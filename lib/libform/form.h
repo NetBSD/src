@@ -1,4 +1,4 @@
-/*	$NetBSD: form.h,v 1.13 2001/06/13 10:45:58 wiz Exp $	*/
+/*	$NetBSD: form.h,v 1.14 2001/07/08 13:01:21 blymn Exp $	*/
 
 /*-
  * Copyright (c) 1998-1999 Brett Lymn
@@ -301,8 +301,7 @@ char *field_buffer(FIELD *, int);
 int field_count(FORM *);
 chtype field_fore(FIELD *);
 int field_index(FIELD *);
-int field_info __P((FIELD *, int *, int *, int *, int *,
-		    int *, int *));
+int field_info(FIELD *, int *, int *, int *, int *, int *, int *);
 Form_Hook field_init(FORM *);
 int field_just(FIELD *);
 Form_Options field_opts(FIELD *);
