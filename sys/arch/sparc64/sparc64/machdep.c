@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.112.4.4 2002/01/03 10:03:56 petrov Exp $ */
+/*	$NetBSD: machdep.c,v 1.112.4.5 2002/01/04 09:26:48 petrov Exp $ */
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -2193,5 +2193,7 @@ cpu_upcall(struct lwp *l, int type, int nevents, int ninterrupted,
 	tf->tf_regs[FRAME_A4] = (u_int64_t)ap;
 	tf->tf_regs[FRAME_T12] = (u_int64_t)upcall;  /* t12 is pv */
 	alpha_pal_wrusp((unsigned long)sp);
+#else
+	panic("cpu_upcall");
 #endif
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.139.4.3 2002/01/03 10:03:55 petrov Exp $	*/
+/*	$NetBSD: locore.s,v 1.139.4.4 2002/01/04 09:26:46 petrov Exp $	*/
 
 /*
  * Copyright (c) 1996-2001 Eduardo Horvath
@@ -332,13 +332,13 @@
 	cmp	%sp, %l4;								     \
 	blu	%xcc, 1f;								     \
 0:											     \
-	 sethi	%hi(_C_LABEL(proc0)), %l4;	/* Yes, use proc0 */			     \
+	 sethi	%hi(_C_LABEL(lwp0)), %l4;	/* Yes, use proc0 */			     \
 	ba,pt	%xcc, 2f;			/* XXXX needs to change to CPUs idle proc */ \
-	 or	%l4, %lo(_C_LABEL(proc0)), %l5;						     \
+	 or	%l4, %lo(_C_LABEL(lwp0)), %l5;						     \
 1:											     \
 	sethi	%hi(CURPROC), %l4;		/* Use curproc */			     \
 	LDPTR	[%l4 + %lo(CURPROC)], %l5;						     \
-	brz,pn	%l5, 0b; nop;			/* If curproc is NULL need to use proc0 */   \
+	brz,pn	%l5, 0b; nop;			/* If curproc is NULL need to use lwp0 */   \
 2:											     \
 	LDPTR	[%l5 + L_MD_FPSTATE], %l6;	/* Save old fpstate */			     \
 	STPTR	%l0, [%l5 + L_MD_FPSTATE];	/* Insert new fpstate */		     \
@@ -7353,12 +7353,13 @@ Lsw_panic_wchan:
 	 or	%lo(2f), %o0, %o0
 Lsw_panic_srun:
 	sethi	%hi(3f), %o0
+	mov	%l3, %o1
 	call	_C_LABEL(panic)
 	 or	%lo(3f), %o0, %o0
 	.data
 1:	.asciz	"switch rq"
 2:	.asciz	"switch wchan"
-3:	.asciz	"switch LSRUN"
+3:	.asciz	"switch LSRUN %p %x"
 idlemsg:	.asciz	"idle %x %x %x %x"
 idlemsg1:	.asciz	" %x %x %x\r\n"
 	_ALIGN
@@ -7536,8 +7537,8 @@ Lsw_scan:
 	LDPTR	[%l3 + L_WCHAN], %o0	! if (l->l_wchan)
 	brnz,pn	%o0, Lsw_panic_wchan	!	panic("switch wchan");
 	 EMPTY
-	ldsb	[%l3 + L_STAT], %o0	! if (l->l_stat != LSRUN)
-	cmp	%o0, LSRUN
+	ld	[%l3 + L_STAT], %o2	! if (l->l_stat != LSRUN)
+	cmp	%o2, LSRUN
 	bne	Lsw_panic_srun		!	panic("switch LSRUN");
 	 EMPTY
 
@@ -7552,7 +7553,7 @@ Lsw_scan:
 	 */
 #endif
 	mov	LSONPROC, %o0			! l->l_stat = SONPROC
-	stb	%o0, [%l3 + L_STAT]
+	st	%o0, [%l3 + L_STAT]
 	sethi	%hi(_C_LABEL(want_resched)), %o0
 	st	%g0, [%o0 + %lo(_C_LABEL(want_resched))]	! want_resched = 0;
 	LDPTR	[%l3 + L_ADDR], %l1		! newpcb = p->p_addr;
@@ -8401,9 +8402,9 @@ ENTRY(pmap_zero_page)
 	cmp	%sp, %l4
 	blu	%xcc, 1f
 0:
-	 sethi	%hi(_C_LABEL(proc0)), %l4		! Yes, use proc0
+	 sethi	%hi(_C_LABEL(lwp0)), %l4		! Yes, use proc0
 	ba,pt	%xcc, 2f
-	 or	%l4, %lo(_C_LABEL(proc0)), %l5
+	 or	%l4, %lo(_C_LABEL(lwp0)), %l5
 1:
 	sethi	%hi(CURPROC), %l4			! Use curproc
 	LDPTR	[%l4 + %lo(CURPROC)], %l5
@@ -8690,9 +8691,9 @@ ENTRY(pmap_copy_page)
 	cmp	%sp, %l4
 	blu	%xcc, 1f
 0:
-	 sethi	%hi(_C_LABEL(proc0)), %l4		! Yes, use proc0
+	 sethi	%hi(_C_LABEL(lwp0)), %l4		! Yes, use proc0
 	ba,pt	%xcc, 2f
-	 or	%l4, %lo(_C_LABEL(proc0)), %l5
+	 or	%l4, %lo(_C_LABEL(lwp0)), %l5
 1:
 	sethi	%hi(CURPROC), %l4			! No, use curproc
 	LDPTR	[%l4 + %lo(CURPROC)], %l5
@@ -9811,9 +9812,9 @@ Lbcopy_block:
 	cmp	%sp, %l4
 	blu	%xcc, 1f
 0:
-	 sethi	%hi(_C_LABEL(proc0)), %l4		! Yes, use proc0
+	 sethi	%hi(_C_LABEL(lwp0)), %l4		! Yes, use proc0
 	ba,pt	%xcc, 2f				! XXXX needs to change to CPUs idle proc
-	 or	%l4, %lo(_C_LABEL(proc0)), %l5
+	 or	%l4, %lo(_C_LABEL(lwp0)), %l5
 1:
 	sethi	%hi(CURPROC), %l4			! Use curproc
 	LDPTR	[%l4 + %lo(CURPROC)], %l5
@@ -11084,9 +11085,9 @@ Lbzero_block:
 	cmp	%sp, %l4
 	blu	%xcc, 1f
 0:
-	 sethi	%hi(_C_LABEL(proc0)), %l4		! Yes, use proc0
+	 sethi	%hi(_C_LABEL(lwp0)), %l4		! Yes, use proc0
 	ba,pt	%xcc, 2f				! XXXX needs to change to CPU's idle proc
-	 or	%l4, %lo(_C_LABEL(proc0)), %l5
+	 or	%l4, %lo(_C_LABEL(lwp0)), %l5
 1:
 	sethi	%hi(CURPROC), %l4			! Use curproc
 	LDPTR	[%l4 + %lo(CURPROC)], %l5
@@ -12396,6 +12397,7 @@ _C_LABEL(esym):
 _C_LABEL(ssym):
 	POINTER	0
 #endif
+	! XXX should it called lwp0paddr
 	.globl	_C_LABEL(proc0paddr)
 _C_LABEL(proc0paddr):
 	POINTER	_C_LABEL(u0)		! KVA of proc0 uarea

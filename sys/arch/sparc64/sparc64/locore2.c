@@ -1,4 +1,4 @@
-/*	$NetBSD: locore2.c,v 1.2.12.1 2002/01/03 06:42:36 petrov Exp $ */
+/*	$NetBSD: locore2.c,v 1.2.12.2 2002/01/04 09:26:48 petrov Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -59,9 +59,8 @@
 #include <machine/cpu.h>
 
 /*
- * XXX comments
- * Put process p on the run queue indicated by its priority.
- * Calls should be made at splstatclock(), and p->p_stat should be SRUN.
+ * Put lwp l on the run queue indicated by its priority.
+ * Calls should be made at splstatclock(), and l->l_stat should be LSRUN.
  */
 void
 setrunqueue(l)
@@ -79,51 +78,24 @@ setrunqueue(l)
 	l->l_back = sched_qs[bit].ph_rlink;
 	l->l_back->l_forw = l;
 	sched_qs[bit].ph_rlink = l;
-#if 0
-	register struct prochd *q;
-	register struct proc *oldlast;
-	register int which = l->l_priority >> 2;
-
-	if (p->p_back != NULL)
-		panic("setrunqueue");
-	q = &sched_qs[which];
-	sched_whichqs |= 1 << which;
-	p->p_forw = (struct proc *)q;
-	p->p_back = oldlast = q->ph_rlink;
-	q->ph_rlink = p;
-	oldlast->p_forw = p;
-#endif
 }
 
 /*
- * Remove process p from its run queue, which should be the one
+ * Remove lwp l from its run queue, which should be the one
  * indicated by its priority.  Calls should be made at splstatclock().
  */
 void
 remrunqueue(l)
 	register struct lwp *l;
 {
-#if 0
-	register int which = p->p_priority >> 2;
-	register struct prochd *q;
-
-	if ((sched_whichqs & (1 << which)) == 0)
-		panic("remrq");
-	p->p_forw->p_back = p->p_back;
-	p->p_back->p_forw = p->p_forw;
-	p->p_back = NULL;
-	q = &sched_qs[which];
-	if (q->ph_link == (struct proc *)q)
-		sched_whichqs &= ~(1 << which);
-#endif
 	int bit;
 
 	bit = l->l_priority >> 2;
 	if ((sched_whichqs & (1 << bit)) == 0)
 		panic("remrunqueue");
 
-	l->l_back->l_forw = l->l_forw;
 	l->l_forw->l_back = l->l_back;
+	l->l_back->l_forw = l->l_forw;
 	l->l_back = NULL;	/* for firewall checking. */
 
 	if ((struct lwp *)&sched_qs[bit] == sched_qs[bit].ph_link)

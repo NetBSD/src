@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_machdep.c,v 1.41.4.3 2002/01/03 06:42:37 petrov Exp $ */
+/*	$NetBSD: vm_machdep.c,v 1.41.4.4 2002/01/04 09:26:49 petrov Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -246,7 +246,7 @@ cpu_lwp_fork(l1, l2, stack, stacksize, func, arg)
 	 * the FPU user, we must save the FPU state first.
 	 */
 
-#ifdef NOTDEF_DEBUG
+#ifdef DEBUG
 	printf("cpu_lwp_fork()\n");
 #endif
 	if (l1 == curproc) {
@@ -361,6 +361,7 @@ cpu_setfunc(l, func, arg)
 	    (u_int64_t)proc_trampoline;		/* ra: assembly magic */
 	up->u_pcb.pcb_context[8] = ALPHA_PSL_IPL_0; /* ps: IPL */
 #endif
+	panic("cpu_setfunc");
 }	
 
 /*
