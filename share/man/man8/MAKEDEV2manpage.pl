@@ -1,6 +1,6 @@
 #!/usr/pkg/bin/perl
 #
-#	$NetBSD: MAKEDEV2manpage.pl,v 1.6 2001/06/26 02:03:08 hubertf Exp $
+#	$NetBSD: MAKEDEV2manpage.pl,v 1.7 2001/06/26 02:28:21 hubertf Exp $
 #
 # Copyright (c) 1999
 #	Hubert Feyrer <hubertf@netbsd.org>.  All rights reserved.
@@ -159,9 +159,9 @@ sub do_devices
                   $l .= "$page(4)";
               }
 
-	      # Add .Xr f\&oo 4 - ampersand to work around manpages that are
+	      # Add .Xr \&foo 4 - ampersand to work around manpages that are
 	      # *roff commands at the same time
-              while ($l =~ s/\s*(\w)(\w*)\((\d)\)(.*)/\n.Xr \1\\&\2 \3 \4/g){$l =~ s/[ \t]+$//g;}
+              while ($l =~ s/\s*(\w+)\((\d)\)(.*)/\n.Xr \\&\1 \2 \3/g){$l =~ s/[ \t]+$//g;}
 
 	      print MANPAGE ". It Ar $target\n";
 	      print MANPAGE "$l\n";
