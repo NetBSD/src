@@ -27,14 +27,14 @@
  *	i4b_isic.c - global isic stuff
  *	==============================
  *
- *	$Id: isic.c,v 1.6 2002/03/25 14:44:46 martin Exp $ 
+ *	$Id: isic.c,v 1.7 2002/03/25 16:39:55 martin Exp $ 
  *
  *      last edit-date: [Fri Jan  5 11:36:10 2001]
  *
  *---------------------------------------------------------------------------*/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: isic.c,v 1.6 2002/03/25 14:44:46 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: isic.c,v 1.7 2002/03/25 16:39:55 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/ioccom.h>
@@ -209,65 +209,6 @@ isicintr(void *arg)
 
 		return(was_ipac_irq);
 	}		
-}
-
-/*---------------------------------------------------------------------------*
- *	isic_recovery - try to recover from irq lockup
- *---------------------------------------------------------------------------*/
-void
-isic_recover(struct isic_softc *sc)
-{
-	u_char byte;
-	
-	/* get hscx irq status from hscx b ista */
-
-	byte = HSCX_READ(HSCX_CH_B, H_ISTA);
-
-	NDBGL1(L1_ERROR, "HSCX B: ISTA = 0x%x", byte);
-
-	if(byte & HSCX_ISTA_ICA)
-		NDBGL1(L1_ERROR, "HSCX A: ISTA = 0x%x", (u_char)HSCX_READ(HSCX_CH_A, H_ISTA));
-
-	if(byte & HSCX_ISTA_EXB)
-		NDBGL1(L1_ERROR, "HSCX B: EXIR = 0x%x", (u_char)HSCX_READ(HSCX_CH_B, H_EXIR));
-
-	if(byte & HSCX_ISTA_EXA)
-		NDBGL1(L1_ERROR, "HSCX A: EXIR = 0x%x", (u_char)HSCX_READ(HSCX_CH_A, H_EXIR));
-
-	/* get isac irq status */
-
-	byte = ISAC_READ(I_ISTA);
-
-	NDBGL1(L1_ERROR, "  ISAC: ISTA = 0x%x", byte);
-	
-	if(byte & ISAC_ISTA_EXI)
-		NDBGL1(L1_ERROR, "  ISAC: EXIR = 0x%x", (u_char)ISAC_READ(I_EXIR));
-
-	if(byte & ISAC_ISTA_CISQ)
-	{
-		byte = ISAC_READ(I_CIRR);
-	
-		NDBGL1(L1_ERROR, "  ISAC: CISQ = 0x%x", byte);
-		
-		if(byte & ISAC_CIRR_SQC)
-			NDBGL1(L1_ERROR, "  ISAC: SQRR = 0x%x", (u_char)ISAC_READ(I_SQRR));
-	}
-
-	NDBGL1(L1_ERROR, "HSCX B: IMASK = 0x%x", HSCX_B_IMASK);
-	NDBGL1(L1_ERROR, "HSCX A: IMASK = 0x%x", HSCX_A_IMASK);
-
-	HSCX_WRITE(0, H_MASK, 0xff);
-	HSCX_WRITE(1, H_MASK, 0xff);
-	DELAY(100);	
-	HSCX_WRITE(0, H_MASK, HSCX_A_IMASK);
-	HSCX_WRITE(1, H_MASK, HSCX_B_IMASK);
-	DELAY(100);
-
-	NDBGL1(L1_ERROR, "  ISAC: IMASK = 0x%x", ISAC_IMASK);
-
-	ISAC_WRITE(I_MASK, 0xff);	
-	DELAY(100);
-	ISAC_WRITE(I_MASK, ISAC_IMASK);
 }
 
 int

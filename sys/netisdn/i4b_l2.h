@@ -1,4 +1,4 @@
-/* $NetBSD: i4b_l2.h,v 1.4 2002/03/25 14:44:46 martin Exp $ */
+/* $NetBSD: i4b_l2.h,v 1.5 2002/03/25 16:39:57 martin Exp $ */
 
 /*
  * Copyright (c) 1997, 2000 Hellmuth Michaelis. All rights reserved.
@@ -29,7 +29,7 @@
  *	i4b_l2.h - ISDN layer 2 (Q.921) definitions
  *	---------------------------------------------
  *
- *	$Id: i4b_l2.h,v 1.4 2002/03/25 14:44:46 martin Exp $ 
+ *	$Id: i4b_l2.h,v 1.5 2002/03/25 16:39:57 martin Exp $ 
  *
  * $FreeBSD$
  *
@@ -361,5 +361,6 @@ extern int i4b_dl_unit_data_ind ( int bri, struct mbuf *m );
 extern int i4b_dl_data_ind ( int bri, struct mbuf *m );
 int i4b_mdl_command_req(int bri, int, void *);
 void * isdn_find_softc_by_bri(int bri);
+extern int isdn_bchan_silence __P(( unsigned char *data, int len ));
 
 #endif /* _I4B_L2_H_ */

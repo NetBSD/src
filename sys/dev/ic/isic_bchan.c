@@ -27,14 +27,14 @@
  *	i4b_bchan.c - B channel handling L1 procedures
  *	----------------------------------------------
  *
- *	$Id: isic_bchan.c,v 1.7 2002/03/24 20:35:46 martin Exp $
+ *	$Id: isic_bchan.c,v 1.8 2002/03/25 16:39:55 martin Exp $
  *
  *      last edit-date: [Fri Jan  5 11:36:11 2001]
  *
  *---------------------------------------------------------------------------*/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: isic_bchan.c,v 1.7 2002/03/24 20:35:46 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: isic_bchan.c,v 1.8 2002/03/25 16:39:55 martin Exp $");
 
 #include <sys/param.h>
 #if defined(__FreeBSD__) && __FreeBSD__ >= 3
@@ -190,7 +190,7 @@ isic_bchannel_start(isdn_layer1token t, int h_chan)
 
 	if(chan->bprot == BPROT_NONE)
 	{
-		if(!(isic_hscx_silence(chan->out_mbuf_cur->m_data,
+		if(!(isdn_bchan_silence(chan->out_mbuf_cur->m_data,
 		    chan->out_mbuf_cur->m_len)))
 			activity = ACT_TX;
 	}
@@ -422,36 +422,3 @@ isic_init_linktab(struct isic_softc *sc)
 	/* used by HDLC data transfers, i.e. ipr and isp drivers */	
 	lt->rx_mbuf = &chan->in_mbuf;	
 }
-
-/*---------------------------------------------------------------------------*
- *	telephony silence detection
- *---------------------------------------------------------------------------*/
-
-#define TEL_IDLE_MIN (BCH_MAX_DATALEN/2)
-
-int
-isic_hscx_silence(unsigned char *data, int len)
-{
-	register int i = 0;
-	register int j = 0;
-
-	/* count idle bytes */
-	
-	for(;i < len; i++)
-	{
-		if((*data >= 0xaa) && (*data <= 0xac))
-			j++;
-		data++;
-	}
-
-#ifdef NOTDEF
-	printf("isic_hscx_silence: got %d silence bytes in frame\n", j);
-#endif
-	
-	if(j < (TEL_IDLE_MIN))
-		return(0);
-	else
-		return(1);
-
-}
-

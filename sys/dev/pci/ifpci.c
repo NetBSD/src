@@ -32,61 +32,38 @@
  *   a lot of code was borrowed from i4b_bchan.c and i4b_hscx.c
  *---------------------------------------------------------------------------
  *
- *	Fritz!Card PCI specific routines for isic driver
+ *	Fritz!Card PCI driver
  *	------------------------------------------------
  *
- *	$Id: isic_pci_avm_fritz_pci.c,v 1.8 2002/03/25 14:44:46 martin Exp $
+ *	$Id: ifpci.c,v 1.1 2002/03/25 16:39:55 martin Exp $
  *
  *      last edit-date: [Fri Jan  5 11:38:58 2001]
  *
  *---------------------------------------------------------------------------*/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: isic_pci_avm_fritz_pci.c,v 1.8 2002/03/25 14:44:46 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ifpci.c,v 1.1 2002/03/25 16:39:55 martin Exp $");
 
-#include "opt_isicpci.h"
-#ifdef ISICPCI_AVM_A1
 
 #include <sys/param.h>
-#if defined(__FreeBSD__) && __FreeBSD__ >= 3
-#include <sys/ioccom.h>
-#else
 #include <sys/ioctl.h>
-#endif
 #include <sys/kernel.h>
 #include <sys/systm.h>
 #include <sys/mbuf.h>
 
-#ifdef __FreeBSD__
-#include <machine/clock.h>
-#include <i386/isa/isa_device.h>
-#include <pci/pcivar.h>              /* for pcici_t */
-#if __FreeBSD__ < 3
-#include <pci/pcireg.h>
-#include <pci/pcibus.h>
-#endif /* __FreeBSD__ < 3 */
-#else
 #include <machine/bus.h>
 #include <sys/device.h>
-#endif
 
 #include <sys/socket.h>
 #include <net/if.h>
 
-#if defined(__NetBSD__) && __NetBSD_Version__ >= 104230000
 #include <sys/callout.h>
-#endif
 
-#ifdef __FreeBSD__
-#include <machine/i4b_debug.h>
-#include <machine/i4b_ioctl.h>
-#else
 #include <dev/pci/pcireg.h>
 #include <dev/pci/pcivar.h>
 #include <dev/pci/pcidevs.h>
 #include <netisdn/i4b_debug.h>
 #include <netisdn/i4b_ioctl.h>
-#endif
 
 #include <netisdn/i4b_global.h>
 #include <netisdn/i4b_l2.h>
@@ -104,8 +81,6 @@ __KERNEL_RCSID(0, "$NetBSD: isic_pci_avm_fritz_pci.c,v 1.8 2002/03/25 14:44:46 m
 #define FRITZPCI_PORT0_IO_MAPOFF	PCI_MAPREG_START+4
 #define FRITZPCI_PORT0_MEM_MAPOFF	PCI_MAPREG_START
 
-extern const struct isdn_layer1_bri_driver isic_std_driver;
-
 static isdn_link_t *avma1pp_ret_linktab(void *token, int channel);
 static void avma1pp_set_link(void *token, int channel, const struct isdn_l4_driver_functions *l4_driver, void *l4_driver_softc);
 
@@ -114,6 +89,8 @@ void n_connect_response(u_int cdid, int response, int cause);
 void n_disconnect_request(u_int cdid, int cause);
 void n_alert_request(u_int cdid);
 void n_mgmt_command(int bri, int cmd, void *parm);
+
+extern const struct isdn_layer1_bri_driver isic_std_driver;
 
 const struct isdn_l3_driver_functions
 ifpci_l3_driver = {
@@ -126,6 +103,13 @@ ifpci_l3_driver = {
 	NULL,
 	NULL,
 	n_mgmt_command
+};
+
+struct ifpci_softc {
+	struct isic_softc sc_isic;	/* parent class */
+
+	/* PCI-specific goo */
+	void *sc_ih;				/* interrupt handler */
 };
 
 /* prototypes */
@@ -143,9 +127,15 @@ static void hscx_write_reg(int chan, u_int off, u_int val, struct isic_softc *sc
 static u_char hscx_read_reg(int chan, u_int off, struct isic_softc *sc);
 static u_int hscx_read_reg_int(int chan, u_int off, struct isic_softc *sc);
 static void avma1pp_bchannel_stat(isdn_layer1token, int h_chan, bchan_statistics_t *bsp);
-static void avma1pp_map_int(struct pci_isic_softc *sc, struct pci_attach_args *pa);
+static void avma1pp_map_int(struct ifpci_softc *sc, struct pci_attach_args *pa);
 static void avma1pp_bchannel_setup(isdn_layer1token, int h_chan, int bprot, int activate);
 static void avma1pp_init_linktab(struct isic_softc *);
+static int ifpci_match(struct device *parent, struct cfdata *match, void *aux);
+static void ifpci_attach(struct device *parent, struct device *self, void *aux);
+
+struct cfattach ifpci_ca = {
+	sizeof(struct ifpci_softc), ifpci_match, ifpci_attach
+};
 
 /*---------------------------------------------------------------------------*
  *	AVM PCI Fritz!Card special registers
@@ -258,16 +248,6 @@ static void avma1pp_init_linktab(struct isic_softc *);
 #define AVMA1PPSETCMDLONG(f) (f) = ((sc->avma1pp_cmd) | (sc->avma1pp_txl << 8) \
  					| (sc->avma1pp_prot << 16))
 
-#ifdef __FreeBSD__
-
-/* "fake" addresses for the non-existent HSCX */
-/* note: the unit number is in the lower byte for both the ISAC and "HSCX" */
-#define HSCX0FAKE	0xfa000 /* read: fake0 */
-#define HSCX1FAKE	0xfa100 /* read: fake1 */
-#define IS_HSCX_MASK	0xfff00
-
-#endif /* __FreeBSD__ */
-
 /*
  * to prevent deactivating the "HSCX" when both channels are active we
  * define an HSCX_ACTIVE flag which is or'd into the channel's state
@@ -276,55 +256,143 @@ static void avma1pp_init_linktab(struct isic_softc *);
  */
 #define HSCX_AVMA1PP_ACTIVE	0x1000 
 
-/*---------------------------------------------------------------------------*
- *	AVM read fifo routines
- *---------------------------------------------------------------------------*/
-
-#ifdef __FreeBSD__
-static void		
-avma1pp_read_fifo(void *buf, const void *base, size_t len)
+static int
+ifpci_match(struct device *parent, struct cfdata *match, void *aux)
 {
-	int unit;
-	struct isic_softc *sc;
+	struct pci_attach_args *pa = aux;
 
-	unit = (int)base & 0xff;
-	sc = &l1_sc[unit];
-
-	/* check whether the target is an HSCX */
-	if (((int)base & IS_HSCX_MASK) == HSCX0FAKE)
-	{
-		hscx_read_fifo(0, buf, len, sc);
-		return;
-	}
-	if (((int)base & IS_HSCX_MASK)  == HSCX1FAKE)
-	{
-		hscx_read_fifo(1, buf, len, sc);
-		return;
-	}
-	/* tell the board to access the ISAC fifo */
-	outb(sc->sc_port + ADDR_REG_OFFSET, ISAC_FIFO);
-	insb(sc->sc_port + ISAC_REG_OFFSET, (u_char *)buf, len);
+	if (PCI_VENDOR(pa->pa_id) == PCI_VENDOR_AVM &&
+	    PCI_PRODUCT(pa->pa_id) == PCI_PRODUCT_AVM_FRITZ_CARD)
+		return 1;
+	return 0;
 }
 
 static void
-hscx_read_fifo(int chan, void *buf, size_t len, struct isic_softc *sc)
+ifpci_attach(struct device *parent, struct device *self, void *aux)
 {
-	u_int *ip;
-	size_t cnt;
+	struct ifpci_softc *psc = (void*)self;
+	struct pci_attach_args *pa = aux;
+	struct isic_softc *sc = &psc->sc_isic;
+	struct isdn_l3_driver *drv;
+	u_int v;
 
-	outl(sc->sc_port + ADDR_REG_OFFSET, chan);
-	ip = (u_int *)buf;
-	cnt = 0;
-	/* what if len isn't a multiple of sizeof(int) and buf is */
-	/* too small ???? */
-	while (cnt < len)
-	{
-		*ip++ = inl(sc->sc_port + ISAC_REG_OFFSET);
-		cnt += 4;
+	/* announce */
+	printf(": Fritz!PCI card\n");
+
+	/* initialize sc */
+	callout_init(&sc->sc_T3_callout);
+	callout_init(&sc->sc_T4_callout);
+
+	/* setup io mappings */
+	sc->sc_cardtyp = CARD_TYPEP_AVMA1PCI;
+	sc->sc_num_mappings = 1;
+	MALLOC_MAPS(sc);
+	sc->sc_maps[0].size = 0;
+	if (pci_mapreg_map(pa, FRITZPCI_PORT0_MEM_MAPOFF, PCI_MAPREG_TYPE_MEM, 0,
+	    &sc->sc_maps[0].t, &sc->sc_maps[0].h, NULL, NULL) != 0
+	   && pci_mapreg_map(pa, FRITZPCI_PORT0_IO_MAPOFF, PCI_MAPREG_TYPE_IO, 0,
+	    &sc->sc_maps[0].t, &sc->sc_maps[0].h, NULL, NULL) != 0) {
+		printf("%s: can't map card\n", sc->sc_dev.dv_xname);
+		return;
 	}
+
+	/* setup access routines */
+
+	sc->clearirq = NULL;
+	sc->readreg = avma1pp_read_reg;
+	sc->writereg = avma1pp_write_reg;
+
+	sc->readfifo = avma1pp_read_fifo;
+	sc->writefifo = avma1pp_write_fifo;
+
+
+	/* setup card type */
+	
+	sc->sc_cardtyp = CARD_TYPEP_AVMA1PCI;
+
+	/* setup IOM bus type */
+	
+	sc->sc_bustyp = BUS_TYPE_IOM2;
+
+	/* this is no IPAC based card */
+	sc->sc_ipac = 0;
+	sc->sc_bfifolen = HSCX_FIFO_LEN;
+
+	/* setup interrupt mapping */
+	avma1pp_map_int(psc, pa);
+	
+	/* init the card */
+	/* the Linux driver does this to clear any pending ISAC interrupts */
+	/* see if it helps any - XXXX */
+	v = 0;
+	v = ISAC_READ(I_STAR);
+	v = ISAC_READ(I_MODE);
+	v = ISAC_READ(I_ADF2);
+	v = ISAC_READ(I_ISTA);
+	if (v & ISAC_ISTA_EXI)
+	{
+		 v = ISAC_READ(I_EXIR);
+	}
+	v = ISAC_READ(I_CIRR);
+	ISAC_WRITE(I_MASK, 0xff);
+	/* the Linux driver does this to clear any pending HSCX interrupts */
+	v = hscx_read_reg_int(0, HSCX_STAT, sc);
+	v = hscx_read_reg_int(1, HSCX_STAT, sc);
+
+	bus_space_write_1(sc->sc_maps[0].t, sc->sc_maps[0].h, STAT0_OFFSET, ASL_RESET_ALL|ASL_TIMERDISABLE);
+	DELAY(SEC_DELAY/100); /* 10 ms */
+	bus_space_write_1(sc->sc_maps[0].t, sc->sc_maps[0].h, STAT0_OFFSET, ASL_TIMERRESET|ASL_ENABLE_INT|ASL_TIMERDISABLE);
+	DELAY(SEC_DELAY/100); /* 10 ms */
+
+	/* setup i4b infrastructure (have to roll our own here) */
+
+	/* sc->sc_isac_version = ((ISAC_READ(I_RBCH)) >> 5) & 0x03; */
+	 printf("%s: ISAC %s (IOM-%c)\n", sc->sc_dev.dv_xname,
+  		"2085 Version A1/A2 or 2086/2186 Version 1.1",
+		 sc->sc_bustyp == BUS_TYPE_IOM1 ? '1' : '2');
+
+	/* init the ISAC */
+	isic_isac_init(sc);
+
+	/* init the "HSCX" */
+	avma1pp_bchannel_setup(sc, HSCX_CH_A, BPROT_NONE, 0);
+	
+	avma1pp_bchannel_setup(sc, HSCX_CH_B, BPROT_NONE, 0);
+
+	/* can't use the normal B-Channel stuff */
+	avma1pp_init_linktab(sc);
+
+	/* set trace level */
+
+	sc->sc_trace = TRACE_OFF;
+
+	sc->sc_state = ISAC_IDLE;
+
+	sc->sc_ibuf = NULL;
+	sc->sc_ib = NULL;
+	sc->sc_ilen = 0;
+
+	sc->sc_obuf = NULL;
+	sc->sc_op = NULL;
+	sc->sc_ol = 0;
+	sc->sc_freeflag = 0;
+
+	sc->sc_obuf2 = NULL;
+	sc->sc_freeflag2 = 0;
+
+	/* init higher protocol layers */
+	drv = isdn_attach_bri(sc->sc_dev.dv_xname,
+	    "AVM Fritz!PCI", &sc->sc_l2, &ifpci_l3_driver);
+	sc->sc_l3token = drv;
+	sc->sc_l2.driver = &isic_std_driver;
+	sc->sc_l2.l1_token = sc;
+	sc->sc_l2.bri = drv->bri;
+	isdn_layer2_status_ind(&sc->sc_l2, STI_ATTACH, 1);
 }
 
-#else
+/*---------------------------------------------------------------------------*
+ *	AVM read fifo routines
+ *---------------------------------------------------------------------------*/
 
 static void
 avma1pp_read_fifo(struct isic_softc *sc, int what, void *buf, size_t size)
@@ -361,68 +429,9 @@ hscx_read_fifo(int chan, void *buf, size_t len, struct isic_softc *sc)
 	}
 }
 
-#endif
-
 /*---------------------------------------------------------------------------*
  *	AVM write fifo routines
  *---------------------------------------------------------------------------*/
-#ifdef __FreeBSD__
-static void
-avma1pp_write_fifo(void *base, const void *buf, size_t len)
-{
-	int unit;
-	struct isic_softc *sc;
-
-	unit = (int)base & 0xff;
-	sc = &l1_sc[unit];
-
-	/* check whether the target is an HSCX */
-	if (((int)base & IS_HSCX_MASK) == HSCX0FAKE)
-	{
-		hscx_write_fifo(0, buf, len, sc);
-		return;
-	}
-	if (((int)base & IS_HSCX_MASK)  == HSCX1FAKE)
-	{
-		hscx_write_fifo(1, buf, len, sc);
-		return;
-	}
-	/* tell the board to use the ISAC fifo */
-	outb(sc->sc_port + ADDR_REG_OFFSET, ISAC_FIFO);
-	outsb(sc->sc_port + ISAC_REG_OFFSET, (const u_char *)buf, len);
-}
-
-static void
-hscx_write_fifo(int chan, const void *buf, size_t len, struct isic_softc *sc)
-{
-	register const u_int *ip;
-	register size_t cnt;
-	l1_bchan_state_t *Bchan = &sc->sc_chan[chan];
-
-	sc->avma1pp_cmd &= ~HSCX_CMD_XME;
-	sc->avma1pp_txl = 0;
-	if (Bchan->out_mbuf_cur == NULL)
-	{
-	  if (Bchan->bprot != BPROT_NONE)
-		 sc->avma1pp_cmd |= HSCX_CMD_XME;
-	}
-	if (len != sc->sc_bfifolen)
-		sc->avma1pp_txl = len;
-
-	cnt = 0; /* borrow cnt */
-	AVMA1PPSETCMDLONG(cnt);
-	hscx_write_reg(chan, HSCX_STAT, cnt, sc);
-
-	ip = (const u_int *)buf;
-	cnt = 0;
-	while (cnt < len)
-	{
-		outl(sc->sc_port + ISAC_REG_OFFSET, *ip++);
-		cnt += 4;
-	}
-}
-
-#else
 
 static void
 avma1pp_write_fifo(struct isic_softc *sc, int what, const void *buf, size_t size)
@@ -471,55 +480,10 @@ hscx_write_fifo(int chan, const void *buf, size_t len, struct isic_softc *sc)
 		cnt += 4;
 	}
 }
-#endif
 
 /*---------------------------------------------------------------------------*
  *	AVM write register routines
  *---------------------------------------------------------------------------*/
-#ifdef __FreeBSD__
-static void
-avma1pp_write_reg(u_char *base, u_int offset, u_int v)
-{
-	int unit;
-	struct isic_softc *sc;
-	u_char reg_bank;
-
-	unit = (int)base & 0xff;
-	sc = &l1_sc[unit];
-
-	/* check whether the target is an HSCX */
-	if (((int)base & IS_HSCX_MASK) == HSCX0FAKE)
-	{
-		hscx_write_reg(0, offset, v, sc);
-		return;
-	}
-	if (((int)base & IS_HSCX_MASK) == HSCX1FAKE)
-	{
-		hscx_write_reg(1, offset, v, sc);
-		return;
-	}
-	/* must be the ISAC */
-	reg_bank = (offset > MAX_LO_REG_OFFSET) ? ISAC_HI_REG_OFFSET:ISAC_LO_REG_OFFSET;
-#ifdef AVMA1PCI_DEBUG
-	printf("write_reg bank %d  off %d.. ", reg_bank, offset);
-#endif
-	/* set the register bank */
-	outb(sc->sc_port + ADDR_REG_OFFSET, reg_bank);
-	outb(sc->sc_port + ISAC_REG_OFFSET + (offset & ISAC_REGSET_MASK), v);
-}
-
-static void
-hscx_write_reg(int chan, u_int off, u_int val, struct isic_softc *sc)
-{
-	/* HACK */
-	if (off == H_MASK)
-		return;
-	/* point at the correct channel */
-	outl(sc->sc_port + ADDR_REG_OFFSET, chan);
-	outl(sc->sc_port + ISAC_REG_OFFSET + off, val);
-}
-
-#else
 
 static void
 avma1pp_write_reg(struct isic_softc *sc, int what, bus_size_t offs, u_int8_t data)
@@ -528,9 +492,6 @@ avma1pp_write_reg(struct isic_softc *sc, int what, bus_size_t offs, u_int8_t dat
 	switch (what) {
 		case ISIC_WHAT_ISAC:
 			reg_bank = (offs > MAX_LO_REG_OFFSET) ? ISAC_HI_REG_OFFSET:ISAC_LO_REG_OFFSET;
-#ifdef AVMA1PCI_DEBUG
-			printf("write_reg bank %d  off %ld.. ", (int)reg_bank, (long)offs);
-#endif
 			/* set the register bank */
 			bus_space_write_1(sc->sc_maps[0].t, sc->sc_maps[0].h, ADDR_REG_OFFSET, reg_bank);
 			bus_space_write_1(sc->sc_maps[0].t, sc->sc_maps[0].h, ISAC_REG_OFFSET + (offs & ISAC_REGSET_MASK), data);
@@ -555,39 +516,10 @@ hscx_write_reg(int chan, u_int off, u_int val, struct isic_softc *sc)
 	bus_space_write_4(sc->sc_maps[0].t, sc->sc_maps[0].h, ISAC_REG_OFFSET + off, val);
 }
 
-#endif
-
 /*---------------------------------------------------------------------------*
  *	AVM read register routines
  *---------------------------------------------------------------------------*/
-#ifdef __FreeBSD__
 
-static u_char
-avma1pp_read_reg(u_char *base, u_int offset)
-{
-	int unit;
-	struct isic_softc *sc;
-	u_char reg_bank;
-
-	unit = (int)base & 0xff;
-	sc = &l1_sc[unit];
-
-	/* check whether the target is an HSCX */
-	if (((int)base & IS_HSCX_MASK) == HSCX0FAKE)
-		return(hscx_read_reg(0, offset, sc));
-	if (((int)base & IS_HSCX_MASK)  == HSCX1FAKE)
-		return(hscx_read_reg(1, offset, sc));
-	/* must be the ISAC */
-	reg_bank = (offset > MAX_LO_REG_OFFSET) ? ISAC_HI_REG_OFFSET:ISAC_LO_REG_OFFSET;
-#ifdef AVMA1PCI_DEBUG
-	printf("read_reg bank %d  off %d.. ", reg_bank, offset);
-#endif
-	/* set the register bank */
-	outb(sc->sc_port + ADDR_REG_OFFSET, reg_bank);
-	return(inb(sc->sc_port + ISAC_REG_OFFSET +
-		(offset & ISAC_REGSET_MASK)));
-}
-#else
 static u_int8_t
 avma1pp_read_reg(struct isic_softc *sc, int what, bus_size_t offs)
 {
@@ -595,9 +527,6 @@ avma1pp_read_reg(struct isic_softc *sc, int what, bus_size_t offs)
 	switch (what) {
 		case ISIC_WHAT_ISAC:
 			reg_bank = (offs > MAX_LO_REG_OFFSET) ? ISAC_HI_REG_OFFSET:ISAC_LO_REG_OFFSET;
-#ifdef AVMA1PCI_DEBUG
-			printf("read_reg bank %d  off %ld.. ", (int)reg_bank, (long)offs);
-#endif
 			/* set the register bank */
 			bus_space_write_1(sc->sc_maps[0].t, sc->sc_maps[0].h, ADDR_REG_OFFSET, reg_bank);
 			return(bus_space_read_1(sc->sc_maps[0].t, sc->sc_maps[0].h, ISAC_REG_OFFSET +
@@ -609,7 +538,6 @@ avma1pp_read_reg(struct isic_softc *sc, int what, bus_size_t offs)
 	}
 	return 0;
 }
-#endif
 
 static u_char
 hscx_read_reg(int chan, u_int off, struct isic_softc *sc)
@@ -628,325 +556,9 @@ hscx_read_reg_int(int chan, u_int off, struct isic_softc *sc)
 	if (off == H_ISTA)
 		return(0);
 	/* point at the correct channel */
-#ifdef __FreeBSD__
-	outl(sc->sc_port + ADDR_REG_OFFSET, chan);
-	return(inl(sc->sc_port + ISAC_REG_OFFSET + off));
-#else
 	bus_space_write_4(sc->sc_maps[0].t, sc->sc_maps[0].h, ADDR_REG_OFFSET, chan);
 	return(bus_space_read_4(sc->sc_maps[0].t, sc->sc_maps[0].h, ISAC_REG_OFFSET + off));
-#endif
 }
-
-/*---------------------------------------------------------------------------*
- *	isic_attach_avma1pp - attach Fritz!Card PCI
- *---------------------------------------------------------------------------*/
-#ifdef __FreeBSD__
-int
-isic_attach_avma1pp(int unit, u_int iobase1, u_int iobase2)
-{
-	struct isic_softc *sc = &l1_sc[unit];
-	u_int v;
-
-	/* check max unit range */
-	
-	if(unit >= ISIC_MAXUNIT)
-	{
-		printf("isic%d: Error, unit %d >= ISIC_MAXUNIT for AVM FRITZ/PCI!\n",
-				unit, unit);
-		return(0);	
-	}	
-	sc->sc_unit = unit;
-
-	/* setup iobase */
-
-	if((iobase1 <= 0) || (iobase1 > 0xffff))
-	{
-		printf("isic%d: Error, invalid iobase 0x%x specified for AVM FRITZ/PCI!\n",
-			unit, iobase1);
-		return(0);
-	}
-	sc->sc_port = iobase1;
-
-	/* the ISAC lives at offset 0x10, but we can't use that. */
-	/* instead, put the unit number into the lower byte - HACK */
-	sc->sc_isac = (caddr_t)((int)(iobase1 & ~0xff) + unit);
-
-	/* this thing doesn't have an HSCX, so fake the base addresses */
-	/* put the unit number into the lower byte - HACK */
-	HSCX_A_BASE = (caddr_t)(HSCX0FAKE + unit);
-	HSCX_B_BASE = (caddr_t)(HSCX1FAKE + unit);
-
-	/* setup access routines */
-
-	sc->clearirq = NULL;
-	sc->readreg = avma1pp_read_reg;
-	sc->writereg = avma1pp_write_reg;
-
-	sc->readfifo = avma1pp_read_fifo;
-	sc->writefifo = avma1pp_write_fifo;
-
-	/* setup card type */
-	
-	sc->sc_cardtyp = CARD_TYPEP_AVMA1PCI;
-
-	/* setup IOM bus type */
-	
-	sc->sc_bustyp = BUS_TYPE_IOM2;
-
-	/* set up some other miscellaneous things */
-	sc->sc_ipac = 0;
-	sc->sc_bfifolen = HSCX_FIFO_LEN;
-
-	/* reset the card */
-	/* the Linux driver does this to clear any pending ISAC interrupts */
-	v = 0;
-	v = ISAC_READ(I_STAR);
-#ifdef AVMA1PCI_DEBUG
-	printf("avma1pp_attach: I_STAR %x...", v);
-#endif
-	v = ISAC_READ(I_MODE);
-#ifdef AVMA1PCI_DEBUG
-	printf("avma1pp_attach: I_MODE %x...", v);
-#endif
-	v = ISAC_READ(I_ADF2);
-#ifdef AVMA1PCI_DEBUG
-	printf("avma1pp_attach: I_ADF2 %x...", v);
-#endif
-	v = ISAC_READ(I_ISTA);
-#ifdef AVMA1PCI_DEBUG
-	printf("avma1pp_attach: I_ISTA %x...", v);
-#endif
-	if (v & ISAC_ISTA_EXI)
-	{
-		 v = ISAC_READ(I_EXIR);
-#ifdef AVMA1PCI_DEBUG
-		 printf("avma1pp_attach: I_EXIR %x...", v);
-#endif
-	}
-	v = ISAC_READ(I_CIRR);
-#ifdef AVMA1PCI_DEBUG
-	printf("avma1pp_attach: I_CIRR %x...", v);
-#endif
-	ISAC_WRITE(I_MASK, 0xff);
-	/* the Linux driver does this to clear any pending HSCX interrupts */
-	v = hscx_read_reg_int(0, HSCX_STAT, sc);
-#ifdef AVMA1PCI_DEBUG
-	printf("avma1pp_attach: 0 HSCX_STAT %x...", v);
-#endif
-	v = hscx_read_reg_int(1, HSCX_STAT, sc);
-#ifdef AVMA1PCI_DEBUG
-	printf("avma1pp_attach: 1 HSCX_STAT %x\n", v);
-#endif
-
-	outb(sc->sc_port + STAT0_OFFSET, ASL_RESET_ALL|ASL_TIMERDISABLE);
-	DELAY(SEC_DELAY/100); /* 10 ms */
-	outb(sc->sc_port + STAT0_OFFSET, ASL_TIMERRESET|ASL_ENABLE_INT|ASL_TIMERDISABLE);
-	DELAY(SEC_DELAY/100); /* 10 ms */
-#ifdef AVMA1PCI_DEBUG
-	outb(sc->sc_port + STAT1_OFFSET, ASL1_ENABLE_IOM|sc->sc_irq);
-	DELAY(SEC_DELAY/100); /* 10 ms */
-	printf("after reset: S1 %#x\n", inb(sc->sc_port + STAT1_OFFSET));
-
-	v = inl(sc->sc_port);
-	printf("isic_attach_avma1pp: v %#x\n", v);
-#endif
-
-   /* from here to the end would normally be done in isic_pci_isdn_attach */
-
-	 printf("isic%d: ISAC %s (IOM-%c)\n", unit,
-  		"2085 Version A1/A2 or 2086/2186 Version 1.1",
-		 sc->sc_bustyp == BUS_TYPE_IOM1 ? '1' : '2');
-
-	/* init the ISAC */
-	isic_isac_init(sc);
-
-	/* init the "HSCX" */
-	avma1pp_bchannel_setup(sc->sc_unit, HSCX_CH_A, BPROT_NONE, 0);
-	
-	avma1pp_bchannel_setup(sc->sc_unit, HSCX_CH_B, BPROT_NONE, 0);
-
-	/* can't use the normal B-Channel stuff */
-	avma1pp_init_linktab(sc);
-
-	/* set trace level */
-
-	sc->sc_trace = TRACE_OFF;
-
-	sc->sc_state = ISAC_IDLE;
-
-	sc->sc_ibuf = NULL;
-	sc->sc_ib = NULL;
-	sc->sc_ilen = 0;
-
-	sc->sc_obuf = NULL;
-	sc->sc_op = NULL;
-	sc->sc_ol = 0;
-	sc->sc_freeflag = 0;
-
-	sc->sc_obuf2 = NULL;
-	sc->sc_freeflag2 = 0;
-
-#if defined(__FreeBSD__) && __FreeBSD__ >=3
-	callout_handle_init(&sc->sc_T3_callout);
-	callout_handle_init(&sc->sc_T4_callout);	
-#endif
-	
-	/* init higher protocol layers */
-	
-	MPH_Status_Ind(sc->sc_unit, STI_ATTACH, sc->sc_cardtyp);
-
-	return(1);
-}
-
-#else
-
-void
-isic_attach_fritzPci(struct pci_isic_softc *psc, struct pci_attach_args *pa)
-{
-	struct isic_softc *sc = &psc->sc_isic;
-	struct isdn_l3_drvier *drv;
-	u_int v;
-
-	/* setup io mappings */
-	sc->sc_num_mappings = 1;
-	MALLOC_MAPS(sc);
-	sc->sc_maps[0].size = 0;
-	if (pci_mapreg_map(pa, FRITZPCI_PORT0_MEM_MAPOFF, PCI_MAPREG_TYPE_MEM, 0,
-	    &sc->sc_maps[0].t, &sc->sc_maps[0].h, NULL, NULL) != 0
-	   && pci_mapreg_map(pa, FRITZPCI_PORT0_IO_MAPOFF, PCI_MAPREG_TYPE_IO, 0,
-	    &sc->sc_maps[0].t, &sc->sc_maps[0].h, NULL, NULL) != 0) {
-		printf("%s: can't map card\n", sc->sc_dev.dv_xname);
-		return;
-	}
-
-	/* setup access routines */
-
-	sc->clearirq = NULL;
-	sc->readreg = avma1pp_read_reg;
-	sc->writereg = avma1pp_write_reg;
-
-	sc->readfifo = avma1pp_read_fifo;
-	sc->writefifo = avma1pp_write_fifo;
-
-
-	/* setup card type */
-	
-	sc->sc_cardtyp = CARD_TYPEP_AVMA1PCI;
-
-	/* setup IOM bus type */
-	
-	sc->sc_bustyp = BUS_TYPE_IOM2;
-
-	/* this is no IPAC based card */
-	sc->sc_ipac = 0;
-	sc->sc_bfifolen = HSCX_FIFO_LEN;
-
-	/* setup interrupt mapping */
-	avma1pp_map_int(psc, pa);
-	
-	/* init the card */
-	/* the Linux driver does this to clear any pending ISAC interrupts */
-	/* see if it helps any - XXXX */
-	v = 0;
-	v = ISAC_READ(I_STAR);
-#ifdef AVMA1PCI_DEBUG
-	printf("avma1pp_attach: I_STAR %x...", v);
-#endif
-	v = ISAC_READ(I_MODE);
-#ifdef AVMA1PCI_DEBUG
-	printf("avma1pp_attach: I_MODE %x...", v);
-#endif
-	v = ISAC_READ(I_ADF2);
-#ifdef AVMA1PCI_DEBUG
-	printf("avma1pp_attach: I_ADF2 %x...", v);
-#endif
-	v = ISAC_READ(I_ISTA);
-#ifdef AVMA1PCI_DEBUG
-	printf("avma1pp_attach: I_ISTA %x...", v);
-#endif
-	if (v & ISAC_ISTA_EXI)
-	{
-		 v = ISAC_READ(I_EXIR);
-#ifdef AVMA1PCI_DEBUG
-		 printf("avma1pp_attach: I_EXIR %x...", v);
-#endif
-	}
-	v = ISAC_READ(I_CIRR);
-#ifdef AVMA1PCI_DEBUG
-	printf("avma1pp_attach: I_CIRR %x...", v);
-#endif
-	ISAC_WRITE(I_MASK, 0xff);
-	/* the Linux driver does this to clear any pending HSCX interrupts */
-	v = hscx_read_reg_int(0, HSCX_STAT, sc);
-#ifdef AVMA1PCI_DEBUG
-	printf("avma1pp_attach: 0 HSCX_STAT %x...", v);
-#endif
-	v = hscx_read_reg_int(1, HSCX_STAT, sc);
-#ifdef AVMA1PCI_DEBUG
-	printf("avma1pp_attach: 1 HSCX_STAT %x\n", v);
-#endif
-
-	bus_space_write_1(sc->sc_maps[0].t, sc->sc_maps[0].h, STAT0_OFFSET, ASL_RESET_ALL|ASL_TIMERDISABLE);
-	DELAY(SEC_DELAY/100); /* 10 ms */
-	bus_space_write_1(sc->sc_maps[0].t, sc->sc_maps[0].h, STAT0_OFFSET, ASL_TIMERRESET|ASL_ENABLE_INT|ASL_TIMERDISABLE);
-	DELAY(SEC_DELAY/100); /* 10 ms */
-#ifdef AVMA1PCI_DEBUG
-	bus_space_write_1(sc->sc_maps[0].t, sc->sc_maps[0].h, STAT1_OFFSET, ASL1_ENABLE_IOM|sc->sc_irq);
-	DELAY(SEC_DELAY/100); /* 10 ms */
-	v = bus_space_read_1(sc->sc_maps[0].t, sc->sc_maps[0].h, STAT1_OFFSET);
-	printf("after reset: S1 %#x\n", v);
-
-	v = bus_space_read_4(sc->sc_maps[0].t, sc->sc_maps[0].h, 0);
-	printf("isic_attach_avma1pp: v %#x\n", v);
-#endif
-
-	/* setup i4b infrastructure (have to roll our own here) */
-
-	/* sc->sc_isac_version = ((ISAC_READ(I_RBCH)) >> 5) & 0x03; */
-	 printf("%s: ISAC %s (IOM-%c)\n", sc->sc_dev.dv_xname,
-  		"2085 Version A1/A2 or 2086/2186 Version 1.1",
-		 sc->sc_bustyp == BUS_TYPE_IOM1 ? '1' : '2');
-
-	/* init the ISAC */
-	isic_isac_init(sc);
-
-	/* init the "HSCX" */
-	avma1pp_bchannel_setup(sc, HSCX_CH_A, BPROT_NONE, 0);
-	
-	avma1pp_bchannel_setup(sc, HSCX_CH_B, BPROT_NONE, 0);
-
-	/* can't use the normal B-Channel stuff */
-	avma1pp_init_linktab(sc);
-
-	/* set trace level */
-
-	sc->sc_trace = TRACE_OFF;
-
-	sc->sc_state = ISAC_IDLE;
-
-	sc->sc_ibuf = NULL;
-	sc->sc_ib = NULL;
-	sc->sc_ilen = 0;
-
-	sc->sc_obuf = NULL;
-	sc->sc_op = NULL;
-	sc->sc_ol = 0;
-	sc->sc_freeflag = 0;
-
-	sc->sc_obuf2 = NULL;
-	sc->sc_freeflag2 = 0;
-
-	/* init higher protocol layers */
-	drv = isdn_attach_bri(sc->sc_dev.dv_xname, 
-	    "AVM Fritz!PCI", &sc->sc_l2, &ifpci_l3_driver);
-	sc->sc_l3token = drv;
-	sc->sc_l2.driver = &isic_std_driver;
-	sc->sc_l2.l1_token = sc;
-	sc->sc_l2.bri = drv->bri;
-	isdn_layer2_status_ind(&sc->sc_l2, STI_ATTACH, 1);
-}
-
-#endif
 
 /*
  * this is the real interrupt routine
@@ -1115,7 +727,7 @@ avma1pp_hscx_intr(int h_chan, u_int stat, struct isic_softc *sc)
 							isdn_layer2_trace_ind(&sc->sc_l2, &hdr, chan->in_mbuf->m_len, chan->in_mbuf->m_data);
 						}
 
-					  if(!(isic_hscx_silence(chan->in_mbuf->m_data, chan->in_mbuf->m_len)))
+					  if(!(isdn_bchan_silence(chan->in_mbuf->m_data, chan->in_mbuf->m_len)))
 						 activity = ACT_RX;
 				
 					  /* move rx'd data to rx queue */
@@ -1216,7 +828,7 @@ avma1pp_hscx_intr(int h_chan, u_int stat, struct isic_softc *sc)
 				
 				if(chan->bprot == BPROT_NONE)
 				{
-					if(!(isic_hscx_silence(chan->out_mbuf_cur->m_data, chan->out_mbuf_cur->m_len)))
+					if(!(isdn_bchan_silence(chan->out_mbuf_cur->m_data, chan->out_mbuf_cur->m_len)))
 						activity = ACT_TX;
 				}
 				else
@@ -1256,43 +868,22 @@ avma1pp_hscx_int_handler(struct isic_softc *sc)
 static void
 avma1pp_disable(struct isic_softc *sc)
 {
-#ifdef __FreeBSD__
-	outb(sc->sc_port + STAT0_OFFSET, ASL_RESET_ALL|ASL_TIMERDISABLE);
-#else
 	bus_space_write_1(sc->sc_maps[0].t, sc->sc_maps[0].h, STAT0_OFFSET, ASL_RESET_ALL|ASL_TIMERDISABLE);
-#endif
 }
 
-#ifdef __FreeBSD__
-static void
-avma1pp_intr(struct isic_softc *sc)
-{
-#define OURS	/* no return value accumulated */
-#define	ISICINTR(sc)	isicintr_sc(sc)
-#else
 static int
 avma1pp_intr(void * parm)
 {
 	struct isic_softc *sc = parm;
 	int ret = 0;
 #define OURS	ret = 1
-#define	ISICINTR(sc)	isicintr(sc)
-#endif
 	u_char stat;
 
-#ifdef __FreeBSD__
-	stat = inb(sc->sc_port + STAT0_OFFSET);
-#else
 	stat = bus_space_read_1(sc->sc_maps[0].t, sc->sc_maps[0].h, STAT0_OFFSET);
-#endif
 	NDBGL1(L1_H_IRQ, "stat %x", stat);
 	/* was there an interrupt from this card ? */
 	if ((stat & ASL_IRQ_Pending) == ASL_IRQ_Pending)
-#ifdef __FreeBSD__
-		return; /* no */
-#else
 		return 0; /* no */
-#endif
 	/* interrupts are low active */
 	if (!(stat & ASL_IRQ_TIMER))
 	  NDBGL1(L1_H_IRQ, "timer interrupt ???");
@@ -1305,48 +896,21 @@ avma1pp_intr(void * parm)
 	if (!(stat & ASL_IRQ_ISAC))
 	{
 	  NDBGL1(L1_H_IRQ, "ISAC");
-		ISICINTR(sc);
+		for (;;) {			
+			/* get isac irq status */
+			u_int8_t isac_irq_stat = ISAC_READ(I_ISTA);
+			if (!isac_irq_stat)
+				break;
+			if (isic_isac_irq(sc, isac_irq_stat))
+				break;	/* bad IRQ */
+		}
 		OURS;
 	}
-#ifndef __FreeBSD__
 	return ret;
-#endif
 }
 
-#ifdef __FreeBSD__
-void
-avma1pp_map_int(pcici_t config_id, void *pisc, unsigned *net_imask)
-{
-	struct isic_softc *sc = (struct isic_softc *)pisc;
-
-#ifdef AVMA1PCI_DEBUG
-	/* may need the irq later */
-#if __FreeBSD__ < 3
-	/* I'd like to call getirq here, but it is static */
-	sc->sc_irq = PCI_INTERRUPT_LINE_EXTRACT(
-			pci_conf_read (config_id, PCI_INTERRUPT_REG));
-	
-	if (sc->sc_irq == 0 || sc->sc_irq == 0xff)
-		printf ("avma1pp_map_int:int line register not set by bios\n");
-	
-	if (sc->sc_irq >= PCI_MAX_IRQ)
-		printf ("avma1pp_map_int:irq %d out of bounds (must be < %d)\n",
-				sc->sc_irq, PCI_MAX_IRQ);
-#else
-	sc->sc_irq = config_id->intline;
-#endif
-#endif /* AVMA1PCI_DEBUG */
-
-	if(!(pci_map_int(config_id, (void *)avma1pp_intr, sc, net_imask)))
-	{
-		printf("Failed to map interrupt for AVM Fritz!Card PCI\n");
-		/* disable the card */
-		avma1pp_disable(sc);
-	}
-}
-#else
 static void
-avma1pp_map_int(struct pci_isic_softc *psc, struct pci_attach_args *pa)
+avma1pp_map_int(struct ifpci_softc *psc, struct pci_attach_args *pa)
 {
 	struct isic_softc *sc = &psc->sc_isic;
 	pci_chipset_tag_t pc = pa->pa_pc;
@@ -1372,7 +936,6 @@ avma1pp_map_int(struct pci_isic_softc *psc, struct pci_attach_args *pa)
 	}
 	printf("%s: interrupting at %s\n", sc->sc_dev.dv_xname, intrstr);
 }
-#endif
 
 static void
 avma1pp_hscx_init(struct isic_softc *sc, int h_chan, int activate)
@@ -1525,7 +1088,7 @@ avma1pp_bchannel_start(isdn_layer1token t, int h_chan)
 
 	if(chan->bprot == BPROT_NONE)
 	{
-		if(!(isic_hscx_silence(chan->out_mbuf_cur->m_data, chan->out_mbuf_cur->m_len)))
+		if(!(isdn_bchan_silence(chan->out_mbuf_cur->m_data, chan->out_mbuf_cur->m_len)))
 			activity = ACT_TX;
 	}
 	else
@@ -1726,5 +1289,3 @@ isic_hscx_fifo(l1_bchan_state_t *chan, struct isic_softc *sc)
 		HSCX_WRFIFO(chan->channel, scrbuf, len);
 	return(cmd);
 }
-
-#endif /* ISICPCI_AVM_A1 */
