@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.25 2000/01/08 13:32:43 lukem Exp $
+# $NetBSD: mi,v 1.26 2000/02/08 14:01:49 tron Exp $
 ./usr/share/dict/README
 ./usr/share/dict/eign
 ./usr/share/dict/propernames
@@ -277,14 +277,20 @@
 ./usr/share/sendmail/domain/berkeley-only.m4
 ./usr/share/sendmail/domain/generic.m4
 ./usr/share/sendmail/domain/ihack.net.m4
+./usr/share/sendmail/feature/accept_unqualified_senders.m4
+./usr/share/sendmail/feature/accept_unresolvable_domains.m4
+./usr/share/sendmail/feature/access_db.m4
 ./usr/share/sendmail/feature/allmasquerade.m4
 ./usr/share/sendmail/feature/always_add_domain.m4
 ./usr/share/sendmail/feature/bestmx_is_local.m4
 ./usr/share/sendmail/feature/bitdomain.m4
+./usr/share/sendmail/feature/blacklist_recipients.m4
 ./usr/share/sendmail/feature/domaintable.m4
 ./usr/share/sendmail/feature/genericstable.m4
 ./usr/share/sendmail/feature/limited_masquerade.m4
+./usr/share/sendmail/feature/local_lmtp.m4
 ./usr/share/sendmail/feature/local_procmail.m4
+./usr/share/sendmail/feature/loose_relay_check.m4
 ./usr/share/sendmail/feature/mailertable.m4
 ./usr/share/sendmail/feature/masquerade_entire_domain.m4
 ./usr/share/sendmail/feature/masquerade_envelope.m4
@@ -293,7 +299,13 @@
 ./usr/share/sendmail/feature/notsticky.m4
 ./usr/share/sendmail/feature/nouucp.m4
 ./usr/share/sendmail/feature/nullclient.m4
+./usr/share/sendmail/feature/promiscuous_relay.m4
+./usr/share/sendmail/feature/rbl.m4
 ./usr/share/sendmail/feature/redirect.m4
+./usr/share/sendmail/feature/relay_based_on_MX.m4
+./usr/share/sendmail/feature/relay_entire_domain.m4
+./usr/share/sendmail/feature/relay_hosts_only.m4
+./usr/share/sendmail/feature/relay_local_from.m4
 ./usr/share/sendmail/feature/smrsh.m4
 ./usr/share/sendmail/feature/stickyhost.m4
 ./usr/share/sendmail/feature/use_ct_file.m4
@@ -324,7 +336,11 @@
 ./usr/share/sendmail/ostype/aux.m4
 ./usr/share/sendmail/ostype/bsd4.3.m4
 ./usr/share/sendmail/ostype/bsd4.4.m4
+./usr/share/sendmail/ostype/bsdi1.0.m4
 ./usr/share/sendmail/ostype/bsdi2.0.m4
+./usr/share/sendmail/ostype/dgux.m4
+./usr/share/sendmail/ostype/domainos.m4
+./usr/share/sendmail/ostype/dynix3.2.m4
 ./usr/share/sendmail/ostype/gnuhurd.m4
 ./usr/share/sendmail/ostype/hpux10.m4
 ./usr/share/sendmail/ostype/hpux9.m4
@@ -339,7 +355,10 @@
 ./usr/share/sendmail/ostype/osf1.m4
 ./usr/share/sendmail/ostype/powerux.m4
 ./usr/share/sendmail/ostype/ptx2.m4
+./usr/share/sendmail/ostype/qnx.m4
 ./usr/share/sendmail/ostype/riscos4.5.m4
+./usr/share/sendmail/ostype/sco-uw-2.1.m4
+./usr/share/sendmail/ostype/sco3.2.m4
 ./usr/share/sendmail/ostype/sinix.m4
 ./usr/share/sendmail/ostype/solaris2.m4
 ./usr/share/sendmail/ostype/solaris2.ml.m4
@@ -347,6 +366,7 @@
 ./usr/share/sendmail/ostype/sunos4.1.m4
 ./usr/share/sendmail/ostype/svr4.m4
 ./usr/share/sendmail/ostype/ultrix4.m4
+./usr/share/sendmail/ostype/unixware7.m4
 ./usr/share/sendmail/ostype/unknown.m4
 ./usr/share/sendmail/ostype/uxpds.m4
 ./usr/share/sendmail/sh/makeinfo.sh
