@@ -1,4 +1,4 @@
-/*	$NetBSD: if_de.c,v 1.36 1997/03/19 02:37:36 thorpej Exp $	*/
+/*	$NetBSD: if_de.c,v 1.37 1997/03/23 09:37:28 veego Exp $	*/
 
 /*-
  * Copyright (c) 1994-1997 Matt Thomas (matt@3am-software.com)
@@ -23,7 +23,7 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
- * Id: if_de.c,v 1.77 1997/03/18 22:16:50 thomas Exp
+ * Id: if_de.c,v 1.80 1997/03/22 20:48:40 thomas Exp
  *
  */
 
@@ -255,6 +255,7 @@ tulip_txprobe(
      * send it!
      */
     sc->tulip_cmdmode |= TULIP_CMD_TXRUN;
+    sc->tulip_flags |= TULIP_TXPROBE_ACTIVE;
     TULIP_CSR_WRITE(sc, csr_command, sc->tulip_cmdmode);
     IF_PREPEND(&sc->tulip_if.if_snd, m);
     tulip_ifstart(&sc->tulip_if);
@@ -797,7 +798,6 @@ tulip_media_poll(
 	return;
     }
 
-    tulip_timeout(sc);
     /*
      * switch to another media if we tried this one enough.
      */
@@ -816,9 +816,15 @@ tulip_media_poll(
 	do {
 	    sc->tulip_probe_media -= 1;
 	    if (sc->tulip_probe_media == TULIP_MEDIA_UNKNOWN) {
-		if (++sc->tulip_probe_passes == 3)
+		if (++sc->tulip_probe_passes == 3) {
 		    printf(TULIP_PRINTF_FMT ": autosense failed: cable problem?\n",
 			   TULIP_PRINTF_ARGS);
+		    if ((sc->tulip_if.if_flags & IFF_UP) == 0) {
+			sc->tulip_if.if_flags &= ~IFF_RUNNING;
+			sc->tulip_probe_state = TULIP_PROBE_INACTIVE;
+			return;
+		    }
+		}
 		sc->tulip_flags ^= TULIP_TRYNWAY;	/* XXX */
 		sc->tulip_probe_mediamask = 0;
 		sc->tulip_probe_media = TULIP_MEDIA_MAX - 1;
@@ -839,6 +845,7 @@ tulip_media_poll(
 	tulip_media_set(sc, sc->tulip_probe_media);
 	sc->tulip_flags &= ~TULIP_TXPROBE_ACTIVE;
     }
+    tulip_timeout(sc);
 
     /*
      * If this is hanging off a phy, we know are doing NWAY and we have
@@ -874,7 +881,6 @@ tulip_media_poll(
      * Try to send a packet.
      */
     tulip_txprobe(sc);
-    sc->tulip_flags |= TULIP_TXPROBE_ACTIVE;
 }
 
 static void
@@ -1135,7 +1141,6 @@ tulip_21041_media_poll(
 		&& ((sc->tulip_flags & TULIP_WANTRXACT) == 0
 		    || (sia_status & TULIP_SIASTS_RXACTIVITY))) {
 	    sc->tulip_probe_timeout = TULIP_21041_PROBE_AUIBNC_TIMEOUT;
-	    sc->tulip_flags |= TULIP_TXPROBE_ACTIVE;
 	    tulip_txprobe(sc);
 	    tulip_timeout(sc);
 	    return;
@@ -1523,7 +1528,7 @@ tulip_null_media_poll(
 #endif
 }
 
-static void __inline__
+__inline__ static void
 tulip_21140_mediainit(
     tulip_softc_t * const sc,
     tulip_media_info_t * const mip,
@@ -2820,7 +2825,11 @@ tulip_ifmedia_status(
     if (sc->tulip_media == TULIP_MEDIA_UNKNOWN)
 	return;
 
-    req->ifm_status = tulip_media_to_ifmedia[sc->tulip_media];
+    req->ifm_status = IFM_AVALID;
+    if (sc->tulip_flags & TULIP_LINKUP)
+	req->ifm_status |= IFM_ACTIVE;
+
+    req->ifm_active = tulip_media_to_ifmedia[sc->tulip_media];
 }
 
 static void
