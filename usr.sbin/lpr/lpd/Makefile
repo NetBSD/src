@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.16 2002/09/18 03:54:33 lukem Exp $
+#	$NetBSD: Makefile,v 1.17 2003/10/19 05:51:44 lukem Exp $
 #	@(#)Makefile	8.1 (Berkeley) 6/6/93
 
 .include <bsd.own.mk>
@@ -11,11 +11,7 @@ CPPFLAGS+=-DLIBWRAP
 LDADD+=	-lwrap
 DPADD+=	${LIBWRAP}
 
-# the ugly hack is to correctly include lib/libc/include/pathnames.h,
-# not usr.sbin/lpr/common_source/pathnames.h
-rcmd.o: rcmd.c
-	${CC} ${CFLAGS} -I${NETBSDSRCDIR}/lib/libc/include -DINET6 \
-	    ${CPPFLAGS} -c ${.IMPSRC}
+CPPFLAGS.rcmd.c=	-DINET6
 
 .PATH:	${NETBSDSRCDIR}/lib/libc/net
 
