@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.135 2003/01/31 19:05:57 martin Exp $	*/
+/*	$NetBSD: pmap.c,v 1.136 2003/03/11 21:28:23 martin Exp $	*/
 #undef	NO_VCACHE /* Don't forget the locked TLB in dostart */
 #define	HWREF
 /*
@@ -2540,6 +2540,7 @@ boolean_t
 pmap_clear_modify(pg)
 	struct vm_page *pg;
 {
+	paddr_t pa = VM_PAGE_TO_PHYS(pg);
 	pv_entry_t pv;
 	int i, changed = 0;
 #ifdef DEBUG
@@ -2601,6 +2602,15 @@ pmap_clear_modify(pg)
 			pv->pv_va &= ~(PV_MOD);
 			simple_unlock(&pmap->pm_lock);
 		}
+
+	/*
+	 * XXX
+	 * This should not be necessary - but empirically it is.
+	 * We need to find the reason this makes a difference and fix
+	 * the root of the problem - then remove this band aid.
+	 */
+	dcache_flush_page(pa);
+
 	pv_check();
 #ifdef DEBUG
 	if (pmap_is_modified(pg)) {
