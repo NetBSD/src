@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.166 2001/12/28 02:13:14 shin Exp $	*/
+/*	$NetBSD: trap.c,v 1.167 2002/01/12 01:40:37 enami Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -44,7 +44,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.166 2001/12/28 02:13:14 shin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.167 2002/01/12 01:40:37 enami Exp $");
 
 #include "opt_cputype.h"	/* which mips CPU levels do we support? */
 #include "opt_ktrace.h"
@@ -749,7 +749,7 @@ mips_singlestep(p)
 	pc = (vaddr_t)f->f_regs[PC];
 	if (fuiword((void *)pc) != 0) /* not a NOP instruction */
 		va = MachEmulateBranch(f, pc,
-			p->p_addr->u_pcb.pcb_fpregs.r_regs[32], 1);
+		    PCB_FSR(&p->p_addr->u_pcb), 1);
 	else
 		va = pc + sizeof(int);
 	p->p_md.md_ss_addr = va;
