@@ -112,7 +112,9 @@ static const char *text[ISC_R_NRESULTS] = {
 	"destination address required",		/* 64 */
 	"cross-zone update",			/* 65 */
 	"no TSIG signature",			/* 66 */
-	"not equal"				/* 67 */
+	"not equal",				/* 67 */
+	"connection reset by peer",		/* 68 */
+	"unknown attribute"			/* 69 */
 };
 
 const char *isc_result_totext (isc_result_t result)

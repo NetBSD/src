@@ -15,7 +15,7 @@
 #include "minires/minires.h"
 #include "arpa/nameser.h"
 
-#include <isc/dst.h>
+#include <isc-dhcp/dst.h>
 
 /* res_nsendsigned */
 isc_result_t
@@ -59,7 +59,7 @@ res_nsendsigned(res_state statp,
 	if (dstkey == NULL) {
 		free(nstatp);
 		free(newmsg);
-		return ISC_R_INVALIDARG;
+		return ISC_R_BADKEY;
 	}
 
 	nstatp->nscount = 1;

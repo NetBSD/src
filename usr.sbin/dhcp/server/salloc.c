@@ -43,7 +43,7 @@
 
 #ifndef lint
 static char copyright[] =
-"$Id: salloc.c,v 1.1.1.1 2000/06/10 18:05:37 mellon Exp $ Copyright (c) 1996-2000 The Internet Software Consortium.  All rights reserved.\n";
+"$Id: salloc.c,v 1.1.1.2 2001/06/18 18:13:26 drochner Exp $ Copyright (c) 1996-2000 The Internet Software Consortium.  All rights reserved.\n";
 #endif /* not lint */
 
 #include "dhcpd.h"
@@ -61,7 +61,36 @@ struct lease *new_leases (n, file, line)
 OMAPI_OBJECT_ALLOC (lease, struct lease, dhcp_type_lease)
 OMAPI_OBJECT_ALLOC (class, struct class, dhcp_type_class)
 OMAPI_OBJECT_ALLOC (pool, struct pool, dhcp_type_pool)
+
+#if !defined (NO_HOST_FREES)	/* Scary debugging mode - don't enable! */
 OMAPI_OBJECT_ALLOC (host, struct host_decl, dhcp_type_host)
+#else
+isc_result_t host_allocate (struct host_decl **p, const char *file, int line)
+{
+	return omapi_object_allocate ((omapi_object_t **)p,
+				      dhcp_type_host, 0, file, line);
+}
+
+isc_result_t host_reference (struct host_decl **pptr, struct host_decl *ptr,
+			       const char *file, int line)
+{
+	return omapi_object_reference ((omapi_object_t **)pptr,
+				       (omapi_object_t *)ptr, file, line);
+}
+
+isc_result_t host_dereference (struct host_decl **ptr,
+			       const char *file, int line)
+{
+	if ((*ptr) -> refcnt == 1) {
+		log_error ("host dereferenced with refcnt == 1.");
+#if defined (DEBUG_RC_HISTORY)
+		dump_rc_history ();
+#endif
+		abort ();
+	}
+	return omapi_object_dereference ((omapi_object_t **)ptr, file, line);
+}
+#endif
 
 struct lease_state *free_lease_states;
 
