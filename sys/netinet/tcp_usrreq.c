@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_usrreq.c,v 1.100 2005/03/11 06:16:16 atatat Exp $	*/
+/*	$NetBSD: tcp_usrreq.c,v 1.101 2005/03/30 11:09:58 yamt Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -100,7 +100,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tcp_usrreq.c,v 1.100 2005/03/11 06:16:16 atatat Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tcp_usrreq.c,v 1.101 2005/03/30 11:09:58 yamt Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -1447,7 +1447,7 @@ sysctl_net_inet_tcp_setup2(struct sysctllog **clog, int pf, const char *pfname,
 	sysctl_createv(clog, 0, NULL, NULL,
 		       CTLFLAG_PERMANENT|CTLFLAG_READWRITE,
 		       CTLTYPE_INT, "sack",
-		       SYSCTL_DESCR("Enable RFC2018 Selection ACKnowledgement"),
+		       SYSCTL_DESCR("Enable RFC2018 Selective ACKnowledgement"),
 		       NULL, 0, &tcp_do_sack, 0,
 		       CTL_NET, pf, IPPROTO_TCP, TCPCTL_SACK, CTL_EOL);
 	sysctl_createv(clog, 0, NULL, NULL,
