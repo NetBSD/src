@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.4 2002/09/27 02:24:28 thorpej Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.5 2002/11/23 13:23:41 fvdl Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -267,7 +267,7 @@ match_harddisk(dv, bid)
 	 * lookup major number for disk block device
 	 */
 	bmajor = devsw_name2blk(dv->dv_xname, NULL, 0);
-	if (bmajor == NULL)
+	if (bmajor == -1)
 		return(0); /* XXX panic() ??? */
 
 	/*
