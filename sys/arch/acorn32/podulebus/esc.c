@@ -1,4 +1,4 @@
-/*	$NetBSD: esc.c,v 1.4 2002/01/25 19:19:23 thorpej Exp $	*/
+/*	$NetBSD: esc.c,v 1.5 2002/02/18 19:57:09 bjh21 Exp $	*/
 
 /*
  * Copyright (c) 1995 Scott Stevens
@@ -54,6 +54,9 @@
  */
 
 #include <sys/param.h>
+
+__RCSID("$NetBSD: esc.c,v 1.5 2002/02/18 19:57:09 bjh21 Exp $");
+
 #include <sys/systm.h>
 #include <sys/device.h>
 #include <sys/buf.h>
@@ -91,6 +94,20 @@ int  escselect	    __P((struct esc_softc *dev, struct esc_pending *pendp,
 			 unsigned char *buf, int len, int mode));
 void escicmd	    __P((struct esc_softc *dev, struct esc_pending *pendp));
 int escgo         __P((struct esc_softc *dev, struct esc_pending *pendp));
+
+void esc_init_nexus(struct esc_softc *, struct nexus *);
+void esc_save_pointers(struct esc_softc *);
+void esc_restore_pointers(struct esc_softc *);
+void esc_ixfer(struct esc_softc *);
+void esc_build_sdtrm(struct esc_softc *, int, int);
+int esc_select_unit(struct esc_softc *,	short);
+struct nexus *esc_arbitate_target(struct esc_softc *, int);
+void esc_setup_nexus(struct esc_softc *, struct nexus *, struct esc_pending *,
+    unsigned char *, int, unsigned char *, int, int);
+int esc_pretests(struct esc_softc *, esc_regmap_p);
+int esc_midaction(struct esc_softc *, esc_regmap_p, struct nexus *);
+int esc_postaction(struct esc_softc *, esc_regmap_p, struct nexus *);
+
 
 /*
  * Initialize these to make 'em patchable. Defaults to enable sync and discon.
@@ -1303,7 +1320,8 @@ esc_postaction(dev, rp, nexus)
 		  else if (dev->sc_dma_blk_flg == ESC_CHAIN_BUMP)
 			len = dev->sc_dma_blk_len;
 		  else
-			len = dev->sc_need_bump(dev, dev->sc_dma_blk_ptr,
+			len = dev->sc_need_bump(dev,
+						(void *)dev->sc_dma_blk_ptr,
 						dev->sc_dma_blk_len);
 
 		  /*
@@ -1322,7 +1340,8 @@ esc_postaction(dev, rp, nexus)
 		  }
 
 		  /* Load DMA with adress and length of transfer. */
-		  dev->sc_setup_dma(dev, dev->sc_dma_buf, dev->sc_dma_len,
+		  dev->sc_setup_dma(dev, (void *)dev->sc_dma_buf,
+		  		    dev->sc_dma_len,
 				    ((nexus->state == ESC_NS_DATA_OUT) ?
 				     ESC_DMA_WRITE : ESC_DMA_READ));
 
