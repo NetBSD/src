@@ -33,7 +33,7 @@
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)set.c	5.3 (Berkeley) 12/1/92";*/
-static char rcsid[] = "$Id: set.c,v 1.4 1994/02/27 03:41:30 cgd Exp $";
+static char rcsid[] = "$Id: set.c,v 1.5 1994/03/13 14:29:34 cgd Exp $";
 #endif /* not lint */
 
 #include <termios.h>
@@ -123,7 +123,7 @@ reset_mode()
 #endif
 			 );
 
-	mode.c_cflag &= ~(CSIZE | CSTOPB | PARENB | PARODD | CLOCAL);
+	mode.c_cflag &= ~(CSIZE | CSTOPB | PARENB | PARODD);
 	mode.c_cflag |= (CS8 | CREAD);
 	mode.c_lflag &= ~(ECHONL | NOFLSH | TOSTOP
 #ifdef ECHOPTR
