@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.216 2001/01/24 09:38:26 garbled Exp $
+# $NetBSD: mi,v 1.217 2001/01/25 09:49:53 wiz Exp $
 .
 ./altroot		base-sys-root
 ./bin			base-sys-root
@@ -452,6 +452,7 @@
 ./usr/include/netatalk		base-c-usr
 ./usr/include/netccitt		base-c-usr
 ./usr/include/netinet		base-c-usr
+./usr/include/netisdn		base-c-usr
 ./usr/include/netiso		base-c-usr
 ./usr/include/netnatm		base-c-usr
 ./usr/include/netns		base-c-usr
@@ -872,12 +873,14 @@
 ./usr/share/examples/emul/ultrix/etc	base-sys-examples
 ./usr/share/examples/ftpd		base-netutil-examples
 ./usr/share/examples/ipf		base-netutil-examples
+./usr/share/examples/isdn		base-isdn-examples
 ./usr/share/examples/kerberos		base-krb5-examples
 ./usr/share/examples/mount_portal	base-miscfs-examples
 ./usr/share/examples/named		base-bind-examples
 ./usr/share/examples/openssl		base-crypto-examples
 ./usr/share/examples/postfix		base-postfix-examples
 ./usr/share/examples/racoon		base-netutil-examples
+./usr/share/examples/rtadvd		base-router-examples
 ./usr/share/examples/supfiles		base-sup-examples
 ./usr/share/examples/syslogd		base-sysutil-examples
 ./usr/share/games			base-games-share
@@ -950,6 +953,8 @@
 ./usr/share/locale/en_US.ISO8859-1/LC_CTYPE	base-locale-en
 ./usr/share/locale/en_US.ISO8859-15		base-locale-en
 ./usr/share/locale/en_US.ISO8859-15/LC_CTYPE	base-locale-en
+./usr/share/locale/en_US.UTF-2			base-locale-en
+./usr/share/locale/en_US.UTF-2/LC_CTYPE		base-locale-en
 ./usr/share/locale/en_US.UTF-8			base-locale-en
 ./usr/share/locale/en_US.UTF-8/LC_CTYPE		base-locale-en
 ./usr/share/locale/es				base-locale-ex
@@ -1075,6 +1080,7 @@
 ./usr/share/locale/uk_UA.KOI8-U/LC_CTYPE	base-locale-uk
 ./usr/share/locale/zh_CN.eucCN			base-locale-zh
 ./usr/share/locale/zh_CN.eucCN/LC_CTYPE		base-locale-zh
+./usr/share/locale/zh_TW.BIG5			base-locale-zh
 ./usr/share/locale/zh_TW.Big5			base-locale-zh
 ./usr/share/locale/zh_TW.Big5/LC_CTYPE		base-locale-zh
 ./usr/share/locale/zh_TW.eucTW			base-locale-zh
@@ -1126,6 +1132,7 @@
 ./usr/share/man/cat8/next68k		base-man-share
 ./usr/share/man/cat8/pc532		base-man-share
 ./usr/share/man/cat8/pmax		base-man-share
+./usr/share/man/cat8/prep		base-man-share
 ./usr/share/man/cat8/sparc		base-man-share
 ./usr/share/man/cat8/sparc64		base-man-share
 ./usr/share/man/cat8/sun3		base-man-share
@@ -1192,6 +1199,7 @@
 ./usr/share/man/man8/next68k		base-man-share
 ./usr/share/man/man8/pc532		base-man-share
 ./usr/share/man/man8/pmax		base-man-share
+./usr/share/man/man8/prep		base-man-share
 ./usr/share/man/man8/sparc		base-man-share
 ./usr/share/man/man8/sparc64		base-man-share
 ./usr/share/man/man8/sun3		base-man-share

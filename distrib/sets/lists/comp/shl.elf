@@ -1,4 +1,4 @@
-# $NetBSD: shl.elf,v 1.18 2001/01/04 21:01:26 garbled Exp $
+# $NetBSD: shl.elf,v 1.19 2001/01/25 09:49:55 wiz Exp $
 ./usr/lib/crtbegin.o		comp-c-lib
 ./usr/lib/crtbeginS.o		comp-c-lib
 ./usr/lib/crtend.o		comp-c-lib
@@ -14,6 +14,7 @@
 ./usr/lib/libcurses.so		comp-c-lib
 ./usr/lib/libdes.so		comp-c-lib
 ./usr/lib/libedit.so		comp-c-lib
+./usr/lib/libform.so		comp-c-lib
 ./usr/lib/libg2c.so		comp-fortran-lib
 ./usr/lib/libgnumalloc.so	comp-c-lib
 ./usr/lib/libgssapi.so		comp-c-lib
