@@ -16,6 +16,7 @@
 ./usr/include/mac68k/float.h
 ./usr/include/mac68k/frame.h
 ./usr/include/mac68k/grfioctl.h
+./usr/include/mac68k/ieee.h
 ./usr/include/mac68k/ieeefp.h
 ./usr/include/mac68k/intr.h
 ./usr/include/mac68k/iteioctl.h
