@@ -1,4 +1,4 @@
-/*	$NetBSD: if.c,v 1.35 1996/05/07 05:26:04 thorpej Exp $	*/
+/*	$NetBSD: if.c,v 1.35.4.1 1996/12/11 03:43:49 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1980, 1986, 1993
@@ -458,6 +458,11 @@ ifioctl(so, cmd, data, p)
 		ifr->ifr_metric = ifp->if_metric;
 		break;
 
+	case SIOCGIFMTU:
+		if (ifp->if_ioctl == 0)
+			return (EOPNOTSUPP);
+		return ((*ifp->if_ioctl)(ifp, cmd, data));
+
 	case SIOCSIFFLAGS:
 		if ((error = suser(p->p_ucred, &p->p_acflag)) != 0)
 			return (error);
@@ -483,6 +488,7 @@ ifioctl(so, cmd, data, p)
 		ifp->if_metric = ifr->ifr_metric;
 		break;
 
+	case SIOCSIFMTU:
 	case SIOCADDMULTI:
 	case SIOCDELMULTI:
 		if ((error = suser(p->p_ucred, &p->p_acflag)) != 0)
@@ -496,8 +502,8 @@ ifioctl(so, cmd, data, p)
 			return (EOPNOTSUPP);
 #if !defined(COMPAT_43) && !defined(COMPAT_LINUX) && !defined(COMPAT_SVR4)
 		return ((*so->so_proto->pr_usrreq)(so, PRU_CONTROL,
-			(struct mbuf *) cmd, (struct mbuf *) data,
-			(struct mbuf *) ifp));
+		    (struct mbuf *)cmd, (struct mbuf *)data,
+		    (struct mbuf *)ifp, p));
 #else
 	    {
 		int ocmd = cmd;
@@ -536,9 +542,8 @@ ifioctl(so, cmd, data, p)
 			cmd = SIOCGIFNETMASK;
 		}
 		error = ((*so->so_proto->pr_usrreq)(so, PRU_CONTROL,
-						    (struct mbuf *) cmd,
-						    (struct mbuf *) data,
-						    (struct mbuf *) ifp));
+		    (struct mbuf *)cmd, (struct mbuf *)data,
+		    (struct mbuf *)ifp, p));
 		switch (ocmd) {
 
 		case OSIOCGIFADDR:
