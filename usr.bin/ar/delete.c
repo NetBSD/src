@@ -1,6 +1,6 @@
 /*-
- * Copyright (c) 1990 The Regents of the University of California.
- * All rights reserved.
+ * Copyright (c) 1990, 1993, 1994
+ *	The Regents of the University of California.  All rights reserved.
  *
  * This code is derived from software contributed to Berkeley by
  * Hugh Smith at The University of Guelph.
@@ -35,30 +35,29 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)delete.c	5.6 (Berkeley) 3/12/91";
+static char sccsid[] = "@(#)delete.c	8.3 (Berkeley) 4/2/94";
 #endif /* not lint */
 
 #include <sys/param.h>
 #include <sys/stat.h>
-#include <fcntl.h>
-#include <dirent.h>
-#include <unistd.h>
-#include <stdio.h>
+
 #include <ar.h>
+#include <dirent.h>
+#include <fcntl.h>
+#include <stdio.h>
+#include <unistd.h>
+
 #include "archive.h"
 #include "extern.h"
 #include "pathnames.h"
-
-extern CHDR chdr;			/* converted header */
-extern char *archive;			/* archive name */
-extern char *tname;                     /* temporary file "name" */
 
 /*-
  * delete --
  *	Deletes named members from the archive.
  */
+int
 delete(argv)
-	register char **argv;
+	char **argv;
 {
 	CF cf;
 	off_t size;
@@ -91,7 +90,7 @@ delete(argv)
 
 	if (*argv) {
 		orphans(argv);
-		return(1);
+		return (1);
 	}
-	return(0);
+	return (0);
 }	
