@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.subdir.mk,v 1.35 2000/06/06 05:33:58 mycroft Exp $
+#	$NetBSD: bsd.subdir.mk,v 1.36 2000/06/06 05:39:26 mycroft Exp $
 #	@(#)bsd.subdir.mk	8.1 (Berkeley) 6/8/93
 
 .if !target(__initialized__)
@@ -25,7 +25,7 @@ _M=
 .endif
 
 __recurse: .USE
-	@targ=${.TARGET:C/-.*//};dir=${.TARGET:C/.*-//};		\
+	@targ=${.TARGET:C/-.*$//};dir=${.TARGET:C/^[^-]*-//};		\
 	case "$$dir" in /*)						\
 		echo "$$targ ===> $$dir";				\
 		cd "$$dir";						\
