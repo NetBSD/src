@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.661 2004/02/23 17:07:17 reinoud Exp $
+# $NetBSD: mi,v 1.662 2004/02/23 17:28:30 perry Exp $
 ./etc/mtree/set.man				man-sys-root
 ./usr/share/info/am-utils.info			man-amd-info		info
 ./usr/share/info/as.info			man-computil-info	bfd,info
@@ -1482,6 +1482,8 @@
 ./usr/share/man/cat8/acorn26/boot26.0		man-sys-catman		.cat
 ./usr/share/man/cat8/acorn26/makedev.0		man-obsolete		obsolete
 ./usr/share/man/cat8/acorn32/MAKEDEV.0		man-obsolete		obsolete
+./usr/share/man/cat8/acorn32/boot.0		man-sys-catman		.cat
+./usr/share/man/cat8/acorn32/boot32.0		man-sys-catman		.cat
 ./usr/share/man/cat8/acorn32/makedev.0		man-obsolete		obsolete
 ./usr/share/man/cat8/adduser.0			man-sysutil-catman	.cat
 ./usr/share/man/cat8/afterboot.0		man-sysutil-catman	.cat
