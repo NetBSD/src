@@ -1,4 +1,4 @@
-/*	$NetBSD: tms320av110var.h,v 1.3 1999/02/16 23:34:13 is Exp $	*/
+/*	$NetBSD: tms320av110var.h,v 1.4 2003/01/06 13:05:12 wiz Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -62,7 +62,7 @@ struct tav_softc {
 	void 		*sc_intrarg;
 	int		sc_bsize;
 
-	/* below audio interupt acknowledge function. Ignored if NULL */
+	/* below audio interrupt acknowledge function. Ignored if NULL */
 	void 		(*sc_intack) __P((struct tav_softc *));
 
 	/* initialization from below */

@@ -1,4 +1,4 @@
-/*	$NetBSD: amiga_init.c,v 1.81 2002/12/10 17:14:04 thorpej Exp $	*/
+/*	$NetBSD: amiga_init.c,v 1.82 2003/01/06 13:04:56 wiz Exp $	*/
 
 /*
  * Copyright (c) 1994 Michael L. Hitch
@@ -35,7 +35,7 @@
 #include "opt_p5ppc68kboard.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: amiga_init.c,v 1.81 2002/12/10 17:14:04 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: amiga_init.c,v 1.82 2003/01/06 13:04:56 wiz Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -945,7 +945,7 @@ start_c(id, fphystart, fphysize, cphysize, esym_addr, flags, inh_sync,
 	*(volatile int *)proc0paddr = i;
 
 	/*
-	 * disable all interupts but enable allow them to be enabled
+	 * disable all interrupts but enable allow them to be enabled
 	 * by specific driver code (global int enable bit)
 	 */
 #ifdef DRACO

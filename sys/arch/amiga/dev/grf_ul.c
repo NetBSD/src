@@ -1,4 +1,4 @@
-/*	$NetBSD: grf_ul.c,v 1.35 2003/01/01 00:28:58 thorpej Exp $ */
+/*	$NetBSD: grf_ul.c,v 1.36 2003/01/06 13:04:58 wiz Exp $ */
 #define UL_DEBUG
 
 /*-
@@ -40,7 +40,7 @@
 #include "opt_amigacons.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: grf_ul.c,v 1.35 2003/01/01 00:28:58 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: grf_ul.c,v 1.36 2003/01/06 13:04:58 wiz Exp $");
 
 #include "grful.h"
 #if NGRFUL > 0
@@ -968,7 +968,7 @@ gsp_write(gsp, ptr, size)
 	while (next == new_put) {
 		/*
 		 * we should use an intr. here. unfortunately, we already
-		 * are called from an interupt and can't use tsleep.
+		 * are called from an interrupt and can't use tsleep.
 		 * so we do busy waiting, at least for the moment.
 		 */
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: dcmreg.h,v 1.5 1996/02/24 00:55:05 thorpej Exp $	*/
+/*	$NetBSD: dcmreg.h,v 1.6 2003/01/06 13:05:00 wiz Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -143,10 +143,10 @@ struct	dcmpreg {
 #define	DCMRS		0x80	/* software reset, write */
 
 /* interrupt control */
-#define	DCMIPL(x)	((((x) >> 4) & 3) + 3)	/* interupt level, read */
-#define	IC_IR		0x40	/* interupt request, read */
-#define	IC_IE		0x80	/* interupt enable, write */
-#define	IC_ID		0x00	/* interupt disable, write */
+#define	DCMIPL(x)	((((x) >> 4) & 3) + 3)	/* interrupt level, read */
+#define	IC_IR		0x40	/* interrupt request, read */
+#define	IC_IE		0x80	/* interrupt enable, write */
+#define	IC_ID		0x00	/* interrupt disable, write */
 
 
 /* Semaphore control */

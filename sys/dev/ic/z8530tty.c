@@ -1,4 +1,4 @@
-/*	$NetBSD: z8530tty.c,v 1.86 2002/11/09 19:22:54 thorpej Exp $	*/
+/*	$NetBSD: z8530tty.c,v 1.87 2003/01/06 13:05:13 wiz Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994, 1995, 1996, 1997, 1998, 1999
@@ -99,7 +99,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: z8530tty.c,v 1.86 2002/11/09 19:22:54 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: z8530tty.c,v 1.87 2003/01/06 13:05:13 wiz Exp $");
 
 #include "opt_kgdb.h"
 
@@ -1197,7 +1197,7 @@ zsparam(tp, t)
 }
 
 /*
- * Compute interupt enable bits and set in the pending bits. Called both
+ * Compute interrupt enable bits and set in the pending bits. Called both
  * in zsparam() and when PPS (pulse per second timing) state changes.
  * Must be called at splzs().
  */

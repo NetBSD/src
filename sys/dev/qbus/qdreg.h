@@ -1,4 +1,4 @@
-/*	$NetBSD: qdreg.h,v 1.4 2002/09/29 23:23:59 wiz Exp $	*/
+/*	$NetBSD: qdreg.h,v 1.5 2003/01/06 13:05:15 wiz Exp $	*/
 /*-
  * Copyright (c) 1982, 1986 The Regents of the University of California.
  * All rights reserved.
@@ -320,7 +320,7 @@
 #define START_BREAK	0x60
 #define STOP_BREAK	0x70
 
-	/* interupt bit definitions */
+	/* interrupt bit definitions */
 
 #define EI_XMT_A	0x01
 #define EI_RCV_A	0x02

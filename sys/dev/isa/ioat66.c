@@ -1,4 +1,4 @@
-/*	$NetBSD: ioat66.c,v 1.6 2003/01/01 00:10:20 thorpej Exp $	*/
+/*	$NetBSD: ioat66.c,v 1.7 2003/01/06 13:05:14 wiz Exp $	*/
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All rights reserved.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ioat66.c,v 1.6 2003/01/01 00:10:20 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ioat66.c,v 1.7 2003/01/06 13:05:14 wiz Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -173,7 +173,7 @@ ioat66attach(parent, self, aux)
 	}
 
 	if(bus_space_map(iot, IOAT66SHARED, 1, 0, &sc->sc_intmasq)) {
-	  printf("%s: can't map shared interupt mask\n", 
+	  printf("%s: can't map shared interrupt mask\n", 
 	 	 sc->sc_dev.dv_xname);
 	  return;
 	}

@@ -1,4 +1,4 @@
-/*	$NetBSD: i82595reg.h,v 1.5 2001/03/16 13:43:31 is Exp $	*/
+/*	$NetBSD: i82595reg.h,v 1.6 2003/01/06 13:05:10 wiz Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -128,7 +128,7 @@
 
 /* reg1, apparently */
 
-#define		XMT_CHAIN_INT	0x20	/* interupt at end of xmt chain */
+#define		XMT_CHAIN_INT	0x20	/* interrupt at end of xmt chain */
 #define		XMT_CHAIN_ERRSTOP 0x40	/* int at end of chain even if err */
 #define		RCV_DISCARD_BAD	0x80	/* Throw bad frames away and continue */
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: pcc.c,v 1.23 2003/01/01 01:51:24 thorpej Exp $	*/
+/*	$NetBSD: pcc.c,v 1.24 2003/01/06 13:05:04 wiz Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -319,7 +319,7 @@ pccsoftintrassert(void)
 }
 
 /*
- * Handle PCC soft interupt #1
+ * Handle PCC soft interrupt #1
  */
 static int
 pccsoftintr(arg)
