@@ -1,4 +1,4 @@
-/*	$NetBSD: subs.c,v 1.8 1998/09/13 15:19:35 hubertf Exp $	*/
+/*	$NetBSD: subs.c,v 1.9 1998/09/15 13:43:35 frueauf Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)subs.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: subs.c,v 1.8 1998/09/13 15:19:35 hubertf Exp $");
+__RCSID("$NetBSD: subs.c,v 1.9 1998/09/15 13:43:35 frueauf Exp $");
 #endif
 #endif /* not lint */
 
@@ -324,7 +324,7 @@ getarg(arg)
 	 * the game is being recovered */
 
 	s = *arg;
-	while (s[0][0] == '-') {
+	while (*s && s[0][0] == '-') {
 		switch (s[0][1]) {
 
 			/* don't ask if rules or instructions needed */
