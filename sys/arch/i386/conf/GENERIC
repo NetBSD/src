@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.568 2003/08/22 05:14:00 itojun Exp $
+# $NetBSD: GENERIC,v 1.569 2003/08/26 21:12:48 jdolecek Exp $
 #
 # GENERIC machine description file
 # 
@@ -22,7 +22,7 @@ include 	"arch/i386/conf/std.i386"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.568 $"
+#ident 		"GENERIC-$Revision: 1.569 $"
 
 maxusers	32		# estimated number of users
 
@@ -688,6 +688,8 @@ pcn*	at pci? dev ? function ?	# AMD PCnet-PCI Ethernet
 rtk*	at pci? dev ? function ?	# Realtek 8129/8139
 sf*	at pci? dev ? function ?	# Adaptec AIC-6915 Ethernet
 sip*	at pci? dev ? function ?	# SiS 900/DP83815 Ethernet
+#skc*	at pci? dev ? function ?	# SysKonnect SK9821 Gigabit Ethernet
+#sk*	at skc?				# SysKonnect SK9821 Gigabit Ethernet
 ste*	at pci? dev ? function ?	# Sundance ST-201 Ethernet
 stge*	at pci? dev ? function ?	# Sundance/Tamarack TC9021 Gigabit
 ti*	at pci? dev ? function ?	# Alteon ACEnic gigabit Ethernet
