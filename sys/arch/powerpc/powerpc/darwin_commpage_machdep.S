@@ -1,11 +1,11 @@
-/*	$NetBSD: darwin_commpage_machdep.S,v 1.3 2004/07/08 07:36:25 manu Exp $ */
+/*	$NetBSD: darwin_commpage_machdep.S,v 1.4 2004/07/08 13:24:39 manu Exp $ */
 
 /*
  * Copyright (c) 2004 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
- * by Emmanuel Dreyfus and Peter Grehan.
+ * by Emmanuel Dreyfus, Peter Grehan, and Wolfgang Solfrank.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -41,6 +41,9 @@
 #include <compat/mach/mach_syscall.h>
 #include <compat/darwin/darwin_syscall.h>
 
+#include <compat/mach/arch/powerpc/fasttraps/mach_fasttraps_syscall.h>
+#define	MACH_FASTTRAPS		0x00007ff0	/* should be in xxx.h XXX */
+
 /*
  *	void bzero(void *src, size_t len); 
  */
@@ -49,46 +52,42 @@ _C_LABEL(darwin_commpage_bzero):
 	cmplwi  r4,0
 	beqlr
 	li      r0,0
-	mr      r5,r4
-	mr      r4,r3
-	cmplwi  r5,6
+	cmplwi  r4,6
 	bgt-    bzero1
-	addi    r4,r4,-1
+	addi    r3,r3,-1
 bzero8:
-	mtctr   r5
+	mtctr   r4
 bzero2:
-	stbu    r0,1(r4)
+	stbu    r0,1(r3)
 	bdnz+   bzero2
 	blr
 bzero1:
-	rlwimi  r0,r0,8,16,23
-	rlwimi  r0,r0,16,0,15
-	andi.   r6,r4,3
+	andi.   r5,r3,3
 	beq+    bzero3
-	andi.   r6,r4,1
+	andi.   r5,r3,1
 	beq-    bzero5
-	stb     r0,0(r4)
-	addi    r4,r4,1
-	addi    r5,r5,-1
-	andi.   r6,r4,2
+	stb     r0,0(r3)
+	addi    r3,r3,1
+	addi    r4,r4,-1
+	andi.   r5,r3,2
 	beq-    bzero3
 bzero5:
-	sth     r0,0(r4)
-	addi    r4,r4,2
-	addi    r5,r5,-2
+	sth     r0,0(r3)
+	addi    r3,r3,2
+	addi    r4,r4,-2
 bzero3:
-	cmplwi  r5,4
+	cmplwi  r4,4
 	blt-    bzero6
-	rlwinm  r6,r5,30,2,31
-	mtctr   r6
-	addi    r4,r4,-4
+	rlwinm  r5,r4,30,2,31
+	mtctr   r5
+	addi    r3,r3,-4
 bzero7:
-	stwu    r0,4(r4)
+	stwu    r0,4(r3)
 	bdnz+   bzero7
 bzero6:
-	andi.   r5,r5,3
+	andi.   r4,r4,3
 	beqlr+
-	addi    r4,r4,3
+	addi    r3,r3,3
 	b       bzero8
 	.globl	_C_LABEL(darwin_commpage_bzero_size)
 _C_LABEL(darwin_commpage_bzero_size) = .-_C_LABEL(darwin_commpage_bzero)
@@ -99,7 +98,7 @@ _C_LABEL(darwin_commpage_bzero_size) = .-_C_LABEL(darwin_commpage_bzero)
  */
 	.globl	_C_LABEL(darwin_commpage_pthread_self)
 _C_LABEL(darwin_commpage_pthread_self):
-	li 	r0,32754 /* MACH_FASTTRAPS_SYS_cthread_self + MACH_FASTTRAPS */
+	li 	r0,MACH_FASTTRAPS_SYS_cthread_self+MACH_FASTTRAPS
 	sc
 	blr
 	.globl	_C_LABEL(darwin_commpage_pthread_self_size)
@@ -214,7 +213,7 @@ _C_LABEL(darwin_commpage_memcpy_size) = .-_C_LABEL(darwin_commpage_memcpy)
 	.globl	_C_LABEL(darwin_commpage_pthread_getspecific)
 _C_LABEL(darwin_commpage_pthread_getspecific):
 	rlwinm	r5,r3,2,0,29
-	li	r0,32754 /* MACH_FASTTRAPS_SYS_cthread_self + MACH_FASTTRAPS */
+	li	r0,MACH_FASTTRAPS_SYS_cthread_self+MACH_FASTTRAPS
 	sc
 	add	r5,r5,r4
 	lwzx	r3,r3,r5
@@ -248,6 +247,7 @@ _C_LABEL(darwin_commpage_sys_dcache_flush):
 	addi	r3,r3,32	/* CACHELINESIZE */
 	addic.	r4,r4,-32	/* len -= CACHELINESIZE */
 	bgt	1b
+	sync
 	blr
 	.globl	_C_LABEL(darwin_commpage_sys_dcache_flush_size)
 _C_LABEL(darwin_commpage_sys_dcache_flush_size) = .-_C_LABEL(darwin_commpage_sys_dcache_flush)
@@ -257,40 +257,39 @@ _C_LABEL(darwin_commpage_sys_dcache_flush_size) = .-_C_LABEL(darwin_commpage_sys
  */
 	.globl	_C_LABEL(darwin_commpage_sys_icache_invalidate)
 _C_LABEL(darwin_commpage_sys_icache_invalidate):
-1:	icbi	0,r3
-	addi	r3,r3,32	/* CACHELINESIZE */
-	addic.	r4,r4,-32	/* len -= CACHELINESIZE */
+	mr	r5,r3
+	mr	r6,r4
+	mflr	r7
+	bla	0xffff84e0	/* Absolute branch to dcache_flush */
+	mtlr	r7
+1:	icbi	0,r5
+	addi	r5,r5,32	/* CACHELINESIZE */
+	addic.	r6,r6,-32	/* len -= CACHELINESIZE */
 	bgt	1b
+	isync
 	blr
 	.globl	_C_LABEL(darwin_commpage_sys_icache_invalidate_size)
 _C_LABEL(darwin_commpage_sys_icache_invalidate_size) = .-_C_LABEL(darwin_commpage_sys_icache_invalidate)
-
-/*
- * Helper definitions for spinlocks operations
- */
-#define COMMPAGE_THREAD_SWITCH 					\
-	li	r3,0;   /* THREAD_NULL */			\
-	li	r4,1;	/* MACH_SWITCH_OPTION_DEPRESS */	\
-	li	r5,1;	/* 1ms */				\
-	li 	r0,-MACH_SYS_syscall_thread_switch;	 	\
-	sc;
-
-#define COMMPAGE_SPINLOCK 	\
-	li	r4,1;		\
-1:	lwarx	r5,0,r3;	\
-	cmpwi	r5,0;		\
-	bne-	1b;		\
-	stwcx.	r4,0,r3;	\
-	bne-	1b;		\
-	isync;
 
 /* 
  *	int spinlock_try(int *p) 
  */
 	.globl	_C_LABEL(darwin_commpage_spinlock_try)
 _C_LABEL(darwin_commpage_spinlock_try):
-	COMMPAGE_SPINLOCK
-	li	r3,0
+	li	r4,1
+	lwarx	r5,0,r3
+	cmpwi	r5,0
+	bne-	2f
+/*
+ * OSX seems to store the address of the lock here. i.e. the equivalent of
+ *	stwcx.	r3,0,r3 !!!
+ */
+	stwcx.	r4,0,r3
+	bne-	2f
+	mr	r3,r4
+	isync
+	blr
+2:	li	r3,0
 	blr
 	.globl	_C_LABEL(darwin_commpage_spinlock_try_size)
 _C_LABEL(darwin_commpage_spinlock_try_size) = .-_C_LABEL(darwin_commpage_spinlock_try)
@@ -304,13 +303,15 @@ _C_LABEL(darwin_commpage_spinlock_lock):
 	li	r7,1
 1:	lwarx	r8,0,r6
 	cmpwi	r8,0
-	bne-	2f
+	bnea-	0xffff85c0	/* Absolute branch to spinlock_relinquish */
+/*
+ * OSX seems to store the address of the lock here. i.e. the equivalent of
+ *	stwcx.	r6,0,r3 !!!
+ */
 	stwcx.	r7,0,r6
-	bne-	2f
-	isync;
+	bnea-	0xffff85c0	/* Absolute branch to spinlock_relinquish */
+	isync
 	blr
-2:	COMMPAGE_THREAD_SWITCH
-	ba	1b
 	.globl	_C_LABEL(darwin_commpage_spinlock_lock_size)
 _C_LABEL(darwin_commpage_spinlock_lock_size) = .-_C_LABEL(darwin_commpage_spinlock_lock)
 
@@ -332,9 +333,12 @@ _C_LABEL(darwin_commpage_spinlock_unlock_size) = .-_C_LABEL(darwin_commpage_spin
 	.globl	_C_LABEL(darwin_commpage_spinlock_relinquish)
 _C_LABEL(darwin_commpage_spinlock_relinquish):
 	mr	r6,r3
-	COMMPAGE_THREAD_SWITCH
+	li	r3,0		/* THREAD_NULL */
+	li	r4,1		/* MACH_SWITCH_OPTION_DEPRESS */
+	li	r5,1		/* 1ms */
+	li 	r0,-MACH_SYS_syscall_thread_switch
+	sc
 	mr	r3,r6
-	COMMPAGE_SPINLOCK
-	blr
+	ba	0xffff8260		/* Absolute branch to spin_lock */
 	.globl	_C_LABEL(darwin_commpage_spinlock_relinquish_size)
 _C_LABEL(darwin_commpage_spinlock_relinquish_size) = .-_C_LABEL(darwin_commpage_spinlock_relinquish)
