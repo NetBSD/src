@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread_switch.S,v 1.1.2.4 2001/07/16 20:21:10 nathanw Exp $	*/
+/*	$NetBSD: pthread_switch.S,v 1.1.2.5 2001/07/20 19:20:40 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -54,6 +54,7 @@
 ENTRY(pthread__switch)
 	pushl	%ebp
 	movl	%esp, %ebp
+	pushl	%edi	/* callee save */
 	PIC_PROLOGUE
 	movl	8(%ebp), %eax  /* eax holds the current thread */
 	movl	12(%ebp), %ecx /* ecx holds the thread to switch to  */
@@ -79,14 +80,14 @@ pthread__switch_no_save:
 	decl	PT_SPINLOCKS(%eax)
 
 pthread__switch_no_decrement:	
-	pushl	%esi
-	pushl	%edi
+	pushl	%esi	/* ucontext_t *ucp */
+	pushl	%edi	/* ucontext_t *oucp */
 	call	PIC_PLT(_C_LABEL(_swapcontext_u))
-	popl	%edi
-	popl	%esi
+	addl	$8, %esp
 	movl	%edi, %esp	/* Switches back to the old stack! */
 	addl	$CONTEXTSIZE, %esp
 	PIC_EPILOGUE
+	popl	%edi
 	movl	%ebp, %esp
 	popl	%ebp
 	ret
@@ -97,6 +98,8 @@ pthread__switch_no_decrement:
 ENTRY(pthread__locked_switch)
 	pushl	%ebp
 	movl	%esp, %ebp
+	pushl	%esi	/* callee save */
+	pushl	%edi	/* callee save */
 	PIC_PROLOGUE	
 	movl	8(%ebp), %eax  /* eax holds the current thread */
 	movl	12(%ebp), %ecx /* ecx holds the thread to switch to  */
@@ -106,12 +109,12 @@ ENTRY(pthread__locked_switch)
 	movl	%esp, PT_UC(%eax)
 	movl	%esp, %edi
 
-	pushl	%eax
-	pushl	%ecx
-	pushl	%edx
-	pushl	%edi
+	pushl	%eax	/* caller save */
+	pushl	%ecx	/* caller save */
+	pushl	%edx	/* caller save */
+	pushl	%edi	/* ucontext_t *ucp */
 	call	PIC_PLT(_C_LABEL(_getcontext_u))
-	popl	%edi
+	addl	$4, %esp
 	popl	%edx
 	popl	%ecx	
 	popl	%eax
@@ -174,12 +177,14 @@ locked_no_old_preempt:
 	NOTREACHED
 	
 locked_no_new_preempt:		
-	pushl	%esi
+	pushl	%esi	/* ucontext_t *ucp */
 	call	PIC_PLT(_C_LABEL(_setcontext_u))
 locked_return_point:
 	/* We're back on the original stack. */
 	addl	$CONTEXTSIZE+16, %esp
-	PIC_EPILOGUE	
+	PIC_EPILOGUE
+	popl	%edi
+	popl	%esi
 	movl	%ebp, %esp
 	popl	%ebp
 	ret
@@ -192,6 +197,7 @@ ENTRY(pthread__upcall_switch)
 	/* Save args into registers so we can stop using the old stack. */
 	pushl	%ebp
 	movl	%esp, %ebp
+	/* No need to save %esi, %edi;  this function never returns */
 	PIC_PROLOGUE
 	movl	8(%ebp), %eax  /* eax holds the upcall thread */
 	movl	12(%ebp), %ecx /* ecx holds the thread to switch to  */
