@@ -1,4 +1,4 @@
-/*	$NetBSD: icmp6.c,v 1.98 2003/08/22 21:53:07 itojun Exp $	*/
+/*	$NetBSD: icmp6.c,v 1.99 2003/08/22 22:00:39 itojun Exp $	*/
 /*	$KAME: icmp6.c,v 1.217 2001/06/20 15:03:29 jinmei Exp $	*/
 
 /*
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: icmp6.c,v 1.98 2003/08/22 21:53:07 itojun Exp $");
+__KERNEL_RCSID(0, "$NetBSD: icmp6.c,v 1.99 2003/08/22 22:00:39 itojun Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -2133,10 +2133,6 @@ icmp6_reflect(m, off)
 	 */
 
 	m->m_flags &= ~(M_BCAST|M_MCAST);
-#ifdef IPSEC
-	/* Don't lookup socket */
-	(void)ipsec_setsocket(m, NULL);
-#endif /* IPSEC */
 
 	/*
 	 * To avoid a "too big" situation at an intermediate router
@@ -2650,10 +2646,6 @@ noredhdropt:
 		= in6_cksum(m, IPPROTO_ICMPV6, sizeof(*ip6), ntohs(ip6->ip6_plen));
 
 	/* send the packet to outside... */
-#ifdef IPSEC
-	/* Don't lookup socket */
-	(void)ipsec_setsocket(m, NULL);
-#endif /* IPSEC */
 	if (ip6_output(m, NULL, NULL, 0,
 		(struct ip6_moptions *)NULL, (struct socket *)NULL, NULL) != 0)
 		icmp6_ifstat_inc(ifp, ifs6_out_error);
