@@ -1,5 +1,6 @@
+#	$NetBSD: crontab,v 1.9 1995/12/17 02:01:10 thorpej Exp $
+#
 # /var/cron/tabs/root - root's crontab for NetBSD
-# $Id: crontab,v 1.8 1994/02/19 11:04:48 cgd Exp $
 #
 SHELL=/bin/sh
 PATH=/etc:/bin:/sbin:/usr/bin:/usr/sbin

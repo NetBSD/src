@@ -1,3 +1,4 @@
+#	$NetBSD: services,v 1.15 1995/12/17 02:01:16 thorpej Exp $
 #
 # Network services, Internet style
 #
@@ -8,7 +9,6 @@
 # are included, only the more common ones.
 #
 #	from: @(#)services	5.8 (Berkeley) 5/9/91
-#	$Id: services,v 1.14 1994/12/28 19:26:15 mycroft Exp $
 #
 tcpmux		1/tcp		# TCP port service multiplexer
 echo		7/tcp

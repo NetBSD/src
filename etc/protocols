@@ -1,8 +1,8 @@
+#	$NetBSD: protocols,v 1.3 1995/12/17 02:01:12 thorpej Exp $
 #
 # Internet (IP) protocols
 #
 #	from: @(#)protocols	5.1 (Berkeley) 4/17/89
-#	$Id: protocols,v 1.2 1993/11/07 10:19:06 cgd Exp $
 #
 # Updated for NetBSD based on RFC 1340, Assigned Numbers (July 1992).
 #
