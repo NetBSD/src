@@ -1,4 +1,4 @@
-/*	$NetBSD: zs.c,v 1.20 2000/07/20 20:40:37 scw Exp $	*/
+/*	$NetBSD: zs.c,v 1.21 2000/07/21 20:18:35 scw Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -213,7 +213,9 @@ zs_config(zsc, bust, bush)
 	 */
 	zsc->zsc_softintr_cookie = softintr_establish(IPL_SOFTSERIAL,
 	    (void (*)(void *)) zsc_intr_soft, zsc);
+#ifdef DEBUG
 	assert(zsc->zsc_softintr_cookie);
+#endif
 }
 
 static int
@@ -251,7 +253,7 @@ zshard(arg)
 		rval |= zsc_intr_hard(zsc);
 		if ((zsc->zsc_cs[0]->cs_softreq) ||
 		    (zsc->zsc_cs[1]->cs_softreq))
-			softintr_schedule(zsc);
+			softintr_schedule(zsc->zsc_softintr_cookie);
 	}
 	return (rval);
 }
