@@ -30,7 +30,7 @@
  *
  *	locore.s
  *
- *	$Id: locore.s,v 1.2 1993/09/13 07:26:47 phil Exp $
+ *	locore.s,v 1.2 1993/09/13 07:26:47 phil Exp
  */
 
 /*
@@ -980,7 +980,7 @@ ENTRY(_int_scsi1)
 	bsr _dp_intr
 #else
 	movqd	4,tos
-	bsd _bad_intr
+	bsr _bad_intr
 #endif
 	br	exit_int
 
