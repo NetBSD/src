@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-1.5.3,v 1.1.2.49 2002/03/11 22:45:04 he Exp $
+#	$NetBSD: CHANGES-1.5.3,v 1.1.2.50 2002/03/20 23:44:53 he Exp $
 
 A complete list of changes from NetBSD 1.5.2 to NetBSD 1.5.3:
 
@@ -1338,7 +1338,7 @@ sbin/dump/tape.c				1.36 via patch
 
 gnu/usr.bin/gzip/gzip.c				1.9
 
-  Fix long file name buffer overrun vulnerability.
+  Fix long file name buffer overrun vulnerability.  Fixes SA#2002-002.
 
 sys/arch/i386/pci/pchb.c			1.30 via patch
 
@@ -2184,6 +2184,7 @@ etc/mtree/special				1.52 via patch
 sys/netinet/ip_input.c				1.145
 
   Correctly enforce ipsec policy check in IPv4 forwarding case.
+  Fixes SA#2002-003.
 
 sys/ufs/ffs/ffs_inode.c				patch
 
@@ -2330,7 +2331,7 @@ sys/compat/freebsd/freebsd_exec.c		patch
 crypto/dist/ssh/channels.c			1.18
 crypto/dist/ssh/version.h			patch
 
-  Fix off by one error in channel number check.
+  Fix off by one error in channel number check.  Fixes SA#2002-004.
 
 distrib/sets/lists/misc/mi			patch
 
@@ -2372,3 +2373,104 @@ sys/conf/osrelease.sh				patch
 share/tmac/doc-common				patch
 
   Mark what we have now as ``Release Candidate 1'' (1.5.3_RC1).
+
+sys/netinet/tcp_input.c				1.136
+
+  Support tcp_log_refused for IPv6.
+
+usr.bin/m4/main.c				1.25
+usr.bin/m4/misc.c				1.11
+
+  Fix a conversion bug internal to m4 which causes it to output
+  0xff as the last byte of output.
+
+usr.sbin/pkg_install/delete/main.c		1.18
+
+  Improve error reporting when a pattern is given but the system
+  is freshly installed so the package DB doesn't exist.
+
+sys/arch/sparc/stand/binstall/binstall.sh	1.8
+distrib/sparc/bootfs/Makefile			1.27
+distrib/sparc/miniroot/list			1.21
+
+  Add ``-f'' option to binstall.sh and use it.  This is allows boot
+  media construction when securelevel > 0.
+
+sys/arch/sparc/sparc/promlib.c			1.10
+
+  Wrap SUN4-only code by the proper ifdef.
+
+sys/arch/i386/pci/pchb.c			1.32
+
+  Correct the attach flags to enable IO space on the Intel 450NX.
+
+crypto/dist/ssh/auth-krb5.c			1.7
+
+  Do not try to use the krb5 context if the init fails; fixes
+  PR#15585.
+
+lib/libz/ChangeLog				1.6
+lib/libz/README					1.6
+lib/libz/adler32.c				1.7
+lib/libz/algorithm.doc				delete
+lib/libz/algorithm.txt				1.1 (new)
+lib/libz/compress.c				1.7
+lib/libz/crc32.c				1.8
+lib/libz/deflate.c				1.8
+lib/libz/deflate.h				1.8
+lib/libz/example.c				1.9
+lib/libz/gzio.c					1.12
+lib/libz/infblock.c				1.6
+lib/libz/infblock.h				1.7
+lib/libz/infcodes.c				1.6
+lib/libz/infcodes.h				1.7
+lib/libz/inffast.c				1.6
+lib/libz/inffast.h				1.7
+lib/libz/inflate.c				1.6
+lib/libz/inftrees.c				1.7
+lib/libz/inftrees.h				1.7
+lib/libz/infutil.c				1.6
+lib/libz/infutil.h				1.7
+lib/libz/minigzip.c				1.11
+lib/libz/trees.c				1.8
+lib/libz/uncompr.c				1.7
+lib/libz/zconf.h				1.11
+lib/libz/zlib.h					1.12
+lib/libz/zutil.c				1.8
+lib/libz/zutil.h				1.11
+sys/lib/libz/adler32.c				1.4
+sys/lib/libz/crc32.c				1.4
+sys/lib/libz/infblock.c				1.4
+sys/lib/libz/infblock.h				1.4
+sys/lib/libz/infcodes.c				1.4
+sys/lib/libz/infcodes.h				1.4
+sys/lib/libz/inffast.c				1.4
+sys/lib/libz/inffast.h				1.4
+sys/lib/libz/inffixed.h				1.4
+sys/lib/libz/inflate.c				1.4
+sys/lib/libz/inftrees.c				1.5
+sys/lib/libz/inftrees.h				1.4
+sys/lib/libz/infutil.c				1.4
+sys/lib/libz/infutil.h				1.4
+sys/lib/libz/uncompr.c				1.4
+sys/lib/libz/zconf.h				1.4
+sys/lib/libz/zlib.h				1.4
+sys/lib/libz/zutil.h				1.10
+sys/net/zlib.c					1.11-1.17
+sys/net/zlib.h					1.6
+sys/netinet6/ipcomp_core.c			1.17-1.19
+
+  Upgrade libz to 1.1.4 due to a possible security bug.
+
+sys/net/ppp-deflate.c				1.11
+
+  Fix a problem related to compression which would cause a lot of
+  logged incorrect warnings.
+
+sys/compat/osf1/syscalls.master			1.37
+sys/compat/osf1/osf1_syscall.h			regenerate
+sys/compat/osf1/osf1_syscallargs.h		regenerate
+sys/compat/osf1/osf1_sysent.c			regenerate
+sys/compat/osf1/osf1_syscalls.c			regenerate
+
+  Add entry for flock(), needed by Netscape communicator.
