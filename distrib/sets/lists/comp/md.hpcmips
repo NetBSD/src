@@ -1,5 +1,4 @@
-# $NetBSD: md.hpcmips,v 1.20 2004/01/11 10:13:42 lukem Exp $
-./usr/include/dev/hpc				comp-c-include
+# $NetBSD: md.hpcmips,v 1.21 2004/01/13 06:31:33 lukem Exp $
 ./usr/include/dev/hpc/hpcfbio.h			comp-c-include
 ./usr/include/hpcmips				comp-c-include
 ./usr/include/hpcmips/_G_config.h		comp-obsolete		obsolete
