@@ -1,4 +1,4 @@
-.\"	$NetBSD: swapctl.2,v 1.4 1997/08/20 05:17:39 mikel Exp $
+.\"	$NetBSD: swapctl.2,v 1.5 1997/08/27 07:31:36 mikel Exp $
 .\"
 .\" Copyright (c) 1997 Matthew R. Green
 .\" Copyright (c) 1980, 1991, 1993
@@ -50,10 +50,8 @@ The
 function is used to add and delete swap devices, and modify their
 configuration.  The
 .Fn swapon
-function only exists as a backwards compatibility feature until the
-next major bump of the
-.Pa libc
-major from 12.  It should never be used in new code, and should be
+function is only retained as a backwards compatibility feature;
+it should never be used in new code, and should be
 removed from existing code.
 .Pp
 The
@@ -208,4 +206,11 @@ and Leo Weppelman <leo@NetBSD.ORG>, and insights from Jason R. Thorpe
 The
 .Fn swapctl
 function call appeared in
+.Nx 1.3 .
+.Pp
+The
+.Fn swapon
+function call appeared in
+.Bx 4.0
+and was dropped in
 .Nx 1.3 .
