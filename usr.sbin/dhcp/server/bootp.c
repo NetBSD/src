@@ -43,7 +43,7 @@
 
 #ifndef lint
 static char copyright[] =
-"$Id: bootp.c,v 1.10 2000/04/22 08:18:17 mellon Exp $ Copyright (c) 1995-2000 The Internet Software Consortium.  All rights reserved.\n";
+"$Id: bootp.c,v 1.11 2000/05/08 19:25:10 matt Exp $ Copyright (c) 1995-2000 The Internet Software Consortium.  All rights reserved.\n";
 #endif /* not lint */
 
 #include "dhcpd.h"
@@ -313,7 +313,7 @@ void bootp (packet)
 	/* Set up the hardware destination address... */
 	hto.hbuf [0] = packet -> raw -> htype;
 	hto.hlen = packet -> raw -> hlen + 1;
-	memcpy (hto.hbuf, packet -> raw -> chaddr, packet -> raw -> hlen);
+	memcpy (&hto.hbuf [1], packet -> raw -> chaddr, packet -> raw -> hlen);
 
 	from = packet -> interface -> primary_address;
 
