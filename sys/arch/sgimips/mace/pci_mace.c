@@ -1,4 +1,4 @@
-/*	$NetBSD: macepci.c,v 1.17 2004/01/18 00:50:08 sekiya Exp $	*/
+/*	$NetBSD: pci_mace.c,v 1.1 2004/01/18 04:06:43 sekiya Exp $	*/
 
 /*
  * Copyright (c) 2001,2003 Christopher Sekiya
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: macepci.c,v 1.17 2004/01/18 00:50:08 sekiya Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pci_mace.c,v 1.1 2004/01/18 04:06:43 sekiya Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -51,10 +51,10 @@ __KERNEL_RCSID(0, "$NetBSD: macepci.c,v 1.17 2004/01/18 00:50:08 sekiya Exp $");
 #include <dev/pci/pcireg.h>
 #include <dev/pci/pcidevs.h>
 
-#include <sgimips/dev/macereg.h>
-#include <sgimips/dev/macevar.h>
+#include <sgimips/mace/macereg.h>
+#include <sgimips/mace/macevar.h>
 
-#include <sgimips/pci/macepcireg.h>
+#include <sgimips/mace/pcireg_mace.h>
 #include <sgimips/pci/pci_addr_fixup.h>
 
 #define PCIBIOS_PRINTV(arg) \
@@ -220,7 +220,7 @@ macepci_attach(parent, self, aux)
 		pba.pba_flags &= ~PCI_FLAGS_IO_ENABLED;		/* Buggy? */
 #endif
 
-	mace_intr_establish(maa->maa_intr, IPL_NONE, macepci_intr, sc);
+	cpu_intr_establish(maa->maa_intr, IPL_NONE, macepci_intr, sc);
 
 	config_found(self, &pba, macepci_print);
 #endif
