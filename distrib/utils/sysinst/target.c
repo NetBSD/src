@@ -1,4 +1,4 @@
-/*	$NetBSD: target.c,v 1.16 1998/06/20 13:05:50 mrg Exp $	*/
+/*	$NetBSD: target.c,v 1.17 1998/08/10 02:23:45 perry Exp $	*/
 
 /*
  * Copyright 1997 Jonathan Stone
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: target.c,v 1.16 1998/06/20 13:05:50 mrg Exp $");
+__RCSID("$NetBSD: target.c,v 1.17 1998/08/10 02:23:45 perry Exp $");
 #endif
 
 /*
@@ -245,7 +245,7 @@ mounted_rootpart()
 	int result;
 
 	static char statrootstr[STRSIZE];
-	bzero(&statfsbuf, sizeof(statfsbuf));
+	memset(&statfsbuf, 0, sizeof(statfsbuf));
 	result = statfs("/", &statfsbuf);
 	if (result < 0) {
 	  	endwin();

@@ -1,4 +1,4 @@
-/*	$NetBSD: tetris.c,v 1.3 1997/10/12 02:03:48 lukem Exp $	*/
+/*	$NetBSD: tetris.c,v 1.4 1998/08/10 02:25:45 perry Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -102,7 +102,7 @@ elide()
 		for (j = B_COLS - 2; *p++ != 0;) {
 			if (--j <= 0) {
 				/* this row is to be elided */
-				bzero(&board[base], B_COLS - 2);
+				memset(&board[base], 0, B_COLS - 2);
 				scr_update();
 				tsleep();
 				while (--base != 0)
