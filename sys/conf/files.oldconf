@@ -1,4 +1,4 @@
-#	$Id: files.oldconf,v 1.10 1993/05/20 03:29:36 cgd Exp $
+#	$Id: files.oldconf,v 1.11 1993/05/31 01:40:53 cgd Exp $
 #
 ddb/db_access.c		optional ddb
 ddb/db_aout.c		optional ddb
@@ -30,7 +30,7 @@ kern/kern__physio.c	standard
 kern/kern_acct.c	standard
 kern/kern_clock.c	standard
 kern/kern_descrip.c	standard
-kern/kern_execve.c	standard
+kern/kern_exec.c	standard
 kern/kern_exit.c	standard
 kern/kern_fork.c	standard
 kern/kern_kinfo.c	standard
