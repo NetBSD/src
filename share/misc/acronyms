@@ -1,4 +1,4 @@
-$NetBSD: acronyms,v 1.132 2004/01/04 02:16:39 jsm Exp $
+$NetBSD: acronyms,v 1.133 2004/01/13 22:42:27 jmmv Exp $
 
 AFAICR	as far as I can recall
 AFAICT	as far as I can tell
@@ -18,7 +18,9 @@ ATM	at the moment
 AWOL	absent without official leave
 AYBABTU	all your base are belong to us
 B/C	because
+B/S	bullshit
 B/W	between
+BBIAB	be back in a bit
 BBL	[I'll] be back later
 BBS	be back soon
 BBT	be back tomorrow
@@ -28,10 +30,12 @@ BIAF	back in a few
 BIALW	back in a little while
 BIAS	back in a second
 BIAW	back in a while
+BOATILAS	bend over and take it like a slut
 BOFH	bastard operator from hell
 BOGAHICA	bend over, grab ankles, here it comes again
 BOHICA	bend over here it comes again
 BRB	[I'll] be right back
+BS	bullshit
 BTDT	been there, done that
 BTTH	boot to the head
 BTW	by the way
@@ -129,6 +133,8 @@ NFC	no fucking clue
 NFI	no fucking idea
 NFW	no fucking way
 NIH	not invented here
+NMF	not my fault
+NMP	not my problem
 NOYB	none of your business
 NOYFB	none of your fucking business
 NP	no problem
@@ -164,6 +170,7 @@ RP	responsible person
 RSN	real soon now
 RTFB	read the fine/fucking book
 RTFC	read the fine/fucking code
+RTFD	read the fine/fucking documentation
 RTFM	read the fine/fucking manual
 RTFMP	read the fine/fucking man page
 RTFS	read the fine/fucking source
@@ -176,6 +183,7 @@ SMLSFB	so many losers, so few bullets
 SMOP	simple matter of programming
 SNAFU	situation normal, all fucked up
 SNERT	snot-nosed egotistical rude teenager
+SNMP	sorry, not my problem
 SNR	signal to noise ratio
 SO	significant other
 SOB	son of [a] bitch
@@ -192,6 +200,8 @@ TANSTAAFL	there ain't no such thing as a free lunch
 TBC	to be continued
 TBD	to be {decided,determined,done}
 TBOMK	the best of my knowledge
+THNX	thanks
+THX	thanks
 TIA	thanks in advance
 TINC	there is no cabal
 TLA	three letter acronym
@@ -204,6 +214,7 @@ TTBOMK	to the best of my knowledge
 TTFN	ta ta for now
 TTYL	talk to you later
 TWIAVBP	the world is a very big place
+TY	thank you
 TYVM	thank you very much
 U/L	upload
 UTSL	use the source, Luke
@@ -221,6 +232,7 @@ WRT	with respect to
 WTF	{what,where,who,why} the fuck
 WTH	{what,where,who,why} the hell
 WYSIWYG	what you see is what you get
+YALIMO	you are lame, in my opinion
 YHBT	you have been trolled
 YHL	you have lost
 YKWIM	you know what I mean
