@@ -1,4 +1,4 @@
-/*	$NetBSD: lpf.c,v 1.4 1995/11/15 22:51:33 pk Exp $	*/
+/*	$NetBSD: lpf.c,v 1.5 1997/07/10 06:21:51 mikel Exp $	*/
 /*
  * Copyright (c) 1983, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -39,7 +39,11 @@ static char copyright[] =
 #endif /* not lint */
 
 #ifndef lint
+#if 0
 static char sccsid[] = "@(#)lpf.c	8.1 (Berkeley) 6/6/93";
+#else
+static char rcsid[] = "$NetBSD";
+#endif
 #endif /* not lint */
 
 /*
@@ -167,7 +171,7 @@ main(argc, argv)
 				}
 
 			default:
-				if (col >= width || !literal && ch < ' ') {
+				if (col >= width || (!literal && ch < ' ')) {
 					col++;
 					break;
 				}
