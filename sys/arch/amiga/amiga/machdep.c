@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.40 1994/10/26 02:01:59 cgd Exp $	*/
+/*	$NetBSD: machdep.c,v 1.41 1994/12/01 17:24:28 chopps Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -149,7 +149,7 @@ char machine[] = "amiga";
  
 
 #ifdef COMPAT_SUNOS
-void sun_sendsig ();
+void sunos_sendsig ();
 #endif
 
  /*
@@ -529,19 +529,19 @@ struct sigframe {
 #ifdef COMPAT_SUNOS
 /* sigh.. I guess it's too late to change now, but "our" sigcontext
    is plain vax, not very 68000 (ap, for example..) */
-struct sun_sigcontext {
+struct sunos_sigcontext {
 	int 	sc_onstack;		/* sigstack state to restore */
 	int	sc_mask;		/* signal mask to restore */
 	int	sc_sp;			/* sp to restore */
 	int	sc_pc;			/* pc to restore */
 	int	sc_ps;			/* psl to restore */
 };
-struct sun_sigframe {
+struct sunos_sigframe {
 	int	ssf_signum;		/* signo for handler */
 	int	ssf_code;		/* additional info for handler */
-	struct sun_sigcontext *ssf_scp;	/* context pointer for handler */
+	struct sunos_sigcontext *ssf_scp;	/* context pointer for handler */
 	u_int	ssf_addr;		/* even more info for handler */
-	struct sun_sigcontext ssf_sc;	/* I don't know if that's what 
+	struct sunos_sigcontext ssf_sc;	/* I don't know if that's what 
 					   comes here */
 };
 #endif	
@@ -561,7 +561,7 @@ void
 sendsig(catcher, sig, mask, code)
 	sig_t catcher;
 	int sig, mask;
-	unsigned code;
+	u_long code;
 {
 	register struct proc *p = curproc;
 	register struct sigframe *fp, *kfp;
@@ -584,7 +584,7 @@ sendsig(catcher, sig, mask, code)
 		/*
 		 * build the short SunOS frame instead
 		 */
-		sun_sendsig(catcher, sig, mask, code);
+		sunos_sendsig(catcher, sig, mask, code);
 		return;
 	}
 #endif
@@ -720,14 +720,14 @@ sendsig(catcher, sig, mask, code)
  * SIG_DFL for "dangerous" signals.
  */
 void
-sun_sendsig(catcher, sig, mask, code)
+sunos_sendsig(catcher, sig, mask, code)
 	sig_t catcher;
 	int sig, mask;
 	unsigned code;
 {
 	register struct proc *p = curproc;
-	register struct sun_sigframe *fp;
-	struct sun_sigframe kfp;
+	register struct sunos_sigframe *fp;
+	struct sunos_sigframe kfp;
 	register struct frame *frame;
 	register struct sigacts *psp = p->p_sigacts;
 	register short ft;
@@ -743,25 +743,25 @@ sun_sendsig(catcher, sig, mask, code)
 	 * will fail if the process has not already allocated
 	 * the space with a `brk'.
 	 */
-	fsize = sizeof(struct sun_sigframe);
+	fsize = sizeof(struct sunos_sigframe);
 	if ((psp->ps_flags & SAS_ALTSTACK) && oonstack == 0 &&
 	    (psp->ps_sigonstack & sigmask(sig))) {
-		fp = (struct sun_sigframe *)(psp->ps_sigstk.ss_base +
-		    psp->ps_sigstk.ss_size - sizeof(struct sun_sigframe));
+		fp = (struct sunos_sigframe *)(psp->ps_sigstk.ss_base +
+		    psp->ps_sigstk.ss_size - sizeof(struct sunos_sigframe));
 		psp->ps_sigstk.ss_flags |= SA_ONSTACK;
 	} else
-		fp = (struct sun_sigframe *)frame->f_regs[SP] - 1;
+		fp = (struct sunos_sigframe *)frame->f_regs[SP] - 1;
 	if ((unsigned)fp <= USRSTACK - ctob(p->p_vmspace->vm_ssize)) 
 		(void)grow(p, (unsigned)fp);
 #ifdef DEBUG
 	if ((sigdebug & SDB_KSTACK) && p->p_pid == sigpid)
-		printf("sun_sendsig(%d): sig %d ssp %x usp %x scp %x ft %d\n",
+		printf("sunos_sendsig(%d): sig %d ssp %x usp %x scp %x ft %d\n",
 		       p->p_pid, sig, &oonstack, fp, &fp->ssf_sc, ft);
 #endif
 	if (useracc((caddr_t)fp, fsize, B_WRITE) == 0) {
 #ifdef DEBUG
 		if ((sigdebug & SDB_KSTACK) && p->p_pid == sigpid)
-			printf("sun_sendsig(%d): useracc failed on sig %d\n",
+			printf("sunos_sendsig(%d): useracc failed on sig %d\n",
 			       p->p_pid, sig);
 #endif
 		/*
@@ -796,7 +796,7 @@ sun_sendsig(catcher, sig, mask, code)
 	frame->f_regs[SP] = (int)fp;
 #ifdef DEBUG
 	if (sigdebug & SDB_FOLLOW)
-		printf("sun_sendsig(%d): sig %d scp %x sc_sp %x\n",
+		printf("sunos_sendsig(%d): sig %d scp %x sc_sp %x\n",
 		       p->p_pid, sig, kfp.ssf_sc.sc_sp);
 #endif
 
@@ -805,7 +805,7 @@ sun_sendsig(catcher, sig, mask, code)
 	frame->f_pc = (u_int) catcher;
 #ifdef DEBUG
 	if ((sigdebug & SDB_KSTACK) && p->p_pid == sigpid)
-		printf("sun_sendsig(%d): sig %d returns\n",
+		printf("sunos_sendsig(%d): sig %d returns\n",
 		       p->p_pid, sig);
 #endif
 }
@@ -839,7 +839,7 @@ sigreturn(p, uap, retval)
 
 #ifdef COMPAT_SUNOS
 	if (p->p_emul == EMUL_SUNOS)
-		return(sun_sigreturn(p, uap, retval));
+		return(sunos_sigreturn(p, uap, retval));
 #endif
 
 	scp = SCARG(uap, sigcntxp);
@@ -957,26 +957,26 @@ sigreturn(p, uap, retval)
  * SunOS processes. We don't have to restore any hardware frames,
  * registers, fpu stuff, that's all done in user space.
  */
-struct sun_sigreturn_args {
-	struct sun_sigcontext *sigcntxp;
+struct sunos_sigreturn_args {
+	struct sunos_sigcontext *sigcntxp;
 };
 
 int
-sun_sigreturn(p, uap, retval)
+sunos_sigreturn(p, uap, retval)
 	struct proc *p;
-	struct sun_sigreturn_args *uap;
+	struct sunos_sigreturn_args *uap;
 	register_t *retval;
 {
-	register struct sun_sigcontext *scp;
+	register struct sunos_sigcontext *scp;
 	register struct frame *frame;
 	register int rf;
-	struct sun_sigcontext tsigc;
+	struct sunos_sigcontext tsigc;
 	int flags;
 
-	scp = SCARG(uap, sigcntxp);
+	scp = uap->sigcntxp;
 #ifdef DEBUG
 	if (sigdebug & SDB_FOLLOW)
-		printf("sun_sigreturn: pid %d, scp %x\n", p->p_pid, scp);
+		printf("sunos_sigreturn: pid %d, scp %x\n", p->p_pid, scp);
 #endif
 	if ((int)scp & 1)
 		return (EINVAL);
@@ -1645,9 +1645,9 @@ cpu_exec_aout_makecmds(p, epp)
 #endif
 #ifdef COMPAT_SUNOS
 	{
-		extern sun_exec_aout_makecmds
+		extern sunos_exec_aout_makecmds
 		    __P((struct proc *, struct exec_package *));
-		if ((error = sun_exec_aout_makecmds(p, epp)) == 0)
+		if ((error = sunos_exec_aout_makecmds(p, epp)) == 0)
 			return(0);
 	}
 #endif

@@ -1,4 +1,4 @@
-/*	$NetBSD: view.c,v 1.10 1994/10/26 02:05:04 cgd Exp $	*/
+/*	$NetBSD: view.c,v 1.11 1994/12/01 17:25:37 chopps Exp $	*/
 
 /*
  * Copyright (c) 1994 Christian E. Hopps
@@ -55,7 +55,7 @@ static void view_remove __P((struct view_softc *));
 static int view_setsize __P((struct view_softc *, struct view_size *));
 
 void viewclose __P((dev_t, int));
-int viewioctl __P((dev_t, int, caddr_t, int, struct proc *));
+int viewioctl __P((dev_t, u_long, caddr_t, int, struct proc *));
 int viewopen __P((dev_t, int));
 int viewmap __P((dev_t, int, int));
 
@@ -286,8 +286,9 @@ viewclose (dev, flags)
 int
 viewioctl (dev, cmd, data, flag, p)
 	dev_t dev;
-	int cmd, flag;
+	u_long cmd;
 	caddr_t data;
+	int flag;
 	struct proc *p;
 {
 	struct view_softc *vu;

@@ -1,4 +1,4 @@
-/*	$NetBSD: wesc.c,v 1.4 1994/10/26 02:05:11 cgd Exp $	*/
+/*	$NetBSD: wesc.c,v 1.5 1994/12/01 17:25:38 chopps Exp $	*/
 
 /*
  * Copyright (c) 1994 Michael L. Hitch
@@ -76,7 +76,7 @@ struct scsi_device wesc_scsidev = {
 #endif
 
 struct cfdriver wesccd = {
-	NULL, "wesc", wescmatch, wescattach, 
+	NULL, "wesc", (cfmatch_t)wescmatch, wescattach, 
 	DV_DULL, sizeof(struct siop_softc), NULL, 0 };
 
 /*

@@ -1,4 +1,4 @@
-/*	$NetBSD: par.c,v 1.10 1994/10/26 02:31:58 cgd Exp $	*/
+/*	$NetBSD: par.c,v 1.11 1994/12/01 17:25:33 chopps Exp $	*/
 
 /*
  * Copyright (c) 1982, 1990 The Regents of the University of California.
@@ -92,7 +92,7 @@ void parattach __P((struct device *, struct device *, void *));
 int parmatch __P((struct device *, struct cfdata *, void *));
 
 struct cfdriver parcd = {
-	NULL, "par", parmatch, parattach, DV_DULL,
+	NULL, "par", (cfmatch_t)parmatch, parattach, DV_DULL,
 	sizeof(struct device), NULL, 0 };
 
 /*ARGSUSED*/
@@ -416,7 +416,7 @@ again:
 int
 parioctl(dev, cmd, data, flag, p)
 	dev_t dev;
-	int cmd;
+	u_long cmd;
 	caddr_t data;
 	int flag;
 	struct proc *p;

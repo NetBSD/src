@@ -1,4 +1,4 @@
-/*	$NetBSD: itevar.h,v 1.9 1994/10/26 02:04:05 cgd Exp $	*/
+/*	$NetBSD: itevar.h,v 1.10 1994/12/01 17:25:23 chopps Exp $	*/
 
 /*
  * Copyright (c) 1994 Christian E. Hopps
@@ -201,7 +201,7 @@ int	iteopen __P((dev_t, int, int, struct proc *));
 int	iteclose __P((dev_t, int, int, struct proc *));
 int	iteread __P((dev_t, struct uio *, int));
 int	itewrite __P((dev_t, struct uio *, int));
-int	iteioctl __P((dev_t, int, caddr_t, int, struct proc *));
+int	iteioctl __P((dev_t, u_long, caddr_t, int, struct proc *));
 void	itestart __P((struct tty *));
 
 /* ite functions */

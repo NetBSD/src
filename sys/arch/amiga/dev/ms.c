@@ -1,4 +1,4 @@
-/*	$NetBSD: ms.c,v 1.5 1994/10/26 02:04:24 cgd Exp $	*/
+/*	$NetBSD: ms.c,v 1.6 1994/12/01 17:25:29 chopps Exp $	*/
 
 /*
  * based on:
@@ -377,11 +377,11 @@ mswrite(dev, uio, flags)
 
 int
 msioctl(dev, cmd, data, flag, p)
-     dev_t dev;
-     int cmd;
-     register caddr_t data;
-     int flag;
-     struct proc *p;
+	dev_t dev;
+	u_long cmd;
+	register caddr_t data;
+	int flag;
+	struct proc *p;
 {
 	struct ms_softc *ms;
 	int unit;

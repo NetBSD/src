@@ -1,4 +1,4 @@
-/*	$NetBSD: atzsc.c,v 1.7 1994/10/26 02:02:48 cgd Exp $	*/
+/*	$NetBSD: atzsc.c,v 1.8 1994/12/01 17:24:52 chopps Exp $	*/
 
 /*
  * Copyright (c) 1994 Christian E. Hopps
@@ -85,7 +85,7 @@ int	atzsc_dmadebug = 0;
 #endif
 
 struct cfdriver atzsccd = {
-	NULL, "atzsc", atzscmatch, atzscattach, 
+	NULL, "atzsc", (cfmatch_t)atzscmatch, atzscattach, 
 	DV_DULL, sizeof(struct sbic_softc), NULL, 0 };
 
 /*

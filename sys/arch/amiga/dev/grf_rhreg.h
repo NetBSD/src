@@ -1,4 +1,4 @@
-/*	$NetBSD: grf_rhreg.h,v 1.2 1994/10/26 02:03:15 cgd Exp $	*/
+/*	$NetBSD: grf_rhreg.h,v 1.3 1994/12/01 17:25:07 chopps Exp $	*/
 
 #ifndef _GRF_RHREG_H
 #define _GRF_RHREG_H
@@ -668,7 +668,7 @@ void RZ3SetPalette __P((struct grf_softc *gp, unsigned char colornum, unsigned c
 void RZ3SetPanning __P((struct grf_softc *gp, short unsigned int xoff, short unsigned int yoff));
 void RZ3SetHWCloc __P((struct grf_softc *gp, short unsigned int x, short unsigned int y));
 int rh_mode __P((register struct grf_softc *gp, int cmd, void *arg, int a2, int a3));
-int rh_ioctl __P((register struct grf_softc *gp, int cmd, void *data));
+int rh_ioctl __P((register struct grf_softc *gp, u_long cmd, void *data));
 int rh_getcmap __P((struct grf_softc *gfp, struct grf_colormap *cmap));
 int rh_putcmap __P((struct grf_softc *gfp, struct grf_colormap *cmap));
 int rh_getspritepos __P((struct grf_softc *gp, struct grf_position *pos));

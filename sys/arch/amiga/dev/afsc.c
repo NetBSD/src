@@ -1,4 +1,4 @@
-/*	$NetBSD: afsc.c,v 1.2 1994/10/26 02:02:41 cgd Exp $	*/
+/*	$NetBSD: afsc.c,v 1.3 1994/12/01 17:24:49 chopps Exp $	*/
 
 /*
  * Copyright (c) 1994 Michael L. Hitch
@@ -77,7 +77,7 @@ struct scsi_device afsc_scsidev = {
 #endif
 
 struct cfdriver afsccd = {
-	NULL, "afsc", afscmatch, afscattach, 
+	NULL, "afsc", (cfmatch_t)afscmatch, afscattach, 
 	DV_DULL, sizeof(struct siop_softc), NULL, 0 };
 
 /*

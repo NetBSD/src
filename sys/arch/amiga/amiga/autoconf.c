@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.25 1994/10/26 02:01:32 cgd Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.26 1994/12/01 17:24:23 chopps Exp $	*/
 
 /*
  * Copyright (c) 1994 Christian E. Hopps
@@ -165,7 +165,7 @@ config_console()
  * mainbus driver 
  */
 struct cfdriver mainbuscd = {
-	NULL, "mainbus", mbmatch, mbattach, 
+	NULL, "mainbus", (cfmatch_t)mbmatch, mbattach, 
 	DV_DULL, sizeof(struct device), NULL, 0
 };
 

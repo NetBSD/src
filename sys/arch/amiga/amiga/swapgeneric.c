@@ -1,4 +1,4 @@
-/*	$NetBSD: swapgeneric.c,v 1.16 1994/10/26 02:02:07 cgd Exp $	*/
+/*	$NetBSD: swapgeneric.c,v 1.17 1994/12/01 17:24:30 chopps Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986 Regents of the University of California.
@@ -175,7 +175,7 @@ setconf()
 				    dkp->dk_driver->d_strategy)
 					break;
 			if (bdp->d_open(MAKEDISKDEV(major(gc->gc_root),
-			    unit, 0), FREAD | FNONBLOCK, 0, curproc))
+			    unit, 0), FREAD | FNONBLOCK, 0, curproc, 0))
 				continue;
 			bdp->d_close(MAKEDISKDEV(major(gc->gc_root), unit, 
 			    0), FREAD | FNONBLOCK, 0, curproc);

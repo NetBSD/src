@@ -1,4 +1,4 @@
-/*	$NetBSD: ser.c,v 1.23 1994/10/26 02:04:51 cgd Exp $	*/
+/*	$NetBSD: ser.c,v 1.24 1994/12/01 17:25:35 chopps Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1990 The Regents of the University of California.
@@ -68,7 +68,7 @@ void serattach __P((struct device *, struct device *, void *));
 int sermatch __P((struct device *, struct cfdata *, void *));
 
 struct cfdriver sercd = {
-	NULL, "ser", sermatch, serattach, DV_TTY,
+	NULL, "ser", (cfmatch_t)sermatch, serattach, DV_TTY,
 	sizeof(struct device), NULL, 0 };
 
 #define SEROBUF_SIZE 32
@@ -600,8 +600,10 @@ sermint(unit)
 
 int
 serioctl(dev, cmd, data, flag, p)
-	dev_t	dev;
+	dev_t dev;
+	u_long cmd;
 	caddr_t data;
+	int flag;
 	struct proc *p;
 {
 	register struct tty *tp;

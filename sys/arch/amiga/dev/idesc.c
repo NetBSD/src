@@ -1,4 +1,4 @@
-/*	$NetBSD: idesc.c,v 1.7 1994/10/26 02:31:56 cgd Exp $	*/
+/*	$NetBSD: idesc.c,v 1.8 1994/12/01 17:25:13 chopps Exp $	*/
 
 /*
  * Copyright (c) 1994 Michael L. Hitch
@@ -269,7 +269,7 @@ struct scsi_device idesc_scsidev = {
 };
 
 struct cfdriver idesccd = {
-	NULL, "idesc", idescmatch, idescattach, 
+	NULL, "idesc", (cfmatch_t)idescmatch, idescattach, 
 	DV_DULL, sizeof(struct idec_softc), NULL, 0 };
 
 struct {

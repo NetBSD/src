@@ -1,4 +1,4 @@
-/*	$NetBSD: ite_cc.c,v 1.20 1994/10/26 02:03:57 cgd Exp $	*/
+/*	$NetBSD: ite_cc.c,v 1.21 1994/12/01 17:25:21 chopps Exp $	*/
 
 #include "grfcc.h"
 #if NGRFCC > 0
@@ -288,7 +288,9 @@ view_init(ip)
 int
 ite_grf_ioctl (ip, cmd, addr, flag, p)
 	struct ite_softc *ip;
+	u_long cmd;
 	caddr_t addr;
+	int flag;
 	struct proc *p;
 {
 	struct winsize ws;

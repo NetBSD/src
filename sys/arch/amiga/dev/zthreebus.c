@@ -1,4 +1,4 @@
-/*	$NetBSD: zthreebus.c,v 1.8 1994/10/26 02:05:17 cgd Exp $	*/
+/*	$NetBSD: zthreebus.c,v 1.9 1994/12/01 17:25:41 chopps Exp $	*/
 
 /*
  * Copyright (c) 1994 Michael L. Hitch
@@ -100,7 +100,7 @@ aconflookup(mid, pid)
  * zorro three bus driver 
  */
 struct cfdriver zthreebuscd = {
-	NULL, "zthreebus", zthreematch, zthreeattach, 
+	NULL, "zthreebus", (cfmatch_t)zthreematch, zthreeattach, 
 	DV_DULL, sizeof(struct device), NULL, 0
 };
 

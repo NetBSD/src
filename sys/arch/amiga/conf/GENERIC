@@ -1,4 +1,4 @@
-#	$NetBSD: GENERIC,v 1.28 1994/10/26 02:02:26 cgd Exp $
+#	$NetBSD: GENERIC,v 1.29 1994/12/01 17:24:44 chopps Exp $
 
 #
 # GENERIC AMIGA
@@ -63,6 +63,7 @@ options		"CD9660"	# ISO 9660 file system, with Rock Ridge
 #
 # Compatability options for various existing systems
 #
+options		"COMPAT_10"	# compatability with older NetBSD release
 options		"COMPAT_09"	# compatability with older NetBSD release
 options		"COMPAT_43"	# 4.3 BSD compatible system calls
 options		COMPAT_SUNOS	# Support to run Sun (m68k) executables

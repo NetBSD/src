@@ -1,4 +1,4 @@
-/*	$NetBSD: grf_cc.c,v 1.15 1994/10/26 02:03:10 cgd Exp $	*/
+/*	$NetBSD: grf_cc.c,v 1.16 1994/12/01 17:25:00 chopps Exp $	*/
 
 #include "grfcc.h"
 #if NGRFCC > 0
@@ -31,7 +31,7 @@ void grfccattach __P((struct device *, struct device *, void *));
 void grf_cc_on __P((struct grf_softc *));
 
 struct cfdriver grfcccd = {
-	NULL, "grfcc", grfccmatch, grfccattach, 
+	NULL, "grfcc", (cfmatch_t)grfccmatch, grfccattach, 
 	DV_DULL, sizeof(struct grf_softc), NULL, 0 };
 
 /* 

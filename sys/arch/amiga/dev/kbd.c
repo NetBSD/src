@@ -1,4 +1,4 @@
-/*	$NetBSD: kbd.c,v 1.11 1994/10/26 02:04:09 cgd Exp $	*/
+/*	$NetBSD: kbd.c,v 1.12 1994/12/01 17:25:25 chopps Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1990 The Regents of the University of California.
@@ -65,7 +65,7 @@ void kbdattach __P((struct device *, struct device *, void *));
 int kbdmatch __P((struct device *, struct cfdata *, void *));
 
 struct cfdriver kbdcd = {
-	NULL, "kbd", kbdmatch, kbdattach, DV_DULL,
+	NULL, "kbd", (cfmatch_t)kbdmatch, kbdattach, DV_DULL,
 	sizeof(struct device), NULL, 0 };
 
 /*ARGSUSED*/
@@ -149,7 +149,7 @@ kbdwrite (dev_t dev, struct uio *uio, int flags)
 }
 
 int
-kbdioctl (dev_t dev, int cmd, register caddr_t data, int flag, struct proc *p)
+kbdioctl(dev_t dev, u_long cmd, register caddr_t data, int flag, struct proc *p)
 {
   register struct kbd_softc *k = &kbd_softc;
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: mlhsc.c,v 1.4 1994/10/26 02:04:22 cgd Exp $	*/
+/*	$NetBSD: mlhsc.c,v 1.5 1994/12/01 17:25:28 chopps Exp $	*/
 
 /*
  * Copyright (c) 1994 Michael L. Hitch
@@ -82,7 +82,7 @@ extern int sci_debug;
 extern int sci_data_wait;
 
 struct cfdriver mlhsccd = {
-	NULL, "mlhsc", mlhscmatch, mlhscattach, 
+	NULL, "mlhsc", (cfmatch_t)mlhscmatch, mlhscattach, 
 	DV_DULL, sizeof(struct sci_softc), NULL, 0 };
 
 /*
