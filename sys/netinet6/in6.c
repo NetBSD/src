@@ -1,4 +1,4 @@
-/*	$NetBSD: in6.c,v 1.32.4.4 2000/10/30 22:36:33 tv Exp $	*/
+/*	$NetBSD: in6.c,v 1.32.4.5 2001/02/26 15:58:18 he Exp $	*/
 /*	$KAME: in6.c,v 1.107 2000/10/06 04:58:30 itojun Exp $	*/
 
 /*
@@ -780,6 +780,14 @@ in6_control(so, cmd, data, ifp, p)
 				time_second + ia->ia6_lifetime.ia6t_pltime;
 		} else
 			ia->ia6_lifetime.ia6t_preferred = 0;
+
+		/*
+		 * make sure to initialize ND6 information.  this is to
+		 * workaround issues with interfaces with IPv6 addresses,
+		 * which have never brought # up.  we are assuming that it is
+		 * safe to nd6_ifattach multiple times.
+		 */
+		nd6_ifattach(ifp);
 
 		/*
 		 * Perform DAD, if needed.
