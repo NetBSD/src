@@ -1,4 +1,4 @@
-#	$Id: Makefile.inc,v 1.3 1993/12/28 11:31:15 davidb Exp $
+#	$Id: Makefile.inc,v 1.4 1994/01/24 18:39:52 cgd Exp $
 
 LIBRCS!=cd $(.CURDIR)/../lib; \
-	printf "xxx:\n\techo \$${.OBJDIR}/librcs.a\n" | make -r -s -f - xxx
+	printf "xxx:\n\techo \$${.OBJDIR}/librcs.a\n" | ${MAKE} -r -s -f - xxx
