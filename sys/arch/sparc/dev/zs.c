@@ -1,4 +1,4 @@
-/*	$NetBSD: zs.c,v 1.24 1995/03/01 21:09:40 pk Exp $ */
+/*	$NetBSD: zs.c,v 1.25 1995/04/11 02:30:53 mycroft Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -72,7 +72,7 @@
 #include <sparc/sparc/auxreg.h>
 
 #include <machine/kbd.h>
-#include <sparc/dev/zsreg.h>
+#include <dev/ic/z8530.h>
 #include <sparc/dev/zsvar.h>
 
 #ifdef KGDB
@@ -1108,7 +1108,7 @@ zsioctl(dev, cmd, data, flag, p)
 	case TIOCSFLAGS: {
 		int userbits, driverbits = 0;
 
-		error = suser(p->p_ucred, &p->p_acflag);
+		error = suser(p->p_ucred, p);
 		if (error != 0)
 			return (EPERM);
 
