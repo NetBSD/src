@@ -1,4 +1,4 @@
-/*	$NetBSD: devopen.c,v 1.4 1999/04/14 11:53:44 drochner Exp $	 */
+/*	$NetBSD: devopen.c,v 1.5 2001/06/01 23:26:31 jdolecek Exp $	 */
 
 /*
  * Copyright (c) 1996
@@ -40,9 +40,6 @@
 #include <biosdisk.h>
 #include <dosfile.h>
 #include <bootinfo.h>
-
-extern int parsebootfile __P((const char *, char**, char**, unsigned int*,
-			      unsigned int*, const char**));
 
 struct devsw devsw[] = {
 	{"disk", biosdiskstrategy, biosdiskopen, biosdiskclose, biosdiskioctl},
