@@ -1,4 +1,4 @@
-/*	$NetBSD: if_gfe.c,v 1.10 2003/04/30 20:49:49 matt Exp $	*/
+/*	$NetBSD: if_gfe.c,v 1.11 2003/06/12 19:18:02 scw Exp $	*/
 
 /*
  * Copyright (c) 2002 Allegro Networks, Inc., Wasabi Systems, Inc.
@@ -345,9 +345,7 @@ gfe_dmamem_alloc(struct gfe_softc *sc, struct gfe_dmamem *gdm, int maxsegs,
 	gdm->gdm_size = size;
 	gdm->gdm_maxsegs = maxsegs;
 
-#if 0
-	flags |= BUS_DMA_NOCACHE;
-#endif
+	flags |= BUS_DMA_COHERENT;
 
 	error = bus_dmamem_alloc(sc->sc_dmat, gdm->gdm_size, PAGE_SIZE,
 	    gdm->gdm_size, gdm->gdm_segs, gdm->gdm_maxsegs, &gdm->gdm_nsegs,
