@@ -1,4 +1,4 @@
-/*	$NetBSD: nlist_elf32.c,v 1.4 1996/10/01 13:35:34 cgd Exp $	*/
+/*	$NetBSD: nlist_elf32.c,v 1.5 1996/10/03 04:55:31 cgd Exp $	*/
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All rights reserved.
@@ -76,8 +76,8 @@ ELFNAMEEND(__fdnlist)(fd, list)
 	Elf_Ehdr *ehdrp;
 	Elf_Shdr *shdrp, *symshdrp, *symstrshdrp;
 	Elf_Sym *symp;
-	Elf32_Off shdr_off;
-	Elf32_Word shdr_size;
+	Elf_Off shdr_off;
+	Elf_Word shdr_size;
 #if (ELFSIZE == 32)
 	Elf32_Half nshdr;
 #elif (ELFSIZE == 64)
