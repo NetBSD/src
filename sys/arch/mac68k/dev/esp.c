@@ -1,4 +1,4 @@
-/*	$NetBSD: esp.c,v 1.8 1997/02/28 07:46:59 scottr Exp $	*/
+/*	$NetBSD: esp.c,v 1.9 1997/03/01 06:38:36 scottr Exp $	*/
 
 /*
  * Copyright (c) 1996 Charles M. Hannum.  All rights reserved.
@@ -96,7 +96,7 @@
 #include <mac68k/dev/espvar.h>
 
 void	espattach	__P((struct device *, struct device *, void *));
-int	espmatch	__P((struct device *, void *, void *));
+int	espmatch	__P((struct device *, struct cfdata *, void *));
 
 /* Linkup to the rest of the kernel */
 struct cfattach esp_ca = {
@@ -149,7 +149,7 @@ struct ncr53c9x_glue esp_glue = {
 };
 
 int
-espmatch(parent, vcf, aux)
+espmatch(parent, cf, aux)
 	struct device *parent;
 	struct cfdata *cf;
 	void *aux;
