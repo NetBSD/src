@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_xxx.c,v 1.39 1997/03/26 22:42:17 gwr Exp $	*/
+/*	$NetBSD: kern_xxx.c,v 1.40 1997/09/20 19:32:15 pk Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -67,7 +67,7 @@ sys_reboot(p, v, retval)
 	 */
 	if ((SCARG(uap, opt) & RB_STRING) &&
 	    (error = copyinstr(SCARG(uap, bootstr), bs, sizeof(bs), 0)) == 0)
-		bootstr = SCARG(uap, bootstr);
+		bootstr = bs;
 	else
 		bootstr = NULL;
 	/*
