@@ -1,4 +1,4 @@
-/*	$NetBSD: ypclnt.h,v 1.8 1997/07/13 18:20:48 christos Exp $	*/
+/*	$NetBSD: ypclnt.h,v 1.9 1997/07/18 06:11:16 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993 Theo de Raadt <deraadt@fsa.ca>
@@ -61,7 +61,7 @@
  
 struct ypall_callback {
 	/* return non-0 to stop getting called */
-	int (*foreach) __P((u_long, char *, int, char *, int, void *));
+	int (*foreach) __P((int, char *, int, char *, int, char *));
 	char *data;		/* opaque pointer for use of callback fn */
 };
 
