@@ -1,4 +1,4 @@
-/* $NetBSD: wss_acpi.c,v 1.12 2004/04/11 10:36:35 kochi Exp $ */
+/* $NetBSD: wss_acpi.c,v 1.13 2004/05/01 12:03:48 kochi Exp $ */
 
 /*
  * Copyright (c) 2002 Jared D. McNeill <jmcneill@invisible.ca>
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wss_acpi.c,v 1.12 2004/04/11 10:36:35 kochi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wss_acpi.c,v 1.13 2004/05/01 12:03:48 kochi Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -52,8 +52,8 @@ __KERNEL_RCSID(0, "$NetBSD: wss_acpi.c,v 1.12 2004/04/11 10:36:35 kochi Exp $");
 #include <dev/isa/wssreg.h>
 #include <dev/isa/wssvar.h>
 
-int	wss_acpi_match(struct device *, struct cfdata *, void *);
-void	wss_acpi_attach(struct device *, struct device *, void *);
+static int	wss_acpi_match(struct device *, struct cfdata *, void *);
+static void	wss_acpi_attach(struct device *, struct device *, void *);
 
 CFATTACH_DECL(wss_acpi, sizeof(struct wss_softc), wss_acpi_match,
     wss_acpi_attach, NULL, NULL);
@@ -69,16 +69,16 @@ struct wss_acpi_hint {
 	int offset_ad1848;		/* offset from start of DAC region */
 };
 
-struct wss_acpi_hint wss_acpi_hints[] = {
+static struct wss_acpi_hint wss_acpi_hints[] = {
 	{ "NMX2210", 1, 2, WSS_CODEC },
 	{ "CSC0000", 0, 1, 0 },		/* Dell Latitude CPi */
 	{ "CSC0100", 0, 1, 0 },		/* CS4610 with CS4236 codec */
 	{ { 0 }, 0, 0, 0 }
 };
 
-int wss_acpi_hints_index (const char *);
+static int wss_acpi_hints_index (const char *);
 
-int
+static int
 wss_acpi_hints_index(idstr)
 	const char *idstr;
 {
@@ -96,7 +96,7 @@ wss_acpi_hints_index(idstr)
 /*
  * wss_acpi_match: autoconf(9) match routine
  */
-int
+static int
 wss_acpi_match(struct device *parent, struct cfdata *match, void *aux)
 {
 	struct acpi_attach_args *aa = aux;
@@ -111,7 +111,7 @@ wss_acpi_match(struct device *parent, struct cfdata *match, void *aux)
 /*
  * wss_acpi_attach: autoconf(9) attach routine
  */
-void
+static void
 wss_acpi_attach(struct device *parent, struct device *self, void *aux)
 {
 	struct wss_softc *sc = (struct wss_softc *)self;

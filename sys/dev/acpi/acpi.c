@@ -1,4 +1,4 @@
-/*	$NetBSD: acpi.c,v 1.63 2004/04/11 06:48:25 kochi Exp $	*/
+/*	$NetBSD: acpi.c,v 1.64 2004/05/01 12:03:48 kochi Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -77,7 +77,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi.c,v 1.63 2004/04/11 06:48:25 kochi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi.c,v 1.64 2004/05/01 12:03:48 kochi Exp $");
 
 #include "opt_acpi.h"
 
@@ -114,10 +114,10 @@ MALLOC_DECLARE(M_ACPI);
 int	acpi_dbgr = 0x00;
 #endif
 
-int	acpi_match(struct device *, struct cfdata *, void *);
-void	acpi_attach(struct device *, struct device *, void *);
+static int	acpi_match(struct device *, struct cfdata *, void *);
+static void	acpi_attach(struct device *, struct device *, void *);
 
-int	acpi_print(void *aux, const char *);
+static int	acpi_print(void *aux, const char *);
 
 extern struct cfdriver acpi_cd;
 
@@ -146,17 +146,17 @@ static int acpi_locked;
 /*
  * Prototypes.
  */
-void		acpi_shutdown(void *);
-ACPI_STATUS	acpi_disable(struct acpi_softc *sc);
-void		acpi_build_tree(struct acpi_softc *);
-ACPI_STATUS	acpi_make_devnode(ACPI_HANDLE, UINT32, void *, void **);
+static void		acpi_shutdown(void *);
+static ACPI_STATUS	acpi_disable(struct acpi_softc *sc);
+static void		acpi_build_tree(struct acpi_softc *);
+static ACPI_STATUS	acpi_make_devnode(ACPI_HANDLE, UINT32, void *, void **);
 
-void		acpi_enable_fixed_events(struct acpi_softc *);
+static void		acpi_enable_fixed_events(struct acpi_softc *);
 #ifdef ACPI_PCI_FIXUP
-void		acpi_pci_fixup(struct acpi_softc *);
+void			acpi_pci_fixup(struct acpi_softc *);
 #endif
 #if defined(ACPI_PCI_FIXUP) || defined(ACPI_ACTIVATE_DEV)
-ACPI_STATUS	acpi_allocate_resources(ACPI_HANDLE handle);
+static ACPI_STATUS	acpi_allocate_resources(ACPI_HANDLE handle);
 #endif
 
 /*
@@ -220,7 +220,7 @@ acpi_probe(void)
  *
  *	Autoconfiguration `match' routine.
  */
-int
+static int
 acpi_match(struct device *parent, struct cfdata *match, void *aux)
 {
 	struct acpibus_attach_args *aa = aux;
@@ -245,7 +245,7 @@ acpi_match(struct device *parent, struct cfdata *match, void *aux)
  *	which was required to check for the presence of ACPI),
  *	and enable the ACPI subsystem.
  */
-void
+static void
 acpi_attach(struct device *parent, struct device *self, void *aux)
 {
 	struct acpi_softc *sc = (void *) self;
@@ -358,7 +358,7 @@ acpi_attach(struct device *parent, struct device *self, void *aux)
  *	Shutdown hook for ACPI -- disable some events that
  *	might confuse us.
  */
-void
+static void
 acpi_shutdown(void *arg)
 {
 	struct acpi_softc *sc = arg;
@@ -375,7 +375,7 @@ acpi_shutdown(void *arg)
  *
  *	Disable ACPI.
  */
-ACPI_STATUS
+static ACPI_STATUS
 acpi_disable(struct acpi_softc *sc)
 {
 	ACPI_STATUS rv = AE_OK;
@@ -399,7 +399,7 @@ struct acpi_make_devnode_state {
  *	Scan relevant portions of the ACPI namespace and attach
  *	child devices.
  */
-void
+static void
 acpi_build_tree(struct acpi_softc *sc)
 {
 	static const char *scopes[] = {
@@ -523,7 +523,7 @@ acpi_activate_device(ACPI_HANDLE handle, ACPI_DEVICE_INFO **di)
  *
  *	Make an ACPI devnode.
  */
-ACPI_STATUS
+static ACPI_STATUS
 acpi_make_devnode(ACPI_HANDLE handle, UINT32 level, void *context,
     void **status)
 {
@@ -610,7 +610,7 @@ acpi_make_devnode(ACPI_HANDLE handle, UINT32 level, void *context,
  *
  *	Autoconfiguration print routine.
  */
-int
+static int
 acpi_print(void *aux, const char *pnp)
 {
 	struct acpi_attach_args *aa = aux;
@@ -672,15 +672,15 @@ acpi_print(void *aux, const char *pnp)
  * ACPI fixed-hardware feature handlers
  *****************************************************************************/
 
-UINT32		acpi_fixed_button_handler(void *);
-void		acpi_fixed_button_pressed(void *);
+static UINT32	acpi_fixed_button_handler(void *);
+static void	acpi_fixed_button_pressed(void *);
 
 /*
  * acpi_enable_fixed_events:
  *
  *	Enable any fixed-hardware feature handlers.
  */
-void
+static void
 acpi_enable_fixed_events(struct acpi_softc *sc)
 {
 	static int beenhere;
@@ -741,7 +741,7 @@ acpi_enable_fixed_events(struct acpi_softc *sc)
  *
  *	Event handler for the fixed buttons.
  */
-UINT32
+static UINT32
 acpi_fixed_button_handler(void *context)
 {
 	struct sysmon_pswitch *smpsw = context;
@@ -766,7 +766,7 @@ acpi_fixed_button_handler(void *context)
  *
  *	Deal with a fixed button being pressed.
  */
-void
+static void
 acpi_fixed_button_pressed(void *context)
 {
 	struct sysmon_pswitch *smpsw = context;
@@ -1183,7 +1183,7 @@ acpi_pci_fixup_bus(ACPI_HANDLE handle, UINT32 level, void *context,
 
 #if defined(ACPI_PCI_FIXUP) || defined(ACPI_ACTIVATE_DEV)
 /* XXX This very incomplete */
-ACPI_STATUS
+static ACPI_STATUS
 acpi_allocate_resources(ACPI_HANDLE handle)
 {
 	ACPI_BUFFER bufp, bufc, bufn;

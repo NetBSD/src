@@ -1,4 +1,4 @@
-/*	$NetBSD: vald_acpi.c,v 1.19 2004/04/10 11:50:55 kochi Exp $	*/
+/*	$NetBSD: vald_acpi.c,v 1.20 2004/05/01 12:05:01 kochi Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -83,7 +83,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vald_acpi.c,v 1.19 2004/04/10 11:50:55 kochi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vald_acpi.c,v 1.20 2004/05/01 12:05:01 kochi Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -137,30 +137,30 @@ static const char * const vald_acpi_hids[] = {
 #define LIBRIGHT_UP	0x01
 #define LIBRIGHT_DOWN	0x02
 
-int	vald_acpi_match(struct device *, struct cfdata *, void *);
-void	vald_acpi_attach(struct device *, struct device *, void *);
+static int	vald_acpi_match(struct device *, struct cfdata *, void *);
+static void	vald_acpi_attach(struct device *, struct device *, void *);
 
-void		vald_acpi_event(void *);
+static void	vald_acpi_event(void *);
 static void	vald_acpi_notify_handler(ACPI_HANDLE, UINT32, void *);
 
 #define ACPI_NOTIFY_ValdStatusChanged	0x80
 
 
-ACPI_STATUS	vald_acpi_ghci_get(struct vald_acpi_softc *, UINT32, UINT32 *,
-    UINT32 *);
-ACPI_STATUS	vald_acpi_ghci_set(struct vald_acpi_softc *, UINT32, UINT32,
-    UINT32 *);
+static ACPI_STATUS	vald_acpi_ghci_get(struct vald_acpi_softc *, UINT32,
+    UINT32 *, UINT32 *);
+static ACPI_STATUS	vald_acpi_ghci_set(struct vald_acpi_softc *, UINT32,
+    UINT32, UINT32 *);
 
-ACPI_STATUS	vald_acpi_libright_get_bus(ACPI_HANDLE, UINT32, void *,
+static ACPI_STATUS	vald_acpi_libright_get_bus(ACPI_HANDLE, UINT32, void *,
     void **);
-void		vald_acpi_libright_get(struct vald_acpi_softc *);
-void		vald_acpi_libright_set(struct vald_acpi_softc *, int);
+static void		vald_acpi_libright_get(struct vald_acpi_softc *);
+static void		vald_acpi_libright_set(struct vald_acpi_softc *, int);
 
-void		vald_acpi_video_switch(struct vald_acpi_softc *);
-void		vald_acpi_fan_switch(struct vald_acpi_softc *);
+static void		vald_acpi_video_switch(struct vald_acpi_softc *);
+static void		vald_acpi_fan_switch(struct vald_acpi_softc *);
 
-ACPI_STATUS	vald_acpi_bcm_set(ACPI_HANDLE, UINT32);
-ACPI_STATUS	vald_acpi_dssx_set(UINT32);
+static ACPI_STATUS	vald_acpi_bcm_set(ACPI_HANDLE, UINT32);
+static ACPI_STATUS	vald_acpi_dssx_set(UINT32);
 
 CFATTACH_DECL(vald_acpi, sizeof(struct vald_acpi_softc),
     vald_acpi_match, vald_acpi_attach, NULL, NULL);
@@ -170,7 +170,7 @@ CFATTACH_DECL(vald_acpi, sizeof(struct vald_acpi_softc),
  *
  *	Autoconfiguration `match' routine.
  */
-int
+static int
 vald_acpi_match(struct device *parent, struct cfdata *match, void *aux)
 {
 	struct acpi_attach_args *aa = aux;
@@ -186,7 +186,7 @@ vald_acpi_match(struct device *parent, struct cfdata *match, void *aux)
  *
  *	Autoconfiguration `attach' routine.
  */
-void
+static void
 vald_acpi_attach(struct device *parent, struct device *self, void *aux)
 {
 	struct vald_acpi_softc *sc = (void *) self;
@@ -288,7 +288,7 @@ vald_acpi_notify_handler(ACPI_HANDLE handle, UINT32 notify, void *context)
  *
  *	Check hotkey event and do it, if event occur.
  */
-void
+static void
 vald_acpi_event(void *arg)
 {
 	struct vald_acpi_softc *sc = arg;
@@ -332,7 +332,7 @@ vald_acpi_event(void *arg)
  *
  *	Get value via "GHCI" Method.
  */
-ACPI_STATUS
+static ACPI_STATUS
 vald_acpi_ghci_get(struct vald_acpi_softc *sc,
     UINT32 reg, UINT32 *value, UINT32 *result)
 {
@@ -389,7 +389,7 @@ vald_acpi_ghci_get(struct vald_acpi_softc *sc,
  *
  *	Set value via "GHCI" Method.
  */
-ACPI_STATUS
+static ACPI_STATUS
 vald_acpi_ghci_set(struct vald_acpi_softc *sc,
     UINT32 reg, UINT32 value, UINT32 *result)
 {
@@ -443,7 +443,7 @@ vald_acpi_ghci_set(struct vald_acpi_softc *sc,
  *	Get LCD brightness level via "_BCL" Method,
  *	and save this handle.
  */
-ACPI_STATUS
+static ACPI_STATUS
 vald_acpi_libright_get_bus(ACPI_HANDLE handle, UINT32 level, void *context,
     void **status)
 {
@@ -500,7 +500,7 @@ vald_acpi_libright_get_bus(ACPI_HANDLE handle, UINT32 level, void *context,
  *
  *	Search node that have "_BCL" Method.
  */
-void
+static void
 vald_acpi_libright_get(struct vald_acpi_softc *sc)
 {
 	ACPI_HANDLE parent;
@@ -524,7 +524,7 @@ vald_acpi_libright_get(struct vald_acpi_softc *sc)
  *
  *	Figure up next status and set it.
  */
-void
+static void
 vald_acpi_libright_set(struct vald_acpi_softc *sc, int UpDown)
 {
 	ACPI_STATUS rv;
@@ -601,7 +601,7 @@ vald_acpi_libright_set(struct vald_acpi_softc *sc, int UpDown)
  *
  *	Get video status(LCD/CRT) and set new video status.
  */
-void
+static void
 vald_acpi_video_switch(struct vald_acpi_softc *sc)
 {
 	ACPI_STATUS	rv;
@@ -645,7 +645,7 @@ vald_acpi_video_switch(struct vald_acpi_softc *sc)
  *
  *	Set LCD brightness via "_BCM" Method.
  */
-ACPI_STATUS
+static ACPI_STATUS
 vald_acpi_bcm_set(ACPI_HANDLE handle, UINT32 bright)
 {
 	ACPI_STATUS rv;
@@ -667,7 +667,7 @@ vald_acpi_bcm_set(ACPI_HANDLE handle, UINT32 bright)
  *
  *	Set value via "\\_SB_.VALX.DSSX" Method.
  */
-ACPI_STATUS
+static ACPI_STATUS
 vald_acpi_dssx_set(UINT32 value)
 {
 	ACPI_STATUS rv;
@@ -691,7 +691,7 @@ vald_acpi_dssx_set(UINT32 value)
  *
  *	Get FAN status and set new FAN status.
  */
-void
+static void
 vald_acpi_fan_switch(struct vald_acpi_softc *sc)
 {
 	ACPI_STATUS rv;

@@ -1,4 +1,4 @@
-/*	$NetBSD: acpi_ec.c,v 1.30 2004/04/24 09:07:50 yamt Exp $	*/
+/*	$NetBSD: acpi_ec.c,v 1.31 2004/05/01 12:03:48 kochi Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -172,7 +172,7 @@
  *****************************************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_ec.c,v 1.30 2004/04/24 09:07:50 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_ec.c,v 1.31 2004/05/01 12:03:48 kochi Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -268,8 +268,8 @@ static __inline void	EcLock(struct acpi_ec_softc *);
 static __inline void	EcUnlock(struct acpi_ec_softc *);
 
 
-int	acpiec_match(struct device *, struct cfdata *, void *);
-void	acpiec_attach(struct device *, struct device *, void *);
+static int	acpiec_match(struct device *, struct cfdata *, void *);
+static void	acpiec_attach(struct device *, struct device *, void *);
 
 CFATTACH_DECL(acpiec, sizeof(struct acpi_ec_softc),
     acpiec_match, acpiec_attach, NULL, NULL);
@@ -353,7 +353,7 @@ EcUnlock(struct acpi_ec_softc *sc)
  *
  *	Autoconfiguration `match' routine.
  */
-int
+static int
 acpiec_match(struct device *parent, struct cfdata *match, void *aux)
 {
 	struct acpi_attach_args *aa = aux;
@@ -472,7 +472,7 @@ acpiec_early_attach(struct device *parent)
  *
  *	Autoconfiguration `attach' routine.
  */
-void
+static void
 acpiec_attach(struct device *parent, struct device *self, void *aux)
 {
 	struct acpi_ec_softc *sc = (void *) self;
