@@ -1,5 +1,5 @@
 /*
- * $Id: md.c,v 1.3 1993/11/06 19:15:31 pk Exp $
+ * $Id: md.c,v 1.4 1993/11/10 21:46:03 pk Exp $
  */
 
 #include <sys/param.h>
@@ -283,5 +283,14 @@ struct relocation_info	*rp, *r;
 {
 	r->r_type = RELOC_COPY_DAT;
 	r->r_addend = 0;
+}
+
+void
+md_set_breakpoint(where, savep)
+long	where;
+long	*savep;
+{
+	*savep = *(long *)where;
+	*(long *)where = TRAP;
 }
 

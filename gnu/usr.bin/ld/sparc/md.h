@@ -27,7 +27,7 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
- *	$Id: md.h,v 1.3 1993/10/24 00:48:20 pk Exp $
+ *	$Id: md.h,v 1.4 1993/11/10 21:46:06 pk Exp $
  */
 
 /*
@@ -122,6 +122,7 @@ typedef struct jmpslot {
 #define CALL	0x40000000	/* Call instruction (opcode2) */
 #define JMP	0x81c06000	/* Jump %g1 instruction (opcode2) */
 #define NOP	0x01000000	/* Delay slot NOP for (reloc_index) */
+#define TRAP	0x91d02001	/* ta 0x1 */
 
 
 /*
