@@ -1,4 +1,4 @@
-##	$NetBSD: Makefile.inc,v 1.4 1999/02/19 19:22:52 drochner Exp $
+##	$NetBSD: Makefile.inc,v 1.5 2001/11/01 09:37:17 yamt Exp $
 
 SRCS += netif_small.c
 .if (${USE_NETIF} == "3c509")
@@ -21,4 +21,8 @@ SRCS += i82557.c
 .endif
 .if (${USE_NETIF} == "3c90xb")
 SRCS += 3c90xb.c
+.endif
+.if (${USE_NETIF} == "ne2000")
+SRCS += ne.c dp8390.c
+CPPFLAGS += -DSUPPORT_NE2000
 .endif
