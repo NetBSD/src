@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.2 2000/03/21 01:05:54 soren Exp $	*/
+/*	$NetBSD: machdep.c,v 1.3 2000/03/21 02:27:50 soren Exp $	*/
 
 /*
  * Copyright (c) 2000 Soren S. Jorvang.  All rights reserved.
@@ -129,8 +129,6 @@ cobalt_hardware_intr(mask, pc, status, cause)
 	static u_int32_t cycles;
 	int s;
 
-	cf.pc = pc;
-	cf.sr = status;
 
 	/* XXX Reverse hardlock and statclock? */
 
@@ -138,6 +136,9 @@ cobalt_hardware_intr(mask, pc, status, cause)
 	if (cause & MIPS_INT_MASK_5) {
 		cycles = mips3_cycle_count();
 		mips3_write_compare(cycles + TICK_CYCLES);
+
+		cf.pc = pc;
+		cf.sr = status;
 
 		s = splstatclock(); /* XXX redo interrupts XXX */
 		statclock(&cf);
@@ -178,6 +179,10 @@ cobalt_hardware_intr(mask, pc, status, cause)
 
 		if (*irq_src & 0x00000100) {
 			*irq_src = 0;
+
+			cf.pc = pc;
+			cf.sr = status;
+
 			s = splclock();	/* XXX redo interrupts XXX */
 			hardclock(&cf);
 			splx(s);	/* XXX redo interrupts XXX */
