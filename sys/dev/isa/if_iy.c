@@ -1,4 +1,4 @@
-/*	$NetBSD: if_iy.c,v 1.9.4.1 1997/02/07 18:03:59 is Exp $	*/
+/*	$NetBSD: if_iy.c,v 1.9.4.2 1997/02/17 20:05:17 is Exp $	*/
 /* #define IYDEBUG */
 /* #define IYMEMDEBUG */
 /*-
@@ -51,6 +51,8 @@
 #include <net/if_dl.h>
 #include <net/netisr.h>
 #include <net/route.h>
+
+#include <net/if_ether.h>
 
 #if NBPFILTER > 0
 #include <net/bpf.h>
@@ -140,6 +142,10 @@ void iyget __P((struct iy_softc *, bus_space_tag_t, bus_space_handle_t, int));
 void iymbuffill __P((void *)); 
 void iymbufempty __P((void *));
 void iyprobemem __P((struct iy_softc *));
+static __inline void eepromwritebit __P((bus_space_tag_t, bus_space_handle_t,
+    bus_size_t, int));
+static __inline int eepromreadbit __P((bus_space_tag_t, bus_space_handle_t,
+	bus_size_t));
 
 /*
  * void iymeminit __P((void *, struct iy_softc *));
@@ -200,32 +206,32 @@ iyprobe(parent, match, aux)
 	/* try to find the round robin sig: */
 
 	c = bus_space_read_1(iot, ioh, ID_REG);
-	if (c & ID_REG_MASK != ID_REG_SIG)
+	if ((c & ID_REG_MASK) != ID_REG_SIG)
 		goto out;
 
 	d = bus_space_read_1(iot, ioh, ID_REG);
-	if (d & ID_REG_MASK != ID_REG_SIG)
+	if ((d & ID_REG_MASK) != ID_REG_SIG)
 		goto out;
 
 	if (((d-c) & R_ROBIN_BITS) != 0x40)
 		goto out;
 		
 	d = bus_space_read_1(iot, ioh, ID_REG);
-	if (d & ID_REG_MASK != ID_REG_SIG)
+	if ((d & ID_REG_MASK) != ID_REG_SIG)
 		goto out;
 
 	if (((d-c) & R_ROBIN_BITS) != 0x80)
 		goto out;
 		
 	d = bus_space_read_1(iot, ioh, ID_REG);
-	if (d & ID_REG_MASK != ID_REG_SIG)
+	if ((d & ID_REG_MASK) != ID_REG_SIG)
 		goto out;
 
 	if (((d-c) & R_ROBIN_BITS) != 0xC0)
 		goto out;
 		
 	d = bus_space_read_1(iot, ioh, ID_REG);
-	if (d & ID_REG_MASK != ID_REG_SIG)
+	if ((d & ID_REG_MASK) != ID_REG_SIG)
 		goto out;
 
 	if (((d-c) & R_ROBIN_BITS) != 0x00)
@@ -447,11 +453,11 @@ struct iy_softc *sc;
 		break;
 
 	case IFF_LINK1:
-		temp = temp & ~TPE_BIT | BNC_BIT;
+		temp = (temp & ~TPE_BIT) | BNC_BIT;
 		break;
  
 	case IFF_LINK0|IFF_LINK1:
-		temp = temp & ~BNC_BIT | TPE_BIT;
+		temp = (temp & ~BNC_BIT) | TPE_BIT;
 		break;
 	default:
 		/* nothing; leave as it is */
@@ -820,7 +826,7 @@ iyintr(arg)
 			printf("\n");
 	}
 #endif
-	if ((status & (RX_INT | TX_INT) == 0))
+	if (((status & (RX_INT | TX_INT)) == 0))
 		return 0;
 
 	if (status & RX_INT) {
