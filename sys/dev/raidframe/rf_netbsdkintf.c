@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_netbsdkintf.c,v 1.141 2002/09/27 15:37:30 provos Exp $	*/
+/*	$NetBSD: rf_netbsdkintf.c,v 1.142 2002/10/01 18:11:57 thorpej Exp $	*/
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -114,7 +114,7 @@
  ***********************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_netbsdkintf.c,v 1.141 2002/09/27 15:37:30 provos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_netbsdkintf.c,v 1.142 2002/10/01 18:11:57 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/errno.h>
@@ -279,7 +279,8 @@ void rf_ReconThread(struct rf_recon_req *);
 void rf_RewriteParityThread(RF_Raid_t *raidPtr);
 void rf_CopybackThread(RF_Raid_t *raidPtr);
 void rf_ReconstructInPlaceThread(struct rf_recon_req *);
-void rf_buildroothack(void *);
+int rf_autoconfig(struct device *self);
+void rf_buildroothack(RF_ConfigSet_t *);
 
 RF_AutoConfig_t *rf_find_raid_components(void);
 RF_ConfigSet_t *rf_create_auto_sets(RF_AutoConfig_t *);
@@ -305,8 +306,6 @@ raidattach(num)
 {
 	int raidID;
 	int i, rc;
-	RF_AutoConfig_t *ac_list; /* autoconfig list */
-	RF_ConfigSet_t *config_sets;
 
 #ifdef DEBUG
 	printf("raidattach: Asked for %d units\n", num);
@@ -390,35 +389,47 @@ raidattach(num)
 	raidautoconfig = 1;
 #endif
 
-if (raidautoconfig) {
-	/* 1. locate all RAID components on the system */
+	/*
+	 * Register a finalizer which will be used to auto-config RAID
+	 * sets once all real hardware devices have been found.
+	 */
+	if (config_finalize_register(NULL, rf_autoconfig) != 0)
+		printf("WARNING: unable to register RAIDframe finalizer\n");
+}
 
-#if DEBUG
-	printf("Searching for raid components...\n");
+int
+rf_autoconfig(struct device *self)
+{
+	RF_AutoConfig_t *ac_list;
+	RF_ConfigSet_t *config_sets;
+
+	if (raidautoconfig == 0)
+		return (0);
+
+	/* XXX This code can only be run once. */
+	raidautoconfig = 0;
+
+	/* 1. locate all RAID components on the system */
+#ifdef DEBUG
+	printf("Searching for RAID components...\n");
 #endif
 	ac_list = rf_find_raid_components();
 
-	/* 2. sort them into their respective sets */
-
+	/* 2. Sort them into their respective sets. */
 	config_sets = rf_create_auto_sets(ac_list);
 
-	/* 3. evaluate each set and configure the valid ones
-	   This gets done in rf_buildroothack() */
+	/*
+	 * 3. Evaluate each set andconfigure the valid ones.
+	 * This gets done in rf_buildroothack().
+	 */
+	rf_buildroothack(config_sets);
 
-	/* schedule the creation of the thread to do the 
-	   "/ on RAID" stuff */
-
-	kthread_create(rf_buildroothack,config_sets);
-
-}
-
+	return (1);
 }
 
 void
-rf_buildroothack(arg)
-	void *arg;
+rf_buildroothack(RF_ConfigSet_t *config_sets)
 {
-	RF_ConfigSet_t *config_sets = arg;
 	RF_ConfigSet_t *cset;
 	RF_ConfigSet_t *next_cset;
 	int retcode;

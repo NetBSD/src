@@ -1,4 +1,4 @@
-/* $NetBSD: device.h,v 1.57 2002/09/30 20:42:29 thorpej Exp $ */
+/* $NetBSD: device.h,v 1.58 2002/10/01 18:11:58 thorpej Exp $ */
 
 /*
  * Copyright (c) 1996, 2000 Christopher G. Demetriou
@@ -303,6 +303,9 @@ void config_defer(struct device *, void (*)(struct device *));
 void config_interrupts(struct device *, void (*)(struct device *));
 void config_pending_incr(void);
 void config_pending_decr(void);
+
+int config_finalize_register(struct device *, int (*)(struct device *));
+void config_finalize(void);
 
 #ifdef __HAVE_DEVICE_REGISTER
 void device_register(struct device *, void *);
