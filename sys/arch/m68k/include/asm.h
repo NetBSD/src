@@ -1,4 +1,4 @@
-/*	$NetBSD: asm.h,v 1.11 1996/09/24 00:05:55 jtc Exp $	*/
+/*	$NetBSD: asm.h,v 1.12 1996/11/30 02:49:00 jtc Exp $	*/
 
 /*
  * Copyright (c) 1994 Allen Briggs
@@ -60,7 +60,7 @@
 #endif
 
 
-#ifdef PROF
+#ifdef GPROF
 #define _PROF_PROLOG	link a6,#0; jbsr mcount; unlk a6
 #else
 #define _PROF_PROLOG

@@ -1,4 +1,4 @@
-/*	$NetBSD: asm.h,v 1.10 1996/10/13 03:29:05 christos Exp $	*/
+/*	$NetBSD: asm.h,v 1.11 1996/11/30 02:49:01 jtc Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -63,7 +63,7 @@
 /*
  * Define -pg profile entry code.
  */
-#if defined(GPROF) || defined(PROF)
+#ifdef GPROF
 #define	MCOUNT	.set noreorder; \
 		.set noat; \
 		move $1,$31; \

@@ -1,4 +1,4 @@
-/*	$NetBSD: asm.h,v 1.3 1994/11/20 20:52:51 deraadt Exp $ */
+/*	$NetBSD: asm.h,v 1.4 1996/11/30 02:49:05 jtc Exp $ */
 
 /*
  * Copyright (c) 1994 Allen Briggs
@@ -83,7 +83,7 @@
 #define	_ENTRY(name) \
 	.align 4; .globl name; .proc 1; FTYPE(name); name:
 
-#ifdef PROF
+#ifdef GPROF
 #define _PROF_PROLOGUE \
 	.data; .align 4; 1: .long 0; \
 	.text; save %sp,-96,%sp; sethi %hi(1b),%o0; call mcount; \

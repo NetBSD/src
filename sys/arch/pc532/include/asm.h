@@ -1,4 +1,4 @@
-/*	$NetBSD: asm.h,v 1.8 1996/11/07 07:33:28 matthias Exp $	*/
+/*	$NetBSD: asm.h,v 1.9 1996/11/30 02:49:02 jtc Exp $	*/
 
 /* 
  * Mach Operating System
@@ -88,7 +88,7 @@
 #define PIC_S_ARG3	16(sp)
 #endif
 
-#if defined(PROF) || defined(GPROF)
+#ifdef GPROF
 #define	MC1	.data; 1:; .long 0; .text
 #define MC2	enter [r0],0; addr 1b(pc),r0; bsr mcount; exit [r0]
 #else
