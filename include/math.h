@@ -31,7 +31,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)math.h	5.8 (Berkeley) 4/2/91
- *	$Id: math.h,v 1.4 1993/08/04 17:24:44 jtc Exp $
+ *	$Id: math.h,v 1.5 1993/10/11 18:13:24 jtc Exp $
  */
 
 #ifndef	_MATH_H_
@@ -56,7 +56,6 @@ extern char __infinity[];		/* bytes for IEEE754 +Infinity */
 #else
 #define	HUGE	HUGE_VAL
 #endif
-#endif
 
 #define	M_E		2.7182818284590452354	/* e */
 #define	M_LOG2E		1.4426950408889634074	/* log 2e */
@@ -71,6 +70,7 @@ extern char __infinity[];		/* bytes for IEEE754 +Infinity */
 #define	M_2_SQRTPI	1.12837916709551257390	/* 2/sqrt(pi) */
 #define	M_SQRT2		1.41421356237309504880	/* sqrt(2) */
 #define	M_SQRT1_2	0.70710678118654752440	/* 1/sqrt(2) */
+#endif	/* !_ANSI_SOURCE && !_POSIX_SOURCE */
 
 #include <sys/cdefs.h>
 
@@ -127,7 +127,7 @@ __pure double	scalb __P((double, int));
 __pure double	y0 __P((double));
 __pure double	y1 __P((double));
 __pure double	yn __P((int, double));
-#endif
+#endif	/* !_ANSI_SOURCE && !_POSIX_SOURCE */
 
 __END_DECLS
 
