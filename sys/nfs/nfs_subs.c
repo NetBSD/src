@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_subs.c,v 1.40 1997/03/23 20:55:51 fvdl Exp $	*/
+/*	$NetBSD: nfs_subs.c,v 1.41 1997/03/27 20:40:09 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -968,9 +968,7 @@ nfsm_disct(mdp, dposp, siz, left, cp2)
 			m2 = m1;
 			*mdp = m1 = havebuf;
 			if (m1->m_flags & M_EXT) {
-				MCLFREE(m1->m_ext.ext_buf)
-				m1->m_flags &= ~M_EXT;
-				m1->m_ext.ext_size = 0; /* why ??? */
+				MEXTREMOVE(m1);
 			}
 		} else {
 			/*
@@ -984,9 +982,8 @@ nfsm_disct(mdp, dposp, siz, left, cp2)
 			m2->m_ext = m1->m_ext;
 			m2->m_data = src;
 			m2->m_len = left;
-			m2->m_flags |= M_EXT;
-			m1->m_ext.ext_size = 0; /* why ??? */
-			m1->m_flags &= ~M_EXT;
+			MCLADDREFERENCE(m1, m2);
+			MEXTREMOVE(m1);
 			m2->m_next = m1->m_next;
 			m1->m_next = m2;
 		}
