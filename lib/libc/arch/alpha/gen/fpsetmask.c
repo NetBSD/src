@@ -1,4 +1,4 @@
-/*	$NetBSD: fpsetmask.c,v 1.2 1999/04/30 00:58:31 ross Exp $	*/
+/*	$NetBSD: fpsetmask.c,v 1.3 2002/01/13 21:45:40 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1995 Ross Harvey
@@ -31,8 +31,16 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
+#include <sys/cdefs.h>
+
+#include "namespace.h"
+
 #include <ieeefp.h>
 #include <machine/sysarch.h>
+
+#ifdef __weak_alias
+__weak_alias(fpsetmask,_fpsetmask)
+#endif
 
 fp_except
 fpsetmask(mask)

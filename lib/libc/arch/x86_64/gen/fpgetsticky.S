@@ -1,4 +1,4 @@
-/*	$NetBSD: fpgetsticky.S,v 1.1 2001/06/19 00:25:03 fvdl Exp $	*/
+/*	$NetBSD: fpgetsticky.S,v 1.2 2002/01/13 21:45:51 thorpej Exp $	*/
 
 /*
  * Written by J.T. Conklin, Apr 4, 1995
@@ -7,7 +7,12 @@
 
 #include <machine/asm.h>
 
+#ifdef WEAK_ALIAS
+WEAK_ALIAS(fpgetsticky, _fpgetsticky)
+ENTRY(_fpgetsticky)
+#else
 ENTRY(fpgetsticky)
+#endif
 	fnstsw -4(%rsp)
 	movl -4(%rsp),%eax
 	andl $63,%eax

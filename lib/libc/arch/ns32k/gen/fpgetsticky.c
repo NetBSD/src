@@ -1,4 +1,4 @@
-/*	$NetBSD: fpgetsticky.c,v 1.3 1997/07/13 18:45:34 christos Exp $	*/
+/*	$NetBSD: fpgetsticky.c,v 1.4 2002/01/13 21:45:46 thorpej Exp $	*/
 
 /*
  * Written by J.T. Conklin, Apr 11, 1995
@@ -7,12 +7,18 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: fpgetsticky.c,v 1.3 1997/07/13 18:45:34 christos Exp $");
+__RCSID("$NetBSD: fpgetsticky.c,v 1.4 2002/01/13 21:45:46 thorpej Exp $");
 #endif /* LIBC_SCCS and not lint */
+
+#include "namespace.h"
 
 #include <ieeefp.h>
 #include <machine/cpufunc.h>
 #include <machine/fpu.h>
+
+#ifdef __weak_alias
+__weak_alias(fpgetsticky,_fpgetsticky)
+#endif
 
 fp_except
 fpgetsticky()

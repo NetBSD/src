@@ -1,4 +1,4 @@
-/*	$NetBSD: fpsetsticky.S,v 1.1 2000/12/29 20:13:53 bjh21 Exp $	*/
+/*	$NetBSD: fpsetsticky.S,v 1.2 2002/01/13 21:45:42 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1996 Mark Brinicombe
@@ -39,7 +39,12 @@
  * Set the current FP cumulative flags
  */
 
+#ifdef WEAK_ALIAS
+WEAK_ALIAS(fpsetsticky, _fpsetsticky)
+ENTRY(_fpsetsticky)
+#else
 ENTRY(fpsetsticky)
+#endif
 	rfs	r1
 	bic	r1, r1, #0x1f
 	and	r0, r0, #0x1f
