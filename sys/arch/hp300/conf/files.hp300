@@ -1,9 +1,8 @@
-# $Id: files.hp300,v 1.8 1994/01/08 11:08:28 cgd Exp $
+# $Id: files.hp300,v 1.9 1994/02/06 00:44:26 mycroft Exp $
 #
 arch/hp300/hp300/autoconf.c		standard
 arch/hp300/hp300/clock.c		standard clock needs-count # XXX? split?
 arch/hp300/hp300/conf.c			standard
-arch/hp300/hp300/cons.c			standard
 arch/hp300/hp300/dkbad.c		standard
 arch/hp300/hp300/kgdb_glue.c		optional kgdb compile-with "${NORMAL_C} -fno-defer-pop"
 arch/hp300/hp300/kgdb_stub.c		optional kgdb
@@ -33,6 +32,7 @@ arch/hp300/dev/hpib.c			optional hpib device-driver
 arch/hp300/dev/nhpib.c			optional hpib device-driver
 arch/hp300/dev/fhpib.c			optional hpib device-driver
 arch/hp300/dev/rd.c			optional rd device-driver
+arch/hp300/dev/rd_compat.c		optional rd device-driver
 arch/hp300/dev/ct.c			optional ct device-driver
 arch/hp300/dev/if_le.c			optional le device-driver
 arch/hp300/dev/ppi.c			optional ppi device-driver
@@ -47,4 +47,5 @@ arch/hp300/hpux/hpux_sig.c		optional hpuxcompat
 arch/hp300/hpux/hpux_syscalls.c		optional hpuxcompat
 arch/hp300/hpux/hpux_sysent.c		optional hpuxcompat
 arch/hp300/hpux/hpux_tty.c		optional hpuxcompat
+dev/cons.c				standard
 thisisfor_in_proto.c			optional hy

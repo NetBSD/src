@@ -37,7 +37,7 @@
  *
  *	from: Utah Hdr: ite.c 1.1 90/07/09
  *	from: @(#)ite.c	7.6 (Berkeley) 5/16/91
- *	$Id: ite.c,v 1.15 1994/01/30 18:30:45 mycroft Exp $
+ *	$Id: ite.c,v 1.16 1994/02/06 00:44:36 mycroft Exp $
  */
 
 /*
@@ -776,7 +776,7 @@ ite_clrtoeos(ip, sp)
 /*
  * Console functions
  */
-#include "../hp300/cons.h"
+#include <dev/cons.h>
 #include "grfioctl.h"
 #include "grfvar.h"
 
