@@ -1,4 +1,4 @@
-/*	$NetBSD: scsiconf.h,v 1.45 1998/10/20 22:26:05 thorpej Exp $	*/
+/*	$NetBSD: scsiconf.h,v 1.46 1998/11/17 14:38:42 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -87,13 +87,7 @@ struct scsibus_softc {
 #define	SCSI_OP_BDINFO	0x0003
 
 int	scsi_change_def __P((struct scsipi_link *, int));
-int	scsi_interpret_sense __P((struct scsipi_xfer *));
 void	scsi_print_addr __P((struct scsipi_link *));
-#ifdef SCSIVERBOSE
-void	scsi_print_sense __P((struct scsipi_xfer *, int));
-void	scsi_print_sense_data __P((struct scsipi_sense_data *, int));
-char   *scsi_decode_sense __P((void *, int));
-#endif
 int	scsi_probe_busses __P((int, int, int));
 int	scsi_scsipi_cmd __P((struct scsipi_link *, struct scsipi_generic *,
 	    int cmdlen, u_char *data_addr, int datalen, int retries,

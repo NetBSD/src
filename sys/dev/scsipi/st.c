@@ -1,4 +1,4 @@
-/*	$NetBSD: st.c,v 1.104 1998/09/11 20:10:15 mjacob Exp $ */
+/*	$NetBSD: st.c,v 1.105 1998/11/17 14:38:43 bouyer Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -2305,7 +2305,7 @@ st_interpret_sense(xs)
 	}
 #ifdef	SCSIVERBOSE
 	if (doprint) {
-		scsi_print_sense(xs, 0);
+		scsipi_print_sense(xs, 0);
 	}
 #else
 	if (doprint) {
