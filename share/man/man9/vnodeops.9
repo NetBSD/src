@@ -1,4 +1,4 @@
-.\"     $NetBSD: vnodeops.9,v 1.31 2005/01/02 17:34:43 thorpej Exp $
+.\"     $NetBSD: vnodeops.9,v 1.32 2005/01/02 18:38:04 wiz Exp $
 .\"
 .\" Copyright (c) 2001, 2005 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -461,7 +461,9 @@ is returned unlocked on a successful lookup.
 .Pp
 On failure
 .Fa *vpp
-is NULL, and
+is
+.Dv NULL ,
+and
 .Fa *dvp
 is left locked.
 If there was an error relocking
@@ -1011,7 +1013,9 @@ is the pointer to a flag which is set by
 to indicate and end-of-file condition.
 If
 .Fa eofflag
-is NULL, the end-of-file condition is not returned.
+is
+.Dv NULL ,
+the end-of-file condition is not returned.
 The arguments
 .Fa cookies
 and
@@ -1022,7 +1026,9 @@ Both
 .Fa cookies
 and
 .Fa ncookies
-should be NULL if they aren't required to be returned by
+should be
+.Dv NULL
+if they aren't required to be returned by
 .Fn VOP_READDIR .
 The directory contents are read into struct dirent structures.
 If the operation is successful zero is returned, otherwise an
@@ -1151,13 +1157,16 @@ of a file specified by vnode
 to its physical block number on the disk.
 If
 .Fa vpp
-is not NULL, the vnode of the device vnode for the file system is
+is not
+.Dv NULL ,
+the vnode of the device vnode for the file system is
 returned in the address specified by
 .Fa vpp .
 If
 .Fa runp
-is not NULL, the maximum blocksize is returned in the address
-specified by
+is not
+.Dv NULL ,
+the maximum blocksize is returned in the address specified by
 .Fa runp .
 .It Fn VOP_PRINT "vp"
 Print debugging information.
@@ -1291,7 +1300,9 @@ The credentials of the calling processing are specified by
 .Fa cred .
 If the argument
 .Fa bpp
-is not NULL, the buffer is written to the allocated blocks.
+is not
+.Dv NULL ,
+the buffer is written to the allocated blocks.
 The argument
 .Fa flags
 is a set of flags controlling the low-level allocation when the buffer
@@ -1477,17 +1488,23 @@ The argument
 specifies the extended attribute namespace.
 The argument
 .Fa name
-is a null-terminated character string naming the attribute to retrieve.
+is a nul-terminated character string naming the attribute to retrieve.
 The argument
 .Fa uio ,
-if not null, specifies where the extended attribute value is to be written.
+if not
+.Dv NULL ,
+specifies where the extended attribute value is to be written.
 The argument
 .Fa size ,
-if not NULL, will contain the number of bytes required to read all of
+if not
+.Dv NULL ,
+will contain the number of bytes required to read all of
 the attribute data upon return.
 In most cases,
 .Fa uio
-will be NULL when
+will be
+.Dv NULL
+when
 .Fa size
 is not, and vice versa.
 The argument
@@ -1507,7 +1524,7 @@ The argument
 specifies the extended attribute namespace.
 The argument
 .Fa name
-is a null-terminated character string naming the attribute to store.
+is a nul-terminated character string naming the attribute to store.
 The argument
 .Fa uio
 specifies the source of the extended attribute data.
@@ -1527,14 +1544,20 @@ The argument
 specifies the extended attribute namespace.
 The argument
 .Fa uio ,
-if not null, specifies where the extended attribute list is to be written.
+if not
+.Dv NULL ,
+specifies where the extended attribute list is to be written.
 The argument
 .Fa size ,
-if not NULL, will contain the number of bytes required to read all of
+if not
+.Dv NULL ,
+will contain the number of bytes required to read all of
 the attribute names upon return.
 In most cases,
 .Fa uio
-will be NULL when
+will be
+.Dv NULL
+when
 .Fa size
 is not, and vice versa.
 The argument
