@@ -1,4 +1,4 @@
-.\"	$NetBSD: esis.4,v 1.7 2000/11/07 06:43:26 lukem Exp $
+.\"	$NetBSD: esis.4,v 1.8 2001/04/04 10:01:07 wiz Exp $
 .\"
 .\" Copyright (c) 1990, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -195,10 +195,10 @@ struct sockaddr specifying the
 of the
 .Tn IS .
 .Sh SEE ALSO
-.Xr un 4 ,
 .Xr iso 4 ,
-.Xr route 8 ,
-.Xr ifconfig 8
+.\" .Xr un 4 ,
+.Xr ifconfig 8 ,
+.Xr route 8
 .Rs
 .%T "End system to Intermediate system routing exchange protocol for use in conjunction with the Protocol for providing the connectionless-mode network service"
 .%R ISO
@@ -221,7 +221,7 @@ This multicast address is not compatible with the
 .Tn IEEE 802.5
 .Pq Tn Token Ring
 multicast addresses format.
-Therefore, broadcast addresses are used on the 
+Therefore, broadcast addresses are used on the
 .Tn IEEE 802.5
 subnetwork.
 .Pp
