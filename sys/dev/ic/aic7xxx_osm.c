@@ -1,4 +1,4 @@
-/*	$NetBSD: aic7xxx_osm.c,v 1.14 2003/11/02 11:07:44 wiz Exp $	*/
+/*	$NetBSD: aic7xxx_osm.c,v 1.15 2004/04/21 18:03:13 itojun Exp $	*/
 
 /*
  * Bus independent FreeBSD shim for the aic7xxx based adaptec SCSI controllers
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: aic7xxx_osm.c,v 1.14 2003/11/02 11:07:44 wiz Exp $");
+__KERNEL_RCSID(0, "$NetBSD: aic7xxx_osm.c,v 1.15 2004/04/21 18:03:13 itojun Exp $");
 
 #include <dev/ic/aic7xxx_osm.h>
 #include <dev/ic/aic7xxx_inline.h>
@@ -99,7 +99,7 @@ ahc_attach(struct ahc_softc *ahc)
 		ahc->sc_channel_b.chan_channel = 1;
 	}
 
-	ahc_controller_info(ahc, ahc_info);
+	ahc_controller_info(ahc, ahc_info, sizeof(ahc_info));
 	printf("%s: %s\n", ahc->sc_dev.dv_xname, ahc_info);
 
 	if ((ahc->flags & AHC_PRIMARY_CHANNEL) == 0) {

@@ -37,7 +37,7 @@
  * IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGES.
  *
- * $Id: aic7xxxvar.h,v 1.44 2004/04/19 12:44:10 wiz Exp $
+ * $Id: aic7xxxvar.h,v 1.45 2004/04/21 18:03:13 itojun Exp $
  *
  * $FreeBSD: /repoman/r/ncvs/src/sys/dev/aic7xxx/aic7xxx.h,v 1.44 2003/01/20 20:44:55 gibbs Exp $
  */
@@ -1275,7 +1275,7 @@ int		ahc_match_scb(struct ahc_softc *, struct scb *,
 
 /****************************** Initialization ********************************/
 int			 ahc_softc_init(struct ahc_softc *);
-void			 ahc_controller_info(struct ahc_softc *, char *);
+void			 ahc_controller_info(struct ahc_softc *, char *, size_t);
 int			 ahc_init(struct ahc_softc *);
 void			 ahc_intr_enable(struct ahc_softc *, int);
 void			 ahc_pause_and_flushwork(struct ahc_softc *);
