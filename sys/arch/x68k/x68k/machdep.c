@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.74 1999/12/04 21:21:48 ragge Exp $	*/
+/*	$NetBSD: machdep.c,v 1.75 2000/01/17 16:17:32 minoura Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -654,8 +654,8 @@ cpu_init_kcore_hdr()
 	m->ram_segs[0].size = mem_size - lowram;
 	for (i = 1; i < vm_nphysseg; i++) {
 		m->ram_segs[i].start = ctob(vm_physmem[i].start);
-		m->ram_segs[i].size  = ctob(vm_physmem[i].end)
-		    - vm_physmem[i].start;
+		m->ram_segs[i].size  = ctob(vm_physmem[i].end
+					    - vm_physmem[i].start);
 	}
 }
 
