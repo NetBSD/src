@@ -1,4 +1,4 @@
-/*	$NetBSD: scsiconf.c,v 1.51 1996/03/05 00:15:12 thorpej Exp $	*/
+/*	$NetBSD: scsiconf.c,v 1.52 1996/03/05 01:45:42 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1994 Charles Hannum.  All rights reserved.
@@ -314,6 +314,8 @@ struct scsi_quirk_inquiry_pattern scsi_quirk_patterns[] = {
 	 "MAXTOR  ", "LXT-213S        ", ""},     SDEV_NOLUNS},
 	{{T_DIRECT, T_FIXED,
 	 "MAXTOR  ", "LXT-213S SUN0207", ""},     SDEV_NOLUNS},
+	{{T_DIRECT, T_FIXED,
+	 "MAXTOR  ", "LXT-200S        ", ""},     SDEV_NOLUNS},
 	{{T_DIRECT, T_FIXED,
 	 "MST     ", "SnapLink        ", ""},     SDEV_NOLUNS},
 	{{T_DIRECT, T_FIXED,
