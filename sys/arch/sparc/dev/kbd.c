@@ -1,4 +1,4 @@
-/*	$NetBSD: kbd.c,v 1.17 1995/05/02 07:56:42 pk Exp $ */
+/*	$NetBSD: kbd.c,v 1.18 1995/05/10 16:04:55 pk Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -101,7 +101,7 @@
  * Decode tables for type 2, 3, and 4 keyboards
  * (stolen from Sprite; see also kbd.h).
  */
-static const u_char kbd_unshifted[] = {
+static u_char kbd_unshifted[] = {
 /*   0 */	KEY_IGNORE,	KEY_L1,		KEY_IGNORE,	KEY_IGNORE,
 /*   4 */	KEY_IGNORE,	KEY_IGNORE,	KEY_IGNORE,	KEY_IGNORE,
 /*   8 */	KEY_IGNORE,	KEY_IGNORE,	KEY_IGNORE,	KEY_IGNORE,
@@ -136,7 +136,7 @@ static const u_char kbd_unshifted[] = {
 /* 124 */	KEY_IGNORE,	KEY_IGNORE,	KEY_IGNORE,	KEY_ALLUP,
 };
 
-static const u_char kbd_shifted[] = {
+static u_char kbd_shifted[] = {
 /*   0 */	KEY_IGNORE,	KEY_L1,		KEY_IGNORE,	KEY_IGNORE,
 /*   4 */	KEY_IGNORE,	KEY_IGNORE,	KEY_IGNORE,	KEY_IGNORE,
 /*   8 */	KEY_IGNORE,	KEY_IGNORE,	KEY_IGNORE,	KEY_IGNORE,
@@ -563,6 +563,8 @@ int
 kbdioctl(dev_t dev, u_long cmd, register caddr_t data, int flag, struct proc *p)
 {
 	register struct kbd_softc *k = &kbd_softc;
+	register struct kiockey *kmp;
+	register u_char *tp;
 
 	switch (cmd) {
 
@@ -579,15 +581,52 @@ kbdioctl(dev_t dev, u_long cmd, register caddr_t data, int flag, struct proc *p)
 		return (0);
 
 	case KIOCGETKEY:
-		if (((struct kiockey *)data)->kio_station == 118) {
+		if (((struct okiockey *)data)->kio_station == 118) {
 			/*
 			 * This is X11 asking if a type 3 keyboard is
 			 * really a type 3 keyboard.  Say yes.
 			 */
-			((struct kiockey *)data)->kio_entry = HOLE;
+			((struct okiockey *)data)->kio_entry = HOLE;
 			return (0);
 		}
 		break;
+
+	case KIOCSKEY:
+		kmp = (struct kiockey *)data;
+
+		switch (kmp->kio_tablemask) {
+		case KIOC_NOMASK:
+			tp = kbd_unshifted;
+			break;
+		case KIOC_SHIFTMASK:
+			tp = kbd_shifted;
+			break;
+		default:
+			/* Silently ignore unsupported masks */
+			return (0);
+		}
+		if (kmp->kio_entry & 0xff80)
+			/* Silently ignore funny entries */
+			return (0);
+
+		tp[kmp->kio_station] = kmp->kio_entry;
+		return (0);
+
+	case KIOCGKEY:
+		kmp = (struct kiockey *)data;
+
+		switch (kmp->kio_tablemask) {
+		case KIOC_NOMASK:
+			tp = kbd_unshifted;
+			break;
+		case KIOC_SHIFTMASK:
+			tp = kbd_shifted;
+			break;
+		default:
+			return (0);
+		}
+		kmp->kio_entry = tp[kmp->kio_station] & ~KEY_MAGIC;
+		return (0);
 
 	case KIOCCMD:
 		/*
