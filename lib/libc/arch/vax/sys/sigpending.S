@@ -33,12 +33,12 @@
 
 #if defined(SYSLIBC_SCCS) && !defined(lint)
 	/* .asciz "@(#)sigpending.s	8.1 (Berkeley) 6/4/93" */
-	.asciz "$NetBSD: sigpending.S,v 1.1 1995/04/17 12:24:07 ragge Exp $"
+	.asciz "$NetBSD: sigpending.S,v 1.2 1998/09/30 18:37:39 ragge Exp $"
 #endif /* SYSLIBC_SCCS and not lint */
 
 #include "SYS.h"
 
-SYSCALL(sigpending)
+_SYSCALL(sigpending,compat_13_sigpending13)
 	movl	r0,*4(ap)		# store old mask
 	clrl	r0
 	ret

@@ -33,7 +33,7 @@
 
 #if defined(SYSLIBC_SCCS) && !defined(lint)
 	/* .asciz "@(#)sigprocmask.s	8.1 (Berkeley) 6/4/93" */
-	.asciz "$NetBSD: sigprocmask.S,v 1.2 1997/02/04 18:38:21 ragge Exp $"
+	.asciz "$NetBSD: sigprocmask.S,v 1.3 1998/09/30 18:37:39 ragge Exp $"
 #endif /* SYSLIBC_SCCS and not lint */
 
 #include "SYS.h"
@@ -48,7 +48,7 @@ ENTRY(sigprocmask, 0)
 	movl	$1,4(ap)		# SIG_BLOCK
 	jbr	2f
 1:	movl	*8(ap),8(ap)		# indirect to new mask arg
-2:	chmk	$ SYS_sigprocmask
+2:	chmk	$ SYS_compat_13_sigprocmask13
 	jcs	err
 	tstl	12(ap)			# test if old mask requested
 	beql	out
