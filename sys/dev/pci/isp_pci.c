@@ -1,4 +1,4 @@
-/* $NetBSD: isp_pci.c,v 1.76 2002/02/21 22:32:43 mjacob Exp $ */
+/* $NetBSD: isp_pci.c,v 1.77 2002/03/22 02:34:05 mjacob Exp $ */
 /*
  * This driver, which is contained in NetBSD in the files:
  *
@@ -57,7 +57,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: isp_pci.c,v 1.76 2002/02/21 22:32:43 mjacob Exp $");
+__KERNEL_RCSID(0, "$NetBSD: isp_pci.c,v 1.77 2002/03/22 02:34:05 mjacob Exp $");
 
 #include <dev/ic/isp_netbsd.h>
 #include <dev/pci/pcireg.h>
@@ -87,42 +87,42 @@ static int isp_pci_intr(void *);
 #if	defined(ISP_DISABLE_1020_SUPPORT)
 #define	ISP_1040_RISC_CODE	NULL
 #else
-#define	ISP_1040_RISC_CODE	isp_1040_risc_code
+#define	ISP_1040_RISC_CODE	(u_int16_t *) isp_1040_risc_code
 #include <dev/microcode/isp/asm_1040.h>
 #endif
 
 #if	defined(ISP_DISABLE_1080_SUPPORT)
 #define	ISP_1080_RISC_CODE	NULL
 #else
-#define	ISP_1080_RISC_CODE	isp_1080_risc_code
+#define	ISP_1080_RISC_CODE	(u_int16_t *) isp_1080_risc_code
 #include <dev/microcode/isp/asm_1080.h>
 #endif
 
 #if	defined(ISP_DISABLE_12160_SUPPORT)
 #define	ISP_12160_RISC_CODE	NULL
 #else
-#define	ISP_12160_RISC_CODE	isp_12160_risc_code
+#define	ISP_12160_RISC_CODE	(u_int16_t *) isp_12160_risc_code
 #include <dev/microcode/isp/asm_12160.h>
 #endif
 
 #if	defined(ISP_DISABLE_2100_SUPPORT)
 #define	ISP_2100_RISC_CODE	NULL
 #else
-#define	ISP_2100_RISC_CODE	isp_2100_risc_code
+#define	ISP_2100_RISC_CODE	(u_int16_t *) isp_2100_risc_code
 #include <dev/microcode/isp/asm_2100.h>
 #endif
 
 #if	defined(ISP_DISABLE_2200_SUPPORT)
 #define	ISP_2200_RISC_CODE	NULL
 #else
-#define	ISP_2200_RISC_CODE	isp_2200_risc_code
+#define	ISP_2200_RISC_CODE	(u_int16_t *) isp_2200_risc_code
 #include <dev/microcode/isp/asm_2200.h>
 #endif
 
 #if	defined(ISP_DISABLE_2300_SUPPORT)
 #define	ISP_2300_RISC_CODE	NULL
 #else
-#define	ISP_2300_RISC_CODE	isp_2300_risc_code
+#define	ISP_2300_RISC_CODE	(u_int16_t *) isp_2300_risc_code
 #include <dev/microcode/isp/asm_2300.h>
 #endif
 
