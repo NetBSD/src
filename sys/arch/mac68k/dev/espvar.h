@@ -1,4 +1,4 @@
-/*	$NetBSD: espvar.h,v 1.3.8.1 1997/11/15 01:14:46 mellon Exp $	*/
+/*	$NetBSD: espvar.h,v 1.3.8.2 1997/11/26 03:42:47 mellon Exp $	*/
 
 /*
  * Copyright (c) 1997 Allen Briggs.
@@ -48,4 +48,5 @@ struct esp_softc {
 	u_int16_t	*sc_pdmaddr;		/* only used in quick */
 	int		sc_pdmalen;		/* only used in quick */
 	size_t		sc_prevdmasize;		/* only used in quick */
+	int		sc_pad;			/* only used in quick */
 };
