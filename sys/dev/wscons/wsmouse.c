@@ -1,4 +1,4 @@
-/* $NetBSD: wsmouse.c,v 1.18 2001/10/25 14:46:41 augustss Exp $ */
+/* $NetBSD: wsmouse.c,v 1.19 2001/11/02 13:02:20 augustss Exp $ */
 
 /*
  * Copyright (c) 1996, 1997 Christopher G. Demetriou.  All rights reserved.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wsmouse.c,v 1.18 2001/10/25 14:46:41 augustss Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wsmouse.c,v 1.19 2001/11/02 13:02:20 augustss Exp $");
 
 /*
  * Copyright (c) 1992, 1993
@@ -246,8 +246,10 @@ wsmouse_detach(struct device  *self, int flags)
 
 #if NWSMUX > 0
 	/* Tell parent mux we're leaving. */
-	if (sc->sc_base.me_parent != NULL)
+	if (sc->sc_base.me_parent != NULL) {
+		DPRINTF(("wsmouse_detach:\n"));
 		wsmux_detach_sc(&sc->sc_base);
+	}
 #endif
 
 	/* If we're open ... */
@@ -459,6 +461,7 @@ wsmouseopen(dev_t dev, int flags, int mode, struct proc *p)
 #if NWSMUX > 0
 	if (sc->sc_base.me_parent != NULL)
 		/* Grab the mouse out of the greedy hands of the mux. */
+		DPRINTF(("wsmouseopen: detach\n"));
 		wsmux_detach_sc(&sc->sc_base);
 #endif
 
