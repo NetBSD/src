@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.5.2.2 2004/07/16 21:07:43 he Exp $
+#	$NetBSD: Makefile,v 1.5.2.3 2004/08/11 19:49:14 jmc Exp $
 
 REQUIRETOOLS=	yes
 NOLINT=		# defined
@@ -21,7 +21,7 @@ SHLIB_MAJOR=	1
 SHLIB_MINOR=	0
 
 LDFLAGS+=	-nodefaultlibs
-LDFLAGS+=	-Wl,--version-script=libgcc.map
+LDFLAGS+=	-Wl,--version-script=${.OBJDIR}/libgcc.map
 
 SRCS+=		${LIB2FUNCS} ${LIB2DIVMOD} ${LIB2_EH} \
 		${G_LIB2ADD:T:S/.asm/.S/} ${LIB1ASMFUNCS}
