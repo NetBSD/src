@@ -1,4 +1,4 @@
-/* $NetBSD: pci_eb164.c,v 1.11 1998/04/14 22:20:59 thorpej Exp $ */
+/* $NetBSD: pci_eb164.c,v 1.12 1998/04/16 19:24:24 thorpej Exp $ */
 
 /*
  * Copyright (c) 1995, 1996 Carnegie-Mellon University.
@@ -29,7 +29,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: pci_eb164.c,v 1.11 1998/04/14 22:20:59 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pci_eb164.c,v 1.12 1998/04/16 19:24:24 thorpej Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -145,11 +145,13 @@ dec_eb164_intr_map(ccv, bustag, buspin, line, ihp)
 
 	alpha_pci_decompose_tag(pc, bustag, NULL, &device, NULL);
 	switch (device) {
-#if 0	/* THIS CODE SHOULD NEVER BE CALLED FOR THE SIO */
+	/*
+	 * There might be a PCI IDE controller on one of the SIO's
+	 * functions, so go ahead and map this interrupt.
+	 */
 	case 8: 					/* SIO */
 		eb164_irq = 4;
 		break;
-#endif
 
 	case 11:
 		eb164_irq = 5;				/* IDE */
