@@ -1,10 +1,10 @@
-/*	$NetBSD: pcmciadevs_data.h,v 1.152 2001/12/04 18:46:52 christos Exp $	*/
+/*	$NetBSD: pcmciadevs_data.h,v 1.153 2001/12/16 05:43:16 ichiro Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcmciadevs,v 1.151 2001/12/04 18:46:30 christos Exp 
+ *	NetBSD: pcmciadevs,v 1.152 2001/12/16 05:42:46 ichiro Exp 
  */
 /* $FreeBSD: src/sys/dev/pccard/pccarddevs,v 1.20 2001/11/19 05:02:55 imp Exp $*/
 
@@ -349,6 +349,13 @@ struct pcmcia_knowndev pcmcia_knowndevs[] = {
 	    0,
 	    "Fujitsu Corporation",
 	    "Fujitsu Compact Flash Ethernet",	}
+	,
+	{
+	    PCMCIA_VENDOR_FUJITSU, PCMCIA_PRODUCT_FUJITSU_ITCFJ182A,
+	    PCMCIA_CIS_FUJITSU_ITCFJ182A,
+	    0,
+	    "Fujitsu Corporation",
+	    "Fujitsu J182A Compact Flash Ethernet",	}
 	,
 	{
 	    PCMCIA_VENDOR_FUJITSU, PCMCIA_PRODUCT_FUJITSU_LA501,
