@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.h,v 1.6 1999/08/05 18:08:12 thorpej Exp $	*/
+/*	$NetBSD: intr.h,v 1.7 2000/08/21 02:06:33 thorpej Exp $	*/
 
 /*
  * Copyright (C) 1997 Scott Reynolds
@@ -46,7 +46,7 @@
 
 #define splhigh()       spl7()
 #define splserial()     _splraise(PSL_S|PSL_IPL5)
-#define splsched()      _splraise(PSL_S|PSL_IPL3)
+#define splsched()      spl7()
 #define splclock()      _splraise(PSL_S|PSL_IPL6)
 #define splstatclock()  splclock()
 #define splimp()        _splraise(PSL_S|PSL_IPL6)

@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.h,v 1.6 2000/02/11 13:15:44 tsubai Exp $	*/
+/*	$NetBSD: intr.h,v 1.7 2000/08/21 02:06:32 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -188,6 +188,7 @@ softintr(ipl)
  */
 #define splimp()	splraise(imask[IPL_IMP])
 #define	splhigh()	splraise(imask[IPL_HIGH])
+#define	splsched()	splhigh()
 #define	spl0()		spllower(0)
 
 #define	setsoftclock()	softintr(SIR_CLOCK)
