@@ -1,4 +1,4 @@
-/*	$NetBSD: advfsops.c,v 1.23 1996/10/13 02:52:08 christos Exp $	*/
+/*	$NetBSD: advfsops.c,v 1.24 1996/12/22 10:10:12 cgd Exp $	*/
 
 /*
  * Copyright (c) 1994 Christian E. Hopps
@@ -47,7 +47,7 @@
 #include <adosfs/adosfs.h>
 
 void adosfs_init __P((void));
-int adosfs_mount __P((struct mount *, char *, caddr_t, struct nameidata *,
+int adosfs_mount __P((struct mount *, const char *, void *, struct nameidata *,
 		      struct proc *));
 int adosfs_start __P((struct mount *, int, struct proc *));
 int adosfs_unmount __P((struct mount *, int, struct proc *));
@@ -66,8 +66,8 @@ int adosfs_loadbitmap __P((struct adosfsmount *));
 int
 adosfs_mount(mp, path, data, ndp, p)
 	struct mount *mp;
-	char *path;
-	caddr_t data;
+	const char *path;
+	void *data;
 	struct nameidata *ndp;
 	struct proc *p;
 {

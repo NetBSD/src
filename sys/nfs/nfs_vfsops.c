@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_vfsops.c,v 1.54 1996/12/03 00:22:48 thorpej Exp $	*/
+/*	$NetBSD: nfs_vfsops.c,v 1.55 1996/12/22 10:10:35 cgd Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993, 1995
@@ -101,7 +101,8 @@ extern u_int32_t nfs_procids[NFS_NPROCS];
 extern u_int32_t nfs_prog, nfs_vers;
 
 static struct mount *
-nfs_mount_diskless __P((struct nfs_dlmount *, char *, int, struct vnode **));
+nfs_mount_diskless __P((struct nfs_dlmount *, const char *, int,
+    struct vnode **));
 
 #define TRUE	1
 #define	FALSE	0
@@ -390,7 +391,7 @@ nfs_mountroot()
 static struct mount *
 nfs_mount_diskless(ndmntp, mntname, mntflag, vpp)
 	struct nfs_dlmount *ndmntp;
-	char *mntname;
+	const char *mntname;
 	int mntflag;
 	struct vnode **vpp;
 {
@@ -548,8 +549,8 @@ nfs_decode_args(nmp, argp)
 int
 nfs_mount(mp, path, data, ndp, p)
 	struct mount *mp;
-	char *path;
-	caddr_t data;
+	const char *path;
+	void *data;
 	struct nameidata *ndp;
 	struct proc *p;
 {
@@ -608,7 +609,7 @@ mountnfs(argp, mp, nam, pth, hst, vpp)
 	register struct nfs_args *argp;
 	register struct mount *mp;
 	struct mbuf *nam;
-	char *pth, *hst;
+	const char *pth, *hst;
 	struct vnode **vpp;
 {
 	register struct nfsmount *nmp;
