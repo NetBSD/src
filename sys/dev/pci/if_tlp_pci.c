@@ -1,4 +1,4 @@
-/*	$NetBSD: if_tlp_pci.c,v 1.58 2002/02/14 07:59:55 chs Exp $	*/
+/*	$NetBSD: if_tlp_pci.c,v 1.59 2002/03/13 04:15:05 chs Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2000 The NetBSD Foundation, Inc.
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_tlp_pci.c,v 1.58 2002/02/14 07:59:55 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_tlp_pci.c,v 1.59 2002/03/13 04:15:05 chs Exp $");
 
 #include "opt_tlp.h"
 
@@ -206,7 +206,7 @@ void	tlp_pci_cobalt_21142_quirks __P((struct tulip_pci_softc *,
 void	tlp_pci_algor_21142_quirks __P((struct tulip_pci_softc *,
 	    const u_int8_t *));
 
-void	tlp_pci_adaptec_21143_quirks __P((struct tulip_pci_softc *,
+void	tlp_pci_adaptec_quirks __P((struct tulip_pci_softc *,
 	    const u_int8_t *));
 
 const struct tlp_pci_quirks tlp_pci_21040_quirks[] = {
@@ -230,6 +230,7 @@ const struct tlp_pci_quirks tlp_pci_21140_quirks[] = {
 	{ tlp_pci_dec_quirks,		{ 0x08, 0x00, 0x2b } },
 	{ tlp_pci_dec_quirks,		{ 0x00, 0x00, 0xf8 } },
 	{ tlp_pci_asante_21140_quirks,	{ 0x00, 0x00, 0x94 } },
+	{ tlp_pci_adaptec_quirks,	{ 0x00, 0x00, 0xd1 } },
 	{ NULL,				{ 0, 0, 0 } }
 };
 
@@ -238,7 +239,7 @@ const struct tlp_pci_quirks tlp_pci_21142_quirks[] = {
 	{ tlp_pci_dec_quirks,		{ 0x00, 0x00, 0xf8 } },
 	{ tlp_pci_cobalt_21142_quirks,	{ 0x00, 0x10, 0xe0 } },
 	{ tlp_pci_algor_21142_quirks,	{ 0x00, 0x40, 0xbc } },
-	{ tlp_pci_adaptec_21143_quirks,	{ 0x00, 0x00, 0xd1 } },
+	{ tlp_pci_adaptec_quirks,	{ 0x00, 0x00, 0xd1 } },
 	{ NULL,				{ 0, 0, 0 } }
 };
 
@@ -1244,7 +1245,7 @@ tlp_pci_algor_21142_quirks(psc, enaddr)
 }
 
 void
-tlp_pci_adaptec_21143_quirks(psc, enaddr)
+tlp_pci_adaptec_quirks(psc, enaddr)
 	struct tulip_pci_softc *psc;
 	const u_int8_t *enaddr;
 {
