@@ -1,4 +1,4 @@
-/* $NetBSD: zs_ioasic.c,v 1.11 2002/09/06 13:18:43 gehenna Exp $ */
+/* $NetBSD: zs_ioasic.c,v 1.12 2002/09/24 13:23:32 ad Exp $ */
 
 /*-
  * Copyright (c) 1996, 1998 The NetBSD Foundation, Inc.
@@ -48,7 +48,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: zs_ioasic.c,v 1.11 2002/09/06 13:18:43 gehenna Exp $");
+__KERNEL_RCSID(0, "$NetBSD: zs_ioasic.c,v 1.12 2002/09/24 13:23:32 ad Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -261,6 +261,7 @@ zs_ioasic_attach(parent, self, aux)
 	struct ioasicdev_attach_args *d = aux;
 	struct zshan *zc;
 	int s, channel;
+	u_long zflg;
 
 	printf("\n");
 
@@ -296,17 +297,19 @@ zs_ioasic_attach(parent, self, aux)
 
 		/*
 		 * DCD and CTS interrupts are only meaningful on
-		 * SCC 0/B.
+		 * SCC 0/B, and RTS and DTR only on B of SCC 0 & 1.
 		 *
 		 * XXX This is sorta gross.
 		 */
 		if (d->iada_offset == 0x00100000 && channel == 1) {
 			cs->cs_creg[15] |= ZSWR15_DCD_IE;
 			cs->cs_preg[15] |= ZSWR15_DCD_IE;
-			(u_long)cs->cs_private = ZIP_FLAGS_DCDCTS;
-		}
-		else
-			cs->cs_private = NULL;
+			zflg = ZIP_FLAGS_DCDCTS;
+		} else
+			zflg = 0;
+		if (channel == 1)
+			zflg |= ZIP_FLAGS_DTRRTS;
+		(u_long)cs->cs_private = zflg;
 
 		/*
 		 * Clear the master interrupt enable.
@@ -317,7 +320,6 @@ zs_ioasic_attach(parent, self, aux)
 			zs_write_reg(cs, 9, 0);
 		}
 
-#ifdef notyet /* XXX thorpej */
 		/*
 		 * Set up the flow/modem control channel pointer to
 		 * deal with the weird wiring on the TC Alpha and
@@ -327,7 +329,6 @@ zs_ioasic_attach(parent, self, aux)
 			cs->cs_ctl_chan = zs->zsc_cs[0];
 		else
 			cs->cs_ctl_chan = NULL;
-#endif
 
 		/*
 		 * Look for a child driver for this channel.
@@ -552,6 +553,10 @@ zs_set_modes(cs, cflag)
 		cs->cs_rr0_dcd &= ~(ZSRR0_CTS|ZSRR0_DCD);
 		cs->cs_rr0_cts &= ~(ZSRR0_CTS|ZSRR0_DCD);
 	}
+	if ((privflags & ZIP_FLAGS_DTRRTS) == 0) {
+		cs->cs_wr5_dtr &= ~(ZSWR5_RTS|ZSWR5_DTR);
+		cs->cs_wr5_rts &= ~(ZSWR5_RTS|ZSWR5_DTR);
+	}
 	splx(s);
 
 	/* Caller will stuff the pending registers. */
@@ -746,6 +751,7 @@ zs_ioasic_cninit(ioasic_addr, zs_offset, channel)
 	struct zs_chanstate *cs;
 	tc_addr_t zs_addr;
 	struct zshan *zc;
+	u_long zflg;
 
 	/*
 	 * Initialize the console finder helpers.
@@ -780,18 +786,21 @@ zs_ioasic_cninit(ioasic_addr, zs_offset, channel)
 
 	/* Initialize the pending registers. */
 	bcopy(zs_ioasic_init_reg, cs->cs_preg, 16);
-	cs->cs_preg[5] |= (ZSWR5_DTR | ZSWR5_RTS);
+	/* cs->cs_preg[5] |= (ZSWR5_DTR | ZSWR5_RTS); */
 
 	/*
 	 * DCD and CTS interrupts are only meaningful on
-	 * SCC 0/B.
+	 * SCC 0/B, and RTS and DTR only on B of SCC 0 & 1.
 	 *
 	 * XXX This is sorta gross.
 	 */
 	if (zs_offset == 0x00100000 && channel == 1)
-		(u_long)cs->cs_private = ZIP_FLAGS_DCDCTS;
+		zflg = ZIP_FLAGS_DCDCTS;
 	else
-		cs->cs_private = NULL;
+		zflg = 0;
+	if (channel == 1)
+		zflg |= ZIP_FLAGS_DTRRTS;
+	(u_long)cs->cs_private = zflg;
 
 	/* Clear the master interrupt enable. */
 	zs_write_reg(cs, 9, 0);
