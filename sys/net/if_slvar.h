@@ -30,9 +30,8 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	@(#)if_slvar.h	7.7 (Berkeley) 5/7/91
- *
- * $Header: /cvsroot/src/sys/net/if_slvar.h,v 1.4 1993/04/19 03:47:51 mycroft Exp $
+ *	from: @(#)if_slvar.h	7.7 (Berkeley) 5/7/91
+ *	$Id: if_slvar.h,v 1.5 1993/05/20 03:06:03 cgd Exp $
  */
 
 #ifndef _NET_IF_SLVAR_H_

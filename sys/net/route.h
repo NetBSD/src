@@ -30,7 +30,8 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	@(#)route.h	7.13 (Berkeley) 4/25/91
+ *	from: @(#)route.h	7.13 (Berkeley) 4/25/91
+ *	$Id: route.h,v 1.3 1993/05/20 03:06:10 cgd Exp $
  */
 
 #ifndef _NET_ROUTE_H_

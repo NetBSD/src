@@ -35,9 +35,8 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *      @(#)bpf.h	7.1 (Berkeley) 5/7/91
- *
- * @(#) $Header: /cvsroot/src/sys/net/bpf.h,v 1.3 1993/04/19 03:47:42 mycroft Exp $ (LBL)
+ *      from: @(#)bpf.h	7.1 (Berkeley) 5/7/91
+ *	$Id: bpf.h,v 1.4 1993/05/20 03:05:50 cgd Exp $
  */
 
 #ifndef _NET_BPF_H_

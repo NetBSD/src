@@ -1,8 +1,8 @@
 /*
  * Definitions that user level programs might need to know to interact
  * with serial line IP (slip) lines.
-
- * @(#) $Header: /cvsroot/src/sys/net/slip.h,v 1.2 1993/04/19 03:48:03 mycroft Exp $ (LBL)
+ *
+ *	$Id: slip.h,v 1.3 1993/05/20 03:06:14 cgd Exp $
  *
  * Copyright (c) 1990 Regents of the University of California.
  * All rights reserved.
