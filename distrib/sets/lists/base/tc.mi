@@ -1,3 +1,3 @@
-# $NetBSD: tc.mi,v 1.2 2001/12/17 19:42:05 wiz Exp $
+# $NetBSD: tc.mi,v 1.3 2004/01/11 08:55:55 lukem Exp $
 ./usr/libexec/cpp0		base-util-bin
-./usr/sbin/dbsym		base-sysutil-bin
+./usr/sbin/dbsym		base-sysutil-bin	bfd

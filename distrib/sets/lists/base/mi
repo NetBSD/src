@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.454 2004/01/06 08:26:11 rtr Exp $
+# $NetBSD: mi,v 1.455 2004/01/11 08:55:55 lukem Exp $
 .			base-sys-root
 ./altroot		base-sys-root
 ./bin			base-sys-root
@@ -923,7 +923,7 @@
 ./usr/sbin/map-mbone		base-netutil-bin
 ./usr/sbin/mbrlabel			base-obsolete	obsolete
 ./usr/sbin/mdconfig		base-sysutil-bin
-./usr/sbin/mdsetimage		base-sysutil-bin
+./usr/sbin/mdsetimage		base-sysutil-bin	bfd
 ./usr/sbin/mk-amd-map		base-amd-bin
 ./usr/sbin/mkalias		base-nis-bin	yp
 ./usr/sbin/mknetid		base-nis-bin	yp

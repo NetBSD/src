@@ -1,10 +1,10 @@
-#	$NetBSD: mi,v 1.657 2004/01/04 13:20:49 lukem Exp $
-./usr/bin/addr2line		comp-debug-bin
-./usr/bin/ar			comp-util-bin
-./usr/bin/as			comp-util-bin
+#	$NetBSD: mi,v 1.658 2004/01/11 08:55:56 lukem Exp $
+./usr/bin/addr2line		comp-debug-bin	bfd
+./usr/bin/ar			comp-util-bin	bfd
+./usr/bin/as			comp-util-bin	bfd
 ./usr/bin/asa			comp-fortran-bin
 ./usr/bin/c++			comp-cxx-bin
-./usr/bin/c++filt		comp-cxx-bin
+./usr/bin/c++filt		comp-cxx-bin	bfd
 ./usr/bin/c89			comp-c-bin
 ./usr/bin/cc			comp-c-bin
 ./usr/bin/crunchgen		comp-c-bin
@@ -26,8 +26,8 @@
 ./usr/bin/genclass              	comp-obsolete	obsolete
 ./usr/bin/gettext		comp-c-bin
 ./usr/bin/gettextize            	comp-obsolete	obsolete
-./usr/bin/gprof			comp-debug-bin
-./usr/bin/ld			comp-util-bin
+./usr/bin/gprof			comp-debug-bin	bfd
+./usr/bin/ld			comp-util-bin	bfd
 ./usr/bin/lex			comp-c-bin
 ./usr/bin/lint			comp-c-bin
 ./usr/bin/lorder		comp-util-bin
@@ -39,15 +39,15 @@
 ./usr/bin/msgfmt		comp-c-bin
 ./usr/bin/msgmerge		comp-c-bin
 ./usr/bin/msgunfmt		comp-c-bin
-./usr/bin/nm			comp-util-bin
-./usr/bin/objcopy		comp-util-bin
-./usr/bin/objdump		comp-util-bin
-./usr/bin/ranlib		comp-util-bin
+./usr/bin/nm			comp-util-bin	bfd
+./usr/bin/objcopy		comp-util-bin	bfd
+./usr/bin/objdump		comp-util-bin	bfd
+./usr/bin/ranlib		comp-util-bin	bfd
 ./usr/bin/rcs2log		comp-cvs-bin	cvs
 ./usr/bin/rpcgen		comp-c-bin
-./usr/bin/size			comp-util-bin
-./usr/bin/strings		comp-util-bin
-./usr/bin/strip			comp-util-bin
+./usr/bin/size			comp-util-bin	bfd
+./usr/bin/strings		comp-util-bin	bfd
+./usr/bin/strip			comp-util-bin	bfd
 ./usr/bin/tsort			comp-util-bin
 ./usr/bin/unifdef		comp-util-bin
 ./usr/bin/unifdefall		comp-util-bin
@@ -1873,12 +1873,12 @@
 ./usr/share/locale/pt/LC_MESSAGES/gettext.mo		comp-c_locale-pt
 ./usr/share/locale/sl/LC_MESSAGES/gettext.mo		comp-c_locale-sl
 ./usr/share/locale/sv/LC_MESSAGES/gettext.mo		comp-c_locale-sv
-./usr/share/man/cat1/addr2line.0	comp-debug-catman
-./usr/share/man/cat1/ar.0		comp-util-catman
-./usr/share/man/cat1/as.0		comp-util-catman
+./usr/share/man/cat1/addr2line.0	comp-debug-catman	bfd
+./usr/share/man/cat1/ar.0		comp-util-catman	bfd
+./usr/share/man/cat1/as.0		comp-util-catman	bfd
 ./usr/share/man/cat1/asa.0		comp-fortran-catman
 ./usr/share/man/cat1/c++.0		comp-cxx-catman
-./usr/share/man/cat1/c++filt.0		comp-cxx-catman
+./usr/share/man/cat1/c++filt.0		comp-cxx-catman	bfd
 ./usr/share/man/cat1/c89.0		comp-c-catman
 ./usr/share/man/cat1/cc.0		comp-c-catman
 ./usr/share/man/cat1/cccp.0		comp-util-catman
@@ -1899,8 +1899,8 @@
 ./usr/share/man/cat1/gcore.0		comp-debug-catman
 ./usr/share/man/cat1/gcov.0		comp-debug-catman
 ./usr/share/man/cat1/gdb.0		comp-debug-catman
-./usr/share/man/cat1/gprof.0		comp-debug-catman
-./usr/share/man/cat1/ld.0		comp-util-catman
+./usr/share/man/cat1/gprof.0		comp-debug-catman	bfd
+./usr/share/man/cat1/ld.0		comp-util-catman	bfd
 ./usr/share/man/cat1/lex.0		comp-c-catman
 ./usr/share/man/cat1/lexdoc.0   	comp-obsolete	obsolete
 ./usr/share/man/cat1/lint.0		comp-c-catman
@@ -1920,16 +1920,16 @@
 ./usr/share/man/cat1/msg_table_add.0	comp-obsolete	obsolete
 ./usr/share/man/cat1/msg_window.0	comp-obsolete	obsolete
 ./usr/share/man/cat1/msgc.0		comp-c-catman
-./usr/share/man/cat1/nm.0		comp-util-catman
-./usr/share/man/cat1/objcopy.0		comp-util-catman
-./usr/share/man/cat1/objdump.0		comp-util-catman
+./usr/share/man/cat1/nm.0		comp-util-catman	bfd
+./usr/share/man/cat1/objcopy.0		comp-util-catman	bfd
+./usr/share/man/cat1/objdump.0		comp-util-catman	bfd
 ./usr/share/man/cat1/openssl_ocsp.0	comp-c-catman	crypto
-./usr/share/man/cat1/ranlib.0		comp-util-catman
-./usr/share/man/cat1/readelf.0		comp-util-catman
+./usr/share/man/cat1/ranlib.0		comp-util-catman	bfd
+./usr/share/man/cat1/readelf.0		comp-util-catman	bfd
 ./usr/share/man/cat1/rpcgen.0		comp-c-catman
-./usr/share/man/cat1/size.0		comp-util-catman
-./usr/share/man/cat1/strings.0		comp-util-catman
-./usr/share/man/cat1/strip.0		comp-util-catman
+./usr/share/man/cat1/size.0		comp-util-catman	bfd
+./usr/share/man/cat1/strings.0		comp-util-catman	bfd
+./usr/share/man/cat1/strip.0		comp-util-catman	bfd
 ./usr/share/man/cat1/tsort.0		comp-c-catman
 ./usr/share/man/cat1/unifdef.0		comp-c-catman
 ./usr/share/man/cat1/unifdefall.0	comp-c-catman
@@ -5468,12 +5468,12 @@
 ./usr/share/man/cat9/wsmouse.0		comp-sys-catman
 ./usr/share/man/cat9/wsmouse_input.0		comp-sys-catman
 ./usr/share/man/cat9/wsmousedevprint.0		comp-sys-catman
-./usr/share/man/man1/addr2line.1	comp-debug-man
-./usr/share/man/man1/ar.1		comp-util-man
-./usr/share/man/man1/as.1		comp-util-man
+./usr/share/man/man1/addr2line.1	comp-debug-man	bfd
+./usr/share/man/man1/ar.1		comp-util-man	bfd
+./usr/share/man/man1/as.1		comp-util-man	bfd
 ./usr/share/man/man1/asa.1		comp-fortran-man
 ./usr/share/man/man1/c++.1		comp-cxx-man
-./usr/share/man/man1/c++filt.1		comp-cxx-man
+./usr/share/man/man1/c++filt.1		comp-cxx-man	bfd
 ./usr/share/man/man1/c89.1		comp-c-man
 ./usr/share/man/man1/cc.1		comp-c-man
 ./usr/share/man/man1/cccp.1		comp-util-man
@@ -5493,8 +5493,8 @@
 ./usr/share/man/man1/gcore.1		comp-debug-man
 ./usr/share/man/man1/gcov.1		comp-debug-man
 ./usr/share/man/man1/gdb.1		comp-debug-man
-./usr/share/man/man1/gprof.1		comp-debug-man
-./usr/share/man/man1/ld.1		comp-util-man
+./usr/share/man/man1/gprof.1		comp-debug-man	bfd
+./usr/share/man/man1/ld.1		comp-util-man	bfd
 ./usr/share/man/man1/lex.1		comp-c-man
 ./usr/share/man/man1/lint.1		comp-c-man
 ./usr/share/man/man1/lorder.1		comp-util-man
@@ -5513,16 +5513,16 @@
 ./usr/share/man/man1/msg_table_add.1	comp-obsolete	obsolete
 ./usr/share/man/man1/msg_window.1	comp-obsolete	obsolete
 ./usr/share/man/man1/msgc.1		comp-c-man
-./usr/share/man/man1/nm.1		comp-util-man
-./usr/share/man/man1/objcopy.1		comp-util-man
-./usr/share/man/man1/objdump.1		comp-util-man
+./usr/share/man/man1/nm.1		comp-util-man	bfd
+./usr/share/man/man1/objcopy.1		comp-util-man	bfd
+./usr/share/man/man1/objdump.1		comp-util-man	bfd
 ./usr/share/man/man1/openssl_ocsp.1		comp-c-man	crypto
-./usr/share/man/man1/ranlib.1		comp-util-man
-./usr/share/man/man1/readelf.1		comp-util-man
+./usr/share/man/man1/ranlib.1		comp-util-man	bfd
+./usr/share/man/man1/readelf.1		comp-util-man	bfd
 ./usr/share/man/man1/rpcgen.1		comp-c-man
-./usr/share/man/man1/size.1		comp-util-man
-./usr/share/man/man1/strings.1		comp-util-man
-./usr/share/man/man1/strip.1		comp-util-man
+./usr/share/man/man1/size.1		comp-util-man	bfd
+./usr/share/man/man1/strings.1		comp-util-man	bfd
+./usr/share/man/man1/strip.1		comp-util-man	bfd
 ./usr/share/man/man1/tsort.1		comp-util-man
 ./usr/share/man/man1/unifdef.1		comp-util-man
 ./usr/share/man/man1/unifdefall.1	comp-util-man

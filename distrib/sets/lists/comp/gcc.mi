@@ -1,6 +1,6 @@
-#	$NetBSD: gcc.mi,v 1.5 2004/01/03 15:43:50 lukem Exp $
+#	$NetBSD: gcc.mi,v 1.6 2004/01/11 08:55:56 lukem Exp $
 ./usr/bin/protoize				comp-c-bin
-./usr/bin/readelf				comp-util-bin
+./usr/bin/readelf				comp-util-bin	bfd
 ./usr/bin/unprotoize				comp-c-bin
 ./usr/include/g++/FlexLexer.h			comp-cxx-include
 ./usr/include/g++/PlotFile.h			comp-cxx-include	obsolete
