@@ -42,7 +42,7 @@ static char copyright[] =
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)nfsd.c	8.7 (Berkeley) 2/22/94";*/
-static char *rcsid = "$Id: nfsd.c,v 1.13 1994/10/18 14:12:55 mycroft Exp $";
+static char *rcsid = "$Id: nfsd.c,v 1.14 1994/10/18 16:00:17 mycroft Exp $";
 #endif not lint
 
 #include <sys/param.h>
@@ -560,5 +560,8 @@ reapchild(signo)
 	int signo;
 {
 
-	while (wait3(NULL, WNOHANG, NULL));
+	for (;;) {
+		if (wait3(NULL, WNOHANG, NULL) < 0 && errno != EINTR)
+			break;
+	}
 }
