@@ -1,11 +1,11 @@
-/*	$NetBSD: perform.c,v 1.17 1999/03/08 00:20:21 hubertf Exp $	*/
+/*	$NetBSD: perform.c,v 1.18 1999/03/09 02:20:49 hubertf Exp $	*/
 
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static const char *rcsid = "from FreeBSD Id: perform.c,v 1.15 1997/10/13 15:03:52 jkh Exp";
 #else
-__RCSID("$NetBSD: perform.c,v 1.17 1999/03/08 00:20:21 hubertf Exp $");
+__RCSID("$NetBSD: perform.c,v 1.18 1999/03/09 02:20:49 hubertf Exp $");
 #endif
 #endif
 
@@ -61,6 +61,13 @@ __RCSID("$NetBSD: perform.c,v 1.17 1999/03/08 00:20:21 hubertf Exp $");
 #include <err.h>
 #include "lib.h"
 #include "delete.h"
+
+/* This should only happen on 1.3 and 1.3.1, not 1.3.2 and up */
+#ifndef TAILQ_FIRST
+#define TAILQ_FIRST(head)               ((head)->tqh_first)
+#define TAILQ_NEXT(elm, field)          ((elm)->field.tqe_next)
+#endif
+
 
 typedef struct _rec_del_t {
     TAILQ_ENTRY(_rec_del_t)	rd_link;
@@ -469,7 +476,7 @@ int
 require_find(char *pkg, rec_find_t updown)
 {
     rec_del_t *rdp;
-    int rv;
+    int rv=0;
 
     TAILQ_INIT(&rdfindq);
     TAILQ_INIT(&rddelq);
