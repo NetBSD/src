@@ -1,4 +1,4 @@
-#
+# $Id: Makefile.sun3,v 1.11 1993/11/10 07:42:12 deraadt Exp $
 # Makefile for 4.4 BSD
 #
 # This makefile is constructed from a machine description:
@@ -19,6 +19,7 @@
 
 
 # DEBUG is set to -g by config if debugging is requested (config -g).
+DEBUG=-g
 # PROF is set to -pg by config if profiling is requested (config -p).
 AS=	gas 
 CC=	gcc ${DEBUG}
@@ -30,6 +31,7 @@ GPROF.EX=/usr/src/usr.lib/libc/csu/sun3/gmon.ex
 # source tree is located via $S relative to the compilation directory
 S=	../../../..
 SUN3=	../..
+LIBKERN=../libkern.a
 
 INCLUDES= -I. -I$S -I$S/sys
 COPTS=	${INCLUDES} ${IDENT} -DKERNEL -Dmc68020 -Dsun3
@@ -63,15 +65,20 @@ NORMAL_S_C=	${CPP} ${COPTS} ${PARAM} $< | ${AS} -o $@
 #	${SYSTEM_LD_HEAD}
 #	${SYSTEM_LD} swapxxx.o
 #	${SYSTEM_LD_TAIL}
+DEBUG?=
+.if ${DEBUG} == "-g"
+LDX=-X
+.else
+LDX=-x
+.endif
 SYSTEM_OBJ=	locore.o ${OBJS} param.o ioconf.o
 #SYSTEM_DEP=	Makefile symbols.sort ${SYSTEM_OBJ}
 SYSTEM_DEP=	Makefile ${SYSTEM_OBJ}
 SYSTEM_LD_HEAD=	@echo loading $@; rm -f $@
-SYSTEM_LD=	@strip=-x; [ X${DEBUG} = X-g ] && strip=-X; \
-		${LD} -n -o $@ -e _start -N -T 0E004000 ${SYSTEM_OBJ} vers.o
-#SYSTEM_LD=	@strip=-x; [ X${DEBUG} = X-g ] && strip=-X; \
-#                ${LD} $$strip -n -o $@ -e _start -N -X -T 0E004000 ${SYSTEM_OBJ} vers.o
-
+SYSTEM_LD=	-@echo ${LD} ${LDX} -p -N -e start -T 0E004000 -o $@ \
+		    '$${SYSTEM_OBJ}' vers.o ${LIBKERN}; \
+		${LD} ${LDX} -p -N -e start -T 0E004000 -o $@ \
+		    ${SYSTEM_OBJ} vers.o ${LIBKERN}
 #SYSTEM_LD_TAIL= @echo rearranging symbols;\
 #		symorder symbols.sort $@;\
 SYSTEM_LD_TAIL=	@size $@; chmod 755 $@; \
