@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.23 2003/08/07 16:28:55 agc Exp $	*/
+/*	$NetBSD: cpu.h,v 1.24 2003/10/01 01:25:06 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1982, 1990, 1993
@@ -278,11 +278,11 @@ void	next68k_calibrate_delay __P((void));
 #define NEXT_P_EVENTC		(NEXT_SLOT_ID_BMAP+0x0201a000)
 #define NEXT_P_BMAP		(NEXT_SLOT_ID+0x020c0000)
 /* All COLOR_FB registers are 1 byte wide */
-#define NEXT_P_C16_DAC_0	(NEXT_SLOT_ID_BMAP+0x02018100)	/* COLOR_FB - RAMDAC */
-#define NEXT_P_C16_DAC_1	(NEXT_SLOT_ID_BMAP+0x02018101)
-#define NEXT_P_C16_DAC_2	(NEXT_SLOT_ID_BMAP+0x02018102)
-#define NEXT_P_C16_DAC_3	(NEXT_SLOT_ID_BMAP+0x02018103)
-#define NEXT_P_C16_CMD_REG	(NEXT_SLOT_ID_BMAP+0x02018180)	/* COLOR_FB - CSR */
+#define NEXT_P_C16_DAC_0	(NEXT_SLOT_ID+0x02018100)	/* COLOR_FB - RAMDAC */
+#define NEXT_P_C16_DAC_1	(NEXT_SLOT_ID+0x02018101)
+#define NEXT_P_C16_DAC_2	(NEXT_SLOT_ID+0x02018102)
+#define NEXT_P_C16_DAC_3	(NEXT_SLOT_ID+0x02018103)
+#define NEXT_P_C16_CMD_REG	(NEXT_SLOT_ID+0x02018180)	/* COLOR_FB - CSR */
 
 /* system control registers */
 #define NEXT_P_MEMTIMING	(NEXT_SLOT_ID_BMAP+0x02006010)
@@ -416,27 +416,14 @@ void	next68k_calibrate_delay __P((void));
  * ``intiolimit'' (defined in locore.s).  Since it is always mapped,
  * conversion between physical and kernel virtual addresses is easy.
  */
-#define	ISIIOVA(va) \
-	((char *)(va) >= intiobase && (char *)(va) < intiolimit)
-#define	IIOV(pa)	((int)(pa)-INTIOBASE+(int)intiobase)
-#define	IIOP(va)	((int)(va)-(int)intiobase+INTIOBASE)
-#define	IIOPOFF(pa)	((int)(pa)-INTIOBASE)
+#define	IIOV(pa)	((int)(pa)-INTIOBASE+intiobase)
+#define	IIOP(va)	((int)(va)-intiobase+INTIOBASE)
 #define	IIOMAPSIZE	btoc(INTIOTOP-INTIOBASE)	/* 2mb */
 
 /* mono fb space */
-#define	ISMONOVA(va) \
-	((char *)(va) >= monobase && (char *)(va) < monolimit)
-#define	MONOV(pa)	((int)(pa)-MONOBASE+(int)monobase)
-#define	MONOP(va)	((int)(va)-(int)monobase+MONOBASE)
-#define	MONOPOFF(pa)	((int)(pa)-MONOBASE)
 #define	MONOMAPSIZE	btoc(MONOTOP-MONOBASE)	/* who cares */
 
 /* color fb space */
-#define	ISCOLORVA(va) \
-	((char *)(va) >= colorbase && (char *)(va) < colorlimit)
-#define	COLORV(pa)	((int)(pa)-COLORBASE+(int)colorbase)
-#define	COLORP(va)	((int)(va)-(int)colorbase+COLORBASE)
-#define	COLORPOFF(pa)	((int)(pa)-COLORBASE)
 #define	COLORMAPSIZE	btoc(COLORTOP-COLORBASE)	/* who cares */
 
 #endif	/* _MACHINE_CPU_H_ */

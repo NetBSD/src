@@ -1,4 +1,4 @@
-/*	$NetBSD: intiovar.h,v 1.2 2002/09/11 01:46:31 mycroft Exp $	*/
+/*	$NetBSD: intiovar.h,v 1.3 2003/10/01 01:25:06 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -50,9 +50,9 @@ struct intio_attach_args {
 	bus_dma_tag_t ia_dmat;		/* bus dma tag */
 };
 
-extern	volatile char *intiobase;
-extern  volatile char *intiolimit;
-extern	volatile char *monobase;
-extern  volatile char *monolimit;
-extern	volatile char *colorbase;
-extern  volatile char *colorlimit;
+extern	vaddr_t intiobase;
+extern  vaddr_t intiolimit;
+extern	vaddr_t monobase;
+extern  vaddr_t monolimit;
+extern	vaddr_t colorbase;
+extern  vaddr_t colorlimit;

@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap_bootstrap.c,v 1.14 2003/08/07 16:28:56 agc Exp $	*/
+/*	$NetBSD: pmap_bootstrap.c,v 1.15 2003/10/01 01:25:06 mycroft Exp $	*/
 
 /*
  * This file was taken from mvme68k/mvme68k/pmap_bootstrap.c
@@ -45,7 +45,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap_bootstrap.c,v 1.14 2003/08/07 16:28:56 agc Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap_bootstrap.c,v 1.15 2003/10/01 01:25:06 mycroft Exp $");
 
 #include <sys/param.h>
 #include <sys/kcore.h>
@@ -455,30 +455,30 @@ pmap_bootstrap(nextpa, firstpa)
 	 * COLORMAPSIZE pages prior to external IO space at end of static
 	 * kernel page table.
 	 */
-	RELOC(colorbase, char *) =
-		(char *)m68k_ptob(nptpages*NPTEPG - IIOMAPSIZE - MONOMAPSIZE - COLORMAPSIZE);
-	RELOC(colorlimit, char *) =
-		(char *)m68k_ptob(nptpages*NPTEPG - IIOMAPSIZE - MONOMAPSIZE);
+	RELOC(colorbase, vaddr_t) =
+		m68k_ptob(nptpages*NPTEPG - IIOMAPSIZE - MONOMAPSIZE - COLORMAPSIZE);
+	RELOC(colorlimit, vaddr_t) =
+		m68k_ptob(nptpages*NPTEPG - IIOMAPSIZE - MONOMAPSIZE);
 
 	/*
 	 * monobase, monolimit: base and end of mono fb space.
 	 * MONOMAPSIZE pages prior to external IO space at end of static
 	 * kernel page table.
 	 */
-	RELOC(monobase, char *) =
-		(char *)m68k_ptob(nptpages*NPTEPG - IIOMAPSIZE - MONOMAPSIZE);
-	RELOC(monolimit, char *) =
-		(char *)m68k_ptob(nptpages*NPTEPG - IIOMAPSIZE);
+	RELOC(monobase, vaddr_t) =
+		m68k_ptob(nptpages*NPTEPG - IIOMAPSIZE - MONOMAPSIZE);
+	RELOC(monolimit, vaddr_t) =
+		m68k_ptob(nptpages*NPTEPG - IIOMAPSIZE);
 
 	/*
 	 * intiobase, intiolimit: base and end of internal IO space.
 	 * IIOMAPSIZE pages prior to external IO space at end of static
 	 * kernel page table.
 	 */
-	RELOC(intiobase, char *) =
-		(char *)m68k_ptob(nptpages*NPTEPG - IIOMAPSIZE);
-	RELOC(intiolimit, char *) =
-		(char *)m68k_ptob(nptpages*NPTEPG);
+	RELOC(intiobase, vaddr_t) =
+		m68k_ptob(nptpages*NPTEPG - IIOMAPSIZE);
+	RELOC(intiolimit, vaddr_t) =
+		m68k_ptob(nptpages*NPTEPG);
 
 	/*
 	 * Setup u-area for process 0.
@@ -652,24 +652,20 @@ pmap_bootstrap(nextpa, firstpa)
 void
 pmap_init_md(void)
 {
-	vaddr_t addr;
 
-	addr = (vaddr_t) intiobase;
-	if (uvm_map(kernel_map, &addr, m68k_ptob(IIOMAPSIZE),
+	if (uvm_map(kernel_map, &intiobase, m68k_ptob(IIOMAPSIZE),
 		    NULL, UVM_UNKNOWN_OFFSET, 0,
 		    UVM_MAPFLAG(UVM_PROT_NONE, UVM_PROT_NONE,
 				UVM_INH_NONE, UVM_ADV_RANDOM,
 				UVM_FLAG_FIXED)) != 0)
 		goto failed;
-	addr = (vaddr_t) monobase;
-	if (uvm_map(kernel_map, &addr, m68k_ptob(MONOMAPSIZE),
+	if (uvm_map(kernel_map, &monobase, m68k_ptob(MONOMAPSIZE),
 		    NULL, UVM_UNKNOWN_OFFSET, 0,
 		    UVM_MAPFLAG(UVM_PROT_NONE, UVM_PROT_NONE,
 				UVM_INH_NONE, UVM_ADV_RANDOM,
 				UVM_FLAG_FIXED)) != 0)
 		goto failed;
-	addr = (vaddr_t) colorbase;
-	if (uvm_map(kernel_map, &addr, m68k_ptob(COLORMAPSIZE),
+	if (uvm_map(kernel_map, &colorbase, m68k_ptob(COLORMAPSIZE),
 		    NULL, UVM_UNKNOWN_OFFSET, 0,
 		    UVM_MAPFLAG(UVM_PROT_NONE, UVM_PROT_NONE,
 				UVM_INH_NONE, UVM_ADV_RANDOM,
