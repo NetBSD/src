@@ -1,4 +1,4 @@
-/*	$NetBSD: scsiconf.c,v 1.218 2003/10/10 18:04:46 matt Exp $	*/
+/*	$NetBSD: scsiconf.c,v 1.219 2004/02/22 07:26:15 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.
@@ -55,7 +55,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: scsiconf.c,v 1.218 2003/10/10 18:04:46 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: scsiconf.c,v 1.219 2004/02/22 07:26:15 mycroft Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -512,10 +512,6 @@ const struct scsi_quirk_inquiry_pattern scsi_quirk_patterns[] = {
 	{{T_OPTICAL, T_REMOV,
 	 "EPSON   ", "OMD-5010        ", "3.08"}, PQUIRK_NOLUNS},
 	{{T_DIRECT, T_FIXED,
-	 "TOSHIBA ","CD-ROM XM-3401TA",  "0283"}, PQUIRK_CDROM|PQUIRK_NOLUNS},
-	{{T_DIRECT, T_FIXED,
-	 "TOSHIBA ", "CD-ROM DRIVE:XM",  "1971"}, PQUIRK_CDROM|PQUIRK_NOLUNS},
-	{{T_DIRECT, T_FIXED,
 	 "ADAPTEC ", "AEC-4412BD",       "1.2A"}, PQUIRK_NOMODESENSE},
 	{{T_DIRECT, T_FIXED,
 	 "ADAPTEC ", "ACB-4000",         ""},     PQUIRK_FORCELUNS|PQUIRK_AUTOSAVE|PQUIRK_NOMODESENSE},
@@ -908,14 +904,6 @@ scsi_probe_device(sc, target, lun)
 	if (periph->periph_version == 0 &&
 	    (periph->periph_quirks & PQUIRK_FORCELUNS) == 0)
 		periph->periph_quirks |= PQUIRK_NOLUNS;
-
-	if (periph->periph_quirks & PQUIRK_CDROM) {
-		periph->periph_quirks ^= PQUIRK_CDROM;
-		inqbuf.dev_qual2 |= SID_REMOVABLE;
-		sa.sa_inqbuf.type = inqbuf.device =
-		    ((inqbuf.device & ~SID_REMOVABLE) | T_CDROM);
-		sa.sa_inqbuf.removable = T_REMOV;
-	}
 
 	if ((periph->periph_quirks & PQUIRK_NOLUNS) == 0)
 		docontinue = 1;
