@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.29 2001/03/27 08:45:02 pooka Exp $
+#	$NetBSD: Makefile,v 1.30 2001/03/31 01:31:49 enami Exp $
 
 .include <bsd.own.mk>
 
@@ -19,7 +19,7 @@ CPPFLAGS+=	-DQUICK -DBUILTIN_ELF -DELFCORE
 MAN=		file.1 magic.5
 
 CLEANFILES+=	magic magic.mgc
-realall:		file magic
+realall:	file magic magic.mgc
 
 MAGDIRF:sh=	echo $(.CURDIR)/magdir/[0-9a-z]*
 MAGFILES=	$(.CURDIR)/Header \
@@ -30,7 +30,8 @@ MAGFILES=	$(.CURDIR)/Header \
 .if ${MKSHARE} != "no"
 magic:		$(MAGFILES)
 	cat $(MAGFILES) > $(.TARGET)
-	$(.OBJDIR)/$(PROG) -C -m $(.TARGET)
+magic.mgc:	magic
+	$(.OBJDIR)/$(PROG) -C -m $(.ALLSRC)
 .else
 magic:
 .endif
