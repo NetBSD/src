@@ -1,4 +1,4 @@
-/* $NetBSD: pmap.c,v 1.36 1998/05/19 00:20:21 thorpej Exp $ */
+/* $NetBSD: pmap.c,v 1.37 1998/05/19 00:29:04 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -161,7 +161,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.36 1998/05/19 00:20:21 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.37 1998/05/19 00:29:04 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1610,9 +1610,9 @@ pmap_enter(pmap, va, pa, prot, wired)
 		/*
 		 * Set up referenced/modified emulation for new mapping.
 		 */
-		if ((pvh->pvh_attrs & PMAP_ATTR_REF) == 0)
+		if ((pvh->pvh_attrs & PGA_REFERENCED) == 0)
 			npte |= PG_FOR | PG_FOW | PG_FOE;
-		else if ((pvh->pvh_attrs & PMAP_ATTR_MOD) == 0)
+		else if ((pvh->pvh_attrs & PGA_MODIFIED) == 0)
 			npte |= PG_FOW;
 
 		/*
@@ -2076,10 +2076,10 @@ pmap_clear_modify(pg)
 #endif
 
 	pvh = pa_to_pvh(pa);
-	if (pvh->pvh_attrs & PMAP_ATTR_MOD) {
+	if (pvh->pvh_attrs & PGA_MODIFIED) {
 		rv = TRUE;
 		pmap_changebit(pa, PG_FOW, TRUE);
-		pvh->pvh_attrs &= ~PMAP_ATTR_MOD;
+		pvh->pvh_attrs &= ~PGA_MODIFIED;
 	}
 
 	return (rv);
@@ -2098,9 +2098,9 @@ pmap_clear_modify(pa)
 	if (!PAGE_IS_MANAGED(pa))		/* XXX why not panic? */
 		return;
 	pvh = pa_to_pvh(pa);
-	if (pvh->pvh_attrs & PMAP_ATTR_MOD) {
+	if (pvh->pvh_attrs & PGA_MODIFIED) {
 		pmap_changebit(pa, PG_FOW, TRUE); 
-		pvh->pvh_attrs &= ~PMAP_ATTR_MOD;
+		pvh->pvh_attrs &= ~PGA_MODIFIED;
 	}
 }
 #endif /* PMAP_NEW */
@@ -2125,10 +2125,10 @@ pmap_clear_reference(pg)
 #endif
 
 	pvh = pa_to_pvh(pa);
-	if (pvh->pvh_attrs & PMAP_ATTR_REF) {
+	if (pvh->pvh_attrs & PGA_REFERENCED) {
 		rv = TRUE;
 		pmap_changebit(pa, PG_FOR | PG_FOW | PG_FOE, TRUE);
-		pvh->pvh_attrs &= ~PMAP_ATTR_REF;
+		pvh->pvh_attrs &= ~PGA_REFERENCED;
 	}
 
 	return (rv);
@@ -2147,9 +2147,9 @@ pmap_clear_reference(pa)
 	if (!PAGE_IS_MANAGED(pa))		/* XXX why not panic? */
 		return;
 	pvh = pa_to_pvh(pa);
-	if (pvh->pvh_attrs & PMAP_ATTR_REF) {
+	if (pvh->pvh_attrs & PGA_REFERENCED) {
 		pmap_changebit(pa, PG_FOR | PG_FOW | PG_FOE, TRUE);
-		pvh->pvh_attrs &= ~PMAP_ATTR_REF;
+		pvh->pvh_attrs &= ~PGA_REFERENCED;
 	}
 }
 #endif /* PMAP_NEW */
@@ -2170,7 +2170,7 @@ pmap_is_referenced(pg)
 	boolean_t rv;
 
 	pvh = pa_to_pvh(pa);
-	rv = ((pvh->pvh_attrs & PMAP_ATTR_REF) != 0);
+	rv = ((pvh->pvh_attrs & PGA_REFERENCED) != 0);
 #ifdef DEBUG
 	if (pmapdebug & PDB_FOLLOW) {
 		printf("pmap_is_referenced(%p) -> %c\n", pg, "FT"[rv]);
@@ -2190,7 +2190,7 @@ pmap_is_referenced(pa)
 		return 0;
 
 	pvh = pa_to_pvh(pa);
-	rv = ((pvh->pvh_attrs & PMAP_ATTR_REF) != 0);
+	rv = ((pvh->pvh_attrs & PGA_REFERENCED) != 0);
 #ifdef DEBUG
 	if (pmapdebug & PDB_FOLLOW) {
 		printf("pmap_is_referenced(%lx) -> %c\n", pa, "FT"[rv]);
@@ -2216,7 +2216,7 @@ pmap_is_modified(pg)
 	boolean_t rv;
 
 	pvh = pa_to_pvh(pa);
-	rv = ((pvh->pvh_attrs & PMAP_ATTR_MOD) != 0);
+	rv = ((pvh->pvh_attrs & PGA_MODIFIED) != 0);
 #ifdef DEBUG
 	if (pmapdebug & PDB_FOLLOW) {
 		printf("pmap_is_modified(%p) -> %c\n", pg, "FT"[rv]);
@@ -2236,7 +2236,7 @@ pmap_is_modified(pa)
 		return 0;
 
 	pvh = pa_to_pvh(pa);
-	rv = ((pvh->pvh_attrs & PMAP_ATTR_MOD) != 0);
+	rv = ((pvh->pvh_attrs & PGA_MODIFIED) != 0);
 #ifdef DEBUG
 	if (pmapdebug & PDB_FOLLOW) {
 		printf("pmap_is_modified(%lx) -> %c\n", pa, "FT"[rv]);
@@ -2626,10 +2626,10 @@ pmap_emulate_reference(p, v, user, write)
 	 *	(2) if it was a write fault, mark page as modified.
 	 */
 	pvh = pa_to_pvh(pa);
-	pvh->pvh_attrs = PMAP_ATTR_REF;
+	pvh->pvh_attrs = PGA_REFERENCED;
 	faultoff = PG_FOR | PG_FOE;
 	if (write) {
-		pvh->pvh_attrs |= PMAP_ATTR_MOD;
+		pvh->pvh_attrs |= PGA_MODIFIED;
 		faultoff |= PG_FOW;
 	}
 	pmap_changebit(pa, faultoff, FALSE);

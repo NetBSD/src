@@ -1,4 +1,4 @@
-/* $NetBSD: pmap.h,v 1.16 1998/05/19 00:20:21 thorpej Exp $ */
+/* $NetBSD: pmap.h,v 1.17 1998/05/19 00:29:03 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -134,8 +134,8 @@ struct pv_head {
 };
 
 /* pvh_attrs */
-#define	PMAP_ATTR_MOD		0x01		/* modified */
-#define	PMAP_ATTR_REF		0x02		/* referenced */
+#define	PGA_MODIFIED		0x01		/* modified */
+#define	PGA_REFERENCED		0x02		/* referenced */
 
 /* pvh_usage */
 #define	PGU_NORMAL		0		/* free or normal use */
