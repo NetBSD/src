@@ -1,6 +1,6 @@
 #!/bin/sh -
 #
-#	$NetBSD: MAKEDEV,v 1.16 2002/06/18 13:40:18 wiz Exp $
+#	$NetBSD: MAKEDEV,v 1.17 2002/06/19 15:00:05 wiz Exp $
 #
 # Copyright (c) 1990 The Regents of the University of California.
 # All rights reserved.
@@ -159,6 +159,7 @@ usbs)
 	makedev ttyU0 ttyU1
 	makedev urio0
 	makedev uscanner0 uscanner1
+	makedev ugen0
 	;;
 
 isdns)
