@@ -1,4 +1,4 @@
-/*	$NetBSD: termios.h,v 1.12 1995/03/26 20:24:52 jtc Exp $	*/
+/*	$NetBSD: termios.h,v 1.13 1995/04/22 13:03:10 cgd Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1993, 1994
@@ -174,9 +174,9 @@
 #endif  /*_POSIX_SOURCE */
 #define	NOFLSH		0x80000000	/* don't flush after interrupt */
 
-typedef unsigned long	tcflag_t;
+typedef unsigned int	tcflag_t;
 typedef unsigned char	cc_t;
-typedef long		speed_t;
+typedef unsigned int	speed_t;
 
 struct termios {
 	tcflag_t	c_iflag;	/* input flags */
@@ -184,8 +184,8 @@ struct termios {
 	tcflag_t	c_cflag;	/* control flags */
 	tcflag_t	c_lflag;	/* local flags */
 	cc_t		c_cc[NCCS];	/* control chars */
-	long		c_ispeed;	/* input speed */
-	long		c_ospeed;	/* output speed */
+	int		c_ispeed;	/* input speed */
+	int		c_ospeed;	/* output speed */
 };
 
 /* 
