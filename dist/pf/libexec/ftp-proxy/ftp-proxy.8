@@ -1,4 +1,4 @@
-.\"	$NetBSD: ftp-proxy.8,v 1.5 2004/11/14 11:26:47 yamt Exp $
+.\"	$NetBSD: ftp-proxy.8,v 1.6 2004/11/19 20:51:34 wiz Exp $
 .\"	$OpenBSD: ftp-proxy.8,v 1.41 2004/07/06 19:49:11 dhartmei Exp $
 .\"
 .\" Copyright (c) 1996-2001
@@ -159,12 +159,6 @@ necessary to capture the FTP control connection.
 Set
 .Nm ftp-proxy
 for use with pf.
-.It Fl r
-Use reverse host
-.Pq reverse DNS
-lookups for logging and libwrap use.
-By default,
-the proxy does not look up hostnames for libwrap or logging purposes.
 .It Fl R Ar address:[port]
 Reverse proxy mode for FTP servers running behind a NAT gateway.
 In this mode, no redirection is needed.
@@ -173,6 +167,12 @@ The proxy is run from
 on the port that external clients connect to (usually 21).
 Control connections and passive data connections are forwarded
 to the server.
+.It Fl r
+Use reverse host
+.Pq reverse DNS
+lookups for logging and libwrap use.
+By default,
+the proxy does not look up hostnames for libwrap or logging purposes.
 .It Fl S Ar address
 Source address to use for data connections made by the proxy.
 Useful when there are multiple addresses (aliases) available
