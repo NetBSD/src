@@ -1,6 +1,6 @@
 #!/bin/sh -
 #
-#	$NetBSD: MAKEDEV,v 1.54 2002/08/09 02:39:30 lukem Exp $
+#	$NetBSD: MAKEDEV,v 1.55 2002/10/04 18:53:42 elric Exp $
 #
 #	from: @(#)MAKEDEV	8.1 (Berkeley) 6/9/93
 #
@@ -21,6 +21,7 @@
 #	st*	MI SCSI tape drives
 # Disks:
 #	ccd*	concatenated disk driver
+#	cgd*	cryptographic disk driver
 #	cd*	MI SCSI cdroms
 #	md*	memory pseudo-disk devices
 #	raid*	RAIDframe disk driver
@@ -80,6 +81,7 @@ all)
 	makedev minimal fd
 	makedev raid0 raid1 raid2 raid3 raid4 raid5 raid6 raid7
 	makedev pty0 vnd0 vnd1 vnd2 vnd3 ccd0 ccd1 ccd2 ccd3
+	makedev cgd0 cgd1 cgd2 cgd3
 	makedev tun0 tun1 tun2 tun3
 	makedev bpf0 bpf1 bpf2 bpf3 bpf4 bpf5 bpf6 bpf7
 	makedev fb0 fb1 fb2
@@ -186,9 +188,10 @@ md*)
 	chmod 640 md${unit}? #rmd${unit}?
 	;;
 
-ccd*|cd*|raid*|sd*|vnd*)
+ccd*|cgd*|cd*|raid*|sd*|vnd*)
 	case $i in
 	ccd*)   name=ccd;       unit=${i#ccd};  blk=24; chr=87;;
+	cgd*)   name=cgd;       unit=${i#cgd};  blk=33; chr=104;;
 	cd*)    name=cd;        unit=${i#cd};   blk=25; chr=47;;
 	raid*)  name=raid;      unit=${i#raid}; blk=32; chr=96;;
 	sd*)    name=sd;        unit=${i#sd};   blk=19; chr=9;;

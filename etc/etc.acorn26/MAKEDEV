@@ -1,5 +1,5 @@
 #!/bin/sh -
-#	$NetBSD: MAKEDEV,v 1.5 2002/08/09 02:39:15 lukem Exp $
+#	$NetBSD: MAKEDEV,v 1.6 2002/10/04 18:53:22 elric Exp $
 #
 # Copyright (c) 1990 The Regents of the University of California.
 # All rights reserved.
@@ -57,6 +57,7 @@
 #	sd*	SCSI or ATAPI disk drives
 #	cd*	SCSI or ATAPI CD-ROM
 #	ccd*	concatenated disk driver
+#	cgd*	cryptographic disk driver
 #	md*	memory pseudo-disk devices
 #	vnd*	file pseudo-disks
 #	raid*	RAIDframe disk devices
@@ -114,6 +115,7 @@ all)
 	makedev std wscons fd pty0
 	makedev vnd0 vnd1 vnd2 vnd3
 	makedev ccd0 ccd1 ccd2 ccd3 md0 md1
+	makedev cgd0 cgd1 cgd2 cgd3
 	makedev wd0 wd1 sd0 sd1
 	makedev wskbd0 wsmouse0
 	makedev com0 lpt0 arcpp0
@@ -223,9 +225,10 @@ md*)
 	chmod 640 md${unit}? #rmd${unit}?
 	;;
 
-ccd*|raid*|vnd*|wd*|sd*|cd*)
+ccd*|cgd*|raid*|vnd*|wd*|sd*|cd*)
 	case $i in
 	ccd*)	name=ccd;	unit=${i#ccd};	blk=3; chr=9;;
+	cgd*)	name=cgd;	unit=${i#cgd};	blk=8; chr=29;;
 	raid*)	name=raid;	unit=${i#raid};	blk=7; chr=26;;
 	vnd*)	name=vnd;	unit=${i#vnd};	blk=2; chr=8;;
 	wd*)	name=wd;	unit=${i#wd};	blk=4; chr=15;;
