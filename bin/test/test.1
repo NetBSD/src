@@ -1,4 +1,4 @@
-.\"	$NetBSD: test.1,v 1.11 1999/03/09 07:05:33 garbled Exp $
+.\"	$NetBSD: test.1,v 1.12 1999/08/22 14:06:59 kleink Exp $
 .\"
 .\" Copyright (c) 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -94,10 +94,6 @@ is set.
 True if
 .Ar file
 exists and is a symbolic link.
-This operator is retained for compatibility with previous versions of
-this program. Do not rely on its existence; use
-.Fl L
-instead.
 .It Fl k Ar file
 True if
 .Ar file
@@ -157,6 +153,10 @@ is zero.
 True if 
 .Ar file
 exists and is a symbolic link.
+This operator is retained for compatibility with previous versions of
+this program. Do not rely on its existence; use
+.Fl h
+instead.
 .It Fl O Ar file
 True if
 .Ar file
