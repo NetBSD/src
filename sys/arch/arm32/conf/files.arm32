@@ -110,9 +110,13 @@ major   {cd = 26}
 major   {ch = 27}
 major	{uk = 28}
 
-device  asc at podulebus: scsi
-file	arch/arm32/podulebus/asc_poll.c		asc
-file	arch/arm32/podulebus/asc_asm.S		asc
+# Generic sbic (WD3393) driver
+define	sbic
+file	arch/arm32/podulebus/sbic.c		sbic
+
+# Acorn SCSI I specific layer for sbic
+device  asc at podulebus: scsi, sbic
+file	arch/arm32/podulebus/asc.c		asc
 
 # Generic fas216 + esp216 driver
 define	sfas
@@ -174,7 +178,7 @@ file	arch/arm32/arm32/iiccontrol.c
 file	arch/arm32/arm32/rtc.c
 
 # IRQ/FIQ files
-file	arch/arm32/arm32/spl.c
+file	arch/arm32/arm32/spl.S
 file	arch/arm32/arm32/irq.S
 file	arch/arm32/arm32/irqhandler.c
 file	arch/arm32/arm32/fiq.S
@@ -225,3 +229,4 @@ file	arch/arm32/fpe-arm/armfpe.s		armfpe
 file	arch/arm32/arm32/db_disasm.c		ddb
 file	arch/arm32/arm32/db_interface.c		ddb
 file	arch/arm32/arm32/db_trace.c		ddb
+file	arch/arm32/arm32/db_machdep.c		ddb
