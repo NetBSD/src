@@ -1,4 +1,4 @@
-$NetBSD: TODO,v 1.5 2000/02/22 11:25:55 soda Exp $
+$NetBSD: TODO,v 1.6 2000/03/03 12:32:15 soda Exp $
 
 To do list (not in any particular order).
 
@@ -52,6 +52,8 @@ To do list (not in any particular order).
     o	implement NCR 53c700(?) driver for NEC RISCserver 2200
 	based on amiga siop driver?
 
+    o	audio driver
+
     o	use MI driver
 
 	-   use MI ncr53c9x driver instead of home grown asc
@@ -66,14 +68,14 @@ To do list (not in any particular order).
 	-   make pccons MI, and share it with i386,
 	    or simply eliminate pccons
 
-    o easy part
+	-   LKM
 
-	- ARC boot device name -> NetBSD root device conversion
+    o	ARC boot device name -> NetBSD root device conversion
 
-	- and missing MI devices
-		lkm, tun, vcoda, raidframe, ...
+    o	and missing MI devices
+		ses?, lkm, vcoda, ...
 
-	- way to specify serial console
+    o	way to specify serial console
 
     o resolve "XXX"
 
