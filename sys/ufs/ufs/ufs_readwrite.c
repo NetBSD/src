@@ -1,4 +1,4 @@
-/*	$NetBSD: ufs_readwrite.c,v 1.18.2.4 1999/04/30 04:32:07 chs Exp $	*/
+/*	$NetBSD: ufs_readwrite.c,v 1.18.2.5 1999/05/30 15:16:22 chs Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -327,7 +327,7 @@ WRITE(v)
 			flags &= ~B_CLRBUF;
 
 		error = ffs_balloc(ip, lbn, blkoffset + xfersize, ap->a_cred,
-				   &bp, NULL, flags, NULL);
+				   &bp, NULL, flags);
 #endif
 		if (error)
 			break;
