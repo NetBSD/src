@@ -1,4 +1,4 @@
-/*	$NetBSD: inode.c,v 1.50 2005/01/19 17:33:58 xtraeme Exp $	*/
+/*	$NetBSD: inode.c,v 1.51 2005/01/20 15:29:40 xtraeme Exp $	*/
 
 /*
  * Copyright (c) 1980, 1986, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)inode.c	8.8 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: inode.c,v 1.50 2005/01/19 17:33:58 xtraeme Exp $");
+__RCSID("$NetBSD: inode.c,v 1.51 2005/01/20 15:29:40 xtraeme Exp $");
 #endif
 #endif /* not lint */
 
@@ -62,7 +62,7 @@ __RCSID("$NetBSD: inode.c,v 1.50 2005/01/19 17:33:58 xtraeme Exp $");
 
 static ino_t startinum;
 
-static int iblock (struct inodesc *, long, u_int64_t);
+static int iblock(struct inodesc *, long, u_int64_t);
 static void swap_dinode1(union dinode *, int);
 static void swap_dinode2(union dinode *, int);
 
