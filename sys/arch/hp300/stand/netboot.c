@@ -1,4 +1,4 @@
-/*	$NetBSD: netboot.c,v 1.6 1995/09/02 05:04:19 thorpej Exp $	*/
+/*	$NetBSD: netboot.c,v 1.7 1995/09/02 23:36:12 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1990, 1993
@@ -36,7 +36,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$NetBSD: netboot.c,v 1.6 1995/09/02 05:04:19 thorpej Exp $";
+static char rcsid[] = "$NetBSD: netboot.c,v 1.7 1995/09/02 23:36:12 thorpej Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -76,7 +76,7 @@ main()
 	bootdev = MAKEBOOTDEV(0, 0, 0, 0, 0);
 
 	printf("\n>> NetBSD NETWORK BOOT HP9000/%s CPU [%s]\n",
-	       getmachineid(), "$Revision: 1.6 $");
+	       getmachineid(), "$Revision: 1.7 $");
 	printf(">> Enter \"reset\" to reset system.\n");
 
 	bdev	= B_TYPE(bootdev);
@@ -156,7 +156,7 @@ machdep_start(entry, howto, loadaddr, ssym, esym)
 {
 
 	asm("movl %0,d7" : : "m" (howto));
-	asm("movl %0,d6" : : "m" (opendev));
+	asm("movl #0,d6");	/* tell setroot we've netbooted */
 	asm("movl %0,a5" : : "a" (loadaddr));
 	asm("movl %0,a4" : : "a" (esym));
 	(*((int (*)())entry))();

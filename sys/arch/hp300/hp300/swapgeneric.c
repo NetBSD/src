@@ -1,4 +1,4 @@
-/*	$NetBSD: swapgeneric.c,v 1.9 1995/09/02 04:54:07 thorpej Exp $	*/
+/*	$NetBSD: swapgeneric.c,v 1.10 1995/09/02 23:36:10 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986 Regents of the University of California.
@@ -73,6 +73,8 @@ extern	struct driver ledriver;
 
 extern struct hp_ctlr hp_cinit[];
 extern struct hp_device hp_dinit[];
+
+extern u_long bootdev;
 
 static	int no_mountroot __P((void));
 
@@ -162,6 +164,10 @@ gotit:
 		goto found;
 	}
 	for (gc = genericconf; gc->gc_driver; gc++) {
+#ifdef NFSCLIENT
+		if (bootdev == 0 && gc->gc_root != NODEV)
+			continue;
+#endif /* NFSCLIENT */
 		for (hd = hp_dinit; hd->hp_driver; hd++) {
 			if (hd->hp_alive == 0)
 				continue;
