@@ -1,4 +1,4 @@
-.\"	$NetBSD: isapnp.4,v 1.7 1998/05/23 16:04:40 matt Exp $
+.\"	$NetBSD: isapnp.4,v 1.8 1998/06/07 09:08:46 enami Exp $
 .\"
 .\" Copyright (c) 1997 Jonathan Stone
 .\" All rights reserved.
@@ -51,6 +51,13 @@ devices on an ISA bus.
 includes machine-independent ISAPNP drivers, sorted by function
 and driver name:
 .Pp
+.Ss SCSI controllers
+.Bl -tag -width speaker -offset indent -compact
+.It aic
+Adaptec AHA-1520B SCSI controller card.
+.El
+.\"
+.Pp
 .Ss Serial and parallel interfaces
 .Bl -tag -width speaker -offset indent -compact
 .It com
@@ -96,14 +103,15 @@ The manual pages for each individual
 driver also list
 the supported front-ends for other buses.
 .Sh SEE ALSO
+.Xr aic 4 ,
 .Xr com 4 ,
 .Xr ep 4 ,
+.Xr guspnp 4 ,
 .Xr isa 4 ,
 .Xr le 4 ,
 .Xr ne 4 ,
 .Xr sb 4 ,
-.Xr guspnp 4 ,
-.Xr ym 4 .
+.Xr ym 4
 .Sh HISTORY
 The
 .Nm
