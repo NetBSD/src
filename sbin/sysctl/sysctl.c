@@ -1,4 +1,4 @@
-/*	$NetBSD: sysctl.c,v 1.63 2003/01/22 17:12:41 dsl Exp $	*/
+/*	$NetBSD: sysctl.c,v 1.64 2003/03/07 00:42:04 fvdl Exp $	*/
 
 /*
  * Copyright (c) 1993
@@ -44,7 +44,7 @@ __COPYRIGHT(
 #if 0
 static char sccsid[] = "@(#)sysctl.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: sysctl.c,v 1.63 2003/01/22 17:12:41 dsl Exp $");
+__RCSID("$NetBSD: sysctl.c,v 1.64 2003/03/07 00:42:04 fvdl Exp $");
 #endif
 #endif /* not lint */
 
@@ -656,8 +656,9 @@ parse(char *string, int flags)
 			lim = MAX_BIOSDISKS;
 		for (bi = dl->dl_biosdisks, i = 0; i < lim; bi++, i++)
 			printf("%x:%lld(%d/%d/%d),%x ",
-				bi->bi_dev, bi->bi_lbasecs, bi->bi_cyl,
-				bi->bi_head, bi->bi_sec, bi->bi_flags);
+				bi->bi_dev, (long long)bi->bi_lbasecs,
+				bi->bi_cyl, bi->bi_head, bi->bi_sec,
+				bi->bi_flags);
 		lim = dl->dl_nnativedisks;
 		ni = dl->dl_nativedisks;
 		bi = dl->dl_biosdisks;
