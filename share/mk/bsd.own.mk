@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.own.mk,v 1.49 1997/05/30 21:46:02 cjs Exp $
+#	$NetBSD: bsd.own.mk,v 1.49.2.1 1997/08/01 18:35:25 cjs Exp $
 
 # This file may be included multiple times without harm.
 
@@ -8,6 +8,7 @@
 .elif exists(/etc/mk.conf)
 .include "/etc/mk.conf"
 .endif
+
 
 # BUILDCONF is our build configuration file. Search upwards in
 # the tree starting in the current directory for it.
@@ -25,7 +26,7 @@ BUILDCONF != \
     else \
 	echo; \
     fi
-MAKEFLAGS += "BUILDCONF=\"${BUILDCONF}\""
+.MAKEFLAGS: BUILDCONF=${BUILDCONF}
 .endif
 .if exists(${BUILDCONF})
 .include "${BUILDCONF}"
