@@ -1,4 +1,4 @@
-/* $NetBSD: locore.s,v 1.63 1999/05/31 20:40:23 ross Exp $ */
+/* $NetBSD: locore.s,v 1.64 1999/07/11 22:35:28 ross Exp $ */
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -76,7 +76,7 @@
 
 #include <machine/asm.h>
 
-__KERNEL_RCSID(0, "$NetBSD: locore.s,v 1.63 1999/05/31 20:40:23 ross Exp $");
+__KERNEL_RCSID(0, "$NetBSD: locore.s,v 1.64 1999/07/11 22:35:28 ross Exp $");
 
 #ifndef EVCNT_COUNTERS
 #include <machine/intrcnt.h>
@@ -86,6 +86,11 @@ __KERNEL_RCSID(0, "$NetBSD: locore.s,v 1.63 1999/05/31 20:40:23 ross Exp $");
 .stabs	__FILE__,132,0,0,kernel_text
 
 #if defined(MULTIPROCESSOR)
+#if 0
+#define	SPLX	 _splx
+#define	SPLRAISE _splraise
+#endif
+
 IMPORT(cpu_info, SIZEOF_CPU_INFO * ALPHA_MAXPROCS)
 
 /*
@@ -120,7 +125,14 @@ IMPORT(cpu_info, SIZEOF_CPU_INFO * ALPHA_MAXPROCS)
 	GET_CPUINFO(reg)					;	\
 	addq	reg, CPU_INFO_IDLE_THREAD, reg			;	\
 	ldq	reg, 0(reg)
-#else
+
+#else	/* if not MULTIPROCESSOR... */
+
+#if 0
+#define	SPLX	 splx
+#define	SPLRAISE splraise
+#endif
+
 IMPORT(curproc, 8)
 IMPORT(fpcurproc, 8)
 IMPORT(curpcb, 8)
@@ -150,6 +162,14 @@ IMPORT(curpcb, 8)
 	/* don't reorder instructions; paranoia. */
 	.set noreorder
 	.text
+
+	.macro	bfalse	reg, dst
+	beq	\reg, \dst
+	.endm
+
+	.macro	btrue	reg, dst
+	bne	\reg, \dst
+	.endm
 
 /*
  * This is for kvm_mkdb, and should be the address of the beginning
@@ -730,7 +750,7 @@ LEAF(restorefpstate, 1)
  * Note that savectx() only works for processes other than curproc,
  * since cpu_switch will copy over the info saved here.  (It _can_
  * sanely be used for curproc iff cpu_switch won't be called again, e.g.
- * from if called from boot().)
+ * if called from boot().)
  *
  * Arguments:
  *	a0	'struct user *' of the process that needs its context saved
@@ -938,6 +958,43 @@ cpu_switch_queuescan:
 	ldiq	v0, 1				/* possible ret to savectx() */
 	RET
 	END(cpu_switch)
+
+#if 0
+/**************************************************************************/
+
+LEAF(SPLRAISE, 1)				/* shouldn't need a GP	*/
+	call_pal PAL_OSF1_rdps			/* v0 <- PS		*/
+	and	v0, ALPHA_PSL_IPL_MASK, v0	/* v0 <- ipl		*/
+	cmplt	v0, a0, t0			/* t0 <= ipl < arg ?	*/
+	bfalse	t0, 1f
+	call_pal PAL_OSF1_swpipl		/* raise IPL if needed	*/
+1:	RET
+	END(SPLRAISE)
+
+/**************************************************************************/
+
+/*
+ * We put splraise() and splx() together (and near the context switch code)
+ * for cache efficiency. We don't restore ra if all we did was the pal op.
+ * We save ra unconditionally, on the theory that the common case is the
+ * spl0() one and in any case because we want traceback to work ... and
+ * traceback-needing events quite frequently follow an spl0!
+ */
+NESTED(SPLX, 1, 8, ra, IM_RA, 0)
+	LDGP(pv)
+	lda	sp, -8(sp)			/* set up stack frame	     */
+	stq	ra, (8-8)(sp)			/* save ra		     */
+	cmpeq	a0, ALPHA_PSL_IPL_0, t0
+	btrue	t0, 1f
+	call_pal PAL_OSF1_swpipl
+	lda	sp, 8(sp)			/* ra is still OK */
+	RET					/* v0 left over from copystr */
+1:	CALL(spl0)
+	ldq	ra, (8-8)(sp)			/* restore ra.		     */
+	lda	sp, 8(sp)			/* kill stack frame.	     */
+	RET
+	END(SPLX)
+#endif
 
 
 /*
@@ -1780,6 +1837,9 @@ LEAF(XentRestart, 1)			/* XXX should be NESTED */
 	stq	at_reg,(FRAME_AT*8)(sp)
 	.set at
 	stq	v0,(FRAME_V0*8)(sp)
+	stq	a0,(FRAME_A0*8)(sp)
+	stq	a1,(FRAME_A1*8)(sp)
+	stq	a2,(FRAME_A2*8)(sp)
 	stq	a3,(FRAME_A3*8)(sp)
 	stq	a4,(FRAME_A4*8)(sp)
 	stq	a5,(FRAME_A5*8)(sp)
@@ -1808,9 +1868,7 @@ LEAF(XentRestart, 1)			/* XXX should be NESTED */
 	br	pv,1f
 1:	LDGP(pv)
 
-	ldq	a0,(FRAME_RA*8)(sp)		/* a0 = ra */
-	ldq	a1,(FRAME_T11*8)(sp)		/* a1 = ai */
-	ldq	a2,(FRAME_T12*8)(sp)		/* a2 = pv */
+	mov	sp,a0
 	CALL(console_restart)
 
 	call_pal PAL_halt
