@@ -1,4 +1,4 @@
-/*	$NetBSD: dkbad.c,v 1.1 1996/05/05 12:17:21 oki Exp $	*/
+/*	$NetBSD: dkbad.c,v 1.2 1996/05/16 15:57:32 oki Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1990, 1993
@@ -46,6 +46,7 @@
  * Return -1 if not found.
  */
 
+int
 isbad(bt, cyl, trk, sec)
 	register struct dkbad *bt;
 	int cyl, trk, sec;

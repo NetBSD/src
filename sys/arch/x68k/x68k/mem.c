@@ -1,4 +1,4 @@
-/*	$NetBSD: mem.c,v 1.1 1996/05/05 12:17:21 oki Exp $	*/
+/*	$NetBSD: mem.c,v 1.2 1996/05/16 15:57:35 oki Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -50,6 +50,7 @@
 #include <sys/systm.h>
 #include <sys/uio.h>
 #include <sys/malloc.h>
+#include <sys/proc.h>
 
 #include <machine/cpu.h>
 
@@ -187,7 +188,6 @@ mmrw(dev, uio, flags)
 		uio->uio_resid -= c;
 	}
 	if (minor(dev) == 0) {
-unlock:
 		if (physlock > 1)
 			wakeup((caddr_t)&physlock);
 		physlock = 0;
