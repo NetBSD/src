@@ -1,4 +1,4 @@
-/*	$NetBSD: sysctl.c,v 1.23 2000/01/17 02:32:06 itojun Exp $	*/
+/*	$NetBSD: sysctl.c,v 1.24 2000/02/06 11:12:40 itojun Exp $	*/
 
 /*
  * Copyright (c) 1993
@@ -44,7 +44,7 @@ __COPYRIGHT(
 #if 0
 static char sccsid[] = "@(#)sysctl.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: sysctl.c,v 1.23 2000/01/17 02:32:06 itojun Exp $");
+__RCSID("$NetBSD: sysctl.c,v 1.24 2000/02/06 11:12:40 itojun Exp $");
 #endif
 #endif /* not lint */
 
@@ -81,8 +81,8 @@ __RCSID("$NetBSD: sysctl.c,v 1.23 2000/01/17 02:32:06 itojun Exp $");
 #include <netinet/tcp_var.h>
 
 #ifdef INET6
-#include <netinet6/ip6.h>
-#include <netinet6/icmp6.h>
+#include <netinet/ip6.h>
+#include <netinet/icmp6.h>
 #include <netinet6/ip6_var.h>
 #include <netinet6/udp6.h>
 #include <netinet6/udp6_var.h>
