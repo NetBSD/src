@@ -9,7 +9,7 @@ SRCS=		column.cc dictionary.cc div.cc env.cc input.cc \
 		node.cc number.cc reg.cc symbol.cc
 LDADD+=		$(.CURDIR)/../libgroff/obj/libgroff.a -lm
 # Delete the -Ig++-include after we fix libg++ and install it
-GXXFLAGS+=	-I$(.CURDIR) -I$(.CURDIR)/../libgroff \
+CXXFLAGS+=	-I$(.CURDIR) -I$(.CURDIR)/../libgroff \
 		-I$(.CURDIR)/../../../lib/libg++/g++-include \
 		-DMACROPATH=\"/usr/share/tmac\" -DSTORE_WIDTH \
 		-DHYPHENFILE=\"$(HYPHENDIR)/hyphen\"
