@@ -1,4 +1,4 @@
-/*	$NetBSD: pdqvar.h,v 1.2 1995/08/19 04:35:22 cgd Exp $	*/
+/*	$NetBSD: pdqvar.h,v 1.3 1996/03/09 03:46:24 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1995 Matt Thomas (thomas@lkg.dec.com)
@@ -95,6 +95,7 @@ typedef struct {
     void *sc_ats;			/* shutdown hook */
 #endif
     struct arpcom sc_ac;
+    void (*if_init) __P((int unit));
     pdq_t *sc_pdq;
     unsigned sc_iobase;
 } pdq_softc_t;
@@ -106,9 +107,16 @@ extern void pdq_ifreset(pdq_softc_t *sc);
 extern void pdq_ifinit(pdq_softc_t *sc);
 extern void pdq_ifwatchdog(pdq_softc_t *sc);
 extern ifnet_ret_t pdq_ifstart(struct ifnet *ifp);
+#ifdef __NetBSD__
+extern int pdq_ifioctl(pdq_softc_t *sc, ioctl_cmd_t cmd, caddr_t data);
+extern void pdq_ifattach(pdq_softc_t *sc, ifnet_ret_t (*ifinit)(int unit),
+			 ifnet_ret_t (*ifwatchdog)(int unit),
+			 int (*ifioctl)(struct ifnet *, ioctl_cmd_t, caddr_t));
+#else /* ! __NetBSD__ */
 extern int pdq_ifioctl(struct ifnet *ifp, ioctl_cmd_t cmd, caddr_t data);
 extern void pdq_ifattach(pdq_softc_t *sc, ifnet_ret_t (*ifinit)(int unit),
 			 ifnet_ret_t (*ifwatchdog)(int unit));
+#endif /* __NetBSD__ */
 #endif /* PDQ_HWSUPPORT */
 #elif defined(DLPI_PDQ)
 #include <sys/param.h>
