@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread_stack.c,v 1.12 2004/03/14 01:20:01 cl Exp $	*/
+/*	$NetBSD: pthread_stack.c,v 1.13 2004/07/18 21:24:52 chs Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -37,8 +37,10 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: pthread_stack.c,v 1.12 2004/03/14 01:20:01 cl Exp $");
+__RCSID("$NetBSD: pthread_stack.c,v 1.13 2004/07/18 21:24:52 chs Exp $");
 
+#define __EXPOSE_STACK 1
+#include <sys/param.h>
 #include <err.h>
 #include <errno.h>
 #include <signal.h>
@@ -156,34 +158,36 @@ static pthread_t
 pthread__stackid_setup(void *base, size_t size)
 {
 	pthread_t t;
+	void *redaddr;
 	size_t pagesize;
 	int ret;
 
-	/* Protect the next-to-bottom stack page as a red zone. */
-	/* XXX assumes that the stack grows down. */
+	t = base;
 	pagesize = (size_t)sysconf(_SC_PAGESIZE);
-#ifdef __hppa__
-	#error "stack does not grow down"
-#endif
-	ret = mprotect((char *)base + pagesize, pagesize, PROT_NONE);
-	if (ret == -1)
-		err(2, "Couldn't mprotect() stack redzone at %p\n",
-		    (char *)base + pagesize);
+
 	/*
 	 * Put a pointer to the pthread in the bottom (but
          * redzone-protected section) of the stack. 
 	 */
-	t = base;
-	
+
+	redaddr = STACK_SHRINK(STACK_MAX(base, size), pagesize);
+#ifdef __MACHINE_STACK_GROWS_UP
+	t->pt_stack.ss_sp = (char *)base + pagesize;
+#else
 	t->pt_stack.ss_sp = (char *)base + 2 * pagesize;
+#endif
 	t->pt_stack.ss_size = PT_STACKSIZE - 2 * pagesize;
 
+
 	/* Set up an initial ucontext pointer to a "safe" area */
-	t->pt_uc =(ucontext_t *)(void *)((char *)t->pt_stack.ss_sp + 
-	    t->pt_stack.ss_size - (pagesize/2));
-#ifdef _UC_UCONTEXT_ALIGN
-	t->pt_uc = (ucontext_t *)((uintptr_t)t->pt_uc & _UC_UCONTEXT_ALIGN);
-#endif
+	t->pt_uc = (ucontext_t *)
+		STACK_ALIGN(STACK_GROW(t->pt_stack.ss_sp, pagesize / 2),
+			    ~_UC_UCONTEXT_ALIGN);
+
+	/* Protect the next-to-bottom stack page as a red zone. */
+	ret = mprotect(redaddr, pagesize, PROT_NONE);
+	if (ret == -1)
+		err(2, "Couldn't mprotect() stack redzone at %p\n", redaddr);
 
 	return t;
 }
@@ -195,6 +199,10 @@ pthread__stackinfo_offset()
 	size_t pagesize;
 
 	pagesize = (size_t)sysconf(_SC_PAGESIZE);
-	return (-(2 * pagesize) +
-	    offsetof(struct __pthread_st, pt_stackinfo));
+
+#ifdef __MACHINE_STACK_GROWS_UP
+	return (-pagesize + offsetof(struct __pthread_st, pt_stackinfo));
+#else
+	return (-(2 * pagesize) + offsetof(struct __pthread_st, pt_stackinfo));
+#endif
 }

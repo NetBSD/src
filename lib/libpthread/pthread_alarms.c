@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread_alarms.c,v 1.9 2004/03/14 01:19:41 cl Exp $	*/
+/*	$NetBSD: pthread_alarms.c,v 1.10 2004/07/18 21:24:52 chs Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: pthread_alarms.c,v 1.9 2004/03/14 01:19:41 cl Exp $");
+__RCSID("$NetBSD: pthread_alarms.c,v 1.10 2004/07/18 21:24:52 chs Exp $");
 
 #include <err.h>
 #include <sys/time.h>
@@ -48,7 +48,7 @@ __RCSID("$NetBSD: pthread_alarms.c,v 1.9 2004/03/14 01:19:41 cl Exp $");
 
 timer_t pthread_alarmtimer;
 PTQ_HEAD(, pt_alarm_t) pthread_alarmqueue = PTQ_HEAD_INITIALIZER;
-pthread_spin_t pthread_alarmqlock;
+pthread_spin_t pthread_alarmqlock = __SIMPLELOCK_UNLOCKED;
 
 #ifdef PTHREAD_ALARM_DEBUG
 #define SDPRINTF(x) DPRINTF(x)

@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread_dbg.c,v 1.28 2004/07/06 19:33:53 nathanw Exp $	*/
+/*	$NetBSD: pthread_dbg.c,v 1.29 2004/07/18 21:24:52 chs Exp $	*/
 
 /*-
  * Copyright (c) 2002 Wasabi Systems, Inc.
@@ -36,8 +36,10 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: pthread_dbg.c,v 1.28 2004/07/06 19:33:53 nathanw Exp $");
+__RCSID("$NetBSD: pthread_dbg.c,v 1.29 2004/07/18 21:24:52 chs Exp $");
 
+#define __EXPOSE_STACK 1
+#include <sys/param.h>
 #include <stddef.h>
 #include <stdlib.h>
 #include <string.h>
@@ -51,8 +53,6 @@ __RCSID("$NetBSD: pthread_dbg.c,v 1.28 2004/07/06 19:33:53 nathanw Exp $");
 #include <pthread_int.h>
 #include <pthread_dbg.h>
 #include <pthread_dbg_int.h>
-
-#define MIN(a,b)	((a)<(b) ? (a) : (b))
 
 #ifndef PT_FIXEDSTACKSIZE_LG
 #undef PT_STACKMASK
@@ -1089,9 +1089,9 @@ td_thr_suspend(td_thread_t *thread)
 {
 	int tmp, tmp1, val;
 	caddr_t addr, sp, nthreadaddr, qaddr;
-	size_t rsize;
+	size_t rsize, ucsize;
 	td_thread_t *nthread;
-	ucontext_t uc;
+	ucontext_t uc, *ucp;
 	struct pthread_queue_t qhead;
 
 	/* validate the thread */
@@ -1163,10 +1163,10 @@ td_thr_suspend(td_thread_t *thread)
 		PTHREAD_REG_TO_UCONTEXT(&uc, thread->proc->regbuf);
 		PTHREAD_FPREG_TO_UCONTEXT(&uc, thread->proc->fpregbuf);
 		sp = (caddr_t)(intptr_t)pthread__uc_sp(&uc);
-		sp -= sizeof(uc);
-#ifdef _UC_UCONTEXT_ALIGN
-		sp = (caddr_t) ((unsigned long)sp & _UC_UCONTEXT_ALIGN);
-#endif
+		sp = STACK_ALIGN(sp, ~_UC_UCONTEXT_ALIGN);
+		ucsize = roundup(sizeof(ucontext_t), (~_UC_UCONTEXT_ALIGN) + 1);
+		ucp = (void *)STACK_ALLOC(sp, ucsize);
+		sp = STACK_GROW(sp, ucsize);
 		val = WRITE(thread->proc, sp, &uc, sizeof(uc));
 		if (val != 0)
 			return val;

@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread_sig.c,v 1.34 2004/03/24 20:01:37 lha Exp $	*/
+/*	$NetBSD: pthread_sig.c,v 1.35 2004/07/18 21:24:52 chs Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -37,13 +37,15 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: pthread_sig.c,v 1.34 2004/03/24 20:01:37 lha Exp $");
+__RCSID("$NetBSD: pthread_sig.c,v 1.35 2004/07/18 21:24:52 chs Exp $");
 
 /* We're interposing a specific version of the signal interface. */
 #define	__LIBC12_SOURCE__
 
 #define	__PTHREAD_SIGNAL_PRIVATE
 
+#define __EXPOSE_STACK 1
+#include <sys/param.h>
 #include <errno.h>
 #include <lwp.h>
 #include <stdint.h>
@@ -75,16 +77,16 @@ extern struct pthread_queue_t pthread__allqueue;
 extern pthread_spin_t pthread__suspqueue_lock;
 extern struct pthread_queue_t pthread__suspqueue;
 
-static pthread_spin_t	pt_sigacts_lock;
+static pthread_spin_t	pt_sigacts_lock = __SIMPLELOCK_UNLOCKED;
 static struct sigaction pt_sigacts[_NSIG];
 
-static pthread_spin_t	pt_process_siglock;
+static pthread_spin_t	pt_process_siglock = __SIMPLELOCK_UNLOCKED;
 static sigset_t	pt_process_sigmask;
 static sigset_t	pt_process_siglist;
 
 /* Queue of threads that are waiting in sigsuspend(). */
 static struct pthread_queue_t pt_sigsuspended;
-static pthread_spin_t pt_sigsuspended_lock;
+static pthread_spin_t pt_sigsuspended_lock = __SIMPLELOCK_UNLOCKED;
 
 /*
  * Nothing actually signals or waits on this lock, but the sleepobj
@@ -94,7 +96,7 @@ static pthread_cond_t pt_sigsuspended_cond = PTHREAD_COND_INITIALIZER;
 
 /* Queue of threads that are waiting in sigtimedwait(). */
 static struct pthread_queue_t pt_sigwaiting;
-static pthread_spin_t pt_sigwaiting_lock;
+static pthread_spin_t pt_sigwaiting_lock = __SIMPLELOCK_UNLOCKED;
 static pthread_t pt_sigwmaster;
 static pthread_cond_t pt_sigwaiting_cond = PTHREAD_COND_INITIALIZER;
 
@@ -846,6 +848,8 @@ pthread__deliver_signal(pthread_t self, pthread_t target, siginfo_t *si)
 	ucontext_t *uc, *olduc;
 	struct sigaction act;
 	siginfo_t *siginfop;
+	caddr_t sp;
+	size_t ucsize;
 
 	pthread_spinlock(self, &pt_sigacts_lock);
 	act = pt_sigacts[si->si_signo];
@@ -874,22 +878,26 @@ pthread__deliver_signal(pthread_t self, pthread_t target, siginfo_t *si)
 	 * handler. So we borrow a bit of space from the target's
 	 * stack, which we were adjusting anyway.
 	 */
-	siginfop = (siginfo_t *)(void *)((char *)(void *)olduc -
-	    STACKSPACE - sizeof(siginfo_t));
+
+	sp = STACK_MAX(olduc, sizeof(ucontext_t));
+	sp = STACK_GROW(sp, STACKSPACE);
+	siginfop = (void *)STACK_ALLOC(sp, sizeof(siginfo_t));
+	sp = STACK_GROW(sp, sizeof(siginfo_t));
 	*siginfop = *si;
 
 	/*
 	 * XXX We are blatantly ignoring SIGALTSTACK. It would screw
 	 * with our notion of stack->thread mappings.
 	 */
-	uc = (ucontext_t *)(void *)((char *)(void *)siginfop -
-	    sizeof(ucontext_t));
-#ifdef _UC_UCONTEXT_ALIGN
-	uc = (ucontext_t *)((uintptr_t)uc & _UC_UCONTEXT_ALIGN);
-#endif
+
+	sp = STACK_ALIGN(sp, ~_UC_UCONTEXT_ALIGN);
+	ucsize = roundup(sizeof(ucontext_t), (~_UC_UCONTEXT_ALIGN) + 1);
+	uc = (void *)STACK_ALLOC(sp, ucsize);
+	sp = STACK_GROW(sp, ucsize);
 
 	_INITCONTEXT_U(uc);
-	uc->uc_stack.ss_sp = uc;
+
+	uc->uc_stack.ss_sp = sp;
 	uc->uc_stack.ss_size = 0;
 	uc->uc_link = NULL;
 

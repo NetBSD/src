@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread_sa.c,v 1.30 2004/03/14 01:19:42 cl Exp $	*/
+/*	$NetBSD: pthread_sa.c,v 1.31 2004/07/18 21:24:52 chs Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: pthread_sa.c,v 1.30 2004/03/14 01:19:42 cl Exp $");
+__RCSID("$NetBSD: pthread_sa.c,v 1.31 2004/07/18 21:24:52 chs Exp $");
 
 #include <err.h>
 #include <errno.h>
@@ -84,6 +84,8 @@ void pthread__find_interrupted(int type, struct sa_t *sas[], int ev, int intr,
 void pthread__resolve_locks(pthread_t self, pthread_t *interrupted);
 
 extern void pthread__switch_return_point(void);
+
+typedef void (*fptr_t)(void);
 
 void
 pthread__upcall(int type, struct sa_t *sas[], int ev, int intr, void *arg)
@@ -390,11 +392,15 @@ pthread__resolve_locks(pthread_t self, pthread_t *intqueuep)
 			    victim, PUC(victim)));
 
 			if (victim->pt_type == PT_THREAD_NORMAL) {
+				fptr_t psrp, pc;
+
 				SDPRINTF((" normal"));
+				psrp = pthread__switch_return_point;
+				pc = (fptr_t)pthread__uc_pc(victim->pt_uc);
 				if ((victim->pt_spinlocks == 0) &&
 				    ((victim->pt_switchto != NULL) ||
-					(pthread__uc_pc(victim->pt_uc) ==
-					    (intptr_t)pthread__switch_return_point))) {
+					(pc == psrp))) {
+
 					/*
 					 * We can remove this thread
 					 * from the interrupted queue.
