@@ -1,4 +1,4 @@
-/*	$NetBSD: auth-rhosts.c,v 1.8 2001/05/15 15:26:07 itojun Exp $	*/
+/*	$NetBSD: auth-rhosts.c,v 1.9 2001/06/23 19:37:38 itojun Exp $	*/
 /*
  * Author: Tatu Ylonen <ylo@cs.hut.fi>
  * Copyright (c) 1995 Tatu Ylonen <ylo@cs.hut.fi>, Espoo, Finland
@@ -15,7 +15,7 @@
  */
 
 #include "includes.h"
-RCSID("$OpenBSD: auth-rhosts.c,v 1.23 2001/04/12 19:15:24 markus Exp $");
+RCSID("$OpenBSD: auth-rhosts.c,v 1.24 2001/06/23 15:12:17 itojun Exp $");
 
 #include "packet.h"
 #include "xmalloc.h"
@@ -29,16 +29,13 @@ RCSID("$OpenBSD: auth-rhosts.c,v 1.23 2001/04/12 19:15:24 markus Exp $");
 /* import */
 extern ServerOptions options;
 
-int check_rhosts_file(const char *, const char *, const char *, const char *,
-    const char *);
-
 /*
  * This function processes an rhosts-style file (.rhosts, .shosts, or
  * /etc/hosts.equiv).  This returns true if authentication can be granted
  * based on the file, and returns zero otherwise.
  */
 
-int
+static int
 check_rhosts_file(const char *filename, const char *hostname,
 		  const char *ipaddr, const char *client_user,
 		  const char *server_user)

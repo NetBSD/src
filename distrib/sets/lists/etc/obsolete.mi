@@ -1,10 +1,11 @@
-# $NetBSD: obsolete.mi,v 1.6 2001/04/10 05:14:35 enami Exp $
+# $NetBSD: obsolete.mi,v 1.7 2001/06/23 19:37:43 itojun Exp $
 ./etc/default/daily.conf
 ./etc/default/monthly.conf
 ./etc/default/rc.conf
 ./etc/default/security.conf
 ./etc/default/weekly.conf
 ./etc/dhclient-script
+./etc/primes
 ./etc/rc.d/fsck.sh
 ./etc/rc.d/gated
 ./etc/rc.d/kerberos
