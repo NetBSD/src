@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_vfsops.c,v 1.73 2000/11/27 08:39:55 chs Exp $	*/
+/*	$NetBSD: ffs_vfsops.c,v 1.74 2000/12/03 19:52:06 fvdl Exp $	*/
 
 /*
  * Copyright (c) 1989, 1991, 1993, 1994
@@ -358,6 +358,8 @@ ffs_mount(mp, path, data, ndp, p)
 	memset(mp->mnt_stat.f_mntfromname + size, 0, MNAMELEN - size);
 	if (mp->mnt_flag & MNT_SOFTDEP)
 		fs->fs_flags |= FS_DOSOFTDEP;
+	else
+		fs->fs_flags &= ~FS_DOSOFTDEP;
 	if (fs->fs_fmod != 0) {	/* XXX */
 		fs->fs_fmod = 0;
 		if (fs->fs_clean & FS_WASCLEAN)
