@@ -1,4 +1,4 @@
-#       $NetBSD: files.vax,v 1.36 1998/05/22 09:59:55 ragge Exp $
+#       $NetBSD: files.vax,v 1.37 1998/06/04 15:59:04 ragge Exp $
 #
 # new style config file for vax architecture
 #
@@ -50,6 +50,9 @@ device	ht: tape
 attach	ht at mba
 file	arch/vax/mba/ht.c		ht needs-flag
 
+# wscons files.
+include "dev/wscons/files.wscons"
+
 # MSCP device drivers
 include "arch/vax/mscp/files.mscp"
 major	{ra = 9}
@@ -98,7 +101,7 @@ attach	dhu at uba
 file	arch/vax/uba/dhu.c		dhu needs-count
 
 # DZ11(-compatible) at UBA/vsbus
-device	dz: tty
+device	dz { }: tty
 file	arch/vax/uba/dz.c		dz needs-count
 
 attach	dz at uba with dz_uba
@@ -137,24 +140,22 @@ device	ln: ifnet, ether
 attach	ln at vsbus
 file	arch/vax/vsa/if_ln.c		ln
 
-# DC367-B in VAXstation 2000/3100 (DZ-like 4-port serial line controller,
-# controls keyboard, mouse, modem, and printer/console)
-device	dc: tty
-attach	dc at vsbus
-file	arch/vax/vsa/dc.c		dc needs-flag
-file	arch/vax/vsa/lk201.c		dc
+# Monochrome framebuffer on VS3100.
+device	smg: wsemuldisplaydev, wsrasteremulops
+attach	smg at vsbus
+file	arch/vax/vsa/smg.c		smg needs-flag
 
-# PM Framebuffer in VAXstation 2000/3100
-device	pm
-attach	pm at vsbus
-file	arch/vax/vsa/pm.c		pm needs-flag
+device	lkc # : wskbddev, wsmousedev
+attach	lkc at dz
+file	arch/vax/vsa/lkc.c		lkc needs-flag
 
 # QDSS at UBA
 device	qd
 attach	qd at uba
 file	arch/vax/uba/qd.c		qd needs-count
-file	arch/vax/uba/qfont.c		qd
+file	arch/vax/uba/qfont.c		qd | smg
 
+# DL-11 at UBA
 device	dl: tty
 attach	dl at uba
 file	arch/vax/uba/dl.c		dl needs-flag

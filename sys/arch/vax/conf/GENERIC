@@ -1,4 +1,4 @@
-#	$NetBSD: GENERIC,v 1.31 1998/05/22 09:59:55 ragge Exp $
+#	$NetBSD: GENERIC,v 1.32 1998/06/04 15:59:04 ragge Exp $
 #
 # GENERIC VAX configuration file; all supported devices.
 #
@@ -147,9 +147,14 @@ dz0		at uba? csr 0160100	# DZ-11
 dz0		at vsbus0		# DC-367
 dl0		at uba? csr 0176500	# DL-11
 
+# VAXstation graphics support
+smg0		at vsbus0		# Small monochrome display ctlr.
+wsdisplay0	at smg0			# display device driver.
+lkc0		at dz0			# Keyboard LK201
+
 pseudo-device   loop	1
 pseudo-device   pty	48
-pseudo-device	bpfilter 8	# Not supported by de or qe yet.
+pseudo-device	bpfilter 8	# Not supported by de yet.
 pseudo-device	sl	2
 pseudo-device	ppp	2
 pseudo-device	tun	2
