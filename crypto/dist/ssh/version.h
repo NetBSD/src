@@ -1,3 +1,3 @@
-/*	$NetBSD: version.h,v 1.1.1.1 2000/09/28 22:10:45 thorpej Exp $	*/
+/*	$NetBSD: version.h,v 1.2 2000/10/03 09:56:38 lukem Exp $	*/
 
-#define SSH_VERSION	"NetBSD_Secure_Shell-20000928"
+#define SSH_VERSION	"NetBSD_Secure_Shell-20001003"
