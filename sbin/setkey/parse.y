@@ -1,4 +1,4 @@
-/*	$NetBSD: parse.y,v 1.6 2001/09/20 00:01:10 toshii Exp $	*/
+/*	$NetBSD: parse.y,v 1.7 2001/11/02 03:57:25 lukem Exp $	*/
 /*	$KAME: parse.y,v 1.63 2001/08/17 06:28:49 itojun Exp $	*/
 
 /*
@@ -931,7 +931,8 @@ setkeymsg_add(type, satype, srcs, dsts)
 	/* set lifetime for HARD */
 	if (p_lt_hard != 0) {
 		struct sadb_lifetime m_lt;
-		u_int len = sizeof(struct sadb_lifetime);
+
+		len = sizeof(struct sadb_lifetime);
 
 		m_lt.sadb_lifetime_len = PFKEY_UNIT64(len);
 		m_lt.sadb_lifetime_exttype = SADB_EXT_LIFETIME_HARD;
@@ -947,7 +948,8 @@ setkeymsg_add(type, satype, srcs, dsts)
 	/* set lifetime for SOFT */
 	if (p_lt_soft != 0) {
 		struct sadb_lifetime m_lt;
-		u_int len = sizeof(struct sadb_lifetime);
+
+		len = sizeof(struct sadb_lifetime);
 
 		m_lt.sadb_lifetime_len = PFKEY_UNIT64(len);
 		m_lt.sadb_lifetime_exttype = SADB_EXT_LIFETIME_SOFT;
