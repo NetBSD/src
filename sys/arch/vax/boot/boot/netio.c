@@ -1,4 +1,4 @@
-/*	$NetBSD: netio.c,v 1.5 2000/05/20 13:35:07 ragge Exp $	*/
+/*	$NetBSD: netio.c,v 1.6 2000/05/26 20:16:46 ragge Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -103,6 +103,7 @@
 #include "vaxstand.h"
 
 static struct iodesc desc;
+static int inited = 0;
 
 struct iodesc *
 socktodesc(sock)
@@ -114,7 +115,10 @@ int
 net_devinit(struct open_file *f, struct netif_driver *drv, u_char *eaddr) {
 	static struct netif best_if;
 	struct iodesc *s;
+	int r;
 
+	if (inited)
+		return 0;
 	/* find a free socket */
 	s = &desc;
 
@@ -169,7 +173,12 @@ net_devinit(struct open_file *f, struct netif_driver *drv, u_char *eaddr) {
 	f->f_devdata = s;
 
 	/* Get the NFS file handle (mount). */
-	return nfs_mount(0, rootip, rootpath);
+	r = nfs_mount(0, rootip, rootpath);
+	if (r)
+		return r;
+
+	inited = 1;
+	return 0;
 }
 
 ssize_t
