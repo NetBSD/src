@@ -1,4 +1,4 @@
-/*	$NetBSD: nsupdate.c,v 1.4 2002/06/20 11:43:01 itojun Exp $	*/
+/*	$NetBSD: nsupdate.c,v 1.5 2002/07/04 23:30:39 itojun Exp $	*/
 
 #if !defined(lint) && !defined(SABER)
 static const char rcsid[] = "Id: nsupdate.c,v 8.27 2001/06/18 14:43:46 marka Exp";
@@ -400,7 +400,9 @@ main(int argc, char **argv) {
 		(void) getword_str(buf2, sizeof buf2, &startp, endp);
 
 		if (isdigit(buf2[0])) { /* ttl */
-		    u_long tmp_ttl = strtoul(buf2, 0, 10);
+		    u_long tmp_ttl;
+		    errno = 0;
+		    tmp_ttl = strtoul(buf2, 0, 10);
 		    if ((errno == ERANGE && tmp_ttl == ULONG_MAX) ||
 			tmp_ttl > UINT32_MAX) {
 			fprintf(stderr, "oversized ttl: %s\n", buf2);

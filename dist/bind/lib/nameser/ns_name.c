@@ -1,4 +1,4 @@
-/*	$NetBSD: ns_name.c,v 1.4 2002/06/20 11:43:08 itojun Exp $	*/
+/*	$NetBSD: ns_name.c,v 1.5 2002/07/04 23:30:40 itojun Exp $	*/
 
 /*
  * Copyright (c) 1996,1999 by Internet Software Consortium.
@@ -790,7 +790,7 @@ decode_bitstring(const char **cpp, char *dn, const char *eom)
 {
 	const char *cp = *cpp;
 	char *beg = dn, tc;
-	int b, blen, plen;
+	int b, blen, plen, i;
 
 	if ((blen = (*cp & 0xff)) == 0)
 		blen = 256;
@@ -800,18 +800,33 @@ decode_bitstring(const char **cpp, char *dn, const char *eom)
 		return(-1);
 
 	cp++;
-	dn += SPRINTF((dn, "\\[x"));
+	i = SPRINTF((dn, "\\[x"));
+	if (i < 0)
+		return (-1);
+	dn += i;
 	for (b = blen; b > 7; b -= 8, cp++)
-		dn += SPRINTF((dn, "%02x", *cp & 0xff));
+		i = SPRINTF((dn, "%02x", *cp & 0xff));
+		if (i < 0)
+			return (-1);
+		dn += i;
 	if (b > 4) {
 		tc = *cp++;
-		dn += SPRINTF((dn, "%02x", tc & (0xff << (8 - b))));
+		i = SPRINTF((dn, "%02x", tc & (0xff << (8 - b))));
+		if (i < 0)
+			return (-1);
+		dn += i;
 	} else if (b > 0) {
 		tc = *cp++;
-		dn += SPRINTF((dn, "%1x",
+		i = SPRINTF((dn, "%1x",
 			       ((tc >> 4) & 0x0f) & (0x0f << (4 - b)))); 
+		if (i < 0)
+			return (-1);
+		dn += i;
 	}
-	dn += SPRINTF((dn, "/%d]", blen));
+	i = SPRINTF((dn, "/%d]", blen));
+	if (i < 0)
+		return (-1);
+	dn += i;
 
 	*cpp = cp;
 	return(dn - beg);
