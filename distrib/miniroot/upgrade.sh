@@ -1,5 +1,5 @@
 #!/bin/sh
-#	$NetBSD: upgrade.sh,v 1.3 1996/05/27 12:39:06 leo Exp $
+#	$NetBSD: upgrade.sh,v 1.4 1996/05/27 13:32:01 pk Exp $
 #
 # Copyright (c) 1996 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -245,13 +245,16 @@ esac
 # Now that the network has been configured, it is safe to configure the
 # fstab.  We remove all but ufs/ffs/nfs.
 (
-	rm -f /tmp/fstab.new
-	while read line; do
-		_fstype=`echo $line | cutword 3`
+	> /tmp/fstab.new
+	while read _dev _mp _fstype _rest ; do
 		if [ "X${_fstype}" = X"ufs" -o \
 		    "X${_fstype}" = X"ffs" -o \
 		    "X${_fstype}" = X"nfs" ]; then
-			echo $line >> /tmp/fstab.new
+			if [ "X${_fstype}" = X"ufs" ]; then
+				# Convert ufs to ffs.
+				_fstype=ffs
+			fi
+			echo "$_dev $_mp $_fstype $_rest" >> /tmp/fstab.new
 		fi
 	done
 ) < /tmp/fstab
@@ -261,8 +264,6 @@ if [ ! -f /tmp/fstab.new ]; then
 	exit 1
 fi
 
-# Convert ufs to ffs.
-sed -e 's/ufs/ffs/' < /tmp/fstab.new > /tmp/fstab
 rm -f /tmp/fstab.new
 
 echo	"The fstab is configured as follows:"
@@ -320,7 +321,20 @@ get_timezone
 
 # Fix up the fstab.
 echo -n	"Converting ufs to ffs in /etc/fstab..."
-sed -e 's/ufs/ffs/' < /mnt/etc/fstab > /tmp/fstab
+(
+	> /tmp/fstab
+	while read _dev _mp _fstype _rest ; do
+		if [ "X${_fstype}" = X"ufs" -o \
+		    "X${_fstype}" = X"ffs" -o \
+		    "X${_fstype}" = X"nfs" ]; then
+			if [ "X${_fstype}" = X"ufs" ]; then
+				# Convert ufs to ffs.
+				_fstype=ffs
+			fi
+			echo "$_dev $_mp $_fstype $_rest" >> /tmp/fstab
+		fi
+	done
+) < /mnt/etc/fstab
 echo	"done."
 echo -n	"Would you like to edit the resulting fstab? [y] "
 getresp "y"
