@@ -1,7 +1,7 @@
-/*	$NetBSD: bhareg.h,v 1.10 1997/10/28 19:08:26 thorpej Exp $	*/
+/*	$NetBSD: bhareg.h,v 1.11 1998/02/06 23:06:46 thorpej Exp $	*/
 
 /*-
- * Copyright (c) 1997 The NetBSD Foundation, Inc.
+ * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -236,17 +236,6 @@ struct bha_ccb {
 #define	CCB_SENDING	0x04
 #endif
 	int timeout;
-
-	/*
-	 * DMA maps used by the CCB.  These maps are created
-	 * in bha_init_ccb().
-	 */
-
-	/*
-	 * This DMA map maps an individual CCB.  This map is
-	 * permanently loaded in bha_init_ccb().
-	 */
-	bus_dmamap_t	dmamap_self;
 
 	/*
 	 * This DMA map maps the buffer involved in the transfer.

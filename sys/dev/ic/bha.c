@@ -1,4 +1,4 @@
-/*	$NetBSD: bha.c,v 1.21 1998/02/04 05:14:01 thorpej Exp $	*/
+/*	$NetBSD: bha.c,v 1.22 1998/02/06 23:06:44 thorpej Exp $	*/
 
 #undef BHADIAG
 #ifdef DDB
@@ -132,12 +132,12 @@ void bha_queue_ccb __P((struct bha_softc *, struct bha_ccb *));
 void bha_collect_mbo __P((struct bha_softc *));
 void bha_start_ccbs __P((struct bha_softc *));
 void bha_done __P((struct bha_softc *, struct bha_ccb *));
-void bha_init __P((struct bha_softc *));
+int bha_init __P((struct bha_softc *));
 void bhaminphys __P((struct buf *));
 int bha_scsi_cmd __P((struct scsipi_xfer *));
 int bha_poll __P((struct bha_softc *, struct scsipi_xfer *, int));
 void bha_timeout __P((void *arg));
-int bha_create_ccbs __P((struct bha_softc *, void *, size_t, int));
+int bha_create_ccbs __P((struct bha_softc *, struct bha_ccb *, int));
 void bha_enqueue __P((struct bha_softc *, struct scsipi_xfer *, int));
 struct scsipi_xfer *bha_dequeue __P((struct bha_softc *));
 
@@ -367,7 +367,10 @@ bha_attach(sc, bpd)
 	printf("%s: model BT-%s, firmware %s\n", sc->sc_dev.dv_xname,
 	    sc->sc_model, sc->sc_firmware);
 
-	bha_init(sc);
+	if (bha_init(sc) != 0) {
+		/* Error during initialization! */
+		return;
+	}
 
 	/*
 	 * ask the adapter what subunits are present
@@ -385,6 +388,10 @@ bha_finish_ccbs(sc)
 
 	wmbi = wmbx->tmbi;
 
+	bus_dmamap_sync(sc->sc_dmat, sc->sc_dmamap_control,
+	    BHA_MBI_OFF(wmbi), sizeof(struct bha_mbx_in),
+	    BUS_DMASYNC_POSTREAD|BUS_DMASYNC_POSTWRITE);
+
 	if (wmbi->stat == BHA_MBI_FREE) {
 		for (i = 0; i < BHA_MBX_SIZE; i++) {
 			if (wmbi->stat != BHA_MBI_FREE) {
@@ -393,6 +400,9 @@ bha_finish_ccbs(sc)
 				goto AGAIN;
 			}
 			bha_nextmbx(wmbi, wmbx, mbi);
+			bus_dmamap_sync(sc->sc_dmat, sc->sc_dmamap_control,
+			    BHA_MBI_OFF(wmbi), sizeof(struct bha_mbx_in),
+			    BUS_DMASYNC_POSTREAD);
 		}
 #ifdef BHADIAGnot
 		printf("%s: mbi interrupt with no full mailboxes\n",
@@ -409,6 +419,10 @@ AGAIN:
 			    sc->sc_dev.dv_xname);
 			goto next;
 		}
+
+		bus_dmamap_sync(sc->sc_dmat, sc->sc_dmamap_control,
+		    BHA_CCB_OFF(ccb), sizeof(struct bha_ccb),
+		    BUS_DMASYNC_POSTREAD|BUS_DMASYNC_POSTWRITE);
 
 #ifdef BHADEBUG
 		if (bha_debug) {
@@ -456,7 +470,13 @@ AGAIN:
 
 	next:
 		wmbi->stat = BHA_MBI_FREE;
+		bus_dmamap_sync(sc->sc_dmat, sc->sc_dmamap_control,
+		    BHA_MBI_OFF(wmbi), sizeof(struct bha_mbx_in),
+		    BUS_DMASYNC_PREREAD|BUS_DMASYNC_PREWRITE);
 		bha_nextmbx(wmbi, wmbx, mbi);
+		bus_dmamap_sync(sc->sc_dmat, sc->sc_dmamap_control,
+		    BHA_MBI_OFF(wmbi), sizeof(struct bha_mbx_in),
+		    BUS_DMASYNC_POSTREAD|BUS_DMASYNC_POSTWRITE);
 	} while (wmbi->stat != BHA_MBI_FREE);
 
 	wmbx->tmbi = wmbi;
@@ -554,44 +574,14 @@ bha_init_ccb(sc, ccb)
 	int hashnum, error;
 
 	/*
-	 * XXX Should we put a DIAGNOSTIC check for multiple
-	 * XXX CCB inits here?
+	 * Create the DMA map for this CCB.
 	 */
-
-	bzero(ccb, sizeof(struct bha_ccb));
-
-	/*
-	 * Create DMA maps for this CCB.
-	 */
-	error = bus_dmamap_create(dmat, sizeof(struct bha_ccb), 1,
-	    sizeof(struct bha_ccb), 0, BUS_DMA_NOWAIT | sc->sc_dmaflags,
-	    &ccb->dmamap_self);
-	if (error) {
-		printf("%s: can't create ccb dmamap_self\n",
-		    sc->sc_dev.dv_xname);
-		return (error);
-	}
-
 	error = bus_dmamap_create(dmat, BHA_MAXXFER, BHA_NSEG, BHA_MAXXFER,
 	    0, BUS_DMA_NOWAIT|BUS_DMA_ALLOCNOW | sc->sc_dmaflags,
 	    &ccb->dmamap_xfer);
 	if (error) {
-		printf("%s: can't create ccb dmamap_xfer\n",
-		    sc->sc_dev.dv_xname);
-		bus_dmamap_destroy(dmat, ccb->dmamap_self);
-		return (error);
-	}
-
-	/*
-	 * Load the permanent DMA maps.
-	 */
-	error = bus_dmamap_load(dmat, ccb->dmamap_self, ccb,
-	    sizeof(struct bha_ccb), NULL, BUS_DMA_NOWAIT);
-	if (error) {
-		printf("%s: can't load ccb dmamap_self\n",
-		    sc->sc_dev.dv_xname);
-		bus_dmamap_destroy(dmat, ccb->dmamap_self);
-		bus_dmamap_destroy(dmat, ccb->dmamap_xfer);
+		printf("%s: unable to create ccb DMA map, error = %d\n",
+		    sc->sc_dev.dv_xname, error);
 		return (error);
 	}
 
@@ -599,7 +589,8 @@ bha_init_ccb(sc, ccb)
 	 * put in the phystokv hash table
 	 * Never gets taken out.
 	 */
-	ccb->hashkey = ccb->dmamap_self->dm_segs[0].ds_addr;
+	ccb->hashkey = sc->sc_dmamap_control->dm_segs[0].ds_addr +
+	    BHA_CCB_OFF(ccb);
 	hashnum = CCB_HASH(ccb->hashkey);
 	ccb->nexthash = sc->sc_ccbhash[hashnum];
 	sc->sc_ccbhash[hashnum] = ccb;
@@ -608,62 +599,30 @@ bha_init_ccb(sc, ccb)
 }
 
 /*
- * Create a set of ccbs and add them to the free list.
+ * Create a set of ccbs and add them to the free list.  Called once
+ * by bha_init().  We return the number of CCBs successfully created.
  */
 int
-bha_create_ccbs(sc, mem, size, max_ccbs)
+bha_create_ccbs(sc, ccbstore, count)
 	struct bha_softc *sc;
-	void *mem;
-	size_t size;
-	int max_ccbs;
+	struct bha_ccb *ccbstore;
+	int count;
 {
-	bus_dma_segment_t seg;
 	struct bha_ccb *ccb;
-	int rseg, error;
+	int i, error;
 
-	if (sc->sc_numccbs >= BHA_CCB_MAX)
-		return (0);
-
-	if (max_ccbs > BHA_CCB_MAX)
-		max_ccbs = BHA_CCB_MAX;
-
-	if ((ccb = mem) != NULL)
-		goto have_mem;
-
-	size = NBPG;
-	error = bus_dmamem_alloc(sc->sc_dmat, size, NBPG, 0, &seg, 1, &rseg,
-	    BUS_DMA_NOWAIT);
-	if (error) {
-		printf("%s: can't allocate memory for ccbs\n",
-		    sc->sc_dev.dv_xname);
-		return (error);
-	}
-
-	error = bus_dmamem_map(sc->sc_dmat, &seg, rseg, size,
-	    (caddr_t *)&ccb, BUS_DMA_NOWAIT|BUS_DMA_COHERENT);
-	if (error) {
-		printf("%s: can't map memory for ccbs\n",
-		    sc->sc_dev.dv_xname);
-		bus_dmamem_free(sc->sc_dmat, &seg, rseg);
-		return (error);
-	}
-
- have_mem:
-	bzero(ccb, size);
-	while (size > sizeof(struct bha_ccb) && sc->sc_numccbs < max_ccbs) {
-		error = bha_init_ccb(sc, ccb);
-		if (error) {
-			printf("%s: can't initialize ccb\n",
-			    sc->sc_dev.dv_xname);
-			return (error);
+	bzero(ccbstore, sizeof(struct bha_ccb) * count);
+	for (i = 0; i < count; i++) {
+		ccb = &ccbstore[i];
+		if ((error = bha_init_ccb(sc, ccb)) != 0) {
+			printf("%s: unable to initialize ccb, error = %d\n",
+			    sc->sc_dev.dv_xname, error);
+			goto out;
 		}
 		TAILQ_INSERT_TAIL(&sc->sc_free_ccb, ccb, chain);
-		(caddr_t)ccb += ALIGN(sizeof(struct bha_ccb));
-		size -= ALIGN(sizeof(struct bha_ccb));
-		sc->sc_numccbs++;
 	}
-
-	return (0);
+ out:
+	return (i);
 }
 
 /*
@@ -691,20 +650,6 @@ bha_get_ccb(sc, flags)
 		if (ccb) {
 			TAILQ_REMOVE(&sc->sc_free_ccb, ccb, chain);
 			break;
-		}
-		if (sc->sc_numccbs < BHA_CCB_MAX) {
-			/*
-			 * bha_create_ccbs() might have managed to create
-			 * one before it failed.  If so, don't abort,
-			 * just grab it and continue to hobble along.
-			 */
-			if (bha_create_ccbs(sc, NULL, 0, BHA_CCB_MAX) != 0 &&
-			    sc->sc_free_ccb.tqh_first == NULL) {
-				printf("%s: can't allocate ccbs\n",
-				    sc->sc_dev.dv_xname);
-				goto out;
-			}
-			continue;
 		}
 		if ((flags & SCSI_NOSLEEP) != 0)
 			goto out;
@@ -765,6 +710,9 @@ bha_collect_mbo(sc)
 	wmbo = wmbx->cmbo;
 
 	while (sc->sc_mbofull > 0) {
+		bus_dmamap_sync(sc->sc_dmat, sc->sc_dmamap_control,
+		    BHA_MBO_OFF(wmbo), sizeof(struct bha_mbx_out),
+		    BUS_DMASYNC_POSTREAD|BUS_DMASYNC_POSTWRITE);
 		if (wmbo->cmd != BHA_MBO_FREE)
 			break;
 
@@ -815,11 +763,16 @@ bha_start_ccbs(sc)
 #endif
 
 		/* Link ccb to mbo. */
-		ltophys(ccb->dmamap_self->dm_segs[0].ds_addr, wmbo->ccb_addr);
+		ltophys(sc->sc_dmamap_control->dm_segs[0].ds_addr +
+		    BHA_CCB_OFF(ccb), wmbo->ccb_addr);
 		if (ccb->flags & CCB_ABORT)
 			wmbo->cmd = BHA_MBO_ABORT;
 		else
 			wmbo->cmd = BHA_MBO_START;
+
+		bus_dmamap_sync(sc->sc_dmat, sc->sc_dmamap_control,
+		    BHA_MBO_OFF(wmbo), sizeof(struct bha_mbx_out),
+		    BUS_DMASYNC_PREREAD|BUS_DMASYNC_PREWRITE);
 
 		/* Tell the card to poll immediately. */
 		bus_space_write_1(iot, ioh, BHA_CMD_PORT, BHA_START_SCSI);
@@ -1121,7 +1074,7 @@ bha_disable_isacompat(sc)
 /*
  * Start the board, ready for normal operation
  */
-void
+int
 bha_init(sc)
 	struct bha_softc *sc;
 {
@@ -1132,7 +1085,7 @@ bha_init(sc)
 	struct bha_setup setup;
 	struct bha_mailbox mailbox;
 	struct bha_period period;
-	int i, j, initial_ccbs, rlen, rseg;
+	int error, i, j, initial_ccbs, rlen, rseg;
 
 	/* Enable round-robin scheme - appeared at firmware rev. 3.31. */
 	if (strcmp(sc->sc_firmware, "3.31") >= 0) {
@@ -1184,6 +1137,8 @@ bha_init(sc)
 	}
 
 	initial_ccbs *= sc->sc_link.openings;
+	if (initial_ccbs > BHA_CCB_MAX)
+		initial_ccbs = BHA_CCB_MAX;
 
 	/* Obtain setup information from. */
 	rlen = sizeof(setup.reply) +
@@ -1240,39 +1195,66 @@ bha_init(sc)
 	}
 
 	/*
-	 * Allocate the mailbox.
+	 * Allocate the mailbox and control blocks.
 	 */
-	if (bus_dmamem_alloc(sc->sc_dmat, NBPG, NBPG, 0, &seg, 1,
-	    &rseg, BUS_DMA_NOWAIT) ||
-	    bus_dmamem_map(sc->sc_dmat, &seg, rseg, NBPG,
-	    (caddr_t *)&wmbx, BUS_DMA_NOWAIT|BUS_DMA_COHERENT))
-		panic("bha_init: can't create or map mailbox");
+	if ((error = bus_dmamem_alloc(sc->sc_dmat, sizeof(struct bha_control),
+	    NBPG, 0, &seg, 1, &rseg, BUS_DMA_NOWAIT)) != 0) {
+		printf("%s: unable to allocate control structures, "
+		    "error = %d\n", sc->sc_dev.dv_xname, error);
+		return (error);
+	}
+	if ((error = bus_dmamem_map(sc->sc_dmat, &seg, rseg,
+	    sizeof(struct bha_control), (caddr_t *)&sc->sc_control,
+	    BUS_DMA_NOWAIT|BUS_DMA_COHERENT)) != 0) {
+		printf("%s: unable to map control structures, error = %d\n",
+		    sc->sc_dev.dv_xname, error);
+		return (error);
+	}
 
 	/*
-	 * Since DMA memory allocation is always rounded up to a
-	 * page size, create some ccbs from the leftovers.
+	 * Create and load the DMA map used for the mailbox and
+	 * control blocks.
 	 */
-	if (bha_create_ccbs(sc, ((caddr_t)wmbx) +
-	    ALIGN(sizeof(struct bha_mbx)),
-	    NBPG - ALIGN(sizeof(struct bha_mbx)), initial_ccbs))
-		panic("bha_init: can't create ccbs");
+	if ((error = bus_dmamap_create(sc->sc_dmat, sizeof(struct bha_control),
+	    1, sizeof(struct bha_control), 0, BUS_DMA_NOWAIT | sc->sc_dmaflags,
+	    &sc->sc_dmamap_control)) != 0) {
+		printf("%s: unable to create control DMA map, error = %d\n",
+		    sc->sc_dev.dv_xname, error);
+		return (error);
+	}
+	if ((error = bus_dmamap_load(sc->sc_dmat, sc->sc_dmamap_control,
+	    sc->sc_control, sizeof(struct bha_control), NULL,
+	    BUS_DMA_NOWAIT)) != 0) {
+		printf("%s: unable to load control DMA map, error = %d\n",
+		    sc->sc_dev.dv_xname, error);
+		return (error);
+	}
 
 	/*
-	 * Create and load the mailbox DMA map.
+	 * Initialize the control blocks.
 	 */
-	if (bus_dmamap_create(sc->sc_dmat, sizeof(struct bha_mbx), 1,
-	    sizeof(struct bha_mbx), 0, BUS_DMA_NOWAIT | sc->sc_dmaflags,
-	    &sc->sc_dmamap_mbox) ||
-	    bus_dmamap_load(sc->sc_dmat, sc->sc_dmamap_mbox, wmbx,
-	    sizeof(struct bha_mbx), NULL, BUS_DMA_NOWAIT))
-		panic("bha_init: can't create or load mailbox dma map");
+	i = bha_create_ccbs(sc, sc->sc_control->bc_ccbs, initial_ccbs);
+	if (i == 0) {
+		printf("%s: unable to create control blocks\n",
+		    sc->sc_dev.dv_xname);
+		return (ENOMEM);
+	} else if (i != initial_ccbs) {
+		printf("%s: WARNING: only %d of %d control blocks created\n",
+		    sc->sc_dev.dv_xname, i, initial_ccbs);
+	}
 
 	/*
 	 * Set up initial mail box for round-robin operation.
 	 */
 	for (i = 0; i < BHA_MBX_SIZE; i++) {
 		wmbx->mbo[i].cmd = BHA_MBO_FREE;
+		bus_dmamap_sync(sc->sc_dmat, sc->sc_dmamap_control,
+		    BHA_MBO_OFF(&wmbx->mbo[i]), sizeof(struct bha_mbx_out),
+		    BUS_DMASYNC_PREREAD|BUS_DMASYNC_PREWRITE);
 		wmbx->mbi[i].stat = BHA_MBI_FREE;
+		bus_dmamap_sync(sc->sc_dmat, sc->sc_dmamap_control,
+		    BHA_MBI_OFF(&wmbx->mbi[i]), sizeof(struct bha_mbx_in),
+		    BUS_DMASYNC_PREREAD|BUS_DMASYNC_PREWRITE);
 	}
 	wmbx->cmbo = wmbx->tmbo = &wmbx->mbo[0];
 	wmbx->tmbi = &wmbx->mbi[0];
@@ -1281,10 +1263,12 @@ bha_init(sc)
 	/* Initialize mail box. */
 	mailbox.cmd.opcode = BHA_MBX_INIT_EXTENDED;
 	mailbox.cmd.nmbx = BHA_MBX_SIZE;
-	ltophys(sc->sc_dmamap_mbox->dm_segs[0].ds_addr, mailbox.cmd.addr);
+	ltophys(sc->sc_dmamap_control->dm_segs[0].ds_addr +
+	    offsetof(struct bha_control, bc_mbx), mailbox.cmd.addr);
 	bha_cmd(iot, ioh, sc,
 	    sizeof(mailbox.cmd), (u_char *)&mailbox.cmd,
 	    0, (u_char *)0);
+	return (0);
 }
 
 void
@@ -1509,8 +1493,9 @@ bha_scsi_cmd(xs)
 			    ccb->scat_gath[seg].seg_len);
 		}
 
-		ltophys(ccb->dmamap_self->dm_segs[0].ds_addr +
-		    offsetof(struct bha_ccb, scat_gath), ccb->data_addr);
+		ltophys(sc->sc_dmamap_control->dm_segs[0].ds_addr +
+		    BHA_CCB_OFF(ccb) + offsetof(struct bha_ccb, scat_gath),
+		    ccb->data_addr);
 		ltophys(ccb->dmamap_xfer->dm_nsegs *
 		    sizeof(struct bha_scat_gath), ccb->data_length);
 	} else {
@@ -1525,13 +1510,18 @@ bha_scsi_cmd(xs)
 	ccb->data_in = 0;
 	ccb->target = sc_link->scsipi_scsi.target;
 	ccb->lun = sc_link->scsipi_scsi.lun;
-	ltophys(ccb->dmamap_self->dm_segs[0].ds_addr +
-	    offsetof(struct bha_ccb, scsi_sense), ccb->sense_ptr);
+	ltophys(sc->sc_dmamap_control->dm_segs[0].ds_addr +
+	    BHA_CCB_OFF(ccb) + offsetof(struct bha_ccb, scsi_sense),
+	    ccb->sense_ptr);
 	ccb->req_sense_length = sizeof(ccb->scsi_sense);
 	ccb->host_stat = 0x00;
 	ccb->target_stat = 0x00;
 	ccb->link_id = 0;
 	ltophys(0, ccb->link_addr);
+
+	bus_dmamap_sync(sc->sc_dmat, sc->sc_dmamap_control,
+	    BHA_CCB_OFF(ccb), sizeof(struct bha_ccb),
+	    BUS_DMASYNC_PREREAD|BUS_DMASYNC_PREWRITE);
 
 	s = splbio();
 	bha_queue_ccb(sc, ccb);
