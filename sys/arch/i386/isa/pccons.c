@@ -1,4 +1,4 @@
-/*	$NetBSD: pccons.c,v 1.118 1998/01/12 18:59:16 thorpej Exp $	*/
+/*	$NetBSD: pccons.c,v 1.119 1998/01/18 14:45:10 drochner Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994, 1995 Charles Hannum.  All rights reserved.
@@ -211,7 +211,7 @@ kbd_wait_output()
 	u_int i;
 
 	for (i = 100000; i; i--)
-		if ((inb(KBSTATP) & KBS_IBF) == 0) {
+		if ((inb(IO_KBD + KBSTATP) & KBS_IBF) == 0) {
 			KBD_DELAY;
 			return (1);
 		}
@@ -224,7 +224,7 @@ kbd_wait_input()
 	u_int i;
 
 	for (i = 100000; i; i--)
-		if ((inb(KBSTATP) & KBS_DIB) != 0) {
+		if ((inb(IO_KBD + KBSTATP) & KBS_DIB) != 0) {
 			KBD_DELAY;
 			return (1);
 		}
@@ -237,10 +237,10 @@ kbd_flush_input()
 	u_int i;
 
 	for (i = 10; i; i--) {
-		if ((inb(KBSTATP) & KBS_DIB) == 0)
+		if ((inb(IO_KBD + KBSTATP) & KBS_DIB) == 0)
 			return;
 		KBD_DELAY;
-		(void) inb(KBDATAP);
+		(void) inb(IO_KBD + KBDATAP);
 	}
 }
 
@@ -254,10 +254,10 @@ kbc_get8042cmd()
 
 	if (!kbd_wait_output())
 		return (-1);
-	outb(KBCMDP, K_RDCMDBYTE);
+	outb(IO_KBD + KBCMDP, K_RDCMDBYTE);
 	if (!kbd_wait_input())
 		return (-1);
-	return (inb(KBDATAP));
+	return (inb(IO_KBD + KBDATAP));
 }
 #endif
 
@@ -271,10 +271,10 @@ kbc_put8042cmd(val)
 
 	if (!kbd_wait_output())
 		return (0);
-	outb(KBCMDP, K_LDCMDBYTE);
+	outb(IO_KBD + KBCMDP, K_LDCMDBYTE);
 	if (!kbd_wait_output())
 		return (0);
-	outb(KBOUTP, val);
+	outb(IO_KBD + KBOUTP, val);
 	return (1);
 }
 
@@ -293,14 +293,14 @@ kbd_cmd(val, polling)
 		if (!kbd_wait_output())
 			return (0);
 		ack = nak = 0;
-		outb(KBOUTP, val);
+		outb(IO_KBD + KBOUTP, val);
 		if (polling)
 			for (i = 100000; i; i--) {
-				if (inb(KBSTATP) & KBS_DIB) {
+				if (inb(IO_KBD + KBSTATP) & KBS_DIB) {
 					register u_char c;
 
 					KBD_DELAY;
-					c = inb(KBDATAP);
+					c = inb(IO_KBD + KBDATAP);
 					if (c == KBR_ACK || c == KBR_ECHO) {
 						ack = 1;
 						return (1);
@@ -316,7 +316,7 @@ kbd_cmd(val, polling)
 			}
 		else
 			for (i = 100000; i; i--) {
-				(void) inb(KBSTATP);
+				(void) inb(IO_KBD + KBSTATP);
 				if (ack)
 					return (1);
 				if (nak)
@@ -454,11 +454,11 @@ pcprobe(parent, match, aux)
 		goto lose;
 	}
 	for (i = 600000; i; i--)
-		if ((inb(KBSTATP) & KBS_DIB) != 0) {
+		if ((inb(IO_KBD + KBSTATP) & KBS_DIB) != 0) {
 			KBD_DELAY;
 			break;
 		}
-	if (i == 0 || inb(KBDATAP) != KBR_RSTDONE) {
+	if (i == 0 || inb(IO_KBD + KBDATAP) != KBR_RSTDONE) {
 		printf("pcprobe: reset error %d\n", 2);
 		goto lose;
 	}
@@ -661,7 +661,7 @@ pcintr(arg)
 	register struct tty *tp = sc->sc_tty;
 	u_char *cp;
 
-	if ((inb(KBSTATP) & KBS_DIB) == 0)
+	if ((inb(IO_KBD + KBSTATP) & KBS_DIB) == 0)
 		return (0);
 	if (polling)
 		return (1);
@@ -673,7 +673,7 @@ pcintr(arg)
 			do
 				(*linesw[tp->t_line].l_rint)(*cp++, tp);
 			while (*cp);
-	} while (inb(KBSTATP) & KBS_DIB);
+	} while (inb(IO_KBD + KBSTATP) & KBS_DIB);
 	return (1);
 }
 
@@ -840,7 +840,7 @@ pccngetc(dev)
 
 	do {
 		/* wait for byte */
-		while ((inb(KBSTATP) & KBS_DIB) == 0);
+		while ((inb(IO_KBD + KBSTATP) & KBS_DIB) == 0);
 		/* see if it's worthwhile */
 		cp = sget();
 	} while (!cp);
@@ -2087,7 +2087,7 @@ sget()
 
 top:
 	KBD_DELAY;
-	dt = inb(KBDATAP);
+	dt = inb(IO_KBD + KBDATAP);
 
 	switch (dt) {
 	case KBR_ACK:
@@ -2309,7 +2309,7 @@ top:
 
 	extended = 0;
 loop:
-	if ((inb(KBSTATP) & KBS_DIB) == 0)
+	if ((inb(IO_KBD + KBSTATP) & KBS_DIB) == 0)
 		return (0);
 	goto top;
 }
