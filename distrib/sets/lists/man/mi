@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.416 2001/10/29 23:29:12 augustss Exp $
+# $NetBSD: mi,v 1.417 2001/10/31 18:26:23 skrll Exp $
 ./usr/share/info/am-utils.info			man-amd-info
 ./usr/share/info/as.info			man-computil-info
 ./usr/share/info/awk.info			man-util-info
@@ -173,6 +173,7 @@
 ./usr/share/man/cat1/last.0			man-util-catman
 ./usr/share/man/cat1/lastcomm.0			man-util-catman
 ./usr/share/man/cat1/ld.aout_so.0		man-shlib-catman
+./usr/share/man/cat1/ld.elf_so.0		man-shlib-catman
 ./usr/share/man/cat1/ld.so.0			man-shlib-catman
 ./usr/share/man/cat1/ldd.0			man-util-catman
 ./usr/share/man/cat1/leave.0			man-util-catman
@@ -1808,6 +1809,7 @@
 ./usr/share/man/man1/last.1			man-util-man
 ./usr/share/man/man1/lastcomm.1			man-util-man
 ./usr/share/man/man1/ld.aout_so.1		man-shlib-man
+./usr/share/man/man1/ld.elf_so.1		man-shlib-man
 ./usr/share/man/man1/ld.so.1			man-shlib-man
 ./usr/share/man/man1/ldd.1			man-util-man
 ./usr/share/man/man1/leave.1			man-util-man
