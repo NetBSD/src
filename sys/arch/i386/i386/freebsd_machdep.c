@@ -1,4 +1,4 @@
-/*	$NetBSD: freebsd_machdep.c,v 1.20 1998/08/15 05:10:22 mycroft Exp $	*/
+/*	$NetBSD: freebsd_machdep.c,v 1.21 1998/09/11 12:50:05 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -95,6 +95,9 @@
 #include <compat/freebsd/freebsd_exec.h>
 #include <compat/freebsd/freebsd_ptrace.h>
 
+void native_sigset13_to_sigset __P((const sigset13_t *, sigset_t *));
+void native_sigset_to_sigset13 __P((const sigset_t *, sigset13_t *));
+
 void
 freebsd_setregs(p, epp, stack)
 	struct proc *p;
@@ -124,46 +127,39 @@ freebsd_setregs(p, epp, stack)
 void
 freebsd_sendsig(catcher, sig, mask, code)
 	sig_t catcher;
-	int sig, mask;
+	int sig;
+	sigset_t *mask;
 	u_long code;
 {
 	register struct proc *p = curproc;
 	register struct trapframe *tf;
 	struct freebsd_sigframe *fp, frame;
 	struct sigacts *psp = p->p_sigacts;
-	int oonstack;
-	extern char freebsd_sigcode[], freebsd_esigcode[];
-
-	/* 
-	 * Build the argument list for the signal handler.
-	 */
-	frame.sf_signum = sig;
+	int onstack;
 
 	tf = p->p_md.md_regs;
-	oonstack = psp->ps_sigstk.ss_flags & SS_ONSTACK;
 
-	/*
-	 * Allocate space for the signal handler context.
-	 */
-	if ((psp->ps_flags & SAS_ALTSTACK) && !oonstack &&
-	    (psp->ps_sigonstack & sigmask(sig))) {
+	/* Do we need to jump onto the signal stack? */
+	onstack =
+	    (psp->ps_sigstk.ss_flags & (SS_DISABLE | SS_ONSTACK)) == 0 &&
+	    (psp->ps_sigact[sig].sa_flags & SA_ONSTACK) != 0;
+
+	/* Allocate space for the signal handler context. */
+	if (onstack)
 		fp = (struct freebsd_sigframe *)((caddr_t)psp->ps_sigstk.ss_sp +
-		    psp->ps_sigstk.ss_size - sizeof(struct freebsd_sigframe));
-		psp->ps_sigstk.ss_flags |= SS_ONSTACK;
-	} else {
-		fp = (struct freebsd_sigframe *)tf->tf_esp - 1;
-	}
+		    psp->ps_sigstk.ss_size);
+	else
+		fp = (struct freebsd_sigframe *)tf->tf_esp;
+	fp--;
 
+	/* Build stack frame for signal trampoline. */
+	frame.sf_signum = sig;
 	frame.sf_code = code;
 	frame.sf_scp = &fp->sf_sc;
 	frame.sf_addr = (char *)rcr2();
 	frame.sf_handler = catcher;
 
-	/*
-	 * Build the signal context to be used by sigreturn.
-	 */
-	frame.sf_sc.sc_onstack = oonstack;
-	frame.sf_sc.sc_mask = mask;
+	/* Save register context. */
 #ifdef VM86
 	if (tf->tf_eflags & PSL_VM) {
 		frame.sf_sc.sc_es = tf->tf_vm86_es;
@@ -189,6 +185,12 @@ freebsd_sendsig(catcher, sig, mask, code)
 	frame.sf_sc.sc_esp = tf->tf_esp;
 	frame.sf_sc.sc_ss = tf->tf_ss;
 
+	/* Save signal stack. */
+	frame.sf_sc.sc_onstack = psp->ps_sigstk.ss_flags & SS_ONSTACK;
+
+	/* Save signal mask. */
+	native_sigset_to_sigset13(mask, &frame.sf_sc.sc_mask);
+
 	if (copyout(&frame, fp, sizeof(frame)) != 0) {
 		/*
 		 * Process has trashed its stack; give it an illegal
@@ -203,12 +205,15 @@ freebsd_sendsig(catcher, sig, mask, code)
 	 */
 	tf->tf_es = GSEL(GUDATA_SEL, SEL_UPL);
 	tf->tf_ds = GSEL(GUDATA_SEL, SEL_UPL);
-	tf->tf_eip = (int)(((char *)PS_STRINGS) - 
-	     (freebsd_esigcode - freebsd_sigcode));
+	tf->tf_eip = (int)psp->ps_sigcode;
 	tf->tf_cs = GSEL(GUCODE_SEL, SEL_UPL);
 	tf->tf_eflags &= ~(PSL_T|PSL_VM|PSL_AC);
 	tf->tf_esp = (int)fp;
 	tf->tf_ss = GSEL(GUDATA_SEL, SEL_UPL);
+
+	/* Remember that we're now on the signal stack. */
+	if (onstack)
+		psp->ps_sigstk.ss_flags |= SS_ONSTACK;
 }
 
 /*
@@ -232,8 +237,7 @@ freebsd_sys_sigreturn(p, v, retval)
 	} */ *uap = v;
 	struct freebsd_sigcontext *scp, context;
 	register struct trapframe *tf;
-
-	tf = p->p_md.md_regs;
+	sigset_t mask;
 
 	/*
 	 * The trampoline code hands us the context.
@@ -244,9 +248,8 @@ freebsd_sys_sigreturn(p, v, retval)
 	if (copyin((caddr_t)scp, &context, sizeof(*scp)) != 0)
 		return (EFAULT);
 
-	/*
-	 * Restore signal context.
-	 */
+	/* Restore register context. */
+	tf = p->p_md.md_regs;
 #ifdef VM86
 	if (context.sc_eflags & PSL_VM) {
 		tf->tf_vm86_es = context.sc_es;
@@ -282,11 +285,15 @@ freebsd_sys_sigreturn(p, v, retval)
 	tf->tf_esp = context.sc_esp;
 	tf->tf_ss = context.sc_ss;
 
-	if (context.sc_onstack & 01)
+	/* Restore signal stack. */
+	if (context.sc_onstack & SS_ONSTACK)
 		p->p_sigacts->ps_sigstk.ss_flags |= SS_ONSTACK;
 	else
 		p->p_sigacts->ps_sigstk.ss_flags &= ~SS_ONSTACK;
-	p->p_sigmask = context.sc_mask & ~sigcantmask;
+
+	/* Restore signal mask. */
+	native_sigset13_to_sigset(&context.sc_mask, &mask);
+	(void) sigprocmask1(p, SIG_SETMASK, &mask, 0);
 
 	return (EJUSTRETURN);
 }

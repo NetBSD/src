@@ -1,4 +1,4 @@
-/*	$NetBSD: vm86.c,v 1.19 1997/10/16 04:57:15 mycroft Exp $	*/
+/*	$NetBSD: vm86.c,v 1.20 1998/09/11 12:50:06 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -244,10 +244,10 @@ vm86_return(p, retval)
 	 * since it's used to jump to the signal handler.  Instead we
 	 * let sendsig() pull in the vm86_eflags bits.
 	 */
-	if (p->p_sigmask & sigmask(SIGURG)) {
+	if (sigismember(&p->p_sigmask, SIGURG)) {
 #ifdef DIAGNOSTIC
 		printf("pid %d killed on VM86 protocol screwup (SIGURG blocked)\n",
-		       p->p_pid);
+		    p->p_pid);
 #endif
 		sigexit(p, SIGILL);
 		/* NOTREACHED */

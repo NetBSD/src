@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_break.c,v 1.45 1998/09/08 20:02:52 rvb Exp $	*/
+/*	$NetBSD: linux_break.c,v 1.46 1998/09/11 12:50:08 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1995 Frank van der Linden
@@ -94,10 +94,10 @@ bsd_to_linux_wstat(status)
 
 	if (WIFSIGNALED(*status))
 		*status = (*status & ~0177) |
-		    bsd_to_linux_sig[WTERMSIG(*status)];
+		    native_to_linux_sig[WTERMSIG(*status)];
 	else if (WIFSTOPPED(*status))
 		*status = (*status & ~0xff00) |
-		    (bsd_to_linux_sig[WSTOPSIG(*status)] << 8);
+		    (native_to_linux_sig[WSTOPSIG(*status)] << 8);
 }
 
 /*
@@ -134,7 +134,7 @@ linux_sys_waitpid(p, v, retval)
 	if ((error = sys_wait4(p, &w4a, retval)))
 		return error;
 
-	p->p_siglist &= ~sigmask(SIGCHLD);
+	sigdelset(&p->p_siglist, SIGCHLD);
 
 	if (status != NULL) {
 		if ((error = copyin(status, &tstat, sizeof tstat)))
@@ -180,7 +180,7 @@ linux_sys_wait4(p, v, retval)
 	if ((error = sys_wait4(p, &w4a, retval)))
 		return error;
 
-	p->p_siglist &= ~sigmask(SIGCHLD);
+	sigdelset(&p->p_siglist, SIGCHLD);
 
 	if (status != NULL) {
 		if ((error = copyin(status, &tstat, sizeof tstat)))

@@ -1,4 +1,4 @@
-/*	$NetBSD: ktrace.h,v 1.15 1998/05/02 18:41:47 christos Exp $	*/
+/*	$NetBSD: ktrace.h,v 1.16 1998/09/11 12:50:12 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1988, 1993
@@ -122,7 +122,7 @@ struct ktr_genio {
 struct ktr_psig {
 	int	signo;
 	sig_t	action;
-	int	mask;
+	sigset_t mask;
 	int	code;
 };
 
@@ -175,7 +175,7 @@ void ktrcsw __P((void *, int, int));
 void ktremul __P((void *, struct proc *, char *));
 void ktrgenio __P((void *, int, enum uio_rw, struct iovec *, int, int));
 void ktrnamei __P((void *, char *));
-void ktrpsig __P((void *, int, sig_t, int, int));
+void ktrpsig __P((void *, int, sig_t, sigset_t *, int));
 void ktrsyscall __P((void *, register_t, size_t, register_t []));
 void ktrsysret __P((void *, register_t, int, register_t));
 void ktrderef __P((struct proc *));

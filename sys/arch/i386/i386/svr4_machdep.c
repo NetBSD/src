@@ -1,4 +1,4 @@
-/*	$NetBSD: svr4_machdep.c,v 1.37 1998/09/05 15:28:06 christos Exp $	 */
+/*	$NetBSD: svr4_machdep.c,v 1.38 1998/09/11 12:50:06 mycroft Exp $	 */
 
 /*-
  * Copyright (c) 1994 The NetBSD Foundation, Inc.
@@ -86,22 +86,18 @@ svr4_setregs(p, epp, stack)
 }
 
 void
-svr4_getcontext(p, uc, mask, oonstack)
+svr4_getcontext(p, uc, mask)
 	struct proc *p;
 	struct svr4_ucontext *uc;
-	int mask, oonstack;
+	sigset_t *mask;
 {
-	struct trapframe *tf = p->p_md.md_regs;
-	struct sigacts *psp = p->p_sigacts;
+	register struct trapframe *tf;
 	svr4_greg_t *r = uc->uc_mcontext.greg;
-	struct svr4_sigaltstack *s = &uc->uc_stack;
-	struct sigaltstack *sf = &psp->ps_sigstk;
 
 	memset(uc, 0, sizeof(struct svr4_ucontext));
 
-	/*
-	 * Set the general purpose registers
-	 */
+	/* Save register context. */
+	tf = p->p_md.md_regs;
 #ifdef VM86
 	if (tf->tf_eflags & PSL_VM) {
 		r[SVR4_X86_GS] = tf->tf_vm86_gs;
@@ -133,15 +129,11 @@ svr4_getcontext(p, uc, mask, oonstack)
 	r[SVR4_X86_UESP] = 0;
 	r[SVR4_X86_SS] = tf->tf_ss;
 
-	/*
-	 * Set the signal stack
-	 */
-	bsd_to_svr4_sigaltstack(sf, s);
+	/* Save signal stack. */
+	native_to_svr4_sigaltstack(&p->p_sigacts->ps_sigstk, &uc->uc_stack);
 
-	/*
-	 * Set the signal mask
-	 */
-	bsd_to_svr4_sigset(&mask, &uc->uc_sigmask);
+	/* Save signal mask. */
+	native_to_svr4_sigset(mask, &uc->uc_sigmask);
 
 	/*
 	 * Set the flags
@@ -165,27 +157,19 @@ svr4_setcontext(p, uc)
 	struct proc *p;
 	struct svr4_ucontext *uc;
 {
-	struct sigacts *psp = p->p_sigacts;
 	register struct trapframe *tf;
 	svr4_greg_t *r = uc->uc_mcontext.greg;
-	struct svr4_sigaltstack *s = &uc->uc_stack;
-	struct sigaltstack *sf = &psp->ps_sigstk;
-	int mask;
+	sigset_t mask;
 
 	/*
 	 * XXX:
 	 * Should we check the value of flags to determine what to restore?
 	 * What to do with uc_link?
 	 * What to do with floating point stuff?
-	 * Should we bother with the rest of the registers that we
-	 * set to 0 right now?
 	 */
 
+	/* Restore register context. */
 	tf = p->p_md.md_regs;
-
-	/*
-	 * Restore register context.
-	 */
 #ifdef VM86
 	if (r[SVR4_X86_EFL] & PSL_VM) {
 		tf->tf_vm86_gs = r[SVR4_X86_GS];
@@ -223,18 +207,14 @@ svr4_setcontext(p, uc)
 	tf->tf_ss = r[SVR4_X86_SS];
 	tf->tf_esp = r[SVR4_X86_ESP];
 
-	/*
-	 * restore signal stack
-	 */
-	svr4_to_bsd_sigaltstack(s, sf);
+	/* Restore signal stack. */
+	svr4_to_native_sigaltstack(&uc->uc_stack, &p->p_sigacts->ps_sigstk);
 
-	/*
-	 * restore signal mask
-	 */
-	svr4_to_bsd_sigset(&uc->uc_sigmask, &mask);
-	p->p_sigmask = mask & ~sigcantmask;
+	/* Restore signal mask. */
+	svr4_to_native_sigset(&uc->uc_sigmask, &mask);
+	(void) sigprocmask1(p, SIG_SETMASK, &mask, 0);
 
-	return EJUSTRETURN;
+	return (EJUSTRETURN);
 }
 
 
@@ -245,7 +225,7 @@ svr4_getsiginfo(si, sig, code, addr)
 	u_long			 code;
 	caddr_t			 addr;
 {
-	si->si_signo = bsd_to_svr4_sig[sig];
+	si->si_signo = native_to_svr4_sig[sig];
 	si->si_errno = 0;
 	si->si_addr  = addr;
 
@@ -344,30 +324,30 @@ svr4_getsiginfo(si, sig, code, addr)
 void
 svr4_sendsig(catcher, sig, mask, code)
 	sig_t catcher;
-	int sig, mask;
+	int sig;
+	sigset_t *mask;
 	u_long code;
 {
 	register struct proc *p = curproc;
 	register struct trapframe *tf;
 	struct svr4_sigframe *fp, frame;
 	struct sigacts *psp = p->p_sigacts;
-	int oonstack;
-	extern char svr4_esigcode[], svr4_sigcode[];
+	int onstack;
 
 	tf = p->p_md.md_regs;
-	oonstack = psp->ps_sigstk.ss_flags & SS_ONSTACK;
 
-	/*
-	 * Allocate space for the signal handler context.
-	 */
-	if ((psp->ps_flags & SAS_ALTSTACK) && !oonstack &&
-	    (psp->ps_sigonstack & sigmask(sig))) {
+	/* Do we need to jump onto the signal stack? */
+	onstack =
+	    (psp->ps_sigstk.ss_flags & (SS_DISABLE | SS_ONSTACK)) == 0 &&
+	    (psp->ps_sigact[sig].sa_flags & SA_ONSTACK) != 0;
+
+	/* Allocate space for the signal handler context. */
+	if (onstack)
 		fp = (struct svr4_sigframe *)((caddr_t)psp->ps_sigstk.ss_sp +
-		    psp->ps_sigstk.ss_size - sizeof(struct svr4_sigframe));
-		psp->ps_sigstk.ss_flags |= SS_ONSTACK;
-	} else {
-		fp = (struct svr4_sigframe *)tf->tf_esp - 1;
-	}
+		    psp->ps_sigstk.ss_size);
+	else
+		fp = (struct svr4_sigframe *)tf->tf_esp;
+	fp--;
 
 	/* 
 	 * Build the argument list for the signal handler.
@@ -378,10 +358,10 @@ svr4_sendsig(catcher, sig, mask, code)
 	 *	- we don't pass the correct signal address [we need to
 	 *	  modify many kernel files to enable that]
 	 */
-
-	svr4_getcontext(p, &frame.sf_uc, mask, oonstack);
+	svr4_getcontext(p, &frame.sf_uc, mask);
 	svr4_getsiginfo(&frame.sf_si, sig, code, (caddr_t) tf->tf_eip);
 
+	/* Build stack frame for signal trampoline. */
 	frame.sf_signum = frame.sf_si.si_signo;
 	frame.sf_sip = &fp->sf_si;
 	frame.sf_ucp = &fp->sf_uc;
@@ -405,14 +385,16 @@ svr4_sendsig(catcher, sig, mask, code)
 	 */
 	tf->tf_es = GSEL(GUDATA_SEL, SEL_UPL);
 	tf->tf_ds = GSEL(GUDATA_SEL, SEL_UPL);
-	tf->tf_eip = (int)(((char *)PS_STRINGS) -
-	     (svr4_esigcode - svr4_sigcode));
+	tf->tf_eip = (int)psp->ps_sigcode;
 	tf->tf_cs = GSEL(GUCODE_SEL, SEL_UPL);
 	tf->tf_eflags &= ~(PSL_T|PSL_VM|PSL_AC);
 	tf->tf_esp = (int)fp;
 	tf->tf_ss = GSEL(GUDATA_SEL, SEL_UPL);
-}
 
+	/* Remember that we're now on the signal stack. */
+	if (onstack)
+		psp->ps_sigstk.ss_flags |= SS_ONSTACK;
+}
 
 /*
  * sysi86

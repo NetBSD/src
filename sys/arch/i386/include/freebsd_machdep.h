@@ -1,4 +1,4 @@
-/*	$NetBSD: freebsd_machdep.h,v 1.1 1995/10/10 01:22:35 mycroft Exp $	*/
+/*	$NetBSD: freebsd_machdep.h,v 1.2 1998/09/11 12:50:07 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1986, 1989, 1991, 1993
@@ -49,9 +49,9 @@
  */
 
 struct freebsd_sigcontext {
-	int	sc_onstack;		/* sigstack state to restore */
-	int	sc_mask;		/* signal mask to restore */
-	int	sc_esp;			/* machine state */
+	int	sc_onstack;	/* sigstack state to restore */
+	sigset13_t sc_mask;	/* signal mask to restore */
+	int	sc_esp;		/* machine state */
 	int	sc_ebp;
 	int	sc_isp;
 	int	sc_eip;
@@ -157,6 +157,6 @@ struct freebsd_ptrace_reg {
 /* sys/i386/include/exec.h */
 #define FREEBSD___LDPGSZ	4096
 
-void freebsd_sendsig __P((sig_t, int, int, u_long));
+void freebsd_sendsig __P((sig_t, int, sigset_t *, u_long));
 
 #endif /* _FREEBSD_MACHDEP_H */

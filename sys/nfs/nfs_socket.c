@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_socket.c,v 1.46 1998/08/09 21:19:51 perry Exp $	*/
+/*	$NetBSD: nfs_socket.c,v 1.47 1998/09/11 12:50:12 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1989, 1991, 1993, 1995
@@ -59,6 +59,8 @@
 #include <sys/syslog.h>
 #include <sys/tprintf.h>
 #include <sys/namei.h>
+#include <sys/signal.h>
+#include <sys/signalvar.h>
 
 #include <netinet/in.h>
 #include <netinet/tcp.h>
@@ -1389,15 +1391,22 @@ nfs_sigintr(nmp, rep, p)
 	struct nfsreq *rep;
 	register struct proc *p;
 {
+	sigset_t ss;
 
 	if (rep && (rep->r_flags & R_SOFTTERM))
 		return (EINTR);
 	if (!(nmp->nm_flag & NFSMNT_INT))
 		return (0);
-	if (p && p->p_siglist &&
-	    (((p->p_siglist & ~p->p_sigmask) & ~p->p_sigignore) &
-	    NFSINT_SIGMASK))
-		return (EINTR);
+	if (p) {
+		sigpending1(p, &ss);
+#if 0
+		sigminusset(&p->p_sigignore, &ss);
+#endif
+		if (sigismember(&ss, SIGINT) || sigismember(&ss, SIGTERM) ||
+		    sigismember(&ss, SIGKILL) || sigismember(&ss, SIGHUP) ||
+		    sigismember(&ss, SIGQUIT))
+			return (EINTR);
+	}
 	return (0);
 }
 

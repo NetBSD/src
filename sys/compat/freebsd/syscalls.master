@@ -1,4 +1,4 @@
-	$NetBSD: syscalls.master,v 1.18 1998/06/25 22:18:32 thorpej Exp $
+	$NetBSD: syscalls.master,v 1.19 1998/09/11 12:50:08 mycroft Exp $
 
 ;	from: @(#)syscalls.master	8.2 (Berkeley) 1/13/94
 
@@ -119,14 +119,16 @@
 #else
 45	UNIMPL		ktrace
 #endif
-46	NOARGS		{ int sys_sigaction(int signum, struct sigaction *nsa, \
-			    struct sigaction *osa); }
+46	NOARGS		{ int compat_13_sys_sigaction(int signum, \
+			    const struct sigaction13 *nsa, \
+			    struct sigaction13 *osa); }
 47	NOARGS		{ gid_t sys_getgid(void); }
-48	NOARGS		{ int sys_sigprocmask(int how, sigset_t mask); }
+48	NOARGS		{ int compat_13_sys_sigprocmask(int how, \
+			    int mask); }
 49	NOARGS		{ int sys___getlogin(char *namebuf, u_int namelen); }
 50	NOARGS		{ int sys_setlogin(char *namebuf); }
 51	NOARGS		{ int sys_acct(char *path); }
-52	NOARGS		{ int sys_sigpending(void); }
+52	NOARGS		{ int compat_13_sys_sigpending(void); }
 53	NOARGS		{ int compat_13_sys_sigaltstack( \
 			    const struct sigaltstack13 *nss, \
 			    struct sigaltstack13 *oss); }
@@ -208,7 +210,7 @@
 			    struct sigvec *nsv, struct sigvec *osv); } osigvec
 109	NOARGS		{ int compat_43_sys_sigblock(int mask); } osigblock
 110	NOARGS		{ int compat_43_sys_sigsetmask(int mask); } osigsetmask
-111	NOARGS		{ int sys_sigsuspend(int mask); }
+111	NOARGS		{ int compat_13_sys_sigsuspend(int mask); }
 112	NOARGS		{ int compat_43_sys_sigstack(struct sigstack *nss, \
 			    struct sigstack *oss); } osigstack
 113	NOARGS		{ int compat_43_sys_recvmsg(int s, \

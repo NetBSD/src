@@ -1,4 +1,4 @@
-	$NetBSD: syscalls.master,v 1.81 1998/07/05 08:49:50 jonathan Exp $
+	$NetBSD: syscalls.master,v 1.82 1998/09/11 12:50:11 mycroft Exp $
 
 ;	@(#)syscalls.master	8.2 (Berkeley) 1/13/94
 
@@ -122,17 +122,19 @@
 #else
 45	UNIMPL		ktrace
 #endif
-46	STD		{ int sys_sigaction(int signum, \
-			    const struct sigaction *nsa, \
-			    struct sigaction *osa); }
+46	COMPAT_13	{ int sys_sigaction(int signum, \
+			    const struct sigaction13 *nsa, \
+			    struct sigaction13 *osa); } sigaction13
 47	STD		{ gid_t sys_getgid(void); }
-48	STD		{ int sys_sigprocmask(int how, sigset_t mask); }
+48	COMPAT_13	{ int sys_sigprocmask(int how, \
+			    int mask); } sigprocmask13
 49	STD		{ int sys___getlogin(char *namebuf, u_int namelen); }
 50	STD		{ int sys_setlogin(const char *namebuf); }
 51	STD		{ int sys_acct(const char *path); }
-52	STD		{ int sys_sigpending(void); }
-53	COMPAT_13	{ int sys_sigaltstack(const struct sigaltstack13 \
-			    *nss, struct sigaltstack13 *oss); } sigaltstack13
+52	COMPAT_13	{ int sys_sigpending(void); } sigpending13
+53	COMPAT_13	{ int sys_sigaltstack( \
+			    const struct sigaltstack13 *nss, \
+			    struct sigaltstack13 *oss); } sigaltstack13
 54	STD		{ int sys_ioctl(int fd, \
 			    u_long com, ... void *data); }
 55	COMPAT_12	{ int sys_reboot(int opt); } oreboot
@@ -215,7 +217,7 @@
 			    struct sigvec *osv); } osigvec
 109	COMPAT_43	{ int sys_sigblock(int mask); } osigblock
 110	COMPAT_43	{ int sys_sigsetmask(int mask); } osigsetmask
-111	STD		{ int sys_sigsuspend(int mask); }
+111	COMPAT_13	{ int sys_sigsuspend(int mask); } sigsuspend13
 112	COMPAT_43	{ int sys_sigstack(struct sigstack *nss, \
 			    struct sigstack *oss); } osigstack
 113	COMPAT_43	{ int sys_recvmsg(int s, struct omsghdr *msg, \
@@ -526,8 +528,9 @@
 278	STD		{ int sys___stat13(const char *path, struct stat *ub); }
 279	STD		{ int sys___fstat13(int fd, struct stat *sb); }
 280	STD		{ int sys___lstat13(const char *path, struct stat *ub); }
-281	STD		{ int sys___sigaltstack14(const struct sigaltstack \
-			    *nss, struct sigaltstack *oss); }
+281	STD		{ int sys___sigaltstack14( \
+			    const struct sigaltstack *nss, \
+			    struct sigaltstack *oss); }
 282	STD		{ int sys___vfork14(void); }
 283	STD		{ int sys___posix_chown(const char *path, uid_t uid, \
 			    gid_t gid); }
@@ -549,3 +552,11 @@
 290	STD		{ ssize_t sys_pwritev(int fd, \
 			    const struct iovec *iovp, int iovcnt, \
 			    int pad, off_t offset); }
+291	STD		{ int sys___sigaction14(int signum, \
+			    const struct sigaction *nsa, \
+			    struct sigaction *osa); }
+292	STD		{ int sys___sigpending14(sigset_t *set); }
+293	STD		{ int sys___sigprocmask14(int how, \
+			    const sigset_t *set, \
+			    sigset_t *oset); }
+294	STD		{ int sys___sigsuspend14(const sigset_t *set); }

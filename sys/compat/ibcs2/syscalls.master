@@ -1,4 +1,4 @@
-	$NetBSD: syscalls.master,v 1.14 1998/03/05 04:36:08 scottb Exp $
+	$NetBSD: syscalls.master,v 1.15 1998/09/11 12:50:08 mycroft Exp $
 
 ;	@(#)syscalls.master	8.1 (Berkeley) 7/19/93
 
@@ -170,7 +170,9 @@
 94	NOARGS		{ int sys___posix_fchown(int fd, int uid, int gid); }
 95	UNIMPL
 96	NOARGS		{ int sys_sigreturn(struct sigcontext *sigcntxp); }
-97	UNIMPL		sigaltstack
+97	STD		{ int ibcs2_sys_sigaltstack( \
+			    const struct ibcs2_sigaltstack *nss, \
+			    struct ibcs2_sigaltstack *oss); }
 98	UNIMPL
 99	UNIMPL
 100	UNIMPL		getcontext/setcontext/sigsetjmp
@@ -320,12 +322,15 @@
 237	STD		{ int ibcs2_sys_eaccess(char *path, int flags); }
 238	UNIMPL		xenix_paccess
 239	STD		{ int ibcs2_sys_sigaction(int signum, \
-			    struct ibcs2_sigaction *nsa, \
+			    const struct ibcs2_sigaction *nsa, \
 			    struct ibcs2_sigaction *osa); }
 240	STD		{ int ibcs2_sys_sigprocmask(int how, \
-			    ibcs2_sigset_t *set, ibcs2_sigset_t *oset); }
-241	STD		{ int ibcs2_sys_sigpending(ibcs2_sigset_t *mask); }
-242	STD		{ int ibcs2_sys_sigsuspend(ibcs2_sigset_t *mask); }
+			    const ibcs2_sigset_t *set, \
+			    ibcs2_sigset_t *oset); }
+241	STD		{ int ibcs2_sys_sigpending( \
+			    ibcs2_sigset_t *set); }
+242	STD		{ int ibcs2_sys_sigsuspend( \
+			    const ibcs2_sigset_t *set); }
 243	STD		{ int ibcs2_sys_getgroups(int gidsetsize, \
 			    ibcs2_gid_t *gidset); }
 244	STD		{ int ibcs2_sys_setgroups(int gidsetsize, \

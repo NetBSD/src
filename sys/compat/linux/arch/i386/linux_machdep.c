@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_machdep.c,v 1.41 1998/06/11 22:26:13 drochner Exp $	*/
+/*	$NetBSD: linux_machdep.c,v 1.42 1998/09/11 12:50:06 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1995 Frank van der Linden
@@ -130,38 +130,27 @@ linux_setregs(p, epp, stack)
 void
 linux_sendsig(catcher, sig, mask, code)
 	sig_t catcher;
-	int sig, mask;
+	int sig;
+	sigset_t *mask;
 	u_long code;
 {
 	register struct proc *p = curproc;
 	register struct trapframe *tf;
 	struct linux_sigframe *fp, frame;
 	struct sigacts *psp = p->p_sigacts;
-	int oonstack;
-	extern char linux_sigcode[], linux_esigcode[];
 
 	tf = p->p_md.md_regs;
-	oonstack = psp->ps_sigstk.ss_flags & SS_ONSTACK;
 
-	/*
-	 * Allocate space for the signal handler context.
-	 */
-	if ((psp->ps_flags & SAS_ALTSTACK) && !oonstack &&
-	    (psp->ps_sigonstack & sigmask(sig))) {
-		fp = (struct linux_sigframe *)((caddr_t)psp->ps_sigstk.ss_sp +
-		    psp->ps_sigstk.ss_size - sizeof(struct linux_sigframe));
-		psp->ps_sigstk.ss_flags |= SS_ONSTACK;
-	} else {
-		fp = (struct linux_sigframe *)tf->tf_esp - 1;
-	}
+	/* Allocate space for the signal handler context. */
+	/* XXX Linux doesn't support the signal stack. */
+	fp = (struct linux_sigframe *)tf->tf_esp;
+	fp--;
 
+	/* Build stack frame for signal trampoline. */
 	frame.sf_handler = catcher;
-	frame.sf_sig = bsd_to_linux_sig[sig];
+	frame.sf_sig = native_to_linux_sig[sig];
 
-	/*
-	 * Build the signal context to be used by sigreturn.
-	 */
-	frame.sf_sc.sc_mask   = mask;
+	/* Save register context. */
 #ifdef VM86
 	if (tf->tf_eflags & PSL_VM) {
 		frame.sf_sc.sc_gs = tf->tf_vm86_gs;
@@ -192,6 +181,12 @@ linux_sendsig(catcher, sig, mask, code)
 	frame.sf_sc.sc_err = tf->tf_err;
 	frame.sf_sc.sc_trapno = tf->tf_trapno;
 
+	/* Save signal stack. */
+	/* XXX Linux doesn't support the signal stack. */
+
+	/* Save signal mask. */
+	native_to_linux_sigset(mask, &frame.sf_sc.sc_mask);
+
 	if (copyout(&frame, fp, sizeof(frame)) != 0) {
 		/*
 		 * Process has trashed its stack; give it an illegal
@@ -206,12 +201,14 @@ linux_sendsig(catcher, sig, mask, code)
 	 */
 	tf->tf_es = GSEL(GUDATA_SEL, SEL_UPL);
 	tf->tf_ds = GSEL(GUDATA_SEL, SEL_UPL);
-	tf->tf_eip = (int)(((char *)PS_STRINGS) -
-	     (linux_esigcode - linux_sigcode));
+	tf->tf_eip = (int)psp->ps_sigcode;
 	tf->tf_cs = GSEL(GUCODE_SEL, SEL_UPL);
 	tf->tf_eflags &= ~(PSL_T|PSL_VM|PSL_AC);
 	tf->tf_esp = (int)fp;
 	tf->tf_ss = GSEL(GUDATA_SEL, SEL_UPL);
+
+	/* Remember that we're now on the signal stack. */
+	/* XXX Linux doesn't support the signal stack. */
 }
 
 /*
@@ -235,8 +232,7 @@ linux_sys_sigreturn(p, v, retval)
 	} */ *uap = v;
 	struct linux_sigcontext *scp, context;
 	register struct trapframe *tf;
-
-	tf = p->p_md.md_regs;
+	sigset_t mask;
 
 	/*
 	 * The trampoline code hands us the context.
@@ -247,9 +243,8 @@ linux_sys_sigreturn(p, v, retval)
 	if (copyin((caddr_t)scp, &context, sizeof(*scp)) != 0)
 		return (EFAULT);
 
-	/*
-	 * Restore signal context.
-	 */
+	/* Restore register context. */
+	tf = p->p_md.md_regs;
 #ifdef VM86
 	if (context.sc_eflags & PSL_VM) {
 		tf->tf_vm86_gs = context.sc_gs;
@@ -287,8 +282,12 @@ linux_sys_sigreturn(p, v, retval)
 	tf->tf_esp = context.sc_esp_at_signal;
 	tf->tf_ss = context.sc_ss;
 
+	/* Restore signal stack. */
 	p->p_sigacts->ps_sigstk.ss_flags &= ~SS_ONSTACK;
-	p->p_sigmask = context.sc_mask & ~sigcantmask;
+
+	/* Restore signal mask. */
+	linux_to_native_sigset(&context.sc_mask, &mask);
+	(void) sigprocmask1(p, SIG_SETMASK, &mask, 0);
 
 	return (EJUSTRETURN);
 }
@@ -595,9 +594,9 @@ linux_machdepioctl(p, v, retval)
 		if ((error = copyin(SCARG(uap, data), (caddr_t)&lvt,
 		    sizeof (struct vt_mode))))
 			return error;
-		lvt.relsig = bsd_to_linux_sig[lvt.relsig];
-		lvt.acqsig = bsd_to_linux_sig[lvt.acqsig];
-		lvt.frsig = bsd_to_linux_sig[lvt.frsig];
+		lvt.relsig = native_to_linux_sig[lvt.relsig];
+		lvt.acqsig = native_to_linux_sig[lvt.acqsig];
+		lvt.frsig = native_to_linux_sig[lvt.frsig];
 		return copyout((caddr_t)&lvt, SCARG(uap, data),
 		    sizeof (struct vt_mode));
 	case LINUX_VT_SETMODE:
@@ -605,9 +604,9 @@ linux_machdepioctl(p, v, retval)
 		if ((error = copyin(SCARG(uap, data), (caddr_t)&lvt,
 		    sizeof (struct vt_mode))))
 			return error;
-		lvt.relsig = linux_to_bsd_sig[lvt.relsig];
-		lvt.acqsig = linux_to_bsd_sig[lvt.acqsig];
-		lvt.frsig = linux_to_bsd_sig[lvt.frsig];
+		lvt.relsig = linux_to_native_sig[lvt.relsig];
+		lvt.acqsig = linux_to_native_sig[lvt.acqsig];
+		lvt.frsig = linux_to_native_sig[lvt.frsig];
 		sg = stackgap_init(p->p_emul);
 		bvtp = stackgap_alloc(&sg, sizeof (struct vt_mode));
 		if ((error = copyout(&lvt, bvtp, sizeof (struct vt_mode))))

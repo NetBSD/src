@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_exec.c,v 1.29 1998/09/05 14:50:26 christos Exp $	*/
+/*	$NetBSD: linux_exec.c,v 1.30 1998/09/11 12:50:08 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1994 The NetBSD Foundation, Inc.
@@ -87,7 +87,6 @@
 
 #include <machine/cpu.h>
 #include <machine/reg.h>
-#include <machine/linux_machdep.h>
 
 #include <compat/linux/linux_types.h>
 #include <compat/linux/linux_syscall.h>
@@ -95,6 +94,7 @@
 #include <compat/linux/linux_syscallargs.h>
 #include <compat/linux/linux_util.h>
 #include <compat/linux/linux_exec.h>
+#include <machine/linux_machdep.h>
 
 static void *linux_aout_copyargs __P((struct exec_package *,
     struct ps_strings *, void *, void *));
