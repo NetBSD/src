@@ -1,6 +1,6 @@
 #! /bin/sh
 
-# $NetBSD: pkg_view.sh,v 1.1.2.33 2003/08/27 08:09:26 jlam Exp $
+# $NetBSD: pkg_view.sh,v 1.1.2.34 2003/08/27 22:00:06 jlam Exp $
 
 #
 # Copyright (c) 2001 Alistair G. Crooks.  All rights reserved.
@@ -148,6 +148,13 @@ esac
 # default to ${viewbase}/packages.
 #
 depot_pkg_dbdir=${stowdir:-${DEPOTBASE:-${viewbase}/packages}}
+
+case "${depot_pkg_dbdir}" in
+${pkg_dbdir})
+	echo "pkg_view: the depot and the view package database directories are the same" 1>&2
+	exit 1
+	;;
+esac
 
 ##########################
 # Shell helper functions #
