@@ -1,4 +1,4 @@
-/*	$NetBSD: param.h,v 1.28 1997/03/01 06:57:45 scottr Exp $	*/
+/*	$NetBSD: param.h,v 1.29 1997/04/13 05:12:42 scottr Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -79,10 +79,6 @@
 #ifndef _PARAM_MACHINE_
 #define _PARAM_MACHINE_
 
-#ifndef PSL_IPL
-#include <machine/psl.h>
-#endif /* PSL_IPL */
-
 /*
  * Machine dependent constants for Macintosh II-and-similar series.
  */
@@ -91,6 +87,11 @@
 #define	_MACHINE_ARCH	m68k
 #define	MACHINE_ARCH	"m68k"
 #define	MID_MACHINE	MID_M68K
+
+/*
+ * Get interrupt glue.
+ */
+#include <machine/intr.h>
 
 /*
  * Round p (pointer or byte index) up to a correctly-aligned value
