@@ -1,4 +1,4 @@
-/*	$NetBSD: md.h,v 1.4 1997/11/25 06:53:22 thorpej Exp $	*/
+/*	$NetBSD: md.h,v 1.5 1997/12/10 04:36:21 phil Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -42,6 +42,9 @@
 
 /* Megs required for a full X installation. */
 #define XNEEDMB 50
+
+/* Size of boot partition */
+#define BOOT_SIZE 80
 
 /* Disk names. */
 EXTERN	char *disk_names[]
