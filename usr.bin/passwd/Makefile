@@ -1,15 +1,20 @@
 #	@(#)Makefile	5.11 (Berkeley) 2/19/91
 
 PROG=	passwd
-SRCS=	local_passwd.c passwd.c pw_copy.c pw_util.c
+SRCS=	local_passwd.c yp_passwd.c passwd.c pw_copy.c pw_util.c getpwent.c
 .PATH:  ${.CURDIR}/../../usr.bin/chpass ${.CURDIR}/../../usr.sbin/vipw \
-	${.CURDIR}/../rlogin
-CFLAGS+=-I${.CURDIR}
+	${.CURDIR}/../rlogin ${.CURDIR}/../../lib/libc/gen
+CFLAGS+=-I${.CURDIR} -DYP
 BINOWN=	root
 BINMODE=4555
+DPADD+= ${LIBRPCSVC}
+LDADD+= -lrpcsvc
 .ifndef EXPORTABLE_SYSTEM
 DPADD+= ${LIBCRYPT}
 LDADD+= -lcrypt
 .endif
 
 .include <bsd.prog.mk>
+
+getpwent.o: getpwent.c
+	${CC} ${CFLAGS} -UYP -c ${.IMPSRC}

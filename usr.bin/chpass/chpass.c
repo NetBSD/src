@@ -59,6 +59,12 @@ char *progname = "chpass";
 char *tempname;
 uid_t uid;
 
+#ifdef	YP
+int use_yp;
+int force_yp = 0;
+extern struct passwd *ypgetpwnam(), *ypgetpwuid();
+#endif
+
 main(argc, argv)
 	int argc;
 	char **argv;
@@ -71,8 +77,12 @@ main(argc, argv)
 	int ch, pfd, tfd;
 	char *arg;
 
+#ifdef	YP
+        use_yp = _yp_check(NULL);
+#endif
+
 	op = EDITENTRY;
-	while ((ch = getopt(argc, argv, "a:s:")) != EOF)
+	while ((ch = getopt(argc, argv, "a:s:ly")) != EOF)
 		switch(ch) {
 		case 'a':
 			op = LOADENTRY;
@@ -82,6 +92,19 @@ main(argc, argv)
 			op = NEWSH;
 			arg = optarg;
 			break;
+#ifdef	YP
+                case 'l':
+                        use_yp = 0;
+                        break;
+                case 'y':
+                        if (!use_yp) {
+                                fprintf(stderr, "chpass: YP not in use.\n");
+                                usage();
+                                exit(1);
+                        }
+                        force_yp = 1;
+                        break;
+#endif
 		case '?':
 		default:
 			usage();
@@ -89,19 +112,39 @@ main(argc, argv)
 	argc -= optind;
 	argv += optind;
 
+#ifdef	YP
+        if (op == LOADENTRY && use_yp) {
+                (void)fprintf(stderr, "chpass: cannot load entry using NIS.\n\tUse the -l flag to load local.\n");
+                exit(1);
+        }
+#endif
 	uid = getuid();
 
 	if (op == EDITENTRY || op == NEWSH)
 		switch(argc) {
 		case 0:
-			if (!(pw = getpwuid(uid))) {
+                        pw = getpwuid(uid);
+#ifdef	YP
+                        if (pw && !force_yp)
+                                use_yp = 0;
+                        else if (use_yp)
+                                pw = ypgetpwuid(uid);
+#endif	/* YP */
+			if (!pw) {
 				(void)fprintf(stderr,
 				    "chpass: unknown user: uid %u\n", uid);
 				exit(1);
 			}
 			break;
 		case 1:
-			if (!(pw = getpwnam(*argv))) {
+			pw = getpwnam(*argv);
+#ifdef	YP
+                        if (pw && !force_yp)
+                                use_yp = 0;
+                        else if (use_yp)
+                                pw = ypgetpwnam(*argv);
+#endif	/* YP */
+			if (!pw) {
 				(void)fprintf(stderr,
 				    "chpass: unknown user %s.\n", *argv);
 				exit(1);
@@ -165,10 +208,21 @@ main(argc, argv)
 		tfd = pw_tmp();
 	}
 		
+#ifdef	YP
+        if (use_yp) {
+		(void)unlink(tempname);
+                if (pw_yp(pw, uid))
+                        pw_error((char *)NULL, 0, 1);
+                else
+                        exit(0);
+        }
+        else
+#endif	/* YP */
 	pw_copy(pfd, tfd, pw);
 
 	if (!pw_mkdb())
 		pw_error((char *)NULL, 0, 1);
+
 	exit(0);
 }
 
@@ -180,6 +234,10 @@ baduser()
 
 usage()
 {
+#ifdef	YP
+	(void)fprintf(stderr, "usage: chpass [-a list] [-s shell] [-l]%s [user]\n", use_yp?" [-y]":"");
+#else
 	(void)fprintf(stderr, "usage: chpass [-a list] [-s shell] [user]\n");
+#endif
 	exit(1);
 }
