@@ -42,7 +42,7 @@
  *	@(#)types.h	8.1 (Berkeley) 6/11/93
  *
  * from: Header: types.h,v 1.5 92/11/26 02:00:07 torek Exp  (LBL)
- * $Id: types.h,v 1.3 1994/07/20 05:44:29 cgd Exp $
+ * $Id: types.h,v 1.4 1994/10/20 04:46:23 cgd Exp $
  */
 
 #ifndef	_MACHTYPES_H_
@@ -74,5 +74,7 @@ typedef	int			  int32_t;
 typedef	unsigned int		u_int32_t;
 typedef	long long		  int64_t;
 typedef	unsigned long long	u_int64_t;
+
+typedef int32_t			register_t;
 
 #endif	/* _MACHTYPES_H_ */
