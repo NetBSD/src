@@ -1,6 +1,8 @@
+/*	$NetBSD: message.c,v 1.5 1995/04/22 10:27:43 cgd Exp $	*/
+
 /*
- * Copyright (c) 1988 The Regents of the University of California.
- * All rights reserved.
+ * Copyright (c) 1988, 1993
+ *	The Regents of the University of California.  All rights reserved.
  *
  * This code is derived from software contributed to Berkeley by
  * Timothy C. Stoehr.
@@ -35,8 +37,11 @@
  */
 
 #ifndef lint
-/*static char sccsid[] = "from: @(#)message.c	5.3 (Berkeley) 6/1/90";*/
-static char rcsid[] = "$Id: message.c,v 1.4 1993/11/10 10:02:19 cgd Exp $";
+#if 0
+static char sccsid[] = "@(#)message.c	8.1 (Berkeley) 5/31/93";
+#else
+static char rcsid[] = "$NetBSD: message.c,v 1.5 1995/04/22 10:27:43 cgd Exp $";
+#endif
 #endif /* not lint */
 
 /*

@@ -1,6 +1,8 @@
+/*	$NetBSD: score.c,v 1.5 1995/04/22 10:28:26 cgd Exp $	*/
+
 /*
- * Copyright (c) 1988 The Regents of the University of California.
- * All rights reserved.
+ * Copyright (c) 1988, 1993
+ *	The Regents of the University of California.  All rights reserved.
  *
  * This code is derived from software contributed to Berkeley by
  * Timothy C. Stoehr.
@@ -35,8 +37,11 @@
  */
 
 #ifndef lint
-/*static char sccsid[] = "from: @(#)score.c	5.5 (Berkeley) 6/1/90";*/
-static char rcsid[] = "$Id: score.c,v 1.4 1993/11/10 10:02:20 cgd Exp $";
+#if 0
+static char sccsid[] = "@(#)score.c	8.1 (Berkeley) 5/31/93";
+#else
+static char rcsid[] = "$NetBSD: score.c,v 1.5 1995/04/22 10:28:26 cgd Exp $";
+#endif
 #endif /* not lint */
 
 /*

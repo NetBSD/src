@@ -1,6 +1,8 @@
+/*	$NetBSD: machdep.c,v 1.3 1995/04/22 10:27:39 cgd Exp $	*/
+
 /*
- * Copyright (c) 1988 The Regents of the University of California.
- * All rights reserved.
+ * Copyright (c) 1988, 1993
+ *	The Regents of the University of California.  All rights reserved.
  *
  * This code is derived from software contributed to Berkeley by
  * Timothy C. Stoehr.
@@ -35,8 +37,11 @@
  */
 
 #ifndef lint
-/*static char sccsid[] = "from: @(#)machdep.c	5.7 (Berkeley) 2/28/91";*/
-static char rcsid[] = "$Id: machdep.c,v 1.2 1993/08/01 18:52:26 mycroft Exp $";
+#if 0
+static char sccsid[] = "@(#)machdep.c	8.1 (Berkeley) 5/31/93";
+#else
+static char rcsid[] = "$NetBSD: machdep.c,v 1.3 1995/04/22 10:27:39 cgd Exp $";
+#endif
 #endif /* not lint */
 
 /*
@@ -510,38 +515,31 @@ int status;
 /* md_lock():
  *
  * This function is intended to give the user exclusive access to the score
- * file.  It does so by "creat"ing a lock file, which can only be created
- * if it does not already exist.  The file is deleted when score file
- * processing is finished.  The lock file should be located in the same
- * directory as the score file.  These full path names should be defined for
- * any particular site in rogue.h.  The constants _PATH_SCOREFILE and
- * _PATH_LOCKFILE define these file names.
+ * file.  It does so by flock'ing the score file.  The full path name of the
+ * score file should be defined for any particular site in rogue.h.  The
+ * constants _PATH_SCOREFILE defines this file name.
  *
  * When the parameter 'l' is non-zero (true), a lock is requested.  Otherwise
- * the lock is released by removing the lock file.
+ * the lock is released.
  */
 
 md_lock(l)
 boolean l;
 {
+	static int fd;
 	short tries;
-	char *lock_file = _PATH_LOCKFILE;
 
 	if (l) {
-		for (tries = 0; tries < 5; tries++) {
-			if (md_get_file_id(lock_file) == -1) {
-				if (creat(lock_file, 0444) != -1) {
-					break;
-				} else {
-					message("cannot lock score file", 0);
-				}
-			} else {
-				message("waiting to lock score file", 0);
-			}
-			sleep(2);
+		if ((fd = open(_PATH_SCOREFILE, O_RDONLY)) < 1) {
+			message("cannot lock score file", 0);
+			return;
 		}
+		for (tries = 0; tries < 5; tries++)
+			if (!flock(fd, LOCK_EX|LOCK_NB))
+				return;
 	} else {
-		(void) unlink(lock_file);
+		(void)flock(fd, LOCK_NB);
+		(void)close(fd);
 	}
 }
 
