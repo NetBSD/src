@@ -1,4 +1,4 @@
-/*	$NetBSD: scsipi_base.c,v 1.98 2003/10/17 16:44:48 mycroft Exp $	*/
+/*	$NetBSD: scsipi_base.c,v 1.99 2003/10/28 09:52:32 simonb Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2000, 2002, 2003 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: scsipi_base.c,v 1.98 2003/10/17 16:44:48 mycroft Exp $");
+__KERNEL_RCSID(0, "$NetBSD: scsipi_base.c,v 1.99 2003/10/28 09:52:32 simonb Exp $");
 
 #include "opt_scsi.h"
 
@@ -330,6 +330,7 @@ scsipi_get_tag(xs)
 	int bit, tag;
 	u_int word;
 
+	bit = 0;	/* XXX gcc */
 	for (word = 0; word < PERIPH_NTAGWORDS; word++) {
 		bit = ffs(periph->periph_freetags[word]);
 		if (bit != 0)
