@@ -1,4 +1,4 @@
-/*	$NetBSD: shlib.c,v 1.17 1999/11/29 08:27:07 itohy Exp $	*/
+/*	$NetBSD: shlib.c,v 1.18 2000/05/27 06:53:30 matt Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -50,9 +50,11 @@ int	isdigit();
 #include <dirent.h>
 #include <err.h>
 #include <fcntl.h>
+#include <a.out.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <paths.h>
 #include <link_aout.h>
 
 #include "shlib.h"
@@ -79,10 +81,14 @@ void
 add_search_dir(name)
 	char	*name;
 {
-	n_search_dirs++;
+	n_search_dirs += 2;
 	search_dirs = (char **)
 		xrealloc(search_dirs, n_search_dirs * sizeof search_dirs[0]);
-	search_dirs[n_search_dirs - 1] = strdup(name);
+	search_dirs[n_search_dirs - 2] = strdup(name);
+	search_dirs[n_search_dirs - 1] =
+	    xmalloc(sizeof(_PATH_EMUL_AOUT) + strlen(name));
+	strcpy(search_dirs[n_search_dirs - 1], _PATH_EMUL_AOUT);
+	strcat(search_dirs[n_search_dirs - 1], name);
 }
 
 void
@@ -95,10 +101,11 @@ remove_search_dir(name)
 		if (strcmp(search_dirs[n], name))
 			continue;
 		free(search_dirs[n]);
-		if (n < (n_search_dirs - 1))
-			bcopy(&search_dirs[n+1], &search_dirs[n],
-			      (n_search_dirs - n - 1) * sizeof search_dirs[0]);
-		n_search_dirs--;
+		free(search_dirs[n+1]);
+		if (n < (n_search_dirs - 2))
+			bcopy(&search_dirs[n+2], &search_dirs[n],
+			      (n_search_dirs - n - 2) * sizeof search_dirs[0]);
+		n_search_dirs -= 2;
 	}
 }
 
@@ -255,6 +262,9 @@ int	do_dot_a;
 
 		while ((dp = readdir(dd)) != NULL) {
 			int	n;
+			struct exec ex;
+			char *xpath;
+			FILE *fp;
 
 			if (do_dot_a && path == NULL &&
 					dp->d_namlen == len + 2 &&
@@ -280,6 +290,23 @@ int	do_dot_a;
 				free(path);
 				path = NULL;
 				found_dot_a = 0;
+			}
+
+			/* verify the library is a.out */
+			xpath = concat(search_dirs[i], "/", dp->d_name);
+			fp = fopen(xpath, "r");
+			free(xpath);
+			if (fp == NULL) {
+				continue;
+			}
+			if (sizeof(ex) != fread(&ex, 1, sizeof(ex), fp)) {
+				fclose(fp);
+				continue;
+			}
+			fclose(fp);
+			if (N_GETMAGIC(ex) != ZMAGIC
+			    || (N_GETFLAG(ex) & EX_DYNAMIC) == 0) {
+				continue;
 			}
 
 			if (major == -1 && minor == -1) {

@@ -1,4 +1,4 @@
-/*	$NetBSD: ldconfig.c,v 1.27 1999/07/16 22:23:29 christos Exp $	*/
+/*	$NetBSD: ldconfig.c,v 1.28 2000/05/27 06:53:29 matt Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -174,7 +174,7 @@ do_conf ()
 	}
 
 	while ((line = fgetln(conf, &len)) != NULL) {
-		if (*line == '#' || *line == '\n')
+		if (*line != '/')
 			continue;
 
 		if (line[len-1] == '\n') {
