@@ -1,4 +1,4 @@
-/*	$NetBSD: systrace-translate.c,v 1.9 2002/11/02 19:43:27 provos Exp $	*/
+/*	$NetBSD: systrace-translate.c,v 1.10 2002/11/02 19:49:21 provos Exp $	*/
 /*	$OpenBSD: systrace-translate.c,v 1.10 2002/08/01 20:50:17 provos Exp $	*/
 /*
  * Copyright 2002 Niels Provos <provos@citi.umich.edu>
@@ -34,6 +34,7 @@
 #include <sys/wait.h>
 #include <sys/tree.h>
 #include <sys/socket.h>
+#include <sys/signal.h>
 #include <inttypes.h>
 #include <limits.h>
 #include <stdlib.h>
@@ -69,7 +70,8 @@ static int linux_print_oflags(char *, size_t, struct intercept_translate *);
 static int print_modeflags(char *, size_t, struct intercept_translate *);
 static int print_number(char *, size_t, struct intercept_translate *);
 static int print_uname(char *, size_t, struct intercept_translate *);
-static int print_uname(char *, size_t, struct intercept_translate *);
+static int print_pidname(char *, size_t, struct intercept_translate *);
+static int print_signame(char *, size_t, struct intercept_translate *);
 static int get_argv(struct intercept_translate *, int, pid_t, void *);
 static int print_argv(char *, size_t, struct intercept_translate *);
 
@@ -275,6 +277,116 @@ print_uname(char *buf, size_t buflen, struct intercept_translate *tl)
 }
 
 static int
+print_pidname(char *buf, size_t buflen, struct intercept_translate *tl)
+{
+	struct intercept_pid *icpid;
+	pid_t pid = (intptr_t)tl->trans_addr;
+
+	icpid = intercept_getpid(pid);
+	snprintf(buf, buflen, "%s",
+	    icpid->name != NULL ? icpid->name : "<unknown>");
+
+	if (icpid->name == NULL)
+		intercept_freepid(pid);
+
+	return (0);
+}
+
+static int
+print_signame(char *buf, size_t buflen, struct intercept_translate *tl)
+{
+	int sig = (intptr_t)tl->trans_addr;
+	char *name;
+
+	switch (sig) {
+	case SIGHUP: 
+		name = "SIGHUP"; 
+		break;
+	case SIGINT: 
+		name = "SIGINT"; 
+		break;
+	case SIGQUIT: 
+		name = "SIGQUIT"; 
+		break;
+	case SIGILL: 
+		name = "SIGILL"; 
+		break;
+	case SIGABRT: 
+		name = "SIGABRT"; 
+		break;
+	case SIGFPE: 
+		name = "SIGFPE"; 
+		break;
+	case SIGKILL: 
+		name = "SIGKILL"; 
+		break;
+	case SIGBUS: 
+		name = "SIGBUS"; 
+		break;
+	case SIGSEGV: 
+		name = "SIGSEGV"; 
+		break;
+	case SIGSYS: 
+		name = "SIGSYS"; 
+		break;
+	case SIGPIPE: 
+		name = "SIGPIPE"; 
+		break;
+	case SIGALRM: 
+		name = "SIGALRM"; 
+		break;
+	case SIGTERM: 
+		name = "SIGTERM"; 
+		break;
+	case SIGURG: 
+		name = "SIGURG"; 
+		break;
+	case SIGSTOP: 
+		name = "SIGSTOP"; 
+		break;
+	case SIGTSTP: 
+		name = "SIGTSTP"; 
+		break;
+	case SIGCONT: 
+		name = "SIGCONT"; 
+		break;
+	case SIGCHLD: 
+		name = "SIGCHLD"; 
+		break;
+	case SIGTTIN: 
+		name = "SIGTTIN"; 
+		break;
+	case SIGTTOU: 
+		name = "SIGTTOU"; 
+		break;
+	case SIGIO: 
+		name = "SIGIO"; 
+		break;
+	case SIGPROF: 
+		name = "SIGPROF"; 
+		break;
+	case SIGWINCH: 
+		name = "SIGWINCH"; 
+		break;
+	case SIGINFO: 
+		name = "SIGINFO"; 
+		break;
+	case SIGUSR1: 
+		name = "SIGUSR1"; 
+		break;
+	case SIGUSR2: 
+		name = "SIGUSR2"; 
+		break;
+	default:
+		snprintf(buf, buflen, "<unknown>: %d", sig);
+		return (0);
+	}
+
+	snprintf(buf, buflen, "%s", name);
+	return (0);
+}
+
+static int
 get_argv(struct intercept_translate *trans, int fd, pid_t pid, void *addr)
 {
 	char *arg;
@@ -375,4 +487,14 @@ struct intercept_translate ic_sockdom = {
 struct intercept_translate ic_socktype = {
 	"socktype",
 	NULL, print_socktype,
+};
+
+struct intercept_translate ic_pidname = {
+	"pidname",
+	NULL, print_pidname,
+};
+
+struct intercept_translate ic_signame = {
+	"signame",
+	NULL, print_signame,
 };
