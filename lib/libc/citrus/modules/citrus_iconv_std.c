@@ -1,4 +1,4 @@
-/*	$NetBSD: citrus_iconv_std.c,v 1.6 2003/09/01 06:16:13 tshiozak Exp $	*/
+/*	$NetBSD: citrus_iconv_std.c,v 1.7 2003/12/29 18:05:01 yamt Exp $	*/
 
 /*-
  * Copyright (c)2003 Citrus Project,
@@ -28,7 +28,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: citrus_iconv_std.c,v 1.6 2003/09/01 06:16:13 tshiozak Exp $");
+__RCSID("$NetBSD: citrus_iconv_std.c,v 1.7 2003/12/29 18:05:01 yamt Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include <assert.h>
@@ -491,6 +491,9 @@ _citrus_iconv_std_iconv_convert(struct _citrus_iconv * __restrict cv,
 
 	/* normal case */
 	for (;;) {
+		if (*inbytes==0)
+			break;
+
 		/* save the encoding states for the error recovery */
 		save_encoding_state(&sc->sc_src_encoding);
 		save_encoding_state(&sc->sc_dst_encoding);
@@ -539,12 +542,6 @@ next:
 		*in = tmpin;
 		*outbytes -= szrout;
 		*out += szrout;
-		if (*inbytes==0)
-			break;
-		if (*outbytes == 0) {
-			ret = E2BIG;
-			goto err_norestore;
-		}
 	}
 	*invalids = inval;
 
