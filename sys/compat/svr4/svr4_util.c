@@ -1,4 +1,4 @@
-/*	$NetBSD: svr4_util.c,v 1.2 1994/10/26 05:28:03 cgd Exp $	*/
+/*	$NetBSD: svr4_util.c,v 1.3 1994/10/26 11:58:31 christos Exp $	*/
 
 /*
  * Copyright (c) 1994 Christos Zoulas
@@ -12,25 +12,19 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *	This product includes software developed by the University of
- *	California, Berkeley and its contributors.
- * 4. Neither the name of the University nor the names of its contributors
- *    may be used to endorse or promote products derived from this software
- *    without specific prior written permission.
+ * 3. The name of the author may not be used to endorse or promote products
+ *    derived from this software without specific prior written permission
  *
- * THIS SOFTWARE IS PROVIDED BY THE REGENTS AND CONTRIBUTORS ``AS IS'' AND
- * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
- * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
- * ARE DISCLAIMED.  IN NO EVENT SHALL THE REGENTS OR CONTRIBUTORS BE LIABLE
- * FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
- * DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS
- * OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
- * HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
- * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
- * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
- * SUCH DAMAGE.
+ * THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR
+ * IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
+ * OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
+ * IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY DIRECT, INDIRECT,
+ * INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT
+ * NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
+ * DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
+ * THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+ * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
+ * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
 #include <sys/param.h>
@@ -61,27 +55,34 @@ svr4_emul_find(p, loc, prefix, path, pbuf)
 {
     struct nameidata nd;
     int error;
-    char buf[MAXPATHLEN];
-    char *ptr;
+    char *ptr, *buf;
     size_t sz;
     size_t len;
 
+    buf = (char *) malloc(MAXPATHLEN, M_TEMP, M_WAITOK);
     *pbuf = path;
 
     for (ptr = buf; (*ptr = *prefix) != '\0'; ptr++, prefix++)
 	continue;
 
-    sz = sizeof(buf) - (ptr - buf);
+    sz = MAXPATHLEN - (ptr - buf);
 
     if (loc == UIO_SYSSPACE)
 	error = copystr(path, ptr, sz, &len);
     else
 	error = copyinstr(path, ptr, sz, &len);
 
+    if (error) {
+	DPRINTF(("copy failed %d\n", error));
+	free(buf, M_TEMP);
+	return error;
+    }
+
     DPRINTF(("looking for %s [%d, %d]: ", buf, sz, len));
 
     if (*ptr != '/') {
 	DPRINTF(("no slash\n"));
+	free(buf, M_TEMP);
 	return EINVAL;
     }
 
@@ -89,21 +90,21 @@ svr4_emul_find(p, loc, prefix, path, pbuf)
 
     if ((error = namei(&nd)) != 0) {
 	DPRINTF(("not found\n"));
+	free(buf, M_TEMP);
 	return error;
     }
 
-    sz = &ptr[len] - buf;
 
-    if (loc == UIO_SYSSPACE) {
-	*pbuf = malloc(sz + 1, M_TEMP, M_WAITOK);
-	error = copystr(buf, *pbuf, sz, &len);
-    }
+    if (loc == UIO_SYSSPACE)
+	*pbuf = buf;
     else {
+	sz = &ptr[len] - buf;
 	*pbuf = stackgap_alloc(sz + 1);
-	error = copyoutstr(buf, *pbuf, sz, &len);
+	error = copyout(buf, *pbuf, sz);
+	free(buf, M_TEMP);
     }
 
-    DPRINTF((error ? "copy failed\n" : "ok\n"));
+    DPRINTF(("ok\n"));
 
     vrele(nd.ni_vp);
     return error;

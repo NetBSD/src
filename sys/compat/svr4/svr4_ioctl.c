@@ -1,4 +1,4 @@
-/*	$NetBSD: svr4_ioctl.c,v 1.5 1994/10/26 05:27:50 cgd Exp $	*/
+/*	$NetBSD: svr4_ioctl.c,v 1.6 1994/10/26 11:58:25 christos Exp $	*/
 
 /*
  * Copyright (c) 1994 Christos Zoulas
@@ -9,7 +9,10 @@
  * are met:
  * 1. Redistributions of source code must retain the above copyright
  *    notice, this list of conditions and the following disclaimer.
- * 2. The name of the author may not be used to endorse or promote products
+ * 2. Redistributions in binary form must reproduce the above copyright
+ *    notice, this list of conditions and the following disclaimer in the
+ *    documentation and/or other materials provided with the distribution.
+ * 3. The name of the author may not be used to endorse or promote products
  *    derived from this software without specific prior written permission
  *
  * THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR
