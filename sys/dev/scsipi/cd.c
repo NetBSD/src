@@ -1,4 +1,4 @@
-/*	$NetBSD: cd.c,v 1.127 1999/05/27 11:19:04 bouyer Exp $	*/
+/*	$NetBSD: cd.c,v 1.128 1999/08/07 02:51:51 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -1134,7 +1134,7 @@ cd_size(cd, flags)
 	 */
 	if (scsipi_command(cd->sc_link,
 	    (struct scsipi_generic *)&scsipi_cmd, sizeof(scsipi_cmd),
-	    (u_char *)&rdcap, sizeof(rdcap), CDRETRIES, 20000, NULL,
+	    (u_char *)&rdcap, sizeof(rdcap), CDRETRIES, 30000, NULL,
 	    flags | SCSI_DATA_IN) != 0)
 		return (0);
 
@@ -1168,7 +1168,7 @@ cd_play(cd, blkno, nblks)
 	_lto2b(nblks, scsipi_cmd.xfer_len);
 	return (scsipi_command(cd->sc_link,
 	    (struct scsipi_generic *)&scsipi_cmd, sizeof(scsipi_cmd),
-	    0, 0, CDRETRIES, 200000, NULL, 0));
+	    0, 0, CDRETRIES, 30000, NULL, 0));
 }
 
 /*
@@ -1226,7 +1226,7 @@ cd_play_msf(cd, startm, starts, startf, endm, ends, endf)
 	scsipi_cmd.end_f = endf;
 	return (scsipi_command(cd->sc_link,
 	    (struct scsipi_generic *)&scsipi_cmd, sizeof(scsipi_cmd),
-	    0, 0, CDRETRIES, 2000, NULL, 0));
+	    0, 0, CDRETRIES, 30000, NULL, 0));
 }
 
 /*
@@ -1244,7 +1244,7 @@ cd_pause(cd, go)
 	scsipi_cmd.resume = go & 0xff;
 	return (scsipi_command(cd->sc_link,
 	    (struct scsipi_generic *)&scsipi_cmd, sizeof(scsipi_cmd),
-	    0, 0, CDRETRIES, 2000, NULL, 0));
+	    0, 0, CDRETRIES, 30000, NULL, 0));
 }
 
 /*
@@ -1256,7 +1256,7 @@ cd_reset(cd)
 {
 
 	return (scsipi_command(cd->sc_link, 0, 0, 0, 0,
-	    CDRETRIES, 2000, NULL, SCSI_RESET));
+	    CDRETRIES, 30000, NULL, SCSI_RESET));
 }
 
 /*
@@ -1281,7 +1281,7 @@ cd_read_subchannel(cd, mode, format, track, data, len)
 	return (scsipi_command(cd->sc_link,
 	    (struct scsipi_generic *)&scsipi_cmd,
 	    sizeof(struct scsipi_read_subchannel), (u_char *)data, len,
-	    CDRETRIES, 5000, NULL, SCSI_DATA_IN|SCSI_SILENT));
+	    CDRETRIES, 30000, NULL, SCSI_DATA_IN|SCSI_SILENT));
 }
 
 /*
@@ -1313,7 +1313,7 @@ cd_read_toc(cd, mode, start, data, len, control)
 	return (scsipi_command(cd->sc_link,
 	    (struct scsipi_generic *)&scsipi_cmd,
 	    sizeof(struct scsipi_read_toc), (u_char *)data, len, CDRETRIES,
-	    5000, NULL, SCSI_DATA_IN));
+	    30000, NULL, SCSI_DATA_IN));
 }
 
 int
