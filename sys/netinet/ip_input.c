@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_input.c,v 1.122 2000/11/24 03:43:20 itojun Exp $	*/
+/*	$NetBSD: ip_input.c,v 1.123 2000/12/14 17:36:44 thorpej Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -478,6 +478,14 @@ ip_input(struct mbuf *m)
 		return;
 	ip = mtod(m, struct ip *);
 #endif /* PFIL_HOOKS */
+
+#ifdef ALTQ
+	/* XXX Temporary until ALTQ is changed to use a pfil hook */
+	if (altq_input != NULL && (*altq_input)(m, AF_INET) == 0) {
+		/* packet dropped by traffic conditioner */
+		return;
+	}
+#endif
 
 	/*
 	 * Convert fields to host representation.
