@@ -1,4 +1,4 @@
-/*	$NetBSD: clock.c,v 1.34 2000/12/04 20:33:12 fvdl Exp $ */
+/*	$NetBSD: clock.c,v 1.35 2000/12/17 21:42:21 pk Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -604,7 +604,7 @@ cpu_initclocks()
 		/* set the next interrupt time */
 		tick_increment = cpu_clockrate / hz;
 #ifdef DEBUG
-		printf("Using %tick -- intr in %ld cycles...", tick_increment);
+		printf("Using %%tick -- intr in %ld cycles...", tick_increment);
 #endif
 		next_tick(tick_increment);
 #ifdef DEBUG
