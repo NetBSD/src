@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.180 2003/10/26 08:05:26 christos Exp $	*/
+/*	$NetBSD: locore.s,v 1.181 2003/11/09 11:23:54 martin Exp $	*/
 
 /*
  * Copyright (c) 1996-2002 Eduardo Horvath
@@ -5493,10 +5493,11 @@ dostart:
 	 * Step 3: clear BSS.  This may just be paranoia; the boot
 	 * loader might already do it for us; but what the hell.
 	 */
-	set	_C_LABEL(edata), %o0		! bzero(edata, end - edata)
-	set	_C_LABEL(end), %o1
-	call	_C_LABEL(bzero)
-	 sub	%o1, %o0, %o1
+	set	_C_LABEL(edata), %o0		! memset(edata, 0, end - edata)
+	set	_C_LABEL(end), %o2
+	clr	%o1
+	call	_C_LABEL(memset)
+	 sub	%o2, %o0, %o2
 
 	/*
 	 * Step 4: compute number of windows and set up tables.
@@ -6945,8 +6946,8 @@ ENTRY(copystr)
  *
  * Copy specified amount of data from user space into the kernel.
  *
- * This is a modified version of bcopy that uses ASI_AIUS.  When
- * bcopy is optimized to use block copy ASIs, this should be also.
+ * This is a modified version of memcpy that uses ASI_AIUS.  When
+ * memcpy is optimized to use block copy ASIs, this should be also.
  */
 
 #define	BCOPY_SMALL	32	/* if < 32, copy by bytes */
@@ -7149,15 +7150,15 @@ Lcopyin_done:
  * Just like copyin, except that the `dst' addresses are user space
  * rather than the `src' addresses.
  *
- * This is a modified version of bcopy that uses ASI_AIUS.  When
- * bcopy is optimized to use block copy ASIs, this should be also.
+ * This is a modified version of memcpy that uses ASI_AIUS.  When
+ * memcpy is optimized to use block copy ASIs, this should be also.
  */
  /*
   * This needs to be reimplemented to really do the copy.
   */
 ENTRY(copyout)
 	/*
-	 * ******NOTE****** this depends on bcopy() not using %g7
+	 * ******NOTE****** this depends on memcpy() not using %g7
 	 */
 #ifdef NOTDEF_DEBUG
 	save	%sp, -CC64FSZ, %sp
@@ -7355,7 +7356,7 @@ Lcopyout_done:
 	 clr	%o0			! return 0
 
 ! Copyin or copyout fault.  Clear cpcb->pcb_onfault and return EFAULT.
-! Note that although we were in bcopy, there is no state to clean up;
+! Note that although we were in memcpy, there is no state to clean up;
 ! the only special thing is that we have to return to [g7 + 8] rather than
 ! [o7 + 8].
 Lcopyfault:
@@ -8908,7 +8909,7 @@ ENTRY(pseg_set)
 
 /*
  * Use block_disable to turn off block insns for
- * bcopy/memset
+ * memcpy/memset
  */
 	.data
 	.align	8
@@ -8924,7 +8925,7 @@ block_disable:	.xword	1
 	
 #if 1
 /*
- * kernel bcopy/memcpy
+ * kernel memcpy
  * Assumes regions do not overlap; has no useful return value.
  *
  * Must not use %g7 (see copyin/copyout above).
@@ -8938,7 +8939,7 @@ ENTRY(memcpy) /* dest, src, size */
 	mov	%o1, %o0
 	mov	%o3, %o1
 #endif
-ENTRY(bcopy) /* src, dest, size */
+! ENTRY(bcopy) /* src, dest, size */
 #ifdef DEBUG
 	set	pmapdebug, %o4
 	ld	[%o4], %o4
@@ -8954,23 +8955,15 @@ ENTRY(bcopy) /* src, dest, size */
 !	ta	1; nop
 	restore
 	.data
-2:	.asciz	"bcopy(%p->%p,%x)\n"
+2:	.asciz	"memcpy(%p<-%p,%x)\n"
 	_ALIGN
 	.text
 3:
 #endif
-	/*
-	 * Check for overlaps and punt.
-	 *
-	 * If src <= dest <= src+len we have a problem.
-	 */
 
-	sub	%o1, %o0, %o3
+	cmp	%o2, BCOPY_SMALL
 
-	cmp	%o3, %o2
-	blu,pn	CCCR, Lovbcopy
-	 cmp	%o2, BCOPY_SMALL
-Lbcopy_start:
+Lmemcpy_start:
 	bge,pt	CCCR, 2f	! if >= this many, go be fancy.
 	 cmp	%o2, 256
 
@@ -8994,45 +8987,15 @@ Lbcopy_start:
 	NOTREACHED
 
 	/*
-	 * Overlapping bcopies -- punt.
-	 */
-Lovbcopy:
-
-	/*
-	 * Since src comes before dst, and the regions might overlap,
-	 * we have to do the copy starting at the end and working backwards.
-	 *
-	 * We could optimize this, but it almost never happens.
-	 */
-	mov	%o1, %o5	! Retval
-	add	%o2, %o0, %o0	! src += len
-	add	%o2, %o1, %o1	! dst += len
-	
-	deccc	%o2
-	bl,pn	CCCR, 1f
-	 dec	%o0
-0:
-	dec	%o1
-	ldsb	[%o0], %o4
-	dec	%o0
-	
-	deccc	%o2
-	bge,pt	CCCR, 0b
-	 stb	%o4, [%o1]
-1:
-	retl
-	 mov	%o5, %o0
-
-	/*
 	 * Plenty of data to copy, so try to do it optimally.
 	 */
 2:
 #if 1
 	! If it is big enough, use VIS instructions
-	bge	Lbcopy_block
+	bge	Lmemcpy_block
 	 nop
 #endif
-Lbcopy_fancy:
+Lmemcpy_fancy:
 
 	!!
 	!! First align the output to a 8-byte entity
@@ -9051,7 +9014,7 @@ Lbcopy_fancy:
 	ldub	[%l0], %l4				! Load 1st byte
 	
 	deccc	1, %l2
-	ble,pn	CCCR, Lbcopy_finish			! XXXX
+	ble,pn	CCCR, Lmemcpy_finish			! XXXX
 	 inc	1, %l0
 	
 	stb	%l4, [%l1]				! Store 1st byte
@@ -9072,7 +9035,7 @@ Lbcopy_fancy:
 	
 1:	
 	deccc	2, %l2
-	ble,pn	CCCR, Lbcopy_finish			! XXXX
+	ble,pn	CCCR, Lmemcpy_finish			! XXXX
 	 inc	2, %l0
 	sth	%l4, [%l1]				! Store 1st short
 	
@@ -9107,7 +9070,7 @@ Lbcopy_fancy:
 	
 1:	
 	deccc	4, %l2
-	ble,pn	CCCR, Lbcopy_finish		! XXXX
+	ble,pn	CCCR, Lmemcpy_finish		! XXXX
 	 inc	4, %l0
 	
 	st	%l4, [%l1]				! Store word
@@ -9116,12 +9079,12 @@ Lbcopy_fancy:
 	!!
 	!! We are now 32-bit aligned in the dest.
 	!!
-Lbcopy_common:	
+Lmemcpy_common:	
 
 	and	%l0, 7, %l4				! Shift amount
 	andn	%l0, 7, %l0				! Source addr
 	
-	brz,pt	%l4, Lbcopy_noshift8			! No shift version...
+	brz,pt	%l4, Lmemcpy_noshift8			! No shift version...
 
 	 sllx	%l4, 3, %l4				! In bits
 	mov	8<<3, %l3
@@ -9133,7 +9096,7 @@ Lbcopy_common:
 	sllx	%o0, %l4, %o0
 	bl,pn	CCCR, 2f
 	 and	%l3, 0x38, %l3
-Lbcopy_unrolled8:
+Lmemcpy_unrolled8:
 
 	/*
 	 * This is about as close to optimal as you can get, since
@@ -9198,7 +9161,7 @@ Lbcopy_unrolled8:
 	bge,pt	CCCR, 1b
 	 inc	6*8, %l1
 
-Lbcopy_unrolled8_cleanup:	
+Lmemcpy_unrolled8_cleanup:	
 	!!
 	!! Finished 8 byte block, unload the regs.
 	!! 
@@ -9239,15 +9202,15 @@ Lbcopy_unrolled8_cleanup:
 	dec	5*8, %l2
 2:
 	inccc	12*8, %l2
-	bz,pn	%icc, Lbcopy_complete
+	bz,pn	%icc, Lmemcpy_complete
 	
 	!! Unrolled 8 times
-Lbcopy_aligned8:	
+Lmemcpy_aligned8:	
 !	ldx	[%l0], %o0				! Already done
 !	sllx	%o0, %l4, %o0				! Shift high word
 	
 	 deccc	8, %l2					! Pre-decrement
-	bl,pn	CCCR, Lbcopy_finish
+	bl,pn	CCCR, Lmemcpy_finish
 1:
 	ldx	[%l0+8], %o1				! Load word 0
 	inc	8, %l0
@@ -9263,7 +9226,7 @@ Lbcopy_aligned8:
 	 sllx	%o1, %l4, %o0	
 
 	btst	7, %l2					! Done?
-	bz,pt	CCCR, Lbcopy_complete
+	bz,pt	CCCR, Lmemcpy_complete
 
 	!!
 	!! Loadup the last dregs into %o0 and shift it into place
@@ -9272,14 +9235,14 @@ Lbcopy_aligned8:
 	dec	8, %g6					!  - 8
 	!! n-8 - (by - 8) -> n - by
 	subcc	%l2, %g6, %g0				! # bytes we need
-	ble,pt	%icc, Lbcopy_finish
+	ble,pt	%icc, Lmemcpy_finish
 	 nop
 	ldx	[%l0+8], %o1				! Need another word
 	srlx	%o1, %l3, %o1
-	ba,pt	%icc, Lbcopy_finish
+	ba,pt	%icc, Lmemcpy_finish
 	 or	%o0, %o1, %o0				! All loaded up.
 	
-Lbcopy_noshift8:
+Lmemcpy_noshift8:
 	deccc	6*8, %l2				! Have enough room?
 	bl,pn	CCCR, 2f
 	 nop
@@ -9318,10 +9281,10 @@ Lbcopy_noshift8:
 	 inc	8, %l1
 1:
 	btst	7, %l2					! Done?
-	bz,pt	CCCR, Lbcopy_complete
+	bz,pt	CCCR, Lmemcpy_complete
 	 clr	%l4
 	ldx	[%l0], %o0
-Lbcopy_finish:
+Lmemcpy_finish:
 	
 	brz,pn	%l2, 2f					! 100% complete?
 	 cmp	%l2, 8					! Exactly 8 bytes?
@@ -9352,7 +9315,7 @@ Lbcopy_finish:
 	stb	%g6, [%l1]				! Store last byte
 	inc	1, %l1					! Update address
 2:	
-Lbcopy_complete:
+Lmemcpy_complete:
 #if 0
 	!!
 	!! verify copy success.
@@ -9379,14 +9342,14 @@ Lbcopy_complete:
 	call	printf
 	 sub	%i2, %l4, %o5
 	set	1f, %o0
-	mov	%i0, %o1
-	mov	%i1, %o2
+	mov	%i0, %o2
+	mov	%i1, %o1
 	call	printf
 	 mov	%i2, %o3
 	ta	1
 	.data
-0:	.asciz	"bcopy failed: %x@%p != %x@%p byte %d\n"
-1:	.asciz	"bcopy(%p, %p, %lx)\n"
+0:	.asciz	"memcpy failed: %x@%p != %x@%p byte %d\n"
+1:	.asciz	"memcpy(%p, %p, %lx)\n"
 	.align 8
 	.text
 2:	
@@ -9404,15 +9367,15 @@ Lbcopy_complete:
  * figure out why sometime.
  */
 	
-Lbcopy_block:
+Lmemcpy_block:
 	sethi	%hi(block_disable), %o3
 	ldx	[ %o3 + %lo(block_disable) ], %o3
-	brnz,pn	%o3, Lbcopy_fancy
+	brnz,pn	%o3, Lmemcpy_fancy
 	!! Make sure our trap table is installed
 	set	_C_LABEL(trapbase), %o5
 	rdpr	%tba, %o3
 	sub	%o3, %o5, %o3
-	brnz,pn	%o3, Lbcopy_fancy	! No, then don't use block load/store
+	brnz,pn	%o3, Lmemcpy_fancy	! No, then don't use block load/store
 	 nop
 #ifdef _KERNEL
 /*
@@ -9558,7 +9521,7 @@ Lbcopy_block:
 	inc	2, %o1
 	inc	2, %o0
 4:
-	brz,pn	%o2, Lbcopy_blockfinish			! XXXX
+	brz,pn	%o2, Lmemcpy_blockfinish			! XXXX
 
 	 btst	4, %o1
 	bz	4f
@@ -9579,11 +9542,11 @@ Lbcopy_block:
 	inc	4, %o1
 	inc	4, %o0
 4:
-	brz,pn	%o2, Lbcopy_blockfinish			! XXXX
+	brz,pn	%o2, Lmemcpy_blockfinish			! XXXX
 	!!
 	!! We are now 32-bit aligned in the dest.
 	!!
-Lbcopy_block_common:	
+Lmemcpy_block_common:	
 
 	 mov	-0, %o4
 	alignaddr %o0, %o4, %o4				! base - shift
@@ -9599,15 +9562,15 @@ Lbcopy_block_common:
 	!!
 	!! Continue until our dest is block aligned
 	!! 
-Lbcopy_block_aligned8:	
+Lmemcpy_block_aligned8:	
 1:
-	brz	%o2, Lbcopy_blockfinish
+	brz	%o2, Lmemcpy_blockfinish
 	 btst	BLOCK_ALIGN, %o1			! Block aligned?
 	bz	1f
 	
 	 faligndata %f0, %f2, %f4			! Generate result
 	deccc	8, %o2
-	ble,pn	%icc, Lbcopy_blockfinish		! Should never happen
+	ble,pn	%icc, Lmemcpy_blockfinish		! Should never happen
 	 fmovd	%f4, %f48
 	
 	std	%f4, [%o1]				! Store result
@@ -9617,7 +9580,7 @@ Lbcopy_block_aligned8:
 	inc	8, %o0
 	ba,pt	%xcc, 1b				! Not yet.
 	 ldd	[%o0], %f2				! Load next part
-Lbcopy_block_aligned64:	
+Lmemcpy_block_aligned64:	
 1:
 
 /*
@@ -9699,7 +9662,7 @@ Lbcopy_block_aligned64:
 	rd	%pc, %o4
 1:	
 	and	%o0, 0x31, %o3
-	add	%o3, (Lbcopy_block_jmp - 1b), %o3
+	add	%o3, (Lmemcpy_block_jmp - 1b), %o3
 	jmpl	%o4 + %o3, %g0
 	 nop
 
@@ -9707,7 +9670,7 @@ Lbcopy_block_aligned64:
 	!! Jump table
 	!!
 	
-Lbcopy_block_jmp:
+Lmemcpy_block_jmp:
 	ba,a,pt	%xcc, L100
 	 nop
 	ba,a,pt	%xcc, L101
@@ -9762,7 +9725,7 @@ L100:
 	faligndata	%f6, %f8, %f40
 	faligndata	%f8, %f10, %f42
 	faligndata	%f10, %f12, %f44
-	brlez,pn	%o2, Lbcopy_blockdone
+	brlez,pn	%o2, Lmemcpy_blockdone
 	 faligndata	%f12, %f14, %f46
 	
 	bleu,a,pn	%icc, 2f
@@ -9781,7 +9744,7 @@ L100:
 	faligndata	%f22, %f24, %f40
 	faligndata	%f24, %f26, %f42
 	faligndata	%f26, %f28, %f44
-	brlez,pn	%o2, Lbcopy_blockdone
+	brlez,pn	%o2, Lmemcpy_blockdone
 	 faligndata	%f28, %f30, %f46
 	
 	bleu,a,pn	%icc, 2f
@@ -9800,7 +9763,7 @@ L100:
 	faligndata	%f54, %f56, %f40
 	faligndata	%f56, %f58, %f42
 	faligndata	%f58, %f60, %f44
-	brlez,pn	%o2, Lbcopy_blockdone
+	brlez,pn	%o2, Lmemcpy_blockdone
 	 faligndata	%f60, %f62, %f46
 	bleu,a,pn	%icc, 2f
 	 ldda	[%o0] ASI_BLK_P, %f16			! Increment is at top
@@ -9860,7 +9823,7 @@ L101:
 	 ldda	[%o0] ASI_BLK_P, %f48
 	membar	#Sync
 2:
-	brlez,pn	%o2, Lbcopy_blockdone
+	brlez,pn	%o2, Lmemcpy_blockdone
 	 faligndata	%f14, %f16, %f46
 
 	stda	%f32, [%o1] ASI_STORE
@@ -9880,7 +9843,7 @@ L101:
 	 ldda	[%o0] ASI_BLK_P, %f0
 	membar	#Sync
 2:	
-	brlez,pn	%o2, Lbcopy_blockdone
+	brlez,pn	%o2, Lmemcpy_blockdone
 	 faligndata	%f30, %f48, %f46
 
 	stda	%f32, [%o1] ASI_STORE
@@ -9900,7 +9863,7 @@ L101:
 	 ldda	[%o0] ASI_BLK_P, %f16
 	membar	#Sync
 2:	
-	brlez,pn	%o2, Lbcopy_blockdone
+	brlez,pn	%o2, Lmemcpy_blockdone
 	 faligndata	%f62, %f0, %f46
 
 	stda	%f32, [%o1] ASI_STORE
@@ -9957,7 +9920,7 @@ L102:
 2:
 	faligndata	%f14, %f16, %f44
 
-	brlez,pn	%o2, Lbcopy_blockdone
+	brlez,pn	%o2, Lmemcpy_blockdone
 	 faligndata	%f16, %f18, %f46
 	
 	stda	%f32, [%o1] ASI_STORE
@@ -9977,7 +9940,7 @@ L102:
 	membar	#Sync
 2:	
 	faligndata	%f30, %f48, %f44
-	brlez,pn	%o2, Lbcopy_blockdone
+	brlez,pn	%o2, Lmemcpy_blockdone
 	 faligndata	%f48, %f50, %f46
 
 	stda	%f32, [%o1] ASI_STORE
@@ -9997,7 +9960,7 @@ L102:
 	membar	#Sync
 2:	
 	faligndata	%f62, %f0, %f44
-	brlez,pn	%o2, Lbcopy_blockdone
+	brlez,pn	%o2, Lmemcpy_blockdone
 	 faligndata	%f0, %f2, %f46
 
 	stda	%f32, [%o1] ASI_STORE
@@ -10052,7 +10015,7 @@ L103:
 	faligndata	%f14, %f16, %f42
 	inc	BLOCK_SIZE, %o0
 	faligndata	%f16, %f18, %f44
-	brlez,pn	%o2, Lbcopy_blockdone
+	brlez,pn	%o2, Lmemcpy_blockdone
 	 faligndata	%f18, %f20, %f46
 	
 	stda	%f32, [%o1] ASI_STORE
@@ -10072,7 +10035,7 @@ L103:
 	faligndata	%f30, %f48, %f42
 	inc	BLOCK_SIZE, %o0
 	faligndata	%f48, %f50, %f44
-	brlez,pn	%o2, Lbcopy_blockdone
+	brlez,pn	%o2, Lmemcpy_blockdone
 	 faligndata	%f50, %f52, %f46
 
 	stda	%f32, [%o1] ASI_STORE
@@ -10092,7 +10055,7 @@ L103:
 	faligndata	%f62, %f0, %f42
 	inc	BLOCK_SIZE, %o0
 	faligndata	%f0, %f2, %f44
-	brlez,pn	%o2, Lbcopy_blockdone
+	brlez,pn	%o2, Lmemcpy_blockdone
 	 faligndata	%f2, %f4, %f46
 
 	stda	%f32, [%o1] ASI_STORE
@@ -10145,7 +10108,7 @@ L104:
 	faligndata	%f16, %f18, %f42
 	inc	BLOCK_SIZE, %o0
 	faligndata	%f18, %f20, %f44
-	brlez,pn	%o2, Lbcopy_blockdone
+	brlez,pn	%o2, Lmemcpy_blockdone
 	 faligndata	%f20, %f22, %f46
 	
 	stda	%f32, [%o1] ASI_STORE
@@ -10165,7 +10128,7 @@ L104:
 	faligndata	%f48, %f50, %f42
 	inc	BLOCK_SIZE, %o0
 	faligndata	%f50, %f52, %f44
-	brlez,pn	%o2, Lbcopy_blockdone
+	brlez,pn	%o2, Lmemcpy_blockdone
 	 faligndata	%f52, %f54, %f46
 
 	stda	%f32, [%o1] ASI_STORE
@@ -10185,7 +10148,7 @@ L104:
 	faligndata	%f0, %f2, %f42
 	inc	BLOCK_SIZE, %o0
 	faligndata	%f2, %f4, %f44
-	brlez,pn	%o2, Lbcopy_blockdone
+	brlez,pn	%o2, Lmemcpy_blockdone
 	 faligndata	%f4, %f6, %f46
 
 	stda	%f32, [%o1] ASI_STORE
@@ -10236,7 +10199,7 @@ L105:
 	inc	BLOCK_SIZE, %o0
 	faligndata	%f18, %f20, %f42
 	faligndata	%f20, %f22, %f44
-	brlez,pn	%o2, Lbcopy_blockdone
+	brlez,pn	%o2, Lmemcpy_blockdone
 	 faligndata	%f22, %f24, %f46
 	
 	stda	%f32, [%o1] ASI_STORE
@@ -10256,7 +10219,7 @@ L105:
 	inc	BLOCK_SIZE, %o0
 	faligndata	%f50, %f52, %f42
 	faligndata	%f52, %f54, %f44
-	brlez,pn	%o2, Lbcopy_blockdone
+	brlez,pn	%o2, Lmemcpy_blockdone
 	 faligndata	%f54, %f56, %f46
 
 	stda	%f32, [%o1] ASI_STORE
@@ -10276,7 +10239,7 @@ L105:
 	inc	BLOCK_SIZE, %o0
 	faligndata	%f2, %f4, %f42
 	faligndata	%f4, %f6, %f44
-	brlez,pn	%o2, Lbcopy_blockdone
+	brlez,pn	%o2, Lmemcpy_blockdone
 	 faligndata	%f6, %f8, %f46
 
 	stda	%f32, [%o1] ASI_STORE
@@ -10326,7 +10289,7 @@ L106:
 	faligndata	%f18, %f20, %f40
 	faligndata	%f20, %f22, %f42
 	faligndata	%f22, %f24, %f44
-	brlez,pn	%o2, Lbcopy_blockdone
+	brlez,pn	%o2, Lmemcpy_blockdone
 	 faligndata	%f24, %f26, %f46
 	
 	stda	%f32, [%o1] ASI_STORE
@@ -10346,7 +10309,7 @@ L106:
 	faligndata	%f52, %f54, %f42
 	inc	BLOCK_SIZE, %o0
 	faligndata	%f54, %f56, %f44
-	brlez,pn	%o2, Lbcopy_blockdone
+	brlez,pn	%o2, Lmemcpy_blockdone
 	 faligndata	%f56, %f58, %f46
 
 	stda	%f32, [%o1] ASI_STORE
@@ -10366,7 +10329,7 @@ L106:
 	faligndata	%f4, %f6, %f42
 	inc	BLOCK_SIZE, %o0
 	faligndata	%f6, %f8, %f44
-	brlez,pn	%o2, Lbcopy_blockdone
+	brlez,pn	%o2, Lmemcpy_blockdone
 	 faligndata	%f8, %f10, %f46
 
 	stda	%f32, [%o1] ASI_STORE
@@ -10414,7 +10377,7 @@ L107:
 	faligndata	%f20, %f22, %f40
 	faligndata	%f22, %f24, %f42
 	faligndata	%f24, %f26, %f44
-	brlez,pn	%o2, Lbcopy_blockdone
+	brlez,pn	%o2, Lmemcpy_blockdone
 	 faligndata	%f26, %f28, %f46
 	
 	stda	%f32, [%o1] ASI_STORE
@@ -10434,7 +10397,7 @@ L107:
 	inc	BLOCK_SIZE, %o0
 	faligndata	%f54, %f56, %f42
 	faligndata	%f56, %f58, %f44
-	brlez,pn	%o2, Lbcopy_blockdone
+	brlez,pn	%o2, Lmemcpy_blockdone
 	 faligndata	%f58, %f60, %f46
 	
 	stda	%f32, [%o1] ASI_STORE
@@ -10455,19 +10418,19 @@ L107:
 	faligndata	%f6, %f8, %f42
 	faligndata	%f8, %f10, %f44
 
-	brlez,pn	%o2, Lbcopy_blockdone
+	brlez,pn	%o2, Lmemcpy_blockdone
 	 faligndata	%f10, %f12, %f46
 
 	stda	%f32, [%o1] ASI_STORE
 	ba	3b
 	 inc	BLOCK_SIZE, %o1
 	
-Lbcopy_blockdone:
+Lmemcpy_blockdone:
 	inc	BLOCK_SIZE, %o2				! Fixup our overcommit
 	membar	#Sync					! Finish any pending loads
 #define	FINISH_REG(f)				\
 	deccc	8, %o2;				\
-	bl,a	Lbcopy_blockfinish;		\
+	bl,a	Lmemcpy_blockfinish;		\
 	 fmovd	f, %f48;			\
 	std	f, [%o1];			\
 	inc	8, %o1
@@ -10486,7 +10449,7 @@ Lbcopy_blockdone:
 	!! The low 3 bits have the sub-word bits needed to be
 	!! stored [because (x-8)&0x7 == x].
 	!!
-Lbcopy_blockfinish:
+Lmemcpy_blockfinish:
 	brz,pn	%o2, 2f					! 100% complete?
 	 fmovd	%f48, %f4
 	cmp	%o2, 8					! Exactly 8 bytes?
@@ -10552,15 +10515,15 @@ Lbcopy_blockfinish:
 	call	prom_printf
 	 sub	%i2, %l4, %o5
 	set	1f, %o0
-	mov	%i0, %o1
-	mov	%i1, %o2
+	mov	%i0, %o2
+	mov	%i1, %o1
 	call	prom_printf
 	 mov	%i2, %o3
 	ta	1
 	.data
 	_ALIGN
-0:	.asciz	"block bcopy failed: %x@%p != %x@%p byte %d\r\n"
-1:	.asciz	"bcopy(%p, %p, %lx)\r\n"
+0:	.asciz	"block memcpy failed: %x@%p != %x@%p byte %d\r\n"
+1:	.asciz	"memcpy(%p, %p, %lx)\r\n"
 	_ALIGN
 	.text
 2:	
@@ -10607,7 +10570,7 @@ Lbcopy_blockfinish:
  * XXXXXXXXXXXXXXXXXXXX
  */
 /*
- * bzero(addr, len)
+ * memset(addr, c, len)
  *
  * We want to use VIS instructions if we're clearing out more than
  * 256 bytes, but to do that we need to properly save and restore the
@@ -10620,28 +10583,20 @@ Lbcopy_blockfinish:
  * This should not really be an issue since the VA hole should
  * cause any such ranges to fail anyway.
  */
-ENTRY(bzero)
-	! %o0 = addr, %o1 = len
-	mov	%o1, %o2
-	clr	%o1			! Initialize our pattern
-/*
- * memset(addr, c, len)
- *
- */
 ENTRY(memset)
 	! %o0 = addr, %o1 = pattern, %o2 = len
 	mov	%o0, %o4		! Save original pointer
 
-Lbzero_internal:
+Lmemset_internal:
 	btst	7, %o0			! Word aligned?
 	bz,pn	%xcc, 0f
 	 nop
 	inc	%o0
 	deccc	%o2			! Store up to 7 bytes
-	bge,a,pt	CCCR, Lbzero_internal
+	bge,a,pt	CCCR, Lmemset_internal
 	 stb	%o1, [%o0 - 1]
 
-	retl				! Duplicate Lbzero_done
+	retl				! Duplicate Lmemset_done
 	 mov	%o4, %o0
 0:
 	/*
@@ -10659,11 +10614,11 @@ Lbzero_internal:
 #if 1
 	!! Now we are 64-bit aligned
 	cmp	%o2, 256		! Use block clear if len > 256
-	bge,pt	CCCR, Lbzero_block	! use block store insns
+	bge,pt	CCCR, Lmemset_block	! use block store insns
 #endif	
 	 deccc	8, %o2
-Lbzero_longs:
-	bl,pn	CCCR, Lbzero_cleanup	! Less than 8 bytes left
+Lmemset_longs:
+	bl,pn	CCCR, Lmemset_cleanup	! Less than 8 bytes left
 	 nop
 3:	
 	inc	8, %o0
@@ -10675,7 +10630,7 @@ Lbzero_longs:
 	 * Len is in [-8..-1] where -8 => done, -7 => 1 byte to zero,
 	 * -6 => two bytes, etc.  Mop up this remainder, if any.
 	 */
-Lbzero_cleanup:	
+Lmemset_cleanup:	
 	btst	4, %o2
 	bz,pt	CCCR, 5f		! if (len & 4) {
 	 nop
@@ -10689,22 +10644,22 @@ Lbzero_cleanup:
 	inc	2, %o0			!	addr += 2;
 7:	
 	btst	1, %o2
-	bnz,a	%icc, Lbzero_done	! if (len & 1)
+	bnz,a	%icc, Lmemset_done	! if (len & 1)
 	 stb	%o1, [%o0]		!	*addr = 0;
-Lbzero_done:
+Lmemset_done:
 	retl
 	 mov	%o4, %o0		! Restore ponter for memset (ugh)
 
 #if 1
-Lbzero_block:
+Lmemset_block:
 	sethi	%hi(block_disable), %o3
 	ldx	[ %o3 + %lo(block_disable) ], %o3
-	brnz,pn	%o3, Lbzero_longs
+	brnz,pn	%o3, Lmemset_longs
 	!! Make sure our trap table is installed
 	set	_C_LABEL(trapbase), %o5
 	rdpr	%tba, %o3
 	sub	%o3, %o5, %o3
-	brnz,pn	%o3, Lbzero_longs	! No, then don't use block load/store
+	brnz,pn	%o3, Lmemset_longs	! No, then don't use block load/store
 	 nop
 /*
  * Kernel:
@@ -10787,7 +10742,7 @@ Lbzero_block:
 
 2:
 	brz	%i1, 3f					! Skip the memory op
-	 fzero	%f0					! for bzero
+	 fzero	%f0					! if pattern is 0
 
 #ifdef _LP64
 	stx	%i1, [%i0]				! Flush this puppy to RAM
@@ -10825,7 +10780,7 @@ Lbzero_block:
 #if 1
 	RESTORE_FPU
 	addcc	%i2, 56, %i2				! Restore the count
-	ba,pt	%xcc, Lbzero_longs			! Finish up the remainder
+	ba,pt	%xcc, Lmemset_longs			! Finish up the remainder
 	 restore
 #else
 #ifdef DEBUG
@@ -10840,7 +10795,7 @@ Lbzero_block:
 	STPTR	%l6, [%l5 + L_FPSTATE]			! Restore old fpstate
 	wr	%g0, 0, %fprs				! Disable FPU
 	addcc	%i2, 56, %i2				! Restore the count
-	ba,pt	%xcc, Lbzero_longs			! Finish up the remainder
+	ba,pt	%xcc, Lmemset_longs			! Finish up the remainder
 	 restore
 #endif
 #endif
@@ -11088,165 +11043,6 @@ Lkcerr:
 	retl				! and return error indicator
 	 mov	EFAULT, %o0
 	NOTREACHED
-
-/*
- * ovbcopy(src, dst, len): like bcopy, but regions may overlap.
- */
-ENTRY(ovbcopy)
-	cmp	%o0, %o1	! src < dst?
-	bgeu	Lbcopy_start	! no, go copy forwards as via bcopy
-	 cmp	%o2, BCOPY_SMALL! (check length for doublecopy first)
-
-	/*
-	 * Since src comes before dst, and the regions might overlap,
-	 * we have to do the copy starting at the end and working backwards.
-	 */
-	add	%o2, %o0, %o0	! src += len
-	add	%o2, %o1, %o1	! dst += len
-	bge,a	Lback_fancy	! if len >= BCOPY_SMALL, go be fancy
-	 btst	3, %o0
-
-	/*
-	 * Not much to copy, just do it a byte at a time.
-	 */
-	deccc	%o2		! while (--len >= 0)
-	bl	1f
-	 EMPTY
-0:
-	dec	%o0		!	*--dst = *--src;
-	ldsb	[%o0], %o4
-	dec	%o1
-	deccc	%o2
-	bge	0b
-	 stb	%o4, [%o1]
-1:
-	retl
-	 nop
-
-	/*
-	 * Plenty to copy, try to be optimal.
-	 * We only bother with word/halfword/byte copies here.
-	 */
-Lback_fancy:
-!	btst	3, %o0		! done already
-	bnz	1f		! if ((src & 3) == 0 &&
-	 btst	3, %o1		!     (dst & 3) == 0)
-	bz,a	Lback_words	!	goto words;
-	 dec	4, %o2		! (done early for word copy)
-
-1:
-	/*
-	 * See if the low bits match.
-	 */
-	xor	%o0, %o1, %o3	! t = src ^ dst;
-	btst	1, %o3
-	bz,a	3f		! if (t & 1) == 0, can do better
-	 btst	1, %o0
-
-	/*
-	 * Nope; gotta do byte copy.
-	 */
-2:
-	dec	%o0		! do {
-	ldsb	[%o0], %o4	!	*--dst = *--src;
-	dec	%o1
-	deccc	%o2		! } while (--len != 0);
-	bnz	2b
-	 stb	%o4, [%o1]
-	retl
-	 nop
-
-3:
-	/*
-	 * Can do halfword or word copy, but might have to copy 1 byte first.
-	 */
-!	btst	1, %o0		! done earlier
-	bz,a	4f		! if (src & 1) {	/* copy 1 byte */
-	 btst	2, %o3		! (done early)
-	dec	%o0		!	*--dst = *--src;
-	ldsb	[%o0], %o4
-	dec	%o1
-	stb	%o4, [%o1]
-	dec	%o2		!	len--;
-	btst	2, %o3		! }
-
-4:
-	/*
-	 * See if we can do a word copy ((t&2) == 0).
-	 */
-!	btst	2, %o3		! done earlier
-	bz,a	6f		! if (t & 2) == 0, can do word copy
-	 btst	2, %o0		! (src&2, done early)
-
-	/*
-	 * Gotta do halfword copy.
-	 */
-	dec	2, %o2		! len -= 2;
-5:
-	dec	2, %o0		! do {
-	ldsh	[%o0], %o4	!	src -= 2;
-	dec	2, %o1		!	dst -= 2;
-	deccc	2, %o0		!	*(short *)dst = *(short *)src;
-	bge	5b		! } while ((len -= 2) >= 0);
-	 sth	%o4, [%o1]
-	b	Lback_mopb	! goto mop_up_byte;
-	 btst	1, %o2		! (len&1, done early)
-
-6:
-	/*
-	 * We can do word copies, but we might have to copy
-	 * one halfword first.
-	 */
-!	btst	2, %o0		! done already
-	bz	7f		! if (src & 2) {
-	 dec	4, %o2		! (len -= 4, done early)
-	dec	2, %o0		!	src -= 2, dst -= 2;
-	ldsh	[%o0], %o4	!	*(short *)dst = *(short *)src;
-	dec	2, %o1
-	sth	%o4, [%o1]
-	dec	2, %o2		!	len -= 2;
-				! }
-
-7:
-Lback_words:
-	/*
-	 * Do word copies (backwards), then mop up trailing halfword
-	 * and byte if any.
-	 */
-!	dec	4, %o2		! len -= 4, done already
-0:				! do {
-	dec	4, %o0		!	src -= 4;
-	dec	4, %o1		!	src -= 4;
-	ld	[%o0], %o4	!	*(int *)dst = *(int *)src;
-	deccc	4, %o2		! } while ((len -= 4) >= 0);
-	bge	0b
-	 st	%o4, [%o1]
-
-	/*
-	 * Check for trailing shortword.
-	 */
-	btst	2, %o2		! if (len & 2) {
-	bz,a	1f
-	 btst	1, %o2		! (len&1, done early)
-	dec	2, %o0		!	src -= 2, dst -= 2;
-	ldsh	[%o0], %o4	!	*(short *)dst = *(short *)src;
-	dec	2, %o1
-	sth	%o4, [%o1]	! }
-	btst	1, %o2
-
-	/*
-	 * Check for trailing byte.
-	 */
-1:
-Lback_mopb:
-!	btst	1, %o2		! (done already)
-	bnz,a	1f		! if (len & 1) {
-	 ldsb	[%o0 - 1], %o4	!	b = src[-1];
-	retl
-	 nop
-1:
-	retl			!	dst[-1] = b;
-	 stb	%o4, [%o1 - 1]	! }
 
 
 /*
