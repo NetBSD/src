@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.2 1996/11/06 23:09:13 cgd Exp $
+#	$NetBSD: Makefile,v 1.3 1997/01/16 01:20:24 cgd Exp $
 
 .PATH:	${.CURDIR}/..
 
@@ -9,5 +9,9 @@ MAN=	installboot.8
 MANSUBDIR=/alpha
 
 CFLAGS+= -g
+LDSTATIC=-static
+
+LDADD+=	-lutil
+DPADD+= ${LIBUTIL}
 
 .include <bsd.prog.mk>
