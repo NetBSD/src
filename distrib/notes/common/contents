@@ -1,4 +1,4 @@
-.\"	$NetBSD: contents,v 1.50 2002/05/06 11:33:20 takemura Exp $
+.\"	$NetBSD: contents,v 1.51 2002/05/08 16:32:54 fredette Exp $
 .\"
 .\" Copyright (c) 1999-2001 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -210,7 +210,7 @@ Server boot-file image for diskless machines.
 .		It Pa netboot/
 Two programs needed to boot \*M kernels over the network.
 .		It Pa tapeimage/
-Tape boot programs, and a RAMDISK kernel.
+Tape boot program, and two shell scripts used to prepare tapes.
 .\}
 .
 .if r_sun3 \{\
@@ -338,7 +338,7 @@ everything described below.
 .if r_pmax .Em 19.0 MB gzipped, 61.2 MB uncompressed
 .if r_sparc .Em 17.5 MB gzipped, 43.7 MB uncompressed
 .if r_sparc64 .Em 18.2 MB gzipped, 50.7 MB uncompressed
-.if r_sun2 .Em 50.5 MB gzipped, 112.8 MB uncompressed
+.if r_sun2 .Em 51.9 MB gzipped, 116.0 MB uncompressed
 .if r_sun3 .Em 14.5 MB gzipped, 38.1 MB uncompressed
 .if r_vax .Em 15.5 MB gzipped, 36.0 MB uncompressed
 .if r_x68k .Em 12.5 MB gzipped, 34.0 MB uncompressed
@@ -371,7 +371,7 @@ system call and library manual pages.
 .if r_pmax .Em 13.4 MB gzipped, 57.2 MB uncompressed
 .if r_sparc .Em 14.1 MB gzipped, 51.9 MB uncompressed
 .if r_sparc64 .Em 16.2 MB gzipped, 68 MB uncompressed
-.if r_sun2 .Em 12.6 MB gzipped, 44.4 MB uncompressed
+.if r_sun2 .Em 12.5 MB gzipped, 45.1 MB uncompressed
 .if r_sun3 .Em 9.5 MB gzipped, 32.5 MB uncompressed
 .if r_vax .Em 11.9 MB gzipped, 37.9 MB uncompressed
 .if r_x68k .Em 9.4 MB gzipped, 31.8 MB uncompressed
@@ -403,7 +403,7 @@ This set includes the games and their manual pages.
 .if r_sh3 .Em ? MB gzipped, ? MB uncompressed
 .if r_sparc .Em 3.0 MB gzipped, 7.2 MB uncompressed
 .if r_sparc64 .Em 2.9 MB gzipped, 7.2 MB uncompressed
-.if r_sun2 .Em 5.5 MB gzipped, 12.3 MB uncompressed
+.if r_sun2 .Em 5.4 MB gzipped, 12.2 MB uncompressed
 .if r_vax .Em 2.9 MB gzipped, 7.1 MB uncompressed
 .
 .It Sy kern-GENERIC
@@ -430,6 +430,7 @@ install this distribution set.
 .if r_pmax .Em 1.1 MB gzipped, 2.7 MB uncompressed
 .if r_sparc .Em 1.2 MB gzipped, 2.8 MB uncompressed
 .if r_sparc64 .Em 2.0 MB gzipped, 4.9 MB uncompressed
+.if r_sun2 .Em 0.4 MB gzipped, 0.9 MB uncompressed
 .if r_vax .Em 0.7 MB gzipped, 1.4 MB uncompressed
 .if r_x68k .Em 0.9 MB gzipped, 2.1 MB uncompressed
 .
@@ -1138,7 +1139,7 @@ versions of
 .if r_sun2 \{\
 .Pp
 There is a collection of Sun2 kernels in the
-.Pa \*M/binary/kernels
+.Pa \*M/binary/kernel
 subdirectory of the
 .Nx \*V
 distribution.  The one named
