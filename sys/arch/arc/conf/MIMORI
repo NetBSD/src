@@ -1,4 +1,4 @@
-#	$NetBSD: MIMORI,v 1.17 2002/04/25 15:06:23 atatat Exp $
+#	$NetBSD: MIMORI,v 1.18 2002/06/17 05:14:06 lukem Exp $
 #	NetBSD: GENERIC,v 1.31 2000/06/09 05:33:02 soda Exp
 #
 #	MIMORI -- My NEC RISCstation 2250 (ur)
@@ -256,6 +256,7 @@ pseudo-device	tb		1	# tablet line discipline
 # rnd works; RND_COM does not on port arc yet.
 pseudo-device	rnd			# /dev/random and in-kernel generator
 #options 	RND_COM			# use "com" randomness as well (BROKEN)
+pseudo-device	clockctl		# user control of clock subsystem
 
 # a pseudo device needed for Coda	# also needs CODA (above)
 #pseudo-device	vcoda		4	# coda minicache <-> venus comm.

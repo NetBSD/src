@@ -1,7 +1,7 @@
 #
 # deafult config file.
 #
-# 	$NetBSD: config.playstation2,v 1.6 2001/12/28 17:37:05 augustss Exp $
+# 	$NetBSD: config.playstation2,v 1.7 2002/06/17 05:14:21 lukem Exp $
 #
 
 maxusers	16
@@ -78,6 +78,7 @@ pseudo-device	ipfilter		# IP filter, NAT
 
 pseudo-device	vnd		2	# virtual disk ick
 pseudo-device	rnd			# /dev/random and in-kernel generator
+pseudo-device	clockctl		# user control of clock subsystem
 
 pseudo-device	gif		2	# IPv[46] over IPv[46] tunnel (RFC1933)
 

@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.208 2002/04/25 15:06:22 atatat Exp $
+# $NetBSD: GENERIC,v 1.209 2002/06/17 05:14:04 lukem Exp $
 #
 # GENERIC machine description file
 # 
@@ -25,7 +25,7 @@ include		"arch/alpha/conf/std.alpha"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.208 $"
+#ident 		"GENERIC-$Revision: 1.209 $"
 
 maxusers 32
 
@@ -526,3 +526,4 @@ pseudo-device	bridge			# simple inter-network bridging
 pseudo-device	sequencer	1	# MIDI sequencer
 pseudo-device	rnd			# /dev/random and in-kernel generator
 #options 	RND_COM			# use "com" randomness too
+pseudo-device	clockctl		# user control of clock subsystem

@@ -1,4 +1,4 @@
-#	$NetBSD: CQREEKSH3,v 1.21 2002/05/09 12:34:20 uch Exp $
+#	$NetBSD: CQREEKSH3,v 1.22 2002/06/17 05:14:09 lukem Exp $
 #
 #	GENERIC -- everything that's currently supported
 #
@@ -67,3 +67,4 @@ sci0 at shb?
 # Pseudo-Devices
 pseudo-device	md		1	# memory disk device (ramdisk)
 pseudo-device	pty			# pseudo-terminals
+pseudo-device	clockctl		# user control of clock subsystem

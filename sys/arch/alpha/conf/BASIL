@@ -1,4 +1,4 @@
-# $NetBSD: BASIL,v 1.11 2002/04/25 15:06:21 atatat Exp $
+# $NetBSD: BASIL,v 1.12 2002/06/17 05:14:04 lukem Exp $
 #
 # basil.shagadelic.org -- thorpej's API UP1000
 
@@ -6,7 +6,7 @@ include	"arch/alpha/conf/std.alpha"
 
 #options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"BASIL-$Revision: 1.11 $"
+#ident 		"BASIL-$Revision: 1.12 $"
 
 maxusers 64
 
@@ -445,3 +445,4 @@ pseudo-device	vnd		4
 #pseudo-device	sequencer	1	# MIDI sequencer
 pseudo-device	rnd			# /dev/random and in-kernel generator
 #options 	RND_COM			# use "com" randomness too
+pseudo-device	clockctl		# user control of clock subsystem

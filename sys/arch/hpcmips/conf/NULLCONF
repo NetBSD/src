@@ -1,5 +1,5 @@
 #
-# 	$NetBSD: NULLCONF,v 1.14 2002/04/25 15:06:27 atatat Exp $
+# 	$NetBSD: NULLCONF,v 1.15 2002/06/17 05:14:11 lukem Exp $
 #
 include		"arch/hpcmips/conf/std.hpcmips"
 
@@ -39,3 +39,4 @@ wskbd*		at	hpckbd? mux 1
 wsmouse*	at	vrpiu? mux 0
 
 pseudo-device	biconsdev	1	# build-in console device
+pseudo-device	clockctl		# user control of clock subsystem

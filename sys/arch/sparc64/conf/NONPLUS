@@ -1,4 +1,4 @@
-# 	$NetBSD: NONPLUS,v 1.35 2002/04/25 15:06:37 atatat Exp $
+# 	$NetBSD: NONPLUS,v 1.36 2002/06/17 05:14:26 lukem Exp $
 
 include "arch/sparc64/conf/std.sparc64"
 
@@ -425,3 +425,5 @@ pseudo-device	pty			# pseudo-ttys (for network, etc.)
 ## THIS DEVICE IS EXPERIMENTAL; use at your own risk.
 
 pseudo-device	rnd
+
+pseudo-device	clockctl		# user control of clock subsystem

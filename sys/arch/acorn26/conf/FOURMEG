@@ -1,4 +1,4 @@
-# $NetBSD: FOURMEG,v 1.6 2002/04/25 15:06:20 atatat Exp $
+# $NetBSD: FOURMEG,v 1.7 2002/06/17 05:14:02 lukem Exp $
 
 # FOURMEG arm26 configuration -- something small
 
@@ -200,6 +200,7 @@ pseudo-device	pty
 #pseudo-device	faith		1	# IPv[46] tcp relay translation i/f
 #pseudo-device	sequencer	1	# MIDI sequencer
 pseudo-device	wsmux			# keyboard/mouse multiplexor
+pseudo-device	clockctl		# user control of clock subsystem
 
 # rnd is EXPERIMENTAL
 #pseudo-device	rnd			# /dev/random and in-kernel generator

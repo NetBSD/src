@@ -1,5 +1,5 @@
 
-#	$NetBSD: KLONDIKE,v 1.23 2002/04/25 15:06:35 atatat Exp $
+#	$NetBSD: KLONDIKE,v 1.24 2002/06/17 05:14:21 lukem Exp $
 #
 # KLONDIKE: Matthias Pfaller's pc532
 #
@@ -92,3 +92,4 @@ pseudo-device	bpfilter 8		# packet filter
 pseudo-device	sl 1			# compressed SLIP
 pseudo-device	ppp 1			# Point-to-Point Protocol
 pseudo-device	tun 1			# ip tunneling
+pseudo-device	clockctl		# user control of clock subsystem

@@ -1,4 +1,4 @@
-#	$NetBSD: NC_WSCONS,v 1.15 2002/06/09 11:53:23 bjh21 Exp $
+#	$NetBSD: NC_WSCONS,v 1.16 2002/06/17 05:14:03 lukem Exp $
 #
 #	NC - with wscons
 #
@@ -297,6 +297,7 @@ pseudo-device	vnd	4		# disk-like interface to files
 #pseudo-device	ccd	2		# concatenated disk devices
 pseudo-device	md	1		# Ramdisk driver
 pseudo-device	rnd			# /dev/random and /dev/urandom
+pseudo-device	clockctl		# user control of clock subsystem
 
 makeoptions	MONITOR="Taxan875+LR"
 #makeoptions	MONITOR="AKF60"

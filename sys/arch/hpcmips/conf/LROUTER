@@ -1,5 +1,5 @@
 #
-# 	$NetBSD: LROUTER,v 1.6 2002/04/25 15:06:27 atatat Exp $
+# 	$NetBSD: LROUTER,v 1.7 2002/06/17 05:14:11 lukem Exp $
 # 	From: NetBSD: MPC303,v 1.4 2001/11/21 11:28:09 uch Exp
 #
 # Kernel configuration file for LASER5 L-Router
@@ -166,6 +166,7 @@ pseudo-device	ipfilter		# IP filter, NAT
 pseudo-device	vnd		4	# virtual disk ick
 #pseudo-device	ccd		4	# concatenated disks
 pseudo-device	rnd			# /dev/random and in-kernel generator
+pseudo-device	clockctl		# user control of clock subsystem
 
 #pseudo-device	biconsdev	1	# build-in console device
 #pseudo-device	wsmux			# mouse & keyboard multiplexor

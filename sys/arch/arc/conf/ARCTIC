@@ -1,4 +1,4 @@
-#	$NetBSD: ARCTIC,v 1.19 2002/04/25 15:06:23 atatat Exp $
+#	$NetBSD: ARCTIC,v 1.20 2002/06/17 05:14:05 lukem Exp $
 #	$OpenBSD: ARCTIC,v 1.12 1999/08/29 12:14:03 niklas Exp $
 #
 #	configuration file for DeskStation
@@ -258,6 +258,7 @@ pseudo-device	pty			# pseudo-terminals
 # rnd works; RND_COM does not on port arc yet.
 pseudo-device	rnd			# /dev/random and in-kernel generator
 #options 	RND_COM			# use "com" randomness as well (BROKEN)
+pseudo-device	clockctl		# user control of clock subsystem
 
 # a pseudo device needed for Coda	# also needs CODA (above)
 #pseudo-device	vcoda		4	# coda minicache <-> venus comm.

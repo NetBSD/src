@@ -1,4 +1,4 @@
-# $NetBSD: NET4501,v 1.7 2002/06/06 21:16:50 gmcgarry Exp $
+# $NetBSD: NET4501,v 1.8 2002/06/17 05:14:14 lukem Exp $
 #
 # NET4501 -- kernel configuration for a Soekris Engineering net4501
 # single-board computer.
@@ -10,7 +10,7 @@ include 	"arch/i386/conf/std.i386"
 
 #options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"NET4501-$Revision: 1.7 $"
+#ident 		"NET4501-$Revision: 1.8 $"
 
 maxusers	32		# estimated number of users
 
@@ -258,3 +258,4 @@ pseudo-device	pty			# pseudo-terminals
 # rnd works; RND_COM does not on port i386 yet.
 pseudo-device	rnd			# /dev/random and in-kernel generator
 #options 	RND_COM			# use "com" randomness as well (BROKEN)
+pseudo-device	clockctl		# user control of clock subsystem

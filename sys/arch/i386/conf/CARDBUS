@@ -1,4 +1,4 @@
-#	$NetBSD: CARDBUS,v 1.59 2002/06/06 21:16:47 gmcgarry Exp $
+#	$NetBSD: CARDBUS,v 1.60 2002/06/17 05:14:12 lukem Exp $
 #
 #	CARDBUS: GENERIC + CardBus support.  Additionally, some
 #	things typically not found on laptops have been commented out.
@@ -10,7 +10,7 @@ include "arch/i386/conf/std.i386"
 
 #options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident		"CARDBUS-$Revision: 1.59 $"
+#ident		"CARDBUS-$Revision: 1.60 $"
 
 maxusers	32		# estimated number of users
 
@@ -954,6 +954,7 @@ pseudo-device	sequencer	1	# MIDI sequencer
 # rnd works; RND_COM does not on port i386 yet.
 pseudo-device	rnd			# /dev/random and in-kernel generator
 #options 	RND_COM			# use "com" randomness as well (BROKEN)
+pseudo-device	clockctl		# user control of clock subsystem
 
 # a pseudo device needed for Coda	# also needs CODA (above)
 pseudo-device	vcoda		4	# coda minicache <-> venus comm.

@@ -1,4 +1,4 @@
-#	$NetBSD: LOWMEM_WSCONS,v 1.12 2002/04/25 15:06:20 atatat Exp $
+#	$NetBSD: LOWMEM_WSCONS,v 1.13 2002/06/17 05:14:03 lukem Exp $
 #
 #	LOWMEM_WSCONS -- RiscPC config with wscons for SMALL machines
 #
@@ -300,6 +300,7 @@ pseudo-device	vnd	4		# disk-like interface to files
 #pseudo-device	ccd	2		# concatenated disk devices
 pseudo-device	md	1		# Ramdisk driver
 pseudo-device	rnd			# /dev/random and /dev/urandom
+pseudo-device	clockctl		# user control of clock subsystem
 
 makeoptions	MONITOR="Taxan875+LR"
 #makeoptions	MONITOR="AKF60"

@@ -1,4 +1,4 @@
-# $NetBSD: FRAU-FARBISSINA,v 1.16 2002/04/25 15:06:21 atatat Exp $
+# $NetBSD: FRAU-FARBISSINA,v 1.17 2002/06/17 05:14:04 lukem Exp $
 #
 # frau-farbissina.shagadelic.org -- thorpej's AlphaServer 1200 MP hacking
 # box
@@ -7,7 +7,7 @@ include	"arch/alpha/conf/std.alpha"
 
 #options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"FRAU-FARBISSINA-$Revision: 1.16 $"
+#ident 		"FRAU-FARBISSINA-$Revision: 1.17 $"
 
 maxusers 64
 
@@ -412,6 +412,7 @@ pseudo-device	gif		4	# IPv[46] over IPv[46] tunnel (RFC1933)
 pseudo-device	faith		1	# IPv[46] tcp relay translation i/f
 #pseudo-device	stf		1	# 6to4 IPv6 over IPv4 encapsulation
 #pseudo-device	sequencer	1	# MIDI sequencer
+pseudo-device	clockctl		# user control of clock subsystem
 
 # rnd is EXPERIMENTAL
 pseudo-device	rnd			# /dev/random and in-kernel generator

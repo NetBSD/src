@@ -1,4 +1,4 @@
-#	$NetBSD: SMALLRAM,v 1.1 2002/05/19 21:58:27 scottr Exp $
+#	$NetBSD: SMALLRAM,v 1.2 2002/06/17 05:14:15 lukem Exp $
 #
 # This is an example of how to configure a small, efficient kernel for a
 # system with limited RAM. Even so it's capable of doing quite a bit. The
@@ -13,7 +13,7 @@ include	"arch/mac68k/conf/std.mac68k"
 
 #options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"SMALLRAM-$Revision: 1.1 $"
+#ident 		"SMALLRAM-$Revision: 1.2 $"
 
 maxusers	8
 
@@ -294,6 +294,7 @@ pseudo-device	grf		2	# grf emulation for wscons
 pseudo-device	ite		1	# ite emulation for wscons
 pseudo-device	pty			# pseudo-terminals
 #pseudo-device	tb		1	# tablet line discipline
+pseudo-device	clockctl		# user control of clock subsystem
 
 # rnd is EXPERIMENTAL at this point.
 #pseudo-device	rnd			# /dev/random and in-kernel generator

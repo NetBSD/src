@@ -1,4 +1,4 @@
-#	$NetBSD: DUMMY,v 1.19 2002/04/25 15:06:35 atatat Exp $
+#	$NetBSD: DUMMY,v 1.20 2002/06/17 05:14:21 lukem Exp $
 #
 # DUMMY: Matthias Pfaller's second pc532
 #
@@ -81,3 +81,4 @@ pseudo-device	bpfilter 8		# packet filter
 #pseudo-device	sl 1			# compressed SLIP
 #pseudo-device	ppp 1			# Point-to-Point Protocol
 #pseudo-device	tun 1			# ip tunneling
+pseudo-device	clockctl		# user control of clock subsystem

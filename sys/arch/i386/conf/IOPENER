@@ -1,4 +1,4 @@
-#	$NetBSD: IOPENER,v 1.28 2002/04/25 15:06:29 atatat Exp $
+#	$NetBSD: IOPENER,v 1.29 2002/06/17 05:14:13 lukem Exp $
 #
 #	IOPENER -- GENERIC-like kernel for the Netpliance i-opener
 #	from: GENERIC,v 1.358 2000/07/05 04:07:25 sommerfeld Exp
@@ -8,7 +8,7 @@ include "arch/i386/conf/std.i386"
 
 #options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"IOPENER-$Revision: 1.28 $"
+#ident 		"IOPENER-$Revision: 1.29 $"
 
 maxusers	32		# estimated number of users
 
@@ -398,6 +398,7 @@ pseudo-device	sequencer	1	# MIDI sequencer
 # rnd works; RND_COM does not on port i386 yet.
 pseudo-device	rnd			# /dev/random and in-kernel generator
 #options 	RND_COM			# use "com" randomness as well (BROKEN)
+pseudo-device	clockctl		# user control of clock subsystem
 
 # a pseudo device needed for Coda	# also needs CODA (above)
 #pseudo-device	vcoda		4	# coda minicache <-> venus comm.

@@ -1,4 +1,4 @@
-# $NetBSD: VME,v 1.5 2002/04/25 15:06:38 atatat Exp $
+# $NetBSD: VME,v 1.6 2002/06/17 05:14:26 lukem Exp $
 
 # VME Sun2 (2/50, 2/130, 2/160...)
 # Supports root on: ie0, sd*, ...
@@ -7,7 +7,7 @@ include "arch/sun2/conf/std.sun2"
 
 #options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"VME-$Revision: 1.5 $"
+#ident 		"VME-$Revision: 1.6 $"
 
 # Machines to be supported by this kernel
 #options 	FPU_EMULATE
@@ -232,3 +232,4 @@ pseudo-device	pty		32	# pseudo-terminals
 #pseudo-device	ccd		4	# concatenated disks
 #pseudo-device	raid		4	# RAIDframe disk driver
 #options 	RAID_AUTOCONFIG		# auto-configuration of RAID components
+pseudo-device	clockctl		# user control of clock subsystem

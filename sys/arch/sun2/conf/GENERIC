@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.16 2002/04/25 15:06:38 atatat Exp $
+# $NetBSD: GENERIC,v 1.17 2002/06/17 05:14:26 lukem Exp $
 #
 # GENERIC machine description file
 # 
@@ -25,7 +25,7 @@ include 	"arch/sun2/conf/std.sun2"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.16 $"
+#ident 		"GENERIC-$Revision: 1.17 $"
 
 # Machines to be supported by this kernel
 #options 	FPU_EMULATE
@@ -259,3 +259,4 @@ pseudo-device	pty		32	# pseudo-terminals
 # options	RF_INCLUDE_INTERDECLUSTER=1
 # options 	RF_INCLUDE_PARITY_DECLUSTERING=1
 # options	RF_INCLUDE_PARITY_DECLUSTERING_DS=1
+pseudo-device	clockctl		# user control of clock subsystem

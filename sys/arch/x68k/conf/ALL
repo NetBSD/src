@@ -1,4 +1,4 @@
-#	$NetBSD: ALL,v 1.51 2002/04/25 15:06:40 atatat Exp $
+#	$NetBSD: ALL,v 1.52 2002/06/17 05:14:28 lukem Exp $
 
 #
 #	ALL -- everything that currently exist including experimental
@@ -8,7 +8,7 @@ include "arch/x68k/conf/std.x68k"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"ALL-$Revision: 1.51 $"
+#ident 		"ALL-$Revision: 1.52 $"
 
 maxusers	32
 
@@ -331,3 +331,5 @@ pseudo-device	pty			# pseudo-terminals
 ## and generate randomness for some kernel formulae.
 
 pseudo-device	rnd
+
+pseudo-device	clockctl		# user control of clock subsystem
