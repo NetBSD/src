@@ -1,4 +1,4 @@
-#	$NetBSD: files.arm32,v 1.86 2001/01/12 21:31:53 bjh21 Exp $
+#	$NetBSD: files.arm32,v 1.87 2001/01/17 00:07:21 fvdl Exp $
 #
 # First try for arm-specific configuration info
 #
@@ -347,6 +347,7 @@ file	arch/arm32/arm32/fault.c
 file	arch/arm32/arm32/undefined.c
 file	arch/arm32/arm32/mem.c
 file	arch/arm32/arm32/process_machdep.c
+file	arch/arm32/arm32/procfs_machdep.c	procfs
 file	arch/arm32/arm32/machdep.c
 file	arch/arm32/arm32/sys_machdep.c
 file	arch/arm32/arm32/vm_machdep.c
