@@ -1,4 +1,4 @@
-/*	$NetBSD: supcmeat.c,v 1.13 1997/07/15 18:15:56 christos Exp $	*/
+/*	$NetBSD: supcmeat.c,v 1.14 1997/07/30 15:35:13 christos Exp $	*/
 
 /*
  * Copyright (c) 1992 Carnegie Mellon University
@@ -645,7 +645,8 @@ void *v;
 			t->Tflags |= FUPDATE;
 			return (SCMOK);
 		}
-		(void) rmdir (name);
+		if (rmdir (name) < 0)
+			runp ("rm","rm","-rf",name,0);
 		if (lstat(name,&sbuf) == 0) {
 			notify ("SUP: Unable to delete directory %s\n",name);
 			t->Tflags |= FUPDATE;
