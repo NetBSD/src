@@ -1,4 +1,4 @@
-#	$NetBSD: NOSY,v 1.14 1997/01/31 18:00:36 cgd Exp $
+#	$NetBSD: NOSY,v 1.14.4.1 1997/03/11 20:50:14 is Exp $
 #
 # Kernel for nostromo.nas.nasa.gov.
 #
@@ -70,13 +70,13 @@ le*	at	ioasic? offset ?
 scc0	at	ioasic? offset ?
 scc1	at	ioasic? offset ?
 tcds0	at	tc? slot ? offset ?
-esp0	at	tcds? slot ?
-esp1	at	tcds? slot ?
+asc0	at	tcds? slot ?
+asc1	at	tcds? slot ?
 sfb*	at	tc? slot ? offset ?
 #fta*	at	tc? slot ? offset ?		# DEC DEFTA FDDI cards
 
 # SCSI bus support
-scsibus* at	esp?
+scsibus* at	asc?
 
 # SCSI devices
 sd*	at	scsibus? target ? lun ?

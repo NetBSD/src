@@ -1,6 +1,9 @@
-#	$NetBSD: Makefile.inc,v 1.5 1997/01/24 01:46:46 cgd Exp $
+#	$NetBSD: Makefile.inc,v 1.5.6.1 1997/03/11 20:50:20 is Exp $
 
-.include <bsd.own.mk>			# for ELF_TOOLCHAIN definition
+.ifndef __INCLUDED_STAND_MAKEFILE_INC
+__INCLUDED_STAND_MAKEFILE_INC=
+
+.include <bsd.own.mk>			# for ECOFF_TOOLCHAIN definition
 
 BINDIR=			/usr/mdec
 
@@ -14,8 +17,11 @@ HEAP_LIMIT=		20040000	# "Region 1 start" + 256k
 
 CPPFLAGS+=		-DPRIMARY_LOAD_ADDRESS="0x${PRIMARY_LOAD_ADDRESS}"
 CPPFLAGS+=		-DSECONDARY_LOAD_ADDRESS="0x${SECONDARY_LOAD_ADDRESS}"
-CPPFLAGS+=		-DHEAP_LIMIT="0x${HEAP_LIMIT}"
 
-.if !defined(ELF_TOOLCHAIN)
+SAMISCCPPFLAGS+=	-DHEAP_LIMIT="0x${HEAP_LIMIT}"
+
+.if defined(ECOFF_TOOLCHAIN)
 CPPFLAGS+=	-DECOFF_COMPAT
+.endif
+
 .endif
