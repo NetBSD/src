@@ -1,10 +1,11 @@
-#	$NetBSD: Makefile.inc,v 1.12.6.2 2001/11/10 21:28:04 scw Exp $
+#	$NetBSD: Makefile.inc,v 1.12.6.3 2001/11/21 20:14:26 scw Exp $
 
 SRCS+=	alloca.S fabs.S frexp.c infinity.c isinf.c isnan.c nanf.c
 SRCS+=	ashlsi3.S ashrsi3.S \
 	lshlsi3.S lshrsi3.S \
 	negdf2.S negsf2.S
 SRCS+=	bswap16.S bswap32.S bswap64.S
+SRCS+=	_lwp.c
 
 # 68000-based machines build with a libgcc that includes
 # much of the (soft)float and integer support that would 
