@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_vfsops.c,v 1.28 1994/08/11 22:25:38 gwr Exp $	*/
+/*	$NetBSD: nfs_vfsops.c,v 1.29 1994/08/12 03:49:24 cgd Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -216,7 +216,7 @@ nfs_mountroot()
 	if (error) panic("nfs_mountroot: getattr for root");
 	n = attr.va_mtime.ts_sec;
 #ifdef	DEBUG
-	printf(" root time: 0x%x\n", n);
+	printf("root time: 0x%x\n", n);
 #endif
 	inittodr(n);
 
@@ -265,7 +265,7 @@ nfs_mountroot()
 		panic("nfs_mountroot: getattr for swap");
 	n = (long) (attr.va_size >> DEV_BSHIFT);
 #ifdef	DEBUG
-	printf(" swap size: 0x%x (blocks)\n", n);
+	printf("swap size: 0x%x (blocks)\n", n);
 #endif
 	swdevt[0].sw_nblks = n;
 
