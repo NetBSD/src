@@ -1,4 +1,4 @@
-/*	$NetBSD: cmds.c,v 1.109 2005/01/03 09:50:09 lukem Exp $	*/
+/*	$NetBSD: cmds.c,v 1.110 2005/02/09 23:17:27 christos Exp $	*/
 
 /*-
  * Copyright (c) 1996-2005 The NetBSD Foundation, Inc.
@@ -103,7 +103,7 @@
 #if 0
 static char sccsid[] = "@(#)cmds.c	8.6 (Berkeley) 10/9/94";
 #else
-__RCSID("$NetBSD: cmds.c,v 1.109 2005/01/03 09:50:09 lukem Exp $");
+__RCSID("$NetBSD: cmds.c,v 1.110 2005/02/09 23:17:27 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -149,6 +149,11 @@ sigjmp_buf	 jabort;
 const char	*mname;
 
 static int	confirm(const char *, const char *);
+
+static const char *doprocess(char *, size_t, const char *, int, int, int);
+static const char *domap(char *, size_t, const char *);
+static const char *docase(char *, size_t, const char *);
+static const char *dotrans(char *, size_t, const char *);
 
 static int
 confirm(const char *cmd, const char *file)
@@ -391,9 +396,11 @@ setstruct(int argc, char *argv[])
 void
 put(int argc, char *argv[])
 {
+	char buf[MAXPATHLEN];
 	char *cmd;
 	int loc = 0;
-	char *locfile, *remfile;
+	char *locfile;
+	const char *remfile;
 
 	if (argc == 2) {
 		argc++;
@@ -417,13 +424,24 @@ put(int argc, char *argv[])
 	if (loc)	/* If argv[2] is a copy of the old argv[1], update it */
 		remfile = locfile;
 	cmd = (argv[0][0] == 'a') ? "APPE" : ((sunique) ? "STOU" : "STOR");
-	if (loc && ntflag)
-		remfile = dotrans(remfile);
-	if (loc && mapflag)
-		remfile = domap(remfile);
+	remfile = doprocess(buf, sizeof(buf), remfile,
+		0, loc && ntflag, loc && mapflag);
 	sendrequest(cmd, locfile, remfile,
 	    locfile != argv[1] || remfile != argv[2]);
 	free(locfile);
+}
+
+static const char *
+doprocess(char *dst, size_t dlen, const char *src,
+    int casef, int transf, int mapf)
+{
+	if (casef)
+		src = docase(dst, dlen, src);
+	if (transf)
+		src = dotrans(dst, dlen, src);
+	if (mapf)
+		src = domap(dst, dlen, src);
+	return src;
 }
 
 /*
@@ -435,7 +453,7 @@ mput(int argc, char *argv[])
 	int i;
 	sigfunc oldintr;
 	int ointer;
-	char *tp;
+	const char *tp;
 
 	if (argc == 0 || (argc == 1 && !another(&argc, &argv, "local-files"))) {
 		fprintf(ttyout, "usage: %s local-files\n", argv[0]);
@@ -456,13 +474,9 @@ mput(int argc, char *argv[])
 				continue;
 			}
 			if (mflag && confirm(argv[0], cp)) {
-				tp = cp;
-				if (mcase)
-					tp = docase(tp);
-				if (ntflag)
-					tp = dotrans(tp);
-				if (mapflag)
-					tp = domap(tp);
+				char buf[MAXPATHLEN];
+				tp = doprocess(buf, sizeof(buf), cp,
+				    mcase, ntflag, mapflag);
 				sendrequest((sunique) ? "STOU" : "STOR",
 				    cp, tp, cp != tp || !interactive);
 				if (!mflag && fromatty) {
@@ -484,8 +498,9 @@ mput(int argc, char *argv[])
 
 		if (!doglob) {
 			if (mflag && confirm(argv[0], argv[i])) {
-				tp = (ntflag) ? dotrans(argv[i]) : argv[i];
-				tp = (mapflag) ? domap(tp) : tp;
+				char buf[MAXPATHLEN];
+				tp = doprocess(buf, sizeof(buf), argv[i],
+					0, ntflag, mapflag);
 				sendrequest((sunique) ? "STOU" : "STOR",
 				    argv[i], tp, tp != argv[i] || !interactive);
 				if (!mflag && fromatty) {
@@ -510,8 +525,10 @@ mput(int argc, char *argv[])
 		for (cpp = gl.gl_pathv; cpp && *cpp != NULL && connected;
 		    cpp++) {
 			if (mflag && confirm(argv[0], *cpp)) {
-				tp = (ntflag) ? dotrans(*cpp) : *cpp;
-				tp = (mapflag) ? domap(tp) : tp;
+				char buf[MAXPATHLEN];
+				tp = *cpp;
+				tp = doprocess(buf, sizeof(buf), *cpp,
+				    0, ntflag, mapflag);
 				sendrequest((sunique) ? "STOU" : "STOR",
 				    *cpp, tp, *cpp != tp || !interactive);
 				if (!mflag && fromatty) {
@@ -554,7 +571,9 @@ int
 getit(int argc, char *argv[], int restartit, const char *mode)
 {
 	int	 loc, rval;
-	char	*remfile, *locfile, *olocfile;
+	char	*remfile, *olocfile;
+	const char *locfile;
+	char 	buf[MAXPATHLEN];
 
 	loc = rval = 0;
 	if (argc == 2) {
@@ -576,13 +595,8 @@ getit(int argc, char *argv[], int restartit, const char *mode)
 		code = -1;
 		return (0);
 	}
-	locfile = olocfile;
-	if (loc && mcase)
-		locfile = docase(locfile);
-	if (loc && ntflag)
-		locfile = dotrans(locfile);
-	if (loc && mapflag)
-		locfile = domap(locfile);
+	locfile = doprocess(buf, sizeof(buf), olocfile,
+		loc && mcase, loc && ntflag, loc && mapflag);
 	if (restartit) {
 		struct stat stbuf;
 		int ret;
@@ -662,7 +676,8 @@ mget(int argc, char *argv[])
 {
 	sigfunc oldintr;
 	int ointer;
-	char *cp, *tp;
+	char *cp;
+	const char *tp;
 	int restartit;
 
 	if (argc == 0 ||
@@ -687,6 +702,7 @@ mget(int argc, char *argv[])
 	if (sigsetjmp(jabort, 1))
 		mabort();
 	while ((cp = remglob(argv, proxy, NULL)) != NULL) {
+		char buf[MAXPATHLEN];
 		if (*cp == '\0' || !connected) {
 			mflag = 0;
 			continue;
@@ -700,13 +716,7 @@ mget(int argc, char *argv[])
 		}
 		if (!confirm(argv[0], cp))
 			continue;
-		tp = cp;
-		if (mcase)
-			tp = docase(tp);
-		if (ntflag)
-			tp = dotrans(tp);
-		if (mapflag)
-			tp = domap(tp);
+		tp = doprocess(buf, sizeof(buf), cp, mcase, ntflag, mapflag);
 		if (restartit) {
 			struct stat stbuf;
 
@@ -1881,26 +1891,25 @@ setcase(int argc, char *argv[])
  * convert the given name to lower case if it's all upper case, into
  * a static buffer which is returned to the caller
  */
-char *
-docase(char *name)
+static const char *
+docase(char *dst, size_t dlen, const char *src)
 {
-	static char new[MAXPATHLEN];
-	int i, dochange;
+	size_t i;
+	int dochange = 1;
 
-	dochange = 1;
-	for (i = 0; name[i] != '\0' && i < sizeof(new) - 1; i++) {
-		new[i] = name[i];
-		if (islower((unsigned char)new[i]))
+	for (i = 0; src[i] != '\0' && i < dlen - 1; i++) {
+		dst[i] = src[i];
+		if (islower((unsigned char)dst[i]))
 			dochange = 0;
 	}
-	new[i] = '\0';
+	dst[i] = '\0';
 
 	if (dochange) {
-		for (i = 0; new[i] != '\0'; i++)
-			if (isupper((unsigned char)new[i]))
-				new[i] = tolower((unsigned char)new[i]);
+		for (i = 0; dst[i] != '\0'; i++)
+			if (isupper((unsigned char)dst[i]))
+				dst[i] = tolower((unsigned char)dst[i]);
 	}
-	return (new);
+	return dst;
 }
 
 void
@@ -1935,22 +1944,24 @@ setntrans(int argc, char *argv[])
 	(void)strlcpy(ntout, argv[2], sizeof(ntout));
 }
 
-char *
-dotrans(char *name)
+static const char *
+dotrans(char *dst, size_t dlen, const char *src)
 {
-	static char new[MAXPATHLEN];
-	char *cp1, *cp2 = new;
-	int i, ostop, found;
+	const char *cp1;
+	char *cp2 = dst;
+	size_t i, ostop;
 
 	for (ostop = 0; *(ntout + ostop) && ostop < 16; ostop++)
 		continue;
-	for (cp1 = name; *cp1; cp1++) {
-		found = 0;
+	for (cp1 = src; *cp1; cp1++) {
+		int found = 0;
 		for (i = 0; *(ntin + i) && i < 16; i++) {
 			if (*cp1 == *(ntin + i)) {
 				found++;
 				if (i < ostop) {
 					*cp2++ = *(ntout + i);
+					if (cp2 - dst >= dlen - 1)
+						goto out;
 				}
 				break;
 			}
@@ -1959,8 +1970,9 @@ dotrans(char *name)
 			*cp2++ = *cp1;
 		}
 	}
+out:
 	*cp2 = '\0';
-	return (new);
+	return dst;
 }
 
 void
@@ -1996,12 +2008,12 @@ setnmap(int argc, char *argv[])
 	(void)strlcpy(mapout, cp, MAXPATHLEN);
 }
 
-char *
-domap(char *name)
+static const char *
+domap(char *dst, size_t dlen, const char *src)
 {
-	static char new[MAXPATHLEN];
-	char *cp1 = name, *cp2 = mapin;
-	char *tp[9], *te[9];
+	const char *cp1 = src;
+	char *cp2 = mapin;
+	const char *tp[9], *te[9];
 	int i, toks[9], toknum = 0, match = 1;
 
 	for (i=0; i < 9; ++i) {
@@ -2044,130 +2056,127 @@ domap(char *name)
 	{
 		toks[toknum] = 0;
 	}
-	cp1 = new;
-	*cp1 = '\0';
-	cp2 = mapout;
-	while (*cp2) {
+	cp2 = dst;
+	*cp2 = '\0';
+	cp1 = mapout;
+	while (*cp1) {
 		match = 0;
-		switch (*cp2) {
+		switch (*cp1) {
 			case '\\':
-				if (*(cp2 + 1)) {
-					*cp1++ = *++cp2;
+				if (*(cp1 + 1)) {
+					*cp2++ = *++cp1;
 				}
 				break;
 			case '[':
 LOOP:
-				if (*++cp2 == '$' &&
-				    isdigit((unsigned char)*(cp2+1))) {
-					if (*++cp2 == '0') {
-						char *cp3 = name;
+				if (*++cp1 == '$' &&
+				    isdigit((unsigned char)*(cp1+1))) {
+					if (*++cp1 == '0') {
+						const char *cp3 = src;
 
 						while (*cp3) {
-							*cp1++ = *cp3++;
+							*cp2++ = *cp3++;
 						}
 						match = 1;
 					}
-					else if (toks[toknum = *cp2 - '1']) {
-						char *cp3 = tp[toknum];
+					else if (toks[toknum = *cp1 - '1']) {
+						const char *cp3 = tp[toknum];
 
 						while (cp3 != te[toknum]) {
-							*cp1++ = *cp3++;
+							*cp2++ = *cp3++;
 						}
 						match = 1;
 					}
 				}
 				else {
-					while (*cp2 && *cp2 != ',' &&
-					    *cp2 != ']') {
-						if (*cp2 == '\\') {
-							cp2++;
+					while (*cp1 && *cp1 != ',' &&
+					    *cp1 != ']') {
+						if (*cp1 == '\\') {
+							cp1++;
 						}
-						else if (*cp2 == '$' &&
-						    isdigit((unsigned char)*(cp2+1))) {
-							if (*++cp2 == '0') {
-							   char *cp3 = name;
+						else if (*cp1 == '$' &&
+						    isdigit((unsigned char)*(cp1+1))) {
+							if (*++cp1 == '0') {
+							   const char *cp3 = src;
 
 							   while (*cp3) {
-								*cp1++ = *cp3++;
+								*cp2++ = *cp3++;
 							   }
 							}
 							else if (toks[toknum =
-							    *cp2 - '1']) {
-							   char *cp3=tp[toknum];
+							    *cp1 - '1']) {
+							   const char *cp3=tp[toknum];
 
 							   while (cp3 !=
 								  te[toknum]) {
-								*cp1++ = *cp3++;
+								*cp2++ = *cp3++;
 							   }
 							}
 						}
-						else if (*cp2) {
-							*cp1++ = *cp2++;
+						else if (*cp1) {
+							*cp2++ = *cp1++;
 						}
 					}
-					if (!*cp2) {
+					if (!*cp1) {
 						fputs(
 						"nmap: unbalanced brackets.\n",
 						    ttyout);
-						return (name);
+						return (src);
 					}
 					match = 1;
-					cp2--;
+					cp1--;
 				}
 				if (match) {
-					while (*++cp2 && *cp2 != ']') {
-					      if (*cp2 == '\\' && *(cp2 + 1)) {
-							cp2++;
+					while (*++cp1 && *cp1 != ']') {
+					      if (*cp1 == '\\' && *(cp1 + 1)) {
+							cp1++;
 					      }
 					}
-					if (!*cp2) {
+					if (!*cp1) {
 						fputs(
 						"nmap: unbalanced brackets.\n",
 						    ttyout);
-						return (name);
+						return (src);
 					}
 					break;
 				}
-				switch (*++cp2) {
+				switch (*++cp1) {
 					case ',':
 						goto LOOP;
 					case ']':
 						break;
 					default:
-						cp2--;
+						cp1--;
 						goto LOOP;
 				}
 				break;
 			case '$':
-				if (isdigit((unsigned char)*(cp2 + 1))) {
-					if (*++cp2 == '0') {
-						char *cp3 = name;
+				if (isdigit((unsigned char)*(cp1 + 1))) {
+					if (*++cp1 == '0') {
+						const char *cp3 = src;
 
 						while (*cp3) {
-							*cp1++ = *cp3++;
+							*cp2++ = *cp3++;
 						}
 					}
-					else if (toks[toknum = *cp2 - '1']) {
-						char *cp3 = tp[toknum];
+					else if (toks[toknum = *cp1 - '1']) {
+						const char *cp3 = tp[toknum];
 
 						while (cp3 != te[toknum]) {
-							*cp1++ = *cp3++;
+							*cp2++ = *cp3++;
 						}
 					}
 					break;
 				}
 				/* intentional drop through */
 			default:
-				*cp1++ = *cp2;
+				*cp2++ = *cp1;
 				break;
 		}
-		cp2++;
+		cp1++;
 	}
-	*cp1 = '\0';
-	if (!*new) {
-		return (name);
-	}
-	return (new);
+	*cp2 = '\0';
+	return *dst ? dst : src;
 }
 
 void
