@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.42 1998/11/11 06:41:27 thorpej Exp $	*/
+/*	$NetBSD: locore.s,v 1.42.4.1 1999/01/31 14:09:21 scw Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -402,16 +402,15 @@ Lenab1:
 	jbsr	_m68881_restore		| restore it (does not kill a1)
 	addql	#4,sp
 Lenab2:
-#if (defined(M68020)||defined(M68040)||defined(M68060))
-/* flush TLB and turn on caches */
-	jbsr	_TBIA			| invalidate TLB
-#endif
 	cmpl	#MMU_68040,_mmutype	| 68040?
-	jeq	Lnocache0		| yes, cache already on
+	jeq	Ltbia040		| yes, cache already on
+	pflusha
 	movl	#CACHE_ON,d0
 	movc	d0,cacr			| clear cache(s)
-	jra	Lnocache0
-Lnocache0:
+	jra	Lenab3
+Ltbia040:
+	.word	0xf518
+Lenab3:
 /* final setup for C code */
 	movl	#_vectab,d0		| set VBR
 	movc	d0,vbr
