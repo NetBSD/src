@@ -33,7 +33,7 @@
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)library.c	8.1 (Berkeley) 6/4/93";*/
-static char *rcsid = "$Id: library.c,v 1.2 1997/05/17 19:35:14 pk Exp $";
+static char *rcsid = "$Id: library.c,v 1.3 1997/08/01 06:33:39 mikel Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -658,17 +658,18 @@ toss(p, nump, size, dotoss, client)
 	void *client;
 {
 	int i;
-	void *p1;
+	char *p0, *p1;
 
 	if (*nump == 0)
 		return;
 
+	p0 = p;
 	for (i = *nump; --i > 0;) {
-		p1 = p + size;
-		if (dotoss(client, p, p1)) {
-			memmove(p, p1, i * size);
+		p1 = p0 + size;
+		if (dotoss(client, p0, p1)) {
+			memmove(p0, p1, i * size);
 			--(*nump);
 		} else
-			p += size;
+			p0 += size;
 	}
 }
