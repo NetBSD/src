@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_machdep.c,v 1.20 1995/10/07 06:25:43 mycroft Exp $	*/
+/*	$NetBSD: sys_machdep.c,v 1.21 1995/10/09 04:00:24 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1995 Charles M. Hannum.  All rights reserved.
@@ -70,14 +70,15 @@ extern vm_map_t kernel_map;
 #ifdef TRACE
 int	nvualarm;
 
-vtrace(p, uap, retval)
+sys_vtrace(p, v, retval)
 	struct proc *p;
-	register struct vtrace_args /* {
-		syscallarg(int) request;
-		syscallarg(int) value;
-	} */ *uap;
+	void *v;
 	register_t *retval;
 {
+	register struct sys_vtrace_args /* {
+		syscallarg(int) request;
+		syscallarg(int) value;
+	} */ *uap = v;
 	int vdoualarm();
 
 	switch (SCARG(uap, request)) {
