@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_time.c,v 1.54.2.6 2002/01/08 00:32:35 nathanw Exp $	*/
+/*	$NetBSD: kern_time.c,v 1.54.2.7 2002/01/28 18:02:53 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -72,7 +72,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_time.c,v 1.54.2.6 2002/01/08 00:32:35 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_time.c,v 1.54.2.7 2002/01/28 18:02:53 nathanw Exp $");
 
 #include "fs_nfs.h"
 #include "opt_nfs.h"
@@ -531,9 +531,7 @@ sys_timer_create(struct lwp *l, void *v, register_t *retval)
 		if (((error = 
 		    copyin(evp, &pt->pt_ev, sizeof (pt->pt_ev))) != 0) ||
 		    ((pt->pt_ev.sigev_notify < SIGEV_NONE) ||
-			(pt->pt_ev.sigev_notify > SIGEV_SA)) ||
-		    ((pt->pt_ev.sigev_notify == SIGEV_SA) &&
-			!(p->p_flag & P_SA))) {
+			(pt->pt_ev.sigev_notify > SIGEV_SA))) {
 			pool_put(&ptimer_pool, pt);
 			return (error ? error : EINVAL);
 		}
@@ -750,7 +748,7 @@ realtimerexpire(void *arg)
 			pt->pt_overruns = 0;
 			psignal(p, pt->pt_ev.sigev_signo);
 		}
-	} else if (pt->pt_ev.sigev_notify == SIGEV_SA) {
+	} else if (pt->pt_ev.sigev_notify == SIGEV_SA && (p->p_flag & P_SA)) {
 		/* Cause the process to generate an upcall when it returns. */
 		if (p->p_userret == NULL) {
 			pt->pt_overruns = 0;
