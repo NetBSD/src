@@ -1,4 +1,4 @@
-#	$NetBSD: files,v 1.279 1999/03/13 14:29:27 drochner Exp $
+#	$NetBSD: files,v 1.280 1999/03/17 18:59:21 sommerfe Exp $
 
 #	@(#)files.newconf	7.5 (Berkeley) 5/10/93
 
@@ -111,6 +111,8 @@ defopt	opt_ddbparam.h	DDB_FROMCONSOLE DDB_ONPANIC DDB_HISTORY_SIZE
 
 # memory (ram) disk options
 defopt	opt_md.h	MEMORY_DISK_HOOKS MEMORY_DISK_SERVER MEMORY_DISK_IS_ROOT
+
+defopt	opt_mdsize.h	MINIROOTSIZE
 
 # device classes
 devclass disk

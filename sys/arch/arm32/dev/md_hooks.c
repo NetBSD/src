@@ -1,4 +1,4 @@
-/*	$NetBSD: md_hooks.c,v 1.12 1999/02/07 09:34:59 jonathan Exp $	*/
+/*	$NetBSD: md_hooks.c,v 1.13 1999/03/17 18:59:22 sommerfe Exp $	*/
 
 /*
  * Copyright (c) 1995 Gordon W. Ross
@@ -44,6 +44,8 @@
 #endif
 
 #include <dev/md.h>
+
+#include "opt_mdsize.h"
 
 #ifdef	MINIROOTSIZE
 #define ROOTBYTES (MINIROOTSIZE << DEV_BSHIFT)
