@@ -1,4 +1,4 @@
-/*	$NetBSD: limits.h,v 1.3 1994/10/26 08:02:12 cgd Exp $	*/
+/*	$NetBSD: limits.h,v 1.4 1995/04/16 20:10:33 ragge Exp $	*/
 
 /*
  * Copyright (c) 1988 The Regents of the University of California.
@@ -57,6 +57,19 @@
 #define ULONG_MAX       0xffffffff      /* max value for an unsigned long */
 #define LONG_MAX        0x7fffffff      /* max value for a long */
 #define LONG_MIN        0x80000000      /* min value for a long */
+
+#if !defined(_ANSI_SOURCE)
+#define SSIZE_MAX       INT_MAX         /* max value for a ssize_t */
+
+#if !defined(_POSIX_SOURCE) && !defined(_XOPEN_SOURCE)
+#define SIZE_T_MAX      UINT_MAX        /* max value for a size_t */
+
+#define UQUAD_MAX       0xffffffffffffffffULL           /* max unsigned quad */
+#define QUAD_MAX        0x7fffffffffffffffLL            /* max signed quad */
+#define QUAD_MIN        (-0x7fffffffffffffffLL-1)       /* min signed quad */
+
+#endif /* !_POSIX_SOURCE && !_XOPEN_SOURCE */
+#endif /* !_ANSI_SOURCE */
 
 #if (!defined(_ANSI_SOURCE)&&!defined(_POSIX_SOURCE)) || defined(_XOPEN_SOURCE)
 #define LONG_BIT	32
