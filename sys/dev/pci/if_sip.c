@@ -1,4 +1,4 @@
-/*	$NetBSD: if_sip.c,v 1.52.4.9 2003/08/15 12:49:28 tron Exp $	*/
+/*	$NetBSD: if_sip.c,v 1.52.4.10 2003/10/02 10:02:00 tron Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002 The NetBSD Foundation, Inc.
@@ -82,7 +82,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_sip.c,v 1.52.4.9 2003/08/15 12:49:28 tron Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_sip.c,v 1.52.4.10 2003/10/02 10:02:00 tron Exp $");
 
 #include "bpfilter.h"
 
@@ -146,7 +146,7 @@ __KERNEL_RCSID(0, "$NetBSD: if_sip.c,v 1.52.4.9 2003/08/15 12:49:28 tron Exp $")
 #define	SIP_NTXDESC_MASK	(SIP_NTXDESC - 1)
 #define	SIP_NEXTTX(x)		(((x) + 1) & SIP_NTXDESC_MASK)
 
-#if defined(DP83020)
+#if defined(DP83820)
 #define	TX_DMAMAP_SIZE		ETHER_MAX_LEN_JUMBO
 #else
 #define	TX_DMAMAP_SIZE		MCLBYTES
