@@ -1,4 +1,4 @@
-#	$NetBSD: configure.ac,v 1.37 2003/06/03 03:16:49 uwe Exp $
+#	$NetBSD: configure.ac,v 1.38 2003/07/18 13:45:16 fredb Exp $
 #
 # Autoconf definition file for libnbcompat.
 #
@@ -52,7 +52,7 @@ AC_CHECK_HEADERS(rpc/types.h getopt.h netconfig.h,,
 
 # Typedefs.
 AC_TYPE_SIZE_T
-AC_CHECK_TYPES([id_t, long long, u_quad_t])
+AC_CHECK_TYPES([id_t, long long, u_long, u_quad_t])
 AC_CHECK_TYPE(socklen_t, [AC_DEFINE(HAVE_SOCKLEN_T)],,
 [#include <sys/types.h>
 #include <sys/socket.h>])

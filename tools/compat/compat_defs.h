@@ -1,4 +1,4 @@
-/*	$NetBSD: compat_defs.h,v 1.27 2003/06/03 03:16:48 uwe Exp $	*/
+/*	$NetBSD: compat_defs.h,v 1.28 2003/07/18 13:45:15 fredb Exp $	*/
 
 #ifndef	__NETBSD_COMPAT_DEFS_H__
 #define	__NETBSD_COMPAT_DEFS_H__
@@ -112,6 +112,10 @@ typedef unsigned long id_t;
 
 #if !HAVE_SOCKLEN_T
 typedef int socklen_t;
+#endif
+
+#if !HAVE_U_LONG
+typedef unsigned long u_long;
 #endif
 
 /* Prototypes for replacement functions. */
