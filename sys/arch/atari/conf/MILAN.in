@@ -1,5 +1,5 @@
 #
-#	$NetBSD: MILAN.in,v 1.8 2001/11/20 11:29:41 lukem Exp $
+#	$NetBSD: MILAN.in,v 1.8.10.1 2002/06/18 23:52:07 lukem Exp $
 #
 # Milan
 #
@@ -43,6 +43,7 @@ isabus0 	at mainbus0			# ISA-bus
 isa0 		at isabus0
 pcibus0 	at mainbus0			# PCI-bus
 pci0 		at pcibus0
+nvr0 		at mainbus0			# nvram driver
 ser0 		at mainbus0
 fdcisa0 	at isa? port 0x3f0 irq 6 drq 2	# standard PC floppy contr.
 fdisa0 		at fdcisa0 drive 0
@@ -63,8 +64,8 @@ fdisa0 		at fdcisa0 drive 0
 # during the partioning with HDDRIVER and TOS supports booting from it!
 # Ok, now you have to choose:
 #   - If _none_ of your disks are marked byteswapped by HDDRIVER, choose
-#     the MILAN_ISAIDE version.
-#   - If _all_ of your disks are byteswapped, use the  MILAN_PCIIDE version
+#     the MILAN-ISAIDE version.
+#   - If _all_ of your disks are byteswapped, use the  MILAN-PCIIDE version
 # The is no way to mix things!
 #
 
