@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.53 2000/04/10 16:28:56 mrg Exp $	*/
+/*	$NetBSD: locore.s,v 1.54 2000/04/13 18:40:27 eeh Exp $	*/
 /*
  * Copyright (c) 1996-1999 Eduardo Horvath
  * Copyright (c) 1996 Paul Kranenburg
@@ -7021,10 +7021,10 @@ Lsw_scan:
 	 */
 	sethi	%hi(_C_LABEL(time)), %o0
 	LDPTR	[%o0 + %lo(_C_LABEL(time))], %o2! Need to do this in 2 steps cause time may not be aligned
-	LDPTR	[%o0 + %lo(_C_LABEL(time))+PTRSZ], %o3
+	LDPTR	[%o0 + %lo(_C_LABEL(time)+PTRSZ)], %o3
 	sethi	%hi(_C_LABEL(runtime)), %o0
 	STPTR	%o2, [%o0 + %lo(_C_LABEL(runtime))]
-	STPTR	%o3, [%o0 + %lo(_C_LABEL(runtime))+PTRSZ]
+	STPTR	%o3, [%o0 + %lo(_C_LABEL(runtime)+PTRSZ)]
 	
 	ld	[%g2 + %lo(_C_LABEL(whichqs))], %o3
 
@@ -10099,10 +10099,10 @@ ENTRY(microtime)
 2:
 	!!  NB: if we could guarantee 128-bit alignment of these values we could do an atomic read
 	LDPTR	[%g2+%lo(_C_LABEL(time))], %o2			! time.tv_sec & time.tv_usec
-	LDPTR	[%g2+%lo(_C_LABEL(time))+PTRSZ], %o3		! time.tv_sec & time.tv_usec
+	LDPTR	[%g2+%lo(_C_LABEL(time)+PTRSZ)], %o3		! time.tv_sec & time.tv_usec
 	ldx	[%g3], %o4					! Load usec timer valuse
 	LDPTR	[%g2+%lo(_C_LABEL(time))], %g1			! see if time values changed
-	LDPTR	[%g2+%lo(_C_LABEL(time))+PTRSZ], %g5		! see if time values changed
+	LDPTR	[%g2+%lo(_C_LABEL(time)+PTRSZ)], %g5		! see if time values changed
 	cmp	%g1, %o2
 	bne	2b						! if time.tv_sec changed
 	 cmp	%g5, %o3
@@ -10128,16 +10128,16 @@ microtick:
 2:	
 	!!  NB: if we could guarantee 128-bit alignment of these values we could do an atomic read
 	LDPTR	[%g2+%lo(_C_LABEL(time))], %o2			! time.tv_sec & time.tv_usec
-	LDPTR	[%g2+%lo(_C_LABEL(time))+PTRSZ], %o3		! time.tv_sec & time.tv_usec
+	LDPTR	[%g2+%lo(_C_LABEL(time)+PTRSZ)], %o3		! time.tv_sec & time.tv_usec
 	rdpr	%tick, %o4					! Load usec timer value
 	LDPTR	[%g2+%lo(_C_LABEL(time))], %g1			! see if time values changed
-	LDPTR	[%g2+%lo(_C_LABEL(time))+PTRSZ], %g5		! see if time values changed
+	LDPTR	[%g2+%lo(_C_LABEL(time)+PTRSZ)], %g5		! see if time values changed
 	cmp	%g1, %o2
 	bne	2b						! if time.tv_sec changed
 	 cmp	%g5, %o3
 	bne	2b						! if time.tv_usec changed
 	 sethi	%hi(_C_LABEL(cpu_clockrate)), %g1
-	ldx	[%g1 + %lo(_C_LABEL(cpu_clockrate)) + 8], %o1
+	ldx	[%g1 + %lo(_C_LABEL(cpu_clockrate) + 8)], %o1
 	sethi	%hi(MICROPERSEC), %o5
 	brnz,pt	%o1, 3f
 	 or	%o6, %lo(MICROPERSEC), %o5
@@ -10145,7 +10145,7 @@ microtick:
 	!! Calculate ticks/usec
 	ldx	[%g1 + %lo(_C_LABEL(cpu_clockrate))], %o1	! No, we need to calculate it
 	udivx	%o1, %o5, %o1
-	stx	%o1, [%g1 + %lo(_C_LABEL(cpu_clockrate)) + 8]	! Save it so we don't need to divide again
+	stx	%o1, [%g1 + %lo(_C_LABEL(cpu_clockrate) + 8)]	! Save it so we don't need to divide again
 3:
 	udivx	%o4, %o1, %o4					! Convert to usec
 	add	%o4, %o3, %o3
@@ -10164,7 +10164,7 @@ microtick:
  * The following code only works if %tick is synchronized with time.
  */
 	sethi	%hi(_C_LABEL(cpu_clockrate)), %o3
-	ldx	[%o3 + %lo(_C_LABEL(cpu_clockrate)) + 8], %o4	! Get scale factor
+	ldx	[%o3 + %lo(_C_LABEL(cpu_clockrate) + 8)], %o4	! Get scale factor
 	rdpr	%tick, %o1
 	sethi	%hi(MICROPERSEC), %o2
 	brnz,pt	%o4, 1f						! Already scaled?
@@ -10206,14 +10206,14 @@ ENTRY(delay)			! %o0 = n
 	rdpr	%tick, %o1					! Take timer snapshot
 	sethi	%hi(_C_LABEL(cpu_clockrate)), %o2
 	sethi	%hi(MICROPERSEC), %o3
-	ldx	[%o2 + %lo(_C_LABEL(cpu_clockrate)) + 8], %o4	! Get scale factor
+	ldx	[%o2 + %lo(_C_LABEL(cpu_clockrate) + 8)], %o4	! Get scale factor
 	brnz,pt	%o4, 0f
 	 or	%o3, %lo(MICROPERSEC), %o3
 
 	!! Calculate ticks/usec
 	ldx	[%o2 + %lo(_C_LABEL(cpu_clockrate))], %o4	! No, we need to calculate it
 	udivx	%o4, %o3, %o4
-	stx	%o4, [%o2 + %lo(_C_LABEL(cpu_clockrate)) + 8]	! Save it so we don't need to divide again
+	stx	%o4, [%o2 + %lo(_C_LABEL(cpu_clockrate) + 8)]	! Save it so we don't need to divide again
 0:
 	
 	mulx	%o0, %o4, %o0					! Convert usec -> ticks
