@@ -39,17 +39,25 @@ char copyright[] =
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)rm.c	4.26 (Berkeley) 3/10/91";*/
-static char rcsid[] = "$Id: rm.c,v 1.6 1993/08/06 00:13:14 deraadt Exp $";
+static char rcsid[] = "$Id: rm.c,v 1.7 1993/10/25 19:12:51 jtc Exp $";
 #endif /* not lint */
 
-#include <sys/types.h>
-#include <sys/stat.h>
-#include <sys/errno.h>
-#include <fts.h>
-#include <unistd.h>
 #include <stdio.h>
 #include <string.h>
 #include <stdlib.h>
+#include <locale.h>
+#include <errno.h>
+#include <sys/types.h>
+#include <sys/stat.h>
+#include <unistd.h>
+#include <fts.h>
+
+int check	__P((char *, char *, struct stat *));
+void checkdot	__P((char **));
+void error	__P((char *, int));
+void rmtree	__P((char **));
+void rmfile	__P((char **));
+void usage	__P((void));
 
 int dflag, fflag, iflag, retval, stdin_ok;
 
@@ -61,13 +69,14 @@ int dflag, fflag, iflag, retval, stdin_ok;
  * 	file removal.
  */
 
+int
 main(argc, argv)
 	int argc;
 	char **argv;
 {
-	extern char *optarg;
-	extern int optind;
 	int ch, rflag;
+
+	setlocale(LC_ALL, "");
 
 	rflag = 0;
 	while ((ch = getopt(argc, argv, "dfiRr")) != EOF)
@@ -110,13 +119,13 @@ main(argc, argv)
 	exit(fflag ? 0 : retval);
 }
 
+void
 rmtree(argv)
 	char **argv;
 {
 	register FTS *fts;
 	register FTSENT *p;
 	register int needstat;
-	struct stat sb;
 
 	/*
 	 * Remove a file hierarchy.  If forcing removal (-f), or interactive
@@ -136,7 +145,7 @@ rmtree(argv)
 		(void)fprintf(stderr, "rm: %s.\n", strerror(errno));
 		exit(1);
 	}
-	while (p = fts_read(fts)) {
+	while ((p = fts_read(fts)) != NULL) {
 		switch(p->fts_info) {
 		case FTS_DNR:
 		case FTS_ERR:
@@ -191,38 +200,50 @@ rmtree(argv)
 	}
 }
 
+void
 rmfile(argv)
 	char **argv;
 {
-	register int df;
 	register char *f;
 	struct stat sb;
 
-	df = dflag;
 	/*
 	 * Remove a file.  POSIX 1003.2 states that, by default, attempting
 	 * to remove a directory is an error, so must always stat the file.
 	 */
-	while (f = *argv++) {
-		/* Assume if can't stat the file, can't unlink it. */
+	while ((f = *argv++) != NULL) {
+		/* If the file does not exist: 
+		 *   If the -f option was not specified, write a diagnostic
+		 *   to the standard error...
+		 */
 		if (lstat(f, &sb)) {
-			if (!fflag || errno != ENOENT)
-				error(f, errno);
-			continue;
-		}
-		if (S_ISDIR(sb.st_mode) && !df && !fflag) {
-			(void)fprintf(stderr, "rm: %s: is a directory\n", f);
-			retval = 1;
-			continue;
-		}
-		if (!fflag && !check(f, f, &sb))
-			continue;
-		if ((S_ISDIR(sb.st_mode) ? rmdir(f) : unlink(f)) &&
-		    (!fflag || errno != ENOENT))
 			error(f, errno);
+			continue;
+		}
+
+		/* If the file is of type directory and neither the -r or -R
+		 * (or -d) options are specified, write a diagnostic to the
+		 * standard error... 
+		 */
+		if (S_ISDIR(sb.st_mode) && !dflag) {
+			error (f, EISDIR);
+			continue;
+		}
+
+		if (!fflag && !check(f, f, &sb)) {
+			continue;
+		}
+
+		/*
+		 * rmdir() directories, unlink() files...
+		 */
+		if ((S_ISDIR(sb.st_mode) ? rmdir(f) : unlink(f))) {
+			error(f, errno);
+		}
 	}
 }
 
+int
 check(path, name, sp)
 	char *path, *name;
 	struct stat *sp;
@@ -257,6 +278,7 @@ check(path, name, sp)
 }
 
 #define ISDOT(a)	((a)[0] == '.' && (!(a)[1] || (a)[1] == '.' && !(a)[2]))
+void
 checkdot(argv)
 	char **argv;
 {
@@ -265,7 +287,7 @@ checkdot(argv)
 
 	complained = 0;
 	for (t = argv; *t;) {
-		if (p = rindex(*t, '/'))
+		if ((p = rindex(*t, '/')) != NULL)
 			++p;
 		else
 			p = *t;
@@ -281,6 +303,7 @@ checkdot(argv)
 	}
 }
 
+void
 error(name, val)
 	char *name;
 	int val;
@@ -290,6 +313,7 @@ error(name, val)
 	retval = 1;
 }
 
+void
 usage()
 {
 	if (!fflag)
