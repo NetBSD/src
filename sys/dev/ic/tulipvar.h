@@ -1,4 +1,4 @@
-/*	$NetBSD: tulipvar.h,v 1.46 2002/03/26 07:41:40 chs Exp $	*/
+/*	$NetBSD: tulipvar.h,v 1.47 2002/04/09 05:57:21 chs Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2000 The NetBSD Foundation, Inc.
@@ -477,11 +477,9 @@ struct tulip_softc {
 #define	TULIP_IS_ENABLED(sc)	((sc)->sc_flags & TULIPF_ENABLED)
 
 /*
- * This macro returns the current media entry for *non-MII* media.
+ * This macro returns the current media entry.
  */
-#define	TULIP_CURRENT_MEDIA(sc)						\
-	(IFM_SUBTYPE((sc)->sc_mii.mii_media.ifm_cur->ifm_media) != IFM_AUTO ? \
-	 (sc)->sc_mii.mii_media.ifm_cur : (sc)->sc_nway_active)
+#define	TULIP_CURRENT_MEDIA(sc) ((sc)->sc_mii.mii_media.ifm_cur)
 
 /*
  * This macro determines if a change to media-related OPMODE bits requires
