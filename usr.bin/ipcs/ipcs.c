@@ -1,4 +1,4 @@
-/*	$NetBSD: ipcs.c,v 1.15 1998/04/01 21:10:30 kleink Exp $	*/
+/*	$NetBSD: ipcs.c,v 1.16 1998/07/06 07:50:19 mrg Exp $	*/
 
 /*
  * Copyright (c) 1994 SigmaSoft, Th. Lockert <tholo@sigmasoft.com>
@@ -143,6 +143,7 @@ main(argc, argv)
 	char   *core = NULL, *namelist = NULL;
 	char	errbuf[_POSIX2_LINE_MAX];
 	int     i;
+	gid_t	egid = getegid();
 
 	while ((i = getopt(argc, argv, "MmQqSsabC:cN:optT")) != -1)
 		switch (i) {
@@ -196,15 +197,23 @@ main(argc, argv)
 		}
 
 	/*
-	 * Discard setgid privelidges if not the running kernel so that
-	 * bad guys can't print interesting stuff from kernel memory.
+	 * Discard setgid privileges.  If not the running kernel, we toss
+	 * them away totally so that bad guys can't print interesting stuff
+	 * from kernel memory, otherwise switch back to kmem for the
+	 * duration of the kvm_openfiles() call.
 	 */
 	if (namelist != NULL || core != NULL)
-		setgid(getgid());
+		(void)setgid(getgid());
+	else
+		(void)setegid(egid);
 
 	if ((kd = kvm_openfiles(namelist, core, NULL, O_RDONLY,
 	    errbuf)) == NULL)
 		errx(1, "can't open kvm: %s", errbuf);
+
+	/* get rid of it now anyway */
+	if (namelist == NULL && core == NULL)
+		(void)setgid(getgid());
 
 	switch (kvm_nlist(kd, symbols)) {
 	case 0:

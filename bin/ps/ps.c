@@ -1,4 +1,4 @@
-/*	$NetBSD: ps.c,v 1.20 1997/09/14 08:57:38 lukem Exp $	*/
+/*	$NetBSD: ps.c,v 1.21 1998/07/06 07:50:18 mrg Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993, 1994
@@ -43,7 +43,7 @@ __COPYRIGHT("@(#) Copyright (c) 1990, 1993, 1994\n\
 #if 0
 static char sccsid[] = "@(#)ps.c	8.4 (Berkeley) 4/2/94";
 #else
-__RCSID("$NetBSD: ps.c,v 1.20 1997/09/14 08:57:38 lukem Exp $");
+__RCSID("$NetBSD: ps.c,v 1.21 1998/07/06 07:50:18 mrg Exp $");
 #endif
 #endif /* not lint */
 
@@ -116,10 +116,12 @@ main(argc, argv)
 	dev_t ttydev;
 	pid_t pid;
 	uid_t uid;
+	gid_t egid = getegid();
 	int all, ch, flag, i, fmt, lineno, nentries;
 	int prtheader, wflag, what, xflg;
 	char *nlistf, *memf, *swapf, errbuf[_POSIX2_LINE_MAX];
 
+	(void)setegid(getgid());
 	if ((ioctl(STDOUT_FILENO, TIOCGWINSZ, (char *)&ws) == -1 &&
 	     ioctl(STDERR_FILENO, TIOCGWINSZ, (char *)&ws) == -1 &&
 	     ioctl(STDIN_FILENO,  TIOCGWINSZ, (char *)&ws) == -1) ||
@@ -265,15 +267,22 @@ main(argc, argv)
 	}
 #endif
 	/*
-	 * Discard setgid privileges if not the running kernel so that bad
-	 * guys can't print interesting stuff from kernel memory.
+	 * Discard setgid privileges.  If not the running kernel, we toss
+	 * them away totally so that bad guys can't print interesting stuff
+	 * from kernel memory, otherwise switch back to kmem for the
+	 * duration of the kvm_openfiles() call.
 	 */
 	if (nlistf != NULL || memf != NULL || swapf != NULL)
-		setgid(getgid());
+		(void)setgid(getgid());
+	else
+		(void)setegid(egid);
 
 	kd = kvm_openfiles(nlistf, memf, swapf, O_RDONLY, errbuf);
 	if (kd == 0)
 		errx(1, "%s", errbuf);
+
+	if (nlistf == NULL && memf == NULL && swapf == NULL)
+		(void)setgid(getgid());
 
 	if (!fmt)
 		parsefmt(dfmt);

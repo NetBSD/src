@@ -1,4 +1,4 @@
-/*	$NetBSD: trpt.c,v 1.7 1997/07/23 16:41:43 thorpej Exp $	*/
+/*	$NetBSD: trpt.c,v 1.8 1998/07/06 07:50:20 mrg Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -81,7 +81,7 @@ __COPYRIGHT(
 #if 0
 static char sccsid[] = "@(#)trpt.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: trpt.c,v 1.7 1997/07/23 16:41:43 thorpej Exp $");
+__RCSID("$NetBSD: trpt.c,v 1.8 1998/07/06 07:50:20 mrg Exp $");
 #endif
 #endif /* not lint */
 
@@ -154,7 +154,9 @@ main(argc, argv)
 {
 	int ch, i, jflag, npcbs;
 	char *system, *core, *cp, errbuf[_POSIX2_LINE_MAX];
+	gid_t egid = getegid();
 
+	(void)setegid(getgid());
 	system = core = NULL;
 
 	jflag = npcbs = 0;
@@ -203,15 +205,23 @@ main(argc, argv)
 		usage();
 
 	/*
-	 * Discard setgid privileged if not the running kernel so that bad
-	 * guys can't print interesting stuff from kernel memory.
+	 * Discard setgid privileges.  If not the running kernel, we toss
+	 * them away totally so that bad guys can't print interesting stuff
+	 * from kernel memory, otherwise switch back to kmem for the
+	 * duration of the kvm_openfiles() call.
 	 */
 	if (core != NULL || system != NULL)
 		setgid(getgid());
+	else
+		setegid(egid);
 
 	kd = kvm_openfiles(system, core, NULL, O_RDONLY, errbuf);
 	if (kd == NULL)
 		errx(1, "can't open kmem: %s", errbuf);
+
+	/* get rid of it now anyway */
+	if (core == NULL && system == NULL)
+		setgid(getgid());
 
 	if (kvm_nlist(kd, nl))
 		errx(2, "%s: no namelist", system ? system : _PATH_UNIX);

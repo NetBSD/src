@@ -1,4 +1,4 @@
-/*	$NetBSD: fstat.c,v 1.25 1998/07/03 15:49:25 msaitoh Exp $	*/
+/*	$NetBSD: fstat.c,v 1.26 1998/07/06 07:50:19 mrg Exp $	*/
 
 /*-
  * Copyright (c) 1988, 1993
@@ -43,7 +43,7 @@ __COPYRIGHT("@(#) Copyright (c) 1988, 1993\n\
 #if 0
 static char sccsid[] = "@(#)fstat.c	8.3 (Berkeley) 5/2/95";
 #else
-__RCSID("$NetBSD: fstat.c,v 1.25 1998/07/03 15:49:25 msaitoh Exp $");
+__RCSID("$NetBSD: fstat.c,v 1.26 1998/07/06 07:50:19 mrg Exp $");
 #endif
 #endif /* not lint */
 
@@ -171,7 +171,9 @@ main(argc, argv)
 	char *memf, *nlistf;
 	char buf[_POSIX2_LINE_MAX];
 	int cnt;
+	gid_t egid = getegid();
 
+	(void)setegid(getgid());
 	arg = 0;
 	what = KERN_PROC_ALL;
 	nlistf = memf = NULL;
@@ -238,16 +240,23 @@ main(argc, argv)
 	}
 
 	/*
-	 * Discard setgid privileges if not the running kernel so that bad
-	 * guys can't print interesting stuff from kernel memory.
+	 * Discard setgid privileges.  If not the running kernel, we toss
+	 * them away totally so that bad guys can't print interesting stuff
+	 * from kernel memory, otherwise switch back to kmem for the
+	 * duration of the kvm_openfiles() call.
 	 */
 	if (nlistf != NULL || memf != NULL)
-		setgid(getgid());
+		(void)setgid(getgid());
+	else
+		(void)setegid(egid);
 
-	if ((kd = kvm_openfiles(nlistf, memf, NULL, O_RDONLY, buf)) == NULL) {
-		fprintf(stderr, "fstat: %s\n", buf);
-		exit(1);
-	}
+	if ((kd = kvm_openfiles(nlistf, memf, NULL, O_RDONLY, buf)) == NULL)
+		errx(1, "%s", buf);
+
+	/* get rid of it now anyway */
+	if (nlistf == NULL && memf == NULL)
+		(void)setgid(getgid());
+
 #ifdef notdef
 	if (kvm_nlist(kd, nl) != 0) {
 		fprintf(stderr, "fstat: no namelist: %s\n", kvm_geterr(kd));
@@ -744,7 +753,7 @@ getinetproto(number)
 {
 	char *cp;
 
-	switch(number) {
+	switch (number) {
 	case IPPROTO_IP:
 		cp = "ip"; break;
 	case IPPROTO_ICMP:
@@ -797,6 +806,7 @@ getfname(filename)
 void
 usage()
 {
+
 	(void)fprintf(stderr,
  "usage: fstat [-fnv] [-p pid] [-u user] [-N system] [-M core] [file ...]\n");
 	exit(1);
