@@ -1,4 +1,4 @@
-/*	$NetBSD: asctime.c,v 1.7 1998/09/10 15:58:39 kleink Exp $	*/
+/*	$NetBSD: asctime.c,v 1.8 1998/09/11 11:35:21 kleink Exp $	*/
 
 /*
 ** This file is in the public domain, so clarified as of
@@ -9,9 +9,9 @@
 #ifndef lint
 #ifndef NOID
 #if 0
-static char	elsieid[] = "@(#)asctime.c	7.8";
+static char	elsieid[] = "@(#)asctime.c	7.9";
 #else
-__RCSID("$NetBSD: asctime.c,v 1.7 1998/09/10 15:58:39 kleink Exp $");
+__RCSID("$NetBSD: asctime.c,v 1.8 1998/09/11 11:35:21 kleink Exp $");
 #endif
 #endif /* !defined NOID */
 #endif /* !defined lint */
