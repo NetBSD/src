@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_glue.c,v 1.60 1996/10/23 07:20:09 matthias Exp $	*/
+/*	$NetBSD: vm_glue.c,v 1.61 1996/10/27 20:31:48 gwr Exp $	*/
 
 /* 
  * Copyright (c) 1991, 1993
@@ -600,30 +600,32 @@ thread_wakeup(event)
 
 int indent = 0;
 
-#include <machine/stdarg.h>		/* see subr_prf.c */
+/*
+ * Note that stdarg.h and the ANSI style va_start macro is used for both
+ * ANSI and traditional C compilers.  (Same as subr_prf.c does.)
+ */
+#include <machine/stdarg.h>
+/* XXX - This is a total hack! */
+#ifndef	va_alist
+#define	va_alist	__builtin_va_alist
+#define	va_dcl		long va_alist; ...
+#endif
 
 /*ARGSUSED2*/
 void
-#if __STDC__
+#ifdef	__STDC__
 iprintf(void (*pr)(const char *, ...), const char *fmt, ...)
 #else
-iprintf(va_alist)
+iprintf(pr, fmt, va_alist)
+	void (*pr)();
+	char *fmt;
 	va_dcl
 #endif
 {
 	register int i;
 	va_list ap;
-#if __STDC__
+
 	va_start(ap, fmt);
-#else
-	void (*pr) __P((const char *, ...));
-	const char *fmt;
-
-	va_start(ap);
-	pr = va_arg(ap, void (*) __P((const char *, ...)));
-	fmt = va_arg(ap, const char *);
-#endif
-
 	for (i = indent; i >= 8; i -= 8)
 		(*pr)("\t");
 	while (--i >= 0)
