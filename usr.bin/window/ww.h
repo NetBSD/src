@@ -1,4 +1,4 @@
-/*	$NetBSD: ww.h,v 1.13 1998/10/14 00:58:49 wsanchez Exp $	*/
+/*	$NetBSD: ww.h,v 1.14 1998/12/20 15:01:43 christos Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -48,6 +48,7 @@
 #include <termios.h>
 #endif
 #include <setjmp.h>
+#include <unistd.h>
 
 #if __STDC__
 #include <stdarg.h>
