@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread.c,v 1.1.2.32 2002/10/28 17:41:15 nathanw Exp $	*/
+/*	$NetBSD: pthread.c,v 1.1.2.33 2002/11/18 08:41:57 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -321,7 +321,7 @@ pthread__idle(void)
 
 	/*
 	 * If we get to run this, then no preemption has happened
-	 * (because the upcall handler will not contiune an idle thread with
+	 * (because the upcall handler will not continue an idle thread with
 	 * PT_FLAG_IDLED set), and so we can yield the processor safely.
 	 */
          sa_yield();
