@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.50 1995/07/04 12:14:32 paulus Exp $	*/
+/*	$NetBSD: machdep.c,v 1.51 1995/07/04 14:42:16 briggs Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -138,6 +138,8 @@ struct mac68k_machine_S	mac68k_machine;
 volatile unsigned char	*Via1Base;
 unsigned long		NuBusBase = NBBASE;
 unsigned long		IOBase;
+
+vm_offset_t		SCSIBase;
 
 extern unsigned long	videoaddr;
 extern unsigned long	videorowbytes;
