@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.58 1995/10/10 21:39:04 gwr Exp $	*/
+/*	$NetBSD: pmap.c,v 1.59 1996/02/12 21:21:15 christos Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Gordon W. Ross
@@ -1546,7 +1546,7 @@ pmap_next_page(paddr)
  *
  * XXX - Should make this a macro in pmap.h
  */
-u_long
+int
 pmap_page_index(pa)
 	vm_offset_t pa;
 {
