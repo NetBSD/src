@@ -1,4 +1,4 @@
-/* $NetBSD: wsmousevar.h,v 1.2 1998/07/27 22:33:22 drochner Exp $ */
+/* $NetBSD: wsmousevar.h,v 1.3 1999/07/29 18:20:03 augustss Exp $ */
 
 /*
  * Copyright (c) 1996, 1997 Christopher G. Demetriou.  All rights reserved.
@@ -56,8 +56,12 @@ struct wsmousedev_attach_args {
 	void	*accesscookie;				/* access cookie */
 };
 
+#include "locators.h"
+
+#define	wsmousedevcf_mux	cf_loc[WSMOUSEDEVCF_MUX]
+
 /*
- * Autoconfiugration helper functions.
+ * Autoconfiguration helper functions.
  */
 int	wsmousedevprint __P((void *, const char *));
 

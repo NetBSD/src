@@ -1,4 +1,4 @@
-.\" $NetBSD: wscons.4,v 1.8 1999/04/13 20:25:29 augustss Exp $
+.\" $NetBSD: wscons.4,v 1.9 1999/07/29 18:22:04 augustss Exp $
 .\"
 .\" Copyright (c) 1999 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -49,9 +49,11 @@
 .Cd options WSDISPLAY_COMPAT_USL
 .Cd options WSDISPLAY_COMPAT_RAWKBD
 
-.Cd wsdisplay* at ...
-.Cd wskbd*     at ...
-.Cd wsmouse*   at ...
+.Cd "wsdisplay* at ..."
+.Cd "wskbd*     at ... mux N"
+.Cd "wsmouse*   at ... mux N"
+
+.Cd pseudo-device  wsmux    N
 .Pp
 .Sh DESCRIPTION
 The
@@ -66,6 +68,9 @@ hardware support for display adapters, keyboards and mice, see
 .Xr wsdisplay 4 ,
 .Xr wskbd 4 , and
 .Xr wsmouse 4
+.It
+input event multiplexor, see
+.Xr wsmux 4
 .It
 terminal emulation modules (see below), and
 .It
@@ -161,12 +166,12 @@ emulator.
 .El
 .Pp
 The
-.Cd WSEMUL_DEFAULT
+.Va WSEMUL_DEFAULT
 kernel option allows to select one of the described terminal options
 as default choice. The default gets into effect in kernel startup, i.e.
 for the operating system console or additional screens allocated
 through the
-.Cd WSDISPLAY_DEFAULTSCREENS
+.Va WSDISPLAY_DEFAULTSCREENS
 option (see
 .Xr wsdisplay 4
 ), or if no emulation type was passed to the
@@ -254,6 +259,7 @@ This man page is still extremely incomplete.
 .Xr wsdisplay 4 ,
 .Xr wskbd 4 ,
 .Xr wsmouse 4 ,
+.Xr wsmux 4 ,
 .Xr wsconscfg 8 ,
 .Xr wsconsctl 8 ,
 .Xr wsfontload 8
