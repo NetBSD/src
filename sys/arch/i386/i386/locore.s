@@ -37,7 +37,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)locore.s	7.3 (Berkeley) 5/13/91
- *	$Id: locore.s,v 1.74 1994/06/11 20:44:13 mycroft Exp $
+ *	$Id: locore.s,v 1.75 1994/06/14 19:53:39 mycroft Exp $
  */
 
 /*
@@ -466,7 +466,7 @@ try586:	/* Use the `cpuid' instruction. */
 	popal
 
 1:
-#endif
+#endif /* BDB */
 
 	/* Load base of page directory and enable mapping. */
 	movl	%esi,%eax		# phys address of ptd in proc 0
@@ -513,7 +513,7 @@ reloc_gdt:
 
 	int	$3
 1:
-#endif
+#endif /* BDB */
 
 	leal	((NKPDE+UPAGES+2)*NBPG)(%esi),%esi	# skip past stack and page tables
 	pushl	%esi
@@ -530,7 +530,7 @@ reloc_gdt:
 	movl	__udatasel,%ecx
 	pushl	%ecx			# user ss
 	pushl	$0xdeadbeef		# user esp (set by execve)
-	pushl	$PSL_USERSET		# user eflags
+	pushl	$(PSL_USERSET | PSL_IOPL)	# user eflags
 	pushl	%eax			# user cs
 	pushl	$0xdeadbeef		# user eip (set by execve)
 	subl	$40,%esp		# error code, trap number, registers
@@ -576,44 +576,6 @@ reloc_gdt:
 /*****************************************************************************/
 
 #define	LCALL(x,y)	.byte 0x9a ; .long y ; .word x
-
-#ifdef nolonger
-
-/*
- * This is the initial process used to start init(8).  It's copied out to
- * offset 0 in process 1's address space.
- */
-ENTRY(icode)
-	pushl	$0			# envp for execve()
-
-#	pushl	$argv-_icode		# can't do this 'cos gas 1.38 is broken
-	movl	$argv,%eax
-	subl	$_icode,%eax
-	pushl	%eax			# argp for execve()
-
-#	pushl	$init-_icode
-	movl	$init,%eax
-	subl	$_icode,%eax
-	pushl	%eax			# fname for execve()
-	pushl	%eax			# dummy return address
-	movl	$SYS_execve,%eax
-	LCALL(7,0)
-	/* Exit if something botches up in the above exec. */
-	movl	$SYS_exit,%eax
-	LCALL(7,0)
-
-init:	.asciz	"/sbin/init"
-	ALIGN_DATA
-argv:	.long	init+6-_icode		# argv[0] = "init" ("/sbin/init" + 6)
-	.long	eicode-_icode		# argv[1] follows icode after copyout
-	.long	0
-eicode:
-
-	.globl	_szicode
-_szicode:
-	.long	eicode-_icode
-
-#endif /* nolonger */
 
 /*
  * Signal trampoline; copied to top of user stack.
@@ -1485,7 +1447,7 @@ ENTRY(setrunqueue)
 	jne	1f
 	cmpb	$SRUN,P_STAT(%eax)
 	jne	1f
-#endif
+#endif /* DIAGNOSTIC */
 	movzbl	P_PRIORITY(%eax),%edx
 	shrl	$2,%edx
 	btsl	%edx,_whichqs		# set q full bit
@@ -1501,7 +1463,7 @@ ENTRY(setrunqueue)
 	call	_panic
 	/*NOTREACHED*/
 2:	.asciz	"setrunqueue"
-#endif
+#endif /* DIAGNOSTIC */
 
 /*
  * remrq(struct proc *p);
@@ -1515,7 +1477,7 @@ ENTRY(remrq)
 #ifdef DIAGNOSTIC
 	btl	%eax,_whichqs
 	jnc	1f
-#endif
+#endif /* DIAGNOSTIC */
 	movl	P_FORW(%esi),%ecx	# unlink process
 	movl	P_BACK(%esi),%edx
 	movl	%edx,P_BACK(%ecx)
@@ -1531,7 +1493,7 @@ ENTRY(remrq)
 	call	_panic
 	/*NOTREACHED*/
 3:	.asciz	"remrq"
-#endif
+#endif /* DIAGNOSTIC */
 
 /*
  * When no processes are on the runq, cpu_switch() branches to here to wait for
@@ -1556,7 +1518,7 @@ ENTRY(switch_error)
 	call	_panic
 	/*NOTREACHED*/
 1:	.asciz	"cpu_switch"
-#endif
+#endif /* DIAGNOSTIC */
 
 /*
  * cpu_switch(void);
@@ -1600,7 +1562,7 @@ sw1:	bsfl	%ecx,%ebx		# find a full q
 #ifdef	DIAGNOSTIC
 	cmpl	%edi,%eax		# linked to self (e.g. nothing queued)?
 	je	_switch_error		# not possible
-#endif
+#endif /* DIAGNOSTIC */
 	movl	P_FORW(%edi),%edx
 	movl	%edx,P_FORW(%eax)
 
@@ -1622,7 +1584,7 @@ sw1:	bsfl	%ecx,%ebx		# find a full q
 	jne	_switch_error		# Yes; shouldn't be queued.
 	cmpb	$SRUN,P_STAT(%edi)	# In run state?
 	jne	_switch_error		# No; shouldn't be queued.
-#endif
+#endif /* DIAGNOSTIC */
 
 	/* Isolate process.  XXX Is this necessary? */
 	movl	%eax,P_BACK(%edi)
@@ -1706,7 +1668,7 @@ switch_exited:
 	call	_set_user_ldt
 	addl	$4,%esp
 2:
-#endif
+#endif /* USER_LDT */
 
 	/* Restore segments. */
 	movl	PCB_FS(%esi),%ecx
@@ -1936,7 +1898,7 @@ IDTVEC(div)
 IDTVEC(dbg)
 #ifdef BDB
 	BDBTRAP(dbg)
-#endif
+#endif /* BDB */
 	subl	$4,%esp
 	pushl	%eax
 /*	movl	%dr6,%eax		# XXX stupid assembler! */
@@ -1952,7 +1914,7 @@ IDTVEC(nmi)
 IDTVEC(bpt)
 #ifdef BDB
 	BDBTRAP(bpt)
-#endif
+#endif /* BDB */
 	pushl	$0
 	BPTTRAP(T_BPTFLT)
 IDTVEC(ofl)
@@ -2035,7 +1997,7 @@ ENTRY(alltraps)
 calltrap:
 #ifdef DIAGNOSTIC
 	movl	_cpl,%ebx
-#endif
+#endif /* DIAGNOSTIC */
 	call	_trap
 2:	/*
 	 * Check for ASTs.
@@ -2050,7 +2012,7 @@ calltrap:
 	call	_trap
 #ifndef DIAGNOSTIC
 1:	INTRFASTEXIT
-#else
+#else /* DIAGNOSTIC */
 1:	cmpl	_cpl,%ebx
 	jne	3f
 	INTRFASTEXIT
@@ -2060,11 +2022,11 @@ calltrap:
 	addl	$4,%esp
 #ifdef DDB
 	int	$3
-#endif
+#endif /* DDB */
 	movl	%ebx,_cpl
 	jmp	2b
 4:	.asciz	"WARNING: SPL NOT LOWERED ON TRAP EXIT\n"
-#endif
+#endif /* DIAGNOSTIC */
 
 #ifdef KGDB
 /*
@@ -2077,7 +2039,7 @@ ENTRY(bpttraps)
 	jne	calltrap
 	call	_kgdb_trap_glue		
 	jmp	calltrap
-#endif
+#endif /* KGDB */
 
 /*
  * Call gate entry for syscall
@@ -2093,7 +2055,7 @@ IDTVEC(syscall)
 	movl	%eax,TF_EFLAGS(%esp)
 #ifdef DIAGNOSTIC
 	movl	_cpl,%ebx
-#endif
+#endif /* DIAGNOSTIC */
 	call	_syscall
 2:	/*
 	 * Check for ASTs.
@@ -2107,7 +2069,7 @@ IDTVEC(syscall)
 	call	_trap
 #ifndef DIAGNOSTIC
 1:	INTRFASTEXIT
-#else
+#else /* DIAGNOSTIC */
 1:	cmpl	_cpl,%ebx
 	jne	3f
 	INTRFASTEXIT
@@ -2117,11 +2079,11 @@ IDTVEC(syscall)
 	addl	$4,%esp
 #ifdef DDB
 	int	$3
-#endif
+#endif /* DDB */
 	movl	%ebx,_cpl
 	jmp	2b
 4:	.asciz	"WARNING: SPL NOT LOWERED ON SYSCALL EXIT\n"
-#endif
+#endif /* DIAGNOSTIC */
 
 #include <i386/isa/vector.s>
 #include <i386/isa/icu.s>
