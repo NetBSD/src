@@ -26,11 +26,6 @@
  * 2550 Garcia Avenue
  * Mountain View, California  94043
  */
-#ifndef lint
-%/*static char sccsid = "from: @(#)bootparam_prot.x 1.2 87/06/24 Copyr 1987 Sun Micro";*/
-%/*static char sccsid = "from: @(#)bootparam_prot.x	2.1 88/08/01 4.0 RPCSRC";*/
-%static char rcsid = "$Id: bootparam_prot.x,v 1.3 1993/08/03 13:18:03 mycroft Exp $";
-#endif /* not lint */
 
 /*
  * RPC for bootparms service.
@@ -47,6 +42,12 @@
 %#include <sys/time.h>
 %#include <sys/errno.h>
 %#include <nfs/nfs.h>
+#else
+%#ifndef lint
+%/*static char sccsid[] = "from: @(#)bootparam_prot.x 1.2 87/06/24 Copyr 1987 Sun Micro";*/
+%/*static char sccsid[] = "from: @(#)bootparam_prot.x	2.1 88/08/01 4.0 RPCSRC";*/
+%static char rcsid[] = "$Id: bootparam_prot.x,v 1.4 1993/08/03 21:53:13 mycroft Exp $";
+%#endif /* not lint */
 #endif
 
 const MAX_MACHINE_NAME  = 255;
