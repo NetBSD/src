@@ -1,4 +1,4 @@
-#	$NetBSD: DEFAULT,v 1.6 1996/10/23 07:49:49 matthias Exp $
+#	$NetBSD: DEFAULT,v 1.7 1996/11/07 07:32:07 matthias Exp $
 #
 # DEFAULT: default install kernel
 #	Only has scn0-5 are configured.
@@ -30,8 +30,8 @@ options 	COMPAT_12
 options 	COMPAT_43		# and 4.3BSD
 #options 	TCP_COMPAT_42		# TCP bug compatibility with 4.2BSD
 
-options		EXEC_SCRIPT	# #! scripts
-options		EXEC_AOUT	# a.out executables (native, BSD/OS, Linux, FreeBSD)
+options 	EXEC_SCRIPT		# #! scripts
+options 	EXEC_AOUT		# a.out executables
 
 # file system options
 #options	QUOTA			# file system quotas
@@ -78,6 +78,7 @@ scsibus0 at ncr0
 sd* at scsibus? target ? lun ?			# SCSI disks
 st* at scsibus? target ? lun ?			# SCSI tapes
 cd* at scsibus? target ? lun ?			# SCSI CD-ROMs
+uk* at scsibus? target ? lun ?		# All the things we don't know
 
 scn0 at membus?
 scn1 at membus?
