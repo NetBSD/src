@@ -1,4 +1,4 @@
-/*	$NetBSD: file_subs.c,v 1.23 2002/02/11 11:19:26 wiz Exp $	*/
+/*	$NetBSD: file_subs.c,v 1.23.2.1 2004/04/07 06:57:38 jmc Exp $	*/
 
 /*-
  * Copyright (c) 1992 Keith Muller.
@@ -16,11 +16,7 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *	This product includes software developed by the University of
- *	California, Berkeley and its contributors.
- * 4. Neither the name of the University nor the names of its contributors
+ * 3. Neither the name of the University nor the names of its contributors
  *    may be used to endorse or promote products derived from this software
  *    without specific prior written permission.
  *
@@ -37,12 +33,16 @@
  * SUCH DAMAGE.
  */
 
+#if HAVE_NBTOOL_CONFIG_H
+#include "nbtool_config.h"
+#endif
+
 #include <sys/cdefs.h>
-#if defined(__RCSID) && !defined(lint)
+#if !defined(lint)
 #if 0
 static char sccsid[] = "@(#)file_subs.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: file_subs.c,v 1.23 2002/02/11 11:19:26 wiz Exp $");
+__RCSID("$NetBSD: file_subs.c,v 1.23.2.1 2004/04/07 06:57:38 jmc Exp $");
 #endif
 #endif /* not lint */
 
@@ -60,6 +60,9 @@ __RCSID("$NetBSD: file_subs.c,v 1.23 2002/02/11 11:19:26 wiz Exp $");
 #include <stdlib.h>
 #include "pax.h"
 #include "extern.h"
+#include "options.h"
+
+char *xtmp_name;
 
 static int
 mk_link(char *,struct stat *,char *, int);
@@ -84,45 +87,39 @@ int
 file_creat(ARCHD *arcn)
 {
 	int fd = -1;
-	mode_t file_mode;
 	int oerrno;
 
 	/*
-	 * assume file doesn't exist, so just try to create it, most times this
-	 * works. We have to take special handling when the file does exist. To
-	 * detect this, we use O_EXCL. For example when trying to create a
-	 * file and a character device or fifo exists with the same name, we
-	 * can accidently open the device by mistake (or block waiting to open)
-	 * If we find that the open has failed, then figure spend the effort to
-	 * figure out why. This strategy was found to have better average
-	 * performance in common use than checking the file (and the path)
-	 * first with lstat.
+	 * Create a temporary file name so that the file doesn't have partial
+	 * contents while restoring.
 	 */
-	file_mode = arcn->sb.st_mode & FILEBITS;
-	if ((fd = open(arcn->name, O_WRONLY | O_CREAT | O_TRUNC | O_EXCL,
-	    file_mode)) >= 0)
-		return(fd);
-
-	/*
-	 * the file seems to exist. First we try to get rid of it (found to be
-	 * the second most common failure when traced). If this fails, only
-	 * then we go to the expense to check and create the path to the file
-	 */
-	if (unlnk_exist(arcn->name, arcn->type) != 0)
+	arcn->tmp_name = malloc(arcn->nlen + 8);
+	if (arcn->tmp_name == NULL) {
+		syswarn(1, errno, "Cannot malloc %d bytes", arcn->nlen + 8);
 		return(-1);
+	}
+	if (xtmp_name)
+		abort();
+	xtmp_name = arcn->tmp_name;
 
 	for (;;) {
 		/*
-		 * try to open it again, if this fails, check all the nodes in
-		 * the path and give it a final try. if chk_path() finds that
-		 * it cannot fix anything, we will skip the last attempt
+		 * try to create the temporary file we use to restore the
+		 * contents info.  if this fails, keep checking all the nodes
+		 * in the path until chk_path() finds that it cannot fix
+		 * anything further.  if that happens we just give up.
 		 */
-		if ((fd = open(arcn->name, O_WRONLY | O_CREAT | O_TRUNC,
-		    file_mode)) >= 0)
+		(void)snprintf(arcn->tmp_name, arcn->nlen + 8, "%s.XXXXXX",
+		    arcn->name);
+		fd = mkstemp(arcn->tmp_name);
+		if (fd >= 0)
 			break;
 		oerrno = errno;
-		if (chk_path(arcn->name,arcn->sb.st_uid,arcn->sb.st_gid) < 0) {
-			syswarn(1, oerrno, "Unable to create %s", arcn->name);
+		if (nodirs || chk_path(arcn->name,arcn->sb.st_uid,arcn->sb.st_gid) < 0) {
+			(void)fflush(listf);
+			syswarn(1, oerrno, "Cannot create %s", arcn->tmp_name);
+			free(arcn->tmp_name);
+			arcn->tmp_name = NULL;
 			return(-1);
 		}
 	}
@@ -145,8 +142,8 @@ file_close(ARCHD *arcn, int fd)
 	if (fd < 0)
 		return;
 	if (close(fd) < 0)
-		syswarn(0, errno, "Unable to close file descriptor on %s",
-		    arcn->name);
+		syswarn(0, errno, "Cannot close file descriptor on %s",
+		    arcn->tmp_name);
 
 	/*
 	 * set owner/groups first as this may strip off mode bits we want
@@ -154,23 +151,39 @@ file_close(ARCHD *arcn, int fd)
 	 * modification times.
 	 */
 	if (pids)
-		res = set_ids(arcn->name, arcn->sb.st_uid, arcn->sb.st_gid);
+		res = set_ids(arcn->tmp_name, arcn->sb.st_uid, arcn->sb.st_gid);
 
 	/*
 	 * IMPORTANT SECURITY NOTE:
 	 * if not preserving mode or we cannot set uid/gid, then PROHIBIT
-	 * set uid/gid bits
+	 * set uid/gid bits but restore the file modes (since mkstemp doesn't).
 	 */
 	if (!pmode || res)
 		arcn->sb.st_mode &= ~(SETBITS);
 	if (pmode)
-		set_pmode(arcn->name, arcn->sb.st_mode);
+		set_pmode(arcn->tmp_name, arcn->sb.st_mode);
+	else
+		set_pmode(arcn->tmp_name, arcn->sb.st_mode & FILEBITS);
 	if (patime || pmtime)
-		set_ftime(arcn->name, arcn->sb.st_mtime, arcn->sb.st_atime, 0);
+		set_ftime(arcn->tmp_name, arcn->sb.st_mtime, arcn->sb.st_atime, 0);
 #if HAVE_STRUCT_STAT_ST_FLAGS
 	if (pfflags && arcn->type != PAX_SLK)
-		set_chflags(arcn->name, arcn->sb.st_flags);
+		set_chflags(arcn->tmp_name, arcn->sb.st_flags);
 #endif
+
+	/*
+	 * Finally, now the temp file is fully instantiated rename it to
+	 * the desired file name.
+	 */
+	if (rename(arcn->tmp_name, arcn->name) < 0) {
+		syswarn(0, errno, "Cannot rename %s to %s",
+		    arcn->tmp_name, arcn->name);
+		(void)unlink(arcn->tmp_name);
+	}
+
+	free(arcn->tmp_name);
+	arcn->tmp_name = NULL;
+	xtmp_name = NULL;
 }
 
 /*
@@ -191,7 +204,7 @@ lnk_creat(ARCHD *arcn)
 	 * is not a directory, so we lstat and check
 	 */
 	if (lstat(arcn->ln_name, &sb) < 0) {
-		syswarn(1,errno,"Unable to link to %s from %s", arcn->ln_name,
+		syswarn(1, errno, "Cannot link to %s from %s", arcn->ln_name,
 		    arcn->name);
 		return(-1);
 	}
@@ -294,8 +307,8 @@ mk_link(char *to, struct stat *to_sb, char *from, int ign)
 		 * make sure it is not the same file, protect the user
 		 */
 		if ((to_sb->st_dev==sb.st_dev)&&(to_sb->st_ino == sb.st_ino)) {
-			tty_warn(1, "Unable to link file %s to itself", to);
-			return(-1);;
+			tty_warn(1, "Cannot link file %s to itself", to);
+			return(-1);
 		}
 
 		/*
@@ -303,12 +316,12 @@ mk_link(char *to, struct stat *to_sb, char *from, int ign)
 		 */
 		if (S_ISDIR(sb.st_mode)) {
 			if (rmdir(from) < 0) {
-				syswarn(1, errno, "Unable to remove %s", from);
+				syswarn(1, errno, "Cannot remove %s", from);
 				return(-1);
 			}
 		} else if (unlink(from) < 0) {
 			if (!ign) {
-				syswarn(1, errno, "Unable to remove %s", from);
+				syswarn(1, errno, "Cannot remove %s", from);
 				return(-1);
 			}
 			return(1);
@@ -327,7 +340,7 @@ mk_link(char *to, struct stat *to_sb, char *from, int ign)
 		if (chk_path(from, to_sb->st_uid, to_sb->st_gid) == 0)
 			continue;
 		if (!ign) {
-			syswarn(1, oerrno, "Could not link to %s from %s", to,
+			syswarn(1, oerrno, "Cannot link to %s from %s", to,
 			    from);
 			return(-1);
 		}
@@ -357,6 +370,9 @@ node_creat(ARCHD *arcn)
 	int pass = 0;
 	mode_t file_mode;
 	struct stat sb;
+	char target[MAXPATHLEN];
+	char *nm = arcn->name;
+	int len;
 
 	/*
 	 * create node based on type, if that fails try to unlink the node and
@@ -369,20 +385,43 @@ node_creat(ARCHD *arcn)
 	for (;;) {
 		switch(arcn->type) {
 		case PAX_DIR:
-			res = mkdir(arcn->name, file_mode);
+			/*
+			 * If -h (or -L) was given in tar-mode, follow the
+			 * potential symlink chain before trying to create the
+			 * directory.
+			 */
+			if (strcmp(NM_TAR, argv0) == 0 && Lflag) {
+				while (lstat(nm, &sb) == 0 &&
+				    S_ISLNK(sb.st_mode)) {
+					len = readlink(nm, target,
+					    sizeof target - 1);
+					if (len == -1) {
+						syswarn(0, errno,
+						   "cannot follow symlink %s in chain for %s",
+						    nm, arcn->name);
+						res = -1;
+						goto badlink;
+					}
+					target[len] = '\0';
+					nm = target;
+				}
+			}
+			res = mkdir(nm, file_mode);
+
+badlink:
 			if (ign)
 				res = 0;
 			break;
 		case PAX_CHR:
 			file_mode |= S_IFCHR;
-			res = mknod(arcn->name, file_mode, arcn->sb.st_rdev);
+			res = mknod(nm, file_mode, arcn->sb.st_rdev);
 			break;
 		case PAX_BLK:
 			file_mode |= S_IFBLK;
-			res = mknod(arcn->name, file_mode, arcn->sb.st_rdev);
+			res = mknod(nm, file_mode, arcn->sb.st_rdev);
 			break;
 		case PAX_FIF:
-			res = mkfifo(arcn->name, file_mode);
+			res = mkfifo(nm, file_mode);
 			break;
 		case PAX_SCK:
 			/*
@@ -390,10 +429,10 @@ node_creat(ARCHD *arcn)
 			 */
 			tty_warn(0,
 			    "%s skipped. Sockets cannot be copied or extracted",
-			    arcn->name);
+			    nm);
 			return(-1);
 		case PAX_SLK:
-			res = symlink(arcn->ln_name, arcn->name);
+			res = symlink(arcn->ln_name, nm);
 			break;
 		case PAX_CTG:
 		case PAX_HLK:
@@ -404,7 +443,7 @@ node_creat(ARCHD *arcn)
 			 * we should never get here
 			 */
 			tty_warn(0, "%s has an unknown file type, skipping",
-				arcn->name);
+			    nm);
 			return(-1);
 		}
 
@@ -420,14 +459,14 @@ node_creat(ARCHD *arcn)
 		 * we failed to make the node
 		 */
 		oerrno = errno;
-		if ((ign = unlnk_exist(arcn->name, arcn->type)) < 0)
+		if ((ign = unlnk_exist(nm, arcn->type)) < 0)
 			return(-1);
 
 		if (++pass <= 1)
 			continue;
 
-		if (chk_path(arcn->name,arcn->sb.st_uid,arcn->sb.st_gid) < 0) {
-			syswarn(1, oerrno, "Could not create: %s", arcn->name);
+		if (nodirs || chk_path(nm,arcn->sb.st_uid,arcn->sb.st_gid) < 0) {
+			syswarn(1, oerrno, "Cannot create %s", nm);
 			return(-1);
 		}
 	}
@@ -435,12 +474,8 @@ node_creat(ARCHD *arcn)
 	/*
 	 * we were able to create the node. set uid/gid, modes and times
 	 */
-#if HAVE_LCHOWN
 	if (pids)
-#else
-	if (pids && arcn->type != PAX_SLK)
-#endif
-		res = set_ids(arcn->name, arcn->sb.st_uid, arcn->sb.st_gid);
+		res = set_ids(nm, arcn->sb.st_uid, arcn->sb.st_gid);
 	else
 		res = 0;
 
@@ -451,14 +486,10 @@ node_creat(ARCHD *arcn)
 	 */
 	if (!pmode || res)
 		arcn->sb.st_mode &= ~(SETBITS);
-#if HAVE_LCHMOD
 	if (pmode)
-#else
-	if (pmode && arcn->type != PAX_SLK)
-#endif
 		set_pmode(arcn->name, arcn->sb.st_mode);
 
-	if (arcn->type == PAX_DIR) {
+	if (arcn->type == PAX_DIR && strcmp(NM_CPIO, argv0) != 0) {
 		/*
 		 * Dirs must be processed again at end of extract to set times
 		 * and modes to agree with those stored in the archive. However
@@ -468,11 +499,11 @@ node_creat(ARCHD *arcn)
 		 * and modes will be fixed after the entire archive is read and
 		 * before pax exits.
 		 */
-		if (access(arcn->name, R_OK | W_OK | X_OK) < 0) {
-			if (lstat(arcn->name, &sb) < 0) {
-				syswarn(0, errno,"Could not access %s (stat)",
+		if (access(nm, R_OK | W_OK | X_OK) < 0) {
+			if (lstat(nm, &sb) < 0) {
+				syswarn(0, errno,"Cannot access %s (stat)",
 				    arcn->name);
-				set_pmode(arcn->name,file_mode | S_IRWXU);
+				set_pmode(nm,file_mode | S_IRWXU);
 			} else {
 				/*
 				 * We have to add rights to the dir, so we make
@@ -480,7 +511,7 @@ node_creat(ARCHD *arcn)
 				 * restored AS CREATED and not as stored if
 				 * pmode is not set.
 				 */
-				set_pmode(arcn->name,
+				set_pmode(nm,
 				    ((sb.st_mode & FILEBITS) | S_IRWXU));
 				if (!pmode)
 					arcn->sb.st_mode = sb.st_mode;
@@ -490,9 +521,9 @@ node_creat(ARCHD *arcn)
 			 * we have to force the mode to what was set here,
 			 * since we changed it from the default as created.
 			 */
-			add_dir(arcn->name, arcn->nlen, &(arcn->sb), 1);
+			add_dir(nm, arcn->nlen, &(arcn->sb), 1);
 		} else if (pmode || patime || pmtime)
-			add_dir(arcn->name, arcn->nlen, &(arcn->sb), 0);
+			add_dir(nm, arcn->nlen, &(arcn->sb), 0);
 	}
 
 #if HAVE_LUTIMES
@@ -542,7 +573,7 @@ unlnk_exist(char *name, int type)
 		if (rmdir(name) < 0) {
 			if (type == PAX_DIR)
 				return(1);
-			syswarn(1,errno,"Unable to remove directory %s", name);
+			syswarn(1, errno, "Cannot remove directory %s", name);
 			return(-1);
 		}
 		return(0);
@@ -552,7 +583,8 @@ unlnk_exist(char *name, int type)
 	 * try to get rid of all non-directory type nodes
 	 */
 	if (unlink(name) < 0) {
-		syswarn(1, errno, "Could not unlink %s", name);
+		(void)fflush(listf);
+		syswarn(1, errno, "Cannot unlink %s", name);
 		return(-1);
 	}
 	return(0);
@@ -562,7 +594,7 @@ unlnk_exist(char *name, int type)
  * chk_path()
  *	We were trying to create some kind of node in the file system and it
  *	failed. chk_path() makes sure the path up to the node exists and is
- *	writeable. When we have to create a directory that is missing along the
+ *	writable. When we have to create a directory that is missing along the
  *	path somewhere, the directory we create will be set to the same
  *	uid/gid as the file has (when uid and gid are being preserved).
  *	NOTE: this routine is a real performance loss. It is only used as a
@@ -685,7 +717,7 @@ set_ftime(char *fnm, time_t mtime, time_t atime, int frc)
 				tv[1].tv_sec = sb.st_mtime;
 #endif
 		} else
-			syswarn(0,errno,"Unable to obtain file stats %s", fnm);
+			syswarn(0, errno, "Cannot obtain file stats %s", fnm);
 	}
 
 	/*
@@ -711,15 +743,13 @@ set_ftime(char *fnm, time_t mtime, time_t atime, int frc)
 int
 set_ids(char *fnm, uid_t uid, gid_t gid)
 {
-#if HAVE_LCHOWN
-	if (lchown(fnm, uid, gid))
-#else
-	if (chown(fnm, uid, gid))
-#endif
-	{
-		syswarn(1, errno, "Unable to set file uid/gid of %s", fnm);
-		return(-1);
-	}
+	if (geteuid() == 0)
+		if (lchown(fnm, uid, gid)) {
+			(void)fflush(listf);
+			syswarn(1, errno, "Cannot set file uid/gid of %s",
+			    fnm);
+			return(-1);
+		}
 	return(0);
 }
 
@@ -732,12 +762,10 @@ void
 set_pmode(char *fnm, mode_t mode)
 {
 	mode &= ABITS;
-#if HAVE_LCHMOD
-	if (lchmod(fnm, mode))
-#else
-	if (chmod(fnm, mode))
-#endif
-		syswarn(1, errno, "Could not set permissions on %s", fnm);
+	if (lchmod(fnm, mode)) {
+		(void)fflush(listf);
+		syswarn(1, errno, "Cannot set permissions on %s", fnm);
+	}
 	return;
 }
 
@@ -751,7 +779,7 @@ set_chflags(char *fnm, u_int32_t flags)
 	
 #if 0
 	if (chflags(fnm, flags) < 0 && errno != EOPNOTSUPP)
-		syswarn(1, errno, "Could not set file flags on %s", fnm);
+		syswarn(1, errno, "Cannot set file flags on %s", fnm);
 #endif
 	return;
 }
@@ -812,6 +840,7 @@ file_write(int fd, char *str, int cnt, int *rem, int *isempt, int sz,
 	char *end;
 	int wcnt;
 	char *st = str;
+	char **strp;
 
 	/*
 	 * while we have data to process
@@ -854,7 +883,7 @@ file_write(int fd, char *str, int cnt, int *rem, int *isempt, int sz,
 				 */
 				if (fd > -1 &&
 				    lseek(fd, (off_t)wcnt, SEEK_CUR) < 0) {
-					syswarn(1,errno,"File seek on %s",
+					syswarn(1, errno, "File seek on %s",
 					    name);
 					return(-1);
 				}
@@ -870,17 +899,27 @@ file_write(int fd, char *str, int cnt, int *rem, int *isempt, int sz,
 		/*
 		 * have non-zero data in this file system block, have to write
 		 */
-		if (fd == -1) {
-			/* GNU hack */
-			if (gnu_hack_string)
+		switch (fd) {
+		case -1:
+			strp = &gnu_name_string;
+			break;
+		case -2:
+			strp = &gnu_link_string;
+			break;
+		default:
+			strp = NULL;
+			break;
+		}
+		if (strp) {
+			if (*strp)
 				err(1, "WARNING! Major Internal Error! GNU hack Failing!");
-			gnu_hack_string = malloc(wcnt + 1);
-			if (gnu_hack_string == NULL) {
+			*strp = malloc(wcnt + 1);
+			if (*strp == NULL) {
 				tty_warn(1, "Out of memory");
 				return(-1);
 			}
-			strncpy(gnu_hack_string, st, wcnt);
-			gnu_hack_string[wcnt] = 0;
+			strlcpy(*strp, st, wcnt);
+			break;
 		} else if (xwrite(fd, st, wcnt) != wcnt) {
 			syswarn(1, errno, "Failed write to file %s", name);
 			return(-1);
