@@ -1,4 +1,4 @@
-/*	$NetBSD: iso_var.h,v 1.13 2000/02/02 23:28:11 thorpej Exp $	*/
+/*	$NetBSD: iso_var.h,v 1.14 2000/03/23 07:03:31 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1988, 1991, 1993
@@ -59,6 +59,9 @@ SOFTWARE.
 ******************************************************************/
 #ifndef _NETISO_ISO_VAR_H_
 #define _NETISO_ISO_VAR_H_
+
+#include <sys/callout.h>
+
 /*
  * ARGO Project, Computer Sciences Dept., University of Wisconsin - Madison
  */
@@ -133,6 +136,9 @@ struct iso_ifaddrhead iso_ifaddr;	/* linked list of iso address ifaces */
 struct ifqueue  clnlintrq;	/* clnl packet input queue */
 struct afhash;
 struct llinfo_llc;
+
+extern struct callout snpac_age_ch;
+extern struct callout esis_config_ch;
 
 /* iso.c */
 int iso_addrmatch1 __P((struct iso_addr *, struct iso_addr *));

@@ -1,4 +1,4 @@
-/*	$NetBSD: esis.c,v 1.23 2000/02/26 16:10:31 itojun Exp $	*/
+/*	$NetBSD: esis.c,v 1.24 2000/03/23 07:03:31 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -67,6 +67,7 @@ SOFTWARE.
 
 #include <sys/param.h>
 #include <sys/systm.h>
+#include <sys/callout.h>
 #include <sys/mbuf.h>
 #include <sys/domain.h>
 #include <sys/protosw.h>
@@ -111,6 +112,8 @@ extern int      iso_systype;
 struct sockaddr_dl esis_dl = {sizeof(esis_dl), AF_LINK};
 extern char     all_es_snpa[], all_is_snpa[];
 
+struct callout	esis_config_ch;
+
 #define EXTEND_PACKET(m, mhdr, cp)\
 	if (((m)->m_next = m_getclr(M_DONTWAIT, MT_HEADER)) == NULL) {\
 		esis_stat.es_nomem++;\
@@ -140,8 +143,11 @@ esis_init()
 
 	LIST_INIT(&esis_pcb);
 
-	timeout(snpac_age, (caddr_t) 0, hz);
-	timeout(esis_config, (caddr_t) 0, hz);
+	callout_init(&snpac_age_ch);
+	callout_init(&esis_config_ch);
+
+	callout_reset(&snpac_age_ch, hz, snpac_age, NULL);
+	callout_reset(&esis_config_ch, hz, esis_config, NULL);
 
 	clnl_protox[ISO9542_ESIS].clnl_input = esis_input;
 	clnl_protox[ISO10589_ISIS].clnl_input = isis_input;
@@ -689,7 +695,7 @@ esis_ishinput(m, shp)
 				goto bad;
 			CTOH(buf[2], buf[3], newct);
 			if ((u_short) esis_config_time != newct) {
-				untimeout(esis_config, 0);
+				callout_stop(&esis_config_ch);
 				esis_config_time = newct;
 				esis_config(NULL);
 			}
@@ -833,7 +839,8 @@ esis_config(v)
 {
 	register struct ifnet *ifp;
 
-	timeout(esis_config, (caddr_t) 0, hz * esis_config_time);
+	callout_reset(&esis_config_ch, hz * esis_config_time,
+	    esis_config, NULL);
 
 	/*
 	 * Report configuration for each interface that - is UP - has

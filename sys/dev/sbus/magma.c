@@ -1,4 +1,4 @@
-/*	$NetBSD: magma.c,v 1.5 1999/11/21 15:01:51 pk Exp $	*/
+/*	$NetBSD: magma.c,v 1.6 2000/03/23 07:01:43 thorpej Exp $	*/
 /*
  * magma.c
  *
@@ -1430,6 +1430,9 @@ mbpp_attach(parent, dev, args)
 	for( port = 0 ; port < sc->ms_board->mb_npar ; port++ ) {
 		mp = &ms->ms_port[port];
 
+		callout_init(&mp->mp_timeout_ch);
+		callout_init(&mp->mp_start_ch);
+
 		if( sc->ms_ncd1190 )
 			mp->mp_cd1190 = &sc->ms_cd1190[port];
 		else
@@ -1627,7 +1630,8 @@ mbpp_rw(dev, uio)
 	 */
 	if( mp->mp_timeout > 0 ) {
 		SET(mp->mp_flags, MBPPF_TIMEOUT);
-		timeout(mbpp_timeout, mp, mp->mp_timeout);
+		callout_reset(&mp->mp_timeout_ch, mp->mp_timeout,
+		    mbpp_timeout, mp);
 	}
 
 	len = cnt = 0;
@@ -1673,7 +1677,8 @@ again:		/* goto bad */
 		if( mp->mp_delay > 0 ) {
 			s = splsoftclock();
 			SET(mp->mp_flags, MBPPF_DELAY);
-			timeout(mbpp_start, mp, mp->mp_delay);
+			callout_reset(&mp->mp_start_ch, mp->mp_delay,
+			    mbpp_start, mp);
 			error = tsleep(mp, PCATCH | PZERO, "mbppdelay", 0);
 			splx(s);
 			if( error ) break;
@@ -1695,11 +1700,11 @@ again:		/* goto bad */
 	 */
 	s = splsoftclock();
 	if( ISSET(mp->mp_flags, MBPPF_TIMEOUT) ) {
-		untimeout(mbpp_timeout, mp);
+		callout_stop(&mp->mp_timeout_ch);
 		CLR(mp->mp_flags, MBPPF_TIMEOUT);
 	}
 	if( ISSET(mp->mp_flags, MBPPF_DELAY) ) {
-		untimeout(mbpp_start, mp);
+		callout_stop(&mp->mp_start_ch);
 		CLR(mp->mp_flags, MBPPF_DELAY);
 	}
 	splx(s);

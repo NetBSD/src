@@ -1,4 +1,4 @@
-/*	$NetBSD: adv.c,v 1.15 2000/02/12 19:12:52 thorpej Exp $	*/
+/*	$NetBSD: adv.c,v 1.16 2000/03/23 07:01:28 thorpej Exp $	*/
 
 /*
  * Generic driver for the Advanced Systems Inc. Narrow SCSI controllers
@@ -40,6 +40,7 @@
 #include <sys/types.h>
 #include <sys/param.h>
 #include <sys/systm.h>
+#include <sys/callout.h>
 #include <sys/kernel.h>
 #include <sys/errno.h>
 #include <sys/ioctl.h>
@@ -235,6 +236,8 @@ adv_init_ccb(sc, ccb)
 {
 	int	hashnum, error;
 
+	callout_init(&ccb->ccb_watchdog);
+
 	/*
          * Create the DMA map for this CCB.
          */
@@ -345,18 +348,21 @@ adv_start_ccbs(sc)
 
 	while ((ccb = sc->sc_waiting_ccb.tqh_first) != NULL) {
 		if (ccb->flags & CCB_WATCHDOG)
-			untimeout(adv_watchdog, ccb);
+			callout_stop(&ccb->ccb_watchdog);
 
 		if (AscExeScsiQueue(sc, &ccb->scsiq) == ASC_BUSY) {
 			ccb->flags |= CCB_WATCHDOG;
-			timeout(adv_watchdog, ccb,
-				(ADV_WATCH_TIMEOUT * hz) / 1000);
+			callout_reset(&ccb->ccb_watchdog,
+			    (ADV_WATCH_TIMEOUT * hz) / 1000,
+			    adv_watchdog, ccb);
 			break;
 		}
 		TAILQ_REMOVE(&sc->sc_waiting_ccb, ccb, chain);
 
 		if ((ccb->xs->xs_control & XS_CTL_POLL) == 0)
-			timeout(adv_timeout, ccb, (ccb->timeout * hz) / 1000);
+			callout_reset(&ccb->xs->xs_callout,
+			    (ccb->timeout * hz) / 1000,
+			    adv_timeout, ccb);
 	}
 }
 
@@ -901,7 +907,7 @@ adv_narrow_isr_callback(sc, qdonep)
 			xs->sc_link->scsipi_scsi.target,
 			xs->sc_link->scsipi_scsi.lun, xs->cmd->opcode);
 #endif
-	untimeout(adv_timeout, ccb);
+	callout_stop(&ccb->xs->xs_callout);
 
 	/*
          * If we were a data transfer, unload the map that described

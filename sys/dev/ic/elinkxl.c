@@ -1,4 +1,4 @@
-/*	$NetBSD: elinkxl.c,v 1.29 2000/03/06 21:02:00 thorpej Exp $	*/
+/*	$NetBSD: elinkxl.c,v 1.30 2000/03/23 07:01:30 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -43,6 +43,7 @@
 
 #include <sys/param.h>
 #include <sys/systm.h>
+#include <sys/callout.h>
 #include <sys/kernel.h>
 #include <sys/mbuf.h>
 #include <sys/socket.h>
@@ -200,6 +201,8 @@ ex_config(sc)
 	bus_space_tag_t iot = sc->sc_iot;
 	bus_space_handle_t ioh = sc->sc_ioh;
 	int i, error, attach_stage;
+
+	callout_init(&sc->ex_mii_callout);
 
 	ex_reset(sc);
 
@@ -662,7 +665,7 @@ ex_init(sc)
 
 	splx(s);
 
-	timeout(ex_tick, sc, hz);
+	callout_reset(&sc->ex_mii_callout, hz, ex_tick, sc);
 }
 
 /*
@@ -1458,7 +1461,7 @@ ex_tick(arg)
 
 	splx(s);
 
-	timeout(ex_tick, sc, hz);
+	callout_reset(&sc->ex_mii_callout, hz, ex_tick, sc);
 }
 
 void
@@ -1526,7 +1529,7 @@ ex_stop(sc)
 
 	bus_space_write_2(iot, ioh, ELINK_COMMAND, C_INTR_LATCH);
 
-	untimeout(ex_tick, sc);
+	callout_stop(&sc->ex_mii_callout);
 	if (sc->ex_conf & EX_CONF_MII)
 		mii_down(&sc->ex_mii);
 
@@ -1588,7 +1591,7 @@ ex_detach(sc)
 	int i;
 
 	/* Unhook our tick handler. */
-	untimeout(ex_tick, sc);
+	callout_stop(&sc->ex_mii_callout);
 
 	if (sc->ex_conf & EX_CONF_MII) {
 		/* Detach all PHYs */

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ppp.c,v 1.56 1999/11/27 18:45:08 hannken Exp $	*/
+/*	$NetBSD: if_ppp.c,v 1.57 2000/03/23 07:03:25 thorpej Exp $	*/
 /*	Id: if_ppp.c,v 1.6 1997/03/04 03:33:00 paulus Exp 	*/
 
 /*
@@ -202,6 +202,7 @@ pppattach()
     for (sc = ppp_softc; i < NPPP; sc++) {
 	sc->sc_unit = i;	/* XXX */
 	sprintf(sc->sc_if.if_xname, "ppp%d", i++);
+	callout_init(&sc->sc_timo_ch);
 	sc->sc_if.if_softc = sc;
 	sc->sc_if.if_mtu = PPP_MTU;
 	sc->sc_if.if_flags = IFF_POINTOPOINT | IFF_MULTICAST;

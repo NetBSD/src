@@ -1,4 +1,4 @@
-/*	$NetBSD: if_spppsubr.c,v 1.6 1999/11/19 20:41:19 thorpej Exp $	 */
+/*	$NetBSD: if_spppsubr.c,v 1.7 2000/03/23 07:03:25 thorpej Exp $	 */
 
 /*
  * Synchronous PPP/Cisco link level subroutines.
@@ -248,6 +248,9 @@ struct cp {
 };
 
 static struct sppp *spppq;
+#if defined(__NetBSD__)
+static struct callout keepalive_ch;
+#endif
 #if defined(__FreeBSD__) && __FreeBSD__ >= 3
 static struct callout_handle keepalive_ch;
 #endif
@@ -811,11 +814,17 @@ sppp_attach(struct ifnet *ifp)
 	struct sppp *sp = (struct sppp*) ifp;
 
 	/* Initialize keepalive handler. */
-	if (! spppq)
+	if (! spppq) {
+#if defined(__NetBSD__)
+		callout_init(&keepalive_ch);
+		callout_reset(&keepalive_ch, hz * 10, sppp_keepalive, NULL);
+#else
 #if defined(__FreeBSD__) && __FreeBSD__ >= 3
 		keepalive_ch = 
 #endif
 		timeout(sppp_keepalive, 0, hz * 10);
+#endif /* __NetBSD__ */
+	}
 
 	/* Insert new entry into the keepalive list. */
 	sp->pp_next = spppq;
@@ -853,24 +862,38 @@ sppp_detach(struct ifnet *ifp)
 		}
 
 	/* Stop keepalive handler. */
-	if (! spppq)
+	if (! spppq) {
+#if defined(__NetBSD__)
+		callout_stop(&keepalive_ch);
+#else
 		untimeout(sppp_keepalive, 0
 #if defined(__FreeBSD__) && __FreeBSD__ >= 3
 		,keepalive_ch
 #endif
 		);
+#endif /* __NetBSD__ */
+	}
 
-	for (i = 0; i < IDX_COUNT; i++)
+	for (i = 0; i < IDX_COUNT; i++) {
+#if defined(__NetBSD__)
+		callout_stop(&sp->ch[i]);
+#else
 		untimeout((cps[i])->TO, (void *)sp
 #if defined(__FreeBSD__) && __FreeBSD__ >= 3
 		, sp->ch[i]
 #endif
 		);
+#endif /* __NetBSD__ */
+	}
+#if defined(__NetBSD__)
+	callout_stop(&sp->pap_my_to_ch);
+#else
 	untimeout(sppp_pap_my_TO, (void *)sp
 #if defined(__FreeBSD__) && __FreeBSD__ >= 3
 	, sp->pap_my_to_ch
 #endif
 	);
+#endif /* __NetBSD__ */
 }
 
 /*
@@ -1764,10 +1787,15 @@ sppp_to_event(const struct cp *cp, struct sppp *sp)
 		case STATE_STOPPING:
 			sppp_cp_send(sp, cp->proto, TERM_REQ, ++sp->pp_seq,
 				     0, 0);
+#if defined(__NetBSD__)
+			callout_reset(&sp->ch[cp->protoidx], sp->lcp.timeout,
+			    cp->TO, sp);
+#else
 #if defined(__FreeBSD__) && __FreeBSD__ >= 3
 			sp->ch[cp->protoidx] =
 #endif
 			timeout(cp->TO, (void *)sp, sp->lcp.timeout);
+#endif /* __NetBSD__ */
 			break;
 		case STATE_REQ_SENT:
 		case STATE_ACK_RCVD:
@@ -1777,10 +1805,15 @@ sppp_to_event(const struct cp *cp, struct sppp *sp)
 			break;
 		case STATE_ACK_SENT:
 			(cp->scr)(sp);
+#if defined(__NetBSD__)
+			callout_reset(&sp->ch[cp->protoidx], sp->lcp.timeout,
+			    cp->TO, sp);
+#else
 #if defined(__FreeBSD__) && __FreeBSD__ >= 3
 			sp->ch[cp->protoidx] = 
 #endif
 			timeout(cp->TO, (void *)sp, sp->lcp.timeout);
+#endif /* __NetBSD__ */
 			break;
 		}
 
@@ -1796,11 +1829,15 @@ sppp_cp_change_state(const struct cp *cp, struct sppp *sp, int newstate)
 {
 	sp->state[cp->protoidx] = newstate;
 
+#if defined(__NetBSD__)
+	callout_stop(&sp->ch[cp->protoidx]);
+#else
 	untimeout(cp->TO, (void *)sp
 #if defined(__FreeBSD__) && __FreeBSD__ >= 3
 	, sp->ch[cp->protoidx]
 #endif
 	);
+#endif /* __NetBSD__ */
 	switch (newstate) {
 	case STATE_INITIAL:
 	case STATE_STARTING:
@@ -1813,10 +1850,15 @@ sppp_cp_change_state(const struct cp *cp, struct sppp *sp, int newstate)
 	case STATE_REQ_SENT:
 	case STATE_ACK_RCVD:
 	case STATE_ACK_SENT:
+#if defined(__NetBSD__)
+		callout_reset(&sp->ch[cp->protoidx], sp->lcp.timeout,
+		    cp->TO, sp);
+#else
 #if defined(__FreeBSD__) && __FreeBSD__ >= 3
 		sp->ch[cp->protoidx]  =
 #endif
 		timeout(cp->TO, (void *)sp, sp->lcp.timeout);
+#endif /* __NetBSD__ */
 		break;
 	}
 }
@@ -1848,6 +1890,9 @@ sppp_lcp_init(struct sppp *sp)
 	sp->lcp.max_terminate = 2;
 	sp->lcp.max_configure = 10;
 	sp->lcp.max_failure = 10;
+#if defined(__NetBSD__)
+	callout_init(&sp->ch[IDX_LCP]);
+#endif
 #if defined(__FreeBSD__) && __FreeBSD__ >= 3
 	callout_handle_init(&sp->ch[IDX_LCP]);
 #endif
@@ -2519,6 +2564,9 @@ sppp_ipcp_init(struct sppp *sp)
 	sp->ipcp.flags = 0;
 	sp->state[IDX_IPCP] = STATE_INITIAL;
 	sp->fail_counter[IDX_IPCP] = 0;
+#if defined(__NetBSD__)
+	callout_init(&sp->ch[IDX_IPCP]);
+#endif
 #if defined(__FreeBSD__) && __FreeBSD__ >= 3
 	callout_handle_init(&sp->ch[IDX_IPCP]);
 #endif
@@ -3269,6 +3317,9 @@ sppp_chap_init(struct sppp *sp)
 	/* Chap doesn't have STATE_INITIAL at all. */
 	sp->state[IDX_CHAP] = STATE_CLOSED;
 	sp->fail_counter[IDX_CHAP] = 0;
+#if defined(__NetBSD__)
+	callout_init(&sp->ch[IDX_CHAP]);
+#endif
 #if defined(__FreeBSD__) && __FreeBSD__ >= 3
 	callout_handle_init(&sp->ch[IDX_CHAP]);
 #endif
@@ -3355,10 +3406,14 @@ sppp_chap_tlu(struct sppp *sp)
 		 */
 		i = 300 + ((unsigned)(random() & 0xff00) >> 7);
 
+#if defined(__NetBSD__)
+		callout_reset(&sp->ch[IDX_CHAP], i * hz, chap.TO, sp);
+#else
 #if defined(__FreeBSD__) && __FreeBSD__ >= 3
 		sp->ch[IDX_CHAP] =
 #endif
 		timeout(chap.TO, (void *)sp, i * hz);
+#endif /* __NetBSD__ */
 	}
 
 	if (debug) {
@@ -3402,11 +3457,15 @@ sppp_chap_tld(struct sppp *sp)
 
 	if (debug)
 		log(LOG_DEBUG, SPP_FMT "chap tld\n", SPP_ARGS(ifp));
+#if defined(__NetBSD__)
+	callout_stop(&sp->ch[IDX_CHAP]);
+#else
 	untimeout(chap.TO, (void *)sp
 #if defined(__FreeBSD__) && __FreeBSD__ >= 3
 	, sp->ch[IDX_CHAP]
 #endif
 	);
+#endif /* __NetBSD__ */
 	sp->lcp.protos &= ~(1 << IDX_CHAP);
 
 	lcp.Close(sp);
@@ -3540,11 +3599,15 @@ sppp_pap_input(struct sppp *sp, struct mbuf *m)
 
 	/* ack and nak are his authproto */
 	case PAP_ACK:
+#if defined(__NetBSD__)
+		callout_stop(&sp->pap_my_to_ch);
+#else
 		untimeout(sppp_pap_my_TO, (void *)sp
 #if defined(__FreeBSD__) && __FreeBSD__ >= 3
 		, sp->pap_my_to_ch
 #endif
 		);
+#endif /* __NetBSD__ */
 		if (debug) {
 			log(LOG_DEBUG, SPP_FMT "pap success",
 			    SPP_ARGS(ifp));
@@ -3573,11 +3636,15 @@ sppp_pap_input(struct sppp *sp, struct mbuf *m)
 		break;
 
 	case PAP_NAK:
+#if defined(__NetBSD__)
+		callout_stop(&sp->pap_my_to_ch);
+#else
 		untimeout(sppp_pap_my_TO, (void *)sp
 #if defined(__FreeBSD__) && __FreeBSD__ >= 3
 		, sp->pap_my_to_ch
 #endif
 		);
+#endif /* __NetBSD__ */
 		if (debug) {
 			log(LOG_INFO, SPP_FMT "pap failure",
 			    SPP_ARGS(ifp));
@@ -3615,6 +3682,10 @@ sppp_pap_init(struct sppp *sp)
 	/* PAP doesn't have STATE_INITIAL at all. */
 	sp->state[IDX_PAP] = STATE_CLOSED;
 	sp->fail_counter[IDX_PAP] = 0;
+#if defined(__NetBSD__)
+	callout_init(&sp->ch[IDX_PAP]);
+	callout_init(&sp->pap_my_to_ch);
+#endif
 #if defined(__FreeBSD__) && __FreeBSD__ >= 3
 	callout_handle_init(&sp->ch[IDX_PAP]);
 	callout_handle_init(&sp->pap_my_to_ch);
@@ -3633,10 +3704,15 @@ sppp_pap_open(struct sppp *sp)
 	if (sp->myauth.proto == PPP_PAP) {
 		/* we are peer, send a request, and start a timer */
 		pap.scr(sp);
+#if defined(__NetBSD__)
+		callout_reset(&sp->pap_my_to_ch, sp->lcp.timeout,
+		    sppp_pap_my_TO, sp);
+#else
 #if defined(__FreeBSD__) && __FreeBSD__ >= 3
 		sp->pap_my_to_ch =
 #endif
 		timeout(sppp_pap_my_TO, (void *)sp, sp->lcp.timeout);
+#endif /* __NetBSD__ */
 	}
 }
 
@@ -3739,16 +3815,25 @@ sppp_pap_tld(struct sppp *sp)
 
 	if (debug)
 		log(LOG_DEBUG, SPP_FMT "pap tld\n", SPP_ARGS(ifp));
+#if defined(__NetBSD__)
+	callout_stop(&sp->ch[IDX_PAP]);
+#else
 	untimeout(pap.TO, (void *)sp
 #if defined(__FreeBSD__) && __FreeBSD__ >= 3
 	, sp->ch[IDX_PAP]
 #endif
 	);
+#endif /* __NetBSD__ */
+
+#if defined(__NetBSD__)
+	callout_stop(&sp->pap_my_to_ch);
+#else
 	untimeout(sppp_pap_my_TO, (void *)sp
 #if defined(__FreeBSD__) && __FreeBSD__ >= 3
 	, sp->pap_my_to_ch
 #endif
 	);
+#endif /* __NetBSD__ */
 	sp->lcp.protos &= ~(1 << IDX_PAP);
 
 	lcp.Close(sp);
@@ -3923,10 +4008,14 @@ sppp_keepalive(void *dummy)
 		}
 	}
 	splx(s);
+#if defined(__NetBSD__)
+	callout_reset(&keepalive_ch, hz * 10, sppp_keepalive, NULL);
+#else
 #if defined(__FreeBSD__) && __FreeBSD__ >= 3
 	keepalive_ch =
 #endif
 	timeout(sppp_keepalive, 0, hz * 10);
+#endif /* __NetBSD__ */
 }
 
 /*

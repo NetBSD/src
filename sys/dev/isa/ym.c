@@ -1,4 +1,4 @@
-/*	$NetBSD: ym.c,v 1.13 1999/12/27 03:21:56 itohy Exp $	*/
+/*	$NetBSD: ym.c,v 1.14 2000/03/23 07:01:36 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -203,6 +203,8 @@ ym_attach(sc)
 	static struct ad1848_volume vol_dac    = {YM_VOL_DAC,    YM_VOL_DAC};
 	static struct ad1848_volume vol_opl3   = {YM_VOL_OPL3,   YM_VOL_OPL3};
 	struct audio_attach_args arg;
+
+	callout_init(&sc->sc_powerdown_ch);
 
 	/* Mute the output to reduce noise during initialization. */
 	ym_mute(sc, SA3_VOL_L, 1);
@@ -1027,7 +1029,7 @@ ym_power_hook(why, v)
 		/*
 		 * suspending...
 		 */
-		untimeout(ym_powerdown_blocks, sc);
+		callout_stop(&sc->sc_powerdown_ch);
 		if (sc->sc_turning_off)
 			ym_powerdown_blocks(sc);
 
@@ -1170,7 +1172,7 @@ ym_chip_powerup(sc, nosleep)
 	ym_mute(sc, SA3_VOL_R, sc->master_mute);
 }
 
-/* timeout() handler for power-down */
+/* callout handler for power-down */
 void
 ym_powerdown_blocks(arg)
 	void *arg;
@@ -1250,12 +1252,12 @@ ym_power_ctl(sc, parts, onoff)
 	}
 	sc->sc_in_power_ctl |= YM_POWER_CTL_INUSE;
 
-	/* Defeat timeout(9) interrupts. */
+	/* Defeat softclock interrupts. */
 	s = splsoftclock();
 
 	/* If ON requested to parts which are scheduled to OFF, cancel it. */
 	if (onoff && sc->sc_turning_off && (sc->sc_turning_off &= ~parts) == 0)
-		untimeout(ym_powerdown_blocks, sc);
+		callout_stop(&sc->sc_powerdown_ch);
 
 	if (!onoff && sc->sc_turning_off)
 		parts &= ~sc->sc_turning_off;
@@ -1265,7 +1267,7 @@ ym_power_ctl(sc, parts, onoff)
 
 	/* Cancel previous timeout if needed. */
 	if (parts != 0 && sc->sc_turning_off)
-		untimeout(ym_powerdown_blocks, sc);
+		callout_stop(&sc->sc_powerdown_ch);
 
 	(void) splx(s);
 
@@ -1303,7 +1305,8 @@ ym_power_ctl(sc, parts, onoff)
 
 	/* Schedule turning off. */
 	if (sc->sc_pow_mode != YM_POWER_NOSAVE && sc->sc_turning_off)
-		timeout(ym_powerdown_blocks, sc, hz * sc->sc_pow_timeout);
+		callout_reset(&sc->sc_powerdown_ch, hz * sc->sc_pow_timeout,
+		    ym_powerdown_blocks, sc);
 
 unlock:
 	if (sc->sc_in_power_ctl & YM_POWER_CTL_WANTED)

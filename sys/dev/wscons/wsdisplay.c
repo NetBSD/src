@@ -1,4 +1,4 @@
-/* $NetBSD: wsdisplay.c,v 1.35 2000/03/06 21:37:16 thorpej Exp $ */
+/* $NetBSD: wsdisplay.c,v 1.36 2000/03/23 07:01:47 thorpej Exp $ */
 
 /*
  * Copyright (c) 1996, 1997 Christopher G. Demetriou.  All rights reserved.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wsdisplay.c,v 1.35 2000/03/06 21:37:16 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wsdisplay.c,v 1.36 2000/03/23 07:01:47 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/conf.h>
@@ -1220,7 +1220,8 @@ wsdisplaystart(tp)
 	/* Come back if there's more to do */
 	if (tp->t_outq.c_cc) {
 		tp->t_state |= TS_TIMEOUT;
-		timeout(ttrstrt, tp, (hz > 128) ? (hz / 128) : 1);
+		callout_reset(&tp->t_rstrt_ch, (hz > 128) ? (hz / 128) : 1,
+		    ttrstrt, tp);
 	}
 	if (tp->t_outq.c_cc <= tp->t_lowat) {
 		if (tp->t_state&TS_ASLEEP) {
@@ -1701,7 +1702,8 @@ wsdisplay_kbdholdscreen(dev, hold)
 		scr->scr_hold_screen = 1;
 	else {
 		scr->scr_hold_screen = 0;
-		timeout(ttrstrt, scr->scr_tty, 0);	/* "immediate" */
+		callout_reset(&scr->scr_tty->t_rstrt_ch, 0,
+		    ttrstrt, scr->scr_tty);		/* "immediate" */
 	}
 }
 

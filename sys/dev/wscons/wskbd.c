@@ -1,4 +1,4 @@
-/* $NetBSD: wskbd.c,v 1.37 2000/03/06 21:37:16 thorpej Exp $ */
+/* $NetBSD: wskbd.c,v 1.38 2000/03/23 07:01:47 thorpej Exp $ */
 
 /*
  * Copyright (c) 1996, 1997 Christopher G. Demetriou.  All rights reserved.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wskbd.c,v 1.37 2000/03/06 21:37:16 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wskbd.c,v 1.38 2000/03/23 07:01:47 thorpej Exp $");
 
 /*
  * Copyright (c) 1992, 1993
@@ -95,6 +95,7 @@ __KERNEL_RCSID(0, "$NetBSD: wskbd.c,v 1.37 2000/03/06 21:37:16 thorpej Exp $");
 #include <sys/proc.h>
 #include <sys/syslog.h>
 #include <sys/systm.h>
+#include <sys/callout.h>
 #include <sys/malloc.h>
 #include <sys/tty.h>
 #include <sys/signalvar.h>
@@ -166,6 +167,7 @@ struct wskbd_softc {
 	struct wskbd_keyrepeat_data sc_keyrepeat_data;
 
 	int	sc_repeating;		/* we've called timeout() */
+	struct callout sc_repeat_ch;
 
 	int	sc_translating;		/* xlate to chars for emulation */
 
@@ -377,6 +379,8 @@ wskbd_attach(parent, self, aux)
 		wskbd_update_layout(sc->id, ap->keymap->layout);
 	}
 
+	callout_init(&sc->sc_repeat_ch);
+
 	sc->id->t_sc = sc;
 
 	sc->sc_accessops = ap->accessops;
@@ -479,8 +483,8 @@ wskbd_repeat(v)
 			wsdisplay_kbdinput(sc->sc_displaydv,
 					   sc->id->t_symbols[i]);
 	}
-	timeout(wskbd_repeat, sc,
-		(hz * sc->sc_keyrepeat_data.delN) / 1000);
+	callout_reset(&sc->sc_repeat_ch,
+	    (hz * sc->sc_keyrepeat_data.delN) / 1000, wskbd_repeat, sc);
 	splx(s);
 }
 #endif
@@ -565,7 +569,7 @@ wskbd_input(dev, type, value)
 #if NWSDISPLAY > 0
 	if (sc->sc_repeating) {
 		sc->sc_repeating = 0;
-		untimeout(wskbd_repeat, sc);
+		callout_stop(&sc->sc_repeat_ch);
 	}
 
 	/*
@@ -582,8 +586,9 @@ wskbd_input(dev, type, value)
 			}
 
 			sc->sc_repeating = num;
-			timeout(wskbd_repeat, sc,
-				(hz * sc->sc_keyrepeat_data.del1) / 1000);
+			callout_reset(&sc->sc_repeat_ch,
+			    (hz * sc->sc_keyrepeat_data.del1) / 1000,
+			    wskbd_repeat, sc);
 		}
 		return;
 	}
@@ -1029,7 +1034,7 @@ getkeyrepeat:
 #if NWSDISPLAY > 0
 		if (sc->sc_repeating) {
 			sc->sc_repeating = 0;
-			untimeout(wskbd_repeat, sc);
+			callout_stop(&sc->sc_repeat_ch);
 		}
 #endif
 		splx(s);

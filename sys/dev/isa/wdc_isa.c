@@ -1,4 +1,4 @@
-/*	$NetBSD: wdc_isa.c,v 1.17 2000/02/08 18:40:51 thorpej Exp $ */
+/*	$NetBSD: wdc_isa.c,v 1.18 2000/03/23 07:01:35 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -85,9 +85,11 @@ wdc_isa_probe(parent, match, aux)
 	struct cfdata *match;
 	void *aux;
 {
-	struct channel_softc ch = { 0 };
+	struct channel_softc ch;
 	struct isa_attach_args *ia = aux;
 	int result = 0;
+
+	memset(&ch, 0, sizeof(ch));
 
 	ch.cmd_iot = ia->ia_iot;
 	if (bus_space_map(ch.cmd_iot, ia->ia_iobase, WDC_ISA_REG_NPORTS, 0,

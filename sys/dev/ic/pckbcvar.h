@@ -1,4 +1,4 @@
-/* $NetBSD: pckbcvar.h,v 1.1 1999/12/03 22:48:25 thorpej Exp $ */
+/* $NetBSD: pckbcvar.h,v 1.2 2000/03/23 07:01:32 thorpej Exp $ */
 
 /*
  * Copyright (c) 1998
@@ -35,6 +35,8 @@
 #ifndef _DEV_IC_PCKBCVAR_H_
 #define _DEV_IC_PCKBCVAR_H_
 
+#include <sys/callout.h>
+
 typedef void *pckbc_tag_t;
 typedef int pckbc_slot_t;
 #define	PCKBC_KBD_SLOT	0
@@ -55,6 +57,8 @@ struct pckbc_internal {
 	struct pckbc_slotdata *t_slotdata[PCKBC_NSLOTS];
 
 	struct pckbc_softc *t_sc; /* back pointer */
+
+	struct callout t_cleanup;
 };
 
 typedef void (*pckbc_inputfcn) __P((void *, int));

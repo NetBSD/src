@@ -1,4 +1,4 @@
-/*	$NetBSD: tp_pcb.h,v 1.11 1998/03/01 02:24:47 fvdl Exp $	*/
+/*	$NetBSD: tp_pcb.h,v 1.12 2000/03/23 07:03:31 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -261,7 +261,7 @@ struct tp_pcb {
 	int		tp_rtv; /* max round-trip time variance */
 	int		tp_rtt; /* smoothed round-trip time */
 	SeqNum		tp_rttseq;	/* packet being timed */
-	int		tp_rttemit;	/* when emitted, in ticks */
+	u_int64_t	tp_rttemit;	/* when emitted, in ticks */
 	int		tp_idle;/* last activity, in ticks */
 	short		tp_rxtcur;	/* current retransmit value */
 	short		tp_rxtshift;	/* log(2) of rexmt exp. backoff */

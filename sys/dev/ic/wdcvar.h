@@ -1,4 +1,4 @@
-/*	$NetBSD: wdcvar.h,v 1.21 2000/03/20 22:53:36 enami Exp $	*/
+/*	$NetBSD: wdcvar.h,v 1.22 2000/03/23 07:01:33 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -40,6 +40,8 @@
 #include <dev/scsipi/scsipi_all.h>
 #include <dev/scsipi/scsipiconf.h>
 
+#include <sys/callout.h>
+
 #define	WAITTIME    (10 * hz)    /* time to wait for a completion */
 	/* this is a lot for hard drives, but not for cdroms */
 
@@ -48,6 +50,8 @@ struct channel_queue {  /* per channel queue (may be shared) */
 };
 
 struct channel_softc { /* Per channel data */
+	/* Out timeout callout */
+	struct callout ch_callout;
 	/* Our location */
 	int channel;
 	/* Our controller's softc */

@@ -1,4 +1,4 @@
-/*	$NetBSD: usb_port.h,v 1.21 2000/02/02 07:34:00 augustss Exp $	*/
+/*	$NetBSD: usb_port.h,v 1.22 2000/03/23 07:01:46 thorpej Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/usb_port.h,v 1.21 1999/11/17 22:33:47 n_hibma Exp $	*/
 
 /*
@@ -80,8 +80,8 @@ typedef struct device *device_ptr_t;
 		u_int offs; \
 	} usb_dma_t
 
-#define usb_timeout(f, d, t, h) timeout((f), (d), (t))
-#define usb_untimeout(f, d, h) untimeout((f), (d))
+#define	usb_timeout(f, d, t, h)	callout_reset(&(h), (t), (f), (d))
+#define	usb_untimeout(f, d, h)	callout_stop(&(h))
 
 #define logprintf printf
 

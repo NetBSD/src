@@ -1,4 +1,4 @@
-/*	$NetBSD: nd6_nbr.c,v 1.19 2000/03/16 02:53:45 thorpej Exp $	*/
+/*	$NetBSD: nd6_nbr.c,v 1.20 2000/03/23 07:03:31 thorpej Exp $	*/
 /*	$KAME: nd6_nbr.c,v 1.28 2000/02/26 06:53:11 itojun Exp $	*/
 
 /*
@@ -1036,8 +1036,9 @@ nd6_dad_start(ifa, tick)
 	dp->dad_ns_ocount = dp->dad_ns_tcount = 0;
 	if (!tick) {
 		nd6_dad_ns_output(dp, ifa);
-		timeout((void (*) __P((void *)))nd6_dad_timer, (void *)ifa,
-			nd_ifinfo[ifa->ifa_ifp->if_index].retrans * hz / 1000);
+		callout_reset(&ia->ia6_dad_ch,
+		    nd_ifinfo[ifa->ifa_ifp->if_index].retrans * hz / 1000,
+		    (void (*) __P((void *)))nd6_dad_timer, ifa);
 	} else {
 		int ntick;
 
@@ -1046,8 +1047,8 @@ nd6_dad_start(ifa, tick)
 		else
 			ntick = *tick + random() % (hz / 2);
 		*tick = ntick;
-		timeout((void (*) __P((void *)))nd6_dad_timer, (void *)ifa,
-			ntick);
+		callout_reset(&ia->ia6_dad_ch, ntick,
+		    (void (*) __P((void *)))nd6_dad_timer, ifa);
 	}
 }
 
@@ -1104,8 +1105,9 @@ nd6_dad_timer(ifa)
 		 * We have more NS to go.  Send NS packet for DAD.
 		 */
 		nd6_dad_ns_output(dp, ifa);
-		timeout((void (*) __P((void *)))nd6_dad_timer, (void *)ifa,
-			nd_ifinfo[ifa->ifa_ifp->if_index].retrans * hz / 1000);
+		callout_reset(&ia->ia6_dad_ch,
+		    nd_ifinfo[ifa->ifa_ifp->if_index].retrans * hz / 1000,
+		    (void (*) __P((void *)))nd6_dad_timer, ifa);
 	} else {
 		/*
 		 * We have transmitted sufficient number of DAD packets.
@@ -1204,7 +1206,7 @@ nd6_dad_duplicated(ifa)
 	ia->ia6_flags |= IN6_IFF_DUPLICATED;
 
 	/* We are done with DAD, with duplicated address found. (failure) */
-	untimeout((void (*) __P((void *)))nd6_dad_timer, (void *)ifa);
+	callout_stop(&ia->ia6_dad_ch);
 
 	log(LOG_ERR, "%s: DAD complete for %s - duplicate found\n",
 	    if_name(ifa->ifa_ifp), ip6_sprintf(&ia->ia_addr.sin6_addr));

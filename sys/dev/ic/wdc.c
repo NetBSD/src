@@ -1,4 +1,4 @@
-/*	$NetBSD: wdc.c,v 1.80 2000/03/20 22:53:36 enami Exp $ */
+/*	$NetBSD: wdc.c,v 1.81 2000/03/23 07:01:33 thorpej Exp $ */
 
 
 /*
@@ -280,6 +280,8 @@ wdcattach(chp)
 	struct ataparams params;
 	static int inited = 0;
 
+	callout_init(&chp->ch_callout);
+
 	if ((error = wdc_addref(chp)) != 0) {
 		printf("%s: unable to enable controller\n",
 		    chp->wdc->sc_dev.dv_xname);
@@ -292,7 +294,6 @@ wdcattach(chp)
 
 	/* initialise global data */
 	if (inited == 0) {
-		
 		/* Initialize the wdc_xfer pool. */
 		pool_init(&wdc_xfer_pool, sizeof(struct wdc_xfer), 0,
 		    0, 0, "wdcspl", 0, NULL, NULL, M_DEVBUF);
@@ -887,7 +888,7 @@ wdctimeout(arg)
 		 * in case it will miss another irq while in this transfer
 		 * We arbitray chose it to be 1s
 		 */
-		timeout(wdctimeout, chp, hz);
+		callout_reset(&chp->ch_callout, hz, wdctimeout, chp);
 		xfer->c_flags |= C_TIMEOU;
 		chp->ch_flags &= ~WDCF_IRQ_WAIT;
 		xfer->c_intr(chp, xfer, 1);
@@ -1241,7 +1242,8 @@ __wdccommand_start(chp, xfer)
 	    wdc_c->r_sector, wdc_c->r_count, wdc_c->r_precomp);
 	if ((wdc_c->flags & AT_POLL) == 0) {
 		chp->ch_flags |= WDCF_IRQ_WAIT; /* wait for interrupt */
-		timeout(wdctimeout, chp, wdc_c->timeout / 1000 * hz);
+		callout_reset(&chp->ch_callout, wdc_c->timeout / 1000 * hz,
+		    wdctimeout, chp);
 		return;
 	}
 	/*
@@ -1307,7 +1309,7 @@ __wdccommand_done(chp, xfer)
 	WDCDEBUG_PRINT(("__wdccommand_done %s:%d:%d\n",
 	    chp->wdc->sc_dev.dv_xname, chp->channel, xfer->drive), DEBUG_FUNCS);
 
-	untimeout(wdctimeout, chp);
+	callout_stop(&chp->ch_callout);
 
 	if (chp->ch_status & WDCS_DWF)
 		wdc_c->flags |= AT_DF;

@@ -1,4 +1,4 @@
-/* $NetBSD: isp_netbsd.h,v 1.22 2000/02/19 01:51:21 mjacob Exp $ */
+/* $NetBSD: isp_netbsd.h,v 1.23 2000/03/23 07:01:31 thorpej Exp $ */
 /*
  * NetBSD Specific definitions for the Qlogic ISP Host Adapter
  * Matthew Jacob <mjacob@nas.nasa.gov>
@@ -75,6 +75,8 @@ struct isposinfo {
 #define	seed		un._seed
 #define	discovered	un._discovered
 	TAILQ_HEAD(, scsipi_xfer) waitq; 
+	struct callout _watchdog;
+	struct callout _restart;
 };
 
 #define	MAXISPREQUEST	256

@@ -1,4 +1,4 @@
-/*	$NetBSD: tulip.c,v 1.55 2000/03/20 07:52:58 thorpej Exp $	*/
+/*	$NetBSD: tulip.c,v 1.56 2000/03/23 07:01:33 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2000 The NetBSD Foundation, Inc.
@@ -48,6 +48,7 @@
 
 #include <sys/param.h>
 #include <sys/systm.h> 
+#include <sys/callout.h>
 #include <sys/mbuf.h>   
 #include <sys/malloc.h>
 #include <sys/kernel.h>
@@ -233,6 +234,9 @@ tlp_attach(sc, enaddr)
 {
 	struct ifnet *ifp = &sc->sc_ethercom.ec_if;
 	int i, error;
+
+	callout_init(&sc->sc_nway_callout);
+	callout_init(&sc->sc_tick_callout);
 
 	/*
 	 * NOTE: WE EXPECT THE FRONT-END TO INITIALIZE sc_regshift!
@@ -583,7 +587,7 @@ tlp_detach(sc)
 
 	/* Unhook our tick handler. */
 	if (sc->sc_tick)
-		untimeout(sc->sc_tick, sc);
+		callout_stop(&sc->sc_tick_callout);
 
 	if (sc->sc_flags & TULIPF_HAS_MII) {
 		/* Detach all PHYs */
@@ -1843,7 +1847,7 @@ tlp_init(sc)
 
 	if (sc->sc_tick != NULL) {
 		/* Start the one second clock. */
-		timeout(sc->sc_tick, sc, hz);
+		callout_reset(&sc->sc_tick_callout, hz, sc->sc_tick, sc);
 	}
 
 	/*
@@ -1959,7 +1963,7 @@ tlp_stop(sc, drain)
 
 	if (sc->sc_tick != NULL) {
 		/* Stop the one second clock. */
-		untimeout(sc->sc_tick, sc);
+		callout_stop(&sc->sc_tick_callout);
 	}
 
 	if (sc->sc_flags & TULIPF_HAS_MII) {
@@ -2993,7 +2997,7 @@ tlp_mii_tick(arg)
 	mii_tick(&sc->sc_mii);
 	splx(s);
 
-	timeout(sc->sc_tick, sc, hz);
+	callout_reset(&sc->sc_tick_callout, hz, sc->sc_tick, sc);
 }
 
 /*
@@ -5062,7 +5066,7 @@ tlp_pnic_nway_tick(arg)
 	tlp_pnic_nway_service(sc, MII_TICK);
 	splx(s);
 
-	timeout(tlp_pnic_nway_tick, sc, hz);
+	callout_reset(&sc->sc_tick_callout, hz, tlp_pnic_nway_tick, sc);
 }
 
 /*
@@ -5198,7 +5202,8 @@ tlp_pnic_nway_auto(sc, waitfor)
 	 */
 	if ((sc->sc_flags & TULIPF_DOINGAUTO) == 0) {
 		sc->sc_flags |= TULIPF_DOINGAUTO;
-		timeout(tlp_pnic_nway_auto_timeout, sc, hz >> 1);
+		callout_reset(&sc->sc_nway_callout, hz >> 1,
+		    tlp_pnic_nway_auto_timeout, sc);
 	}
 	return (EJUSTRETURN);
 }

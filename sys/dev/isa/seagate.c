@@ -1,4 +1,4 @@
-/*	$NetBSD: seagate.c,v 1.34 1999/09/30 23:04:41 thorpej Exp $	*/
+/*	$NetBSD: seagate.c,v 1.35 2000/03/23 07:01:35 thorpej Exp $	*/
 
 /*
  * ST01/02, Future Domain TMC-885, TMC-950 SCSI driver
@@ -599,7 +599,8 @@ sea_scsi_cmd(xs)
 	 * Usually return SUCCESSFULLY QUEUED
 	 */
 	if ((flags & XS_CTL_POLL) == 0) {
-		timeout(sea_timeout, scb, (xs->timeout * hz) / 1000);
+		callout_reset(&scb->xs->xs_callout, (xs->timeout * hz) / 1000,
+		    sea_timeout, scb);
 		splx(s);
 		return SUCCESSFULLY_QUEUED;
 	}
@@ -839,7 +840,8 @@ sea_timeout(arg)
 		sea_abort(sea, scb);
 		/* 2 secs for the abort */
 		if ((xs->xs_control & XS_CTL_POLL) == 0)
-			timeout(sea_timeout, scb, 2 * hz);
+			callout_reset(&scb->xs->xs_callout, 2 * hz,
+			    sea_timeout, scb);
 	}
 
 	splx(s);
@@ -1194,7 +1196,7 @@ sea_done(sea, scb)
 {
 	struct scsipi_xfer *xs = scb->xs;
 
-	untimeout(sea_timeout, scb);
+	callout_stop(&scb->xs->xs_callout);
 
 	xs->resid = scb->datalen;
 

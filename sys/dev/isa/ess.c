@@ -1,4 +1,4 @@
-/*	$NetBSD: ess.c,v 1.50 2000/02/07 22:07:31 thorpej Exp $	*/
+/*	$NetBSD: ess.c,v 1.51 2000/03/23 07:01:34 thorpej Exp $	*/
 
 /*
  * Copyright 1997
@@ -776,6 +776,10 @@ ess_setup_sc(sc, doinit)
 	struct ess_softc *sc;
 	int doinit;
 {
+
+	callout_init(&sc->sc_poll1_ch);
+	callout_init(&sc->sc_poll2_ch);
+
 	/* Reset the chip. */
 	if (ess_reset(sc) != 0) {
 		DPRINTF(("ess_setup_sc: couldn't reset chip\n"));
@@ -1303,7 +1307,8 @@ ess_audio1_trigger_output(addr, start, end, blksize, intr, arg, param)
 		sc->sc_audio1.buffersize = (char *)end - (char *)start;
 		sc->sc_audio1.dmacount = 0;
 		sc->sc_audio1.blksize = blksize;
-		timeout(ess_audio1_poll, sc, hz/30);
+		callout_reset(&sc->sc_poll1_ch, hz / 30,
+		    ess_audio1_poll, sc);
 	}
 
 	reg = ess_read_x_reg(sc, ESS_XCMD_AUDIO_CTRL);
@@ -1381,7 +1386,8 @@ ess_audio2_trigger_output(addr, start, end, blksize, intr, arg, param)
 		sc->sc_audio2.buffersize = (char *)end - (char *)start;
 		sc->sc_audio2.dmacount = 0;
 		sc->sc_audio2.blksize = blksize;
-		timeout(ess_audio2_poll, sc, hz/30);
+		callout_reset(&sc->sc_poll2_ch, hz / 30,
+		    ess_audio2_poll, sc);
 	}
 
 	reg = ess_read_mix_reg(sc, ESS_MREG_AUDIO2_CTRL2);
@@ -1450,7 +1456,8 @@ ess_audio1_trigger_input(addr, start, end, blksize, intr, arg, param)
 		sc->sc_audio1.buffersize = (char *)end - (char *)start;
 		sc->sc_audio1.dmacount = 0;
 		sc->sc_audio1.blksize = blksize;
-		timeout(ess_audio1_poll, sc, hz/30);
+		callout_reset(&sc->sc_poll1_ch, hz / 30,
+		    ess_audio1_poll, sc);
 	}
 
 	reg = ess_read_x_reg(sc, ESS_XCMD_AUDIO_CTRL);
@@ -1515,7 +1522,7 @@ ess_audio1_halt(addr)
 		    ESS_AUDIO1_CTRL2_FIFO_ENABLE);
 		isa_dmaabort(sc->sc_ic, sc->sc_audio1.drq);
 		if (sc->sc_audio1.polled)
-			untimeout(ess_audio1_poll, sc);
+			callout_stop(&sc->sc_poll1_ch);
 		sc->sc_audio1.active = 0;
 	}
 
@@ -1536,7 +1543,7 @@ ess_audio2_halt(addr)
 		    ESS_AUDIO2_CTRL1_FIFO_ENABLE);
 		isa_dmaabort(sc->sc_ic, sc->sc_audio2.drq);
 		if (sc->sc_audio2.polled)
-			untimeout(ess_audio2_poll, sc);
+			callout_stop(&sc->sc_poll2_ch);
 		sc->sc_audio2.active = 0;
 	}
 
@@ -1620,7 +1627,7 @@ ess_audio1_poll(addr)
 	(*sc->sc_audio1.intr)(sc->sc_audio1.arg, dmacount);
 #endif
 
-	timeout(ess_audio1_poll, sc, hz/30);
+	callout_reset(&sc->sc_poll1_ch, hz / 30, ess_audio1_poll, sc);
 }
 
 void
@@ -1651,7 +1658,7 @@ ess_audio2_poll(addr)
 	(*sc->sc_audio2.intr)(sc->sc_audio2.arg, dmacount);
 #endif
 
-	timeout(ess_audio2_poll, sc, hz/30);
+	callout_reset(&sc->sc_poll2_ch, hz / 30, ess_audio2_poll, sc);
 }
 
 int

@@ -1,4 +1,4 @@
-/*	$NetBSD: i82557.c,v 1.23 2000/03/20 07:52:58 thorpej Exp $	*/
+/*	$NetBSD: i82557.c,v 1.24 2000/03/23 07:01:31 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 1999 The NetBSD Foundation, Inc.
@@ -78,6 +78,7 @@
 
 #include <sys/param.h>
 #include <sys/systm.h>
+#include <sys/callout.h>
 #include <sys/mbuf.h>
 #include <sys/malloc.h>
 #include <sys/kernel.h>
@@ -241,6 +242,8 @@ fxp_attach(sc)
 	bus_dma_segment_t seg;
 	int rseg, i, error;
 	struct fxp_phytype *fp;
+
+	callout_init(&sc->sc_callout);
 
 	/*
 	 * Allocate the control data structures, and create and load the
@@ -1158,7 +1161,7 @@ fxp_tick(arg)
 	/*
 	 * Schedule another timeout one second from now.
 	 */
-	timeout(fxp_tick, sc, hz);
+	callout_reset(&sc->sc_callout, hz, fxp_tick, sc);
 }
 
 /*
@@ -1205,7 +1208,7 @@ fxp_stop(sc, drain)
 	/*
 	 * Cancel stats updater.
 	 */
-	untimeout(fxp_tick, sc);
+	callout_stop(&sc->sc_callout);
 	if (sc->sc_flags & FXPF_MII) {
 		/* Down the MII. */
 		mii_down(&sc->sc_mii);
@@ -1475,7 +1478,7 @@ fxp_init(sc)
 	/*
 	 * Start the one second timer.
 	 */
-	timeout(fxp_tick, sc, hz);
+	callout_reset(&sc->sc_callout, hz, fxp_tick, sc);
 
 	/*
 	 * Attempt to start output on the interface.
@@ -1923,7 +1926,7 @@ fxp_detach(sc)
 	int i;
 
 	/* Unhook our tick handler. */
-	untimeout(fxp_tick, sc);
+	callout_stop(&sc->sc_callout);
 
 	if (sc->sc_flags & FXPF_MII) {
 		/* Detach all PHYs */

@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_socket.c,v 1.53 1999/08/29 16:29:16 sommerfeld Exp $	*/
+/*	$NetBSD: nfs_socket.c,v 1.54 2000/03/23 07:03:32 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1989, 1991, 1993, 1995
@@ -47,6 +47,7 @@
 
 #include <sys/param.h>
 #include <sys/systm.h>
+#include <sys/callout.h>
 #include <sys/proc.h>
 #include <sys/mount.h>
 #include <sys/kernel.h>
@@ -141,6 +142,8 @@ static int proct[NFS_NPROCS] = {
 static int nfs_backoff[8] = { 2, 4, 8, 16, 32, 64, 128, 256, };
 int nfsrtton = 0;
 struct nfsrtt nfsrtt;
+
+struct callout nfs_timer_ch = CALLOUT_INITIALIZER;
 
 /*
  * Initialize sockets and congestion for a new NFS connection.
@@ -1410,7 +1413,7 @@ nfs_timer(arg)
 	}
 #endif /* NFSSERVER */
 	splx(s);
-	timeout(nfs_timer, (void *)0, nfs_ticks);
+	callout_reset(&nfs_timer_ch, nfs_ticks, nfs_timer, NULL);
 }
 
 /*

@@ -1,4 +1,4 @@
-/*	$NetBSD: ahb.c,v 1.28 1999/09/30 23:04:39 thorpej Exp $	*/
+/*	$NetBSD: ahb.c,v 1.29 2000/03/23 07:01:28 thorpej Exp $	*/
 
 #include "opt_ddb.h"
 
@@ -324,7 +324,8 @@ ahb_send_mbox(sc, opcode, ecb)
 		ecb->xs->sc_link->scsipi_scsi.target);
 
 	if ((ecb->xs->xs_control & XS_CTL_POLL) == 0)
-		timeout(ahb_timeout, ecb, (ecb->timeout * hz) / 1000);
+		callout_reset(&ecb->xs->xs_callout,
+		    (ecb->timeout * hz) / 1000, ahb_timeout, ecb);
 }
 
 /*
@@ -357,7 +358,8 @@ ahb_send_immed(sc, cmd, ecb)
 		ecb->xs->sc_link->scsipi_scsi.target);
 
 	if ((ecb->xs->xs_control & XS_CTL_POLL) == 0)
-		timeout(ahb_timeout, ecb, (ecb->timeout * hz) / 1000);
+		callout_reset(&ecb->xs->xs_callout,
+		    (ecb->timeout * hz) / 1000, ahb_timeout, ecb);
 }
 
 /*
@@ -426,7 +428,7 @@ ahbintr(arg)
 			goto next;
 		}
 
-		untimeout(ahb_timeout, ecb);
+		callout_stop(&ecb->xs->xs_callout);
 		ahb_done(sc, ecb);
 
 	next:

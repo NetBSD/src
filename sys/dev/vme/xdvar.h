@@ -1,4 +1,4 @@
-/*	$NetBSD: xdvar.h,v 1.4 2000/01/21 23:41:45 thorpej Exp $	*/
+/*	$NetBSD: xdvar.h,v 1.5 2000/03/23 07:01:47 thorpej Exp $	*/
 
 /*
  *
@@ -39,6 +39,8 @@
  *
  * author: Chuck Cranor <chuck@ccrc.wustl.edu>
  */
+
+#include <sys/callout.h>
 
 /*
  * i/o request: wrapper for hardware's iopb data structure
@@ -137,6 +139,8 @@ struct xd_softc {
 struct xdc_softc {
 	struct device sc_dev;		/* device struct, reqd by autoconf */
 	struct evcnt sc_intrcnt;	/* event counter (for vmstat -i) */
+
+	struct callout sc_tick_ch;
 
 	struct xdc *xdc;		/* vaddr of vme registers */
 

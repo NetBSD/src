@@ -1,4 +1,4 @@
-/*	$NetBSD: ata_wdc.c,v 1.23 2000/01/17 00:01:00 bouyer Exp $	*/
+/*	$NetBSD: ata_wdc.c,v 1.24 2000/03/23 07:01:27 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1998 Manuel Bouyer.
@@ -170,7 +170,8 @@ wdc_ata_bio_start(chp, xfer)
 
 	/* start timeout machinery */
 	if ((ata_bio->flags & ATA_POLL) == 0)
-		timeout(wdctimeout, chp, ATA_DELAY / 1000 * hz);
+		callout_reset(&chp->ch_callout, ATA_DELAY / 1000 * hz,
+		    wdctimeout, chp);
 	_wdc_ata_bio_start(chp, xfer);
 }
 
@@ -588,7 +589,7 @@ wdc_ata_bio_kill_xfer(chp, xfer)
 	struct ata_bio *ata_bio = xfer->cmd;
 	int drive = xfer->drive;
 
-	untimeout(wdctimeout, chp);
+	callout_stop(&chp->ch_callout);
 	/* remove this command from xfer queue */
 	wdc_free_xfer(chp, xfer);
 
@@ -614,7 +615,7 @@ wdc_ata_bio_done(chp, xfer)
 	    (u_int)xfer->c_flags),
 	    DEBUG_XFERS);
 
-	untimeout(wdctimeout, chp);
+	callout_stop(&chp->ch_callout);
 
 	/* feed back residual bcount to our caller */
 	ata_bio->bcount = xfer->c_bcount;

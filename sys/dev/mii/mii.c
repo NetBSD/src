@@ -1,4 +1,4 @@
-/*	$NetBSD: mii.c,v 1.19 2000/02/02 17:09:44 thorpej Exp $	*/
+/*	$NetBSD: mii.c,v 1.20 2000/03/23 07:01:36 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
@@ -144,6 +144,7 @@ mii_attach(parent, mii, capmask, phyloc, offloc, flags)
 			/*
 			 * Link it up in the parent's MII data.
 			 */
+			callout_init(&child->mii_nway_ch);
 			LIST_INSERT_HEAD(&mii->mii_phys, child, mii_list);
 			child->mii_offset = offset;
 			mii->mii_instance++;

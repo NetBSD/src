@@ -1,4 +1,4 @@
-/*	$NetBSD: hme.c,v 1.8 2000/02/14 17:14:28 pk Exp $	*/
+/*	$NetBSD: hme.c,v 1.9 2000/03/23 07:01:30 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -317,8 +317,7 @@ hme_config(sc)
 			  RND_TYPE_NET, 0);
 #endif
 
-	/* Start the one second clock */
-	timeout(hme_tick, sc, hz);
+	callout_init(&sc->sc_tick_ch);
 }
 
 void
@@ -332,7 +331,7 @@ hme_tick(arg)
 	mii_tick(&sc->sc_mii);
 	splx(s);
 
-	timeout(hme_tick, sc, hz);
+	callout_reset(&sc->sc_tick_ch, hz, hme_tick, sc);
 }
 
 void
@@ -354,7 +353,7 @@ hme_stop(sc)
 	bus_space_handle_t seb = sc->sc_seb;
 	int n;
 
-	untimeout(hme_tick, sc);
+	callout_stop(&sc->sc_tick_ch);
 	mii_down(&sc->sc_mii);
 
 	/* Reset transmitter and receiver */
@@ -612,6 +611,9 @@ hme_init(sc)
 	/* Call MI initialization function if any */
 	if (sc->sc_hwinit)
 		(*sc->sc_hwinit)(sc);
+
+	/* Start the one second timer. */
+	callout_reset(&sc->sc_tick_ch, hz, hme_tick, sc);
 
 	ifp->if_flags |= IFF_RUNNING;
 	ifp->if_flags &= ~IFF_OACTIVE;

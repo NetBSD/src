@@ -1,4 +1,4 @@
-/*	$NetBSD: elink3var.h,v 1.24 2000/02/08 12:49:12 enami Exp $	*/
+/*	$NetBSD: elink3var.h,v 1.25 2000/03/23 07:01:30 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1994 Herb Peyerl <hpeyerl@beer.org>
@@ -45,6 +45,8 @@ struct ep_softc {
 
 	struct ethercom sc_ethercom;	/* Ethernet common part		*/
 	struct mii_data sc_mii;		/* MII/media control		*/
+	struct callout sc_mii_callout;	/* MII callout handle		*/
+	struct callout sc_mbuf_callout;	/* mbuf fill callout		*/
 	bus_space_tag_t sc_iot;		/* bus cookie			*/
 	bus_space_handle_t sc_ioh;	/* bus i/o handle		*/
 	bus_space_tag_t sc_memt;	/* RoadRunner only		*/

@@ -1,4 +1,4 @@
-/*	$NetBSD: aarp.c,v 1.4 1999/09/21 22:18:52 matt Exp $	*/
+/*	$NetBSD: aarp.c,v 1.5 2000/03/23 07:03:27 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1990,1991 Regents of The University of Michigan.
@@ -32,6 +32,7 @@
 #include <sys/syslog.h>
 #include <sys/param.h>
 #include <sys/systm.h>
+#include <sys/callout.h>
 #include <sys/proc.h>
 #include <sys/mbuf.h>
 #include <sys/time.h>
@@ -95,6 +96,7 @@ u_char aarp_org_code[3] = {
 	0x00, 0x00, 0x00
 };
 
+struct callout aarptimer_callout;
 
 static void
 aarptimer(ignored)
@@ -103,7 +105,7 @@ aarptimer(ignored)
 	struct aarptab *aat;
 	int             i, s;
 
-	timeout(aarptimer, NULL, AARPT_AGE * hz);
+	callout_reset(&aarptimer_callout, AARPT_AGE * hz, aarptimer, NULL);
 	aat = aarptab;
 	for (i = 0; i < AARPTAB_SIZE; i++, aat++) {
 		int killtime = (aat->aat_flags & ATF_COM) ? AARPT_KILLC :
@@ -388,7 +390,7 @@ at_aarpinput(ifp, m)
 			 * probe, or probed for the same address we'd like
 			 * to use. Change the address we're probing for.
 		         */
-			untimeout(aarpprobe, ifp);
+			callout_stop(&aa->aa_probe_ch);
 			wakeup(aa);
 			m_freem(m);
 			return;
@@ -503,7 +505,8 @@ aarptnew(addr)
 
 	if (first) {
 		first = 0;
-		timeout(aarptimer, NULL, hz);
+		callout_init(&aarptimer_callout);
+		callout_reset(&aarptimer_callout, hz, aarptimer, NULL);
 	}
 	aat = &aarptab[AARPTAB_HASH(*addr) * AARPTAB_BSIZ];
 	for (n = 0; n < AARPTAB_BSIZ; n++, aat++) {
@@ -561,7 +564,7 @@ aarpprobe(arp)
 		wakeup(aa);
 		return;
 	} else {
-		timeout(aarpprobe, arp, hz / 5);
+		callout_reset(&aa->aa_probe_ch, hz / 5, aarpprobe, arp);
 	}
 
 	if ((m = m_gethdr(M_DONTWAIT, MT_DATA)) == NULL) {
@@ -625,7 +628,7 @@ aarp_clean()
 	struct aarptab *aat;
 	int             i;
 
-	untimeout(aarptimer, 0);
+	callout_stop(&aarptimer_callout);
 	for (i = 0, aat = aarptab; i < AARPTAB_SIZE; i++, aat++)
 		if (aat->aat_hold)
 			m_freem(aat->aat_hold);

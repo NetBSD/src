@@ -1,4 +1,4 @@
-/*	$NetBSD: xy.c,v 1.16 2000/02/07 20:16:58 thorpej Exp $	*/
+/*	$NetBSD: xy.c,v 1.17 2000/03/23 07:01:47 thorpej Exp $	*/
 
 /*
  *
@@ -478,6 +478,7 @@ xycattach(parent, self, aux)
 	vme_intr_establish(ct, ih, IPL_BIO, xycintr, xyc);
 	evcnt_attach(&xyc->sc_dev, "intr", &xyc->sc_intrcnt);
 
+	callout_init(&xyc->sc_tick_ch);
 
 	/* now we must look for disks using autoconfig */
 	xa.fullmode = XY_SUB_POLL;
@@ -487,7 +488,7 @@ xycattach(parent, self, aux)
 		(void) config_found(self, (void *) &xa, NULL);
 
 	/* start the watchdog clock */
-	timeout(xyc_tick, xyc, XYC_TICKCNT);
+	callout_reset(&xyc->sc_tick_ch, XYC_TICKCNT, xyc_tick, xyc);
 
 }
 
@@ -2069,7 +2070,7 @@ xyc_tick(arg)
 
 	/* until next time */
 
-	timeout(xyc_tick, xycsc, XYC_TICKCNT);
+	callout_reset(&xycsc->sc_tick_ch, XYC_TICKCNT, xyc_tick, xycsc);
 }
 
 /*

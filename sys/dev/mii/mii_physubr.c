@@ -1,4 +1,4 @@
-/*	$NetBSD: mii_physubr.c,v 1.16 2000/03/15 20:34:43 thorpej Exp $	*/
+/*	$NetBSD: mii_physubr.c,v 1.17 2000/03/23 07:01:36 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2000 The NetBSD Foundation, Inc.
@@ -138,7 +138,8 @@ mii_phy_auto(sc, waitfor)
 	 */
 	if ((sc->mii_flags & MIIF_DOINGAUTO) == 0) {
 		sc->mii_flags |= MIIF_DOINGAUTO;
-		timeout(mii_phy_auto_timeout, sc, hz >> 1);
+		callout_reset(&sc->mii_nway_ch, hz >> 1,
+		    mii_phy_auto_timeout, sc);
 	}
 	return (EJUSTRETURN);
 }
@@ -242,7 +243,7 @@ mii_phy_down(sc)
 
 	if (sc->mii_flags & MIIF_DOINGAUTO) {
 		sc->mii_flags &= ~MIIF_DOINGAUTO;
-		untimeout(mii_phy_auto_timeout, sc);
+		callout_stop(&sc->mii_nway_ch);
 	}
 }
 
@@ -416,7 +417,7 @@ mii_phy_detach(self, flags)
 	struct mii_softc *sc = (void *) self;
 
 	if (sc->mii_flags & MIIF_DOINGAUTO)
-		untimeout(mii_phy_auto_timeout, sc);
+		callout_stop(&sc->mii_nway_ch);
 
 	mii_phy_delete_media(sc);
 

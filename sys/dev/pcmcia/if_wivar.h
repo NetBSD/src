@@ -1,4 +1,4 @@
-/*	$NetBSD: if_wivar.h,v 1.7 2000/03/06 10:31:28 enami Exp $	*/
+/*	$NetBSD: if_wivar.h,v 1.8 2000/03/23 07:01:42 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -31,7 +31,7 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF
  * THE POSSIBILITY OF SUCH DAMAGE.
  *
- *	$Id: if_wivar.h,v 1.7 2000/03/06 10:31:28 enami Exp $
+ *	$Id: if_wivar.h,v 1.8 2000/03/23 07:01:42 thorpej Exp $
  */
 
 
@@ -59,6 +59,8 @@ struct wi_softc	{
 
 	bus_space_tag_t		wi_btag;
 	bus_space_handle_t	wi_bhandle;
+
+	struct callout		wi_inquire_ch;
 
   	void *sc_sdhook;	/* saved shutdown hook for card */
 	void *sc_ih;

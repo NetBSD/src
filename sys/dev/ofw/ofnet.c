@@ -1,4 +1,4 @@
-/*	$NetBSD: ofnet.c,v 1.17 1999/05/18 23:52:57 thorpej Exp $	*/
+/*	$NetBSD: ofnet.c,v 1.18 2000/03/23 07:01:37 thorpej Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -36,6 +36,7 @@
 
 #include <sys/param.h>
 #include <sys/systm.h>
+#include <sys/callout.h>
 #include <sys/device.h>
 #include <sys/ioctl.h>
 #include <sys/mbuf.h>
@@ -76,6 +77,7 @@ struct ofnet_softc {
 	int sc_phandle;
 	int sc_ihandle;
 	struct ethercom sc_ethercom;
+	struct callout sc_callout;
 };
 
 static int ofnet_match __P((struct device *, struct cfdata *, void *));
@@ -151,7 +153,9 @@ ofnet_attach(parent, self, aux)
 	    sizeof myaddr) < 0)
 		panic("ofnet_attach: no mac-address");
 	printf(": address %s\n", ether_sprintf(myaddr));
-	
+
+	callout_init(&of->sc_callout);
+
 	bcopy(of->sc_dev.dv_xname, ifp->if_xname, IFNAMSIZ);
 	ifp->if_softc = of;
 	ifp->if_start = ofnet_start;
@@ -272,7 +276,7 @@ ofnet_timer(arg)
 	struct ofnet_softc *of = arg;
 
 	ofnet_read(of);
-	timeout(ofnet_timer, of, 1);
+	callout_reset(&of->sc_callout, 1, ofnet_timer, of);
 }
 
 static void
@@ -295,7 +299,7 @@ static void
 ofnet_stop(of)
 	struct ofnet_softc *of;
 {
-	untimeout(ofnet_timer, of);
+	callout_stop(&of->sc_callout);
 	of->sc_ethercom.ec_if.if_flags &= ~IFF_RUNNING;
 }
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: satlink.c,v 1.8 2000/02/07 22:07:31 thorpej Exp $	*/
+/*	$NetBSD: satlink.c,v 1.9 2000/03/23 07:01:35 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -46,6 +46,7 @@
 
 #include <sys/param.h>
 #include <sys/systm.h>
+#include <sys/callout.h>
 #include <sys/errno.h>
 #include <sys/ioctl.h>
 #include <sys/device.h>
@@ -83,6 +84,7 @@ struct satlink_softc {
 	int	sc_lastresid;		/* residual */
 	struct selinfo sc_selq;		/* our select/poll queue */
 	struct	satlink_id sc_id;	/* ID cached at attach time */
+	struct callout sc_ch;		/* callout pseudo-interrupt */
 };
 
 /* sc_flags */
@@ -185,6 +187,8 @@ satlinkattach(parent, self, aux)
 	    sc->sc_id.sid_grpid, sc->sc_id.sid_userid,
 	    sc->sc_id.sid_serial);
 
+	callout_reset(&sc->sc_ch);
+
 	sc->sc_bufsize = isa_dmamaxsize(sc->sc_ic, sc->sc_drq);
 
 	/* Allocate and map the ring buffer. */
@@ -245,7 +249,7 @@ satlinkopen(dev, flags, fmt, p)
 
 	sc->sc_flags |= SATF_ISOPEN;
 
-	timeout(satlinktimeout, sc, SATLINK_TIMEOUT);
+	callout_reset(&sc->sc_ch, SATLINK_TIMEOUT, satlinktimeout, sc);
 
 	return (0);
 }
@@ -265,7 +269,7 @@ satlinkclose(dev, flags, fmt, p)
 	splx(s);
 
 	isa_dmaabort(sc->sc_ic, sc->sc_drq);
-	untimeout(satlinktimeout, sc);
+	callout_stop(&sc->sc_ch);
 
 	return (0);
 }
@@ -446,5 +450,5 @@ satlinktimeout(arg)
 	selwakeup(&sc->sc_selq);
 
  out:
-	timeout(satlinktimeout, sc, SATLINK_TIMEOUT);
+	callout_reset(&sc->sc_ch, SATLINK_TIMEOUT, satlinktimeout, sc);
 }

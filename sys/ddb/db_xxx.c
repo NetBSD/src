@@ -1,4 +1,4 @@
-/*	$NetBSD: db_xxx.c,v 1.6 1999/07/22 21:11:26 thorpej Exp $	*/
+/*	$NetBSD: db_xxx.c,v 1.7 2000/03/23 07:01:25 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1991, 1993
@@ -197,26 +197,6 @@ db_show_callout(addr, haddr, count, modif)
 	db_expr_t count;
 	char *modif;
 {
-	register struct callout *p1;
-	register int	cum;
-	register int	s;
-	db_expr_t	offset;
-	char		*name;
 
-	db_printf("      cum     ticks      arg  func\n");
-	s = splhigh();
-	for (cum = 0, p1 = calltodo.c_next; p1; p1 = p1->c_next) {
-		register int t = p1->c_time;
-
-		if (t > 0)
-			cum += t;
-
-		db_find_sym_and_offset((db_expr_t)p1->c_func, &name, &offset);
-		if (name == NULL)
-			name = "?";
-
-		db_printf("%9d %9d %p  %s (%p)\n",
-			  cum, t, p1->c_arg, name, p1->c_func);
-	}
-	splx(s);
+	db_printf("`show callout' not currently implemented\n");
 }

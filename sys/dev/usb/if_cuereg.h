@@ -1,4 +1,4 @@
-/*	$NetBSD: if_cuereg.h,v 1.5 2000/03/02 12:37:50 augustss Exp $	*/
+/*	$NetBSD: if_cuereg.h,v 1.6 2000/03/23 07:01:45 thorpej Exp $	*/
 /*
  * Copyright (c) 1997, 1998, 1999, 2000
  *	Bill Paul <wpaul@ee.columbia.edu>.  All rights reserved.
@@ -176,6 +176,7 @@ struct cue_softc {
 #define GET_IFP(sc) (&(sc)->arpcom.ac_if)
 #elif defined(__NetBSD__)
 	struct ethercom		cue_ec;
+	struct callout		cue_stat_ch;
 #if NRND > 0
 	rndsource_element_t	rnd_source;
 #endif

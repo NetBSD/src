@@ -1,4 +1,4 @@
-/*	$NetBSD: ohci.c,v 1.78 2000/03/20 00:37:00 augustss Exp $	*/
+/*	$NetBSD: ohci.c,v 1.79 2000/03/23 07:01:46 thorpej Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/ohci.c,v 1.22 1999/11/17 22:33:40 n_hibma Exp $	*/
 
 /*
@@ -1849,7 +1849,8 @@ ohci_abort_xfer(xfer, status)
 #if 1
 	if (xfer->device->bus->intr_context) {
 		/* We have no process context, so we can't use tsleep(). */
-		timeout(ohci_abort_xfer_end, xfer, hz / USB_FRAMES_PER_SECOND);
+		callout_reset(&xfer->abort_handle, hz / USB_FRAMES_PER_SECOND,
+		    ohci_abort_xfer_end, xfer);
 	} else {
 #if defined(DIAGNOSTIC) && defined(__i386__) && defined(__FreeBSD__)
 		KASSERT(intr_nesting_level == 0,

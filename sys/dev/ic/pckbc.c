@@ -1,4 +1,4 @@
-/* $NetBSD: pckbc.c,v 1.1 1999/12/03 22:48:25 thorpej Exp $ */
+/* $NetBSD: pckbc.c,v 1.2 2000/03/23 07:01:32 thorpej Exp $ */
 
 /*
  * Copyright (c) 1998
@@ -33,6 +33,7 @@
 
 #include <sys/param.h>
 #include <sys/systm.h>
+#include <sys/callout.h>
 #include <sys/kernel.h>
 #include <sys/proc.h>
 #include <sys/device.h>
@@ -705,7 +706,7 @@ pckbc_start(t, slot)
 			if (cmd->flags & KBC_CMDFLAG_SYNC)
 				wakeup(cmd);
 			else {
-				untimeout(pckbc_cleanup, t);
+				callout_stop(&t->t_cleanup);
 				TAILQ_INSERT_TAIL(&q->freequeue, cmd, next);
 			}
 			cmd = TAILQ_FIRST(&q->cmdqueue);
@@ -770,7 +771,7 @@ pckbc_cmdresponse(t, slot, data)
 	if (cmd->flags & KBC_CMDFLAG_SYNC)
 		wakeup(cmd);
 	else {
-		untimeout(pckbc_cleanup, t);
+		callout_stop(&t->t_cleanup);
 		TAILQ_INSERT_TAIL(&q->freequeue, cmd, next);
 	}
 	if (!CMD_IN_QUEUE(q))
@@ -838,7 +839,7 @@ pckbc_enqueue_cmd(self, slot, cmd, len, responselen, sync, respbuf)
 		} else
 			res = nc->status;
 	} else
-		timeout(pckbc_cleanup, t, 1*hz);
+		callout_reset(&t->t_cleanup, hz, pckbc_cleanup, t);
 
 	if (sync) {
 		if (respbuf)
@@ -940,6 +941,7 @@ pckbc_cnattach(iot, addr, slot)
 	pckbc_consdata.t_ioh_d = ioh_d;
 	pckbc_consdata.t_ioh_c = ioh_c;
 	pckbc_consdata.t_addr = addr;
+	callout_init(&pckbc_consdata.t_cleanup);
 
 	/* flush */
 	(void) pckbc_poll_data1(iot, ioh_d, ioh_c, PCKBC_KBD_SLOT, 0);

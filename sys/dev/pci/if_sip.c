@@ -1,4 +1,4 @@
-/*	$NetBSD: if_sip.c,v 1.8 2000/03/06 21:02:02 thorpej Exp $	*/
+/*	$NetBSD: if_sip.c,v 1.9 2000/03/23 07:01:39 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1999 Network Computer, Inc.
@@ -42,6 +42,7 @@
 
 #include <sys/param.h>
 #include <sys/systm.h>
+#include <sys/callout.h>
 #include <sys/mbuf.h>
 #include <sys/malloc.h>
 #include <sys/kernel.h>
@@ -177,6 +178,8 @@ struct sip_softc {
 	void *sc_ih;			/* interrupt cookie */
 
 	struct mii_data sc_mii;		/* MII/media information */
+
+	struct callout sc_tick_ch;	/* tick callout */
 
 	bus_dmamap_t sc_cddmamap;	/* control data DMA map */
 #define	sc_cddma	sc_cddmamap->dm_segs[0].ds_addr
@@ -345,6 +348,8 @@ sip_attach(parent, self, aux)
 	const struct sip_product *sip;
 	pcireg_t pmode;
 	u_int16_t enaddr[ETHER_ADDR_LEN / 2];
+
+	callout_init(&sc->sc_tick_ch);
 
 	sip = sip_lookup(pa);
 	if (sip == NULL) {
@@ -1304,7 +1309,7 @@ sip_tick(arg)
 	mii_tick(&sc->sc_mii);
 	splx(s);
 
-	timeout(sip_tick, sc, hz);
+	callout_reset(&sc->sc_tick_ch, hz, sip_tick, sc);
 }
 
 /*
@@ -1512,7 +1517,7 @@ sip_init(sc)
 	/*
 	 * Start the one second MII clock.
 	 */
-	timeout(sip_tick, sc, hz);
+	callout_reset(&sc->sc_tick_ch, hz, sip_tick, sc);
 
 	/*
 	 * ...all done!
@@ -1566,7 +1571,7 @@ sip_stop(sc, drain)
 	/*
 	 * Stop the one second clock.
 	 */
-	untimeout(sip_tick, sc);
+	callout_stop(&sc->sc_tick_ch);
 
 	/* Down the MII. */
 	mii_down(&sc->sc_mii);

@@ -1,4 +1,4 @@
-/*	$NetBSD: uha_isa.c,v 1.18 1999/09/30 23:04:41 thorpej Exp $	*/
+/*	$NetBSD: uha_isa.c,v 1.19 2000/03/23 07:01:35 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -302,7 +302,8 @@ u14_start_mbox(sc, mscp)
 		bus_space_write_1(iot, ioh, U14_LINT, U14_OGMFULL);
 
 	if ((mscp->xs->xs_control & XS_CTL_POLL) == 0)
-		timeout(uha_timeout, mscp, (mscp->timeout * hz) / 1000);
+		callout_reset(&mscp->xs->xs_callout,
+		    (mscp->timeout * hz) / 1000, uha_timeout, mscp);
 }
 
 /*
@@ -379,7 +380,7 @@ u14_intr(arg)
 			continue;	/* whatever it was, it'll timeout */
 		}
 
-		untimeout(uha_timeout, mscp);
+		callout_stop(&mscp->xs->xs_callout);
 		uha_done(sc, mscp);
 
 		if ((bus_space_read_1(iot, ioh, U14_SINT) & U14_SDIP) == 0)

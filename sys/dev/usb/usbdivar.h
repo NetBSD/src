@@ -1,4 +1,4 @@
-/*	$NetBSD: usbdivar.h,v 1.47 2000/02/22 11:30:56 augustss Exp $	*/
+/*	$NetBSD: usbdivar.h,v 1.48 2000/03/23 07:01:46 thorpej Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/usbdivar.h,v 1.11 1999/11/17 22:33:51 n_hibma Exp $	*/
 
 /*
@@ -37,6 +37,8 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
+
+#include <sys/callout.h>
 
 /* From usb_mem.h */
 DECLARE_USB_DMA_T;
@@ -200,8 +202,12 @@ struct usbd_xfer {
 	void		       *hcpriv; /* private use by the HC driver */
 	int			hcprivint;
 
+#if defined(__NetBSD__)
+	struct callout		timo_handle;
+	struct callout		abort_handle;
+#endif
 #if defined(__FreeBSD__)
-	struct callout_handle  timo_handle;
+	struct callout_handle	timo_handle;
 #endif
 };
 

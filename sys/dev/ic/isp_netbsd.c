@@ -1,4 +1,4 @@
-/* $NetBSD: isp_netbsd.c,v 1.23 2000/02/12 02:25:28 mjacob Exp $ */
+/* $NetBSD: isp_netbsd.c,v 1.24 2000/03/23 07:01:31 thorpej Exp $ */
 /*
  * Platform (NetBSD) dependent common attachment code for Qlogic adapters.
  * Matthew Jacob <mjacob@nas.nasa.gov>
@@ -146,8 +146,10 @@ isp_attach(isp)
 	/*
 	 * Start the watchdog.
 	 */
+	callout_init(&isp->isp_osinfo._watchdog);
 	isp->isp_dogactive = 1;
-	timeout(isp_watch, isp, WATCH_INTERVAL * hz);
+	callout_reset(&isp->isp_osinfo._watchdog, WATCH_INTERVAL * hz,
+	    isp_watch, isp);
 
 	/*
 	 * And attach children (if any).
@@ -315,7 +317,8 @@ ispcmd(xs)
 			break;
 		case CMD_RQLATER:
 			result = SUCCESSFULLY_QUEUED;
-			timeout(isp_command_requeue, xs, hz);
+			callout_reset(&xs->xs_callout, hz,
+			    isp_command_requeue, xs);
 			break;
 		case CMD_COMPLETE:
 			result = COMPLETE;
@@ -426,7 +429,8 @@ isp_watch(arg)
 			break;
 		}
 	}
-	timeout(isp_watch, isp, WATCH_INTERVAL * hz);
+	callout_reset(&isp->isp_osinfo._watchdog, WATCH_INTERVAL * hz,
+	    isp_watch, isp);
 	isp->isp_dogactive = 1;
 	(void) splx(s);
 }
@@ -453,7 +457,7 @@ isp_uninit(isp)
 	 * Turn off the watchdog (if active).
 	 */
 	if (isp->isp_dogactive) {
-		untimeout(isp_watch, isp);
+		callout_stop(&isp->isp_osinfo._watchdog);
 		isp->isp_dogactive = 0;
 	}
 
@@ -648,7 +652,8 @@ isp_async(isp, cmd, arg)
 		break;
         case ISPASYNC_LOOP_UP:
 		isp->isp_osinfo.blocked = 0;
-		timeout(isp_internal_restart, isp, 1);
+		callout_reset(&isp->isp_osinfo._restart, 1,
+		    isp_internal_restart, isp);
 		printf("%s: Loop UP\n", isp->isp_name);
 		break;
 	case ISPASYNC_PDB_CHANGED:

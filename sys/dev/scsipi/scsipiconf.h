@@ -1,4 +1,4 @@
-/*	$NetBSD: scsipiconf.h,v 1.37 2000/01/20 17:10:18 mjacob Exp $	*/
+/*	$NetBSD: scsipiconf.h,v 1.38 2000/03/23 07:01:44 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.
@@ -59,6 +59,7 @@
 
 typedef	int	boolean;
 
+#include <sys/callout.h>
 #include <sys/queue.h>
 #include <dev/scsipi/scsipi_debug.h>
 
@@ -258,6 +259,7 @@ struct scsipi_link {
 struct scsipi_xfer {
 	TAILQ_ENTRY(scsipi_xfer) adapter_q; /* queue entry for use by adapter */
 	TAILQ_ENTRY(scsipi_xfer) device_q;  /* device's pending xfers */
+	struct callout xs_callout;	/* callout for adapter use */
 	int	xs_control;		/* control flags */
 	__volatile int xs_status;	/* status flags */
 	struct	scsipi_link *sc_link;	/* all about our device and adapter */

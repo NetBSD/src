@@ -1,4 +1,4 @@
-/*	$NetBSD: ncr.c,v 1.97 2000/03/18 06:59:02 cgd Exp $	*/
+/*	$NetBSD: ncr.c,v 1.98 2000/03/23 07:01:39 thorpej Exp $	*/
 
 /**************************************************************************
 **
@@ -209,6 +209,7 @@
 
 #ifdef KERNEL
 #include <sys/systm.h>
+#include <sys/callout.h>
 #include <sys/malloc.h>
 #include <sys/buf.h>
 #include <sys/kernel.h>
@@ -1139,6 +1140,7 @@ struct ncb {
 	struct device sc_dev;
 	pci_chipset_tag_t sc_pc;
 	void *sc_ih;
+	struct callout sc_timo_ch;
 	bus_space_tag_t sc_st;
 	bus_space_handle_t sc_sh;
 	bus_dma_tag_t sc_dmat;
@@ -1532,7 +1534,7 @@ static	int	read_tekram_eeprom
 
 #if 0
 static char ident[] =
-	"\n$NetBSD: ncr.c,v 1.97 2000/03/18 06:59:02 cgd Exp $\n";
+	"\n$NetBSD: ncr.c,v 1.98 2000/03/23 07:01:39 thorpej Exp $\n";
 #endif
 
 static const u_long	ncr_version = NCR_VERSION	* 11
@@ -3726,6 +3728,8 @@ static void ncr_attach (pcici_t config_id, int unit)
 	int ioh_valid, memh_valid;
 	bus_dma_segment_t seg;
 	int rseg, error;
+
+	callout_init(&np->sc_timo_ch);
 
 	i = ncr_chip_lookup(pa->pa_id, rev);
 	printf(": %s\n", ncr_chip_table[i].name);
@@ -6031,7 +6035,7 @@ static void ncr_timeout (void *arg)
 		splx (oldspl);
 	}
 
-	timeout (ncr_timeout, (caddr_t) np, step ? step : 1);
+	callout_reset (&np->sc_timo_ch, step ? step : 1, ncr_timeout, np);
 
 	if (INB(nc_istat) & (INTF|SIP|DIP)) {
 
@@ -6401,7 +6405,7 @@ void ncr_exception (ncb_p np)
 			if (i%16==15) printf (".\n");
 		};
 
-		untimeout (ncr_timeout, (caddr_t) np);
+		callout_stop (&np->sc_timo_ch);
 
 		printf ("%s: halted!\n", ncr_name(np));
 		/*

@@ -1,4 +1,4 @@
-/*	$NetBSD: esp_pcmcia.c,v 1.4 2000/03/20 06:01:11 mycroft Exp $	*/
+/*	$NetBSD: esp_pcmcia.c,v 1.5 2000/03/23 07:01:42 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -71,6 +71,9 @@ struct esp_pcmcia_softc {
 	int sc_io_window;			/* our i/o window */
 	struct pcmcia_function *sc_pf;		/* our PCMCIA function */
 	void *sc_ih;				/* interrupt handler */
+#ifdef ESP_PCMCIA_POLL
+	struct callout sc_poll_ch;
+#endif
 	int sc_flags;
 #define	ESP_PCMCIA_ATTACHED	1		/* attach completed */
 #define ESP_PCMCIA_ATTACHING	2		/* attach in progress */
@@ -237,6 +240,10 @@ esp_pcmcia_init(esc)
 
 	sc->sc_glue = &esp_pcmcia_glue;
 
+#ifdef ESP_PCMCIA_POLL
+	callout_init(&esc->sc_poll_ch);
+#endif
+
 	sc->sc_rev = NCR_VARIANT_ESP406;
 	sc->sc_id = 7;
 	sc->sc_freq = 40;
@@ -295,7 +302,7 @@ esp_pcmcia_enable(arg, onoff)
 
 	if (onoff) {
 #ifdef ESP_PCMCIA_POLL
-		timeout(esp_pcmcia_poll, esc, 1);
+		callout_reset(&esc->sc_poll_ch, 1, esp_pcmcia_poll, esc);
 #else
 		/* Establish the interrupt handler. */
 		esc->sc_ih = pcmcia_intr_establish(esc->sc_pf, IPL_BIO,
@@ -327,7 +334,7 @@ esp_pcmcia_enable(arg, onoff)
 	} else {
 		pcmcia_function_disable(esc->sc_pf);
 #ifdef ESP_PCMCIA_POLL
-		untimeout(esp_pcmcia_poll, esc);
+		callout_stop(&esc->sc_poll_ch);
 #else
 		pcmcia_intr_disestablish(esc->sc_pf, esc->sc_ih);
 #endif
@@ -344,7 +351,7 @@ esp_pcmcia_poll(arg)
 	struct esp_pcmcia_softc *esc = arg;
 
 	(void) ncr53c9x_intr(&esc->sc_ncr53c9x);
-	timeout(esp_pcmcia_poll, esc, 1);
+	callout_reset(&esc->sc_poll_ch, 1, esp_pcmcia_poll, esc);
 }
 #endif
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: pccbbvar.h,v 1.11 2000/03/22 09:35:08 haya Exp $	*/
+/*	$NetBSD: pccbbvar.h,v 1.12 2000/03/23 07:01:40 thorpej Exp $	*/
 /*
  * Copyright (c) 1999 HAYAKAWA Koichi.  All rights reserved.
  *
@@ -30,6 +30,7 @@
 
 /* require sys/device.h */
 /* require sys/queue.h */
+/* require sys/callout.h */
 /* require dev/ic/i82365reg.h */
 /* require dev/ic/i82365var.h */
 
@@ -115,6 +116,8 @@ struct pccbb_softc {
 
 	bus_space_tag_t sc_base_memt;
 	bus_space_handle_t sc_base_memh;
+
+	struct callout sc_insert_ch;
 
 	void *sc_ih;			/* interrupt handler */
 	int sc_intrline;		/* interrupt line */

@@ -1,4 +1,4 @@
-/*      $NetBSD: ukbd.c,v 1.56 2000/02/29 21:37:01 augustss Exp $        */
+/*      $NetBSD: ukbd.c,v 1.57 2000/03/23 07:01:46 thorpej Exp $        */
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -43,6 +43,7 @@
 
 #include <sys/param.h>
 #include <sys/systm.h>
+#include <sys/callout.h>
 #include <sys/kernel.h>
 #include <sys/device.h>
 #include <sys/ioctl.h>
@@ -180,6 +181,8 @@ struct ukbd_softc {
 
 	int sc_leds;
 #if defined(__NetBSD__)
+	struct callout sc_rawrepeat_ch;
+
 	struct device *sc_wskbddev;
 #if defined(WSDISPLAY_COMPAT_RAWKBD)
 #define REP_DELAY1 400
@@ -341,6 +344,8 @@ USB_ATTACH(ukbd)
 
 	a.accessops = &ukbd_accessops;
 	a.accesscookie = sc;
+
+	callout_init(&sc->sc_rawrepeat_ch);
 
 	/* Flash the leds; no real purpose, just shows we're alive. */
 	ukbd_set_leds(sc, WSKBD_LED_SCROLL | WSKBD_LED_NUM | WSKBD_LED_CAPS);
@@ -568,10 +573,11 @@ ukbd_intr(xfer, addr, status)
 		s = spltty();
 		wskbd_rawinput(sc->sc_wskbddev, cbuf, j);
 		splx(s);
-		untimeout(ukbd_rawrepeat, sc);
+		callout_stop(&sc->sc_rawrepeat_ch);
 		if (npress != 0) {
 			sc->sc_nrep = npress;
-			timeout(ukbd_rawrepeat, sc, hz * REP_DELAY1 / 1000);
+			callout_reset(&sc->sc_rawrepeat_ch,
+			    hz * REP_DELAY1 / 1000, ukbd_rawrepeat, sc);
 		}
 		return;
 	}
@@ -623,7 +629,8 @@ ukbd_rawrepeat(v)
 	s = spltty();
 	wskbd_rawinput(sc->sc_wskbddev, sc->sc_rep, sc->sc_nrep);
 	splx(s);
-	timeout(ukbd_rawrepeat, sc, hz * REP_DELAYN / 1000);
+	callout_reset(&sc->sc_rawrepeat_ch, hz * REP_DELAYN / 1000,
+	    ukbd_rawrepeat, sc);
 }
 #endif
 
@@ -651,7 +658,7 @@ ukbd_ioctl(v, cmd, data, flag, p)
 	case WSKBDIO_SETMODE:
 		DPRINTF(("ukbd_ioctl: set raw = %d\n", *(int *)data));
 		sc->sc_rawkbd = *(int *)data == WSKBD_RAW;
-		untimeout(ukbd_rawrepeat, sc);
+		callout_stop(&sc->sc_rawrepeat_ch);
 		return (0);
 #endif
 	}

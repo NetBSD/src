@@ -1,4 +1,4 @@
-/*	$NetBSD: if_arp.c,v 1.66 1999/09/25 17:49:29 is Exp $	*/
+/*	$NetBSD: if_arp.c,v 1.67 2000/03/23 07:03:28 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -85,6 +85,7 @@
 
 #include <sys/param.h>
 #include <sys/systm.h>
+#include <sys/callout.h>
 #include <sys/malloc.h>
 #include <sys/mbuf.h>
 #include <sys/socket.h>
@@ -155,6 +156,8 @@ int	arp_inuse, arp_allocated, arp_intimer;
 int	arp_maxtries = 5;
 int	useloopback = 1;	/* use loopback interface for local traffic */
 int	arpinit_done = 0;
+
+struct	callout arptimer_ch;
 
 /* revarp state */
 static struct	in_addr myip, srv_ip;
@@ -336,7 +339,7 @@ arptimer(arg)
 		return;
 	}
 
-	timeout(arptimer, NULL, arpt_prune * hz);
+	callout_reset(&arptimer_ch, arpt_prune * hz, arptimer, NULL);
 	for (la = llinfo_arp.lh_first; la != 0; la = nla) {
 		register struct rtentry *rt = la->la_rt;
 
@@ -375,7 +378,8 @@ arp_rtrequest(req, rt, sa)
 		if (time.tv_sec == 0) {
 			time.tv_sec++;
 		}
-		timeout(arptimer, (caddr_t)0, hz);
+		callout_init(&arptimer_ch);
+		callout_reset(&arptimer_ch, hz, arptimer, NULL);
 	}
 	if (rt->rt_flags & RTF_GATEWAY)
 		return;

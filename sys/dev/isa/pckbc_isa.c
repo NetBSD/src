@@ -1,4 +1,4 @@
-/* $NetBSD: pckbc_isa.c,v 1.1 1999/12/03 22:48:25 thorpej Exp $ */
+/* $NetBSD: pckbc_isa.c,v 1.2 2000/03/23 07:01:35 thorpej Exp $ */
 
 /*
  * Copyright (c) 1998
@@ -160,6 +160,7 @@ pckbc_isa_attach(parent, self, aux)
 		t->t_ioh_c = ioh_c;
 		t->t_addr = IO_KBD;
 		t->t_cmdbyte = KC8_CPU; /* Enable ports */
+		callout_init(&t->t_cleanup);
 	}
 
 	t->t_sc = sc;

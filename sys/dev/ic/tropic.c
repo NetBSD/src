@@ -1,4 +1,4 @@
-/*	$NetBSD: tropic.c,v 1.6 1999/12/17 08:26:31 fvdl Exp $	*/
+/*	$NetBSD: tropic.c,v 1.7 2000/03/23 07:01:32 thorpej Exp $	*/
 
 /* 
  * Ported to NetBSD by Onno van der Linden
@@ -38,6 +38,7 @@
 
 #include <sys/param.h>
 #include <sys/systm.h>
+#include <sys/callout.h>
 #include <sys/kernel.h>
 #include <sys/proc.h>
 #include <sys/mbuf.h>
@@ -440,6 +441,10 @@ tr_attach(sc)
 #if NBPFILTER > 0
 	bpfattach(&ifp->if_bpf, ifp, DLT_IEEE802, sizeof(struct token_header));
 #endif
+
+	callout_init(&sc->sc_timeout_callout);
+	callout_init(&sc->sc_init_callout);
+	callout_init(&sc->sc_reinit_callout);
 
 /*
  * XXX rnd stuff
@@ -889,7 +894,7 @@ tr_intr(arg)
 						    sc->sc_xmit_buffers);
 #endif
 						sc->sc_xmit_correlator = 0;
-						untimeout(tr_timeout, sc);
+						callout_stop(&sc->sc_timeout_callout);
 						wakeup(&sc->tr_sleepevent);
 					}
 					else
@@ -905,7 +910,8 @@ tr_intr(arg)
  * XXX untimeout depending on the error, timeout in other cases
  * XXX error 0x24 && autospeed mode: open again !!!!
  */
-					timeout(tr_init, sc, hz*30);
+					callout_reset(&sc->sc_init_callout,
+					    hz * 30, tr_init, sc);
 				}
 				break;
 
@@ -918,12 +924,12 @@ tr_intr(arg)
 					ifp->if_flags &= ~IFF_RUNNING;
 					ifp->if_flags &= ~IFF_UP;
 					ifp->if_flags &= ~IFF_OACTIVE;
-					untimeout(tr_timeout, sc);
+					callout_stop(&sc->sc_timeout_callout);
 					wakeup(&sc->tr_sleepevent);
 				}
 				break;
 			case DIR_SET_DEFAULT_RING_SPEED:
-				untimeout(tr_timeout, sc);
+				callout_stop(&sc->sc_timeout_callout);
 				wakeup(&sc->tr_sleepevent);
 				break;
 
@@ -936,7 +942,7 @@ tr_intr(arg)
 					        SRB_OPNSAP_STATIONID);
 				printf("%s: Token Ring opened\n",
 				    sc->sc_dev.dv_xname);
-				untimeout(tr_timeout, sc);
+				callout_stop(&sc->sc_timeout_callout);
 				wakeup(&sc->tr_sleepevent);
 				break;
 /* XXX DLC_CLOSE_SAP not needed ? */
@@ -1036,7 +1042,8 @@ tr_intr(arg)
 					ifp->if_flags &= ~IFF_RUNNING;
 					ifp->if_flags &= ~IFF_UP;
 					if_qflush(&ifp->if_snd);
-					timeout(tr_reinit, sc ,hz*30);
+					callout_reset(&sc->sc_reinit_callout,
+					    hz * 30, tr_reinit, sc);
 				}
 				else {
 #ifdef TROPICDEBUG
@@ -1710,7 +1717,7 @@ void
 tr_sleep(sc)
 struct tr_softc *sc;
 {
-	timeout(tr_timeout, sc, hz*30);
+	callout_reset(&sc->sc_timeout_callout, hz * 30, tr_timeout, sc);
 	sleep(&sc->tr_sleepevent, 1);
 }
 

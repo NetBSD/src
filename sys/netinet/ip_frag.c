@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_frag.c,v 1.15 1999/12/12 11:11:16 veego Exp $	*/
+/*	$NetBSD: ip_frag.c,v 1.16 2000/03/23 07:03:28 thorpej Exp $	*/
 
 /*
  * Copyright (C) 1993-1998 by Darren Reed.
@@ -9,7 +9,7 @@
  */
 #if !defined(lint)
 #if defined(__NetBSD__)
-static const char rcsid[] = "$NetBSD: ip_frag.c,v 1.15 1999/12/12 11:11:16 veego Exp $";
+static const char rcsid[] = "$NetBSD: ip_frag.c,v 1.16 2000/03/23 07:03:28 thorpej Exp $";
 #else
 static const char sccsid[] = "@(#)ip_frag.c	1.11 3/24/96 (C) 1993-1995 Darren Reed";
 static const char rcsid[] = "@(#)Id: ip_frag.c,v 2.4.2.3 1999/09/18 15:03:54 darrenr Exp ";
@@ -91,6 +91,9 @@ static const char rcsid[] = "@(#)Id: ip_frag.c,v 2.4.2.4 1999/11/28 04:52:10 dar
 # endif
 extern struct callout_handle ipfr_slowtimer_ch;
 # endif
+#endif
+#if defined(__NetBSD__)
+extern struct callout ipfr_slowtimer_ch;
 #endif
 
 
@@ -517,7 +520,11 @@ int ipfr_slowtimer()
 #   if (__FreeBSD_version >= 300000)
 	ipfr_slowtimer_ch = timeout(ipfr_slowtimer, NULL, hz/2);
 #   else
+#    if defined(__NetBSD__)
+	callout_reset(&ipfr_slowtimer_ch, hz / 2, ipfr_slowtimer, NULL);
+#    else
 	timeout(ipfr_slowtimer, NULL, hz/2);
+#    endif
 #   endif
 #  endif
 #  if (BSD < 199306) && !defined(__sgi)

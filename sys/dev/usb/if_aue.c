@@ -1,4 +1,4 @@
-/*	$NetBSD: if_aue.c,v 1.31 2000/03/16 18:27:21 uch Exp $	*/
+/*	$NetBSD: if_aue.c,v 1.32 2000/03/23 07:01:45 thorpej Exp $	*/
 /*
  * Copyright (c) 1997, 1998, 1999, 2000
  *	Bill Paul <wpaul@ee.columbia.edu>.  All rights reserved.
@@ -860,6 +860,8 @@ USB_ATTACH(aue)
 	usb_register_netisr();
 
 #elif defined(__NetBSD__) || defined(__OpenBSD__)
+
+	callout_init(&sc->aue_stat_ch);
 
 	printf("%s: Ethernet address %s\n", USBDEVNAME(sc->aue_dev),
 	    ether_sprintf(eaddr));

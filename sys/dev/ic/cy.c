@@ -1,4 +1,4 @@
-/*	$NetBSD: cy.c,v 1.11 1999/09/09 21:52:11 tron Exp $	*/
+/*	$NetBSD: cy.c,v 1.12 2000/03/23 07:01:30 thorpej Exp $	*/
 
 /*
  * cy.c
@@ -29,6 +29,7 @@
 #include <sys/device.h>
 #include <sys/malloc.h>
 #include <sys/systm.h>
+#include <sys/callout.h>
 
 #include <machine/bus.h>
 
@@ -56,6 +57,8 @@ static int      cy_open = 0;
 static int      cy_events = 0;
 
 cdev_decl(cy);
+
+struct callout cy_poll_callout = CALLOUT_INITIALIZER;
 
 /*
  * Common probe routine
@@ -306,7 +309,7 @@ cyopen(dev, flag, mode, p)
 		/* hmm... need spltty() here? */
 		if (cy_open == 0) {
 			cy_open = 1;
-			timeout(cy_poll, NULL, 1);
+			callout_reset(&cy_poll_callout, 1, cy_poll, NULL);
 		}
 		/* this sets parameters and raises DTR */
 		cyparam(tp, &tp->t_termios);
@@ -1063,7 +1066,7 @@ cy_poll(arg)
 	counter = 0;
 
 out:
-	timeout(cy_poll, NULL, 1);
+	callout_reset(&cy_poll_callout, 1, cy_poll, NULL);
 }
 
 /*

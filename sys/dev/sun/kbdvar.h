@@ -1,4 +1,4 @@
-/*	$NetBSD: kbdvar.h,v 1.3 2000/03/22 16:08:51 pk Exp $	*/
+/*	$NetBSD: kbdvar.h,v 1.4 2000/03/23 07:01:44 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -43,6 +43,8 @@
  *
  *	@(#)kbd.c	8.2 (Berkeley) 10/30/93
  */
+
+#include <sys/callout.h>
 
 /*
  * How many input characters we can buffer.
@@ -115,6 +117,8 @@ struct kbd_softc {
 	int	k_repeating;		/* we've called timeout() */
 	struct	kbd_state k_state;	/* ASCII translation state */
 
+	struct callout k_repeat_ch;
+
 	/* Console hooks */
 	char k_isconsole;
 	struct cons_channel *k_cc;
@@ -125,7 +129,6 @@ struct kbd_softc {
 	char k_magic1_down;
 	u_char k_magic1;	/* L1 */
 	u_char k_magic2;	/* A */
-
 
 	/*
 	 * The transmit ring buffer.

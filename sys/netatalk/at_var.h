@@ -1,4 +1,4 @@
-/*	$NetBSD: at_var.h,v 1.1 1997/04/02 21:31:08 christos Exp $	 */
+/*	$NetBSD: at_var.h,v 1.2 2000/03/23 07:03:27 thorpej Exp $	 */
 
 /*
  * Copyright (c) 1990,1991 Regents of The University of Michigan.
@@ -28,6 +28,9 @@
 
 #ifndef _NETATALK_AT_VAR_H_
 #define _NETATALK_AT_VAR_H_ 1
+
+#include <sys/callout.h>
+
 /*
  * For phase2, we need to keep not only our address on an interface,
  * but also the legal networks on the interface.
@@ -43,6 +46,7 @@ struct at_ifaddr {
 	u_short         aa_firstnet, aa_lastnet;
 	int             aa_probcnt;
 	TAILQ_ENTRY(at_ifaddr) aa_list;	/* list of appletalk addresses */
+	struct callout	aa_probe_ch;	/* for aarpprobe() */
 };
 
 struct at_aliasreq {

@@ -1,4 +1,4 @@
-/*	$NetBSD: i82365.c,v 1.56 2000/02/27 22:57:20 enami Exp $	*/
+/*	$NetBSD: i82365.c,v 1.57 2000/03/23 07:01:30 thorpej Exp $	*/
 
 #define	PCICDEBUG
 
@@ -377,9 +377,13 @@ pcic_attach_socket_finish(h)
 
 	/* enable interrupts on card detect, poll for them if no irq avail */
 	reg = PCIC_CSC_INTR_CD_ENABLE;
-	if (sc->irq == -1)
-		timeout(pcic_poll_intr, sc, hz / 2);
-	else
+	if (sc->irq == -1) {
+		if (sc->poll_established == 0) {
+			callout_init(&sc->poll_ch);
+			callout_reset(&sc->poll_ch, hz / 2, pcic_poll_intr, sc);
+			sc->poll_established = 1;
+		}
+	} else
 		reg |= sc->irq << PCIC_CSC_INTR_IRQ_SHIFT;
 	pcic_write(h, PCIC_CSC_INTR, reg);
 
@@ -672,7 +676,7 @@ pcic_poll_intr(arg)
 	for (i = 0; i < PCIC_NSLOTS; i++)
 		if (sc->handle[i].flags & PCIC_FLAG_SOCKETP)
 			(void)pcic_intr_socket(&sc->handle[i]);
-	timeout(pcic_poll_intr, sc, hz / 2);
+	callout_reset(&sc->poll_ch, hz / 2, pcic_poll_intr, sc);
 	splx(s);
 }
 

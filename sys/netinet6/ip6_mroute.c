@@ -1,4 +1,4 @@
-/*	$NetBSD: ip6_mroute.c,v 1.10 2000/02/06 12:49:45 itojun Exp $	*/
+/*	$NetBSD: ip6_mroute.c,v 1.11 2000/03/23 07:03:30 thorpej Exp $	*/
 
 /*
  * Copyright (C) 1998 WIDE Project.
@@ -54,6 +54,7 @@
 
 #include <sys/param.h>
 #include <sys/systm.h>
+#include <sys/callout.h>
 #include <sys/mbuf.h>
 #include <sys/socket.h>
 #include <sys/socketvar.h>
@@ -219,6 +220,8 @@ static int add_m6if __P((struct mif6ctl *));
 static int del_m6if __P((mifi_t *));
 static int add_m6fc __P((struct mf6cctl *));
 static int del_m6fc __P((struct mf6cctl *));
+
+static struct callout expire_upcalls_ch = CALLOUT_INITIALIZER;
 
 /*
  * Handle MRT setsockopt commands to modify the multicast routing tables.
@@ -402,7 +405,8 @@ ip6_mrouter_init(so, m)
 
 	pim6 = 0;/* used for stubbing out/in pim stuff */
 
-	timeout(expire_upcalls, (caddr_t)NULL, EXPIRE_TIMEOUT);
+	callout_reset(&expire_upcalls_ch, EXPIRE_TIMEOUT,
+	    expire_upcalls, NULL);
 
 #ifdef MRT6DEBUG
 	if (mrt6debug)
@@ -464,7 +468,7 @@ ip6_mrouter_done()
 
 	pim6 = 0; /* used to stub out/in pim specific code */
 
-	untimeout(expire_upcalls, (caddr_t)NULL);
+	callout_stop(&expire_upcalls_ch);
 
 	/*
 	 * Free all multicast forwarding cache entries.
@@ -1166,7 +1170,8 @@ expire_upcalls(unused)
 		}
 	}
 	splx(s);
-	timeout(expire_upcalls, (caddr_t)NULL, EXPIRE_TIMEOUT);
+	callout_reset(&expire_upcalls_ch, EXPIRE_TIMEOUT,
+	    expire_upcalls, NULL);
 }
 
 /*

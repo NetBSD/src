@@ -1,4 +1,4 @@
-/*	$NetBSD: lptvar.h,v 1.49 1998/08/15 03:02:46 mycroft Exp $	*/
+/*	$NetBSD: lptvar.h,v 1.50 2000/03/23 07:01:31 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1993, 1994 Charles M. Hannum.
@@ -56,9 +56,12 @@
 #ifndef _LPT_VAR_H_
 #define _LPT_VAR_H_
 
+#include <sys/callout.h>
+
 struct lpt_softc {
 	struct device sc_dev;
 	void *sc_ih;
+	struct callout sc_wakeup_ch;
 	size_t sc_count;
 	void *sc_inbuf;
 	u_char *sc_cp;

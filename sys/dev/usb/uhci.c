@@ -1,4 +1,4 @@
-/*	$NetBSD: uhci.c,v 1.88 2000/03/16 12:40:51 tsutsui Exp $	*/
+/*	$NetBSD: uhci.c,v 1.89 2000/03/23 07:01:46 thorpej Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/uhci.c,v 1.33 1999/11/17 22:33:41 n_hibma Exp $	*/
 
 /*
@@ -1692,7 +1692,8 @@ uhci_abort_xfer(xfer, status)
 	/* Make sure hardware has completed. */
 	if (xfer->device->bus->intr_context) {
 		/* We have no process context, so we can't use tsleep(). */
-		timeout(uhci_abort_xfer_end, xfer, hz / USB_FRAMES_PER_SECOND);
+		callout_reset(&xfer->abort_handle, hz / USB_FRAMES_PER_SECOND,
+		    uhci_abort_xfer_end, xfer);
 	} else {
 #if defined(DIAGNOSTIC) && defined(__i386__) && defined(__FreeBSD__)
 		KASSERT(intr_nesting_level == 0,
@@ -2236,7 +2237,8 @@ uhci_device_isoc_abort(xfer)
 	/* make sure hardware has completed, */
 	if (xfer->device->bus->intr_context) {
 		/* We have no process context, so we can't use tsleep(). */
-		timeout(uhci_abort_xfer_end, xfer, hz / USB_FRAMES_PER_SECOND);
+		callout_reset(&xfer->abort_handle, hz / USB_FRAMES_PER_SECOND,
+		    uhci_abort_xfer_end, xfer);
 	} else {
 		usb_delay_ms(xfer->pipe->device->bus, 1);
 		/* and call final part of interrupt handler. */

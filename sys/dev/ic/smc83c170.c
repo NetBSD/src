@@ -1,4 +1,4 @@
-/*	$NetBSD: smc83c170.c,v 1.28 2000/03/06 21:02:01 thorpej Exp $	*/
+/*	$NetBSD: smc83c170.c,v 1.29 2000/03/23 07:01:32 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.
@@ -48,6 +48,7 @@
 
 #include <sys/param.h>
 #include <sys/systm.h> 
+#include <sys/callout.h>
 #include <sys/mbuf.h>   
 #include <sys/malloc.h>
 #include <sys/kernel.h>
@@ -125,6 +126,8 @@ epic_attach(sc)
 	bus_dma_segment_t seg;
 	u_int8_t enaddr[ETHER_ADDR_LEN], devname[12 + 1];
 	u_int16_t myea[ETHER_ADDR_LEN / 2], mydevname[6];
+
+	callout_init(&sc->sc_mii_callout);
 
 	/*
 	 * Allocate the control data structures, and create and load the
@@ -891,7 +894,7 @@ epic_tick(arg)
 	mii_tick(&sc->sc_mii);
 	splx(s);
 
-	timeout(epic_tick, sc, hz);
+	callout_reset(&sc->sc_mii_callout, hz, epic_tick, sc);
 }
 
 /*
@@ -1082,7 +1085,7 @@ epic_init(sc)
 	/*
 	 * Start the one second clock.
 	 */
-	timeout(epic_tick, sc, hz);
+	callout_reset(&sc->sc_mii_callout, hz, epic_tick, sc);
 
 	/*
 	 * Attempt to start output on the interface.
@@ -1133,7 +1136,7 @@ epic_stop(sc, drain)
 	/*
 	 * Stop the one second clock.
 	 */
-	untimeout(epic_tick, sc);
+	callout_stop(&sc->sc_mii_callout);
 
 	/* Down the MII. */
 	mii_down(&sc->sc_mii);

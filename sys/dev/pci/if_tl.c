@@ -1,4 +1,4 @@
-/*	$NetBSD: if_tl.c,v 1.31 2000/03/06 21:02:02 thorpej Exp $	*/
+/*	$NetBSD: if_tl.c,v 1.32 2000/03/23 07:01:39 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1997 Manuel Bouyer.  All rights reserved.
@@ -302,6 +302,9 @@ tl_pci_attach(parent, self, aux)
 
 	printf("\n");
 
+	callout_init(&sc->tl_tick_ch);
+	callout_init(&sc->tl_restart_ch);
+
 	tp = tl_lookup_product(pa->pa_id);
 	if (tp == NULL)
 		panic("tl_pci_attach: impossible");
@@ -459,7 +462,7 @@ tl_reset(sc)
 
 	/* read stats */
 	if (sc->tl_if.if_flags & IFF_RUNNING) {
-		untimeout(tl_ticks, sc);
+		callout_stop(&sc->tl_tick_ch);
 		tl_read_stats(sc);
 	}
 	/* Reset adapter */
@@ -513,7 +516,7 @@ static void tl_shutdown(v)
 	DELAY(100000);
 
 	/* stop statistics reading loop, read stats */ 
-	untimeout(tl_ticks, sc);
+	callout_stop(&sc->tl_tick_ch);
 	tl_read_stats(sc);
 
 	/* Down the MII. */
@@ -640,7 +643,7 @@ static int tl_init(sc)
 	mii_mediachg(&sc->tl_mii);
 
 	/* start ticks calls */
-	timeout(tl_ticks, sc, hz);
+	callout_reset(&sc->tl_tick_ch, hz, tl_ticks, sc);
 	/* write adress of Rx list and enable interrupts */
 	TL_HR_WRITE(sc, TL_HOST_CH_PARM, vtophys(&sc->Rx_list[0].hw_list));
 	TL_HR_WRITE(sc, TL_HOST_CMD,
@@ -985,7 +988,7 @@ tl_intr(v)
 			    sc->sc_dev.dv_xname);
 			tl_reset(sc);
 			/* shedule reinit of the board */
-			timeout(tl_restart, sc, 1);
+			callout_reset(&sc->tl_restart_ch, 1, tl_restart, sc);
 			return(1);
 		}
 #endif
@@ -1077,7 +1080,7 @@ tl_intr(v)
 			    TL_HR_READ(sc, TL_HOST_CH_PARM));
 			tl_reset(sc);
 			/* shedule reinit of the board */
-			timeout(tl_restart, sc, 1);
+			callout_reset(&sc->tl_restart_ch, 1, tl_restart, sc);
 			return(1);
 		} else {
 			u_int8_t netstat;
@@ -1524,7 +1527,7 @@ static void tl_ticks(v)
 	}
 
 	/* read statistics every seconds */
-	timeout(tl_ticks, v, hz);
+	callout_reset(&sc->tl_tick_ch, hz, tl_ticks, sc);
 }
 
 static void

@@ -1,4 +1,4 @@
-/*	$NetBSD: at_control.c,v 1.3 2000/02/02 23:28:09 thorpej Exp $	 */
+/*	$NetBSD: at_control.c,v 1.4 2000/03/23 07:03:27 thorpej Exp $	 */
 
 /*
  * Copyright (c) 1990,1994 Regents of The University of Michigan.
@@ -171,6 +171,7 @@ at_control(cmd, data, ifp, p)
 				return (ENOBUFS);
 
 			bzero(aa, sizeof *aa);
+			callout_init(&aa->aa_probe_ch);
 
 			if ((aa0 = at_ifaddr.tqh_first) != NULL) {
 				/*
@@ -527,7 +528,8 @@ at_ifinit(ifp, aa, sat)
 				 * start off the probes as an asynchronous
 				 * activity. though why wait 200mSec?
 				 */
-				timeout(aarpprobe, ifp, hz / 5);
+				callout_reset(&aa->aa_probe_ch, hz / 5,
+				    aarpprobe, ifp);
 				if (tsleep(aa, PPAUSE | PCATCH, "at_ifinit",
 				    0)) {
 					/*

@@ -1,4 +1,4 @@
-/*	$NetBSD: scsipi_base.c,v 1.29 2000/01/17 17:59:48 bouyer Exp $	*/
+/*	$NetBSD: scsipi_base.c,v 1.30 2000/03/23 07:01:44 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -131,6 +131,7 @@ scsipi_get_xs(sc_link, flags)
 	 * than SCSI
 	 */
 	if (xs != NULL) {
+		callout_init(&xs->xs_callout);
 		xs->xs_control = flags;
 		TAILQ_INSERT_TAIL(&sc_link->pending_xfers, xs, device_q);
 		bzero(&xs->cmdstore, sizeof(xs->cmdstore));

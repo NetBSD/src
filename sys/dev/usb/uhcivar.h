@@ -1,4 +1,4 @@
-/*	$NetBSD: uhcivar.h,v 1.23 2000/02/22 16:03:44 augustss Exp $	*/
+/*	$NetBSD: uhcivar.h,v 1.24 2000/03/23 07:01:46 thorpej Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/uhcivar.h,v 1.14 1999/11/17 22:33:42 n_hibma Exp $	*/
 
 /*
@@ -74,6 +74,9 @@ typedef struct uhci_intr_info {
 	uhci_soft_td_t *stdstart;
 	uhci_soft_td_t *stdend;
 	LIST_ENTRY(uhci_intr_info) list;
+#if defined(__NetBSD__)
+	struct callout timeout_handle;
+#endif
 #if defined(__FreeBSD__)
 	struct callout_handle timeout_handle;
 #endif /* defined(__FreeBSD__) */

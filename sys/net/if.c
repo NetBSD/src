@@ -1,4 +1,4 @@
-/*	$NetBSD: if.c,v 1.58 2000/03/22 11:34:15 itojun Exp $	*/
+/*	$NetBSD: if.c,v 1.59 2000/03/23 07:03:24 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
@@ -110,6 +110,7 @@
 #include <sys/param.h>
 #include <sys/mbuf.h>
 #include <sys/systm.h>
+#include <sys/callout.h>
 #include <sys/proc.h>
 #include <sys/socket.h>
 #include <sys/socketvar.h>
@@ -136,6 +137,8 @@
 int	ifqmaxlen = IFQ_MAXLEN;
 void	if_slowtimo __P((void *arg));
 
+struct	callout if_slowtimo_ch;
+
 #ifdef INET6
 /*
  * XXX: declare here to avoid to include many inet6 related files..
@@ -156,6 +159,7 @@ void
 ifinit()
 {
 
+	callout_init(&if_slowtimo_ch);
 	if_slowtimo(NULL);
 }
 
@@ -811,7 +815,8 @@ if_slowtimo(arg)
 			(*ifp->if_watchdog)(ifp);
 	}
 	splx(s);
-	timeout(if_slowtimo, NULL, hz / IFNET_SLOWHZ);
+	callout_reset(&if_slowtimo_ch, hz / IFNET_SLOWHZ,
+	    if_slowtimo, NULL);
 }
 
 /*

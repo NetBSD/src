@@ -1,4 +1,4 @@
-/*	$NetBSD: i82557var.h,v 1.11 2000/02/12 04:05:49 enami Exp $	*/
+/*	$NetBSD: i82557var.h,v 1.12 2000/03/23 07:01:31 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 1999 The NetBSD Foundation, Inc.
@@ -65,6 +65,8 @@
  *
  *	Id: if_fxpvar.h,v 1.4 1997/11/29 08:11:01 davidg Exp
  */
+
+#include <sys/callout.h>
 
 /*
  * Misc. defintions for the Intel i82557 fast Ethernet controller
@@ -163,6 +165,7 @@ struct fxp_softc {
 	void *sc_ih;			/* interrupt handler cookie */
 
 	struct mii_data sc_mii;		/* MII/media information */
+	struct callout sc_callout;	/* MII callout */
 
 	/*
 	 * We create a single DMA map that maps all data structure

@@ -1,4 +1,4 @@
-/* $NetBSD: vga.c,v 1.25 2000/01/25 02:44:03 ad Exp $ */
+/* $NetBSD: vga.c,v 1.26 2000/03/23 07:01:33 thorpej Exp $ */
 
 /*
  * Copyright (c) 1995, 1996 Carnegie-Mellon University.
@@ -29,6 +29,7 @@
 
 #include <sys/param.h>
 #include <sys/systm.h>
+#include <sys/callout.h>
 #include <sys/kernel.h>
 #include <sys/device.h>
 #include <sys/malloc.h>
@@ -102,6 +103,8 @@ struct vga_config {
 	struct vgascreen *wantedscreen;
 	void (*switchcb) __P((void *, int, int));
 	void *switchcbarg;
+
+	struct callout vc_switch_callout;
 };
 
 static int vgaconsole, vga_console_type, vga_console_attached;
@@ -496,6 +499,7 @@ vga_init(vc, iot, memt)
 	LIST_INIT(&vc->screens);
 	vc->active = NULL;
 	vc->currenttype = vh->vh_mono ? &vga_stdscreen_mono : &vga_stdscreen;
+	callout_init(&vc->vc_switch_callout);
 
 	vc->vc_fonts[0] = &vga_builtinfont;
 	for (i = 1; i < 8; i++)
@@ -722,7 +726,8 @@ vga_show_screen(v, cookie, waitok, cb, cbarg)
 	vc->switchcb = cb;
 	vc->switchcbarg = cbarg;
 	if (cb) {
-		timeout((void(*)(void *))vga_doswitch, vc, 0);
+		callout_reset(&vc->vc_switch_callout, 0,
+		    (void(*)(void *))vga_doswitch, vc);
 		return (EAGAIN);
 	}
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: aic7xxx.c,v 1.43 2000/03/16 10:33:45 fvdl Exp $	*/
+/*	$NetBSD: aic7xxx.c,v 1.44 2000/03/23 07:01:29 thorpej Exp $	*/
 
 /*
  * Generic driver for the aic7xxx based adaptec SCSI controllers
@@ -1870,9 +1870,8 @@ ahc_handle_seqint(struct ahc_softc *ahc, u_int intstat)
 				 * retrieve the sense.
 				 */
 				if (!(scb->xs->xs_control & XS_CTL_POLL)) {
-					untimeout(ahc_timeout, (caddr_t)scb);
-					timeout(ahc_timeout, (caddr_t)scb,
-					    5 * hz);
+					callout_reset(&scb->xs->xs_callout,
+					    5 * hz, ahc_timeout, scb);
 				}
 			}
 			break;
@@ -3312,7 +3311,7 @@ ahc_done(struct ahc_softc *ahc, struct scb *scb)
 	sc_link = xs->sc_link;
 	LIST_REMOVE(scb, plinks);
 
-	untimeout(ahc_timeout, (caddr_t)scb);
+	callout_stop(&scb->xs->xs_callout);
 
 #ifdef AHC_DEBUG
 	if (ahc_debug & AHC_SHOWCMDS) {
@@ -3361,8 +3360,9 @@ ahc_done(struct ahc_softc *ahc, struct scb *scb)
 			struct scsipi_xfer *txs = scbp->xs;
 
 			if (!(txs->xs_control & XS_CTL_POLL)) {
-				timeout(ahc_timeout, scbp,
-				    (scbp->xs->timeout * hz)/1000);
+				callout_reset(&scbp->xs->xs_callout,
+				    (scbp->xs->timeout * hz) / 1000,
+				    ahc_timeout, scbp);
 			}
 			scbp = LIST_NEXT(scbp, plinks);
 		}
@@ -4095,8 +4095,8 @@ ahc_execute_scb(void *arg, bus_dma_segment_t *dm_segs, int nsegments)
 	scb->flags |= SCB_ACTIVE;
 
 	if (!(xs->xs_control & XS_CTL_POLL))
-		timeout(ahc_timeout, (caddr_t)scb,
-		    (xs->timeout * hz) / 1000);
+		callout_reset(&scb->xs->xs_callout, (xs->timeout * hz) / 1000,
+		    ahc_timeout, scb);
 
 	if ((scb->flags & SCB_TARGET_IMMEDIATE) != 0) {
 #if 0
@@ -4545,7 +4545,7 @@ ahc_set_recoveryscb(struct ahc_softc *ahc, struct scb *scb)
 		 */
 		scbp = ahc->pending_ccbs.lh_first;
 		while (scbp != NULL) {
-			untimeout(ahc_timeout, scbp);
+			callout_stop(&scbp->xs->xs_callout);
 			scbp = scbp->plinks.le_next;
 		}
 	}
@@ -4699,8 +4699,9 @@ bus_reset:
 				scb->flags |= SCB_OTHERTCL_TIMEOUT;
 				newtimeout = MAX(active_scb->xs->timeout,
 						 scb->xs->timeout);
-				timeout(ahc_timeout, scb,
-					    (newtimeout * hz) / 1000);
+				callout_reset(&scb->xs->xs_callout,
+				    (newtimeout * hz) / 1000,
+				    ahc_timeout, scb);
 				splx(s);
 				return;
 			} 
@@ -4728,7 +4729,8 @@ bus_reset:
 			scsi_print_addr(active_scb->xs->sc_link);
 			printf("BDR message in message buffer\n");
 			active_scb->flags |=  SCB_DEVICE_RESET;
-			timeout(ahc_timeout, (caddr_t)active_scb, 2 * hz);
+			callout_reset(&active_scb->xs->xs_callout,
+			    2 * hz, ahc_timeout, active_scb);
 			unpause_sequencer(ahc);
 		} else {
 			int	 disconnected;
@@ -4818,7 +4820,8 @@ bus_reset:
 					ahc_outb(ahc, KERNEL_QINPOS,
 						 ahc->qinfifonext);
 				}
-				timeout(ahc_timeout, (caddr_t)scb, 2 * hz);
+				callout_reset(&scb->xs->xs_callout, 2 * hz,
+				    ahc_timeout, scb);
 				unpause_sequencer(ahc);
 			} else {
 				/* Go "immediatly" to the bus reset */

@@ -1,4 +1,4 @@
-/*	$NetBSD: be.c,v 1.16 2000/02/14 17:06:45 pk Exp $	*/
+/*	$NetBSD: be.c,v 1.17 2000/03/23 07:01:43 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -73,6 +73,7 @@
 
 #include <sys/param.h>
 #include <sys/systm.h>
+#include <sys/callout.h>
 #include <sys/kernel.h>
 #include <sys/errno.h>
 #include <sys/ioctl.h>
@@ -132,6 +133,8 @@ struct be_softc {
 	struct mii_data	sc_mii;		/* MII media control */
 #define sc_media	sc_mii.mii_media/* shorthand */
 	int		sc_phys[2];	/* MII instance -> phy */
+
+	struct callout sc_tick_ch;
 
 	/*
 	 * Some `mii_softc' items we need to emulate MII operation
@@ -341,6 +344,8 @@ beattach(parent, self, aux)
 	mii->mii_statchg = be_mii_statchg;
 
 	ifmedia_init(&mii->mii_media, 0, be_ifmedia_upd, be_ifmedia_sts);
+
+	callout_init(&sc->sc_tick_ch);
 
 	/*
 	 * Initialize transceiver and determine which PHY connection to use.
@@ -654,7 +659,7 @@ bestop(sc)
 	bus_space_tag_t t = sc->sc_bustag;
 	bus_space_handle_t br = sc->sc_br;
 
-	untimeout(be_tick, sc);
+	callout_stop(&sc->sc_tick_ch);
 
 	/* Down the MII. */
 	mii_down(&sc->sc_mii);
@@ -1145,7 +1150,7 @@ beinit(sc)
 	ifp->if_flags &= ~IFF_OACTIVE;
 
 	be_ifmedia_upd(ifp);
-	timeout(be_tick, sc, hz);
+	callout_reset(&sc->sc_tick_ch, hz, be_tick, sc);
 	splx(s);
 }
 
@@ -1432,7 +1437,7 @@ be_tick(arg)
 	(void)be_intphy_service(sc, &sc->sc_mii, MII_TICK);
 
 	splx(s);
-	timeout(be_tick, sc, hz);
+	callout_reset(&sc->sc_tick_ch, hz, be_tick, sc);
 }
 
 void

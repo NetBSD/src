@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_mroute.h,v 1.17 1999/11/20 00:37:59 thorpej Exp $	*/
+/*	$NetBSD: ip_mroute.h,v 1.18 2000/03/23 07:03:29 thorpej Exp $	*/
 
 /*
  * Definitions for IP multicast forwarding.
@@ -15,6 +15,7 @@
 #define _NETINET_IP_MROUTE_H_
 
 #include <sys/queue.h>
+#include <sys/callout.h>
 
 /*
  * Multicast Routing set/getsockopt commands.
@@ -137,6 +138,7 @@ struct vif {
 	u_long	  v_bytes_in;		/* # bytes in on interface */
 	u_long	  v_bytes_out;		/* # bytes out on interface */
 	struct	  route v_route;	/* cached route if this is a tunnel */
+	struct	  callout v_repq_ch;	/* for tbf_reprocess_q() */
 #ifdef RSVP_ISI
 	int	  v_rsvp_on;		/* # RSVP listening on this vif */
 	struct	  socket *v_rsvpd;	/* # RSVPD daemon */

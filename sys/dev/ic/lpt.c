@@ -1,4 +1,4 @@
-/*	$NetBSD: lpt.c,v 1.55 1999/03/29 21:50:06 perry Exp $	*/
+/*	$NetBSD: lpt.c,v 1.56 2000/03/23 07:01:31 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1993, 1994 Charles M. Hannum.
@@ -107,6 +107,8 @@ lpt_attach_subr(sc)
 	ioh = sc->sc_ioh;
 
 	bus_space_write_1(iot, ioh, lpt_control, LPC_NINIT);
+
+	callout_init(&sc->sc_wakeup_ch);
 
 	sc->sc_dev_ok = 1;
 }
@@ -236,7 +238,7 @@ lptwakeup(arg)
 	lptintr(sc);
 	splx(s);
 
-	timeout(lptwakeup, sc, STEP);
+	callout_reset(&sc->sc_wakeup_ch, STEP, lptwakeup, sc);
 }
 
 /*
@@ -258,7 +260,7 @@ lptclose(dev, flag, mode, p)
 		(void) lptpushbytes(sc);
 
 	if ((sc->sc_flags & LPT_NOINTR) == 0)
-		untimeout(lptwakeup, sc);
+		callout_stop(&sc->sc_wakeup_ch);
 
 	bus_space_write_1(iot, ioh, lpt_control, LPC_NINIT);
 	sc->sc_state = 0;
