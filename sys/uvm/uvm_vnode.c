@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_vnode.c,v 1.17.2.3 1999/02/25 04:44:38 chs Exp $	*/
+/*	$NetBSD: uvm_vnode.c,v 1.17.2.4 1999/04/09 04:48:42 chs Exp $	*/
 
 /*
  * XXXCDC: "ROUGH DRAFT" QUALITY UVM PRE-RELEASE FILE!   
@@ -574,7 +574,7 @@ uvn_flush(uobj, start, stop, flags)
 	}
 #if 0
 	/* XXX unfortunately this is legitimate */
-	if (flags & PGO_FREE && uobj->uo_refs) {
+	if ((flags & PGO_FREE) && uobj->uo_refs) {
 		printf("uvn_flush: PGO_FREE on ref'd vp %p\n", uobj);
 		Debugger();
 	}
@@ -1419,13 +1419,13 @@ uvm_vnp_sync(mp)
 		 * regain vnode REF).
 		 */
 #ifdef UBC
-/* XXX should be using a vref-like function here */
+		vget(vp, LK_INTERLOCK);
 #else
 		if (uvn->u_obj.uo_refs == 0)
 			VREF(vp);
-#endif
 		uvn->u_obj.uo_refs++;
 		simple_unlock(&uvn->u_obj.vmobjlock);
+#endif
 
 		/*
 		 * got it!
