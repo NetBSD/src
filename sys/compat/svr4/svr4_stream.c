@@ -1,4 +1,4 @@
-/*	$NetBSD: svr4_stream.c,v 1.33 1998/11/27 18:33:21 christos Exp $	 */
+/*	$NetBSD: svr4_stream.c,v 1.34 1999/01/23 23:44:08 christos Exp $	 */
 
 /*-
  * Copyright (c) 1994 The NetBSD Foundation, Inc.
@@ -1228,11 +1228,8 @@ i_setsig(fp, p, retval, fd, cmd, dat)
 		int mask;
 
 		flags = oflags | O_ASYNC;
-		if ((error = copyin(dat, &mask, sizeof(mask))) != 0) {
-			DPRINTF(("i_setsig: bad eventmask pointer\n"));
-			return error;
-		}
-		if (mask & SVR4_S_ALLMASK) {
+		mask = (int)(u_long)dat;
+		if (mask & ~SVR4_S_ALLMASK) {
 			DPRINTF(("i_setsig: bad eventmask data %x\n", mask));
 			return EINVAL;
 		}
@@ -1255,7 +1252,7 @@ i_setsig(fp, p, retval, fd, cmd, dat)
 	if (dat != NULL) {
 		SCARG(&fa, cmd) = F_SETOWN;
 		SCARG(&fa, arg) = (void *) p->p_pid;
-		return sys_fcntl(p, &fa, retval);
+		return sys_fcntl(p, &fa, &flags);
 	}
 	return 0;
 }
