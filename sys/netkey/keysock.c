@@ -1,4 +1,4 @@
-/*	$NetBSD: keysock.c,v 1.31 2004/05/31 04:29:01 itojun Exp $	*/
+/*	$NetBSD: keysock.c,v 1.32 2004/05/31 09:06:36 itojun Exp $	*/
 /*	$KAME: keysock.c,v 1.32 2003/08/22 05:45:08 itojun Exp $	*/
 
 /*
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: keysock.c,v 1.31 2004/05/31 04:29:01 itojun Exp $");
+__KERNEL_RCSID(0, "$NetBSD: keysock.c,v 1.32 2004/05/31 09:06:36 itojun Exp $");
 
 #include "opt_inet.h"
 
@@ -270,8 +270,11 @@ key_sendup0(rp, m, promisc, canwait)
 		if (canwait &&
 		    sbspace(&rp->rcb_socket->so_rcv) < m->m_pkthdr.len) {
 			error = EAGAIN;
-			continue;
+			kp->kp_queue = m;
+			break;
 		}
+
+		m->m_nextpkt = NULL;
 
 		if (!sbappendaddr(&rp->rcb_socket->so_rcv,
 		    (struct sockaddr *)&key_src, m, NULL)) {
