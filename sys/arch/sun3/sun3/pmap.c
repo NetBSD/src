@@ -473,14 +473,19 @@ pmeg_t pmeg_allocate_invalid(pmap, va)
 	}
 	pmap_remove_range(pmegp->pmeg_owner, pmegp->pmeg_va,
 			  pmegp->pmeg_va+NBSG);
-    }
+    } else
+	panic("pmeg_allocate_invalid: failed\n");
+    if (!pmegp)
+	panic("pmeg_allocate_invalid: unable to allocate pmeg");
     pmegp->pmeg_owner = pmap;
     pmegp->pmeg_owner_version = pmap->pm_version;
     pmegp->pmeg_va = va;
     pmegp->pmeg_wired_count = 0;
     pmegp->pmeg_reserved  = 0;
     pmegp->pmeg_vpages  = 0;
-    pmegp = (pmeg_t) enqueue_tail(&pmeg_active_queue, pmegp);
+    enqueue_tail(&pmeg_active_queue, pmegp);
+    printf("pmeg_allocate_invalid: pmeg %d allocated to pmap %x\n",
+	   pmegp->pmeg_index, pmap);
     return pmegp;
 }
 
@@ -1261,14 +1266,14 @@ add_pte:	/* can be destructive */
     if (mem_type & PG_TYPE) 
 	set_pte(va, pte_proto | PG_NC);
     else {
-	printf("before pv_link\n");
 	nflags = pv_link(kernel_pmap, pa, va, PG_TO_PV_FLAGS(pte_proto));
-	printf("after pv_link\n");
 	if (nflags & PV_NC)
 	    set_pte(va, pte_proto | PG_NC);
 	else
 	    set_pte(va, pte_proto);
     }
+    printf("pmap_enter_kernel: va: %x pa: %x pte_proto: %x\n", va, pa,
+	   pte_proto);
     pmegp->pmeg_vpages++;	/* assumes pmap_enter can never insert
 				 a non-valid page*/
     splx(s);
