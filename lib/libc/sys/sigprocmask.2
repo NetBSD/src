@@ -1,4 +1,4 @@
-.\"	$NetBSD: sigprocmask.2,v 1.18 2004/08/25 11:56:50 pooka Exp $
+.\"	$NetBSD: sigprocmask.2,v 1.19 2004/11/23 09:38:45 kleink Exp $
 .\"
 .\" Copyright (c) 1983, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -59,8 +59,7 @@ The signal mask is changed as a function of the specified
 and the current mask.
 The function is specified by
 .Fa how
-using one of the following values from
-.Aq Pa sys/signal.h :
+using one of the following values:
 .Bl -tag -width SIG_UNBLOCK
 .It Dv SIG_BLOCK
 The new mask is the union of the current mask and the specified
