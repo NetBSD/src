@@ -1,7 +1,7 @@
 /*
  * Copyright (c) 1988 University of Utah.
- * Copyright (c) 1982, 1990 The Regents of the University of California.
- * All rights reserved.
+ * Copyright (c) 1982, 1990, 1993
+ *	The Regents of the University of California.  All rights reserved.
  *
  * This code is derived from software contributed to Berkeley by
  * the Systems Programming Group of the University of Utah Computer
@@ -35,9 +35,10 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	from: Utah Hdr: clockreg.h 1.14 91/01/18
- *	from: @(#)clockreg.h	7.3 (Berkeley) 5/7/91
- *	$Id: clockreg.h,v 1.3 1993/08/01 19:24:40 mycroft Exp $
+ * from: Utah $Hdr: clockreg.h 1.14 91/01/18$
+ *
+ *	from: @(#)clockreg.h	8.2 (Berkeley) 1/12/94
+ *	$Id: clockreg.h,v 1.4 1994/05/23 06:14:07 mycroft Exp $
  */
 
 /*
@@ -90,10 +91,8 @@ struct clkreg {
 
 #define CLK_RESOLUTION	4	/* 4 usec resolution (250Khz) */
 #define	CLK_INTERVAL	2500	/* 10msec interval at 250KHz */
-/* #define CLK_INTERVAL	5000	/* 20msec interval at 250Khz */
-
-#ifndef PRF_INTERVAL
-#define PRF_INTERVAL    CLK_INTERVAL
+#ifdef NOTDEF
+#define CLK_INTERVAL	5000	/* 20msec interval at 250Khz */
 #endif
 
 /*

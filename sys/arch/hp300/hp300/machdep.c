@@ -1,7 +1,7 @@
 /*
  * Copyright (c) 1988 University of Utah.
- * Copyright (c) 1982, 1986, 1990 The Regents of the University of California.
- * All rights reserved.
+ * Copyright (c) 1982, 1986, 1990, 1993
+ *	The Regents of the University of California.  All rights reserved.
  *
  * This code is derived from software contributed to Berkeley by
  * the Systems Programming Group of the University of Utah Computer
@@ -35,9 +35,10 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	from: Utah Hdr: machdep.c 1.63 91/04/24
- *	from: @(#)machdep.c	7.16 (Berkeley) 6/3/91
- *	$Id: machdep.c,v 1.36 1994/05/23 02:36:53 cgd Exp $
+ * from: Utah $Hdr: machdep.c 1.74 92/12/20$
+ *
+ *	from: @(#)machdep.c	8.10 (Berkeley) 4/20/94
+ *	$Id: machdep.c,v 1.37 1994/05/23 06:15:09 mycroft Exp $
  */
 
 #include <sys/param.h>
@@ -75,12 +76,12 @@
 #include <hp300/hpux/hpux.h>
 #endif
 
-#include <hp300/include/cpu.h>
-#include <hp300/include/reg.h>
-#include <hp300/include/psl.h>
+#include <machine/cpu.h>
+#include <machine/reg.h>
+#include <machine/psl.h>
+#include <machine/pte.h>
 #include <dev/cons.h>
 #include <hp300/hp300/isr.h>
-#include <hp300/include/pte.h>
 #include <net/netisr.h>
 
 #define	MAXMEM	64*1024*CLSIZE	/* XXX - from cmap.h */
@@ -116,36 +117,46 @@ int	physmem = MAXMEM;	/* max supported memory, changes to actual */
 int	safepri = PSL_LOWIPL;
 
 extern	u_int lowram;
+extern	short exframesize[];
 
 /*
  * Console initialization: called early on from main,
  * before vm init or startup.  Do enough configuration
  * to choose and initialize a console.
  */
-void
 consinit()
 {
 
 	/*
 	 * Set cpuspeed immediately since cninit() called routines
-	 * might use delay.
+	 * might use delay.  Note that we only set it if a custom value
+	 * has not already been specified.
 	 */
-	switch (machineid) {
-	case HP_320:
-	case HP_330:
-	case HP_340:
-		cpuspeed = MHZ_16;
-		break;
-	case HP_350:
-	case HP_360:
-		cpuspeed = MHZ_25;
-		break;
-	case HP_370:
-		cpuspeed = MHZ_33;
-		break;
-	case HP_375:
-		cpuspeed = MHZ_50;
-		break;
+	if (cpuspeed == 0) {
+		switch (machineid) {
+		case HP_320:
+		case HP_330:
+		case HP_340:
+			cpuspeed = MHZ_16;
+			break;
+		case HP_350:
+		case HP_360:
+		case HP_380:
+			cpuspeed = MHZ_25;
+			break;
+		case HP_370:
+		case HP_433:
+			cpuspeed = MHZ_33;
+			break;
+		case HP_375:
+			cpuspeed = MHZ_50;
+			break;
+		default:	/* assume the fastest */
+			cpuspeed = MHZ_50;
+			break;
+		}
+		if (mmutype == MMU_68040)
+			cpuspeed *= 2;	/* XXX */
 	}
 	/*
          * Find what hardware is attached to this machine.
@@ -174,22 +185,24 @@ cpu_startup()
 	register unsigned i;
 	register caddr_t v, firstaddr;
 	int base, residual;
-	extern long Usrptsize;
-	extern struct map *useriomap;
+	vm_offset_t minaddr, maxaddr;
+	vm_size_t size;
+#ifdef BUFFERS_UNMANAGED
+	vm_offset_t bufmemp;
+	caddr_t buffermem;
+	int ix;
+#endif
 #ifdef DEBUG
 	extern int pmapdebug;
 	int opmapdebug = pmapdebug;
+
+	pmapdebug = 0;
 #endif
-	vm_offset_t minaddr, maxaddr;
-	vm_size_t size;
 
 	/*
 	 * Initialize error message buffer (at end of core).
+	 * avail_end was pre-decremented in pmap_bootstrap to compensate.
 	 */
-#ifdef DEBUG
-	pmapdebug = 0;
-#endif
-	/* avail_end was pre-decremented in pmap_bootstrap to compensate */
 	for (i = 0; i < btoc(sizeof (struct msgbuf)); i++)
 		pmap_enter(kernel_pmap, (vm_offset_t)msgbufp,
 		    avail_end + i * NBPG, VM_PROT_ALL, TRUE);
@@ -225,7 +238,7 @@ again:
 	    (name) = (type *)v; v = (caddr_t)((name)+(num))
 #define	valloclim(name, type, num, lim) \
 	    (name) = (type *)v; v = (caddr_t)((lim) = ((name)+(num)))
-#ifdef notdef
+#ifdef REAL_CLISTS
 	valloc(cfree, struct cblock, nclist);
 #endif
 	valloc(callout, struct callout, ncallout);
@@ -276,6 +289,11 @@ again:
 		firstaddr = (caddr_t) kmem_alloc(kernel_map, round_page(size));
 		if (firstaddr == 0)
 			panic("startup: no room for tables");
+#ifdef BUFFERS_UNMANAGED
+		buffermem = (caddr_t) kmem_alloc(kernel_map, bufpages*CLBYTES);
+		if (buffermem == 0)
+			panic("startup: no room for buffers");
+#endif
 		goto again;
 	}
 	/*
@@ -283,7 +301,6 @@ again:
 	 */
 	if ((vm_size_t)(v - firstaddr) != size)
 		panic("startup: table size inconsistency");
-
 	/*
 	 * Now allocate buffers proper.  They are different than the above
 	 * in that they usually occupy more virtual memory than physical.
@@ -297,6 +314,9 @@ again:
 		panic("startup: cannot allocate buffers");
 	base = bufpages / nbuf;
 	residual = bufpages % nbuf;
+#ifdef BUFFERS_UNMANAGED
+	bufmemp = (vm_offset_t) buffermem;
+#endif
 	for (i = 0; i < nbuf; i++) {
 		vm_size_t curbufsize;
 		vm_offset_t curbuf;
@@ -310,17 +330,42 @@ again:
 		 */
 		curbuf = (vm_offset_t)buffers + i * MAXBSIZE;
 		curbufsize = CLBYTES * (i < residual ? base+1 : base);
+#ifdef BUFFERS_UNMANAGED
+		/*
+		 * Move the physical pages over from buffermem.
+		 */
+		for (ix = 0; ix < curbufsize/CLBYTES; ix++) {
+			vm_offset_t pa;
+
+			pa = pmap_extract(kernel_pmap, bufmemp);
+			if (pa == 0)
+				panic("startup: unmapped buffer");
+			pmap_remove(kernel_pmap, bufmemp, bufmemp+CLBYTES);
+			pmap_enter(kernel_pmap,
+				   (vm_offset_t)(curbuf + ix * CLBYTES),
+				   pa, VM_PROT_READ|VM_PROT_WRITE, TRUE);
+			bufmemp += CLBYTES;
+		}
+#else
 		vm_map_pageable(buffer_map, curbuf, curbuf+curbufsize, FALSE);
 		vm_map_simplify(buffer_map, curbuf);
+#endif
 	}
-
+#ifdef BUFFERS_UNMANAGED
+#if 0
+	/*
+	 * We would like to free the (now empty) original address range
+	 * but too many bad things will happen if we try.
+	 */
+	kmem_free(kernel_map, (vm_offset_t)buffermem, bufpages*CLBYTES);
+#endif
+#endif
 	/*
 	 * Allocate a submap for exec arguments.  This map effectively
 	 * limits the number of processes exec'ing at any time.
 	 */
 	exec_map = kmem_suballoc(kernel_map, &minaddr, &maxaddr,
 				 16*NCARGS, TRUE);
-
 	/*
 	 * Allocate a submap for physio
 	 */
@@ -342,6 +387,7 @@ again:
 	callfree = callout;
 	for (i = 1; i < ncallout; i++)
 		callout[i-1].c_next = &callout[i];
+	callout[i-1].c_next = NULL;
 
 #ifdef DEBUG
 	pmapdebug = opmapdebug;
@@ -377,8 +423,10 @@ setregs(p, entry, stack, retval)
 	u_long stack;
 	int retval[2];
 {
-	p->p_md.md_regs[PC] = entry & ~1;
-	p->p_md.md_regs[SP] = stack;
+	struct frame *frame = (struct frame *)p->p_md.md_regs;
+
+	frame->f_pc = entry & ~1;
+	frame->f_regs[SP] = stack;
 #ifdef FPCOPROC
 	/* restore a null state frame */
 	p->p_addr->u_pcb.pcb_fpregs.fpf_null = 0;
@@ -387,7 +435,7 @@ setregs(p, entry, stack, retval)
 #ifdef COMPAT_HPUX
 	if (p->p_emul == EMUL_HPUX) {
 
-		p->p_md.md_regs[A0] = 0;/* not 68010 (bit 31), no FPA (30) */
+		frame->f_regs[A0] = 0; /* not 68010 (bit 31), no FPA (30) */
 		retval[0] = 0;		/* no float card */
 #ifdef FPCOPROC
 		retval[1] = 1;		/* yes 68881 */
@@ -396,22 +444,39 @@ setregs(p, entry, stack, retval)
 #endif
 	}
 	/*
+	 * XXX This doesn't have much to do with setting registers but
+	 * I didn't want to muck up kern_exec.c with this code, so I
+	 * stuck it here.
+	 *
 	 * Ensure we perform the right action on traps type 1 and 2:
 	 * If our parent is an HPUX process and we are being traced, turn
 	 * on HPUX style interpretation.  Else if we were using the HPUX
 	 * style interpretation, revert to the BSD interpretation.
 	 *
-	 * XXX This doesn't have much to do with setting registers but
-	 * I didn't want to muck up kern_exec.c with this code, so I
-	 * stuck it here.
+	 * Note that we do this by changing the trap instruction in the
+	 * global "sigcode" array which then gets copied out to the user's
+	 * sigcode in the stack.  Since we are changing it in the global
+	 * array we must always reset it, even for non-HPUX processes.
+	 *
+	 * Note also that implementing it in this way creates a potential
+	 * race where we could have tweaked it for process A which then
+	 * blocks in the copyout to the stack and process B comes along
+	 * and untweaks it causing A to wind up with the wrong setting
+	 * when the copyout continues.  However, since we have already
+	 * copied something out to this user stack page (thereby faulting
+	 * it in), this scenerio is extremely unlikely.
 	 */
-	if ((p->p_pptr->p_emul == EMUL_HPUX) &&
-	    (p->p_flag & P_TRACED)) {
-		tweaksigcode(1);
-		p->p_addr->u_pcb.pcb_flags |= PCB_HPUXTRACE;
-	} else if (p->p_addr->u_pcb.pcb_flags & PCB_HPUXTRACE) {
-		tweaksigcode(0);
-		p->p_addr->u_pcb.pcb_flags &= ~PCB_HPUXTRACE;
+	{
+		extern short sigcodetrap[];
+
+		if ((p->p_pptr->p_emul == EMUL_HPUX) &&
+		    (p->p_flag & P_TRACED)) {
+			p->p_md.md_flags |= MDP_HPUXTRACE;
+			*sigcodetrap = 0x4E42;
+		} else {
+			p->p_md.md_flags &= ~MDP_HPUXTRACE;
+			*sigcodetrap = 0x4E41;
+		}
 	}
 #endif
 }
@@ -424,88 +489,79 @@ extern	char version[];
 
 identifycpu()
 {
+	char *t, *mc;
+	int len;
 
-	strcpy(cpu_model, "HP9000/");
 	switch (machineid) {
 	case HP_320:
-		strcat(cpu_model, "320 (16.67");
+		t = "320 (16.67MHz";
 		break;
 	case HP_330:
-		strcat(cpu_model, "318/319/330 (16.67");
+		t = "318/319/330 (16.67MHz";
 		break;
 	case HP_340:
-		strcat(cpu_model, "340 (16.67");
+		t = "340 (16.67MHz";
 		break;
 	case HP_350:
-		strcat(cpu_model, "350 (25");
+		t = "350 (25MHz";
 		break;
 	case HP_360:
-		strcat(cpu_model, "360 (25");
+		t = "360 (25MHz";
 		break;
 	case HP_370:
-		strcat(cpu_model, "370 (33.33");
+		t = "370 (33.33MHz";
 		break;
 	case HP_375:
-		strcat(cpu_model, "345/375 (50");
+		t = "345/375 (50MHz";
+		break;
+	case HP_380:
+		t = "380/425 (25MHz";
+		break;
+	case HP_433:
+		t = "433 (33MHz";
 		break;
 	default:
-		printf("unknown machine type %d\n", machineid);
+		printf("\nunknown machine type %d\n", machineid);
 		panic("startup");
 	}
+	mc = (mmutype == MMU_68040 ? "40" :
+	       (mmutype == MMU_68030 ? "30" : "20"));
+	sprintf(cpu_model, "HP9000/%s MC680%s CPU", t, mc);
 	switch (mmutype) {
+	case MMU_68040:
 	case MMU_68030:
-		strcat(cpu_model, "Mhz MC68030 CPU+MMU, ");
+		strcat(cpu_model, "+MMU");
 		break;
 	case MMU_68851:
-		strcat(cpu_model, "Mhz MC68020 CPU, MC68851 MMU, ");
+		strcat(cpu_model, ", MC68851 MMU");
 		break;
 	case MMU_HP:
-		strcat(cpu_model, "Mhz MC68020 CPU, HP MMU, ");
+		strcat(cpu_model, ", HP MMU");
 		break;
 	default:
-		printf("unknown MMU type %d\n", mmutype);
+		printf("%s\nunknown MMU type %d\n", cpu_model, mmutype);
 		panic("startup");
 	}
-	switch (machineid) {
-	case HP_320:
-	case HP_330:
-	case HP_340:
-		strcat(cpu_model, "16.67");
-		break;
-	case HP_350:
-		strcat(cpu_model, "20");
-		break;
-	case HP_360:
-		strcat(cpu_model, "25");
-		break;
-	case HP_370:
-		strcat(cpu_model, "33.33");
-		break;
-	case HP_375:
-		strcat(cpu_model, "50");
-		break;
-	}
-	if (mmutype == MMU_68030)
-		strcat(cpu_model, "Mhz MC68882 FPU, ");
+	len = strlen(cpu_model);
+	if (mmutype == MMU_68040)
+		len += sprintf(cpu_model + len,
+		    "+FPU, 4k on-chip physical I/D caches");
+	else if (mmutype == MMU_68030)
+		len += sprintf(cpu_model + len, ", %sMHz MC68882 FPU",
+		       machineid == HP_340 ? "16.67" :
+		       (machineid == HP_360 ? "25" :
+			(machineid == HP_370 ? "33.33" : "50")));
 	else
-		strcat(cpu_model, "Mhz MC68881 FPU, ");
-	switch (machineid) {
-	case HP_320:
-		strcat(cpu_model, "16K");
-		break;
-	default:
-		strcat(cpu_model, "32K");
-		break;
-	case HP_370:
-		strcat(cpu_model, "64K");
-		break;
-	}
+		len += sprintf(cpu_model + len, ", %sMHz MC68881 FPU",
+		       machineid == HP_350 ? "20" : "16.67");
 	switch (ectype) {
 	case EC_VIRT:
-		strcat(cpu_model, " virtual-address cache");
+		sprintf(cpu_model + len, ", %dK virtual-address cache",
+		       machineid == HP_320 ? 16 : 32);
 		break;
 	case EC_PHYS:
-		strcat(cpu_model, " physical-address cache");
+		sprintf(cpu_model + len, ", %dK physical-address cache",
+		       machineid == HP_370 ? 64 : 32);
 		break;
 	}
 	strcat(cpu_model, ")");
@@ -527,6 +583,10 @@ identifycpu()
 	case HP_340:
 	case HP_360:
 	case HP_370:
+#endif
+#if !defined(HP380)
+	case HP_380:
+	case HP_433:
 #endif
 		panic("CPU type not configured");
 	default:
@@ -566,22 +626,50 @@ cpu_sysctl(name, namelen, oldp, oldlenp, newp, newlen, p)
 	/* NOTREACHED */
 }
 
-#ifdef COMPAT_HPUX
-tweaksigcode(ishpux)
-{
-	static short *sigtrap = NULL;
-	extern short sigcode[], esigcode[];
+#ifdef USELEDS
+#include <hp300/hp300/led.h>
 
-	/* locate trap instruction in pcb_sigc */
-	if (sigtrap == NULL) {
-		sigtrap = esigcode;
-		while (--sigtrap >= sigcode)
-			if ((*sigtrap & 0xFFF0) == 0x4E40)
-				break;
-		if (sigtrap < sigcode)
-			panic("bogus sigcode\n");
-	}
-	*sigtrap = ishpux ? 0x4E42 : 0x4E41;
+int inledcontrol = 0;	/* 1 if we are in ledcontrol already, cheap mutex */
+char *ledaddr;
+
+/*
+ * Map the LED page and setup the KVA to access it.
+ */
+ledinit()
+{
+	extern caddr_t ledbase;
+
+	pmap_enter(kernel_pmap, (vm_offset_t)ledbase, (vm_offset_t)LED_ADDR,
+		   VM_PROT_READ|VM_PROT_WRITE, TRUE);
+	ledaddr = (char *) ((int)ledbase | (LED_ADDR & PGOFSET));
+}
+
+/*
+ * Do lights:
+ *	`ons' is a mask of LEDs to turn on,
+ *	`offs' is a mask of LEDs to turn off,
+ *	`togs' is a mask of LEDs to toggle.
+ * Note we don't use splclock/splx for mutual exclusion.
+ * They are expensive and we really don't need to be that precise.
+ * Besides we would like to be able to profile this routine.
+ */
+ledcontrol(ons, offs, togs)
+	register int ons, offs, togs;
+{
+	static char currentleds;
+	register char leds;
+
+	inledcontrol = 1;
+	leds = currentleds;
+	if (ons)
+		leds |= ons;
+	if (offs)
+		leds &= ~offs;
+	if (togs)
+		leds ^= togs;
+	currentleds = leds;
+	*ledaddr = ~leds;
+	inledcontrol = 0;
 }
 #endif
 
@@ -661,7 +749,6 @@ sendsig(catcher, sig, mask, code)
 	register struct sigacts *psp = p->p_sigacts;
 	register short ft;
 	int oonstack, fsize;
-	extern short exframesize[];
 	extern char sigcode[], esigcode[];
 
 	frame = (struct frame *)p->p_md.md_regs;
@@ -729,9 +816,9 @@ sendsig(catcher, sig, mask, code)
 	kfp->sf_state.ss_flags = SS_USERREGS;
 	bcopy((caddr_t)frame->f_regs,
 	      (caddr_t)kfp->sf_state.ss_frame.f_regs, sizeof frame->f_regs);
-	if (ft >= FMT9) {
+	if (ft >= FMT7) {
 #ifdef DEBUG
-		if (ft != FMT9 && ft != FMTA && ft != FMTB)
+		if (ft > 15 || exframesize[ft] < 0)
 			panic("sendsig: bogus frame type");
 #endif
 		kfp->sf_state.ss_flags |= SS_RTEFRAME;
@@ -818,7 +905,7 @@ sendsig(catcher, sig, mask, code)
 	/*
 	 * Signal trampoline code is at base of user stack.
 	 */
-	frame->f_pc = (int)(((char *)PS_STRINGS) - (esigcode - sigcode));
+	frame->f_pc = (int)PS_STRINGS - (esigcode - sigcode);
 #ifdef DEBUG
 	if ((sigdebug & SDB_KSTACK) && p->p_pid == sigpid)
 		printf("sendsig(%d): sig %d returns\n",
@@ -840,7 +927,7 @@ sendsig(catcher, sig, mask, code)
 struct sigreturn_args {
 	struct sigcontext *sigcntxp;
 };
-
+/* ARGSUSED */
 sigreturn(p, uap, retval)
 	struct proc *p;
 	struct sigreturn_args *uap;
@@ -852,7 +939,6 @@ sigreturn(p, uap, retval)
 	struct sigcontext tsigc;
 	struct sigstate tstate;
 	int flags;
-	extern short exframesize[];
 
 	scp = uap->sigcntxp;
 #ifdef DEBUG
@@ -1014,7 +1100,7 @@ boot(howto)
 	register int howto;
 {
 	/* take a snap shot before clobbering any registers */
-	if (curproc)
+	if (curproc && curproc->p_addr)
 		savectx(curproc->p_addr, 0);
 
 	boothowto = howto;
@@ -1031,9 +1117,9 @@ boot(howto)
 		if (panicstr == 0)
 			vnode_pager_umount(NULL);
 #ifdef notdef
-#include "fd.h"
-#if NFD > 0
-		fdshutdown();
+#include "vn.h"
+#if NVN > 0
+		vnshutdown();
 #endif
 #endif
 		sync(&proc0, (void *)NULL, (int *)NULL);
@@ -1068,11 +1154,10 @@ boot(howto)
 		doboot();
 		/*NOTREACHED*/
 	}
-	for (;;) ; /* should not be necessary, but here to quiet compiler */
 	/*NOTREACHED*/
 }
 
-u_int	dumpmag = 0x8fca0101;	/* magic number for savecore */
+int	dumpmag = 0x8fca0101;	/* magic number for savecore */
 int	dumpsize = 0;		/* also for savecore */
 long	dumplo = 0;
 
@@ -1080,13 +1165,16 @@ dumpconf()
 {
 	int nblks;
 
-	dumpsize = physmem;
+	/*
+	 * XXX include the final RAM page which is not included in physmem.
+	 */
+	dumpsize = physmem + 1;
 	if (dumpdev != NODEV && bdevsw[major(dumpdev)].d_psize) {
 		nblks = (*bdevsw[major(dumpdev)].d_psize)(dumpdev);
 		if (dumpsize > btoc(dbtob(nblks - dumplo)))
 			dumpsize = btoc(dbtob(nblks - dumplo));
 		else if (dumplo == 0)
-			dumplo = nblks - btodb(ctob(physmem));
+			dumplo = nblks - btodb(ctob(dumpsize));
 	}
 	/*
 	 * Don't dump on the first CLBYTES (why CLBYTES?)
@@ -1141,41 +1229,27 @@ dumpsys()
 	}
 }
 
-/*
- * Return the best possible estimate of the time in the timeval
- * to which tvp points.  We do this by returning the current time
- * plus the amount of time since the last clock interrupt (clock.c:clkread).
- *
- * Check that this time is no less than any previously-reported time,
- * which could happen around the time of a clock adjustment.  Just for fun,
- * we guarantee that the time will be greater than the value obtained by a
- * previous call.
- */
-microtime(tvp)
-	register struct timeval *tvp;
-{
-	int s = splhigh();
-	static struct timeval lasttime;
-
-	*tvp = time;
-	tvp->tv_usec += clkread();
-	while (tvp->tv_usec > 1000000) {
-		tvp->tv_sec++;
-		tvp->tv_usec -= 1000000;
-	}
-	if (tvp->tv_sec == lasttime.tv_sec &&
-	    tvp->tv_usec <= lasttime.tv_usec &&
-	    (tvp->tv_usec = lasttime.tv_usec + 1) > 1000000) {
-		tvp->tv_sec++;
-		tvp->tv_usec -= 1000000;
-	}
-	lasttime = *tvp;
-	splx(s);
-}
-
 initcpu()
 {
+#ifdef MAPPEDCOPY
+	extern u_int mappedcopysize;
+
+	/*
+	 * Initialize lower bound for doing copyin/copyout using
+	 * page mapping (if not already set).  We don't do this on
+	 * VAC machines as it loses big time.
+	 */
+	if (mappedcopysize == 0) {
+		if (ectype == EC_VIRT)
+			mappedcopysize = (u_int) -1;
+		else
+			mappedcopysize = NBPG;
+	}
+#endif
 	parityenable();
+#ifdef USELEDS
+	ledinit();
+#endif
 }
 
 straytrap(pc, evec)
@@ -1250,6 +1324,12 @@ netintr()
 		clnlintr();
 	}
 #endif
+#ifdef CCITT
+	if (netisr & (1 << NETISR_CCITT)) {
+		netisr &= ~(1 << NETISR_CCITT);
+		ccittintr();
+	}
+#endif
 }
 
 intrhand(sr)
@@ -1259,6 +1339,7 @@ intrhand(sr)
 	register int found = 0;
 	register int ipl;
 	extern struct isr isrqueue[];
+	static int straycount;
 
 	ipl = (sr >> 8) & 7;
 	switch (ipl) {
@@ -1274,7 +1355,11 @@ intrhand(sr)
 				break;
 			}
 		}
-		if (found == 0)
+		if (found)
+			straycount = 0;
+		else if (++straycount > 50)
+			panic("intrhand: stray interrupt");
+		else
 			printf("stray interrupt, sr 0x%x\n", sr);
 		break;
 
@@ -1283,7 +1368,10 @@ intrhand(sr)
 	case 2:
 	case 6:
 	case 7:
-		printf("intrhand: unexpected sr 0x%x\n", sr);
+		if (++straycount > 50)
+			panic("intrhand: unexpected sr");
+		else
+			printf("intrhand: unexpected sr 0x%x\n", sr);
 		break;
 	}
 }
@@ -1301,6 +1389,7 @@ void
 candbtimer(arg)
 	void *arg;
 {
+
 	crashandburn = 0;
 }
 #endif
@@ -1334,10 +1423,10 @@ nmihand(frame)
 				      "forced crash, nosync" : "forced crash");
 			}
 			crashandburn++;
-			timeout(candbtimer, NULL, candbdelay);
+			timeout(candbtimer, (void *)0, candbdelay);
 		}
-#endif
-#endif
+#endif /* DDB */
+#endif /* PANICBUTTON */
 		return;
 	}
 	if (parityerror(&frame))
@@ -1406,7 +1495,7 @@ parityerror(fp)
 		printf("WARNING: kernel parity error ignored\n");
 #endif
 	} else {
-		regdump(fp->f_regs, 128);
+		regdump(fp, 128);
 		panic("kernel parity error");
 	}
 	return(1);
@@ -1420,14 +1509,12 @@ findparerror()
 {
 	static label_t parcatch;
 	static int looking = 0;
-	volatile struct pte opte;
 	volatile int pg, o, s;
 	register volatile int *ip;
 	register int i;
 	int found;
 
 #ifdef lint
-	ip = &found;
 	i = o = pg = 0; if (i) return(0);
 #endif
 	/*
@@ -1459,8 +1546,9 @@ findparerror()
 	for (pg = btoc(lowram); pg < btoc(lowram)+physmem; pg++) {
 		pmap_enter(kernel_pmap, (vm_offset_t)vmmap, ctob(pg),
 		    VM_PROT_READ, TRUE);
+		ip = (int *)vmmap;
 		for (o = 0; o < NBPG; o += sizeof(int))
-			i = *(int *)(&vmmap[o]);
+			i = *ip++;
 	}
 	/*
 	 * Getting here implies no fault was found.  Should never happen.
@@ -1475,8 +1563,8 @@ done:
 	return(found);
 }
 
-regdump(rp, sbytes)
-	int *rp; /* must not be register */
+regdump(fp, sbytes)
+	struct frame *fp; /* must not be register */
 	int sbytes;
 {
 	static int doingdump = 0;
@@ -1488,8 +1576,9 @@ regdump(rp, sbytes)
 		return;
 	s = splhigh();
 	doingdump = 1;
-	printf("pid = %d, pc = %s, ", curproc->p_pid, hexstr(rp[PC], 8));
-	printf("ps = %s, ", hexstr(rp[PS], 4));
+	printf("pid = %d, pc = %s, ",
+	       curproc ? curproc->p_pid : -1, hexstr(fp->f_pc, 8));
+	printf("ps = %s, ", hexstr(fp->f_sr, 4));
 	printf("sfc = %s, ", hexstr(getsfc(), 4));
 	printf("dfc = %s\n", hexstr(getdfc(), 4));
 	printf("Registers:\n     ");
@@ -1497,18 +1586,18 @@ regdump(rp, sbytes)
 		printf("        %d", i);
 	printf("\ndreg:");
 	for (i = 0; i < 8; i++)
-		printf(" %s", hexstr(rp[i], 8));
+		printf(" %s", hexstr(fp->f_regs[i], 8));
 	printf("\nareg:");
 	for (i = 0; i < 8; i++)
-		printf(" %s", hexstr(rp[i+8], 8));
+		printf(" %s", hexstr(fp->f_regs[i+8], 8));
 	if (sbytes > 0) {
-		if (rp[PS] & PSL_S) {
+		if (fp->f_sr & PSL_S) {
 			printf("\n\nKernel stack (%s):",
-			       hexstr((int)(((int *)&rp)-1), 8));
-			dumpmem(((int *)&rp)-1, sbytes, 0);
+			       hexstr((int)(((int *)&fp)-1), 8));
+			dumpmem(((int *)&fp)-1, sbytes, 0);
 		} else {
-			printf("\n\nUser stack (%s):", hexstr(rp[SP], 8));
-			dumpmem((int *)rp[SP], sbytes, 1);
+			printf("\n\nUser stack (%s):", hexstr(fp->f_regs[SP], 8));
+			dumpmem((int *)fp->f_regs[SP], sbytes, 1);
 		}
 	}
 	doingdump = 0;
@@ -1520,7 +1609,7 @@ extern char kstack[];
 
 dumpmem(ptr, sz, ustack)
 	register int *ptr;
-	int sz;
+	int sz, ustack;
 {
 	register int i, val;
 	extern char *hexstr();
@@ -1547,6 +1636,7 @@ dumpmem(ptr, sz, ustack)
 char *
 hexstr(val, len)
 	register int val;
+	int len;
 {
 	static char nbuf[9];
 	register int x, i;
@@ -1564,6 +1654,24 @@ hexstr(val, len)
 	}
 	return(nbuf);
 }
+
+#ifdef DEBUG
+char oflowmsg[] = "k-stack overflow";
+char uflowmsg[] = "k-stack underflow";
+
+badkstack(oflow, fr)
+	int oflow;
+	struct frame fr;
+{
+	extern char kstackatbase[];
+
+	printf("%s: sp should be %x\n", 
+	       oflow ? oflowmsg : uflowmsg,
+	       kstackatbase - (exframesize[fr.f_format] + 8));
+	regdump(&fr, 0);
+	panic(oflow ? oflowmsg : uflowmsg);
+}
+#endif
 
 /*
  * cpu_exec_aout_makecmds():

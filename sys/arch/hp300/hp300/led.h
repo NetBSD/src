@@ -1,6 +1,6 @@
 /*
- * Copyright (c) 1989 University of Utah.
- * Copyright (c) 1990, 1993
+ * Copyright (c) 1992 University of Utah.
+ * Copyright (c) 1982, 1986, 1990, 1993
  *	The Regents of the University of California.  All rights reserved.
  *
  * This code is derived from software contributed to Berkeley by
@@ -35,12 +35,20 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * from: Utah $Hdr: clockioctl.h 1.1 90/07/09$
+ * from: Utah $Hdr: led.h 1.2 92/08/27$
  *
- *	from: @(#)clockioctl.h	8.1 (Berkeley) 6/10/93
- *	$Id: clockioctl.h,v 1.4 1994/05/23 06:14:01 mycroft Exp $
+ *	from: @(#)led.h	8.1 (Berkeley) 6/10/93
+ *	$Id: led.h,v 1.1 1994/05/23 06:14:54 mycroft Exp $
  */
 
-#define	CLOCKMAP	_IOWR('C', 1, int)
-#define	CLOCKUNMAP	_IOW('C', 2, int)
-#define	CLOCKGETRES	_IOR('C', 3, int)
+#define	LED_ADDR	0x1FFFF		/* a ROM address--strange but true */
+
+#define	LED_LANXMT	0x80		/* for LAN transmit activity */
+#define	LED_LANRCV	0x40		/* for LAN receive activity */
+#define	LED_DISK	0x20		/* for disk activity */
+#define	LED_PULSE	0x10		/* heartbeat */
+
+#ifdef KERNEL
+extern	char *ledaddr;
+extern	int inledcontrol;
+#endif

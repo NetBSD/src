@@ -1,6 +1,6 @@
 /*
- * Copyright (c) 1982, 1986, 1990 The Regents of the University of California.
- * All rights reserved.
+ * Copyright (c) 1982, 1986, 1990, 1993
+ *	The Regents of the University of California.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -30,14 +30,14 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	from: @(#)dkbad.c	7.2 (Berkeley) 12/16/90
- *	$Id: dkbad.c,v 1.2 1993/05/22 07:57:22 cgd Exp $
+ *	from: @(#)dkbad.c	8.2 (Berkeley) 1/12/94
+ *	$Id: dkbad.c,v 1.3 1994/05/23 06:14:16 mycroft Exp $
  */
 
 #ifndef NOBADSECT
-#include "sys/param.h"
-#include "sys/buf.h"
-#include "sys/dkbad.h"
+#include <sys/param.h>
+#include <sys/buf.h>
+#include <sys/dkbad.h>
 
 /*
  * Search the bad sector table looking for
@@ -47,6 +47,7 @@
 
 isbad(bt, cyl, trk, sec)
 	register struct dkbad *bt;
+	int cyl, trk, sec;
 {
 	register int i;
 	register long blk, bblk;

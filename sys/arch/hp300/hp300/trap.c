@@ -1,7 +1,7 @@
 /*
  * Copyright (c) 1988 University of Utah.
- * Copyright (c) 1982, 1986, 1990 The Regents of the University of California.
- * All rights reserved.
+ * Copyright (c) 1982, 1986, 1990, 1993
+ *	The Regents of the University of California.  All rights reserved.
  *
  * This code is derived from software contributed to Berkeley by
  * the Systems Programming Group of the University of Utah Computer
@@ -35,36 +35,37 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	from: Utah Hdr: trap.c 1.32 91/04/06
- *	from: @(#)trap.c	7.15 (Berkeley) 8/2/91
- *	$Id: trap.c,v 1.20 1994/05/21 09:22:40 cgd Exp $
+ * from: Utah $Hdr: trap.c 1.37 92/12/20$
+ *
+ *	from: @(#)trap.c	8.5 (Berkeley) 1/4/94
+ *	$Id: trap.c,v 1.21 1994/05/23 06:15:35 mycroft Exp $
  */
 
-#include "param.h"
-#include "systm.h"
-#include "proc.h"
-#include "acct.h"
-#include "kernel.h"
-#include "signalvar.h"
-#include "resourcevar.h"
-#include "syslog.h"
-#include "user.h"
+#include <sys/param.h>
+#include <sys/systm.h>
+#include <sys/proc.h>
+#include <sys/acct.h>
+#include <sys/kernel.h>
+#include <sys/signalvar.h>
+#include <sys/resourcevar.h>
+#include <sys/syscall.h>
+#include <sys/syslog.h>
+#include <sys/user.h>
 #ifdef KTRACE
-#include "ktrace.h"
+#include <sys/ktrace.h>
 #endif
-#include "syscall.h"
 
-#include "../include/psl.h"
-#include "../include/trap.h"
-#include "../include/cpu.h"
-#include "../include/reg.h"
-#include "../include/mtpr.h"
+#include <machine/psl.h>
+#include <machine/trap.h>
+#include <machine/cpu.h>
+#include <machine/reg.h>
+#include <machine/mtpr.h>
 
-#include "vm/vm.h"
-#include "vm/pmap.h"
+#include <vm/vm.h>
+#include <vm/pmap.h>
 
 #ifdef COMPAT_HPUX
-#include "../hpux/hpux.h"
+#include <hp300/hpux/hpux.h>
 #endif
 
 struct	sysent	sysent[];
@@ -95,9 +96,9 @@ short	exframesize[] = {
 	FMT0SIZE,	/* type 0 - normal (68020/030/040) */
 	FMT1SIZE,	/* type 1 - throwaway (68020/030/040) */
 	FMT2SIZE,	/* type 2 - normal 6-word (68020/030/040) */
-	-1,		/* type 3 - FP post-instruction (68040) */
+	FMT3SIZE,	/* type 3 - FP post-instruction (68040) */
 	-1, -1, -1,	/* type 4-6 - undefined */
-	-1,		/* type 7 - access error (68040) */
+	FMT7SIZE,	/* type 7 - access error (68040) */
 	58,		/* type 8 - bus fault (68010) */
 	FMT9SIZE,	/* type 9 - coprocessor mid-instruction (68020/030) */
 	FMTASIZE,	/* type A - short bus fault (68020/030) */
@@ -105,19 +106,45 @@ short	exframesize[] = {
 	-1, -1, -1, -1	/* type C-F - undefined */
 };
 
-#ifdef DEBUG
-int mmudebug = 0;
+#ifdef HP380
+#define KDFAULT(c)	(mmutype == MMU_68040 ? \
+			    ((c) & SSW4_TMMASK) == SSW4_TMKD : \
+			    ((c) & (SSW_DF|FC_SUPERD)) == (SSW_DF|FC_SUPERD))
+#define WRFAULT(c) 	(mmutype == MMU_68040 ? \
+			    ((c) & SSW4_RW) == 0 : \
+			    ((c) & (SSW_DF|SSW_RW)) == SSW_DF)
+#else
+#define KDFAULT(c)	(((c) & (SSW_DF|SSW_FCMASK)) == (SSW_DF|FC_SUPERD))
+#define WRFAULT(c)	(((c) & (SSW_DF|SSW_RW)) == SSW_DF)
 #endif
 
-static inline void
-userret(p, pc, oticks)
-	register struct proc *p;
-	int pc;
-	u_quad_t oticks;
-{
-	int sig;
-	int s;
+#ifdef DEBUG
+int mmudebug = 0;
+int mmupid = -1;
+#define MDB_FOLLOW	1
+#define MDB_WBFOLLOW	2
+#define MDB_WBFAILED	4
+#define MDB_ISPID(p)	(p) == mmupid
+#endif
 
+/*
+ * trap and syscall both need the following work done before returning
+ * to user mode.
+ */
+static inline void
+userret(p, fp, oticks, faultaddr, fromtrap)
+	register struct proc *p;
+	register struct frame *fp;
+	u_quad_t oticks;
+	u_int faultaddr;
+	int fromtrap;
+{
+	int sig, s;
+#ifdef HP380
+	int beenhere = 0;
+
+again:
+#endif
 	/* take pending signals */
 	while ((sig = CURSIG(p)) != 0)
 		postsig(sig);
@@ -127,9 +154,9 @@ userret(p, pc, oticks)
 		 * Since we are curproc, clock will normally just change
 		 * our priority without moving us from one queue to another
 		 * (since the running process is not on a queue.)
-		 * If that happened after we setrunqueue ourselves but before
-		 * we switch()'ed, we might not be on the queue indicated by
-		 * our priority.
+		 * If that happened after we put ourselves on the run queue
+		 * but before we mi_switch()'ed, we might not be on the queue
+		 * indicated by our priority.
 		 */
 		s = splstatclock();
 		setrunqueue(p);
@@ -141,14 +168,40 @@ userret(p, pc, oticks)
 	}
 
 	/*
-	 * If profiling, charge recent system time to the trapped pc.
+	 * If profiling, charge system time to the trapped pc.
 	 */
-	if (p->p_flag & P_PROFIL) { 
+	if (p->p_flag & P_PROFIL) {
 		extern int psratio;
 
-		addupc_task(p, pc, (int)(p->p_sticks - oticks) * psratio); 
-	}        
-
+		addupc_task(p, fp->f_pc,
+			    (int)(p->p_sticks - oticks) * psratio);
+	}
+#ifdef HP380
+	/*
+	 * Deal with user mode writebacks (from trap, or from sigreturn).
+	 * If any writeback fails, go back and attempt signal delivery.
+	 * unless we have already been here and attempted the writeback
+	 * (e.g. bad address with user ignoring SIGSEGV).  In that case
+	 * we just return to the user without sucessfully completing
+	 * the writebacks.  Maybe we should just drop the sucker?
+	 */
+	if (mmutype == MMU_68040 && fp->f_format == FMT7) {
+		if (beenhere) {
+#ifdef DEBUG
+			if (mmudebug & MDB_WBFAILED)
+				printf(fromtrap ?
+		"pid %d(%s): writeback aborted, pc=%x, fa=%x\n" :
+		"pid %d(%s): writeback aborted in sigreturn, pc=%x\n",
+				    p->p_pid, p->p_comm, fp->f_pc, faultaddr);
+#endif
+		} else if (sig = writeback(fp, fromtrap)) {
+			beenhere = 1;
+			oticks = p->p_sticks;
+			trapsignal(p, sig, faultaddr);
+			goto again;
+		}
+	}
+#endif
 	curpriority = p->p_priority;
 }
 
@@ -164,6 +217,7 @@ trap(type, code, v, frame)
 	register unsigned v;
 	struct frame frame;
 {
+	extern char fswintr[];
 	register struct proc *p;
 	register int i;
 	u_int ucode;
@@ -177,20 +231,22 @@ trap(type, code, v, frame)
 		sticks = p->p_sticks;
 		p->p_md.md_regs = frame.f_regs;
 	}
-
 #ifdef DDB
 	if (type == T_TRACE || type == T_BREAKPOINT) {
 		if (kdb_trap(type, &frame))
 			return;
 	}
 #endif
-
 	switch (type) {
 
 	default:
 dopanic:
 		printf("trap type %d, code = %x, v = %x\n", type, code, v);
-		regdump(frame.f_regs, 128);
+#ifdef DDB
+		if (kdb_trap(type, &frame))
+			return;
+#endif
+		regdump(&frame, 128);
 		type &= ~T_USER;
 		if ((unsigned)type < trap_types)
 			panic(trap_type[type]);
@@ -213,13 +269,15 @@ copyfault:
 
 	case T_BUSERR|T_USER:	/* bus error */
 	case T_ADDRERR|T_USER:	/* address error */
+		ucode = v;
 		i = SIGBUS;
 		break;
 
 #ifdef FPCOPROC
 	case T_COPERR:		/* kernel coprocessor violation */
 #endif
-	case T_FMTERR:		/* kernel format error */
+	case T_FMTERR|T_USER:	/* do all RTE errors come in as T_USER? */
+	case T_FMTERR:		/* ...just in case... */
 	/*
 	 * The user has most likely trashed the RTE or FP state info
 	 * in the stack frame of a signal handler.
@@ -254,6 +312,19 @@ copyfault:
 	 * no clash.
 	 */
 		ucode = code;
+		i = SIGFPE;
+		break;
+#endif
+
+#ifdef HP380
+	case T_FPEMULI|T_USER:	/* unimplemented FP instuction */
+	case T_FPEMULD|T_USER:	/* unimplemented FP data type */
+		/* XXX need to FSAVE */
+		printf("pid %d(%s): unimplemented FP %s at %x (EA %x)\n",
+		       p->p_pid, p->p_comm,
+		       frame.f_format == 2 ? "instruction" : "data type",
+		       frame.f_pc, frame.f_fmt2.f_iaddr);
+		/* XXX need to FRESTORE */
 		i = SIGFPE;
 		break;
 #endif
@@ -325,8 +396,8 @@ copyfault:
 	 * SUN 3.x traps get passed through as T_TRAP15 and are not really
 	 * supported yet.
 	 */
-	case T_TRACE:		/* XXX kernel trace trap */
-	case T_TRAP15:		/* XXX SUN trace trap */
+	case T_TRACE:		/* kernel trace trap */
+	case T_TRAP15:		/* SUN trace trap */
 		frame.f_sr &= ~PSL_T;
 		i = SIGTRAP;
 		break;
@@ -373,15 +444,19 @@ copyfault:
 			return;
 		}
 		spl0();
-#ifndef PROFTIMER
-		if ((p->p_flag&SOWEUPC) && p->p_stats->p_prof.pr_scale) {
-			addupc(frame.f_pc, &p->p_stats->p_prof, 1);
-			p->p_flag &= ~SOWEUPC;
+		if (p->p_flag & P_OWEUPC) {
+			p->p_flag &= ~P_OWEUPC;
+			ADDUPROF(p);
 		}
-#endif
 		goto out;
 
 	case T_MMUFLT:		/* kernel mode page fault */
+		/*
+		 * If we were doing profiling ticks or other user mode
+		 * stuff from interrupt code, Just Say No.
+		 */
+		if (p->p_addr->u_pcb.pcb_onfault == fswintr)
+			goto copyfault;
 		/* fall into ... */
 
 	case T_MMUFLT|T_USER:	/* page fault */
@@ -393,6 +468,11 @@ copyfault:
 		vm_prot_t ftype;
 		extern vm_map_t kernel_map;
 
+#ifdef DEBUG
+		if ((mmudebug & MDB_WBFOLLOW) || MDB_ISPID(p->p_pid))
+		printf("trap: T_MMUFLT pid=%d, code=%x, v=%x, pc=%x, sr=%x\n",
+		       p->p_pid, code, v, frame.f_pc, frame.f_sr);
+#endif
 		/*
 		 * It is only a kernel address space fault iff:
 		 * 	1. (type & T_USER) == 0  and
@@ -402,12 +482,11 @@ copyfault:
 		 * argument space is lazy-allocated.
 		 */
 		if (type == T_MMUFLT &&
-		    (!p->p_addr->u_pcb.pcb_onfault ||
-		     (code & (SSW_DF|FC_SUPERD)) == (SSW_DF|FC_SUPERD)))
+		    (!p->p_addr->u_pcb.pcb_onfault || KDFAULT(code)))
 			map = kernel_map;
 		else
 			map = &vm->vm_map;
-		if ((code & (SSW_DF|SSW_RW)) == SSW_DF)	/* what about RMW? */
+		if (WRFAULT(code))
 			ftype = VM_PROT_READ | VM_PROT_WRITE;
 		else
 			ftype = VM_PROT_READ;
@@ -418,7 +497,25 @@ copyfault:
 			goto dopanic;
 		}
 #endif
+#ifdef COMPAT_HPUX
+		if (ISHPMMADDR(va)) {
+			vm_offset_t bva;
+
+			rv = pmap_mapmulti(map->pmap, va);
+			if (rv != KERN_SUCCESS) {
+				bva = HPMMBASEADDR(va);
+				rv = vm_fault(map, bva, ftype, FALSE);
+				if (rv == KERN_SUCCESS)
+					(void) pmap_mapmulti(map->pmap, va);
+			}
+		} else
+#endif
 		rv = vm_fault(map, va, ftype, FALSE);
+#ifdef DEBUG
+		if (rv && MDB_ISPID(p->p_pid))
+			printf("vm_fault(%x, %x, %x, 0) -> %x\n",
+			       map, va, ftype, rv);
+#endif
 		/*
 		 * If this was a stack access we keep track of the maximum
 		 * accessed stack size.  Also, if vm_fault gets a protection
@@ -437,8 +534,13 @@ copyfault:
 				rv = KERN_INVALID_ADDRESS;
 		}
 		if (rv == KERN_SUCCESS) {
-			if (type == T_MMUFLT)
+			if (type == T_MMUFLT) {
+#ifdef HP380
+				if (mmutype == MMU_68040)
+					(void) writeback(&frame, 1);
+#endif
 				return;
+			}
 			goto out;
 		}
 		if (type == T_MMUFLT) {
@@ -459,14 +561,326 @@ copyfault:
 	if ((type & T_USER) == 0)
 		return;
 out:
-	userret(p, frame.f_pc, sticks);
+	userret(p, &frame, sticks, v, 1);
 }
+
+#ifdef HP380
+#ifdef DEBUG
+struct writebackstats {
+	int calls;
+	int cpushes;
+	int move16s;
+	int wb1s, wb2s, wb3s;
+	int wbsize[4];
+} wbstats;
+
+char *f7sz[] = { "longword", "byte", "word", "line" };
+char *f7tt[] = { "normal", "MOVE16", "AFC", "ACK" };
+char *f7tm[] = { "d-push", "u-data", "u-code", "M-data",
+		 "M-code", "k-data", "k-code", "RES" };
+char wberrstr[] =
+    "WARNING: pid %d(%s) writeback [%s] failed, pc=%x fa=%x wba=%x wbd=%x\n";
+#endif
+
+writeback(fp, docachepush)
+	struct frame *fp;
+	int docachepush;
+{
+	register struct fmt7 *f = &fp->f_fmt7;
+	register struct proc *p = curproc;
+	int err = 0;
+	u_int fa;
+	caddr_t oonfault = p->p_addr->u_pcb.pcb_onfault;
+
+#ifdef DEBUG
+	if ((mmudebug & MDB_WBFOLLOW) || MDB_ISPID(p->p_pid)) {
+		printf(" pid=%d, fa=%x,", p->p_pid, f->f_fa);
+		dumpssw(f->f_ssw);
+	}
+	wbstats.calls++;
+#endif
+	/*
+	 * Deal with special cases first.
+	 */
+	if ((f->f_ssw & SSW4_TMMASK) == SSW4_TMDCP) {
+		/*
+		 * Dcache push fault.
+		 * Line-align the address and write out the push data to
+		 * the indicated physical address.
+		 */
+#ifdef DEBUG
+		if ((mmudebug & MDB_WBFOLLOW) || MDB_ISPID(p->p_pid)) {
+			printf(" pushing %s to PA %x, data %x",
+			       f7sz[(f->f_ssw & SSW4_SZMASK) >> 5],
+			       f->f_fa, f->f_pd0);
+			if ((f->f_ssw & SSW4_SZMASK) == SSW4_SZLN)
+				printf("/%x/%x/%x",
+				       f->f_pd1, f->f_pd2, f->f_pd3);
+			printf("\n");
+		}
+		if (f->f_wb1s & SSW4_WBSV)
+			panic("writeback: cache push with WB1S valid");
+		wbstats.cpushes++;
+#endif
+		/*
+		 * XXX there are security problems if we attempt to do a
+		 * cache push after a signal handler has been called.
+		 */
+		if (docachepush) {
+			pmap_enter(kernel_pmap, (vm_offset_t)vmmap,
+				   trunc_page(f->f_fa), VM_PROT_WRITE, TRUE);
+			fa = (u_int)&vmmap[(f->f_fa & PGOFSET) & ~0xF];
+			bcopy((caddr_t)&f->f_pd0, (caddr_t)fa, 16);
+			DCFL(pmap_extract(kernel_pmap, (vm_offset_t)fa));
+			pmap_remove(kernel_pmap, (vm_offset_t)vmmap,
+				    (vm_offset_t)&vmmap[NBPG]);
+		} else
+			printf("WARNING: pid %d(%s) uid %d: CPUSH not done\n",
+			       p->p_pid, p->p_comm, p->p_ucred->cr_uid);
+	} else if ((f->f_ssw & (SSW4_RW|SSW4_TTMASK)) == SSW4_TTM16) {
+		/*
+		 * MOVE16 fault.
+		 * Line-align the address and write out the push data to
+		 * the indicated virtual address.
+		 */
+#ifdef DEBUG
+		if ((mmudebug & MDB_WBFOLLOW) || MDB_ISPID(p->p_pid))
+			printf(" MOVE16 to VA %x(%x), data %x/%x/%x/%x\n",
+			       f->f_fa, f->f_fa & ~0xF, f->f_pd0, f->f_pd1,
+			       f->f_pd2, f->f_pd3);
+		if (f->f_wb1s & SSW4_WBSV)
+			panic("writeback: MOVE16 with WB1S valid");
+		wbstats.move16s++;
+#endif
+		if (KDFAULT(f->f_wb1s))
+			bcopy((caddr_t)&f->f_pd0, (caddr_t)(f->f_fa & ~0xF), 16);
+		else
+			err = suline((caddr_t)(f->f_fa & ~0xF), (caddr_t)&f->f_pd0);
+		if (err) {
+			fa = f->f_fa & ~0xF;
+#ifdef DEBUG
+			if (mmudebug & MDB_WBFAILED)
+				printf(wberrstr, p->p_pid, p->p_comm,
+				       "MOVE16", fp->f_pc, f->f_fa,
+				       f->f_fa & ~0xF, f->f_pd0);
+#endif
+		}
+	} else if (f->f_wb1s & SSW4_WBSV) {
+		/*
+		 * Writeback #1.
+		 * Position the "memory-aligned" data and write it out.
+		 */
+		register u_int wb1d = f->f_wb1d;
+		register int off;
+
+#ifdef DEBUG
+		if ((mmudebug & MDB_WBFOLLOW) || MDB_ISPID(p->p_pid))
+			dumpwb(1, f->f_wb1s, f->f_wb1a, f->f_wb1d);
+		wbstats.wb1s++;
+		wbstats.wbsize[(f->f_wb2s&SSW4_SZMASK)>>5]++;
+#endif
+		off = (f->f_wb1a & 3) * 8;
+		switch (f->f_wb1s & SSW4_SZMASK) {
+		case SSW4_SZLW:
+			if (off)
+				wb1d = (wb1d >> (32 - off)) | (wb1d << off);
+			if (KDFAULT(f->f_wb1s))
+				*(long *)f->f_wb1a = wb1d;
+			else
+				err = suword((caddr_t)f->f_wb1a, wb1d);
+			break;
+		case SSW4_SZB:
+			off = 24 - off;
+			if (off)
+				wb1d >>= off;
+			if (KDFAULT(f->f_wb1s))
+				*(char *)f->f_wb1a = wb1d;
+			else
+				err = subyte((caddr_t)f->f_wb1a, wb1d);
+			break;
+		case SSW4_SZW:
+			off = (off + 16) % 32;
+			if (off)
+				wb1d = (wb1d >> (32 - off)) | (wb1d << off);
+			if (KDFAULT(f->f_wb1s))
+				*(short *)f->f_wb1a = wb1d;
+			else
+				err = susword((caddr_t)f->f_wb1a, wb1d);
+			break;
+		}
+		if (err) {
+			fa = f->f_wb1a;
+#ifdef DEBUG
+			if (mmudebug & MDB_WBFAILED)
+				printf(wberrstr, p->p_pid, p->p_comm,
+				       "#1", fp->f_pc, f->f_fa,
+				       f->f_wb1a, f->f_wb1d);
+#endif
+		}
+	}
+	/*
+	 * Deal with the "normal" writebacks.
+	 *
+	 * XXX writeback2 is known to reflect a LINE size writeback after
+	 * a MOVE16 was already dealt with above.  Ignore it.
+	 */
+	if (err == 0 && (f->f_wb2s & SSW4_WBSV) &&
+	    (f->f_wb2s & SSW4_SZMASK) != SSW4_SZLN) {
+#ifdef DEBUG
+		if ((mmudebug & MDB_WBFOLLOW) || MDB_ISPID(p->p_pid))
+			dumpwb(2, f->f_wb2s, f->f_wb2a, f->f_wb2d);
+		wbstats.wb2s++;
+		wbstats.wbsize[(f->f_wb2s&SSW4_SZMASK)>>5]++;
+#endif
+		switch (f->f_wb2s & SSW4_SZMASK) {
+		case SSW4_SZLW:
+			if (KDFAULT(f->f_wb2s))
+				*(long *)f->f_wb2a = f->f_wb2d;
+			else
+				err = suword((caddr_t)f->f_wb2a, f->f_wb2d);
+			break;
+		case SSW4_SZB:
+			if (KDFAULT(f->f_wb2s))
+				*(char *)f->f_wb2a = f->f_wb2d;
+			else
+				err = subyte((caddr_t)f->f_wb2a, f->f_wb2d);
+			break;
+		case SSW4_SZW:
+			if (KDFAULT(f->f_wb2s))
+				*(short *)f->f_wb2a = f->f_wb2d;
+			else
+				err = susword((caddr_t)f->f_wb2a, f->f_wb2d);
+			break;
+		}
+		if (err) {
+			fa = f->f_wb2a;
+#ifdef DEBUG
+			if (mmudebug & MDB_WBFAILED) {
+				printf(wberrstr, p->p_pid, p->p_comm,
+				       "#2", fp->f_pc, f->f_fa,
+				       f->f_wb2a, f->f_wb2d);
+				dumpssw(f->f_ssw);
+				dumpwb(2, f->f_wb2s, f->f_wb2a, f->f_wb2d);
+			}
+#endif
+		}
+	}
+	if (err == 0 && (f->f_wb3s & SSW4_WBSV)) {
+#ifdef DEBUG
+		if ((mmudebug & MDB_WBFOLLOW) || MDB_ISPID(p->p_pid))
+			dumpwb(3, f->f_wb3s, f->f_wb3a, f->f_wb3d);
+		wbstats.wb3s++;
+		wbstats.wbsize[(f->f_wb3s&SSW4_SZMASK)>>5]++;
+#endif
+		switch (f->f_wb3s & SSW4_SZMASK) {
+		case SSW4_SZLW:
+			if (KDFAULT(f->f_wb3s))
+				*(long *)f->f_wb3a = f->f_wb3d;
+			else
+				err = suword((caddr_t)f->f_wb3a, f->f_wb3d);
+			break;
+		case SSW4_SZB:
+			if (KDFAULT(f->f_wb3s))
+				*(char *)f->f_wb3a = f->f_wb3d;
+			else
+				err = subyte((caddr_t)f->f_wb3a, f->f_wb3d);
+			break;
+		case SSW4_SZW:
+			if (KDFAULT(f->f_wb3s))
+				*(short *)f->f_wb3a = f->f_wb3d;
+			else
+				err = susword((caddr_t)f->f_wb3a, f->f_wb3d);
+			break;
+#ifdef DEBUG
+		case SSW4_SZLN:
+			panic("writeback: wb3s indicates LINE write");
+#endif
+		}
+		if (err) {
+			fa = f->f_wb3a;
+#ifdef DEBUG
+			if (mmudebug & MDB_WBFAILED)
+				printf(wberrstr, p->p_pid, p->p_comm,
+				       "#3", fp->f_pc, f->f_fa,
+				       f->f_wb3a, f->f_wb3d);
+#endif
+		}
+	}
+	p->p_addr->u_pcb.pcb_onfault = oonfault;
+	/*
+	 * Determine the cause of the failure if any translating to
+	 * a signal.  If the corresponding VA is valid and RO it is
+	 * a protection fault (SIGBUS) otherwise consider it an
+	 * illegal reference (SIGSEGV).
+	 */
+	if (err) {
+		if (vm_map_check_protection(&p->p_vmspace->vm_map,	
+					    trunc_page(fa), round_page(fa),
+					    VM_PROT_READ) &&
+		    !vm_map_check_protection(&p->p_vmspace->vm_map,
+					     trunc_page(fa), round_page(fa),
+					     VM_PROT_WRITE))
+			err = SIGBUS;
+		else
+			err = SIGSEGV;
+	}
+	return(err);
+}
+
+#ifdef DEBUG
+dumpssw(ssw)
+	register u_short ssw;
+{
+	printf(" SSW: %x: ", ssw);
+	if (ssw & SSW4_CP)
+		printf("CP,");
+	if (ssw & SSW4_CU)
+		printf("CU,");
+	if (ssw & SSW4_CT)
+		printf("CT,");
+	if (ssw & SSW4_CM)
+		printf("CM,");
+	if (ssw & SSW4_MA)
+		printf("MA,");
+	if (ssw & SSW4_ATC)
+		printf("ATC,");
+	if (ssw & SSW4_LK)
+		printf("LK,");
+	if (ssw & SSW4_RW)
+		printf("RW,");
+	printf(" SZ=%s, TT=%s, TM=%s\n",
+	       f7sz[(ssw & SSW4_SZMASK) >> 5],
+	       f7tt[(ssw & SSW4_TTMASK) >> 3],
+	       f7tm[ssw & SSW4_TMMASK]);
+}
+
+dumpwb(num, s, a, d)
+	int num;
+	u_short s;
+	u_int a, d;
+{
+	register struct proc *p = curproc;
+	vm_offset_t pa;
+
+	printf(" writeback #%d: VA %x, data %x, SZ=%s, TT=%s, TM=%s\n",
+	       num, a, d, f7sz[(s & SSW4_SZMASK) >> 5],
+	       f7tt[(s & SSW4_TTMASK) >> 3], f7tm[s & SSW4_TMMASK]);
+	printf("               PA ");
+	pa = pmap_extract(&p->p_vmspace->vm_pmap, (vm_offset_t)a);
+	if (pa == 0)
+		printf("<invalid address>");
+	else
+		printf("%x, current value %x", pa, fuword((caddr_t)a));
+	printf("\n");
+}
+#endif
+#endif
 
 /*
  * Proces a system call.
  */
 syscall(code, frame)
-	volatile int code;
+	u_int code;
 	struct frame frame;
 {
 	register caddr_t params;
@@ -499,12 +913,27 @@ syscall(code, frame)
 		callp = sysent, numsys = nsysent;
 	params = (caddr_t)frame.f_regs[SP] + sizeof(int);
 	switch (code) {
+
 	case SYS_syscall:
+		/*
+		 * Code is first argument, followed by actual args.
+		 */
 		code = fuword(params);
 		params += sizeof(int);
+		/*
+		 * XXX sigreturn requires special stack manipulation
+		 * that is only done if entered via the sigreturn
+		 * trap.  Cannot allow it here so make sure we fail.
+		 */
+		if (code == SYS_sigreturn)
+			code = numsys;
 		break;
 
 	case SYS___syscall:
+		/*
+		 * Like syscall, but code is a quad, so as to maintain
+		 * quad alignment for the rest of the arguments.
+		 */
 #ifdef COMPAT_HPUX
 		if (p->p_emul == EMUL_HPUX)
 			break;
@@ -517,10 +946,10 @@ syscall(code, frame)
 		/* nothing to do by default */
 		break;
 	}
-	if (code < 0 || code >= numsys)
-		callp += SYS_syscall;	/* => nosys */
-	else
+	if (code < numsys)
 		callp += code;
+	else
+		callp += SYS_syscall;	/* => nosys */
 	argsize = callp->sy_narg * sizeof(int);
 	if (argsize && (error = copyin(params, (caddr_t)&args, argsize))) {
 #ifdef KTRACE
@@ -543,6 +972,7 @@ syscall(code, frame)
 #endif
 		error = (*callp->sy_call)(p, &args, rval);
 	switch (error) {
+
 	case 0:
 		/*
 		 * Reinitialize proc pointer `p' as it may be different
@@ -562,8 +992,7 @@ syscall(code, frame)
 		break;
 
 	case EJUSTRETURN:
-		/* nothing to do */
-		break;
+		break;		/* nothing to do */
 
 	default:
 	bad:
@@ -576,7 +1005,7 @@ syscall(code, frame)
 		break;
 	}
 
-	userret(p, frame.f_pc, sticks);
+	userret(p, &frame, sticks, (u_int)0, 0);
 #ifdef KTRACE
 	if (KTRPOINT(p, KTR_SYSRET))
 		ktrsysret(p->p_tracep, code, error, rval[0]);

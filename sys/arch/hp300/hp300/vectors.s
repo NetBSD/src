@@ -1,6 +1,6 @@
 | Copyright (c) 1988 University of Utah
-| Copyright (c) 1990 Regents of the University of California.
-| All rights reserved.
+| Copyright (c) 1990, 1993
+|	The Regents of the University of California.  All rights reserved.
 |
 | Redistribution and use in source and binary forms, with or without
 | modification, are permitted provided that the following conditions
@@ -30,9 +30,24 @@
 | OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 | SUCH DAMAGE.
 |
-|	from: @(#)vectors.s	7.2 (Berkeley) 5/7/91
-|	$Id: vectors.s,v 1.2 1993/05/22 07:57:49 cgd Exp $
+|	from: @(#)vectors.s	8.2 (Berkeley) 1/21/94
+|	$Id: vectors.s,v 1.3 1994/05/23 06:15:41 mycroft Exp $
 |
+#ifdef HPFPLIB
+/*
+ * XXX the HP FP library mishandles "normal" F-line faults causing
+ * the kernel to crash, hence we detect it ourselves rather than just
+ * vectoring to "_fline".  We also always catch unsupported data type
+ * faults ourselves for no particular reason.
+ */
+#define	_fpbsun		_bsun
+#define	_fpinex		_inex
+#define	_fpdz		_dz
+#define	_fpunfl		_unfl
+#define	_fpoperr	_operr
+#define	_fpovfl		_ovfl
+#define	_fpsnan		_snan
+#else
 #define	_fpbsun		_fpfault
 #define	_fpinex		_fpfault
 #define	_fpdz		_fpfault
@@ -40,6 +55,7 @@
 #define	_fpoperr	_fpfault
 #define	_fpovfl		_fpfault
 #define	_fpsnan		_fpfault
+#endif
 
 	.text
 	.globl	_buserr,_addrerr
