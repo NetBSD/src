@@ -1,4 +1,4 @@
-/* $NetBSD: pmap.old.c,v 1.18 1997/09/02 13:18:31 thorpej Exp $ */
+/* $NetBSD: pmap.old.c,v 1.19 1997/09/02 19:00:53 thorpej Exp $ */
 
 /* 
  * Copyright (c) 1991, 1993
@@ -98,7 +98,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: pmap.old.c,v 1.18 1997/09/02 13:18:31 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.old.c,v 1.19 1997/09/02 19:00:53 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -276,6 +276,22 @@ void pmap_check_wiring	__P((char *, vm_offset_t));
 /* pmap_remove_mapping flags */
 #define	PRM_TFLUSH	1
 #define	PRM_CFLUSH	2
+
+/*
+ *	Inline version of pmap_activate(), for speed in certain cases.
+ *
+ *	This is invoked when it is known that the pmap in question
+ *	is the one for the current process.
+ */
+__inline void _pmap_activate __P((struct pmap *));
+__inline void
+_pmap_activate(pmap)
+	struct pmap *pmap;
+{
+
+	Lev1map[kvtol1pte(VM_MIN_ADDRESS)] = pmap->pm_stpte;
+	ALPHA_TBIAP();
+}
 
 /*
  * pmap_bootstrap:
@@ -631,7 +647,6 @@ pmap_pinit(pmap)
 	 */
 	pmap->pm_stab = Segtabzero;
 	pmap->pm_stpte = Segtabzeropte;
-	pmap->pm_stchanged = TRUE;
 	pmap->pm_count = 1;
 	simple_lock_init(&pmap->pm_lock);
 }
@@ -1392,19 +1407,42 @@ ok:
 	splx(s);
 }
 
+/*
+ * pmap_activate:
+ *
+ *	Mark that a processor is about to be used by a given pmap
+ *	(address space).
+ */
 void
-pmap_activate(pmap)
-	register pmap_t pmap;
+pmap_activate(p)
+	struct proc *p;
 {
-	int iscurproc;
+	struct pmap *pmap = p->p_vmspace->vm_map.pmap;
 
 #ifdef DEBUG
 	if (pmapdebug & (PDB_FOLLOW|PDB_SEGTAB))
-		printf("pmap_activate(%p)\n", pmap);
+		printf("pmap_activate(%p)\n", p);
 #endif
 
-	iscurproc = curproc != NULL && pmap == curproc->p_vmspace->vm_map.pmap;
-	PMAP_ACTIVATE(pmap, iscurproc);
+	if (p == curproc)
+		_pmap_activate(pmap);
+}
+
+/*
+ * pmap_deactivate:
+ *
+ *	Mark that a processor is no longer used by a given pmap
+ *	(address space).
+ */
+void
+pmap_deactivate(p)
+	struct proc *p;
+{
+
+#ifdef DEBUG
+	if (pmapdebug & (PDB_FOLLOW|PDB_SEGTAB))
+		printf("pmap_deactivate(%p)\n", p);
+#endif
 }
 
 /*
@@ -1825,7 +1863,6 @@ pmap_remove_mapping(pmap, va, pte, flags)
 						 ALPHA_STSIZE);
 				ptpmap->pm_stab = Segtabzero;
 				ptpmap->pm_stpte = Segtabzeropte;
-				ptpmap->pm_stchanged = TRUE;
 				/*
 				 * XXX may have changed segment table
 				 * pointer for current process so
@@ -1834,7 +1871,7 @@ pmap_remove_mapping(pmap, va, pte, flags)
 				 */
 				if (curproc != NULL &&
 				    ptpmap == curproc->p_vmspace->vm_map.pmap)
-					PMAP_ACTIVATE(ptpmap, 1);
+					_pmap_activate(ptpmap);
 			}
 #ifdef DEBUG
 			else if (ptpmap->pm_sref < 0)
@@ -1971,13 +2008,12 @@ pmap_enter_ptpage(pmap, va)
 		pmap->pm_stab = (pt_entry_t *)
 			kmem_alloc(st_map, ALPHA_STSIZE);
 		pmap->pm_stpte = *kvtopte(pmap->pm_stab);
-		pmap->pm_stchanged = TRUE;
 		/*
 		 * XXX may have changed segment table pointer for current
 		 * process so update now to reload hardware.
 		 */
 		if (pmap == curproc->p_vmspace->vm_map.pmap)
-			PMAP_ACTIVATE(pmap, 1);
+			_pmap_activate(pmap);
 #ifdef DEBUG
 		if (pmapdebug & (PDB_ENTER|PDB_PTPAGE|PDB_SEGTAB))
 			printf("enter: pmap %p stab %p(%lx)\n",
