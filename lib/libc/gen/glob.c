@@ -1,7 +1,7 @@
-/*	$NetBSD: glob.c,v 1.10 1997/10/22 06:37:50 thorpej Exp $	*/
+/*	$NetBSD: glob.c,v 1.11 2003/12/04 23:39:18 keihan Exp $	*/
 
 /*
- * Written by Jason R. Thorpe <thorpej@NetBSD.ORG>, October 21, 1997.
+ * Written by Jason R. Thorpe <thorpej@NetBSD.org>, October 21, 1997.
  * Public domain.
  */
 

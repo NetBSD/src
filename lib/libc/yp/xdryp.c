@@ -1,7 +1,7 @@
-/*	$NetBSD: xdryp.c,v 1.26 2003/05/29 18:15:25 christos Exp $	*/
+/*	$NetBSD: xdryp.c,v 1.27 2003/12/04 23:39:18 keihan Exp $	*/
 
 /*
- * Copyright (c) 1996 Jason R. Thorpe <thorpej@NetBSD.ORG>.
+ * Copyright (c) 1996 Jason R. Thorpe <thorpej@NetBSD.org>.
  * All rights reserved.
  *
  * Copyright (c) 1992, 1993 Theo de Raadt <deraadt@fsa.ca>
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: xdryp.c,v 1.26 2003/05/29 18:15:25 christos Exp $");
+__RCSID("$NetBSD: xdryp.c,v 1.27 2003/12/04 23:39:18 keihan Exp $");
 #endif
 
 /*
