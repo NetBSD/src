@@ -1,4 +1,4 @@
-.\" $Header: /cvsroot/src/share/doc/iso/wisc/Attic/appendix_a.nr,v 1.1.1.1 1994/06/19 00:07:17 cgd Exp $
+.\" WISC: Header: appendix_a.nr,v 1.3 88/12/07 10:42:12 nhall Exp $
 .(x
 Appendix A
 .)x

@@ -3,9 +3,9 @@
 .\" LICENSED MATERIALS - PROPERTY OF IBM
 .\" REFER TO COPYRIGHT INSTRUCTIONS FORM NUMBER G120-2083
 .\"
-.\"$Header: /cvsroot/src/share/doc/iso/wiscman/Attic/rvd.4p,v 1.1.1.1 1994/06/19 00:07:23 cgd Exp $
-.\"$ACIS:rvd.4p_ca 11.0$
-.\"$Source: /cvsroot/src/share/doc/iso/wiscman/Attic/rvd.4p,v $
+.\"WISC: Header:rvd.4p_ca 11.0$
+.\"WISC: ACIS:rvd.4p_ca 11.0$
+.\"WISC: Source: /ibm/acis/usr/man/man4/RCS/rvd.4p_ca,v $
 .\"This file contains -man macros.
 .TH RVD 4P "July 1987" "Space overwritten by .AC macro" " "
 .AC 1 0
