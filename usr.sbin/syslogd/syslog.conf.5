@@ -1,4 +1,4 @@
-.\"	$NetBSD: syslog.conf.5,v 1.11.4.9 2004/11/17 16:39:09 wiz Exp $
+.\"	$NetBSD: syslog.conf.5,v 1.11.4.10 2004/11/18 20:51:40 thorpej Exp $
 .\"
 .\" Copyright (c) 1990, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -29,7 +29,7 @@
 .\"
 .\"     from: @(#)syslog.conf.5	8.1 (Berkeley) 6/9/93
 .\"
-.Dd November 15, 2004
+.Dd November 18, 2004
 .Dt SYSLOG.CONF 5
 .Os
 .Sh NAME
@@ -68,6 +68,8 @@ are encoded as a
 .Em facility ,
 a period
 .Pq Sq \&. ,
+an optional set of comparison flags
+.Pq Bq <=> ,
 and a
 .Em level ,
 with no intervening white-space.
@@ -90,6 +92,19 @@ values specified to the
 and
 .Xr syslog 3
 library routines.
+.Pp
+The
+.Em comparison flags
+may be used to specify exactly what levels are logged.
+If unspecified, the default comparison is
+.Sq >=
+.Pq greater than or equal to ,
+or, if the
+.Fl U
+option is passed to
+.Xr syslogd 8 ,
+.Sq =
+.Pq equal to .
 .Pp
 The
 .Em level
@@ -198,10 +213,10 @@ However, there are cases where a
 may be too broadly defined.
 .Pp
 If a received message matches the specified
-.Em facility
-and is of the specified
+.Em facility ,
+and the specified
 .Em level
-.Em (or a higher level) ,
+comparison is true,
 and the first word in the message after the date matches the
 .Em program ,
 the action specified in the
@@ -360,6 +375,9 @@ A configuration file might appear as follows:
 # Log anything (except mail) of level info or higher.
 # Don't log private authentication messages!
 *.info;mail.none;authpriv.none		/var/log/messages
+
+# Log daemon messages at debug level only
+daemon.=debug				/var/log/daemon.debug
 
 # The authpriv file has restricted access.
 authpriv.*				/var/log/secure

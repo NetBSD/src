@@ -1,4 +1,4 @@
-/*	$NetBSD: syslogd.c,v 1.69.2.34 2004/11/18 16:11:04 thorpej Exp $	*/
+/*	$NetBSD: syslogd.c,v 1.69.2.35 2004/11/18 20:51:40 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1983, 1988, 1993, 1994
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1988, 1993, 1994\n\
 #if 0
 static char sccsid[] = "@(#)syslogd.c	8.3 (Berkeley) 4/4/94";
 #else
-__RCSID("$NetBSD: syslogd.c,v 1.69.2.34 2004/11/18 16:11:04 thorpej Exp $");
+__RCSID("$NetBSD: syslogd.c,v 1.69.2.35 2004/11/18 20:51:40 thorpej Exp $");
 #endif
 #endif /* not lint */
 
@@ -65,6 +65,8 @@ __RCSID("$NetBSD: syslogd.c,v 1.69.2.34 2004/11/18 16:11:04 thorpej Exp $");
  * more extensive changes by Eric Allman (again)
  * Extension to log by program name as well as facility and priority
  *   by Peter da Silva.
+ * -u and -v by Harlan Stenn.
+ * Priority comparison code by Harlan Stenn.
  */
 
 #define	MAXLINE		1024		/* maximum line length */
@@ -144,6 +146,10 @@ struct filed {
 	time_t	f_time;			/* time this was last written */
 	char	*f_host;		/* host from which to record */
 	u_char	f_pmask[LOG_NFACILITIES+1];	/* priority mask */
+	u_char	f_pcmp[LOG_NFACILITIES+1];	/* compare priority */
+#define	PRI_LT	0x1
+#define	PRI_EQ	0x2
+#define	PRI_GT	0x4
 	char	*f_program;		/* program this applies to */
 	union {
 		char	f_uname[MAXUNAMES][UT_NAMESIZE+1];
@@ -233,6 +239,9 @@ int	NumForwards = 0;	/* number of forwarding actions in conf file */
 char	**LogPaths;		/* array of pathnames to read messages from */
 int	NoRepeat = 0;		/* disable "repeated"; log always */
 int	SyncKernel = 0;		/* write kernel messages synchronously */
+int	UniquePriority = 0;	/* only log specified priority */
+int	LogFacPri = 0;		/* put facility and priority in log messages: */
+				/* 0=no, 1=numeric, 2=names */
 
 void	cfline(char *, struct filed *, char *, char *);
 char   *cvthname(struct sockaddr_storage *);
@@ -300,7 +309,7 @@ main(int argc, char *argv[])
 
 	(void)setlocale(LC_ALL, "");
 
-	while ((ch = getopt(argc, argv, "dnsSf:m:p:P:ru:g:t:")) != -1)
+	while ((ch = getopt(argc, argv, "dnsSf:m:p:P:ru:g:t:Uv")) != -1)
 		switch(ch) {
 		case 'd':		/* debug */
 			Debug++;
@@ -345,6 +354,13 @@ main(int argc, char *argv[])
 			user = optarg;
 			if (*user == '\0')
 				usage();
+			break;
+		case 'U':		/* only log specified priority */
+			UniquePriority = 1;
+			break;
+		case 'v':		/* log facility and priority */
+			if (LogFacPri < 2)
+				LogFacPri++;
 			break;
 		default:
 			usage();
@@ -583,7 +599,7 @@ usage(void)
 {
 
 	(void)fprintf(stderr,
-	    "usage: %s [-dnrSs] [-f config_file] [-g group] [-m mark_interval]\n"
+	    "usage: %s [-dnrSsUv] [-f config_file] [-g group] [-m mark_interval]\n"
 	    "\t[-P file_list] [-p log_socket [-p log_socket2 ...]]\n"
 	    "\t[-t chroot_dir] [-u user]\n", getprogname());
 	exit(1);
@@ -945,8 +961,11 @@ logmsg(int pri, char *msg, char *from, int flags)
 	}
 	for (f = Files; f; f = f->f_next) {
 		/* skip messages that are incorrect priority */
-		if (f->f_pmask[fac] < prilev ||
-		    f->f_pmask[fac] == INTERNAL_NOPRI)
+		if (!(((f->f_pcmp[fac] & PRI_EQ) && (f->f_pmask[fac] == prilev))
+		     ||((f->f_pcmp[fac] & PRI_LT) && (f->f_pmask[fac] < prilev))
+		     ||((f->f_pcmp[fac] & PRI_GT) && (f->f_pmask[fac] > prilev))
+		     )
+		    || f->f_pmask[fac] == INTERNAL_NOPRI)
 			continue;
 
 		/* skip messages with the incorrect host name */
@@ -1042,7 +1061,7 @@ logmsg(int pri, char *msg, char *from, int flags)
 void
 fprintlog(struct filed *f, int flags, char *msg)
 {
-	struct iovec iov[6];
+	struct iovec iov[7];
 	struct iovec *v;
 	struct addrinfo *r;
 	int j, l, lsent;
@@ -1066,6 +1085,47 @@ fprintlog(struct filed *f, int flags, char *msg)
 		v->iov_len = 1;
 		v++;
 	}
+
+	if (LogFacPri) {
+		static char fp_buf[30];
+		const char *f_s = NULL, *p_s = NULL;
+		int fac = f->f_prevpri & LOG_FACMASK;
+		int pri = LOG_PRI(f->f_prevpri);
+		char f_n[5], p_n[5];
+
+		if (LogFacPri > 1) {
+			CODE *c;
+
+			for (c = facilitynames; c->c_name != NULL; c++) {
+				if (c->c_val == fac) {
+					f_s = c->c_name;
+					break;
+				}
+			}
+			for (c = prioritynames; c->c_name != NULL; c++) {
+				if (c->c_val == pri) {
+					p_s = c->c_name;
+					break;
+				}
+			}
+		}
+		if (f_s == NULL) {
+			snprintf(f_n, sizeof(f_n), "%d", LOG_FAC(fac));
+			f_s = f_n;
+		}
+		if (p_s == NULL) {
+			snprintf(p_n, sizeof(p_n), "%d", pri);
+			p_s = p_n;
+		}
+		snprintf(fp_buf, sizeof(fp_buf), "<%s.%s>", f_s, p_s);
+		v->iov_base = fp_buf;
+		v->iov_len = strlen(fp_buf);
+	} else {
+		v->iov_base = "";
+		v->iov_len = 0;
+	}
+	v++;
+
 	v->iov_base = f->f_prevhost;
 	v->iov_len = strlen(v->iov_base);
 	v++;
@@ -1148,7 +1208,7 @@ fprintlog(struct filed *f, int flags, char *msg)
 				break;
 			}
 		}
-		if (writev(f->f_file, iov, 6) < 0) {
+		if (writev(f->f_file, iov, 7) < 0) {
 			int e = errno;
 			(void) close(f->f_file);
 			if (f->f_un.f_pipe.f_pid > 0)
@@ -1174,7 +1234,7 @@ fprintlog(struct filed *f, int flags, char *msg)
 					logerror(f->f_un.f_pipe.f_pname);
 					break;
 				}
-				if (writev(f->f_file, iov, 6) < 0) {
+				if (writev(f->f_file, iov, 7) < 0) {
 					e = errno;
 					(void) close(f->f_file);
 					if (f->f_un.f_pipe.f_pid > 0)
@@ -1209,7 +1269,7 @@ fprintlog(struct filed *f, int flags, char *msg)
 			v->iov_len = 1;
 		}
 	again:
-		if (writev(f->f_file, iov, 6) < 0) {
+		if (writev(f->f_file, iov, 7) < 0) {
 			int e = errno;
 			(void)close(f->f_file);
 			/*
@@ -1269,7 +1329,7 @@ wallmsg(struct filed *f, struct iovec *iov)
 	/* NOSTRICT */
 	for (; ep; ep = ep->next) {
 		if (f->f_type == F_WALL) {
-			if ((p = ttymsg(iov, 6, ep->line, TTYMSGTIME))
+			if ((p = ttymsg(iov, 7, ep->line, TTYMSGTIME))
 			    != NULL) {
 				errno = 0;	/* already in msg */
 				logerror(p);
@@ -1281,7 +1341,7 @@ wallmsg(struct filed *f, struct iovec *iov)
 			if (!f->f_un.f_uname[i][0])
 				break;
 			if (strcmp(f->f_un.f_uname[i], ep->name) == 0) {
-				if ((p = ttymsg(iov, 6, ep->line, TTYMSGTIME))
+				if ((p = ttymsg(iov, 7, ep->line, TTYMSGTIME))
 				    != NULL) {
 					errno = 0;	/* already in msg */
 					logerror(p);
@@ -1794,10 +1854,38 @@ cfline(char *line, struct filed *f, char *prog, char *host)
 
 	/* scan through the list of selectors */
 	for (p = line; *p && !isblank((unsigned char)*p);) {
+		int pri_done;
+		int pri_cmp;
 
 		/* find the end of this facility name list */
 		for (q = p; *q && !isblank((unsigned char)*q) && *q++ != '.'; )
 			continue;
+
+		/* get the priority comparison */
+		pri_cmp = 0;
+		pri_done = 0;
+		while (! pri_done) {
+			switch (*q) {
+			case '<':
+				pri_cmp = PRI_LT;
+				q++;
+				break;
+			case '=':
+				pri_cmp = PRI_EQ;
+				q++;
+				break;
+			case '>':
+				pri_cmp = PRI_GT;
+				q++;
+				break;
+			default:
+				pri_done = 1;
+				break;
+			}
+		}
+		if (pri_cmp == 0)
+			pri_cmp = UniquePriority ? PRI_EQ
+						 : PRI_EQ | PRI_GT;
 
 		/* collect priority name */
 		for (bp = buf; *q && !strchr("\t ,;", *q); )
@@ -1826,8 +1914,10 @@ cfline(char *line, struct filed *f, char *prog, char *host)
 				*bp++ = *p++;
 			*bp = '\0';
 			if (*buf == '*')
-				for (i = 0; i < LOG_NFACILITIES; i++)
+				for (i = 0; i < LOG_NFACILITIES; i++) {
 					f->f_pmask[i] = pri;
+					f->f_pcmp[i] = pri_cmp;
+				}
 			else {
 				i = decode(buf, facilitynames);
 				if (i < 0) {
@@ -1837,6 +1927,7 @@ cfline(char *line, struct filed *f, char *prog, char *host)
 					return;
 				}
 				f->f_pmask[i >> 3] = pri;
+				f->f_pmask[i >> 3] = pri_cmp;
 			}
 			while (*p == ',' || *p == ' ')
 				p++;
