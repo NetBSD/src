@@ -31,12 +31,13 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)mille.h	5.5 (Berkeley) 6/1/90
- *	$Id: mille.h,v 1.2 1993/08/01 18:54:07 mycroft Exp $
+ *	$Id: mille.h,v 1.3 1993/08/10 02:48:47 mycroft Exp $
  */
 
 # include	<sys/types.h>
 # include	<ctype.h>
 # include	<curses.h>
+# include	<termios.h>
 # include	<string.h>
 
 /*
