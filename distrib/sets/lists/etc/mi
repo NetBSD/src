@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.68 2000/09/28 22:25:29 thorpej Exp $
+# $NetBSD: mi,v 1.69 2000/10/01 06:12:25 lukem Exp $
 ./.cshrc
 ./.profile
 ./dev/MAKEDEV.local
@@ -9,11 +9,11 @@
 ./etc/csh.logout
 ./etc/daily
 ./etc/daily.conf
-./etc/default/daily.conf
-./etc/default/monthly.conf
-./etc/default/rc.conf
-./etc/default/security.conf
-./etc/default/weekly.conf
+./etc/defaults/daily.conf
+./etc/defaults/monthly.conf
+./etc/defaults/rc.conf
+./etc/defaults/security.conf
+./etc/defaults/weekly.conf
 ./etc/dhclient-script
 ./etc/disktab
 ./etc/dm.conf
