@@ -1,6 +1,6 @@
 #! /bin/sh --
 #
-#	$NetBSD: checkflist,v 1.10 1998/07/22 17:01:43 perry Exp $
+#	$NetBSD: checkflist,v 1.10.2.1 2000/01/08 18:53:16 he Exp $
 #
 # Verify output of makeflist against contents of $DESTDIR.
 
@@ -14,6 +14,7 @@ tmpname=/tmp/_CHECK.$$
 
 xargs=""
 dargs=""
+diffargs=""
 
 # handle args
 while : ; do
@@ -28,12 +29,20 @@ while : ; do
 	-secr)
 		dargs="-d"
 		;;
+	-u)
+		diffargs="-u"
+		;;
+	-c)
+		diffargs="-c"
+		;;
 	-*)
 		cat 1>&2 <<USAGE
 Usage: $0 [-x11|-both] [-secr]
 	-x11		check only x11 lists
 	-both		check netbsd + x11 lists
 	-secr		check domestic ("secr") lists
+	-u		output differences in "unified diff" style
+	-c		output differences in "context diff" style
 USAGE
 		exit 1
 		;;
@@ -47,5 +56,5 @@ done
 sh makeflist $xargs $dargs > $tmpname
 
 ( cd $DESTDIR ; find $origin \( -type d -o -type f -o -type l \) ) | sort | \
-    diff $tmpname -
+    diff $diffargs $tmpname -
 /bin/rm -f $tmpname
