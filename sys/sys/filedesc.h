@@ -1,6 +1,6 @@
 /*
- * Copyright (c) 1990 The Regents of the University of California.
- * All rights reserved.
+ * Copyright (c) 1990, 1993
+ *	The Regents of the University of California.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -30,12 +30,9 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	from: @(#)filedesc.h	7.4 (Berkeley) 5/4/91
- *	$Id: filedesc.h,v 1.6 1994/01/04 12:26:46 cgd Exp $
+ *	from: @(#)filedesc.h	8.1 (Berkeley) 6/2/93
+ *	$Id: filedesc.h,v 1.7 1994/05/21 04:10:38 cgd Exp $
  */
-
-#ifndef _SYS_FILEDESC_H_
-#define _SYS_FILEDESC_H_
 
 /*
  * This structure is used for the management of descriptors.  It may be
@@ -95,13 +92,11 @@ struct filedesc0 {
 /*
  * Kernel global variables and routines.
  */
+int	dupfdopen __P((struct filedesc *fdp, int indx, int dfd, int mode,
+	    int error));
 int	fdalloc __P((struct proc *p, int want, int *result));
 int	fdavail __P((struct proc *p, int n));
 int	falloc __P((struct proc *p, struct file **resultfp, int *resultfd));
 struct	filedesc *fdcopy __P((struct proc *p));
 void	fdfree __P((struct proc *p));
-int	dupfdopen __P((struct filedesc *fdp, int indx, int dfd, int mode,
-	    int error));
 #endif
-
-#endif /* !_SYS_FILEDESC_H_ */
