@@ -1,4 +1,4 @@
-/*	$NetBSD: sig_machdep.c,v 1.11 2002/03/24 16:10:11 bjh21 Exp $	*/
+/*	$NetBSD: sig_machdep.c,v 1.12 2002/06/23 00:16:20 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1994-1998 Mark Brinicombe.
@@ -44,7 +44,7 @@
 
 #include <sys/param.h>
 
-__KERNEL_RCSID(0, "$NetBSD: sig_machdep.c,v 1.11 2002/03/24 16:10:11 bjh21 Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sig_machdep.c,v 1.12 2002/06/23 00:16:20 thorpej Exp $");
 
 #include <sys/mount.h>		/* XXX only needed by syscallargs.h */
 #include <sys/proc.h>
@@ -102,12 +102,6 @@ sendsig(sig_t catcher, int sig, sigset_t *mask, u_long code)
 	fp--;
 	(u_int)fp = STACKALIGN(fp);
 
-	/* Build stack frame for signal trampoline. */
-	frame.sf_signum = sig;
-	frame.sf_code = code;
-	frame.sf_scp = &fp->sf_sc;
-	frame.sf_handler = catcher;
-
 	/* Save register context. */
 	frame.sf_sc.sc_r0     = tf->tf_r0;
 	frame.sf_sc.sc_r1     = tf->tf_r1;
@@ -156,10 +150,10 @@ sendsig(sig_t catcher, int sig, sigset_t *mask, u_long code)
 	/*
 	 * Build context to run handler in.
 	 */
-	tf->tf_r0 = frame.sf_signum;
-	tf->tf_r1 = frame.sf_code;
-	tf->tf_r2 = (int)frame.sf_scp;
-	tf->tf_r3 = (int)frame.sf_handler;
+	tf->tf_r0 = sig;
+	tf->tf_r1 = code;
+	tf->tf_r2 = (int)&fp->sf_sc;
+	tf->tf_r3 = (int)catcher;
 	tf->tf_usr_sp = (int)fp;
 	tf->tf_pc = (int)p->p_sigctx.ps_sigcode;
 #ifndef acorn26
