@@ -1,4 +1,4 @@
-.\"	$NetBSD: xfer,v 1.21 2002/03/29 22:06:12 bjh21 Exp $
+.\"	$NetBSD: xfer,v 1.22 2002/04/01 11:10:19 skrll Exp $
 .\"
 .\" Copyright (c) 1999-2001 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -52,6 +52,15 @@ See
 for details.
 .Pp
 .\} \" r_arm32
+.
+.if r_cats \{\
+You will need to create a CD with an install kernel on it or have another
+machine available to allow net booting.
+See
+.Pa cats/ Ns Ar platform Ns Pa /prep
+for details.
+.Pp
+.\} \" r_cats
 .
 .if r_i386 \{\
 If you are not booting off a CD-ROM, you will need to have some floppy
