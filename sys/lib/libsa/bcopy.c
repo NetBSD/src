@@ -1,4 +1,4 @@
-/*	$NetBSD: bcopy.c,v 1.6 1996/01/13 22:25:34 leo Exp $	*/
+/*	$NetBSD: bcopy.c,v 1.7 1999/03/30 22:03:47 cgd Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -37,6 +37,8 @@
 
 #include <sys/types.h>
 #include "stand.h"
+
+#undef bcopy			/* in case of LIBSA_USE_MEMCPY */
 
 /*
  * This is designed to be small, not fast.
