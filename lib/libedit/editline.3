@@ -1,4 +1,4 @@
-.\"	$NetBSD: editline.3,v 1.30 2003/01/21 18:40:23 christos Exp $
+.\"	$NetBSD: editline.3,v 1.31 2003/01/21 23:00:56 wiz Exp $
 .\"
 .\" Copyright (c) 1997-1999 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -152,7 +152,7 @@ if no characters were read or if an error occurred.
 Read a character from the tty.
 .Fa ch
 is modified to contain the character read.
-Returns the number of characters read if successful, -1 otherwise.
+Returns the number of characters read if successful, \-1 otherwise.
 .It Fn el_push
 Pushes
 .Fa str
@@ -184,7 +184,7 @@ matches the
 argument supplied to
 .Fn el_init .
 The return value is
--1 if the command is unknown,
+\-1 if the command is unknown,
 0 if there was no error or
 .Dq prog
 didn't match, or
@@ -472,7 +472,7 @@ typedef struct lineinfo {
 Insert
 .Fa str
 into the line at the cursor.
-Returns -1 if
+Returns \-1 if
 .Fa str
 is empty or won't fit, and 0 otherwise.
 .It Fn el_deletestr
@@ -562,7 +562,7 @@ Add
 .Fa str
 as a new element to the history, and, if necessary,
 removing the oldest entry to keep the list to the created size.
-If 
+If
 .Dv H_SETUNIQUE
 was has been called with a non-zero arguments, the element
 will not be entered into the history if its contents match
@@ -572,7 +572,7 @@ If the element is entered
 returns 1, if it is ignored as a duplicate returns 0.
 Finally
 .Fn history
-returns -1 if an error occurred.
+returns \-1 if an error occurred.
 .It Dv H_PREV_STR , Fa "const char *str"
 Return the closest previous event that starts with
 .Fa str .
@@ -592,10 +592,10 @@ Load the history list stored in
 Save the history list to
 .Fa file .
 .It Dv H_SETUNIQUE , Fa "int unique"
-Set if the adjacent identical event strigns should not be entered into
+Set if the adjacent identical event strings should not be entered into
 the history.
 .It Dv H_GETUNIQUE
-Retrieve the current setting if if adjacent elementes should be entered into
+Retrieve the current setting if if adjacent elements should be entered into
 the history.
 .El
 .Pp
@@ -603,7 +603,7 @@ the history.
 returns >= 0 if the operation succeeds
 .Fa op
 succeeds.
-Otherwise, -1 is returned and
+Otherwise, \-1 is returned and
 .Fa ev
 is updated to contain more details about the error.
 .El
