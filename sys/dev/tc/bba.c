@@ -1,4 +1,4 @@
-/* $NetBSD: bba.c,v 1.5 2000/06/05 23:02:04 gmcgarry Exp $ */
+/* $NetBSD: bba.c,v 1.6 2000/06/12 22:40:20 gmcgarry Exp $ */
 
 /*
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -63,14 +63,17 @@
 #define DPRINTF(x)
 #endif  /* AUDIO_DEBUG */
 
-#define BBA_MAX_DMA_SEGMENTS	16
 #define BBA_REGISTER_SHIFT	6
+#define BBA_MAX_DMA_SEGMENTS	16
+#define BBA_DMABUF_SIZE		(BBA_MAX_DMA_SEGMENTS*PAGE_SIZE)
+#define BBA_DMABUF_ALIGN	PAGE_SIZE
+#define BBA_DMABUF_BOUNDARY	0
 
 struct bba_mem {
+        struct bba_mem *next;
 	bus_addr_t addr;
 	bus_size_t size;
 	caddr_t kva;
-        struct bba_mem *next;
 };
 
 struct bba_dma_state {
@@ -138,10 +141,12 @@ int	bba_getdev __P((void *, struct audio_device *));
 void	*bba_allocm __P((void *, int, size_t, int, int));
 void	bba_freem __P((void *, void *, int));
 size_t	bba_round_buffersize __P((void *, int, size_t));
+int	bba_get_props __P((void *));
+int	bba_mappage __P((void *, void *, int, int));
 int	bba_trigger_output __P((void *, void *, void *, int,
-		void (*)(void *), void *, struct audio_params *));
+	    void (*)(void *), void *, struct audio_params *));
 int	bba_trigger_input __P((void *, void *, void *, int,
-		void (*)(void *), void *, struct audio_params *));
+	    void (*)(void *), void *, struct audio_params *));
 
 struct audio_hw_if sa_hw_if = {
 	am7930_open,
@@ -166,8 +171,8 @@ struct audio_hw_if sa_hw_if = {
 	bba_allocm,			/* md */
 	bba_freem,			/* md */
 	bba_round_buffersize,		/* md */
-	0,
-	am7930_get_props,
+	bba_mappage,
+	bba_get_props,
 	bba_trigger_output,		/* md */
 	bba_trigger_input		/* md */
 };
@@ -190,9 +195,9 @@ int bba_match(parent, cf, aux)
 {
 	struct ioasicdev_attach_args *ia = aux;
 
-        if (strcmp(ia->iada_modname, "isdn") != 0 &&
-            strcmp(ia->iada_modname, "AMD79c30") != 0)
-                return 0;
+	if (strcmp(ia->iada_modname, "isdn") != 0 &&
+	    strcmp(ia->iada_modname, "AMD79c30") != 0)
+		return 0;
 
 	return 1;
 }
@@ -214,7 +219,7 @@ bba_attach(parent, self, aux)
 
 	/* get the bus space handle for codec */
 	if (bus_space_subregion(sc->sc_bst, sc->sc_bsh,
-		ia->iada_offset, 0, &sc->sc_codec_bsh)) {
+	    ia->iada_offset, 0, &sc->sc_codec_bsh)) {
 		printf("%s: unable to map device\n", asc->sc_dev.dv_xname);
 		return;
 	}
@@ -234,7 +239,7 @@ bba_attach(parent, self, aux)
 	am7930_init(asc, AUDIOAMD_DMA_MODE);
 
 	ioasic_intr_establish(parent, ia->iada_cookie, TC_IPL_NONE,
-		 bba_intr, sc);
+	    bba_intr, sc);
 
 	audio_attach_mi(&sa_hw_if, asc, &asc->sc_dev);
 }
@@ -300,20 +305,23 @@ bba_allocm(addr, direction, size, pool, flags)
 	int rseg;
 	caddr_t kva;
 	struct bba_mem *m;
+	int w;
 	int state = 0;
 
 	DPRINTF(("bba_allocm: size = %d\n",size));
 
-	if (bus_dmamem_alloc(sc->sc_dmat, size, PAGE_SIZE, 0, &seg,
-		1, &rseg, BUS_DMA_NOWAIT)) {
+	w = (flags & M_NOWAIT) ? BUS_DMA_NOWAIT : BUS_DMA_WAITOK;
+
+	if (bus_dmamem_alloc(sc->sc_dmat, size, BBA_DMABUF_ALIGN,
+	    BBA_DMABUF_BOUNDARY, &seg, 1, &rseg, w)) {
 		printf("%s: can't allocate DMA buffer\n",
-			asc->sc_dev.dv_xname);
+		    asc->sc_dev.dv_xname);
 		goto bad;
 	}
 	state |= 1;
 
 	if (bus_dmamem_map(sc->sc_dmat, &seg, rseg, size,
-		&kva, BUS_DMA_NOWAIT|BUS_DMA_COHERENT)) {
+	    &kva, w | BUS_DMA_COHERENT)) {
 		printf("%s: can't map DMA buffer\n", asc->sc_dev.dv_xname);
 		goto bad;
 	}
@@ -351,11 +359,11 @@ bba_freem(addr, ptr, pool)
         caddr_t kva = (caddr_t)addr;
 
 	for (mp = &sc->sc_mem_head; *mp && (*mp)->kva != kva;
-		mp = &(*mp)->next)
+	    mp = &(*mp)->next)
 		/* nothing */ ;
 	m = *mp;
-	if (m != NULL) {
-		printf("bba_freem: freeing unallocted memory\n");
+	if (m == NULL) {
+		printf("bba_freem: freeing unallocated memory\n");
 		return;
 	}
 	*mp = m->next;
@@ -376,8 +384,7 @@ bba_round_buffersize(addr, direction, size)
 {
 	DPRINTF(("bba_round_buffersize: size=%d\n", size));
 
-#define BBA_BUFFERSIZE (BBA_MAX_DMA_SEGMENTS * PAGE_SIZE)
-	return  (size > BBA_BUFFERSIZE ? BBA_BUFFERSIZE : round_page(size));
+	return  (size > BBA_DMABUF_SIZE ? BBA_DMABUF_SIZE : round_page(size));
 }
 
 
@@ -457,26 +464,27 @@ bba_trigger_output(addr, start, end, blksize, intr, arg, param)
 	int state = 0;
 
 	DPRINTF(("bba_trigger_output: sc=%p start=%p end=%p blksize=%d intr=%p(%p)\n",
-		addr, start, end, blksize, intr, arg));
+	    addr, start, end, blksize, intr, arg));
+
+	/* disable any DMA */
+	ssr = bus_space_read_4(sc->sc_bst, sc->sc_bsh, IOASIC_CSR);
+	ssr &= ~IOASIC_CSR_DMAEN_ISDN_T;
+	bus_space_write_4(sc->sc_bst, sc->sc_bsh, IOASIC_CSR, ssr);
 
 	if (bus_dmamap_create(sc->sc_dmat, (char *)end - (char *)start,
-		BBA_MAX_DMA_SEGMENTS, PAGE_SIZE, 0, BUS_DMA_NOWAIT, &d->dmam)) {
+	    BBA_MAX_DMA_SEGMENTS, PAGE_SIZE, BBA_DMABUF_BOUNDARY,
+	    BUS_DMA_NOWAIT, &d->dmam)) {
 		printf("bba_trigger_output: can't create DMA map\n");
 		goto bad;
 	}
 	state |= 1;
 
 	if (bus_dmamap_load(sc->sc_dmat, d->dmam, start,
-		(char *)end - (char *)start, NULL, BUS_DMA_NOWAIT)) {
-		printf("bba_trigger_output: can't load DMA map\n");
+	    (char *)end - (char *)start, NULL, BUS_DMA_NOWAIT)) {
+	    printf("bba_trigger_output: can't load DMA map\n");
 		goto bad;
 	}
 	state |= 2;
-
-	/* disable any DMA */
-	ssr = bus_space_read_4(sc->sc_bst, sc->sc_bsh, IOASIC_CSR);
-	ssr &= ~IOASIC_CSR_DMAEN_ISDN_T;
-	bus_space_write_4(sc->sc_bst, sc->sc_bsh, IOASIC_CSR, ssr);
 
 	d->intr = intr;
 	d->intr_arg = arg;
@@ -488,9 +496,9 @@ bba_trigger_output(addr, start, end, blksize, intr, arg, param)
 
 	/* setup DMA pointer */
 	bus_space_write_4(sc->sc_bst, sc->sc_bsh, IOASIC_ISDN_X_DMAPTR,
-		IOASIC_DMA_ADDR(phys));
+	    IOASIC_DMA_ADDR(phys));
 	bus_space_write_4(sc->sc_bst, sc->sc_bsh, IOASIC_ISDN_X_NEXTPTR,
-		IOASIC_DMA_ADDR(nphys));
+	    IOASIC_DMA_ADDR(nphys));
 
 	/* kick off DMA */
 	ssr |= IOASIC_CSR_DMAEN_ISDN_T;
@@ -525,26 +533,27 @@ bba_trigger_input(addr, start, end, blksize, intr, arg, param)
 	int state = 0;
 
 	DPRINTF(("bba_trigger_input: sc=%p start=%p end=%p blksize=%d intr=%p(%p)\n",
-		addr, start, end, blksize, intr, arg));
+	    addr, start, end, blksize, intr, arg));
+
+	/* disable any DMA */
+	ssr = bus_space_read_4(sc->sc_bst, sc->sc_bsh, IOASIC_CSR);
+	ssr &= ~IOASIC_CSR_DMAEN_ISDN_R;
+	bus_space_write_4(sc->sc_bst, sc->sc_bsh, IOASIC_CSR, ssr);
 
 	if (bus_dmamap_create(sc->sc_dmat, (char *)end - (char *)start,
-		BBA_MAX_DMA_SEGMENTS, PAGE_SIZE, 0, BUS_DMA_NOWAIT, &d->dmam)) {
+	    BBA_MAX_DMA_SEGMENTS, PAGE_SIZE, BBA_DMABUF_BOUNDARY,
+	    BUS_DMA_NOWAIT, &d->dmam)) {
 		printf("bba_trigger_input: can't create DMA map\n");
 		goto bad;
 	}
 	state |= 1;
 
 	if (bus_dmamap_load(sc->sc_dmat, d->dmam, start,
-		(char *)end - (char *)start, NULL, BUS_DMA_NOWAIT)) {
+	    (char *)end - (char *)start, NULL, BUS_DMA_NOWAIT)) {
 		printf("bba_trigger_input: can't load DMA map\n");
 		goto bad;
 	}
 	state |= 2;
-
-	/* disable any DMA */
-	ssr = bus_space_read_4(sc->sc_bst, sc->sc_bsh, IOASIC_CSR);
-	ssr &= ~IOASIC_CSR_DMAEN_ISDN_R;
-	bus_space_write_4(sc->sc_bst, sc->sc_bsh, IOASIC_CSR, ssr);
 
 	d->intr = intr;
 	d->intr_arg = arg;
@@ -556,9 +565,9 @@ bba_trigger_input(addr, start, end, blksize, intr, arg, param)
 
 	/* setup DMA pointer */
 	bus_space_write_4(sc->sc_bst, sc->sc_bsh, IOASIC_ISDN_R_DMAPTR,
-		IOASIC_DMA_ADDR(phys));
+	    IOASIC_DMA_ADDR(phys));
 	bus_space_write_4(sc->sc_bst, sc->sc_bsh, IOASIC_ISDN_R_NEXTPTR,
-		IOASIC_DMA_ADDR(nphys));
+	    IOASIC_DMA_ADDR(nphys));
 
 	/* kick off DMA */
 	ssr |= IOASIC_CSR_DMAEN_ISDN_R;
@@ -594,7 +603,7 @@ bba_intr(addr)
 		d->curseg = (d->curseg+1) % d->dmam->dm_nsegs;
 		nphys = (tc_addr_t)d->dmam->dm_segs[d->curseg].ds_addr;
 		bus_space_write_4(sc->sc_bst, sc->sc_bsh,
-			IOASIC_ISDN_X_NEXTPTR, IOASIC_DMA_ADDR(nphys));
+		    IOASIC_ISDN_X_NEXTPTR, IOASIC_DMA_ADDR(nphys));
 		if (d->intr != NULL)
 			(*d->intr)(d->intr_arg);
 	}
@@ -603,7 +612,7 @@ bba_intr(addr)
 		d->curseg = (d->curseg+1) % d->dmam->dm_nsegs;
 		nphys = (tc_addr_t)d->dmam->dm_segs[d->curseg].ds_addr;
 		bus_space_write_4(sc->sc_bst, sc->sc_bsh,
-			IOASIC_ISDN_R_NEXTPTR, IOASIC_DMA_ADDR(nphys));
+		    IOASIC_ISDN_R_NEXTPTR, IOASIC_DMA_ADDR(nphys));
 		if (d->intr != NULL)
 			(*d->intr)(d->intr_arg);
 	}
@@ -611,6 +620,39 @@ bba_intr(addr)
 	splx(s);
 
 	return 0;
+}
+
+int
+bba_get_props(addr)
+        void *addr;
+{
+	return (AUDIO_PROP_MMAP | am7930_get_props(addr));
+}
+
+int
+bba_mappage(addr, mem, offset, prot)
+	void *addr;
+	void *mem;
+	int offset;
+	int prot;
+{
+	struct bba_softc *sc = addr;
+        struct bba_mem **mp;
+	bus_dma_segment_t seg;
+        caddr_t kva = (caddr_t)mem;
+
+	for (mp = &sc->sc_mem_head; *mp && (*mp)->kva != kva;
+	    mp = &(*mp)->next)
+		/* nothing */ ;
+	if (*mp == NULL || offset < 0) {
+		return -1;
+	}
+
+        seg.ds_addr = (*mp)->addr;
+        seg.ds_len = (*mp)->size;
+
+        return bus_dmamem_mmap(sc->sc_dmat, &seg, 1, offset,
+	    prot, BUS_DMA_WAITOK);
 }
 
 
