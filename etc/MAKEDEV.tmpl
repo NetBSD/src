@@ -1,5 +1,5 @@
 #!/bin/sh -
-#	$NetBSD: MAKEDEV.tmpl,v 1.11 2003/12/10 11:40:11 hannken Exp $
+#	$NetBSD: MAKEDEV.tmpl,v 1.12 2003/12/15 08:57:52 jdolecek Exp $
 #
 # Copyright (c) 2003 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -278,7 +278,7 @@ dialout=524288
 callunit=262144
 
 # Keep /usr/etc so SunOS can find chown
-PATH=/sbin:/usr/sbin:/bin:/usr/bin:/usr/etc
+PATH=/sbin:/usr/sbin:/bin:/usr/bin:/rescue:/usr/etc
 
 # only allow read&write for owner by default
 umask 077
