@@ -1,4 +1,4 @@
-/*	$NetBSD: cap_mkdb.c,v 1.12 2000/10/04 20:02:26 mjl Exp $	*/
+/*	$NetBSD: cap_mkdb.c,v 1.13 2001/01/28 17:34:31 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -43,7 +43,7 @@ __COPYRIGHT("@(#) Copyright (c) 1992, 1993\n\
 #if 0
 static char sccsid[] = "@(#)cap_mkdb.c	8.2 (Berkeley) 4/27/95";
 #endif
-__RCSID("$NetBSD: cap_mkdb.c,v 1.12 2000/10/04 20:02:26 mjl Exp $");
+__RCSID("$NetBSD: cap_mkdb.c,v 1.13 2001/01/28 17:34:31 jdolecek Exp $");
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -168,7 +168,7 @@ db_build(char **ifiles)
 
 	data.data = NULL;
 	key.data = NULL;
-	for (reccnt = 0, bplen = 0; (st = cgetnext(&bp, ifiles)) > 0;) {
+	for (reccnt = 0, bplen = 0; (st = cgetnext(&bp, ifiles)) > 0; free(bp)){
 
 		/*
 		 * Allocate enough memory to store record, terminating
