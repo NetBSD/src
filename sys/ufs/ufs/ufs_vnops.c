@@ -1,4 +1,4 @@
-/*	$NetBSD: ufs_vnops.c,v 1.95 2003/04/11 10:36:33 fvdl Exp $	*/
+/*	$NetBSD: ufs_vnops.c,v 1.96 2003/04/11 14:13:28 fvdl Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993, 1995
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ufs_vnops.c,v 1.95 2003/04/11 10:36:33 fvdl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ufs_vnops.c,v 1.96 2003/04/11 14:13:28 fvdl Exp $");
 
 #ifndef _LKM
 #include "opt_quota.h"
@@ -2033,20 +2033,13 @@ ufs_vinit(struct mount *mntp, int (**specops)(void *), int (**fifoops)(void *),
 	case VFIFO:
 		vp->v_op = fifoops;
 		break;
+	case VNON:
 	case VBAD:
 	case VSOCK:
 	case VLNK:
 	case VDIR:
 	case VREG:
 		break;
-	case VNON:
-#ifdef DIAGNOSTIC
-	default:
-		panic("ufs_vinit: ino %d: bad mode %x", ip->i_number,
-		    ip->i_mode);
-#else
-		break;
-#endif
 	}
 	if (ip->i_number == ROOTINO)
                 vp->v_flag |= VROOT;
