@@ -1,4 +1,4 @@
-/*      $NetBSD: if_wi_pci.c,v 1.24 2003/06/28 14:21:38 darrenr Exp $  */
+/*      $NetBSD: if_wi_pci.c,v 1.25 2003/06/29 22:30:25 fvdl Exp $  */
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_wi_pci.c,v 1.24 2003/06/28 14:21:38 darrenr Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_wi_pci.c,v 1.25 2003/06/29 22:30:25 fvdl Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -166,10 +166,12 @@ wi_pci_reset(sc)
 {
 	int i, secs, usecs;
 
-	CSR_WRITE_2(sc, WI_PCI_COR, WI_COR_SOFT_RESET);
+	bus_space_write_2(sc->sc_iot, sc->sc_ioh,
+	    WI_PCI_COR, WI_COR_SOFT_RESET);
 	DELAY(250*1000); /* 1/4 second */
 
-	CSR_WRITE_2(sc, WI_PCI_COR, WI_COR_CLEAR);
+	bus_space_write_2(sc->sc_iot, sc->sc_ioh,
+	    WI_PCI_COR, WI_COR_CLEAR);
 	DELAY(500*1000); /* 1/2 second */
 
 	/* wait 2 seconds for firmware to complete initialization. */
@@ -293,11 +295,6 @@ wi_pci_attach(parent, self, aux)
 	sc->sc_enabled = 1;
 	sc->sc_enable = wi_pci_enable;
 	sc->sc_disable = wi_pci_disable;
-
-	/* Enable the card. */
-	pci_conf_write(pc, pa->pa_tag, PCI_COMMAND_STATUS_REG,
-		pci_conf_read(pc, pa->pa_tag, PCI_COMMAND_STATUS_REG) |
-		PCI_COMMAND_MASTER_ENABLE);
 
 	sc->sc_iot = iot;
 	sc->sc_ioh = ioh;

@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.60 2003/06/28 14:21:02 darrenr Exp $	*/
+/*	$NetBSD: machdep.c,v 1.61 2003/06/29 22:28:43 fvdl Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -1021,8 +1021,8 @@ nmihand(frame)
  * understand and, if so, set up the vmcmds for it.
  */
 int
-cpu_exec_aout_makecmds(l, epp)
-    struct lwp *l;
+cpu_exec_aout_makecmds(p, epp)
+    struct proc *p;
     struct exec_package *epp;
 {
     return ENOEXEC;

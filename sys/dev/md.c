@@ -1,4 +1,4 @@
-/*	$NetBSD: md.c,v 1.35 2003/06/28 14:21:31 darrenr Exp $	*/
+/*	$NetBSD: md.c,v 1.36 2003/06/29 22:30:00 fvdl Exp $	*/
 
 /*
  * Copyright (c) 1995 Gordon W. Ross, Leo Weppelman.
@@ -46,7 +46,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: md.c,v 1.35 2003/06/28 14:21:31 darrenr Exp $");
+__KERNEL_RCSID(0, "$NetBSD: md.c,v 1.36 2003/06/29 22:30:00 fvdl Exp $");
 
 #include "opt_md.h"
 
@@ -194,7 +194,8 @@ static int md_server_loop __P((struct md_softc *sc));
 static int md_ioctl_server __P((struct md_softc *sc,
 		struct md_conf *umd, struct proc *proc));
 #endif	/* MEMORY_DISK_SERVER */
-static int md_ioctl_kalloc __P((struct md_softc *sc, struct md_conf *umd));
+static int md_ioctl_kalloc __P((struct md_softc *sc,
+		struct md_conf *umd, struct proc *proc));
 
 int
 mdsize(dev_t dev)
@@ -216,10 +217,10 @@ mdsize(dev_t dev)
 }
 
 int
-mdopen(dev, flag, fmt, l)
+mdopen(dev, flag, fmt, proc)
 	dev_t dev;
 	int flag, fmt;
-	struct lwp *l;
+	struct proc *proc;
 {
 	int unit;
 	struct md_softc *sc;
@@ -253,10 +254,10 @@ mdopen(dev, flag, fmt, l)
 }
 
 int
-mdclose(dev, flag, fmt, l)
+mdclose(dev, flag, fmt, proc)
 	dev_t dev;
 	int flag, fmt;
-	struct lwp *l;
+	struct proc *proc;
 {
 	int unit;
 
@@ -378,12 +379,12 @@ mdstrategy(bp)
 }
 
 int
-mdioctl(dev, cmd, data, flag, l)
+mdioctl(dev, cmd, data, flag, proc)
 	dev_t dev;
 	u_long cmd;
 	int flag;
 	caddr_t data;
-	struct lwp *l;
+	struct proc *proc;
 {
 	int unit;
 	struct md_softc *sc;
@@ -408,10 +409,10 @@ mdioctl(dev, cmd, data, flag, l)
 			break;
 		switch (umd->md_type) {
 		case MD_KMEM_ALLOCATED:
-			return md_ioctl_kalloc(sc, umd);
+			return md_ioctl_kalloc(sc, umd, proc);
 #if MEMORY_DISK_SERVER
 		case MD_UMEM_SERVER:
-			return md_ioctl_server(sc, umd, l->l_proc);
+			return md_ioctl_server(sc, umd, proc);
 #endif	/* MEMORY_DISK_SERVER */
 		default:
 			break;
@@ -426,9 +427,10 @@ mdioctl(dev, cmd, data, flag, l)
  * Just allocate some kernel memory and return.
  */
 static int
-md_ioctl_kalloc(sc, umd)
+md_ioctl_kalloc(sc, umd, proc)
 	struct md_softc *sc;
 	struct md_conf *umd;
+	struct proc *proc;
 {
 	vaddr_t addr;
 	vsize_t size;

@@ -1,4 +1,4 @@
-/*	$NetBSD: cd9660_vfsops.c,v 1.7 2003/06/29 18:43:23 thorpej Exp $	*/
+/*	$NetBSD: cd9660_vfsops.c,v 1.8 2003/06/29 22:31:08 fvdl Exp $	*/
 
 /*-
  * Copyright (c) 1994
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cd9660_vfsops.c,v 1.7 2003/06/29 18:43:23 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cd9660_vfsops.c,v 1.8 2003/06/29 22:31:08 fvdl Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_compat_netbsd.h"
@@ -120,13 +120,13 @@ struct genfs_ops cd9660_genfsops = {
 
 static int iso_makemp __P((struct iso_mnt *isomp, struct buf *bp, int *ea_len));
 static int iso_mountfs __P((struct vnode *devvp, struct mount *mp,
-		struct lwp *l, struct iso_args *argp));
+		struct proc *p, struct iso_args *argp));
 
 int
 cd9660_mountroot()
 {
 	struct mount *mp;
-	struct lwp *l = curlwp;	/* XXX */
+	struct proc *p = curproc;	/* XXX */
 	int error;
 	struct iso_args args;
 
@@ -146,7 +146,7 @@ cd9660_mountroot()
 	}
 
 	args.flags = ISOFSMNT_ROOT;
-	if ((error = iso_mountfs(rootvp, mp, l, &args)) != 0) {
+	if ((error = iso_mountfs(rootvp, mp, p, &args)) != 0) {
 		mp->mnt_op->vfs_refcount--;
 		vfs_unbusy(mp);
 		free(mp, M_MOUNT);
@@ -156,7 +156,7 @@ cd9660_mountroot()
 	simple_lock(&mountlist_slock);
 	CIRCLEQ_INSERT_TAIL(&mountlist, mp, mnt_list);
 	simple_unlock(&mountlist_slock);
-	(void)cd9660_statfs(mp, &mp->mnt_stat, l);
+	(void)cd9660_statfs(mp, &mp->mnt_stat, p);
 	vfs_unbusy(mp);
 	inittodr(0);
 	return (0);
@@ -168,20 +168,18 @@ cd9660_mountroot()
  * mount system call
  */
 int
-cd9660_mount(mp, path, data, ndp, l)
+cd9660_mount(mp, path, data, ndp, p)
 	struct mount *mp;
 	const char *path;
 	void *data;
 	struct nameidata *ndp;
-	struct lwp *l;
+	struct proc *p;
 {
 	struct vnode *devvp;
 	struct iso_args args;
-	struct proc *p;
 	int error;
 	struct iso_mnt *imp = NULL;
-
-	p = l->l_proc;
+	
 	if (mp->mnt_flag & MNT_GETARGS) {
 		imp = VFSTOISOFS(mp);
 		if (imp == NULL)
@@ -211,7 +209,7 @@ cd9660_mount(mp, path, data, ndp, l)
 	 * Not an update, or updating the name: look up the name
 	 * and verify that it refers to a sensible block device.
 	 */
-	NDINIT(ndp, LOOKUP, FOLLOW, UIO_USERSPACE, args.fspec, l);
+	NDINIT(ndp, LOOKUP, FOLLOW, UIO_USERSPACE, args.fspec, p);
 	if ((error = namei(ndp)) != 0)
 		return (error);
 	devvp = ndp->ni_vp;
@@ -230,7 +228,7 @@ cd9660_mount(mp, path, data, ndp, l)
 	 */
 	if (p->p_ucred->cr_uid != 0) {
 		vn_lock(devvp, LK_EXCLUSIVE | LK_RETRY);
-		error = VOP_ACCESS(devvp, VREAD, p->p_ucred, l);
+		error = VOP_ACCESS(devvp, VREAD, p->p_ucred, p);
 		VOP_UNLOCK(devvp, 0);
 		if (error) {
 			vrele(devvp);
@@ -238,7 +236,7 @@ cd9660_mount(mp, path, data, ndp, l)
 		}
 	}
 	if ((mp->mnt_flag & MNT_UPDATE) == 0)
-		error = iso_mountfs(devvp, mp, l, &args);
+		error = iso_mountfs(devvp, mp, p, &args);
 	else {
 		if (devvp != imp->im_devvp)
 			error = EINVAL;	/* needs translation */
@@ -251,7 +249,7 @@ cd9660_mount(mp, path, data, ndp, l)
 	}
 	imp = VFSTOISOFS(mp);
 	return set_statfs_info(path, UIO_USERSPACE, args.fspec, UIO_USERSPACE,
-	    mp, l);
+	    mp, p);
 }
 
 /*
@@ -299,10 +297,10 @@ iso_makemp(isomp, bp, ea_len)
  * Common code for mount and mountroot
  */
 static int
-iso_mountfs(devvp, mp, l, argp)
+iso_mountfs(devvp, mp, p, argp)
 	struct vnode *devvp;
 	struct mount *mp;
-	struct lwp *l;
+	struct proc *p;
 	struct iso_args *argp;
 {
 	struct iso_mnt *isomp = (struct iso_mnt *)0;
@@ -333,10 +331,10 @@ iso_mountfs(devvp, mp, l, argp)
 		return error;
 	if (vcount(devvp) > 1 && devvp != rootvp)
 		return EBUSY;
-	if ((error = vinvalbuf(devvp, V_SAVE, l->l_proc->p_ucred, l, 0, 0)) != 0)
+	if ((error = vinvalbuf(devvp, V_SAVE, p->p_ucred, p, 0, 0)) != 0)
 		return (error);
 
-	error = VOP_OPEN(devvp, ronly ? FREAD : FREAD|FWRITE, FSCRED, l);
+	error = VOP_OPEN(devvp, ronly ? FREAD : FREAD|FWRITE, FSCRED, p);
 	if (error)
 		return error;
 	needclose = 1;
@@ -347,14 +345,14 @@ iso_mountfs(devvp, mp, l, argp)
 	 */
 	iso_bsize = ISO_DEFAULT_BLOCK_SIZE;
 
-	error = VOP_IOCTL(devvp, DIOCGDINFO, &label, FREAD, FSCRED, l);
+	error = VOP_IOCTL(devvp, DIOCGDINFO, &label, FREAD, FSCRED, p);
 	if (!error &&
 	    label.d_partitions[DISKPART(dev)].p_fstype == FS_ISO9660) {
 		/* XXX more sanity checks? */
 		sess = label.d_partitions[DISKPART(dev)].p_cdsession;
 	} else {
 		/* fallback to old method */
-		error = VOP_IOCTL(devvp, CDIOREADMSADDR, &sess, 0, FSCRED, l);
+		error = VOP_IOCTL(devvp, CDIOREADMSADDR, &sess, 0, FSCRED, p);
 		if (error)
 			sess = 0;	/* never mind */
 	}
@@ -513,7 +511,7 @@ out:
 		brelse(supbp);
 	if (needclose) {
 		vn_lock(devvp, LK_EXCLUSIVE | LK_RETRY);
-		(void)VOP_CLOSE(devvp, ronly ? FREAD : FREAD|FWRITE, NOCRED, l);
+		(void)VOP_CLOSE(devvp, ronly ? FREAD : FREAD|FWRITE, NOCRED, p);
 		VOP_UNLOCK(devvp, 0);
 	}
 	if (isomp) {
@@ -529,10 +527,10 @@ out:
  */
 /* ARGSUSED */
 int
-cd9660_start(mp, flags, l)
+cd9660_start(mp, flags, p)
 	struct mount *mp;
 	int flags;
-	struct lwp *l;
+	struct proc *p;
 {
 	return 0;
 }
@@ -541,10 +539,10 @@ cd9660_start(mp, flags, l)
  * unmount system call
  */
 int
-cd9660_unmount(mp, mntflags, l)
+cd9660_unmount(mp, mntflags, p)
 	struct mount *mp;
 	int mntflags;
-	struct lwp *l;
+	struct proc *p;
 {
 	struct iso_mnt *isomp;
 	int error, flags = 0;
@@ -570,7 +568,7 @@ cd9660_unmount(mp, mntflags, l)
 		isomp->im_devvp->v_specmountpoint = NULL;
 
 	vn_lock(isomp->im_devvp, LK_EXCLUSIVE | LK_RETRY);
-	error = VOP_CLOSE(isomp->im_devvp, FREAD, NOCRED, l);
+	error = VOP_CLOSE(isomp->im_devvp, FREAD, NOCRED, p);
 	vput(isomp->im_devvp);
 	free(isomp, M_ISOFSMNT);
 	mp->mnt_data = NULL;
@@ -604,12 +602,12 @@ cd9660_root(mp, vpp)
  */
 /* ARGSUSED */
 int
-cd9660_quotactl(mp, cmd, uid, arg, l)
+cd9660_quotactl(mp, cmd, uid, arg, p)
 	struct mount *mp;
 	int cmd;
 	uid_t uid;
 	caddr_t arg;
-	struct lwp *l;
+	struct proc *p;
 {
 
 	return (EOPNOTSUPP);
@@ -619,10 +617,10 @@ cd9660_quotactl(mp, cmd, uid, arg, l)
  * Get file system statistics.
  */
 int
-cd9660_statfs(mp, sbp, l)
+cd9660_statfs(mp, sbp, p)
 	struct mount *mp;
 	struct statfs *sbp;
-	struct lwp *l;
+	struct proc *p;
 {
 	struct iso_mnt *isomp;
 	
@@ -648,11 +646,11 @@ cd9660_statfs(mp, sbp, l)
 
 /* ARGSUSED */
 int
-cd9660_sync(mp, waitfor, cred, l)
+cd9660_sync(mp, waitfor, cred, p)
 	struct mount *mp;
 	int waitfor;
 	struct ucred *cred;
-	struct lwp *l;
+	struct proc *p;
 {
 	return (0);
 }
@@ -990,14 +988,14 @@ cd9660_vptofh(vp, fhp)
 }
 
 int
-cd9660_sysctl(name, namelen, oldp, oldlenp, newp, newlen, l)
+cd9660_sysctl(name, namelen, oldp, oldlenp, newp, newlen, p)
 	int *name;
 	u_int namelen;
 	void *oldp;
 	size_t *oldlenp;
 	void *newp;
 	size_t newlen;
-	struct lwp *l;
+	struct proc *p;
 {
 	return (EOPNOTSUPP);
 }

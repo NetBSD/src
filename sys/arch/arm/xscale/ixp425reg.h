@@ -1,4 +1,4 @@
-/*	$NetBSD: ixp425reg.h,v 1.6 2003/06/29 10:51:31 ichiro Exp $ */
+/*	$NetBSD: ixp425reg.h,v 1.7 2003/06/29 22:28:12 fvdl Exp $ */
 /*
  * Copyright (c) 2003
  *	Ichiro FUKUHARA <ichiro@ichiro.org>.
@@ -140,7 +140,6 @@
 
 /* Interrupt Identification Register */
 #define	IXP425_UART_IIR		0x0008
-#define	 IIR_IMASK		0xf
 #define	 IIR_NOPEND		(1U << 0)	/* No pending interrupts */
 #define	 IIR_MLSC		(0U << 1)	/* Modem status */
 #define	 IIR_TXRDY		(1U << 1)	/* Transmitter ready */
@@ -192,7 +191,6 @@
 #define	 LSR_PE			(1U << 2)	/* Parity error */
 #define	 LSR_OE			(1U << 1)	/* Overrun, lost incoming byte */
 #define	 LSR_DR			(1U << 0)	/* Byte ready in Receive Buffer */
-#define	 LSR_RCV_MASK		0x1f		/* Incoming data and error */
 
 /* Modem Status Register */
 #define	IXP425_UART_MSR		0x0018

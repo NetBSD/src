@@ -1,4 +1,4 @@
-/*	$NetBSD: mach_exec.c,v 1.31 2003/06/28 14:21:23 darrenr Exp $	 */
+/*	$NetBSD: mach_exec.c,v 1.32 2003/06/29 22:29:34 fvdl Exp $	 */
 
 /*-
  * Copyright (c) 2001-2003 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mach_exec.c,v 1.31 2003/06/28 14:21:23 darrenr Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mach_exec.c,v 1.32 2003/06/29 22:29:34 fvdl Exp $");
 
 #include "opt_syscall_debug.h"
 
@@ -117,8 +117,8 @@ const struct emul emul_mach = {
  * emulation, and it probably contains Darwin specific bits. 
  */
 int
-exec_mach_copyargs(l, pack, arginfo, stackp, argp)
-	struct lwp *l;
+exec_mach_copyargs(p, pack, arginfo, stackp, argp)
+	struct proc *p;
 	struct exec_package *pack;
 	struct ps_strings *arginfo;
 	char **stackp;
@@ -139,7 +139,7 @@ exec_mach_copyargs(l, pack, arginfo, stackp, argp)
 	
 	*stackp += sizeof(macho_hdr);
 
-	if ((error = copyargs(l, pack, arginfo, stackp, argp)) != 0) {
+	if ((error = copyargs(p, pack, arginfo, stackp, argp)) != 0) {
 		DPRINTF(("mach: copyargs failed\n"));
 		return error;
 	}

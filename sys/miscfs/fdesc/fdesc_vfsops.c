@@ -1,4 +1,4 @@
-/*	$NetBSD: fdesc_vfsops.c,v 1.42 2003/06/29 18:43:31 thorpej Exp $	*/
+/*	$NetBSD: fdesc_vfsops.c,v 1.43 2003/06/29 22:31:38 fvdl Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993, 1995
@@ -45,7 +45,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fdesc_vfsops.c,v 1.42 2003/06/29 18:43:31 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fdesc_vfsops.c,v 1.43 2003/06/29 22:31:38 fvdl Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_compat_netbsd.h"
@@ -64,31 +64,31 @@ __KERNEL_RCSID(0, "$NetBSD: fdesc_vfsops.c,v 1.42 2003/06/29 18:43:31 thorpej Ex
 #include <miscfs/fdesc/fdesc.h>
 
 int	fdesc_mount __P((struct mount *, const char *, void *,
-			 struct nameidata *, struct lwp *));
-int	fdesc_start __P((struct mount *, int, struct lwp *));
-int	fdesc_unmount __P((struct mount *, int, struct lwp *));
+			 struct nameidata *, struct proc *));
+int	fdesc_start __P((struct mount *, int, struct proc *));
+int	fdesc_unmount __P((struct mount *, int, struct proc *));
 int	fdesc_quotactl __P((struct mount *, int, uid_t, caddr_t,
-			    struct lwp *));
-int	fdesc_statfs __P((struct mount *, struct statfs *, struct lwp *));
-int	fdesc_sync __P((struct mount *, int, struct ucred *, struct lwp *));
+			    struct proc *));
+int	fdesc_statfs __P((struct mount *, struct statfs *, struct proc *));
+int	fdesc_sync __P((struct mount *, int, struct ucred *, struct proc *));
 int	fdesc_vget __P((struct mount *, ino_t, struct vnode **));
 int	fdesc_fhtovp __P((struct mount *, struct fid *, struct vnode **));
 int	fdesc_checkexp __P((struct mount *, struct mbuf *, int *,
 			    struct ucred **));
 int	fdesc_vptofh __P((struct vnode *, struct fid *));
 int	fdesc_sysctl __P((int *, u_int, void *, size_t *, void *, size_t,
-			  struct lwp *));
+			  struct proc *));
 
 /*
  * Mount the per-process file descriptors (/dev/fd)
  */
 int
-fdesc_mount(mp, path, data, ndp, l)
+fdesc_mount(mp, path, data, ndp, p)
 	struct mount *mp;
 	const char *path;
 	void *data;
 	struct nameidata *ndp;
-	struct lwp *l;
+	struct proc *p;
 {
 	int error = 0;
 	struct fdescmount *fmp;
@@ -116,25 +116,25 @@ fdesc_mount(mp, path, data, ndp, l)
 	vfs_getnewfsid(mp);
 
 	error = set_statfs_info(path, UIO_USERSPACE, "fdesc", UIO_SYSSPACE,
-	    mp, l);
+	    mp, p);
 	VOP_UNLOCK(rvp, 0);
 	return error;
 }
 
 int
-fdesc_start(mp, flags, l)
+fdesc_start(mp, flags, p)
 	struct mount *mp;
 	int flags;
-	struct lwp *l;
+	struct proc *p;
 {
 	return (0);
 }
 
 int
-fdesc_unmount(mp, mntflags, l)
+fdesc_unmount(mp, mntflags, p)
 	struct mount *mp;
 	int mntflags;
-	struct lwp *l;
+	struct proc *p;
 {
 	int error;
 	int flags = 0;
@@ -188,25 +188,24 @@ fdesc_root(mp, vpp)
 }
 
 int
-fdesc_quotactl(mp, cmd, uid, arg, l)
+fdesc_quotactl(mp, cmd, uid, arg, p)
 	struct mount *mp;
 	int cmd;
 	uid_t uid;
 	caddr_t arg;
-	struct lwp *l;
+	struct proc *p;
 {
 
 	return (EOPNOTSUPP);
 }
 
 int
-fdesc_statfs(mp, sbp, l)
+fdesc_statfs(mp, sbp, p)
 	struct mount *mp;
 	struct statfs *sbp;
-	struct lwp *l;
+	struct proc *p;
 {
 	struct filedesc *fdp;
-	struct proc *p;
 	int lim;
 	int i;
 	int last;
@@ -218,7 +217,6 @@ fdesc_statfs(mp, sbp, l)
 	 * limit is ever reduced below the current number
 	 * of open files... ]
 	 */
-	p = l->l_proc;
 	lim = p->p_rlimit[RLIMIT_NOFILE].rlim_cur;
 	fdp = p->p_fd;
 	last = min(fdp->fd_nfiles, lim);
@@ -252,11 +250,11 @@ fdesc_statfs(mp, sbp, l)
 
 /*ARGSUSED*/
 int
-fdesc_sync(mp, waitfor, uc, l)
+fdesc_sync(mp, waitfor, uc, p)
 	struct mount *mp;
 	int waitfor;
 	struct ucred *uc;
-	struct lwp *l;
+	struct proc *p;
 {
 
 	return (0);
@@ -310,14 +308,14 @@ fdesc_vptofh(vp, fhp)
 }
 
 int
-fdesc_sysctl(name, namelen, oldp, oldlenp, newp, newlen, l)
+fdesc_sysctl(name, namelen, oldp, oldlenp, newp, newlen, p)
 	int *name;
 	u_int namelen;
 	void *oldp;
 	size_t *oldlenp;
 	void *newp;
 	size_t newlen;
-	struct lwp *l;
+	struct proc *p;
 {
 	return (EOPNOTSUPP);
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: cz.c,v 1.27 2003/06/28 14:21:38 darrenr Exp $	*/
+/*	$NetBSD: cz.c,v 1.28 2003/06/29 22:30:24 fvdl Exp $	*/
 
 /*-
  * Copyright (c) 2000 Zembu Labs, Inc.
@@ -73,7 +73,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cz.c,v 1.27 2003/06/28 14:21:38 darrenr Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cz.c,v 1.28 2003/06/29 22:30:24 fvdl Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -962,7 +962,7 @@ cztty_shutdown(struct cztty_softc *sc)
  *	Open a Cyclades-Z serial port.
  */
 int
-czttyopen(dev_t dev, int flags, int mode, struct lwp *l)
+czttyopen(dev_t dev, int flags, int mode, struct proc *p)
 {
 	struct cztty_softc *sc = CZTTY_SOFTC(dev);
 	struct cz_softc *cz;
@@ -980,7 +980,7 @@ czttyopen(dev_t dev, int flags, int mode, struct lwp *l)
 
 	if (ISSET(tp->t_state, TS_ISOPEN) &&
 	    ISSET(tp->t_state, TS_XCLUDE) &&
-	    l->l_proc->p_ucred->cr_uid != 0)
+	    p->p_ucred->cr_uid != 0)
 		return (EBUSY);
 
 	s = spltty();
@@ -1082,7 +1082,7 @@ czttyopen(dev_t dev, int flags, int mode, struct lwp *l)
  *	Close a Cyclades-Z serial port.
  */
 int
-czttyclose(dev_t dev, int flags, int mode, struct lwp *l)
+czttyclose(dev_t dev, int flags, int mode, struct proc *p)
 {
 	struct cztty_softc *sc = CZTTY_SOFTC(dev);
 	struct tty *tp = sc->sc_tty;
@@ -1140,15 +1140,15 @@ czttywrite(dev_t dev, struct uio *uio, int flags)
  *	Poll a Cyclades-Z serial port.
  */
 int
-czttypoll(dev, events, l)
+czttypoll(dev, events, p)
 	dev_t dev;
 	int events;
-	struct lwp *l;
+	struct proc *p;
 {
 	struct cztty_softc *sc = CZTTY_SOFTC(dev);
 	struct tty *tp = sc->sc_tty;
  
-	return ((*tp->t_linesw->l_poll)(tp, events, l));
+	return ((*tp->t_linesw->l_poll)(tp, events, p));
 }
 
 /*
@@ -1157,18 +1157,17 @@ czttypoll(dev, events, l)
  *	Perform a control operation on a Cyclades-Z serial port.
  */
 int
-czttyioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct lwp *l)
+czttyioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct proc *p)
 {
 	struct cztty_softc *sc = CZTTY_SOFTC(dev);
 	struct tty *tp = sc->sc_tty;
-	struct proc *p = l->l_proc;
 	int s, error;
 
-	error = (*tp->t_linesw->l_ioctl)(tp, cmd, data, flag, l);
+	error = (*tp->t_linesw->l_ioctl)(tp, cmd, data, flag, p);
 	if (error != EPASSTHROUGH)
 		return (error);
 
-	error = ttioctl(tp, cmd, data, flag, l);
+	error = ttioctl(tp, cmd, data, flag, p);
 	if (error != EPASSTHROUGH)
 		return (error);
 

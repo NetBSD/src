@@ -1,4 +1,4 @@
-/*	$NetBSD: ld.c,v 1.25 2003/06/28 14:21:31 darrenr Exp $	*/
+/*	$NetBSD: ld.c,v 1.26 2003/06/29 22:29:59 fvdl Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ld.c,v 1.25 2003/06/28 14:21:31 darrenr Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ld.c,v 1.26 2003/06/29 22:29:59 fvdl Exp $");
 
 #include "rnd.h"
 
@@ -267,7 +267,7 @@ ldshutdown(void *cookie)
 
 /* ARGSUSED */
 int
-ldopen(dev_t dev, int flags, int fmt, struct lwp *l)
+ldopen(dev_t dev, int flags, int fmt, struct proc *p)
 {
 	struct ld_softc *sc;
 	int unit, part;
@@ -311,7 +311,7 @@ ldopen(dev_t dev, int flags, int fmt, struct lwp *l)
 
 /* ARGSUSED */
 int
-ldclose(dev_t dev, int flags, int fmt, struct lwp *l)
+ldclose(dev_t dev, int flags, int fmt, struct proc *p)
 {
 	struct ld_softc *sc;
 	int part, unit;
@@ -362,7 +362,7 @@ ldwrite(dev_t dev, struct uio *uio, int ioflag)
 
 /* ARGSUSED */
 int
-ldioctl(dev_t dev, u_long cmd, caddr_t addr, int32_t flag, struct lwp *l)
+ldioctl(dev_t dev, u_long cmd, caddr_t addr, int32_t flag, struct proc *p)
 {
 	struct ld_softc *sc;
 	int part, unit, error;

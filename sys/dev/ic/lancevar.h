@@ -1,4 +1,4 @@
-/*	$NetBSD: lancevar.h,v 1.5 2003/06/29 14:42:58 jdolecek Exp $	*/
+/*	$NetBSD: lancevar.h,v 1.6 2003/06/29 22:30:12 fvdl Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.

@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_ioctl.h,v 1.17 2003/06/28 14:21:22 darrenr Exp $	*/
+/*	$NetBSD: linux_ioctl.h,v 1.18 2003/06/29 22:29:30 fvdl Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1998 The NetBSD Foundation, Inc.
@@ -43,18 +43,18 @@ struct linux_sys_ioctl_args;
 
 #ifdef _KERNEL
 __BEGIN_DECLS
-int linux_machdepioctl __P((struct lwp *, void *, register_t *));
-int linux_ioctl_cdrom __P((struct lwp *, struct linux_sys_ioctl_args *,
+int linux_machdepioctl __P((struct proc *, void *, register_t *));
+int linux_ioctl_cdrom __P((struct proc *, struct linux_sys_ioctl_args *,
     register_t *));
-int linux_ioctl_termios __P((struct lwp *, struct linux_sys_ioctl_args *,
+int linux_ioctl_termios __P((struct proc *, struct linux_sys_ioctl_args *,
     register_t *));
-int linux_ioctl_socket __P((struct lwp *, struct linux_sys_ioctl_args *,
+int linux_ioctl_socket __P((struct proc *, struct linux_sys_ioctl_args *,
     register_t *));
-int linux_ioctl_hdio __P((struct lwp *, struct linux_sys_ioctl_args *,
+int linux_ioctl_hdio __P((struct proc *, struct linux_sys_ioctl_args *,
     register_t *));
-int linux_ioctl_fdio __P((struct lwp *p, struct linux_sys_ioctl_args *uap, 
+int linux_ioctl_fdio __P((struct proc *p, struct linux_sys_ioctl_args *uap, 
                  register_t *retval));
-int linux_ioctl_blkio __P((struct lwp *p, struct linux_sys_ioctl_args *uap, 
+int linux_ioctl_blkio __P((struct proc *p, struct linux_sys_ioctl_args *uap, 
                  register_t *retval));
 __END_DECLS
 #endif	/* !_KERNEL */

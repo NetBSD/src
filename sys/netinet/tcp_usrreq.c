@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_usrreq.c,v 1.80 2003/06/29 12:00:47 simonb Exp $	*/
+/*	$NetBSD: tcp_usrreq.c,v 1.81 2003/06/29 22:32:00 fvdl Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -102,7 +102,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tcp_usrreq.c,v 1.80 2003/06/29 12:00:47 simonb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tcp_usrreq.c,v 1.81 2003/06/29 22:32:00 fvdl Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -170,13 +170,12 @@ static int tcp_sysctl_ident(int *, u_int, void *, size_t *, void *, size_t);
  */
 /*ARGSUSED*/
 int
-tcp_usrreq(so, req, m, nam, control, l)
+tcp_usrreq(so, req, m, nam, control, p)
 	struct socket *so;
 	int req;
 	struct mbuf *m, *nam, *control;
-	struct lwp *l;
-{
 	struct proc *p;
+{
 	struct inpcb *inp;
 #ifdef INET6
 	struct in6pcb *in6p;
@@ -189,7 +188,6 @@ tcp_usrreq(so, req, m, nam, control, l)
 #endif
 	int family;	/* family of the socket */
 
-	p = l ? l->l_proc : NULL;
 	family = so->so_proto->pr_domain->dom_family;
 
 	if (req == PRU_CONTROL) {

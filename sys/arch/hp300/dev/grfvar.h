@@ -1,4 +1,4 @@
-/*	$NetBSD: grfvar.h,v 1.15 2003/06/29 15:58:19 thorpej Exp $	*/
+/*	$NetBSD: grfvar.h,v 1.16 2003/06/29 22:28:17 fvdl Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -137,7 +137,7 @@ paddr_t	grfaddr __P((struct grf_softc *, off_t));
 #endif
 
 #ifdef COMPAT_HPUX
-int	hpuxgrfioctl __P((dev_t, int, caddr_t, int, struct lwp *));
+int	hpuxgrfioctl __P((dev_t, int, caddr_t, int, struct proc *));
 
 int	grflock __P((struct grf_data *, int));
 int	grfunlock __P((struct grf_data *));

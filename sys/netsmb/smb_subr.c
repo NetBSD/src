@@ -1,4 +1,4 @@
-/*	$NetBSD: smb_subr.c,v 1.18 2003/06/28 14:22:16 darrenr Exp $	*/
+/*	$NetBSD: smb_subr.c,v 1.19 2003/06/29 22:32:11 fvdl Exp $	*/
 
 /*
  * Copyright (c) 2000-2001 Boris Popov
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: smb_subr.c,v 1.18 2003/06/28 14:22:16 darrenr Exp $");
+__KERNEL_RCSID(0, "$NetBSD: smb_subr.c,v 1.19 2003/06/29 22:32:11 fvdl Exp $");
  
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -63,29 +63,22 @@ static MALLOC_DEFINE(M_SMBSTR, "smbstr", "SMB strings");
 MALLOC_DEFINE(M_SMBTEMP, "smbtemp", "Temp netsmb data");
 
 void
-smb_makescred(struct smb_cred *scred, struct lwp *l, struct ucred *cred)
+smb_makescred(struct smb_cred *scred, struct proc *p, struct ucred *cred)
 {
-	struct proc *p;
-
-	if (l) {
-		p = l ? l->l_proc : NULL;
-
-		scred->scr_l = l;
+	if (p) {
+		scred->scr_p = p;
 		scred->scr_cred = cred ? cred : p->p_ucred;
 	} else {
-		scred->scr_l = NULL;
+		scred->scr_p = NULL;
 		scred->scr_cred = cred ? cred : NULL;
 	}
 }
 
 int
-smb_proc_intr(struct lwp *l)
+smb_proc_intr(struct proc *p)
 {
-	struct proc *p;
-
-	if (l == NULL)
+	if (p == NULL)
 		return 0;
-	p = l->l_proc;
 	if (!sigemptyset(&p->p_sigctx.ps_siglist)
 	    && SMB_SIGMASK(p->p_sigctx.ps_siglist))
                 return EINTR;

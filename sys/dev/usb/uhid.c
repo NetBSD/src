@@ -1,4 +1,4 @@
-/*	$NetBSD: uhid.c,v 1.58 2003/06/28 14:21:46 darrenr Exp $	*/
+/*	$NetBSD: uhid.c,v 1.59 2003/06/29 22:30:57 fvdl Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uhid.c,v 1.58 2003/06/28 14:21:46 darrenr Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uhid.c,v 1.59 2003/06/29 22:30:57 fvdl Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -120,7 +120,7 @@ Static void uhid_intr(struct uhidev *, void *, u_int len);
 
 Static int uhid_do_read(struct uhid_softc *, struct uio *uio, int);
 Static int uhid_do_write(struct uhid_softc *, struct uio *uio, int);
-Static int uhid_do_ioctl(struct uhid_softc*, u_long, caddr_t, int, struct lwp *);
+Static int uhid_do_ioctl(struct uhid_softc*, u_long, caddr_t, int, usb_proc_ptr);
 
 USB_DECLARE_DRIVER(uhid);
 
@@ -251,7 +251,7 @@ uhid_intr(struct uhidev *addr, void *data, u_int len)
 }
 
 int
-uhidopen(dev_t dev, int flag, int mode, struct lwp *l)
+uhidopen(dev_t dev, int flag, int mode, usb_proc_ptr p)
 {
 	struct uhid_softc *sc;
 	int error;
@@ -279,7 +279,7 @@ uhidopen(dev_t dev, int flag, int mode, struct lwp *l)
 }
 
 int
-uhidclose(dev_t dev, int flag, int mode, struct lwp *l)
+uhidclose(dev_t dev, int flag, int mode, usb_proc_ptr p)
 {
 	struct uhid_softc *sc;
 
@@ -412,7 +412,7 @@ uhidwrite(dev_t dev, struct uio *uio, int flag)
 
 int
 uhid_do_ioctl(struct uhid_softc *sc, u_long cmd, caddr_t addr,
-	      int flag, struct lwp *l)
+	      int flag, usb_proc_ptr p)
 {
 	struct usb_ctl_report_desc *rd;
 	struct usb_ctl_report *re;
@@ -435,8 +435,8 @@ uhid_do_ioctl(struct uhid_softc *sc, u_long cmd, caddr_t addr,
 		if (*(int *)addr) {
 			if (sc->sc_async != NULL)
 				return (EBUSY);
-			sc->sc_async = l->l_proc;
-			DPRINTF(("uhid_do_ioctl: FIOASYNC %p\n", l->l_proc));
+			sc->sc_async = p;
+			DPRINTF(("uhid_do_ioctl: FIOASYNC %p\n", p));
 		} else
 			sc->sc_async = NULL;
 		break;
@@ -526,7 +526,7 @@ uhid_do_ioctl(struct uhid_softc *sc, u_long cmd, caddr_t addr,
 }
 
 int
-uhidioctl(dev_t dev, u_long cmd, caddr_t addr, int flag, struct lwp *l)
+uhidioctl(dev_t dev, u_long cmd, caddr_t addr, int flag, usb_proc_ptr p)
 {
 	struct uhid_softc *sc;
 	int error;
@@ -534,14 +534,14 @@ uhidioctl(dev_t dev, u_long cmd, caddr_t addr, int flag, struct lwp *l)
 	USB_GET_SC(uhid, UHIDUNIT(dev), sc);
 
 	sc->sc_refcnt++;
-	error = uhid_do_ioctl(sc, cmd, addr, flag, l);
+	error = uhid_do_ioctl(sc, cmd, addr, flag, p);
 	if (--sc->sc_refcnt < 0)
 		usb_detach_wakeup(USBDEV(sc->sc_hdev.sc_dev));
 	return (error);
 }
 
 int
-uhidpoll(dev_t dev, int events, struct lwp *l)
+uhidpoll(dev_t dev, int events, usb_proc_ptr p)
 {
 	struct uhid_softc *sc;
 	int revents = 0;
@@ -559,7 +559,7 @@ uhidpoll(dev_t dev, int events, struct lwp *l)
 		if (sc->sc_q.c_cc > 0)
 			revents |= events & (POLLIN | POLLRDNORM);
 		else
-			selrecord(l, &sc->sc_rsel);
+			selrecord(p, &sc->sc_rsel);
 	}
 
 	splx(s);

@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_syscalls.c,v 1.92 2003/06/29 18:43:45 thorpej Exp $	*/
+/*	$NetBSD: lfs_syscalls.c,v 1.93 2003/06/29 22:32:40 fvdl Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003 The NetBSD Foundation, Inc.
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_syscalls.c,v 1.92 2003/06/29 18:43:45 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_syscalls.c,v 1.93 2003/06/29 22:32:40 fvdl Exp $");
 
 #ifndef LFS
 # define LFS		/* for prototypes in syscallargs.h */
@@ -137,7 +137,7 @@ extern TAILQ_HEAD(bqueues, buf) bufqueues[BQUEUES];
  */
 #ifdef USE_64BIT_SYSCALLS
 int
-sys_lfs_markv(struct lwp *l, void *v, register_t *retval)
+sys_lfs_markv(struct proc *p, void *v, register_t *retval)
 {
 	struct sys_lfs_markv_args /* {
 		syscallarg(fsid_t *) fsidp;
@@ -145,7 +145,6 @@ sys_lfs_markv(struct lwp *l, void *v, register_t *retval)
 		syscallarg(int) blkcnt;
 	} */ *uap = v;
 	BLOCK_INFO *blkiov;
-	struct proc *p = l->l_proc;
 	int blkcnt, error;
 	fsid_t fsid;
 
@@ -182,11 +181,10 @@ sys_lfs_markv(struct lwp *l, void *v, register_t *retval)
 	} */ *uap = v;
 	BLOCK_INFO *blkiov;
 	BLOCK_INFO_15 *blkiov15;
-	struct proc *p = l->l_proc;
 	int i, blkcnt, error;
 	fsid_t fsid;
 
-	if ((error = suser(p->p_ucred, &p->p_acflag)) != 0)
+	if ((error = suser(l->l_proc->p_ucred, &l->l_proc->p_acflag)) != 0)
 		return (error);
 	
 	if ((error = copyin(SCARG(uap, fsidp), &fsid, sizeof(fsid_t))) != 0)
@@ -212,7 +210,7 @@ sys_lfs_markv(struct lwp *l, void *v, register_t *retval)
 		blkiov[i].bi_size      = blkiov15[i].bi_size;
 	}
 
-	if ((error = lfs_markv(p, &fsid, blkiov, blkcnt)) == 0) {
+	if ((error = lfs_markv(l->l_proc, &fsid, blkiov, blkcnt)) == 0) {
 		for (i = 0; i < blkcnt; i++) {
 			blkiov15[i].bi_inode	 = blkiov[i].bi_inode;
 			blkiov15[i].bi_lbn	 = blkiov[i].bi_lbn;
@@ -612,14 +610,13 @@ lfs_markv(struct proc *p, fsid_t *fsidp, BLOCK_INFO *blkiov, int blkcnt)
  */
 #ifdef USE_64BIT_SYSCALLS
 int
-sys_lfs_bmapv(struct lwp *l, void *v, register_t *retval)
+sys_lfs_bmapv(struct proc *p, void *v, register_t *retval)
 {
 	struct sys_lfs_bmapv_args /* {
 		syscallarg(fsid_t *) fsidp;
 		syscallarg(struct block_info *) blkiov;
 		syscallarg(int) blkcnt;
 	} */ *uap = v;
-	struct proc *p = l->l_proc;
 	BLOCK_INFO *blkiov;
 	int blkcnt, error;
 	fsid_t fsid;
@@ -685,7 +682,7 @@ sys_lfs_bmapv(struct lwp *l, void *v, register_t *retval)
 		blkiov[i].bi_size      = blkiov15[i].bi_size;
 	}
 
-	if ((error = lfs_bmapv(l, &fsid, blkiov, blkcnt)) == 0) {
+	if ((error = lfs_bmapv(p, &fsid, blkiov, blkcnt)) == 0) {
 		for (i = 0; i < blkcnt; i++) {
 			blkiov15[i].bi_inode	 = blkiov[i].bi_inode;
 			blkiov15[i].bi_lbn	 = blkiov[i].bi_lbn;
@@ -706,7 +703,7 @@ sys_lfs_bmapv(struct lwp *l, void *v, register_t *retval)
 #endif
 
 int
-lfs_bmapv(struct lwp *l, fsid_t *fsidp, BLOCK_INFO *blkiov, int blkcnt)
+lfs_bmapv(struct proc *p, fsid_t *fsidp, BLOCK_INFO *blkiov, int blkcnt)
 {
 	BLOCK_INFO *blkp;
 	IFILE *ifp;
@@ -721,7 +718,7 @@ lfs_bmapv(struct lwp *l, fsid_t *fsidp, BLOCK_INFO *blkiov, int blkcnt)
 	int cnt, error;
 	int numrefed = 0;
 
-	lfs_cleaner_pid = l->l_proc->p_pid;
+	lfs_cleaner_pid = p->p_pid;
 	
 	if ((mntp = vfs_getvfs(fsidp)) == NULL)
 		return (ENOENT);

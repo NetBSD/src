@@ -1,4 +1,4 @@
-/* $NetBSD: wsfontdev.c,v 1.7 2003/06/28 14:21:48 darrenr Exp $ */
+/* $NetBSD: wsfontdev.c,v 1.8 2003/06/29 22:31:06 fvdl Exp $ */
 
 /*
  * Copyright (c) 2001
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wsfontdev.c,v 1.7 2003/06/28 14:21:48 darrenr Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wsfontdev.c,v 1.8 2003/06/29 22:31:06 fvdl Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -60,7 +60,7 @@ wsfontattach(int n)
 }
 
 int
-wsfontopen(dev_t dev, int flag, int mode, struct lwp *l)
+wsfontopen(dev_t dev, int flag, int mode, struct proc *p)
 {
 
 	if (wsfont_isopen)
@@ -70,7 +70,7 @@ wsfontopen(dev_t dev, int flag, int mode, struct lwp *l)
 }
 
 int
-wsfontclose(dev_t dev, int flag, int mode, struct lwp *l)
+wsfontclose(dev_t dev, int flag, int mode, struct proc *p)
 {
 
 	wsfont_isopen = 0;
@@ -78,7 +78,7 @@ wsfontclose(dev_t dev, int flag, int mode, struct lwp *l)
 }
 
 int
-wsfontioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct lwp *l)
+wsfontioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct proc *p)
 {
 	char nbuf[16];
 	void *buf;

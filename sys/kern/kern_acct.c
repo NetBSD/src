@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_acct.c,v 1.53 2003/06/28 14:21:53 darrenr Exp $	*/
+/*	$NetBSD: kern_acct.c,v 1.54 2003/06/29 22:31:18 fvdl Exp $	*/
 
 /*-
  * Copyright (c) 1994 Christopher G. Demetriou
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_acct.c,v 1.53 2003/06/28 14:21:53 darrenr Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_acct.c,v 1.54 2003/06/29 22:31:18 fvdl Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -208,12 +208,12 @@ sys_acct(l, v, retval)
 	 */
 	if (SCARG(uap, path) != NULL) {
 		NDINIT(&nd, LOOKUP, NOFOLLOW, UIO_USERSPACE, SCARG(uap, path),
-		    l);
+		    p);
 		if ((error = vn_open(&nd, FWRITE|O_APPEND, 0)) != 0)
 			return (error);
 		VOP_UNLOCK(nd.ni_vp, 0);
 		if (nd.ni_vp->v_type != VREG) {
-			vn_close(nd.ni_vp, FWRITE, p->p_ucred, l);
+			vn_close(nd.ni_vp, FWRITE, p->p_ucred, p);
 			return (EACCES);
 		}
 	}
@@ -263,15 +263,14 @@ sys_acct(l, v, retval)
  * "acct.h" header file.)
  */
 int
-acct_process(l)
-	struct lwp *l;
+acct_process(p)
+	struct proc *p;
 {
 	struct acct acct;
 	struct rusage *r;
 	struct timeval ut, st, tmp;
 	int s, t, error = 0;
 	struct plimit *oplim = NULL;
-	struct proc *p = l->l_proc;
 
 	ACCT_LOCK();
 
@@ -338,10 +337,10 @@ acct_process(l)
 	/*
 	 * Now, just write the accounting information to the file.
 	 */
-	VOP_LEASE(acct_vp, l, p->p_ucred, LEASE_WRITE);
+	VOP_LEASE(acct_vp, p, p->p_ucred, LEASE_WRITE);
 	error = vn_rdwr(UIO_WRITE, acct_vp, (caddr_t)&acct,
 	    sizeof(acct), (off_t)0, UIO_SYSSPACE, IO_APPEND|IO_UNIT,
-	    acct_ucred, NULL, l);
+	    acct_ucred, NULL, p);
 	if (error != 0)
 		log(LOG_ERR, "Accounting: write failed %d\n", error);
 

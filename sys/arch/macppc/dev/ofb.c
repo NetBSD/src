@@ -1,4 +1,4 @@
-/*	$NetBSD: ofb.c,v 1.34 2003/06/29 11:02:21 darrenr Exp $	*/
+/*	$NetBSD: ofb.c,v 1.35 2003/06/29 22:28:33 fvdl Exp $	*/
 
 /*
  * Copyright (c) 1995, 1996 Carnegie-Mellon University.
@@ -89,7 +89,7 @@ struct wsscreen_list ofb_screenlist = {
 	sizeof(_ofb_scrlist) / sizeof(struct wsscreen_descr *), _ofb_scrlist
 };
 
-static int ofb_ioctl __P((void *, u_long, caddr_t, int, struct lwp *));
+static int ofb_ioctl __P((void *, u_long, caddr_t, int, struct proc *));
 static paddr_t ofb_mmap __P((void *, off_t, int));
 static int ofb_alloc_screen __P((void *, const struct wsscreen_descr *,
 				void **, int *, int *, long *));
@@ -325,12 +325,12 @@ ofb_is_console()
 }
 
 int
-ofb_ioctl(v, cmd, data, flag, l)
+ofb_ioctl(v, cmd, data, flag, p)
 	void *v;
 	u_long cmd;
 	caddr_t data;
 	int flag;
-	struct lwp *l;
+	struct proc *p;
 {
 	struct ofb_softc *sc = v;
 	struct ofb_devconfig *dc = sc->sc_dc;
@@ -367,7 +367,7 @@ ofb_ioctl(v, cmd, data, flag, l)
 	case PCI_IOC_CFGREAD:
 	case PCI_IOC_CFGWRITE:
 		return (pci_devioctl(sc->sc_pc, sc->sc_pcitag,
-		    cmd, data, flag, l));
+		    cmd, data, flag, p));
 	}
 	return EPASSTHROUGH;
 }

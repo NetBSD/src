@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_boot.c,v 1.58 2003/06/28 14:22:16 darrenr Exp $	*/
+/*	$NetBSD: nfs_boot.c,v 1.59 2003/06/29 22:32:14 fvdl Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1997 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_boot.c,v 1.58 2003/06/28 14:22:16 darrenr Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_boot.c,v 1.59 2003/06/29 22:32:14 fvdl Exp $");
 
 #include "opt_nfs.h"
 #include "opt_nfs_boot.h"
@@ -104,9 +104,9 @@ static  int nfs_boot_getfh __P((struct nfs_dlmount *ndm));
  * save all the boot parameters in the nfs_diskless struct.
  */
 int
-nfs_boot_init(nd, lwp)
+nfs_boot_init(nd, procp)
 	struct nfs_diskless *nd;
-	struct lwp *lwp;
+	struct proc *procp;
 {
 	struct ifnet *ifp;
 	int error;
@@ -130,13 +130,13 @@ nfs_boot_init(nd, lwp)
 #else
 		printf("nfs_boot: trying BOOTP\n");
 #endif
-		error = nfs_bootdhcp(nd, lwp);
+		error = nfs_bootdhcp(nd, procp);
 	}
 #endif
 #ifdef NFS_BOOT_BOOTPARAM
 	if (error && nfs_boot_bootparam) {
 		printf("nfs_boot: trying RARP (and RPC/bootparam)\n");
-		error = nfs_bootparam(nd, lwp);
+		error = nfs_bootparam(nd, procp);
 	}
 #endif
 	if (error)
@@ -155,26 +155,26 @@ nfs_boot_init(nd, lwp)
 	error = nfs_boot_getfh(&nd->nd_root);
 
 	if (error)
-		nfs_boot_cleanup(nd, lwp);
+		nfs_boot_cleanup(nd, procp);
 
 	return (error);
 }
 
 void
-nfs_boot_cleanup(nd, lwp)
+nfs_boot_cleanup(nd, procp)
 	struct nfs_diskless *nd;
-	struct lwp *lwp;
+	struct proc *procp;
 {
 
-	nfs_boot_deladdress(nd->nd_ifp, lwp, nd->nd_myip.s_addr);
-	nfs_boot_ifupdown(nd->nd_ifp, lwp, 0);
+	nfs_boot_deladdress(nd->nd_ifp, procp, nd->nd_myip.s_addr);
+	nfs_boot_ifupdown(nd->nd_ifp, procp, 0);
 	nfs_boot_flushrt(nd->nd_ifp);
 }
 
 int
-nfs_boot_ifupdown(ifp, lwp, up)
+nfs_boot_ifupdown(ifp, procp, up)
 	struct ifnet *ifp;
-	struct lwp *lwp;
+	struct proc *procp;
 	int up;
 {
 	struct socket *so;
@@ -199,7 +199,7 @@ nfs_boot_ifupdown(ifp, lwp, up)
 	 * Get the old interface flags and or IFF_UP into them so
 	 * things like media selection flags are not clobbered.
 	 */
-	error = ifioctl(so, SIOCGIFFLAGS, (caddr_t)&ireq, lwp);
+	error = ifioctl(so, SIOCGIFFLAGS, (caddr_t)&ireq, procp);
 	if (error) {
 		printf("ifupdown: GIFFLAGS, error=%d\n", error);
 		goto out;
@@ -208,7 +208,7 @@ nfs_boot_ifupdown(ifp, lwp, up)
 		ireq.ifr_flags |= IFF_UP;
 	else
 		ireq.ifr_flags &= ~IFF_UP;
-	error = ifioctl(so, SIOCSIFFLAGS, (caddr_t)&ireq, lwp);
+	error = ifioctl(so, SIOCSIFFLAGS, (caddr_t)&ireq, procp);
 	if (error) {
 		printf("ifupdown: SIFFLAGS, error=%d\n", error);
 		goto out;
@@ -223,9 +223,9 @@ out:
 }
 
 int
-nfs_boot_setaddress(ifp, lwp, addr, netmask, braddr)
+nfs_boot_setaddress(ifp, procp, addr, netmask, braddr)
 	struct ifnet *ifp;
-	struct lwp *lwp;
+	struct proc *procp;
 	u_int32_t addr, netmask, braddr;
 {
 	struct socket *so;
@@ -268,7 +268,7 @@ nfs_boot_setaddress(ifp, lwp, addr, netmask, braddr)
 		sin->sin_addr.s_addr = braddr;
 	} /* else leave broadcast addr unspecified (len=0) */
 
-	error = ifioctl(so, SIOCAIFADDR, (caddr_t)&iareq, lwp);
+	error = ifioctl(so, SIOCAIFADDR, (caddr_t)&iareq, procp);
 	if (error) {
 		printf("setaddress, error=%d\n", error);
 		goto out;
@@ -282,9 +282,9 @@ out:
 }
 
 int
-nfs_boot_deladdress(ifp, lwp, addr)
+nfs_boot_deladdress(ifp, procp, addr)
 	struct ifnet *ifp;
-	struct lwp *lwp;
+	struct proc *procp;
 	u_int32_t addr;
 {
 	struct socket *so;
@@ -310,7 +310,7 @@ nfs_boot_deladdress(ifp, lwp, addr)
 	sin->sin_family = AF_INET;
 	sin->sin_addr.s_addr = addr;
 
-	error = ifioctl(so, SIOCDIFADDR, (caddr_t)&ireq, lwp);
+	error = ifioctl(so, SIOCDIFADDR, (caddr_t)&ireq, procp);
 	if (error) {
 		printf("deladdress, error=%d\n", error);
 		goto out;
@@ -365,7 +365,7 @@ nfs_boot_sobind_ipport(so, port)
 	sin->sin_family = AF_INET;
 	sin->sin_addr.s_addr = INADDR_ANY;
 	sin->sin_port = htons(port);
-	error = sobind(so, m, curlwp);		/* XXX */
+	error = sobind(so, m, curproc);
 	m_freem(m);
 	return (error);
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: darwin_sysctl.h,v 1.3 2003/06/28 14:21:17 darrenr Exp $ */
+/*	$NetBSD: darwin_sysctl.h,v 1.4 2003/06/29 22:29:15 fvdl Exp $ */
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -50,7 +50,7 @@ extern pid_t darwin_init_pid;
 }
 
 int darwin_sysctl(int *, u_int, void *, 
-    size_t *, void *, size_t, struct lwp *);
+    size_t *, void *, size_t, struct proc *);
 
 #define DARWIN_CTL_UNSPEC	0
 #define DARWIN_CTL_KERN		1

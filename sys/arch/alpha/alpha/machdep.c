@@ -1,4 +1,4 @@
-/* $NetBSD: machdep.c,v 1.269 2003/06/29 15:14:12 simonb Exp $ */
+/* $NetBSD: machdep.c,v 1.270 2003/06/29 22:28:01 fvdl Exp $ */
 
 /*-
  * Copyright (c) 1998, 1999, 2000 The NetBSD Foundation, Inc.
@@ -75,7 +75,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.269 2003/06/29 15:14:12 simonb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.270 2003/06/29 22:28:01 fvdl Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1753,14 +1753,14 @@ sys___sigreturn14(l, v, retval)
  * machine dependent system variables.
  */
 int
-cpu_sysctl(name, namelen, oldp, oldlenp, newp, newlen, l)
+cpu_sysctl(name, namelen, oldp, oldlenp, newp, newlen, p)
 	int *name;
 	u_int namelen;
 	void *oldp;
 	size_t *oldlenp;
 	void *newp;
 	size_t newlen;
-	struct lwp *l;
+	struct proc *p;
 {
 	dev_t consdev;
 
@@ -2009,8 +2009,8 @@ cpu_exec_ecoff_setregs(l, epp, stack)
  *
  */
 int
-cpu_exec_ecoff_probe(l, epp)
-	struct lwp *l;
+cpu_exec_ecoff_probe(p, epp)
+	struct proc *p;
 	struct exec_package *epp;
 {
 	struct ecoff_exechdr *execp = (struct ecoff_exechdr *)epp->ep_hdr;
