@@ -1,4 +1,4 @@
-/*	$NetBSD: siop_pci_common.c,v 1.20 2003/10/25 18:31:12 christos Exp $	*/
+/*	$NetBSD: siop_pci_common.c,v 1.21 2003/10/25 21:31:20 christos Exp $	*/
 
 /*
  * Copyright (c) 2000 Manuel Bouyer.
@@ -32,7 +32,7 @@
 /* SYM53c8xx PCI-SCSI I/O Processors driver: PCI front-end */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: siop_pci_common.c,v 1.20 2003/10/25 18:31:12 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: siop_pci_common.c,v 1.21 2003/10/25 21:31:20 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -314,7 +314,7 @@ siop_pci_attach_common(pci_sc, siop_sc, pa, intr)
 		default:
 			aprint_error("%s: invalid memory type %d\n",
 			    siop_sc->sc_dev.dv_xname, memtype);
-			break;
+			return 0;
 		}
 		if (pci_mapreg_map(pa, bar, memtype, 0,
                     &siop_sc->sc_ramt, &siop_sc->sc_ramh,
