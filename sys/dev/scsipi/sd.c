@@ -162,6 +162,8 @@ sdopen(int dev)
 	}
 
 	sd = sd_data[unit];
+	if(!sd)
+		return ENXIO;
 	if( !(sd->flags & SDVALID) )
 		return ENXIO;
 
@@ -442,6 +444,8 @@ sdstart(int unit)
 		printf("sdstart%d ", unit);
 
 	sd = sd_data[unit];
+	if(!sd)
+		return;
 
 	/*
 	 * See if there is a buf to do and we are not already
@@ -606,10 +610,10 @@ sdioctl(dev_t dev, int cmd, caddr_t addr, int flag)
 	/* If the device is not valid.. abandon ship */
 	if(unit > NSD)
 		return EIO;
+	sd = sd_data[unit];
 	if(sd==NULL)
 		return EIO;
 
-	sd = sd_data[unit];
 	if(!(sd->flags & SDVALID))
 		return EIO;
 
@@ -897,6 +901,8 @@ sd_get_parms(int unit, int flags)
 	int sectors;
 
 	/* First check if we have it all loaded */
+	if(!sd)
+		return 0;
 	if(sd->flags & SDVALID)
 		return 0;
 
