@@ -1,4 +1,4 @@
-/*	$NetBSD: math_emu.h,v 1.6 1999/04/22 00:23:33 fvdl Exp $	*/
+/*	$NetBSD: math_emu.h,v 1.7 2003/08/01 13:20:35 mrg Exp $	*/
 
 /*
  * linux/include/linux/math_emu.h
@@ -29,7 +29,7 @@ typedef struct {
 } temp_real_unaligned;
 
 #define real_to_real(a,b) \
-((*(long long *) (b) = *(long long *) (a)),((b)->exponent = (a)->exponent))
+((*(long long *)(void *) (b) = *(long long *)(void *) (a)),((b)->exponent = (a)->exponent))
 
 typedef struct {
 	long a,b;
