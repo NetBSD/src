@@ -39,19 +39,16 @@ char copyright[] =
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)mkdir.c	5.7 (Berkeley) 5/31/90";*/
-static char rcsid[] = "$Id: mkdir.c,v 1.5 1993/08/01 18:59:23 mycroft Exp $";
+static char rcsid[] = "$Id: mkdir.c,v 1.6 1993/10/13 18:34:36 jtc Exp $";
 #endif /* not lint */
 
-#include <sys/types.h>
-#include <sys/stat.h>
-#include <errno.h>
 #include <stdio.h>
 #include <string.h>
 #include <stdlib.h>
-
-extern int errno;
-extern void *setmode();
-extern mode_t getmode();
+#include <errno.h>
+#include <sys/types.h>
+#include <sys/stat.h>
+#include <unistd.h>
 
 main(argc, argv)
 	int argc;

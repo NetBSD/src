@@ -42,7 +42,7 @@ char copyright[] =
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)look.c	5.1 (Berkeley) 7/21/91";*/
-static char rcsid[] = "$Id: look.c,v 1.3 1993/08/01 18:13:24 mycroft Exp $";
+static char rcsid[] = "$Id: look.c,v 1.4 1993/10/13 18:34:30 jtc Exp $";
 #endif /* not lint */
 
 /*
@@ -62,6 +62,7 @@ static char rcsid[] = "$Id: look.c,v 1.3 1993/08/01 18:13:24 mycroft Exp $";
 #include <stdlib.h>
 #include <string.h>
 #include <ctype.h>
+#include <unistd.h>
 #include "pathnames.h"
 
 /*
