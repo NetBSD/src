@@ -1,4 +1,4 @@
-/*	$NetBSD: disklabel.h,v 1.1 2001/10/16 15:38:43 uch Exp $	*/
+/*	$NetBSD: disklabel.h,v 1.2 2002/03/26 11:02:35 uch Exp $	*/
 
 /*
  * Copyright (c) 1994 Christopher G. Demetriou
@@ -35,7 +35,7 @@
 
 #define LABELSECTOR	1		/* sector containing label */
 #define LABELOFFSET	0		/* offset of label in sector */
-#define	MAXPARTITIONS	8		/* number of partitions */
+#define	MAXPARTITIONS	16		/* number of partitions */
 #define RAW_PART	3
 
 /* Pull in MBR partition definitions. */
