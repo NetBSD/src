@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs.S,v 1.8 1998/07/01 02:16:27 tv Exp $	*/
+/*	$NetBSD: ffs.S,v 1.9 1999/09/06 19:00:24 chs Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -44,7 +44,7 @@
 #if 0
 	.asciz "@(#)ffs.s	8.1 (Berkeley) 6/4/93"
 #else
-	RCSID("$NetBSD: ffs.S,v 1.8 1998/07/01 02:16:27 tv Exp $")
+	RCSID("$NetBSD: ffs.S,v 1.9 1999/09/06 19:00:24 chs Exp $")
 #endif
 #endif  /* LIBC_SCCS and not lint */
 
@@ -99,7 +99,7 @@ ENTRY(ffs)
 	retl
 	 add	%o0, 24, %o0
 
-ENTRY(__ffstab)
+RODATA(__ffstab)
 	.byte	-24,1,2,1,3,1,2,1,4,1,2,1,3,1,2,1 /* 00-0f */
 	.byte	5,1,2,1,3,1,2,1,4,1,2,1,3,1,2,1	/* 10-1f */
 	.byte	6,1,2,1,3,1,2,1,4,1,2,1,3,1,2,1	/* 20-2f */
