@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.S,v 1.5 2003/01/17 23:10:30 thorpej Exp $	*/
+/*	$NetBSD: locore.S,v 1.6 2003/02/09 15:49:34 drochner Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
@@ -2030,7 +2030,7 @@ ENTRY(cpu_switchto)
 #endif
 	.globl  _C_LABEL(uvmspace_free),_C_LABEL(kernel_map)
 	.globl	_C_LABEL(uvm_km_free),_C_LABEL(tss_free)
-/* LINTSTUB: Func: void switch_exit(struct lwp *l) */
+/* LINTSTUB: Func: void switch_exit(struct lwp *l, void (*exit)(struct lwp *)) */
 ENTRY(switch_exit)
 	movl	4(%esp),%edi		# old process
 	movl	8(%esp),%eax		# exit func
