@@ -1,4 +1,4 @@
-/*	$NetBSD: icp_pci.c,v 1.5 2002/10/02 16:51:18 thorpej Exp $	*/
+/*	$NetBSD: icp_pci.c,v 1.6 2003/01/20 05:30:07 simonb Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -76,7 +76,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: icp_pci.c,v 1.5 2002/10/02 16:51:18 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: icp_pci.c,v 1.6 2003/01/20 05:30:07 simonb Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -322,7 +322,7 @@ icp_pci_attach(struct device *parent, struct device *self, void *aux)
 #if 0
 		/* disable board interrupts, deinit services */
 		icph_writeb(0xff, &dp6_ptr->io.irqdel);
-		icph_writeb(0x00, &dp6_ptr->io.irqen);;
+		icph_writeb(0x00, &dp6_ptr->io.irqen);
 		icph_writeb(0x00, &dp6_ptr->u.ic.S_Status);
 		icph_writeb(0x00, &dp6_ptr->u.ic.Cmd_Index);
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: apm.c,v 1.5 2002/10/23 09:11:15 jdolecek Exp $	*/
+/*	$NetBSD: apm.c,v 1.6 2003/01/20 05:30:01 simonb Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -39,7 +39,7 @@
 #include "apm.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: apm.c,v 1.5 2002/10/23 09:11:15 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: apm.c,v 1.6 2003/01/20 05:30:01 simonb Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -125,7 +125,7 @@ apmioctl(dev, cmd, data, flag, p)
 	int flag;
 	struct proc *p;
 {
-	struct apm_softc *sc;;
+	struct apm_softc *sc;
 
 	if ((apm_cd.cd_ndevs == 0) || (minor(dev) & 0xf0) || 
 	    ((sc = apm_cd.cd_devs[minor(dev) & 0xf0]) == NULL))

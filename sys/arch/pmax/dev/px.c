@@ -1,4 +1,4 @@
-/*	$NetBSD: px.c,v 1.44 2002/11/26 19:50:28 christos Exp $	*/
+/*	$NetBSD: px.c,v 1.45 2003/01/20 05:30:01 simonb Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -43,7 +43,7 @@
 #endif
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: px.c,v 1.44 2002/11/26 19:50:28 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: px.c,v 1.45 2003/01/20 05:30:01 simonb Exp $");
 
 /*
  * px.c: driver for the DEC TURBOchannel 2D and 3D accelerated framebuffers
@@ -1932,7 +1932,7 @@ pxkqfilter(dev_t dev, struct knote *kn)
 	SLIST_INSERT_HEAD(klist, kn, kn_selnext);
 	splx(s);
 
-	return (0);;
+	return (0);
 }
 
 paddr_t

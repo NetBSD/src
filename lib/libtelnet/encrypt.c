@@ -1,4 +1,4 @@
-/*	$NetBSD: encrypt.c,v 1.9 2002/05/26 22:07:28 wiz Exp $	*/
+/*	$NetBSD: encrypt.c,v 1.10 2003/01/20 05:29:57 simonb Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)encrypt.c	8.2 (Berkeley) 5/30/95";
 #else
-__RCSID("$NetBSD: encrypt.c,v 1.9 2002/05/26 22:07:28 wiz Exp $");
+__RCSID("$NetBSD: encrypt.c,v 1.10 2003/01/20 05:29:57 simonb Exp $");
 #endif /* not lint */
 
 /*
@@ -978,7 +978,7 @@ encrypt_gen_printsub(data, cnt, buf, buflen)
 	data += 2;
 	buf[buflen-1] = '\0';
 	buf[buflen-2] = '*';
-	buflen -= 2;;
+	buflen -= 2;
 	for (; cnt > 0; cnt--, data++) {
 		sprintf(tbuf, " %d", *data);
 		for (cp = tbuf; *cp && buflen > 0; --buflen)

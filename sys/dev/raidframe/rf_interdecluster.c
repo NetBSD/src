@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_interdecluster.c,v 1.8 2002/09/23 02:40:08 oster Exp $	*/
+/*	$NetBSD: rf_interdecluster.c,v 1.9 2003/01/20 05:30:08 simonb Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -33,7 +33,7 @@
  ************************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_interdecluster.c,v 1.8 2002/09/23 02:40:08 oster Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_interdecluster.c,v 1.9 2003/01/20 05:30:08 simonb Exp $");
 
 #include "rf_archs.h"
 
@@ -169,7 +169,7 @@ rf_MapSectorInterDecluster(
 	col_before_remap = index_within_region / (raidPtr->numCol - 1);
 
 	if (!remap) {
-		*col = col_before_remap;;
+		*col = col_before_remap;
 		*diskSector = (su_offset_into_disk + ((raidPtr->numCol - 1) * sparing_region_id)) *
 		    raidPtr->Layout.sectorsPerStripeUnit;
 		*diskSector += (raidSector % raidPtr->Layout.sectorsPerStripeUnit);

@@ -1,4 +1,4 @@
-/*	$NetBSD: grf_rh.c,v 1.40 2003/01/01 00:28:58 thorpej Exp $ */
+/*	$NetBSD: grf_rh.c,v 1.41 2003/01/20 05:29:59 simonb Exp $ */
 
 /*
  * Copyright (c) 1994 Markus Wild
@@ -34,7 +34,7 @@
 #include "opt_retina.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: grf_rh.c,v 1.40 2003/01/01 00:28:58 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: grf_rh.c,v 1.41 2003/01/20 05:29:59 simonb Exp $");
 
 #include "grfrh.h"
 #if NGRFRH > 0
@@ -722,7 +722,7 @@ rh_load_mon(struct grf_softc *gp, struct MonDef *md)
 	unsigned short *c, z;
 	const unsigned char *f;
 
-	ba = gp->g_regkva;;
+	ba = gp->g_regkva;
 	fb = gp->g_fbkva;
 
 	/* provide all needed information in grf device-independant

@@ -1,4 +1,4 @@
-/* $NetBSD: if_an_pcmcia.c,v 1.14 2002/10/02 16:52:08 thorpej Exp $ */
+/* $NetBSD: if_an_pcmcia.c,v 1.15 2003/01/20 05:30:08 simonb Exp $ */
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_an_pcmcia.c,v 1.14 2002/10/02 16:52:08 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_an_pcmcia.c,v 1.15 2003/01/20 05:30:08 simonb Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -224,7 +224,7 @@ an_pcmcia_attach(parent, self, aux)
 	if (an_attach(sc) != 0) {
 		printf("%s: failed to attach controller\n",
 		    sc->an_dev.dv_xname);
-		goto fail5;;
+		goto fail5;
 	}
 	psc->sc_powerhook = powerhook_establish(an_power, sc);
 	sc->sc_enabled = 0;

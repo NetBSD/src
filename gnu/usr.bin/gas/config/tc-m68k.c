@@ -856,7 +856,7 @@ register struct m68k_op *opP;
 		return FAIL;
 	} /* Out of gas */
 	
-	for (strend = str; *strend; strend++) ;;
+	for (strend = str; *strend; strend++) ;
 	
 	--strend;
 	

@@ -1,4 +1,4 @@
-/*	$NetBSD: server.c,v 1.24 2002/12/06 03:09:28 thorpej Exp $	*/
+/*	$NetBSD: server.c,v 1.25 2003/01/20 05:30:12 simonb Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)server.c	8.1 (Berkeley) 6/9/93";
 #else
-__RCSID("$NetBSD: server.c,v 1.24 2002/12/06 03:09:28 thorpej Exp $");
+__RCSID("$NetBSD: server.c,v 1.25 2003/01/20 05:30:12 simonb Exp $");
 #endif
 #endif /* not lint */
 
@@ -1237,7 +1237,7 @@ clean(char *cp)
 		}
 		tp = otp;
 		*tp++ = '/';
-		cp = dp->d_name;;
+		cp = dp->d_name;
 		while ((*tp++ = *cp++) != 0)
 			;
 		tp--;
@@ -1316,7 +1316,7 @@ removeit(struct stat *stp)
 		}
 		tp = otp;
 		*tp++ = '/';
-		cp = dp->d_name;;
+		cp = dp->d_name;
 		while ((*tp++ = *cp++) != 0)
 			;
 		tp--;
