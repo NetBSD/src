@@ -1,4 +1,4 @@
-/*	$NetBSD: ibcs2_exec_xout.c,v 1.6 2003/08/08 18:57:03 christos Exp $	*/
+/*	$NetBSD: ibcs2_exec_xout.c,v 1.7 2003/11/05 04:03:21 christos Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995, 1998 Scott Bartram
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ibcs2_exec_xout.c,v 1.6 2003/08/08 18:57:03 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ibcs2_exec_xout.c,v 1.7 2003/11/05 04:03:21 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -114,6 +114,9 @@ exec_ibcs2_xout_prep_nmagic(p, epp, xp, xep)
 	long baddr, bsize;
 	struct xseg *xs;
 	size_t resid;
+
+	if (xep->xe_segsize > 16 * sizeof(*xs))
+		return ENOEXEC;
 
 	/* read in segment table */
 	xs = (struct xseg *)malloc(xep->xe_segsize, M_TEMP, M_WAITOK);
