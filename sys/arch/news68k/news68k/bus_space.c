@@ -1,4 +1,4 @@
-/*	$NetBSD: bus_space.c,v 1.1 2000/10/04 16:26:44 tsutsui Exp $	*/
+/*	$NetBSD: bus_space.c,v 1.2 2000/10/14 07:19:24 tsutsui Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -72,7 +72,7 @@ bus_space_map(t, bpa, size, flags, bshp)
 	}
 
 	if (t == NEWS68K_BUS_SPACE_EIO)
-		*bshp = (bus_space_handle_t)EIOV(bpa);
+		*bshp = (bus_space_handle_t)bpa; /* XXX use tt0 mapping */
 		return (0);
 
 	return (1);
