@@ -1,4 +1,4 @@
-/*	$NetBSD: ipcs.c,v 1.19 2000/03/28 23:36:11 augustss Exp $	*/
+/*	$NetBSD: ipcs.c,v 1.20 2000/04/12 15:37:14 simonb Exp $	*/
 
 /*
  * Copyright (c) 1994 SigmaSoft, Th. Lockert <tholo@sigmasoft.com>
@@ -286,7 +286,7 @@ main(argc, argv)
 			if (option & PID)
 				printf(" LSPID LRPID");
 			if (option & TIME)
-				printf("   STIME    RTIME    CTIME");
+				printf("    STIME    RTIME    CTIME");
 			printf("\n");
 			for (i = 0; i < msginfo.msgmni; i += 1) {
 				if (xmsqids[i].msg_qbytes != 0) {
@@ -314,7 +314,7 @@ main(argc, argv)
 						    group_from_gid(msqptr->msg_perm.cgid, 0));
 
 					if (option & OUTSTANDING)
-						printf(" %6ld %6ld",
+						printf(" %6ld %5ld",
 						    (long)msqptr->_msg_cbytes,
 						    (long)msqptr->msg_qnum);
 
@@ -323,12 +323,12 @@ main(argc, argv)
 						    (long)msqptr->msg_qbytes);
 
 					if (option & PID)
-						printf(" %6d %6d",
+						printf(" %5d %5d",
 						    msqptr->msg_lspid,
 						    msqptr->msg_lrpid);
 
 					if (option & TIME)
-						printf("%s %s %s",
+						printf(" %s %s %s",
 						    stime_buf,
 						    rtime_buf,
 						    ctime_buf);
@@ -384,11 +384,11 @@ main(argc, argv)
 			if (option & OUTSTANDING)
 				printf(" NATTCH");
 			if (option & BIGGEST)
-				printf("  SEGSZ");
+				printf("   SEGSZ");
 			if (option & PID)
 				printf("  CPID  LPID");
 			if (option & TIME)
-				printf("   ATIME    DTIME    CTIME");
+				printf("    ATIME    DTIME    CTIME");
 			printf("\n");
 			for (i = 0; i < shminfo.shmmni; i += 1) {
 				if (xshmids[i].shm_perm.mode & 0x0800) {
@@ -420,16 +420,16 @@ main(argc, argv)
 						    shmptr->shm_nattch);
 
 					if (option & BIGGEST)
-						printf(" %6lu",
+						printf(" %7lu",
 						    (u_long)shmptr->shm_segsz);
 
 					if (option & PID)
-						printf(" %6d %6d",
+						printf(" %5d %5d",
 						    shmptr->shm_cpid,
 						    shmptr->shm_lpid);
 
 					if (option & TIME)
-						printf("%s %s %s",
+						printf(" %s %s %s",
 						    atime_buf,
 						    dtime_buf,
 						    ctime_buf);
@@ -499,7 +499,7 @@ main(argc, argv)
 			if (option & BIGGEST)
 				printf(" NSEMS");
 			if (option & TIME)
-				printf("   OTIME    CTIME");
+				printf("    OTIME    CTIME");
 			printf("\n");
 			for (i = 0; i < seminfo.semmni; i += 1) {
 				if ((xsema[i].sem_perm.mode & SEM_ALLOC) != 0) {
@@ -524,11 +524,11 @@ main(argc, argv)
 						    group_from_gid(semaptr->sem_perm.cgid, 0));
 
 					if (option & BIGGEST)
-						printf(" %6d",
+						printf(" %5d",
 						    semaptr->sem_nsems);
 
 					if (option & TIME)
-						printf("%s %s",
+						printf(" %s %s",
 						    otime_buf,
 						    ctime_buf);
 
