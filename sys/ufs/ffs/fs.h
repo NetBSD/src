@@ -1,4 +1,4 @@
-/*	$NetBSD: fs.h,v 1.24 2002/04/10 07:46:10 mycroft Exp $	*/
+/*	$NetBSD: fs.h,v 1.25 2002/04/10 14:31:07 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1993
@@ -477,7 +477,8 @@ struct ocg {
 #define	cbtocylno(fs, bno) \
     (fsbtodb(fs, bno) / (fs)->fs_spc)
 #define	cbtorpos(fs, bno) \
-    ((fsbtodb(fs, bno) % (fs)->fs_spc / (fs)->fs_nsect * (fs)->fs_trackskew + \
+    ((fs)->fs_nrpos <= 1 ? 0 : \
+     (fsbtodb(fs, bno) % (fs)->fs_spc / (fs)->fs_nsect * (fs)->fs_trackskew + \
       fsbtodb(fs, bno) % (fs)->fs_spc % (fs)->fs_nsect * (fs)->fs_interleave) % \
      (fs)->fs_nsect * (fs)->fs_nrpos / (fs)->fs_npsect)
 
