@@ -1,4 +1,4 @@
-/*	$NetBSD: mfb.c,v 1.33 1998/03/31 11:32:53 jonathan Exp $	*/
+/*	$NetBSD: mfb.c,v 1.34 1998/04/19 10:22:45 jonathan Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -81,7 +81,7 @@
  */
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
-__KERNEL_RCSID(0, "$NetBSD: mfb.c,v 1.33 1998/03/31 11:32:53 jonathan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mfb.c,v 1.34 1998/04/19 10:22:45 jonathan Exp $");
 
 #include "fb.h"
 #include "mfb.h"
@@ -103,7 +103,6 @@ __KERNEL_RCSID(0, "$NetBSD: mfb.c,v 1.33 1998/03/31 11:32:53 jonathan Exp $");
 #include <machine/fbio.h>
 #include <machine/fbvar.h>
 
-#include <pmax/dev/cfbvar.h>		/* XXX dev/tc ? */ 
 #include <pmax/dev/mfbreg.h>
 #include <pmax/dev/fbreg.h>
 
@@ -195,11 +194,8 @@ struct fbdriver mfb_driver = {
 
 
 /*
- * Autoconfiguration data for config.new.
- * Use static-sized softc until config.old and old autoconfig
- * code is completely gone.
+ * driver frontend declaration for autoconfiguration.
  */
-
 int mfbmatch __P((struct device *, struct cfdata *, void *));
 void mfbattach __P((struct device *, struct device *, void *));
 int mfb_intr __P((void *sc));
@@ -207,6 +203,7 @@ int mfb_intr __P((void *sc));
 struct cfattach mfb_ca = {
 	sizeof(struct fbinfo), mfbmatch, mfbattach
 };
+
 
 int
 mfbmatch(parent, match, aux)
@@ -244,7 +241,7 @@ mfbattach(parent, self, aux)
 
 	/* if this is the console, it's already configured. */
 	if (ta->ta_cookie == cons_slot)
-		return;	/* XXX patch up f softc pointer */
+		return;	/* XXX patch up softc pointer */
 #endif
 
 	if (!mfbinit(fi, mfbaddr, unit, 0))
@@ -479,11 +476,11 @@ mfbRestoreCursorColor (fi)
 	else
 		fg = 0;
 	regs->addr_ovly = fg;
-	wbflush();
+	tc_wmb();
 	regs->addr_ovly = fg;
-	wbflush();
+	tc_wmb();
 	regs->addr_ovly = fg;
-	wbflush();
+	tc_wmb();
 }
 
 /* Set the color of the cursor. */
@@ -648,7 +645,7 @@ mfbLoadColorMap(fi, bits, index, count)
 		cmap[i] = cmap_bits[i];
 		if (! fi->fi_blanked) {
 			regs->addr_cmap_data = cmap [i] >> 4;
-			wbflush();
+			tc_wmb();
 		}
 	}
 	return 0;
@@ -706,7 +703,7 @@ bt455_video_on(fi)
 	BT455_SELECT_ENTRY(regs, 0);
 	for (i = 0; i < 6; i++) {
 		regs->addr_cmap_data = cmap [i] >> 4;
-		wbflush();
+		tc_wmb();
 	}
 	mfbRestoreCursorColor (fi);
 
@@ -745,7 +742,7 @@ bt455_video_off(fi)
 	BT455_SELECT_ENTRY(regs, 0);
 	for (i = 0; i < 6; i++) {
 		regs->addr_cmap_data = 0;
-		wbflush();
+		tc_wmb();
 	}
 
 	/* and the cursor.. */
@@ -765,7 +762,7 @@ bt431_select_reg(regs, regno)
 {
 	regs->addr_lo = SET_VALUE(regno & 0xff);
 	regs->addr_hi = SET_VALUE((regno >> 8) & 0xff);
-	wbflush();
+	tc_wmb();
 }
 
 static void 
@@ -774,7 +771,7 @@ bt431_write_reg(regs, regno, val)
 {
 	bt431_select_reg(regs, regno);
 	regs->addr_reg = SET_VALUE(val);
-	wbflush();
+	tc_wmb();
 }
 
 #ifdef notused
