@@ -1,4 +1,4 @@
-/* $NetBSD: pci_machdep.h,v 1.7 2002/02/24 13:19:07 kleink Exp $ */
+/* $NetBSD: pci_machdep.h,v 1.8 2002/02/25 00:34:13 kleink Exp $ */
 
 /*
  * Copyright (c) 1996 Carnegie-Mellon University.
@@ -69,7 +69,7 @@ struct prep_pci_chipset {
 	void		(*pc_conf_interrupt)(void *, int, int, int, int, int *);
 	void		(*pc_decompose_tag)(void *, pcitag_t, int *,
 			    int *, int *);
-	int		(*pc_conf_hook)(void *, int, int, int, int);
+	int		(*pc_conf_hook)(void *, int, int, int, pcireg_t);
 };
 
 /*
@@ -115,7 +115,7 @@ void *prep_pci_intr_establish(void *, pci_intr_handle_t, int, int (*)(void *),
     void *);
 void prep_pci_intr_disestablish(void *, void *);
 void prep_pci_conf_interrupt(void *, int, int, int, int, int *);
-int prep_pci_conf_hook(void *, int, int, int, int);
+int prep_pci_conf_hook(void *, int, int, int, pcireg_t);
 
 void prep_pci_get_chipset_tag_direct(pci_chipset_tag_t);
 void prep_pci_get_chipset_tag_indirect(pci_chipset_tag_t);
