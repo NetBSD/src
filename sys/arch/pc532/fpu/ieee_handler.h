@@ -1,4 +1,4 @@
-/*	$NetBSD: ieee_handler.h,v 1.1 1996/04/04 06:36:20 phil Exp $	*/
+/*	$NetBSD: ieee_handler.h,v 1.2 1996/05/03 23:19:27 phil Exp $	*/
 
 /* 
  * IEEE floating point support for NS32081 and NS32381 fpus.
@@ -24,6 +24,9 @@
  *      or unix signal handler version.
  *
  * HISTORY
+ * 02-Apr-96 Matthias Pfaller <leo@dachau.marco.de>)
+ *	Add NetBSD kernel support.
+ *
  * 14-Dec-95  Ian Dall (Ian.Dall@dsto.defence.gov.au)
  *	First release.
  *
