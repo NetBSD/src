@@ -1,4 +1,4 @@
-/* $NetBSD: ciareg.h,v 1.11 1997/09/15 22:34:38 thorpej Exp $ */
+/* $NetBSD: ciareg.h,v 1.12 1997/09/17 01:35:34 thorpej Exp $ */
 
 /*
  * Copyright (c) 1995, 1996 Carnegie-Mellon University.
@@ -50,6 +50,10 @@
 #define	CIA_PCI_MC_CSRS	0x8750000000UL
 #define	CIA_PCI_ATRANS	0x8760000000UL
 #define	CIA_PCI_TBIA	0x8760000100UL
+#define	CIA_EV56_BWMEM	0x8800000000UL
+#define	CIA_EV56_BWIO	0x8900000000UL
+#define	CIA_EV56_BWCONF0 0x8a00000000UL
+#define	CIA_EV56_BWCONF1 0x8b00000000UL
 
 #define	CIA_PCI_W0BASE	0x8760000400UL
 #define	CIA_PCI_W0MASK	0x8760000440UL
@@ -111,6 +115,17 @@
 /*
  * General CSRs
  */
+
+#define	CIA_CSR_REV	(CIA_CSRS + 0x80)
+
+#define		REV_MASK		0x000000ff
+
+#define	CIA_CSR_CNFG	(CIA_CSRS + 0x140)
+
+#define		CNFG_BWEN		0x00000001
+#define		CNFG_MWEN		0x00000010
+#define		CNFG_DWEN		0x00000020
+#define		CNFG_WLEN		0x00000100
 
 #define	CIA_CSR_HAE_MEM	(CIA_CSRS + 0x400)
 
