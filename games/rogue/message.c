@@ -36,7 +36,7 @@
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)message.c	5.3 (Berkeley) 6/1/90";*/
-static char rcsid[] = "$Id: message.c,v 1.3 1993/08/10 16:33:14 mycroft Exp $";
+static char rcsid[] = "$Id: message.c,v 1.4 1993/11/10 10:02:19 cgd Exp $";
 #endif /* not lint */
 
 /*
@@ -196,22 +196,23 @@ rgetchar()
 	for(;;) {
 		ch = getchar();
 
-#ifdef VREPRINT
-		if (ch == origtermio.c_cc[VREPRINT])
+		switch(ch) {
+		case '\022':
 			wrefresh(curscr);
-		else
-#endif
-#ifdef VSUSP
-		if (ch == origtermio.c_cc[VSUSP]) {
+			break;
+#ifdef UNIX_BSD4_2
+		case '\032':
 			printf(CL);
 			fflush(stdout);
-			kill(0, SIGTSTP);
-		} else
+			tstp();
+			break;
 #endif
-		if (ch == '&')
+		case '&':
 			save_screen();
-		else
+			break;
+		default:
 			return(ch);
+		}
 	}
 }
 /*
