@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.10 1998/02/27 10:44:12 christos Exp $
+#	$NetBSD: Makefile,v 1.11 1998/07/22 22:31:29 scottr Exp $
 #
 # Copyright (c) 1990 The Regents of the University of California.
 # All rights reserved.
@@ -34,6 +34,11 @@
 #	from: @(#)Makefile	8.1 (Berkeley) 6/6/93
 #
 
+# XXX Keep telnet(1) and libtelnet from getting out of sync during the build
+# XXX process.
+.if !exists(${.CURDIR}/../../domestic/usr.bin/telnet) || \
+    defined(EXPORTABLE_SYSTEM) || make(clean) || make(cleandir)
+
 PROG=	telnet
 
 CPPFLAGS+=-DTERMCAP -DKLUDGELINEMODE -DUSE_TERMIO -Dunix
@@ -52,6 +57,14 @@ CRYPT_SRC+= ring.c ring.h telnet.c terminal.c utilities.c Makefile
 NOCRYPT_DIR=${.CURDIR}/Nocrypt
 
 .include <bsd.prog.mk>
+
+.else	# EXPORTABLE_SYSTEM
+
+MAN=	telnet.1
+
+.include <bsd.man.mk>
+
+.endif	# EXPORTABLE_SYSTEM
 
 nocrypt:
 	@echo "Encryption code already removed."
