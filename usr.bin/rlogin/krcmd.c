@@ -1,4 +1,4 @@
-/*	$NetBSD: krcmd.c,v 1.2 1995/03/21 07:58:36 cgd Exp $	*/
+/*	$NetBSD: krcmd.c,v 1.3 1997/10/19 14:10:31 lukem Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)krcmd.c	8.1 (Berkeley) 6/6/93";
 #else
-static char rcsid[] = "$NetBSD: krcmd.c,v 1.2 1995/03/21 07:58:36 cgd Exp $";
+__RCSID("$NetBSD: krcmd.c,v 1.3 1997/10/19 14:10:31 lukem Exp $");
 #endif
 #endif /* not lint */
 
