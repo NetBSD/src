@@ -1,4 +1,4 @@
-/*	$NetBSD: utilities.c,v 1.46 2004/04/13 22:36:36 dbj Exp $	*/
+/*	$NetBSD: utilities.c,v 1.47 2004/06/12 01:35:46 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1980, 1986, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)utilities.c	8.6 (Berkeley) 5/19/95";
 #else
-__RCSID("$NetBSD: utilities.c,v 1.46 2004/04/13 22:36:36 dbj Exp $");
+__RCSID("$NetBSD: utilities.c,v 1.47 2004/06/12 01:35:46 mycroft Exp $");
 #endif
 #endif /* not lint */
 
@@ -343,19 +343,14 @@ bread(fd, buf, blk, size)
 
 	offset = blk;
 	offset *= dev_bsize;
-	if (lseek(fd, offset, 0) < 0)
-		rwerror("SEEK", blk);
-	else if (read(fd, buf, (int)size) == size)
+	if (pread(fd, buf, (int)size, offset) == size)
 		return (0);
 	rwerror("READ", blk);
-	if (lseek(fd, offset, 0) < 0)
-		rwerror("SEEK", blk);
 	errs = 0;
 	memset(buf, 0, (size_t)size);
 	printf("THE FOLLOWING DISK SECTORS COULD NOT BE READ:");
 	for (cp = buf, i = 0; i < size; i += secsize, cp += secsize) {
-		if (read(fd, cp, (int)secsize) != secsize) {
-			(void)lseek(fd, offset + i + secsize, 0);
+		if (pread(fd, cp, (int)secsize, offset + i) != secsize) {
 			if (secsize != dev_bsize && dev_bsize != 1)
 				printf(" %lld (%lld),",
 				    (long long)((blk*dev_bsize + i) / secsize),
@@ -385,21 +380,15 @@ bwrite(fd, buf, blk, size)
 		return;
 	offset = blk;
 	offset *= dev_bsize;
-	if (lseek(fd, offset, 0) < 0)
-		rwerror("SEEK", blk);
-	else if (write(fd, buf, (int)size) == size) {
+	if (pwrite(fd, buf, (int)size, offset) == size) {
 		fsmodified = 1;
 		return;
 	}
 	rwerror("WRITE", blk);
-	if (lseek(fd, offset, 0) < 0)
-		rwerror("SEEK", blk);
 	printf("THE FOLLOWING SECTORS COULD NOT BE WRITTEN:");
 	for (cp = buf, i = 0; i < size; i += dev_bsize, cp += dev_bsize)
-		if (write(fd, cp, (int)dev_bsize) != dev_bsize) {
-			(void)lseek(fd, offset + i + dev_bsize, 0);
+		if (pwrite(fd, cp, (int)dev_bsize, offset + i) != dev_bsize)
 			printf(" %lld,", (long long)(blk + i / dev_bsize));
-		}
 	printf("\n");
 	return;
 }
