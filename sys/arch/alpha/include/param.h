@@ -1,4 +1,4 @@
-/* $NetBSD: param.h,v 1.24 1998/08/14 16:50:03 thorpej Exp $ */
+/* $NetBSD: param.h,v 1.25 1998/11/19 01:42:37 ross Exp $ */
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -51,7 +51,6 @@
 #define	MACHINE_ARCH	"alpha"
 #define	MID_MACHINE	MID_ALPHA
 
-#include <machine/alpha_cpu.h>
 #include <machine/cpu.h>
 
 /*
