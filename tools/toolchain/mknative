@@ -1,5 +1,5 @@
 #!/bin/sh
-#	$NetBSD: mknative,v 1.8 2002/05/20 15:19:09 thorpej Exp $
+#	$NetBSD: mknative,v 1.9 2003/02/07 01:52:54 lukem Exp $
 #
 # Shell script for generating all the constants needed for a native
 # platform build of src/gnu/dist/toolchain.
@@ -16,7 +16,7 @@ getvars () {
 	$MAKE -f - _x_ <<EOF || bomb "getvars $_mf $* failed"
 _x_:
 .for var in $*
-	@echo G_\${var}=\${\${var}:Q} | sed 's,$_VPATH,\$\${DIST},g'
+	@echo G_\${var}=\${\${var}:Q} | sed 's,$_VPATH,\$\${GNUHOSTDIST},g'
 .endfor
 .include "$_TMPDIR/$_mf"
 EOF

@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.gnuhost,v 1.16 2002/02/26 22:27:11 tv Exp $
+#	$NetBSD: Makefile.gnuhost,v 1.17 2003/02/07 01:52:51 lukem Exp $
 #
 # Rules used when building a GNU host package.  Expects MODULE to be set.
 #
@@ -17,7 +17,7 @@
 
 .include <bsd.own.mk>
 
-DIST=		${.CURDIR}/../../gnu/dist/${MODULE}
+GNUHOSTDIST?=	${.CURDIR}/../../gnu/dist/${MODULE}
 
 FIND_ARGS+=	\! \( -type d \( \
 			-name 'CVS' -o \
@@ -33,7 +33,7 @@ FIND_ARGS+=	\! \( -type d \( \
     (make(all) || make(realall) || (!make(clean) && !make(cleandir) && !make(obj))) && \
     !defined(_GNU_CFGSRC)
 
-_GNU_CFGSRC!=	find ${DIST} ${FIND_ARGS} \
+_GNU_CFGSRC!=	find ${GNUHOSTDIST} ${FIND_ARGS} \
 		-type f \( -name 'config*' -o -name '*.in' \) -print
 .MAKEOVERRIDES+= _GNU_CFGSRC
 .endif
@@ -64,7 +64,7 @@ INSTALL_TARGET?=install
 
 .configure_done: ${_GNU_CFGSRC} ${.CURDIR}/Makefile
 	@mkdir build 2>/dev/null || true
-	@(cd build && ${CONFIGURE_ENV} sh ${DIST}/configure ${CONFIGURE_ARGS})
+	@(cd build && ${CONFIGURE_ENV} sh ${GNUHOSTDIST}/configure ${CONFIGURE_ARGS})
 	@touch $@
 
 # The .build_done timestamp is only updated if a file actually changes
