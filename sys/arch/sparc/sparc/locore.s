@@ -3838,14 +3838,14 @@ ENTRY(probeget)
  */
 ENTRY(probeset)
 	! %o0 = addr, %o1 = (1,2,4), %o2 = val
-	set	KERNBASE, %o2
-	cmp	%o0, %o2		! if addr < KERNBASE
+	set	KERNBASE, %o3
+	cmp	%o0, %o3		! if addr < KERNBASE
 	blu	Lfsbadaddr		!	go return error
 	 EMPTY
-	sethi	%hi(_cpcb), %o2
-	ld	[%o2 + %lo(_cpcb)], %o2	! cpcb->pcb_onfault = Lfserr;
+	sethi	%hi(_cpcb), %o3
+	ld	[%o3 + %lo(_cpcb)], %o3	! cpcb->pcb_onfault = Lfserr;
 	set	Lfserr, %o5
-	st	%o5, [%o2 + PCB_ONFAULT]
+	st	%o5, [%o3 + PCB_ONFAULT]
 	btst	1, %o1
 	bnz,a	0f			! if (len & 1)
 	 stb	%o2, [%o0]		!	*(char *)addr = value;
@@ -3857,7 +3857,7 @@ ENTRY(probeset)
 	 st	%o2, [%o0]		!	*(int *)addr = value;
 0:	clr	%o0			! made it, clear onfault and return 0
 	retl
-	 st	%g0, [%o2 + PCB_ONFAULT]
+	 st	%g0, [%o3 + PCB_ONFAULT]
 
 /*
  * int xldcontrolb(caddr_t, pcb)
