@@ -1,4 +1,4 @@
-/*	$NetBSD: bcureg.h,v 1.4 2001/04/11 08:52:59 sato Exp $	*/
+/*	$NetBSD: bcureg.h,v 1.5 2001/04/16 09:17:05 sato Exp $	*/
 
 /*-
  * Copyright (c) 1999-2001 SATO Kazumi. All rights reserved.
@@ -367,7 +367,7 @@
 
 #define		BCUREVID_RIDMASK	(0xf<<12)	/* Revision ID */
 #define		BCUREVID_RIDSHFT	(12)		/* Revision ID */
-#define		BCUREVID_RID_4122	(0x4)		/* VR4121 */
+#define		BCUREVID_RID_4122	(0x4)		/* VR4122 */
 #define		BCUREVID_RID_4121	(0x3)		/* VR4121 */
 #define		BCUREVID_RID_4111	(0x2)		/* VR4111 */
 #define		BCUREVID_RID_4102	(0x1)		/* VR4102 */
