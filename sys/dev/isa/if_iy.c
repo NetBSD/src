@@ -1,4 +1,4 @@
-/*	$NetBSD: if_iy.c,v 1.9 1996/10/21 22:41:03 thorpej Exp $	*/
+/*	$NetBSD: if_iy.c,v 1.9.4.1 1997/02/07 18:03:59 is Exp $	*/
 /* #define IYDEBUG */
 /* #define IYMEMDEBUG */
 /*-
@@ -93,7 +93,7 @@ struct iy_softc {
 	bus_space_tag_t sc_iot;
 	bus_space_handle_t sc_ioh;
 
-	struct arpcom sc_arpcom;
+	struct ethercom sc_ethercom;
 
 #define MAX_MBS 8
 	struct mbuf *mb[MAX_MBS];
@@ -113,6 +113,7 @@ struct iy_softc {
 #ifdef IYDEBUG
 	int sc_debug;
 #endif
+	u_char sc_enaddr[6];
 };
 
 void iywatchdog __P((struct ifnet *));
@@ -250,12 +251,12 @@ iyprobe(parent, match, aux)
 	    (eaddr[EEPPEther2] != eepromread(iot, ioh, EEPROM_REG, EEPPEther2a)))
 		printf("EEPROM Ethernet address differs from copy\n");
 	
-        sc->sc_arpcom.ac_enaddr[1] = eaddr[EEPPEther0] & 0xFF;
-        sc->sc_arpcom.ac_enaddr[0] = eaddr[EEPPEther0] >> 8;
-        sc->sc_arpcom.ac_enaddr[3] = eaddr[EEPPEther1] & 0xFF;
-        sc->sc_arpcom.ac_enaddr[2] = eaddr[EEPPEther1] >> 8;
-        sc->sc_arpcom.ac_enaddr[5] = eaddr[EEPPEther2] & 0xFF;
-        sc->sc_arpcom.ac_enaddr[4] = eaddr[EEPPEther2] >> 8;
+        sc->sc_enaddr[1] = eaddr[EEPPEther0] & 0xFF;
+        sc->sc_enaddr[0] = eaddr[EEPPEther0] >> 8;
+        sc->sc_enaddr[3] = eaddr[EEPPEther1] & 0xFF;
+        sc->sc_enaddr[2] = eaddr[EEPPEther1] >> 8;
+        sc->sc_enaddr[5] = eaddr[EEPPEther2] & 0xFF;
+        sc->sc_enaddr[4] = eaddr[EEPPEther2] >> 8;
 	
 	if (ia->ia_irq == IRQUNK)
 		ia->ia_irq = eepro_irqmap[eaddr[EEPPW1] & EEPP_Int];
@@ -294,7 +295,7 @@ iyattach(parent, self, aux)
 {
 	struct iy_softc *sc = (void *)self;
 	struct isa_attach_args *ia = aux;
-	struct ifnet *ifp = &sc->sc_arpcom.ac_if;
+	struct ifnet *ifp = &sc->sc_ethercom.ec_if;
 	bus_space_tag_t iot;
 	bus_space_handle_t ioh;
 
@@ -318,12 +319,12 @@ iyattach(parent, self, aux)
 
 	/* Attach the interface. */
 	if_attach(ifp);
-	ether_ifattach(ifp);
+	ether_ifattach(ifp, sc->sc_enaddr);
 	printf(": address %s, chip rev. %d, %d kB SRAM\n",
-	    ether_sprintf(sc->sc_arpcom.ac_enaddr),
+	    ether_sprintf(sc->sc_enaddr),
 	    sc->hard_vers, sc->sram/1024);
 #if NBPFILTER > 0
-	bpfattach(&sc->sc_arpcom.ac_if.if_bpf, ifp, DLT_EN10MB,
+	bpfattach(&sc->sc_ethercom.ec_if.if_bpf, ifp, DLT_EN10MB,
 	    sizeof(struct ether_header));
 #endif
 
@@ -372,7 +373,7 @@ struct iy_softc *sc;
 #endif
 	sc->tx_start = sc->tx_end = sc->rx_size;
 	sc->tx_last = 0;
-	sc->sc_arpcom.ac_if.if_flags &= ~(IFF_RUNNING|IFF_OACTIVE);
+	sc->sc_ethercom.ec_if.if_flags &= ~(IFF_RUNNING|IFF_OACTIVE);
 
 	iymbufempty((void *)sc);
 }
@@ -401,7 +402,7 @@ struct iy_softc *sc;
 	iot = sc->sc_iot;
 	ioh = sc->sc_ioh;
 
-	ifp = &sc->sc_arpcom.ac_if;
+	ifp = &sc->sc_ethercom.ec_if;
 #ifdef IYDEBUG
 	printf("ifp is %p\n", ifp);
 #endif
@@ -413,7 +414,7 @@ struct iy_softc *sc;
 		bus_space_write_1(iot, ioh, EEPROM_REG, temp & ~0x10);
 	
 	for (i=0; i<6; ++i) {
-		bus_space_write_1(iot, ioh, I_ADD(i), sc->sc_arpcom.ac_enaddr[i]);
+		bus_space_write_1(iot, ioh, I_ADD(i), sc->sc_enaddr[i]);
 	}
 
 	temp = bus_space_read_1(iot, ioh, REG1);
@@ -787,7 +788,7 @@ iywatchdog(ifp)
 	struct iy_softc *sc = ifp->if_softc;
 
 	log(LOG_ERR, "%s: device timeout\n", sc->sc_dev.dv_xname);
-	++sc->sc_arpcom.ac_if.if_oerrors;
+	++sc->sc_ethercom.ec_if.if_oerrors;
 	iyreset(sc);
 }
 
@@ -844,7 +845,7 @@ iyget(sc, iot, ioh, rxlen)
 	struct ifnet *ifp;
 	int len;
 
-	ifp = &sc->sc_arpcom.ac_if;
+	ifp = &sc->sc_ethercom.ec_if;
 
 	m = sc->mb[sc->next_mb];
 	sc->mb[sc->next_mb] = 0;
@@ -913,8 +914,10 @@ iyget(sc, iot, ioh, rxlen)
 		bpf_mtap(ifp->if_bpf, top);
 		if ((ifp->if_flags & IFF_PROMISC) &&
 		    (eh->ether_dhost[0] & 1) == 0 &&
-		    bcmp(eh->ether_dhost, sc->sc_arpcom.ac_enaddr, 
-				sizeof(eh->ether_dhost)) != 0) {
+		    bcmp(eh->ether_dhost,
+		    	LLADDR(sc->sc_ethercom.ec_if.if_sadl), 
+			sizeof(eh->ether_dhost)) != 0) {
+
 			m_freem(top);
 			return;
 		}
@@ -940,7 +943,7 @@ struct iy_softc *sc;
 
 	iot = sc->sc_iot;
 	ioh = sc->sc_ioh;
-	ifp = &sc->sc_arpcom.ac_if;
+	ifp = &sc->sc_ethercom.ec_if;
 
 	rxadrs = sc->rx_start;
 	bus_space_write_2(iot, ioh, HOST_ADDR_REG, rxadrs);
@@ -980,7 +983,7 @@ struct iy_softc *sc;
 	struct ifnet *ifp;
 	u_int txstatus, txstat2, txlen, txnext;
 
-	ifp = &sc->sc_arpcom.ac_if;
+	ifp = &sc->sc_ethercom.ec_if;
 	iot = sc->sc_iot;
 	ioh = sc->sc_ioh;
 
@@ -1056,11 +1059,12 @@ check_eh(sc, eh, to_bpf)
 		 * destined for us.
 		 */
 #if NBPFILTER > 0
-		*to_bpf = (sc->sc_arpcom.ac_if.iy_bpf != 0); /* BPF gets this packet if anybody cares */
+		*to_bpf = (sc->sc_ethercom.ec_if.iy_bpf != 0); /* BPF gets this packet if anybody cares */
 #endif
 		if (eh->ether_dhost[0] & 1)
 			return 1;
-		if (ether_equal(eh->ether_dhost, sc->sc_arpcom.ac_enaddr))
+		if (ether_equal(eh->ether_dhost, 
+		    LLADDR(sc->sc_ethercom.ec_if.if_sadl)))
 			return 1;
 		return 0;
 
@@ -1069,10 +1073,10 @@ check_eh(sc, eh, to_bpf)
 		 * Receiving all packets.  These need to be passed on to BPF.
 		 */
 #if NBPFILTER > 0
-		*to_bpf = (sc->sc_arpcom.ac_if.iy_bpf != 0);
+		*to_bpf = (sc->sc_ethercom.ec_if.iy_bpf != 0);
 #endif
 		/* If for us, accept and hand up to BPF */
-		if (ether_equal(eh->ether_dhost, sc->sc_arpcom.ac_enaddr))
+		if (ether_equal(eh->ether_dhost, LLADDR(sc->sc_ethercom.ec_if.if_sadl)))
 			return 1;
 
 #if NBPFILTER > 0
@@ -1107,14 +1111,14 @@ check_eh(sc, eh, to_bpf)
 		 * time.  Whew!  (Hope this is a fast machine...)
 		 */
 #if NBPFILTER > 0
-		*to_bpf = (sc->sc_arpcom.ac_if.iy_bpf != 0);
+		*to_bpf = (sc->sc_ethercom.ec_if.iy_bpf != 0);
 #endif
 		/* We want to see multicasts. */
 		if (eh->ether_dhost[0] & 1)
 			return 1;
 
 		/* We want to see our own packets */
-		if (ether_equal(eh->ether_dhost, sc->sc_arpcom.ac_enaddr))
+		if (ether_equal(eh->ether_dhost, LLADDR(sc->sc_ethercom.ec_if.if_sadl)))
 			return 1;
 
 		/* Anything else goes to BPF but nothing else. */
@@ -1134,7 +1138,7 @@ check_eh(sc, eh, to_bpf)
 		 * of here as quickly as possible.
 		 */
 #if NBPFILTER > 0
-		*to_bpf = (sc->sc_arpcom.ac_if.iy_bpf != 0);
+		*to_bpf = (sc->sc_ethercom.ec_if.iy_bpf != 0);
 #endif
 		return 1;
 	}
@@ -1176,7 +1180,7 @@ iyioctl(ifp, cmd, data)
 #ifdef INET
 		case AF_INET:
 			iyinit(sc);
-			arp_ifinit(&sc->sc_arpcom, ifa);
+			arp_ifinit(ifp, ifa);
 			break;
 #endif
 #ifdef NS
@@ -1186,12 +1190,12 @@ iyioctl(ifp, cmd, data)
 			struct ns_addr *ina = &IA_SNS(ifa)->sns_addr;
 
 			if (ns_nullhost(*ina))
-				ina->x_host =
-				    *(union ns_host *)(sc->sc_arpcom.ac_enaddr);
+				ina->x_host = *(union ns_host *)
+				    LLADDR(sc->sc_ethercom.ec_if.if_sadl));
 			else
 				bcopy(ina->x_host.c_host,
-				    sc->sc_arpcom.ac_enaddr,
-				    sizeof(sc->sc_arpcom.ac_enaddr));
+				    LLADDR(sc->sc_ethercom.ec_if.if_sadl),
+				    6);
 			/* Set new address. */
 			iyinit(sc);
 			break;
@@ -1240,8 +1244,8 @@ iyioctl(ifp, cmd, data)
 	case SIOCADDMULTI:
 	case SIOCDELMULTI:
 		error = (cmd == SIOCADDMULTI) ?
-		    ether_addmulti(ifr, &sc->sc_arpcom):
-		    ether_delmulti(ifr, &sc->sc_arpcom);
+		    ether_addmulti(ifr, &sc->sc_ethercom):
+		    ether_delmulti(ifr, &sc->sc_ethercom);
 
 		if (error == ENETRESET) {
 			/*
@@ -1272,12 +1276,13 @@ iy_mc_reset(sc)
 	 * Step through the list of addresses.
 	 */
 	sc->mcast_count = 0;
-	ETHER_FIRST_MULTI(step, &sc->sc_arpcom, enm);
+	ETHER_FIRST_MULTI(step, &sc->sc_ethercom, enm);
 	while (enm) {
 		if (sc->mcast_count >= MAXMCAST ||
 		    bcmp(enm->enm_addrlo, enm->enm_addrhi, 6) != 0) {
-			sc->sc_arpcom.ac_if.if_flags |= IFF_ALLMULTI;
-			iyioctl(&sc->sc_arpcom.ac_if, SIOCSIFFLAGS, (void *)0);
+			sc->sc_ethercom.ec_if.if_flags |= IFF_ALLMULTI;
+			iyioctl(&sc->sc_ethercom.ec_if, SIOCSIFFLAGS,
+			    (void *)0);
 			goto setflag;
 		}
 

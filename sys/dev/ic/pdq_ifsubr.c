@@ -1,4 +1,4 @@
-/*	$NetBSD: pdq_ifsubr.c,v 1.5 1996/05/20 00:26:21 thorpej Exp $	*/
+/*	$NetBSD: pdq_ifsubr.c,v 1.5.6.1 1997/02/07 18:01:30 is Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1996 Matt Thomas <matt@3am-software.com>
@@ -53,6 +53,11 @@
 #include <net/if_types.h>
 #include <net/if_dl.h>
 #include <net/route.h>
+
+#if defined(__NetBSD__)
+#include <net/if_ether.h>
+#endif
+
 
 #include "bpfilter.h"
 #if NBPFILTER > 0
@@ -158,7 +163,7 @@ ifnet_ret_t
 pdq_ifstart(
     struct ifnet *ifp)
 {
-    pdq_softc_t *sc = (pdq_softc_t *) ((caddr_t) ifp - offsetof(pdq_softc_t, sc_ac.ac_if));
+    pdq_softc_t *sc = (pdq_softc_t *) ((caddr_t) ifp - offsetof(pdq_softc_t, sc_ec.ec_if));
     struct ifqueue *ifq = &ifp->if_snd;
     struct mbuf *m;
     int tx = 0;
@@ -252,7 +257,7 @@ pdq_os_addr_fill(
     struct ether_multistep step;
     struct ether_multi *enm;
 
-    ETHER_FIRST_MULTI(step, &sc->sc_ac, enm);
+    ETHER_FIRST_MULTI(step, &sc->sc_ec, enm);
     while (enm != NULL && num_addrs > 0) {
 	((u_short *) addr->lanaddr_bytes)[0] = ((u_short *) enm->enm_addrlo)[0];
 	((u_short *) addr->lanaddr_bytes)[1] = ((u_short *) enm->enm_addrlo)[1];
@@ -269,7 +274,7 @@ pdq_ifioctl(
     ioctl_cmd_t cmd,
     caddr_t data)
 {
-    pdq_softc_t *sc = (pdq_softc_t *) ((caddr_t) ifp - offsetof(pdq_softc_t, sc_ac.ac_if));
+    pdq_softc_t *sc = (pdq_softc_t *) ((caddr_t) ifp - offsetof(pdq_softc_t, sc_ec.ec_if));
     int s, error = 0;
 
     s = splimp();
@@ -283,7 +288,7 @@ pdq_ifioctl(
 #if defined(INET)
 		case AF_INET: {
 		    pdq_ifinit(sc);
-		    arp_ifinit(&sc->sc_ac, ifa);
+		    arp_ifinit(ifp, ifa);
 		    break;
 		}
 #endif /* INET */
@@ -328,9 +333,9 @@ pdq_ifioctl(
 	     * Update multicast listeners
 	     */
 	    if (cmd == SIOCADDMULTI)
-		error = ether_addmulti((struct ifreq *)data, &sc->sc_ac);
+		error = ether_addmulti((struct ifreq *)data, &sc->sc_ec);
 	    else
-		error = ether_delmulti((struct ifreq *)data, &sc->sc_ac);
+		error = ether_delmulti((struct ifreq *)data, &sc->sc_ec);
 
 	    if (error == ENETRESET) {
 		if (sc->sc_if.if_flags & IFF_RUNNING)

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_fddisubr.c,v 1.9 1996/10/21 01:58:23 perry Exp $	*/
+/*	$NetBSD: if_fddisubr.c,v 1.9.4.1 1997/02/07 18:06:59 is Exp $	*/
 
 /*
  * Copyright (c) 1995
@@ -60,6 +60,9 @@
 #ifdef INET
 #include <netinet/in.h>
 #include <netinet/in_var.h>
+#endif
+#if defined(__NetBSD__)
+#include <net/if_ether.h>
 #endif
 #include <netinet/if_ether.h>
 #if defined(__FreeBSD__)
@@ -132,7 +135,9 @@ fddi_output(ifp, m0, dst, rt0)
 	register struct rtentry *rt;
 	struct mbuf *mcopy = (struct mbuf *)0;
 	register struct fddi_header *fh;
+#ifndef __NetBSD__
 	struct arpcom *ac = (struct arpcom *)ifp;
+#endif
 
 	if ((ifp->if_flags & (IFF_UP|IFF_RUNNING)) != (IFF_UP|IFF_RUNNING))
 		senderr(ENETDOWN);
@@ -163,7 +168,19 @@ fddi_output(ifp, m0, dst, rt0)
 
 #ifdef INET
 	case AF_INET:
+#if defined(__NetBSD__)
+#define SIN(x) ((struct sockaddr_in *)(x))
+		if (m->m_flags & M_BCAST)
+                	bcopy((caddr_t)fddibroadcastaddr, (caddr_t)edst,
+				sizeof(edst));
+
+		else if (m->m_flags & M_MCAST) {
+			ETHER_MAP_IP_MULTICAST(&SIN(dst)->sin_addr,
+			    (caddr_t)edst)
+		} else if (!arpresolve(ifp, rt, m, dst, edst))
+#else
 		if (!ARPRESOLVE(ac, rt, m, dst, edst, rt0))
+#endif
 			return (0);	/* if not yet resolved */
 		/* If broadcasting on a simplex interface, loopback a copy */
 		if ((m->m_flags & M_BCAST) && (ifp->if_flags & IFF_SIMPLEX))
@@ -206,8 +223,13 @@ fddi_output(ifp, m0, dst, rt0)
 				fh = mtod(mcopy, struct fddi_header *);
 				bcopy((caddr_t)edst,
 				      (caddr_t)fh->fddi_dhost, sizeof (edst));
+#ifdef __NetBSD__
+				bcopy(LLADDR(ifp->if_sadl),
+				      (caddr_t)fh->fddi_shost, sizeof (edst));
+#else
 				bcopy((caddr_t)ac->ac_enaddr,
 				      (caddr_t)fh->fddi_shost, sizeof (edst));
+#endif
 			}
 		}
 		M_PREPEND(m, 3, M_DONTWAIT);
@@ -246,8 +268,13 @@ fddi_output(ifp, m0, dst, rt0)
 				fh = mtod(mcopy, struct fddi_header *);
 				bcopy((caddr_t)edst,
 				      (caddr_t)fh->fddi_dhost, sizeof (edst));
+#ifdef __NetBSD__
+				bcopy(LLADDR(ifp->if_sadl),
+				      (caddr_t)fh->fddi_shost, sizeof (edst));
+#else
 				bcopy((caddr_t)ac->ac_enaddr,
 				      (caddr_t)fh->fddi_shost, sizeof (edst));
+#endif
 				fh->fddi_fc = FDDIFC_LLC_ASYNC|FDDIFC_LLC_PRIO4;
 			}
 		}
@@ -349,8 +376,13 @@ fddi_output(ifp, m0, dst, rt0)
 #if NBPFILTER > 0
   queue_it:
 #endif
+#ifdef __NetBSD__
+ 	bcopy(LLADDR(ifp->if_sadl), (caddr_t)fh->fddi_shost,
+	    sizeof(fh->fddi_shost));
+#else
  	bcopy((caddr_t)ac->ac_enaddr, (caddr_t)fh->fddi_shost,
 	    sizeof(fh->fddi_shost));
+#endif
 	s = splimp();
 	/*
 	 * Queue message on interface, and start output if interface
@@ -389,7 +421,7 @@ fddi_input(ifp, fh, m)
 {
 	register struct ifqueue *inq;
 	register struct llc *l;
-#ifdef	ISO
+#if defined(ISO) && !defined(__NetBSD__)
 	struct arpcom *ac = (struct arpcom *)ifp;
 #endif
 	int s;
@@ -500,8 +532,13 @@ fddi_input(ifp, fh, m)
 			l->llc_dsap = l->llc_ssap;
 			l->llc_ssap = c;
 			if (m->m_flags & (M_BCAST | M_MCAST))
+#ifdef __NetBSD__
+				bcopy(LLADDR(ifp->if_sadl),
+				      (caddr_t)fh->fddi_dhost, 6);
+#else
 				bcopy((caddr_t)ac->ac_enaddr,
 				      (caddr_t)fh->fddi_dhost, 6);
+#endif
 			sa.sa_family = AF_UNSPEC;
 			sa.sa_len = sizeof(sa);
 			eh = (struct ether_header *)sa.sa_data;
@@ -566,7 +603,9 @@ void
 fddi_ifattach(ifp)
 	register struct ifnet *ifp;
 {
+#ifndef __NetBSD__
 	register struct ifaddr *ifa;
+#endif
 	register struct sockaddr_dl *sdl;
 
 	ifp->if_type = IFT_FDDI;
@@ -575,11 +614,15 @@ fddi_ifattach(ifp)
 	ifp->if_mtu = FDDIMTU;
 	ifp->if_output = fddi_output;
 #ifdef __NetBSD__
-	for (ifa = ifp->if_addrlist.tqh_first; ifa != 0;
-	    ifa = ifa->ifa_list.tqe_next)
+	if ((sdl = ifp->if_sadl) &&
+	    sdl->sdl_family == AF_LINK) {
+		sdl->sdl_type = IFT_FDDI;
+		sdl->sdl_alen = ifp->if_addrlen;
+		bcopy(LLADDR(ifp->if_sadl),
+		      LLADDR(sdl), ifp->if_addrlen);
+	}
 #else
 	for (ifa = ifp->if_addrlist; ifa; ifa = ifa->ifa_next)
-#endif
 		if ((sdl = (struct sockaddr_dl *)ifa->ifa_addr) &&
 		    sdl->sdl_family == AF_LINK) {
 			sdl->sdl_type = IFT_FDDI;
@@ -588,4 +631,5 @@ fddi_ifattach(ifp)
 			      LLADDR(sdl), ifp->if_addrlen);
 			break;
 		}
+#endif
 }
