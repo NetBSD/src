@@ -1,4 +1,4 @@
-/* $NetBSD: lib.h,v 1.29.4.2 2000/10/17 19:50:27 tv Exp $ */
+/* $NetBSD: lib.h,v 1.29.4.3 2001/03/20 18:11:13 he Exp $ */
 
 /* from FreeBSD Id: lib.h,v 1.25 1997/10/08 07:48:03 charnier Exp */
 
@@ -174,6 +174,7 @@ void    leave_playpen(char *);
 off_t   min_free(char *);
 void    save_dirs(char **c, char **p);
 void    restore_dirs(char *c, char *p);
+void    show_version(void);
 
 /* String */
 char   *get_dash_string(char **);
@@ -255,5 +256,6 @@ int     pkg_perform(lpkg_head_t *);
 extern Boolean Verbose;
 extern Boolean Fake;
 extern Boolean Force;
+extern int upgrade;
 
 #endif				/* _INST_LIB_LIB_H_ */
