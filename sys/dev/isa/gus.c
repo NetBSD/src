@@ -1,4 +1,4 @@
-/*	$NetBSD: gus.c,v 1.38 1997/08/04 18:47:16 augustss Exp $	*/
+/*	$NetBSD: gus.c,v 1.39 1997/08/07 22:48:10 augustss Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -1137,6 +1137,7 @@ gus_dma_output(addr, buf, size, intr, arg)
 	if (sc->sc_precision == 16)
 	    flags |= GUSMASK_DMA_DATA_SIZE; 
 	if (sc->sc_encoding == AUDIO_ENCODING_ULAW ||
+	    sc->sc_encoding == AUDIO_ENCODING_ALAW ||
 	    sc->sc_encoding == AUDIO_ENCODING_ULINEAR_BE ||
 	    sc->sc_encoding == AUDIO_ENCODING_ULINEAR_LE)
 	    flags |= GUSMASK_DMA_INVBIT;
@@ -1402,6 +1403,7 @@ gus_dmaout_dointr(sc)
 		    (sc->sc_nbufs - 1) * sc->sc_chanblocksize - 2,
 		    guspeek(port,
 			    sc->sc_gusaddr + sc->sc_chanblocksize - 2));
+	  case AUDIO_ENCODING_ALAW:
 	  case AUDIO_ENCODING_ULAW:
 	  byte:
 	    /* we need to fetch the translated byte, then stuff it. */
@@ -2114,6 +2116,7 @@ gus_set_params(addr, mode, p, q)
 
 	switch (p->encoding) {
 	case AUDIO_ENCODING_ULAW:
+	case AUDIO_ENCODING_ALAW:
 	case AUDIO_ENCODING_SLINEAR_LE:
 	case AUDIO_ENCODING_ULINEAR_LE:
 	case AUDIO_ENCODING_SLINEAR_BE:
@@ -2150,6 +2153,10 @@ gus_set_params(addr, mode, p, q)
 	case AUDIO_ENCODING_ULAW:
 		p->sw_code = mode == AUMODE_PLAY ? 
 			mulaw_to_ulinear8 : ulinear8_to_mulaw;
+		break;
+	case AUDIO_ENCODING_ALAW:
+		p->sw_code = mode == AUMODE_PLAY ? 
+			alaw_to_ulinear8 : ulinear8_to_alaw;
 		break;
 	case AUDIO_ENCODING_ULINEAR_BE:
 	case AUDIO_ENCODING_SLINEAR_BE:
@@ -2192,7 +2199,8 @@ gus_round_blocksize(addr, blocksize)
 
 	DPRINTF(("gus_round_blocksize called\n"));
 
-	if (sc->sc_encoding == AUDIO_ENCODING_ULAW && blocksize > 32768)
+	if ((sc->sc_encoding == AUDIO_ENCODING_ULAW ||
+	     sc->sc_encoding == AUDIO_ENCODING_ALAW) && blocksize > 32768)
 		blocksize = 32768;
 	else if (blocksize > 65536)
 		blocksize = 65536;
@@ -2765,7 +2773,7 @@ gus_init_cs4231(sc)
 	} else {
 		struct ad1848_volume vol = {AUDIO_MAX_GAIN, AUDIO_MAX_GAIN};
 		static struct audio_hw_if gusmax_hw_if = {
-			gusopen,
+			gusmaxopen,
 			gusmax_close,
 			NULL,				/* drain */
 
@@ -3000,6 +3008,7 @@ gus_dma_input(addr, buf, size, callback, arg)
 	if (sc->sc_recdrq >= 4)
 		dmac |= GUSMASK_SAMPLE_DATA16;
 	if (sc->sc_encoding == AUDIO_ENCODING_ULAW ||
+	    sc->sc_encoding == AUDIO_ENCODING_ALAW ||
 	    sc->sc_encoding == AUDIO_ENCODING_ULINEAR_LE ||
 	    sc->sc_encoding == AUDIO_ENCODING_ULINEAR_BE)
 	    dmac |= GUSMASK_SAMPLE_INVBIT;
@@ -4246,6 +4255,13 @@ gus_query_encoding(addr, fp)
 		fp->precision = 16;
 		fp->flags = AUDIO_ENCODINGFLAG_EMULATED;
 		break;
+	case 7:
+		strcpy(fp->name, AudioEalaw);
+		fp->encoding = AUDIO_ENCODING_ALAW;
+		fp->precision = 8;
+		fp->flags = AUDIO_ENCODINGFLAG_EMULATED;
+		break;
+
 	default:
 		return(EINVAL);
 		/*NOTREACHED*/
