@@ -1,4 +1,4 @@
-/*	$NetBSD: isa_machdep.c,v 1.52 2001/11/15 07:03:32 lukem Exp $	*/
+/*	$NetBSD: isa_machdep.c,v 1.53 2001/11/18 13:48:00 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -76,7 +76,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: isa_machdep.c,v 1.52 2001/11/15 07:03:32 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: isa_machdep.c,v 1.53 2001/11/18 13:48:00 jdolecek Exp $");
 
 #define ISA_DMA_STATS
 
@@ -204,8 +204,8 @@ struct i386_bus_dma_tag isa_bus_dma_tag = {
 };
 
 /*
- * Fill in default interrupt table (in case of spuruious interrupt
- * during configuration of kernel, setup interrupt control unit
+ * Fill in default interrupt table (in case of spurious interrupt
+ * during configuration of kernel), setup interrupt control unit
  */
 void
 isa_defaultirq()
