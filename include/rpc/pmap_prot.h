@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap_prot.h,v 1.8 2000/06/02 22:57:55 fvdl Exp $	*/
+/*	$NetBSD: pmap_prot.h,v 1.9 2005/02/03 04:39:32 perry Exp $	*/
 
 /*
  * Sun RPC is a product of Sun Microsystems, Inc. and is provided for
@@ -98,9 +98,9 @@ struct pmaplist {
 };
 
 __BEGIN_DECLS
-extern bool_t xdr_pmap		__P((XDR *, struct pmap *));
-extern bool_t xdr_pmaplist	__P((XDR *, struct pmaplist **));
-extern bool_t xdr_pmaplist_ptr	__P((XDR *, struct pmaplist *));
+extern bool_t xdr_pmap		(XDR *, struct pmap *);
+extern bool_t xdr_pmaplist	(XDR *, struct pmaplist **);
+extern bool_t xdr_pmaplist_ptr	(XDR *, struct pmaplist *);
 __END_DECLS
 
 #endif /* !_RPC_PMAP_PROT_H_ */

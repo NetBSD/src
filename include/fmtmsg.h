@@ -1,4 +1,4 @@
-/*	$NetBSD: fmtmsg.h,v 1.1 1999/09/12 19:04:30 kleink Exp $	*/
+/*	$NetBSD: fmtmsg.h,v 1.2 2005/02/03 04:39:32 perry Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -81,8 +81,8 @@
 #include <sys/cdefs.h>
 
 __BEGIN_DECLS
-int	fmtmsg __P((long, const char *, int, const char *, const char *,
-	    const char *));
+int	fmtmsg(long, const char *, int, const char *, const char *,
+	    const char *);
 __END_DECLS
 
 #endif /* !_FMTMSG_H_ */

@@ -1,4 +1,4 @@
-/*	$NetBSD: res_update.h,v 1.1.1.1 2004/05/21 02:17:49 christos Exp $	*/
+/*	$NetBSD: res_update.h,v 1.2 2005/02/03 04:39:32 perry Exp $	*/
 
 /*
  * Copyright (c) 2004 by Internet Systems Consortium, Inc. ("ISC")
@@ -57,11 +57,11 @@ typedef	LIST(ns_updrec)	ns_updque;
 #define res_nmkupdate		__res_nmkupdate
 #define res_nupdate		__res_nupdate
 
-int		res_mkupdate __P((ns_updrec *, u_char *, int));
-int		res_update __P((ns_updrec *));
-ns_updrec *	res_mkupdrec __P((int, const char *, u_int, u_int, u_long));
-void		res_freeupdrec __P((ns_updrec *));
-int		res_nmkupdate __P((res_state, ns_updrec *, u_char *, int));
-int		res_nupdate __P((res_state, ns_updrec *, ns_tsig_key *));
+int		res_mkupdate(ns_updrec *, u_char *, int);
+int		res_update(ns_updrec *);
+ns_updrec *	res_mkupdrec(int, const char *, u_int, u_int, u_long);
+void		res_freeupdrec(ns_updrec *);
+int		res_nmkupdate(res_state, ns_updrec *, u_char *, int);
+int		res_nupdate(res_state, ns_updrec *, ns_tsig_key *);
 
 #endif /*__RES_UPDATE_H*/

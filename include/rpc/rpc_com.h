@@ -1,4 +1,4 @@
-/*	$NetBSD: rpc_com.h,v 1.1 2002/11/08 00:08:20 fvdl Exp $	*/
+/*	$NetBSD: rpc_com.h,v 1.2 2005/02/03 04:39:32 perry Exp $	*/
 
 /*
  * Sun RPC is a product of Sun Microsystems, Inc. and is provided for
@@ -52,7 +52,7 @@
 #define	RPC_MAXADDRSIZE 1024
 
 __BEGIN_DECLS
-bool_t rpc_control __P((int, void *));
+bool_t rpc_control(int, void *);
 __END_DECLS
 
 /*

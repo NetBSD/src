@@ -1,4 +1,4 @@
-/*	$NetBSD: langinfo.h,v 1.8 2004/01/18 09:07:07 yamt Exp $	*/
+/*	$NetBSD: langinfo.h,v 1.9 2005/02/03 04:39:32 perry Exp $	*/
 
 /*
  * Written by J.T. Conklin <jtc@NetBSD.org>
@@ -85,7 +85,7 @@
 #define ALT_DIGITS	((nl_item)56)	/* Alternative symbols for digits */
 
 __BEGIN_DECLS
-char *nl_langinfo __P((nl_item));
+char *nl_langinfo(nl_item);
 __END_DECLS
 
 #endif	/* _LANGINFO_H_ */

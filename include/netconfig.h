@@ -1,4 +1,4 @@
-/*	$NetBSD: netconfig.h,v 1.2 2004/05/28 14:38:53 christos Exp $	*/
+/*	$NetBSD: netconfig.h,v 1.3 2005/02/03 04:39:32 perry Exp $	*/
 
 /*-
  * Copyright (c) 2004 The NetBSD Foundation, Inc.
@@ -113,18 +113,18 @@ typedef struct {
 #define NC_ICMP		"icmp"
 
 __BEGIN_DECLS
-void *setnetconfig __P((void));
-struct netconfig *getnetconfig __P((void *));
-struct netconfig *getnetconfigent __P((char *));
-void freenetconfigent __P((struct netconfig *));
-int endnetconfig __P((void *));
+void *setnetconfig(void);
+struct netconfig *getnetconfig(void *);
+struct netconfig *getnetconfigent(char *);
+void freenetconfigent(struct netconfig *);
+int endnetconfig(void *);
 
-void *setnetpath __P((void));
-struct netconfig *getnetpath __P((void *));
+void *setnetpath(void);
+struct netconfig *getnetpath(void *);
 int endnetpath(void *);
 
-void nc_perror __P((const char *));
-char *nc_sperror __P((void));
+void nc_perror(const char *);
+char *nc_sperror(void);
 __END_DECLS
 
 #endif /* _NETCONFIG_H_ */

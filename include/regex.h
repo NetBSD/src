@@ -1,4 +1,4 @@
-/*	$NetBSD: regex.h,v 1.11 2003/08/07 09:44:11 agc Exp $	*/
+/*	$NetBSD: regex.h,v 1.12 2005/02/03 04:39:32 perry Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -136,12 +136,11 @@ typedef struct {
 #define	REG_BACKR	02000	/* force use of backref code */
 
 __BEGIN_DECLS
-int	regcomp __P((regex_t * __restrict, const char * __restrict, int));
-size_t	regerror __P((int, const regex_t * __restrict, char * __restrict,
-	    size_t));
-int	regexec __P((const regex_t * __restrict,
-	    const char * __restrict, size_t, regmatch_t [], int));
-void	regfree __P((regex_t *));
+int	regcomp(regex_t * __restrict, const char * __restrict, int);
+size_t	regerror(int, const regex_t * __restrict, char * __restrict, size_t);
+int	regexec(const regex_t * __restrict,
+	    const char * __restrict, size_t, regmatch_t [], int);
+void	regfree(regex_t *);
 __END_DECLS
 
 #endif /* !_REGEX_H_ */

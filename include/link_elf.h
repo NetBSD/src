@@ -1,4 +1,4 @@
-/*	$NetBSD: link_elf.h,v 1.5 1999/03/19 22:06:36 thorpej Exp $	*/
+/*	$NetBSD: link_elf.h,v 1.6 2005/02/03 04:39:32 perry Exp $	*/
 
 /*
  * This only exists for GDB.
@@ -25,7 +25,7 @@ struct link_map {
 struct r_debug {
 	int r_version;			/* not used */
 	struct link_map *r_map;		/* list of loaded images */
-	void (*r_brk) __P((void));	/* pointer to break point */
+	void (*r_brk)(void);	/* pointer to break point */
 	enum {
 		RT_CONSISTENT,		/* things are stable */
 		RT_ADD,			/* adding a shared library */

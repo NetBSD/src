@@ -1,4 +1,4 @@
-/*	$NetBSD: nl_types.h,v 1.10 2001/12/06 23:04:06 wiz Exp $	*/
+/*	$NetBSD: nl_types.h,v 1.11 2005/02/03 04:39:32 perry Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -89,10 +89,10 @@ typedef struct __nl_cat_d {
 typedef long	nl_item;
 
 __BEGIN_DECLS
-nl_catd  catopen __P((const char *, int));
-char    *catgets __P((nl_catd, int, int, const char *))
+nl_catd  catopen(const char *, int);
+char    *catgets(nl_catd, int, int, const char *)
 	__attribute__((__format_arg__(4)));
-int	 catclose __P((nl_catd));
+int	 catclose(nl_catd);
 __END_DECLS
 
 #endif	/* _NL_TYPES_H_ */

@@ -1,4 +1,4 @@
-/*	$NetBSD: nsswitch.h,v 1.16 2004/11/10 07:23:32 lukem Exp $	*/
+/*	$NetBSD: nsswitch.h,v 1.17 2005/02/03 04:39:32 perry Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 1999, 2004 The NetBSD Foundation, Inc.
@@ -227,15 +227,15 @@ typedef struct {
 #include <sys/cdefs.h>
 
 __BEGIN_DECLS
-int	nsdispatch	__P((void *, const ns_dtab [], const char *,
-			    const char *, const ns_src [], ...));
+int	nsdispatch(void *, const ns_dtab [], const char *,
+			const char *, const ns_src [], ...);
 
 #ifdef _NS_PRIVATE
-int		 _nsdbtaddsrc __P((ns_dbt *, const ns_src *));
-void		 _nsdbtdump __P((const ns_dbt *));
-int		 _nsdbtput __P((const ns_dbt *));
-void		 _nsyyerror __P((const char *));
-int		 _nsyylex __P((void));
+int		 _nsdbtaddsrc(ns_dbt *, const ns_src *);
+void		 _nsdbtdump(const ns_dbt *);
+int		 _nsdbtput(const ns_dbt *);
+void		 _nsyyerror(const char *);
+int		 _nsyylex(void);
 #endif /* _NS_PRIVATE */
 
 __END_DECLS

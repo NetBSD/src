@@ -1,4 +1,4 @@
-/*	$NetBSD: vis.h,v 1.14 2003/08/07 09:44:12 agc Exp $	*/
+/*	$NetBSD: vis.h,v 1.15 2005/02/03 04:39:32 perry Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -75,19 +75,19 @@
 #include <sys/cdefs.h>
 
 __BEGIN_DECLS
-char	*vis __P((char *, int, int, int));
-char	*svis __P((char *, int, int, int, const char *));
-int	strvis __P((char *, const char *, int));
-int	strsvis __P((char *, const char *, int, const char *));
-int	strvisx __P((char *, const char *, size_t, int));
-int	strsvisx __P((char *, const char *, size_t, int, const char *));
-int	strunvis __P((char *, const char *));
-int	strunvisx __P((char *, const char *, int));
+char	*vis(char *, int, int, int);
+char	*svis(char *, int, int, int, const char *);
+int	strvis(char *, const char *, int);
+int	strsvis(char *, const char *, int, const char *);
+int	strvisx(char *, const char *, size_t, int);
+int	strsvisx(char *, const char *, size_t, int, const char *);
+int	strunvis(char *, const char *);
+int	strunvisx(char *, const char *, int);
 #ifdef __LIBC12_SOURCE__
-int	unvis __P((char *, int, int *, int));
-int	__unvis13 __P((char *, int, int *, int));
+int	unvis(char *, int, int *, int);
+int	__unvis13(char *, int, int *, int);
 #else
-int	unvis __P((char *, int, int *, int))	__RENAME(__unvis13);
+int	unvis(char *, int, int *, int) __RENAME(__unvis13);
 #endif
 __END_DECLS
 
