@@ -1,4 +1,4 @@
-/*	$NetBSD: lpt.c,v 1.4 1996/10/11 00:09:28 christos Exp $ */
+/*	$NetBSD: lpt.c,v 1.5 1996/10/11 21:07:14 leo Exp $ */
 
 /*
  * Copyright (c) 1996 Leo Weppelman
@@ -138,7 +138,7 @@ void	*match, *auxp;
 {
 	struct cfdata *cfp = match;
 
-	if (!strcmp((char *)auxp, "*") && cfp->cf_unit == 0)
+	if (!strcmp((char *)auxp, "lpt") && cfp->cf_unit == 0)
 		return (1);
 	return (0);
 }
