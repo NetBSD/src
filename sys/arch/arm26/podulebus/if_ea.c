@@ -1,4 +1,4 @@
-/* $NetBSD: if_ea.c,v 1.1 2000/05/09 21:56:03 bjh21 Exp $ */
+/* $NetBSD: if_ea.c,v 1.2 2000/07/20 20:25:10 bjh21 Exp $ */
 
 /*
  * Copyright (c) 1995 Mark Brinicombe
@@ -118,7 +118,6 @@
 struct ea_softc {
 	struct device sc_dev;
 	struct irq_handler *sc_ih;
-	int sc_podule_number;		/* Our podule number */
 	u_int sc_iobase;		/* base I/O addr */
 	struct ethercom sc_ethercom;	/* Ethernet common */
 	char sc_pktbuf[EA_BUFSIZ]; 	/* frame buffer */
@@ -155,6 +154,10 @@ static void eatxpacket __P((struct ea_softc *));
 
 int eaprobe __P((struct device *, struct cfdata *, void *));
 void eaattach __P((struct device *, struct device *, void *));
+
+void ea_dump_buffer __P((struct ea_softc *, int));
+void ea_claimirq __P((struct ea_softc *));
+void ea_releaseirq __P((struct ea_softc *));
 
 /* driver structure for autoconf */
 
@@ -274,57 +277,34 @@ eaattach(parent, self, aux)
 	struct ea_softc *sc = (void *)self;
 	struct podulebus_attach_args *pa = (void *)aux;
 	struct ifnet *ifp = &sc->sc_ethercom.ec_if;
-	int loop;
-	int sum;
 	u_int8_t myaddr[ETHER_ADDR_LEN];
-
+	char *ptr;
+	int i;
+	
 /*	dprintf(("Attaching %s...\n", sc->sc_dev.dv_xname));*/
 
-/* Note the podule number and validate */
-
-	sc->sc_podule_number = pa->pa_slotnum;
-
-/* Set the address of the controller for easy access */
-	
+	/* Set the address of the controller for easy access */
 	sc->sc_iobase = pa->pa_memc_h + EA_8005_BASE;
 
-/* Read the station address - the receiver must be off */
-
-	WriteShort(sc->sc_iobase + EA_8005_CONFIG1, EA_BUFCODE_STATION_ADDR0);
-	
-	for (sum = 0, loop = 0; loop < ETHER_ADDR_LEN; ++loop) {
-		myaddr[loop] =
-		    ReadByte(sc->sc_iobase + EA_8005_BUFWIN);
-		sum += myaddr[loop];
+	/* Get the Ethernet address from the device description string. */
+	ptr = strchr(pa->pa_descr, '(');
+	if (ptr == NULL) {
+		printf(": Ethernet address not found in description\n");
+		return;
 	}
-
-/*
- * Hard code the ether address if we don't have one.
- * Need to work out how I get the real address
- * until then use the one a network slot card
- * would used, based on the machine id.
- */
-
-/*
- * Unfortunately, arm26 machines don't necessarily have a SSN, and I don't
- * support them yet anyway.  Erm, ideas anyone?
- */
-
-	if (sum == 0) {
-		printf(": Ethernet address not found.  Giving up.\n");
-#if 0
-		myaddr[0] = 0x00;
-		myaddr[1] = 0x00;
-		myaddr[2] = bootconfig.machine_id[3];
-		myaddr[3] = bootconfig.machine_id[2];
-		myaddr[4] = bootconfig.machine_id[1];
-		myaddr[5] = bootconfig.machine_id[0];
-#endif
+	ptr++;
+	for (i = 0; i < ETHER_ADDR_LEN; i++) {
+		myaddr[i] = strtoul(ptr, &ptr, 16);
+		if (*ptr++ != (i == ETHER_ADDR_LEN - 1 ? ')' : ':')) {
+			printf(": Bad Ethernet address found in "
+			       "description\n");
+			return;
+		}
 	}
 
 	/* Print out some information for the user. */
 
-	printf(": SEEQ8005 address %s", ether_sprintf(myaddr));
+	printf(": address %s", ether_sprintf(myaddr));
 
 	sc->sc_irqclaimed = 0;
 
@@ -364,7 +344,8 @@ eaattach(parent, self, aux)
 	/* Should test the RAM */
 
 	ea_ramtest(sc);
-	
+
+	printf("\n");
 /*	dprintf(("eaattach() finished.\n"));*/
 }
 
@@ -380,6 +361,7 @@ ea_ramtest(sc)
 	register u_int iobase = sc->sc_iobase;
 	register int loop;
 	register u_int sum = 0;
+	char pbuf[9];
 
 /*	dprintf(("ea_ramtest()\n"));*/
 
@@ -469,10 +451,11 @@ ea_ramtest(sc)
 
 	/* Report */
 
-	if (sum == 0)
-		printf(" %dK buffer RAM\n", EA_BUFFER_SIZE / 1024);
-	else
-		printf(" buffer RAM failed self test, %d faults\n", sum);
+	if (sum == 0) {
+		format_bytes(pbuf, sizeof(pbuf), EA_BUFFER_SIZE);
+		printf(", %s buffer RAM", pbuf);
+	} else
+		printf(", buffer RAM failed self test, %d faults", sum);
 }
 
 
