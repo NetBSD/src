@@ -1,7 +1,7 @@
-/*	$NetBSD: ym.c,v 1.19 2001/11/13 08:01:36 lukem Exp $	*/
+/*	$NetBSD: ym.c,v 1.20 2002/02/26 14:57:36 itohy Exp $	*/
 
 /*-
- * Copyright (c) 1999 The NetBSD Foundation, Inc.
+ * Copyright (c) 1999-2002 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ym.c,v 1.19 2001/11/13 08:01:36 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ym.c,v 1.20 2002/02/26 14:57:36 itohy Exp $");
 
 #include "mpu_ym.h"
 #include "opt_ym.h"
@@ -116,7 +116,7 @@ __KERNEL_RCSID(0, "$NetBSD: ym.c,v 1.19 2001/11/13 08:01:36 lukem Exp $");
 
 /* Default mixer settings. */
 #ifndef YM_VOL_MASTER
-#define YM_VOL_MASTER		220
+#define YM_VOL_MASTER		208
 #endif
 
 #ifndef YM_VOL_DAC
@@ -128,14 +128,13 @@ __KERNEL_RCSID(0, "$NetBSD: ym.c,v 1.19 2001/11/13 08:01:36 lukem Exp $");
 #endif
 
 /*
- * The equalizer is ``flat'' if the 3D Enhance is turned off,
- * but you can set other default values.
+ * Default position of the equalizer.
  */
-#ifndef YM_ENHANCE_TREBLE
-#define YM_ENHANCE_TREBLE	0
+#ifndef YM_DEFAULT_TREBLE
+#define YM_DEFAULT_TREBLE	YM_EQ_FLAT_OFFSET
 #endif
-#ifndef YM_ENHANCE_BASS
-#define YM_ENHANCE_BASS		0
+#ifndef YM_DEFAULT_BASS
+#define YM_DEFAULT_BASS		YM_EQ_FLAT_OFFSET
 #endif
 
 #ifdef __i386__		/* XXX */
@@ -217,9 +216,7 @@ ym_attach(sc)
 	static struct ad1848_volume vol_master = {YM_VOL_MASTER, YM_VOL_MASTER};
 	static struct ad1848_volume vol_dac    = {YM_VOL_DAC,    YM_VOL_DAC};
 	static struct ad1848_volume vol_opl3   = {YM_VOL_OPL3,   YM_VOL_OPL3};
-#if YM_ENHANCE_TREBLE || YM_ENHANCE_BASS
 	mixer_ctrl_t mctl;
-#endif
 	struct audio_attach_args arg;
 
 	callout_init(&sc->sc_powerdown_ch);
@@ -245,9 +242,6 @@ ym_attach(sc)
 	ym_set_mic_gain(sc, 0);
 	sc->master_mute = 0;
 
-	sc->mic_mute = 1;
-	ym_mute(sc, SA3_MIC_VOL, sc->mic_mute);
-
 	/* Override ad1848 settings. */
 	ad1848_set_channel_gain(ac, AD1848_DAC_CHANNEL, &vol_dac);
 	ad1848_set_channel_gain(ac, AD1848_AUX2_CHANNEL, &vol_opl3);
@@ -257,6 +251,8 @@ ym_attach(sc)
 	 * also change the initial value of sc->sc_external_sources
 	 * (currently 0 --- no external source is active).
 	 */
+	sc->mic_mute = 1;
+	ym_mute(sc, SA3_MIC_VOL, sc->mic_mute);
 	ad1848_mute_channel(ac, AD1848_AUX1_CHANNEL, MUTE_ALL);	/* CD */
 	ad1848_mute_channel(ac, AD1848_LINE_CHANNEL, MUTE_ALL);	/* line */
 	ac->mute[AD1848_AUX1_CHANNEL] = MUTE_ALL;
@@ -310,29 +306,25 @@ ym_attach(sc)
 	ym_powerdown_blocks(sc);
 
 	powerhook_establish(ym_power_hook, sc);
+#endif
 
-	if (sc->sc_on_blocks /* & YM_POWER_ACTIVE */)
+	/* Set tone control to the default position. */
+	mctl.un.value.num_channels = 1;
+	mctl.un.value.level[AUDIO_MIXER_LEVEL_MONO] = YM_DEFAULT_TREBLE;
+	mctl.dev = YM_MASTER_TREBLE;
+	ym_mixer_set_port(sc, &mctl);
+	mctl.un.value.level[AUDIO_MIXER_LEVEL_MONO] = YM_DEFAULT_BASS;
+	mctl.dev = YM_MASTER_BASS;
+	ym_mixer_set_port(sc, &mctl);
+
+	/* Unmute the output now if the chip is on. */
+#ifndef AUDIO_NO_POWER_CTL
+	if (sc->sc_on_blocks & YM_POWER_ACTIVE)
 #endif
 	{
-		/* Unmute the output now if the chip is on. */
 		ym_mute(sc, SA3_VOL_L, sc->master_mute);
 		ym_mute(sc, SA3_VOL_R, sc->master_mute);
 	}
-
-#if YM_ENHANCE_TREBLE || YM_ENHANCE_BASS
-	/* Set tone control to the default position. */
-	mctl.un.value.num_channels = 1;
-#if YM_ENHANCE_TREBLE
-	mctl.un.value.level[AUDIO_MIXER_LEVEL_MONO] = YM_ENHANCE_TREBLE;
-	mctl.dev = YM_MASTER_TREBLE;
-	ym_mixer_set_port(sc, &mctl);
-#endif
-#if YM_ENHANCE_BASS
-	mctl.un.value.level[AUDIO_MIXER_LEVEL_MONO] = YM_ENHANCE_BASS;
-	mctl.dev = YM_MASTER_BASS;
-	ym_mixer_set_port(sc, &mctl);
-#endif
-#endif
 }
 
 static __inline int
@@ -501,13 +493,21 @@ ym_set_3d(sc, cp, val, reg)
 	struct ad1848_volume *val;
 	int reg;
 {
-	u_int8_t e;
+	u_int8_t l, r, e;
 
 	ad1848_to_vol(cp, val);
 
-	e = (val->left * (SA3_3D_BITS + 1) + (SA3_3D_BITS + 1) / 2) /
+	l = val->left;
+	r = val->right;
+	if (reg != SA3_3D_WIDE) {
+		/* flat on center */
+		l = YM_EQ_EXPAND_VALUE(l);
+		r = YM_EQ_EXPAND_VALUE(r);
+	}
+
+	e = (l * (SA3_3D_BITS + 1) + (SA3_3D_BITS + 1) / 2) /
 		(AUDIO_MAX_GAIN + 1) << SA3_3D_LSHIFT |
-	    (val->right * (SA3_3D_BITS + 1) + (SA3_3D_BITS + 1) / 2) /
+	    (r * (SA3_3D_BITS + 1) + (SA3_3D_BITS + 1) / 2) /
 		(AUDIO_MAX_GAIN + 1) << SA3_3D_RSHIFT;
 
 #ifndef AUDIO_NO_POWER_CTL
@@ -521,7 +521,7 @@ ym_set_3d(sc, cp, val, reg)
 #ifndef AUDIO_NO_POWER_CTL
 	/* turn wide stereo off if necessary */
 	if (YM_EQ_OFF(&sc->sc_treble) && YM_EQ_OFF(&sc->sc_bass) &&
-	    YM_EQ_OFF(&sc->sc_wide))
+	    YM_WIDE_OFF(&sc->sc_wide))
 		ym_power_ctl(sc, YM_POWER_3D, 0);
 #endif
 }
@@ -607,6 +607,7 @@ ym_mixer_set_port(addr, cp)
 	case YM_CD_MUTE:
 	case YM_LINE_MUTE:
 	case YM_SPEAKER_MUTE:
+	case YM_MIC_MUTE:
 		extsources = YM_MIXER_TO_XS(cp->dev);
 		if (cp->un.ord) {
 			if ((sc->sc_external_sources &= ~extsources) == 0) {
@@ -797,6 +798,14 @@ ym_query_devinfo(addr, dip)
 		else
 			dip->un.v.num_channels = 2;
 
+		if (dip->index == YM_SPEAKER_LVL)
+			dip->un.v.delta = 1 << (8 - 4 /* valid bits */);
+		else if (dip->index == YM_DAC_LVL ||
+		    dip->index == YM_MONITOR_LVL)
+			dip->un.v.delta = 1 << (8 - 6 /* valid bits */);
+		else
+			dip->un.v.delta = 1 << (8 - 5 /* valid bits */);
+
 		strcpy(dip->un.v.units.name, AudioNvolume);
 		break;
 
@@ -829,6 +838,7 @@ ym_query_devinfo(addr, dip)
 		dip->next = YM_OUTPUT_MUTE;
 		strcpy(dip->label.name, AudioNmaster);
 		dip->un.v.num_channels = 2;
+		dip->un.v.delta = (AUDIO_MAX_GAIN + 1) / (SA3_VOL_MV + 1);
 		strcpy(dip->un.v.units.name, AudioNvolume);
 		break;
 
@@ -845,6 +855,7 @@ ym_query_devinfo(addr, dip)
 		dip->next = YM_RECORD_SOURCE;
 		strcpy(dip->label.name, AudioNrecord);
 		dip->un.v.num_channels = 2;
+		dip->un.v.delta = 1 << (8 - 4 /* valid bits */);
 		strcpy(dip->un.v.units.name, AudioNvolume);
 		break;
 
@@ -886,6 +897,8 @@ ym_query_devinfo(addr, dip)
 		dip->mixer_class = YM_EQ_CLASS;
 		strcpy(dip->label.name, AudioNtreble);
 		dip->un.v.num_channels = 2;
+		dip->un.v.delta = (AUDIO_MAX_GAIN + 1) / (SA3_3D_BITS + 1)
+		    >> YM_EQ_REDUCE_BIT;
 		strcpy(dip->un.v.units.name, AudioNtreble);
 		break;
 
@@ -894,6 +907,8 @@ ym_query_devinfo(addr, dip)
 		dip->mixer_class = YM_EQ_CLASS;
 		strcpy(dip->label.name, AudioNbass);
 		dip->un.v.num_channels = 2;
+		dip->un.v.delta = (AUDIO_MAX_GAIN + 1) / (SA3_3D_BITS + 1)
+		    >> YM_EQ_REDUCE_BIT;
 		strcpy(dip->un.v.units.name, AudioNbass);
 		break;
 
@@ -902,6 +917,7 @@ ym_query_devinfo(addr, dip)
 		dip->mixer_class = YM_EQ_CLASS;
 		strcpy(dip->label.name, AudioNsurround);
 		dip->un.v.num_channels = 2;
+		dip->un.v.delta = (AUDIO_MAX_GAIN + 1) / (SA3_3D_BITS + 1);
 		strcpy(dip->un.v.units.name, AudioNsurround);
 		break;
 
