@@ -1,4 +1,4 @@
-.\"	$NetBSD: hardware,v 1.116 2004/11/24 20:49:17 bouyer Exp $
+.\"	$NetBSD: hardware,v 1.117 2005/01/09 06:08:20 snj Exp $
 .
 .Nx \*V
 runs on ISA (AT-Bus), EISA, MCA, PCI, and VL-bus systems
@@ -665,10 +665,6 @@ Hardware the we do
 .Em not
 currently support, but get many questions about:
 .(bullet -offset indent
-Multiprocessor systems.
-.Nx
-will run, but only use one processor.
-.It
 PCI WD-7000 SCSI host adapters.
 .It
 QIC-40 and QIC-80 tape drives.
