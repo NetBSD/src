@@ -1,4 +1,4 @@
-/*	$NetBSD: nca_isa.c,v 1.3 2000/03/18 16:13:27 mycroft Exp $	*/
+/*	$NetBSD: nca_isa.c,v 1.4 2000/03/18 16:52:20 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
@@ -82,7 +82,19 @@
 #include <dev/ic/ncr5380var.h>
 #include <dev/ic/ncr53c400reg.h>
 
-#include <dev/isa/nca_isavar.h>
+struct nca_isa_softc {
+	struct ncr5380_softc	sc_ncr5380;	/* glue to MI code */
+
+        void *sc_ih;
+        int sc_irq;
+	int sc_options;
+};
+
+struct nca_isa_probe_data {
+	struct device sc_dev;
+	int sc_reg_offset;
+	int sc_host_type;
+};
 
 int	nca_isa_find __P((bus_space_tag_t, bus_space_handle_t, bus_size_t,
 	    struct nca_isa_probe_data *));
@@ -92,13 +104,6 @@ int	nca_isa_test __P((bus_space_tag_t, bus_space_handle_t, bus_size_t));
 
 struct cfattach nca_isa_ca = {
 	sizeof(struct nca_isa_softc), nca_isa_match, nca_isa_attach
-};
-
-struct scsipi_device nca_isa_dev = {
-	NULL,			/* Use default error handler */
-	NULL,			/* have a queue, served by this */
-	NULL,			/* have no async handler */
-	NULL,			/* Use default 'done' routine */
 };
 
 
