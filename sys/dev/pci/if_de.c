@@ -21,7 +21,7 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
- * Id: if_de.c,v 1.80 1997/03/22 20:48:40 thomas Exp
+ * Id: if_de.c,v 1.83 1997/03/25 21:12:17 thomas Exp
  *
  */
 
@@ -890,6 +890,11 @@ tulip_media_select(
 	DELAY(10);
 	TULIP_CSR_WRITE(sc, csr_gp, sc->tulip_gpdata);
     }
+    /*
+     * If this board has no media, just return
+     */
+    if (IFM_SUBTYPE(sc->tulip_ifmedia.ifm_media) == IFM_NONE)
+	return;
     if (sc->tulip_media == TULIP_MEDIA_UNKNOWN) {
 	TULIP_CSR_WRITE(sc, csr_intr, sc->tulip_intrmask);
 	(*sc->tulip_boardsw->bd_media_poll)(sc, TULIP_MEDIAPOLL_START);
@@ -1155,6 +1160,11 @@ tulip_21041_media_poll(
 	    } else {
 		printf(TULIP_PRINTF_FMT ": autosense failed: cable problem?\n",
 		       TULIP_PRINTF_ARGS);
+		if ((sc->tulip_if.if_flags & IFF_UP) == 0) {
+		    sc->tulip_if.if_flags &= ~IFF_RUNNING;
+		    sc->tulip_probe_state = TULIP_PROBE_INACTIVE;
+		    return;
+		}
 	    }
 	}
     }
@@ -1733,60 +1743,6 @@ static const tulip_boardsw_t tulip_21140_znyx_zx34x_boardsw = {
     tulip_2114x_media_preset,
 };
 
-/*
- * Asante needs a special function because there is no pulldown resistor
- * on the PHY reset line - if we leave it floating (GPR=0x100) the PHY
- * never comes out of reset.
- */
-static void
-tulip_21140_asante_fast_media_probe(
-    tulip_softc_t * const sc)
-{
-    tulip_media_t media;
-
-    sc->tulip_cmdmode |= TULIP_CMD_STOREFWD|TULIP_CMD_MUSTBEONE
-	|TULIP_CMD_BACKOFFCTR;
-
-    sc->tulip_gpinit = TULIP_GP_ASANTE_PINS;
-    sc->tulip_gpdata = 0;
-
-    TULIP_CSR_WRITE(sc, csr_gp, TULIP_GP_ASANTE_PINS|TULIP_GP_PINSET);
-    TULIP_CSR_WRITE(sc, csr_gp, TULIP_GP_ASANTE_PHYRESET);
-    DELAY(100);
-    TULIP_CSR_WRITE(sc, csr_gp, 0);
-    DELAY(200000);
-
-    /*
-     * Let's make sure we don't reeanble RESET by accident.
-     */
-
-    for (media = TULIP_MEDIA_UNKNOWN; media < TULIP_MEDIA_MAX; media++) {
-	tulip_media_info_t *mip = sc->tulip_mediums[media];
-	if (mip == NULL)
-	    continue;
-
-	if (mip->mi_type == TULIP_MEDIAINFO_MII) {
-	    mip->mi_reset_length = 0;
-	    mip->mi_gpr_length = 0;
-	}
-    }
-
-    /*
-     * We need to decode the srom again now that the PHY is
-     * no longer in permanent reset mode.
-     */
-
-    (void) tulip_srom_decode(sc);
-}
-
-static const tulip_boardsw_t tulip_21140_asante_fast_boardsw = {
-    TULIP_21140_ASANTE,
-    tulip_21140_asante_fast_media_probe,
-    tulip_media_select,
-    tulip_media_poll,
-    tulip_2114x_media_preset,
-};
-
 static void
 tulip_2114x_media_probe(
     tulip_softc_t * const sc)
@@ -2020,6 +1976,22 @@ tulip_crc32(
 }
 
 static void
+tulip_identify_dec_nic(
+    tulip_softc_t * const sc)
+{
+    strcpy(sc->tulip_boardid, "DEC ");
+#define D0	4
+    if (sc->tulip_chipid <= TULIP_DE425)
+	return;
+    if (bcmp(sc->tulip_rombuf + 29, "DE500", 5) == 0
+	|| bcmp(sc->tulip_rombuf + 29, "DE450", 5) == 0) {
+	bcopy(sc->tulip_rombuf + 29, &sc->tulip_boardid[D0], 8);
+	sc->tulip_boardid[D0+8] = ' ';
+    }
+#undef D0
+}
+
+static void
 tulip_identify_znyx_nic(
     tulip_softc_t * const sc)
 {
@@ -2179,8 +2151,47 @@ tulip_identify_asante_nic(
     tulip_softc_t * const sc)
 {
     strcpy(sc->tulip_boardid, "Asante ");
-    if (sc->tulip_chipid == TULIP_21140 || sc->tulip_chipid == TULIP_21140A)
-	sc->tulip_boardsw = &tulip_21140_asante_fast_boardsw;
+    if ((sc->tulip_chipid == TULIP_21140 || sc->tulip_chipid == TULIP_21140A)
+	    && sc->tulip_boardsw != &tulip_2114x_isv_boardsw) {
+	tulip_media_info_t *mi = sc->tulip_mediainfo;
+
+	/*
+	 * The Asante Fast Ethernet doesn't always ship with a valid
+	 * new format SROM.  So if isn't in the new format, we cheat
+	 * set it up as if we had.
+	 */
+
+	sc->tulip_gpinit = TULIP_GP_ASANTE_PINS;
+	sc->tulip_gpdata = 0;
+
+	TULIP_CSR_WRITE(sc, csr_gp, TULIP_GP_ASANTE_PINS|TULIP_GP_PINSET);
+	TULIP_CSR_WRITE(sc, csr_gp, TULIP_GP_ASANTE_PHYRESET);
+	DELAY(100);
+	TULIP_CSR_WRITE(sc, csr_gp, 0);
+	DELAY(200000);
+
+	mi->mi_type = TULIP_MEDIAINFO_MII;
+	mi->mi_gpr_length = 0;
+	mi->mi_gpr_offset = 0;
+	mi->mi_reset_length = 0;
+	mi->mi_reset_offset = 0;;
+
+	mi->mi_phyaddr = tulip_mii_get_phyaddr(sc, 0);
+	if (mi->mi_phyaddr == TULIP_MII_NOPHY)
+	    return;
+	sc->tulip_features |= TULIP_HAVE_MII;
+	mi->mi_capabilities  = PHYSTS_10BASET|PHYSTS_10BASET_FD|PHYSTS_100BASETX|PHYSTS_100BASETX_FD;
+	mi->mi_advertisement = PHYSTS_10BASET|PHYSTS_10BASET_FD|PHYSTS_100BASETX|PHYSTS_100BASETX_FD;
+	mi->mi_full_duplex   = PHYSTS_10BASET_FD|PHYSTS_100BASETX_FD;
+	mi->mi_tx_threshold  = PHYSTS_10BASET|PHYSTS_10BASET_FD;
+	TULIP_MEDIAINFO_ADD_CAPABILITY(sc, mi, 100BASETX_FD);
+	TULIP_MEDIAINFO_ADD_CAPABILITY(sc, mi, 100BASETX);
+	TULIP_MEDIAINFO_ADD_CAPABILITY(sc, mi, 100BASET4);
+	TULIP_MEDIAINFO_ADD_CAPABILITY(sc, mi, 10BASET_FD);
+	TULIP_MEDIAINFO_ADD_CAPABILITY(sc, mi, 10BASET);
+
+	sc->tulip_boardsw = &tulip_2114x_isv_boardsw;
+    }
 }
 
 static int
@@ -2513,6 +2524,8 @@ static const struct {
     void (*vendor_identify_nic)(tulip_softc_t * const sc);
     unsigned char vendor_oui[3];
 } tulip_vendors[] = {
+    { tulip_identify_dec_nic,		{ 0x08, 0x00, 0x2B } },
+    { tulip_identify_dec_nic,		{ 0x00, 0x00, 0xF8 } },
     { tulip_identify_smc_nic,		{ 0x00, 0x00, 0xC0 } },
     { tulip_identify_smc_nic,		{ 0x00, 0xE0, 0x29 } },
     { tulip_identify_znyx_nic,		{ 0x00, 0xC0, 0x95 } },
@@ -2560,7 +2573,6 @@ tulip_read_macaddr(
 	sc->tulip_boardsw = &tulip_21040_boardsw;
 #endif /* TULIP_EISA */
     } else {
-	int new_srom_fmt = 0;
 	if (sc->tulip_chipid == TULIP_21041) {
 	    /*
 	     * Thankfully all 21041's act the same.
@@ -2572,10 +2584,6 @@ tulip_read_macaddr(
 	     * DEC 10/100 evaluation board.  Not really valid but
 	     * it's the best we can do until every one switches to
 	     * the new SROM format.
-	     *
-	     * If it's not a rev 1.0 21140, probe for PHYs active on
-	     * the MII.  If any are found, switch to MII mode for
-	     * dealing with the board.
 	     */
 	     
 	    sc->tulip_boardsw = &tulip_21140_eb_boardsw;
@@ -2586,7 +2594,7 @@ tulip_read_macaddr(
 	     * SROM CRC is valid therefore it must be in the
 	     * new format.
 	     */
-	    new_srom_fmt = 1;
+	    sc->tulip_features |= TULIP_HAVE_ISVSROM;
 	} else if (sc->tulip_rombuf[126] == 0xff && sc->tulip_rombuf[127] == 0xFF) {
 	    /*
 	     * No checksum is present.  See if the SROM id checks out;
@@ -2598,22 +2606,12 @@ tulip_read_macaddr(
 		    break;
 	    }
 	    if (idx == 18 && sc->tulip_rombuf[18] == 1 && sc->tulip_rombuf[19] != 0)
-		new_srom_fmt = 2;
+		sc->tulip_features |= TULIP_HAVE_ISVSROM;
 	}
-	if (new_srom_fmt && tulip_srom_decode(sc)) {
+	if ((sc->tulip_features & TULIP_HAVE_ISVSROM) && tulip_srom_decode(sc)) {
 	    if (sc->tulip_chipid != TULIP_21041)
 		sc->tulip_boardsw = &tulip_2114x_isv_boardsw;
 
-	    /*
-	     * New SROM format.  Copy out the Ethernet address.
-	     * If it contains a DE500-XA string, then it must be
-	     * a DE500-XA.
-	     */
-	    if (bcmp(sc->tulip_rombuf + 29, "DE500", 5) == 0
-		    || bcmp(sc->tulip_rombuf + 29, "DE450", 5) == 0) {
-		bcopy(sc->tulip_rombuf + 29, sc->tulip_boardid, 8);
-		sc->tulip_boardid[8] = ' ';
-	    }
 	    /*
 	     * If the SROM specifies more than one adapter, tag this as a
 	     * BASE rom.
@@ -2759,13 +2757,19 @@ tulip_ifmedia_add(
     tulip_softc_t * const sc)
 {
     tulip_media_t media;
+    int medias = 0;
 
     for (media = TULIP_MEDIA_UNKNOWN; media < TULIP_MEDIA_MAX; media++) {
-	if (sc->tulip_mediums[media] != NULL)
+	if (sc->tulip_mediums[media] != NULL) {
 	    ifmedia_add(&sc->tulip_ifmedia, tulip_media_to_ifmedia[media],
 			0, 0);
+	    medias++;
+	}
     }
-    if (sc->tulip_media == TULIP_MEDIA_UNKNOWN) {
+    if (medias == 0) {
+	ifmedia_add(&sc->tulip_ifmedia, IFM_ETHER | IFM_NONE, 0, 0);
+	ifmedia_set(&sc->tulip_ifmedia, IFM_ETHER | IFM_NONE);
+    } else if (sc->tulip_media == TULIP_MEDIA_UNKNOWN) {
 	ifmedia_add(&sc->tulip_ifmedia, IFM_ETHER | IFM_AUTO, 0, 0);
 	ifmedia_set(&sc->tulip_ifmedia, IFM_ETHER | IFM_AUTO);
     } else {
@@ -2834,63 +2838,98 @@ static void
 tulip_addr_filter(
     tulip_softc_t * const sc)
 {
-    u_int32_t *sp = sc->tulip_setupdata;
     struct ether_multistep step;
     struct ether_multi *enm;
-    int i = 0;
 
-    sc->tulip_flags &= ~TULIP_WANTHASH;
+    sc->tulip_flags &= ~(TULIP_WANTHASH|TULIP_ALLMULTI);
     sc->tulip_flags |= TULIP_WANTSETUP;
     sc->tulip_cmdmode &= ~TULIP_CMD_RXRUN;
     sc->tulip_intrmask &= ~TULIP_STS_RXSTOPPED;
+#if defined(IFF_ALLMULTI)    
+    sc->tulip_if.if_flags &= ~IFF_ALLMULTI;
+#endif
     if (sc->tulip_multicnt > 14) {
-	unsigned hash;
 	/*
-	 * If we have more than 14 multicasts, we have
-	 * go into hash perfect mode (512 bit multicast
-	 * hash and one perfect hardware).
+	 * Some early passes of the 21140 have broken multicast hashes.
+	 * When we get too many multicasts with these chips, we have to
+	 * switch into all-multicast mode.
 	 */
-
-	bzero(sc->tulip_setupdata, sizeof(sc->tulip_setupdata));
-	hash = tulip_mchash(etherbroadcastaddr);
-	sp[hash >> 4] |= 1 << (hash & 0xF);
-	ETHER_FIRST_MULTI(step, TULIP_ETHERCOM(sc), enm);
-	while (enm != NULL) {
-	    hash = tulip_mchash(enm->enm_addrlo);
-	    sp[hash >> 4] |= 1 << (hash & 0xF);
-	    ETHER_NEXT_MULTI(step, enm);
+	if (sc->tulip_features & TULIP_HAVE_BROKEN_HASH) {
+	    sc->tulip_flags |= TULIP_ALLMULTI;
+	} else {
+	    u_int32_t *sp = sc->tulip_setupdata;
+	    unsigned hash;
+	    /*
+	     * If we have more than 14 multicasts, we have
+	     * go into hash perfect mode (512 bit multicast
+	     * hash and one perfect hardware).
+	     */
+	    bzero(sc->tulip_setupdata, sizeof(sc->tulip_setupdata));
+	    ETHER_FIRST_MULTI(step, TULIP_ETHERCOM(sc), enm);
+	    while (enm != NULL) {
+		if (bcmp(enm->enm_addrlo, enm->enm_addrhi, 6) == 0) {
+		    hash = tulip_mchash(enm->enm_addrlo);
+		    sp[hash >> 4] |= 1 << (hash & 0xF);
+		} else {
+		    sc->tulip_flags |= TULIP_ALLMULTI;
+		    break;
+		}
+		ETHER_NEXT_MULTI(step, enm);
+	    }
+	    /*
+	     * No reason to use a hash if we are going to be
+	     * receiving every multicast.
+	     */
+	    if ((sc->tulip_flags & TULIP_ALLMULTI) == 0) {
+		hash = tulip_mchash(etherbroadcastaddr);
+		sp[hash >> 4] |= 1 << (hash & 0xF);
+		sc->tulip_flags |= TULIP_WANTHASH;
+		sp[39] = ((u_int16_t *) sc->tulip_enaddr)[0]; 
+		sp[40] = ((u_int16_t *) sc->tulip_enaddr)[1]; 
+		sp[41] = ((u_int16_t *) sc->tulip_enaddr)[2];
+	    }
 	}
-	sc->tulip_flags |= TULIP_WANTHASH;
-	sp[39] = ((u_int16_t *) sc->tulip_enaddr)[0]; 
-	sp[40] = ((u_int16_t *) sc->tulip_enaddr)[1]; 
-	sp[41] = ((u_int16_t *) sc->tulip_enaddr)[2];
-    } else {
-	/*
-	 * Else can get perfect filtering for 16 addresses.
-	 */
-	ETHER_FIRST_MULTI(step, TULIP_ETHERCOM(sc), enm);
-	for (; enm != NULL; i++) {
-	    *sp++ = ((u_int16_t *) enm->enm_addrlo)[0]; 
-	    *sp++ = ((u_int16_t *) enm->enm_addrlo)[1]; 
-	    *sp++ = ((u_int16_t *) enm->enm_addrlo)[2];
-	    ETHER_NEXT_MULTI(step, enm);
+    }
+    if ((sc->tulip_flags & TULIP_WANTHASH) == 0) {
+	u_int32_t *sp = sc->tulip_setupdata;
+	int idx = 0;
+	if ((sc->tulip_flags & TULIP_ALLMULTI) == 0) {
+	    /*
+	     * Else can get perfect filtering for 16 addresses.
+	     */
+	    ETHER_FIRST_MULTI(step, TULIP_ETHERCOM(sc), enm);
+	    for (; enm != NULL; idx++) {
+		if (bcmp(enm->enm_addrlo, enm->enm_addrhi, 6) == 0) {
+		    *sp++ = ((u_int16_t *) enm->enm_addrlo)[0]; 
+		    *sp++ = ((u_int16_t *) enm->enm_addrlo)[1]; 
+		    *sp++ = ((u_int16_t *) enm->enm_addrlo)[2];
+		} else {
+		    sc->tulip_flags |= TULIP_ALLMULTI;
+		    break;
+		}
+		ETHER_NEXT_MULTI(step, enm);
+	    }
+	    /*
+	     * Add the broadcast address.
+	     */
+	    idx++;
+	    *sp++ = 0xFFFF;
+	    *sp++ = 0xFFFF;
+	    *sp++ = 0xFFFF;
 	}
-	/*
-	 * Add the broadcast address.
-	 */
-	i++;
-	*sp++ = 0xFFFF;
-	*sp++ = 0xFFFF;
-	*sp++ = 0xFFFF;
 	/*
 	 * Pad the rest with our hardware address
 	 */
-	for (; i < 16; i++) {
+	for (; idx < 16; idx++) {
 	    *sp++ = ((u_int16_t *) sc->tulip_enaddr)[0]; 
 	    *sp++ = ((u_int16_t *) sc->tulip_enaddr)[1]; 
 	    *sp++ = ((u_int16_t *) sc->tulip_enaddr)[2];
 	}
     }
+#if defined(IFF_ALLMULTI)
+    if (sc->tulip_flags & TULIP_ALLMULTI)
+	sc->tulip_if.if_flags |= IFF_ALLMULTI;
+#endif
 }
 
 static void
@@ -3013,7 +3052,7 @@ tulip_init(
 	    sc->tulip_cmdmode |= TULIP_CMD_PROMISCUOUS;
 	} else {
 	    sc->tulip_cmdmode &= ~TULIP_CMD_PROMISCUOUS;
-	    if (sc->tulip_if.if_flags & IFF_ALLMULTI) {
+	    if (sc->tulip_flags & TULIP_ALLMULTI) {
 		sc->tulip_cmdmode |= TULIP_CMD_ALLMULTI;
 	    } else {
 		sc->tulip_cmdmode &= ~TULIP_CMD_ALLMULTI;
@@ -4627,6 +4666,8 @@ tulip_pci_attach(
 	sc->tulip_features |= TULIP_HAVE_GPR;
     if (chipid == TULIP_21140A && revinfo <= 0x22)
 	sc->tulip_features |= TULIP_HAVE_RXBUGGY;
+    if (chipid == TULIP_21140)
+	sc->tulip_features |= TULIP_HAVE_BROKEN_HASH;
     if (chipid != TULIP_21040 && chipid != TULIP_DE425 && chipid != TULIP_21140)
 	sc->tulip_features |= TULIP_HAVE_POWERMGMT;
     if (chipid == TULIP_21041 || chipid == TULIP_21142 || chipid == TULIP_21143) {
