@@ -1,4 +1,4 @@
-.\" $NetBSD: wscons.4,v 1.12 2000/05/02 19:02:28 drochner Exp $
+.\" $NetBSD: wscons.4,v 1.13 2000/09/21 10:43:50 ad Exp $
 .\"
 .\" Copyright (c) 1999 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -150,7 +150,7 @@ In addition to the plain
 functions are supported:
 .Bl -bullet
 .It
-ANSI colors
+ANSI colors.
 .It
 Some
 .Tn VT220
@@ -198,9 +198,12 @@ Emulates enough of the
 .Dq pcvt
 driver to make X servers work.
 .It Cd WSDISPLAY_COMPAT_SYSCONS
-Emulates enough of the i386 FreeBSD
+Emulates enough of the
+.Fx
 .Dq syscons
-driver to make X servers work. Useful with FreeBSD binary emulation.
+driver to make X servers work. Useful with
+.Fx
+binary emulation.
 .El
 .Pp
 Linux/i386 X servers do usually run if the first two options are
