@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_glue.c,v 1.66 2003/06/29 22:32:50 fvdl Exp $	*/
+/*	$NetBSD: uvm_glue.c,v 1.67 2003/10/13 20:43:03 scw Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_glue.c,v 1.66 2003/06/29 22:32:50 fvdl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_glue.c,v 1.67 2003/10/13 20:43:03 scw Exp $");
 
 #include "opt_kgdb.h"
 #include "opt_kstack.h"
@@ -317,6 +317,10 @@ uvm_lwp_fork(l1, l2, stack, stacksize, func, arg)
 		    VM_PROT_READ | VM_PROT_WRITE);
 		if (error)
 			panic("uvm_lwp_fork: uvm_fault_wire failed: %d", error);
+#ifdef PMAP_UAREA
+		/* Tell the pmap this is a u-area mapping */
+		PMAP_UAREA((vaddr_t)up);
+#endif
 		l2->l_flag |= L_INMEM;
 	}
 
