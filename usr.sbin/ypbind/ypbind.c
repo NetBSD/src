@@ -1,4 +1,4 @@
-/*	$NetBSD: ypbind.c,v 1.39 1999/06/06 02:38:00 thorpej Exp $	*/
+/*	$NetBSD: ypbind.c,v 1.40 1999/08/16 03:12:32 simonb Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993 Theo de Raadt <deraadt@fsa.ca>
@@ -34,7 +34,7 @@
 
 #include <sys/cdefs.h>
 #ifndef LINT
-__RCSID("$NetBSD: ypbind.c,v 1.39 1999/06/06 02:38:00 thorpej Exp $");
+__RCSID("$NetBSD: ypbind.c,v 1.40 1999/08/16 03:12:32 simonb Exp $");
 #endif
 
 #include <sys/param.h>
@@ -392,7 +392,7 @@ ypbindproc_setdom_2(transp, argp)
 	if (ntohs(fromsin->sin_port) >= IPPORT_RESERVED) {
 #ifdef DEBUG
 		if (debug)
-			printf("ypset from unpriviledged port denied\n");
+			printf("ypset from unprivileged port denied\n");
 #endif
 		return &res;
 	}

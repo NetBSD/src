@@ -1,4 +1,4 @@
-/*	$NetBSD: hpux_machdep.c,v 1.22 1999/03/24 05:50:59 mrg Exp $	*/
+/*	$NetBSD: hpux_machdep.c,v 1.23 1999/08/16 02:59:23 simonb Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -572,7 +572,7 @@ hpux_sendsig(catcher, sig, mask, code)
  * Return to previous pc and psl as specified by
  * context left by sendsig. Check carefully to
  * make sure that the user has not modified the
- * psl to gain improper priviledges or to cause
+ * psl to gain improper privileges or to cause
  * a machine fault.
  */
 /* ARGSUSED */
