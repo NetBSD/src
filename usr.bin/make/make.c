@@ -1,4 +1,4 @@
-/*	$NetBSD: make.c,v 1.12 1997/03/10 21:19:56 christos Exp $	*/
+/*	$NetBSD: make.c,v 1.13 1997/03/23 01:25:29 christos Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -42,7 +42,7 @@
 #if 0
 static char sccsid[] = "@(#)make.c	8.1 (Berkeley) 6/6/93";
 #else
-static char rcsid[] = "$NetBSD: make.c,v 1.12 1997/03/10 21:19:56 christos Exp $";
+static char rcsid[] = "$NetBSD: make.c,v 1.13 1997/03/23 01:25:29 christos Exp $";
 #endif
 #endif /* not lint */
 
@@ -96,6 +96,7 @@ static int  	numNodes;   	/* Number of nodes to be processed. If this
 				 * TRUE, there's a cycle in the graph */
 
 static int MakeAddChild __P((ClientData, ClientData));
+static int MakeFindChild __P((ClientData, ClientData));
 static int MakeAddAllSrc __P((ClientData, ClientData));
 static int MakeTimeStamp __P((ClientData, ClientData));
 static int MakeHandleUse __P((ClientData, ClientData));
@@ -303,7 +304,30 @@ MakeAddChild (gnp, lp)
     }
     return (0);
 }
-
+
+/*-
+ *-----------------------------------------------------------------------
+ * MakeFindChild  --
+ *	Function used by Make_Run to find the pathname of a child
+ *	that was already made.
+ *
+ * Results:
+ *	Always returns 0
+ *
+ * Side Effects:
+ *	The path of the node is updated
+ *-----------------------------------------------------------------------
+ */
+static int
+MakeFindChild (gnp, dum)
+    ClientData     gnp;		/* the node to find */
+    ClientData     dum;
+{
+    GNode          *gn = (GNode *) gnp;
+    gn->path = Dir_FindFile(gn->name, dirSearchPath);
+    return (0);
+}
+
 /*-
  *-----------------------------------------------------------------------
  * Make_HandleUse --
@@ -881,6 +905,8 @@ Make_ExpandUse (targs)
 		Lst_ForEach (gn->children, MakeAddChild, (ClientData)examine);
 	    } else {
 		(void)Lst_EnQueue (ntargs, (ClientData)gn);
+		if (gn->type & OP_MADE)
+		    Lst_ForEach (gn->children, MakeFindChild, (ClientData)NULL);
 	    }
 	}
     }
