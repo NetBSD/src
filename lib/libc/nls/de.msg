@@ -183,6 +183,8 @@ $ ENOSTR
 91 Kein STREAM
 $ ETIME
 92 Zeitüberschreitung bei STREAM Ioctl
+$ ENOATTR
+93 Attribut nicht gefunden
 $set 2
 $ SIGHUP
 1 Verbindungsende
