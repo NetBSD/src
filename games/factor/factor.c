@@ -1,4 +1,4 @@
-/*	$NetBSD: factor.c,v 1.9 1999/09/08 21:17:48 jsm Exp $	*/
+/*	$NetBSD: factor.c,v 1.10 2002/06/15 02:12:23 simonb Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -46,7 +46,7 @@ __COPYRIGHT("@(#) Copyright (c) 1989, 1993\n\
 #if 0
 static char sccsid[] = "@(#)factor.c	8.4 (Berkeley) 5/4/95";
 #else
-__RCSID("$NetBSD: factor.c,v 1.9 1999/09/08 21:17:48 jsm Exp $");
+__RCSID("$NetBSD: factor.c,v 1.10 2002/06/15 02:12:23 simonb Exp $");
 #endif
 #endif /* not lint */
 
@@ -69,37 +69,45 @@ __RCSID("$NetBSD: factor.c,v 1.9 1999/09/08 21:17:48 jsm Exp $");
  * If no args are given, the list of numbers are read from stdin.
  */
 
-#include <err.h>
 #include <ctype.h>
+#include <err.h>
 #include <errno.h>
 #include <limits.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <unistd.h>
 
+#include <openssl/bn.h>
+
 #include "primes.h"
 
 /*
  * prime[i] is the (i-1)th prime.
  *
- * We are able to sieve 2^32-1 because this byte table yields all primes 
+ * We are able to sieve 2^32-1 because this byte table yields all primes
  * up to 65537 and 65537^2 > 2^32-1.
  */
 extern const ubig prime[];
 extern const ubig *pr_limit;		/* largest prime in the prime array */
 
-int	main __P((int, char *[]));
-void	pr_fact __P((ubig));	/* print factors of a value */
-void	usage __P((void)) __attribute__((__noreturn__));
+#define	PRIME_CHECKS	5
+
+int	main(int, char *[]);
+void	pr_fact(BIGNUM *);			/* print factors of a value */
+void	BN_print_dec_fp(FILE *, const BIGNUM *);
+void	pollard_pminus1(BIGNUM *);		/* print factors for big numbers */
+void	usage(void) __attribute__((__noreturn__));
 
 int
-main(argc, argv)
-	int argc;
-	char *argv[];
+main(int argc, char *argv[])
 {
-	ubig val;
+	BIGNUM *val;
 	int ch;
-	char *p, buf[100];		/* > max number of digits. */
+	char *p, buf[LINE_MAX];		/* > max number of digits. */
+
+	val = BN_new();
+	if (val == NULL)
+		errx(1, "can't initialise bignum");
 
 	while ((ch = getopt(argc, argv, "")) != -1)
 		switch (ch) {
@@ -123,12 +131,8 @@ main(argc, argv)
 				continue;
 			if (*p == '-')
 				errx(1, "negative numbers aren't permitted.");
-			errno = 0;
-			val = strtoul(buf, &p, 10);
-			if (errno)
-				err(1, "%s", buf);
-			if (*p != '\n')
-				errx(1, "%s: illegal numeric format.", buf);
+			if (BN_dec2bn(&val, buf) == 0)
+				errx(1, "%s: illegal numeric format.", argv[0]);
 			pr_fact(val);
 		}
 	/* Factor the arguments. */
@@ -136,11 +140,7 @@ main(argc, argv)
 		for (; *argv != NULL; ++argv) {
 			if (argv[0][0] == '-')
 				errx(1, "negative numbers aren't permitted.");
-			errno = 0;
-			val = strtoul(argv[0], &p, 10);
-			if (errno)
-				err(1, "%s", argv[0]);
-			if (*p != '\0')
+			if (BN_dec2bn(&val, argv[0]) == 0)
 				errx(1, "%s: illegal numeric format.", argv[0]);
 			pr_fact(val);
 		}
@@ -161,49 +161,118 @@ main(argc, argv)
  * Factors are printed with leading tabs.
  */
 void
-pr_fact(val)
-	ubig val;		/* Factor this value. */
+pr_fact(BIGNUM *val)
 {
 	const ubig *fact;		/* The factor found. */
 
 	/* Firewall - catch 0 and 1. */
-	if (val == 0)		/* Historical practice; 0 just exits. */
+	if (BN_is_zero(val))	/* Historical practice; 0 just exits. */
 		exit(0);
-	if (val == 1) {
-		(void)printf("1: 1\n");
+	if (BN_is_one(val)) {
+		printf("1: 1\n");
 		return;
 	}
 
 	/* Factor value. */
-	(void)printf("%lu:", val);
-	for (fact = &prime[0]; val > 1; ++fact) {
+
+	BN_print_dec_fp(stdout, val);
+	putchar(':');
+	for (fact = &prime[0]; !BN_is_one(val); ++fact) {
 		/* Look for the smallest factor. */
 		do {
-			if (val % (long)*fact == 0)
+			if (BN_mod_word(val, (BN_ULONG)*fact) == 0)
 				break;
 		} while (++fact <= pr_limit);
 
 		/* Watch for primes larger than the table. */
 		if (fact > pr_limit) {
-			(void)printf(" %lu", val);
+			pollard_pminus1(val);
 			break;
 		}
 
 		/* Divide factor out until none are left. */
 		do {
-			(void)printf(" %lu", *fact);
-			val /= (long)*fact;
-		} while ((val % (long)*fact) == 0);
+			printf(" %lu", *fact);
+			BN_div_word(val, (BN_ULONG)*fact);
+		} while (BN_mod_word(val, (BN_ULONG)*fact) == 0);
 
 		/* Let the user know we're doing something. */
-		(void)fflush(stdout);
+		fflush(stdout);
 	}
-	(void)putchar('\n');
+	putchar('\n');
+}
+
+/*
+ * Sigh..  No _decimal_ output to file functions in BN.
+ */
+void
+BN_print_dec_fp(FILE *fp, const BIGNUM *num)
+{
+	char *buf;
+	
+	buf = BN_bn2dec(num);
+	if (buf == NULL)
+		return;	/* XXX do anything here? */
+	fprintf(fp, buf);
+	free(buf);
 }
 
 void
-usage()
+usage(void)
 {
-	(void)fprintf(stderr, "usage: factor [value ...]\n");
+	fprintf(stderr, "usage: factor [value ...]\n");
 	exit (0);
+}
+
+
+
+
+/* pollard rho, algorithm from Jim Gillogly, May 2000 */
+
+void
+pollard_pminus1(BIGNUM *val)
+{
+	BIGNUM *base, *num, *i, *x;
+	BN_CTX *ctx;
+
+	ctx = BN_CTX_new();
+
+	base = BN_new();
+	num = BN_new();
+	i = BN_new();
+	x = BN_new();
+
+	BN_set_word(i, 2);
+	BN_set_word(base, 2);
+
+	for (;;) {
+		BN_mod_exp(base, base, i, val, ctx);
+
+		BN_copy(x, base);
+		BN_sub_word(x, 1);
+		BN_gcd(x, x, val, ctx);
+
+		if (!BN_is_one(x)) {
+			if (BN_is_prime(x, PRIME_CHECKS, NULL, NULL,
+			    NULL) == 1) {
+				putchar(' ');
+				BN_print_dec_fp(stdout, x);
+			} else
+				pollard_pminus1(x);
+			fflush(stdout);
+
+			BN_div(num, NULL, val, x, ctx);
+			if (BN_is_one(num))
+				return;
+			if (BN_is_prime(num, PRIME_CHECKS, NULL, NULL,
+			    NULL) == 1) {
+				putchar(' ');
+				BN_print_dec_fp(stdout, num);
+				fflush(stdout);
+				return;
+			}
+			BN_copy(val, num);
+		}
+		BN_add_word(i, 1);
+	}
 }
