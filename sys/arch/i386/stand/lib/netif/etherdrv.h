@@ -1,4 +1,4 @@
-/*	$NetBSD: etherdrv.h,v 1.3 1997/07/15 11:23:04 drochner Exp $	*/
+/*	$NetBSD: etherdrv.h,v 1.4 1999/02/19 19:30:46 drochner Exp $	*/
 
 /*
  * Copyright (c) 1996
@@ -32,9 +32,9 @@
  *
  */
 
-int EtherInit __P((char*));
-int EtherSend __P((char*, int));
-int EtherReceive __P((char*, int));
+int EtherInit __P((unsigned char *));
+int EtherSend __P((char *, int));
+int EtherReceive __P((char *, int));
 void EtherStop __P((void));
 
 extern int ether_medium;

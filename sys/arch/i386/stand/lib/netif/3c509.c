@@ -1,4 +1,4 @@
-/*	$NetBSD: 3c509.c,v 1.5 1998/05/14 18:15:02 drochner Exp $	*/
+/*	$NetBSD: 3c509.c,v 1.6 1999/02/19 19:30:46 drochner Exp $	*/
 
 /* stripped down from freebsd:sys/i386/netboot/3c509.c */
 
@@ -73,7 +73,7 @@ extern int mapio __P((void));
 ETH_PROBE - Look for an adapter
 ***************************************************************************/
 int EtherInit(myadr)
-char *myadr;
+	unsigned char *myadr;
 {
 	/* common variables */
 	int i;

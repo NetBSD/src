@@ -1,4 +1,4 @@
-/*	$NetBSD: pcnet_pci.c,v 1.4 1997/09/20 12:13:05 drochner Exp $	*/
+/*	$NetBSD: pcnet_pci.c,v 1.5 1999/02/19 19:30:47 drochner Exp $	*/
 
 /*
  * Copyright (c) 1996
@@ -57,7 +57,7 @@ extern void am7990_stop __P((void));
 static struct btinfo_netif bi_netif;
 
 int EtherInit(myadr)
-char *myadr;
+	unsigned char *myadr;
 {
   int iobase, pcicsr, i;
 
