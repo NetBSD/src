@@ -1,4 +1,4 @@
-/* $NetBSD: wsemul_sun.c,v 1.7 1998/06/20 19:11:05 drochner Exp $ */
+/* $NetBSD: wsemul_sun.c,v 1.8 1998/06/20 21:52:50 drochner Exp $ */
 
 /*
  * Copyright (c) 1996, 1997 Christopher G. Demetriou.  All rights reserved.
@@ -33,7 +33,7 @@
 static const char _copyright[] __attribute__ ((unused)) =
     "Copyright (c) 1996, 1997 Christopher G. Demetriou.  All rights reserved.";
 static const char _rcsid[] __attribute__ ((unused)) =
-    "$NetBSD: wsemul_sun.c,v 1.7 1998/06/20 19:11:05 drochner Exp $";
+    "$NetBSD: wsemul_sun.c,v 1.8 1998/06/20 21:52:50 drochner Exp $";
 
 /* XXX DESCRIPTION/SOURCE OF INFORMATION */
 
@@ -284,8 +284,8 @@ wsemul_sun_output_normal(edp, c, kernel)
 		/* FALLTHRU */
 
 	default:		/* normal character */
-		(*edp->emulops->putstr)(edp->emulcookie, edp->crow, edp->ccol,
-		    &c, 1, kernel ? edp->kernattr : edp->curattr);
+		(*edp->emulops->putchar)(edp->emulcookie, edp->crow, edp->ccol,
+		    c, kernel ? edp->kernattr : edp->curattr);
 		edp->ccol++;
 
 		/* if cur col is still on cur line, done. */

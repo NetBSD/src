@@ -1,4 +1,4 @@
-/* $NetBSD: wscons_rops.c,v 1.2 1998/05/14 20:49:57 drochner Exp $ */
+/* $NetBSD: wscons_rops.c,v 1.3 1998/06/20 21:52:50 drochner Exp $ */
 
 /*
  * Copyright (c) 1991, 1993
@@ -98,14 +98,15 @@ rcons_cursor(id, on, row, col)
  * Actually write a string to the frame buffer.
  */
 void
-rcons_putstr(id, row, col, str, n, attr)
+rcons_putchar(id, row, col, uc, attr)
 	void *id;
-	int row, col, n;
-	char *str;
+	int row, col;
+	u_int uc;
 	long attr;
 {
 	struct rcons *rc = id;
 	register int x, y, op;
+	u_char help;
 
 	x = col * rc->rc_font->width + rc->rc_xorigin;
 	y = row * rc->rc_font->height + rc->rc_font_ascent + rc->rc_yorigin;
@@ -113,7 +114,8 @@ rcons_putstr(id, row, col, str, n, attr)
 	op = RAS_SRC;
 	if ((attr != 0) ^ ((rc->rc_bits & RC_INVERT) != 0))
 		op = RAS_NOT(op);
-	raster_textn(rc->rc_sp, x, y, op, rc->rc_font, str, n);
+	help = uc & 0xff;
+	raster_textn(rc->rc_sp, x, y, op, rc->rc_font, &help, 1);
 }
 
 /*
