@@ -98,16 +98,22 @@ pcmcia_attach(parent, self, aux)
 }
 
 int
-pcmcia_attach_card(dev, iftype)
+pcmcia_card_attach(dev)
      struct device *dev;
-     int *iftype;
 {
     struct pcmcia_softc *sc = (struct pcmcia_softc *) dev;
     struct pcmcia_function *pf;
     struct pcmcia_attach_args paa;
     int attached;
 
+    /* this is here so that when socket_enable calls gettype, trt happens */
+    sc->card.pf_head.sqh_first = NULL;
+
+    pcmcia_chip_socket_enable(sc->pct, sc->pch);
+
     pcmcia_read_cis(sc);
+
+    pcmcia_chip_socket_disable(sc->pct, sc->pch);
 
     /* bail now if the card has no functions, or if there was an error
        in the cis. */
@@ -119,16 +125,6 @@ pcmcia_attach_card(dev, iftype)
 
     if (pcmcia_verbose)
 	pcmcia_print_cis(sc);
-
-    /* set the iftype to memory if this card has only one function,
-       and that is memory. */
-    if (sc->card.pf_head.sqh_first &&
-	!sc->card.pf_head.sqh_first->pf_list.sqe_next &&
-	(sc->card.pf_head.sqh_first->cfe_head.sqh_first->iftype ==
-	 PCMCIA_IFTYPE_MEMORY))
-	*iftype = PCMCIA_IFTYPE_MEMORY;
-    else
-	*iftype = PCMCIA_IFTYPE_IO;
 
     attached = 0;
 
@@ -169,7 +165,7 @@ pcmcia_attach_card(dev, iftype)
 }
 
 void
-pcmcia_detach_card(dev)
+pcmcia_card_detach(dev)
      struct device *dev;
 {
 /*    struct pcmcia_softc *sc = (struct pcmcia_softc *) dev; */
@@ -229,6 +225,23 @@ pcmcia_print(arg, pnp)
     printf(" function %d", pa->pf->number);
 
     return(UNCONF);
+}
+
+int pcmcia_card_gettype(dev)
+     struct device *dev;
+{
+    struct pcmcia_softc *sc = (struct pcmcia_softc *) dev;
+
+    /* set the iftype to memory if this card has no functions (not yet
+       probed), or only one function, and that is memory. */
+    if (!sc->card.pf_head.sqh_first ||
+	(sc->card.pf_head.sqh_first &&
+	 !sc->card.pf_head.sqh_first->pf_list.sqe_next &&
+	 (sc->card.pf_head.sqh_first->cfe_head.sqh_first->iftype ==
+	  PCMCIA_IFTYPE_MEMORY)))
+	return(PCMCIA_IFTYPE_MEMORY);
+    else
+	return(PCMCIA_IFTYPE_IO);
 }
 
 /* Initialize a PCMCIA function.  May be called as long as the function
@@ -314,11 +327,8 @@ pcmcia_function_enable(pf)
 	reg |= PCMCIA_CCR_OPTION_FUNC_ENABLE;
     pcmcia_ccr_write(pf, PCMCIA_CCR_OPTION, reg);
 
-#if 0
-    reg = PCMCIA_CCR_STATUS_SIGCHG;
-#else
     reg = 0;
-#endif
+
     if ((pf->cfe->flags & PCMCIA_CFE_IO16) == 0)
 	reg |= PCMCIA_CCR_STATUS_IOIS8;
     if (pf->cfe->flags & PCMCIA_CFE_AUDIO)
@@ -334,7 +344,7 @@ pcmcia_function_enable(pf)
     return(0);
 
  bad:
-    /* Decrement the refernce count, and power down the socket,
+    /* Decrement the reference count, and power down the socket,
        if necessary. */
     if (pf->sc->sc_enabled_count-- == 1)
 	pcmcia_chip_socket_disable(pf->sc->pct, pf->sc->pch);
@@ -380,9 +390,9 @@ pcmcia_function_disable(pf)
 	pcmcia_mem_free(pf, &pf->pf_pcmh);
     }
 
-    /* Decrement the refernce count, and power down the socket,
+    /* Decrement the reference count, and power down the socket,
        if necessary. */
-    if (pf->sc->sc_enabled_count-- == 1)
+    if (--pf->sc->sc_enabled_count == 0)
 	pcmcia_chip_socket_disable(pf->sc->pct, pf->sc->pch);
 }
 
