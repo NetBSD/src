@@ -1,4 +1,4 @@
-#	$NetBSD: GENERIC,v 1.26 1995/12/14 01:09:59 tls Exp $
+#	$NetBSD: GENERIC,v 1.27 1995/12/24 00:22:20 neil Exp $
 #
 #	GENERIC -- everything that's currently supported
 #
@@ -176,3 +176,4 @@ pseudo-device	tun	2		# network tunneling over tty
 pseudo-device	pty	64		# pseudo-terminals
 pseudo-device	tb	1		# tablet line discipline
 pseudo-device	vnd	4		# paging to files
+pseudo-device	ccd	4		# concatenated disk devices
