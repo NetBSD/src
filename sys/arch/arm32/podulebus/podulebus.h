@@ -1,4 +1,4 @@
-/* $NetBSD: podulebus.h,v 1.2 1996/03/18 21:23:18 mark Exp $ */
+/* $NetBSD: podulebus.h,v 1.3 1996/04/26 22:34:02 mark Exp $ */
 
 /*
  * Copyright (c) 1995 Mark Brinicombe.
@@ -107,7 +107,8 @@ struct podule_attach_args {
 
 extern podule_t podules[MAX_PODULES + MAX_NETSLOTS];
 
-int findpodule	__P((int, int, int));
+int matchpodule __P((struct podule_attach_args *pa,
+    int manufacturer, int product, int required_slot));
 
 #endif
 
