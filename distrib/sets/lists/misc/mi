@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.23 1999/12/23 14:38:12 abs Exp $
+# $NetBSD: mi,v 1.24 1999/12/29 04:16:24 hubertf Exp $
 ./usr/share/dict/README
 ./usr/share/dict/eign
 ./usr/share/dict/propernames
@@ -206,6 +206,7 @@
 ./usr/share/examples/amd/cd
 ./usr/share/examples/amd/master
 ./usr/share/examples/amd/net
+./usr/share/examples/apm/script
 ./usr/share/examples/dhcp/dhcpd.conf
 ./usr/share/examples/emul/svr4/etc/SVR4_MAKEDEV
 ./usr/share/examples/emul/svr4/etc/netconfig
