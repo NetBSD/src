@@ -1,4 +1,4 @@
-/*	$NetBSD: m68k.h,v 1.7 2001/05/03 20:55:11 fredette Exp $	*/
+/*	$NetBSD: m68k.h,v 1.8 2001/06/14 15:49:05 fredette Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -108,6 +108,10 @@ void	zeropage __P((void *addr));
 /* locore.s (XXX: move to support.s?) */
 int 	getdfc __P((void));
 int 	getsfc __P((void));
+
+/* w16copy.s */
+void	w16zero __P((void *, u_int));
+void	w16copy __P((const void *, void *, u_int));
 
 #ifdef MAPPEDCOPY
 /* mappedcopy.c */
