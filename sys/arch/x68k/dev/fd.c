@@ -1,4 +1,4 @@
-/*	$NetBSD: fd.c,v 1.31 2000/03/23 06:47:32 thorpej Exp $	*/
+/*	$NetBSD: fd.c,v 1.32 2000/03/27 15:49:34 minoura Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -1157,7 +1157,7 @@ loop:
 		fd->sc_dk.dk_seek++;
 		disk_busy(&fd->sc_dk);
 
-		callout_stop(&fdc->sc_timo_ch, 4 * hz, fdctimeout, fdc);
+		callout_reset(&fdc->sc_timo_ch, 4 * hz, fdctimeout, fdc);
 		return 1;
 
 	case DOIO:
