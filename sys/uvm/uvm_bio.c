@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_bio.c,v 1.1.2.4 1999/04/30 04:32:07 chs Exp $	*/
+/*	$NetBSD: uvm_bio.c,v 1.1.2.5 1999/05/30 15:17:29 chs Exp $	*/
 
 /* 
  * Copyright (c) 1998 Chuck Silvers.
@@ -445,11 +445,12 @@ ubc_alloc(uobj, offset, lenp, flags)
 	int flags;
 {
 	int s;
-	vaddr_t umap_offset, slot_offset;
+	vaddr_t umap_offset, slot_offset, va;
 	struct ubc_map *umap;
 	UVMHIST_FUNC("ubc_alloc"); UVMHIST_CALLED(ubchist);
 
-	UVMHIST_LOG(ubchist, "uobj %p offset 0x%lx", uobj, offset,0,0);
+	UVMHIST_LOG(ubchist, "uobj %p offset 0x%lx len 0x%lx",
+		    uobj, offset, *lenp,0);
 
 	umap_offset = offset & ~(MAXBSIZE - 1);
 	slot_offset = offset & (MAXBSIZE - 1);
@@ -466,8 +467,6 @@ again:
 	simple_lock(&ubc_object.uobj.vmobjlock);
 	umap = ubc_find_mapping(uobj, umap_offset);
 	if (umap == NULL) {
-		vaddr_t va;
-
 		umap = TAILQ_FIRST(&ubc_object.inactive);
 		if (umap == NULL) {
 			simple_unlock(&ubc_object.uobj.vmobjlock);
@@ -554,7 +553,6 @@ ubc_release(va, wlen)
 	}
 	UVMHIST_LOG(ubchist, "umap %p refs %d", umap, umap->refcount,0,0);
 	simple_unlock(&ubc_object.uobj.vmobjlock);
-
 	splx(s);
 }
 
@@ -571,6 +569,7 @@ ubc_flush(uobj, start, end)
 	vaddr_t start, end;
 {
 	struct ubc_map *umap;
+	vaddr_t va;
 	int s;
 	UVMHIST_FUNC("ubc_flush");  UVMHIST_CALLED(ubchist);
 
@@ -598,6 +597,11 @@ ubc_flush(uobj, start, end)
 		 * remove from hash,
 		 * move to head of inactive queue.
 		 */
+
+		va = (vaddr_t)(ubc_object.kva +
+			       (umap - ubc_object.umap) * MAXBSIZE);
+		pmap_remove(pmap_kernel(), va, va + MAXBSIZE);
+
 		LIST_REMOVE(umap, hash);
 		umap->uobj = NULL;
 		TAILQ_REMOVE(&ubc_object.inactive, umap, inactive);
