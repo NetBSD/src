@@ -1,4 +1,4 @@
-/*	$NetBSD: if_gre.h,v 1.5 1999/11/19 20:41:19 thorpej Exp $ */
+/*	$NetBSD: if_gre.h,v 1.5.4.1 2002/02/26 20:57:42 he Exp $ */
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -132,6 +132,8 @@ struct mobip_h {
 #define MOB_H_SIZ_L		(sizeof(struct mobile_h))
 #define MOB_H_SBIT	0x0080
 
+#define	GRE_TTL	30
+extern int ip_gre_ttl;
 
 /* 
  * ioctls needed to manipulate the interface 
