@@ -1,7 +1,7 @@
-/*	$NetBSD: pccons.c,v 1.82 1995/04/19 18:10:47 mycroft Exp $	*/
+/*	$NetBSD: pccons.c,v 1.83 1995/04/19 19:10:35 mycroft Exp $	*/
 
 /*-
- * Copyright (c) 1993, 1994 Charles Hannum.
+ * Copyright (c) 1993, 1994, 1995 Charles Hannum.  All rights reserved.
  * Copyright (c) 1990 The Regents of the University of California.
  * All rights reserved.
  *
@@ -42,8 +42,6 @@
 /*
  * code to work keyboard & display for PC-style console
  */
-
-#include "pc.h"
 
 #include <sys/param.h>
 #include <sys/conf.h>

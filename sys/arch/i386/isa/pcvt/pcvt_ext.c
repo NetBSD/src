@@ -1,4 +1,4 @@
-/*	$NetBSD: pcvt_ext.c,v 1.6 1994/10/30 21:44:34 cgd Exp $	*/
+/*	$NetBSD: pcvt_ext.c,v 1.7 1995/04/19 19:12:15 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1993, 1994 Hellmuth Michaelis and Joerg Wunsch
@@ -59,9 +59,6 @@
  *	-hm	------------ Release 3.00 --------------
  *
  *---------------------------------------------------------------------------*/
-
-#include "vt.h"
-#if NVT > 0
 
 #include "pcvt_hdr.h"		/* global include */
 
@@ -2569,8 +2566,6 @@ usl_vt_ioctl(Dev_t dev, u_long cmd, caddr_t data, int flag, struct proc *p)
 	return -1;		/* inappropriate usl_vt_compat ioctl */
 }
 #endif /* PCVT_USL_VT_COMPAT */
-
-#endif	/* NVT > 0 */
 
 /* ------------------------- E O F ------------------------------------------*/
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: com.c,v 1.50 1995/04/19 18:59:27 mycroft Exp $	*/
+/*	$NetBSD: com.c,v 1.51 1995/04/19 19:12:53 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994, 1995 Charles Hannum.  All rights reserved.
@@ -40,8 +40,6 @@
  * COM driver, based on HP dca driver
  * uses National Semiconductor NS16450/NS16550AF UART
  */
-#include "com.h"
-
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/ioctl.h>
