@@ -1,4 +1,4 @@
-/*	$NetBSD: kernel.h,v 1.12 1997/01/15 01:37:55 perry Exp $	*/
+/*	$NetBSD: kernel.h,v 1.13 1997/01/15 05:11:45 perry Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -42,14 +42,12 @@
 
 /* Global variables for the kernel. */
 
-/* 1.1 */
 extern long hostid;
 extern char hostname[MAXHOSTNAMELEN];
 extern int hostnamelen;
 extern char domainname[MAXHOSTNAMELEN];
 extern int domainnamelen;
 
-/* 1.2 */
 extern volatile struct timeval mono_time;
 extern struct timeval boottime;
 extern struct timeval runtime;
