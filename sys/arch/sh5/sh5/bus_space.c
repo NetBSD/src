@@ -1,4 +1,4 @@
-/*	$NetBSD: bus_space.c,v 1.1 2002/07/05 13:32:03 scw Exp $	*/
+/*	$NetBSD: bus_space.c,v 1.2 2002/08/26 10:35:40 scw Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -206,8 +206,8 @@ static int
 _bus_space_map(void *cookie, bus_addr_t addr, bus_size_t size,
     int flags, bus_space_handle_t *bushp)
 {
-	bus_dma_segment_t seg;
 	vaddr_t va;
+	paddr_t pa;
 	int i;
 
 	for (i = 0; i < _BUS_SPACE_NUM_BOOT_MAPPINGS; i++) {
@@ -229,23 +229,18 @@ _bus_space_map(void *cookie, bus_addr_t addr, bus_size_t size,
 		 * a mapping set up during bootstrap.
 		 */
 		*bushp = (bus_space_handle_t)(bootmapping[i].bm_va +
-		    (vaddr_t)(seg.ds_addr - bootmapping[i].bm_start));
+		    (vaddr_t)(addr - bootmapping[i].bm_start));
 		return (0);
 	}
 
-	seg.ds_addr = seg._ds_cpuaddr = sh5_trunc_page(addr);
-	seg.ds_len = sh5_round_page(size);
+	pa = sh5_trunc_page(addr);
+	size = sh5_round_page(size);
 
 	if (pmap_initialized) {
-		caddr_t kva;
 		/*
 		 * Set up a new mapping in the normal way
 		 */
-		if (bus_dmamem_map(&_sh5_bus_dma_tag, &seg, 1, seg.ds_len, &kva,
-		    flags | BUS_DMA_COHERENT))
-			return (EIO);
-
-		va = (vaddr_t)kva;
+		va = pmap_map_device(pa, size);
 	} else {
 		/*
 		 * We're being called before the pmap (and presumably UVM)
@@ -263,11 +258,10 @@ _bus_space_map(void *cookie, bus_addr_t addr, bus_size_t size,
 			/*NOTREACHED*/
 		}
 
-		va = pmap_bootstrap_mapping((paddr_t)seg.ds_addr,
-		    (u_int)seg.ds_len);
+		va = pmap_map_device(pa, size);
 		bootmapping[i].bm_valid = 1;
-		bootmapping[i].bm_start = seg.ds_addr;
-		bootmapping[i].bm_size = seg.ds_len;
+		bootmapping[i].bm_start = pa;
+		bootmapping[i].bm_size = size;
 		bootmapping[i].bm_va = va;
 	}
 
@@ -304,7 +298,7 @@ _bus_space_unmap(void *cookie, bus_space_handle_t bush, bus_size_t size)
 		return;
 	}
 
-	bus_dmamem_unmap(&_sh5_bus_dma_tag, (caddr_t) va, size);
+	pmap_kremove(va, size);
 }
 
 /*ARGSUSED*/
