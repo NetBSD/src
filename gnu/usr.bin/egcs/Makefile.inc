@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.27 2001/01/04 10:43:24 itojun Exp $
+#	$NetBSD: Makefile.inc,v 1.28 2001/01/08 08:29:59 itojun Exp $
 
 .if !defined(GCC_MAKEFILE_INC)
 GCC_MAKEFILE_INC=1
@@ -21,12 +21,14 @@ COMMON=		${.CURDIR}/../common
 COMMONOBJ!=	cd ${.CURDIR}/../common; ${MAKE} print-objdir
 .endif
 
-.if (${MACHINE_ARCH} == "mipsel") || (${MACHINE_ARCH} == "mipseb")
-ARCHSUBDIR= mips
-.elif (${MACHINE_ARCH} == "sh3el") || (${MACHINE_ARCH} == "sh3eb")
-ARCHSUBDIR= sh3
-.else
+.if exists(${.CURDIR}/../arch/${MACHINE_ARCH})
 ARCHSUBDIR= ${MACHINE_ARCH}
+.elif exists(${.CURDIR}/../arch/${MACHINE_CPU})
+ARCHSUBDIR= ${MACHINE_CPU}
+.else
+.BEGIN:
+	@echo no ../arch/${MACHINE_ARCH} nor ../arch/${MACHINE_CPU} exists
+	@false
 .endif
 
 CPPFLAGS+=	-I${.CURDIR}/../arch \
@@ -46,11 +48,11 @@ HOST_CPPFLAGS+= -I${.CURDIR}/../arch \
 CPPFLAGS+=-DDEFAULT_ELF
 .endif
 
-.if (${MACHINE_ARCH} == "mipseb")
+.if (${MACHINE_ARCH} == "mipseb") || (${MACHINE_ARCH} == "sh3eb")
 CPPFLAGS+=-DTARGET_BIG_ENDIAN_DEFAULT
 .endif
 
-.if (${MACHINE_ARCH} == "mipsel")
+.if (${MACHINE_ARCH} == "mipsel") || (${MACHINE_ARCH} == "sh3el")
 CPPFLAGS+=-DTARGET_LITTLE_ENDIAN_DEFAULT
 .endif
 

@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.8 2001/01/04 09:22:06 itojun Exp $
+#	$NetBSD: Makefile,v 1.9 2001/01/08 08:29:59 itojun Exp $
 
 .include <bsd.own.mk>
 
@@ -70,14 +70,6 @@ DPSRCS+=	g2c.h
 
 MKLINT=		no
 
-.if (${MACHINE_ARCH} == "mipsel") || (${MACHINE_ARCH} == "mipseb")
-ARCHSUBDIR= mips
-.elif (${MACHINE_ARCH} == "sh3el") || (${MACHINE_ARCH} == "sh3eb")
-ARCHSUBDIR= sh3
-.else
-ARCHSUBDIR= ${MACHINE_ARCH}
-.endif
-
 CPPFLAGS+=	-I. -I${.CURDIR} -I${ARCH} -I${ARCH}/${ARCHSUBDIR} \
 		-I${DIST}/libf2c -I${DIST}/libf2c/libF77 \
 		-I${DIST}/libf2c/libI77 -I${DIST}/libf2c/libU77 \
@@ -96,6 +88,16 @@ MAKE_SYMLINK?=	ln -sf
 
 DIST=		${.CURDIR}/../../dist
 ARCH=		${.CURDIR}/../../usr.bin/egcs/arch
+
+.if exists(${ARCH}/${MACHINE_ARCH})
+ARCHSUBDIR= ${MACHINE_ARCH}
+.elif exists(${ARCH}/${MACHINE_CPU})
+ARCHSUBDIR= ${MACHINE_CPU}
+.else
+.BEGIN:
+	@echo no egcs/arch/${MACHINE_ARCH} nor egcs/arch/${MACHINE_CPU} exists
+	@false
+.endif
 
 .PATH:${DIST}/libf2c ${DIST}/gcc/f
 

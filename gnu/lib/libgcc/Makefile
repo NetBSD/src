@@ -1,4 +1,6 @@
-#	$NetBSD: Makefile,v 1.15 2001/01/04 09:17:42 itojun Exp $
+#	$NetBSD: Makefile,v 1.16 2001/01/08 08:29:59 itojun Exp $
+
+.include <bsd.own.mk>
 
 HAVE_GCC28!=	${CXX} --version | egrep "^(2\.8|egcs)" ; echo
 
@@ -9,12 +11,14 @@ MKPIC=		no
 DIST=		${.CURDIR}/../../dist/gcc
 ARCH=		${.CURDIR}/../../usr.bin/egcs/arch
 
-.if (${MACHINE_ARCH} == "mipsel") || (${MACHINE_ARCH} == "mipseb")
-ARCHSUBDIR= mips
-.elif (${MACHINE_ARCH} == "sh3el") || (${MACHINE_ARCH} == "sh3eb")
-ARCHSUBDIR= sh3
-.else
+.if exists(${ARCH}/${MACHINE_ARCH})
 ARCHSUBDIR= ${MACHINE_ARCH}
+.elif exists(${ARCH}/${MACHINE_CPU})
+ARCHSUBDIR= ${MACHINE_CPU}
+.else
+.BEGIN:
+	@echo no egcs/arch/${MACHINE_ARCH} nor egcs/arch/${MACHINE_CPU} exists
+	@false
 .endif
 
 CPPFLAGS+=	-I${ARCH}/${ARCHSUBDIR} -I${ARCH} \
