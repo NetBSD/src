@@ -1,4 +1,4 @@
-/*	$NetBSD: conf_common.c,v 1.1 2002/07/26 03:23:04 simonb Exp $	*/
+/*	$NetBSD: conf_common.c,v 1.2 2002/07/31 03:42:54 simonb Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: conf_common.c,v 1.1 2002/07/26 03:23:04 simonb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: conf_common.c,v 1.2 2002/07/31 03:42:54 simonb Exp $");
 
 #include "opt_systrace.h"
 
@@ -160,6 +160,18 @@ __KERNEL_RCSID(0, "$NetBSD: conf_common.c,v 1.1 2002/07/26 03:23:04 simonb Exp $
 #define	NSPKR		0
 #endif
 
+#ifdef CONF_HAVE_KTTCP
+#include "kttcp.h"
+#else
+#define	NKTTCP		0
+#endif
+
+#ifdef CONF_HAVE_SYSMON
+#include <dev/sysmon/sysmonconf.h>
+#else
+#define	NSYSMON		0
+#endif
+
 #ifdef CONF_HAVE_ISA	/* XXX bad name */
 #include "fdc.h"
 #include "lpt.h"
@@ -176,6 +188,17 @@ __KERNEL_RCSID(0, "$NetBSD: conf_common.c,v 1.1 2002/07/26 03:23:04 simonb Exp $
 #include "aucom.h"
 #else
 #define	NAUCOM		0
+#endif
+
+#ifdef CONF_HAVE_SBMIPS
+#ifdef JTAGCONSOLE
+cdev_decl(sbjcn);
+#else
+#include "sbscn.h"
+cdev_decl(sbscn);
+#endif /* JTAGCONSOLE */
+#else
+#define	NSBSCN		0
 #endif
 
 #include "clockctl.h"
@@ -251,6 +274,8 @@ cdev_decl(isdntel);
 #include <altq/altqconf.h>
 
 cdev_decl(pci);
+cdev_decl(kttcp);
+cdev_decl(sysmon);
 
 struct bdevsw bdevsw[] =
 {
@@ -327,6 +352,8 @@ struct bdevsw bdevsw[] =
 	bdev_lkm_dummy(),		/* 70 */
 	bdev_lkm_dummy(),		/* 71 */
 	bdev_lkm_dummy(),		/* 72 */
+	bdev_lkm_dummy(),		/* 73 */
+	bdev_lkm_dummy(),		/* 74 */
 };
 int	nblkdev = sizeof(bdevsw) / sizeof(bdevsw[0]);
 
@@ -349,7 +376,11 @@ struct cdevsw cdevsw[] =
 	cdev_ch_init(NCH,ch),		/* 14: SCSI autochanger */
 	cdev_notdef(),			/* 15 */
 	cdev_lkm_init(NLKM,lkm),	/* 16: loadable module driver */
-	cdev_lkm_dummy(),		/* 17 */
+#ifdef JTAGCONSOLE
+	cdev_tty_init(1,sbjcn),		/* 17: JTAG serial port */
+#else
+	cdev_tty_init(NSBSCN,sbscn),	/* 17: sbscn serial port */
+#endif
 	cdev_lkm_dummy(),		/* 18 */
 	cdev_lkm_dummy(),		/* 19 */
 	cdev_lkm_dummy(),		/* 20 */
@@ -409,8 +440,10 @@ struct cdevsw cdevsw[] =
 #else
 	cdev_notdef(),			/* 70: system call tracing */
 #endif
-	cdev__oci_init(NWSFONT, wsfont),/* 71: wsfont pseudo-device */
-	cdev_tty_init(NAUCOM,aucom),	/* 72: au1k UART */
+	cdev__oci_init(NKTTCP,kttcp),	/* 71: kernel ttcp helper */
+	cdev__oci_init(NWSFONT, wsfont),/* 72: wsfont pseudo-device */
+	cdev_tty_init(NAUCOM,aucom),	/* 73: au1k UART */
+	cdev_sysmon_init(NSYSMON, sysmon), /* 74: System Monitor */
 };
 int	nchrdev = sizeof(cdevsw) / sizeof(cdevsw[0]);
 
@@ -522,6 +555,9 @@ static int chrtoblktbl[] = {
 	/* 69 */	NODEV,
 	/* 70 */	NODEV,
 	/* 71 */	NODEV,
+	/* 72 */	NODEV,
+	/* 73 */	NODEV,
+	/* 74 */	NODEV,
 };
 
 /*
