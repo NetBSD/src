@@ -1,4 +1,4 @@
-/*	$NetBSD: trace.c,v 1.2 2000/12/30 16:38:22 sommerfeld Exp $	*/
+/*	$NetBSD: trace.c,v 1.3 2001/01/23 02:48:05 cgd Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -38,11 +38,11 @@
 
 
 #ifdef MAKE_BOOTSTRAP
-static char rcsid[] = "$NetBSD: trace.c,v 1.2 2000/12/30 16:38:22 sommerfeld Exp $";
+static char rcsid[] = "$NetBSD: trace.c,v 1.3 2001/01/23 02:48:05 cgd Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: trace.c,v 1.2 2000/12/30 16:38:22 sommerfeld Exp $");
+__RCSID("$NetBSD: trace.c,v 1.3 2001/01/23 02:48:05 cgd Exp $");
 #endif /* not lint */
 #endif
 
@@ -60,8 +60,8 @@ __RCSID("$NetBSD: trace.c,v 1.2 2000/12/30 16:38:22 sommerfeld Exp $");
  */
 
 #include <stdio.h>
-#include <time.h>
 #include <unistd.h>
+#include <sys/time.h>
 
 #include "make.h"
 #include "job.h"
