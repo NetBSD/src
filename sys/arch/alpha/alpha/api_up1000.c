@@ -1,4 +1,4 @@
-/* $NetBSD: api_up1000.c,v 1.1 2000/06/01 20:30:28 thorpej Exp $ */
+/* $NetBSD: api_up1000.c,v 1.2 2000/06/06 20:26:19 matt Exp $ */
 
 /*
  * Copyright (c) 1995, 1996, 1997 Carnegie-Mellon University.
@@ -32,7 +32,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: api_up1000.c,v 1.1 2000/06/01 20:30:28 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: api_up1000.c,v 1.2 2000/06/06 20:26:19 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -222,7 +222,11 @@ api_up1000_device_register(dev, aux)
 		if (parent->dv_parent != scsipidev)
 			return;
 
-		if (b->unit / 100 != sa->sa_sc_link->scsipi_scsi.target)
+		if (sa->sa_sc_link->type == BUS_SCSI
+		    && b->unit / 100 != sa->sa_sc_link->scsipi_scsi.target)
+			return;
+		if (sa->sa_sc_link->type == BUS_ATAPI
+		    && b->unit / 100 != sa->sa_sc_link->scsipi_atapi.drive) 
 			return;
 
 		/* XXX LUN! */
