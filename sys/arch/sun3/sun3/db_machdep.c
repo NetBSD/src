@@ -1,4 +1,4 @@
-/*	$NetBSD: db_machdep.c,v 1.4 1995/04/26 23:23:23 gwr Exp $	*/
+/*	$NetBSD: db_machdep.c,v 1.5 1995/06/27 14:44:49 gwr Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Gordon W. Ross
@@ -82,18 +82,27 @@ db_write_text(dst, ch)
 	int ch;
 {
 	int		oldpte, tmppte;
-	vm_offset_t pgva;
+	vm_offset_t pgva = sun3_trunc_page((long)dst);
+	extern int cache_size;
 
-	pgva = sun3_trunc_page((long)dst);
+	/* Flush read-only VAC entry so we'll see the new one. */
+#ifdef	HAVECACHE
+	if (cache_size)
+		cache_flush_page(pgva);
+#endif
 	oldpte = get_pte(pgva);
 	if ((oldpte & PG_VALID) == 0) {
 		db_printf(" address 0x%x not a valid page\n", dst);
 		return;
 	}
+	tmppte = oldpte | PG_WRITE | PG_NC;
 
-	tmppte = oldpte | PG_WRITE;
 	set_pte(pgva, tmppte);
+
+	/* Now we can write in this page of kernel text... */
 	*dst = (char) ch;
+
+	/* Temporary PTE was non-cacheable; no flush needed. */
 	set_pte(pgva, oldpte);
 	ICIA();
 }

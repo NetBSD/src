@@ -1,7 +1,7 @@
-/*	$NetBSD: pmap.c,v 1.51 1995/05/24 21:06:40 gwr Exp $	*/
+/*	$NetBSD: pmap.c,v 1.52 1995/06/27 14:44:51 gwr Exp $	*/
 
 /*
- * Copyright (c) 1994 Gordon W. Ross
+ * Copyright (c) 1994, 1995 Gordon W. Ross
  * Copyright (c) 1993 Adam Glass
  * All rights reserved.
  *
@@ -33,30 +33,22 @@
  */
 
 /*
- * XXX - current_projects:
- *
- * debugging support
- * locking protocols
- *
- */
-
-/*
  * Some notes:
  *
  * sun3s have contexts (8).  In our mapping of the world, the kernel is mapped
  * into all contexts.  Processes take up a known portion of the context,
  * and compete for the available contexts on a LRU basis.
  *
- * sun3s also have this evil "pmeg" crapola.  Essentially each "context"'s
+ * sun3s also have this evil "PMEG" crapola.  Essentially each "context"'s
  * address space is defined by the 2048 one-byte entries in the segment map.
  * Each of these 1-byte entries points to a "Page Map Entry Group" (PMEG)
  * which contains the mappings for that virtual segment.  (This strange
  * terminology invented by Sun and preserved here for consistency.)
  * Each PMEG maps a segment of 128Kb length, with 16 pages of 8Kb each.
  *
- * As you can tell these "pmeg's" are in short supply and heavy demand.
- * 'pmeg's allocated to the kernel are "static" in the sense that they can't
- * be stolen from it.  'pmeg's allocated to a particular segment of a
+ * As you might guess, these PMEGs are in short supply and heavy demand.
+ * PMEGs allocated to the kernel are "static" in the sense that they can't
+ * be stolen from it.  PMEGs allocated to a particular segment of a
  * pmap's virtual space will be fought over by the other pmaps.
  */
 
@@ -1042,8 +1034,12 @@ pv_changepte(head, set_bits, clear_bits)
 		if (in_ctx == TRUE) {
 			/*
 			 * The PTE is in the current context.
+			 * Make sure PTE is up-to-date with VAC.
 			 */
-			/* XXX - Need cache flush here? */
+#ifdef	HAVECACHE
+			if (cache_size)
+				cache_flush_page(va);
+#endif
 			pte = get_pte(va);
 		} else {
 			/*
@@ -1076,7 +1072,7 @@ pv_changepte(head, set_bits, clear_bits)
 		pte &= ~clear_bits;
 
 		if (in_ctx == TRUE) {
-			/* XXX - Need cache flush here? */
+			/* Did cache flush above. */
 			set_pte(va, pte);
 		} else {
 			set_pte_pmeg(sme, VA_PTE_NUM(va), pte);
@@ -1138,8 +1134,12 @@ pv_syncflags(head)
 		if (in_ctx == TRUE) {
 			/*
 			 * The PTE is in the current context.
+			 * Make sure PTE is up-to-date with VAC.
 			 */
-			/* XXX - Need cache flush here? */
+#ifdef	HAVECACHE
+			if (cache_size)
+				cache_flush_page(va);
+#endif
 			pte = get_pte(va);
 		} else {
 			/*
@@ -1170,7 +1170,7 @@ pv_syncflags(head)
 		}
 
 		if (in_ctx == TRUE) {
-			/* XXX - Need cache flush here? */
+			/* Did cache flush above. */
 			set_pte(va, pte);
 		} else {
 			set_pte_pmeg(sme, VA_PTE_NUM(va), pte);
@@ -1572,7 +1572,7 @@ pmap_init()
 	extern int physmem;
 
 	pv_init();
-	physmem = btoc(avail_end);
+	physmem = btoc((u_int)avail_end);
 }
 
 /*
@@ -1810,6 +1810,13 @@ pmap_remove_range_mmu(pmap, sva, eva)
 	for (va = sva; va < eva; va += NBPG) {
 		pte = get_pte(va);
 		if (pte & PG_VALID) {
+#ifdef	HAVECACHE
+			if (flush_by_page) {
+				cache_flush_page(va);
+				/* Get fresh mod/ref bits from write-back. */
+				pte = get_pte(va);
+			}
+#endif
 			if (IS_MAIN_MEM(pte)) {
 				save_modref_bits(pte);
 				pv_unlink(pmap, PG_PA(pte), va);
@@ -1819,10 +1826,6 @@ pmap_remove_range_mmu(pmap, sva, eva)
 				printf("pmap: set_pte pmap=%x va=%x old=%x new=%x (rrmmu)\n",
 					   pmap, va, pte, PG_INVAL);
 			}
-#endif
-#ifdef	HAVECACHE
-			if (flush_by_page)
-				cache_flush_page(va);
 #endif
 			set_pte(va, PG_INVAL);
 			pmegp->pmeg_vpages--;
@@ -2130,8 +2133,11 @@ pmap_enter_kernel(va, pa, prot, wired, new_pte)
 
 	/* Have valid translation.  Flush cache before changing it. */
 #ifdef	HAVECACHE
-	if (cache_size)
+	if (cache_size) {
 		cache_flush_page(va);
+		/* Get fresh mod/ref bits from write-back. */
+		old_pte = get_pte(va);
+	}
 #endif
 
 	/* XXX - removing valid page here, way lame... -glass */
@@ -2322,8 +2328,11 @@ pmap_enter_user(pmap, va, pa, prot, wired, new_pte)
 
 	/* Have valid translation.  Flush cache before changing it. */
 #ifdef	HAVECACHE
-	if (cache_size)
+	if (cache_size) {
 		cache_flush_page(va);
+		/* Get fresh mod/ref bits from write-back. */
+		old_pte = get_pte(va);
+	}
 #endif
 
 	/* XXX - removing valid page here, way lame... -glass */
@@ -2809,6 +2818,7 @@ pmap_protect_range_mmu(pmap, sva, eva)
 	vm_offset_t va;
 	int pte, sme;
 	int nflags;
+	int flush_by_page = 0;
 
 	/* Interrupt level handled by caller. */
 	CHECK_SPL();
@@ -2848,16 +2858,34 @@ pmap_protect_range_mmu(pmap, sva, eva)
 #endif
 
 #ifdef	HAVECACHE
-	if (cache_size)
-		cache_flush_segment(va);
+	if (cache_size) {
+		/*
+		 * If the range to be removed is larger than the cache,
+		 * it will be cheaper to flush this segment entirely.
+		 */
+		if (cache_size < (eva - sva)) {
+			/* cheaper to flush whole segment */
+			cache_flush_segment(va);
+		} else {
+			flush_by_page = 1;
+		}
+	}
 #endif
 
 	/* Remove write permission on PTEs in the given range. */
 	for (va = sva; va < eva; va += NBPG) {
 		pte = get_pte(va);
 		if (pte & PG_VALID) {
-			/* XXX - Need cache flush here? */
-			save_modref_bits(pte);
+#ifdef	HAVECACHE
+			if (flush_by_page) {
+				cache_flush_page(va);
+				/* Get fresh mod/ref bits from write-back. */
+				pte = get_pte(va);
+			}
+#endif
+			if (IS_MAIN_MEM(pte)) {
+				save_modref_bits(pte);
+			}
 			pte &= ~(PG_WRITE | PG_MODREF);
 			set_pte(va, pte);
 		}
@@ -2898,7 +2926,9 @@ pmap_protect_range_noctx(pmap, sva, eva)
 		ptenum = VA_PTE_NUM(va);
 		pte = get_pte_pmeg(sme, ptenum);
 		if (pte & PG_VALID) {
-			save_modref_bits(pte);
+			if (IS_MAIN_MEM(pte)) {
+				save_modref_bits(pte);
+			}
 			pte &= ~(PG_WRITE | PG_MODREF);
 			set_pte_pmeg(sme, ptenum, pte);
 		}
