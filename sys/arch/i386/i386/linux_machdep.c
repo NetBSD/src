@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_machdep.c,v 1.15 1995/08/31 09:33:10 fvdl Exp $	*/
+/*	$NetBSD: linux_machdep.c,v 1.16 1995/09/01 20:06:10 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1995 Frank van der Linden
@@ -106,7 +106,7 @@ linux_sendsig(catcher, sig, mask, code)
 	extern char linux_sigcode[], linux_esigcode[];
 
 	tf = p->p_md.md_regs;
-	oonstack = psp->ps_sigstk.ss_flags & SA_ONSTACK;
+	oonstack = psp->ps_sigstk.ss_flags & SS_ONSTACK;
 
 	/*
 	 * Allocate space for the signal handler context.
@@ -115,7 +115,7 @@ linux_sendsig(catcher, sig, mask, code)
 	    (psp->ps_sigonstack & sigmask(sig))) {
 		fp = (struct linux_sigframe *)(psp->ps_sigstk.ss_base +
 		    psp->ps_sigstk.ss_size - sizeof(struct linux_sigframe));
-		psp->ps_sigstk.ss_flags |= SA_ONSTACK;
+		psp->ps_sigstk.ss_flags |= SS_ONSTACK;
 	} else {
 		fp = (struct linux_sigframe *)tf->tf_esp - 1;
 	}
@@ -220,7 +220,7 @@ linux_sigreturn(p, uap, retval)
 	    ISPL(context.sc_cs) != SEL_UPL)
 		return (EINVAL);
 
-	p->p_sigacts->ps_sigstk.ss_flags &= ~SA_ONSTACK;
+	p->p_sigacts->ps_sigstk.ss_flags &= ~SS_ONSTACK;
 	p->p_sigmask = context.sc_mask & ~sigcantmask;
 
 	/*
