@@ -27,7 +27,7 @@
  *	i4b daemon - misc support routines
  *	----------------------------------
  *
- *	$Id: support.c,v 1.12 2004/03/28 20:49:22 pooka Exp $ 
+ *	$Id: support.c,v 1.13 2004/10/30 08:19:30 dsl Exp $ 
  *
  * $FreeBSD$
  *
@@ -196,7 +196,7 @@ find_by_device_for_dialoutnumber(int drivertype, int driverunit, int cmdlen, cha
 		
 		for (j = 0; j < cmdlen; j++)
 		{
-			if (!(isdigit(*(cmd+j))))
+			if (!(isdigit((unsigned char)*(cmd+j))))
 			{
 				DBGL(DL_MSG, (logit(LL_DBG, "find_by_device_for_dialoutnumber: entry %d, dial string contains non-digit at pos %d", cep->index, j)));
 				return(NULL);
