@@ -38,8 +38,8 @@ static char copyright[] =
 #endif /* not lint */
 
 #ifndef lint
-/*static char sccsid[] = "from: @(#)main.c	8.2 (Berkeley) 1/7/94";*/
-static char *rcsid = "$Id: main.c,v 1.4 1994/06/08 19:33:37 mycroft Exp $";
+/*static char sccsid[] = "from: @(#)main.c	8.3 (Berkeley) 9/13/94";*/
+static char *rcsid = "$Id: main.c,v 1.5 1994/12/28 02:21:46 mycroft Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -67,7 +67,7 @@ long	dumpnum = 1;
 long	volno = 0;
 long	ntrec;
 char	*dumpmap;
-char	*clrimap;
+char	*usedinomap;
 ino_t	maxino;
 time_t	dumptime;
 time_t	dumpdate;

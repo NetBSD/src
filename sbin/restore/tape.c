@@ -37,8 +37,8 @@
  */
 
 #ifndef lint
-/*static char sccsid[] = "from: @(#)tape.c	8.3 (Berkeley) 4/1/94";*/
-static char *rcsid = "$Id: tape.c,v 1.13 1994/09/23 14:27:57 mycroft Exp $";
+/*static char sccsid[] = "from: @(#)tape.c	8.6 (Berkeley) 9/13/94";*/
+static char *rcsid = "$Id: tape.c,v 1.14 1994/12/28 02:21:53 mycroft Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -251,8 +251,8 @@ setup()
 	dprintf(stdout, "maxino = %d\n", maxino);
 	map = calloc((unsigned)1, (unsigned)howmany(maxino, NBBY));
 	if (map == NULL)
-		panic("no memory for file removal list\n");
-	clrimap = map;
+		panic("no memory for active inode map\n");
+	usedinomap = map;
 	curfile.action = USING;
 	getfile(xtrmap, xtrmapskip);
 	if (spcl.c_type != TS_BITS) {
@@ -265,6 +265,13 @@ setup()
 	dumpmap = map;
 	curfile.action = USING;
 	getfile(xtrmap, xtrmapskip);
+	/*
+	 * If there may be whiteout entries on the tape, pretend that the
+	 * whiteout inode exists, so that the whiteout entries can be
+	 * extracted.
+	 */
+	if (oldinofmt == 0)
+		SETINO(WINO, dumpmap);
 }
 
 /*
@@ -501,7 +508,8 @@ int
 extractfile(name)
 	char *name;
 {
-	int mode;
+	int flags;
+	mode_t mode;
 	struct timeval timep[2];
 	struct entry *ep;
 
@@ -512,6 +520,7 @@ extractfile(name)
 	timep[1].tv_sec = curfile.dip->di_mtime.ts_sec;
 	timep[1].tv_usec = curfile.dip->di_mtime.ts_nsec / 1000;
 	mode = curfile.dip->di_mode;
+	flags = curfile.dip->di_flags;
 	switch (mode & IFMT) {
 
 	default:
@@ -546,24 +555,6 @@ extractfile(name)
 		}
 		return (linkit(lnkbuf, name, SYMLINK));
 
-	case IFIFO:
-		vprintf(stdout, "extract fifo %s\n", name);
-		if (Nflag) {
-			skipfile();
-			return (GOOD);
-		}
-		if (mkfifo(name, mode) < 0) {
-			fprintf(stderr, "%s: cannot create fifo: %s\n",
-			    name, strerror(errno));
-			skipfile();
-			return (FAIL);
-		}
-		(void) chown(name, curfile.dip->di_uid, curfile.dip->di_gid);
-		(void) chmod(name, mode);
-		skipfile();
-		utimes(name, timep);
-		return (GOOD);
-
 	case IFCHR:
 	case IFBLK:
 		vprintf(stdout, "extract special file %s\n", name);
@@ -579,6 +570,26 @@ extractfile(name)
 		}
 		(void) chown(name, curfile.dip->di_uid, curfile.dip->di_gid);
 		(void) chmod(name, mode);
+		(void) chflags(name, flags);
+		skipfile();
+		utimes(name, timep);
+		return (GOOD);
+
+	case IFIFO:
+		vprintf(stdout, "extract fifo %s\n", name);
+		if (Nflag) {
+			skipfile();
+			return (GOOD);
+		}
+		if (mkfifo(name, mode) < 0) {
+			fprintf(stderr, "%s: cannot create fifo: %s\n",
+			    name, strerror(errno));
+			skipfile();
+			return (FAIL);
+		}
+		(void) chown(name, curfile.dip->di_uid, curfile.dip->di_gid);
+		(void) chmod(name, mode);
+		(void) chflags(name, flags);
 		skipfile();
 		utimes(name, timep);
 		return (GOOD);
@@ -598,6 +609,7 @@ extractfile(name)
 		}
 		(void) fchown(ofile, curfile.dip->di_uid, curfile.dip->di_gid);
 		(void) fchmod(ofile, mode);
+		(void) fchflags(ofile, flags);
 		getfile(xtrfile, xtrskip);
 		(void) close(ofile);
 		utimes(name, timep);
@@ -1139,10 +1151,10 @@ accthdr(header)
 		goto newcalc;
 	switch (prevtype) {
 	case TS_BITS:
-		fprintf(stderr, "Dump mask header");
+		fprintf(stderr, "Dumped inodes map header");
 		break;
 	case TS_CLRI:
-		fprintf(stderr, "Remove mask header");
+		fprintf(stderr, "Used inodes map header");
 		break;
 	case TS_INODE:
 		fprintf(stderr, "File header, ino %d", previno);
