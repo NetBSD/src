@@ -1,4 +1,4 @@
-#	$NetBSD: GENERIC,v 1.6 2001/02/01 01:09:12 thorpej Exp $
+#	$NetBSD: GENERIC,v 1.7 2001/02/01 01:27:59 thorpej Exp $
 #
 #	GENERIC -- everything that's currently supported
 #
@@ -15,8 +15,8 @@ options		MINIROOTSIZE=6000
 options 	DONT_INIT_BSC
 
 # wscons options
-options		RCONS_16BPP
 options 	WSEMUL_VT100		# VT100 / VT220 emulation
+options 	FONT_BOLD8x16
 
 maxusers	16		# estimated number of users
 
