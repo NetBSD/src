@@ -1,4 +1,4 @@
-#	$NetBSD: SUN_LAMP,v 1.102 1998/08/31 17:58:56 thorpej Exp $
+#	$NetBSD: SUN_LAMP,v 1.103 1999/01/14 04:26:47 cgd Exp $
 #
 #	SUN_LAMP -- kernel for one of cgd's 486/50 EISA boxes...
 #
@@ -159,19 +159,7 @@ fd*	at fdc? drive ?
 
 #wt0	at isa? port 0x300 irq 5 drq 1	# Archive and Wangtek QIC tape drives
 
-ed0	at isa? port 0x300 iomem 0xd0000 irq 10	# WD/SMC, 3C503, and NE[12]000
-#ed1	at isa? port 0x250 iomem 0xd8000 irq 9	#   ethernet cards
-#ed2	at isa? port 0x300 iomem 0xcc000 irq 10
-#eg0	at isa? ...				# 3C505 ethernet cards
-#el0	at isa? port 0x300 irq 9		# 3C501 ethernet cards
-#ep0	at isa? port ? irq ?			# 3C509 ethernet cards
-#ie0	at isa? port 0x360 iomem 0xd0000 irq 7	# StarLAN & 3C507 ethernet cards
-#depca0	at isa? port 0x300 iomem 0xc8000 iosiz 0x8000 irq 5	# DEPCA
-#le*	at depca?
-#nele0	at isa? port 0x320 irq 10 drq 7		# NE2100
-#le*	at nele?
-#bicc0	at isa? port 0x320 irq 10 drq 7		# BICC IsoLan
-#le*	at bicc?
+we0	at isa? port 0x300 iomem 0xd0000 irq 10	# WD/SMC
 
 #sb0	at isa? port 0x220 irq 7 drq 1	# SoundBlaster
 #audio*	at sb0
