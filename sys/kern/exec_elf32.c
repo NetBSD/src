@@ -1,4 +1,4 @@
-/*	$NetBSD: exec_elf32.c,v 1.96 2003/12/07 02:18:53 chs Exp $	*/
+/*	$NetBSD: exec_elf32.c,v 1.97 2004/01/07 16:42:53 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1994, 2000 The NetBSD Foundation, Inc.
@@ -64,7 +64,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(1, "$NetBSD: exec_elf32.c,v 1.96 2003/12/07 02:18:53 chs Exp $");
+__KERNEL_RCSID(1, "$NetBSD: exec_elf32.c,v 1.97 2004/01/07 16:42:53 thorpej Exp $");
 
 /* If not included by exec_elf64.c, ELFSIZE won't be defined. */
 #ifndef ELFSIZE
@@ -537,7 +537,7 @@ ELFNAME2(exec,makecmds)(struct proc *p, struct exec_package *epp)
 	Elf_Ehdr *eh = epp->ep_hdr;
 	Elf_Phdr *ph, *pp;
 	Elf_Addr phdr = 0, pos = 0;
-	int error, i;
+	int error, i, nload;
 	char *interp = NULL;
 	u_long phsize;
 
@@ -611,7 +611,7 @@ ELFNAME2(exec,makecmds)(struct proc *p, struct exec_package *epp)
 	/*
 	 * Load all the necessary sections
 	 */
-	for (i = 0; i < eh->e_phnum; i++) {
+	for (i = nload = 0; i < eh->e_phnum; i++) {
 		Elf_Addr  addr = ELFDEFNNAME(NO_ADDR);
 		u_long size = 0;
 		int prot = 0;
@@ -620,49 +620,30 @@ ELFNAME2(exec,makecmds)(struct proc *p, struct exec_package *epp)
 
 		switch (ph[i].p_type) {
 		case PT_LOAD:
-
 			/*
-			 * Calcuate size of the text and data segments
-			 * by starting at first and going to end of last.
-			 * 'rwx' sections are treated as data.
+			 * XXX
+			 * Can handle only 2 sections: text and data
 			 */
+			if (nload++ == 2)
+				goto bad;
 			ELFNAME(load_psection)(&epp->ep_vmcmds, epp->ep_vp,
 			    &ph[i], &addr, &size, &prot, VMCMD_FIXED);
 
 			/*
 			 * Decide whether it's text or data by looking
-			 * at the protection of the section.
+			 * at the entry point.
 			 */
-			if (prot & VM_PROT_WRITE) {
-				/* data section */
-				if (epp->ep_dsize == ELFDEFNNAME(NO_ADDR)) {
+			if (eh->e_entry >= addr &&
+			    eh->e_entry < (addr + size)) {
+				epp->ep_taddr = addr;
+				epp->ep_tsize = size;
+				if (epp->ep_daddr == ELFDEFNNAME(NO_ADDR)) {
 					epp->ep_daddr = addr;
 					epp->ep_dsize = size;
-				} else {
-					if (addr < epp->ep_daddr) {
-						epp->ep_dsize =
-						    epp->ep_dsize +
-						    epp->ep_daddr - addr;
-						epp->ep_daddr = addr;
-					} else
-						epp->ep_dsize = addr + size -
-						    epp->ep_daddr;
 				}
-			} else if (prot & VM_PROT_EXECUTE) {
-				/* text section */
-				if (epp->ep_tsize == ELFDEFNNAME(NO_ADDR)) {
-					epp->ep_taddr = addr;
-					epp->ep_tsize = size;
-				} else {
-					if (addr < epp->ep_taddr) {
-						epp->ep_tsize =
-						    epp->ep_tsize +
-						    epp->ep_taddr - addr;
-						epp->ep_taddr = addr;
-					} else
-						epp->ep_tsize = addr + size -
-						    epp->ep_taddr;
-				}
+			} else {
+				epp->ep_daddr = addr;
+				epp->ep_dsize = size;
 			}
 			break;
 
