@@ -1,4 +1,4 @@
-/*	$NetBSD: driver.c,v 1.3 2001/01/23 01:59:29 blymn Exp $	*/
+/*	$NetBSD: driver.c,v 1.4 2001/01/30 06:44:42 blymn Exp $	*/
 
 /*-
  * Copyright (c) 1998-1999 Brett Lymn
@@ -112,12 +112,13 @@ form_driver(FORM *form, int c)
 
 
 	old_field = form->cur_field;
+	fieldp = form->fields[form->cur_field];
 	update_page = update_field = 0;
+	status = E_OK;
 	
 	if (c < REQ_MIN_REQUEST) {
 		if (isprint(c)) {
 		  next_field:
-			fieldp = form->fields[form->cur_field];
 			buf = fieldp->buffers[0];
 			
 			pos = fieldp->start_char + fieldp->cursor_xpos
@@ -160,6 +161,23 @@ form_driver(FORM *form, int c)
 		if (c > REQ_MAX_COMMAND)
 			return E_UNKNOWN_COMMAND;
 
+		if ((c >= REQ_NEXT_PAGE) && (c <= REQ_DOWN_FIELD)) {
+			  /* first check the field we are in is ok */
+			if (_formi_validate_field(form) != E_OK)
+				return E_INVALID_FIELD;
+
+			if (form->field_term != NULL)
+				form->field_term(form);
+
+			  /*
+			   * if we have a page movement then the form term
+			   * needs to be called too
+			   */ 
+			if ((c <= REQ_LAST_PAGE) && (form->form_term != NULL))
+				form->form_term(form);
+		}
+		
+			
 		switch (c) {
 		case REQ_NEXT_PAGE:
 			if (form->page < form->max_page) {
@@ -168,10 +186,10 @@ form_driver(FORM *form, int c)
 				update_page = 1;
 				if (_formi_pos_first_field(form) != E_OK) {
 					form->page = old_page;
-					return E_REQUEST_DENIED;
+					status = E_REQUEST_DENIED;
 				}
 			} else
-				return E_REQUEST_DENIED;
+				status = E_REQUEST_DENIED;
 			break;
 		
 		case REQ_PREV_PAGE:
@@ -181,10 +199,10 @@ form_driver(FORM *form, int c)
 				update_page = 1;
 				if (_formi_pos_first_field(form) != E_OK) {
 					form->page = old_page;
-					return E_REQUEST_DENIED;
+					status = E_REQUEST_DENIED;
 				}
 			} else
-				return E_REQUEST_DENIED;
+				status = E_REQUEST_DENIED;
 			break;
 		
 		case REQ_FIRST_PAGE:
@@ -193,7 +211,7 @@ form_driver(FORM *form, int c)
 			update_page = 1;
 			if (_formi_pos_first_field(form) != E_OK) {
 				form->page = old_page;
-				return E_REQUEST_DENIED;
+				status = E_REQUEST_DENIED;
 			}
 			break;
 		
@@ -203,27 +221,19 @@ form_driver(FORM *form, int c)
 			update_page = 1;
 			if (_formi_pos_first_field(form) != E_OK) {
 				form->page = old_page;
-				return E_REQUEST_DENIED;
+				status = E_REQUEST_DENIED;
 			}
 			break;
 		
 		case REQ_NEXT_FIELD:
 			status = _formi_pos_new_field(form, _FORMI_FORWARD,
 						      FALSE);
-			if (status != E_OK) {
-				return status;
-			}
-			
 			update_field = 1;
 			break;
 		
 		case REQ_PREV_FIELD:
 			status = _formi_pos_new_field(form, _FORMI_BACKWARD,
 						      FALSE);
-			
-			if (status != E_OK)
-				return status;
-
 			update_field = 1;
 			break;
 		
@@ -240,18 +250,12 @@ form_driver(FORM *form, int c)
 		case REQ_SNEXT_FIELD:
 			status = _formi_pos_new_field(form, _FORMI_FORWARD,
 						      TRUE);
-			if (status != E_OK)
-				return status;
-
 			update_field = 1;
 			break;
 		
 		case REQ_SPREV_FIELD:
 			status = _formi_pos_new_field(form, _FORMI_BACKWARD,
 						      TRUE);
-			if (status != E_OK)
-				return status;
-
 			update_field = 1;
 			break;
 		
@@ -278,9 +282,6 @@ form_driver(FORM *form, int c)
 		case REQ_UP_FIELD:
 		case REQ_DOWN_FIELD:
 			status = traverse_form_links(form, c);
-			if (status != E_OK)
-				return status;
-			
 			update_field = 1;
 			break;
 
@@ -295,7 +296,6 @@ form_driver(FORM *form, int c)
 			   * into a previous field request. Otherwise
 			   * fallthrough to the field handler.
 			   */
-			fieldp = form->fields[old_field];
 			if ((form->opts & O_BS_OVERLOAD) == O_BS_OVERLOAD) {
 				if ((fieldp->start_char == 0) &&
 				    (fieldp->start_line == 0) &&
@@ -317,7 +317,6 @@ form_driver(FORM *form, int c)
 			   * into a next field request. Otherwise
 			   * fallthrough to the field handler.
 			   */
-			fieldp = form->fields[old_field];
 			if ((form->opts & O_NL_OVERLOAD) == O_NL_OVERLOAD) {
 				if ((fieldp->start_char == 0) &&
 				    (fieldp->start_line == 0) &&
@@ -394,6 +393,25 @@ form_driver(FORM *form, int c)
 			  /* NOTREACHED */
 			break;
 		}
+	}
+
+	  /* call the field and form init functions if required. */
+	if ((c >= REQ_NEXT_PAGE) && (c <= REQ_DOWN_FIELD)) {
+		if (form->field_init != NULL)
+			form->field_init(form);
+
+		  /*
+		   * if we have a page movement then the form init
+		   * needs to be called too
+		   */ 
+		if ((c <= REQ_LAST_PAGE) && (form->form_init != NULL))
+			form->form_init(form);
+
+		  /*
+		   * if there was an error just return now...
+		   */
+		if (status != E_OK)
+			return status;
 	}
 	
 	if (update_field < 0)
