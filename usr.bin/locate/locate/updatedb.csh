@@ -59,11 +59,11 @@ set errs = $TMPDIR/locate.errs.$$
 find ${SRCHPATHS} \( ! -fstype local -o -fstype fdesc -o -fstype kernfs \) -a \
 		-prune -o -print | \
 	tr '/' '\001' | \
-	(sort -f; echo $status > $errs) | tr '\001' '/' > $filelist
+	(sort -T /var/tmp -f; echo $status > $errs) | tr '\001' '/' > $filelist
 
 $LIBDIR/locate.bigram < $filelist | \
-	(sort; echo $status >> $errs) | \
-	uniq -c | sort -nr | \
+	(sort -T /var/tmp; echo $status >> $errs) | \
+	uniq -c | sort -T /var/tmp -nr | \
 	awk '{ if (NR <= 128) print $2 }' | tr -d '\012' > $bigrams
 
 # code the file list
