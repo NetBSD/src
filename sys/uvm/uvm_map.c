@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_map.c,v 1.32 1998/10/24 13:32:34 mrg Exp $	*/
+/*	$NetBSD: uvm_map.c,v 1.33 1998/11/15 04:38:19 chuck Exp $	*/
 
 /*
  * XXXCDC: "ROUGH DRAFT" QUALITY UVM PRE-RELEASE FILE!
@@ -2150,13 +2150,12 @@ uvm_map_clean(map, start, end, flags)
 		simple_lock(&object->vmobjlock);
 
 		/*
-		 * flush pages if writing is allowed.   note that object is
-		 * locked.
+		 * flush pages if we've got a valid backing object.
+		 * note that object is locked.
 		 * XXX should we continue on an error?
 		 */
 
-		if (object && object->pgops &&
-		    (current->protection & VM_PROT_WRITE) != 0) {
+		if (object && object->pgops) {
 			if (!object->pgops->pgo_flush(object, offset,
 			    offset+size, flags)) {
 				simple_unlock(&object->vmobjlock);
