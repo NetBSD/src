@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_machdep.c,v 1.3 1995/05/01 08:06:22 mycroft Exp $	*/
+/*	$NetBSD: linux_machdep.c,v 1.4 1995/05/01 14:15:09 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1995 Frank van der Linden
@@ -114,10 +114,21 @@ linux_sendsig(catcher, sig, mask, code)
 	 * Build the signal context to be used by sigreturn.
 	 */
 	frame.ls_sc.lsc_mask   = mask;
-	frame.ls_sc.lsc_es     = tf->tf_es;
-	frame.ls_sc.lsc_fs     = LSEL(LUDATA_SEL, SEL_UPL);
-	frame.ls_sc.lsc_gs     = LSEL(LUDATA_SEL, SEL_UPL);
-	frame.ls_sc.lsc_ds     = tf->tf_ds;
+#ifdef VM86
+	if (tf->tf_eflags & PSL_VM) {
+		frame.ls_sc.lsc_gs = tf->tf_vm86_gs;
+		frame.ls_sc.lsc_fs = tf->tf_vm86_fs;
+		frame.ls_sc.lsc_es = tf->tf_vm86_es;
+		frame.ls_sc.lsc_ds = tf->tf_vm86_ds;
+	} else
+#else
+	{
+		__asm("movl %%gs,%w0" : "=r" (frame.ls_sc.sc_gs));
+		__asm("movl %%fs,%w0" : "=r" (frame.ls_sc.sc_fs));
+		frame.ls_sc.lsc_es = tf->tf_es;
+		frame.ls_sc.lsc_ds = tf->tf_ds;
+	}
+#endif
 	frame.ls_sc.lsc_edi    = tf->tf_edi;
 	frame.ls_sc.lsc_esi    = tf->tf_esi;
 	frame.ls_sc.lsc_ebp    = tf->tf_ebp;
@@ -202,8 +213,19 @@ linux_sigreturn(p, uap, retval)
 	/*
 	 * Restore signal context.
 	 */
-	tf->tf_es     = context.lsc_es;
-	tf->tf_ds     = context.lsc_ds;
+#ifdef VM86
+	if (context.lsc_eflags & PSL_VM) {
+		tf->tf_vm86_gs = context.lsc_gs;
+		tf->tf_vm86_fs = context.lsc_fs;
+		tf->tf_vm86_es = context.lsc_es;
+		tf->tf_vm86_ds = context.lsc_ds;
+	} else
+#endif
+	{
+		/* %fs and %gs were restored by the trampoline. */
+		tf->tf_es = context.lsc_es;
+		tf->tf_ds = context.lsc_ds;
+	}
 	tf->tf_edi    = context.lsc_edi;
 	tf->tf_esi    = context.lsc_esi;
 	tf->tf_ebp    = context.lsc_ebp;
