@@ -1,4 +1,4 @@
-/*	$NetBSD: cdefs.h,v 1.50 2003/10/29 01:11:16 grant Exp $	*/
+/*	$NetBSD: cdefs.h,v 1.51 2004/01/07 19:38:10 martin Exp $	*/
 
 /*
  * Copyright (c) 1991, 1993
@@ -230,6 +230,17 @@
 #endif /* __GNUC__ */
 #else /* _STANDALONE || _KERNEL */
 #define	__RENAME(x)	no renaming in kernel or standalone environment
+#endif
+
+/*
+ * A barrier to stop the optimizer from moving code or assume live
+ * register values. This is gcc specific, the version is more or less
+ * arbitrary, might work with older compilers.
+ */
+#if __GNUC_PREREQ__(2, 95)
+#define	__insn_barrier()	__asm __volatile("":::"memory")
+#else
+#define	__insn_barrier()	/* */
 #endif
 
 /*
