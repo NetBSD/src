@@ -315,7 +315,11 @@ identifycpu()
 	printf("CPU: ");
 #ifdef DIAGNOSTIC
 	if (cpu < 0 || cpu >= (sizeof i386_cpus/sizeof(struct cpu_nameclass)))
+#ifdef notyet /* XXX */
 		panic("unknown cpu type %d\n", cpu);
+#else
+		panic("unknown cpu type\n");
+#endif
 #endif
 	printf("%s", i386_cpus[cpu].cpu_name);
 	cpu_class = i386_cpus[cpu].cpu_class;
