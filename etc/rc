@@ -1,4 +1,4 @@
-#	$NetBSD: rc,v 1.102 1998/02/24 00:24:45 lukem Exp $
+#	$NetBSD: rc,v 1.103 1998/04/07 04:47:33 mrg Exp $
 #	originally from: @(#)rc	8.2 (Berkeley) 3/17/94
 
 # System startup script run by init on autoboot
@@ -454,6 +454,10 @@ fi
 
 if checkyesno apmd; then
 	echo -n ' apmd';		apmd $apmd_flags
+fi
+
+if checkyesno screenblank; then
+	echo -n ' screenblank';		screenblank $screenblank_flags
 fi
 
 if checkyesno inetd; then
