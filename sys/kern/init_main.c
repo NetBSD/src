@@ -1,4 +1,4 @@
-/*	$NetBSD: init_main.c,v 1.238 2004/06/03 20:35:30 nathanw Exp $	*/
+/*	$NetBSD: init_main.c,v 1.239 2004/07/05 07:28:45 pk Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1991, 1992, 1993
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: init_main.c,v 1.238 2004/06/03 20:35:30 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: init_main.c,v 1.239 2004/07/05 07:28:45 pk Exp $");
 
 #include "fs_nfs.h"
 #include "opt_nfsserver.h"
@@ -194,6 +194,7 @@ struct	vnode *rootvp, *swapdev_vp;
 int	boothowto;
 int	cold = 1;			/* still working on startup */
 struct	timeval boottime;
+time_t	rootfstime;			/* recorded root fs time, if known */
 
 __volatile int start_init_exec;		/* semaphore for start_init() */
 
@@ -522,6 +523,13 @@ main(void)
 	} while (error != 0);
 	mountroothook_destroy();
 
+	/*
+	 * Initialise the time-of-day clock, passing the time recorded
+	 * in the root filesystem (if any) for use by systems that
+	 * don't have a non-volatile time-of-day device.
+	 */
+	inittodr(rootfstime);
+
 	CIRCLEQ_FIRST(&mountlist)->mnt_flag |= MNT_ROOTFS;
 	CIRCLEQ_FIRST(&mountlist)->mnt_op->vfs_refcount++;
 
@@ -594,6 +602,12 @@ main(void)
 	/* The scheduler is an infinite loop. */
 	uvm_scheduler();
 	/* NOTREACHED */
+}
+
+void
+setrootfstime(time_t t)
+{
+	rootfstime = t;
 }
 
 static void
