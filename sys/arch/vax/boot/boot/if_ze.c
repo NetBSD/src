@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ze.c,v 1.9 2000/05/18 04:20:41 matt Exp $	*/
+/*	$NetBSD: if_ze.c,v 1.10 2000/05/20 13:30:03 ragge Exp $	*/
 /*
  * Copyright (c) 1998 James R. Maynard III.  All rights reserved.
  *
@@ -41,9 +41,10 @@
 #include <netinet/in.h>
 #include <netinet/in_systm.h>
 
-#include <lib/libkern/libkern.h>
 #include <lib/libsa/netif.h>
 #include <lib/libsa/stand.h>
+
+#include "lib/libkern/libkern.h"
 
 #include <dev/ic/sgecreg.h>
 
@@ -52,20 +53,12 @@
 
 #include "vaxstand.h"
 
-int ze_probe(), ze_match(), ze_get(), ze_put();
-void ze_init(), ze_end();
+static int ze_get(struct iodesc *, void *, size_t, time_t);
+static int ze_put(struct iodesc *, void *, size_t);
 
-struct netif_stats ze_stats;
-
-struct netif_dif ze_ifs[] = {
-/*	dif_unit	dif_nsel	dif_stats	dif_private	*/
-{	0,		1,		&ze_stats,	},
-};
-
-struct netif_stats ze_stats;
 
 struct netif_driver ze_driver = {
-	"ze", ze_match, ze_probe, ze_init, ze_get, ze_put, ze_end, ze_ifs, 1,
+	0, 0, 0, 0, ze_get, ze_put,
 };
 
 #define NRCV 8				/* allocate 8 receive descriptors */
@@ -73,7 +66,7 @@ struct netif_driver ze_driver = {
 #define SETUP_FRAME_LEN 128		/* length of the setup frame */
 
 /* allocate a buffer on an octaword boundary */
-#define OW_ALLOC(x) ((void *)((int)(alloc((x) + 15) + 15) & ~15))
+#define OW_ALLOC(x) ((void *)((int)((int)alloc((x) + 15) + 15) & ~15))
 
 static	volatile struct zedevice *addr;
 
@@ -82,33 +75,17 @@ struct ze_rdes *ze_rdes_list;	/* and receive desc list */
 u_char ze_myaddr[ETHER_ADDR_LEN];	/* my Ethernet address */
 
 int
-ze_match(nif, machdep_hint)
-	struct netif *nif;
-	void *machdep_hint;
-{
-	return strcmp(machdep_hint, "ze") == 0;
-}
-
-int
-ze_probe(nif, machdep_hint)
-	struct netif *nif;
-	void *machdep_hint;
-{
-	return 0;
-}
-
-void
-ze_init(desc, machdep_hint)
-	struct iodesc *desc;
-	void *machdep_hint;
+zeopen(struct open_file *f, int adapt, int ctlr, int unit, int part)
 {
 	u_long nicsr0_work, *nisa_rom;
-	int i;
-	u_char *saved_buf;
 	struct ze_tdes *ze_setup_tdes_list;
+	int i;
 
 	/* point to the device in memory */
-	addr = (struct zedevice *)rpb->csrphy;
+	if (askname == 0) /* Override if autoboot */
+		addr = (struct zedevice *)bootrpb.csrphy;
+	else
+		addr = (struct zedevice *)0x20008000;
 
 	/* reset the device and wait for completion */
 	addr->ze_nicsr6 = ZE_NICSR6_MBO | ZE_NICSR6_RE;
@@ -116,6 +93,7 @@ ze_init(desc, machdep_hint)
 		;
 	if (addr->ze_nicsr5 & ZE_NICSR5_SF) {
 		printf("SGEC self-test failed...\n");
+		return 1;
 	}
 
 	/* Get our Ethernet address */
@@ -131,7 +109,6 @@ ze_init(desc, machdep_hint)
 			else
 				ze_myaddr[i] = (nisa_rom[i] & 0x0000ff00) >> 8;
 	}
-	bcopy(ze_myaddr,desc->myea,ETHER_ADDR_LEN);
 
 	/* initialize SGEC operating mode */
 	/* disable interrupts here */
@@ -197,13 +174,16 @@ ze_init(desc, machdep_hint)
 	addr->ze_nicsr6 |= ZE_NICSR6_SR;
 
 	/* And away-y-y we go! */
+
+	net_devinit(f, &ze_driver, ze_myaddr);
+	return 0;
 }
 
 int
 ze_get(desc, pkt, maxlen, timeout)
 	struct iodesc *desc;
 	void *pkt;
-	int maxlen;
+	size_t maxlen;
 	time_t timeout;
 {
 	int timeout_ctr=100000*timeout, len, rdes;
@@ -259,7 +239,7 @@ int
 ze_put(desc, pkt, len)
 	struct iodesc *desc;
 	void *pkt;
-	int len;
+	size_t len;
 {
 	int timeout=100000;
 
@@ -288,7 +268,7 @@ ze_put(desc, pkt, len)
 
 	/* Wait for the frame to be sent, but not too long. */
 	timeout = 100000;
-	while ((addr->ze_nicsr5 & ZE_NICSR5_TI == 0) && (--timeout>0))
+	while (((addr->ze_nicsr5 & ZE_NICSR5_TI) == 0) && (--timeout>0))
 		;
 
 	/* Reset the transmitter interrupt pending flag. */
@@ -299,8 +279,10 @@ ze_put(desc, pkt, len)
 	return -1;
 }
 
-void
-ze_end()
+int
+zeclose(struct open_file *f)
 {
 	addr->ze_nicsr6 = ZE_NICSR6_RE;
+
+	return 0;
 }
