@@ -1,4 +1,4 @@
-#	$NetBSD: WALNUT,v 1.10 2002/02/10 17:37:03 wiz Exp $
+#	$NetBSD: WALNUT,v 1.11 2002/02/26 21:44:29 tv Exp $
 #
 #	GENERIC -- everything that's currently supported
 #
@@ -103,7 +103,6 @@ options 	PFIL_HOOKS	# pfil(9) packet filter hooks
 options 	IPFILTER_LOG	# ipmon(8) log support
 #options 	TCP_DEBUG	# Record last TCP_NDEBUG packets with SO_DEBUG
 options 	NMBCLUSTERS=1024
-options 	NEW_PIPE
 
 # These options enable verbose messages for several subsystems.
 # Warning, these may compile large string tables into the kernel!
