@@ -1,4 +1,4 @@
-/* $NetBSD: pmap.old.h,v 1.10 1997/09/03 00:58:13 thorpej Exp $ */
+/* $NetBSD: pmap.old.h,v 1.11 1997/09/03 19:07:34 thorpej Exp $ */
 
 /* 
  * Copyright (c) 1987 Carnegie-Mellon University
@@ -92,6 +92,21 @@ typedef struct pv_entry {
 } *pv_entry_t;
 
 #define PV_PTPAGE	0x01	/* header: entry maps a page table page */
+
+struct pv_page;
+
+struct pv_page_info {
+	TAILQ_ENTRY(pv_page) pgi_list;
+	struct pv_entry *pgi_freelist;
+	int pgi_nfree;
+};
+
+#define	NPVPPG ((NBPG - sizeof(struct pv_page_info)) / sizeof(struct pv_entry))
+
+struct pv_page {
+	struct pv_page_info pvp_pgi;
+	struct pv_entry pvp_pv[NPVPPG];
+};
 
 /*
  * bits of pmap_attributes[]
