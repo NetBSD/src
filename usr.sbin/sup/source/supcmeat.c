@@ -1,4 +1,4 @@
-/*	$NetBSD: supcmeat.c,v 1.19 1999/04/12 20:48:07 pk Exp $	*/
+/*	$NetBSD: supcmeat.c,v 1.20 1999/06/17 05:11:48 christos Exp $	*/
 
 /*
  * Copyright (c) 1992 Carnegie Mellon University
@@ -127,6 +127,7 @@ int docompress=FALSE;			/* Do we do compression? */
 extern COLLECTION *thisC;		/* collection list pointer */
 extern int rpauseflag;			/* don't disable resource pausing */
 extern int portdebug;			/* network debugging ports */
+extern int noutime;			/* don't set utimes */
 
 /*************************************************
  ***    U P G R A D E   C O L L E C T I O N    ***
@@ -888,7 +889,8 @@ register struct stat *statp;
 	}
 	tbuf[0].tv_sec = time((time_t *)NULL);  tbuf[0].tv_usec = 0;
 	tbuf[1].tv_sec = t->Tmtime;  tbuf[1].tv_usec = 0;
-	(void) utimes (t->Tname,tbuf);
+	if (!noutime)
+		(void) utimes (t->Tname,tbuf);
 	vnotify ("SUP %s directory %s\n",new?"Created":"Updated",t->Tname);
 	return (FALSE);
 }
@@ -964,7 +966,8 @@ register struct stat *statp;
 		}
 		tbuf[0].tv_sec = time((time_t *)NULL);  tbuf[0].tv_usec = 0;
 		tbuf[1].tv_sec = t->Tmtime;  tbuf[1].tv_usec = 0;
-		(void) utimes (t->Tname,tbuf);
+		if (!noutime)
+			(void) utimes (t->Tname,tbuf);
 		return (FALSE);
 	}
 	if (thisC->Cflags&CFLIST) {
@@ -1023,7 +1026,8 @@ register struct stat *statp;
 	}
 	tbuf[0].tv_sec = time((time_t *)NULL);  tbuf[0].tv_usec = 0;
 	tbuf[1].tv_sec = t->Tmtime;  tbuf[1].tv_usec = 0;
-	(void) utimes (t->Tname,tbuf);
+	if (!noutime)
+		(void) utimes (t->Tname,tbuf);
 	return (FALSE);
 }
 
