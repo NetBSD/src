@@ -1,4 +1,4 @@
-/*	$NetBSD: dz_vsbus.c,v 1.32 2003/07/15 02:15:06 lukem Exp $ */
+/*	$NetBSD: dz_vsbus.c,v 1.33 2003/10/18 12:09:18 ragge Exp $ */
 /*
  * Copyright (c) 1998 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dz_vsbus.c,v 1.32 2003/07/15 02:15:06 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dz_vsbus.c,v 1.33 2003/10/18 12:09:18 ragge Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -187,6 +187,9 @@ dz_vsbus_attach(struct device *parent, struct device *self, void *aux)
 	dzattach(sc, NULL, consline);
 	DELAY(10000);
 
+	if (consline != -1)
+		cn_set_magic("\033D"); /* set VAX DDB escape sequence */
+
 #if NDZKBD > 0
 	/* Don't touch this port if this is the console */
 	if (cn_tab->cn_dev != makedev(cdevsw_lookup_major(&dz_cdevsw), 0)) {
@@ -258,7 +261,7 @@ dzcnprobe(struct consdev *cndev)
 	case VAX_BTYP_49:
 	case VAX_BTYP_53:
 		ioaddr = 0x25000000;
-		diagcons = 3;
+		diagcons = (vax_confdata & 8 ? 3 : 0);
 		break;
 
 	default:
