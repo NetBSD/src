@@ -1,4 +1,4 @@
-/*	$NetBSD: traceroute6.c,v 1.26 2002/08/30 03:57:21 onoe Exp $	*/
+/*	$NetBSD: traceroute6.c,v 1.27 2002/08/30 04:02:44 onoe Exp $	*/
 /*	$KAME: traceroute6.c,v 1.58 2002/08/27 00:33:39 itojun Exp $	*/
 
 /*
@@ -79,7 +79,7 @@ static char sccsid[] = "@(#)traceroute.c	8.1 (Berkeley) 6/6/93";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: traceroute6.c,v 1.26 2002/08/30 03:57:21 onoe Exp $");
+__RCSID("$NetBSD: traceroute6.c,v 1.27 2002/08/30 04:02:44 onoe Exp $");
 #endif
 #endif
 
@@ -689,11 +689,7 @@ main(argc, argv)
 	 * Send UDP or ICMP
 	 */
 	if (useicmp) {
-		sndsock = socket(AF_INET6, SOCK_RAW, IPPROTO_ICMPV6);
-		if ((sndsock = socket(AF_INET6, SOCK_RAW, IPPROTO_ICMPV6)) < 0) {
-			perror("socket(SOCK_RAW, IPPROTO_ICMPV6)");
-			exit(5);
-		}
+		sndsock = rcvsock;
 	} else {
 		if ((sndsock = socket(AF_INET6, SOCK_DGRAM, 0)) < 0) {
 			perror("socket(SOCK_DGRAM)");
