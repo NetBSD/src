@@ -1,4 +1,4 @@
-/*	$NetBSD: vmparam.h,v 1.7 2003/12/07 20:03:04 scw Exp $	*/
+/*	$NetBSD: vmparam.h,v 1.8 2003/12/07 20:03:47 scw Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -168,20 +168,11 @@
 #define VM_FREELIST_DEFAULT	0
 #endif
 
-/*#ifndef _LP64*/
 #define sh5_round_page(x)       ((((uintptr_t)(x)) + PGOFSET) & ~PGOFSET)
 #define sh5_trunc_page(x)       ((uintptr_t)(x) & ~PGOFSET)
 #define sh5_page_offset(x)      ((uintptr_t)(x) & PGOFSET)
 #define sh5_btop(x)             ((uintptr_t)(x) >> PGSHIFT)
 #define sh5_ptob(x)             ((uintptr_t)(x) << PGSHIFT)
-/*#else*/
-#if 0
-#define sh5_round_page(x)       ((((u_int64_t)(x)) + PGOFSET) & ~PGOFSET)
-#define sh5_trunc_page(x)       ((u_int64_t)(x) & ~PGOFSET)
-#define sh5_page_offset(x)      ((u_int64_t)(x) & PGOFSET)
-#define sh5_btop(x)             ((u_int64_t)(x) >> PGSHIFT)
-#define sh5_ptob(x)             ((u_int64_t)(x) << PGSHIFT)
-#endif
 
 /* pmap-specific data store in the vm_page structure. */
 #define __HAVE_VM_PAGE_MD
