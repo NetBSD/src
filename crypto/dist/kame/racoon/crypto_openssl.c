@@ -1,4 +1,4 @@
-/*	$KAME: crypto_openssl.c,v 1.72 2002/06/10 09:36:11 itojun Exp $	*/
+/*	$KAME: crypto_openssl.c,v 1.79 2003/07/12 08:44:44 itojun Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -56,6 +56,7 @@
 #endif
 #ifdef HAVE_OPENSSL_X509_H
 #include <openssl/x509.h>
+#include <openssl/x509v3.h>
 #include <openssl/x509_vfy.h>
 #endif
 #include <openssl/bn.h>
@@ -85,6 +86,11 @@
 #include "crypto/sha2/sha2.h"
 #endif
 
+/* 0.9.7 stuff? */
+#if OPENSSL_VERSION_NUMBER < 0x0090700fL
+typedef STACK_OF(GENERAL_NAME) GENERAL_NAMES;
+#endif
+
 #include "var.h"
 #include "misc.h"
 #include "vmbuf.h"
@@ -100,7 +106,6 @@
 
 #ifdef HAVE_SIGNING_C
 static int cb_check_cert __P((int, X509_STORE_CTX *));
-static void eay_setgentype __P((char *, int *));
 static X509 *mem2x509 __P((vchar_t *));
 #endif
 
@@ -404,9 +409,8 @@ eay_get_x509asn1subjectname(cert)
 
 /*
  * get the subjectAltName from X509 certificate.
- * the name is terminated by '\0'.
+ * the name must be terminated by '\0'.
  */
-#include <openssl/x509v3.h>
 int
 eay_get_x509subjectaltname(cert, altname, type, pos)
 	vchar_t *cert;
@@ -415,61 +419,51 @@ eay_get_x509subjectaltname(cert, altname, type, pos)
 	int pos;
 {
 	X509 *x509 = NULL;
-	X509_EXTENSION *ext;
-	X509V3_EXT_METHOD *method = NULL;
-	STACK_OF(GENERAL_NAME) *name;
-	CONF_VALUE *cval = NULL;
-	STACK_OF(CONF_VALUE) *nval = NULL;
-	u_char *bp;
+        GENERAL_NAMES *gens;
+	GENERAL_NAME *gen;
 	int i, len;
 	int error = -1;
 
 	*altname = NULL;
 	*type = GENT_OTHERNAME;
 
-	bp = cert->v;
-
 	x509 = mem2x509(cert);
 	if (x509 == NULL)
 		goto end;
 
-	i = X509_get_ext_by_NID(x509, NID_subject_alt_name, -1);
-	if (i < 0)
-		goto end;
-	ext = X509_get_ext(x509, i);
-	method = X509V3_EXT_get(ext);
-	if(!method)
-		goto end;
-	
-	bp = ext->value->data;
-	name = method->d2i(NULL, &bp, ext->value->length);
-	if(!name)
+        gens = X509_get_ext_d2i(x509, NID_subject_alt_name, NULL, NULL);
+	if (gens == NULL)
 		goto end;
 
-	nval = method->i2v(method, name, NULL);
-	method->ext_free(name);
-	name = NULL;
-	if(!nval)
-		goto end;
-
-	for (i = 0; i < sk_CONF_VALUE_num(nval); i++) {
-		/* skip the name */
+        for(i = 0; i < sk_GENERAL_NAME_num(gens); i++) {
 		if (i + 1 != pos)
 			continue;
-		cval = sk_CONF_VALUE_value(nval, i);
-		len = strlen(cval->value) + 1;	/* '\0' included */
-		*altname = racoon_malloc(len);
-		if (!*altname) {
-			sk_CONF_VALUE_pop_free(nval, X509V3_conf_free);
-			goto end;
-		}
-		strlcpy(*altname, cval->value, len);
-
-		/* set type of the name */
-		eay_setgentype(cval->name, type);
+		break;
 	}
 
-	sk_CONF_VALUE_pop_free(nval, X509V3_conf_free);
+	/* there is no data at "pos" */
+        if (i == sk_GENERAL_NAME_num(gens))
+		goto end;
+
+	gen = sk_GENERAL_NAME_value(gens, i);
+
+	/* make sure if the data is terminated by '\0'. */
+	if (gen->d.ia5->data[gen->d.ia5->length] != '\0') {
+#ifndef EAYDEBUG
+		plog(LLV_ERROR, LOCATION, NULL,
+			"data is not terminated by '\0'.");
+#endif
+		hexdump(gen->d.ia5->data, gen->d.ia5->length + 1);
+		goto end;
+	}
+
+	len = gen->d.ia5->length + 1;
+	*altname = racoon_malloc(len);
+	if (!*altname)
+		goto end;
+
+	strlcpy(*altname, gen->d.ia5->data, len);
+	*type = gen->type;
 
 	error = 0;
 
@@ -489,27 +483,6 @@ eay_get_x509subjectaltname(cert, altname, type, pos)
 		X509_free(x509);
 
 	return error;
-}
-
-static void
-eay_setgentype(name, type)
-	char *name;
-	int *type;
-{
-	/* XXX It's needed effective code */
-	if(!memcmp(name, "email", strlen("email"))) {
-		*type = GENT_EMAIL;
-	} else if(!memcmp(name, "URI", strlen("URI"))) {
-		*type = GENT_URI;
-	} else if(!memcmp(name, "DNS", strlen("DNS"))) {
-		*type = GENT_DNS;
-	} else if(!memcmp(name, "RID", strlen("RID"))) {
-		*type = GENT_RID;
-	} else if(!memcmp(name, "IP", strlen("IP"))) {
-		*type = GENT_IPADD;
-	} else {
-		*type = GENT_OTHERNAME;
-	}
 }
 
 /*
@@ -1498,6 +1471,7 @@ eay_hmac_init(key, md)
 	return (caddr_t)c;
 }
 
+#ifdef WITH_SHA2
 /*
  * HMAC SHA2-512
  */
@@ -1677,6 +1651,7 @@ eay_hmacsha2_256_final(c)
 
 	return(res);
 }
+#endif	/* WITH_SHA2 */
 
 /*
  * HMAC SHA1
@@ -1798,6 +1773,7 @@ eay_hmacmd5_final(c)
 	return(res);
 }
 
+#ifdef WITH_SHA2
 /*
  * SHA2-512 functions
  */
@@ -1849,6 +1825,7 @@ eay_sha2_512_one(data)
 
 	return(res);
 }
+#endif
 
 int
 eay_sha2_512_hashlen()
@@ -1856,6 +1833,7 @@ eay_sha2_512_hashlen()
 	return SHA512_DIGEST_LENGTH << 3;
 }
 
+#ifdef WITH_SHA2
 /*
  * SHA2-384 functions
  */
@@ -1907,6 +1885,7 @@ eay_sha2_384_one(data)
 
 	return(res);
 }
+#endif
 
 int
 eay_sha2_384_hashlen()
@@ -1914,6 +1893,7 @@ eay_sha2_384_hashlen()
 	return SHA384_DIGEST_LENGTH << 3;
 }
 
+#ifdef WITH_SHA2
 /*
  * SHA2-256 functions
  */
@@ -1965,6 +1945,7 @@ eay_sha2_256_one(data)
 
 	return(res);
 }
+#endif
 
 int
 eay_sha2_256_hashlen()

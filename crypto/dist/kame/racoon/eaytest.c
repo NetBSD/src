@@ -1,4 +1,4 @@
-/*	$KAME: eaytest.c,v 1.39 2001/12/12 18:23:42 sakane Exp $	*/
+/*	$KAME: eaytest.c,v 1.41 2003/07/12 08:44:45 itojun Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -69,7 +69,9 @@ void certtest __P((int, char **));
 static char **getcerts __P((char *));
 void ciphertest __P((int, char **));
 void hmactest __P((int, char **));
+#ifdef WITH_SHA2
 void sha2test __P((int, char **));
+#endif
 void sha1test __P((int, char **));
 void md5test __P((int, char **));
 void dhtest __P((int, char **));
@@ -644,7 +646,9 @@ hmactest(ac, av)
 	char *object2 =                 "8bb74958b9fee94e";
 	char *r_hmd5  = "5702d7d1 fd1bfc7e 210fc9fa cda7d02c";
 	char *r_hsha1 = "309999aa 9779a43e ebdea839 1b4e7ee1 d8646874";
+#ifdef WITH_SHA2
 	char *r_hsha2 = "d47262d8 a5b6f39d d8686939 411b3e79 ed2e27f9 2c4ea89f dd0a06ae 0c0aa396";
+#endif
 	vchar_t *key, *data, *data1, *data2, *res;
 	vchar_t mod;
 	caddr_t ctx;
@@ -684,6 +688,7 @@ hmactest(ac, av)
 	free(mod.v);
 	vfree(res);
 
+#ifdef WITH_SHA2
 	/* HMAC SHA2 */
 	printf("HMAC SHA2 by eay_hmacsha2_256_one()\n");
 	res = eay_hmacsha2_256_one(key, data);
@@ -693,6 +698,7 @@ hmactest(ac, av)
 		printf(" XXX NG XXX\n");
 	free(mod.v);
 	vfree(res);
+#endif
 
 	/* HMAC SHA1 */
 	printf("HMAC SHA1 by eay_hmacsha1_one()\n");

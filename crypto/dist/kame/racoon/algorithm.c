@@ -1,4 +1,4 @@
-/*	$KAME: algorithm.c,v 1.25 2002/06/10 20:01:21 itojun Exp $	*/
+/*	$KAME: algorithm.c,v 1.28 2003/07/12 08:44:44 itojun Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -57,6 +57,7 @@ static struct hash_algorithm oakley_hashdef[] = {
 		eay_sha1_init,		eay_sha1_update,
 		eay_sha1_final,		eay_sha1_hashlen,
 		eay_sha1_one, },
+#ifdef WITH_SHA2
 { "sha2_256",	algtype_sha2_256,	OAKLEY_ATTR_HASH_ALG_SHA2_256,
 		eay_sha2_256_init,	eay_sha2_256_update,
 		eay_sha2_256_final,	eay_sha2_256_hashlen,
@@ -69,6 +70,7 @@ static struct hash_algorithm oakley_hashdef[] = {
 		eay_sha2_512_init,	eay_sha2_512_update,
 		eay_sha2_512_final,	eay_sha2_512_hashlen,
 		eay_sha2_512_one, },
+#endif
 };
 
 static struct hmac_algorithm oakley_hmacdef[] = {
@@ -80,6 +82,7 @@ static struct hmac_algorithm oakley_hmacdef[] = {
 		eay_hmacsha1_init,	eay_hmacsha1_update,
 		eay_hmacsha1_final,	NULL,
 		eay_hmacsha1_one, },
+#ifdef WITH_SHA2
 { "hmac_sha2_256",	algtype_sha2_256,	OAKLEY_ATTR_HASH_ALG_SHA2_256,
 		eay_hmacsha2_256_init,	eay_hmacsha2_256_update,
 		eay_hmacsha2_256_final,	NULL,
@@ -92,6 +95,7 @@ static struct hmac_algorithm oakley_hmacdef[] = {
 		eay_hmacsha2_512_init,	eay_hmacsha2_512_update,
 		eay_hmacsha2_512_final,	NULL,
 		eay_hmacsha2_512_one, },
+#endif
 };
 
 static struct enc_algorithm oakley_encdef[] = {

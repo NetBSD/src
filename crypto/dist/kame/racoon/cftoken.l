@@ -1,4 +1,4 @@
-/*	$KAME: cftoken.l,v 1.69 2002/09/27 06:03:51 itojun Exp $	*/
+/*	$KAME: cftoken.l,v 1.71 2003/06/27 07:32:38 sakane Exp $	*/
 
 %{
 #include <sys/types.h>
@@ -14,6 +14,7 @@
 #include <errno.h>
 #include <limits.h>
 #include <ctype.h>
+#include <glob.h>
 #ifdef HAVE_STDARG_H
 #include <stdarg.h>
 #else
@@ -64,8 +65,10 @@ int yyerrorcount = 0;
 static struct include_stack {
 	char *path;
 	FILE *fp;
-	YY_BUFFER_STATE state;
+	YY_BUFFER_STATE prevstate;
 	int lineno;
+	glob_t matches;
+	int matchon;
 } incstack[MAX_INCLUDE_DEPTH];
 static int incstackp = 0;
 
@@ -176,6 +179,7 @@ hexstring	0x{hexdigit}+
 <S_SAINF>anonymous	{ YYD; return(ANONYMOUS); }
 <S_SAINF>{blcl}any{elcl}	{ YYD; return(PORTANY); }
 <S_SAINF>any		{ YYD; return(ANY); }
+<S_SAINF>from		{ YYD; return(FROM); }
 	/* sainfo spec */
 <S_SAINF>{bcl}		{ BEGIN S_SAINFS; return(BOC); }
 <S_SAINF>{semi}		{ BEGIN S_INI; return(EOS); }
@@ -222,7 +226,8 @@ hexstring	0x{hexdigit}+
 <S_RMTS>dh_group	{ YYD; return(DH_GROUP); }
 <S_RMTS>nonce_size	{ YYD; return(NONCE_SIZE); }
 <S_RMTS>generate_policy	{ YYD; return(GENERATE_POLICY); }
-<S_RMTS>support_mip6	{ YYD; return(SUPPORT_MIP6); }
+<S_RMTS>support_mip6	{ YYD; yywarn("it is obsoleted.  use \"support_proxy\"."); return(SUPPORT_PROXY); }
+<S_RMTS>support_proxy	{ YYD; return(SUPPORT_PROXY); }
 <S_RMTS>initial_contact	{ YYD; return(INITIAL_CONTACT); }
 <S_RMTS>proposal_check	{ YYD; return(PROPOSAL_CHECK); }
 <S_RMTS>obey		{ YYD; yylval.num = PROP_CHECK_OBEY; return(PROPOSAL_CHECK_LEVEL); }
@@ -411,11 +416,26 @@ no		{ YYD; yylval.num = FALSE; return(BOOLEAN); }
 		}
 
 <<EOF>>		{
-			if ( --incstackp < 0 ) {
-				yyterminate();
+			yy_delete_buffer(YY_CURRENT_BUFFER);
+			incstackp--;
+    nextfile:
+			if (incstack[incstackp].matchon <
+			    incstack[incstackp].matches.gl_pathc) {
+				char* filepath = incstack[incstackp].matches.gl_pathv[incstack[incstackp].matchon];
+				incstack[incstackp].matchon++;
+				incstackp++;
+				if (yycf_set_buffer(filepath) != 0) {
+					incstackp--;
+					goto nextfile;
+				}
+				yy_switch_to_buffer(yy_create_buffer(yyin, YY_BUF_SIZE));
+				BEGIN(S_INI);
 			} else {
-				yy_delete_buffer(YY_CURRENT_BUFFER);
-				yy_switch_to_buffer(incstack[incstackp].state);
+				globfree(&incstack[incstackp].matches);
+				if (incstackp == 0)
+					yyterminate();
+				else
+					yy_switch_to_buffer(incstack[incstackp].prevstate);
 			}
 		}
 
@@ -470,6 +490,8 @@ int
 yycf_switch_buffer(path)
 	char *path;
 {
+	char *filepath = NULL;
+
 	/* got the include file name */
 	if (incstackp >= MAX_INCLUDE_DEPTH) {
 		plog(LLV_ERROR, LOCATION, NULL,
@@ -477,10 +499,27 @@ yycf_switch_buffer(path)
 		return -1;
 	}
 
-	incstack[incstackp++].state = YY_CURRENT_BUFFER;
-
-	if (yycf_set_buffer(path) != 0)
+	if (glob(path, GLOB_TILDE, NULL, &incstack[incstackp].matches) != 0 ||
+	    incstack[incstackp].matches.gl_pathc == 0) {
+		plog(LLV_ERROR, LOCATION, NULL,
+			"glob found no matches for path");
 		return -1;
+	}
+	incstack[incstackp].matchon = 0;
+	incstack[incstackp].prevstate = YY_CURRENT_BUFFER;
+
+    nextmatch:
+	if (incstack[incstackp].matchon >= incstack[incstackp].matches.gl_pathc)
+		return -1;
+	filepath =
+	    incstack[incstackp].matches.gl_pathv[incstack[incstackp].matchon];
+	incstack[incstackp].matchon++;
+	incstackp++;
+
+	if (yycf_set_buffer(filepath) != 0) {
+	      incstackp--;
+	      goto nextmatch;
+	}
 
 	yy_switch_to_buffer(yy_create_buffer(yyin, YY_BUF_SIZE));
 
@@ -507,6 +546,8 @@ yycf_set_buffer(path)
 	incstack[incstackp].fp = yyin;
 	incstack[incstackp].path = strdup(path);
 	incstack[incstackp].lineno = 1;
+	plog(LLV_DEBUG, LOCATION, NULL,
+		"reading config file %s\n", path, 0);
 
 	return 0;
 }

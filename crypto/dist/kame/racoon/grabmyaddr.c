@@ -1,4 +1,4 @@
-/*	$KAME: grabmyaddr.c,v 1.34 2002/06/11 15:26:55 itojun Exp $	*/
+/*	$KAME: grabmyaddr.c,v 1.35 2003/01/14 07:07:36 sakane Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -166,8 +166,9 @@ grab_myaddrs()
 
 		if (!suitable_ifaddr(ifap->ifa_name, ifap->ifa_addr)) {
 			plog(LLV_ERROR, LOCATION, NULL,
-				"unsuitable ifaddr: %s\n",
-				saddr2str(ifap->ifa_addr));
+				"unsuitable address: %s %s\n",
+				ifap->ifa_name,
+				saddrwop2str(ifap->ifa_addr));
 			continue;
 		}
 
@@ -281,8 +282,10 @@ grab_myaddrs()
 		case AF_INET6:
 #endif
 			if (!suitable_ifaddr(ifr->ifr_name, &ifr->ifr_addr)) {
-				plog(LLV_DEBUG, LOCATION, NULL,
-					"unsuitable ifaddr %s\n");
+				plog(LLV_ERROR, LOCATION, NULL,
+					"unsuitable address: %s %s\n",
+					ifr->ifr_name,
+					saddrwop2str(&ifr->ifr_addr));
 				continue;
 			}
 

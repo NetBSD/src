@@ -1,4 +1,4 @@
-/*	$KAME: isakmp.c,v 1.176 2002/08/28 04:08:30 itojun Exp $	*/
+/*	$KAME: isakmp.c,v 1.177 2003/05/29 08:59:51 sakane Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -755,9 +755,9 @@ quick_main(iph2, msg)
 
 /* new negotiation of phase 1 for initiator */
 int
-isakmp_ph1begin_i(rmconf, remote)
+isakmp_ph1begin_i(rmconf, remote, local)
 	struct remoteconf *rmconf;
-	struct sockaddr *remote;
+	struct sockaddr *remote, *local;
 {
 	struct ph1handle *iph1;
 #ifdef ENABLE_STATS
@@ -782,7 +782,7 @@ isakmp_ph1begin_i(rmconf, remote)
 	iph1->approval = NULL;
 
 	/* XXX copy remote address */
-	if (copy_ph1addresses(iph1, rmconf, remote, NULL) < 0)
+	if (copy_ph1addresses(iph1, rmconf, remote, local) < 0)
 		return -1;
 
 	(void)insph1(iph1);
@@ -1687,7 +1687,7 @@ isakmp_post_acquire(iph2)
 			saddrwop2str(iph2->dst));
 
 		/* start phase 1 negotiation as a initiator. */
-		if (isakmp_ph1begin_i(rmconf, iph2->dst) < 0) {
+		if (isakmp_ph1begin_i(rmconf, iph2->dst, iph2->src) < 0) {
 			SCHED_KILL(sc);
 			return -1;
 		}
