@@ -1,4 +1,4 @@
-/*	$NetBSD: oldmon.h,v 1.7 1996/02/13 17:04:59 christos Exp $ */
+/*	$NetBSD: oldmon.h,v 1.8 1996/02/13 17:13:22 christos Exp $ */
 
 /*
  * Copyright (C) 1985 Regents of the University of California
@@ -204,7 +204,7 @@ struct om_vector {
 	__dead void (*exitToMon) __P((void));/* Exit from user program */
 	u_char	**memorybitmap;		/* V1: &{0 or &bits} */
 	void	(*setcxsegmap)		/* Set seg in any context */
-		    __P((int, caddt_t, int));
+		    __P((int, caddr_t, int));
 	void	(**vector_cmd) __P((void));/* V2: Handler for 'v' cmd */
   	u_long	*ExpectedTrapSig;
   	u_long	*TrapVectorTable;
