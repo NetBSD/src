@@ -1,4 +1,4 @@
-/*	$NetBSD: if_arc.h,v 1.10 1999/05/20 18:07:27 thorpej Exp $	*/
+/*	$NetBSD: if_arc.h,v 1.11 1999/08/27 19:23:19 is Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1993
@@ -120,6 +120,7 @@ struct	arccom {
 u_int8_t arcbroadcastaddr;
 
 void	arc_ifattach __P((struct ifnet *, u_int8_t));
+void	arc_storelladdr __P((struct ifnet *, u_int8_t));
 char	*arc_sprintf __P((u_int8_t *));
 int	arc_isphds __P((int));
 #endif
