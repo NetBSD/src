@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.21 1997/09/19 13:55:06 leo Exp $	*/
+/*	$NetBSD: pmap.c,v 1.22 1998/01/02 22:43:29 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1993, 1994, 1995 Charles M. Hannum.  All rights reserved.
@@ -188,7 +188,6 @@ void ns532_protection_init __P((void));
 void pmap_collect_pv __P((void));
 __inline void pmap_remove_pv __P((pmap_t, vm_offset_t, u_int));
 __inline void pmap_enter_pv __P((pmap_t, vm_offset_t, u_int));
-void pmap_deactivate __P((pmap_t, struct pcb *));
 void pmap_remove_all __P((vm_offset_t));
 
 #ifdef	NKPDE
@@ -733,21 +732,26 @@ pmap_reference(pmap)
 	simple_unlock(&pmap->pm_lock);
 }
 
+/*
+ *	Activate the specified address space of the specified process.
+ *	If the process is the current process, load the MMU context.
+ */
 void
-pmap_activate(pmap, pcb)
-	pmap_t pmap;
-	struct pcb *pcb;
+pmap_activate(p)
+	struct proc *p;
 {
+	struct pcb *pcb = &p->p_addr->u_pcb;
+	pmap_t pmap = p->p_vmspace->vm_map.pmap;  
 
-	if (pmap /*&& pmap->pm_pdchanged */) {
-		pcb->pcb_ptb =
-		    pmap_extract(pmap_kernel(), (vm_offset_t)pmap->pm_pdir);
-		if (pmap == curproc->p_vmspace->vm_map.pmap)
-			load_ptb(pcb->pcb_ptb);
-		pmap->pm_pdchanged = FALSE;
-	}
+	pcb->pcb_ptb = pmap_extract(pmap_kernel(), (vm_offset_t)pmap->pm_pdir);
+	if (p == curproc)
+		load_ptb(pcb->pcb_ptb);
+	pmap->pm_pdchanged = FALSE;
 }
 
+/*
+ *	Deactivate the address space of the specified process.
+ */
 void
 pmap_deactivate(pmap, pcb)
 	pmap_t pmap;

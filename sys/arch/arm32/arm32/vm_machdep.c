@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_machdep.c,v 1.16 1997/10/14 11:23:54 mark Exp $	*/
+/*	$NetBSD: vm_machdep.c,v 1.17 1998/01/02 22:36:34 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1994-1997 Mark Brinicombe.
@@ -87,7 +87,6 @@ int process_read_fpregs	__P((struct proc *p, struct fpreg *regs));
 
 void	switch_exit	__P((struct proc *p, struct proc *proc0));
 int	savectx		__P((struct pcb *pcb));
-void	pmap_activate	__P((pmap_t pmap, struct pcb *pcbp));
 extern void proc_trampoline	__P(());
 extern void child_return	__P(());
 
@@ -245,7 +244,7 @@ cpu_fork(p1, p2)
 	pmap_enter(p2->p_vmspace->vm_map.pmap, 0,
 	    systempage.physical, VM_PROT_READ, TRUE);
 
-	pmap_activate(p2->p_vmspace->vm_map.pmap, &up->u_pcb);
+	pmap_activate(p2);
 
 #ifdef ARMFPE
 	/* Initialise a new FP context for p2 and copy the context from p1 */
