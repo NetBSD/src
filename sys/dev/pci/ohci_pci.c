@@ -1,4 +1,4 @@
-/*	$NetBSD: ohci_pci.c,v 1.3 1998/07/25 15:15:39 augustss Exp $	*/
+/*	$NetBSD: ohci_pci.c,v 1.4 1998/07/25 23:23:02 augustss Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -52,7 +52,6 @@
 
 #include <machine/bus.h>
 
-#include <dev/pci/pcidevs.h>
 #include <dev/pci/pcivar.h>
 
 #include <dev/usb/usb.h>
@@ -78,11 +77,10 @@ ohci_pci_match(parent, match, aux)
 {
 	struct pci_attach_args *pa = (struct pci_attach_args *) aux;
 
-	if ((PCI_VENDOR(pa->pa_id) == PCI_VENDOR_OPTI &&
-	     PCI_PRODUCT(pa->pa_id) == PCI_PRODUCT_OPTI_RM861HA) ||
-	    (PCI_VENDOR(pa->pa_id) == PCI_VENDOR_ALI &&
-	     PCI_PRODUCT(pa->pa_id) == PCI_PRODUCT_ALI_M5237))
-                return 1;
+	if (PCI_CLASS(pa->pa_class) == PCI_CLASS_SERIALBUS &&
+	    PCI_SUBCLASS(pa->pa_class) == PCI_SUBCLASS_SERIALBUS_USB &&
+	    PCI_INTERFACE(pa->pa_class) == PCI_INTERFACE_OHCI)
+		return 1;
  
 	return 0;
 }
