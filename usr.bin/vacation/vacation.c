@@ -1,4 +1,4 @@
-/*	$NetBSD: vacation.c,v 1.16 1998/12/19 23:37:14 christos Exp $	*/
+/*	$NetBSD: vacation.c,v 1.17 2000/07/21 01:21:31 mjl Exp $	*/
 
 /*
  * Copyright (c) 1983, 1987, 1993
@@ -44,7 +44,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1987, 1993\n\
 #if 0
 static char sccsid[] = "@(#)vacation.c	8.2 (Berkeley) 1/26/94";
 #endif
-__RCSID("$NetBSD: vacation.c,v 1.16 1998/12/19 23:37:14 christos Exp $");
+__RCSID("$NetBSD: vacation.c,v 1.17 2000/07/21 01:21:31 mjl Exp $");
 #endif /* not lint */
 
 /*
@@ -86,29 +86,27 @@ __RCSID("$NetBSD: vacation.c,v 1.16 1998/12/19 23:37:14 christos Exp $");
 typedef struct alias {
 	struct alias *next;
 	const char *name;
-} ALIAS;
-ALIAS *names;
+} alias_t;
+alias_t *names;
 
 DB *db;
 char from[MAXLINE];
 
-int main __P((int, char **));
-int junkmail __P((void));
-int nsearch __P((const char *, const char *));
-void readheaders __P((void));
-int recent __P((void));
-void sendmessage __P((const char *));
-void setinterval __P((time_t));
-void setreply __P((void));
-void usage __P((void));
+int main(int, char **);
+int junkmail(void);
+int nsearch(const char *, const char *);
+void readheaders(void);
+int recent(void);
+void sendmessage(const char *);
+void setinterval(time_t);
+void setreply(void);
+void usage(void);
 
 int
-main(argc, argv)
-	int argc;
-	char **argv;
+main(int argc, char **argv)
 {
 	struct passwd *pw;
-	ALIAS *cur;
+	alias_t *cur;
 	time_t interval;
 	int ch, iflag;
 
@@ -117,7 +115,7 @@ main(argc, argv)
 	while ((ch = getopt(argc, argv, "a:Iir:")) != -1)
 		switch((char)ch) {
 		case 'a':			/* alias */
-			if (!(cur = (ALIAS *)malloc((u_int)sizeof(ALIAS))))
+			if (!(cur = (alias_t *)malloc((size_t)sizeof(alias_t))))
 				break;
 			cur->name = optarg;
 			cur->next = names;
@@ -177,7 +175,7 @@ main(argc, argv)
 		exit(0);
 	}
 
-	if (!(cur = malloc((u_int)sizeof(ALIAS))))
+	if (!(cur = malloc((size_t)sizeof(alias_t))))
 		exit(1);
 	cur->name = pw->pw_name;
 	cur->next = names;
@@ -202,7 +200,7 @@ main(argc, argv)
 void
 readheaders()
 {
-	ALIAS *cur;
+	alias_t *cur;
 	char *p;
 	int tome, cont;
 	char buf[MAXLINE];
@@ -269,13 +267,12 @@ findme:			for (cur = names; !tome && cur; cur = cur->next)
  *	do a nice, slow, search of a string for a substring.
  */
 int
-nsearch(name, str)
-	const char *name, *str;
+nsearch(const char *name, const char *str)
 {
 	size_t len;
 
 	for (len = strlen(name); *str; ++str)
-		if (*str == *name && !strncasecmp(name, str, len))
+		if (!strncasecmp(name, str, len))
 			return(1);
 	return(0);
 }
@@ -364,8 +361,7 @@ recent()
  *	store the reply interval
  */
 void
-setinterval(interval)
-	time_t interval;
+setinterval(time_t interval)
 {
 	DBT key, data;
 
@@ -399,8 +395,7 @@ setreply()
  *	exec sendmail to send the vacation file to sender
  */
 void
-sendmessage(myname)
-	const char *myname;
+sendmessage(const char *myname)
 {
 	FILE *mfp, *sfp;
 	int i;
