@@ -1,4 +1,4 @@
-/*	$NetBSD: sysctl.c,v 1.75 2003/12/04 19:49:39 atatat Exp $ */
+/*	$NetBSD: sysctl.c,v 1.76 2003/12/04 20:07:59 atatat Exp $ */
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -72,7 +72,7 @@ __COPYRIGHT(
 #if 0
 static char sccsid[] = "@(#)sysctl.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: sysctl.c,v 1.75 2003/12/04 19:49:39 atatat Exp $");
+__RCSID("$NetBSD: sysctl.c,v 1.76 2003/12/04 20:07:59 atatat Exp $");
 #endif
 #endif /* not lint */
 
@@ -146,6 +146,8 @@ static void sysctlerror(int);
  * unexported from some place else (XXX tbd)
  */
 int learn_tree(int *, u_int, struct sysctlnode *);
+int sysctlnametomib(const char *, int *, u_int *,
+		    char *, size_t *, struct sysctlnode **);
 
 /*
  * "handlers"
