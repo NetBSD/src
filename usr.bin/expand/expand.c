@@ -39,16 +39,23 @@ char copyright[] =
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)expand.c	5.3 (Berkeley) 6/1/90";*/
-static char rcsid[] = "$Id: expand.c,v 1.2 1993/08/01 18:16:35 mycroft Exp $";
+static char rcsid[] = "$Id: expand.c,v 1.3 1993/08/28 02:34:04 jtc Exp $";
 #endif /* not lint */
 
 #include <stdio.h>
+#include <stdlib.h>
+#include <ctype.h>
+
 /*
  * expand - expand tabs to equivalent spaces
  */
 int	nstops;
 int	tabstops[100];
 
+static void getstops();
+static void usage();
+
+int
 main(argc, argv)
 	int argc;
 	char *argv[];
@@ -56,12 +63,27 @@ main(argc, argv)
 	register int c, column;
 	register int n;
 
-	argc--, argv++;
-	do {
-		while (argc > 0 && argv[0][0] == '-') {
-			getstops(argv[0]);
-			argc--, argv++;
+	/* handle obsolete syntax */
+	while (argc > 1 && argv[1][0] && isdigit(argv[1][1])) {
+		getstops(&argv[1][1]);
+		argc--; argv++;
+	}
+
+	while ((c = getopt (argc, argv, "t:")) != -1) {
+		switch (c) {
+		case 't':
+			getstops(optarg);
+			break;
+		case '?':
+		default:
+			usage();
+			/* NOTREACHED */
 		}
+	}
+	argc -= optind;
+	argv += optind;
+
+	do {
 		if (argc > 0) {
 			if (freopen(argv[0], "r", stdin) == NULL) {
 				perror(argv[0]);
@@ -70,12 +92,8 @@ main(argc, argv)
 			argc--, argv++;
 		}
 		column = 0;
-		for (;;) {
-			c = getc(stdin);
-			if (c == -1)
-				break;
+		while ((c = getchar()) != EOF) {
 			switch (c) {
-
 			case '\t':
 				if (nstops == 0) {
 					do {
@@ -126,13 +144,13 @@ main(argc, argv)
 	exit(0);
 }
 
+static void
 getstops(cp)
 	register char *cp;
 {
 	register int i;
 
 	nstops = 0;
-	cp++;
 	for (;;) {
 		i = 0;
 		while (*cp >= '0' && *cp <= '9')
@@ -147,7 +165,15 @@ bad:
 		tabstops[nstops++] = i;
 		if (*cp == 0)
 			break;
-		if (*cp++ != ',')
+		if (*cp != ',' && *cp != ' ')
 			goto bad;
+		cp++;
 	}
+}
+
+static void
+usage()
+{
+	(void)fprintf (stderr, "usage: expand [-t tablist] [file ...]\n");
+	exit(1);
 }
