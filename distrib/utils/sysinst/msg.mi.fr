@@ -1,4 +1,4 @@
-/*	$NetBSD: msg.mi.fr,v 1.22 1999/06/22 04:29:54 cgd Exp $	*/
+/*	$NetBSD: msg.mi.fr,v 1.23 1999/06/22 12:45:26 bouyer Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -529,9 +529,9 @@ L'installation a échoué.
 }
 
 message notarfile
-{La distribution %s n'existe pas.
+{Le composant %s n'existe pas.
 
-Continue extracting sets?} /* XXX CGD trans */
+Voulez-vous continuer à extraire les composants ?}
 
 message endtarok
 {Tous les fichiers ont étés extraits. SVP appuyer sur <entrée> pour continuer.}
@@ -540,10 +540,9 @@ message endtar
 {Il y a eu des problèmes au décompactage des composants. Votre installation
 est incomplète.
 
-/* XXX CGD trans */
-You selected %d distribution sets.  %d sets couldn't be found
-and %d were skipped after an error occured.  Of the %d
-that were attempted, %d unpacked without errors and %d with errors.
+Vous aviez selectionné %d composants. %d n'ont pas été trouvés et
+%d ont été ignorés après qu'une erreur se soit produite. Sur les %d
+qui ont été traités, %d ont été extrait sans erreurs et %d avec erreurs.
 
 La procédure d'installation a échoué. Vérifiez vos composants et
 envisagez une réinstallation des composants depuis le menu principal.}
@@ -690,7 +689,7 @@ message tarerror
 Ceci signifie que certains fichiers n'ont pas étés extraits
 correctement et que votre système n'est pas complet.
 
-Continue extracting sets?}	/* XXX CGD trans */
+Voulez-vous continuer à extraire les composants ?}
 
 message etc_hosts
 {
