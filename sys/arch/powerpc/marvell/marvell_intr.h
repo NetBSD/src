@@ -1,4 +1,4 @@
-/*	$NetBSD: marvell_intr.h,v 1.3 2003/03/16 06:57:31 matt Exp $	*/
+/*	$NetBSD: marvell_intr.h,v 1.4 2003/03/17 16:54:16 matt Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -320,12 +320,10 @@ void intr_dispatch __P((void));
 static __inline int splraise __P((int));
 static __inline int spllower __P((int));
 static __inline void splx __P((int));
-static __inline void softintr __P((int));
 #else
 extern int splraise __P((int));
 extern int spllower __P((int));
 extern void splx __P((int));
-extern void softintr __P((int));
 #endif
 
 extern volatile int tickspending;
@@ -434,16 +432,6 @@ spllower(int ncpl)
 
 	return (ocpl);
 }
-
-static __inline void
-softintr(int sibit)
-{
-	register_t omsr;
-
-	omsr = extintr_disable();
-	ipending[IMASK_SOFTINT] |= sibit;
-	extintr_restore(omsr);
-}
 #endif	/* SPL_INLINE */
 
 
@@ -453,12 +441,15 @@ softintr(int sibit)
  */
 #define SIR_BASE	(NIRQ-32)
 #define SIR_SOFTCLOCK	(NIRQ-5)
-#define SIR_NET		(NIRQ-4)
-#define SIR_I2C		(NIRQ-3)
-#define SIR_SERIAL	(NIRQ-2)
+#define SIR_SOFTNET	(NIRQ-4)
+#define SIR_SOFTI2C	(NIRQ-3)
+#define SIR_SOFTSERIAL	(NIRQ-2)
 #define SIR_HWCLOCK	(NIRQ-1)
-#define SIR_RES		~(SIBIT(SIR_SOFTCLOCK)|SIBIT(SIR_NET)| \
-			  SIBIT(SIR_I2C)|SIBIT(SIR_SERIAL)|SIBIT(SIR_HWCLOCK))
+#define SIR_RES		~(SIBIT(SIR_SOFTCLOCK)|\
+			  SIBIT(SIR_SOFTNET)|\
+			  SIBIT(SIR_SOFTI2C)|\
+			  SIBIT(SIR_SOFTSERIAL)|\
+			  SIBIT(SIR_HWCLOCK))
 
 /*
  * standard hardware interrupt spl's
@@ -485,6 +476,12 @@ softintr(int sibit)
 #define	splsoftnet()		splraise(IPL_SOFTNET)
 #define	splsoftserial()		splraise(IPL_SOFTSERIAL)
 
+#define __HAVE_GENERIC_SOFT_INTERRUPTS	/* should be in <machine/types.h> */
+void *softintr_establish(int level, void (*fun)(void *), void *arg);
+void softintr_disestablish(void *cookie);
+void softintr_schedule(void *cookie);
+
+
 /*
  * Miscellaneous
  */
@@ -494,12 +491,14 @@ softintr(int sibit)
 #define	spl0()		spllower(IPL_NONE)
 
 #define SIBIT(ipl)	(1 << ((ipl) - SIR_BASE))
+#if 0
 #define	setsoftclock()	softintr(SIBIT(SIR_SOFTCLOCK))
-#define	setsoftnet()	softintr(SIBIT(SIR_NET))
-#define	setsoftserial()	softintr(SIBIT(SIR_SERIAL))
-#define	setsofti2c()	softintr(SIBIT(SIR_I2C))
+#define	setsoftnet()	softintr(SIBIT(SIR_SOFTNET))
+#define	setsoftserial()	softintr(SIBIT(SIR_SOFTSERIAL))
+#define	setsofti2c()	softintr(SIBIT(SIR_SOFTI2C))
+#endif
 
-extern volatile int intrcnt[];
+extern void *softnet_si;
 void	*intr_establish(int, int, int, int (*)(void *), void *);
 void	intr_disestablish(void *);
 void	init_interrupt(void);
@@ -508,7 +507,9 @@ const char * intr_string(int);
 const struct evcnt * intr_evcnt(int);
 void	ext_intr(struct intrframe *);
 
+#if 0
 void	softserial(void);
+#endif
 void	strayintr(int);
 
 #define	schednetisr(isr)  do {			\
@@ -520,7 +521,7 @@ void	strayintr(int);
 	   :					\
 	   : "r"(1 << (isr)), "b"(&netisr)	\
 	   : "cr0", "r0");			\
-	setsoftnet();				\
+	softintr_schedule(softnet_si);		\
 } while (/*CONSTCOND*/ 0)
 
 /*
