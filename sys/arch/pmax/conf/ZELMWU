@@ -1,7 +1,7 @@
 #
 # Matthias Drochner's development machine
 #
-#	$NetBSD: ZELMWU,v 1.1.2.3 1999/06/11 00:53:34 nisimura Exp $
+#	$NetBSD: ZELMWU,v 1.1.2.4 1999/08/04 07:23:03 nisimura Exp $
 #
 include		"arch/pmax/conf/std.pmax"
 
@@ -104,6 +104,7 @@ le0	at	ioasic?	offset ?	# LANCE
 zsc*	at	ioasic? offset ?	# Z85C30
 zstty*	at	zsc? channel 1
 lkkbd0	at	zsc? channel ?
+vsms0	at	zsc? channel ?
 #dtop0	at	ioasic?	offset ?	# MAXINE kbd and mouse
 #isdn	at	ioasic?	offset ?	# MAXINE ISDN/audio (not supported)
 #fdc	at	ioasic?	offset ?	# MAXINE floppy disk (not supported)
@@ -148,7 +149,8 @@ cd*	at scsibus? target ? lun ?
 wsdisplay* at	sfb?
 #wsdisplay* at	tfb?
 #wsdisplay* at	xcfb?
-wskbd0 at lkkbd?
+wskbd0	at lkkbd? console ? mux 1
+wsmouse0 at vsms? mux 0
 
 # Pseudo-devices                            ###
 pseudo-device	loop		1	# network loopback
@@ -157,6 +159,7 @@ pseudo-device	loop		1	# network loopback
 pseudo-device	pty		64	# pseudo ptys
 #pseudo-device	bpfilter	16	# packet filter ports
 #pseudo-device	ipfilter		# IP filter, NAT
+pseudo-device	wsmux		2	# mouse & keyboard multiplexor
 
 #pseudo-device	vnd		4	# virtual disk ick
 #pseudo-device	ccd             4       # concatenated disks
