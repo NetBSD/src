@@ -418,7 +418,8 @@ main (int argc, char **argv)
       while ((n->next != (name) &names[len])
 	     && (strcmp (buf, n->next->name_uc) > 0))
 	n = n->next;
-      if (strcmp (buf, n->next->name_uc) == 0)
+      if (n->next != (name) &names[len] 
+	  && strcmp (buf, n->next->name_uc) == 0)
 	{
 	  fprintf (stderr, "%s: extraneous \"%s\"\n", input_name, buf);
 	  do_exit = TRUE;
