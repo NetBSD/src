@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.lib.mk,v 1.50 1994/06/30 05:31:13 cgd Exp $
+#	$NetBSD: bsd.lib.mk,v 1.51 1994/06/30 06:47:38 deraadt Exp $
 #	@(#)bsd.lib.mk	5.26 (Berkeley) 5/2/91
 
 .if exists(${.CURDIR}/../Makefile.inc)
@@ -15,7 +15,7 @@ SHLIB_MINOR != . ${.CURDIR}/shlib_version ; echo $$minor
 # prefer .S to a .c, add .po, remove stuff not used in the BSD libraries
 # .so used for PIC object files
 .SUFFIXES:
-.SUFFIXES: .out .o .po .so .S .s .c .cc .C .f .y .l
+.SUFFIXES: .out .o .po .so .S .s .c .cc .C .f .y .l .m4
 
 .c.o:
 	${CC} ${CFLAGS} -c ${.IMPSRC} 
