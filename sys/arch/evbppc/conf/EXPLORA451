@@ -1,4 +1,4 @@
-#	$NetBSD: EXPLORA451,v 1.2 2003/04/10 22:06:55 christos Exp $
+#	$NetBSD: EXPLORA451,v 1.3 2003/05/31 12:00:59 hannken Exp $
 #
 #	GENERIC -- everything that's currently supported
 #
@@ -54,6 +54,7 @@ options 	DDB_HISTORY_SIZE=512	# enable history editing in DDB
 #options 	KGDB		# remote debugger
 #options 	KGDB_DEVNAME="\"com\"",KGDB_DEVADDR=0x3f8,KGDB_DEVRATE=9600
 makeoptions	DEBUG="-g"	# compile full symbol table
+options 	SYMTAB_SPACE=300000
 
 # Compatibility options
 options 	COMPAT_NOMID	# compatibility with 386BSD, BSDI, NetBSD 0.8,
@@ -198,3 +199,4 @@ pseudo-device	nsmb			# experimental - SMB requester
 # wscons pseudo-devices
 pseudo-device	wsmux			# mouse & keyboard multiplexor
 pseudo-device	wsfont
+pseudo-device	ksyms			# /dev/ksyms
