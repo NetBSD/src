@@ -1,4 +1,4 @@
-/* $NetBSD: alloc.c,v 1.10 2001/09/14 14:03:59 wiz Exp $ */
+/* $NetBSD: alloc.c,v 1.11 2002/05/25 23:29:16 wiz Exp $ */
 
 /*-
  * Copyright (c) 1983, 1991, 1993
@@ -38,20 +38,15 @@
 #if 0
 static char sccsid[] = "@(#)alloc.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: alloc.c,v 1.10 2001/09/14 14:03:59 wiz Exp $");
+__RCSID("$NetBSD: alloc.c,v 1.11 2002/05/25 23:29:16 wiz Exp $");
 #endif
 #endif /* not lint */
 
 #include <sys/types.h>
 
 #include <unistd.h>
+#include <stdarg.h>
 #include <stdlib.h>
-
-#if __STDC__
-# include <stdarg.h>
-#else
-# include <varargs.h>
-#endif
 
 #include "csh.h"
 #include "extern.h"
