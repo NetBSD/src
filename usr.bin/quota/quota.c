@@ -1,4 +1,4 @@
-/*	$NetBSD: quota.c,v 1.26 2003/08/07 11:15:34 agc Exp $	*/
+/*	$NetBSD: quota.c,v 1.27 2003/09/21 17:01:43 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1980, 1990, 1993
@@ -42,7 +42,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1990, 1993\n\
 #if 0
 static char sccsid[] = "@(#)quota.c	8.4 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: quota.c,v 1.26 2003/08/07 11:15:34 agc Exp $");
+__RCSID("$NetBSD: quota.c,v 1.27 2003/09/21 17:01:43 bouyer Exp $");
 #endif
 #endif /* not lint */
 
@@ -638,7 +638,7 @@ getnfsquota(fst, fs, qup, id, quotatype)
 	ret = callaurpc(fst->f_mntfromname, RQUOTAPROG, EXT_RQUOTAVERS,
 	    RQUOTAPROC_GETQUOTA, xdr_ext_getquota_args, &ext_gq_args,
 	    xdr_getquota_rslt, &gq_rslt);
-	if (ret == RPC_VERSMISMATCH) {
+	if (ret == RPC_PROGVERSMISMATCH) {
 		if (quotatype != USRQUOTA) {
 			*cp = ':';
 			return (0);
