@@ -1,4 +1,4 @@
-/* $NetBSD: sched.h,v 1.10 2000/08/26 04:17:44 sommerfeld Exp $ */
+/* $NetBSD: sched.h,v 1.11 2001/04/30 01:13:21 lukem Exp $ */
 
 /*-
  * Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
@@ -194,7 +194,7 @@ void roundrobin(struct cpu_info *);
 #define	scheduler_fork_hook(parent, child)				\
 do {									\
 	(child)->p_estcpu = (parent)->p_estcpu;				\
-} while (0)
+} while (/* CONSTCOND */ 0)
 
 /*
  * scheduler_wait_hook:
@@ -206,7 +206,7 @@ do {									\
 	/* XXX Only if parent != init?? */				\
 	(parent)->p_estcpu = ESTCPULIM((parent)->p_estcpu +		\
 	    (child)->p_estcpu);						\
-} while (0)
+} while (/* CONSTCOND */ 0)
 
 #if defined(MULTIPROCESSOR) || defined(LOCKDEBUG)
 #include <sys/lock.h>
@@ -220,13 +220,13 @@ extern struct simplelock sched_lock;
 do {									\
 	s = splsched();							\
 	simple_lock(&sched_lock);					\
-} while (0)
+} while (/* CONSTCOND */ 0)
 
 #define	SCHED_UNLOCK(s)							\
 do {									\
 	simple_unlock(&sched_lock);					\
 	splx(s);							\
-} while (0)
+} while (/* CONSTCOND */ 0)
 
 void	sched_lock_idle(void);
 void	sched_unlock_idle(void);

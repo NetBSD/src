@@ -1,4 +1,4 @@
-/*	$NetBSD: signalvar.h,v 1.28 2001/01/14 22:32:01 thorpej Exp $	*/
+/*	$NetBSD: signalvar.h,v 1.29 2001/04/30 01:13:21 lukem Exp $	*/
 
 /*
  * Copyright (c) 1991, 1993
@@ -93,7 +93,7 @@ struct	sigctx {
 do {									\
 	(p)->p_sigctx.ps_sigcheck = 1;					\
 	signotify(p);							\
-} while (0)
+} while (/* CONSTCOND */ 0)
 
 /*
  * Determine signal that should be delivered to process p, the current

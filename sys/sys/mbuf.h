@@ -1,4 +1,4 @@
-/*	$NetBSD: mbuf.h,v 1.56 2001/01/14 02:07:22 thorpej Exp $	*/
+/*	$NetBSD: mbuf.h,v 1.57 2001/04/30 01:13:21 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1999 The NetBSD Foundation, Inc.
@@ -209,7 +209,7 @@ struct mbuf {
 	do { int ms = splvm(); \
 	  { code } \
 	  splx(ms); \
-	} while (0)
+	} while (/* CONSTCOND */ 0)
 
 /*
  * mbuf allocation/deallocation macros:
@@ -235,7 +235,7 @@ struct mbuf {
 		(m)->m_flags = 0; \
 	} else \
 		(m) = m_retry((how), (type)); \
-} while (0)
+} while (/* CONSTCOND */ 0)
 
 #define	MGETHDR(m, how, type) do { \
 	MBUFLOCK((m) = pool_get(&mbpool, (how) == M_WAIT ? PR_WAITOK|PR_LIMITFAIL : 0);); \
@@ -249,7 +249,7 @@ struct mbuf {
 		(m)->m_pkthdr.aux = (struct mbuf *)NULL; \
 	} else \
 		(m) = m_retryhdr((how), (type)); \
-} while (0)
+} while (/* CONSTCOND */ 0)
 
 /*
  * Macros for tracking external storage associated with an mbuf.
@@ -260,11 +260,11 @@ struct mbuf {
 #define MCLREFDEBUGN(m, file, line) do {				\
 		(m)->m_ext.ext_nfile = (file);				\
 		(m)->m_ext.ext_nline = (line);				\
-	} while (0)
+	} while (/* CONSTCOND */ 0)
 #define MCLREFDEBUGO(m, file, line) do {				\
 		(m)->m_ext.ext_ofile = (file);				\
 		(m)->m_ext.ext_oline = (line);				\
-	} while (0)
+	} while (/* CONSTCOND */ 0)
 #else
 #define MCLREFDEBUGN(m, file, line)
 #define MCLREFDEBUGO(m, file, line)
@@ -277,7 +277,7 @@ struct mbuf {
 			(m)->m_ext.ext_prevref;				\
 		(m)->m_ext.ext_prevref->m_ext.ext_nextref =		\
 			(m)->m_ext.ext_nextref;				\
-	} while (0)
+	} while (/* CONSTCOND */ 0)
 #define	_MCLADDREFERENCE(o, n)	do {					\
 		(n)->m_flags |= ((o)->m_flags & (M_EXT|M_CLUSTER));	\
 		(n)->m_ext.ext_nextref = (o)->m_ext.ext_nextref;	\
@@ -285,13 +285,13 @@ struct mbuf {
 		(o)->m_ext.ext_nextref = (n);				\
 		(n)->m_ext.ext_nextref->m_ext.ext_prevref = (n);	\
 		MCLREFDEBUGN((n), __FILE__, __LINE__);			\
-	} while (0)
+	} while (/* CONSTCOND */ 0)
 #define	MCLINITREFERENCE(m)	do {					\
 		(m)->m_ext.ext_prevref = (m);				\
 		(m)->m_ext.ext_nextref = (m);				\
 		MCLREFDEBUGO((m), __FILE__, __LINE__);			\
 		MCLREFDEBUGN((m), NULL, 0);				\
-	} while (0)
+	} while (/* CONSTCOND */ 0)
 
 #define	MCLADDREFERENCE(o, n)	MBUFLOCK(_MCLADDREFERENCE((o), (n));)
 
@@ -327,7 +327,7 @@ struct mbuf {
 		(m)->m_ext.ext_arg = NULL;  \
 		MCLINITREFERENCE(m); \
 	} \
-} while (0)
+} while (/* CONSTCOND */ 0)
 
 #define	MEXTMALLOC(m, size, how) do { \
 	(m)->m_ext.ext_buf = \
@@ -342,7 +342,7 @@ struct mbuf {
 		(m)->m_ext.ext_type = mbtypes[(m)->m_type]; \
 		MCLINITREFERENCE(m); \
 	} \
-} while (0)
+} while (/* CONSTCOND */ 0)
 
 #define	MEXTADD(m, buf, size, type, free, arg) do { \
 	(m)->m_data = (m)->m_ext.ext_buf = (caddr_t)(buf); \
@@ -353,7 +353,7 @@ struct mbuf {
 	(m)->m_ext.ext_arg = (arg); \
 	(m)->m_ext.ext_type = (type); \
 	MCLINITREFERENCE(m); \
-} while (0)
+} while (/* CONSTCOND */ 0)
 
 #define	_MEXTREMOVE(m) do { \
 	if (MCLISREFERENCED(m)) { \
@@ -368,7 +368,7 @@ struct mbuf {
 	} \
 	(m)->m_flags &= ~(M_CLUSTER|M_EXT); \
 	(m)->m_ext.ext_size = 0;	/* why ??? */ \
-} while (0)
+} while (/* CONSTCOND */ 0)
 
 #define	MEXTREMOVE(m) \
 	MBUFLOCK(_MEXTREMOVE((m));)
@@ -384,7 +384,7 @@ do {									\
 		(m)->m_data = (m)->m_pktdat;				\
 	else								\
 		(m)->m_data = (m)->m_dat;				\
-} while (0)
+} while (/* CONSTCOND */ 0)
 
 /*
  * MFREE(struct mbuf *m, struct mbuf *n)
@@ -419,20 +419,24 @@ do {									\
 	(from)->m_pkthdr.aux = (struct mbuf *)NULL; \
 	(to)->m_flags = (from)->m_flags & M_COPYFLAGS; \
 	(to)->m_data = (to)->m_pktdat; \
-} while (0)
+} while (/* CONSTCOND */ 0)
 
 /*
  * Set the m_data pointer of a newly-allocated mbuf (m_get/MGET) to place
  * an object of the specified size at the end of the mbuf, longword aligned.
  */
 #define	M_ALIGN(m, len) \
-	do { (m)->m_data += (MLEN - (len)) &~ (sizeof(long) - 1); } while (0)
+	do { \
+		(m)->m_data += (MLEN - (len)) &~ (sizeof(long) - 1); \
+	} while (/* CONSTCOND */ 0)
 /*
  * As above, for mbufs allocated with m_gethdr/MGETHDR
  * or initialized by M_COPY_PKTHDR.
  */
 #define	MH_ALIGN(m, len) \
-	do { (m)->m_data += (MHLEN - (len)) &~ (sizeof(long) - 1); } while (0)
+	do { \
+		(m)->m_data += (MHLEN - (len)) &~ (sizeof(long) - 1); \
+	} while (/* CONSTCOND */ 0)
 
 /*
  * Compute the amount of space available
@@ -466,13 +470,13 @@ do {									\
 		(m) = m_prepend((m), (plen), (how)); \
 	if ((m) && (m)->m_flags & M_PKTHDR) \
 		(m)->m_pkthdr.len += (plen); \
-} while (0)
+} while (/* CONSTCOND */ 0)
 
 /* change mbuf to new type */
 #define MCHTYPE(m, t) do { \
 	MBUFLOCK(mbstat.m_mtypes[(m)->m_type]--; mbstat.m_mtypes[t]++;); \
 	(m)->m_type = t; \
-} while (0)
+} while (/* CONSTCOND */ 0)
 
 /* length to m_copy to copy all */
 #define	M_COPYALL	1000000000

@@ -1,4 +1,4 @@
-/*	$NetBSD: exec.h,v 1.78 2001/02/14 18:21:42 eeh Exp $	*/
+/*	$NetBSD: exec.h,v 1.79 2001/04/30 01:13:20 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1994 Christopher G. Demetriou
@@ -238,7 +238,7 @@ void	new_vmcmd __P((struct exec_vmcmd_set *evsp,
         vcp->ev_offset = (offset); \
         vcp->ev_prot = (prot); \
 	vcp->ev_flags = (flags); \
-} while (0)
+} while (/* CONSTCOND */ 0)
 #endif /* EXEC_DEBUG */
 
 #endif /* _KERNEL */

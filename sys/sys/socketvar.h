@@ -1,4 +1,4 @@
-/*	$NetBSD: socketvar.h,v 1.44 2001/04/09 13:23:07 enami Exp $	*/
+/*	$NetBSD: socketvar.h,v 1.45 2001/04/30 01:13:21 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1990, 1993
@@ -190,7 +190,7 @@ do {									\
 	(sb)->sb_mbcnt += MSIZE;					\
 	if ((m)->m_flags & M_EXT)					\
 		(sb)->sb_mbcnt += (m)->m_ext.ext_size;			\
-} while (0)
+} while (/* CONSTCOND */ 0)
 
 /* adjust counters in sb reflecting freeing of m */
 #define	sbfree(sb, m)							\
@@ -199,7 +199,7 @@ do {									\
 	(sb)->sb_mbcnt -= MSIZE;					\
 	if ((m)->m_flags & M_EXT)					\
 		(sb)->sb_mbcnt -= (m)->m_ext.ext_size;			\
-} while (0)
+} while (/* CONSTCOND */ 0)
 
 /*
  * Set lock on sockbuf sb; sleep if lock is already held.
@@ -219,19 +219,19 @@ do {									\
 		(sb)->sb_flags &= ~SB_WANT;				\
 		wakeup((caddr_t)&(sb)->sb_flags);			\
 	}								\
-} while (0)
+} while (/* CONSTCOND */ 0)
 
 #define	sorwakeup(so)							\
 do {									\
 	if (sb_notify(&(so)->so_rcv))					\
 		sowakeup((so), &(so)->so_rcv);				\
-} while (0)
+} while (/* CONSTCOND */ 0)
 
 #define	sowwakeup(so)							\
 do {									\
 	if (sb_notify(&(so)->so_snd))					\
 		sowakeup((so), &(so)->so_snd);				\
-} while (0)
+} while (/* CONSTCOND */ 0)
 
 #ifdef _KERNEL
 extern u_long		sb_max;

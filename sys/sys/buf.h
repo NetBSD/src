@@ -1,4 +1,4 @@
-/*	$NetBSD: buf.h,v 1.45 2000/11/27 18:26:40 chs Exp $	*/
+/*	$NetBSD: buf.h,v 1.46 2001/04/30 01:13:20 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
@@ -258,7 +258,7 @@ struct cluster_save {
 do {									\
 	memset((bp)->b_data, 0, (u_int)(bp)->b_bcount);			\
 	(bp)->b_resid = 0;						\
-} while (0)
+} while (/* CONSTCOND */ 0)
 
 /* Flags to low-level allocation routines. */
 #define B_CLRBUF	0x01	/* Request allocated buffer be cleared. */
