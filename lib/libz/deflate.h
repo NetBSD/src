@@ -1,4 +1,4 @@
-/*	$NetBSD: deflate.h,v 1.8 2002/03/11 23:40:17 fvdl Exp $	*/
+/*	$NetBSD: deflate.h,v 1.9 2002/05/29 18:15:18 christos Exp $	*/
 
 /* deflate.h -- internal compression state
  * Copyright (C) 1995-2002 Jean-loup Gailly
@@ -10,7 +10,7 @@
    subject to change. Applications should only use zlib.h.
  */
 
-/* @(#) $Id: deflate.h,v 1.8 2002/03/11 23:40:17 fvdl Exp $ */
+/* @(#) $Id: deflate.h,v 1.9 2002/05/29 18:15:18 christos Exp $ */
 
 #ifndef _DEFLATE_H
 #define _DEFLATE_H
@@ -275,6 +275,7 @@ void _tr_flush_block  __P((deflate_state *s, charf *buf, ulg stored_len,
 void _tr_align        __P((deflate_state *s));
 void _tr_stored_block __P((deflate_state *s, charf *buf, ulg stored_len,
                           int eof));
+void _tr_stored_type_only __P((deflate_state *));
 
 #define d_code(dist) \
    ((dist) < 256 ? _dist_code[dist] : _dist_code[256+((dist)>>7)])
