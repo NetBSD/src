@@ -1,4 +1,4 @@
-/*	$NetBSD: iso_snpac.c,v 1.20 1998/08/25 04:43:46 thorpej Exp $	*/
+/*	$NetBSD: iso_snpac.c,v 1.21 1999/06/30 03:32:40 chopps Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -257,25 +257,17 @@ iso_setmcasts(ifp, req)
 	{all_es_snpa, all_is_snpa, all_l1is_snpa, all_l2is_snpa, 0};
 	struct ifreq    ifr;
 	register caddr_t *cpp;
-	int             doreset = 0;
 
 	bzero((caddr_t) & ifr, sizeof(ifr));
 	for (cpp = (caddr_t *) addrlist; *cpp; cpp++) {
 		bcopy(*cpp, (caddr_t) ifr.ifr_addr.sa_data, 6);
-		if (req == RTM_ADD) {
-			if (ether_addmulti(&ifr, (struct ethercom *)ifp) 
-			    == ENETRESET)
-				doreset++;
-			else if (ether_delmulti(&ifr, (struct ethercom *)ifp)
-			    == ENETRESET)
-				doreset++;
-		}
-	}
-	if (doreset) {
-		if (ifp->if_reset)
-			(*ifp->if_reset) (ifp);
-		else
-			printf("iso_setmcasts: %s needs reseting to receive iso mcasts\n",
+		if (req == RTM_ADD && (ifp->if_ioctl == 0 ||
+		    (*ifp->if_ioctl)(ifp, SIOCADDMULTI, (caddr_t)&ifr) != 0))
+			printf("iso_setmcasts: %s unable to add mcast\n",
+			    ifp->if_xname);
+		else if (req == RTM_DELETE && (ifp->if_ioctl == 0 ||
+		    (*ifp->if_ioctl)(ifp, SIOCDELMULTI, (caddr_t)&ifr) != 0))
+			printf("iso_setmcasts: %s unable to delete mcast\n",
 			    ifp->if_xname);
 	}
 }
