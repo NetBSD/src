@@ -1,4 +1,4 @@
-#	$NetBSD: files.alpha,v 1.10 1996/03/17 01:06:24 thorpej Exp $
+#	$NetBSD: files.alpha,v 1.11 1996/04/12 01:20:50 cgd Exp $
 #
 # alpha-specific configuration info
 
@@ -12,11 +12,11 @@ maxusers 2 8 64
 # Bus-independent devices
 #
 
-device mainbus { }			# no locators (yet?)
-attach mainbus at root
+device	mainbus { }	              # no locators (yet?)
+attach	mainbus at root
 
-device cpu { }				# not really optional; can be a 'bus'
-attach cpu at mainbus
+device	cpu { }				# not really optional; can be a 'bus'
+attach	cpu at mainbus
 file	arch/alpha/alpha/cpu.c		cpu
 
 
@@ -31,30 +31,27 @@ major { sd = 8 }
 
 
 #
-# ansi/sun console emulator
-#
-
-define	ansicons
-file	dev/pseudo/ansicons.c		ansicons
-
-
-#
 # raster console routines
 #
 
+define	raster
 include "../../../dev/rcons/files.rcons"
-
-define	rcons
-file	dev/pseudo/rcons_init.c		rcons
-file	dev/pseudo/rcons_subr.c		rcons
+file	arch/alpha/wscons/wscons_rinit.c	raster
+file	arch/alpha/wscons/wscons_rops.c		raster
 
 
 #
 # "Workstation Console" glue; attaches frame buffer to emulator & kbd.
-# XXX should be pseudo-device, with an ansicons attribute.
 #
-define	wsc				# XXX should be pseudo-dev
-file	arch/alpha/pci/wscons.c		wsc		needs-flag
+define  wsconsdev {[console = -1]}
+device	wscons
+attach	wscons at wsconsdev
+file	arch/alpha/wscons/wscons.c	wscons		needs-flag
+file	arch/alpha/wscons/wscons_emul.c	wscons
+
+file	arch/alpha/wscons/event.c	wscons
+file	arch/alpha/wscons/kbd.c		wscons
+file	arch/alpha/wscons/ms.c		wscons
 
 
 #
@@ -63,53 +60,48 @@ file	arch/alpha/pci/wscons.c		wsc		needs-flag
 
 include "../../../dev/tc/files.tc"
 
-device tcasic: tcbus
-attach tcasic at mainbus
+device	tcasic: tcbus
+attach	tcasic at mainbus
 file	arch/alpha/tc/tcasic.c		tcasic
 file	arch/alpha/tc/tc_3000_500.c	dec_3000_500
 file	arch/alpha/tc/tc_3000_300.c	dec_3000_300
 
 # the TurboChannel IOCTL ASIC
-device ioasic { offset = -1 }
-attach ioasic at tc
+device	ioasic { offset = -1 }
+attach	ioasic at tc
 file	arch/alpha/tc/ioasic.c		ioasic		needs-flag
 
-# the TurboChannel clock (XXX)
-# device clock					# not really optional
-# attach clock at ioasic
-#file	arch/alpha/alpha/clock.c	clock
-
 # Smart Frame buffer (XXX NOT YET SUPPORTED)
-device sfb
-attach sfb at tc
+device	sfb
+attach	sfb at tc
 file	arch/alpha/tc/sfb.c		sfb
 
 # 8530 UARTs
-device scc
-attach scc at ioasic
+device	scc
+attach	scc at ioasic
 file	arch/alpha/tc/scc.c		scc		needs-count
 
 # the TCDS ASIC
-device tcds { slot = -1 }
-attach tcds at tc
+device	tcds { slot = -1 }
+attach	tcds at tc
 file	arch/alpha/tc/tcds.c		tcds		needs-count
 
 # 53C[F]90 SCSI
-device esp: scsi
-attach esp at tcds
+device	esp: scsi
+attach	esp at tcds
 file	arch/alpha/tc/esp.c		esp		needs-count
 file	arch/alpha/tc/tcds_dma.c	esp
 
 # Baseboard Lance ethernet.
-# XXX should use entry in files.tc
-device le at ioasic, tc: ether, ifnet
-attach le at ioasic, tc with le_tc
+device	le: ether, ifnet
+attach	le at ioasic, tc with le_tc
 file	dev/tc/if_le.c			le	needs-flag # for le_iomem
 
 #
 # ISA Bus support
 #
 
+include "../../../dev/pci/files.pci"	# XXX some ISA devs are 'at pci' too.
 include "../../../dev/isa/files.isa"
 
 #file	arch/alpha/isa/isafcns_jensen.c	dec_2000_300
@@ -119,19 +111,15 @@ include "../../../dev/isa/files.isa"
 # ISA Bus devices
 #
 
-device	ibus { }
-attach	ibus at mainbus
-device	jcombo: isabus
-attach	jcombo at ibus
-device	jeisa: eisabus
-attach	jeisa at ibus
+#device	ibus at mainbus { }
+#device	jcombo at ibus: isabus
+#device	jeisa at ibus: eisabus
 
 device  pckbd
-attach	pckbd at isa
+attach  pckbd at isa
 file    arch/alpha/isa/pckbd.c           pckbd needs-flag
-# XXX should attach to pckbd
 device  pms
-attach	pms at isa
+attach  pms at isa
 file    arch/alpha/isa/pms.c             pms needs-flag
 
 
@@ -146,25 +134,27 @@ include "../../../dev/eisa/files.eisa"
 # PCI Bus support
 #
 
-include "../../../dev/pci/files.pci"
+# include "../../../dev/pci/files.pci" XXX SEE ABOVE
 
 device	apecs: pcibus
 attach	apecs at mainbus
 file	arch/alpha/pci/apecs.c		apecs
-file	arch/alpha/pci/apecs_isa.c	apecs
 file	arch/alpha/pci/apecs_pci.c	apecs
-
-device	cia: pcibus
-attach	cia at mainbus
-file	arch/alpha/pci/cia.c		cia
-file	arch/alpha/pci/cia_isa.c	cia
-file	arch/alpha/pci/cia_pci.c	cia
 
 device	lca: pcibus
 attach	lca at mainbus
 file	arch/alpha/pci/lca.c		lca
-file	arch/alpha/pci/lca_isa.c	lca
 file	arch/alpha/pci/lca_pci.c	lca
+
+file	arch/alpha/pci/apecs_lca_bus_io.c	apecs | lca
+file	arch/alpha/pci/apecs_lca_bus_mem.c	apecs | lca
+
+device	cia: pcibus
+attach	cia at mainbus
+file	arch/alpha/pci/cia.c		cia
+file	arch/alpha/pci/cia_bus_io.c	cia
+file	arch/alpha/pci/cia_bus_mem.c	cia
+file	arch/alpha/pci/cia_pci.c	cia
 
 file	arch/alpha/pci/pci_2100_a50.c	dec_2100_a50
 file	arch/alpha/pci/pci_kn20aa.c	dec_kn20aa
@@ -179,16 +169,20 @@ file	arch/alpha/pci/pci_machdep.c	pci
 
 device	sio: isabus
 attach	sio at pci
-device	pceb: eisabus
+device	pceb: isabus, eisabus
 attach	pceb at pci
-file	arch/alpha/pci/sio.c		sio pceb	needs-flag
-file	arch/alpha/pci/sio_pic.c	sio pceb
+file	arch/alpha/pci/sio.c		sio | pceb	needs-flag
+file	arch/alpha/pci/sio_pic.c	sio | pceb
 
-device	tga: rcons, wsc, ansicons
+device	tga: raster, wsconsdev
 attach	tga at pci
 file	arch/alpha/pci/tga.c		tga		needs-flag
+file	arch/alpha/pci/tga_conf.c	tga
+file	arch/alpha/pci/tga_bt463.c	tga
+file	arch/alpha/pci/tga_bt485.c	tga
 
-device	pcivga: wsc, ansicons
+
+device	pcivga: wsconsdev
 attach	pcivga at pci
 file	arch/alpha/pci/pcivga.c		pcivga		needs-flag
 
@@ -197,12 +191,12 @@ file	arch/alpha/pci/pcivga.c		pcivga		needs-flag
 # Devices that can live on multiple busses
 #
 
-device clock						# not really optional
-attach clock at isa, ioasic
-file	arch/alpha/alpha/clock.c	clock
-file	arch/alpha/alpha/clock_mc.c	dec_3000_500 dec_2000_300 dec_3000_300
-					dec_2100_a50 dec_kn20aa dec_axppci_33
-					dec_21000
+device	clock
+attach	clock at isa, ioasic
+file	arch/alpha/alpha/clock.c	#XXX clock
+file	arch/alpha/alpha/clock_mc.c	dec_3000_500 | dec_2000_300 |
+					dec_3000_300 | dec_2100_a50 |
+					dec_kn20aa | dec_axppci_33 | dec_21000
 
 #
 # Standard files
