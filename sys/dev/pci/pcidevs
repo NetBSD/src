@@ -1,4 +1,4 @@
-$NetBSD: pcidevs,v 1.576 2003/09/21 07:45:13 nisimura Exp $
+$NetBSD: pcidevs,v 1.577 2003/09/21 14:12:09 nisimura Exp $
 
 /*
  * Copyright (c) 1995, 1996 Christopher G. Demetriou
@@ -119,7 +119,7 @@ vendor IPCCORP		0x1046	IPC Corporation
 vendor GENOA		0x1047	Genoa Systems
 vendor ELSA		0x1048	Elsa
 vendor FOUNTAINTECH	0x1049	Fountain Technology
-vendor SGSTHOMSON	0x104a	SGS-Thomson Microelectrics
+vendor SGSTHOMSON	0x104a	SGS-Thomson Microelectronics
 vendor BUSLOGIC		0x104b	BusLogic
 vendor TI		0x104c	Texas Instruments
 vendor SONY		0x104d	Sony
