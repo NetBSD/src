@@ -1,4 +1,5 @@
 /*-
+ * Copyright (c) 1996 Christopher G. Demetriou.  All rights reserved.
  * Copyright (c) 1990, 1993
  *	The Regents of the University of California.  All rights reserved.
  *
@@ -39,7 +40,7 @@ static char copyright[] =
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)kvm_mkdb.c	8.1 (Berkeley) 6/6/93";*/
-static char *rcsid = "$Id: kvm_mkdb.c,v 1.8 1994/08/29 23:17:00 mycroft Exp $";
+static char *rcsid = "$Id: kvm_mkdb.c,v 1.9 1996/09/29 02:19:56 cgd Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -67,14 +68,16 @@ HASHINFO openinfo = {
 	0		/* lorder */
 };
 
+static DB *db;
+static char dbtemp[MAXPATHLEN];
+
 int
 main(argc, argv)
 	int argc;
 	char *argv[];
 {
-	DB *db;
 	int ch;
-	char *p, *nlistpath, *nlistname, dbtemp[MAXPATHLEN], dbname[MAXPATHLEN];
+	char *p, *nlistpath, *nlistname, dbname[MAXPATHLEN];
 
 	while ((ch = getopt(argc, argv, "")) != EOF)
 		switch (ch) {
@@ -106,10 +109,16 @@ main(argc, argv)
 	if (db == NULL)
 		err(1, "%s", dbtemp);
 	create_knlist(nlistpath, db);
-	if (db->close(db))
-		err(1, "%s", dbtemp);
-	if (rename(dbtemp, dbname))
-		err(1, "rename %s to %s", dbtemp, dbname);
+	if (db->close(db)) {
+		warn("%s", dbtemp);
+		db = NULL;
+		punt();
+	}
+	db = NULL;
+	if (rename(dbtemp, dbname)) {
+		warn("rename %s to %s", dbtemp, dbname);
+		punt();
+	}
 	exit(0);
 }
 
@@ -117,5 +126,15 @@ void
 usage()
 {
 	(void)fprintf(stderr, "usage: kvm_mkdb [file]\n");
+	exit(1);
+}
+
+void
+punt()
+{
+
+	if (db != NULL)
+		db->close(db);
+	unlink(dbtemp);
 	exit(1);
 }

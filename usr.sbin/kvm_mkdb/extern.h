@@ -1,4 +1,5 @@
 /*-
+ * Copyright (c) 1996 Christopher G. Demetriou.  All rights reserved.
  * Copyright (c) 1992, 1993
  *	The Regents of the University of California.  All rights reserved.
  *
@@ -31,9 +32,33 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)extern.h	8.1 (Berkeley) 6/6/93
- *	$Id: extern.h,v 1.2 1994/06/11 07:57:38 mycroft Exp $
+ *	$Id: extern.h,v 1.3 1996/09/29 02:19:55 cgd Exp $
  */
 
-void	create_knlist __P((char *, DB *));
-void	error __P((char *));
+#ifdef __alpha__
+#define NLIST_ECOFF
+#define NLIST_ELF64
+#else
+#define NLIST_AOUT
+/* #define	NLIST_ECOFF */
+/* #define	NLIST_ELF32 */
+/* #define	NLIST_ELF64 */
+#endif
+
+void	create_knlist __P((const char *, DB *));
+void	punt __P((void));
 int	testdb __P(());
+u_long	get_kerntext __P((const char *kfn));
+
+#ifdef NLIST_AOUT
+int	create_knlist_aout __P((const char *, DB *));
+#endif
+#ifdef NLIST_ECOFF
+int	create_knlist_ecoff __P((const char *, DB *));
+#endif
+#ifdef NLIST_ELF32
+int	create_knlist_elf32 __P((const char *, DB *));
+#endif
+#ifdef NLIST_ELF64
+int	create_knlist_elf64 __P((const char *, DB *));
+#endif
