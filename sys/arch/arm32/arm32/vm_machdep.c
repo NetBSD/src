@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_machdep.c,v 1.15 1997/10/06 01:12:05 mark Exp $	*/
+/*	$NetBSD: vm_machdep.c,v 1.16 1997/10/14 11:23:54 mark Exp $	*/
 
 /*
  * Copyright (c) 1994-1997 Mark Brinicombe.
@@ -78,7 +78,9 @@ typedef struct {
 
 extern pv_addr_t systempage;
 
+#ifdef PMAP_DEBUG
 extern int pmap_debug_level;
+#endif
 
 int process_read_regs	__P((struct proc *p, struct reg *regs));
 int process_read_fpregs	__P((struct proc *p, struct fpreg *regs));
@@ -124,11 +126,10 @@ cpu_fork(p1, p2)
 	u_char *ptr;
 #endif	/* STACKCHECKS */
 
-#ifdef DEBUG_VMMACHDEP        
+#ifdef PMAP_DEBUG
 	if (pmap_debug_level >= 0)
-		printf("cpu_fork: %08x %08x %08x %08x\n", (u_int)p1, (u_int)p2,
-		   (u_int) curproc, (u_int)&proc0);
-#endif	/* DEBUG_VMMACHDEP */
+		printf("cpu_fork: %p %p %p %p\n", p1, p2, curproc, &proc0);
+#endif
 
 #if 0	/* XXX */
 	/* Sync the pcb */
@@ -170,7 +171,7 @@ cpu_fork(p1, p2)
  * NOTE: This will be different from p1 stack address.
  */
  
-#ifdef DEBUG_VMMACHDEP
+#ifdef PMAP_DEBUG
 	if (pmap_debug_level >= 0) {
 		printf("cpu_fork: pcb = %08x pagedir = %08x\n",
 		    (u_int)&up->u_pcb, (u_int)up->u_pcb.pcb_pagedir);
@@ -181,7 +182,7 @@ cpu_fork(p1, p2)
 		    (u_int)p2->p_addr, (u_int)&p2->p_addr->u_pcb, p2->p_pid,
 		    p2->p_vmspace->vm_map.pmap);
 	}
-#endif	/* DEBUG_VMMACHDEP */
+#endif
 
 /* ream out old pagetables */
 
@@ -195,15 +196,15 @@ cpu_fork(p1, p2)
 
 	addr = trunc_page((u_int)vtopte(0));
 
-#ifdef DEBUG_VMMACHDEP
+#ifdef PMAP_DEBUG
 	if (pmap_debug_level >= 0) {
-		printf("fun time: paging in PT %08x for %08x\n", (u_int)addr, 0);
+		printf("fun time: paging in PT %08x for 0\n", (u_int)addr);
 		printf("p2->p_vmspace->vm_map.pmap->pm_pdir[0] = %08x\n",
 		    p2->p_vmspace->vm_map.pmap->pm_pdir[0]);
 		printf("p2->pm_vptpt[0] = %08x",
 		    *((int *)(p2->p_vmspace->vm_map.pmap->pm_vptpt + 0)));
 	}
-#endif	/* DEBUG_VMMACHDEP */
+#endif
 
 /* Nuke the exising mapping */
 
@@ -219,17 +220,17 @@ cpu_fork(p1, p2)
 
 /* Wire down a page to cover the page table zero page and the start of the user are in */
 
-#ifdef DEBUG_VMMACHDEP
+#ifdef PMAP_DEBUG
 	if (pmap_debug_level >= 0) {
 		printf("vm_map_pageable: addr=%08x\n", (u_int)addr);
 	}
-#endif	/* DEBUG_VMMACHDEP */
+#endif
 
 	if (vm_map_pageable(&p2->p_vmspace->vm_map, addr, addr+NBPG, FALSE) != 0) {
 		panic("Failed to fault in system page PT\n");
 	}
 
-#ifdef DEBUG_VMMACHDEP
+#ifdef PMAP_DEBUG
 	if (pmap_debug_level >= 0) {
 		printf("party on! acquired a page table for 0M->(4M-1)\n");
 		printf("p2->p_vmspace->vm_map.pmap->pm_pdir[0] = %08x\n",
@@ -237,7 +238,7 @@ cpu_fork(p1, p2)
 		printf("p2->pm_vptpt[0] = %08x",
 		    *((int *)(p2->p_vmspace->vm_map.pmap->pm_vptpt + 0)));
 	}
-#endif	/* DEBUG_VMMACHDEP */
+#endif
 
 	/* Map the system page */
 
@@ -325,25 +326,25 @@ cpu_swapin(p)
 {
 	vm_offset_t addr;
 
-#ifdef DEBUG_VMMACHDEP
+#ifdef PMAP_DEBUG
 	if (pmap_debug_level >= 0)
 		printf("cpu_swapin(%p, %d, %s, %p)\n", p, p->p_pid,
 		    p->p_comm, p->p_vmspace->vm_map.pmap);
-#endif	/* DEBUG_VMMACHDEP */
+#endif
 
 	/* Get the address of the page table containing 0x00000000 */
 
 	addr = trunc_page((u_int)vtopte(0));
 
-#ifdef DEBUG_VMMACHDEP
+#ifdef PMAP_DEBUG
 	if (pmap_debug_level >= 0) {
-		printf("fun time: paging in PT %08x for %08x\n", addr, 0);
-		printf("p->p_vmspace->vm_map.pmap->pm_pdir[0] = %08x\n",
+		printf("fun time: paging in PT %p for 0\n", addr);
+		printf("p->p_vmspace->vm_pmap.pm_pdir[0] = %p\n",
 		    p->p_vmspace->vm_map.pmap->pm_pdir[0]);
 		printf("p->pm_vptpt[0] = %08x",
 		    *((int *)(p->p_vmspace->vm_map.pmap->pm_vptpt + 0)));
 	}
-#endif	/* DEBUG_VMMACHDEP */
+#endif  
 
 	/*
 	 * Wire down a page to cover the page table zero page
@@ -352,19 +353,19 @@ cpu_swapin(p)
 
 	vm_map_pageable(&p->p_vmspace->vm_map, addr, addr + NBPG, FALSE);
 
-#ifdef DEBUG_VMMACHDEP
+#ifdef PMAP_DEBUG
 	if (pmap_debug_level >= 0) {
 		printf("party on! acquired a page table for 0M->(4M-1)\n");
 		printf("p->p_vmspace->vm_map.pmap->pm_pdir[0] = %08x\n",
 		    p->p_vmspace->vm_map.pmap->pm_pdir[0]);
 		printf("p->pm_vptpt[0] = %08x",
-		    *((int *)(p->p_vmspace->vm_map.pmap->pm_vptpt + 0)));
+		     *((int *)(p->p_vmspace->vm_map.pmap->pm_vptpt + 0)));
 	}
-#endif	/* DEBUG_VMMACHDEP */
+#endif
 
 	/* Map the system page */
 
-	pmap_enter(p->p_vmspace->vm_map.pmap, 0x00000000,
+	pmap_enter(p->p_vmspace->vm_map.pmap, 0,
 	    systempage.physical, VM_PROT_READ, TRUE);
 }
 
@@ -373,18 +374,18 @@ void
 cpu_swapout(p)
 	struct proc *p;
 {
-#ifdef DEBUG_VMMACHDEP
+#ifdef PMAP_DEBUG
 	if (pmap_debug_level >= 0) {
 		printf("cpu_swapout(%p, %d, %s, %p)\n", p, p->p_pid,
-		    p->p_comm, p->p_vmspace->vm_map.pmap);
+		    p->p_comm, (u_int)&p->p_vmspace->vm_map.pmap);
 		printf("p->pm_vptpt[0] = %08x",
 		    *((int *)(p->p_vmspace->vm_map.pmap->pm_vptpt + 0)));
 	}
-#endif	/* DEBUG_VMMACHDEP */
+#endif
 
 	/* Free the system page mapping */
 
-	pmap_remove(p->p_vmspace->vm_map.pmap, 0x00000000, NBPG);
+	pmap_remove(p->p_vmspace->vm_map.pmap, 0, NBPG);
 }
 
 
@@ -404,11 +405,11 @@ pagemove(from, to, size)
 	if (size % CLBYTES)
 		panic("pagemove: size=%08x", size);
 
-#ifdef DEBUG_VMMACHDEP
+#ifdef PMAP_DEBUG
 	if (pmap_debug_level >= 0)
 		printf("pagemove: V%08x to %08x size %08x\n", (u_int)from,
 		    (u_int)to, size);
-#endif	/* DEBUG_VMMACHDEP */
+#endif
 	fpte = vtopte(from);
 	tpte = vtopte(to);
 
@@ -461,9 +462,11 @@ vmapbuf(bp, len)
 	pt_entry_t *fpte, *tpte;
 	pt_entry_t *pmap_pte __P((pmap_t, vm_offset_t));
 
+#ifdef PMAP_DEBUG
 	if (pmap_debug_level >= 0)
 		printf("vmapbuf: bp=%08x buf=%08x len=%08x\n", (u_int)bp,
 		    (u_int)bp->b_data, (u_int)len);
+#endif
     
 	if ((bp->b_flags & B_PHYS) == 0)
 		panic("vmapbuf");
@@ -512,9 +515,11 @@ vunmapbuf(bp, len)
 {
 	vm_offset_t addr, off;
 
+#ifdef PMAP_DEBUG
 	if (pmap_debug_level >= 0)
 		printf("vunmapbuf: bp=%08x buf=%08x len=%08x\n",
 		    (u_int)bp, (u_int)bp->b_data, (u_int)len);
+#endif
 
 	if ((bp->b_flags & B_PHYS) == 0)
 		panic("vunmapbuf");
