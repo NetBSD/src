@@ -1,4 +1,4 @@
-/*	$NetBSD: siop_common.c,v 1.2 2000/05/15 15:16:59 bouyer Exp $	*/
+/*	$NetBSD: siop_common.c,v 1.3 2000/06/12 20:13:41 bouyer Exp $	*/
 
 /*
  * Copyright (c) 2000 Manuel Bouyer.
@@ -477,4 +477,58 @@ siop_clearfifo(sc)
 			return;
 		}
 	}
+}
+
+int
+siop_modechange(sc)
+	struct siop_softc *sc;
+{
+	int retry;
+	int sist0, sist1, stest2, stest4;
+	for (retry = 0; retry < 5; retry++) {
+		/*
+		 * datasheet says to wait 100ms and re-read SIST1,
+		 * to check that DIFFSENSE is srable.
+		 * We may delay() 5 times for  100ms at interrupt time;
+		 * hopefully this will not happen often.
+		 */
+		delay(100000);
+		sist0 = bus_space_read_1(sc->sc_rt, sc->sc_rh, SIOP_SIST0);
+		sist1 = bus_space_read_1(sc->sc_rt, sc->sc_rh, SIOP_SIST1);
+		if (sist1 & SIEN1_SBMC)
+			continue; /* we got an irq again */
+		stest4 = bus_space_read_1(sc->sc_rt, sc->sc_rh, SIOP_STEST4) &
+		    STEST4_MODE_MASK;
+		stest2 = bus_space_read_1(sc->sc_rt, sc->sc_rh, SIOP_STEST2);
+		switch(stest4) {
+		case STEST4_MODE_DIF:
+			printf("%s: switching to differential mode\n",
+			    sc->sc_dev.dv_xname);
+			bus_space_write_1(sc->sc_rt, sc->sc_rh, SIOP_STEST2,
+			    stest2 | STEST2_DIF);
+			break;
+		case STEST4_MODE_SE:
+			printf("%s: switching to single-ended mode\n",
+			    sc->sc_dev.dv_xname);
+			bus_space_write_1(sc->sc_rt, sc->sc_rh, SIOP_STEST2,
+			    stest2 & ~STEST2_DIF);
+			break;
+		case STEST4_MODE_LVD:
+			printf("%s: switching to LVD mode\n",
+			    sc->sc_dev.dv_xname);
+			bus_space_write_1(sc->sc_rt, sc->sc_rh, SIOP_STEST2,
+			    stest2 & ~STEST2_DIF);
+			break;
+		default:
+			printf("%s: invalid SCSI mode 0x%x\n",
+			    sc->sc_dev.dv_xname, stest4);
+			return 0;
+		}
+		bus_space_write_1(sc->sc_rt, sc->sc_rh, SIOP_STEST0,
+		    stest4 >> 2);
+		return 1;
+	}
+	printf("%s: timeout waiting for DIFFSENSE to stabilise\n",
+	    sc->sc_dev.dv_xname);
+	return 0;
 }
