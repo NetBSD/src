@@ -1,4 +1,4 @@
-/*	$NetBSD: msg_sys.def,v 1.5 1999/06/19 00:40:29 cgd Exp $	*/
+/*	$NetBSD: msg_sys.def,v 1.6 1999/06/22 15:00:37 cgd Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -37,7 +37,8 @@
  */
 
 static WINDOW *msg_win = NULL;
-static char cbuffer [ MAXSTR ];
+static char *cbuffer;
+static size_t cbuffersize;
 static int do_echo = 1;
 
 /* Routines */
@@ -47,9 +48,24 @@ void msg_beep (void)
 	fprintf (stderr, "\a");
 }
 
-void msg_window(WINDOW *window)
+int msg_window(WINDOW *window)
 {
+	size_t ncbuffersize;
+	char *ncbuffer;
+
 	msg_win = window;
+
+	ncbuffersize = getmaxx(window) * getmaxy(window) + 1;
+	if (ncbuffersize > cbuffersize) {
+		ncbuffer = malloc(ncbuffersize);
+		if (ncbuffer == NULL)
+			return 1;
+		if (cbuffer != NULL)
+			free(cbuffer);
+		cbuffer = ncbuffer;
+		cbuffersize = ncbuffersize;
+	}
+	return 0;
 }
 
 char *msg_string (int msg_no)
@@ -77,7 +93,7 @@ int msg_vprintf (char *fmt, va_list ap)
 {
 	int ret;
 
-	ret = vsnprintf (cbuffer, MAXSTR, fmt, ap);
+	ret = vsnprintf (cbuffer, cbuffersize, fmt, ap);
 	waddstr (msg_win, cbuffer);
 	wrefresh (msg_win);
 	return ret;
