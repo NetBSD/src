@@ -36,13 +36,15 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)varargs.h	8.2 (Berkeley) 3/22/94
- *	$Id: varargs.h,v 1.5 1994/10/09 13:33:54 mycroft Exp $
+ *	$Id: varargs.h,v 1.6 1994/10/15 04:57:42 cgd Exp $
  */
 
 #ifndef _I386_VARARGS_H_
 #define	_I386_VARARGS_H_
 
-typedef char *va_list;
+#include <machine/ansi.h>
+
+typedef _BSD_VA_LIST_	va_list;
 
 #define	va_dcl	int va_alist;
 
