@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.35 2000/05/08 00:38:29 itojun Exp $
+# $NetBSD: mi,v 1.36 2000/06/07 01:31:40 thorpej Exp $
 ./usr/share/dict/README
 ./usr/share/dict/eign
 ./usr/share/dict/propernames
@@ -379,6 +379,7 @@
 ./usr/share/examples/postfix/sample-aliases.cf
 ./usr/share/examples/postfix/sample-canonical.cf
 ./usr/share/examples/postfix/sample-debug.cf
+./usr/share/examples/postfix/sample-filter.cf
 ./usr/share/examples/postfix/sample-ldap.cf
 ./usr/share/examples/postfix/sample-local.cf
 ./usr/share/examples/postfix/sample-misc.cf
