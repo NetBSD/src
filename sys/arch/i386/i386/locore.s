@@ -34,7 +34,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)locore.s	7.3 (Berkeley) 5/13/91
- *	$Id: locore.s,v 1.26 1993/08/03 07:03:01 mycroft Exp $
+ *	$Id: locore.s,v 1.27 1993/08/23 05:01:47 cgd Exp $
  */
 
 
@@ -1631,13 +1631,14 @@ ENTRY(swtch)
 	movl	%eax,PCB_CMAP2(%ecx)	# in our context
 	movl	$0,_curproc		#  out of process
 
-	# movw	_cpl,%ax
-	# movw	%ax,PCB_IML(%ecx)	# save ipl
+	call	_splhigh
+	movw	%ax,PCB_IML(%ecx)	# save ipl
 
 	/* save is done, now choose a new process or idle */
 sw1:
-	cli
+	cli				# splhigh doesn't do a cli
 	SHOW_CLI
+
 	movl	_whichqs,%edi
 2:
 	# XXX - bsf is sloow
@@ -1702,24 +1703,15 @@ swfnd:
 	movl	%ecx,_curproc		# into next process
 	movl	%edx,_curpcb
 
-	pushl	%edx			# save p to return
-/*
- * XXX - 0.0 forgot to save it - is that why this was commented out in 0.1?
- * I think restoring the cpl is unnecessary, but we must turn off the cli
- * now that spl*() don't do it as a side affect.
- */
-	pushl	PCB_IML(%edx)
-	sti
+	sti				# splx() doesn't do an sti/cli
 	SHOW_STI
-#if 0
-	call	_splx
-#endif
-	addl	$4,%esp
-/*
- * XXX - 0.0 gets here via swtch_to_inactive().  I think 0.1 gets here in the
- * same way.  Better return a value.
- */
-	popl	%eax			# return (p);
+
+	movw    PCB_IML(%edx),%ax
+	pushl   %ax
+	call    _splx			# restore the process's ipl
+	addl	$4, %esp
+
+	movl	%edx,%eax		# return (p);
 	ret
 
 ENTRY(mvesp)

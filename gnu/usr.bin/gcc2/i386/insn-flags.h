@@ -1,7 +1,7 @@
 /* Generated automatically by the program `genflags'
 from the machine description file `md'. 
 
-	$Id: insn-flags.h,v 1.2 1993/08/02 17:37:02 mycroft Exp $
+	$Id: insn-flags.h,v 1.3 1993/08/23 05:00:18 cgd Exp $
 */
 
 #define HAVE_tstsi_1 1
@@ -98,12 +98,12 @@ from the machine description file `md'.
 #define HAVE_negdf2 (TARGET_80387)
 #define HAVE_abssf2 (TARGET_80387)
 #define HAVE_absdf2 (TARGET_80387)
-#define HAVE_sqrtsf2 (TARGET_80387 && (TARGET_IEEE_FP || flag_fast_math))
-#define HAVE_sqrtdf2 (TARGET_80387 && (TARGET_IEEE_FP || flag_fast_math))
-#define HAVE_sindf2 (TARGET_80387 && (TARGET_IEEE_FP || flag_fast_math))
-#define HAVE_sinsf2 (TARGET_80387 && (TARGET_IEEE_FP || flag_fast_math))
-#define HAVE_cosdf2 (TARGET_80387 && (TARGET_IEEE_FP || flag_fast_math))
-#define HAVE_cossf2 (TARGET_80387 && (TARGET_IEEE_FP || flag_fast_math))
+#define HAVE_sqrtsf2 (TARGET_80387 && (TARGET_IEEE_FP || flag_fast_math) && WORKING_FPE)
+#define HAVE_sqrtdf2 (TARGET_80387 && (TARGET_IEEE_FP || flag_fast_math) && WORKING_FPE)
+#define HAVE_sindf2 (TARGET_80387 && (TARGET_IEEE_FP || flag_fast_math) && WORKING_FPE)
+#define HAVE_sinsf2 (TARGET_80387 && (TARGET_IEEE_FP || flag_fast_math) && WORKING_FPE)
+#define HAVE_cosdf2 (TARGET_80387 && (TARGET_IEEE_FP || flag_fast_math) && WORKING_FPE)
+#define HAVE_cossf2 (TARGET_80387 && (TARGET_IEEE_FP || flag_fast_math) && WORKING_FPE)
 #define HAVE_one_cmplsi2 1
 #define HAVE_one_cmplhi2 1
 #define HAVE_one_cmplqi2 1
