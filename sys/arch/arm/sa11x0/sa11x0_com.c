@@ -1,4 +1,4 @@
-/*      $NetBSD: sa11x0_com.c,v 1.3 2002/03/17 19:40:34 atatat Exp $        */
+/*      $NetBSD: sa11x0_com.c,v 1.4 2002/07/19 18:26:56 ichiro Exp $        */
 
 /*-
  * Copyright (c) 1998, 1999, 2001 The NetBSD Foundation, Inc.
@@ -103,6 +103,11 @@
 #include <arm/sa11x0/sa11x0_comreg.h>
 #include <arm/sa11x0/sa11x0_comvar.h>
 
+#ifdef hpcarm
+#include <hpc/include/platid.h>
+#include <hpc/include/platid_mask.h>
+#endif
+
 #include "sacom.h"
 
 cdev_decl(sacom);
@@ -141,6 +146,10 @@ static inline void sacom_txsoft(struct sacom_softc *, struct tty *);
 static inline void sacom_stsoft(struct sacom_softc *, struct tty *);
 static inline void sacom_schedrx(struct sacom_softc *);
 
+#ifdef hpcarm
+/* HPCARM specific functions */
+static void	sacom_j720_init(struct sa11x0_softc *, struct sacom_softc *);
+#endif
 
 #define COMUNIT_MASK	0x7ffff
 #define COMDIALOUT_MASK	0x80000
@@ -182,6 +191,14 @@ struct cfattach sacom_ca = {
 };
 extern struct cfdriver sacom_cd;
 
+#ifdef hpcarm
+struct platid_data sacom_platid_table[] = {
+	{ &platid_mask_MACH_HP_JORNADA_720, sacom_j720_init },
+	{ &platid_mask_MACH_HP_JORNADA_720JP, sacom_j720_init },
+	{ NULL, NULL }
+};
+#endif
+
 struct consdev sacomcons = {
 	NULL, NULL, sacomcngetc, sacomcnputc, sacomcnpollc, NULL,
 	NODEV, CN_NORMAL
@@ -215,6 +232,11 @@ sacom_attach(parent, self, aux)
 	struct sacom_softc *sc = (struct sacom_softc*)self;
 	struct sa11x0_attach_args *sa = aux;
 
+#ifdef hpcarm
+	struct platid_data *p;
+	void (*mdinit)(struct device *, struct sacom_softc *);
+#endif
+
 	printf("\n");
 
 	sc->sc_iot = sa->sa_iot;
@@ -243,6 +265,14 @@ sacom_attach(parent, self, aux)
 	}
 
 	sacom_attach_subr(sc);
+
+#ifdef hpcarm
+	/* Do hpcarm specific initialization, if any */
+	if ((p = platid_search_data(&platid, sacom_platid_table)) != NULL) {
+		mdinit = p->data;
+		(mdinit)(parent, sc);
+	}
+#endif
 
 	sa11x0_intr_establish(0, sa->sa_intr, 1, IPL_SERIAL, sacomintr, sc);
 }
@@ -1490,6 +1520,16 @@ sacomintr(arg)
 	rnd_add_uint32(&sc->rnd_source, iir | lsr);
 #endif
 	return (1);
+}
+
+static void
+sacom_j720_init(struct sa11x0_softc *parent, struct sacom_softc *sc) {
+
+	/* XXX  this should be done at sc->enable function */
+	bus_space_write_4(parent->sc_iot, parent->sc_gpioh,
+	    SAGPIO_PCR, 0xa0000);
+	bus_space_write_4(parent->sc_iot, parent->sc_gpioh,
+	    SAGPIO_PSR, 0x100);
 }
 
 /* Initialization for serial console */
