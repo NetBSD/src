@@ -1,4 +1,4 @@
-/*	$NetBSD: ftree.c,v 1.31 2004/06/20 22:20:14 jmc Exp $	*/
+/*	$NetBSD: ftree.c,v 1.32 2004/07/02 16:26:53 christos Exp $	*/
 
 /*-
  * Copyright (c) 1992 Keith Muller.
@@ -78,7 +78,7 @@
 #if 0
 static char sccsid[] = "@(#)ftree.c	8.2 (Berkeley) 4/18/94";
 #else
-__RCSID("$NetBSD: ftree.c,v 1.31 2004/06/20 22:20:14 jmc Exp $");
+__RCSID("$NetBSD: ftree.c,v 1.32 2004/07/02 16:26:53 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -374,7 +374,6 @@ ftree_arg(void)
 			if (i == 0)
 				return -1;
 			farray[0][i] = '\0';
-			fprintf(stderr, ">%s<\n", farray[0]);
 		} else {
 			/*
 			 * the user supplied the file args as arguements to pax
