@@ -30,7 +30,7 @@
 .\" SUCH DAMAGE.
 .\"
 .\"     @(#)doc-syms	8.1 (Berkeley) 6/8/93
-.\"	$NetBSD: doc-syms,v 1.23 1997/07/15 00:36:48 kleink Exp $
+.\"	$NetBSD: doc-syms,v 1.24 1997/07/17 19:42:45 kleink Exp $
 .\"
 .\"     %beginstrip%
 .\" NS Ux macro - UNIX
@@ -302,17 +302,17 @@
 .		\}
 .		el \{\
 .			ds b1 \&\\*(tNANSI \\*(aaX3.159-1989\\*(sV
-.			as b1 (``\\*(tNANSI C \\*(aa'')
+.			as b1 (``\\*(tNANSI C\\*(aa'')
 .		\}
 .       \}
 .       if "\\*(A\\n(aP"-ansiC-89" \{\
 .		ie \\n(sT==1 \{\
 .			ds b1 \&\\*(tNANSI \\*(aaX3.159-1989\\*(sV
-.			as b1 (``\\*(tNANSI C \\*(aa'')
+.			as b1 (``\\*(tNANSI C\\*(aa'')
 .		\}
 .		el \{\
 .			ds b1 \&\\*(tNANSI \\*(aaX3.159-1989\\*(sV
-.			as b1 (``\\*(tNANSI C \\*(aa'')
+.			as b1 (``\\*(tNANSI C\\*(aa'')
 .		\}
 .       \}
 .       if "\\*(A\\n(aP"-ieee754" \{\
