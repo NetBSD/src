@@ -1,4 +1,4 @@
-/*	$NetBSD: mtrace.c,v 1.23 2002/08/09 02:09:25 itojun Exp $	*/
+/*	$NetBSD: mtrace.c,v 1.24 2002/09/19 16:45:59 mycroft Exp $	*/
 
 /*
  * mtrace.c
@@ -52,12 +52,13 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: mtrace.c,v 1.23 2002/08/09 02:09:25 itojun Exp $");
+__RCSID("$NetBSD: mtrace.c,v 1.24 2002/09/19 16:45:59 mycroft Exp $");
 #endif
 
 #include <sys/types.h>
 #include <sys/ioctl.h>
 #include <sys/time.h>
+#include <sys/poll.h>
 #include <netinet/in.h>
 #include <arpa/inet.h>
 #include <ctype.h>
@@ -392,7 +393,7 @@ byteswap(u_long v)
 int
 send_recv(u_int32_t dst, int type, int code, int tries, struct resp_buf *save)
 {
-    fd_set  fds;
+    struct pollfd set[1];
     struct timeval tq, tr, tv;
     struct ip *ip;
     struct igmp *igmp;
@@ -461,19 +462,16 @@ send_recv(u_int32_t dst, int type, int code, int tries, struct resp_buf *save)
 	/*
 	 * Wait for response, discarding false alarms
 	 */
+	set[0].fd = igmp_socket;
+	set[0].events = POLLIN;
 	while (TRUE) {
-	    FD_ZERO(&fds);
-	    if (igmp_socket >= FD_SETSIZE)
-		log(LOG_ERR, 0, "descriptor too big");
-	    FD_SET(igmp_socket, &fds);
 	    gettimeofday(&tv, 0);
 	    tv.tv_sec = tq.tv_sec + timeout - tv.tv_sec;
 	    tv.tv_usec = tq.tv_usec - tv.tv_usec;
 	    if (tv.tv_usec < 0) tv.tv_usec += 1000000L, --tv.tv_sec;
 	    if (tv.tv_sec < 0) tv.tv_sec = tv.tv_usec = 0;
 
-	    count = select(igmp_socket + 1, &fds, (fd_set *)0, (fd_set *)0,
-			   &tv);
+	    count = poll(set, 1, tv.tv_sec * 1000 + tv.tv_usec / 1000);
 
 	    if (count < 0) {
 		if (errno != EINTR) perror("select");
