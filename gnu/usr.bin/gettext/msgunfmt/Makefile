@@ -1,6 +1,4 @@
-#	$NetBSD: Makefile,v 1.1 2000/11/02 01:09:04 itojun Exp $
-
-.include <bsd.own.mk>
+#	$NetBSD: Makefile,v 1.2 2001/12/13 00:31:39 thorpej Exp $
 
 PROG=	msgunfmt
 SRCS=	message.c msgunfmt.c str-list.c
