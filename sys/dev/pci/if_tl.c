@@ -1,4 +1,4 @@
-/*	$NetBSD: if_tl.c,v 1.62 2003/10/05 14:57:14 tsutsui Exp $	*/
+/*	$NetBSD: if_tl.c,v 1.63 2003/11/02 10:50:40 wiz Exp $	*/
 
 /*
  * Copyright (c) 1997 Manuel Bouyer.  All rights reserved.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_tl.c,v 1.62 2003/10/05 14:57:14 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_tl.c,v 1.63 2003/11/02 10:50:40 wiz Exp $");
 
 #undef TLDEBUG
 #define TL_PRIV_STATS
@@ -1544,7 +1544,7 @@ tl_read_stats(sc)
 	int ierr_code;
 	int ierr_crc;
 	int oerr_underr;
-	int oerr_deffered;
+	int oerr_deferred;
 	int oerr_coll;
 	int oerr_multicoll;
 	int oerr_exesscoll;
@@ -1563,7 +1563,7 @@ tl_read_stats(sc)
 	reg =  tl_intreg_read(sc, TL_INT_STATS_FERR);
 	ierr_crc = (reg & TL_FERR_CRC) >> 16;
 	ierr_code = (reg & TL_FERR_CODE) >> 24;
-	oerr_deffered = (reg & TL_FERR_DEF);
+	oerr_deferred = (reg & TL_FERR_DEF);
 
 	reg =  tl_intreg_read(sc, TL_INT_STATS_COLL);
 	oerr_multicoll = (reg & TL_COL_MULTI);
@@ -1591,7 +1591,7 @@ tl_read_stats(sc)
 	sc->ierr_code		+= ierr_code;
 	sc->ierr_crc		+= ierr_crc;
 	sc->oerr_underr		+= oerr_underr;
-	sc->oerr_deffered	+= oerr_deffered;
+	sc->oerr_deferred	+= oerr_deferred;
 	sc->oerr_coll		+= oerr_coll;
 	sc->oerr_multicoll	+= oerr_multicoll;
 	sc->oerr_exesscoll	+= oerr_exesscoll;
