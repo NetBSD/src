@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.6 1998/10/05 22:41:13 minoura Exp $
+#	$NetBSD: Makefile.inc,v 1.7 1998/10/18 07:35:00 itohy Exp $
 
 # TOP is assumed to be defined by Makefile including this one.
 
@@ -28,7 +28,7 @@ DISKTYPE=	floppy5
 # 204800	1167k,  29 inodes free
 INO_BYTES?=	204800
 
-CLEANFILES+=	netbsd.ram.gz
+CLEANFILES+=	netbsd.ram.gz netbsd.tmp*
 
 all:	netbsd.ram.gz
 	dd if=/dev/zero of=${IMAGE} bs=100k count=12
@@ -43,7 +43,7 @@ all:	netbsd.ram.gz
 	umount ${MOUNT_POINT}
 	@echo ""
 	@echo "installing new bootblocks"
-	${MDEC}/writefdboot ${MDEC}/fdboot ${VND_CRDEV}
+	${MDEC}/installboot ${MDEC}/fdboot ${VND_CRDEV}
 	vnconfig -u ${VND_CDEV}
 
 unconfig:
@@ -52,10 +52,11 @@ unconfig:
 	-/bin/rm -f ${IMAGE}
 
 netbsd.ram.gz: ${KERN} ${RAMDISK}
+	-/bin/rm -f netbsd.tmp*
 	cp ${KERN} netbsd.tmp
 	mdsetimage -v netbsd.tmp ${RAMDISK}
 	gzip netbsd.tmp
-	mv netbsd.tmp.gz ${.TARGET}
+	mv -f netbsd.tmp.gz ${.TARGET}
 
 clean cleandir distclean:
 	/bin/rm -f *.core ${IMAGE} ${CLEANFILES}
