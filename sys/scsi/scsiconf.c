@@ -1,4 +1,4 @@
-/*	$NetBSD: scsiconf.c,v 1.39 1995/08/13 17:48:57 briggs Exp $	*/
+/*	$NetBSD: scsiconf.c,v 1.40 1995/08/14 13:01:42 briggs Exp $	*/
 
 /*
  * Copyright (c) 1994 Charles Hannum.  All rights reserved.
@@ -260,7 +260,7 @@ struct scsi_quirk_inquiry_pattern scsi_quirk_patterns[] = {
 	{T_CDROM, T_REMOV,
 	 "CHINON  ", "CD-ROM CDS-431  ", "",     SDEV_NOLUNS},
 	{T_CDROM, T_REMOV,
-	 "CHINON  ", "CD-ROM CDS-535  ", "Q14",  SDEV_NOLUNS},
+	 "CHINON  ", "CD-ROM CDS-535  ", "",     SDEV_NOLUNS},
 	{T_CDROM, T_REMOV,
 	 "DENON   ", "DRD-25X         ", "V",    SDEV_NOLUNS},
 	{T_CDROM, T_REMOV,
