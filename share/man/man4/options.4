@@ -1,4 +1,4 @@
-.\"	$NetBSD: options.4,v 1.215 2003/07/03 20:13:26 ragge Exp $
+.\"	$NetBSD: options.4,v 1.216 2003/07/04 13:11:14 wiz Exp $
 .\"
 .\" Copyright (c) 1996
 .\" 	Perry E. Metzger.  All rights reserved.
@@ -174,7 +174,7 @@ For the
 .Ar keywords
 file-system, makeoptions, options, and pseudo-device,
 .Ar no
-removes the file-system, makeoption, options, or pseudo-device, 
+removes the file-system, makeoption, options, or pseudo-device,
 .Ar name .
 This is useful when a kernel configuration file includes another which
 has undesired options.
@@ -192,7 +192,7 @@ no pseudo-device bridge
 .Xc
 Includes support for the pseudo-device
 .Ar name .
-Some pseudo-devices can have multiple or 
+Some pseudo-devices can have multiple or
 .Ar N
 instances.
 .El
@@ -1796,7 +1796,7 @@ The default is 256k, but sometimes it need to be increased, for example
 when using large TCP windows.  This option can be changed via
 .Xr sysctl 8
 as well.
-.It Cd options SOMAXKVA=value 
+.It Cd options SOMAXKVA=value
 Sets the maximum size of kernel virtual memory that the socket buffers
 are allowed to use. The default is 16MB, but in situations where for
 example large TCP windows are used this value must also be increased.
