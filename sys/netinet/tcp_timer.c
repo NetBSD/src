@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_timer.c,v 1.67 2005/01/26 21:49:27 mycroft Exp $	*/
+/*	$NetBSD: tcp_timer.c,v 1.68 2005/01/27 18:45:41 mycroft Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -98,7 +98,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tcp_timer.c,v 1.67 2005/01/26 21:49:27 mycroft Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tcp_timer.c,v 1.68 2005/01/27 18:45:41 mycroft Exp $");
 
 #include "opt_inet.h"
 #include "opt_tcp_debug.h"
@@ -415,6 +415,7 @@ tcp_timer_rexmt(void *arg)
 	/* Loss Window MUST be one segment. */
 	tp->snd_cwnd = tp->t_segsz;
 	tp->snd_ssthresh = win * tp->t_segsz;
+	tp->t_partialacks = -1;
 	tp->t_dupacks = 0;
 	}
 	(void) tcp_output(tp);
