@@ -1,3 +1,5 @@
+/* $NetBSD: if_eh.c,v 1.2 1996/02/15 21:48:59 mark Exp $ */
+
 /*
  * Copyright (c) 1995 Melvin Tang-Richardson.
  * All rights reserved.
@@ -7,6 +9,7 @@
  *  - Testing
  *  - 16-bit dma's
  *  - Buffer overflow handling (This must be done a certain way) [Nuts]
+ *  - Enabling card interrupts (Need i cubed info)
  *
  * Other things to do
  *  - Pipelined transmitts
@@ -43,6 +46,8 @@
  * if_eh.c
  *
  * Ether H driver.
+ *
+ *	$Id: if_eh.c,v 1.2 1996/02/15 21:48:59 mark Exp $
  *
  */
 
@@ -100,10 +105,10 @@
 #define MY_PODULE	(0xec)
 
 #define TXBUF_SIZE	(1522)
-#define NTXBUF		(2)
+#define NTXBUF		(1)
 
 #define RXBUF_SIZE	(256)
-#define NRXBUF		(20)
+#define NRXBUF		(26)
 
 #define ETHER_MIN_LEN   (64)
 #define ETHER_MAX_LEN   (1522)
@@ -158,20 +163,20 @@ struct eh_softc {
 /****************************************************************************/
 
 struct cfdriver ehcd;
-int  ehprobe 	__P(( struct device *parent, void *match, void *aux ));
-void ehattach 	__P(( struct device *parent, struct device *self, void *aux ));
-void ehstart 	__P(( struct ifnet *ifp ));
-int  ehioctl 	__P(( struct ifnet *ifp, u_long cmd, caddr_t data ));
-void ehwatchdog __P(( int unit ));
-void eh_stop_controller  __P(( struct eh_softc *sc ));
-void eh_start_controller __P(( struct eh_softc *sc ));
-void eh_transmit_command __P(( struct eh_softc *sc ));
-int  eh_copyin  __P(( struct eh_softc *sc, int src, char *dest, int len ));
-int  eh_copyout __P(( struct eh_softc *sc, char *src, int dest, int len ));
-void ehinit __P(( struct eh_softc *sc ));
-int  ehstop __P(( struct eh_softc *sc ));
-int  ehintr __P(( void *arg ));
-void eh_shutdown __P(( void *arg ));
+int  ehprobe		__P((struct device *parent, void *match, void *aux));
+void ehattach		__P((struct device *parent, struct device *self, void *aux));
+void ehstart		__P((struct ifnet *ifp));
+int  ehioctl		__P((struct ifnet *ifp, u_long cmd, caddr_t data));
+void ehwatchdog		__P((int unit));
+void eh_stop_controller  __P((struct eh_softc *sc));
+void eh_start_controller __P((struct eh_softc *sc));
+void eh_transmit_command __P((struct eh_softc *sc));
+int  eh_copyin		__P((struct eh_softc *sc, int src, char *dest, int len));
+int  eh_copyout		__P((struct eh_softc *sc, char *src, int dest, int len));
+void ehinit		__P((struct eh_softc *sc));
+int  ehstop		__P((struct eh_softc *sc));
+int  ehintr		__P((void *arg));
+void eh_shutdown	__P((void *arg));
 
 /****************************************************************************/
 /* Some useful macros *******************************************************/
@@ -194,7 +199,11 @@ void eh_shutdown __P(( void *arg ));
 /* Bus attachment code ******************************************************/
 /****************************************************************************/
 
-int ehprobe ( struct device *parent, void *match, void *aux )
+int
+ehprobe(parent, match, aux)
+	struct device *parent;
+	void *match;
+	void *aux;
 {
     struct eh_softc *sc = (void *) match;
     struct podule_attach_args *pa = (void *) aux;
@@ -338,7 +347,11 @@ int ehprobe ( struct device *parent, void *match, void *aux )
     return 1;
 }
 
-void ehattach ( struct device *parent, struct device *self, void *aux )
+void
+ehattach(parent, self, aux)
+	struct device *parent;
+	struct device *self;
+	void *aux;
 {
     struct eh_softc *sc = (void *) self;
     struct podule_attach_args *pa = (void *)aux;
@@ -424,7 +437,9 @@ void ehattach ( struct device *parent, struct device *self, void *aux )
 
 #define NEXT_TXBUF (((sc->sc_txcur+1)>=NTXBUF) ? 0 : (sc->sc_txcur+1))
 
-void ehstart ( struct ifnet *ifp )
+void
+ehstart(ifp)
+	struct ifnet *ifp;
 {
     struct eh_softc *sc = ehcd.cd_devs[ifp->if_unit];
     int cur;
@@ -433,6 +448,8 @@ void ehstart ( struct ifnet *ifp )
     char *buffer;
     char txbuf[TXBUF_SIZE];
     int len = 0;
+
+    PAGE(0);
 
     if ((ifp->if_flags & IFF_OACTIVE) != 0 )
 	return;
@@ -502,7 +519,11 @@ void ehstart ( struct ifnet *ifp )
 #define DOSET(a,b) (a->if_flags|=b)
 #define DOCLR(a,b) (a->if_flags&=~b)
 
-int ehioctl ( struct ifnet *ifp, u_long cmd, caddr_t data )
+int
+ehioctl(ifp, cmd, data)
+	struct ifnet *ifp;
+	u_long cmd;
+	caddr_t data;
 {
     struct eh_softc *sc = ehcd.cd_devs[ifp->if_unit];
     struct ifaddr *ifa = (struct ifaddr *)data;
@@ -555,7 +576,9 @@ int ehioctl ( struct ifnet *ifp, u_long cmd, caddr_t data )
     return error;
 }
 
-void ehwatchdog ( int unit )
+void
+ehwatchdog(unit)
+	int unit;
 {
     struct eh_softc *sc = ehcd.cd_devs[unit];
 
@@ -573,7 +596,9 @@ void ehwatchdog ( int unit )
  * continue to completion before entering the reset state.
  */
 
-void eh_stop_controller ( struct eh_softc *sc )
+void
+eh_stop_controller(sc)
+	struct eh_softc *sc;
 {
     SetReg ( EH_COMMAND, ((GetReg(EH_COMMAND)&0xfc)|1) );
     delay ( 10000 );	/* Change this to wait on the ISR bit */
@@ -586,13 +611,17 @@ void eh_stop_controller ( struct eh_softc *sc )
  * been placed in a reset mode by eh_stop_controller or an error.
  */
 
-void eh_start_controller ( struct eh_softc *sc )
+void
+eh_start_controller(sc)
+	struct eh_softc *sc;
 {
     int temp = GetReg(EH_COMMAND);
     SetReg ( EH_COMMAND, ( (temp&0xfc)|2) );
 }
 
-void eh_transmit_command ( struct eh_softc *sc )
+void
+eh_transmit_command(sc)
+	struct eh_softc *sc;
 {
     /* Explicit set here.  There is no other reasonable combination */
     SetReg ( EH_COMMAND, COM_ABORT|COM_STA|COM_TXP);
@@ -606,7 +635,9 @@ void eh_transmit_command ( struct eh_softc *sc )
 
 /* We musn't fail */
 
-inline void eh_ensure_dma_ok ( struct eh_softc *sc )
+inline void
+eh_ensure_dma_ok(sc)
+	struct eh_softc *sc;
 {
     register int isr = GetReg ( EH_ISR );
     register int status = GetReg ( EH_COMMAND );
@@ -627,7 +658,10 @@ inline void eh_ensure_dma_ok ( struct eh_softc *sc )
     SetReg ( EH_COMMAND, 0x22 );
 }
 
-inline int eh_ensure_dma_competed ( struct eh_softc *sc, int type )
+inline int
+eh_ensure_dma_competed(sc, type)
+	struct eh_softc *sc;
+	int type;
 {
     register int status = GetReg ( EH_COMMAND );
 
@@ -653,7 +687,12 @@ inline int eh_ensure_dma_competed ( struct eh_softc *sc, int type )
 
 /* Do an eh_copyin, but take into consideration ring wrap */
 
-int eh_copyring ( struct eh_softc *sc, int src, char *dest, int len )
+int
+eh_copyring(sc, src, dest, len)
+	struct eh_softc *sc;
+	int src;
+	char *dest;
+	int len;
 {
     if ( (src+len)>sc->sc_rbd )
     {
@@ -680,7 +719,12 @@ int eh_copyring ( struct eh_softc *sc, int src, char *dest, int len )
     return len;
 }
 
-int eh_copyin ( struct eh_softc *sc, int src, char *dest, int len )
+int
+eh_copyin(sc, src, dest, len)
+	struct eh_softc *sc;
+	int src;
+	char *dest;
+	int len;
 {
     int counter;
     int s;
@@ -727,7 +771,12 @@ int eh_copyin ( struct eh_softc *sc, int src, char *dest, int len )
     return len;
 }
 
-int eh_copyout ( struct eh_softc *sc, char *src, int dest, int len )
+int
+eh_copyout(sc, src, dest, len)
+	struct eh_softc *sc;
+	char *src;
+	int dest;
+	int len;
 {
     int counter;
     int s;
@@ -778,7 +827,9 @@ int eh_copyout ( struct eh_softc *sc, char *src, int dest, int len )
 #define ALLOCBLK(v,s)	(v)=card_freestart;	\
 			card_freestart+=((s)+0xff)&(~0xff)
 
-void ehinit ( struct eh_softc *sc )
+void
+ehinit(sc)
+	struct eh_softc *sc;
 {
     int card_freestart;
     int counter;
@@ -792,7 +843,7 @@ void ehinit ( struct eh_softc *sc )
 
     ALLOCBLK ( sc->sc_rbs, (RXBUF_SIZE*NRXBUF) );
     sc->sc_rbd = card_freestart;
-    sc->sc_nxtpkt = sc->sc_rbs;
+    sc->sc_nxtpkt = sc->sc_rbs + 0x100;
 
     /* Allocate transmit buffers */
     for ( counter=0; counter<NTXBUF; counter++ )
@@ -861,10 +912,10 @@ void ehinit ( struct eh_softc *sc )
 
     PAGE(1);
 
+    SetReg ( EH_CURR,   sc->sc_nxtpkt >> 8 );
+
     for ( counter=0; counter<6; counter++ )
 	SetReg ( ((counter+1)<<2), sc->sc_arpcom.ac_enaddr[counter] );
-
-    SetReg ( EH_CURR,   sc->sc_rbs >> 8 );
 
     /* Put controller into start mode COM = 0x22 */
 
@@ -882,7 +933,9 @@ void ehinit ( struct eh_softc *sc )
     ehstart(&sc->sc_arpcom.ac_if);
 }
 
-int ehstop ( struct eh_softc *sc )
+int
+ehstop(sc)
+	struct eh_softc *sc;
 {
     int s = splimp ();
     eh_stop_controller (sc);
@@ -897,7 +950,9 @@ int ehstop ( struct eh_softc *sc )
 
 #undef MYTEST
 
-void eh_rint ( struct eh_softc *sc )
+void
+eh_rint(sc)
+	struct eh_softc *sc;
 {
     struct ifnet *ifp = &sc->sc_arpcom.ac_if;
     struct mbuf *top, **mp, *m;
@@ -941,33 +996,8 @@ void eh_rint ( struct eh_softc *sc )
 	    }
 
 	    rxstatus = hdr.rx_status;
-
-	/* Apparently, older NE2000 clones read the MSB of len wrong */
-	/* This code recalculates it.  It seems as if the DP83905    */
-	/* does not get it wrong				     */
-
-#ifdef MYTEST
-old=hdr.rx_rbc1;
-	    totlen = hdr.rx_rbc0;
-
-	    if ( (hdr.rx_nxtpkt<<8) > ptr )
-		hdr.rx_rbc1 = (hdr.rx_nxtpkt<<8)-ptr;
-	    else
-		hdr.rx_rbc1 = (hdr.rx_nxtpkt<<8)+(sc->sc_rbd-sc->sc_rbs)-ptr;
-	    hdr.rx_rbc1=(hdr.rx_rbc1>>8)-1;
-
-	    if ( ((totlen&255)+4)>256 )
-		hdr.rx_rbc1--;
-#endif
-
 	    totlen = (hdr.rx_rbc1<<8) + hdr.rx_rbc0;
 
-#ifdef MYTEST
-if (old!=hdr.rx_rbc1)
-    printf ( "CODE CAUGHT CHIP Actual %02x%02x CALC%02x%02x",
-		old, (int)hdr.rx_rbc0, (int)hdr.rx_rbc1, (int)hdr.rx_rbc0 );
-#endif
-	
             ptr+=4;
 
 	    /* Check the packet's status */
@@ -986,7 +1016,9 @@ if (old!=hdr.rx_rbc1)
 		return;
 	    }
 
-	    sc->sc_nxtpkt = hdr.rx_nxtpkt << 8;
+
+	if (0)
+		printf ( "pulling packet at %08x, next at %08x\n", thispacket, sc->sc_nxtpkt );
 
  	    if ( totlen>ETHER_MAX_LEN )
             {
@@ -1010,7 +1042,7 @@ if (old!=hdr.rx_rbc1)
 	    if ( m==0 )
 	        return;
 	    m->m_pkthdr.rcvif = ifp;
-	    m->m_pkthdr.len	  = totlen;
+	    m->m_pkthdr.len   = totlen;
 	    len = MHLEN;
 	    top = 0;
 	    mp = &top;
@@ -1020,7 +1052,7 @@ if (old!=hdr.rx_rbc1)
 	 	   MGET(m, M_DONTWAIT, MT_DATA);
 		   if ( m==0 ) {
 		       m_freem(top);
-		       return;
+		       goto skip;
 		   }
 		   len = MLEN;
 	        }
@@ -1040,23 +1072,32 @@ if (old!=hdr.rx_rbc1)
 	        mp = &m->m_next;
 	    }
 
+	    m = top;
+	    ifp->if_ipackets++;
+	    ether_input(ifp, &eh, m );
+skip:
+
 	    /* Ok, I'm done with this packet */
+
+	    sc->sc_nxtpkt = hdr.rx_nxtpkt << 8;
 
 	    /* Set the boundary pointer on the ring buffer */
 
 	    bnry = (sc->sc_nxtpkt>>8)-1;
-	    if ( bnry < sc->sc_rbs )
-		bnry = sc->sc_rbd-1;
+	    if ( bnry < (sc->sc_rbs>>8) )
+		bnry = (sc->sc_rbd>>8)-1;
    	    SetReg ( EH_BNRY, bnry );
 	
-	    m = top;
-	    ifp->if_ipackets++;
-	    ether_input(ifp, &eh, m );
+    	    PAGE(1);
+    	    rbend = GetReg ( EH_CURR ) << 8;
+    	    PAGE(0);
 	}
     }
 }
 
-int ehintr ( void *arg )
+int
+ehintr(arg)
+	void *arg;
 {
     struct eh_softc *sc = arg;
     register int isr = GetReg ( EH_ISR );	/* Is char of int faster ? */
@@ -1169,7 +1210,9 @@ int ehintr ( void *arg )
 /* Auxilary routines ********************************************************/
 /****************************************************************************/
 
-void eh_shutdown ( void *arg )
+void
+eh_shutdown(arg)
+	void *arg;
 {
     struct eh_softc *sc = (struct eh_softc *)arg;
 
