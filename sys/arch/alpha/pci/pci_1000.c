@@ -1,4 +1,4 @@
-/* $NetBSD: pci_1000.c,v 1.1 1998/06/26 21:45:56 ross Exp $ */
+/* $NetBSD: pci_1000.c,v 1.2 1998/07/07 21:44:57 thorpej Exp $ */
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: pci_1000.c,v 1.1 1998/06/26 21:45:56 ross Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pci_1000.c,v 1.2 1998/07/07 21:44:57 thorpej Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -239,8 +239,7 @@ dec_1000_iointr(framep, vec)
 		if (!alpha_shared_intr_dispatch(dec_1000_pci_intr, irq)) {
 			alpha_shared_intr_stray(dec_1000_pci_intr, irq,
 			    "dec_1000 irq");
-			if (dec_1000_pci_intr[irq].intr_nstrays ==
-			    dec_1000_pci_intr[irq].intr_maxstrays)
+			if (ALPHA_SHARED_INTR_DISABLE(&dec_1000_pci_intr[irq]))
 				dec_1000_disable_intr(irq);
 		}
 		return;
