@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.63 2002/03/24 05:55:31 thorpej Exp $	*/
+/*	$NetBSD: pmap.c,v 1.64 2002/03/24 06:07:00 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2002 Wasabi Systems, Inc.
@@ -143,7 +143,7 @@
 #include <machine/param.h>
 #include <arm/arm32/katelib.h>
 
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.63 2002/03/24 05:55:31 thorpej Exp $");        
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.64 2002/03/24 06:07:00 thorpej Exp $");        
 #ifdef PMAP_DEBUG
 #define	PDEBUG(_lev_,_stat_) \
 	if (pmap_debug_level >= (_lev_)) \
@@ -1453,17 +1453,17 @@ pmap_allocpagedir(pmap)
 	simple_lock(&pmaps_lock);
 	/* wish we didn't have to keep this locked... */
 
-	/* Duplicate the kernel mapping i.e. all mappings 0xf0000000+ */
+	/* Duplicate the kernel mappings. */
 	bcopy((char *)pmap_kernel()->pm_pdir + (PD_SIZE - KERNEL_PD_SIZE),
 		(char *)pmap->pm_pdir + (PD_SIZE - KERNEL_PD_SIZE),
 		KERNEL_PD_SIZE);
 
-	(void) pmap_extract(pmap_kernel(), pmap->pm_vptpt, &pmap->pm_pptpt);
-	pmap->pm_pptpt &= PG_FRAME;
+	pte = vtopte(pmap->pm_vptpt);
+	pmap->pm_pptpt = l2pte_pa(*pte);
+
 	/* Revoke cacheability and bufferability */
 	/* XXX should be done better than this */
-	pte = pmap_pte(pmap_kernel(), pmap->pm_vptpt);
-	*pte = *pte & ~(PT_C | PT_B);
+	*pte &= ~(PT_C | PT_B);
 
 	/* Wire in this page table */
 	pmap_map_in_l1(pmap, PTE_BASE, pmap->pm_pptpt, TRUE);
@@ -1471,9 +1471,7 @@ pmap_allocpagedir(pmap)
 	pt->pt_flags &= ~PTFLAG_CLEAN;	/* L1 is dirty now */
 	
 	/*
-	 * Map the kernel page tables for 0xf0000000 +
-	 * into the page table used to map the
-	 * pmap's page tables
+	 * Map the kernel page tables into the new PT map.
 	 */
 	bcopy((char *)(PTE_BASE
 	    + (PTE_BASE >> (PGSHIFT - 2))
