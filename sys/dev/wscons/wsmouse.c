@@ -1,4 +1,4 @@
-/* $NetBSD: wsmouse.c,v 1.1 1998/03/22 14:24:04 drochner Exp $ */
+/* $NetBSD: wsmouse.c,v 1.2 1998/06/09 07:34:23 thorpej Exp $ */
 
 /*
  * Copyright (c) 1996, 1997 Christopher G. Demetriou.  All rights reserved.
@@ -33,7 +33,7 @@
 static const char _copyright[] __attribute__ ((unused)) =
     "Copyright (c) 1996, 1997 Christopher G. Demetriou.  All rights reserved.";
 static const char _rcsid[] __attribute__ ((unused)) =
-    "$NetBSD: wsmouse.c,v 1.1 1998/03/22 14:24:04 drochner Exp $";
+    "$NetBSD: wsmouse.c,v 1.2 1998/06/09 07:34:23 thorpej Exp $";
 
 /*
  * Copyright (c) 1992, 1993
@@ -113,11 +113,7 @@ struct wsmouse_softc {
 	int		sc_dy;		/* delta-y */
 };
 
-#ifdef __BROKEN_INDIRECT_CONFIG
-int	wsmouse_match __P((struct device *, void *, void *));
-#else
 int	wsmouse_match __P((struct device *, struct cfdata *, void *));
-#endif
 void	wsmouse_attach __P((struct device *, struct device *, void *));
 
 struct cfattach wsmouse_ca = {
@@ -145,11 +141,7 @@ wsmousedevprint(aux, pnp)
 int
 wsmouse_match(parent, match, aux)
 	struct device *parent;
-#ifdef __BROKEN_INDIRECT_CONFIG
-	void *match;
-#else
 	struct cfdata *match;
-#endif
 	void *aux;
 {
 

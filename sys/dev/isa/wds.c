@@ -1,4 +1,4 @@
-/*	$NetBSD: wds.c,v 1.31 1998/06/09 00:05:46 thorpej Exp $	*/
+/*	$NetBSD: wds.c,v 1.32 1998/06/09 07:25:06 thorpej Exp $	*/
 
 #undef WDSDIAG
 #ifdef DDB
@@ -219,11 +219,7 @@ struct scsipi_device wds_dev = {
 	NULL,			/* Use default 'done' routine */
 };
 
-#ifdef __BROKEN_INDIRECT_CONFIG
-int	wdsprobe __P((struct device *, void *, void *));
-#else
 int	wdsprobe __P((struct device *, struct cfdata *, void *));
-#endif
 void	wdsattach __P((struct device *, struct device *, void *));
 
 struct cfattach wds_ca = {
@@ -316,11 +312,7 @@ wds_cmd(iot, ioh, ibuf, icnt)
 int
 wdsprobe(parent, match, aux)
 	struct device *parent;
-#ifdef __BROKEN_INDIRECT_CONFIG
-	void *match;
-#else
 	struct cfdata *match;
-#endif
 	void *aux;
 {
 	struct isa_attach_args *ia = aux;

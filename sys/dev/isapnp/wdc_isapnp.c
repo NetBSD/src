@@ -1,4 +1,4 @@
-/*	$NetBSD: wdc_isapnp.c,v 1.3 1998/06/09 00:05:20 thorpej Exp $	*/
+/*	$NetBSD: wdc_isapnp.c,v 1.4 1998/06/09 07:28:31 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles M. Hannum.  All rights reserved.
@@ -59,11 +59,7 @@ struct wdc_isapnp_softc {
 	int	sc_drq;
 };
 
-#ifdef __BROKEN_INDIRECT_CONFIG
-int	wdc_isapnp_probe 	__P((struct device *, void *, void *));
-#else
 int	wdc_isapnp_probe 	__P((struct device *, struct cfdata *, void *));
-#endif
 void	wdc_isapnp_attach 	__P((struct device *, struct device *, void *));
 
 struct cfattach wdc_isapnp_ca = {
@@ -79,11 +75,7 @@ static void	wdc_isapnp_dma_finish __P((void *));
 int
 wdc_isapnp_probe(parent, match, aux)
 	struct device *parent;
-#ifdef __BROKEN_INDIRECT_CONFIG
-	void *match;
-#else
 	struct cfdata *match;
-#endif
 	void *aux;
 {
 	struct isapnp_attach_args *ipa = aux;

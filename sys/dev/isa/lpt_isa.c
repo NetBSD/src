@@ -1,4 +1,4 @@
-/*	$NetBSD: lpt_isa.c,v 1.47 1997/10/20 18:43:16 thorpej Exp $	*/
+/*	$NetBSD: lpt_isa.c,v 1.48 1998/06/09 07:25:03 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1993, 1994 Charles Hannum.
@@ -88,11 +88,7 @@ struct lpt_isa_softc {
 
 };
 
-#ifdef __BROKEN_INDIRECT_CONFIG
-int lpt_isa_probe __P((struct device *, void *, void *));
-#else
 int lpt_isa_probe __P((struct device *, struct cfdata *, void *));
-#endif
 void lpt_isa_attach __P((struct device *, struct device *, void *));
 
 struct cfattach lpt_isa_ca = {
@@ -152,11 +148,7 @@ lpt_port_test(iot, ioh, base, off, data, mask)
 int
 lpt_isa_probe(parent, match, aux)
 	struct device *parent;
-#ifdef __BROKEN_INDIRECT_CONFIG
-	void *match;
-#else
 	struct cfdata *match;
-#endif
 	void *aux;
 {
 	struct isa_attach_args *ia = aux;

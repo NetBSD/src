@@ -1,4 +1,4 @@
-/*	$NetBSD: com_pcmcia.c,v 1.3 1998/02/01 23:50:52 marc Exp $	*/
+/*	$NetBSD: com_pcmcia.c,v 1.4 1998/06/09 07:32:54 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994, 1995, 1996
@@ -72,11 +72,7 @@
 #define	PCMCIA_MANUFACTURER_IBM			0xa4
 #define	PCMCIA_PRODUCT_IBM_HOME_AND_AWAY	0x2e
 
-#ifdef __BROKEN_INDIRECT_CONFIG
-int com_pcmcia_match __P((struct device *, void *, void *));
-#else
 int com_pcmcia_match __P((struct device *, struct cfdata *, void *));
-#endif
 void com_pcmcia_attach __P((struct device *, struct device *, void *));
 void com_pcmcia_cleanup __P((void *));
 
@@ -133,11 +129,7 @@ struct com_dev {
 int
 com_pcmcia_match(parent, match, aux)
 	struct device *parent;
-#ifdef __BROKEN_INDIRECT_CONFIG
-	void *match;
-#else
 	struct cfdata *match;
-#endif
 	void *aux;
 {
 	struct pcmcia_attach_args *pa = aux;

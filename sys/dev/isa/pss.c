@@ -1,4 +1,4 @@
-/*	$NetBSD: pss.c,v 1.43 1998/06/09 00:05:46 thorpej Exp $	*/
+/*	$NetBSD: pss.c,v 1.44 1998/06/09 07:25:04 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1994 John Brezak
@@ -161,37 +161,21 @@ int	pssdebug = 0;
 #define DPRINTF(x)
 #endif
 
-#ifdef __BROKEN_INDIRECT_CONFIG
-int	pssprobe __P((struct device *, void *, void *));
-#else
 int	pssprobe __P((struct device *, struct cfdata *, void *));
-#endif
 void	pssattach __P((struct device *, struct device *, void *));
 static	int pssfind __P((struct device *, struct pss_softc *, 
 			 struct isa_attach_args *));
 
-#ifdef __BROKEN_INDIRECT_CONFIG
-int	spprobe __P((struct device *, void *, void *));
-#else
 int	spprobe __P((struct device *, struct cfdata *, void *));
-#endif
 void	spattach __P((struct device *, struct device *, void *));
 static	int spfind __P((struct device *, struct ad1848_softc *, 
 			struct isa_attach_args *));
 
 #ifdef notyet
-#ifdef __BROKEN_INDIRECT_CONFIG
-int	mpuprobe __P((struct device *, void *, void *));
-#else
 int	mpuprobe __P((struct device *, struct cfdata *, void *));
-#endif
 void	mpuattach __P((struct device *, struct device *, void *));
 
-#ifdef __BROKEN_INDIRECT_CONFIG
-int	pcdprobe __P((struct device *, void *, void *));
-#else
 int	pcdprobe __P((struct device *, struct cfdata *, void *));
-#endif
 void	pcdattach __P((struct device *, struct device *, void *));
 #endif
 
@@ -721,21 +705,13 @@ pss_dump_regs(sc)
 int
 pssprobe(parent, match, aux)
     struct device *parent;
-#ifdef __BROKEN_INDIRECT_CONFIG
-    void *match;
-#else
     struct cfdata *match;
-#endif
     void *aux;
 {
     struct pss_softc probesc, *sc = &probesc;
 
     bzero(sc, sizeof *sc);
-#ifdef __BROKEN_INDIRECT_CONFIG
-    sc->sc_dev.dv_cfdata = ((struct device *)match)->dv_cfdata;
-#else
     sc->sc_dev.dv_cfdata = match;
-#endif
     strcpy(sc->sc_dev.dv_xname, "pas");
     return pssfind(parent, sc, aux);
 }
@@ -842,21 +818,13 @@ pss_found:
 int
 spprobe(parent, match, aux)
     struct device *parent;
-#ifdef __BROKEN_INDIRECT_CONFIG
-    void *match;
-#else
     struct cfdata *match;
-#endif
     void *aux;
 {
     struct ad1848_softc probesc, *sc = &probesc;
 
     bzero(sc, sizeof *sc);
-#ifdef __BROKEN_INDIRECT_CONFIG
-    sc->sc_dev.dv_cfdata = ((struct device *)match)->dv_cfdata;
-#else
     sc->sc_dev.dv_cfdata = match;
-#endif
     return spfind(parent, sc, aux);
 }
 
@@ -958,11 +926,7 @@ spfind(parent, sc, ia)
 int
 mpuprobe(parent, match, aux)
     struct device *parent;
-#ifdef __BROKEN_INDIRECT_CONFIG
-    void *match;
-#else
     struct cfdata *match;
-#endif
     void *aux;
 {
 #ifndef __BROKEN_INDIRECT_CONFIG
@@ -1012,11 +976,7 @@ mpuprobe(parent, match, aux)
 int
 pcdprobe(parent, match, aux)
     struct device *parent;
-#ifdef __BROKEN_INDIRECT_CONFIG
-    void *match;
-#else
     struct cfdata *match;
-#endif
     void *aux;
 {
 #ifndef __BROKEN_INDIRECT_CONFIG
