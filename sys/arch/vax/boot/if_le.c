@@ -1,4 +1,4 @@
-/*	$NetBSD: if_le.c,v 1.1 1997/03/15 13:04:27 ragge Exp $ */
+/*	$NetBSD: if_le.c,v 1.2 1997/03/22 12:47:31 ragge Exp $ */
 /*
  * Copyright (c) 1997 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -134,7 +134,6 @@ le_match(nif, machdep_hint)
 	struct netif *nif;
 	void *machdep_hint;
 {
-printf("machdep_hint %s\n", machdep_hint);
 	return strcmp(machdep_hint, "le") == 0;
 }
 
@@ -153,6 +152,7 @@ le_init(desc, machdep_hint)
 	int stat, i, *ea;
 	volatile int to = 100000;
 
+	*(int *)0x20080014 = 0; /* Be sure we do DMA in low 16MB */
 	next_rdesc = next_tdesc = 0;
 
 	LEWRCSR(LE_CSR0, LE_C0_STOP);
@@ -171,9 +171,9 @@ le_init(desc, machdep_hint)
 		initblock->ib_ladrf2 = 0;
 
 		(int)rdesc = QW_ALLOC(sizeof(struct buffdesc) * NRBUF);
-		initblock->ib_rdr = (RLEN << 28) | (int)rdesc;
+		initblock->ib_rdr = (RLEN << 29) | (int)rdesc;
 		(int)tdesc = QW_ALLOC(sizeof(struct buffdesc) * NTBUF);
-		initblock->ib_tdr = (TLEN << 28) | (int)tdesc;
+		initblock->ib_tdr = (TLEN << 29) | (int)tdesc;
 
 		for (i = 0; i < NRBUF; i++) {
 			rdesc[i].bd_adrflg = alloc(BUFSIZE) | BR_OWN;
@@ -212,7 +212,7 @@ le_get(desc, pkt, maxlen, timeout)
 	volatile int to = 100000 * timeout;
 
 retry:
-	if (--to == 0)
+	if (to-- == 0)
 		return 0;
 
 	csr = LERDCSR(LE_CSR0);
@@ -232,7 +232,7 @@ retry:
 
 	rdesc[next_rdesc].bd_mcnt = 0;
 	rdesc[next_rdesc].bd_adrflg |= BR_OWN;
-	if (++next_rdesc >= 2) /* XXX doesn't confirm to specs, but works */
+	if (++next_rdesc >= NRBUF)
 		next_rdesc = 0;
 
 	if (len == 0)
@@ -254,7 +254,7 @@ retry:
 		return -1;
 
 	csr = LERDCSR(LE_CSR0);
-	LEWRCSR(LE_CSR0, csr & (LE_C0_MISS|LE_C0_TINT));
+	LEWRCSR(LE_CSR0, csr & (LE_C0_MISS|LE_C0_CERR|LE_C0_TINT));
 
 	if (tdesc[next_tdesc].bd_adrflg & BT_OWN)
 		goto retry;
@@ -272,6 +272,8 @@ retry:
 		;
 
 	LEWRCSR(LE_CSR0, LE_C0_TINT);
+	if (++next_tdesc >= NTBUF)
+		next_tdesc = 0;
 
 	if (to)
 		return len;
