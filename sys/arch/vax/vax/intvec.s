@@ -1,4 +1,4 @@
-/*      $NetBSD: intvec.s,v 1.6 1995/02/13 00:46:08 ragge Exp $   */
+/*	$NetBSD: intvec.s,v 1.7 1995/02/23 17:53:52 ragge Exp $   */
 
 /*
  * Copyright (c) 1994 Ludd, University of Lule}, Sweden.
@@ -109,7 +109,7 @@ _kernbase:
 	INTVEC(strayBC, ISTACK)	# Unused, BC
 	INTVEC(hardclock,ISTACK)	# Interval Timer
 	INTVEC(strayC4, ISTACK)	# Unused, C4
-	INTVEC(strayC8, ISTACK)	# Unused, C8
+	INTVEC(emulate, KSTACK) # Subset instruction emulation
 	INTVEC(strayCC, ISTACK)	# Unused, CC
 	INTVEC(strayD0, ISTACK)	# Unused, D0
 	INTVEC(strayD4, ISTACK)	# Unused, D4
@@ -273,7 +273,6 @@ hardclock:	mtpr	$0xc1,$PR_ICCS		# Reset interrupt flag
 		rei
 
 	STRAY(0, C4)
-	STRAY(0, C8)
 	STRAY(0, CC)
 	STRAY(0, D0)
 	STRAY(0, D4)
@@ -301,71 +300,87 @@ trap:	pushr	$0x3f
 	mtpr	$0x1f,$PR_IPL	# Be sure we can REI
 	rei
 
-#if 0
-
-msg_0, 00:	.asciz	"\r\nTrap:	0x00	Unused.\r\n"
-msg_0, 08:	.asciz	"\r\nTrap:	0x08	V_K_STK_INV\r\n"
-msg_0, 0C:	.asciz	"\r\nTrap:	0x0C	V_POWER_FAIL\r\n"
-
-msg_0, 14:	.asciz	"\r\nTrap:	0x14	V_CUSTOMER\n"
-
-msg_0, 28:	.asciz	"\r\nTrap:	0x28	V_TRACE_PEND\r\n"
-msg_0, 2C:	.asciz	"\r\nTrap:	0x2C	V_BREAKPOINT\r\n"
-
-msg_0, 30:	.asciz	"\r\nTrap:	0x30	V_COMPAT\r\n"
-msg_0, 38:	.asciz	"\r\nTrap:	0x38	Unused.\r\n"
-msg_0, 3C:	.asciz	"\r\nTrap:	0x3C	Unused.\r\n"
-
-msg_0, 44:	.asciz	"\r\nTrap:	0x44	V_CHME\r\n"
-msg_0, 48:	.asciz	"\r\nTrap:	0x48	V_CHMS.\r\n"
-msg_0, 4C:	.asciz	"\r\nTrap:	0x4C	V_CHMU\r\n"
-
-msg_0, 50:	.asciz	"\r\nTrap:	0x50	V_SBI_SILO\r\n"
-msg_0, 54:	.asciz	"\r\nTrap:	0x54	V_CORR_READ\r\n"
-msg_0, 58:	.asciz	"\r\nTrap:	0x58	V_SBI_ALERT\r\n"
-msg_0, 5C:	.asciz	"\r\nTrap:	0x5C	V_SBI_FAULT\r\n"
-
-msg_0, 60:	.asciz	"\r\nTrap:	0x60	V_MEM_W_TOUT\r\n"
-msg_0, 64:	.asciz	"\r\nTrap:	0x64	Unused.\r\n"
-msg_0, 68:	.asciz	"\r\nTrap:	0x68	Unused.\r\n"
-msg_0, 6C:	.asciz	"\r\nTrap:	0x6C	Unused.\r\n"
-
-msg_0, 70:	.asciz	"\r\nTrap:	0x70	Unused.\r\n"
-msg_0, 74:	.asciz	"\r\nTrap:	0x74	Unused.\r\n"
-msg_0, 78:	.asciz	"\r\nTrap:	0x78	Unused.\r\n"
-msg_0, 7C:	.asciz	"\r\nTrap:	0x7C	Unused.\r\n"
-
-msg_0, 80:	.asciz	"\r\nTrap:	0x80	Unused.\r\n"
-msg_0, 84:	.asciz	"\r\nTrap:	0x84	V_SW_LVL1\r\n"
-msg_0, 8C:	.asciz	"\r\nTrap:	0x8C	V_SW_LVL3\r\n"
-
-msg_0, 90:	.asciz	"\r\nTrap:	0x90	V_SW_LVL4\r\n"
-msg_0, 94:	.asciz	"\r\nTrap:	0x94	V_SW_LVL5\r\n"
-msg_0, 98:	.asciz	"\r\nTrap:	0x98	V_SW_LVL6\r\n"
-msg_0, 9C:	.asciz	"\r\nTrap:	0x9C	V_SW_LVL7\r\n"
-
-msg_0, A4:	.asciz	"\r\nTrap:	0xA4	V_SW_LVL9\r\n"
-msg_0, A8:	.asciz	"\r\nTrap:	0xA8	V_SW_LVL10\r\n"
-msg_0, AC:	.asciz	"\r\nTrap:	0xAC	V_SW_LVL11\r\n"
-
-msg_0, B4:	.asciz	"\r\nTrap:	0xB4	V_SW_LVL13\r\n"
-msg_0, B8:	.asciz	"\r\nTrap:	0xB8	V_SW_LVL14\r\n"
-msg_0, BC:	.asciz	"\r\nTrap:	0xBC	V_SW_LVL15\r\n"
-
-msg_0, C4:	.asciz	"\r\nTrap:	0xC4	Unused.\r\n"
-msg_0, C8:	.asciz	"\r\nTrap:	0xC8	Unused.\r\n"
-msg_0, CC:	.asciz	"\r\nTrap:	0xCC	Unused.\r\n"
-
-msg_0, D0:	.asciz	"\r\nTrap:	0xD0	Unused.\r\n"
-msg_0, D4:	.asciz	"\r\nTrap:	0xD4	Unused.\r\n"
-msg_0, D8:	.asciz	"\r\nTrap:	0xD8	Unused.\r\n"
-msg_0, DC:	.asciz	"\r\nTrap:	0xDC	Unused.\r\n"
-
-msg_0, E0:	.asciz	"\r\nTrap:	0xE0	Unused.\r\n"
-msg_0, E4:	.asciz	"\r\nTrap:	0xE4	Unused.\r\n"
-msg_0, E8:	.asciz	"\r\nTrap:	0xE8	Unused.\r\n"
-msg_0, EC:	.asciz	"\r\nTrap:	0xEC	Unused.\r\n"
-
-msg_0, F0:	.asciz	"\r\nTrap:	0xF0	V_CONSOLE_SR\r\n"
-msg_0, F4:	.asciz	"\r\nTrap:	0xF4	V_CONSOLE_ST\r\n"
+#if VAX630 || VAX650
+/*
+ * Table of emulated Microvax instructions supported by emulate.s.
+ * Use noemulate to convert unimplemented ones to reserved instruction faults.
+ */
+	.globl	_emtable
+_emtable:
+/* f8 */ .long _EMashp; .long _EMcvtlp; .long noemulate; .long noemulate
+/* fc */ .long noemulate; .long noemulate; .long noemulate; .long noemulate
+/* 00 */ .long noemulate; .long noemulate; .long noemulate; .long noemulate
+/* 04 */ .long noemulate; .long noemulate; .long noemulate; .long noemulate
+/* 08 */ .long _EMcvtps; .long _EMcvtsp; .long noemulate; .long _EMcrc
+/* 0c */ .long noemulate; .long noemulate; .long noemulate; .long noemulate
+/* 10 */ .long noemulate; .long noemulate; .long noemulate; .long noemulate
+/* 14 */ .long noemulate; .long noemulate; .long noemulate; .long noemulate
+/* 18 */ .long noemulate; .long noemulate; .long noemulate; .long noemulate
+/* 1c */ .long noemulate; .long noemulate; .long noemulate; .long noemulate
+/* 20 */ .long _EMaddp4; .long _EMaddp6; .long _EMsubp4; .long _EMsubp6
+/* 24 */ .long _EMcvtpt; .long _EMmulp; .long _EMcvttp; .long _EMdivp
+/* 28 */ .long noemulate; .long _EMcmpc3; .long _EMscanc; .long _EMspanc
+/* 2c */ .long noemulate; .long _EMcmpc5; .long _EMmovtc; .long _EMmovtuc
+/* 30 */ .long noemulate; .long noemulate; .long noemulate; .long noemulate
+/* 34 */ .long _EMmovp; .long _EMcmpp3; .long _EMcvtpl; .long _EMcmpp4
+/* 38 */ .long _EMeditpc; .long _EMmatchc; .long _EMlocc; .long _EMskpc
 #endif
+/*
+ * The following is called with the stack set up as follows:
+ *
+ *	  (sp):	Opcode
+ *	 4(sp):	Instruction PC
+ *	 8(sp):	Operand 1
+ *	12(sp):	Operand 2
+ *	16(sp):	Operand 3
+ *	20(sp):	Operand 4
+ *	24(sp):	Operand 5
+ *	28(sp):	Operand 6
+ *	32(sp):	Operand 7 (unused)
+ *	36(sp):	Operand 8 (unused)
+ *	40(sp):	Return PC
+ *	44(sp):	Return PSL
+ *	48(sp): TOS before instruction
+ *
+ * Each individual routine is called with the stack set up as follows:
+ *
+ *	  (sp):	Return address of trap handler
+ *	 4(sp):	Opcode (will get return PSL)
+ *	 8(sp):	Instruction PC
+ *	12(sp):	Operand 1
+ *	16(sp):	Operand 2
+ *	20(sp):	Operand 3
+ *	24(sp):	Operand 4
+ *	28(sp):	Operand 5
+ *	32(sp):	Operand 6
+ *	36(sp):	saved register 11
+ *	40(sp):	saved register 10
+ *	44(sp):	Return PC
+ *	48(sp):	Return PSL
+ *	52(sp): TOS before instruction
+ *	See the VAX Architecture Reference Manual, Section B-5 for more
+ *	information.
+ */
+
+	.align	2
+	.globl	emulate
+emulate:
+#if VAX630 || VAX650
+	movl	r11,32(sp)		# save register r11 in unused operand
+	movl	r10,36(sp)		# save register r10 in unused operand
+	cvtbl	(sp),r10		# get opcode
+	addl2	$8,r10			# shift negative opcodes
+	subl3	r10,$0x43,r11		# forget it if opcode is out of range
+	bcs	noemulate
+	movl	_emtable[r10],r10	# call appropriate emulation routine
+	jsb	(r10)		# routines put return values into regs 0-5
+	movl	32(sp),r11		# restore register r11
+	movl	36(sp),r10		# restore register r10
+	insv	(sp),$0,$4,44(sp)	# and condition codes in Opcode spot
+	addl2	$40,sp			# adjust stack for return
+	rei
+noemulate:
+	addl2	$48,sp			# adjust stack for
+#endif
+	.word	0xffff			# "reserved instruction fault"
+

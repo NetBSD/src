@@ -1,4 +1,4 @@
-/*	$NetBSD: uda.c,v 1.4 1995/02/13 00:44:27 ragge Exp $	*/
+/*	$NetBSD: uda.c,v 1.5 1995/02/23 17:53:24 ragge Exp $	*/
 
 /*
  * Copyright (c) 1988 Regents of the University of California.
@@ -279,7 +279,7 @@ udaprobe(reg, ctlr, um)
 	struct mscp_info *mi;
 	extern int cpu_type;
 	int timeout, tries;
-#ifdef QBA
+#ifdef notyet
 	int s;
 #endif
 
@@ -340,7 +340,7 @@ udaprobe(reg, ctlr, um)
 	 * initialise within ten seconds.  Or so I hear; I have not seen
 	 * this manual myself.
 	 */
-#if defined(QBA) && !defined(GENERIC)
+#ifdef notyet
 	s = spl6();
 #endif
 	tries = 0;
@@ -356,8 +356,8 @@ again:
 		if (todr() > timeout)
 			goto bad;
 	/* should have interrupted by now */
-#ifdef QBA
-#ifndef GENERIC
+#ifdef notyet
+#ifdef notyet
 	sc->sc_ipl = br = qbgetpri();
 #else
 	sc->sc_ipl = br = 0x15;
@@ -367,7 +367,7 @@ again:
 bad:
 	if (++tries < 2)
 		goto again;
-#if defined(QBA) && !defined(GENERIC)
+#ifdef notyet
 	splx(s);
 #endif
 	return (0);
@@ -1331,7 +1331,7 @@ udaintr(/*ctlr*/)
 	extern int cpu_type;
 	int ctlr=0; /* XXX Fult f|r att testa interrupter :-/ */
 /*printf("udaintr\n"); */
-#ifdef QBA
+#ifdef notyet
 	splx(sc->sc_ipl);	/* Qbus interrupt protocol is odd */
 #endif
 	sc->sc_wticks = 0;	/* reset interrupt watchdog */
@@ -2275,7 +2275,7 @@ struct	udatypes {
 	{ MSCP_MKDRIVE3('R', 'C', 'F', 25), "rc25-fixed",
 						rc25_sizes, 42, 4, 302 },
 	{ MSCP_MKDRIVE2('R', 'D', 52), "rd52", rd52_sizes, 18, 7, 480 },
-	{ MSCP_MKDRIVE2('R', 'D', 53), "rd53", rd53_sizes, 18, 8, 963 },
+	{ MSCP_MKDRIVE2('R', 'D', 53), "rd53", rd53_sizes, 17, 8, 1019 },
 	{ MSCP_MKDRIVE2('R', 'D', 32), "rd54-from-rd32",
 						rd54_sizes, 17, 15, 1220 },
 	{ MSCP_MKDRIVE2('R', 'D', 54), "rd54", rd54_sizes, 17, 15, 1220 },

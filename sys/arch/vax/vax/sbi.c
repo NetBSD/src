@@ -1,4 +1,4 @@
-/*	$NetBSD: sbi.c,v 1.1 1995/02/13 00:46:16 ragge Exp $ */
+/*	$NetBSD: sbi.c,v 1.2 1995/02/23 17:54:03 ragge Exp $ */
 /*
  * Copyright (c) 1994 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -45,9 +45,9 @@
 static int sbi_attached=0;
 
 struct bp_conf {
-        char *type;
-        int num;
-        int partyp;
+	char *type;
+	int num;
+	int partyp;
 };
 
 int
@@ -76,46 +76,63 @@ sbi_print(aux, name)
 
 int
 sbi_match(parent, cf, aux)
-        struct  device  *parent;
-        struct  cfdata  *cf;
-        void    *aux;
+	struct  device  *parent;
+	struct  cfdata  *cf;
+	void    *aux;
 {
 	struct bp_conf *bp=aux;
 
 	if(strcmp(bp->type,"sbi"))
 		return 1;
-        return 0;
+	return 0;
 }
 
 void
 sbi_attach(parent, self, aux)
-        struct  device  *parent, *self;
-        void    *aux;
+	struct  device  *parent, *self;
+	void    *aux;
 {
 	void *nisse;
 	struct nexus *nexus;
-	u_int nextype, nexnum;
+	u_int nextype, nexnum, maxnex;
 	struct sbi_attach_args sa;
 
 	/* SBI space should be alloc'ed in SYSPT instead */
 	kmem_suballoc(kernel_map, (void*)&nexus, (void*)&nisse,
 		(NNEXSBI*sizeof(struct nexus)), FALSE);
-	/* Should be done in another way to be compatible with 780 */
-	pmap_map((int)nexus, 0xf20000, 0xf40000, VM_PROT_READ|VM_PROT_WRITE);
 	switch(cpunumber){
 #ifdef VAX730
 	case VAX_730:
+	pmap_map((int)nexus, 0xf20000, 0xf40000, VM_PROT_READ|VM_PROT_WRITE);
+	maxnex = NNEX730;
 	printf(": BL[730\n");
 	break;
 #endif
 #ifdef VAX750
 	case VAX_750:
+	pmap_map((int)nexus, 0xf20000, 0xf40000, VM_PROT_READ|VM_PROT_WRITE);
+	maxnex = NNEX750;
 	printf(": CMI750\n");
+	break;
+#endif
+#ifdef VAX630
+	case VAX_78032:
+	switch (cpu_type) {
+	case VAX_630:
+		pmap_map((int)nexus, 0x20088000, 0x200a8000,
+			VM_PROT_READ|VM_PROT_WRITE);
+		maxnex = NNEX630;
+		printf(": Q22\n");
+		break;
+	default:
+		panic("Microvax not supported");
+	};
 	break;
 #endif
 
 	case VAX_780:
 	case VAX_8600:
+	maxnex = NNEXSBI;
 	printf(": SBI780\n");
 	}
 
@@ -124,7 +141,7 @@ sbi_attach(parent, self, aux)
  * in different ways (if they identifies themselves at all).
  * We have to fake identifying depending on different CPUs.
  */
-	for(nexnum=0;nexnum<NNEXSBI;nexnum++){
+	for(nexnum=0;nexnum<maxnex;nexnum++){
 		if(badaddr((caddr_t)&nexus[nexnum],4))continue;
 
 		switch(cpunumber){
@@ -142,6 +159,11 @@ sbi_attach(parent, self, aux)
 			break;
 		}
 #endif
+#ifdef VAX630
+		case VAX_78032:
+			sa.type = NEX_UBA0;
+			break;
+#endif
 		default:
 			sa.type=nexus[nexnum].nexcsr.nex_type;
 		}
@@ -152,5 +174,5 @@ sbi_attach(parent, self, aux)
 }
 
 struct  cfdriver sbicd =
-        { NULL, "sbi", sbi_match, sbi_attach, DV_DULL, sizeof(struct device) };
+	{ NULL, "sbi", sbi_match, sbi_attach, DV_DULL, sizeof(struct device) };
 

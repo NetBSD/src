@@ -1,4 +1,4 @@
-/*      $NetBSD: autoconf.c,v 1.1 1995/02/13 00:46:02 ragge Exp $      */
+/*      $NetBSD: autoconf.c,v 1.2 1995/02/23 17:53:46 ragge Exp $      */
 
 /*
  * Copyright (c) 1994 Ludd, University of Lule}, Sweden.
@@ -67,9 +67,12 @@ int	nexty750[]={ NEX_MEM16,	NEX_MEM16,	NEX_MEM16,	NEX_MEM16,
 #endif
 #if VAX730
 int   nexty730[NNEX730] = {
-        NEX_MEM16,      NEX_ANY,        NEX_ANY,        NEX_ANY,
-        NEX_ANY,        NEX_ANY,        NEX_ANY,        NEX_ANY,
+	NEX_MEM16,      NEX_ANY,	NEX_ANY,	NEX_ANY,
+	NEX_ANY,	NEX_ANY,	NEX_ANY,	NEX_ANY,
 };
+#endif
+#if VAX630
+int     uvaxII_mchk(), uvaxII_memerr(), uvaxII_clock(), uvaxII_conf();
 #endif
 
 struct	cpu_dep	cpu_calls[VAX_MAX+1]={
@@ -81,9 +84,9 @@ struct	cpu_dep	cpu_calls[VAX_MAX+1]={
 	cpu_notsupp,cpu_notsupp,cpu_notsupp,cpu_notsupp,cpu_notsupp,
 #endif
 #ifdef  VAX750	/* Type 2, 11/750 */
-        cpu_notgen,ka750_clock,ka750_mchk,ka750_memerr,ka750_conf,
+	cpu_notgen,ka750_clock,ka750_mchk,ka750_memerr,ka750_conf,
 #else
-        cpu_notgen,cpu_notgen,cpu_notgen,cpu_notgen,cpu_notgen,
+	cpu_notgen,cpu_notgen,cpu_notgen,cpu_notgen,cpu_notgen,
 #endif
 #ifdef	VAX730	/* Type 3, 11/{730,725}, ceauciesco-vax */
 	cpu_notsupp,cpu_notsupp,cpu_notsupp,cpu_notsupp,cpu_notsupp,
@@ -110,8 +113,8 @@ struct	cpu_dep	cpu_calls[VAX_MAX+1]={
 #else
 	cpu_notsupp,cpu_notsupp,cpu_notsupp,cpu_notsupp,cpu_notsupp,
 #endif
-#ifdef	VAX630	/* Type 8, KA630 (uVAX II) */
-	cpu_notsupp,cpu_notsupp,cpu_notsupp,cpu_notsupp,cpu_notsupp,
+#ifdef  VAX630  /* Type 8, KA630 or KA410 (uVAX II) */
+	cpu_notgen,uvaxII_clock,uvaxII_mchk,uvaxII_memerr,uvaxII_conf,
 #else
 	cpu_notsupp,cpu_notsupp,cpu_notsupp,cpu_notsupp,cpu_notsupp,
 #endif
@@ -144,19 +147,19 @@ configure()
 		panic("backplane not configured");
 
 #if GENERIC
-        if ((boothowto & RB_ASKNAME) == 0)
-                setroot();
-        setconf();
+	if ((boothowto & RB_ASKNAME) == 0)
+		setroot();
+	setconf();
 #else
-        setroot();
+	setroot();
 #endif
-        /*
-         * Configure swap area and related system
-         * parameter based on device(s) used.
-         */
-        gencnslask(); /* XXX inte g|ras h{r */
-        swapconf();
-        cold=0;
+	/*
+	 * Configure swap area and related system
+	 * parameter based on device(s) used.
+	 */
+	gencnslask(); /* XXX inte g|ras h{r */
+	swapconf();
+	cold=0;
 }
 
 
@@ -193,6 +196,7 @@ backplane_attach(parent, self, hej)
 
 	switch(cpunumber){
 	case VAX_750:
+	case VAX_78032:
 		cmem=cbi=0;
 		ccpu=csbi=1;
 		break;
@@ -205,52 +209,62 @@ backplane_attach(parent, self, hej)
 		config_found(self, &bp, printut);
 	}
 	bp.type="mem";
-        for(i=0;i<cmem;i++){
-                bp.num=i;
-                config_found(self, &bp, printut);
-        }
-        bp.type="bi";
-        for(i=0;i<cbi;i++){
-                bp.num=i;
-                config_found(self, &bp, printut);
-        }
-        bp.type="sbi";
-        for(i=0;i<csbi;i++){
-                bp.num=i;
-                config_found(self, &bp, printut);
-        }
+	for(i=0;i<cmem;i++){
+		bp.num=i;
+		config_found(self, &bp, printut);
+	}
+	bp.type="bi";
+	for(i=0;i<cbi;i++){
+		bp.num=i;
+		config_found(self, &bp, printut);
+	}
+	bp.type="sbi";
+	for(i=0;i<csbi;i++){
+		bp.num=i;
+		config_found(self, &bp, printut);
+	}
 }
 
 int
 cpu_match(parent, cf, aux)
-        struct  device  *parent;
-        struct  cfdata  *cf;
-        void    *aux;
+	struct  device  *parent;
+	struct  cfdata  *cf;
+	void    *aux;
 {
 	struct bp_conf *bp=aux;
 
 	if(strcmp(cf->cf_driver->cd_name,"cpu"))
 		return 0;
 
+	switch (cpunumber) {
 #ifdef VAX750
-	if(cpunumber==VAX_750)
+	case VAX_750:
 		if(cf->cf_unit==0&&bp->partyp==BACKPLANE)
 			return 1;
+		break;
 #endif
+#ifdef VAX630
+	case VAX_78032:
+		if(cf->cf_unit==0&&bp->partyp==BACKPLANE)
+			return 1;
+		break;
+#endif
+	};
 
 	return 0;
 }
 
 void
 cpu_attach(parent, self, aux)
-        struct  device  *parent, *self;
-        void    *aux;
+	struct  device  *parent, *self;
+	void    *aux;
 {
 	extern int cpu_type;
 	extern char cpu_model[];
 
+	switch (cpunumber) {
 #ifdef	VAX750
-	if(cpunumber==VAX_750){
+	case VAX_750:
 		printf(": 11/750, hardware rev %d, ucode rev %d\n",
 		V750HARDW(cpu_type), V750UCODE(cpu_type));
 		printf("cpu0 at backplane0: ");
@@ -259,22 +273,29 @@ cpu_attach(parent, self, aux)
 			mtpr(0x8000,PR_ACCS);
 		} else printf("no FPA\n");
 		strcpy(cpu_model,"VAX 11/750");
-	}
+		break;
 #endif
+#if VAX630
+	case VAX_78032:
+		printf(": MicroVAXII CPU\n");
+		strcpy(cpu_model, "MicroVAX 78032/78132");
+		break;
+#endif
+	};
 }
 
 int nmcr=0;
 
 int
 mem_match(parent, cf, aux)
-        struct  device  *parent;
-        struct  cfdata  *cf;
-        void    *aux;
+	struct  device  *parent;
+	struct  cfdata  *cf;
+	void    *aux;
 {
 	struct sbi_attach_args *sa=(struct sbi_attach_args *)aux;
 
-        if((cf->cf_loc[0]!=sa->nexnum)&&(cf->cf_loc[0]>-1))
-                return 0; /* memory doesn't match spec's */
+	if((cf->cf_loc[0]!=sa->nexnum)&&(cf->cf_loc[0]>-1))
+		return 0; /* memory doesn't match spec's */
 	switch(sa->type){
 	case NEX_MEM16:
 		return 1;
@@ -284,8 +305,8 @@ mem_match(parent, cf, aux)
 
 void
 mem_attach(parent, self, aux)
-        struct  device  *parent, *self;
-        void    *aux;
+	struct  device  *parent, *self;
+	void    *aux;
 {
 	struct sbi_attach_args *sa=(struct sbi_attach_args *)aux;
 	switch(cpunumber){

@@ -1,4 +1,4 @@
-/*      $NetBSD: machdep.c,v 1.6 1995/02/13 00:46:11 ragge Exp $  */
+/*      $NetBSD: machdep.c,v 1.7 1995/02/23 17:53:56 ragge Exp $  */
 
 /* Copyright (c) 1994 Ludd, University of Lule}, Sweden.
  * Copyright (c) 1993 Adam Glass
@@ -362,7 +362,7 @@ sigreturn(p, uap, retval)
 	struct sigretargs *uap;
 	int *retval;
 {
-	struct trapframe *scf=(struct trapframe *)mfpr(PR_SSP);
+	struct trapframe *scf=p->p_addr->u_pcb.framep;
 	struct sigcontext *cntx=uap->cntxp;
 	/* Compatibility mode? */
 	if((cntx->sc_ps&(PSL_IPL|PSL_IS))||
@@ -430,8 +430,7 @@ sendsig(catcher, sig, mask, code)
 	trampf=(struct trampframe *)((u_int)sigctx-sizeof(struct trampframe));
 	cursp=(u_int*)sigctx-2; /* Place for pointer to arg list in sigreturn */
 
-	syscf=(struct trapframe*)mfpr(PR_SSP); /* Where registers are placed */
-
+	syscf=p->p_addr->u_pcb.framep;
         if(useracc((caddr_t)cursp, sizeof(struct sigcontext)+
 			sizeof(struct trampframe), B_WRITE)==0) {
                 /*

@@ -1,4 +1,4 @@
-/*      $NetBSD: vm_machdep.c,v 1.6 1995/02/13 00:46:21 ragge Exp $       */
+/*      $NetBSD: vm_machdep.c,v 1.7 1995/02/23 17:54:12 ragge Exp $       */
 
 #undef SWDEBUG
 /*
@@ -49,24 +49,25 @@
 #include "sys/vnode.h"
 
 volatile int whichqs;
+extern u_int proc0paddr;
 
 pagemove(from, to, size)
-        caddr_t from, to;
-        int size;
+	caddr_t from, to;
+	int size;
 {
-        u_int *fpte, *tpte;
+	u_int *fpte, *tpte;
 
-        fpte = kvtopte(from);
-        tpte = kvtopte(to);
-        while (size > 0) {
-                *tpte++ = *fpte;
-                *(int *)fpte++ = PG_NV;
-                mtpr(from,PR_TBIS);
-                mtpr(to,PR_TBIS);
-                from += NBPG;
-                to += NBPG;
-                size -= NBPG;
-        }
+	fpte = kvtopte(from);
+	tpte = kvtopte(to);
+	while (size > 0) {
+		*tpte++ = *fpte;
+		*(int *)fpte++ = PG_NV;
+		mtpr(from,PR_TBIS);
+		mtpr(to,PR_TBIS);
+		from += NBPG;
+		to += NBPG;
+		size -= NBPG;
+	}
 }
 
 #define VIRT2PHYS(x) \
@@ -74,69 +75,84 @@ pagemove(from, to, size)
 		(unsigned int)Sysmap))&0x1fffff)<<9)
 
 
-volatile unsigned int ustat,uofset,p0br,p0lr,p1br,p1lr;
+volatile unsigned int ustat,uofset,p0br,p0lr,p1br,p1lr,savpcb;
 
 cpu_fork(p1, p2)
-        struct proc *p1, *p2;
+	struct proc *p1, *p2;
 {
-        unsigned int *i,ksp,uorig,uchld,j;
-        struct pcb *nyproc;
-        struct pte *ptep;
-        extern int sigsida;
+	unsigned int *i,ksp,uorig,uchld,j;
+	struct pcb *nyproc;
+	struct pte *ptep;
+	extern int sigsida;
 	struct pmap *pmap;
 
-        uorig=(unsigned int)p1->p_addr;
+	uorig=(unsigned int)p1->p_addr;
 	pmap=&p2->p_vmspace->vm_pmap;
-        (u_int)nyproc=uchld=(unsigned int)p2->p_addr;
-        uofset=uchld-uorig;
+	(u_int)nyproc=uchld=(unsigned int)p2->p_addr;
+	uofset=uchld-uorig;
+	nyproc->framep=((struct pcb *)uorig)->framep+uofset;
 /*
  * Kopiera stacken. pcb skiter vi i, eftersom det ordnas fr}n savectx.
  * OBS! Vi k|r p} kernelstacken!
  */
 
-        splhigh();
-        ksp=mfpr(PR_KSP);
+	splhigh();
+	ksp=mfpr(PR_KSP);
 #define UAREA   (NBPG*UPAGES)
 #define size    (uorig+UAREA-ksp)
-        bcopy((void *)ksp,(void *)(uchld+UAREA-size),size);
-        ustat=(uchld+UAREA-size)-8; /* Kompensera f|r PC + PSL */
+	bcopy((void *)ksp,(void *)(uchld+UAREA-size),size);
+	ustat=(uchld+UAREA-size)-8; /* Kompensera f|r PC + PSL */
 /*
  * Ett VIDRIGT karpen-s{tt att s{tta om s} att sp f}r r{tt adress...
  */
 
-        for((u_int)i=ustat;(u_int)i<uchld+UAREA;i++)
-                if(*i<(uorig+UAREA)&& *i>ksp)
-                        *i = *i+(uchld-uorig);
+	for((u_int)i=ustat;(u_int)i<uchld+UAREA;i++)
+		if(*i<(uorig+UAREA)&& *i>ksp)
+			*i = *i+(uchld-uorig);
 
 
 /* Set up page table registers, map sigreturn page into user space */
 
-        nyproc->P0BR=nyproc->P1BR=0;
+	nyproc->P0BR=nyproc->P1BR=0;
 	nyproc->P0LR=AST_PCB;
-        nyproc->P1LR=0x200000;
+	nyproc->P1LR=0x200000;
+
+	/*
+	 * For the microvax, the stack registers PR_KSP,.. live in the PCB,
+	 * so we need to make sure they get copied to the new pcb.
+	 */
+	nyproc->KSP = mfpr(PR_KSP);
+	nyproc->SSP = mfpr(PR_SSP);
+	nyproc->USP = mfpr(PR_USP);
+	mtpr(0, PR_ESP); /* Clear in this pcb, then flip and set it */
 	(u_int)pmap->pm_pcb=uchld;
 	asm("
 		mfpr $8,_p0br
 		mfpr $9,_p0lr
 		mfpr $0xa,_p1br
 		mfpr $0xb,_p1lr
+		mfpr $0x10,_savpcb
 	"); /* page registers changes after pmap_expandp1() */
 
 	mtpr(VIRT2PHYS(uchld),PR_PCBB);
-        mtpr(uchld,PR_ESP); /* Kan ev. faulta ibland XXX */
+	mtpr(uchld,PR_ESP); /* Kan ev. faulta ibland XXX */
 
-        asm("movpsl  -(sp)");
-        asm("jsb _savectx");
-        asm("movl r0,_ustat");
+	asm("movpsl  -(sp)");
+	asm("jsb _savectx");
+	asm("movl r0,_ustat");
 
-        spl0();
-        if (ustat){
-                /*
-                 * Return 1 in child.
-                 */
-                return (0);
-        }
-        return (1);
+	if (ustat){
+		asm("
+			mtpr _savpcb,$0x10
+		");
+		spl0();
+		/*
+		 * Return 1 in child.
+		 */
+		return (0);
+	}
+	spl0();
+	return (1);
 }
 
 
@@ -162,8 +178,8 @@ void
 remrq(p)
 	struct proc *p;
 {
-        struct proc *qp;
-        int bitnr;
+	struct proc *qp;
+	int bitnr;
 
 	bitnr=(p->p_priority>>2);
 	if(bitisclear(bitnr,whichqs))
@@ -243,7 +259,7 @@ copyoutstr(from, to, maxlen, lencopied)
 void *from, *to;
 u_int *lencopied,maxlen;
 {
-        u_int i;
+	u_int i;
 	char *gfrom=from, *gto=to;
 
 	for(i=0;i<maxlen;i++){
@@ -268,21 +284,21 @@ cpu_exec_aout_makecmds(p, epp)
  */
 	ep=epp->ep_hdr;
 
-        switch (ep->a_midmag) {
-        case 0x10b: /* ZMAGIC in 4.3BSD Reno programs */
-                error = reno_zmagic(p, epp);
-                break;
-        case 0x108:
+	switch (ep->a_midmag) {
+	case 0x10b: /* ZMAGIC in 4.3BSD Reno programs */
+		error = reno_zmagic(p, epp);
+		break;
+	case 0x108:
 printf("Warning: reno_nmagic\n");
-                error = exec_aout_prep_nmagic(p, epp);
-                break;
-        case 0x107:
+		error = exec_aout_prep_nmagic(p, epp);
+		break;
+	case 0x107:
 printf("Warning: reno_omagic\n");
-                error = exec_aout_prep_omagic(p, epp);
-                break;
-        default:
-                error = ENOEXEC;
-        }
+		error = exec_aout_prep_omagic(p, epp);
+		break;
+	default:
+		error = ENOEXEC;
+	}
 	return(error);
 }
 
@@ -297,59 +313,59 @@ sysarch(){return(EINVAL);}
 
 int
 reno_zmagic(p, epp)
-        struct proc *p;
-        struct exec_package *epp;
+	struct proc *p;
+	struct exec_package *epp;
 {
-        struct exec *execp = epp->ep_hdr;
+	struct exec *execp = epp->ep_hdr;
 
-        epp->ep_taddr = USRTEXT;
-        epp->ep_tsize = execp->a_text;
-        epp->ep_daddr = epp->ep_taddr + execp->a_text;
-        epp->ep_dsize = execp->a_data + execp->a_bss;
-        epp->ep_entry = execp->a_entry;
+	epp->ep_taddr = USRTEXT;
+	epp->ep_tsize = execp->a_text;
+	epp->ep_daddr = epp->ep_taddr + execp->a_text;
+	epp->ep_dsize = execp->a_data + execp->a_bss;
+	epp->ep_entry = execp->a_entry;
 
-        /*
-         * check if vnode is in open for writing, because we want to
-         * demand-page out of it.  if it is, don't do it, for various
-         * reasons
-         */
-        if ((execp->a_text != 0 || execp->a_data != 0) &&
-            epp->ep_vp->v_writecount != 0) {
-                return ETXTBSY;
-        }
-        epp->ep_vp->v_flag |= VTEXT;
+	/*
+	 * check if vnode is in open for writing, because we want to
+	 * demand-page out of it.  if it is, don't do it, for various
+	 * reasons
+	 */
+	if ((execp->a_text != 0 || execp->a_data != 0) &&
+	    epp->ep_vp->v_writecount != 0) {
+		return ETXTBSY;
+	}
+	epp->ep_vp->v_flag |= VTEXT;
 
-        /* set up command for text segment */
-        NEW_VMCMD(&epp->ep_vmcmds, vmcmd_map_pagedvn, execp->a_text,
-            epp->ep_taddr, epp->ep_vp, 0x400, VM_PROT_READ|VM_PROT_EXECUTE);
+	/* set up command for text segment */
+	NEW_VMCMD(&epp->ep_vmcmds, vmcmd_map_pagedvn, execp->a_text,
+	    epp->ep_taddr, epp->ep_vp, 0x400, VM_PROT_READ|VM_PROT_EXECUTE);
 
-        /* set up command for data segment */
-        NEW_VMCMD(&epp->ep_vmcmds, vmcmd_map_pagedvn, execp->a_data,
-            epp->ep_daddr, epp->ep_vp, execp->a_text+0x400,
-            VM_PROT_READ|VM_PROT_WRITE|VM_PROT_EXECUTE);
+	/* set up command for data segment */
+	NEW_VMCMD(&epp->ep_vmcmds, vmcmd_map_pagedvn, execp->a_data,
+	    epp->ep_daddr, epp->ep_vp, execp->a_text+0x400,
+	    VM_PROT_READ|VM_PROT_WRITE|VM_PROT_EXECUTE);
 
-        /* set up command for bss segment */
-        NEW_VMCMD(&epp->ep_vmcmds, vmcmd_map_zero, execp->a_bss,
-            epp->ep_daddr + execp->a_data, NULLVP, 0,
-            VM_PROT_READ|VM_PROT_WRITE|VM_PROT_EXECUTE);
+	/* set up command for bss segment */
+	NEW_VMCMD(&epp->ep_vmcmds, vmcmd_map_zero, execp->a_bss,
+	    epp->ep_daddr + execp->a_data, NULLVP, 0,
+	    VM_PROT_READ|VM_PROT_WRITE|VM_PROT_EXECUTE);
 
-        return exec_aout_setup_stack(p, epp);
+	return exec_aout_setup_stack(p, epp);
 }
 
 void
 cpu_exit(p)
-        struct proc *p;
+	struct proc *p;
 {
 	extern unsigned int scratch;
 
 	if(!p) panic("cpu_exit from null process");
-        vmspace_free(p->p_vmspace);
+	vmspace_free(p->p_vmspace);
 
-        (void) splimp();
+	(void) splimp();
 	mtpr(scratch+NBPG,PR_KSP);/* Must change kernel stack before freeing */
-        kmem_free(kernel_map, (vm_offset_t)p->p_addr, ctob(UPAGES));
+	kmem_free(kernel_map, (vm_offset_t)p->p_addr, ctob(UPAGES));
 	cpu_switch();
-        /* NOTREACHED */
+	/* NOTREACHED */
 }
 
 suword(ptr,val)
@@ -364,11 +380,11 @@ suword(ptr,val)
  */
 int
 cpu_coredump(p, vp, cred)
-        struct proc *p;
-        struct vnode *vp;
-        struct ucred *cred;
+	struct proc *p;
+	struct vnode *vp;
+	struct ucred *cred;
 {
-        return (vn_rdwr(UIO_WRITE, vp, (caddr_t) p->p_addr, ctob(UPAGES),
-            (off_t)0, UIO_SYSSPACE, IO_NODELOCKED|IO_UNIT, cred, (int *) NULL,
-            p));
+	return (vn_rdwr(UIO_WRITE, vp, (caddr_t) p->p_addr, ctob(UPAGES),
+	    (off_t)0, UIO_SYSSPACE, IO_NODELOCKED|IO_UNIT, cred, (int *) NULL,
+	    p));
 }

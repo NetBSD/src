@@ -1,4 +1,4 @@
-/*      $NetBSD: uba.c,v 1.5 1995/02/13 00:44:21 ragge Exp $      */
+/*      $NetBSD: uba.c,v 1.6 1995/02/23 17:53:21 ragge Exp $      */
 
 /*
  * Copyright (c) 1982, 1986 The Regents of the University of California.
@@ -57,6 +57,10 @@
 #include "machine/cpu.h"
 #include "machine/mtpr.h"
 #include "machine/nexus.h"
+#include "machine/sid.h"
+#if VAX630
+#include "machine/uvaxII.h"
+#endif
 #include "uba.h"
 #include "ubareg.h"
 #include "ubavar.h"
@@ -67,6 +71,12 @@ extern int cold;
 /* F|r att f} genom kompilatorn :( Nollpekare f|r interrupt... */
 int cvec=0;
 volatile int rbr,rcvec;
+#if VAX630 || VAX410
+extern struct uvaxIIcpu *uvaxIIcpu_ptr;
+#endif
+#if VAX630
+extern struct ka630clock *ka630clk_ptr;
+#endif
 
 /*
  * Mark addresses starting at "addr" and continuing
@@ -75,22 +85,22 @@ volatile int rbr,rcvec;
  */
 static
 csralloc(ualloc, addr, size)
-        caddr_t ualloc;
-        u_short addr;
-        register int size;
+	caddr_t ualloc;
+	u_short addr;
+	register int size;
 {
-        register caddr_t p;
-        int warned = 0;
+	register caddr_t p;
+	int warned = 0;
 
-        p = &ualloc[ubdevreg(addr+size)];
-        while (--size >= 0) {
-                if (*--p && !warned) {
-                        printf(
-        "WARNING: device registers overlap those for a previous device!\n");
-                        warned = 1;
-                }
-                *p = 1;
-        }
+	p = &ualloc[ubdevreg(addr+size)];
+	while (--size >= 0) {
+		if (*--p && !warned) {
+			printf(
+	"WARNING: device registers overlap those for a previous device!\n");
+			warned = 1;
+		}
+		*p = 1;
+	}
 }
 
 /*
@@ -98,15 +108,15 @@ csralloc(ualloc, addr, size)
  * by mapping kernel ptes starting at pte.
  */
 ioaccess(physa, pte, size)
-        u_int physa;
-        u_int *pte;
-        u_int size;
+	u_int physa;
+	u_int *pte;
+	u_int size;
 {
-        u_int i = (size>>PG_SHIFT);
-        u_int v = (physa>>PG_SHIFT);
+	u_int i = (size>>PG_SHIFT);
+	u_int v = (physa>>PG_SHIFT);
 
 	do {
-	        *pte = PG_V|PG_KW|v;
+		*pte = PG_V|PG_KW|v;
 		pte++;
 		v++;
 	} while (--i > 0);
@@ -1144,6 +1154,16 @@ uba_match(parent, cf, aux)
 	extern int numuba;
 	int ubanr;
 
+#if VAX630
+	/*
+	 * The MicroVAXII always has a single QBA.
+	 */
+	if (cpu_type == VAX_630)
+		if (numuba == 0)
+			return 1;
+		else
+			return 0;
+#endif
 	if(numuba) return 0;
 	if((cf->cf_loc[0]!=sa->nexnum)&&(cf->cf_loc[0]>-1))
 		return 0; /* UBA doesn't match spec's */
@@ -1172,6 +1192,9 @@ uba_attach(parent, self, aux)
 	void ubascan();
 
 	printf("\n");
+	switch (cpunumber) {
+#if VAX750
+	case VAX_750:
 	uhp->uh_mr = (void *)ubar->uba_map;
 	uhp->uh_type = DW750;
 	uhp->uh_uba = (void*)ubar;
@@ -1186,8 +1209,68 @@ uba_attach(parent, self, aux)
 
 #else
 	unifind(uhp, UMEM750(numuba) + (uhp->uh_memsize * NBPG));
-	numuba++;
 #endif
+	break;
+#endif
+#if VAX630 || VAX410
+	case VAX_78032:
+	switch (cpu_type) {
+#if VAX630
+	case VAX_630:
+		uhp->uh_mr = (void *)sa->nexaddr;
+		uhp->uh_type = QBA;
+		uhp->uh_uba = (void*)ubar;
+		uhp->uh_physuba = (void*)QBAMAP630;
+		uhp->uh_memsize = QBAPAGES;
+		uhp->uh_mem = Numem;
+		uhp->uh_iopage = Numem + (uhp->uh_memsize * NBPG);
+
+		/*
+		 * For the MicroVAXII, the qbus address space is not contiguous
+		 * in physical address space. I also map the page that has the
+		 * memory error registers and the watch chip here and init them,
+		 * for want of a better place to do it.
+		 */
+		ioaccess(QMEM630, UMEMmap[0], QBAPAGES * NBPG);
+		ioaccess(QIOPAGE630, UMEMmap[0] + QBAPAGES, UBAIOPAGES * NBPG);
+		ioaccess(UVAXIICPU, UMEMmap[0] + QBAPAGES + UBAIOPAGES, NBPG);
+		uvaxIIcpu_ptr =
+			(struct uvaxIIcpu *)(Numem+(QBAPAGES+UBAIOPAGES)*NBPG);
+		ioaccess(KA630CLK,UMEMmap[0] + QBAPAGES + UBAIOPAGES + 1,NBPG);
+		ka630clk_ptr =
+		    (struct ka630clock *)(Numem+(QBAPAGES+UBAIOPAGES+1)*NBPG);
+
+		/*
+		 * Clear restart and boot in progress flags in the CPMBX.
+		 */
+		ka630clk_ptr->cpmbx = (ka630clk_ptr->cpmbx & KA630CLK_LANG) |
+			KA630CLK_REBOOT;
+
+		/*
+		 * Enable memory parity error detection and clear error bits.
+		 */
+		uvaxIIcpu_ptr->uvaxII_mser = (UVAXIIMSER_PEN|UVAXIIMSER_MERR|
+			UVAXIIMSER_LEB);
+
+		/*
+		 * Now that QBus space is mapped, set the local memory external
+		 * access enable.
+		 */
+		*((u_short *)(uhp->uh_iopage + QIPCR)) = Q_LMEAE;
+/* Now everything should be set up (I hope...) */
+#ifdef notyet
+		config_scan(ubascan,self);
+
+#else
+		unifind(uhp, QIOPAGE630);
+#endif
+		break;
+#endif
+	};
+	break;
+#endif
+	};
+	numuba++;
 }
 
 

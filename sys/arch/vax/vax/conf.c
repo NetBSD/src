@@ -1,4 +1,4 @@
-/*	$NetBSD: conf.c,v 1.5 1995/02/13 00:46:05 ragge Exp $	*/
+/*	$NetBSD: conf.c,v 1.6 1995/02/23 17:53:49 ragge Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986 The Regents of the University of California.
@@ -124,8 +124,8 @@ int	tmopen(),tmclose(),tmstrategy(),tmioctl(),tmdump(),tmreset();
 #define	tmreset		nullop
 #endif
 
-#include "tms.h"
-#if NTMS > 0
+#include "tmscp.h"
+#if NTMSCP > 0
 int	tmscpopen(),tmscpclose(),tmscpstrategy();
 int	tmscpioctl(),tmscpdump(),tmscpreset();
 #else
@@ -175,8 +175,8 @@ extern void	udastrategy();
 #define	udasize		0
 #endif
 
-#include "kra.h"
-#if NKDB > 0
+/*#include "kra.h" */
+#if 0
 int	kdbopen(),kdbstrategy(),kdbdump(),kdbsize();
 #else
 #define	kdbopen		enxio
