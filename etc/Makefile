@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.159 2000/08/21 23:03:10 lukem Exp $
+#	$NetBSD: Makefile,v 1.160 2000/08/23 20:48:42 jhawk Exp $
 #	from: @(#)Makefile	8.7 (Berkeley) 5/25/95
 
 # Environment variables without default values:
@@ -118,7 +118,7 @@ obj:
 	mkdir -p ${KERNOBJDIR}
 
 .ifndef DESTDIR
-distribution distrib-dirs release snapshot:
+distribution distrib-dirs release snapshot snap_pre snap_md_pre snap_md_post:
 	@echo setenv DESTDIR before doing that!
 	@false
 .else
