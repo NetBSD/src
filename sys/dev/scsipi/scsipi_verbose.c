@@ -1,4 +1,4 @@
-/*	$NetBSD: scsipi_verbose.c,v 1.19 2004/03/15 22:43:43 bouyer Exp $	*/
+/*	$NetBSD: scsipi_verbose.c,v 1.20 2004/03/16 19:10:44 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: scsipi_verbose.c,v 1.19 2004/03/15 22:43:43 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: scsipi_verbose.c,v 1.20 2004/03/16 19:10:44 bouyer Exp $");
 
 #include <sys/param.h>
 #include <sys/time.h>
@@ -817,7 +817,7 @@ scsipi_print_sense(xs, verbosity)
 {
 	scsipi_printaddr(xs->xs_periph);
  	printf(" Check Condition on CDB: ");
-	scsipi_print_cbd(xs->cmd);
+	scsipi_print_cdb(xs->cmd);
  	printf("\n");
 	scsipi_print_sense_data(&xs->sense.scsi_sense, verbosity);
 }

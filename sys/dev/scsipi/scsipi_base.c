@@ -1,4 +1,4 @@
-/*	$NetBSD: scsipi_base.c,v 1.103 2004/03/15 22:43:43 bouyer Exp $	*/
+/*	$NetBSD: scsipi_base.c,v 1.104 2004/03/16 19:10:43 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2000, 2002, 2003 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: scsipi_base.c,v 1.103 2004/03/15 22:43:43 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: scsipi_base.c,v 1.104 2004/03/16 19:10:43 bouyer Exp $");
 
 #include "opt_scsi.h"
 
@@ -730,12 +730,12 @@ scsipi_kill_pending(periph)
 }
 
 /*
- * scsipi_print_cbd:
- * prints a command block descriptor (for debug purpose, error messages,
+ * scsipi_print_cdb:
+ * prints a command descriptor block (for debug purpose, error messages,
  * SCSIPI_VERBOSE, ...)
  */
 void
-scsipi_print_cbd(cmd)
+scsipi_print_cdb(cmd)
 	struct scsipi_generic *cmd;
 {
 	int i, j;
