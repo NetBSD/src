@@ -1,3 +1,5 @@
+/*	$NetBSD: rdate.c,v 1.3 1996/02/22 06:59:18 thorpej Exp $	*/
+
 /*
  * Copyright (c) 1994 Christos Zoulas
  * All rights reserved.
@@ -26,8 +28,6 @@
  * THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
- *
- *	$Id: rdate.c,v 1.2 1996/02/10 18:44:56 christos Exp $
  */
 
 /*
@@ -38,7 +38,7 @@
  *	midnight January 1st 1900.
  */
 #ifndef lint
-static char rcsid[] = "$Id: rdate.c,v 1.2 1996/02/10 18:44:56 christos Exp $";
+static char rcsid[] = "$NetBSD: rdate.c,v 1.3 1996/02/22 06:59:18 thorpej Exp $";
 #endif/* lint */
 
 #include <sys/types.h>
