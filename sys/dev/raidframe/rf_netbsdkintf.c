@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_netbsdkintf.c,v 1.81 2000/05/27 19:12:03 oster Exp $	*/
+/*	$NetBSD: rf_netbsdkintf.c,v 1.82 2000/05/27 20:29:14 oster Exp $	*/
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -2842,9 +2842,28 @@ rf_create_auto_sets(ac_list)
 			cset = config_sets;
 			while(cset!=NULL) {
 				if (rf_does_it_fit(cset, ac)) {
-					/* looks like it matches */
-					ac->next = cset->ac;
-					cset->ac = ac;
+					/* looks like it matches... how about
+					   the mod_counter? */
+
+					if (cset->ac->clabel->mod_counter ==
+					    ac->clabel->mod_counter) {
+						ac->next = cset->ac;
+						cset->ac = ac;
+					} else {
+						/* else we ignore this, as
+						   it used to belong to a
+						   valid set, but is no
+						   longer in sync.  It's
+						   effectively a renegade,
+						   and we don't want to add
+						   it *anywhere*.  Close it,
+						   and carry on.
+						*/
+						VOP_CLOSE(ac->vp, FREAD, 
+							   NOCRED, 0);
+						vput(ac->vp);
+						
+					}
 					break;
 				}
 				cset = cset->next;
