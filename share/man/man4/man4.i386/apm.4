@@ -24,7 +24,7 @@
 .\" ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.\"   $NetBSD: apm.4,v 1.13 2001/09/10 06:07:56 perry Exp $
+.\"   $NetBSD: apm.4,v 1.14 2001/09/11 22:52:55 wiz Exp $
 .\"
 .Dd May 18, 1996
 .Dt APM 4 i386
@@ -129,7 +129,7 @@ struct apm_power_info {
 	u_char battery_life;
 	u_char spare1;
 	u_int minutes_left;		/* estimate */
-	u_int nbattery;		
+	u_int nbattery;
 	u_int batteryid;
 	u_int spare2[4];
 };
@@ -180,10 +180,10 @@ is nonzero, the return values will reflect the indicated
 battery's percentage remaining, minutes left, etc.
 It is an error to set
 .Va batteryid
-to a value greater than that returned by 
+to a value greater than that returned by
 .Va nbattery .
 If the system is using APM v1.1 or earlier, individual batteries
-cannot be queried, and 
+cannot be queried, and
 .Va nbattery
 will always return 0.
 .Va batteryid
