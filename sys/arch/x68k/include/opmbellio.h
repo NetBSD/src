@@ -30,7 +30,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * $Id: opmbellio.h,v 1.1 1996/05/05 12:17:15 oki Exp $
+ * $Id: opmbellio.h,v 1.1.1.1 1996/05/05 12:17:03 oki Exp $
  */
 
 #ifndef _IOCTL_

@@ -1,4 +1,4 @@
-/*	$NetBSD: pmax_trap.c,v 1.47 1997/06/22 07:42:42 jonathan Exp $	*/
+/*	$NetBSD: pmax_trap.c,v 1.48.2.2 1997/07/01 07:21:16 jonathan Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -591,7 +591,7 @@ xine_intr(mask, pc, statusReg, causeReg)
 
 #ifdef DS5000_240
 /*
- * 3Max+ hardware interrupts. (DECstation 5000/240) UNTESTED!!
+ * 3Max+ hardware interrupts. (DECstation 5000/240)
  */
 int
 kn03_intr(mask, pc, statusReg, causeReg)
