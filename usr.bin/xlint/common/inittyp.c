@@ -1,4 +1,4 @@
-/*	$NetBSD: inittyp.c,v 1.5 2003/05/29 18:12:17 christos Exp $	*/
+/*	$NetBSD: inittyp.c,v 1.5.2.1 2004/06/22 07:18:25 tron Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -31,9 +31,13 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
+#if HAVE_NBTOOL_CONFIG_H
+#include "nbtool_config.h"
+#endif
+
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: inittyp.c,v 1.5 2003/05/29 18:12:17 christos Exp $");
+__RCSID("$NetBSD: inittyp.c,v 1.5.2.1 2004/06/22 07:18:25 tron Exp $");
 #endif
 
 #include <ctype.h>
