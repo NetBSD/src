@@ -1,11 +1,7 @@
-# bootpd/Makefile
-# $NetBSD: Makefile,v 1.5 1998/03/14 04:39:53 lukem Exp $
+#	$NetBSD: Makefile,v 1.6 1998/03/15 01:13:25 lukem Exp $
 
 PROG=	bootpd
-CPPFLAGS+= -DETC_ETHERS -DSYSLOG -DDEBUG -DVEND_CMU
-
-SRCS=	bootpd.c dovend.c readfile.c hash.c dumptab.c \
-	 lookup.c getif.c hwaddr.c report.c tzone.c
+CPPFLAGS+= -DVEND_CMU
 
 MAN=	bootpd.8 bootptab.5
 MLINKS= bootpd.8 bootpgw.8
