@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.12.2.1 1997/11/08 06:08:18 lukem Exp $
+#	$NetBSD: Makefile,v 1.12.2.2 1997/11/20 09:06:39 mrg Exp $
 #	@(#)Makefile	5.12 (Berkeley) 5/30/93
 
 # EXTRA
@@ -64,6 +64,7 @@ SRCS=	main.c object.c create.c tok.c display.c global.c data.c io.c \
 DPADD=	${LIBTERM}
 LDADD=	-ltermcap
 HIDEGAME=hidegame
+SETGIDGAME=yes
 DAT=larnmaze larnopts larn.help
 FILES=${DAT:S@^@${.CURDIR}/datfiles/@g}
 FILESDIR=/usr/share/games/larn

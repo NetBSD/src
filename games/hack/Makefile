@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.24.2.1 1997/11/08 06:03:54 lukem Exp $
+#	$NetBSD: Makefile,v 1.24.2.2 1997/11/20 09:06:37 mrg Exp $
 #	@(#)Makefile	8.2 (Berkeley) 4/27/95
 
 PROG=	hack
@@ -19,6 +19,7 @@ MAN=	hack.6
 DPADD+=	${LIBTERM} ${LIBCOMPAT}
 LDADD+=	-ltermcap
 HIDEGAME=hidegame
+SETGIDGAME=yes
 CLEANFILES+=hack.onames.h makedefs
 FILES=help hh data
 FILESDIR=/var/games/hackdir
@@ -45,9 +46,9 @@ afterinstall: clobber
 .endif
 
 clobber: 
-	${INSTALL} -c -o games -g games -m 600 /dev/null \
+	${INSTALL} -c -o games -g games -m 660 /dev/null \
 	    ${DESTDIR}/var/games/hackdir/perm
-	${INSTALL} -c -o games -g games -m 600 /dev/null \
+	${INSTALL} -c -o games -g games -m 660 /dev/null \
 	    ${DESTDIR}/var/games/hackdir/record
 	rm -f ${DESTDIR}/var/games/hackdir/bones*
 
