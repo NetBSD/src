@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.201 2004/12/03 02:04:00 chs Exp $	*/
+/*	$NetBSD: locore.s,v 1.202 2005/01/16 23:50:13 chs Exp $	*/
 
 /*
  * Copyright (c) 1996-2002 Eduardo Horvath
@@ -3759,8 +3759,7 @@ bpt:
  *	int type;
  *	struct trapframe *tf0;
  */
-	.globl	_C_LABEL(kgdb_trap_glue)
-_C_LABEL(kgdb_trap_glue):
+ENTRY_NOPROFILE(kgdb_trap_glue)
 	save	%sp, -CCFSZ, %sp
 
 	flushw				! flush all windows
@@ -4335,9 +4334,9 @@ ENTRY(sparc64_ipi_flush_all)
  *       IRQ# = %tt - 0x40
  */
 
-	.globl _C_LABEL(sparc_interrupt)	! This is for interrupt debugging
-_C_LABEL(sparc_interrupt):
+ENTRY_NOPROFILE(sparc_interrupt)
 #ifdef TRAPS_USE_IG
+	! This is for interrupt debugging
 	wrpr	%g0, PSTATE_KERN|PSTATE_IG, %pstate	! DEBUG
 #endif
 	/*
@@ -5184,8 +5183,8 @@ _C_LABEL(endtrapcode):
 !!!
 !!! Only toast a few %o registers
 !!!
-	.globl	dump_dtlb
-dump_dtlb:
+
+ENTRY_NOPROFILE(dump_dtlb)
 	clr	%o1
 	add	%o1, (64 * 8), %o3
 1:
@@ -5206,8 +5205,7 @@ dump_dtlb:
 	retl
 	 nop
 
-	.globl	dump_itlb
-dump_itlb:
+ENTRY_NOPROFILE(dump_itlb)
 	clr	%o1
 	add	%o1, (64 * 8), %o3
 1:
@@ -5229,8 +5227,7 @@ dump_itlb:
 	 nop
 
 #ifdef _LP64
-	.globl	print_dtlb
-print_dtlb:
+ENTRY_NOPROFILE(print_dtlb)
 	save	%sp, -CC64FSZ, %sp
 	clr	%l1
 	add	%l1, (64 * 8), %l3
@@ -5264,8 +5261,7 @@ print_dtlb:
 	 restore
 
 
-	.globl	print_itlb
-print_itlb:
+ENTRY_NOPROFILE(print_itlb)
 	save	%sp, -CC64FSZ, %sp
 	clr	%l1
 	add	%l1, (64 * 8), %l3
@@ -5305,8 +5301,7 @@ print_itlb:
 	.asciz	"%2d:%016lx %016lx\r\n"
 	.text
 #else
-	.globl	print_dtlb
-print_dtlb:
+ENTRY_NOPROFILE(print_dtlb)
 	save	%sp, -CC64FSZ, %sp
 	clr	%l1
 	add	%l1, (64 * 8), %l3
@@ -5347,8 +5342,7 @@ print_dtlb:
 	ret
 	 restore
 
-	.globl	print_itlb
-print_itlb:
+ENTRY_NOPROFILE(print_itlb)
 	save	%sp, -CC64FSZ, %sp
 	clr	%l1
 	add	%l1, (64 * 8), %l3
@@ -6928,9 +6922,7 @@ ENTRY(cache_flush_phys)
  * will eventually be removed, with a hole left in its place, if things
  * work out.
  */
-	.globl	_C_LABEL(sigcode)
-	.globl	_C_LABEL(esigcode)
-_C_LABEL(sigcode):
+ENTRY_NOPROFILE(sigcode)
 	/*
 	 * XXX  the `save' and `restore' below are unnecessary: should
 	 *	replace with simple arithmetic on %sp
@@ -7022,6 +7014,8 @@ _C_LABEL(sigcode):
 	mov	SYS_exit, %g1		! exit(errno)
 	t	ST_SYSCALL
 	/* NOTREACHED */
+
+	.globl	_C_LABEL(esigcode)
 _C_LABEL(esigcode):
 #endif
 
