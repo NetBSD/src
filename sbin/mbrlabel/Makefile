@@ -1,6 +1,8 @@
-#	$NetBSD: Makefile,v 1.3 2000/12/24 13:57:37 lukem Exp $
+#	$NetBSD: Makefile,v 1.4 2002/08/19 10:16:55 lukem Exp $
 
-DISKLABELPATH=	${.CURDIR}/../../sbin/disklabel
+.include <bsd.own.mk>
+
+DISKLABELPATH=	${NETBSDSRCDIR}/sbin/disklabel
 PROG=	mbrlabel
 SRCS=	mbrlabel.c dkcksum.c printlabel.c
 CPPFLAGS+= -I${DISKLABELPATH}
