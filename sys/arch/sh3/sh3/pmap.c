@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.20 2001/05/13 19:41:17 tshiozak Exp $	*/
+/*	$NetBSD: pmap.c,v 1.21 2001/05/25 23:34:44 sommerfeld Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -2260,6 +2260,7 @@ pmap_page_remove(pg)
 			    VM_PAGE_TO_PHYS(pg), pg->wire_count);
 #endif
 			prevptr = &pve->pv_next;
+			pmap_unmap_ptes(pve->pv_pmap);	/* unlocks pmap */
 			continue;
 		}
 #endif /* kern/12554 */
