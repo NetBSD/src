@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-2.0,v 1.1.2.326 2004/07/10 13:38:00 tron Exp $
+#	$NetBSD: CHANGES-2.0,v 1.1.2.327 2004/07/10 13:57:37 tron Exp $
 
 A complete list of changes from the initial NetBSD 2.0 branch on 28 March 2004
 until 2.0 release:
@@ -5291,4 +5291,39 @@ sys/dev/usb/uvisor.c				1.26
 	GREENHOUSE2_USBKR100 -> REALTEK_RTL8150L, per PR 20425.
 	Add another Zire device, from PR 25929.
 	[mycroft, ticket #629]
+
+sys/dev/usb/ulpt.c				1.64
+
+	Remove the call to ulpt_reset(). Although this *shouldn't* cause
+	printers to disconnect, it does, and this is *not* what the "prime"
+	behavior was for in lpt.
+	[mycroft, ticket #630]
+
+sys/dev/usb/ohci.c				1.150
+sys/dev/usb/umass.c				1.112
+
+	Fix an error in a printf() format.
+	Swap the order that two items are written; possibly fixes a race
+	condition that would affect isoc transfers.
+	Fix a printf() error.
+	[mycroft, ticket #631]
+
+distrib/common/buildfloppies.sh			1.8
+
+	Correct padding of kernel floppies. This might be the fix for PR/25552
+	[dsl, ticket #632]
+
+sys/dev/pci/eso.c				1.35
+
+	In addition to alpha, grossly work around the 24-bit limitation of the
+	Audio 1 DMA engine by allocating through the ISA DMA tag on amd64
+	and i386.
+	[kleink, ticket #633]
+
+sys/kern/kern_sa.c				1.52
+
+	sa_release: NULL out l_savp to avoid having a stale reference to
+	per-vp data. it matters when an application using SA does exec()
+	an application which also uses SA. (firefox 0.9 seems to do this.)
+	[yamt, ticket #635]
 
