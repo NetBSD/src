@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.25 1997/04/27 20:37:07 thorpej Exp $	*/
+/*	$NetBSD: cpu.h,v 1.26 1997/10/12 18:38:01 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -172,6 +172,9 @@ void	doboot __P((void))
 	__attribute__((__noreturn__));
 void	ecacheon __P((void));
 void	ecacheoff __P((void));
+
+/* clock.c functions */
+void	hp300_calibrate_delay __P((void));
 
 /* machdep.c functions */
 int	badaddr __P((caddr_t));
