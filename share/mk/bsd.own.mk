@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.own.mk,v 1.364 2003/09/23 13:45:27 christos Exp $
+#	$NetBSD: bsd.own.mk,v 1.365 2003/09/24 04:58:33 matt Exp $
 
 .if !defined(_BSD_OWN_MK_)
 _BSD_OWN_MK_=1
@@ -38,7 +38,6 @@ TOOLCHAIN_MISSING=	no
 #    ${MACHINE_ARCH} == "m68000" ||
 #    ${MACHINE_ARCH} == "sh3el" ||
 #    ${MACHINE_ARCH} == "sh3eb" ||
-#    ${MACHINE_ARCH} == "powerpc" ||
 # mostly working,:
 #    ${MACHINE_ARCH} == "m68k" ||
 #    ${MACHINE_ARCH} == "mipseb" ||
@@ -46,6 +45,7 @@ TOOLCHAIN_MISSING=	no
 .if ${MACHINE_ARCH} == "alpha" || \
     ${MACHINE_ARCH} == "arm" || \
     ${MACHINE_ARCH} == "i386" || \
+    ${MACHINE_ARCH} == "powerpc" || \
     ${MACHINE_ARCH} == "sparc" || \
     ${MACHINE_ARCH} == "sparc64"
 HAVE_GCC3?=	yes
@@ -66,7 +66,6 @@ USE_TOOLS_TOOLCHAIN?=yes
 #	${MACHINE_ARCH} == "alpha"
 #	${MACHINE_ARCH} == "arm"
 #	${MACHINE_ARCH} == "armeb"
-#	${MACHINE_ARCH} == "powerpc"
 #	${MACHINE_ARCH} == "sh3eb"
 #	${MACHINE_ARCH} == "sh3el"
 #	${MACHINE_ARCH} == "vax"
@@ -76,6 +75,7 @@ USE_TOOLS_TOOLCHAIN?=yes
 # working:
 .if ${MACHINE_ARCH} == "i386" || \
     ${MACHINE_ARCH} == "m68k" || \
+    ${MACHINE_ARCH} == "powerpc" || \
     ${MACHINE_ARCH} == "sparc" || \
     ${MACHINE_ARCH} == "sparc64"
 HAVE_GDB53?=	yes
