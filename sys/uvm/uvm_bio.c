@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_bio.c,v 1.1.4.2 1999/06/21 16:19:44 thorpej Exp $	*/
+/*	$NetBSD: uvm_bio.c,v 1.1.4.3 1999/07/04 04:41:10 chs Exp $	*/
 
 /* 
  * Copyright (c) 1998 Chuck Silvers.
@@ -69,7 +69,10 @@ static struct ubc_map *ubc_find_mapping __P((struct uvm_object *,
  */
 
 #define UBC_HASH(uobj, offset) (((long)(uobj) / sizeof(struct uvm_object) + \
-				 (offset) / MAXBSIZE) & ubc_object.hashmask)
+				 (offset) / UBC_WINSIZE) & ubc_object.hashmask)
+
+#define UBC_QUEUE(offset) (&ubc_object.inactive[((offset) / UBC_WINSIZE) & \
+					       (UBC_NQUEUES - 1)])
 
 /* XXX make this real eventually */
 #define UBC_DEFAULT_READAHEAD_PAGES 1
@@ -95,13 +98,14 @@ struct ubc_map
 static struct ubc_object
 {
 	struct uvm_object uobj;		/* glue for uvm_map() */
-	vaddr_t kva;			/* where ubc_object is mapped */
+	char *kva;			/* where ubc_object is mapped */
 	struct ubc_map *umap;		/* array of ubc_map's */
 
 	LIST_HEAD(, ubc_map) *hash;	/* hashtable for cached ubc_map's */
 	u_long hashmask;		/* mask for hashtable */
 
-	TAILQ_HEAD(, ubc_map) inactive;	/* inactive queue for ubc_map's */
+	TAILQ_HEAD(ubc_inactive_head, ubc_map) *inactive;
+					/* inactive queues for ubc_map's */
 
 } ubc_object;
 
@@ -116,8 +120,14 @@ struct uvm_pagerops ubc_pager =
 };
 
 
-/* XXX */
-static int ubc_nwins = 16;
+int ubc_nwins = UBC_NWINS;
+int ubc_winsize = UBC_WINSIZE;
+#ifdef PMAP_PREFER
+int ubc_nqueues;
+#define UBC_NQUEUES ubc_nqueues
+#else
+#define UBC_NQUEUES 1
+#endif
 
 
 /*
@@ -129,12 +139,13 @@ static void
 ubc_init()
 {
 	struct ubc_map *umap;
+	vaddr_t va;
 	int i;
 
 	/*
 	 * init ubc_object.
 	 * alloc and init ubc_map's.
-	 * init inactive queue.
+	 * init inactive queues.
 	 * alloc and init hashtable.
 	 * map in ubc_object.
 	 */
@@ -147,30 +158,33 @@ ubc_init()
 
 	ubc_object.umap = malloc(ubc_nwins * sizeof(struct ubc_map),
 				 M_TEMP, M_NOWAIT);
-	if (ubc_object.umap == NULL) {
-		panic("ubc_init: failed to allocate ubc_maps");
-	}
 	bzero(ubc_object.umap, ubc_nwins * sizeof(struct ubc_map));
 
-	TAILQ_INIT(&ubc_object.inactive);
-	for (umap = ubc_object.umap;
-	     umap < &ubc_object.umap[ubc_nwins];
-	     umap++) {
-		TAILQ_INSERT_TAIL(&ubc_object.inactive, umap, inactive);
+	va = (vaddr_t)1L;
+#ifdef PMAP_PREFER
+	PMAP_PREFER(0, &va);
+	ubc_nqueues = va / UBC_WINSIZE;
+#endif
+	ubc_object.inactive = malloc(UBC_NQUEUES *
+				     sizeof(struct ubc_inactive_head),
+				     M_TEMP, M_NOWAIT);
+	for (i = 0; i < UBC_NQUEUES; i++) {
+		TAILQ_INIT(&ubc_object.inactive[i]);
+	}
+	for (i = 0; i < ubc_nwins; i++) {
+		umap = &ubc_object.umap[i];
+		TAILQ_INSERT_TAIL(&ubc_object.inactive[i & (UBC_NQUEUES - 1)],
+				  umap, inactive);
 	}
 
-	ubc_object.hash = hashinit(ubc_nwins / 4, M_TEMP, M_NOWAIT,
+	ubc_object.hash = hashinit(ubc_nwins, M_TEMP, M_NOWAIT,
 				   &ubc_object.hashmask);
-	if (ubc_object.hash == NULL) {
-		panic("ubc_init: failed to allocate hash\n");
-	}
-
 	for (i = 0; i <= ubc_object.hashmask; i++) {
 		LIST_INIT(&ubc_object.hash[i]);
 	}
 
-	if (uvm_map(kernel_map, &ubc_object.kva,
-		    ubc_nwins * MAXBSIZE, &ubc_object.uobj, 0,
+	if (uvm_map(kernel_map, (vaddr_t *)&ubc_object.kva,
+		    ubc_nwins * UBC_WINSIZE, &ubc_object.uobj, 0,
 		    UVM_MAPFLAG(UVM_PROT_ALL, UVM_PROT_ALL, UVM_INH_NONE,
 				UVM_ADV_RANDOM, UVM_FLAG_NOMERGE))
 	    != KERN_SUCCESS) {
@@ -179,7 +193,8 @@ ubc_init()
 
 	/* XXX this shouldn't go here */
 	{
-		static struct uvm_history_ent ubchistbuf[200];
+		static struct uvm_history_ent ubchistbuf[2000];
+
 		ubchistbuf[0] = ubchistbuf[0];
 		UVMHIST_INIT_STATIC(ubchist, ubchistbuf);
 	}
@@ -204,19 +219,19 @@ ubc_fault(ufi, ign1, ign2, ign3, ign4, fault_type, access_type, flags)
 	struct ubc_map *umap;
 	vaddr_t va, eva, ubc_offset, umap_offset;
 	int i, rv, npages;
-	struct vm_page *pages[MAXBSIZE >> PAGE_SHIFT];
+	struct vm_page *pages[UBC_WINSIZE >> PAGE_SHIFT];
 	boolean_t retry;
 
 	UVMHIST_FUNC("ubc_fault");  UVMHIST_CALLED(ubchist);
 
 	va = ufi->orig_rvaddr;
-	ubc_offset = va - ubc_object.kva;
+	ubc_offset = va - (vaddr_t)ubc_object.kva;
 
 #ifdef DEBUG
 	if (ufi->entry->object.uvm_obj != &ubc_object.uobj) {
 		panic("ubc_fault: not ubc_object");
 	}
-	if (ubc_offset >= ubc_nwins * MAXBSIZE) {
+	if (ubc_offset >= ubc_nwins * UBC_WINSIZE) {
 		panic("ubc_fault: fault addr 0x%lx outside ubc mapping", va);
 	}
 #endif
@@ -224,8 +239,8 @@ ubc_fault(ufi, ign1, ign2, ign3, ign4, fault_type, access_type, flags)
 	UVMHIST_LOG(ubchist, "va 0x%lx ubc_offset 0x%lx at %d",
 		    va, ubc_offset, access_type,0);
 
-	umap = &ubc_object.umap[ubc_offset / MAXBSIZE];
-	umap_offset = ubc_offset & (MAXBSIZE - 1);
+	umap = &ubc_object.umap[ubc_offset / UBC_WINSIZE];
+	umap_offset = ubc_offset & (UBC_WINSIZE - 1);
 
 #ifdef DIAGNOSTIC
 	if (umap->refcount == 0) {
@@ -244,7 +259,7 @@ ubc_fault(ufi, ign1, ign2, ign3, ign4, fault_type, access_type, flags)
 
 	/* XXX limit npages by size of file? */
 	npages = min(UBC_DEFAULT_READAHEAD_PAGES,
-		     (MAXBSIZE - umap_offset) >> PAGE_SHIFT);
+		     (UBC_WINSIZE - umap_offset) >> PAGE_SHIFT);
 
 	/*
 	 * no need to try with PGO_LOCKED...
@@ -255,12 +270,6 @@ ubc_fault(ufi, ign1, ign2, ign3, ign4, fault_type, access_type, flags)
 		uvmfault_unlockall(ufi, NULL, &ubc_object.uobj, NULL);
 		flags &= ~(PGO_LOCKED);
 	}
-
-	/*
-	 * XXX
-	 * uvn_get is currently pretty dumb about read-ahead,
-	 * so right now this will only ever get the 1 page that we need.
-	 */
 
 again:
 	/*
@@ -282,15 +291,15 @@ again:
 	bzero(pages, sizeof pages);
 	simple_lock(&uobj->vmobjlock);
 
-UVMHIST_LOG(ubchist, "umap_offset 0x%x writeoff 0x%x writelen 0x%x u_size 0x%x",
-	    (int)umap_offset, (int)umap->writeoff,
-	    (int)umap->writelen, (int)uvn->u_size);
+	UVMHIST_LOG(ubchist, "umap_offset 0x%x writeoff 0x%x writelen 0x%x "
+		    "u_size 0x%x", (int)umap_offset, (int)umap->writeoff,
+		    (int)umap->writelen, (int)uvn->u_size);
 
 	if (access_type == VM_PROT_WRITE &&
 	    umap_offset >= umap->writeoff &&
 	    (umap_offset + PAGE_SIZE <= umap->writeoff + umap->writelen ||
 	     umap_offset + PAGE_SIZE >= uvn->u_size - umap->offset)) {
-UVMHIST_LOG(ubchist, "setting PGO_OVERWRITE", 0,0,0,0);
+		UVMHIST_LOG(ubchist, "setting PGO_OVERWRITE", 0,0,0,0);
 		flags |= PGO_OVERWRITE;
 	}
 	else { UVMHIST_LOG(ubchist, "NOT setting PGO_OVERWRITE", 0,0,0,0); }
@@ -391,7 +400,6 @@ UVMHIST_LOG(ubchist, "setting PGO_OVERWRITE", 0,0,0,0);
 		uvm_pageactivate(pages[i]);
 		uvm_unlock_pageq();
 
-		/* uvmexp.fltnomap++; XXX? */
 		pmap_enter(ufi->orig_map->pmap, va, VM_PAGE_TO_PHYS(pages[i]),
 			   VM_PROT_ALL, FALSE, access_type);
 
@@ -451,13 +459,12 @@ ubc_alloc(uobj, offset, lenp, flags)
 	UVMHIST_LOG(ubchist, "uobj %p offset 0x%lx len 0x%lx",
 		    uobj, offset, *lenp,0);
 
-	umap_offset = offset & ~(MAXBSIZE - 1);
-	slot_offset = offset & (MAXBSIZE - 1);
-	*lenp = min(*lenp, MAXBSIZE - slot_offset);
+	umap_offset = offset & ~(UBC_WINSIZE - 1);
+	slot_offset = offset & (UBC_WINSIZE - 1);
+	*lenp = min(*lenp, UBC_WINSIZE - slot_offset);
 
 	/*
 	 * the vnode is always locked here, so we don't need to add a ref.
-	 * XXX make sure this is really true.
 	 */
 
 	s = splbio();
@@ -466,7 +473,7 @@ again:
 	simple_lock(&ubc_object.uobj.vmobjlock);
 	umap = ubc_find_mapping(uobj, umap_offset);
 	if (umap == NULL) {
-		umap = TAILQ_FIRST(&ubc_object.inactive);
+		umap = TAILQ_FIRST(UBC_QUEUE(offset));
 		if (umap == NULL) {
 			simple_unlock(&ubc_object.uobj.vmobjlock);
 			tsleep(&lbolt, PVM, "ubc_alloc", 0);
@@ -488,12 +495,13 @@ again:
 		LIST_INSERT_HEAD(&ubc_object.hash[UBC_HASH(uobj, umap_offset)],
 				 umap, hash);
 
-		va = (ubc_object.kva + (umap - ubc_object.umap) * MAXBSIZE);
-		pmap_remove(pmap_kernel(), va, va + MAXBSIZE);
+		va = (vaddr_t)(ubc_object.kva +
+			       (umap - ubc_object.umap) * UBC_WINSIZE);
+		pmap_remove(pmap_kernel(), va, va + UBC_WINSIZE);
 	}
 
 	if (umap->refcount == 0) {
-		TAILQ_REMOVE(&ubc_object.inactive, umap, inactive);
+		TAILQ_REMOVE(UBC_QUEUE(offset), umap, inactive);
 	}
 
 #ifdef DIAGNOSTIC
@@ -510,12 +518,12 @@ again:
 	umap->refcount++;
 	simple_unlock(&ubc_object.uobj.vmobjlock);
 	splx(s);
-	UVMHIST_LOG(ubchist, "umap %p refs %d va 0x%lx",
+	UVMHIST_LOG(ubchist, "umap %p refs %d va %p",
 		    umap, umap->refcount,
-		    ubc_object.kva + (umap - ubc_object.umap) * MAXBSIZE,0);
+		    ubc_object.kva + (umap - ubc_object.umap) * UBC_WINSIZE,0);
 
-	return (void *) (ubc_object.kva +
-		(umap - ubc_object.umap) * MAXBSIZE + slot_offset);
+	return ubc_object.kva +
+		(umap - ubc_object.umap) * UBC_WINSIZE + slot_offset;
 }
 
 
@@ -534,7 +542,7 @@ ubc_release(va, wlen)
 	s = splbio();
 	simple_lock(&ubc_object.uobj.vmobjlock);
 
-	umap = &ubc_object.umap[((vaddr_t)va - ubc_object.kva) / MAXBSIZE];
+	umap = &ubc_object.umap[((char *)va - ubc_object.kva) / UBC_WINSIZE];
 	uobj = umap->uobj;
 
 #ifdef DIAGNOSTIC
@@ -547,7 +555,30 @@ ubc_release(va, wlen)
 	umap->writelen = 0;
 	umap->refcount--;
 	if (umap->refcount == 0) {
-		TAILQ_INSERT_TAIL(&ubc_object.inactive, umap, inactive);
+#ifdef PMAP_PREFER
+		vaddr_t va;
+
+		/*
+		 * if this file is the executable image of some process,
+		 * that process will likely have the file mapped at
+		 * an alignment other than what PMAP_PREFER() would like.
+		 * we'd like to have process text be able to use the cache
+		 * even if someone is also reading the file, so we'll
+		 * invalidate mappings of such files as soon as possible.
+		 */
+
+		if (((struct vnode *)uobj)->v_flag & VTEXT) {
+			va = (vaddr_t)(ubc_object.kva +
+				       (umap - ubc_object.umap) * UBC_WINSIZE);
+			pmap_remove(pmap_kernel(), va, va + UBC_WINSIZE);
+			LIST_REMOVE(umap, hash);
+			umap->uobj = NULL;
+			TAILQ_INSERT_HEAD(UBC_QUEUE(umap->offset), umap,
+					  inactive);
+		} else
+#endif
+		TAILQ_INSERT_TAIL(UBC_QUEUE(umap->offset), umap, inactive);
+
 	}
 	UVMHIST_LOG(ubchist, "umap %p refs %d", umap, umap->refcount,0,0);
 	simple_unlock(&ubc_object.uobj.vmobjlock);
@@ -556,9 +587,7 @@ ubc_release(va, wlen)
 
 
 /*
- * XXX
- * we don't ever need to flush ubc mappings,
- * but this is here for now in case it's useful for debugging.
+ * removing a range of mappings from the ubc mapping cache.
  */
 
 void
@@ -582,13 +611,9 @@ ubc_flush(uobj, start, end)
 
 		if (umap->uobj != uobj || 
 		    umap->offset < start ||
-		    (umap->offset >= end && end != 0)) {
+		    (umap->offset >= end && end != 0) ||
+		    umap->refcount > 0) {
 			continue;
-		}
-
-		if (umap->refcount != 0) {
-			panic("ubc_flush: flushing active "
-			      "umap %p uobj %p", umap, uobj);
 		}
 
 		/*
@@ -596,13 +621,14 @@ ubc_flush(uobj, start, end)
 		 * move to head of inactive queue.
 		 */
 
-		va = (ubc_object.kva + (umap - ubc_object.umap) * MAXBSIZE);
-		pmap_remove(pmap_kernel(), va, va + MAXBSIZE);
+		va = (vaddr_t)(ubc_object.kva +
+			       (umap - ubc_object.umap) * UBC_WINSIZE);
+		pmap_remove(pmap_kernel(), va, va + UBC_WINSIZE);
 
 		LIST_REMOVE(umap, hash);
 		umap->uobj = NULL;
-		TAILQ_REMOVE(&ubc_object.inactive, umap, inactive);
-		TAILQ_INSERT_HEAD(&ubc_object.inactive, umap, inactive);
+		TAILQ_REMOVE(UBC_QUEUE(umap->offset), umap, inactive);
+		TAILQ_INSERT_HEAD(UBC_QUEUE(umap->offset), umap, inactive);
 	}
 	simple_unlock(&ubc_object.uobj.vmobjlock);
 	splx(s);
@@ -622,8 +648,8 @@ ubc_print()
 			continue;
 		}
 
-		printf("0x%lx  %p  0x%08x  %2d    0x%04x    0x%04x\n",
-		       ubc_object.kva + (umap - ubc_object.umap) * MAXBSIZE,
+		printf("%p  %p  0x%08x  %2d    0x%04x    0x%04x\n",
+		       ubc_object.kva + (umap - ubc_object.umap) * UBC_WINSIZE,
 		       umap->uobj, (int)umap->offset, umap->refcount,
 		       (int)umap->writeoff, (int)umap->writelen);
 	}
