@@ -1,4 +1,4 @@
-/*	$NetBSD: z8530tty.c,v 1.55 1999/01/25 17:53:13 wrstuden Exp $	*/
+/*	$NetBSD: z8530tty.c,v 1.56 1999/01/31 21:41:00 wrstuden Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994, 1995, 1996, 1997, 1998
@@ -928,6 +928,12 @@ zsparam(tp, t)
 		zst->zst_r_lowat = zstty_rbuf_lowat;
 	}
 
+	/*
+	 * Fetch current state of rr0 - it might have changed if interrupts
+	 * were off.
+	 */
+	cs->cs_rr0 = zs_read_csr(cs);
+
 	splx(s);
 
 	/*
@@ -935,8 +941,7 @@ zsparam(tp, t)
 	 * CLOCAL or MDMBUF.  We don't hang up here; we only do that by
 	 * explicit request.
 	 */
-	(void) (*linesw[tp->t_line].l_modem)(tp,
-			ISSET(cs->cs_rr0, ZSRR0_DCD));
+	(void) (*linesw[tp->t_line].l_modem)(tp, ISSET(cs->cs_rr0, ZSRR0_DCD));
 
 	if (!ISSET(cflag, CHWFLOW)) {
 		if (zst->zst_tx_stopped) {
