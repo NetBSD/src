@@ -1,7 +1,7 @@
-/*	$NetBSD: exec.h,v 1.3 1994/10/26 08:02:05 cgd Exp $	*/
+/*	$NetBSD: exec.h,v 1.4 1995/09/23 14:57:40 ragge Exp $	*/
 
 /*
- * Copyright (c) 1994 Ludd, University of Lule}, Sweden
+ * Copyright (c) 1993 Christopher G. Demetriou
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -12,10 +12,7 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *      This product includes software developed at Ludd, University of Lule}
- * 4. The name of the author may not be used to endorse or promote products
+ * 3. The name of the author may not be used to endorse or promote products
  *    derived from this software without specific prior written permission
  *
  * THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR
@@ -30,8 +27,23 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
- /* All bugs are subject to removal without further notice */
-		
+#ifndef _VAX_EXEC_H_
+#define _VAX_EXEC_H_
 
-#define __LDPGSZ        1024
+#define __LDPGSZ	1024
 
+/* Relocation format. */
+struct relocation_info_vax {
+	int r_address;			/* offset in text or data segment */
+	unsigned int r_symbolnum : 24,	/* ordinal number of add symbol */
+			 r_pcrel :  1,	/* 1 if value should be pc-relative */
+			r_length :  2,	/* log base 2 of value's width */
+			r_extern :  1,	/* 1 if need to add symbol to value */
+		       r_baserel :  1,	/* linkage table relative */
+		      r_jmptable :  1,	/* relocate to jump table */
+		      r_relative :  1,	/* load address relative */
+			  r_copy :  1;	/* run time copy */
+};
+#define relocation_info	relocation_info_vax
+
+#endif  /* _VAX_EXEC_H_ */
