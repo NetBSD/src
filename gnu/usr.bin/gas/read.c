@@ -19,7 +19,7 @@
    the Free Software Foundation, 675 Mass Ave, Cambridge, MA 02139, USA. */
 
 #ifndef lint
-static char rcsid[] = "$Id: read.c,v 1.14 1995/03/25 17:27:27 glass Exp $";
+static char rcsid[] = "$Id: read.c,v 1.15 1996/04/14 11:31:32 pk Exp $";
 #endif
 
 #define MASK_CHAR (0xFF)	/* If your chars aren't 8 bits, you will
@@ -631,7 +631,7 @@ int arg;
 	if (temp > max_alignment) {
 		as_bad("Alignment too large: %d. assumed.", temp = max_alignment);
 	}
-	
+
 	/*
 	 * For the sparc, `.align (1<<n)' actually means `.align n'
 	 * so we have to convert it.
@@ -644,6 +644,7 @@ int arg;
 	    as_bad("Alignment not a power of 2");
 	
 	temp = i;
+
 	if (*input_line_pointer == ',') {
 		input_line_pointer ++;
 		temp_fill = get_absolute_expression();

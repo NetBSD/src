@@ -25,7 +25,7 @@
   */
 
 #ifndef lint
-static char rcsid[] = "$Id: tc-i386.c,v 1.10 1996/02/16 22:19:45 pk Exp $";
+static char rcsid[] = "$Id: tc-i386.c,v 1.11 1996/04/14 11:32:02 pk Exp $";
 #endif
 
 #include "as.h"
@@ -1606,7 +1606,7 @@ char *operand_string;
 			 * into a temporary buffer...
 			 */
 			register char *cp;
-			if (flagseen['k'] &&
+			if (picmode &&
 				(cp = strchr(input_line_pointer,'@'))) {
 				char tmpbuf[BUFSIZ];
 
@@ -1759,7 +1759,7 @@ register segT	segment;
 /* XXX - oops, the JMP_TBL relocation info should have percolated through
  * here, define a field in frag to this?
  */
-	(flagseen['k'] && S_GET_SEGMENT(fragP->fr_symbol) == SEG_UNKNOWN)?
+	(picmode && S_GET_SEGMENT(fragP->fr_symbol) == SEG_UNKNOWN)?
 			RELOC_JMP_TBL :
 #endif
 				 NO_RELOC, (symbolS *)0);
@@ -1776,7 +1776,7 @@ register segT	segment;
 				 (symbolS *) 0,
 				 fragP->fr_offset, 1,
 #ifdef PIC
-/*XXX*/	(flagseen['k'] && S_GET_SEGMENT(fragP->fr_symbol) == SEG_UNKNOWN)?
+/*XXX*/	(picmode && S_GET_SEGMENT(fragP->fr_symbol) == SEG_UNKNOWN)?
 			RELOC_JMP_TBL :
 #endif
 				NO_RELOC, (symbolS *)0);
@@ -1916,6 +1916,7 @@ char ***vecP;
 	switch (**argP) {
 #ifdef PIC
 	case 'k':
+	case 'K':
 #if 00
 		char *tmp = xmalloc(3+1+strlen(operand_special_chars));
 		strcpy(tmp, operand_special_chars);
@@ -2070,7 +2071,7 @@ relax_addressT segment_address_in_file;
 	case NO_RELOC:
 		break;
 	case RELOC_32:
-		if (!flagseen['k'] || !S_IS_EXTERNAL(fixP->fx_addsy))
+		if (!picmode || !S_IS_EXTERNAL(fixP->fx_addsy))
 			break;
 		r_symbolnum = fixP->fx_addsy->sy_number;
 		extrn_bit = 1;
