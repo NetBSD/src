@@ -1,4 +1,4 @@
-/*	$NetBSD: citrus_euctw.c,v 1.4 2002/03/28 10:29:11 yamt Exp $	*/
+/*	$NetBSD: citrus_euctw.c,v 1.5 2002/03/28 10:53:48 yamt Exp $	*/
 
 /*-
  * Copyright (c)2002 Citrus Project,
@@ -56,7 +56,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: citrus_euctw.c,v 1.4 2002/03/28 10:29:11 yamt Exp $");
+__RCSID("$NetBSD: citrus_euctw.c,v 1.5 2002/03/28 10:53:48 yamt Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include <assert.h>
@@ -104,9 +104,6 @@ typedef struct {
 #define	_SS2	0x008e
 #define	_SS3	0x008f
 
-#define	_TO_EI(_cl_)			((_EUCTWEncodingInfo *)(_cl_))
-#define _TO_CEI(_cl_)			((_EUCTWCTypeInfo *)(_cl_))
-#define _TO_STATE(_ps_)			((_EUCTWState *)(_ps_))
 #define _CEI_TO_EI(_cei_)		(&(_cei_)->ei)
 #define _CEI_TO_STATE(_cei_, _func_)	(_cei_)->states.s_##_func_
 
