@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.36 2000/03/23 20:44:40 ws Exp $
+#	$NetBSD: Makefile,v 1.37 2000/04/13 16:08:20 msaitoh Exp $
 
 # for OBJECT_FMT
 .include <bsd.own.mk>
@@ -83,7 +83,7 @@ TDEPFILES.ns32k=	ns32k-tdep.c
 NATDEPFILES.powerpc=	ppcnbsd-nat.c
 TDEPFILES.powerpc=	rs6000-tdep.c
 
-#NATDEPFILES.sh3=	sh-nat.c
+NATDEPFILES.sh3=	shnbsd-nat.c
 TDEPFILES.sh3=		sh-tdep.c
 
 NATDEPFILES.sparc=	sparcnbsd-nat.c
