@@ -1,4 +1,4 @@
-/*	$NetBSD: fsutil.h,v 1.2 1996/09/28 19:21:42 christos Exp $	*/
+/*	$NetBSD: fsutil.h,v 1.3 1996/10/03 20:06:31 christos Exp $	*/
 
 /*
  * Copyright (c) 1996 Christos Zoulas.  All rights reserved.
@@ -45,6 +45,7 @@ const char *cdevname __P((void));
 void setcdevname __P((const char *, int));
 int  hotroot __P((void));
 void *emalloc __P((size_t));
+void *erealloc __P((void *, size_t));
 char *estrdup __P((const char *));
 
 #define CHECK_PREEN	1

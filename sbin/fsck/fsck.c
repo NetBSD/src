@@ -1,4 +1,4 @@
-/*	$NetBSD: fsck.c,v 1.6 1996/09/28 19:23:29 christos Exp $	*/
+/*	$NetBSD: fsck.c,v 1.7 1996/10/03 20:06:30 christos Exp $	*/
 
 /*
  * Copyright (c) 1996 Christos Zoulas. All rights reserved.
@@ -38,7 +38,7 @@
  *
  */
 
-static char rcsid[] = "$NetBSD: fsck.c,v 1.6 1996/09/28 19:23:29 christos Exp $";
+static char rcsid[] = "$NetBSD: fsck.c,v 1.7 1996/10/03 20:06:30 christos Exp $";
 
 #include <sys/param.h>
 #include <sys/mount.h>
@@ -81,7 +81,7 @@ static const char *getoptions __P((const char *));
 static void addentry __P((struct fstypelist *, const char *, const char *));
 static void maketypelist __P((char *));
 static char *catopt __P((char *, const char *, int));
-static void mangle __P((char *, int *, const char **));
+static void mangle __P((char *, int *, const char ***, int *));
 static void usage __P((void));
 static void *isok __P((struct fstab *));
 
@@ -94,11 +94,15 @@ main(argc, argv)
 	struct fstab *fs;
 	int i, rval = 0;
 	char *vfstype = NULL;
+	char globopt[3];
+
+	globopt[0] = '-';
+	globopt[2] = '\0';
 
 	TAILQ_INIT(&selhead);
 	TAILQ_INIT(&opthead);
 
-	while ((i = getopt(argc, argv, "dvpnyl:t:T:")) != -1)
+	while ((i = getopt(argc, argv, "dvpfnyl:t:T:")) != -1)
 		switch (i) {
 		case 'd':
 			flags |= CHECK_DEBUG;
@@ -108,16 +112,18 @@ main(argc, argv)
 			flags |= CHECK_VERBOSE;
 			break;
 
+		case 'p':
+			flags |= CHECK_PREEN;
+			/*FALLTHROUGH*/
+		case 'n':
+		case 'f':
 		case 'y':
-			options = catopt(options, "-y", 1);
+			globopt[1] = i;
+			options = catopt(options, globopt, 1);
 			break;
 
 		case 'l':
 			maxrun = atoi(optarg);
-			break;
-
-		case 'n':
-			options = catopt(options, "-n", 1);
 			break;
 
 		case 'T':
@@ -131,11 +137,6 @@ main(argc, argv)
 
 			maketypelist(optarg);
 			vfstype = optarg;
-			break;
-
-		case 'p':
-			options = catopt(options, "-p", 1);
-			flags |= CHECK_PREEN;
 			break;
 
 		case '?':
@@ -211,9 +212,9 @@ checkfs(vfstype, spec, mntpt, auxarg, pidp)
 		_PATH_USRSBIN,
 		NULL
 	};
-	const char *argv[100], **edir;
+	const char **argv, **edir;
 	pid_t pid;
-	int argc, i, status;
+	int argc, i, status, maxargc;
 	char *optbuf = NULL, execname[MAXPATHLEN + 1];
 	const char *extra = getoptions(vfstype);
 
@@ -224,6 +225,9 @@ checkfs(vfstype, spec, mntpt, auxarg, pidp)
 
 	if (strcmp(vfstype, "ufs") == 0)
 		vfstype = MOUNT_UFS;
+
+	maxargc = 100;
+	argv = emalloc(sizeof(char *) * maxargc);
 
 	argc = 0;
 	argv[argc++] = vfstype;
@@ -238,9 +242,10 @@ checkfs(vfstype, spec, mntpt, auxarg, pidp)
 		optbuf = estrdup(extra);
 
 	if (optbuf)
-		mangle(optbuf, &argc, argv);
+		mangle(optbuf, &argc, &argv, &maxargc);
 
 	argv[argc++] = spec;
+	argv[argc] = NULL;
 
 	if (flags & (CHECK_DEBUG|CHECK_VERBOSE)) {
 		(void)printf("start %s %swait fsck_%s", mntpt, 
@@ -421,16 +426,25 @@ catopt(s0, s1, fr)
 
 
 static void
-mangle(opts, argcp, argv)
+mangle(opts, argcp, argvp, maxargcp)
 	char *opts;
 	int *argcp;
-	const char **argv;
+	const char ***argvp;
+	int *maxargcp;
 {
 	char *p, *s;
-	int argc;
+	int argc = *argcp, maxargc = *maxargcp;
+	const char **argv = *argvp;
 
 	argc = *argcp;
-	for (s = opts; (p = strsep(&s, ",")) != NULL;)
+	maxargc = *maxargcp;
+
+	for (s = opts; (p = strsep(&s, ",")) != NULL;) {
+		/* always leave space for one more argument and the NULL */
+		if (argc >= maxargc - 3) {
+			maxargc += 50;
+			argv = erealloc(argv, maxargc * sizeof(char *));
+		}
 		if (*p != '\0')
 			if (*p == '-') {
 				argv[argc++] = p;
@@ -444,8 +458,11 @@ mangle(opts, argcp, argv)
 				argv[argc++] = "-o";
 				argv[argc++] = p;
 			}
+	}
 
 	*argcp = argc;
+	*argvp = argv;
+	*maxargcp = maxargc;
 }
 
 

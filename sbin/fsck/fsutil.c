@@ -1,4 +1,4 @@
-/*	$NetBSD: fsutil.c,v 1.1 1996/09/27 22:38:41 christos Exp $	*/
+/*	$NetBSD: fsutil.c,v 1.2 1996/10/03 20:06:31 christos Exp $	*/
 
 /*
  * Copyright (c) 1990, 1993
@@ -33,7 +33,7 @@
  * SUCH DAMAGE.
  */
 #ifndef lint
-static char rcsid[] = "$NetBSD: fsutil.c,v 1.1 1996/09/27 22:38:41 christos Exp $";
+static char rcsid[] = "$NetBSD: fsutil.c,v 1.2 1996/10/03 20:06:31 christos Exp $";
 #endif /* not lint */
 
 #include <stdio.h>
@@ -293,6 +293,18 @@ emalloc(s)
 	void *p = malloc(s);
 	if (p == NULL)
 		err(1, "malloc failed");
+	return p;
+}
+
+
+void *
+erealloc(p, s)
+	void *p;
+	size_t s;
+{
+	p = realloc(p, s);
+	if (p == NULL)
+		err(1, "realloc failed");
 	return p;
 }
 
