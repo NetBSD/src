@@ -1,7 +1,7 @@
-/*	$NetBSD: vm_machdep.c,v 1.20 1998/04/03 01:58:40 mark Exp $	*/
+/*	$NetBSD: vm_machdep.c,v 1.21 1998/04/30 21:22:01 mark Exp $	*/
 
 /*
- * Copyright (c) 1994-1997 Mark Brinicombe.
+ * Copyright (c) 1994-1998 Mark Brinicombe.
  * Copyright (c) 1994 Brini.
  * All rights reserved.
  *
@@ -111,9 +111,6 @@ cpu_fork(p1, p2)
 	struct pcb *pcb = (struct pcb *)&p2->p_addr->u_pcb;
 	struct trapframe *tf;
 	struct switchframe *sf;
-	vm_offset_t addr;
-	vm_offset_t muaddr = VM_MAXUSER_ADDRESS;
-	struct vm_map *vp;
 #ifdef STACKCHECKS
 	int loop;
 	u_char *ptr;
@@ -153,8 +150,6 @@ cpu_fork(p1, p2)
 
 #ifdef PMAP_DEBUG
 	if (pmap_debug_level >= 0) {
-		printf("cpu_fork: pcb=%p pagedir=%p\n",
-		    &p2->p_addr->u_pcb, p2->p_addr->u_pcb.pcb_pagedir);
 		printf("p1->procaddr=%p p1->procaddr->u_pcb=%p pid=%d pmap=%p\n",
 		    p1->p_addr, &p1->p_addr->u_pcb, p1->p_pid,
 		    p1->p_vmspace->vm_map.pmap);
@@ -164,66 +159,6 @@ cpu_fork(p1, p2)
 	}
 #endif	/* PMAP_DEBUG */
 
-	/* ream out old pagetables */
-	if (p1->p_vmspace != p2->p_vmspace) {
-		vp = &p2->p_vmspace->vm_map;
-		(void)vm_deallocate(vp, muaddr, VM_MAX_ADDRESS - muaddr);
-		(void)vm_allocate(vp, &muaddr, VM_MAX_ADDRESS - muaddr, FALSE);
-		(void)vm_map_inherit(vp, muaddr, VM_MAX_ADDRESS, VM_INHERIT_NONE);
-
-		/* Get the address of the page table containing 0x00000000 */
-		addr = trunc_page((u_int)vtopte(0));
-
-#ifdef PMAP_DEBUG
-		if (pmap_debug_level >= 0) {
-			printf("fun time: paging in PT %lx for 0\n", addr);
-			printf("p2->p_vmspace->vm_map.pmap->pm_pdir[0] = %08x\n",
-			    p2->p_vmspace->vm_map.pmap->pm_pdir[0]);
-			printf("p2->pm_vptpt[0] = %08x",
-			    *((int *)(p2->p_vmspace->vm_map.pmap->pm_vptpt + 0)));
-		}
-#endif	/* PMAP_DEBUG */
-
-		/* Nuke the exising mapping */
-		p2->p_vmspace->vm_map.pmap->pm_pdir[0] = 0;
-		p2->p_vmspace->vm_map.pmap->pm_pdir[1] = 0;
-		p2->p_vmspace->vm_map.pmap->pm_pdir[2] = 0;
-		p2->p_vmspace->vm_map.pmap->pm_pdir[3] = 0;
-
-		*((int *)(p2->p_vmspace->vm_map.pmap->pm_vptpt + 0)) = 0;
-
-		cpu_cache_purgeID();
-		cpu_tlb_flushID();
-
-		/*
-		 * Wire down a page to cover the page table zero page
-		 * and the start of the user are in
-		 */
-
-#ifdef PMAP_DEBUG
-		if (pmap_debug_level >= 0)
-			printf("vm_map_pageable: addr=%lx\n", addr);
-#endif	/* PMAP_DEBUG */
-
-		if (vm_map_pageable(&p2->p_vmspace->vm_map, addr, addr+NBPG,
-		    FALSE) != 0)
-			panic("Failed to fault in system page PT\n");
-
-#ifdef PMAP_DEBUG
-		if (pmap_debug_level >= 0) {
-			printf("party on! acquired a page table for 0M->(4M-1)\n");
-			printf("p2->p_vmspace->vm_map.pmap->pm_pdir[0] = %08x\n",
-			    p2->p_vmspace->vm_map.pmap->pm_pdir[0]);
-			printf("p2->pm_vptpt[0] = %08x",
-			    *((int *)(p2->p_vmspace->vm_map.pmap->pm_vptpt + 0)));
-		}
-#endif	/* PMAP_DEBUG */
-
-		/* Map the system page */
-
-		pmap_enter(p2->p_vmspace->vm_map.pmap, 0,
-		    systempage.physical, VM_PROT_READ, TRUE);
-	}
 	pmap_activate(p2);
 
 #ifdef ARMFPE
@@ -302,48 +237,14 @@ void
 cpu_swapin(p)
 	struct proc *p;
 {
-	vm_offset_t addr;
-
 #ifdef PMAP_DEBUG
 	if (pmap_debug_level >= 0)
 		printf("cpu_swapin(%p, %d, %s, %p)\n", p, p->p_pid,
 		    p->p_comm, p->p_vmspace->vm_map.pmap);
 #endif	/* PMAP_DEBUG */
 
-	/* Get the address of the page table containing 0x00000000 */
-
-	addr = trunc_page((u_int)vtopte(0));
-
-#ifdef PMAP_DEBUG
-	if (pmap_debug_level >= 0) {
-		printf("fun time: paging in PT %lx for 0\n", addr);
-		printf("p->p_vmspace->vm_pmap.pm_pdir[0] = %x\n",
-		    p->p_vmspace->vm_map.pmap->pm_pdir[0]);
-		printf("p->pm_vptpt[0] = %08x",
-		    *((int *)(p->p_vmspace->vm_map.pmap->pm_vptpt + 0)));
-	}
-#endif  /* PMAP_DEBUG */
-
-	/*
-	 * Wire down a page to cover the page table zero page
-	 * and the start of the user are in
-	 */
-
-	vm_map_pageable(&p->p_vmspace->vm_map, addr, addr + NBPG, FALSE);
-
-#ifdef PMAP_DEBUG
-	if (pmap_debug_level >= 0) {
-		printf("party on! acquired a page table for 0M->(4M-1)\n");
-		printf("p->p_vmspace->vm_map.pmap->pm_pdir[0] = %08x\n",
-		    p->p_vmspace->vm_map.pmap->pm_pdir[0]);
-		printf("p->pm_vptpt[0] = %08x",
-		     *((int *)(p->p_vmspace->vm_map.pmap->pm_vptpt + 0)));
-	}
-#endif	/* PMAP_DEBUG */
-
 	/* Map the system page */
-
-	pmap_enter(p->p_vmspace->vm_map.pmap, 0,
+	pmap_enter(p->p_vmspace->vm_map.pmap, 0x00000000,
 	    systempage.physical, VM_PROT_READ, TRUE);
 }
 
@@ -353,17 +254,13 @@ cpu_swapout(p)
 	struct proc *p;
 {
 #ifdef PMAP_DEBUG
-	if (pmap_debug_level >= 0) {
+	if (pmap_debug_level >= 0)
 		printf("cpu_swapout(%p, %d, %s, %p)\n", p, p->p_pid,
 		    p->p_comm, &p->p_vmspace->vm_map.pmap);
-		printf("p->pm_vptpt[0] = %08x",
-		    *((int *)(p->p_vmspace->vm_map.pmap->pm_vptpt + 0)));
-	}
 #endif	/* PMAP_DEBUG */
 
 	/* Free the system page mapping */
-
-	pmap_remove(p->p_vmspace->vm_map.pmap, 0, NBPG);
+	pmap_remove(p->p_vmspace->vm_map.pmap, 0x00000000, 0x00000000 + NBPG);
 }
 
 
@@ -385,8 +282,7 @@ pagemove(from, to, size)
 
 #ifdef PMAP_DEBUG
 	if (pmap_debug_level >= 0)
-		printf("pagemove: V%08x to %08x size %08x\n", (u_int)from,
-		    (u_int)to, size);
+		printf("pagemove: V%p to %p size %08x\n", from, to, size);
 #endif	/* PMAP_DEBUG */
 
 	fpte = vtopte(from);
@@ -396,7 +292,6 @@ pagemove(from, to, size)
 	 * Make sure the cache does not have dirty data for the
 	 * pages we are moving.
 	 */
-
 	if (size <= 0x1000) {
 		cpu_cache_purgeID_rng((u_int)from, size);
 		cpu_cache_purgeID_rng((u_int)to, size);
@@ -455,11 +350,11 @@ vmapbuf(bp, len)
 	len = round_page(off + len);
 	taddr = kmem_alloc_wait(phys_map, len);
 	bp->b_data = (caddr_t)(taddr + off);
+
 	/*
 	 * The region is locked, so we expect that pmap_pte() will return
 	 * non-NULL.
 	 */
-
 	fpte = pmap_pte(vm_map_pmap(&bp->b_proc->p_vmspace->vm_map), faddr);
 	tpte = pmap_pte(vm_map_pmap(phys_map), taddr);
 
@@ -467,7 +362,6 @@ vmapbuf(bp, len)
 	 * Make sure the cache does not have dirty data for the
 	 * pages we are replacing
 	 */
-
 	if (len <= 0x1000) {
 		cpu_cache_purgeID_rng(faddr, len);
 		cpu_cache_purgeID_rng(taddr, len);
@@ -507,7 +401,6 @@ vunmapbuf(bp, len)
 	 * Make sure the cache does not have dirty data for the
 	 * pages we had mapped.
 	 */
-
 	addr = trunc_page(bp->b_data);
 	off = (vm_offset_t)bp->b_data - addr;
 	len = round_page(off + len);

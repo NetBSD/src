@@ -1,4 +1,4 @@
-/*	$NetBSD: fault.c,v 1.21 1998/04/19 23:25:49 mark Exp $	*/
+/*	$NetBSD: fault.c,v 1.22 1998/04/30 21:22:00 mark Exp $	*/
 
 /*
  * Copyright (c) 1994-1997 Mark Brinicombe.
@@ -547,13 +547,6 @@ copyfault:
 		if (rv == KERN_SUCCESS) {
 			if (nss > vm->vm_ssize)
 				vm->vm_ssize = nss;
-			va = trunc_page(vtopte(va));
-			/*
-			 * for page table, increment wiring as long as not
-			 * a page table fault as well
-			 */
-			if (map != kernel_map)
-				vm_map_pageable(map, va, round_page(va+1), FALSE);
 			if (fault_code == FAULT_TRANS_P)
 				return;
 			goto out;
@@ -584,7 +577,7 @@ nogo:
 		register vm_map_t map;
 		int rv;
 		vm_prot_t ftype;
-		u_int nss, v;
+		u_int nss;
 
 		va = trunc_page((vm_offset_t)fault_address);
 
@@ -630,22 +623,6 @@ nogo:
 		}
 
 		/* check if page table is mapped, if not, fault it first */
-		v = trunc_page(vtopte(va));
-#ifdef PMAP_DEBUG
-		if (pmap_debug_level >= 0)
-			printf("v=%08x\n", v);
-#endif
-		rv = vm_fault(map, v, ftype, FALSE);
-		if (rv != KERN_SUCCESS)
-			goto nogo1;
-
-#ifdef PMAP_DEBUG
-		if (pmap_debug_level >= 0)
-			printf("vm_fault succeeded\n");
-#endif
-		/* update increment wiring as this is a page table fault */
-		vm_map_pageable(map, v, round_page(v+1), FALSE);
-
 #ifdef PMAP_DEBUG
 		if (pmap_debug_level >= 0)
 			printf("faulting in page %08lx\n", va);
@@ -656,13 +633,6 @@ nogo:
 		if (rv == KERN_SUCCESS) {
 			if (nss > vm->vm_ssize)
 				vm->vm_ssize = nss;
-			va = trunc_page(vtopte(va));
-			/*
-			 * for page table, increment wiring as long as not
-			 * a page table fault as well
-			 */
-			if (!v && map != kernel_map)
-				vm_map_pageable(map, va, round_page(va+1), FALSE);
 			if (fault_code == FAULT_TRANS_S)
 				return;
 			goto out;

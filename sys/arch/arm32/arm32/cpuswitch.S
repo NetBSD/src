@@ -1,7 +1,7 @@
-/*	$NetBSD: cpuswitch.S,v 1.22 1998/04/20 17:27:30 mark Exp $	*/
+/*	$NetBSD: cpuswitch.S,v 1.23 1998/04/30 21:22:00 mark Exp $	*/
 
 /*
- * Copyright (c) 1994-1997 Mark Brinicombe.
+ * Copyright (c) 1994-1998 Mark Brinicombe.
  * Copyright (c) 1994 Brini.
  * All rights reserved.
  *
@@ -464,7 +464,6 @@ findqueue:
 	 * not need to save the current context. Instead we can jump
 	 * straight to restoring the context for the new process.
 	 */
-
 	teq	r1, #0x00000000
 	beq	switch_exited
 
@@ -488,7 +487,6 @@ findqueue:
 	 * This can be optimised... We know we want to go from SVC32
 	 * mode to UND32 mode
 	 */
-
         mrs	r3, cpsr_all
 	bic	r2, r3, #(PSR_MODE)
 	orr	r2, r2, #(PSR_UND32_MODE | I32_bit)
@@ -647,20 +645,11 @@ Lse_context_switched:
 
 	str	r3, [sp, #-0x0004]!
 
-	/* Thoroughly nuke the old process's resources. */
-	/* This has to be done here, before we lose the pmap */
-	mov	r1, #0x00000000
-	add	r2, r1, #NBPG
-	ldr	r0, [r3, #(P_VMSPACE)]
-	ldr	r0, [r0, #(VM_PMAP)]
-	bl	_pmap_remove
-	ldr	r0, [sp]
-
 	/*
 	 * Have to wait until we have switched to proc0 as the
 	 * pmap gets released in vmspace_free()
 	 */
-	ldr	r0, [r0, #(P_VMSPACE)]
+	ldr	r0, [r3, #(P_VMSPACE)]
 	bl	_vmspace_free
 
 	/* This has to be done here */
