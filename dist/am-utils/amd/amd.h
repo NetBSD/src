@@ -1,4 +1,4 @@
-/*	$NetBSD: amd.h,v 1.1.1.7 2004/11/27 01:00:38 christos Exp $	*/
+/*	$NetBSD: amd.h,v 1.2 2004/11/27 01:39:50 christos Exp $	*/
 
 /*
  * Copyright (c) 1997-2004 Erez Zadok
@@ -579,7 +579,7 @@ extern void mapc_free(opaque_t);
 extern int  mapc_keyiter(mnt_map *, key_fun, opaque_t);
 extern void mapc_reload(void);
 extern int  mapc_search(mnt_map *, char *, char **);
-extern void mapc_showtypes(char *buf);
+extern void mapc_showtypes(char *buf, size_t buflen);
 extern int  mapc_type_exists(const char *type);
 extern void mk_fattr(nfsfattr *, nfsftype);
 extern int  mount_auto_node(char *, opaque_t);
