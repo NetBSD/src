@@ -1,7 +1,7 @@
-/* $NetBSD: esa.c,v 1.10 2002/03/10 14:57:31 jmcneill Exp $ */
+/* $NetBSD: esa.c,v 1.11 2002/03/16 14:34:00 jmcneill Exp $ */
 
 /*
- * Copyright (c) 2001, 2002 Jared D. McNeill <jmcneill@invisible.yi.org>
+ * Copyright (c) 2001, 2002 Jared D. McNeill <jmcneill@invisible.ca>
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -30,6 +30,12 @@
  * 
  * Based on the FreeBSD maestro3 driver and the NetBSD eap driver.
  * Original driver by Don Kim.
+ *
+ * The list management code could possibly be written better, but what
+ * we have right now does the job nicely. Thanks to Zach Brown <zab@zabbo.net>
+ * and Andrew MacDonald <amac@epsilon.yi.org> for helping me debug the
+ * problems with the original list management code present in the Linux
+ * driver.
  */
 
 #include <sys/types.h>
@@ -101,7 +107,7 @@ int		esa_query_encoding(void *, struct audio_encoding *);
 int		esa_set_params(void *, int, int, struct audio_params *,
 			       struct audio_params *);
 int		esa_round_blocksize(void *, int);
-int		esa_init_output(void *, void *, int);
+int		esa_commit_settings(void *);
 int		esa_halt_output(void *);
 int		esa_halt_input(void *);
 int		esa_set_port(void *, mixer_ctrl_t *);
@@ -144,14 +150,16 @@ int		esa_amp_enable(struct esa_softc *);
 void		esa_enable_interrupts(struct esa_softc *);
 u_int32_t	esa_get_pointer(struct esa_softc *, struct esa_channel *);
 
+/* list management */
+int		esa_add_list(struct esa_voice *, struct esa_list *, u_int16_t,
+			     int);
+void		esa_remove_list(struct esa_voice *, struct esa_list *, int);
+
 /* power management */
 int		esa_power(struct esa_softc *, int);
 void		esa_powerhook(int, void *);
 int		esa_suspend(struct esa_softc *);
 int		esa_resume(struct esa_softc *);
-
-struct device *	audio_attach_mi_lkm(struct audio_hw_if *, void *,
-				    struct device *);
 
 static audio_encoding_t esa_encoding[] = {
 	{ 0, AudioEulinear, AUDIO_ENCODING_ULINEAR, 8, 0 },
@@ -178,9 +186,9 @@ struct audio_hw_if esa_hw_if = {
 	esa_query_encoding,
 	esa_set_params,
 	esa_round_blocksize,
-	NULL,			/* commit_settings */
-	esa_init_output,
-	NULL,			/* esa_init_input */
+	esa_commit_settings,
+	NULL,			/* init_output */
+	NULL,			/* init_input */
 	NULL,			/* start_output */
 	NULL,			/* start_input */
 	esa_halt_output,
@@ -238,11 +246,10 @@ int
 esa_set_params(void *hdl, int setmode, int usemode, struct audio_params *play,
 	       struct audio_params *rec)
 {
-	struct esa_softc *sc = hdl;
+	struct esa_voice *vc = hdl;
+	//struct esa_softc *sc = (struct esa_softc *)vc->parent;
 	struct esa_channel *ch;
 	struct audio_params *p;
-	u_int32_t data;
-	u_int32_t freq;
 	int mode;
 
 	for (mode = AUMODE_RECORD; mode != -1;
@@ -253,11 +260,11 @@ esa_set_params(void *hdl, int setmode, int usemode, struct audio_params *play,
 		switch (mode) {
 		case AUMODE_PLAY:
 			p = play;
-			ch = &sc->play;
+			ch = &vc->play;
 			break;
 		case AUMODE_RECORD:
 			p = rec;
-			ch = &sc->rec;
+			ch = &vc->rec;
 			break;
 		}
 
@@ -312,64 +319,123 @@ esa_set_params(void *hdl, int setmode, int usemode, struct audio_params *play,
 		default:
 			return (EINVAL);
 		}
-	
-		if (p->channels == 1)
-			data = 1;
-		else
-			data = 0;
-		esa_write_assp(sc, ESA_MEMTYPE_INTERNAL_DATA,
-			       ch->data_offset + ESA_SRC3_MODE_OFFSET,
-		    data);
-	
-		if (play->precision * play->factor == 8)
-			data = 1;
-		else
-			data = 0;
-		esa_write_assp(sc, ESA_MEMTYPE_INTERNAL_DATA,
-			       ch->data_offset + ESA_SRC3_WORD_LENGTH_OFFSET,
-			       data);
 
-		if ((freq = ((p->sample_rate << 15) + 24000) / 48000) != 0) {
-			freq--;
-		}
-		esa_write_assp(sc, ESA_MEMTYPE_INTERNAL_DATA,
-			       ch->data_offset + ESA_CDATA_FREQUENCY, freq);
+		ch->mode = *p;
 	}
 
 	return (0);
 }
 
 int
-esa_round_blocksize(void *hdl, int bs)
+esa_commit_settings(void *hdl)
 {
-	struct esa_softc *sc = hdl;
+	struct esa_voice *vc = hdl;
+	struct esa_softc *sc = (struct esa_softc *)vc->parent;
+	struct audio_params *p = &vc->play.mode;
+	struct audio_params *r = &vc->rec.mode;
+	u_int32_t data;
+	u_int32_t freq;
+	int data_bytes = (((ESA_MINISRC_TMP_BUFFER_SIZE & ~1) +
+			   (ESA_MINISRC_IN_BUFFER_SIZE & ~1) +
+			   (ESA_MINISRC_OUT_BUFFER_SIZE & ~1) + 4) + 255)
+			   &~ 255;
 
-	sc->play.blksize = sc->rec.blksize = 4096;
+	/* playback */
+	vc->play.data_offset = ESA_DAC_DATA + (data_bytes * vc->index);
+	if (p->channels == 1)
+		data = 1;
+	else
+		data = 0;
+	esa_write_assp(sc, ESA_MEMTYPE_INTERNAL_DATA,
+		       vc->play.data_offset + ESA_SRC3_MODE_OFFSET,
+		       data);
+	if (p->precision * p->factor == 8)
+		data = 1;
+	else
+		data = 0;
+	esa_write_assp(sc, ESA_MEMTYPE_INTERNAL_DATA,
+		       vc->play.data_offset + ESA_SRC3_WORD_LENGTH_OFFSET,
+		       data);
+	if ((freq = ((p->sample_rate << 15) + 24000) / 48000) != 0) {
+		freq--;
+	}
+	esa_write_assp(sc, ESA_MEMTYPE_INTERNAL_DATA,
+		       vc->play.data_offset + ESA_CDATA_FREQUENCY, freq);
 
-	return (sc->play.blksize);
-}
-
-int
-esa_init_output(void *hdl, void *buffer, int size)
-{
+	/* recording */
+	vc->rec.data_offset = ESA_DAC_DATA + (data_bytes * vc->index) +
+			      (data_bytes / 2);
+	if (r->channels == 1)
+		data = 1;
+	else
+		data = 0;
+	esa_write_assp(sc, ESA_MEMTYPE_INTERNAL_DATA,
+		       vc->rec.data_offset + ESA_SRC3_MODE_OFFSET,
+		       data);
+	if (r->precision * r->factor == 8)
+		data = 1;
+	else
+		data = 0;
+	esa_write_assp(sc, ESA_MEMTYPE_INTERNAL_DATA,
+		       vc->rec.data_offset + ESA_SRC3_WORD_LENGTH_OFFSET,
+		       data);
+	if ((freq = ((r->sample_rate << 15) + 24000) / 48000) != 0) {
+		freq--;
+	}
+	esa_write_assp(sc, ESA_MEMTYPE_INTERNAL_DATA,
+		       vc->rec.data_offset + ESA_CDATA_FREQUENCY, freq);
 
 	return (0);
+};
+
+int
+esa_round_blocksize(void *hdl, int bs)
+{
+	struct esa_voice *vc = hdl;
+
+	/*
+	 * Surely there has to be a better solution...
+	 */
+	vc->play.blksize = vc->rec.blksize = 4096;
+
+	return (vc->play.blksize);
 }
 
 int
 esa_halt_output(void *hdl)
 {
-	struct esa_softc *sc = hdl;
+	struct esa_voice *vc = hdl;
+	struct esa_softc *sc = (struct esa_softc *)vc->parent;
+	bus_space_tag_t iot = sc->sc_iot;
+	bus_space_handle_t ioh = sc->sc_ioh;
+	u_int16_t data;
 
-	if (sc->play.active == 0)
+	if (vc->play.active == 0)
 		return (0);
 
-	sc->play.active = 0;
+	vc->play.active = 0;
 
 	esa_write_assp(sc, ESA_MEMTYPE_INTERNAL_DATA,
-		       ESA_KDATA_INSTANCE0_MINISRC, 0);
-	esa_write_assp(sc, ESA_MEMTYPE_INTERNAL_DATA, ESA_KDATA_DMA_XFER0, 0);
-	esa_write_assp(sc, ESA_MEMTYPE_INTERNAL_DATA, ESA_KDATA_MIXER_XFER0, 0);
+		       ESA_CDATA_INSTANCE_READY + vc->play.data_offset, 0);
+
+	sc->sc_ntimers--;
+	if (sc->sc_ntimers == 0) {
+		esa_write_assp(sc, ESA_MEMTYPE_INTERNAL_DATA,
+			       ESA_KDATA_TIMER_COUNT_RELOAD, 0);
+		esa_write_assp(sc, ESA_MEMTYPE_INTERNAL_DATA,
+			       ESA_KDATA_TIMER_COUNT_CURRENT, 0);
+		data = bus_space_read_2(iot, ioh, ESA_HOST_INT_CTRL);
+		bus_space_write_2(iot, ioh, ESA_HOST_INT_CTRL,
+		    data & ~ESA_CLKRUN_GEN_ENABLE);
+	}
+
+	esa_write_assp(sc, ESA_MEMTYPE_INTERNAL_DATA,
+		       ESA_KDATA_MIXER_TASK_NUMBER,
+		       sc->mixer_list.indexmap[vc->index]);
+	/* remove ourselves from the packed lists */
+	esa_remove_list(vc, &sc->mixer_list, vc->index);
+	esa_remove_list(vc, &sc->dma_list, vc->index);
+	esa_remove_list(vc, &sc->msrc_list, vc->index);
 
 	return (0);
 }
@@ -377,25 +443,37 @@ esa_halt_output(void *hdl)
 int
 esa_halt_input(void *hdl)
 {
-	struct esa_softc *sc = hdl;
+	struct esa_voice *vc = hdl;
+	struct esa_softc *sc = (struct esa_softc *)vc->parent;
 	bus_space_tag_t iot = sc->sc_iot;
 	bus_space_handle_t ioh = sc->sc_ioh;
 	u_int32_t data;
 	
-	if (sc->rec.active == 0)
+	if (vc->rec.active == 0)
 		return (0);
 		
-	sc->rec.active = 0;
+	vc->rec.active = 0;
 	
-	esa_write_assp(sc, ESA_MEMTYPE_INTERNAL_DATA,
-		       ESA_KDATA_TIMER_COUNT_RELOAD, 0);
-	esa_write_assp(sc, ESA_MEMTYPE_INTERNAL_DATA, ESA_KDATA_TIMER_COUNT_CURRENT, 0);
-	data = bus_space_read_2(iot, ioh, ESA_HOST_INT_CTRL);
-	bus_space_write_2(iot, ioh, ESA_HOST_INT_CTRL, data & ~ESA_CLKRUN_GEN_ENABLE);
-	
-	esa_write_assp(sc, ESA_MEMTYPE_INTERNAL_DATA, sc->rec.data_offset +
+	sc->sc_ntimers--;
+	if (sc->sc_ntimers == 0) {
+		esa_write_assp(sc, ESA_MEMTYPE_INTERNAL_DATA,
+			       ESA_KDATA_TIMER_COUNT_RELOAD, 0);
+		esa_write_assp(sc, ESA_MEMTYPE_INTERNAL_DATA,
+			       ESA_KDATA_TIMER_COUNT_CURRENT, 0);
+		data = bus_space_read_2(iot, ioh, ESA_HOST_INT_CTRL);
+		bus_space_write_2(iot, ioh, ESA_HOST_INT_CTRL,
+				  data & ~ESA_CLKRUN_GEN_ENABLE);
+	}
+
+	esa_write_assp(sc, ESA_MEMTYPE_INTERNAL_DATA, vc->rec.data_offset +
 		       ESA_CDATA_INSTANCE_READY, 0);
-	esa_write_assp(sc, ESA_MEMTYPE_INTERNAL_DATA, ESA_KDATA_ADC1_REQUEST, 0);
+	esa_write_assp(sc, ESA_MEMTYPE_INTERNAL_DATA, ESA_KDATA_ADC1_REQUEST,
+		       0);
+
+	/* remove ourselves from the packed lists */
+	esa_remove_list(vc, &sc->adc1_list, vc->index + ESA_NUM_VOICES);
+	esa_remove_list(vc, &sc->dma_list, vc->index + ESA_NUM_VOICES);
+	esa_remove_list(vc, &sc->msrc_list, vc->index + ESA_NUM_VOICES);
 
 	return (0);
 }
@@ -403,7 +481,8 @@ esa_halt_input(void *hdl)
 void *
 esa_malloc(void *hdl, int direction, size_t size, int type, int flags)
 {
-	struct esa_softc *sc = hdl;
+	struct esa_voice *vc = hdl;
+	struct esa_softc *sc = (struct esa_softc *)vc->parent;
 	struct esa_dma *p;
 	int error;
 
@@ -417,8 +496,8 @@ esa_malloc(void *hdl, int direction, size_t size, int type, int flags)
 		    sc->sc_dev.dv_xname);
 		return (0);
 	}
-	p->next = sc->sc_dmas;
-	sc->sc_dmas = p;
+	p->next = vc->dma;
+	vc->dma = p;
 
 	return (KERNADDR(p));
 }
@@ -426,11 +505,12 @@ esa_malloc(void *hdl, int direction, size_t size, int type, int flags)
 void
 esa_free(void *hdl, void *addr, int type)
 {
-	struct esa_softc *sc = hdl;
+	struct esa_voice *vc = hdl;
+	struct esa_softc *sc = (struct esa_softc *)vc->parent;
 	struct esa_dma *p;
 	struct esa_dma **pp;
 
-	for (pp = &sc->sc_dmas; (p = *pp) != NULL; pp = &p->next)
+	for (pp = &vc->dma; (p = *pp) != NULL; pp = &p->next)
 		if (KERNADDR(p) == addr) {
 			esa_freemem(sc, p);
 			*pp = p->next;
@@ -451,7 +531,8 @@ esa_getdev(void *hdl, struct audio_device *ret)
 int
 esa_set_port(void *hdl, mixer_ctrl_t *mc)
 {
-	struct esa_softc *sc = hdl;
+	struct esa_voice *vc = hdl;
+	struct esa_softc *sc = (struct esa_softc *)vc->parent;
 
 	return (sc->codec_if->vtbl->mixer_set_port(sc->codec_if, mc));
 }
@@ -459,7 +540,8 @@ esa_set_port(void *hdl, mixer_ctrl_t *mc)
 int
 esa_get_port(void *hdl, mixer_ctrl_t *mc)
 {
-	struct esa_softc *sc = hdl;
+	struct esa_voice *vc = hdl;
+	struct esa_softc *sc = (struct esa_softc *)vc->parent;
 
 	return (sc->codec_if->vtbl->mixer_get_port(sc->codec_if, mc));
 }
@@ -467,7 +549,8 @@ esa_get_port(void *hdl, mixer_ctrl_t *mc)
 int
 esa_query_devinfo(void *hdl, mixer_devinfo_t *di)
 {
-	struct esa_softc *sc = hdl;
+	struct esa_voice *vc = hdl;
+	struct esa_softc *sc = (struct esa_softc *)vc->parent;
 
 	return (sc->codec_if->vtbl->query_devinfo(sc->codec_if, di));
 }
@@ -475,11 +558,14 @@ esa_query_devinfo(void *hdl, mixer_devinfo_t *di)
 size_t
 esa_round_buffersize(void *hdl, int direction, size_t bufsize)
 {
-	struct esa_softc *sc = hdl;
+	struct esa_voice *vc = hdl;
 
-	sc->play.bufsize = sc->rec.bufsize = 65536;
+	/*
+	 * We must be able to do better than this...
+	 */
+	vc->play.bufsize = vc->rec.bufsize = 65536;
 
-	return (sc->play.bufsize);
+	return (vc->play.bufsize);
 }
 
 int
@@ -494,7 +580,8 @@ esa_trigger_output(void *hdl, void *start, void *end, int blksize,
 			void (*intr)(void *), void *intrarg,
 			struct audio_params *param)
 {
-	struct esa_softc *sc = hdl;
+	struct esa_voice *vc = hdl;
+	struct esa_softc *sc = (struct esa_softc *)vc->parent;
 	struct esa_dma *p;
 	bus_space_tag_t iot = sc->sc_iot;
 	bus_space_handle_t ioh = sc->sc_ioh;
@@ -502,21 +589,21 @@ esa_trigger_output(void *hdl, void *start, void *end, int blksize,
 	u_int32_t bufaddr;
 	u_int32_t i;
 	size_t size;
+
 	int data_bytes = (((ESA_MINISRC_TMP_BUFFER_SIZE & ~1) +
 			   (ESA_MINISRC_IN_BUFFER_SIZE & ~1) +
 			   (ESA_MINISRC_OUT_BUFFER_SIZE & ~1) + 4) + 255)
 			   &~ 255;
-	int dac_data = ESA_DAC_DATA + data_bytes;
+	int dac_data = ESA_DAC_DATA + (data_bytes * vc->index);
 	int dsp_in_size = ESA_MINISRC_IN_BUFFER_SIZE - (0x20 * 2);
 	int dsp_out_size = ESA_MINISRC_OUT_BUFFER_SIZE - (0x20 * 2);
 	int dsp_in_buf = dac_data + (ESA_MINISRC_TMP_BUFFER_SIZE / 2);
 	int dsp_out_buf = dsp_in_buf + (dsp_in_size / 2) + 1;
-	sc->play.data_offset = dac_data;
 
-	if (sc->play.active)
+	if (vc->play.active)
 		return (EINVAL);
 
-	for (p = sc->sc_dmas; p && KERNADDR(p) != start; p = p->next)
+	for (p = vc->dma; p && KERNADDR(p) != start; p = p->next)
 		;
 	if (!p) {
 		printf("%s: esa_trigger_output: bad addr %p\n",
@@ -524,15 +611,15 @@ esa_trigger_output(void *hdl, void *start, void *end, int blksize,
 		return (EINVAL);
 	}
 
-	sc->play.active = 1;
-	sc->play.intr = intr;
-	sc->play.arg = intrarg;
-	sc->play.pos = 0;
-	sc->play.count = 0;
-	sc->play.buf = start;
+	vc->play.active = 1;
+	vc->play.intr = intr;
+	vc->play.arg = intrarg;
+	vc->play.pos = 0;
+	vc->play.count = 0;
+	vc->play.buf = start;
 	size = (size_t)(((caddr_t)end - (caddr_t)start));
 	bufaddr = DMAADDR(p);
-	sc->play.start = bufaddr;
+	vc->play.start = bufaddr;
 
 #define LO(x) ((x) & 0x0000ffff)
 #define HI(x) ((x) >> 16)
@@ -576,7 +663,7 @@ esa_trigger_output(void *hdl, void *start, void *end, int blksize,
 	/* Enable or disable low-pass filter? (0xff if rate > 45000) */
 	esa_write_assp(sc, ESA_MEMTYPE_INTERNAL_DATA, dac_data +
 	    ESA_SRC3_DIRECTION_OFFSET + 22,
-	    (param->sample_rate > 45000) ? 0xff : 0);
+	    vc->play.mode.sample_rate > 45000 ? 0xff : 0);
 	/* Tell it which way DMA is going */
 	esa_write_assp(sc, ESA_MEMTYPE_INTERNAL_DATA, dac_data +
 	    ESA_CDATA_DMA_CONTROL,
@@ -589,28 +676,35 @@ esa_trigger_output(void *hdl, void *start, void *end, int blksize,
 		    esa_playvals[i].addr, esa_playvals[i].val);
 
 	/* Put us in the packed task lists */
-	esa_write_assp(sc, ESA_MEMTYPE_INTERNAL_DATA,
-	    ESA_KDATA_INSTANCE0_MINISRC,
-	    dac_data >> ESA_DP_SHIFT_COUNT);
-	esa_write_assp(sc, ESA_MEMTYPE_INTERNAL_DATA, ESA_KDATA_DMA_XFER0,
-	    dac_data >> ESA_DP_SHIFT_COUNT);
-	esa_write_assp(sc, ESA_MEMTYPE_INTERNAL_DATA, ESA_KDATA_MIXER_XFER0,
-	    dac_data >> ESA_DP_SHIFT_COUNT);
+	esa_add_list(vc, &sc->msrc_list, dac_data >> ESA_DP_SHIFT_COUNT,
+		     vc->index);
+	esa_add_list(vc, &sc->dma_list, dac_data >> ESA_DP_SHIFT_COUNT,
+		     vc->index);
+	esa_add_list(vc, &sc->mixer_list, dac_data >> ESA_DP_SHIFT_COUNT,
+		     vc->index);
 #undef LO
 #undef HI
 
-	esa_write_assp(sc, ESA_MEMTYPE_INTERNAL_DATA,
-	    ESA_KDATA_TIMER_COUNT_RELOAD, 240);
-	esa_write_assp(sc, ESA_MEMTYPE_INTERNAL_DATA,
-	    ESA_KDATA_TIMER_COUNT_CURRENT, 240);
-	data = bus_space_read_2(iot, ioh, ESA_HOST_INT_CTRL);
-	bus_space_write_2(iot, ioh, ESA_HOST_INT_CTRL,
-	    data | ESA_CLKRUN_GEN_ENABLE);
+	/* XXX */
+	//esa_commit_settings(vc);
+
+	sc->sc_ntimers++;
+
+	if (sc->sc_ntimers == 1) {
+		esa_write_assp(sc, ESA_MEMTYPE_INTERNAL_DATA,
+		    ESA_KDATA_TIMER_COUNT_RELOAD, 240);
+		esa_write_assp(sc, ESA_MEMTYPE_INTERNAL_DATA,
+		    ESA_KDATA_TIMER_COUNT_CURRENT, 240);
+		data = bus_space_read_2(iot, ioh, ESA_HOST_INT_CTRL);
+		bus_space_write_2(iot, ioh, ESA_HOST_INT_CTRL,
+		    data | ESA_CLKRUN_GEN_ENABLE);
+	}
 
 	esa_write_assp(sc, ESA_MEMTYPE_INTERNAL_DATA, dac_data +
 	    ESA_CDATA_INSTANCE_READY, 1);
 	esa_write_assp(sc, ESA_MEMTYPE_INTERNAL_DATA,
-	    ESA_KDATA_MIXER_TASK_NUMBER, 1);
+	    ESA_KDATA_MIXER_TASK_NUMBER,
+	    sc->mixer_list.indexmap[vc->index]);
 
 	return (0);
 }
@@ -620,7 +714,8 @@ esa_trigger_input(void *hdl, void *start, void *end, int blksize,
 			void (*intr)(void *), void *intrarg,
 			struct audio_params *param)
 {
-	struct esa_softc *sc = hdl;
+	struct esa_voice *vc = hdl;
+	struct esa_softc *sc = (struct esa_softc *)vc->parent;
 	struct esa_dma *p;
 	bus_space_tag_t iot = sc->sc_iot;
 	bus_space_handle_t ioh = sc->sc_ioh;
@@ -632,17 +727,22 @@ esa_trigger_input(void *hdl, void *start, void *end, int blksize,
 			   (ESA_MINISRC_IN_BUFFER_SIZE & ~1) +
 			   (ESA_MINISRC_OUT_BUFFER_SIZE & ~1) + 4) + 255)
 			   &~ 255;
-	int adc_data = ESA_DAC_DATA + data_bytes + (data_bytes / 2);
+	int adc_data = ESA_DAC_DATA + (data_bytes * vc->index) +
+		       (data_bytes / 2);
 	int dsp_in_size = ESA_MINISRC_IN_BUFFER_SIZE - (0x10 * 2);
 	int dsp_out_size = ESA_MINISRC_OUT_BUFFER_SIZE - (0x10 * 2);
 	int dsp_in_buf = adc_data + (ESA_MINISRC_TMP_BUFFER_SIZE / 2);
 	int dsp_out_buf = dsp_in_buf + (dsp_in_size / 2) + 1;
-	sc->rec.data_offset = adc_data;
+	vc->rec.data_offset = adc_data;
 
-	if (sc->rec.active)
+	/* We only support 1 recording channel */
+	if (vc->index > 0)
+		return (ENODEV);
+
+	if (vc->rec.active)
 		return (EINVAL);
 
-	for (p = sc->sc_dmas; p && KERNADDR(p) != start; p = p->next)
+	for (p = vc->dma; p && KERNADDR(p) != start; p = p->next)
 		;
 	if (!p) {
 		printf("%s: esa_trigger_input: bad addr %p\n",
@@ -650,15 +750,15 @@ esa_trigger_input(void *hdl, void *start, void *end, int blksize,
 		return (EINVAL);
 	}
 
-	sc->rec.active = 1;
-	sc->rec.intr = intr;
-	sc->rec.arg = intrarg;
-	sc->rec.pos = 0;
-	sc->rec.count = 0;
-	sc->rec.buf = start;
+	vc->rec.active = 1;
+	vc->rec.intr = intr;
+	vc->rec.arg = intrarg;
+	vc->rec.pos = 0;
+	vc->rec.count = 0;
+	vc->rec.buf = start;
 	size = (size_t)(((caddr_t)end - (caddr_t)start));
 	bufaddr = DMAADDR(p);
-	sc->rec.start = bufaddr;
+	vc->rec.start = bufaddr;
 
 #define LO(x) ((x) & 0x0000ffff)
 #define HI(x) ((x) >> 16)
@@ -709,27 +809,33 @@ esa_trigger_input(void *hdl, void *start, void *end, int blksize,
 		    esa_recvals[i].addr, esa_recvals[i].val);
 
 	/* Put us in the packed task lists */
-	esa_write_assp(sc, ESA_MEMTYPE_INTERNAL_DATA,
-	    ESA_KDATA_INSTANCE0_MINISRC,
-	    adc_data >> ESA_DP_SHIFT_COUNT);
-	esa_write_assp(sc, ESA_MEMTYPE_INTERNAL_DATA, ESA_KDATA_DMA_XFER0,
-	    adc_data >> ESA_DP_SHIFT_COUNT);
-	esa_write_assp(sc, ESA_MEMTYPE_INTERNAL_DATA, ESA_KDATA_ADC1_XFER0,
-	    adc_data >> ESA_DP_SHIFT_COUNT);
+	esa_add_list(vc, &sc->adc1_list, adc_data >> ESA_DP_SHIFT_COUNT,
+		     vc->index + ESA_NUM_VOICES);
+	esa_add_list(vc, &sc->msrc_list, adc_data >> ESA_DP_SHIFT_COUNT,
+		     vc->index + ESA_NUM_VOICES);
+	esa_add_list(vc, &sc->dma_list, adc_data >> ESA_DP_SHIFT_COUNT,
+		     vc->index + ESA_NUM_VOICES);
 #undef LO
 #undef HI
 
-	esa_write_assp(sc, ESA_MEMTYPE_INTERNAL_DATA,
-	    ESA_KDATA_TIMER_COUNT_RELOAD, 240);
-	esa_write_assp(sc, ESA_MEMTYPE_INTERNAL_DATA,
-	    ESA_KDATA_TIMER_COUNT_CURRENT, 240);
-	data = bus_space_read_2(iot, ioh, ESA_HOST_INT_CTRL);
-	bus_space_write_2(iot, ioh, ESA_HOST_INT_CTRL,
-	    data | ESA_CLKRUN_GEN_ENABLE);
+	/* XXX */
+	//esa_commit_settings(vc);
 
-	esa_write_assp(sc, ESA_MEMTYPE_INTERNAL_DATA, ESA_KDATA_ADC1_REQUEST, 1);
+	sc->sc_ntimers++;
+	if (sc->sc_ntimers == 1) {
+		esa_write_assp(sc, ESA_MEMTYPE_INTERNAL_DATA,
+		    ESA_KDATA_TIMER_COUNT_RELOAD, 240);
+		esa_write_assp(sc, ESA_MEMTYPE_INTERNAL_DATA,
+		    ESA_KDATA_TIMER_COUNT_CURRENT, 240);
+		data = bus_space_read_2(iot, ioh, ESA_HOST_INT_CTRL);
+		bus_space_write_2(iot, ioh, ESA_HOST_INT_CTRL,
+		    data | ESA_CLKRUN_GEN_ENABLE);
+	}
+
 	esa_write_assp(sc, ESA_MEMTYPE_INTERNAL_DATA, adc_data +
 	    ESA_CDATA_INSTANCE_READY, 1);
+	esa_write_assp(sc, ESA_MEMTYPE_INTERNAL_DATA, ESA_KDATA_ADC1_REQUEST,
+	    1);
 
 	return (0);
 }
@@ -740,22 +846,22 @@ int
 esa_intr(void *hdl)
 {
 	struct esa_softc *sc = hdl;
+	struct esa_voice *vc;
 	bus_space_tag_t iot = sc->sc_iot;
 	bus_space_handle_t ioh = sc->sc_ioh;
-	u_int32_t status, ctl;
+	u_int8_t status, ctl;
 	u_int32_t pos;
 	u_int32_t diff;
-	u_int32_t play_blksize = sc->play.blksize;
-	u_int32_t play_bufsize = sc->play.bufsize;
-	u_int32_t rec_blksize = sc->rec.blksize;
-	u_int32_t rec_bufsize = sc->rec.bufsize;
+	u_int32_t play_blksize, play_bufsize;
+	u_int32_t rec_blksize, rec_bufsize;
+	int i;
 
 	status = bus_space_read_1(iot, ioh, ESA_HOST_INT_STATUS);
-	if (!status)
+	if (status == 0xff)
 		return (0);
 
 	/* ack the interrupt */
-	bus_space_write_1(iot, ioh, ESA_HOST_INT_STATUS, 0xff);
+	bus_space_write_1(iot, ioh, ESA_HOST_INT_STATUS, status);
 
 	if (status & ESA_HV_INT_PENDING) {
 		u_int8_t event;
@@ -786,28 +892,35 @@ esa_intr(void *hdl)
 				bus_space_write_1(iot, ioh,
 				    ESA_ASSP_HOST_INT_STATUS,
 				    ESA_DSP2HOST_REQ_TIMER);
-				if (sc->play.active) {
-					pos = esa_get_pointer(sc, &sc->play)
-					    % play_bufsize;
-					diff = (play_bufsize + pos - sc->play.pos)
-					    % play_bufsize;
-					sc->play.pos = pos;
-					sc->play.count += diff;
-					while(sc->play.count >= play_blksize) {
-						sc->play.count -= play_blksize;
-						(*sc->play.intr)(sc->play.arg);
+				for (i = 0; i < ESA_NUM_VOICES; i++) {
+					vc = &sc->voice[i];
+					if (vc->play.active) {
+						play_blksize = vc->play.blksize;
+						play_bufsize = vc->play.bufsize;
+						pos = esa_get_pointer(sc, &vc->play)
+						    % play_bufsize;
+						diff = (play_bufsize + pos - vc->play.pos)
+						    % play_bufsize;
+						vc->play.pos = pos;
+						vc->play.count += diff;
+						while(vc->play.count >= play_blksize) {
+							vc->play.count -= play_blksize;
+							(*vc->play.intr)(vc->play.arg);
+						}
 					}
-				}
-				if (sc->rec.active) {
-					pos = esa_get_pointer(sc, &sc->rec)
-					    % rec_bufsize;
-					diff = (rec_bufsize + pos - sc->rec.pos)
-					    % rec_bufsize;
-					sc->rec.pos = pos;
-					sc->rec.count += diff;
-					while(sc->rec.count >= rec_blksize) {
-						sc->rec.count -= rec_blksize;
-						(*sc->rec.intr)(sc->rec.arg);
+					if (vc->rec.active) {
+						rec_blksize = vc->rec.blksize;
+						rec_bufsize = vc->rec.bufsize;
+						pos = esa_get_pointer(sc, &vc->rec)
+						    % rec_bufsize;
+						diff = (rec_bufsize + pos - vc->rec.pos)
+						    % rec_bufsize;
+						vc->rec.pos = pos;
+						vc->rec.count += diff;
+						while(vc->rec.count >= rec_blksize) {
+							vc->rec.count -= rec_blksize;
+							(*vc->rec.intr)(vc->rec.arg);
+						}
 					}
 				}
 			}
@@ -904,6 +1017,7 @@ esa_attach(struct device *parent, struct device *self, void *aux)
 	u_int32_t data;
 	char devinfo[256];
 	int revision, len;
+	int i;
 
 	pci_devinfo(pa->pa_id, pa->pa_class, 0, devinfo);
 	revision = PCI_REVISION(pa->pa_class);
@@ -994,7 +1108,29 @@ esa_attach(struct device *parent, struct device *self, void *aux)
 	if (ac97_attach(&sc->host_if) != 0)
 		return;
 
-	sc->sc_audiodev = audio_attach_mi(&esa_hw_if, self, &sc->sc_dev);
+	/* initialize list management structures */
+	sc->mixer_list.mem_addr = ESA_KDATA_MIXER_XFER0;
+	sc->mixer_list.max = ESA_MAX_VIRTUAL_MIXER_CHANNELS;
+	sc->adc1_list.mem_addr = ESA_KDATA_ADC1_XFER0;
+	sc->adc1_list.max = ESA_MAX_VIRTUAL_ADC1_CHANNELS;
+	sc->dma_list.mem_addr = ESA_KDATA_DMA_XFER0;
+	sc->dma_list.max = ESA_MAX_VIRTUAL_DMA_CHANNELS;
+	sc->msrc_list.mem_addr = ESA_KDATA_INSTANCE0_MINISRC;
+	sc->msrc_list.max = ESA_MAX_INSTANCE_MINISRC;
+
+	/* initialize index maps */
+	for (i = 0; i < ESA_NUM_VOICES * 2; i++) {
+		sc->mixer_list.indexmap[i] = -1;
+		sc->msrc_list.indexmap[i] = -1;
+		sc->dma_list.indexmap[i] = -1;
+		sc->adc1_list.indexmap[i] = -1;
+	}
+	for (i = 0; i < ESA_NUM_VOICES; i++) {
+		sc->voice[i].parent = (struct device *)sc;
+		sc->voice[i].index = i;
+		sc->sc_audiodev[i] =
+		    audio_attach_mi(&esa_hw_if, &sc->voice[i], &sc->sc_dev);
+	}
 
 	sc->powerhook = powerhook_establish(esa_powerhook, sc);
 	if (sc->powerhook == NULL)
@@ -1008,12 +1144,12 @@ int
 esa_detach(struct device *self, int flags)
 {
 	struct esa_softc *sc = (struct esa_softc *)self;
-	int rv = 0;
+	int i;
 
-	if (sc->sc_audiodev != NULL)
-		rv = config_detach(sc->sc_audiodev, flags);
-	if (rv)
-		return (rv);
+	for (i = 0; i < ESA_NUM_VOICES; i++) {
+		if (sc->sc_audiodev[i] != NULL)
+			config_detach(sc->sc_audiodev[i], flags);
+	}
 
 	if (sc->sc_ih != NULL)
 		pci_intr_disestablish(sc->sc_pct, sc->sc_ih);
@@ -1148,6 +1284,7 @@ esa_wait(struct esa_softc *sc)
 int
 esa_init(struct esa_softc *sc)
 {
+	struct esa_voice *vc;
 	bus_space_tag_t iot = sc->sc_iot;
 	bus_space_handle_t ioh = sc->sc_ioh;
 	pcitag_t tag = sc->sc_tag;
@@ -1207,8 +1344,8 @@ esa_init(struct esa_softc *sc)
 	esa_write_assp(sc, ESA_MEMTYPE_INTERNAL_DATA,
              ESA_KDATA_MIXER_TASK_NUMBER, 0);
 	/* Extreme kernel master volume */
-	esa_write_assp(sc, ESA_MEMTYPE_INTERNAL_DATA, ESA_KDATA_DAC_LEFT_VOLUME,
-	    ESA_ARB_VOLUME);
+	esa_write_assp(sc, ESA_MEMTYPE_INTERNAL_DATA,
+	    ESA_KDATA_DAC_LEFT_VOLUME, ESA_ARB_VOLUME);
 	esa_write_assp(sc, ESA_MEMTYPE_INTERNAL_DATA,
             ESA_KDATA_DAC_RIGHT_VOLUME, ESA_ARB_VOLUME);
 
@@ -1220,8 +1357,11 @@ esa_init(struct esa_softc *sc)
 		esa_write_assp(sc, ESA_MEMTYPE_INTERNAL_DATA, i, 0);
 
 	/* set some sane defaults */
-	sc->play.data_offset = ESA_DAC_DATA + data_bytes;
-	sc->rec.data_offset = ESA_DAC_DATA + data_bytes + (data_bytes / 2);
+	for (i = 0; i < ESA_NUM_VOICES; i++) {
+		vc = &sc->voice[i];
+		vc->play.data_offset = ESA_DAC_DATA + (data_bytes * i);
+		vc->rec.data_offset = ESA_DAC_DATA + (data_bytes * i * 2);
+	}
 
 	esa_enable_interrupts(sc);
 
@@ -1399,6 +1539,58 @@ esa_enable_interrupts(struct esa_softc *sc)
 	    data | ESA_ASSP_HOST_INT_ENABLE);
 }
 
+/*
+ * List management
+ */
+int
+esa_add_list(struct esa_voice *vc, struct esa_list *el,
+	     u_int16_t val, int index)
+{
+	struct esa_softc *sc = (struct esa_softc *)vc->parent;
+
+	el->indexmap[index] = el->currlen;
+	esa_write_assp(sc, ESA_MEMTYPE_INTERNAL_DATA,
+		       el->mem_addr + el->currlen,
+		       val);
+
+	return (el->currlen++); 
+}
+
+void
+esa_remove_list(struct esa_voice *vc, struct esa_list *el, int index)
+{
+	struct esa_softc *sc = (struct esa_softc *)vc->parent;
+	u_int16_t val;
+	int lastindex = el->currlen - 1;
+	int vindex = el->indexmap[index];
+	int i;
+
+	/* reset our virtual index */
+	el->indexmap[index] = -1;
+
+	if (vindex != lastindex) {
+		val = esa_read_assp(sc, ESA_MEMTYPE_INTERNAL_DATA,
+				    el->mem_addr + lastindex);
+		esa_write_assp(sc, ESA_MEMTYPE_INTERNAL_DATA,
+			       el->mem_addr + vindex,
+			       val);
+		for (i = 0; i < ESA_NUM_VOICES * 2; i++)
+			if (el->indexmap[i] == lastindex)
+				break;
+		if (i >= ESA_NUM_VOICES * 2)
+			printf("%s: esa_remove_list: invalid task index\n",
+			       sc->sc_dev.dv_xname);
+		else
+			el->indexmap[i] = vindex;
+	}
+
+	esa_write_assp(sc, ESA_MEMTYPE_INTERNAL_DATA,
+		       el->mem_addr + lastindex, 0);
+	el->currlen--;
+
+	return;
+}
+
 int
 esa_power(struct esa_softc *sc, int state)
 {
@@ -1443,7 +1635,8 @@ esa_suspend(struct esa_softc *sc)
 	index = 0;
 
 	x = splaudio();
-	esa_halt_output(sc);
+	for (i = 0; i < ESA_NUM_VOICES; i++)
+		esa_halt_output(&sc->voice[i]);
 	delay(10000);
 	splx(x);
 
@@ -1524,12 +1717,13 @@ esa_get_pointer(struct esa_softc *sc, struct esa_channel *ch)
 paddr_t
 esa_mappage(void *addr, void *mem, off_t off, int prot)
 {
-	struct esa_softc *sc = addr;
+	struct esa_voice *vc = addr;
+	struct esa_softc *sc = (struct esa_softc *)vc->parent;
 	struct esa_dma *p;
 
 	if (off < 0)
 		return (-1);
-	for (p = sc->sc_dmas; p && KERNADDR(p) != mem; p = p->next)
+	for (p = vc->dma; p && KERNADDR(p) != mem; p = p->next)
 		;
 	if (!p)
 		return (-1);
