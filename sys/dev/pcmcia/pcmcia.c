@@ -1,4 +1,4 @@
-/*	$NetBSD: pcmcia.c,v 1.1.2.12 1997/10/15 03:16:58 enami Exp $	*/
+/*	$NetBSD: pcmcia.c,v 1.1.2.13 1997/10/16 19:41:59 thorpej Exp $	*/
 
 #define	PCMCIADEBUG
 
@@ -99,6 +99,8 @@ pcmcia_attach(parent, self, aux)
 
 	sc->pct = paa->pct;
 	sc->pch = paa->pch;
+	sc->iobase = paa->iobase;
+	sc->iosize = paa->iosize;
 
 	sc->ih = NULL;
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: i82365.c,v 1.1.2.13 1997/10/16 09:18:09 enami Exp $	*/
+/*	$NetBSD: i82365.c,v 1.1.2.14 1997/10/16 19:41:51 thorpej Exp $	*/
 
 #define	PCICDEBUG
 
@@ -285,6 +285,8 @@ pcic_attach_socket(h)
 
 	paa.pct = (pcmcia_chipset_tag_t) h->sc->pct;
 	paa.pch = (pcmcia_chipset_handle_t) h;
+	paa.iobase = h->sc->iobase;
+	paa.iosize = h->sc->iosize;
 
 	h->pcmcia = config_found_sm(&h->sc->dev, &paa, pcic_print,
 	    pcic_submatch);

@@ -1,4 +1,4 @@
-/*	$NetBSD: pcmciachip.h,v 1.1.2.10 1997/10/16 09:15:32 enami Exp $	*/
+/*	$NetBSD: pcmciachip.h,v 1.1.2.11 1997/10/16 19:42:02 thorpej Exp $	*/
 
 #ifndef _PCMCIA_PCMCIACHIP_H_
 #define	_PCMCIA_PCMCIACHIP_H_
@@ -102,6 +102,8 @@ struct pcmcia_chip_functions {
 struct pcmciabus_attach_args {
 	pcmcia_chipset_tag_t pct;
 	pcmcia_chipset_handle_t pch;
+	bus_addr_t iobase;		/* start i/o space allocation here */
+	bus_size_t iosize;		/* size of the i/o space range */
 };
 
 /* interfaces for the chipset to call pcmcia */
