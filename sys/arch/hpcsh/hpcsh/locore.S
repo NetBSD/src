@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.S,v 1.4 2002/03/24 18:21:12 uch Exp $	*/
+/*	$NetBSD: locore.S,v 1.5 2002/05/09 12:41:09 uch Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -33,12 +33,10 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include "assym.h"
-
 #include <sh3/asm.h>
-#include <sh3/locore.h>
+
 /*
- * void start(int argc, char *argv[], struct bootinfo *bi) 
+ * void start(int argc, char *argv[], struct bootinfo *bi)
  *    __attribute__((__noreturn__)):
  *	Kernel entry point. setup bootstrap stack pointer.
  *	Don't pollute r4, r5, r6, since these are passed down to
