@@ -1,4 +1,4 @@
-/*	$NetBSD: atactl.c,v 1.15 2002/08/05 23:29:29 soren Exp $	*/
+/*	$NetBSD: atactl.c,v 1.16 2002/08/06 00:00:21 soren Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -94,7 +94,7 @@ struct command commands[] = {
 	{ "standby",	"",			device_idle },
 	{ "sleep",	"",			device_idle },
 	{ "checkpower",	"",			device_checkpower },
-	{ "smart",	"enable|disable|info",	device_smart },
+	{ "smart",	"enable|disable|status", device_smart },
 	{ NULL,		NULL,			NULL },
 };
 
@@ -314,7 +314,7 @@ print_smart_status(void *vbuf, void *tbuf)
 	printf("id\tvalue\tthresh\tcrit\tcollect\treliability\n");
 	for (i = 0; i < 256; i++) {
 		if (values[i] != 00 && values[i] != 0xFE && values[i] != 0xFF) {
-			printf("%2d\t%3d\t%3d\t%s\t%sline\t%stive\n",
+			printf("%3d\t%3d\t%3d\t%s\t%sline\t%stive\n",
 			       i, values[i], thresholds[i],
 			       flags[i] & WDSM_ATTR_ADVISORY ? "yes" : "no",
 			       flags[i] & WDSM_ATTR_COLLECTIVE ? "on" : "off",
@@ -674,7 +674,7 @@ device_smart(int argc, char *argv[])
 
 			is_smart(0);
 		}
-	} else if (strcmp(argv[0], "info") == 0) {
+	} else if (strcmp(argv[0], "status") == 0) {
 		if (is_smart(0)) {
 			memset(&inbuf, 0, sizeof(inbuf));
 			memset(&req, 0, sizeof(req));
