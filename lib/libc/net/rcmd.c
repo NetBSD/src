@@ -1,4 +1,4 @@
-/*	$NetBSD: rcmd.c,v 1.12 1995/06/03 22:33:34 mycroft Exp $	*/
+/*	$NetBSD: rcmd.c,v 1.13 1995/11/16 08:35:33 pk Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993, 1994
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)rcmd.c	8.3 (Berkeley) 3/26/94";
 #else
-static char *rcsid = "$NetBSD: rcmd.c,v 1.12 1995/06/03 22:33:34 mycroft Exp $";
+static char *rcsid = "$NetBSD: rcmd.c,v 1.13 1995/11/16 08:35:33 pk Exp $";
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -399,7 +399,6 @@ __ivaliduser(hostf, raddr, luser, ruser)
 
 		if ((hp = gethostbyaddr((char *) &raddr,
 					sizeof(raddr), AF_INET)) == NULL) {
-			abort();
 			return -1;
 		}
 		(void) strncpy(rhost, hp->h_name, sizeof(rhost));
