@@ -1,4 +1,4 @@
-/* $NetBSD: machdep.c,v 1.167.2.4 1999/04/29 14:41:58 perry Exp $ */
+/* $NetBSD: machdep.c,v 1.167.2.5 1999/06/21 19:19:37 cgd Exp $ */
 
 /*-
  * Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.
@@ -82,7 +82,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.167.2.4 1999/04/29 14:41:58 perry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.167.2.5 1999/06/21 19:19:37 cgd Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -2170,25 +2170,26 @@ cpu_exec_ecoff_hook(p, epp)
 {
 	struct ecoff_exechdr *execp = (struct ecoff_exechdr *)epp->ep_hdr;
 	extern struct emul emul_netbsd;
-#ifdef COMPAT_OSF1
-	extern struct emul emul_osf1;
-#endif
+	int error;
+	extern int osf1_exec_ecoff_hook(struct proc *p,
+					struct exec_package *epp);
 
 	switch (execp->f.f_magic) {
 #ifdef COMPAT_OSF1
 	case ECOFF_MAGIC_ALPHA:
-		epp->ep_emul = &emul_osf1;
+		error = osf1_exec_ecoff_hook(p, epp);
 		break;
 #endif
 
 	case ECOFF_MAGIC_NETBSD_ALPHA:
 		epp->ep_emul = &emul_netbsd;
+		error = 0;
 		break;
 
 	default:
-		return ENOEXEC;
+		error = ENOEXEC;
 	}
-	return 0;
+	return (error);
 }
 #endif
 
