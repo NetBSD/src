@@ -1,11 +1,11 @@
-.\"	$NetBSD: mk.conf.5,v 1.7 2000/03/28 01:21:36 enami Exp $
+.\"	$NetBSD: mk.conf.5,v 1.8 2001/06/19 12:34:27 wiz Exp $
 .\"
 .\"  Copyright (c) 1999 The NetBSD Foundation, Inc.
 .\"  All rights reserved.
-.\" 
+.\"
 .\"  This code is derived from software contributed to The NetBSD Foundation
 .\"  by Luke Mewburn.
-.\" 
+.\"
 .\"  Redistribution and use in source and binary forms, with or without
 .\"  modification, are permitted provided that the following conditions
 .\"  are met:
@@ -19,7 +19,7 @@
 .\"  	This product includes software developed by Luke Mewburn.
 .\"  4. The name of the author may not be used to endorse or promote products
 .\"     derived from this software without specific prior written permission.
-.\"  
+.\"
 .\"  THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR
 .\"  IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
 .\"  OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
@@ -49,7 +49,6 @@ Listed below are the
 variables that may be set, the values to which each may be set,
 a brief description of what each variable does, and a reference to
 relevant manual pages.
-.Pp
 .Ss NetBSD System variables
 .Bl -tag -width OBJMACHINE
 .It Sy BSDOBJDIR
@@ -71,14 +70,14 @@ If defined,
 .Sq "make install"
 checks that the targets in the source directories are up-to-date and
 remakes them if they are out of date, instead of blindly trying to install
-out of date or non-existant targets.
+out of date or non-existent targets.
 .It Sy COPTS
 Extra options for the C compiler.
 Should be appended to (e.g.,
 .Sy COPTS+=-g ) ,
 rather than explicitly set.
 .It Sy MANZ
-Install manual pages compressed with 
+Install manual pages compressed with
 .Xr gzip 1 .
 .It Sy MKCATPAGES
 If
@@ -148,10 +147,8 @@ If defined,
 only installs targets that are more recently modified in the source
 directories that their installed counterparts.
 .El
-.Pp
 .Ss Pkgsrc system variables
-
-Please see 
+Please see
 .Xr packages 7
 for more variables used internally by the package system and
 .Pa /usr/pkgsrc/mk/mk.conf.example
