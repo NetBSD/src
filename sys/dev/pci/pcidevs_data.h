@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs_data.h,v 1.225 2000/05/27 11:40:05 soren Exp $	*/
+/*	$NetBSD: pcidevs_data.h,v 1.226 2000/05/27 17:12:36 scw Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.220 2000/05/27 11:38:31 soren Exp 
+ *	NetBSD: pcidevs,v 1.222 2000/05/27 17:11:37 scw Exp 
  */
 
 /*
@@ -2732,6 +2732,18 @@ struct pci_knowndev pci_knowndevs[] = {
 	    0,
 	    "Opti",
 	    "82C558",
+	},
+	{
+	    PCI_VENDOR_OPTI, PCI_PRODUCT_OPTI_82C568,
+	    0,
+	    "Opti",
+	    "82C568",
+	},
+	{
+	    PCI_VENDOR_OPTI, PCI_PRODUCT_OPTI_82D568,
+	    0,
+	    "Opti",
+	    "82D568",
 	},
 	{
 	    PCI_VENDOR_OPTI, PCI_PRODUCT_OPTI_82C621,

@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs.h,v 1.227 2000/05/27 11:40:04 soren Exp $	*/
+/*	$NetBSD: pcidevs.h,v 1.228 2000/05/27 17:12:36 scw Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.220 2000/05/27 11:38:31 soren Exp 
+ *	NetBSD: pcidevs,v 1.222 2000/05/27 17:11:37 scw Exp 
  */
 
 /*
@@ -1208,6 +1208,8 @@
 /* Opti products */
 #define	PCI_PRODUCT_OPTI_82C557	0xc557		/* 82C557 */
 #define	PCI_PRODUCT_OPTI_82C558	0xc558		/* 82C558 */
+#define	PCI_PRODUCT_OPTI_82C568	0xc568		/* 82C568 */
+#define	PCI_PRODUCT_OPTI_82D568	0xd568		/* 82D568 */
 #define	PCI_PRODUCT_OPTI_82C621	0xc621		/* 82C621 */
 #define	PCI_PRODUCT_OPTI_82C822	0xc822		/* 82C822 */
 #define	PCI_PRODUCT_OPTI_RM861HA	0xc861		/* RM861HA */
@@ -1335,7 +1337,7 @@
 /* Solidum Systems Corporation */
 #define	PCI_PRODUCT_SOLIDUM_AMD971	0x2000		/* SNP8023: AMD 971 */
 #define	PCI_PRODUCT_SOLIDUM_CLASS802	0x8023		/* SNP8023: Classifier Engine */
-  
+
 /* Sony products */
 #define	PCI_PRODUCT_SONY_CXD1947A	0x8009		/* CXD1947A FireWire Host Controller */
 #define	PCI_PRODUCT_SONY_CXD32222	0x8039		/* CXD3222 OHCI i.LINK(IEEE 1394) PCI controller */
