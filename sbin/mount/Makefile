@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.19 2001/02/04 20:12:32 christos Exp $
+#	$NetBSD: Makefile,v 1.20 2001/02/20 23:24:47 cgd Exp $
 #	@(#)Makefile	8.6 (Berkeley) 5/8/95
 
 PROG=	mount
@@ -47,15 +47,13 @@ checkname.c: ${.CURDIR}/Makefile
 	  done;							\
 	  echo "void checkname(int, char **);";			\
 	  echo;							\
-	  echo "extern const char *__progname;";		\
-	  echo;							\
 	  echo "void checkname(int argc, char **argv) {"; 	\
-	  echo "if (strcmp(__progname, \"mount\") == 0) return;";	\
+	  echo "if (strcmp(getprogname(), \"mount\") == 0) return;";	\
 	  for p in ${MOUNT_PROGS}; do				\
-		echo "if (strcmp(__progname, \"$$p\") == 0)";	\
+		echo "if (strcmp(getprogname(), \"$$p\") == 0)";	\
 		echo " exit($$p(argc, argv));";			\
 	  done;		\
-	  echo "if (strcmp(__progname, \"mount_ufs\") == 0)";	\
+	  echo "if (strcmp(getprogname(), \"mount_ufs\") == 0)";	\
 	  echo " exit(mount_ffs(argc, argv));";			\
 	  echo "}";	\
 	fi > ${.TARGET}

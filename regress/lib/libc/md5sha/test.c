@@ -1,4 +1,4 @@
-/*	$NetBSD: test.c,v 1.2 2000/08/19 17:52:13 sommerfeld Exp $	*/
+/*	$NetBSD: test.c,v 1.3 2001/02/20 23:22:49 cgd Exp $	*/
 
 /*
  * Combined MD5/SHA1 time and regression test.
@@ -17,11 +17,10 @@ int mflag, rflag, sflag, tflag;
 static void
 usage(void)
 {
-	extern char *__progname;
 	(void)fprintf(stderr,
 	    "Usage:\t%s -r[ms] < test-file\n"
 	    "\t%s -t[ms]\n",
-	    __progname, __progname);
+	    getprogname(), getprogname());
 	exit(1);
 	/* NOTREACHED */
 }

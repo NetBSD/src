@@ -1,4 +1,4 @@
-/*	$NetBSD: wdogctl.c,v 1.6 2001/02/04 21:14:32 christos Exp $	*/
+/*	$NetBSD: wdogctl.c,v 1.7 2001/02/20 23:25:29 cgd Exp $	*/
 
 /*-
  * Copyright (c) 2000 Zembu Labs, Inc.
@@ -58,8 +58,6 @@ void	list_timers(void);
 void	usage(void);
 
 int	Aflag;
-
-extern const char *__progname;
 
 int
 main(int argc, char *argv[])
@@ -345,10 +343,12 @@ list_timers(void)
 void
 usage(void)
 {
-	fprintf(stderr, "Usage: %s\n", __progname);
-	fprintf(stderr, "       %s -k [-A] [-p seconds] timer\n", __progname);
-	fprintf(stderr, "       %s -u [-A] [-p seconds] timer\n", __progname);
-	fprintf(stderr, "       %s -d\n", __progname);
+	fprintf(stderr, "Usage: %s\n", getprogname());
+	fprintf(stderr, "       %s -k [-A] [-p seconds] timer\n",
+	    getprogname());
+	fprintf(stderr, "       %s -u [-A] [-p seconds] timer\n",
+	    getprogname());
+	fprintf(stderr, "       %s -d\n", getprogname());
 
 	exit(1);
 }
