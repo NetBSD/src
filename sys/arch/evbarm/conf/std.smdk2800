@@ -1,10 +1,10 @@
-#	$NetBSD: std.smdk2800,v 1.6 2003/05/22 05:52:19 thorpej Exp $
+#	$NetBSD: std.smdk2800,v 1.7 2003/07/31 20:25:28 bsh Exp $
 #
-# standard NetBSD/evbarm for IQ80310 options
+# standard NetBSD/evbarm for SMDK2800 options
 
 machine	evbarm arm
 
-# Config definitions for SMDK2800/24[10]0
+# Config definitions for SMDK2800
 include "arch/evbarm/conf/files.smdk2800"
 
 options 	EXEC_ELF32
@@ -18,5 +18,6 @@ options 	ARM32
 
 makeoptions	BOARDTYPE="smdk2800"
 makeoptions	BOARDMKFRAG="${THISARM}/conf/mk.smdk2xx0"
+makeoptions	KERNEL_BASE_PHYS=0x08200000
 
 options 	ARM_INTR_IMPL="<arch/arm/s3c2xx0/s3c2800_intr.h>"
