@@ -1,5 +1,5 @@
 #!/bin/sh -
-#	$NetBSD: MAKEDEV,v 1.15 2002/03/04 14:02:31 lukem Exp $
+#	$NetBSD: MAKEDEV,v 1.16 2002/03/13 01:26:56 simonb Exp $
 #
 # Copyright (c) 1990 The Regents of the University of California.
 # All rights reserved.
@@ -171,7 +171,7 @@ fd)
 	;;
 
 md*)
-	unit=${i#md}; blk=2; chr=2;
+	unit=${i#md}; blk=2; chr=2
 	rm -f md${unit}? rmd${unit}?
 	mknod md${unit}a  b $blk $(($unit * 16 + 0))
 	mknod md${unit}d  b $blk $(($unit * 16 + 3))
@@ -179,7 +179,7 @@ md*)
 #	mknod rmd${unit}d c $chr $(($unit * 16 + 3))
 	chgrp operator md${unit}? #rmd${unit}?
 	chmod 640 md${unit}? #rmd${unit}?
-	;;      
+	;;
 
 ccd*|cd*|raid*|sd*|vnd*|wd*)
 	case $i in
@@ -259,7 +259,7 @@ opty)
 		mknod ttyp$j c 12 $jn
 		mknod ptyp$j c 13 $jn
 	done
-	chmod 666 ttyp[0-9a-f] ptyp[0-9a-f] 
+	chmod 666 ttyp[0-9a-f] ptyp[0-9a-f]
 	;;
 
 		
@@ -346,7 +346,7 @@ bpf*|tun*)
 	mknod $name$unit	c $chr $unit
 	;;
 
-ipl)    
+ipl)
 	rm -f ipl ipnat ipstate ipauth
 	mknod ipl c 20 0
 	mknod ipnat c 20 1
@@ -364,7 +364,7 @@ random)
 	;;
 
 scsibus*)
-	unit=${i#scsibus}; 
+	unit=${i#scsibus}
 	rm -f scsibus$unit
 	mknod scsibus$unit c 24 $unit
 	chmod 644 scsibus$unit
@@ -383,21 +383,21 @@ i4bctl)
 	;;
 
 i4brbch*)
-	unit=${i#i4brbch};
+	unit=${i#i4brbch}
 	rm -f i4brbch$unit
 	mknod i4brbch$unit c 30 $unit
 	chmod 600 i4brbch$unit
 	;;
 
 i4btel*)
-	unit=${i#i4btel};
+	unit=${i#i4btel}
 	rm -f i4btel$unit
 	mknod i4btel$unit c 32 $unit
 	chmod 600 i4btel$unit
 	;;
 
 i4btrc*)
-	unit=${i#i4btrc};
+	unit=${i#i4btrc}
 	rm -f i4btrc$unit
 	mknod i4btrc$unit c 31 $unit
 	chmod 600 i4btrc$unit

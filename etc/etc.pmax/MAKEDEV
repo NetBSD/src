@@ -1,6 +1,6 @@
 #!/bin/sh -
 #
-#	$NetBSD: MAKEDEV,v 1.50 2002/03/04 14:02:36 lukem Exp $
+#	$NetBSD: MAKEDEV,v 1.51 2002/03/13 01:27:01 simonb Exp $
 #
 #	from: @(#)MAKEDEV	8.1 (Berkeley) 6/9/93
 #
@@ -48,7 +48,7 @@
 # Platform-specific devices:
 #	NOTE: /dev/mouse should be a link to one of these for X windows.
 #	fb*	generic framebuffer pseudo-device
-#	px*	PixelStamp Xserver access 
+#	px*	PixelStamp Xserver access
 # The following names are reserved for future use:
 #	fdc*	Baseboard 2.88 floppy disk on Personal DECstations
 #	ttyE?	Workstation console ("wscons") glass-tty emulators
@@ -76,7 +76,7 @@ do
 case $i in
 
 all)
-	makedev minimal fd 
+	makedev minimal fd
 	makedev raid0 raid1 raid2 raid3 raid4 raid5 raid6 raid7
 	makedev pty0 vnd0 vnd1 vnd2 vnd3 ccd0 ccd1 ccd2 ccd3
 	makedev tun0 tun1 tun2 tun3
@@ -174,12 +174,12 @@ audio*)
 	;;
 
 md*)
-	unit=${i#md}; blk=17; chr=97;
+	unit=${i#md}; blk=17; chr=97
 	rm -f md${unit}? rmd${unit}?
-	mknod md${unit}a  b $blk $(($unit * 8 + 0)) 
-	mknod md${unit}c  b $blk $(($unit * 8 + 2)) 
-#	mknod rmd${unit}a c $chr $(($unit * 8 + 0)) 
-#	mknod rmd${unit}c c $chr $(($unit * 8 + 2)) 
+	mknod md${unit}a  b $blk $(($unit * 8 + 0))
+	mknod md${unit}c  b $blk $(($unit * 8 + 2))
+#	mknod rmd${unit}a c $chr $(($unit * 8 + 0))
+#	mknod rmd${unit}c c $chr $(($unit * 8 + 2))
 	chgrp operator md${unit}? #rmd${unit}?
 	chmod 640 md${unit}? #rmd${unit}?
 	;;
@@ -299,7 +299,7 @@ opty)
 		mknod ttyp$j c 4 $jn
 		mknod ptyp$j c 5 $jn
 	done
-	chmod 666 ttyp[0-9a-f] ptyp[0-9a-f] 
+	chmod 666 ttyp[0-9a-f] ptyp[0-9a-f]
 	;;
 
 		
@@ -395,7 +395,7 @@ ss*)
 	;;
 
 scsibus*)
-	unit=${i#scsibus}; 
+	unit=${i#scsibus}
 	rm -f scsibus$unit
 	mknod scsibus$unit c 95 $unit
 	chmod 644 scsibus$unit

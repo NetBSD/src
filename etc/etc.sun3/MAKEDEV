@@ -1,6 +1,6 @@
 #!/bin/sh -
 #
-#	$NetBSD: MAKEDEV,v 1.41 2002/03/04 14:02:38 lukem Exp $
+#	$NetBSD: MAKEDEV,v 1.42 2002/03/13 01:27:03 simonb Exp $
 #
 # Copyright (c) 1990 The Regents of the University of California.
 # All rights reserved.
@@ -187,7 +187,7 @@ opty)
 		mknod ttyp$j c 20 $jn
 		mknod ptyp$j c 21 $jn
 	done
-	chmod 666 ttyp[0-9a-f] ptyp[0-9a-f] 
+	chmod 666 ttyp[0-9a-f] ptyp[0-9a-f]
 	;;
 
 		
@@ -247,7 +247,7 @@ ccd*|cd*|fd*|sd*|xd*|xy*|vnd*|raid*)
 	;;
 
 st*)
-	name=st; blk=11; chr=18;
+	name=st; blk=11; chr=18
 	mk   r$name$unit c $chr $(($unit * 16 + 0)) 660 operator
 	mk  nr$name$unit c $chr $(($unit * 16 + 1)) 660 operator
 	mk  er$name$unit c $chr $(($unit * 16 + 2)) 660 operator
@@ -267,7 +267,7 @@ cgfour*)
 	;;
 
 md*)
-	name=md; blk=13; chr=52;
+	name=md; blk=13; chr=52
 	mk  md${unit}a b $blk $(($unit * 8 + 0)) 640 operator
 	mk  md${unit}c b $blk $(($unit * 8 + 2)) 640 operator
 #	mk rmd${unit}a c $chr $(($unit * 8 + 0)) 640 operator

@@ -1,6 +1,6 @@
 #!/bin/sh -
 #
-#	$NetBSD: MAKEDEV,v 1.45 2002/03/04 14:02:32 lukem Exp $
+#	$NetBSD: MAKEDEV,v 1.46 2002/03/13 01:26:57 simonb Exp $
 #
 # Copyright (c) 1990 The Regents of the University of California.
 # All rights reserved.
@@ -161,7 +161,7 @@ ct*|mt*|st*)
 		#
 		# block devices don't work so don't make them
 		#rm -f ${name}${unit} ${name}${four} ${name}${eight} \
-		#    ${name}${twelve} 
+		#    ${name}${twelve}
 		#mknod ${name}${unit}	b $blk $unit
 		#mknod ${name}${four}	b $blk $four
 		#mknod ${name}${eight}	b $blk $eight
@@ -209,7 +209,7 @@ tun*)
 	;;
 
 md*)
-	unit=${i#md}; blk=14; chr=32;
+	unit=${i#md}; blk=14; chr=32
 	rm -f md${unit}? rmd${unit}?
 	mknod md${unit}a  b $blk $(($unit * 8 + 0))
 	mknod md${unit}c  b $blk $(($unit * 8 + 2))
@@ -290,7 +290,7 @@ apci*)
 	case $unit in
 	0)
 		for i in 0 1 2 3; do
-			rm -f ttya${i}; mknod ttya${i} c 31 ${i};
+			rm -f ttya${i}; mknod ttya${i} c 31 ${i}
 		done
 		;;
 	*)
@@ -464,7 +464,7 @@ opty)
 		mknod ttyp$j c 4 $jn
 		mknod ptyp$j c 5 $jn
 	done
-	chmod 666 ttyp[0-9a-f] ptyp[0-9a-f] 
+	chmod 666 ttyp[0-9a-f] ptyp[0-9a-f]
 	;;
 
 		
@@ -504,7 +504,7 @@ random)
 	;;
 
 scsibus*)
-	unit=${i#scsibus}; 
+	unit=${i#scsibus}
 	rm -f scsibus$unit
 	mknod scsibus$unit c 34 $unit
 	chmod 644 scsibus$unit
