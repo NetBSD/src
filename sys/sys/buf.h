@@ -1,4 +1,4 @@
-/*	$NetBSD: buf.h,v 1.62 2003/07/08 06:17:59 itojun Exp $	*/
+/*	$NetBSD: buf.h,v 1.63 2003/07/08 06:28:52 itojun Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
@@ -292,7 +292,7 @@ struct buf *geteblk __P((int));
 struct buf *getnewbuf __P((int, int));
 struct buf *incore __P((struct vnode *, daddr_t));
 
-void	minphys __P((struct buf *bp));
+void	minphys __P((struct buf *));
 int	physio __P((void (*)(struct buf *), struct buf *, dev_t,
 		    int, void (*)(struct buf *), struct uio *));
 
