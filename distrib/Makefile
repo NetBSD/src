@@ -1,6 +1,6 @@
-#	$NetBSD: Makefile,v 1.1 1998/05/02 07:40:23 ross Exp $
+#	$NetBSD: Makefile,v 1.2 1999/04/25 12:05:36 veego Exp $
 
-SUBDIR=	utils
+SUBDIR=	notes utils
 
 .if exists(${MACHINE}/miniroot)
 SUBDIR+= miniroot
@@ -9,7 +9,5 @@ SUBDIR+= miniroot
 .if exists(${MACHINE}/Makefile)
 SUBDIR+= ${MACHINE}
 .endif
-
-SUBDIR+= notes
 
 .include <bsd.subdir.mk>
