@@ -1,4 +1,4 @@
-.\"	$NetBSD: com.4,v 1.5 2003/01/05 20:58:39 jmcneill Exp $
+.\"	$NetBSD: com.4,v 1.6 2003/04/09 17:21:48 jmmv Exp $
 .\"
 .\" Copyright (c) 1990, 1991 The Regents of the University of California.
 .\" All rights reserved.
@@ -36,7 +36,7 @@
 .\"
 .\"     from: @(#)dca.4	5.2 (Berkeley) 3/27/91
 .\"
-.Dd April 20, 2001
+.Dd April 9, 2003
 .Dt COM 4
 .Os
 .Sh NAME
@@ -56,6 +56,7 @@ serial communications interface
 .Cd "com* at pcmcom?"
 .Cd "com* at pnpbios? index ?"
 .Cd "com* at puc? port ?"
+.Cd options COM_HAYESP
 .Cd options RND_COM
 .Ss Arm32
 .Cd "com0 at mainbus? base 0x00210fe0"
@@ -79,6 +80,10 @@ of 115200.
 The ttyXX devices are traditional dialin devices; the dtyXX devices are
 used for dialout.  (See
 .Xr tty 4 . )
+.Pp
+The
+.Va COM_HAYESP
+kernel option adds support for the Hayes ESP serial board.
 .Pp
 With options RND_COM enabled, the
 .Nm
