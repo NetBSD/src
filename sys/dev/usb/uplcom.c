@@ -1,4 +1,4 @@
-/*	$NetBSD: uplcom.c,v 1.8 2001/01/23 21:56:17 augustss Exp $	*/
+/*	$NetBSD: uplcom.c,v 1.9 2001/01/24 14:46:49 ichiro Exp $	*/
 /*
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -37,6 +37,7 @@
 
 /*
  * Simple datasheet
+ * http://www.prolific.com.tw/download/DataSheet/pl2303_ds11.PDF
  * http://www.nisseisg.co.jp/jyouhou/_cp/@gif/2303.pdf
  * 	(english)
  *
