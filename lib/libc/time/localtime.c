@@ -1,4 +1,4 @@
-/*	$NetBSD: localtime.c,v 1.14 1998/01/22 07:06:58 jtc Exp $	*/
+/*	$NetBSD: localtime.c,v 1.15 1998/07/26 13:00:41 mycroft Exp $	*/
 
 /*
 ** This file is in the public domain, so clarified as of
@@ -11,7 +11,7 @@
 #if 0
 static char	elsieid[] = "@(#)localtime.c	7.64";
 #else
-__RCSID("$NetBSD: localtime.c,v 1.14 1998/01/22 07:06:58 jtc Exp $");
+__RCSID("$NetBSD: localtime.c,v 1.15 1998/07/26 13:00:41 mycroft Exp $");
 #endif
 #endif /* !defined NOID */
 #endif /* !defined lint */
@@ -74,7 +74,7 @@ __weak_alias(tzsetwall,_tzsetwall);
 #define WILDABBR	"   "
 #endif /* !defined WILDABBR */
 
-static char		wildabbr[] = "WILDABBR";
+static const char	wildabbr[] = "WILDABBR";
 
 static const char	gmt[] = "GMT";
 
@@ -190,7 +190,7 @@ static char		lcl_TZname[TZ_STRLEN_MAX + 1];
 static int		lcl_is_set;
 static int		gmt_is_set;
 
-char *			tzname[2] = {
+const char *		tzname[2] = {
 	wildabbr,
 	wildabbr
 };
