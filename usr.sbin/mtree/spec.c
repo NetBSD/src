@@ -1,4 +1,4 @@
-/*	$NetBSD: spec.c,v 1.46 2002/02/05 12:15:14 lukem Exp $	*/
+/*	$NetBSD: spec.c,v 1.47 2002/02/11 12:43:55 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1989, 1993
@@ -74,7 +74,7 @@
 #if 0
 static char sccsid[] = "@(#)spec.c	8.2 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: spec.c,v 1.46 2002/02/05 12:15:14 lukem Exp $");
+__RCSID("$NetBSD: spec.c,v 1.47 2002/02/11 12:43:55 lukem Exp $");
 #endif
 #endif /* not lint */
 
@@ -97,9 +97,10 @@ __RCSID("$NetBSD: spec.c,v 1.46 2002/02/05 12:15:14 lukem Exp $");
 size_t	mtree_lineno;			/* Current spec line number */
 int	Wflag;				/* Don't "whack" permissions */
 
-static dev_t	 parsedev(char *);
-static void	 set(char *, NODE *);
-static void	 unset(char *, NODE *);
+static	dev_t	parsedev(char *);
+static	void	replacenode(NODE *, NODE *);
+static	void	set(char *, NODE *);
+static	void	unset(char *, NODE *);
 
 NODE *
 spec(FILE *fp)
@@ -181,7 +182,8 @@ noparent:		mtree_err("no parent node");
 					continue;	/* handle // */
 				*e = '\0';
 				if (strcmp(p, ".") != 0) {
-					while (cur && strcmp(cur->name, p)) {
+					while (cur &&
+					    strcmp(cur->name, p) != 0) {
 						cur = cur->next;
 					}
 				}
@@ -195,11 +197,6 @@ noparent:		mtree_err("no parent node");
 			}
 			if (*p == '\0')
 				mtree_err("%s: empty leaf element", tname);
-			for (; cur != NULL; cur = cur->next) {
-				if (strcmp(cur->name, p) == 0)
-					mtree_err("%s: %s", p,
-					    strerror(EEXIST));
-			}
 		}
 
 		if ((centry = calloc(1, sizeof(NODE) + strlen(p))) == NULL)
@@ -213,27 +210,60 @@ noparent:		mtree_err("no parent node");
 		set(next, centry);
 
 		if (root == NULL) {
-			if (strcmp(centry->name, ".") || centry->type != F_DIR)
+				/*
+				 * empty tree
+				 */
+			if (strcmp(centry->name, ".") != 0 ||
+			    centry->type != F_DIR)
 				mtree_err(
 				    "root node must be the directory `.'");
 			last = root = centry;
 			root->parent = root;
 		} else if (pathparent != NULL) {
+				/*
+				 * full path entry
+				 */
 			centry->parent = pathparent;
 			cur = pathparent->child;
-			if (cur == NULL)
+			if (cur == NULL) {
 				pathparent->child = centry;
-			else {
-				while (cur->next != NULL)
-					cur = cur->next;
-				cur->next = centry;
-				centry->prev = cur;
+				last = centry;
+			} else {
+				for (; cur != NULL; cur = cur->next) {
+					if (strcmp(cur->name, centry->name)
+					    == 0) {
+						/* existing entry; replace */
+						replacenode(cur, centry);
+						break;
+					}
+					if (cur->next == NULL) {
+						/* last entry; add new */
+						cur->next = centry;
+						centry->prev = cur;
+						break;
+					}
+				}
+				last = cur;
+				while (last->next != NULL)
+					last = last->next;
 			}
-			last = centry;
+		} else if (strcmp(centry->name, ".") == 0) {
+				/*
+				 * duplicate "." entry; always replace
+				 */
+			replacenode(root, centry);
 		} else if (last->type == F_DIR && !(last->flags & F_DONE)) {
+				/*
+				 * new relative child
+				 * (no duplicate check)
+				 */
 			centry->parent = last;
 			last = last->child = centry;
 		} else {
+				/*
+				 * relative entry, up one directory
+				 * (no duplicate check)
+				 */
 			centry->parent = last->parent;
 			centry->prev = last;
 			last = last->next = centry;
@@ -351,6 +381,35 @@ parsedev(char *arg)
 			mtree_err("invalid device `%s'", arg);
 	}
 	return (result);
+}
+
+static void
+replacenode(NODE *cur, NODE *new)
+{
+
+	if (cur->type != new->type)
+		mtree_err("existing entry type `%s' does not match type `%s'",
+		    nodetype(cur->type), nodetype(new->type));
+#define REPLACE(x)	cur->x = new->x
+#define REPLACESTR(x)	if (cur->x) free(cur->x); cur->x = new->x
+
+	REPLACE(st_size);
+	REPLACE(st_mtimespec);
+	REPLACESTR(slink);
+	REPLACE(st_uid);
+	REPLACE(st_gid);
+	REPLACE(st_mode);
+	REPLACE(st_rdev);
+	REPLACE(st_flags);
+	REPLACE(st_nlink);
+	REPLACE(cksum);
+	REPLACESTR(md5digest);
+	REPLACESTR(rmd160digest);
+	REPLACESTR(sha1digest);
+	REPLACESTR(tags);
+	REPLACE(lineno);
+	REPLACE(flags);
+	free(new);
 }
 
 static void
