@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.14 1998/11/26 21:06:21 thorpej Exp $	*/
+/*	$NetBSD: trap.c,v 1.15 1999/01/10 10:24:17 tsubai Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -396,21 +396,23 @@ copyin(udaddr, kaddr, len)
 	void *kaddr;
 	size_t len;
 {
-	void *p;
+	const char *up = udaddr;
+	char *kp = kaddr;
+	char *p;
 	size_t l;
 	faultbuf env;
 
 	if (setfault(env))
 		return EFAULT;
 	while (len > 0) {
-		p = USER_ADDR + ((u_int)udaddr & ~SEGMENT_MASK);
-		l = (USER_ADDR + SEGMENT_LENGTH) - p;
+		p = (char *)USER_ADDR + ((u_int)up & ~SEGMENT_MASK);
+		l = ((char *)USER_ADDR + SEGMENT_LENGTH) - p;
 		if (l > len)
 			l = len;
-		setusr(curpcb->pcb_pm->pm_sr[(u_int)udaddr >> ADDR_SR_SHFT]);
-		bcopy(p, kaddr, l);
-		udaddr += l;
-		kaddr += l;
+		setusr(curpcb->pcb_pm->pm_sr[(u_int)up >> ADDR_SR_SHFT]);
+		bcopy(p, kp, l);
+		up += l;
+		kp += l;
 		len -= l;
 	}
 	curpcb->pcb_onfault = 0;
@@ -423,21 +425,23 @@ copyout(kaddr, udaddr, len)
 	void *udaddr;
 	size_t len;
 {
-	void *p;
+	const char *kp = kaddr;
+	char *up = udaddr;
+	char *p;
 	size_t l;
 	faultbuf env;
 
 	if (setfault(env))
 		return EFAULT;
 	while (len > 0) {
-		p = USER_ADDR + ((u_int)udaddr & ~SEGMENT_MASK);
-		l = (USER_ADDR + SEGMENT_LENGTH) - p;
+		p = (char *)USER_ADDR + ((u_int)up & ~SEGMENT_MASK);
+		l = ((char *)USER_ADDR + SEGMENT_LENGTH) - p;
 		if (l > len)
 			l = len;
-		setusr(curpcb->pcb_pm->pm_sr[(u_int)udaddr >> ADDR_SR_SHFT]);
-		bcopy(kaddr, p, l);
-		udaddr += l;
-		kaddr += l;
+		setusr(curpcb->pcb_pm->pm_sr[(u_int)up >> ADDR_SR_SHFT]);
+		bcopy(kp, p, l);
+		up += l;
+		kp += l;
 		len -= l;
 	}
 	curpcb->pcb_onfault = 0;
