@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.121 2000/02/21 20:38:49 erh Exp $	*/
+/*	$NetBSD: trap.c,v 1.122 2000/03/28 00:55:33 simonb Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.121 2000/02/21 20:38:49 erh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.122 2000/03/28 00:55:33 simonb Exp $");
 
 #include "opt_cputype.h"	/* which mips CPU levels do we support? */
 #include "opt_inet.h"
@@ -753,7 +753,6 @@ interrupt(status, cause, pc)
 	unsigned pc;
 {
 	unsigned mask;
-	extern u_int32_t mips3_cycle_count __P((void));
 
 	mask = cause & status;	/* pending interrupts & enable mask */
 
@@ -1086,8 +1085,6 @@ mips_singlestep(p)
 
 #if defined(DEBUG) || defined(DDB)
 mips_reg_t kdbrpeek __P((vaddr_t));
-extern void stacktrace __P((void)); /*XXX*/
-extern void logstacktrace __P((void)); /*XXX*/
 
 
 int
@@ -1140,8 +1137,6 @@ extern char mips3_KernIntr[];
 extern char mips3_UserIntr[];
 extern char mips3_SystemCall[];
 extern int main __P((void*));
-extern void mips_idle __P((void));
-extern void cpu_switch __P((struct proc *));
 
 /*
  *  stack trace code, also useful to DDB one day
