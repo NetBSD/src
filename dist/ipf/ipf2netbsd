@@ -1,6 +1,6 @@
 #! /bin/sh
 #
-#	$NetBSD: ipf2netbsd,v 1.12 2004/03/23 12:23:54 martti Exp $
+#	$NetBSD: ipf2netbsd,v 1.13 2004/03/23 21:07:47 martti Exp $
 #
 # Copyright (c) 1999 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -73,7 +73,6 @@ pax -rvw fil.c ip_auth.c ip_auth.h ip_compat.h ip_fil.c ip_fil.h ip_frag.c ip_fr
 pax -rvw mln_ipl.c $dlkm
 cd $r/test
 pax -rvw * $dregress
-cp -f $r/ip_fil_netbsd.c $dbase/ip_fil.c
 cp -f $r/ip_fil_netbsd.c $dsys/ip_fil.c
 
 ### Remove the $'s around the Id:
