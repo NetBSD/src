@@ -1,4 +1,4 @@
-/*	$NetBSD: scandir.c,v 1.20 2001/11/21 00:47:56 enami Exp $	*/
+/*	$NetBSD: scandir.c,v 1.21 2001/11/21 00:48:28 enami Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)scandir.c	8.3 (Berkeley) 1/2/94";
 #else
-__RCSID("$NetBSD: scandir.c,v 1.20 2001/11/21 00:47:56 enami Exp $");
+__RCSID("$NetBSD: scandir.c,v 1.21 2001/11/21 00:48:28 enami Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -91,7 +91,7 @@ scandir(dirname, namelist, select, dcomp)
 	_DIAGASSERT(namelist != NULL);
 
 	if ((dirp = opendir(dirname)) == NULL)
-		return(-1);
+		return (-1);
 	if (fstat(dirp->dd_fd, &stb) < 0)
 		goto bad;
 
@@ -141,7 +141,7 @@ scandir(dirname, namelist, select, dcomp)
 	if (nitems && dcomp != NULL)
 		qsort(names, nitems, sizeof(struct dirent *), dcomp);
 	*namelist = names;
-	return(nitems);
+	return (nitems);
 
 bad2:
 	while (nitems-- > 0)
@@ -149,7 +149,7 @@ bad2:
 	free(names);
 bad:
 	closedir(dirp);
-	return(-1);
+	return (-1);
 }
 
 /*
@@ -164,6 +164,6 @@ alphasort(d1, d2)
 	_DIAGASSERT(d1 != NULL);
 	_DIAGASSERT(d2 != NULL);
 
-	return(strcmp((*(const struct dirent *const *)d1)->d_name,
+	return (strcmp((*(const struct dirent *const *)d1)->d_name,
 	    (*(const struct dirent *const *)d2)->d_name));
 }
