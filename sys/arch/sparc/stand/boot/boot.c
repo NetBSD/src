@@ -1,4 +1,4 @@
-/*	$NetBSD: boot.c,v 1.6 1999/04/30 09:29:40 christos Exp $ */
+/*	$NetBSD: boot.c,v 1.7 1999/05/03 16:13:16 christos Exp $ */
 
 /*-
  * Copyright (c) 1982, 1986, 1990, 1993
@@ -187,7 +187,7 @@ main()
 
 	marks[MARK_END] = (((u_long)marks[MARK_END] + sizeof(int) - 1)) &
 	    (-sizeof(int));
-	arg = (prom_version() == PROM_OLDMON) ? PROM_LOADADDR : romp;
+	arg = (prom_version() == PROM_OLDMON) ? (caddr_t)PROM_LOADADDR : romp;
 #if 0
 	/* Old style cruft; works only with a.out */
 	marks[MARK_END] |= 0xf0000000;

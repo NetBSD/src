@@ -1,4 +1,4 @@
-/*	$NetBSD: bootxx.c,v 1.4 1999/02/15 18:59:36 pk Exp $ */
+/*	$NetBSD: bootxx.c,v 1.5 1999/05/03 16:13:16 christos Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -84,10 +84,10 @@ main()
 			prom_bootdevice != NULL ? prom_bootdevice : "unknown");
 	}
 
-	(void)loadboot(&io, PROM_LOADADDR);
+	(void)loadboot(&io, (caddr_t)PROM_LOADADDR);
 	(io.f_dev->dv_close)(&io);
 
-	arg = (prom_version() == PROM_OLDMON) ? PROM_LOADADDR : romp;
+	arg = (prom_version() == PROM_OLDMON) ? (caddr_t)PROM_LOADADDR : romp;
 	(*entry)(arg);
 	_rtt();
 }
