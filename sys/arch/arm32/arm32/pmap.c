@@ -1,4 +1,4 @@
-/* $NetBSD: pmap.c,v 1.5 1996/04/26 20:48:27 mark Exp $ */
+/* $NetBSD: pmap.c,v 1.6 1996/05/06 00:54:51 mark Exp $ */
 
 /*
  * Copyright (c) 1994-1996 Mark Brinicombe.
@@ -457,7 +457,7 @@ pmap_modify_pv(pmap, va, pind, bic_mask, eor_mask)
 #ifdef DIAGNOSTIC
 	if (pind > 0x00010000 || pind < 0) {
 		traceback();
-		panic("pmap_modify_pv: pind out of range pind = %08x va=%08x\n", pind, va);
+		panic("pmap_modify_pv: pind out of range pind = %08x va=%08x\n", pind, (u_int)va);
 	}      
 #endif
 
@@ -1580,7 +1580,7 @@ pmap_protect(pmap, sva, eva, prot)
 /* Get the physical page index */
 
 		if ((pind = pmap_page_index(pa)) == -1)
-			panic("pmap_protect: pmap_page_index failed for pte %08x\n", pte); 
+			panic("pmap_protect: pmap_page_index failed for pte %08x\n", (u_int)pte); 
 
 /* Clear write flag */
 
