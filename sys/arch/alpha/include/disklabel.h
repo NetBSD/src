@@ -1,7 +1,7 @@
-/* $NetBSD: disklabel.h,v 1.3 1997/04/06 08:47:22 cgd Exp $ */
+/* $NetBSD: disklabel.h,v 1.4 1999/04/02 07:32:33 cgd Exp $ */
 
 /*
- * Copyright (c) 1994 Christopher G. Demetriou
+ * Copyright (c) 1994, 1999 Christopher G. Demetriou
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -14,7 +14,8 @@
  *    documentation and/or other materials provided with the distribution.
  * 3. All advertising materials mentioning features or use of this software
  *    must display the following acknowledgement:
- *      This product includes software developed by Christopher G. Demetriou.
+ *      This product includes software developed by Christopher G. Demetriou
+ *      for the NetBSD Project.
  * 4. The name of the author may not be used to endorse or promote products
  *    derived from this software without specific prior written permission
  *
@@ -44,5 +45,22 @@
 struct cpu_disklabel {
 	struct dkbad bad;			/* bad-sector information */
 };
+
+/*
+ * Alpha (disk, but also tape) Boot Block.  See Section (III) 3.6.1 of the
+ * Alpha Architecture Reference Manual.
+ */
+
+struct boot_block {
+	u_int64_t bb_pad[60];		/* disklabel lives in here */
+	u_int64_t bb_secsize;		/* secondary size (blocks) */
+	u_int64_t bb_secstart;		/* secondary start (blocks) */
+	u_int64_t bb_flags;		/* unknown; always zero */
+	u_int64_t bb_cksum;		/* checksum of the the boot block,
+					 * taken as u_int64_t's
+					 */
+};
+
+#define	BOOT_BLOCK_BLOCKSIZE	512	/* block size for sec. size/start */
 
 #endif /* _MACHINE_DISKLABEL_H_ */
