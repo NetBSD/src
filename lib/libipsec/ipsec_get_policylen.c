@@ -1,4 +1,4 @@
-/*	$NetBSD: ipsec_get_policylen.c,v 1.1 2000/02/01 03:08:36 itojun Exp $	*/
+/*	$NetBSD: ipsec_get_policylen.c,v 1.2 2000/02/08 13:17:51 itojun Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, 1998, and 1999 WIDE Project.
@@ -34,7 +34,7 @@
 
 #include <netinet6/ipsec.h>
 
-#include <netkey/keyv2.h>
+#include <net/pfkeyv2.h>
 
 #include "ipsec_strerror.h"
 

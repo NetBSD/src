@@ -1,4 +1,4 @@
-/*	$NetBSD: pfkey_dump.c,v 1.5 2000/02/08 13:14:35 itojun Exp $	*/
+/*	$NetBSD: pfkey_dump.c,v 1.6 2000/02/08 13:17:52 itojun Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, 1998, and 1999 WIDE Project.
@@ -33,7 +33,7 @@
 #include <sys/param.h>
 #include <sys/socket.h>
 #include <netinet6/ipsec.h>
-#include <netkey/keyv2.h>
+#include <net/pfkeyv2.h>
 #include <netkey/key_var.h>
 #include <netkey/key_debug.h>
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: policy_token.l,v 1.1 2000/02/01 03:08:37 itojun Exp $	*/
+/*	$NetBSD: policy_token.l,v 1.2 2000/02/08 13:17:52 itojun Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, 1998, and 1999 WIDE Project.
@@ -34,7 +34,7 @@
 #include <sys/param.h>
 #include <sys/socket.h>
 #include <net/route.h>
-#include <netkey/keyv2.h>
+#include <net/pfkeyv2.h>
 #include <netkey/keydb.h>
 #include <netkey/key_debug.h>
 #include <netinet/in.h>
