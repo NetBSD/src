@@ -1,4 +1,4 @@
-/*	$NetBSD: amiga_init.c,v 1.82 2003/01/06 13:04:56 wiz Exp $	*/
+/*	$NetBSD: amiga_init.c,v 1.83 2003/01/11 10:47:08 aymeric Exp $	*/
 
 /*
  * Copyright (c) 1994 Michael L. Hitch
@@ -35,7 +35,7 @@
 #include "opt_p5ppc68kboard.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: amiga_init.c,v 1.82 2003/01/06 13:04:56 wiz Exp $");
+__KERNEL_RCSID(0, "$NetBSD: amiga_init.c,v 1.83 2003/01/11 10:47:08 aymeric Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -105,9 +105,6 @@ volatile unsigned short *amiga_intena_read, *amiga_intena_write;
 vaddr_t amigahwaddr;
 u_int namigahwpg;
 
-vaddr_t amigashdwaddr;
-u_int namigashdwpg;
-
 vaddr_t CHIPMEMADDR;
 vaddr_t chipmem_start;
 vaddr_t chipmem_end;
@@ -117,6 +114,8 @@ static vaddr_t z2mem_end;		/* XXX */
 int use_z2_mem = 1;			/* XXX */
 
 u_long boot_fphystart, boot_fphysize, boot_cphysize;
+static u_int start_c_fphystart;
+static u_int start_c_pstart;
 
 static u_long boot_flags;
 
@@ -136,7 +135,7 @@ int kernel_reload_write(struct uio *);
 extern void kernel_reload(char *, u_long, u_long, u_long, u_long,
 	u_long, u_long, u_long, u_long, u_long, u_long);
 extern void etext(void);
-void start_c_cleanup(void);
+void start_c_finish(void);
 
 void *
 chipmem_steal(long amount)
@@ -213,13 +212,9 @@ start_c(id, fphystart, fphysize, cphysize, esym_addr, flags, inh_sync,
 	u_int Sysptmap_pa;
 	register st_entry_t sg_proto, *sg, *esg;
 	register pt_entry_t pg_proto, *pg;
-	u_int tc, end_loaded, ncd, i;
+	u_int end_loaded, ncd, i;
 	struct boot_memlist *ml;
 	u_int loadbase = 0;	/* XXXXXXXXXXXXXXXXXXXXXXXXXXXX */
-	u_int *shadow_pt = 0;	/* XXXXXXXXXXXXXXXXXXXXXXXXXXXX */
-#ifdef	P5PPC68KBOARD
-        struct cfdev *cdp, *ecdp;
-#endif
 
 #ifdef DEBUG_KERNEL_START
 	/* XXX this only is valid if Altais is in slot 0 */
@@ -384,14 +379,6 @@ start_c(id, fphystart, fphysize, cphysize, esym_addr, flags, inh_sync,
 #endif
 	ptextra = NCHIPMEMPG + NCIAPG + NZTWOROMPG + RELOC(NZTWOMEMPG, u_int) +
 	    btoc(RELOC(ZBUSAVAIL, u_int)) + NPCMCIAPG;
-	/*
-	 * if kernel shadow mapping will overlap any initial mapping
-	 * of Zorro I/O space or the page table map, we need to
-	 * adjust things to remove the overlap.
-	 */
-	if (loadbase != 0) {
-		/* What to do, what to do? */
-	}
 
 	ptsize = (RELOC(Sysptsize, u_int) +
 	    howmany(ptextra, NPTEPG)) << PGSHIFT;
@@ -448,9 +435,6 @@ start_c(id, fphystart, fphysize, cphysize, esym_addr, flags, inh_sync,
 		 */
 		i = ((ptsize >> PGSHIFT) + 1) * (NPTEPG / SG4_LEV3SIZE);
 		sg = &((u_int *)(RELOC(Sysseg_pa, u_int)))[SG4_LEV1SIZE];
-		if (loadbase != 0)
-			/* start of next L2 table */
-			shadow_pt = &sg[roundup(i, SG4_LEV2SIZE)];
 		esg = &sg[i];
 		sg_proto = ptpa | SG_U | SG_RW | SG_V;
 		while (sg < esg) {
@@ -471,46 +455,6 @@ start_c(id, fphystart, fphysize, cphysize, esym_addr, flags, inh_sync,
 		while (sg < esg) {
 			*sg++ = sg_proto;
 			sg_proto += (SG4_LEV2SIZE * sizeof(st_entry_t));
-		}
-		if (loadbase != 0) {
-			sg = (u_int *)RELOC(Sysseg_pa, u_int);
-			if (sg[loadbase >> SG4_SHIFT1] == 0) {
-				/* allocate another level 2 table */
-				sg[loadbase >> SG4_SHIFT1] =
-				    (u_int)shadow_pt | SG_U | SG_RW | SG_V;
-				shadow_pt = NULL;
-				RELOC(protostfree, u_int) =
-				    RELOC(protostfree, u_int) << 1;
-			}
-			sg = (u_int *)(sg[loadbase >> SG4_SHIFT1] & SG4_ADDR1);
-			if (sg[(loadbase & SG4_MASK2) >> SG4_SHIFT2] == 0) {
-				/* no page table exists, need to allocate it */
-				sg_proto = pstart | SG_U | SG_RW | SG_V;
-				sg = &sg[(loadbase & SG4_MASK2) >> SG4_SHIFT2];
-				sg = (u_int *)((int)sg &
-					~(NBPG / SG4_LEV3SIZE - 1));
-				esg = &sg[NPTEPG / SG4_LEV3SIZE];
-				while (sg < esg) {
-					*sg++ = sg_proto;
-					sg_proto += SG4_LEV3SIZE *
-						sizeof (st_entry_t);
-				}
-				pg = (u_int *) pstart;
-				esg = (u_int *)&pg[NPTEPG];
-				while (pg < esg)
-					*pg++ = PG_NV;
-				pstart += NBPG;
-				vstart += NBPG;
-				avail -= NBPG;
-				/* ptmap??? */
-			}
-			sg = (u_int *)RELOC(Sysseg_pa, u_int);
-			sg = (u_int *)(sg[loadbase >> SG4_SHIFT1] & SG4_ADDR1);
-			shadow_pt =
-			    ((u_int *)(sg[(loadbase & SG4_MASK2) >> SG4_SHIFT2]
-				& SG4_ADDR1)) +
-			    ((loadbase & SG4_MASK3) >> SG4_SHIFT3); /* XXX is */
-
 		}
 		/*
 		 * Initialize Sysptmap
@@ -554,28 +498,6 @@ start_c(id, fphystart, fphysize, cphysize, esym_addr, flags, inh_sync,
 		while (pg < esg) {
 			*sg++ = SG_NV;
 			*pg++ = PG_NV;
-		}
-
-		if (loadbase != 0) {
-			sg = (u_int *)RELOC(Sysseg_pa, u_int);
-			if (sg[loadbase >> SG_ISHIFT] == 0) {
-				/* no page table exists, need to allocate it */
-				sg[loadbase >> SG_ISHIFT] =
-				    pstart | SG_RW | SG_V;
-				pg = (u_int *)Sysptmap_pa;
-				pg[loadbase >> SG_ISHIFT] =
-				    pstart | PG_RW | PG_CI | PG_V;
-				pg = (u_int *) pstart;
-				esg = (u_int *)&pg[NPTEPG];
-				while (pg < esg)
-					*pg++ = PG_NV;
-				pstart += NBPG;
-				vstart += NBPG;
-				avail -= NBPG;
-			}
-			shadow_pt =
-			    ((u_int *)(sg[loadbase >> SG_ISHIFT] & 0xffffff00))
-			    + ((loadbase & SG_PMASK) >> SG_PSHIFT);
 		}
 	}
 
@@ -689,23 +611,6 @@ start_c(id, fphystart, fphysize, cphysize, esym_addr, flags, inh_sync,
 			*pg++     = pg_proto;
 			pg_proto += NBPG;
 		}
-	}
-
-	/*
-	 * Initial any "shadow" mapping of the kernel
-	 */
-	if (loadbase != 0 && shadow_pt != 0) {
-		RELOC(amigashdwaddr, vaddr_t) = (u_int)shadow_pt - loadbase;
-		RELOC(namigashdwpg, u_int) = (vstart + USPACE) >> PGSHIFT;
-		pg_proto = fphystart | PG_RO | PG_V;
-		pg = shadow_pt;
-		*pg++ = PG_NV;			/* Make page 0 invalid */
-		pg_proto += NBPG;
-		for (i = NBPG; i < (u_int)etext; i += NBPG, pg_proto += NBPG)
-			*pg++ = pg_proto;
-		pg_proto = (pg_proto & PG_FRAME) | PG_RW | PG_V;
-		for (; i < vstart + USPACE; i += NBPG, pg_proto += NBPG)
-			*pg++ = pg_proto;
 	}
 
 	/*
@@ -840,14 +745,6 @@ start_c(id, fphystart, fphysize, cphysize, esym_addr, flags, inh_sync,
 	 */
 #if defined(M68040) || defined(M68060)
 	if (RELOC(mmutype, int) == MMU_68040) {
-		/*
-		 * movel Sysseg_pa,a0;
-		 * movec a0,SRP;
-		 * pflusha;
-		 * movel #$0xc000,d0;
-		 * movec d0,TC
-		 */
-
 		if (id & AMIGA_68060) {
 			/* do i need to clear the branch cache? */
 			asm volatile (	".word 0x4e7a,0x0002;"
@@ -855,9 +752,13 @@ start_c(id, fphystart, fphysize, cphysize, esym_addr, flags, inh_sync,
 					".word 0x4e7b,0x0002" : : : "d0");
 		}
 
+		/*
+		 * movel Sysseg_pa,%a0;
+		 * movec %a0,%srp;
+		 */
+
 		asm volatile ("movel %0,%%a0; .word 0x4e7b,0x8807"
 		    : : "a" (RELOC(Sysseg_pa, u_int)) : "a0");
-		asm volatile (".word 0xf518" : : );
 
 #ifdef DEBUG_KERNEL_START
 		if ((id>>24)==0x7D) {
@@ -868,27 +769,29 @@ start_c(id, fphystart, fphysize, cphysize, esym_addr, flags, inh_sync,
 		} else
 ((volatile struct Custom *)0xdff000)->color[0] = 0xA70;		/* ORANGE */
 #endif
-
-		asm volatile ("movel #0xc000,%%d0; .word 0x4e7b,0x0003"
-		    : : :"d0" );
 	} else
 #endif
 	{
-
 		/*
 		 * setup and load SRP
 		 * nolimit, share global, 4 byte PTE's
 		 */
 		(RELOC(protorp[0], u_int)) = 0x80000202;
 		asm volatile ("pmove %0@,%%srp":: "a" (&RELOC(protorp, u_int)));
-		/*
-		 * setup and load TC register.
-		 * enable_cpr, enable_srp, pagesize=8k,
-		 * A = 8 bits, B = 11 bits
-		 */
-		tc = 0x82d08b00;
-		asm volatile ("pmove %0@,%%tc" : : "a" (&tc));
 	}
+
+	RELOC(start_c_fphystart, u_int) = fphystart;
+	RELOC(start_c_pstart, u_int) = pstart;
+}
+
+void
+start_c_finish()
+{
+	extern u_int32_t delaydivisor;
+#ifdef	P5PPC68KBOARD
+        struct cfdev *cdp, *ecdp;
+#endif
+
 #ifdef DEBUG_KERNEL_START
 #ifdef DRACO
 	if ((id >> 24) == 0x7D) { /* mapping on, is_draco() is valid */
@@ -907,8 +810,8 @@ start_c(id, fphystart, fphysize, cphysize, esym_addr, flags, inh_sync,
 ((volatile struct Custom *)CUSTOMADDR)->color[0] = 0x0a0;	/* GREEN */
 #endif
 
-	bzero ((u_char *)proc0paddr, USPACE);	/* XXXXXXXXXXXXXXXXXXXXX */
-	pmap_bootstrap(pstart, fphystart);	/* XXXXXXXXXXXXXXXXXXXXXXx*/
+	bzero ((u_char *)proc0paddr, USPACE);
+	pmap_bootstrap(start_c_pstart, start_c_fphystart);
 
 	/*
 	 * to make life easier in locore.s, set these addresses explicitly
@@ -941,8 +844,10 @@ start_c(id, fphystart, fphysize, cphysize, esym_addr, flags, inh_sync,
 		z2mem_start = ZTWOMEMADDR;
 	}
 
+#if 0
 	i = *(int *)proc0paddr;
 	*(volatile int *)proc0paddr = i;
+#endif
 
 	/*
 	 * disable all interrupts but enable allow them to be enabled
@@ -1018,24 +923,6 @@ start_c(id, fphystart, fphysize, cphysize, esym_addr, flags, inh_sync,
 			}
         }
 #endif
-}
-
-void
-start_c_cleanup()
-{
-	u_int *sg, *esg;
-	extern u_int32_t delaydivisor;
-
-	/*
-	 * remove shadow mapping of kernel?
-	 */
-	if (amigashdwaddr == 0)
-		return;
-	sg = (u_int *) amigashdwaddr;
-	esg = (u_int *)&sg[namigashdwpg];
-	while (sg < esg)
-		*sg++ = PG_NV;
-
 	/*
 	 * preliminary delay divisor value
 	 */
