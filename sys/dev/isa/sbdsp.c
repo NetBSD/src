@@ -1,4 +1,4 @@
-/*	$NetBSD: sbdsp.c,v 1.89 1999/01/08 18:10:35 augustss Exp $	*/
+/*	$NetBSD: sbdsp.c,v 1.90 1999/02/17 01:22:47 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1991-1993 Regents of the University of California.
@@ -2197,8 +2197,13 @@ sb_malloc(addr, size, pool, flags)
 	int flags;
 {
 	struct sbdsp_softc *sc = addr;
+	int drq;
 
-	return isa_malloc(sc->sc_ic, 4, size, pool, flags);
+	if (sc->sc_drq8 != -1)
+		drq = sc->sc_drq8;
+	else
+		drq = sc->sc_drq16;
+	return isa_malloc(sc->sc_ic, drq, size, pool, flags);
 }
 
 void
