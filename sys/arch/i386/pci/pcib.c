@@ -1,4 +1,4 @@
-/*	$NetBSD: pcib.c,v 1.20 1998/09/18 11:13:10 drochner Exp $	*/
+/*	$NetBSD: pcib.c,v 1.21 1998/09/18 11:57:57 drochner Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1998 The NetBSD Foundation, Inc.
@@ -72,18 +72,15 @@ pcibmatch(parent, match, aux)
 
 #if 0
 	/*
-	 * Match all known PCI-ISA bridges.
+	 * PCI-ISA bridges are matched on class/subclass.
+	 * This list contains only the bridges where correct
+	 * (or incorrect) behaviour is not yet confirmed.
 	 */
 	switch (PCI_VENDOR(pa->pa_id)) {
 	case PCI_VENDOR_INTEL:
 		switch (PCI_PRODUCT(pa->pa_id)) {
-		case PCI_PRODUCT_INTEL_SIO:
 		case PCI_PRODUCT_INTEL_82426EX:
-		case PCI_PRODUCT_INTEL_82371MX:
 		case PCI_PRODUCT_INTEL_82380AB:
-		case PCI_PRODUCT_INTEL_82371FB_ISA:
-		case PCI_PRODUCT_INTEL_82371SB_ISA:
-		case PCI_PRODUCT_INTEL_82371AB_ISA:
 			return (1);
 		}
 		break;
