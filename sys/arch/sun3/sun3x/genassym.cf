@@ -1,4 +1,4 @@
-#	$NetBSD: genassym.cf,v 1.3 2003/01/18 07:03:36 thorpej Exp $
+#	$NetBSD: genassym.cf,v 1.4 2003/04/11 21:20:45 nathanw Exp $
 
 #
 # Copyright (c) 1994, 1995 Gordon W. Ross
@@ -100,7 +100,7 @@ define	SUN3X_MONEND			SUN3X_MONEND
 # kernel-isms
 define	KERNBASE			KERNBASE
 define	USPACE				USPACE
-define	NBPG				NBPG
+define	PAGE_SIZE			PAGE_SIZE
 
 # system calls
 define	SYS_exit			SYS_exit
