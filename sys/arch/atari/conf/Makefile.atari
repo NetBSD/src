@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.atari,v 1.49 1999/01/08 19:26:12 augustss Exp $
+#	$NetBSD: Makefile.atari,v 1.50 1999/01/15 23:21:25 thorpej Exp $
 
 # Makefile for NetBSD
 #
@@ -34,7 +34,7 @@ SIZE?=	size
 STRIP?=	strip
 TSORT?=	tsort -q
 
-COPTS?=	-O2 -mc68020
+COPTS?=	-O2
 
 # source tree is located via $S relative to the compilation directory
 .ifndef S

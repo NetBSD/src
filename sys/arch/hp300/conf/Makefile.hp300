@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.hp300,v 1.66 1999/01/08 19:26:12 augustss Exp $
+#	$NetBSD: Makefile.hp300,v 1.67 1999/01/15 23:21:26 thorpej Exp $
 
 # Makefile for NetBSD
 #
@@ -45,7 +45,7 @@ HP300=	$S/arch/hp300
 HAVE_GCC28!=	${CC} --version | egrep "^(2\.8|egcs)" ; echo 
 INCLUDES=	-I. -I$S/arch -I$S -nostdinc
 CPPFLAGS=	${INCLUDES} ${IDENT} ${PARAM} -D_KERNEL \
-		-Dmc68020 -Dhp300
+		-Dhp300
 CWARNFLAGS?=	-Werror -Wall -Wstrict-prototypes -Wmissing-prototypes \
 		-Wpointer-arith
 .if (${HAVE_GCC28} != "")

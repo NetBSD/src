@@ -1,4 +1,4 @@
-# $NetBSD: Makefile.sun3,v 1.73 1999/01/08 19:26:15 augustss Exp $
+# $NetBSD: Makefile.sun3,v 1.74 1999/01/15 23:21:27 thorpej Exp $
 
 # Makefile for NetBSD
 #
@@ -57,7 +57,7 @@ TEXTADDR=0E004000
 HAVE_GCC28!=	${CC} --version | egrep "^(2\.8|egcs)" ; echo 
 INCLUDES=	-nostdinc -I. -I$S/arch -I$S
 XDEFS=		-undef -D__NetBSD__ -Dm68k -Dmc68000
-DEFINES=	-D_KERNEL -Dmc68020 -Dsun3
+DEFINES=	-D_KERNEL -Dsun3
 CPPFLAGS=	${INCLUDES} ${XDEFS} ${DEFINES} ${IDENT} ${PARAM}
 # Make it easy to override this on the command line...
 CWARNFLAGS?= 	-Werror -Wall -Wstrict-prototypes -Wmissing-prototypes \
