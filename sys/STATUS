@@ -102,6 +102,6 @@ sparc64		compiles		tested on U5(+siop)
 
 sun3					si0 at obio0 OK
 
-vax
+vax		compiles
 
 x68k
