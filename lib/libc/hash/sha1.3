@@ -1,4 +1,4 @@
-.\"	$NetBSD: sha1.3,v 1.8 2001/09/16 02:28:09 wiz Exp $
+.\"	$NetBSD: sha1.3,v 1.9 2002/02/07 07:00:19 ross Exp $
 .\"	$OpenBSD: sha1.3,v 1.9 1998/03/07 22:18:12 millert Exp $
 .\"
 .\" Copyright (c) 1997 Todd C. Miller <Todd.Miller@courtesan.com>
@@ -43,8 +43,8 @@
 .Nm SHA1Data
 .Nd calculate the NIST Secure Hash Algorithm
 .Sh SYNOPSIS
-.Fd #include <sys/types.h>
-.Fd #include <sha1.h>
+.Fd #include \*[Lt]sys/types.h\*[Gt]
+.Fd #include \*[Lt]sha1.h\*[Gt]
 .Ft void
 .Fn SHA1Init "SHA1_CTX *context"
 .Ft void
@@ -161,13 +161,13 @@ int n;
 
 buf = "abc";
 n = strlen(buf);
-SHA1Init(&sha);
-SHA1Update(&sha, (u_char *)buf, n);
-SHA1Final(results, &sha);
+SHA1Init(&amp;sha);
+SHA1Update(&amp;sha, (u_char *)buf, n);
+SHA1Final(results, &amp;sha);
 
 /* Print the digest as one long hex value */
 printf("0x");
-for (n = 0; n < 20; n++)
+for (n = 0; n \*[Lt] 20; n++)
 	printf("%02x", results[n]);
 putchar('\\n');
 .Ed

@@ -1,4 +1,4 @@
-.\"	$NetBSD: pw_init.3,v 1.7 2000/07/10 11:19:16 ad Exp $
+.\"	$NetBSD: pw_init.3,v 1.8 2002/02/07 07:00:52 ross Exp $
 .\"
 .\" Copyright (c) 1995
 .\"	The Regents of the University of California.  All rights reserved.
@@ -49,8 +49,8 @@
 .Sh LIBRARY
 .Lb libutil
 .Sh SYNOPSIS
-.Fd #include <pwd.h>
-.Fd #include <util.h>
+.Fd #include \*[Lt]pwd.h\*[Gt]
+.Fd #include \*[Lt]util.h\*[Gt]
 .Ft void
 .Fn pw_init "void"
 .Ft void
@@ -106,7 +106,7 @@ function reads a passwd file from
 .Fa ffd
 and writes it to
 .Fa tfd ,
-updating the entry corresponding to pw->pw_name with the information
+updating the entry corresponding to pw-\*[Gt]pw_name with the information
 in
 .Fa pw .
 If

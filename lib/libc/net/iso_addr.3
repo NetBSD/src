@@ -1,4 +1,4 @@
-.\"	$NetBSD: iso_addr.3,v 1.5 2001/09/16 02:23:09 wiz Exp $
+.\"	$NetBSD: iso_addr.3,v 1.6 2002/02/07 07:00:21 ross Exp $
 .\"
 .\" Copyright (c) 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -43,8 +43,8 @@
 .Sh LIBRARY
 .Lb libc
 .Sh SYNOPSIS
-.Fd #include <sys/types.h>
-.Fd #include <netiso/iso.h>
+.Fd #include \*[Lt]sys/types.h\*[Gt]
+.Fd #include \*[Lt]netiso/iso.h\*[Gt]
 .Ft struct iso_addr *
 .Fn iso_addr "const char *cp"
 .Ft char *
@@ -78,7 +78,7 @@ is a sequence of hexadecimal
 (optionally separated by periods),
 of the form:
 .Bd -filled -offset indent
-<hex digits>.<hex digits>.<hex digits>
+\*[Lt]hex digits\*[Gt].\*[Lt]hex digits\*[Gt].\*[Lt]hex digits\*[Gt]
 .Ed
 .Pp
 Each pair of hexadecimal digits represents a byte

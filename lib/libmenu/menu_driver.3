@@ -1,4 +1,4 @@
-.\"	$NetBSD: menu_driver.3,v 1.4 2001/04/29 19:07:06 wiz Exp $
+.\"	$NetBSD: menu_driver.3,v 1.5 2002/02/07 07:00:50 ross Exp $
 .\"
 .\" Copyright (c) 1999
 .\"	Brett Lymn - blymn@baea.com.au, brett_lymn@yahoo.com.au
@@ -38,7 +38,7 @@
 .Sh LIBRARY
 .Lb libmenu
 .Sh SYNOPSIS
-.Fd #include <menu.h>
+.Fd #include \*[Lt]menu.h\*[Gt]
 .Ft int
 .Fn menu_driver "MENU *menu" "int c"
 .Sh DESCRIPTION
@@ -127,8 +127,8 @@ The menu driver could not process the request.
 .Xr menus 3
 .Sh NOTES
 The header
-.Pa <menu.h>
+.Pa \*[Lt]menu.h\*[Gt]
 automatically includes both
-.Pa <curses.h>
+.Pa \*[Lt]curses.h\*[Gt]
 and
-.Pa <eti.h> .
+.Pa \*[Lt]eti.h\*[Gt] .

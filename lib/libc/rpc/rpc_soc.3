@@ -1,5 +1,5 @@
 .\"	@(#)rpc.3n	2.4 88/08/08 4.0 RPCSRC; from 1.19 88/06/24 SMI
-.\"	$NetBSD: rpc_soc.3,v 1.3 2001/09/16 02:17:41 wiz Exp $
+.\"	$NetBSD: rpc_soc.3,v 1.4 2002/02/07 07:00:23 ross Exp $
 .\"
 .TH RPC_SOC 3 "16 February 1988"
 .SH NAME
@@ -89,7 +89,7 @@ Finally, the procedure call returns to the client.
 .ft B
 .nf
 .sp .5
-#include <rpc/rpc.h>
+#include \*[Lt]rpc/rpc.h\*[Gt]
 .fi
 .ft R
 .br
@@ -679,7 +679,7 @@ address
 .IR *addr .
 If
 .\"The following in-line font conversion is necessary for the hyphen indicator
-\fB\%addr\->sin_port\fR
+\fB\%addr\-\*[Gt]sin_port\fR
 is zero, then it is set to the actual port that the remote
 program is listening on (the remote
 .B portmap
@@ -730,7 +730,7 @@ as a transport. The remote program is located at Internet
 address
 .IR addr .
 If
-\fB\%addr\->sin_port\fR
+\fB\%addr\-\*[Gt]sin_port\fR
 is zero, then it is set to actual port that the remote
 program is listening on (the remote
 .B portmap
@@ -784,7 +784,7 @@ as a transport. The remote program is located at Internet
 address
 .IR addr .
 If
-\fB\%addr\->sin_port\fR
+\fB\%addr\-\*[Gt]sin_port\fR
 is zero, then it is set to actual port that the remote
 program is listening on (the remote
 .B portmap
@@ -1243,7 +1243,7 @@ service.  If
 is non-zero, then a mapping of the triple
 .RI [ prognum , versnum , protocol\fR]
 to
-\fB\%xprt\->xp_port\fR
+\fB\%xprt\-\*[Gt]xp_port\fR
 is established with the local
 .B portmap
 service (generally
@@ -1497,9 +1497,9 @@ If the socket is not bound to a local
 .SM TCP
 port, then this routine binds it to an arbitrary port.  Upon
 completion,
-\fB\%xprt\->xp_sock\fR
+\fB\%xprt\-\*[Gt]xp_sock\fR
 is the transport's socket descriptor, and
-\fB\%xprt\->xp_port\fR
+\fB\%xprt\-\*[Gt]xp_port\fR
 is the transport's port number.
 This routine returns
 .SM NULL
@@ -1559,9 +1559,9 @@ If the socket is not bound to a local
 .SM UDP
 port, then this routine binds it to an arbitrary port. Upon
 completion,
-\fB\%xprt\->xp_sock\fR
+\fB\%xprt\-\*[Gt]xp_sock\fR
 is the transport's socket descriptor, and
-\fB\%xprt\->xp_port\fR
+\fB\%xprt\-\*[Gt]xp_port\fR
 is the transport's port number.
 This routine returns
 .SM NULL
