@@ -1,4 +1,4 @@
-/*	$Id: cardbus_map.c,v 1.1 1999/10/15 06:07:18 haya Exp $	*/
+/*	$NetBSD: cardbus_map.c,v 1.2 1999/10/15 06:42:21 haya Exp $	*/
 
 /*
  * Copyright (c) 1999

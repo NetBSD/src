@@ -1,3 +1,4 @@
+/*	$NetBSD: rbus.c,v 1.2 1999/10/15 06:42:22 haya Exp $	*/
 /*
  * Copyright (c) 1999
  *     HAYAKAWA Koichi.  All rights reserved.
@@ -28,7 +29,6 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-/* $Id: rbus.c,v 1.1 1999/10/15 06:07:24 haya Exp $ */
 
 
 #include <sys/types.h>

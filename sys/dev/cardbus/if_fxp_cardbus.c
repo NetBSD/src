@@ -1,4 +1,4 @@
-/*	$Id: if_fxp_cardbus.c,v 1.1 1999/10/15 06:07:24 haya Exp $	*/
+/*	$NetBSD: if_fxp_cardbus.c,v 1.2 1999/10/15 06:42:22 haya Exp $	*/
 
 /*
  * Copyright (c) 1999

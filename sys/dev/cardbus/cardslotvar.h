@@ -1,4 +1,4 @@
-/*	$Id: cardslotvar.h,v 1.1 1999/10/15 06:07:22 haya Exp $	*/
+/*	$NetBSD: cardslotvar.h,v 1.2 1999/10/15 06:42:22 haya Exp $	*/
 
 /*
  * Copyright (c) 1999
