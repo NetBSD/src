@@ -1,4 +1,4 @@
-/*	$NetBSD: ftpcmd.y,v 1.54 2000/11/13 11:50:46 itojun Exp $	*/
+/*	$NetBSD: ftpcmd.y,v 1.55 2000/11/15 02:32:30 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1997-2000 The NetBSD Foundation, Inc.
@@ -83,7 +83,7 @@
 #if 0
 static char sccsid[] = "@(#)ftpcmd.y	8.3 (Berkeley) 4/6/94";
 #else
-__RCSID("$NetBSD: ftpcmd.y,v 1.54 2000/11/13 11:50:46 itojun Exp $");
+__RCSID("$NetBSD: ftpcmd.y,v 1.55 2000/11/15 02:32:30 lukem Exp $");
 #endif
 #endif /* not lint */
 
@@ -227,26 +227,26 @@ cmd
 			if (logged_in) {
 				reply(-221, "%s", "");
 				reply(0,
-	    "Data traffic for this session was %qd byte%s in %qd file%s.",
-				    (qdfmt_t)total_data, PLURAL(total_data),
-				    (qdfmt_t)total_files, PLURAL(total_files));
+ "Data traffic for this session was " LLF " byte%s in " LLF " file%s.",
+				    (LLT)total_data, PLURAL(total_data),
+				    (LLT)total_files, PLURAL(total_files));
 				reply(0,
-	    "Total traffic for this session was %qd byte%s in %qd transfer%s.",
-				    (qdfmt_t)total_bytes, PLURAL(total_bytes),
-				    (qdfmt_t)total_xfers, PLURAL(total_xfers));
+ "Total traffic for this session was " LLF " byte%s in " LLF " transfer%s.",
+				    (LLT)total_bytes, PLURAL(total_bytes),
+				    (LLT)total_xfers, PLURAL(total_xfers));
 			}
 			reply(221,
 			    "Thank you for using the FTP service on %s.",
 			    hostname);
 			if (logged_in) {
 				syslog(LOG_INFO,
-				    "Data traffic: %qd byte%s in %qd file%s",
-				    (qdfmt_t)total_data, PLURAL(total_data),
-				    (qdfmt_t)total_files, PLURAL(total_files));
+		"Data traffic: " LLF " byte%s in " LLF " file%s",
+				    (LLT)total_data, PLURAL(total_data),
+				    (LLT)total_files, PLURAL(total_files));
 				syslog(LOG_INFO,
-				  "Total traffic: %qd byte%s in %qd transfer%s",
-				    (qdfmt_t)total_bytes, PLURAL(total_bytes),
-				    (qdfmt_t)total_xfers, PLURAL(total_xfers));
+		"Total traffic: " LLF " byte%s in " LLF " transfer%s",
+				    (LLT)total_bytes, PLURAL(total_bytes),
+				    (LLT)total_xfers, PLURAL(total_xfers));
 			}
 
 			dologout(0);
@@ -855,9 +855,9 @@ rcmd
 			if ($2) {
 				fromname = NULL;
 				restart_point = $4; /* XXX $3 is only "int" */
-				reply(350, "Restarting at %qd. %s",
-				    (qdfmt_t)restart_point,
-			    "Send STORE or RETRIEVE to initiate transfer.");
+				reply(350,
+    "Restarting at " LLF ". Send STORE or RETRIEVE to initiate transfer.",
+				    (LLT)restart_point);
 			}
 		}
 
@@ -895,11 +895,12 @@ host_port
 		{
 			char *a, *p;
 
+			memset(&data_dest, 0, sizeof(data_dest));
 			data_dest.su_len = sizeof(struct sockaddr_in);
 			data_dest.su_family = AF_INET;
-			p = (char *)&data_dest.su_sin.sin_port;
+			p = (char *)&data_dest.su_port;
 			p[0] = $9; p[1] = $11;
-			a = (char *)&data_dest.su_sin.sin_addr;
+			a = (char *)&data_dest.su_addr;
 			a[0] = $1; a[1] = $3; a[2] = $5; a[3] = $7;
 		}
 	;
@@ -911,12 +912,12 @@ host_long_port4
 		{
 			char *a, *p;
 
-			data_dest.su_sin.sin_len =
-				sizeof(struct sockaddr_in);
+			memset(&data_dest, 0, sizeof(data_dest));
+			data_dest.su_len = sizeof(struct sockaddr_in);
 			data_dest.su_family = AF_INET;
 			p = (char *)&data_dest.su_port;
 			p[0] = $15; p[1] = $17;
-			a = (char *)&data_dest.su_sin.sin_addr;
+			a = (char *)&data_dest.su_addr;
 			a[0] =  $5;  a[1] =  $7;  a[2] =  $9;  a[3] = $11;
 
 			/* reject invalid LPRT command */
@@ -936,24 +937,23 @@ host_long_port6
 #ifdef INET6
 			char *a, *p;
 
-			data_dest.su_sin6.sin6_len =
-				sizeof(struct sockaddr_in6);
+			memset(&data_dest, 0, sizeof(data_dest));
+			data_dest.su_len = sizeof(struct sockaddr_in6);
 			data_dest.su_family = AF_INET6;
 			p = (char *)&data_dest.su_port;
 			p[0] = $39; p[1] = $41;
-			a = (char *)&data_dest.su_sin6.sin6_addr;
+			a = (char *)&data_dest.si_su.su_sin6.sin6_addr;
 			 a[0] =  $5;  a[1] =  $7;  a[2] =  $9;  a[3] = $11;
 			 a[4] = $13;  a[5] = $15;  a[6] = $17;  a[7] = $19;
 			 a[8] = $21;  a[9] = $23; a[10] = $25; a[11] = $27;
 			a[12] = $29; a[13] = $31; a[14] = $33; a[15] = $35;
 			if (his_addr.su_family == AF_INET6) {
 				/* XXX more sanity checks! */
-				data_dest.su_sin6.sin6_scope_id =
-					his_addr.su_sin6.sin6_scope_id;
+				data_dest.su_scope_id = his_addr.su_scope_id;
 			}
 #else
 			memset(&data_dest, 0, sizeof(data_dest));
-#endif
+#endif /* INET6 */
 			/* reject invalid LPRT command */
 			if ($1 != 6 || $3 != 16 || $37 != 2)
 				memset(&data_dest, 0, sizeof(data_dest));
@@ -1756,19 +1756,16 @@ port_check(const char *cmd, int family)
 			goto port_check_fail;
 		switch (data_dest.su_family) {
 		case AF_INET:
-			if (memcmp(&data_dest.su_sin.sin_addr,
-			    &his_addr.su_sin.sin_addr,
-			    sizeof(data_dest.su_sin.sin_addr)) != 0)
+			if (memcmp(&data_dest.su_addr, &his_addr.su_addr,
+			    data_dest.su_len) != 0)
 				goto port_check_fail;
 			break;
 #ifdef INET6
 		case AF_INET6:
-			if (memcmp(&data_dest.su_sin6.sin6_addr,
-			    &his_addr.su_sin6.sin6_addr,
-			    sizeof(data_dest.su_sin6.sin6_addr)) != 0)
+			if (memcmp(&data_dest.su_6addr, &his_addr.su_6addr,
+			    sizeof(data_dest.su_6addr)) != 0)
 				goto port_check_fail;
-			if (data_dest.su_sin6.sin6_scope_id !=
-			    his_addr.su_sin6.sin6_scope_id)
+			if (data_dest.su_scope_id != his_addr.su_scope_id)
 				goto port_check_fail;
 			break;
 #endif
