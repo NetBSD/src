@@ -1,4 +1,4 @@
-/*	$NetBSD: logger.c,v 1.4 1994/12/22 06:27:00 jtc Exp $	*/
+/*	$NetBSD: logger.c,v 1.5 1997/10/19 04:16:48 lukem Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -33,17 +33,17 @@
  * SUCH DAMAGE.
  */
 
+#include <sys/cdefs.h>
 #ifndef lint
-static char copyright[] =
-"@(#) Copyright (c) 1983, 1993\n\
-	The Regents of the University of California.  All rights reserved.\n";
+__COPYRIGHT("@(#) Copyright (c) 1983, 1993\n\
+	The Regents of the University of California.  All rights reserved.\n");
 #endif /* not lint */
 
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)logger.c	8.1 (Berkeley) 6/6/93";
 #endif
-static char rcsid[] = "$NetBSD: logger.c,v 1.4 1994/12/22 06:27:00 jtc Exp $";
+__RCSID("$NetBSD: logger.c,v 1.5 1997/10/19 04:16:48 lukem Exp $");
 #endif /* not lint */
 
 #include <errno.h>
@@ -58,6 +58,7 @@ static char rcsid[] = "$NetBSD: logger.c,v 1.4 1994/12/22 06:27:00 jtc Exp $";
 
 int	decode __P((char *, CODE *));
 int	pencode __P((char *));
+int	main __P((int, char **));
 void	usage __P((void));
 
 /*
@@ -77,7 +78,7 @@ main(argc, argv)
 	tag = NULL;
 	pri = LOG_NOTICE;
 	logflags = 0;
-	while ((ch = getopt(argc, argv, "f:ip:st:")) != EOF)
+	while ((ch = getopt(argc, argv, "f:ip:st:")) != -1)
 		switch((char)ch) {
 		case 'f':		/* file to log */
 			if (freopen(optarg, "r", stdin) == NULL) {
@@ -111,7 +112,7 @@ main(argc, argv)
 
 	/* log input line if appropriate */
 	if (argc > 0) {
-		register char *p, *endp;
+		char *p, *endp;
 		int len;
 
 		for (p = buf, endp = buf + sizeof(buf) - 2; *argv;) {
@@ -125,7 +126,7 @@ main(argc, argv)
 			else {
 				if (p != buf)
 					*p++ = ' ';
-				bcopy(*argv++, p, len);
+				memmove(p, *argv++, len);
 				*(p += len) = '\0';
 			}
 		}
@@ -142,7 +143,7 @@ main(argc, argv)
  */
 int
 pencode(s)
-	register char *s;
+	char *s;
 {
 	char *save;
 	int fac, lev;
@@ -176,7 +177,7 @@ decode(name, codetab)
 	char *name;
 	CODE *codetab;
 {
-	register CODE *c;
+	CODE *c;
 
 	if (isdigit(*name))
 		return (atoi(name));
