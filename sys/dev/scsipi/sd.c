@@ -1,4 +1,4 @@
-/*	$NetBSD: sd.c,v 1.155 2000/01/21 23:40:00 thorpej Exp $	*/
+/*	$NetBSD: sd.c,v 1.156 2000/01/25 20:42:33 drochner Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -694,7 +694,10 @@ sdstart(v)
 		 * First, translate the block to absolute and put it in terms
 		 * of the logical blocksize of the device.
 		 */
-		blkno = bp->b_blkno / (lp->d_secsize / DEV_BSIZE);
+		if (lp->d_secsize >= DEV_BSIZE)
+			blkno = bp->b_blkno / (lp->d_secsize / DEV_BSIZE);
+		else
+			blkno = bp->b_blkno * (DEV_BSIZE / lp->d_secsize);
 		if (SDPART(bp->b_dev) != RAW_PART) {
 			p = &lp->d_partitions[SDPART(bp->b_dev)];
 			blkno += p->p_offset;
