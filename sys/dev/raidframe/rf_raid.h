@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_raid.h,v 1.25 2004/01/10 00:56:28 oster Exp $	*/
+/*	$NetBSD: rf_raid.h,v 1.26 2004/03/01 23:30:58 oster Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -237,7 +237,9 @@ struct RF_Raid_s {
          */
 	int     procsInBufWait;
 	int     numFullReconBuffers;
+#if RF_ACC_TRACE > 0
 	RF_AccTraceEntry_t *recon_tracerecs;
+#endif
 	unsigned long accumXorTimeUs;
 
 	/*
