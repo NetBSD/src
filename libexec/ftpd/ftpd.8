@@ -1,4 +1,4 @@
-.\"	$NetBSD: ftpd.8,v 1.50 2000/01/13 00:04:31 lukem Exp $
+.\"	$NetBSD: ftpd.8,v 1.51 2000/05/16 00:59:12 itojun Exp $
 .\"
 .\" Copyright (c) 1997-2000 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -560,6 +560,17 @@ The server must run as the super-user to create sockets with
 privileged port numbers.
 It maintains an effective user id of the logged in user, reverting
 to the super-user only when binding addresses to sockets.
+.Pp
+.Nm
+may have trouble handling connections from scoped IPv6 addresses, or
+IPv4 mapped addresses
+.Po
+IPv4 connection on
+.Dv AF_INET6
+socket
+.Pc .
+For the latter case, running two daemons,
+one for IPv4 and one for IPv6, will avoid the problem.
 .Sh SECURITY CONSIDERATIONS
 .Cm RFC 959
 provides no restrictions on the PORT command, and this can lead
@@ -576,11 +587,6 @@ will be rejected.
 Use of this option is
 .Em strongly
 recommended.
-.Pp
-When running on IPv6, connection from IPv4 mapped address
-.Pq IPv4 connection to IPv6 socket
-is not very stable.
-Please run two daemons, one for IPv4 and one for IPv6.
 .Pp
 Don't create
 .Pa ~ftp/tmp
