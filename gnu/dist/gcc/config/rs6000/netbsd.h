@@ -1,6 +1,5 @@
 /* Start with SVR4 defaults. */
 #include <rs6000/sysv4.h>
-#undef MD_EXEC_PREFIX
 
 /* Get generic NetBSD definitions.  */
 
