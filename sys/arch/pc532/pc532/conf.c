@@ -1,4 +1,4 @@
-/*	$NetBSD: conf.c,v 1.21 1995/04/10 10:02:09 mycroft Exp $	*/
+/*	$NetBSD: conf.c,v 1.22 1995/04/20 07:16:30 phil Exp $	*/
 
 /*-
  * Copyright (c) 1991 The Regents of the University of California.
@@ -84,7 +84,7 @@ int	nblkdev = sizeof(bdevsw) / sizeof(bdevsw[0]);
 	dev_init(c,n,open), dev_init(c,n,close), (dev_type_read((*))) enodev, \
 	dev_init(c,n,write), dev_init(c,n,ioctl), (dev_type_stop((*))) enodev, \
 	(dev_type_reset((*))) nullop, 0, seltrue, \
-	(dev_type_map((*))) enodev, 0 }
+	(dev_type_mmap((*))) enodev, 0 }
 
 cdev_decl(cn);
 cdev_decl(ctty);
