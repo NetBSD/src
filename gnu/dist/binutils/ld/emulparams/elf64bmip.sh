@@ -1,3 +1,4 @@
+EMULATION_NAME="elf64bmip"
 . ${srcdir}/emulparams/elf32bmipn32-defs.sh
 OUTPUT_FORMAT="elf64-bigmips"
 BIG_OUTPUT_FORMAT="elf64-bigmips"
