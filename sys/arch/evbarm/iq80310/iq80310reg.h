@@ -1,4 +1,4 @@
-/*	$NetBSD: iq80310reg.h,v 1.2 2001/11/07 02:24:18 thorpej Exp $	*/
+/*	$NetBSD: iq80310reg.h,v 1.3 2001/11/08 03:28:53 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
@@ -79,8 +79,22 @@
 #define	CPLD_READ(x)		*((__volatile uint8_t *)(x))
 #define	CPLD_WRITE(x, v)	*((__volatile uint8_t *)(x)) = (v)
 
+/*
+ * We allocate a page table for VA 0xfe400000 (4MB) and map the i80312
+ * PCI I/O space (2 * 64L) and i80312 regisers (4K) there.
+ */
+#define	IQ80310_IOPXS_VBASE	0xfe400000UL
+#define	IQ80310_PIOW_VBASE	IQ80310_IOPXS_VBASE
+#define	IQ80310_SIOW_VBASE	(IQ80310_PIOW_VBASE + I80312_PCI_XLATE_IOSIZE)
+#define	IQ80310_80312_VBASE	(IQ80310_SIOW_VBASE + I80312_PCI_XLATE_IOSIZE)
+
+/*
+ * The IQ80310 on-board devices are mapped VA==PA during bootstrap.
+ * Conveniently, the size of the on-board register space is 1 section
+ * mapping.
+ */
 #define	IQ80310_OBIO_BASE	0xfe800000UL
-#define	IQ80310_OBIO_SIZE	0x00100000UL
+#define	IQ80310_OBIO_SIZE	0x00100000UL	/* 1MB */
 
 #define	IQ80310_UART1		0xfe800000UL	/* XR 16550 */
 
