@@ -1,4 +1,4 @@
-/*	$NetBSD: comsat.c,v 1.21 2001/03/16 21:39:08 atatat Exp $	*/
+/*	$NetBSD: comsat.c,v 1.22 2001/04/02 14:57:37 onoe Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -40,7 +40,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1993\n\
 #if 0
 static char sccsid[] = "from: @(#)comsat.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: comsat.c,v 1.21 2001/03/16 21:39:08 atatat Exp $");
+__RCSID("$NetBSD: comsat.c,v 1.22 2001/04/02 14:57:37 onoe Exp $");
 #endif
 #endif /* not lint */
 
@@ -196,7 +196,7 @@ mailfor(char *name)
 	offset = strtol(cp + 1, &fn, 10);
 	if (errno == ERANGE)
 		return;
-	if (fn && *fn) {
+	if (fn && *fn && *fn != '\n') {
 		/*
 		 * Procmail sends messages to comsat with a trailing colon
 		 * and a pathname to the folder where the new message was
