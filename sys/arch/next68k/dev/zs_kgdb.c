@@ -1,4 +1,4 @@
-/*	$NetBSD: zs_kgdb.c,v 1.1 1999/03/27 02:59:41 dbj Exp $	*/
+/*	$NetBSD: zs_kgdb.c,v 1.2 2002/05/17 06:44:03 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -46,6 +46,8 @@
  *   (gdb) set remotebaud 19200
  *   (gdb) target remote /dev/ttyb
  */
+
+#include "opt_kgdb.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
