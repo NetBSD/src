@@ -1,4 +1,4 @@
-/*	$NetBSD: ext2fs_vnops.c,v 1.2 1997/06/30 20:13:44 fvdl Exp $	*/
+/*	$NetBSD: ext2fs_vnops.c,v 1.3 1997/07/01 07:34:03 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1997 Manuel Bouyer.
@@ -665,7 +665,9 @@ abortit:
 		 * Avoid ".", "..", and aliases of "." for obvious reasons.
 		 */
 		if ((fcnp->cn_namelen == 1 && fcnp->cn_nameptr[0] == '.') ||
-		    dp == ip || (fcnp->cn_flags&ISDOTDOT) ||
+		    dp == ip ||
+			(fcnp->cn_flags&ISDOTDOT) ||
+			(tcnp->cn_flags & ISDOTDOT) ||
 		    (ip->i_flag & IN_RENAME)) {
 			VOP_UNLOCK(fvp);
 			error = EINVAL;
