@@ -1,4 +1,4 @@
-	$NetBSD: syscalls.master,v 1.19 2004/09/08 19:45:22 jdolecek Exp $  
+	$NetBSD: syscalls.master,v 1.20 2004/09/20 18:41:07 jdolecek Exp $  
 
 ;	@(#)syscalls.master	8.1 (Berkeley) 7/19/93
 
@@ -421,8 +421,10 @@
 249	UNIMPL		swapcontext
 250	UNIMPL		tgkill
 251	UNIMPL		utimes
-252	UNIMPL		statfs64
-253	UNIMPL		fstatfs64
+252	STD		{ int linux_sys_statfs64(const char *path, \
+			    size_t sz, struct linux_statfs64 *sp); }
+253	STD		{ int linux_sys_fstatfs64(int fd, \
+			    size_t sz, struct linux_statfs64 *sp); }
 254	UNIMPL		fadvise64_64
 255	UNIMPL		rtas
 256	UNIMPL		/* reserved for sys_debug_setcontext */
