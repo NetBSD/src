@@ -1,4 +1,4 @@
-/*	$NetBSD: citrus_db_hash.c,v 1.3 2003/10/27 00:12:42 lukem Exp $	*/
+/*	$NetBSD: citrus_db_hash.c,v 1.4 2004/01/02 21:49:35 itojun Exp $	*/
 
 /*-
  * Copyright (c)2003 Citrus Project,
@@ -32,7 +32,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: citrus_db_hash.c,v 1.3 2003/10/27 00:12:42 lukem Exp $");
+__RCSID("$NetBSD: citrus_db_hash.c,v 1.4 2004/01/02 21:49:35 itojun Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #ifndef HOSTPROG
@@ -57,7 +57,7 @@ _citrus_db_hash_std(void *closure, struct _region *r)
 	u_int32_t hash = 0, tmp;
 	size_t i;
 
-	for (i=_region_size(r); i>0; i--) {
+	for (i = _region_size(r); i > 0; i--) {
 		hash <<= 4;
 		hash += _bcs_tolower(*p);
 		tmp = hash & 0xF0000000;

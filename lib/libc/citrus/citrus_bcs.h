@@ -1,4 +1,4 @@
-/*	$NetBSD: citrus_bcs.h,v 1.1 2003/06/25 09:51:26 tshiozak Exp $	*/
+/*	$NetBSD: citrus_bcs.h,v 1.2 2004/01/02 21:49:35 itojun Exp $	*/
 
 /*-
  * Copyright (c)2003 Citrus Project,
@@ -36,30 +36,30 @@
 #define _CITRUS_BCS_PRED(_name_, _cond_) \
 static __inline int _citrus_bcs_##_name_(u_int8_t c) { return (_cond_); }
 
-_CITRUS_BCS_PRED(isblank, c==' ' || c=='\t')
-_CITRUS_BCS_PRED(iseol, c=='\n' || c=='\r')
+_CITRUS_BCS_PRED(isblank, c == ' ' || c == '\t')
+_CITRUS_BCS_PRED(iseol, c == '\n' || c == '\r')
 _CITRUS_BCS_PRED(isspace,
 		 _citrus_bcs_isblank(c) || _citrus_bcs_iseol(c) ||
-		 c=='\f' || c=='\v')
-_CITRUS_BCS_PRED(isdigit, c>='0' && c<='9')
-_CITRUS_BCS_PRED(isupper, c>='A' && c<='Z')
-_CITRUS_BCS_PRED(islower, c>='a' && c<='z')
+		 c == '\f' || c == '\v')
+_CITRUS_BCS_PRED(isdigit, c >= '0' && c <= '9')
+_CITRUS_BCS_PRED(isupper, c >= 'A' && c <= 'Z')
+_CITRUS_BCS_PRED(islower, c >= 'a' && c <= 'z')
 _CITRUS_BCS_PRED(isalpha, _citrus_bcs_isupper(c) || _citrus_bcs_islower(c))
 _CITRUS_BCS_PRED(isalnum, _citrus_bcs_isdigit(c) || _citrus_bcs_isalpha(c))
 _CITRUS_BCS_PRED(isxdigit,
 		 _citrus_bcs_isdigit(c) ||
-		 (c>='A' && c<='F') || (c>='a' && c<='f'))
+		 (c >= 'A' && c <= 'F') || (c >= 'a' && c <= 'f'))
 
 static __inline u_int8_t
 _citrus_bcs_toupper(u_int8_t c)
 {
-	return (_citrus_bcs_islower(c) ? (c-'a'+'A') : c);
+	return (_citrus_bcs_islower(c) ? (c - 'a' + 'A') : c);
 }
 
 static __inline u_int8_t
 _citrus_bcs_tolower(u_int8_t c)
 {
-	return (_citrus_bcs_isupper(c) ? (c-'A'+'a') : c);
+	return (_citrus_bcs_isupper(c) ? (c - 'A' + 'a') : c);
 }
 
 __BEGIN_DECLS

@@ -1,4 +1,4 @@
-/*	$NetBSD: citrus_db_factory.c,v 1.7 2003/10/28 04:00:51 jmc Exp $	*/
+/*	$NetBSD: citrus_db_factory.c,v 1.8 2004/01/02 21:49:35 itojun Exp $	*/
 
 /*-
  * Copyright (c)2003 Citrus Project,
@@ -32,7 +32,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: citrus_db_factory.c,v 1.7 2003/10/28 04:00:51 jmc Exp $");
+__RCSID("$NetBSD: citrus_db_factory.c,v 1.8 2004/01/02 21:49:35 itojun Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include <assert.h>
@@ -254,7 +254,7 @@ static __inline void
 putpad(struct _region *r, size_t *rofs)
 {
 	size_t i;
-	for (i=ceilto(*rofs)-*rofs; i>0; i--)
+	for (i = ceilto(*rofs) - *rofs; i > 0; i--)
 		put8(r, rofs, 0);
 }
 
@@ -323,7 +323,7 @@ _citrus_db_factory_serialize(struct _citrus_db_factory *df, const char *magic,
 	dump_header(r, magic, &ofs, df->df_num_entries);
 
 	/* dump entries */
-	for (i=0; i<df->df_num_entries; i++) {
+	for (i = 0; i < df->df_num_entries; i++) {
 		de = depp[i];
 		nextofs = 0;
 		if (de->de_next) {
