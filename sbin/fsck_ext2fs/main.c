@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.4 1998/03/01 02:20:25 fvdl Exp $	*/
+/*	$NetBSD: main.c,v 1.5 1998/04/01 15:24:12 kleink Exp $	*/
 
 /*
  * Copyright (c) 1997 Manuel Bouyer.
@@ -44,7 +44,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1986, 1993\n\
 #if 0
 static char sccsid[] = "@(#)main.c	8.2 (Berkeley) 1/23/94";
 #else
-__RCSID("$NetBSD: main.c,v 1.4 1998/03/01 02:20:25 fvdl Exp $");
+__RCSID("$NetBSD: main.c,v 1.5 1998/04/01 15:24:12 kleink Exp $");
 #endif
 #endif /* not lint */
 
@@ -59,6 +59,7 @@ __RCSID("$NetBSD: main.c,v 1.4 1998/03/01 02:20:25 fvdl Exp $");
 #include <string.h>
 #include <ctype.h>
 #include <stdio.h>
+#include <time.h>
 #include <unistd.h>
 
 #include "fsck.h"
