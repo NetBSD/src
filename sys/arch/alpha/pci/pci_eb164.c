@@ -1,4 +1,4 @@
-/* $NetBSD: pci_eb164.c,v 1.17 1998/05/24 19:09:57 matt Exp $ */
+/* $NetBSD: pci_eb164.c,v 1.18 1998/06/05 19:15:41 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -66,7 +66,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: pci_eb164.c,v 1.17 1998/05/24 19:09:57 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pci_eb164.c,v 1.18 1998/06/05 19:15:41 thorpej Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -80,6 +80,7 @@ __KERNEL_RCSID(0, "$NetBSD: pci_eb164.c,v 1.17 1998/05/24 19:09:57 matt Exp $");
 #include <vm/vm.h>
 
 #include <machine/autoconf.h>
+#include <machine/rpb.h>
 
 #include <dev/pci/pcireg.h>
 #include <dev/pci/pcivar.h>
@@ -173,6 +174,7 @@ dec_eb164_intr_map(ccv, bustag, buspin, line, ihp)
 	struct cia_config *ccp = ccv;
 	pci_chipset_tag_t pc = &ccp->cc_pc;
 	int bus, device, function;
+	u_int64_t variation;
 
 	if (buspin == 0) {
 		/* No IRQ used. */
@@ -185,16 +187,38 @@ dec_eb164_intr_map(ccv, bustag, buspin, line, ihp)
 
 	alpha_pci_decompose_tag(pc, bustag, &bus, &device, &function);
 
+	variation = hwrpb->rpb_variation & SV_ST_MASK;
+
 	/*
-	 * The PCI-ISA bridge lives on device 8 of bus 0.  On the AlphaPC
-	 * 164SX, this is a Cypress chip with PCI IDE wired to compatibility
-	 * mode on functions 1 and 2.  There will be no interrupt mapping
-	 * for this device, so just bail out now.
+	 *
+	 * The AlphaPC 164 and AlphaPC 164LX have a CMD PCI IDE controller
+	 * at bus 0 device 11.  These are wired to compatibility mode,
+	 * so do not map their interrupts.
+	 *
+	 * The AlphaPC 164SX has PCI IDE on functions 1 and 2 of the
+	 * Cypress PCI-ISA bridge at bus 0 device 8.  These, too, are
+	 * wired to compatibility mode.
+	 *
+	 * Real EB164s have ISA IDE on the Super I/O chip.
 	 */
-	if (bus == 0 && device == 8) {
-		if (function == 0)
-			panic("dec_eb164_intr_map: SIO device");
-		return (1);
+	if (bus == 0) {
+		if (variation >= SV_ST_ALPHAPC164_366 &&
+		    variation <= SV_ST_ALPHAPC164LX_600) {
+			if (device == 8)
+				panic("dec_eb164_intr_map: SIO device");
+			if (device == 11)
+				return (1);
+		} else if (variation >= SV_ST_ALPHAPC164SX_400 &&
+			   variation <= SV_ST_ALPHAPC164SX_600) {
+			if (device == 8) {
+				if (function == 0)
+					panic("dec_eb164_intr_map: SIO device");
+				return (1);
+			}
+		} else {
+			if (device == 8)
+				panic("dec_eb164_intr_map: SIO device");
+		}
 	}
 
 	/*
