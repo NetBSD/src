@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_time.c,v 1.18 1996/02/09 18:59:53 christos Exp $	*/
+/*	$NetBSD: kern_time.c,v 1.19 1996/02/13 21:10:43 christos Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -45,6 +45,10 @@
 
 #include <sys/mount.h>
 #include <sys/syscallargs.h>
+
+#if defined(NFSCLIENT) || defined(NFSSERVER)
+#include <nfs/nfs_var.h>
+#endif
 
 #include <machine/cpu.h>
 
