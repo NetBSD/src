@@ -1,11 +1,11 @@
-#	$NetBSD: GENERIC_LAPTOP,v 1.2.2.11 2002/01/19 21:56:50 he Exp $
+#	$NetBSD: GENERIC_LAPTOP,v 1.2.2.12 2002/01/24 22:37:52 he Exp $
 #
 #	GENERIC -- everything that's currently supported
 #
 
 include "arch/i386/conf/std.i386"
 
-#ident 		"GENERIC-$Revision: 1.2.2.11 $"
+#ident 		"GENERIC-$Revision: 1.2.2.12 $"
 
 maxusers	32		# estimated number of users
 
@@ -568,6 +568,7 @@ clct*	at pci? dev ? function ?	# Cirrus Logic CS4281
 cmpci*	at pci? dev ? function ?	# C-Media CMI8338/8738
 eap*	at pci? dev ? function ?	# Ensoniq AudioPCI
 emuxki*	at pci? dev ? function ?	# Creative SBLive! and PCI512
+esa*	at pci? dev ? function ?	# ESS Allegro-1 / Maestro-3 PCI Audio
 esm*	at pci? dev ? function ?	# ESS Maestro-1/2/2e PCI Audio Accelerator
 eso*	at pci? dev ? function ?	# ESS Solo-1 PCI AudioDrive
 neo*	at pci? dev ? function ?	# 
@@ -614,6 +615,7 @@ audio*	at clct?
 audio*	at cmpci?
 audio*	at eap?
 audio*	at emuxki?
+audio*	at esa?
 audio*	at esm?
 audio*	at eso?
 audio*	at ess?
