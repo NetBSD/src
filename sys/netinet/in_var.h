@@ -1,4 +1,4 @@
-/*	$NetBSD: in_var.h,v 1.49 2003/08/18 22:28:51 itojun Exp $	*/
+/*	$NetBSD: in_var.h,v 1.50 2003/10/23 20:55:08 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -98,7 +98,6 @@ struct in_ifaddr {
 	LIST_HEAD(, in_multi) ia_multiaddrs; /* list of multicast addresses */
 	struct	in_multi *ia_allhosts;	/* multicast address record for
 					   the allhosts multicast group */
-	LIST_HEAD(, inpcb) ia_inpcbs;	/* list of pcbs with this source */
 };
 
 struct	in_aliasreq {

@@ -1,4 +1,4 @@
-/*	$NetBSD: udp_usrreq.c,v 1.112 2003/10/18 13:05:45 enami Exp $	*/
+/*	$NetBSD: udp_usrreq.c,v 1.113 2003/10/23 20:55:08 mycroft Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: udp_usrreq.c,v 1.112 2003/10/18 13:05:45 enami Exp $");
+__KERNEL_RCSID(0, "$NetBSD: udp_usrreq.c,v 1.113 2003/10/23 20:55:08 mycroft Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -1024,11 +1024,6 @@ udp_usrreq(so, req, m, nam, control, p)
 		so->so_state &= ~SS_ISCONNECTED;	/* XXX */
 		in_pcbdisconnect(inp);
 		inp->inp_laddr = zeroin_addr;		/* XXX */
-		if (inp->inp_ia != NULL) {
-			LIST_REMOVE(inp, inp_ialink);
-			IFAFREE(&inp->inp_ia->ia_ifa);
-			inp->inp_ia = NULL;
-		}
 		in_pcbstate(inp, INP_BOUND);		/* XXX */
 		break;
 
@@ -1073,11 +1068,6 @@ udp_usrreq(so, req, m, nam, control, p)
 			in_pcbstate(inp, INP_BOUND);	/* XXX */
 		}
 	  die:
-		if (inp->inp_ia != NULL && in_nullhost(inp->inp_laddr)) {
-			LIST_REMOVE(inp, inp_ialink);
-			IFAFREE(&inp->inp_ia->ia_ifa);
-			inp->inp_ia = NULL;
-		}
 		if (m)
 			m_freem(m);
 	}
