@@ -1,4 +1,4 @@
-/*	$NetBSD: clock.c,v 1.19 2002/02/12 15:26:48 uch Exp $	*/
+/*	$NetBSD: clock.c,v 1.20 2002/02/19 17:21:18 uch Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994 Charles Hannum.
@@ -219,11 +219,12 @@ gettick()
 {
 	int counter;
 	/* Don't want someone screwing with the counter while we're here. */
-	disable_intr();
+	_cpu_exception_suspend();
 
 	counter = SHREG_TCNT0;
 
-	enable_intr();
+	_cpu_exception_resume(0);
+
 	return counter;
 }
 
