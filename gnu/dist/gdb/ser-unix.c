@@ -69,12 +69,18 @@ static int hardwire_readchar PARAMS ((serial_t scb, int timeout));
 static int rate_to_code PARAMS ((int rate));
 static int hardwire_setbaudrate PARAMS ((serial_t scb, int rate));
 static int hardwire_write PARAMS ((serial_t scb, const char *str, int len));
-/* FIXME: static void hardwire_restore PARAMS ((serial_t scb)); */
 static void hardwire_close PARAMS ((serial_t scb));
 static int get_tty_state PARAMS ((serial_t scb, struct hardwire_ttystate *state));
 static int set_tty_state PARAMS ((serial_t scb, struct hardwire_ttystate *state));
 static serial_ttystate hardwire_get_tty_state PARAMS ((serial_t scb));
 static int hardwire_set_tty_state PARAMS ((serial_t scb, serial_ttystate state));
+static int hardwire_noflush_set_tty_state PARAMS ((serial_t, serial_ttystate,
+						   serial_ttystate));
+static void hardwire_print_tty_state PARAMS ((serial_t, serial_ttystate));
+static int hardwire_flush_output PARAMS ((serial_t));
+static int hardwire_flush_input PARAMS ((serial_t));
+static int hardwire_send_break PARAMS ((serial_t));
+static int hardwire_setstopbits PARAMS ((serial_t, int));
 
 /* Open up a real live device for serial I/O */
 

@@ -71,3 +71,25 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.  */
 #define REGISTER_BYTES \
   ((NUM_REGS - 4) * REGISTER_RAW_SIZE(R0_REGNUM) \
    + 8            * REGISTER_RAW_SIZE(LP0_REGNUM))
+
+/* tm-umax.h assumes a 32082 fpu. We have a 32382 fpu. */
+#undef REGISTER_NAMES
+#undef NUM_REGS
+#undef REGISTER_BYTES
+/* Initializer for an array of names of registers.
+   There should be NUM_REGS strings in this initializer.  */
+
+#define REGISTER_NAMES {"r0", "r1", "r2", "r3", "r4", "r5", "r6", "r7",	\
+ 			"f0", "f1", "f2", "f3", "f4", "f5", "f6", "f7",	\
+			"sp", "fp", "pc", "ps",				\
+ 			"fsr",						\
+			"l0", "l1", "l2", "l3", "l4", "l5", "l6", "l7", "xx",			\
+ 			}
+
+#define NUM_REGS		29
+
+/* Total amount of space needed to store our copies of the machine's
+   register state, the array `registers'.  */
+#define REGISTER_BYTES \
+  ((NUM_REGS - 4) * REGISTER_RAW_SIZE(R0_REGNUM) \
+   + 8            * REGISTER_RAW_SIZE(LP0_REGNUM))

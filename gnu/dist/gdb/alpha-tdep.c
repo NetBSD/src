@@ -134,7 +134,7 @@ struct linked_proc_info
 } *linked_proc_desc_table = NULL;
 
 
-/* Under Linux, signal handler invocations can be identified by the
+/* Under GNU/Linux, signal handler invocations can be identified by the
    designated code sequence that is used to return from a signal
    handler.  In particular, the return address of a signal handler
    points to the following sequence (the first instruction is quadword
