@@ -1,4 +1,4 @@
-/* $NetBSD: lock_stubs.s,v 1.1.2.3 2002/03/11 17:55:36 thorpej Exp $ */
+/* $NetBSD: lock_stubs.s,v 1.1.2.4 2002/03/12 17:17:32 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -36,7 +36,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-__KERNEL_RCSID(7, "$NetBSD: lock_stubs.s,v 1.1.2.3 2002/03/11 17:55:36 thorpej Exp $")
+__KERNEL_RCSID(7, "$NetBSD: lock_stubs.s,v 1.1.2.4 2002/03/12 17:17:32 thorpej Exp $")
 
 /*
  * Assembly language lock stubs.  These handle the common ("easy")
@@ -61,9 +61,18 @@ NESTED_NOPROFILE(mutex_enter, 1, 0, ra, 0, 0)
 
 2:	br	1b
 
+#if 1
+3:	lda	sp, -8(sp)
+	stq	ra, 0(sp)
+	CALL(mutex_vector_enter)
+	ldq	ra, 0(sp)
+	lda	sp, 8(sp)
+	RET
+#else
 	/* Do a tail-call to mutex_vector_enter() */
 3:	lda	t0, mutex_vector_enter
 	jmp	zero, (t0)
+#endif
 END(mutex_enter)
 
 NESTED_NOPROFILE(mutex_tryenter, 1, 0, ra, 0, 0)
@@ -81,9 +90,18 @@ NESTED_NOPROFILE(mutex_tryenter, 1, 0, ra, 0, 0)
 
 2:	br	1b
 
+#if 1
+3:	lda	sp, -8(sp)
+	stq	ra, 0(sp)
+	CALL(mutex_vector_tryenter)
+	ldq	ra, 0(sp)
+	lda	sp, 8(sp)
+	RET
+#else
 	/* Do a tail-call to mutex_vector_tryenter() */
 3:	lda	t0, mutex_vector_tryenter
 	jmp	zero, (t0)
+#endif
 END(mutex_tryenter)
 
 /*
@@ -105,9 +123,8 @@ END(mutex_tryenter)
  * case, it is very important that the insn that actually clears
  * the lock must NEVER be executed twice.
  *
- * On the Alpha, it'd be nice to be able to use load-locked/store-conditional,
- * but since we're storing zero, that breaks the store-conditional logic.  On
- * the alpha, we'll use the restartable sequence method.
+ * On the Alpha, we can use load-locked/store-conditional.
+ * XXX But we don't, yet.
  */
 NESTED_NOPROFILE(mutex_exit, 1, 0, ra, 0, 0)
 	LDGP(pv)
@@ -128,7 +145,16 @@ EXPORT(mutex_exit_critical_end)
 
 	RET
 
+#if 1
+1:	lda	sp, -8(sp)
+	stq	ra, 0(sp)
+	CALL(mutex_vector_exit)
+	ldq	ra, 0(sp)
+	lda	sp, 8(sp)
+	RET
+#else
 	/* Do a tail-call to mutex_vector_exit() */
 1:	lda	t0, mutex_vector_exit
 	jmp	zero, (t0)
+#endif
 END(mutex_exit)
