@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.34 1999/03/28 16:01:19 eeh Exp $ */
+/*	$NetBSD: machdep.c,v 1.35 1999/03/28 19:01:03 eeh Exp $ */
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -892,7 +892,7 @@ cpu_dumpconf()
 	dumpsize = physmem;
 }
 
-#define	BYTES_PER_DUMP	(32 * 1024)	/* must be a multiple of pagesize */
+#define	BYTES_PER_DUMP	(8 * 1024)	/* must be a multiple of pagesize */
 static vaddr_t dumpspace;
 
 caddr_t
@@ -971,8 +971,8 @@ dumpsys()
 			if (i && (i % (1024*1024)) == 0)
 				printf("%d ", i / (1024*1024));
 
-			(void) pmap_enter_phys(pmap_kernel(), dumpspace, maddr, maddr + n,
-					VM_PROT_READ, 1);
+			(void) pmap_enter(pmap_kernel(), dumpspace, maddr,
+					VM_PROT_READ, 1, VM_PROT_READ);
 			error = (*dump)(dumpdev, blkno,
 					(caddr_t)dumpspace, (int)n);
 			pmap_remove(pmap_kernel(), dumpspace, dumpspace + n);
@@ -1730,9 +1730,9 @@ static	vaddr_t iobase = IODEV_BASE;
 		printf("sparc_bus_map: phys %llx virt %p hp %llx\n", 
 		       (int)(pa>>32), (int)pa, v, (int)((*hp)>>32), (int)*hp);
 #endif
-		pmap_enter_phys(pmap_kernel(), v, pa | pm_flags, NBPG,
+		pmap_enter(pmap_kernel(), v, pa | pm_flags,
 				(flags&BUS_SPACE_MAP_READONLY) ? VM_PROT_READ
-				: VM_PROT_READ | VM_PROT_WRITE, 1/*, 0*/);
+				: VM_PROT_READ | VM_PROT_WRITE, 1, 0);
 		v += PAGE_SIZE;
 		pa += PAGE_SIZE;
 	} while ((size -= PAGE_SIZE) > 0);
@@ -1760,7 +1760,11 @@ sparc_bus_mmap(t, iospace, paddr, flags, hp)
 	int		flags;
 	bus_space_handle_t *hp;
 {
+#if 0
+	*hp = (bus_space_handle_t)pmap_from_phys_address(paddr,flags);
+#else
 	*hp = (bus_space_handle_t)(paddr>>PGSHIFT);
+#endif
 #if 0
 	printf("sparc_bus_mmap: encoding pa %llx as %llx becomes %llx\n",
 	       (bus_addr_t)(paddr), (bus_space_handle_t)*hp, 

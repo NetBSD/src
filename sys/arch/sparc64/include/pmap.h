@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.h,v 1.8 1998/09/22 02:48:43 eeh Exp $	*/
+/*	$NetBSD: pmap.h,v 1.9 1999/03/28 19:01:02 eeh Exp $	*/
 
 /*-
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -130,9 +130,15 @@ struct prom_map {
 	u_int64_t	tte;
 };
 
-#define PMAP_NC		1	/* Set the E bit in the page */
-#define PMAP_NVC	2	/* Don't enable the virtual cache */
-#define PMAP_LITTLE	3	/* Map in little endian mode */
+#define PMAP_NC		0x001	/* Set the E bit in the page */
+#define PMAP_NVC	0x002	/* Don't enable the virtual cache */
+#define PMAP_LITTLE	0x004	/* Map in little endian mode */
+/* Large page size hints -- we really should use another param to pmap_enter() */
+#define PMAP_8K		0x000
+#define PMAP_64K	0x008	/* Use 64K page */
+#define PMAP_512K	0x010
+#define PMAP_4M		0x018
+#define PMAP_SZ_TO_TTE(x)	(((x)&0x018)<<58)
 /* If these bits are different in va's to the same PA then there is an aliasing in the d$ */
 #define VA_ALIAS_MASK   (1<<14)	
 
@@ -152,6 +158,7 @@ extern struct pmap kernel_pmap_;
 int pmap_count_res __P((pmap_t pmap));
 /* int pmap_change_wiring __P((pmap_t pm, vaddr_t va, boolean_t wired)); */
 #define pmap_resident_count(pm)		pmap_count_res((pm))
+#define pmap_from_phys_address(x,f)	((x)>>PGSHIFT)
 #define	pmap_phys_address(x)		((((paddr_t)(x))<<PGSHIFT)|PMAP_NC)
 
 void pmap_bootstrap __P((u_long kernelstart, u_long kernelend, u_int numctx));
@@ -171,7 +178,6 @@ void		switchexit __P((struct proc *));
 /* SPARC64 specific */
 int	ctx_alloc __P((struct pmap*));
 void	ctx_free __P((struct pmap*));
-void	pmap_enter_phys __P((pmap_t, vaddr_t, u_int64_t, u_int64_t, vm_prot_t, boolean_t));
 
 
 #endif	/* _KERNEL */

@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.27 1999/03/28 16:01:19 eeh Exp $ */
+/*	$NetBSD: trap.c,v 1.28 1999/03/28 19:01:03 eeh Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -70,6 +70,7 @@
 
 #include <vm/vm.h>
 #include <vm/vm_kern.h>
+#include <uvm/uvm_fault.h>
 
 #include <machine/cpu.h>
 #include <machine/ctlreg.h>
@@ -950,6 +951,7 @@ data_access_fault(type, addr, pc, tf)
 	register vaddr_t va;
 	register int rv;
 	vm_prot_t ftype;
+	vm_prot_t access_type;
 	vaddr_t onfault;
 	u_quad_t sticks;
 #if DEBUG
@@ -1029,7 +1031,8 @@ data_access_fault(type, addr, pc, tf)
 #endif
 	/* Now munch on protections... */
 
-	ftype = (type == T_FDMMU_PROT)? VM_PROT_READ|VM_PROT_WRITE:VM_PROT_READ;
+	access_type = (type == T_FDMMU_PROT) ? VM_PROT_READ|VM_PROT_WRITE : VM_PROT_READ;
+	ftype = (type == T_FDMMU_PROT) ? VM_FAULT_PROTECT : VM_FAULT_INVALID;
 	if (tstate & (PSTATE_PRIV<<TSTATE_PSTATE_SHIFT)) {
 		extern char Lfsbail[];
 		/*
@@ -1048,7 +1051,7 @@ data_access_fault(type, addr, pc, tf)
 			goto kfault;
 		if (!(addr&TLB_TAG_ACCESS_CTX)) {
 			/* CTXT == NUCLEUS */
-			if ((rv=uvm_fault(kernel_map, va, ftype, 0)) == KERN_SUCCESS) {
+			if ((rv=uvm_fault(kernel_map, va, ftype, access_type)) == KERN_SUCCESS) {
 #ifdef DEBUG
 				if (trapdebug&(TDB_ADDFLT|TDB_FOLLOW))
 					printf("data_access_fault: kernel uvm_fault(%x, %x, %x, 0) sez %x -- success\n",
@@ -1056,17 +1059,6 @@ data_access_fault(type, addr, pc, tf)
 #endif
 				return;
 			}
-#if 0
-/* XXXX Like, why are we doing this twice? */
-			if ((rv=uvm_fault(kernel_map, va, ftype, 0)) == KERN_SUCCESS) {
-#ifdef DEBUG
-				if (trapdebug&(TDB_ADDFLT|TDB_FOLLOW))
-					printf("data_access_fault: kernel uvm_fault(%x, %x, %x, 0) sez %x -- success\n",
-					       kernel_map, (vaddr_t)va, ftype, rv);
-#endif
-				return;
-			}
-#endif
 #ifdef DEBUG
 			if (trapdebug&(TDB_ADDFLT|TDB_FOLLOW))
 				printf("data_access_fault: kernel uvm_fault(%x, %x, %x, 0) sez %x -- failure\n",
@@ -1079,7 +1071,7 @@ data_access_fault(type, addr, pc, tf)
 
 	vm = p->p_vmspace;
 	/* alas! must call the horrible vm code */
-	rv = uvm_fault(&vm->vm_map, (vaddr_t)va, ftype, FALSE);
+	rv = uvm_fault(&vm->vm_map, (vaddr_t)va, ftype, access_type);
 
 #ifdef DEBUG
 	if (trapdebug&(TDB_ADDFLT|TDB_FOLLOW))
@@ -1182,6 +1174,7 @@ data_access_error(type, sfva, sfsr, afva, afsr, tf)
 	register vaddr_t va = 0; /* Stupid GCC warning */
 	register int rv;
 	vm_prot_t ftype;
+	vm_prot_t access_type;
 	vaddr_t onfault;
 	u_quad_t sticks;
 #ifdef DEBUG
@@ -1317,7 +1310,8 @@ DEBUGGER(type, tf);
 #endif
 	/* Now munch on protections... */
 
-	ftype = sfsr & SFSR_W ? VM_PROT_READ|VM_PROT_WRITE:VM_PROT_READ;
+	access_type = (sfsr & SFSR_W) ? VM_PROT_READ|VM_PROT_WRITE : VM_PROT_READ;
+	ftype = VM_FAULT_PROTECT; /* Mapping must exist... */
 	if (tstate & (PSTATE_PRIV<<TSTATE_PSTATE_SHIFT)) {
 		extern char Lfsbail[];
 		/*
@@ -1336,7 +1330,7 @@ DEBUGGER(type, tf);
 			goto kfault;
 		if (SFSR_CTXT_IS_PRIM(sfsr) || SFSR_CTXT_IS_NUCLEUS(sfsr)) {
 			/* NUCLEUS context */
-			if (uvm_fault(kernel_map, va, ftype, 0) == KERN_SUCCESS)
+			if (uvm_fault(kernel_map, va, ftype, access_type) == KERN_SUCCESS)
 				return;
 			if (SFSR_CTXT_IS_NUCLEUS(sfsr))
 				goto kfault;
@@ -1350,7 +1344,7 @@ DEBUGGER(type, tf);
 	if (trapdebug&(TDB_ADDFLT|TDB_FOLLOW))
 		printf("data_access_error: calling uvm_fault\n");
 #endif
-	rv = uvm_fault(&vm->vm_map, (vaddr_t)va, ftype, FALSE);
+	rv = uvm_fault(&vm->vm_map, (vaddr_t)va, ftype, access_type);
 
 	/*
 	 * If this was a stack access we keep track of the maximum
@@ -1432,6 +1426,7 @@ text_access_fault(type, pc, tf)
 	register vaddr_t va;
 	register int rv;
 	vm_prot_t ftype;
+	vm_prot_t access_type;
 	u_quad_t sticks;
 
 #if DEBUG
@@ -1475,7 +1470,8 @@ text_access_fault(type, pc, tf)
 
 	/* Now munch on protections... */
 
-	ftype = VM_PROT_READ;
+	access_type = /* VM_PROT_EXECUTE| */VM_PROT_READ;
+	ftype = VM_FAULT_INVALID;
 	if (tstate & (PSTATE_PRIV<<TSTATE_PSTATE_SHIFT)) {
 		(void) splhigh();
 		printf("text_access_fault: pc=%x\n", pc);
@@ -1487,7 +1483,7 @@ text_access_fault(type, pc, tf)
 
 	vm = p->p_vmspace;
 	/* alas! must call the horrible vm code */
-	rv = uvm_fault(&vm->vm_map, (vaddr_t)va, ftype, FALSE);
+	rv = uvm_fault(&vm->vm_map, (vaddr_t)va, ftype, access_type);
 
 #ifdef DEBUG
 	if (trapdebug&(TDB_TXTFLT|TDB_FOLLOW))
@@ -1563,6 +1559,7 @@ text_access_error(type, pc, sfsr, afva, afsr, tf)
 	register vaddr_t va;
 	register int rv;
 	vm_prot_t ftype;
+	vm_prot_t access_type;
 	u_quad_t sticks;
 #if DEBUG
 	static int lastdouble;
@@ -1645,7 +1642,8 @@ text_access_error(type, pc, sfsr, afva, afsr, tf)
 #endif
 	/* Now munch on protections... */
 
-	ftype = VM_PROT_READ;
+	access_type = /* VM_PROT_EXECUTE| */ VM_PROT_READ;
+	ftype = VM_FAULT_PROTECT; /* Protection fault? */
 	if (tstate & (PSTATE_PRIV<<TSTATE_PSTATE_SHIFT)) {
 		(void) splhigh();
 		printf("text error: pc=%lx sfsr=%%qb\n", pc, (long)sfsr, SFSR_BITS);
@@ -1657,7 +1655,7 @@ text_access_error(type, pc, sfsr, afva, afsr, tf)
 
 	vm = p->p_vmspace;
 	/* alas! must call the horrible vm code */
-	rv = uvm_fault(&vm->vm_map, (vaddr_t)va, ftype, FALSE);
+	rv = uvm_fault(&vm->vm_map, (vaddr_t)va, ftype, access_type);
 
 	/*
 	 * If this was a stack access we keep track of the maximum
