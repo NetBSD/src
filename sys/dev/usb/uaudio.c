@@ -1,4 +1,4 @@
-/*	$NetBSD: uaudio.c,v 1.65 2003/03/30 04:47:13 toshii Exp $	*/
+/*	$NetBSD: uaudio.c,v 1.66 2003/04/17 16:38:02 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -44,7 +44,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uaudio.c,v 1.65 2003/03/30 04:47:13 toshii Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uaudio.c,v 1.66 2003/04/17 16:38:02 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -2271,7 +2271,7 @@ uaudio_match_alt_sub(int nalts, const struct as_info *alts,
 		if (a1d->bSamFreqType == UA_SAMP_CONTNUOUS) {
 			DPRINTFN(2,("uaudio_match_alt_sub: cont %d-%d\n",
 				    UA_SAMP_LO(a1d), UA_SAMP_HI(a1d)));
-			if (UA_SAMP_LO(a1d) < rate && rate < UA_SAMP_HI(a1d))
+			if (UA_SAMP_LO(a1d) <= rate && rate <= UA_SAMP_HI(a1d))
 				return i;
 		} else {
 			for (j = 0; j < a1d->bSamFreqType; j++) {
