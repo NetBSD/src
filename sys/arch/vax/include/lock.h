@@ -1,4 +1,4 @@
-/*	$NetBSD: lock.h,v 1.10 2002/10/10 17:12:23 thorpej Exp $	*/
+/*	$NetBSD: lock.h,v 1.11 2003/02/25 23:29:53 matt Exp $	*/
 
 /*
  * Copyright (c) 2000 Ludd, University of Lule}, Sweden.
@@ -32,6 +32,10 @@
 
 #ifndef _VAX_LOCK_H_
 #define _VAX_LOCK_H_
+
+#ifdef _KERNEL
+#include <machine/cpu.h>
+#endif
 
 typedef __volatile int		__cpu_simple_lock_t;
 
