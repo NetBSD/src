@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1995 - 2000 Kungliga Tekniska Högskolan
+ * Copyright (c) 1995 - 2003 Kungliga Tekniska Högskolan
  * (Royal Institute of Technology, Stockholm, Sweden).
  * All rights reserved.
  * 
@@ -31,8 +31,8 @@
  * SUCH DAMAGE.
  */
 
-/* $Heimdal: afssysdefs.h,v 1.24 2000/11/17 01:07:47 assar Exp $
-   $NetBSD: afssysdefs.h,v 1.1.1.4 2002/09/12 12:41:43 joda Exp $ */
+/* $Heimdal: afssysdefs.h,v 1.26 2003/02/08 22:55:55 assar Exp $
+   $NetBSD: afssysdefs.h,v 1.1.1.5 2003/05/15 20:28:50 lha Exp $ */
 
 /*
  * This section is for machines using single entry point AFS syscalls!
@@ -83,7 +83,19 @@
 #define AFS_SYSCALL	31
 #endif
 
-#if defined(__FreeBSD__) || defined(__NetBSD__) || defined(__OpenBSD__)
+#if defined(__FreeBSD__)
+#if __FreeBSD_version >= 500000
+#define AFS_SYSCALL 339
+#else
+#define AFS_SYSCALL 210
+#endif
+#endif /* __FreeBSD__ */
+
+#ifdef __OpenBSD__
+#define AFS_SYSCALL 208
+#endif
+
+#if defined(__NetBSD__)
 #define AFS_SYSCALL 210
 #endif
 

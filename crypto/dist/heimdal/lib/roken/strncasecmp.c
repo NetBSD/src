@@ -33,8 +33,8 @@
 
 #ifdef HAVE_CONFIG_H
 #include <config.h>
-__RCSID("$Heimdal: strncasecmp.c,v 1.2 1999/12/02 16:58:53 joda Exp $"
-        "$NetBSD: strncasecmp.c,v 1.1.1.3 2002/09/12 12:41:42 joda Exp $");
+__RCSID("$Heimdal: strncasecmp.c,v 1.3 2003/04/14 11:46:04 lha Exp $"
+        "$NetBSD: strncasecmp.c,v 1.1.1.4 2003/05/15 20:28:49 lha Exp $");
 #endif
 
 #include <string.h>
@@ -46,7 +46,9 @@ __RCSID("$Heimdal: strncasecmp.c,v 1.2 1999/12/02 16:58:53 joda Exp $"
 int
 strncasecmp(const char *s1, const char *s2, size_t n)
 {
-    while(n > 0 && toupper(*s1) == toupper(*s2)) {
+    while(n > 0 
+	  && toupper((unsigned char)*s1) == toupper((unsigned char)*s2))
+    {
 	if(*s1 == '\0')
 	    return 0;
 	s1++;
@@ -55,7 +57,7 @@ strncasecmp(const char *s1, const char *s2, size_t n)
     }
     if(n == 0)
 	return 0;
-    return toupper(*s1) - toupper(*s2);
+    return toupper((unsigned char)*s1) - toupper((unsigned char)*s2);
 }
 
 #endif

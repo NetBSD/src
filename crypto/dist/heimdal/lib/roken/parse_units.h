@@ -31,8 +31,8 @@
  * SUCH DAMAGE. 
  */
 
-/* $Heimdal: parse_units.h,v 1.7 2001/09/04 09:56:00 assar Exp $
-   $NetBSD: parse_units.h,v 1.1.1.3 2002/09/12 12:41:42 joda Exp $ */
+/* $Heimdal: parse_units.h,v 1.8 2003/04/16 17:30:54 lha Exp $
+   $NetBSD: parse_units.h,v 1.1.1.4 2003/05/15 20:28:49 lha Exp $ */
 
 #ifndef __PARSE_UNITS_H__
 #define __PARSE_UNITS_H__
@@ -44,8 +44,6 @@ struct units {
     const char *name;
     unsigned mult;
 };
-
-typedef struct units units;
 
 int
 parse_units (const char *s, const struct units *units,
