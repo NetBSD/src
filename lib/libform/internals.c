@@ -1,4 +1,4 @@
-/*	$NetBSD: internals.c,v 1.26 2002/07/29 05:23:30 blymn Exp $	*/
+/*	$NetBSD: internals.c,v 1.27 2002/08/02 11:49:18 blymn Exp $	*/
 
 /*-
  * Copyright (c) 1998-1999 Brett Lymn
@@ -1709,7 +1709,7 @@ _formi_manipulate_field(FORM *form, int c)
 		   * deny the request otherwise just fall through to
 		   * the next_char request handler.
 		   */
-		if (cur->cursor_xpos >= cur->lines[row].length - 1)
+		if (cur->cursor_xpos >= cur->cols - 1)
 			return E_REQUEST_DENIED;
 
 		  /* FALLTHRU */
@@ -1734,7 +1734,8 @@ _formi_manipulate_field(FORM *form, int c)
 			_formi_set_cursor_xpos(cur);
 		} else {
 			if (cur->cursor_xpos >= (cur->lines[row].length - 1)) {
-				if ((row + 1) >= cur->row_count)
+				if (((row + 1) >= cur->row_count) ||
+				    (c == REQ_RIGHT_CHAR))
 					return E_REQUEST_DENIED;
 				
 				cur->cursor_xpos = 0;
@@ -1755,7 +1756,8 @@ _formi_manipulate_field(FORM *form, int c)
 				cur->row_xpos++;
 				if (cur->cursor_xpos
 				    >= cur->lines[row].length) {
-					if ((row + 1) >= cur->row_count) {
+					if (((row + 1) >= cur->row_count) ||
+					    (c == REQ_RIGHT_CHAR)) {
 						cur->cursor_xpos = old_xpos;
 						cur->row_xpos = old_row_pos;
 						return E_REQUEST_DENIED;
