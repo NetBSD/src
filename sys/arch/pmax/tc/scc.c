@@ -1,4 +1,4 @@
-/*	$NetBSD: scc.c,v 1.69 2001/05/02 10:32:19 scw Exp $	*/
+/*	$NetBSD: scc.c,v 1.70 2001/07/07 14:21:01 simonb Exp $	*/
 
 /*
  * Copyright (c) 1991,1990,1989,1994,1995,1996 Carnegie Mellon University
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
-__KERNEL_RCSID(0, "$NetBSD: scc.c,v 1.69 2001/05/02 10:32:19 scw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: scc.c,v 1.70 2001/07/07 14:21:01 simonb Exp $");
 
 /*
  * Intel 82530 dual usart chip driver. Supports the serial port(s) on the
@@ -666,8 +666,7 @@ sccopen(dev, flag, mode, p)
 	while (!(flag & O_NONBLOCK) && !(tp->t_cflag & CLOCAL) &&
 	    !(tp->t_state & TS_CARR_ON)) {
 		tp->t_wopen++;
-		error = ttysleep(tp, (caddr_t)&tp->t_rawq, TTIPRI | PCATCH,
-		    ttopen, 0);
+		error = ttysleep(tp, &tp->t_rawq, TTIPRI | PCATCH, ttopen, 0);
 		tp->t_wopen--;
 		if (error != 0)
 			break;
@@ -1091,7 +1090,7 @@ scc_rxintr(sc, chan, regs, unit)
 		return;
 	}
 	if (!(tp->t_state & TS_ISOPEN)) {
-		wakeup((caddr_t)&tp->t_rawq);
+		wakeup(&tp->t_rawq);
 #ifdef PORTSELECTOR
 		if (!(tp->t_state & TS_WOPEN))
 #endif
@@ -1209,7 +1208,7 @@ sccstart(tp)
 	if (tp->t_outq.c_cc <= tp->t_lowat) {
 		if (tp->t_state & TS_ASLEEP) {
 			tp->t_state &= ~TS_ASLEEP;
-			wakeup((caddr_t)&tp->t_outq);
+			wakeup(&tp->t_outq);
 		}
 		selwakeup(&tp->t_wsel);
 	}

@@ -1,4 +1,4 @@
-/*	$NetBSD: bus_dma.c,v 1.29 2001/05/26 21:27:12 chs Exp $	*/
+/*	$NetBSD: bus_dma.c,v 1.30 2001/07/07 14:21:01 simonb Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -107,7 +107,7 @@ _bus_dmamap_create(t, size, nsegments, maxsegsz, boundary, flags, dmamp)
 	    (flags & BUS_DMA_NOWAIT) ? M_NOWAIT : M_WAITOK)) == NULL)
 		return (ENOMEM);
 
-	bzero(mapstore, mapsize);
+	memset(mapstore, 0, mapsize);
 	map = (struct pmax_bus_dmamap *)mapstore;
 	map->_dm_size = size;
 	map->_dm_segcnt = nsegments;
@@ -360,7 +360,7 @@ _bus_dmamap_load_uio(t, map, uio, flags)
 		 * until we have exhausted the residual count.
 		 */
 		minlen = resid < iov[i].iov_len ? resid : iov[i].iov_len;
-		addr = (caddr_t)iov[i].iov_base;
+		addr = iov[i].iov_base;
 
 		error = _bus_dmamap_load_buffer(map, addr, minlen,
 		    p, flags, &lastaddr, &seg, first);
@@ -742,7 +742,7 @@ _bus_dmamem_mmap(t, segs, nsegs, off, prot, flags)
 			continue;
 		}
 
-		return (mips_btop((caddr_t)segs[i].ds_addr + off));
+		return (mips_btop(segs[i].ds_addr + off));
 	}
 
 	/* Page not found. */

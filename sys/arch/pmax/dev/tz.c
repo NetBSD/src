@@ -1,4 +1,4 @@
-/*	$NetBSD: tz.c,v 1.31 2000/06/02 20:15:41 mhitch Exp $	*/
+/*	$NetBSD: tz.c,v 1.32 2001/07/07 14:21:01 simonb Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -214,7 +214,7 @@ tzprobe(xxxsd)
 	sc->sc_rwcmd.unitNumber = sd->sd_slave;
 
 	/* XXX set up device info */				/* XXX */
-	bzero(&sc->sc_dev, sizeof(sc->sc_dev));			/* XXX */
+	memset(&sc->sc_dev, 0, sizeof(sc->sc_dev));		/* XXX */
 	sprintf(sc->sc_dev.dv_xname, "tz%d", sd->sd_unit);	/* XXX */
 	sc->sc_dev.dv_unit = sd->sd_unit;			/* XXX */
 	sc->sc_dev.dv_class = DV_TAPE;				/* XXX */
@@ -244,7 +244,7 @@ tzprobe(xxxsd)
 		(ScsiGroup0Cmd *)sc->sc_cdb.cdb);
 	sc->sc_buf.b_flags = B_BUSY | B_READ;
 	sc->sc_buf.b_bcount = 0;
-	sc->sc_buf.b_data = (caddr_t)0;
+	sc->sc_buf.b_data = NULL;
 	BUFQ_INSERT_HEAD(&sc->sc_tab, &sc->sc_buf);
 	tzstart(sd->sd_unit);
 	(void) biowait(&sc->sc_buf);
@@ -271,9 +271,9 @@ tzprobe(xxxsd)
 			inqbuf.qualifier, inqbuf.version);
 	} else {
 
-		bcopy((caddr_t)inqbuf.vendorID, (caddr_t)vid, 8);
-		bcopy((caddr_t)inqbuf.productID, (caddr_t)pid, 16);
-		bcopy((caddr_t)inqbuf.revLevel, (caddr_t)revl, 4);
+		memcpy(vid, inqbuf.vendorID, 8);
+		memcpy(pid, inqbuf.productID, 16);
+		memcpy(revl, inqbuf.revLevel, 4);
 		for (i = 8; --i > 0; )
 			if (vid[i] != ' ')
 				break;
@@ -293,7 +293,7 @@ tzprobe(xxxsd)
 
 	sc->sc_quirks = NULL;
 	for (i = 0; i < NQUIRKS; i++) {
-		if (bcmp(pid, tz_quirk_table[i].product,
+		if (memcmp(pid, tz_quirk_table[i].product,
 		    strlen(tz_quirk_table[i].product)) == 0) {
 			sc->sc_quirks = &tz_quirk_table[i];
 			if (tz_quirk_table[i].quirks & TZ_Q_FORCE_BLKSIZE)
