@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs.h,v 1.697 2005/03/07 02:28:11 christos Exp $	*/
+/*	$NetBSD: pcidevs.h,v 1.698 2005/03/15 00:14:13 uwe Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.696 2005/03/07 02:27:17 christos Exp
+ *	NetBSD: pcidevs,v 1.697 2005/03/15 00:13:16 uwe Exp
  */
 
 /*
@@ -1425,13 +1425,13 @@
 #define	PCI_PRODUCT_EMULEX_LP9802	0xf980		/* LP9802 FibreChannel adapter */
 
 /* ENE Technology products */
-#define	PCI_PRODUCT_ENE_MCR510	0x510		/* MCR510 PCI Memory Card Reader Controller */
-#define	PCI_PRODUCT_ENE_CB710	0x710		/* CB710 CardBus Controller */
-#define	PCI_PRODUCT_ENE_CB720	0x720		/* CB720 CardBus Controller */
+#define	PCI_PRODUCT_ENE_MCR510	0x0510		/* MCR510 PCI Memory Card Reader Controller */
 #define	PCI_PRODUCT_ENE_CB1211	0x1211		/* CB1211 CardBus Controller */
 #define	PCI_PRODUCT_ENE_CB1225	0x1225		/* CB1225 CardBus Controller */
 #define	PCI_PRODUCT_ENE_CB1410	0x1410		/* CB1410 CardBus Controller */
+#define	PCI_PRODUCT_ENE_CB710	0x1411		/* CB710 CardBus Controller */
 #define	PCI_PRODUCT_ENE_CB1420	0x1420		/* CB1420 CardBus Controller */
+#define	PCI_PRODUCT_ENE_CB720	0x1421		/* CB720 CardBus Controller */
 
 /* Ensoniq products */
 #define	PCI_PRODUCT_ENSONIQ_AUDIOPCI	0x5000		/* AudioPCI */
