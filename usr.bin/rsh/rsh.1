@@ -1,4 +1,4 @@
-.\"	$NetBSD: rsh.1,v 1.4 1997/02/16 15:01:04 mrg Exp $
+.\"	$NetBSD: rsh.1,v 1.5 1997/02/17 15:10:53 mrg Exp $
 .\"
 .\" Copyright (c) 1983, 1990, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -32,7 +32,7 @@
 .\" SUCH DAMAGE.
 .\"
 .\"	from: @(#)rsh.1	8.2 (Berkeley) 4/29/95
-.\"	$NetBSD: rsh.1,v 1.4 1997/02/16 15:01:04 mrg Exp $
+.\"	$NetBSD: rsh.1,v 1.5 1997/02/17 15:10:53 mrg Exp $
 .\"
 .Dd April 29, 1995
 .Dt RSH 1
@@ -47,11 +47,11 @@
 .Op Fl l Ar username
 .Ar host
 .Op command
-.\" .Nm rsh
-.\" .Op Fl Kdnx
-.\" .Op Fl k Ar realm
-.\" .Ar username@host
-.\" .Op command
+.Nm rsh
+.Op Fl Kdnx
+.Op Fl k Ar realm
+.Ar username@host
+ .Op command
 .Sh DESCRIPTION
 .Nm Rsh
 executes
@@ -94,11 +94,9 @@ instead of the remote host's realm as determined by
 By default, the remote username is the same as the local username.
 The
 .Fl l
-option
-.\" or the
-.\" .Pa username@host
-.\" format allow
-allows the remote name to be specified.
+option or the
+.Pa username@host
+format allow the remote name to be specified.
 Kerberos authentication is used, and authorization is determined
 as in
 .Xr rlogin  1  .
