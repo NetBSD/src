@@ -1,4 +1,4 @@
-/* $NetBSD: vfs_getcwd.c,v 1.15.10.1 2004/03/15 05:22:25 jmc Exp $ */
+/* $NetBSD: vfs_getcwd.c,v 1.15.10.2 2004/03/15 05:25:19 jmc Exp $ */
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_getcwd.c,v 1.15.10.1 2004/03/15 05:22:25 jmc Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_getcwd.c,v 1.15.10.2 2004/03/15 05:25:19 jmc Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -312,7 +312,7 @@ getcwd_getcache(lvpp, uvpp, bpp, bufp)
 	struct vnode *lvp, *uvp = NULL;
 	char *obp = *bpp;
 	int error;
-	int vpid;
+	u_long vpid;
 	
 	lvp = *lvpp;
 	
