@@ -1,4 +1,4 @@
-/*	$NetBSD: rtcreg.h,v 1.1 2001/11/17 23:38:33 gmcgarry Exp $	*/
+/*	$NetBSD: rtcreg.h,v 1.2 2001/11/17 23:48:15 gmcgarry Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -47,3 +47,7 @@
 #define RTC_READ_REG    0xc3
 
 #define RTC_BASE_YEAR   1900
+
+#define RTC_REG5_HOUR	0x3
+#define RTC_REG5_PM	0x4
+#define RTC_REG5_24HR	0x8
