@@ -1,4 +1,4 @@
-/*	$NetBSD: mmu_sh4.c,v 1.4 2002/04/28 17:10:39 uch Exp $	*/
+/*	$NetBSD: mmu_sh4.c,v 1.5 2002/05/09 12:27:04 uch Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -39,6 +39,7 @@
 #include <sys/param.h>
 #include <sys/systm.h>
 
+#include <sh3/pte.h>	/* NetBSD/sh3 specific PTE */
 #include <sh3/mmu.h>
 #include <sh3/mmu_sh4.h>
 
@@ -68,12 +69,10 @@ sh4_mmu_start()
 	sh_tlb_set_asid(0);
 
 	/*
-	 * Single virtual memory mode.
 	 * User can't access store queue
 	 * make wired entry for u-area.
 	 */
-	_reg_write_4(SH4_MMUCR, SH4_MMUCR_AT | SH4_MMUCR_TI | SH4_MMUCR_SV |
-	    SH4_MMUCR_SQMD |
+	_reg_write_4(SH4_MMUCR, SH4_MMUCR_AT | SH4_MMUCR_TI | SH4_MMUCR_SQMD |
 	    (SH4_UTLB_ENTRY - UPAGES) << SH4_MMUCR_URB_SHIFT);
 
 	SH4_MMU_HAZARD;
@@ -136,15 +135,33 @@ sh4_tlb_invalidate_all()
 }
 
 void
-sh4_tlb_reset()
+sh4_tlb_update(int asid, vaddr_t va, u_int32_t pte)
 {
-	/*
-	 * SH4 MMUCR reserved bit
-	 *   read:  unknown.
-	 *   write: must be 0.
-	 */
-	_reg_write_4(SH4_MMUCR,
-	    (_reg_read_4(SH4_MMUCR) & SH4_MMUCR_MASK) | SH4_MMUCR_TI);
+	u_int32_t oasid;
+	u_int32_t ptel;
 
-	SH4_MMU_HAZARD;
+	KDASSERT(asid < 0x100 && (pte & ~PGOFSET) != 0 && va != 0);
+
+	/* Save old ASID */
+	oasid = _reg_read_4(SH4_PTEH) & SH4_PTEH_ASID_MASK;
+
+	/* Invalidate old entry (if any) */
+	sh4_tlb_invalidate_addr(asid, va);
+
+	_reg_write_4(SH4_PTEH, asid);
+	/* Load new entry */
+	_reg_write_4(SH4_PTEH, (va & ~PGOFSET) | asid);
+	ptel = pte & PG_HW_BITS;
+	if (pte & _PG_PCMCIA) {
+		_reg_write_4(SH4_PTEA,
+		    (pte >> _PG_PCMCIA_SHIFT) & SH4_PTEA_SA_MASK);
+	} else {
+		_reg_write_4(SH4_PTEA, 0);
+	}
+	_reg_write_4(SH4_PTEL, ptel);
+	__asm__ __volatile__("ldtlb; nop");
+
+	/* Restore old ASID */
+	if (asid != oasid)
+		_reg_write_4(SH4_PTEH, oasid);
 }
