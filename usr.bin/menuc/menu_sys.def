@@ -1,4 +1,4 @@
-/*	$NetBSD: menu_sys.def,v 1.51 2003/11/30 09:22:25 dsl Exp $	*/
+/*	$NetBSD: menu_sys.def,v 1.52 2003/12/21 21:42:48 dsl Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -61,19 +61,21 @@ static int max_lines = 0, max_cols = 0;
 static const char *scrolltext = " <: page up, >: page down";
 #endif
 
-static menudesc *menus = menu_def;
-
 #ifdef DYNAMIC_MENUS
 static int num_menus  = 0;
 #define DYN_INIT_NUM 32
+static menudesc **menu_list;
+#define MENUS(n) (*(menu_list[n]))
+#else
+#define MENUS(n) (menu_def[n])
 #endif
 
 /* prototypes for in here! */
 static void init_menu(menudesc *m);
 static char opt_ch(menudesc *m, int op_no);
 static void draw_menu(menudesc *m, void *arg);
-static void process_help(menudesc *m, int num);
-static void process_req(menudesc *m, void *arg, int num, int req);
+static void process_help(menudesc *m);
+static void process_req(menudesc *m, void *arg, int req);
 static int menucmd(WINDOW *w);
 
 #ifndef NULL
@@ -343,7 +345,7 @@ draw_menu(menudesc *m, void *arg)
 
 static void
 /*ARGSUSED*/
-process_help(menudesc *m, int num)
+process_help(menudesc *m)
 {
 	const char *help = m->helpstr;
 	int lineoff = 0;
@@ -418,7 +420,7 @@ process_help(menudesc *m, int num)
 }
 
 static void
-process_req(menudesc *m, void *arg, int num, int req)
+process_req(menudesc *m, void *arg, int req)
 {
 	int ch;
 	int hasexit = (m->mopt & MC_NOEXITOPT ? 0 : 1);
@@ -463,7 +465,7 @@ process_req(menudesc *m, void *arg, int num, int req)
 		break;
 
 	case REQ_HELP:
-		process_help(m, num);
+		process_help(m);
 		/* FALLTHROUGH */
 
 	case REQ_REDISPLAY:
@@ -529,6 +531,7 @@ process_req(menudesc *m, void *arg, int num, int req)
 int
 menu_init(void)
 {
+	int i;
 
 	if (__menu_init)
 		return 0;
@@ -559,11 +562,12 @@ menu_init(void)
 	num_menus = DYN_INIT_NUM;
 	while (num_menus < DYN_MENU_START)
 		num_menus *= 2;
-	menus = malloc(sizeof(menudesc) * num_menus);
-	if (menus == NULL)
+	menu_list = malloc(sizeof *menu_list * num_menus);
+	if (menu_list == NULL)
 		return 2;
-	(void)memset(menus, 0, sizeof(menudesc) * num_menus);
-	(void)memcpy(menus, menu_def, sizeof(menudesc) * DYN_MENU_START);
+	(void)memset(menu_list, 0, sizeof *menu_list * num_menus);
+	for (i = 0; i < DYN_MENU_START; i++)
+		menu_list[i] = &menu_def[i];
 #endif
 
 	__menu_init = 1;
@@ -579,7 +583,7 @@ process_menu(int num, void *arg)
 
 	menudesc *m;
 
-	m = &menus[num];
+	m = &MENUS(num);
 
 	/* Initialize? */
 	if (menu_init()) {
@@ -614,7 +618,7 @@ process_menu(int num, void *arg)
 		draw_menu(m, arg);
 
 		while ((req = menucmd(m->mw)) != REQ_EXECUTE)
-			process_req(m, arg, num, req);
+			process_req(m, arg, req);
 
 		sel = m->cursel;
 		if (!(m->mopt & MC_NOCLEAR)) {
@@ -642,7 +646,7 @@ process_menu(int num, void *arg)
 				num = opt->opt_menu;
 				delwin(m->mw);
 				m->mw = NULL;
-				m = &menus[num];
+				m = &MENUS(num);
 				continue;
 			}
 			process_menu(opt->opt_menu, arg);
@@ -663,6 +667,14 @@ process_menu(int num, void *arg)
 	m->mw = NULL;
 }
 
+
+void
+set_menu_numopts(int menu, int numopts)
+{
+
+	MENUS(menu).numopts = numopts;
+}
+
 /* Control L is end of standard routines, remaining only for dynamic. */
 
 /* Beginning of routines for dynamic menus. */
@@ -670,16 +682,14 @@ process_menu(int num, void *arg)
 static int 
 double_menus(void)
 {
-	menudesc *temp;
-	int sz = sizeof(menudesc) * num_menus;
+	menudesc **temp;
+	int sz = sizeof *menu_list * num_menus;
 
-	temp  = malloc(sz * 2);
+	temp  = realloc(menu_list, sz * 2);
 	if (temp == NULL)
 		return 0;
-	(void)memcpy(temp, menus, sz);
 	(void)memset(temp + num_menus, 0, sz);
-	/* We must not free 'menus', the code may have a pointer to it */
-	menus = temp;
+	menu_list = temp;
 	num_menus *= 2;
 
 	return 1;
@@ -700,12 +710,19 @@ new_menu(const char *title, menu_ent *opts, int numopts,
 	for (ix = DYN_MENU_START; ; ix++) {
 		if (ix >= num_menus && !double_menus())
 			return -1;
-		if (!(menus[ix].mopt & MC_VALID))
+		m = menu_list[ix];
+		if (m == NULL) {
+			m = calloc(sizeof *m, 1);
+			if (m == NULL)
+				return -1;
+			menu_list[ix] = m;
+			break;
+		}
+		if (!(m->mopt & MC_VALID))
 			break;
 	}
 
 	/* Set Entries */
-	m = menus + ix;
 	m->title = title;
 	m->opts = opts;
 	m->numopts = numopts;
@@ -731,17 +748,10 @@ free_menu(int menu_no)
 	if (menu_no < 0 || menu_no >= num_menus)
 		return;
 
-	m = menus + menu_no;
+	m = menu_list[menu_no];
 	if (!(m->mopt & MC_VALID))
 		return;
 	if (m->mw != NULL)
 		delwin(m->mw);
 	memset(m, 0, sizeof *m);
-}
-
-void
-set_menu_numopts(int menu, int numopts)
-{
-
-	menus[menu].numopts = numopts;
 }
