@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-1.4.3,v 1.1.2.11 2000/05/06 16:44:32 he Exp $
+#	$NetBSD: CHANGES-1.4.3,v 1.1.2.12 2000/05/11 10:31:17 he Exp $
 
 A complete list of changes from NetBSD 1.4.2 to NetBSD 1.4.3:
 
@@ -269,3 +269,56 @@ dist/bind/include/port_ipv6.h			patch (new)
 sys/netinet/ip_input.c				1.112
 
   Handle large offsets inside very small options correctly.
+
+usr.sbin/wiconfig/Makefile			1.1-1.2
+usr.sbin/wiconfig/wiconfig.8			1.1-1.5
+usr.sbin/wiconfig/wiconfig.c			1.1-1.4
+usr.sbin/Makefile				1.121 via patch
+sys/dev/pcmcia/if_wi_ieee.h			1.1-1.4
+sys/dev/pcmcia/if_wireg.h			1.1-1.5
+sys/dev/pcmcia/if_wivar.h			1.1-1.7
+sys/dev/pcmcia/if_wi.c				1.1-1.13,1.15-1.17 via patch
+sys/dev/pcmcia/files.pcmcia			1.15
+sys/dev/pcmcia/pcmciadevs			1.39
+sys/dev/pcmcia/pcmciadevs.h			regenerate
+sys/dev/pcmcia/pcmciadevs_data.h		regenerate
+sys/net/if_media.h				1.16-1.17,1.19,1.21-1.23
+sys/net/if_media.c				1.9
+sys/net/if.h					1.46 (partial) via patch
+share/man/man4/wi.4				1.1-1.10 via patch
+share/man/man4/Makefile				patch
+share/man/man4/pcmcia.4				patch
+sys/arch/i386/conf/GENERIC			1.252
+sys/arch/i386/conf/INSTALL			1.123
+distrib/i386/floppies/ramdisk/ramdiskbin.conf	1.16
+distrib/i386/floppies/ramdisk/list		1.21
+distrib/i386/floppies/ramdisk/Makefile		patch
+distrib/sets/lists/man/mi			patch
+distrib/sets/lists/base/mi			patch
+
+  Add a driver for ``wi'', Lucent "Orinoco"/Wavelan.
+
+sys/dev/eisa/if_ep_eisa.c			1.22
+
+  Only allocate the I/O space required.  This permits an ISDN4BSD kernel
+  with e.g. an AVM Fritz! card to work with an ep0 card in EISA slot 1.
+  Fixes PR#5279.
+
+sys/dev/ic/elink3.c				1.80
+
+  Make the 3Com 3C597 Fast Etherlink TX EISA card work.  Fixes PR#7067.
+
+distrib/i386/floppies/bootfloppy-common/Makefile.inc	patch
+
+  Make sure the PCMCIA alloc variables are retained in the symbol
+  table of the resulting kernel, thereby allowing them to be tweaked
+  as described in the install notes.
+
+libexec/ftpd/ftpd.c				patch
+
+  Back out unnecessary half of revision 1.70 which breaks parsing
+  of /etc/ftpchroot.
+
+usr.sbin/chown/chown.c				1.21
+
+  Deal with user names with `.' in them.  Fixes PR#10043.
