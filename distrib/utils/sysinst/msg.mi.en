@@ -1,4 +1,4 @@
-/*	$NetBSD: msg.mi.en,v 1.83 2001/06/06 23:12:49 scottr Exp $	*/
+/*	$NetBSD: msg.mi.en,v 1.84 2002/02/04 14:35:10 mrg Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -672,7 +672,13 @@ Aborting upgrade.}
 message netnotup
 {There was a problem in setting up the network.  Either your gateway
 or your nameserver was not reachable by a ping.  Do you want to
-configure your network again?  (No aborts the install process.)
+configure your network again?  (No allows you to continue anyway
+or abort the install process.)
+}
+
+message netnotup_continueanyway
+{Would you like to continue the install process anyway, and assume
+that the network is working?  (No aborts the install process.)
 }
 
 message makedev
