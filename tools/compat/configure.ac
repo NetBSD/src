@@ -1,4 +1,4 @@
-#	$NetBSD: configure.ac,v 1.36 2003/03/14 03:38:42 thorpej Exp $
+#	$NetBSD: configure.ac,v 1.37 2003/06/03 03:16:49 uwe Exp $
 #
 # Autoconf definition file for libnbcompat.
 #
@@ -96,7 +96,7 @@ AC_CHECK_DECLS(sys_signame,,, [#include <signal.h>])
 
 # Library functions (where a .h check isn't enough).
 AC_FUNC_ALLOCA
-AC_CHECK_FUNCS(asprintf asnprintf basename dirfd dirname \
+AC_CHECK_FUNCS(atoll asprintf asnprintf basename dirfd dirname \
 	fgetln flock fparseln futimes getopt getopt_long \
 	isblank issetugid lchflags lchmod lchown lutimes mkstemp mkdtemp \
 	poll pread putc_unlocked pwcache_userdb pwrite random setenv \
