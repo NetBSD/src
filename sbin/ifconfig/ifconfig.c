@@ -1,4 +1,4 @@
-/*	$NetBSD: ifconfig.c,v 1.147 2004/11/11 20:37:18 dsl Exp $	*/
+/*	$NetBSD: ifconfig.c,v 1.148 2004/11/16 05:59:32 itojun Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 2000 The NetBSD Foundation, Inc.
@@ -76,7 +76,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1993\n\
 #if 0
 static char sccsid[] = "@(#)ifconfig.c	8.2 (Berkeley) 2/16/94";
 #else
-__RCSID("$NetBSD: ifconfig.c,v 1.147 2004/11/11 20:37:18 dsl Exp $");
+__RCSID("$NetBSD: ifconfig.c,v 1.148 2004/11/16 05:59:32 itojun Exp $");
 #endif
 #endif /* not lint */
 
@@ -2035,11 +2035,7 @@ tunnel_status(void)
 	char psrcaddr[NI_MAXHOST];
 	char pdstaddr[NI_MAXHOST];
 	const char *ver = "";
-#ifdef NI_WITHSCOPEID
-	const int niflag = NI_NUMERICHOST | NI_WITHSCOPEID;
-#else
 	const int niflag = NI_NUMERICHOST;
-#endif
 	struct if_laddrreq req;
 
 	psrcaddr[0] = pdstaddr[0] = '\0';
@@ -2201,11 +2197,7 @@ in6_alias(struct in6_ifreq *creq)
 	struct sockaddr_in6 *sin6;
 	char hbuf[NI_MAXHOST];
 	u_int32_t scopeid;
-#ifdef NI_WITHSCOPEID
-	const int niflag = NI_NUMERICHOST | NI_WITHSCOPEID;
-#else
 	const int niflag = NI_NUMERICHOST;
-#endif
 
 	/* Get the non-alias address for this interface. */
 	getsock(AF_INET6);

@@ -1,4 +1,4 @@
-/*	$NetBSD: inet6.c,v 1.31 2003/11/06 06:11:48 itojun Exp $	*/
+/*	$NetBSD: inet6.c,v 1.32 2004/11/16 05:59:32 itojun Exp $	*/
 /*	BSDI inet.c,v 2.3 1995/10/24 02:19:29 prb Exp	*/
 
 /*
@@ -64,7 +64,7 @@
 #if 0
 static char sccsid[] = "@(#)inet.c	8.4 (Berkeley) 4/20/94";
 #else
-__RCSID("$NetBSD: inet6.c,v 1.31 2003/11/06 06:11:48 itojun Exp $");
+__RCSID("$NetBSD: inet6.c,v 1.32 2004/11/16 05:59:32 itojun Exp $");
 #endif
 #endif /* not lint */
 
@@ -1195,11 +1195,7 @@ inet6name(in6p)
 	static int first = 1;
 	char hbuf[NI_MAXHOST];
 	struct sockaddr_in6 sin6;
-#ifdef NI_WITHSCOPEID
-	const int niflag = NI_NUMERICHOST | NI_WITHSCOPEID;
-#else
 	const int niflag = NI_NUMERICHOST;
-#endif
 
 	if (first && !numeric_addr) {
 		first = 0;

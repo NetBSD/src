@@ -1,4 +1,4 @@
-/*	$NetBSD: if.c,v 1.57 2003/11/15 11:54:34 ragge Exp $	*/
+/*	$NetBSD: if.c,v 1.58 2004/11/16 05:59:32 itojun Exp $	*/
 
 /*
  * Copyright (c) 1983, 1988, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "from: @(#)if.c	8.2 (Berkeley) 2/21/94";
 #else
-__RCSID("$NetBSD: if.c,v 1.57 2003/11/15 11:54:34 ragge Exp $");
+__RCSID("$NetBSD: if.c,v 1.58 2004/11/16 05:59:32 itojun Exp $");
 #endif
 #endif /* not lint */
 
@@ -96,11 +96,7 @@ intpr(interval, ifnetaddr, pfunc)
 	char name[IFNAMSIZ + 1];	/* + 1 for `*' */
 	char hbuf[NI_MAXHOST];		/* for getnameinfo() */
 #ifdef INET6
-#ifdef NI_WITHSCOPEID
-	const int niflag = NI_NUMERICHOST | NI_WITHSCOPEID;
-#else
 	const int niflag = NI_NUMERICHOST;
-#endif
 #endif
 
 	if (ifnetaddr == 0) {

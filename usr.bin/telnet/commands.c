@@ -1,4 +1,4 @@
-/*	$NetBSD: commands.c,v 1.59 2004/03/20 23:26:05 heas Exp $	*/
+/*	$NetBSD: commands.c,v 1.60 2004/11/16 05:59:32 itojun Exp $	*/
 
 /*
  * Copyright (C) 1997 and 1998 WIDE Project.
@@ -63,7 +63,7 @@
 #if 0
 static char sccsid[] = "@(#)commands.c	8.4 (Berkeley) 5/30/95";
 #else
-__RCSID("$NetBSD: commands.c,v 1.59 2004/03/20 23:26:05 heas Exp $");
+__RCSID("$NetBSD: commands.c,v 1.60 2004/11/16 05:59:32 itojun Exp $");
 #endif
 #endif /* not lint */
 
@@ -2150,11 +2150,7 @@ static const char *
 sockaddr_ntop(struct sockaddr *sa)
 {
     static char addrbuf[NI_MAXHOST];
-#ifdef NI_WITHSCOPEID
-    const int niflags = NI_NUMERICHOST | NI_WITHSCOPEID;
-#else
     const int niflags = NI_NUMERICHOST;
-#endif
 
     if (getnameinfo(sa, sa->sa_len, addrbuf, sizeof(addrbuf),
 	    NULL, 0, niflags) == 0)

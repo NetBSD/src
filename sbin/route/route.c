@@ -1,4 +1,4 @@
-/*	$NetBSD: route.c,v 1.73 2004/05/15 14:13:36 itojun Exp $	*/
+/*	$NetBSD: route.c,v 1.74 2004/11/16 05:59:32 itojun Exp $	*/
 
 /*
  * Copyright (c) 1983, 1989, 1991, 1993
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1989, 1991, 1993\n\
 #if 0
 static char sccsid[] = "@(#)route.c	8.6 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: route.c,v 1.73 2004/05/15 14:13:36 itojun Exp $");
+__RCSID("$NetBSD: route.c,v 1.74 2004/11/16 05:59:32 itojun Exp $");
 #endif
 #endif /* not lint */
 
@@ -541,11 +541,7 @@ routename(sa, nm, flags)
 		struct sockaddr_in6 sin6;
 		int niflags;
 
-#ifdef NI_WITHSCOPEID
-		niflags = NI_WITHSCOPEID;
-#else
 		niflags = 0;
-#endif
 		if (nflag)
 			niflags |= NI_NUMERICHOST;
 		memset(&sin6, 0, sizeof(sin6));
@@ -699,11 +695,7 @@ netname(sa, nm)
 		struct sockaddr_in6 sin6;
 		int niflags;
 
-#ifdef NI_WITHSCOPEID
-		niflags = NI_WITHSCOPEID;
-#else
 		niflags = 0;
-#endif
 		if (nflag)
 			niflags |= NI_NUMERICHOST;
 		memset(&sin6, 0, sizeof(sin6));
