@@ -1,4 +1,4 @@
-/*	$NetBSD: odsyntax.c,v 1.11 2001/02/07 18:32:21 christos Exp $	*/
+/*	$NetBSD: odsyntax.c,v 1.12 2001/12/05 17:46:15 bjh21 Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)odsyntax.c	8.2 (Berkeley) 5/4/95";
 #else
-__RCSID("$NetBSD: odsyntax.c,v 1.11 2001/02/07 18:32:21 christos Exp $");
+__RCSID("$NetBSD: odsyntax.c,v 1.12 2001/12/05 17:46:15 bjh21 Exp $");
 #endif
 #endif /* not lint */
 
@@ -91,12 +91,12 @@ oldsyntax(argc, argvp)
 	char ***argvp;
 {
 	int ch;
-	char **argv;
+	char *p, **argv;
 	int x, y;
 
 	deprecated = 1;
 	argv = *argvp;
-	while ((ch = getopt(argc, argv, "aBbcDdeFfHhIiLlOoPpst:wvXx")) != -1)
+	while ((ch = getopt(argc, argv, "aBbcDdeFfHhIij:LlOoPpst:wvXx")) != -1)
 		switch (ch) {
 		case 'a':
 			odprecede();
@@ -152,6 +152,21 @@ oldsyntax(argc, argvp)
 		case 'i':
 			odprecede();
 			add("8/2 \" %6d \" \"\\n\"");
+			break;
+		case 'j':
+			if ((skip = strtol(optarg, &p, 0)) < 0)
+				errx(1, "%s: bad skip value", optarg);
+			switch(*p) {
+			case 'b':
+				skip *= 512;
+				break;
+			case 'k':
+				skip *= 1024;
+				break;
+			case 'm':
+				skip *= 1048576;
+				break;
+			}
 			break;
 		case 'O':
 			odprecede();
