@@ -1,4 +1,4 @@
-/*	$NetBSD: ns_pcb.c,v 1.6 1995/06/13 08:37:08 mycroft Exp $	*/
+/*	$NetBSD: ns_pcb.c,v 1.7 1995/08/16 00:32:40 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1984, 1985, 1986, 1987, 1993
@@ -56,13 +56,12 @@ ns_pcballoc(so, head)
 	struct socket *so;
 	struct nspcb *head;
 {
-	struct mbuf *m;
 	register struct nspcb *nsp;
 
-	m = m_getclr(M_DONTWAIT, MT_PCB);
-	if (m == NULL)
+	nsp = malloc(sizeof(*nsp), M_PCB, M_NOWAIT);
+	if (nsp == 0)
 		return (ENOBUFS);
-	nsp = mtod(m, struct nspcb *);
+	bzero((caddr_t)nsp, sizeof(*nsp));
 	nsp->nsp_socket = so;
 	insque(nsp, head);
 	so->so_pcb = (caddr_t)nsp;
@@ -238,7 +237,7 @@ ns_pcbdetach(nsp)
 	if (nsp->nsp_route.ro_rt)
 		rtfree(nsp->nsp_route.ro_rt);
 	remque(nsp);
-	(void) m_free(dtom(nsp));
+	free(nsp, M_PCB);
 }
 
 ns_setsockaddr(nsp, nam)
