@@ -1,6 +1,6 @@
-/*	$NetBSD: sem.h,v 1.3 1996/03/17 02:08:36 thorpej Exp $	*/
+/*	$NetBSD: sem.h,v 1.4 1996/03/17 06:29:40 cgd Exp $	*/
 
-/* 
+/*
  * Copyright (c) 1992, 1993
  *	The Regents of the University of California.  All rights reserved.
  *
