@@ -18,7 +18,7 @@ along with GNU Tar; see the file COPYING.  If not, write to
 the Free Software Foundation, 675 Mass Ave, Cambridge, MA 02139, USA.  */
 
 #ifndef lint
-static char rcsid[] = "$Id: buffer.c,v 1.3 1993/08/02 17:48:38 mycroft Exp $";
+static char rcsid[] = "$Id: buffer.c,v 1.4 1998/07/06 07:50:27 fair Exp $";
 #endif /* not lint */
 
 /*
@@ -1412,9 +1412,12 @@ new_volume (type)
   extern int now_verifying;
   extern char TTY_NAME[];
   static int looped = 0;
+  int flushinput = 0;
 
   if (!read_file && !f_run_script_at_end)
     read_file = (archive == 0) ? fopen (TTY_NAME, "r") : stdin;
+
+  flushinput = isatty(fileno(read_file));
 
   if (now_verifying)
     return -1;
@@ -1446,6 +1449,18 @@ tryagain:
 	  {
 	    fprintf (msg_file, "\007Prepare volume #%d for %s and hit return: ", global_volno, ar_files[cur_ar_file]);
 	    fflush (msg_file);
+
+/*
+** Avoid bogons from the tty
+*/
+#if defined(TIOCDRAIN) && defined(TIOCFLUSH)
+	    if (flushinput) {
+		    int what = FREAD;
+		    (void) ioctl(fileno(read_file), TIOCDRAIN, (void *)NULL);
+		    (void) ioctl(fileno(read_file), TIOCFLUSH, &what);
+	    }
+#endif /* TIOCDRAIN && TIOCFLUSH */
+
 	    if (fgets (inbuf, sizeof (inbuf), read_file) == 0)
 	      {
 		fprintf (msg_file, "EOF?  What does that mean?");
