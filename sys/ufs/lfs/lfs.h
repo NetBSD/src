@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs.h,v 1.62 2003/04/02 10:39:39 fvdl Exp $	*/
+/*	$NetBSD: lfs.h,v 1.63 2003/04/09 00:32:54 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003 The NetBSD Foundation, Inc.
@@ -115,8 +115,9 @@
 /* Resource limits */
 #define LFS_MAX_BUFS	    ((nbuf >> 2) - 10)
 #define LFS_WAIT_BUFS	    ((nbuf >> 1) - (nbuf >> 3) - 10)
-#define LFS_MAX_BYTES	    (((bufpages >> 2) - 10) * NBPG)
-#define LFS_WAIT_BYTES	    (((bufpages >> 1) - (bufpages >> 3) - 10) * NBPG)
+#define LFS_MAX_BYTES	    (((bufpages >> 2) - 10) * PAGE_SIZE)
+#define LFS_WAIT_BYTES	    (((bufpages >> 1) - (bufpages >> 3) - 10) \
+			      * PAGE_SIZE)
 #define LFS_MAX_DIROP	    ((desiredvnodes >> 2) + (desiredvnodes >> 3))
 #define LFS_MAX_PAGES \
      (((uvmexp.active + uvmexp.inactive + uvmexp.free) * uvmexp.filemin) >> 8)
