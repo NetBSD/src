@@ -1,4 +1,4 @@
-/*	$NetBSD: ipsend.h,v 1.3 1997/09/21 18:02:12 veego Exp $	*/
+/*	$NetBSD: ipsend.h,v 1.4 1997/10/30 16:10:35 mrg Exp $	*/
 
 /*
  * ipsend.h (C) 1997 Darren Reed
@@ -61,7 +61,6 @@ extern	void	ip_test5 __P((char *, int, ip_t *, struct in_addr, int));
 extern	void	ip_test6 __P((char *, int, ip_t *, struct in_addr, int));
 extern	void	ip_test7 __P((char *, int, ip_t *, struct in_addr, int));
 extern	int	do_socket __P((char *, int, struct tcpiphdr *, struct in_addr));
-
 extern	int	openkmem __P((void));
 extern	int	kmemcpy __P((char *, void *, int));
 

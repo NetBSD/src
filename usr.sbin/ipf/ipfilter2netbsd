@@ -1,6 +1,6 @@
 #! /bin/sh
 #
-#	$NetBSD: ipfilter2netbsd,v 1.11 1997/10/25 06:58:08 lukem Exp $
+#	$NetBSD: ipfilter2netbsd,v 1.12 1997/10/30 16:10:01 mrg Exp $
 #
 # Copyright (c) 1996 Matthew R. Green
 # All rights reserved.
@@ -67,7 +67,7 @@ cd $d/src/usr.sbin/ipf
 
 echo creating main Makefile
 cat > Makefile<<'__eof_makefile'
-#	$NetBSD: ipfilter2netbsd,v 1.11 1997/10/25 06:58:08 lukem Exp $
+#	$NetBSD: ipfilter2netbsd,v 1.12 1997/10/30 16:10:01 mrg Exp $
 
 SUBDIR=		ipf ipfstat ipmon ipnat ipftest ipsend iptest
 .if make(install)
@@ -83,7 +83,7 @@ cd $d/src/usr.sbin/ipf
 
 echo creating main Makefile.inc
 cat > Makefile.inc<<'__eof_makefile'
-#	$NetBSD: ipfilter2netbsd,v 1.11 1997/10/25 06:58:08 lukem Exp $
+#	$NetBSD: ipfilter2netbsd,v 1.12 1997/10/30 16:10:01 mrg Exp $
 
 WARNS?=	1
 
@@ -95,17 +95,16 @@ __eof_makefile
 cd $r
 echo ipf:
 src='ipf.c parse.c opt.c ipf.h'
-man='ipf.1 ipf.4 ipf.5 ipl.4'
+man='ipf.8 ipf.4 ipf.5 ipl.4'
 
 pax -rvw $src $d/src/usr.sbin/ipf/ipf
 cd man; pax -rvw $man $d/src/usr.sbin/ipf/ipf; cd ..
 
 cd $d/src/usr.sbin/ipf/ipf
-mv ipf.1 ipf.8
 
 echo creating Makefile
 cat > Makefile<<'__eof_makefile'
-#	$NetBSD: ipfilter2netbsd,v 1.11 1997/10/25 06:58:08 lukem Exp $
+#	$NetBSD: ipfilter2netbsd,v 1.12 1997/10/30 16:10:01 mrg Exp $
 
 PROG=	ipf
 SRCS=	ipf.c parse.c opt.c
@@ -132,7 +131,7 @@ cd $d/src/usr.sbin/ipf/ipfstat
 
 echo creating Makefile
 cat > Makefile<<'__eof_makefile'
-#	$NetBSD: ipfilter2netbsd,v 1.11 1997/10/25 06:58:08 lukem Exp $
+#	$NetBSD: ipfilter2netbsd,v 1.12 1997/10/30 16:10:01 mrg Exp $
 
 PROG=	ipfstat
 SRCS=	kmem.c fils.c opt.c parse.c
@@ -156,7 +155,7 @@ cd $d/src/usr.sbin/ipf/ipftest
 
 echo creating Makefile
 cat > Makefile<<'__eof_makefile'
-#	$NetBSD: ipfilter2netbsd,v 1.11 1997/10/25 06:58:08 lukem Exp $
+#	$NetBSD: ipfilter2netbsd,v 1.12 1997/10/30 16:10:01 mrg Exp $
 
 PROG=	ipftest
 SRCS=	ipt.c ipft_sn.c ipft_ef.c ipft_td.c ipft_pc.c opt.c ipft_tx.c misc.c ip_frag.c ip_state.c ip_nat.c ipft_hx.c ip_fil.c fil.c parse.c ip_proxy.c ip_auth.c
@@ -181,7 +180,7 @@ cd $d/src/usr.sbin/ipf/ipmon
 
 echo creating Makefile
 cat > Makefile<<'__eof_makefile'
-#	$NetBSD: ipfilter2netbsd,v 1.11 1997/10/25 06:58:08 lukem Exp $
+#	$NetBSD: ipfilter2netbsd,v 1.12 1997/10/30 16:10:01 mrg Exp $
 
 PROG=	ipmon
 MAN=	ipmon.8
@@ -206,7 +205,7 @@ mv ipnat.1 ipnat.8
 
 echo creating Makefile
 cat > Makefile<<'__eof_makefile'
-#	$NetBSD: ipfilter2netbsd,v 1.11 1997/10/25 06:58:08 lukem Exp $
+#	$NetBSD: ipfilter2netbsd,v 1.12 1997/10/30 16:10:01 mrg Exp $
 
 PROG=	ipnat
 SRCS=	kmem.c ipnat.c
@@ -231,7 +230,7 @@ cd $d/src/usr.sbin/ipf/ipresend
 
 echo creating Makefile
 cat > Makefile<<'__eof_makefile'
-#	$NetBSD: ipfilter2netbsd,v 1.11 1997/10/25 06:58:08 lukem Exp $
+#	$NetBSD: ipfilter2netbsd,v 1.12 1997/10/30 16:10:01 mrg Exp $
 
 PROG=	ipresend
 SRCS=	ipresend.c ip.c resend.c opt.c ipft_ef.c ipft_hx.c ipft_sn.c ipft_td.c ipft_tx.c sbpf.c 44arp.c
@@ -258,7 +257,7 @@ cd $d/src/usr.sbin/ipf/ipsend
 
 echo creating Makefile
 cat > Makefile<<'__eof_makefile'
-#	$NetBSD: ipfilter2netbsd,v 1.11 1997/10/25 06:58:08 lukem Exp $
+#	$NetBSD: ipfilter2netbsd,v 1.12 1997/10/30 16:10:01 mrg Exp $
 
 PROG=	ipsend
 SRCS=	ipsend.c ip.c ipsopt.c 44arp.c sbpf.c iplang_l.l iplang_y.y
@@ -287,7 +286,7 @@ cd $d/src/usr.sbin/ipf/iptest
 
 echo creating Makefile
 cat > Makefile<<'__eof_makefile'
-#	$NetBSD: ipfilter2netbsd,v 1.11 1997/10/25 06:58:08 lukem Exp $
+#	$NetBSD: ipfilter2netbsd,v 1.12 1997/10/30 16:10:01 mrg Exp $
 
 PROG=	iptest
 SRCS=	iptest.c iptests.c ip.c sbpf.c 44arp.c sock.c
@@ -309,7 +308,7 @@ cd $d/src/usr.sbin/ipf/rules
 
 echo creating Makefile
 cat > Makefile<<'__eof_makefile'
-#	$NetBSD: ipfilter2netbsd,v 1.11 1997/10/25 06:58:08 lukem Exp $
+#	$NetBSD: ipfilter2netbsd,v 1.12 1997/10/30 16:10:01 mrg Exp $
 
 FILESDIR= /usr/share/samples/ipf
 
@@ -343,7 +342,7 @@ cd $d/src/sys/lkm/netinet/if_ipl
 
 echo creating Makefile
 cat > Makefile<<'__eof_makefile'
-#	$NetBSD: ipfilter2netbsd,v 1.11 1997/10/25 06:58:08 lukem Exp $
+#	$NetBSD: ipfilter2netbsd,v 1.12 1997/10/30 16:10:01 mrg Exp $
 
 .include "../Makefile.inc"
 
@@ -370,7 +369,7 @@ find $d -name '*.[chly]' -print | while read c; do
 	< $c > /tmp/ipf2n$$ && mv /tmp/ipf2n$$ $c && echo transformed $c
 	sed 1q < $c | grep '\$NetBSD' || (
 cat <<'__eof_header'
-/*	$NetBSD: ipfilter2netbsd,v 1.11 1997/10/25 06:58:08 lukem Exp $	*/
+/*	$NetBSD: ipfilter2netbsd,v 1.12 1997/10/30 16:10:01 mrg Exp $	*/
 
 __eof_header
 cat $c

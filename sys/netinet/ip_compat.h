@@ -1,14 +1,14 @@
-/*	$NetBSD: ip_compat.h,v 1.9 1997/09/21 18:03:11 veego Exp $	*/
+/*	$NetBSD: ip_compat.h,v 1.10 1997/10/30 16:08:57 mrg Exp $	*/
 
 /*
- * (C)opyright 1993-1997 by Darren Reed.
+ * Copyright (C) 1993-1997 by Darren Reed.
  *
  * Redistribution and use in source and binary forms are permitted
  * provided that this notice is preserved and due credit is given
  * to the original author and the contributors.
  *
  * @(#)ip_compat.h	1.8 1/14/96
- * Id: ip_compat.h,v 2.0.2.22 1997/09/09 14:26:36 darrenr Exp 
+ * Id: ip_compat.h,v 2.0.2.31 1997/10/29 12:14:08 darrenr Exp 
  */
 
 #ifndef	__IP_COMPAT_H__
@@ -19,6 +19,7 @@
 #  define	__P(x)  x
 # else
 #  define	__P(x)  ()
+#  define	const
 # endif
 #endif
 
@@ -33,13 +34,30 @@
 #define	_KERNEL
 #endif
 
-#if defined(__SVR4) || defined(__svr4__)
+#if defined(__SVR4) || defined(__svr4__) || defined(__sgi)
 #define index   strchr
 # ifndef	_KERNEL
 #  define	bzero(a,b)	memset(a,0,b)
 #  define	bcmp		memcmp
 #  define	bcopy(a,b,c)	memmove(b,a,c)
 # endif
+#endif
+
+#ifdef __sgi
+struct  ether_addr {
+        u_char  ether_addr_octet[6];
+};
+
+# ifdef IPFILTER_LKM
+#  define IPL_PRFX ipl
+#  define IPL_EXTERN(ep) ipl##ep
+# else
+#  define IPL_PRFX ipfilter
+#  define IPL_EXTERN(ep) ipfilter##ep
+# endif
+#else
+# define IPL_PRFX ipl
+# define IPL_EXTERN(ep) ipl##ep
 #endif
 
 #if	SOLARIS
@@ -85,7 +103,7 @@
 /*
  * These operating systems already take care of the problem for us.
  */
-#if defined(__NetBSD__) || defined(__FreeBSD__)
+#if defined(__NetBSD__) || defined(__OpenBSD__) || defined(__FreeBSD__)
 typedef u_int32_t       u_32_t;
 #else
 /*
@@ -178,10 +196,10 @@ typedef unsigned long   u_32_t;
 #  define	IRCOPY(a,b,c)	copyin((a), (b), (c))
 #  define	IWCOPY(a,b,c)	copyout((a), (b), (c))
 #  define	FREE_MB_T(m)	freemsg(m)
-#  define	SPLNET(x)	;
-#  define	SPLIMP(x)	;
-#  undef	SPLX
-#  define	SPLX(x)		;
+#  define	SPL_NET(x)	;
+#  define	SPL_IMP(x)	;
+#  undef	SPL_X
+#  define	SPL_X(x)	;
 #  ifdef	sparc
 #   define	ntohs(x)	(x)
 #   define	ntohl(x)	(x)
@@ -215,8 +233,23 @@ typedef	struct	qif	{
 extern	ill_t	*get_unit __P((char *));
 #  define	GETUNIT(n)	get_unit((n))
 # else /* SOLARIS */
-#  define	MUTEX_ENTER(x)	;
-#  define	MUTEX_EXIT(x)	;
+#  ifdef __sgi
+#   include <sys/ksynch.h>
+#   define	IPF_LOCK_PL	plhi
+#  endif
+#  if defined(__sgi)
+#   include <sys/sema.h>
+#undef kmutex_t
+typedef struct {
+	lock_t *l;
+	int pl;
+} kmutex_t;
+#   define	MUTEX_ENTER(x)	(x)->pl = LOCK((x)->l, IPF_LOCK_PL);
+#   define	MUTEX_EXIT(x)	UNLOCK((x)->l, (x)->pl);
+#  else
+#   define	MUTEX_ENTER(x)	;
+#   define	MUTEX_EXIT(x)	;
+#  endif
 #  ifndef linux
 #   define	FREE_MB_T(m)	m_freem(m)
 #   define	MTOD(m,t)	mtod(m,t)
@@ -234,17 +267,26 @@ extern	ill_t	*get_unit __P((char *));
 #  define	GETUNIT(n)	ifunit((n))
 # endif /* sun */
 
-# if defined(sun) && !defined(linux)
+# if defined(sun) && !defined(linux) || defined(__sgi)
 #  define	UIOMOVE(a,b,c,d)	uiomove((caddr_t)a,b,c,d)
 #  define	SLEEP(id, n)	sleep((id), PZERO+1)
 #  define	WAKEUP(id)	wakeup(id)
 #  define	KFREE(x)	kmem_free((char *)(x), sizeof(*(x)))
 #  define	KFREES(x,s)	kmem_free((char *)(x), (s))
 #  if !SOLARIS
-#   define	KMALLOC(a,b,c)	(a) = (b)new_kmem_alloc((c), KMEM_NOSLEEP)
 extern	void	m_copydata __P((struct mbuf *, int, int, caddr_t));
 extern	void	m_copyback __P((struct mbuf *, int, int, caddr_t));
-#  endif /* __svr4__ */
+#  endif
+#  ifdef __sgi
+#   include <sys/kmem.h>
+#   include <sys/ddi.h>
+#   define	KMALLOC(a,b,c)	(a) = (b)kmem_alloc((c), KM_NOSLEEP)
+#   define	GET_MINOR(x)	getminor(x)
+#  else
+#   if !SOLARIS
+#    define	KMALLOC(a,b,c)	(a) = (b)new_kmem_alloc((c), KMEM_NOSLEEP)
+#   endif /* __svr4__ */
+#  endif /* __sgi */
 # endif /* sun && !linux */
 # ifndef	GET_MINOR
 #  define	GET_MINOR(x)	minor(x)
@@ -272,13 +314,13 @@ extern	vm_map_t	kmem_map;
 #  define	WAKEUP(id)	wakeup(id)
 # endif /* BSD */
 # if defined(NetBSD) && NetBSD <= 1991011 && NetBSD >= 199407
-#  define	SPLNET(x)	x = splsoftnet()
-#  define	SPLX(x)		(void) splx(x)
+#  define	SPL_NET(x)	x = splsoftnet()
+#  define	SPL_X(x)	(void) splx(x)
 # else
 #  if !SOLARIS
-#   define	SPLIMP(x)	x = splimp()
-#   define	SPLNET(x)	x = splnet()
-#   define	SPLX(x)		(void) splx(x)
+#   define	SPL_IMP(x)	x = splimp()
+#   define	SPL_NET(x)	x = splnet()
+#   define	SPL_X(x)	(void) splx(x)
 #  endif
 # endif
 # define	PANIC(x,y)	if (x) panic y
@@ -288,10 +330,10 @@ extern	vm_map_t	kmem_map;
 # define	PANIC(x,y)	;
 # define	MUTEX_ENTER(x)	;
 # define	MUTEX_EXIT(x)	;
-# define	SPLNET(x)	;
-# define	SPLIMP(x)	;
-# undef		SPLX
-# define	SPLX(x)		;
+# define	SPL_NET(x)	;
+# define	SPL_IMP(x)	;
+# undef		SPL_X
+# define	SPL_X(x)	;
 # define	KMALLOC(a,b,c)	(a) = (b)malloc(c)
 # define	KFREE(x)	free(x)
 # define	KFREES(x,s)	free(x)
@@ -306,7 +348,7 @@ typedef mblk_t mb_t;
 typedef struct mbuf mb_t;
 #endif
 
-#ifdef linux
+#if defined(linux) || defined(__sgi)
 /*
  * These #ifdef's are here mainly for linux, but who knows, they may
  * not be in other places or maybe one day linux will grow up and some
@@ -323,6 +365,24 @@ typedef struct mbuf mb_t;
 #endif
 #ifndef	ICMP_PARAMPROB
 # define	ICMP_PARAMPROB	ICMP_PARAMETERPROB
+#endif
+#ifndef ICMP_TSTAMP
+# define	ICMP_TSTAMP	ICMP_TIMESTAMP
+#endif
+#ifndef ICMP_TSTAMPREPLY
+# define	ICMP_TSTAMPREPLY	ICMP_TIMESTAMPREPLY
+#endif
+#ifndef ICMP_IREQ
+# define	ICMP_IREQ	ICMP_INFO_REQUEST
+#endif
+#ifndef ICMP_IREQREPLY
+# define	ICMP_IREQREPLY	ICMP_INFO_REPLY
+#endif
+#ifndef	ICMP_MASKREQ
+# define	ICMP_MASKREQ	ICMP_ADDRESS
+#endif
+#ifndef ICMP_MASKREPLY
+# define	ICMP_MASKREPLY	ICMP_ADDRESSREPLY
 #endif
 #ifndef	IPVERSION
 # define	IPVERSION	4
@@ -408,13 +468,12 @@ typedef struct mbuf mb_t;
 #ifndef IPOPT_SECUR_TOPSECRET
 # define	IPOPT_SECUR_TOPSECRET	((u_short)0x6bc5)
 #endif
+#ifndef IPOPT_OLEN
+# define	IPOPT_OLEN	1
+#endif
+#endif /* linux || __sgi */
 
-# if LINUX < 0200
-#  define	icmp	icmphdr
-#  define	icmp_type	type
-#  define	icmp_code	code
-# endif
-
+#ifdef	linux
 typedef	struct	{
 	__u16	th_sport;
 	__u16	th_dport;
@@ -438,7 +497,7 @@ typedef	struct	{
 	__u16	uh_sport;
 	__u16	uh_dport;
 	__u16	uh_ulen;
-	__u16	uh_sun;
+	__u16	uh_sum;
 } udphdr_t;
 
 typedef	struct	{
@@ -464,7 +523,7 @@ typedef	struct	{
 /*
  * Structure of an icmp header.
  */
-struct icmp {
+typedef struct icmp {
 	u_char	icmp_type;		/* type of message, see below */
 	u_char	icmp_code;		/* type sub code */
 	u_short	icmp_cksum;		/* ones complement cksum of struct */
@@ -501,7 +560,7 @@ struct icmp {
 # define	icmp_ip		icmp_dun.id_ip.idi_ip
 # define	icmp_mask	icmp_dun.id_mask
 # define	icmp_data	icmp_dun.id_data
-};
+} icmphdr_t;
 
 struct ipovly {
 	caddr_t	ih_next, ih_prev;	/* for protocol sequence q's */
@@ -518,31 +577,33 @@ typedef struct  {
 	__u16	ether_type;
 } ether_header_t;
 
-# define	SPLX(x)		(void)
-# define	SPLNET(x)	(void)
-# define	SPLIMP(x)	(void)
+# ifdef	KERNEL
+#  define	SPL_X(x)	(void)
+#  define	SPL_NET(x)	(void)
+#  define	SPL_IMP(x)	(void)
+ 
+#  define	bcopy(a,b,c)	memmove(b,a,c)
+#  define	bcmp(a,b,c)	memcmp(a,b,c)
 
-# define	bcopy(a,b,c)	memmove(b,a,c)
-# define	bcmp(a,b,c)	memcmp(a,b,c)
+#  define	UNITNAME(n)	dev_get((n))
+#  define	ifnet	device
 
-# define	UNITNAME(n)	dev_get((n))
-# define	ifnet	device
-
-# define	KMALLOC(a,b,c)	(a) = (b)kmalloc((c), GFP_ATOMIC)
-# define	KFREE(x)	kfree_s((x), sizeof(*(x)))
-# define	KFREES(x,s)	kfree_s((x), (s))
-# define	IRCOPY(a,b,c)	{ \
+#  define	KMALLOC(a,b,c)	(a) = (b)kmalloc((c), GFP_ATOMIC)
+#  define	KFREE(x)	kfree_s((x), sizeof(*(x)))
+#  define	KFREES(x,s)	kfree_s((x), (s))
+#  define	IRCOPY(a,b,c)	{ \
 				 error = verify_area(VERIFY_READ, \
 						     (b) ,sizeof((b))); \
 				 if (!error) \
 					memcpy_fromfs((b), (a), (c)); \
 				}
-# define	IWCOPY(a,b,c)	{ \
+#  define	IWCOPY(a,b,c)	{ \
 				 error = verify_area(VERIFY_WRITE, \
 						     (b) ,sizeof((b))); \
 				 if (!error) \
 					memcpy_tofs((b), (a), (c)); \
 				}
+# endif
 #else
 typedef	struct	tcphdr	tcphdr_t;
 typedef	struct	udphdr	udphdr_t;
@@ -550,6 +611,21 @@ typedef	struct	icmp	icmphdr_t;
 typedef	struct	ip	ip_t;
 typedef	struct	ether_header	ether_header_t;
 #endif /* linux */
+
+#if defined(hpux) || defined(linux)
+struct	ether_addr	{
+	char	ether_addr_octet[6];
+};
+#endif
+
+/*
+ * XXX - This is one of those *awful* hacks which nobody likes
+ */
+#ifdef	ultrix
+#define	A_A
+#else
+#define	A_A	&
+#endif
 
 #ifndef	ICMP_ROUTERADVERT
 # define	ICMP_ROUTERADVERT	9

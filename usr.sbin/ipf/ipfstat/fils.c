@@ -1,7 +1,7 @@
-/*	$NetBSD: fils.c,v 1.9 1997/09/21 18:01:11 veego Exp $	*/
+/*	$NetBSD: fils.c,v 1.10 1997/10/30 16:10:09 mrg Exp $	*/
 
 /*
- * (C)opyright 1993-1996 by Darren Reed.
+ * Copyright (C) 1993-1997 by Darren Reed.
  *
  * Redistribution and use in source and binary forms are permitted
  * provided that this notice is preserved and due credit is given
@@ -42,13 +42,13 @@
 #include "netinet/ip_state.h"
 #include "netinet/ip_auth.h"
 #include "kmem.h"
-#ifdef	__NetBSD__
+#if defined(__NetBSD__) || (__OpenBSD__)
 #include <paths.h>
 #endif
 
-#if !defined(lint) && defined(LIBC_SCCS)
-static	char	sccsid[] = "@(#)fils.c	1.21 4/20/96 (C) 1993-1996 Darren Reed";
-static	char	rcsid[] = "Id: fils.c,v 2.0.2.19 1997/09/10 13:08:13 darrenr Exp ";
+#if !defined(lint)
+static const char sccsid[] = "@(#)fils.c	1.21 4/20/96 (C) 1993-1996 Darren Reed";
+static const char rcsid[] = "@(#)Id: fils.c,v 2.0.2.25 1997/10/29 12:14:05 darrenr Exp ";
 #endif
 #ifdef	_PATH_UNIX
 #define	VMUNIX	_PATH_UNIX
@@ -188,7 +188,7 @@ char *argv[];
 
 	if (opts & OPT_SHOWLIST) {
 		showlist(&fio);
-		if((opts & OPT_OUTQUE) && (opts & OPT_INQUE)){
+		if ((opts & OPT_OUTQUE) && (opts & OPT_INQUE)){
 			opts &= ~OPT_OUTQUE;
 			showlist(&fio);
 		}
@@ -258,12 +258,16 @@ struct	friostat	*fp;
 			fp->f_st[0].fr_pull[0], fp->f_st[0].fr_pull[1]);
 	PRINTF("OUT Pullups succeeded:\t%lu\tfailed:\t%lu\n",
 			fp->f_st[1].fr_pull[0], fp->f_st[1].fr_pull[1]);
+	PRINTF("Fastroute successes:\t%lu\tfailures:\t%lu\n",
+			fp->f_froute[0], fp->f_froute[1]);
 
 	PRINTF("Packet log flags set: (%#x)\n", frf);
 	if (frf & FF_LOGPASS)
 		PRINTF("\tpackets passed through filter\n");
 	if (frf & FF_LOGBLOCK)
 		PRINTF("\tpackets blocked by filter\n");
+	if (frf & FF_LOGNOMATCH)
+		PRINTF("\tpackets not matched by filter\n");
 	if (!frf)
 		PRINTF("\tnone\n");
 }
@@ -373,7 +377,7 @@ ips_stat_t *ipsp;
 				    sizeof(ips)) == -1)
 				break;
 			PRINTF("%s -> ", inet_ntoa(ips.is_src));
-			PRINTF("%s age %ld pass %d pr %d state %d/%d\n",
+			PRINTF("%s ttl %ld pass %d pr %d state %d/%d\n",
 				inet_ntoa(ips.is_dst), ips.is_age,
 				ips.is_pass, ips.is_p, ips.is_state[0],
 				ips.is_state[1]);
@@ -397,6 +401,51 @@ ips_stat_t *ipsp;
 				PRINTF(" %hu %hu %d\n", ips.is_icmp.ics_id,
 					ips.is_icmp.ics_seq,
 					ips.is_icmp.ics_type);
+
+			/* phil@ultimate.com ... */
+			PRINTF("\t");
+			/* from "printfr()" */
+			if (ips.is_pass & FR_PASS) {
+				PRINTF("pass");
+			} else if (ips.is_pass & FR_BLOCK) {
+				PRINTF("block");
+				if (ips.is_pass & FR_RETICMP)
+					PRINTF(" return-icmp");
+				if (ips.is_pass & FR_RETRST)
+					PRINTF(" return-rst");
+			} else if ((ips.is_pass & FR_LOGMASK) == FR_LOG) {
+					PRINTF("log");
+				if (ips.is_pass & FR_LOGBODY)
+					PRINTF(" body");
+				if (ips.is_pass & FR_LOGFIRST)
+					PRINTF(" first");
+			} else if (ips.is_pass & FR_ACCOUNT)
+				PRINTF("count");
+
+			if (ips.is_pass & FR_OUTQUE)
+				PRINTF(" out");
+			else
+				PRINTF(" in");
+
+			if ((ips.is_pass & (FR_LOGB|FR_LOGP)) != 0) {
+				PRINTF(" log");
+				if (ips.is_pass & FR_LOGBODY)
+					PRINTF(" body");
+				if (ips.is_pass & FR_LOGFIRST)
+					PRINTF(" first");
+				if (ips.is_pass & FR_LOGORBLOCK)
+					PRINTF(" or-block");
+			}
+			if (ips.is_pass & FR_QUICK)
+				PRINTF(" quick");
+			if (ips.is_pass & FR_KEEPFRAG)
+				PRINTF(" keep frags");
+			/* a given; no? */
+			if (ips.is_pass & FR_KEEPSTATE)
+				PRINTF(" keep state");
+			PRINTF("\n");
+			/* ... phil@ultimate.com */
+
 			istab[i] = ips.is_next;
 		}
 }

@@ -1,15 +1,15 @@
-/*	$NetBSD: ip_state.c,v 1.9 1997/09/21 18:03:32 veego Exp $	*/
+/*	$NetBSD: ip_state.c,v 1.10 1997/10/30 16:09:10 mrg Exp $	*/
 
 /*
- * (C)opyright 1995 by Darren Reed.
+ * Copyright (C) 1995-1997 by Darren Reed.
  *
  * Redistribution and use in source and binary forms are permitted
  * provided that this notice is preserved and due credit is given
  * to the original author and the contributors.
  */
-#if !defined(lint) && defined(LIBC_SCCS)
-static	char	sccsid[] = "@(#)ip_state.c	1.8 6/5/96 (C) 1993-1995 Darren Reed";
-static	char	rcsid[] = "Id: ip_state.c,v 2.0.2.20 1997/08/20 16:27:20 darrenr Exp ";
+#if !defined(lint)
+static const char sccsid[] = "@(#)ip_state.c	1.8 6/5/96 (C) 1993-1995 Darren Reed";
+static const char rcsid[] = "@(#)Id: ip_state.c,v 2.0.2.24 1997/10/29 12:14:15 darrenr Exp ";
 #endif
 
 #if !defined(_KERNEL) && !defined(KERNEL)
@@ -72,7 +72,7 @@ static	char	rcsid[] = "Id: ip_state.c,v 2.0.2.20 1997/08/20 16:27:20 darrenr Exp
 ipstate_t *ips_table[IPSTATE_SIZE];
 int	ips_num = 0;
 ips_stat_t ips_stats;
-#if	SOLARIS && defined(_KERNEL)
+#if	(SOLARIS || defined(__sgi)) && defined(_KERNEL)
 extern	kmutex_t	ipf_state;
 #endif
 
@@ -98,7 +98,7 @@ ips_stat_t *fr_statetstats()
 
 int fr_state_ioctl(data, cmd, mode)
 caddr_t data;
-#ifdef	__NetBSD__
+#if defined(__NetBSD__) || defined(__OpenBSD__)
 u_long cmd;
 #else
 int cmd;
@@ -247,12 +247,16 @@ u_int pass;
  * change timeout depending on whether new packet is a SYN-ACK returning for a
  * SYN or a RST or FIN which indicate time to close up shop.
  */
+#ifdef __STDC__
+int fr_tcpstate(ipstate_t *is, fr_info_t *fin, ip_t *ip, tcphdr_t *tcp, u_short sport)
+#else
 int fr_tcpstate(is, fin, ip, tcp, sport)
 register ipstate_t *is;
 fr_info_t *fin;
 ip_t *ip;
 tcphdr_t *tcp;
 u_short sport;
+#endif
 {
 	register int seqskew, ackskew;
 	register u_short swin, dwin;
@@ -477,8 +481,8 @@ void fr_timeoutstate()
 	int s;
 #endif
 
+	SPL_NET(s);
 	MUTEX_ENTER(&ipf_state);
-	SPLNET(s);
 	for (i = 0; i < IPSTATE_SIZE; i++)
 		for (isp = &ips_table[i]; (is = *isp); )
 			if (is->is_age && !--is->is_age) {
@@ -494,8 +498,8 @@ void fr_timeoutstate()
 				ips_num--;
 			} else
 				isp = &is->is_next;
-	SPLX(s);
 	MUTEX_EXIT(&ipf_state);
+	SPL_X(s);
 }
 
 
@@ -588,9 +592,13 @@ int dir;
 
 
 #ifdef	IPFILTER_LOG
+#ifdef __STDC__
+void ipstate_log(struct ipstate *is, u_short type)
+#else
 void ipstate_log(is, type)
 struct ipstate *is;
 u_short type;
+#endif
 {
 	struct	ipslog	ipsl;
 	void *items[1];
