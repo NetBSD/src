@@ -1,4 +1,4 @@
-/*	$NetBSD: suff.c,v 1.8 1995/06/14 15:19:59 christos Exp $	*/
+/*	$NetBSD: suff.c,v 1.9 1995/09/22 00:42:10 christos Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -42,7 +42,7 @@
 #if 0
 static char sccsid[] = "@(#)suff.c	5.6 (Berkeley) 6/1/90";
 #else
-static char rcsid[] = "$NetBSD: suff.c,v 1.8 1995/06/14 15:19:59 christos Exp $";
+static char rcsid[] = "$NetBSD: suff.c,v 1.9 1995/09/22 00:42:10 christos Exp $";
 #endif
 #endif /* not lint */
 
@@ -1427,7 +1427,7 @@ SuffExpandChildren(cgnp, pgnp)
 	    /*
 	     * Add all elements of the members list to the parent node.
 	     */
-	    while(!Lst_IsEmpty(members)) {
+	    while (!Lst_IsEmpty(members)) {
 		gn = (GNode *)Lst_DeQueue(members);
 
 		if (DEBUG(SUFF)) {
@@ -1830,6 +1830,16 @@ SuffFindNormalDeps(gn, slst)
     targs = Lst_Init(FALSE);
 
     /*
+     * We do not apply suffix rules to nodes that are not in our directory.
+     * If we did that, then we could be building things in the current
+     * directory that should be build somewhere else.
+     */
+    if (strchr(gn->name, '/') != NULL) {
+	ln = NILLNODE;
+	if (DEBUG(SUFF))
+	    printf("Not applying suffix rules rules to %s\n", gn->name);
+    }
+    /*
      * We're caught in a catch-22 here. On the one hand, we want to use any
      * transformation implied by the target's sources, but we can't examine
      * the sources until we've expanded any variables/wildcards they may hold,
@@ -1847,7 +1857,8 @@ SuffFindNormalDeps(gn, slst)
      * children, then look for any overriding transformations they imply.
      * Should we find one, we discard the one we found before.
      */
-    while(ln != NILLNODE) {
+
+    while (ln != NILLNODE) {
 	/*
 	 * Look for next possible suffix...
 	 */
