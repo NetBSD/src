@@ -1,4 +1,4 @@
-/*	$NetBSD: bpf.c,v 1.95 2004/04/20 10:51:09 darrenr Exp $	*/
+/*	$NetBSD: bpf.c,v 1.96 2004/04/30 22:07:21 dyoung Exp $	*/
 
 /*
  * Copyright (c) 1990, 1991, 1993
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bpf.c,v 1.95 2004/04/20 10:51:09 darrenr Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bpf.c,v 1.96 2004/04/30 22:07:21 dyoung Exp $");
 
 #include "bpfilter.h"
 
@@ -1232,6 +1232,73 @@ bpf_mcpy(dst_arg, src_arg, len)
 }
 
 /*
+ * Dispatch a packet to all the listeners on interface bp.
+ *
+ * marg    pointer to the packet, either a data buffer or an mbuf chain
+ * buflen  buffer length, if marg is a data buffer
+ * cpfn    a function that can copy marg into the listener's buffer
+ * pktlen  length of the packet
+ * rcvif   either NULL or the interface the packet came in on.
+ */
+static __inline void
+bpf_deliver(struct bpf_if *bp, void *(*cpfn)(void *, const void *, size_t),
+    void *marg, u_int pktlen, u_int buflen, struct ifnet *rcvif)
+{
+	u_int slen;
+	struct bpf_d *d;
+
+	for (d = bp->bif_dlist; d != 0; d = d->bd_next) {
+		if (!d->bd_seesent && (rcvif == NULL))
+			continue;
+		++d->bd_rcount;
+		slen = bpf_filter(d->bd_filter, marg, pktlen, buflen);
+		if (slen != 0)
+			catchpacket(d, marg, pktlen, slen, cpfn);
+	}
+}
+
+static __inline u_int
+bpf_measure(struct mbuf *m)
+{
+	struct mbuf *m0;
+	u_int pktlen;
+
+	pktlen = 0;
+	for (m0 = m; m0 != 0; m0 = m0->m_next)
+		pktlen += m0->m_len;
+	return pktlen;
+}
+
+/*
+ * Incoming linkage from device drivers, when the head of the packet is in
+ * a buffer, and the tail is in an mbuf chain.
+ */
+void
+bpf_mtap2(arg, data, dlen, m)
+	caddr_t arg;
+	void *data;
+	u_int dlen;
+	struct mbuf *m;
+{
+	struct bpf_if *bp = (struct bpf_if *)arg;
+	u_int pktlen;
+	struct mbuf mb;
+
+	pktlen = bpf_measure(m) + dlen;
+
+	/*
+	 * Craft on-stack mbuf suitable for passing to bpf_filter.
+	 * Note that we cut corners here; we only setup what's
+	 * absolutely needed--this mbuf should never go anywhere else.
+	 */
+	mb.m_next = m;
+	mb.m_data = data;
+	mb.m_len = dlen;
+
+	bpf_deliver(bp, bpf_mcpy, &mb, pktlen, 0, m->m_pkthdr.rcvif);
+}
+
+/*
  * Incoming linkage from device drivers, when packet is in an mbuf chain.
  */
 void
@@ -1241,14 +1308,10 @@ bpf_mtap(arg, m)
 {
 	void *(*cpfn) __P((void *, const void *, size_t));
 	struct bpf_if *bp = (struct bpf_if *)arg;
-	struct bpf_d *d;
-	u_int pktlen, slen, buflen;
-	struct mbuf *m0;
+	u_int pktlen, buflen;
 	void *marg;
 
-	pktlen = 0;
-	for (m0 = m; m0 != 0; m0 = m0->m_next)
-		pktlen += m0->m_len;
+	pktlen = bpf_measure(m);
 
 	if (pktlen == m->m_len) {
 		cpfn = memcpy;
@@ -1260,14 +1323,7 @@ bpf_mtap(arg, m)
 		buflen = 0;
 	}
 
-	for (d = bp->bif_dlist; d != 0; d = d->bd_next) {
-		if (!d->bd_seesent && (m->m_pkthdr.rcvif == NULL))
-			continue;
-		++d->bd_rcount;
-		slen = bpf_filter(d->bd_filter, marg, pktlen, buflen);
-		if (slen != 0)
-			catchpacket(d, marg, pktlen, slen, cpfn);
-	}
+	bpf_deliver(bp, cpfn, marg, pktlen, buflen, m->m_pkthdr.rcvif);
 }
 
 /*
