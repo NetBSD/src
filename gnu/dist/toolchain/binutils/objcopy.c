@@ -1687,7 +1687,7 @@ strip_main (argc, argv)
 	  break;
 	case 'S':
 	case 'g':
-	case 'd':
+	case 'd':	/* NetBSD, historic BSD strip */
 	  strip_symbols = STRIP_DEBUG;
 	  break;
 	case OPTION_STRIP_UNNEEDED:
