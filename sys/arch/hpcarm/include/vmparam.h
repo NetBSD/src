@@ -1,4 +1,4 @@
-/*	$NetBSD: vmparam.h,v 1.11 2002/02/23 14:02:48 toshii Exp $	*/
+/*	$NetBSD: vmparam.h,v 1.12 2002/03/03 11:23:01 chris Exp $	*/
 
 /*
  * Copyright (c) 1988 The Regents of the University of California.
@@ -93,7 +93,7 @@
 /* XXX max. amount of KVM to be used by buffers. */
 #ifndef VM_MAX_KERNEL_BUF
 #define VM_MAX_KERNEL_BUF \
-	((VM_MAXKERN_ADDRESS - KERNEL_VM_BASE) * 4 / 10)
+	((KERNEL_VM_SIZE) * 4 / 10)
 #endif
 
 /* virtual sizes (bytes) for various kernel submaps */
