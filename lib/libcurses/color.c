@@ -1,4 +1,4 @@
-/*	$NetBSD: color.c,v 1.9 2000/04/27 00:26:57 jdc Exp $	*/
+/*	$NetBSD: color.c,v 1.10 2000/04/27 05:03:22 mycroft Exp $	*/
 
 /*
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: color.c,v 1.9 2000/04/27 00:26:57 jdc Exp $");
+__RCSID("$NetBSD: color.c,v 1.10 2000/04/27 05:03:22 mycroft Exp $");
 #endif				/* not lint */
 
 #include "curses.h"
@@ -257,8 +257,13 @@ init_pair(short pair, short fore, short back)
 #ifdef DEBUG
 	__CTRACE("init_pair: %d, %d, %d\n", pair, fore, back);
 #endif
+
 	if (pair < 0 || pair >= COLOR_PAIRS)
-		return(ERR);
+		return (ERR);
+	if (fore < 0 || fore >= COLORS)
+		return (ERR);
+	if (back < 0 || back >= COLORS)
+		return (ERR);
 
 	if ((pairs[pair].flags & __USED) && (fore != pairs[pair].fore ||
 	    back != pairs[pair].back))
@@ -266,24 +271,15 @@ init_pair(short pair, short fore, short back)
 	else
 		changed = 0;
 
-	if (fore >= 0 && fore < COLORS)
-		pairs[pair].fore = fore;
-	else
-		return(ERR);
-
-	if (back >= 0 && back < COLOR_PAIRS)
-		pairs[pair].back = back;
-	else
-		return(ERR);
-
 	pairs[pair].flags |= __USED;
+	pairs[pair].fore = fore;
+	pairs[pair].back = back;
 
 	/* XXX: need to initialise HP style (iP) */
 
-	if (changed) {
-		__change_pair (pair);
-	}
-	return(OK);
+	if (changed)
+		__change_pair(pair);
+	return (OK);
 }
 
 /*
