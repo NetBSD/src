@@ -1,4 +1,4 @@
-/*	$NetBSD: subr.s,v 1.53 2000/08/26 03:38:46 matt Exp $	   */
+/*	$NetBSD: subr.s,v 1.54 2000/08/26 15:13:23 matt Exp $	   */
 
 /*
  * Copyright (c) 1994 Ludd, University of Lule}, Sweden.
@@ -306,7 +306,13 @@ remrq:	.asciz	"remrunqueue"
 # Idle loop. Here we could do something fun, maybe, like calculating
 # pi or something.
 #
-idle:	mtpr	$IPL_NONE,$PR_IPL 	# Enable all types of interrupts
+idle:
+#if defined(LOCKDEBUG)
+	calls	$0,_C_LABEL(sched_unlock_idle)
+#elif defined(MULTIPROCESSOR)
+	clrl	_C_LABEL(sched_lock)	# release sched lock
+#endif
+	mtpr	$IPL_NONE,$PR_IPL 	# Enable all types of interrupts
 1:
 #if 0
 	tstl	_C_LABEL(uvm)+UVM_PAGE_IDLE_ZERO
@@ -324,22 +330,17 @@ idle:	mtpr	$IPL_NONE,$PR_IPL 	# Enable all types of interrupts
 #endif
 	tstl	_C_LABEL(sched_whichqs)	# Anything ready to run?
 	bneq	Swtch			# Yes, goto switch again.
-#if defined(LOCKDEBUG)
-	calls	$0,_C_LABEL(sched_unlock_idle)
-#elif defined(MULTIPROCESSOR)
-	clrl	_C_LABEL(sched_lock)	# release sched lock
-#endif
 	brb	idle			# nope, continue to idlely loop
 
 #
 # cpu_switch, cpu_exit and the idle loop implemented in assembler 
-# for efficiency. r0 contains pointer to last process.
+# for efficiency. r0 contains pointer to last process.  This is
+# called at IPL_HIGH.
 #
 
 JSBENTRY(Swtch)
 	mfpr	$PR_SSP,r1		# Get ptr to this cpu_info struct
 	clrl	CI_CURPROC(r1)		# Stop process accounting
-	mtpr	$IPL_HIGH,$PR_IPL	# block all interrupts
 	ffs	$0,$32,_C_LABEL(sched_whichqs),r3 # Search for bit set
 	beql	idle			# no bit set, go to idle loop
 
