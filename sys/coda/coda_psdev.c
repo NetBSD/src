@@ -1,4 +1,4 @@
-/*	$NetBSD: coda_psdev.c,v 1.14 2000/12/22 22:58:57 jdolecek Exp $	*/
+/*	$NetBSD: coda_psdev.c,v 1.15 2000/12/27 22:06:07 jdolecek Exp $	*/
 
 /*
  * 
@@ -584,10 +584,10 @@ coda_call(mntinfo, inSize, outSize, buffer)
 #ifdef	notyet
 		    sigminusset(&p->p_sigctx.ps_sigmask, &p->p_sigctx.ps_siglist);
 		    printf("coda_call: siglist = %x.%x.%x.%x, sigmask = %x.%x.%x.%x\n", 
-			    p->p_siglist.__bits[0], p->p_siglist.__bits[1],
-			    p->p_siglist.__bits[2], p->p_siglist.__bits[3],
-			    p->p_sigmask.__bits[0], p->p_sigmask.__bits[1],
-			    p->p_sigmask.__bits[2], p->p_sigmask.__bits[3]);
+			    p->p_sigctx.ps_siglist.__bits[0], p->p_sigctx.ps_siglist.__bits[1],
+			    p->p_sigctx.ps_siglist.__bits[2], p->p_sigctx.ps_siglist.__bits[3],
+			    p->p_sigctx.ps_sigmask.__bits[0], p->p_sigctx.ps_sigmask.__bits[1],
+			    p->p_sigctx.ps_sigmask.__bits[2], p->p_sigctx.ps_sigmask.__bits[3]);
 #endif
 	    }
 	} while (error && i++ < 128 && VC_OPEN(vcp));
