@@ -1,4 +1,4 @@
-/*	$NetBSD: ibcs2_ioctl.c,v 1.12 1996/08/10 09:08:26 mycroft Exp $	*/
+/*	$NetBSD: ibcs2_ioctl.c,v 1.13 1997/09/19 21:57:10 jtk Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Scott Bartram
@@ -522,6 +522,17 @@ ibcs2_sys_ioctl(p, v, retval)
 
 	case IBCS2_SIOCSOCKSYS:
 		return ibcs2_socksys(p, uap, retval);
+
+	case IBCS2_FIONBIO:
+		{
+			int arg;
+
+			if ((error = copyin(SCARG(uap, data), &arg,
+			    sizeof(arg))) != 0)
+				return error;
+
+		    	return (*ctl)(fp, FIONBIO, (caddr_t)&arg, p);
+		}
 
 	case IBCS2_I_NREAD:     /* STREAMS */
 	        SCARG(uap, cmd) = FIONREAD;
