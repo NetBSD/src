@@ -1,4 +1,4 @@
-/*	$NetBSD: xlint.c,v 1.12 1999/05/03 15:23:27 christos Exp $	*/
+/*	$NetBSD: xlint.c,v 1.13 1999/05/03 15:45:01 christos Exp $	*/
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -34,7 +34,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: xlint.c,v 1.12 1999/05/03 15:23:27 christos Exp $");
+__RCSID("$NetBSD: xlint.c,v 1.13 1999/05/03 15:45:01 christos Exp $");
 #endif
 
 #include <sys/param.h>
@@ -287,9 +287,9 @@ usage()
     "Usage: %s [-abceghprvxzHF] [-s|-t] [-i|-nu] [-Dname[=def]] [-Uname]\n",
 	    __progname);
 	(void)fprintf(stderr, 
-    "\t[-Idirectory] [-Ldirectory] [-llibrary] [-ooutputfile] file ...\n\n");
+    "\t[-Idirectory] [-Ldirectory] [-llibrary] [-ooutputfile] file ...\n");
 	(void)fprintf(stderr,
-    "%s [-abceghprvzHF] [-s|-t] -Clibrary [-Dname[=def]]\n", __progname);
+    "       %s [-abceghprvzHF] [-s|-t] -Clibrary [-Dname[=def]]\n", __progname);
 	(void)fprintf(stderr, "\t[-Idirectory] [-Uname] file ...\n");
 	terminate(-1);
 }
