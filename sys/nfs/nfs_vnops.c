@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_vnops.c,v 1.94 1998/06/24 20:58:47 sommerfe Exp $	*/
+/*	$NetBSD: nfs_vnops.c,v 1.95 1998/08/07 11:02:39 kleink Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -61,6 +61,7 @@
 #include <sys/fcntl.h>
 #include <sys/lockf.h>
 #include <sys/stat.h>
+#include <sys/unistd.h>
 
 #include <vm/vm.h>
 
@@ -2964,23 +2965,85 @@ loop:
 /*
  * Return POSIX pathconf information applicable to nfs.
  *
- * The NFS V2 protocol doesn't support this, so just return EINVAL
- * for V2.
+ * N.B. The NFS V2 protocol doesn't support this RPC.
  */
 /* ARGSUSED */
 int
 nfs_pathconf(v)
 	void *v;
 {
-#if 0
 	struct vop_pathconf_args /* {
 		struct vnode *a_vp;
 		int a_name;
 		register_t *a_retval;
 	} */ *ap = v;
-#endif
+	struct nfsv3_pathconf *pcp;
+	struct vnode *vp = ap->a_vp;
+	struct mbuf *mreq, *mrep, *md, *mb, *mb2;
+	int32_t t1, t2;
+	u_int32_t *tl;
+	caddr_t bpos, dpos, cp, cp2;
+	int error = 0, attrflag;
+	int v3 = NFS_ISV3(vp);
 
-	return (EINVAL);
+	switch (ap->a_name) {
+		/* Names that can be resolved locally. */
+	case _PC_PIPE_BUF:
+		*ap->a_retval = PIPE_BUF;
+		break;
+	case _PC_SYNC_IO:
+		*ap->a_retval = 1;
+		break;
+	/* Names that cannot be resolved locally; do an RPC, if possible. */
+	case _PC_LINK_MAX:
+	case _PC_NAME_MAX:
+	case _PC_CHOWN_RESTRICTED:
+	case _PC_NO_TRUNC:
+		if (!v3) {
+			/*
+			 * The pathconf name is not invalid, we just don't
+			 * have a limit for these.  Per POSIX, this is not
+			 * an error.
+			 */
+			*ap->a_retval = -1;
+			break;
+		}
+		nfsstats.rpccnt[NFSPROC_PATHCONF]++;
+		nfsm_reqhead(vp, NFSPROC_PATHCONF, NFSX_FH(1));
+		nfsm_fhtom(vp, 1);
+		nfsm_request(vp, NFSPROC_PATHCONF,
+		    curproc, curproc->p_ucred);	/* XXX */
+		nfsm_postop_attr(vp, attrflag);
+		if (!error) {
+			nfsm_dissect(pcp, struct nfsv3_pathconf *,
+			    NFSX_V3PATHCONF);
+			switch (ap->a_name) {
+			case _PC_LINK_MAX:
+				*ap->a_retval =
+				    fxdr_unsigned(register_t, pcp->pc_linkmax);
+				break;
+			case _PC_NAME_MAX:
+				*ap->a_retval =
+				    fxdr_unsigned(register_t, pcp->pc_namemax);
+				break;
+			case _PC_CHOWN_RESTRICTED:
+				*ap->a_retval =
+				    (pcp->pc_chownrestricted == nfs_true);
+				break;
+			case _PC_NO_TRUNC:
+				*ap->a_retval =
+				    (pcp->pc_notrunc == nfs_true);
+				break;
+			}
+		}
+		nfsm_reqdone;
+		break;
+	default:
+		error = EINVAL;
+		break;
+	}
+
+	return (error);
 }
 
 /*
