@@ -1,4 +1,4 @@
-/*	$NetBSD: fetch.c,v 1.39 1998/11/18 07:24:26 itohy Exp $	*/
+/*	$NetBSD: fetch.c,v 1.40 1998/11/22 06:52:32 explorer Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: fetch.c,v 1.39 1998/11/18 07:24:26 itohy Exp $");
+__RCSID("$NetBSD: fetch.c,v 1.40 1998/11/22 06:52:32 explorer Exp $");
 #endif /* not lint */
 
 /*
@@ -448,6 +448,7 @@ url_get(url, proxyenv, outfile)
 			fprintf(ttyout, "Requesting %s\n", url);
 			fprintf(fin, "GET %s HTTP/1.1\r\n", path);
 			fprintf(fin, "Host: %s\r\n", host);
+			fprintf(fin, "Accept: */*\r\n");
 			fprintf(fin, "Connection: close\r\n\r\n");
 		}
 		if (fflush(fin) == EOF) {
