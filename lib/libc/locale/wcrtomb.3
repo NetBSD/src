@@ -1,4 +1,4 @@
-.\" $NetBSD: wcrtomb.3,v 1.5 2004/01/24 16:58:54 wiz Exp $
+.\" $NetBSD: wcrtomb.3,v 1.6 2004/09/27 07:07:04 yamt Exp $
 .\"
 .\" Copyright (c)2002 Citrus Project,
 .\" All rights reserved.
@@ -38,7 +38,7 @@
 .Sh SYNOPSIS
 .In wchar.h
 .Ft size_t
-.Fn wcrtomb "const char * restrict s" "wchar_t wc" "mbstate_t * restrict ps"
+.Fn wcrtomb "char * restrict s" "wchar_t wc" "mbstate_t * restrict ps"
 .\" ----------------------------------------------------------------------
 .Sh DESCRIPTION
 .Fn wcrtomb
