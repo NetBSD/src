@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_exec.c,v 1.100.2.4 2001/07/19 13:36:19 perry Exp $	*/
+/*	$NetBSD: kern_exec.c,v 1.100.2.5 2002/01/14 15:18:47 he Exp $	*/
 
 /*-
  * Copyright (C) 1993, 1994, 1996 Christopher G. Demetriou
@@ -97,6 +97,15 @@ check_exec(p, epp)
 	struct vnode *vp;
 	struct nameidata *ndp;
 	size_t resid;
+
+	/*
+	 * Lock the process and set the P_INEXEC flag to indicate that
+	 * it should be left alone until we're done here.  This is
+	 * necessary to avoid race conditions - e.g. in ptrace() -
+	 * that might allow a local user to illicitly obtain elevated
+	 * privileges.
+	 */
+	p->p_flag |= P_INEXEC;
 
 	ndp = epp->ep_ndp;
 	ndp->ni_cnd.cn_nameiop = LOOKUP;
@@ -498,9 +507,11 @@ sys_execve(p, v, retval)
 		ktremul(p->p_tracep, p, p->p_emul->e_name);
 #endif
 
+	p->p_flag &= ~P_INEXEC;
 	return (EJUSTRETURN);
 
 bad:
+	p->p_flag &= ~P_INEXEC;
 	/* free the vmspace-creation commands, and release their references */
 	kill_vmcmds(&pack.ep_vmcmds);
 	/* kill any opened file descriptor, if necessary */
@@ -516,10 +527,12 @@ bad:
 	uvm_km_free_wakeup(exec_map, (vaddr_t) argp, NCARGS);
 
 freehdr:
+	p->p_flag &= ~P_INEXEC;
 	FREE(pack.ep_hdr, M_EXEC);
 	return error;
 
 exec_abort:
+	p->p_flag &= ~P_INEXEC;
 	/*
 	 * the old process doesn't exist anymore.  exit gracefully.
 	 * get rid of the (new) address space we have created, if any, get rid
