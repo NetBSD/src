@@ -1,4 +1,4 @@
-.\"	$NetBSD: minherit.2,v 1.3 1999/12/02 21:42:37 kleink Exp $
+.\"	$NetBSD: minherit.2,v 1.3.4.1 2000/06/25 20:30:20 sommerfeld Exp $
 .\"
 .\" Copyright (c) 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -48,15 +48,30 @@
 .Fn minherit "void *addr" "size_t len" "int inherit"
 .Sh DESCRIPTION
 The
-.Fn minherit
+.Fn minherit 
 system call
-changes the specified pages to have the inheritance characteristic
-.Fa inherit ,
+changes the specified range of virtual addresses to have the specified
+fork-time inheritance characteristic
+.Fa inherit .
 which can be set to VM_INHERIT_NONE, VM_INHERIT_COPY, or VM_INHERIT_SHARE.
 Not all implementations will guarantee that the inheritance characteristic
 can be set on a page basis;
 the granularity of changes may be as large as an entire region.
+.Pp
+Normally, the entire address space is marked VM_INHERIT_COPY; when the
+process calls
+.Fn fork ,
+the child receives a (virtual) copy of the entire address space.
+Pages or regions marked VM_INHERIT_SHARE are shared between the
+address spaces, while pages or regions marked VM_INHERIT_NONE will be
+unmapped in the child.
+.Sh BUGS
+If the a particular port does not support page-granularity
+inheritance, there's no way to figure out how large a region is
+actually affected by 
+.Fn minherit .
 .Sh SEE ALSO
+.Xr fork 2 ,
 .Xr madvise 2 , 
 .Xr mincore 2 , 
 .Xr mprotect 2 , 
