@@ -1,8 +1,8 @@
 #	from: @(#)Makefile	6.1 (Berkeley) 3/3/91
-#	$Id: Makefile,v 1.6 1993/10/07 07:24:07 cgd Exp $
+#	$Id: Makefile,v 1.7 1993/10/13 02:00:30 cgd Exp $
 
-.if !defined (HOST)
-HOST=$(MACHINE)
+.if !defined (hosttype)
+hosttype=$(MACHINE)
 .endif
 .if !defined (OBJFORMAT)
 OBJFORMAT=aout
@@ -21,7 +21,7 @@ SRCS=		app.c as.c atof-generic.c bignum-copy.c \
 		obj-$(OBJFORMAT).c
 CFLAGS+=	-I$(.CURDIR) ${ADDINCLUDE} -I$(.CURDIR)/config \
 		-DPIC -DOLD_GAS -DSIGTY=void -Derror=as_fatal
-LDADD+=		-lgnumalloc
+#LDADD+=		-lgnumalloc
 DPADD+=		/usr/lib/libgnumalloc.a
 
 .PATH: $(.CURDIR)/config
@@ -32,14 +32,14 @@ $(PROG): config.status
 config.status:
 	/bin/rm -f targ-cpu.h ; ln -s $(.CURDIR)/config/tc-$(MACHINE).h targ-cpu.h
 	/bin/rm -f obj-format.h ; ln -s $(.CURDIR)/config/obj-$(OBJFORMAT).h obj-format.h
-	/bin/rm -f host.h ; ln -s $(.CURDIR)/config/ho-$(HOST).h host.h
+	/bin/rm -f host.h ; ln -s $(.CURDIR)/config/ho-$(hosttype).h host.h
 	/bin/rm -f targ-env.h
 .if exists ($(.CURDIR)/config/te-$(MACHINE).h)
 	ln -s $(.CURDIR)/config/te-$(MACHINE).h targ-env.h
 .else
 	ln -s $(.CURDIR)/config/te-generic.h targ-env.h
 .endif
-	echo "curdir=$(.CURDIR) machine=$(MACHINE) host=$(HOST)" > $(.TARGET)
+	echo "curdir=$(.CURDIR) machine=$(MACHINE) host=$(hosttype)" > $(.TARGET)
 
 CLEANFILES+= targ-cpu.h obj-format.h host.h targ-env.h config.status
 
