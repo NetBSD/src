@@ -1,4 +1,4 @@
-/*	$NetBSD: unpcb.h,v 1.8 1997/01/22 07:09:29 mikel Exp $	*/
+/*	$NetBSD: unpcb.h,v 1.9 1997/05/15 17:01:08 kleink Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -62,6 +62,12 @@
  * Stream sockets keep copies of receive sockbuf sb_cc and sb_mbcnt
  * so that changes in the sockbuf may be computed to modify
  * back pressure on the sender accordingly.
+ *
+ * The unp_ctime holds the creation time of the socket: it might be part of
+ * a socketpair created by pipe(2), and POSIX requires pipe(2) to initialize
+ * a stat structure's st_[acm]time members with the pipe's creation time.
+ * N.B.: updating st_[am]time when reading/writing the pipe is not required,
+ *       so we just use a single timespec and do not implement that.
  */
 struct	unpcb {
 	struct	socket *unp_socket;	/* pointer back to socket */
@@ -73,6 +79,7 @@ struct	unpcb {
 	struct	sockaddr_un *unp_addr;	/* bound address of socket */
 	int	unp_cc;			/* copy of rcv.sb_cc */
 	int	unp_mbcnt;		/* copy of rcv.sb_mbcnt */
+	struct	timespec unp_ctime;	/* holds creation time */
 };
 
 #define	sotounpcb(so)	((struct unpcb *)((so)->so_pcb))
