@@ -1,4 +1,4 @@
-/*	$NetBSD: if_tl.c,v 1.57 2003/03/19 17:23:26 bouyer Exp $	*/
+/*	$NetBSD: if_tl.c,v 1.58 2003/09/30 00:35:30 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1997 Manuel Bouyer.  All rights reserved.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_tl.c,v 1.57 2003/03/19 17:23:26 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_tl.c,v 1.58 2003/09/30 00:35:30 thorpej Exp $");
 
 #undef TLDEBUG
 #define TL_PRIV_STATS
@@ -100,8 +100,9 @@ __KERNEL_RCSID(0, "$NetBSD: if_tl.c,v 1.57 2003/03/19 17:23:26 bouyer Exp $");
 #include <dev/pci/pcivar.h>
 #include <dev/pci/pcidevs.h>
 
-#include <dev/i2c/i2c_bus.h>
-#include <dev/i2c/i2c_eeprom.h>
+#include <dev/i2c/i2cvar.h>
+#include <dev/i2c/i2c_bitbang.h>
+#include <dev/i2c/at24cxxvar.h>
 
 #include <dev/mii/mii.h>
 #include <dev/mii/miivar.h>
@@ -156,9 +157,30 @@ void tl_mii_write __P((struct device *, int, int, int));
 
 void tl_statchg __P((struct device *));
 
-void tl_i2c_set __P((void*, u_int8_t));
-void tl_i2c_clr __P((void*, u_int8_t));
-int tl_i2c_read __P((void*, u_int8_t));
+	/* I2C glue */
+static int tl_i2c_acquire_bus(void *, int);
+static void tl_i2c_release_bus(void *, int);
+static int tl_i2c_send_start(void *, int);
+static int tl_i2c_send_stop(void *, int);
+static int tl_i2c_initiate_xfer(void *, i2c_addr_t, int);
+static int tl_i2c_read_byte(void *, uint8_t *, int);
+static int tl_i2c_write_byte(void *, uint8_t, int);
+
+	/* I2C bit-bang glue */
+static void tl_i2cbb_set_bits(void *, uint32_t);
+static void tl_i2cbb_set_dir(void *, uint32_t);
+static uint32_t tl_i2cbb_read(void *);
+static const struct i2c_bitbang_ops tl_i2cbb_ops = {
+	tl_i2cbb_set_bits,
+	tl_i2cbb_set_dir,
+	tl_i2cbb_read,
+	{
+		TL_NETSIO_EDATA,	/* SDA */
+		TL_NETSIO_ECLOCK,	/* SCL */
+		TL_NETSIO_ETXEN,	/* SDA is output */
+		0,			/* SDA is input */
+	}
+};
 
 static __inline void netsio_clr __P((tl_softc_t*, u_int8_t));
 static __inline void netsio_set __P((tl_softc_t*, u_int8_t));
@@ -282,7 +304,7 @@ tl_pci_attach(parent, self, aux)
 	bus_space_handle_t ioh, memh;
 	pci_intr_handle_t intrhandle;
 	const char *intrstr;
-	int i, tmp, ioh_valid, memh_valid;
+	int ioh_valid, memh_valid;
 	int reg_io, reg_mem;
 	pcireg_t reg10, reg14;
 	pcireg_t csr;
@@ -353,11 +375,15 @@ tl_pci_attach(parent, self, aux)
 
 	tl_reset(sc);
 
-	/* fill in the i2c struct */
-	sc->i2cbus.adapter_softc = sc;
-	sc->i2cbus.set_bit = tl_i2c_set;
-	sc->i2cbus.clr_bit = tl_i2c_clr;
-	sc->i2cbus.read_bit = tl_i2c_read;
+	/* fill in the i2c tag */
+	sc->sc_i2c.ic_cookie = sc;
+	sc->sc_i2c.ic_acquire_bus = tl_i2c_acquire_bus;
+	sc->sc_i2c.ic_release_bus = tl_i2c_release_bus;
+	sc->sc_i2c.ic_send_start = tl_i2c_send_start;
+	sc->sc_i2c.ic_send_stop = tl_i2c_send_stop;
+	sc->sc_i2c.ic_initiate_xfer = tl_i2c_initiate_xfer;
+	sc->sc_i2c.ic_read_byte = tl_i2c_read_byte;
+	sc->sc_i2c.ic_write_byte = tl_i2c_write_byte;
 
 #ifdef TLDEBUG
 	printf("default values of INTreg: 0x%x\n",
@@ -365,15 +391,11 @@ tl_pci_attach(parent, self, aux)
 #endif
 
 	/* read mac addr */
-	for (i=0; i<ETHER_ADDR_LEN; i++) {
-		tmp = i2c_eeprom_read(&sc->i2cbus, 0x83 + i);
-		if (tmp < 0) {
-			printf("%s: error reading Ethernet adress\n",
-			    sc->sc_dev.dv_xname);
+	if (seeprom_bootstrap_read(&sc->sc_i2c, 0x50, 0x83, 512/*?*/,
+				   sc->tl_enaddr, ETHER_ADDR_LEN)) {
+		printf("%s: error reading Ethernet adress\n",
+		    sc->sc_dev.dv_xname);
 			return;
-		} else {
-			sc->tl_enaddr[i] = tmp;
-		}
 	}
 	printf("%s: Ethernet address %s\n", sc->sc_dev.dv_xname,
 	    ether_sprintf(sc->tl_enaddr));
@@ -889,71 +911,90 @@ tl_statchg(self)
 	tl_intreg_write_byte(sc, TL_INT_NET + TL_INT_NetCmd, reg);
 }
 
-void tl_i2c_set(v, bit)
-	void *v;
-	u_int8_t bit;
-{
-	tl_softc_t *sc = v;
+/********** I2C glue **********/
 
-	switch (bit) {
-	case I2C_DATA:
-		netsio_set(sc, TL_NETSIO_EDATA);
-		break;
-	case I2C_CLOCK:
-		netsio_set(sc, TL_NETSIO_ECLOCK);
-		break;
-	case I2C_TXEN:
-		netsio_set(sc, TL_NETSIO_ETXEN);
-		break;
-	default:
-		printf("tl_i2c_set: unknown bit %d\n", bit);
-	}
-	return;
+static int
+tl_i2c_acquire_bus(void *cookie, int flags)
+{
+
+	/* private bus */
+	return (0);
 }
 
-void tl_i2c_clr(v, bit)
-	void *v;
-	u_int8_t bit;
+static void
+tl_i2c_release_bus(void *cookie, int flags)
 {
-	tl_softc_t *sc = v;
 
-	switch (bit) {
-	case I2C_DATA:
-		netsio_clr(sc, TL_NETSIO_EDATA);
-		break;
-	case I2C_CLOCK:
-		netsio_clr(sc, TL_NETSIO_ECLOCK);
-		break;
-	case I2C_TXEN:
-		netsio_clr(sc, TL_NETSIO_ETXEN);
-		break;
-	default:
-		printf("tl_i2c_clr: unknown bit %d\n", bit);
-	}
-	return;
+	/* private bus */
 }
 
-int tl_i2c_read(v, bit)
-	void *v;
-	u_int8_t bit;
+static int
+tl_i2c_send_start(void *cookie, int flags)
 {
-	tl_softc_t *sc = v;
 
-	switch (bit) {
-	case I2C_DATA:
-		return netsio_read(sc, TL_NETSIO_EDATA);
-		break;
-	case I2C_CLOCK:
-		return netsio_read(sc, TL_NETSIO_ECLOCK);
-		break;
-	case I2C_TXEN:
-		return netsio_read(sc, TL_NETSIO_ETXEN);
-		break;
-	default:
-		printf("tl_i2c_read: unknown bit %d\n", bit);
-		return -1;
-	}
+	return (i2c_bitbang_send_start(cookie, flags, &tl_i2cbb_ops));
 }
+
+static int
+tl_i2c_send_stop(void *cookie, int flags)
+{
+
+	return (i2c_bitbang_send_stop(cookie, flags, &tl_i2cbb_ops));
+}
+
+static int
+tl_i2c_initiate_xfer(void *cookie, i2c_addr_t addr, int flags)
+{
+
+	return (i2c_bitbang_initiate_xfer(cookie, addr, flags, &tl_i2cbb_ops));
+}
+
+static int
+tl_i2c_read_byte(void *cookie, uint8_t *valp, int flags)
+{
+
+	return (i2c_bitbang_read_byte(cookie, valp, flags, &tl_i2cbb_ops));
+}
+
+static int
+tl_i2c_write_byte(void *cookie, uint8_t val, int flags)
+{
+
+	return (i2c_bitbang_write_byte(cookie, val, flags, &tl_i2cbb_ops));
+}
+
+/********** I2C bit-bang glue **********/
+
+static void
+tl_i2cbb_set_bits(void *cookie, uint32_t bits)
+{
+	struct tl_softc *sc = cookie;
+	uint8_t reg;
+
+	reg = tl_intreg_read_byte(sc, TL_INT_NET + TL_INT_NetSio);
+	reg = (reg & ~(TL_NETSIO_EDATA|TL_NETSIO_ECLOCK)) | bits;
+	tl_intreg_write_byte(sc, TL_INT_NET + TL_INT_NetSio, reg);
+}
+
+static void
+tl_i2cbb_set_dir(void *cookie, uint32_t bits)
+{
+	struct tl_softc *sc = cookie;
+	uint8_t reg;
+
+	reg = tl_intreg_read_byte(sc, TL_INT_NET + TL_INT_NetSio);
+	reg = (reg & ~TL_NETSIO_ETXEN) | bits;
+	tl_intreg_write_byte(sc, TL_INT_NET + TL_INT_NetSio, reg);
+}
+
+static uint32_t
+tl_i2cbb_read(void *cookie)
+{
+
+	return (tl_intreg_read_byte(cookie, TL_INT_NET + TL_INT_NetSio));
+}
+
+/********** End of I2C stuff **********/
 
 static int
 tl_intr(v)

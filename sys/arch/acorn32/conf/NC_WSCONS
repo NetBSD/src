@@ -1,4 +1,4 @@
-#	$NetBSD: NC_WSCONS,v 1.19 2003/09/13 13:30:05 chris Exp $
+#	$NetBSD: NC_WSCONS,v 1.20 2003/09/30 00:35:31 thorpej Exp $
 #
 #	NC - with wscons
 #
@@ -144,13 +144,11 @@ clock*	at iomd?
 #qms*	at iomd?
 
 # IIC bus device
-iic*	at iomd?
+iomdiic* at iomd?
+iic0 at iomdiic?
 
 # RTC device via IIC bus
-rtc*	at iic? addr 0xa0
-
-# time-of-day device via rtc device
-todclock0	at rtc?
+pcfrtc*	at iic? addr 0x50
 
 # VIDC device
 vidc0		at mainbus?

@@ -1,4 +1,4 @@
-#	$NetBSD: NC,v 1.16 2003/09/13 13:30:05 chris Exp $
+#	$NetBSD: NC,v 1.17 2003/09/30 00:35:31 thorpej Exp $
 #
 #	NC - with vidcconsole
 #
@@ -148,13 +148,11 @@ kbd*	at iomd?
 opms*	at iomd?
 
 # IIC bus device
-iic*	at iomd?
+iomdiic* at iomd?
+iic0 at iomdiic?
 
 # RTC device via IIC bus
-rtc*	at iic? addr 0xa0
-
-# time-of-day device via rtc device
-todclock0	at rtc?
+pcfrtc*	at iic? addr 0x50
 
 # VIDC device
 vidc0		at mainbus?
