@@ -1,4 +1,4 @@
-/*	$NetBSD: atapiconf.c,v 1.21 1999/01/19 10:57:11 bouyer Exp $	*/
+/*	$NetBSD: atapiconf.c,v 1.22 1999/01/21 10:31:39 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1996 Manuel Bouyer.  All rights reserved.
@@ -76,6 +76,8 @@ struct scsi_quirk_inquiry_pattern atapi_quirk_patterns[] = {
 	 "ALPS ELECTRIC CO.,LTD. DC544C", "", "SW03D"},	ADEV_NOTUR},
 	{{T_CDROM, T_REMOV,
 	 "BCD-16X 1997-04-25", "", "VER 2.2"},	SDEV_NOSTARTUNIT},
+	{{T_CDROM, T_REMOV,
+	 "CR-2801TE", "", "1.07"},		ADEV_NOSENSE},
 	{{T_CDROM, T_REMOV,
 	 "FX320S", "", "q01"},			ADEV_NOSENSE},
 	{{T_CDROM, T_REMOV,
