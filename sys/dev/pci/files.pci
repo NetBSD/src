@@ -1,4 +1,4 @@
-#	$NetBSD: files.pci,v 1.25 1997/07/20 20:31:50 pk Exp $
+#	$NetBSD: files.pci,v 1.25.2.1 1997/09/01 20:29:39 thorpej Exp $
 #
 # Config file and device description for machine-independent PCI code.
 # Included by ports that need it.  Requires that the SCSI files be
@@ -7,6 +7,7 @@
 device	pci {[dev = -1], [function = -1]}
 attach	pci at pcibus
 file	dev/pci/pci.c			pci needs-flag
+file	dev/pci/pci_map.c		pci
 file	dev/pci/pci_subr.c		pci
 
 # Adaptec 3940, 2940, and aic78[5678]0 SCSI controllers
