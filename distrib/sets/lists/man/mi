@@ -1,7 +1,7 @@
-# $NetBSD: mi,v 1.247 2000/05/18 07:22:58 shin Exp $
+# $NetBSD: mi,v 1.247.2.1 2000/05/29 14:02:29 minoura Exp $
 ./usr/share/info/am-utils.info
-./usr/share/info/awk.info
 ./usr/share/info/as.info
+./usr/share/info/awk.info
 ./usr/share/info/bfd.info
 ./usr/share/info/binutils.info
 ./usr/share/info/cpp.info
@@ -65,6 +65,7 @@
 ./usr/share/man/cat1/co.0
 ./usr/share/man/cat1/col.0
 ./usr/share/man/cat1/colcrt.0
+./usr/share/man/cat1/colldef.0
 ./usr/share/man/cat1/colrm.0
 ./usr/share/man/cat1/column.0
 ./usr/share/man/cat1/comm.0
@@ -188,6 +189,7 @@
 ./usr/share/man/cat1/mkdir.0
 ./usr/share/man/cat1/mkfifo.0
 ./usr/share/man/cat1/mkfilters.0
+./usr/share/man/cat1/mklocale.0
 ./usr/share/man/cat1/mktemp.0
 ./usr/share/man/cat1/mopa.out.0
 ./usr/share/man/cat1/mopchk.0
@@ -1079,6 +1081,7 @@
 ./usr/share/man/man1/co.1
 ./usr/share/man/man1/col.1
 ./usr/share/man/man1/colcrt.1
+./usr/share/man/man1/colldef.1
 ./usr/share/man/man1/colrm.1
 ./usr/share/man/man1/column.1
 ./usr/share/man/man1/comm.1
@@ -1202,6 +1205,7 @@
 ./usr/share/man/man1/mkdir.1
 ./usr/share/man/man1/mkfifo.1
 ./usr/share/man/man1/mkfilters.1
+./usr/share/man/man1/mklocale.1
 ./usr/share/man/man1/mktemp.1
 ./usr/share/man/man1/mopa.out.1
 ./usr/share/man/man1/mopchk.1

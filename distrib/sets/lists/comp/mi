@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.219 2000/05/25 04:20:46 shin Exp $
+#	$NetBSD: mi,v 1.219.2.1 2000/05/29 14:02:28 minoura Exp $
 ./sys			comp-sysutil-root
 ./usr/bin/addr2line	comp-miscutil-bin
 ./usr/bin/ar		comp-util-bin
@@ -1042,6 +1042,7 @@
 ./usr/include/vm/vm_param.h		comp-c-include
 ./usr/include/vm/vm_prot.h		comp-c-include
 ./usr/include/wchar.h		comp-c-include
+./usr/include/wctype.h		comp-c-include
 ./usr/include/zconf.h		comp-c-include
 ./usr/include/zlib.h		comp-c-include
 ./usr/lib/crt0.o		comp-c-lib
@@ -1109,6 +1110,12 @@
 ./usr/lib/liby_p.a		comp-c-proflib
 ./usr/lib/libz.a		comp-c-lib
 ./usr/lib/libz_p.a		comp-c-proflib
+./usr/lib/runemodule/libBIG5_p.a		comp-c-proflib
+./usr/lib/runemodule/libEUCTW_p.a		comp-c-proflib
+./usr/lib/runemodule/libEUC_p.a		comp-c-proflib
+./usr/lib/runemodule/libISO2022_p.a		comp-c-proflib
+./usr/lib/runemodule/libMSKanji_p.a		comp-c-proflib
+./usr/lib/runemodule/libUTF2_p.a		comp-c-proflib
 ./usr/libdata/lint/llib-lbz2.ln		comp-c-lintlib
 ./usr/libdata/lint/llib-lc.ln		comp-c-lintlib
 ./usr/libdata/lint/llib-lcompat.ln		comp-c-lintlib

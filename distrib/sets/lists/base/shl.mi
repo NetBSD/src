@@ -1,4 +1,4 @@
-# $NetBSD: shl.mi,v 1.76 2000/05/26 02:44:33 simonb Exp $
+# $NetBSD: shl.mi,v 1.76.2.1 2000/05/29 14:02:27 minoura Exp $
 ./usr/lib/libamu.so.1.1
 ./usr/lib/libbz2.so.0.0
 ./usr/lib/libc.so.12.61
@@ -26,3 +26,9 @@
 ./usr/lib/libutil.so.5.2
 ./usr/lib/libwrap.so.0.2
 ./usr/lib/libz.so.0.2
+./usr/lib/runemodule/libBIG5.so.1.0
+./usr/lib/runemodule/libEUC.so.1.0
+./usr/lib/runemodule/libEUCTW.so.1.0
+./usr/lib/runemodule/libISO2022.so.1.0
+./usr/lib/runemodule/libMSKanji.so.1.0
+./usr/lib/runemodule/libUTF2.so.1.0

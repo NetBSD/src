@@ -1,4 +1,4 @@
-# $NetBSD: shl.elf,v 1.21 2000/05/02 12:46:05 simonb Exp $
+# $NetBSD: shl.elf,v 1.21.2.1 2000/05/29 14:02:27 minoura Exp $
 ./usr/lib/libamu.so.1
 ./usr/lib/libbz2.so.0
 ./usr/lib/libc.so.12
@@ -26,4 +26,12 @@
 ./usr/lib/libutil.so.5
 ./usr/lib/libwrap.so.0
 ./usr/lib/libz.so.0
+./usr/lib/runemodule/libBIG5.so.1
+./usr/lib/runemodule/libBIG5.so.1.0
+./usr/lib/runemodule/libBIG5_p.a
+./usr/lib/runemodule/libEUC.so.1
+./usr/lib/runemodule/libEUCTW.so.1
+./usr/lib/runemodule/libISO2022.so.1
+./usr/lib/runemodule/libMSKanji.so.1
+./usr/lib/runemodule/libUTF2.so.1
 ./usr/libexec/ld.elf_so
