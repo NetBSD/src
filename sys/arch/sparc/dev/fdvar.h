@@ -1,11 +1,11 @@
-/*	$NetBSD: fdvar.h,v 1.7 1998/09/05 14:01:08 pk Exp $	*/
+/*	$NetBSD: fdvar.h,v 1.8 1998/09/05 15:42:42 pk Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
- * by 
+ * by Paul Kranenburg.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
