@@ -1,4 +1,4 @@
-/*	$NetBSD: Locore.c,v 1.3.2.5 2002/12/31 01:03:46 thorpej Exp $	*/
+/*	$NetBSD: Locore.c,v 1.3.2.6 2003/01/08 01:00:14 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2000 Ben Harris.
@@ -41,7 +41,7 @@
 
 #include <sys/param.h>
 
-__RCSID("$NetBSD: Locore.c,v 1.3.2.5 2002/12/31 01:03:46 thorpej Exp $");
+__RCSID("$NetBSD: Locore.c,v 1.3.2.6 2003/01/08 01:00:14 thorpej Exp $");
 
 #include <sys/proc.h>
 #include <sys/sched.h>
@@ -57,52 +57,6 @@ __RCSID("$NetBSD: Locore.c,v 1.3.2.5 2002/12/31 01:03:46 thorpej Exp $");
 void idle(void);
 
 struct pcb *curpcb;
-
-/*
- * Put process p on the run queue indicated by its priority.
- * Calls should be made at splstatclock(), and p->p_stat should be SRUN.
- */
-void
-setrunqueue(struct lwp *l)
-{
-	struct  prochd *q;
-	struct lwp *oldlast;
-	int which = l->l_priority >> 2;
-	
-#ifdef	DIAGNOSTIC
-	if (l->l_back)
-		panic("setrunqueue");
-#endif
-	q = &sched_qs[which];
-	sched_whichqs |= 1 << which;
-	l->l_forw = (struct lwp *)q;
-	l->l_back = oldlast = q->ph_rlink;
-	q->ph_rlink = l;
-	oldlast->l_forw = l;
-}
-
-/*
- * Remove process p from its run queue, which should be the one
- * indicated by its priority.
- * Calls should be made at splstatclock().
- */
-void
-remrunqueue(struct lwp *l)
-{
-	int which = l->l_priority >> 2;
-	struct prochd *q;
-
-#ifdef	DIAGNOSTIC	
-	if (!(sched_whichqs & (1 << which)))
-		panic("remrunqueue");
-#endif
-	l->l_forw->l_back = l->l_back;
-	l->l_back->l_forw = l->l_forw;
-	l->l_back = NULL;
-	q = &sched_qs[which];
-	if (q->ph_link == (struct lwp *)q)
-		sched_whichqs &= ~(1 << which);
-}
 
 /*
  * Idle
