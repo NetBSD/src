@@ -1,4 +1,4 @@
-/*	$NetBSD: wdvar.h,v 1.8 2001/12/02 22:44:33 bouyer Exp $	*/
+/*	$NetBSD: wdvar.h,v 1.9 2001/12/03 00:11:16 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1998 Manuel Bouyer.
@@ -68,6 +68,18 @@ struct ata_bio {
   
 struct ata_bustype {
 	int bustype_type;	/* symbolic name of type */
+	int (*ata_bio) __P((struct ata_drive_datas*, struct ata_bio *));
+	void (*ata_reset_channel) __P((struct ata_drive_datas *));
+	int (*ata_exec_command) __P((struct ata_drive_datas *,
+					struct wdc_command *));
+#define WDC_COMPLETE 0x01
+#define WDC_QUEUED   0x02
+#define WDC_TRY_AGAIN 0x03
+	int (*ata_get_params) __P((struct ata_drive_datas*, u_int8_t,
+					struct ataparams *));
+	int (*ata_addref) __P((struct ata_drive_datas *));
+	void (*ata_delref) __P((struct ata_drive_datas *));
+	void (*ata_killpending) __P((struct ata_drive_datas *));
 };
 /* bustype_type */
 /* #define SCSIPI_BUSTYPE_SCSI	0 */
@@ -84,7 +96,5 @@ struct ata_device {
 	int adev_openings;
 	struct ata_drive_datas *adev_drv_data;
 };
-
-int wdc_ata_bio __P((struct ata_drive_datas*, struct ata_bio*)); 
 
 void wddone __P((void *));

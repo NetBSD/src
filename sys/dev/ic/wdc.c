@@ -1,4 +1,4 @@
-/*	$NetBSD: wdc.c,v 1.102 2001/12/02 22:44:33 bouyer Exp $ */
+/*	$NetBSD: wdc.c,v 1.103 2001/12/03 00:11:17 bouyer Exp $ */
 
 
 /*
@@ -72,7 +72,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wdc.c,v 1.102 2001/12/02 22:44:33 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wdc.c,v 1.103 2001/12/03 00:11:17 bouyer Exp $");
 
 #ifndef WDCDEBUG
 #define WDCDEBUG
@@ -99,8 +99,8 @@ __KERNEL_RCSID(0, "$NetBSD: wdc.c,v 1.102 2001/12/02 22:44:33 bouyer Exp $");
 #define bus_space_read_multi_stream_4	bus_space_read_multi_4
 #endif /* __BUS_SPACE_HAS_STREAM_METHODS */
 
-#include <dev/ata/wdvar.h>
 #include <dev/ata/atavar.h>
+#include <dev/ata/wdvar.h>
 #include <dev/ata/atareg.h>
 #include <dev/ic/wdcreg.h>
 #include <dev/ic/wdcvar.h>
@@ -116,7 +116,7 @@ __KERNEL_RCSID(0, "$NetBSD: wdc.c,v 1.102 2001/12/02 22:44:33 bouyer Exp $");
 
 struct pool wdc_xfer_pool;
 
-const struct ata_bustype wdc_ata_bustype = {SCSIPI_BUSTYPE_ATA};
+extern const struct ata_bustype wdc_ata_bustype; /* in ata_wdc.c */
 
 static void  __wdcerror	  __P((struct channel_softc*, char *));
 static int   __wdcwait_reset  __P((struct channel_softc *, int));
@@ -124,7 +124,6 @@ void  __wdccommand_done __P((struct channel_softc *, struct wdc_xfer *));
 void  __wdccommand_start __P((struct channel_softc *, struct wdc_xfer *));	
 int   __wdccommand_intr __P((struct channel_softc *, struct wdc_xfer *, int));
 int   wdprint __P((void *, const char *));
-
 
 #define DEBUG_INTR   0x01
 #define DEBUG_XFERS  0x02

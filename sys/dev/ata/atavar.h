@@ -1,4 +1,4 @@
-/*	$NetBSD: atavar.h,v 1.21 2001/12/02 22:44:32 bouyer Exp $	*/
+/*	$NetBSD: atavar.h,v 1.22 2001/12/03 00:11:16 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1998 Manuel Bouyer.
@@ -144,19 +144,7 @@ struct wdc_command {
     void *callback_arg;  /* argument passed to *callback() */
 };
 
-int wdc_exec_command __P((struct ata_drive_datas *, struct wdc_command*));
-#define WDC_COMPLETE 0x01
-#define WDC_QUEUED   0x02
-#define WDC_TRY_AGAIN 0x03
-
-void wdc_probe_caps __P((struct ata_drive_datas*));
 int  wdc_downgrade_mode __P((struct ata_drive_datas*));
-
-void wdc_reset_channel __P((struct ata_drive_datas *));
-
-int wdc_ata_addref __P((struct ata_drive_datas *));
-void wdc_ata_delref __P((struct ata_drive_datas *));
-void wdc_ata_kill_pending __P((struct ata_drive_datas *));
 
 struct ataparams;
 int ata_get_params __P((struct ata_drive_datas*, u_int8_t,
@@ -168,4 +156,3 @@ int ata_set_mode __P((struct ata_drive_datas*, u_int8_t, u_int8_t));
 #define CMD_AGAIN 2
 
 void ata_dmaerr __P((struct ata_drive_datas *));
-void ata_perror __P((struct ata_drive_datas *, int, char *));
