@@ -1,4 +1,4 @@
-/*	$NetBSD: st.c,v 1.74 1997/09/13 08:51:18 enami Exp $	*/
+/*	$NetBSD: st.c,v 1.75 1997/09/29 19:33:03 mjacob Exp $	*/
 
 /*
  * Copyright (c) 1994 Charles Hannum.  All rights reserved.
@@ -284,6 +284,7 @@ int	st_read __P((struct st_softc *, char *, int, int));
 int	st_read_block_limits __P((struct st_softc *, int));
 int	st_mode_sense __P((struct st_softc *, int));
 int	st_mode_select __P((struct st_softc *, int));
+int	st_cmprss __P((struct st_softc *, int));
 int	st_space __P((struct st_softc *, int, u_int, int));
 int	st_write_filemarks __P((struct st_softc *, int, int));
 int	st_check_eod __P((struct st_softc *, boolean, int *, int));
@@ -292,6 +293,8 @@ int	st_rewind __P((struct st_softc *, u_int, int));
 int	st_interpret_sense __P((struct scsipi_xfer *));
 int	st_touch_tape __P((struct st_softc *));
 int	st_erase __P((struct st_softc *, int full, int flags));
+int	st_rdpos __P((struct st_softc *, int, u_int32_t *));
+int	st_setpos __P((struct st_softc *, int, u_int32_t *));
 
 struct cfattach st_ca = {
 	sizeof(struct st_softc), stmatch, stattach
@@ -1100,7 +1103,7 @@ stioctl(dev, cmd, arg, flag, p)
 	hold_blksize = st->blksize;
 	hold_density = st->density;
 
-	switch (cmd) {
+	switch ((u_int) cmd) {
 
 	case MTIOCGET: {
 		struct mtget *g = (struct mtget *) arg;
@@ -1204,6 +1207,10 @@ stioctl(dev, cmd, arg, flag, p)
 				st->density = number;
 			goto try_new_value;
 
+		case MTCMPRESS:
+			error = st_cmprss(st, number);
+			break;
+
 		default:
 			error = EINVAL;
 		}
@@ -1212,6 +1219,23 @@ stioctl(dev, cmd, arg, flag, p)
 	case MTIOCIEOT:
 	case MTIOCEEOT:
 		break;
+
+	case MTIOCRDSPOS:
+		error = st_rdpos(st, 0, (u_int32_t *) arg);
+		break;
+
+	case MTIOCRDHPOS:
+		error = st_rdpos(st, 1, (u_int32_t *) arg);
+		break;
+
+	case MTIOCSLOCATE:
+		error = st_setpos(st, 0, (u_int32_t *) arg);
+		break;
+
+	case MTIOCHLOCATE:
+		error = st_setpos(st, 1, (u_int32_t *) arg);
+		break;
+
 	default:
 		if (STMODE(dev) == CTLMODE)
 			error = scsipi_do_ioctl(st->sc_link, dev, cmd, arg, flag, p);
@@ -1457,6 +1481,123 @@ st_mode_select(st, flags)
 	    ST_RETRIES, 5000, NULL, flags | SCSI_DATA_OUT);
 }
 
+int
+st_cmprss(st, onoff)
+	struct st_softc *st;
+	int onoff;
+{
+	u_int scsi_dlen;
+	struct scsi_mode_select mcmd;
+	struct scsi_mode_sense scmd;
+	struct scsi_select {
+		struct scsi_mode_header header;
+		struct scsi_blk_desc blk_desc;
+		u_char pdata[max(sizeof (struct scsi_tape_dev_conf_page),
+			 sizeof (struct scsi_tape_dev_compression_page))];
+	} scsi_pdata;
+	struct scsi_tape_dev_conf_page *ptr;
+	struct scsi_tape_dev_compression_page *cptr;
+	struct scsipi_link *sc_link = st->sc_link;
+	int error, ison, flags;
+
+	scsi_dlen = sizeof (scsi_pdata);
+	bzero(&scsi_pdata, scsi_dlen);
+
+	/*
+	 * Set up for a mode sense.
+	 * Do DATA COMPRESSION page first.
+	 */
+	bzero(&scmd, sizeof (scmd));
+	scmd.opcode = SCSI_MODE_SENSE;
+	scmd.page = SMS_PAGE_CTRL_CURRENT | 0xf;
+	scmd.length = scsi_dlen;
+
+	flags = SCSI_SILENT;
+
+	/*
+	 * Do the MODE SENSE command...
+	 */
+again:
+	error = sc_link->scsipi_cmd(sc_link, (struct scsipi_generic *) &scmd,
+			sizeof(scmd), (u_char *) &scsi_pdata, scsi_dlen,
+			ST_RETRIES, 5000, NULL, flags | SCSI_DATA_IN);
+
+	if (error) {
+		if (scmd.byte2 != SMS_DBD) {
+			scmd.byte2 = SMS_DBD;
+			goto again;
+		}
+		return error;
+	}
+
+	if (scsi_pdata.header.blk_desc_len) {
+		ptr = (struct scsi_tape_dev_conf_page *) scsi_pdata.pdata;
+	} else {
+		ptr = (struct scsi_tape_dev_conf_page *) &scsi_pdata.blk_desc;
+	}
+
+	if ((scmd.page & SMS_PAGE_CODE) == 0xf) {
+		cptr = (struct scsi_tape_dev_compression_page *) ptr;
+		ison = (cptr->dce_dcc & DCP_DCE) != 0;
+		if (onoff)
+			cptr->dce_dcc |= DCP_DCE;
+		else
+			cptr->dce_dcc &= ~DCP_DCE;
+		cptr->pagecode &= ~0x80;
+	} else {
+		ison =  (ptr->sel_comp_alg != 0);
+		if (onoff)
+			ptr->sel_comp_alg = 1;
+		else
+			ptr->sel_comp_alg = 0;
+		ptr->pagecode &= ~0x80;
+	}
+	onoff = (onoff)? 1 : 0;
+	/*
+	 * There might be a virtue in actually doing the MODE SELECTS,
+	 * but let's not clog the bus over it.
+	 */
+	if (onoff == ison)
+		return (0);
+
+	/*
+	 * Set up for a mode select
+	 */
+
+	scsi_pdata.header.data_length = 0;
+	scsi_pdata.header.medium_type = 0;
+	if ((st->flags & ST_DONTBUFFER) == 0)
+		scsi_pdata.header.dev_spec = SMH_DSP_BUFF_MODE_ON;
+	else
+		scsi_pdata.header.dev_spec = 0;
+
+	bzero(&mcmd, sizeof(mcmd));
+	mcmd.opcode = SCSI_MODE_SELECT;
+	mcmd.byte2 = SMS_PF;
+	mcmd.length = scsi_dlen;
+	if (scsi_pdata.header.blk_desc_len) {
+		scsi_pdata.blk_desc.density = 0;
+		scsi_pdata.blk_desc.nblocks[0] = 0;
+		scsi_pdata.blk_desc.nblocks[1] = 0;
+		scsi_pdata.blk_desc.nblocks[2] = 0;
+	}
+
+	/*
+	 * do the command
+	 */
+	error = sc_link->scsipi_cmd(sc_link, (struct scsipi_generic *) &mcmd,
+	    sizeof(mcmd), (u_char *) &scsi_pdata, scsi_dlen,
+	    ST_RETRIES, 5000, NULL, flags | SCSI_DATA_OUT);
+
+	if (error && (scmd.page & SMS_PAGE_CODE) == 0xf) {
+		/*
+		 * Try DEVICE CONFIGURATION page.
+		 */
+		scmd.page = SMS_PAGE_CTRL_CURRENT | 0x10;
+		goto again;
+	}
+	return (error);
+}
 /*
  * issue an erase command
  */
@@ -1699,6 +1840,81 @@ st_rewind(st, immediate, flags)
 	    flags);
 }
 
+int
+st_rdpos(st, hard, blkptr)
+	struct st_softc *st;
+	int hard;
+	u_int32_t *blkptr;
+{
+	int error;
+	u_int8_t posdata[20];
+	struct scsi_tape_read_position cmd;
+
+	/*
+	 * First flush any pending writes...
+	 */
+	error = st_write_filemarks(st, 0, SCSI_SILENT);
+	if (error)
+		return (error);
+
+	bzero(&cmd, sizeof (cmd));
+	bzero(&posdata, sizeof (posdata));
+	cmd.opcode = READ_POSITION;
+	if (hard)
+		cmd.byte1 = 1;
+
+	error = st->sc_link->scsipi_cmd(st->sc_link,
+	    (struct scsipi_generic *) &cmd, sizeof (cmd), (u_char *) &posdata,
+	    sizeof (posdata), ST_RETRIES, 30000, NULL, SCSI_DATA_IN);
+
+	if (error == 0) {
+
+#if	0
+		printf("posdata:");
+		for (hard = 0; hard < sizeof (posdata); hard++)
+			printf("%02x ", posdata[hard] & 0xff);
+		printf("\n");
+#endif
+		if (posdata[0] & 0x4)	/* Block Position Unknown */
+			error = EINVAL;
+		else {
+			*blkptr = _4btol(&posdata[4]);
+		}
+	}
+	return (error);
+}
+
+int
+st_setpos(st, hard, blkptr)
+	struct st_softc *st;
+	int hard;
+	u_int32_t *blkptr;
+{
+	int error;
+	struct scsipi_generic cmd;
+
+	/*
+	 * First flush any pending writes...
+	 */
+	error = st_write_filemarks(st, 0, SCSI_SILENT);
+	if (error)
+		return (error);
+
+	bzero(&cmd, sizeof (cmd));
+	cmd.opcode = LOCATE;
+	if (hard)
+		cmd.bytes[0] = 1 << 2;
+	_lto4b(*blkptr, &cmd.bytes[2]);
+	error = st->sc_link->scsipi_cmd(st->sc_link, &cmd, sizeof (cmd), NULL,
+		0, ST_RETRIES, 5000, NULL, 0);
+	/*
+	 * XXX: Note file && block number position now unknown (if
+	 * XXX: these things ever start being maintained in this driver)
+	 */
+	return (error);
+}
+
+
 /*
  * Look at the returned sense and act on the error and detirmine
  * The unix error number to pass back... (0 = report no error)
@@ -1725,7 +1941,7 @@ st_interpret_sense(xs)
 	if ((sense->error_code & SSD_ERRCODE) != 0x70)
 		return -1;	/* let the generic code handle it */
 #ifdef SCSIVERBOSE
-	else
+	else if ((xs->flags & SCSI_SILENT) == 0)
 		scsi_print_sense(xs, 0);    /* tell folks what happened */
 #endif
 	if (st->flags & ST_FIXEDBLOCKS) {
