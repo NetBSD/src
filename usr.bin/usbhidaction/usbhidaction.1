@@ -1,4 +1,4 @@
-.\" $NetBSD: usbhidaction.1,v 1.10 2004/10/19 13:51:57 augustss Exp $
+.\" $NetBSD: usbhidaction.1,v 1.11 2004/10/20 13:47:21 augustss Exp $
 .\"
 .\" Copyright (c) 2000 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -60,10 +60,12 @@ The options are as follows:
 .Bl -tag -width Ds
 .It Fl c Ar config-file
 Specify a path name for the config file.
+When running as a daemon this needs to be an absolute path for the HUP
+signal to work.
 .It Fl d
 Toggle the daemon flag.
 .It Fl i
-Ignore HID items in the config file that does not exist in the device.
+Ignore HID items in the config file that do not exist in the device.
 .It Fl f Ar device
 Specify a path name for the device to operate on.
 If
