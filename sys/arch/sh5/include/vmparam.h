@@ -1,4 +1,4 @@
-/*	$NetBSD: vmparam.h,v 1.3 2002/11/23 09:25:54 scw Exp $	*/
+/*	$NetBSD: vmparam.h,v 1.4 2002/12/10 05:14:33 thorpej Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -104,11 +104,8 @@
 #define	VM_MAX_ADDRESS		VM_MAXUSER_ADDRESS
 
 /*
- * USRTEXT is the virtual address of the start of user text/data/bss space.
- *
  * USRSTACK is the top of user stack. 
  */
-#define	USRTEXT		(VM_MIN_ADDRESS + NBPG)
 #define USRSTACK	VM_MAXUSER_ADDRESS
 #define USRSTACK32	USRSTACK
 

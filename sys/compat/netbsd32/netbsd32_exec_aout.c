@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_exec_aout.c,v 1.10 2002/10/05 22:34:04 chs Exp $	*/
+/*	$NetBSD: netbsd32_exec_aout.c,v 1.11 2002/12/10 05:14:37 thorpej Exp $	*/
 /*	from: NetBSD: exec_aout.c,v 1.15 1996/09/26 23:34:46 cgd Exp */
 
 /*
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netbsd32_exec_aout.c,v 1.10 2002/10/05 22:34:04 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netbsd32_exec_aout.c,v 1.11 2002/12/10 05:14:37 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -41,6 +41,7 @@ __KERNEL_RCSID(0, "$NetBSD: netbsd32_exec_aout.c,v 1.10 2002/10/05 22:34:04 chs 
 #include <sys/malloc.h>
 #include <sys/vnode.h>
 #include <sys/exec.h>
+#include <sys/exec_aout.h>
 #include <sys/resourcevar.h>
 #include <sys/signal.h>
 #include <sys/signalvar.h>
@@ -136,7 +137,7 @@ netbsd32_exec_aout_prep_zmagic(p, epp)
 	struct netbsd32_exec *execp = epp->ep_hdr;
 	int error;
 
-	epp->ep_taddr = USRTEXT;
+	epp->ep_taddr = __LDPGSZ;
 	epp->ep_tsize = execp->a_text;
 	epp->ep_daddr = epp->ep_taddr + execp->a_text;
 	epp->ep_dsize = execp->a_data + execp->a_bss;
@@ -178,7 +179,7 @@ netbsd32_exec_aout_prep_nmagic(p, epp)
 	struct netbsd32_exec *execp = epp->ep_hdr;
 	long bsize, baddr;
 
-	epp->ep_taddr = USRTEXT;
+	epp->ep_taddr = __LDPGSZ;
 	epp->ep_tsize = execp->a_text;
 	epp->ep_daddr = roundup(epp->ep_taddr + execp->a_text, __LDPGSZ);
 	epp->ep_dsize = execp->a_data + execp->a_bss;
@@ -219,7 +220,7 @@ netbsd32_exec_aout_prep_omagic(p, epp)
 	struct netbsd32_exec *execp = epp->ep_hdr;
 	long dsize, bsize, baddr;
 
-	epp->ep_taddr = USRTEXT;
+	epp->ep_taddr = __LDPGSZ;
 	epp->ep_tsize = execp->a_text;
 	epp->ep_daddr = epp->ep_taddr + execp->a_text;
 	epp->ep_dsize = execp->a_data + execp->a_bss;

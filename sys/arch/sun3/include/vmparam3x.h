@@ -1,4 +1,4 @@
-/*	$NetBSD: vmparam3x.h,v 1.15 2001/07/03 05:17:13 chs Exp $	*/
+/*	$NetBSD: vmparam3x.h,v 1.16 2002/12/10 05:14:35 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -47,10 +47,8 @@
  */
 
 /*
- * USRTEXT is the start of the user text/data space, while
  * USRSTACK is the top (end) of the user stack.
  */
-#define	USRTEXT 	NBPG		/* Start of user text */
 #define	USRSTACK	KERNBASE	/* High end of user stack */
 
 /*
