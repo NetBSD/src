@@ -1,4 +1,4 @@
-.\"	$NetBSD: revoke.2,v 1.4 1998/08/29 08:32:41 lukem Exp $
+.\"	$NetBSD: revoke.2,v 1.5 1999/03/24 13:40:51 hubertf Exp $
 .\"
 .\" Copyright (c) 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -36,7 +36,7 @@
 .\"
 .\"     @(#)revoke.2	8.1 (Berkeley) 6/4/93
 .\"
-.Dd June 4, 1993
+.Dd March 22, 1999
 .Dt REVOKE 2
 .Os
 .Sh NAME
@@ -65,11 +65,9 @@ the device close function
 is called as if all open references to the file had been closed.
 .Pp
 Access to a file may be revoked only by its owner or the super user.
-The
+.Pp
 .Nm revoke
-function is currently supported only for block and character special
-device files.
-It is normally used to prepare a terminal device for a new login session,
+is normally used to prepare a terminal device for a new login session,
 preventing any access by a previous user of the terminal.
 .Sh RETURN VALUES
 A 0 value indicated that the call succeeded.  A \-1 return value
@@ -93,14 +91,17 @@ Too many symbolic links were encountered in translating the pathname.
 .It Bq Er EFAULT
 .Fa path
 points outside the process's allocated address space.
-.It Bq Er EINVAL
-The named file is neither a character special or block
-special file.
 .It Bq Er EPERM
 The caller is neither the owner of the file nor the super user.
 .El
 .Sh SEE ALSO
-.Xr close 2
+.Xr close 2 ,
+.Xr dup 2 ,
+.Xr fcntl 2 ,
+.Xr flock 2 ,
+.Xr fstat 2 ,
+.Xr read 2 ,
+.Xr write 2
 .Sh HISTORY
 The
 .Nm revoke
