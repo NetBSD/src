@@ -1,7 +1,7 @@
-/*	$NetBSD: cmds.c,v 1.22 2003/08/07 09:46:38 agc Exp $	*/
+/*	$NetBSD: cmds.c,v 1.23 2004/08/09 12:56:47 lukem Exp $	*/
 
 /*
- * Copyright (c) 1999-2001 The NetBSD Foundation, Inc.
+ * Copyright (c) 1999-2004 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -97,7 +97,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: cmds.c,v 1.22 2003/08/07 09:46:38 agc Exp $");
+__RCSID("$NetBSD: cmds.c,v 1.23 2004/08/09 12:56:47 lukem Exp $");
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -107,7 +107,6 @@ __RCSID("$NetBSD: cmds.c,v 1.22 2003/08/07 09:46:38 agc Exp $");
 
 #include <dirent.h>
 #include <errno.h>
-#include <setjmp.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
