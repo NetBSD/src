@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_fs.c,v 1.14.2.5 2004/09/21 13:25:53 skrll Exp $	*/
+/*	$NetBSD: netbsd32_fs.c,v 1.14.2.6 2005/02/19 13:14:06 skrll Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Matthew R. Green
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netbsd32_fs.c,v 1.14.2.5 2004/09/21 13:25:53 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netbsd32_fs.c,v 1.14.2.6 2005/02/19 13:14:06 skrll Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ktrace.h"
@@ -110,7 +110,6 @@ dofilereadv32(l, fd, fp, iovp, iovcnt, offset, flags, retval)
 	struct iovec *iov;
 	struct iovec *needfree;
 	struct iovec aiov[UIO_SMALLIOV];
-	struct proc *p = l->l_proc;
 	long i, cnt, error = 0;
 	u_int iovlen;
 #ifdef KTRACE
@@ -160,7 +159,7 @@ dofilereadv32(l, fd, fp, iovp, iovcnt, offset, flags, retval)
 	/*
 	 * if tracing, save a copy of iovec
 	 */
-	if (KTRPOINT(p, KTR_GENIO))  {
+	if (KTRPOINT(l->l_proc, KTR_GENIO))  {
 		ktriov = malloc(iovlen, M_TEMP, M_WAITOK);
 		memcpy((caddr_t)ktriov, (caddr_t)auio.uio_iov, iovlen);
 	}
@@ -173,7 +172,7 @@ dofilereadv32(l, fd, fp, iovp, iovcnt, offset, flags, retval)
 			error = 0;
 	cnt -= auio.uio_resid;
 #ifdef KTRACE
-	if (KTRPOINT(p, KTR_GENIO))
+	if (KTRPOINT(l->l_proc, KTR_GENIO))
 		if (error == 0) {
 			ktrgenio(l, fd, UIO_READ, ktriov, cnt,
 			    error);
