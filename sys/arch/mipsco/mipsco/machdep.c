@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.24 2001/04/24 15:41:40 thorpej Exp $	*/
+/*	$NetBSD: machdep.c,v 1.25 2001/04/28 04:20:27 wdk Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -43,7 +43,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.24 2001/04/24 15:41:40 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.25 2001/04/28 04:20:27 wdk Exp $");
 
 /* from: Utah Hdr: machdep.c 1.63 91/04/24 */
 
@@ -342,15 +342,15 @@ mach_init(argc, argv, envp, bim, bip)
 	mips_init_msgbuf();
 
 	/*
-	 * Initialize the virtual memory system.
-	 */
-	pmap_bootstrap();
-
-	/*
 	 * Compute the size of system data structures.  pmap_bootstrap()
 	 * needs some of this information.
 	 */
 	size = (vsize_t)allocsys(NULL, NULL);
+
+	/*
+	 * Initialize the virtual memory system.
+	 */
+	pmap_bootstrap();
 
 	/*
 	 * Allocate space for proc0's USPACE.
