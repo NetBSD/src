@@ -1,4 +1,4 @@
-/*	$NetBSD: stp4020.c,v 1.40 2004/08/11 00:58:08 mycroft Exp $ */
+/*	$NetBSD: stp4020.c,v 1.41 2004/08/11 00:59:40 mycroft Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: stp4020.c,v 1.40 2004/08/11 00:58:08 mycroft Exp $");
+__KERNEL_RCSID(0, "$NetBSD: stp4020.c,v 1.41 2004/08/11 00:59:40 mycroft Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1028,7 +1028,8 @@ stp4020_chip_socket_settype(pch, type)
 	 * Enable socket I/O interrupts for IO cards.
 	 */
 	v = stp4020_rd_sockctl(h, STP4020_ICR0_IDX);
-	v &= ~(STP4020_ICR0_IOILVL|STP4020_ICR0_IFTYPE|STP4020_ICR0_SPKREN);
+	v &= ~(STP4020_ICR0_IOIE | STP4020_ICR0_IOILVL | STP4020_ICR0_IFTYPE |
+	    STP4020_ICR0_SPKREN);
 	if (type == PCMCIA_IFTYPE_IO) {
 		v |= STP4020_ICR0_IFTYPE_IO|STP4020_ICR0_IOIE
 		    |STP4020_ICR0_SPKREN;
