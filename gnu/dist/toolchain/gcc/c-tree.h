@@ -255,6 +255,8 @@ extern tree complex_double_type_node;
 extern tree complex_long_double_type_node;
 extern tree ptr_type_node;
 extern tree ptrdiff_type_node;
+extern tree intmax_type_node;
+extern tree uintmax_type_node;
 extern tree short_integer_type_node;
 extern tree short_unsigned_type_node;
 extern tree signed_char_type_node;
