@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-1.4.2,v 1.1.2.87 1999/12/17 00:01:28 he Exp $
+#	$NetBSD: CHANGES-1.4.2,v 1.1.2.88 1999/12/17 09:01:01 he Exp $
 
 A complete list of changes from NetBSD 1.4.1 to NetBSD 1.4.2:
 
@@ -1773,7 +1773,7 @@ sys/arch/mac68k/dev/adb_direct.c		1.35
   Make adbInCount volatile to fix problems uncovered by aggressive
   optimization.
 
-sys/arch/vax/vax/machdep.c			patch
+sys/arch/vax/vax/machdep.c			patch (part of 1.91)
 
   In process_write_regs(), no checks were made to which bits in
   the PSL that was altered. This means that the traced process
