@@ -1,7 +1,13 @@
-#	$NetBSD: special,v 1.46 2001/10/05 16:11:46 lukem Exp $
+#	$NetBSD: special,v 1.47 2001/10/12 05:18:24 lukem Exp $
 #	@(#)special	8.2 (Berkeley) 1/23/94
 #
 # Hand-crafted mtree specification for the dangerous files.
+#
+# /etc/security checks:
+#	- All of these are checked if $check_mtree is enabled.
+#	- Files with "nomail" tags are highlighted if they change.
+#	- Files without "nomail" or "exclude" tags are displayed
+#	  with diff(1)s if $check_changelist is enabled.
 #
 
 /set uname=root gname=wheel
@@ -21,9 +27,6 @@
 ./etc/bootparams		type=file mode=0644 optional
 ./etc/bootptab			type=file mode=0644 optional
 ./etc/ccd.conf			type=file mode=0644 optional
-#	XXX remove changelist?
-./etc/changelist		type=file mode=0644
-#	XXX remove crontab entry completely ?
 ./etc/crontab			type=file mode=0644 optional
 ./etc/csh.cshrc			type=file mode=0644
 ./etc/csh.login			type=file mode=0644
@@ -63,7 +66,6 @@
 ./etc/hosts.equiv		type=file mode=0600 optional
 ./etc/hosts.lpd			type=file mode=0644 optional
 ./etc/ifaliases			type=file mode=0644 optional
-#	XXX support ifconfig.*
 ./etc/inetd.conf		type=file mode=0644
 ./etc/ipf.conf			type=file mode=0644 optional
 ./etc/ipnat.conf		type=file mode=0644 optional
@@ -75,14 +77,14 @@
 ./etc/login.conf		type=file mode=0644 optional
 ./etc/mail			type=dir  mode=0755
 ./etc/mail/aliases		type=file mode=0644
-./etc/mail/aliases.db		type=file mode=0644
+./etc/mail/aliases.db		type=file mode=0644 tags=exclude
 ./etc/mail/helpfile		type=file mode=0444
 ./etc/mail/local-host-names	type=file mode=0644 optional
 ./etc/mail/sendmail.cf		type=file mode=0444
 ./etc/mail.rc			type=file mode=0644
 ./etc/mailer.conf		type=file mode=0644
 ./etc/man.conf			type=file mode=0644
-./etc/master.passwd		type=file mode=0600
+./etc/master.passwd		type=file mode=0600 tags=nomail
 ./etc/mk.conf			type=file mode=0644
 ./etc/moduli			type=file mode=0444
 ./etc/monthly			type=file mode=0644
@@ -91,13 +93,14 @@
 ./etc/mrouted.conf		type=file mode=0644
 ./etc/mtree			type=dir  mode=0755
 ./etc/mtree/special		type=file mode=0444
+./etc/mtree/special.local	type=file mode=0644 optional
 ./etc/mygate			type=file mode=0644 optional
 ./etc/myname			type=file mode=0644 optional
 ./etc/named.conf		type=file mode=0644 optional
 ./etc/namedb			type=dir  mode=0755
 ./etc/netconfig			type=file mode=0644
 ./etc/netgroup			type=file mode=0644 optional
-./etc/netgroup.db		type=file mode=0644 optional
+./etc/netgroup.db		type=file mode=0644 optional tags=exclude
 ./etc/netstart.local		type=file mode=0644 optional
 ./etc/networks			type=file mode=0644
 ./etc/newsyslog.conf		type=file mode=0644
@@ -111,11 +114,9 @@
 ./etc/printcap			type=file mode=0644
 ./etc/profile			type=file mode=0644
 ./etc/protocols			type=file mode=0644
-#	XXX support raid*.conf
 ./etc/rbootd.conf		type=file mode=0644 optional
 ./etc/rc			type=file mode=0644
 ./etc/rc.conf			type=file mode=0644
-#	XXX support rc.conf.d/*
 ./etc/rc.d			type=dir  mode=0755
 ./etc/rc.d/DAEMON		type=file mode=0555
 ./etc/rc.d/LOGIN		type=file mode=0555
@@ -213,13 +214,14 @@
 ./etc/security.local		type=file mode=0644 optional
 ./etc/services			type=file mode=0644
 ./etc/shells			type=file mode=0644
-./etc/spwd.db			type=file mode=0600
+./etc/shosts.equiv		type=file mode=0600 optional
+./etc/spwd.db			type=file mode=0600 tags=exclude
 ./etc/ssh.conf			type=file mode=0644 optional
-./etc/ssh_host_dsa_key		type=file mode=0600 optional
+./etc/ssh_host_dsa_key		type=file mode=0600 optional tags=nomail
 ./etc/ssh_host_dsa_key.pub	type=file mode=0644 optional
-./etc/ssh_host_key		type=file mode=0600 optional
+./etc/ssh_host_key		type=file mode=0600 optional tags=nomail
 ./etc/ssh_host_key.pub		type=file mode=0644 optional
-./etc/ssh_host_rsa_key		type=file mode=0600 optional
+./etc/ssh_host_rsa_key		type=file mode=0600 optional tags=nomail
 ./etc/ssh_host_rsa_key.pub	type=file mode=0644 optional
 ./etc/ssh_known_hosts		type=file mode=0644 optional
 ./etc/ssh_known_hosts2		type=file mode=0644 optional
@@ -240,6 +242,19 @@
 ./root/.login			type=file mode=0644
 ./root/.profile			type=file mode=0644
 ./root/.rhosts			type=file mode=0600 optional
+./root/.shosts			type=file mode=0600 optional
+./root/.ssh			type=dir  mode=0700 optional
+./root/.ssh/authorized_keys	type=file mode=0600 optional
+./root/.ssh/authorized_keys2	type=file mode=0600 optional
+./root/.ssh/config		type=file mode=0644 optional
+./root/.ssh/id_dsa		type=file mode=0600 optional tags=nomail
+./root/.ssh/id_dsa.pub		type=file mode=0644 optional
+./root/.ssh/id_rsa		type=file mode=0600 optional tags=nomail
+./root/.ssh/id_rsa.pub		type=file mode=0644 optional
+./root/.ssh/identity		type=file mode=0600 optional tags=nomail
+./root/.ssh/identity.pub	type=file mode=0644 optional
+./root/.ssh/known_hosts		type=file mode=0644 optional
+./root/.ssh/known_hosts2	type=file mode=0644 optional
 
 ./sbin				type=dir  mode=0755 ignore
 
@@ -260,21 +275,21 @@
 
 ./var				type=dir  mode=0755
 ./var/account			type=dir  mode=0755
-./var/account/acct		type=file mode=0644 optional
+./var/account/acct		type=file mode=0644 optional tags=exclude
 ./var/at			type=dir  mode=0755 ignore
 ./var/backups			type=dir  mode=0755 ignore
 ./var/cron			type=dir  mode=0755
 ./var/cron/tabs			type=dir  mode=0700
 ./var/cron/tabs/root		type=file mode=0600
 ./var/db			type=dir  mode=0755
-./var/db/kvm.db			type=file mode=0644
+./var/db/kvm.db			type=file mode=0644 tags=exclude
 ./var/log			type=dir  mode=0755
-./var/log/authlog		type=file mode=0600
-./var/log/wtmp			type=file mode=0644
+./var/log/authlog		type=file mode=0600 optional tags=exclude
+./var/log/wtmp			type=file mode=0644 tags=exclude
 ./var/mail			type=dir  mode=1777 ignore
 ./var/preserve			type=dir  mode=0755 ignore
 ./var/run			type=dir  mode=0755
-./var/run/utmp			type=file mode=0664 gname=utmp
+./var/run/utmp			type=file mode=0664 gname=utmp tags=exclude
 ./var/spool			type=dir  mode=0755
 ./var/spool/ftp			type=dir  mode=0755 optional
 ./var/spool/ftp/bin		type=dir  mode=0755 optional
