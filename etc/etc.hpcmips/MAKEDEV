@@ -1,6 +1,6 @@
 #!/bin/sh -
 #
-#	$NetBSD: MAKEDEV,v 1.46 2002/12/31 06:54:38 shin Exp $
+#	$NetBSD: MAKEDEV,v 1.47 2003/03/30 17:41:53 wiz Exp $
 #
 # Copyright (c) 1990 The Regents of the University of California.
 # All rights reserved.
@@ -47,7 +47,7 @@
 #	cd*	SCSI CD-ROM
 #	vnd*	"file" pseudo-disks
 #	md*	memory pseudo-disk devices
-#	ccd*	contatenated disk devices
+#	ccd*	concatenated disk devices
 #	cgd*	cryptographic disk devices
 #	raid*	RAIDframe disk devices
 #
@@ -93,7 +93,7 @@
 #	clockctl clock control for non root users
 #	fd	file descriptors
 #	bpf*	packet filter
-#	ipl	ip filter
+#	ipl	IP filter
 #	lkm	loadable kernel modules interface
 #	random	Random number generator
 #	tun*	network tunnel driver
