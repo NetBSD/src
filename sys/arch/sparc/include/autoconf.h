@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.h,v 1.24 1998/03/30 14:15:12 pk Exp $ */
+/*	$NetBSD: autoconf.h,v 1.25 1998/04/07 20:08:29 pk Exp $ */
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -149,17 +149,6 @@ union obio_attach_args {
 	struct obio4_attach_args	uoba_oba4;	/* sun4 on-board view */
 };
 
-#if 0
-int	obio_bus_map __P((
-		bus_space_tag_t,
-		void *		/*physical addr*/,
-		int		/*offset*/,
-		size_t		/*size*/,
-		int		/*flags*/,
-		void *		/*preferred virtual address */,
-		bus_space_handle_t *));
-#endif
-
 #define obio_bus_map(t, a, o, s, f, v, hp)		\
 	bus_space_map2(t, 0, (long)(a) + o, s, f, (vm_offset_t)v, hp)
 
@@ -170,26 +159,6 @@ int	obio_bus_map __P((
 int	obio_find_rom_map __P((bus_addr_t, bus_type_t, int,
 				bus_space_handle_t *));
 
-#if 0
-int	obio_bus_probe __P((
-		bus_space_tag_t,
-		void *				/* phys addr */,
-		int				/* offset */,
-		size_t				/* size */,
-		int (*) __P((void *, void *)),	/* callback */
-		void *				/* arg */));
-#endif
-
-/*
- * mapiodev maps an I/O device to a virtual address, returning the address.
- * mapdev does the real work: you can supply a special virtual address and
- * it will use that instead of creating one, but you must only do this if
- * you get it from ../sparc/vaddrs.h.
- */
-void	*mapdev __P((struct rom_reg *pa, int va,
-		     int offset, int size));	/* OBSOLETE */
-#define	mapiodev(pa, offset, size) \
-	mapdev(pa, 0, offset, size)		/* OBSOLETE */
 
 
 /*
