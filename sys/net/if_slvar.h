@@ -32,7 +32,7 @@
  *
  *	@(#)if_slvar.h	7.7 (Berkeley) 5/7/91
  *
- * $Header: /cvsroot/src/sys/net/if_slvar.h,v 1.1.1.1 1993/03/21 09:45:37 cgd Exp $
+ * $Header: /cvsroot/src/sys/net/if_slvar.h,v 1.2 1993/03/21 18:04:42 cgd Exp $
  */
 
 /*
@@ -65,6 +65,7 @@ struct sl_softc {
 #define	SC_NOICMP	0x0004		/* supress ICMP traffic */
 #define	SC_AUTOCOMP	0x0008		/* auto-enable TCP compression */
 /* internal flags (should be separate) */
+#define	SC_ERROR	0x08000		/* had an input error - 30 Aug 92*/
 #define	SC_ABORT	0x10000		/* have been sent an abort request */
 
 /* this stuff doesn't belong here... */

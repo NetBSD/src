@@ -22,13 +22,24 @@
  * 
  * any improvements or extensions that they make and grant Carnegie the
  * rights to redistribute these changes.
+ *
+ * PATCHES MAGIC                LEVEL   PATCH THAT GOT US HERE
+ * --------------------         -----   ----------------------
+ * CURRENT PATCH LEVEL:         4       00083
+ * --------------------         -----   ----------------------
+ *
+ * 14 Mar 93	Chris G. Demetriou	Fixed so that tab is not output,
+ *					use spaces instead.
  */
 /*
  * HISTORY
  * $Log: db_output.c,v $
- * Revision 1.1.1.1  1993/03/21 09:45:37  cgd
- * initial import of 386bsd-0.1 sources
+ * Revision 1.2  1993/03/21 18:04:42  cgd
+ * after 0.2.2 "stable" patches applied
  *
+ * Revision 1.1.1.1  93/03/21  09:46:26  cgd
+ * initial import of 386bsd-0.1 sources
+ * 
  * Revision 1.1  1992/03/25  21:45:18  pace
  * Initial revision
  *
@@ -90,8 +101,10 @@ db_force_whitespace()
 	while (last_print < db_output_position) {
 	    next_tab = NEXT_TAB(last_print);
 	    if (next_tab <= db_output_position) {
-		cnputc('\t');
-		last_print = next_tab;
+		while (last_print < next_tab) { /* DON'T send a tab!!! */
+			cnputc(' ');
+			last_print++;
+		}
 	    }
 	    else {
 		cnputc(' ');

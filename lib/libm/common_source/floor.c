@@ -29,7 +29,16 @@
  * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
+ *
+ * PATCHES MAGIC                LEVEL   PATCH THAT GOT US HERE
+ * --------------------         -----   ----------------------
+ * CURRENT PATCH LEVEL:         1       00068
+ * --------------------         -----   ----------------------
+ *
+ * 17 Dec 1992	Karl Lehenbauer 	Removed defines for rint() to
+ *					add it's use in 386BSD.
  */
+  static char rcsid[] = "$Header: /cvsroot/src/lib/libm/common_source/Attic/floor.c,v 1.2 1993/03/21 18:04:42 cgd Exp $";
 
 #ifndef lint
 static char sccsid[] = "@(#)floor.c	5.7 (Berkeley) 10/9/90";
@@ -98,7 +107,6 @@ double x;
 	}
 }
 
-#ifndef national			/* rint() is in ./NATIONAL/support.s */
 /*
  * algorithm for rint(x) in pseudo-pascal form ...
  *
@@ -137,4 +145,3 @@ double x;
 	t = x + s;				/* x+s rounded to integer */
 	return (t - s);
 }
-#endif	/* not national */
