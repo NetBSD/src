@@ -1,4 +1,4 @@
-/*	$NetBSD: cpuswitch.S,v 1.3.2.7 2002/06/20 03:38:04 nathanw Exp $	*/
+/*	$NetBSD: cpuswitch.S,v 1.3.2.8 2002/06/21 23:43:50 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1994-1998 Mark Brinicombe.
@@ -789,7 +789,7 @@ Lse_context_switched:
 	str	r0, [r1]
 
         ldr     r1, Llwp0
-	b	switch_search
+	b	Lswitch_search
 
 ENTRY(switch_lwp_exit)
 	/*
