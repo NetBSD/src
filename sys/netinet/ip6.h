@@ -1,4 +1,4 @@
-/*	$NetBSD: ip6.h,v 1.4 2000/02/06 11:11:29 itojun Exp $	*/
+/*	$NetBSD: ip6.h,v 1.5 2000/02/24 09:55:24 itojun Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -205,6 +205,7 @@ struct ip6_frag {
 #define IPV6_MMTU	1280	/* minimal MTU and reassembly. 1024 + 256 */
 #define IPV6_MAXPACKET	65535	/* ip6 max packet size without Jumbo payload*/
 
+#ifdef _KERNEL
 /*
  * IP6_EXTHDR_CHECK ensures that region between the IP6 header and the
  * target header (including IPv6 itself, extension headers and
@@ -280,5 +281,6 @@ do {									\
 	} else								\
 		(val) = (typ)NULL;					\
 } while (0)
+#endif /*_KERNEL*/
 
 #endif /* not _NETINET_IP6_H_ */
