@@ -1,4 +1,4 @@
-/*	$NetBSD: awi_wicfg.c,v 1.6 2001/06/25 04:43:33 onoe Exp $	*/
+/*	$NetBSD: awi_wicfg.c,v 1.7 2001/06/28 10:40:04 onoe Exp $	*/
 
 /*
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -648,8 +648,8 @@ awi_cfgset(ifp, cmd, data)
 	}
 	if (error == ENETRESET) {
 		if (sc->sc_enabled) {
-			awi_stop(sc);
-			error = awi_init(sc);
+			awi_stop(ifp, 0);
+			error = awi_init(ifp);
 		} else
 			error = 0;
 	}
