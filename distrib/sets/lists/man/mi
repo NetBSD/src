@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.330 2001/03/30 13:58:43 kleink Exp $
+# $NetBSD: mi,v 1.331 2001/03/30 14:35:45 minoura Exp $
 ./usr/share/info/am-utils.info			man-amd-info
 ./usr/share/info/as.info			man-computil-info
 ./usr/share/info/awk.info			man-util-info
@@ -929,6 +929,7 @@
 ./usr/share/man/cat4/x68k/neptune.0		man-sys-catman
 ./usr/share/man/cat4/x68k/pow.0			man-sys-catman
 ./usr/share/man/cat4/xi.0			man-sys-catman
+./usr/share/man/cat4/yds.0			man-sys-catman
 ./usr/share/man/cat4/ym.0			man-sys-catman
 ./usr/share/man/cat4/zero.0			man-sys-catman
 ./usr/share/man/cat4/zstty.0			man-sys-catman
@@ -2418,6 +2419,7 @@
 ./usr/share/man/man4/x68k/neptune.4		man-sys-man
 ./usr/share/man/man4/x68k/pow.4			man-sys-man
 ./usr/share/man/man4/xi.4			man-sys-man
+./usr/share/man/man4/yds.4			man-sys-man
 ./usr/share/man/man4/ym.4			man-sys-man
 ./usr/share/man/man4/zero.4			man-sys-man
 ./usr/share/man/man4/zstty.4			man-sys-man
