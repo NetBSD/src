@@ -1,4 +1,4 @@
-/*	$NetBSD: int_types.h,v 1.1 2000/06/26 15:42:40 kleink Exp $	*/
+/*	$NetBSD: int_types.h,v 1.2 2000/06/27 04:58:53 kleink Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -39,17 +39,25 @@
 #define	_M68K_INT_TYPES_H_
 
 /*
- * 7.18.1.1 Exact-width integer types
+ * 7.18.1 Integer types
  */
+
+/* 7.18.1.1 Exact-width integer types */
+
 typedef	signed char		 __int8_t;
 typedef	unsigned char		__uint8_t;
-typedef	short			__int16_t;
-typedef	unsigned short	       __uint16_t;
+typedef	short int		__int16_t;
+typedef	unsigned short int     __uint16_t;
 typedef	int			__int32_t;
 typedef	unsigned int	       __uint32_t;
 /* LONGLONG */
-typedef	long long		__int64_t;
+typedef	long long int		__int64_t;
 /* LONGLONG */
-typedef	unsigned long long     __uint64_t;
+typedef	unsigned long long int __uint64_t;
+
+/* 7.18.1.4 Integer types capable of holding object pointers */
+
+typedef	int		       __intptr_t;
+typedef	unsigned int	      __uintptr_t;
 
 #endif	/* !_M68K_INT_TYPES_H_ */
