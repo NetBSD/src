@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.63 2003/07/27 04:38:06 tsutsui Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.64 2003/08/01 00:23:18 tsutsui Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 2002 The NetBSD Foundation, Inc.
@@ -99,7 +99,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.63 2003/07/27 04:38:06 tsutsui Exp $");                                                  
+__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.64 2003/08/01 00:23:18 tsutsui Exp $");                                                  
 
 #include "hil.h"
 #include "dvbox.h"
@@ -800,11 +800,18 @@ dev_data_insert(dd, ddlist)
 void
 hp300_cninit()
 {
+	struct bus_space_tag tag;
+	bus_space_tag_t bst;
+
+	bst = &tag;
+	memset(bst, 0, sizeof(struct bus_space_tag));
+	bst->bustype = HP300_BUS_SPACE_INTIO;
+
 	/*
 	 * Look for serial consoles first.
 	 */
 #if NAPCI > 0
-	if (!apcicnattach(HP300_BUS_SPACE_INTIO, 0x1c020, -1))
+	if (!apcicnattach(bst, 0x1c020, -1))
 		return;
 #endif
 #if NDCA > 0
@@ -822,19 +829,19 @@ hp300_cninit()
 	 * Look for internal framebuffers.
 	 */
 #if NDVBOX > 0
-	if (!dvboxcnattach(HP300_BUS_SPACE_INTIO, 0x160000,-1))
+	if (!dvboxcnattach(bst, 0x160000,-1))
 		goto find_kbd;
 #endif
 #if NGBOX > 0
-	if (!gboxcnattach(HP300_BUS_SPACE_INTIO, 0x160000,-1))
+	if (!gboxcnattach(bst, 0x160000,-1))
 		goto find_kbd;
 #endif
 #if NRBOX > 0
-	if (!rboxcnattach(HP300_BUS_SPACE_INTIO, 0x160000,-1))
+	if (!rboxcnattach(bst, 0x160000,-1))
 		goto find_kbd;
 #endif
 #if NTOPCAT > 0
-	if (!topcatcnattach(HP300_BUS_SPACE_INTIO, 0x160000,-1))
+	if (!topcatcnattach(bst, 0x160000,-1))
 		goto find_kbd;
 #endif
 #endif	/* CONSCODE */
@@ -866,11 +873,11 @@ hp300_cninit()
 find_kbd:
 
 #if NDNKBD > 0
-	dnkbdcnattach(HP300_BUS_SPACE_INTIO, 0x1c000)
+	dnkbdcnattach(bst, 0x1c000)
 #endif
 
 #if NHIL > 0
-	hilkbdcnattach(HP300_BUS_SPACE_INTIO, 0x28000);
+	hilkbdcnattach(bst, 0x28000);
 #endif
 #endif	/* NITE */
 }
@@ -902,8 +909,13 @@ dio_scode_probe(scode, func)
 	int scode;
 	int (*func)(bus_space_tag_t, bus_addr_t, int);
 {
+	struct bus_space_tag tag;
+	bus_space_tag_t bst;
 	caddr_t pa, va;
 
+	bst = &tag;
+	memset(bst, 0, sizeof(struct bus_space_tag));
+	bst->bustype = HP300_BUS_SPACE_DIO;
 	pa = dio_scodetopa(scode);
 	va = iomap(pa, PAGE_SIZE);
 	if (va == 0)
@@ -914,7 +926,7 @@ dio_scode_probe(scode, func)
 	}
 	iounmap(va, PAGE_SIZE);
 
-	return ((*func)(HP300_BUS_SPACE_DIO, (bus_addr_t)pa, scode));
+	return ((*func)(bst, (bus_addr_t)pa, scode));
 }
 
 

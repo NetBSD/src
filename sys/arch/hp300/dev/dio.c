@@ -1,4 +1,4 @@
-/*	$NetBSD: dio.c,v 1.23 2003/05/24 06:21:22 gmcgarry Exp $	*/
+/*	$NetBSD: dio.c,v 1.24 2003/08/01 00:23:17 tsutsui Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dio.c,v 1.23 2003/05/24 06:21:22 gmcgarry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dio.c,v 1.24 2003/08/01 00:23:17 tsutsui Exp $");
 
 #define	_HP300_INTR_H_PRIVATE
 
@@ -69,6 +69,10 @@ __KERNEL_RCSID(0, "$NetBSD: dio.c,v 1.23 2003/05/24 06:21:22 gmcgarry Exp $");
 #include "locators.h"
 #define        diocf_scode             cf_loc[DIOCF_SCODE]
 
+struct dio_softc {
+	struct device sc_dev;
+	struct bus_space_tag sc_tag;
+};
 
 static int	dio_scodesize __P((struct dio_attach_args *));
 char	*dio_devinfo __P((struct dio_attach_args *, char *, size_t));
@@ -78,7 +82,7 @@ void	dioattach __P((struct device *, struct device *, void *));
 int	dioprint __P((void *, const char *));
 int	diosubmatch __P((struct device *, struct cfdata *, void *));
 
-CFATTACH_DECL(dio, sizeof(struct device),
+CFATTACH_DECL(dio, sizeof(struct dio_softc),
     diomatch, dioattach, NULL, NULL);
 
 int
@@ -102,11 +106,16 @@ dioattach(parent, self, aux)
 	struct device *parent, *self;
 	void *aux;
 {
+	struct dio_softc *sc = (struct dio_softc *)self;
 	struct dio_attach_args da;
 	caddr_t pa, va;
+	bus_space_tag_t bst = &sc->sc_tag;
 	int scode, scmax, scodesize;
 
 	printf("\n");
+
+	memset(bst, 0, sizeof(struct bus_space_tag));
+	bst->bustype = HP300_BUS_SPACE_DIO;
 
 	scmax = DIO_SCMAX(machineid);
 
@@ -138,7 +147,7 @@ dioattach(parent, self, aux)
 
 		/* Fill out attach args. */
 		memset(&da, 0, sizeof(da));
-		da.da_bst = HP300_BUS_SPACE_DIO;
+		da.da_bst = bst;
 		da.da_scode = scode;
 
 		da.da_id = DIO_ID(va);

@@ -1,4 +1,4 @@
-/*	$NetBSD: bus_space.c,v 1.7 2003/07/19 16:02:06 tsutsui Exp $	*/
+/*	$NetBSD: bus_space.c,v 1.8 2003/08/01 00:23:18 tsutsui Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bus_space.c,v 1.7 2003/07/19 16:02:06 tsutsui Exp $");                                                  
+__KERNEL_RCSID(0, "$NetBSD: bus_space.c,v 1.8 2003/08/01 00:23:18 tsutsui Exp $");                                                  
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -68,7 +68,7 @@ bus_space_map(t, bpa, size, flags, bshp)
 	vsize_t offset;
 	int error;
 
-	if (t == HP300_BUS_SPACE_INTIO) {
+	if (t->bustype == HP300_BUS_SPACE_INTIO) {
 		/*
 		 * Intio space is direct-mapped in pmap_bootstrap(); just
 		 * do the translation.
@@ -77,7 +77,7 @@ bus_space_map(t, bpa, size, flags, bshp)
 		return (0);
 	}
 
-	if (t != HP300_BUS_SPACE_DIO)
+	if (t->bustype != HP300_BUS_SPACE_DIO)
 		panic("bus_space_map: bad space tag");
 
 	/*
@@ -144,7 +144,7 @@ bus_space_unmap(t, bsh, size)
 	vaddr_t kva;
 	vsize_t offset;
 
-	if (t == HP300_BUS_SPACE_INTIO) {
+	if (t->bustype == HP300_BUS_SPACE_INTIO) {
 		/*
 		 * Intio space is direct-mapped in pmap_bootstrap(); nothing
 		 * to do
@@ -152,7 +152,7 @@ bus_space_unmap(t, bsh, size)
 		return;
 	}
 
-	if (t != HP300_BUS_SPACE_DIO)
+	if (t->bustype != HP300_BUS_SPACE_DIO)
 		panic("bus_space_map: bad space tag");
 
 	kva = m68k_trunc_page(bsh);
