@@ -1,5 +1,4 @@
-.\"	$NetBSD: wdc.9,v 1.5 2001/05/31 10:51:21 abs Exp $
-
+.\"	$NetBSD: wdc.9,v 1.6 2001/06/05 12:56:03 wiz Exp $
 .\"
 .\" Copyright (c) 1998 Manuel Bouyer.
 .\"
@@ -31,9 +30,8 @@
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
 .\"
-
 .Dd October 18, 1998
-.Dt wdc 9
+.Dt WDC 9
 .Os
 .Sh NAME
 .Nm wdc
@@ -59,7 +57,7 @@ will use services provided by
 .Pp
 The machine-dependent bus front-end provides informations to
 .Nm
-vith the 
+vith the
 .Va wdc_softc
 and
 .Va channel_softc
@@ -74,18 +72,18 @@ structure.
 struct wdc_softc { /* Per controller state */
         struct device sc_dev;
         int           cap;
-#define WDC_CAPABILITY_DATA16 0x0001    
-#define WDC_CAPABILITY_DATA32 0x0002    
-#define WDC_CAPABILITY_MODE   0x0004    
-#define WDC_CAPABILITY_DMA    0x0008    
-#define WDC_CAPABILITY_UDMA   0x0010    
-#define WDC_CAPABILITY_HWLOCK 0x0020    
-#define WDC_CAPABILITY_ATA_NOSTREAM 0x0040 
-#define WDC_CAPABILITY_ATAPI_NOSTREAM 0x0080 
-#define WDC_CAPABILITY_NO_EXTRA_RESETS 0x0100 
-        u_int8_t      pio_mode; 
-        u_int8_t      dma_mode; 
-        int nchannels;  
+#define WDC_CAPABILITY_DATA16 0x0001
+#define WDC_CAPABILITY_DATA32 0x0002
+#define WDC_CAPABILITY_MODE   0x0004
+#define WDC_CAPABILITY_DMA    0x0008
+#define WDC_CAPABILITY_UDMA   0x0010
+#define WDC_CAPABILITY_HWLOCK 0x0020
+#define WDC_CAPABILITY_ATA_NOSTREAM 0x0040
+#define WDC_CAPABILITY_ATAPI_NOSTREAM 0x0080
+#define WDC_CAPABILITY_NO_EXTRA_RESETS 0x0100
+        u_int8_t      pio_mode;
+        u_int8_t      dma_mode;
+        int nchannels;
         struct channel_softc *channels;
 
         void            *dma_arg;
@@ -109,10 +107,10 @@ struct channel_softc { /* Per channel data */
         bus_space_tag_t       data32iot;
         bus_space_handle_t    data32ioh;
         int ch_flags;
-#define WDCF_ACTIVE   0x01      
-#define WDCF_IRQ_WAIT 0x10      
+#define WDCF_ACTIVE   0x01
+#define WDCF_IRQ_WAIT 0x10
         u_int8_t ch_status;
-        u_int8_t ch_error; 
+        u_int8_t ch_error;
         struct ata_drive_datas ch_drive[2];
         struct channel_queue *ch_queue;
 };
@@ -226,7 +224,7 @@ needs to be set to the hightest PIO and DMA mode supported.
 If
 .Va WDC_CAPABILITY_UDMA
 is set, then
-.Va dma_mode 
+.Va dma_mode
 must be set to the hightest Ultra-DMA mode supported.
 If
 .Va WDC_CAPABILITY_MODE
@@ -243,7 +241,7 @@ If this flag is set, the bus front-end needs to provide the
 .Va claim_hw
 and
 .Va free_hw
-functions. 
+functions.
 .Va claim_hw
 will be called when the driver wants to access the controller ports.
 The second parameter is set to 1 when it is possible to sleep wainting
@@ -255,7 +253,7 @@ front-end shall call
 with the first argument passed to
 .Va claim_hw
 as argument.
-This arguments will also be the one passed to 
+This arguments will also be the one passed to
 .Va free_hw.
 This function is called once the transfert is complete, so that the lock can
 be released.
@@ -270,7 +268,7 @@ This should not be used, unless the data bus is not wired properly (which
 seems common on big-endian systems), and byte-order needs to be preserved
 for compatibility with the host's firmware.
 Also note that the IDE bus is a little-endian bus, so the bus_space
-functions used for the bus_space tag passed in the 
+functions used for the bus_space tag passed in the
 .Va channel_softc
 have to do the apropriate byte-swapping for big-endian systems.
 .Pp
