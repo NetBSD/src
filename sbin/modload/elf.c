@@ -1,7 +1,7 @@
-/*	$NetBSD: elf.c,v 1.10 2002/07/24 14:14:10 joda Exp $	*/
+/*	$NetBSD: elf.c,v 1.11 2002/10/06 13:23:00 simonb Exp $	*/
 
 /*
- * Copyright (c) 1998 Johan Danielsson <joda@pdc.kth.se> 
+ * Copyright (c) 1998 Johan Danielsson <joda@pdc.kth.se>
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -29,18 +29,18 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: elf.c,v 1.10 2002/07/24 14:14:10 joda Exp $");
+__RCSID("$NetBSD: elf.c,v 1.11 2002/10/06 13:23:00 simonb Exp $");
 
 #include <sys/param.h>
 
 #if defined(__alpha__) || defined(__arch64__) || defined(__x86_64__)
-#define ELFSIZE 64
+#define	ELFSIZE 64
 #else
-#define ELFSIZE 32
+#define	ELFSIZE 32
 #endif
 #include <sys/exec_elf.h>
 #ifndef ELF_HDR_SIZE
-#define ELF_HDR_SIZE sizeof(Elf_Ehdr)
+#define	ELF_HDR_SIZE sizeof(Elf_Ehdr)
 #endif
 #include <sys/lkm.h>
 
@@ -230,7 +230,7 @@ read_elf_header(int fd, Elf_Ehdr *ehdr)
 	    ehdr->e_ident[EI_CLASS] != ELFCLASS)
 		errx(4, "not in ELF%u format", ELFSIZE);
 	if (ehdr->e_ehsize != ELF_HDR_SIZE)
-		errx(4, "file has ELF%u identity, but wrong header size", 
+		errx(4, "file has ELF%u identity, but wrong header size",
 		    ELFSIZE);
 
 	return 0;
@@ -242,38 +242,36 @@ static ssize_t data_offset;
 
 /* return size needed by the module */
 int
-elf_mod_sizes(fd, modsize, strtablen, resrvp, sp)
-	int fd;
-	size_t *modsize;
-	int *strtablen;
-	struct lmc_resrv *resrvp;
-	struct stat *sp;
+elf_mod_sizes(int fd,
+	      size_t *modsize,
+	      int *strtablen,
+	      struct lmc_resrv *resrvp,
+	      struct stat *sp)
 {
 	Elf_Ehdr ehdr;
 	ssize_t off = 0;
 	size_t data_hole = 0;
 	char *shstrtab, *strtab;
 	struct elf_section *head, *s;
-	extern int symtab;
-	
+
 	if (read_elf_header(fd, &ehdr) < 0)
 		return -1;
 	shstrtab = read_shstring_table(fd, &ehdr);
 	read_sections(fd, &ehdr, shstrtab, &head);
 
 	for (s = head; s; s = s->next) {
-                if ((s->type == SHT_STRTAB) && (s->type == SHT_SYMTAB)
-                    && (s->type == SHT_DYNSYM)) {
+		if ((s->type == SHT_STRTAB) && (s->type == SHT_SYMTAB)
+		    && (s->type == SHT_DYNSYM)) {
 			continue;
 		}
 		if (debug)
-			fprintf(stderr, 
-			    "%s: addr = %p size = %#lx align = %#lx\n", 
+			fprintf(stderr,
+			    "%s: addr = %p size = %#lx align = %#lx\n",
 			    s->name, s->addr, (u_long)s->size, (u_long)s->align);
 		/* XXX try to get rid of the hole before the data
-                   section that GNU-ld likes to put there */
+		   section that GNU-ld likes to put there */
 		if (strcmp(s->name, ".data") == 0 && s->addr > (void*)off) {
-#define ROUND(V, S) (((V) + (S) - 1) & ~((S) - 1))
+#define	ROUND(V, S) (((V) + (S) - 1) & ~((S) - 1))
 			data_offset = ROUND(off, s->align);
 			if (debug)
 				fprintf(stderr, ".data section forced to "
@@ -286,7 +284,7 @@ elf_mod_sizes(fd, modsize, strtablen, resrvp, sp)
 		off = (ssize_t)s->addr + s->size;
 	}
 	off -= data_hole;
-	
+
 	/* XXX round to pagesize? */
 	*modsize = ROUND(off, sysconf(_SC_PAGESIZE));
 	free(shstrtab);
@@ -317,7 +315,7 @@ elf_mod_sizes(fd, modsize, strtablen, resrvp, sp)
  * -R		executable to link against
  * -e		entry point
  * -o		output file
- * -Ttext	address to link text segment to in hex (assumes it's 
+ * -Ttext	address to link text segment to in hex (assumes it's
  *		a page boundary)
  * -Tdata	address to link data segment to in hex
  * <target>	object file */
@@ -330,20 +328,20 @@ elf_mod_sizes(fd, modsize, strtablen, resrvp, sp)
 void
 elf_linkcmd(char *buf,
 	    size_t len,
-	    const char *kernel, 
-	    const char *entry, 
-	    const char *outfile, 
-	    const void *address, 
+	    const char *kernel,
+	    const char *entry,
+	    const char *outfile,
+	    const void *address,
 	    const char *object)
 {
 	ssize_t n;
 
 	if (data_offset == NULL)
-		n = snprintf(buf, len, LINKCMD, kernel, entry, 
+		n = snprintf(buf, len, LINKCMD, kernel, entry,
 			     outfile, address, object);
 	else
-		n = snprintf(buf, len, LINKCMD2, kernel, entry, 
-			     outfile, address, 
+		n = snprintf(buf, len, LINKCMD2, kernel, entry,
+			     outfile, address,
 			     (const char*)address + data_offset, object);
 	if (n >= len)
 		errx(1, "link command longer than %lu bytes", (u_long)len);
@@ -361,19 +359,19 @@ elf_mod_load(int fd)
 	struct elf_section *head, *s;
 	char buf[10 * BUFSIZ];
 	void *addr = NULL;
-		
+
 	if (read_elf_header(fd, &ehdr) < 0)
 		return NULL;
 
 	shstrtab = read_shstring_table(fd, &ehdr);
 	read_sections(fd, &ehdr, shstrtab, &head);
-	
+
 	for (s = head; s; s = s->next) {
 		if ((s->type != SHT_STRTAB) && (s->type != SHT_SYMTAB)
 		    && (s->type != SHT_DYNSYM)) {
 			if (debug)
 				fprintf(stderr, "loading `%s': addr = %p, "
-					"size = %#lx\n", 
+					"size = %#lx\n",
 					s->name, s->addr, (u_long)s->size);
 			if (s->type == SHT_NOBITS) {
 				/* skip some space */
@@ -381,8 +379,8 @@ elf_mod_load(int fd)
 			} else {
 				if (addr != NULL) {
 					/* if there is a gap in the prelinked
-                                   	module, transfer some empty
-                                   	space... */
+				   	module, transfer some empty
+				   	space... */
 					zero_size += (char*)s->addr
 					 		- (char*)addr;
 				}
@@ -408,84 +406,81 @@ elf_mod_load(int fd)
 	}
 	if (zero_size)
 		loadspace(zero_size);
-	
+
 	free_sections(head);
 	free(shstrtab);
 	return (void*)ehdr.e_entry;
 }
 
-extern int devfd, modfd;
-
 void
-elf_mod_symload(strtablen)
-	int strtablen;
+elf_mod_symload(int strtablen)
 {
 	Elf_Ehdr ehdr;
-        char *shstrtab;
-        struct elf_section *head, *s;
+	char *shstrtab;
+	struct elf_section *head, *s;
 	char *symbuf, *strbuf;
 
-        /*
-         * Seek to the text offset to start loading...
-         */
-        if (lseek(modfd, 0, SEEK_SET) == -1)
-                err(12, "lseek");
-        if (read_elf_header(modfd, &ehdr) < 0)
-                return;
- 
-        shstrtab = read_shstring_table(modfd, &ehdr);
-        read_sections(modfd, &ehdr, shstrtab, &head);
+	/*
+	 * Seek to the text offset to start loading...
+	 */
+	if (lseek(modfd, 0, SEEK_SET) == -1)
+		err(12, "lseek");
+	if (read_elf_header(modfd, &ehdr) < 0)
+		return;
 
-        for (s = head; s; s = s->next) {
+	shstrtab = read_shstring_table(modfd, &ehdr);
+	read_sections(modfd, &ehdr, shstrtab, &head);
+
+	for (s = head; s; s = s->next) {
 		struct elf_section *p = s;
 
-                if ((p->type == SHT_SYMTAB) || (p->type == SHT_DYNSYM)) {
-                        if (debug)
-                                fprintf(stderr, "loading `%s': addr = %p, "
-                                        "size = %#lx\n",
-                                        s->name, s->addr, (u_long)s->size);
+		if ((p->type == SHT_SYMTAB) || (p->type == SHT_DYNSYM)) {
+			if (debug)
+				fprintf(stderr, "loading `%s': addr = %p, "
+					"size = %#lx\n",
+					s->name, s->addr, (u_long)s->size);
 			/*
-         		 * Seek to the file offset to start loading it...
-         		 */
-        		if (lseek(modfd, p->offset, SEEK_SET) == -1)
-                		err(12, "lseek");
+	 		 * Seek to the file offset to start loading it...
+	 		 */
+			if (lseek(modfd, p->offset, SEEK_SET) == -1)
+				err(12, "lseek");
 			symbuf = malloc(p->size);
 			if (symbuf == 0)
-                		err(13, "malloc");
+				err(13, "malloc");
 			if (read(modfd, symbuf, p->size) != p->size)
-                		err(14, "read");
+				err(14, "read");
 
 			loadsym(symbuf, p->size);
 			free(symbuf);
-                }
-        }
+		}
+	}
 
 	for (s = head; s; s = s->next) {
-                struct elf_section *p = s;
- 
-                if ((p->type == SHT_STRTAB)
-		    && (strcmp(p->name, ".strtab") == 0 )) {
-                        if (debug)
-                                fprintf(stderr, "loading `%s': addr = %p, "
-                                        "size = %#lx\n",
-                                        s->name, s->addr, (u_long)s->size);
-                        /*
-                         * Seek to the file offset to start loading it...
-                         */
-                        if (lseek(modfd, p->offset, SEEK_SET) == -1)
-                                err(12, "lseek");
-                        strbuf = malloc(p->size);
-                        if (strbuf == 0)
-                                err(13, "malloc");
-                        if (read(modfd, strbuf, p->size) != p->size)
-                                err(14, "read");
- 
-                        loadsym(strbuf, p->size);
-                        free(strbuf);
-                }
-        }
+		struct elf_section *p = s;
 
-        free(shstrtab);
-        free_sections(head);
-        return;
+		if ((p->type == SHT_STRTAB)
+		    && (strcmp(p->name, ".strtab") == 0 )) {
+			if (debug)
+				fprintf(stderr, "loading `%s': addr = %p, "
+					"size = %#lx\n",
+					s->name, s->addr, (u_long)s->size);
+			/*
+			 * Seek to the file offset to start loading it...
+			 */
+			if (lseek(modfd, p->offset, SEEK_SET) == -1)
+				err(12, "lseek");
+			strbuf = malloc(p->size);
+			if (strbuf == 0)
+				err(13, "malloc");
+			if (read(modfd, strbuf, p->size) != p->size)
+				err(14, "read");
+
+			loadsym(strbuf, p->size);
+			free(strbuf);
+		}
+	}
+
+	free(shstrtab);
+	free_sections(head);
+	return;
 }

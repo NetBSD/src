@@ -1,4 +1,4 @@
-/*	$NetBSD: a.out.c,v 1.1 1999/06/13 12:54:40 mrg Exp $	*/
+/*	$NetBSD: a.out.c,v 1.2 2002/10/06 13:23:00 simonb Exp $	*/
 
 /*
  * Copyright (c) 1993 Terrence R. Lambert.
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: a.out.c,v 1.1 1999/06/13 12:54:40 mrg Exp $");
+__RCSID("$NetBSD: a.out.c,v 1.2 2002/10/06 13:23:00 simonb Exp $");
 
 #include <sys/param.h>
 #include <sys/ioctl.h>
@@ -64,15 +64,15 @@ __RCSID("$NetBSD: a.out.c,v 1.1 1999/06/13 12:54:40 mrg Exp $");
 void
 a_out_linkcmd(char *buf,
 	      size_t len,
-	      const char *kernel, 
-	      const char *entry, 
-	      const char *outfile, 
-	      const void *address, 
+	      const char *kernel,
+	      const char *entry,
+	      const char *outfile,
+	      const void *address,
 	      const char *object)
 {
 	ssize_t n;
 
-	n = snprintf(buf, len, LINKCMD, kernel, entry, 
+	n = snprintf(buf, len, LINKCMD, kernel, entry,
 		     outfile, address, object);
 	if (n >= len)
 		errx(1, "link command longer than %lu bytes", (u_long)len);
@@ -88,7 +88,7 @@ a_out_read_header(int fd, struct exec *info_buf)
 		err(1, "failed reading %lu bytes", (u_long)sizeof(*info_buf));
 	if (n != sizeof(*info_buf)) {
 		if (debug)
-			fprintf(stderr, "failed to read %lu bytes", 
+			fprintf(stderr, "failed to read %lu bytes",
 				(u_long)sizeof(*info_buf));
 		return -1;
 	}
@@ -101,15 +101,12 @@ a_out_read_header(int fd, struct exec *info_buf)
 	return 0;
 }
 
-extern int symtab;
-
 int
-a_out_mod_sizes(fd, modsize, strtablen, resrvp, sp)
-	int fd;
-	size_t *modsize;
-	int *strtablen;
-	struct lmc_resrv *resrvp;
-	struct stat *sp;
+a_out_mod_sizes(int fd,
+		size_t *modsize,
+		int *strtablen,
+		struct lmc_resrv *resrvp,
+		struct stat * sp)
 {
 	struct exec info_buf;
 
@@ -151,7 +148,7 @@ a_out_mod_load(int fd)
 	 */
 	if (a_out_read_header(fd, &info_buf) < 0)
 		return NULL;
-	
+
 	/*
 	 * Seek to the text offset to start loading...
 	 */
@@ -169,19 +166,15 @@ a_out_mod_load(int fd)
 			err(1, "while reading from prelinked module");
 		if (n == 0)
 			errx(1, "EOF while reading from prelinked module");
-		
+
 		loadbuf(buf, n);
 		b -= n;
 	}
 	return (void*)info_buf.a_entry;
 }
 
-extern int devfd, modfd;
-extern struct lmc_resrv resrv;
-
 void
-a_out_mod_symload(strtablen)
-	int strtablen;
+a_out_mod_symload(int strtablen)
 {
 	struct exec info_buf;
 	struct lmc_loadbuf ldbuf;
@@ -214,7 +207,7 @@ a_out_mod_symload(strtablen)
 		err(14, "read");
 	numsyms = info_buf.a_syms / sizeof(struct nlist);
 
-	for (nlp = (struct nlist *)symbuf; 
+	for (nlp = (struct nlist *)symbuf;
 	    (char *)nlp < symbuf + info_buf.a_syms; nlp++) {
 		register int strx;
 
