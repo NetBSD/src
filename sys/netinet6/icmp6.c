@@ -1,4 +1,4 @@
-/*	$NetBSD: icmp6.c,v 1.96 2003/08/07 16:33:22 agc Exp $	*/
+/*	$NetBSD: icmp6.c,v 1.97 2003/08/22 20:20:09 jonathan Exp $	*/
 /*	$KAME: icmp6.c,v 1.217 2001/06/20 15:03:29 jinmei Exp $	*/
 
 /*
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: icmp6.c,v 1.96 2003/08/07 16:33:22 agc Exp $");
+__KERNEL_RCSID(0, "$NetBSD: icmp6.c,v 1.97 2003/08/22 20:20:09 jonathan Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -2144,7 +2144,9 @@ icmp6_reflect(m, off)
 	 * Note that only echo and node information replies are affected,
 	 * since the length of ICMP6 errors is limited to the minimum MTU.
 	 */
-	if (ip6_output(m, NULL, NULL, IPV6_MINMTU, NULL, &outif) != 0 && outif)
+	if (ip6_output(m, NULL, NULL, IPV6_MINMTU,
+		(struct ip6_moptions *)0, (struct in6pcb *)0, &outif) != 0
+	    && outif)
 		icmp6_ifstat_inc(outif, ifs6_out_error);
 
 	if (outif)
@@ -2652,7 +2654,8 @@ noredhdropt:
 	/* Don't lookup socket */
 	(void)ipsec_setsocket(m, NULL);
 #endif /* IPSEC */
-	if (ip6_output(m, NULL, NULL, 0, NULL, NULL) != 0)
+	if (ip6_output(m, NULL, NULL, 0,
+		(struct ip6_moptions *)0, (struct in6pcb *)0, NULL) != 0)
 		icmp6_ifstat_inc(ifp, ifs6_out_error);
 
 	icmp6_ifstat_inc(ifp, ifs6_out_msg);

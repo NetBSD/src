@@ -1,4 +1,4 @@
-/*	$NetBSD: udp6_output.c,v 1.12 2003/08/15 03:42:06 jonathan Exp $	*/
+/*	$NetBSD: udp6_output.c,v 1.13 2003/08/22 20:20:10 jonathan Exp $	*/
 /*	$KAME: udp6_output.c,v 1.43 2001/10/15 09:19:52 itojun Exp $	*/
 
 /*
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: udp6_output.c,v 1.12 2003/08/15 03:42:06 jonathan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: udp6_output.c,v 1.13 2003/08/22 20:20:10 jonathan Exp $");
 
 #include "opt_ipsec.h"
 #include "opt_inet.h"
@@ -353,7 +353,7 @@ udp6_output(in6p, m, addr6, control, p)
 		}
 #endif /* IPSEC */
 		error = ip6_output(m, in6p->in6p_outputopts, &in6p->in6p_route,
-		    flags, in6p->in6p_moptions, NULL);
+		    flags, in6p->in6p_moptions, in6p, NULL);
 		break;
 	case AF_INET:
 #ifdef INET
