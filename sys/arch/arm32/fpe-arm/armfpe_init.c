@@ -1,4 +1,4 @@
-/* $NetBSD: armfpe_init.c,v 1.11 1996/12/27 01:39:16 mark Exp $ */
+/* $NetBSD: armfpe_init.c,v 1.12 1997/02/03 03:12:09 mark Exp $ */
 
 /*
  * Copyright (C) 1996 Mark Brinicombe
@@ -156,8 +156,7 @@ arm_fpe_boot(cpu)
 
 	*fpe_arm_header.exc_handler_ptr_addr = (u_int)arm_fpe_exception_glue;
 	/* Set up post instruction handler */
-#if defined(CPU_ARM6) || defined(CPU_ARM7) || defined(CPU_ARM7500) \
- || defined(CPU_SA110)
+#if defined(CPU_ARM6) || defined(CPU_ARM7) || defined(CPU_SA110)
 	*fpe_arm_header.fp_post_proc_addr = (((((u_int)arm_fpe_post_proc_glue -
 	    (u_int)fpe_arm_header.fp_post_proc_addr - 8)>>2) & 0x00ffffff)
 	    | 0xea000000);
