@@ -1,4 +1,4 @@
-/*	$NetBSD: ite_cv3d.c,v 1.1 1997/10/19 18:55:22 veego Exp $	*/
+/*	$NetBSD: ite_cv3d.c,v 1.2 1997/11/10 12:17:20 is Exp $	*/
 
 /*
  * Copyright (c) 1995 Michael Teske
@@ -76,13 +76,13 @@ grfcv3d_cnprobe()
 	int rv;
 
 	if (done == 0)
-#ifdef CV64CONSOLE
+#ifdef CV3DCONSOLE
 		rv = CN_INTERNAL;
 #else
 		rv = CN_DEAD;
 #endif
 	else
-#ifdef CV64CONSOLE
+#ifdef CV3DCONSOLE
 		rv = CN_NORMAL;
 #else
 		rv = CN_DEAD;
