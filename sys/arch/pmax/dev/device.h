@@ -1,4 +1,4 @@
-/*	$NetBSD: device.h,v 1.6 1995/09/11 08:29:18 jonathan Exp $	*/
+/*	$NetBSD: device.h,v 1.7 1995/09/13 19:35:55 jonathan Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -70,7 +70,7 @@ struct pmax_ctlr {
  * This structure describes devices connected to a SCSI interface
  * and is partially initialized in "ioconf.c" by the 'config' program.
  */
-struct scsi_device {
+struct pmax_scsi_device {
 	struct pmax_driver *sd_driver;	/* SCSI device driver routines */
 	struct pmax_driver *sd_cdriver;	/* SCSI interface driver routines */
 	int		sd_unit;	/* device unit number */
@@ -92,7 +92,7 @@ struct scsi_device {
  * needs to execute a SCSI command.
  */
 typedef struct ScsiCmd {
-	struct	scsi_device *sd; /* device requesting the command */
+	struct	pmax_scsi_device *sd; /* device requesting the command */
 	int	unit;		/* unit number passed to device done routine */
 	int	flags;		/* control flags for this command (see below) */
 	int	buflen;		/* length of the data buffer in bytes */
@@ -116,5 +116,5 @@ typedef struct ScsiCmd {
 
 #ifdef _KERNEL
 extern struct pmax_ctlr pmax_cinit[];
-extern struct scsi_device scsi_dinit[];
+extern struct pmax_scsi_device scsi_dinit[];
 #endif

@@ -66,7 +66,7 @@ extern struct pmax_driver tzdriver;
  * config code and the machine-independent NetBSD scsi drivers.
  */
 
-struct scsi_device scsi_dinit[] = {
+struct pmax_scsi_device scsi_dinit[] = {
 /*driver,	cdriver,	unit,	ctlr,	drive,	slave,	dk,	flags*/
 { &rzdriver,	&siidriver,	0,	0,	0,	0,	1,	0x0 },
 { &rzdriver,	&siidriver,	1,	0,	1,	0,	1,	0x0 },
@@ -141,7 +141,7 @@ void
 configure_scsi()
 {
 	register struct pmax_ctlr *cp;
-	register struct scsi_device *dp;
+	register struct pmax_scsi_device *dp;
 	register struct pmax_driver *drp;
 
 	extern int dkn;	/* number of iostat dk numbers assigned */

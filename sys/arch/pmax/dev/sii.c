@@ -1,4 +1,4 @@
-/*	$NetBSD: sii.c,v 1.7 1995/09/11 08:29:16 jonathan Exp $	*/
+/*	$NetBSD: sii.c,v 1.8 1995/09/13 19:35:58 jonathan Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -136,7 +136,7 @@ struct scsi_adapter asc_switch = {
 	NULL,
 };
 
-struct scsi_device asc_dev = {
+struct scsi_device sii_dev = {
 /*XXX*/	NULL,			/* Use default error handler */
 /*XXX*/	NULL,			/* have a queue, served by this */
 /*XXX*/	NULL,			/* have no async handler */
@@ -287,7 +287,7 @@ void
 siistart(scsicmd)
 	register ScsiCmd *scsicmd;	/* command to start */
 {
-	register struct scsi_device *sdp = scsicmd->sd;
+	register struct pmax_scsi_device *sdp = scsicmd->sd;
 	register struct siisoftc *sc = siicd.cd_devs[sdp->sd_ctlr];
 	int s;
 

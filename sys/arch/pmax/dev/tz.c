@@ -1,4 +1,4 @@
-/*	$NetBSD: tz.c,v 1.6 1995/09/11 08:29:11 jonathan Exp $	*/
+/*	$NetBSD: tz.c,v 1.7 1995/09/13 19:35:59 jonathan Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -68,7 +68,7 @@ struct	pmax_driver tzdriver = {
 };
 
 struct	tz_softc {
-	struct	scsi_device *sc_sd;	/* physical unit info */
+	struct	pmax_scsi_device *sc_sd;	/* physical unit info */
 	int	sc_flags;		/* see below */
 	int	sc_tapeid;		/* tape drive id */
 	int	sc_blklen;		/* 0 = variable len records */
@@ -112,7 +112,7 @@ void tzstrategy __P((register struct buf *bp));
  * Return true if found and initialized ok.
  */
 tzprobe(sd)
-	struct scsi_device *sd;
+	struct pmax_scsi_device *sd;
 {
 	register struct tz_softc *sc = &tz_softc[sd->sd_unit];
 	register int i;

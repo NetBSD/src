@@ -1,4 +1,4 @@
-/*	$NetBSD: swapgeneric.c,v 1.6 1994/11/24 17:50:51 dean Exp $	*/
+/*	$NetBSD: swapgeneric.c,v 1.7 1995/09/13 19:36:04 jonathan Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -75,7 +75,7 @@ struct	genericconf {
 
 setconf()
 {
-	register struct scsi_device *dp;
+	register struct pmax_scsi_device *dp;
 	register struct genericconf *gc;
 	register char *cp, *gp;
 	int unit, swaponroot = 0;
@@ -126,7 +126,7 @@ gotit:
 			if (dp->sd_alive == 0)
 				continue;
 			if (dp->sd_unit == unit &&
-			    dp->sd_driver == (struct driver *)gc->gc_driver) {
+			    (caddr_t) dp->sd_driver == gc->gc_driver) {
 				printf("root on %s%d%c\n",
 					dp->sd_driver->d_name, unit,
 					"ab"[swaponroot]);

@@ -1,4 +1,4 @@
-/*	$NetBSD: asc.c,v 1.14 1995/09/11 08:29:14 jonathan Exp $	*/
+/*	$NetBSD: asc.c,v 1.15 1995/09/13 19:35:53 jonathan Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -130,10 +130,8 @@
 #include <sys/errno.h>
 #include <sys/device.h>
 
-#ifdef notyet
 #include <scsi/scsi_all.h>
 #include <scsi/scsiconf.h>
-#endif
 
 #include <machine/machConst.h>
 #include <machine/autoconf.h>
@@ -430,7 +428,7 @@ struct asc_softc {
 	int		timeout_250;	/* 250ms timeout */
 	int		tb_ticks;	/* 4ns. ticks/tb channel ticks */
 #ifdef USE_NEW_SCSI
-	struct scsi_link sc_link;		/* scsi lint struct */
+	struct scsi_link sc_link;		/* scsi link struct */
 #endif
 };
 
@@ -691,7 +689,7 @@ void
 asc_start(scsicmd)
 	register ScsiCmd *scsicmd;	/* command to start */
 {
-	register struct scsi_device *sdp = scsicmd->sd;
+	register struct pmax_scsi_device *sdp = scsicmd->sd;
 	register asc_softc_t asc = asccd.cd_devs[sdp->sd_ctlr];
 	int s;
 
