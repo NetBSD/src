@@ -1,4 +1,4 @@
-/*	$NetBSD: pci_swiz_bus_io_chipdep.c,v 1.4 1996/06/11 21:16:24 cgd Exp $	*/
+/*	$NetBSD: pci_swiz_bus_io_chipdep.c,v 1.5 1996/06/11 21:25:32 cgd Exp $	*/
 
 /*
  * Copyright (c) 1995, 1996 Carnegie-Mellon University.
@@ -119,7 +119,36 @@ __C(CHIP,_io_map)(v, ioaddr, iosize, iohp)
 	bus_io_handle_t *iohp;
 {
 
-	*iohp = (phystok0seg(CHIP_IO_BASE) >> 5) + ioaddr;
+#ifdef CHIP_IO_W1_START
+	if (ioaddr >= CHIP_IO_W1_START(v) &&
+	    ioaddr <= CHIP_IO_W1_END(v)) {
+		*iohp = (phystok0seg(CHIP_IO_W1_BASE(v)) >> 5) +
+		    (ioaddr & CHIP_IO_W1_MASK(v));
+	} else
+#endif
+#ifdef CHIP_IO_W2_START
+	if (ioaddr >= CHIP_IO_W2_START(v) &&
+	    ioaddr <= CHIP_IO_W2_END(v)) {
+		*iohp = (phystok0seg(CHIP_IO_W2_BASE(v)) >> 5) +
+		    (ioaddr & CHIP_IO_W2_MASK(v));
+	} else
+#endif
+	{
+		printf("\n");
+#ifdef CHIP_IO_W1_START
+		printf("%s: window[1]=0x%lx-0x%lx\n",
+		    __S(__C(CHIP,_io_map)), CHIP_IO_W1_START(v),
+		    CHIP_IO_W1_END(v)-1);
+#endif
+#ifdef CHIP_IO_W2_START
+		printf("%s: window[2]=0x%lx-0x%lx\n",
+		    __S(__C(CHIP,_io_map)), CHIP_IO_W2_START(v),
+		    CHIP_IO_W2_END(v)-1);
+#endif
+		panic("%s: don't know how to map %lx non-cacheable\n",
+		    __S(__C(CHIP,_io_map)), ioaddr);
+	}
+
 	return (0);
 }
 
