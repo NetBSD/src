@@ -1,4 +1,4 @@
-.\" $NetBSD: pkg_info.1,v 1.13 1999/01/19 17:02:00 hubertf Exp $
+.\" $NetBSD: pkg_info.1,v 1.14 1999/03/04 00:35:06 hubertf Exp $
 .\"
 .\" FreeBSD install - a package for the installation and maintainance
 .\" of non-core utilities.
@@ -17,7 +17,7 @@
 .\"
 .\"     @(#)pkg_info.1
 .\"
-.Dd January 12, 1999
+.Dd March 4, 1999
 .Dt PKG_INFO 1
 .Os FreeBSD
 .Sh NAME
@@ -42,7 +42,8 @@ command.
 The
 .Ar pkg-name
 may be the name of an installed package, the pathname to a package
-distribution file, or a URL to an ftp-available package.
+distribution file, a filename belonging to an installed package (if -F
+is also given), or a URL to an ftp-available package.
 .Pp
 The following command-line options are supported:
 .Bl -tag -width indent
@@ -209,5 +210,5 @@ refined it for
 .Nx
 .It "Hubert Feyrer"
 .Nx
-wildcard dependency processing, pkgdb, etc. 
+wildcard dependency processing, pkgdb, depends displaying, etc. 
 .El

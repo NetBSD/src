@@ -1,11 +1,11 @@
-/*	$NetBSD: perform.c,v 1.20 1999/01/19 17:02:00 hubertf Exp $	*/
+/*	$NetBSD: perform.c,v 1.21 1999/03/04 00:35:05 hubertf Exp $	*/
 
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static const char *rcsid = "from FreeBSD Id: perform.c,v 1.23 1997/10/13 15:03:53 jkh Exp";
 #else
-__RCSID("$NetBSD: perform.c,v 1.20 1999/01/19 17:02:00 hubertf Exp $");
+__RCSID("$NetBSD: perform.c,v 1.21 1999/03/04 00:35:05 hubertf Exp $");
 #endif
 #endif
 
@@ -148,6 +148,9 @@ pkg_do(char *pkg)
 		}
 		if (Flags & SHOW_COMMENT) {
 			show_file("Comment:\n", COMMENT_FNAME);
+		}
+		if (Flags & SHOW_DEPENDS) {
+			show_depends("Requires:\n", &plist);
 		}
 		if ((Flags & SHOW_REQBY) && !isemptyfile(REQUIRED_BY_FNAME)) {
 			show_file("Required by:\n", REQUIRED_BY_FNAME);

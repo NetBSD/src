@@ -1,4 +1,4 @@
-/* $NetBSD: info.h,v 1.8 1999/01/19 17:02:00 hubertf Exp $ */
+/* $NetBSD: info.h,v 1.9 1999/03/04 00:35:05 hubertf Exp $ */
 
 /* from FreeBSD Id: info.h,v 1.10 1997/02/22 16:09:40 peter Exp */
 
@@ -47,6 +47,7 @@
 #define SHOW_MTREE		0x0800
 #define SHOW_BUILD_VERSION	0x1000
 #define SHOW_BUILD_INFO		0x2000
+#define SHOW_DEPENDS		0x4000
 
 extern int Flags;
 extern Boolean AllInstalled;
@@ -61,6 +62,7 @@ extern size_t termwidth;
 extern void	show_file(char *, char *);
 extern void	show_plist(char *, package_t *, pl_ent_t);
 extern void	show_files(char *, package_t *);
+extern void	show_depends(char *, package_t *);
 extern void	show_index(char *, char *);
 
 #endif	/* _INST_INFO_H_INCLUDE */
