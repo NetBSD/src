@@ -30,6 +30,7 @@
 %token	IRQ
 %token	MACHIN
 %token	MAJOR
+%token  	MANUFACTURER
 %token	MASTER
 %token	MAXFDESCS
 %token	MAXUSERS
@@ -42,6 +43,7 @@
 %token	MAKEOPTIONS
 %token	PORT
 %token	PRIORITY
+%token  	PRODUCT
 %token	PSEUDO_DEVICE
 %token	ROOT
 %token	SEMICOLON
@@ -104,7 +106,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)config.y	5.14 (Berkeley) 7/1/91
- *	$Id: config.y,v 1.10 1994/01/08 10:33:53 cgd Exp $
+ *	$Id: config.y,v 1.11 1994/02/01 02:07:21 cgd Exp $
  */
 
 #include "config.h"
@@ -168,6 +170,10 @@ Config_spec:
 			machine = MACHINE_PMAX;
 			machinename = "pmax";
 			machinearch = machinename;
+		} else if (!strcmp($2, "amiga")) {
+			machine = MACHINE_AMIGA;
+			machinename = "amiga";
+			machinearch = "m68k";
 		} else
 			yyerror("Unknown machine type");
 	      } |
@@ -491,8 +497,10 @@ Con_info:
 		cur.d_conn = connect($2, $3);
 		} |
 	AT NEXUS NUMBER
-	      = { check_nexus(&cur, $3); cur.d_conn = TO_NEXUS; };
-    
+	      = { check_nexus(&cur, $3); cur.d_conn = TO_NEXUS; } |
+        AT MANUFACTURER NUMBER PRODUCT NUMBER
+              = { check_manuf_prod (&cur, $3, $5); cur.d_conn = TO_NEXUS; } ;
+
 Info_list:
 	Info_list Info
 		|
@@ -811,6 +819,22 @@ check_nexus(dev, num)
 			yyerror("only isa's should be connected to the nexus");
 		break;
 	}
+}
+
+/*
+ * build a nexus ID out of manufacturer and product code
+ */
+check_manuf_prod (dev, manuf, prod)
+	register struct device *dev;
+	int manuf, prod;
+{
+	/* need either both wildcard or none */
+	if ((manuf == QUES) != (prod == QUES))
+		yyerror ("manufacturer and product must either be both set or both wildcard.");
+
+	/* enough to check one now */
+	if (manuf != QUES)
+		dev->d_addr = ((manuf & 0xffff) << 16) | (prod & 0xffff);
 }
 
 /*
