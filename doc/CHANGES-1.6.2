@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-1.6.2,v 1.1.2.66 2003/06/24 09:45:16 grant Exp $
+#	$NetBSD: CHANGES-1.6.2,v 1.1.2.67 2003/06/24 09:47:02 grant Exp $
 
 A complete list of changes from NetBSD 1.6.1 to NetBSD 1.6.2:
 
@@ -826,3 +826,8 @@ sys/ufs/ffs/ffs_inode.c				1.52
 	people have noticed.
 	Reviewed by fvdl.
 	[nakayama, ticket #1333]
+
+sys/dev/usb/uaudio.c				1.61
+
+	Correct test for busy-ness when setting parameters.
+	[nakayama, ticket #1334]
