@@ -1,6 +1,6 @@
 /*
- * Copyright (c) 1983 The Regents of the University of California.
- * All rights reserved.
+ * Copyright (c) 1983, 1993
+ *	The Regents of the University of California.  All rights reserved.
  * (c) UNIX System Laboratories, Inc.
  * All or some portions of this file are derived from material licensed
  * to the University of California by American Telephone and Telegraph
@@ -37,8 +37,8 @@
  */
 
 #ifndef lint
-/* from: static char sccsid[] = "@(#)dirs.c	5.25 (Berkeley) 12/2/92"; */
-static char *rcsid = "$Id: dirs.c,v 1.6 1994/05/17 04:14:33 cgd Exp $";
+/*static char sccsid[] = "from: @(#)dirs.c	8.2 (Berkeley) 1/21/94";*/
+static char *rcsid = "$Id: dirs.c,v 1.7 1994/06/08 19:33:33 mycroft Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -46,9 +46,9 @@ static char *rcsid = "$Id: dirs.c,v 1.6 1994/05/17 04:14:33 cgd Exp $";
 #include <sys/stat.h>
 #include <sys/time.h>
 
-#include <ufs/fs.h>
-#include <ufs/dinode.h>
-#include <ufs/dir.h>
+#include <ufs/ffs/fs.h>
+#include <ufs/ufs/dinode.h>
+#include <ufs/ufs/dir.h>
 #include <protocols/dumprestore.h>
 
 #include <errno.h>
@@ -60,12 +60,6 @@ static char *rcsid = "$Id: dirs.c,v 1.6 1994/05/17 04:14:33 cgd Exp $";
 #include "pathnames.h"
 #include "restore.h"
 #include "extern.h"
-
-#ifndef BSD44
-#undef DIRSIZ
-#define DIRSIZ(x, dp) \
-    ((sizeof (struct direct) - (MAXNAMLEN+1)) + (((dp)->d_namlen+1 + 3) &~ 3))
-#endif
 
 /*
  * Symbol table of directories read from tape.
@@ -126,7 +120,7 @@ static struct inotab	*allocinotab __P((ino_t, struct dinode *, long));
 static void		 dcvt __P((struct odirect *, struct direct *));
 static void		 flushent __P((void));
 static struct inotab	*inotablookup __P((ino_t));
-static RST_DIR		*opendirfile __P((char *));
+static RST_DIR		*opendirfile __P((const char *));
 static void		 putdir __P((char *, long));
 static void		 putent __P((struct direct *));
 static void		 rst_seekdir __P((RST_DIR *, long, long));
@@ -151,7 +145,7 @@ extractdirs(genmode)
 	vprintf(stdout, "Extract directories from tape\n");
 	(void) sprintf(dirfile, "%s/rstdir%d", _PATH_TMP, dumpdate);
 	df = fopen(dirfile, "w");
-	if (df == 0) {
+	if (df == NULL) {
 		fprintf(stderr,
 		    "restore: %s - cannot create directory temporary\n",
 		    dirfile);
@@ -161,7 +155,7 @@ extractdirs(genmode)
 	if (genmode != 0) {
 		(void) sprintf(modefile, "%s/rstmode%d", _PATH_TMP, dumpdate);
 		mf = fopen(modefile, "w");
-		if (mf == 0) {
+		if (mf == NULL) {
 			fprintf(stderr,
 			    "restore: %s - cannot create modefile \n",
 			    modefile);
@@ -170,9 +164,7 @@ extractdirs(genmode)
 		}
 	}
 	nulldir.d_ino = 0;
-#ifdef BSD44
 	nulldir.d_type = DT_DIR;
-#endif
 	nulldir.d_namlen = 1;
 	(void) strcpy(nulldir.d_name, "/");
 	nulldir.d_reclen = DIRSIZ(0, &nulldir);
@@ -298,8 +290,9 @@ pathsearch(pathname)
 	ino = ROOTINO;
 	while (*path == '/')
 		path++;
+	dp = NULL;
 	while ((name = strsep(&path, "/")) != NULL && *name != NULL) {
-		if ((dp = searchdir(ino, name)) == 0)
+		if ((dp = searchdir(ino, name)) == NULL)
 			return (NULL);
 		ino = dp->d_ino;
 	}
@@ -321,7 +314,7 @@ searchdir(inum, name)
 
 	itp = inotablookup(inum);
 	if (itp == NULL)
-		return(0);
+		return (NULL);
 	rst_seekdir(dirp, itp->t_seekpt, itp->t_seekpt);
 	len = strlen(name);
 	do {
@@ -440,9 +433,7 @@ dcvt(odp, ndp)
 
 	bzero((char *)ndp, (long)(sizeof *ndp));
 	ndp->d_ino =  odp->d_ino;
-#ifdef BSD44
 	ndp->d_type = DT_UNKNOWN;
-#endif
 	(void) strncpy(ndp->d_name, odp->d_name, ODIRSIZ);
 	ndp->d_namlen = strlen(ndp->d_name);
 	ndp->d_reclen = DIRSIZ(0, ndp);
@@ -518,7 +509,7 @@ rst_readdir(dirp)
  */
 RST_DIR *
 rst_opendir(name)
-	char *name;
+	const char *name;
 {
 	struct inotab *itp;
 	RST_DIR *dirp;
@@ -530,7 +521,7 @@ rst_opendir(name)
 		rst_seekdir(dirp, itp->t_seekpt, itp->t_seekpt);
 		return (dirp);
 	}
-	return (0);
+	return (NULL);
 }
 
 /*
@@ -541,7 +532,7 @@ rst_closedir(dirp)
 	RST_DIR *dirp;
 {
 
-	close(dirp->dd_fd);
+	(void)close(dirp->dd_fd);
 	free(dirp);
 	return;
 }
@@ -562,7 +553,7 @@ rst_telldir(dirp)
  */
 static RST_DIR *
 opendirfile(name)
-	char *name;
+	const char *name;
 {
 	register RST_DIR *dirp;
 	register int fd;
@@ -712,7 +703,7 @@ allocinotab(ino, dip, seekpt)
 	itp->t_ino = ino;
 	itp->t_seekpt = seekpt;
 	if (mf == NULL)
-		return(itp);
+		return (itp);
 	node.ino = ino;
 	node.timep[0].tv_sec = dip->di_atime.ts_sec;
 	node.timep[0].tv_usec = dip->di_atime.ts_nsec / 1000;
@@ -722,7 +713,7 @@ allocinotab(ino, dip, seekpt)
 	node.uid = dip->di_uid;
 	node.gid = dip->di_gid;
 	(void) fwrite((char *)&node, 1, sizeof(struct modeinfo), mf);
-	return(itp);
+	return (itp);
 }
 
 /*
@@ -736,14 +727,14 @@ inotablookup(ino)
 
 	for (itp = inotab[INOHASH(ino)]; itp != NULL; itp = itp->t_next)
 		if (itp->t_ino == ino)
-			return(itp);
+			return (itp);
 	return (NULL);
 }
 
 /*
  * Clean up and exit
  */
-void
+__dead void
 done(exitcode)
 	int exitcode;
 {

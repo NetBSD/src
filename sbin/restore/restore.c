@@ -1,6 +1,6 @@
 /*
- * Copyright (c) 1983 The Regents of the University of California.
- * All rights reserved.
+ * Copyright (c) 1983, 1993
+ *	The Regents of the University of California.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -32,16 +32,14 @@
  */
 
 #ifndef lint
-/* from: static char sccsid[] = "@(#)restore.c	5.11 (Berkeley) 10/16/92"; */
-static char *rcsid = "$Id: restore.c,v 1.3 1993/12/22 10:32:04 cgd Exp $";
+/*static char sccsid[] = "from: @(#)restore.c	8.1 (Berkeley) 6/5/93";*/
+static char *rcsid = "$Id: restore.c,v 1.4 1994/06/08 19:33:41 mycroft Exp $";
 #endif /* not lint */
 
 #include <sys/types.h>
 #include <sys/stat.h>
 
-#include <sys/param.h>
-#include <ufs/dinode.h>
-#include <ufs/fs.h>
+#include <ufs/ufs/dinode.h>
 
 #include <stdio.h>
 #include <string.h>

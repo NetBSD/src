@@ -1,6 +1,6 @@
 /*
- * Copyright (c) 1983 The Regents of the University of California.
- * All rights reserved.
+ * Copyright (c) 1983, 1993
+ *	The Regents of the University of California.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -32,23 +32,24 @@
  */
 
 #ifndef lint
-char copyright[] =
-"@(#) Copyright (c) 1983 The Regents of the University of California.\n\
- All rights reserved.\n";
+static char copyright[] =
+"@(#) Copyright (c) 1983, 1993\n\
+	The Regents of the University of California.  All rights reserved.\n";
 #endif /* not lint */
 
 #ifndef lint
-/* from: static char sccsid[] = "@(#)main.c	5.11 (Berkeley) 10/16/92"; */
-static char *rcsid = "$Id: main.c,v 1.3 1993/12/22 10:31:52 cgd Exp $";
+/*static char sccsid[] = "from: @(#)main.c	8.2 (Berkeley) 1/7/94";*/
+static char *rcsid = "$Id: main.c,v 1.4 1994/06/08 19:33:37 mycroft Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
 #include <sys/time.h>
 
-#include <ufs/fs.h>
-#include <ufs/dinode.h>
+#include <ufs/ffs/fs.h>
+#include <ufs/ufs/dinode.h>
 #include <protocols/dumprestore.h>
 
+#include <err.h>
 #include <errno.h>
 #include <signal.h>
 #include <stdio.h>
@@ -97,9 +98,9 @@ main(argc, argv)
 			bflag = 1;
 			ntrec = strtol(optarg, &p, 10);
 			if (*p)
-				err("illegal blocksize -- %s", optarg);
+				errx(1, "illegal blocksize -- %s", optarg);
 			if (ntrec <= 0)
-				err("block size must be greater than 0");
+				errx(1, "block size must be greater than 0");
 			break;
 		case 'c':
 			cvtflag = 1;
@@ -119,7 +120,8 @@ main(argc, argv)
 		case 't':
 		case 'x':
 			if (command != '\0')
-				err("%c and %c options are mutually exclusive",
+				errx(1,
+				    "%c and %c options are mutually exclusive",
 				    ch, command);
 			command = ch;
 			break;
@@ -133,9 +135,9 @@ main(argc, argv)
 			/* Dumpnum (skip to) for multifile dump tapes. */
 			dumpnum = strtol(optarg, &p, 10);
 			if (*p)
-				err("illegal dump number -- %s", optarg);
+				errx(1, "illegal dump number -- %s", optarg);
 			if (dumpnum <= 0)
-				err("dump number must be greater than 0");
+				errx(1, "dump number must be greater than 0");
 			break;
 		case 'v':
 			vflag = 1;
@@ -150,7 +152,7 @@ main(argc, argv)
 	argv += optind;
 
 	if (command == '\0')
-		err("none of i, R, r, t or x options specified");
+		errx(1, "none of i, R, r, t or x options specified");
 
 	if (signal(SIGINT, onintr) == SIG_IGN)
 		(void) signal(SIGINT, SIG_IGN);
@@ -267,7 +269,7 @@ main(argc, argv)
 	/* NOTREACHED */
 }
 
-void
+static void
 usage()
 {
 	(void)fprintf(stderr, "usage:\t%s%s%s%s%s",
@@ -304,7 +306,7 @@ obsolete(argcp, argvp)
 	/* Allocate space for new arguments. */
 	if ((*argvp = nargv = malloc((argc + 1) * sizeof(char *))) == NULL ||
 	    (p = flagsp = malloc(strlen(ap) + 2)) == NULL)
-		err("%s", strerror(errno));
+		err(1, NULL);
 
 	*nargv++ = *argv;
 	argv += 2;
@@ -315,7 +317,7 @@ obsolete(argcp, argvp)
 		case 'f':
 		case 's':
 			if ((nargv[0] = malloc(strlen(*argv) + 2 + 1)) == NULL)
-				err("%s", strerror(errno));
+				err(1, NULL);
 			nargv[0][0] = '-';
 			nargv[0][1] = *ap;
 			(void)strcpy(&nargv[0][2], *argv);
@@ -342,9 +344,3 @@ obsolete(argcp, argvp)
 	/* Copy remaining arguments. */
 	while (*nargv++ = *argv++);
 }
-
-#if __STDC__
-#include <stdarg.h>
-#else
-#include <varargs.h>
-#endif
