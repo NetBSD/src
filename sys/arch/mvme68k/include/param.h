@@ -1,4 +1,4 @@
-/*	$NetBSD: param.h,v 1.21 2000/05/27 22:37:47 scw Exp $	*/
+/*	$NetBSD: param.h,v 1.22 2000/11/20 19:35:29 scw Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -83,7 +83,7 @@
 
 #if defined(_KERNEL) && !defined(_LOCORE)
 extern void _delay __P((unsigned));
-#define delay(us)	_delay((us)<<8)
+#define delay(us)	_delay((us)<<10)
 #define DELAY(n)	delay(n)
 #endif	/* _KERNEL && !_LOCORE */
 
