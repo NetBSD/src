@@ -535,9 +535,9 @@ rlog_proc (argc, argv, xwhere, mwhere, mfile, shorten, local, mname, msg)
 	{
 	    error (0, errno, "cannot chdir to %s", repository);
 	    free (repository);
+	    free( where );
 	    return (1);
 	}
-	free (repository);
 	/* End section which is identical to patch_proc.  */
 
 	which = W_REPOS | W_ATTIC;
@@ -551,7 +551,11 @@ rlog_proc (argc, argv, xwhere, mwhere, mfile, shorten, local, mname, msg)
     err = start_recursion (log_fileproc, (FILESDONEPROC) NULL, log_dirproc,
 			   (DIRLEAVEPROC) NULL, (void *) &log_data,
 			   argc - 1, argv + 1, local, which, 0, CVS_LOCK_READ,
-			   where, 1);
+			   where, 1, repository);
+
+    if ( ! ( which & W_LOCAL ) ) free (repository);
+    if( where ) free( where );
+
     return err;
 }
 
@@ -1109,26 +1113,21 @@ log_expand_revlist (rcs, revlist, default_branch)
                does.  This code is a bit cryptic for my tastes, but
                keeping the same implementation as rlog ensures a
                certain degree of compatibility.  */
-	    if (r->first == NULL)
+	    if (r->first == NULL && nr->last != NULL)
 	    {
-		if (nr->last == NULL)
-		    nr->fields = 0;
+		nr->fields = numdots (nr->last) + 1;
+		if (nr->fields < 2)
+		    nr->first = xstrdup (".0");
 		else
 		{
-		    nr->fields = numdots (nr->last) + 1;
-		    if (nr->fields < 2)
-			nr->first = xstrdup (".0");
-		    else
-		    {
-			char *cp;
+		    char *cp;
 
-			nr->first = xstrdup (nr->last);
-			cp = strrchr (nr->first, '.');
-			strcpy (cp + 1, "0");
-		    }
+		    nr->first = xstrdup (nr->last);
+		    cp = strrchr (nr->first, '.');
+		    strcpy (cp + 1, "0");
 		}
 	    }
-	    else if (r->last == NULL)
+	    else if (r->last == NULL && nr->first != NULL)
 	    {
 		nr->fields = numdots (nr->first) + 1;
 		nr->last = xstrdup (nr->first);

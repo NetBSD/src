@@ -150,7 +150,7 @@ add (argc, argv)
 #ifdef CLIENT_SUPPORT
     if (current_parsed_root->isremote)
     {
-	int i;
+	int j;
 
 	if (argc == 0)
 	    /* We snipped out all the arguments in the above sanity
@@ -180,7 +180,7 @@ add (argc, argv)
 	    free (repository);
 	}
 
-	for (i = 0; i < argc; ++i)
+	for (j = 0; j < argc; ++j)
 	{
 	    /* FIXME: Does this erroneously call Create_Admin in error
 	       conditions which are only detected once the server gets its
@@ -195,7 +195,7 @@ add (argc, argv)
 	       "Directory %s added" message), and then Create_Admin,
 	       which should also fix the error handling concerns.  */
 
-	    if (isdir (argv[i]))
+	    if (isdir (argv[j]))
 	    {
 		char *tag;
 		char *date;
@@ -210,7 +210,7 @@ add (argc, argv)
 		if (save_cwd (&cwd))
 		    error_exit ();
 
-		filedir = xstrdup (argv[i]);
+		filedir = xstrdup (argv[j]);
 		p = last_component (filedir);
 		if (p == filedir)
 		{
@@ -246,7 +246,7 @@ add (argc, argv)
 		rcsdir = xmalloc (strlen (repository) + strlen (p) + 5);
 		sprintf (rcsdir, "%s/%s", repository, p);
 
-		Create_Admin (p, argv[i], rcsdir, tag, date,
+		Create_Admin (p, argv[j], rcsdir, tag, date,
 			      nonbranch, 0, 1);
 
 		if (found_slash)
@@ -263,7 +263,7 @@ add (argc, argv)
 		free (rcsdir);
 
 		if (p == filedir)
-		    Subdir_Register ((List *) NULL, (char *) NULL, argv[i]);
+		    Subdir_Register ((List *) NULL, (char *) NULL, argv[j]);
 		else
 		{
 		    Subdir_Register ((List *) NULL, update_dir, p);
@@ -291,7 +291,8 @@ add (argc, argv)
 	struct file_info finfo;
 	char *p;
 #if defined (SERVER_SUPPORT) && !defined (FILENAMES_CASE_INSENSITIVE)
-	char *found_name;
+	char *found_name = NULL;
+	int restore_case = 0;
 #endif
 
 	memset (&finfo, 0, sizeof finfo);
@@ -346,7 +347,7 @@ add (argc, argv)
 	    /* Need to check whether there is a directory with the
 	       same name but different case.  We'll check for files
 	       with the same name later (when Version_TS calls
-	       RCS_parse which calls fopen_case).  If CVS some day
+	       RCS_parse which calls locate_rcs).  If CVS some day
 	       records directories in the RCS files, then we should be
 	       able to skip the separate check here, which would be
 	       cleaner.  */
@@ -356,7 +357,6 @@ add (argc, argv)
 	    dirp = CVS_OPENDIR (finfo.repository);
 	    if (dirp == NULL)
 		error (1, errno, "cannot read directory %s", finfo.repository);
-	    found_name = NULL;
 	    errno = 0;
 	    while ((dp = CVS_READDIR (dirp)) != NULL)
 	    {
@@ -391,14 +391,28 @@ add (argc, argv)
 		   same.  */
 		finfo.file = found_name;
 	    }
+	    else
+	    {
+		/* We didn't find a directory match.  Turn off ign_case so that
+		 * file names are looked up case sensitively.  We do this so
+		 * that file adds always use the case specified by the user.
+		 */
+		ign_case = 0;
+		restore_case = 1;
+	    }
 	}
-#endif
+#endif /* SERVER_SUPPORT && !FILENAMES_CASE_INSENSITIVE */
 
 	/* We pass force_tag_match as 1.  If the directory has a
            sticky branch tag, and there is already an RCS file which
            does not have that tag, then the head revision is
            meaningless to us.  */
 	vers = Version_TS (&finfo, options, NULL, NULL, 1, 0);
+
+#if defined (SERVER_SUPPORT) && !defined (FILENAMES_CASE_INSENSITIVE)
+	ign_case = restore_case;
+#endif /* SERVER_SUPPORT && !FILENAMES_CASE_INSENSITIVE */
+
 	if (vers->vn_user == NULL)
 	{
 	    /* No entry available, ts_rcs is invalid */
@@ -519,7 +533,7 @@ file `%s' will be added on branch `%s' from version %s",
 				   can't think of a way to word the
 				   message which is not confusing.  */
 				error (0, 0, "\
-re-adding file %s (in place of dead revision %s)",
+re-adding file `%s' (in place of dead revision %s)",
 					finfo.fullname, vers->vn_rcs);
 			}
 			Register (entries, finfo.file, "0", vers->ts_user,
@@ -575,10 +589,11 @@ cannot resurrect %s; RCS file removed by second party", finfo.fullname);
 		     * There is an RCS file, so remove the "-" from the
 		     * version number and restore the file
 		     */
-		    char *tmp = xmalloc (strlen (finfo.file) + 50);
-
+		    char *tmp = xmalloc( strlen( vers->vn_user ) );
 		    (void) strcpy (tmp, vers->vn_user + 1);
 		    (void) strcpy (vers->vn_user, tmp);
+		    free( tmp );
+		    tmp = xmalloc( strlen( finfo.file ) + 13 );
 		    (void) sprintf (tmp, "Resurrected %s", finfo.file);
 		    Register (entries, finfo.file, vers->vn_user, tmp,
 			      vers->options,
@@ -644,7 +659,7 @@ cannot resurrect %s; RCS file removed by second party", finfo.fullname);
 
 	free (finfo.fullname);
 #if defined (SERVER_SUPPORT) && !defined (FILENAMES_CASE_INSENSITIVE)
-	if (ign_case && found_name != NULL)
+	if (found_name != NULL)
 	    free (found_name);
 #endif
     }
@@ -737,7 +752,8 @@ add_directory (finfo)
 		       + 80
 		       + (tag == NULL ? 0 : strlen (tag) + 80)
 		       + (date == NULL ? 0 : strlen (date) + 80));
-    (void) sprintf (message, "Directory %s added to the repository\n", rcsdir);
+    (void) sprintf (message, "Directory %s added to the repository\n",
+		    rcsdir);
     if (tag)
     {
 	(void) strcat (message, "--> Using per-directory sticky tag `");
@@ -820,12 +836,13 @@ add_directory (finfo)
 
     Subdir_Register (entries, (char *) NULL, dir);
 
-    cvs_output (message, 0);
+    if (!really_quiet)
+	cvs_output (message, 0);
 
     free (rcsdir);
     free (message);
 
-    return (0);
+    return 0;
 
 out:
     if (restore_cwd (&cwd, NULL))
