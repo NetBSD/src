@@ -1,4 +1,4 @@
-/*	$NetBSD: mtree.h,v 1.16 2001/10/22 07:07:46 lukem Exp $	*/
+/*	$NetBSD: mtree.h,v 1.17 2001/10/25 03:00:14 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -59,6 +59,7 @@ typedef struct _node {
 	nlink_t	st_nlink;			/* link count */
 	char	*md5sum;			/* md5 checksum */
 	char	*tags;				/* tags, comma delimited */
+	size_t	lineno;				/* line # entry came from */
 
 #define	F_CKSUM	0x00000001			/* check sum */
 #define	F_DONE	0x00000002			/* directory done */
@@ -101,8 +102,13 @@ typedef struct {
 } slist_t;
 
 
-NODE	*spec(FILE *);
-u_int	 nodetoino(u_int);
+/*
+ * prototypes for functions published to other programs which want to use
+ * the specfile parser but don't want to pull in all of "extern.h"
+ */
+const char	*inotype(u_int);
+u_int		 nodetoino(u_int);
+NODE		*spec(FILE *);
 
 
 #define	RP(p)	\
