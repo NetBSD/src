@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.2 2002/02/16 16:52:10 thorpej Exp $	*/
+/*	$NetBSD: main.c,v 1.3 2002/02/17 20:14:08 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1996
@@ -125,6 +125,10 @@ main(void)
 		bootmenu();	/* does not return */
 	}
 
+	/*
+	 * The file name provided here is just a default.  If the
+	 * DHCP server provides a file name, we'll use that instead.
+	 */
 	bootit("netbsd", 0);
 
 	/*
