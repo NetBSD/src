@@ -1,4 +1,4 @@
-/*	$NetBSD: isinf_ieee754.c,v 1.3 2003/10/27 00:05:46 kleink Exp $	*/
+/*	$NetBSD: isinf_ieee754.c,v 1.4 2003/10/27 09:27:03 skrll Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -40,7 +40,7 @@
 #if 0
 static char sccsid[] = "@(#)isinf.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: isinf_ieee754.c,v 1.3 2003/10/27 00:05:46 kleink Exp $");
+__RCSID("$NetBSD: isinf_ieee754.c,v 1.4 2003/10/27 09:27:03 skrll Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -56,7 +56,7 @@ __weak_alias(isinf,_isinf)
 int
 isinf(double d)
 {
-	union ieee_double_u u;;
+	union ieee_double_u u;
 
 	u.dblu_d = d;
 	return (u.dblu_dbl.dbl_exp == DBL_EXP_INFNAN &&
