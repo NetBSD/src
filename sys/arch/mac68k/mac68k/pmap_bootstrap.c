@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap_bootstrap.c,v 1.48 1998/12/22 08:47:07 scottr Exp $	*/
+/*	$NetBSD: pmap_bootstrap.c,v 1.49 1999/03/27 05:19:34 briggs Exp $	*/
 
 /* 
  * Copyright (c) 1991, 1993
@@ -40,6 +40,7 @@
  */
 
 #include "opt_ddb.h"
+#include "zsc.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -73,7 +74,9 @@ extern vaddr_t virtual_avail, virtual_end;
 extern vm_size_t mem_size;
 extern int protection_codes[];
 
+#if NZSC > 0
 extern	int	zsinited;
+#endif
 
 /*
  * These are used to map the RAM:
@@ -556,7 +559,9 @@ void
 bootstrap_mac68k(tc)
 	int	tc;
 {
+#if NZSC > 0
 	extern void zs_init __P((void));
+#endif
 	extern int *esym;
 	paddr_t nextpa;
 	caddr_t oldROMBase;
@@ -615,8 +620,10 @@ bootstrap_mac68k(tc)
 	 * of this function (where we start using the MMU, so the new
 	 * address is correct.
 	 */
+#if NZSC > 0
 	if (zsinited != 0)
 		zs_init();
+#endif
 
 	videoaddr = newvideoaddr;
 }
