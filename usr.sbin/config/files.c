@@ -1,4 +1,4 @@
-/*	$NetBSD: files.c,v 1.14.8.1 2002/05/16 13:00:43 gehenna Exp $	*/
+/*	$NetBSD: files.c,v 1.14.8.2 2002/05/19 13:56:53 gehenna Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -350,12 +350,6 @@ fixdevm(void)
 			return (1);
 		}
 		(void)snprintf(mstr, sizeof(mstr), "%d", dm->dm_cmajor);
-		if (ht_lookup(cdevmtab, intern(mstr)) != NULL) {
-			xerror(dm->dm_srcfile, dm->dm_srcline,
-			       "device-major of character major '%d' "
-			       "is already defined", dm->dm_cmajor);
-			return (1);
-		}
 		if (ht_insert(cdevmtab, intern(dm->dm_name), dm) ||
 		    ht_insert(cdevmtab, intern(mstr), dm)) {
 			panic("fixdevm: %s character major %d",
