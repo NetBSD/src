@@ -1,4 +1,4 @@
-/*	$NetBSD: if.c,v 1.26 1996/02/26 23:16:42 mrg Exp $	*/
+/*	$NetBSD: if.c,v 1.27 1996/02/27 07:28:38 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1980, 1986, 1993
@@ -619,7 +619,7 @@ ifconf(cmd, data)
 		} else 
 		    for (; space > sizeof (ifr) && ifa != 0; ifa = ifa->ifa_list.tqe_next) {
 			register struct sockaddr *sa = ifa->ifa_addr;
-#ifdef COMPAT_43
+#if defined(COMPAT_43) || defined(COMPAT_LINUX)
 			if (cmd == OSIOCGIFCONF) {
 				struct osockaddr *osa =
 					 (struct osockaddr *)&ifr.ifr_addr;
