@@ -1,4 +1,4 @@
-/*	$NetBSD: ieee_ovfl.c,v 1.2 1996/10/23 07:43:47 matthias Exp $	*/
+/*	$NetBSD: ieee_ovfl.c,v 1.3 1997/04/01 16:35:26 matthias Exp $	*/
 
 /* 
  * IEEE floating point support for NS32081 and NS32381 fpus.
@@ -28,10 +28,10 @@
  *
  */
 #include "ieee_internal.h"
-#ifdef __NetBSD__
+#if defined(__NetBSD__) && defined(_KERNEL)
 #include <machine/limits.h>
 #else
-#include <machine/limits.h>
+#include <limits.h>
 #endif
 
 int ieee_ovfl(struct operand *op1, struct operand *op2,
