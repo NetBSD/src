@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_machdep.c,v 1.99 2001/06/02 18:09:14 chs Exp $	*/
+/*	$NetBSD: vm_machdep.c,v 1.100 2001/09/10 10:14:57 fvdl Exp $	*/
 
 /*-
  * Copyright (c) 1995 Charles M. Hannum.  All rights reserved.
@@ -47,6 +47,7 @@
 
 #include "opt_user_ldt.h"
 #include "opt_largepages.h"
+#include "opt_mtrr.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -65,6 +66,7 @@
 #include <machine/gdt.h>
 #include <machine/reg.h>
 #include <machine/specialreg.h>
+#include <machine/mtrr.h>
 
 #include "npx.h"
 #if NNPX > 0
@@ -194,6 +196,11 @@ cpu_exit(p)
 	/* If we were using the FPU, forget about it. */
 	if (npxproc == p)
 		npxproc = 0;
+#endif
+
+#ifdef MTRR
+	if (p->p_md.md_flags & MDP_USEDMTRR)
+		mtrr_clean(p);
 #endif
 
 	/*
