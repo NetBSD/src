@@ -1,6 +1,6 @@
 	    Internet Software Consortium DHCP Distribution
-		   Version 3, Beta 2, Patchlevel 9
-			   October 15, 2000
+		   Version 3, Beta 2, Patchlevel 23
+			    March 22, 2001
 
 			    Release Notes
 
@@ -48,6 +48,311 @@ Measurement Systems, and Brian Murrell at BC Tel Advanced
 Communications.  I'd like to express my thanks to all of these good
 people here, both for working on the code and for prodding me into
 improving it.
+
+	        Changes since 3.0 Beta 2 Patchlevel 22
+
+- Apply some patches suggested by Cyrille Lefevre, who is maintaining
+  the FreeBSD ISC DHCP Distribution port.
+
+- Fix a core dump in DHCPRELEASE.
+
+	        Changes since 3.0 Beta 2 Patchlevel 21
+
+- This time for sure: fix the spin described in the changes for pl20.
+
+	        Changes since 3.0 Beta 2 Patchlevel 20
+
+- Fix a problem with Linux detecting large numbers of interfaces (Ben)
+
+- Fix a memory smash in the quotify code, which was introduced in
+  pl19.
+
+- Actually fix the spin described in the changes for pl20.   The
+  previous fix only partially fixed the problem - enough to get it
+  past the regression test.
+
+	        Changes since 3.0 Beta 2 Patchlevel 19
+
+- Fix a bug that could cause the server to abort if compiled with
+  POINTER_DEBUG enabled.
+
+- Fix a bug that could cause the server to spin when responding to a
+  DHCPREQUEST.
+
+- Apply Joost Mulders' suggested patches for DLPI on x86.
+
+- Support NUL characters in quoted strings.
+
+- Install unformatted man pages on SunOS.
+
+	        Changes since 3.0 Beta 2 Patchlevel 18
+
+- Allow the server to be placed in partner-down state using OMAPI.
+  (Damien Neil)
+
+- Implement omshell, which can be used to do arbitrary things to the
+  server (in theory). (Damien Neil)
+
+- Fix a case where if a client had two different leases the server could
+  actually dereference the second one when it hadn't been referenced,
+  leading to memory corruption and a core dump. (James Brister)
+
+- Fix a case where a client could request the address of another client's
+  lease, but find_lease wouldn't detect that the other client had it, and
+  would attempt to allocate it to the client, resulting in a lease conflict
+  message.
+
+- Fix a case where a client with more than one client identifier could be
+  given a lease where the hardware address was correct but the client
+  identifier was not, resulting in a lease conflict message.
+
+- Fix a problem where the server could write out a colon-seperated
+  hex list as a value for a variable, which would then not parse.
+  The fix is to always write strings as quoted strings, with any
+  non-printable characters quoted as octal escape sequences.   So
+  a file written the old way still won't work, but new files written
+  this way will work.
+
+- Fix documentation for sending non-standard options.
+
+- Use unparsable names for unknown options.    WARNING: this will
+  break any configuration files that use the option-nnn convention.
+  If you want to continue to use this convention for some options,
+  please be sure to write a definition, like this:
+
+  option option-nnn code nnn = string;
+
+  You can use a descriptive name instead of option-nnn if you like.
+
+- Fix a problem where we would see a DHCPDISCOVER/DHCPOFFER/
+  DHCPREQUEST/DHCPACK/DHCPREQUEST/DHCPNAK sequence.   This was the
+  result of a deceptively silly bug in supersede_lease.
+
+- Fix client script exit status check, according to a fix supplied by
+  Hermann Lauer.
+
+- Fix an endianness bug in the tracefile support, regarding ICMP
+  messages.
+
+- Fix a bug in the client where the medium would not work correctly if
+  it contained quoted strings.
+
+		       ** there was no pl17 **
+
+	        Changes since 3.0 Beta 2 Patchlevel 16
+
+- Add support for transaction tracing.   This allows the state of the
+  DHCP server on startup, and all the subsequent transactions, to be
+  recorded in a file which can then be played back to reproduce the
+  behaviour of the DHCP server.   This can be used to quickly
+  reproduce bugs that cause core dumps or corruption, and also for
+  tracking down memory leaks.
+
+- Incorporate some bug fixes provided by Joost Mulders for the DLPI
+  package which should clear up problems people have been seeing on
+  Solaris.
+
+- Fix bugs in the handling of options stored as linked lists (agent
+  options, fqdn options and nwip options) that could cause memory
+  corruption and core dumps.
+
+- Fix a bug in DHCPREQUEST handling that resulted in DHCPNAK messages
+  not being send in some cases when they were needed.
+
+- Make the lease structure somewhat more compact.
+
+- Make initial failover startup *much* faster.   This was researched
+  and implemented by Damien Neil.
+
+- Add a --version flag to all executables, which prints the program
+  name and version to standard output.
+
+- Don't rewrite the lease file every thousand leases.
+
+- A bug in nit.c for older SunOS machines was fixed by a patch sent in
+  by Takeshi Hagiwara.
+
+- Fix a memory corruption bug in the DHCP client.
+
+- Lots of documentation updates.
+
+- Add a feature allowing environment variables to be passed to the
+  DHCP client script on the DHCP client command line.
+
+- Fix client medium support, which had been broken for some time.
+
+- Fix a bug in the DHCP client initial startup backoff interval, which
+  would cause two DHCPDISCOVERS to be sent back-to-back on startup.
+
+
+	        Changes since 3.0 Beta 2 Patchlevel 15
+
+- Some documentation tweaks.
+
+- Maybe fix a problem in the DLPI code.
+
+- Fix some error code space inconsistencies in ddns update code.
+
+- Support relay agents that intercept unicast DHCP messages to stuff
+  agent options into them.
+
+- Fix a small memory leak in the relay agent option support code.
+
+- Fix a core dump that would occur if a packet was sent with no
+  options.
+
+	        Changes since 3.0 Beta 2 Patchlevel 14
+
+- Finish fixing a long-standing bug in the agent options code.   This
+  was causing core dumps and failing to operate correctly - in
+  particular, agent option stashing wasn't working.   Agent option
+  stashing should now be working, meaning that agent options can be
+  used in class statements to control address allocation.
+
+- Fix up documentation.
+
+- Fix a couple of small memory leaks that would have added up
+  significantly in a high-demand situation.
+
+- Add a log-facility configuration parameter.
+
+- Fix a compile error on some older operating systems.
+
+- Add the ability in the client to execute certain statements before
+  transmitting packets to the server.   Handy for debugging; not much
+  practical use otherwise.
+
+- Don't send faked-out giaddr when renewing or bound - again, useful
+  for debugging.
+
+	        Changes since 3.0 Beta 2 Patchlevel 13
+
+- Fixed a problem where the fqdn decoder would sometimes try to store
+  an option with an (unsigned) negative length, resulting in a core
+  dump on some systems.
+
+- Work around the Win98 DHCP client, which NUL-terminates the FQDN
+  option.
+
+- Work around Win98 and Win2k clients that will claim they want to do
+  the update even when they don't have any way to do it.
+
+- Fix some log messages that can be printed when failover is operating
+  that were not printing enough information.
+
+- It was possible for a DHCPDISCOVER to get an allocation even when
+  the state machine said the server shouldn't be responding.
+
+- Don't load balance DHCPREQUESTs from clients in RENEWING and
+  REBINDING, since in RENEWING, if we heard it, it's for us, and in
+  REBINDING, the client wouldn't have got to REBINDING if its primary
+  were answering.
+
+- When we get a bogus state lease binding state transition, don't do
+  the transition.
+  
+
+	        Changes since 3.0 Beta 2 Patchlevel 12
+
+- Fixed a couple of silly compile errors.
+
+		Changes since 3.0 Beta 2 Patchlevel 11
+
+- Albert Herranz tracked down and fixed a subtle bug in the base64
+  decoder that would prevent any key with an 'x' in its base64
+  representation from working correctly.
+
+- Thanks to Chris Cheney and Michael Sanders, we have a fix for the
+  hang that they both spotted in the DHCP server - when
+  one-lease-per-client was set, the code to release the "other" lease
+  could spin.
+
+- Fix a problem with alignment of the input buffer in bpf in cases
+  where two packets arrive in the same bpf read.
+
+- Fix a problem where the relay agent would crash if you specified an
+  interface name on the command line.
+
+- Add the ability to conditionalize client behaviour based on the
+  client state.
+
+- Add support for the FQDN option, and added support for a new way of
+  doing ddns updates (ddns update style interim) that allows more than
+  one DHCP server to update the DNS for the same network(s).   This
+  was implemented by Damien Neil with some additional functionality
+  added by Ted Lemon.
+
+- Damien added a "log" statement, so that the configuration file can
+  be made to log debugging information and other information.
+
+- Fixed a bug that caused option buffers not to be terminated with an
+  end option.
+
+- Fixed a long-standing bug in the support for option spaces where the
+  options are stored as an ordered list rather than in a hash table,
+  which could theoretically result in memory pool corruption.
+
+- Prevent hardware declarations with no actual hardware address from
+  being written as something unparsable, and behave correctly in the
+  face of a null hardware address on input.
+
+- Allow key names to be FQDNs, and qualify the algorithm name if it is
+  specified unqualified.
+
+- Modify the DDNS update code so that it never prints the "resolver
+  failed" message, but instead says *why* the resolver failed.
+
+- Officially support the subnet selection option, which now has an
+  RFC.
+
+- Fix a build bug on MacOS X.
+
+- Allow administrator to disable ping checking.
+
+- Clean up dhcpd.conf documentation and add more information about how
+  it works.
+
+		Changes since 3.0 Beta 2 Patchlevel 10
+
+- Fix a bug introduced during debugging (!) and accidentally committed
+  to CVS.
+
+		Changes since 3.0 Beta 2 Patchlevel 9
+
+- Fix DHCP client handling of vendor encapsulated options.
+
+- Fix a bug in the handling of relay agent information options introduced
+  in patchlevel 9.
+
+- Stash agent options on client leases by default, and use the stashed
+  options at renewal time.
+
+- Add the ability to test the client's binding state in the client
+  configuration language.
+
+- Fix a core dump in the DNS update code.
+
+- Fix some expression evaluation bugs that were causing updates to be
+  done when no client hostname was received.
+
+- Fix expression evaluation debugging printfs.
+
+- Teach pretty_print_option to print options in option spaces other than
+  the DHCP option space.
+
+- Add a warning message if the RHS of a not is not boolean.
+
+- Never select for more than a day, because some implementations of
+  select will just fail if the timeout is too long (!).
+
+- Fix a case where a DHCPDISCOVER from an unknown network would be
+  silently dropped.
+
+- Fix a bug where if a client requested an IP address for which a different
+  client had the lease, the DHCP server would reallocate it anyway.
+
+- Fix the DNS update code so that if the client changes its name, the DNS
+  will be correctly updated.
 
 		Changes since 3.0 Beta 2 Patchlevel 8
 
