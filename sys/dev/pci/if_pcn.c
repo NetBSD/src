@@ -1,4 +1,4 @@
-/*	$NetBSD: if_pcn.c,v 1.20 2003/07/21 08:38:56 jdolecek Exp $	*/
+/*	$NetBSD: if_pcn.c,v 1.21 2003/10/19 03:32:25 matt Exp $	*/
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
@@ -64,8 +64,10 @@
  *	  Ethernet chip (XXX only if we use an ILACC-compatible SWSTYLE).
  */
 
+#include "opt_pcn.h"
+
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_pcn.c,v 1.20 2003/07/21 08:38:56 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_pcn.c,v 1.21 2003/10/19 03:32:25 matt Exp $");
 
 #include "bpfilter.h"
 #include "rnd.h"
@@ -619,12 +621,28 @@ pcn_attach(struct device *parent, struct device *self, void *aux)
 	 */
 	pcn_reset(sc);
 
+#if !defined(PCN_NO_PROM)
+
 	/*
 	 * Read the Ethernet address from the EEPROM.
 	 */
 	for (i = 0; i < ETHER_ADDR_LEN; i++)
 		enaddr[i] = bus_space_read_1(sc->sc_st, sc->sc_sh,
 		    PCN32_APROM + i);
+#else
+	/*
+	 * The PROM is not used; instead we assume that the MAC address
+	 * has been programmed into the device's physical address
+	 * registers by the boot firmware
+	 */
+
+        for (i=0; i < 3; i++) {
+		uint32_t val;
+		val = pcn_csr_read(sc, LE_CSR12 + i);
+		enaddr[2*i] = val & 0x0ff;
+		enaddr[2*i+1] = (val >> 8) & 0x0ff;
+	}
+#endif
 
 	/*
 	 * Now that the device is mapped, attempt to figure out what
