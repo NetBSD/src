@@ -1,4 +1,4 @@
-/*	$NetBSD: pwhash.c,v 1.4 2003/06/23 13:05:51 agc Exp $	*/
+/*	$NetBSD: pwhash.c,v 1.5 2003/07/14 09:33:08 itojun Exp $	*/
 /*	$OpenBSD: encrypt.c,v 1.16 2002/02/16 21:27:45 millert Exp $	*/
 
 /*
@@ -28,7 +28,7 @@
 #include <sys/cdefs.h>
 
 #ifndef lint
-__RCSID("$NetBSD: pwhash.c,v 1.4 2003/06/23 13:05:51 agc Exp $");
+__RCSID("$NetBSD: pwhash.c,v 1.5 2003/07/14 09:33:08 itojun Exp $");
 #endif
 
 #include <sys/types.h>
@@ -100,15 +100,15 @@ print_passwd(char *string, int operation, void *extra)
 			/* To be compatible... */
 			errx(1, "%s", strerror(EFTYPE));
 		}
-		strcpy(msalt, &string[8]);
+		strlcpy(msalt, &string[8], sizeof(msalt));
 		salt = msalt;
 		break;
 
 	case DO_MD5:
-		strcpy(buffer, "$1$");
+		strlcpy(buffer, "$1$", sizeof(buffer));
 		to64(&buffer[3], arc4random(), 4);
 		to64(&buffer[7], arc4random(), 4);
-		strcpy(buffer + 11, "$");
+		strlcpy(buffer + 11, "$", sizeof(buffer) - 11);
 		salt = buffer;
 		break;
 
