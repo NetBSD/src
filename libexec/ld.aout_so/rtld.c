@@ -1,4 +1,4 @@
-/*	$NetBSD: rtld.c,v 1.69 1998/10/23 00:44:44 matt Exp $	*/
+/*	$NetBSD: rtld.c,v 1.70 1998/12/15 21:35:17 pk Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -36,7 +36,6 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include <sys/param.h>
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <sys/file.h>
@@ -221,6 +220,9 @@ static struct rt_symbol	*enter_rts __P((const char *, long, int, caddr_t,
 						long, struct so_map *));
 static void		maphints __P((void));
 static void		unmaphints __P((void));
+static int		hash_string __P((const char *));
+static int		hinthash __P((char *, int, int));
+static char		*findhint __P((char *, int, int, char *));
 
 static void		preload __P((char *));
 static void		ld_trace __P((struct so_map *));
@@ -234,6 +236,10 @@ strcmp (register const char *s1, register const char *s2)
 			return (0);
 	return (*(unsigned char *)s1 - *(unsigned char *)--s2);
 }
+
+/* `md-static-funcs.c' implements these functions: */
+static void	md_relocate_simple __P((struct relocation_info *,
+					long, char *));
 
 #include "md-static-funcs.c"
 
@@ -276,7 +282,7 @@ rtld(version, crtp, dp)
 
 		register long	addr = reloc->r_address + crtp->crt_ba;
 
-		md_relocate_simple(reloc, crtp->crt_ba, addr);
+		md_relocate_simple(reloc, crtp->crt_ba, (char *)addr);
 	}
 
 	/* Now (and NOT BEFORE this point) we can call externals. */
@@ -890,8 +896,8 @@ reloc_map(smp)
 
 			if (RELOC_COPY_P(r) && src_map) {
 				if (p->nz_size != np->nz_size)
-					warnx("symbol %s at %#x in %s changed "
-					      "size: expected %d, actual %d",
+					warnx("symbol %s at %p in %s changed "
+					      "size: expected %ld, actual %ld",
 					      sym,
 					      src_map->som_addr + np->nz_value,
 					      src_map->som_path,
@@ -975,10 +981,10 @@ static struct rt_symbol 	*rt_symtab[RTC_TABSIZE];
  */
 static inline int
 hash_string(key)
-	char *key;
+	const char *key;
 {
-	register char *cp;
-	register int k;
+	const char *cp;
+	int k;
 
 	cp = key;
 	k = 0;
@@ -1073,6 +1079,8 @@ lookup(name, ref_map, src_map, strong)
 	if ((rtsp = lookup_rts(name)) != NULL)
 		return (rtsp->rt_sp);
 
+	weak_smp = NULL; /* XXX - gcc! */
+
 	/*
 	 * Search all maps for a definition of NAME
 	 */
@@ -1088,6 +1096,8 @@ lookup(name, ref_map, src_map, strong)
 		struct rrs_hash	*hashbase;
 		char		*stringbase;
 		int		symsize;
+
+		np = NULL; /* XXX - gcc! */
 
 		if (*src_map && smp != *src_map)
 			continue;
@@ -1235,7 +1245,6 @@ __dladdr(addr, dli)
 		struct so_map	*src_map = smp;
 		int		buckets;
 		struct rrs_hash	*hp;
-		char		*cp;
 		struct	nzlist	*np;
 		caddr_t		cur = 0;
 
@@ -1341,7 +1350,7 @@ binder(jsp)
 	}
 
 	if (smp == NULL)
-		errx(1, "Call to binder from unknown location: %#x\n", jsp);
+		errx(1, "Call to binder from unknown location: %p\n", jsp);
 
 	index = jsp->reloc_index & JMPSLOT_RELOC_MASK;
 
@@ -1351,7 +1360,7 @@ binder(jsp)
 
 	np = lookup(sym, smp, &src_map, 1);
 	if (np == NULL)
-		errx(1, "Undefined symbol \"%s\" called from %s:%s at %#x",
+		errx(1, "Undefined symbol \"%s\" called from %s:%s at %p",
 				sym, main_progname, smp->som_path, jsp);
 
 	/* Fixup jmpslot so future calls transfer directly to target */
@@ -1390,7 +1399,7 @@ maphints()
 	    (hsize = (size_t)statbuf.st_size) < sizeof(struct hints_header))
 		goto nohints;
 
-	hsize = roundup(hsize, PAGSIZ);
+	hsize = (hsize + PAGSIZ - 1) & -PAGSIZ;
 
 	addr = mmap(0, hsize, PROT_READ, MAP_FILE|MAP_COPY, hfd, 0);
 	if (addr == (caddr_t)-1)
@@ -1600,6 +1609,7 @@ preload(paths)
 	return;
 }
 
+#if 0
 static struct somap_private dlmap_private = {
 		0,
 		(struct so_map *)0,
@@ -1619,6 +1629,7 @@ static struct so_map dlmap = {
 	(struct _dynamic *)0,
 	(caddr_t)&dlmap_private
 };
+#endif
 static int dlerrno;
 
 /*
@@ -1631,7 +1642,7 @@ build_sod(name, sodp)
 {
 	unsigned int	tuplet;
 	int		major, minor;
-	char		*realname, *tok, *etok, *cp;
+	char		*realname = NULL, *tok, *etok, *cp;
 
 	/* default is an absolute or relative path */
 	sodp->sod_name = (long)strdup(name);    /* strtok is destructive */
@@ -1681,6 +1692,9 @@ build_sod(name, sodp)
 			goto backout;
 		}
 	}
+	if (realname == NULL)
+		goto backout;
+
 	cp = (char *)sodp->sod_name;
 	sodp->sod_name = (long)strdup(realname);
 	free(cp);
