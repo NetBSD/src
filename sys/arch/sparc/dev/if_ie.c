@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ie.c,v 1.11 1995/01/27 09:49:57 pk Exp $	*/
+/*	$NetBSD: if_ie.c,v 1.12 1995/02/16 21:50:43 pk Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994, 1995 Charles Hannum.
@@ -390,6 +390,8 @@ iematch(parent, cf, aux)
 
 	if (strcmp(cf->cf_driver->cd_name, ra->ra_name))	/* correct name? */
 		return (0);
+	if (ca->ca_bustype == BUS_SBUS)
+		return (0);
 
 	if (cputyp == CPU_SUN4) {
 		/*
@@ -483,6 +485,7 @@ ieattach(parent, self, aux)
 	struct confargs *ca = aux;
 	struct ifnet *ifp = &sc->sc_arpcom.ac_if;
 	extern void myetheraddr(u_char *);	/* should be elsewhere */
+	register struct bootpath *bp;
 	int     pri = ca->ca_ra.ra_intr[0].int_pri;
 
 	/*
@@ -647,10 +650,7 @@ ieattach(parent, self, aux)
 #endif
 
 	switch (ca->ca_bustype) {
-	case BUS_SBUS:
-		panic("ie configured on the sbus?");	/* XXX */
-		break;		/* shouldn't happen, no sbus ie's XXX */
-#ifdef SUN4
+#if defined(SUN4)
 	case BUS_OBIO:
 		sc->sc_ih.ih_fun = ieintr;
 		sc->sc_ih.ih_arg = sc;
@@ -661,10 +661,15 @@ ieattach(parent, self, aux)
 		sc->sc_ih.ih_fun = ieintr;
 		sc->sc_ih.ih_arg = sc;
 		vmeintr_establish(ca->ca_ra.ra_intr[0].int_vec, pri,
-		    &(sc->sc_ih));
+		    &sc->sc_ih);
 		break;
 #endif /* SUN4 */
 	}
+
+	bp = ca->ca_ra.ra_bp;
+	if (bp != NULL && strcmp(bp->name, "ie") == 0 &&
+	    sc->sc_dev.dv_unit == bp->val[1])
+		bootdv = &sc->sc_dev;
 }
 
 
