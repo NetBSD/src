@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_nat.c,v 1.56.2.2 2004/05/30 11:25:19 tron Exp $	*/
+/*	$NetBSD: ip_nat.c,v 1.56.2.3 2004/05/30 11:25:56 tron Exp $	*/
 
 /*
  * Copyright (C) 1995-2003 by Darren Reed.
@@ -3529,10 +3529,10 @@ int fr_checknatout(fin, passp)
 fr_info_t *fin;
 u_32_t *passp;
 {
+	struct ifnet *ifp, *sifp;
 	icmphdr_t *icmp = NULL;
 	tcphdr_t *tcp = NULL;
 	ipnat_t *np = NULL;
-	struct ifnet *ifp;
 	u_int nflags = 0;
 	u_32_t ipa, iph;
 	int natadd = 1;
@@ -3544,11 +3544,11 @@ u_32_t *passp;
 		return 0;
 
 	fr = fin->fin_fr;
+	sifp = fin->fin_ifp;
 	if ((fr != NULL) && !(fr->fr_flags & FR_DUP) &&
 	    fr->fr_tif.fd_ifp && fr->fr_tif.fd_ifp != (void *)-1)
-		ifp = fr->fr_tif.fd_ifp;
-	else
-		ifp = fin->fin_ifp;
+		fin->fin_ifp = fr->fr_tif.fd_ifp;
+	ifp = fin->fin_ifp;
 
 	if (!(fin->fin_flx & FI_SHORT) && (fin->fin_off == 0)) {
 		switch (fin->fin_p)
@@ -3665,6 +3665,7 @@ maskloop:
 			*passp = FR_BLOCK;
 		fin->fin_flx |= FI_BADNAT;
 	}
+	fin->fin_ifp = sifp;
 	return rval;
 }
 
