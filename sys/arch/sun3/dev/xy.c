@@ -1,4 +1,4 @@
-/*	$NetBSD: xy.c,v 1.44 2003/01/01 02:26:13 thorpej Exp $	*/
+/*	$NetBSD: xy.c,v 1.45 2003/05/02 08:45:11 dsl Exp $	*/
 
 /*
  *
@@ -254,7 +254,7 @@ xygetdisklabel(xy, b)
 	struct xy_softc *xy;
 	void *b;
 {
-	char *err;
+	const char *err;
 	struct sun_disklabel *sdl;
 
 	/* We already have the label data in `b'; setup for dummy strategy */

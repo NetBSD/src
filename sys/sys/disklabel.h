@@ -1,4 +1,4 @@
-/*	$NetBSD: disklabel.h,v 1.80 2003/04/03 22:18:46 fvdl Exp $	*/
+/*	$NetBSD: disklabel.h,v 1.81 2003/05/02 08:45:24 dsl Exp $	*/
 
 /*
  * Copyright (c) 1987, 1988, 1993
@@ -497,8 +497,8 @@ void	 diskerr __P((const struct buf *, const char *, const char *, int,
 u_int	 dkcksum __P((struct disklabel *));
 int	 setdisklabel __P((struct disklabel *, struct disklabel *, u_long,
 	    struct cpu_disklabel *));
-char	*readdisklabel __P((dev_t, void (*)(struct buf *), struct disklabel *,
-	    struct cpu_disklabel *));
+const char *readdisklabel __P((dev_t, void (*)(struct buf *),
+	    struct disklabel *, struct cpu_disklabel *));
 int	 writedisklabel __P((dev_t, void (*)(struct buf *), struct disklabel *,
 	    struct cpu_disklabel *));
 int	 bounds_check_with_label __P((struct buf *, struct disklabel *, int));

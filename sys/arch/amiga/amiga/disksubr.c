@@ -1,4 +1,4 @@
-/*	$NetBSD: disksubr.c,v 1.42 2003/01/06 12:46:07 wiz Exp $	*/
+/*	$NetBSD: disksubr.c,v 1.43 2003/05/02 08:45:22 dsl Exp $	*/
 
 /*
  * Copyright (c) 1994 Christian E. Hopps
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: disksubr.c,v 1.42 2003/01/06 12:46:07 wiz Exp $");
+__KERNEL_RCSID(0, "$NetBSD: disksubr.c,v 1.43 2003/05/02 08:45:22 dsl Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -98,7 +98,7 @@ struct rdbmap *getrdbmap(dev_t, void (*)(struct buf *), struct disklabel *,
  * (e.g., sector size) must be filled in before calling us.
  * Returns null on success and an error string on failure.
  */
-char *
+const char *
 readdisklabel(dev, strat, lp, clp)
 	dev_t dev;
 	void (*strat)(struct buf *);
