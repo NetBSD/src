@@ -1,4 +1,4 @@
-/*	$NetBSD: extern.h,v 1.19 2000/01/05 11:59:12 itojun Exp $	*/
+/*	$NetBSD: extern.h,v 1.20 2000/01/07 04:47:23 itojun Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -59,6 +59,7 @@ extern int	nhosts;
 extern int	nports;
 extern int	protos;
 extern int	verbose;
+extern int	nflag;
 
 struct inpcb;
 #ifdef INET6

@@ -1,4 +1,4 @@
-/*	$NetBSD: netstat.c,v 1.15 2000/01/05 11:59:12 itojun Exp $	*/
+/*	$NetBSD: netstat.c,v 1.16 2000/01/07 04:47:24 itojun Exp $	*/
 
 /*-
  * Copyright (c) 1980, 1992, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)netstat.c	8.1 (Berkeley) 6/6/93";
 #endif
-__RCSID("$NetBSD: netstat.c,v 1.15 2000/01/05 11:59:12 itojun Exp $");
+__RCSID("$NetBSD: netstat.c,v 1.16 2000/01/07 04:47:24 itojun Exp $");
 #endif /* not lint */
 
 /*
@@ -124,7 +124,7 @@ static struct {
 } netcb;
 
 static	int aflag = 0;
-static	int nflag = 0;
+int nflag = 0;
 static	int lastrow = 1;
 
 WINDOW *
