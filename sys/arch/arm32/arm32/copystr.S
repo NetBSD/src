@@ -1,4 +1,4 @@
-/*	$NetBSD: copystr.S,v 1.11 1999/11/02 06:48:33 chs Exp $	*/
+/*	$NetBSD: copystr.S,v 1.12 1999/11/02 07:45:59 chs Exp $	*/
 
 /*
  * Copyright (c) 1995 Mark Brinicombe.
@@ -148,7 +148,7 @@ ENTRY(copyoutstr)
 	/* Do the actual copy */
 do_copyinoutstr:
 	teq	r2, #0x00000000
-	moveq	r5, #0x00000000
+	moveq	r5, #0x00000001
 	moveq	r6, #0x00000000
 	beq	Lcopyinoutstrexit
 
