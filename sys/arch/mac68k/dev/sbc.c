@@ -1,8 +1,7 @@
-/*	$NetBSD: sbc.c,v 1.8 1996/06/11 03:20:23 scottr Exp $	*/
+/*	$NetBSD: sbc.c,v 1.9 1996/06/19 01:47:28 scottr Exp $	*/
 
 /*
  * Copyright (c) 1996 Scott Reynolds
- * Copyright (c) 1995 Allen Briggs
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -16,9 +15,8 @@
  * 3. The name of the authors may not be used to endorse or promote products
  *    derived from this software without specific prior written permission.
  * 4. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *      This product includes software developed by Allen Briggs and
- *      Scott Reynolds.
+ *    must display the following acknowledgements:
+ *      This product includes software developed by Scott Reynolds.
  *
  * THIS SOFTWARE IS PROVIDED BY THE AUTHORS ``AS IS'' AND ANY EXPRESS OR
  * IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
@@ -43,13 +41,11 @@
  * Credits, history:
  *
  * Scott Reynolds wrote this module, based on work by Allen Briggs
- * (mac68k), David Jones (sun3), and Leo Weppelman (atari).  Allen
- * supplied some crucial interpretation of the NetBSD 1.1 'ncrscsi'
- * driver.  Allen, Gordon W. Ross, and Jason Thorpe all helped to
- * refine this code, and were considerable sources of moral support.
- *
- * The sbc_options code is based on similar code in Jason's modified
- * NetBSD/sparc 'si' driver.
+ * (mac68k), Gordon W. Ross and David Jones (sun3), and Leo Weppelman
+ * (atari).  Thanks to Allen for supplying crucial interpretation of the
+ * NetBSD/mac68k 1.1 'ncrscsi' driver.  Also, Allen, Gordon, and Jason
+ * Thorpe all helped to refine this code, and were considerable sources
+ * of moral support.
  */
 
 #include <sys/types.h>
@@ -153,6 +149,9 @@ struct sbc_softc {
  * Alternatively, you can patch your kernel with DDB or some other
  * mechanism.  The sc_options member of the softc is OR'd with
  * the value in sbc_options.
+ *
+ * The options code is based on the sparc 'si' driver's version of
+ * the same.
  */     
 #define	SBC_PDMA	0x01	/* Use PDMA for polled transfers */
 #define	SBC_INTR	0x02	/* Allow SCSI IRQ/DRQ interrupts */
