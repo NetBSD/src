@@ -1,4 +1,4 @@
-/*	$NetBSD: rshd.c,v 1.19 2000/04/14 12:28:51 itojun Exp $	*/
+/*	$NetBSD: rshd.c,v 1.19.4.1 2000/10/17 22:41:49 tv Exp $	*/
 
 /*
  * Copyright (C) 1998 WIDE Project.
@@ -73,7 +73,7 @@ __COPYRIGHT("@(#) Copyright (c) 1988, 1989, 1992, 1993, 1994\n\
 #if 0
 static char sccsid[] = "@(#)rshd.c	8.2 (Berkeley) 4/6/94";
 #else
-__RCSID("$NetBSD: rshd.c,v 1.19 2000/04/14 12:28:51 itojun Exp $");
+__RCSID("$NetBSD: rshd.c,v 1.19.4.1 2000/10/17 22:41:49 tv Exp $");
 #endif
 #endif /* not lint */
 
@@ -114,7 +114,8 @@ int	log_success;		/* If TRUE, log all successful accesses */
 int	sent_null;
 
 void	 doit __P((struct sockaddr *));
-void	 error __P((const char *, ...));
+void	 error __P((const char *, ...))
+     __attribute__((__format__(__printf__, 1, 2)));
 void	 getstr __P((char *, int, char *));
 int	 local_domain __P((char *));
 char	*topdomain __P((char *));
