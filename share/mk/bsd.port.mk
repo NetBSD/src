@@ -1,7 +1,7 @@
 #-*- mode: Fundamental; tab-width: 4; -*-
 # ex:ts=4
 #
-#	$NetBSD: bsd.port.mk,v 1.59 1998/03/23 07:42:50 hubertf Exp $
+#	$NetBSD: bsd.port.mk,v 1.60 1998/03/24 10:27:44 tron Exp $
 #
 #	bsd.port.mk - 940820 Jordan K. Hubbard.
 #	This file is in the public domain.
@@ -681,7 +681,9 @@ INSTALL_TARGET+=	install.man
 # Popular master sites
 MASTER_SITE_XCONTRIB+=	\
 	ftp://crl.dec.com/pub/X11/contrib/%SUBDIR%/ \
-    ftp://ftp.eu.net/X11/contrib/%SUBDIR%/
+    ftp://ftp.eu.net/X11/contrib/%SUBDIR%/ \
+	ftp://ftp.uni-paderborn.de/pub/X11/contrib/%SUBDIR%/ \
+	ftp://ftp.x.org/contrib/%SUBDIR%/
 
 MASTER_SITE_GNU+=	\
 	ftp://prep.ai.mit.edu/pub/gnu/%SUBDIR%/ \
