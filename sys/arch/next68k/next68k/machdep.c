@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.12 1999/01/31 07:02:33 dbj Exp $	*/
+/*	$NetBSD: machdep.c,v 1.13 1999/01/31 18:12:14 dbj Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -808,25 +808,18 @@ cpu_reboot(howto, bootstr)
 	}
 #endif
 
-	if (howto & RB_POWERDOWN) {
+	if ((howto & RB_POWERDOWN) == RB_POWERDOWN) {
 		poweroff();
 	}
 
 	/* Finally, halt/reboot the system. */
 	if (howto & RB_HALT) {
-		printf("System halted.  Hit any key to reboot.\n\n");
-		(void)cngetc();
+		monbootflag = 0x2d680000;				/* "-h" */
 	}
 
-#if 0
 	printf("rebooting...\n");
 	DELAY(1000000);
 	doboot();
-#else
-	printf("Don't know how to reboot, powering off instead\n");
-	poweroff();
-#endif
-
 	/*NOTREACHED*/
 }
 
