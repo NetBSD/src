@@ -1,3 +1,5 @@
+/*	$NetBSD: i386_get_ldt.c,v 1.4 1998/01/09 03:15:09 perry Exp $	*/
+
 /*
  *  Copyright (c) 1993 John Brezak
  *  All rights reserved.

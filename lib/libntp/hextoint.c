@@ -1,3 +1,5 @@
+/*	$NetBSD: hextoint.c,v 1.2 1998/01/09 03:16:14 perry Exp $	*/
+
 /*
  * hextoint - convert an ascii string in hex to an unsigned
  *	      long, with error checking

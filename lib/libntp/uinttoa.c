@@ -1,3 +1,5 @@
+/*	$NetBSD: uinttoa.c,v 1.2 1998/01/09 03:16:37 perry Exp $	*/
+
 /*
  * uinttoa - return an asciized unsigned integer
  */

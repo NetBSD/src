@@ -1,3 +1,5 @@
+/*	$NetBSD: syssignal.c,v 1.2 1998/01/09 03:16:32 perry Exp $	*/
+
 #include <stdio.h>
 #include <sys/types.h>
 #include <signal.h>

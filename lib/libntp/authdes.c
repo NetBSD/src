@@ -1,3 +1,5 @@
+/*	$NetBSD: authdes.c,v 1.2 1998/01/09 03:15:55 perry Exp $	*/
+
 /*
  * authdes.c -  dummy encryption routines for destinations outside the USA.
  *

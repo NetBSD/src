@@ -1,3 +1,5 @@
+/*	$NetBSD: statestr.c,v 1.2 1998/01/09 03:16:31 perry Exp $	*/
+
 /*
  * pretty printing of status information
  */
