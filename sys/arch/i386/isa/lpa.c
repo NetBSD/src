@@ -45,7 +45,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	$Id: lpa.c,v 1.3 1993/05/22 11:41:20 cgd Exp $
+ *	$Id: lpa.c,v 1.4 1993/06/05 22:58:29 cgd Exp $
  */
 
 /*
@@ -102,7 +102,8 @@
 #ifndef DEBUG
 #define lprintf
 #else
-#define lprintf		if (lpflag) printf
+#define lprintf		if (lpaflag) printf
+int lpaflag = 1;
 #endif
 
 int lpaprobe(), lpaattach();
@@ -140,11 +141,14 @@ struct lpa_softc {
 int
 lpa_port_test(short port, u_char data, u_char mask)
 	{
-	int	temp;
+	int	temp, timeout;
 
 	data = data & mask;
 	outb(port, data);
-	temp = inb(port) & mask;
+	timeout = 100;
+	do
+		temp = inb(port) & mask;
+	while (temp != data && --timeout);
 	lprintf("Port 0x%x\tout=%x\tin=%x\n", port, data, temp);
 	return (temp == data);
 	}
