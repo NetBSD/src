@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs_data.h,v 1.520 2003/04/05 16:43:47 lha Exp $	*/
+/*	$NetBSD: pcidevs_data.h,v 1.521 2003/04/11 02:50:07 explorer Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.519 2003/04/05 16:41:42 lha Exp 
+ *	NetBSD: pcidevs,v 1.520 2003/04/11 02:49:40 explorer Exp 
  */
 
 /*
@@ -6002,6 +6002,12 @@ const struct pci_knowndev pci_knowndevs[] = {
 	    0,
 	    "Promise Technology",
 	    "Serial ATA/150 TX2plus Bus Master IDE Accelerator",
+	},
+	{
+	    PCI_VENDOR_PROMISE, PCI_PRODUCT_PROMISE_SATA150TX4,
+	    0,
+	    "Promise Technology",
+	    "Serial ATA/150 TX4 Controller",
 	},
 	{
 	    PCI_VENDOR_PROMISE, PCI_PRODUCT_PROMISE_ULTRA100,
