@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.42 1996/09/11 00:44:24 thorpej Exp $	*/
+/*	$NetBSD: trap.c,v 1.43 1996/10/05 07:24:10 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -255,11 +255,8 @@ trap(type, code, v, frame)
 	struct frame frame;
 {
 	extern char fubail[], subail[];
-#ifdef DDB
-	extern char trap0[], trap1[], trap2[], trap12[], trap15[], illinst[];
-#endif
 	register struct proc *p;
-	register int i;
+	register int i, s;
 	u_int ucode;
 	u_quad_t sticks;
 
@@ -274,28 +271,51 @@ trap(type, code, v, frame)
 	switch (type) {
 
 	default:
-dopanic:
-		printf("trap type %d, code = %x, v = %x\n", type, code, v);
-#ifdef DDB
-		if (kdb_trap(type, &frame))
-			return;
+	dopanic:
+		printf("trap type %d, code = 0x%x, v = 0x%x\n", type, code, v);
+		printf("%s program counter = 0x%x\n",
+		    (type & T_USER) ? "user" : "kernel", frame.f_pc);
+		/*
+		 * Let the kernel debugger see the trap frame that
+		 * caused us to panic.  This is a convenience so
+		 * one can see registers at the point of failure.
+		 */
+		s = splhigh();
+#ifdef KGDB
+		/* If connected, step or cont returns 1 */
+		if (kgdb_trap(type, &frame))
+			goto kgdb_cont;
 #endif
+#ifdef DDB
+		(void) kdb_trap(type, &frame);
+#endif
+	kgdb_cont:
+		splx(s);
+		if (panicstr) {
+			printf("trap during panic!\n");
+#ifdef DEBUG
+			/* XXX should be a machine-dependent hook */
+			printf("(press a key)\n"); (void)cngetc();
+#endif
+		}
 		regdump(&frame, 128);
 		type &= ~T_USER;
-		if ((unsigned)type < trap_types)
+		if ((u_int)type < trap_types)
 			panic(trap_type[type]);
 		panic("trap");
 
 	case T_BUSERR:		/* kernel bus error */
-		if (!p->p_addr->u_pcb.pcb_onfault)
+		if (p->p_addr->u_pcb.pcb_onfault == 0)
 			goto dopanic;
+		/* FALLTHROUGH */
+
+	copyfault:
 		/*
 		 * If we have arranged to catch this fault in any of the
 		 * copy to/from user space routines, set PC to return to
 		 * indicated location and set flag informing buserror code
 		 * that it may need to clean up stack frame.
 		 */
-copyfault:
 		frame.f_stackadj = exframesize[frame.f_format];
 		frame.f_format = frame.f_vector = 0;
 		frame.f_pc = (int) p->p_addr->u_pcb.pcb_onfault;
@@ -422,31 +442,26 @@ copyfault:
 	 * XXX: Trace traps are a nightmare.
 	 *
 	 *	HP-UX uses trap #1 for breakpoints,
-	 *	HPBSD uses trap #2,
+	 *	NetBSD/m68k uses trap #2,
 	 *	SUN 3.x uses trap #15,
-	 *	KGDB uses trap #15 (for kernel breakpoints; handled elsewhere).
+	 *	DDB and KGDB uses trap #15 (for kernel breakpoints;
+	 *	handled elsewhere).
 	 *
-	 * HPBSD and HP-UX traps both get mapped by locore.s into T_TRACE.
+	 * NetBSD and HP-UX traps both get mapped by locore.s into T_TRACE.
 	 * SUN 3.x traps get passed through as T_TRAP15 and are not really
 	 * supported yet.
+	 *
+	 * XXX: We should never get kernel-mode T_TRACE or T_TRAP15
+	 * XXX: because locore.s now gives them special treatment.
 	 */
 	case T_TRACE:		/* kernel trace trap */
-	case T_TRAP15:		/* SUN trace trap */
-#ifdef DDB
-		if (type == T_TRAP15 ||
-		    ((caddr_t)frame.f_pc != trap0 &&
-		     (caddr_t)frame.f_pc != trap1 &&
-		     (caddr_t)frame.f_pc != trap2 &&
-		     (caddr_t)frame.f_pc != trap12 &&
-		     (caddr_t)frame.f_pc != trap15 &&
-		     (caddr_t)frame.f_pc != illinst)) {
-			if (kdb_trap(type, &frame))
-				return;
-		}
+	case T_TRAP15:		/* kernel breakpoint */
+#ifdef DEBUG
+		printf("unexpected kernel trace trap, type = %d\n", type);
+		printf("program counter = 0x%x\n", frame.f_pc);
 #endif
 		frame.f_sr &= ~PSL_T;
-		i = SIGTRAP;
-		break;
+		return;
 
 	case T_TRACE|T_USER:	/* user trace trap */
 	case T_TRAP15|T_USER:	/* SUN user trace trap */
@@ -519,7 +534,7 @@ copyfault:
 	case T_MMUFLT|T_USER:	/* page fault */
 	    {
 		register vm_offset_t va;
-		register struct vmspace *vm = p->p_vmspace;
+		register struct vmspace *vm = p ? p->p_vmspace : NULL;
 		register vm_map_t map;
 		int rv;
 		vm_prot_t ftype;
@@ -539,21 +554,26 @@ copyfault:
 		 * argument space is lazy-allocated.
 		 */
 		if (type == T_MMUFLT &&
-		    (!p->p_addr->u_pcb.pcb_onfault || KDFAULT(code)))
+		    ((p != NULL && p->p_addr->u_pcb.pcb_onfault == 0) ||
+		    KDFAULT(code)))
 			map = kernel_map;
 		else
 			map = &vm->vm_map;
+
 		if (WRFAULT(code))
 			ftype = VM_PROT_READ | VM_PROT_WRITE;
 		else
 			ftype = VM_PROT_READ;
+
 		va = trunc_page((vm_offset_t)v);
-#ifdef DEBUG
+
 		if (map == kernel_map && va == 0) {
-			printf("trap: bad kernel access at %x\n", v);
+			printf("trap: bad kernel %s access at 0x%x\n",
+			    (ftype & VM_PROT_WRITE) ? "read/write" :
+			    "read", v);
 			goto dopanic;
 		}
-#endif
+
 #ifdef COMPAT_HPUX
 		if (ISHPMMADDR(va)) {
 			vm_offset_t bva;
@@ -569,7 +589,7 @@ copyfault:
 #endif
 		rv = vm_fault(map, va, ftype, FALSE);
 #ifdef DEBUG
-		if (rv && MDB_ISPID(p->p_pid))
+		if (rv && p != NULL && MDB_ISPID(p->p_pid))
 			printf("vm_fault(%x, %x, %x, 0) -> %x\n",
 			       map, va, ftype, rv);
 #endif
