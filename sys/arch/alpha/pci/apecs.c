@@ -1,4 +1,4 @@
-/*	$NetBSD: apecs.c,v 1.11 1996/10/10 23:50:58 christos Exp $	*/
+/*	$NetBSD: apecs.c,v 1.12 1996/10/13 03:00:00 christos Exp $	*/
 
 /*
  * Copyright (c) 1995, 1996 Carnegie-Mellon University.
@@ -133,16 +133,16 @@ apecsattach(parent, self, aux)
 
 	/* XXX SGMAP FOO */
 
-	kprintf(": DECchip %s Core Logic chipset\n",
+	printf(": DECchip %s Core Logic chipset\n",
 	    acp->ac_memwidth == 128 ? "21072" : "21071");
-	kprintf("%s: DC21071-CA pass %d, %d-bit memory bus\n",
+	printf("%s: DC21071-CA pass %d, %d-bit memory bus\n",
 	    self->dv_xname, acp->ac_comanche_pass2 ? 2 : 1, acp->ac_memwidth);
-	kprintf("%s: DC21071-DA pass %d\n", self->dv_xname,
+	printf("%s: DC21071-DA pass %d\n", self->dv_xname,
 	    acp->ac_epic_pass2 ? 2 : 1);
 	/* XXX print bcache size */
 
 	if (!acp->ac_epic_pass2)
-		kprintf("WARNING: 21071-DA NOT PASS2... NO BETS...\n");
+		printf("WARNING: 21071-DA NOT PASS2... NO BETS...\n");
 
 	switch (hwrpb->rpb_type) {
 #if defined(DEC_2100_A50)
@@ -170,7 +170,7 @@ apecsprint(aux, pnp)
 
 	/* only PCIs can attach to APECSes; easy. */
 	if (pnp)
-		kprintf("%s at %s", pba->pba_busname, pnp);
-	kprintf(" bus %d", pba->pba_bus);
+		printf("%s at %s", pba->pba_busname, pnp);
+	printf(" bus %d", pba->pba_bus);
 	return (UNCONF);
 }
