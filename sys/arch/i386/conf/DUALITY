@@ -1,7 +1,7 @@
 #
 # DUALITY -- Mycroft's 486 box
 #
-#	$Id: DUALITY,v 1.8 1993/05/20 14:32:26 cgd Exp $
+#	$Id: DUALITY,v 1.9 1993/06/03 01:30:26 cgd Exp $
 #
 
 machine		"i386"
@@ -14,6 +14,7 @@ options		"COMPAT_43"
 options		"TCP_COMPAT_42"
 options		XSERVER,UCONSOLE
 options		PCFS,KERNFS
+options		"COMPAT_NOMID"
 
 config		netbsd	root on wd0 swap on wd0
 

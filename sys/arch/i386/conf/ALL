@@ -1,7 +1,7 @@
 #
 #	ALL -- everything that's currently supported
 #
-#	$Id: ALL,v 1.8 1993/05/20 14:32:19 cgd Exp $
+#	$Id: ALL,v 1.9 1993/06/03 01:30:22 cgd Exp $
 #
 machine		"i386"
 cpu		"I386_CPU"
@@ -30,6 +30,7 @@ options FDESC
 options KERNFS
 options SCSI
 options	"MATH_EMULATE"
+options		"COMPAT_NOMID"
 
 options		"COMPAT_43"
 options		"TCP_COMPAT_42"
