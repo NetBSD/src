@@ -2178,6 +2178,14 @@ ENUMX
   BFD_RELOC_ARM_THUMB_SHIFT
 ENUMX
   BFD_RELOC_ARM_THUMB_OFFSET
+ENUMX
+  BFD_RELOC_ARM_GOTPC
+ENUMX
+  BFD_RELOC_ARM_GOT12
+ENUMX
+  BFD_RELOC_ARM_GOT32
+ENUMX
+  BFD_RELOC_ARM_JMPSLOT
 ENUMDOC
   These relocs are only used within the ARM assembler.  They are not
   (at present) written to any object files.
