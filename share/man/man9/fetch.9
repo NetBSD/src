@@ -1,4 +1,4 @@
-.\"	$NetBSD: fetch.9,v 1.7 1998/06/08 11:31:44 lukem Exp $
+.\"	$NetBSD: fetch.9,v 1.8 1998/07/06 22:57:33 msaitoh Exp $
 .\"
 .\" Copyright (c) 1996 Jason R. Thorpe.
 .\" All rights reserved.
@@ -91,7 +91,7 @@ for all functions except
 The function
 .Fn fuword
 has no way to unambiguously signal an error, because the
-data it reads might legetimately be the same as the -1
+data it reads might legitimately be the same as the -1
 used to indicate an error.  The other functions do not
 have this problem because the unsigned values returned
 by those can never match the -1 error return value.
