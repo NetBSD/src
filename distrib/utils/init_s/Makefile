@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.10 2000/05/18 01:10:22 matt Exp $
+# $NetBSD: Makefile,v 1.10.4.1 2000/09/25 22:17:52 wrstuden Exp $
 # Build a "small init" (i.e. for boot media)
 
 PROG=	init
@@ -18,3 +18,4 @@ all: ${PROG}
 .include <bsd.prog.mk>
 
 .PATH:  ${SRCDIR}
+.NOPATH: ${PROG}
