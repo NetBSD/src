@@ -1,4 +1,4 @@
-$NetBSD: pcidevs,v 1.80 1998/09/18 04:30:10 mark Exp $
+$NetBSD: pcidevs,v 1.81 1998/09/18 10:49:11 drochner Exp $
 
 /*
  * Copyright (c) 1995, 1996 Christopher G. Demetriou
@@ -263,7 +263,7 @@ vendor EMULEX		0x10df	Emulex
 vendor IMS		0x10e0	Integrated Micro Solutions
 vendor TEKRAM		0x10e1	Tekram Technology (1st PCI Vendor ID)
 vendor APTIX		0x10e2	Aptix Corporation
-vendor NEWBRIDGE	0x10e3	Newbridge Microsystems
+vendor NEWBRIDGE	0x10e3	Newbridge Microsystems / Tundra Semiconductor
 vendor TANDEM		0x10e4	Tandem Computers
 vendor MICROINDUSTRIES	0x10e5	Micro Industries
 vendor GAINBERY		0x10e6	Gainbery Computer Products
@@ -515,6 +515,7 @@ vendor PROLAN		0x8c4a	ProLAN
 vendor COMPUTONE	0x8e0e	Computone Corperation
 vendor KTI		0x8e2e	KTI
 vendor ADP		0x9004	Adaptec
+vendor ADP2		0x9005	Adaptec (2nd PCI Vendor ID)
 vendor ATRONICS		0x907f	Atronics
 vendor ARC		0xedd8	ARC Logic
 vendor INVALID		0xffff	INVALID VENDOR ID
@@ -583,6 +584,11 @@ product ADP 2940U	0x8178	AHA-2940 Ultra
 product ADP 3940U	0x8278	AHA-3940 Ultra
 product ADP 2944U	0x8478	AHA-2944 Ultra
 
+product ADP2 2940U2	0x0010	AHA-2940 Ultra2
+product ADP2 7890	0x001f	AIC-7890/1
+product ADP2 3940U2	0x0050	AHA-3940 Ultra2
+product ADP2 7896	0x005f	AIC-7896/7
+
 /* Advanced System Products */
 product ADVSYS 1200A	0x1100
 product ADVSYS 1200B	0x1200
@@ -629,6 +635,7 @@ product AVANCE2 ALG2302	0x2302	ALG2302
 
 /* Bit3 products */
 product BIT3 PCIVME617		0x0001	PCI-VME Interface Mod. 617
+product BIT3 PCIVME2706		0x0300	PCI-VME Interface Mod. 2706
 
 /* Brooktree products */
 product	BROOKTREE BT848		0x0350	Bt848 Video Capture
@@ -868,6 +875,9 @@ product MUTECH MV1000	0x0001	MV1000
 /* NetVin products - XXX better descriptions */
 product NETVIN 5000	0x5000	5000 Ethernet
 
+/* Newbridge / Tundra products */
+product NEWBRIDGE CA91CX42		0x0000	Universe VME bridge
+
 /* National Semiconductor products */
 product NS DP83810	0x0001	DP83810 10/100 Ethernet
 product NS NS87410	0xd001	NS87410
@@ -881,11 +891,11 @@ product SYMBIOS 810AP	0x0005	53c810AP
 product SYMBIOS 860	0x0006	53c860
 product SYMBIOS 875	0x000f	53c875
 
-/* NEC products */
-product NEC POWERVR2	0x0046	PowerVR PCX2
-
 /* Packet Engines products */
 product SYMBIOS PE_GNIC	0x0702	Packet Engines G-NIC Ethernet
+
+/* NEC products */
+product NEC POWERVR2	0x0046	PowerVR PCX2
 
 /* NexGen products */
 product NEXGEN NX82C501	0x4e78	NX82C501 Host-PCI Bridge
