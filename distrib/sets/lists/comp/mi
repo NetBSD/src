@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.593 2003/07/16 08:53:42 itojun Exp $
+#	$NetBSD: mi,v 1.594 2003/07/16 19:03:12 he Exp $
 ./usr/bin/addr2line		comp-debug-bin
 ./usr/bin/ar			comp-util-bin
 ./usr/bin/as			comp-util-bin
@@ -1042,6 +1042,8 @@
 ./usr/lib/libssl_p.a		comp-c-proflib
 ./usr/lib/libstdc++.a		comp-cxx-lib
 ./usr/lib/libstdc++_p.a		comp-cxx-proflib
+./usr/lib/libtelnet.a		comp-krb5-lib
+./usr/lib/libtelnet_p.a		comp-krb5-proflib
 ./usr/lib/libtermcap.a		comp-c-lib
 ./usr/lib/libtermcap_p.a	comp-c-proflib
 ./usr/lib/libtermlib.a		comp-c-lib
