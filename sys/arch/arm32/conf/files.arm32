@@ -1,4 +1,4 @@
-#	$NetBSD: files.arm32,v 1.124 2001/07/08 15:41:55 bjh21 Exp $
+#	$NetBSD: files.arm32,v 1.125 2001/07/28 13:28:04 chris Exp $
 #
 # First try for arm-specific configuration info
 #
@@ -337,21 +337,7 @@ file	arch/arm32/vidc/console/dumb.c 		vt
 
 # Generic MD files
 file	arch/arm32/arm32/autoconf.c
-file	arch/arm32/arm32/bus_dma.c
 file	arch/arm32/arm32/conf.c
-file	arch/arm32/arm32/cpuswitch.S
-file	arch/arm32/arm32/stubs.c
-file	arch/arm32/arm32/exception.S
-file	arch/arm32/arm32/fault.c
-file	arch/arm32/arm32/mem.c
-file	arch/arm32/arm32/procfs_machdep.c	procfs
-file	arch/arm32/arm32/machdep.c
-file	arch/arm32/arm32/vm_machdep.c
-file	arch/arm32/arm32/fusu.S
-file	arch/arm32/arm32/setcpsr.S
-file	arch/arm32/arm32/setstack.S
-file	arch/arm32/arm32/spl.S
-file	arch/arm32/arm32/intr.c
 
 file	arch/arm/arm/disksubr.c			disk
 file	arch/arm/arm/disksubr_acorn.c		disk
