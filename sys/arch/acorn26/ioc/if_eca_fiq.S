@@ -1,4 +1,4 @@
-/*	$NetBSD: if_eca_fiq.S,v 1.1 2002/03/24 15:47:16 bjh21 Exp $	*/
+/*	$NetBSD: if_eca_fiq.S,v 1.2 2002/03/24 23:17:00 bjh21 Exp $	*/
 
 /*-
  * Copyright (c) 2001 Ben Harris
@@ -29,10 +29,10 @@
 
 #include <machine/asm.h>
 
-RCSID("$NetBSD: if_eca_fiq.S,v 1.1 2002/03/24 15:47:16 bjh21 Exp $")
+RCSID("$NetBSD: if_eca_fiq.S,v 1.2 2002/03/24 23:17:00 bjh21 Exp $")
 
 #include <dev/ic/mc6854reg.h>
-#include <arch/arm26/ioc/if_ecavar.h>
+#include <arch/acorn26/ioc/if_ecavar.h>
 
 #include "assym.h"
 
