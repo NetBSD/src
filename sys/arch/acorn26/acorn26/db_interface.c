@@ -1,4 +1,4 @@
-/*	$NetBSD: db_interface.c,v 1.2 2002/05/13 20:30:07 matt Exp $	*/
+/*	$NetBSD: db_interface.c,v 1.3 2003/05/03 08:16:09 he Exp $	*/
 
 /* 
  * Copyright (c) 1996 Scott K. Stevens
@@ -61,7 +61,6 @@ u_int db_fetch_reg __P((int, db_regs_t *));
 int db_trapper __P((u_int addr, u_int inst, struct trapframe *frame,
     int fault_code));
 
-static int db_validate_address __P((vm_offset_t));
 static void db_write_text __P((unsigned char *,	int ch));
 
 const struct db_variable db_regs[] = {
@@ -166,7 +165,7 @@ kdb_trap(type, regs)
 }
 
 
-static int
+int
 db_validate_address(addr)
 	vm_offset_t addr;
 {
