@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.2 2003/12/24 12:44:17 rtr Exp $
+#	$NetBSD: Makefile,v 1.3 2004/02/06 11:58:56 rtr Exp $
 
 XTODO= cpconfig
 
@@ -24,8 +24,9 @@ CPPFLAGS=	-I${X11SRCDIR.xc}/programs/Xserver/hw/xfree86/os-support \
 
 CPPFLAGS.scan.c=	-DXCONFIGDIR=\"/usr/X11R6/lib/X11\" \
 			-DXCONFIGFILE=\"XF86Config\" \
-			-DXVERSION="(((4) * 10000000) + (( 3) * 100000) + (( 0) * 1000) + 0)"
+			-DXVERSION="${XVERSION}"
 
 .include <bsd.x11.mk>
+XVERSION!=	${PRINTX11VERSION}
 LIBDIR=${X11USRLIBDIR}
 .include <bsd.lib.mk>

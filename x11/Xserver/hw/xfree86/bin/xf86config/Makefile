@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.1 2003/12/26 05:23:15 rtr Exp $
+#	$NetBSD: Makefile,v 1.2 2004/02/06 11:58:56 rtr Exp $
 
 .include <bsd.own.mk>
 
@@ -14,7 +14,7 @@ DPADD=	${LIBXKBFILE} ${LIBXEXT} ${LIBX11}
 CPPFLAGS+=	-DCARD_DATABASE_FILE='"${X11INCDIR}/X11/Cards"' \
 		-DXKB_RULES_DIR=\"${X11INCDIR}/X11/xkb/rules\" \
 		-DXCONFIGFILE=\"XF86Config\" \
-		-DXVERSION="(((4) * 10000000) + (( 3) * 100000) + (( 0) * 1000) + 0)" \
+		-DXVERSION="${XVERSION}" \
 		-DWSCONS_SUPPORT
 
 .if ${MACHINE} == "i386"
@@ -22,4 +22,5 @@ CPPFLAGS+=	-DPCCONS_SUPPORT -DPCVT_SUPPORT
 .endif
 
 .include <bsd.x11.mk>
+XVERSION!=	${PRINTX11VERSION}
 .include <bsd.prog.mk>
