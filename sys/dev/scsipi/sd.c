@@ -1,4 +1,4 @@
-/*	$NetBSD: sd.c,v 1.175 2001/05/22 18:59:57 mjacob Exp $	*/
+/*	$NetBSD: sd.c,v 1.176 2001/05/29 01:02:39 chs Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -1309,11 +1309,8 @@ sddump(dev, blkno, va, size)
 	int	nwrt;		/* current number of sectors to write */
 	struct scsipi_rw_big cmd;	/* write command */
 	struct scsipi_xfer *xs;	/* ... convenience */
-	struct scsipi_periph *periph = sd->sc_periph;
-	struct scsipi_channel *chan = periph->periph_channel;
-
-	if ((sd->sc_dev.dv_flags & DVF_ACTIVE) == 0)
-		return (ENODEV);
+	struct scsipi_periph *periph;
+	struct scsipi_channel *chan;
 
 	/* Check if recursive dump; if so, punt. */
 	if (sddoingadump)
@@ -1331,6 +1328,9 @@ sddump(dev, blkno, va, size)
 
 	if ((sd->sc_dev.dv_flags & DVF_ACTIVE) == 0)
 		return (ENODEV);
+
+	periph = sd->sc_periph;
+	chan = periph->periph_channel;
 
 	/* Make sure it was initialized. */
 	if ((periph->periph_flags & PERIPH_MEDIA_LOADED) != 0)
