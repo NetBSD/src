@@ -18,7 +18,7 @@
  * 5. Modifications may be freely made to this file if the above conditions
  *    are met.
  *
- * $FreeBSD: src/sys/sys/pipe.h,v 1.17 2001/01/09 04:33:48 wollman Exp $
+ * $FreeBSD: src/sys/sys/pipe.h,v 1.18 2002/02/27 07:35:59 alfred Exp $
  */
 
 #ifndef _SYS_PIPE_H_
@@ -112,7 +112,7 @@ struct pipemapping {
 #define PIPE_WANTCLOSE	0x020	/* Pipe is wanted to be run-down. */
 #define PIPE_SEL	0x040	/* Pipe has a select active. */
 #define PIPE_EOF	0x080	/* Pipe is in EOF condition. */
-#define PIPE_LOCK	0x100	/* Process has exclusive access to pointers/data. */
+#define PIPE_LOCKFL	0x100	/* Process has exclusive access to pointers/data. */
 #define PIPE_LWANT	0x200	/* Process wants exclusive access to pointers/data. */
 #define PIPE_DIRECTW	0x400	/* Pipe direct write active. */
 #define PIPE_SIGNALR	0x800	/* Do selwakeup() on read(2) */
@@ -130,6 +130,7 @@ struct pipe {
 	struct	timespec pipe_mtime;	/* time of last modify */
 	struct	timespec pipe_ctime;	/* time of status change */
 	struct	sigio *pipe_sigio;	/* information for async I/O */
+	struct	mtx *pipe_mtxp;		/* shared mutex between both pipes */
 #elif defined(__NetBSD__)
 	struct	timeval pipe_atime;	/* time of last access */
 	struct	timeval pipe_mtime;	/* time of last modify */
@@ -142,10 +143,14 @@ struct pipe {
 	int	pipe_busy;		/* busy flag, mostly to handle rundown sanely */
 };
 
-#ifdef __NetBSD__
-void pipe_init __P((void));
-int sysctl_dopipe __P((int *, u_int, void *, size_t *, void *, size_t));
+#ifdef __FreeBSD__
+#define PIPE_MTX(pipe)		(pipe)->pipe_mtxp
+#define PIPE_LOCK(pipe)		mtx_lock(PIPE_MTX(pipe))
+#define PIPE_UNLOCK(pipe)	mtx_unlock(PIPE_MTX(pipe))
+#define PIPE_LOCK_ASSERT(pipe, type)  mtx_assert(PIPE_MTX(pipe), (type))
+#endif /* FreeBSD */
 
+#ifdef __NetBSD__
 /*
  * KERN_PIPE subtypes
  */
@@ -164,6 +169,18 @@ int sysctl_dopipe __P((int *, u_int, void *, size_t *, void *, size_t));
 	{ "nbigpipes", CTLTYPE_INT }, \
 	{ "kvasize", CTLTYPE_INT }, \
 }
+
+#ifdef _KERNEL
+void pipe_init __P((void));
+int sysctl_dopipe __P((int *, u_int, void *, size_t *, void *, size_t));
+
+/* XXXSMP use spinlock ? clear for now */
+#define PIPE_MTX(pipe)		NULL
+#define PIPE_LOCK(pipe)	
+#define PIPE_UNLOCK(pipe)
+#define PIPE_LOCK_ASSERT(pipe, type)
+
+#endif /* _KERNEL */
 
 #endif /* NetBSD */
 
