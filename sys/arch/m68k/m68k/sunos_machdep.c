@@ -1,4 +1,4 @@
-/*	$NetBSD: sunos_machdep.c,v 1.1 1995/04/22 23:43:07 christos Exp $	*/
+/*	$NetBSD: sunos_machdep.c,v 1.2 1995/04/23 00:27:48 briggs Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -54,9 +54,12 @@
 #include <sys/signal.h>
 #include <sys/signalvar.h>
 #include <sys/malloc.h>
+#include <sys/buf.h>
 
 #include <sys/syscallargs.h>
 #include <compat/sunos/sunos_syscallargs.h>
+
+#include <machine/reg.h>
 
 /* sigh.. I guess it's too late to change now, but "our" sigcontext
    is plain vax, not very 68000 (ap, for example..) */
@@ -85,7 +88,7 @@ void
 sunos_sendsig(catcher, sig, mask, code)
 	sig_t catcher;
 	int sig, mask;
-	u_ong code;
+	u_long code;
 {
 	register struct proc *p = curproc;
 	register struct sunos_sigframe *fp;
@@ -170,7 +173,7 @@ sunos_sendsig(catcher, sig, mask, code)
 	kfp.sf_sc.sc_pc = frame->f_pc;
 	kfp.sf_sc.sc_ps = frame->f_sr;
 
-	if (copyout(&kfp, fp, fsize) ! = 0) {
+	if (copyout(&kfp, fp, fsize) != 0) {
 		/*
 		 * Process has trashed its stack; give it an illegal
 		 * instruction to halt it in its tracks.
@@ -215,11 +218,9 @@ sunos_sigreturn(p, uap, retval)
 {
 	register struct sunos_sigcontext *scp;
 	register struct frame *frame;
-	register int rf;
 	struct sunos_sigcontext tsigc;
-	int flags;
 
-	scp = uap->sigcntxp;
+	scp = (struct sunos_sigcontext *) SCARG(uap, sigcntxp);
 #ifdef DEBUG
 	if (sigdebug & SDB_FOLLOW)
 		printf("sunos_sigreturn: pid %d, scp %x\n", p->p_pid, scp);
