@@ -1,4 +1,4 @@
-/*	$NetBSD: undefined.h,v 1.1 2001/02/23 21:23:49 reinoud Exp $	*/
+/*	$NetBSD: undefined.h,v 1.2 2001/03/11 16:18:40 bjh21 Exp $	*/
 
 /*
  * Copyright (c) 1995-1996 Mark Brinicombe.
@@ -43,7 +43,12 @@
  * Created      : 08/02/95
  */
 
+
+#ifndef _ARM_UNDEFINED_H_
+#define _ARM_UNDEFINED_H_
 #ifdef _KERNEL
+
+#include <sys/queue.h>
 
 typedef int (*undef_handler_t) __P((unsigned int, unsigned int, trapframe_t *, int));
 
@@ -51,13 +56,30 @@ typedef int (*undef_handler_t) __P((unsigned int, unsigned int, trapframe_t *, i
 #define FP_COPROC2	2
 #define MAX_COPROCS	16
 
-extern undef_handler_t undefined_handlers[MAX_COPROCS];
-
 /* Prototypes for undefined.c */
 
-int install_coproc_handler __P((int, undef_handler_t));
+void *install_coproc_handler __P((int, undef_handler_t));
+void remove_coproc_handler __P((void *));
 void undefined_init __P((void));
+
+/*
+ * XXX Stuff below here is for use before malloc() is available.  Most code
+ * shouldn't use it.
+ */
+
+struct undefined_handler {
+	LIST_ENTRY(undefined_handler) uh_link;
+	undef_handler_t uh_handler;
+};
+
+/*
+ * Handlers installed using install_coproc_handler_static shouldn't be
+ * removed.
+ */
+void install_coproc_handler_static __P((int, struct undefined_handler *));
 
 #endif
 
 /* End of undefined.h */
+
+#endif /* _ARM_UNDEFINED_H_ */
