@@ -1,4 +1,4 @@
-/*	$NetBSD: types.h,v 1.58 2003/04/28 23:16:31 bjh21 Exp $	*/
+/*	$NetBSD: types.h,v 1.59 2003/07/18 15:54:14 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1991, 1993, 1994
@@ -358,4 +358,9 @@ struct	uio;
 #endif
 
 #endif /* _XOPEN_SOURCE_EXTENDED || _XOPEN_SOURCE >= 500 || _NETBSD_SOURCE */
+
+#if !defined(_KERNEL) && !defined(_STANDALONE)
+#include <pthread_types.h>
+#endif
+
 #endif /* !_SYS_TYPES_H_ */
