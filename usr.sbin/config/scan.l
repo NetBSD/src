@@ -1,5 +1,5 @@
 %{
-/*	$NetBSD: scan.l,v 1.38 2003/08/07 11:25:17 agc Exp $	*/
+/*	$NetBSD: scan.l,v 1.39 2003/09/03 18:56:38 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -193,6 +193,46 @@ with		return WITH;
 
 int interesting = 1;
 
+static int
+curdir_push(const char *fname)
+{
+	struct prefix *pf;
+	char *p, *d, *f;
+
+	/* Set up the initial "current directory" for include directives. */
+	d = dirname(f = estrdup(fname));
+	free(f);
+	if (*d == '/')
+		p = estrdup(d);
+	else {
+		char *cwd, buf[PATH_MAX];
+
+		if ((cwd = getcwd(buf, sizeof(buf))) == NULL)
+			return (-1);
+		p = emalloc(strlen(cwd) + strlen(d) + 2);
+		sprintf(p, "%s/%s", cwd, d);
+	}
+	pf = emalloc(sizeof(*pf));
+	pf->pf_prefix = p;
+	SLIST_INSERT_HEAD(&curdirs, pf, pf_next);
+
+	return (0);
+}
+
+static void
+curdir_pop(void)
+{
+	struct prefix *pf;
+
+	pf = SLIST_FIRST(&curdirs);
+	SLIST_REMOVE_HEAD(&curdirs, pf_next);
+	if (SLIST_EMPTY(&curdirs))
+		panic("curdirs is empty");
+	/* LINTED cast away const (pf_prefix is malloc'd for curdirs) */
+	free((void *)pf->pf_prefix);
+	free(pf);
+}
+
 /*
  * Open the "main" file (conffile).
  */
@@ -206,6 +246,10 @@ firstfile(const char *fname)
 	if ((yyin = fopen(fname, "r")) == NULL)
 #endif
 		return (-1);
+
+	if (curdir_push(fname) == -1)
+		return (-1);
+
 	yyfile = conffile = fname;
 	yyline = 1;
 	return (0);
@@ -261,7 +305,14 @@ include(const char *fname, int ateof, int conditional, int direct)
 		setupdirs();
 	}
 
-	s = (*fname == '/') ? estrdup(fname) : sourcepath(fname);
+	if (fname[0] == '/')
+		s = estrdup(fname);
+	else if (fname[0] == '.' && fname[1] == '/') {
+		struct prefix *pf = SLIST_FIRST(&curdirs);
+		s = emalloc(strlen(pf->pf_prefix) + strlen(fname));
+		sprintf(s, "%s/%s", pf->pf_prefix, fname + 2);
+	} else
+		s = sourcepath(fname);
 	if ((fp = fopen(s, "r")) == NULL) {
 		if (conditional == 0)
 			error("cannot open %s for reading: %s\n", s,
@@ -269,6 +320,12 @@ include(const char *fname, int ateof, int conditional, int direct)
 		else if (vflag)
 			warn("cannot open conditional include file %s: %s",
 			     s, strerror(errno));
+		free(s);
+		return (-1);
+	}
+	if (curdir_push(s) == -1) {
+		error("cannot record current working directory for %s\n", s);
+		fclose(fp);
 		free(s);
 		return (-1);
 	}
@@ -299,6 +356,7 @@ endinclude(void)
 	struct incl *in;
 	int ateof;
 
+	curdir_pop();
 	if ((in = incl) == NULL)
 		panic("endinclude");
 	incl = in->in_prev;
