@@ -1,4 +1,4 @@
-/*	$NetBSD: uvscom.c,v 1.9 2003/02/12 15:36:20 ichiro Exp $	*/
+/*	$NetBSD: uvscom.c,v 1.10 2003/07/14 15:47:30 lukem Exp $	*/
 /*-
  * Copyright (c) 2001-2002, Shunsuke Akiyama <akiyama@jp.FreeBSD.org>.
  * All rights reserved.
@@ -33,6 +33,9 @@
  * adapter.  It supports DDI Pocket's Air H" C@rd, C@rd H" 64, NTT's P-in,
  * P-in m@ater and various data communication card adapters.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: uvscom.c,v 1.10 2003/07/14 15:47:30 lukem Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

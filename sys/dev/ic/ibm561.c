@@ -1,4 +1,4 @@
-/* $NetBSD: ibm561.c,v 1.3 2002/08/03 00:13:03 itojun Exp $ */
+/* $NetBSD: ibm561.c,v 1.4 2003/07/14 15:47:10 lukem Exp $ */
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -35,6 +35,9 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: ibm561.c,v 1.4 2003/07/14 15:47:10 lukem Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

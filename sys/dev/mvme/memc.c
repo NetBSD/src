@@ -1,4 +1,4 @@
-/*	$NetBSD: memc.c,v 1.1 2002/02/12 20:38:46 scw Exp $	*/
+/*	$NetBSD: memc.c,v 1.2 2003/07/14 15:47:20 lukem Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2002 The NetBSD Foundation, Inc.
@@ -40,6 +40,9 @@
  * Support for the MEMECC and MEMC40 memory controllers on MVME68K
  * and MVME88K boards.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: memc.c,v 1.2 2003/07/14 15:47:20 lukem Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>

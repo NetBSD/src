@@ -1,4 +1,4 @@
-/*	$NetBSD: vme_two_isr.c,v 1.3 2003/03/07 12:40:12 he Exp $	*/
+/*	$NetBSD: vme_two_isr.c,v 1.4 2003/07/14 15:47:21 lukem Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002 The NetBSD Foundation, Inc.
@@ -41,6 +41,9 @@
  * soft interrupts when the user hasn't specified `vmetwo0' in the
  * kernel config file (mvme1[67]2 only).
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: vme_two_isr.c,v 1.4 2003/07/14 15:47:21 lukem Exp $");
 
 #include "vmetwo.h"
 

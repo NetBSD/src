@@ -1,4 +1,4 @@
-/*	$NetBSD: mpt_netbsd.c,v 1.6 2003/05/01 20:18:35 thorpej Exp $	*/
+/*	$NetBSD: mpt_netbsd.c,v 1.7 2003/07/14 15:47:11 lukem Exp $	*/
 
 /*
  * Copyright (c) 2003 Wasabi Systems, Inc.
@@ -73,6 +73,9 @@
  * Adapted from the FreeBSD "mpt" driver by Jason R. Thorpe for
  * Wasabi Systems, Inc.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: mpt_netbsd.c,v 1.7 2003/07/14 15:47:11 lukem Exp $");
 
 #include <dev/ic/mpt.h>			/* pulls in all headers */
 

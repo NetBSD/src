@@ -1,4 +1,4 @@
-/*	$NetBSD: wskbdmap_sun.c,v 1.2 2002/10/25 21:50:10 martin Exp $	*/
+/*	$NetBSD: wskbdmap_sun.c,v 1.3 2003/07/14 15:47:28 lukem Exp $	*/
 /*	$OpenBSD: sunkbd.c,v 1.9 2002/09/08 23:22:00 miod Exp $	*/
 
 /*
@@ -36,6 +36,9 @@
  * Materiel Command, USAF, under agreement number F30602-01-2-0537.
  *
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: wskbdmap_sun.c,v 1.3 2003/07/14 15:47:28 lukem Exp $");
 
 #include <sys/types.h>
 #include <dev/wscons/wsksymdef.h>

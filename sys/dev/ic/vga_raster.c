@@ -1,4 +1,4 @@
-/*	$NetBSD: vga_raster.c,v 1.11 2003/04/07 05:48:54 junyoung Exp $	*/
+/*	$NetBSD: vga_raster.c,v 1.12 2003/07/14 15:47:12 lukem Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002 Bang Jun-Young
@@ -53,6 +53,9 @@
  * any improvements or extensions that they make and grant Carnegie the
  * rights to redistribute these changes.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: vga_raster.c,v 1.12 2003/07/14 15:47:12 lukem Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
