@@ -1,4 +1,4 @@
-/*	$NetBSD: kvm_mkdb.c,v 1.11 1996/09/30 19:48:44 cgd Exp $	*/
+/*	$NetBSD: kvm_mkdb.c,v 1.12 1996/10/12 00:51:45 cgd Exp $	*/
 
 /*-
  * Copyright (c) 1996 Christopher G. Demetriou.  All rights reserved.
@@ -44,7 +44,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "from: @(#)kvm_mkdb.c	8.3 (Berkeley) 5/4/95";
 #else
-static char *rcsid = "$NetBSD: kvm_mkdb.c,v 1.11 1996/09/30 19:48:44 cgd Exp $";
+static char *rcsid = "$NetBSD: kvm_mkdb.c,v 1.12 1996/10/12 00:51:45 cgd Exp $";
 #endif
 #endif /* not lint */
 
@@ -105,10 +105,8 @@ main(argc, argv)
 	nlistpath = argc > 0 ? argv[0] : _PATH_UNIX;
 	nlistname = basename(nlistpath);
 
-	(void)snprintf(dbtemp, sizeof(dbtemp), "%skvm_%s.tmp",
-	    _PATH_VARDB, nlistname);
-	(void)snprintf(dbname, sizeof(dbname), "%skvm_%s.db",
-	    _PATH_VARDB, nlistname);
+	(void)snprintf(dbname, sizeof(dbname), "%s", _PATH_KVMDB);
+	(void)snprintf(dbtemp, sizeof(dbtemp), "%s.tmp", _PATH_KVMDB);
 	(void)umask(0);
 	db = dbopen(dbtemp, O_CREAT | O_EXLOCK | O_TRUNC | O_RDWR,
 	    S_IRUSR | S_IWUSR | S_IRGRP | S_IROTH, DB_HASH, &openinfo);

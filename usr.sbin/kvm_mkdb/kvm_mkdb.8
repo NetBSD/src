@@ -1,4 +1,4 @@
-.\"	$NetBSD: kvm_mkdb.8,v 1.7 1996/09/30 18:27:00 thorpej Exp $
+.\"	$NetBSD: kvm_mkdb.8,v 1.8 1996/10/12 00:51:44 cgd Exp $
 .\"
 .\" Copyright (c) 1989, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -44,24 +44,25 @@
 .Op file
 .Sh DESCRIPTION
 .Nm Kvm_mkdb
-creates a database in
-.Pa /var/db
+creates a database,
+.Pa /var/db/kvm.db ,
 containing information about the specified file.
 If no file is specified,
 .Pa /netbsd
 is used by default.
-The file is named ``kvm_filename.db'', where ``filename'' is the
-name of the file read.
+The database will only be recreated if its contents
+do not already describe the running kernel.
+.Pp
 Various library routines consult this database.
 The only information currently stored is the kernel namelist, which is
 used by the
 .Xr kvm_nlist 3
-function, however, in the future the database may contain other static
+function.  In the future, the database may contain other static
 information about the current system.
 .Sh FILES
-.Bl -tag -width /var/db/kvm_netbsd.db -compact
+.Bl -tag -width /var/db/kvm.db -compact
 .It Pa /netbsd
-.It Pa /var/db/kvm_netbsd.db
+.It Pa /var/db/kvm.db
 .El
 .Sh SEE ALSO
 .Xr kvm_nlist 3
