@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.10 1998/11/04 13:45:57 christos Exp $	*/
+/*	$NetBSD: main.c,v 1.11 2000/04/01 20:44:43 mjl Exp $	*/
 
 /* main.c: This file contains the main control and user-interface routines
    for the ed line editor. */
@@ -39,7 +39,7 @@ __COPYRIGHT(
 #if 0
 static char *rcsid = "@(#)main.c,v 1.1 1994/02/01 00:34:42 alm Exp";
 #else
-__RCSID("$NetBSD: main.c,v 1.10 1998/11/04 13:45:57 christos Exp $");
+__RCSID("$NetBSD: main.c,v 1.11 2000/04/01 20:44:43 mjl Exp $");
 #endif
 #endif /* not lint */
 
@@ -447,7 +447,7 @@ next_addr()
 
 int patlock = 0;	/* if set, pattern not freed by get_compiled_pattern() */
 
-long rows = 22;		/* scroll length: ws_row - 2 */
+int rows = 22;		/* scroll length: ws_row - 2 */
 
 /* exec_command: execute the next command in command buffer; return print
    request, if any */
