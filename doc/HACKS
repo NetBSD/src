@@ -1,4 +1,4 @@
-# $NetBSD: HACKS,v 1.9 2003/09/19 16:41:58 martin Exp $
+# $NetBSD: HACKS,v 1.10 2003/09/26 13:39:49 skrll Exp $
 #
 # This file is intended to document workarounds for currently unsolved
 # (mostly) compiler bugs.
@@ -236,13 +236,4 @@ descr
 	fail with "makes integer from pointer without a cast".  This
 	is observed on e.g. the sun3 port.  Ideally the "types" for
 	symbols should be consistent across all ports.
-kcah
-
-hack	i386 / sparc default debugging type in GCC 3.3.1
-cdate	19 Sept 2003
-who	mrg
-file	gnu/dist/gcc/gcc/config/{i386,sparc}/netbsd-elf.h
-descr
-	Until i386 & sparc* switch to GDB 5.3, the default debugging
-	format needs to be stabs not DWARF.
 kcah

@@ -56,9 +56,6 @@ Boston, MA 02111-1307, USA.  */
 
 #undef PREFERRED_DEBUGGING_TYPE
 #define PREFERRED_DEBUGGING_TYPE DWARF2_DEBUG
-/* XXX delete me when switching to GDB 5.3.  */
-#undef PREFERRED_DEBUGGING_TYPE
-#define PREFERRED_DEBUGGING_TYPE DBX_DEBUG
 
 /* This is the char to use for continuation (in case we need to turn
    continuation back on).  */
