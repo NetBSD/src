@@ -1,4 +1,4 @@
-/*	$NetBSD: disklabel.c,v 1.45 1997/10/13 09:53:26 bouyer Exp $	*/
+/*	$NetBSD: disklabel.c,v 1.46 1997/10/17 21:29:36 mark Exp $	*/
 
 /*
  * Copyright (c) 1987, 1993
@@ -47,7 +47,7 @@ __COPYRIGHT("@(#) Copyright (c) 1987, 1993\n\
 static char sccsid[] = "@(#)disklabel.c	8.4 (Berkeley) 5/4/95";
 /* from static char sccsid[] = "@(#)disklabel.c	1.2 (Symmetric) 11/28/85"; */
 #else
-__RCSID("$NetBSD: disklabel.c,v 1.45 1997/10/13 09:53:26 bouyer Exp $");
+__RCSID("$NetBSD: disklabel.c,v 1.46 1997/10/17 21:29:36 mark Exp $");
 #endif
 #endif /* not lint */
 
@@ -138,6 +138,11 @@ static int	debug;
 static struct dos_partition *dosdp;	/* i386 DOS partition, if found */
 static struct dos_partition *readmbr __P((int));
 #endif
+#ifdef __arm32__
+static u_int filecore_partition_offset;
+static u_int get_filecore_partition __P((int));
+static u_int filecore_checksum __P((u_char *));
+#endif	/* __arm32__ */
 
 int main __P((int, char *[]));
 
@@ -268,7 +273,17 @@ main(argc, argv)
 	 */
 	dosdp = readmbr(f);
 #endif
-
+#ifdef __arm32__
+	/*
+	 * Check for the presence of a RiscOS filecore boot block
+	 * indicating an ADFS file system on the disc.
+	 * Return the offset to the NetBSD part of the disc if
+	 * this can be determined.
+	 * This routine will terminate disklabel if the disc
+	 * is found to be ADFS only.
+	 */
+	filecore_partition_offset = get_filecore_partition(f);
+#endif	/* __arm32__ */
 	switch (op) {
 
 	case EDIT:
@@ -449,7 +464,9 @@ writelabel(f, boot, lp)
 			sectoffset = 0;
 		}
 #endif
-
+#ifdef __arm32__
+		sectoffset = filecore_partition_offset * DEV_BSIZE;
+#endif	/* __arm32__ */
 		/*
 		 * First set the kernel disk label,
 		 * then write a label to the raw disk.
@@ -614,6 +631,122 @@ readmbr(f)
 }
 #endif
 
+#ifdef __arm32__
+/*
+ * static u_int filecore_checksum(u_char *bootblock)
+ *
+ * Calculates the filecore boot block checksum. This is used to validate
+ * a filecore boot block on the disc. If a boot block is validated then
+ * it is used to locate the partition table. If the boot block is not
+ * validated, it is assumed that the whole disc is NetBSD.
+ */
+
+/*
+ * This can be coded better using add with carry but as it is used rarely
+ * there is not much point writing it in assembly.
+ */
+ 
+static u_int
+filecore_checksum(bootblock)
+	u_char *bootblock;
+{
+	u_int sum;
+	u_int loop;
+    
+	sum = 0;
+
+	for (loop = 0; loop < 512; ++loop)
+		sum += bootblock[loop];
+
+	if (sum == 0) return(0xffff);
+
+	sum = 0;
+    
+	for (loop = 0; loop < 511; ++loop) {
+		sum += bootblock[loop];
+		if (sum > 255)
+			sum -= 255;
+	}
+
+	return(sum);
+}
+
+/*
+ * Fetch filecore bootblock from disk and analyse it
+ */
+
+static u_int
+get_filecore_partition(f)
+	int f;
+{
+	static char bb[DEV_BSIZE];
+	struct filecore_bootblock *fcbb = (struct filecore_bootblock *)bb;
+	u_int offset;
+
+	if (lseek(f, (off_t)FILECORE_BOOT_SECTOR * DEV_BSIZE, SEEK_SET) < 0 ||
+	    read(f, bb, sizeof(bb)) < sizeof(bb))
+		err(4, "can't read filecore boot block");
+
+	/* Check if table is valid. */
+	if (filecore_checksum(bb) != fcbb->checksum)
+		return(0);
+
+	/*
+	 * Check for NetBSD/arm32 (RiscBSD) partition marker.
+	 * If found the NetBSD disklabel location is easy.
+	 */
+
+	offset = (fcbb->partition_cyl_low + (fcbb->partition_cyl_high << 8))
+	    * fcbb->heads * fcbb->secspertrack;
+
+	if (fcbb->partition_type == PARTITION_FORMAT_RISCBSD)
+		return(offset);
+	else if (fcbb->partition_type == PARTITION_FORMAT_RISCIX) {
+		/*
+		 * Ok we need to read the RISCiX partition table and
+		 * search for a partition named RiscBSD, NetBSD or
+		 * Empty:
+		 */
+
+		struct riscix_partition_table *riscix_part = (struct riscix_partition_table *)bb;
+		int loop;
+
+		if (lseek(f, (off_t)offset * DEV_BSIZE, SEEK_SET) < 0 ||
+		    read(f, bb, sizeof(bb)) < sizeof(bb))
+			err(4, "can't read riscix partition table");
+
+		/* Break out as soon as we find a suitable partition */
+
+		for (loop = 0; loop < NRISCIX_PARTITIONS; ++loop) {
+			if (strcmp(riscix_part->partitions[loop].rp_name, "RiscBSD") == 0
+			    || strcmp(riscix_part->partitions[loop].rp_name, "NetBSD") == 0
+			    || strcmp(riscix_part->partitions[loop].rp_name, "Empty:") == 0) {
+				offset = riscix_part->partitions[loop].rp_start;
+				break;
+			}
+		}
+		if (loop == NRISCIX_PARTITIONS) {
+			/*
+			 * Valid filecore boot block, RISCiX partition table
+			 * but no NetBSD partition. We should leave this disc alone.
+			 */
+			err(4, "No NetBSD partition found in RISCiX partition table - Cannot label\n");
+		}
+		return(offset);
+	} else {
+		/*
+		 * Valid filecore boot block and no non-ADFS partition.
+		 * This means that the whole disc is allocated for ADFS 
+		 * so do not trash ! If the user really wants to put a
+		 * NetBSD disklabel on the disc then they should remove
+		 * the filecore boot block first with dd.
+		 */
+		err(4, "This is a filecore only disk - Cannot label\n");
+	}
+	return(0);
+}
+#endif	/* __arm32__ */
+
 /*
  * Fetch disklabel for disk.
  * Use ioctl to get label unless -r flag is given.
@@ -632,6 +765,9 @@ readlabel(f)
 		if (dosdp && dosdp->dp_size && dosdp->dp_typ == DOSPTYP_386BSD)
 			sectoffset = dosdp->dp_start * DEV_BSIZE;
 #endif
+#ifdef __arm32__
+		sectoffset = filecore_partition_offset * DEV_BSIZE;
+#endif	/* __arm32__ */
 		if (lseek(f, sectoffset, SEEK_SET) < 0 ||
 		    read(f, bootarea, BBSIZE) < BBSIZE)
 			err(4, "%s", specname);
