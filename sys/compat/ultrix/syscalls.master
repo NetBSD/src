@@ -1,4 +1,4 @@
-	$NetBSD: syscalls.master,v 1.17 1996/09/03 03:12:42 mycroft Exp $
+	$NetBSD: syscalls.master,v 1.18 1997/01/31 02:20:03 thorpej Exp $
 
 ;	@(#)syscalls.master	8.1 (Berkeley) 7/19/93
 
@@ -246,7 +246,7 @@
 161	STD		{ int ultrix_sys_fstatfs(int fd, \
 			    struct ultrix_statfs *buf); }
 162	UNIMPL		umount
-#ifdef NFSCLIENT
+#ifdef NFS
 163	NOARGS		{ int async_daemon(void); }
 164	NOARGS		{ int sys_getfh(char *fname, fhandle_t *fhp); }
 #else
