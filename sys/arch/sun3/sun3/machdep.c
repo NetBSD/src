@@ -231,7 +231,7 @@ void cpu_startup()
 	callout[i-1].c_next = &callout[i];
     callout[i-1].c_next = NULL;
 
-    printf("avail mem = %d\n", ptoa(vm_page_free_count));
+    printf("avail mem = %d\n", ptoa(cnt.v_free_count));
     printf("using %d buffers containing %d bytes of memory\n",
 	   nbuf, bufpages * CLBYTES);
 
@@ -314,9 +314,7 @@ void consinit()
 
 void cpu_reset()
 {
-    mon_reboot("");		/* or do i have to get the value out of
-				 * the eeprom...bleh
-				 */
+    sun3_rom_reboot();
 }
 
 #ifdef HPUXCOMPAT
@@ -963,14 +961,12 @@ void boot(howto)
      int howto;
 {
 
-    mon_printf("booting....\n");
-    sun3_stop();
-    if ((howto&RB_NOSYNC) == 0 && waittime < 0 && bfreelist[0].b_forw) {
+    mon_printf("kernel ended deliberately\n");
+
+    if ((howto&RB_NOSYNC) == 0 && waittime < 0) {
 	struct buf *bp;
 	int iter, nbusy;
-	extern struct proc proc0;
 
-	
 	waittime = 0;
 	(void) splnet();
 	printf("syncing disks... ");
@@ -979,7 +975,7 @@ void boot(howto)
 		 */
 	if (panicstr == 0)
 	    vnode_pager_umount(NULL);
-	sync(&proc0, (void *) NULL, (int *) NULL);
+	sync((struct proc *)0, (void *)0, (int *)0);
 	
 	for (iter = 0; iter < 20; iter++) {
 	    nbusy = 0;
@@ -997,18 +993,22 @@ void boot(howto)
 	    printf("done\n");
 	DELAY(10000);			/* wait for printf to finish */
     }
+    /*
+     * If we've been adjusting the clock, the todr
+     * will be out of synch; adjust it now.
+     */
     resettodr();
     splhigh();
     if (howto&RB_HALT) {
 	printf("\n");
 	printf("The operating system has halted.\n");
-	sun3_stop();
+	sun3_rom_halt();
     } else {
 	if (howto & RB_DUMP) {
 	    printf("dumping not supported yet :)\n");
 	}
     }
-    cpu_reset();
+    sun3_rom_reboot();
     for(;;) ;
     /*NOTREACHED*/
 }
@@ -1097,10 +1097,8 @@ hexstr(val, len)
 	nbuf[len] = '\0';
 	for (i = len-1; i >= 0; --i) {
 		x = val & 0xF;
-		if (x > 9)
-			nbuf[i] = x - 10 + 'A';
-		else
-			nbuf[i] = x + '0';
+		/* Isn't this a cool trick? */
+		nbuf[i] = "0123456789ABCDEF"[x];
 		val >>= 4;
 	}
 	return(nbuf);
