@@ -1132,6 +1132,24 @@ legitimize_pic_address (orig, reg, code)
   /* fprintf(stderr, "after: "); debug_rtx(pic_ref); */
   return pic_ref;
 }
+
+int
+vax_reg_used_p(operand, reg)
+     rtx operand;
+     int reg;
+{
+   if (GET_CODE (operand) == REG && REGNO (operand) == reg)
+     return 1;
+   if (GET_CODE (operand) == MEM ||
+       GET_CODE (operand) == PRE_DEC ||
+       GET_CODE (operand) == POST_DEC)
+     return vax_reg_used_p (XEXP(operand, 0), reg);
+   if (GET_CODE (operand) == PLUS ||
+       GET_CODE (operand) == MULT)
+     return vax_reg_used_p (XEXP(operand, 0), reg) ||
+	    vax_reg_used_p (XEXP(operand, 1), reg);
+   return 0;
+}
 
 #ifdef VMS_TARGET
 /* Additional support code for VMS target. */
