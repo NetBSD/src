@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.own.mk,v 1.426 2004/11/28 07:00:52 jmc Exp $
+#	$NetBSD: bsd.own.mk,v 1.427 2004/11/28 11:14:41 jmc Exp $
 
 .if !defined(_BSD_OWN_MK_)
 _BSD_OWN_MK_=1
@@ -223,6 +223,7 @@ TOOL_FGEN=		${TOOLDIR}/bin/${_TOOL_PREFIX}fgen
 TOOL_GENCAT=		${TOOLDIR}/bin/${_TOOL_PREFIX}gencat
 TOOL_GROFF=		PATH=${TOOLDIR}/lib/groff:$${PATH} ${TOOLDIR}/bin/${_TOOL_PREFIX}groff
 TOOL_HEXDUMP=		${TOOLDIR}/bin/${_TOOL_PREFIX}hexdump
+TOOL_HP300MKBOOT=	${TOOLDIR}/bin/${_TOOL_PREFIX}hp300-mkboot
 TOOL_INDXBIB=		${TOOLDIR}/bin/${_TOOL_PREFIX}indxbib
 TOOL_INSTALLBOOT=	${TOOLDIR}/bin/${_TOOL_PREFIX}installboot
 TOOL_INSTALL_INFO=	${TOOLDIR}/bin/${_TOOL_PREFIX}install-info
