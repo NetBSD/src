@@ -1,4 +1,4 @@
-/*	$NetBSD: ehci.c,v 1.78 2004/10/22 10:38:17 augustss Exp $ */
+/*	$NetBSD: ehci.c,v 1.79 2004/10/23 13:36:43 augustss Exp $ */
 
 /*
  * Copyright (c) 2004 The NetBSD Foundation, Inc.
@@ -65,7 +65,7 @@
 */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ehci.c,v 1.78 2004/10/22 10:38:17 augustss Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ehci.c,v 1.79 2004/10/23 13:36:43 augustss Exp $");
 
 #include "ohci.h"
 #include "uhci.h"
@@ -797,7 +797,7 @@ ehci_idone(struct ehci_xfer *ex)
 
 	/* If there are left over TDs we need to update the toggle. */
 	if (sqtd != NULL) {
-		printf("ehci_idone: need toggle update status=%08x nstatus=%08x\n", status, nstatus);
+		DPRINTF(("ehci_idone: need toggle update status=%08x nstatus=%08x\n", status, nstatus));
 #if 0
 		ehci_dump_sqh(epipe->sqh);
 		ehci_dump_sqtds(ex->sqtdstart);
