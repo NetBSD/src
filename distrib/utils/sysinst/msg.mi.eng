@@ -1,4 +1,4 @@
-/*	$NetBSD: msg.mi.eng,v 1.7.2.11 1997/12/04 13:27:28 jonathan Exp $	*/
+/*	$NetBSD: msg.mi.eng,v 1.7.2.12 1997/12/05 14:12:45 jonathan Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -85,6 +85,20 @@ before this procedure!  Do you really want to upgrade NetBSD?
 (This is your last warning before this procedure starts modifying your
 disks.)
 }
+
+message reinstallusure
+{Ok, lets unpack the NetBSD distribution sets to a bootable hard disk.
+This procedure just fetches and unpacks sets onto an pre-partitioned
+bootable disk. It does not label disks, upgrade bootblocks, or save
+any existing configuration info.  (Quit and choose `install' or
+`upgrade' if you want those options.)  You should have already done an
+`install' or `upgrade' before starting this procedure!
+
+Do you really want to re-install  NetBSD dstribution sets?
+(This is your last warning before this procedure starts modifying your
+disks.)
+}
+
 
 message nodisk
 {I can not find any hard disks for use by NetBSD.  You will be
@@ -270,13 +284,31 @@ message instcomplete
 {The installation of NetBSD-@@VERSION@@ is now complete.  The system
 should boot from hard disk.  Follow the instructions in the INSTALL
 document about final configuration of your system.
+
+At a minimum, you must edit rc.conf for your local environmment
+and set RC_CONFIGURED before you can boot to multiuser.
 }
 
-message upgrcomplete
+message unpackcomplete
 {The upgrade to NetBSD-@@VERSION@@ is now complete.  You will
 now need to follow the instructions in the INSTALL document as to 
 what you need to do to get your system re-configured for your
 situation.  Your old /etc has been saved as /etc.old.
+
+At a minimum, you must edit rc.conf for your local environmment
+and set RC_CONFIGURED before you can boot to multiuser.
+}
+
+
+message upgrcomplete
+{Unpacking additional release sets of NetBSD-@@VERSION@@ is now
+complete.  Unpacking sets has clobbered the target /etc.  Any /etc.old
+saved by an earlier upgrade was not touched.  You will now need to
+follow the instructions in the INSTALL document to get your system
+re-configured for your situation.
+
+At a minimum, you must edit rc.conf for your local environmment
+and set RC_CONFIGURED before you can boot to multiuser.
 }
 
 message distmedium
@@ -325,9 +357,9 @@ message dev
 {device}
 
 message nfssource
-{Enter the nfs host and directory where the distribution is located.
-Remember, the directory should contain the .tgz files and be nfs
-mountable.
+{Enter the nfs host and server directory where the distribution is
+located.  Remember, the directory should contain the .tgz files and
+must be nfs mountable.
 
 host:      %s
 directory: %s
@@ -355,6 +387,13 @@ filesystem: %s
 directory:  %s
 }
 
+message localdir
+{Enter the already-mounted local directory where the distribution is
+located.  Remember, the directory should contain the .tgz files.
+
+directory:  %s
+}
+
 message filesys
 {filesystem}
 
@@ -363,6 +402,13 @@ message cdrombadmount
 
 message localfsbadmount
 {%s could not be mounted on local device %s.}
+
+message badlocalsetdir
+{%s is not a directory}
+
+message badsetdir 
+{%s does not contain the mandatory installation sets
+base.tgz and kern.tgz.  Are you sure you'e got the right directory?}
 
 message nonet
 {I can not find any network interfaces for use by NetBSD.  You will be
@@ -444,8 +490,22 @@ message badls
 {Could not run /bin/ls.  This error should not have happened. Install aborted.
 }
 
+message notarfile
+{Release set %s does not exist.
+}
+
+message endtarok
+{All selected distribution sets unpacked sucessfully.}
+
 message endtar
-{All your files have now been extracted.  Please hit CR to continue.}
+{There were problems unpacking distribution sets.
+Your installation is incomplete. 
+
+You selected %d distribution sets.  I couldn't find %d of those sets at all.
+Of the %d that were found, %d unpacked without errors and %d with errors.
+
+The installation is aborted. Please recheck your distribution source
+and consider re-installing sets from the main menu.}
 
 message abort
 {Your choices have made it impossible to install NetBSD.  Install aborted.
@@ -459,6 +519,12 @@ by hand.  Installation aborted.
 message abortupgr
 {The distribution was not successfully loaded.  You will need to proceed
 by hand.  Upgrade aborted.
+}
+
+message abortunpack
+{Unpacking additional sets was not successful.  You will need to
+proceed by hand, or choose a different source for release sets and try
+again.
 }
 
 message openmsgbuf
@@ -501,11 +567,16 @@ message badetcfstab
 {Help! Can't parse /etc/fstab in target disk %s.  Aborting upgrade.
 }
 
-message etc_oldexists
-{I cannot save /etc as /etc.old. The target disk already has an /etc.old,
-perhaps from an earlier upgrade? Please fix this before continuing.
-Aborting upgrade. 
-}
+message etc_oldexists 
+{I cannot save /etc as /etc.old, because the target disk already has an
+/etc.old. Please fix this before continuing.
+
+One way is to start a shell from the Utilities menu, examine the
+target /etc and /etc.old.  If /etc.old is from a completed upgrade,
+you can rm -f etc.old and restart.  Or if /etc.old is from a recent,
+incomplete upgrade, you can rm -f /etc and mv etc.old to /etc.
+
+Aborting upgrade.}
 
 message netnotup
 {There was a problem in setting up the network.  Either your gateway
@@ -574,8 +645,9 @@ message cur_distsets
 message tarerror
 {There was an error in extracting the file %s.  That means some files
 were not extracted correctly and your system will not be complete.
-CR to continue
-}
+The installation is aborting.
+
+Press CR to continue after a short delay.}
 
 message etc_hosts
 {
