@@ -1,4 +1,4 @@
-/*	$NetBSD: bootinfo.h,v 1.8 2000/06/02 18:27:47 thorpej Exp $	*/
+/*	$NetBSD: bootinfo.h,v 1.9 2002/11/29 19:33:26 fvdl Exp $	*/
 
 /*
  * Copyright (c) 1997
@@ -85,8 +85,8 @@ struct btinfo_console {
 struct btinfo_symtab {
 	struct btinfo_common common;
 	int nsym;
-	int ssym;
-	int esym;
+	long ssym;
+	long esym;
 };
 
 struct bi_memmap_entry {
