@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.47 2001/06/19 07:14:24 simonb Exp $	*/
+/*	$NetBSD: trap.c,v 1.48 2001/06/26 13:00:18 matt Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -113,6 +113,7 @@ trap(frame)
 				     : "=r"(user_sr) : "K"(USER_SR));
 				va &= ADDR_PIDX | ADDR_POFF;
 				va |= user_sr << ADDR_SR_SHFT;
+				/* KERNEL_PROC_LOCK(p); XXX */
 				map = &p->p_vmspace->vm_map;
 			}
 			if (frame->dsisr & DSISR_STORE)
@@ -120,6 +121,14 @@ trap(frame)
 			else
 				ftype = VM_PROT_READ;
 			rv = uvm_fault(map, trunc_page(va), 0, ftype);
+			if (map != kernel_map) {
+				/*
+				 * Record any stack growth...
+				 */
+				if (rv == 0)
+					uvm_grow(p, trunc_page(va));
+				/* KERNEL_PROC_UNLOCK(p); XXX */
+			}
 			KERNEL_UNLOCK();
 			if (rv == 0)
 				return;
@@ -150,6 +159,10 @@ trap(frame)
 		rv = uvm_fault(&p->p_vmspace->vm_map, trunc_page(frame->dar),
 		    0, ftype);
 		if (rv == 0) {
+			/*
+			 * Record any stack growth...
+			 */
+			uvm_grow(p, trunc_page(frame->dar));
 			KERNEL_PROC_UNLOCK(p);
 			break;
 		}
