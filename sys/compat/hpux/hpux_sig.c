@@ -1,4 +1,4 @@
-/*	$NetBSD: hpux_sig.c,v 1.15 1995/11/28 08:39:50 thorpej Exp $	*/
+/*	$NetBSD: hpux_sig.c,v 1.16 1997/04/01 19:59:02 scottr Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -49,10 +49,13 @@
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/kernel.h>
+#include <sys/mount.h>
 #include <sys/proc.h>
 #include <sys/signalvar.h>
+#include <sys/syscallargs.h>
 
 #include <compat/hpux/hpux.h>
+#include <compat/hpux/hpux_sig.h>
 #include <compat/hpux/hpux_syscallargs.h>
 
 /* indexed by HPUX signal number - 1 */
@@ -86,11 +89,11 @@ hpux_sys_sigvec(p, v, retval)
 	void *v;
 	register_t *retval;
 {
-	register struct hpux_sys_sigvec_args *uap = v;
+	struct hpux_sys_sigvec_args *uap = v;
 	struct sigvec vec;
-	register struct sigacts *ps = p->p_sigacts;
-	register struct sigvec *sv;
-	register int sig;
+	struct sigacts *ps = p->p_sigacts;
+	struct sigvec *sv;
+	int sig;
 	int bit, error;
 
 	sig = hpuxtobsdsig(SCARG(uap, signo));
@@ -134,7 +137,7 @@ hpux_sys_sigvec(p, v, retval)
 
 int
 hpux_sys_sigblock(p, v, retval)
-	register struct proc *p;
+	struct proc *p;
 	void *v;
 	register_t *retval;
 {
@@ -205,7 +208,7 @@ hpux_sys_kill(p, v, retval)
  */
 int
 hpux_sys_sigprocmask(p, v, retval)
-	register struct proc *p;
+	struct proc *p;
 	void *v;
 	register_t *retval;
 {
@@ -251,7 +254,7 @@ hpux_sys_sigprocmask(p, v, retval)
 
 int
 hpux_sys_sigpending(p, v, retval)
-	register struct proc *p;
+	struct proc *p;
 	void *v;
 	register_t *retval;
 {
@@ -265,12 +268,12 @@ hpux_sys_sigpending(p, v, retval)
 
 int
 hpux_sys_sigsuspend(p, v, retval)
-	register struct proc *p;
+	struct proc *p;
 	void *v;
 	register_t *retval;
 {
 	struct hpux_sys_sigsuspend_args *uap = v;
-	register struct sigacts *ps = p->p_sigacts;
+	struct sigacts *ps = p->p_sigacts;
 	hpux_sigset_t sigset;
 	int mask;
 
@@ -291,11 +294,11 @@ hpux_sys_sigaction(p, v, retval)
 	void *v;
 	register_t *retval;
 {
-	register struct hpux_sys_sigaction_args *uap = v;
+	struct hpux_sys_sigaction_args *uap = v;
 	struct hpux_sigaction action;
-	register struct sigacts *ps = p->p_sigacts;
-	register struct hpux_sigaction *sa;
-	register int sig;
+	struct sigacts *ps = p->p_sigacts;
+	struct hpux_sigaction *sa;
+	int sig;
 	int bit;
 
 	sig = hpuxtobsdsig(SCARG(uap, signo));
@@ -332,7 +335,7 @@ hpux_sys_sigaction(p, v, retval)
 		 */
 		act.sa_handler = sa->sa_handler;
 		act.sa_mask = hpuxtobsdmask(sa->sa_mask.sigset[0]);
-		act.sa_flags == SA_RESTART;
+		act.sa_flags = SA_RESTART;
 		if (sa->sa_flags & HPUXSA_ONSTACK)
 			act.sa_flags |= SA_ONSTACK;
 		if (sa->sa_flags & HPUXSA_NOCLDSTOP)
@@ -357,9 +360,9 @@ hpux_sys_ssig_6x(p, v, retval)
 		syscallarg(int) signo;
 		syscallarg(sig_t) fun;
 	} */ *uap = v;
-	register int a;
+	int a;
 	struct sigaction vec;
-	register struct sigaction *sa = &vec;
+	struct sigaction *sa = &vec;
 
 	a = hpuxtobsdsig(SCARG(uap, signo));
 	sa->sa_handler = SCARG(uap, fun);
@@ -374,7 +377,7 @@ hpux_sys_ssig_6x(p, v, retval)
 		return (0);
 	}
 	if (a <= 0 || a >= NSIG || a == SIGKILL || a == SIGSTOP ||
-	    a == SIGCONT && sa->sa_handler == SIG_IGN)
+	    (a == SIGCONT && sa->sa_handler == SIG_IGN))
 		return (EINVAL);
 	sa->sa_mask = 0;
 	sa->sa_flags = 0;
@@ -389,7 +392,7 @@ hpux_sys_ssig_6x(p, v, retval)
 /* signal numbers: convert from HPUX to BSD */
 int
 hpuxtobsdsig(sig)
-	register int sig;
+	int sig;
 {
 	if (--sig < 0 || sig >= NSIG)
 		return(0);
@@ -399,7 +402,7 @@ hpuxtobsdsig(sig)
 /* signal numbers: convert from BSD to HPUX */
 int
 bsdtohpuxsig(sig)
-	register int sig;
+	int sig;
 {
 	if (--sig < 0 || sig >= NSIG)
 		return(0);
@@ -409,9 +412,9 @@ bsdtohpuxsig(sig)
 /* signal masks: convert from HPUX to BSD (not pretty or fast) */
 int
 hpuxtobsdmask(mask)
-	register int mask;
+	int mask;
 {
-	register int nmask, sig, nsig;
+	int nmask, sig, nsig;
 
 	if (mask == 0 || mask == -1)
 		return(mask);
@@ -424,9 +427,9 @@ hpuxtobsdmask(mask)
 
 int
 bsdtohpuxmask(mask)
-	register int mask;
+	int mask;
 {
-	register int nmask, sig, nsig;
+	int nmask, sig, nsig;
 
 	if (mask == 0 || mask == -1)
 		return(mask);

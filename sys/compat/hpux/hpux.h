@@ -1,4 +1,4 @@
-/*	$NetBSD: hpux.h,v 1.10 1995/12/08 07:54:43 thorpej Exp $	*/
+/*	$NetBSD: hpux.h,v 1.11 1997/04/01 19:58:58 scottr Exp $	*/
 
 /*
  * Copyright (c) 1995 Jason R. Thorpe.  All rights reserved.
@@ -281,7 +281,7 @@ struct hpux_shmid_ds {
 /* HP-UX POSIX signal stuff implementation */
 typedef struct __hpux_sigset_t { long sigset[8]; } hpux_sigset_t;
 struct hpux_sigaction {
-	void		(*sa_handler)();
+	void		(*sa_handler) __P((int));
 	hpux_sigset_t	sa_mask;
 	int		sa_flags;
 };
