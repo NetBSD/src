@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.4 2003/09/30 09:49:29 lukem Exp $
+#	$NetBSD: Makefile,v 1.5 2004/01/17 03:53:54 rtr Exp $
 
 .include "../Makefile.serverlib"
 
@@ -20,6 +20,12 @@ CPPFLAGS+=	-I${X11SRCDIR.xc}/programs/Xserver/include \
 		-I${DESTDIR}${X11INCDIR}/X11/extensions \
 		-I${X11SRCDIR.xc}/programs/Xserver/Xext \
 		-I${X11SRCDIR.xc}/programs/Xserver/lbx
+
+.include "../Makefile.common"
+
+.if ${XSERVER_XAMIGA} != "no"
+CPPFLAGS+=	-DNEED_SCREEN_REGIONS
+.endif
 
 CPPFLAGS.globals.c=	-DCOMPILEDDEFAULTFONTPATH=\"${X11FONTDIR}/misc/,${X11FONTDIR}/Speedo/,${X11FONTDIR}/Type1/,${X11FONTDIR}/CID/,${X11FONTDIR}/75dpi/,${X11FONTDIR}/100dpi/\" \
 			-DRGB_DB=\"${X11LIBDIR}/rgb\"
