@@ -1,5 +1,5 @@
-/*	$NetBSD: casttest.c,v 1.3 2001/11/28 00:52:24 itojun Exp $	*/
-/*	$KAME: casttest.c,v 1.2 2000/11/08 05:58:25 itojun Exp $	*/
+/*	$NetBSD: casttest.c,v 1.4 2001/11/28 03:16:06 itojun Exp $	*/
+/*	$KAME: casttest.c,v 1.5 2001/11/28 03:14:03 itojun Exp $	*/
 
 /*
  * Copyright (C) 2000 WIDE Project.
@@ -158,12 +158,17 @@ test1(rounds)
 again:
 
 	for (z = 0; z < 3; z++) {
+#if 0
 		if (k_len[z] != 16)
 			continue;
+#endif
 
 		set_cast128_subkey(subkey, k, k_len[z]);
 
-		cast128_encrypt_round16(out, in, subkey);
+		if (k_len[z] * 8 <= 80)
+			cast128_encrypt_round12(out, in, subkey);
+		else
+			cast128_encrypt_round16(out, in, subkey);
 
 		if (memcmp(out, c[z], 8) != 0) {
 			printf("ecb cast error encrypting for keysize %d\n",
@@ -179,7 +184,10 @@ again:
 			printf("\n");
 		}
 
-		cast128_decrypt_round16(out, out, subkey);
+		if (k_len[z] * 8 <= 80)
+			cast128_decrypt_round12(out, out, subkey);
+		else
+			cast128_decrypt_round16(out, out, subkey);
 		if (memcmp(out, in, 8) != 0) {
 			printf("ecb cast error decrypting for keysize %d\n",
 			    k_len[z] * 8);
