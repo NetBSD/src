@@ -1,4 +1,4 @@
-/*	$NetBSD: syncfs.h,v 1.4.4.1 2002/01/08 00:33:44 nathanw Exp $	*/
+/*	$NetBSD: syncfs.h,v 1.4.4.2 2003/01/07 21:41:18 thorpej Exp $	*/
 
 /*
  * Copyright 1997 Marshall Kirk McKusick. All Rights Reserved.
@@ -31,6 +31,9 @@
  * SUCH DAMAGE.
  */
 
+#ifndef _MISCFS_SYNCFS_SYNCFS_H_
+#define _MISCFS_SYNCFS_SYNCFS_H_
+
 /*
  * Routines to create and manage a filesystem syncer vnode.
  */
@@ -56,3 +59,5 @@ extern int (**sync_vnodeop_p) __P((void *));
 extern int syncer_maxdelay;	/* maximum delay time */ 
 extern struct lock syncer_lock;	/* lock to freeze syncer during unmount */
 LIST_HEAD(synclist, vnode);
+
+#endif /* _MISCFS_SYNCFS_SYNCFS_H_ */

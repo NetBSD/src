@@ -1,4 +1,4 @@
-/*	$NetBSD: socketvar.h,v 1.42.2.7 2002/11/11 22:16:36 nathanw Exp $	*/
+/*	$NetBSD: socketvar.h,v 1.42.2.8 2003/01/07 21:42:15 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1990, 1993
@@ -190,7 +190,7 @@ do {									\
 	    (so)->so_qlen || (so)->so_error)
 
 /* can we write something to so? */
-#define	sowriteable(so) \
+#define	sowritable(so) \
 	((sbspace(&(so)->so_snd) >= (so)->so_snd.sb_lowat && \
 	    (((so)->so_state&SS_ISCONNECTED) || \
 	      ((so)->so_proto->pr_flags&PR_CONNREQUIRED)==0)) || \

@@ -1,4 +1,4 @@
-/*	$NetBSD: smb_trantcp.c,v 1.1.4.3 2002/02/28 04:15:20 nathanw Exp $	*/
+/*	$NetBSD: smb_trantcp.c,v 1.1.4.4 2003/01/07 21:41:45 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2000-2001 Boris Popov
@@ -118,7 +118,7 @@ nb_poll(struct nbpcb *nbp, int events, struct proc *p)
                         revents |= events & (POLLIN | POLLRDNORM);
 
         if (events & (POLLOUT | POLLWRNORM))
-                if (sowriteable(so))
+                if (sowritable(so))
                         revents |= events & (POLLOUT | POLLWRNORM);
 
         if (events & (POLLPRI | POLLRDBAND))
