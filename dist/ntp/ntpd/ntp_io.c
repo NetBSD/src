@@ -1,4 +1,4 @@
-/*	$NetBSD: ntp_io.c,v 1.5 2002/01/03 11:22:07 martin Exp $	*/
+/*	$NetBSD: ntp_io.c,v 1.6 2002/01/05 13:24:40 martin Exp $	*/
 
 /*
  * ntp_io.c - input/output routines for ntpd.	The socket-opening code
@@ -35,7 +35,7 @@
 #endif
 #include <arpa/inet.h>
 
-#if _BSDI_VERSION >= 199510
+#if _BSDI_VERSION >= 199510 || (defined(__NetBSD__) && __NetBSD_Version__ >= 105000000)
 # include <ifaddrs.h>
 #endif
 
@@ -206,11 +206,11 @@ create_sockets(
 	u_int port
 	)
 {
-#if _BSDI_VERSION >= 199510
+#if _BSDI_VERSION >= 199510 || (defined(__NetBSD__) && __NetBSD_Version__ >= 105000000)
 	int i, j;
 	struct ifaddrs *ifaddrs, *ifap;
 	struct sockaddr_in resmask;
-#if 	_BSDI_VERSION < 199701
+#if 	_BSDI_VERSION < 199701 && !defined(__NetBSD__)
 	struct ifaddrs *lp;
 	int num_if;
 #endif
@@ -244,8 +244,8 @@ create_sockets(
 	inter_list[0].notsent = 0;
 	inter_list[0].flags = INT_BROADCAST;
 
-#if _BSDI_VERSION >= 199510
-#if 	_BSDI_VERSION >= 199701
+#if _BSDI_VERSION >= 199510 || (defined(__NetBSD__) && __NetBSD_Version__ >= 105000000)
+#if 	_BSDI_VERSION >= 199701 || (defined(__NetBSD__) && __NetBSD_Version__ >= 105000000)
 	if (getifaddrs(&ifaddrs) < 0)
 	{
 		msyslog(LOG_ERR, "getifaddrs: %m");
@@ -333,10 +333,10 @@ create_sockets(
 		 * one physical interface. -wsr
 		 */
 		for (j=0; j < i; j++)
-		    if (inter_list[j].sin.sin_addr.s_addr &
-			inter_list[j].mask.sin_addr.s_addr ==
-			inter_list[i].sin.sin_addr.s_addr &
-			inter_list[i].mask.sin_addr.s_addr)
+		    if ((inter_list[j].sin.sin_addr.s_addr &
+			inter_list[j].mask.sin_addr.s_addr) ==
+			(inter_list[i].sin.sin_addr.s_addr &
+			inter_list[i].mask.sin_addr.s_addr))
 		    {
 			    if (inter_list[j].flags & INT_LOOPBACK)
 				inter_list[j] = inter_list[i];
@@ -347,7 +347,11 @@ create_sockets(
 		if (i > MAXINTERFACES)
 		    break;
 	}
+#ifdef __NetBSD__
+	freeifaddrs(ifaddrs);
+#else
 	free(ifaddrs);
+#endif
 #else	/* _BSDI_VERSION >= 199510 */
 # ifdef USE_STREAMS_DEVICE_FOR_IF_CONFIG
 	if ((vs = open("/dev/ip", O_RDONLY)) < 0)
