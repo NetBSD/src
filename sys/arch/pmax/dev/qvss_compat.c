@@ -1,4 +1,4 @@
-/*	$NetBSD: qvss_compat.c,v 1.8 1997/05/25 10:53:33 jonathan Exp $	*/
+/*	$NetBSD: qvss_compat.c,v 1.9 1997/07/02 13:59:15 jonathan Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -563,12 +563,12 @@ genConfigMouse()
 		break;
 #endif /* NDC_DS */
 
-#if NSCC > 1
+#if NSCC > 0
 	case DS_3MIN:
 	case DS_3MAXPLUS:
 		sccDivertXInput = genKbdEvent;
-		sccMouseEvent = genMouseEvent;
-		sccMouseButtons = genMouseButtons;
+		sccMouseEvent = (void (*) __P((int)))genMouseEvent;
+		sccMouseButtons = (void (*) __P((int)))genMouseButtons;
 		break;
 #endif
 #if NDTOP > 0
@@ -611,12 +611,12 @@ genDeconfigMouse()
 		break;
 #endif /* NDC_DS */
 
-#if NSCC > 1
+#if NSCC > 0
 	case DS_3MIN:
 	case DS_3MAXPLUS:
 		sccDivertXInput = (void (*) __P((int)) )0;
-		sccMouseEvent = (void (*) __P((MouseReport *)) )0;
-		sccMouseButtons = (void (*) __P((MouseReport *)) )0;
+		sccMouseEvent = (void (*) __P((int)) )0;
+		sccMouseButtons = (void (*) __P((int)) )0;
 		break;
 #endif
 
