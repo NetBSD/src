@@ -1,4 +1,4 @@
-.\"	$NetBSD: main,v 1.170 2002/04/17 13:04:05 shell Exp $
+.\"	$NetBSD: main,v 1.171 2002/04/17 14:04:16 shell Exp $
 .\"
 .\" Copyright (c) 1999-2001 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -1577,6 +1577,7 @@ them, and would like to mentioned, tell us!)
 .It Ta Ken Hornstein Ta Mt kenh@netbsd.org
 .It Ta Marc Horowitz Ta Mt marc@netbsd.org
 .It Ta Nick Hudson Ta Mt skrll@netbsd.org
+.It Ta Shell Hung Ta Mt shell@netbsd.org
 .It Ta Martin Husemann Ta Mt martin@netbsd.org
 .It Ta Dean Huxley Ta Mt dean@netbsd.org
 .It Ta Bernardo Innocenti Ta Mt bernie@netbsd.org
@@ -1684,7 +1685,6 @@ them, and would like to mentioned, tell us!)
 .It Ta YAMAMOTO Takashi Ta Mt yamt@netbsd.org
 .It Ta Yuji Yamano Ta Mt yyamano@netbsd.org
 .It Ta Maria Zevenhoven Ta Mt maria7@netbsd.org
-.It Ta Shell Hung Ta Mt shell@netbsd.org
 .
 .El
 .
