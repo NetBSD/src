@@ -1,4 +1,4 @@
-/*	$NetBSD: aic6360.c,v 1.35 1995/09/26 19:31:19 thorpej Exp $	*/
+/*	$NetBSD: aic6360.c,v 1.36 1995/10/03 20:59:03 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Charles Hannum.  All rights reserved.
@@ -900,6 +900,11 @@ aic_free_acb(sc, acb, flags)
 
 	acb->flags = ACB_FREE;
 	TAILQ_INSERT_HEAD(&sc->free_list, acb, chain);
+
+	/*
+	 * If there were none, wake anybody waiting for one to come free,
+	 * starting with queued entries.
+	 */
 	if (acb->chain.tqe_next == 0)
 		wakeup(&sc->free_list);
 
@@ -911,10 +916,9 @@ aic_get_acb(sc, flags)
 	struct aic_softc *sc;
 	int flags;
 {
-	int s;
 	struct aic_acb *acb;
+	int s;
 
-	/* Get a aic command block */
 	s = splbio();
 
 	while ((acb = sc->free_list.tqh_first) == NULL &&

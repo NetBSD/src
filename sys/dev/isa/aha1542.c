@@ -1,4 +1,4 @@
-/*	$NetBSD: aha1542.c,v 1.52 1995/09/26 22:56:54 thorpej Exp $	*/
+/*	$NetBSD: aha1542.c,v 1.53 1995/10/03 20:58:56 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1994 Charles Hannum.  All rights reserved.
@@ -734,10 +734,36 @@ aha_free_ccb(aha, ccb, flags)
 	 * If there were none, wake anybody waiting for one to come free,
 	 * starting with queued entries.
 	 */
-	if (!ccb->chain.tqe_next)
+	if (ccb->chain.tqe_next == 0)
 		wakeup(&aha->free_ccb);
 
 	splx(s);
+}
+
+static inline void
+aha_init_ccb(aha, ccb)
+	struct aha_softc *aha;
+	struct aha_ccb *ccb;
+{
+	int hashnum;
+
+	bzero(ccb, sizeof(struct aha_ccb));
+	/*
+	 * put in the phystokv hash table
+	 * Never gets taken out.
+	 */
+	ccb->hashkey = KVTOPHYS(ccb);
+	hashnum = CCB_HASH(ccb->hashkey);
+	ccb->nexthash = aha->ccbhash[hashnum];
+	aha->ccbhash[hashnum] = ccb;
+}
+
+static inline void
+aha_reset_ccb(aha, ccb)
+	struct aha_softc *aha;
+	struct aha_ccb *ccb;
+{
+
 }
 
 /*
@@ -748,9 +774,8 @@ aha_get_ccb(aha, flags)
 	struct aha_softc *aha;
 	int flags;
 {
-	int s;
 	struct aha_ccb *ccb;
-	int hashnum;
+	int s;
 
 	s = splbio();
 
@@ -767,29 +792,26 @@ aha_get_ccb(aha, flags)
 		if (aha->numccbs < AHA_CCB_MAX) {
 			if (ccb = (struct aha_ccb *) malloc(sizeof(struct aha_ccb),
 			    M_TEMP, M_NOWAIT)) {
-				bzero(ccb, sizeof(struct aha_ccb));
+				aha_init_ccb(aha, ccb);
 				aha->numccbs++;
-				/*
-				 * put in the phystokv hash table
-				 * Never gets taken out.
-				 */
-				ccb->hashkey = KVTOPHYS(ccb);
-				hashnum = CCB_HASH(ccb->hashkey);
-				ccb->nexthash = aha->ccbhash[hashnum];
-				aha->ccbhash[hashnum] = ccb;
 			} else {
 				printf("%s: can't malloc ccb\n",
 				    aha->sc_dev.dv_xname);
+				goto out;
 			}
 			break;
 		}
 		if ((flags & SCSI_NOSLEEP) != 0)
-			break;
+			goto out;
 		tsleep(&aha->free_ccb, PRIBIO, "ahaccb", 0);
 	}
 
+	aha_reset_ccb(aha, ccb);
+	ccb->flags = CCB_ACTIVE;
+
+out:
 	splx(s);
-	return ccb;
+	return (ccb);
 }
 
 /*
@@ -1157,7 +1179,6 @@ aha_scsi_cmd(xs)
 		xs->error = XS_DRIVER_STUFFUP;
 		return TRY_AGAIN_LATER;
 	}
-	ccb->flags = CCB_ACTIVE;
 	ccb->xs = xs;
 
 	/*

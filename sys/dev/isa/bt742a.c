@@ -1,4 +1,4 @@
-/*	$NetBSD: bt742a.c,v 1.48 1995/09/26 19:31:22 thorpej Exp $	*/
+/*	$NetBSD: bt742a.c,v 1.49 1995/10/03 20:58:58 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1994 Charles Hannum.  All rights reserved.
@@ -761,10 +761,36 @@ bt_free_ccb(bt, ccb, flags)
 	 * If there were none, wake anybody waiting for one to come free,
 	 * starting with queued entries.
 	 */
-	if (!ccb->chain.tqe_next)
+	if (ccb->chain.tqe_next == 0)
 		wakeup(&bt->free_ccb);
 
 	splx(s);
+}
+
+static inline void
+bt_init_ccb(bt, ccb)
+	struct bt_softc *bt;
+	struct bt_ccb *ccb;
+{
+	int hashnum;
+
+	bzero(ccb, sizeof(struct bt_ccb));
+	/*
+	 * put in the phystokv hash table
+	 * Never gets taken out.
+	 */
+	ccb->hashkey = KVTOPHYS(ccb);
+	hashnum = CCB_HASH(ccb->hashkey);
+	ccb->nexthash = bt->ccbhash[hashnum];
+	bt->ccbhash[hashnum] = ccb;
+}
+
+static inline void
+bt_reset_ccb(bt, ccb)
+	struct bt_softc *bt;
+	struct bt_ccb *ccb;
+{
+
 }
 
 /*
@@ -778,9 +804,8 @@ bt_get_ccb(bt, flags)
 	struct bt_softc *bt;
 	int flags;
 {
-	int s;
 	struct bt_ccb *ccb;
-	int hashnum;
+	int s;
 
 	s = splbio();
 
@@ -797,27 +822,24 @@ bt_get_ccb(bt, flags)
 		if (bt->numccbs < BT_CCB_MAX) {
 			if (ccb = (struct bt_ccb *) malloc(sizeof(struct bt_ccb),
 			    M_TEMP, M_NOWAIT)) {
-				bzero(ccb, sizeof(struct bt_ccb));
+				bt_init_ccb(bt, ccb);
 				bt->numccbs++;
-				/*
-				 * put in the phystokv hash table
-				 * Never gets taken out.
-				 */
-				ccb->hashkey = KVTOPHYS(ccb);
-				hashnum = CCB_HASH(ccb->hashkey);
-				ccb->nexthash = bt->ccbhash[hashnum];
-				bt->ccbhash[hashnum] = ccb;
 			} else {
 				printf("%s: can't malloc ccb\n",
 				    bt->sc_dev.dv_xname);
+				goto out;
 			}
 			break;
 		}
 		if ((flags & SCSI_NOSLEEP) != 0)
-			break;
+			goto out;
 		tsleep(&bt->free_ccb, PRIBIO, "btccb", 0);
 	}
 
+	bt_reset_ccb(bt, ccb);
+	ccb->flags = CCB_ACTIVE;
+
+out:
 	splx(s);
 	return ccb;
 }
@@ -1180,7 +1202,6 @@ bt_scsi_cmd(xs)
 		xs->error = XS_DRIVER_STUFFUP;
 		return TRY_AGAIN_LATER;
 	}
-	ccb->flags = CCB_ACTIVE;
 	ccb->xs = xs;
 
 	/*
