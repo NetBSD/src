@@ -1,4 +1,4 @@
-.\" $NetBSD: main,v 1.6.2.18 2000/02/12 20:43:03 he Exp $
+.\" $NetBSD: main,v 1.6.2.19 2000/02/13 18:01:11 he Exp $
 .\"
 .\" Copyright (c) 1999 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -145,7 +145,7 @@ The intermediate versions of code available in the main development
 trunk in our CVS repository (also known as ``NetBSD-current'') from
 after the point where the release cycle for 1.4 was started, are
 designated by version identifiers such as 1.4A, 1.4B, 1.4P etc.
-These identifiers do not desingate a release, but try to indicate
+These identifiers do not designate a release, but try to indicate
 major changes in internal kernel APIs.  Note that the kernel from
 .Nx
 \*V can
