@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.461 2001/11/17 08:20:58 christos Exp $	*/
+/*	$NetBSD: machdep.c,v 1.462 2001/11/20 07:42:33 enami Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2000 The NetBSD Foundation, Inc.
@@ -76,7 +76,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.461 2001/11/17 08:20:58 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.462 2001/11/20 07:42:33 enami Exp $");
 
 #include "opt_cputype.h"
 #include "opt_ddb.h"
@@ -895,8 +895,8 @@ const struct cpu_cpuid_nameclass i386_cpuid_cpus[] = {
 		{ {
 			CPUCLASS_486, 
 			{
-				0, 0, 0, 0, 0, 0, 0,
-				0, 0, 0, 0, 0, 0, 0, 0, 0,
+				0, 0, 0, 0, 0, 0, 0, 0,
+				0, 0, 0, 0, 0, 0, 0, 0,
 				"486 compatible"	/* Default */
 			},
 			NULL,
@@ -906,8 +906,8 @@ const struct cpu_cpuid_nameclass i386_cpuid_cpus[] = {
 		{
 			CPUCLASS_586,
 			{
-				0, 0, 0, 0, 0, 0, 0,
-				0, 0, 0, 0, 0, 0, 0, 0, 0,
+				0, 0, 0, 0, 0, 0, 0, 0,
+				0, 0, 0, 0, 0, 0, 0, 0,
 				"Crusoe"		/* Default */
 			},
 			transmeta_cpu_setup,
@@ -917,8 +917,8 @@ const struct cpu_cpuid_nameclass i386_cpuid_cpus[] = {
 		{
 			CPUCLASS_686,
 			{
-				0, 0, 0, 0, 0, 0, 0,
-				0, 0, 0, 0, 0, 0, 0, 0, 0,
+				0, 0, 0, 0, 0, 0, 0, 0,
+				0, 0, 0, 0, 0, 0, 0, 0,
 				"Pentium Pro compatible"	/* Default */
 			},
 			NULL,
@@ -928,8 +928,8 @@ const struct cpu_cpuid_nameclass i386_cpuid_cpus[] = {
 		{
 			CPUCLASS_686,
 			{
-				0, 0, 0, 0, 0, 0, 0,
-				0, 0, 0, 0, 0, 0, 0, 0, 0,
+				0, 0, 0, 0, 0, 0, 0, 0,
+				0, 0, 0, 0, 0, 0, 0, 0,
 				"Pentium Pro compatible"	/* Default */
 			},
 			NULL,
@@ -1035,19 +1035,20 @@ amd_family5_setup(void)
  * Port from FreeBSD-current(August, 2001) to NetBSD by tshiozak.
  */
 
-#define MSR_TMx86_LONGRUN		0x80868010
-#define MSR_TMx86_LONGRUN_FLAGS		0x80868011
+#define	MSR_TMx86_LONGRUN		0x80868010
+#define	MSR_TMx86_LONGRUN_FLAGS		0x80868011
 
-#define LONGRUN_MODE_MASK(x)		((x) & 0x000000007f)
-#define LONGRUN_MODE_RESERVED(x)	((x) & 0xffffff80)
-#define LONGRUN_MODE_WRITE(x, y)	(LONGRUN_MODE_RESERVED(x) | LONGRUN_MODE_MASK(y))
+#define	LONGRUN_MODE_MASK(x)		((x) & 0x000000007f)
+#define	LONGRUN_MODE_RESERVED(x)	((x) & 0xffffff80)
+#define	LONGRUN_MODE_WRITE(x, y)	(LONGRUN_MODE_RESERVED(x) | \
+					    LONGRUN_MODE_MASK(y))
 
-#define LONGRUN_MODE_MINFREQUENCY	0x00
-#define LONGRUN_MODE_ECONOMY		0x01
-#define LONGRUN_MODE_PERFORMANCE	0x02
-#define LONGRUN_MODE_MAXFREQUENCY	0x03
-#define LONGRUN_MODE_UNKNOWN		0x04
-#define LONGRUN_MODE_MAX		0x04
+#define	LONGRUN_MODE_MINFREQUENCY	0x00
+#define	LONGRUN_MODE_ECONOMY		0x01
+#define	LONGRUN_MODE_PERFORMANCE	0x02
+#define	LONGRUN_MODE_MAXFREQUENCY	0x03
+#define	LONGRUN_MODE_UNKNOWN		0x04
+#define	LONGRUN_MODE_MAX		0x04
 
 union msrinfo {
 	u_int64_t	msr;
@@ -1091,7 +1092,7 @@ out:
 }
 
 static u_int 
-tmx86_get_longrun_status(u_int * frequency, u_int * voltage, u_int * percentage)
+tmx86_get_longrun_status(u_int *frequency, u_int *voltage, u_int *percentage)
 {
 	u_long		eflags;
 	u_int		regs[4];
@@ -1124,9 +1125,9 @@ tmx86_set_longrun_mode(u_int mode)
 	/* Write LongRun mode values to Model Specific Register. */
 	msrinfo.msr = rdmsr(MSR_TMx86_LONGRUN);
 	msrinfo.regs[0] = LONGRUN_MODE_WRITE(msrinfo.regs[0],
-					     longrun_modes[mode][0]);
+	    longrun_modes[mode][0]);
 	msrinfo.regs[1] = LONGRUN_MODE_WRITE(msrinfo.regs[1],
-					     longrun_modes[mode][1]);
+	    longrun_modes[mode][1]);
 	wrmsr(MSR_TMx86_LONGRUN, msrinfo.msr);
 
 	/* Write LongRun mode flags to Model Specific Register. */
@@ -1146,8 +1147,9 @@ static u_int	 		 crusoe_percentage;
 static void
 tmx86_get_longrun_status_all(void)
 {
+
 	tmx86_get_longrun_status(&crusoe_frequency,
-				 &crusoe_voltage, &crusoe_percentage);
+	    &crusoe_voltage, &crusoe_percentage);
 }
 
 
@@ -1161,19 +1163,19 @@ print_transmeta_info(void)
 	if (nreg >= 0x80860001) {
 		do_cpuid(0x80860001, regs);
 		printf("  Processor revision %u.%u.%u.%u\n",
-		       (regs[1] >> 24) & 0xff,
-		       (regs[1] >> 16) & 0xff,
-		       (regs[1] >> 8) & 0xff,
-		       regs[1] & 0xff);
+		    (regs[1] >> 24) & 0xff,
+		    (regs[1] >> 16) & 0xff,
+		    (regs[1] >> 8) & 0xff,
+		    regs[1] & 0xff);
 	}
 	if (nreg >= 0x80860002) {
 		do_cpuid(0x80860002, regs);
 		printf("  Code Morphing Software revision %u.%u.%u-%u-%u\n",
-		       (regs[1] >> 24) & 0xff,
-		       (regs[1] >> 16) & 0xff,
-		       (regs[1] >> 8) & 0xff,
-		       regs[1] & 0xff,
-		       regs[2]);
+		    (regs[1] >> 24) & 0xff,
+		    (regs[1] >> 16) & 0xff,
+		    (regs[1] >> 8) & 0xff,
+		    regs[1] & 0xff,
+		    regs[2]);
 	}
 	if (nreg >= 0x80860006) {
 		char info[65];
@@ -1187,14 +1189,15 @@ print_transmeta_info(void)
 
 	crusoe_longrun = tmx86_get_longrun_mode();
 	tmx86_get_longrun_status(&crusoe_frequency,
-				 &crusoe_voltage, &crusoe_percentage);
+	    &crusoe_voltage, &crusoe_percentage);
 	printf("  LongRun mode: %d  <%dMHz %dmV %d%%>\n", crusoe_longrun,
-	       crusoe_frequency, crusoe_voltage, crusoe_percentage);
+	    crusoe_frequency, crusoe_voltage, crusoe_percentage);
 }
 
 void
 transmeta_cpu_setup(void)
 {
+
 	tmx86_has_longrun = 1;
 	print_transmeta_info();
 }
@@ -1870,7 +1873,7 @@ cpu_sysctl(name, namelen, oldp, oldlenp, newp, newlen, p)
 			return (EOPNOTSUPP);
 		mode = (int)(crusoe_longrun = tmx86_get_longrun_mode());
 		error = sysctl_int(oldp, oldlenp, newp, newlen, &mode);
-		if (!error && (u_int)mode!=crusoe_longrun) {
+		if (!error && (u_int)mode != crusoe_longrun) {
 			if (tmx86_set_longrun_mode(mode)) {
 				crusoe_longrun = (u_int)mode;
 			} else {
