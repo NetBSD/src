@@ -1,4 +1,4 @@
-/*	$NetBSD: mem.c,v 1.2 1996/05/16 15:57:35 oki Exp $	*/
+/*	$NetBSD: mem.c,v 1.3 1996/05/19 11:37:20 oki Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -188,6 +188,9 @@ mmrw(dev, uio, flags)
 		uio->uio_resid -= c;
 	}
 	if (minor(dev) == 0) {
+#ifdef DEBUG
+unlock:
+#endif
 		if (physlock > 1)
 			wakeup((caddr_t)&physlock);
 		physlock = 0;
