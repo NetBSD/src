@@ -1,4 +1,4 @@
-/*	$NetBSD: menus.md.eng,v 1.3.2.6 1997/11/29 21:56:57 fvdl Exp $	*/
+/*	$NetBSD: menus.md.eng,v 1.3.2.7 1997/12/11 01:49:00 fvdl Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -149,10 +149,26 @@ menu editpart, title  "  Select to change";
 	option "Partition OK", exit;
 
 menu chooseid, title  "  Partition Kind? ";
-	option "NetBSD", 	exit,	action { part[editpart][ID] = 165; };
-	option "DOS < 32 Meg",	exit,	action { part[editpart][ID] = 4; };
-	option "DOS > 32 Meg",	exit,	action { part[editpart][ID] = 6; };
-	option "unused",	exit,	action { part[editpart][ID] = 0; };
+	option "NetBSD", 	exit,	action
+	{
+		part[editpart][ID] = 165;
+		part[editpart][SET] = 1;
+	};
+	option "DOS < 32 Meg",	exit,	action
+	{
+		part[editpart][ID] = 4;
+		part[editpart][SET] = 1;
+	};
+	option "DOS > 32 Meg",	exit,	action
+	{
+		part[editpart][ID] = 6;
+		part[editpart][SET] = 1;
+	};
+	option "unused",	exit,	action
+	{
+		part[editpart][ID] = 0;
+		part[editpart][SET] = 1;
+	};
 
 menu editfsparts, y=13, exit;
 	display action  {
