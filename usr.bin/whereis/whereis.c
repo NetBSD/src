@@ -39,11 +39,11 @@ char copyright[] =
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)whereis.c	5.5 (Berkeley) 4/18/91";*/
-static char rcsid[] = "$Id: whereis.c,v 1.3 1993/08/01 18:03:00 mycroft Exp $";
+static char rcsid[] = "$Id: whereis.c,v 1.4 1993/12/04 01:08:35 jtc Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
-#include <sys/dir.h>
+#include <dirent.h>
 #include <stdio.h>
 #include <ctype.h>
 
@@ -348,7 +348,7 @@ findin(dir, cp)
 	char *dir, *cp;
 {
 	DIR *dirp;
-	struct direct *dp;
+	struct dirent *dp;
 
 	dirp = opendir(dir);
 	if (dirp == NULL)
