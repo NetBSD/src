@@ -1,4 +1,4 @@
-/*	$NetBSD: abort.c,v 1.10 1998/01/30 23:37:42 perry Exp $	*/
+/*	$NetBSD: abort.c,v 1.11 1998/10/12 15:56:16 kleink Exp $	*/
 
 /*
  * Copyright (c) 1985, 1993
@@ -38,10 +38,11 @@
 #if 0
 static char sccsid[] = "@(#)abort.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: abort.c,v 1.10 1998/01/30 23:37:42 perry Exp $");
+__RCSID("$NetBSD: abort.c,v 1.11 1998/10/12 15:56:16 kleink Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
+#include "namespace.h"
 #include <signal.h>
 #include <stdlib.h>
 #include <unistd.h>
@@ -83,5 +84,5 @@ abort()
 	(void)signal(SIGABRT, SIG_DFL);
 	(void)sigprocmask(SIG_SETMASK, &mask, (sigset_t *)NULL);
 	(void)kill(getpid(), SIGABRT);
-	exit(1);
+	_exit(1);
 }
