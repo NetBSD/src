@@ -1,11 +1,11 @@
-/*	$NetBSD: main.c,v 1.23.2.2 2002/07/21 04:41:13 lukem Exp $	*/
+/*	$NetBSD: main.c,v 1.23.2.3 2002/08/06 00:31:37 lukem Exp $	*/
 
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char *rcsid = "from FreeBSD Id: main.c,v 1.16 1997/10/08 07:45:43 charnier Exp";
 #else
-__RCSID("$NetBSD: main.c,v 1.23.2.2 2002/07/21 04:41:13 lukem Exp $");
+__RCSID("$NetBSD: main.c,v 1.23.2.3 2002/08/06 00:31:37 lukem Exp $");
 #endif
 #endif
 
@@ -32,6 +32,7 @@ __RCSID("$NetBSD: main.c,v 1.23.2.2 2002/07/21 04:41:13 lukem Exp $");
 
 #include <err.h>
 #include <sys/param.h>
+#include <sys/resource.h>
 #include "lib.h"
 #include "add.h"
 #include "verify.h"
@@ -65,6 +66,8 @@ main(int argc, char **argv)
 {
 	int     ch, error=0;
 	lpkg_head_t pkgs;
+	struct rlimit rlim;
+	int rc;
 
 	while ((ch = getopt(argc, argv, Options)) != -1) {
 		switch (ch) {
@@ -141,13 +144,28 @@ main(int argc, char **argv)
 
 			TAILQ_INSERT_TAIL(&pkgs, lpp, lp_link);
 		}
-	}
-	/* If no packages, yelp */
-	else if (!ch)
+	} else if (!ch)
+		/* If no packages, yelp */
 		warnx("missing package name(s)"), usage();
 	else if (ch > 1 && AddMode == MASTER)
 		warnx("only one package name may be specified with master mode"),
 		    usage();
+	
+	/* Increase # of max. open file descriptors as high as possible */
+	rc = getrlimit(RLIMIT_NOFILE, &rlim);
+	if (rc == -1) {
+	  	warn("cannot retrieve max. number of open files resource limit");
+	} else {
+	   	rlim.rlim_cur = rlim.rlim_max;
+		rc = setrlimit(RLIMIT_NOFILE, &rlim);
+		if (rc == -1) {
+		  	warn("cannot increase max. number of open files resource limit, try 'ulimit'");
+		} else {
+		  	if (Verbose)
+		  		printf("increasing RLIMIT_NOFILE to max. %ld open files\n", (long)rlim.rlim_cur);
+		}
+	}
+
 	error += pkg_perform(&pkgs);
 	if (error  != 0) {
 		if (Verbose)
