@@ -43,17 +43,7 @@ if [ -f /usr/lib/uucp/clean.weekly ]; then
 fi
 echo ""
 
-echo "Rotating messages:"
-cd /var/log
-if [ -f messages.2.Z ]; then mv -f messages.2.Z messages.3.Z; fi
-if [ -f messages.1.Z ]; then mv -f messages.1.Z messages.2.Z; fi
-if [ -f messages.0.Z ]; then mv -f messages.0.Z messages.1.Z; fi
-mv -f messages messages.0
-compress -f messages.0
-cp /dev/null messages
-chmod 644 messages
-kill -1 `cat /var/run/syslog.pid`
-cd /
+# Rotation of message log now handled automatically by cron and 'newsyslog'
 
 echo ""
 echo "Rebuilding locate database:"

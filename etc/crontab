@@ -1,4 +1,5 @@
-# /var/cron/tabs/root - root's crontab for Vixie's cron
+# /var/cron/tabs/root - root's crontab for NetBSD
+# $Id: crontab,v 1.5 1993/05/21 14:45:17 cgd Exp $
 #
 SHELL=/bin/sh
 PATH=/etc:/bin:/sbin:/usr/bin:/usr/sbin
@@ -7,6 +8,11 @@ HOME=/var/log
 #minute	hour	mday	month	wday	command
 #
 #0/15	*	*	*	*	/usr/libexec/atrun
+#
+# rotate log files every hour, if necessary
+0	*	*	*	*	/usr/bin/newsyslog
+#
+# do daily/weekly/monthly maintenance
 0	2	*	*	*	sh /etc/daily
 30	3	*	*	6	sh /etc/weekly
 30	5	1	*	*	sh /etc/monthly
