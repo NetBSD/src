@@ -1,4 +1,4 @@
-/*	$NetBSD: chpass.c,v 1.23 2002/06/11 06:06:18 itojun Exp $	*/
+/*	$NetBSD: chpass.c,v 1.24 2002/08/07 23:20:30 soren Exp $	*/
 
 /*-
  * Copyright (c) 1988, 1993, 1994
@@ -43,7 +43,7 @@ __COPYRIGHT("@(#) Copyright (c) 1988, 1993, 1994\n\
 #if 0
 static char sccsid[] = "@(#)chpass.c	8.4 (Berkeley) 4/2/94";
 #else 
-__RCSID("$NetBSD: chpass.c,v 1.23 2002/06/11 06:06:18 itojun Exp $");
+__RCSID("$NetBSD: chpass.c,v 1.24 2002/08/07 23:20:30 soren Exp $");
 #endif
 #endif /* not lint */
 
@@ -284,10 +284,8 @@ void
 usage()
 {
 
-#ifdef	YP
-	(void)fprintf(stderr, "usage: chpass [-a list] [-s shell] [-l]%s [user]\n", use_yp?" [-y]":"");
-#else
-	(void)fprintf(stderr, "usage: chpass [-a list] [-s shell] [user]\n");
-#endif
+	(void)fprintf(stderr, "usage: %s [-a list] [-s shell] [-l] [user]\n"
+			      "       %s [-a list] [-s shell] [-y] [user]\n",
+			getprogname(), getprogname());
 	exit(1);
 }
