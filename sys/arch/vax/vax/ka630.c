@@ -1,4 +1,4 @@
-/*	$NetBSD: ka630.c,v 1.16 1999/08/07 10:36:48 ragge Exp $	*/
+/*	$NetBSD: ka630.c,v 1.17 1999/09/06 19:52:52 ragge Exp $	*/
 /*-
  * Copyright (c) 1982, 1988, 1990, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -59,8 +59,6 @@ static void ka630_halt __P((void));
 static void ka630_reboot __P((int));
 static void ka630_clrf __P((void));
 
-extern	short *clk_page;
-
 struct	cpu_dep ka630_calls = {
 	0,
 	ka630_mchk,
@@ -81,8 +79,6 @@ struct	cpu_dep ka630_calls = {
 void
 ka630_conf()
 {
-	extern	int clk_adrshift, clk_tweak;
-
 	clk_adrshift = 0;	/* Addressed at short's... */
 	clk_tweak = 0;		/* ...and no shifting */
 	clk_page = (short *)vax_map_physmem((paddr_t)KA630CLK, 1);
