@@ -1,4 +1,4 @@
-.\"	$NetBSD: sleep.9,v 1.13 2001/06/21 11:59:01 wiz Exp $
+.\"	$NetBSD: sleep.9,v 1.14 2001/06/29 10:54:20 jdolecek Exp $
 .\"
 .\" Copyright (c) 1996 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -44,6 +44,7 @@
 .Nm wakeup
 .Nd process context sleep and and wakeup
 .Sh SYNOPSIS
+.Fd #include <sys/proc.h>
 .Ft int
 .Fn "ltsleep" "void *ident" "int priority" "const char *wmesg" "int timo" "__volatile struct simplelock *slock"
 .Ft int
@@ -146,7 +147,7 @@ condition protection facility.
 .Pp
 The
 .Fn tsleep
-function is functionally equivalent to:
+macro is functionally equivalent to:
 .Bd -literal -offset indent
 ltsleep(ident, priority, wmesg, timo, NULL)
 .Ed
