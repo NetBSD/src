@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_sysctl.c,v 1.36 1998/05/24 19:52:01 kleink Exp $	*/
+/*	$NetBSD: kern_sysctl.c,v 1.37 1998/06/28 21:34:59 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -43,6 +43,7 @@
  */
 
 #include "opt_insecure.h"
+#include "opt_shortcorename.h"
 #include "opt_uvm.h"
 
 #include <sys/param.h>
@@ -212,6 +213,11 @@ int securelevel = -1;
 #else
 int securelevel = 0;
 #endif
+#ifdef SHORTCORENAME
+int shortcorename = 1;
+#else
+int shortcorename = 0;
+#endif
 
 /*
  * kernel related system variables.
@@ -229,6 +235,7 @@ kern_sysctl(name, namelen, oldp, oldlenp, newp, newlen, p)
 	int error, level, inthostid;
 	int old_autonicetime;
 	int old_vnodes;
+	int old_shortcorename;
 	extern char ostype[], osrelease[], version[];
 
 	/* all sysctl names at this level are terminal */
@@ -368,6 +375,16 @@ kern_sysctl(name, namelen, oldp, oldlenp, newp, newlen, p)
 #else
 		return (sysctl_rdint(oldp, oldlenp, newp, 0));
 #endif
+ 	case KERN_SHORTCORENAME:
+ 		/* Only allow values of zero or one. */
+ 		old_shortcorename = shortcorename;
+ 		error = sysctl_int(oldp, oldlenp, newp, newlen, 
+ 		    &shortcorename);
+ 		if (shortcorename != 0 && shortcorename != 1) {
+ 			shortcorename = old_shortcorename;
+ 			return (EINVAL);
+ 		}
+ 		return (error);
 	default:
 		return (EOPNOTSUPP);
 	}
