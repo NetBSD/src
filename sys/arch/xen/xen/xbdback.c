@@ -1,4 +1,4 @@
-/*      $NetBSD: xbdback.c,v 1.1.2.1 2005/02/16 13:58:30 bouyer Exp $      */
+/*      $NetBSD: xbdback.c,v 1.1.2.2 2005/03/08 19:33:01 bouyer Exp $      */
 
 /*
  * Copyright (c) 2005 Manuel Bouyer.
@@ -279,6 +279,8 @@ xbdback_ctrlif_rx(ctrl_msg_t *msg, unsigned long id)
 	{
 		blkif_be_disconnect_t *req =
 		    (blkif_be_disconnect_t *)&msg->msg[0];
+		vaddr_t ring_addr;
+
 		if (msg->length != sizeof(blkif_be_disconnect_t))
 			goto error;
 		xbdi = xbdif_lookup(req->domid, req->blkif_handle);
@@ -286,7 +288,13 @@ xbdback_ctrlif_rx(ctrl_msg_t *msg, unsigned long id)
 			req->status = BLKIF_BE_STATUS_INTERFACE_NOT_FOUND;
 			goto end;
 		}
-		req->status = BLKIF_BE_STATUS_ERROR;
+		hypervisor_disable_irq(xbdi->irq);
+		event_remove_handler(xbdi->irq, xbdback_evthandler, xbdi);
+		unbind_evtchn_to_irq(xbdi->evtchn);
+		ring_addr = (vaddr_t)xbdi->blk_ring;
+		pmap_remove(pmap_kernel(), ring_addr, ring_addr + PAGE_SIZE);
+		uvm_km_free(kernel_map, ring_addr, PAGE_SIZE);
+		req->status = BLKIF_BE_STATUS_OKAY;
 		break;
 	}
 	case CMSG_BLKIF_BE_VBD_CREATE:
@@ -329,6 +337,14 @@ xbdback_ctrlif_rx(ctrl_msg_t *msg, unsigned long id)
 		if (vbd == NULL) {
 			req->status = BLKIF_BE_STATUS_VBD_NOT_FOUND;
 			goto end;
+		}
+		if (vbd->size) {
+			printf("xbd backend: detach device %s%d%c "
+			    "for domain %d\n", devsw_blk2name(major(vbd->dev)),
+			    DISKUNIT(vbd->dev), DISKPART(vbd->dev) + 'a',
+			    xbdi->domid);
+			vbd->start = vbd->size = vbd->dev = 0;
+			vn_close(vbd->vp, FREAD, NOCRED, NULL);
 		}
 		SLIST_REMOVE(&xbdi->vbds, vbd, xbd_vbd, next);
 		free(vbd, M_DEVBUF);
@@ -428,10 +444,14 @@ xbdback_ctrlif_rx(ctrl_msg_t *msg, unsigned long id)
 			req->status = BLKIF_BE_STATUS_VBD_NOT_FOUND;
 			goto end;
 		}
-		if (vbd->size != 0) {
+		if (vbd->size == 0) {
 			req->status = BLKIF_BE_STATUS_VBD_NOT_FOUND;
 			goto end;
 		}
+		printf("xbd backend: detach device %s%d%c "
+		    "for domain %d\n", devsw_blk2name(major(vbd->dev)),
+		    DISKUNIT(vbd->dev), DISKPART(vbd->dev) + 'a',
+		    xbdi->domid);
 		vbd->start = vbd->size = vbd->dev = 0;
 		vn_close(vbd->vp, FREAD, NOCRED, NULL);
 		req->status = BLKIF_BE_STATUS_OKAY;
