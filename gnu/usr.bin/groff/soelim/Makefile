@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.6 2001/04/19 14:41:41 wiz Exp $
+#	$NetBSD: Makefile,v 1.7 2002/01/01 00:27:37 thorpej Exp $
 
 .include "../Makefile.lib"
 
@@ -6,6 +6,7 @@ DIST=		${IDIST}/src/preproc/soelim
 .PATH:		${DIST}
 
 PROG=		soelim
+PROG_CXX=
 SRCS=		soelim.cc
 LDADD+=		$(LIBGROFF)
 DPADD+=		$(LIBGROFF)
