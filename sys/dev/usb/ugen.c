@@ -1,4 +1,4 @@
-/*	$NetBSD: ugen.c,v 1.22 1999/09/05 19:32:18 augustss Exp $	*/
+/*	$NetBSD: ugen.c,v 1.23 1999/09/09 12:26:44 augustss Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -463,7 +463,7 @@ ugen_do_read(sc, endpt, uio, flag)
 		}
 		break;
 	case UE_BULK:
-		reqh = usbd_alloc_request();
+		reqh = usbd_alloc_request(sc->sc_udev);
 		if (reqh == 0)
 			return (ENOMEM);
 		while ((n = min(UGEN_BBSIZE, uio->uio_resid)) != 0) {
@@ -544,7 +544,7 @@ ugen_do_write(sc, endpt, uio, flag)
 	DPRINTF(("ugenwrite\n"));
 	switch (sce->edesc->bmAttributes & UE_XFERTYPE) {
 	case UE_BULK:
-		reqh = usbd_alloc_request();
+		reqh = usbd_alloc_request(sc->sc_udev);
 		if (reqh == 0)
 			return (EIO);
 		while ((n = min(UGEN_BBSIZE, uio->uio_resid)) != 0) {
