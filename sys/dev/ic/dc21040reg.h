@@ -1,3 +1,5 @@
+/*	$NetBSD: dc21040reg.h,v 1.2 1995/06/05 00:46:30 cgd Exp $	*/
+
 /*-
  * Copyright (c) 1994, 1995 Matt Thomas (thomas@lkg.dec.com)
  * All rights reserved.
@@ -20,33 +22,6 @@
  * THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
- *
- * $Id: dc21040reg.h,v 1.1.1.1 1995/06/05 00:38:18 cgd Exp $
- *
- * $Log: dc21040reg.h,v $
- * Revision 1.1.1.1  1995/06/05 00:38:18  cgd
- * dc21040 driver, from Matt Thomas
- *
- * Revision 1.3  1995/05/05  19:44:34  thomas
- * cogent em100 support
- *
- * Revision 1.1  1994/10/01  20:16:45  wollman
- * Add Matt Thomas's DC21040 PCI Ethernet driver.  (This is turning out
- * to be quite a popular chip, so expect to see a number of products
- * based on it.)
- *
- * Revision 1.2  1994/08/15  20:42:25  thomas
- * misc additions
- *
- * Revision 1.1  1994/08/12  21:02:46  thomas
- * Initial revision
- *
- * Revision 1.8  1994/08/05  20:20:54  thomas
- * Enable change log
- *
- * Revision 1.7  1994/08/05  20:20:14  thomas
- * *** empty log message ***
- *
  */
 
 #if !defined(_DC21040_H)
