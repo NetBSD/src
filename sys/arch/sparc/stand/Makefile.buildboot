@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.buildboot,v 1.12 2000/02/21 15:13:11 pk Exp $
+#	$NetBSD: Makefile.buildboot,v 1.13 2000/08/28 19:10:31 pk Exp $
 
 S=	${.CURDIR}/../../../..
 
@@ -10,12 +10,12 @@ SRCS=		${COMMONSOURCE} ${PROGSOURCE}
 MKMAN=		no
 BINMODE=	444
 
-RELOCS=		200000 300000 400000 700000
-# Note: a `RELOC' value of 0x300000 seems to work on most machines
-RELOC_DEFAULT?=	300000
+RELOCS=		200000 3E0000 400000 700000
+# Note: a `RELOC' value of 0x3E0000 seems to work on most machines
+RELOC_DEFAULT?=	3E0000
 # `bootxx' is linked at a different address to circumvent i-cache
 # flushing issues on Hypersparcs
-RELOC_BOOTXX=	340000
+RELOC_BOOTXX=	3F8000
 
 CPPFLAGS+=	-D_STANDALONE -DSUN4 -DSUN4C -DHEAP_VARIABLE
 
