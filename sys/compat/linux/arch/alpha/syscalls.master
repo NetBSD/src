@@ -1,4 +1,4 @@
-	$NetBSD: syscalls.master,v 1.48 2004/10/05 06:01:20 jdolecek Exp $
+	$NetBSD: syscalls.master,v 1.49 2005/02/26 23:10:19 perry Exp $
 ;
 ;	@(#)syscalls.master	8.1 (Berkeley) 7/19/93
 
@@ -170,7 +170,7 @@
 			    struct linux_stat *sp); }
 68	STD		{ int linux_sys_lstat(const char *path, \
 			    struct linux_stat *sp); }
-69	UNIMPL 
+69	UNIMPL
 70	UNIMPL
 ;71	ALIAS		osf1_sys_mmap
 71	NOARGS		{ int linux_sys_mmap(unsigned long addr, size_t len, \
@@ -191,7 +191,7 @@
 			    struct osf1_itimerval *itv, \
 			    struct osf1_itimerval *oitv); }
 84	UNIMPL
-85	UNIMPL	
+85	UNIMPL
 86	UNIMPL		osf1_sys_getitimer
 87	NOARGS		{ int compat_43_sys_gethostname(char *hostname, \
 			    u_int len); }
@@ -569,7 +569,7 @@
 			    linux_sigset_t *set, \
 			    size_t sigsetsize); }
 355	UNIMPL		rt_sigtimedwait
-; XXX XAX int here?  sigset_t here? 
+; XXX XAX int here?  sigset_t here?
 356	STD		{ int linux_sys_rt_queueinfo(int pid, int signum, \
 			    linux_siginfo_t *uinfo); }
 357	STD		{ int linux_sys_rt_sigsuspend(linux_sigset_t *unewset, \

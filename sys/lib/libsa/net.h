@@ -1,7 +1,7 @@
-/*	$NetBSD: net.h,v 1.14 2003/03/19 17:19:32 drochner Exp $	*/
+/*	$NetBSD: net.h,v 1.15 2005/02/26 22:58:56 perry Exp $	*/
 
 /*
- * Copyright (c) 1993 Adam Glass 
+ * Copyright (c) 1993 Adam Glass
  * Copyright (c) 1992 Regents of the University of California.
  * All rights reserved.
  *

@@ -1,4 +1,4 @@
-/*	$NetBSD: irix_mman.c,v 1.8 2003/01/22 12:58:22 rafal Exp $ */
+/*	$NetBSD: irix_mman.c,v 1.9 2005/02/26 23:10:18 perry Exp $ */
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: irix_mman.c,v 1.8 2003/01/22 12:58:22 rafal Exp $");
+__KERNEL_RCSID(0, "$NetBSD: irix_mman.c,v 1.9 2005/02/26 23:10:18 perry Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_sysv.h"
@@ -71,8 +71,8 @@ __KERNEL_RCSID(0, "$NetBSD: irix_mman.c,v 1.8 2003/01/22 12:58:22 rafal Exp $");
 #include <compat/irix/irix_exec.h>
 #include <compat/irix/irix_syscallargs.h>
 
-static int irix_mmap __P((struct lwp *, void *, size_t, int , 
-		int, int, off_t, register_t *)); 
+static int irix_mmap __P((struct lwp *, void *, size_t, int ,
+		int, int, off_t, register_t *));
 
 int
 irix_sys_mmap(l, v, retval)
@@ -85,12 +85,12 @@ irix_sys_mmap(l, v, retval)
 		syscallarg(irix_size_t) len;
 		syscallarg(int) prot;
 		syscallarg(int) flags;
-		syscallarg(int) fd;                                             
-		syscallarg(irix_off_t) pos; 
+		syscallarg(int) fd;
+		syscallarg(irix_off_t) pos;
 	} */ *uap = v;
 
-	return irix_mmap(l, SCARG(uap, addr), SCARG(uap, len), 
-	    SCARG(uap, prot), SCARG(uap, flags), SCARG(uap, fd), 
+	return irix_mmap(l, SCARG(uap, addr), SCARG(uap, len),
+	    SCARG(uap, prot), SCARG(uap, flags), SCARG(uap, fd),
 	    SCARG(uap, pos), retval);
 }
 
@@ -105,13 +105,13 @@ irix_sys_mmap64(l, v, retval)
 		syscallarg(irix_size_t) len;
 		syscallarg(int) prot;
 		syscallarg(int) flags;
-		syscallarg(int) fd;                                             
+		syscallarg(int) fd;
 		syscallarg(int) pad1;
-		syscallarg(irix_off64_t) pos; 
+		syscallarg(irix_off64_t) pos;
 	} */ *uap = v;
 
-	return irix_mmap(l, SCARG(uap, addr), SCARG(uap, len), 
-	    SCARG(uap, prot), SCARG(uap, flags), SCARG(uap, fd), 
+	return irix_mmap(l, SCARG(uap, addr), SCARG(uap, len),
+	    SCARG(uap, prot), SCARG(uap, flags), SCARG(uap, fd),
 	    SCARG(uap, pos), retval);
 }
 
@@ -135,7 +135,7 @@ irix_mmap(l, addr, len, prot, flags, fd, pos, retval)
 	printf("irix_sys_mmap(): addr = %p, len = 0x%x, prot = 0x%x ",
 	    addr, len, prot);
 	printf("flags = 0x%x, fd = %d, pos = 0x%lx\n", flags, fd, (long)pos);
-	    
+
 #endif
 	if (flags & IRIX_MAP_SHARED)
 		bsd_flags |= MAP_SHARED;
@@ -148,14 +148,14 @@ irix_mmap(l, addr, len, prot, flags, fd, pos, retval)
 	 * Note about MAP_FIXED: IRIX's mmap(2) states that
 	 * when MAP_FIXED is unset, range 0x30000000 to 0x40000000
 	 * will not be used except if MAP_SGI_ANYADDR is set
-	 * or if syssgi(SGI_UNSUPPORTED_MAP_RESERVED_RANGE) was 
+	 * or if syssgi(SGI_UNSUPPORTED_MAP_RESERVED_RANGE) was
 	 * enabled. We do not emulate this behavior for now.
 	 */
 	if (flags & IRIX_MAP_FIXED)
 		bsd_flags |= MAP_FIXED;
 	if (flags & IRIX_MAP_RENAME)
 		bsd_flags |= MAP_RENAME;
-		
+
 	if (flags & IRIX_MAP_AUTORESRV)
 		printf("Warning: unsupported IRIX mmap() flag MAP_AUTORESV\n");
 	if (flags & IRIX_MAP_TEXT)
@@ -167,7 +167,7 @@ irix_mmap(l, addr, len, prot, flags, fd, pos, retval)
 	if (flags & IRIX_MAP_SGI_ANYADDR)
 		printf("Warning: unsupported IRIX mmap() flag IRIX_MAP_SGI_ANYADDR\n");
 
-	/* 
+	/*
 	 * When AUTOGROW is set and the mapping is bigger than
 	 * the file, if pages beyond the end of file are touched,
 	 * IRIX will increase the file size accordingly. We are
@@ -178,7 +178,7 @@ irix_mmap(l, addr, len, prot, flags, fd, pos, retval)
 		struct file *fp;
 		struct vnode *vp;
 		struct vattr vattr;
-		
+
 		/* getvnode does FILE_USE */
 		if ((error = getvnode(p->p_fd, fd, &fp)) != 0)
 			return error;
@@ -217,7 +217,7 @@ out:
 		FILE_UNUSE(fp, p);
 		if (error)
 			return error;
-			
+
 	}
 
 	SCARG(&cup, addr) = addr;
@@ -235,13 +235,13 @@ out:
 		irix_isrr_insert((vaddr_t)addr, len, IRIX_ISRR_PRIVATE, p);
 		return 0;
 	}
-		
+
 	IRIX_VM_SYNC(p, error = sys_mmap(l, &cup, retval));
 	return error;
 }
 
 
-int 
+int
 irix_sys_munmap(l, v, retval)
 	struct lwp *l;
 	void *v;
@@ -256,13 +256,13 @@ irix_sys_munmap(l, v, retval)
 
 	IRIX_VM_SYNC(p, error = sys_munmap(l, v, retval));
 	if (error == 0)
-		irix_isrr_insert((vaddr_t)SCARG(uap, addr), 
+		irix_isrr_insert((vaddr_t)SCARG(uap, addr),
 		    SCARG(uap, len), IRIX_ISRR_SHARED, p);
 
 	return error;
 }
 
-int 
+int
 irix_sys_break(l, v, retval)
 	struct lwp *l;
 	void *v;
@@ -275,8 +275,8 @@ irix_sys_break(l, v, retval)
 	return error;
 }
 
-#ifdef SYSVSHM 
-int 
+#ifdef SYSVSHM
+int
 irix_sys_shmsys(l, v, retval)
 	struct lwp *l;
 	void *v;
@@ -290,7 +290,7 @@ irix_sys_shmsys(l, v, retval)
 }
 #endif
 
-int 
+int
 irix_sys_mprotect(l, v, retval)
 	struct lwp *l;
 	void *v;

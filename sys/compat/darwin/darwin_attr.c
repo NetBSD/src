@@ -1,4 +1,4 @@
-/*	$NetBSD: darwin_attr.c,v 1.4 2004/07/28 22:24:06 manu Exp $ */
+/*	$NetBSD: darwin_attr.c,v 1.5 2005/02/26 23:10:18 perry Exp $ */
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: darwin_attr.c,v 1.4 2004/07/28 22:24:06 manu Exp $");
+__KERNEL_RCSID(0, "$NetBSD: darwin_attr.c,v 1.5 2005/02/26 23:10:18 perry Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -72,7 +72,7 @@ static int darwin_attr_append(const char *, size_t, char **, size_t *);
 
 
 static int
-darwin_attr_append(x, size, bp, len) 
+darwin_attr_append(x, size, bp, len)
 	const char *x;
 	size_t size;
 	char **bp;
@@ -143,7 +143,7 @@ darwin_sys_getattrlist(l, v, retval)
 		follow = FOLLOW;
 
 #ifdef DEBUG_DARWIN
-	printf("getattrlist: %08x %08x %08x %08x %08x\n", 
+	printf("getattrlist: %08x %08x %08x %08x %08x\n",
 	    kalist.commonattr, kalist.volattr, kalist.dirattr,
 	    kalist.fileattr, kalist.forkattr);
 #endif
@@ -156,9 +156,9 @@ darwin_sys_getattrlist(l, v, retval)
 		fl |= CHECK_ALT_FL_SYMLINK;
 	(void)emul_find(p, &sg, p->p_emul->e_path, SCARG(uap, path), &path, fl);
 
-	/* 
+	/*
 	 * Get the informations for path: file related info
-	 */ 
+	 */
 	ust = stackgap_alloc(p, &sg, sizeof(st));
 	SCARG(&cup1, path) = path;
 	SCARG(&cup1, ub) = ust;
@@ -185,8 +185,8 @@ darwin_sys_getattrlist(l, v, retval)
 	if ((error = copyin(uf, &f, sizeof(f))) != 0)
 		return error;
 
-	/* 
-	 * Prepare the buffer 
+	/*
+	 * Prepare the buffer
 	 */
 	buf = malloc(len, M_TEMP, M_WAITOK);
 	bp = buf;
@@ -200,14 +200,14 @@ darwin_sys_getattrlist(l, v, retval)
 	cred->cr_gid = p->p_cred->p_rgid;
 
 	NDINIT(&nd, LOOKUP, follow | LOCKLEAF, UIO_USERSPACE, path, p);
-	if ((error = namei(&nd)) != 0) 
-		goto out2;	
+	if ((error = namei(&nd)) != 0)
+		goto out2;
 
 	vp = nd.ni_vp;
 	if ((error = VOP_ACCESS(vp, VREAD | VEXEC, cred, p)) != 0)
 		goto out3;
 
-	/* 
+	/*
 	 * Buffer whole length: is always present
 	 */
 	if (1) {
@@ -355,7 +355,7 @@ darwin_sys_getattrlist(l, v, retval)
 			goto out3;
 	}
 
-	if (kalist.commonattr & DARWIN_ATTR_CMN_NAMEDATTRCOUNT) { 
+	if (kalist.commonattr & DARWIN_ATTR_CMN_NAMEDATTRCOUNT) {
 		/* Data is unsigned long. Unsupported in Darwin */
 		error = EINVAL;
 		goto out3;
@@ -386,7 +386,7 @@ darwin_sys_getattrlist(l, v, retval)
 		SCARG(&cup3, flags) = R_OK;
 		if (sys_access(l, &cup3, &rv) == 0)
 			ua |= R_OK;
-			
+
 		SCARG(&cup3, flags) = W_OK;
 		if (sys_access(l, &cup3, &rv) == 0)
 			ua |= W_OK;
@@ -415,9 +415,9 @@ darwin_sys_getattrlist(l, v, retval)
 	if (kalist.volattr & DARWIN_ATTR_VOL_SIGNATURE) {
 		unsigned long sign;
 
-		/* 
+		/*
 		 * XXX Volume signature, used to distinguish
-		 * between volumes inside the same filesystem. 
+		 * between volumes inside the same filesystem.
 		 */
 		sign = f.f_fsid.__fsid_val[0];
 		if (ATTR_APPEND(sign, bp, len) != 0)
@@ -539,8 +539,8 @@ darwin_sys_getattrlist(l, v, retval)
 	if (kalist.volattr & DARWIN_ATTR_VOL_ENCODINGSUSED) {
 		unsigned long long data;
 
-		/* 
-		 * XXX bitmap of encoding used in this volume 
+		/*
+		 * XXX bitmap of encoding used in this volume
 		 */
 		(void)bzero(&data, sizeof(data));
 		if (ATTR_APPEND(data, bp, len) != 0)
@@ -674,7 +674,7 @@ darwin_sys_getattrlist(l, v, retval)
 			goto out3;
 	}
 
-	if (kalist.fileattr & DARWIN_ATTR_FILE_DATAEXTENTS) { 
+	if (kalist.fileattr & DARWIN_ATTR_FILE_DATAEXTENTS) {
 		darwin_extentrecord data;
 
 		/* Obsolete in Darwin */
@@ -724,14 +724,14 @@ darwin_sys_getattrlist(l, v, retval)
 			goto out3;
 	}
 
-	/* 
-	 * Now the variable length fields 
+	/*
+	 * Now the variable length fields
 	 */
-	
+
 	if (cmn_name_p) {		/* DARWIN_ATTR_CMN_NAME */
 		cmn_name_p->attr_dataoffset = (u_long)bp - (u_long)cmn_name_p;
 		cmn_name_p->attr_length = nd.ni_cnd.cn_namelen;
-		if (darwin_attr_append(nd.ni_cnd.cn_nameptr, 
+		if (darwin_attr_append(nd.ni_cnd.cn_nameptr,
 		    cmn_name_p->attr_length, &bp, &len) != 0)
 			goto out3;
 
@@ -742,10 +742,10 @@ darwin_sys_getattrlist(l, v, retval)
 	}
 
 	if (vol_mountpoint_p) {		/* DARWIN_ATTR_VOL_MOUNTPOINT */
-		vol_mountpoint_p->attr_dataoffset = 
+		vol_mountpoint_p->attr_dataoffset =
 		    (u_long)bp - (u_long)vol_mountpoint_p;
 		vol_mountpoint_p->attr_length = strlen(f.f_mntonname);
-		if (darwin_attr_append(f.f_mntonname, 
+		if (darwin_attr_append(f.f_mntonname,
 		    vol_mountpoint_p->attr_length, &bp, &len) != 0)
 			goto out3;
 
@@ -756,7 +756,7 @@ darwin_sys_getattrlist(l, v, retval)
 	}
 
 	if (vol_mounteddevice_p) {	/* DARWIN_ATTR_VOL_MOUNTEDDEVICE */
-		vol_mounteddevice_p->attr_dataoffset = 
+		vol_mounteddevice_p->attr_dataoffset =
 		    (u_long)bp - (u_long)vol_mounteddevice_p;
 		vol_mounteddevice_p->attr_length = strlen(f.f_mntfromname);
 		if (darwin_attr_append(f.f_mntfromname,

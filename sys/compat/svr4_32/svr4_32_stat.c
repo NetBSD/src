@@ -1,4 +1,4 @@
-/*	$NetBSD: svr4_32_stat.c,v 1.14 2004/04/19 02:55:40 dmcmahill Exp $	 */
+/*	$NetBSD: svr4_32_stat.c,v 1.15 2005/02/26 23:10:21 perry Exp $	 */
 
 /*-
  * Copyright (c) 1994 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: svr4_32_stat.c,v 1.14 2004/04/19 02:55:40 dmcmahill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: svr4_32_stat.c,v 1.15 2005/02/26 23:10:21 perry Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -75,7 +75,7 @@ __KERNEL_RCSID(0, "$NetBSD: svr4_32_stat.c,v 1.14 2004/04/19 02:55:40 dmcmahill 
 #include <compat/svr4_32/svr4_32_socket.h>
 
 #if defined(__sparc__) || defined(__sparc_v9__) || defined(__sparc64__)
-/* 
+/*
  * Solaris-2.4 on the sparc has the old stat call using the new
  * stat data structure...
  */
@@ -211,7 +211,7 @@ svr4_32_sys_stat(l, v, retval)
 	if (S_ISSOCK(st.st_mode))
 		(void) svr4_add_socket(p, SCARG(&cup, path), &st);
 
-	if ((error = copyout(&svr4_st, (vaddr_t)(u_long)SCARG(uap, ub), 
+	if ((error = copyout(&svr4_st, (vaddr_t)(u_long)SCARG(uap, ub),
 			     sizeof svr4_st)) != 0)
 		return error;
 
@@ -260,7 +260,7 @@ svr4_32_sys_lstat(l, v, retval)
 	if (S_ISSOCK(st.st_mode))
 		(void) svr4_add_socket(p, SCARG(&cup, path), &st);
 
-	if ((error = copyout(&svr4_st, (caddr_t)(u_long)SCARG(uap, ub), 
+	if ((error = copyout(&svr4_st, (caddr_t)(u_long)SCARG(uap, ub),
 			     sizeof svr4_st)) != 0)
 		return error;
 
@@ -302,7 +302,7 @@ svr4_32_sys_fstat(l, v, retval)
 
 	bsd_to_svr4_32_stat(&st, &svr4_st);
 
-	if ((error = copyout(&svr4_st, (caddr_t)(u_long)SCARG(uap, sb), 
+	if ((error = copyout(&svr4_st, (caddr_t)(u_long)SCARG(uap, sb),
 			     sizeof svr4_st)) != 0)
 		return error;
 
@@ -339,10 +339,10 @@ svr4_32_sys_xstat(l, v, retval)
 	bsd_to_svr4_32_xstat(&st, &svr4_st);
 
 	if (S_ISSOCK(st.st_mode))
-		(void) svr4_add_socket(p, (const char *)(u_long)SCARG(uap, path), 
+		(void) svr4_add_socket(p, (const char *)(u_long)SCARG(uap, path),
 				       &st);
 
-	if ((error = copyout(&svr4_st, (caddr_t)(u_long)SCARG(uap, ub), 
+	if ((error = copyout(&svr4_st, (caddr_t)(u_long)SCARG(uap, ub),
 			     sizeof svr4_st)) != 0)
 		return error;
 
@@ -378,10 +378,10 @@ svr4_32_sys_lxstat(l, v, retval)
 	bsd_to_svr4_32_xstat(&st, &svr4_st);
 
 	if (S_ISSOCK(st.st_mode))
-		(void) svr4_add_socket(p, (const char *)(u_long)SCARG(uap, path), 
+		(void) svr4_add_socket(p, (const char *)(u_long)SCARG(uap, path),
 				       &st);
 
-	if ((error = copyout(&svr4_st, (caddr_t)(u_long)SCARG(uap, ub), 
+	if ((error = copyout(&svr4_st, (caddr_t)(u_long)SCARG(uap, ub),
 			     sizeof svr4_st)) != 0)
 		return error;
 
@@ -415,7 +415,7 @@ svr4_32_sys_fxstat(l, v, retval)
 
 	bsd_to_svr4_32_xstat(&st, &svr4_st);
 
-	if ((error = copyout(&svr4_st, (caddr_t)(u_long)SCARG(uap, sb), 
+	if ((error = copyout(&svr4_st, (caddr_t)(u_long)SCARG(uap, sb),
 			     sizeof svr4_st)) != 0)
 		return error;
 
@@ -451,10 +451,10 @@ svr4_32_sys_stat64(l, v, retval)
 	bsd_to_svr4_32_stat64(&st, &svr4_st);
 
 	if (S_ISSOCK(st.st_mode))
-		(void) svr4_add_socket(p, (const char *)(u_long)SCARG(uap, path), 
+		(void) svr4_add_socket(p, (const char *)(u_long)SCARG(uap, path),
 				       &st);
 
-	if ((error = copyout(&svr4_st,  (caddr_t)(u_long)SCARG(uap, sb), 
+	if ((error = copyout(&svr4_st,  (caddr_t)(u_long)SCARG(uap, sb),
 			     sizeof svr4_st)) != 0)
 		return error;
 
@@ -490,10 +490,10 @@ svr4_32_sys_lstat64(l, v, retval)
 	bsd_to_svr4_32_stat64(&st, &svr4_st);
 
 	if (S_ISSOCK(st.st_mode))
-		(void) svr4_add_socket(p, (const char *)(u_long)SCARG(uap, path), 
+		(void) svr4_add_socket(p, (const char *)(u_long)SCARG(uap, path),
 				       &st);
 
-	if ((error = copyout(&svr4_st, (caddr_t)(u_long)SCARG(uap, sb), 
+	if ((error = copyout(&svr4_st, (caddr_t)(u_long)SCARG(uap, sb),
 			     sizeof svr4_st)) != 0)
 		return error;
 
@@ -527,7 +527,7 @@ svr4_32_sys_fstat64(l, v, retval)
 
 	bsd_to_svr4_32_stat64(&st, &svr4_st);
 
-	if ((error = copyout(&svr4_st, (caddr_t)(u_long)SCARG(uap, sb), 
+	if ((error = copyout(&svr4_st, (caddr_t)(u_long)SCARG(uap, sb),
 			     sizeof svr4_st)) != 0)
 		return error;
 
@@ -559,7 +559,7 @@ svr4_32_ustat(l, v, retval)
          * XXX: should set f_tfree and f_tinode at least
          * How do we translate dev -> fstat? (and then to svr4_32_ustat)
          */
-	if ((error = copyout(&us, (caddr_t)(u_long)SCARG(uap, name), 
+	if ((error = copyout(&us, (caddr_t)(u_long)SCARG(uap, name),
 			     sizeof us)) != 0)
 		return (error);
 
@@ -709,7 +709,7 @@ svr4_32_sys_systeminfo(l, v, retval)
 			error = 0;
 	}
 	else {
-		error = copyinstr((caddr_t)(u_long)SCARG(uap, buf), buf, 
+		error = copyinstr((caddr_t)(u_long)SCARG(uap, buf), buf,
 				  sizeof(buf), &len);
 		if (error)
 			return error;
@@ -775,7 +775,7 @@ svr4_32_sys_utime(l, v, retval)
 	SCARG(&ap, path) = (const char *)(u_long)SCARG(uap, path);
 	CHECK_ALT_EXIST(p, &sg, SCARG(&ap, path));
 	if (SCARG(uap, ubuf)) {
-		if ((error = copyin((caddr_t)(u_long)SCARG(uap, ubuf), 
+		if ((error = copyin((caddr_t)(u_long)SCARG(uap, ubuf),
 				    &ub, sizeof(ub))) != 0)
 			return error;
 		tbuf[0].tv_sec = ub.actime;
@@ -869,7 +869,7 @@ svr4_32_sys_pathconf(l, v, retval)
 {
 	struct svr4_32_sys_pathconf_args *uap = v;
 	struct proc *p = l->l_proc;
-	struct sys_pathconf_args /* { 
+	struct sys_pathconf_args /* {
 		syscallarg(char *) path;
 		syscallarg(int) name;
 	} */ ua;

@@ -1,21 +1,21 @@
-/*	$NetBSD: divrem.m4,v 1.6 2002/01/24 00:45:22 ross Exp $	*/
+/*	$NetBSD: divrem.m4,v 1.7 2005/02/26 22:58:56 perry Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Carnegie-Mellon University.
  * All rights reserved.
  *
  * Author: Chris G. Demetriou
- * 
+ *
  * Permission to use, copy, modify and distribute this software and
  * its documentation is hereby granted, provided that both the copyright
  * notice and this permission notice appear in all copies of the
  * software, derivative works or modified versions, and any portions
  * thereof, and that both notices appear in supporting documentation.
- * 
- * CARNEGIE MELLON ALLOWS FREE USE OF THIS SOFTWARE IN ITS "AS IS" 
- * CONDITION.  CARNEGIE MELLON DISCLAIMS ANY LIABILITY OF ANY KIND 
+ *
+ * CARNEGIE MELLON ALLOWS FREE USE OF THIS SOFTWARE IN ITS "AS IS"
+ * CONDITION.  CARNEGIE MELLON DISCLAIMS ANY LIABILITY OF ANY KIND
  * FOR ANY DAMAGES WHATSOEVER RESULTING FROM THE USE OF THIS SOFTWARE.
- * 
+ *
  * Carnegie Mellon requests users of this software to return to
  *
  *  Software Distribution Coordinator  or  Software.Distribution@CS.CMU.EDU
@@ -145,7 +145,7 @@ LAloop:
 	and	A, BIT, CC			/* if bit in A is set, done. */
 	bne	CC, Ldodiv
 	subq	I, 1, I				/* decrement I, shift bit */
-	srl     BIT, 1, BIT 
+	srl     BIT, 1, BIT
 	bne	I, LAloop			/* If I != 0, loop again */
 
 Ldodiv:
@@ -159,7 +159,7 @@ Ldivloop:
 	cmoveq	CC, T_0, RESULT
 	subq	A, B, T_0
 	cmoveq	CC, T_0, A
-	srl	BIT, 1, BIT	
+	srl	BIT, 1, BIT
 	srl	B, 1, B
 	beq	A, Lret_result
 	bne	BIT, Ldivloop

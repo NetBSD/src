@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_mmap.h,v 1.5 2004/08/28 18:58:57 jdolecek Exp $	*/
+/*	$NetBSD: linux_mmap.h,v 1.6 2005/02/26 23:10:19 perry Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -39,13 +39,13 @@
 #ifndef _MIPS_LINUX_MMAP_H
 #define _MIPS_LINUX_MMAP_H
 
-/* 
+/*
  * LINUX_PROT_* defined in common/linux_mmap.h
  * LINUX_MAP_SHARED/PRIVATE defined in common/linux_mmap.h
  */
 
 /*
- * From Linux's include/asm-mips/mman.h 
+ * From Linux's include/asm-mips/mman.h
  */
 #define LINUX_MAP_FIXED		0x0010
 #define LINUX_MAP_ANON		0x0800	/* MAP_ANONYMOUS for Linux */

@@ -1,4 +1,4 @@
-/*	$NetBSD: mach_notify.c,v 1.15 2004/01/01 22:48:54 manu Exp $ */
+/*	$NetBSD: mach_notify.c,v 1.16 2005/02/26 23:10:20 perry Exp $ */
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mach_notify.c,v 1.15 2004/01/01 22:48:54 manu Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mach_notify.c,v 1.16 2005/02/26 23:10:20 perry Exp $");
 
 #include "opt_ktrace.h"
 
@@ -91,7 +91,7 @@ mach_notify_port_destroyed(l, mr)
 	(void)mach_message_get((mach_msg_header_t *)req, sizeof(*req), mp, l);
 #ifdef DEBUG_MACH_MSG
 	printf("pid %d: message queued on port %p (%d) [%p]\n",
-	    l->l_proc->p_pid, mp, req->req_msgh.msgh_id, 
+	    l->l_proc->p_pid, mp, req->req_msgh.msgh_id,
 	    mp->mp_recv->mr_sethead);
 #endif
 	wakeup(mp->mp_recv->mr_sethead);
@@ -109,13 +109,13 @@ mach_notify_port_no_senders(l, mr)
 	struct mach_port *mp;
 	mach_notify_port_no_senders_request_t *req;
 
-	if ((mr->mr_notify_no_senders == NULL) || 
+	if ((mr->mr_notify_no_senders == NULL) ||
 	    (mr->mr_notify_no_senders->mr_port == NULL))
 		return;
 	mp = mr->mr_notify_no_senders->mr_port;
 
 #ifdef DIAGNOSTIC
-	if ((mp == NULL) || 
+	if ((mp == NULL) ||
 	    (mp->mp_recv == NULL) ||
 	    (mp->mp_datatype != MACH_MP_NOTIFY_SYNC)) {
 		printf("mach_notify_port_no_senders: bad port or reciever\n");
@@ -140,7 +140,7 @@ mach_notify_port_no_senders(l, mr)
 	(void)mach_message_get((mach_msg_header_t *)req, sizeof(*req), mp, l);
 #ifdef DEBUG_MACH_MSG
 	printf("pid %d: message queued on port %p (%d) [%p]\n",
-	    l->l_proc->p_pid, mp, req->req_msgh.msgh_id, 
+	    l->l_proc->p_pid, mp, req->req_msgh.msgh_id,
 	    mp->mp_recv->mr_sethead);
 #endif
 	wakeup(mp->mp_recv->mr_sethead);
@@ -158,7 +158,7 @@ mach_notify_port_dead_name(l, mr)
 	struct mach_port *mp;
 	mach_notify_port_dead_name_request_t *req;
 
-	if ((mr->mr_notify_dead_name == NULL) || 
+	if ((mr->mr_notify_dead_name == NULL) ||
 	    (mr->mr_notify_dead_name->mr_port == NULL))
 		return;
 	mp = mr->mr_notify_dead_name->mr_port;
@@ -187,7 +187,7 @@ mach_notify_port_dead_name(l, mr)
 	(void)mach_message_get((mach_msg_header_t *)req, sizeof(*req), mp, l);
 #ifdef DEBUG_MACH_MSG
 	printf("pid %d: message queued on port %p (%d) [%p]\n",
-	    l->l_proc->p_pid, mp, req->req_msgh.msgh_id, 
+	    l->l_proc->p_pid, mp, req->req_msgh.msgh_id,
 	    mp->mp_recv->mr_sethead);
 #endif
 	wakeup(mp->mp_recv->mr_sethead);

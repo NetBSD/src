@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_exec_elf32.c,v 1.66 2003/10/31 14:04:36 drochner Exp $	*/
+/*	$NetBSD: linux_exec_elf32.c,v 1.67 2005/02/26 23:10:19 perry Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1998, 2000, 2001 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_exec_elf32.c,v 1.66 2003/10/31 14:04:36 drochner Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_exec_elf32.c,v 1.67 2005/02/26 23:10:19 perry Exp $");
 
 #ifndef ELFSIZE
 /* XXX should die */
@@ -113,11 +113,11 @@ ELFNAME2(linux,atexit_signature)(p, epp, eh)
 	static const char signature[] = "__libc_atexit";
 	char *strtable = NULL;
 	Elf_Shdr *sh;
-	
+
 	int error;
 
 	/*
-	 * load the section header table 
+	 * load the section header table
 	 */
 	shsize = eh->e_shnum * sizeof(Elf_Shdr);
 	sh = (Elf_Shdr *) malloc(shsize, M_TEMP, M_WAITOK);
@@ -125,7 +125,7 @@ ELFNAME2(linux,atexit_signature)(p, epp, eh)
 	if (error)
 		goto out;
 
-	/* 
+	/*
 	 * Now let's find the string table. If it does not exists, give up.
 	 */
 	strndx = (int)(eh->e_shstrndx);
@@ -147,7 +147,7 @@ ELFNAME2(linux,atexit_signature)(p, epp, eh)
 
 	for (i = 0; i < eh->e_shnum; i++) {
 		Elf_Shdr *s = &sh[i];
-		if (!memcmp((void*)(&(strtable[s->sh_name])), signature, 
+		if (!memcmp((void*)(&(strtable[s->sh_name])), signature,
 				sizeof(signature))) {
 			DPRINTF(("linux_atexit_sig=%s\n",
 			    &(strtable[s->sh_name])));
@@ -326,7 +326,7 @@ ELFNAME2(linux,probe)(p, epp, eh, itp, pos)
 #ifdef LINUX_ATEXIT_SIGNATURE
 	    ((error = ELFNAME2(linux,atexit_signature)(p, epp, eh)) != 0) &&
 #endif
-	    1) 
+	    1)
 			return error;
 
 	if (itp) {

@@ -1,4 +1,4 @@
-/*	$NetBSD: altq_hfsc.h,v 1.5 2003/01/06 15:20:24 christos Exp $	*/
+/*	$NetBSD: altq_hfsc.h,v 1.6 2005/02/26 23:04:16 perry Exp $	*/
 /*	$KAME: altq_hfsc.h,v 1.6 2000/12/14 08:12:46 thorpej Exp $	*/
 
 /*
@@ -43,7 +43,7 @@
 
 #ifdef __cplusplus
 extern "C" {
-#endif 
+#endif
 
 struct hfsc_interface {
 	char	hfsc_ifname[IFNAMSIZ];  /* interface name (e.g., fxp0) */
@@ -264,7 +264,7 @@ struct hfsc_if {
 	u_int	hif_classes;			/* # of classes in the tree */
 	u_int	hif_packets;			/* # of packets in the tree */
 	u_int	hif_classid;			/* class id sequence number */
-	
+
 	ellist_t *hif_eligible;			/* eligible list */
 
 	struct acc_classifier	hif_classifier;
@@ -274,6 +274,6 @@ struct hfsc_if {
 
 #ifdef __cplusplus
 }
-#endif 
+#endif
 
 #endif /* _ALTQ_ALTQ_HFSC_H_ */

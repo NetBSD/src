@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_emuldata.h,v 1.6 2004/08/08 09:40:50 jdolecek Exp $	*/
+/*	$NetBSD: linux_emuldata.h,v 1.7 2005/02/26 23:10:19 perry Exp $	*/
 
 /*-
  * Copyright (c) 1998,2002 The NetBSD Foundation, Inc.
@@ -46,7 +46,7 @@
  * structure.
  */
 struct linux_emuldata_shared {
-	caddr_t	p_break;	/* Processes' idea of break */	
+	caddr_t	p_break;	/* Processes' idea of break */
 	int refs;
 };
 

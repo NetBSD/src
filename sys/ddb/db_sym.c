@@ -1,4 +1,4 @@
-/*	$NetBSD: db_sym.c,v 1.48 2005/02/15 21:09:57 cube Exp $	*/
+/*	$NetBSD: db_sym.c,v 1.49 2005/02/26 23:04:17 perry Exp $	*/
 
 /*
  * Mach Operating System
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: db_sym.c,v 1.48 2005/02/15 21:09:57 cube Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_sym.c,v 1.49 2005/02/26 23:04:17 perry Exp $");
 
 #include "opt_ddbparam.h"
 
@@ -390,7 +390,7 @@ db_printsym(db_expr_t off, db_strategy_t strategy,
 				(*pr)("%s", name);
 				if (d) {
 					char tbuf[24];
-	
+
 					db_format_radix(tbuf, 24, d, TRUE);
 					(*pr)("+%s", tbuf);
 				}
@@ -460,5 +460,5 @@ db_sym_numargs(db_sym_t cursym, int *nargp, char **argnamep)
 		    argnamep));
 #endif
 	return (FALSE);
-}  
+}
 

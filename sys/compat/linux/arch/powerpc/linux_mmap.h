@@ -1,4 +1,4 @@
-/* $NetBSD: linux_mmap.h,v 1.3 2001/09/08 07:09:43 manu Exp $   */
+/* $NetBSD: linux_mmap.h,v 1.4 2005/02/26 23:10:19 perry Exp $   */
 
 /*-
  * Copyright (c) 1998, 2001 The NetBSD Foundation, Inc.
@@ -39,13 +39,13 @@
 #ifndef _POWERPC_LINUX_MMAP_H
 #define _POWERPC_LINUX_MMAP_H
 
-/* 
- * LINUX_PROT_* are defined in common/linux_mmap.h 
- * LINUX_MAP_SHARED/PRIVATE are defined in common/linux_mmap.h 
+/*
+ * LINUX_PROT_* are defined in common/linux_mmap.h
+ * LINUX_MAP_SHARED/PRIVATE are defined in common/linux_mmap.h
  */
 
-/* 
- * From Linux's include/asm-ppc/mman.h 
+/*
+ * From Linux's include/asm-ppc/mman.h
  */
 #define LINUX_MAP_FIXED		0x0010
 #define LINUX_MAP_ANON		0x0020

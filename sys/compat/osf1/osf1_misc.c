@@ -1,4 +1,4 @@
-/* $NetBSD: osf1_misc.c,v 1.69 2003/01/18 08:32:04 thorpej Exp $ */
+/* $NetBSD: osf1_misc.c,v 1.70 2005/02/26 23:10:21 perry Exp $ */
 
 /*
  * Copyright (c) 1999 Christopher G. Demetriou.  All rights reserved.
@@ -35,17 +35,17 @@
  * All rights reserved.
  *
  * Author: Chris G. Demetriou
- * 
+ *
  * Permission to use, copy, modify and distribute this software and
  * its documentation is hereby granted, provided that both the copyright
  * notice and this permission notice appear in all copies of the
  * software, derivative works or modified versions, and any portions
  * thereof, and that both notices appear in supporting documentation.
- * 
- * CARNEGIE MELLON ALLOWS FREE USE OF THIS SOFTWARE IN ITS "AS IS" 
- * CONDITION.  CARNEGIE MELLON DISCLAIMS ANY LIABILITY OF ANY KIND 
+ *
+ * CARNEGIE MELLON ALLOWS FREE USE OF THIS SOFTWARE IN ITS "AS IS"
+ * CONDITION.  CARNEGIE MELLON DISCLAIMS ANY LIABILITY OF ANY KIND
  * FOR ANY DAMAGES WHATSOEVER RESULTING FROM THE USE OF THIS SOFTWARE.
- * 
+ *
  * Carnegie Mellon requests users of this software to return to
  *
  *  Software Distribution Coordinator  or  Software.Distribution@CS.CMU.EDU
@@ -58,7 +58,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: osf1_misc.c,v 1.69 2003/01/18 08:32:04 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: osf1_misc.c,v 1.70 2005/02/26 23:10:21 perry Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_syscall_debug.h"
@@ -211,7 +211,7 @@ osf1_sys_getsysinfo(struct lwp *l, void *v, register_t *retval)
 #endif
 			cpuinfo.current_cpu = unit;
 			cpuinfo.cpus_in_box = ncpus;
-			cpuinfo.cpu_type = 
+			cpuinfo.cpu_type =
 			    LOCATE_PCS(hwrpb, unit)->pcs_proc_type;
 			cpuinfo.ncpus = ncpus;
 			cpuinfo.cpus_present = ncpus;

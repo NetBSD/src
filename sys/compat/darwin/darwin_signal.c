@@ -1,4 +1,4 @@
-/*	$NetBSD: darwin_signal.c,v 1.18 2004/07/28 22:24:06 manu Exp $ */
+/*	$NetBSD: darwin_signal.c,v 1.19 2005/02/26 23:10:18 perry Exp $ */
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: darwin_signal.c,v 1.18 2004/07/28 22:24:06 manu Exp $");
+__KERNEL_RCSID(0, "$NetBSD: darwin_signal.c,v 1.19 2005/02/26 23:10:18 perry Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -147,9 +147,9 @@ darwin_tracesig(p, signo)
 	int code[2];
 	int error;
 
-	/* 
+	/*
 	 * If the process does not have softsignals,
-	 * we are done, normal signal delivery should 
+	 * we are done, normal signal delivery should
 	 * occur.
 	 */
 	ded = (struct darwin_emuldata *)p->p_emuldata;
@@ -188,7 +188,7 @@ darwin_sys_sigprocmask(l, v, retval)
 	ubset = stackgap_alloc(p, &sg, sizeof(*ubset));
 	if (SCARG(uap, oset) != NULL)
 		uboset = stackgap_alloc(p, &sg, sizeof(*uboset));
-	
+
 	if (SCARG(uap, set) != NULL) {
 		error = copyin(SCARG(uap, set), &kdset, sizeof(kdset));
 		if (error != 0)
@@ -205,14 +205,14 @@ darwin_sys_sigprocmask(l, v, retval)
 	SCARG(&cup, oset) = uboset;
 	if ((error = sys___sigprocmask14(l, &cup, retval)) != 0)
 		return error;
-	
+
 	if (SCARG(uap, oset) != NULL) {
 		if ((error = copyin(uboset, &kboset, sizeof(kboset))) != 0)
 			return error;
 
 		native_sigset_to_sigset13(&kboset, &kdoset);
 
-		if ((error = copyout(&kdoset, 
+		if ((error = copyout(&kdoset,
 		    SCARG(uap, oset), sizeof(kdoset))) != 0)
 			return error;
 	}
@@ -220,7 +220,7 @@ darwin_sys_sigprocmask(l, v, retval)
 	return 0;
 }
 
-void 
+void
 native_to_darwin_siginfo(ksi, dsi)
 	const struct ksiginfo *ksi;
 	struct darwin___siginfo *dsi;
@@ -232,7 +232,7 @@ native_to_darwin_siginfo(ksi, dsi)
 	dsi->darwin_si_uid = ksi->ksi_uid;
 	dsi->darwin_si_status = ksi->ksi_status;
 	dsi->darwin_si_addr = ksi->ksi_addr;
-	(void)memcpy(&dsi->darwin_si_value, 
+	(void)memcpy(&dsi->darwin_si_value,
 	    &ksi->ksi_sigval, sizeof(dsi->darwin_si_value));
 	dsi->darwin_si_band = ksi->ksi_band;
 

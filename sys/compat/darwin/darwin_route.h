@@ -1,4 +1,4 @@
-/*	$NetBSD: darwin_route.h,v 1.2 2004/07/24 01:00:29 manu Exp $ */
+/*	$NetBSD: darwin_route.h,v 1.3 2005/02/26 23:10:18 perry Exp $ */
 
 /*-
  * Copyright (c) 2004 The NetBSD Foundation, Inc.
@@ -83,7 +83,7 @@ struct darwin_if_msghdr {
 	struct darwin_if_data dim_data;
 	char	dim_pad1[3];
 	/* Followed by a struct sockaddr_dl */
-} __packed;		
+} __packed;
 
 struct darwin_ifa_msghdr {
 	u_short	diam_len;

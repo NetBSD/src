@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_signal.c,v 1.41 2003/07/03 21:22:32 christos Exp $	*/
+/*	$NetBSD: linux_signal.c,v 1.42 2005/02/26 23:10:19 perry Exp $	*/
 /*-
  * Copyright (c) 1995, 1998 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -54,7 +54,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_signal.c,v 1.41 2003/07/03 21:22:32 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_signal.c,v 1.42 2005/02/26 23:10:19 perry Exp $");
 
 #define COMPAT_LINUX 1
 
@@ -372,13 +372,13 @@ linux_sigprocmask1(p, how, set, oset)
 	error = sigprocmask1(p, how,
 	    set ? &nbss : NULL, oset ? &obss : NULL);
 	if (error)
-		return (error); 
+		return (error);
 	if (oset) {
 		native_to_linux_old_sigset(&olss, &obss);
 		error = copyout(&olss, oset, sizeof(olss));
 		if (error)
 			return (error);
-	}       
+	}
 	return (error);
 }
 
@@ -431,7 +431,7 @@ linux_sys_rt_sigprocmask(l, v, retval)
 	if (!error && oset) {
 		native_to_linux_sigset(&olss, &obss);
 		error = copyout(&olss, oset, sizeof(olss));
-	}       
+	}
 	return (error);
 }
 

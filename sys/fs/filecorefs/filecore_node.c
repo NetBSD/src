@@ -1,7 +1,7 @@
-/*	$NetBSD: filecore_node.c,v 1.5 2004/05/20 05:39:34 atatat Exp $	*/
+/*	$NetBSD: filecore_node.c,v 1.6 2005/02/26 22:58:55 perry Exp $	*/
 
 /*-
- * Copyright (c) 1982, 1986, 1989, 1994 
+ * Copyright (c) 1982, 1986, 1989, 1994
  *           The Regents of the University of California.
  * All rights reserved.
  *
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: filecore_node.c,v 1.5 2004/05/20 05:39:34 atatat Exp $");
+__KERNEL_RCSID(0, "$NetBSD: filecore_node.c,v 1.6 2005/02/26 22:58:55 perry Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -234,10 +234,10 @@ filecore_inactive(v)
 	struct proc *p = ap->a_p;
 	struct filecore_node *ip = VTOI(vp);
 	int error = 0;
-	
+
 	if (prtactive && vp->v_usecount != 0)
 		vprint("filecore_inactive: pushing active", vp);
-	
+
 	ip->i_flag = 0;
 	VOP_UNLOCK(vp, 0);
 	/*
@@ -262,7 +262,7 @@ filecore_reclaim(v)
 	} */ *ap = v;
 	struct vnode *vp = ap->a_vp;
 	struct filecore_node *ip = VTOI(vp);
-	
+
 	if (prtactive && vp->v_usecount != 0)
 		vprint("filecore_reclaim: pushing active", vp);
 	/*

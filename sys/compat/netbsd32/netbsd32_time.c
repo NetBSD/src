@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_time.c,v 1.7 2004/11/14 03:30:10 atatat Exp $	*/
+/*	$NetBSD: netbsd32_time.c,v 1.8 2005/02/26 23:10:21 perry Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Matthew R. Green
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netbsd32_time.c,v 1.7 2004/11/14 03:30:10 atatat Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netbsd32_time.c,v 1.8 2005/02/26 23:10:21 perry Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ntp.h"
@@ -312,11 +312,11 @@ netbsd32_setitimer(l, v, retval)
 
 /* XXX there should be a way to share code with kern_time */
 /* XXX just copied some from there */
-	/* 
+	/*
 	 * Don't bother allocating data structures if the process just
 	 * wants to clear the timer.
 	 */
-	if (!timerisset(&aitv.it_value) && 
+	if (!timerisset(&aitv.it_value) &&
 	    ((p->p_timers == NULL) || (p->p_timers->pts_timers[which] == NULL)))
 		return (0);
 
@@ -349,13 +349,13 @@ netbsd32_setitimer(l, v, retval)
 		s = splclock();
 		callout_stop(&pt->pt_ch);
 		if (timerisset(&pt->pt_time.it_value)) {
-			timeradd(&pt->pt_time.it_value, &time, 
+			timeradd(&pt->pt_time.it_value, &time,
 			    &pt->pt_time.it_value);
 			/*
 			 * Don't need to check hzto() return value, here.
 			 * callout_reset() does it for us.
 			 */
-			callout_reset(&pt->pt_ch, hzto(&pt->pt_time.it_value), 
+			callout_reset(&pt->pt_ch, hzto(&pt->pt_time.it_value),
 			    realtimerexpire, pt);
 		}
 		splx(s);
@@ -394,7 +394,7 @@ netbsd32_getitimer(l, v, retval)
 			 * .it_value part of real time timer.  If time
 			 * for real time timer has passed return 0,
 			 * else return difference between current time
-			 * and time for the timer to go off.  
+			 * and time for the timer to go off.
 			 */
 			aitv = p->p_timers->pts_timers[ITIMER_REAL]->pt_time;
 			if (timerisset(&aitv.it_value)) {
@@ -481,7 +481,7 @@ netbsd32_settimeofday(l, v, retval)
 	 */
 	if (SCARG(uap, tzp))
 		printf("pid %d attempted to set the "
-		    "(obsolete) kernel time zone\n", p->p_pid); 
+		    "(obsolete) kernel time zone\n", p->p_pid);
 	return (0);
 }
 
@@ -670,7 +670,7 @@ netbsd32_nanosleep(l, v, retval)
 	s = splclock();
 	timeradd(&atv,&time,&atv);
 	timo = hzto(&atv);
-	/* 
+	/*
 	 * Avoid inadvertantly sleeping forever
 	 */
 	if (timo == 0)

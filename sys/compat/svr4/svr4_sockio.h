@@ -1,4 +1,4 @@
-/*	$NetBSD: svr4_sockio.h,v 1.3 1998/09/04 19:54:39 christos Exp $	 */
+/*	$NetBSD: svr4_sockio.h,v 1.4 2005/02/26 23:10:21 perry Exp $	 */
 
 /*-
  * Copyright (c) 1995 The NetBSD Foundation, Inc.
@@ -46,14 +46,14 @@
 #define	SVR4_IFF_POINTOPOINT	0x0010
 #define	SVR4_IFF_NOTRAILERS	0x0020
 #define	SVR4_IFF_RUNNING	0x0040
-#define	SVR4_IFF_NOARP		0x0080	
+#define	SVR4_IFF_NOARP		0x0080
 #define	SVR4_IFF_PROMISC	0x0100
 #define	SVR4_IFF_ALLMULTI	0x0200
 #define	SVR4_IFF_INTELLIGENT	0x0400
 #define	SVR4_IFF_MULTICAST	0x0800
 #define	SVR4_IFF_MULTI_BCAST	0x1000
 #define	SVR4_IFF_UNNUMBERED	0x2000
-#define	SVR4_IFF_PRIVATE	0x8000	
+#define	SVR4_IFF_PRIVATE	0x8000
 
 struct svr4_ifreq {
 #define	SVR4_IFNAMSIZ	16
@@ -64,7 +64,7 @@ struct svr4_ifreq {
 		struct	osockaddr	ifru_broadaddr;
 		short			ifru_flags;
 		int			ifru_metric;
-		char			ifru_data;	
+		char			ifru_data;
 		char			ifru_enaddr[6];
 		int			if_muxid[2];
 

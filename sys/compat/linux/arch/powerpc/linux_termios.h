@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_termios.h,v 1.6 2001/08/26 21:17:52 manu Exp $ */
+/*	$NetBSD: linux_termios.h,v 1.7 2005/02/26 23:10:19 perry Exp $ */
 
 /*-
  * Copyright (c) 1998, 2001 The NetBSD Foundation, Inc.
@@ -43,13 +43,13 @@
 #define LINUX_NCCS 19
 
 /*
- * Enable optional part of struct termios 
+ * Enable optional part of struct termios
  * in sys/compat/linux/common/linux_termios.h
  */
 #define LINUX_LARGE_STRUCT_TERMIOS
 
-/* 
- * From Linux's include/asm-ppc/termios.h 
+/*
+ * From Linux's include/asm-ppc/termios.h
  */
 #define LINUX_TCGETS		_LINUX_IOR('t', 19, struct linux_termios)
 #define LINUX_TCSETS		_LINUX_IOW('t', 20, struct linux_termios)
@@ -62,30 +62,30 @@
 #define LINUX_TCSBRK		_LINUX_IO('t', 29)
 #define LINUX_TCXONC		_LINUX_IO('t', 30)
 #define LINUX_TCFLSH		_LINUX_IO('t', 31)
-#define LINUX_TIOCEXCL	0x540c 
-#define LINUX_TIOCNXCL	0x540d 
-#define LINUX_TIOCSCTTY	0x540e 
+#define LINUX_TIOCEXCL	0x540c
+#define LINUX_TIOCNXCL	0x540d
+#define LINUX_TIOCSCTTY	0x540e
 #define LINUX_TIOCGPGRP	_LINUX_IOR('t', 119, int)
 #define LINUX_TIOCSPGRP	_LINUX_IOW('t', 118, int)
 #define LINUX_TIOCOUTQ	_LINUX_IOR('t', 115, int)
-#define LINUX_TIOCSTI		0x5412 
+#define LINUX_TIOCSTI		0x5412
 #define LINUX_TIOCGWINSZ 	_LINUX_IOR('t', 104, struct linux_winsize)
 #define LINUX_TIOCSWINSZ 	_LINUX_IOW('t', 103, struct linux_winsize)
-#define LINUX_TIOCMGET		0x5415 
-#define LINUX_TIOCMBIS		0x5416 
-#define LINUX_TIOCMBIC		0x5417 
-#define LINUX_TIOCMSET		0x5418 
-#define LINUX_TIOCGSOFTCAR	0x5419 
-#define LINUX_TIOCSSOFTCAR	0x541a 
+#define LINUX_TIOCMGET		0x5415
+#define LINUX_TIOCMBIS		0x5416
+#define LINUX_TIOCMBIC		0x5417
+#define LINUX_TIOCMSET		0x5418
+#define LINUX_TIOCGSOFTCAR	0x5419
+#define LINUX_TIOCSSOFTCAR	0x541a
 #define LINUX_FIONREAD		_LINUX_IOR('f', 127, int)
 #define LINUX_TIOCINQ		LINUX_FIONREAD
-#define LINUX_TIOCLINUX		0x541c 
-#define LINUX_TIOCCONS		0x541d 
-#define LINUX_TIOCGSERIAL	0x541e 
-#define LINUX_TIOCSSERIAL	0x541f 
-#define LINUX_TIOCPKT		0x5420 
+#define LINUX_TIOCLINUX		0x541c
+#define LINUX_TIOCCONS		0x541d
+#define LINUX_TIOCGSERIAL	0x541e
+#define LINUX_TIOCSSERIAL	0x541f
+#define LINUX_TIOCPKT		0x5420
 #define LINUX_FIONBIO		_LINUX_IOW('f', 126, int)
-#define LINUX_TIOCNOTTY		0x5422 
+#define LINUX_TIOCNOTTY		0x5422
 #define LINUX_TIOCSETD		0x5423
 #define LINUX_TIOCGETD		0x5424
 #define LINUX_TCSBRKP		0x5425
@@ -104,9 +104,9 @@
 #define LINUX_TIOCSERGETMULTI 0x545a
 #define LINUX_TIOCSERSETMULTI 0x545b
 
-/* 
- * linux_termios c_cc chars: 
- * From Linux include/asm-ppc/termios.h AND include/asm-ppc/termbits.h 
+/*
+ * linux_termios c_cc chars:
+ * From Linux include/asm-ppc/termios.h AND include/asm-ppc/termbits.h
  */
 #define LINUX_VINTR 	0
 #define LINUX_VQUIT 	1
@@ -119,20 +119,20 @@
 #define LINUX_VEOL2 	8
 #define LINUX_VSWTC 	9
 
-/* 
- * The following is from include/asm-ppc/termbits.h only 
+/*
+ * The following is from include/asm-ppc/termbits.h only
  */
 #define LINUX_VWERASE   10
 #define LINUX_VREPRINT  11
 #define LINUX_VSUSP     12
 #define LINUX_VSTART    13
 #define LINUX_VSTOP     14
-#define LINUX_VLNEXT    15    
+#define LINUX_VLNEXT    15
 #define LINUX_VDISCARD  16
 
-/* 
- * Old style linux_termio 
- * XXX Not found anywhere in Linux 
+/*
+ * Old style linux_termio
+ * XXX Not found anywhere in Linux
  */
 #define	LINUX_OLD_VINTR	LINUX_VINTR
 #define	LINUX_OLD_VQUIT	LINUX_VQUIT
@@ -145,10 +145,10 @@
 #define	LINUX_OLD_VEOL2	LINUX_VEOL2
 #define	LINUX_OLD_VSWTC	LINUX_VSWTC
 
-/* 
- * All the remaining stuff is from  Linux's include/asm-ppc/termbits.h 
+/*
+ * All the remaining stuff is from  Linux's include/asm-ppc/termbits.h
  * Note that theses values are octal, not hex.
- * Linux c_iflag masks 
+ * Linux c_iflag masks
  */
 #define LINUX_IGNBRK	0000001
 #define LINUX_BRKINT	0000002
@@ -165,8 +165,8 @@
 #define LINUX_IUCLC	0010000
 #define LINUX_IMAXBEL	0002000
 
-/* 
- * Linux c_oflag masks 
+/*
+ * Linux c_oflag masks
  */
 #define LINUX_OPOST	0000001
 #define LINUX_ONLCR	0000002
@@ -202,13 +202,13 @@
 #define LINUX_VT0  	00000000
 #define LINUX_VT1  	00200000
 /* Hmm.. Linux/i386 considers this part of TABDLY.. */
-#define LINUX_XTABS	01000000 
+#define LINUX_XTABS	01000000
 
-/* 
- * Linux c_cflag bit masks 
+/*
+ * Linux c_cflag bit masks
  * XXX not found in Linux, but it is needed to build
  */
-#define LINUX_NSPEEDS   16 
+#define LINUX_NSPEEDS   16
 
 #define LINUX_CBAUD	0000377
 #define LINUX_B0	0000000     /* hang up */
@@ -250,19 +250,19 @@
 #define LINUX_CS5	00000000
 #define LINUX_CS6	00000400
 #define LINUX_CS7 	00001000
-#define LINUX_CS8	00001400 
-   
-#define LINUX_CSTOPB	00002000 
-#define LINUX_CREAD	00004000 
-#define LINUX_PARENB	00010000 
-#define LINUX_PARODD	00020000 
-#define LINUX_HUPCL	00040000 
-   
+#define LINUX_CS8	00001400
+
+#define LINUX_CSTOPB	00002000
+#define LINUX_CREAD	00004000
+#define LINUX_PARENB	00010000
+#define LINUX_PARODD	00020000
+#define LINUX_HUPCL	00040000
+
 #define LINUX_CLOCAL 	00100000
 #define LINUX_CRTSCTS	020000000000    /* flow control */
 
-/* 
- * Linux c_lflag masks 
+/*
+ * Linux c_lflag masks
  */
 #define LINUX_ISIG   0x00000080
 #define LINUX_ICANON 0x00000100
