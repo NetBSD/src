@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.sys.mk,v 1.94 2003/07/28 02:38:33 lukem Exp $
+#	$NetBSD: bsd.sys.mk,v 1.95 2003/08/22 18:07:21 christos Exp $
 #
 # Build definitions used for NetBSD source tree builds.
 
@@ -10,8 +10,12 @@ _BSD_SYS_MK_=1
 CFLAGS+=	-Wall -Wstrict-prototypes -Wmissing-prototypes -Wpointer-arith
 #CFLAGS+=	-Wmissing-declarations -Wredundant-decls -Wnested-externs
 # Add -Wno-sign-compare.  -Wsign-compare is included in -Wall as of GCC 3.3,
-# but our sources aren't up for it yet.
-CFLAGS+=	-Wno-sign-compare
+# but our sources aren't up for it yet. Also, add -Wno-traditional because
+# gcc includes #elif in the warnings, which is 'this code will not compile
+# in a traditional environment' warning, as opposed to 'this code behaves
+# differently in traditional and ansi environments' which is the warning
+# we wanted, and now we don't get anymore.
+CFLAGS+=	-Wno-sign-compare -Wno-traditional
 # XXX Delete -Wuninitialized by default for now -- the compiler doesn't
 # XXX always get it right.
 CFLAGS+=	-Wno-uninitialized
