@@ -1,4 +1,4 @@
-/*	$NetBSD: rtc.c,v 1.1 2001/11/17 23:38:32 gmcgarry Exp $	*/
+/*	$NetBSD: rtc.c,v 1.2 2001/11/17 23:48:15 gmcgarry Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -146,8 +146,7 @@ rtc_gettime(todr_chip_handle_t handle, struct timeval *tv)
 
 	dt.dt_sec  = rtc_to_decimal(1, 0);
 	dt.dt_min  = rtc_to_decimal(3, 2);
-	/* Hours are different for some reason. Makes no sense really. */
-	dt.dt_hour = ((rtc_registers[5] & 0x03) * 10) + rtc_registers[4];
+	dt.dt_hour = (rtc_registers[5] & RTC_REG5_HOUR) * 10 + rtc_registers[4];
 	dt.dt_day  = rtc_to_decimal(8, 7);
 	dt.dt_mon  = rtc_to_decimal(10, 9);
 
@@ -193,9 +192,8 @@ rtc_settime(todr_chip_handle_t handle, struct timeval *tv)
 	decimal_to_rtc(9, 10, dt.dt_mon);
 	decimal_to_rtc(11, 12, year);
 
-	/* Some bogusness to deal with seemingly broken hardware. Nonsense */
 	rtc_registers[4] = dt.dt_hour % 10;
-	rtc_registers[5] = ((dt.dt_hour / 10) & 0x03) | 0x08;
+	rtc_registers[5] = ((dt.dt_hour / 10) & RTC_REG5_HOUR) | RTC_REG5_24HR;
 
 	rtc_registers[6] = 0;
 
