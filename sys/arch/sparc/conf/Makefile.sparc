@@ -1,4 +1,4 @@
-# 	$NetBSD: Makefile.sparc,v 1.38 1996/12/01 06:12:37 jonathan Exp $
+# 	$NetBSD: Makefile.sparc,v 1.39 1997/01/24 00:58:20 pk Exp $
 
 # Makefile for NetBSD
 #
@@ -124,7 +124,7 @@ newvers: ${SYSTEM_DEP} ${SYSTEM_SWAP_DEP}
 	${CC} ${CFLAGS} ${CPPFLAGS} ${PROF} -c vers.c
 
 
-clean::
+clean:
 	rm -f eddep *netbsd netbsd.gdb tags *.[io] [a-z]*.s \
 	    [Ee]rrs linterrs makelinks genassym genassym.o assym.h
 
@@ -147,7 +147,7 @@ links:
 
 SRCS=	${SPARC}/sparc/locore.s \
 	param.c ioconf.c ${CFILES} ${SFILES}
-depend:: .depend
+depend: .depend
 .depend: ${SRCS} assym.h param.c
 	${MKDEP} ${AFLAGS} ${CPPFLAGS} ${SPARC}/sparc/locore.s
 	${MKDEP} -a ${CFLAGS} ${CPPFLAGS} param.c ioconf.c ${CFILES}
