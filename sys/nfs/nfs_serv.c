@@ -34,7 +34,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)nfs_serv.c	7.40 (Berkeley) 5/15/91
- *	$Id: nfs_serv.c,v 1.4 1993/07/16 00:50:30 cgd Exp $
+ *	$Id: nfs_serv.c,v 1.5 1993/07/16 00:51:55 cgd Exp $
  */
 
 /*
@@ -211,13 +211,22 @@ nfsrv_setattr(mrep, md, dpos, cred, xid, mrq, repstat, p)
 	 * The usec field of sa_atime is overloaded with the va_flags field
 	 * for 4.4BSD clients. Hopefully other clients always set both the
 	 * sec and usec fields to -1 when not setting the atime.
+	 *
+	 * jfw@ksr.com (6/2/93):  Suns certainly don't set the usec field to
+	 *                        -1 when *setting* the atime, resulting in
+	 *                        va_flags acquiring random contents.
 	 */
+#if 0 /* bad assumption, NFS is too fragile to extend. */
 	if (sp->sa_atime.tv_sec != nfs_xdrneg1) {
 		vap->va_atime.tv_sec = fxdr_unsigned(long, sp->sa_atime.tv_sec);
 		vap->va_atime.tv_usec = 0;
 	}
 	if (sp->sa_atime.tv_usec != nfs_xdrneg1)
 		vap->va_flags = fxdr_unsigned(u_long, sp->sa_atime.tv_usec);
+#else
+	if (sp->sa_atime.tv_sec != nfs_xdrneg1)
+		fxdr_time(&sp->sa_atime, &vap->va_atime);
+#endif
 	if (sp->sa_mtime.tv_sec != nfs_xdrneg1)
 		fxdr_time(&sp->sa_mtime, &vap->va_mtime);
 	if (error = VOP_SETATTR(vp, vap, cred, p)) {
