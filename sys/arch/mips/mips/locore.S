@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.S,v 1.106 2000/07/18 06:25:33 jeffs Exp $	*/
+/*	$NetBSD: locore.S,v 1.107 2000/07/19 18:38:41 jeffs Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -82,7 +82,14 @@
 	.globl	_C_LABEL(kernel_text)		# libkvm refers this
 start:
 _C_LABEL(kernel_text):
+#if defined(MIPS3) & !defined(MIPS1)
+	/* keep firmware exception handler until we hook. */
+	mfc0	v0, MIPS_COP_0_STATUS
+	and	v0, MIPS3_SR_DIAG_BEV
+	mtc0	v0, MIPS_COP_0_STATUS		# Disable interrupts
+#else
 	mtc0	zero, MIPS_COP_0_STATUS		# Disable interrupts
+#endif
 /*
  * Initialize stack and call machine startup.
  */
@@ -128,7 +135,8 @@ _C_LABEL(kernel_text):
 	mtc0	t0, MIPS_COP_0_CONFIG
 #endif /* HPCMIPS_L1CACHE_DISABLE */
 #else
-	li	t0, MIPS_SR_COP_1_BIT		# Disable interrupts, and
+	mfc0	t0, MIPS_COP_0_STATUS
+	or	t0, MIPS_SR_COP_1_BIT		# Disable interrupts, and
 	mtc0	t0, MIPS_COP_0_STATUS		# enable the fp coprocessor
 #endif
 	nop
