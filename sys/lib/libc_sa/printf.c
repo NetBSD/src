@@ -1,3 +1,5 @@
+/*	$NetBSD: printf.c,v 1.2 1994/10/26 05:36:52 cgd Exp $	*/
+
 /*-
  * Copyright (c) 1991 The Regents of the University of California.
  * All rights reserved.
@@ -30,8 +32,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	from: @(#)printf.c	5.6 (Berkeley) 5/25/91
- *	$Id: printf.c,v 1.1 1993/10/13 11:16:24 cgd Exp $
+ *	@(#)printf.c	5.6 (Berkeley) 5/25/91
  */
 
 /*

@@ -1,4 +1,5 @@
-/* $NetBSD: svr4_dirent.h,v 1.1 1994/10/24 17:37:34 deraadt Exp $	*/
+/*	$NetBSD: svr4_dirent.h,v 1.2 1994/10/26 05:27:44 cgd Exp $	*/
+
 /*
  * Copyright (c) 1994 Christos Zoulas
  * All rights reserved.

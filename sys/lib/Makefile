@@ -1,4 +1,4 @@
-#	$Id: Makefile,v 1.4 1994/07/27 03:10:37 brezak Exp $
+#	$NetBSD: Makefile,v 1.5 1994/10/26 05:36:41 cgd Exp $
 
 .if exists(libsa)
 SUBDIR+= libsa

@@ -1,4 +1,5 @@
-/*	$NetBSD: svr4_ioctl.c,v 1.4 1994/10/24 17:37:42 deraadt Exp $	*/
+/*	$NetBSD: svr4_ioctl.c,v 1.5 1994/10/26 05:27:50 cgd Exp $	*/
+
 /*
  * Copyright (c) 1994 Christos Zoulas
  * All rights reserved.
@@ -22,6 +23,7 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
+
 #include <sys/param.h>
 #include <sys/proc.h>
 #include <sys/systm.h>

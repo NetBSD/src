@@ -1,6 +1,4 @@
-/*
- *	$Id: salibc.h,v 1.1 1993/10/16 07:32:22 cgd Exp $
- */
+/*	$NetBSD: salibc.h,v 1.2 1994/10/26 05:36:54 cgd Exp $	*/
 
 #include <sys/types.h>
 
