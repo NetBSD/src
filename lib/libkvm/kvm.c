@@ -35,7 +35,7 @@
 
 #if defined(LIBC_SCCS) && !defined(lint)
 /*static char sccsid[] = "from: @(#)kvm.c	5.18 (Berkeley) 5/7/91";*/
-static char rcsid[] = "$Id: kvm.c,v 1.31 1994/04/17 04:48:31 cgd Exp $";
+static char rcsid[] = "$Id: kvm.c,v 1.32 1994/04/23 02:42:01 briggs Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 #include <sys/param.h>
@@ -107,7 +107,7 @@ static	long	vm_page_buckets;
 static	long	page_shift;
 static	char	*tmp;
 #if defined(m68k)
-#if defined(amiga)
+#if defined(amiga) || defined(mac68k)
 static  int	cpu040;
 #endif
 static	int	lowram;
@@ -180,7 +180,7 @@ static struct nlist nl[] = {
 #define	X_SYSSEG	(X_LAST+0)
 	{ "_lowram" },
 #define	X_LOWRAM	(X_LAST+1)
-#if defined(amiga)
+#if defined(amiga) || defined(mac68k)
 	{ "_cpu040" },
 #define X_CPU040	(X_LAST+2)
 #endif
@@ -905,7 +905,7 @@ getkvars()
 		long	addr;
 
 #if defined(m68k)
-#if defined(amiga)
+#if defined(amiga) || defined(mac68k)
 		addr = (long) nl[X_CPU040].n_value;
 		(void) lseek(kmem, addr, 0);
 		if (read(kmem, (char *) &cpu040, sizeof (cpu040))
