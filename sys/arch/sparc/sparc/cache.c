@@ -1,4 +1,4 @@
-/*	$NetBSD: cache.c,v 1.32 1997/07/20 18:48:35 pk Exp $ */
+/*	$NetBSD: cache.c,v 1.33 1997/07/29 09:41:56 fair Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -414,7 +414,7 @@ sun4_vcache_flush_page(va)
 
 #ifdef DEBUG
 	if (va & PGOFSET)
-		panic("cache_flush_page: asked to flush misaligned va %x",va);
+		panic("cache_flush_page: asked to flush misaligned va 0x%x",va);
 #endif
 
 	cachestats.cs_npgflush++;
@@ -590,7 +590,7 @@ srmmu_vcache_flush_page(va)
 
 #ifdef DEBUG
 	if (va & PGOFSET)
-		panic("cache_flush_page: asked to flush misaligned va %x",va);
+		panic("cache_flush_page: asked to flush misaligned va 0x%x",va);
 #endif
 
 	cachestats.cs_npgflush++;
