@@ -1,4 +1,4 @@
-/*	$NetBSD: freebsd_misc.c,v 1.6 2000/07/18 14:15:05 onoe Exp $	*/
+/*	$NetBSD: freebsd_misc.c,v 1.7 2000/08/07 18:10:24 bjh21 Exp $	*/
 
 /*
  * Copyright (c) 1995 Frank van der Linden
@@ -34,6 +34,8 @@
 /*
  * FreeBSD compatibility module. Try to deal with various FreeBSD system calls.
  */
+
+#include "opt_ntp.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -93,6 +95,7 @@ freebsd_sys_rtprio(p, v, retval)
 	return ENOSYS;	/* XXX */
 }
 
+#ifdef NTP
 int
 freebsd_ntp_adjtime(p, v, retval)
 	struct proc *p;
@@ -107,6 +110,7 @@ freebsd_ntp_adjtime(p, v, retval)
 
 	return ENOSYS;	/* XXX */
 }
+#endif
 
 int
 freebsd_sys_sigaction4(p, v, retval)
