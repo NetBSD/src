@@ -23,6 +23,6 @@
 
 #include "sparc/tm-sparc.h"
 
-#include "tm-nbsd.h"
+#include <tm-nbsd.h>
 
 #endif /* TM_NBSD_H */

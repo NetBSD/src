@@ -19,4 +19,4 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.  */
 
 #define	SVR4_SHARED_LIBS
 /* Get generic NetBSD native definitions. */
-#include "nm-nbsd.h"
+#include <nm-nbsd.h>
