@@ -1,4 +1,4 @@
-/*	$NetBSD: mq200_vrip.c,v 1.3 2001/02/22 18:38:04 uch Exp $	*/
+/*	$NetBSD: mq200_vrip.c,v 1.4 2001/04/18 11:07:27 sato Exp $	*/
 
 /*-
  * Copyright (c) 2000 Takemura Shin
@@ -35,6 +35,8 @@
 
 #include <machine/bus.h>
 
+#include "opt_vr41xx.h"
+#include <hpcmips/vr/vrcpudef.h>
 #include <hpcmips/vr/vripreg.h>
 #include <hpcmips/vr/vripvar.h>
 #include <hpcmips/vr/vrgiureg.h>
