@@ -1,4 +1,4 @@
-/*	$NetBSD: conf.c,v 1.43 1997/06/14 22:24:06 is Exp $	*/
+/*	$NetBSD: conf.c,v 1.44 1997/08/27 20:18:20 is Exp $	*/
 
 /*-
  * Copyright (c) 1991 The Regents of the University of California.
@@ -90,7 +90,8 @@ int	nblkdev = sizeof(bdevsw) / sizeof(bdevsw[0]);
 #include "ms.h"
 #include "view.h"
 #include "mfcs.h"
-#include "drcom.h"
+#include "com.h"
+cdev_decl(com);
 #include "audio.h"
 cdev_decl(audio);
 dev_decl(filedesc,open);
@@ -132,7 +133,7 @@ struct cdevsw	cdevsw[] =
 	cdev_lkm_dummy(),		/* 29 */
 	cdev_lkm_dummy(),		/* 30 */
  	cdev_tty_init(NMSC,msc),	/* 31: A2232 MSC Multiport serial */
-	cdev_tty_init(NDRCOM,drcom),	/* 32: DraCo com ports */
+	cdev_tty_init(NCOM,com),	/* 32: com ports */
 	cdev_lkm_dummy(),		/* 33 */
 	cdev_lkm_dummy(),		/* 34 */
 	cdev_lkm_dummy(),		/* 35 */
