@@ -1,4 +1,4 @@
-/*	$NetBSD: bpf.c,v 1.36 1997/10/09 18:17:19 christos Exp $	*/
+/*	$NetBSD: bpf.c,v 1.37 1997/10/09 18:58:08 christos Exp $	*/
 
 /*
  * Copyright (c) 1990, 1991, 1993
@@ -374,7 +374,6 @@ bpfopen(dev, flag, mode, p)
 	/* Mark "free" and do most initialization. */
 	bzero((char *)d, sizeof(*d));
 	d->bd_bufsize = bpf_bufsize;
-	d->bd_sig = SIGIO;
 
 	return (0);
 }
@@ -558,11 +557,11 @@ bpf_wakeup(d)
 	struct proc *p;
 
 	wakeup((caddr_t)d);
-	if (d->bd_async && d->bd_sig)
+	if (d->bd_async)
 		if (d->bd_pgid > 0)
-			gsignal (d->bd_pgid, d->bd_sig);
+			gsignal (d->bd_pgid, SIGIO);
 		else if ((p = pfind (-d->bd_pgid)) != NULL)
-			psignal (p, d->bd_sig);
+			psignal (p, SIGIO);
 
 #if BSD >= 199103
 	selwakeup(&d->bd_sel);
