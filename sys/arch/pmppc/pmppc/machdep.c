@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.12 2003/02/03 17:10:00 matt Exp $	*/
+/*	$NetBSD: machdep.c,v 1.13 2003/04/19 13:58:38 bjh21 Exp $	*/
 
 /*
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -105,6 +105,7 @@
 #include <machine/bus.h>
 #include <machine/db_machdep.h>
 #include <machine/intr.h>
+#include <machine/pio.h>
 #include <machine/pmap.h>
 #include <machine/powerpc.h>
 #include <machine/trap.h>
