@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.31 1998/01/24 16:46:38 mycroft Exp $	*/
+/*	$NetBSD: machdep.c,v 1.32 1998/02/08 09:33:14 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -831,15 +831,13 @@ cpu_init_kcore_hdr()
 	m->relocend = (u_int32_t)end;
 
 	/*
-	 * The mvme68k has one contiguous memory segment.  Note,
-	 * RAM size is physmem + btoc(MSGBUFSIZE) to account for the msgbuf
-	 * pages.
+	 * The mvme68k has one or two memory segments.
 	 *
-	 * XXX We'll have to change this a bit when we support
-	 * XXX adding VME memory cards.
+	 * XXX Dump routines need to be fixed to handle multiple
+	 * XXX segments (VME memory cards).
 	 */
 	m->ram_segs[0].start = lowram;
-	m->ram_segs[0].size  = ctob(physmem + btoc(MSGBUFSIZE));
+	m->ram_segs[0].size  = ctob(physmem);
 }
 
 /*
