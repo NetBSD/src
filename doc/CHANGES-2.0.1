@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-2.0.1,v 1.1.2.4 2005/01/07 16:00:57 jdc Exp $
+#	$NetBSD: CHANGES-2.0.1,v 1.1.2.5 2005/01/10 19:02:54 jmc Exp $
 
 A complete list of changes from the NetBSD 2.0 release to the NetBSD 2.0.1 
 release.
@@ -53,13 +53,13 @@ sys/arch/sparc64/sparc64/pmap.c			1.157
 	before we recycle all the contexts in ctx_alloc().  The latter
 	is not good enough since a (physically tagged) L1 cache line is
 	valid for all contexts, not just the one that was used to
-	instantiate it.  fixes PR#24126, PR#25669 and PR#27730.
+	instantiate it.  PR#24126, PR#25669 and PR#27730.
 	[martin, ticket #1013]
 
 sys/arch/sparc64/sparc64/pmap.c			1.158
 
 	Better return value checking for pseg_get/pseg_set. Turn Debugger()
-	calls into proper panics and sprinkle some KASSERTs.  Closes PR#27288.
+	calls into proper panics and sprinkle some KASSERTs.  PR#27288.
 	[martin, ticket #1014]
 
 lib/libc/arch/sparc64/gen/_setjmp.S		1.6
@@ -67,24 +67,21 @@ lib/libc/arch/sparc64/gen/_setjmp.S		1.6
 	Replace the stack unwinding by a much simpler solution taken from
 	../../arch/sparc/gen/_setjmp.S rev. 1.6. This ended up to be
 	~identical to the OpenBSD change triggered by the same sparc change.
-	Thanks to Stoned Elipot for pointing out the problem.
 	[martin, ticket #1020]
 
-lib/libc/arch/x86_64/gen/swapcontext.S 1.3
+lib/libc/arch/x86_64/gen/swapcontext.S 		1.3
 
 	Use correct stack offsets after pushing values onto it.
 	PR#28486.
 	[hira, ticket #1029]
 
-sys/net/if_media.c			1.23
+sys/net/if_media.c				1.23
 
-	As pointed out by Greg Troxel, ifmedia_entrys were allocated with
-	malloc_type M_IFADDR and freed with malloc_type M_DEVBUF.  This
-	causes a panic(9) in DIAGNOSTIC kernels.  Add malloc_type M_IFMEDIA
-	and use it for both malloc'ing and free'ing ifmedia_entrys.
+	Add malloc_type M_IFMEDIA and use it for both malloc'ing and free'ing 
+	ifmedia_entrys to prevent panic(9) in DIAGNOSTIC kernels.
 	[dyoung, ticket #1030]
 
-sys/arch/xen/i386/locore.S		1.7
+sys/arch/xen/i386/locore.S			1.7
 
 	HYPERVISOR_yield is one of the hypervisor calls that's "overloaded";
 	it does different things depending what's in %ebx.
@@ -93,16 +90,19 @@ sys/arch/xen/i386/locore.S		1.7
 	SCHEDOP_yield, which was what was wanted; so unpredictable things
 	happened, notably immediate return to the NetBSD idle loop, in
 	other words spinning on CPU.
-
-	Michael Kukat caught this one and suggested this fix on port-xen.
 	[tls, ticket #1043]
 
-sys/arch/xen/i386/machdep.c		1.11
+sys/arch/xen/i386/machdep.c			1.11
 
 	Terminate the domain on RB_HALT, not just on reboot.  This avoids
-	looping around a cngetc() that will never return while "halted",
-	which is rude, and which also requires domain 0 to not just restart
-	us, but kill us first.  Suggestion from Michael Kukat (though this
-	change is not the same as the one he suggested).
+	looping around a cngetc() that will never return while "halted".
 	[tls, ticket #1045]
 
+sys/arch/sh3/sh3/mmu.c				1.10
+sys/arch/sh3/sh3/mmu_sh3.c			1.7
+sys/arch/sh3/sh3/mmu_sh4.c			1.8
+
+	Protect accesses to PTE/TLB registers with 
+	_cpu_exception_suspend()/_cpu_exception_resume() pair. Prevents 
+	spontaneous reboot under heavy load
+	[tsutsui, ticket #1072]
