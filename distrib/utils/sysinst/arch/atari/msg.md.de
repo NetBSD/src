@@ -1,0 +1,74 @@
+/*	$NetBSD: msg.md.de,v 1.1 2004/02/29 18:46:44 jschauma Exp $	*/
+
+/*
+ * Copyright 1997 Piermont Information Systems Inc.
+ * All rights reserved.
+ *
+ * Written by Philip A. Nelson for Piermont Information Systems Inc.
+ *
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions
+ * are met:
+ * 1. Redistributions of source code must retain the above copyright
+ *    notice, this list of conditions and the following disclaimer.
+ * 2. Redistributions in binary form must reproduce the above copyright
+ *    notice, this list of conditions and the following disclaimer in the
+ *    documentation and/or other materials provided with the distribution.
+ * 3. All advertising materials mentioning features or use of this software
+ *    must display the following acknowledgement:
+ *      This product includes software developed for the NetBSD Project by
+ *      Piermont Information Systems Inc.
+ * 4. The name of Piermont Information Systems Inc. may not be used to endorse
+ *    or promote products derived from this software without specific prior
+ *    written permission.
+ *
+ * THIS SOFTWARE IS PROVIDED BY PIERMONT INFORMATION SYSTEMS INC. ``AS IS''
+ * AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+ * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+ * ARE DISCLAIMED. IN NO EVENT SHALL PIERMONT INFORMATION SYSTEMS INC. BE 
+ * LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR 
+ * CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF 
+ * SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+ * INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
+ * CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+ * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF 
+ * THE POSSIBILITY OF SUCH DAMAGE.
+ *
+ */
+
+/* MD Message catalog -- German, atari version */
+
+message md_hello
+{Wenn Sie von einer Diskette gebootet haben, so können Sie diese jetzt
+entnehmen.
+
+}
+
+message dobootblks
+{Installiere die Bootblöcke auf %s ...
+}
+
+message infoahdilabel
+{Sie müssen nun Ihre Rootdisk zur Installation von NetBSD vorbereiten.
+Nachfolgend wird dies als das 'Labeling' einer Disk bezeichnet werden. 
+
+Zuvor besteht die Möglichkeit zur Editierung oder Erstellung einer AHDI
+kompatiblen Partitionierung auf jener Disk, die für NetBSD gedacht ist. 
+Beachten Sie, dass NetBSD nicht auf AHDI Partitionen angewiesen ist; werfen Sie
+sie einen Blick auf die NetBSD Dokumentation.
+Wenn Sie eine AHDI kompatible Partitionierung nutzen wollen, so müssen Sie
+einige Partitionen NetBSD zuweisen, damit NetBSD fähig ist die Disk zu nutzen.
+Stellen Sie die 'Id' aller jener Partitionen, die Sie nutzen wollen, auf
+'NBD'. Setzen Sie zusätzlich die 'Id' der als Swap zu nutzenden Partition
+auf 'SWP'.
+
+Wünschen Sie eine AHDI kompatible Partitionierung? }
+
+message set_kernel_1
+{Kernel (TT030/Falcon)}
+message set_kernel_2
+{Kernel (Hades)}
+message set_kernel_3 
+{Kernel (Milan ISA)}
+message set_kernel_4
+{Kernel (Milan PCI)}
