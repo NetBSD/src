@@ -1,4 +1,4 @@
-/*	$NetBSD: arithmetic.c,v 1.14 2000/04/14 05:58:01 simonb Exp $	*/
+/*	$NetBSD: arithmetic.c,v 1.15 2000/05/08 07:56:00 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -46,7 +46,7 @@ __COPYRIGHT("@(#) Copyright (c) 1989, 1993\n\
 #if 0
 static char sccsid[] = "@(#)arithmetic.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: arithmetic.c,v 1.14 2000/04/14 05:58:01 simonb Exp $");
+__RCSID("$NetBSD: arithmetic.c,v 1.15 2000/05/08 07:56:00 mycroft Exp $");
 #endif
 #endif /* not lint */
 
@@ -121,7 +121,7 @@ main(argc, argv)
 	int ch, cnt;
 
 	/* Revoke setgid privileges */
-	setregid(getgid(), getgid());
+	setgid(getgid());
 
 	while ((ch = getopt(argc, argv, "r:o:")) != -1)
 		switch(ch) {
