@@ -1,4 +1,4 @@
-/*	$NetBSD: sb.c,v 1.10 1994/10/27 04:18:12 cgd Exp $	*/
+/*	$NetBSD: sb.c,v 1.11 1994/11/03 23:21:28 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1991-1993 Regents of the University of California.
@@ -102,23 +102,23 @@ struct {
 	int wmidi;
 } sberr;
 
-int	sbintr __P((struct sb_softc *));
-int	sbprobe();
-void	sbattach();
+int	sbprobe __P((struct device *, void *, void *));
 #ifdef NEWCONFIG
 void	sbforceintr(void *);
 #endif
+void	sbattach __P((struct device *, struct device *, void *));
+int	sbintr __P((struct sb_softc *));
 
 struct cfdriver sbcd = {
 	NULL, "sb", sbprobe, sbattach, DV_DULL, sizeof(struct sb_softc)
 };
 
 int
-sbprobe(parent, self, aux)
-	struct device *parent, *self;
-	void *aux;
+sbprobe(parent, match, aux)
+	struct device *parent;
+	void *match, *aux;
 {
-	register struct sb_softc *sc = (void *)self;
+	register struct sb_softc *sc = match;
 	register struct isa_attach_args *ia = aux;
 	register u_short iobase = ia->ia_iobase;
 
