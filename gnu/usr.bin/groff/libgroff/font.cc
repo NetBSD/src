@@ -1,12 +1,12 @@
 // -*- C++ -*-
-/* Copyright (C) 1989, 1990, 1991 Free Software Foundation, Inc.
-     Written by James Clark (jjc@jclark.uucp)
+/* Copyright (C) 1989, 1990, 1991, 1992 Free Software Foundation, Inc.
+     Written by James Clark (jjc@jclark.com)
 
 This file is part of groff.
 
 groff is free software; you can redistribute it and/or modify it under
 the terms of the GNU General Public License as published by the Free
-Software Foundation; either version 1, or (at your option) any later
+Software Foundation; either version 2, or (at your option) any later
 version.
 
 groff is distributed in the hope that it will be useful, but WITHOUT ANY
@@ -15,7 +15,7 @@ FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
 for more details.
 
 You should have received a copy of the GNU General Public License along
-with groff; see the file LICENSE.  If not, write to the Free Software
+with groff; see the file COPYING.  If not, write to the Free Software
 Foundation, 675 Mass Ave, Cambridge, MA 02139, USA. */
 
 #include <stdio.h>
@@ -34,7 +34,7 @@ const char *const WS = " \t\n\r";
 
 struct font_char_metric {
   char type;
-  unsigned char code;
+  int code;
   int width;
   int height;
   int depth;
@@ -50,6 +50,15 @@ struct font_kern_list {
   font_kern_list *next;
 
   font_kern_list(int, int, int, font_kern_list * = 0);
+};
+
+struct font_widths_cache {
+  font_widths_cache *next;
+  int point_size;
+  int *width;
+
+  font_widths_cache(int, int, font_widths_cache *);
+  ~font_widths_cache();
 };
 
 /* text_file */
@@ -77,8 +86,8 @@ text_file::text_file(FILE *p, char *s)
 
 text_file::~text_file()
 {
-  delete buf;
-  delete path;
+  a_delete buf;
+  a_delete path;
   if (fp)
     fclose(fp);
 }
@@ -89,12 +98,33 @@ int text_file::next()
   if (fp == 0)
     return 0;
   if (buf == 0) {
-    buf = new char [512];
-    size = 512;
+    buf = new char [128];
+    size = 128;
   }
   for (;;) {
-    if (fgets(buf, size, fp) == 0)
-      return 0;
+    int i = 0;
+    for (;;) {
+      int c = getc(fp);
+      if (c == EOF)
+	break;
+      if (illegal_input_char(c))
+	error("illegal input character code `%1'", int(c));
+      else {
+	if (i + 1 >= size) {
+	  char *old_buf = buf;
+	  buf = new char[size*2];
+	  memcpy(buf, old_buf, size);
+	  a_delete old_buf;
+	  size *= 2;
+	}
+	buf[i++] = c;
+	if (c == '\n')
+	  break;
+      }
+    }
+    if (i == 0)
+      break;
+    buf[i] = '\0';
     lineno++;
     char *ptr = buf;
     while (csspace(*ptr))
@@ -102,6 +132,7 @@ int text_file::next()
     if (*ptr != 0 && (!skip_comments || *ptr != '#'))
       return 1;
   }
+  return 0;
 }
 
 void text_file::error(const char *format, 
@@ -117,7 +148,7 @@ void text_file::error(const char *format,
 
 font::font(const char *s)
 : special(0), ligatures(0), kern_hash_table(0), space_width(0),
-  ch(0), ch_used(0), ch_size(0), ch_index(0), nindices(0)
+  ch(0), ch_used(0), ch_size(0), ch_index(0), nindices(0), widths_cache(0)
 {
   name = new char[strlen(s) + 1];
   strcpy(name, s);
@@ -128,8 +159,8 @@ font::font(const char *s)
 
 font::~font()
 {
-  delete ch;
-  delete ch_index;
+  a_delete ch;
+  a_delete ch_index;
   if (kern_hash_table) {
     for (int i = 0; i < KERN_HASH_TABLE_SIZE; i++) {
       font_kern_list *kerns = kern_hash_table[i];
@@ -139,10 +170,15 @@ font::~font()
 	delete tem;
       }
     }
-    delete kern_hash_table;
+    a_delete kern_hash_table;
   }
-  delete name;
-  delete internalname;
+  a_delete name;
+  a_delete internalname;
+  while (widths_cache) {
+    font_widths_cache *tem = widths_cache;
+    widths_cache = widths_cache->next;
+    delete tem;
+  }
 }
 
 static int scale_round(int n, int x, int y)
@@ -154,12 +190,13 @@ static int scale_round(int n, int x, int y)
   if (n >= 0) {
     if (n <= (INT_MAX - y2)/x)
       return (n*x + y2)/y;
+    return int(n*double(x)/double(y) + .5);
   }
   else {
     if (-(unsigned)n <= (-(unsigned)INT_MIN - y2)/x)
       return (n*x - y2)/y;
+    return int(n*double(x)/double(y) - .5);
   }
-  return int(n*double(x)/double(y) + .5);
 }
 
 inline int font::scale(int w, int sz)
@@ -183,10 +220,48 @@ int font::is_special()
   return special;
 }
 
+font_widths_cache::font_widths_cache(int ps, int ch_size,
+				     font_widths_cache *p = 0)
+: next(p), point_size(ps)
+{
+  width = new int[ch_size];
+  for (int i = 0; i < ch_size; i++)
+    width[i] = -1;
+}
+
+font_widths_cache::~font_widths_cache()
+{
+  a_delete width;
+}
+
 int font::get_width(int c, int point_size)
 {
-  assert(c >= 0 && c < nindices && ch_index[c] >= 0);
-  return scale(ch[ch_index[c]].width, point_size);
+  assert(c >= 0 && c < nindices);
+  int i = ch_index[c];
+  assert(i >= 0);
+
+  if (point_size == unitwidth)
+    return ch[i].width;
+
+  if (!widths_cache)
+    widths_cache = new font_widths_cache(point_size, ch_size);
+  else if (widths_cache->point_size != point_size) {
+    for (font_widths_cache **p = &widths_cache; *p; p = &(*p)->next)
+      if ((*p)->point_size == point_size)
+	break;
+    if (*p) {
+      font_widths_cache *tem = *p;
+      *p = (*p)->next;
+      tem->next = widths_cache;
+      widths_cache = tem;
+    }
+    else
+      widths_cache = new font_widths_cache(point_size, ch_size, widths_cache);
+  }
+  int &w = widths_cache->width[i];
+  if (w < 0)
+    w = scale(ch[i].width, point_size);
+  return w;
 }
 
 int font::get_height(int c, int point_size)
@@ -267,7 +342,7 @@ int font::get_character_type(int c)
   return ch[ch_index[c]].type;
 }
 
-unsigned char font::get_code(int c)
+int font::get_code(int c)
 {
   assert(c >= 0 && c < nindices && ch_index[c] >= 0);
   return ch[ch_index[c]].code;
@@ -303,7 +378,7 @@ void font::alloc_ch_index(int index)
     memcpy(ch_index, old_ch_index, sizeof(short)*old_nindices);
     for (int i = old_nindices; i < nindices; i++)
       ch_index[i] = -1;
-    delete old_ch_index;
+    a_delete old_ch_index;
   }
 }
 
@@ -317,7 +392,7 @@ void font::extend_ch()
     font_char_metric *old_ch = ch;
     ch = new font_char_metric[ch_size];
     memcpy(ch, old_ch, old_ch_size*sizeof(font_char_metric));
-    delete old_ch;
+    a_delete old_ch;
   }
 }
 
@@ -331,14 +406,14 @@ void font::compact()
     short *old_ch_index = ch_index;
     ch_index = new short[i];
     memcpy(ch_index, old_ch_index, i*sizeof(short));
-    delete old_ch_index;
+    a_delete old_ch_index;
     nindices = i;
   }
   if (ch_used < ch_size) {
     font_char_metric *old_ch = ch;
     ch = new font_char_metric[ch_used];
     memcpy(ch, old_ch, ch_used*sizeof(font_char_metric));
-    delete old_ch;
+    a_delete old_ch;
     ch_size = ch_used;
   }
 }
@@ -364,22 +439,41 @@ void font::copy_entry(int new_index, int old_index)
   ch_index[new_index] = ch_index[old_index];
 }
 
-font *font::load_font(const char *s)
+font *font::load_font(const char *s, int *not_found)
 {
   font *f = new font(s);
-  if (!f->load()) {
+  if (!f->load(not_found)) {
     delete f;
     return 0;
   }
   return f;
 }
 
-int font::load()
+static char *trim_arg(char *p)
+{
+  if (!p)
+    return 0;
+  while (csspace(*p))
+    p++;
+  char *q = strchr(p, '\0');
+  while (q > p && csspace(q[-1]))
+    q--;
+  *q = '\0';
+  return p;
+}
+
+// If the font can't be found, then if not_found is NULL it will be set
+// to 1 otherwise a message will be printed.
+
+int font::load(int *not_found)
 {
   char *path;
   FILE *fp;
   if ((fp = open_file(name, &path)) == NULL) {
-    error("can't find font file `%1'", name);
+    if (not_found)
+      *not_found = 1;
+    else
+      error("can't find font file `%1'", name);
     return 0;
   }
   text_file t(fp, path);
@@ -445,23 +539,9 @@ int font::load()
       special = 1;
     }
     else if (strcmp(p, "kernpairs") != 0 && strcmp(p, "charset") != 0) {
-      int nargv = 5;
-      const char **argv = new char *[nargv];
-      int argc = 0;
-      do {
-	if (argc < nargv) {
-	  const char **old_argv = argv;
-	  int old_nargv = nargv;
-	  nargv *= 2;
-	  argv = new char *[nargv];
-	  memcpy(argv, old_argv, sizeof(char*)*old_nargv);
-	  delete old_argv;
-	}
-	argv[argc++] = p;
-	p = strtok(0, WS);
-      } while (p != 0);
-      handle_unknown_font_command(argc, argv);
-      delete argv;
+      char *command = p;
+      p = strtok(0, "\n");
+      handle_unknown_font_command(command, trim_arg(p), t.path, t.lineno);
     }
     else
       break;
@@ -576,17 +656,11 @@ int font::load()
 	    return 0;
 	  }
 	  char *ptr;
-	  long code = strtol(p, &ptr, 0);
-	  if (code == 0 && ptr == p) {
+	  metric.code = (int)strtol(p, &ptr, 0);
+	  if (metric.code == 0 && ptr == p) {
 	    t.error("bad code `%1' for character `%2'", p, nm);
 	    return 0;
 	  }
-	  if (code < 0 || code >= 256) {
-	    t.error("code %1 for character `%2' not between 0 and 255",
-		    int(code), nm);
-	    return 0;
-	  }
-	  metric.code = (unsigned char)code;
 	  if (strcmp(nm, "---") == 0) {
 	    last_index = number_to_index(metric.code);
 	    add_entry(last_index, metric);
@@ -645,7 +719,7 @@ int font::load_desc()
   FILE *fp;
   char *path;
   if ((fp = open_file("DESC", &path)) == 0) {
-    error("can't open `DESC'");
+    error("can't find `DESC' file");
     return 0;
   }
   text_file t(fp, path);
@@ -689,7 +763,7 @@ int font::load_desc()
 	t.error("bad number of fonts `%1'", p);
 	return 0;
       }
-      font_name_table = new char *[nfonts+1]; 
+      font_name_table = (const char **)new char *[nfonts+1]; 
       for (int i = 0; i < nfonts; i++) {
 	p = strtok(0, WS);
 	while (p == 0) {
@@ -741,7 +815,7 @@ int font::load_desc()
 	  sizes = new int[n*2];
 	  memcpy(sizes, old_sizes, n*sizeof(int));
 	  n *= 2;
-	  delete old_sizes;
+	  a_delete old_sizes;
 	}
 	sizes[i++] = lower;
 	if (lower == 0)
@@ -755,7 +829,7 @@ int font::load_desc()
     }
     else if (strcmp("styles", p) == 0) {
       int style_table_size = 5;
-      style_table = new char *[style_table_size];
+      style_table = (const char **)new char *[style_table_size];
       for (int j = 0; j < style_table_size; j++)
 	style_table[j] = 0;
       int i = 0;
@@ -767,12 +841,12 @@ int font::load_desc()
 	if (i + 1 >= style_table_size) {
 	  const char **old_style_table = style_table;
 	  style_table_size *= 2;
-	  style_table = new char*[style_table_size];
+	  style_table = (const char **)new char*[style_table_size];
 	  for (j = 0; j < i; j++)
 	    style_table[j] = old_style_table[j];
 	  for (; j < style_table_size; j++)
 	    style_table[j] = 0;
-	  delete old_style_table;
+	  a_delete old_style_table;
 	}
 	char *tem = new char[strlen(p) + 1];
 	strcpy(tem, p);
@@ -781,6 +855,11 @@ int font::load_desc()
     }
     else if (strcmp("charset", p) == 0)
       break;
+    else if (unknown_desc_command_handler) {
+      char *command = p;
+      p = strtok(0, "\n");
+      (*unknown_desc_command_handler)(command, trim_arg(p), t.path, t.lineno);
+    }
   }
   if (res == 0) {
     t.error("missing `res' command");
@@ -813,7 +892,16 @@ int font::load_desc()
   return 1;
 }      
 
-void font::handle_unknown_font_command(int, const char **)
+void font::handle_unknown_font_command(const char *, const char *,
+				       const char *, int)
 {
+}
+
+FONT_COMMAND_HANDLER
+font::set_unknown_desc_command_handler(FONT_COMMAND_HANDLER func)
+{
+  FONT_COMMAND_HANDLER prev = unknown_desc_command_handler;
+  unknown_desc_command_handler = func;
+  return prev;
 }
 
