@@ -1,7 +1,7 @@
-/*	$NetBSD: tcp_var.h,v 1.25.2.1 1997/11/08 06:31:36 thorpej Exp $	*/
+/*	$NetBSD: tcp_var.h,v 1.25.2.2 1998/01/29 10:34:43 mellon Exp $	*/
 
 /*
- * Copyright (c) 1982, 1986, 1993, 1994
+ * Copyright (c) 1982, 1986, 1993, 1994, 1995
  *	The Regents of the University of California.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -32,7 +32,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	@(#)tcp_var.h	8.3 (Berkeley) 4/10/94
+ *	@(#)tcp_var.h	8.4 (Berkeley) 5/24/95
  */
 
 /*
@@ -67,6 +67,7 @@ struct tcpcb {
 
 	struct	tcpiphdr *t_template;	/* skeletal packet for transmit */
 	struct	inpcb *t_inpcb;		/* back pointer to internet pcb */
+	LIST_ENTRY(tcpcb) t_delack;	/* delayed ACK queue */
 /*
  * The following fields are used as in the protocol specification.
  * See RFC783, Dec. 1981, page 21.
@@ -130,6 +131,30 @@ struct tcpcb {
 /* TUBA stuff */
 	caddr_t	t_tuba_pcb;		/* next level down pcb for TCP over z */
 };
+
+/*
+ * Queue for delayed ACK processing.
+ */
+LIST_HEAD(tcp_delack_head, tcpcb);
+#ifdef _KERNEL
+extern struct tcp_delack_head tcp_delacks;
+
+#define	TCP_SET_DELACK(tp) \
+do { \
+	if (((tp)->t_flags & TF_DELACK) == 0) { \
+		(tp)->t_flags |= TF_DELACK; \
+		LIST_INSERT_HEAD(&tcp_delacks, (tp), t_delack); \
+	} \
+} while (0)
+
+#define	TCP_CLEAR_DELACK(tp) \
+do { \
+	if ((tp)->t_flags & TF_DELACK) { \
+		(tp)->t_flags &= ~TF_DELACK; \
+		LIST_REMOVE((tp), t_delack); \
+	} \
+} while (0)
+#endif /* _KERNEL */
 
 /*
  * Handy way of passing around TCP option info.
@@ -206,6 +231,16 @@ struct syn_cache_head {
 #define	TCP_REXMTVAL(tp) \
 	((((tp)->t_srtt >> TCP_RTT_SHIFT) + (tp)->t_rttvar) >> 2)
 
+#ifdef _KERNEL
+/*
+ * Compute the initial window for slow start.
+ */
+extern int tcp_init_win;
+#define	TCP_INITIAL_WINDOW(segsz) \
+	((tcp_init_win == 0) ? (min(4 * (segsz), max(2 * (segsz), 4380))) : \
+	 ((segsz) * tcp_init_win))
+#endif /* _KERNEL */
+
 /*
  * TCP statistics.
  * Many of these should be kept per connection,
@@ -227,6 +262,9 @@ struct	tcpstat {
 	u_long	tcps_keeptimeo;		/* keepalive timeouts */
 	u_long	tcps_keepprobe;		/* keepalive probes sent */
 	u_long	tcps_keepdrops;		/* connections dropped in keepalive */
+	u_long	tcps_persistdrops;	/* connections dropped in persist */
+	u_long	tcps_connsdrained;	/* connections drained due to memory
+					   shortage */
 
 	u_long	tcps_sndtotal;		/* total packets sent */
 	u_long	tcps_sndpack;		/* data packets sent */
@@ -294,7 +332,8 @@ struct	tcpstat {
 #define	TCPCTL_SYN_CACHE_LIMIT	5	/* max size of comp. state engine */
 #define	TCPCTL_SYN_BUCKET_LIMIT	6	/* max size of hash bucket */
 #define	TCPCTL_SYN_CACHE_INTER	7	/* interval of comp. state timer */
-#define	TCPCTL_MAXID		8
+#define	TCPCTL_INIT_WIN		8	/* initial window */
+#define	TCPCTL_MAXID		9
 
 #define	TCPCTL_NAMES { \
 	{ 0, 0 }, \
@@ -305,6 +344,7 @@ struct	tcpstat {
 	{ "syn_cache_limit", CTLTYPE_INT }, \
 	{ "syn_bucket_limit", CTLTYPE_INT }, \
 	{ "syn_cache_interval", CTLTYPE_INT },\
+	{ "init_win", CTLTYPE_INT }, \
 }
 
 #ifdef _KERNEL
@@ -313,6 +353,7 @@ struct	tcpstat tcpstat;	/* tcp statistics */
 u_int32_t tcp_now;		/* for RFC 1323 timestamps */
 extern	int tcp_do_rfc1323;	/* enabled/disabled? */
 extern	int tcp_mssdflt;	/* default seg size */
+extern	int tcp_init_win;	/* initial window */
 extern	int tcp_syn_cache_limit; /* max entries for compressed state engine */
 extern	int tcp_syn_bucket_limit;/* max entries per hash bucket */
 extern	int tcp_syn_cache_interval; /* compressed state timer */
