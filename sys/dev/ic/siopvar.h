@@ -1,4 +1,4 @@
-/*	$NetBSD: siopvar.h,v 1.13.2.5 2001/03/27 15:32:00 bouyer Exp $	*/
+/*	$NetBSD: siopvar.h,v 1.13.2.6 2001/04/03 15:30:42 bouyer Exp $	*/
 
 /*
  * Copyright (c) 2000 Manuel Bouyer.
@@ -62,8 +62,6 @@ struct siop_softc {
 	int sc_currschedslot;		/* current scheduler slot */
 	struct cbd_list cmds;		/* list of command block descriptors */
 	struct cmd_list free_list;	/* cmd descr free list */
-	struct cmd_list urgent_list;	/* hitgh priority cmd descr list */
-	struct cmd_list ready_list;	/* cmd descr ready list */
 	struct lunsw_list lunsw_list;	/* lunsw free list */
 	u_int32_t script_free_lo;	/* free ram offset from sc_scriptaddr */
 	u_int32_t script_free_hi;	/* free ram offset from sc_scriptaddr */
@@ -72,7 +70,7 @@ struct siop_softc {
 	u_int32_t sc_flags;
 };
 /* defs for sc_flags */
-/* none for now */
+#define SCF_CHAN_NOSLOT	0x0001		/* channel out of sheduler slot */
 
 /* features */
 #define SF_BUS_WIDE	0x00000001 /* wide bus */

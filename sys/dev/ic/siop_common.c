@@ -1,4 +1,4 @@
-/*	$NetBSD: siop_common.c,v 1.11.2.7 2001/03/12 13:30:32 bouyer Exp $	*/
+/*	$NetBSD: siop_common.c,v 1.11.2.8 2001/04/03 15:30:41 bouyer Exp $	*/
 
 /*
  * Copyright (c) 2000 Manuel Bouyer.
@@ -130,6 +130,7 @@ siop_setuptables(siop_cmd)
 	struct scsipi_xfer *xs = siop_cmd->xs;
 	int target = xs->xs_periph->periph_target;
 	int lun = xs->xs_periph->periph_lun;
+	int msgoffset = 1;
 
 	siop_cmd->siop_tables.id = htole32(sc->targets[target]->id);
 	memset(siop_cmd->siop_tables.msg_out, 0, 8);
@@ -139,21 +140,37 @@ siop_setuptables(siop_cmd)
 	else
 		siop_cmd->siop_tables.msg_out[0] = MSG_IDENTIFY(lun, 1);
 	siop_cmd->siop_tables.t_msgout.count= htole32(1);
+	if (xs->xs_tag_type != 0) {
+		if ((sc->targets[target]->flags & TARF_TAG) == 0) {
+			scsipi_printaddr(xs->xs_periph);
+			printf(": tagged command type %d id %d\n",
+			    siop_cmd->xs->xs_tag_type, siop_cmd->xs->xs_tag_id);
+			panic("tagged command for non-tagging device\n");
+		}
+		siop_cmd->flags |= CMDFL_TAG;
+		siop_cmd->siop_tables.msg_out[1] = siop_cmd->xs->xs_tag_type;
+		siop_cmd->siop_tables.msg_out[2] = siop_cmd->xs->xs_tag_id + 1;
+		siop_cmd->siop_tables.t_msgout.count = htole32(3);
+		msgoffset = 3;
+		siop_cmd->tag = siop_cmd->xs->xs_tag_id + 1;
+	} else
+		siop_cmd->tag = 0;
 	if (sc->targets[target]->status == TARST_ASYNC) {
 		if (sc->targets[target]->flags & TARF_WIDE) {
 			sc->targets[target]->status = TARST_WIDE_NEG;
-			siop_wdtr_msg(siop_cmd, 1, MSG_EXT_WDTR_BUS_16_BIT);
+			siop_wdtr_msg(siop_cmd, msgoffset,
+			    MSG_EXT_WDTR_BUS_16_BIT);
 		} else if (sc->targets[target]->flags & TARF_SYNC) {
 			sc->targets[target]->status = TARST_SYNC_NEG;
-			siop_sdtr_msg(siop_cmd, 1, sc->minsync, sc->maxoff);
+			siop_sdtr_msg(siop_cmd, msgoffset,
+			    sc->minsync, sc->maxoff);
 		} else {
 			sc->targets[target]->status = TARST_OK;
 			siop_update_xfer_mode(sc, target);
 		}
-	} else if (sc->targets[target]->status == TARST_OK &&
-	    (sc->targets[target]->flags & TARF_TAG) && xs->xs_tag_type != 0) {
-		siop_cmd->flags |= CMDFL_TAG;
 	}
+	if (xs->xs_tag_type != 0 && (siop_cmd->flags & CMDFL_TAG) == 0)
+		printf("siop_setuptables: tagged CMD type 0x%x for target %d lun %d runs untagged, status 0x%x flags 0x%x\n", xs->xs_tag_type, target, lun, sc->targets[target]->status, sc->targets[target]->flags);
 	siop_cmd->siop_tables.status =
 	    htole32(SCSI_SIOP_NOSTATUS); /* set invalid status */
 
