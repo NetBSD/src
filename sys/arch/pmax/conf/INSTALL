@@ -1,4 +1,4 @@
-# 	$NetBSD: INSTALL,v 1.27 1999/12/09 02:11:55 simonb Exp $
+# 	$NetBSD: INSTALL,v 1.28 1999/12/31 12:21:06 ad Exp $
 #
 # Distribution	install kernel (any model)
 #    netbsd:	cut-down kernel for miniroots.
@@ -108,7 +108,7 @@ mfb*	at	tc? slot ? offset ?	# PMAG-A MX Monochrome Framebuffer
 cfb*	at	tc? slot ? offset ?	# PMAG-B CX Color Framebuffer
 #tfb*	at	tc? slot ? offset ?	# PMAG-RO TX True Color Framebuffer
 sfb*	at	tc? slot ? offset ?	# PMAGB-B HX Smart Framebuffer
-px0	at	tc? slot ? offset ?	# PMAG-C PX family
+px0	at	tc? slot ? offset ?	# PMAG-C,D,E,F PX family
 #sfbp*	at	tc? slot ? offset ?	# PMAGD HX+ Smart Framebuffer
 xcfb0	at	tc? slot ? offset ?	# PMAG-DV Color Framebuffer at MAXINE
 asc*	at	tc? slot ? offset ?	# PMAZ-A single channel SCSI
