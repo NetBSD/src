@@ -1,4 +1,4 @@
-/*	$NetBSD: boot.c,v 1.2 1997/10/05 18:20:21 thorpej Exp $	*/
+/*	$NetBSD: boot.c,v 1.3 1998/01/27 05:46:59 sakamoto Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -375,7 +375,7 @@ elf_exec(fd, elf, entryp, esymp)
 		if (phdr.p_filesz < phdr.p_memsz) {
 			printf("+%lu@0x%lx", phdr.p_memsz - phdr.p_filesz,
 			    (u_long)(phdr.p_vaddr + phdr.p_filesz));
-			bzero(phdr.p_vaddr + phdr.p_filesz,
+			bzero((void *)phdr.p_vaddr + phdr.p_filesz,
 			    phdr.p_memsz - phdr.p_filesz);
 		}
 		first = 0;
