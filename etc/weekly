@@ -1,6 +1,6 @@
 #!/bin/sh -
 #
-#	$NetBSD: weekly,v 1.15 2000/10/07 07:36:57 lukem Exp $
+#	$NetBSD: weekly,v 1.16 2000/10/15 17:32:38 kim Exp $
 #	from: @(#)weekly	8.2 (Berkeley) 1/2/94
 #
 
@@ -35,7 +35,8 @@ fi
 #if [ -d /usr/src -a \
 #  -n "`find -f /usr/src ! -fstype local -prune -or -type d -print -prune`" ];
 #then
-#	echo "looking for checked out files:"
+#	echo ""
+#	echo "Looking for checked out files:"
 #	TDIR=/tmp/_checkout$$
 #
 #	mkdir $TDIR
@@ -59,17 +60,18 @@ if checkyesno clean_uucp && [ -f /usr/libexec/uucp/clean.weekly ]; then
 	echo "Cleaning up UUCP:"
 	su daemon -c /usr/libexec/uucp/clean.weekly
 fi
-echo ""
 
-echo ""
-if checkyesno rebuild_locatedb && [ -f /var/db/locate.database ]; then
-	echo "Rebuilding locate database:"
-	chmod 644 /var/db/locate.database
-	chown nobody:nobody /var/db/locate.database
-	nice -5 su -m nobody -c /usr/libexec/locate.updatedb 2>/dev/null
-	chown root:wheel /var/db/locate.database
-else
-	echo "Not rebuilding locate database; no /var/db/locate.database"
+if checkyesno rebuild_locatedb; then
+	echo ""
+	if [ -f /var/db/locate.database ]; then
+		echo "Rebuilding locate database:"
+		chmod 644 /var/db/locate.database
+		chown nobody:nobody /var/db/locate.database
+		nice -5 su -m nobody -c /usr/libexec/locate.updatedb 2>/dev/null
+		chown root:wheel /var/db/locate.database
+	else
+		echo "Not rebuilding locate database; no /var/db/locate.database"
+	fi
 fi
 
 if [ -f /etc/weekly.local ]; then
