@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_fork.c,v 1.32 1997/06/19 20:54:15 pk Exp $	*/
+/*	$NetBSD: kern_fork.c,v 1.32.6.1 1997/09/08 23:09:38 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1991, 1993
@@ -53,6 +53,7 @@
 #include <sys/file.h>
 #include <sys/acct.h>
 #include <sys/ktrace.h>
+#include <sys/signalvar.h>
 
 #include <sys/syscallargs.h>
 
@@ -240,6 +241,11 @@ again:
 			VREF(p2->p_tracep);
 	}
 #endif
+
+	/*
+	 * Set up signal actions for the new process.
+	 */
+	p2->p_sigacts = sigacts_copy(p1);
 
 	/*
 	 * This begins the section where we must prevent the parent
