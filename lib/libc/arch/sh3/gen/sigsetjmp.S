@@ -1,4 +1,4 @@
-/*	$NetBSD: sigsetjmp.S,v 1.1 2000/01/05 14:07:34 msaitoh Exp $	*/
+/*	$NetBSD: sigsetjmp.S,v 1.2 2000/08/04 08:47:04 tsubai Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -40,12 +40,12 @@
 
 #include <machine/asm.h>
 #if defined(LIBC_SCCS)
-	RCSID("$NetBSD: sigsetjmp.S,v 1.1 2000/01/05 14:07:34 msaitoh Exp $")
+	RCSID("$NetBSD: sigsetjmp.S,v 1.2 2000/08/04 08:47:04 tsubai Exp $")
 #endif
 
 ENTRY(sigsetjmp)
 	mov	r4, r0
-	add	#4*9, r0	# &savemask
+	add	#4*9, r0	! &savemask
 	mov.l	r5, @r0
 	tst	r5, r5
 	bt	1f
