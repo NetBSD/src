@@ -1,4 +1,4 @@
-/*	$NetBSD: msiiep.c,v 1.20 2004/03/17 17:04:59 pk Exp $ */
+/*	$NetBSD: msiiep.c,v 1.21 2004/04/24 15:49:00 kleink Exp $ */
 
 /*
  * Copyright (c) 2001 Valeriy E. Ushakov
@@ -27,7 +27,7 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: msiiep.c,v 1.20 2004/03/17 17:04:59 pk Exp $");
+__KERNEL_RCSID(0, "$NetBSD: msiiep.c,v 1.21 2004/04/24 15:49:00 kleink Exp $");
 
 #include <sys/param.h>
 #include <sys/malloc.h>
@@ -343,7 +343,8 @@ mspcic_attach(parent, self, aux)
 	sc->sc_bh = (bus_space_handle_t)MSIIEP_PCIC_VA;
 
 	/* print our PCI device info and bus clock frequency */
-	pci_devinfo(mspcic->pcic_id, mspcic->pcic_class, 0, devinfo);
+	pci_devinfo(mspcic->pcic_id, mspcic->pcic_class, 0, devinfo,
+	    sizeof(devinfo));
 	printf(": %s: clock = %s MHz\n", devinfo, clockfreq(sc->sc_clockfreq));
 
 	mspcic_init_maps();
