@@ -1,4 +1,4 @@
-/*	$NetBSD: be_bus.c,v 1.2 1998/04/23 09:17:44 leo Exp $	*/
+/*	$NetBSD: be_bus.c,v 1.3 1998/05/25 09:08:08 leo Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -209,6 +209,10 @@ beb_alloc_bus_space_tag()
 	beb_t->abs_rr_2  = beb_bus_space_read_region_2;
 	beb_t->abs_rr_4  = beb_bus_space_read_region_4;
 	beb_t->abs_rr_8  = beb_bus_space_read_region_8;
+	beb_t->abs_rrs_1 = beb_bus_space_read_region_1;
+	beb_t->abs_rrs_2 = beb_bus_space_read_region_2;
+	beb_t->abs_rrs_4 = beb_bus_space_read_region_4;
+	beb_t->abs_rrs_8 = beb_bus_space_read_region_8;
 	beb_t->abs_w_1   = beb_bus_space_write_1;
 	beb_t->abs_w_2   = beb_bus_space_write_2;
 	beb_t->abs_w_4   = beb_bus_space_write_4;
@@ -229,6 +233,10 @@ beb_alloc_bus_space_tag()
 	beb_t->abs_wr_2  = beb_bus_space_write_region_2;
 	beb_t->abs_wr_4  = beb_bus_space_write_region_4;
 	beb_t->abs_wr_8  = beb_bus_space_write_region_8;
+	beb_t->abs_wrs_1 = beb_bus_space_write_region_1;
+	beb_t->abs_wrs_2 = beb_bus_space_write_region_2;
+	beb_t->abs_wrs_4 = beb_bus_space_write_region_4;
+	beb_t->abs_wrs_8 = beb_bus_space_write_region_8;
 	beb_t->abs_sm_1  = beb_bus_space_set_multi_1;
 	beb_t->abs_sm_2  = beb_bus_space_set_multi_2;
 	beb_t->abs_sm_4  = beb_bus_space_set_multi_4;

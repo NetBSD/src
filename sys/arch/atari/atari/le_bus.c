@@ -1,4 +1,4 @@
-/*	$NetBSD: le_bus.c,v 1.2 1998/04/23 09:17:44 leo Exp $	*/
+/*	$NetBSD: le_bus.c,v 1.3 1998/05/25 09:08:08 leo Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -132,7 +132,7 @@ static void		leb_bus_space_read_multi_stream_8 __P((bus_space_tag_t,
 				bus_space_handle_t, bus_size_t, u_int64_t *,
 				bus_size_t));
 
-	/* read multiple stream */
+	/* write multiple stream */
 static void		leb_bus_space_write_multi_stream_2 __P((bus_space_tag_t,
 				bus_space_handle_t, bus_size_t,
 				const u_int16_t *, bus_size_t));
@@ -157,7 +157,7 @@ static void		leb_bus_space_read_region_8 __P((bus_space_tag_t,
 				bus_space_handle_t, bus_size_t, u_int64_t *,
 				bus_size_t));
 
-	/* read region */
+	/* write region */
 static void		leb_bus_space_write_region_1 __P((bus_space_tag_t,
 				bus_space_handle_t, bus_size_t,
 				const u_int8_t *, bus_size_t));
@@ -170,6 +170,28 @@ static void		leb_bus_space_write_region_4 __P((bus_space_tag_t,
 static void		leb_bus_space_write_region_8 __P((bus_space_tag_t,
 				bus_space_handle_t, bus_size_t,
 				const u_int64_t *, bus_size_t));
+
+	/* read region stream */
+static void		leb_bus_space_read_region_stream_2 __P((
+				bus_space_tag_t, bus_space_handle_t,
+				bus_size_t, u_int16_t *, bus_size_t));
+static void		leb_bus_space_read_region_stream_4 __P((
+				bus_space_tag_t, bus_space_handle_t,
+				bus_size_t, u_int32_t *, bus_size_t));
+static void		leb_bus_space_read_region_stream_8 __P((
+				bus_space_tag_t, bus_space_handle_t,
+				bus_size_t, u_int64_t *, bus_size_t));
+
+	/* write region */
+static void		leb_bus_space_write_region_stream_2 __P((
+				bus_space_tag_t, bus_space_handle_t,
+				bus_size_t, const u_int16_t *, bus_size_t));
+static void		leb_bus_space_write_region_stream_4 __P((
+				bus_space_tag_t, bus_space_handle_t,
+				bus_size_t, const u_int32_t *, bus_size_t));
+static void		leb_bus_space_write_region_stream_8 __P((
+				bus_space_tag_t, bus_space_handle_t,
+				bus_size_t, const u_int64_t *, bus_size_t));
 
 	/* set multi */
 static void		leb_bus_space_set_multi_1 __P((bus_space_tag_t,
@@ -268,6 +290,10 @@ leb_alloc_bus_space_tag()
 	leb_t->abs_rr_2  = leb_bus_space_read_region_2;
 	leb_t->abs_rr_4  = leb_bus_space_read_region_4;
 	leb_t->abs_rr_8  = leb_bus_space_read_region_8;
+	leb_t->abs_rrs_1 = leb_bus_space_read_region_1;
+	leb_t->abs_rrs_2 = leb_bus_space_read_region_stream_2;
+	leb_t->abs_rrs_4 = leb_bus_space_read_region_stream_4;
+	leb_t->abs_rrs_8 = leb_bus_space_read_region_stream_8;
 	leb_t->abs_w_1   = leb_bus_space_write_1;
 	leb_t->abs_w_2   = leb_bus_space_write_2;
 	leb_t->abs_w_4   = leb_bus_space_write_4;
@@ -288,6 +314,10 @@ leb_alloc_bus_space_tag()
 	leb_t->abs_wr_2  = leb_bus_space_write_region_2;
 	leb_t->abs_wr_4  = leb_bus_space_write_region_4;
 	leb_t->abs_wr_8  = leb_bus_space_write_region_8;
+	leb_t->abs_wrs_1 = leb_bus_space_write_region_1;
+	leb_t->abs_wrs_2 = leb_bus_space_write_region_stream_2;
+	leb_t->abs_wrs_4 = leb_bus_space_write_region_stream_4;
+	leb_t->abs_wrs_8 = leb_bus_space_write_region_stream_8;
 	leb_t->abs_sm_1  = leb_bus_space_set_multi_1;
 	leb_t->abs_sm_2  = leb_bus_space_set_multi_2;
 	leb_t->abs_sm_4  = leb_bus_space_set_multi_4;
@@ -803,6 +833,91 @@ leb_bus_space_write_region_8(t, h, o, a, c)
 {
 	for (; c; a++, o += 8, c--)
 		__write_8(h, o, *a);
+}
+
+/*
+ *	void bus_space_read_region_stream_N __P((bus_space_tag_t tag,
+ *		bus_space_handle_t bsh, bus_size_t offset,
+ *		u_intN_t *addr, bus_size_t count));
+ *
+ * Read `count' 1, 2, 4, or 8 byte quantities from bus space
+ * described by tag/handle and starting at `offset' and copy into
+ * buffer provided.
+ * No endian conversion is being done.
+ */
+static void
+leb_bus_space_read_region_stream_2(t, h, o, a, c)
+	bus_space_tag_t		t;
+	bus_space_handle_t	h;
+	bus_size_t		o, c;
+	u_int16_t		*a;
+{
+	for (; c; a++, o += 2, c--)
+		*a = *(u_int16_t *)(h + o);
+}
+
+static void
+leb_bus_space_read_region_stream_4(t, h, o, a, c)
+	bus_space_tag_t		t;
+	bus_space_handle_t	h;
+	bus_size_t		o, c;
+	u_int32_t		*a;
+{
+	for (; c; a++, o += 4, c--)
+		*a = *(u_int32_t *)(h + o);
+}
+
+static void
+leb_bus_space_read_region_stream_8(t, h, o, a, c)
+	bus_space_tag_t		t;
+	bus_space_handle_t	h;
+	bus_size_t		o, c;
+	u_int64_t		*a;
+{
+	for (; c; a++, o += 8, c--)
+		*a = *(u_int64_t *)(h + o);
+}
+
+/*
+ *	void bus_space_write_region_stream_N __P((bus_space_tag_t tag,
+ *		bus_space_handle_t bsh, bus_size_t offset,
+ *		u_intN_t *addr, bus_size_t count));
+ *
+ * Copy `count' 1, 2, 4, or 8 byte quantities from the buffer provided
+ * into the bus space described by tag/handle and starting at `offset'.
+ * No endian conversion is being done.
+ */
+static void
+leb_bus_space_write_region_stream_2(t, h, o, a, c)
+	bus_space_tag_t		t;
+	bus_space_handle_t	h;
+	bus_size_t		o, c;
+	const u_int16_t		*a;
+{
+	for (; c; a++, o += 2, c--)
+		*((u_int16_t *)(h + o)) = *a;
+}
+
+static void
+leb_bus_space_write_region_stream_4(t, h, o, a, c)
+	bus_space_tag_t		t;
+	bus_space_handle_t	h;
+	bus_size_t		o, c;
+	const u_int32_t		*a;
+{
+	for (; c; a++, o += 4, c--)
+		*((u_int32_t *)(h + o)) = *a;
+}
+
+static void
+leb_bus_space_write_region_stream_8(t, h, o, a, c)
+	bus_space_tag_t		t;
+	bus_space_handle_t	h;
+	bus_size_t		o, c;
+	const u_int64_t		*a;
+{
+	for (; c; a++, o += 8, c--)
+		*((u_int64_t *)(h + o)) = *a;
 }
 
 /*

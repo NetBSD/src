@@ -1,4 +1,4 @@
-/*	$NetBSD: mainbus.c,v 1.1 1998/04/10 08:19:54 leo Exp $	*/
+/*	$NetBSD: mainbus.c,v 1.2 1998/05/25 09:08:08 leo Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -200,6 +200,10 @@ mb_alloc_bus_space_tag()
 	mb_t->abs_rr_2  = mb_bus_space_read_region_2;
 	mb_t->abs_rr_4  = mb_bus_space_read_region_4;
 	mb_t->abs_rr_8  = mb_bus_space_read_region_8;
+	mb_t->abs_rrs_1 = mb_bus_space_read_region_1;
+	mb_t->abs_rrs_2 = mb_bus_space_read_region_2;
+	mb_t->abs_rrs_4 = mb_bus_space_read_region_4;
+	mb_t->abs_rrs_8 = mb_bus_space_read_region_8;
 	mb_t->abs_w_1   = mb_bus_space_write_1;
 	mb_t->abs_w_2   = mb_bus_space_write_2;
 	mb_t->abs_w_4   = mb_bus_space_write_4;
@@ -220,6 +224,10 @@ mb_alloc_bus_space_tag()
 	mb_t->abs_wr_2  = mb_bus_space_write_region_2;
 	mb_t->abs_wr_4  = mb_bus_space_write_region_4;
 	mb_t->abs_wr_8  = mb_bus_space_write_region_8;
+	mb_t->abs_wrs_1 = mb_bus_space_write_region_1;
+	mb_t->abs_wrs_2 = mb_bus_space_write_region_2;
+	mb_t->abs_wrs_4 = mb_bus_space_write_region_4;
+	mb_t->abs_wrs_8 = mb_bus_space_write_region_8;
 	mb_t->abs_sm_1  = mb_bus_space_set_multi_1;
 	mb_t->abs_sm_2  = mb_bus_space_set_multi_2;
 	mb_t->abs_sm_4  = mb_bus_space_set_multi_4;
