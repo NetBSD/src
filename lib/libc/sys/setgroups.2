@@ -30,7 +30,7 @@
 .\" SUCH DAMAGE.
 .\"
 .\"     from: @(#)setgroups.2	6.7 (Berkeley) 3/10/91
-.\"	$Id: setgroups.2,v 1.5 1994/04/15 22:43:25 jtc Exp $
+.\"	$Id: setgroups.2,v 1.6 1994/04/19 00:09:05 jtc Exp $
 .\"
 .Dd March 10, 1991
 .Dt SETGROUPS 2
@@ -53,7 +53,7 @@ The parameter
 .Fa ngroups
 indicates the number of entries in the array and must be no
 more than
-.Dv NGROUPS_MAX .
+.Dv {NGROUPS_MAX} .
 .Pp
 Only the super-user may set new groups.
 .Sh RETURN VALUES
@@ -69,7 +69,7 @@ call will fail if:
 The value of 
 .Fa ngroups
 is greater than
-.Dv NGROUPS_MAX .
+.Dv {NGROUPS_MAX} .
 .It Bq Er EPERM
 The caller is not the super-user.
 .It Bq Er EFAULT
