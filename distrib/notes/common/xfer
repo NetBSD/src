@@ -1,4 +1,4 @@
-.\"	$NetBSD: xfer,v 1.8 2000/10/29 12:32:24 lukem Exp $
+.\"	$NetBSD: xfer,v 1.9 2000/11/02 01:37:46 lukem Exp $
 .\"
 .\" Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -589,7 +589,7 @@ If you're making the tape on a
 system, the easiest way
 to do so is probably something like:
 .Pp
-.Dl # Ic "tar -cf Ar tape_device dist_directories"
+.Dl # Ic "tar -cf" Ar "tape_device dist_directories"
 .Pp
 where
 .Ar tape_device
@@ -611,7 +611,7 @@ you would do the following:
 .Pp
 .Dl # Ic "cd \&.../NetBSD-\*V"
 .Dl # Ic "cd \*M/binary"
-.Dl # Ic "tar -cf Ar tape_device misc etc kern"
+.Dl # Ic "tar -cf" Ar tape_device Ic "misc etc kern"
 .Pp
 .(Note
 You still need to fill in
