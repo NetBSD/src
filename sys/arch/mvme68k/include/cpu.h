@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.8 1998/11/11 06:41:27 thorpej Exp $	*/
+/*	$NetBSD: cpu.h,v 1.8.4.1 1999/02/13 16:54:27 scw Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -172,6 +172,7 @@ extern unsigned long allocate_sir();
 #ifdef _KERNEL
 extern	int machineid;
 extern	char *intiobase, *intiolimit;
+extern	u_int intiobase_phys, intiotop_phys;
 
 struct frame;
 void	doboot __P((int)) 
@@ -187,13 +188,15 @@ void	child_return __P((void *));
 #endif
 
 /* physical memory sections for mvme147 */
-#define	INTIOBASE	(0xfffe0000)
-#define	INTIOTOP	(0xfffe5000)
+#define	INTIOBASE147	(0xfffe0000u)
+#define	INTIOTOP147	(0xfffe5000u)
+
+/* ditto for mvme1[67]7 */
+#define	INTIOBASE167	(0xfff00000u)
+#define	INTIOTOP167	(0xfffd0000u)
 
 /*
  * Internal IO space:
- *
- * Ranges from 0x800000 to 0x1000000 (IIOMAPSIZE).
  *
  * Internal IO space is mapped in the kernel from ``intiobase'' to
  * ``intiolimit'' (defined in locore.s).  Since it is always mapped,
@@ -201,7 +204,6 @@ void	child_return __P((void *));
  */
 #define	ISIIOVA(va) \
 	((char *)(va) >= intiobase && (char *)(va) < intiolimit)
-#define	IIOV(pa)	((int)(pa)-INTIOBASE+(int)intiobase)
-#define	IIOP(va)	((int)(va)-(int)intiobase+INTIOBASE)
-#define	IIOPOFF(pa)	((int)(pa)-INTIOBASE)
-#define	IIOMAPSIZE	btoc(INTIOTOP-INTIOBASE)	/* 1mb */
+#define	IIOV(pa)	(((u_int)(pa) - intiobase_phys) + (u_int)intiobase)
+#define	IIOP(va)	(((u_int)(va) - (u_int)intiobase) + intiobase_phys)
+#define	IIOPOFF(pa)	((u_int)(pa) - intiobase_phys)

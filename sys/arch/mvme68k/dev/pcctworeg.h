@@ -1,4 +1,4 @@
-/*	$NetBSD: pcctworeg.h,v 1.1.2.1 1999/01/30 21:58:43 scw Exp $ */
+/*	$NetBSD: pcctworeg.h,v 1.1.2.2 1999/02/13 16:54:27 scw Exp $ */
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -51,7 +51,8 @@
 #define PCCTWO_SCC_OFF      0x3000	/* Offset of CD2401 Serial Comms chip */
 #define PCCTWO_IE_OFF	    0x4000	/* Offset of 82596 LAN controller */
 #define PCCTWO_NCRSC_OFF    0x5000	/* Offset of NCR53C710 SCSI chip */
-#define PCCTWO_CLOCK_OFF    0xA0000	/* Offset of BBRAM & TOD Clock chip */
+#define PCCTWO_CLOCK_OFF    0x7e000	/* Offset of MK48T18 NVRAM */
+#define PCCTWO_RTC_OFF      0x1ff8	/* Offset of MK48T18 RTC registers */
 
 #define PCCTWO_PADDR(off)	((void *)(PCCTWO_BASE + (off)))
 
@@ -147,8 +148,8 @@ extern struct pcctwo *sys_pcctwo;
 #define PCCTWOV_GPIO		0xa	/* General Purpose Input Interrupt */
 #define PCCTWOV_SCC_RX_EXCEP	0xc	/* SCC Receive Exception */
 #define PCCTWOV_SCC_MODEM	0xd	/* SCC Modem (Non-Auto-vector mode) */
-#define PCCTWOV_SCC_RX		0xe	/* SCC Rx (Non-Auto-vector mode) */
-#define PCCTWOV_SCC_TX		0xf	/* SCC Tx (Non-Auto-vector mode) */
+#define PCCTWOV_SCC_TX		0xe	/* SCC Tx (Non-Auto-vector mode) */
+#define PCCTWOV_SCC_RX		0xf	/* SCC Rx (Non-Auto-vector mode) */
 #define PCCTWOV_MAX		16
 
 

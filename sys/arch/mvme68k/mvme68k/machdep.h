@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.h,v 1.1.2.1 1999/01/31 14:27:31 scw Exp $ */
+/*	$NetBSD: machdep.h,v 1.1.2.2 1999/02/13 16:54:29 scw Exp $ */
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -47,6 +47,6 @@
 extern void	myetheraddr	__P((u_char *));
 
 extern void	*ether_data_buff;
-extern u_long	ether_data_buff_len;
+extern u_long	ether_data_buff_size;
 
 #endif	/* __mvme68k_machdep_h */

@@ -1,4 +1,4 @@
-/*	$NetBSD: lptvar.h,v 1.1.2.2 1999/02/13 16:54:26 scw Exp $ */
+/*	$NetBSD: if_iereg.h,v 1.1.2.1 1999/02/13 16:54:25 scw Exp $ */
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -37,54 +37,21 @@
  */
 
 /*
- * Common front-end for mvme68k parallel printer ports
+ * Definitions for the MPU Port and Channel Attention registers
+ * of the onboard i82596 Ethernet controller on MVME1[67]7 boards.
  */
+#ifndef __mvme68k_if_iereg_h
+#define __mvme68k_if_iereg_h
 
-#ifndef __mvme68k_lptvar_h
-#define __mvme68k_lptvar_h
-
-struct lpt_funcs;
-
-
-struct lpt_softc {
-	struct device		sc_dev;
-	struct lpt_funcs	*sc_funcs;
-	void			*sc_arg;
-	size_t			sc_count;
-	struct buf		*sc_inbuf;
-	u_char			*sc_cp;
-	int			sc_spinmax;
-	u_char			sc_state;
-#define	LPT_OPEN	0x01	/* device is open */
-#define	LPT_OBUSY	0x02	/* printer is busy doing output */
-#define	LPT_INIT	0x04	/* waiting to initialize for open */
-	u_char			sc_flags;
-#define	LPT_FAST_STROBE	0x10	/* Select 1.6uS strobe pulse */
-#define	LPT_AUTOLF	0x20	/* automatic LF on CR */
-#define	LPT_NOPRIME	0x40	/* don't prime on open */
-#define	LPT_NOINTR	0x80	/* do not use interrupt */
-
-	/* Back-end specific stuff */
-	void			*sc_regs;
-	int			sc_ipl;
-	u_char			sc_icr;
-	u_char			sc_laststatus;
+struct mpu_regs {
+	volatile u_int16_t mpu_upper;	/* Upper Command Word */
+	volatile u_int16_t mpu_lower;	/* Lower Command Word */
+	volatile u_int32_t mpu_ca;	/* Channel Attention. Dummy Rd or Wr */
 };
 
+#define	IE_MPU_RESET		0x00	/* Software Reset */
+#define	IE_MPU_SELF_TEST	0x01	/* Execute a Self-Test */
+#define	IE_MPU_SCP_ADDRESS	0x02	/* Sys. Configuration Address Pointer */
+#define	IE_MPU_DUMP		0x03	/* Execute a Dump */
 
-struct lpt_funcs {
-	void	(*lf_open) __P((struct lpt_softc *, int));
-	void	(*lf_close) __P((struct lpt_softc *));
-	void	(*lf_iprime) __P((struct lpt_softc *));
-	void	(*lf_speed) __P((struct lpt_softc *, int));
-	int	(*lf_notrdy) __P((struct lpt_softc *, int));
-	void	(*lf_wrdata) __P((struct lpt_softc *, u_char));
-};
-
-#define	LPT_STROBE_FAST	0
-#define LPT_STROBE_SLOW	1
-
-extern	void	lpt_attach_subr	__P((struct lpt_softc *));
-extern	int	lpt_intr	__P((struct lpt_softc *));
-
-#endif	/* __mvme68k_lptvar_h */
+#endif /* __mvme68k_if_iereg_h */

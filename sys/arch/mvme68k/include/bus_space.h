@@ -1,4 +1,4 @@
-/*	$NetBSD: bus_space.h,v 1.1.2.1 1999/01/30 21:58:43 scw Exp $ */
+/*	$NetBSD: bus_space.h,v 1.1.2.2 1999/02/13 16:54:27 scw Exp $ */
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -94,8 +94,9 @@ typedef u_long	bus_space_handle_t;
  * Mapping and unmapping operations.
  */
 #define	bus_space_map(t, a, s, f, hp)					\
-    ((((a)>=INTIOBASE)&&((a)+(s)<INTIOTOP)) ?				\
-     ((*(hp)=(bus_space_handle_t)((t)+((a)-INTIOBASE))),0) : (-1))
+    ((((a) >= intiobase_phys) && (((a) + (s)) < intiotop_phys)) ?	\
+     ((*(hp) = (bus_space_handle_t)((t) + ((a) - intiobase_phys))),0) :	\
+     (-1))
 
 #define	bus_space_unmap(t, h, s)
 	

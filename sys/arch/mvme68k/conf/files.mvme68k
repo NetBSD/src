@@ -1,4 +1,4 @@
-#	$NetBSD: files.mvme68k,v 1.22.2.1 1999/01/30 21:58:41 scw Exp $
+#	$NetBSD: files.mvme68k,v 1.22.2.2 1999/02/13 16:54:23 scw Exp $
 
 # config file for mvme68k
 
@@ -35,14 +35,14 @@ device zstty: tty
 attach zstty at zsc
 file dev/ic/z8530tty.c				zstty needs-flag
 
-# printer
+# Parallel printer
 device lpt
-file arch/mvme68k/dev/lpt.c			lpt needs-flag
-
 attach lpt at pcc with lpt_pcc
-file arch/mvme68k/dev/lpt_pcc.c			lpt_pcc
 attach lpt at pcctwo with lpt_pcctwo
+file arch/mvme68k/dev/lpt.c			lpt needs-flag
+file arch/mvme68k/dev/lpt_pcc.c			lpt_pcc
 file arch/mvme68k/dev/lpt_pcctwo.c		lpt_pcctwo
+
 
 # device defined in sys/conf/files
 attach le at pcc with le_pcc: le24
@@ -52,6 +52,10 @@ file arch/mvme68k/dev/if_le.c			le
 device ie: ifnet, ether, arp, i82586
 attach ie at pcctwo with ie_pcctwo
 file arch/mvme68k/dev/if_ie.c			ie
+
+# CD2401 Quad Serial Controller
+attach clmpcc at pcctwo with clmpcc_pcctwo
+file arch/mvme68k/dev/clmpcc_pcctwo.c		clmpcc_pcctwo needs-flag
 
 # Generic VME support
 device vmechip { }

@@ -1,4 +1,4 @@
-/*	$NetBSD: clock_pcctwo.c,v 1.1.2.1 1999/01/30 21:58:41 scw Exp $ */
+/*	$NetBSD: clock_pcctwo.c,v 1.1.2.2 1999/02/13 16:54:24 scw Exp $ */
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -106,10 +106,10 @@ clock_pcctwo_attach(parent, self, aux)
 
 	/* As found on other mvme68k boards */
 	nvram = PCCTWO_VADDR(pa->pa_offset);
-	clockregs = PCCTWO_VADDR(pa->pa_offset + PCCTWO_CLOCK_OFF);
+	clockregs = PCCTWO_VADDR(pa->pa_offset + PCCTWO_RTC_OFF);
 
 	/* Do common portions of clock config. */
-	clock_config(self, clockregs, nvram, MK48T02_SIZE,
+	clock_config(self, clockregs, nvram, MK48T08_SIZE,
 		     clock_pcctwo_initclocks);
 
 	/* Ensure our interrupts get disabled at shutdown time. */
