@@ -1,4 +1,4 @@
-/* $NetBSD: cfb.c,v 1.7 1999/01/15 23:31:25 thorpej Exp $ */
+/* $NetBSD: cfb.c,v 1.8 1999/03/01 02:45:04 nisimura Exp $ */
 
 /*
  * Copyright (c) 1998 Tohru Nishimura.  All rights reserved.
@@ -32,7 +32,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: cfb.c,v 1.7 1999/01/15 23:31:25 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cfb.c,v 1.8 1999/03/01 02:45:04 nisimura Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -734,8 +734,8 @@ set_cursor(sc, p)
 		if (p->size.x > CURSOR_MAX_SIZE || p->size.y > CURSOR_MAX_SIZE)
 			return (EINVAL);
 		icount = ((p->size.x < 33) ? 4 : 8) * p->size.y;
-		if (!useracc(p->image, count, B_READ) ||
-		    !useracc(p->mask, count, B_READ))
+		if (!useracc(p->image, icount, B_READ) ||
+		    !useracc(p->mask, icount, B_READ))
 			return (EFAULT);
 	}
 	if (v & (WSDISPLAY_CURSOR_DOPOS | WSDISPLAY_CURSOR_DOCUR)) {
