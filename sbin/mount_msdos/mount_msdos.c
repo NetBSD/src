@@ -1,4 +1,4 @@
-/* $NetBSD: mount_msdos.c,v 1.27 2003/03/22 11:15:51 jdolecek Exp $ */
+/* $NetBSD: mount_msdos.c,v 1.28 2003/05/03 15:37:08 christos Exp $ */
 
 /*
  * Copyright (c) 1994 Christopher G. Demetriou
@@ -36,7 +36,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: mount_msdos.c,v 1.27 2003/03/22 11:15:51 jdolecek Exp $");
+__RCSID("$NetBSD: mount_msdos.c,v 1.28 2003/05/03 15:37:08 christos Exp $");
 #endif /* not lint */
 
 #include <sys/cdefs.h>
@@ -167,7 +167,7 @@ mount_msdos(argc, argv)
 	if (mntflags & MNT_GETARGS) {
 		char buf[1024];
 		(void)snprintb(buf, sizeof(buf), MSDOSFSMNT_BITS, args.flags);
-		printf("uid=%d, gid=%d, mask=%d, flags=%s\n", args.uid,
+		printf("uid=%d, gid=%d, mask=0%o, flags=%s\n", args.uid,
 		    args.gid, args.mask, buf);
 	}
 

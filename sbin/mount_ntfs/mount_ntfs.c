@@ -1,4 +1,4 @@
-/* $NetBSD: mount_ntfs.c,v 1.8 2003/03/22 11:15:52 jdolecek Exp $ */
+/* $NetBSD: mount_ntfs.c,v 1.9 2003/05/03 15:37:08 christos Exp $ */
 
 /*
  * Copyright (c) 1994 Christopher G. Demetriou
@@ -35,7 +35,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: mount_ntfs.c,v 1.8 2003/03/22 11:15:52 jdolecek Exp $");
+__RCSID("$NetBSD: mount_ntfs.c,v 1.9 2003/05/03 15:37:08 christos Exp $");
 #endif
 
 #include <sys/cdefs.h>
@@ -202,7 +202,7 @@ mount_ntfs(argc, argv)
 	if (mntflags & MNT_GETARGS) {
 		char buf[1024];
 		(void)snprintb(buf, sizeof(buf), NTFS_MFLAG_BITS, args.flag);
-		printf("uid=%d, gid=%d, mode=%d, flags=%s\n", args.uid,
+		printf("uid=%d, gid=%d, mode=0%o, flags=%s\n", args.uid,
 		    args.gid, args.mode, buf);
 	}
 	exit (0);
