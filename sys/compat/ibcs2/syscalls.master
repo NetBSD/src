@@ -1,4 +1,4 @@
-	$NetBSD: syscalls.master,v 1.4 1995/03/14 15:12:52 scottb Exp $
+	$NetBSD: syscalls.master,v 1.5 1995/08/14 01:27:43 mycroft Exp $
 
 ;	@(#)syscalls.master	8.1 (Berkeley) 7/19/93
 ; System call name/number master file (or rather, slave, from IBCS2).
@@ -13,14 +13,14 @@
 ;		for UNIMPL/OBSOL, name continues with comments
 
 #include <sys/param.h>
-#include <compat/ibcs2/ibcs2_types.h>
-#include <compat/ibcs2/ibcs2_signal.h>
-#include <compat/ibcs2/ibcs2_statfs.h>
 #include <sys/systm.h>
 #include <sys/signal.h>
 #include <sys/mount.h>
 #include <sys/syscallargs.h>
+#include <compat/ibcs2/ibcs2_types.h>
+#include <compat/ibcs2/ibcs2_signal.h>
 #include <compat/ibcs2/ibcs2_syscallargs.h>
+#include <compat/ibcs2/ibcs2_statfs.h>
 
 ; types:
 ;	STD	always included

@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_ipccall.c,v 1.4 1995/06/24 20:20:22 christos Exp $	*/
+/*	$NetBSD: linux_ipccall.c,v 1.5 1995/08/14 01:27:52 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1995 Frank van der Linden
@@ -48,6 +48,7 @@
 #include <sys/syscallargs.h>
 
 #include <compat/linux/linux_types.h>
+#include <compat/linux/linux_signal.h>
 #include <compat/linux/linux_syscallargs.h>
 #include <compat/linux/linux_util.h>
 #include <compat/linux/linux_ipc.h>

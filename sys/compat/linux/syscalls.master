@@ -1,4 +1,4 @@
-	$NetBSD: syscalls.master,v 1.7 1995/07/24 06:35:58 fvdl Exp $
+	$NetBSD: syscalls.master,v 1.8 1995/08/14 01:27:56 mycroft Exp $
 
 ;	@(#)syscalls.master	8.1 (Berkeley) 7/19/93
 
@@ -37,8 +37,9 @@
 #include <sys/mount.h>
 #include <sys/syscallargs.h>
 #include <compat/linux/linux_types.h>
-#include <machine/linux_machdep.h>
+#include <compat/linux/linux_signal.h>
 #include <compat/linux/linux_syscallargs.h>
+#include <machine/linux_machdep.h>
 
 0	NOARGS		{ int nosys(void); } syscall
 1	NOARGS		{ int exit(int rval); }

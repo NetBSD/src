@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_socket.c,v 1.9 1995/06/24 20:20:33 christos Exp $	*/
+/*	$NetBSD: linux_socket.c,v 1.10 1995/08/14 01:27:55 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1995 Frank van der Linden
@@ -55,6 +55,7 @@
 
 #include <compat/linux/linux_types.h>
 #include <compat/linux/linux_util.h>
+#include <compat/linux/linux_signal.h>
 #include <compat/linux/linux_syscallargs.h>
 #include <compat/linux/linux_ioctl.h>
 #include <compat/linux/linux_socket.h>

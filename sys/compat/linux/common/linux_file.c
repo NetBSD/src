@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_file.c,v 1.7 1995/07/24 06:35:28 fvdl Exp $	*/
+/*	$NetBSD: linux_file.c,v 1.8 1995/08/14 01:27:50 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1995 Frank van der Linden
@@ -46,6 +46,7 @@
 #include <sys/syscallargs.h>
 
 #include <compat/linux/linux_types.h>
+#include <compat/linux/linux_signal.h>
 #include <compat/linux/linux_syscallargs.h>
 #include <compat/linux/linux_fcntl.h>
 #include <compat/linux/linux_util.h>
