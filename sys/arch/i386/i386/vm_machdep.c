@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_machdep.c,v 1.114 2004/01/04 11:44:52 jdolecek Exp $	*/
+/*	$NetBSD: vm_machdep.c,v 1.115 2004/02/06 08:18:39 junyoung Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986 The Regents of the University of California.
@@ -80,7 +80,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.114 2004/01/04 11:44:52 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.115 2004/02/06 08:18:39 junyoung Exp $");
 
 #include "opt_user_ldt.h"
 #include "opt_largepages.h"
@@ -113,8 +113,7 @@ static void setredzone(struct lwp *l);
 #endif
 
 void
-cpu_proc_fork(p1, p2)
-	struct proc *p1, *p2;
+cpu_proc_fork(struct proc *p1, struct proc *p2)
 {
 
 	p2->p_md.md_flags = p1->p_md.md_flags;
@@ -139,12 +138,8 @@ cpu_proc_fork(p1, p2)
  * accordingly.
  */
 void
-cpu_lwp_fork(l1, l2, stack, stacksize, func, arg)
-	struct lwp *l1, *l2;
-	void *stack;
-	size_t stacksize;
-	void (*func)(void *);
-	void *arg;
+cpu_lwp_fork(struct lwp *l1, struct lwp *l2, void *stack, size_t stacksize,
+    void (*func)(void *), void *arg)
 {
 	struct pcb *pcb = &l2->l_addr->u_pcb;
 	struct trapframe *tf;
@@ -210,10 +205,7 @@ cpu_lwp_fork(l1, l2, stack, stacksize, func, arg)
 }
 
 void
-cpu_setfunc(l, func, arg)
-	struct lwp *l;
-	void (*func)(void *);
-	void *arg;
+cpu_setfunc(struct lwp *l, void (*func)(void *), void *arg)
 {
 	struct pcb *pcb = &l->l_addr->u_pcb;
 	struct trapframe *tf = l->l_md.md_regs;
@@ -227,8 +219,7 @@ cpu_setfunc(l, func, arg)
 }	
 
 void
-cpu_swapin(l)
-	struct lwp *l;
+cpu_swapin(struct lwp *l)
 {
 #ifndef NOREDZONE
 	setredzone(l);
@@ -236,8 +227,7 @@ cpu_swapin(l)
 }
 
 void
-cpu_swapout(l)
-	struct lwp *l;
+cpu_swapout(struct lwp *l)
 {
 
 #if NNPX > 0
@@ -282,12 +272,10 @@ struct md_core {
 	struct reg intreg;
 	struct fpreg freg;
 };
+
 int
-cpu_coredump(l, vp, cred, chdr)
-	struct lwp *l;
-	struct vnode *vp;
-	struct ucred *cred;
-	struct core *chdr;
+cpu_coredump(struct lwp *l, struct vnode *vp, struct ucred *cred,
+    struct core *chdr)
 {
 	struct proc *p = l->l_proc;
 	struct md_core md_core;
@@ -347,9 +335,7 @@ setredzone(struct lwp *l)
  * Both addresses are assumed to reside in the Sysmap.
  */
 void
-pagemove(from, to, size)
-	register caddr_t from, to;
-	size_t size;
+pagemove(register caddr_t from, register caddr_t from, size_t size)
 {
 	register pt_entry_t *fpte, *tpte, ofpte, otpte;
 	int32_t cpumask = 0;
@@ -387,14 +373,13 @@ pagemove(from, to, size)
  * Convert kernel VA to physical address
  */
 int
-kvtop(addr)
-	register caddr_t addr;
+kvtop(register caddr_t addr)
 {
 	paddr_t pa;
 
 	if (pmap_extract(pmap_kernel(), (vaddr_t)addr, &pa) == FALSE)
 		panic("kvtop: zero page frame");
-	return((int)pa);
+	return (int)pa;
 }
 
 /*
@@ -403,9 +388,7 @@ kvtop(addr)
  * do not need to pass an access_type to pmap_enter().
  */
 void
-vmapbuf(bp, len)
-	struct buf *bp;
-	vsize_t len;
+vmapbuf(struct buf *bp, vsize_t len)
 {
 	vaddr_t faddr, taddr, off;
 	paddr_t fpa;
@@ -444,9 +427,7 @@ vmapbuf(bp, len)
  * Unmap a previously-mapped user I/O request.
  */
 void
-vunmapbuf(bp, len)
-	struct buf *bp;
-	vsize_t len;
+vunmapbuf(struct buf *bp, vsize_t len)
 {
 	vaddr_t addr, off;
 
