@@ -1,4 +1,4 @@
-/* $NetBSD: vga_common.c,v 1.1 2002/10/15 17:30:44 junyoung Exp $ */
+/* $NetBSD: vga_common.c,v 1.2 2003/01/27 14:46:10 tsutsui Exp $ */
 
 /*
  * Copyright (c) 1995, 1996 Carnegie-Mellon University.
@@ -83,12 +83,11 @@ vga_common_probe(bus_space_tag_t iot, bus_space_tag_t memt)
 	/* reset state */
 	(void) bus_space_read_1(iot, ioh_6845, 10);
 	bus_space_write_1(iot, ioh_vga, VGA_ATC_INDEX,
-			  20 | 0x20); /* colselect | enable */
+	    20 | 0x20); /* colselect | enable */
 	regval = bus_space_read_1(iot, ioh_vga, VGA_ATC_DATAR);
 	/* toggle the implemented bits */
 	bus_space_write_1(iot, ioh_vga, VGA_ATC_DATAW, regval ^ 0x0f);
-	bus_space_write_1(iot, ioh_vga, VGA_ATC_INDEX,
-			  20 | 0x20);
+	bus_space_write_1(iot, ioh_vga, VGA_ATC_INDEX, 20 | 0x20);
 	/* read back */
 	if (bus_space_read_1(iot, ioh_vga, VGA_ATC_DATAR) != (regval ^ 0x0f))
 		goto bad;
