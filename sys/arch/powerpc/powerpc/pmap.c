@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.21 1999/04/17 21:16:47 ws Exp $	*/
+/*	$NetBSD: pmap.c,v 1.22 1999/06/17 18:21:34 thorpej Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -705,19 +705,6 @@ pmap_update()
 void
 pmap_collect(pm)
 	struct pmap *pm;
-{
-}
-
-/*
- * Make the specified pages pageable or not as requested.
- *
- * This routine is merely advisory.
- */
-void
-pmap_pageable(pm, start, end, pageable)
-	struct pmap *pm;
-	vaddr_t start, end;
-	int pageable;
 {
 }
 
