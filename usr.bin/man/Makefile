@@ -1,5 +1,8 @@
-#	@(#)Makefile	5.1 (Berkeley) 5/27/90
+#	@(#)Makefile	8.1 (Berkeley) 6/6/93
 
-SUBDIR=	apropos man whatis
+PROG=	man
+SRCS=	config.c man.c
+MAN1=	man.0
+MAN5=	man.conf.0
 
-.include <bsd.subdir.mk>
+.include <bsd.prog.mk>
