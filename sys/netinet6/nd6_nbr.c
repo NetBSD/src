@@ -1,4 +1,4 @@
-/*	$NetBSD: nd6_nbr.c,v 1.5 1999/07/09 22:57:30 thorpej Exp $	*/
+/*	$NetBSD: nd6_nbr.c,v 1.6 1999/07/10 19:46:10 thorpej Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -915,8 +915,9 @@ nd6_dad_start(ifa, tick)
 	bzero(dp, sizeof(*dp));
 	TAILQ_INSERT_TAIL(&dadq, (struct dadq *)dp, dad_list);
 
-	printf("performing DAD for %s(%s)\n",
-		ip6_sprintf(&ia->ia_addr.sin6_addr), ifa->ifa_ifp->if_xname);
+	/* XXXJRT This is probably a purely debugging message. */
+	printf("%s: starting DAD for %s\n", ifa->ifa_ifp->if_xname,
+	    ip6_sprintf(&ia->ia_addr.sin6_addr));
 
 	/*
 	 * Send NS packet for DAD, ip6_dad_count times.
@@ -1060,9 +1061,11 @@ nd6_dad_timer(ifa)
 			 */
 			ia->ia6_flags &= ~IN6_IFF_TENTATIVE;
 
-			printf("DAD success for %s(%s)\n",
-				ip6_sprintf(&ia->ia_addr.sin6_addr),
-				ifa->ifa_ifp->if_xname);
+			/* XXXJRT This is probably a purely debugging message */
+			printf("%s: DAD complete for %s - no duplicates "
+			    "found\n", ifa->ifa_ifp->if_xname,
+			    ip6_sprintf(&ia->ia_addr.sin6_addr));
+
 			TAILQ_REMOVE(&dadq, (struct dadq *)dp, dad_list);
 			free(dp, M_IP6NDP);
 			dp = NULL;
@@ -1087,10 +1090,10 @@ nd6_dad_duplicated(ifa)
 		return;
 	}
 
-	log(LOG_ERR, "DAD detected duplicate IP6 address %s(%s): "
-		"got %d NS and %d NA\n", ip6_sprintf(&ia->ia_addr.sin6_addr),
-		ifa->ifa_ifp->if_xname,
-		dp->dad_ns_icount, dp->dad_na_icount);
+	log(LOG_ERR, "%s: DAD detected duplicate IPv6 address %s: %d NS, "
+	    "%d NA\n", ifa->ifa_ifp->if_xname,
+	    ip6_sprintf(&ia->ia_addr.sin6_addr),
+	    dp->dad_ns_icount, dp->dad_na_icount);
 
 	ia->ia6_flags &= ~IN6_IFF_TENTATIVE;
 	ia->ia6_flags |= IN6_IFF_DUPLICATED;
@@ -1102,9 +1105,11 @@ nd6_dad_duplicated(ifa)
 #endif
 		);
 
-	printf("DAD failed for %s(%s): manual operation required\n",
-		ip6_sprintf(&ia->ia_addr.sin6_addr),
-		ifa->ifa_ifp->if_xname);
+	/* XXXJRT This is probably a purely debugging message. */
+	printf("%s: DAD complete for %s - duplicate found\n",
+	    ifa->ifa_ifp->if_xname, ip6_sprintf(&ia->ia_addr.sin6_addr));
+	printf("%s: manual intervention required\n", ifa->ifa_ifp->if_xname);
+
 	TAILQ_REMOVE(&dadq, (struct dadq *)dp, dad_list);
 	free(dp, M_IP6NDP);
 	dp = NULL;

@@ -1,4 +1,4 @@
-/*	$NetBSD: in6_ifattach.c,v 1.3 1999/07/03 21:30:18 thorpej Exp $	*/
+/*	$NetBSD: in6_ifattach.c,v 1.4 1999/07/10 19:46:10 thorpej Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -122,7 +122,9 @@ in6_ifattach_getifid(ifp0)
 			}
 		}
 	}
-	printf("failed to get EUI64");
+#ifdef DEBUG
+	printf("in6_ifattach_getifid: failed to get EUI64");
+#endif
 	return EADDRNOTAVAIL;
 
 found:
@@ -140,8 +142,8 @@ found:
 	}
 
 	if (found_first_ifid) {
-		printf("got EUI64 from %s, "
-			"value %02x:%02x:%02x:%02x:%02x:%02x:%02x:%02x\n",
+		printf("%s: supplying EUI64: "
+			"%02x:%02x:%02x:%02x:%02x:%02x:%02x:%02x\n",
 			ifp->if_xname,
 			first_ifid[0] & 0xff, first_ifid[1] & 0xff,
 			first_ifid[2] & 0xff, first_ifid[3] & 0xff,
@@ -149,7 +151,9 @@ found:
 			first_ifid[6] & 0xff, first_ifid[7] & 0xff);
 		return 0;
 	} else {
-		printf("failed to get EUI64");
+#ifdef DEBUG
+		printf("in6_ifattach_getifid: failed to get EUI64");
+#endif
 		return EADDRNOTAVAIL;
 	}
 }
@@ -164,7 +168,7 @@ in6_ifattach_p2p()
 	struct ifnet *ifp;
 
 	/* prevent infinite loop. just in case. */
-	if (! found_first_ifid)
+	if (found_first_ifid == 0)
 		return;
 
 	for (ifp = ifnet.tqh_first; ifp; ifp = ifp->if_list.tqe_next) {
@@ -205,13 +209,13 @@ in6_ifattach(ifp, type, laddr, noloop)
 	int rtflag = 0;
 
 	if (type == IN6_IFT_P2P && found_first_ifid == 0) {
-		printf("%s: no ifid available yet for IPv6 link-local address\n",
+		printf("%s: no ifid available for IPv6 link-local address\n",
 			ifp->if_xname);
 		return;
 	}
 
 	if ((ifp->if_flags & IFF_MULTICAST) == 0) {
-		printf("%s: no multicast allowed, IPv6 is not enabled\n",
+		printf("%s: not multicast capable, IPv6 not enabled\n",
 			ifp->if_xname);
 		return;
 	}
@@ -303,7 +307,7 @@ in6_ifattach(ifp, type, laddr, noloop)
 		ieee802_to_eui64(&ia->ia_addr.sin6_addr.s6_addr8[8], laddr);
 		/* set global bit */
 		ia->ia_addr.sin6_addr.s6_addr8[8] |= 0x02;
-		if (! found_first_ifid) {
+		if (found_first_ifid == 0) {
 			if (in6_ifattach_getifid(ifp) == 0)
 				in6_ifattach_p2p();
 		}
@@ -332,11 +336,11 @@ in6_ifattach(ifp, type, laddr, noloop)
 		if (error) {
 			switch (error) {
 			case EAFNOSUPPORT:
-				printf("%s: IPv6 is not supported\n",
+				printf("%s: IPv6 not supported\n",
 					ifp->if_xname);
 				break;
 			default:
-				printf("SIOCSIFADDR(%s) returned %d\n",
+				printf("%s: SIOCSIFADDR error %d\n",
 					ifp->if_xname, error);
 				break;
 			}
@@ -559,8 +563,11 @@ in6_ifdetach(ifp)
 				ia = ia->ia_next;
 			if (ia->ia_next)
 				ia->ia_next = oia->ia_next;
+#ifdef DEBUG
 			else
-				printf("Didn't unlink in6ifaddr from list\n");
+				printf("%s: didn't unlink in6ifaddr from "
+				    "list\n", ifp->if_xname);
+#endif
 		}
 
 		free(ia, M_IFADDR);
