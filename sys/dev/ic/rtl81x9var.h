@@ -1,4 +1,4 @@
-/*	$NetBSD: rtl81x9var.h,v 1.11.2.1 2004/06/21 16:39:22 tron Exp $	*/
+/*	$NetBSD: rtl81x9var.h,v 1.11.2.2 2004/06/21 17:12:38 tron Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998
@@ -84,17 +84,13 @@ struct rtk_mii_frame {
 
 struct rtk_list_data {
 	struct mbuf		*rtk_tx_mbuf[RTK_TX_DESC_CNT];
-	struct mbuf		*rtk_rx_mbuf[RTK_TX_DESC_CNT];
+	struct mbuf		*rtk_rx_mbuf[RTK_RX_DESC_CNT];
 	int			rtk_tx_prodidx;
 	int			rtk_rx_prodidx;
 	int			rtk_tx_considx;
 	int			rtk_tx_free;
 	bus_dmamap_t		rtk_tx_dmamap[RTK_TX_DESC_CNT];
 	bus_dmamap_t		rtk_rx_dmamap[RTK_RX_DESC_CNT];
-	bus_dma_tag_t		rtk_stag;	/* stats mapping tag */
-	bus_dmamap_t		rtk_smap;	/* stats map */
-	struct rtk_stats		*rtk_stats;
-	bus_addr_t		rtk_stats_addr;
 	bus_dmamap_t		rtk_rx_list_map;
 	struct rtk_desc		*rtk_rx_list;
 	bus_dma_segment_t 	rtk_rx_listseg;
