@@ -1,3 +1,5 @@
+	$NetBSD: install,v 1.9.2.4 1998/02/07 06:23:18 mellon Exp $	
+
 Installing NetBSD is a relatively complex process, but, if you have
 this document in hand and are careful to read and remember the
 information which is presented to you by the install program, it
@@ -72,8 +74,12 @@ begin again from scratch.
 	your system as the kernel configures the hardware.  Note which
 	hard disk device(s) are configured (sd0, sd1, etc).  Then
 	you will be prompted for a root device.  At this time type
-	'sd0b', where '0' is the device which contains the swap
+	'sd0b', where 'sd0' is the device which contains the swap
 	partition you created during the hard disk preparation.
+	When prompted for a dump device, answer 'none' for the upgrade 
+	(normally, you would tell it one of the swap devices). When 
+	prompted for the root filesystem type, confirm 'generic', which 
+	will auto-detect it. 
 
 	If the system should hang after entering the root device, try
 	again with
