@@ -1,4 +1,4 @@
-/*      $NetBSD: lfs_inode.c,v 1.1 1999/09/29 04:57:49 perseant Exp $ */
+/*      $NetBSD: lfs_inode.c,v 1.2 1999/10/01 04:35:23 perseant Exp $ */
 
 /*-
  * Copyright (c) 1980, 1991, 1993, 1994
@@ -43,7 +43,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1991, 1993, 1994\n\
 #if 0
 static char sccsid[] = "@(#)main.c      8.6 (Berkeley) 5/1/95";
 #else
-__RCSID("$NetBSD: lfs_inode.c,v 1.1 1999/09/29 04:57:49 perseant Exp $");
+__RCSID("$NetBSD: lfs_inode.c,v 1.2 1999/10/01 04:35:23 perseant Exp $");
 #endif
 #endif /* not lint */
 
@@ -87,7 +87,7 @@ fs_read_sblock(char *sblock_buf)
 	sblock = (struct lfs *)sblock_buf;
 	rawread(LFS_LABELPAD, (char *) sblock, LFS_SBPAD);
 	if (sblock->lfs_magic != LFS_MAGIC) {
-#if 0
+#ifdef notyet
 		if (sblock->lfs_magic == bswap32(LFS_MAGIC)) {
 			lfs_sb_swap(sblock, sblock, 0);
 			needswap = 1;
@@ -106,6 +106,8 @@ struct ufsi *
 fs_parametrize(void)
 {
 	static struct ufsi ufsi;
+
+	spcl.c_flags = iswap32(iswap32(spcl.c_flags) | DR_NEWINODEFMT);
 
 	ufsi.ufs_dsize = fsbtodb(sblock,sblock->lfs_size);
 	ufsi.ufs_bsize = sblock->lfs_bsize;
@@ -238,7 +240,7 @@ lfs_ientry(ino_t ino)
 }
 
 /* Search a block for a specific dinode. */
-struct dinode *
+static struct dinode *
 lfs_ifind(struct lfs *fs, ino_t ino, struct dinode *dip)
 {
 	register int cnt;
@@ -259,7 +261,6 @@ getino(inum)
 	static struct dinode ifile_dinode; /* XXX fill this in */
 	static struct dinode empty_dinode; /* Always stays zeroed */
 	struct dinode *dp;
-	int i;
 
 	if(inum == sblock->lfs_ifile) {
 		/* Load the ifile inode if not already */
@@ -279,9 +280,11 @@ getino(inum)
 
 	if(blkno != inoblkno) {
 		bread(blkno, (char *)inoblock, (int)sblock->lfs_bsize);
+#ifdef notyet
 		if (needswap)
 			for (i = 0; i < MAXINOPB; i++)
 				ffs_dinode_swap(&inoblock[i], &inoblock[i]);
+#endif
 	}
 	return lfs_ifind(sblock, inum, inoblock);
 }
