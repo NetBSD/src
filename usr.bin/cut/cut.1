@@ -1,5 +1,7 @@
-.\" Copyright (c) 1989, 1990 The Regents of the University of California.
-.\" All rights reserved.
+.\"	$NetBSD: cut.1,v 1.5 1995/03/26 20:51:25 glass Exp $
+.\"
+.\" Copyright (c) 1989, 1990, 1993
+.\"	The Regents of the University of California.  All rights reserved.
 .\"
 .\" This code is derived from software contributed to Berkeley by
 .\" the Institute of Electrical and Electronics Engineers, Inc.
@@ -32,10 +34,9 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.\"     from: @(#)cut.1	5.5 (Berkeley) 6/27/91
-.\"	$Id: cut.1,v 1.4 1993/08/19 17:16:46 jtc Exp $
+.\"     @(#)cut.1	8.1 (Berkeley) 6/6/93
 .\"
-.Dd June 27, 1991
+.Dd June 6, 1993
 .Dt CUT 1
 .Os
 .Sh NAME
@@ -94,9 +95,9 @@ specifies byte positions.
 The
 .Ar list
 specifies character positions.
-.It Fl d Ar delim
-Use
-.Ar delim
+.It Fl d Ar string
+Use the first character of
+.Ar string
 as the field delimiter character instead of the tab character.
 .It Fl f Ar list
 The
