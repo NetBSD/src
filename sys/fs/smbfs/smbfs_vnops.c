@@ -1,4 +1,4 @@
-/*	$NetBSD: smbfs_vnops.c,v 1.12 2003/02/24 16:19:05 jdolecek Exp $	*/
+/*	$NetBSD: smbfs_vnops.c,v 1.13 2003/02/24 19:09:02 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -154,6 +154,8 @@ static struct vnodeopv_entry_desc smbfs_vnodeop_entries[] = {
 	{ &vop_symlink_desc,		smbfs_symlink },
 	{ &vop_unlock_desc,		genfs_unlock },
 	{ &vop_write_desc,		smbfs_write },
+	{ &vop_mmap_desc,		genfs_mmap },		/* mmap */
+	{ &vop_seek_desc,		genfs_seek },		/* seek */
 	{ NULL, NULL }
 };
 const struct vnodeopv_desc smbfs_vnodeop_opv_desc =
