@@ -1,4 +1,4 @@
-/*	$NetBSD: divrem.m4,v 1.4 1995/09/30 02:14:17 cgd Exp $	*/
+/*	$NetBSD: divrem.m4,v 1.5 1995/09/30 03:09:07 cgd Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Carnegie-Mellon University.
@@ -52,7 +52,7 @@ define(BIT, `t0')
 define(I, `t1')
 define(CC, `t2')
 define(T_0, `t3')
-ifelse(S, `true', `define(SIGN, `t4')')
+ifelse(S, `true', `define(NEG, `t4')')
 
 #include "DEFS.h"
 
@@ -63,7 +63,7 @@ LEAF(NAME, 0)					/* XXX */
 	stq	CC, 16(sp)
 	stq	T_0, 24(sp)
 ifelse(S, `true',
-`	stq	SIGN, 32(sp)')
+`	stq	NEG, 32(sp)')
 	stq	A, 40(sp)
 	stq	B, 48(sp)
 	mov	zero, RESULT			/* Initialize result to zero */
@@ -71,30 +71,43 @@ ifelse(S, `true',
 ifelse(S, `true',
 `
 	/* Compute sign of result.  If either is negative, this is easy.  */
-	or	A, B, SIGN			/* not the sign, but... */
-	bgt	SIGN, Ldoit			/* neither negative? do it! */
+	or	A, B, NEG			/* not the sign, but... */
+	srl	NEG, WORDSIZE - 1, NEG		/* rather, or of high bits */
+	blbc	NEG, Ldoit			/* neither negative? do it! */
 
 ifelse(OP, `div',
-`	xor	A, B, SIGN			/* THIS is the sign! */
-', `	mov	A, SIGN				/* sign follows A. */
+`	xor	A, B, NEG			/* THIS is the sign! */
+', `	mov	A, NEG				/* sign follows A. */
 ')
-	bge	A, LnegB			/* see if A is negative */
+	srl	NEG, WORDSIZE - 1, NEG		/* make negation the low bit. */
+
+	srl	A, WORDSIZE - 1, I		/* is A negative? */
+	blbc	I, LnegB			/* no. */
 	/* A is negative; flip it. */
+ifelse(WORDSIZE, `32', `
+	/* top 32 bits may be random junk */
+	zap	A, 0xf0, A
+')
 	subq	zero, A, A
-	bge	B, Ldoit			/* see if B is negative */
+	srl	B, WORDSIZE - 1, I		/* is B negative? */
+	blbc	I, Ldoit			/* no. */
 LnegB:
 	/* B is definitely negative, no matter how we got here. */
+ifelse(WORDSIZE, `32', `
+	/* top 32 bits may be random junk */
+	zap	B, 0xf0, B
+')
 	subq	zero, B, B
 Ldoit:
-', `
+')
 ifelse(WORDSIZE, `32', `
 	/*
-	 * Clear the top 32 bits of each operand, as the compiler may
-	 * have sign extended them, if the 31st bit was set.
+	 * Clear the top 32 bits of each operand, as they may
+	 * sign extension (if negated above), or random junk.
 	 */
 	zap	A, 0xf0, A
 	zap	B, 0xf0, B
-')' )
+')
 
 	/* kill the special cases. */
 	beq	B, Ldotrap			/* division by zero! */
@@ -159,7 +172,7 @@ ifelse(S, `true',
 `
 	/* Check to see if we should negate it. */
 	subqv	zero, RESULT, T_0
-	cmovlt	SIGN, T_0, RESULT
+	cmovlbs	NEG, T_0, RESULT
 ')
 
 	ldq	BIT, 0(sp)
@@ -167,7 +180,7 @@ ifelse(S, `true',
 	ldq	CC, 16(sp)
 	ldq	T_0, 24(sp)
 ifelse(S, `true',
-`	ldq	SIGN, 32(sp)')
+`	ldq	NEG, 32(sp)')
 	ldq	A, 40(sp)
 	ldq	B, 48(sp)
 	lda	sp, 64(sp)
