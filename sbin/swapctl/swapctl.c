@@ -1,4 +1,4 @@
-/*	$NetBSD: swapctl.c,v 1.1.1.1 1997/06/12 13:14:11 mrg Exp $	*/
+/*	$NetBSD: swapctl.c,v 1.2 1997/06/15 03:47:53 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1996, 1997 Matthew R. Green
@@ -42,6 +42,11 @@
  *	-k		use kilobytes
  *	-p <pri>	use this priority
  *	-c		change priority
+ *
+ * or, if invoked as "swapon" (compatibility mode):
+ *
+ *	-a		all devices listed as `sw' in /etc/fstab
+ *	<dev>		add this device
  */
 
 #include <sys/param.h>
@@ -57,26 +62,54 @@
 
 #include "swapctl.h"
 
-int	Aflag;
-int	aflag;
-int	cflag;
-#ifdef SWAP_OFF_WORKS
-int	dflag;
-#endif
-int	lflag;
-int	kflag;
-int	sflag;
-int	pflag;
+int	command;
+
+/*
+ * Commands for swapctl(8).  These are mutually exclusive.
+ */
+#define	CMD_A		0x01	/* process /etc/fstab */
+#define	CMD_a		0x02	/* add a swap file/device */
+#define	CMD_c		0x04	/* change priority of a swap file/device */
+#define	CMD_d		0x08	/* delete a swap file/device */
+#define	CMD_l		0x10	/* list swap files/devices */
+#define	CMD_s		0x20	/* summary of swap files/devices */
+
+#define	SET_COMMAND(cmd) \
+do { \
+	if (command) \
+		usage(); \
+	command = (cmd); \
+} while (0)
+
+/*
+ * Commands that require a "path" argument at the end of the command
+ * line, and the ones which require that none exist.
+ */
+#define	REQUIRE_PATH	(CMD_a | CMD_c | CMD_d)
+#define	REQUIRE_NOPATH	(CMD_A | CMD_l | CMD_s)
+
+/*
+ * Option flags, and the commands with which they are valid.
+ */
+int	kflag;		/* display in 1K blocks */
+#define	KFLAG_CMDS	(CMD_l | CMD_s)
+
+int	pflag;		/* priority was specified */
+#define	PFLAG_CMDS	(CMD_A | CMD_a | CMD_c)
+
 int	pri;		/* uses 0 as default pri */
-char	*path;
 
 static	void change_priority __P((char *));
 static	void add_swap __P((char *));
-#ifdef SWAP_OFF_WORKS
 static	void del_swap __P((char *));
-#endif /* SWAP_OFF_WORKS */
 static	void do_fstab __P((void));
 static	void usage __P((void));
+static	void swapon_command __P((int, char **));
+#if 0
+static	void swapoff_command __P((int, char **));
+#endif
+
+extern	char *__progname;	/* from crt0.o */
 
 int
 main(argc, argv)
@@ -84,98 +117,159 @@ main(argc, argv)
 	char	*argv[];
 {
 	int	c;
-	int	am_swapon = 0;
-#ifdef SWAP_OFF_WORKS
-	int	swapoff = 0;
-	static	char getoptstr[] = "Aacdlkp:s";
-#else
-	static	char getoptstr[] = "Aaclkp:s";
-#endif /* SWAP_OFF_WORKS */
-	extern	char *__progname;		/* XXX */
 
-	if (strcmp(__progname, "swapon") == 0)
-		aflag = am_swapon = 1;
-#ifdef SWAP_OFF_WORKS
-	else if (strcmp(__progname, "swapoff") == 0)
-		dflag = swapoff = 1;
-#endif /* SWAP_OFF_WORKS */
-	while ((c = getopt(argc, argv, getoptstr)) != EOF) {
-		switch(c) {
+	if (strcmp(__progname, "swapon") == 0) {
+		swapon_command(argc, argv);
+		/* NOTREACHED */
+	}
+
+#if 0
+	if (strcmp(__progname, "swapoff") == 0) {
+		swapoff_command(argc, argv);
+		/* NOTREACHED */
+	}
+#endif
+
+	while ((c = getopt(argc, argv, "Aacdlkp:s")) != -1) {
+		switch (c) {
 		case 'A':
-			Aflag = 1;
+			SET_COMMAND(CMD_A);
 			break;
+
 		case 'a':
-			if (cflag) {
-				warn("-a and -c are mutually exclusive");
-				usage();
-			}
-#ifdef SWAP_OFF_WORKS
-			if (dflag) {
-				warn("-a and -d are mutually exclusive");
-				usage();
-			}
-#endif /* SWAP_OFF_WORKS */
-			if (am_swapon)
-				Aflag = 1;
-			else
-				aflag = 1;
+			SET_COMMAND(CMD_a);
 			break;
+
 		case 'c':
-			if (aflag) {
-				warn("-c and -a are mutually exclusive");
-				usage();
-			}
-			cflag = 1;
+			SET_COMMAND(CMD_c);
 			break;
-#ifdef SWAP_OFF_WORKS
+
 		case 'd':
-			if (aflag || cflag) {
-				warn("-d and -a or -c are mutually exclusive");
-				usage();
-			}
-			dflag = 1;
+			SET_COMMAND(CMD_d);
 			break;
-#endif /* SWAP_OFF_WORKS */
+
 		case 'l':
-			lflag = 1;
+			SET_COMMAND(CMD_l);
 			break;
+
 		case 'k':
 			kflag = 1;
 			break;
+
 		case 'p':
 			pflag = 1;
+			/* XXX strtol() */
 			pri = atoi(optarg);
 			break;
+
 		case 's':
-			sflag = 1;
+			SET_COMMAND(CMD_s);
 			break;
+
+		default:
+			usage();
+			/* NOTREACHED */
 		}
 	}
-	/* SWAP_OFF_WORKS */
-	if (!aflag && !Aflag && !cflag && !lflag && !sflag /* && !dflag */)
+
+	/* Did the user specify a command? */
+	if (command == 0)
 		usage();
 
 	argv += optind;
-	if (!*argv && !Aflag && !lflag && !sflag)
+	argc -= optind;
+
+	switch (argc) {
+	case 0:
+		if (command & REQUIRE_PATH)
+			usage();
+		break;
+
+	case 1:
+		if (command & REQUIRE_NOPATH)
+			usage();
+		break;
+
+	default:
 		usage();
-	if (cflag && !pflag)
+	}
+
+	/* To change priority, you have to specify one. */
+	if ((command == CMD_c) && pflag == 0)
 		usage();
 
-	if (lflag)
+	/* Dispatch the command. */
+	switch (command) {
+	case CMD_l:
 		list_swap(pri, kflag, pflag, 0, 1);
-	else if (sflag)
+		break;
+
+	case CMD_s:
 		list_swap(pri, kflag, pflag, 0, 0);
-	else if (cflag)
+		break;
+
+	case CMD_c:
 		change_priority(argv[0]);
-	else if (aflag)
+		break;
+
+	case CMD_a:
 		add_swap(argv[0]);
-#ifdef SWAP_OFF_WORKS
-	else if (dflag)
+		break;
+
+	case CMD_d:
 		del_swap(argv[0]);
-#endif /* SWAP_OFF_WORKS */
-	else if (Aflag)
+		break;
+
+	case CMD_A:
 		do_fstab();
+		break;
+	}
+
 	exit(0);
+}
+
+/*
+ * swapon_command: emulate the old swapon(8) program.
+ */
+void
+swapon_command(argc, argv)
+	int argc;
+	char **argv;
+{
+	int ch, fiztab = 0;
+
+	while ((ch = getopt(argc, argv, "a")) != -1) {
+		switch (ch) {
+		case 'a':
+			fiztab = 1;
+			break;
+		default:
+			goto swapon_usage;
+		}
+	}
+	argc -= optind;
+	argv += optind;
+
+	if (fiztab) {
+		if (argc)
+			goto swapon_usage;
+		do_fstab();
+		exit(0);
+	} else if (argc == 0)
+		goto swapon_usage;
+
+	while (argc) {
+		add_swap(argv[0]);
+		argc--;
+		argv++;
+	}
+	exit(0);
+	/* NOTREACHED */
+
+ swapon_usage:
+	fprintf(stderr, "usage: %s -a\n", __progname);
+	fprintf(stderr, "       %s <path> ...\n", __progname);
+	exit(1);
 }
 
 /*
@@ -199,24 +293,20 @@ add_swap(path)
 {
 
 	if (swapctl(SWAP_ON, path, pri) < 0)
-		warn("%s", path);
+		err(1, "%s", path);
 }
 
-#if SWAP_OFF_WORKS
 /*
  * del_swap:  remove the pathname to the list of swap devices.
- *
- * XXX note that the kernel does not support this operation (yet).
  */
 void
 del_swap(path)
-	char path;
+	char *path;
 {
 
 	if (swapctl(SWAP_OFF, path, pri) < 0)
-		warn("%s", path);
+		err(1, "%s", path);
 }
-#endif /* SWAP_OFF_WORKS */
 
 void
 do_fstab()
@@ -271,8 +361,8 @@ do_fstab()
 		if (swapctl(SWAP_ON, spec, (int)priority) < 0)
 			warn("%s", spec);
 		else
-printf("swap: adding %s as swap device at priority %d\n",
-	    fp->fs_spec, priority);
+			printf("%s: adding %s as swap device at priority %d\n",
+			    __progname, fp->fs_spec, priority);
 
 		if (spec != fp->fs_spec)
 			free(spec);
@@ -282,15 +372,11 @@ printf("swap: adding %s as swap device at priority %d\n",
 void
 usage()
 {
-	extern char *__progname;
-#ifdef SWAP_OFF_WORKS
-	static	char usagemsg[] =
-	    "usage: %s [-k] [-A|-a|-c|-d|-l|-s] [-p <pri>] [device]\n";
-#else
-	static	char usagemsg[] =
-	    "usage: %s [-k] [-A|-a|-c|-l|-s] [-p <pri>] [device]\n";
-#endif /* SWAP_OFF_WORKS */
 
-	fprintf(stderr, usagemsg, __progname);
+	fprintf(stderr, "usage: %s -A [-p priority]\n", __progname);
+	fprintf(stderr, "       %s -a [-p priority] path\n", __progname);
+	fprintf(stderr, "       %s -c -p priority path\n", __progname);
+	fprintf(stderr, "       %s -d path\n", __progname);
+	fprintf(stderr, "       %s -l | -s [-k]\n", __progname);
 	exit(1);
 }
