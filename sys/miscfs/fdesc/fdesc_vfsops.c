@@ -1,4 +1,4 @@
-/*	$NetBSD: fdesc_vfsops.c,v 1.13 1994/06/29 06:34:16 cgd Exp $	*/
+/*	$NetBSD: fdesc_vfsops.c,v 1.14 1994/09/15 03:42:37 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -87,15 +87,15 @@ fdesc_mount(mp, path, data, ndp, p)
 	rvp->v_type = VDIR;
 	rvp->v_flag |= VROOT;
 	fmp->f_root = rvp;
-	/* XXX -- don't mark as local to work around fts() problems */
-	/*mp->mnt_flag |= MNT_LOCAL;*/
-	mp->mnt_data = (qaddr_t) fmp;
+	mp->mnt_flag |= MNT_LOCAL;
+	mp->mnt_data = (qaddr_t)fmp;
 	getnewfsid(mp, makefstype(MOUNT_FDESC));
 
 	(void) copyinstr(path, mp->mnt_stat.f_mntonname, MNAMELEN - 1, &size);
 	bzero(mp->mnt_stat.f_mntonname + size, MNAMELEN - size);
 	bzero(mp->mnt_stat.f_mntfromname, MNAMELEN);
 	bcopy("fdesc", mp->mnt_stat.f_mntfromname, sizeof("fdesc"));
+	(void)fdesc_statfs(mp, &mp->mnt_stat, p);
 	return (0);
 }
 
@@ -220,7 +220,6 @@ fdesc_statfs(mp, sbp, p)
 #else
 	sbp->f_type = 0;
 #endif
-	sbp->f_flags = 0;
 	sbp->f_bsize = DEV_BSIZE;
 	sbp->f_iosize = DEV_BSIZE;
 	sbp->f_blocks = 2;		/* 1K to keep df happy */
