@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.194 2001/07/05 07:05:02 chs Exp $ */
+/*	$NetBSD: pmap.c,v 1.195 2001/07/07 21:23:53 mrg Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -71,6 +71,7 @@
 #include <sys/exec.h>
 #include <sys/core.h>
 #include <sys/kcore.h>
+#include <sys/kernel.h>
 
 #include <uvm/uvm.h>
 
@@ -426,6 +427,13 @@ static u_long segfixmask = 0xffffffff; /* all bits valid to start */
 #if defined(SUN4M)
 void		setpgt4m __P((int *ptep, int pte));
 void		setpte4m __P((vaddr_t va, int pte));
+
+#ifdef MULTIPROCESSOR
+void		setpgt4m_va __P((vaddr_t va, int *ptep, int pte));
+#else
+#define		setpgt4m_va(va, ptep, pte)	setpgt4m((ptep), (pte))
+#endif
+
 #endif
 
 /* Function pointer messiness for supporting multiple sparc architectures
@@ -513,20 +521,256 @@ void 		(*pmap_rmu_p) __P((struct pmap *, vaddr_t, vaddr_t, int, int));
  */
 
 #if defined(SUN4M)
+
+#if defined(MULTIPROCESSOR)
 /*
- * Macros which implement SRMMU TLB flushing/invalidation
+ * The SMP versions of the tlb flush routines.
  */
-#define tlb_flush_page(va)    \
-	sta(((vaddr_t)(va) & ~0xfff) | ASI_SRMMUFP_L3, ASI_SRMMUFP, 0)
+static __inline__ void	smp_tlb_flush_context __P((void));
+static __inline__ void	smp_tlb_flush_region __P((int));
+static __inline__ void	smp_tlb_flush_segment __P((int, int));
+static __inline__ void	smp_tlb_flush_page __P((int va));
+static __inline__ void	smp_tlb_flush_all __P((void));
 
-#define tlb_flush_segment(vr, vs) \
-	sta(((vr)<<RGSHIFT) | ((vs)<<SGSHIFT) | ASI_SRMMUFP_L2, ASI_SRMMUFP,0)
+#if 0
+int smp_tlb_fc_cnt[2];	/* [0] -> calls, [1] -> ipi generating calls */
+int smp_tlb_fr_cnt[2];
+int smp_tlb_fs_cnt[2];
+int smp_tlb_fp_cnt[2];
+int smp_tlb_fa_cnt[2];
+#define INCR_COUNT(x) x[0]++
+#define INCR_CALL(x) x[1]++
 
-#define tlb_flush_region(vr) \
-	sta(((vr) << RGSHIFT) | ASI_SRMMUFP_L1, ASI_SRMMUFP, 0)
+void db_print_tlb_stats(void);
+void
+db_print_tlb_stats()
+{
 
-#define tlb_flush_context()	sta(ASI_SRMMUFP_L0, ASI_SRMMUFP, 0)
-#define tlb_flush_all()		sta(ASI_SRMMUFP_LN, ASI_SRMMUFP, 0)
+	printf("SMP TLB shootdown statistics:\n");
+	printf("\twhat\tcount\tcalls\n");
+	printf("\tcontext\t%d\t%d\n", smp_tlb_fc_cnt[0], smp_tlb_fc_cnt[1]);
+	printf("\tregion\t%d\t%d\n", smp_tlb_fr_cnt[0], smp_tlb_fr_cnt[1]);
+	printf("\tseg\t%d\t%d\n", smp_tlb_fs_cnt[0], smp_tlb_fs_cnt[1]);
+	printf("\tpage\t%d\t%d\n", smp_tlb_fp_cnt[0], smp_tlb_fp_cnt[1]);
+	printf("\tall\t%d\t%d\n", smp_tlb_fa_cnt[0], smp_tlb_fa_cnt[1]);
+}
+#else
+#define INCR_COUNT(x) /* nothing */
+#define INCR_CALL(x) /* nothing */
+#endif
+
+/*
+ * SMP TLB flush routines; these *must* be broadcast on sun4m systems
+ */
+static __inline__ void
+smp_tlb_flush_page(va)
+	int va;
+{
+	int n, s;
+
+	INCR_COUNT(smp_tlb_fp_cnt);
+	tlb_flush_page_real(va);
+	if (cold || (cpuinfo.flags & CPUFLG_READY) == 0)
+		return;
+	INCR_CALL(smp_tlb_fc_cnt);
+	LOCK_XPMSG();
+	for (n = 0; n < ncpu; n++) {
+		struct cpu_info *cpi = cpus[n];
+		struct xpmsg_flush_page *p;
+
+		if (cpi == NULL || cpuinfo.mid == cpi->mid ||
+		    (cpi->flags & CPUFLG_READY) == 0)
+			continue;
+		p = &cpi->msg.u.xpmsg_flush_page;
+		s = splhigh();
+		simple_lock(&cpi->msg.lock);
+		cpi->msg.tag = XPMSG_DEMAP_TLB_PAGE;
+		p->ctx = getcontext4m();
+		p->va = va;
+		raise_ipi_wait_and_unlock(cpi);
+		splx(s);
+	}
+	UNLOCK_XPMSG();
+}
+
+static __inline__ void
+smp_tlb_flush_segment(vr, vs)
+	int vr, vs;
+{
+	int n, s;
+
+	INCR_COUNT(smp_tlb_fs_cnt);
+	tlb_flush_segment_real(vr, vs);
+	if (cold || (cpuinfo.flags & CPUFLG_READY) == 0)
+		return;
+	INCR_CALL(smp_tlb_fs_cnt);
+	LOCK_XPMSG();
+	for (n = 0; n < ncpu; n++) {
+		struct cpu_info *cpi = cpus[n];
+		struct xpmsg_flush_segment *p;
+
+		if (cpi == NULL || cpuinfo.mid == cpi->mid ||
+		    (cpi->flags & CPUFLG_READY) == 0)
+			continue;
+		p = &cpi->msg.u.xpmsg_flush_segment;
+		s = splhigh();
+		simple_lock(&cpi->msg.lock);
+		cpi->msg.tag = XPMSG_DEMAP_TLB_SEGMENT;
+		p->ctx = getcontext4m();
+		p->vr = vr;
+		p->vs = vs;
+		raise_ipi_wait_and_unlock(cpi);
+		splx(s);
+	}
+	UNLOCK_XPMSG();
+}
+
+static __inline__ void
+smp_tlb_flush_region(vr)
+	int vr;
+{
+	int n, s;
+
+	INCR_COUNT(smp_tlb_fr_cnt);
+	tlb_flush_region_real(vr);
+	if (cold || (cpuinfo.flags & CPUFLG_READY) == 0)
+		return;
+	INCR_CALL(smp_tlb_fr_cnt);
+	LOCK_XPMSG();
+	for (n = 0; n < ncpu; n++) {
+		struct cpu_info *cpi = cpus[n];
+		struct xpmsg_flush_region *p;
+
+		if (cpi == NULL || cpuinfo.mid == cpi->mid ||
+		    (cpi->flags & CPUFLG_READY) == 0)
+			continue;
+		p = &cpi->msg.u.xpmsg_flush_region;
+		s = splhigh();
+		simple_lock(&cpi->msg.lock);
+		cpi->msg.tag = XPMSG_DEMAP_TLB_REGION;
+		p->ctx = getcontext4m();
+		p->vr = vr;
+		raise_ipi_wait_and_unlock(cpi);
+		splx(s);
+	}
+	UNLOCK_XPMSG();
+}
+
+static __inline__ void
+smp_tlb_flush_context()
+{
+	int n, s;
+
+	INCR_COUNT(smp_tlb_fc_cnt);
+	tlb_flush_context_real();
+	if (cold || (cpuinfo.flags & CPUFLG_READY) == 0)
+		return;
+	INCR_CALL(smp_tlb_fc_cnt);
+	LOCK_XPMSG();
+	for (n = 0; n < ncpu; n++) {
+		struct cpu_info *cpi = cpus[n];
+		struct xpmsg_flush_context *p;
+
+		if (cpi == NULL || cpuinfo.mid == cpi->mid ||
+		    (cpi->flags & CPUFLG_READY) == 0)
+			continue;
+		p = &cpi->msg.u.xpmsg_flush_context;
+		s = splhigh();
+		simple_lock(&cpi->msg.lock);
+		cpi->msg.tag = XPMSG_DEMAP_TLB_CONTEXT;
+		p->ctx = getcontext4m();
+		raise_ipi_wait_and_unlock(cpi);
+		splx(s);
+	}
+	UNLOCK_XPMSG();
+}
+
+static __inline__ void
+smp_tlb_flush_all()
+{
+	int n, s;
+
+	INCR_COUNT(smp_tlb_fa_cnt);
+	tlb_flush_all_real();
+	if (cold || (cpuinfo.flags & CPUFLG_READY) == 0)
+		return;
+	INCR_CALL(smp_tlb_fa_cnt);
+	LOCK_XPMSG();
+	for (n = 0; n < ncpu; n++) {
+		struct cpu_info *cpi = cpus[n];
+
+		if (cpi == NULL || cpuinfo.mid == cpi->mid ||
+		    (cpi->flags & CPUFLG_READY) == 0)
+			continue;
+		s = splhigh();
+		simple_lock(&cpi->msg.lock);
+		cpi->msg.tag = XPMSG_DEMAP_TLB_ALL;
+		raise_ipi_wait_and_unlock(cpi);
+		splx(s);
+	}
+	UNLOCK_XPMSG();
+}
+#endif
+
+#if defined(MULTIPROCESSOR) /* && 0 */
+#define tlb_flush_page(va)		smp_tlb_flush_page((int)va)
+#define tlb_flush_segment(vr, vs)	smp_tlb_flush_segment(vr, vs)
+#define tlb_flush_region(vr)		smp_tlb_flush_region(vr)
+#define tlb_flush_context()		smp_tlb_flush_context()
+#define tlb_flush_all()			smp_tlb_flush_all()
+#else
+#define tlb_flush_page(va)		tlb_flush_page_real(va)
+#define tlb_flush_segment(vr, vs)	tlb_flush_segment_real(vr, vs)
+#define tlb_flush_region(vr)		tlb_flush_region_real(vr)
+#define tlb_flush_context()		tlb_flush_context_real()
+#define tlb_flush_all()			tlb_flush_all_real()
+#endif
+
+/*
+ * Atomically update a PTE entry, coping with hardware updating the
+ * PTE at the same time we are.  This is the procedure that is
+ * recommended in the SuperSPARC user's manual.
+ */
+int updatepte4m __P((vaddr_t, int *, int, int));
+static struct simplelock pte4m_lock = SIMPLELOCK_INITIALIZER;
+
+int
+updatepte4m(va, pte, bic, bis)
+	vaddr_t va;
+	int *pte;
+	int bic;
+	int bis;
+{
+	int oldval, swapval;
+	volatile int *vpte = (volatile int *)pte;
+
+	/*
+	 * Can only be one of these happening in the system
+	 * at any one time.
+	 */
+	simple_lock(&pte4m_lock);
+
+	/*
+	 * The idea is to loop swapping zero into the pte, flushing
+	 * it, and repeating until it stays zero.  At this point,
+	 * there should be no more hardware accesses to this PTE
+	 * so we can modify it without losing any mod/ref info.
+	 */
+	oldval = 0;
+	do {
+		swapval = 0;
+		swap(vpte, swapval);
+		tlb_flush_page(va);
+		oldval |= swapval;
+	} while (*vpte != 0);
+
+	swapval = (oldval & ~bic) | bis;
+	swap(vpte, swapval);
+
+	simple_unlock(&pte4m_lock);
+
+	return (oldval);
+}
 
 static u_int	VA2PA __P((caddr_t));
 static u_long	srmmu_bypass_read __P((u_long));
@@ -557,7 +801,7 @@ VA2PA(addr)
 		    ((u_int)addr & 0xfff));
 
 	/* A `TLB Flush Entire' is required before any L0, L1 or L2 probe */
-	tlb_flush_all();
+	tlb_flush_all_real();
 
 	pte = lda(((u_int)addr & ~0xfff) | ASI_SRMMUFP_L2, ASI_SRMMUFP);
 	if ((pte & SRMMU_TETYPE) == SRMMU_TEPTE)
@@ -584,8 +828,21 @@ setpgt4m(ptep, pte)
 	int *ptep;
 	int pte;
 {
+
 	swap(ptep, pte);
 }
+
+#ifdef MULTIPROCESSOR
+__inline void
+setpgt4m_va(va, ptep, pte)
+	vaddr_t va;
+	int *ptep;
+	int pte;
+{
+
+	updatepte4m(va, ptep, 0xffffffff, pte);
+}
+#endif
 
 /* Set the page table entry for va to pte. */
 __inline void
@@ -664,8 +921,8 @@ pgt_page_alloc(sz, flags, mtype)
 	pmap_update();
 
 	return ((void *)va);
-}       
-   
+}
+
 void
 pgt_page_free(v, sz, mtype)
 	void *v;
@@ -2251,15 +2508,16 @@ pv_changepte4m(pv0, bis, bic)
 			 */
 			cache_flush_page(va);
 
+#if !defined(MULTIPROCESSOR)	/* XXX? done in updatepte4m() */
 			/* Flush TLB so memory copy is up-to-date */
 			tlb_flush_page(va);
+#endif
 		}
 
 		tpte = sp->sg_pte[VA_SUN4M_VPG(va)];
 		KASSERT((tpte & SRMMU_TETYPE) == SRMMU_TEPTE);
-		pv0->pv_flags |= MR4M(tpte);
-		tpte = (tpte | bis) & ~bic;
-		setpgt4m(&sp->sg_pte[VA_SUN4M_VPG(va)], tpte);
+		pv0->pv_flags |= MR4M(updatepte4m(va,
+		    &sp->sg_pte[VA_SUN4M_VPG(va)], bic, bis));
 	}
 	setcontext4m(ctx);
 	splx(s);
@@ -2345,6 +2603,9 @@ pv_syncflags4m(pv0)
 	return (flags);
 }
 
+/*
+ * Should be called with pmap already locked.
+ */
 void
 pv_unlink4m(pv, pm, va)
 	struct pvlist *pv;
@@ -3348,13 +3609,13 @@ mmu_install_tables(sc)
 	if (sc->mmu_enable != 0)
 		sc->mmu_enable();
 
-	tlb_flush_all();
+	tlb_flush_all_real();
 	prom_ctxreg = lda(SRMMU_CXTPTR, ASI_SRMMU);
 
 	sta(SRMMU_CXTPTR, ASI_SRMMU,
 		(sc->ctx_tbl_pa >> SRMMU_PPNPASHIFT) & ~0x3);
 
-	tlb_flush_all();
+	tlb_flush_all_real();
 
 #ifdef DEBUG
 	printf("done.\n");
@@ -3601,7 +3862,8 @@ pmap_map(va, pa, endpa, prot)
 /*
  * Check a pmap for spuriously lingering mappings
  */
-static __inline__ void pmap_quiet_check(struct pmap *pm)
+static __inline__ void
+pmap_quiet_check(struct pmap *pm)
 {
 	int vs, vr;
 
@@ -3757,6 +4019,7 @@ pmap_pmap_pool_dtor(void *arg, void *object)
 #if defined(SUN4M)
 	if (CPU_ISSUN4M) {
 		int n;
+
 #if defined(MULTIPROCESSOR)
 		for (n = 0; n < ncpu; n++)
 #else
@@ -3996,6 +4259,7 @@ pmap_rmk4_4c(pm, va, endva, vr, vs)
 #if defined(SUN4M)		/* 4M version of pmap_rmk */
 /* remove from kernel (4m)*/
 /*static*/ void
+/* pm is already locked */
 pmap_rmk4m(pm, va, endva, vr, vs)
 	struct pmap *pm;
 	vaddr_t va, endva;
@@ -4047,8 +4311,10 @@ pmap_rmk4m(pm, va, endva, vr, vs)
 				pv_unlink4m(pv, pm, va);
 			}
 		}
+#if !defined(MULTIPROCESSOR)
 		tlb_flush_page(va);
-		setpgt4m(&sp->sg_pte[VA_SUN4M_VPG(va)], SRMMU_TEINVALID);
+#endif
+		setpgt4m_va(va, &sp->sg_pte[VA_SUN4M_VPG(va)], SRMMU_TEINVALID);
 		nleft--;
 #ifdef DIAGNOSTIC
 		if (nleft < 0)
@@ -4229,6 +4495,7 @@ pmap_rmu4_4c(pm, va, endva, vr, vs)
 
 #if defined(SUN4M)		/* 4M version of pmap_rmu */
 /* remove from user */
+/* Note: pm is already locked */
 /*static*/ void
 pmap_rmu4m(pm, va, endva, vr, vs)
 	struct pmap *pm;
@@ -4300,10 +4567,12 @@ pmap_rmu4m(pm, va, endva, vr, vs)
 			panic("pmap_rmu: too many PTEs in segment; "
 			      "va 0x%lx; endva 0x%lx", va, endva);
 #endif
+#if !defined(MULTIPROCESSOR)
 		if (pm->pm_ctx)
 			tlb_flush_page(va);
+#endif
 
-		setpgt4m(&pte0[VA_SUN4M_VPG(va)], SRMMU_TEINVALID);
+		setpgt4m_va(va, &pte0[VA_SUN4M_VPG(va)], SRMMU_TEINVALID);
 	}
 
 	/*
@@ -4315,7 +4584,7 @@ pmap_rmu4m(pm, va, endva, vr, vs)
 
 		if (pm->pm_ctx)
 			tlb_flush_segment(vr, vs); 	/* Paranoia? */
-		setpgt4m(&rp->rg_seg_ptps[vs], SRMMU_TEINVALID);
+		setpgt4m_va(va, &rp->rg_seg_ptps[vs], SRMMU_TEINVALID);
 		sp->sg_pte = NULL;
 		pool_put(&L23_pool, pte0);
 
@@ -4786,7 +5055,7 @@ pmap_page_protect4m(pg, prot)
 		}
 
 		tpte = sp->sg_pte[VA_SUN4M_VPG(va)];
-		setpgt4m(&sp->sg_pte[VA_SUN4M_VPG(va)], SRMMU_TEINVALID);
+		setpgt4m_va(va, &sp->sg_pte[VA_SUN4M_VPG(va)], SRMMU_TEINVALID);
 
 		if ((tpte & SRMMU_TETYPE) != SRMMU_TEPTE)
 			panic("pmap_page_protect !PG_V");
@@ -4799,7 +5068,7 @@ pmap_page_protect4m(pg, prot)
 			 */
 			if (pm->pm_ctx)
 				tlb_flush_segment(vr, vs);
-			setpgt4m(&rp->rg_seg_ptps[vs], SRMMU_TEINVALID);
+			setpgt4m_va(va, &rp->rg_seg_ptps[vs], SRMMU_TEINVALID);
 			pool_put(&L23_pool, sp->sg_pte);
 			sp->sg_pte = NULL;
 
@@ -4926,11 +5195,12 @@ pmap_protect4m(pm, sva, eva, prot)
 				pmap_stats.ps_npg_prot_actual++;
 				if (pm->pm_ctx) {
 					cache_flush_page(va);
+#if !defined(MULTIPROCESSOR)
 					/* Flush TLB entry */
 					tlb_flush_page(va);
+#endif
 				}
-				setpgt4m(&sp->sg_pte[VA_SUN4M_VPG(va)],
-					 tpte & ~PPROT_WRITE);
+				updatepte4m(va, &sp->sg_pte[VA_SUN4M_VPG(va)], PPROT_WRITE, 0);
 			}
 		}
 	}
@@ -4997,12 +5267,16 @@ pmap_changeprot4m(pm, va, prot, wired)
 		    (SRMMU_PG_C|PG_SUN4M_OBMEM))
 			cache_flush_page(va);
 
+#if !defined(MULTIPROCESSOR)
 		tlb_flush_page(va);
-		setcontext4m(ctx);
+#endif
 	}
 
-	setpgt4m(&sp->sg_pte[VA_SUN4M_VPG(va)],
+	setpgt4m_va(va, &sp->sg_pte[VA_SUN4M_VPG(va)],
 		 (pte & ~SRMMU_PROT_MASK) | newprot);
+
+	if (pm->pm_ctx)
+		setcontext4m(ctx);
 
 out:
 	simple_unlock(&pm->pm_lock);
@@ -5123,7 +5397,7 @@ pmap_enk4_4c(pm, va, prot, flags, pv, pteproto)
 		    (pteproto & (PG_PFNUM|PG_TYPE))) {
 			/* just changing protection and/or wiring */
 			splx(s);
-			pmap_changeprot4_4c(pm, va, prot, 
+			pmap_changeprot4_4c(pm, va, prot,
 					    (flags & PMAP_WIRED) != 0);
 			return (0);
 		}
@@ -5750,8 +6024,10 @@ printf("pmap_enk4m: changing existing va=>pa entry: va 0x%lx, pteproto 0x%x, "
 		panic("pmap_enk4m: missing segment table for va 0x%lx",va);
 #endif
 
+#if !defined(MULTIPROCESSOR)
 	tlb_flush_page(va);
-	setpgt4m(&sp->sg_pte[VA_SUN4M_VPG(va)], pteproto);
+#endif
+	setpgt4m_va(va, &sp->sg_pte[VA_SUN4M_VPG(va)], pteproto);
 
 	splx(s);
 	return (0);
@@ -5941,9 +6217,11 @@ pmap_enu4m(pm, va, prot, flags, pv, pteproto)
 	 */
 	if (pm->pm_ctx) {
 		setcontext4m(pm->pm_ctxnum);
+#if !defined(MULTIPROCESSOR)
 		tlb_flush_page(va);
+#endif
 	}
-	setpgt4m(&sp->sg_pte[VA_SUN4M_VPG(va)], pteproto);
+	setpgt4m_va(va, &sp->sg_pte[VA_SUN4M_VPG(va)], pteproto);
 
 out:
 	splx(s);
@@ -7137,7 +7415,7 @@ pmap_dumpsize()
 /*
  * Write the core dump headers and MD data to the dump device.
  * We dump the following items:
- * 
+ *
  *	kcore_seg_t		 MI header defined in <sys/kcore.h>)
  *	cpu_kcore_hdr_t		 MD header defined in <machine/kcore.h>)
  *	phys_ram_seg_t[npmemarr] physical memory segments
@@ -7198,7 +7476,7 @@ pmap_dumpmmu(dump, blkno)
 	kcpup->segmapoffset = segmapoffset =
 		memsegoffset + npmemarr * sizeof(phys_ram_seg_t);
 
-	kcpup->npmeg = (CPU_ISSUN4OR4C) ? seginval + 1 : 0; 
+	kcpup->npmeg = (CPU_ISSUN4OR4C) ? seginval + 1 : 0;
 	kcpup->pmegoffset = pmegoffset =
 		segmapoffset + kcpup->nsegmap * sizeof(struct segmap);
 
