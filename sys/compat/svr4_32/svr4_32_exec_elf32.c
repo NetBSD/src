@@ -1,4 +1,4 @@
-/*	$NetBSD: svr4_32_exec_elf32.c,v 1.5 2002/08/26 21:06:04 christos Exp $	 */
+/*	$NetBSD: svr4_32_exec_elf32.c,v 1.6 2002/08/29 13:59:23 christos Exp $	 */
 
 /*-
  * Copyright (c) 1994 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: svr4_32_exec_elf32.c,v 1.5 2002/08/26 21:06:04 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: svr4_32_exec_elf32.c,v 1.6 2002/08/29 13:59:23 christos Exp $");
 
 #define	ELFSIZE		32				/* XXX should die */
 
@@ -76,7 +76,8 @@ int sun_hwcap = (AV_SPARC_HWMUL_32x32|AV_SPARC_HWDIV_32x32|AV_SPARC_HWFSMULD);
 
 #if 0
 int
-svr4_32_copyargs(pack, arginfo, stackp, argp)
+svr4_32_copyargs(p, pack, arginfo, stackp, argp)
+	struct proc *p;
 	struct exec_package *pack;
 	struct ps_strings *arginfo;
 	char **stackp;
@@ -203,7 +204,8 @@ svr4_32_copyargs(pack, arginfo, stackp, argp)
 }
 #else
 int
-svr4_32_copyargs(pack, arginfo, stackp, argp)
+svr4_32_copyargs(p, pack, arginfo, stackp, argp)
+	struct proc *p;
 	struct exec_package *pack;
 	struct ps_strings *arginfo;
 	char **stackp;
