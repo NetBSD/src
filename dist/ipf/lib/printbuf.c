@@ -1,4 +1,4 @@
-/*	$NetBSD: printbuf.c,v 1.1.1.1 2004/03/28 08:56:20 martti Exp $	*/
+/*	$NetBSD: printbuf.c,v 1.2 2004/11/13 15:18:41 he Exp $	*/
 
 /*
  * Copyright (C) 1993-2001 by Darren Reed.
@@ -22,7 +22,7 @@ int len, zend;
 
 	for (s = buf, i = len; i; i--) {
 		c = *s++;
-		if (isprint(c))
+		if (isprint((unsigned char)c))
 			putchar(c);
 		else
 			printf("\\%03o", c);
