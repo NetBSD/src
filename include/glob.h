@@ -1,4 +1,4 @@
-/*	$NetBSD: glob.h,v 1.9 1998/03/31 20:32:48 kleink Exp $	*/
+/*	$NetBSD: glob.h,v 1.10 1998/06/19 22:41:44 kleink Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -42,6 +42,7 @@
 #define	_GLOB_H_
 
 #include <sys/cdefs.h>
+#include <sys/featuretest.h>
 #include <sys/types.h>
 #include <sys/stat.h>
 
@@ -77,18 +78,20 @@ typedef struct {
 #define	GLOB_MARK	0x0008	/* Append / to matching directories. */
 #define	GLOB_NOCHECK	0x0010	/* Return pattern itself if nothing matches. */
 #define	GLOB_NOSORT	0x0020	/* Don't sort. */
+#define	GLOB_NOESCAPE	0x1000	/* Disable backslash escaping. */
 
-#ifndef _POSIX_SOURCE
+#if !defined(_POSXI_C_SOURCE) && !defined(_XOPEN_SOURCE)
 #define	GLOB_ALTDIRFUNC	0x0040	/* Use alternately specified directory funcs. */
 #define	GLOB_BRACE	0x0080	/* Expand braces ala csh. */
 #define	GLOB_MAGCHAR	0x0100	/* Pattern had globbing characters. */
 #define	GLOB_NOMAGIC	0x0200	/* GLOB_NOCHECK without magic chars (csh). */
-#define	GLOB_QUOTE	0x0400	/* Quote special chars with \. */
 #define	GLOB_TILDE	0x0800	/* Expand tilde names from the passwd file. */
 #endif
 
 #define	GLOB_NOSPACE	(-1)	/* Malloc call failed. */
 #define	GLOB_ABORTED	(-2)	/* Unignored error. */
+#define	GLOB_NOMATCH	(-3)	/* No match, and GLOB_NOCHECK was not set. */
+#define	GLOB_NOSYS	(-4)	/* Implementation does not support function. */
 
 __BEGIN_DECLS
 #ifdef __LIBC12_SOURCE__
