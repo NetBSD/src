@@ -1,4 +1,4 @@
-/*	$NetBSD: msdosfs_vfsops.c,v 1.37 1996/01/19 14:28:23 leo Exp $	*/
+/*	$NetBSD: msdosfs_vfsops.c,v 1.38 1996/01/21 16:35:29 fvdl Exp $	*/
 
 /*-
  * Copyright (C) 1994, 1995 Wolfgang Solfrank.
@@ -177,7 +177,7 @@ msdosfs_mount(mp, path, data, ndp, p)
 		VOP_UNLOCK(devvp);
 	}
 	if ((mp->mnt_flag & MNT_UPDATE) == 0)
-		error = msdosfs_mountfs(devvp, mp, p);
+		error = msdosfs_mountfs(devvp, mp, p, &args);
 	else {
 		if (devvp != pmp->pm_devvp)
 			error = EINVAL;	/* needs translation */
@@ -229,10 +229,11 @@ msdosfs_mount(mp, path, data, ndp, p)
 }
 
 int
-msdosfs_mountfs(devvp, mp, p)
+msdosfs_mountfs(devvp, mp, p, argp)
 	struct vnode *devvp;
 	struct mount *mp;
 	struct proc *p;
+	struct msdosfs_args *argp;
 {
 	struct msdosfsmount *pmp;
 	struct buf *bp;
@@ -266,7 +267,7 @@ msdosfs_mountfs(devvp, mp, p)
 	bp  = NULL; /* both used in error_exit */
 	pmp = NULL;
 
-	if (pmp->pm_flags & MSDOSFSMNT_GEMDOSFS) {
+	if (argp->flags & MSDOSFSMNT_GEMDOSFS) {
 		/*
 	 	 * We need the disklabel to calculate the size of a FAT entry
 		 * later on. Also make sure the partition contains a filesystem
@@ -300,7 +301,7 @@ msdosfs_mountfs(devvp, mp, p)
 	b33 = (struct byte_bpb33 *)bsp->bs33.bsBPB;
 	b50 = (struct byte_bpb50 *)bsp->bs50.bsBPB;
 #ifdef MSDOSFS_CHECKSIG
-	if (!(pmp->pm_flags & MSDOSFSMNT_GEMDOSFS)
+	if (!(argp->flags & MSDOSFSMNT_GEMDOSFS)
 		&& (bsp->bs50.bsBootSectSig != BOOTSIG)) {
 		error = EINVAL;
 		goto error_exit;
@@ -327,7 +328,7 @@ msdosfs_mountfs(devvp, mp, p)
 	pmp->pm_Heads = getushort(b50->bpbHeads);
 	pmp->pm_Media = b50->bpbMedia;
 
-	if (!(pmp->pm_flags & MSDOSFSMNT_GEMDOSFS)) {
+	if (!(argp->flags & MSDOSFSMNT_GEMDOSFS)) {
 		/* XXX - We should probably check more values here */
     		if (!pmp->pm_BytesPerSec || !SecPerClust
 	    		|| pmp->pm_Heads > 255 || pmp->pm_SecPerTrack > 63) {
@@ -344,7 +345,7 @@ msdosfs_mountfs(devvp, mp, p)
 		pmp->pm_HugeSectors = pmp->pm_Sectors;
 	}
 
-	if (pmp->pm_flags & MSDOSFSMNT_GEMDOSFS) {
+	if (argp->flags & MSDOSFSMNT_GEMDOSFS) {
 		/*
 		 * Check a few values (could do some more):
 		 * - logical sector size: power of 2, >= block size
@@ -389,7 +390,7 @@ msdosfs_mountfs(devvp, mp, p)
 	pmp->pm_maxcluster = pmp->pm_nmbrofclusters + 1;
 	pmp->pm_fatsize = pmp->pm_FATsecs * pmp->pm_BytesPerSec;
 
-	if (pmp->pm_flags & MSDOSFSMNT_GEMDOSFS) {
+	if (argp->flags & MSDOSFSMNT_GEMDOSFS) {
 		if ((pmp->pm_nmbrofclusters <= (0xff0 - 2))
 		      && ((dtype == DTYPE_FLOPPY) || ((dtype == DTYPE_VNODE)
 		      && ((pmp->pm_Heads == 1) || (pmp->pm_Heads == 2))))
