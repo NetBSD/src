@@ -1,4 +1,4 @@
-/*	$NetBSD: acpivar.h,v 1.7 2002/12/28 06:14:07 jmcneill Exp $	*/
+/*	$NetBSD: acpivar.h,v 1.8 2002/12/28 08:44:43 matt Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -189,6 +189,7 @@ struct acpi_irq {
 	SIMPLEQ_ENTRY(acpi_irq) ar_list;
 	int		ar_index;
 	uint32_t	ar_irq;
+	uint32_t	ar_type;
 };
 
 struct acpi_drq {
@@ -235,7 +236,7 @@ struct acpi_resource_parse_ops {
 	void	(*memrange)(struct device *, void *, uint32_t, uint32_t,
 		    uint32_t, uint32_t);
 
-	void	(*irq)(struct device *, void *, uint32_t);
+	void	(*irq)(struct device *, void *, uint32_t, uint32_t);
 	void	(*drq)(struct device *, void *, uint32_t);
 
 	void	(*start_dep)(struct device *, void *, int);
