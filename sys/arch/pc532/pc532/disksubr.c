@@ -32,7 +32,7 @@
  *
  *	from: @(#)ufs_disksubr.c	7.16 (Berkeley) 5/4/91
  *	
- *	$Id: disksubr.c,v 1.1.1.1 1993/09/09 23:53:49 phil Exp $
+ *	$Id: disksubr.c,v 1.2 1994/01/14 08:09:42 phil Exp $
  */
 
 #include "param.h"
@@ -52,9 +52,9 @@
  * Returns null on success and an error string on failure.
  */
 char *
-cpu_readdisklabel(dev, strat, lp, osdep)
+readdisklabel(dev, strat, lp, osdep)
 	dev_t dev;
-	int (*strat)();
+	void (*strat)();
 	register struct disklabel *lp;
 	struct cpu_disklabel *osdep;
 {
@@ -102,7 +102,7 @@ cpu_readdisklabel(dev, strat, lp, osdep)
  * Check new disk label for sensibility
  * before setting it.
  */
-cpu_setdisklabel(olp, nlp, openmask, osdep)
+setdisklabel(olp, nlp, openmask, osdep)
 	register struct disklabel *olp, *nlp;
 	u_long openmask;
 	struct cpu_disklabel *osdep;
@@ -147,9 +147,9 @@ cpu_setdisklabel(olp, nlp, openmask, osdep)
 /*
  * Write disk label back to device after modification.
  */
-cpu_writedisklabel(dev, strat, lp, osdep)
+writedisklabel(dev, strat, lp, osdep)
 	dev_t dev;
-	int (*strat)();
+	void (*strat)();
 	register struct disklabel *lp;
 	struct cpu_disklabel *osdep;
 {
