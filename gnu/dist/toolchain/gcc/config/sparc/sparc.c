@@ -367,7 +367,7 @@ sparc_override_options ()
   sparc_init_modes ();
 
   if ((profile_flag || profile_block_flag)
-      && sparc_cmodel != CM_MEDLOW)
+      && sparc_cmodel != CM_32 && sparc_cmodel != CM_MEDLOW)
     {
       error ("profiling does not support code models other than medlow");
     }
