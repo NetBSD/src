@@ -1,4 +1,4 @@
-/*	$NetBSD: if_le_tc.c,v 1.9 1998/07/21 17:36:07 drochner Exp $	*/
+/*	$NetBSD: if_le_tc.c,v 1.10 1999/03/04 01:39:04 nisimura Exp $	*/
 
 /*
  * Copyright (c) 1996 Carnegie-Mellon University.
@@ -75,8 +75,7 @@ le_tc_match(parent, match, aux)
 {
 	struct tc_attach_args *d = aux;
 
-	if (strncmp("PMAD-AA ", d->ta_modname, TC_ROM_LLEN) &&
-	    strncmp("PMAD-BA ", d->ta_modname, TC_ROM_LLEN))
+	if (strncmp("PMAD-AA ", d->ta_modname, TC_ROM_LLEN) != 0)
 		return (0);
 
 	return (1);
