@@ -1,4 +1,4 @@
-/*	$NetBSD: ad1848_isa.c,v 1.3 1998/09/06 11:06:52 pk Exp $	*/
+/*	$NetBSD: ad1848_isa.c,v 1.4 1998/11/26 21:45:13 hannken Exp $	*/
 
 /*
  * Copyright (c) 1994 John Brezak
@@ -314,6 +314,7 @@ ad1848_isa_probe(isc)
 					sc->chip_name = "CS4232";
 					break;
 				case 0x03:
+				case 0x83:
 					sc->chip_name = "CS4236/CS4236B";
 					break;
 				}
