@@ -1,7 +1,8 @@
-#	$NetBSD: Makefile,v 1.7 2001/01/09 08:52:58 enami Exp $
+#	$NetBSD: Makefile,v 1.8 2001/08/06 20:01:23 tv Exp $
 
 .include <bsd.own.mk>
 
+.if !defined(USE_NEW_TOOLCHAIN)
 PROG=		gprof
 SRCS=		basic_blocks.c call_graph.c cg_arcs.c cg_dfn.c cg_print.c \
 		core.c gmon_io.c gprof.c hertz.c hist.c source.c \
@@ -22,4 +23,6 @@ BFDOBJ!=	cd ${.CURDIR}/../../lib/libbfd && ${PRINTOBJDIR}
 .PATH:		${DIST}/gprof
 
 .include <bsd.info.mk>
+.endif
+
 .include <bsd.prog.mk>
