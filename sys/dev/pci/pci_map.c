@@ -1,4 +1,4 @@
-/*	$NetBSD: pci_map.c,v 1.1 1997/08/30 06:46:58 mycroft Exp $	*/
+/*	$NetBSD: pci_map.c,v 1.2 1997/09/23 23:08:47 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1994, 1997 Charles M. Hannum.  All rights reserved.
@@ -83,6 +83,11 @@ pci_io_find(pc, tag, reg, type, basep, sizep, flagsp)
 		return (1);
 	}
 
+	if (PCI_MAPREG_IO_SIZE(mask) == 0) {
+		printf("pci_io_find: void region\n");
+		return (1);
+	}
+
 	if (basep != 0)
 		*basep = PCI_MAPREG_IO_ADDR(address);
 	if (sizep != 0)
@@ -134,6 +139,11 @@ pci_mem_find(pc, tag, reg, type, basep, sizep, flagsp)
 		printf("pci_mem_find: expected mem type %08x, found %08x\n",
 		    PCI_MAPREG_MEM_TYPE(type),
 		    PCI_MAPREG_MEM_TYPE(address));
+		return (1);
+	}
+
+	if (PCI_MAPREG_MEM_SIZE(mask) == 0) {
+		printf("pci_mem_find: void region\n");
 		return (1);
 	}
 
