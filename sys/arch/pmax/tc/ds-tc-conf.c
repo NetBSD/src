@@ -1,4 +1,4 @@
-/*	$NetBSD: ds-tc-conf.c,v 1.3 1995/09/12 07:27:07 jonathan Exp $	*/
+/*	$NetBSD: ds-tc-conf.c,v 1.4 1995/10/09 01:45:28 jonathan Exp $	*/
 
 /*
  * Copyright (c) 1995 Jonathan Stone
@@ -83,7 +83,7 @@ static struct tc_slot_desc xine_slot_addrs [4] = {
 struct tc_cpu_desc xine_tc_desc =
 {
 	xine_slot_addrs, XINE_TC_NSLOTS,
-	xine_devs, 11, /*XXX*/
+	xine_devs, 4, /*XXX*/ 
 	tc_ds_ioasic_intr_setup,
 	tc_ds_ioasic_intr_establish,
 	tc_ds_ioasic_intr_disestablish,
