@@ -1,4 +1,4 @@
-/*	$NetBSD: clmpcc.c,v 1.6 1999/08/01 09:35:05 scw Exp $ */
+/*	$NetBSD: clmpcc.c,v 1.7 1999/09/18 09:45:05 scw Exp $ */
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -1292,9 +1292,9 @@ clmpcc_txintr(arg)
 		/*
 		 * Disable transmit interrupt
 		 */
-		clmpcc_wrreg(ch->ch_sc, CLMPCC_REG_IER,
-			clmpcc_rdreg(ch->ch_sc, CLMPCC_REG_IER) &
-						~CLMPCC_IER_TX_EMPTY);
+		clmpcc_wrreg(sc, CLMPCC_REG_IER,
+			clmpcc_rdreg(sc, CLMPCC_REG_IER) &
+					~CLMPCC_IER_TX_EMPTY);
 
 		/*
 		 * Request Tx processing in the soft interrupt handler
