@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_ptrace.c,v 1.8 2001/11/15 09:48:00 lukem Exp $	*/
+/*	$NetBSD: linux_ptrace.c,v 1.9 2002/12/06 10:51:27 tron Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_ptrace.c,v 1.8 2001/11/15 09:48:00 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_ptrace.c,v 1.9 2002/12/06 10:51:27 tron Exp $");
 
 #include <sys/param.h>
 #include <sys/malloc.h>
@@ -82,7 +82,7 @@ struct linux_reg {
 };
 
 /* structure used for storing floating point context */
-struct linux_fpreg {
+struct linux_ctx {
   long cwd;
   long swd;
   long twd;
@@ -98,7 +98,7 @@ struct linux_fpreg {
 struct linux_user {
   struct linux_reg regs;	/* registers */
   int u_fpvalid;		/* true if math co-processor being used. */
-  struct linux_fpreg i387;	/* Math Co-processor registers. */
+  struct linux_ctx i387;	/* Math Co-processor registers. */
 /* The rest of this junk is to help gdb figure out what goes where */
 #define lusr_startgdb	u_tsize
   unsigned long int u_tsize;	/* Text segment size (pages). */
@@ -113,7 +113,7 @@ struct linux_user {
   int __reserved;		/* unused */
   void * u_ar0;			/* Used by gdb to help find the values for */
 				/* the registers. */
-  struct linux_fpreg* u_fpstate;/* Math Co-processor pointer. */
+  struct linux_ctx* u_fpstate;/* Math Co-processor pointer. */
   unsigned long __magic;	/* To uniquely identify a core file */
   char u_comm[32];		/* User command that was responsible */
   int u_debugreg[8];
@@ -140,7 +140,7 @@ linux_sys_ptrace_arch(p, v, retval)
 	struct reg *regs = NULL;
 	struct fpreg *fpregs = NULL;
 	struct linux_reg *linux_regs = NULL;
-	struct linux_fpreg *linux_fpregs = NULL;
+	struct linux_ctx *linux_fpregs = NULL;
 	int addr;
 
 	request = SCARG(uap, request);
@@ -246,36 +246,36 @@ linux_sys_ptrace_arch(p, v, retval)
 	case  LINUX_PTRACE_GETFPREGS:
 		MALLOC(fpregs, struct fpreg *, sizeof(struct fpreg),
 			M_TEMP, M_WAITOK);
-		MALLOC(linux_fpregs, struct linux_fpreg *,
-			sizeof(struct linux_fpreg), M_TEMP, M_WAITOK);
+		MALLOC(linux_fpregs, struct linux_ctx *,
+			sizeof(struct linux_ctx), M_TEMP, M_WAITOK);
 
 		error = process_read_fpregs(t, fpregs);
 		if (error != 0)
 			goto out;
 
 		/* zero the contents if NetBSD fpreg structure is smaller */
-		if (sizeof(struct fpreg) < sizeof(struct linux_fpreg))
-			memset(linux_fpregs, '\0', sizeof(struct linux_fpreg));
+		if (sizeof(struct fpreg) < sizeof(struct linux_ctx))
+			memset(linux_fpregs, '\0', sizeof(struct linux_ctx));
 
 		memcpy(linux_fpregs, fpregs,
-			min(sizeof(struct linux_fpreg), sizeof(struct fpreg)));
+			min(sizeof(struct linux_ctx), sizeof(struct fpreg)));
 		error = copyout(linux_fpregs, (caddr_t)SCARG(uap, data),
-		    sizeof(struct linux_fpreg));
+		    sizeof(struct linux_ctx));
 		goto out;
 
 	case  LINUX_PTRACE_SETFPREGS:
 		MALLOC(fpregs, struct fpreg *, sizeof(struct fpreg),
 			M_TEMP, M_WAITOK);
-		MALLOC(linux_fpregs, struct linux_fpreg *,
-			sizeof(struct linux_fpreg), M_TEMP, M_WAITOK);
+		MALLOC(linux_fpregs, struct linux_ctx *,
+			sizeof(struct linux_ctx), M_TEMP, M_WAITOK);
 		error = copyin((caddr_t)SCARG(uap, data), linux_fpregs,
-		    sizeof(struct linux_fpreg));
+		    sizeof(struct linux_ctx));
 		if (error != 0)
 			goto out;
 
 		memset(fpregs, '\0', sizeof(struct fpreg));
 		memcpy(fpregs, linux_fpregs,
-			min(sizeof(struct linux_fpreg), sizeof(struct fpreg)));
+			min(sizeof(struct linux_ctx), sizeof(struct fpreg)));
 
 		error = process_write_regs(t, regs);
 		goto out;
