@@ -1,4 +1,4 @@
-/*	$NetBSD: netif_news.c,v 1.1 1999/12/22 05:54:41 tsubai Exp $	*/
+/*	$NetBSD: netif_news.c,v 1.2 1999/12/23 06:52:31 tsubai Exp $	*/
 
 /*
  * Copyright (c) 1995 Gordon W. Ross
@@ -236,6 +236,6 @@ getsecs()
 {
 	u_int t[2];
 
-	apcall_nsectime(t);	/* time = t[0](s) + t[1](ns) */
+	apcall_gettimeofday(t);		/* time = t[0](s) + t[1](ns) */
 	return t[0];
 }

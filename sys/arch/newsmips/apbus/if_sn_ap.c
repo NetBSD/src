@@ -1,4 +1,4 @@
-/*	$NetBSD: if_sn_ap.c,v 1.1 1999/12/22 05:55:24 tsubai Exp $	*/
+/*	$NetBSD: if_sn_ap.c,v 1.2 1999/12/23 06:52:30 tsubai Exp $	*/
 
 /*
  * Copyright (C) 1997 Allen Briggs
@@ -139,34 +139,7 @@ sn_ap_getaddr(sc, lladdr)
 	return 0;
 }
 
-#define APSONIC_REG	0x00
-#define APSONIC_NREGS	0x10
-
-#define APSONIC_ENDIAN		0x80000000 /* Endian Display bit	*/
-#define APSONIC_RDERR		0x00020000 /* DMA Error occur in RDMAC	*/
-#define APSONIC_TDERR		0x00010000 /* DMA Error occur in TDMAC	*/
-#define APSONIC_RDMACEN		0x00004000 /* RDMAC done Interrupt enable */
-#define APSONIC_TDMACEN		0x00002000 /* TDMAC done Interrupt enable */
-#define APSONIC_DERREN		0x00001000 /* DMA Error Interrupt enable */
-#define APSONIC_CH3_INTEN	0x00000800 /* Channel 3 Interrupt enable */
-#define APSONIC_CH2_INTEN	0x00000400 /* Channel 2 Interrupt enable */
-#define APSONIC_CH1_INTEN	0x00000200 /* Channel 1 Interrupt enable */
-#define APSONIC_CH0_INTEN	0x00000100 /* Channel 0 Interrupt enable */
-#define APSONIC_RDMAC		0x00000040 /* RDMAC done Interrupt	*/
-#define APSONIC_TDMAC		0x00000020 /* TDMAC done Interrupt	*/
-#define APSONIC_DERR		0x00000010 /* DMA Error Interrupt	*/
-#define APSONIC_CH3_INT		0x00000008 /* Channel 3 Interrupt	*/
-#define APSONIC_CH2_INT		0x00000004 /* Channel 2 Interrupt	*/
-#define APSONIC_CH1_INT		0x00000002 /* Channel 1 Interrupt	*/
-#define APSONIC_CH0_INT		0x00000001 /* Channel 0 Interrupt	*/
-
-#define APSONIC_INT_MASK (APSONIC_CH0_INTEN | \
-			  APSONIC_CH1_INTEN | \
-			  APSONIC_CH2_INTEN | \
-			  APSONIC_CH3_INTEN | \
-			  APSONIC_RDMACEN | \
-			  APSONIC_TDMACEN | \
-			  APSONIC_DERREN)
+#define APSONIC_INT_MASK	0x00007f00	/* XXX */
 
 void
 sn_md_init(sc)
@@ -174,7 +147,7 @@ sn_md_init(sc)
 {
 	u_int *reg = (u_int *)(sc->sc_hwbase - 0x00100000);
 
-	reg[APSONIC_REG] = APSONIC_INT_MASK;
+	*reg = APSONIC_INT_MASK;
 	wbflush();
 	apbus_wbflush();
 	delay(10000);

@@ -1,4 +1,4 @@
-/*	$NetBSD: apbusvar.h,v 1.1 1999/12/22 05:55:24 tsubai Exp $	*/
+/*	$NetBSD: apbusvar.h,v 1.2 1999/12/23 06:52:30 tsubai Exp $	*/
 
 /*-
  * Copyright (C) 1999 SHIMIZU Ryo.  All rights reserved.
@@ -39,9 +39,9 @@ struct apbus_attach_args {
 	u_long	apa_hwbase;	/* hardware I/O address */
 };
 
-void *apbus_device_to_hwaddr __P((struct apbus_device *));
-struct apbus_device *apbus_lookupdev __P((char *));
-void apdevice_dump __P((struct apbus_device *));
+void *apbus_device_to_hwaddr __P((struct apbus_dev *));
+struct apbus_dev *apbus_lookupdev __P((char *));
+void apdevice_dump __P((struct apbus_dev *));
 void apbus_intr_init __P((void));
 int apbus_intr_call __P((int, int));
 void *apbus_intr_establish __P((int, int, int, void (*)(void *), void *,

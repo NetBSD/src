@@ -1,4 +1,4 @@
-/*	$NetBSD: news5000.c,v 1.1 1999/12/22 05:53:21 tsubai Exp $	*/
+/*	$NetBSD: news5000.c,v 1.2 1999/12/23 06:52:31 tsubai Exp $	*/
 
 /*-
  * Copyright (C) 1999 SHIMIZU Ryo.  All rights reserved.
@@ -37,243 +37,155 @@
 #include <newsmips/apbus/apbusvar.h>
 #include <newsmips/newsmips/machid.h>
 
-static void level5_interrupt __P((void));
-static void level4_interrupt __P((void));
-static void level3_interrupt __P((void));
-static void level2_interrupt __P((unsigned int, unsigned int));
-static void level1_interrupt __P((void));
-static void level0_interrupt __P((void));
-
-static void abif_error4 __P((void));
+static void level1_intr __P((void));
+static void level0_intr __P((void));
 
 /*
  * Handle news5000 interrupts.
  */
 int
-news5000_intr(mask, pc, statusReg, causeReg)
+news5000_intr(mask, pc, status, cause)
 	u_int mask;
-	u_int pc;		/* program counter where to continue */
-	u_int statusReg;	/* status register at time of the exception */
-	u_int causeReg;		/* cause register at time of exception */
+	u_int pc;	/* program counter where to continue */
+	u_int status;	/* status register at time of the exception */
+	u_int cause;	/* cause register at time of exception */
 {
 	if (mask & MIPS_INT_MASK_2) {
-		level2_interrupt(pc,statusReg);
+#ifdef DEBUG
+		static int l2cnt = 0;
+#endif
+		u_int int2stat;
+		struct clockframe cf;
+
+		int2stat = *(volatile u_int *)NEWS5000_INTST2;
+
+#ifdef DEBUG
+		l2cnt++;
+		if (l2cnt == 50) {
+			*(volatile u_int *)NEWS5000_LED_SEC = 1;
+		}
+		if (l2cnt == 100) {
+			*(volatile u_int *)NEWS5000_LED_SEC = 0;
+			l2cnt = 0;
+		}
+#endif
+
+		if (int2stat & NEWS5000_INT2_TIMER0) {
+			*(volatile u_int *)NEWS5000_TIMER0 = 1;
+
+			cf.pc = pc;
+			cf.sr = status;
+
+			hardclock(&cf);
+			intrcnt[HARDCLOCK_INTR]++;
+		}
+
 		apbus_wbflush();
-		causeReg &= ~MIPS_INT_MASK_2;
+		cause &= ~MIPS_INT_MASK_2;
 	}
 	/* If clock interrupts were enabled, re-enable them ASAP. */
-	splx(MIPS_SR_INT_IE | (statusReg & MIPS_INT_MASK_2));
+	splx(MIPS_SR_INT_IE | (status & MIPS_INT_MASK_2));
 
 	if (mask & MIPS_INT_MASK_5) {
-		level5_interrupt();
+		u_int int5stat = *(volatile u_int *)NEWS5000_INTST5;
+		printf("level5 interrupt (%08x)\n", int5stat);
+
 		apbus_wbflush();
-		causeReg &= ~MIPS_INT_MASK_5;
+		cause &= ~MIPS_INT_MASK_5;
 	}
 
 	if (mask & MIPS_INT_MASK_4) {
-		level4_interrupt();
+		u_int int4stat = *(volatile u_int *)NEWS5000_INTST4;
+		printf("level4 interrupt (%08x)\n", int4stat);
+
 		apbus_wbflush();
-		causeReg &= ~MIPS_INT_MASK_4;
+		cause &= ~MIPS_INT_MASK_4;
 	}
 
 	if (mask & MIPS_INT_MASK_3) {
-		level3_interrupt();
+		u_int int3stat = *(volatile u_int *)NEWS5000_INTST3;
+		printf("level3 interrupt (%08x)\n", int3stat);
+
 		apbus_wbflush();
-		causeReg &= ~MIPS_INT_MASK_3;
+		cause &= ~MIPS_INT_MASK_3;
 	}
 
 	if (mask & MIPS_INT_MASK_1) {
-		level1_interrupt();
+		level1_intr();
 		apbus_wbflush();
-		causeReg &= ~MIPS_INT_MASK_1;
+		cause &= ~MIPS_INT_MASK_1;
 	}
 
 	if (mask & MIPS_INT_MASK_0) {
-		level0_interrupt();
+		level0_intr();
 		apbus_wbflush();
-		causeReg &= ~MIPS_INT_MASK_0;
+		cause &= ~MIPS_INT_MASK_0;
 	}
 
-	return ((statusReg & ~causeReg & MIPS_HARD_INT_MASK) |  MIPS_SR_INT_IE);
+	return (status & ~cause & MIPS_HARD_INT_MASK) | MIPS_SR_INT_IE;
 }
+
 
 void
-level5_interrupt()
+level1_intr()
 {
-	printf("level5 interrupt\n");
-}
+	u_int int1stat;
 
-void
-level4_interrupt()
-{
-	volatile int *intenp = (volatile int *)NEWS5000_INTMASK4;
-	int int4stat, saved_inten;
-
-	int4stat = *(volatile int *)NEWS5000_INTSTAT4;
-	saved_inten = *intenp;
-	*intenp = 0;
-	if (int4stat & NEWS5000_INT4_SBIF) {
-printf("SBIF ERROR\n");
-		/* sbif_error4(); */
-	} else if (int4stat & NEWS5000_INT4_MFBIF) {
-printf("MBIF ERROR\n");
-/*
-		mbif_error4();
-		if (fxif_error4)
-		    fxif_error4();
-*/
-	} else if (int4stat & NEWS5000_INT4_ABIF) {
-/* printf("ABIF ERROR\n"); */
-		abif_error4();
-	}
-	*intenp = saved_inten;
-}
-
-static void
-abif_error4()
-{
-#define	AB_BERRADR	0xb4c00018
-#define	AB_BERRDATA	0xb4c00020
-#define	AB_BERRPARITY	0xb4c00028
-
-	int stat;
-
-printf("abif_error4\n");
-
-	stat = *(volatile u_int *)NEWS5000_APBUS_INTSTAT &
-	       *(volatile u_int *)NEWS5000_APBUS_INTMASK;
-
-	if (stat & NEWS5000_INTAPBUS_DMAADDRESS) {
-		printf("AB I/F: DMA address error\n");
-	}
-	if (stat & (NEWS5000_INTAPBUS_RDTIMEO|NEWS5000_INTAPBUS_WRTIMEO)) {
-		if (stat & NEWS5000_INTAPBUS_RDTIMEO)
-			printf("AB I/F: read timeout\n");
-		if (stat & NEWS5000_INTAPBUS_WRTIMEO)
-			printf("AB I/F: write timeout\n");
-
-		printf("	address = %x:%x\n",
-		    *(volatile u_int *)AB_BERRADR, *(volatile u_int *)(AB_BERRADR + 4));
-	}
-	*(volatile u_int *)NEWS5000_APBUS_INTSTAT = stat;
-}
-
-void
-level3_interrupt()
-{
-	printf("level3 interrupt\n");
-}
-
-void
-level2_interrupt(pc, statusReg)
-	unsigned int pc;
-	unsigned int statusReg;
-{
-#ifdef DEBUG
-	static int l2cnt = 0;
-#endif
-	unsigned int int2stat;
-	struct clockframe cf;
-
-	int2stat = *(volatile unsigned int *)NEWS5000_INTSTAT2;
-
-#ifdef DEBUG
-	l2cnt++;
-	if (l2cnt == 50) {
-		*(volatile unsigned int *)NEWS5000_LED3 = 1;
-	}
-	if (l2cnt == 100) {
-		*(volatile unsigned int *)NEWS5000_LED3 = 0;
-		l2cnt = 0;
-	}
-#endif
-
-	if (int2stat & NEWS5000_INT2_TIMER0) {
-		*(volatile unsigned int *)NEWS5000_TIMER0 = 1;
-
-		cf.pc = pc;
-		cf.sr = statusReg;
-
-		hardclock(&cf);
-		intrcnt[HARDCLOCK_INTR]++;
-	}
-
-	if (int2stat & NEWS5000_INT2_TIMER1) {
-		*(volatile unsigned int *)NEWS5000_TIMER1 = 1;
-	}
-}
-
-void
-level1_interrupt()
-{
-	unsigned int int1stat;
-	int nintcall;
-
-	int1stat = *(volatile unsigned int *)NEWS5000_INTSTAT1;
+	int1stat = *(volatile u_int *)NEWS5000_INTST1;
 
 	if (int1stat) {
-		/* printf("level1 interrupt (%08x)\n", int1stat); */
-		nintcall = apbus_intr_call(1,int1stat);
-
-		if (!nintcall) {
-			printf("level1_interrupt: no match interrupt mask! %04x\n",int1stat);
-		}
-	} else {
+		if (apbus_intr_call(1, int1stat) == 0)
+			printf("level1_intr: no andler (mask 0x%04x)\n",
+			       int1stat);
+	} else
 		printf("level1 stray interrupt?\n");
-	}
-
 }
 
 void
-level0_interrupt()
+level0_intr()
 {
-	unsigned int int0stat;
-	int nintcall;
+	u_int int0stat;
 
-	int0stat = *(volatile unsigned int *)NEWS5000_INTSTAT0;
+	int0stat = *(volatile u_int *)NEWS5000_INTST0;
 
 	if (int0stat) {
-		/* printf("level0 interrupt (%08x)\n", int0stat); */
-		nintcall = apbus_intr_call(0, int0stat);
-
-		if (!nintcall) {
-			printf("level0_interrupt: no match interrupt mask! %04x\n",int0stat);
-		}
-
-	} else {
+		if (apbus_intr_call(0, int0stat) == 0)
+			printf("level0_intr: no handler (mask 0x%04x)\n",
+			       int0stat);
+	} else
 		printf("level0 stray interrupt?\n");
-	}
-
 }
 
 void
 enable_intr_5000()
 {
-	/* APbus Interrupt (DMAC, SONIC, FIFO*, FDC) */
-	*(volatile unsigned int *)NEWS5000_INTMASK0 =
-		NEWS5000_INTSLOT_ALL|NEWS5000_INT0_ALL;
+	volatile u_int *inten0 = (void *)NEWS5000_INTEN0;
+	volatile u_int *inten1 = (void *)NEWS5000_INTEN1;
 
-	/* APbus Interrupt (KBD, SERIAL, AUDIO*, PARALLEL, FB */
-	*(volatile unsigned int *)NEWS5000_INTMASK1 =
-		NEWS5000_INTSLOT_ALL|NEWS5000_INT1_ALL;
+	*inten0 = NEWS5000_INT0_DMAC | NEWS5000_INT0_SONIC |
+		  NEWS5000_INT0_FDC;
+	*inten1 = NEWS5000_INT1_KBD | NEWS5000_INT1_SCC |
+		  NEWS5000_INT1_AUDIO0 | NEWS5000_INT1_AUDIO1 |
+		  NEWS5000_INT1_PARALLEL | NEWS5000_INT1_FB;
 
-	*(volatile unsigned int *)NEWS5000_INTMASK4 =
-		NEWS5000_INT4_ALL;
+	/* It's not a time to enable timer yet. */
+	/* *(volatile u_int *)NEWS5000_INTEN2 = 0; */
 
-	*(volatile unsigned int *)NEWS5000_INTCLR5 = 0xffffffff;
-	*(volatile unsigned int *)NEWS5000_INTMASK5 =
-		NEWS5000_INT5_ABIF|NEWS5000_INT5_MBIF|NEWS5000_INT5_SBIF;
+	/* currently INT3-INT5 are not used */
+	*(volatile u_int *)NEWS5000_INTEN3 = 0;
+	*(volatile u_int *)NEWS5000_INTEN4 = 0;
+	*(volatile u_int *)NEWS5000_INTEN5 = 0;
 }
 
 void
 disable_intr_5000()
 {
-	*(volatile unsigned int *)NEWS5000_INTMASK0 = 0;
-	*(volatile unsigned int *)NEWS5000_INTMASK1 = 0;
-	*(volatile unsigned int *)NEWS5000_INTMASK2 = 0;
-	*(volatile unsigned int *)NEWS5000_INTMASK3 = 0;
-	*(volatile unsigned int *)NEWS5000_INTMASK4 = 0;
-	*(volatile unsigned int *)NEWS5000_INTMASK5 = 0;
+	*(volatile u_int *)NEWS5000_INTEN0 = 0;
+	*(volatile u_int *)NEWS5000_INTEN1 = 0;
+	*(volatile u_int *)NEWS5000_INTEN2 = 0;
+	*(volatile u_int *)NEWS5000_INTEN3 = 0;
+	*(volatile u_int *)NEWS5000_INTEN4 = 0;
+	*(volatile u_int *)NEWS5000_INTEN5 = 0;
 }
 
 void
