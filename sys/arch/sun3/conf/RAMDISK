@@ -1,4 +1,4 @@
-#	$NetBSD: RAMDISK,v 1.5 1996/10/08 18:01:50 jtc Exp $
+#	$NetBSD: RAMDISK,v 1.6 1996/10/09 00:14:36 thorpej Exp $
 
 #
 # RAMDISK: Root/swap on ramdisk
@@ -11,6 +11,7 @@
 include "arch/sun3/conf/std.sun3"
 
 # Machines to be supported by this kernel
+options 	FPU_EMULATE		# XXX - Should not be needed!
 options 	HAVECACHE		# Sun3/260 VAC
 
 # Needs to be set per system.  i.e change these as you see fit
@@ -18,8 +19,12 @@ maxusers	2
 
 # Standard system options
 options 	SWAPPAGER, VNODEPAGER, DEVPAGER	# paging
-#makeoptions DEBUG="-g"			# symbols for kgdb + nm
+
+# Debugging options.  Uncomment either this:
 #options 	DDB
+# ... or these two: (for KGDB on another machine)
+makeoptions DEBUG="-g"			# symbols for kgdb + nm
+options 	KGDB
 
 # Enable the hooks used for initializing the ram-disk.
 options 	RAMDISK_HOOKS
@@ -27,25 +32,24 @@ options 	MINIROOTSIZE=512	# 256K
 
 # Filesystem options
 # May need NFSCLIENT to get miniroot image
-options 	NFSCLIENT			# nfs client support
+options 	NFSCLIENT	# nfs client support
 # Need FFS for the ramdisk image
-options 	FFS				# ufs file system
+options 	FFS		# ufs file system
 options 	FIFO		# FIFOs; RECOMMENDED
 
 # Networking options
-options 	INET				# IP prototol stack support
+options 	INET		# IP prototol stack support
+options 	TCP_COMPAT_42	# TCP bug compatibility with 4.2BSD
 # XXX - Work-around for root on slow SunOS/Sun3 servers (sigh...)
 options 	NFS_BOOT_RWSIZE=1024
 
 # Compatability options
 #options 	COMPAT_SUNOS	# can run SunOS 4.1.1 executables
-#options 	COMPAT_09	# NetBSD 0.9,
-options 	COMPAT_10	# NetBSD 1.0,
-options 	COMPAT_11	# NetBSD 1.1,
-options		COMPAT_12	# NetBSD 1.2,
-options 	COMPAT_43	# and 4.3BSD
-options 	TCP_COMPAT_42	# TCP bug compatibility with 4.2BSD
-#options 	UCONSOLE	# Allow non-root TIOCCONS
+#options 	COMPAT_43	# and 4.3BSD and ...
+#options 	COMPAT_10	# NetBSD 1.0
+options 	COMPAT_11	# NetBSD 1.1
+options 	COMPAT_12	# NetBSD 1.2
+options 	UCONSOLE	# Allow non-root TIOCCONS
 
 # Sun3-specific debugging options
 options 	DIAGNOSTIC

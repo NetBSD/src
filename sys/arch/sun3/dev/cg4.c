@@ -1,4 +1,4 @@
-/*	$NetBSD: cg4.c,v 1.7 1996/03/17 02:03:45 thorpej Exp $	*/
+/*	$NetBSD: cg4.c,v 1.8 1996/10/09 00:15:18 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -162,7 +162,7 @@ cg4attach(parent, self, args)
 	struct confargs *ca = args;
 	struct fbtype *fbt;
 	volatile struct bt_regs *bt;
-	int i, ramsize, pa;
+	int i;
 
 	fb->fb_driver = &cg4fbdriver;
 	fb->fb_private = sc;
@@ -178,7 +178,7 @@ cg4attach(parent, self, args)
 	fbt->fb_size = CG4_MMAP_SIZE;
 
 	sc->sc_phys = ca->ca_paddr;
-	sc->sc_bt = (struct bt_regs *)
+	sc->sc_bt = bt = (volatile struct bt_regs *)
 		bus_mapin(ca->ca_bustype, ca->ca_paddr,
 				  sizeof(struct bt_regs *));
 
