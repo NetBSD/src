@@ -1,4 +1,4 @@
-/*	$NetBSD: read.c,v 1.1.1.1 2000/08/07 09:23:40 leo Exp $	*/
+/*	$NetBSD: read.c,v 1.2 2001/02/25 14:32:59 jdc Exp $	*/
 
 /*
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -38,6 +38,9 @@
 
 #include "privahdi.h"
 #include <fcntl.h>
+#ifdef DEBUG
+#include <stdio.h>
+#endif
 #include <stdlib.h>
 #include <strings.h>
 #include <unistd.h>
