@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.S,v 1.31 2004/08/26 10:12:33 junyoung Exp $	*/
+/*	$NetBSD: locore.S,v 1.31.6.1 2005/02/13 10:47:14 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
@@ -2051,8 +2051,6 @@ ENTRY(cpu_switchto)
 #ifndef MULTIPROCESSOR
 	.globl	_C_LABEL(lwp0)
 #endif
-	.globl  _C_LABEL(uvmspace_free),_C_LABEL(kernel_map)
-	.globl	_C_LABEL(uvm_km_free),_C_LABEL(tss_free)
 /* LINTSTUB: Func: void cpu_exit(struct lwp *l) */
 ENTRY(cpu_exit)
 	movl	4(%esp),%edi		# old process
