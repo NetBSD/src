@@ -1,4 +1,4 @@
-#	$NetBSD: majors.sparc64,v 1.10 2003/07/27 14:18:27 itojun Exp $
+#	$NetBSD: majors.sparc64,v 1.11 2003/08/08 16:40:31 rafal Exp $
 #
 # Device majors for sparc64
 #
@@ -64,6 +64,7 @@ device-major	ugen		char 81			ugen
 device-major	ucom		char 82			ucom
 device-major	urio		char 83			urio
 device-major	uscanner	char 84			uscanner
+device-major	radio		char 85			radio
 
 device-major	wsdisplay	char 90			wsdisplay
 device-major	wskbd		char 91			wskbd
