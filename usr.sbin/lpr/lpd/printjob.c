@@ -1,4 +1,4 @@
-/*	$NetBSD: printjob.c,v 1.17 1997/10/05 16:45:45 mrg Exp $	*/
+/*	$NetBSD: printjob.c,v 1.18 1997/10/19 19:40:21 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -45,7 +45,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1993\n\
 #if 0
 static char sccsid[] = "@(#)printjob.c	8.7 (Berkeley) 5/10/95";
 #else
-__RCSID("$NetBSD: printjob.c,v 1.17 1997/10/05 16:45:45 mrg Exp $");
+__RCSID("$NetBSD: printjob.c,v 1.18 1997/10/19 19:40:21 mycroft Exp $");
 #endif
 #endif /* not lint */
 
@@ -539,7 +539,7 @@ print(format, file)
 	 * still point to the same file or someone is trying to print
 	 * something he shouldn't.
 	 */
-	if ((stb.st_mode & S_IFMT) == S_IFLNK && fstat(fi, &stb) == 0 &&
+	if (S_ISLNK(stb.st_mode) && fstat(fi, &stb) == 0 &&
 	    (stb.st_dev != fdev || stb.st_ino != fino))
 		return(ACCESS);
 	if (!SF && !tof) {		/* start on a fresh page */
@@ -862,7 +862,7 @@ sendfile(type, file)
 	 * still point to the same file or someone is trying to print something
 	 * he shouldn't.
 	 */
-	if ((stb.st_mode & S_IFMT) == S_IFLNK && fstat(f, &stb) == 0 &&
+	if (S_ISLNK(stb.st_mode) && fstat(f, &stb) == 0 &&
 	    (stb.st_dev != fdev || stb.st_ino != fino))
 		return(ACCESS);
 	amt = snprintf(buf, sizeof(buf), "%c%qd %s\n", type,
