@@ -1,4 +1,7 @@
-/* $NetBSD: elf_machdep.h,v 1.8 2001/10/31 18:05:36 thorpej Exp $ */
+/* $NetBSD: elf_machdep.h,v 1.9 2001/11/01 12:54:35 drochner Exp $ */
+
+#ifndef	_ALPHA_ELF_MACHDEP_H_
+#define	_ALPHA_ELF_MACHDEP_H_
 
 /*
  * Alpha ELF uses different (non-standard) definitions of Elf64_Sword
@@ -54,3 +57,5 @@ typedef	uint64_t	Elf64_Word;
 #define	R_ALPHA_RELATIVE	27	/* Adjust by program base */
 
 #define	R_TYPE(name)		__CONCAT(R_ALPHA_,name)
+
+#endif /* _ALPHA_ELF_MACHDEP_H_ */
