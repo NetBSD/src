@@ -1,4 +1,4 @@
-/*	$NetBSD: arcemu.c,v 1.6.2.3 2004/07/23 06:59:38 tron Exp $	*/
+/*	$NetBSD: arcemu.c,v 1.6.2.4 2004/07/23 07:02:04 tron Exp $	*/
 
 /*
  * Copyright (c) 2004 Steve Rumble 
@@ -27,6 +27,9 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: arcemu.c,v 1.6.2.4 2004/07/23 07:02:04 tron Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
