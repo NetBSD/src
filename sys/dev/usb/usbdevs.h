@@ -1,10 +1,10 @@
-/*	$NetBSD: usbdevs.h,v 1.35 1999/06/28 04:10:26 augustss Exp $	*/
+/*	$NetBSD: usbdevs.h,v 1.36 1999/08/23 16:54:13 augustss Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	aNetBSD: usbdevs,v 1.35 1999/06/28 04:09:53 augustss Exp 
+ *	aNetBSD: usbdevs,v 1.36 1999/08/23 16:53:32 augustss Exp 
  */
 
 /*
@@ -71,6 +71,7 @@
 #define	USB_VENDOR_SHUTTLE	0x04e6		/* Shuttle Technology */
 #define	USB_VENDOR_BROTHER	0x04f9		/* Brother Industries Corp. */
 #define	USB_VENDOR_JAZZ	0x04fa		/* Dallas Semiconductor */
+#define	USB_VENDOR_KAWATSU	0x050f		/* Kawatsu Semiconductor, Inc. */
 #define	USB_VENDOR_AKS	0x0529		/* Fast Security AG */
 #define	USB_VENDOR_VISION	0x0533		/* Alcatel Mobile Phones */
 #define	USB_VENDOR_ATEN	0x0557		/* ATEN International Co. ltd. */
@@ -163,6 +164,9 @@
 
 /* Jazz products */
 #define	USB_PRODUCT_JAZZ_J6502	0x4201		/* J-6502 speakers */
+
+/* Kawatsu products */
+#define	USB_PRODUCT_KAWATSU_MH4000P	0x0003		/* MiniHub 4000P */
 
 /* AKS products */
 #define	USB_PRODUCT_AKS_USBHASP	0x0001		/* USB-HASP 0.06 */
