@@ -1,4 +1,4 @@
-#	$NetBSD: SHARK,v 1.35 2000/06/17 06:19:03 matt Exp $
+#	$NetBSD: SHARK,v 1.35.2.1 2000/07/25 23:08:18 is Exp $
 # From:  NetBSD: GENERIC,v 1.61 2000/01/20 19:12:29 wrstuden Exp
 #
 #	SHARK
@@ -170,6 +170,10 @@ sd*		at atapibus? drive?
 # PCCONS@OFW
 ofisapc*	at ofbus?
 pc*		at ofisapc?
+#options 	FRENCH_KBD
+#options 	FINNISH_KBD
+#options 	GERMAN_KBD
+#options 	NORWEGIAN_KBD
 
 # PS/2 Mouse
 opms0		at spckbd? irq 12
