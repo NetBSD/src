@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.367 1999/11/13 00:30:33 thorpej Exp $	*/
+/*	$NetBSD: machdep.c,v 1.368 1999/11/30 15:22:52 drochner Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -717,7 +717,7 @@ struct cpu_cpuid_nameclass i386_cpuid_cpus[] = {
 				"6x86MX", 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
 				"6x86MX"		/* Default */
 			},
-			NULL
+			cyrix6x86_cpu_setup
 		} }
 	},
 	{
