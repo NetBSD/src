@@ -1,4 +1,4 @@
-/*	$NetBSD: wdc_obio.c,v 1.5 1999/10/04 22:58:10 tsubai Exp $	*/
+/*	$NetBSD: wdc_obio.c,v 1.6 2000/01/21 18:45:14 tsubai Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -102,7 +102,8 @@ wdc_obio_probe(parent, match, aux)
 
 	bzero(compat, sizeof(compat));
 	OF_getprop(ca->ca_node, "compatible", compat, sizeof(compat));
-	if (strcmp(compat, "heathrow-ata") == 0)
+	if (strcmp(compat, "heathrow-ata") == 0 ||
+	    strcmp(compat, "keylargo-ata") == 0)
 		return 1;
 
 	return 0;
