@@ -1,4 +1,4 @@
-/*	$NetBSD: cache.c,v 1.31 1997/07/06 22:23:38 pk Exp $ */
+/*	$NetBSD: cache.c,v 1.32 1997/07/20 18:48:35 pk Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -113,17 +113,21 @@ sun4_cache_enable()
 void
 ms1_cache_enable()
 {
+	u_int pcr;
 
 	cache_alias_bits = GUESS_CACHE_ALIAS_BITS;
 	cache_alias_dist = GUESS_CACHE_ALIAS_DIST;
 
-	/* We "flash-clear" the I/D caches. */
-	sta(0, ASI_ICACHECLR, 0);	/* clear */
-	sta(0, ASI_DCACHECLR, 0);
+	pcr = lda(SRMMU_PCR, ASI_SRMMU);
 
-	/* Turn on caches via MMU */
-	sta(SRMMU_PCR, ASI_SRMMU,
-	    lda(SRMMU_PCR,ASI_SRMMU) | MS1_PCR_DCE | MS1_PCR_ICE);
+	/* We "flash-clear" the I/D caches. */
+	if ((pcr & MS1_PCR_ICE) == 0)
+		sta(0, ASI_ICACHECLR, 0);
+	if ((pcr & MS1_PCR_DCE) == 0)
+		sta(0, ASI_DCACHECLR, 0);
+
+	/* Turn on caches */
+	sta(SRMMU_PCR, ASI_SRMMU, pcr | MS1_PCR_DCE | MS1_PCR_ICE);
 
 	cpuinfo.flags |= CPUFLG_CACHEPAGETABLES;
 
@@ -135,14 +139,14 @@ ms1_cache_enable()
 void
 viking_cache_enable()
 {
-	int pcr;
+	u_int pcr;
 
 	cache_alias_dist = max(
 		CACHEINFO.ic_totalsize / CACHEINFO.ic_associativity,
 		CACHEINFO.dc_totalsize / CACHEINFO.dc_associativity);
 	cache_alias_bits = (cache_alias_dist - 1) & ~PGOFSET;
 
-	pcr = lda(SRMMU_PCR,ASI_SRMMU);
+	pcr = lda(SRMMU_PCR, ASI_SRMMU);
 
 	if ((pcr & VIKING_PCR_ICE) == 0) {
 		/* I-cache not on; "flash-clear" it now. */
@@ -175,7 +179,8 @@ viking_cache_enable()
 void
 hypersparc_cache_enable()
 {
-	register u_int pcr, i, lim, ls, ts;
+	int i, ls, ts;
+	u_int pcr;
 
 	ls = CACHEINFO.c_linesize;
 	ts = CACHEINFO.c_totalsize;
@@ -193,9 +198,11 @@ hypersparc_cache_enable()
 		cache_alias_bits = CACHE_ALIAS_BITS_HS128k;
 		cache_alias_dist = CACHE_ALIAS_DIST_HS128k;
 	}
-	/* Now reset cache tag memory */
-	for (i = 0, lim = ts; i < lim; i += ls)
-		sta(i, ASI_DCACHETAG, 0);
+
+	/* Now reset cache tag memory if cache not yet enabled */
+	if ((pcr & HYPERSPARC_PCR_CE) == 0)
+		for (i = 0; i < ts; i += ls)
+			sta(i, ASI_DCACHETAG, 0);
 
 	/* Enable write-back cache */
 	pcr |= (HYPERSPARC_PCR_CE | HYPERSPARC_PCR_CM);
@@ -212,7 +219,8 @@ hypersparc_cache_enable()
 void
 swift_cache_enable()
 {
-	int pcr;
+	int i, ls, ts;
+	u_int pcr;
 
 	cache_alias_dist = max(
 		CACHEINFO.ic_totalsize / CACHEINFO.ic_associativity,
@@ -222,6 +230,19 @@ swift_cache_enable()
 	pcr = lda(SRMMU_PCR, ASI_SRMMU);
 	pcr |= (SWIFT_PCR_ICE | SWIFT_PCR_DCE);
 	sta(SRMMU_PCR, ASI_SRMMU, pcr);
+
+	/* Now reset cache tag memory if cache not yet enabled */
+	ls = CACHEINFO.ic_linesize;
+	ts = CACHEINFO.ic_totalsize;
+	if ((pcr & SWIFT_PCR_ICE) == 0)
+		for (i = 0; i < ts; i += ls)
+			sta(i, ASI_ICACHETAG, 0);
+
+	ls = CACHEINFO.dc_linesize;
+	ts = CACHEINFO.dc_totalsize;
+	if ((pcr & SWIFT_PCR_DCE) == 0)
+		for (i = 0; i < ts; i += ls)
+			sta(i, ASI_DCACHETAG, 0);
 
 	/* XXX - assume that an MS2 with ecache is really a turbo in disguise */
 	if (CACHEINFO.ec_totalsize == 0)
@@ -233,18 +254,27 @@ swift_cache_enable()
 void
 cypress_cache_enable()
 {
-	u_int scr;
+	int i, ls, ts;
+	u_int pcr;
 
 	cache_alias_dist = CACHEINFO.c_totalsize;
 	cache_alias_bits = (cache_alias_dist - 1) & ~PGOFSET;
 
-	scr = lda(SRMMU_PCR, ASI_SRMMU);
-	scr &= ~(CYPRESS_PCR_CE | CYPRESS_PCR_CM);
-	scr |= CYPRESS_PCR_CE;
+	pcr = lda(SRMMU_PCR, ASI_SRMMU);
+	pcr &= ~(CYPRESS_PCR_CE | CYPRESS_PCR_CM);
+
+	/* Now reset cache tag memory if cache not yet enabled */
+	ls = CACHEINFO.c_linesize;
+	ts = CACHEINFO.c_totalsize;
+	if ((pcr & CYPRESS_PCR_CE) == 0)
+		for (i = 0; i < ts; i += ls)
+			sta(i, ASI_DCACHETAG, 0);
+
+	pcr |= CYPRESS_PCR_CE;
 	/* If put in write-back mode, turn it on */
 	if (CACHEINFO.c_vactype == VAC_WRITEBACK)
-		scr |= CYPRESS_PCR_CM;
-	sta(SRMMU_PCR, ASI_SRMMU, scr);
+		pcr |= CYPRESS_PCR_CM;
+	sta(SRMMU_PCR, ASI_SRMMU, pcr);
 	CACHEINFO.c_enabled = 1;
 	printf("cache enabled\n");
 }
@@ -252,7 +282,8 @@ cypress_cache_enable()
 void
 turbosparc_cache_enable()
 {
-	int pcr, pcf;
+	int i, ls, ts;
+	u_int pcr, pcf;
 
 	cache_alias_dist = max(
 		CACHEINFO.ic_totalsize / CACHEINFO.ic_associativity,
@@ -260,6 +291,20 @@ turbosparc_cache_enable()
 	cache_alias_bits = (cache_alias_dist - 1) & ~PGOFSET;
 
 	pcr = lda(SRMMU_PCR, ASI_SRMMU);
+
+	/* Now reset cache tag memory if cache not yet enabled */
+	ls = CACHEINFO.ic_linesize;
+	ts = CACHEINFO.ic_totalsize;
+	if ((pcr & TURBOSPARC_PCR_ICE) == 0)
+		for (i = 0; i < ts; i += ls)
+			sta(i, ASI_ICACHETAG, 0);
+
+	ls = CACHEINFO.dc_linesize;
+	ts = CACHEINFO.dc_totalsize;
+	if ((pcr & TURBOSPARC_PCR_DCE) == 0)
+		for (i = 0; i < ts; i += ls)
+			sta(i, ASI_DCACHETAG, 0);
+
 	pcr |= (TURBOSPARC_PCR_ICE | TURBOSPARC_PCR_DCE);
 	sta(SRMMU_PCR, ASI_SRMMU, pcr);
 
