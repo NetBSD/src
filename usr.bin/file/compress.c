@@ -1,4 +1,4 @@
-/*	$NetBSD: compress.c,v 1.1.1.2 1999/11/01 17:29:59 christos Exp $	*/
+/*	$NetBSD: compress.c,v 1.1.1.3 2000/05/14 22:44:19 christos Exp $	*/
 
 /*
  * compress routines:
@@ -23,9 +23,9 @@
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
-FILE_RCSID("@(#)Id: compress.c,v 1.14 1999/10/31 22:23:03 christos Exp ")
+FILE_RCSID("@(#)Id: compress.c,v 1.15 1999/11/28 20:02:29 christos Exp ")
 #else
-__RCSID("$NetBSD: compress.c,v 1.1.1.2 1999/11/01 17:29:59 christos Exp $");
+__RCSID("$NetBSD: compress.c,v 1.1.1.3 2000/05/14 22:44:19 christos Exp $");
 #endif
 #endif
 
@@ -42,6 +42,7 @@ static struct {
     { "\037\240", 2, { "gzip", "-cdq", NULL }, 1 },	/* SCO LZH */
     /* the standard pack utilities do not accept standard input */
     { "\037\036", 2, { "gzip", "-cdq", NULL }, 0 },	/* packed */
+    { "BZh",      3, { "bzip2", "-d", NULL }, 1 },	/* bzip2-ed */
 };
 
 static int ncompr = sizeof(compr) / sizeof(compr[0]);

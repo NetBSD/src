@@ -1,4 +1,4 @@
-/*	$NetBSD: file.c,v 1.1.1.3 1999/11/01 17:30:00 christos Exp $	*/
+/*	$NetBSD: file.c,v 1.1.1.4 2000/05/14 22:44:19 christos Exp $	*/
 
 /*
  * file - find type of a file or files - main program.
@@ -51,20 +51,23 @@
 #ifdef HAVE_UNISTD_H
 #include <unistd.h>	/* for read() */
 #endif
+#ifdef HAVE_LOCALE_H
+#include <locale.h>
+#endif
 
 #include <netinet/in.h>		/* for byte swapping */
 
 #include "patchlevel.h"
 
 #ifndef	lint
-FILE_RCSID("@(#)Id: file.c,v 1.47 1999/10/31 22:23:03 christos Exp ")
+FILE_RCSID("@(#)Id: file.c,v 1.51 2000/05/14 17:58:36 christos Exp ")
 #endif	/* lint */
 
 
 #ifdef S_IFLNK
-# define USAGE  "Usage: %s [-bcnvzL] [-f namefile] [-m magicfiles] file...\n"
+# define USAGE  "Usage: %s [-bciknvzL] [-f namefile] [-m magicfiles] file...\n"
 #else
-# define USAGE  "Usage: %s [-bcnvz] [-f namefile] [-m magicfiles] file...\n"
+# define USAGE  "Usage: %s [-bciknvz] [-f namefile] [-m magicfiles] file...\n"
 #endif
 
 #ifndef MAGIC
@@ -81,13 +84,17 @@ int 			/* Global command-line options 		*/
 	bflag = 0,	/* brief output format	 		*/
 	zflag = 0,	/* follow (uncompress) compressed files */
 	sflag = 0,	/* read block special files		*/
-	nobuffer = 0;   /* Do not buffer stdout */
+	iflag = 0,
+	nobuffer = 0,   /* Do not buffer stdout */
+	kflag = 0;	/* Keep going after the first match	*/
+
 int			/* Misc globals				*/
 	nmagic = 0;	/* number of valid magic[]s 		*/
 
 struct  magic *magic;	/* array of magic entries		*/
 
 const char *magicfile;	/* where magic be found 		*/
+const char *default_magicfile = MAGIC;
 
 char *progname;		/* used throughout 			*/
 int lineno;		/* line number in the magic file	*/
@@ -111,6 +118,11 @@ main(argc, argv)
 {
 	int c;
 	int check = 0, didsomefiles = 0, errflg = 0, ret = 0, app = 0;
+	char *mime;
+
+#ifdef LC_CTYPE
+	setlocale(LC_CTYPE, ""); /* makes islower etc work for other langs */
+#endif
 
 	if ((progname = strrchr(argv[0], '/')) != NULL)
 		progname++;
@@ -118,24 +130,15 @@ main(argc, argv)
 		progname = argv[0];
 
 	if (!(magicfile = getenv("MAGIC")))
-		magicfile = MAGIC;
+		magicfile = default_magicfile;
 
-	while ((c = getopt(argc, argv, "bcdnf:m:svzL")) != EOF)
+	while ((c = getopt(argc, argv, "bcdf:ikm:nsvzL")) != EOF)
 		switch (c) {
-		case 'v':
-			(void) fprintf(stdout, "%s-%d.%d\n", progname,
-				       FILE_VERSION_MAJOR, patchlevel);
-			(void) fprintf(stdout, "magic file from %s\n",
-				       magicfile);
-			return 1;
 		case 'b':
 			++bflag;
 			break;
 		case 'c':
 			++check;
-			break;
-		case 'n':
-			++nobuffer;
 			break;
 		case 'd':
 			++debug;
@@ -150,20 +153,40 @@ main(argc, argv)
 			unwrap(optarg);
 			++didsomefiles;
 			break;
+		case 'i':
+			iflag++;
+			if ((mime = malloc(strlen(magicfile) + 5)) != NULL) {
+				(void)strcpy(mime, magicfile);
+				(void)strcat(mime, ".mime");
+				magicfile = mime;
+			}
+			break;
+		case 'k':
+			kflag = 1;
+			break;
+		case 'm':
+			magicfile = optarg;
+			break;
+		case 'n':
+			++nobuffer;
+			break;
+		case 's':
+			sflag++;
+			break;
+		case 'v':
+			(void) fprintf(stdout, "%s-%d.%d\n", progname,
+				       FILE_VERSION_MAJOR, patchlevel);
+			(void) fprintf(stdout, "magic file from %s\n",
+				       magicfile);
+			return 1;
+		case 'z':
+			zflag++;
+			break;
 #ifdef S_IFLNK
 		case 'L':
 			++lflag;
 			break;
 #endif
-		case 'm':
-			magicfile = optarg;
-			break;
-		case 'z':
-			zflag++;
-			break;
-		case 's':
-			sflag++;
-			break;
 		case '?':
 		default:
 			errflg++;
@@ -365,7 +388,7 @@ int wid;
 	}
 
 	if (nbytes == 0)
-		ckfputs("empty", stdout);
+		ckfputs(iflag ? "application/x-empty" : "empty", stdout);
 	else {
 		buf[nbytes++] = '\0';	/* null-terminate it */
 		match = tryit(buf, nbytes, zflag);
