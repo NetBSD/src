@@ -1,4 +1,4 @@
-/* $NetBSD: cia.c,v 1.36 1998/06/03 23:16:55 thorpej Exp $ */
+/* $NetBSD: cia.c,v 1.37 1998/06/04 21:34:45 thorpej Exp $ */
 
 /*
  * Copyright (c) 1995, 1996 Carnegie-Mellon University.
@@ -32,7 +32,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: cia.c,v 1.36 1998/06/03 23:16:55 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cia.c,v 1.37 1998/06/04 21:34:45 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -72,6 +72,17 @@ static int	ciaprint __P((void *, const char *pnp));
 /* There can be only one. */
 int ciafound;
 struct cia_config cia_configuration;
+
+/*
+ * This determines if we attempt to use BWX for PCI bus and config space
+ * access.  Some systems, notably with Pyxis, don't fare so well unless
+ * BWX is used.
+ */
+#ifndef CIA_USE_BWX
+#define	CIA_USE_BWX	1
+#endif
+
+int	cia_use_bwx = CIA_USE_BWX;
 
 int
 ciamatch(parent, match, aux)
@@ -122,10 +133,30 @@ cia_init(ccp, mallocsafe)
 	else
 		ccp->cc_cnfg = 0;
 
+	/*
+	 * Use BWX iff:
+	 *
+	 *	- It hasn't been disbled by the user,
+	 *	- it's enabled in CNFG,
+	 *	- we're implementation version ev5,
+	 *	- BWX is enabled in the CPU's capabilities mask (yes,
+	 *	  the bit is really cleared if the capability exists...)
+	 */
+	if (cia_use_bwx != 0 &&
+	    (ccp->cc_cnfg & CNFG_BWEN) != 0 &&
+	    alpha_implver() == ALPHA_IMPLVER_EV5 &&
+	    alpha_amask(ALPHA_AMASK_BWX) == 0)
+		ccp->cc_flags |= CCF_USEBWX;
+
 	if (!ccp->cc_initted) {
 		/* don't do these twice since they set up extents */
-		cia_swiz_bus_io_init(&ccp->cc_iot, ccp);
-		cia_swiz_bus_mem_init(&ccp->cc_memt, ccp);
+		if (ccp->cc_flags & CCF_USEBWX) {
+			cia_bwx_bus_io_init(&ccp->cc_iot, ccp);
+			cia_bwx_bus_mem_init(&ccp->cc_memt, ccp);
+		} else {
+			cia_swiz_bus_io_init(&ccp->cc_iot, ccp);
+			cia_swiz_bus_mem_init(&ccp->cc_memt, ccp);
+		}
 	}
 	ccp->cc_mallocsafe = mallocsafe;
 
@@ -164,6 +195,11 @@ ciaattach(parent, self, aux)
 		printf("%s: extended capabilities: %s\n", self->dv_xname,
 		    bitmask_snprintf(ccp->cc_cnfg, CIA_CSR_CNFG_BITS,
 		    bits, sizeof(bits)));
+#if 1
+	if (ccp->cc_flags & CCF_USEBWX)
+		printf("%s: using BWX for PCI config and device access\n",
+		    self->dv_xname);
+#endif
 
 	switch (hwrpb->rpb_type) {
 #ifdef DEC_KN20AA
