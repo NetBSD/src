@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-#       $NetBSD: MAKEDEV2manpage.sh,v 1.3 2003/02/14 15:20:20 grant Exp $
+#       $NetBSD: MAKEDEV2manpage.sh,v 1.4 2003/10/24 20:26:57 jdolecek Exp $
 #
 # Copyright (c) 2002
 #       Dieter Baron <dillo@NetBSD.org>.  All rights reserved.
@@ -45,43 +45,25 @@
 AWK=${AWK:-awk}
 DIFF=${DIFF:-diff}
 
-mkmanpage() {
-	arch=$1;
-	shift;
-	manpage="man8.${arch}/MAKEDEV.8";
-	tmpfile="${manpage}.$$";
+manpage="MAKEDEV.8";
+tmpfile="${manpage}.$$";
 
-	${AWK} -vARCH=${arch} -f MAKEDEV2manpage.awk MAKEDEV.8.template \
-		> ${tmpfile} || { rm ${tmpfile}; exit 1; }
-	if ${DIFF} -I'^\.Dd ' -I'^\.\\" $NetBSD' -q ${manpage} ${tmpfile} \
-		>/dev/null
-	then
-		result='unchanged';
-		rm ${tmpfile};
-	else
-		result='updated';
-		if [ `wc -l < ${tmpfile}` -ne `wc -l < ${manpage}` ]
-		then
-			LC_ALL=C LC_CTYPE=C date=`date +"%B %e, %Y`
-		else
-			date=`sed -n 's/^\.Dd //p' ${manpage}`
-		fi
-		sed "s/@@@DATE@@@/$date/" ${tmpfile} > ${tmpfile}.2
-		rm ${tmpfile}
-		mv ${tmpfile}.2 ${manpage}
-	fi
-	printf "%-20s ${result}\n" ${arch}
-}
-
-
-if [ $# -ne 0 ]
+${AWK} -f MAKEDEV2manpage.awk MAKEDEV.8.template \
+	> ${tmpfile} || { rm ${tmpfile}; exit 1; }
+if ${DIFF} -I'^\.Dd ' -I'^\.\\" $NetBSD' -q ${manpage} ${tmpfile} \
+	>/dev/null
 then
-	archs="$@"
+	result='unchanged';
+	rm ${tmpfile};
 else
-	archs=`ls -d man8.* | sed 's/man8\.//'`
+	result='updated';
+	if [ `wc -l < ${tmpfile}` -ne `wc -l < ${manpage}` ]; then
+		LC_ALL=C LC_CTYPE=C date=`date +"%B %e, %Y`
+	else
+		date=`sed -n 's/^\.Dd //p' ${manpage}`
+	fi
+	sed "s/@@@DATE@@@/$date/" ${tmpfile} > ${tmpfile}.2
+	rm ${tmpfile}
+	mv ${tmpfile}.2 ${manpage}
 fi
-
-for n in ${archs}
-do
-	mkmanpage $n
-done
+echo "$manpage: ${result}"
