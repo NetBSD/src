@@ -1,4 +1,4 @@
-/*	$NetBSD: pciide.c,v 1.10 1998/10/13 08:59:46 bouyer Exp $	*/
+/*	$NetBSD: pciide.c,v 1.11 1998/10/19 12:24:33 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1996, 1998 Christopher G. Demetriou.  All rights reserved.
@@ -227,7 +227,15 @@ const struct pciide_product_desc pciide_cmd_products[] =  {
 const struct pciide_product_desc pciide_via_products[] =  {
     { PCI_PRODUCT_VIATECH_VT82C586_IDE,
       0,
-      "VT82C586 (Apollo VP) IDE Controller",
+      "VIA Technologies VT82C586 (Apollo VP) IDE Controller",
+      apollo_setup_cap,
+      apollo_setup_chip,
+      apollo_channel_probe,
+      apollo_channel_disable
+     },
+    { PCI_PRODUCT_VIATECH_VT82C586A_IDE,
+      0,
+      "VIA Technologies VT82C586A IDE Controller",
       apollo_setup_cap,
       apollo_setup_chip,
       apollo_channel_probe,
@@ -351,7 +359,11 @@ pciide_attach(parent, self, aux)
 		 * In fact, it seems that the first channel of the CMD PCI0640
 		 * can't be disabled.
 		 */
+#ifndef PCIIDE_CMD064x_DISABLE
 		if ((sc->sc_pp->ide_flags & CMD_PCI064x_IOEN) == 0) {
+#else
+		if (1) {
+#endif
 			printf("%s: device disabled (at %s)\n",
 		 	   sc->sc_wdcdev.sc_dev.dv_xname,
 		  	  (csr & PCI_COMMAND_IO_ENABLE) == 0 ?
@@ -411,19 +423,24 @@ pciide_attach(parent, self, aux)
 	 * XXX which type it is.  Either that or 'quirk' certain devices.
 	 */
 	if (interface & PCIIDE_INTERFACE_BUS_MASTER_DMA) {
-		sc->sc_dma_ok = (pci_mapreg_map(pa,
-		    PCIIDE_REG_BUS_MASTER_DMA, PCI_MAPREG_TYPE_IO, 0,
-		    &sc->sc_dma_iot, &sc->sc_dma_ioh, NULL, NULL) == 0);
-		sc->sc_dmat = pa->pa_dmat;
 		printf("%s: bus-master DMA support present",
 		    sc->sc_wdcdev.sc_dev.dv_xname);
-		if (sc->sc_dma_ok == 0) {
-			printf(", but unused (couldn't map registers)");
+		if (sc->sc_pp == &default_product_desc) {
+			printf(", but unused (no driver support)");
+			sc->sc_dma_ok = 0;
 		} else {
-			sc->sc_wdcdev.dma_arg = sc;
-			sc->sc_wdcdev.dma_init = pciide_dma_init;
-			sc->sc_wdcdev.dma_start = pciide_dma_start;
-			sc->sc_wdcdev.dma_finish = pciide_dma_finish;
+			sc->sc_dma_ok = (pci_mapreg_map(pa,
+			    PCIIDE_REG_BUS_MASTER_DMA, PCI_MAPREG_TYPE_IO, 0,
+			    &sc->sc_dma_iot, &sc->sc_dma_ioh, NULL, NULL) == 0);
+			sc->sc_dmat = pa->pa_dmat;
+			if (sc->sc_dma_ok == 0) {
+				printf(", but unused (couldn't map registers)");
+			} else {
+				sc->sc_wdcdev.dma_arg = sc;
+				sc->sc_wdcdev.dma_init = pciide_dma_init;
+				sc->sc_wdcdev.dma_start = pciide_dma_start;
+				sc->sc_wdcdev.dma_finish = pciide_dma_finish;
+			}
 		}
 		printf("\n");
 	}
@@ -707,8 +724,6 @@ void
 default_setup_cap(sc)
 	struct pciide_softc *sc;
 {
-	if (sc->sc_dma_ok)
-		sc->sc_wdcdev.cap |= WDC_CAPABILITY_DMA;
 	sc->sc_wdcdev.pio_mode = 0;
 	sc->sc_wdcdev.dma_mode = 0;
 }
@@ -1185,7 +1200,7 @@ void
 apollo_setup_cap(sc)
 	struct pciide_softc *sc;
 {
-	if (sc->sc_pp->ide_product == PCI_PRODUCT_VIATECH_VT82C586_IDE)
+	if (sc->sc_pp->ide_product == PCI_PRODUCT_VIATECH_VT82C586A_IDE)
 		sc->sc_wdcdev.cap |= WDC_CAPABILITY_UDMA;
 	sc->sc_wdcdev.cap |= WDC_CAPABILITY_DATA32 | WDC_CAPABILITY_MODE |
 	    WDC_CAPABILITY_DMA;
