@@ -52,9 +52,7 @@
 #ifndef HEADER_AES_H
 #define HEADER_AES_H
 
-#ifdef OPENSSL_NO_AES
-#error AES is disabled.
-#endif
+#include <sys/types.h>
 
 #define AES_ENCRYPT	1
 #define AES_DECRYPT	0
@@ -70,7 +68,7 @@ extern "C" {
 
 /* This should be a hidden type, but EVP requires that the size be known */
 struct aes_key_st {
-    unsigned long rd_key[4 *(AES_MAXNR + 1)];
+    u_int32_t rd_key[4 *(AES_MAXNR + 1)];
     int rounds;
 };
 typedef struct aes_key_st AES_KEY;

@@ -5,17 +5,12 @@
 #include <sys/types.h>
 
 /* OpenSSL was configured with the following options: */
-#ifdef OPENSSL_ALGORITHM_DEFINES
-   /* no ciphers excluded */
-#endif
-#ifdef OPENSSL_THREAD_DEFINES
-#endif
-#ifdef OPENSSL_OTHER_DEFINES
-#endif
+# define OPENSSL_NO_KRB5
+
+/* The OPENSSL_NO_* macros are also defined as NO_* if the application
+   asks for it.  This is a transient feature that is provided for those
+   who haven't had the time to do the appropriate changes in their
+   applications.  */
+#  define NO_KRB5
 
 /* crypto/opensslconf.h.in */
-
-/* Generate 80386 code? */
-#undef I386_ONLY
-
-#define OPENSSL_UNISTD <unistd.h>

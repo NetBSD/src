@@ -86,7 +86,10 @@ int main(int argc, char *argv[])
 	ERR_load_BN_strings();
 
 	ctx=BN_CTX_new();
-	if (ctx == NULL) EXIT(1);
+	if (ctx == NULL) {
+		printf("BN_CTX_new failed\n");
+		EXIT(1);
+	}
 	r_mont=BN_new();
 	r_recp=BN_new();
 	r_simple=BN_new();
@@ -99,7 +102,10 @@ int main(int argc, char *argv[])
 
 	out=BIO_new(BIO_s_file());
 
-	if (out == NULL) EXIT(1);
+	if (out == NULL) {
+		printf("BIO_new failed\n");
+		EXIT(1);
+	}
 	BIO_set_fp(out,stdout,BIO_NOCLOSE);
 
 	for (i=0; i<200; i++)

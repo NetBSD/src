@@ -32,9 +32,10 @@
  */
 
 #include "krb5_locl.h"
+#include <openssl/ui.h>
 
 __RCSID("$Heimdal: get_in_tkt_pw.c,v 1.16 2001/05/14 06:14:48 assar Exp $"
-        "$NetBSD: get_in_tkt_pw.c,v 1.1.1.4 2002/09/12 12:41:41 joda Exp $");
+        "$NetBSD: get_in_tkt_pw.c,v 1.2 2003/07/24 14:16:56 itojun Exp $");
 
 krb5_error_code
 krb5_password_key_proc (krb5_context context,
@@ -53,7 +54,7 @@ krb5_password_key_proc (krb5_context context,
 	return ENOMEM;
     }
     if (password == NULL) {
-	if(des_read_pw_string (buf, sizeof(buf), "Password: ", 0)) {
+	if(UI_UTIL_read_pw_string(buf, sizeof(buf), "Password: ", 0)) {
 	    free (*key);
 	    krb5_clear_error_string(context);
 	    return KRB5_LIBOS_PWDINTR;

@@ -64,6 +64,7 @@
 #include <openssl/evp.h>
 #include <openssl/x509.h>
 #include <openssl/pem2.h>
+#include <openssl/e_os2.h>
 
 #ifdef  __cplusplus
 extern "C" {
@@ -122,7 +123,8 @@ extern "C" {
 #define PEM_STRING_SSL_SESSION	"SSL SESSION PARAMETERS"
 #define PEM_STRING_DSAPARAMS	"DSA PARAMETERS"
 
-
+  /* Note that this structure is initialised by PEM_SealInit and cleaned up
+     by PEM_SealFinal (at least for now) */
 typedef struct PEM_Encode_Seal_st
 	{
 	EVP_ENCODE_CTX encode;
@@ -143,7 +145,7 @@ typedef struct pem_recip_st
 
 	int cipher;
 	int key_enc;
-	char iv[8];
+	/*	char iv[8]; unused and wrong size */
 	} PEM_USER;
 
 typedef struct pem_ctx_st
@@ -159,7 +161,8 @@ typedef struct pem_ctx_st
 
 	struct	{
 		int cipher;
-		unsigned char iv[8];
+	/* unused, and wrong size
+	   unsigned char iv[8]; */
 		} DEK_info;
 		
 	PEM_USER *originator;
@@ -177,7 +180,8 @@ typedef struct pem_ctx_st
 	EVP_CIPHER *dec;	/* date encryption cipher */
 	int key_len;		/* key length */
 	unsigned char *key;	/* key */
-	unsigned char iv[8];	/* the iv */
+	/* unused, and wrong size
+	   unsigned char iv[8]; */
 
 	
 	int  data_enc;		/* is the data encrypted */
@@ -189,7 +193,6 @@ typedef struct pem_ctx_st
  * write. Now they are all implemented with either:
  * IMPLEMENT_PEM_rw(...) or IMPLEMENT_PEM_rw_cb(...)
  */
-
 
 #define IMPLEMENT_PEM_read_fp(name, type, str, asn1) \
 type *PEM_read_##name(FILE *fp, type **x, pem_password_cb *cb, void *u)\
@@ -453,6 +456,8 @@ int	PEM_read_bio(BIO *bp, char **name, char **header,
 		unsigned char **data,long *len);
 int	PEM_write_bio(BIO *bp,const char *name,char *hdr,unsigned char *data,
 		long len);
+int PEM_bytes_read_bio(unsigned char **pdata, long *plen, char **pnm, const char *name, BIO *bp,
+	     pem_password_cb *cb, void *u);
 char *	PEM_ASN1_read_bio(char *(*d2i)(),const char *name,BIO *bp,char **x,
 		pem_password_cb *cb, void *u);
 int	PEM_ASN1_write_bio(int (*i2d)(),const char *name,BIO *bp,char *x,
@@ -486,6 +491,7 @@ void    PEM_SignUpdate(EVP_MD_CTX *ctx,unsigned char *d,unsigned int cnt);
 int	PEM_SignFinal(EVP_MD_CTX *ctx, unsigned char *sigret,
 		unsigned int *siglen, EVP_PKEY *pkey);
 
+int	PEM_def_callback(char *buf, int num, int w, void *key);
 void	PEM_proc_type(char *buf, int type);
 void	PEM_dek_info(char *buf, const char *type, int len, char *str);
 
@@ -510,12 +516,10 @@ DECLARE_PEM_rw(PKCS8, X509_SIG)
 
 DECLARE_PEM_rw(PKCS8_PRIV_KEY_INFO, PKCS8_PRIV_KEY_INFO)
 
-
 DECLARE_PEM_rw_cb(RSAPrivateKey, RSA)
 
 DECLARE_PEM_rw(RSAPublicKey, RSA)
 DECLARE_PEM_rw(RSA_PUBKEY, RSA)
-
 
 
 DECLARE_PEM_rw_cb(DSAPrivateKey, DSA)
@@ -523,7 +527,6 @@ DECLARE_PEM_rw_cb(DSAPrivateKey, DSA)
 DECLARE_PEM_rw(DSA_PUBKEY, DSA)
 
 DECLARE_PEM_rw(DSAparams, DSA)
-
 
 
 DECLARE_PEM_rw(DHparams, DH)

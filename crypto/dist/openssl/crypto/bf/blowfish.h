@@ -59,10 +59,11 @@
 #ifndef HEADER_BLOWFISH_H
 #define HEADER_BLOWFISH_H
 
+#include <openssl/e_os2.h>
+
 #ifdef  __cplusplus
 extern "C" {
 #endif
-
 
 #define BF_ENCRYPT	1
 #define BF_DECRYPT	0

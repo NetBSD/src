@@ -1,4 +1,4 @@
-#	$NetBSD: sha.inc,v 1.3 2000/07/16 07:16:24 mrg Exp $
+#	$NetBSD: sha.inc,v 1.4 2003/07/24 14:16:33 itojun Exp $
 #
 #	@(#) Copyright (c) 1995 Simon J. Gerraty
 #
@@ -10,5 +10,3 @@
 CPPFLAGS+=	-I${OPENSSLSRC}/crypto/sha
 
 SRCS+=sha_dgst.c sha1dgst.c sha_one.c sha1_one.c $(SHA1_ASM_OBJ)
-
-

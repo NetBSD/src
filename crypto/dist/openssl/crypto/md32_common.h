@@ -1,6 +1,6 @@
 /* crypto/md32_common.h */
 /* ====================================================================
- * Copyright (c) 1999 The OpenSSL Project.  All rights reserved.
+ * Copyright (c) 1999-2002 The OpenSSL Project.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -178,8 +178,7 @@
  * Engage compiler specific rotate intrinsic function if available.
  */
 #undef ROTATE
-#ifndef PEDANTIC
-# if defined(_MSC_VER)
+# if 0 /* defined(_MSC_VER) */
 #  define ROTATE(a,n)	_lrotl(a,n)
 # elif defined(__MWERKS__)
 #  if defined(__POWERPC__)
@@ -190,7 +189,7 @@
 #  else
 #   define ROTATE(a,n)	__rol(a,n)
 #  endif
-# elif defined(__GNUC__) && __GNUC__>=2 && !defined(NO_ASM) && !defined(NO_INLINE_ASM)
+# elif defined(__GNUC__) && __GNUC__>=2 && !defined(OPENSSL_NO_ASM) && !defined(OPENSSL_NO_INLINE_ASM)
   /*
    * Some GNU C inline assembler templates. Note that these are
    * rotates by *constant* number of bits! But that's exactly
@@ -198,7 +197,7 @@
    *
    * 					<appro@fy.chalmers.se>
    */
-#  if defined(__i386) || defined(__i386__)
+#  if defined(__i386) || defined(__i386__) || defined(__x86_64) || defined(__x86_64__)
 #   define ROTATE(a,n)	({ register unsigned int ret;	\
 				asm (			\
 				"roll %1,%0"		\
@@ -222,9 +221,9 @@
  * Engage compiler specific "fetch in reverse byte order"
  * intrinsic function if available.
  */
-# if defined(__GNUC__) && __GNUC__>=2 && !defined(NO_ASM) && !defined(NO_INLINE_ASM)
+# if defined(__GNUC__) && __GNUC__>=2 && !defined(OPENSSL_NO_ASM) && !defined(OPENSSL_NO_INLINE_ASM)
   /* some GNU C inline assembler templates by <appro@fy.chalmers.se> */
-#  if (defined(__i386) || defined(__i386__)) && !defined(I386_ONLY)
+#  if (defined(__i386) || defined(__i386__) || defined(__x86_64) || defined(__x86_64__)) && !defined(I386_ONLY)
 #   define BE_FETCH32(a)	({ register unsigned int l=(a);\
 				asm (			\
 				"bswapl %0"		\
@@ -240,7 +239,7 @@
 			   l;				\
 			})
 
-#  elif defined(__sparc) && defined(ULTRASPARC)
+#  elif defined(__sparc) && defined(OPENSSL_SYS_ULTRASPARC)
 #  define LE_FETCH32(a)	({ register unsigned int l;		\
 				asm (				\
 				"lda [%1]#ASI_PRIMARY_LITTLE,%0"\
@@ -250,7 +249,6 @@
 			})
 #  endif
 # endif
-#endif /* PEDANTIC */
 
 #if HASH_LONG_LOG2==2	/* Engage only if sizeof(HASH_LONG)== 4 */
 /* A nice byte order reversal from Wei Dai <weidai@eskimo.com> */
@@ -334,74 +332,74 @@
 
 #if defined(DATA_ORDER_IS_BIG_ENDIAN)
 
-#define HOST_c2l(c,l)	(l =(((unsigned long)(*((c)++)))<<24),		\
-			 l|=(((unsigned long)(*((c)++)))<<16),		\
-			 l|=(((unsigned long)(*((c)++)))<< 8),		\
-			 l|=(((unsigned long)(*((c)++)))    ),		\
+#define HOST_c2l(c,l)	(l =(((u_int32_t)(*((c)++)))<<24),		\
+			 l|=(((u_int32_t)(*((c)++)))<<16),		\
+			 l|=(((u_int32_t)(*((c)++)))<< 8),		\
+			 l|=(((u_int32_t)(*((c)++)))    ),		\
 			 l)
 #define HOST_p_c2l(c,l,n)	{					\
 			switch (n) {					\
-			case 0: l =((unsigned long)(*((c)++)))<<24;	\
-			case 1: l|=((unsigned long)(*((c)++)))<<16;	\
-			case 2: l|=((unsigned long)(*((c)++)))<< 8;	\
-			case 3: l|=((unsigned long)(*((c)++)));		\
+			case 0: l =((u_int32_t)(*((c)++)))<<24;	\
+			case 1: l|=((u_int32_t)(*((c)++)))<<16;	\
+			case 2: l|=((u_int32_t)(*((c)++)))<< 8;	\
+			case 3: l|=((u_int32_t)(*((c)++)));		\
 				} }
 #define HOST_p_c2l_p(c,l,sc,len) {					\
 			switch (sc) {					\
-			case 0: l =((unsigned long)(*((c)++)))<<24;	\
+			case 0: l =((u_int32_t)(*((c)++)))<<24;	\
 				if (--len == 0) break;			\
-			case 1: l|=((unsigned long)(*((c)++)))<<16;	\
+			case 1: l|=((u_int32_t)(*((c)++)))<<16;	\
 				if (--len == 0) break;			\
-			case 2: l|=((unsigned long)(*((c)++)))<< 8;	\
+			case 2: l|=((u_int32_t)(*((c)++)))<< 8;	\
 				} }
 /* NOTE the pointer is not incremented at the end of this */
 #define HOST_c2l_p(c,l,n)	{					\
 			l=0; (c)+=n;					\
 			switch (n) {					\
-			case 3: l =((unsigned long)(*(--(c))))<< 8;	\
-			case 2: l|=((unsigned long)(*(--(c))))<<16;	\
-			case 1: l|=((unsigned long)(*(--(c))))<<24;	\
+			case 3: l =((u_int32_t)(*(--(c))))<< 8;	\
+			case 2: l|=((u_int32_t)(*(--(c))))<<16;	\
+			case 1: l|=((u_int32_t)(*(--(c))))<<24;	\
 				} }
-#define HOST_l2c(l,c)	(*((c)++)=(unsigned char)(((l)>>24)&0xff),	\
-			 *((c)++)=(unsigned char)(((l)>>16)&0xff),	\
-			 *((c)++)=(unsigned char)(((l)>> 8)&0xff),	\
-			 *((c)++)=(unsigned char)(((l)    )&0xff),	\
+#define HOST_l2c(l,c)	(*((c)++)=(u_int8_t)(((l)>>24)&0xff),	\
+			 *((c)++)=(u_int8_t)(((l)>>16)&0xff),	\
+			 *((c)++)=(u_int8_t)(((l)>> 8)&0xff),	\
+			 *((c)++)=(u_int8_t)(((l)    )&0xff),	\
 			 l)
 
 #elif defined(DATA_ORDER_IS_LITTLE_ENDIAN)
 
-#define HOST_c2l(c,l)	(l =(((unsigned long)(*((c)++)))    ),		\
-			 l|=(((unsigned long)(*((c)++)))<< 8),		\
-			 l|=(((unsigned long)(*((c)++)))<<16),		\
-			 l|=(((unsigned long)(*((c)++)))<<24),		\
+#define HOST_c2l(c,l)	(l =(((u_int32_t)(*((c)++)))    ),		\
+			 l|=(((u_int32_t)(*((c)++)))<< 8),		\
+			 l|=(((u_int32_t)(*((c)++)))<<16),		\
+			 l|=(((u_int32_t)(*((c)++)))<<24),		\
 			 l)
 #define HOST_p_c2l(c,l,n)	{					\
 			switch (n) {					\
-			case 0: l =((unsigned long)(*((c)++)));		\
-			case 1: l|=((unsigned long)(*((c)++)))<< 8;	\
-			case 2: l|=((unsigned long)(*((c)++)))<<16;	\
-			case 3: l|=((unsigned long)(*((c)++)))<<24;	\
+			case 0: l =((u_int32_t)(*((c)++)));		\
+			case 1: l|=((u_int32_t)(*((c)++)))<< 8;	\
+			case 2: l|=((u_int32_t)(*((c)++)))<<16;	\
+			case 3: l|=((u_int32_t)(*((c)++)))<<24;	\
 				} }
 #define HOST_p_c2l_p(c,l,sc,len) {					\
 			switch (sc) {					\
-			case 0: l =((unsigned long)(*((c)++)));		\
+			case 0: l =((u_int32_t)(*((c)++)));		\
 				if (--len == 0) break;			\
-			case 1: l|=((unsigned long)(*((c)++)))<< 8;	\
+			case 1: l|=((u_int32_t)(*((c)++)))<< 8;	\
 				if (--len == 0) break;			\
-			case 2: l|=((unsigned long)(*((c)++)))<<16;	\
+			case 2: l|=((u_int32_t)(*((c)++)))<<16;	\
 				} }
 /* NOTE the pointer is not incremented at the end of this */
 #define HOST_c2l_p(c,l,n)	{					\
 			l=0; (c)+=n;					\
 			switch (n) {					\
-			case 3: l =((unsigned long)(*(--(c))))<<16;	\
-			case 2: l|=((unsigned long)(*(--(c))))<< 8;	\
-			case 1: l|=((unsigned long)(*(--(c))));		\
+			case 3: l =((u_int32_t)(*(--(c))))<<16;	\
+			case 2: l|=((u_int32_t)(*(--(c))))<< 8;	\
+			case 1: l|=((u_int32_t)(*(--(c))));		\
 				} }
-#define HOST_l2c(l,c)	(*((c)++)=(unsigned char)(((l)    )&0xff),	\
-			 *((c)++)=(unsigned char)(((l)>> 8)&0xff),	\
-			 *((c)++)=(unsigned char)(((l)>>16)&0xff),	\
-			 *((c)++)=(unsigned char)(((l)>>24)&0xff),	\
+#define HOST_l2c(l,c)	(*((c)++)=(u_int8_t)(((l)    )&0xff),	\
+			 *((c)++)=(u_int8_t)(((l)>> 8)&0xff),	\
+			 *((c)++)=(u_int8_t)(((l)>>16)&0xff),	\
+			 *((c)++)=(u_int8_t)(((l)>>24)&0xff),	\
 			 l)
 
 #endif
@@ -410,14 +408,14 @@
  * Time for some action:-)
  */
 
-void HASH_UPDATE (HASH_CTX *c, const void *data_, unsigned long len)
+int HASH_UPDATE (HASH_CTX *c, const void *data_, unsigned long len)
 	{
 	const unsigned char *data=data_;
 	register HASH_LONG * p;
-	register unsigned long l;
+	register u_int32_t l;
 	int sw,sc,ew,ec;
 
-	if (len==0) return;
+	if (len==0) return 1;
 
 	l=(c->Nl+(len<<3))&0xffffffffL;
 	/* 95-05-24 eay Fixed a bug with the overflow handling, thanks to
@@ -456,7 +454,10 @@ void HASH_UPDATE (HASH_CTX *c, const void *data_, unsigned long len)
 				{
 				ew=(c->num>>2);
 				ec=(c->num&0x03);
-				l=p[sw]; HOST_p_c2l(data,l,sc); p[sw++]=l;
+				if (sc)
+					l=p[sw];
+				HOST_p_c2l(data,l,sc);
+				p[sw++]=l;
 				for (; sw < ew; sw++)
 					{
 					HOST_c2l(data,l); p[sw]=l;
@@ -466,7 +467,7 @@ void HASH_UPDATE (HASH_CTX *c, const void *data_, unsigned long len)
 					HOST_c2l_p(data,l,ec); p[sw]=l;
 					}
 				}
-			return;
+			return 1;
 			}
 		}
 
@@ -520,6 +521,7 @@ void HASH_UPDATE (HASH_CTX *c, const void *data_, unsigned long len)
 		HOST_c2l_p(data,l,ec);
 		*p=l;
 		}
+	return 1;
 	}
 
 
@@ -543,10 +545,10 @@ void HASH_TRANSFORM (HASH_CTX *c, const unsigned char *data)
 	}
 
 
-void HASH_FINAL (unsigned char *md, HASH_CTX *c)
+int HASH_FINAL (unsigned char *md, HASH_CTX *c)
 	{
 	register HASH_LONG *p;
-	register unsigned long l;
+	register u_int32_t l;
 	register int i,j;
 	static const unsigned char end[4]={0x80,0x00,0x00,0x00};
 	const unsigned char *cp=end;
@@ -602,6 +604,32 @@ void HASH_FINAL (unsigned char *md, HASH_CTX *c)
 	c->num=0;
 	/* clear stuff, HASH_BLOCK may be leaving some stuff on the stack
 	 * but I'm not worried :-)
-	memset((void *)c,0,sizeof(HASH_CTX));
+	OPENSSL_cleanse((void *)c,sizeof(HASH_CTX));
 	 */
+	return 1;
 	}
+
+#ifndef MD32_REG_T
+#define MD32_REG_T u_int32_t
+/*
+ * This comment was originaly written for MD5, which is why it
+ * discusses A-D. But it basically applies to all 32-bit digests,
+ * which is why it was moved to common header file.
+ *
+ * In case you wonder why A-D are declared as long and not
+ * as MD5_LONG. Doing so results in slight performance
+ * boost on LP64 architectures. The catch is we don't
+ * really care if 32 MSBs of a 64-bit register get polluted
+ * with eventual overflows as we *save* only 32 LSBs in
+ * *either* case. Now declaring 'em long excuses the compiler
+ * from keeping 32 MSBs zeroed resulting in 13% performance
+ * improvement under SPARC Solaris7/64 and 5% under AlphaLinux.
+ * Well, to be honest it should say that this *prevents* 
+ * performance degradation.
+ *				<appro@fy.chalmers.se>
+ * Apparently there're LP64 compilers that generate better
+ * code if A-D are declared int. Most notably GCC-x86_64
+ * generates better code.
+ *				<appro@fy.chalmers.se>
+ */
+#endif

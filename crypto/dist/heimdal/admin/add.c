@@ -32,9 +32,10 @@
  */
 
 #include "ktutil_locl.h"
+#include <openssl/ui.h>
 
 __RCSID("$Heimdal: add.c,v 1.5 2002/09/10 19:26:52 joda Exp $"
-        "$NetBSD: add.c,v 1.1.1.5 2002/09/12 12:41:33 joda Exp $");
+        "$NetBSD: add.c,v 1.2 2003/07/24 14:16:54 itojun Exp $");
 
 int
 kt_add(int argc, char **argv)
@@ -120,7 +121,7 @@ kt_add(int argc, char **argv)
 	kvno = atoi(buf);
     }
     if(password_string == NULL && random_flag == 0) {
-	if(des_read_pw_string(buf, sizeof(buf), "Password: ", 1))
+	if(UI_UTIL_read_pw_string(buf, sizeof(buf), "Password: ", 1))
 	    goto out;
 	password_string = buf;
     }

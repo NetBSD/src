@@ -1,4 +1,4 @@
-/*	$NetBSD: cipher.c,v 1.14 2003/07/10 01:09:43 lukem Exp $	*/
+/*	$NetBSD: cipher.c,v 1.15 2003/07/24 14:16:56 itojun Exp $	*/
 /*
  * Author: Tatu Ylonen <ylo@cs.hut.fi>
  * Copyright (c) 1995 Tatu Ylonen <ylo@cs.hut.fi>, Espoo, Finland
@@ -37,7 +37,7 @@
 
 #include "includes.h"
 RCSID("$OpenBSD: cipher.c,v 1.62 2002/11/21 22:45:31 markus Exp $");
-__RCSID("$NetBSD: cipher.c,v 1.14 2003/07/10 01:09:43 lukem Exp $");
+__RCSID("$NetBSD: cipher.c,v 1.15 2003/07/24 14:16:56 itojun Exp $");
 
 #include "xmalloc.h"
 #include "log.h"
@@ -47,17 +47,17 @@ __RCSID("$NetBSD: cipher.c,v 1.14 2003/07/10 01:09:43 lukem Exp $");
 
 #if OPENSSL_VERSION_NUMBER < 0x00907000L
 #include "rijndael.h"
-static EVP_CIPHER *evp_rijndael(void);
+static const EVP_CIPHER *evp_rijndael(void);
 #endif
-static EVP_CIPHER *evp_ssh1_3des(void);
-static EVP_CIPHER *evp_ssh1_bf(void);
+static const EVP_CIPHER *evp_ssh1_3des(void);
+static const EVP_CIPHER *evp_ssh1_bf(void);
 
 struct Cipher {
 	char	*name;
 	int	number;		/* for ssh1 only */
 	u_int	block_size;
 	u_int	key_len;
-	EVP_CIPHER	*(*evptype)(void);
+	const EVP_CIPHER	*(*evptype)(void);
 } ciphers[] = {
 	{ "none", 		SSH_CIPHER_NONE, 8, 0, EVP_enc_null },
 	{ "des", 		SSH_CIPHER_DES, 8, 8, EVP_des_cbc },
@@ -358,7 +358,7 @@ ssh1_3des_cleanup(EVP_CIPHER_CTX *ctx)
 	return (1);
 }
 
-static EVP_CIPHER *
+static const EVP_CIPHER *
 evp_ssh1_3des(void)
 {
 	static EVP_CIPHER ssh1_3des;
@@ -411,7 +411,7 @@ bf_ssh1_cipher(EVP_CIPHER_CTX *ctx, u_char *out, const u_char *in, u_int len)
 	return (ret);
 }
 
-static EVP_CIPHER *
+static const EVP_CIPHER *
 evp_ssh1_bf(void)
 {
 	static EVP_CIPHER ssh1_bf;
@@ -513,7 +513,7 @@ ssh_rijndael_cleanup(EVP_CIPHER_CTX *ctx)
 	return (1);
 }
 
-static EVP_CIPHER *
+static const EVP_CIPHER *
 evp_rijndael(void)
 {
 	static EVP_CIPHER rijndal_cbc;

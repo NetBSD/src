@@ -33,9 +33,10 @@
 
 #include "headers.h"
 #include <getarg.h>
+#include <openssl/ui.h>
 
 __RCSID("$Heimdal: string2key.c,v 1.20 2003/03/25 12:28:52 joda Exp $"
-        "$NetBSD: string2key.c,v 1.2 2003/05/15 20:44:13 lha Exp $");
+        "$NetBSD: string2key.c,v 1.3 2003/07/24 14:16:55 itojun Exp $");
 
 int version5;
 int version4;
@@ -168,7 +169,7 @@ main(int argc, char **argv)
     if(argv[0])
 	password = argv[0];
     if(password == NULL){
-	if(des_read_pw_string(buf, sizeof(buf), "Password: ", 0))
+	if(UI_UTIL_read_pw_string(buf, sizeof(buf), "Password: ", 0))
 	    return 1;
 	password = buf;
     }
