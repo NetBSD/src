@@ -1,4 +1,4 @@
-/*	$NetBSD: usb_mem.c,v 1.8 1999/08/14 14:49:32 augustss Exp $	*/
+/*	$NetBSD: usb_mem.c,v 1.9 1999/08/16 20:19:55 augustss Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -106,8 +106,8 @@ usb_block_allocmem(tag, size, align, dmap)
 
 #ifdef DIAGNOSTIC
 	if (!curproc) {
-		printf("usb_block_allocmem: in interrupt context\n");
-		return (USBD_NOMEM);
+		printf("usb_block_allocmem: in interrupt context, size=%u\n",
+		       size);
 	}
 #endif
 
@@ -118,12 +118,19 @@ usb_block_allocmem(tag, size, align, dmap)
 			LIST_REMOVE(p, next);
 			splx(s);
 			*dmap = p;
-			DPRINTFN(6, ("usb_block_allocmem: free list size=%d\n",
-				     p->size));
+			DPRINTFN(6,("usb_block_allocmem: free list size=%d\n",
+				    p->size));
 			return (USBD_NORMAL_COMPLETION);
 		}
 	}
 	splx(s);
+
+#ifdef DIAGNOSTIC
+	if (!curproc) {
+		printf("usb_block_allocmem: in interrupt context, failed\n");
+		return (USBD_NOMEM);
+	}
+#endif
 
 	DPRINTFN(6, ("usb_block_allocmem: no free\n"));
 	p = malloc(sizeof *p, M_USB, M_NOWAIT);
