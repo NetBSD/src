@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.5 2003/07/01 12:38:09 mrg Exp $
+# $NetBSD: Makefile,v 1.6 2003/08/01 10:36:42 lukem Exp $
 
 # $FreeBSD: src/gnu/usr.bin/groff/src/preproc/eqn/Makefile,v 1.4 2003/05/01 13:22:19 ru Exp $
 
@@ -17,6 +17,7 @@ MAN=		eqn.1 neqn.1
 YFLAGS=		-d
 CLEANFILES=	eqn.cpp eqn_tab.h ${SCRIPTS} ${MAN} y.tab.c y.tab.h
 
+eqn.cpp: eqn.y
 eqn_tab.h: eqn.cpp
 lex.cpp: eqn_tab.h
 
