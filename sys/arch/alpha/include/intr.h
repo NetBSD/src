@@ -1,4 +1,4 @@
-/* $NetBSD: intr.h,v 1.49.10.1 2002/03/10 21:15:25 thorpej Exp $ */
+/* $NetBSD: intr.h,v 1.49.10.2 2002/03/11 21:55:57 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2000, 2001, 2002 The NetBSD Foundation, Inc.
@@ -121,6 +121,7 @@ struct scbvec {
 #define	IPL_BIO		ALPHA_PSL_IPL_IO   /* block I/O interrupts */
 #define	IPL_NET		ALPHA_PSL_IPL_IO   /* network interrupts */
 #define	IPL_TTY		ALPHA_PSL_IPL_IO   /* terminal interrupts */
+#define	IPL_VM		ALPHA_PSL_IPL_IO   /* interrupts that can alloc mem */
 #define	IPL_CLOCK	ALPHA_PSL_IPL_CLOCK/* clock interrupts */
 #define	IPL_HIGH	ALPHA_PSL_IPL_HIGH /* all interrupts */
 #define	IPL_SERIAL	ALPHA_PSL_IPL_IO   /* serial interrupts */
