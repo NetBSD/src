@@ -1,4 +1,4 @@
-/*	$NetBSD: parsetime.c,v 1.7 1998/06/27 21:15:08 christos Exp $	*/
+/*	$NetBSD: parsetime.c,v 1.7.2.1 2000/01/08 18:48:31 he Exp $	*/
 
 /* 
  * parsetime.c - parse time for at(1)
@@ -141,7 +141,7 @@ static int sc_tokplur;	/* scanner - is token plural? */
 #if 0
 static char rcsid[] = "$OpenBSD: parsetime.c,v 1.4 1997/03/01 23:40:10 millert Exp $";
 #else
-__RCSID("$NetBSD: parsetime.c,v 1.7 1998/06/27 21:15:08 christos Exp $");
+__RCSID("$NetBSD: parsetime.c,v 1.7.2.1 2000/01/08 18:48:31 he Exp $");
 #endif
 #endif
 
@@ -526,7 +526,7 @@ month(tm)
 
 		tm->tm_wday = wday;
 
-		assign_date(tm, mday, tm->tm_mon, tm->tm_year);
+		assign_date(tm, mday, tm->tm_mon, tm->tm_year + TM_YEAR_BASE);
 		break;
 
 	case NUMBER:
