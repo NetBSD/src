@@ -1,4 +1,4 @@
-/*	$NetBSD: tp_usrreq.c,v 1.10 1996/05/22 13:56:08 mycroft Exp $	*/
+/*	$NetBSD: tp_usrreq.c,v 1.11 1996/06/14 22:22:14 cgd Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -328,9 +328,6 @@ tp_sendoob(tpcb, so, xdata, outflags)
 	if (xdata == (struct mbuf *) 0) {
 		/* empty xpd packet */
 		MGETHDR(xdata, M_WAIT, MT_OOBDATA);
-		if (xdata == NULL) {
-			return ENOBUFS;
-		}
 		xdata->m_len = 0;
 		xdata->m_pkthdr.len = 0;
 	}

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_cons.c,v 1.7 1996/02/13 22:09:44 christos Exp $	*/
+/*	$NetBSD: if_cons.c,v 1.8 1996/06/14 22:22:09 cgd Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -593,9 +593,7 @@ make_partial_x25_packet(isop, lcp)
 		lcp->lcd_facilities = 0;
 		return 0;
 	}
-	MGETHDR(m, M_WAITOK, MT_DATA);
-	if (m == 0)
-		return ENOBUFS;
+	MGETHDR(m, M_WAIT, MT_DATA);
 	buf = mtod(m, caddr_t);
 	ptr = buf;
 
