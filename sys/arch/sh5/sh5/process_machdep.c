@@ -1,4 +1,4 @@
-/*	$NetBSD: process_machdep.c,v 1.6 2002/10/09 20:27:35 scw Exp $	*/
+/*	$NetBSD: process_machdep.c,v 1.7 2002/10/24 13:58:48 scw Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -49,6 +49,7 @@
 #include <machine/reg.h>
 
 #include <sh5/conreg.h>
+#include <sh5/fpu.h>
 
 void
 setregs(struct proc *p, struct exec_package *pack, u_long stack)
@@ -105,7 +106,7 @@ setregs(struct proc *p, struct exec_package *pack, u_long stack)
 	 *
 	 * With FPSCR.DN set, denormalised numbers are quietly flushed to zero.
 	 */
-	p->p_addr->u_pcb.pcb_ctx.sf_fpregs.fpscr = 0x20000;
+	p->p_addr->u_pcb.pcb_ctx.sf_fpregs.fpscr = SH5_FPSCR_DN_FLUSH_ZERO;
 
 	sh5_fprestore(SH5_CONREG_USR_FPRS_MASK << SH5_CONREG_USR_FPRS_SHIFT,
 	    &p->p_addr->u_pcb);
