@@ -1,4 +1,4 @@
-/*	$NetBSD: bfd.h,v 1.2 1997/10/17 18:45:54 gwr Exp $	*/
+/*	$NetBSD: bfd.h,v 1.3 1997/10/19 02:52:24 jonathan Exp $	*/
 
 /* Main header file for the bfd library -- portable access to object files.
    Copyright 1990, 91, 92, 93, 94, 95, 96, 1997 Free Software Foundation, Inc.
@@ -61,8 +61,9 @@ extern "C" {
  * Which machines need 64-bit targets?
  * We could make all 64-bit capable, but
  * that kills performance on 32-bit CPUs.
- */
-#if defined(__alpha__) || defined(__mips__)
+ * (it also breaks GDB 4.16 unless ints are 64 bits.)
+*/
+#if defined(__alpha__)
 #define BFD_ARCH_SIZE 64
 #else
 #define BFD_ARCH_SIZE 32

@@ -1,4 +1,4 @@
-# $NetBSD: _mips.mk,v 1.4 1997/10/17 20:07:22 gwr Exp $
+# $NetBSD: _mips.mk,v 1.5 1997/10/19 02:52:26 jonathan Exp $
 
 BFD_MACHINES =	cpu-mips.c
 BFD_BACKENDS =	elf32-mips.c elf32.c elf.c elflink.c ecofflink.c \
@@ -12,10 +12,16 @@ TDEFAULTS = \
  -DSELECT_VECS=' &bfd_elf32_littlemips_vec, &bfd_elf32_bigmips_vec, &bfd_elf64_bigmips_vec, &bfd_elf64_littlemips_vec, &ecoff_little_vec, &ecoff_big_vec ' \
  -DHAVE_bfd_elf32_littlemips_vec \
  -DHAVE_bfd_elf32_bigmips_vec \
- -DHAVE_bfd_elf64_bigmips_vec \
- -DHAVE_bfd_elf64_littlemips_vec \
  -DHAVE_ecoff_little_vec \
  -DHAVE_ecoff_big_vec \
  -DNETBSD_CORE
+
+# XXX cannot support the following targets with gdb 4.16.
+# They assume that  BFD_ARCH_SIZE is 64, but that causes bfd_vma_addr 
+# to be a 64-bit int. GDB uses bfd_vma_addr for CORE_ADDR, but also
+# casts CORE_ADDRS to ints, which loses on 32-bit mips hosts.
+# -DHAVE_bfd_elf64_bigmips_vec \
+# -DHAVE_bfd_elf64_littlemips_vec \
+
 
 OPCODE_MACHINES =  mips-dis.c mips-opc.c mips16-opc.c
