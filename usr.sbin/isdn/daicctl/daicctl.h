@@ -29,7 +29,7 @@
  * isdnctl.h: global declarations
  */
 
-#define PATH_ISDN_DEV	"/dev/i4b"
+#define PATH_ISDN_DEV	"/dev/isdn"
 
 extern void download __P((int fd, int controller, char *filename));
 extern void simpccard __P((int controller, int insert));

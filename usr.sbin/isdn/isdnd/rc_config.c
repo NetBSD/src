@@ -27,7 +27,7 @@
  *	i4b daemon - config file processing
  *	-----------------------------------
  *
- *	$Id: rc_config.c,v 1.6 2002/01/26 19:31:20 martin Exp $ 
+ *	$Id: rc_config.c,v 1.7 2002/03/16 17:03:43 martin Exp $ 
  *
  * $FreeBSD$
  *
@@ -290,7 +290,7 @@ set_isppp_auth(int entry)
 		return;
 
 	memset(&spcfg, 0, sizeof spcfg);
-	snprintf(spcfg.ifname, sizeof(spcfg.ifname), "isp%d", cep->usrdeviceunit);
+	snprintf(spcfg.ifname, sizeof(spcfg.ifname), "ippp%d", cep->usrdeviceunit);
 
 	/* use a random AF to create the socket */
 	if ((s = socket(AF_INET, SOCK_DGRAM, 0)) < 0) {
@@ -1075,13 +1075,13 @@ cfg_setval(int keyword)
 
 		case USRDEVICENAME:
 			DBGL(DL_RCCF, (log(LL_DBG, "entry %d: usrdevicename = %s", entrycount, yylval.str)));
-			if(!strcmp(yylval.str, "rbch"))
+			if(!strcmp(yylval.str, "bchan"))
 				cfg_entry_tab[entrycount].usrdevicename = BDRV_RBCH;
 			else if(!strcmp(yylval.str, "tel"))
 				cfg_entry_tab[entrycount].usrdevicename = BDRV_TEL;
-			else if(!strcmp(yylval.str, "ipr"))
+			else if(!strcmp(yylval.str, "irip"))
 				cfg_entry_tab[entrycount].usrdevicename = BDRV_IPR;
-			else if(!strcmp(yylval.str, "isp"))
+			else if(!strcmp(yylval.str, "ippp"))
 				cfg_entry_tab[entrycount].usrdevicename = BDRV_ISPPP;
 #ifdef __bsdi__
 			else if(!strcmp(yylval.str, "ibc"))

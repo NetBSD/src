@@ -27,7 +27,7 @@
  *	i4b daemon - misc support routines
  *	----------------------------------
  *
- *	$Id: support.c,v 1.1.1.1 2001/01/06 13:00:12 martin Exp $ 
+ *	$Id: support.c,v 1.2 2002/03/16 17:03:43 martin Exp $ 
  *
  * $FreeBSD$
  *
@@ -598,10 +598,10 @@ char *
 bdrivername(int drivertype)
 {
 	static char *bdtab[] = {
-		"rbch",
+		"bchan",
 		"tel",
-		"ipr",
-		"isp",
+		"irip",
+		"ippp",
 		"ibc",
 		"ing"
 	};

@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# $NetBSD: isdnd,v 1.5 2002/01/31 01:26:05 lukem Exp $
+# $NetBSD: isdnd,v 1.6 2002/03/16 17:03:41 martin Exp $
 #
 
 # PROVIDE: isdnd
@@ -53,10 +53,10 @@ if checkyesno isdnd && checkyesno isdn_autoupdown; then
 			# XXX - does this work with IPv6 ?
 			if ifconfig $int | fgrep inet >/dev/null; then
 				case $int in
-				isp*)
+				ippp*)
 					isdn_interfaces="$isdn_interfaces $int"
 					;;
-				ipr*)
+				irip*)
 					isdn_interfaces="$isdn_interfaces $int"
 					;;
 				esac

@@ -27,7 +27,7 @@
  *	isdntelctl - i4b set telephone interface options
  *	------------------------------------------------
  *
- *	$Id: main.c,v 1.1.1.1 2001/01/06 13:00:34 martin Exp $
+ *	$Id: main.c,v 1.2 2002/03/16 17:03:44 martin Exp $
  *
  * $FreeBSD$
  *
@@ -54,7 +54,7 @@
 
 static void usage ( void );
 
-#define I4BTELDEVICE	"/dev/i4btel"
+#define I4BTELDEVICE	"/dev/isdntel"
 
 int opt_get = 0;
 int opt_unit = 0;
@@ -212,7 +212,7 @@ static void
 usage(void)
 {
 	fprintf(stderr, "\n");
-	fprintf(stderr, "isdntelctl - /dev/i4btel control, version %d.%d.%d (%s %s)\n",VERSION, REL, STEP, __DATE__, __TIME__);
+	fprintf(stderr, "isdntelctl - /dev/isdntel control, version %d.%d.%d (%s %s)\n",VERSION, REL, STEP, __DATE__, __TIME__);
 	fprintf(stderr, "usage: isdntelctl -c -g -u <unit> -A -N -U\n");
 	fprintf(stderr, "       -c            clear input queue\n");
 	fprintf(stderr, "       -g            get current settings\n");

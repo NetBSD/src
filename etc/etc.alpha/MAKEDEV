@@ -1,5 +1,5 @@
 #!/bin/sh -
-#	$NetBSD: MAKEDEV,v 1.94 2002/03/16 16:56:44 ad Exp $
+#	$NetBSD: MAKEDEV,v 1.95 2002/03/16 17:03:29 martin Exp $
 #
 # Copyright (c) 1990 The Regents of the University of California.
 # All rights reserved.
@@ -92,11 +92,11 @@
 #	ttyU*	Modem
 #
 # ISDN devices:
-#	i4b	communication between userland isdnd and kernel
-#	i4bctl	control device
-#	i4brbch* raw b-channel access
-#	i4btel*	telephony device
-#	i4btrc*	trace device
+#	isdns		communication between userland isdnd and kernel
+#	isdnctl		control device
+#	isdnbchan*	raw b-channel access
+#	isdntel*	telephony device
+#	isdntrc*	trace device
 #
 # Special purpose devices:
 #	clockctl clock control for non root users
@@ -160,7 +160,7 @@ all)
 	makedev audio0 audio1 audio2 audio3
 	makedev random satlink0 speaker mlx0 local
 	makedev scsibus0 scsibus1 scsibus2 scsibus3
-	makedev usbs isdn
+	makedev usbs isdns
 	makedev music rmidi0 rmidi1 rmidi2 rmidi3 rmidi4 rmidi5 rmidi6 rmidi7
 	makedev ttyCZ0 ttyCY0
 	makedev agp0
@@ -220,8 +220,8 @@ usbs)
 	makedev uscanner0 uscanner1
 	;;
 
-isdn)
-	makedev i4b i4bctl i4brbch0 i4brbch1 i4btel0 i4btel1 i4btrc0 i4btrc1
+isdns)
+	makedev isdn isdnctl isdnbchan0 isdnbchan1 isdntel0 isdntel1 isdntrc0 isdntrc1
 	;;
 
 std)
@@ -699,37 +699,37 @@ scsibus*)
 	chmod 644 scsibus$unit
 	;;
 
-i4b)
-	rm -f i4b
-	mknod i4b c 51 0
-	chmod 600 i4b
+isdn)
+	rm -f isdn
+	mknod isdn c 51 0
+	chmod 600 isdn
 	;;
 
-i4bctl)
-	rm -f i4bctl
-	mknod i4bctl c 52 0
-	chmod 600 i4bctl
+isdnctl)
+	rm -f isdnctl
+	mknod isdnctl c 52 0
+	chmod 600 isdnctl
 	;;
 
-i4brbch*)
-	unit=${i#i4brbch}
-	rm -f i4brbch$unit
-	mknod i4brbch$unit c 53 $unit
-	chmod 600 i4brbch$unit
+isdnbchan*)
+	unit=${i#isdnbchan}
+	rm -f isdnbchan$unit
+	mknod isdnbchan$unit c 53 $unit
+	chmod 600 isdnbchan$unit
 	;;
 
-i4btrc*)
-	unit=${i#i4btrc}
-	rm -f i4btrc$unit
-	mknod i4btrc$unit c 54 $unit
-	chmod 600 i4btrc$unit
+isdntrc*)
+	unit=${i#isdntrc}
+	rm -f isdntrc$unit
+	mknod isdntrc$unit c 54 $unit
+	chmod 600 isdntrc$unit
 	;;
 
-i4btel*)
-	unit=${i#i4btel}
-	rm -f i4btel$unit
-	mknod i4btel$unit c 55 $unit
-	chmod 600 i4btel$unit
+isdntel*)
+	unit=${i#isdntel}
+	rm -f isdntel$unit
+	mknod isdntel$unit c 55 $unit
+	chmod 600 isdntel$unit
 	;;
 
 clockctl)

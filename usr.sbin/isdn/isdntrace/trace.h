@@ -35,7 +35,7 @@
  *	trace.h - header file for isdn trace
  *	------------------------------------
  *
- *	$Id: trace.h,v 1.1.1.1 2001/01/06 13:00:34 martin Exp $ 
+ *	$Id: trace.h,v 1.2 2002/03/16 17:03:44 martin Exp $ 
  *
  * $FreeBSD$
  *
@@ -65,7 +65,7 @@
 #include "pcause_1tr6.h"	/* obsolete german national ISDN */
 #include "pcause_q850.h"
 
-#define I4BTRC_DEVICE		"/dev/i4btrc"	/* trace device file */
+#define I4BTRC_DEVICE		"/dev/isdntrc"	/* trace device file */
 #define TRACE_FILE_NAME		"isdntrace"	/* default output filename */
 #define BIN_FILE_NAME		"isdntracebin"	/* default binary filename */
 

@@ -27,7 +27,7 @@
  *	exec.h - supplemental program/script execution
  *	----------------------------------------------
  *
- *	$Id: exec.c,v 1.1.1.1 2001/01/06 13:00:13 martin Exp $ 
+ *	$Id: exec.c,v 1.2 2002/03/16 17:03:42 martin Exp $ 
  *
  * $FreeBSD$
  *
@@ -141,7 +141,7 @@ exec_prog(char *prog, char **arglist)
 
 	/*
 	 * close files used only by isdnd, e.g.
-	 * 1. /dev/i4b
+	 * 1. /dev/isdn
 	 * 2. /var/log/isdnd.acct (or similar, when used)
 	 * 3. /var/log/isdnd.log (or similar, when used)
 	 */
@@ -214,7 +214,7 @@ exec_answer(cfg_entry_t *cep)
 	
 	device = bdrivername(cep->usrdevicename);
 
-	snprintf(devicename, sizeof(devicename), "/dev/i4b%s%d", device, cep->usrdeviceunit);
+	snprintf(devicename, sizeof(devicename), "/dev/isdn%s%d", device, cep->usrdeviceunit);
 
 	argv[0] = cep->answerprog;
 	argv[1] = "-D";
