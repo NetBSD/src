@@ -1,4 +1,4 @@
-/*	$NetBSD: cdvar.h,v 1.4 1997/10/13 00:47:54 explorer Exp $	*/
+/*	$NetBSD: cdvar.h,v 1.5 1998/01/15 02:21:34 cgd Exp $	*/
 
 /*
  * Copyright (c) 1997 Manuel Bouyer.  All rights reserved.
@@ -29,7 +29,6 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#define	CDOUTSTANDING	4
 #define	CDRETRIES	1
 
 struct cd_ops;
@@ -58,10 +57,12 @@ struct cd_softc {
 };
 
 struct cd_ops {
-	int	(*cdo_setchan) __P((struct cd_softc *, int, int, int, int));
-	int	(*cdo_getvol) __P((struct cd_softc *, struct ioc_vol *));
-	int	(*cdo_setvol) __P((struct cd_softc *, const struct ioc_vol *));
-	int	(*cdo_set_pa_immed) __P((struct cd_softc *));
+	int	(*cdo_setchan) __P((struct cd_softc *, int, int, int, int,
+		    int));
+	int	(*cdo_getvol) __P((struct cd_softc *, struct ioc_vol *, int));
+	int	(*cdo_setvol) __P((struct cd_softc *, const struct ioc_vol *,
+		    int));
+	int	(*cdo_set_pa_immed) __P((struct cd_softc *, int));
 };
 
 void cdattach __P((struct device *, struct cd_softc *, struct scsipi_link *,
