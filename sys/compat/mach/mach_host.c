@@ -1,4 +1,4 @@
-/*	$NetBSD: mach_host.c,v 1.8 2002/11/14 19:44:06 christos Exp $ */
+/*	$NetBSD: mach_host.c,v 1.9 2002/11/14 21:17:30 christos Exp $ */
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mach_host.c,v 1.8 2002/11/14 19:44:06 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mach_host.c,v 1.9 2002/11/14 21:17:30 christos Exp $");
 
 #include <sys/types.h>
 #include <sys/malloc.h>
@@ -80,15 +80,19 @@ mach_host_info(p, msgh)
 
 	switch(req.req_flavor) {
 	case MACH_HOST_BASIC_INFO: {
-		struct mach_host_basic_info *info;
+		struct mach_host_basic_info *info
+		    = (struct mach_host_basic_info *)&rep.rep_data[0];
 
-		info = (struct mach_host_basic_info *)&rep.rep_data[0];
+		DPRINTF(("mach_host_info(BASIC_INFO);\n"));
 		mach_host_basic_info(info);
 		break;
 	}
 
 	case MACH_HOST_SEMAPHORE_TRAPS:
 	case MACH_HOST_MACH_MSG_TRAP:
+		DPRINTF(("mach_host_info(%s);\n",
+		    req.req_flavor == MACH_HOST_SEMAPHORE_TRAPS ?
+		    "SEMAPHORE_TRAPS" : "MACH_MSG_TRAP"));
 		reps = (mach_host_info_reply_simple_t *)&rep;
 		reps->rep_msgh.msgh_size = 
 		    sizeof(*reps) - sizeof(reps->rep_trailer);
@@ -99,9 +103,10 @@ mach_host_info(p, msgh)
 	case MACH_HOST_SCHED_INFO:
 	case MACH_HOST_RESOURCE_SIZES:
 	case MACH_HOST_PRIORITY_INFO:
-		DPRINTF(("unimplemented host_info flavor %d\n", 
+		DPRINTF(("Unimplemented host_info flavor %d\n", 
 		    req.req_flavor));
 	default:
+		uprintf("Unknown host_info flavor %d\n", req.req_flavor);
 		rep.rep_retval = native_to_mach_errno[EINVAL];
 		break;
 	}
@@ -124,6 +129,8 @@ mach_host_page_size(p, msgh)
 
 	if ((error = copyin(msgh, &req, sizeof(req))) != 0)
 		return error;
+
+	DPRINTF(("mach_host_page_size();\n"));
 
 	bzero(&rep, sizeof(rep));
 
@@ -151,6 +158,8 @@ mach_host_get_clock_service(p, msgh)
 
 	if ((error = copyin(msgh, &req, sizeof(req))) != 0)
 		return error;
+
+	DPRINTF(("mach_host_get_clock_service();\n"));
 
 	bzero(&rep, sizeof(rep));
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: mach_port.c,v 1.4 2002/11/12 06:14:39 manu Exp $ */
+/*	$NetBSD: mach_port.c,v 1.5 2002/11/14 21:17:30 christos Exp $ */
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mach_port.c,v 1.4 2002/11/12 06:14:39 manu Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mach_port.c,v 1.5 2002/11/14 21:17:30 christos Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -58,6 +58,7 @@ mach_sys_reply_port(p, v, retval)
 {
 	static int current_port = 0x80b;
 
+	DPRINTF(("mach_sys_reply_port();\n"));
 	*retval = current_port; /* XXX */
 	return 0;
 }
@@ -68,6 +69,7 @@ mach_sys_thread_self_trap(p, v, retval)
 	void *v;
 	register_t *retval;
 {
+	DPRINTF(("mach_sys_thread_self_trap();\n"));
 	*retval = 0; /* XXX */
 	return 0;
 }
@@ -79,6 +81,7 @@ mach_sys_task_self_trap(p, v, retval)
 	void *v;
 	register_t *retval;
 {
+	DPRINTF(("mach_sys_task_self_trap();\n"));
 	*retval = 0xa07; /* XXX */
 	return 0;
 }
@@ -90,6 +93,7 @@ mach_sys_host_self_trap(p, v, retval)
 	void *v;
 	register_t *retval;
 {
+	DPRINTF(("mach_sys_host_self_trap();\n"));
 	*retval = 0x90b; /* XXX */
 	return 0;
 }
@@ -106,6 +110,7 @@ mach_port_deallocate(p, msgh)
 	if ((error = copyin(msgh, &req, sizeof(req))) != 0)
 		return error;
 
+	DPRINTF(("mach_sys_port_deallocate();\n"));
 	bzero(&rep, sizeof(rep));
 
 	rep.rep_msgh.msgh_bits =
@@ -131,6 +136,8 @@ mach_port_allocate(p, msgh)
 
 	if ((error = copyin(msgh, &req, sizeof(req))) != 0)
 		return error;
+
+	DPRINTF(("mach_sys_port_allocate();\n"));
 
 	bzero(&rep, sizeof(rep));
 

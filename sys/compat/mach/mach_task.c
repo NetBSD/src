@@ -1,4 +1,4 @@
-/*	$NetBSD: mach_task.c,v 1.4 2002/11/12 05:18:31 manu Exp $ */
+/*	$NetBSD: mach_task.c,v 1.5 2002/11/14 21:17:30 christos Exp $ */
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mach_task.c,v 1.4 2002/11/12 05:18:31 manu Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mach_task.c,v 1.5 2002/11/14 21:17:30 christos Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -66,6 +66,7 @@ mach_task_get_special_port(p, msgh)
 	if ((error = copyin(msgh, &req, sizeof(req))) != 0)
 		return error;
 
+	DPRINTF(("mach_task_get_special_port();\n"));
 	bzero(&rep, sizeof(rep));
 
 	rep.rep_msgh.msgh_bits = 
@@ -97,6 +98,8 @@ mach_ports_lookup(p, msgh)
 	if ((error = copyin(msgh, &req, sizeof(req))) != 0)
 		return error;
 	
+	DPRINTF(("mach_ports_lookup();\n"));
+
 	bzero(&evc, sizeof(evc));
 	evc.ev_addr = 0x00008000;
 	evc.ev_len = PAGE_SIZE;

@@ -1,4 +1,4 @@
-/*	$NetBSD: mach_vm.c,v 1.6 2002/11/12 06:14:39 manu Exp $ */
+/*	$NetBSD: mach_vm.c,v 1.7 2002/11/14 21:17:31 christos Exp $ */
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mach_vm.c,v 1.6 2002/11/12 06:14:39 manu Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mach_vm.c,v 1.7 2002/11/14 21:17:31 christos Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -67,6 +67,9 @@ mach_vm_map(p, msgh)
 	if ((error = copyin(msgh, &req, sizeof(req))) != 0)
 		return error;
 
+	DPRINTF(("mach_vm_map(addr = %p, size = 0x%08x);\n",
+	    (void *)req.req_address, req.req_size));
+
 #if 1
 	/* XXX Darwin fails on mapping a page at address 0 */
 	if (req.req_address == 0)
@@ -75,8 +78,6 @@ mach_vm_map(p, msgh)
 
 	bzero(&rep, sizeof(rep));
 
-	DPRINTF(("vm_map(addr = %p, size = 0x%08x)\n",
-		(void *)req.req_address, req.req_size));
 	SCARG(&cup, addr) = (void *)req.req_address;
 	SCARG(&cup, len) = req.req_size;
 	SCARG(&cup, prot) = PROT_READ | PROT_WRITE;
@@ -111,6 +112,9 @@ mach_vm_allocate(p, msgh)
 
 	if ((error = copyin(msgh, &req, sizeof(req))) != 0)
 		return error;
+
+	DPRINTF(("mach_vm_allocate(addr = %p, size = 0x%08x);\n",
+	    (void *)req.req_address, req.req_size));
 
 	bzero(&rep, sizeof(rep));
 
@@ -149,6 +153,9 @@ mach_vm_deallocate(p, msgh)
 
 	if ((error = copyin(msgh, &req, sizeof(req))) != 0)
 		return error;
+
+	DPRINTF(("mach_vm_deallocate(addr = %p, size = 0x%08x);\n",
+	    (void *)req.req_address, req.req_size));
 
 	bzero(&rep, sizeof(rep));
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: mach_misc.c,v 1.9 2002/11/10 21:53:40 manu Exp $	 */
+/*	$NetBSD: mach_misc.c,v 1.10 2002/11/14 21:17:30 christos Exp $	 */
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mach_misc.c,v 1.9 2002/11/10 21:53:40 manu Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mach_misc.c,v 1.10 2002/11/14 21:17:30 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -160,9 +160,11 @@ mach_sys_msg_overwrite_trap(struct proc *p, void *v, register_t *r) {
 			    namemap->map_id; namemap++)
 				if (namemap->map_id == mh.msgh_id)
 					break;
-			if (namemap->map_handler == NULL)
+			if (namemap->map_handler == NULL) {
+				DPRINTF(("unimplemented overwrite message %d\n",
+				    mh.msgh_id));
 				break;
-			DPRINTF(("mach_%s()\n", namemap->map_name));
+			}
 			return (*namemap->map_handler)(p, SCARG(ap, msg));
 		}
 		break;
