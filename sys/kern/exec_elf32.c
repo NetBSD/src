@@ -1,4 +1,4 @@
-/*	$NetBSD: exec_elf32.c,v 1.56 2000/11/13 21:32:15 jdolecek Exp $	*/
+/*	$NetBSD: exec_elf32.c,v 1.57 2000/11/14 22:14:53 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1994 The NetBSD Foundation, Inc.
@@ -86,6 +86,8 @@
 #include <sys/signalvar.h>
 #include <sys/mount.h>
 #include <sys/stat.h>
+
+#include <uvm/uvm_extern.h>
 
 #ifdef COMPAT_NETBSD32
 #include <compat/netbsd32/netbsd32_exec.h>
@@ -204,7 +206,7 @@ ELFNAME(copyargs)(struct exec_package *pack, struct ps_strings *arginfo,
 		a++;
 
 		a->a_type = AT_PAGESZ;
-		a->a_v = NBPG;
+		a->a_v = PAGE_SIZE;
 		a++;
 
 		a->a_type = AT_BASE;
@@ -704,8 +706,8 @@ ELFNAME2(exec,makecmds)(struct proc *p, struct exec_package *epp)
 
 #ifdef ELF_MAP_PAGE_ZERO
 	/* Dell SVR4 maps page zero, yeuch! */
-	NEW_VMCMD(&epp->ep_vmcmds, vmcmd_map_readvn, NBPG, 0, epp->ep_vp, 0,
-	    VM_PROT_READ);
+	NEW_VMCMD(&epp->ep_vmcmds, vmcmd_map_readvn, PAGE_SIZE, 0,
+	    epp->ep_vp, 0, VM_PROT_READ);
 #endif
 	free((char *)ph, M_TEMP);
 	vn_marktext(epp->ep_vp);
