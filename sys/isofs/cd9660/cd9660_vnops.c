@@ -1,4 +1,4 @@
-/*	$NetBSD: cd9660_vnops.c,v 1.21 1994/12/24 16:44:12 ws Exp $	*/
+/*	$NetBSD: cd9660_vnops.c,v 1.22 1994/12/27 19:05:12 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1994
@@ -170,9 +170,8 @@ cd9660_access(ap)
 {
 	struct iso_node *ip = VTOI(ap->a_vp);
 
-	return (vaccess(ip->inode.iso_mode,
-			ip->inode.iso_uid, ip->inode.iso_gid,
-			ap->a_mode, ap->a_cred));
+	return (vaccess(ip->inode.iso_mode, ip->inode.iso_uid,
+	    ip->inode.iso_gid, ap->a_mode, ap->a_cred));
 }
 
 int
