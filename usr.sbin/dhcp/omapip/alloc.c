@@ -55,6 +55,11 @@ unsigned long dmalloc_cutoff_generation;
 #if defined (DEBUG_RC_HISTORY)
 struct rc_history_entry rc_history [RC_HISTORY_MAX];
 int rc_history_index;
+int rc_history_count;
+#endif
+
+#if defined (DEBUG_RC_HISTORY)
+static void print_rc_hist_entry (int);
 #endif
 
 VOIDPTR dmalloc (size, file, line)
@@ -119,6 +124,7 @@ VOIDPTR dmalloc (size, file, line)
 	}
 #endif
 #endif
+	rc_register (file, line, 0, foo + DMDOFFSET, 1);
 	return bar;
 }
 
@@ -179,6 +185,7 @@ void dfree (ptr, file, line)
 		ptr = bar;
 	}
 #endif
+	rc_register (file, line, 0, (unsigned char *)ptr + DMDOFFSET, 0);
 	free (ptr);
 }
 
@@ -280,9 +287,41 @@ void dmalloc_dump_outstanding ()
 #if defined (DEBUG_MEMORY_LEAKAGE)
 		/* Don't count data that's actually on a free list
                    somewhere. */
-		if (dp -> file)
-			log_info ("  %s(%d): %d",
-				  dp -> file, dp -> line, dp -> size);
+		if (dp -> file) {
+#if defined (DEBUG_RC_HISTORY)
+			/* If we have the info, see if this is actually
+			   new garbage. */
+			if (rc_history_count < RC_HISTORY_MAX) {
+				int i, printit = 0, inhistory = 0, prefcnt = 0;
+				i = rc_history_index - rc_history_count;
+				if (i < 0)
+					i += RC_HISTORY_MAX;
+				do {
+				    if (rc_history [i].addr == dp + 1) {
+					if (rc_history [i].refcnt == 1 &&
+					    prefcnt == 0 && !printit) {
+						printit = 1;
+						inhistory = 1;
+						log_info ("  %s(%d): %d",
+							  dp -> file,
+							  dp -> line,
+							  dp -> size);
+					}
+					prefcnt = rc_history [i].refcnt;
+					if (printit)
+						print_rc_hist_entry (i);
+				    }
+				    if (++i == RC_HISTORY_MAX)
+					    i = 0;
+				} while (i != rc_history_index);
+				if (!inhistory)
+					log_info ("  %s(%d): %d", dp -> file,
+						  dp -> line, dp -> size);
+			} else
+#endif
+				log_info ("  %s(%d): %d",
+					  dp -> file, dp -> line, dp -> size);
+		}
 #endif
 	}
 	if (dmalloc_list)
@@ -291,21 +330,37 @@ void dmalloc_dump_outstanding ()
 #endif /* DEBUG_MEMORY_LEAKAGE || DEBUG_MALLOC_POOL */
 
 #if defined (DEBUG_RC_HISTORY)
+static void print_rc_hist_entry (int i)
+{
+	log_info ("   referenced by %s(%d)[%lx]: addr = %lx  refcnt = %x",
+		  rc_history [i].file, rc_history [i].line,
+		  (unsigned long)rc_history [i].reference,
+		  (unsigned long)rc_history [i].addr,
+		  rc_history [i].refcnt);
+}
+
 void dump_rc_history ()
 {
 	int i;
 
 	i = rc_history_index;
-	do {
-		log_info ("   referenced by %s(%d)[%lx]: addr = %lx  refcnt = %x",
-			  rc_history [i].file, rc_history [i].line,
-			  (unsigned long)rc_history [i].reference,
-			  (unsigned long)rc_history [i].addr,
-			  rc_history [i].refcnt);
+	if (!rc_history [i].file)
+		i = 0;
+	else if (rc_history_count < RC_HISTORY_MAX) {
+		i -= rc_history_count;
+		if (i < 0)
+			i += RC_HISTORY_MAX;
+	}
+	rc_history_count = 0;
+		
+	while (rc_history [i].file) {
+		print_rc_hist_entry (i);
 		++i;
 		if (i == RC_HISTORY_MAX)
 			i = 0;
-	} while (i != rc_history_index && rc_history [i].file);
+		if (i == rc_history_index)
+			break;
+	}
 }
 #endif
 
@@ -481,6 +536,7 @@ isc_result_t omapi_object_dereference (omapi_object_t **h,
 			if (outer_reference)
 				omapi_object_dereference
 					(&(*h) -> outer, file, line);
+			(*h) -> refcnt--;
 			if (!(*h) -> type -> freer)
 				rc_register (file, line, h, *h, 0);
 			if ((*h) -> type -> destroy)
