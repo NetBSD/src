@@ -1,4 +1,4 @@
-#	$NetBSD: GENERIC,v 1.121 1999/04/19 21:22:56 kleink Exp $
+#	$NetBSD: GENERIC,v 1.122 1999/05/01 10:20:01 tron Exp $
 
 #
 #if 0
@@ -64,6 +64,7 @@ options 	IPFILTER_LOG	# ipmon(8) log support
 
 # Filesystems
 file-system 	FFS		# Berkeley fast file system
+file-system 	EXT2FS		# second extended file system (linux)
 #file-system 	LFS		# log-structured filesystem (experimental)
 file-system 	MFS		# Memory based filesystem
 file-system 	NFS		# Network File System client side code
@@ -79,9 +80,11 @@ file-system 	UMAPFS		# NULLFS + uid and gid remapping
 file-system 	UNION		# union filesystem
 
 # Filesystem options
-options 	NFSSERVER	# Network File System server side code
 options 	QUOTA		# User and group quotas in FFS
 #options 	FFS_EI		# FFS Endian Independant support
+options 	NFSSERVER	# Network File System server side code
+#options 	EXT2FS_SYSTEM_FLAGS # makes ext2fs file flags (append and
+				# immutable) behave as system flags.
 
 #
 # Compatability options for various existing systems
@@ -374,4 +377,3 @@ pseudo-device	ccd		4	# concatenated disk devices
 #options        RND_COM                 # use "com" randomness as well (BROKEN)
 
 config	netbsd root on ? type ?
-
