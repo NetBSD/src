@@ -1,4 +1,4 @@
-/*	$NetBSD: ne2000.c,v 1.11 1998/02/04 14:13:40 sakamoto Exp $	*/
+/*	$NetBSD: ne2000.c,v 1.12 1998/06/10 01:15:50 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -455,60 +455,71 @@ ne2000_write_mbuf(sc, m, buf)
 		}
 	} else {
 		/* NE2000s are a bit trickier. */
-		u_int8_t *data, *aligndata, savebyte[2];
-		int l, wantbyte;
+		u_int8_t *data, savebyte[2];
+		int l, leftover;
+#ifdef DIAGNOSTIC
+		u_int8_t *lim;
+#endif
+		/* Start out with no leftover data. */
+		leftover = 0;
+		savebyte[0] = savebyte[1] = 0;
 
-		wantbyte = 0;
 		for (; m != 0; m = m->m_next) {
 			l = m->m_len;
 			if (l == 0)
 				continue;
 			data = mtod(m, u_int8_t *);
-			aligndata = NULL;
-
-			/* Finish the last word. */
-			if (wantbyte) {
-				savebyte[1] = *data;
-				bus_space_write_stream_2(asict, asich,
-				    NE2000_ASIC_DATA, *(u_int16_t *)savebyte);
-				data++;
-				l--;
-				wantbyte = 0;
+#ifdef DIAGNOSTIC
+			lim = data + l;
+#endif
+			while (l > 0) {
+				if (leftover) {
+					/*
+					 * Data left over (from mbuf or
+					 * realignment).  Buffer the next
+					 * byte, and write it and the
+					 * leftover data out.
+					 */
+					savebyte[1] = *data++;
+					l--;
+					bus_space_write_stream_2(asict, asich,
+					    NE2000_ASIC_DATA,
+					    *(u_int16_t *)savebyte);
+					leftover = 0;
+				} else if (ALIGNED_POINTER(data,
+					   u_int16_t) == 0) {
+					/*
+					 * Unaligned data; buffer the next
+					 * byte.
+					 */
+					savebyte[0] = *data++;
+					l--;
+					leftover = 1;
+				} else {
+					/*
+					 * Aligned data; output contiguous
+					 * words as much as we can, then
+					 * buffer the remaining byte, if any.
+					 */
+					leftover = l & 1;
+					l &= ~1;
+					bus_space_write_multi_stream_2(asict,
+					    asich, NE2000_ASIC_DATA,
+					    (u_int16_t *)data, l >> 1);
+					data += l;
+					if (leftover)
+						savebyte[0] = *data++;
+					l = 0;
+				}
 			}
-
-			/*
-			 * If the previous mbuf was odd length, the
-			 * above check will have misaligned the rest
-			 * of the current mbuf.  If this is the case,
-			 * we need to use a temporary buffer.
-			 */
-			if (ALIGNED_POINTER(data, u_int16_t) == 0) {
-				aligndata = malloc(l, M_DEVBUF, M_NOWAIT);
-				if (aligndata == NULL)
-					panic("ne2000_write_mbuf: can't get "
-					    "temporary buffer"); /* XXX */
-				bcopy(data, aligndata, l);
-				data = aligndata;
-			}
-
-			/* Output contiguous words. */
-			if (l > 1) {
-				bus_space_write_multi_stream_2(asict, asich,
-				    NE2000_ASIC_DATA, (u_int16_t *)data,
-				    l >> 1);
-			}
-			/* Save last byte, if necessary. */
-			if (l & 1) {
-				data += l & ~1;
-				savebyte[0] = *data;
-				wantbyte = 1;
-			}
-
-			if (aligndata != NULL)
-				free(aligndata, M_DEVBUF);
+			if (l < 0)
+				panic("ne2000_write_mbuf: negative len");
+#ifdef DIAGNOSTIC
+			if (data != lim)
+				panic("ne2000_write_mbuf: data != lim");
+#endif
 		}
-
-		if (wantbyte) {
+		if (leftover) {
 			savebyte[1] = 0;
 			bus_space_write_stream_2(asict, asich, NE2000_ASIC_DATA,
 			    *(u_int16_t *)savebyte);
