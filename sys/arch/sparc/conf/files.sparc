@@ -1,4 +1,4 @@
-#	$NetBSD: files.sparc,v 1.59 1998/07/27 19:20:03 pk Exp $
+#	$NetBSD: files.sparc,v 1.60 1998/07/28 00:10:23 pk Exp $
 
 # @(#)files.sparc	8.1 (Berkeley) 7/19/93
 # sparc-specific configuration info
@@ -186,11 +186,10 @@ file	arch/sparc/dev/bt_subr.c	bt_dac
 file	arch/sparc/dev/fb.c		fb needs-flag
 
 # device definition in sys/conf/files
-attach le at sbus with le_sbus: le24
 attach le at ledma with le_ledma: le24
-attach le at lebuffer with le_lebuffer: le24
 attach le at obio with le_obio: le24
-file	arch/sparc/dev/if_le.c		le
+file	arch/sparc/dev/if_le_ledma.c	le_ledma
+file	arch/sparc/dev/if_le_obio.c	le_obio
 
 attach ie at obio with ie_obio
 file	arch/sparc/dev/if_ie_obio.c	ie_obio
@@ -200,11 +199,6 @@ attach si at vme
 device sw: scsi, ncr5380sbc
 attach sw at obio
 file	arch/sparc/dev/si.c		si | sw
-
-# Efficient Networks, Inc. ATM interface
-# device declaration in sys/conf/files
-attach  en at sbus with en_sbus
-file    arch/sparc/dev/if_en_sbus.c     en_sbus
 
 # Qlogic ISP 10x0 (Sbus) family
 # device declaration in sys/conf/files
