@@ -35,7 +35,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)pmap.h	7.4 (Berkeley) 5/12/91
- *	$Id: pmap.h,v 1.4 1993/08/27 23:52:22 brezak Exp $
+ *	$Id: pmap.h,v 1.5 1993/08/30 18:09:57 brezak Exp $
  */
 
 /*
@@ -228,8 +228,10 @@ pv_entry_t	pv_table;		/* array of entries, one per page */
 #ifndef MACHINE_NONCONTIG
 #define pa_index(pa)		atop(pa - vm_first_phys)
 #define pa_to_pvh(pa)		(&pv_table[pa_index(pa)])
+void		pmap_bootstrap __P((vm_offset_t first, vm_offset_t load));
 #else
 #define pa_to_pvh(pa)		(&pv_table[pmap_page_index(pa)])
+void		pmap_bootstrap __P((vm_offset_t start));
 #endif
 
 #define	pmap_resident_count(pmap)	((pmap)->pm_stats.resident_count)
