@@ -1,4 +1,4 @@
-# 	$NetBSD: NONPLUS,v 1.5 1998/08/13 02:10:40 eeh Exp $
+# 	$NetBSD: NONPLUS,v 1.6 1998/08/26 10:31:37 mrg Exp $
 
 include "arch/sparc64/conf/std.sparc64"
 
@@ -29,14 +29,11 @@ options		BUS_DMA		# enable bus_dma*() instead of dvma_mapin()
 
 config		netbsd	root on ? type ?
 
-## Virtual memory configuration.  There are two choices, the old Mach
-## based VM system, or the new UVM system.
-#options 	OLDVM		# MACH VM
-options 	UVM		# UVM VM
+## UVM options.
 options		UVM_PAGE_TRKOWN
 options		UVMHIST
-#options		UVMHIST_PRINT
-#options 	PMAP_NEW	# new pmap interface; requires UVM
+#options 	UVMHIST_PRINT	# Loud!
+#options 	PMAP_NEW	# new pmap interface; not yet supported
 
 ## System call tracing (see ktrace(1)).
 options 	KTRACE
