@@ -1,4 +1,4 @@
-/* $NetBSD: installboot.c,v 1.2 1997/06/13 22:15:09 drochner Exp $	 */
+/* $NetBSD: installboot.c,v 1.3 1997/06/19 11:46:46 drochner Exp $	 */
 
 /*
  * Copyright (c) 1994 Paul Kranenburg
@@ -339,8 +339,6 @@ main(argc, argv)
 	if (argc - optind != 2) {
 		usage();
 	}
-	if (argv[optind + 1][strlen(argv[optind + 1]) - 1] != 'a')
-		errx(1, "use partition 'a'!");
 
 	bp = loadprotoblocks(argv[optind], &size);
 	if (!bp)
@@ -385,9 +383,15 @@ main(argc, argv)
 			warn("get disklabel");
 			goto out;
 		}
-	} else
-		bsdoffs = dl.d_partitions[0].p_offset;
-
+	} else {
+		char c = argv[optind + 1][strlen(argv[optind + 1]) - 1];
+#define isvalidpart(c) ((c) >= 'a' && (c) <= 'z')
+		if(!isvalidpart(c) || (c - 'a') >= dl.d_npartitions) {
+			warnx("invalid partition");
+			goto out;
+		}
+		bsdoffs = dl.d_partitions[c - 'a'].p_offset;
+	}
 	if (verbose)
 		printf("BSD partition starts at sector %d\n", bsdoffs);
 
