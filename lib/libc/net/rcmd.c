@@ -1,4 +1,4 @@
-/*	$NetBSD: rcmd.c,v 1.19.2.2 1997/02/16 12:32:49 mrg Exp $	*/
+/*	$NetBSD: rcmd.c,v 1.19.2.3 1997/02/16 12:54:01 mrg Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993, 1994
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)rcmd.c	8.3 (Berkeley) 3/26/94";
 #else
-static char *rcsid = "$NetBSD: rcmd.c,v 1.19.2.2 1997/02/16 12:32:49 mrg Exp $";
+static char *rcsid = "$NetBSD: rcmd.c,v 1.19.2.3 1997/02/16 12:54:01 mrg Exp $";
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -103,10 +103,10 @@ rcmd(ahost, rport, locuser, remuser, cmd, fd2p)
 	 */
 	sp = getservbyname("shell", "tcp");
 	if (sp != NULL && sp->s_port == rport)
-		rshrcmd(ahost, rport, locuser, remuser, cmd, fd2p,
-		    getenv("RSHCMD"));
+		return (rshrcmd(ahost, rport, locuser, remuser, cmd, fd2p,
+		    getenv("RSHCMD")));
 	else
-		hporcmd(hp, ahost, rport, locuser, remuser, cmd, fd2p);
+		return (hporcmd(hp, ahost, rport, locuser, remuser, cmd, fd2p));
 }
 
 int
@@ -125,7 +125,7 @@ orcmd(ahost, rport, locuser, remuser, cmd, fd2p)
 	}
 	*ahost = hp->h_name;
 	
-	hporcmd(hp, ahost, rport, locuser, remuser, cmd, fd2p);
+	return (hporcmd(hp, ahost, rport, locuser, remuser, cmd, fd2p));
 }
 
 int
