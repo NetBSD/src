@@ -1,4 +1,4 @@
-/*	$NetBSD: pci_device.c,v 1.1 2001/09/13 22:52:20 thorpej Exp $	*/
+/*	$NetBSD: pci_device.c,v 1.2 2003/03/08 09:53:45 lukem Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -38,6 +38,9 @@
 /*
  * Interface to PCI config space registers for a specific PCI device.
  */
+
+#include <sys/cdefs.h>
+__RCSID("$NetBSD: pci_device.c,v 1.2 2003/03/08 09:53:45 lukem Exp $");
 
 #include <sys/types.h>
 #include <sys/ioctl.h>
