@@ -1,4 +1,5 @@
 ./usr/include/machine/ansi.h
+./usr/include/machine/aout_machdep.h
 ./usr/include/machine/asm.h
 ./usr/include/machine/autoconf.h
 ./usr/include/machine/bsd_audioio.h
@@ -11,8 +12,8 @@
 ./usr/include/machine/db_machdep.h
 ./usr/include/machine/disklabel.h
 ./usr/include/machine/eeprom.h
+./usr/include/machine/elf_machdep.h
 ./usr/include/machine/endian.h
-./usr/include/machine/exec.h
 ./usr/include/machine/fbio.h
 ./usr/include/machine/fbvar.h
 ./usr/include/machine/float.h
