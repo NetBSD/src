@@ -1,4 +1,4 @@
-/*	$NetBSD: usscanner.c,v 1.12 2002/09/23 05:51:24 simonb Exp $	*/
+/*	$NetBSD: usscanner.c,v 1.13 2004/03/22 14:55:42 tls Exp $	*/
 
 /*
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -54,7 +54,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: usscanner.c,v 1.12 2002/09/23 05:51:24 simonb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: usscanner.c,v 1.13 2004/03/22 14:55:42 tls Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -92,7 +92,7 @@ int	usscannerdebug = 0;
 #define USSCANNER_SCSIID_HOST	0x00
 #define USSCANNER_SCSIID_DEVICE	0x01
 
-#define USSCANNER_MAX_TRANSFER_SIZE	MAXBSIZE
+#define USSCANNER_MAX_TRANSFER_SIZE	MAXPHYS
 
 #define USSCANNER_TIMEOUT 2000
 

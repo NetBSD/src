@@ -1,4 +1,4 @@
-/*	$NetBSD: ulpt.c,v 1.60 2003/10/04 21:19:50 augustss Exp $	*/
+/*	$NetBSD: ulpt.c,v 1.61 2004/03/22 14:55:42 tls Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/ulpt.c,v 1.24 1999/11/17 22:33:44 n_hibma Exp $	*/
 
 /*
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ulpt.c,v 1.60 2003/10/04 21:19:50 augustss Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ulpt.c,v 1.61 2004/03/22 14:55:42 tls Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -252,6 +252,7 @@ USB_ATTACH(ulpt)
 	    ifcd >= iend)
 		panic("ulpt: iface desc out of range");
 #endif
+#if 0
 	/* Step through all the descriptors looking for bidir mode */
 	for (id = ifcd, altno = 0;
 	     id < iend;
@@ -279,6 +280,11 @@ USB_ATTACH(ulpt)
 			USB_ATTACH_ERROR_RETURN;
 		}
 	}
+#else
+	id = ifcd;
+	err = 0;
+	altno = 0;
+#endif
 
 	epcount = 0;
 	(void)usbd_endpoint_count(iface, &epcount);
