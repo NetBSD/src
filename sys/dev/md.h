@@ -1,4 +1,4 @@
-/*	$NetBSD: md.h,v 1.6 2000/01/21 12:14:53 tsutsui Exp $	*/
+/*	$NetBSD: md.h,v 1.7 2001/07/02 17:17:25 uch Exp $	*/
 
 /*
  * Copyright (c) 1995 Gordon W. Ross
@@ -85,6 +85,9 @@ struct md_conf {
  * called by the ramdisk driver to allow machine-dependent to
  * match/configure and/or load each ramdisk unit.
  */
-extern void md_attach_hook __P((int unit, struct md_conf *));
-extern void md_open_hook   __P((int unit, struct md_conf *));
+extern void md_attach_hook(int, struct md_conf *);
+extern void md_open_hook(int, struct md_conf *);
+#ifdef MEMORY_DISK_DYNAMIC
+extern void md_root_setconf(char *, size_t);
 #endif
+#endif /* _KERNEL */
