@@ -1,4 +1,4 @@
-.\"	$NetBSD: BUILDING.mdoc,v 1.8 2001/11/08 21:29:06 wiz Exp $
+.\"	$NetBSD: BUILDING.mdoc,v 1.9 2001/11/12 23:16:18 tv Exp $
 .\"
 .\" Copyright (c) 2001 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -38,7 +38,7 @@
 .\" NOTE: After changing this file, run "make build-docs" to generate the
 .\" proper plaintext versions, and check in all BUILDING.* files!
 .\"
-.Dd October 29, 2001
+.Dd November 12, 2001
 .Dt BUILDING 8
 .Os NetBSD
 .
@@ -428,27 +428,6 @@ Indicates whether object directories will be created automatically
 (via a
 .Dq make obj
 pass) at the start of a build.
-.DFLTy
-.
-.It Sy MKTOOLS
-Indicates whether the host tools will be built and installed
-automatically if they are out-of-date.
-.Bl -tag -width "never"
-.It Sy yes
-Build tools as needed into
-.Sy TOOLDIR ,
-but only if the tools in question are out-of-date.
-.It Sy no
-Do not update the tools in
-.Sy TOOLDIR ;
-halt the build as a safety precaution if tools are out-of-date.
-.It Sy always
-Always rebuild the tools in
-.Sy TOOLDIR
-from scratch during a build.  This is similar to the standard
-.Nx
-source tree build method, but is not typically required for host tools.
-.El
 .DFLTy
 .
 .It Sy NBUILDJOBS

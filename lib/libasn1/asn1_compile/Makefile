@@ -1,22 +1,13 @@
-# $NetBSD: Makefile,v 1.11 2001/10/25 07:42:39 thorpej Exp $
-
-NOMAN=	noman
-
-.include <bsd.own.mk>
+# $NetBSD: Makefile,v 1.12 2001/11/12 23:16:20 tv Exp $
 
 DIST=		${.CURDIR}/../../../crypto/dist
 .PATH: ${DIST}/heimdal/lib/asn1 ${DIST}/heimdal/lib/roken ${DIST}/heimdal/lib/vers
 
-WARNS?=  1
-MKLINT= no
+PROG=		asn1_compile
 
-.ifdef HOSTPROG
-# This is is what src/tools/Makefile.host expects
-PROG=	asn1_compile
-XXX_CROSS_TOOL=yes	# temporary hack
-.else
-HOSTPROG= asn1_compile
-.endif
+MKLINT=		no
+MKMAN=		no
+WARNS?=		1
 
 asn1_compile_SRCS = 				\
 	gen.c					\
@@ -42,7 +33,7 @@ roken_SRCS =					\
 SRCS=	$(asn1_compile_SRCS)			\
 	$(roken_SRCS)
 
-YHEADER=	1
+YHEADER=
 
 #LIBROKEN!=	cd ${.CURDIR}/../../libroken && ${PRINTOBJDIR}
 #	 -I${LIBROKEN}				\
@@ -53,8 +44,7 @@ HOST_CPPFLAGS+= -I.				\
 	 -I${DIST}/heimdal/lib/roken		\
 	 -DHAVE_CONFIG_H
 
-.ifndef XXX_CROSS_TOOL
-DPSRCS=	print_version.h
+DPSRCS=		print_version.h
 
 make-print-version.lo: ${.CURDIR}/../../../include/heimdal/version.h
 
@@ -66,5 +56,8 @@ print_version.h: make-print-version
 
 CLEANFILES+=	print_version.h make-print-version make-print-version.lo
 
+# HOSTPROG will be set already if this is a src/tools build.
+.ifndef HOSTPROG
+HOSTPROG=	${PROG}
 .include <bsd.hostprog.mk>
 .endif

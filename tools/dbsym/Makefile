@@ -1,17 +1,12 @@
-#	$NetBSD: Makefile,v 1.1 2001/11/09 05:53:26 thorpej Exp $
+#	$NetBSD: Makefile,v 1.2 2001/11/12 23:16:26 tv Exp $
 
-DBSYM_TARET_PREFIX=${MACHINE_GNU_PLATFORM}-
+.include <bsd.own.mk>
 
-HOSTPROGNAME=	${DBSYM_TARET_PREFIX}dbsym
+HOSTPROGNAME=	${MACHINE_GNU_PLATFORM}-dbsym
 HOST_SRCDIR=	gnu/usr.sbin/dbsym
 
-BFDDIR=	${TOOLCHAINOBJDIR}/toolchain/bfd
-IBERTYDIR= ${TOOLCHAINOBJDIR}/toolchain/libiberty
+TOOLCHAINOBJ!=	cd ${.CURDIR}/../toolchain && ${PRINTOBJDIR}
+BFDDIR=		${TOOLCHAINOBJ}/build/bfd
+IBERTYDIR=	${TOOLCHAINOBJ}/build/libiberty
 
 .include "${.CURDIR}/../Makefile.host"
-
-TOOLCHAINOBJDIR!= cd ${_CURDIR}/../toolchain && ${PRINTOBJDIR}
-
-HOST_CPPFLAGS+= -I${BFDDIR} -I${DIST}/include
-
-${TIMESTAMP}: ${SRCS}
