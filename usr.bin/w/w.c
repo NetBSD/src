@@ -1,4 +1,4 @@
-/*	$NetBSD: w.c,v 1.36 2000/06/08 02:37:28 enami Exp $	*/
+/*	$NetBSD: w.c,v 1.36.2.1 2000/06/26 00:45:30 simonb Exp $	*/
 
 /*-
  * Copyright (c) 1980, 1991, 1993, 1994
@@ -43,7 +43,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1991, 1993, 1994\n\
 #if 0
 static char sccsid[] = "@(#)w.c	8.6 (Berkeley) 6/30/94";
 #else
-__RCSID("$NetBSD: w.c,v 1.36 2000/06/08 02:37:28 enami Exp $");
+__RCSID("$NetBSD: w.c,v 1.36.2.1 2000/06/26 00:45:30 simonb Exp $");
 #endif
 #endif /* not lint */
 
@@ -84,6 +84,8 @@ __RCSID("$NetBSD: w.c,v 1.36 2000/06/08 02:37:28 enami Exp $");
 #include <vis.h>
 
 #include "extern.h"
+
+#define	max(a,b)	(((a)>(b))?(a):(b))
 
 struct timeval	boottime;
 struct utmp	utmp;
@@ -128,7 +130,7 @@ main(argc, argv)
 	struct stat *stp;
 	FILE *ut;
 	struct in_addr l;
-	int ch, i, nentries, nusers, wcmd;
+	int ch, i, nentries, nusers, wcmd, lognamelen;
 	char *memf, *nlistf, *p, *x;
 	char buf[MAXHOSTNAMELEN], errbuf[_POSIX2_LINE_MAX];
 
@@ -225,13 +227,10 @@ main(argc, argv)
 			exit (0);
 	}
 
-#define HEADER	"USER    TTY FROM              LOGIN@  IDLE WHAT\n"
-#define WUSED	(sizeof (HEADER) - sizeof ("WHAT\n"))
-	(void)printf(HEADER);
-
 	if ((kp = kvm_getproc2(kd, KERN_PROC_ALL, 0,
 	    sizeof(struct kinfo_proc2), &nentries)) == NULL)
 		errx(1, "%s", kvm_geterr(kd));
+	lognamelen = 0;
 	for (i = 0; i < nentries; i++, kp++) {
 
 		if (kp->p_stat == SIDL || kp->p_stat == SZOMB)
@@ -242,19 +241,28 @@ main(argc, argv)
 				/*
 				 * Proc is in foreground of this terminal
 				 */
-				if (proc_compare(ep->kp, kp))
+				if (proc_compare(ep->kp, kp)) {
 					ep->kp = kp;
+					lognamelen = max(lognamelen,
+					    strlen(kp->p_login));
+				}
 				break;
 			}
 		}
 	}
+
+	argwidth = printf("%-*sTTY %-*s %*s  IDLE WHAT\n",
+	    lognamelen, "USER", UT_HOSTSIZE, "FROM",
+	    7 /* "dddhhXm" */, "LOGIN@");
+	argwidth -= sizeof("WHAT\n");
+
 	if ((ioctl(STDOUT_FILENO, TIOCGWINSZ, &ws) == -1 &&
 	     ioctl(STDERR_FILENO, TIOCGWINSZ, &ws) == -1 &&
 	     ioctl(STDIN_FILENO, TIOCGWINSZ, &ws) == -1) || ws.ws_col == 0)
 	       ttywidth = 79;
         else
 	       ttywidth = ws.ws_col - 1;
-	argwidth = ttywidth - WUSED;
+	argwidth = ttywidth - argwidth;
 	if (argwidth < 4)
 		argwidth = 8;
 	/* sort by idle time */
@@ -311,8 +319,8 @@ main(argc, argv)
 			    (int)(ep->utmp.ut_host + UT_HOSTSIZE - x), x);
 			p = buf;
 		}
-		(void)printf("%-*.*s %-2.2s %-*.*s ",
-		    UT_NAMESIZE, UT_NAMESIZE, ep->utmp.ut_name,
+		(void)printf("%-*s %-2.2s %-*.*s ",
+		    lognamelen, ep->kp->p_login,
 		    (strncmp(ep->utmp.ut_line, "tty", 3) &&
 		    strncmp(ep->utmp.ut_line, "dty", 3)) ?
 		    ep->utmp.ut_line : ep->utmp.ut_line + 3,
@@ -320,7 +328,7 @@ main(argc, argv)
 		pr_attime(&ep->utmp.ut_time, &now);
 		pr_idle(ep->idle);
 		pr_args(ep->kp);
-		printf("\n");
+		(void)printf("\n");
 	}
 	exit(0);
 }
