@@ -1,4 +1,4 @@
-/*	$NetBSD: rtld.c,v 1.54 2002/09/05 21:57:09 mycroft Exp $	 */
+/*	$NetBSD: rtld.c,v 1.55 2002/09/06 13:27:48 junyoung Exp $	 */
 
 /*
  * Copyright 1996 John D. Polstra.
@@ -60,12 +60,6 @@
 #endif
 
 #define END_SYM		"_end"
-
-/*
- * Debugging support.
- */
-
-typedef void    (*funcptr) __P((void));
 
 /*
  * Function declarations.
