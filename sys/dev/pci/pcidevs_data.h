@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs_data.h,v 1.140 1999/07/14 23:03:09 fvdl Exp $	*/
+/*	$NetBSD: pcidevs_data.h,v 1.141 1999/07/15 14:53:13 augustss Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.135 1999/07/14 23:02:01 fvdl Exp 
+ *	NetBSD: pcidevs,v 1.136 1999/07/15 14:52:48 augustss Exp 
  */
 
 /*
@@ -764,6 +764,12 @@ struct pci_knowndev pci_knowndevs[] = {
 	    0,
 	    "Avance Logic (2nd PCI Vendor ID)",
 	    "ALG2302",
+	},
+	{
+	    PCI_VENDOR_CCUBE, PCI_PRODUCT_CCUBE_CINEMASTER,
+	    0,
+	    "C-Cube Microsystems",
+	    "Cinemaster C 3.0 DVD Decoder",
 	},
 	{
 	    PCI_VENDOR_AVM, PCI_PRODUCT_AVM_FRITZ_CARD,
@@ -5839,6 +5845,12 @@ struct pci_knowndev pci_knowndevs[] = {
 	    PCI_VENDOR_3DO, 0,
 	    PCI_KNOWNDEV_NOPROD,
 	    "The 3D0 Company",
+	    NULL,
+	},
+	{
+	    PCI_VENDOR_CCUBE, 0,
+	    PCI_KNOWNDEV_NOPROD,
+	    "C-Cube Microsystems",
 	    NULL,
 	},
 	{
