@@ -1,4 +1,4 @@
-/* $NetBSD: radioctl.c,v 1.2 2002/01/02 14:46:06 briggs Exp $ */
+/* $NetBSD: radioctl.c,v 1.3 2002/01/02 20:23:01 briggs Exp $ */
 /* $OpenBSD: radioctl.c,v 1.5 2001/12/18 18:42:19 mickey Exp $ */
 /* $RuOBSD: radioctl.c,v 1.4 2001/10/20 18:09:10 pva Exp $ */
 
@@ -72,7 +72,6 @@ struct opt_t {
 	u_int32_t value;
 };
 
-extern char *__progname;
 const char *onchar = "on";
 #define ONCHAR_LEN	2
 const char *offchar = "off";
@@ -187,8 +186,14 @@ main(int argc, char **argv)
 static void
 usage(void)
 {
-	printf("Usage: %s [-f file] [-a] [-n] [-w name=value] [name]\n",
-		__progname);
+	const char *progname = getprogname();
+
+	fprintf(stderr, "Usage:\t%s %s\n\t%s %s\n\t%s %s\n\t%s %s\n",
+		progname, "[-n] variable ...",
+		progname, "[-n] -w name=value ...",
+		progname, "[-n] -a",
+		progname, "[-n] -f file");
+	exit(1);
 }
 
 static void
