@@ -1,4 +1,4 @@
-/*	$NetBSD: su.c,v 1.39.4.1 2000/08/09 14:52:15 assar Exp $	*/
+/*	$NetBSD: su.c,v 1.39.4.2 2000/09/10 18:35:03 erh Exp $	*/
 
 /*
  * Copyright (c) 1988 The Regents of the University of California.
@@ -44,7 +44,7 @@ __COPYRIGHT(
 #if 0
 static char sccsid[] = "@(#)su.c	8.3 (Berkeley) 4/2/94";*/
 #else
-__RCSID("$NetBSD: su.c,v 1.39.4.1 2000/08/09 14:52:15 assar Exp $");
+__RCSID("$NetBSD: su.c,v 1.39.4.2 2000/09/10 18:35:03 erh Exp $");
 #endif
 #endif /* not lint */
 
@@ -173,11 +173,13 @@ main(argc, argv)
 		}
 	argv += optind;
 
+	/* Lower the priority so su runs faster */
 	errno = 0;
 	prio = getpriority(PRIO_PROCESS, 0);
 	if (errno)
 		prio = 0;
-	(void)setpriority(PRIO_PROCESS, 0, -2);
+	if (prio > -2)
+		(void)setpriority(PRIO_PROCESS, 0, -2);
 	openlog("su", LOG_CONS, 0);
 
 	/* get current login name and shell */
@@ -330,8 +332,13 @@ badlogin:
 	if (iscsh == UNSET)
 		iscsh = strstr(avshell, "csh") ? YES : NO;
 
-#ifndef LOGIN_CAP /* This is done by setusercontext() */
 	/* set permissions */
+#ifdef LOGIN_CAP
+	if (setusercontext(lc, pwd, pwd->pw_uid,
+	    (asthem ? (LOGIN_SETPRIORITY | LOGIN_SETUMASK) : 0) |
+	    LOGIN_SETRESOURCES | LOGIN_SETGROUP | LOGIN_SETUSER))
+		err(1, "setting user context");
+#else
 	if (setgid(pwd->pw_gid) < 0)
 		err(1, "setgid");
 	if (initgroups(user, pwd->pw_gid))
@@ -348,8 +355,7 @@ badlogin:
 				err(1, NULL);
 			environ[0] = NULL;
 #ifdef LOGIN_CAP
-			if (setusercontext(lc,
-			    pwd, pwd->pw_uid, LOGIN_SETPATH))
+			if (setusercontext(lc, pwd, pwd->pw_uid, LOGIN_SETPATH))
 				err(1, "setting user context");
 #else
 			(void)setenv("PATH", _PATH_DEFPATH, 1);
@@ -415,13 +421,8 @@ badlogin:
 		syslog(LOG_NOTICE|LOG_AUTH, "%s to %s%s",
 		    username, pwd->pw_name, ontty());
 
+	/* Raise our priority back to what we had before */
 	(void)setpriority(PRIO_PROCESS, 0, prio);
-#ifdef LOGIN_CAP
-	if (setusercontext(lc, pwd, pwd->pw_uid,
-	    (asthem ? (LOGIN_SETPRIORITY | LOGIN_SETUMASK) : 0) |
-	    LOGIN_SETRESOURCES | LOGIN_SETGROUP | LOGIN_SETUSER))
-		err(1, "setting user context");
-#endif
 
 	execv(shell, np);
 	err(1, "%s", shell);
