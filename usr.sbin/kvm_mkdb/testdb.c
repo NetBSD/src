@@ -1,3 +1,5 @@
+/*	$NetBSD: testdb.c,v 1.3 1996/09/30 18:27:04 thorpej Exp $	*/
+
 /*-
  * Copyright (c) 1992, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -32,8 +34,11 @@
  */
 
 #ifndef lint
-/*static char sccsid[] = "from: @(#)testdb.c	8.1 (Berkeley) 6/6/93";*/
-static char *rcsid = "$Id: testdb.c,v 1.2 1994/06/11 07:57:42 mycroft Exp $";
+#if 0
+static char sccsid[] = "from: @(#)testdb.c	8.1 (Berkeley) 6/6/93";
+#else
+static char *rcsid = "$NetBSD: testdb.c,v 1.3 1996/09/30 18:27:04 thorpej Exp $";
+#endif
 #endif /* not lint */
 
 #include <sys/param.h>

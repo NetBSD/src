@@ -1,3 +1,5 @@
+/*	$NetBSD: extern.h,v 1.4 1996/09/30 18:26:59 thorpej Exp $	*/
+
 /*-
  * Copyright (c) 1996 Christopher G. Demetriou.  All rights reserved.
  * Copyright (c) 1992, 1993
@@ -32,7 +34,6 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)extern.h	8.1 (Berkeley) 6/6/93
- *	$Id: extern.h,v 1.3 1996/09/29 02:19:55 cgd Exp $
  */
 
 #ifdef __alpha__
