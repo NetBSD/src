@@ -1,6 +1,6 @@
 #!/bin/sh -
 #
-#	$NetBSD: MAKEDEV,v 1.114 2000/06/04 09:34:06 tron Exp $
+#	$NetBSD: MAKEDEV,v 1.115 2000/06/04 09:34:58 tron Exp $
 #
 # Copyright (c) 1990 The Regents of the University of California.
 # All rights reserved.
@@ -688,6 +688,7 @@ bktr)
 	ln -fs bktr0 bktr
 	ln -fs tuner0 tuner
 	ln -fs vbi0 vbi
+	;;
 
 bktr*)
 	unit=${i#bktr}
