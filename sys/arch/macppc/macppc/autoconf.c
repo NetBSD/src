@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.2 1998/06/05 12:22:45 tsubai Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.3 1998/06/24 15:13:43 tsubai Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -57,9 +57,7 @@ int booted_partition;		/* ...and partition on that device */
 struct devnametobdevmaj powermac_nam2blk[] = {
 	{ "ofdisk",	0 },
 	{ "sd",		4 },
-#ifdef notyet
-	{ "md",		XXX },
-#endif
+	{ "md",		9 },
 	{ NULL,		0 },
 };
 
@@ -121,6 +119,9 @@ findroot()
 		goto out;
 
 	/* XXX for now... */
+	if (strncmp(p, "scsi/sd", 7) != 0)
+		goto out;
+
 	booted_partition = p[len - 2] - '0';
 	targ = p[len - 4] - '0';
 
