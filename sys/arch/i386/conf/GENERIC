@@ -1,11 +1,11 @@
-#	$NetBSD: GENERIC,v 1.346 2000/05/28 21:46:04 jhawk Exp $
+#	$NetBSD: GENERIC,v 1.347 2000/06/01 04:24:01 david Exp $
 #
 #	GENERIC -- everything that's currently supported
 #
 
 include "arch/i386/conf/std.i386"
 
-#ident 		"GENERIC-$Revision: 1.346 $"
+#ident 		"GENERIC-$Revision: 1.347 $"
 
 maxusers	32		# estimated number of users
 
@@ -708,7 +708,6 @@ cmpci*	at pci? dev ? function ?	# C-Media CMI8338/8738
 eap*	at pci? dev ? function ?	# Ensoniq AudioPCI
 eso*	at pci? dev ? function ?	# ESS Solo-1 PCI AudioDrive
 fms*	at pci? dev ? function ?	# Forte Media FM801
-#sbl*	at pci? dev ? function ?	# SoundBlaster Live!
 sv*	at pci? dev ? function ?	# S3 SonicVibes
 
 # ISA Plug-and-Play audio devices
@@ -754,7 +753,6 @@ audio*	at gus?
 audio*	at guspnp?
 audio*	at pas?
 audio*	at sb?
-#audio*	at sbl?
 audio*	at sp?
 audio*	at sv?
 audio*	at uaudio?
