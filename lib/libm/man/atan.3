@@ -30,7 +30,7 @@
 .\" SUCH DAMAGE.
 .\"
 .\"     from: @(#)atan.3	5.1 (Berkeley) 5/2/91
-.\"	$Id: atan.3,v 1.6 1995/04/14 18:39:59 jtc Exp $
+.\"	$Id: atan.3,v 1.7 1997/03/29 23:10:59 christos Exp $
 .\"
 .Dd May 2, 1991
 .Dt ATAN 3
@@ -55,9 +55,10 @@ in the range
 .Bk -words
 .Bq -\*(Pi/2 , +\*(Pi/2 .
 .Ek
-.Sh RETURN VALUES
-Exceptional cases are handled by
-.Xr matherr 3 .
+.\" SYSV_MODE
+.\" .Sh RETURN VALUES
+.\" Exceptional cases are handled by
+.\" .Xr matherr 3 .
 .Sh SEE ALSO
 .Xr acos 3 ,
 .Xr asin 3 ,
@@ -68,5 +69,5 @@ Exceptional cases are handled by
 .Xr sinh 3 ,
 .Xr tan 3 ,
 .Xr tanh 3 ,
-.Xr math 3 ,
-.Xr matherr 3
+.Xr math 3
+.\" .Xr matherr 3
