@@ -1,4 +1,4 @@
-/*	$NetBSD: emacs.c,v 1.10 1999/11/09 00:01:49 jdolecek Exp $	*/
+/*	$NetBSD: emacs.c,v 1.10.4.1 2002/02/06 13:56:11 he Exp $	*/
 
 /*
  *  Emacs-like command line editing and history
@@ -1768,6 +1768,17 @@ x_expand(c)
 	return KSTD;
 }
 
+
+static int
+is_dir(const char *path)
+{
+	struct stat st;
+
+	if (stat(path, &st) == 0)
+		return S_ISDIR(st.st_mode);
+	return 0;
+}
+
 /* type == 0 for list, 1 for complete and 2 for complete-list */
 static void
 do_complete(flags, type)
@@ -1854,8 +1865,15 @@ do_complete(flags, type)
 				 * space to the end...
 				 */
 				if (nwords == 1
-				    && !ISDIRSEP(words[0][nlen - 1]))
-					x_ins(space);
+				    && !ISDIRSEP(words[0][nlen - 1])) {
+					/*
+					 * we may be here because we
+					 * just expanded $HOME in
+					 * which case adding '/' is
+					 * correct.
+					 */
+					x_ins(is_dir(words[0]) ? slash : space);
+				}
 			} else
 				x_e_putc(BEL);
 		}
