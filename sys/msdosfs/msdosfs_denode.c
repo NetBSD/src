@@ -1,4 +1,4 @@
-/*	$NetBSD: msdosfs_denode.c,v 1.13 1995/06/02 15:33:27 mycroft Exp $	*/
+/*	$NetBSD: msdosfs_denode.c,v 1.14 1995/06/02 16:19:55 mycroft Exp $	*/
 
 /*-
  * Copyright (C) 1994 Wolfgang Solfrank.
@@ -313,10 +313,10 @@ deupdat(dep, waitfor)
 
 	/*
 	 * If the modified bit is off, or this denode is from a readonly
-	 * filesystem, or this denode is for a directory, or the denode
-	 * represents an open but unlinked file then don't do anything. DOS
-	 * directory entries that describe a directory do not ever get
-	 * updated.  This is the way dos treats them.
+	 * filesystem, or the denode represents an open but unlinked file
+	 * then don't do anything. DOS directory entries that describe a
+	 * directory do not ever get updated.  This is the way dos treats
+	 * them.
 	 */
 	if ((dep->de_flag & DE_MODIFIED) == 0)
 		return (0);
