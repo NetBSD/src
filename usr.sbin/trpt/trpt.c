@@ -1,4 +1,4 @@
-/*	$NetBSD: trpt.c,v 1.12 2001/09/11 15:45:01 thorpej Exp $	*/
+/*	$NetBSD: trpt.c,v 1.13 2002/10/12 08:57:16 soda Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -81,7 +81,7 @@ __COPYRIGHT(
 #if 0
 static char sccsid[] = "@(#)trpt.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: trpt.c,v 1.12 2001/09/11 15:45:01 thorpej Exp $");
+__RCSID("$NetBSD: trpt.c,v 1.13 2002/10/12 08:57:16 soda Exp $");
 #endif
 #endif /* not lint */
 
@@ -170,7 +170,7 @@ main(argc, argv)
 	system = core = NULL;
 
 	jflag = npcbs = 0;
-	while ((ch = getopt(argc, argv, "afjp:st")) != -1) {
+	while ((ch = getopt(argc, argv, "afjp:stN:M:")) != -1) {
 		switch (ch) {
 		case 'a':
 			++aflag;
