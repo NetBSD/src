@@ -1,5 +1,7 @@
-.\" Copyright (c) 1990 The Regents of the University of California.
-.\" All rights reserved.
+.\"	$NetBSD: du.1,v 1.4 1995/03/28 17:50:14 glass Exp $
+.\"
+.\" Copyright (c) 1990, 1993
+.\"	The Regents of the University of California.  All rights reserved.
 .\"
 .\" Redistribution and use in source and binary forms, with or without
 .\" modification, are permitted provided that the following conditions
@@ -29,18 +31,18 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.\"	from: @(#)du.1	6.15 (Berkeley) 3/1/92
-.\"	$Id: du.1,v 1.3 1993/08/06 17:10:01 mycroft Exp $
+.\"	@(#)du.1	8.2 (Berkeley) 4/1/94
 .\"
-.Dd March 1, 1992
+.Dd April 1, 1994
 .Dt DU 1
-.Os BSD 4.4
+.Os
 .Sh NAME
 .Nm du
-.Nd Display disk usage statistics
+.Nd display disk usage statistics
 .Sh SYNOPSIS
 .Nm du
-.Op Fl a Li \&| Fl s
+.Op Fl H | Fl L | Fl P
+.Op Fl a | Fl s
 .Op Fl kx
 .Op Ar file ...
 .Sh DESCRIPTION
@@ -54,6 +56,13 @@ the current directory is displayed.
 .Pp
 The options are as follows:
 .Bl -tag -width Ds
+.It Fl H
+Symbolic links on the command line are followed.
+(Symbolic links encountered in the tree traversal are not followed.)
+.It Fl L
+All symbolic links are followed.
+.It Fl P
+No symbolic links are followed.
 .It Fl a
 Display an entry for each file in the file hierarchy.
 .It Fl k
@@ -73,10 +82,26 @@ Display only the grand total for the specified files.
 Filesystem mount points are not traversed.
 .El
 .Pp
-If
-.Ar file
-is a symbolic link referencing an existing file, the file referenced
-by the link is reported on instead of the link itself.
+.Nm Du
+counts the storage used by symbolic links and not the files they
+reference unless the
+.Fl H
+or 
+.Fl L 
+option is specified.  
+If either the
+.Fl H
+or
+.Fl L
+options are specified, storage used by any symbolic links which are
+followed is not counted or displayed.
+The
+.Fl H ,
+.Fl L
+and
+.Fl P
+options override each other and the command's actions are determined
+by the last one specified.
 .Pp
 Files having multiple hard links are counted (and displayed) a single
 time per
@@ -94,6 +119,8 @@ size block.
 .El
 .Sh SEE ALSO
 .Xr df 1 ,
+.Xr fts 3 ,
+.Xr symlink 7 ,
 .Xr quot 8
 .Sh HISTORY
 A

@@ -1,6 +1,8 @@
+/*	$NetBSD: du.c,v 1.9 1995/03/28 17:50:18 glass Exp $	*/
+
 /*
- * Copyright (c) 1989 The Regents of the University of California.
- * All rights reserved.
+ * Copyright (c) 1989, 1993, 1994
+ *	The Regents of the University of California.  All rights reserved.
  *
  * This code is derived from software contributed to Berkeley by
  * Chris Newcomb.
@@ -35,46 +37,63 @@
  */
 
 #ifndef lint
-char copyright[] =
-"@(#) Copyright (c) 1989 The Regents of the University of California.\n\
- All rights reserved.\n";
+static char copyright[] =
+"@(#) Copyright (c) 1989, 1993, 1994\n\
+	The Regents of the University of California.  All rights reserved.\n";
 #endif /* not lint */
 
 #ifndef lint
-/*static char sccsid[] = "from: @(#)du.c	5.17 (Berkeley) 5/20/92";*/
-static char rcsid[] = "$Id: du.c,v 1.8 1994/03/30 03:08:45 cgd Exp $";
+#if 0
+static char sccsid[] = "@(#)du.c	8.4 (Berkeley) 4/1/94";
+#else
+static char rcsid[] = "$NetBSD: du.c,v 1.9 1995/03/28 17:50:18 glass Exp $";
+#endif
 #endif /* not lint */
 
+#include <sys/types.h>
+#include <sys/stat.h>
+
+#include <dirent.h>
+#include <err.h>
+#include <errno.h>
+#include <fts.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <errno.h>
-#include <sys/types.h>
-#include <sys/stat.h>
-#include <dirent.h>
 #include <unistd.h>
-#include <fts.h>
-#include <err.h>
 
 int	 linkchk __P((FTSENT *));
 void	 usage __P((void));
 
+int
 main(argc, argv)
 	int argc;
 	char *argv[];
 {
-	register FTS *fts;
-	register FTSENT *p;
-	register int listdirs, listfiles;
+	FTS *fts;
+	FTSENT *p;
 	long blocksize;
-	int aflag, ch, ftsoptions, notused, sflag, kflag;
+	int ftsoptions, listdirs, listfiles;
+	int Hflag, Lflag, Pflag, aflag, ch, kflag, notused, rval, sflag;
 	char **save;
 
-	ftsoptions = FTS_PHYSICAL;
 	save = argv;
-	aflag = kflag = sflag = 0;
-	while ((ch = getopt(argc, argv, "aksx")) != EOF)
-		switch(ch) {
+	Hflag = Lflag = Pflag = aflag = kflag = sflag = 0;
+	ftsoptions = FTS_PHYSICAL;
+	while ((ch = getopt(argc, argv, "HLPaksx")) != EOF)
+		switch (ch) {
+		case 'H':
+			Hflag = 1;
+			Lflag = Pflag = 0;
+			break;
+		case 'L':
+			Lflag = 1;
+			Hflag = Pflag = 0;
+			break;
+		case 'P':
+			Pflag = 1;
+			Hflag = Lflag = 0;
+			break;
 		case 'a':
 			aflag = 1;
 			break;
@@ -92,7 +111,27 @@ main(argc, argv)
 		default:
 			usage();
 		}
+	argc -= optind;
 	argv += optind;
+
+	/*
+	 * XXX
+	 * Because of the way that fts(3) works, logical walks will not count
+	 * the blocks actually used by symbolic links.  We rationalize this by
+	 * noting that users computing logical sizes are likely to do logical
+	 * copies, so not counting the links is correct.  The real reason is
+	 * that we'd have to re-implement the kernel's symbolic link traversing
+	 * algorithm to get this right.  If, for example, you have relative
+	 * symbolic links referencing other relative symbolic links, it gets
+	 * very nasty, very fast.  The bottom line is that it's documented in
+	 * the man page, so it's a feature.
+	 */
+	if (Hflag)
+		ftsoptions |= FTS_COMFOLLOW;
+	if (Lflag) {
+		ftsoptions &= ~FTS_PHYSICAL;
+		ftsoptions |= FTS_LOGICAL;
+	}
 
 	if (aflag) {
 		if (sflag)
@@ -118,9 +157,9 @@ main(argc, argv)
 	if ((fts = fts_open(argv, ftsoptions, NULL)) == NULL)
 		err(1, NULL);
 
-	while (p = fts_read(fts))
-		switch(p->fts_info) {
-		case FTS_D:
+	for (; (p = fts_read(fts)) != NULL;)
+		switch (p->fts_info) {
+		case FTS_D:			/* Ignore. */
 			break;
 		case FTS_DP:
 			p->fts_parent->fts_number += 
@@ -135,17 +174,13 @@ main(argc, argv)
 				    howmany(p->fts_number, blocksize),
 				    p->fts_path);
 			break;
-		case FTS_DNR:
+		case FTS_DC:			/* Ignore. */
+			break;
+		case FTS_DNR:			/* Warn, continue. */
 		case FTS_ERR:
 		case FTS_NS:
 			warn("%s", p->fts_path);
 			break;
-		case FTS_SL:
-			if (p->fts_level == FTS_ROOTLEVEL) {
-				(void)fts_set(fts, p, FTS_FOLLOW);
-				break;
-			}
-			/* FALLTHROUGH */
 		default:
 			if (p->fts_statp->st_nlink > 1 && linkchk(p))
 				break;
@@ -160,7 +195,7 @@ main(argc, argv)
 			p->fts_parent->fts_number += p->fts_statp->st_blocks;
 		}
 	if (errno)
-		err(1, NULL);
+		err(1, "fts_read");
 	exit(0);
 }
 
@@ -171,33 +206,35 @@ typedef struct _ID {
 
 int
 linkchk(p)
-	register FTSENT *p;
+	FTSENT *p;
 {
 	static ID *files;
 	static int maxfiles, nfiles;
-	register ID *fp, *start;
-	register ino_t ino;
-	register dev_t dev;
+	ID *fp, *start;
+	ino_t ino;
+	dev_t dev;
 
 	ino = p->fts_statp->st_ino;
 	dev = p->fts_statp->st_dev;
-	if (start = files)
+	if ((start = files) != NULL)
 		for (fp = start + nfiles - 1; fp >= start; --fp)
 			if (ino == fp->inode && dev == fp->dev)
-				return(1);
+				return (1);
 
 	if (nfiles == maxfiles && (files = realloc((char *)files,
 	    (u_int)(sizeof(ID) * (maxfiles += 128)))) == NULL)
-		err(1, NULL);
+		err(1, "");
 	files[nfiles].inode = ino;
 	files[nfiles].dev = dev;
 	++nfiles;
-	return(0);
+	return (0);
 }
 
 void
 usage()
 {
-	(void)fprintf(stderr, "usage: du [-a | -s] [-kx] [file ...]\n");
+
+	(void)fprintf(stderr,
+		"usage: du [-H | -L | -P] [-a | -s] [-kx] [file ...]\n");
 	exit(1);
 }
