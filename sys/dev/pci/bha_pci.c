@@ -1,4 +1,4 @@
-/*	$NetBSD: bha_pci.c,v 1.8 1997/03/13 00:38:53 cgd Exp $	*/
+/*	$NetBSD: bha_pci.c,v 1.9 1997/03/13 01:04:04 cgd Exp $	*/
 
 /*
  * Copyright (c) 1994, 1996 Charles M. Hannum.  All rights reserved.
@@ -68,10 +68,11 @@ int
 bha_pci_match(parent, match, aux)
 	struct device *parent;
 #ifdef	__BROKEN_INDIRECT_CONFIG
-	void *match, *aux;
+	void *match;
 #else
-	struct cfdata *match; void *aux; 
+	struct cfdata *match;
 #endif
+	void *aux;
 {
 	struct pci_attach_args *pa = aux;
 	bus_space_tag_t iot = pa->pa_iot;
