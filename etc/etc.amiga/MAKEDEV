@@ -1,6 +1,6 @@
 #!/bin/sh -
 #
-#	$NetBSD: MAKEDEV,v 1.55 2000/02/01 05:26:12 mhitch Exp $
+#	$NetBSD: MAKEDEV,v 1.56 2000/02/09 22:23:32 aymeric Exp $
 #
 # Copyright (c) 1990 The Regents of the University of California.
 # All rights reserved.
@@ -206,7 +206,7 @@ sd*|vnd*|ccd*|raid*|wd*)
 	vnd*)	name=vnd;	unit=${i#vnd};	blk=6;	chr=19;;
 	ccd*)	name=ccd;	unit=${i#ccd};	blk=8;	chr=7;;
 	raid*)	name=raid;	unit=${i#raid};	blk=16;	chr=50;;
-	wd*)	name=wd;	unit=${i#wd};	blk=17;	chr=52;
+	wd*)	name=wd;	unit=${i#wd};	blk=17;	chr=52;;
 	esac
 	rm -f $name$unit? r$name$unit?
 	mknod ${name}${unit}a	b $blk $(($unit * 16 + 0))
