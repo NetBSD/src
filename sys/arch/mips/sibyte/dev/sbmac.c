@@ -1,4 +1,4 @@
-/* $NetBSD: sbmac.c,v 1.17 2004/03/18 06:59:30 cgd Exp $ */
+/* $NetBSD: sbmac.c,v 1.18 2004/03/19 06:01:31 cgd Exp $ */
 
 /*
  * Copyright 2000, 2001
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sbmac.c,v 1.17 2004/03/18 06:59:30 cgd Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sbmac.c,v 1.18 2004/03/19 06:01:31 cgd Exp $");
 
 #include "bpfilter.h"
 #include "opt_inet.h"
@@ -1122,7 +1122,7 @@ sbmac_initctx(struct sbmac_softc *s)
 			    SYS_SOC_TYPE(sysrev) == K_SYS_SOC_TYPE_BCM1125 ||
 			    SYS_SOC_TYPE(sysrev) == K_SYS_SOC_TYPE_BCM1125H ||
 			    (SYS_SOC_TYPE(sysrev) == K_SYS_SOC_TYPE_BCM1250 &&
-			     0));
+			     G_SYS_REVISION(sysrev) >= K_SYS_REVISION_BCM1250_PASS3));
 #ifdef SBMAC_EVENT_COUNTERS
 	evcnt_attach_dynamic(&s->sbm_ev_rxintr, EVCNT_TYPE_INTR,
 	    NULL, s->sc_dev.dv_xname, "rxintr");
