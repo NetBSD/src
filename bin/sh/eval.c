@@ -1,4 +1,4 @@
-/*	$NetBSD: eval.c,v 1.54 2000/05/15 03:42:48 elric Exp $	*/
+/*	$NetBSD: eval.c,v 1.55 2000/05/17 07:37:12 elric Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)eval.c	8.9 (Berkeley) 6/8/95";
 #else
-__RCSID("$NetBSD: eval.c,v 1.54 2000/05/15 03:42:48 elric Exp $");
+__RCSID("$NetBSD: eval.c,v 1.55 2000/05/17 07:37:12 elric Exp $");
 #endif
 #endif /* not lint */
 
@@ -754,6 +754,10 @@ evalcommand(cmd, flags, backcmd)
 			pid_t	pid;
 
 			INTOFF;
+			savelocalvars = localvars;
+			localvars = NULL;
+			for (sp = varlist.list ; sp ; sp = sp->next)
+				mklocal(sp->text, VEXPORT);
 			vforked = 1;
 			switch (pid = vfork()) {
 			case -1:
@@ -783,6 +787,8 @@ evalcommand(cmd, flags, backcmd)
 				break;
 			default:
 				handler = savehandler;	/* restore from vfork(2) */
+				poplocalvars();
+				localvars = savelocalvars;
 				if (vforked == 2) {
 					vforked = 0;
 					waitpid(pid, NULL, 0);
@@ -848,7 +854,7 @@ normal_fork:
 		savehandler = handler;
 		handler = &jmploc;
 		for (sp = varlist.list ; sp ; sp = sp->next)
-			mklocal(sp->text);
+			mklocal(sp->text, 0);
 		funcnest++;
 		evaltree(cmdentry.u.func, flags & EV_TESTED);
 		funcnest--;
@@ -929,8 +935,9 @@ cmddone:
 #endif
 		clearredir(vforked?REDIR_VFORK:0);
 		redirect(cmd->ncmd.redirect, vforked?REDIR_VFORK:0);
-		for (sp = varlist.list ; sp ; sp = sp->next)
-			setvareq(sp->text, VEXPORT|VSTACK);
+		if (!vforked)
+			for (sp = varlist.list ; sp ; sp = sp->next)
+				setvareq(sp->text, VEXPORT|VSTACK);
 		envp = environment();
 		shellexec(argv, envp, pathval(), cmdentry.u.index, vforked);
 	}

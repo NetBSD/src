@@ -1,4 +1,4 @@
-/*	$NetBSD: var.c,v 1.23 1999/07/09 03:05:50 christos Exp $	*/
+/*	$NetBSD: var.c,v 1.24 2000/05/17 07:37:12 elric Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)var.c	8.3 (Berkeley) 5/4/95";
 #else
-__RCSID("$NetBSD: var.c,v 1.23 1999/07/09 03:05:50 christos Exp $");
+__RCSID("$NetBSD: var.c,v 1.24 2000/05/17 07:37:12 elric Exp $");
 #endif
 #endif /* not lint */
 
@@ -557,7 +557,7 @@ localcmd(argc, argv)
 	if (! in_function())
 		error("Not in a function");
 	while ((name = *argptr++) != NULL) {
-		mklocal(name);
+		mklocal(name, 0);
 	}
 	return 0;
 }
@@ -571,7 +571,7 @@ localcmd(argc, argv)
  */
 
 void
-mklocal(name)
+mklocal(name, flags)
 	char *name;
 	{
 	struct localvar *lvp;
@@ -590,9 +590,9 @@ mklocal(name)
 		for (vp = *vpp ; vp && ! varequal(vp->text, name) ; vp = vp->next);
 		if (vp == NULL) {
 			if (strchr(name, '='))
-				setvareq(savestr(name), VSTRFIXED);
+				setvareq(savestr(name), VSTRFIXED|flags);
 			else
-				setvar(name, NULL, VSTRFIXED);
+				setvar(name, NULL, VSTRFIXED|flags);
 			vp = *vpp;	/* the new variable */
 			lvp->text = NULL;
 			lvp->flags = VUNSET;
@@ -601,7 +601,7 @@ mklocal(name)
 			lvp->flags = vp->flags;
 			vp->flags |= VSTRFIXED|VTEXTFIXED;
 			if (strchr(name, '='))
-				setvareq(savestr(name), 0);
+				setvareq(savestr(name), flags);
 		}
 	}
 	lvp->vp = vp;
