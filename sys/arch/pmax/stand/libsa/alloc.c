@@ -1,11 +1,9 @@
-/*	$NetBSD: conf.c,v 1.6 1999/01/21 12:33:46 simonb Exp $	*/
-
-/*
- * Copyright (c) 1992, 1993
+/*-
+ * Copyright (c) 1993
  *	The Regents of the University of California.  All rights reserved.
  *
  * This code is derived from software contributed to Berkeley by
- * Ralph Campbell.
+ * The Mach Operating System project at Carnegie-Mellon University.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -35,36 +33,77 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	@(#)conf.c	8.1 (Berkeley) 6/10/93
+ *	from: @(#)alloc.c	8.1 (Berkeley) 6/11/93
+ *  
+ *
+ * Copyright (c) 1989, 1990, 1991 Carnegie Mellon University
+ * All Rights Reserved.
+ *
+ * Author: Alessandro Forin
+ * 
+ * Permission to use, copy, modify and distribute this software and its
+ * documentation is hereby granted, provided that both the copyright
+ * notice and this permission notice appear in all copies of the
+ * software, derivative works or modified versions, and any portions
+ * thereof, and that both notices appear in supporting documentation.
+ * 
+ * CARNEGIE MELLON ALLOWS FREE USE OF THIS SOFTWARE IN ITS "AS IS"
+ * CONDITION.  CARNEGIE MELLON DISCLAIMS ANY LIABILITY OF ANY KIND FOR
+ * ANY DAMAGES WHATSOEVER RESULTING FROM THE USE OF THIS SOFTWARE.
+ * 
+ * Carnegie Mellon requests users of this software to return to
+ * 
+ *  Software Distribution Coordinator  or  Software.Distribution@CS.CMU.EDU
+ *  School of Computer Science
+ *  Carnegie Mellon University
+ *  Pittsburgh PA 15213-3890
+ * 
+ * any improvements or extensions that they make and grant Carnegie the
+ * rights to redistribute these changes.
+ *
+ * $Id: alloc.c,v 1.1 1999/01/21 12:33:41 simonb Exp $
  */
 
-#include <sys/types.h>
-#include <lib/libsa/stand.h>
-#include <lib/libsa/ufs.h>
-#include <pmax/stand/dec_prom.h>
-#include "rz.h"
-#include "tz.h"
+#include <sys/param.h>
 
-const	struct callback *callv = &callvec;
-int	errno;
+/*
+ *	Dynamic memory allocator
+ */
+struct fl {
+	struct fl	*next;
+	unsigned	size;
+} *freelist = (struct fl *)0;
 
-extern void	nullsys();
-extern int	nodev(), noioctl();
+extern char end[];
+static char *top = end;
 
-#ifdef SMALL
-#define rzclose /*(()(struct open_file*))*/0
-#endif	/*SMALL*/
+void *
+alloc(size)
+	unsigned size;
+{
+	register struct fl *f = freelist, **prev;
 
-#if 1
-# define	rzioctl		noioctl
-# define	tzioctl		noioctl
-#endif
+	prev = &freelist;
+	while (f && f->size < size) {
+		prev = &f->next;
+		f = f->next;
+	}
+	if (f == (struct fl *)0) {
+		f = (struct fl *)top;
+		top += ALIGN(size);
+	} else
+		*prev = f->next;
+	return ((void *)f);
+}
 
-struct devsw devsw[] = {
-	{ "rz",	rzstrategy,	rzopen,	rzclose,	rzioctl }, /*0*/
-#ifndef BOOT
-	{ "tz",	tzstrategy,	tzopen,	tzclose,	tzioctl }, /*1*/
-#endif
-};
+void
+free(ptr, size)
+	void *ptr;
+	unsigned size;
+{
+	register struct fl *f = (struct fl *)ptr;
 
-int	ndevs = (sizeof(devsw)/sizeof(devsw[0]));
+	f->size = ALIGN(size);
+	f->next = freelist;
+	freelist = f;
+}

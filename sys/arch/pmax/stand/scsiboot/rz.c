@@ -1,4 +1,4 @@
-/*	$NetBSD: rz.c,v 1.6 1995/06/28 10:22:35 jonathan Exp $	*/
+/*	$NetBSD: rz.c,v 1.7 1999/01/21 12:33:46 simonb Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -44,6 +44,7 @@
 #include <sys/param.h>
 #include <sys/disklabel.h>
 #include "dec_prom.h"
+#include "rz.h"
 
 struct	rz_softc {
 	int	sc_fd;			/* PROM file id */
@@ -58,9 +59,9 @@ rzstrategy(devdata, rw, bn, reqcnt, addr, cnt)
 	void *devdata;
 	int rw;
 	daddr_t bn;
-	u_int reqcnt;
-	char *addr;
-	u_int *cnt;	/* out: number of bytes transfered */
+	size_t reqcnt;
+	void *addr;
+	size_t *cnt;	/* out: number of bytes transfered */
 {
 	register struct rz_softc *sc = (struct rz_softc *)devdata;
 	register int part = sc->sc_part;
