@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-2.0,v 1.1.2.507 2004/11/12 05:08:22 jmc Exp $
+#	$NetBSD: CHANGES-2.0,v 1.1.2.508 2004/11/12 05:29:10 jmc Exp $
 
 A complete list of changes from the initial NetBSD 2.0 branch on 28 March 2004
 until 2.0 release:
@@ -7879,3 +7879,15 @@ sys/arch/amiga/dev/ite_cl.c			1.7
 	volatile. The console screen now shows data and is usable.
 
 	[mhitch, ticket #923]
+
+xfree/xc/programs/Xserver/hw/netbsd/dec/tga/tgawindow.c		1.2
+xfree/xc/programs/Xserver/hw/netbsd/dec/sfb/sfbwindow.c		1.2
+xfree/xc/programs/Xserver/hw/netbsd/alpha/tga/tgawindow.c	1.2
+xfree/xc/programs/Xserver/hw/netbsd/alpha/sfb/sfbwindow.c	1.2
+
+	The 4.4.0 import changed the REGION_INIT() macro and uses with NullBox
+	(which is a NULL pointer) cause a memory fault.  The XalphaNetBSD and
+	XdecNetBSD servers fail with a memory fault on an alpha with a TGA
+	video adapter.  Change REGION_INIT() to REGION_NULL() where used with
+	NullBox.  Both servers will now run on an alpha with a tga card.
+	[mhitch, ticket #925]
