@@ -1,4 +1,4 @@
-/* $NetBSD: genassym.c,v 1.7 1996/06/12 20:02:42 mark Exp $ */
+/* $NetBSD: genassym.c,v 1.8 1996/08/21 20:26:41 mark Exp $ */
 
 /*-
  * Copyright (c) 1982, 1990 The Regents of the University of California.
@@ -74,6 +74,8 @@ main()
 	def("PGSHIFT", PGSHIFT);
 	def("PDSHIFT", PDSHIFT);
 
+	def("P_TRACED", P_TRACED);
+	def("P_PROFIL", P_PROFIL);
 	def("P_ADDR", &p->p_addr);
 	def("P_BACK", &p->p_back);
 	def("P_FORW", &p->p_forw);
@@ -81,6 +83,10 @@ main()
 	def("P_STAT", &p->p_stat);
 	def("P_WCHAN", &p->p_wchan);
 	def("P_VMSPACE", &p->p_vmspace);
+	def("P_FLAG", &p->p_flag);
+	def("P_SIGLIST", &p->p_siglist);
+	def("P_SIGMASK", &p->p_sigmask);
+	def("P_USRPRI", &p->p_usrpri);
 	def("P_SPARE", &p->p_md.__spare);
 
 	def("PCB_PAGEDIR", &pcb->pcb_pagedir);
