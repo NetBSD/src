@@ -28,6 +28,11 @@
  **********************************************************************
  * HISTORY
  * $Log: scan.c,v $
+ * Revision 1.3  1995/06/24 16:21:42  christos
+ * - Don't use system(3) to fork processes. It is a big security hole.
+ * - Encode the filenames in the scan files using strvis(3), so filenames
+ *   that contain newlines or other weird characters don't break the scanner.
+ *
  * Revision 1.2  1994/01/03 14:47:25  brezak
  * Change <sys/dir.h> to <dirent.h>
  *
@@ -90,7 +95,9 @@
 
 #include <libc.h>
 #include <c.h>
+#include <vis.h>
 #include <sys/types.h>
+#include <sys/param.h>
 #include <sys/time.h>
 #include <sys/stat.h>
 #ifdef HAS_POSIX_DIR
@@ -291,7 +298,7 @@ char *release;
 	if (f != NULL) {
 		rewound = TRUE;
 		for (;;) {
-			p = fgets (buf,STRINGLENGTH,f);
+			p = fgets (buf,sizeof(buf),f);
 			if (p == NULL) {
 				if (rewound)
 					break;
@@ -343,7 +350,7 @@ makescanlists ()
 	(void) sprintf (buf,FILERELEASES,collname);
 	f = fopen (buf,"r");
 	if (f != NULL) {
-		while (p = fgets (buf,STRINGLENGTH,f)) {
+		while (p = fgets (buf,sizeof(buf),f)) {
 			q = index (p,'\n');
 			if (q)  *q = 0;
 			if (index ("#;:",*p))  continue;
@@ -459,7 +466,7 @@ static
 readlistfile (fname)
 char *fname;
 {
-	char buf[STRINGLENGTH],*p;
+	char buf[STRINGLENGTH+MAXPATHLEN*4+1],*p;
 	register char *q,*r;
 	register FILE *f;
 	register int ltn,n,i,flags;
@@ -470,7 +477,7 @@ char *fname;
 	f = fopen (fname,"r");
 	if (f == NULL)  goaway ("Can't read list file %s",fname);
 	cdprefix (prefix);
-	while (p = fgets (buf,STRINGLENGTH,f)) {
+	while (p = fgets (buf,sizeof(buf),f)) {
 		if (q = index (p,'\n'))  *q = '\0';
 		if (index ("#;:",*p))  continue;
 		q = nxtarg (&p," \t");
@@ -811,6 +818,7 @@ int getscanfile (scanfile)
 char *scanfile;
 {
 	char buf[STRINGLENGTH];
+	char fname[MAXPATHLEN];
 	struct stat sbuf;
 	register FILE *f;
 	TREE ts;
@@ -826,7 +834,7 @@ char *scanfile;
 		return (FALSE);
 	if ((f = fopen (buf,"r")) == NULL)
 		return (FALSE);
-	if ((p = fgets (buf,STRINGLENGTH,f)) == NULL) {
+	if ((p = fgets (buf,sizeof(buf),f)) == NULL) {
 		(void) fclose (f);
 		return (FALSE);
 	}
@@ -846,7 +854,7 @@ char *scanfile;
 		return (TRUE);
 	}
 	notwanted = FALSE;
-	while (p = fgets (buf,STRINGLENGTH,f)) {
+	while (p = fgets (buf,sizeof(buf),f)) {
 		q = index (p,'\n');
 		if (q)  *q = 0;
 		ts.Tflags = 0;
@@ -880,20 +888,21 @@ char *scanfile;
 			goaway ("scanfile format inconsistant");
 		*q++ = 0;
 		ts.Tmtime = atoi (p);
+		(void) strunvis(fname, q);
 		if (ts.Tctime > lasttime)
 			ts.Tflags |= FNEW;
 		else if (newonly) {
 			for (tl = listTL; tl != NULL; tl = tl->TLnext)
-				if (tmp = Tsearch (tl->TLtree,q))
+				if (tmp = Tsearch (tl->TLtree,fname))
 					tmp->Tflags &= ~FNEW;
 			notwanted = TRUE;
 			continue;
 		}
-		if (Tlookup (refuseT,q)) {
+		if (Tlookup (refuseT,fname)) {
 			notwanted = TRUE;
 			continue;
 		}
-		t = Tinsert (&listT,q,TRUE);
+		t = Tinsert (&listT,fname,TRUE);
 		t->Tmode = ts.Tmode;
 		t->Tflags = ts.Tflags;
 		t->Tctime = ts.Tctime;
@@ -957,9 +966,11 @@ TREE *t;
 FILE **scanF;
 {
 	int recordexec ();
+	char fname[MAXPATHLEN*4+1];
 
 	if (t->Tflags&FBACKUP)  fprintf (*scanF,"B");
 	if (t->Tflags&FNOACCT)  fprintf (*scanF,"N");
+	strvis(fname, t->Tname, VIS_WHITE);
 	fprintf (*scanF,"%o %d %d %s\n",
 		t->Tmode,t->Tctime,t->Tmtime,t->Tname);
 	(void) Tprocess (t->Texec,recordexec,*scanF);
@@ -971,7 +982,9 @@ recordexec (t,scanF)
 TREE *t;
 FILE **scanF;
 {
-	fprintf(*scanF,"X%s\n",t->Tname);
+	char fname[MAXPATHLEN*4+1];
+	strvis(fname, t->Tname, VIS_WHITE);
+	fprintf(*scanF,"X%s\n",fname);
 	return (SCMOK);
 }
 
