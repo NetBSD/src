@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.50 2000/01/19 03:28:23 danw Exp $	*/
+/*	$NetBSD: machdep.c,v 1.51 2000/01/19 20:05:45 thorpej Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -41,7 +41,6 @@
 
 #include <sys/param.h>
 #include <sys/buf.h>
-#include <sys/callout.h>
 #include <sys/exec.h>
 #include <sys/malloc.h>
 #include <sys/map.h>
@@ -469,13 +468,6 @@ cpu_startup()
 	 * are allocated via the pool allocator, and we use direct-mapped
 	 * pool pages.
 	 */
-
-	/*
-	 * Initialize callouts.
-	 */
-	callfree = callout;
-	for (i = 1; i < ncallout; i++)
-		callout[i - 1].c_next = &callout[i];
 
 	format_bytes(pbuf, sizeof(pbuf), ptoa(uvmexp.free));
 	printf("avail memory = %s\n", pbuf);

@@ -1,4 +1,4 @@
-/*	$NetBSD: callout.h,v 1.11 1997/01/22 07:09:06 mikel Exp $	*/
+/*	$NetBSD: callout.h,v 1.12 2000/01/19 20:05:51 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -52,6 +52,8 @@ struct callout {
 #ifdef _KERNEL
 struct	callout *callfree, *callout, calltodo;
 int	ncallout;
+
+void	callout_startup __P((void));
 #endif
 
 #endif /* !_SYS_CALLOUT_H_ */
