@@ -18,7 +18,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$Id: main.c,v 1.7 1993/11/28 23:39:35 paulus Exp $";
+static char rcsid[] = "$Id: main.c,v 1.8 1994/01/25 05:58:05 paulus Exp $";
 #endif
 
 #define SETSID
@@ -223,6 +223,11 @@ main(argc, argv)
 
     pid = getpid();
 
+    if (!ppp_available()) {
+	fprintf(stderr, "Sorry - PPP is not available on this system\n");
+	exit(1);
+    }
+
     /*
      * Initialize to the standard option set, then parse, in order,
      * the system options file, the user's options file, and the command
@@ -259,8 +264,6 @@ main(argc, argv)
 	    syslog(LOG_ERR, "getpgrp(0): %m");
 	    die(1);
 	}
-	if (pgrpid != pid) 
-	    syslog(LOG_WARNING, "warning... not a process group leader");
 
     } else {
 	/*
@@ -336,7 +339,16 @@ main(argc, argv)
 
     signal(SIGUSR1, incdebug);		/* Increment debug flag */
     signal(SIGUSR2, nodebug);		/* Reset debug flag */
-  
+
+    /*
+     * Block SIGIOs and SIGPOLLs for now
+     */
+    sigemptyset(&mask);
+    sigaddset(&mask, SIGIO);
+#ifdef	STREAMS
+    sigaddset(&mask, SIGPOLL);
+#endif
+    sigprocmask(SIG_BLOCK, &mask, NULL);
 
     /*
      * Open the serial device and set it up to be the ppp interface.
@@ -394,14 +406,14 @@ main(argc, argv)
     }
 
     /*
-     * Set process group of device to our process group so we can get SIGIOs.
+     * Set process group of device to our process group so we can get
+     * SIGIOs and SIGHUPs.
      */
 #ifdef SETSID
     if (default_device) {
 	int id = tcgetpgrp(fd);
 	if (id != pgrpid) {
-	    syslog(LOG_WARNING,
-		   "warning: not foreground process group leader");
+	    syslog(LOG_WARNING, "warning: not in tty's process group");
 	}
     } else {
 	if (tcsetpgrp(fd, pgrpid) < 0) {
