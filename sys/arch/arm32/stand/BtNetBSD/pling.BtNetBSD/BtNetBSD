@@ -1,5 +1,5 @@
 REM > BtNetBSD
-REM $NetBSD: BtNetBSD,v 1.4 2001/03/30 23:49:06 reinoud Exp $
+REM $NetBSD: BtNetBSD,v 1.5 2001/04/01 16:50:24 reinoud Exp $
 REM
 REM Copyright (c) 2000, 2001 Reinoud Zandijk
 REM Copyright (c) 1998, 1999, 2000 Ben Harris
@@ -58,7 +58,7 @@ VDU 4, 28, (scwidth%-width%)/2, (scheigth%+heigth%)/2, (scwidth%+width%)/2, (sch
 COLOUR 128:CLS
 
 PRINT''
-PROCcenter("BtNetBSD 0.91")
+PROCcenter("BtNetBSD 0.95")
 PROCcenter("booting NetBSD/arm32 on a RiscPC/RC7500/NC and Imago")
 PRINT''
 
