@@ -1,4 +1,4 @@
-$NetBSD: pcidevs,v 1.586 2003/10/18 18:51:29 matt Exp $
+$NetBSD: pcidevs,v 1.587 2003/10/22 11:30:52 fvdl Exp $
 
 /*
  * Copyright (c) 1995, 1996 Christopher G. Demetriou
@@ -1944,6 +1944,14 @@ product NVIDIA	VANTA		0x002c	Vanta
 product NVIDIA	RIVATNT2M64	0x002d	RIVA TNT2 Model 64
 product NVIDIA	NFORCE2_ATA133	0x0065	nForce2 ATA133 IDE
 product NVIDIA	NFORCE2_MCPT_AC	0x006a	nForce2 MCP-T AC-97
+product NVIDIA	NFORCE3_PCHB	0x00d1	nForce3 Host-PCI bridge
+product NVIDIA	NFORCE3_PCIB	0x00d0	nForce3 PCI-ISA bridge
+product NVIDIA	NFORCE3_SMBUS	0x00d4	nForce3 SMBus controller
+product NVIDIA	NFORCE3_ATA133	0x00d5	nForce3 ATA133 IDE
+product NVIDIA	NFORCE3_OHCI	0x00d7	nForce3 USB Host Controller
+product NVIDIA	NFORCE3_EHCI	0x00d8	nForce3 USB2 Host Controller
+product NVIDIA	NFORCE3_MCPT_AC	0x00da	nForce3 MCP-T AC-97
+product NVIDIA	NFORCE3_PPB	0x00dd	nforce3 PCI-PCI bridge
 product NVIDIA	ALADDINTNT2	0x00a0	Aladdin TNT2
 product NVIDIA	GEFORCE256	0x0100	GeForce 256
 product NVIDIA	GEFORCEDDR	0x0101	GeForce DDR
@@ -2048,6 +2056,7 @@ product PROMISE ULTRA66_0 0x0d38 Ultra66/ATA Bus Master IDE Accelerator
 product PROMISE MBULTRA133 0x1275 Ultra133/ATA Bus Master IDE Accelerator (MB)
 product PROMISE	SATA150TX2PLUSO 0x3375 Serial ATA/150 TX2 Controller plus one parallel IDE bus
 product PROMISE SATA150TX2PLUS 0x3376 Serial ATA/150 TX2plus Bus Master IDE Accelerator
+product PROMISE SATA150FT378 0x3373 FastTrak 378 Serial ATA/150 Controller
 product PROMISE	SATA150TX4 0x3318 Serial ATA/150 TX4 Controller
 product PROMISE ULTRA100 0x4d30	Ultra100/ATA Bus Master IDE Accelerator
 product PROMISE ULTRA33	0x4d33	Ultra33/ATA Bus Master IDE Accelerator
@@ -2082,6 +2091,7 @@ product REALTEK	RT8029		0x8029	8029 Ethernet
 product REALTEK	RT8129		0x8129	8129 10/100 Ethernet
 product REALTEK RT8139B		0x8138	8139B 10/100 Ethernet
 product REALTEK RT8139		0x8139	8139 10/100 Ethernet
+product REALTEK RT8169		0x8169	8169 10/100/1000 Ethernet
 
 /* RICOH products */
 product RICOH Rx5C465	0x0465 5C465 PCI-CardBus bridge
