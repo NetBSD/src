@@ -1,4 +1,4 @@
-/*	$NetBSD: spp_usrreq.c,v 1.30 2002/09/27 15:37:59 provos Exp $	*/
+/*	$NetBSD: spp_usrreq.c,v 1.31 2003/02/01 06:23:48 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1984, 1985, 1986, 1987, 1993
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: spp_usrreq.c,v 1.30 2002/09/27 15:37:59 provos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: spp_usrreq.c,v 1.31 2003/02/01 06:23:48 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -64,6 +64,8 @@ __KERNEL_RCSID(0, "$NetBSD: spp_usrreq.c,v 1.30 2002/09/27 15:37:59 provos Exp $
 #include <netns/spp_debug.h>
 
 #include <machine/stdarg.h>
+
+MALLOC_DEFINE(M_SPIDPQ, "SP queue ent", "SP packet queue entry");
 
 /*
  * SP protocol implementation.
@@ -519,7 +521,7 @@ update_window:
 	}
 
 	MALLOC(si_q, struct spidp_q *, sizeof (struct spidp_q),
-	    M_IPQ/* XXX M_SPIDPQ */, M_NOWAIT);
+	    M_SPIDPQ, M_NOWAIT);
 	if (si_q == NULL) {
 		sppstat.spps_rcvshort ++;	/* XXX rcvmemdrop... */
 		return (1);
@@ -559,7 +561,7 @@ present:
 			}
 			p = q->si_q.le_next;
 			LIST_REMOVE(q, si_q);
-			FREE(q, M_IPQ /* XXX, M_SPIDPQ */);
+			FREE(q, M_SPIDPQ);
 			wakeup = 1;
 			sppstat.spps_rcvpack++;
 #ifdef SF_NEWCALL
@@ -1621,7 +1623,7 @@ spp_close(cb)
 		n = s->si_q.le_next;
 		m = s->si_m;
 		LIST_REMOVE(s, si_q);
-		FREE(s, M_IPQ /* XXX M_SPIDPQ */);
+		FREE(s, M_SPIDPQ);
 		m_freem(m);
 	}
 	free(cb->s_idp, M_PCB);

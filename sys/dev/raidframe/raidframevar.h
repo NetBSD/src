@@ -1,4 +1,4 @@
-/*	$NetBSD: raidframevar.h,v 1.1 2001/10/04 15:43:58 oster Exp $ */
+/*	$NetBSD: raidframevar.h,v 1.2 2003/02/01 06:23:40 thorpej Exp $ */
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -111,6 +111,8 @@
 #include <sys/proc.h>
 #include <sys/lock.h>
 
+#include <sys/mallocvar.h>
+
 /*
  * First, define system-dependent types and constants.
  *
@@ -160,6 +162,9 @@ typedef u_int64_t RF_uint64;
  */
 #define RF_TRUE  1
 #define RF_FALSE 0
+
+/* Malloc types. */
+MALLOC_DECLARE(M_RAIDFRAME);
 
 /*
  * Now, some generic types

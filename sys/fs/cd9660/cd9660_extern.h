@@ -1,4 +1,4 @@
-/*	$NetBSD: cd9660_extern.h,v 1.1 2002/12/23 17:52:08 jdolecek Exp $	*/
+/*	$NetBSD: cd9660_extern.h,v 1.2 2003/02/01 06:23:41 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1994
@@ -43,6 +43,9 @@
 /*
  * Definitions used in the kernel for cd9660 file system support.
  */
+
+#include <sys/mallocvar.h>
+MALLOC_DECLARE(M_ISOFSMNT);
 
 /* CD-ROM Format type */
 enum ISO_FTYPE  { ISO_FTYPE_DEFAULT, ISO_FTYPE_9660, ISO_FTYPE_RRIP, ISO_FTYPE_ECMA };

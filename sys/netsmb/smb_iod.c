@@ -1,4 +1,4 @@
-/*	$NetBSD: smb_iod.c,v 1.3 2002/06/01 23:51:05 lukem Exp $	*/
+/*	$NetBSD: smb_iod.c,v 1.4 2003/02/01 06:23:48 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2000-2001 Boris Popov
@@ -64,9 +64,7 @@
 #define	smb_iod_wakeup(iod)	wakeup(&(iod)->iod_flags)
 
 
-#ifndef __NetBSD__
 static MALLOC_DEFINE(M_SMBIOD, "SMBIOD", "SMB network io daemon");
-#endif
 
 static int smb_iod_next;
 

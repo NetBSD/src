@@ -1,4 +1,4 @@
-/*	$NetBSD: ntfs_subr.c,v 1.2 2003/01/06 12:27:42 wiz Exp $	*/
+/*	$NetBSD: ntfs_subr.c,v 1.3 2003/02/01 06:23:41 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999 Semen Ustimenko (semenu@FreeBSD.org)
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ntfs_subr.c,v 1.2 2003/01/06 12:27:42 wiz Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ntfs_subr.c,v 1.3 2003/02/01 06:23:41 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -61,12 +61,10 @@ __KERNEL_RCSID(0, "$NetBSD: ntfs_subr.c,v 1.2 2003/01/06 12:27:42 wiz Exp $");
 int ntfs_debug = NTFS_DEBUG;
 #endif
 
-#if defined(__FreeBSD__)
 MALLOC_DEFINE(M_NTFSNTVATTR, "NTFS vattr", "NTFS file attribute information");
 MALLOC_DEFINE(M_NTFSRDATA, "NTFS res data", "NTFS resident data");
 MALLOC_DEFINE(M_NTFSRUN, "NTFS vrun", "NTFS vrun storage");
 MALLOC_DEFINE(M_NTFSDECOMP, "NTFS decomp", "NTFS decompression temporary");
-#endif
 
 /* Local struct used in ntfs_ntlookupfile() */
 struct ntfs_lookup_ctx {

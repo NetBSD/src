@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_proc.c,v 1.56 2003/01/22 12:52:16 yamt Exp $	*/
+/*	$NetBSD: kern_proc.c,v 1.57 2003/02/01 06:23:43 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -73,7 +73,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_proc.c,v 1.56 2003/01/22 12:52:16 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_proc.c,v 1.57 2003/02/01 06:23:43 thorpej Exp $");
 
 #include "opt_kstack.h"
 
@@ -161,6 +161,11 @@ struct pool ras_pool;
 struct pool sadata_pool;
 struct pool saupcall_pool;
 struct pool ptimer_pool;
+
+MALLOC_DEFINE(M_EMULDATA, "emuldata", "Per-process emulation data");
+MALLOC_DEFINE(M_PROC, "proc", "Proc structures");
+MALLOC_DEFINE(M_SESSION, "session", "session header");
+MALLOC_DEFINE(M_SUBPROC, "subproc", "Proc sub-structures");
 
 /*
  * The process list descriptors, used during pid allocation and

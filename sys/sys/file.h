@@ -1,4 +1,4 @@
-/*	$NetBSD: file.h,v 1.34 2002/10/23 09:14:57 jdolecek Exp $	*/
+/*	$NetBSD: file.h,v 1.35 2003/02/01 06:23:50 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -42,7 +42,11 @@
 #include <sys/unistd.h>
 
 #ifdef _KERNEL
+#include <sys/mallocvar.h>
 #include <sys/queue.h>
+
+MALLOC_DECLARE(M_FILE);
+MALLOC_DECLARE(M_IOCTLOPS);
 
 struct proc;
 struct uio;

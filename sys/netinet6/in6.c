@@ -1,4 +1,4 @@
-/*	$NetBSD: in6.c,v 1.71 2002/10/17 00:07:44 itojun Exp $	*/
+/*	$NetBSD: in6.c,v 1.72 2003/02/01 06:23:46 thorpej Exp $	*/
 /*	$KAME: in6.c,v 1.198 2001/07/18 09:12:38 itojun Exp $	*/
 
 /*
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: in6.c,v 1.71 2002/10/17 00:07:44 itojun Exp $");
+__KERNEL_RCSID(0, "$NetBSD: in6.c,v 1.72 2003/02/01 06:23:46 thorpej Exp $");
 
 #include "opt_inet.h"
 
@@ -100,6 +100,8 @@ __KERNEL_RCSID(0, "$NetBSD: in6.c,v 1.71 2002/10/17 00:07:44 itojun Exp $");
 #include <netinet6/in6_ifattach.h>
 
 #include <net/net_osdep.h>
+
+MALLOC_DEFINE(M_IP6OPT, "ip6_options", "IPv6 options");
 
 /* enable backward compatibility code for obsoleted ioctls */
 #define COMPAT_IN6IFIOCTL
