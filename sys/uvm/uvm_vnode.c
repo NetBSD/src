@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_vnode.c,v 1.17.2.5 1999/04/29 05:36:41 chs Exp $	*/
+/*	$NetBSD: uvm_vnode.c,v 1.17.2.6 1999/04/30 04:29:15 chs Exp $	*/
 
 /*
  * XXXCDC: "ROUGH DRAFT" QUALITY UVM PRE-RELEASE FILE!   
@@ -552,6 +552,7 @@ uvn_flush(uobj, start, stop, flags)
 	int flags;
 {
 	struct uvm_vnode *uvn = (struct uvm_vnode *) uobj;
+	struct vnode *vp = (struct vnode *)uobj;
 	struct vm_page *pp, *ppnext, *ptmp;
 	struct vm_page *pps[MAXBSIZE >> PAGE_SHIFT], **ppsp;
 	int npages, result, lcv;
@@ -974,15 +975,23 @@ ReTry:
 	/*
 	 * now wait for all I/O if required.
 	 */
-#ifdef UBC
-	/*
-	 * XXX currently not needed since all i/o is sync.
-	 * merge this with VBWAIT.
-	 */
-#else
 	if (need_iosync) {
 
 		UVMHIST_LOG(maphist,"  <<DOING IOSYNC>>",0,0,0,0);
+#ifdef UBC
+		/*
+		 * XXX this doesn't use the new two-flag scheme,
+		 * but to use that, all i/o initiators will have to change.
+		 */
+
+		while (vp->v_numoutput != 0) {
+			vp->v_flag |= VBWAIT;
+			UVM_UNLOCK_AND_WAIT(&vp->v_numoutput,
+					    &uvn->u_obj.vmobjlock, 
+					    FALSE, "uvn_flush",0);
+			simple_lock(&uvn->u_obj.vmobjlock);
+		}
+#else
 		while (uvn->u_nio != 0) {
 			uvn->u_flags |= UVM_VNODE_IOSYNC;
 			UVM_UNLOCK_AND_WAIT(&uvn->u_nio, &uvn->u_obj.vmobjlock, 
@@ -992,8 +1001,8 @@ ReTry:
 		if (uvn->u_flags & UVM_VNODE_IOSYNCWANTED)
 			wakeup(&uvn->u_flags);
 		uvn->u_flags &= ~(UVM_VNODE_IOSYNC|UVM_VNODE_IOSYNCWANTED);
-	}
 #endif
+	}
 
 	/* return, with object locked! */
 	UVMHIST_LOG(maphist,"<- done (retval=0x%x)",retval,0,0,0);
@@ -1506,23 +1515,31 @@ uvm_vnp_setpageblknos(vp, off, len, blkno, ufp_flags, zero)
 {
 	int i;
 	int npages = (len + PAGE_SIZE - 1) >> PAGE_SHIFT;
-	struct vm_page *pgs[npages];
+	struct vm_page *pgs[16];
 	struct uvm_object *uobj = &vp->v_uvm.u_obj;
 
-	memset(pgs, 0, npages);
 	simple_lock(&uobj->vmobjlock);
-	uvn_findpages(uobj, trunc_page(off), &npages, pgs, ufp_flags);
-	for (i = 0; i < npages; i++) {
-		if (pgs[i] == NULL) {
-			continue;
+	while (npages > 0) { 
+		int pages = min(npages, 16);
+
+		memset(pgs, 0, pages);
+		uvn_findpages(uobj, trunc_page(off), &pages, pgs, ufp_flags);
+		for (i = 0; i < pages; i++) {
+			if (pgs[i] == NULL) {
+				continue;
+			}
+			pgs[i]->blkno = blkno;
+			blkno += PAGE_SIZE >> DEV_BSHIFT;
+			if (zero) {
+				uvm_pagezero(pgs[i]);
+			}
 		}
-		pgs[i]->blkno = blkno;
-		blkno += PAGE_SIZE >> DEV_BSHIFT;
-		if (zero) {
-			uvm_pagezero(pgs[i]);
-		}
+		uvm_pager_dropcluster(uobj, NULL, pgs, &pages, PGO_PDFREECLUST,
+				      0);
+
+		off += pages << PAGE_SHIFT;
+		npages -= pages;
 	}
-	uvm_pager_dropcluster(uobj, NULL, pgs, &npages, PGO_PDFREECLUST, 0);
 	simple_unlock(&uobj->vmobjlock);
 }
 
@@ -1545,11 +1562,11 @@ uvm_vnp_zerorange(vp, off, len)
 	 */
 
 	while (len) {
-		int byteoff = off & (MAXBSIZE - 1);
-		int bytelen = min(len, MAXBSIZE - byteoff);
+		vsize_t bytelen = len;
 
-		win = ubc_alloc(&vp->v_uvm.u_obj, off, bytelen, UBC_WRITE);
-		memset(win + (off & (MAXBSIZE - 1)), 0, bytelen);
+		win = ubc_alloc(&vp->v_uvm.u_obj, off, &bytelen, UBC_WRITE);
+		memset(win, 0, bytelen);
 		ubc_release(win, 0);
+		len -= bytelen;
 	}
 }
