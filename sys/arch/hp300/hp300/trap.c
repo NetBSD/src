@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.31 1995/03/09 08:59:56 mycroft Exp $	*/
+/*	$NetBSD: trap.c,v 1.32 1995/03/26 08:03:44 cgd Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -1004,7 +1004,7 @@ syscall(code, frame)
 #endif
 #ifdef KTRACE
 	if (KTRPOINT(p, KTR_SYSCALL))
-		ktrsyscall(p->p_tracep, code, callp->sy_narg, argsize, args);
+		ktrsyscall(p->p_tracep, code, argsize, args);
 #endif
 	if (error)
 		goto bad;
