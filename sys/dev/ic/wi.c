@@ -1,4 +1,4 @@
-/*	$NetBSD: wi.c,v 1.36 2002/01/21 11:29:22 ichiro Exp $	*/
+/*	$NetBSD: wi.c,v 1.37 2002/01/21 21:55:05 ichiro Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wi.c,v 1.36 2002/01/21 11:29:22 ichiro Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wi.c,v 1.37 2002/01/21 21:55:05 ichiro Exp $");
 
 #define WI_HERMES_AUTOINC_WAR	/* Work around data write autoinc bug. */
 #define WI_HERMES_STATS_WAR	/* Work around stats counter bug. */
@@ -484,7 +484,7 @@ void wi_update_stats(sc)
 
 	switch (gen.wi_type) {
 	case WI_INFO_SCAN_RESULTS:
-		if (gen.wi_len < 3)
+		if (gen.wi_len <= 3)
 			break;
 		if (sc->sc_prism2) {	/* Prism2 chip */
 			naps = 2 * (gen.wi_len - 3) / sizeof(ap2);
