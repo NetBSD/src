@@ -1,6 +1,6 @@
-#	$NetBSD: Makefile,v 1.6 1999/07/22 01:16:59 hubertf Exp $
+#	$NetBSD: Makefile,v 1.7 1999/09/04 22:38:18 christos Exp $
 
-TEXINFO=        am-utils.texi
-INFOFLAGS=      -I${.CURDIR}
+TEXINFO = am-utils.info
+INFOFLAGS = -I${.CURDIR}
 
 .include <bsd.info.mk>
