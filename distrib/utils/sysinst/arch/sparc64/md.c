@@ -1,4 +1,4 @@
-/*	$NetBSD: md.c,v 1.8 2001/01/14 02:38:22 mrg Exp $	*/
+/*	$NetBSD: md.c,v 1.9 2002/12/05 01:17:30 fvdl Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -69,14 +69,14 @@ md_get_info(void)
 	fd = open(devname, O_RDONLY, 0);
 	if (fd < 0) {
 		if (logging)
-			(void)fprintf(log, "Can't open %s\n", devname);
+			(void)fprintf(logfp, "Can't open %s\n", devname);
 		endwin();
 		fprintf(stderr, "Can't open %s\n", devname);
 		exit(1);
 	}
 	if (ioctl(fd, DIOCGDINFO, &disklabel) == -1) {
 		if (logging)
-			(void)fprintf(log, "Can't read disklabel on %s.\n",
+			(void)fprintf(logfp, "Can't read disklabel on %s.\n",
 				devname);
 		endwin();
 		fprintf(stderr, "Can't read disklabel on %s.\n", devname);
@@ -192,7 +192,7 @@ md_cleanup_install(void)
 
 	sprintf(sedcmd, "sed 's/rc_configured=NO/rc_configured=YES/' < %s > %s",
 	    realfrom, realto);
-	scripting_fprintf(log, "%s\n", sedcmd);
+	scripting_fprintf(logfp, "%s\n", sedcmd);
 	do_system(sedcmd);
 
 	run_prog(RUN_FATAL, NULL, "mv -f %s %s", realto, realfrom);

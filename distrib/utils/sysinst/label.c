@@ -1,4 +1,4 @@
-/*	$NetBSD: label.c,v 1.21 2002/07/29 01:30:25 grant Exp $	*/
+/*	$NetBSD: label.c,v 1.22 2002/12/05 01:17:16 fvdl Exp $	*/
 
 /*
  * Copyright 1997 Jonathan Stone
@@ -36,7 +36,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: label.c,v 1.21 2002/07/29 01:30:25 grant Exp $");
+__RCSID("$NetBSD: label.c,v 1.22 2002/12/05 01:17:16 fvdl Exp $");
 #endif
 
 #include <sys/types.h>
@@ -213,13 +213,14 @@ savenewlabel(lp, nparts)
 	f = fopen("/etc/disktab", "w");
 #endif
 	if (logging)
-		(void)fprintf(log, "Creating disklabel %s\n", bsddiskname);
+		(void)fprintf(logfp, "Creating disklabel %s\n", bsddiskname);
 	scripting_fprintf(NULL, "cat <<EOF >>/etc/disktab\n");
 	if (f == NULL) {
 		endwin();
 		(void)fprintf(stderr, "Could not open /etc/disktab");
 		if (logging)
-			(void)fprintf(log, "Failed to open /etc/diskabel for appending.\n");
+			(void)fprintf(logfp,
+			    "Failed to open /etc/diskabel for appending.\n");
 		exit (1);
 	}
 	scripting_fprintf(f, "%s|NetBSD installation generated:\\\n", bsddiskname);

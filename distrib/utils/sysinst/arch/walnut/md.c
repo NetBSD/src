@@ -1,4 +1,4 @@
-/*	$NetBSD: md.c,v 1.2 2002/08/02 05:11:35 grant Exp $ */
+/*	$NetBSD: md.c,v 1.3 2002/12/05 01:17:31 fvdl Exp $ */
 
 /*
  * Copyright 1997,2002 Piermont Information Systems Inc.
@@ -358,7 +358,7 @@ md_cleanup_install(void)
 	strncpy(realto, target_expand("/etc/rc.conf.install"), STRSIZE);
 	sprintf(sedcmd, "sed 's/rc_configured=NO/rc_configured=YES/' < %s > %s",
 	    realfrom, realto);
-	scripting_fprintf(log, "%s\n", sedcmd);
+	scripting_fprintf(logfp, "%s\n", sedcmd);
 	do_system(sedcmd);
 
 	run_prog(RUN_FATAL, NULL, "mv -f %s %s", realto, realfrom);

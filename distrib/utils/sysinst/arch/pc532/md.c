@@ -1,4 +1,4 @@
-/*	$NetBSD: md.c,v 1.23 2002/08/02 05:11:33 grant Exp $	*/
+/*	$NetBSD: md.c,v 1.24 2002/12/05 01:17:27 fvdl Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -108,7 +108,7 @@ int	md_post_disklabel (void)
 	printf (msg_string(MSG_dobootblks), diskdev);
 	sprintf(bimcmd, "bim -y -c init -c 'add /usr/mdec/boot boot' -c 'default 0' -c 'exit' /dev/%sc",
 		diskdev);
-	scripting_fprintf(log, "%s\n", sedcmd);
+	scripting_fprintf(logfp, "%s\n", sedcmd);
 
 	do_system(bimcmd);
 	return 0;

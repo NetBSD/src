@@ -1,4 +1,4 @@
-/*	$NetBSD: util.c,v 1.75 2002/10/19 20:33:19 provos Exp $	*/
+/*	$NetBSD: util.c,v 1.76 2002/12/05 01:17:18 fvdl Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -225,7 +225,7 @@ get_via_floppy()
 			sprintf(catcmd, "/bin/cat %s >> %s",
 				fullname, distname);
 			if (logging)
-				(void)fprintf(log, "%s\n", catcmd);
+				(void)fprintf(logfp, "%s\n", catcmd);
 			if (scripting)
 				(void)fprintf(script, "%s\n", catcmd);
 			do_system(catcmd);
@@ -577,7 +577,7 @@ cleanup_dist(name)
 	if (list_file == NULL) {
 		saved_errno = errno;
 		if (logging)
-			fprintf(log, "Open of %s failed: %s\n", file_path,
+			fprintf(logfp, "Open of %s failed: %s\n", file_path,
 			    strerror(saved_errno));
 		if (saved_errno == ENOENT)
 			return 1;
@@ -597,7 +597,7 @@ cleanup_dist(name)
 		if (lstat(file_path, &st) != 0) {
 			saved_errno = errno;
 			if (logging)
-				fprintf(log, "stat() of %s failed: %s\n",
+				fprintf(logfp, "stat() of %s failed: %s\n",
 				    file_path, strerror(saved_errno));
 			if (saved_errno == ENOENT)
 				continue;
@@ -624,7 +624,7 @@ cleanup_dist(name)
 		snprintf(current->name, MAXPATHLEN, "%s", file_path);
 		current->type = st.st_mode & S_IFMT;
 		if (logging)
-			fprintf(log, "Adding file %s, type %d to list of "
+			fprintf(logfp, "Adding file %s, type %d to list of "
 			    "obsolete file\n", current->name, current->type);
 	}
 	fclose(list_file);
@@ -660,7 +660,7 @@ cleanup_dist(name)
 				continue;	/* don't worry about
 						   non-existing files */
 			if (logging)
-				fprintf(log, "rm %s failed: %s\n",
+				fprintf(logfp, "rm %s failed: %s\n",
 				    current->name, strerror(saved_errno));
 			msg_display_add(MSG_unlink_fail, current->name,
 			    strerror(saved_errno));
@@ -682,7 +682,7 @@ cleanup_dist(name)
 		saved_errno = errno;
 		if (saved_errno == ENOTEMPTY) {
 			if (logging)
-				fprintf(log, "dir %s not empty, "
+				fprintf(logfp, "dir %s not empty, "
 				    "trying to rename to %s.old\n",
 				    current->name, current->name);
 			snprintf(file_path, MAXPATHLEN,
@@ -694,7 +694,7 @@ cleanup_dist(name)
 			if (rename(current->name, file_path) != 0) {
 				saved_errno = errno;
 				if (logging)
-					fprintf(log, "mv %s %s failed: %s\n", 
+					fprintf(logfp, "mv %s %s failed: %s\n", 
 					    current->name, file_path,
 					    strerror(saved_errno));
 				msg_display_add(MSG_rename_fail, current->name,
@@ -710,7 +710,7 @@ cleanup_dist(name)
 			if (saved_errno == ENOENT)
 				continue;
 			if (logging)
-				fprintf(log, "rm %s failed: %s\n",
+				fprintf(logfp, "rm %s failed: %s\n",
 				    current->name, strerror(saved_errno));
 			msg_display_add(MSG_unlink_fail, current->name,
 			    strerror(saved_errno));

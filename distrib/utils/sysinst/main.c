@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.28 2002/07/27 10:02:50 grant Exp $	*/
+/*	$NetBSD: main.c,v 1.29 2002/12/05 01:17:16 fvdl Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -65,7 +65,7 @@ static void process_f_flag (char *);
 static int exit_cleanly = 0;	/* Did we finish nicely? */
 int logging;			/* are we logging everything? */
 int scripting;			/* are we building a script? */
-FILE *log;			/* log file */
+FILE *logfp;			/* log file */
 FILE *script;			/* script file */
 
 #ifdef DEBUG
@@ -244,9 +244,9 @@ cleanup()
 	run_prog(0, NULL, "/sbin/umount /mnt2");
 	endwin();
 	if (logging) {
-		fprintf(log, "Log ended at: %s\n", asctime(localtime(&tloc)));
-		fflush(log);
-		fclose(log);
+		fprintf(logfp, "Log ended at: %s\n", asctime(localtime(&tloc)));
+		fflush(logfp);
+		fclose(logfp);
 	}
 	if (scripting) {
 		fprintf(script, "# Script ended at: %s\n", asctime(localtime(&tloc)));
