@@ -1,4 +1,4 @@
-/*	$NetBSD: cz.c,v 1.12 2000/12/28 22:59:11 sommerfeld Exp $	*/
+/*	$NetBSD: cz.c,v 1.13 2001/01/20 04:19:21 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2000 Zembu Labs, Inc.
@@ -879,6 +879,8 @@ cztty_getttysoftc(dev_t dev)
 	for (i = 0, j = 0; i < cz_cd.cd_ndevs; i++) {
 		k = j;
 		cz = cz_cd.cd_devs[i];
+		if (cz == NULL)
+			continue;
 		if (cz->cz_ports == NULL)
 			continue;
 		j += cz->cz_nchannels;
