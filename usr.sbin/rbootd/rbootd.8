@@ -1,4 +1,4 @@
-.\"	$NetBSD: rbootd.8,v 1.4 1997/05/29 01:48:46 cgd Exp $
+.\"	$NetBSD: rbootd.8,v 1.5 1997/10/17 12:50:03 lukem Exp $
 .\"
 .\" Copyright (c) 1988, 1992 The University of Utah and the Center
 .\"	for Software Science (CSS).
@@ -51,20 +51,20 @@
 .Nm rbootd
 .Nd HP remote boot server
 .Sh SYNOPSIS
-.Nm rbootd
+.Nm
 .Op Fl ad
 .Op Fl i Ar interface
 .Op config_file
 .Sh DESCRIPTION
 The
-.Nm rbootd
+.Nm
 utility services boot requests from Hewlett-Packard workstations over a
 local area network.
 All boot files must reside in the boot file directory; further, if a
 client supplies path information in its boot request, it will be silently
 stripped away before processing.
 By default,
-.Nm rbootd
+.Nm
 only responds to requests from machines listed in its configuration file.
 .Pp
 The options are as follows:
@@ -74,13 +74,13 @@ Respond to boot requests from any machine.
 The configuration file is ignored if this option is specified.
 .It Fl d
 Run
-.Nm rbootd
+.Nm
 in debug mode.
 Packets sent and received are displayed to the terminal.
 .It Fl i Ar interface
 Service boot requests on specified interface.
 If unspecified,
-.Nm rbootd
+.Nm
 searches the system interface list for the lowest numbered, configured
 ``up'' interface (excluding loopback).
 Ties are broken by choosing the earliest match.
@@ -89,7 +89,7 @@ Ties are broken by choosing the earliest match.
 Specifying
 .Ar config_file
 on the command line causes
-.Nm rbootd
+.Nm
 to use a different configuration file from the default.
 .Pp
 The configuration file is a text file where each line describes a particular
@@ -113,7 +113,7 @@ Here is a sample configuration file:
 .It 8::9:1:C6:75	SYSHPBSD,SYSHPUX	# jaguar (either)
 .El
 .Pp
-.Nm Rbootd
+.Nm
 logs status and error messages via
 .Xr syslog 3 .
 A startup message is always logged, and in the case of fatal errors (or
