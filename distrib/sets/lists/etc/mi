@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.50 2000/05/02 12:46:06 simonb Exp $
+# $NetBSD: mi,v 1.51 2000/05/03 10:57:29 itojun Exp $
 ./.cshrc
 ./.profile
 ./dev/MAKEDEV.local
@@ -27,6 +27,9 @@
 ./etc/inetd.conf
 ./etc/lkm.conf
 ./etc/localtime
+./etc/mail/aliases
+./etc/mail/helpfile
+./etc/mail/sendmail.cf
 ./etc/mail.rc
 ./etc/mailer.conf
 ./etc/man.conf
@@ -195,4 +198,3 @@
 ./var/run/utmp
 ./var/yp/Makefile.main
 ./var/yp/Makefile.yp
-
