@@ -1,4 +1,4 @@
-/*	$NetBSD: kvm_sparc64.c,v 1.4 2000/06/29 06:34:26 mrg Exp $	*/
+/*	$NetBSD: kvm_sparc64.c,v 1.5 2000/08/01 16:47:55 eeh Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -42,7 +42,7 @@
 #if 0
 static char sccsid[] = "@(#)kvm_sparc.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: kvm_sparc64.c,v 1.4 2000/06/29 06:34:26 mrg Exp $");
+__RCSID("$NetBSD: kvm_sparc64.c,v 1.5 2000/08/01 16:47:55 eeh Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -87,12 +87,15 @@ _kvm_freevtop(kd)
  * Prepare for translation of kernel virtual addresses into offsets
  * into crash dump files. We use the MMU specific goop written at the
  * front of the crash dump by pmap_dumpmmu().
+ *
+ * We should read in and cache the ksegs here to speed up operations...
  */
 int
 _kvm_initvtop(kd)
 	kvm_t *kd;
 {
-	kd->nbpg = 8196;
+	kd->nbpg = 0x2000;
+
 	return (0);
 }
 
@@ -110,50 +113,87 @@ _kvm_kvatop(kd, va, pa)
 {
 	cpu_kcore_hdr_t *cpup = kd->cpu_data;
 	u_long kernbase = cpup->kernbase;
+	uint64_t *pseg, *pdir, *ptbl;
+	int64_t data;
 
 	if (va < kernbase)
-		goto err;
+		goto lose;
 
-	/* Handle the wired 4MB TTE */
-	if (va > cpup->kernbase && va < cpup->kernbase + 4*1024*1024) {
+	/* Handle the wired 4MB TTEs */
+	if (va > cpup->ktextbase && va < (cpup->ktextbase + cpup->ktextsz)) {
 		u_long vaddr;
 
-		vaddr = va - cpup->kernbase;
-		*pa = cpup->kphys + va;
-		return (4*1024*1024 - va);
+		vaddr = va - cpup->ktextbase;
+		*pa = cpup->ktextp + vaddr;
+		return (cpup->ktextsz - vaddr);
 	}
-#if 0
+
+	if (va > cpup->kdatabase && va < (cpup->kdatabase + cpup->kdatasz)) {
+		u_long vaddr;
+
+		vaddr = va - cpup->kdatabase;
+		*pa = cpup->kdatap + vaddr;
+		return (cpup->kdatasz - vaddr);
+	}
+
+
 	/*
-	 * Layout of CPU segment:
-	 *	cpu_kcore_hdr_t;
-	 *	[alignment]
-	 *	phys_ram_seg_t[cpup->nmemseg];
-	 *	segmap[cpup->nsegmap];
-	 *	ptes[cpup->npmegs];
+	 * Parse kernel page table.
 	 */
-	segmaps = (struct segmap *)((long)kd->cpu_data + cpup->segmapoffset);
-	ptes = (int *)((int)kd->cpu_data + cpup->pmegoffset);
-	nkreg = ((int)((-(unsigned)kernbase) / NBPRG));
-	nureg = 256 - nkreg;
-
-	vr = VA_VREG(va);
-	vs = VA_VSEG(va);
-
-	sp = &segmaps[(vr-nureg)*NSEGRG + vs];
-	if (sp->sg_npte == 0)
-		goto err;
-	if (sp->sg_pmeg == cpup->npmeg - 1) /* =seginval */
-		goto err;
-	pte = ptes[sp->sg_pmeg * nptesg + VA_VPG(va)];
-	if ((pte & PG_V) != 0) {
-		long p, off = VA_OFF(va);
-
-		p = (pte & PG_PFNUM) << pgshift;
-		*pa = p + off;
-		return (kd->nbpg - off);
+	pseg = (uint64_t *)(u_long)cpup->segmapoffset;
+	if (pread(kd->pmfd, &pdir, sizeof(pdir),
+		_kvm_pa2off(kd, (u_long)&pseg[va_to_seg(va)])) 
+		!= sizeof(pdir)) {
+		_kvm_syserr(kd, 0, "could not read L1 PTE");
+		goto lose;
 	}
-#endif
-err:
+
+	if (!pdir) {
+		_kvm_err(kd, 0, "invalid L1 PTE");
+		goto lose;
+	}
+
+	if (pread(kd->pmfd, &ptbl, sizeof(ptbl),
+		_kvm_pa2off(kd, (u_long)&pdir[va_to_dir(va)])) 
+		!= sizeof(ptbl)) {
+		_kvm_syserr(kd, 0, "could not read L2 PTE");
+		goto lose;
+	}
+
+	if (!ptbl) {
+		_kvm_err(kd, 0, "invalid L2 PTE");
+		goto lose;
+	}
+
+	if (pread(kd->pmfd, &data, sizeof(data),
+		_kvm_pa2off(kd, (u_long)&ptbl[va_to_pte(va)])) 
+		!= sizeof(data)) {
+		_kvm_syserr(kd, 0, "could not read TTE");
+		goto lose;
+	}
+
+	if (data >= 0) {
+		_kvm_err(kd, 0, "invalid L2 TTE");
+		goto lose;
+	}
+	
+	/* 
+	 * Calculate page offsets and things.
+	 *
+	 * XXXX -- We could support multiple page sizes.
+	 */
+	va = va & (kd->nbpg - 1);
+	data &= TLB_PA_MASK;
+	*pa = data + va;
+
+	/*
+	 * Parse and trnslate our TTE.
+	 */
+
+	return (kd->nbpg - va);
+
+lose:
+	*pa = -1;
 	_kvm_err(kd, 0, "invalid address (%x)", va);
 	return (0);
 }
