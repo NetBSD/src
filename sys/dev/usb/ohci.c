@@ -1,4 +1,4 @@
-/*	$NetBSD: ohci.c,v 1.85 2000/04/01 09:27:35 augustss Exp $	*/
+/*	$NetBSD: ohci.c,v 1.86 2000/04/21 15:38:55 augustss Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/ohci.c,v 1.22 1999/11/17 22:33:40 n_hibma Exp $	*/
 
 /*
@@ -2352,6 +2352,7 @@ ohci_root_ctrl_start(xfer)
 			OWRITE4(sc, port, UPS_OVERCURRENT_INDICATOR);
 			break;
 		case UHF_PORT_POWER:
+			/* Yes, writing to the LOW_SPEED bit clears power. */
 			OWRITE4(sc, port, UPS_LOW_SPEED);
 			break;
 		case UHF_C_PORT_CONNECTION:
