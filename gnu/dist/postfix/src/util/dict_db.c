@@ -439,6 +439,13 @@ static DICT *dict_db_open(const char *class, const char *path, int open_flags,
 
     db_path = concatenate(path, ".db", (char *) 0);
 
+    /*
+     * Note: DICT_FLAG_LOCK is used only by programs that do fine-grained (in
+     * the time domain) locking while accessing individual database records.
+     * 
+     * Programs such as postmap/postalias use their own large-grained (in the
+     * time domain) locks while rewriting the entire file.
+     */
     if (dict_flags & DICT_FLAG_LOCK) {
 	if ((lock_fd = open(db_path, open_flags, 0644)) < 0)
 	    msg_fatal("open database %s: %m", db_path);
@@ -517,13 +524,24 @@ static DICT *dict_db_open(const char *class, const char *path, int open_flags,
     if (fstat(dict_db->dict.fd, &st) < 0)
 	msg_fatal("dict_db_open: fstat: %m");
     dict_db->dict.mtime = st.st_mtime;
+
+    /*
+     * Warn if the source file is newer than the indexed file, except when
+     * the source file changed only seconds ago.
+     */
+    if ((dict_flags & DICT_FLAG_LOCK) != 0
+	&& stat(path, &st) == 0
+	&& st.st_mtime > dict_db->dict.mtime
+	&& st.st_mtime < time((time_t *) 0) - 100)
+	msg_warn("database %s is older than source file %s", db_path, path);
+
     close_on_exec(dict_db->dict.fd, CLOSE_ON_EXEC);
     dict_db->dict.flags = dict_flags | DICT_FLAG_FIXED;
     if ((dict_flags & (DICT_FLAG_TRY1NULL | DICT_FLAG_TRY0NULL)) == 0)
 	dict_db->dict.flags |= (DICT_FLAG_TRY1NULL | DICT_FLAG_TRY0NULL);
     dict_db->db = db;
     myfree(db_path);
-    return (DICT_DEBUG(&dict_db->dict));
+    return (DICT_DEBUG (&dict_db->dict));
 }
 
 /* dict_hash_open - create association with data base */

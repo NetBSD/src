@@ -125,6 +125,8 @@ home_mailbox =
 # localpart), $recipient_delimiter. Specify ${name?value} or
 # ${name:value} to expand value only when $name does (does not) exist.
 #
+# luser_relay works only for the default Postfix local delivery agent.
+#
 # luser_relay = $user@other.host
 # luser_relay = $local@other.host
 # luser_relay = admin+$local
@@ -219,12 +221,13 @@ local_destination_recipient_limit = 1
 
 # DELIVERED-TO
 #
-# The prepend_delivered_header controls when Postfix should prepend 
-# a Delivered-To: message header.  
+# The prepend_delivered_header controls when the Postfix local delivery
+# agent should prepend a Delivered-To: message header.
 #
-# By default, Postfix prepends a Delivered-To: header when forwarding
-# mail and when delivering to file (mailbox) and command. Turning off
-# the Delivered-To: header when forwarding mail is not recommended.
+# By default, the Postfix local delivery agent prepends a Delivered-To:
+# header when forwarding mail and when delivering to file (mailbox)
+# and command. Turning off the Delivered-To: header when forwarding
+# mail is not recommended.
 #
 # prepend_delivered_header = command, file, forward
 # prepend_delivered_header = forward
