@@ -1,4 +1,4 @@
-# $NetBSD: form,v 1.6 2002/03/27 08:53:43 lukem Exp $
+# $NetBSD: form,v 1.7 2002/04/02 03:00:05 garbled Exp $
 script:script1,do_rcshutdown	Run /etc/rc.shutdown?
 iscript:3,1,999,script2,rcshutdown_timeout	Number of seconds before terminating shutdown
 escript:15,script2,hostname	Hostname, if blank use /etc/myname
@@ -7,6 +7,7 @@ escript:15,script2,domainname	NIS Domain Name, if blank use /etc/defaultdomain
 escript:15,script2,critical_filesystems_local	Filesystems to mount before network config
 escript:15,script2,critical_filesystems_remote	Filesystems to mount early in boot process
 script:script1,no_swap		Set to yes if you have no swap configured
+script:script1,swapoff		Remove block-type swap partitions upon shutdown?
 script:script1,lkm		Run /etc/rc.lkm
 script:script1,savecore		Run savecore at boot?
 escript:15,script2,savecore_flags	Flags to pass to savecore
@@ -23,9 +24,9 @@ script:script1,ipnat		Start ipnat NAT daemon?
 script:script1,ipfs		Save and load ipf/ipnat state at boot?
 escript:15,script2,ipfs_flags	Flags to pass ipfs
 script:script1,ipsec		Start ipsec security daemon?
-script:script1,racoon		Start IKE daemon?
 script:script1,ipmon		Write ipfilter messages to syslog?
 escript:15,script2,ipmon_flags	Flags to pass to ipmon
+script:script1,racoon		Start IKE daemon?
 script:script1,auto_ifconfig	Automatically configure all available interfaces?
 escript:15,script2,net_interfaces	If above is NO, configure which interfaces?
 script:script1,flushroutes	Flush routes in netstart?
@@ -38,6 +39,8 @@ list:host,autohost,router	IPV6 mode
 script:script1,ip6sitelocal	IPv6 sitelocal addresses
 script:script1,rtsol		IPV6 autoconfig on non routers
 escript:15,script2,rtsol_flags	Flags to pass to rtsol
+script:script1,ifwatchd		Run ifwatchd daemon?
+escript:40,script2,ifwatchd_flags
 script:script1,altqd		Run ALTQ configuration/monitoring daemon?
 escript:15,script2,altqd_flags	Flags to pass altqd
 script:script1,inetd		Run inetd?
@@ -60,6 +63,7 @@ script:script1,lpd		Run lpd?
 escript:15,script2,lpd_flags	Flags for lpd
 script:script1,sshd		Run sshd?
 escript:15,script2,sshd_flags	Flags for sshd
+escript:20,script2,sshd_conf_dir	Directory for sshd config files
 script:script1,routed		Run routed?
 escript:15,script2,routed_flags	Flags for routed
 script:script1,gated		Run gated?
@@ -81,6 +85,8 @@ script:script1,rbootd		Run rbootd?
 escript:15,script2,rbootd_flags	Flags for rbootd
 script:script1,mopd		Run mopd?
 escript:15,script2,mopd_flags	Flags for mopd
+script:script1,ndbootd		Run ndbootd?
+escript:30,script2,ndbootd_flags	Flags for ndbootd
 script:script1,rtadvd		Run rtadvd?
 escript:15,script2,rtadvd_flags	Flags for rtadvd
 script:script1,xfs		Run X11 Font Server (xfs)?
@@ -118,7 +124,7 @@ script:script1,poffd		Run x68k power switch monitor?
 escript:30,script2,poffd_flags	Flags for poffd
 script:script1,screenblank	Run screenblank (i386/sparc only)?
 escript:15,script2,screenblank_flags	Flags for screenblank
-script:script1,wscons		Configure wscons?
-escript:15,script2,wscons_flags	Flags to pass to /etc/rc.wscons
 script:script1,moused		Configure moused?
 escript:15,script2,moused_flags	Flags for moused
+script:script1,wscons		Configure wscons?
+escript:15,script2,wscons_flags	Flags to pass to /etc/rc.wscons
