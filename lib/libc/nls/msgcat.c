@@ -31,7 +31,7 @@ up-to-date.  Many thanks.
 ******************************************************************/
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static char *rcsid = "$Id: msgcat.c,v 1.10 1994/12/23 13:01:33 cgd Exp $";
+static char *rcsid = "$Id: msgcat.c,v 1.10.2.1 1995/02/17 10:51:21 jtc Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 /* Edit History
@@ -48,7 +48,7 @@ static char *rcsid = "$Id: msgcat.c,v 1.10 1994/12/23 13:01:33 cgd Exp $";
  * We need a better way of handling errors than printing text.  I need
  * to add an error handling routine.
  */
-
+#include "namespace.h"
 #include "nl_types.h"
 #include "msgcat.h"
 
@@ -79,7 +79,7 @@ static char *rcsid = "$Id: msgcat.c,v 1.10 1994/12/23 13:01:33 cgd Exp $";
 static nl_catd loadCat();
 static nl_catd loadSet();
 
-nl_catd 	_catopen( name, type)
+nl_catd 	catopen( name, type)
 __const char *name;
 int type;
 {
@@ -236,7 +236,7 @@ int msgId;
     return(msg);
 }
 
-char	*_catgets( catd, setId, msgId, dflt)
+char	*catgets( catd, setId, msgId, dflt)
 nl_catd catd;
 int setId;
 int msgId;
@@ -253,7 +253,7 @@ char *dflt;
 }
 
 
-int		_catclose( catd)
+int		catclose( catd)
 nl_catd catd;
 {
     MCCatT	*cat = (MCCatT *) catd;
