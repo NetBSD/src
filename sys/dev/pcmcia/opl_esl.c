@@ -1,4 +1,4 @@
-/* $NetBSD: opl_esl.c,v 1.7 2002/10/02 16:52:20 thorpej Exp $ */
+/* $NetBSD: opl_esl.c,v 1.8 2004/08/11 16:20:05 drochner Exp $ */
 
 /*
  * Copyright (c) 2001 Jared D. McNeill <jmcneill@invisible.yi.org>
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: opl_esl.c,v 1.7 2002/10/02 16:52:20 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: opl_esl.c,v 1.8 2004/08/11 16:20:05 drochner Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -76,8 +76,8 @@ opl_esl_match(struct device *parent, struct cfdata *match, void *aux)
 	if (aa->type != AUDIODEV_TYPE_OPL)
 		return (0);
 	memset(&sc, 0, sizeof(sc));
-	sc.iot = ssc->sc_pcioh.iot;
-	sc.ioh = ssc->sc_pcioh.ioh;
+	sc.iot = ssc->sc_iot;
+	sc.ioh = ssc->sc_ioh;
 
 	return (opl_find(&sc));
 }
@@ -88,8 +88,8 @@ opl_esl_attach(struct device *parent, struct device *self, void *aux)
 	struct esl_pcmcia_softc *ssc = (struct esl_pcmcia_softc *)parent;
 	struct opl_softc *sc = (struct opl_softc *)self;
 
-	sc->iot = ssc->sc_pcioh.iot;
-	sc->ioh = ssc->sc_pcioh.ioh;
+	sc->iot = ssc->sc_iot;
+	sc->ioh = ssc->sc_ioh;
 	sc->offs = 0;
 	strcpy(sc->syn.name, "ESS AudioDrive ");
 
