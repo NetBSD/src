@@ -1,4 +1,4 @@
-#	$NetBSD: files.i386,v 1.83 1997/04/24 20:45:53 mycroft Exp $
+#	$NetBSD: files.i386,v 1.84 1997/05/13 22:48:02 jtk Exp $
 #
 # new style config file for i386 architecture
 #
@@ -65,7 +65,7 @@ include "../../../dev/pci/files.pci"
 file	arch/i386/pci/pci_machdep.c	pci
 
 # PCI-Host bridge chipsets
-device	pchb
+device	pchb:	pcibus
 attach	pchb at pci
 file	arch/i386/pci/pchb.c		pchb
 
