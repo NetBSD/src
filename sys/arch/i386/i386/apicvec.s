@@ -1,4 +1,4 @@
-/* $NetBSD: apicvec.s,v 1.1.2.5 2001/04/30 16:23:09 sommerfeld Exp $ */	
+/* $NetBSD: apicvec.s,v 1.1.2.6 2001/04/30 20:36:37 sommerfeld Exp $ */	
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -90,63 +90,6 @@ XINTR(ltimer):
 	pushl	%eax
 	call	_C_LABEL(lapic_clockintr)
 	addl	$4,%esp		
-	jmp	_C_LABEL(Xdoreti)
-
-	.globl XINTR(softclock), XINTR(softnet), XINTR(softser)
-XINTR(softclock):
-	pushl	$0		
-	pushl	$T_ASTFLT
-	INTRENTRY		
-	MAKE_FRAME		
-	pushl	CPL
-	movl	$IPL_SOFTCLOCK,CPL
-	andl	$~(1<<SIR_CLOCK),_C_LABEL(ipending)
-	movl	$0,_C_LABEL(local_apic)+LAPIC_EOI
-	sti
-	call	_C_LABEL(apic_intlock)
-	pushl	$I386_SOFTINTR_SOFTCLOCK
-	call	_C_LABEL(softintr_dispatch)
-	addl	$4,%esp
-	call	_C_LABEL(apic_intunlock)	
-	jmp	_C_LABEL(Xdoreti)
-	
-XINTR(softnet):
-	pushl	$0		
-	pushl	$T_ASTFLT
-	INTRENTRY		
-	MAKE_FRAME		
-	pushl	CPL
-	movl	$IPL_SOFTNET,CPL
-	andl	$~(1<<SIR_NET),_C_LABEL(ipending)
-	movl	$0,_C_LABEL(local_apic)+LAPIC_EOI	
-	sti
-	call	_C_LABEL(apic_intlock)		
-	xorl	%edi,%edi
-	xchgl	_C_LABEL(netisr),%edi
-
-#include "net/netisr_dispatch.h"
-	
-	pushl	$I386_SOFTINTR_SOFTNET
-	call	_C_LABEL(softintr_dispatch)
-	addl	$4,%esp
-	call	_C_LABEL(apic_intunlock)		
-	jmp	_C_LABEL(Xdoreti)
-
-XINTR(softser):	
-	pushl	$0		
-	pushl	$T_ASTFLT
-	INTRENTRY		
-	MAKE_FRAME		
-	pushl	CPL
-	movl	$IPL_SOFTSERIAL,CPL
-	andl	$~(1<<SIR_SERIAL),_C_LABEL(ipending)
-	movl	$0,_C_LABEL(local_apic)+LAPIC_EOI	
-	sti
-	call	_C_LABEL(apic_intlock)
-	pushl	$I386_SOFTINTR_SOFTSERIAL
-	call	_C_LABEL(softintr_dispatch)
-	addl	$4,%esp
-	call	_C_LABEL(apic_intunlock)	
 	jmp	_C_LABEL(Xdoreti)
 
 #if NIOAPIC > 0
