@@ -1,4 +1,4 @@
-/*	$NetBSD: db_trace.c,v 1.7 2002/10/10 08:53:22 scw Exp $	*/
+/*	$NetBSD: db_trace.c,v 1.8 2002/10/18 09:16:14 scw Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -63,6 +63,8 @@
 
 /*
  * A stack frame is created using "addi{,.l} r15, -n, r15"
+ * or "sub r15, rN, r15" if the frame is bigger than 511 bytes.
+ * In the latter case, there will have been a preceding "movi ###, rN".
  */
 #define	OP_ADDI_R15_n_R15_M	0xfff003ff
 #define	OP_ADDI_n(op)		IMM_EXT(((int)((op) >> 10) & 0x3ff), 10)
@@ -71,6 +73,25 @@
 #else
 #define	OP_ADDI_R15_n_R15	0xd0f000f0
 #endif
+
+/*
+ * Detect frame creation using movi/sub.
+ * Note that this will not work if the frame is > 32767 bytes in size.
+ * Having said that, anyone who writes a kernel function which uses
+ * that much automatic variable space on the stack should be hung, drawn
+ * and quartered.
+ */
+#define	OP_SUB_R15_Rn_R15_M	0xffff03ff
+#define	OP_SUB_n(op)		(((op) >> 10) & 0x3f)
+#define	OP_MOVI_imm_Rn_M	0xfc00000f
+#define	OP_MOVI_imm(op)		IMM_EXT(((int)((op) >> 10) & 0xffff), 16)
+#define	OP_MOVI_reg(op)		(((op) >> 4) & 0x3f)
+#ifndef _LP64
+#define	OP_SUB_R15_Rn_R15	0x00fa00f0
+#else
+#define	OP_SUB_R15_Rn_R15	0x00fb00f0
+#endif
+#define	OP_MOVI_imm_Rn		0xcc000000
 
 /*
  * The prologue is generally terminated by "add{,.l} r15, r63, r14"
@@ -117,6 +138,13 @@ static int prev_frame(db_addr_t, db_addr_t, db_addr_t *, db_addr_t *);
 
 static struct intrframe *cur_intrframe;
 
+/*
+ * When grovelling a function's prologue, we track the values assigned
+ * to r0-r62 using "movi" instructions. This is in case the prologue is
+ * setting up a >511 byte frame by subtracting a register from r15.
+ */
+static	int	prologue_movi[64];
+
 void
 db_stack_trace_print(db_expr_t addr, int have_addr, db_expr_t count,
     char *modif, void (*pr)(const char *, ...))
@@ -124,6 +152,7 @@ db_stack_trace_print(db_expr_t addr, int have_addr, db_expr_t count,
 	struct proc *p;
 	db_addr_t pc, fp;
 	db_addr_t nextpc, nextfp;
+	db_addr_t lastpc = 0, lastfp = 0;
 	db_sym_t sym;
 	db_expr_t diff, pc_adj;
 	char *symp;
@@ -187,7 +216,8 @@ db_stack_trace_print(db_expr_t addr, int have_addr, db_expr_t count,
 	 * Walk the call stack until the PC or FP are not valid
 	 */
 	while (pc >= SH5_KSEG0_BASE && fp >= SH5_KSEG0_BASE &&
-	    (pc & 3) == 0 && (fp & 7) == 0) {
+	    (pc & 3) == 0 && (fp & 7) == 0 &&
+	    (pc != lastpc || fp != lastfp)) {
 		/*
 		 * Lookup the name of the current function
 		 */
@@ -226,6 +256,9 @@ db_stack_trace_print(db_expr_t addr, int have_addr, db_expr_t count,
 			pc = fp = SH5_KSEG0_BASE;
 			break;
 		}
+
+		lastpc = pc;
+		lastfp = fp;
 
 		if (strcmp(symp, "Lsh5_event_sync") == 0 ||
 		    strcmp(symp, "Ltrapagain") == 0 ||
@@ -312,6 +345,9 @@ db_stack_trace_print(db_expr_t addr, int have_addr, db_expr_t count,
 	else
 	if ((fp & 7) != 0)
 		(*pr)("Frame pointer is invalid: 0x%lx(fp=0x%lx)\n", pc, fp);
+	else
+	if (lastpc == pc && lastfp == fp)
+	       (*pr)("Program counter and Frame pointer bodge. In asm code?\n");
 }
 
 /*
@@ -414,6 +450,20 @@ prev_frame(db_addr_t curfp, db_addr_t curpc,
 			lastfpoff += OP_ADDI_n(op);
 			prevfp = curfp - lastfpoff;
 		} else
+		if ((op & OP_SUB_R15_Rn_R15_M) == OP_SUB_R15_Rn_R15) {
+			/*
+			 * Found "sub r15, rN, r15"
+			 *
+			 * This is the same as the previous case, except this
+			 * time we're subtracting a value in a register from
+			 * the current stack pointer.
+			 *
+			 * We should already have seen the corresponding
+			 * "movi imm, rN".
+			 */
+			lastfpoff -= (long) prologue_movi[OP_SUB_n(op)];
+			prevfp = curfp - lastfpoff;
+		} else
 		if ((op & OP_ST_R15_n_R14_M) == OP_ST_R15_n_R14) {
 			/*
 			 * Found "st r15, n, r14"
@@ -488,6 +538,17 @@ prev_frame(db_addr_t curfp, db_addr_t curpc,
 			case 7:	*pprevpc = (db_addr_t)ddb_regs.tf_callee.tr7;
 				break;
 			}
+		} else
+		if ((op & OP_MOVI_imm_Rn_M) == OP_MOVI_imm_Rn) {
+			/*
+			 * Found a "movi imm, Rn". There's a chance this
+			 * value may be used to set up a stack frame if
+			 * the frame size is > 511 bytes. So we stash it
+			 * away somewhere for later use should it be
+			 * needed.
+			 */
+			if (OP_MOVI_reg(op) < 63)
+			       prologue_movi[OP_MOVI_reg(op)] = OP_MOVI_imm(op);
 		} else
 		if ((op & OP_ADD_R15_R63_R14_M) == OP_ADD_R15_R63_R14) {
 			/*
