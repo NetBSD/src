@@ -1,4 +1,4 @@
-/*	$NetBSD: icpsp.c,v 1.8 2003/06/13 05:57:31 thorpej Exp $	*/
+/*	$NetBSD: icpsp.c,v 1.9 2003/09/18 01:33:59 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: icpsp.c,v 1.8 2003/06/13 05:57:31 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: icpsp.c,v 1.9 2003/09/18 01:33:59 mycroft Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -127,7 +127,7 @@ icpsp_attach(struct device *parent, struct device *self, void *aux)
 	sc->sc_channel.chan_channel = 0;
 	sc->sc_channel.chan_ntargets = ((icp->icp_class & ICP_FC) != 0 ?
 	    127 : 16); /* XXX bogus check */
-	sc->sc_channel.chan_nluns = 7;
+	sc->sc_channel.chan_nluns = 8;
 	sc->sc_channel.chan_id = icp->icp_bus_id[sc->sc_busno];
 	sc->sc_channel.chan_flags = SCSIPI_CHAN_NOSETTLE;
 
