@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.1 2000/11/24 19:49:40 scw Exp $
+#	$NetBSD: Makefile.inc,v 1.2 2000/11/24 22:07:32 scw Exp $
 #
 #	etc.mvme68k/Makefile.inc -- mvme68k-specific etc Makefile targets
 #
@@ -20,12 +20,12 @@ snap_md_post:
 .endif
 	cd ${.CURDIR}/../distrib && ${MAKE} depend && ${MAKE}
 	cd ${.CURDIR}/../distrib/mvme68k && ${MAKE} release
+	cd ${.CURDIR}/../distrib/miniroot && ${MAKE} release
 	cd ${.CURDIR}/../distrib/notes && ${MAKE} release
 	cp -p ${DESTDIR}/usr/mdec/sboot ${RELEASEDIR}/installation/netboot
 	cp -p ${DESTDIR}/usr/mdec/netboot ${RELEASEDIR}/installation/netboot
 	cp -p ${DESTDIR}/usr/mdec/stboot ${RELEASEDIR}/installation/tapeimage
 	cp -p ${DESTDIR}/usr/mdec/bootst ${RELEASEDIR}/installation/tapeimage
-	sh ../distrib/sets/makesums -t ${RELEASEDIR}/installation/miniroot
-	sh ../distrib/sets/makesums -t ${RELEASEDIR}/installation/netboot
-	sh ../distrib/sets/makesums -t ${RELEASEDIR}/installation/tapeimage
+	sh ../distrib/sets/makesums -t ${RELEASEDIR}/installation/netboot -all
+	sh ../distrib/sets/makesums -t ${RELEASEDIR}/installation/tapeimage -all
 
