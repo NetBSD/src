@@ -34,12 +34,12 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)Ovfork.s	5.1 (Berkeley) 4/23/90
- *	$Id: Ovfork.S,v 1.7 1994/01/27 15:02:37 mycroft Exp $
+ *	$Id: Ovfork.S,v 1.8 1994/10/26 19:49:44 mycroft Exp $
  */
 
 #if defined(SYSLIBC_SCCS) && !defined(lint)
 	.text
-	.asciz "$Id: Ovfork.S,v 1.7 1994/01/27 15:02:37 mycroft Exp $"
+	.asciz "$Id: Ovfork.S,v 1.8 1994/10/26 19:49:44 mycroft Exp $"
 #endif /* SYSLIBC_SCCS and not lint */
 
 #include "SYS.h"
@@ -54,7 +54,7 @@
 ENTRY(vfork)
 	popl	%ecx		/* my rta into ecx */
 	movl	$(SYS_vfork),%eax
-	LCALL(7,0)
+	int	$0x80
 	jc	err
 	decl	%edx
 	andl	%edx,%eax
