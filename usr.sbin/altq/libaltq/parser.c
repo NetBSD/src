@@ -47,7 +47,6 @@
 #include <altq/altq_rio.h>
 #include "altq_qop.h"
 #include "qop_cdnr.h"
-#include "if_nameindex.h"
 
 #define show_help(op)  printf(cmd_tab[op].cmd_help)
 

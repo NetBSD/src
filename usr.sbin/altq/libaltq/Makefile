@@ -1,38 +1,19 @@
-PREFIX?=	/usr/local
-SYS_INCLUDES?=	-I/usr/src/sys-altq
+#	$NetBSD: Makefile,v 1.2 2000/12/16 18:57:35 thorpej Exp $
 
-LIB=	libaltq.a
+#WARNS=	2
 
-OBJS= 	qop.o parser.o quip_server.o qop_cdnr.o qop_errlist.o \
-	qop_conf.o qop_dummy.o qop_cbq.o qop_hfsc.o qop_priq.o \
-	qop_red.o qop_rio.o qop_blue.o qop_wfq.o qop_fifoq.o \
-	qop_priq.o
+LIB=	altq
+SRCS=	parser.c qop.c qop_blue.c qop_cbq.c qop_cdnr.c qop_conf.c \
+	qop_dummy.c qop_errlist.c qop_fifoq.c qop_hfsc.c qop_priq.c \
+	qop_red.c qop_rio.c qop_wfq.c quip_server.c
 
-CFLAGS=		-g -Wall
-CFLAGS+=	-Wpointer-arith -Wcast-qual -Wmissing-prototypes -ansi
-DEFINES=	-DALTQ $(SYS_DEFINES)
-INCLUDES=	-I. $(SYS_INCLUDES)
+CPPFLAGS+= -DALTQ
 
-all: $(LIB)
+MKLINT=		no
+MKPIC=		no
+MKPROFILE=	no
 
-install: $(LIB)
-	$(INSTALL) $(COPY) -m 0444 $(LIB) $(PREFIX)/lib
+# only needed during build
+libinstall::
 
-libaltq.a: libaltq.a($(OBJS))
-	rm -f $@
-	ar cq $@ `lorder $(OBJS) | tsort -q`
-	ranlib $@
-
-.c.o: 
-	$(CC) $(CFLAGS) $(INCLUDES) $(DEFINES) -c $*.c
-
-clean:;		-rm -f $(LIB) *.a *.o core *.core *.bak ,* *~ "#"*
-
-
-
-
-
-
-
-
-
+.include <bsd.lib.mk>
