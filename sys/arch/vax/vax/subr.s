@@ -1,4 +1,4 @@
-/*	$NetBSD: subr.s,v 1.26 1998/09/09 00:09:19 thorpej Exp $	   */
+/*	$NetBSD: subr.s,v 1.27 1998/09/30 14:10:00 ragge Exp $	   */
 
 /*
  * Copyright (c) 1994 Ludd, University of Lule}, Sweden.
@@ -91,7 +91,8 @@ _sigcode:	pushr	$0x3f
 		movl	0x24(sp),r0
 		calls	$3,(r0)
 		popr	$0x3f
-		chmk	$SYS_sigreturn
+		chmk	$SYS___sigreturn14
+		chmk	$SYS_exit
 		halt	
 		.align	2
 _esigcode:
