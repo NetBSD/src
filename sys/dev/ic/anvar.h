@@ -1,4 +1,4 @@
-/*	$NetBSD: anvar.h,v 1.4 2000/12/19 08:00:56 onoe Exp $	*/
+/*	$NetBSD: anvar.h,v 1.5 2000/12/20 23:30:36 onoe Exp $	*/
 /*
  * Copyright (c) 1997, 1998, 1999
  *	Bill Paul <wpaul@ctr.columbia.edu>.  All rights reserved.
@@ -61,6 +61,10 @@
 #define AN_DEFAULT_NODENAME	"NetBSD"
 
 #define AN_DEFAULT_IBSS		"NetBSD IBSS"
+
+/* The interrupts we will handle */
+#define AN_INTRS	\
+	(AN_EV_RX|AN_EV_TX|AN_EV_TX_EXC|AN_EV_ALLOC|AN_EV_LINKSTAT)
 
 /*
  * register space access macros
