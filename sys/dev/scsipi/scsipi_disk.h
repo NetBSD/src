@@ -1,4 +1,4 @@
-/*	$NetBSD: scsipi_disk.h,v 1.11 2004/12/04 19:02:25 thorpej Exp $	*/
+/*	$NetBSD: scsipi_disk.h,v 1.12 2004/12/07 23:07:31 thorpej Exp $	*/
 
 /*
  * SCSI and SCSI-like interfaces description
@@ -56,9 +56,9 @@
  * SCSI command format
  */
 
-#define	READ_BIG		0x28
-#define WRITE_BIG		0x2a
-struct scsipi_rw_big {
+#define	READ_10			0x28
+#define WRITE_10		0x2a
+struct scsipi_rw_10 {
 	u_int8_t opcode;
 	u_int8_t byte2;
 #define	SRWB_RELADDR	0x01	/* obsolete */
