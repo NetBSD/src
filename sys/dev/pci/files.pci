@@ -1,4 +1,4 @@
-#	$NetBSD: files.pci,v 1.180 2002/10/08 13:09:18 kent Exp $
+#	$NetBSD: files.pci,v 1.181 2002/10/11 00:57:59 thorpej Exp $
 #
 # Config file and device description for machine-independent PCI code.
 # Included by ports that need it.  Requires that the SCSI files be
@@ -215,10 +215,10 @@ attach	gem at pci with gem_pci
 file	dev/pci/if_gem_pci.c		gem_pci
 
 # NE2000-compatible PCI Ethernet cards
-defparam opt_ipkdb.h	IPKDB_NE_PCISLOT	: IPKDB_NE_PCI
-defflag	opt_ipkdb.h	IPKDB_NE_PCI		: IPKDB_NE IPKDB_NE_PCISLOT
+defparam opt_ipkdb.h	IPKDB_NE_PCISLOT
+defflag	opt_ipkdb.h	IPKDB_NE_PCI		: IPKDB_NE
 attach	ne at pci with ne_pci: rtl80x9
-file	dev/pci/if_ne_pci.c		ne_pci | IPKDB_NE_PCI
+file	dev/pci/if_ne_pci.c		ne_pci | ipkdb_ne_pci
 
 # Texas Instruments ThunderLAN Chip.
 device	tl: ether, ifnet, arp, i2c, i2c_eeprom, mii, mii_bitbang
