@@ -2,11 +2,11 @@
 # Distribution kernel (NEC VR based model) kernel config file
 
 #
-# 	$NetBSD: GENERIC,v 1.56 2000/06/30 17:10:17 itojun Exp $
+# 	$NetBSD: GENERIC,v 1.57 2000/07/02 10:01:30 takemura Exp $
 #
 include		"arch/hpcmips/conf/std.hpcmips"
 
-#ident 		"GENERIC-$Revision: 1.56 $"
+#ident 		"GENERIC-$Revision: 1.57 $"
 
 maxusers	8
 
@@ -96,6 +96,10 @@ options 	WSDISPLAY_COMPAT_PCVT		# emulate some ioctls
 options 	WSDISPLAY_COMPAT_SYSCONS	# emulate some ioctls
 options 	WSDISPLAY_COMPAT_USL		# VT handling
 options 	WSDISPLAY_COMPAT_RAWKBD		# can get raw scancodes
+
+# temporally power management
+hpcapm0	at mainbus0			# pseudo power management
+apm0	at hpcapm0			# pseudo APM
 
 vrip*	at mainbus0
 vrcmu*	at vrip? addr 0x0b000060 size 0x20

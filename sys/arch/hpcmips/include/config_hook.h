@@ -1,4 +1,4 @@
-/*	$NetBSD: config_hook.h,v 1.3 2000/04/03 03:48:42 sato Exp $	*/
+/*	$NetBSD: config_hook.h,v 1.4 2000/07/02 10:01:31 takemura Exp $	*/
 
 /*-
  * Copyright (c) 1999
@@ -81,7 +81,11 @@ int	config_hook_call __P((int type, long id, void *msg));
 #define CONFIG_HOOK_BUTTONEVENT_LIGHT_UP	17
 #define CONFIG_HOOK_BUTTONEVENT_LIGHT_DOWN	18
 
-#define CONFIG_HOOK_NTYPES 		2
+#define CONFIG_HOOK_PMEVENT		2
+#define CONFIG_HOOK_PMEVENT_STANDBYREQ		0
+#define CONFIG_HOOK_PMEVENT_SUSPENDREQ		1
+
+#define CONFIG_HOOK_NTYPES 		3
 
 /*
  * nicknames for including from configration file.
