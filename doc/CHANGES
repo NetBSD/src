@@ -1,4 +1,4 @@
-LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.288 $>
+LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.289 $>
 
 
 [Note: This file does not mention every change made to the NetBSD source tree.
@@ -639,3 +639,4 @@ Changes from NetBSD 1.6 to NetBSD 2.0:
 	file(1): update to 4.08.  [pooka 20040323]
 	sysctl: Update dynamic implementation.  Solves netbsd32 compat issue
 		and adds support for descriptions.  [atatat 20040324]
+	sendmail(8): update to 8.12.11.  [atatat 20040325]
