@@ -1,4 +1,4 @@
-/*	$NetBSD: j6x0tp.c,v 1.3 2003/11/04 03:43:12 uwe Exp $ */
+/*	$NetBSD: j6x0tp.c,v 1.4 2003/11/05 00:28:34 uwe Exp $ */
 
 /*
  * Copyright (c) 2003 Valeriy E. Ushakov
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: j6x0tp.c,v 1.3 2003/11/04 03:43:12 uwe Exp $");
+__KERNEL_RCSID(0, "$NetBSD: j6x0tp.c,v 1.4 2003/11/05 00:28:34 uwe Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -91,7 +91,7 @@ volatile int j6x0tp_debug = 0;
 #define SCPDR_TP_SCAN_X		0x01
 
 /*
- * A/D covnerter channels to get x/y from
+ * A/D converter channels to get x/y from
  */
 #define ADC_CHANNEL_TP_Y	1
 #define ADC_CHANNEL_TP_X	2
@@ -277,7 +277,7 @@ j6x0tp_attach(struct device *parent, struct device *self, void *aux)
 	sc->sc_wskbddev = config_found_sm(self, &wska, wskbddevprint,
 					  j6x0tp_wskbd_submatch);
 
-	/* init calibration, set default paramters */
+	/* init calibration, set default parameters */
 	tpcalib_init(&sc->sc_tpcalib);
 	tpcalib_ioctl(&sc->sc_tpcalib, WSMOUSEIO_SCALIBCOORDS,
 		      (caddr_t)&j6x0tp_default_calib, 0, 0);
