@@ -1,4 +1,4 @@
-/*	$NetBSD: ldd.c,v 1.16 1998/12/16 23:13:02 thorpej Exp $	*/
+/*	$NetBSD: ldd.c,v 1.17 1998/12/16 23:14:02 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -71,7 +71,7 @@ char	*argv[];
 	int		rval;
 	int		c;
 
-	while ((c = getopt(argc, argv, "f:")) != EOF) {
+	while ((c = getopt(argc, argv, "f:")) != -1) {
 		switch (c) {
 		case 'f':
 			if (fmt1) {
