@@ -1,4 +1,4 @@
-/*	$NetBSD: make.h,v 1.41 2002/02/04 17:24:56 christos Exp $	*/
+/*	$NetBSD: make.h,v 1.42 2002/02/18 00:35:39 pk Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -409,7 +409,7 @@ int Make_TimeStamp __P((GNode *, GNode *));
 Boolean Make_OODate __P((GNode *));
 Lst Make_ExpandUse __P((Lst));
 time_t Make_Recheck __P((GNode *));
-int Make_HandleUse __P((GNode *, GNode *));
+void Make_HandleUse __P((GNode *, GNode *));
 void Make_Update __P((GNode *));
 void Make_DoAllVar __P((GNode *));
 Boolean Make_Run __P((Lst));
