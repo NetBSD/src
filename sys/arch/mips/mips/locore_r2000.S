@@ -1,4 +1,4 @@
-/*	$NetBSD: locore_r2000.S,v 1.37 1997/06/25 05:06:01 mhitch Exp $	*/
+/*	$NetBSD: locore_r2000.S,v 1.38 1997/07/07 03:54:33 jonathan Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -222,7 +222,10 @@ NNON_LEAF(mips1_KernGenException, TRAP_FRAME_SIZE, ra)
 	mfc0	a3, MIPS_COP_0_EXC_PC		# 4th arg is PC
 	sw	v1, TRAP_FRAME_OFFSET+(MULHI * 4)(sp)
 	sw	a3, TRAP_FRAME_OFFSET+(PC * 4)(sp)
-
+#ifdef DDB
+	addu	v0, sp, TRAP_FRAME_SIZE 	#  SP at trap for debugging
+	sw	v0, TRAP_FRAME_OFFSET+(SP * 4)(sp)
+#endif DDB
 	jal	_C_LABEL(trap)
 	sw	a3, TRAP_RA_OFFSET(sp)		# for debugging
 
@@ -834,6 +837,8 @@ NLEAF(mips1_TLBMissException)
 	.asciiz	"ktlbmiss: PC %x RA %x ADR %x\nSR %x CR %x SP %x\n"
 	.text
 
+	/* Call mips1_dump_tlb(0, 2, printf) to show the bad kstack TLB */
+	la	a2, _C_LABEL(printf)
 	li	a0,0
 	jal	_C_LABEL(mips1_dump_tlb)
 	li	a1,3				# BDslot

@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.90 1997/07/01 09:32:23 jonathan Exp $	*/
+/*	$NetBSD: machdep.c,v 1.91 1997/07/07 03:54:27 jonathan Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -114,6 +114,10 @@
 #include "scc.h"
 #include "le_ioasic.h"
 #include "asc.h"
+
+
+extern struct consdev *cn_tab;	/* Console I/O table... */
+extern struct consdev cd;
 
 
 #if defined(DS5000_25) || defined(DS5000_100) || defined(DS5000_240)
@@ -310,6 +314,9 @@ mach_init(argc, argv, code, cv)
 	} else {
 		callv = &callvec;
 	}
+
+	/* Use PROM console output until we initialize a console driver. */
+	cn_tab = &cd;
 
 	/* check for direct boot from DS5000 PROM */
 	if (argc > 0 && strcmp(argv[0], "boot") == 0) {
