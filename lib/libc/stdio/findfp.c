@@ -1,4 +1,4 @@
-/*	$NetBSD: findfp.c,v 1.13.6.2 2002/01/28 20:50:55 nathanw Exp $	*/
+/*	$NetBSD: findfp.c,v 1.13.6.3 2002/02/06 23:10:56 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)findfp.c	8.2 (Berkeley) 1/4/94";
 #else
-__RCSID("$NetBSD: findfp.c,v 1.13.6.2 2002/01/28 20:50:55 nathanw Exp $");
+__RCSID("$NetBSD: findfp.c,v 1.13.6.3 2002/02/06 23:10:56 nathanw Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -52,9 +52,9 @@ __RCSID("$NetBSD: findfp.c,v 1.13.6.2 2002/01/28 20:50:55 nathanw Exp $");
 #include <errno.h>
 #include <stdlib.h>
 #include <string.h>
+#include "reentrant.h"
 #include "local.h"
 #include "glue.h"
-#include "reentrant.h"
 
 int	__sdidinit;
 
@@ -71,7 +71,10 @@ static FILE usual[FOPEN_MAX - 3];
 static struct __sfileext usualext[FOPEN_MAX - 3];
 static struct glue uglue = { 0, FOPEN_MAX - 3, usual };
 
-struct __sfileext __sFext[3];
+#define STDEXT { {0}, {0}, MUTEX_INITIALIZER, COND_INITIALIZER, NULL, 0}
+struct __sfileext __sFext[3] = { STDEXT,
+				 STDEXT,
+				 STDEXT};
 
 FILE __sF[3] = {
 	std(__SRD, STDIN_FILENO),		/* stdin */
@@ -149,6 +152,12 @@ found:
 /*	fp->_cookie = <any>; */	/* caller sets cookie, _read/_write etc */
 	_UB(fp)._base = NULL;	/* no ungetc buffer */
 	_UB(fp)._size = 0;
+#ifdef _REENTRANT
+	mutex_init(&_LOCK(fp), NULL);
+	cond_init(&_LOCKCOND(fp), 0, NULL);
+	_LOCKOWNER(fp) = NULL;
+	_LOCKCOUNT(fp) = 0;
+#endif
 	fp->_lb._base = NULL;	/* no line buffer */
 	fp->_lb._size = 0;
 	memset(WCIO_GET(fp), 0, sizeof(struct wchar_io_data));
