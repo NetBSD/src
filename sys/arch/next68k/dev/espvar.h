@@ -1,4 +1,4 @@
-/*	$NetBSD: espvar.h,v 1.9 1999/02/14 10:19:51 dbj Exp $	*/
+/*	$NetBSD: espvar.h,v 1.10 1999/03/02 12:11:24 dbj Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -69,7 +69,7 @@ struct esp_softc {
 	 * buffer into a "tail" buffer that we can control more carefully.
 	 * We then chain this extra buffer onto the end.
 	 */
-#define ESP_DMA_OVERRUN 2*DMA_ENDALIGNMENT
+#define ESP_DMA_OVERRUN 3*DMA_ENDALIGNMENT
 #define ESP_DMA_MAXTAIL 128
 #define ESP_DMA_TAILBUFSIZE (ESP_DMA_MAXTAIL+2*DMA_ENDALIGNMENT+ESP_DMA_OVERRUN)
 	bus_dmamap_t  sc_tail_dmamap;

@@ -1,4 +1,4 @@
-/*	$NetBSD: nextdma.c,v 1.12 1999/02/14 10:19:51 dbj Exp $	*/
+/*	$NetBSD: nextdma.c,v 1.13 1999/03/02 12:11:25 dbj Exp $	*/
 /*
  * Copyright (c) 1998 Darrin B. Jewell
  * All rights reserved.
@@ -560,7 +560,7 @@ nextdma_intr(arg)
 #endif
 #endif
 
-#if 0
+#if 1
 #ifdef DIAGNOSTIC
 			if (state & (DMACSR_SUPDATE|DMACSR_ENABLE)) {
 				next_dma_print(nd);
