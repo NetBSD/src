@@ -1,4 +1,4 @@
-/*	$NetBSD: types.h,v 1.27 2003/08/07 16:30:13 agc Exp $	*/
+/*	$NetBSD: types.h,v 1.28 2003/09/26 22:46:01 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -53,6 +53,11 @@ typedef unsigned long	vsize_t;
 #endif
 
 typedef int		register_t;
+
+typedef __volatile int		__cpu_simple_lock_t;
+
+#define __SIMPLELOCK_LOCKED	1
+#define __SIMPLELOCK_UNLOCKED	0
 
 /* The VAX does not have strict alignment requirements. */
 #define	__NO_STRICT_ALIGNMENT

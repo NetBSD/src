@@ -1,4 +1,4 @@
-/*	$NetBSD: lock.h,v 1.13 2003/06/26 13:20:55 he Exp $	*/
+/*	$NetBSD: lock.h,v 1.14 2003/09/26 22:46:01 nathanw Exp $	*/
 
 /*
  * Copyright (c) 2000 Ludd, University of Lule}, Sweden.
@@ -39,11 +39,6 @@
 #endif
 #include <machine/cpu.h>
 #endif
-
-typedef __volatile int		__cpu_simple_lock_t;
-
-#define __SIMPLELOCK_LOCKED	1
-#define __SIMPLELOCK_UNLOCKED	0
 
 static __inline void
 __cpu_simple_lock_init(__cpu_simple_lock_t *alp)

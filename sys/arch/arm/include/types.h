@@ -1,4 +1,4 @@
-/*	$NetBSD: types.h,v 1.9 2003/08/07 16:26:53 agc Exp $	*/
+/*	$NetBSD: types.h,v 1.10 2003/09/26 22:46:00 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1990 The Regents of the University of California.
@@ -60,6 +60,11 @@ typedef unsigned long	pmc_evid_t;
 typedef unsigned long	pmc_ctr_t;
 
 typedef int		register_t;
+
+typedef	__volatile int		__cpu_simple_lock_t;
+
+#define	__SIMPLELOCK_LOCKED	1
+#define	__SIMPLELOCK_UNLOCKED	0
 
 #define	__HAVE_SYSCALL_INTERN
 #define	__HAVE_MINIMAL_EMUL
