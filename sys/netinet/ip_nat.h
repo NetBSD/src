@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_nat.h,v 1.28 2003/12/16 12:15:04 abs Exp $	*/
+/*	$NetBSD: ip_nat.h,v 1.29 2004/01/03 22:34:38 tron Exp $	*/
 
 /*
  * Copyright (C) 1995-2001 by Darren Reed.
@@ -51,7 +51,7 @@
 #undef	NAT_SIZE
 #undef	RDR_SIZE
 #undef	NAT_TABLE_SZ
-#undef	HOSTMAP_SIZE	127
+#undef	HOSTMAP_SIZE
 #define	NAT_SIZE	2047
 #define	RDR_SIZE	2047
 #define	NAT_TABLE_SZ	16383
