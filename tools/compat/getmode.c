@@ -1,4 +1,4 @@
-/*	$NetBSD: getmode.c,v 1.3 2003/10/27 00:12:43 lukem Exp $	*/
+/*	$NetBSD: getmode.c,v 1.4 2004/01/08 12:16:09 simonb Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -39,7 +39,9 @@
 #include "nbtool_config.h"
 #include <stdlib.h>
 
-void *setmode(const char *str) {
+void *
+setmode(const char *str)
+{
 	mode_t *mp = malloc(sizeof(mode_t));
 
 	*mp = strtoul(str, NULL, 8);
@@ -47,6 +49,9 @@ void *setmode(const char *str) {
 	return mp;
 }
 
-mode_t getmode(const void *mp, mode_t mode) {
+mode_t
+getmode(const void *mp, mode_t mode)
+{
+
 	return *((const mode_t *)mp);
 }
