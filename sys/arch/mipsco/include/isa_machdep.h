@@ -1,4 +1,4 @@
-/*	$NetBSD: isa_machdep.h,v 1.1 2001/03/30 23:45:19 wdk Exp $	*/
+/*	$NetBSD: isa_machdep.h,v 1.2 2001/09/15 01:17:47 wdk Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -125,5 +125,47 @@ int	isa_mem_alloc(bus_space_tag_t, bus_size_t, bus_size_t,
 	    bus_addr_t, int, bus_addr_t *, bus_space_handle_t *);
 void	isa_mem_free(bus_space_tag_t, bus_space_handle_t, bus_size_t);
 
+#define	isa_dmainit(ic, bst, dmat, d)					\
+	_isa_dmainit(&(ic)->ic_dmastate, (bst), (dmat), (d))
+#define	isa_dmacascade(ic, c)						\
+	_isa_dmacascade(&(ic)->ic_dmastate, (c))
+#define	isa_dmamaxsize(ic, c)						\
+	_isa_dmamaxsize(&(ic)->ic_dmastate, (c))
+#define	isa_dmamap_create(ic, c, s, f)					\
+	_isa_dmamap_create(&(ic)->ic_dmastate, (c), (s), (f))
+#define	isa_dmamap_destroy(ic, c)					\
+	_isa_dmamap_destroy(&(ic)->ic_dmastate, (c))
+#define	isa_dmastart(ic, c, a, n, p, f, bf)				\
+	_isa_dmastart(&(ic)->ic_dmastate, (c), (a), (n), (p), (f), (bf))
+#define	isa_dmaabort(ic, c)						\
+	_isa_dmaabort(&(ic)->ic_dmastate, (c))
+#define	isa_dmacount(ic, c)						\
+	_isa_dmacount(&(ic)->ic_dmastate, (c))
+#define	isa_dmafinished(ic, c)						\
+	_isa_dmafinished(&(ic)->ic_dmastate, (c))
+#define	isa_dmadone(ic, c)						\
+	_isa_dmadone(&(ic)->ic_dmastate, (c))
+#define	isa_dmafreeze(ic)						\
+	_isa_dmafreeze(&(ic)->ic_dmastate)
+#define	isa_dmathaw(ic)							\
+	_isa_dmathaw(&(ic)->ic_dmastate)
+#define	isa_dmamem_alloc(ic, c, s, ap, f)				\
+	_isa_dmamem_alloc(&(ic)->ic_dmastate, (c), (s), (ap), (f))
+#define	isa_dmamem_free(ic, c, a, s)					\
+	_isa_dmamem_free(&(ic)->ic_dmastate, (c), (a), (s))
+#define	isa_dmamem_map(ic, c, a, s, kp, f)				\
+	_isa_dmamem_map(&(ic)->ic_dmastate, (c), (a), (s), (kp), (f))
+#define	isa_dmamem_unmap(ic, c, k, s)					\
+	_isa_dmamem_unmap(&(ic)->ic_dmastate, (c), (k), (s))
+#define	isa_dmamem_mmap(ic, c, a, s, o, p, f)				\
+	_isa_dmamem_mmap(&(ic)->ic_dmastate, (c), (a), (s), (o), (p), (f))
+#define	isa_drq_isfree(ic, c)						\
+	_isa_drq_isfree(&(ic)->ic_dmastate, (c))
+#define	isa_malloc(ic, c, s, p, f)					\
+	_isa_malloc(&(ic)->ic_dmastate, (c), (s), (p), (f))
+#define	isa_free(a, p)							\
+	_isa_free((a), (p))
+#define	isa_mappage(m, o, p)						\
+	_isa_mappage((m), (o), (p))
 
 #endif /* _ISA_MACHDEP_H_ XXX */
