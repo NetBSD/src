@@ -1,15 +1,15 @@
-[XXX This must be updated for 1.3!]
+i386-specific enhancements include a number of new device drivers, such
+as the Intel Etherexpress FE drivers, ATAPI support, and others.
+See the hardware compatibility list for supported devices.
 
-For the i386, NetBSD 1.2 brings a number of new device drivers, many
-bug fixes, improvements in Linux emulation (including support for sound)
-and the other emulations (SVR4, IBCS2, FreeBSD), and enhancements to
-a number of existing device drivers such as the "ahc" driver for Adaptec
-AHC-2X4X and AIC-7XXX-based SCSI host adapters and the "bt" driver for Bus
-Logic SCSI host adapters.  Support for PCI-PCI bridges allows the use of cards
-such as Cogent and SMC multiple-port Ethernet cards and Adaptec 3940
-multichannel SCSI host adapters with preexisting device drivers.
+Other (but not all) i386-specific improvements are:
+	* APM support
+	* bounce-buffer support so that busmaster ISA controllers
+	  work for machines with > 16M
+	* floppy formatting support
+	* improved detection of the amount of memory present in the
+	  machine
+	* support for FAT32 filesystems
 
-FDDI is now supported; drivers are in the generic (but not install) kernels.
-
-NetBSD 1.2 on i386 is, as usual, also fully backward compatible with old
+NetBSD 1.3 on i386 is, as usual, also fully backward compatible with old
 NetBSD i386 binaries, so you don't need to recompile all your local programs.
