@@ -1,4 +1,4 @@
-/*	$NetBSD: wsksymdef.h,v 1.11 1998/09/17 18:16:39 drochner Exp $ */
+/*	$NetBSD: wsksymdef.h,v 1.12 1998/10/03 11:59:44 drochner Exp $ */
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -439,6 +439,7 @@
 #define KB_DE			0x0300
 #define KB_DK			0x0400
 #define KB_IT			0x0500
+#define KB_FR                   0x0600
 
 #define KB_NODEAD		0x0001
 #define KB_DECLK		0x0002	/* DEC LKnnn layout */
@@ -449,6 +450,7 @@
 	{ KB_US,	"us" }, \
 	{ KB_DE,	"de" }, \
 	{ KB_DK,	"dk" }, \
+	{ KB_FR,	"fr" }, \
 	{ KB_NODEAD,	"nodead" }, \
 	{ KB_DECLK,	"declk" }, \
 	{ KB_LK401,	"lk401" }
