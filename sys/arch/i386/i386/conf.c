@@ -1,4 +1,4 @@
-/*	$NetBSD: conf.c,v 1.145 2001/09/10 10:08:40 fvdl Exp $	*/
+/*	$NetBSD: conf.c,v 1.146 2001/09/13 22:08:44 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -242,6 +242,9 @@ cdev_decl(agp);
 #include "wsfont.h"
 cdev_decl(wsfont);
 
+#include "pci.h"
+cdev_decl(pci);
+
 struct cdevsw	cdevsw[] =
 {
 	cdev_cn_init(1,cn),		/* 0: virtual console */
@@ -334,6 +337,7 @@ struct cdevsw	cdevsw[] =
 	cdev__oci_init(NMLY,mly),	/* 80: Newer Mylex control interface */
 	cdev__oci_init(NWSFONT,wsfont),	/* 81: wsfont pseudo-device */
 	cdev__ocim_init(NAGP,agp),	/* 82: AGP graphics aperture device */
+	cdev_pci_init(NPCI,pci),	/* 83: PCI bus access device */
 };
 int	nchrdev = sizeof(cdevsw) / sizeof(cdevsw[0]);
 
@@ -458,6 +462,7 @@ static int chrtoblktbl[] = {
 	/* 80 */	NODEV,
 	/* 81 */	NODEV,
 	/* 82 */	NODEV,
+	/* 83 */	NODEV,
 };
 
 /*
