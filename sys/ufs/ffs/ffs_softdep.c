@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_softdep.c,v 1.50 2003/06/29 22:32:35 fvdl Exp $	*/
+/*	$NetBSD: ffs_softdep.c,v 1.51 2003/09/07 11:55:43 yamt Exp $	*/
 
 /*
  * Copyright 1998 Marshall Kirk McKusick. All Rights Reserved.
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ffs_softdep.c,v 1.50 2003/06/29 22:32:35 fvdl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ffs_softdep.c,v 1.51 2003/09/07 11:55:43 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/buf.h>
@@ -59,6 +59,8 @@ __KERNEL_RCSID(0, "$NetBSD: ffs_softdep.c,v 1.50 2003/06/29 22:32:35 fvdl Exp $"
 #include <uvm/uvm.h>
 struct pool sdpcpool;
 u_int softdep_lockedbufs;
+
+extern struct simplelock bqueue_slock; /* XXX */
 
 MALLOC_DEFINE(M_PAGEDEP, "pagedep", "file page dependencies");
 MALLOC_DEFINE(M_INODEDEP, "inodedep", "Inode depependencies");
@@ -4703,13 +4705,17 @@ softdep_fsync_mountdev(vp)
 	if (vp->v_type != VBLK)
 		panic("softdep_fsync_mountdev: vnode not VBLK");
 	ACQUIRE_LOCK(&lk);
+	simple_lock(&bqueue_slock);
 	for (bp = vp->v_dirtyblkhd.lh_first; bp; bp = nbp) {
 		nbp = bp->b_vnbufs.le_next;
+		simple_lock(&bp->b_interlock);
 		/* 
 		 * If it is already scheduled, skip to the next buffer.
 		 */
-		if (bp->b_flags & B_BUSY)
+		if (bp->b_flags & B_BUSY) {
+			simple_unlock(&bp->b_interlock);
 			continue;
+		}
 		if ((bp->b_flags & B_DELWRI) == 0)
 			panic("softdep_fsync_mountdev: not dirty");
 		/*
@@ -4717,19 +4723,25 @@ softdep_fsync_mountdev(vp)
 		 * dependencies.
 		 */
 		if ((wk = LIST_FIRST(&bp->b_dep)) == NULL ||
-		    wk->wk_type != D_BMSAFEMAP)
+		    wk->wk_type != D_BMSAFEMAP) {
+			simple_unlock(&bp->b_interlock);
 			continue;
+		}
 		bremfree(bp);
+		simple_unlock(&bqueue_slock);
 		bp->b_flags |= B_BUSY;
+		simple_unlock(&bp->b_interlock);
 		FREE_LOCK(&lk);
 		(void) bawrite(bp);
 		ACQUIRE_LOCK(&lk);
+		simple_lock(&bqueue_slock);
 		/*
 		 * Since we may have slept during the I/O, we need 
 		 * to start from a known point.
 		 */
 		nbp = vp->v_dirtyblkhd.lh_first;
 	}
+	simple_unlock(&bqueue_slock);
 	drain_output(vp, 1);
 	FREE_LOCK(&lk);
 }
@@ -5550,22 +5562,33 @@ getdirtybuf(bpp, waitfor)
 {
 	struct buf *bp;
 
+again:
 	for (;;) {
 		int s;
 		
 		if ((bp = *bpp) == NULL)
 			return (0);
+		simple_lock(&bp->b_interlock);
 		if ((bp->b_flags & B_BUSY) == 0)
 			break;
-		if (waitfor != MNT_WAIT)
+		if (waitfor != MNT_WAIT) {
+			simple_unlock(&bp->b_interlock);
 			return (0);
+		}
 		bp->b_flags |= B_WANTED;
 		s = FREE_LOCK_INTERLOCKED(&lk);
-		(void) tsleep(bp, PRIBIO + 1, "softgetdbuf", 0);
+		(void) ltsleep(bp, (PRIBIO + 1) | PNORELOCK, "softgetdbuf", 0,
+		    &bp->b_interlock);
 		ACQUIRE_LOCK_INTERLOCKED(&lk, s);
 	}
+	LOCK_ASSERT(simple_lock_held(&bp->b_interlock));
 	if ((bp->b_flags & B_DELWRI) == 0) {
+		simple_unlock(&bp->b_interlock);
 		return (0);
+	}
+	if (!simple_lock_try(&bqueue_slock)) {
+		simple_unlock(&bp->b_interlock);
+		goto again;
 	}
 #if 1
 	bp->b_flags |= B_BUSY;
@@ -5573,6 +5596,8 @@ getdirtybuf(bpp, waitfor)
 #else
 	bp->b_flags |= B_BUSY | B_VFLUSH;
 #endif
+	simple_unlock(&bqueue_slock);
+	simple_unlock(&bp->b_interlock);
 	return (1);
 }
 
