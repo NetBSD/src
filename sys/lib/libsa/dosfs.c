@@ -1,4 +1,4 @@
-/*	$NetBSD: dosfs.c,v 1.1 2000/11/02 00:25:05 thorpej Exp $	*/
+/*	$NetBSD: dosfs.c,v 1.2 2000/11/02 00:34:51 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1996, 1998 Robert Nordier
@@ -98,7 +98,7 @@ typedef struct {
 
 /* Supply missing "." and ".." root directory entries */
 static const char *const dotstr[2] = {".", ".."};
-static struct direntry dot[2] = {
+static const struct direntry dot[2] = {
 	{".       ", "   ", ATTR_DIRECTORY,
 		0, 0, {0, 0}, {0, 0}, {0, 0}, {0, 0},
 		{0, 0}, {0x21, 0}, {0, 0}, {0, 0, 0, 0}},
@@ -138,8 +138,8 @@ static struct direntry dot[2] = {
 
 static int dosunmount(DOS_FS *);
 static int parsebs(DOS_FS *, DOS_BS *);
-static int namede(DOS_FS *, const char *, struct direntry **);
-static int lookup(DOS_FS *, u_int, const char *, struct direntry **);
+static int namede(DOS_FS *, const char *, const struct direntry **);
+static int lookup(DOS_FS *, u_int, const char *, const struct direntry **);
 static void cp_xdnm(u_char *, struct winentry *);
 static void cp_sfn(u_char *, struct direntry *);
 static off_t fsize(DOS_FS *, struct direntry *);
@@ -202,7 +202,7 @@ dosunmount(DOS_FS * fs)
 int
 dosfs_open(char *path, struct open_file *fd)
 {
-	struct direntry *de;
+	const struct direntry *de;
 	DOS_FILE *f;
 	DOS_FS *fs;
 	u_int   size, clus;
@@ -427,10 +427,10 @@ parsebs(DOS_FS * fs, DOS_BS * bs)
  * Return directory entry from path
  */
 static int
-namede(DOS_FS * fs, const char *path, struct direntry ** dep)
+namede(DOS_FS * fs, const char *path, const struct direntry ** dep)
 {
 	char    name[256];
-	struct direntry *de;
+	const struct direntry *de;
 	char   *s;
 	size_t  n;
 	int     err;
@@ -462,7 +462,7 @@ namede(DOS_FS * fs, const char *path, struct direntry ** dep)
  * Lookup path segment
  */
 static int
-lookup(DOS_FS * fs, u_int clus, const char *name, struct direntry ** dep)
+lookup(DOS_FS * fs, u_int clus, const char *name, const struct direntry ** dep)
 {
 	DOS_DIR *dir;
 	u_char  lfn[261];
