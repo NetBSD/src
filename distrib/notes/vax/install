@@ -1,4 +1,4 @@
-.\"	$NetBSD: install,v 1.9 2000/11/07 16:24:04 matt Exp $
+.\"	$NetBSD: install,v 1.10 2001/07/24 18:27:09 nra Exp $
 .\"
 .\" Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -35,7 +35,7 @@ Installation of
 .Nx*M
 is now easier than ever!
 For the latest news, problem reports, and discussion, join
-the port-\*M mainlist by mailing a line saying
+the port-\*M maillist by mailing a line saying
 .Pp
 .Dl subscribe port-\*M
 .Pp
