@@ -1,4 +1,4 @@
-/* $NetBSD: loadfile.c,v 1.2 1999/03/25 03:38:53 simonb Exp $ */
+/* $NetBSD: loadfile.c,v 1.3 1999/04/10 01:52:33 simonb Exp $ */
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -165,9 +165,10 @@ loadfile(fname, marks, flags)
 		WARN(("%s", fname));
 	}
 
-	if (rval == 0)
+	if (rval == 0) {
 		PROGRESS(("=0x%lx\n", marks[MARK_END] - marks[MARK_START]));
-	return fd;
+		return fd;
+	}
 err:
 	(void)close(fd);
 	return -1;
