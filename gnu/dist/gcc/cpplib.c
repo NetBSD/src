@@ -529,7 +529,7 @@ cpp_define (pfile, str)
   p = str;
   if (!is_idstart[*p])
     {
-      cpp_error (pfile, "malformed option `-D %s'", str);
+      cpp_error (pfile, "invalid macro name `%s'", str);
       return;
     }
   while (is_idchar[*++p])
@@ -542,7 +542,7 @@ cpp_define (pfile, str)
     }
   else if (*p != '=')
     {
-      cpp_error (pfile, "malformed option `-D %s'", str);
+      cpp_error (pfile, "invalid macro name `%s'", str);
       return;
     }
   else
