@@ -1,4 +1,4 @@
-/*	$NetBSD: cmds.c,v 1.88 2000/07/18 07:16:52 lukem Exp $	*/
+/*	$NetBSD: cmds.c,v 1.89 2000/07/30 04:42:37 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1996-2000 The NetBSD Foundation, Inc.
@@ -107,7 +107,7 @@
 #if 0
 static char sccsid[] = "@(#)cmds.c	8.6 (Berkeley) 10/9/94";
 #else
-__RCSID("$NetBSD: cmds.c,v 1.88 2000/07/18 07:16:52 lukem Exp $");
+__RCSID("$NetBSD: cmds.c,v 1.89 2000/07/30 04:42:37 lukem Exp $");
 #endif
 #endif /* not lint */
 
@@ -2302,11 +2302,7 @@ restart(int argc, char *argv[])
 		off_t rp;
 		char *ep;
 
-#ifndef NO_QUAD
-		rp = strtoll(argv[1], &ep, 10);
-#else
-		rp = strtol(argv[1], &ep, 10);
-#endif
+		rp = STRTOLL(argv[1], &ep, 10);
 		if (rp < 0 || *ep != '\0')
 			fprintf(ttyout, "restart: Invalid offset `%s'\n",
 			    argv[1]);
@@ -2317,13 +2313,8 @@ restart(int argc, char *argv[])
 		fputs("No restart point defined.\n", ttyout);
 	else
 		fprintf(ttyout,
-#ifndef NO_QUAD
-		    "Restarting at %lld for next get, put or append\n",
-		    (long long)restart_point);
-#else
-		    "Restarting at %ld for next get, put or append\n",
-		    (long)restart_point);
-#endif
+		    "Restarting at " QUADF " for next get, put or append\n",
+		    (QUADT)restart_point);
 }
 
 /*
@@ -2425,11 +2416,7 @@ sizecmd(int argc, char *argv[])
 	size = remotesize(argv[1], 1);
 	if (size != -1)
 		fprintf(ttyout,
-#ifndef NO_QUAD
-		    "%s\t%lld\n", argv[1], (long long)size);
-#else
-		    "%s\t%ld\n", argv[1], (long)size);
-#endif
+		    "%s\t" QUADF "\n", argv[1], (QUADT)size);
 	code = (size > 0);
 }
 

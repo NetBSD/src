@@ -1,4 +1,4 @@
-/*	$NetBSD: util.c,v 1.97 2000/07/18 07:16:56 lukem Exp $	*/
+/*	$NetBSD: util.c,v 1.98 2000/07/30 04:42:38 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1997-2000 The NetBSD Foundation, Inc.
@@ -75,7 +75,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: util.c,v 1.97 2000/07/18 07:16:56 lukem Exp $");
+__RCSID("$NetBSD: util.c,v 1.98 2000/07/30 04:42:38 lukem Exp $");
 #endif /* not lint */
 
 /*
@@ -655,11 +655,7 @@ remotesize(const char *file, int noisy)
 		cp = strchr(reply_string, ' ');
 		if (cp != NULL) {
 			cp++;
-#ifndef NO_QUAD
-			size = strtoll(cp, &ep, 10);
-#else
-			size = strtol(cp, &ep, 10);
-#endif
+			size = STRTOLL(cp, &ep, 10);
 			if (*ep != '\0' && !isspace((unsigned char)*ep))
 				size = -1;
 		}
@@ -938,12 +934,8 @@ progressmeter(int flag)
 	abbrevsize = cursize;
 	for (i = 0; abbrevsize >= 100000 && i < sizeof(prefixes); i++)
 		abbrevsize >>= 10;
-	len += snprintf(buf + len, BUFLEFT,
-#ifndef NO_QUAD
-	    " %5lld %c%c ", (long long)abbrevsize,
-#else
-	    " %5ld %c%c ", (long)abbrevsize,
-#endif
+	len += snprintf(buf + len, BUFLEFT, " " QUADFP("5") " %c%c ",
+	    (QUADT)abbrevsize,
 	    prefixes[i],
 	    i == 0 ? ' ' : 'B');
 
@@ -959,11 +951,8 @@ progressmeter(int flag)
 	for (i = 1; bytespersec >= 1024000 && i < sizeof(prefixes); i++)
 		bytespersec >>= 10;
 	len += snprintf(buf + len, BUFLEFT,
-#ifndef NO_QUAD
-	    " %3lld.%02d %cB/s ", (long long)bytespersec / 1024,
-#else
-	    " %3ld.%02d %cB/s ", (long)bytespersec / 1024,
-#endif
+	    " " QUADFP("3") ".%02d %cB/s ",
+	    (QUADT)(bytespersec / 1024),
 	    (int)((bytespersec % 1024) * 100 / 1024),
 	    prefixes[i]);
 
@@ -1032,13 +1021,8 @@ ptransfer(int siginfo)
 			bytespersec /= elapsed;
 	}
 	len = 0;
-	len += snprintf(buf + len, BUFLEFT,
-#ifndef NO_QUAD
-	    "%lld byte%s %s in ", (long long)bytes,
-#else
-	    "%ld byte%s %s in ", (long)bytes,
-#endif
-	    bytes == 1 ? "" : "s", direction);
+	len += snprintf(buf + len, BUFLEFT, QUADF " byte%s %s in ",
+	    (QUADT)bytes, bytes == 1 ? "" : "s", direction);
 	remaining = (int)elapsed;
 	if (remaining > SECSPERDAY) {
 		int days;
@@ -1057,12 +1041,8 @@ ptransfer(int siginfo)
 
 	for (i = 1; bytespersec >= 1024000 && i < sizeof(prefixes); i++)
 		bytespersec >>= 10;
-	len += snprintf(buf + len, BUFLEFT,
-#ifndef NO_QUAD
-	    "(%lld.%02d %cB/s)", (long long)bytespersec / 1024,
-#else
-	    "(%ld.%02d %cB/s)", (long)bytespersec / 1024,
-#endif
+	len += snprintf(buf + len, BUFLEFT, "(" QUADF ".%02d %cB/s)",
+	    (QUADT)(bytespersec / 1024),
 	    (int)((bytespersec % 1024) * 100 / 1024),
 	    prefixes[i]);
 

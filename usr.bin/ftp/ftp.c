@@ -1,4 +1,4 @@
-/*	$NetBSD: ftp.c,v 1.102 2000/07/18 07:16:54 lukem Exp $	*/
+/*	$NetBSD: ftp.c,v 1.103 2000/07/30 04:42:37 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1996-2000 The NetBSD Foundation, Inc.
@@ -103,7 +103,7 @@
 #if 0
 static char sccsid[] = "@(#)ftp.c	8.6 (Berkeley) 10/27/94";
 #else
-__RCSID("$NetBSD: ftp.c,v 1.102 2000/07/18 07:16:54 lukem Exp $");
+__RCSID("$NetBSD: ftp.c,v 1.103 2000/07/30 04:42:37 lukem Exp $");
 #endif
 #endif /* not lint */
 
@@ -819,12 +819,7 @@ sendrequest(const char *cmd, const char *local, const char *remote,
 			warn("local: %s", local);
 			goto cleanupsend;
 		}
-#ifndef NO_QUAD
-		if (command("REST %lld", (long long) restart_point) !=
-#else
-		if (command("REST %ld", (long) restart_point) !=
-#endif
-		    CONTINUE)
+		if (command("REST " QUADF, (QUADT)restart_point) != CONTINUE)
 			goto cleanupsend;
 		lmode = "r+w";
 	}
@@ -1128,11 +1123,7 @@ recvrequest(const char *cmd, const char *local, const char *remote,
 	if (sigsetjmp(xferabort, 1))
 		goto abort;
 	if (is_retr && restart_point &&
-#ifndef NO_QUAD
-	    command("REST %lld", (long long) restart_point) != CONTINUE)
-#else
-	    command("REST %ld", (long) restart_point) != CONTINUE)
-#endif
+	    command("REST " QUADF, (QUADT) restart_point) != CONTINUE)
 		goto cleanuprecv;
 	if (! EMPTYSTRING(remote)) {
 		if (command("%s %s", cmd, remote) != PRELIM)
@@ -1981,12 +1972,8 @@ proxtrans(const char *cmd, const char *local, const char *remote)
 		goto abort;
 	oldintr = xsignal(SIGINT, abortpt);
 	if ((restart_point &&
-#ifndef NO_QUAD
-	    (command("REST %lld", (long long) restart_point) != CONTINUE)
-#else
-	    (command("REST %ld", (long) restart_point) != CONTINUE)
-#endif
-	    ) || (command("%s %s", cmd, remote) != PRELIM)) {
+	    (command("REST " QUADF, (QUADT) restart_point) != CONTINUE))
+	    || (command("%s %s", cmd, remote) != PRELIM)) {
 		(void)xsignal(SIGINT, oldintr);
 		pswitch(1);
 		return;
@@ -1995,12 +1982,8 @@ proxtrans(const char *cmd, const char *local, const char *remote)
 	pswitch(1);
 	secndflag++;
 	if ((restart_point &&
-#ifndef NO_QUAD
-	    (command("REST %lld", (long long) restart_point) != CONTINUE)
-#else
-	    (command("REST %ld", (long) restart_point) != CONTINUE)
-#endif
-	    ) || (command("%s %s", cmd2, local) != PRELIM))
+	    (command("REST " QUADF, (QUADT) restart_point) != CONTINUE))
+	    || (command("%s %s", cmd2, local) != PRELIM))
 		goto abort;
 	ptflag++;
 	(void)getreply(0);

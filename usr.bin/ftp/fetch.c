@@ -1,4 +1,4 @@
-/*	$NetBSD: fetch.c,v 1.118 2000/07/18 06:49:21 lukem Exp $	*/
+/*	$NetBSD: fetch.c,v 1.119 2000/07/30 04:42:37 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1997-2000 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: fetch.c,v 1.118 2000/07/18 06:49:21 lukem Exp $");
+__RCSID("$NetBSD: fetch.c,v 1.119 2000/07/30 04:42:37 lukem Exp $");
 #endif /* not lint */
 
 /*
@@ -562,13 +562,8 @@ fetch_url(const char *url, const char *proxyenv, char *proxyauth, char *wwwauth)
 		if (verbose) {
 			fprintf(ttyout, "Copying %s", decodedpath);
 			if (restart_point)
-#ifndef NO_QUAD
-				fprintf(ttyout, " (restarting at %lld)",
-				    (long long)restart_point);
-#else
-				fprintf(ttyout, " (restarting at %ld)",
-				    (long)restart_point);
-#endif
+				fprintf(ttyout, " (restarting at " QUADF ")",
+				    (QUADT)restart_point);
 			fputs("\n", ttyout);
 		}
 	} else {				/* ftp:// or http:// URLs */
@@ -813,17 +808,10 @@ fetch_url(const char *url, const char *proxyenv, char *proxyauth, char *wwwauth)
 			fprintf(fin, "Connection: close\r\n");
 			if (restart_point) {
 				fputs(leading, ttyout);
-#ifndef NO_QUAD
-				fprintf(fin, "Range: bytes=%lld-\r\n",
-				    (long long)restart_point);
-				fprintf(ttyout, "restarting at %lld",
-				    (long long)restart_point);
-#else
-				fprintf(fin, "Range: bytes=%ld-\r\n",
-				    (long)restart_point);
-				fprintf(ttyout, "restarting at %ld",
-				    (long)restart_point);
-#endif
+				fprintf(fin, "Range: bytes=" QUADF "-\r\n",
+				    (QUADT)restart_point);
+				fprintf(ttyout, "restarting at " QUADF,
+				    (QUADT)restart_point);
 				leading = ", ";
 				hasleading++;
 			}
@@ -901,67 +889,38 @@ fetch_url(const char *url, const char *proxyenv, char *proxyauth, char *wwwauth)
 			if (strncasecmp(cp, CONTENTLEN,
 					sizeof(CONTENTLEN) - 1) == 0) {
 				cp += sizeof(CONTENTLEN) - 1;
-#ifndef NO_QUAD
-				filesize = strtoll(cp, &ep, 10);
-#else
-				filesize = strtol(cp, &ep, 10);
-#endif
+				filesize = STRTOLL(cp, &ep, 10);
 				if (filesize < 0 || *ep != '\0')
 					goto improper;
 				if (debug)
-#ifndef NO_QUAD
-					fprintf(ttyout, "parsed len as: %lld\n",
-					    (long long)filesize);
-#else
-					fprintf(ttyout, "parsed len as: %ld\n",
-					    (long)filesize);
-#endif
+					fprintf(ttyout,
+					    "parsed len as: " QUADF "\n",
+					    (QUADT)filesize);
 
 #define CONTENTRANGE "Content-Range: bytes "
 			} else if (strncasecmp(cp, CONTENTRANGE,
 					sizeof(CONTENTRANGE) - 1) == 0) {
 				cp += sizeof(CONTENTRANGE) - 1;
-#ifndef NO_QUAD
-				rangestart = strtoll(cp, &ep, 10);
-#else
-				rangestart = strtol(cp, &ep, 10);
-#endif
+				rangestart = STRTOLL(cp, &ep, 10);
 				if (rangestart < 0 || *ep != '-')
 					goto improper;
 				cp = ep + 1;
-
-#ifndef NO_QUAD
-				rangeend = strtoll(cp, &ep, 10);
-#else
-				rangeend = strtol(cp, &ep, 10);
-#endif
+				rangeend = STRTOLL(cp, &ep, 10);
 				if (rangeend < 0 || *ep != '/' ||
 				    rangeend < rangestart)
 					goto improper;
 				cp = ep + 1;
-
-#ifndef NO_QUAD
-				entitylen = strtoll(cp, &ep, 10);
-#else
-				entitylen = strtol(cp, &ep, 10);
-#endif
+				entitylen = STRTOLL(cp, &ep, 10);
 				if (entitylen < 0 || *ep != '\0')
 					goto improper;
 
 				if (debug)
-#ifndef NO_QUAD
 					fprintf(ttyout,
-					    "parsed range as: %lld-%lld/%lld\n",
-					    (long long)rangestart,
-					    (long long)rangeend,
-					    (long long)entitylen);
-#else
-					fprintf(ttyout,
-					    "parsed range as: %ld-%ld/%ld\n",
-					    (long)rangestart,
-					    (long)rangeend,
-					    (long)entitylen);
-#endif
+					    "parsed range as: "
+					    QUADF "-" QUADF "/" QUADF "\n",
+					    (QUADT)rangestart,
+					    (QUADT)rangeend,
+					    (QUADT)entitylen);
 				if (! restart_point) {
 					warnx(
 				    "Received unexpected Content-Range header");
@@ -1217,14 +1176,8 @@ fetch_url(const char *url, const char *proxyenv, char *proxyauth, char *wwwauth)
 				goto cleanup_fetch_url;
 			}
 			if (debug)
-				fprintf(ttyout,
-#ifndef NO_QUAD
-				    "got chunksize of %lld\n",
-				    (long long)chunksize);
-#else
-				    "got chunksize of %ld\n",
-				    (long)chunksize);
-#endif
+				fprintf(ttyout, "got chunksize of " QUADF "\n",
+				    (QUADT)chunksize);
 			if (chunksize == 0)
 				break;
 		}
