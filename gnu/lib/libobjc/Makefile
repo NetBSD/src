@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.21 2002/09/17 23:18:35 thorpej Exp $
+#	$NetBSD: Makefile,v 1.22 2003/06/01 02:08:08 thorpej Exp $
 
 REQUIRETOOLS=	yes
 NOLINT=		# defined
@@ -6,6 +6,8 @@ NOLINT=		# defined
 .include <bsd.own.mk>
 
 LIB=		objc
+
+.if ${MKGCC} != "no"
 
 SHLIB_MAJOR=	1
 SHLIB_MINOR=	0
@@ -35,3 +37,6 @@ runtime-info.h:
 .include <bsd.lib.mk>
 
 ${OBJS} ${POBJS} ${SOBJS}: runtime-info.h
+.else
+.include <bsd.prog.mk>	# do nothing
+.endif
