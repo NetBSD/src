@@ -1,4 +1,4 @@
-/*	$NetBSD: am7990.c,v 1.22 1996/10/13 01:37:19 christos Exp $	*/
+/*	$NetBSD: am7990.c,v 1.23 1996/11/19 21:21:13 gwr Exp $	*/
 
 /*-
  * Copyright (c) 1995 Charles M. Hannum.  All rights reserved.
@@ -98,7 +98,7 @@ hide void am7990_shutdown __P((void *));
 
 #define	ifp	(&sc->sc_arpcom.ac_if)
 
-#if 0	/* XXX what do we do about this?!  --thorpej */
+#ifdef	sun3	/* XXX what do we do about this?!  --thorpej */
 static inline u_int16_t ether_cmp __P((void *, void *));
 
 /*
