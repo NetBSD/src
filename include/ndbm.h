@@ -1,4 +1,4 @@
-/*	$NetBSD: ndbm.h,v 1.7 1998/05/07 19:02:04 kleink Exp $	*/
+/*	$NetBSD: ndbm.h,v 1.8 2000/07/07 10:43:54 ad Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -41,6 +41,7 @@
 #ifndef _NDBM_H_
 #define	_NDBM_H_
 
+#include <sys/cdefs.h>
 #include <sys/featuretest.h>
 #include <db.h>
 
