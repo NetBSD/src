@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.3 1996/10/18 06:10:58 thorpej Exp $
+#	$NetBSD: Makefile,v 1.4 1997/10/11 01:19:15 oki Exp $
 
 #G=-g
 #M=-m68020 -fall-bsr
@@ -33,7 +33,6 @@ installboot: fdboot
 install: fdboot
 	${INSTALL} -c -o bin -g bin -m 444 fdboot ${DESTDIR}/usr/mdec
 
-clean::
-	rm -f fdboot fdboot.o bootufs.o fdboot.x
+CLEANFILES=fdboot fdboot.o bootufs.o fdboot.x
 
 .include <bsd.prog.mk>
