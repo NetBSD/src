@@ -31,7 +31,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)ufs_alloc.c	7.26 (Berkeley) 5/2/91
- *	$Id: ufs_alloc.c,v 1.4 1993/12/17 08:12:02 mycroft Exp $
+ *	$Id: ufs_alloc.c,v 1.5 1994/03/27 09:10:17 cgd Exp $
  */
 
 #include <sys/param.h>
@@ -138,7 +138,7 @@ nospace:
  */
 realloccg(ip, lbprev, bpref, osize, nsize, bpp)
 	register struct inode *ip;
-	off_t lbprev;
+	daddr_t lbprev;
 	daddr_t bpref;
 	int osize, nsize;
 	struct buf **bpp;
@@ -245,10 +245,10 @@ realloccg(ip, lbprev, bpref, osize, nsize, bpp)
 	if (bno > 0) {
 		bp->b_blkno = fsbtodb(fs, bno);
 		(void) vnode_pager_uncache(ITOV(ip));
-		blkfree(ip, bprev, (off_t)osize);
+		blkfree(ip, bprev, osize);
 		if (nsize < request)
 			blkfree(ip, bno + numfrags(fs, nsize),
-				(off_t)(request - nsize));
+				(request - nsize));
 		ip->i_blocks += btodb(nsize - osize);
 		ip->i_flag |= IUPD|ICHG;
 		allocbuf(bp, nsize);
@@ -870,7 +870,7 @@ gotit:
 blkfree(ip, bno, size)
 	register struct inode *ip;
 	daddr_t bno;
-	off_t size;
+	daddr_t size;
 {
 	register struct fs *fs;
 	register struct cg *cgp;

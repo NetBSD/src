@@ -31,7 +31,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)vnode.h	7.39 (Berkeley) 6/27/91
- *	$Id: vnode.h,v 1.15 1994/02/01 02:41:26 deraadt Exp $
+ *	$Id: vnode.h,v 1.16 1994/03/27 09:09:59 cgd Exp $
  */
 
 #ifndef _SYS_VNODE_H_
@@ -282,7 +282,7 @@ struct vnodeops {
 /*
  * Token indicating no attribute value yet assigned
  */
-#define	VNOVAL	((unsigned)0xffffffff)
+#define	VNOVAL	(-1)
 
 #ifdef KERNEL
 /*
