@@ -1,4 +1,4 @@
-/*	$NetBSD: conf.c,v 1.70 2001/10/05 13:32:00 mrg Exp $ */
+/*	$NetBSD: conf.c,v 1.71 2001/10/22 16:40:47 mrg Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -43,6 +43,8 @@
  *
  *	@(#)conf.c	8.3 (Berkeley) 11/14/93
  */
+
+/* XXX KEEP THIS FILE IN SYNC WITH THE arch/sparc64/sparc64/conf.c VERSION */
 
 #include "opt_compat_svr4.h"
 
@@ -115,6 +117,11 @@ cdev_decl(i4bctl);
 cdev_decl(i4btrc);
 cdev_decl(i4brbch);
 cdev_decl(i4btel);
+
+#ifdef notyet
+#include "pci.h"
+cdev_decl(pci);
+#endif
 
 struct bdevsw	bdevsw[] =
 {
