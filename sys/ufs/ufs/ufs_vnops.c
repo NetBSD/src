@@ -1,4 +1,4 @@
-/*	$NetBSD: ufs_vnops.c,v 1.68.2.2 2000/09/14 18:50:16 perseant Exp $	*/
+/*	$NetBSD: ufs_vnops.c,v 1.68.2.3 2000/10/19 14:15:14 he Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993, 1995
@@ -2039,6 +2039,7 @@ bad:
 #endif
 	if (DOINGSOFTDEP(tvp))
 		softdep_change_linkcnt(ip);
+	tvp->v_type = VNON;
 	vput(tvp);
 	return (error);
 }
