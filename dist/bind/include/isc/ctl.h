@@ -1,4 +1,4 @@
-/*	$NetBSD: ctl.h,v 1.1.1.1.8.1 2000/10/17 19:50:40 tv Exp $	*/
+/*	$NetBSD: ctl.h,v 1.1.1.1.8.2 2000/11/13 22:00:10 tv Exp $	*/
 
 #ifndef ISC_CTL_H
 #define ISC_CTL_H

@@ -1,4 +1,4 @@
-/*	$NetBSD: res_send.c,v 1.1.1.1.8.1 2000/10/17 19:50:43 tv Exp $	*/
+/*	$NetBSD: res_send.c,v 1.1.1.1.8.2 2000/11/13 22:00:12 tv Exp $	*/
 
 /*
  * Copyright (c) 1985, 1989, 1993
