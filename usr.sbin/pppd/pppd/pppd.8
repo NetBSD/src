@@ -1,5 +1,5 @@
 .\" manual page [] for pppd 2.0
-.\" $Id: pppd.8,v 1.3 1993/11/10 01:34:29 paulus Exp $
+.\" $Id: pppd.8,v 1.4 1993/11/28 23:35:34 paulus Exp $
 .\" SH section heading
 .\" SS subsection heading
 .\" LP paragraph
@@ -457,7 +457,7 @@ pppd /dev/ttya 38400 connect 'chat "" "" "login:" "username"
 If your serial connection is any more complicated than a piece of
 wire, you may need to arrange for some control characters to be
 escaped.  In particular, it is often useful to escape XON (^Q) and
-XOFF (^S), using \fBasyncmap 20000\fR.  If the path includes a telnet,
+XOFF (^S), using \fBasyncmap a0000\fR.  If the path includes a telnet,
 you probably should escape ^] as well (\fBasyncmap 200a0000\fR).
 Don't use an rlogin in the path - many implementations are not
 transparent; they will remove the sequence [0xff, 0xff, 0x73, 0x73,
