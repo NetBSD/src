@@ -1,4 +1,4 @@
-/*	$NetBSD: uaudio.c,v 1.64 2003/02/23 04:20:06 simonb Exp $	*/
+/*	$NetBSD: uaudio.c,v 1.65 2003/03/30 04:47:13 toshii Exp $	*/
 
 /*
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -44,7 +44,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uaudio.c,v 1.64 2003/02/23 04:20:06 simonb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uaudio.c,v 1.65 2003/03/30 04:47:13 toshii Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -256,7 +256,7 @@ Static usbd_status	uaudio_chan_alloc_buffers(struct uaudio_softc *,
 Static void		uaudio_chan_free_buffers(struct uaudio_softc *,
 						 struct chan *);
 Static void		uaudio_chan_init(struct chan *, int,
-					 const struct audio_params *);
+					 const struct audio_params *, int);
 Static void		uaudio_chan_set_param(struct chan *ch, u_char *start,
 			    u_char *end, int blksize);
 Static void		uaudio_chan_ptransfer(struct chan *ch);
@@ -2088,12 +2088,6 @@ uaudio_chan_rtransfer(struct chan *ch)
 	total = 0;
 	for (i = 0; i < UAUDIO_NFRAMES; i++) {
 		size = ch->bytes_per_frame;
-		residue += ch->fraction;
-		if (residue >= USB_FRAMES_PER_SECOND) {
-			if ((ch->sc->sc_altflags & UA_NOFRAC) == 0)
-				size += ch->sample_size;
-			residue -= USB_FRAMES_PER_SECOND;
-		}
 		cb->sizes[i] = size;
 		cb->offsets[i] = total;
 		total += size;
@@ -2179,17 +2173,23 @@ uaudio_chan_rintr(usbd_xfer_handle xfer, usbd_private_handle priv,
 }
 
 void
-uaudio_chan_init(struct chan *ch, int altidx, const struct audio_params *param)
+uaudio_chan_init(struct chan *ch, int altidx, const struct audio_params *param,
+    int maxpktsize)
 {
 	int samples_per_frame, sample_size;
 
 	ch->altidx = altidx;
 	sample_size = param->precision * param->factor * param->hw_channels / 8;
 	samples_per_frame = param->hw_sample_rate / USB_FRAMES_PER_SECOND;
-	ch->fraction = param->hw_sample_rate % USB_FRAMES_PER_SECOND;
 	ch->sample_size = sample_size;
 	ch->sample_rate = param->hw_sample_rate;
-	ch->bytes_per_frame = samples_per_frame * sample_size;
+	if (maxpktsize == 0) {
+		ch->fraction = param->hw_sample_rate % USB_FRAMES_PER_SECOND;
+		ch->bytes_per_frame = samples_per_frame * sample_size;
+	} else {
+		ch->fraction = 0;
+		ch->bytes_per_frame = maxpktsize;
+	}
 	ch->residue = 0;
 }
 
@@ -2521,11 +2521,12 @@ uaudio_set_params(void *addr, int setmode, int usemode,
 
 	if ((usemode & AUMODE_PLAY) /*&& paltidx != sc->sc_playchan.altidx*/) {
 		/* XXX abort transfer if currently happening? */
-		uaudio_chan_init(&sc->sc_playchan, paltidx, play);
+		uaudio_chan_init(&sc->sc_playchan, paltidx, play, 0);
 	}
 	if ((usemode & AUMODE_RECORD) /*&& raltidx != sc->sc_recchan.altidx*/) {
 		/* XXX abort transfer if currently happening? */
-		uaudio_chan_init(&sc->sc_recchan, raltidx, rec);
+		uaudio_chan_init(&sc->sc_recchan, raltidx, rec,
+		    UGETW(sc->sc_alts[raltidx].edesc->wMaxPacketSize));
 	}
 
 	DPRINTF(("uaudio_set_params: use altidx=p%d/r%d, altno=p%d/r%d\n",
