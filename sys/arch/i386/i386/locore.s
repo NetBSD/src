@@ -1,5 +1,5 @@
 
-/*	$NetBSD: locore.s,v 1.175 1997/11/13 05:31:04 mycroft Exp $	*/
+/*	$NetBSD: locore.s,v 1.176 1997/11/13 07:21:23 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994, 1995, 1997
@@ -2030,12 +2030,8 @@ IDTVEC(trap0e)
 IDTVEC(trap0e_pentium)
 	pushl	$T_PAGEFLT
 	INTRENTRY
-	testb	$SEL_RPL,TF_CS(%esp)
+	testb	$PGEX_U,TF_ERR(%esp)
 	jnz	calltrap
-#ifdef VM86
-	testl	$PSL_VM,TF_EFLAGS(%esp)
-	jnz	calltrap
-#endif
 	movl	%cr2,%eax
 	subl	_idt,%eax
 	jc	calltrap
