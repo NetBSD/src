@@ -1,4 +1,4 @@
-/*	$NetBSD: scsi_all.h,v 1.5 1994/06/29 06:42:57 cgd Exp $	*/
+/*	$NetBSD: scsi_all.h,v 1.6 1994/12/28 19:42:54 mycroft Exp $	*/
 
 /*
  * SCSI general  interface description
@@ -23,6 +23,7 @@
 
 #ifndef	_SCSI_SCSI_ALL_H
 #define _SCSI_SCSI_ALL_H 1
+
 /*
  * SCSI command format
  */
@@ -37,136 +38,123 @@
 #define	SCSI_CMD_LUN_SHIFT	5	/* LUN in the cmd is no longer SCSI */
 
 
-struct scsi_generic
-{
-	u_char	opcode;
-	u_char	bytes[11];
+struct scsi_generic {
+	u_int8_t opcode;
+	u_int8_t bytes[11];
 };
 
-struct scsi_test_unit_ready
-{
-	u_char	op_code;
-	u_char	byte2;
-	u_char	unused[3];
-	u_char	control;
+struct scsi_test_unit_ready {
+	u_int8_t opcode;
+	u_int8_t byte2;
+	u_int8_t unused[3];
+	u_int8_t control;
 };
 
-struct scsi_send_diag
-{
-	u_char	op_code;
-	u_char	byte2;
+struct scsi_send_diag {
+	u_int8_t opcode;
+	u_int8_t byte2;
 #define	SSD_UOL		0x01
 #define	SSD_DOL		0x02
 #define	SSD_SELFTEST	0x04
 #define	SSD_PF		0x10
-	u_char	unused[1];
-	u_char	paramlen[2];
-	u_char	control;
+	u_int8_t unused[1];
+	u_int8_t paramlen[2];
+	u_int8_t control;
 };
 
-struct scsi_sense
-{
-	u_char	op_code;
-	u_char	byte2;
-	u_char	unused[2];
-	u_char	length;
-	u_char	control;
+struct scsi_sense {
+	u_int8_t opcode;
+	u_int8_t byte2;
+	u_int8_t unused[2];
+	u_int8_t length;
+	u_int8_t control;
 };
 
-struct scsi_inquiry
-{
-	u_char	op_code;
-	u_char	byte2;
-	u_char	unused[2];
-	u_char	length;
-	u_char	control;
+struct scsi_inquiry {
+	u_int8_t opcode;
+	u_int8_t byte2;
+	u_int8_t unused[2];
+	u_int8_t length;
+	u_int8_t control;
 };
 
-struct scsi_mode_sense
-{
-	u_char	op_code;
-	u_char	byte2;
+struct scsi_mode_sense {
+	u_int8_t opcode;
+	u_int8_t byte2;
 #define	SMS_DBD				0x08
-	u_char	page;
+	u_int8_t page;
 #define	SMS_PAGE_CODE 			0x3F
 #define	SMS_PAGE_CTRL 			0xC0
 #define	SMS_PAGE_CTRL_CURRENT 		0x00
 #define	SMS_PAGE_CTRL_CHANGEABLE 	0x40
 #define	SMS_PAGE_CTRL_DEFAULT 		0x80
 #define	SMS_PAGE_CTRL_SAVED 		0xC0
-	u_char	unused;
-	u_char	length;
-	u_char	control;
+	u_int8_t unused;
+	u_int8_t length;
+	u_int8_t control;
 };
 
-struct scsi_mode_sense_big
-{
-	u_char	op_code;
-	u_char	byte2; 		/* same bits as small version */
-	u_char	page; 		/* same bits as small version */
-	u_char	unused[4];
-	u_char	length[2];
-	u_char	control;
+struct scsi_mode_sense_big {
+	u_int8_t opcode;
+	u_int8_t byte2;		/* same bits as small version */
+	u_int8_t page; 		/* same bits as small version */
+	u_int8_t unused[4];
+	u_int8_t length[2];
+	u_int8_t control;
 };
 
-struct scsi_mode_select
-{
-	u_char	op_code;
-	u_char	byte2;
+struct scsi_mode_select {
+	u_int8_t opcode;
+	u_int8_t byte2;
 #define	SMS_SP	0x01
 #define	SMS_PF	0x10
-	u_char	unused[2];
-	u_char	length;
-	u_char	control;
+	u_int8_t unused[2];
+	u_int8_t length;
+	u_int8_t control;
 };
 
-struct scsi_mode_select_big
-{
-	u_char	op_code;
-	u_char	byte2;		/* same bits as small version */
-	u_char	unused[5];
-	u_char	length[2];
-	u_char	control;
+struct scsi_mode_select_big {
+	u_int8_t opcode;
+	u_int8_t byte2;		/* same bits as small version */
+	u_int8_t unused[5];
+	u_int8_t length[2];
+	u_int8_t control;
 };
 
-struct scsi_reserve
-{
-	u_char	op_code;
-	u_char	byte2;
-	u_char	unused[2];
-	u_char	length;
-	u_char	control;
+struct scsi_reserve {
+	u_int8_t opcode;
+	u_int8_t byte2;
+	u_int8_t unused[2];
+	u_int8_t length;
+	u_int8_t control;
 };
 
-struct scsi_release
-{
-	u_char	op_code;
-	u_char	byte2;
-	u_char	unused[2];
-	u_char	length;
-	u_char	control;
+struct scsi_release {
+	u_int8_t opcode;
+	u_int8_t byte2;
+	u_int8_t unused[2];
+	u_int8_t length;
+	u_int8_t control;
 };
 
-struct scsi_prevent
-{
-	u_char	op_code;
-	u_char	byte2;
-	u_char	unused[2];
-	u_char	how;
-	u_char	control;
+struct scsi_prevent {
+	u_int8_t opcode;
+	u_int8_t byte2;
+	u_int8_t unused[2];
+	u_int8_t how;
+	u_int8_t control;
 };
 #define	PR_PREVENT 0x01
 #define PR_ALLOW   0x00
 
-struct scsi_changedef
-{
-	u_char	op_code;
-	u_char	byte2;
-	u_char	unused1;
-	u_char	how;
-	u_char	unused[4];
-	u_char	datalen;
-	u_char	control;
+struct scsi_changedef {
+	u_int8_t opcode;
+	u_int8_t byte2;
+	u_int8_t unused1;
+	u_int8_t how;
+	u_int8_t unused[4];
+	u_int8_t datalen;
+	u_int8_t control;
 };
 #define SC_SCSI_1 0x01
 #define SC_SCSI_2 0x03
@@ -174,7 +162,6 @@ struct scsi_changedef
 /*
  * Opcodes
  */
-
 #define	TEST_UNIT_READY		0x00
 #define REQUEST_SENSE		0x03
 #define INQUIRY			0x12
@@ -191,7 +178,6 @@ struct scsi_changedef
 #define MOVE_MEDIUM     	0xa5
 #define READ_ELEMENT_STATUS	0xb8
 
-
 /*
  * sense data format
  */
@@ -200,7 +186,7 @@ struct scsi_changedef
 #define T_PRINTER	2
 #define T_PROCESSOR	3
 #define T_WORM		4
-#define T_READONLY	5
+#define T_CDROM		5
 #define T_SCANNER 	6
 #define T_OPTICAL 	7
 #define T_NODEVICE	0x1F
@@ -211,26 +197,25 @@ struct scsi_changedef
 #define T_REMOV		1
 #define	T_FIXED		0
 
-struct scsi_inquiry_data
-{
-	u_char	device;
+struct scsi_inquiry_data {
+	u_int8_t device;
 #define	SID_TYPE	0x1F
 #define	SID_QUAL	0xE0
 #define	SID_QUAL_LU_OK	0x00
 #define	SID_QUAL_LU_OFFLINE	0x20
 #define	SID_QUAL_RSVD	0x40
 #define	SID_QUAL_BAD_LU	0x60
-	u_char	dev_qual2;
+	u_int8_t dev_qual2;
 #define	SID_QUAL2	0x7F
 #define	SID_REMOVABLE	0x80
-	u_char	version;
+	u_int8_t version;
 #define SID_ANSII	0x07
 #define SID_ECMA	0x38
 #define SID_ISO		0xC0
-	u_char	response_format;
-	u_char	additional_length;
-	u_char	unused[2];
-	u_char	flags;
+	u_int8_t response_format;
+	u_int8_t additional_length;
+	u_int8_t unused[2];
+	u_int8_t flags;
 #define	SID_SftRe	0x01
 #define	SID_CmdQue	0x02
 #define	SID_Linked	0x08
@@ -241,119 +226,82 @@ struct scsi_inquiry_data
 	char	vendor[8];
 	char	product[16];
 	char	revision[4];
-	u_char	extra[8];
+	u_int8_t extra[8];
 };
-
-/*
- * The union had to die.  It caused a padding problem with 
- * m68k gcc, specifically `ext.extended.segment' was being
- * read at byte 2 not 1.
- */
-struct	scsi_sense_data_old	/* XXXX The union had to die. */
-{
-/* 1*/	u_char	error_code;	/* same bits as new version */
-	union
-	{
-		struct
-		{
-/* 2*/			u_char	blockhi;
-/* 3*/			u_char	blockmed;
-/* 4*/			u_char	blocklow;
-		} unextended;
-		struct
-		{
-/* 2*/			u_char	segment;
-/* 3*/			u_char	flags;	/* same bits as new version */
-/* 7*/			u_char	info[4];
-/* 8*/			u_char	extra_len;
-			/* allocate enough room to hold new stuff
-			( by increasing 16 to 24 below) */
-/*32*/			u_char	extra_bytes[24];
-		} extended;
-	}ext;
-};	/* total of 32 bytes */
 
 /*
  * This looks bad, and it is.  However it fixes padding problems
  * caused by using unions.  This *needs* to be an array, if this code
  * is to work on any architecture.
  */
-struct	scsi_sense_data
-{
-/* 1*/	u_char	error_code;	/* same bits as new version */
+struct	scsi_sense_data {
+/* 1*/	u_int8_t error_code;		/* same bits as new version */
 #define XXX_unextended_blockhi	extended_segment
 #define XXX_unextended_blockmed	extended_flags
 #define XXX_unextended_blocklow	extended_info[0]
-/* 2*/	u_char	extended_segment;
-/* 3*/	u_char	extended_flags;		/* same bits as new version */
-/* 7*/	u_char	extended_info[4];
-/* 8*/	u_char	extended_extra_len;
+/* 2*/	u_int8_t extended_segment;
+/* 3*/	u_int8_t extended_flags;	/* same bits as new version */
+/* 7*/	u_int8_t extended_info[4];
+/* 8*/	u_int8_t extended_extra_len;
 	/*
 	 * allocate enough room to hold new stuff
 	 * (by increasing 16 to 24 below)
 	 */
-/*32*/	u_char	extended_extra_bytes[24];
+/*32*/	u_int8_t extended_extra_bytes[24];
 };	/* total of 32 bytes */
 
-struct	scsi_sense_data_new
-{
-/* 1*/	u_char	error_code;
+struct	scsi_sense_data_new {
+/* 1*/	u_int8_t error_code;
 #define	SSD_ERRCODE		0x7F
 #define	SSD_ERRCODE_VALID	0x80
-	union
-	{
-		struct	/* this is deprecated, the standard says "DON'T"*/
-		{
-/* 2*/			u_char	blockhi;
-/* 3*/			u_char	blockmed;
-/* 4*/			u_char	blocklow;
+	union {
+		struct {	/* this is deprecated, the standard says "DON'T"*/
+/* 2*/			u_int8_t blockhi;
+/* 3*/			u_int8_t blockmed;
+/* 4*/			u_int8_t blocklow;
 		} unextended;
-		struct
-		{
-/* 2*/			u_char	segment;
-/* 3*/			u_char	flags;
+		struct {
+/* 2*/			u_int8_t segment;
+/* 3*/			u_int8_t flags;
 #define	SSD_KEY		0x0F
 #define	SSD_ILI		0x20
 #define	SSD_EOM		0x40
 #define	SSD_FILEMARK	0x80
-/* 7*/			u_char	info[4];
-/* 8*/			u_char	extra_len;
-/*12*/			u_char	cmd_spec_info[4];
-/*13*/			u_char	add_sense_code;
-/*14*/			u_char	add_sense_code_qual;
-/*15*/			u_char	fru;
-/*16*/			u_char	sense_key_spec_1;
+/* 7*/			u_int8_t info[4];
+/* 8*/			u_int8_t extra_len;
+/*12*/			u_int8_t cmd_spec_info[4];
+/*13*/			u_int8_t add_sense_code;
+/*14*/			u_int8_t add_sense_code_qual;
+/*15*/			u_int8_t fru;
+/*16*/			u_int8_t sense_key_spec_1;
 #define	SSD_SCS_VALID		0x80
-/*17*/			u_char	sense_key_spec_2;
-/*18*/			u_char	sense_key_spec_3;
-/*32*/			u_char	extra_bytes[14];
+/*17*/			u_int8_t sense_key_spec_2;
+/*18*/			u_int8_t sense_key_spec_3;
+/*32*/			u_int8_t extra_bytes[14];
 		} extended;
-	}ext;
+	} ext;
 }; /* total of 32 bytes */
 
-struct	blk_desc
-{
-	u_char	density;
-	u_char	nblocks[3];
-	u_char	reserved;
-	u_char	blklen[3];
+struct scsi_blk_desc {
+	u_int8_t density;
+	u_int8_t nblocks[3];
+	u_int8_t reserved;
+	u_int8_t blklen[3];
 };
 
-struct scsi_mode_header
-{
-	u_char	data_length;	/* Sense data length */
-	u_char	medium_type;
-	u_char	dev_spec;
-	u_char	blk_desc_len;
+struct scsi_mode_header {
+	u_int8_t data_length;	/* Sense data length */
+	u_int8_t medium_type;
+	u_int8_t dev_spec;
+	u_int8_t blk_desc_len;
 };
 
-struct scsi_mode_header_big
-{
-	u_char	data_length[2];	/* Sense data length */
-	u_char	medium_type;
-	u_char	dev_spec;
-	u_char	unused[2];
-	u_char	blk_desc_len[2];
+struct scsi_mode_header_big {
+	u_int8_t data_length[2];	/* Sense data length */
+	u_int8_t medium_type;
+	u_int8_t dev_spec;
+	u_int8_t unused[2];
+	u_int8_t blk_desc_len[2];
 };
 
 
@@ -361,7 +309,8 @@ struct scsi_mode_header_big
  * Status Byte
  */
 #define	SCSI_OK		0x00
-#define	SCSI_CHECK		0x02
-#define	SCSI_BUSY		0x08	
-#define SCSI_INTERM		0x10
-#endif /*_SCSI_SCSI_ALL_H*/
+#define	SCSI_CHECK	0x02
+#define	SCSI_BUSY	0x08	
+#define SCSI_INTERM	0x10
+
+#endif /* _SCSI_SCSI_ALL_H */

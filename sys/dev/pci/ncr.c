@@ -1,4 +1,4 @@
-/*	$NetBSD: ncr.c,v 1.7 1994/11/04 09:42:18 mycroft Exp $	*/
+/*	$NetBSD: ncr.c,v 1.8 1994/12/28 19:44:27 mycroft Exp $	*/
 
 /**************************************************************************
 **
@@ -339,19 +339,6 @@ int ncr_debug = 0;
 
 /*==========================================================
 **
-**	"Special features" of targets.
-**	quirks field		of struct tcb.
-**	actualquirks field	of struct ccb.
-**
-**==========================================================
-*/
-
-#define	QUIRK_AUTOSAVE	(0x01)
-#define	QUIRK_NOMSG	(0x02)
-#define	QUIRK_UPDATE	(0x80)
-
-/*==========================================================
-**
 **	Capability bits in Inquire response byte 7.
 **
 **==========================================================
@@ -579,7 +566,6 @@ struct tcb {
 
 	/*
 	**	negotiation of wide and synch transfer.
-	**	device quirks.
 	*/
 
 /*0*/	u_char	minsync;
@@ -587,7 +573,7 @@ struct tcb {
 /*2*/	u_short	period;
 /*0*/	u_char	maxoffs;
 
-/*1*/	u_char	quirks;
+/*1*/	u_char	__pad;
 
 /*2*/	u_char	widedone;
 /*3*/	u_char	wval;
@@ -1194,7 +1180,9 @@ static	void	ncr_exception	(ncb_p np);
 static	void	ncr_free_ccb	(ncb_p np, ccb_p cp, int flags);
 static	void	ncr_getclock	(ncb_p np);
 static	ccb_p	ncr_get_ccb	(ncb_p np, u_long flags, u_long t,u_long l);
+#ifndef __NetBSD__
 static  U_INT32 ncr_info	(int unit);
+#endif /* !__NetBSD__ */
 static	void	ncr_init	(ncb_p np, char * msg, u_long code);
 static	void	ncr_int_ma	(ncb_p np);
 static	void	ncr_int_sir	(ncb_p np);
@@ -1204,7 +1192,7 @@ static	u_long	ncr_lookup	(char* id);
 #endif
 static	void	ncr_min_phys	(struct buf *bp);
 static	void	ncr_negotiate	(struct ncb* np, struct tcb* tp);
-static	void	ncr_opennings	(ncb_p np, lcb_p lp, struct scsi_xfer * xp);
+static	void	ncr_openings	(ncb_p np, lcb_p lp, struct scsi_xfer * xp);
 static	void	ncb_profile	(ncb_p np, ccb_p cp);
 static	void	ncr_script_copy_and_bind
 				(struct script * script, ncb_p np);
@@ -1327,7 +1315,7 @@ static	u_long	getirr (void)
 
 
 static char ident[] =
-	"\n$NetBSD: ncr.c,v 1.7 1994/11/04 09:42:18 mycroft Exp $\n";
+	"\n$NetBSD: ncr.c,v 1.8 1994/12/28 19:44:27 mycroft Exp $\n";
 
 u_long	ncr_version = NCR_VERSION
 	+ (u_long) sizeof (struct ncb)
@@ -1397,8 +1385,10 @@ struct scsi_adapter ncr_switch =
 	ncr_min_phys,
 	0,
 	0,
+#ifndef __NetBSD__
 	ncr_info,
 	"ncr",
+#endif /* !__NetBSD__ */
 };
 
 struct scsi_device ncr_dev =
@@ -1407,7 +1397,9 @@ struct scsi_device ncr_dev =
 	NULL,			/* have a queue, served by this */
 	NULL,			/* have no async handler */
 	NULL,			/* Use default 'done' routine */
+#ifndef __NetBSD__
 	"ncr",
+#endif /* !__NetBSD__ */
 };
 #else /* ANCIENT */
 struct scsi_switch ncr_switch =
@@ -1666,7 +1658,7 @@ static	struct script script0 = {
 		0,
 	/*
 	**	Send the IDENTIFY and SIMPLE_TAG messages
-	**	(and the M_X_SYNC_REQ message)
+	**	(and the MSG_EXT_SDTR message)
 	*/
 	SCR_MOVE_TBL ^ SCR_MSG_OUT,
 		offsetof (struct dsb, smsg),
@@ -1750,7 +1742,7 @@ static	struct script script0 = {
 	/*
 	**	Initialize the msgout buffer with a NOOP message.
 	*/
-	SCR_LOAD_REG (scratcha, M_NOOP),
+	SCR_LOAD_REG (scratcha, MSG_NOOP),
 		0,
 	SCR_COPY (1),
 		RADDR (scratcha),
@@ -1768,9 +1760,9 @@ static	struct script script0 = {
 	*/
 	SCR_FROM_REG (sbdl),
 		0,
-	SCR_JUMP ^ IFTRUE (DATA (M_EXTENDED)),
+	SCR_JUMP ^ IFTRUE (DATA (MSG_EXTENDED)),
 		PADDR (msg_in),
-	SCR_JUMP ^ IFTRUE (DATA (M_REJECT)),
+	SCR_JUMP ^ IFTRUE (DATA (MSG_MESSAGE_REJECT)),
 		PADDR (msg_reject),
 	/*
 	**	normal processing
@@ -1874,11 +1866,11 @@ static	struct script script0 = {
 	SCR_REG_REG (PS_REG, SCR_ADD, 1),
 		0,
 	/*
-	**	Prepare a M_ID_ERROR message
+	**	Prepare a MSG_INITIATOR_DET_ERR message
 	**	(initiator detected error).
 	**	The target should retry the transfer.
 	*/
-	SCR_LOAD_REG (scratcha, M_ID_ERROR),
+	SCR_LOAD_REG (scratcha, MSG_INITIATOR_DET_ERR),
 		0,
 	SCR_JUMP,
 		PADDR (setmsg),
@@ -1989,21 +1981,21 @@ static	struct script script0 = {
 	/*
 	**	Parity was ok, handle this message.
 	*/
-	SCR_JUMP ^ IFTRUE (DATA (M_COMPLETE)),
+	SCR_JUMP ^ IFTRUE (DATA (MSG_CMDCOMPLETE)),
 		PADDR (complete),
-	SCR_JUMP ^ IFTRUE (DATA (M_SAVE_DP)),
+	SCR_JUMP ^ IFTRUE (DATA (MSG_SAVEDATAPOINTER)),
 		PADDR (save_dp),
-	SCR_JUMP ^ IFTRUE (DATA (M_RESTORE_DP)),
+	SCR_JUMP ^ IFTRUE (DATA (MSG_RESTOREPOINTERS)),
 		PADDR (restore_dp),
-	SCR_JUMP ^ IFTRUE (DATA (M_DISCONNECT)),
+	SCR_JUMP ^ IFTRUE (DATA (MSG_DISCONNECT)),
 		PADDR (disconnect),
-	SCR_JUMP ^ IFTRUE (DATA (M_EXTENDED)),
+	SCR_JUMP ^ IFTRUE (DATA (MSG_EXTENDED)),
 		PADDR (msg_extended),
-	SCR_JUMP ^ IFTRUE (DATA (M_NOOP)),
+	SCR_JUMP ^ IFTRUE (DATA (MSG_NOOP)),
 		PADDR (clrack),
-	SCR_JUMP ^ IFTRUE (DATA (M_REJECT)),
+	SCR_JUMP ^ IFTRUE (DATA (MSG_MESSAGE_REJECT)),
 		PADDR (msg_reject),
-	SCR_JUMP ^ IFTRUE (DATA (M_IGN_RESIDUE)),
+	SCR_JUMP ^ IFTRUE (DATA (MSG_IGN_WIDE_RESIDUE)),
 		PADDR (msg_ign_residue),
 	/*
 	**	Rest of the messages left as
@@ -2018,7 +2010,7 @@ static	struct script script0 = {
 	*/
 	SCR_INT,
 		SIR_REJECT_SENT,
-	SCR_LOAD_REG (scratcha, M_REJECT),
+	SCR_LOAD_REG (scratcha, MSG_MESSAGE_REJECT),
 		0,
 	SCR_JUMP,
 		PADDR (setmsg),
@@ -2032,7 +2024,7 @@ static	struct script script0 = {
 	/*
 	**	send a "message parity error" message.
 	*/
-	SCR_LOAD_REG (scratcha, M_PARITY),
+	SCR_LOAD_REG (scratcha, MSG_PARITY_ERROR),
 		0,
 	SCR_JUMP,
 		PADDR (setmsg),
@@ -2163,7 +2155,7 @@ static	struct script script0 = {
 		PADDR (msg_parity),
 	SCR_FROM_REG (scratcha),
 		0,
-	SCR_JUMP ^ IFTRUE (DATA (M_X_WIDE_REQ)),
+	SCR_JUMP ^ IFTRUE (DATA (MSG_EXT_WDTR)),
 		PADDR (msg_wdtr),
 	/*
 	**	unknown extended message
@@ -2200,7 +2192,7 @@ static	struct script script0 = {
 	SCR_INT ^ IFFALSE (WHEN (SCR_MSG_OUT)),
 		SIR_NEGO_PROTO,
 	/*
-	**	Send the M_X_WIDE_REQ
+	**	Send the MSG_EXT_WDTR
 	*/
 	SCR_MOVE_ABS (4) ^ SCR_MSG_OUT,
 		NADDR (msgout),
@@ -2233,7 +2225,7 @@ static	struct script script0 = {
 		PADDR (msg_parity),
 	SCR_FROM_REG (scratcha),
 		0,
-	SCR_JUMP ^ IFTRUE (DATA (M_X_SYNC_REQ)),
+	SCR_JUMP ^ IFTRUE (DATA (MSG_EXT_SDTR)),
 		PADDR (msg_sdtr),
 	/*
 	**	unknown extended message
@@ -2271,7 +2263,7 @@ static	struct script script0 = {
 	SCR_INT ^ IFFALSE (WHEN (SCR_MSG_OUT)),
 		SIR_NEGO_PROTO,
 	/*
-	**	Send the M_X_SYNC_REQ
+	**	Send the MSG_EXT_SDTR
 	*/
 	SCR_MOVE_ABS (5) ^ SCR_MSG_OUT,
 		NADDR (msgout),
@@ -2412,12 +2404,12 @@ static	struct script script0 = {
 
 }/*-------------------------< DISCONNECT >---------------*/,{
 	/*
-	**	If QUIRK_AUTOSAVE is set,
+	**	If SDEV_AUTOSAVE is set,
 	**	do an "save pointer" operation.
 	*/
 	SCR_FROM_REG (QU_REG),
 		0,
-/*<<<*/	SCR_JUMPR ^ IFFALSE (MASK (QUIRK_AUTOSAVE, QUIRK_AUTOSAVE)),
+/*<<<*/	SCR_JUMPR ^ IFFALSE (MASK (SDEV_AUTOSAVE, SDEV_AUTOSAVE)),
 		12,
 	/*
 	**	like SAVE_DP message:
@@ -2511,7 +2503,7 @@ static	struct script script0 = {
 	/*
 	**	If it was no ABORT message ...
 	*/
-	SCR_JUMP ^ IFTRUE (DATA (M_ABORT)),
+	SCR_JUMP ^ IFTRUE (DATA (MSG_ABORT)),
 		PADDR (msg_out_abort),
 	/*
 	**	... wait for the next phase
@@ -2523,7 +2515,7 @@ static	struct script script0 = {
 	/*
 	**	... else clear the message ...
 	*/
-	SCR_LOAD_REG (scratcha, M_NOOP),
+	SCR_LOAD_REG (scratcha, MSG_NOOP),
 		0,
 	SCR_COPY (4),
 		RADDR (scratcha),
@@ -2624,12 +2616,12 @@ static	struct script script0 = {
 		PADDR (startpos),
 		RADDR (scratcha),
 	/*
-	**	If QUIRK_NOMSG is set, select without ATN.
+	**	If SDEV_NOSYNCWIDE is set, select without ATN.
 	**	and don't send a message.
 	*/
 	SCR_FROM_REG (QU_REG),
 		0,
-	SCR_JUMP ^ IFTRUE (MASK (QUIRK_NOMSG, QUIRK_NOMSG)),
+	SCR_JUMP ^ IFTRUE (MASK (SDEV_NOSYNCWIDE, SDEV_NOSYNCWIDE)),
 		PADDR(getcc3),
 	/*
 	**	Then try to connect to the target.
@@ -2778,7 +2770,7 @@ static	struct script script0 = {
 	*/
 	SCR_FROM_REG (sbdl),
 		0,
-/*<<<*/	SCR_JUMPR ^ IFFALSE (MASK (M_IDENTIFY, 0x98)),
+/*<<<*/	SCR_JUMPR ^ IFFALSE (MASK (MSG_IDENTIFY(0,0), 0x98)),
 		32,
 	/*
 	**	It WAS an Identify message.
@@ -2819,7 +2811,7 @@ static	struct script script0 = {
 	*/
 	SCR_FROM_REG (sbdl),
 		0,
-/*<<<*/	SCR_JUMPR ^ IFFALSE (DATA (M_SIMPLE_TAG)),
+/*<<<*/	SCR_JUMPR ^ IFFALSE (DATA (MSG_SIMPLE_Q_TAG)),
 		48,
 	/*
 	**	It WAS a SIMPLE_TAG message.
@@ -2916,12 +2908,12 @@ static	struct script script0 = {
 	**      Abort a bad reselection.
 	**	Set the message to ABORT vs. ABORT_TAG
 	*/
-	SCR_LOAD_REG (scratcha, M_ABORT_TAG),
+	SCR_LOAD_REG (scratcha, MSG_ABORT_TAG),
 		0,
 	SCR_JUMPR ^ IFFALSE (CARRYSET),
 		8,
 }/*-------------------------< ABORT >----------------------*/,{
-	SCR_LOAD_REG (scratcha, M_ABORT),
+	SCR_LOAD_REG (scratcha, MSG_ABORT),
 		0,
 	SCR_COPY (1),
 		RADDR (scratcha),
@@ -3205,18 +3197,6 @@ void ncr_min_phys (struct  buf *bp)
 {
 	if (bp->b_bcount > MAX_SIZE) bp->b_bcount = MAX_SIZE;
 }
-
-/*----------------------------------------------------------
-**
-**	Maximal number of outstanding requests per target.
-**
-**----------------------------------------------------------
-*/
-
-U_INT32 ncr_info (int unit)
-{
-	return (1);   /* may be changed later */
-}
 
 /*----------------------------------------------------------
 **
@@ -3248,6 +3228,18 @@ static	int ncr_probe(pcici_t config_id)
 {
 	if (ncr_units >= NNCR) return (-1);
 	return (ncr_units);
+}
+
+/*----------------------------------------------------------
+**
+**	Maximal number of outstanding requests per target.
+**
+**----------------------------------------------------------
+*/
+
+U_INT32 ncr_info (int unit)
+{
+	return (1);   /* may be changed later */
 }
 
 #endif /* !__NetBSD__ */
@@ -3432,7 +3424,7 @@ static	int ncr_attach (pcici_t config_id)
 		ncr_name (np));
 	DELAY (1000000);
 #endif
-	printf ("%s scanning for targets 0..%d ($Revision: 1.7 $)\n",
+	printf ("%s scanning for targets 0..%d ($Revision: 1.8 $)\n",
 		ncr_name (np), MAX_TARGET-1);
 
 	/*
@@ -3443,12 +3435,16 @@ static	int ncr_attach (pcici_t config_id)
 #ifndef ANCIENT
 #ifdef __NetBSD__
 	np->sc_link.adapter_softc = np;
+	np->sc_link.adapter_target = np->myaddr;
 #else /* !__NetBSD__ */
 	np->sc_link.adapter_unit = ncr_units;
-#endif /* !__NetBSD__ */
 	np->sc_link.adapter_targ = np->myaddr;
+#endif /* !__NetBSD__ */
 	np->sc_link.adapter      = &ncr_switch;
 	np->sc_link.device       = &ncr_dev;
+#ifdef __NetBSD__
+	np->sc_link.openings    = 1;
+#endif /* __NetBSD__ */
 
 #ifdef __NetBSD__
 	config_found(self, &np->sc_link, ncr_print);
@@ -3591,7 +3587,7 @@ static INT32 ncr_start (struct scsi_xfer * xp)
 		(xp->LUN    >= MAX_LUN   ) ||
 		(flags    & SCSI_DATA_UIO)) {
 		xp->error = XS_DRIVER_STUFFUP;
-		return(HAD_ERROR);
+		return(COMPLETE);
 	};
 
 	/*---------------------------------------------
@@ -3610,7 +3606,7 @@ static INT32 ncr_start (struct scsi_xfer * xp)
 			PRINT_ADDR(xp);
 			printf ("access to partial disk block refused.\n");
 			xp->error = XS_DRIVER_STUFFUP;
-			return(HAD_ERROR);
+			return(COMPLETE);
 		};
 	};
 
@@ -3662,7 +3658,7 @@ static INT32 ncr_start (struct scsi_xfer * xp)
 	};
 
 	if (xp->bp)
-		flags |= (SCSI_NOSLEEP); /* just to be sure */
+		flags |= SCSI_NOSLEEP; /* just to be sure */
 
 	/*---------------------------------------------------
 	**
@@ -3688,29 +3684,6 @@ static INT32 ncr_start (struct scsi_xfer * xp)
 	bzero (&cp->phys.header.stamp, sizeof (struct tstamp));
 	cp->phys.header.stamp.start = time;
 
-	/*----------------------------------------------------
-	**
-	**	Get device quirks from a speciality table.
-	**
-	**	@GENSCSI@
-	**	This should be a part of the device table
-	**	in "scsi_conf.c".
-	**
-	**----------------------------------------------------
-	*/
-
-	if (tp->quirks & QUIRK_UPDATE) {
-#ifdef NEW_SCSICONF
-		tp->quirks = xp->sc_link->quirks;
-#else
-		tp->quirks = ncr_lookup ((char*) &tp->inqdata[0]);
-#endif
-		if (tp->quirks) {
-			PRINT_ADDR(xp);
-			printf ("quirks=%x.\n", tp->quirks);
-		};
-	};
-
 	/*---------------------------------------------------
 	**
 	**	negotiation required?
@@ -3779,13 +3752,13 @@ static INT32 ncr_start (struct scsi_xfer * xp)
 		/*
 		** @GENSCSI@	Bug in "/sys/scsi/cd.c"
 		**
-		**	/sys/scsi/cd.c initializes opennings with 2.
+		**	/sys/scsi/cd.c initializes openings with 2.
 		**	Our info value of 1 is not respected.
 		*/
-		if (xp->sc_link && xp->sc_link->opennings) {
+		if (xp->sc_link && xp->sc_link->openings) {
 			PRINT_ADDR(xp);
-			printf ("opennings set to 0.\n");
-			xp->sc_link->opennings = 0;
+			printf ("openings set to 0.\n");
+			xp->sc_link->openings = 0;
 		};
 #endif
 	};
@@ -3811,18 +3784,18 @@ static INT32 ncr_start (struct scsi_xfer * xp)
 		case 0x08:  /* READ_SMALL (6) */
 		case 0x28:  /* READ_BIG  (10) */
 		case 0xa8:  /* READ_HUGE (12) */
-			cp -> scsi_smsg [msglen] = M_SIMPLE_TAG;
+			cp -> scsi_smsg [msglen] = MSG_SIMPLE_Q_TAG;
 			break;
 		default:
-			cp -> scsi_smsg [msglen] = M_ORDERED_TAG;
+			cp -> scsi_smsg [msglen] = MSG_ORDERED_Q_TAG;
 		}
 
 		/*
 		**	can be overwritten by ncrcontrol
 		*/
 		switch (np->order) {
-		case M_SIMPLE_TAG:
-		case M_ORDERED_TAG:
+		case MSG_SIMPLE_Q_TAG:
+		case MSG_ORDERED_Q_TAG:
 			cp -> scsi_smsg [msglen] = np->order;
 		};
 		msglen++;
@@ -3831,9 +3804,9 @@ static INT32 ncr_start (struct scsi_xfer * xp)
 
 	switch (nego) {
 	case NS_SYNC:
-		cp -> scsi_smsg [msglen++] = M_EXTENDED;
+		cp -> scsi_smsg [msglen++] = MSG_EXTENDED;
 		cp -> scsi_smsg [msglen++] = 3;
-		cp -> scsi_smsg [msglen++] = M_X_SYNC_REQ;
+		cp -> scsi_smsg [msglen++] = MSG_EXT_SDTR;
 		cp -> scsi_smsg [msglen++] = tp->minsync;
 		cp -> scsi_smsg [msglen++] = tp->maxoffs;
 #ifdef SCSI_NCR_DEBUG
@@ -3846,9 +3819,9 @@ static INT32 ncr_start (struct scsi_xfer * xp)
 #endif /* SCSI_NCR_DEBUG */
 		break;
 	case NS_WIDE:
-		cp -> scsi_smsg [msglen++] = M_EXTENDED;
+		cp -> scsi_smsg [msglen++] = MSG_EXTENDED;
 		cp -> scsi_smsg [msglen++] = 2;
-		cp -> scsi_smsg [msglen++] = M_X_WIDE_REQ;
+		cp -> scsi_smsg [msglen++] = MSG_EXT_WDTR;
 		cp -> scsi_smsg [msglen++] = tp->usrwide;
 #ifdef SCSI_NCR_DEBUG
 		if (ncr_debug & DEBUG_NEGO) {
@@ -3884,7 +3857,7 @@ static INT32 ncr_start (struct scsi_xfer * xp)
 	if (segments < 0) {
 		xp->error = XS_DRIVER_STUFFUP;
 		ncr_free_ccb(np, cp, flags);
-		return(HAD_ERROR);
+		return(COMPLETE);
 	};
 
 	/*----------------------------------------------------
@@ -3954,7 +3927,7 @@ static INT32 ncr_start (struct scsi_xfer * xp)
 	/*
 	**	status
 	*/
-	cp->actualquirks		= tp->quirks;
+	cp->actualquirks		= xp->sc_link->quirks;
 	cp->host_status			= nego ? HS_NEGOTIATE : HS_BUSY;
 	cp->scsi_status			= S_ILLEGAL;
 	cp->parity_status		= 0;
@@ -3971,8 +3944,7 @@ static INT32 ncr_start (struct scsi_xfer * xp)
 	**----------------------------------------------------
 	*/
 
-	oldspl = 0; /* for the sake of gcc */
-	if (!(flags & SCSI_NOMASK)) oldspl = splbio();
+	oldspl = splbio();
 	np->lock++;
 
 	/*
@@ -4011,8 +3983,9 @@ static INT32 ncr_start (struct scsi_xfer * xp)
 	*/
 
 	np->lock--;
-	if (!(flags & SCSI_NOMASK)) {
-		splx (oldspl);
+	splx (oldspl);
+
+	if (!(flags & SCSI_POLL)) {
 		if (np->lasttime) {
 #ifdef SCSI_NCR_DEBUG
 			if(ncr_debug & DEBUG_TINY) printf ("Q");
@@ -4069,13 +4042,8 @@ static INT32 ncr_start (struct scsi_xfer * xp)
 			ncr_name (np), cp->host_status, cp->scsi_status);
 	};
 #endif /* SCSI_NCR_DEBUG */
-	if (!(flags & SCSI_NOMASK))
-		return (SUCCESSFULLY_QUEUED);
-	switch (xp->error) {
-	case  0     : return (COMPLETE);
-	case XS_BUSY: return (TRY_AGAIN_LATER);
-	};
-	return (HAD_ERROR);
+
+	return (COMPLETE);
 }
 
 /*==========================================================
@@ -4166,8 +4134,80 @@ void ncr_complete (ncb_p np, ccb_p cp)
 	/*
 	**	Check the status.
 	*/
-	if (   (cp->host_status == HS_COMPLETE)
-		&& (cp->scsi_status == S_GOOD)) {
+	if (xp->error != XS_NOERROR) {
+
+		/*
+		**	Don't override the error value.
+		*/
+
+	} else if (cp->host_status != HS_COMPLETE) {
+
+		switch (cp->host_status) {
+		case HS_SEL_TIMEOUT:
+			/*
+			**   Selection timed out; device missing.
+			*/
+			xp->error = XS_SELTIMEOUT;
+			break;
+
+		case HS_TIMEOUT:
+			/*
+			**   No response to command.
+			*/
+			xp->error = XS_TIMEOUT;
+			break;
+
+		default:
+			/*
+			**  Other protocol messes
+			*/
+			PRINT_ADDR(xp);
+			printf ("COMMAND FAILED (%x %x) @%x.\n",
+				cp->host_status, cp->scsi_status, cp);
+
+			xp->error = XS_DRIVER_STUFFUP;
+			break;
+		}
+
+	} else if (cp->scsi_status != SCSI_OK) {
+
+		switch (cp->scsi_status) {
+		case S_SENSE|SCSI_OK:
+			/*
+			**   Check condition code
+			*/
+			xp->error = XS_SENSE;
+#ifdef SCSI_NCR_DEBUG
+			if (ncr_debug & (DEBUG_RESULT|DEBUG_TINY)) {
+				u_char * p = (u_char*) & xp->sense;
+				int i;
+				printf ("\n%s: sense data:", ncr_name (np));
+				for (i=0; i<14; i++) printf (" %x", *p++);
+				printf (".\n");
+			};
+#endif /* SCSI_NCR_DEBUG */
+			break;
+
+		case SCSI_BUSY:
+			/*
+			**   Target is busy.
+			*/
+			xp->error = XS_BUSY;
+			break;
+
+		default:
+			/*
+			**  Other protocol messes
+			*/
+			PRINT_ADDR(xp);
+			printf ("COMMAND FAILED (%x %x) @%x.\n",
+				cp->host_status, cp->scsi_status, cp);
+
+			xp->error = XS_DRIVER_STUFFUP;
+			break;
+		}
+
+	} else {
 
 		/*
 		**	All went well.
@@ -4211,11 +4251,6 @@ void ncr_complete (ncb_p np, ccb_p cp)
 			**	prepare negotiation of synch and wide.
 			*/
 			ncr_negotiate (np, tp);
-
-			/*
-			**	force quirks update before next command start
-			*/
-			tp->quirks |= QUIRK_UPDATE;
 		};
 
 		/*
@@ -4224,7 +4259,7 @@ void ncr_complete (ncb_p np, ccb_p cp)
 		if (lp) {
 			ncr_settags (tp, lp);
 			if (lp->reqlink != lp->actlink)
-				ncr_opennings (np, lp, xp);
+				ncr_openings (np, lp, xp);
 		};
 
 #ifdef DK
@@ -4236,57 +4271,6 @@ void ncr_complete (ncb_p np, ccb_p cp)
 		tp->bytes     += xp->datalen;
 		tp->transfers ++;
 
-	} else if (xp->flags & SCSI_ERR_OK) {
-
-		/*
-		**   Not correct, but errors expected.
-		*/
-		xp->resid = 0;
-
-	} else if ((cp->host_status == HS_COMPLETE)
-		&& (cp->scsi_status == (S_SENSE|S_GOOD))) {
-
-		/*
-		**   Check condition code
-		*/
-		xp->error = XS_SENSE;
-
-#ifdef SCSI_NCR_DEBUG
-		if (ncr_debug & (DEBUG_RESULT|DEBUG_TINY)) {
-			u_char * p = (u_char*) & xp->sense;
-			int i;
-			printf ("\n%s: sense data:", ncr_name (np));
-			for (i=0; i<14; i++) printf (" %x", *p++);
-			printf (".\n");
-		};
-#endif /* SCSI_NCR_DEBUG */
-
-	} else if ((cp->host_status == HS_COMPLETE)
-		&& (cp->scsi_status == S_BUSY)) {
-
-		/*
-		**   Target is busy.
-		*/
-		xp->error = XS_BUSY;
-
-	} else if ((cp->host_status == HS_SEL_TIMEOUT)
-		|| (cp->host_status == HS_TIMEOUT)) {
-
-		/*
-		**   No response
-		*/
-		xp->error = XS_TIMEOUT;
-
-	} else {
-
-		/*
-		**  Other protocol messes
-		*/
-		PRINT_ADDR(xp);
-		printf ("COMMAND FAILED (%x %x) @%x.\n",
-			cp->host_status, cp->scsi_status, cp);
-
-		xp->error = XS_DRIVER_STUFFUP;
 	}
 
 	xp->flags |= ITSDONE;
@@ -5481,7 +5465,7 @@ static int ncr_show_msg (u_char * msg)
 {
 	u_char i;
 	printf ("%x",*msg);
-	if (*msg==M_EXTENDED) {
+	if (*msg==MSG_EXTENDED) {
 		for (i=1;i<8;i++) {
 			if (i-1>msg[1]) break;
 			printf ("-%x",msg[i]);
@@ -5718,8 +5702,8 @@ void ncr_int_sir (ncb_p np)
 			break;
 
 		};
-		np->msgin [0] = M_NOOP;
-		np->msgout[0] = M_NOOP;
+		np->msgin [0] = MSG_NOOP;
+		np->msgout[0] = MSG_NOOP;
 		cp->nego_status = 0;
 		OUTL (nc_dsp,vtophys (&np->script->dispatch));
 		break;
@@ -5816,13 +5800,13 @@ void ncr_int_sir (ncb_p np)
 
 		ncr_setsync (np, cp, (fak<<5)|ofs);
 
-		np->msgout[0] = M_EXTENDED;
+		np->msgout[0] = MSG_EXTENDED;
 		np->msgout[1] = 3;
-		np->msgout[2] = M_X_SYNC_REQ;
+		np->msgout[2] = MSG_EXT_SDTR;
 		np->msgout[3] = per;
 		np->msgout[4] = ofs;
 
-		np->msgin [0] = M_NOOP;
+		np->msgin [0] = MSG_NOOP;
 
 		cp->nego_status = NS_SYNC;
 
@@ -5914,12 +5898,12 @@ void ncr_int_sir (ncb_p np)
 
 		ncr_setwide (np, cp, wide);
 
-		np->msgout[0] = M_EXTENDED;
+		np->msgout[0] = MSG_EXTENDED;
 		np->msgout[1] = 2;
-		np->msgout[2] = M_X_WIDE_REQ;
+		np->msgout[2] = MSG_EXT_WDTR;
 		np->msgout[3] = wide;
 
-		np->msgin [0] = M_NOOP;
+		np->msgin [0] = MSG_NOOP;
 
 		cp->nego_status = NS_WIDE;
 
@@ -5943,13 +5927,13 @@ void ncr_int_sir (ncb_p np)
 	case SIR_REJECT_RECEIVED:
 		/*-----------------------------------------------
 		**
-		**	We received a M_REJECT message.
+		**	We received a MSG_MESSAGE_REJECT message.
 		**
 		**-----------------------------------------------
 		*/
 
 		PRINT_ADDR(cp->xfer);
-		printf ("M_REJECT received (%x:%x).\n",
+		printf ("MSG_MESSAGE_REJECT received (%x:%x).\n",
 			np->lastmsg, np->msgout[0]);
 		break;
 
@@ -5962,7 +5946,7 @@ void ncr_int_sir (ncb_p np)
 		*/
 
 		PRINT_ADDR(cp->xfer);
-		printf ("M_REJECT sent for ");
+		printf ("MSG_MESSAGE_REJECT sent for ");
 		(void) ncr_show_msg (np->msgin);
 		printf (".\n");
 		break;
@@ -5984,7 +5968,7 @@ void ncr_int_sir (ncb_p np)
 		*/
 
 		PRINT_ADDR(cp->xfer);
-		printf ("M_IGN_RESIDUE received, but not yet implemented.\n");
+		printf ("MSG_IGN_WIDE_RESIDUE received, but not yet implemented.\n");
 		break;
 
 	case SIR_MISSING_SAVE:
@@ -5997,7 +5981,7 @@ void ncr_int_sir (ncb_p np)
 		*/
 
 		PRINT_ADDR(cp->xfer);
-		printf ("M_DISCONNECT received, but datapointer not saved:\n"
+		printf ("MSG_DISCONNECT received, but datapointer not saved:\n"
 			"	data=%x save=%x goal=%x.\n",
 			INL (nc_temp),
 			np->header.savep,
@@ -6324,7 +6308,7 @@ static	void ncr_alloc_ccb (ncb_p np, struct scsi_xfer * xp)
 **==========================================================
 */
 
-static void ncr_opennings (ncb_p np, lcb_p lp, struct scsi_xfer * xp)
+static void ncr_openings (ncb_p np, lcb_p lp, struct scsi_xfer * xp)
 {
 #ifndef	ANCIENT
 	/*
@@ -6340,10 +6324,10 @@ static void ncr_opennings (ncb_p np, lcb_p lp, struct scsi_xfer * xp)
 
 		if (!diff) return;
 
-		if (diff > xp->sc_link->opennings)
-			diff = xp->sc_link->opennings;
+		if (diff > xp->sc_link->openings)
+			diff = xp->sc_link->openings;
 
-		xp->sc_link->opennings	-= diff;
+		xp->sc_link->openings	-= diff;
 		lp->actlink		-= diff;
 #ifdef SCSI_NCR_DEBUG
 		if (ncr_debug & DEBUG_TAGS)
@@ -6359,7 +6343,7 @@ static void ncr_opennings (ncb_p np, lcb_p lp, struct scsi_xfer * xp)
 	if (lp->reqlink > lp->actlink) {
 		u_char diff = lp->reqlink - lp->actlink;
 
-		xp->sc_link->opennings	+= diff;
+		xp->sc_link->openings	+= diff;
 		lp->actlink		+= diff;
 		wakeup ((caddr_t) xp->sc_link);
 #ifdef SCSI_NCR_DEBUG
@@ -6613,61 +6597,6 @@ static	void ncb_profile (ncb_p np, ccb_p cp)
 	np->profile.ms_post	+= post;
 }
 #undef PROFILE
-
-/*==========================================================
-**
-**
-**	Device lookup.
-**
-**	@GENSCSI@ should be integrated to scsiconf.c
-**
-**
-**==========================================================
-*/
-
-#ifndef NEW_SCSICONF
-
-struct table_entry {
-	char *	manufacturer;
-	char *	model;
-	char *	version;
-	u_long	info;
-};
-
-static struct table_entry device_tab[] =
-{
-	{"WangDAT", "Model 2600", "01.7", QUIRK_NOMSG},
-	{"WangDAT", "Model 3200", "02.2", QUIRK_NOMSG},
-	{"WangDAT", "Model 1300", "02.4", QUIRK_NOMSG},
-	{"", "", "", 0} /* catch all: must be last entry. */
-};
-
-static u_long ncr_lookup(char * id)
-{
-	struct table_entry * p = device_tab;
-	char *d, *r, c;
-
-	for (;;p++) {
-
-		d = id+8;
-		r = p->manufacturer;
-		while ((c=*r++)) if (c!=*d++) break;
-		if (c) continue;
-
-		d = id+16;
-		r = p->model;
-		while ((c=*r++)) if (c!=*d++) break;
-		if (c) continue;
-
-		d = id+32;
-		r = p->version;
-		while ((c=*r++)) if (c!=*d++) break;
-		if (c) continue;
-
-		return (p->info);
-	}
-}
-#endif
 
 /*==========================================================
 **
