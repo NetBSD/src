@@ -37,7 +37,7 @@ Name_Repository (dir, update_dir)
 	xupdate_dir = ".";
 
     if (dir != NULL)
-	(void) asprintf (&tmp, "%s/%s", dir, CVSADM_REP);
+	(void) xasprintf (&tmp, "%s/%s", dir, CVSADM_REP);
     else
 	tmp = xstrdup (CVSADM_REP);
 
@@ -53,7 +53,7 @@ Name_Repository (dir, update_dir)
 	char *cvsadm;
 
 	if (dir != NULL)
-	    (void) asprintf (&cvsadm, "%s/%s", dir, CVSADM);
+	    (void) xasprintf (&cvsadm, "%s/%s", dir, CVSADM);
 	else
 	    cvsadm = xstrdup (CVSADM);
 
