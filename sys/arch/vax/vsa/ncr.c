@@ -1,4 +1,4 @@
-/*	$NetBSD: ncr.c,v 1.18 1999/03/13 15:16:48 ragge Exp $	*/
+/*	$NetBSD: ncr.c,v 1.19 1999/03/26 22:04:07 ragge Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -126,7 +126,11 @@ si_match(parent, cf, aux)
 	struct vsbus_attach_args *va = aux;
 	volatile char *si_csr = (char *) va->va_addr;
 
-	si_csr[4] = 0xcf;
+	/* This is the way Linux autoprobes the interrupt MK-990321 */
+	si_csr[12] = 0;
+	si_csr[16] = 0x80;
+	si_csr[0] = 0x80;
+	si_csr[4] = 5; /* 0xcf */
 	DELAY(100000);
 	va->va_ivec = si_intr;
 	return 1;
