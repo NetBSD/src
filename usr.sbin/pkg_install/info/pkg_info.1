@@ -1,4 +1,4 @@
-.\" $NetBSD: pkg_info.1,v 1.29.2.1 2003/07/13 09:45:25 jlam Exp $
+.\" $NetBSD: pkg_info.1,v 1.29.2.2 2003/08/08 10:19:01 jlam Exp $
 .\"
 .\" FreeBSD install - a package for the installation and maintenance
 .\" of non-core utilities.
@@ -25,7 +25,7 @@
 .Nd a utility for displaying information on software packages
 .Sh SYNOPSIS
 .Nm
-.Op Fl BbcDdFfhIikLmnpqRrSsVv
+.Op Fl BbcDdFfhIikLmNnpqRrSsVv
 .Bk -words
 .Op Fl e Ar package
 .Ek
@@ -170,6 +170,8 @@ organize it.
 This lets you add a special token to the start of each field.
 .It Fl m
 Show the mtree file (if any) for each package.
+.It Fl N
+Show which packages each package was built with (exact dependencies), if any.
 .It Fl n
 Show which packages each package needs (depends upon), if any.
 .It Fl p

@@ -1,11 +1,11 @@
-/*	$NetBSD: perform.c,v 1.40.2.2 2003/07/23 20:48:01 jlam Exp $	*/
+/*	$NetBSD: perform.c,v 1.40.2.3 2003/08/08 10:19:01 jlam Exp $	*/
 
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static const char *rcsid = "from FreeBSD Id: perform.c,v 1.23 1997/10/13 15:03:53 jkh Exp";
 #else
-__RCSID("$NetBSD: perform.c,v 1.40.2.2 2003/07/23 20:48:01 jlam Exp $");
+__RCSID("$NetBSD: perform.c,v 1.40.2.3 2003/08/08 10:19:01 jlam Exp $");
 #endif
 #endif
 
@@ -184,6 +184,9 @@ pkg_do(char *pkg)
 		}
 		if (Flags & SHOW_DEPENDS) {
 			show_depends("Requires:\n", &plist);
+		}
+		if (Flags & SHOW_BLD_DEPENDS) {
+			show_bld_depends("Built using:\n", &plist);
 		}
 		if ((Flags & SHOW_REQBY) && !isemptyfile(REQUIRED_BY_FNAME)) {
 			show_file("Required by:\n", REQUIRED_BY_FNAME);
