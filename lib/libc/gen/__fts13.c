@@ -1,4 +1,4 @@
-/*	$NetBSD: __fts13.c,v 1.16 1999/06/10 23:40:53 christos Exp $	*/
+/*	$NetBSD: __fts13.c,v 1.17 1999/08/26 20:24:59 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993, 1994
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)fts.c	8.6 (Berkeley) 8/14/94";
 #else
-__RCSID("$NetBSD: __fts13.c,v 1.16 1999/06/10 23:40:53 christos Exp $");
+__RCSID("$NetBSD: __fts13.c,v 1.17 1999/08/26 20:24:59 mycroft Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -88,7 +88,7 @@ static FTSENT	*fts_build __P((FTS *, int));
 static void	 fts_lfree __P((FTSENT *));
 static void	 fts_load __P((FTS *, FTSENT *));
 static size_t	 fts_maxarglen __P((char * const *));
-static void	 fts_padjust __P((FTS *, void *));
+static void	 fts_padjust __P((FTS *, FTSENT *));
 static int	 fts_palloc __P((FTS *, size_t));
 static FTSENT	*fts_sort __P((FTS *, FTSENT *, size_t));
 static u_short	 fts_stat __P((FTS *, FTSENT *, int));
@@ -601,8 +601,8 @@ fts_build(sp, type)
 	size_t nitems;
 	FTSENT *cur, *tail;
 	DIR *dirp;
-	void *adjaddr;
-	int cderrno, descend, len, level, maxlen, nlinks, saved_errno;
+	int adjust, cderrno, descend, len, level, nlinks, saved_errno;
+	size_t maxlen;
 #ifdef FTS_WHITEOUT
 	int oflag;
 #endif
@@ -686,7 +686,7 @@ fts_build(sp, type)
 	 * If not changing directories set a pointer so that can just append
 	 * each new name into the path.
 	 */
-	maxlen = sp->fts_pathlen - cur->fts_pathlen - 1;
+	maxlen = sp->fts_pathlen - cur->fts_pathlen;
 	len = NAPPEND(cur);
 	if (ISSET(FTS_NOCHDIR)) {
 		cp = sp->fts_path + len;
@@ -696,7 +696,7 @@ fts_build(sp, type)
 	level = cur->fts_level + 1;
 
 	/* Read the directory, attaching each entry to the `link' pointer. */
-	adjaddr = NULL;
+	adjust = 0;
 	for (head = tail = NULL, nitems = 0; (dp = readdir(dirp)) != NULL;) {
 		size_t dlen;
 
@@ -710,7 +710,7 @@ fts_build(sp, type)
 #endif
 		if ((p = fts_alloc(sp, dp->d_name, dlen)) == NULL)
 			goto mem1;
-		if (dlen > maxlen) {
+		if (dlen + 1 > maxlen) {
 			if (fts_palloc(sp, dlen)) {
 				/*
 				 * No more memory for path or structures.  Save
@@ -727,8 +727,8 @@ mem1:				saved_errno = errno;
 				SET(FTS_STOP);
 				return (NULL);
 			}
-			adjaddr = sp->fts_path;
-			maxlen = sp->fts_pathlen - sp->fts_cur->fts_pathlen - 1;
+			adjust = 1;
+			maxlen = sp->fts_pathlen - sp->fts_cur->fts_pathlen;
 		}
 
 		p->fts_pathlen = len + dlen + 1;
@@ -789,8 +789,8 @@ mem1:				saved_errno = errno;
 	 * If had to realloc the path, adjust the addresses for the rest
 	 * of the tree.
 	 */
-	if (adjaddr)
-		fts_padjust(sp, adjaddr);
+	if (adjust)
+		fts_padjust(sp, head);
 
 	/*
 	 * If not changing directories, reset the path back to original
@@ -1018,23 +1018,28 @@ fts_palloc(sp, more)
  * already returned.
  */
 static void
-fts_padjust(sp, addr)
+fts_padjust(sp, head)
 	FTS *sp;
-	void *addr;
+	FTSENT *head;
 {
 	FTSENT *p;
+	char *addr;
 
 #define	ADJUST(p) {							\
-	(p)->fts_accpath =						\
-	    (char *)addr + ((p)->fts_accpath - (p)->fts_path);		\
+	if ((p)->fts_accpath != (p)->fts_name)				\
+		(p)->fts_accpath =					\
+		    addr + ((p)->fts_accpath - (p)->fts_path);		\
 	(p)->fts_path = addr;						\
 }
+
+	addr = sp->fts_path;
+
 	/* Adjust the current set of children. */
 	for (p = sp->fts_child; p; p = p->fts_link)
 		ADJUST(p);
 
-	/* Adjust the rest of the tree. */
-	for (p = sp->fts_cur; p->fts_level >= FTS_ROOTLEVEL;) {
+	/* Adjust the rest of the tree, including the current level. */
+	for (p = head; p->fts_level >= FTS_ROOTLEVEL;) {
 		ADJUST(p);
 		p = p->fts_link ? p->fts_link : p->fts_parent;
 	}
