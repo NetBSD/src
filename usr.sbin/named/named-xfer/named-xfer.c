@@ -1,4 +1,4 @@
-/*	$NetBSD: named-xfer.c,v 1.4 1997/10/04 15:12:24 mrg Exp $	*/
+/*	$NetBSD: named-xfer.c,v 1.5 1997/10/18 04:05:50 lukem Exp $	*/
 
 /*
  * The original version of xfer by Kevin Dunlap.
@@ -217,9 +217,9 @@ main(argc, argv)
 	openlog(ProgName, LOG_PID);
 #endif
 #ifdef STUBS
-	while ((c = getopt(argc, argv, "C:d:l:s:t:z:f:p:P:qS")) != EOF)
+	while ((c = getopt(argc, argv, "C:d:l:s:t:z:f:p:P:qS")) != -1)
 #else
-	while ((c = getopt(argc, argv, "C:d:l:s:t:z:f:p:P:q")) != EOF)
+	while ((c = getopt(argc, argv, "C:d:l:s:t:z:f:p:P:q")) != -1)
 #endif
 	    switch (c) {
 #ifdef GEN_AXFR
