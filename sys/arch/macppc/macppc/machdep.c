@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.18 1998/09/13 11:58:00 mycroft Exp $	*/
+/*	$NetBSD: machdep.c,v 1.19 1998/09/21 17:16:27 tsubai Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -135,8 +135,7 @@ int	bufpages = 0;
 caddr_t allocsys __P((caddr_t));
 void install_extint __P((void (*)(void)));
 
-extern u_int openfirmware_entry;
-static u_int ofw_pa;
+extern struct bat ofbat;
 
 int cold = 1;
 
@@ -165,6 +164,7 @@ initppc(startkernel, endkernel, args)
 	int exc, scratch;
 
 	int chosen, mmu, mode, exists;
+	u_int32_t ofw_pa;
 
 	/*
 	 * Read translations for Openfirmware call.
@@ -213,26 +213,6 @@ initppc(startkernel, endkernel, args)
 	battable[0].batu = BATU(0x00000000);
 
 	/*
-	 * BAT1 maps Openfirmware working area
-	 */
-	battable[1].batl = ofw_pa | 0x02;
-	battable[1].batu = 0xff80001e;		/* 1MB */
-
-	/*
-	 * BAT2 maps most I/O devices
-	 * 0xf0000000-0xf7ffffff (128MB) --> 0xf0000000-
-	 */
-	battable[2].batl = 0xf0000002 | BAT_I;
-	battable[2].batu = 0xf0000ffe;
-
-	/*
-	 * BAT3 maps video ram
-	 * (XXX upper half slots only...)
-	 */
-	battable[3].batl = BATL(0x80000000, BAT_I);
-	battable[3].batu = BATU(0x80000000);
-
-	/*
 	 * Now setup fixed bat registers
 	 *
 	 * Note that we still run in real mode, and the BAT
@@ -242,16 +222,20 @@ initppc(startkernel, endkernel, args)
 	asm volatile ("mtibatl 0,%0; mtibatu 0,%1;"
 		      "mtdbatl 0,%0; mtdbatu 0,%1;"
 		      :: "r"(battable[0].batl), "r"(battable[0].batu));
-	/* BAT1 Openfirmware */
-	asm volatile ("mtdbatl 1,%0; mtdbatu 1,%1;"
-		      "mtibatl 1,%0; mtibatu 1,%1;"
-		      :: "r"(battable[1].batl), "r"(battable[1].batu));
-	/* BAT2 obio devices */
-	asm volatile ("mtdbatl 2,%0; mtdbatu 2,%1"
-		      :: "r"(battable[2].batl), "r"(battable[2].batu));
-	/* BAT3 video ram */
+
+	/* BAT1 statically maps obio devices */
+	/* 0xf0000000-0xf7ffffff (128MB) --> 0xf0000000- */
+	asm volatile ("mtdbatl 1,%0; mtdbatu 1,%1"
+		      :: "r"(0xf0000002 | BAT_I), "r"(0xf0000ffe));
+
+	/* BAT3 used temporarily for mapping video ram */
+	/* (XXX upper half slots only...) */
 	asm volatile ("mtdbatl 3,%0; mtdbatu 3,%1"
-		      :: "r"(battable[3].batl), "r"(battable[3].batu));
+		      :: "r"(BATL(0x80000000, BAT_I)), "r"(BATU(0x80000000)));
+
+	/* Open Firmware working area */
+	ofbat.batl = ofw_pa | 0x02;
+	ofbat.batu = 0xff80001e;		/* 1MB */
 
 	/*
 	 * Set up trap vectors
