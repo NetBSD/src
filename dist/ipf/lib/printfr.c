@@ -1,11 +1,11 @@
-/*	$NetBSD: printfr.c,v 1.1.1.3 2005/02/08 06:53:17 martti Exp $	*/
+/*	$NetBSD: printfr.c,v 1.1.1.4 2005/04/03 15:01:42 martti Exp $	*/
 
 /*
  * Copyright (C) 1993-2001 by Darren Reed.
  *
  * See the IPFILTER.LICENCE file for details on licencing.
  *
- * Id: printfr.c,v 1.43.2.8 2005/01/09 01:53:11 darrenr Exp
+ * Id: printfr.c,v 1.43.2.10 2005/03/16 15:38:13 darrenr Exp
  */
 
 #include "ipf.h"
@@ -168,32 +168,32 @@ ioctlfunc_t	iocfunc;
 		if (*fp->fr_ifnames[1] && strcmp(fp->fr_ifnames[1], "*"))
 			printifname(",", fp->fr_ifnames[1], fp->fr_ifas[1]);
 		putchar(' ');
+	}
 
-		if (*fp->fr_dif.fd_ifname || (fp->fr_flags & FR_DUP))
-			print_toif("dup-to", &fp->fr_dif);
-		if (*fp->fr_tif.fd_ifname)
-			print_toif("to", &fp->fr_tif);
-		if (*fp->fr_rif.fd_ifname)
-			print_toif("reply-to", &fp->fr_rif);
-		if (fp->fr_flags & FR_FASTROUTE)
-			printf("fastroute ");
+	if (*fp->fr_dif.fd_ifname || (fp->fr_flags & FR_DUP))
+		print_toif("dup-to", &fp->fr_dif);
+	if (*fp->fr_tif.fd_ifname)
+		print_toif("to", &fp->fr_tif);
+	if (*fp->fr_rif.fd_ifname)
+		print_toif("reply-to", &fp->fr_rif);
+	if (fp->fr_flags & FR_FASTROUTE)
+		printf("fastroute ");
 
-		if ((*fp->fr_ifnames[2] && strcmp(fp->fr_ifnames[2], "*")) ||
-		    (*fp->fr_ifnames[3] && strcmp(fp->fr_ifnames[3], "*"))) {
-			if (fp->fr_flags & FR_OUTQUE)
-				printf("in-via ");
-			else
-				printf("out-via ");
+	if ((*fp->fr_ifnames[2] && strcmp(fp->fr_ifnames[2], "*")) ||
+	    (*fp->fr_ifnames[3] && strcmp(fp->fr_ifnames[3], "*"))) {
+		if (fp->fr_flags & FR_OUTQUE)
+			printf("in-via ");
+		else
+			printf("out-via ");
 
-			if (*fp->fr_ifnames[2]) {
-				printifname("", fp->fr_ifnames[2],
-					    fp->fr_ifas[2]);
-				putchar(' ');
+		if (*fp->fr_ifnames[2]) {
+			printifname("", fp->fr_ifnames[2],
+				    fp->fr_ifas[2]);
+			putchar(' ');
 
-				if (*fp->fr_ifnames[3]) {
-					printifname(",", fp->fr_ifnames[3],
-						    fp->fr_ifas[3]);
-				}
+			if (*fp->fr_ifnames[3]) {
+				printifname(",", fp->fr_ifnames[3],
+					    fp->fr_ifas[3]);
 			}
 		}
 	}
@@ -321,6 +321,13 @@ ioctlfunc_t	iocfunc;
 			if (!(fp->fr_flx & FI_FRAG))
 				printf("not ");
 			printf("frag");
+			comma = ",";
+		}
+		if (fp->fr_mflx & FI_FRAGBODY) {
+			fputs(comma, stdout);
+			if (!(fp->fr_flx & FI_FRAGBODY))
+				printf("not ");
+			printf("frag-body");
 			comma = ",";
 		}
 		if (fp->fr_mflx & FI_NATED) {
