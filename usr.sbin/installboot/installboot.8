@@ -1,4 +1,4 @@
-.\"	$NetBSD: installboot.8,v 1.39 2003/11/26 09:02:52 wiz Exp $
+.\"	$NetBSD: installboot.8,v 1.40 2004/03/13 22:51:50 dsl Exp $
 .\"
 .\" Copyright (c) 2002-2003 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -249,6 +249,11 @@ Modify the default boot command line.
 .Sy [ i386 ]
 Set the console device, \*[Lt]console name\*[Gt] must be one of:
 pc, com0, com1, com2, com3, com0kbd, com1kbd, com2kbd or com3kbd.
+.
+.It Sy keymap=\*[Lt]keymap\*[Gt]
+.Sy [ i386 ]
+Set a boot time keyboard translation map.
+Each character in \*[Lt]keymap\*[Gt] will be replaced by the one following it.
 .
 .It Sy password=\*[Lt]password\*[Gt]
 .Sy [ i386 ]
@@ -662,6 +667,12 @@ The disk must have a boot partition large enough to hold the bootstrap code.
 Currently the primary bootstrap must be a LIF format file.
 .
 .Ss NetBSD/i386 and NetBSD/amd64
+The bootstrap must be installed in the NetBSD partition that starts at
+the beginning of the mbr partition.
+If that is a valid filesystem and contains the /boot program then it
+will be used as the root filesystem, otherwise the 'a' partition will
+be booted.
+.Pp
 The size of primary bootstrap programs is restricted to 8KB, even
 though some file systems (e.g., ISO 9660) are able to accommodate larger
 ones.
