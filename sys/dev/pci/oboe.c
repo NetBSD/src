@@ -1,4 +1,4 @@
-/*	$NetBSD: oboe.c,v 1.4 2001/12/05 15:51:11 augustss Exp $	*/
+/*	$NetBSD: oboe.c,v 1.5 2001/12/11 21:34:06 augustss Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -149,7 +149,7 @@ static int oboe_alloc_taskfile(struct oboe_softc *);
 static void oboe_init_taskfile(struct oboe_softc *);
 static void oboe_startchip(struct oboe_softc *);
 static void oboe_stopchip(struct oboe_softc *);
-static void oboe_setbaud(struct oboe_softc *, int);
+static int oboe_setbaud(struct oboe_softc *, int);
 
 struct cfattach oboe_ca = {
 	sizeof(struct oboe_softc), oboe_match, oboe_attach,
@@ -167,7 +167,8 @@ oboe_match(struct device *parent, struct cfdata *match, void *aux)
 	struct pci_attach_args *pa = aux;
 
 	if (PCI_VENDOR(pa->pa_id) == PCI_VENDOR_TOSHIBA2 &&
-	    PCI_PRODUCT(pa->pa_id) == PCI_PRODUCT_TOSHIBA2_OBOE)
+	    (PCI_PRODUCT(pa->pa_id) == PCI_PRODUCT_TOSHIBA2_OBOE ||
+	     PCI_PRODUCT(pa->pa_id) == PCI_PRODUCT_TOSHIBA2_DONAUOBOE))
 		return (1);
 	return 0;
 }
@@ -343,7 +344,8 @@ oboe_read(void *h, struct uio *uio, int flag)
 	if (!error) {
 		slot = (sc->sc_rxs - sc->sc_saved + RX_SLOTS) % RX_SLOTS;
 		if (uio->uio_resid < sc->sc_lens[slot]) {
-			DPRINTF(("oboe_read: uio buffer smaller than frame size (%d < %d)\n", uio->uio_resid, sc->sc_lens[slot]));
+			DPRINTF(("oboe_read: uio buffer smaller than frame size"
+			    "(%d < %d)\n", uio->uio_resid, sc->sc_lens[slot]));
 			error = EINVAL;
 		} else {
 			DPRINTF(("oboe_read: moving %d bytes from %p\n", 
@@ -401,7 +403,7 @@ oboe_write(void *h, struct uio *uio, int flag)
 
 	sc->sc_taskfile->xmit[sc->sc_txs].control = 0x84;
 		
-	/* Need delay here??? */
+	/* XXX Need delay here??? */
 	delay(1000);
 
 	sc->sc_txpending++;
@@ -419,16 +421,16 @@ int
 oboe_set_params(void *h, struct irda_params *p)
 {
 	struct oboe_softc *sc = h;
-	int s = splir();
+	int error;
 
 	if (p->speed > 0) {
-		oboe_setbaud(sc, p->speed);
+		error = oboe_setbaud(sc, p->speed);
+		if (error)
+			return (error);
 	}
 	sc->sc_ebofs = p->ebofs;
 
-	splx(s);
-
-	/* ignore ebofs and maxsize for now */
+	/* XXX ignore ebofs and maxsize for now */
 	return (0);
 }
 
@@ -436,9 +438,7 @@ int
 oboe_get_speeds(void *h, int *speeds)
 {
 	struct oboe_softc *sc = h;
-	int s = splir();
 	*speeds = sc->sc_speeds;
-	splx(s);
 	return (0);
 }
 
@@ -449,7 +449,8 @@ oboe_get_turnarounds(void *h, int *turnarounds)
 	struct oboe_softc *sc = h;
 #endif
 	DPRINTF(("%s: sc=%p\n", __FUNCTION__, sc));
-	*turnarounds = 0x01; /* 10ms */
+	/* XXX Linux driver sets all bits */
+	*turnarounds = IRDA_TURNT_10000; /* 10ms */
 	return (0);
 }
 
@@ -470,7 +471,7 @@ oboe_poll(void *h, int events, struct proc *p)
 			DPRINTF(("%s: have data\n", __FUNCTION__));
 			revents |= events & (POLLIN | POLLRDNORM);
 		} else {
-			DPRINTF(("%s: recording select", __FUNCTION__));
+			DPRINTF(("%s: recording select\n", __FUNCTION__));
 			selrecord(p, &sc->sc_rsel);
 		}
 	}
@@ -516,9 +517,9 @@ oboe_intr(void *p)
 
 			DPRINTF(("oboe_intr: moving %d bytes to %p\n", len,
 				 sc->sc_recv_stores[sc->sc_rxs]));
-			bcopy(sc->sc_recv_bufs[sc->sc_rxs],
-			      sc->sc_recv_stores[sc->sc_rxs],
-			      len);
+			memcpy(sc->sc_recv_stores[sc->sc_rxs],
+			       sc->sc_recv_bufs[sc->sc_rxs],
+			       len);
 			sc->sc_lens[sc->sc_rxs] = len;
 			sc->sc_saved++;
 #if 0			
@@ -587,9 +588,10 @@ oboe_init_taskfile(struct oboe_softc *sc)
 }
 
 static int
-oboe_alloc_taskfile(struct oboe_softc *sc)	
+oboe_alloc_taskfile(struct oboe_softc *sc)
 {
 	int i;
+	/* XXX */
 	uint32_t addr = (uint32_t)malloc(OBOE_TASK_BUF_LEN, M_DEVBUF, M_WAITOK);
 	if (addr == NULL) {
 		goto bad;
@@ -626,7 +628,8 @@ bad:
 }
 
 static void
-oboe_startchip (struct oboe_softc *sc) {
+oboe_startchip (struct oboe_softc *sc)
+{
 	uint32_t physaddr;
 
 	OUTB(sc, 0, OBOE_LOCK);
@@ -646,7 +649,7 @@ oboe_startchip (struct oboe_softc *sc) {
 	OUTB(sc, 0x0e, OBOE_REG_11);
 	OUTB(sc, 0x80, OBOE_RST);
 	
-	oboe_setbaud(sc, 9600);
+	(void)oboe_setbaud(sc, 9600);
 
 	sc->sc_rxs = INB(sc, OBOE_RCVT);
 	if (sc->sc_rxs < 0 || sc->sc_rxs >= RX_SLOTS)
@@ -657,7 +660,8 @@ oboe_startchip (struct oboe_softc *sc) {
 }
 
 static void
-oboe_stopchip (struct oboe_softc *sc) {
+oboe_stopchip (struct oboe_softc *sc)
+{
 	OUTB(sc, 0x0e, OBOE_REG_11);
 	OUTB(sc, 0x00, OBOE_RST);
 	OUTB(sc, 0x3f, OBOE_TFP2);     /* Write the taskfile address */
@@ -665,7 +669,7 @@ oboe_stopchip (struct oboe_softc *sc) {
 	OUTB(sc, 0xff, OBOE_TFP0);
 	OUTB(sc, 0x0f, OBOE_REG_1B);
 	OUTB(sc, 0xff, OBOE_REG_1A);
-	OUTB(sc, 0x00, OBOE_ISR); /* FIXME: should i do this to disable ints? */
+	OUTB(sc, 0x00, OBOE_ISR); /* XXX: should i do this to disable ints? */
 	OUTB(sc, 0x80, OBOE_RST);
 	OUTB(sc, 0x0e, OBOE_LOCK);
 }
@@ -677,8 +681,9 @@ OUTB(sc, OBOE_SMDL_##type, OBOE_SMDL); \
 OUTB(sc, divisor, OBOE_UDIV); \
 break
 	
-static void
-oboe_setbaud (struct oboe_softc *sc, int baud) {
+static int
+oboe_setbaud(struct oboe_softc *sc, int baud)
+{
 	int s;
 
 	DPRINTF(("oboe: setting baud to %d\n", baud));
@@ -695,15 +700,18 @@ oboe_setbaud (struct oboe_softc *sc, int baud) {
 	SPEEDCASE(1152000, MIR, 0x01);
 	SPEEDCASE(4000000, FIR, 0x00);
 	default:
-		printf("oboe: cannot set speed to %d\n", baud);
-		return;
+		DPRINTF(("oboe: cannot set speed to %d\n", baud));
+		splx(s);
+		return (EINVAL);
 	}
-
-	splx(s);
 
 	OUTB(sc, 0x00, OBOE_RST);
 	OUTB(sc, 0x80, OBOE_RST);
 	OUTB(sc, 0x01, OBOE_REG_9);
 	
 	sc->sc_speed = baud;
+
+	splx(s);
+
+	return (0);
 }
