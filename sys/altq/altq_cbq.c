@@ -1,4 +1,4 @@
-/*	$NetBSD: altq_cbq.c,v 1.6 2002/10/07 02:57:39 itojun Exp $	*/
+/*	$NetBSD: altq_cbq.c,v 1.7 2003/08/20 23:32:25 itojun Exp $	*/
 /*	$KAME: altq_cbq.c,v 1.11 2002/10/04 14:24:09 kjc Exp $	*/
 
 /*
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: altq_cbq.c,v 1.6 2002/10/07 02:57:39 itojun Exp $");
+__KERNEL_RCSID(0, "$NetBSD: altq_cbq.c,v 1.7 2003/08/20 23:32:25 itojun Exp $");
 
 #if defined(__FreeBSD__) || defined(__NetBSD__)
 #include "opt_altq.h"
@@ -112,7 +112,7 @@ cbq_add_class(acp)
 		return (EBADF);
 
 	/* check parameters */
-	if (acp->cbq_class.priority >= RM_MAXPRIO ||
+	if (acp->cbq_class.priority >= CBQ_MAXPRI ||
 	    acp->cbq_class.maxq > CBQ_MAXQSIZE)
 		return (EINVAL);
 
