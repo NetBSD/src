@@ -1,4 +1,4 @@
-.\" $NetBSD: sysinst,v 1.2 1999/02/01 16:16:09 he Exp $
+.\" $NetBSD: sysinst,v 1.2.2.1 1999/05/04 22:30:52 perry Exp $
 .\"
 .\" Copyright (c) 1999 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -64,6 +64,7 @@ for the installation and as such covers many details to be completed.
 Do not let this discourage you, the install program is not hard
 to use.
 .
+.if !r_pmax  \{\
 .It_need
 .Em Possible Tn PCMCIA Em issues
 .Pp
@@ -86,9 +87,6 @@ can skip this section, and ignore the
 notes.
 .Pp
 This will explains how to work around the installation problem.
-It is anticipated that this bug will be fixed by
-.Nx
-1.4
 .Pp
 What is the bug: The kernel keeps careful track of what interrupts
 and i/o ports are in use during autoconfiguration. It then allows
@@ -122,6 +120,7 @@ DDB (the in-kernel debugger) and set pcic_isa_intr_alloc_mask to mask
 out the offending interrupt before continuing.  By default the kernel
 masks out IRQ 10, and the corresponding mask is 0xfbff.
 .\}
+.\}
 .It_need
 .Em General
 .Pp
@@ -154,20 +153,24 @@ What you need.
 .Bl -hyphen
 .It_need
 The distribution sets (in this example, they are on CD).
+.if !r_pmax  \{\
 .It_need
 .ie r_alpha Two floppy disks.
 .ie r_i386 Two 1.44M 3.5" floppy disks.
-.el One 1.44M 3.5\" floppy.
+.el One 1.44M 3.5" floppy.
+.\}
 .It_need
 .if r_i386 A PC with a 386 or newer processor.
 A CD-ROM drive (SCSI or ATAPI), a harddisk and a minimum of
-.if r_i386 4Mb
 .if r_alpha 32Mb
+.if r_i386 4Mb
+.if r_pmax 8Mb
 of memory installed.
 .It_need
 The harddisk should have at least
-.if r_i386 70
 .if r_alpha 200
+.if r_i386 70
+.if r_pmax 200
 +
 .Em n
 megabytes of
@@ -205,6 +208,13 @@ would type something like:
 The Quick Installation
 .Bl -hyphen
 .It_need
+.ie r_pmax \{\
+Boot the system as desribed in the previous section.  You
+should be at the
+.Ic sysinst
+main menu.
+.\}
+.el \{\
 Insert the
 .ie r_i386 first
 .ie r_alpha first
@@ -216,6 +226,7 @@ the computer.
 .if r_alpha .Dl \&\*>\*>\*> Ic "B DVA0
 .if r_i386 When prompted, insert the second boot floppy.
 The main menu will be displayed.
+.\}
 .It_need
 If you wish, you can configure some network settings
 immediately by choosing the
@@ -261,6 +272,11 @@ Further information can be found on
 .Nx
 .
 .
+.ie r_pmax  \{\
+.Pp
+Boot the system as desribed in the previous section.
+.\}
+.el \{\
 .(pcmcia
 Unplug your
 .Tn PCMCIA
@@ -271,13 +287,7 @@ devices, so that they won't be found by
 .
 .Pp
 Boot your machine using the boot floppy. The boot loader will
-start, and will print a countdown and begin booting. You will
-likely see one
-.Li file not found
-warning from the boot loader.
-Ignore this, it merely indicates that the boot loader
-did not find a normal kernel to boot before trying to boot a
-compressed kernel.
+start, and will print a countdown and begin booting.
 .Pp
 If the boot loader messages do not appear in a reasonable
 amount of time, you either have a bad boot floppy or a
@@ -337,6 +347,7 @@ root partition, but the new installation floppies use a
 ramdisk file system and are no longer dependent on the floppy
 once it has booted.
 .\}
+.\}
 .Pp
 Once
 .Nx
@@ -345,10 +356,12 @@ you will be presented with a welcome message and a main menu.
 It will also include instructions for using the menus.
 .It_need
 .Em Network configuration
+.if !r_pmax  \{\
 .(pcmcia
 You can skip this section, as you will only get data
 from floppy in the first part of the install.
 .pcmcia)
+.\}
 .Pp
 If you will not use network operation during the installation,
 but you do want your machine to be configured for networking once
@@ -374,6 +387,12 @@ will report a list of disks it finds
 and ask you for your selection. Depending on how many disks
 are found, you may get a different message. You should see
 disk names like
+.ie r_pmax \{\
+.Li rz0
+or
+.Li rz1
+.\}
+.el \{\
 .Li wd0 ,
 .Li wd1 ,
 .Li sd0 ,
@@ -385,16 +404,7 @@ or
 next tries to figure out the real and BIOS geometry
 of your disk. It will present you with the values it found,
 if any, and will give you a chance to change them.
-Please note that if you change the values,
-.Ic sysinst
-.Em will also reinitialize your MBR .
 .\}
-.Pp
-You will also be asked if you want to use the last cylinder of
-the disk. Originally, the last cylinder of the disk was used for
-diagnostic purposes, but this is usually not a concern anymore
-these days. You will be able to specify whether you want to
-skip the last cylinder anyway.
 .Pp
 Next, depending on whether you are using a
 .Li Pf wd Em x
@@ -420,6 +430,7 @@ If you are
 .Em sure
 that it does, reply affirmatively. Otherwise, the install
 program will automatically reserve space for bad144 tables.
+.\}
 .It_need
 .Em Partitioning the disk.
 .Bl -bullet
@@ -462,6 +473,15 @@ Be sure to mark the partition you want to boot from as active!
 .Pp
 After you are done editing the MBR, a sanity check
 will be done, checking for partitions that overlap.
+Depending on the BIOS capabilities of your machine and the
+parameters of the NetBSD partition you have specified, you
+may also be asked if you want to install newer bootcode in
+your MBR. If you have multiple operating systems on the
+disk that you are installing on, you will also be given
+the option to install a bootselector, that will allow you
+to pick the operating system to start up when your computer
+is (re-)started.
+.Pp
 If everything is ok, you can go on to the next step,
 editing the
 .Nx
@@ -736,7 +756,8 @@ will continue until all the sets have been loaded from floppy.
 In order to install from a local filesystem, you will
 need to specify the device that the filesystem resides
 on
-.Pq for example Li wd1e ,
+.ie r_pmax .Pq for example Li rz1e
+.el .Pq for example Li wd1e
 the type of the filesystem,
 and the directory on the specified filesystem where the sets are located.
 .Ic sysinst
@@ -765,9 +786,10 @@ the sets you want. Some sets always need to be installed
 .Pq Ic kern, base No and Ic etc
 they will not be shown in this selection menu.
 .Pp
-Before extraction begins, you can elect to watch the files
-being extracted; the name of each file that is extracted will
-be shown.
+Before extraction begins, you can elect to watch the files being
+extracted; the name of each file that is extracted will be shown.
+This can slow down the installation process considerably, especially
+on machines with slow graphics consoles or serial consoles.
 .Pp
 After all the files have been extracted, all the necessary
 device node files will be created. If you have already
