@@ -38,7 +38,7 @@
  *
  *      %W% (Berkeley) %G%
  *
- * $Id: mk-amd-map.c,v 1.4 1997/07/24 23:18:56 christos Exp $
+ * $Id: mk-amd-map.c,v 1.5 1997/10/17 00:07:55 lukem Exp $
  */
 
 /*
@@ -228,7 +228,7 @@ main(int argc, char *argv[])
   extern int optind;
 
   /* test options */
-  while ((ch = getopt(argc, argv, "p")) != EOF)
+  while ((ch = getopt(argc, argv, "p")) != -1)
     switch (ch) {
     case 'p':
       printit = 1;

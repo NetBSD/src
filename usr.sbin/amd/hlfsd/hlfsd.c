@@ -38,7 +38,7 @@
  *
  *      %W% (Berkeley) %G%
  *
- * $Id: hlfsd.c,v 1.1.1.3 1997/09/26 16:07:39 christos Exp $
+ * $Id: hlfsd.c,v 1.2 1997/10/17 00:07:49 lukem Exp $
  *
  * HLFSD was written at Columbia University Computer Science Department, by
  * Erez Zadok <ezk@cs.columbia.edu> and Alexander Dupuy <dupuy@cs.columbia.edu>
@@ -179,7 +179,7 @@ main(int argc, char *argv[])
   if ((int) strlen(progname) > PROGNAMESZ) /* truncate to reasonable size */
     progname[PROGNAMESZ] = '\0';
 
-  while ((opt = getopt(argc, argv, "a:c:CD:fg:hi:l:no:px:v")) != EOF)
+  while ((opt = getopt(argc, argv, "a:c:CD:fg:hi:l:no:px:v")) != -1)
     switch (opt) {
 
     case 'a':

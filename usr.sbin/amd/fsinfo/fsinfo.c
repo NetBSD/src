@@ -38,7 +38,7 @@
  *
  *      %W% (Berkeley) %G%
  *
- * $Id: fsinfo.c,v 1.4 1997/07/24 23:18:31 christos Exp $
+ * $Id: fsinfo.c,v 1.5 1997/10/17 00:07:41 lukem Exp $
  *
  */
 
@@ -109,7 +109,7 @@ fsi_get_args(int c, char *v[])
   if (!progname)
     progname = "fsinfo";
 
-  while ((ch = getopt(c, v, "a:b:d:e:f:h:m:D:U:I:qv")) != EOF)
+  while ((ch = getopt(c, v, "a:b:d:e:f:h:m:D:U:I:qv")) != -1)
 
     switch (ch) {
 
