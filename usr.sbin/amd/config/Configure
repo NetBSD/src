@@ -36,9 +36,8 @@
 # OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 # SUCH DAMAGE.
 #
-#	@(#)Configure	8.1 (Berkeley) 6/6/93
-#
-# $Id: Configure,v 1.1.1.1 1994/06/13 19:56:07 mycroft Exp $
+#	from: @(#)Configure	8.1 (Berkeley) 6/6/93
+#	$Id: Configure,v 1.2 1994/06/13 20:48:27 mycroft Exp $
 #
 echo "Making ./arch and ./os-type executable ..."
 until chmod +x ./arch ./os-type; do echo "Error: chmod command failed" >&2; exit 1; done

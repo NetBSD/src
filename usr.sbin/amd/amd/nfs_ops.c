@@ -34,12 +34,11 @@
  * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
- *
- * $Id: nfs_ops.c,v 1.2 1994/06/13 19:47:48 mycroft Exp $
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)nfs_ops.c	8.1 (Berkeley) 6/6/93";
+/*static char sccsid[] = "from: @(#)nfs_ops.c	8.1 (Berkeley) 6/6/93";*/
+static char *rcsid = "$Id: nfs_ops.c,v 1.3 1994/06/13 20:47:44 mycroft Exp $";
 #endif /* not lint */
 
 #include "am.h"

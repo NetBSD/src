@@ -35,10 +35,8 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	@(#)amq.c	8.1 (Berkeley) 6/7/93
- *
- * $Id: amq.c,v 1.3 1994/06/13 19:48:13 mycroft Exp $
- *
+ *	from: @(#)amq.c	8.1 (Berkeley) 6/7/93
+ *	$Id: amq.c,v 1.4 1994/06/13 20:48:20 mycroft Exp $
  */
 
 /*
@@ -54,7 +52,7 @@ char copyright[] = "\
 #endif /* not lint */
 
 #ifndef lint
-static char rcsid[] = "$Id: amq.c,v 1.3 1994/06/13 19:48:13 mycroft Exp $";
+static char rcsid[] = "$Id: amq.c,v 1.4 1994/06/13 20:48:20 mycroft Exp $";
 static char sccsid[] = "@(#)amq.c	8.1 (Berkeley) 6/7/93";
 #endif /* not lint */
 

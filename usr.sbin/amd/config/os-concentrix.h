@@ -35,9 +35,8 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	@(#)os-concentrix.h	8.1 (Berkeley) 6/6/93
- *
- * $Id: os-concentrix.h,v 1.2 1994/06/13 19:48:49 mycroft Exp $
+ *	from: @(#)os-concentrix.h	8.1 (Berkeley) 6/6/93
+ *	$Id: os-concentrix.h,v 1.3 1994/06/13 20:49:20 mycroft Exp $
  *
  * Alliant Concentrix 5.0.0 definitions for Amd (automounter)
  */

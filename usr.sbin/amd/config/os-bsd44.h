@@ -35,9 +35,8 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	@(#)os-bsd44.h	8.1 (Berkeley) 6/6/93
- *
- * $Id: os-bsd44.h,v 1.7 1994/06/13 20:18:00 mycroft Exp $
+ *	from: @(#)os-bsd44.h	8.1 (Berkeley) 6/6/93
+ *	$Id: os-bsd44.h,v 1.8 1994/06/13 20:49:19 mycroft Exp $
  *
  * 4.4 BSD definitions for Amd (automounter)
  */
