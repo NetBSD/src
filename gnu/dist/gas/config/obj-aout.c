@@ -479,6 +479,8 @@ obj_aout_type (ignore)
 		S_SET_OTHER (sym, 1);
 	      else if (strncmp (input_line_pointer, "function", 8) == 0)
 		S_SET_OTHER (sym, 2);
+	      else if (strncmp (input_line_pointer, "label", 5) == 0)
+		S_SET_OTHER (sym, 3);
 	    }
 	}
     }
