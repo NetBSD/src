@@ -1,30 +1,15 @@
-# $NetBSD: Makefile,v 1.5.2.1 1998/08/29 04:14:42 mellon Exp $
+# $NetBSD: Makefile,v 1.5.2.2 1998/11/06 20:41:18 cgd Exp $
 # Original from FreeBSD, no rcs id.
 
 LIB=		install
-SRCS=		exec.c file.c global.c msg.c pen.c plist.c str.c
+SRCS=		exec.c file.c global.c pen.c plist.c str.c
 
 # Don't need to install ftpio.3
 NOMAN=		yes
-
 NOPROFILE=	yes
 NOPIC=		yes
 
 # only needed during build - prevent installation of library
 libinstall::
-
-ftperr.c:	ftp.errors
-	@echo '#include <stdio.h>' > ${.TARGET}
-	@echo '#include "ftpio.h"' >> ${.TARGET}
-	@echo "struct ftperr ftpErrList[] = {" \ >>  ${.TARGET}
-	@cat ${.ALLSRC} \
-	  | grep -v ^# \
-	  | sort \
-	  | while read NUM STRING; do \
-	    echo "  { $${NUM}, \"$${STRING}\" },"; \
-	  done >> ${.TARGET}
-	@echo "};" >> ${.TARGET}
-	@echo -n "int const ftpErrListLength = " >> ${.TARGET}
-	@echo "sizeof(ftpErrList) / sizeof(*ftpErrList);" >> ${.TARGET}
 
 .include <bsd.lib.mk>
