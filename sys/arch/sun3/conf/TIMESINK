@@ -1,6 +1,6 @@
 #
 # config file for TIMESINK, Adam's test machine
-# $Id: TIMESINK,v 1.11 1994/04/17 06:31:10 glass Exp $
+# $Id: TIMESINK,v 1.12 1994/05/27 15:03:19 gwr Exp $
 #
 
 include "std.sun3"
@@ -13,7 +13,6 @@ options		"SUN3_60"
 maxusers	4
 options		TIMEZONE="'6*80'"	# minutes west of GMT (for param.c)
 options 	DST=2			# daylight savings rules (for param.c)
-options 	MAXFDESCS=2048   	# max # of fds/process (for param.c)
 
 # Standard system options
 options		SWAPPAGER, VNODEPAGER, DEVPAGER	# paging
