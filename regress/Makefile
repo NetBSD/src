@@ -1,8 +1,8 @@
-#	$Id: Makefile,v 1.2 1993/05/22 07:10:38 cgd Exp $
+#	$Id: Makefile,v 1.3 1993/05/27 21:52:44 cgd Exp $
 
-# missing: bin lib libexec sbin usr.bin usr.sbin share games gnu
+# missing: bin libexec sbin usr.bin usr.sbin share games gnu
 
-SUBDIR+= include
+SUBDIR+= include lib
 
 regress: _SUBDIRUSE
 
