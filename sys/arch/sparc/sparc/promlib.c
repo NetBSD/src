@@ -1,4 +1,4 @@
-/*	$NetBSD: promlib.c,v 1.23 2003/10/13 17:59:19 pk Exp $ */
+/*	$NetBSD: promlib.c,v 1.24 2003/10/15 11:51:48 pk Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: promlib.c,v 1.23 2003/10/13 17:59:19 pk Exp $");
+__KERNEL_RCSID(0, "$NetBSD: promlib.c,v 1.24 2003/10/15 11:51:48 pk Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_sparc_arch.h"
@@ -690,7 +690,7 @@ obp_v2_getbootfile()
 {
 	struct v2bootargs *ba = promops.po_bootcookie;
 	char *kernel = parse_bootfile(*ba->v2_bootargs);
-	int optionsnode;
+	int diagmode, optionsnode;
 
 	if (kernel[0] != '\0')
 		return kernel;
@@ -700,10 +700,16 @@ obp_v2_getbootfile()
 	 * was given to the `boot' command (e.g `boot -s'). If we determine
 	 * in parse_bootfile() above, that boot args contain only switches
 	 * then get the `boot-file' value (if any) ourselves.
+	 * If the `diag-switch?' PROM variable is set to true, we use
+	 * `diag-file' instead.
+	 *
 	 * Note: PROM_getpropstring() imposes a 31 char size limit.
 	 */
 	optionsnode = findnode(firstchild(findroot()), "options");
-	return PROM_getpropstring(optionsnode, "boot-file");
+	diagmode = strcmp(PROM_getpropstring(optionsnode, "diag-switch?"),
+			  "true") == 0;
+	return PROM_getpropstring(optionsnode,
+				  diagmode ? "diag-file" : "boot-file");
 }
 
 void
