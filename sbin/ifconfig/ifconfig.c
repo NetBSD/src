@@ -1,4 +1,4 @@
-/*	$NetBSD: ifconfig.c,v 1.38 1997/09/08 05:26:08 mrg Exp $	*/
+/*	$NetBSD: ifconfig.c,v 1.39 1997/09/15 01:53:36 lukem Exp $	*/
 
 /*
  * Copyright (c) 1997 Jason R. Thorpe.
@@ -65,17 +65,17 @@
  * SUCH DAMAGE.
  */
 
+#include <sys/cdefs.h>
 #ifndef lint
-static char copyright[] =
-"@(#) Copyright (c) 1983, 1993\n\
-	The Regents of the University of California.  All rights reserved.\n";
+__COPYRIGHT("@(#) Copyright (c) 1983, 1993\n\
+	The Regents of the University of California.  All rights reserved.\n");
 #endif /* not lint */
 
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)ifconfig.c	8.2 (Berkeley) 2/16/94";
 #else
-static char rcsid[] = "$NetBSD: ifconfig.c,v 1.38 1997/09/08 05:26:08 mrg Exp $";
+__RCSID("$NetBSD: ifconfig.c,v 1.39 1997/09/15 01:53:36 lukem Exp $");
 #endif
 #endif /* not lint */
 
@@ -345,7 +345,7 @@ main(argc, argv)
 
 	/* Process commands. */
 	while (argc > 0) {
-		register struct cmd *p;
+		struct cmd *p;
 
 		for (p = cmds; p->c_name; p++)
 			if (strcmp(argv[0], p->c_name) == 0)
@@ -1017,7 +1017,7 @@ status(ap, alen)
 	const u_int8_t *ap;
 	int alen;
 {
-	register struct afswtch *p = afp;
+	struct afswtch *p = afp;
 	struct ifmediareq ifmr;
 	int *media_list, i;
 
@@ -1328,7 +1328,7 @@ in_getaddr(s, which)
 	char *s;
 	int which;
 {
-	register struct sockaddr_in *sin = sintab[which];
+	struct sockaddr_in *sin = sintab[which];
 	struct hostent *hp;
 	struct netent *np;
 
@@ -1352,11 +1352,11 @@ in_getaddr(s, which)
 void
 printb(s, v, bits)
 	char *s;
-	register char *bits;
-	register unsigned short v;
+	char *bits;
+	unsigned short v;
 {
-	register int i, any = 0;
-	register char c;
+	int i, any = 0;
+	char c;
 
 	if (bits && *bits == 8)
 		printf("%s=%o", s, v);
@@ -1478,7 +1478,7 @@ iso_getaddr(addr, which)
 	char *addr;
 	int which;
 {
-	register struct sockaddr_iso *siso = sisotab[which];
+	struct sockaddr_iso *siso = sisotab[which];
 	siso->siso_addr = *iso_addr(addr);
 
 	if (which == MASK) {
@@ -1512,7 +1512,7 @@ setnsellength(val, d)
 
 void
 fixnsel(s)
-	register struct sockaddr_iso *s;
+	struct sockaddr_iso *s;
 {
 	if (s->siso_family == 0)
 		return;

@@ -1,4 +1,4 @@
-.\"	$NetBSD: ifconfig.8,v 1.18 1997/05/30 03:49:36 lukem Exp $
+.\"	$NetBSD: ifconfig.8,v 1.19 1997/09/15 01:53:35 lukem Exp $
 .\"
 .\" Copyright (c) 1983, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -40,24 +40,24 @@
 .Nm ifconfig
 .Nd configure network interface parameters
 .Sh SYNOPSIS
-.Nm ifconfig
+.Nm
 .Ar interface address_family
 .Oo
 .Ar address
 .Op Ar dest_address
 .Oc
 .Op Ar parameters
-.Nm ifconfig
+.Nm
 .Op Fl m
 .Ar interface
 .Op Ar protocol_family
-.Nm ifconfig
+.Nm
 .Fl a
 .Op Fl m
 .Op Fl d
 .Op Fl u
 .Op Ar protocol_family
-.Nm ifconfig
+.Nm
 .Fl l
 .Op Fl d
 .Op Fl u
@@ -73,7 +73,7 @@ a later time to redefine an interface's address
 or other operating parameters.
 .Pp
 Available operands for
-.Nm ifconfig :
+.Nm "" :
 .Bl -tag -width Ds
 .It Ar Address
 For the
@@ -129,7 +129,7 @@ for example,
 .El
 .Pp
 The following parameters may be set with 
-.Nm ifconfig :
+.Nm "" :
 .Bl -tag -width dest_addressxx
 .It Cm alias
 Establish an additional network address for this interface.
