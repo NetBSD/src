@@ -1,4 +1,4 @@
-/* $NetBSD: vm_machdep.c,v 1.19 2001/09/10 21:19:33 chris Exp $ */
+/* $NetBSD: vm_machdep.c,v 1.20 2002/03/04 02:43:23 simonb Exp $ */
 
 /*-
  * Copyright (c) 2000, 2001 Ben Harris
@@ -66,7 +66,7 @@
 
 #include <sys/param.h>
 
-__RCSID("$NetBSD: vm_machdep.c,v 1.19 2001/09/10 21:19:33 chris Exp $");
+__RCSID("$NetBSD: vm_machdep.c,v 1.20 2002/03/04 02:43:23 simonb Exp $");
 
 #include <sys/buf.h>
 #include <sys/mount.h> /* XXX syscallargs.h uses fhandle_t and fsid_t */
@@ -80,8 +80,6 @@ __RCSID("$NetBSD: vm_machdep.c,v 1.19 2001/09/10 21:19:33 chris Exp $");
 #include <machine/frame.h>
 #include <machine/intr.h>
 #include <machine/machdep.h>
-
-extern struct vm_map *phys_map; /* XXX where? */
 
 /*
  * Finish a fork operation, with process p2 nearly set up.

@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_machdep.c,v 1.26 2002/03/03 14:31:29 uch Exp $	*/
+/*	$NetBSD: vm_machdep.c,v 1.27 2002/03/04 02:43:25 simonb Exp $	*/
 
 /*-
  * Copyright (c) 1995 Charles M. Hannum.  All rights reserved.
@@ -251,8 +251,6 @@ pagemove(caddr_t from, caddr_t to, size_t size)
 	}
 	TLBFLUSH();
 }
-
-extern struct vm_map *phys_map;
 
 /*
  * Map an IO request into kernel virtual address space.  Requests fall into

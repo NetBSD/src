@@ -1,5 +1,5 @@
-/* $NetBSD: vm_machdep.c,v 1.10 2001/09/10 21:19:32 chris Exp $ */
-/*	$NetBSD: vm_machdep.c,v 1.10 2001/09/10 21:19:32 chris Exp $	*/
+/* $NetBSD: vm_machdep.c,v 1.11 2002/03/04 02:43:24 simonb Exp $ */
+/*	$NetBSD: vm_machdep.c,v 1.11 2002/03/04 02:43:24 simonb Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -44,7 +44,7 @@
  */
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
-__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.10 2001/09/10 21:19:32 chris Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.11 2002/03/04 02:43:24 simonb Exp $");
 
 #include "opt_compat_hpux.h"
 
@@ -293,8 +293,6 @@ kvtop(addr)
 		panic("kvtop: zero page frame");
 	return((int)pa);
 }
-
-extern struct vm_map *phys_map;
 
 /*
  * Map a user I/O request into kernel virtual address space.

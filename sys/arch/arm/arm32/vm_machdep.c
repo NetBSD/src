@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_machdep.c,v 1.14 2002/02/26 15:13:28 simonb Exp $	*/
+/*	$NetBSD: vm_machdep.c,v 1.15 2002/03/04 02:43:23 simonb Exp $	*/
 
 /*
  * Copyright (c) 1994-1998 Mark Brinicombe.
@@ -305,8 +305,6 @@ pagemove(from, to, size)
 	}
 	//cpu_tlb_flushD();
 }
-
-extern struct vm_map *phys_map;
 
 /*
  * Map a user I/O request into kernel virtual address space.
