@@ -1,4 +1,4 @@
-/*	$NetBSD: ncr5380var.h,v 1.9 1998/10/25 17:26:41 christos Exp $	*/
+/*	$NetBSD: ncr5380var.h,v 1.10 1998/10/25 18:49:18 christos Exp $	*/
 
 /*
  * Copyright (c) 1995 David Jones, Gordon W. Ross
@@ -53,7 +53,7 @@
 /*
  * Handy read/write macros
  */
-#if NCR5380_USE_BUS_SPACE
+#ifdef NCR5380_USE_BUS_SPACE
 # include <machine/bus.h>
 /* bus_space() variety */
 # define NCR5380_READ(reg)	bus_space_read_1(sc->iot,sc->ioh,sc->reg)
