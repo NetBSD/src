@@ -1,4 +1,4 @@
-/*	$NetBSD: copystr.S,v 1.10 1999/10/26 06:53:41 cgd Exp $	*/
+/*	$NetBSD: copystr.S,v 1.11 1999/11/02 06:48:33 chs Exp $	*/
 
 /*
  * Copyright (c) 1995 Mark Brinicombe.
@@ -172,6 +172,9 @@ Lcopyinoutstr_loop:
 	teqne	r6, r2
 	bne	Lcopyinoutstr_loop
 
+	mov	r0, #0x00000000
+	str	r0, [r4, #PCB_ONFAULT]
+
 Lcopyinoutstrexit:
 	teq	r3, #0x00000000
 	strne	r6, [r3]
@@ -180,8 +183,6 @@ Lcopyinoutstrexit:
 	moveq	r0, #0x00000000
 	movne	r0, #ENAMETOOLONG
 
-	mov	r6, #0x00000000
-	str	r6, [r4, #PCB_ONFAULT]
 	ldmfd	sp!, {r4-r6}
 	mov	pc, lr
 
