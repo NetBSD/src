@@ -1,4 +1,4 @@
-.\"	$NetBSD: kvm_getprocs.3,v 1.5 1999/07/02 15:28:50 simonb Exp $
+.\"	$NetBSD: kvm_getprocs.3,v 1.6 2000/04/15 04:38:47 simonb Exp $
 .\"
 .\" Copyright (c) 1992, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -102,6 +102,20 @@ This memory is locally allocated, and subsequent calls to
 and
 .Fn kvm_close
 will overwrite this storage.
+.Pp
+If the
+.Fa op
+argument for
+.Fn kvm_getprocs
+is
+.Sy KERN_PROC_TTY ,
+.Fa arg
+can also be
+.Sy KERN_PROC_TTY_NODEV
+to select processes with no controlling tty and
+.Sy KERN_PROC_TTY_REVOKE
+to select processes which have had their controlling tty
+revoked.
 .Pp
 .Fn kvm_getargv
 returns a null-terminated argument vector that corresponds to the
