@@ -1,4 +1,4 @@
-.\" $NetBSD: pkg_delete.1,v 1.26 2002/09/26 01:41:51 wiz Exp $
+.\" $NetBSD: pkg_delete.1,v 1.27 2003/01/10 11:55:46 agc Exp $
 .\"
 .\" FreeBSD install - a package for the installation and maintenance
 .\" of non-core utilities.
@@ -144,6 +144,13 @@ deletes the package contents, and finally removes the package records.
 If a package is required by other installed packages,
 .Nm
 will list those dependent packages and refuse to delete the package
+(unless the
+.Fl f
+option is given).
+.Pp
+If a package has been marked as a
+.Cm preserved
+package, it will not be able to be deleted
 (unless the
 .Fl f
 option is given).

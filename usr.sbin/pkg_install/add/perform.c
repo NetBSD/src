@@ -1,11 +1,11 @@
-/*	$NetBSD: perform.c,v 1.76 2003/01/05 21:27:20 agc Exp $	*/
+/*	$NetBSD: perform.c,v 1.77 2003/01/10 11:55:44 agc Exp $	*/
 
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static const char *rcsid = "from FreeBSD Id: perform.c,v 1.44 1997/10/13 15:03:46 jkh Exp";
 #else
-__RCSID("$NetBSD: perform.c,v 1.76 2003/01/05 21:27:20 agc Exp $");
+__RCSID("$NetBSD: perform.c,v 1.77 2003/01/10 11:55:44 agc Exp $");
 #endif
 #endif
 
@@ -588,6 +588,8 @@ pkg_do(const char *pkg)
 			move_file(".", BUILD_INFO_FNAME, LogDir);
 		if (fexists(DISPLAY_FNAME))
 			move_file(".", DISPLAY_FNAME, LogDir);
+		if (fexists(PRESERVE_FNAME))
+			move_file(".", PRESERVE_FNAME, LogDir);
 
 		/* register dependencies */
 		/* we could save some cycles here if we remembered what we
