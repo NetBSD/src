@@ -1,4 +1,4 @@
-/*	$NetBSD: qms.c,v 1.16 1998/01/13 02:10:07 thorpej Exp $	*/
+/*	$NetBSD: qms.c,v 1.17 1998/01/17 07:06:45 mark Exp $	*/
 
 /*
  * Copyright (c) Scott Stevens 1995 All rights reserved
@@ -62,7 +62,7 @@
 
 static void qmsputbuffer	__P((struct qms_softc *sc, struct mousebufrec *buf));
 
-extern struct cfdriver pms_cd;
+extern struct cfdriver qms_cd;
 
 /* qms device structure */
 
