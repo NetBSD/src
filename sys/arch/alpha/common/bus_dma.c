@@ -1,4 +1,4 @@
-/* $NetBSD: bus_dma.c,v 1.6 1997/09/05 02:05:37 thorpej Exp $ */
+/* $NetBSD: bus_dma.c,v 1.7 1998/01/09 06:37:04 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -39,7 +39,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: bus_dma.c,v 1.6 1997/09/05 02:05:37 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bus_dma.c,v 1.7 1998/01/09 06:37:04 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -300,7 +300,7 @@ _bus_dmamem_alloc(t, size, alignment, boundary, segs, nsegs, rsegs, flags)
 	int *rsegs;
 	int flags; 
 {
-	extern vm_offset_t vm_first_phys, vm_last_phys;
+	extern vm_offset_t avail_start, avail_end;
 	vm_offset_t curaddr, lastaddr, high;
 	vm_page_t m;    
 	struct pglist mlist;
@@ -309,13 +309,13 @@ _bus_dmamem_alloc(t, size, alignment, boundary, segs, nsegs, rsegs, flags)
 	/* Always round the size. */
 	size = round_page(size);
 
-	high = vm_last_phys - PAGE_SIZE;
+	high = avail_end - PAGE_SIZE;
 
 	/*
 	 * Allocate pages from the VM system.
 	 */
 	TAILQ_INIT(&mlist);
-	error = vm_page_alloc_memory(size, vm_first_phys, high,
+	error = vm_page_alloc_memory(size, avail_start, high,
 	    alignment, boundary, &mlist, nsegs, (flags & BUS_DMA_NOWAIT) == 0);
 	if (error)
 		return (error);
@@ -333,7 +333,7 @@ _bus_dmamem_alloc(t, size, alignment, boundary, segs, nsegs, rsegs, flags)
 	for (; m != NULL; m = m->pageq.tqe_next) {
 		curaddr = VM_PAGE_TO_PHYS(m);
 #ifdef DIAGNOSTIC
-		if (curaddr < vm_first_phys || curaddr >= high) {
+		if (curaddr < avail_start || curaddr >= high) {
 			printf("vm_page_alloc_memory returned non-sensical"
 			    " address 0x%lx\n", curaddr);
 			panic("_bus_dmamem_alloc");
