@@ -1,4 +1,4 @@
-/*	$NetBSD: usbdi.c,v 1.5 1998/07/25 15:22:11 augustss Exp $	*/
+/*	$NetBSD: usbdi.c,v 1.6 1998/07/26 17:42:49 augustss Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -957,3 +957,12 @@ usbd_set_disco(p, hdl, data)
 
 /* XXX do periodic free() of free list */
 
+/*
+ * Called from keyboard driver when in polling mode.
+ */
+void
+usbd_dopoll(iface)
+	usbd_interface_handle iface;
+{
+	iface->device->bus->do_poll(iface->device->bus);
+}

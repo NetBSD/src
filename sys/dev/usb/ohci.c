@@ -1,4 +1,4 @@
-/*	$NetBSD: ohci.c,v 1.4 1998/07/24 21:09:07 augustss Exp $	*/
+/*	$NetBSD: ohci.c,v 1.5 1998/07/26 17:42:48 augustss Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -74,6 +74,7 @@ ohci_soft_td_t *ohci_alloc_std __P((ohci_softc_t *));
 void		ohci_free_std __P((ohci_softc_t *, ohci_soft_td_t *));
 
 usbd_status	ohci_open __P((usbd_pipe_handle));
+void		ohci_poll __P((struct usbd_bus *));
 void		ohci_waitintr __P((ohci_softc_t *, usbd_request_handle));
 void		ohci_rhsc __P((ohci_softc_t *, usbd_request_handle));
 void		ohci_process_done __P((ohci_softc_t *, ohci_physaddr_t));
@@ -452,6 +453,7 @@ ohci_init(sc)
 	/* Set up the bus struct. */
 	sc->sc_bus.open_pipe = ohci_open;
 	sc->sc_bus.pipe_size = sizeof(struct ohci_pipe);
+	sc->sc_bus.do_poll = ohci_poll;
 
 	return (USBD_NORMAL_COMPLETION);
 
@@ -834,6 +836,16 @@ ohci_waitintr(sc, reqh)
 	DPRINTF(("ohci_waitintr: timeout\n"));
 	reqh->status = USBD_TIMEOUT;
 	reqh->xfercb(reqh);
+}
+
+void
+ohci_poll(bus)
+	struct usbd_bus *bus;
+{
+	ohci_softc_t *sc = (ohci_softc_t *)bus;
+
+	if (OREAD4(sc, OHCI_INTERRUPT_STATUS) & sc->sc_eintrs)
+		ohci_intr(sc);
 }
 
 usbd_status
