@@ -1,11 +1,11 @@
-/*	$NetBSD: futil.c,v 1.10 2003/08/24 21:11:37 tron Exp $	*/
+/*	$NetBSD: futil.c,v 1.11 2003/08/25 10:35:28 tron Exp $	*/
 
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static const char *rcsid = "from FreeBSD Id: futil.c,v 1.7 1997/10/08 07:45:39 charnier Exp";
 #else
-__RCSID("$NetBSD: futil.c,v 1.10 2003/08/24 21:11:37 tron Exp $");
+__RCSID("$NetBSD: futil.c,v 1.11 2003/08/25 10:35:28 tron Exp $");
 #endif
 #endif
 
@@ -80,19 +80,25 @@ apply_perms(char *dir, char *arg)
 		cd_to = dir;
 
 	if (Mode)
-		if (vsystem("cd %s && %s -R %s %s", cd_to, CHMOD_CMD, Mode, arg))
-			warnx("couldn't change modes of '%s' to '%s'", arg, Mode);
-	if (Owner && Group) {
-		if (vsystem("cd %s && %s -R %s.%s %s", cd_to, CHOWN_CMD, Owner, Group, arg))
+		if (fcexec(cd_to, CHMOD_CMD, "-R", Mode, arg, NULL))
+			warnx("couldn't change modes of '%s' to '%s'", arg,
+			    Mode);
+	if (Owner != NULL && Group != NULL) {
+		if (vsystem("cd %s && %s -R %s.%s %s", cd_to, CHOWN_CMD, Owner,
+		    Group, arg))
 			warnx("couldn't change owner/group of '%s' to '%s.%s'",
 			    arg, Owner, Group);
 		return;
 	}
-	if (Owner) {
-		if (vsystem("cd %s && %s -R %s %s", cd_to, CHOWN_CMD, Owner, arg))
-			warnx("couldn't change owner of '%s' to '%s'", arg, Owner);
+	if (Owner != NULL) {
+		if (fcexec(cd_to, CHOWN_CMD, "-R", Owner, arg, NULL))
+			warnx("couldn't change owner of '%s' to '%s'", arg,
+			    Owner);
 		return;
-	} else if (Group)
-		if (vsystem("cd %s && %s -R %s %s", cd_to, CHGRP_CMD, Group, arg))
-			warnx("couldn't change group of '%s' to '%s'", arg, Group);
+	}
+	if (Group != NULL) {
+		if (fcexec(cd_to, CHGRP_CMD, "-R", Group, arg, NULL))
+			warnx("couldn't change group of '%s' to '%s'", arg,
+			    Group);
+	}
 }
