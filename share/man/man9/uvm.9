@@ -1,4 +1,4 @@
-.\"	$NetBSD: uvm.9,v 1.13 2000/05/07 17:09:32 mrg Exp $
+.\"	$NetBSD: uvm.9,v 1.14 2000/06/29 06:08:44 mrg Exp $
 .\"
 .\" Copyright (c) 1998 Matthew R. Green
 .\" All rights reserved.
@@ -37,7 +37,6 @@
 .Nd virtual memory system external interface
 .Sh SYNOPSIS
 .Fd #include <sys/param.h>
-.Fd #include <vm/vm.h>
 .Fd #include <uvm/uvm.h>
 .Sh DESCRIPTION
 The UVM virtual memory system manages access to the computer's memory
@@ -885,17 +884,14 @@ and
 .Dv KERN_PAGES_LOCKED
 values are not actually returned by the UVM code.
 .Sh NOTES
-These functions are only available with options
-.Dv UVM .
-.Pp
 .Fn uvm_chgkprot
 is only available if the kernel has been compiled with options
 .Dv KGDB .
 .Pp
-The include file
-.Pa <vm/vm.h>
-will be deprecated when then Mach VM system is obsoleted.  All structure
-and types whose names begin with ``vm_'' will be renamed to ``uvm_''.
+All structure and types whose names begin with 
+.Dq vm_
+will be renamed to
+.Dq uvm_ .
 .Pp
 The
 .Xr pmap 9
@@ -907,13 +903,12 @@ UVM is a new VM system developed at Washington University in St. Louis
 VM system, the FreeBSD VM system, and the SunOS4 VM system.  UVM's basic
 structure is based on the
 .Bx 4.4
-VM system.  UVM's new i386 machine-depenent layer includes several ideas
-from FreeBSD.  UVM's new anonymous memory system is based on the
+VM system.  UVM's new anonymous memory system is based on the
 anonymous memory system found in SunOS4 VM (as described in papers by
 published Sun Microsystems, Inc.).  UVM also includes a number of feature
 new to BSD including page loanout, map entry passing, simplified
-copy-on-write, and clustered anonymous memory pageout.  UVM will be
-further documented in August 1998 in a dissertation by Charles D. Cranor.
+copy-on-write, and clustered anonymous memory pageout.  UVM is also
+further documented in a August 1998 dissertation by Charles D. Cranor.
 .Pp
 UVM appeared in
 .Nx 1.4 .
