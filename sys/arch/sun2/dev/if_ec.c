@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ec.c,v 1.2 2001/08/17 20:27:12 fredette Exp $	*/
+/*	$NetBSD: if_ec.c,v 1.3 2001/12/17 18:14:17 fredette Exp $	*/
 
 /*
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -63,6 +63,7 @@
 #include <net/if_types.h>
 
 #include <net/if_ether.h>
+#include <net/if_media.h>
 
 #ifdef INET
 #include <netinet/in.h>
@@ -98,6 +99,8 @@ struct ec_softc {
 	void *sc_ih;
 
 	struct ethercom sc_ethercom;	/* ethernet common */
+	struct ifmedia sc_media;	/* our supported media */
+
 	bus_space_tag_t sc_iot;	/* bus space tag */
 	bus_space_handle_t sc_ioh;	/* bus space handle */
 
@@ -140,6 +143,9 @@ void ec_recv __P((struct ec_softc *, int));
 void ec_coll __P((struct ec_softc *));
 void ec_copyin __P((struct ec_softc *, void *, int, size_t));
 void ec_copyout __P((struct ec_softc *, const void *, int, size_t));
+
+int ec_mediachange __P((struct ifnet *));
+void ec_mediastatus __P((struct ifnet *, struct ifmediareq *));
 
 int ec_match __P((struct device *, struct cfdata *, void *));
 void ec_attach __P((struct device *, struct device *, void *));
@@ -243,6 +249,11 @@ ec_attach(parent, self, aux)
 	ifp->if_watchdog = ec_watchdog;
 	ifp->if_flags = IFF_BROADCAST | IFF_SIMPLEX | IFF_NOTRAILERS;
 	IFQ_SET_READY(&ifp->if_snd);
+
+        /* Initialize ifmedia structures. */
+	ifmedia_init(&sc->sc_media, 0, ec_mediachange, ec_mediastatus);
+	ifmedia_add(&sc->sc_media, IFM_ETHER|IFM_MANUAL, 0, NULL);
+	ifmedia_set(&sc->sc_media, IFM_ETHER|IFM_MANUAL);
 
 	/* Now we can attach the interface. */
 	if_attach(ifp);
@@ -562,6 +573,24 @@ ec_recv(sc, intbit)
 	ECREG_CSR_WR((ECREG_CSR_RD & EC_CSR_INTPA) | EC_CSR_INT_BSW(intbit) | intbit);
 }
 
+int
+ec_mediachange(ifp)
+	struct ifnet *ifp;
+{               
+	return (0);
+}
+
+void    
+ec_mediastatus(ifp, ifmr) 
+	struct ifnet *ifp;
+	struct ifmediareq *ifmr;
+{  
+	if ((ifp->if_flags & IFF_UP) == 0)
+		return;
+        
+	ifmr->ifm_status = IFM_AVALID | IFM_ACTIVE;
+}
+
 /*
  * Process an ioctl request. This code needs some work - it looks pretty ugly.
  */
@@ -572,6 +601,8 @@ ec_ioctl(ifp, cmd, data)
 	caddr_t data;
 {
 	struct ifaddr *ifa = (struct ifaddr *) data;
+	struct ifreq *ifr = (struct ifreq *)data;
+	struct ec_softc *sc = ifp->if_softc;
 	int s, error = 0;
 
 	s = splnet();
@@ -633,6 +664,11 @@ ec_ioctl(ifp, cmd, data)
 			 */
 			ec_reset(ifp);
 		}
+		break;
+
+	case SIOCGIFMEDIA:
+	case SIOCSIFMEDIA:
+		error = ifmedia_ioctl(ifp, ifr, &sc->sc_media, cmd);
 		break;
 
 	default:
