@@ -31,7 +31,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)vnode.h	7.39 (Berkeley) 6/27/91
- *	$Id: vnode.h,v 1.13 1993/12/21 07:02:18 cgd Exp $
+ *	$Id: vnode.h,v 1.14 1993/12/22 12:51:31 cgd Exp $
  */
 
 #ifndef _SYS_VNODE_H_
@@ -218,7 +218,7 @@ struct vnodeops {
 	int	(*vop_bmap)	__P((struct vnode *vp, daddr_t bn,
 				    struct vnode **vpp, daddr_t *bnp));
 	int	(*vop_strategy)	__P((struct buf *bp));
-	void	(*vop_print)	__P((struct vnode *vp));
+	int	(*vop_print)	__P((struct vnode *vp));
 	int	(*vop_islocked)	__P((struct vnode *vp));
 	int	(*vop_advlock)	__P((struct vnode *vp, caddr_t id, int op,
 				    struct flock *fl, int flags));
