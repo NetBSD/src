@@ -1,4 +1,4 @@
-/*	$NetBSD: msg.mi.fr,v 1.74 2004/03/28 19:06:49 bouyer Exp $	*/
+/*	$NetBSD: msg.mi.fr,v 1.74.2.1 2004/03/30 05:57:35 jmc Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -264,7 +264,7 @@ message show_all_unused_partitions
 {Afficher les partitions libres}
 
 message partition_sizes_ok
-{Taille des partitions correcte}
+{Taille et options des partitions correcte}
 
 message edfspart
 {Vous devez d'abord préciser le type de système de fichier (FS),
@@ -670,7 +670,7 @@ message distdir
 
 message delete_dist_files
 {Voulez-vous supprimer les fichiers de distribution de NetBSD de %s ?
-Vous pouvez les conserver pour installer ou mettre a jour d'autre systèmes.)}
+Vous pouvez les conserver pour installer ou mettre a jour d'autre systèmes.}
 
 message verboseextract
 {Pendant la procédure d'extraction des fichiers,
@@ -857,7 +857,7 @@ message set_text_tools
 {Outils de manipulation de textes}
 
 message set_X11
-{X11 tout}
+{X11}
 
 message set_X11_base
 {X11 base et clients}
