@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_extern.h,v 1.66 2001/08/16 01:37:50 chs Exp $	*/
+/*	$NetBSD: uvm_extern.h,v 1.67 2001/09/15 20:36:45 chs Exp $	*/
 
 /*
  *
@@ -156,9 +156,8 @@ typedef off_t voff_t;		/* XXX: offset within a uvm_object */
 #define UVM_MAPFLAG(PROT,MAXPROT,INH,ADVICE,FLAGS) \
 	((MAXPROT << 8)|(PROT)|(INH)|((ADVICE) << 12)|(FLAGS))
 
-/* magic offset value */
+/* magic offset value: offset not known(obj) or don't care(!obj) */
 #define UVM_UNKNOWN_OFFSET ((voff_t) -1)
-				/* offset not known(obj) or don't care(!obj) */
 
 /*
  * the following defines are for uvm_km_kmemalloc's flags
@@ -183,17 +182,20 @@ typedef off_t voff_t;		/* XXX: offset within a uvm_object */
 /*
  * the following defines are for ubc_alloc's flags
  */
-#define UBC_READ	0
-#define UBC_WRITE	1
+#define UBC_READ	0x01
+#define UBC_WRITE	0x02
+#define UBC_FAULTBUSY	0x04
 
 /*
  * flags for uvn_findpages().
  */
-#define UFP_ALL		0x0
-#define UFP_NOWAIT	0x1
-#define UFP_NOALLOC	0x2
-#define UFP_NOCACHE	0x4
-#define UFP_NORDONLY	0x8
+#define UFP_ALL		0x00
+#define UFP_NOWAIT	0x01
+#define UFP_NOALLOC	0x02
+#define UFP_NOCACHE	0x04
+#define UFP_NORDONLY	0x08
+#define UFP_DIRTYONLY	0x10
+#define UFP_BACKWARD	0x20
 
 /*
  * lockflags that control the locking behavior of various functions.
@@ -243,13 +245,13 @@ struct uvmexp {
 	int paging;	/* number of pages in the process of being paged out */
 	int wired;      /* number of wired pages */
 
-	int ncolors;	/* number of page color buckets: must be p-o-2 */
-	int colormask;	/* color bucket mask */
-
 	/*
 	 * Adding anything before this line will break binary compatibility
 	 * with top(1) on NetBSD 1.5.
 	 */
+
+	int ncolors;	/* number of page color buckets: must be p-o-2 */
+	int colormask;	/* color bucket mask */
 
 	int zeropages;		/* number of zero'd pages */
 	int reserve_pagedaemon; /* number of pages reserved for pagedaemon */
@@ -341,10 +343,6 @@ struct uvmexp {
 	int pdreanon;	/* anon pages reactivated due to min threshold */
 	int pdrevnode;	/* vnode pages reactivated due to min threshold */
 	int pdrevtext;	/* vtext pages reactivated due to min threshold */
-
-	/* kernel memory objects: managed by uvm_km_kmemalloc() only! */
-	struct uvm_object *kmem_object;
-	struct uvm_object *mb_object;
 };
 
 /*
@@ -495,7 +493,6 @@ extern struct vm_map *phys_map;
 
 #define vm_resident_count(vm) (pmap_resident_count((vm)->vm_map.pmap))
 
-/* XXX clean up later */
 struct buf;
 struct loadavg;
 struct proc;
@@ -530,7 +527,7 @@ void			uao_reference_locked __P((struct uvm_object *));
 void			ubc_init __P((void));
 void *			ubc_alloc __P((struct uvm_object *, voff_t, vsize_t *,
 				       int));
-void			ubc_release __P((void *, vsize_t));
+void			ubc_release __P((void *, int));
 void			ubc_flush __P((struct uvm_object *, voff_t, voff_t));
 
 /* uvm_fault.c */
@@ -557,7 +554,6 @@ void			uvm_vsunlock __P((struct proc *, caddr_t, size_t));
 
 /* uvm_init.c */
 void			uvm_init __P((void));
-				/* init the uvm system */
 
 /* uvm_io.c */
 int			uvm_io __P((struct vm_map *, struct uio *));
@@ -583,9 +579,9 @@ vaddr_t			uvm_km_alloc_poolpage1 __P((struct vm_map *,
 			    struct uvm_object *, boolean_t));
 void			uvm_km_free_poolpage1 __P((struct vm_map *, vaddr_t));
 
-#define	uvm_km_alloc_poolpage(waitok) \
-	uvm_km_alloc_poolpage1(kmem_map, uvmexp.kmem_object, (waitok))
-#define	uvm_km_free_poolpage(addr) \
+#define	uvm_km_alloc_poolpage(waitok)					\
+	uvm_km_alloc_poolpage1(kmem_map, NULL, (waitok))
+#define	uvm_km_free_poolpage(addr)					\
 	uvm_km_free_poolpage1(kmem_map, (addr))
 
 /* uvm_map.c */
@@ -629,8 +625,8 @@ struct vm_page		*uvm_pagealloc_strat __P((struct uvm_object *,
 void			uvm_pagerealloc __P((struct vm_page *,
 					     struct uvm_object *, voff_t));
 /* Actually, uvm_page_physload takes PF#s which need their own type */
-void			uvm_page_physload __P((paddr_t, paddr_t,
-					       paddr_t, paddr_t, int));
+void			uvm_page_physload __P((paddr_t, paddr_t, paddr_t,
+			    paddr_t, int));
 void			uvm_setpagesize __P((void));
 
 /* uvm_pager.c */
@@ -643,9 +639,8 @@ void			uvm_pageout __P((void *));
 void			uvm_aiodone_daemon __P((void *));
 
 /* uvm_pglist.c */
-int			uvm_pglistalloc __P((psize_t, paddr_t,
-				paddr_t, paddr_t, paddr_t,
-				struct pglist *, int, int));
+int			uvm_pglistalloc __P((psize_t, paddr_t, paddr_t,
+			    paddr_t, paddr_t, struct pglist *, int, int));
 void			uvm_pglistfree __P((struct pglist *));
 
 /* uvm_swap.c */
@@ -670,7 +665,6 @@ struct uvm_object	*uvn_attach __P((void *, vm_prot_t));
 void			uvn_findpages __P((struct uvm_object *, voff_t,
 					   int *, struct vm_page **, int));
 void			uvm_vnp_zerorange __P((struct vnode *, off_t, size_t));
-void			uvm_vnp_asyncget __P((struct vnode *, off_t, size_t));
 
 /* kern_malloc.c */
 void			kmeminit_nkmempages __P((void));

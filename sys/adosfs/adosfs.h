@@ -1,4 +1,4 @@
-/*	$NetBSD: adosfs.h,v 1.17 1999/07/08 01:05:58 wrstuden Exp $	*/
+/*	$NetBSD: adosfs.h,v 1.18 2001/09/15 20:36:31 chs Exp $	*/
 
 /*
  * Copyright (c) 1994 Christian E. Hopps
@@ -31,6 +31,8 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
+#include <miscfs/genfs/genfs_node.h>
+
 /*
  * Arguments to mount amigados filesystems.
  */
@@ -62,6 +64,7 @@ enum anode_type { AROOT, ADIR, AFILE, ALDIR, ALFILE, ASLINK };
  * table for f/e. it is always ANODETABSZ(ap) bytes in size.
  */
 struct anode {
+	struct genfs_node gnode;
 	LIST_ENTRY(anode) link;
 	enum anode_type type;
 	char name[31];		/* (r/d/f) name for object */

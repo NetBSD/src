@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_object.h,v 1.12 2001/05/26 16:32:47 chs Exp $	*/
+/*	$NetBSD: uvm_object.h,v 1.13 2001/09/15 20:36:46 chs Exp $	*/
 
 /*
  *
@@ -64,23 +64,11 @@ struct uvm_object {
  * for kernel objects... when a kernel object is unmapped we always want
  * to free the resources associated with the mapping.   UVM_OBJ_KERN
  * allows us to decide which type of unmapping we want to do.
- *
- * in addition, we have kernel objects which may be used in an
- * interrupt context.  these objects get their mappings entered
- * with pmap_kenter*() and removed with pmap_kremove(), which
- * are safe to call in interrupt context, and must be used ONLY
- * for wired kernel mappings in these objects and their associated
- * maps.
  */
 #define UVM_OBJ_KERN		(-2)
-#define	UVM_OBJ_KERN_INTRSAFE	(-3)
 
 #define	UVM_OBJ_IS_KERN_OBJECT(uobj)					\
-	((uobj)->uo_refs == UVM_OBJ_KERN ||				\
-	 (uobj)->uo_refs == UVM_OBJ_KERN_INTRSAFE)
-
-#define	UVM_OBJ_IS_INTRSAFE_OBJECT(uobj)				\
-	((uobj)->uo_refs == UVM_OBJ_KERN_INTRSAFE)
+	((uobj)->uo_refs == UVM_OBJ_KERN)
 
 #ifdef _KERNEL
 
