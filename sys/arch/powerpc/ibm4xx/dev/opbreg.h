@@ -1,4 +1,4 @@
-/*	$NetBSD: ibm405gp.h,v 1.7 2002/08/13 04:57:49 simonb Exp $	*/
+/*	$NetBSD: opbreg.h,v 1.1 2002/08/13 04:57:49 simonb Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -35,60 +35,10 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef _IBM4XX_IBM405GP_H_
-#define	_IBM4XX_IBM405GP_H_
+#ifndef _IBM4XX_OPBREG_H_
+#define	_IBM4XX_OPBREG_H_
 
-/*
- * Memory and PCI addresses
- */
-
-/* Local Memory and Peripherals */
-#define	IBM405GP_LOCAL_MEM_START	0x00000000
-#define	IBM405GP_LOCAL_MEM_END		0x7fffffff
-
-/* PCI Memory - 1.625GB */
-#define	IBM405GP_PCI_MEM_START		0x80000000
-#define	IBM405GP_PCI_MEM_END		0xe7ffffff
-
-/* PCI I/O - PCI I/O accesses from 0 to 64kB-1 (64kB) */
-#define	IBM405GP_PCI_IO_LOW_START	0xe8000000
-#define	IBM405GP_PCI_IO_LOW_END		0xe800ffff
-
-/* PCI I/O - PCI I/O accesses from 8MB to 64MB-1 (56MB) */
-#define	IBM405GP_PCI_IO_HIGH_START	0xe8800000
-#define	IBM405GP_PCI_IO_HIGH_END	0xebffffff
-
-#define	IBM405GP_PCIC0_BASE		0xeec00000
-
-/* PCI Interrupt Acknowledge (read: 0xeed00000 0xeed00003 - 4 bytes) */
-#define	IBM405GP_PCIIA0			0xeed00000
-
-/* PCI Special Cycle (write: 0xeed00000 0xeed00003 - 4 bytes) */
-#define	IBM405GP_PCISC0			0xeed00000
-#define	IBM405GP_PCIL0_BASE		0xef400000
-
-/*
- * Internal peripheral addresses
- */
-
-#define	IBM405GP_UART0_BASE		0xef600300
-#define	IBM405GP_UART1_BASE		0xef600400
-#define	IBM405GP_IIC0_BASE		0xef600500
-#define	IBM405GP_OPBA0_BASE		0xef600600
-#define	IBM405GP_GPIO0_BASE		0xef600700
-#define	IBM405GP_EMAC0_BASE		0xef600800
-
-
-/* Expansion ROM - 254MB */
-#define	IBM405GP_EXPANSION_ROM_START	0xf0000000
-#define	IBM405GP_EXPANSION_ROM_END	0xffdfffff
-
-/* Boot ROM - 2MB */
-#define	IBM405GP_BOOT_ROM_START		0xffe00000
-#define	IBM405GP_BOOT_ROM_END		0xffffffff
-
-#ifndef _LOCORE
-void galaxy_show_pci_map(void);
-void galaxy_setup_pci(void);
-#endif /* _LOCORE */
-#endif	/* _IBM4XX_IBM405GP_H_ */
+/* OPB Arbiter Registers */
+#define	OPBA_PR			0x00	/* Priority Register */
+#define	OPBA_CR			0x01	/* Control Register */
+#endif	/* _IBM4XX_OPBREG_H_ */

@@ -1,4 +1,4 @@
-/*	$NetBSD: consinit.c,v 1.3 2001/11/20 08:43:40 lukem Exp $	*/
+/*	$NetBSD: consinit.c,v 1.4 2002/08/13 04:57:50 simonb Exp $	*/
 
 /*
  * Copyright (c) 1998
@@ -50,7 +50,7 @@
 
 #if (NCOM > 0)
 #ifndef CONADDR
-#define CONADDR UART0_BASE
+#define CONADDR IBM405GP_UART0_BASE
 #endif
 #ifndef CONSPEED
 #define CONSPEED B9600	/*  */
