@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.44 1999/03/24 05:51:17 mrg Exp $     */
+/*	$NetBSD: trap.c,v 1.45 1999/06/20 00:53:02 ragge Exp $     */
 /*
  * Copyright (c) 1994 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -171,7 +171,8 @@ if(faultdebug)printf("trap accflt type %lx, code %lx, pc %lx, psl %lx\n",
 #endif
 #ifdef DIAGNOSTIC
 		if (p == 0)
-			panic("trap: access fault without process");
+			panic("trap: access fault: addr %lx code %lx",
+			    frame->pc, frame->code);
 #endif
 		/*
 		 * First check for ptefetch. Can only happen to pages
@@ -228,7 +229,7 @@ ufault:			if (rv == KERN_RESOURCE_SHORTAGE) {
 		break;
 
 	case T_PTELEN:
-		if (p->p_addr)
+		if (p && p->p_addr)
 			FAULTCHK;
 		panic("ptelen fault in system space: addr %lx pc %lx",
 		    frame->code, frame->pc);
