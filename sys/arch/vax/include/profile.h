@@ -1,6 +1,6 @@
-/*	$NetBSD: profile.h,v 1.1 1995/02/13 00:43:29 ragge Exp $ */
+/*	$NetBSD: profile.h,v 1.2 1995/03/30 20:43:04 ragge Exp $ */
 /*
- * Copyright (c) 1994 Ludd, University of Lule}, Sweden.
+ * Copyright (c) 1995 Ludd, University of Lule}, Sweden.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -32,4 +32,34 @@
  /* All bugs are subject to removal without further notice */
 		
 
+#define _MCOUNT_DECL static inline void _mcount
+
+#define MCOUNT \
+extern void mcount() asm("mcount");                                     \
+void									\
+mcount()                                                                \
+{									\
+	int selfpc, frompcindex;					\
+        /*                                                              \
+         * find the return address for mcount,                          \
+         * and the return address for mcount's caller.                  \
+         *                                                              \
+         * selfpc = pc pushed by mcount call                            \
+         */                                                             \
+	asm("movl 0x10(fp),%0" : "=r" (selfpc));			\
+        /*                                                              \
+         * frompcindex = pc pushed by call into self.                   \
+         */                                                             \
+	asm("movl 0xc(fp),%0;movl 0x10(%0),%0" : "=r" (frompcindex));	\
+        _mcount(frompcindex, selfpc);                                   \
+}
+
+#ifdef KERNEL
+/*
+ * Note that we assume splhigh() and splx() cannot call mcount()
+ * recursively.
+ */
+#define MCOUNT_ENTER    s = splhigh()
+#define MCOUNT_EXIT     splx(s)
+#endif /* KERNEL */
 
