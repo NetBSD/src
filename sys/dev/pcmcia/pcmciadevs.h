@@ -1,10 +1,10 @@
-/*	$NetBSD: pcmciadevs.h,v 1.92.2.5 2001/04/04 15:46:25 he Exp $	*/
+/*	$NetBSD: pcmciadevs.h,v 1.92.2.6 2001/05/26 16:16:38 he Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcmciadevs,v 1.93.2.4 2001/03/16 19:35:14 he Exp 
+ *	NetBSD: pcmciadevs,v 1.93.2.5 2001/04/04 15:45:40 he Exp 
  */
 
 /*-
@@ -296,6 +296,9 @@
 #define	PCMCIA_STR_SIMPLETECH_SPECTRUM24	"Symbol Spectrum24 WLAN Adapter"
 
 /* Socket Communications Products */
+#define	PCMCIA_CIS_SOCKET_EA_ETHER	{ NULL, NULL, NULL, NULL }
+#define	PCMCIA_PRODUCT_SOCKET_EA_ETHER	0x0000
+#define	PCMCIA_STR_SOCKET_EA_ETHER	"Socket Communications EA"
 #define	PCMCIA_CIS_SOCKET_PAGECARD	{ NULL, NULL, NULL, NULL }
 #define	PCMCIA_PRODUCT_SOCKET_PAGECARD	0x0003
 #define	PCMCIA_STR_SOCKET_PAGECARD	"Socket Communications PageCard"
