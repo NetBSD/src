@@ -1,4 +1,4 @@
-/*	$NetBSD: keydb.h,v 1.9 2000/09/22 16:55:04 itojun Exp $	*/
+/*	$NetBSD: keydb.h,v 1.9.18.1 2003/01/10 06:45:35 jmc Exp $	*/
 /*	$KAME: keydb.h,v 1.14 2000/08/02 17:58:26 sakane Exp $	*/
 
 /*
@@ -63,7 +63,11 @@ struct secashead {
 					/* SA chain */
 					/* The first of this list is newer SA */
 
-	struct route sa_route;		/* route cache */
+	union {
+		struct route sau_route;
+		struct route_in6 sau_route6;
+	} sa_u;
+#define sa_route sa_u.sau_route
 };
 
 /* Security Association */
@@ -105,7 +109,7 @@ struct secreplay {
 	u_int32_t seq;		/* used by sender */
 	u_int32_t lastseq;	/* used by receiver */
 	caddr_t bitmap;		/* used by receiver */
-	int overflow;		/* overflow flag */
+	int overflow;		/* what round does the counter take. */
 };
 
 /* socket table due to send PF_KEY messages. */
