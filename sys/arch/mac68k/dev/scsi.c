@@ -1,4 +1,4 @@
-/*	$NetBSD: scsi.c,v 1.17 1995/07/24 07:35:12 cgd Exp $	*/
+/*	$NetBSD: scsi.c,v 1.18 1995/08/12 20:31:06 mycroft Exp $	*/
 
 /*
  * Copyright (C) 1993	Allen K. Briggs, Chris P. Caputo,
@@ -121,7 +121,7 @@ static volatile long *sci_4byte_addr = (long *) 0x6000;
 static volatile u_char *sci_1byte_addr = (u_char *) 0x12000;
 
 static unsigned int ncr5380_adapter_info(struct ncr5380_softc * ncr5380);
-static u_int ncr5380_minphys(struct buf * bp);
+static void ncr5380_minphys(struct buf * bp);
 static int ncr5380_scsi_cmd(struct scsi_xfer * xs);
 
 static int ncr5380_show_scsi_cmd(struct scsi_xfer * xs);
@@ -132,11 +132,11 @@ static int ncr5380_send_cmd(struct scsi_xfer * xs);
 extern void ncr5380_intr(int adapter);
 extern void spinwait(int);
 
-static int 
+static int
 scsi_gen(int adapter, int id, int lun,
     struct scsi_generic * cmd, int cmdlen,
     void *databuf, int datalen);
-static int 
+static int
 scsi_group0(int adapter, int id, int lun,
     int opcode, int addr, int len,
     int flags, caddr_t databuf, int datalen);
@@ -229,14 +229,14 @@ ncrattach(parent, dev, aux)
 }
 
 #define MIN_PHYS	65536	/* BARF!!!! */
-static u_int
+static void
 ncr5380_minphys(struct buf * bp)
 {
 	if (bp->b_bcount > MIN_PHYS) {
 		printf("Uh-oh...  ncr5380_minphys setting bp->b_bcount = %x.\n", MIN_PHYS);
 		bp->b_bcount = MIN_PHYS;
 	}
-	return (minphys(bp));
+	minphys(bp);
 }
 #undef MIN_PHYS
 

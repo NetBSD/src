@@ -1,4 +1,4 @@
-/*	$NetBSD: ncr.c,v 1.15 1995/07/24 07:18:51 cgd Exp $	*/
+/*	$NetBSD: ncr.c,v 1.16 1995/08/12 20:31:35 mycroft Exp $	*/
 
 /**************************************************************************
 **
@@ -1164,7 +1164,7 @@ void    ncr_int_sto     (ncb_p np);
 #ifndef NEW_SCSICONF
 u_long	ncr_lookup	(char* id);
 #endif /* NEW_SCSICONF */
-u_int	ncr_minphys	(struct buf *bp);
+void	ncr_minphys	(struct buf *bp);
 void	ncr_negotiate	(struct ncb* np, struct tcb* tp);
 void	ncr_openings	(ncb_p np, lcb_p lp, struct scsi_xfer * xp);
 void	ncb_profile	(ncb_p np, ccb_p cp);
@@ -1204,7 +1204,7 @@ void	ncr_attach	(pcici_t tag, int unit);
 
 
 static char ident[] =
-	"\n$Id: ncr.c,v 1.15 1995/07/24 07:18:51 cgd Exp $\n";
+	"\n$Id: ncr.c,v 1.16 1995/08/12 20:31:35 mycroft Exp $\n";
 
 u_long	ncr_version = NCR_VERSION
 	+ (u_long) sizeof (struct ncb)
@@ -2941,7 +2941,7 @@ void ncr_script_copy_and_bind (struct script *script, ncb_p np)
 
 	start = src;
 	end = src + (sizeof(struct script) / 4);
-	
+
 	while (src < end) {
 
 		*dst++ = opcode = *src++;
@@ -3061,13 +3061,13 @@ void ncr_script_copy_and_bind (struct script *script, ncb_p np)
 **----------------------------------------------------------
 */
 
-u_int
+void
 ncr_minphys (struct  buf *bp)
 {
 
 	if (bp->b_bcount > MAX_SIZE)
 		bp->b_bcount = MAX_SIZE;
-	return (minphys(bp));
+	minphys(bp);
 }
 
 /*----------------------------------------------------------
@@ -3308,7 +3308,7 @@ void ncr_attach (pcici_t config_id, int unit)
 		ncr_name (np));
 	DELAY (1000000);
 #endif
-	printf ("%s scanning for targets 0..%d ($Revision: 1.15 $)\n",
+	printf ("%s scanning for targets 0..%d ($Revision: 1.16 $)\n",
 		ncr_name (np), MAX_TARGET-1);
 
 	/*
@@ -3415,7 +3415,7 @@ INT32 ncr_start (struct scsi_xfer * xp)
 	int	i, oldspl, segments, flags = xp->flags;
 	u_char	ptr, nego, idmsg;
 	u_long  msglen, msglen2;
-	
+
 
 
 	/*---------------------------------------------
@@ -3570,7 +3570,7 @@ INT32 ncr_start (struct scsi_xfer * xp)
 		/*
 		**	negotiate synchronous transfers?
 		*/
-	
+
 		if (!tp->period) {
 			if (tp->inqdata[7] & INQ7_SYNC) {
 				nego = NS_SYNC;
@@ -4553,7 +4553,7 @@ void ncr_setmaxtags (tcb_p tp, u_long usrtags)
 void ncr_settags (tcb_p tp, lcb_p lp)
 {
 	u_char reqtags, tmp;
-	
+
 	if ((!tp) || (!lp)) return;
 
 	/*
@@ -5987,9 +5987,9 @@ void ncr_alloc_ccb (ncb_p np, struct scsi_xfer * xp)
 		tp->getscr[4] = vtophys (&tp->wval);
 		tp->getscr[5] = np->paddr + offsetof (struct ncr_reg, nc_scntl3);
 
-		assert (( (offsetof(struct ncr_reg, nc_sxfer) ^ 
+		assert (( (offsetof(struct ncr_reg, nc_sxfer) ^
 			offsetof(struct tcb    , sval    )) &3) == 0);
-		assert (( (offsetof(struct ncr_reg, nc_scntl3) ^ 
+		assert (( (offsetof(struct ncr_reg, nc_scntl3) ^
 			offsetof(struct tcb    , wval    )) &3) == 0);
 
 		tp->call_lun.l_cmd   = (SCR_CALL);

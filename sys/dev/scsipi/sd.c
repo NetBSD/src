@@ -1,4 +1,4 @@
-/*	$NetBSD: sd.c,v 1.74 1995/08/05 23:48:55 mycroft Exp $	*/
+/*	$NetBSD: sd.c,v 1.75 1995/08/12 20:31:46 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Charles M. Hannum.  All rights reserved.
@@ -29,7 +29,7 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-/* 
+/*
  * Originally written by Julian Elischer (julian@dialix.oz.au)
  * for TRW Financial Systems for use under the MACH(2.5) operating system.
  *
@@ -345,7 +345,7 @@ bad3:
  * close the device.. only called if we are the LAST occurence of an open
  * device.  Convenient now but usually a pain.
  */
-int 
+int
 sdclose(dev, flag, fmt)
 	dev_t dev;
 	int flag, fmt;
@@ -384,7 +384,7 @@ sdclose(dev, flag, fmt)
  * can understand.  The transfer is described by a buf and will include
  * only one physical transfer.
  */
-void 
+void
 sdstrategy(bp)
 	struct buf *bp;
 {
@@ -458,7 +458,7 @@ done:
  * must be called at the correct (highish) spl level
  * sdstart() is called at splbio from sdstrategy and scsi_done
  */
-void 
+void
 sdstart(sd)
 	register struct sd_softc *sd;
 {
@@ -475,7 +475,7 @@ sdstart(sd)
 	 */
 	while (sc_link->openings > 0) {
 		/*
-		 * there is excess capacity, but a special waits 
+		 * there is excess capacity, but a special waits
 		 * It'll need the adapter as soon as we clear out of the
 		 * way and let it run (user level wait).
 		 */
@@ -506,7 +506,7 @@ sdstart(sd)
 		}
 
 		/*
-		 * We have a buf, now we should make a command 
+		 * We have a buf, now we should make a command
 		 *
 		 * First, translate the block to absolute and put it in terms
 		 * of the logical blocksize of the device.
@@ -543,22 +543,14 @@ sdstart(sd)
 	}
 }
 
-u_int 
-sdminphys(bp)
-	struct buf *bp;
-{
-	register struct sd_softc *sd = sdcd.cd_devs[SDUNIT(bp->b_dev)];
-
-	return (sd->sc_link->adapter->scsi_minphys)(bp);
-}
-
 int
 sdread(dev, uio)
 	dev_t dev;
 	struct uio *uio;
 {
 
-	return (physio(sdstrategy, NULL, dev, B_READ, sdminphys, uio));
+	return (physio(sdstrategy, NULL, dev, B_READ,
+		       sd->sc_link->adapter->scsi_minphys, uio));
 }
 
 int
@@ -567,14 +559,15 @@ sdwrite(dev, uio)
 	struct uio *uio;
 {
 
-	return (physio(sdstrategy, NULL, dev, B_WRITE, sdminphys, uio));
+	return (physio(sdstrategy, NULL, dev, B_WRITE,
+		       sd->sc_link->adapter->scsi_minphys, uio));
 }
 
 /*
  * Perform special action on behalf of the user
  * Knows about the internals of this device
  */
-int 
+int
 sdioctl(dev, cmd, addr, flag, p)
 	dev_t dev;
 	u_long cmd;
@@ -650,7 +643,7 @@ sdioctl(dev, cmd, addr, flag, p)
 /*
  * Load the label information on the named device
  */
-void 
+void
 sdgetdisklabel(sd)
 	struct sd_softc *sd;
 {
@@ -701,7 +694,7 @@ sdgetdisklabel(sd)
 /*
  * Find out from the device what it's capacity is
  */
-u_long 
+u_long
 sd_size(sd, flags)
 	struct sd_softc *sd;
 	int flags;
@@ -735,7 +728,7 @@ sd_size(sd, flags)
 /*
  * Tell the device to map out a defective block
  */
-int 
+int
 sd_reassign_blocks(sd, block)
 	struct sd_softc *sd;
 	u_long block;
@@ -765,7 +758,7 @@ sd_reassign_blocks(sd, block)
  * Get the scsi driver to send a full inquiry to the * device and use the
  * results to fill out the disk parameter structure.
  */
-int 
+int
 sd_get_parms(sd, flags)
 	struct sd_softc *sd;
 	int flags;
@@ -819,7 +812,7 @@ sd_get_parms(sd, flags)
 		/*
 		 * KLUDGE!! (for zone recorded disks)
 		 * give a number of sectors so that sec * trks * cyls
-		 * is <= disk_size 
+		 * is <= disk_size
 		 * can lead to wasted space! THINK ABOUT THIS !
 		 */
 		dp->heads = scsi_sense.pages.rigid_geometry.nheads;
@@ -949,7 +942,7 @@ sddump(dev, blkno, va, size)
 		/*
 		 * Fill out the scsi_xfer structure
 		 *    Note: we cannot sleep as we may be an interrupt
-		 * don't use scsi_scsi_cmd() as it may want 
+		 * don't use scsi_scsi_cmd() as it may want
 		 * to wait for an xs.
 		 */
 		bzero(xs, sizeof(sx));

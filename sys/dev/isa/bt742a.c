@@ -1,4 +1,4 @@
-/*	$NetBSD: bt742a.c,v 1.44 1995/07/29 23:04:57 mycroft Exp $	*/
+/*	$NetBSD: bt742a.c,v 1.45 1995/08/12 20:31:27 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1994 Charles Hannum.  All rights reserved.
@@ -363,7 +363,7 @@ void bt_done __P((struct bt_softc *, struct bt_ccb *));
 int bt_find __P((struct bt_softc *));
 void bt_init __P((struct bt_softc *));
 void bt_inquire_setup_information __P((struct bt_softc *));
-u_int btminphys __P((struct buf *));
+void btminphys __P((struct buf *));
 int bt_scsi_cmd __P((struct scsi_xfer *));
 int bt_poll __P((struct bt_softc *, struct scsi_xfer *, int));
 void bt_timeout __P((void *arg));
@@ -566,7 +566,7 @@ btprobe(parent, match, aux)
 		}
 	} else
 		ia->ia_drq = bt->bt_drq;
-	
+
 	ia->ia_msize = 0;
 	ia->ia_iosize = 4;
 	return 1;
@@ -639,7 +639,7 @@ btintr(arg)
 	/*
 	 * First acknowlege the interrupt, Then if it's
 	 * not telling about a completed operation
-	 * just return. 
+	 * just return.
 	 */
 	stat = inb(BT_INTR_PORT);
 	if ((stat & (BT_MBOA | BT_MBIF)) == 0) {
@@ -764,7 +764,7 @@ bt_free_ccb(bt, ccb, flags)
 }
 
 /*
- * Get a free ccb 
+ * Get a free ccb
  *
  * If there are none, see if we can allocate a new one.  If so, put it in
  * the hash table too otherwise either return an error or sleep.
@@ -856,7 +856,7 @@ bt_send_mbo(bt, cmd, ccb)
 	wmbo = wmbx->tmbo;
 	bt_nextmbx(wmbx->tmbo, wmbx, mbo);
 
-	/* 
+	/*
 	 * Check the outmail box is free or not.
 	 * Note: Under the normal operation, it shuld NOT happen to wait.
 	 */
@@ -962,7 +962,7 @@ bt_find(bt)
 	struct bt_config conf;
 
 	/*
-	 * reset board, If it doesn't respond, assume 
+	 * reset board, If it doesn't respond, assume
 	 * that it's not there.. good for the probe
 	 */
 
@@ -1070,7 +1070,7 @@ bt_init(bt)
 	int i;
 
 	/*
-	 * Initialize mail box 
+	 * Initialize mail box
 	 */
 	*((physaddr *)ad) = KVTOPHYS(&bt->bt_mbx);
 
@@ -1130,21 +1130,21 @@ bt_inquire_setup_information(bt)
 	}
 }
 
-u_int 
+void
 btminphys(bp)
 	struct buf *bp;
 {
 
 	if (bp->b_bcount > ((BT_NSEG - 1) << PGSHIFT))
 		bp->b_bcount = ((BT_NSEG - 1) << PGSHIFT);
-	return (minphys(bp));
+	minphys(bp);
 }
 
 /*
  * start a scsi operation given the command and the data address.  Also needs
  * the unit, target and lu.
  */
-int 
+int
 bt_scsi_cmd(xs)
 	struct scsi_xfer *xs;
 {
@@ -1245,7 +1245,7 @@ bt_scsi_cmd(xs)
 					/*
 					 * This page is contiguous (physically)
 					 * with the the last, just extend the
-					 * length 
+					 * length
 					 */
 					/* how far to the end of the page */
 					nextphys = (thisphys & ~PGOFSET) + NBPG;
@@ -1332,7 +1332,7 @@ bt_scsi_cmd(xs)
 /*
  * Poll a particular unit, looking for a particular xs
  */
-int 
+int
 bt_poll(bt, xs, count)
 	struct bt_softc *bt;
 	struct scsi_xfer *xs;
