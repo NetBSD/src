@@ -1,4 +1,4 @@
-#	$NetBSD: GENERIC,v 1.152 2000/12/19 10:42:02 bouyer Exp $
+#	$NetBSD: GENERIC,v 1.153 2000/12/19 15:51:47 tsutsui Exp $
 
 #
 #if 0
@@ -16,7 +16,7 @@
 
 include "arch/amiga/conf/std.amiga"
 
-#ident 		"GENERIC-$Revision: 1.152 $"
+#ident 		"GENERIC-$Revision: 1.153 $"
 
 #ifdef INSTALL_CONFIGURATION
 makeoptions	COPTS="-Os"
@@ -453,7 +453,6 @@ pseudo-device	ccd		4	# concatenated disk devices
 #pseudo-device	raid		4	# RAIDframe disk driver
 #options 	RAID_AUTOCONFIG		# auto-configuration of RAID components
 
-# rnd is EXPERIMENTAL at this point.
 pseudo-device  rnd                     # /dev/random and in-kernel generator
 #options        RND_COM                 # use "com" randomness as well (BROKEN)
 
