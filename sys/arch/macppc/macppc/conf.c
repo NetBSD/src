@@ -1,4 +1,4 @@
-/*	$NetBSD: conf.c,v 1.41 2002/06/17 16:33:09 christos Exp $	*/
+/*	$NetBSD: conf.c,v 1.42 2002/06/18 05:22:51 itojun Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -144,6 +144,9 @@ cdev_decl(wsmouse);
 #include "wsmux.h"
 cdev_decl(wsmux);
 
+#include "apm.h"
+cdev_decl(apm);
+
 #include "usb.h"
 cdev_decl(usb);
 #include "uhid.h"
@@ -251,6 +254,7 @@ struct cdevsw cdevsw[] = {
 #else
 	cdev_notdef(),			/* 63: system call tracing */
 #endif
+	cdev_apm_init(NAPM,apm),	/* 64: Advancded Power Management */
 };
 int nchrdev = sizeof cdevsw / sizeof cdevsw[0];
 
