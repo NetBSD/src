@@ -1,4 +1,4 @@
-/*	$NetBSD: buf.h,v 1.18 1995/03/26 20:23:54 jtc Exp $	*/
+/*	$NetBSD: buf.h,v 1.19 1995/03/29 20:57:38 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -77,6 +77,12 @@ struct buf {
 	int	b_validoff;		/* Offset in buffer of valid region. */
 	int	b_validend;		/* Offset of end of valid region. */
 };
+
+/*
+ * For portability with historic industry practice, the cylinder number has
+ * to be maintained in the `b_resid' field.
+ */
+#define	b_cylinder b_resid		/* Cylinder number for disksort(). */
 
 /* Device driver compatibility definitions. */
 #define	b_active b_bcount		/* Driver queue head: drive active. */
