@@ -1,4 +1,4 @@
-#	$NetBSD: install.md,v 1.2 2000/05/24 23:20:46 matt Exp $
+#	$NetBSD: install.md,v 1.3 2002/11/18 12:39:56 lukem Exp $
 #
 #
 # Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -190,12 +190,12 @@ __md_prep_disklabel_1
 }
 
 md_copy_kernel() {
-	if [ -f /mnt/netbsd.GENERIC ]; then
-		echo -n "Linking /netbsd.GENERIC to /netbsd ... "
-		ln /mnt/netbsd.GENERIC /mnt/netbsd
+	if [ -f /mnt/netbsd-GENERIC ]; then
+		echo -n "Linking /netbsd-GENERIC to /netbsd ... "
+		ln /mnt/netbsd-GENERIC /mnt/netbsd
 		echo "done."
 	else
-		echo "WARNING: No /netbsd.GENERIC!  Please install /netbsd manually!"
+		echo "WARNING: No /netbsd-GENERIC!  Please install /netbsd manually!"
 	fi
 }
 

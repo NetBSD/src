@@ -1,4 +1,4 @@
-/*	$NetBSD: md.c,v 1.29 2002/02/03 22:21:56 skrll Exp $	*/
+/*	$NetBSD: md.c,v 1.30 2002/11/18 12:39:55 lukem Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -140,12 +140,12 @@ int
 md_post_newfs(void)
 {
 	/*
-	 * Create a symlink of netbsd to netbsd.GENERIC
+	 * Create a symlink of netbsd to netbsd-GENERIC
 	 * XXX This is... less than ideal... but there is no md hook between
 	 * get_and_unpack_sets() and sanity_check(), and we do not want to
 	 * change kern.tgz until we replace the miniroot install
 	 */
-	symlink("netbsd.GENERIC",target_expand("/netbsd"));
+	symlink("netbsd-GENERIC",target_expand("/netbsd"));
 
 	/* boot blocks ... */
 	msg_display(MSG_dobootblks, diskdev);

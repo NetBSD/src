@@ -1,4 +1,4 @@
-.\"	$NetBSD: contents,v 1.87 2002/10/16 04:10:43 lukem Exp $
+.\"	$NetBSD: contents,v 1.88 2002/11/18 12:39:48 lukem Exp $
 .\"
 .\" Copyright (c) 1999-2002 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -65,13 +65,13 @@ This kernel runs on Vr41xx and TX3922 CPU only.
 .\}
 .
 .if \n[acorn26] \{\
-.			It Pa netbsd.FOURMEG.gz
+.			It Pa netbsd-FOURMEG.gz
 A somewhat smaller kernel, intended to be usable on systems with
 four megabytes of RAM.
 .\}
 .
 .if \n[amiga] \{\
-.			It Pa netbsd.INSTALL.gz
+.			It Pa netbsd-INSTALL.gz
 A somewhat smaller kernel, which you can use to boot the system
 on memory-tight systems.
 This is the same kernel as present on the miniroot.
@@ -104,35 +104,35 @@ A kernel for TX3912 machines.
 .\}
 .
 .if \n[i386] \{\
-.			It Pa netbsd.GENERIC_LAPTOP.gz
+.			It Pa netbsd-GENERIC_LAPTOP.gz
 A version of
 .Li GENERIC
 that has USB, PCMCIA and CardBus enabled to allow
 installing on laptop machines.
-.			It Pa netbsd.GENERIC_TINY.gz
+.			It Pa netbsd-GENERIC_TINY.gz
 A version of
 .Li GENERIC
 intended to run on machines with less than 8 MB.
-.			It Pa netbsd.GENERIC_PS2TINY.gz
+.			It Pa netbsd-GENERIC_PS2TINY.gz
 A version of
 .Li GENERIC
 intended to run on IBM PS/2 machines.
-.			It Pa netbsd.INSTALL.gz
+.			It Pa netbsd-INSTALL.gz
 The install kernel.
-.			It Pa netbsd.INSTALL_TINY.gz
+.			It Pa netbsd-INSTALL_TINY.gz
 A version of
 .Li INSTALL
 intended to run on machines with less than 8 MB.
-.			It Pa netbsd.INSTALL_SMALL.gz
+.			It Pa netbsd-INSTALL_SMALL.gz
 A version of
 .Li INSTALL
 intended to fit on 5.25"/1.2 MB diskettes.
-.			It Pa netbsd.INSTALL_LAPTOP.gz
+.			It Pa netbsd-INSTALL_LAPTOP.gz
 A version of
 .Li INSTALL
 that has USB, PCMCIA and CardBus enabled to allow
 installing on laptop machines.
-.			It Pa netbsd.INSTALL_PS2.gz
+.			It Pa netbsd-INSTALL_PS2.gz
 A version of
 .Li INSTALL
 that has MCA stuff enabled to allow installing on IBM PS/2 machines.
@@ -146,14 +146,14 @@ A kernel containing code for everything supported in this release using
 the SBC variant of the SCSI driver.
 .\}
 .if \n[macppc] \{\
-.			It Pa netbsd.GENERIC_MD.gz
+.			It Pa netbsd-GENERIC_MD.gz
 A gzipped
 .Nx
 kernel containing code for everything supported in this release.
 It also has a RAM-disk installer.
 This is the kernel you should use when you want to install via from an
 HFS partition on Open Firmware 3 systems, netboot, or from a CD-R.
-.			It Pa netbsd.INSTALL.gz
+.			It Pa netbsd-INSTALL.gz
 A gzipped
 .Nx kernel containing code only for Open Firmware 1.0.5, 1.1.22, 2.0.x,
 and 2.4 systems (i.e. those that have floppy drives).
@@ -163,15 +163,15 @@ one of these systems from a floppy disk.
 .\}
 .
 .if \n[mvme68k] \{\
-.			It Pa netbsd.VME147.gz
+.			It Pa netbsd-VME147.gz
 A kernel for MVME147 boards.
-.			It Pa netbsd.VME162.gz
+.			It Pa netbsd-VME162.gz
 A kernel for MVME162 boards.
-.			It Pa netbsd.VME167.gz
+.			It Pa netbsd-VME167.gz
 A kernel for MVME167 boards.
-.			It Pa netbsd.VME172.gz
+.			It Pa netbsd-VME172.gz
 A kernel for MVME172 boards.
-.			It Pa netbsd.VME177.gz
+.			It Pa netbsd-VME177.gz
 A kernel for MVME177 boards.
 .\}
 .
@@ -191,14 +191,14 @@ kernel (in ELF format) containing code for everything supported
 in this release.
 .			It Pa netbsd.img-WALNUT.gz
 Same as the above, but in the format expected by the firmware.
-.			It Pa netbsd.INSTALL.gz
+.			It Pa netbsd-INSTALL.gz
 A gzipped
 .Nx
 kernel (ELF format) containing code for everything supported in this
 release.
 It also includes a RAM-disk installer with
 .Ic sysinst .
-.			It Pa netbsd.INSTALL.img.gz
+.			It Pa netbsd-INSTALL.img.gz
 Same as the above, but in the format expected by the firmware.
 .\}
 .
@@ -1189,18 +1189,18 @@ The following are included in the
 .Pa hp300/binary/kernel
 directory:
 .
-.(tag netbsd.RAMDISK.symbols.gz
+.(tag netbsd-RAMDISK.symbols.gz
 .It Pa netbsd-GENERIC.gz
 A gzipped
 .Li GENERIC
 kernel.
-.It Pa netbsd.RAMDISK.gz
+.It Pa netbsd-RAMDISK.gz
 A gzipped
 .Li INSTALL
 kernel with embedded ramdisk.
-.It Pa netbsd.RAMDISK.symbols.gz
+.It Pa netbsd-RAMDISK.symbols.gz
 Symbols for
-.Pa netbsd.RAMDISK.gz .
+.Pa netbsd-RAMDISK.gz .
 .tag)
 .\}
 .
@@ -1238,7 +1238,7 @@ kernel with system installer
 .Pq Ic sysinst .
 This kernel runs on Vr41xx and TX3922 CPU only.
 .showsize 2 7
-.It Pa netbsd.TX3912.gz
+.It Pa netbsd-TX3912.gz
 .Nx*M
 kernel with system installer
 .Pq Ic sysinst .
@@ -1463,8 +1463,8 @@ This file contains a bootstrap program which knows how to load the
 ramdisk image from tape.
 This must be the second file written to the tape.
 .	tag)
-.	(tag netbsd.RAMDISK.gz
-.	It Pa netbsd.RAMDISK.gz
+.	(tag netbsd-RAMDISK.gz
+.	It Pa netbsd-RAMDISK.gz
 This is the
 .Nx
 \*M
@@ -1580,7 +1580,7 @@ subdirectory of the
 .Nx \*V
 distribution.
 The one named
-.Pa netbsd.RAMDISK.gz
+.Pa netbsd-RAMDISK.gz
 contain a root file system image and should only be used for the
 initial installation.
 The others are included for convenience.
