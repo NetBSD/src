@@ -1,4 +1,4 @@
-/*	$NetBSD: bus.h,v 1.6 1996/11/10 03:19:25 thorpej Exp $	*/
+/*	$NetBSD: bus.h,v 1.7 1996/12/02 05:35:13 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1996 Charles M. Hannum.  All rights reserved.
@@ -406,7 +406,8 @@ void	bus_space_free __P((bus_space_tag_t t, bus_space_handle_t bsh,
 
 /*
  *	void bus_space_set_multi_N __P((bus_space_tag_t tag,
- *	    bus_space_handle_t bsh, u_intN_t val, size_t count));
+ *	    bus_space_handle_t bsh, bus_size_t offset, u_intN_t val,
+ *	    size_t count));
  *
  * Write the 1, 2, 4, or 8 byte value `val' to bus space described
  * by tag/handle/offset `count' times.
@@ -416,7 +417,8 @@ void	bus_space_free __P((bus_space_tag_t t, bus_space_handle_t bsh,
 
 /*
  *	void bus_space_set_region_N __P((bus_space_tag_t tag,
- *	    bus_space_handle_t bsh, u_intN_t val, size_t count));
+ *	    bus_space_handle_t bsh, bus_size_t offset, u_intN_t val,
+ *	    size_t count));
  *
  * Write `count' 1, 2, 4, or 8 byte value `val' to bus space described
  * by tag/handle starting at `offset'.
