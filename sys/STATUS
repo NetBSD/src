@@ -33,6 +33,13 @@ Port		Status of		comments
 alpha		compiles		asc untested
 
 amiga		compiles
+				amiga siop:	panics
+				amiga siopng:	seems OK
+				amiga sbic:	seems OK
+				amiga sfas:	untested
+				amiga sci:	untested
+				amiga idesc:	not done, but deprecated
+						(not in GENERIC)
 
 amigappc	
 
