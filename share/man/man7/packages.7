@@ -1,4 +1,4 @@
-.\"	$NetBSD: packages.7,v 1.80 2003/07/26 20:17:37 salo Exp $
+.\"	$NetBSD: packages.7,v 1.81 2003/09/15 12:32:02 agc Exp $
 .\"
 .\" from: NetBSD: bsd.pkg.mk,v 1.89 1998/06/01 21:30:10 hubertf Exp
 .\"
@@ -140,6 +140,21 @@ Primary location(s) for distribution files if not found locally.
 Primary location(s) for distribution patch files (see
 .Dv PATCHFILES
 below) if not found locally.
+.It PKG_DEBUG_LEVEL
+The level of debugging output which is displayed whilst making and
+installing the package. The default value for this is
+.Pa 0 ,
+which will not display the commands as they are executed
+(normal, default, quiet operation);
+the value
+.Pa 1
+will display all shell commands before their invocation,
+and the value
+.Pa 2
+will display both the shell commands before their invocation, and
+their actual execution progress with
+.Pa set -x
+will be displayed.
 .It WRKDIR
 A temporary working directory that gets *clobbered* on clean.  The default is
 .Pa ${.CURDIR}/work
