@@ -1,4 +1,4 @@
-/*	$NetBSD: term.c,v 1.30 2001/01/09 19:43:15 jdolecek Exp $	*/
+/*	$NetBSD: term.c,v 1.31 2001/01/10 22:42:56 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)term.c	8.2 (Berkeley) 4/30/95";
 #else
-__RCSID("$NetBSD: term.c,v 1.30 2001/01/09 19:43:15 jdolecek Exp $");
+__RCSID("$NetBSD: term.c,v 1.31 2001/01/10 22:42:56 jdolecek Exp $");
 #endif
 #endif /* not lint && not SCCSID */
 
@@ -440,7 +440,7 @@ term_rebuffer_display(EditLine *el)
 	term_free_display(el);
 
 	c->h = Val(T_co);
-	c->v = (EL_BUFSIZ * 4) / c->h + 1;
+	c->v = Val(T_li);
 
 	if (term_alloc_display(el) == -1)
 		return (-1);
