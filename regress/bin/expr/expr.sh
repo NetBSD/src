@@ -9,7 +9,8 @@ function test_expr {
 	fi
 }
 	
-# These will get eval'd so escape any meta characters
+# The first arg will get eval'd so escape any meta characters
+# The 2nd arg is an expected string/response from expr for that op.
 
 # Test overflow cases
 test_expr '4611686018427387904 + 4611686018427387903' '9223372036854775807'
