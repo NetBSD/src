@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.S,v 1.129 2001/12/08 11:15:43 manu Exp $	*/
+/*	$NetBSD: locore.S,v 1.130 2002/01/04 09:26:39 takemura Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -146,7 +146,10 @@ _C_LABEL(kernel_text):
 	mtc0	t0, MIPS_COP_0_STATUS		# the fp coprocessor
 	COP0_SYNC
 #ifdef HPCMIPS_L1CACHE_DISABLE
-	li	t0, 0x00018c2			# XXX, KSEG0 is uncached
+	mfc0	t0, MIPS_COP_0_CONFIG
+	li	t1, 0xfffffff8
+	and	t0, t0, t1
+	or	t0, 0x00000002			# XXX, KSEG0 is uncached
 	mtc0	t0, MIPS_COP_0_CONFIG
 	COP0_SYNC
 #endif /* HPCMIPS_L1CACHE_DISABLE */
