@@ -1,4 +1,4 @@
-/*	$NetBSD: in.h,v 1.53 2001/03/27 02:24:39 itojun Exp $	*/
+/*	$NetBSD: in.h,v 1.54 2001/05/27 23:46:51 itojun Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1990, 1993
@@ -100,7 +100,7 @@ typedef __sa_family_t	sa_family_t;
  * When a user does a bind(2) or connect(2) with a port number of zero,
  * a non-conflicting local port address is chosen.
  *
- * The default range is IPPORT_ANONMIX to IPPORT_ANONMAX, although
+ * The default range is IPPORT_ANONMIN to IPPORT_ANONMAX, although
  * that is settable by sysctl(3); net.inet.ip.anonportmin and
  * net.inet.ip.anonportmax respectively.
  *
