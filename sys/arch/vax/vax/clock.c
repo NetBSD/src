@@ -1,4 +1,4 @@
-/*	$NetBSD: clock.c,v 1.23 1998/08/11 17:52:57 ragge Exp $	 */
+/*	$NetBSD: clock.c,v 1.24 1998/08/20 23:52:42 matt Exp $	 */
 /*
  * Copyright (c) 1995 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -251,7 +251,7 @@ generic_clkwrite()
 }
 #endif
 
-#if VAX630 || VAX410 || VAX43 || VAX8200
+#if VAX630 || VAX410 || VAX43 || VAX8200 || VAX46
 
 volatile short *clk_page;	/* where the chip is mapped in virtual memory */
 int	clk_adrshift;	/* how much to multiply the in-page address with */
