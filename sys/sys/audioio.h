@@ -1,4 +1,4 @@
-/*	$NetBSD: audioio.h,v 1.11 1997/07/15 07:46:22 augustss Exp $	*/
+/*	$NetBSD: audioio.h,v 1.12 1997/07/27 01:17:10 augustss Exp $	*/
 
 /*
  * Copyright (c) 1991-1993 Regents of the University of California.
@@ -73,7 +73,7 @@ struct audio_info {
 	u_int	mode;		/* current device mode */
 #define AUMODE_PLAY	0x01
 #define AUMODE_RECORD	0x02
-#define AUMODE_PLAY_ALL	0x04	/* play all samples--no real-time correction */
+#define AUMODE_PLAY_ALL  0x04	/* don't do real-time correction */
 };
 typedef struct audio_info audio_info_t;
 
@@ -98,6 +98,12 @@ typedef struct audio_device {
         char version[MAX_AUDIO_DEV_LEN];
         char config[MAX_AUDIO_DEV_LEN];
 } audio_device_t;
+
+typedef struct audio_offset {
+	u_int	samples;	/* Total number of bytes transferred */
+	u_int	deltablks;	/* Blocks transferred since last checked */
+	u_int	offset;		/* Physical transfer offset in buffer */
+} audio_offset_t;
 
 /*
  * Supported audio encodings
@@ -140,6 +146,11 @@ typedef struct audio_encoding {
 #define AUDIO_GETFD	_IOR('A', 29, int)
 #define AUDIO_SETFD	_IOWR('A', 30, int)
 #define AUDIO_PERROR	_IOR('A', 31, int)
+#define AUDIO_GETIOFFS	_IOR('A', 32, struct audio_offset)
+#define AUDIO_GETOOFFS	_IOR('A', 33, struct audio_offset)
+#define AUDIO_GETPROPS	_IOR('A', 34, int)
+#define  AUDIO_PROP_FULLDUPLEX	0x01
+#define  AUDIO_PROP_MMAP	0x02
 
 /*
  * Mixer device

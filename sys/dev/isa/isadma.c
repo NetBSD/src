@@ -1,4 +1,4 @@
-/*	$NetBSD: isadma.c,v 1.26 1997/06/06 23:43:55 thorpej Exp $	*/
+/*	$NetBSD: isadma.c,v 1.27 1997/07/27 01:16:57 augustss Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -54,6 +54,17 @@
 #include <dev/isa/isavar.h>
 #include <dev/isa/isadmavar.h>
 #include <dev/isa/isadmareg.h>
+
+/* Used by isa_malloc() */
+#include <sys/malloc.h>
+struct isa_mem {
+	struct device *isadev;
+	int chan;
+	bus_size_t size;
+	bus_addr_t addr;
+	caddr_t kva;
+	struct isa_mem *next;
+} *isa_mem_head = 0;
 
 /*
  * High byte of DMA address is stored in this DMAPG register for
@@ -570,4 +581,62 @@ isa_dmamem_mmap(isadev, chan, addr, size, off, prot, flags)
 	seg.ds_len = size;
 
 	return (bus_dmamem_mmap(sc->sc_dmat, &seg, 1, off, prot, flags));
+}
+
+void *
+isa_malloc(isadev, chan, size, pool, flags)
+	struct device *isadev;
+	int chan;
+	size_t size;
+	int pool;
+	int flags;
+{
+	bus_addr_t addr;
+	caddr_t kva;
+	int bflags;
+	struct isa_mem *m;
+
+	bflags = flags & M_WAITOK ? BUS_DMA_WAITOK : BUS_DMA_NOWAIT;
+
+	if (isa_dmamem_alloc(isadev, chan, size, &addr, bflags))
+		return 0;
+	if (isa_dmamem_map(isadev, chan, addr, size, &kva, bflags)) {
+		isa_dmamem_free(isadev, chan, addr, size);
+		return 0;
+	}
+	m = malloc(sizeof(*m), pool, flags);
+	if (m == 0) {
+		isa_dmamem_unmap(isadev, chan, kva, size);
+		isa_dmamem_free(isadev, chan, addr, size);
+		return 0;
+	}
+	m->isadev = isadev;
+	m->chan = chan;
+	m->size = size;
+	m->addr = addr;
+	m->kva = kva;
+	m->next = isa_mem_head;
+	isa_mem_head = m;
+	return (void *)kva;
+}
+
+void
+isa_free(addr, pool)
+	void *addr;
+	int pool;
+{
+	struct isa_mem **mp, *m;
+	caddr_t kva = (caddr_t)addr;
+
+	for(mp = &isa_mem_head; *mp && (*mp)->kva != kva; mp = &(*mp)->next)
+		;
+	m = *mp;
+	if (!m) {
+		printf("isa_free: freeing unallocted memory\n");
+		return;
+	}
+	*mp = m->next;
+	isa_dmamem_unmap(m->isadev, m->chan, kva, m->size);
+	isa_dmamem_free(m->isadev, m->chan, m->addr, m->size);
+	free(m, pool);
 }

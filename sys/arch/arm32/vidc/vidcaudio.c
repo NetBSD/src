@@ -1,4 +1,4 @@
-/* $NetBSD: vidcaudio.c,v 1.13 1997/05/09 22:16:28 augustss Exp $ */
+/* $NetBSD: vidcaudio.c,v 1.14 1997/07/27 01:16:34 augustss Exp $ */
 
 /*
  * Copyright (c) 1995 Melvin Tang-Richardson
@@ -519,6 +519,8 @@ struct audio_hw_if vidcaudio_hw_if = {
     vidcaudio_set_in_port,
     vidcaudio_get_in_port,
     vidcaudio_commit_settings,
+    NULL,
+    NULL,
     vidcaudio_start_output,
     vidcaudio_start_input,
     vidcaudio_halt_output,
@@ -531,7 +533,10 @@ struct audio_hw_if vidcaudio_hw_if = {
     vidcaudio_set_port,
     vidcaudio_get_port,
     vidcaudio_query_devinfo,
-    0, /* not full duplex */
+    0,
+    0,
+    0,
+    0,
     0
 };
 

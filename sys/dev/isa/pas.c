@@ -1,4 +1,4 @@
-/*	$NetBSD: pas.c,v 1.28 1997/07/25 01:42:20 augustss Exp $	*/
+/*	$NetBSD: pas.c,v 1.29 1997/07/27 01:17:02 augustss Exp $	*/
 
 /*
  * Copyright (c) 1991-1993 Regents of the University of California.
@@ -120,6 +120,8 @@ struct audio_hw_if pas_hw_if = {
 	sbdsp_set_in_port,
 	sbdsp_get_in_port,
 	sbdsp_commit_settings,
+	NULL,
+	NULL,
 	sbdsp_dma_output,
 	sbdsp_dma_input,
 	sbdsp_haltdma,
@@ -132,7 +134,10 @@ struct audio_hw_if pas_hw_if = {
 	sbdsp_mixer_set_port,
 	sbdsp_mixer_get_port,
 	sbdsp_mixer_query_devinfo,
-	0,	/* not full-duplex */
+	sb_malloc,
+	sb_free,
+	sb_round,
+	0,
 	0
 };
 
