@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.15 2002/09/22 12:58:24 wiz Exp $
+#	$NetBSD: Makefile,v 1.16 2003/01/13 07:09:53 matt Exp $
 
 .include <bsd.own.mk>
 
@@ -34,6 +34,13 @@ INFOFLAGS=	-I${DIST}/gdb/doc -I${DIST}/gdb/mi \
 .if ${MKGDB} != "no" && ${MKBFD} != "no" && \
     exists(${.CURDIR}/../arch/${MACHINE_ARCH}/defs.mk)
 
+# PSIM support for PowerPC.
+.if ${MACHINE_ARCH} == powerpc || ${MACHINE_ARCH} == powerpcle
+PSIMOBJ!=	cd ${TOP}/usr.bin/sim/ppc && ${PRINTOBJDIR}
+LDADD+=		-L${PSIMOBJ} -lsim
+DPADD+=		${PSIMOBJ}/libsim.a
+.endif
+
 BFDOBJ!=	cd ${TOP}/lib/libbfd && ${PRINTOBJDIR}
 LDADD+=		-L${BFDOBJ} -lbfd
 DPADD+=		${BFDOBJ}/libbfd_pic.a
@@ -41,13 +48,6 @@ DPADD+=		${BFDOBJ}/libbfd_pic.a
 IBERTYOBJ!=	cd ${TOP}/lib/libiberty && ${PRINTOBJDIR}
 LDADD+=		-L${IBERTYOBJ} -liberty
 DPADD+=		${IBERTYOBJ}/libiberty.a
-
-# PSIM support for PowerPC.
-.if ${MACHINE_ARCH} == powerpc || ${MACHINE_ARCH} == powerpcle
-PSIMOBJ!=	cd ${TOP}/usr.bin/sim/ppc && ${PRINTOBJDIR}
-LDADD+=		-L${PSIMOBJ} -lsim
-DPADD+=		${PSIMOBJ}/libsim.a
-.endif
 
 .PATH: ${DIST}/gdb ${DIST}/gdb/tui ${DIST}/gdb/doc \
 	${DIST}/readline ${.CURDIR}/../arch/${MACHINE_ARCH}
