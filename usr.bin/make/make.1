@@ -1,4 +1,4 @@
-.\"	$NetBSD: make.1,v 1.102 2004/05/07 08:12:16 sjg Exp $
+.\"	$NetBSD: make.1,v 1.103 2004/05/07 08:23:31 wiz Exp $
 .\"
 .\" Copyright (c) 1990, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -148,14 +148,13 @@ Specify that environment variables override macro assignments within
 makefiles.
 .It Fl f Ar makefile
 Specify a makefile to read instead of the default
-.Ql Pa makefile
-and
+.Ql Pa makefile .
 If
 .Ar makefile
 is
 .Ql Fl ,
 standard input is read.
-Multiple makefile's may be specified, and are read in the order specified.
+Multiple makefiles may be specified, and are read in the order specified.
 .It Fl I Ar directory
 Specify a directory in which to search for makefiles and included makefiles.
 The system makefile directory (or directories, see the
@@ -341,12 +340,12 @@ is interrupted.
 Targets and sources may contain the shell wildcard values
 .Ql \&? ,
 .Ql * ,
-.Ql []
+.Ql [] ,
 and
 .Ql {} .
 The values
 .Ql \&? ,
-.Ql *
+.Ql * ,
 and
 .Ql []
 may only be used as part of the final
@@ -369,7 +368,7 @@ operator is used.
 .Pp
 If the first characters of the command line are any combination of
 .Ql Ic @ ,
-.Ql Ic +
+.Ql Ic + ,
 or
 .Ql Ic \- ,
 the command is treated specially.
