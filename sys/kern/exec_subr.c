@@ -1,4 +1,4 @@
-/*	$NetBSD: exec_subr.c,v 1.18 2000/06/13 04:25:31 chs Exp $	*/
+/*	$NetBSD: exec_subr.c,v 1.19 2000/06/21 05:41:07 matt Exp $	*/
 
 /*
  * Copyright (c) 1993, 1994, 1996 Christopher G. Demetriou
@@ -226,6 +226,16 @@ vmcmd_map_readvn(p, cmd)
 
 	if (error)
 		return error;
+
+	return vmcmd_readvn(p, cmd);
+}
+
+int
+vmcmd_readvn(p, cmd)
+	struct proc *p;
+	struct exec_vmcmd *cmd;
+{
+	int error;
 
 	error = vn_rdwr(UIO_READ, cmd->ev_vp, (caddr_t)cmd->ev_addr,
 	    cmd->ev_len, cmd->ev_offset, UIO_USERSPACE, IO_UNIT,

@@ -1,4 +1,4 @@
-/*	$NetBSD: exec.h,v 1.68 1999/12/30 15:46:16 eeh Exp $	*/
+/*	$NetBSD: exec.h,v 1.69 2000/06/21 05:41:09 matt Exp $	*/
 
 /*-
  * Copyright (c) 1994 Christopher G. Demetriou
@@ -161,6 +161,7 @@ void	vmcmdset_extend		__P((struct exec_vmcmd_set *));
 void	kill_vmcmds		__P((struct exec_vmcmd_set *evsp));
 int	vmcmd_map_pagedvn	__P((struct proc *, struct exec_vmcmd *));
 int	vmcmd_map_readvn	__P((struct proc *, struct exec_vmcmd *));
+int	vmcmd_readvn		__P((struct proc *, struct exec_vmcmd *));
 int	vmcmd_map_zero		__P((struct proc *, struct exec_vmcmd *));
 void	*copyargs		__P((struct exec_package *, struct ps_strings *,
 				     void *, void *));
