@@ -1,7 +1,7 @@
-/*	$NetBSD: plumvideo.c,v 1.2 1999/12/07 17:25:00 uch Exp $ */
+/*	$NetBSD: plumvideo.c,v 1.3 2000/02/26 15:16:19 uch Exp $ */
 
 /*
- * Copyright (c) 1999, by UCHIYAMA Yasushi
+ * Copyright (c) 1999, 2000, by UCHIYAMA Yasushi
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -58,6 +58,15 @@
 #include <arch/hpcmips/dev/fbvar.h>
 #endif
 
+#ifdef PLUMVIDEODEBUG
+int	plumvideo_debug = 1;
+#define	DPRINTF(arg) if (plumvideo_debug) printf arg;
+#define	DPRINTFN(n, arg) if (plumvideo_debug > (n)) printf arg;
+#else
+#define	DPRINTF(arg)
+#define DPRINTFN(n, arg)
+#endif
+
 int	plumvideo_match __P((struct device*, struct cfdata*, void*));
 void	plumvideo_attach __P((struct device*, struct device*, void*));
 int	plumvideo_print __P((void*, const char*));
@@ -79,8 +88,10 @@ struct fb_attach_args {
 	const char *fba_name;
 };
 
-void	plumvideo_dump __P((struct plumvideo_softc*));
 void	plumvideo_bootinforefil __P((struct plumvideo_softc*));
+#ifdef PLUMVIDEODEBUG
+void	plumvideo_dump __P((struct plumvideo_softc*));
+#endif
 
 int
 plumvideo_match(parent, cf, aux)
@@ -124,29 +135,40 @@ plumvideo_attach(parent, self, aux)
 	/*
 	 * Power control
 	 */
-	/* LCD power on and display on */
-	plum_power_establish(sc->sc_pc, PLUM_PWR_LCD);
-
-	/* supply power to V-RAM */
-	plum_power_establish(sc->sc_pc, PLUM_PWR_EXTPW2);
-	/* supply power to LCD */
-	plum_power_establish(sc->sc_pc, PLUM_PWR_EXTPW1);
-#if notrequired
-	/* supply power to RAMDAC */
-	plum_power_establish(sc->sc_pc, PLUM_PWR_EXTPW0);
-#endif	
-
-	/* back-light on */
-	plum_power_establish(sc->sc_pc, PLUM_PWR_BKL);
-
-	/* MAX back-light luminance */
-	plum_conf_write(sc->sc_regt, sc->sc_regh, PLUM_VIDEO_PLLUM_REG,
-			0x3);
+#ifndef PLUMVIDEODEBUG
+	if (bootinfo->bi_cnuse & BI_CNUSE_SERIAL) {
+		/* LCD power on and display off */
+		plum_power_disestablish(sc->sc_pc, PLUM_PWR_LCD);
+		/* power off V-RAM */
+		plum_power_disestablish(sc->sc_pc, PLUM_PWR_EXTPW2);
+		/* power off LCD */
+		plum_power_disestablish(sc->sc_pc, PLUM_PWR_EXTPW1);
+		/* power off RAMDAC */
+		plum_power_disestablish(sc->sc_pc, PLUM_PWR_EXTPW0);
+		/* back-light off */
+		plum_power_disestablish(sc->sc_pc, PLUM_PWR_BKL);
+	} else 
+#endif
+	{
+		/* LCD power on and display on */
+		plum_power_establish(sc->sc_pc, PLUM_PWR_LCD);
+		/* supply power to V-RAM */
+		plum_power_establish(sc->sc_pc, PLUM_PWR_EXTPW2);
+		/* supply power to LCD */
+		plum_power_establish(sc->sc_pc, PLUM_PWR_EXTPW1);
+		/* back-light on */
+		plum_power_establish(sc->sc_pc, PLUM_PWR_BKL);
+	}
 
 	/* 
 	 *  reinstall bootinfo 
 	 */
 	plumvideo_bootinforefil(sc);
+
+#ifdef PLUMVIDEODEBUG
+	if (plumvideo_debug)
+		plumvideo_dump(sc);
+#endif
 
 #if NFB > 0
 	if(!cn_tab && fb_cnattach(0, 0, 0, 0)) {
@@ -197,33 +219,21 @@ plumvideo_bootinforefil(sc)
 #endif
 }
 
+#ifdef PLUMVIDEODEBUG
 void
 plumvideo_dump(sc)
 	struct plumvideo_softc *sc;
 {
 	bus_space_tag_t regt = sc->sc_regt;
 	bus_space_handle_t regh = sc->sc_regh;
-	bus_space_tag_t iot = sc->sc_iot;
-	bus_space_handle_t ioh = sc->sc_ioh;
 
 	plumreg_t reg;
-	int i, j;
+	int i;
 
-	for (i = 0; i < 0x200; i+=4) {
+	for (i = 0; i < 0x160; i+=4) {
 		reg = plum_conf_read(regt, regh, i);
-		printf("%03x %08x", i, reg);
+		printf("0x%03x %08x", i, reg);
 		bitdisp(reg);
 	}
-	for (j = 0; j < 10; j++) {
-		reg = plum_conf_read(regt, regh, PLUM_VIDEO_PLILN_REG);
-		printf("%d, %d\n", reg,
-		       plum_conf_read(regt, regh, PLUM_VIDEO_PLCLN_REG));
-		for (i = 0; i < PLUM_VIDEO_VRAM_IOSIZE; i += 4) {
-			bus_space_write_4(iot, ioh, i, 0);
-		}
-		for (i = 0; i < PLUM_VIDEO_VRAM_IOSIZE; i += 4) {
-			bus_space_write_4(iot, ioh, i, ~0);
-		}
-	}
 }
-
+#endif /* PLUMVIDEODEBUG */
