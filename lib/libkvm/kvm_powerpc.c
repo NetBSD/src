@@ -1,4 +1,4 @@
-/*	$NetBSD: kvm_powerpc.c,v 1.1 1997/03/29 21:11:03 thorpej Exp $	*/
+/*	$NetBSD: kvm_powerpc.c,v 1.2 1997/08/12 16:34:11 gwr Exp $	*/
 
 /*-
  * Copyright (C) 1996 Wolfgang Solfrank.
@@ -75,4 +75,21 @@ _kvm_pa2off(kd, pa)
 {
 	_kvm_err(kd, 0, "pa2off not yet implemented!");
 	return 0;
+}
+
+/*
+ * Machine-dependent initialization for ALL open kvm descriptors,
+ * not just those for a kernel crash dump.  Some architectures
+ * have to deal with these NOT being constants!  (i.e. m68k)
+ */
+int
+_kvm_mdopen(kd)
+	kvm_t	*kd;
+{
+
+	kd->usrstack = USRSTACK;
+	kd->min_uva = VM_MIN_ADDRESS;
+	kd->max_uva = VM_MAXUSER_ADDRESS;
+
+	return (0);
 }

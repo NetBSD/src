@@ -1,4 +1,4 @@
-/*	$NetBSD: kvm_m68k.c,v 1.11 1997/04/09 21:15:50 thorpej Exp $	*/
+/*	$NetBSD: kvm_m68k.c,v 1.12 1997/08/12 16:34:09 gwr Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -43,8 +43,9 @@
  */
 
 #include <sys/param.h>
-#include <sys/sysctl.h>
+#include <sys/exec.h>
 #include <sys/kcore.h>
+#include <sys/sysctl.h>
 
 #include <stdio.h>
 #include <string.h>
@@ -149,4 +150,30 @@ _kvm_pa2off(kd, pa)
 	u_long	pa;
 {
 	return ((kd->vmst->ops->pa2off)(kd, pa));
+}
+
+/*
+ * Machine-dependent initialization for ALL open kvm descriptors,
+ * not just those for a kernel crash dump.  Some architectures
+ * have to deal with these NOT being constants!  (i.e. m68k)
+ */
+int
+_kvm_mdopen(kd)
+	kvm_t	*kd;
+{
+	u_long max_uva;
+	extern struct ps_strings *__ps_strings;
+
+#if 0	/* XXX - These vary across m68k machines... */
+	kd->usrstack = USRSTACK;
+	kd->min_uva = VM_MIN_ADDRESS;
+	kd->max_uva = VM_MAXUSER_ADDRESS;
+#endif
+	/* This is somewhat hack-ish, but it works. */
+	max_uva = (u_long) (__ps_strings + 1);
+	kd->usrstack = max_uva;
+	kd->max_uva  = max_uva;
+	kd->min_uva  = 0;
+
+	return (0);
 }
