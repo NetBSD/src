@@ -1,7 +1,7 @@
-# $NetBSD: Makefile.inc,v 1.14 2002/05/29 04:11:03 lukem Exp $
+# $NetBSD: Makefile.inc,v 1.15 2002/11/19 16:31:49 bouyer Exp $
 
 IMAGESIZE=	7m
-MAKEFS_FLAGS=	-o density=5k
+MAKEFS_FLAGS=	-o density=4k
 IMAGEENDIAN=	le
 MAKEDEVTARGETS=	all
 LISTS+=		${DISTRIBDIR}/common/list.sysinst
