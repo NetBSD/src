@@ -39,7 +39,7 @@ char copyright[] =
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)ifconfig.c	5.1 (Berkeley) 2/28/91";*/
-static char rcsid[] = "$Id: ifconfig.c,v 1.11 1993/12/10 11:29:42 cgd Exp $";
+static char rcsid[] = "$Id: ifconfig.c,v 1.12 1994/01/22 02:04:35 cgd Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -67,6 +67,7 @@ static char rcsid[] = "$Id: ifconfig.c,v 1.11 1993/12/10 11:29:42 cgd Exp $";
 #include <ctype.h>
 #include <stdlib.h>
 #include <string.h>
+#include <err.h>
 
 struct	ifreq		ifr, ridreq;
 struct	ifaliasreq	addreq;
@@ -184,12 +185,13 @@ main(argc, argv)
 	int all = 0;
 
 	if (argc < 2) {
-		fprintf(stderr, "usage: ifconfig interface\n%s%s%s%s%s",
-		    "\t[ af [ address [ dest_addr ] ] [ up ] [ down ]",
+		fprintf(stderr, "usage: ifconfig interface\n%s%s%s%s%s%s",
+		    "\t[ af [ address [ dest_addr ] ] [ up ] [ down ] ",
 			    "[ netmask mask ] ]\n",
 		    "\t[ metric n ]\n",
-		    "\t[ trailers | -trailers ]\n",
-		    "\t[ arp | -arp ]\n");
+		    "\t[ arp | -arp ]\n",
+		    "\t[ link0 | -link0 ] [ link1 | -link1 ] ",
+			    "[ link2 | -link2 ]\n");
 		exit(1);
 	}
 	argc--, argv++;
@@ -261,6 +263,9 @@ main(argc, argv)
 			p++;	/* got src, do dst */
 		if (p->c_func) {
 			if (p->c_parameter == NEXTARG) {
+				if (argv[1] == NULL)
+					errx(1, "'%s' requires argument",
+					    p->c_name);
 				(*p->c_func)(argv[1]);
 				argc--, argv++;
 			} else
@@ -523,7 +528,7 @@ in_status(force)
 		sin = (struct sockaddr_in *)&ifr.ifr_dstaddr;
 		printf("--> %s ", inet_ntoa(sin->sin_addr));
 	}
-	printf("netmask %x ", ntohl(netmask.sin_addr.s_addr));
+	printf("netmask 0x%x ", ntohl(netmask.sin_addr.s_addr));
 	if (flags & IFF_BROADCAST) {
 		if (ioctl(in_s, SIOCGIFBRDADDR, (caddr_t)&ifr) < 0) {
 			if (errno == EADDRNOTAVAIL)
@@ -625,21 +630,19 @@ Perror(cmd)
 {
 	extern int errno;
 
-	fprintf(stderr, "ifconfig: ");
 	switch (errno) {
 
 	case ENXIO:
-		fprintf(stderr, "%s: no such interface\n", cmd);
+		errx(1, "%s: no such interface", cmd);
 		break;
 
 	case EPERM:
-		fprintf(stderr, "%s: permission denied\n", cmd);
+		errx(1, "%s: permission denied", cmd);
 		break;
 
 	default:
-		perror(cmd);
+		err(1, "%s", cmd);
 	}
-	exit(1);
 }
 
 struct	in_addr inet_makeaddr();
@@ -667,10 +670,8 @@ in_getaddr(s, which)
 		bcopy(hp->h_addr, (char *)&sin->sin_addr, hp->h_length);
 	else if (np = getnetbyname(s))
 		sin->sin_addr = inet_makeaddr(np->n_net, INADDR_ANY);
-	else {
-		fprintf(stderr, "%s: bad value\n", s);
-		exit(1);
-	}
+	else
+		errx(1, "%s: bad value", s);
 }
 
 /*
@@ -753,14 +754,10 @@ setnsellength(val)
 	char *val;
 {
 	nsellength = atoi(val);
-	if (nsellength < 0) {
-		fprintf(stderr, "Negative NSEL length is absurd\n");
-		exit (1);
-	}
-	if (afp == 0 || afp->af_af != AF_ISO) {
-		fprintf(stderr, "Setting NSEL length valid only for iso\n");
-		exit (1);
-	}
+	if (nsellength < 0)
+		errx(1, "Negative NSEL length is absurd");
+	if (afp == 0 || afp->af_af != AF_ISO)
+		errx(1, "Setting NSEL length valid only for iso");
 }
 
 #ifdef EON
