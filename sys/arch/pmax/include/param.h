@@ -1,4 +1,4 @@
-/*	$NetBSD: param.h,v 1.18 1997/02/26 01:45:41 jonathan Exp $	*/
+/*	$NetBSD: param.h,v 1.19 1997/06/08 10:46:01 jonathan Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -54,8 +54,6 @@
 
 #define	_MACHINE	pmax
 #define	MACHINE		"pmax"
-#define	_MACHINE_ARCH	mips
-#define	MACHINE_ARCH	"mips"
 #define	MID_MACHINE	MID_PMAX
 
 #define	KERNBASE	0x80000000	/* start of kernel virtual */
