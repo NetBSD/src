@@ -172,39 +172,23 @@ awi_pcmcia_find (psc, pa, cfe)
 	int fail = 0;
 	u_int8_t version[AWI_BANNER_LEN];
 	
-#if 0
-	printf("\ntry %lx\n", cfe->iospace[0].start);
-#endif
 	/*
 	 * see if we can read the firmware version sanely
 	 * through the i/o ports.
 	 * if not, try a different CIS string..
 	 */
 	if (pcmcia_io_alloc(psc->sc_pf, cfe->iospace[0].start,
-	    cfe->iospace[0].length, 0, &psc->sc_pcioh) != 0) {
-#if 0
-		printf("alloc failed\n");
-#endif
+	    cfe->iospace[0].length, 0, &psc->sc_pcioh) != 0)
 		goto fail;
-	}
 	
-
 	if (pcmcia_io_map(psc->sc_pf, PCMCIA_WIDTH_AUTO, 0, psc->sc_pcioh.size,
-	    &psc->sc_pcioh, &psc->sc_io_window)) {
-#if 0
-		printf("io_map failed\n");
-#endif
+	    &psc->sc_pcioh, &psc->sc_io_window))
 		goto fail_io_free;
-	}
 
 	/* Enable the card. */
 	pcmcia_function_init(psc->sc_pf, cfe);
-	if (pcmcia_function_enable(psc->sc_pf)) {
-#if 0
-		printf("function_enable failed\n");
-#endif
+	if (pcmcia_function_enable(psc->sc_pf)) 
 		goto fail_io_unmap;
-	}
 		
 	sc->sc_chip.sc_iot = psc->sc_pcioh.iot;
 	sc->sc_chip.sc_ioh = psc->sc_pcioh.ioh;
@@ -214,16 +198,8 @@ awi_pcmcia_find (psc, pa, cfe)
 
 	awi_read_bytes (sc, AWI_BANNER, version, AWI_BANNER_LEN);
 
-	if (memcmp(version, "PCnetMobile:", 12) == 0) {
-#if 0
-		printf("win\n");
-#endif
+	if (memcmp(version, "PCnetMobile:", 12) == 0)
 		return 0;
-	} else {
-#if 0
-		printf("bad version: %s\n", version);
-#endif
-	}
 	
 	fail++;
 	pcmcia_function_disable (psc->sc_pf);
@@ -237,7 +213,6 @@ awi_pcmcia_find (psc, pa, cfe)
 	pcmcia_io_free (psc->sc_pf, &psc->sc_pcioh);
  fail:
 	fail++;
-	printf("awi_pcmcia_find fail %d\n", fail);
 	return fail;
 }
 
@@ -258,9 +233,6 @@ awi_pcmcia_attach(parent, self, aux)
 
 #if 0
 	int i, j;
-#endif
-
-#if 0		
 
 	for (cfe = pa->pf->cfe_head.sqh_first, i=0;
 	     cfe != NULL;
@@ -304,57 +276,25 @@ awi_pcmcia_attach(parent, self, aux)
 		printf(": no suitable CIS info found\n");
 		return;
 	}
-#if 0
-	/* Enable the card. */
-	pcmcia_function_init(pa->pf, cfe);
-	if (pcmcia_function_enable(psc->sc_pf))
-		printf(": function enable failed\n");
-#endif
 
 	sc->sc_enabled = 1;
 	sc->sc_state = AWI_ST_SELFTEST;
 	printf(": BayStack 650 Wireless (802.11)\n");
 	
-#if 0
-	for (i=0; i<cfe->num_memspace; i++) {
-		printf("memspace %d: len 0x%lx, cardaddr 0x%lx"
-		    ", hostaddr 0x%lx\n",
-		    i,
-		    cfe->memspace[i].length,
-		    cfe->memspace[i].cardaddr,
-		    cfe->memspace[i].hostaddr);
-	}
-#endif
-	
 	if (pcmcia_mem_alloc(psc->sc_pf, AM79C930_MEM_SIZE, &memh) != 0) {
-		printf(": unable to allocate memory space\n");
-		return;		/* XXX */
-	}
-	if (pcmcia_mem_map(psc->sc_pf, PCMCIA_MEM_COMMON,
+		printf("%s: unable to allocate memory space; using i/o only\n",
+		    sc->sc_dev.dv_xname);
+	} else if (pcmcia_mem_map(psc->sc_pf, PCMCIA_MEM_COMMON,
 	    AM79C930_MEM_BASE, AM79C930_MEM_SIZE,
 	    &memh, &memoff, &memwin)) {
-		printf(": unable to map memory space\n");
-		return;		/* XXX */
+		printf("%s: unable to map memory space; using i/o only\n",
+		    sc->sc_dev.dv_xname);
+		pcmcia_mem_free(psc->sc_pf, &memh);
+	} else {
+		sc->sc_chip.sc_memt = memh.memt;
+		sc->sc_chip.sc_memh = memh.memh;
+		am79c930_chip_init(&sc->sc_chip, 1);
 	}
-	sc->sc_chip.sc_memt = memh.memt;
-	sc->sc_chip.sc_memh = memh.memh;
-
-#if 0
-	if (pcmcia_io_alloc(pa->pf, AM79C930_IO_BASE, AM79C930_IO_SIZE,
-	    AM79C930_IO_SIZE, &psc->sc_pcioh) != 0) {
-		printf(": unable to allocate i/o space\n");
-		return;		/* XXX */
-	}
-	
-	if (pcmcia_io_map(pa->pf, PCMCIA_WIDTH_AUTO, 0, psc->sc_pcioh.size,
-	    &psc->sc_pcioh, &psc->sc_io_window)) {
-		printf(": can't map i/o space\n");
-		return;
-	}
-	
-	sc->sc_chip.sc_iot = psc->sc_pcioh.iot;
-	sc->sc_chip.sc_ioh = psc->sc_pcioh.ioh;
-#endif
 
 	sc->sc_chip.sc_bustype = AM79C930_BUS_PCMCIA;
 	
