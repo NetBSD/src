@@ -1,6 +1,6 @@
-/* $NetBSD: upcvar.h,v 1.1 2000/08/16 23:56:12 bjh21 Exp $ */
+/* $NetBSD: upcvar.h,v 1.2 2003/03/02 00:21:47 bjh21 Exp $ */
 /*-
- * Copyright (c) 2000 Ben Harris
+ * Copyright (c) 2000, 2003 Ben Harris
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -25,7 +25,6 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
-/* This file is part of NetBSD/arm26 -- a port of NetBSD to ARM2/3 machines. */
 
 #ifndef __UPCVAR_H
 #define __UPCVAR_H
@@ -56,8 +55,10 @@ struct upc_softc {
 };
 
 extern void upc_attach(struct upc_softc *);
-extern int upc_read_config(struct upc_softc *, int);
-extern void upc_write_config(struct upc_softc *, int, int);
+extern int upc1_read_config(struct upc_softc *, int);
+extern void upc1_write_config(struct upc_softc *, int, int);
+extern int upc2_read_config(struct upc_softc *, int);
+extern void upc2_write_config(struct upc_softc *, int, int);
 
 /* This is the structure passed to children of upc. */
 struct upc_attach_args {

@@ -1,6 +1,6 @@
-/* $NetBSD: upc.c,v 1.5 2003/01/01 00:10:19 thorpej Exp $ */
+/* $NetBSD: upc.c,v 1.6 2003/03/02 00:21:47 bjh21 Exp $ */
 /*-
- * Copyright (c) 2000 Ben Harris
+ * Copyright (c) 2000, 2003 Ben Harris
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -25,10 +25,21 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
-/* This file is part of NetBSD/arm26 -- a port of NetBSD to ARM2/3 machines. */
+/*
+ * upc - driver for C&T Universal Peripheral Controllers
+ *
+ * Supports:
+ * 82C710 Universal Peripheral Controller
+ * 82C711 Universal Peripheral Controller II
+ * 82C721 Universal Peripheral Controller III (untested)
+ *
+ * The 82C710 is substantially different from its successors.
+ * Functions that just handle the 82C710 are named upc1_*, which those
+ * that handle the 82C711 and 82C721 are named upc2_*.
+ */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: upc.c,v 1.5 2003/01/01 00:10:19 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: upc.c,v 1.6 2003/03/02 00:21:47 bjh21 Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -46,84 +57,146 @@ __KERNEL_RCSID(0, "$NetBSD: upc.c,v 1.5 2003/01/01 00:10:19 thorpej Exp $");
 
 #include "locators.h"
 
+/* Conventional port to use for 82C710 configuration */
+#define UPC1_PORT_CRI	0x390
+#define UPC1_PORT_CAP	(UPC1_PORT_CRI + 1)
+
+static int upc1_probe(struct upc_softc *);
+static void upc1_attach(struct upc_softc *);
+static void upc2_attach(struct upc_softc *);
 static void upc_found(struct upc_softc *, char const *, int, int,
 		      struct upc_irqhandle *);
 static void upc_found2(struct upc_softc *, char const *, int, int, int, int,
 		       struct upc_irqhandle *);
 static int upc_print(void *, char const *);
 static int upc_submatch(struct device *, struct cfdata *, void *);
-static int upc_com3_addr(int);
-static int upc_com4_addr(int);
+static int upc2_com3_addr(int);
+static int upc2_com4_addr(int);
 
 void
 upc_attach(struct upc_softc *sc)
 {
-	u_int8_t cr[5];
+
+	if (upc1_probe(sc))
+		upc1_attach(sc);
+	else
+		upc2_attach(sc);
+}
+
+static int
+upc1_probe(struct upc_softc *sc)
+{
+
+	return upc1_read_config(sc, UPC1_CFGADDR_CONFBASE) ==
+	    UPC1_PORT_CRI >> UPC1_CONFBASE_SHIFT;
+}
+
+static void
+upc1_attach(struct upc_softc *sc)
+{
+	u_int8_t cr[16];
 	int i;
 
+	aprint_normal(": 82C710\n");
 	/* Dump configuration */
-	for (i = 0; i < 5; i++)
-		cr[i] = upc_read_config(sc, i);
+	for (i = 0; i < 16; i++)
+		cr[i] = upc1_read_config(sc, i);
 
-	/* Leave configuration mode. */
-	printf(": config state %02x %02x %02x %02x %02x",
-	       cr[0], cr[1], cr[2], cr[3], cr[4]);
-	printf("\n");
+	aprint_verbose("%s: config state", sc->sc_dev.dv_xname);
+	for (i = 0; i < 16; i++)
+		aprint_verbose(" %02x", cr[i]);
+	aprint_verbose("\n");
 
-	/* "Find" the attached devices */
 	/* FDC */
-	if (cr[0] & UPC_CR0_FDC_ENABLE)
+	if (cr[UPC1_CFGADDR_CRC] & UPC1_CRC_FDCEN)
 		upc_found(sc, "fdc", UPC_PORT_FDCBASE, 2, &sc->sc_fintr);
 	/* IDE */
-	if (cr[0] & UPC_CR0_IDE_ENABLE)
+	if (cr[UPC1_CFGADDR_CRC] & UPC1_CRC_IDEEN)
 		upc_found2(sc, "wdc", UPC_PORT_IDECMDBASE, 8,
 			   UPC_PORT_IDECTLBASE, 2, &sc->sc_wintr);
 	/* Parallel */
-	switch (cr[1] & UPC_CR1_LPT_MASK) {
-	case UPC_CR1_LPT_3BC:
+	if (cr[UPC1_CFGADDR_CR0] & UPC1_CR0_PEN)
+		upc_found(sc, "lpt",
+		    cr[UPC1_CFGADDR_PARBASE] << UPC1_PARBASE_SHIFT,
+		    LPT_NPORTS, &sc->sc_pintr);
+	/* UART */
+	if (cr[UPC1_CFGADDR_CR0] & UPC1_CR0_SEN)
+		upc_found(sc, "com",
+		    cr[UPC1_CFGADDR_UARTBASE] << UPC1_UARTBASE_SHIFT,
+		    COM_NPORTS, &sc->sc_irq4);
+	/* Mouse */
+	/* XXX not yet supported */
+}
+
+static void
+upc2_attach(struct upc_softc *sc)
+{
+	u_int8_t cr[5];
+	int i;
+
+	aprint_normal(": 82C711/82C721");
+	/* Dump configuration */
+	for (i = 0; i < 5; i++)
+		cr[i] = upc2_read_config(sc, i);
+
+	aprint_verbose(", config state %02x %02x %02x %02x %02x",
+	       cr[0], cr[1], cr[2], cr[3], cr[4]);
+	aprint_normal("\n");
+
+	/* "Find" the attached devices */
+	/* FDC */
+	if (cr[0] & UPC2_CR0_FDC_ENABLE)
+		upc_found(sc, "fdc", UPC_PORT_FDCBASE, 2, &sc->sc_fintr);
+	/* IDE */
+	if (cr[0] & UPC2_CR0_IDE_ENABLE)
+		upc_found2(sc, "wdc", UPC_PORT_IDECMDBASE, 8,
+			   UPC_PORT_IDECTLBASE, 2, &sc->sc_wintr);
+	/* Parallel */
+	switch (cr[1] & UPC2_CR1_LPT_MASK) {
+	case UPC2_CR1_LPT_3BC:
 		upc_found(sc, "lpt", 0x3bc, LPT_NPORTS, &sc->sc_pintr);
 		break;
-	case UPC_CR1_LPT_378:
+	case UPC2_CR1_LPT_378:
 		upc_found(sc, "lpt", 0x378, LPT_NPORTS, &sc->sc_pintr);
 		break;
-	case UPC_CR1_LPT_278:
+	case UPC2_CR1_LPT_278:
 		upc_found(sc, "lpt", 0x278, LPT_NPORTS, &sc->sc_pintr);
 		break;
 	}
 	/* UART1 */
-	if (cr[2] & UPC_CR2_UART1_ENABLE) {
-		switch (cr[2] & UPC_CR2_UART1_MASK) {
-		case UPC_CR2_UART1_3F8:
+	if (cr[2] & UPC2_CR2_UART1_ENABLE) {
+		switch (cr[2] & UPC2_CR2_UART1_MASK) {
+		case UPC2_CR2_UART1_3F8:
 			upc_found(sc, "com", 0x3f8, COM_NPORTS, &sc->sc_irq4);
 			break;
-		case UPC_CR2_UART1_2F8:
+		case UPC2_CR2_UART1_2F8:
 			upc_found(sc, "com", 0x2f8, COM_NPORTS, &sc->sc_irq3);
 			break;
-		case UPC_CR2_UART1_COM3:
-			upc_found(sc, "com", upc_com3_addr(cr[1]), COM_NPORTS,
+		case UPC2_CR2_UART1_COM3:
+			upc_found(sc, "com", upc2_com3_addr(cr[1]), COM_NPORTS,
 				  &sc->sc_irq4);
 			break;
-		case UPC_CR2_UART1_COM4:
-			upc_found(sc, "com", upc_com4_addr(cr[1]), COM_NPORTS,
+		case UPC2_CR2_UART1_COM4:
+			upc_found(sc, "com", upc2_com4_addr(cr[1]), COM_NPORTS,
 				  &sc->sc_irq3);
 			break;
 		}
 	}
 	/* UART2 */
-	if (cr[2] & UPC_CR2_UART2_ENABLE) {
-		switch (cr[2] & UPC_CR2_UART2_MASK) {
-		case UPC_CR2_UART2_3F8:
+	if (cr[2] & UPC2_CR2_UART2_ENABLE) {
+		switch (cr[2] & UPC2_CR2_UART2_MASK) {
+		case UPC2_CR2_UART2_3F8:
 			upc_found(sc, "com", 0x3f8, COM_NPORTS, &sc->sc_irq4);
 			break;
-		case UPC_CR2_UART2_2F8:
+		case UPC2_CR2_UART2_2F8:
 			upc_found(sc, "com", 0x2f8, COM_NPORTS, &sc->sc_irq3);
 			break;
-		case UPC_CR2_UART2_COM3:
-			upc_found(sc, "com", upc_com3_addr(cr[1]), COM_NPORTS,
+		case UPC2_CR2_UART2_COM3:
+			upc_found(sc, "com", upc2_com3_addr(cr[1]), COM_NPORTS,
 				  &sc->sc_irq4);
 			break;
-		case UPC_CR2_UART2_COM4:
-			upc_found(sc, "com", upc_com4_addr(cr[1]), COM_NPORTS,
+		case UPC2_CR2_UART2_COM4:
+			upc_found(sc, "com", upc2_com4_addr(cr[1]), COM_NPORTS,
 				  &sc->sc_irq3);
 			break;
 		}
@@ -172,34 +245,34 @@ upc_intr_establish(struct upc_irqhandle *uih, int level, int (*func)(void *),
 }
 
 static int
-upc_com3_addr(int cr1)
+upc2_com3_addr(int cr1)
 {
 
-	switch (cr1 & UPC_CR1_COM34_MASK) {
-	case UPC_CR1_COM34_338_238:
+	switch (cr1 & UPC2_CR1_COM34_MASK) {
+	case UPC2_CR1_COM34_338_238:
 		return 0x338;
-	case UPC_CR1_COM34_3E8_2E8:
+	case UPC2_CR1_COM34_3E8_2E8:
 		return 0x3e8;
-	case UPC_CR1_COM34_2E8_2E0:
+	case UPC2_CR1_COM34_2E8_2E0:
 		return 0x2e8;
-	case UPC_CR1_COM34_220_228:
+	case UPC2_CR1_COM34_220_228:
 		return 0x220;
 	}
 	return -1;
 }
 
 static int
-upc_com4_addr(int cr1)
+upc2_com4_addr(int cr1)
 {
 
-	switch (cr1 & UPC_CR1_COM34_MASK) {
-	case UPC_CR1_COM34_338_238:
+	switch (cr1 & UPC2_CR1_COM34_MASK) {
+	case UPC2_CR1_COM34_338_238:
 		return 0x238;
-	case UPC_CR1_COM34_3E8_2E8:
+	case UPC2_CR1_COM34_3E8_2E8:
 		return 0x2e8;
-	case UPC_CR1_COM34_2E8_2E0:
+	case UPC2_CR1_COM34_2E8_2E0:
 		return 0x2e0;
-	case UPC_CR1_COM34_220_228:
+	case UPC2_CR1_COM34_220_228:
 		return 0x228;
 	}
 	return -1;
@@ -229,39 +302,89 @@ upc_submatch(struct device *parent, struct cfdata *cf, void *aux)
 }
 
 int
-upc_read_config(struct upc_softc *sc, int reg)
+upc1_read_config(struct upc_softc *sc, int reg)
 {
 	bus_space_tag_t iot = sc->sc_iot;
 	bus_space_handle_t ioh = sc->sc_ioh;
 	int retval;
 
 	/* Switch into configuration mode. */
-	bus_space_write_1(iot, ioh, UPC_PORT_CFGADDR, UPC_CFGMAGIC_ENTER);
-	bus_space_write_1(iot, ioh, UPC_PORT_CFGADDR, UPC_CFGMAGIC_ENTER);
+	bus_space_write_1(iot, ioh, UPC1_PORT_CFG1, UPC1_CFGMAGIC_1);
+	bus_space_write_1(iot, ioh, UPC1_PORT_CFG2, UPC1_CFGMAGIC_2);
+	bus_space_write_1(iot, ioh, UPC1_PORT_CFG2, UPC1_CFGMAGIC_3);
+	bus_space_write_1(iot, ioh, UPC1_PORT_CFG2,
+	    UPC1_PORT_CRI >> UPC1_CONFBASE_SHIFT);
+	bus_space_write_1(iot, ioh, UPC1_PORT_CFG1,
+	    (UPC1_PORT_CRI >> UPC1_CONFBASE_SHIFT) ^ 0xff);
 
 	/* Read register. */
-	bus_space_write_1(iot, ioh, UPC_PORT_CFGADDR, reg);
-	retval = bus_space_read_1(iot, ioh, UPC_PORT_CFGDATA);
+	bus_space_write_1(iot, ioh, UPC1_PORT_CRI, reg);
+	retval = bus_space_read_1(iot, ioh, UPC1_PORT_CAP);
 
 	/* Leave configuration mode. */
-	bus_space_write_1(iot, ioh, UPC_PORT_CFGADDR, UPC_CFGMAGIC_EXIT);
+	bus_space_write_1(iot, ioh, UPC1_PORT_CRI, UPC1_CFGADDR_EXIT);
+	bus_space_write_1(iot, ioh, UPC1_PORT_CAP, 0);
 	return retval;
 }
 
 void
-upc_write_config(struct upc_softc *sc, int reg, int val)
+upc1_write_config(struct upc_softc *sc, int reg, int val)
 {
 	bus_space_tag_t iot = sc->sc_iot;
 	bus_space_handle_t ioh = sc->sc_ioh;
 
 	/* Switch into configuration mode. */
-	bus_space_write_1(iot, ioh, UPC_PORT_CFGADDR, UPC_CFGMAGIC_ENTER);
-	bus_space_write_1(iot, ioh, UPC_PORT_CFGADDR, UPC_CFGMAGIC_ENTER);
+	bus_space_write_1(iot, ioh, UPC1_PORT_CFG1, UPC1_CFGMAGIC_1);
+	bus_space_write_1(iot, ioh, UPC1_PORT_CFG2, UPC1_CFGMAGIC_2);
+	bus_space_write_1(iot, ioh, UPC1_PORT_CFG2, UPC1_CFGMAGIC_3);
+	bus_space_write_1(iot, ioh, UPC1_PORT_CFG2,
+	    UPC1_PORT_CRI >> UPC1_CONFBASE_SHIFT);
+	bus_space_write_1(iot, ioh, UPC1_PORT_CFG1,
+	    (UPC1_PORT_CRI >> UPC1_CONFBASE_SHIFT) ^ 0xff);
 
-	/* Write register. */
-	bus_space_write_1(iot, ioh, UPC_PORT_CFGADDR, reg);
-	bus_space_write_1(iot, ioh, UPC_PORT_CFGDATA, val);
+	/* Read register. */
+	bus_space_write_1(iot, ioh, UPC1_PORT_CRI, reg);
+	bus_space_write_1(iot, ioh, UPC1_PORT_CAP, val);
 
 	/* Leave configuration mode. */
-	bus_space_write_1(iot, ioh, UPC_PORT_CFGADDR, UPC_CFGMAGIC_EXIT);
+	bus_space_write_1(iot, ioh, UPC1_PORT_CRI, UPC1_CFGADDR_EXIT);
+	bus_space_write_1(iot, ioh, UPC1_PORT_CAP, 0);
+}
+
+int
+upc2_read_config(struct upc_softc *sc, int reg)
+{
+	bus_space_tag_t iot = sc->sc_iot;
+	bus_space_handle_t ioh = sc->sc_ioh;
+	int retval;
+
+	/* Switch into configuration mode. */
+	bus_space_write_1(iot, ioh, UPC2_PORT_CFGADDR, UPC2_CFGMAGIC_ENTER);
+	bus_space_write_1(iot, ioh, UPC2_PORT_CFGADDR, UPC2_CFGMAGIC_ENTER);
+
+	/* Read register. */
+	bus_space_write_1(iot, ioh, UPC2_PORT_CFGADDR, reg);
+	retval = bus_space_read_1(iot, ioh, UPC2_PORT_CFGDATA);
+
+	/* Leave configuration mode. */
+	bus_space_write_1(iot, ioh, UPC2_PORT_CFGADDR, UPC2_CFGMAGIC_EXIT);
+	return retval;
+}
+
+void
+upc2_write_config(struct upc_softc *sc, int reg, int val)
+{
+	bus_space_tag_t iot = sc->sc_iot;
+	bus_space_handle_t ioh = sc->sc_ioh;
+
+	/* Switch into configuration mode. */
+	bus_space_write_1(iot, ioh, UPC2_PORT_CFGADDR, UPC2_CFGMAGIC_ENTER);
+	bus_space_write_1(iot, ioh, UPC2_PORT_CFGADDR, UPC2_CFGMAGIC_ENTER);
+
+	/* Write register. */
+	bus_space_write_1(iot, ioh, UPC2_PORT_CFGADDR, reg);
+	bus_space_write_1(iot, ioh, UPC2_PORT_CFGDATA, val);
+
+	/* Leave configuration mode. */
+	bus_space_write_1(iot, ioh, UPC2_PORT_CFGADDR, UPC2_CFGMAGIC_EXIT);
 }
