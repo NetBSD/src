@@ -38,7 +38,7 @@
 
 #ifndef lint
 /* from: static char sccsid[] = "@(#)parse.c	5.18 (Berkeley) 2/19/91"; */
-static char *rcsid = "$Id: parse.c,v 1.13 1995/02/08 04:36:41 christos Exp $";
+static char *rcsid = "$Id: parse.c,v 1.14 1995/05/15 13:10:10 ws Exp $";
 #endif /* not lint */
 
 /*-
@@ -194,7 +194,6 @@ static struct {
 } parseKeywords[] = {
 { ".BEGIN", 	  Begin,    	0 },
 { ".DEFAULT",	  Default,  	0 },
-{ ".OPTIONAL",	  Attribute,   	OP_OPTIONAL },
 { ".END",   	  End,	    	0 },
 { ".EXEC",	  Attribute,   	OP_EXEC },
 { ".IGNORE",	  Ignore,   	OP_IGNORE },
@@ -210,6 +209,7 @@ static struct {
 { ".NOTMAIN",	  Attribute,   	OP_NOTMAIN },
 { ".NOTPARALLEL", NotParallel,	0 },
 { ".NULL",  	  Null,	    	0 },
+{ ".OPTIONAL",	  Attribute,   	OP_OPTIONAL },
 { ".ORDER", 	  Order,    	0 },
 { ".PATH",	  ExPath,	0 },
 { ".PRECIOUS",	  Precious, 	OP_PRECIOUS },
