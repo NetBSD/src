@@ -1,4 +1,4 @@
-/*	$NetBSD: load.c,v 1.6 1999/12/13 09:09:34 christos Exp $	 */
+/*	$NetBSD: load.c,v 1.7 1999/12/13 09:22:52 christos Exp $	 */
 
 /*
  * Copyright 1996 John D. Polstra.
@@ -54,7 +54,8 @@
 #include "debug.h"
 #include "rtld.h"
 
-static Obj_Entry *_rtld_load_by_name __P((const char *, Obj_Entry *, bool));
+static bool _rtld_load_by_name __P((const char *, Obj_Entry *, Needed_Entry **,
+    bool));
 
 /*
  * Load a shared object into memory, if it is not already loaded.  The
@@ -132,10 +133,11 @@ _rtld_load_object(filepath, dodebug)
 	return obj;
 }
 
-static Obj_Entry *
-_rtld_load_by_name(name, obj, dodebug)
+static bool
+_rtld_load_by_name(name, obj, needed, dodebug)
 	const char *name;
 	Obj_Entry *obj;
+	Needed_Entry **needed;
 	bool dodebug;
 {
 	Library_Xform *x = _rtld_xforms;
@@ -143,6 +145,7 @@ _rtld_load_by_name(name, obj, dodebug)
 	size_t i, j;
 	int ctlname[2];
 	char *libpath;
+	bool got = false;
 	union {
 		int i;
 		char s[16];
@@ -205,18 +208,30 @@ _rtld_load_by_name(name, obj, dodebug)
 			o = _rtld_load_object(libpath, true);
 			if (o == NULL)
 				continue;
+			got = true;
+			if (j == 0)
+				(*needed)->obj = o;
+			else {
+				/* make a new one and put it in the chain */
+				Needed_Entry *ne = xmalloc(sizeof(*ne));
+				ne->name = (*needed)->name;
+				ne->obj = o;
+				ne->next = (*needed)->next;
+				(*needed)->next = ne;
+				*needed = ne;
+			}
+				
 		}
 		
 	}
 
-	if (o != NULL)
-		return o;
+	if (got)
+		return true;
 
 	libpath = _rtld_find_library(name, obj);
 	if (libpath == NULL)
-		return NULL;
-	return _rtld_load_object(libpath, true);
-
+		return false;
+	return ((*needed)->obj = _rtld_load_object(libpath, true)) != NULL;
 }
 
 
@@ -239,8 +254,7 @@ _rtld_load_needed_objects(first, dodebug)
 		for (needed = obj->needed; needed != NULL;
 		    needed = needed->next) {
 			const char *name = obj->strtab + needed->name;
-			needed->obj = _rtld_load_by_name(name, obj, dodebug);
-			if (needed->obj == NULL)
+			if (!_rtld_load_by_name(name, obj, &needed, dodebug))
 				status = -1;	/* FIXME - cleanup */
 #ifdef RTLD_LOADER
 			if (status == -1)
