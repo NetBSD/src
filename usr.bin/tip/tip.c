@@ -1,4 +1,4 @@
-/*	$NetBSD: tip.c,v 1.18 1997/12/17 16:56:30 mellon Exp $	*/
+/*	$NetBSD: tip.c,v 1.19 1997/12/17 17:09:33 mellon Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -43,7 +43,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1993\n\
 #if 0
 static char sccsid[] = "@(#)tip.c	8.1 (Berkeley) 6/6/93";
 #endif
-__RCSID("$NetBSD: tip.c,v 1.18 1997/12/17 16:56:30 mellon Exp $");
+__RCSID("$NetBSD: tip.c,v 1.19 1997/12/17 17:09:33 mellon Exp $");
 #endif /* not lint */
 
 /*
@@ -201,8 +201,14 @@ notnumber:
 	if (!HW)
 		ttysetup(i);
 
-	if ((fcarg = fcntl(FD, F_GETFL, 0)) < 0 ||
-	    fcntl(FD, F_SETFL, fcarg & ~O_NONBLOCK) < 0) {
+	/*
+	 * Direct connections with no carrier require using O_NONBLOCK on
+	 * open, but we don't want to keep O_NONBLOCK after open because it
+	 * will cause busy waits.
+	 */
+	if (DC &&
+	    ((fcarg = fcntl(FD, F_GETFL, 0)) < 0 ||
+	     fcntl(FD, F_SETFL, fcarg & ~O_NONBLOCK) < 0)) {
 		printf("tip: can't clear O_NONBLOCK: %s", strerror (errno));
 		daemon_uid();
 		(void)uu_unlock (uucplock);
