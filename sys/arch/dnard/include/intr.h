@@ -1,4 +1,4 @@
-/* 	$NetBSD: intr.h,v 1.1 2001/03/04 05:55:43 matt Exp $	*/
+/* 	$NetBSD: intr.h,v 1.2 2001/05/09 22:30:47 matt Exp $	*/
 
 /*
  * Copyright (c) 1997 Mark Brinicombe.
@@ -35,6 +35,10 @@
 
 #ifndef _ARM32_INTR_H_
 #define _ARM32_INTR_H_
+
+#ifdef _KERNEL
+#include <arm/arm32/psl.h>
+#endif
 
 /* Define the various Interrupt Priority Levels */
 
