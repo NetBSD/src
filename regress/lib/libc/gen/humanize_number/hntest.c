@@ -1,4 +1,4 @@
-/*	$NetBSD: hntest.c,v 1.2 2004/07/16 23:28:20 enami Exp $	*/
+/*	$NetBSD: hntest.c,v 1.3 2005/01/19 14:13:21 kleink Exp $	*/
 
 #include <err.h>
 #include <inttypes.h>
@@ -71,7 +71,7 @@ const struct hnflags normal_flags[] = {
 const char *
 	formatflags(char *, size_t, const struct hnflags *, size_t, int);
 void	newline(void);
-void	wprintf(const char *, ...);
+void	w_printf(const char *, ...);
 int	main(int, char *[]);
 
 const char *
@@ -120,7 +120,7 @@ newline(void)
 }
 
 void
-wprintf(const char *fmt, ...)
+w_printf(const char *fmt, ...)
 {
 	char buf[80];
 	va_list ap;
@@ -177,18 +177,18 @@ main(int argc, char *argv[])
 		    (rv == -1 || strcmp(buf, ho->ho_retstr) == 0))
 			continue;
 
-		wprintf("humanize_number(\"%s\", %d, %" PRId64 ",",
+		w_printf("humanize_number(\"%s\", %d, %" PRId64 ",",
 		    ho->ho_retstr, ho->ho_len, ho->ho_num);
-		wprintf("\"%s\",", ho->ho_suffix);
-		wprintf("%s,", formatflags(fbuf, sizeof(fbuf), scale_flags,
+		w_printf("\"%s\",", ho->ho_suffix);
+		w_printf("%s,", formatflags(fbuf, sizeof(fbuf), scale_flags,
 		    sizeof(scale_flags) / sizeof(scale_flags[0]),
 		    ho->ho_scale));
-		wprintf("%s)", formatflags(fbuf, sizeof(fbuf), normal_flags,
+		w_printf("%s)", formatflags(fbuf, sizeof(fbuf), normal_flags,
 		    sizeof(normal_flags) / sizeof(normal_flags[0]),
 		    ho->ho_flags));
-		wprintf("= %d,", ho->ho_retval);
-		wprintf("but got");
-		wprintf("%d/[%s]", rv, rv == -1 ? "" : buf);
+		w_printf("= %d,", ho->ho_retval);
+		w_printf("but got");
+		w_printf("%d/[%s]", rv, rv == -1 ? "" : buf);
 		newline();
 		error = 1;
 	}
