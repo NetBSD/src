@@ -206,7 +206,7 @@ hpprobe (dvp)
   outb (hpc + hp_option, 0);
 
   splx (s);
-  return (1);
+  return (16);
 }
 
 /*
