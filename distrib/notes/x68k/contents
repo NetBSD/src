@@ -1,3 +1,5 @@
+	$NetBSD: contents,v 1.3.2.1 1998/01/29 12:41:31 mellon Exp $	
+
 The x68k-specific portion of the NetBSD 1.2 release is found in the
 "x68k" subdirectory of the distribution.  That subdirectory is laid
 out as follows:
@@ -57,7 +59,8 @@ distribution tree, and are as follows:
 		[ 7.5M gzipped, 22.8M uncompressed ]
 
 	comp12	The NetBSD/x68k Compiler tools.  All of the tools
-		relating to C, C++, and FORTRAN (yes, there are two!).
+		relating to C, C++, Objective C, and FORTRAN (yes,
+		there are two, although NO FORTRAN compiler!).
 		This set includes the system include files
 		(/usr/include), the linker, the compiler tool chain,
 		and the various system libraries (except the shared
