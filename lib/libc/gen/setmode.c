@@ -33,7 +33,7 @@
 
 #if defined(LIBC_SCCS) && !defined(lint)
 /*static char *sccsid = "from: @(#)setmode.c	5.6 (Berkeley) 5/27/91";*/
-static char *rcsid = "$Id: setmode.c,v 1.6 1994/02/10 23:36:59 cgd Exp $";
+static char *rcsid = "$Id: setmode.c,v 1.7 1994/02/10 23:42:09 cgd Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 #include <sys/types.h>
@@ -104,11 +104,11 @@ getmode(bbox, omode)
 			value = newmode & S_IRWXO;
 common:			if (set->cmd2 & CMD2_CLR) {
 				if (set->cmd2 & CMD2_UBITS)
-					newmode &= ~(S_IRWXU & set->bits);
+					newmode &= ~((value<<6) & set->bits);
 				if (set->cmd2 & CMD2_GBITS)
-					newmode &= ~(S_IRWXG & set->bits);
+					newmode &= ~((value<<3) & set->bits);
 				if (set->cmd2 & CMD2_OBITS)
-					newmode &= ~(S_IRWXO & set->bits);
+					newmode &= ~(value & set->bits);
 			}
 			if (set->cmd2 & CMD2_SET) {
 				if (set->cmd2 & CMD2_UBITS)
@@ -166,7 +166,7 @@ setmode(p)
 	BITCMD *set, *saveset, *endset;
 	sigset_t sigset, sigoset;
 	mode_t mask;
-	int permXbits, setlen;
+	int equalopdone, permXbits, setlen;
 
 	if (!*p)
 		return (NULL);
@@ -238,6 +238,8 @@ getop:		if ((op = *p++) != '+' && op != '-' && op != '=') {
 			free(saveset);
 			return (NULL);
 		}
+		if (op == '=')
+			equalopdone = 0;
 
 		who &= ~S_ISTXT;
 		for (perm = 0, permXbits = 0;; ++p) {
@@ -274,7 +276,8 @@ getop:		if ((op = *p++) != '+' && op != '-' && op != '=') {
 				 * to flush out any partial mode that we have,
 				 * and then do the copying of the mode bits.
 				 */
-				if (perm || op == '=') {
+				if (perm || (op == '=' && !equalopdone)) {
+					equalopdone = 1;
 					ADDCMD(op, who, perm, mask);
 					perm = 0;
 				}
@@ -290,7 +293,8 @@ getop:		if ((op = *p++) != '+' && op != '-' && op != '=') {
 				 * Add any permissions that we haven't already
 				 * done.
 				 */
-				if (perm || op == '=') {
+				if (perm || (op == '=' && !equalopdone)) {
+					equalopdone = 1;
 					ADDCMD(op, who, perm, mask);
 					perm = 0;
 				}
