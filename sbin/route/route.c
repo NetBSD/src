@@ -1,4 +1,4 @@
-/*	$NetBSD: route.c,v 1.60 2002/10/18 00:16:25 itojun Exp $	*/
+/*	$NetBSD: route.c,v 1.61 2002/10/18 00:21:23 itojun Exp $	*/
 
 /*
  * Copyright (c) 1983, 1989, 1991, 1993
@@ -43,7 +43,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1989, 1991, 1993\n\
 #if 0
 static char sccsid[] = "@(#)route.c	8.6 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: route.c,v 1.60 2002/10/18 00:16:25 itojun Exp $");
+__RCSID("$NetBSD: route.c,v 1.61 2002/10/18 00:21:23 itojun Exp $");
 #endif
 #endif /* not lint */
 
@@ -936,13 +936,7 @@ newroute(argc, argv)
 			case K_PREFIXLEN:
 				if (!--argc)
 					usage(1+*argv);
-				if (prefixlen(*++argv) == 128) {
-					forcenet = 0;
-					ishost = 1;
-				} else {
-					forcenet = 1;
-					ishost = 0;
-				}
+				ishost = prefixlen(*++argv);
 				break;
 			case K_MTU:
 			case K_HOPCOUNT:
@@ -1371,7 +1365,7 @@ prefixlen(s)
 		break;
 #endif
 	}
-	return(len);
+	return (len == max);
 }
 
 #ifndef SMALL
