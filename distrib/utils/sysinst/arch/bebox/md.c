@@ -1,4 +1,4 @@
-/*	$NetBSD: md.c,v 1.22 2001/01/14 02:38:18 mrg Exp $ */
+/*	$NetBSD: md.c,v 1.23 2001/04/12 03:48:12 briggs Exp $ */
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -38,6 +38,8 @@
 
 /* md.c -- Machine specific code for bebox */
 
+#include <sys/param.h>
+#include <sys/sysctl.h>
 #include <stdio.h>
 #include <util.h>
 #include "defs.h"
@@ -48,7 +50,6 @@
 
 int mbr_present;
 int c1024_resp;
-
 char mbr[512];
 
 /* prototypes */
@@ -59,7 +60,7 @@ int md_get_info()
 
 	read_mbr(diskdev, mbr, sizeof mbr);
 	md_bios_info(diskdev);
-	return edit_mbr();
+	return edit_mbr((struct mbr_partition *) &mbr[MBR_PARTOFF]);
 }
 
 int md_pre_disklabel()
@@ -277,7 +278,7 @@ editlab:
 		/* XXX UGH! need arguments to process_menu */
 		switch (c1024_resp) {
 		case 1:
-			edit_mbr();
+			edit_mbr((struct mbr_partition *) &mbr[MBR_PARTOFF]);
 			/*FALLTHROUGH*/
 		case 2:
 			goto editlab;
@@ -310,7 +311,7 @@ editlab:
 		(void)fprintf (f, "\t:p%c#%d:o%c#%d:t%c=%s:",
 			       'a'+i, bsdlabel[i].pi_size,
 			       'a'+i, bsdlabel[i].pi_offset,
-			       'a'+i, fstype[bsdlabel[i].pi_fstype]);
+			       'a'+i, fstypenames[bsdlabel[i].pi_fstype]);
 		if (bsdlabel[i].pi_fstype == FS_BSDFFS)
 			(void)fprintf (f, "b%c#%d:f%c#%d",
 				       'a'+i, bsdlabel[i].pi_bsize,
@@ -371,6 +372,24 @@ void
 md_init()
 {
 }
+
+int
+md_bios_info(dev)
+	char *dev;
+{
+	int cyl, head, sec;
+
+	msg_display(MSG_nobiosgeom, dlcyl, dlhead, dlsec);
+	if (guess_biosgeom_from_mbr(mbr, &cyl, &head, &sec) >= 0) {
+		msg_display_add(MSG_biosguess, cyl, head, sec);
+		set_bios_geom(cyl, head, sec);
+	} else
+		set_bios_geom(dlcyl, dlhead, dlsec);
+	bsize = bcyl * bhead * bsec;
+	bcylsize = bhead * bsec;
+	return 0;
+}
+
 
 void
 md_set_sizemultname()
