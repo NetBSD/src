@@ -94,7 +94,7 @@ Transferring the miniroot file system:
 	disk.
 
 	Once the hard disk has been prepared for NetBSD, the miniroot
-	file system (miniroot-13.fs) is transferred to the swap
+	file system (miniroot.fs) is transferred to the swap
 	partition configured during the hard disk prep (or the existing
 	swap partition in the case of an upgrade).  The xstreamtodev
 	utility provided in the "amiga/utilities" directory can be used
@@ -107,7 +107,7 @@ Transferring the miniroot file system:
 	are not using the swap partition.
 
 	On AmigaDOS, the command:
-		xstreamtodev --input=miniroot-13.fs --rdb-name=<swap partition>
+		xstreamtodev --input=miniroot.fs --rdb-name=<swap partition>
 	where <swap partition> is the name you gave to the NetBSD
 	partition to be used for swapping.  If xstreamtodev is unable
 	to determine the SCSI driver device name or the unit number
@@ -118,7 +118,7 @@ Transferring the miniroot file system:
 	in single user state on the current NetBSD system, or use the
 	"shutdown now" command to shutdown to single-user state.  Then
 	copy the miniroot using dd:
-		dd if=miniroot-13.fs of=/dev/rsd0b
+		dd if=miniroot.fs of=/dev/rsd0b
 	where /dev/rsd0b should be the device path of the swap partition
 	your system is configured to use.  Once the file is copied,
 	reboot back to AmigaDOS to boot the upgrade kernel.

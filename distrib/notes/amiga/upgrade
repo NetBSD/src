@@ -6,9 +6,9 @@ it is impractical to upgrade by recompiling from the sources and
 installing.
 
 To do the upgrade, you must have the NetBSD kernel on AmigaDOS and
-you must transfer the miniroot file system miniroot-13.fs onto the swap
+you must transfer the miniroot file system miniroot.fs onto the swap
 partition of the NetBSD hard disk.  You must also have at least the
-"base13" binary distribution set available, so that you can upgrade
+"base" binary distribution set available, so that you can upgrade
 with it, using one of the upgrade methods described above.  Finally,
 you must have sufficient disk space available to install the new
 binaries.  Since the old binaries are being overwritten in place,
@@ -40,7 +40,7 @@ To upgrade your system, follow the following instructions:
 
 	* Directly booting NetBSD, with boot blocks installed:
 
-	[This description is for V41 (OS 3.1) ROMs. For older ROMs,
+	[This description is for V40 (OS 3.1) ROMs. For older ROMs,
 	there might be small differences. Check your AmigaOS documentation
 	to learn about the exact procedure.]
 
@@ -122,7 +122,7 @@ Your system has now been upgraded to NetBSD _VER.
 	There are several things that you should do, or might have to
 	do, to insure that the system works properly.
 
-	You will probably want to get the etc13 distribution,
+	You will probably want to get the etc distribution,
 	extract it, and compare its contents with those in your /etc/
 	directory.  You will probably want to replace some of your
 	system configuration files, or incorporate some of the changes
