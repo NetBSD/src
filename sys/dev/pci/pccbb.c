@@ -1,4 +1,4 @@
-/*	$NetBSD: pccbb.c,v 1.86 2003/01/01 00:10:23 thorpej Exp $	*/
+/*	$NetBSD: pccbb.c,v 1.87 2003/01/20 02:29:56 simonb Exp $	*/
 
 /*
  * Copyright (c) 1998, 1999 and 2000
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pccbb.c,v 1.86 2003/01/01 00:10:23 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pccbb.c,v 1.87 2003/01/20 02:29:56 simonb Exp $");
 
 /*
 #define CBB_DEBUG
@@ -1218,10 +1218,8 @@ pccbb_ctrl(ct, command)
 		} else {
 			return 0;
 		}
-		break;
 	case CARDBUS_RESET:
 		return cb_reset(sc);
-		break;
 	case CARDBUS_IO_ENABLE:       /* fallthrough */
 	case CARDBUS_IO_DISABLE:      /* fallthrough */
 	case CARDBUS_MEM_ENABLE:      /* fallthrough */
@@ -1230,7 +1228,6 @@ pccbb_ctrl(ct, command)
 	case CARDBUS_BM_DISABLE:      /* fallthrough */
 		/* XXX: I think we don't need to call this function below. */
 		return pccbb_cardenable(sc, command);
-		break;
 	}
 
 	return 0;
@@ -1295,7 +1292,6 @@ pccbb_power(ct, command)
 		break;
 	default:
 		return 0;	       /* power NEVER changed */
-		break;
 	}
 
 	switch (command & CARDBUS_VPPMASK) {
