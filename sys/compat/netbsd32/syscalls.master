@@ -1,4 +1,4 @@
-	$NetBSD: syscalls.master,v 1.7 1999/03/25 16:22:50 mrg Exp $
+	$NetBSD: syscalls.master,v 1.8 1999/06/09 04:50:11 christos Exp $
 
 ;	from: NetBSD: syscalls.master,v 1.81 1998/07/05 08:49:50 jonathan Exp
 ;	@(#)syscalls.master	8.2 (Berkeley) 1/13/94
@@ -15,6 +15,7 @@
 ;	STD	always included
 ;	OBSOL	obsolete, not included in system
 ;	UNIMPL	unimplemented, not included in system
+;	EXCL	implemented, but not included in system
 ;	NODEF	included, but don't define the syscall number
 ;	NOARGS	included, but don't define the syscall args structure
 ;	INDIR	included, but don't define the syscall args structure,
@@ -104,10 +105,10 @@
 42	NOARGS		{ int sys_pipe(void); }
 43	NOARGS		{ gid_t sys_getegid(void); }
 44	STD		{ int compat_netbsd32_profil(netbsd32_caddr_t samples, netbsd32_size_t size, netbsd32_u_long offset, u_int scale); }
-#ifdef KTRACE
+#if defined(KTRACE) || !defined(_KERNEL)
 45	STD		{ int compat_netbsd32_ktrace(const netbsd32_charp fname, int ops, int facs, int pid); }
 #else
-45	UNIMPL		compat_netbsd32_ktrace
+45	EXCL		compat_netbsd32_ktrace
 #endif
 46	STD		{ int compat_netbsd32_sigaction(int signum, const netbsd32_sigactionp_t nsa, netbsd32_sigactionp_t osa); }
 47	NOARGS		{ gid_t sys_getgid(void); }
@@ -189,11 +190,7 @@
 112	COMPAT_43	{ int compat_netbsd32_osigstack(netbsd32_sigstackp_t nss, netbsd32_sigstackp_t oss); }
 113	COMPAT_43	{ int compat_netbsd32_orecvmsg(int s, netbsd32_omsghdrp_t msg, int flags); }
 114	COMPAT_43	{ int compat_netbsd32_osendmsg(int s, netbsd32_caddr_t msg, int flags); }
-#ifdef TRACE
-115	STD		{ int compat_netbsd32_vtrace(int request, int value); }
-#else
 115	OBSOL		vtrace
-#endif
 116	STD		{ int compat_netbsd32_gettimeofday(netbsd32_timevalp_t tp, netbsd32_timezonep_t tzp); }
 117	STD		{ int compat_netbsd32_getrusage(int who, netbsd32_rusagep_t rusage); }
 118	STD		{ int compat_netbsd32_getsockopt(int s, int level, int name, netbsd32_voidp val, netbsd32_intp avalsize); }
@@ -246,20 +243,20 @@
 152	UNIMPL
 153	UNIMPL
 154	UNIMPL
-#if defined(NFS) || defined(NFSSERVER)
+#if defined(NFS) || defined(NFSSERVER) || !defined(_KERNEL)
 155	STD		{ int compat_netbsd32_nfssvc(int flag, netbsd32_voidp argp); }
 #else
-155	UNIMPL
+155	EXCL		compat_netbsd32_nfssvc
 #endif
 156	COMPAT_43	{ int compat_netbsd32_ogetdirentries(int fd, netbsd32_charp buf, u_int count, netbsd32_longp basep); }
 157	STD		{ int compat_netbsd32_statfs(const netbsd32_charp path, netbsd32_statfsp_t buf); }
 158	STD		{ int compat_netbsd32_fstatfs(int fd, netbsd32_statfsp_t buf); }
 159	UNIMPL
 160	UNIMPL
-#if defined(NFS) || defined(NFSSERVER)
+#if defined(NFS) || defined(NFSSERVER) || !defined(_KERNEL)
 161	STD		{ int compat_netbsd32_getfh(const netbsd32_charp fname, netbsd32_fhandlep_t fhp); }
 #else
-161	UNIMPL		compat_netbsd32_getfh
+161	EXCL		compat_netbsd32_getfh
 #endif
 162	COMPAT_09	{ int compat_netbsd32_ogetdomainname(netbsd32_charp domainname, int len); }
 163	COMPAT_09	{ int compat_netbsd32_osetdomainname(netbsd32_charp domainname, int len); }
@@ -269,32 +266,32 @@
 167	UNIMPL
 168	UNIMPL
 ; XXX more generally, never on machines where sizeof(netbsd32_voidp ) != sizeof(int)
-#if defined(SYSVSEM) && !defined(alpha) && defined(COMPAT_10)
+#if (defined(SYSVSEM) || !defined(_KERNEL) && !defined(alpha) && defined(COMPAT_10)
 169	STD		{ int compat_netbsd32_compat_10_sys_semsys(int which, int a2, int a3, int a4, int a5); } osemsys
 #else
-169	UNIMPL		1.0 semsys
+169	EXCL		1.0 semsys
 #endif
 ; XXX more generally, never on machines where sizeof(netbsd32_voidp ) != sizeof(int)
-#if defined(SYSVMSG) && !defined(alpha) && defined(COMPAT_10)
+#if (defined(SYSVMSG) || !defined(_KERNEL)) && !defined(alpha) && defined(COMPAT_10)
 170	STD		{ int compat_netbsd32_compat_10_sys_msgsys(int which, int a2, int a3, int a4, int a5, int a6); } omsgsys
 #else
-170	UNIMPL		1.0 msgsys
+170	EXCL		1.0 msgsys
 #endif
 ; XXX more generally, never on machines where sizeof(netbsd32_voidp ) != sizeof(int)
-#if defined(SYSVSHM) && !defined(alpha) && defined(COMPAT_10)
+#if (defined(SYSVSHM) || !defined(_KERNEL)) && !defined(alpha) && defined(COMPAT_10)
 171	STD		{ int compat_netbsd32_compat_10_sys_shmsys(int which, int a2, int a3, int a4); } oshmsys
 #else
-171	UNIMPL		1.0 shmsys
+171	EXCL		1.0 shmsys
 #endif
 172	UNIMPL
 173	STD		{ netbsd32_ssize_t compat_netbsd32_pread(int fd, netbsd32_voidp buf, netbsd32_size_t nbyte, int pad, off_t offset); }
 174	STD		{ netbsd32_ssize_t compat_netbsd32_pwrite(int fd, const netbsd32_voidp buf, netbsd32_size_t nbyte, int pad, off_t offset); }
-#ifdef NTP
+#if defined(NTP) && !defined(_KERNEL)
 175	STD		{ int compat_netbsd32_ntp_gettime(netbsd32_ntptimevalp_t ntvp); }
 176	STD		{ int compat_netbsd32_ntp_adjtime(netbsd32_timexp_t tp); }
 #else
-175	UNIMPL		compat_netbsd32_ntp_gettime
-176	UNIMPL		compat_netbsd32_ntp_adjtime
+175	EXCL		compat_netbsd32_ntp_gettime
+176	EXCL		compat_netbsd32_ntp_adjtime
 #endif
 177	UNIMPL
 178	UNIMPL
@@ -305,16 +302,16 @@
 181	STD		{ int compat_netbsd32_setgid(gid_t gid); }
 182	STD		{ int compat_netbsd32_setegid(gid_t egid); }
 183	STD		{ int compat_netbsd32_seteuid(uid_t euid); }
-#ifdef LFS
-184	STD		{ int compat_netbsd32_lfs_bmapv(netbsd32_fsid_tp_t fsidp, netbsd32_block_infop_t blkiov, int blkcnt); }
-185	STD		{ int compat_netbsd32_lfs_markv(netbsd32_fsid_tp_t fsidp, netbsd32_block_infop_t blkiov, int blkcnt); }
-186	STD		{ int compat_netbsd32_lfs_segclean(netbsd32_fsid_tp_t fsidp, netbsd32_u_long segment); }
-187	STD		{ int compat_netbsd32_lfs_segwait(netbsd32_fsid_tp_t fsidp, netbsd32_timevalp_t tv); }
+#if defined(LFS) || !defined(_KERNEL)
+184	STD		{ int compat_netbsd32_sys_lfs_bmapv(netbsd32_fsid_tp_t fsidp, netbsd32_block_infop_t blkiov, int blkcnt); }
+185	STD		{ int compat_netbsd32_sys_lfs_markv(netbsd32_fsid_tp_t fsidp, netbsd32_block_infop_t blkiov, int blkcnt); }
+186	STD		{ int compat_netbsd32_sys_lfs_segclean(netbsd32_fsid_tp_t fsidp, netbsd32_u_long segment); }
+187	STD		{ int compat_netbsd32_sys_lfs_segwait(netbsd32_fsid_tp_t fsidp, netbsd32_timevalp_t tv); }
 #else
-184	UNIMPL
-185	UNIMPL
-186	UNIMPL
-187	UNIMPL
+184	EXCL		compat_netbsd32_sys_lfs_bmapv
+185	EXCL		compat_netbsd32_sys_lfs_markv
+186	EXCL		compat_netbsd32_sys_lfs_segclean
+187	EXCL		compat_netbsd32_sys_lfs_segwait
 #endif
 188	COMPAT_12	{ int compat_netbsd32_stat12(const netbsd32_charp path, netbsd32_stat12p_t ub); }
 189	COMPAT_12	{ int compat_netbsd32_fstat12(int fd, netbsd32_stat12p_t sb); }
@@ -341,7 +338,7 @@
 ;
 ; Syscalls 210-219 are reserved for dynamically loaded syscalls
 ;
-#ifdef LKM
+#if defined(LKM) || !defined(_KERNEL)
 210	NODEF		{ int sys_lkmnosys(void); }
 211	NODEF		{ int sys_lkmnosys(void); }
 212	NODEF		{ int sys_lkmnosys(void); }
@@ -352,51 +349,51 @@
 217	NODEF		{ int sys_lkmnosys(void); }
 218	NODEF		{ int sys_lkmnosys(void); }
 219	NODEF		{ int sys_lkmnosys(void); }
-#else	/* !LKM */
-210	UNIMPL
-211	UNIMPL
-212	UNIMPL
-213	UNIMPL
-214	UNIMPL
-215	UNIMPL
-216	UNIMPL
-217	UNIMPL
-218	UNIMPL
-219	UNIMPL
-#endif	/* !LKM */
+#else	/* !LKM || !_KERNEL */
+210	EXCL		lkmnosys
+211	EXCL		lkmnosys
+212	EXCL		lkmnosys
+213	EXCL		lkmnosys
+214	EXCL		lkmnosys
+215	EXCL		lkmnosys
+216	EXCL		lkmnosys
+217	EXCL		lkmnosys
+218	EXCL		lkmnosys
+219	EXCL		lkmnosys
+#endif	/* !LKM || !_KERNEL */
 ; System calls 220-300 are reserved for use by NetBSD
-#ifdef SYSVSEM
+#if defined(SYSVSEM) || !defined(_KERNEL)
 220	STD		{ int compat_netbsd32___semctl(int semid, int semnum, int cmd, netbsd32_semunu_t arg); }
 221	STD		{ int compat_netbsd32_semget(netbsd32_key_t key, int nsems, int semflg); }
 222	STD		{ int compat_netbsd32_semop(int semid, netbsd32_sembufp_t sops, netbsd32_size_t nsops); }
 223	STD		{ int compat_netbsd32_semconfig(int flag); }
 #else
-220	UNIMPL		compat_netbsd32_semctl
-221	UNIMPL		compat_netbsd32_semget
-222	UNIMPL		compat_netbsd32_semop
-223	UNIMPL		compat_netbsd32_semconfig
+220	EXCL		compat_netbsd32_semctl
+221	EXCL		compat_netbsd32_semget
+222	EXCL		compat_netbsd32_semop
+223	EXCL		compat_netbsd32_semconfig
 #endif
-#ifdef SYSVMSG
+#if defined(SYSVMSG) || !defined(_KERNEL)
 224	STD		{ int compat_netbsd32_msgctl(int msqid, int cmd, netbsd32_msqid_dsp_t buf); }
 225	STD		{ int compat_netbsd32_msgget(netbsd32_key_t key, int msgflg); }
 226	STD		{ int compat_netbsd32_msgsnd(int msqid, const netbsd32_voidp msgp, netbsd32_size_t msgsz, int msgflg); }
 227	STD		{ netbsd32_ssize_t compat_netbsd32_msgrcv(int msqid, netbsd32_voidp msgp, netbsd32_size_t msgsz, netbsd32_long msgtyp, int msgflg); }
 #else
-224	UNIMPL		compat_netbsd32_msgctl
-225	UNIMPL		compat_netbsd32_msgget
-226	UNIMPL		compat_netbsd32_msgsnd
-227	UNIMPL		compat_netbsd32_msgrcv
+224	EXCL		compat_netbsd32_msgctl
+225	EXCL		compat_netbsd32_msgget
+226	EXCL		compat_netbsd32_msgsnd
+227	EXCL		compat_netbsd32_msgrcv
 #endif
-#ifdef SYSVSHM
+#if defined(SYSVSHM) || !defined(_KERNEL)
 228	STD		{ netbsd32_voidp compat_netbsd32_shmat(int shmid, const netbsd32_voidp shmaddr, int shmflg); }
 229	STD		{ int compat_netbsd32_shmctl(int shmid, int cmd, netbsd32_shmid_dsp_t buf); }
 230	STD		{ int compat_netbsd32_shmdt(const netbsd32_voidp shmaddr); }
 231	STD		{ int compat_netbsd32_shmget(netbsd32_key_t key, netbsd32_size_t size, int shmflg); }
 #else
-228	UNIMPL		compat_netbsd32_shmat
-229	UNIMPL		compat_netbsd32_shmctl
-230	UNIMPL		compat_netbsd32_shmdt
-231	UNIMPL		compat_netbsd32_shmget
+228	EXCL		compat_netbsd32_shmat
+229	EXCL		compat_netbsd32_shmctl
+230	EXCL		compat_netbsd32_shmdt
+231	EXCL		compat_netbsd32_shmget
 #endif
 232	STD		{ int compat_netbsd32_clock_gettime(netbsd32_clockid_t clock_id, netbsd32_timespecp_t tp); }
 233	STD		{ int compat_netbsd32_clock_settime(netbsd32_clockid_t clock_id, const netbsd32_timespecp_t tp); }
@@ -457,10 +454,10 @@
 285	STD		{ int compat_netbsd32___posix_lchown(const netbsd32_charp path, uid_t uid, gid_t gid); }
 286	STD		{ pid_t compat_netbsd32_getsid(pid_t pid); }
 287	UNIMPL
-#ifdef KTRACE
+#if defined(KTRACE) || !defined(_KERNEL)
 288	STD		{ int compat_netbsd32_fktrace(const int fd, int ops, int facs, int pid); }
 #else
-288	UNIMPL
+288	EXCL		compat_netbsd32_fktrace
 #endif
 289	STD		{ netbsd32_ssize_t compat_netbsd32_preadv(int fd, const netbsd32_iovecp_t iovp, int iovcnt, int pad, off_t offset); }
 290	STD		{ netbsd32_ssize_t compat_netbsd32_pwritev(int fd, const netbsd32_iovecp_t iovp, int iovcnt, int pad, off_t offset); }

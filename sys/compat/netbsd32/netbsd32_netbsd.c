@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_netbsd.c,v 1.13 1999/05/26 01:07:07 thorpej Exp $	*/
+/*	$NetBSD: netbsd32_netbsd.c,v 1.14 1999/06/09 04:50:10 christos Exp $	*/
 
 /*
  * Copyright (c) 1998 Matthew R. Green
@@ -2307,27 +2307,6 @@ compat_netbsd32_listen(p, v, retval)
 	NETBSD32TO64_UAP(s);
 	NETBSD32TO64_UAP(backlog);
 	return (sys_listen(p, &ua, retval));
-}
-
-int
-compat_netbsd32_vtrace(p, v, retval)
-	struct proc *p;
-	void *v;
-	register_t *retval;
-{
-#ifdef TRACE
-	struct compat_netbsd32_vtrace_args /* {
-		syscallarg(int) request;
-		syscallarg(int) value;
-	} */ *uap = v;
-	struct sys_vtrace_args ua;
-
-	NETBSD32TO64_UAP(request);
-	NETBSD32TO64_UAP(value);
-	return (vtrace(p, &ua, retval));
-#else
-	return (ENOSYS);
-#endif
 }
 
 int
