@@ -1,4 +1,4 @@
-/*	$NetBSD: udp_usrreq.c,v 1.87 2001/10/29 07:02:34 simonb Exp $	*/
+/*	$NetBSD: udp_usrreq.c,v 1.88 2001/11/02 02:37:50 itojun Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -738,7 +738,7 @@ udp6_realinput(af, src, dst, m, off)
 	sport = src->sin6_port;
 	in6_embedscope(&dst6, dst, NULL, NULL);
 	dport = dst->sin6_port;
-	dst4 = (struct in_addr *)&dst->sin6_addr.s6_addr32[12];
+	dst4 = (struct in_addr *)&dst->sin6_addr.s6_addr[12];
 
 	if (IN6_IS_ADDR_MULTICAST(&dst6) ||
 	    (af == AF_INET && IN_MULTICAST(dst4->s_addr))) {
