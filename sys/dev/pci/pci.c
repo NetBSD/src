@@ -1,4 +1,4 @@
-/*	$NetBSD: pci.c,v 1.19 1996/05/03 17:33:49 christos Exp $	*/
+/*	$NetBSD: pci.c,v 1.20 1996/07/26 07:13:52 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1995, 1996 Christopher G. Demetriou.  All rights reserved.
@@ -228,7 +228,7 @@ pci_io_find(pc, pcitag, reg, iobasep, iosizep)
 	if (iobasep != NULL)
 		*iobasep = PCI_MAPREG_IO_ADDR(addrdata);
 	if (iosizep != NULL)
-		*iosizep = ~PCI_MAPREG_IO_ADDR(sizedata) + 1;
+		*iosizep = PCI_MAPREG_IO_SIZE(sizedata);
 
 	return (0);
 }
@@ -284,7 +284,7 @@ pci_mem_find(pc, pcitag, reg, membasep, memsizep, cacheablep)
 	if (membasep != NULL)
 		*membasep = PCI_MAPREG_MEM_ADDR(addrdata);	/* PCI addr */
 	if (memsizep != NULL)
-		*memsizep = ~PCI_MAPREG_MEM_ADDR(sizedata) + 1;
+		*memsizep = PCI_MAPREG_MEM_SIZE(sizedata);
 	if (cacheablep != NULL)
 		*cacheablep = PCI_MAPREG_MEM_CACHEABLE(addrdata);
 
