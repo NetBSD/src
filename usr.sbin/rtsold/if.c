@@ -1,4 +1,4 @@
-/*	$NetBSD: if.c,v 1.9 2002/05/31 10:22:14 itojun Exp $	*/
+/*	$NetBSD: if.c,v 1.10 2002/07/14 00:37:46 wiz Exp $	*/
 /*	$KAME: if.c,v 1.18 2002/05/31 10:10:03 itojun Exp $	*/
 
 /*
@@ -71,7 +71,7 @@ static unsigned int if_maxindex __P((void));
 static void get_rtaddrs __P((int, struct sockaddr *, struct sockaddr **));
 
 int
-ifinit()
+ifinit(void)
 {
 	ifsock = rssock;
 
@@ -419,7 +419,7 @@ get_llflag(const char *name)
 
 #ifndef HAVE_GETIFADDRS
 static unsigned int
-if_maxindex()
+if_maxindex(void)
 {
 	struct if_nameindex *p, *p0;
 	unsigned int max = 0;

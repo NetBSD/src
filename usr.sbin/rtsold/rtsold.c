@@ -1,4 +1,4 @@
-/*	$NetBSD: rtsold.c,v 1.15 2002/05/31 22:10:18 itojun Exp $	*/
+/*	$NetBSD: rtsold.c,v 1.16 2002/07/14 00:37:48 wiz Exp $	*/
 /*	$KAME: rtsold.c,v 1.52 2002/05/31 22:03:31 itojun Exp $	*/
 
 /*
@@ -104,9 +104,7 @@ static void rtsold_set_dump_file __P((void));
 static void usage __P((char *));
 
 int
-main(argc, argv)
-	int argc;
-	char **argv;
+main(int argc, char **argv)
 {
 	int s, maxfd, ch, once = 0;
 	struct timeval *timeout;
@@ -402,7 +400,7 @@ bad:
 }
 
 void
-iflist_init()
+iflist_init(void)
 {
 	struct ifinfo *ifi, *next;
 
@@ -493,7 +491,7 @@ make_packet(struct ifinfo *ifinfo)
 }
 
 static struct timeval *
-rtsol_check_timer()
+rtsol_check_timer(void)
 {
 	static struct timeval returnval;
 	struct timeval now, rtsol_timer;
@@ -704,7 +702,7 @@ TIMEVAL_SUB(struct timeval *a, struct timeval *b, struct timeval *result)
 }
 
 static void
-rtsold_set_dump_file()
+rtsold_set_dump_file(void)
 {
 	do_dump = 1;
 }
@@ -723,15 +721,7 @@ usage(char *progname)
 }
 
 void
-#if __STDC__
 warnmsg(int priority, const char *func, const char *msg, ...)
-#else
-warnmsg(priority, func, msg, va_alist)
-	int priority;
-	const char *func;
-	const char *msg;
-	va_dcl
-#endif
 {
 	va_list ap;
 	char buf[BUFSIZ];
@@ -754,7 +744,7 @@ warnmsg(priority, func, msg, va_alist)
  * return a list of interfaces which is suitable to sending an RS.
  */
 char **
-autoifprobe()
+autoifprobe(void)
 {
 #ifndef HAVE_GETIFADDRS
 	errx(1, "-a is not available with the configuration");
