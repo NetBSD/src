@@ -1,4 +1,4 @@
-/*	$NetBSD: ctk_endian.h,v 1.1.1.2 2001/05/17 20:52:44 itojun Exp $	*/
+/*	$NetBSD: ctk_endian.h,v 1.1.1.1 2001/05/17 20:46:48 itojun Exp $	*/
 
 /*
  * Cylink Corporation © 1998
