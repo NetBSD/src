@@ -1,4 +1,4 @@
-/*	$NetBSD: pdcide.c,v 1.18 2004/08/21 00:28:34 thorpej Exp $	*/
+/*	$NetBSD: pdcide.c,v 1.19 2004/08/23 21:30:35 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000, 2001 Manuel Bouyer.
@@ -509,11 +509,11 @@ pdc202xx_pci_intr(void *arg)
 			continue;
 		if (scr & PDC2xx_SCR_INT(i)) {
 			crv = wdcintr(wdc_cp);
-			if (crv == 0) {
+			if (crv == 0)
 				printf("%s:%d: bogus intr (reg 0x%x)\n",
-				    sc->sc_wdcdev.sc_atac.atac_dev.dv_xname, i, scr);
-				pciide_irqack(wdc_cp);
-			} else
+				    sc->sc_wdcdev.sc_atac.atac_dev.dv_xname,
+				    i, scr);
+			else
 				rv = 1;
 		}
 	}
