@@ -1,4 +1,4 @@
-/*	$NetBSD: pciide_machdep.c,v 1.3 2002/01/13 23:02:35 augustss Exp $	*/
+/*	$NetBSD: intr_machdep.h,v 1.1 2002/01/13 23:02:34 augustss Exp $	*/
 
 /*
  * Copyright (c) 2000 Soren S. Jorvang.  All rights reserved.
@@ -25,33 +25,15 @@
  * SUCH DAMAGE.
  */
 
-#include <sys/param.h>
-#include <sys/systm.h>
-#include <sys/device.h>
+struct cobalt_intr {
+        int     cookie_type;
+#define COBALT_COOKIE_TYPE_CPU	0x1
+#define COBALT_COOKIE_TYPE_ICU	0x2
+        int     (*func)(void *);
+        void    *arg;
+};
 
-#include <dev/pci/pcireg.h>
-#include <dev/pci/pcivar.h>
-#include <dev/pci/pciidereg.h>
-#include <dev/pci/pciidevar.h>
-
-#include <machine/intr_machdep.h>
-
-void *
-pciide_machdep_compat_intr_establish(dev, pa, chan, func, arg)
-	struct device *dev;
-	struct pci_attach_args *pa;
-	int chan;
-	int (*func)(void *);
-	void *arg;
-{
-	int irq;
-	void *cookie;
-
-	irq = PCIIDE_COMPAT_IRQ(chan);
-	cookie = icu_intr_establish(irq, IST_EDGE, IPL_BIO, func, arg);
-	if (cookie == NULL)
-		return (NULL);
-	printf("%s: %s channel interrupting at irq %d\n", dev->dv_xname,
-	    PCIIDE_CHANNEL_NAME(chan), irq);
-	return (cookie);
-}
+extern void *	cpu_intr_establish(int, int, int (*)(void *), void *);
+extern void *	icu_intr_establish(int, int, int, int (*)(void *), void *);
+extern void	cpu_intr_disestablish(void *);
+extern void	icu_intr_disestablish(void *);
