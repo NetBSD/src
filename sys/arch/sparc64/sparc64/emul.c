@@ -1,7 +1,7 @@
-/*	$NetBSD: emul.c,v 1.7 2000/12/04 16:01:19 fvdl Exp $	*/
+/*	$NetBSD: emul.c,v 1.8 2001/06/29 23:58:40 eeh Exp $	*/
 
 /*-
- * Copyright (c) 1997 The NetBSD Foundation, Inc.
+ * Copyright (c) 1997, 2001 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -320,7 +320,10 @@ fixalign(p, tf)
 
 	if (op.bits.st) {
 		if (op.bits.fl) {
-			savefpstate(p->p_md.md_fpstate);
+			if (p == fpproc) {
+				savefpstate(p->p_md.md_fpstate);
+				fpproc = NULL;
+			}
 
 			error = readfpreg(p, code.i_op3.i_rd, &data.i[0]);
 			if (error)
@@ -378,6 +381,7 @@ fixalign(p, tf)
 					return error;
 			}
 			loadfpstate(p->p_md.md_fpstate);
+			fpproc = p;
 		}
 		else {
 			error = writegpreg(tf, code.i_op3.i_rd, &data.i[0]);
