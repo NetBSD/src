@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.kinc.mk,v 1.4 1999/01/15 10:57:36 castor Exp $
+#	$NetBSD: bsd.kinc.mk,v 1.5 1999/02/04 11:58:30 christos Exp $
 
 # System configuration variables:
 #
@@ -85,9 +85,9 @@ incinstall:: ${DESTDIR}${INCSDIR}/$I
 .endif
 ${DESTDIR}${INCSDIR}/$I: ${DESTDIR}${INCSDIR} $I 
 	@cmp -s ${.CURDIR}/$I ${.TARGET} > /dev/null 2>&1 || \
-	    (echo "${INSTALL} ${PRESERVE} -c -o ${BINOWN} -g ${BINGRP} \
-		-m ${NONBINMODE} ${.CURDIR}/$I ${.TARGET}" && \
-	     ${INSTALL} ${PRESERVE} -c -o ${BINOWN} -g ${BINGRP} \
+	    (echo "${INSTALL} ${RENAME} ${PRESERVE} -c -o ${BINOWN} \
+		-g ${BINGRP} -m ${NONBINMODE} ${.CURDIR}/$I ${.TARGET}" && \
+	     ${INSTALL} ${RENAME} ${PRESERVE} -c -o ${BINOWN} -g ${BINGRP} \
 		-m ${NONBINMODE} ${.CURDIR}/$I ${.TARGET})
 .endfor
 .endif
@@ -102,9 +102,9 @@ incinstall:: ${DESTDIR}${INCSDIR}/$I
 .endif
 ${DESTDIR}${INCSDIR}/$I: ${DESTDIR}${INCSDIR} $I 
 	@cmp -s $I ${.TARGET} > /dev/null 2>&1 || \
-	    (echo "${INSTALL} ${PRESERVE} -c -o ${BINOWN} -g ${BINGRP} \
-		-m ${NONBINMODE} $I ${.TARGET}" && \
-	     ${INSTALL} ${PRESERVE} -c -o ${BINOWN} -g ${BINGRP} \
+	    (echo "${INSTALL} ${RENAME} ${PRESERVE} -c -o ${BINOWN} \
+		-g ${BINGRP} -m ${NONBINMODE} $I ${.TARGET}" && \
+	     ${INSTALL} ${RENAME} ${PRESERVE} -c -o ${BINOWN} -g ${BINGRP} \
 		-m ${NONBINMODE} $I ${.TARGET})
 .endfor
 .endif
