@@ -1,4 +1,4 @@
-/*	$NetBSD: alpha_reloc.c,v 1.19 2002/09/14 23:21:13 thorpej Exp $	*/
+/*	$NetBSD: alpha_reloc.c,v 1.20 2002/09/21 17:51:44 mycroft Exp $	*/
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
@@ -195,6 +195,11 @@ _rtld_relocate_nonplt_objects(obj, self)
 	bool self;
 {
 	const Elf_Rela *rela;
+#define COMBRELOC
+#ifdef COMBRELOC
+	unsigned long lastsym = -1;
+#endif
+	Elf_Addr target;
 
 	if (self)
 		return 0;
@@ -215,12 +220,21 @@ _rtld_relocate_nonplt_objects(obj, self)
 
 		case R_TYPE(REFQUAD):
 		case R_TYPE(GLOB_DAT):
-			def = _rtld_find_symdef(symnum, obj, &defobj, false);
-			if (def == NULL)
-				return -1;
+#ifdef COMBRELOC
+			if (symnum != lastsym) {
+#endif
+				def = _rtld_find_symdef(symnum, obj, &defobj,
+				    false);
+				if (def == NULL)
+					return -1;
+				target = (Elf_Addr)(defobj->relocbase +
+				    def->st_value);
+#ifdef COMBRELOC
+				lastsym = symnum;
+			}
+#endif
 
-			tmp = (Elf_Addr)(defobj->relocbase + def->st_value) +
-			    rela->r_addend;
+			tmp = target + rela->r_addend;
 			if (__predict_true(RELOC_ALIGNED_P(where))) {
 				if (*where != tmp)
 					*where = tmp;
