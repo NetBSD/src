@@ -1,4 +1,4 @@
-/*	$NetBSD: usbdi_util.c,v 1.1 1998/07/12 19:52:01 augustss Exp $	*/
+/*	$NetBSD: usbdi_util.c,v 1.2 1998/07/13 10:49:42 augustss Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -252,6 +252,33 @@ usbd_set_report(iface, type, id, data, len)
 		return (USBD_INVAL);
 	req.bmRequestType = UT_WRITE_CLASS_INTERFACE;
 	req.bRequest = UR_SET_REPORT;
+	USETW2(req.wValue, type, id);
+	USETW(req.wIndex, ifd->bInterfaceNumber);
+	USETW(req.wLength, len);
+	return (usbd_do_request(dev, &req, data));
+}
+
+usbd_status
+usbd_get_report(iface, type, id, data, len)
+	usbd_interface_handle iface;
+	int type;
+	int id;
+	void *data;
+	int len;
+{
+	usb_interface_descriptor_t *ifd = usbd_get_interface_descriptor(iface);
+	usbd_device_handle dev;
+	usb_device_request_t req;
+	usbd_status r;
+
+	DPRINTFN(4, ("usbd_set_report: len=%d\n", len));
+	r = usbd_interface2device_handle(iface, &dev);
+	if (r != USBD_NORMAL_COMPLETION)
+		return (r);
+	if (!ifd)
+		return (USBD_INVAL);
+	req.bmRequestType = UT_READ_CLASS_INTERFACE;
+	req.bRequest = UR_GET_REPORT;
 	USETW2(req.wValue, type, id);
 	USETW(req.wIndex, ifd->bInterfaceNumber);
 	USETW(req.wLength, len);

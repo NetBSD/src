@@ -1,4 +1,4 @@
-/*	$NetBSD: usb.h,v 1.1 1998/07/12 19:52:00 augustss Exp $	*/
+/*	$NetBSD: usb.h,v 1.2 1998/07/13 10:49:41 augustss Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -345,6 +345,11 @@ struct usb_device_info {
 #define USB_PORT_DISABLED 0xfc
 };
 
+struct usb_ctl_report {
+	int report;
+	u_char	data[1024];	/* filled data size will vary */
+};
+
 /* USB controller */
 #define USB_REQUEST		_IOWR('U', 1, struct usb_ctl_request)
 #define USB_SETDEBUG		_IOW ('U', 2, int)
@@ -353,6 +358,8 @@ struct usb_device_info {
 
 /* Generic HID device */
 #define USB_GET_REPORT_DESC	_IOR ('U', 21, struct usb_ctl_report_desc)
+#define USB_SET_IMMED		_IOW ('U', 22, int)
+#define USB_GET_REPORT		_IOWR('U', 23, struct usb_ctl_report)
 
 /* Generic USB device */
 #define USB_SET_CONFIG		_IOW ('U', 100, int)
