@@ -24,7 +24,7 @@
  * rights to redistribute these changes.
  *
  *	From: db_interface.c,v 2.4 1991/02/05 17:11:13 mrt (CMU)
- *	$Id: db_interface.c,v 1.7.4.1 1994/08/15 14:47:21 mycroft Exp $
+ *	$Id: db_interface.c,v 1.7.4.2 1994/10/09 09:14:21 mycroft Exp $
  */
 
 /*
@@ -64,6 +64,8 @@ kdb_trap(type, code, regs)
 	int	type, code;
 	register struct i386_saved_state *regs;
 {
+	int s;
+
 #if 0
 	if ((boothowto&RB_KDB) == 0)
 		return(0);
@@ -100,11 +102,13 @@ kdb_trap(type, code, regs)
 		    : "ax");
 	}
 
+	s = splhigh();
 	db_active++;
 	cnpollc(TRUE);
 	db_trap(type, code);
 	cnpollc(FALSE);
 	db_active--;
+	splx(s);
 
 	regs->tf_eip = ddb_regs.tf_eip;
 	regs->tf_eflags = ddb_regs.tf_eflags;
