@@ -1,4 +1,4 @@
-.\"	$NetBSD: sail.6,v 1.8 2002/02/08 01:25:15 ross Exp $
+.\"	$NetBSD: sail.6,v 1.9 2002/09/26 16:12:42 wiz Exp $
 .\"
 .\" Copyright (c) 1988, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -60,7 +60,8 @@ originally developed by S. Craig Taylor.
 Players of
 .I Sail
 take command of an old fashioned Man of War and fight other
-players or the computer.  They may re-enact one of the many
+players or the computer.
+They may re-enact one of the many
 historical sea battles recorded in the game, or they can choose
 a fictional battle.
 .PP
@@ -70,7 +71,8 @@ Navy, the player has complete control over the workings of his ship.
 He must order every maneuver, change the set of his sails, and judge the
 right moment to let loose the terrible destruction of his broadsides.
 In addition to fighting the enemy, he must harness the powers of the wind
-and sea to make them work for him.  The outcome of many battles during the
+and sea to make them work for him.
+The outcome of many battles during the
 age of sail was decided by the ability of one captain to hold the `weather
 gage.'
 .PP
@@ -80,7 +82,8 @@ The flags are:
 Print the names and ships of the top ten sailors.
 .TP
 .B \-l
-Show the login name.  Only effective with \fB-s\fP.
+Show the login name.
+Only effective with \fB-s\fP.
 .TP
 .B \-x
 Play the first available ship instead of prompting for a choice.
@@ -89,8 +92,9 @@ Play the first available ship instead of prompting for a choice.
 No bells.
 .SH IMPLEMENTATION
 .I Sail
-is really two programs in one.  Each player starts up a process which
-runs his own ship.  In addition, a
+is really two programs in one.
+Each player starts up a process which runs his own ship.
+In addition, a
 .I driver
 process is forked (by the first player) to run the computer ships
 and take care of global bookkeeping.
@@ -108,12 +112,14 @@ To implement a multi-user game in Version 7 UNIX, which was the operating
 system
 .I Sail
 was first written under, the communicating processes must use a common
-temporary file as a place to read and write messages.  In addition, a
-locking mechanism must be provided to ensure exclusive access to the
-shared file.  For example,
+temporary file as a place to read and write messages.
+In addition, a locking mechanism must be provided to ensure exclusive
+access to the shared file.
+For example,
 .I Sail
 uses a temporary file named /tmp/#sailsink.21 for scenario 21, and
-corresponding file names for the other scenarios.  To provide exclusive
+corresponding file names for the other scenarios.
+To provide exclusive
 access to the temporary file,
 .I Sail
 uses a technique stolen from an old game called "pubcaves" by Jeff Cohen.
@@ -126,13 +132,14 @@ Processes do a busy wait in the loop
 .br
 .sp
 until they are able to create a link to a file named "/tmp/#saillock.??".
-The "??" correspond to the scenario number of the game.  Since UNIX
+The "??" correspond to the scenario number of the game.
+Since UNIX
 guarantees that a link will point to only one file, the process that succeeds
 in linking will have exclusive access to the temporary file.
 .PP
-Whether or not this really works is open to speculation.  When ucbmiro
-was rebooted after a crash, the file system check program found 3 links
-between the
+Whether or not this really works is open to speculation.
+When ucbmiro was rebooted after a crash, the file system check program
+found 3 links between the
 .I Sail
 temporary file and its link file.
 .SH CONSEQUENCES OF SEPARATE PLAYER AND DRIVER PROCESSES
@@ -141,24 +148,29 @@ the driver must coordinate the action with the other ships in the game.
 For example, if a player wants to move in a certain direction, he writes a
 message into the temporary file requesting the driver to move his ship.
 Each ``turn,'' the driver reads all the messages sent from the players and
-decides what happened.  It then writes back into the temporary file new
-values of variables, etc.
+decides what happened.
+It then writes back into the temporary file new values of variables, etc.
 .PP
 The most noticeable effect this communication has on the game is the
-delay in moving.  Suppose a player types a move for his ship and hits
-return.  What happens then?  The player process saves up messages to
-be written to the temporary file in a buffer.  Every 7 seconds or so, the
-player process gets exclusive access to the temporary file and writes
-out its buffer to the file.  The driver, running asynchronously, must
-read in the movement command, process it, and write out the results.  This
-takes two exclusive accesses to the temporary file.  Finally, when the player
-process gets around to doing another 7 second update, the results of the
-move are displayed on the screen.  Hence, every movement requires four
+delay in moving.
+Suppose a player types a move for his ship and hits return.
+What happens then?
+The player process saves up messages to
+be written to the temporary file in a buffer.
+Every 7 seconds or so, the player process gets exclusive access to
+the temporary file and writes out its buffer to the file.
+The driver, running asynchronously, must
+read in the movement command, process it, and write out the results.
+This takes two exclusive accesses to the temporary file.
+Finally, when the player process gets around to doing another 7 second
+update, the results of the move are displayed on the screen.
+Hence, every movement requires four
 exclusive accesses to the temporary file (anywhere from 7 to 21 seconds
 depending upon asynchrony) before the player sees the results of his moves.
 .PP
-In practice, the delays are not as annoying as they would appear.  There
-is room for "pipelining" in the movement.  After the player writes out
+In practice, the delays are not as annoying as they would appear.
+There is room for "pipelining" in the movement.
+After the player writes out
 a first movement message, a second movement command can then be issued.
 The first message will be in the temporary file waiting for the driver, and
 the second will be in the file buffer waiting to be written to the file.
@@ -166,16 +178,19 @@ Thus, by always typing moves a turn ahead of the time, the player can
 sail around quite quickly.
 .PP
 If the player types several movement commands between two 7 second updates,
-only the last movement command typed will be seen by the driver.  Movement
-commands within the same update "overwrite" each other, in a sense.
+only the last movement command typed will be seen by the driver.
+Movement commands within the same update "overwrite" each other, in a sense.
 .SH THE HISTORY OF SAIL
 I wrote the first version of
 .I Sail
-on a PDP 11/70 in the fall of 1980.  Needless to say, the code was horrendous,
-not portable in any sense of the word, and didn't work.  The program was not
-very modular and had fseeks() and fwrites() every few lines.  After a
-tremendous rewrite from the top down, I got the first working version up by
-1981.  There were several annoying bugs concerning firing broadsides and
+on a PDP 11/70 in the fall of 1980.
+Needless to say, the code was horrendous,
+not portable in any sense of the word, and didn't work.
+The program was not
+very modular and had fseeks() and fwrites() every few lines.
+After a tremendous rewrite from the top down,
+I got the first working version up by 1981.
+There were several annoying bugs concerning firing broadsides and
 finding angles.
 .I Sail
 uses no floating point, by the way, so the direction routines are rather
@@ -187,12 +202,14 @@ available).
 .PP
 Captain Happy (Craig Leres) is responsible for making
 .I Sail
-portable for the first time.  This was no easy task, by the way.  Constants
-like 2 and 10 were very frequent in the code.  I also became famous for
-using "Riggle Memorial Structures" in
+portable for the first time.
+This was no easy task, by the way.
+Constants like 2 and 10 were very frequent in the code.
+I also became famous for using "Riggle Memorial Structures" in
 .I Sail.
 Many of my structure references are so long that they run off the line
-printer page.  Here is an example, if you promise not to laugh.
+printer page.
+Here is an example, if you promise not to laugh.
 .br
 .sp
 .ce
@@ -202,15 +219,19 @@ specs[scene[flog.fgamenum].ship[flog.fshipnum].shipnum].pts
 .PP
 .I Sail
 received its fourth and most thorough rewrite in the summer and fall
-of 1983.  Ed Wang rewrote and modularized the code (a monumental feat)
-almost from scratch.  Although he introduced many new bugs, the final
-result was very much cleaner and (?) faster.  He added window movement
-commands and find ship commands.
+of 1983.
+Ed Wang rewrote and modularized the code (a monumental feat)
+almost from scratch.
+Although he introduced many new bugs, the final result was very much
+cleaner and (?) faster.
+He added window movement commands and find ship commands.
 .SH HISTORICAL INFO
 Old Square Riggers were very maneuverable ships capable of intricate
-sailing.  Their only disadvantage was an inability to sail very
-close to the wind.  The design of a wooden ship allowed only for the
-guns to bear to the left and right sides.  A few guns of small
+sailing.
+Their only disadvantage was an inability to sail very close to the wind.
+The design of a wooden ship allowed only for the
+guns to bear to the left and right sides.
+A few guns of small
 aspect (usually 6 or 9 pounders) could point forward, but their
 effect was small compared to a 68 gun broadside of 24 or 32 pounders.
 The guns bear approximately like so:
@@ -229,9 +250,10 @@ The guns bear approximately like so:
 
 .fi
 An interesting phenomenon occurred when a broadside was fired
-down the length of an enemy ship.  The shot tended to bounce along
-the deck and did several times more damage.  This phenomenon was called
-a rake.  Because the bows of a ship are very strong and present a smaller
+down the length of an enemy ship.
+The shot tended to bounce along the deck and did several times more damage.
+This phenomenon was called a rake.
+Because the bows of a ship are very strong and present a smaller
 target than the stern, a stern rake (firing from the stern to the bow) causes
 more damage than a bow rake.
 .nf
@@ -242,91 +264,109 @@ more damage than a bow rake.
 
 .fi
 Most ships were equipped with carronades, which were very large, close
-range cannons.  American ships from the revolution until the War of 1812
+range cannons.
+American ships from the revolution until the War of 1812
 were almost entirely armed with carronades.
 .PP
 The period of history covered in
 .I Sail
 is approximately from the 1770's until the end of Napoleonic France in 1815.
-There are many excellent books about the age of sail.  My favorite author
-is Captain Frederick Marryat.  More contemporary authors include C.S. Forester
-and Alexander Kent.
+There are many excellent books about the age of sail.
+My favorite author is Captain Frederick Marryat.
+More contemporary authors include C.S. Forester and Alexander Kent.
 .PP
-Fighting ships came in several sizes classed by armament.  The mainstays of
-any fleet were its "Ships of the Line", or "Line of Battle Ships".  They
-were so named because these ships fought together in great lines.  They were
+Fighting ships came in several sizes classed by armament.
+The mainstays of
+any fleet were its "Ships of the Line", or "Line of Battle Ships".
+They were so named because these ships fought together in great lines.
+They were
 close enough for mutual support, yet every ship could fire both its broadsides.
 We get the modern words "ocean liner," or "liner," and "battleship" from
-"ship of the line."  The most common size was the 74 gun two decked
-ship of the line.  The two gun decks usually mounted 18 and 24 pounder guns.
+"ship of the line."
+The most common size was the 74 gun two decked ship of the line.
+The two gun decks usually mounted 18 and 24 pounder guns.
 .PP
-The pride of the fleet were the first rates.  These were huge three decked
-ships of the line mounting 80 to 136 guns.  The guns in the three tiers
+The pride of the fleet were the first rates.
+These were huge three decked ships of the line mounting 80 to 136 guns.
+The guns in the three tiers
 were usually 18, 24, and 32 pounders in that order from top to bottom.
 .PP
-Various other ships came next.  They were almost all "razees," or ships
-of the line with one deck sawed off.  They mounted 40-64 guns and were
-a poor cross between a frigate and a line of battle ship.  They neither
-had the speed of the former nor the firepower of the latter.
+Various other ships came next.
+They were almost all "razees," or ships of the line with one deck sawed off.
+They mounted 40-64 guns and were
+a poor cross between a frigate and a line of battle ship.
+They neither had the speed of the former nor the firepower of the latter.
 .PP
-Next came the "eyes of the fleet."  Frigates came in many sizes mounting
-anywhere from 32 to 44 guns.  They were very handy vessels.  They could
-outsail anything bigger and outshoot anything smaller.  Frigates didn't
-fight in lines of battle as the much bigger 74's did.  Instead, they
-harassed the enemy's rear or captured crippled ships.  They were much
-more useful in missions away from the fleet, such as cutting out expeditions
-or boat actions.  They could hit hard and get away fast.
+Next came the "eyes of the fleet."
+Frigates came in many sizes mounting anywhere from 32 to 44 guns.
+They were very handy vessels.
+They could outsail anything bigger and outshoot anything smaller.
+Frigates didn't fight in lines of battle as the much bigger 74's did.
+Instead, they harassed the enemy's rear or captured crippled ships.
+They were much more useful in missions away from the fleet,
+such as cutting out expeditions or boat actions.
+They could hit hard and get away fast.
 .PP
-Lastly, there were the corvettes, sloops, and brigs.  These were smaller
-ships mounting typically fewer than 20 guns.  A corvette was only slightly
-smaller than a frigate, so one might have up to 30 guns.  Sloops were used
-for carrying dispatches or passengers.  Brigs were something you built for
-land-locked lakes.
+Lastly, there were the corvettes, sloops, and brigs.
+These were smaller ships mounting typically fewer than 20 guns.
+A corvette was only slightly
+smaller than a frigate, so one might have up to 30 guns.
+Sloops were used for carrying dispatches or passengers.
+Brigs were something you built for land-locked lakes.
 .SH SAIL PARTICULARS
 Ships in
 .I Sail
-are represented by two characters.  One character represents the bow of
-the ship, and the other represents the stern.  Ships have nationalities
-and numbers.  The first ship of a nationality is number 0, the second
-number 1, etc.  Therefore, the first British ship in a game would be
-printed as "b0".  The second Brit would be "b1", and the fifth Don
-would be "s4".
+are represented by two characters.
+One character represents the bow of
+the ship, and the other represents the stern.
+Ships have nationalities and numbers.
+The first ship of a nationality is number 0, the second
+number 1, etc.
+Therefore, the first British ship in a game would be printed as "b0".
+The second Brit would be "b1", and the fifth Don would be "s4".
 .PP
 Ships can set normal sails, called Battle Sails, or bend on extra canvas
-called Full Sails.  A ship under full sail is a beautiful sight indeed,
-and it can move much faster than a ship under Battle Sails.  The only
-trouble is, with full sails set, there is so much tension on sail and
+called Full Sails.
+A ship under full sail is a beautiful sight indeed,
+and it can move much faster than a ship under Battle Sails.
+The only trouble is, with full sails set, there is so much tension on sail and
 rigging that a well aimed round shot can burst a sail into ribbons where
-it would only cause a little hole in a loose sail.  For this reason,
-rigging damage is doubled on a ship with full sails set.  Don't let
-that discourage you from using full sails.  I like to keep them up
-right into the heat of battle.  A ship
-with full sails set has a capital letter for its nationality.  E.g.,
-a Frog, "f0", with full sails set would be printed as "F0".
+it would only cause a little hole in a loose sail.
+For this reason, rigging damage is doubled on a ship with full sails set.
+Don't let that discourage you from using full sails.
+I like to keep them up right into the heat of battle.
+A ship with full sails set has a capital letter for its nationality.
+E.g., a Frog, "f0", with full sails set would be printed as "F0".
 .PP
 When a ship is battered into a listing hulk, the last man aboard "strikes
-the colors."  This ceremony is the ship's formal surrender.  The nationality
-character
-of a surrendered ship is printed as "!".  E.g., the Frog of our last example
-would soon be "!0".
+the colors."
+This ceremony is the ship's formal surrender.
+The nationality character of a surrendered ship is printed as "!".
+E.g., the Frog of our last example would soon be "!0".
 .PP
 A ship has a random chance of catching fire or sinking when it reaches the
-stage of listing hulk.  A sinking ship has a "~" printed for its nationality,
+stage of listing hulk.
+A sinking ship has a "~" printed for its nationality,
 and a ship on fire and about to explode has a "#" printed.
 .PP
-Captured ships become the nationality of the prize crew.  Therefore, if
+Captured ships become the nationality of the prize crew.
+Therefore, if
 an American ship captures a British ship, the British ship will have an
-"a" printed for its nationality.  In addition, the ship number is changed
+"a" printed for its nationality.
+In addition, the ship number is changed
 to "\*[Am]","'", "(", ,")", "*", or "+" depending upon the original number,
-be it 0,1,2,3,4, or 5.  E.g., the "b0" captured by an American becomes the
-"a\*[Am]".  The "s4" captured by a Frog becomes the "f*".
+be it 0,1,2,3,4, or 5.
+E.g., the "b0" captured by an American becomes the
+"a\*[Am]".
+The "s4" captured by a Frog becomes the "f*".
 .PP
 The ultimate example is, of course, an exploding Brit captured by an
 American: "#\*[Am]".
 .SH MOVEMENT
 Movement is the most confusing part of
 .I Sail
-to many.  Ships can head in 8 directions:
+to many.
+Ships can head in 8 directions:
 .nf
 
                                  0      0      0
@@ -334,26 +374,31 @@ to many.  Ships can head in 8 directions:
         0        0                                             0
 
 .fi
-The stern of a ship moves when it turns.  The bow remains stationary.
+The stern of a ship moves when it turns.
+The bow remains stationary.
 Ships can always turn, regardless of the wind (unless they are becalmed).
-All ships drift when they lose headway.  If a ship doesn't move forward
-at all for two turns, it will begin to drift.  If a ship has begun to
+All ships drift when they lose headway.
+If a ship doesn't move forward at all for two turns, it will begin to drift.
+If a ship has begun to
 drift, then it must move forward before it turns, if it plans to do
 more than make a right or left turn, which is always possible.
 .PP
 Movement commands to
 .I Sail
-are a string of forward moves and turns.  An example is "l3".  It will
-turn a ship left and then move it ahead 3 spaces.  In the drawing above,
-the "b0" made 7 successive left turns.  When
+are a string of forward moves and turns.
+An example is "l3".
+It will turn a ship left and then move it ahead 3 spaces.
+In the drawing above, the "b0" made 7 successive left turns.
+When
 .I Sail
-prompts you for a move, it prints three characters of import.  E.g.,
+prompts you for a move, it prints three characters of import.
+E.g.,
 .nf
 	move (7, 4):
 .fi
-The first number is the maximum number of moves you can make,
-including turns.  The second number is the maximum number of turns
-you can make.  Between the numbers is sometimes printed a quote "'".
+The first number is the maximum number of moves you can make, including turns.
+The second number is the maximum number of turns you can make.
+Between the numbers is sometimes printed a quote "'".
 If the quote is present, it means that your ship has been drifting, and
 you must move ahead to regain headway before you turn (see note above).
 Some of the possible moves for the example above are as follows:
@@ -371,7 +416,8 @@ Some of the possible moves for the example above are as follows:
 .fi
 Because square riggers performed so poorly sailing into the wind, if at
 any point in a movement command you turn into the wind, the movement stops
-there.  E.g.,
+there.
+E.g.,
 .ne 1i
 .nf
 
@@ -381,17 +427,20 @@ there.  E.g.,
 
 .fi
 Moreover, whenever you make a turn, your movement allowance drops to
-min(what's left, what you would have at the new attitude).  In short,
-if you turn closer to the wind, you most likely won't be able to sail the
-full allowance printed in the "move" prompt.
+min(what's left, what you would have at the new attitude).
+In short, if you turn closer to the wind, you most likely won't be able
+to sail the full allowance printed in the "move" prompt.
 .PP
-Old sailing captains had to keep an eye constantly on the wind.  Captains
-in
+Old sailing captains had to keep an eye constantly on the wind.
+Captains in
 .I Sail
-are no different.  A ship's ability to move depends on its attitude to the
-wind.  The best angle possible is to have the wind off your quarter, that is,
-just off the stern.  The direction rose on the side of the screen gives the
-possible movements for your ship at all positions to the wind.  Battle
+are no different.
+A ship's ability to move depends on its attitude to the wind.
+The best angle possible is to have the wind off your quarter, that is,
+just off the stern.
+The direction rose on the side of the screen gives the
+possible movements for your ship at all positions to the wind.
+Battle
 sail speeds are given first, and full sail speeds are given in parenthesis.
 .nf
 
@@ -404,17 +453,21 @@ sail speeds are given first, and full sail speeds are given in parenthesis.
 
 .fi
 Pretend the bow of your ship (the "^") is pointing upward and the wind is
-blowing from the bottom to the top of the page.  The
-numbers at the bottom "3(6)" will be your speed under battle or full
-sails in such a situation.  If the wind is off your quarter, then you
-can move "4(7)".  If the wind is off your beam, "3(6)".  If the wind is
-off your bow, then you can only move "1(2)".  Facing into the wind, you
-can't move at all.  Ships facing into the wind were said to be "in irons".
+blowing from the bottom to the top of the page.
+The numbers at the bottom "3(6)" will be your speed under battle or full
+sails in such a situation.
+If the wind is off your quarter, then you can move "4(7)".
+If the wind is off your beam, "3(6)".
+If the wind is off your bow, then you can only move "1(2)".
+Facing into the wind, you can't move at all.
+Ships facing into the wind were said to be "in irons".
 .SH WINDSPEED AND DIRECTION
 The windspeed and direction is displayed as a little weather vane on the
-side of the screen.  The number in the middle of the vane indicates the wind
-speed, and the + to - indicates the wind direction.  The wind blows from
-the + sign (high pressure) to the - sign (low pressure).  E.g.,
+side of the screen.
+The number in the middle of the vane indicates the wind
+speed, and the + to - indicates the wind direction.
+The wind blows from the + sign (high pressure) to the - sign (low pressure).
+E.g.,
 .nf
 
 				|
@@ -426,9 +479,11 @@ The wind speeds are 0 = becalmed, 1 = light breeze, 2 = moderate breeze,
 3 = fresh breeze, 4 = strong breeze, 5 = gale, 6 = full gale, 7 = hurricane.
 If a hurricane shows up, all ships are destroyed.
 .SH GRAPPLING AND FOULING
-If two ships collide, they run the risk of becoming tangled together.  This
-is called "fouling."  Fouled ships are stuck together, and neither can move.
-They can unfoul each other if they want to.  Boarding parties can only be
+If two ships collide, they run the risk of becoming tangled together.
+This is called "fouling."
+Fouled ships are stuck together, and neither can move.
+They can unfoul each other if they want to.
+Boarding parties can only be
 sent across to ships when the antagonists are either fouled or grappled.
 .PP
 Ships can grapple each other by throwing grapnels into the rigging of
@@ -437,8 +492,8 @@ the other.
 The number of fouls and grapples you have are displayed on the upper
 right of the screen.
 .SH BOARDING
-Boarding was a very costly venture in terms of human life.  Boarding parties
-may be formed in
+Boarding was a very costly venture in terms of human life.
+Boarding parties may be formed in
 .I Sail
 to either board an enemy ship or to defend your own ship against attack.
 Men organized as Defensive Boarding Parties fight twice as hard to save
@@ -447,39 +502,49 @@ their ship as men left unorganized.
 The boarding strength of a crew depends upon its quality and upon the
 number of men sent.
 .SH CREW QUALITY
-The British seaman was world renowned for his sailing abilities.  American
-sailors, however, were actually the best seamen in the world.  Because the
+The British seaman was world renowned for his sailing abilities.
+American sailors, however, were actually the best seamen in the world.
+Because the
 American Navy offered twice the wages of the Royal Navy, British seamen
 who liked the sea defected to America by the thousands.
 .PP
 In
 .I Sail,
-crew quality is quantized into 5 energy levels.  "Elite" crews can outshoot
-and outfight all other sailors.  "Crack" crews are next.  "Mundane" crews
-are average, and "Green" and "Mutinous" crews are below average.  A good
-rule of thumb is that "Crack" or "Elite" crews get one extra hit
-per broadside compared to "Mundane" crews.  Don't expect too much from
+crew quality is quantized into 5 energy levels.
+"Elite" crews can outshoot and outfight all other sailors.
+"Crack" crews are next.
+"Mundane" crews
+are average, and "Green" and "Mutinous" crews are below average.
+A good rule of thumb is that "Crack" or "Elite" crews get one extra hit
+per broadside compared to "Mundane" crews.
+Don't expect too much from
 "Green" crews.
 .pl -1
 .SH BROADSIDES
 Your two broadsides may be loaded with four kinds of shot: grape, chain,
-round, and double.  You have guns and carronades in both the port and starboard
-batteries.  Carronades only have a range of two, so you have to get in
-close to be able to fire them.  You have the choice of firing at the hull
-or rigging of another ship.  If the range of the ship is greater than 6,
+round, and double.
+You have guns and carronades in both the port and starboard batteries.
+Carronades only have a range of two, so you have to get in
+close to be able to fire them.
+You have the choice of firing at the hull or rigging of another ship.
+If the range of the ship is greater than 6,
 then you may only shoot at the rigging.
 .PP
 The types of shot and their advantages are:
 .SH ROUND
-Range of 10.  Good for hull or rigging hits.
+Range of 10.
+Good for hull or rigging hits.
 .SH DOUBLE
-Range of 1.  Extra good for hull or rigging hits.
+Range of 1.
+Extra good for hull or rigging hits.
 Double takes two turns to load.
 .SH CHAIN
-Range of 3.  Excellent for tearing down rigging.
+Range of 3.
+Excellent for tearing down rigging.
 Cannot damage hull or guns, though.
 .SH GRAPE
-Range of 1.  Sometimes devastating against enemy crews.
+Range of 1.
+Sometimes devastating against enemy crews.
 .PP
 On the side of the screen is displayed some vital information about your
 ship:
@@ -494,55 +559,65 @@ ship:
 
 .fi
 "Load" shows what your port (left) and starboard (right) broadsides are
-loaded with.  A "!" after the type of shot indicates that it is an initial
-broadside.  Initial broadside were loaded with care before battle and before
-the decks ran red with blood.  As a consequence, initial broadsides are a
-little more effective than broadsides loaded later.  A "*" after the type of
-shot indicates that the gun
-crews are still loading it, and you cannot fire yet.  "Hull" shows how much
-hull you have left.  "Crew" shows your three sections of crew.  As your
-crew dies off, your ability to fire decreases.  "Guns" and "Carr" show
-your port and starboard guns.  As you lose guns, your ability to fire
-decreases.  "Rigg" shows how much rigging you have on your 3 or 4 masts.
+loaded with.
+A "!" after the type of shot indicates that it is an initial broadside.
+Initial broadside were loaded with care before battle and before
+the decks ran red with blood.
+As a consequence, initial broadsides are a
+little more effective than broadsides loaded later.
+A "*" after the type of shot indicates that the gun
+crews are still loading it, and you cannot fire yet.
+"Hull" shows how much hull you have left.
+"Crew" shows your three sections of crew.
+As your crew dies off, your ability to fire decreases.
+"Guns" and "Carr" show your port and starboard guns.
+As you lose guns, your ability to fire decreases.
+"Rigg" shows how much rigging you have on your 3 or 4 masts.
 As rigging is shot away, you lose mobility.
 .SH EFFECTIVENESS OF FIRE
 It is very dramatic when a ship fires its thunderous broadsides, but the
-mere opportunity to fire them does not guarantee any hits.  Many factors
-influence the destructive force of a broadside.  First of all, and the chief
-factor, is distance.  It is harder to hit a ship at range ten than it is
-to hit one sloshing alongside.  Next is raking.  Raking fire, as
-mentioned before,
-can sometimes dismast a ship at range ten.  Next, crew size and quality affects
-the damage done by a broadside.   The number of guns firing also bears on the
-point,
-so to speak.  Lastly, weather affects the accuracy of a broadside.  If the
-seas are high (5 or 6), then the lower gunports of ships of the line can't
-even be opened to run out the guns.  This gives frigates and other flush
-decked vessels an advantage in a storm.  The scenario
+mere opportunity to fire them does not guarantee any hits.
+Many factors influence the destructive force of a broadside.
+First of all, and the chief factor, is distance.
+It is harder to hit a ship at range ten than it is
+to hit one sloshing alongside.
+Next is raking.
+Raking fire, as mentioned before, can sometimes dismast a ship at range ten.
+Next, crew size and quality affects the damage done by a broadside.
+The number of guns firing also bears on the point, so to speak.
+Lastly, weather affects the accuracy of a broadside.
+If the seas are high (5 or 6), then the lower gunports
+of ships of the line can't even be opened to run out the guns.
+This gives frigates and other flush decked vessels an advantage in a storm.
+The scenario
 .I Pellew vs. The Droits de L'Homme
 takes advantage of this peculiar circumstance.
 .SH REPAIRS
 Repairs may be made to your Hull, Guns, and Rigging at the slow rate of
-two points per three turns.  The message "Repairs Completed" will be
-printed if no more repairs can be made.
+two points per three turns.
+The message "Repairs Completed" will be printed if no more repairs can be made.
 .SH PECULIARITIES OF COMPUTER SHIPS
 Computer ships in
 .I Sail
-follow all the rules above with a few exceptions.  Computer ships never
-repair damage.  If they did, the players could never beat them.  They
-play well enough as it is.  As a consolation, the computer ships can fire double
-shot every turn.  That fluke is a good reason to keep your distance.  The
-.I
-Driver
-figures out the moves of the computer ships.   It computes them with a typical
-A.I. distance function and a depth first search to find the maximum "score."
+follow all the rules above with a few exceptions.
+Computer ships never repair damage.
+If they did, the players could never beat them.
+They play well enough as it is.
+As a consolation, the computer ships can fire double shot every turn.
+That fluke is a good reason to keep your distance.
+The
+.I Driver
+figures out the moves of the computer ships.
+It computes them with a typical A.I. distance
+function and a depth first search to find the maximum "score."
 It seems to work fairly well, although I'll be the first to admit it isn't
 perfect.
 .SH HOW TO PLAY
 Commands are given to
 .I Sail
-by typing a single character.  You will then be prompted for further
-input.  A brief summary of the commands follows.
+by typing a single character.
+You will then be prompted for further input.
+A brief summary of the commands follows.
 .br
 .SH COMMAND SUMMARY
 .nf
@@ -590,7 +665,8 @@ Wind from the N, blowing a fresh breeze.
 Wind from the S, blowing a fresh breeze.
 
 .fi
-This is John Paul Jones' first famous battle.  Aboard the Bonhomme
+This is John Paul Jones' first famous battle.
+Aboard the Bonhomme
 Richard, he was able to overcome the Serapis's greater firepower
 by quickly boarding her.
 .nf
@@ -761,8 +837,10 @@ Wind from the N, blowing a fresh breeze.
 Wind from the E, blowing a gale.
 
 .fi
-A scenario for you Horny fans.  Remember, he sank the Natividad
-against heavy odds and winds.  Hint: don't try to board the Natividad,
+A scenario for you Horny fans.
+Remember, he sank the Natividad
+against heavy odds and winds.
+Hint: don't try to board the Natividad,
 her crew is much bigger, albeit green.
 .nf
 
@@ -788,8 +866,10 @@ Wind from the S, blowing a strong breeze.
 .nf
 Wind from the E, blowing a fresh breeze.
 
-The only battle Hornblower ever lost.  He was able to dismast one
-ship and stern rake the others though.  See if you can do as well.
+.fi
+The only battle Hornblower ever lost.
+He was able to dismast one ship and stern rake the others though.
+See if you can do as well.
 .nf
 
 (b) Sutherland        74 gun Ship of the Line (crack crew) (26 pts)
