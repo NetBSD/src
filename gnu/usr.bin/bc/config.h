@@ -33,7 +33,7 @@
 #define PACKAGE "bc"
 
 /* Package VERSION number */
-#define VERSION "1.04"
+#define VERSION "1.05"
 
 /* define if the math lib is to be loaded from a file. */
 /* #undef BC_MATH_FILE */
@@ -46,6 +46,9 @@
 
 /* Define if you have the isgraph function.  */
 #define HAVE_ISGRAPH 1
+
+/* Define if you have the setvbuf function.  */
+#define HAVE_SETVBUF 1
 
 /* Define if you have the <lib.h> header file.  */
 /* #undef HAVE_LIB_H */
