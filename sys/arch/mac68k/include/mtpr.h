@@ -1,5 +1,3 @@
-
-
 /*
  * Copyright (c) 1988 University of Utah.
  * Copyright (c) 1982, 1990 The Regents of the University of California.
@@ -40,7 +38,8 @@
 /*
  * from: Utah $Hdr: mtpr.h 1.1 90/07/09$
  *
- *	@(#)mtpr.h	7.2 (Berkeley) 11/3/90
+ *	from: @(#)mtpr.h	7.2 (Berkeley) 11/3/90
+ *	$Id: mtpr.h,v 1.2 1993/11/29 00:38:17 briggs Exp $
  */
 
 /*
@@ -55,7 +54,10 @@ extern unsigned char ssir;
 
 #define SIR_NET		0x1
 #define SIR_CLOCK	0x2
+#define SIR_SERIAL	0x4
 
 #define siroff(x)	ssir &= ~(x)
 #define setsoftnet()	ssir |= SIR_NET
 #define setsoftclock()	ssir |= SIR_CLOCK
+#define setsoftserial()	ssir |= SIR_SERIAL
+
