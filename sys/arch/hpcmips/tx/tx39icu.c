@@ -1,4 +1,4 @@
-/*	$NetBSD: tx39icu.c,v 1.3 1999/12/22 15:35:35 uch Exp $ */
+/*	$NetBSD: tx39icu.c,v 1.4 1999/12/23 17:24:30 uch Exp $ */
 
 /*
  * Copyright (c) 1999, by UCHIYAMA Yasushi
@@ -59,7 +59,7 @@
 u_int32_t tx39intrvec; /* debug use */
 
 /* IRQHIGH lines list */
-static struct irqhigh_list {
+static const struct irqhigh_list {
 	int qh_pri; /* IRQHIGH priority */
 	int qh_set; /* Register set */
 	int qh_bit; /* bit offset in the register set */
@@ -165,7 +165,8 @@ int	tx39icu_intr __P((u_int32_t, u_int32_t, u_int32_t, u_int32_t));
 void	tx39_intr_dump __P((struct tx39icu_softc*));
 void	tx39_intr_decode __P((int, int*, int*));
 void	tx39_irqhigh_disestablish __P((tx_chipset_tag_t, int, int, int));
-void	tx39_irqhigh_establish __P((tx_chipset_tag_t, int, int, int, int (*) __P((void*)), void*));
+void	tx39_irqhigh_establish __P((tx_chipset_tag_t, int, int, int, 
+				    int (*) __P((void*)), void*));
 void	tx39_irqhigh_intr __P((u_int32_t, u_int32_t, u_int32_t, u_int32_t));
 int	tx39_irqhigh __P((int, int));
 
@@ -233,14 +234,21 @@ tx39icu_attach(parent, self, aux)
 #endif /* WINCE_DEFAULT_SETTING */
 
 	/* Clear all pending interrupts */
-	tx_conf_write(tc, TX39_INTRCLEAR1_REG, tx_conf_read(tc, TX39_INTRSTATUS1_REG));
-	tx_conf_write(tc, TX39_INTRCLEAR2_REG, tx_conf_read(tc, TX39_INTRSTATUS2_REG));
-	tx_conf_write(tc, TX39_INTRCLEAR3_REG, tx_conf_read(tc, TX39_INTRSTATUS3_REG));
-	tx_conf_write(tc, TX39_INTRCLEAR4_REG, tx_conf_read(tc, TX39_INTRSTATUS4_REG));
-	tx_conf_write(tc, TX39_INTRCLEAR5_REG, tx_conf_read(tc, TX39_INTRSTATUS5_REG));
+	tx_conf_write(tc, TX39_INTRCLEAR1_REG, 
+		      tx_conf_read(tc, TX39_INTRSTATUS1_REG));
+	tx_conf_write(tc, TX39_INTRCLEAR2_REG, 
+		      tx_conf_read(tc, TX39_INTRSTATUS2_REG));
+	tx_conf_write(tc, TX39_INTRCLEAR3_REG, 
+		      tx_conf_read(tc, TX39_INTRSTATUS3_REG));
+	tx_conf_write(tc, TX39_INTRCLEAR4_REG, 
+		      tx_conf_read(tc, TX39_INTRSTATUS4_REG));
+	tx_conf_write(tc, TX39_INTRCLEAR5_REG, 
+		      tx_conf_read(tc, TX39_INTRSTATUS5_REG));
 #ifdef TX392X
-	tx_conf_write(tc, TX39_INTRCLEAR7_REG, tx_conf_read(tc, TX39_INTRSTATUS7_REG));
-	tx_conf_write(tc, TX39_INTRCLEAR8_REG, tx_conf_read(tc, TX39_INTRSTATUS8_REG));
+	tx_conf_write(tc, TX39_INTRCLEAR7_REG, 
+		      tx_conf_read(tc, TX39_INTRSTATUS7_REG));
+	tx_conf_write(tc, TX39_INTRCLEAR8_REG, 
+		      tx_conf_read(tc, TX39_INTRSTATUS8_REG));
 #endif /* TX392X */
 
 	/* Enable global interrupts */
