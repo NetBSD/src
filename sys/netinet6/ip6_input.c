@@ -1,4 +1,4 @@
-/*	$NetBSD: ip6_input.c,v 1.51 2001/12/22 01:40:03 itojun Exp $	*/
+/*	$NetBSD: ip6_input.c,v 1.52 2002/05/12 15:48:39 wiz Exp $	*/
 /*	$KAME: ip6_input.c,v 1.188 2001/03/29 05:34:31 itojun Exp $	*/
 
 /*
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip6_input.c,v 1.51 2001/12/22 01:40:03 itojun Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip6_input.c,v 1.52 2002/05/12 15:48:39 wiz Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -357,7 +357,7 @@ ip6_input(m)
 	 * support IPv4-less kernel compilation, we cannot support SIIT
 	 * environment at all.  So, it makes more sense for us to reject any
 	 * malicious packets for non-SIIT environment, than try to do a
-	 * partical support for SIIT environment.
+	 * partial support for SIIT environment.
 	 */
 	if (IN6_IS_ADDR_V4MAPPED(&ip6->ip6_src) ||
 	    IN6_IS_ADDR_V4MAPPED(&ip6->ip6_dst)) {
