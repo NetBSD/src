@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.190 2003/02/18 13:36:52 pk Exp $ */
+/*	$NetBSD: autoconf.c,v 1.191 2003/02/21 19:04:07 pk Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -299,8 +299,11 @@ bootstrap()
 
 #ifdef DDB
 	if ((bi_sym = lookup_bootinfo(BTINFO_SYMTAB)) != NULL) {
-		bi_sym->ssym += KERNBASE;
-		bi_sym->esym += KERNBASE;
+		if (bi_sym->ssym < KERNBASE) {
+			/* Assume low-loading boot loader */
+			bi_sym->ssym += KERNBASE;
+			bi_sym->esym += KERNBASE;
+		}
 		ddb_init(bi_sym->nsym, (int *)bi_sym->ssym,
 		    (int *)bi_sym->esym);
 	} else {
