@@ -1,4 +1,4 @@
-/*	$NetBSD: nextdma.c,v 1.11 1999/02/13 09:44:50 dbj Exp $	*/
+/*	$NetBSD: nextdma.c,v 1.12 1999/02/14 10:19:51 dbj Exp $	*/
 /*
  * Copyright (c) 1998 Darrin B. Jewell
  * All rights reserved.
@@ -264,11 +264,13 @@ next_dma_rotate(nd)
 
 #ifdef DIAGNOSTIC
 	if (nd->_nd_map_cont) {
-		if (!DMA_BEGINALIGNED(nd->_nd_map_cont->dm_segs[nd->_nd_idx].ds_addr)) {
+		if (!DMA_BEGINALIGNED(nd->_nd_map_cont->dm_segs[nd->_nd_idx_cont].ds_addr)) {
+			next_dma_print(nd);
 			panic("DMA request unaligned at start\n");
 		}
-		if (!DMA_ENDALIGNED(nd->_nd_map_cont->dm_segs[nd->_nd_idx].ds_addr + 
-				nd->_nd_map_cont->dm_segs[nd->_nd_idx].ds_len)) {
+		if (!DMA_ENDALIGNED(nd->_nd_map_cont->dm_segs[nd->_nd_idx_cont].ds_addr + 
+				nd->_nd_map_cont->dm_segs[nd->_nd_idx_cont].ds_len)) {
+			next_dma_print(nd);
 			panic("DMA request unaligned at end\n");
 		}
 	}
@@ -418,6 +420,10 @@ next_dma_print(nd)
 	dd_saved_start  = bus_space_read_4(nd->nd_bst, nd->nd_bsh, DD_SAVED_START);
 	dd_saved_stop   = bus_space_read_4(nd->nd_bst, nd->nd_bsh, DD_SAVED_STOP);
 
+	/* NDMAP is Next DMA Print (really!) */
+
+	printf("NDMAP: nd->_nd_dmadir = 0x%08x\n",nd->_nd_dmadir);
+
 	if (nd->_nd_map) {
 		printf("NDMAP: nd->_nd_map->dm_mapsize = %d\n",
 				nd->_nd_map->dm_mapsize);
@@ -523,14 +529,7 @@ nextdma_intr(arg)
 		if (!nd->_nd_map_cont) {
 
 #ifdef DIAGNOSTIC
-			if (state & (DMACSR_SUPDATE|DMACSR_ENABLE)) {
-				next_dma_print(nd);
-				panic("unexpected bits set in DMA state at shutdown (0x%b)\n", state,DMACSR_BITS);
-			}
-#endif
-
-#ifdef DIAGNOSTIC
-#if 0 /* Sometimes the DMA registers have totally bogus values when read.
+#if 1 /* Sometimes the DMA registers have totally bogus values when read.
 			 * Until that's understood, we skip this check
 			 */
 
@@ -557,6 +556,16 @@ nextdma_intr(arg)
 					panic("unexpected DMA limit at shutdown 0x%08x, 0x%08x, 0x%08x",
 							next,limit,expected_limit);
 				}
+			}
+#endif
+#endif
+
+#if 0
+#ifdef DIAGNOSTIC
+			if (state & (DMACSR_SUPDATE|DMACSR_ENABLE)) {
+				next_dma_print(nd);
+				panic("DMA: unexpected bits set in DMA state at shutdown (0x%b)\n", 
+						state,DMACSR_BITS);
 			}
 #endif
 #endif
