@@ -1,4 +1,4 @@
-/*	$NetBSD: stat.h,v 1.16 1995/03/26 20:24:48 jtc Exp $	*/
+/*	$NetBSD: stat.h,v 1.17 1995/06/15 23:08:08 cgd Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -73,9 +73,18 @@ struct stat {
 	uid_t	  st_uid;		/* user ID of the file's owner */
 	gid_t	  st_gid;		/* group ID of the file's group */
 	dev_t	  st_rdev;		/* device type */
+#ifndef _POSIX_SOURCE
 	struct	timespec st_atimespec;	/* time of last access */
 	struct	timespec st_mtimespec;	/* time of last data modification */
 	struct	timespec st_ctimespec;	/* time of last file status change */
+#else
+	time_t	  st_atime;		/* time of last access */
+	long	  st_atimensec;		/* nsec of last access */
+	time_t	  st_mtime;		/* time of last data modification */
+	long	  st_mtimensec;		/* nsec of last data modification */
+	time_t	  st_ctime;		/* time of last file status change */
+	long	  st_ctimensec;		/* nsec of last file status change */
+#endif
 	off_t	  st_size;		/* file size, in bytes */
 	int64_t	  st_blocks;		/* blocks allocated for file */
 	u_int32_t st_blksize;		/* optimal blocksize for I/O */
@@ -84,9 +93,14 @@ struct stat {
 	int32_t	  st_lspare;
 	int64_t	  st_qspare[2];
 };
-#define st_atime st_atimespec.ts_sec
-#define st_mtime st_mtimespec.ts_sec
-#define st_ctime st_ctimespec.ts_sec
+#ifndef _POSIX_SOURCE
+#define	st_atime	st_atimespec.ts_sec
+#define	st_atimensec	st_atimespec.ts_nsec
+#define	st_mtime	st_mtimespec.ts_sec
+#define	st_mtimensec	st_mtimespec.ts_nsec
+#define	st_ctime	st_ctimespec.ts_sec
+#define	st_ctimensec	st_ctimespec.ts_nsec
+#endif
 
 #define	S_ISUID	0004000			/* set user id on execution */
 #define	S_ISGID	0002000			/* set group id on execution */
