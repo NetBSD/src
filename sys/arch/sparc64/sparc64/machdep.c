@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.27 1999/01/09 22:10:22 thorpej Exp $ */
+/*	$NetBSD: machdep.c,v 1.28 1999/01/10 19:37:47 eeh Exp $ */
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -1787,6 +1787,7 @@ sparc_bus_map(t, iospace, addr, size, flags, vaddr, hp)
 {
 	vaddr_t v;
 	u_int64_t pa;
+	paddr_t	pm_flags;
 static	vaddr_t iobase = IODEV_BASE;
 
 
@@ -1817,13 +1818,24 @@ static	vaddr_t iobase = IODEV_BASE;
 	printf("\nsparc_bus_map: type %x addr %p virt %p paddr %llx\n",
 		       iospace, addr, *hp, (paddr_t)pa);
 #endif
+	switch (iospace) {
+	case PCI_CONFIG_BUS_SPACE:
+		pm_flags = PMAP_NC|PMAP_LITTLE;
+		break;
+	case PCI_MEMORY_BUS_SPACE:
+		pm_flags = PMAP_LITTLE;
+		break;
+	default:
+		pm_flags = PMAP_NC;
+		break;
+	}
 
 	do {
 #ifdef NOTDEF_DEBUG
 		printf("sparc_bus_map: phys %llx virt %p hp %llx\n", 
 		       (int)(pa>>32), (int)pa, v, (int)((*hp)>>32), (int)*hp);
 #endif
-		pmap_enter_phys(pmap_kernel(), v, pa | PMAP_NC, NBPG,
+		pmap_enter_phys(pmap_kernel(), v, pa | pm_flags, NBPG,
 				(flags&BUS_SPACE_MAP_READONLY) ? VM_PROT_READ
 				: VM_PROT_READ | VM_PROT_WRITE, 1);
 		v += PAGE_SIZE;
