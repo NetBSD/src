@@ -1,4 +1,4 @@
-/*	$NetBSD: wc.c,v 1.27 2002/03/23 21:36:08 enami Exp $	*/
+/*	$NetBSD: wc.c,v 1.28 2002/05/02 13:07:13 wiz Exp $	*/
 
 /*
  * Copyright (c) 1980, 1987, 1991, 1993
@@ -43,7 +43,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1987, 1991, 1993\n\
 #if 0
 static char sccsid[] = "@(#)wc.c	8.2 (Berkeley) 5/2/95";
 #else
-__RCSID("$NetBSD: wc.c,v 1.27 2002/03/23 21:36:08 enami Exp $");
+__RCSID("$NetBSD: wc.c,v 1.28 2002/05/02 13:07:13 wiz Exp $");
 #endif
 #endif /* not lint */
 
@@ -340,6 +340,6 @@ static void
 usage()
 {
 
-	(void)fprintf(stderr, "usage: wc [-clw] [file ...]\n");
+	(void)fprintf(stderr, "usage: wc [-c | -m] [-lw] [file ...]\n");
 	exit(1);
 }
