@@ -1,4 +1,4 @@
-/*	$NetBSD: kvm_sun3.c,v 1.5 1997/03/21 18:44:25 gwr Exp $	*/
+/*	$NetBSD: kvm_sun3.c,v 1.6 1997/04/09 21:15:58 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)kvm_sparc.c	8.1 (Berkeley) 6/4/93";
 #else
-static char *rcsid = "$NetBSD: kvm_sun3.c,v 1.5 1997/03/21 18:44:25 gwr Exp $";
+static char *rcsid = "$NetBSD: kvm_sun3.c,v 1.6 1997/04/09 21:15:58 thorpej Exp $";
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -61,6 +61,8 @@ static char *rcsid = "$NetBSD: kvm_sun3.c,v 1.5 1997/03/21 18:44:25 gwr Exp $";
 #include <kvm.h>
 #include <db.h>
 
+#include <m68k/kcore.h>
+
 #include "kvm_private.h"
 #include "kvm_m68k.h"
 
@@ -75,38 +77,24 @@ struct kvm_ops _kvm_ops_sun3 = {
 	_kvm_sun3_kvatop,
 	_kvm_sun3_pa2off };
 
+#define	_kvm_pg_pa(v, s, pte)	\
+	(((pte) & (s)->pg_frame) << (v)->pgshift)
+
+#define	_kvm_va_segnum(s, x)	\
+	((u_int)(x) >> (s)->segshift)
+#define	_kvm_pte_num_mask(v)	\
+	(0xf << (v)->pgshift)
+#define	_kvm_va_pte_num(v, va)	\
+	(((va) & _kvm_pte_num_mask((v))) >> (v)->pgshift)
+
 /*
- * XXX: I don't like this, but until all arch/.../include files
- * are exported into some user-accessable place, there is no
- * convenient alternative to copying these definitions here.
+ * XXX Re-define these here, no other place for them.
  */
-
-/* sun3/include/param.h */
-#define PGSHIFT 	13
-#define NBPG		8192
-#define PGOFSET 	(NBPG-1)
-#define SEGSHIFT	17
-#define KERNBASE	0x0E000000
-
-/* sun3/include/pte.h */
-#define NKSEG 256	/* kernel segmap entries */
-#define NPAGSEG 16	/* pages per segment */
-#define PG_VALID	0x80000000
-#define PG_FRAME	0x0007FFFF
-#define PG_PA(pte) ((pte & PG_FRAME) <<PGSHIFT)
-
-#define VA_SEGNUM(x)	((u_int)(x) >> SEGSHIFT)
-#define VA_PTE_NUM_MASK (0xF << PGSHIFT)
-#define VA_PTE_NUM(va) ((va & VA_PTE_NUM_MASK) >> PGSHIFT)
-
-/* sun3/include/kcore.h */
-typedef struct cpu_kcore_hdr {
-	phys_ram_seg_t	ram_segs[4];
-	u_char ksegmap[NKSEG];
-} cpu_kcore_hdr_t;
+#define	NKSEG		256	/* kernel segmap entries */
+#define	NPAGSEG		16	/* pages per segment */
 
 /* Finally, our local stuff... */
-struct vmstate {
+struct private_vmstate {
 	/* Page Map Entry Group (PMEG) */
 	int   pmeg[NKSEG][NPAGSEG];
 };
@@ -121,11 +109,12 @@ int
 _kvm_sun3_initvtop(kd)
 	kvm_t *kd;
 {
-	register char *p;
+	cpu_kcore_hdr_t *h = kd->cpu_data;
+	char *p;
 
 	p = kd->cpu_data;
-	p += (NBPG - sizeof(kcore_seg_t));
-	kd->vmst = (struct vmstate *)p;
+	p += (h->page_size - sizeof(kcore_seg_t));
+	kd->vmst->private = p;
 
 	return (0);
 }
@@ -135,7 +124,7 @@ _kvm_sun3_freevtop(kd)
 	kvm_t *kd;
 {
 	/* This was set by pointer arithmetic, not allocation. */
-	kd->vmst = (void*)0;
+	kd->vmst->private = (void*)0;
 }
 
 /*
@@ -150,42 +139,44 @@ _kvm_sun3_kvatop(kd, va, pap)
 	u_long va;
 	u_long *pap;
 {
-	register cpu_kcore_hdr_t *ckh;
-	u_int segnum, sme, ptenum;
+	cpu_kcore_hdr_t *h = kd->cpu_data;
+	struct sun3_kcore_hdr *s = &h->un._sun3;
+	struct vmstate *v = kd->vmst;
+	struct private_vmstate *pv = v->private;
 	int pte, offset;
+	u_int segnum, sme, ptenum;
 	u_long pa;
 
 	if (ISALIVE(kd)) {
 		_kvm_err(kd, 0, "vatop called in live kernel!");
-		return((off_t)0);
+		return(0);
 	}
-	ckh = kd->cpu_data;
 
-	if (va < KERNBASE) {
+	if (va < h->kernbase) {
 		_kvm_err(kd, 0, "not a kernel address");
-		return((off_t)0);
+		return(0);
 	}
 
 	/*
 	 * Get the segmap entry (sme) from the kernel segmap.
 	 * Note: only have segmap entries from KERNBASE to end.
 	 */
-	segnum = VA_SEGNUM(va - KERNBASE);
-	ptenum = VA_PTE_NUM(va);
-	offset = va & PGOFSET;
+	segnum = _kvm_va_segnum(s, va - h->kernbase);
+	ptenum = _kvm_va_pte_num(v, va);
+	offset = va & v->pgofset;
 
 	/* The segmap entry selects a PMEG. */
-	sme = ckh->ksegmap[segnum];
-	pte = kd->vmst->pmeg[sme][ptenum];
+	sme = s->ksegmap[segnum];
+	pte = pv->pmeg[sme][ptenum];
 
-	if ((pte & PG_VALID) == 0) {
+	if ((pte & (s)->pg_valid) == 0) {
 		_kvm_err(kd, 0, "page not valid (VA=0x%x)", va);
 		return (0);
 	}
-	pa = PG_PA(pte) + offset;
+	pa = _kvm_pg_pa(v, s, pte) + offset;
 
 	*pap = pa;
-	return (NBPG - offset);
+	return (h->page_size - offset);
 }
 
 /*
@@ -198,4 +189,3 @@ _kvm_sun3_pa2off(kd, pa)
 {
 	return(kd->dump_off + pa);
 }
-
