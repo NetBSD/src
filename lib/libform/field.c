@@ -1,4 +1,4 @@
-/*	$NetBSD: field.c,v 1.7 2001/02/16 03:19:32 blymn Exp $	*/
+/*	$NetBSD: field.c,v 1.8 2001/03/25 12:21:06 blymn Exp $	*/
 /*-
  * Copyright (c) 1998-1999 Brett Lymn
  *                         (blymn@baea.com.au, brett_lymn@yahoo.com.au)
@@ -111,8 +111,22 @@ field_userptr(FIELD *field)
 int
 set_field_opts(FIELD *field, Form_Options options)
 {
+	int i;
+	
 	FIELD *fp = (field == NULL) ? &_formi_default_field : field;
 
+	  /* not allowed to set opts if the field is the current one */
+	if ((field != NULL) && (field->parent != NULL) &&
+	    (field->parent->cur_field == field->index))
+		return E_CURRENT;
+	
+	if ((options & O_STATIC) == O_STATIC) {
+		for (i = 0; i < field->nbuf; i++) {
+			if (field->buffers[i].length > field->cols)
+				field->buffers[i].string[field->cols] = '\0';
+		}
+	}
+	
 	fp->opts = options;
 
 	return E_OK;
@@ -124,8 +138,22 @@ set_field_opts(FIELD *field, Form_Options options)
 int
 field_opts_on(FIELD *field, Form_Options options)
 {
+	int i;
+	
 	FIELD *fp = (field == NULL) ? &_formi_default_field : field;
 
+	  /* not allowed to set opts if the field is the current one */
+	if ((field != NULL) && (field->parent != NULL) &&
+	    (field->parent->cur_field == field->index))
+		return E_CURRENT;
+	
+	if ((options & O_STATIC) == O_STATIC) {
+		for (i = 0; i < field->nbuf; i++) {
+			if (field->buffers[i].length > field->cols)
+				field->buffers[i].string[field->cols] = '\0';
+		}
+	}
+	
 	fp->opts |= options;
 
 	return E_OK;
@@ -139,6 +167,11 @@ field_opts_off(FIELD *field, Form_Options options)
 {
 	FIELD *fp = (field == NULL) ? &_formi_default_field : field;
 
+	  /* not allowed to set opts if the field is the current one */
+	if ((field != NULL) && (field->parent != NULL) &&
+	    (field->parent->cur_field == field->index))
+		return E_CURRENT;
+	
 	fp->opts &= ~options;
 	return E_OK;
 }
@@ -163,6 +196,14 @@ set_field_just(FIELD *field, int justification)
 {
 	FIELD *fp = (field == NULL) ? &_formi_default_field : field;
 
+	  /*
+	   * not allowed to set justification if the field is
+	   * the current one
+	   */
+	if ((field != NULL) && (field->parent != NULL) &&
+	    (field->parent->cur_field == field->index))
+		return E_CURRENT;
+	
 	if ((justification < MIN_JUST_STYLE) /* check justification valid */
 	    || (justification > MAX_JUST_STYLE))
 		return E_BAD_ARGUMENT;
@@ -212,11 +253,14 @@ dynamic_field_info(FIELD *field, int *drows, int *dcols, int *max)
 	if (field == NULL)
 		return E_BAD_ARGUMENT;
 
-	if ((field->opts & O_STATIC) == O_STATIC) /* check if field dynamic */
-		return E_BAD_ARGUMENT;
-
-	*drows = field->drows;
-	*dcols = field->dcols;
+	if ((field->opts & O_STATIC) == O_STATIC) {
+		*drows = field->rows;
+		*dcols = field->cols;
+	} else {
+		*drows = field->drows;
+		*dcols = field->dcols;
+	}
+	
 	*max = field->max;
 
 	return E_OK;
