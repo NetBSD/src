@@ -18,6 +18,9 @@ ac_help="$ac_help
 ac_help="$ac_help
   --enable-sim-powerpc "
 ac_help="$ac_help
+  --with-mmalloc=MMALLOC_DIR
+  use the GNU mapped-malloc package in MMALLOC_DIR "
+ac_help="$ac_help
   --enable-gdbtk "
 ac_help="$ac_help
   --with-x                use the X Window System"
@@ -1785,7 +1788,7 @@ fi
 if test "${enable_sim_powerpc+set}" = set; then
   enableval="$enable_sim_powerpc"
   case "${enableval}" in
-yes)	powerpc_sim=yes ;;
+yes)	powerpc_sim=yes ;; SIM=../sim/ppc/libsim.a ; SIM_OBS=remote-sim.o ;;
 no)	powerpc_sim=no ;;
 *)	{ echo "configure: error: bad value ${enableval} given for sim-powerpc option" 1>&2; exit 1; } ;;
 esac
@@ -1795,6 +1798,25 @@ fi
 
 
 
+
+
+
+
+mmalloc_dir=../mmalloc
+mmalloc_yn=MMALLOC_YES
+# Check whether --with-mmalloc or --without-mmalloc was given.
+if test "${with_mmalloc+set}" = set; then
+  withval="$with_mmalloc"
+  case "${withval}" in
+  no)	mmalloc_yn=MMALLOC_NO ;;
+  *)	mmalloc_dir="${withval}";;
+  esac
+else
+  if test ! -d "${mmalloc_dir}"; then
+    echo "configure: warning: mmalloc not found - building without it" 1>&2;
+    mmalloc_yn=MMALLOC_NO
+  fi
+fi
 
 
 
@@ -1833,6 +1855,7 @@ case "${host}" in
 
 a29k-*-*)		gdb_host=ultra3 ;;
 
+alpha-*-netbsd*)	gdb_host=nbsd ;;
 alpha-*-osf1*)		gdb_host=alpha-osf1 ;;
 alpha-*-osf2*)		gdb_host=alpha-osf2 ;;
 alpha-*-osf[3456789]*)	gdb_host=alpha-osf3 ;;
@@ -1925,6 +1948,7 @@ ns32k-umax-*)		gdb_host=umax ;;
 ns32k-utek-sysv*)	gdb_host=merlin ;;
 
 powerpc-*-aix*)		gdb_host=aix ;;
+powerpc-*-netbsd*)	gdb_host=nbsd ;;
 powerpcle-*-cygwin32)	gdb_host=cygwin32 ;;
 pn-*-*)			gdb_host=pn ;;
 
@@ -1990,6 +2014,7 @@ a29k-*-sym1*)		gdb_target=ultra3 ;;
 a29k-*-udi*)		gdb_target=a29k-udi ;;
 a29k-*-vxworks*)        gdb_target=vx29k ;;
 
+alpha-*-netbsd*)	gdb_target=nbsd ;;
 alpha-*-osf*)		gdb_target=alpha-osf1 ;;
 
 
@@ -2128,17 +2153,10 @@ powerpc-*-netware*)	gdb_target=ppc-nw
 
 powerpc-*-aix4*)	gdb_target=aix4 ;;
 powerpc-*-aix*)		gdb_target=aix ;;
+powerpc-*-netbsd*)	gdb_target=nbsd ;;
 powerpcle-*-cygwin32)	gdb_target=cygwin32 ;;
-powerpc-*-eabi*)	if test x"$powerpc_sim" = x"yes"; then
-			  gdb_target=ppc-sim
-			else
-			  gdb_target=ppc-eabi
-			fi ;;
-powerpcle-*-eabi*)	if test x"$powerpc_sim" = x"yes"; then
-			  gdb_target=ppcle-sim
-			else
-			  gdb_target=ppcle-eabi
-			fi ;;
+powerpc-*-eabi*)	gdb_target=ppc-eabi ;;
+powerpcle-*-eabi*)	gdb_target=ppcle-eabi ;;
 
 pyramid-*-*)		gdb_target=pyramid ;;
 
@@ -2394,9 +2412,13 @@ s%@TKHDIR@%$TKHDIR%g
 s%@TKLIB@%$TKLIB%g
 s%@ENABLE_GDBTK@%$ENABLE_GDBTK%g
 s%@X_LDFLAGS@%$X_LDFLAGS%g
+s%@SIM@%$SIM%g
+s%@SIM_OBS@%$SIM_OBS%g
 s%@ENABLE_CFLAGS@%$ENABLE_CFLAGS%g
 s%@ENABLE_CLIBS@%$ENABLE_CLIBS%g
 s%@ENABLE_OBS@%$ENABLE_OBS%g
+s%@mmalloc_dir@%$mmalloc_dir%g
+s%@mmalloc_yn@%$mmalloc_yn%g
 s%@target_subdir@%$target_subdir%g
 /@host_makefile_frag@/r $host_makefile_frag
 s%@host_makefile_frag@%%g
