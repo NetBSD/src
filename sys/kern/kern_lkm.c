@@ -36,7 +36,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	$Id: kern_lkm.c,v 1.6 1993/09/05 01:36:28 cgd Exp $
+ *	$Id: kern_lkm.c,v 1.6.2.1 1993/10/16 02:39:19 mycroft Exp $
  */
 
 #include "param.h"
@@ -622,8 +622,8 @@ int			cmd;
 	struct lkm_dev		*args = lkmtp->private.lkm_dev;
 	int			i;
 	int			err = 0;
-	extern int		nblkdev;	/* i386/i386/conf.c*/
-	extern int		nchrdev;	/* i386/i386/conf.c*/
+	extern int		nblkdev;	/* in conf.c */
+	extern int		nchrdev;	/* in conf.c */
 
 	switch( cmd) {
 	case LKM_E_LOAD:
