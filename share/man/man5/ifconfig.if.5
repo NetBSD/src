@@ -1,4 +1,4 @@
-.\"	$NetBSD: ifconfig.if.5,v 1.6 2002/10/05 05:24:41 tron Exp $
+.\"	$NetBSD: ifconfig.if.5,v 1.7 2002/10/13 00:46:59 wiz Exp $
 .\"
 .\" Copyright (c) 1996 Matthew R. Green
 .\" All rights reserved.
@@ -26,7 +26,7 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.Dd January 12, 2001
+.Dd October 5, 2002
 .Dt IFCONFIG.IF 5
 .Os
 .Sh NAME
@@ -84,7 +84,7 @@ and
 up
 # autoconfigure IPv4 address
 !dhclient $int
-# autoconfigure IPv6 address.  be sure to set $ip6mode to autohost.
+# autoconfigure IPv6 address.  Be sure to set $ip6mode to autohost.
 !rtsol $int
 .Ed
 .Pp
@@ -101,7 +101,8 @@ Earlier versions of
 .Pa /etc/rc.d/network
 required an explicit
 .Sq create
-command for such interfaces. This is now handled automatically.
+command for such interfaces.
+This is now handled automatically.
 .Sh FILES
 .Pa /etc/rc.d/network
 .Sh SEE ALSO
