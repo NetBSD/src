@@ -1,4 +1,4 @@
-/*	$NetBSD: tpcalib.c,v 1.1 2000/01/10 14:07:59 takemura Exp $	*/
+/*	$NetBSD: tpcalib.c,v 1.2 2000/01/12 15:00:47 uch Exp $	*/
 
 /*
  * Copyright (c) 1999 Shin Takemura All rights reserved.
@@ -113,7 +113,14 @@ tpcalib_ioctl(sc, cmd, data, flag, p)
 				    &sc->sc_ay, &sc->sc_by, &sc->sc_cy)) {
 			printf("tpcalib: MRA error");
 			tpcalib_reset(sc);
+			
+			return (-1);
 		} else {
+			sc->sc_minx = d->minx;
+			sc->sc_maxx = d->maxx;
+			sc->sc_miny = d->miny;
+			sc->sc_maxy = d->maxy;
+			sc->sc_saved = *d;
 			DPRINTF(("tpcalib: Ax=%d Bx=%d Cx=%d\n",
 				 sc->sc_ax, sc->sc_bx, sc->sc_cx));
 			DPRINTF(("tpcalib: Ay=%d By=%d Cy=%d\n",
