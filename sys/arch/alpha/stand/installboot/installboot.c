@@ -1,4 +1,4 @@
-/* $NetBSD: installboot.c,v 1.19 1999/10/04 19:19:11 ross Exp $ */
+/* $NetBSD: installboot.c,v 1.20 1999/10/04 19:23:19 ross Exp $ */
 
 /*
  * Copyright (c) 1999 Ross Harvey.  All rights reserved.
@@ -62,6 +62,7 @@
 
 #include <sys/param.h>				/* XXX for roundup, howmany */
 #include <sys/stat.h>
+#include <include/disklabel.h>
 #include <sys/disklabel.h>
 #include <dev/sun/disklabel.h>
 #include <assert.h>
@@ -403,7 +404,8 @@ sun_bootstrap(struct boot_block * const bb)
 	}
 	resum(bb, bb16);
 	if (verbose)
-		printf("final harmonized checksum: %016lx\n", bb->bb_cksum);
+		printf("final harmonized checksum: %016llx\n",
+		    (long long)bb->bb_cksum);
 	check_sparc(bb, "final");
 }
 
