@@ -1,4 +1,4 @@
-/*	$NetBSD: pci_machdep.c,v 1.31 2001/05/15 14:14:49 leo Exp $	*/
+/*	$NetBSD: pci_machdep.c,v 1.32 2001/05/28 07:22:37 leo Exp $	*/
 
 /*
  * Copyright (c) 1996 Leo Weppelman.  All rights reserved.
@@ -188,7 +188,7 @@ void		*auxp;
 		 * find one, try to initialize it to a 'standard' text
 		 * mode (80x25).
 		 */
-		check_for_vga();
+		check_for_vga(pba.pba_iot, pba.pba_memt);
 		return;
 	}
 
