@@ -1,10 +1,10 @@
 #!/bin/sh
 #
-# $NetBSD: NETWORK,v 1.1 2000/07/26 00:11:49 lukem Exp $
+# $NetBSD: NETWORK,v 1.2 2001/04/05 23:55:00 thorpej Exp $
 #
 
 # PROVIDE: NETWORK
-# REQUIRE: network dhclient
+# REQUIRE: network dhclient altqd
 
 #	This is a dummy dependancy, for services which require networking
 #	to be operational before starting.
