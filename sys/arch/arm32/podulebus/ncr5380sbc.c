@@ -1,4 +1,4 @@
-/*	$NetBSD: ncr5380sbc.c,v 1.1 1996/01/31 23:26:07 mark Exp $	*/
+/*	$NetBSD: ncr5380sbc.c,v 1.2 1996/03/27 22:05:19 mark Exp $	*/
 
 /*
  * Copyright (c) 1996 Melvin Tang-Richardson (Modified for weird regs)
@@ -127,9 +127,7 @@ static void	ncr5380_machine __P((struct ncr5380_softc *));
  * Debugging stuff
  *****************************************************************/
 
-#ifdef DDB
-int Debugger();
-#else
+#ifndef DDB
 /* This is used only in recoverable places. */
 #define Debugger() printf("Debug: ncr5380.c:%d\n", __LINE__)
 #endif
