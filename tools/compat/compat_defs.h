@@ -1,4 +1,4 @@
-/*	$NetBSD: compat_defs.h,v 1.31 2003/10/27 00:12:42 lukem Exp $	*/
+/*	$NetBSD: compat_defs.h,v 1.31.2.1 2004/06/14 20:19:44 tron Exp $	*/
 
 #ifndef	__NETBSD_COMPAT_DEFS_H__
 #define	__NETBSD_COMPAT_DEFS_H__
@@ -32,7 +32,19 @@
 #include <paths.h>
 #include <stdarg.h>
 #include <stdio.h>
+
+/* So extra NetBSD extentions don't get pulled in */
+#ifdef __NetBSD__
+#define _POSIX_C_SOURCE
+#undef _NETBSD_SOURCE
+#endif
+
 #include <stdlib.h>
+
+#ifdef __NetBSD__
+#undef _POSIX_C_SOURCE
+#endif
+
 #include <string.h>
 
 #if HAVE_SYS_CDEFS_H
