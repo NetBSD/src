@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.7 1998/02/19 02:17:06 cgd Exp $
+#	$NetBSD: Makefile,v 1.8 1998/05/08 00:36:07 enami Exp $
 
 LIB=	gcc
 NOLINT=		nolint (gcc private fns library)
@@ -41,8 +41,8 @@ LIB2SOBJS=${LIB2OBJS:.o=.so}
 
 ${LIB2OBJS}: libgcc2.c
 	${COMPILE.c} -DL${.PREFIX} -o ${.TARGET} ${.CURDIR}/libgcc2.c
-	@${LD} -x -r ${.TARGET}
-	@mv a.out ${.TARGET}
+	@${LD} -x -r -o ${.TARGET}.o ${.TARGET}
+	@mv ${.TARGET}.o ${.TARGET}
 
 #${LIB1SOBJS}: libgcc1.c
 #	${COMPILE.c} -fpic -DL${.PREFIX} -o ${.TARGET} ${.CURDIR}/libgcc1.c
