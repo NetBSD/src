@@ -1,4 +1,4 @@
-/* $NetBSD: if_ie.c,v 1.9 2002/10/02 02:23:51 thorpej Exp $ */
+/* $NetBSD: if_ie.c,v 1.10 2002/10/02 03:31:59 thorpej Exp $ */
 
 /*
  * Copyright (c) 1995 Melvin Tang-Richardson.
@@ -61,7 +61,7 @@
 
 #include <sys/param.h>
 
-__RCSID("$NetBSD: if_ie.c,v 1.9 2002/10/02 02:23:51 thorpej Exp $");
+__RCSID("$NetBSD: if_ie.c,v 1.10 2002/10/02 03:31:59 thorpej Exp $");
 
 #include <sys/systm.h>
 #include <sys/kernel.h>
@@ -201,7 +201,7 @@ static void start_receiver(struct ie_softc *);
  */
 
 CFATTACH_DECL(ie, sizeof(struct ie_softc),
-	ieprobe, ieattach, NULL, NULL);
+    ieprobe, ieattach, NULL, NULL);
 
 /* Let's go! */
 

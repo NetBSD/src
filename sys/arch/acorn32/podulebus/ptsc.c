@@ -1,4 +1,4 @@
-/*	$NetBSD: ptsc.c,v 1.6 2002/10/02 02:23:52 thorpej Exp $	*/
+/*	$NetBSD: ptsc.c,v 1.7 2002/10/02 03:31:59 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1995 Scott Stevens
@@ -69,7 +69,7 @@ void ptscattach __P((struct device *, struct device *, void *));
 int  ptscmatch  __P((struct device *, struct cfdata *, void *));
 
 CFATTACH_DECL(ptsc, sizeof(struct ptsc_softc),
-	ptscmatch, ptscattach, NULL, NULL);
+    ptscmatch, ptscattach, NULL, NULL);
 
 int ptsc_intr		 __P((void *arg));
 int ptsc_setup_dma	 __P((struct sfas_softc *sc, void *ptr, int len,

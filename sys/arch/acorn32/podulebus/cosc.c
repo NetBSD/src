@@ -1,4 +1,4 @@
-/*	$NetBSD: cosc.c,v 1.8 2002/10/02 02:23:51 thorpej Exp $	*/
+/*	$NetBSD: cosc.c,v 1.9 2002/10/02 03:31:59 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1996 Mark Brinicombe
@@ -63,7 +63,7 @@ void coscattach	__P((struct device *, struct device *, void *));
 int coscmatch	__P((struct device *, struct cfdata *, void *));
 
 CFATTACH_DECL(cosc, sizeof(struct cosc_softc),
-	coscmatch, coscattach, NULL, NULL);
+    coscmatch, coscattach, NULL, NULL);
 
 int cosc_intr		 __P((void *arg));
 int cosc_setup_dma	 __P((struct esc_softc *sc, void *ptr, int len,
