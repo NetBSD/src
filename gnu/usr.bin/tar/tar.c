@@ -18,7 +18,7 @@ along with GNU Tar; see the file COPYING.  If not, write to
 the Free Software Foundation, 675 Mass Ave, Cambridge, MA 02139, USA.  */
 
 #ifndef lint
-static char rcsid[] = "$NetBSD: tar.c,v 1.8 1997/02/07 03:54:35 mikel Exp $";
+static char rcsid[] = "$NetBSD: tar.c,v 1.9 1997/05/08 06:40:28 mikel Exp $";
 #endif /* not lint */
 
 /*
@@ -226,7 +226,7 @@ main (argc, argv)
     case CMD_CREATE:
       create_archive ();
       if (f_totals)
-	fprintf (stderr, "Total bytes written: %d\n", tot_written);
+	fprintf (stderr, "Total bytes written: %qu\n", tot_written);
       break;
     case CMD_EXTRACT:
       if (f_volhdr)

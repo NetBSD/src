@@ -17,7 +17,7 @@ You should have received a copy of the GNU General Public License
 along with GNU Tar; see the file COPYING.  If not, write to
 the Free Software Foundation, 675 Mass Ave, Cambridge, MA 02139, USA.
 
-	$Id: tar.h,v 1.5 1993/08/07 07:42:55 cgd Exp $
+	$Id: tar.h,v 1.6 1997/05/08 06:40:29 mikel Exp $
 */
 
 /* major() and minor() macros (among other things) defined here for hpux */
@@ -170,7 +170,7 @@ TAR_EXTERN char filename_terminator;	/* \n or \0. */
 TAR_EXTERN char *tar;		/* Name of this program */
 TAR_EXTERN struct sp_array *sparsearray;	/* Pointer to the start of the scratch space */
 TAR_EXTERN int sp_array_size;	/* Initial size of the sparsearray */
-TAR_EXTERN int tot_written;	/* Total written to output */
+TAR_EXTERN u_quad_t tot_written;	/* Total written to output */
 TAR_EXTERN struct re_pattern_buffer
  *label_pattern;		/* compiled regex for extract label */
 TAR_EXTERN char **ar_files;	/* list of tape drive names */
