@@ -1,5 +1,5 @@
-/*	$NetBSD: pfkey_dump.c,v 1.12 2003/03/09 01:03:55 lukem Exp $	*/
-/*	$KAME: pfkey_dump.c,v 1.37 2002/05/14 10:50:56 itojun Exp $	*/
+/*	$NetBSD: pfkey_dump.c,v 1.13 2003/07/22 03:33:10 itojun Exp $	*/
+/*	$KAME: pfkey_dump.c,v 1.41 2003/06/27 06:05:37 itojun Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, 1998, and 1999 WIDE Project.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: pfkey_dump.c,v 1.12 2003/03/09 01:03:55 lukem Exp $");
+__RCSID("$NetBSD: pfkey_dump.c,v 1.13 2003/07/22 03:33:10 itojun Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -126,6 +126,9 @@ static struct val2str str_alg_auth[] = {
 	{ SADB_X_AALG_MD5, "md5", },
 	{ SADB_X_AALG_SHA, "sha", },
 	{ SADB_X_AALG_NULL, "null", },
+	{ SADB_X_AALG_SHA2_256, "hmac-sha2-256", },
+	{ SADB_X_AALG_SHA2_384, "hmac-sha2-384", },
+	{ SADB_X_AALG_SHA2_512, "hmac-sha2-512", },
 	{ -1, NULL, },
 };
 
@@ -139,9 +142,7 @@ static struct val2str str_alg_enc[] = {
 #endif
 	{ SADB_X_EALG_CAST128CBC, "cast128-cbc", },
 	{ SADB_X_EALG_BLOWFISHCBC, "blowfish-cbc", },
-#ifdef SADB_X_EALG_RIJNDAELCBC
 	{ SADB_X_EALG_RIJNDAELCBC, "rijndael-cbc", },
-#endif
 	{ -1, NULL, },
 };
 
@@ -469,8 +470,8 @@ str_prefport(family, pref, port, ulp)
 	u_int family, pref, port, ulp;
 {
 	static char buf[128];
-	char prefbuf[10];
-	char portbuf[10];
+	char prefbuf[128];
+	char portbuf[128];
 	int plen;
 
 	switch (family) {
