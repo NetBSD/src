@@ -1,4 +1,4 @@
-/* $NetBSD: isp.c,v 1.49 2000/02/12 02:32:21 mjacob Exp $ */
+/* $NetBSD: isp.c,v 1.50 2000/02/19 01:53:56 mjacob Exp $ */
 /*
  * Copyright (C) 1997, 1998, 1999 National Aeronautics & Space Administration
  * All rights reserved.
@@ -805,9 +805,8 @@ isp_scsi_init(isp)
 	 *
 	 * Ultra2 F/W always has had fast posting (and LVD transitions)
 	 *
-	 * Ultra and older (i.e., SBus) cards may not. Assume SBus cards
-	 * do not, and only guess that 4.55.0 <= x < 5.0.0 (initiator
-	 * only) and x >= 7.55 (initiator/target) has fast posting.
+	 * Ultra and older (i.e., SBus) cards may not. It's just safer
+	 * to assume not for them.
 	 */
 
 	mbs.param[0] = MBOX_SET_FW_FEATURES;
@@ -816,13 +815,6 @@ isp_scsi_init(isp)
 		mbs.param[1] |= FW_FEATURE_LVD_NOTIFY;
 	if (IS_ULTRA2(isp) || IS_1240(isp))
 		mbs.param[1] |= FW_FEATURE_FAST_POST;
-#ifndef	ISP_NO_FASTPOST_SCSI
-	else if ((ISP_FW_REVX(isp->isp_fwrev) >= ISP_FW_REV(4, 55, 0) &&
-	    (ISP_FW_REVX(isp->isp_fwrev) < ISP_FW_REV(5, 0, 0))) ||
-	    (ISP_FW_REVX(isp->isp_fwrev) >= ISP_FW_REV(7, 55, 0))) {
-		mbs.param[1] |= FW_FEATURE_FAST_POST;
-	}
-#endif
 	if (mbs.param[1] != 0) {
 		u_int16_t sfeat = mbs.param[1];
 		isp_mboxcmd(isp, &mbs);
@@ -1658,8 +1650,9 @@ isp_pdb_sync(isp, target)
 	/*
 	 * Now log in any fabric devices
 	 */
-	for (lp = &fcp->portdb[FC_SNS_ID+1];
+	for (lim = FC_SNS_ID+1, lp = &fcp->portdb[FC_SNS_ID+1];
 	     lp < &fcp->portdb[MAX_FC_TARG]; lp++) {
+		u_int32_t portid;
 		mbreg_t mbs;
 
 		/*
@@ -1667,67 +1660,77 @@ isp_pdb_sync(isp, target)
 		 */
 		if (lp->port_wwn == 0)
 			continue;
+
 		/*
 		 * Don't try to log into yourself.
 		 */
-		if (lp->portid == fcp->isp_portid)
+		if ((portid = lp->portid) == fcp->isp_portid)
 			continue;
 
 		/*
-		 * Force a logout.
+		 * Force a logout if we were logged in.
 		 */
-		lp->loopid = loopid = lp - fcp->portdb;
-		mbs.param[0] = MBOX_FABRIC_LOGOUT;
-		mbs.param[1] = lp->loopid << 8;
-		mbs.param[2] = 0;
-		mbs.param[3] = 0;
-		isp_mboxcmd(isp, &mbs);
+		if (lp->valid) {
+			mbs.param[0] = MBOX_FABRIC_LOGOUT;
+			mbs.param[1] = lp->loopid << 8;
+			mbs.param[2] = 0;
+			mbs.param[3] = 0;
+			isp_mboxcmd(isp, &mbs);
+			lp->valid = 0;
+		}
 
 		/*
 		 * And log in....
 		 */
-		mbs.param[0] = MBOX_FABRIC_LOGIN;
-		mbs.param[1] = lp->loopid << 8;
-		mbs.param[2] = lp->portid >> 16;
-		mbs.param[3] = lp->portid & 0xffff;
-		isp_mboxcmd(isp, &mbs);
-		switch (mbs.param[0]) {
-		case  MBOX_COMMAND_COMPLETE:
-			break;
-		case MBOX_COMMAND_ERROR:
-			switch (mbs.param[1]) {
-			case	1:
-				PRINTF("%s: no loop\n", isp->isp_name);
+		loopid = lp - fcp->portdb;
+		lp->loopid = 0;
+		lim = 0;
+		do {
+			mbs.param[0] = MBOX_FABRIC_LOGIN;
+			mbs.param[1] = loopid << 8;
+			if (IS_2200(isp)) {
+				/* only issue a PLOGI if not logged in */
+				mbs.param[1] |= 0x1;
+			}
+			mbs.param[2] = portid >> 16;
+			mbs.param[3] = portid & 0xffff;
+			isp_mboxcmd(isp, &mbs);
+			switch (mbs.param[0]) {
+			case MBOX_LOOP_ID_USED:
+				/*
+				 * Try the next available loop id.
+				 */
+				loopid++;
 				break;
-			case	2:
-				PRINTF("%s: IOCB buffer could not be alloced\n",
-				    isp->isp_name);
+			case MBOX_PORT_ID_USED:
+				/*
+				 * This port is already logged in.
+				 * Snaffle the loop id it's using.
+				 */
+				if ((loopid = mbs.param[1]) == 0) {
+					lim = -1;
+				}
+				/* FALLTHROUGH */
+			case MBOX_COMMAND_COMPLETE:
+				lp->loopid = loopid;
+				lim = 1;
 				break;
-			case	3:
-				PRINTF("%s: could not alloc xchange resource\n",
-				    isp->isp_name);
-				break;
-			case	4:
-				PRINTF("%s: ELS timeout\n", isp->isp_name);
-				break;
-			case	5:
-				PRINTF("%s: no fabric port\n", isp->isp_name);
-				break;
-			case	6:
-				PRINTF("%s: remote device cannot be a target\n",
-				    isp->isp_name);
-				break;
+			case MBOX_COMMAND_ERROR:
+				PRINTF("%s: command error in PLOGI (0x%x)\n",
+				    isp->isp_name, mbs.param[1]);
+				/* FALLTHROUGH */
+			case MBOX_ALL_IDS_USED: /* We're outta IDs */
 			default:
+				lim = -1;
 				break;
 			}
+		} while (lim == 0 && loopid < MAX_FC_TARG);
+		if (lim < 0)
 			continue;
-		default:
-			continue;
-		}
 
 		lp->valid = 1;
 		lp->fabdev = 1;
-		if (isp_getpdb(isp, loopid, &pdb) != 0) {
+		if (isp_getpdb(isp, lp->loopid, &pdb) != 0) {
 			/*
 			 * Be kind...
 			 */
@@ -1745,7 +1748,6 @@ isp_pdb_sync(isp, target)
 		lp->roles =
 		    (pdb.pdb_prli_svc3 & SVC3_ROLE_MASK) >> SVC3_ROLE_SHIFT;
 		lp->portid = BITS2WORD(pdb.pdb_portid_bits);
-		lp->loopid = loopid;
 		lp->node_wwn =
 		    (((u_int64_t)pdb.pdb_nodename[0]) << 56) |
 		    (((u_int64_t)pdb.pdb_nodename[1]) << 48) |
@@ -1768,6 +1770,7 @@ isp_pdb_sync(isp, target)
 		 * Check to make sure this all makes sense.
 		 */
 		if (lp->node_wwn && lp->port_wwn) {
+			loopid = lp - fcp->portdb;
 			(void) isp_async(isp, ISPASYNC_PDB_CHANGED, &loopid);
 			continue;
 		}
@@ -1827,6 +1830,8 @@ isp_scan_fabric(isp)
 		MemoryBarrier();
 		isp_mboxcmd(isp, &mbs);
 		if (mbs.param[0] != MBOX_COMMAND_COMPLETE) {
+			IDPRINTF(1, ("%s: SNS failed (0x%x)\n", isp->isp_name,
+			    mbs.param[0]));
 			return (-1);
 		}
 		ISP_UNSWIZZLE_SNS_RSP(isp, resp, SNS_GAN_RESP_SIZE >> 1);
@@ -1878,13 +1883,15 @@ ispscsicmd(xs)
 	}
 
 	/*
-	 * We *could* do the different sequence type that has close
-	 * to the whole Queue Entry for the command...
+	 * Check command CDB length, etc.. We really are limited to 16 bytes
+	 * for Fibre Channel, but can do up to 44 bytes in parallel SCSI,
+	 * but probably only if we're running fairly new firmware (we'll
+	 * let the old f/w choke on an extended command queue entry).
 	 */
 
-	if (XS_CDBLEN(xs) > (IS_FC(isp) ? 16 : 12) || XS_CDBLEN(xs) == 0) {
+	if (XS_CDBLEN(xs) > (IS_FC(isp)? 16 : 44) || XS_CDBLEN(xs) == 0) {
 		PRINTF("%s: unsupported cdb length (%d, CDB[0]=0x%x)\n",
-		    isp->isp_name, XS_CDBLEN(xs), XS_CDBP(xs)[0]);
+		    isp->isp_name, XS_CDBLEN(xs), XS_CDBP(xs)[0] & 0xff);
 		XS_SETERR(xs, HBA_BOTCH);
 		return (CMD_COMPLETE);
 	}
@@ -2034,7 +2041,10 @@ ispscsicmd(xs)
 	if (IS_FC(isp)) {
 		reqp->req_header.rqs_entry_type = RQSTYPE_T2RQS;
 	} else {
-		reqp->req_header.rqs_entry_type = RQSTYPE_REQUEST;
+		if (XS_CDBLEN(xs) > 12)
+			reqp->req_header.rqs_entry_type = RQSTYPE_CMDONLY;
+		else
+			reqp->req_header.rqs_entry_type = RQSTYPE_REQUEST;
 	}
 	reqp->req_header.rqs_flags = 0;
 	reqp->req_header.rqs_seqno = 0;
@@ -2147,16 +2157,17 @@ isp_control(isp, ctl, arg)
 		 * Issue a bus reset.
 		 */
 		mbs.param[0] = MBOX_BUS_RESET;
+		mbs.param[2] = 0;
 		if (IS_SCSI(isp)) {
 			mbs.param[1] =
 			    ((sdparam *) isp->isp_param)->isp_bus_reset_delay;
 			if (mbs.param[1] < 2)
 				mbs.param[1] = 2;
 			bus = *((int *) arg);
-			mbs.param[2] = bus;
+			if (IS_DUALBUS(isp))
+				mbs.param[2] = bus;
 		} else {
 			mbs.param[1] = 10;
-			mbs.param[2] = 0;
 			bus = 0;
 		}
 		isp->isp_sendmarker = 1 << bus;
@@ -2209,8 +2220,8 @@ isp_control(isp, ctl, arg)
 			mbs.param[1] =
 			    (bus << 15) | (XS_TGT(xs) << 8) | XS_LUN(xs);
 		}
-		mbs.param[2] = handle >> 16;
-		mbs.param[3] = handle & 0xffff;
+		mbs.param[3] = handle >> 16;
+		mbs.param[2] = handle & 0xffff;
 		isp_mboxcmd(isp, &mbs);
 		if (mbs.param[0] != MBOX_COMMAND_COMPLETE) {
 			PRINTF("%s: isp_control MBOX_ABORT failure (code %x)\n",
@@ -3559,6 +3570,12 @@ command_known:
 			    "COMMAND_PARAM_ERROR\n", isp->isp_name, opcode);
 		}
 		break;
+
+	case MBOX_LOOP_ID_USED:
+	case MBOX_PORT_ID_USED:
+	case MBOX_ALL_IDS_USED:
+		break;
+
 
 	/*
 	 * Be silent about these...
