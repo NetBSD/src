@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.6 2004/05/23 02:24:50 lukem Exp $
+#	$NetBSD: Makefile,v 1.7 2004/08/07 08:58:19 jdolecek Exp $
 
 MKPRIVATELIB=	yes
 
@@ -9,7 +9,7 @@ LIB=	cvs
 DIST=	${IDIST}/lib
 .PATH:	${DIST}
 
-SRCS=	argmatch.c dup2.c getdate.y getline.c getopt.c getopt1.c \
+SRCS=	argmatch.c getdate.y getline.c getopt.c getopt1.c \
 	md5.c regex.c savecwd.c sighandle.c stripslash.c xgetwd.c \
 	yesno.c
 
