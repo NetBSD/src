@@ -37,7 +37,7 @@
  * From:
  *	Id: fdesc_vfsops.c,v 4.1 1993/12/17 10:47:45 jsp Rel
  *
- *	$Id: fdesc_vfsops.c,v 1.6 1994/01/05 09:01:00 cgd Exp $
+ *	$Id: fdesc_vfsops.c,v 1.7 1994/01/05 11:07:31 cgd Exp $
  */
 
 /*
@@ -97,7 +97,7 @@ fdesc_mount(mp, path, data, ndp, p)
 		return (error);
 
 	MALLOC(fmp, struct fdescmount *, sizeof(struct fdescmount),
-				M_UFSMNT, M_WAITOK);	/* XXX */
+				M_MISCFSMNT, M_WAITOK);
 	rvp->v_type = VDIR;
 	rvp->v_flag |= VROOT;
 	VTOFDESC(rvp)->fd_type = Froot;
@@ -184,7 +184,7 @@ fdesc_unmount(mp, mntflags, p)
 	/*
 	 * Finally, throw away the fdescmount structure
 	 */
-	free(mp->mnt_data, M_UFSMNT);	/* XXX */
+	free(mp->mnt_data, M_MISCFSMNT);
 	mp->mnt_data = 0;
 	return 0;
 }

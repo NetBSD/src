@@ -37,7 +37,7 @@
  * From:
  *	Id: fdesc_vnops.c,v 4.1 1993/12/17 10:47:45 jsp Rel
  *
- *	$Id: fdesc_vnops.c,v 1.8 1994/01/05 09:01:02 cgd Exp $
+ *	$Id: fdesc_vnops.c,v 1.9 1994/01/05 11:07:44 cgd Exp $
  */
 
 /*
@@ -106,7 +106,7 @@ loop:
 	}
 	fdescvplock |= FDL_LOCKED;
 
-	error = getnewvnode(VT_UFS, mp, &fdesc_vnodeops, vpp);
+	error = getnewvnode(VT_FDESC, mp, &fdesc_vnodeops, vpp);
 	if (error)
 		goto out;
 	if (nvpp)
