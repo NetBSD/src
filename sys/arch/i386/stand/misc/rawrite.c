@@ -142,8 +142,7 @@ void main(void)
 
   printf("Enter destination drive: ");
   scanf("%s", fname);
-  drive = fname[0];
-  drive = (islower(drive) ? toupper(drive) : drive) - 'A';
+  drive = (fname[0] - 'A') & 0xf;
   printf("Please insert a formatted diskette into ");
   printf("drive %c: and press -ENTER- :", drive + 'A');
   while (bioskey(1) == 0) ;				/* Wait...	*/
