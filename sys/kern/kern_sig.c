@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_sig.c,v 1.112.2.30 2002/09/26 19:46:53 nathanw Exp $	*/
+/*	$NetBSD: kern_sig.c,v 1.112.2.31 2002/10/11 22:30:47 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1991, 1993
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_sig.c,v 1.112.2.30 2002/09/26 19:46:53 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_sig.c,v 1.112.2.31 2002/10/11 22:30:47 nathanw Exp $");
 
 #include "opt_ktrace.h"
 #include "opt_compat_sunos.h"
@@ -1542,8 +1542,15 @@ sigexit(struct lwp *l, int signum)
 	 * in the same process.
 	 */
 	if (p->p_flag & P_WEXIT)
-		lwp_coredump_hook(l, NULL);
+		(*p->p_userret)(l, p->p_userret_arg);
 	p->p_flag |= P_WEXIT;
+	/* We don't want to switch away from exiting. */
+	/* XXX multiprocessor: stop LWPs on other processors. */
+	if (l->l_flag & L_SA) {
+		l->l_flag &= ~L_SA;
+		p->p_flag &= ~P_SA;
+	}
+
 	/* Make other LWPs stick around long enough to be dumped */
 	p->p_userret = lwp_coredump_hook;
 	p->p_userret_arg = NULL;
@@ -1622,11 +1629,6 @@ coredump(struct lwp *l)
 	error = build_corename(p, name);
 	if (error)
 		return error;
-
-	/* We don't want to switch away from crashing. */
-	/* XXX multiprocessor: stop LWPs on other processors. */
-	if (l->l_flag & L_SA) 
-		l->l_flag &= ~L_SA;
 
 	NDINIT(&nd, LOOKUP, NOFOLLOW, UIO_SYSSPACE, name, p);
 	error = vn_open(&nd, O_CREAT | FWRITE | FNOSYMLINK, S_IRUSR | S_IWUSR);
