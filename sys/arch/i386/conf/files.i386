@@ -1,4 +1,4 @@
-#	$Id: files.i386,v 1.39 1994/03/12 02:55:21 cgd Exp $
+#	$Id: files.i386,v 1.40 1994/03/23 00:37:23 cgd Exp $
 #
 arch/i386/i386/autoconf.c	standard
 arch/i386/i386/db_disasm.c	optional ddb
@@ -23,6 +23,7 @@ arch/i386/isa/bsd_audio.c	optional audio device-driver
 arch/i386/isa/bt742a.c		optional bt device-driver requires isa scsi not aha
 arch/i386/isa/clock.c		optional isa
 arch/i386/isa/com.c		optional com device-driver requires isa
+arch/i386/isa/ast.c		optional ast device-driver requires com isa
 arch/i386/isa/cy.c		optional cy device-driver requires isa
 arch/i386/isa/elink.c		optional ep or ie
 arch/i386/isa/fd.c		optional fd device-driver requires isa
