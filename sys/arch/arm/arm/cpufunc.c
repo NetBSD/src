@@ -1,4 +1,4 @@
-/*	$NetBSD: cpufunc.c,v 1.55 2003/03/18 11:20:56 bsh Exp $	*/
+/*	$NetBSD: cpufunc.c,v 1.56 2003/04/18 10:45:23 scw Exp $	*/
 
 /*
  * arm7tdmi support code Copyright (c) 2001 John Fremlin
@@ -1438,6 +1438,9 @@ parse_cpu_options(args, optlist, cpuctrl)
 {
 	int integer;
 
+	if (args == NULL)
+		return(cpuctrl);
+
 	while (optlist->co_name) {
 		if (get_bootconf_option(args, optlist->co_name,
 		    BOOTOPT_TYPE_BOOLEAN, &integer)) {
@@ -1832,6 +1835,9 @@ sa11x0_setup(args)
 	cpuctrl |= CPU_CONTROL_BEND_ENABLE;
 #endif
 
+	if (vector_page == ARM_VECTORS_HIGH)
+		cpuctrl |= CPU_CONTROL_VECRELOC;
+
 	/* Clear out the cache */
 	cpu_idcache_wbinv_all();
 
@@ -1875,6 +1881,9 @@ ixp12x0_setup(args)
 #ifdef __ARMEB__
 	cpuctrl |= CPU_CONTROL_BEND_ENABLE;
 #endif
+
+	if (vector_page == ARM_VECTORS_HIGH)
+		cpuctrl |= CPU_CONTROL_VECRELOC;
 
 	/* Clear out the cache */
 	cpu_idcache_wbinv_all();
@@ -1927,13 +1936,16 @@ xscale_setup(args)
 		 | CPU_CONTROL_WBUF_ENABLE | CPU_CONTROL_ROM_ENABLE
 		 | CPU_CONTROL_BEND_ENABLE | CPU_CONTROL_AFLT_ENABLE
 		 | CPU_CONTROL_LABT_ENABLE | CPU_CONTROL_BPRD_ENABLE
-		 | CPU_CONTROL_CPCLK;
+		 | CPU_CONTROL_CPCLK | CPU_CONTROL_VECRELOC;
 
 	cpuctrl = parse_cpu_options(args, xscale_options, cpuctrl);
 
 #ifdef __ARMEB__
 	cpuctrl |= CPU_CONTROL_BEND_ENABLE;
 #endif
+
+	if (vector_page == ARM_VECTORS_HIGH)
+		cpuctrl |= CPU_CONTROL_VECRELOC;
 
 	/* Clear out the cache */
 	cpu_idcache_wbinv_all();
