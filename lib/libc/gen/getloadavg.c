@@ -33,21 +33,13 @@
 
 #if defined(LIBC_SCCS) && !defined(lint)
 /*static char sccsid[] = "from: @(#)getloadavg.c	6.2 (Berkeley) 6/29/90";*/
-static char rcsid[] = "$Id: getloadavg.c,v 1.2 1993/08/01 18:31:55 mycroft Exp $";
+static char rcsid[] = "$Id: getloadavg.c,v 1.3 1994/01/28 04:49:27 cgd Exp $";
 #endif /* LIBC_SCCS and not lint */
 
-#include <sys/param.h>
 #include <sys/types.h>
-#include <sys/file.h>
-#include <nlist.h>
-
-static struct nlist nl[] = {
-	{ "_averunnable" },
-#define	X_AVERUNNABLE	0
-	{ "_fscale" },
-#define	X_FSCALE	1
-	{ "" },
-};
+#include <sys/time.h>
+#include <sys/resource.h>
+#include <sys/kinfo.h>
 
 /*
  *  getloadavg() -- Get system load averages.
@@ -59,36 +51,20 @@ getloadavg(loadavg, nelem)
 	double loadavg[];
 	int nelem;
 {
-	static int need_nlist = 1;
-	fixpt_t	averunnable[3];
-	int fscale, kmemfd, i;
-	int alreadyopen;
+	int needed, err, i;
+	struct loadavg averunnable;
 
-	if ((alreadyopen = kvm_openfiles(NULL, NULL, NULL)) == -1)
-		return (-1);
-	/* 
-	 * cache nlist 
-	 */
-	if (need_nlist) {
-		if (kvm_nlist(nl) != 0)
-			goto bad;
-		need_nlist = 0;
-	}
-	if (kvm_read((off_t)nl[X_AVERUNNABLE].n_value, (char *)averunnable, 
-	    sizeof(averunnable)) != sizeof(averunnable))
-		goto bad;
-	if (kvm_read( (off_t)nl[X_FSCALE].n_value, (char *)&fscale, 
-	    sizeof(fscale)) != sizeof(fscale))
-		goto bad;
-	nelem = MIN(nelem, sizeof(averunnable) / sizeof(averunnable[0]));
+	needed = getkerninfo(KINFO_LOADAVG, NULL, NULL, 0);
+	if (needed != sizeof(struct loadavg))
+		return -1;
+
+	err = getkerninfo(KINFO_LOADAVG, &averunnable, &needed, 0);
+	if (err != 0 || needed != sizeof(struct loadavg))
+		return -1;
+
+	if (nelem > 3)
+		nelem = 3;
 	for (i = 0; i < nelem; i++)
-		loadavg[i] = (double) averunnable[i] / fscale;
-	if (!alreadyopen)
-		kvm_close();
-	return (nelem);
-
-bad:
-	if (!alreadyopen)
-		kvm_close();
-	return (-1);
+		loadavg[i] = (double) averunnable.ldavg[i] / averunnable.fscale;
+	return nelem;
 }
