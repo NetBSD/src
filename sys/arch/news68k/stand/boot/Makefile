@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.5 2000/04/13 14:19:57 tsutsui Exp $
+#	$NetBSD: Makefile,v 1.6 2000/04/13 14:44:02 tsutsui Exp $
 
 COMMON= ${.CURDIR}/../common
 .ifnmake(print-objdir)
@@ -16,6 +16,7 @@ BINMODE= 444
 
 SIZE?= size
 STRIP?= strip
+OBJCOPY?= objcopy
 
 S= ${.CURDIR}/../../../..
 
@@ -47,7 +48,7 @@ ${PROG}: ${OBJS} machine m68k
 	${LD} ${LDFLAGS} -o ${PROG} ${OBJS} ${LIBS}
 	-${SIZE} ${PROG}
 	${STRIP} ${PROG}
-	tail -c +33 ${PROG} > ${PROG}.tmp
+	${OBJCOPY} -O binary ${PROG} ${PROG}.tmp
 	mv ${PROG}.tmp ${PROG}
 
 .include <bsd.prog.mk>
