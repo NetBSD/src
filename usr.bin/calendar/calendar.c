@@ -1,4 +1,4 @@
-/*	$NetBSD: calendar.c,v 1.22 2000/04/14 06:07:14 simonb Exp $	*/
+/*	$NetBSD: calendar.c,v 1.23 2000/11/29 15:29:51 christos Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993, 1994
@@ -43,7 +43,7 @@ __COPYRIGHT("@(#) Copyright (c) 1989, 1993\n\
 #if 0
 static char sccsid[] = "@(#)calendar.c	8.4 (Berkeley) 1/7/95";
 #endif
-__RCSID("$NetBSD: calendar.c,v 1.22 2000/04/14 06:07:14 simonb Exp $");
+__RCSID("$NetBSD: calendar.c,v 1.23 2000/11/29 15:29:51 christos Exp $");
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -325,10 +325,10 @@ opencal()
 	int fd, pdes[2];
 
 	/* open up calendar file as stdin */
-	if (!freopen(fname, "r", stdin)) {
+	if (!freopen(fname, "rf", stdin)) {
 		if (doall)
 			return (NULL);
-		errx(1, "no calendar file.");
+		err(1, "Cannot open `%s'", fname);
 	}
 	if (pipe(pdes) < 0)
 		return (NULL);
