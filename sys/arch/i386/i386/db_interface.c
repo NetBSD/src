@@ -1,4 +1,4 @@
-/*	$NetBSD: db_interface.c,v 1.30.2.9 2002/04/27 14:39:34 sommerfeld Exp $	*/
+/*	$NetBSD: db_interface.c,v 1.30.2.10 2002/05/18 17:27:31 sommerfeld Exp $	*/
 
 /*
  * Mach Operating System
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: db_interface.c,v 1.30.2.9 2002/04/27 14:39:34 sommerfeld Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_interface.c,v 1.30.2.10 2002/05/18 17:27:31 sommerfeld Exp $");
 
 #include "opt_ddb.h"
 
@@ -61,11 +61,11 @@ __KERNEL_RCSID(0, "$NetBSD: db_interface.c,v 1.30.2.9 2002/04/27 14:39:34 sommer
 #include <ddb/db_output.h>
 #include <ddb/ddbvar.h>
 
-extern label_t	*db_recover;
 extern char *trap_type[];
 extern int trap_types;
 
 int	db_active = 0;
+db_regs_t ddb_regs;	/* register state */
 
 void db_mach_cpu (db_expr_t, int, db_expr_t, char *);
 

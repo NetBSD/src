@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.376.2.35 2002/04/27 20:24:46 sommerfeld Exp $	*/
+/*	$NetBSD: machdep.c,v 1.376.2.36 2002/05/18 17:27:31 sommerfeld Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2000 The NetBSD Foundation, Inc.
@@ -76,7 +76,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.376.2.35 2002/04/27 20:24:46 sommerfeld Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.376.2.36 2002/05/18 17:27:31 sommerfeld Exp $");
 
 #include "opt_cputype.h"
 #include "opt_ddb.h"
@@ -177,7 +177,17 @@ __KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.376.2.35 2002/04/27 20:24:46 sommerfel
 char machine[] = "i386";		/* cpu "architecture" */
 char machine_arch[] = "i386";		/* machine == machine_arch */
 
+volatile u_int32_t ipending;
+
+int imasks[NIPL];
+int iunmask[NIPL];
+
+u_int cpu_serial[3];
+
 char bootinfo[BOOTINFO_MAXSIZE];
+
+/* Our exported CPU info; we have only one right now. */
+struct cpu_info cpu_info_store;
 
 struct bi_devmatch *i386_alldisks = NULL;
 int i386_ndisks = 0;
@@ -196,7 +206,6 @@ struct mtrr_funcs *mtrr_funcs;
 int	physmem;
 int	dumpmem_low;
 int	dumpmem_high;
-int	boothowto;
 int	cpu_class;
 int	i386_fpu_present;
 int	i386_fpu_exception;

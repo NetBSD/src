@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.59.2.31 2002/04/27 14:39:39 sommerfeld Exp $	*/
+/*	$NetBSD: cpu.h,v 1.59.2.32 2002/05/18 17:27:33 sommerfeld Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -251,12 +251,14 @@ do {									\
  * encapsulate the previous machine state in an opaque
  * clockframe; for now, use generic intrframe.
  *
- * XXX intrframe has a lot of gunk we don't need.
+ * Note: Since spllowersoftclock() does not actually unmask the currently
+ * running (hardclock) interrupt, CLKF_BASEPRI() *must* always be 0; otherwise
+ * we could stall hardclock ticks if another interrupt takes too long.
  */
 #define clockframe intrframe
 
 #define	CLKF_USERMODE(frame)	USERMODE((frame)->if_cs, (frame)->if_eflags)
-#define	CLKF_BASEPRI(frame)	((frame)->if_ppl == 0)
+#define	CLKF_BASEPRI(frame)	(0)
 #define	CLKF_PC(frame)		((frame)->if_eip)
 #define	CLKF_INTR(frame)	((frame)->if_ppl & (1 << IPL_TAGINTR))
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.h,v 1.12.10.19 2001/12/29 23:31:07 sommerfeld Exp $	*/
+/*	$NetBSD: intr.h,v 1.12.10.20 2002/05/18 17:27:34 sommerfeld Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2001 The NetBSD Foundation, Inc.
@@ -85,10 +85,10 @@
 #ifndef _LOCORE
 
 extern volatile u_int32_t lapic_tpr;
-volatile u_int32_t ipending;
+extern volatile u_int32_t ipending;
 
-int imasks[NIPL];
-int iunmask[NIPL];
+extern int imasks[NIPL];
+extern int iunmask[NIPL];
 
 #define CPSHIFT 4
 #define IMASK(level) imasks[(level)>>CPSHIFT]

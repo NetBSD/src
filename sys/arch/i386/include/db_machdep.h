@@ -1,4 +1,4 @@
-/*	$NetBSD: db_machdep.h,v 1.15.2.4 2001/06/18 03:33:32 sommerfeld Exp $	*/
+/*	$NetBSD: db_machdep.h,v 1.15.2.5 2002/05/18 17:27:33 sommerfeld Exp $	*/
 
 /* 
  * Mach Operating System
@@ -42,7 +42,7 @@ typedef	long		db_expr_t;	/* expression - signed */
 
 typedef struct trapframe db_regs_t;
 #ifndef MULTIPROCESSOR
-db_regs_t	ddb_regs;	/* register state */
+extern db_regs_t ddb_regs;	/* register state */
 #define	DDB_REGS	(&ddb_regs)
 #else
 extern db_regs_t *ddb_regp;
