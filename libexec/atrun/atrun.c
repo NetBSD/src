@@ -1,4 +1,4 @@
-/*	$NetBSD: atrun.c,v 1.12 2003/03/03 17:14:36 dsl Exp $	*/
+/*	$NetBSD: atrun.c,v 1.13 2003/05/17 22:57:30 itojun Exp $	*/
 
 /*
  *  atrun.c - run jobs queued by at; run with root privileges.
@@ -57,7 +57,7 @@ static char *namep;
 #if 0
 static char rcsid[] = "$OpenBSD: atrun.c,v 1.7 1997/09/08 22:12:10 millert Exp $";
 #else
-__RCSID("$NetBSD: atrun.c,v 1.12 2003/03/03 17:14:36 dsl Exp $");
+__RCSID("$NetBSD: atrun.c,v 1.13 2003/05/17 22:57:30 itojun Exp $");
 #endif
 
 static int debug = 0;
@@ -478,7 +478,7 @@ main(argc, argv)
 			if (isupper(queue) &&
 			    (strcmp(batch_name, dirent->d_name) > 0)) {
 				run_batch = 1;
-				(void)strncpy(batch_name, dirent->d_name,
+				(void)strlcpy(batch_name, dirent->d_name,
 				    sizeof(batch_name));
 				batch_uid = buf.st_uid;
 				batch_gid = buf.st_gid;
