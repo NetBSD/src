@@ -1,4 +1,4 @@
-/*	$NetBSD: ibm_6040.c,v 1.1 2003/01/16 02:18:23 matt Exp $	*/
+/*	$NetBSD: ibm_6040.c,v 1.2 2003/01/21 22:01:57 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -41,7 +41,9 @@
 #include <machine/intr.h>
 #include <machine/platform.h>
 
+/*
 static void pci_intr_fixup_ibm_6040(int, int, int *);
+*/
 
 static const char *obiodevs_ibm_6040[] = {
 	NULL
