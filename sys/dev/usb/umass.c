@@ -1,4 +1,4 @@
-/*	$NetBSD: umass.c,v 1.38 2000/06/01 14:29:00 augustss Exp $	*/
+/*	$NetBSD: umass.c,v 1.38.2.1 2000/07/13 01:14:08 thorpej Exp $	*/
 /*-
  * Copyright (c) 1999 MAEKAWA Masahide <bishop@rr.iij4u.or.jp>,
  *		      Nick Hibma <n_hibma@freebsd.org>
@@ -1191,7 +1191,7 @@ umass_activate(struct device *self, enum devact act)
 		break;
 
 	case DVACT_DEACTIVATE:
-		if (sc->sc_child != NULL)
+		if (sc->sc_child == NULL)
 			break;
 		rv = config_deactivate(sc->sc_child);
 		DPRINTF(UDMASS_USB, ("%s: umass_activate: child "
