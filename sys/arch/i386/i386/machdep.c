@@ -36,7 +36,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)machdep.c	7.4 (Berkeley) 6/3/91
- *	$Id: machdep.c,v 1.118 1994/08/25 00:10:30 mycroft Exp $
+ *	$Id: machdep.c,v 1.119 1994/09/05 01:08:51 mycroft Exp $
  */
 
 #include <sys/param.h>
@@ -477,7 +477,16 @@ sendsig(catcher, sig, mask, code)
 	/* 
 	 * Build the argument list for the signal handler.
 	 */
-	frame.sf_signum = sig;
+	switch (p->p_emul) {
+#ifdef COMPAT_IBCS2
+	case EMUL_IBCS2_COFF:
+		frame.sf_signum = bsd2ibcs_sig(sig);
+		break;
+#endif
+	default:
+		frame.sf_signum = sig;
+		break;
+	}
 	frame.sf_code = code;
 	frame.sf_scp = &fp->sf_sc;
 	frame.sf_handler = catcher;

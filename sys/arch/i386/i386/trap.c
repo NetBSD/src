@@ -36,7 +36,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)trap.c	7.4 (Berkeley) 5/13/91
- *	$Id: trap.c,v 1.51 1994/08/30 06:19:44 mycroft Exp $
+ *	$Id: trap.c,v 1.52 1994/09/05 01:08:43 mycroft Exp $
  */
 
 /*
@@ -499,6 +499,7 @@ syscall(frame)
 #endif
 #ifdef COMPAT_IBCS2
 	case EMUL_IBCS2_COFF:
+	case EMUL_IBCS2_XOUT:
 		nsys = nibcs2_sysent;
 		callp = ibcs2_sysent;
 		if (IBCS2_HIGH_SYSCALL(code))
