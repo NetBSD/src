@@ -27,7 +27,7 @@
 .\" (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.\"	$NetBSD: scc.4,v 1.2 2003/03/30 21:20:18 wiz Exp $
+.\"	$NetBSD: scc.4,v 1.3 2003/04/25 02:31:57 fair Exp $
 .\"
 .Dd September 19, 2001
 .Dt SCC 4
@@ -43,8 +43,9 @@ The
 .Nm
 driver provides support for the Zilog 8530 Serial Communications
 Controller (SCC) via the IOASIC found on DEC 3000/300, 3000/500 and
-DECstation 5000 models in the /100, /20, and /240 series.  Each SCC
-device has two serial ports.  The model 20 provides one SCC device.
+DECstation 5000 models in the /100, /20, and /240 series.
+Each SCC device has two serial ports.
+The model 20 provides one SCC device.
 Other models provide two, but one port of each device is dedicated to
 mouse and keyboard input, respectively.
 .Pp
@@ -79,7 +80,8 @@ and the second port is
 .Pa ttya .
 .Sh SEE ALSO
 .Xr intro 4 ,
-.Xr ioasic 4
+.Xr ioasic 4 ,
+.Xr MAKEDEV 8
 .Sh HISTORY
 The
 .Nm
@@ -88,8 +90,8 @@ driver first appeared in
 .Sh BUGS
 The IOASIC provides internal DMA channels that can be programmed to
 transfer up to 4096 bytes of data into, or out, of an SCC without
-further software intervention.  This feature of the IOASIC is not yet
-supported.
+further software intervention.
+This feature of the IOASIC is not yet supported.
 .Pp
 The mapping from device-special files (major and minor number) to chip
 and port is arguably backwards.
