@@ -25,6 +25,9 @@ the Free Software Foundation, 675 Mass Ave, Cambridge, MA 02139, USA.  */
 #undef CPP_PREDEFINES
 #define CPP_PREDEFINES "-Dns32532 -Dpc532 -Dunix -D__NetBSD__ -Dns32k"
 
+/* Like the default, except no -lg.  */
+#define LIB_SPEC "%{!p:%{!pg:-lc}}%{p:-lc_p}%{pg:-lc_p}"
+
 /* Compile for the floating point unit & 32532 by default;
    also presume SB is zero */
 
