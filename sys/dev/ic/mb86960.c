@@ -1,4 +1,4 @@
-/*	$NetBSD: mb86960.c,v 1.35 1999/09/13 10:31:35 itojun Exp $	*/
+/*	$NetBSD: mb86960.c,v 1.35.2.1 2000/11/20 11:40:43 bouyer Exp $	*/
 
 /*
  * All Rights Reserved, Copyright (C) Fujitsu Limited 1995
@@ -271,7 +271,7 @@ mb86960_config(sc, media, nmedia, defmedia)
 #endif
 #if NRND > 0
 	rnd_attach_source(&sc->rnd_source, sc->sc_dev.dv_xname,
-			  RND_TYPE_NET, 0);
+	    RND_TYPE_NET, 0);
 #endif
 	/* Print additional info when attached. */
 	printf("%s: Ethernet address %s\n", sc->sc_dev.dv_xname,
@@ -335,6 +335,9 @@ mb86960_config(sc, media, nmedia, defmedia)
 		    sc->sc_dev.dv_xname, buf, bbw, ram, txb, sbw);
 	}
 #endif
+
+	/* The attach is successful. */
+	sc->sc_flags |= FE_FLAGS_ATTACHED;
 }
 
 /*
@@ -361,7 +364,7 @@ mb86960_mediastatus(ifp, ifmr)
 {
 	struct mb86960_softc *sc = ifp->if_softc;
 
-	if (sc->sc_enabled == 0) {
+	if ((sc->sc_flags & FE_FLAGS_ENABLED) == 0) {
 		ifmr->ifm_active = IFM_ETHER | IFM_NONE;
 		ifmr->ifm_status = 0;
 		return;
@@ -978,8 +981,11 @@ mb86960_rint(sc, rstat)
 	if (rstat & (FE_D1_OVRFLO | FE_D1_CRCERR | FE_D1_ALGERR |
 	    FE_D1_SRTPKT)) {
 #if FE_DEBUG >= 3
-		log(LOG_WARNING, "%s: receive error: %b\n",
-		    sc->sc_dev.dv_xname, rstat, FE_D1_ERRBITS);
+		char sbuf[sizeof(FE_D1_ERRBITS) + 64];
+
+		bitmask_snprintf(rstat, FE_D1_ERRBITS, sbuf, sizeof(sbuf));
+		log(LOG_WARNING, "%s: receive error: %s\n",
+		    sc->sc_dev.dv_xname, sbuf);
 #endif
 		ifp->if_ierrors++;
 	}
@@ -1106,7 +1112,8 @@ mb86960_intr(arg)
 	struct ifnet *ifp = &sc->sc_ec.ec_if;
 	u_char tstat, rstat;
 
-	if (sc->sc_enabled == 0)
+	if ((sc->sc_flags & FE_FLAGS_ENABLED) == 0 ||
+	    (sc->sc_dev.dv_flags & DVF_ACTIVE) == 0)
 		return (0);
 
 #if FE_DEBUG >= 4
@@ -1277,7 +1284,7 @@ mb86960_ioctl(ifp, cmd, data)
 
 	case SIOCADDMULTI:
 	case SIOCDELMULTI:
-		if (sc->sc_enabled == 0) {
+		if ((sc->sc_flags & FE_FLAGS_ENABLED) == 0) {
 			error = EIO;
 			break;
 		}
@@ -1324,7 +1331,6 @@ mb86960_get_packet(sc, len)
 	bus_space_tag_t bst = sc->sc_bst;
 	bus_space_handle_t bsh = sc->sc_bsh;
 	struct ifnet *ifp = &sc->sc_ec.ec_if;
-	struct ether_header *eh;
 	struct mbuf *m;
 
 	/* Allocate a header mbuf. */
@@ -1363,7 +1369,6 @@ mb86960_get_packet(sc, len)
 	 * header mbuf.
 	 */
 	m->m_data += EOFF;
-	eh = mtod(m, struct ether_header *);
 
 	/* Set the length of this packet. */
 	m->m_len = len;
@@ -1377,22 +1382,8 @@ mb86960_get_packet(sc, len)
 	 * Check if there's a BPF listener on this interface.  If so, hand off
 	 * the raw packet to bpf.
 	 */
-	if (ifp->if_bpf) {
+	if (ifp->if_bpf)
 		bpf_mtap(ifp->if_bpf, m);
-
-		/*
-		 * Note that the interface cannot be in promiscuous mode if
-		 * there are no BPF listeners.  And if we are in promiscuous
-		 * mode, we have to check if this packet is really ours.
-		 */
-		if ((ifp->if_flags & IFF_PROMISC) != 0 &&
-		    (eh->ether_dhost[0] & 1) == 0 && /* !mcast and !bcast */
-	  	    bcmp(eh->ether_dhost, sc->sc_enaddr,
-			sizeof(eh->ether_dhost)) != 0) {
-			m_freem(m);
-			return (1);
-		}
-	}
 #endif
 
 	(*ifp->if_input)(ifp, m);
@@ -1565,15 +1556,7 @@ mb86960_getmcaf(ec, af)
 {
 	struct ifnet *ifp = &ec->ec_if;
 	struct ether_multi *enm;
-	register u_char *cp;
-	register u_int32_t crc;
-	static const u_int32_t crctab[] = {
-		0x00000000, 0x1db71064, 0x3b6e20c8, 0x26d930ac,
-		0x76dc4190, 0x6b6b51f4, 0x4db26158, 0x5005713c,
-		0xedb88320, 0xf00f9344, 0xd6d6a3e8, 0xcb61b38c,
-		0x9b64c2b0, 0x86d3d2d4, 0xa00ae278, 0xbdbdf21c
-	};
-	register int len;
+	u_int32_t crc;
 	struct ether_multistep step;
 
 	/*
@@ -1603,13 +1586,8 @@ mb86960_getmcaf(ec, af)
 			goto allmulti;
 		}
 
-		cp = enm->enm_addrlo;
-		crc = 0xffffffff;
-		for (len = sizeof(enm->enm_addrlo); --len >= 0;) {
-			crc ^= *cp++;
-			crc = (crc >> 4) ^ crctab[crc & 0xf];
-			crc = (crc >> 4) ^ crctab[crc & 0xf];
-		}
+		crc = ether_crc32_le(enm->enm_addrlo, ETHER_ADDR_LEN);
+
 		/* Just want the 6 most significant bits. */
 		crc >>= 26;
 
@@ -1782,7 +1760,7 @@ mb86960_enable(sc)
 	log(LOG_INFO, "%s: mb86960_enable()\n", sc->sc_dev.dv_xname);
 #endif
 
-	if (sc->sc_enabled == 0 && sc->sc_enable != NULL) {
+	if ((sc->sc_flags & FE_FLAGS_ENABLED) == 0 && sc->sc_enable != NULL) {
 		if ((*sc->sc_enable)(sc) != 0) {
 			printf("%s: device enable failed\n",
 			    sc->sc_dev.dv_xname);
@@ -1790,7 +1768,7 @@ mb86960_enable(sc)
 		}
 	}
 
-	sc->sc_enabled = 1;
+	sc->sc_flags |= FE_FLAGS_ENABLED;
 	return (0);
 }
 
@@ -1806,12 +1784,17 @@ mb86960_disable(sc)
 	log(LOG_INFO, "%s: mb86960_disable()\n", sc->sc_dev.dv_xname);
 #endif
 
-	if (sc->sc_enabled != 0 && sc->sc_disable != NULL) {
+	if ((sc->sc_flags & FE_FLAGS_ENABLED) != 0 && sc->sc_disable != NULL) {
 		(*sc->sc_disable)(sc);
-		sc->sc_enabled = 0;
+		sc->sc_flags &= ~FE_FLAGS_ENABLED;
 	}
 }
 
+/*
+ * mbe_activate:
+ *
+ *	Handle device activation/deactivation requests.
+ */
 int
 mb86960_activate(self, act)
 	struct device *self;
@@ -1827,17 +1810,43 @@ mb86960_activate(self, act)
 		break;
 
 	case DVACT_DEACTIVATE:
-#ifdef notyet
-		/* First, kill off the interface. */
-		if_detach(sc->sc_ec.ec_if);
-#endif
-
-		/* Now disable the interface. */
-		mb86960_disable(sc);
+		if_deactivate(&sc->sc_ec.ec_if);
 		break;
 	}
 	splx(s);
 	return (rv);
+}
+
+/*
+ * mb86960_detach:
+ *
+ *	Detach a MB86960 interface.
+ */
+int
+mb86960_detach(sc)
+	struct mb86960_softc *sc;
+{
+	struct ifnet *ifp = &sc->sc_ec.ec_if;
+
+	/* Succeed now if there's no work to do. */
+	if ((sc->sc_flags & FE_FLAGS_ATTACHED) == 0)
+		return (0);
+
+	/* Delete all media. */
+	ifmedia_delete_instance(&sc->sc_media, IFM_INST_ANY);
+
+#if NRND > 0
+	/* Unhook the entropy source. */
+	rnd_detach_source(&sc->rnd_source);
+#endif
+#if NBPFILTER > 0
+	bpfdetach(ifp);
+#endif
+	ether_ifdetach(ifp);
+	if_detach(ifp);
+
+	mb86960_disable(sc);
+	return (0);
 }
 
 #if FE_DEBUG >= 1

@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_interdecluster.c,v 1.3 1999/02/05 00:06:12 oster Exp $	*/
+/*	$NetBSD: rf_interdecluster.c,v 1.3.8.1 2000/11/20 11:42:54 bouyer Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -39,7 +39,6 @@
 #include "rf_dag.h"
 #include "rf_dagutils.h"
 #include "rf_dagfuncs.h"
-#include "rf_threadid.h"
 #include "rf_general.h"
 #include "rf_utils.h"
 #include "rf_dagffrd.h"

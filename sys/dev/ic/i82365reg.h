@@ -1,4 +1,4 @@
-/*	$NetBSD: i82365reg.h,v 1.3 1998/12/20 17:53:28 nathanw Exp $	*/
+/*	$NetBSD: i82365reg.h,v 1.3.8.1 2000/11/20 11:40:35 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1997 Marc Horowitz.  All rights reserved.
@@ -46,13 +46,9 @@
  * the same device.
  */
 
-#define	PCIC_CHIP0_BASE		0x00
-#define	PCIC_CHIP1_BASE		0x80
-
-/* Each PCIC chip can drive two sockets */
-
-#define	PCIC_SOCKETA_INDEX	0x00
-#define	PCIC_SOCKETB_INDEX	0x40
+/* pcic can have 2 controllers offset by 0x80 and 2 sockets offset by 0x40 */
+#define	PCIC_CHIP_OFFSET	0x80
+#define	PCIC_SOCKET_OFFSET	0x40
 
 /* general setup registers */
 
@@ -86,17 +82,15 @@
 #define	PCIC_PWRCTL_AUTOSWITCH_ENABLE		0x20
 #define	PCIC_PWRCTL_PWR_ENABLE			0x10
 #define	PCIC_PWRCTL_VPP2_MASK			0x0C
-/* XXX these are a little unclear from the data sheet */
 #define	PCIC_PWRCTL_VPP2_RESERVED		0x0C
-#define	PCIC_PWRCTL_VPP2_EN1			0x08
-#define	PCIC_PWRCTL_VPP2_EN0			0x04
-#define	PCIC_PWRCTL_VPP2_ENX			0x00
+#define	PCIC_PWRCTL_VPP2_12V			0x08
+#define	PCIC_PWRCTL_VPP2_VCC			0x04
+#define	PCIC_PWRCTL_VPP2_OFF			0x00
 #define	PCIC_PWRCTL_VPP1_MASK			0x03
-/* XXX these are a little unclear from the data sheet */
 #define	PCIC_PWRCTL_VPP1_RESERVED		0x03
-#define	PCIC_PWRCTL_VPP1_EN1			0x02
-#define	PCIC_PWRCTL_VPP1_EN0			0x01
-#define	PCIC_PWRCTL_VPP1_ENX			0x00
+#define	PCIC_PWRCTL_VPP1_12V			0x02
+#define	PCIC_PWRCTL_VPP1_VCC			0x01
+#define	PCIC_PWRCTL_VPP1_OFF			0x00
 
 #define	PCIC_CSC				0x04	/* RW */
 #define	PCIC_CSC_ZERO				0xE0
@@ -117,6 +111,7 @@
 #define	PCIC_ADDRWIN_ENABLE_MEM1		0x02
 #define	PCIC_ADDRWIN_ENABLE_MEM0		0x01
 
+/* this is _not_ available on cirrus chips */
 #define	PCIC_CARD_DETECT			0x16	/* RW */
 #define	PCIC_CARD_DETECT_RESERVED		0xC0
 #define	PCIC_CARD_DETECT_SW_INTR		0x20
@@ -180,6 +175,12 @@
 #define	PCIC_CSC_INTR_BATTWARN_ENABLE		0x02
 #define	PCIC_CSC_INTR_BATTDEAD_ENABLE		0x01	/* for memory cards */
 #define	PCIC_CSC_INTR_RI_ENABLE			0x01	/* for I/O cards */
+
+#define PCIC_CSC_INTR_FORMAT "\177\020" "f\4\4CSC_INTR_IRQ\0"   \
+				"b\0RI\0"			\
+				"b\1BATTWARN\0" 		\
+				"b\2READY\0"			\
+				"b\3CD\0"
 
 #define	PCIC_CSC_INTR_IRQ_VALIDMASK		0xDEB8 /* 1101 1110 1011 1000 */
 

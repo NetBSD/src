@@ -1,4 +1,4 @@
-/* $NetBSD: lemac.c,v 1.12 1999/05/18 23:52:56 thorpej Exp $ */
+/* $NetBSD: lemac.c,v 1.12.2.1 2000/11/20 11:40:41 bouyer Exp $ */
 
 /*-
  * Copyright (c) 1994, 1995, 1997 Matt Thomas <matt@3am-software.com>
@@ -78,7 +78,7 @@
 #include <i386/isa/decether.h>
 #endif
 
-#include <vm/vm.h>
+#include <uvm/uvm_extern.h>
 
 #include "bpfilter.h"
 #if NBPFILTER > 0
@@ -284,17 +284,6 @@ lemac_input(
 	LEMAC_GETBUF16(sc, offset, sizeof(eh) / 2, (void *) &eh);
     }
 
-    /*
-     * If this is single cast but not to us
-     * drop it!
-     */
-    if ((eh.ether_dhost[0] & 1) == 0
-#if NBPFILTER > 0
-	    && (sc->sc_if.if_flags & IFF_PROMISC) == 0
-#endif
-	    && !LEMAC_ADDREQUAL(eh.ether_dhost, sc->sc_enaddr))
-	return;
-
     MGETHDR(m, M_DONTWAIT, MT_DATA);
     if (m == NULL) {
 	sc->sc_if.if_ierrors++;
@@ -459,19 +448,10 @@ lemac_multicast_op(
     const u_char *mca,
     int enable)
 {
-    u_int idx, bit, crc = 0xFFFFFFFFUL;
-    static const u_int crctab[] = {
-	0x00000000, 0x1db71064, 0x3b6e20c8, 0x26d930ac,
-	0x76dc4190, 0x6b6b51f4, 0x4db26158, 0x5005713c,
-	0xedb88320, 0xf00f9344, 0xd6d6a3e8, 0xcb61b38c,
-	0x9b64c2b0, 0x86d3d2d4, 0xa00ae278, 0xbdbdf21c
-    };
+    u_int idx, bit, crc;
 
-    for (idx = 0; idx < 6; idx++) {
-	crc ^= *mca++;
-	crc = (crc >> 4) ^ crctab[crc & 0xf];
-	crc = (crc >> 4) ^ crctab[crc & 0xf];
-    }
+    crc = ether_crc32_le(mca, ETHER_ADDR_LEN);
+
     /*
      * The following two lines convert the N bit index into a longword index
      * and a longword mask.  
@@ -1041,7 +1021,6 @@ lemac_ifattach(
 	   sc->sc_lastpage * 2 + 2,
 	   lemac_modes[sc->sc_flags & LEMAC_MODE_MASK]);
 
-    ifp->if_baudrate = 10000000;
     ifp->if_softc = (void *) sc;
     ifp->if_start = lemac_ifstart;
     ifp->if_ioctl = lemac_ifioctl;

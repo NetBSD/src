@@ -1,4 +1,4 @@
-/*	$NetBSD: boca.c,v 1.32 1998/09/18 14:38:48 enami Exp $	*/
+/*	$NetBSD: boca.c,v 1.32.12.1 2000/11/20 11:41:11 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All rights reserved.
@@ -37,6 +37,8 @@
 #include <sys/systm.h>
 #include <sys/device.h>
 #include <sys/termios.h>
+#include <sys/kernel.h>
+#include <sys/callout.h>
 
 #include <machine/bus.h>
 #include <machine/intr.h>
@@ -59,11 +61,13 @@ struct boca_softc {
 	int sc_alive;			/* mask of slave units attached */
 	void *sc_slaves[NSLAVES];	/* com device unit numbers */
 	bus_space_handle_t sc_slaveioh[NSLAVES];
+	struct callout fixup;
 };
 
 int bocaprobe __P((struct device *, struct cfdata *, void *));
 void bocaattach __P((struct device *, struct device *, void *));
 int bocaintr __P((void *));
+void boca_fixup __P((void *));
 int bocaprint __P((void *, const char *));
 
 struct cfattach boca_ca = {
@@ -181,6 +185,8 @@ bocaattach(parent, self, aux)
 
 	sc->sc_ih = isa_intr_establish(ia->ia_ic, ia->ia_irq, IST_EDGE,
 	    IPL_SERIAL, bocaintr, sc);
+	callout_init(&sc->fixup);
+	callout_reset(&sc->fixup, hz/10, boca_fixup, sc);
 }
 
 int
@@ -192,14 +198,18 @@ bocaintr(arg)
 	int alive = sc->sc_alive;
 	int bits;
 
-	bits = bus_space_read_1(iot, sc->sc_slaveioh[0], 7) & alive;
+	bits = bus_space_read_1(iot, sc->sc_slaveioh[0], com_scratch) & alive;
 	if (bits == 0)
 		return (0);
 
 	for (;;) {
 #define	TRY(n) \
-		if (bits & (1 << (n))) \
-			comintr(sc->sc_slaves[n]);
+		if (bits & (1 << (n))) { \
+			if (comintr(sc->sc_slaves[n]) == 0) { \
+				printf("%s: bogus intr for port %d\n", \
+				    sc->sc_dev.dv_xname, n); \
+			} \
+		}
 		TRY(0);
 		TRY(1);
 		TRY(2);
@@ -209,8 +219,28 @@ bocaintr(arg)
 		TRY(6);
 		TRY(7);
 #undef TRY
-		bits = bus_space_read_1(iot, sc->sc_slaveioh[0], 7) & alive;
-		if (bits == 0)
+		bits = bus_space_read_1(iot, sc->sc_slaveioh[0],
+		    com_scratch) & alive;
+		if (bits == 0) {
 			return (1);
+		}
  	}
+}
+
+void
+boca_fixup(v)
+	void *v;
+{
+	struct boca_softc *sc = v;
+	int alive = sc->sc_alive;
+	int i, s;
+
+	s = splserial();
+
+	for (i = 0; i < 8; i++) {
+		if (alive & (1 << (i)))
+			comintr(sc->sc_slaves[i]);
+	}
+	callout_reset(&sc->fixup, hz/10, boca_fixup, sc);
+	splx(s);
 }

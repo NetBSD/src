@@ -1,4 +1,4 @@
-/*	$NetBSD: if_le_lebuffer.c,v 1.3 1998/08/29 20:32:11 pk Exp $	*/
+/*	$NetBSD: if_le_lebuffer.c,v 1.3.12.1 2000/11/20 11:43:05 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -58,8 +58,9 @@
 #include <netinet/if_inarp.h>
 #endif
 
+#include <machine/bus.h>
+#include <machine/intr.h>
 #include <machine/autoconf.h>
-#include <machine/cpu.h>
 
 #include <dev/sbus/sbusvar.h>
 #include <dev/sbus/lebuffervar.h>
@@ -163,10 +164,6 @@ lematch_lebuffer(parent, cf, aux)
 }
 
 
-#define SAME_LANCE(bp, sa) \
-	(bp->val[0] == sa->sa_slot && bp->val[1] == sa->sa_offset)
-
-
 void
 leattach_lebuffer(parent, self, aux)
 	struct device *parent, *self;
@@ -205,10 +202,6 @@ leattach_lebuffer(parent, self, aux)
 	lesc->sc_sd.sd_reset = (void *)lance_reset;
 	sbus_establish(&lesc->sc_sd, parent);
 
-	if (sa->sa_bp != NULL && strcmp(sa->sa_bp->name, le_cd.cd_name) == 0 &&
-	    SAME_LANCE(sa->sa_bp, sa))
-		sa->sa_bp->dev = &sc->sc_dev;
-
 	sc->sc_supmedia = lemedia;
 	sc->sc_nsupmedia = NLEMEDIA;
 	sc->sc_defaultmedia = lemedia[0];
@@ -226,6 +219,8 @@ leattach_lebuffer(parent, self, aux)
 
 	am7990_config(&lesc->sc_am7990);
 
-	(void)bus_intr_establish(lesc->sc_bustag, sa->sa_pri, 0,
-				 am7990_intr, sc);
+	/* Establish interrupt handler */
+	if (sa->sa_nintr != 0)
+		(void)bus_intr_establish(lesc->sc_bustag, sa->sa_pri,
+					 IPL_NET, 0, am7990_intr, sc);
 }

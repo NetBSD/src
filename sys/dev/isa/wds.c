@@ -1,4 +1,4 @@
-/*	$NetBSD: wds.c,v 1.39.2.3 1999/10/26 23:10:17 thorpej Exp $	*/
+/*	$NetBSD: wds.c,v 1.39.2.4 2000/11/20 11:41:22 bouyer Exp $	*/
 
 #include "opt_ddb.h"
 
@@ -451,7 +451,7 @@ AGAIN:
 		}
 #endif /* WDSDEBUG */
 
-		untimeout(wds_timeout, scb);
+		callout_stop(&scb->xs->xs_callout);
 		wds_done(sc, scb, wmbi->stat);
 
 	next:
@@ -772,7 +772,8 @@ wds_start_scbs(sc)
 		wds_cmd(sc->sc_iot, sc->sc_ioh, &c, sizeof c);
 
 		if ((scb->flags & SCB_POLLED) == 0)
-			timeout(wds_timeout, scb, (scb->timeout * hz) / 1000);
+			callout_reset(&scb->xs->xs_callout,
+			    (scb->timeout * hz) / 1000, wds_timeout, scb);
 
 		++sc->sc_mbofull;
 		wds_nextmbx(wmbo, wmbx, mbo);

@@ -1,8 +1,9 @@
-#	$NetBSD: Makefile.usbdevs,v 1.2 1999/01/07 22:18:23 augustss Exp $
+#	$NetBSD: Makefile.usbdevs,v 1.2.8.1 2000/11/20 11:43:18 bouyer Exp $
 
 AWK=	awk
 UNAME=	uname
+RM=	rm
 
 usbdevs.h usbdevs_data.h: usbdevs devlist2h.awk
-	/bin/rm -f usbdevs.h usbdevs_data.h
+	${RM} -f usbdevs.h usbdevs_data.h
 	${AWK} -v os=`${UNAME} -s` -f devlist2h.awk usbdevs

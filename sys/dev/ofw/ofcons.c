@@ -1,4 +1,4 @@
-/*	$NetBSD: ofcons.c,v 1.9 1998/03/21 04:08:37 mycroft Exp $	*/
+/*	$NetBSD: ofcons.c,v 1.9.14.1 2000/11/20 11:42:13 bouyer Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -36,6 +36,7 @@
 #include <sys/device.h>
 #include <sys/proc.h>
 #include <sys/systm.h>
+#include <sys/callout.h>
 #include <sys/tty.h>
 
 #include <dev/cons.h>
@@ -45,6 +46,7 @@
 struct ofcons_softc {
 	struct device of_dev;
 	struct tty *of_tty;
+	struct callout sc_poll_ch;
 	int of_flags;
 };
 /* flags: */
@@ -86,7 +88,11 @@ ofcons_attach(parent, self, aux)
 	struct device *parent, *self;
 	void *aux;
 {
+	struct ofcons_softc *sc = (struct ofcons_softc *) self;
+
 	printf("\n");
+
+	callout_init(&sc->sc_poll_ch);
 }
 
 static void ofcons_start __P((struct tty *));
@@ -128,7 +134,7 @@ ofcons_open(dev, flag, mode, p)
 	
 	if (!(sc->of_flags & OFPOLL)) {
 		sc->of_flags |= OFPOLL;
-		timeout(ofcons_poll, sc, 1);
+		callout_reset(&sc->sc_poll_ch, 1, ofcons_poll, sc);
 	}
 
 	return (*linesw[tp->t_line].l_open)(dev, tp);
@@ -143,7 +149,7 @@ ofcons_close(dev, flag, mode, p)
 	struct ofcons_softc *sc = ofcons_cd.cd_devs[minor(dev)];
 	struct tty *tp = sc->of_tty;
 
-	untimeout(ofcons_poll, sc);
+	callout_stop(&sc->sc_poll_ch);
 	sc->of_flags &= ~OFPOLL;
 	(*linesw[tp->t_line].l_close)(tp, flag);
 	ttyclose(tp);
@@ -231,7 +237,7 @@ ofcons_start(tp)
 	tp->t_state &= ~TS_BUSY;
 	if (cl->c_cc) {
 		tp->t_state |= TS_TIMEOUT;
-		timeout(ttrstrt, (void *)tp, 1);
+		callout_reset(&tp->t_rstrt_ch, 1, ttrstrt, (void *)tp);
 	}
 	if (cl->c_cc <= tp->t_lowat) {
 		if (tp->t_state & TS_ASLEEP) {
@@ -266,7 +272,7 @@ ofcons_poll(aux)
 		if (tp && (tp->t_state & TS_ISOPEN))
 			(*linesw[tp->t_line].l_rint)(ch, tp);
 	}
-	timeout(ofcons_poll, sc, 1);
+	callout_reset(&sc->sc_poll_ch, 1, ofcons_poll, sc);
 }
 
 static int
@@ -348,12 +354,12 @@ ofcons_cnpollc(dev, on)
 		return;
 	if (on) {
 		if (sc->of_flags & OFPOLL)
-			untimeout(ofcons_poll, sc);
+			callout_stop(&sc->sc_poll_ch);
 		sc->of_flags &= ~OFPOLL;
 	} else {
 		if (!(sc->of_flags & OFPOLL)) {
 			sc->of_flags |= OFPOLL;
-			timeout(ofcons_poll, sc, 1);
+			callout_reset(&sc->sc_poll_ch, 1, ofcons_poll, sc);
 		}
 	}
 }

@@ -1,4 +1,4 @@
-/*      $NetBSD: advlib.c,v 1.11.2.1 1999/10/19 17:47:28 thorpej Exp $        */
+/*      $NetBSD: advlib.c,v 1.11.2.2 2000/11/20 11:40:05 bouyer Exp $        */
 
 /*
  * Low level routines for the Advanced Systems Inc. SCSI controllers chips
@@ -67,9 +67,7 @@
 #include <dev/scsipi/scsipi_all.h>
 #include <dev/scsipi/scsiconf.h>
 
-#include <vm/vm.h>
-#include <vm/vm_param.h>
-#include <vm/pmap.h>
+#include <uvm/uvm_extern.h>
 
 #include <dev/ic/advlib.h>
 #include <dev/ic/adv.h>

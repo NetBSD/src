@@ -1,4 +1,4 @@
-/*	$NetBSD: mscp.c,v 1.11 1999/06/06 19:16:18 ragge Exp $	*/
+/*	$NetBSD: mscp.c,v 1.11.4.1 2000/11/20 11:42:13 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1996 Ludd, University of Lule}, Sweden.
@@ -65,12 +65,12 @@
  */
 struct mscp *
 mscp_getcp(mi, canwait)
-	register struct mscp_softc *mi;
+	struct mscp_softc *mi;
 	int canwait;
 {
 #define mri	(&mi->mi_cmd)
-	register struct mscp *mp;
-	register int i;
+	struct mscp *mp;
+	int i;
 	int s = splimp();
 
 again:
@@ -84,7 +84,7 @@ again:
 			return (NULL);
 		}
 		mi->mi_wantcredits = 1;
-		sleep((caddr_t) &mi->mi_wantcredits, PCMD);
+		(void) tsleep(&mi->mi_wantcredits, PCMD, "mscpwcrd", 0);
 		goto again;
 	}
 	i = mri->mri_next;
@@ -94,7 +94,7 @@ again:
 			return (NULL);
 		}
 		mi->mi_wantcmd = 1;
-		sleep((caddr_t) &mi->mi_wantcmd, PCMD);
+		(void) tsleep(&mi->mi_wantcmd, PCMD, "mscpwcmd", 0);
 		goto again;
 	}
 	mi->mi_credits--;
@@ -129,7 +129,7 @@ int	mscp_aeb_xor = 0x8000bb80;
  */
 void
 mscp_dorsp(mi)
-	register struct mscp_softc *mi;
+	struct mscp_softc *mi;
 {
 	struct device *drive;
 	struct mscp_device *me = mi->mi_me;

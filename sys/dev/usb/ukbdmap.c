@@ -1,11 +1,11 @@
-/*	$NetBSD: ukbdmap.c,v 1.3 1999/02/28 10:05:00 augustss Exp $	*/
+/*	$NetBSD: ukbdmap.c,v 1.3.8.1 2000/11/20 11:43:27 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
- * by Lennart Augustsson (augustss@carlstedt.se) at
+ * by Lennart Augustsson (lennart@augustsson.net) at
  * Carlstedt Research & Technology.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -41,9 +41,11 @@
 #include <dev/wscons/wsksymdef.h>
 #include <dev/wscons/wsksymvar.h>
 
+#include <dev/usb/usb_port.h>
+
 #define KC(n)		KS_KEYCODE(n)
 
-static const keysym_t ukbd_keydesc_us[] = {
+Static const keysym_t ukbd_keydesc_us[] = {
 /*  pos      command		normal		shifted */
     KC(4), 			KS_a,
     KC(5), 			KS_b,
@@ -154,7 +156,7 @@ static const keysym_t ukbd_keydesc_us[] = {
     KC(231),			KS_Meta_R,
 };
 
-static const keysym_t ukbd_keydesc_swapctrlcaps[] = {
+Static const keysym_t ukbd_keydesc_swapctrlcaps[] = {
 /*  pos      command		normal		shifted */
     KC(57), 			KS_Control_L,
     KC(224), KS_Cmd1,		KS_Caps_Lock,

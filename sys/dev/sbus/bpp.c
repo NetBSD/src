@@ -1,4 +1,4 @@
-/*	$NetBSD: bpp.c,v 1.2 1999/02/28 17:01:49 pk Exp $ */
+/*	$NetBSD: bpp.c,v 1.2.8.1 2000/11/20 11:43:04 bouyer Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -51,9 +51,10 @@
 #include <sys/errno.h>
 #include <sys/device.h>
 
-#include <machine/conf.h>
 #include <machine/bus.h>
+#include <machine/intr.h>
 #include <machine/autoconf.h>
+#include <machine/conf.h>
 
 #include <dev/ic/lsi64854reg.h>
 #include <dev/ic/lsi64854var.h>
@@ -181,10 +182,13 @@ bppattach(parent, self, aux)
 	sc->sc_channel = L64854_CHANNEL_PP;
 	lsi64854_attach(sc);
 
-	sc->sc_intrchain = bppintr;
-	sc->sc_intrchainarg = dsc;
-	(void)bus_intr_establish(sa->sa_bustag, sa->sa_pri, 0,
-				 lsi64854_pp_intr, sc);
+	/* Establish interrupt handler */
+	if (sa->sa_nintr) {
+		sc->sc_intrchain = bppintr;
+		sc->sc_intrchainarg = dsc;
+		(void)bus_intr_establish(sa->sa_bustag, sa->sa_pri, IPL_TTY, 0,
+					 lsi64854_pp_intr, sc);
+	}
 
 	/* Allocate buffer XXX - should actually use dmamap_uio() */
 	dsc->sc_bufsz = 1024;
@@ -298,7 +302,7 @@ bppwrite(dev, uio, flags)
 	int s;
 
 	/*
-	 * Wait until the DMA engibe is free.
+	 * Wait until the DMA engine is free.
 	 */
 	s = splbpp();
 	while ((sc->sc_flags & BPP_LOCKED) != 0) {
@@ -341,14 +345,18 @@ bppwrite(dev, uio, flags)
 					  L64854_REG_TCR, tcr);
 
 			/* Enable DMA */
+			s = splbpp();
 			DMA_GO(lsi);
 			error = tsleep(sc, PZERO|PCATCH, "bppdma", 0);
+			splx(s);
 			if (error != 0)
 				goto out;
 
 			/* Bail out if bottom half reported an error */
 			if ((error = sc->sc_error) != 0)
 				goto out;
+
+			len -= size;
 		}
 	}
 

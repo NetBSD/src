@@ -1,4 +1,4 @@
-/* $NetBSD: wsmouse.c,v 1.9 1999/08/04 11:26:04 augustss Exp $ */
+/* $NetBSD: wsmouse.c,v 1.9.2.1 2000/11/20 11:43:38 bouyer Exp $ */
 
 /*
  * Copyright (c) 1996, 1997 Christopher G. Demetriou.  All rights reserved.
@@ -30,10 +30,8 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-static const char _copyright[] __attribute__ ((unused)) =
-    "Copyright (c) 1996, 1997 Christopher G. Demetriou.  All rights reserved.";
-static const char _rcsid[] __attribute__ ((unused)) =
-    "$NetBSD: wsmouse.c,v 1.9 1999/08/04 11:26:04 augustss Exp $";
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: wsmouse.c,v 1.9.2.1 2000/11/20 11:43:38 bouyer Exp $");
 
 /*
  * Copyright (c) 1992, 1993
@@ -109,6 +107,10 @@ static const char _rcsid[] __attribute__ ((unused)) =
 #include <dev/wscons/wsmuxvar.h>
 #endif
 
+#define INVALID_X	INT_MAX
+#define INVALID_Y	INT_MAX
+#define INVALID_Z	INT_MAX
+
 struct wsmouse_softc {
 	struct device	sc_dv;
 
@@ -123,6 +125,9 @@ struct wsmouse_softc {
 	int		sc_dx;		/* delta-x */
 	int		sc_dy;		/* delta-y */
 	int		sc_dz;		/* delta-z */
+	int		sc_x;		/* absolute-x */
+	int		sc_y;		/* absolute-y */
+	int		sc_z;		/* absolute-z */
 
 	int		sc_refcnt;
 	u_char		sc_dying;	/* device is being detached */
@@ -278,10 +283,11 @@ wsmouse_detach(self, flags)
 }
 
 void
-wsmouse_input(wsmousedev, btns, dx, dy, dz)
+wsmouse_input(wsmousedev, btns, x, y, z, flags)
 	struct device *wsmousedev;
 	u_int btns;			/* 0 is up */
-	int dx, dy, dz;
+	int x, y, z;
+	u_int flags;
 {
 	struct wsmouse_softc *sc = (struct wsmouse_softc *)wsmousedev;
 	struct wscons_event *ev;
@@ -302,9 +308,12 @@ wsmouse_input(wsmousedev, btns, dx, dy, dz)
 		evar = &sc->sc_events;
 
 	sc->sc_mb = btns;
-	sc->sc_dx += dx;
-	sc->sc_dy += dy;
-	sc->sc_dz += dz;
+	if (!(flags & WSMOUSE_INPUT_ABSOLUTE_X))
+		sc->sc_dx += x;
+	if (!(flags & WSMOUSE_INPUT_ABSOLUTE_Y))
+		sc->sc_dy += y;
+	if (!(flags & WSMOUSE_INPUT_ABSOLUTE_Z))
+		sc->sc_dz += z;
 
 	/*
 	 * We have at least one event (mouse button, delta-X, or
@@ -341,6 +350,64 @@ wsmouse_input(wsmousedev, btns, dx, dy, dz)
 		splx(s);						\
 	} while (0)
 
+	if (flags & WSMOUSE_INPUT_ABSOLUTE_X) {
+		if (sc->sc_x != x) {
+			NEXT;
+			ev->type = WSCONS_EVENT_MOUSE_ABSOLUTE_X;
+			ev->value = x;
+			TIMESTAMP;
+			ADVANCE;
+			sc->sc_x = x;
+		}
+	} else {
+		if (sc->sc_dx) {
+			NEXT;
+			ev->type = WSCONS_EVENT_MOUSE_DELTA_X;
+			ev->value = sc->sc_dx;
+			TIMESTAMP;
+			ADVANCE;
+			sc->sc_dx = 0;
+		}
+	}
+	if (flags & WSMOUSE_INPUT_ABSOLUTE_Y) {
+		if (sc->sc_y != y) {
+			NEXT;
+			ev->type = WSCONS_EVENT_MOUSE_ABSOLUTE_Y;
+			ev->value = y;
+			TIMESTAMP;
+			ADVANCE;
+			sc->sc_y = y;
+		}
+	} else {
+		if (sc->sc_dy) {
+			NEXT;
+			ev->type = WSCONS_EVENT_MOUSE_DELTA_Y;
+			ev->value = sc->sc_dy;
+			TIMESTAMP;
+			ADVANCE;
+			sc->sc_dy = 0;
+		}
+	}
+	if (flags & WSMOUSE_INPUT_ABSOLUTE_Z) {
+		if (sc->sc_z != z) {
+			NEXT;
+			ev->type = WSCONS_EVENT_MOUSE_ABSOLUTE_Z;
+			ev->value = z;
+			TIMESTAMP;
+			ADVANCE;
+			sc->sc_z = z;
+		}
+	} else {
+		if (sc->sc_dz) {
+			NEXT;
+			ev->type = WSCONS_EVENT_MOUSE_DELTA_Z;
+			ev->value = sc->sc_dz;
+			TIMESTAMP;
+			ADVANCE;
+			sc->sc_dz = 0;
+		}
+	}
+
 	mb = sc->sc_mb;
 	ub = sc->sc_ub;
 	while ((d = mb ^ ub) != 0) {
@@ -359,30 +426,6 @@ wsmouse_input(wsmousedev, btns, dx, dy, dz)
 		TIMESTAMP;
 		ADVANCE;
 		ub ^= d;
-	}
-	if (sc->sc_dx) {
-		NEXT;
-		ev->type = WSCONS_EVENT_MOUSE_DELTA_X;
-		ev->value = sc->sc_dx;
-		TIMESTAMP;
-		ADVANCE;
-		sc->sc_dx = 0;
-	}
-	if (sc->sc_dy) {
-		NEXT;
-		ev->type = WSCONS_EVENT_MOUSE_DELTA_Y;
-		ev->value = sc->sc_dy;
-		TIMESTAMP;
-		ADVANCE;
-		sc->sc_dy = 0;
-	}
-	if (sc->sc_dz) {
-		NEXT;
-		ev->type = WSCONS_EVENT_MOUSE_DELTA_Z;
-		ev->value = sc->sc_dz;
-		TIMESTAMP;
-		ADVANCE;
-		sc->sc_dz = 0;
 	}
 out:
 	if (any) {
@@ -426,6 +469,9 @@ wsmouseopen(dev, flags, mode, p)
 	wsevent_init(&sc->sc_events);		/* may cause sleep */
 
 	sc->sc_ready = 1;			/* start accepting events */
+	sc->sc_x = INVALID_X;
+	sc->sc_y = INVALID_Y;
+	sc->sc_z = INVALID_Z;
 
 	/* enable the device, and punt if that's not possible */
 	error = (*sc->sc_accessops->enable)(sc->sc_accesscookie);

@@ -1,4 +1,4 @@
-/* $NetBSD: wsconsio.h,v 1.20 1999/09/20 06:29:07 nisimura Exp $ */
+/* $NetBSD: wsconsio.h,v 1.20.2.1 2000/11/20 11:43:36 bouyer Exp $ */
 
 /*
  * Copyright (c) 1996, 1997 Christopher G. Demetriou.  All rights reserved.
@@ -83,6 +83,9 @@ struct wscons_event {
 #define		WSKBD_TYPE_PC_AT	4	/* PC-ish, AT scancode */
 #define		WSKBD_TYPE_USB		5	/* USB, XT scancode */
 #define		WSKBD_TYPE_NEXT		6	/* NeXT keyboard */
+#define		WSKBD_TYPE_HPC_KBD	7	/* HPC bultin keyboard */
+#define		WSKBD_TYPE_HPC_BTN	8	/* HPC/PsPC buttons */
+#define		WSKBD_TYPE_ARCHIMEDES	9	/* Archimedes keyboard */
 
 /* Manipulate the keyboard bell. */
 struct wskbd_bell_data {
@@ -136,8 +139,8 @@ struct wskbd_map_data {
 };
 #define WSKBDIO_GETMAP		_IOWR('W', 13, struct wskbd_map_data)
 #define WSKBDIO_SETMAP		_IOW('W', 14, struct wskbd_map_data)
-#define WSKBDIO_GETENCODING	_IOR('W', 15, int)
-#define WSKBDIO_SETENCODING	_IOW('W', 16, int)
+#define WSKBDIO_GETENCODING	_IOR('W', 15, kbd_t)
+#define WSKBDIO_SETENCODING	_IOW('W', 16, kbd_t)
 
 /* internal use only */
 #define WSKBDIO_SETMODE		_IOW('W', 19, int)
@@ -156,6 +159,9 @@ struct wskbd_map_data {
 #define		WSMOUSE_TYPE_USB	3	/* USB mouse */
 #define		WSMOUSE_TYPE_LMS	4	/* Logitech busmouse */
 #define		WSMOUSE_TYPE_MMS	5	/* Microsoft InPort mouse */
+#define		WSMOUSE_TYPE_TPANEL	6	/* Generic Touch Panel */
+#define 	WSMOUSE_TYPE_NEXT	7	/* NeXT mouse */
+#define		WSMOUSE_TYPE_ARCHIMEDES	8	/* Archimedes mouse */
 
 /* Set resolution.  Not applicable to all mouse types. */
 #define	WSMOUSEIO_SRES		_IOR('W', 33, u_int)
@@ -171,6 +177,22 @@ struct wskbd_map_data {
 #define		WSMOUSE_RATE_MIN	0
 #define		WSMOUSE_RATE_DEFAULT	50
 #define		WSMOUSE_RATE_MAX	100
+
+/* Set/get sample coordinates for calibration */
+#define WSMOUSE_CALIBCOORDS_MAX		16
+#define WSMOUSE_CALIBCOORDS_RESET	-1
+struct wsmouse_calibcoords {
+	int minx, miny;		/* minimum value of X/Y */
+	int maxx, maxy;		/* maximum value of X/Y */
+	int samplelen;		/* number of samples available or
+				   WSMOUSE_CALIBCOORDS_RESET for raw mode */
+	struct wsmouse_calibcoord {
+		int rawx, rawy;	/* raw coordinate */
+		int x, y;	/* translated coordinate */
+	} samples[WSMOUSE_CALIBCOORDS_MAX];	/* sample coordinates */
+};
+#define	WSMOUSEIO_SCALIBCOORDS	_IOW('W', 36, struct wsmouse_calibcoords)
+#define	WSMOUSEIO_GCALIBCOORDS	_IOR('W', 37, struct wsmouse_calibcoords)
 
 /*
  * Display ioctls (64 - 95)
@@ -194,6 +216,14 @@ struct wskbd_map_data {
 #define		WSDISPLAY_TYPE_PX	13	/* DEC TC PX */
 #define		WSDISPLAY_TYPE_PXG	14	/* DEC TC PXG */
 #define		WSDISPLAY_TYPE_TX	15	/* DEC TC TX */
+#define		WSDISPLAY_TYPE_HPCFB	16	/* Handheld/PalmSize PC */
+#define		WSDISPLAY_TYPE_VIDC	17	/* Acorn/ARM VIDC */
+#define		WSDISPLAY_TYPE_SPX	18	/* DEC SPX (VS3100/VS4000) */
+#define		WSDISPLAY_TYPE_GPX	19	/* DEC GPX (uVAX/VS2K/VS3100 */
+#define		WSDISPLAY_TYPE_LCG	20	/* DEC LCG (VS4000) */
+#define		WSDISPLAY_TYPE_VAX_MONO	21	/* DEC VS2K/VS3100 mono */
+#define		WSDISPLAY_TYPE_SB_P9100	22	/* Tadpole SPARCbook P9100 */
+#define		WSDISPLAY_TYPE_EGA	23	/* (generic) EGA */
 
 /* Basic display information.  Not applicable to all display types. */
 struct wsdisplay_fbinfo {
@@ -272,7 +302,12 @@ struct wsdisplay_font {
 #define WSDISPLAY_FONTENC_ISO 0
 #define WSDISPLAY_FONTENC_IBM 1
 #define WSDISPLAY_FONTENC_PCVT 2
-	int fontwidth, fontheight, stride; /* XXX endianness??? */
+#define WSDISPLAY_FONTENC_ISO7 3 /* greek */
+	int fontwidth, fontheight, stride;
+	int bitorder, byteorder;
+#define	WSDISPLAY_FONTORDER_KNOWN 0		/* i.e, no need to convert */
+#define	WSDISPLAY_FONTORDER_L2R 1
+#define	WSDISPLAY_FONTORDER_R2L 2
 	void *data;
 };
 #define WSDISPLAYIO_LDFONT	_IOW('W', 77, struct wsdisplay_font)
@@ -304,6 +339,18 @@ struct wsdisplay_kbddata {
 	int idx;
 };
 #define _O_WSDISPLAYIO_SETKEYBOARD _IOWR('W', 81, struct wsdisplay_kbddata)
+
+/* Misc control.  Not applicable to all display types. */
+struct wsdisplay_param {
+        int param;
+#define	WSDISPLAYIO_PARAM_BACKLIGHT	1
+#define	WSDISPLAYIO_PARAM_BRIGHTNESS	2
+#define	WSDISPLAYIO_PARAM_CONTRAST	3
+        int min, max, curval;
+        int reserved[4];
+};
+#define	WSDISPLAYIO_GETPARAM	_IOWR('W', 82, struct wsdisplay_param)
+#define	WSDISPLAYIO_SETPARAM	_IOWR('W', 83, struct wsdisplay_param)
 
 /* XXX NOT YET DEFINED */
 /* Mapping information retrieval. */

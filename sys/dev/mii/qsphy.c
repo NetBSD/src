@@ -1,7 +1,7 @@
-/*	$NetBSD: qsphy.c,v 1.12 1999/04/23 04:24:32 thorpej Exp $	*/
+/*	$NetBSD: qsphy.c,v 1.12.2.1 2000/11/20 11:42:12 bouyer Exp $	*/
 
 /*-
- * Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.
+ * Copyright (c) 1998, 1999, 2000 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -91,12 +91,17 @@ int	qsphymatch __P((struct device *, struct cfdata *, void *));
 void	qsphyattach __P((struct device *, struct device *, void *));
 
 struct cfattach qsphy_ca = {
-	sizeof(struct mii_softc), qsphymatch, qsphyattach
+	sizeof(struct mii_softc), qsphymatch, qsphyattach, mii_phy_detach,
+	    mii_phy_activate
 };
 
 int	qsphy_service __P((struct mii_softc *, struct mii_data *, int));
-void	qsphy_reset __P((struct mii_softc *));
 void	qsphy_status __P((struct mii_softc *));
+void	qsphy_reset __P((struct mii_softc *));
+
+const struct mii_phy_funcs qsphy_funcs = {
+	qsphy_service, qsphy_status, qsphy_reset,
+};
 
 int
 qsphymatch(parent, match, aux)
@@ -127,17 +132,11 @@ qsphyattach(parent, self, aux)
 
 	sc->mii_inst = mii->mii_instance;
 	sc->mii_phy = ma->mii_phyno;
-	sc->mii_service = qsphy_service;
+	sc->mii_funcs = &qsphy_funcs;
 	sc->mii_pdata = mii;
+	sc->mii_flags = mii->mii_flags;
 
-#define	ADD(m, c)	ifmedia_add(&mii->mii_media, (m), (c), NULL)
-
-	ADD(IFM_MAKEWORD(IFM_ETHER, IFM_NONE, 0, sc->mii_inst),
-	    BMCR_ISO);
-	ADD(IFM_MAKEWORD(IFM_ETHER, IFM_100_TX, IFM_LOOP, sc->mii_inst),
-	    BMCR_LOOP|BMCR_S100);
-
-	qsphy_reset(sc);
+	PHY_RESET(sc);
 
 	sc->mii_capabilities =
 	    PHY_READ(sc, MII_BMSR) & ma->mii_capmask;
@@ -145,10 +144,8 @@ qsphyattach(parent, self, aux)
 	if ((sc->mii_capabilities & BMSR_MEDIAMASK) == 0)
 		printf("no media present");
 	else
-		mii_add_media(mii, sc->mii_capabilities,
-		    sc->mii_inst);
+		mii_phy_add_media(sc);
 	printf("\n");
-#undef ADD
 }
 
 int
@@ -159,6 +156,9 @@ qsphy_service(sc, mii, cmd)
 {
 	struct ifmedia_entry *ife = mii->mii_media.ifm_cur;
 	int reg;
+
+	if ((sc->mii_dev.dv_flags & DVF_ACTIVE) == 0)
+		return (ENXIO);
 
 	switch (cmd) {
 	case MII_POLLSTAT:
@@ -186,28 +186,7 @@ qsphy_service(sc, mii, cmd)
 		if ((mii->mii_ifp->if_flags & IFF_UP) == 0)
 			break;
 
-		switch (IFM_SUBTYPE(ife->ifm_media)) {
-		case IFM_AUTO:
-			/*
-			 * If we're already in auto mode, just return.
-			 */
-			if (PHY_READ(sc, MII_BMCR) & BMCR_AUTOEN)
-				return (0);
-			(void) mii_phy_auto(sc, 1);
-			break;
-		case IFM_100_T4:
-			/*
-			 * XXX Not supported as a manual setting right now.
-			 */
-			return (EINVAL);
-		default:
-			/*
-			 * BMCR data is stored in the ifmedia entry.
-			 */
-			PHY_WRITE(sc, MII_ANAR,
-			    mii_anar(ife->ifm_media));
-			PHY_WRITE(sc, MII_BMCR, ife->ifm_data);
-		}
+		mii_phy_setmedia(sc);
 		break;
 
 	case MII_TICK:
@@ -217,33 +196,20 @@ qsphy_service(sc, mii, cmd)
 		if (IFM_INST(ife->ifm_media) != sc->mii_inst)
 			return (0);
 
-		/*
-		 * Only used for autonegotiation.
-		 */
-		if (IFM_SUBTYPE(ife->ifm_media) != IFM_AUTO)
+		if (mii_phy_tick(sc) == EJUSTRETURN)
 			return (0);
-
-		/*
-		 * Is the interface even up?
-		 */
-		if ((mii->mii_ifp->if_flags & IFF_UP) == 0)
-			return (0);
-
-		/*
-		 * The QS6612's autonegotiation doesn't need to be
-		 * kicked; it continues in the background.
-		 */
 		break;
+
+	case MII_DOWN:
+		mii_phy_down(sc);
+		return (0);
 	}
 
 	/* Update the media status. */
-	qsphy_status(sc);
+	mii_phy_status(sc);
 
 	/* Callback if something changed. */
-	if (sc->mii_active != mii->mii_media_active || cmd == MII_MEDIACHG) {
-		(*mii->mii_statchg)(sc->mii_dev.dv_parent);
-		sc->mii_active = mii->mii_media_active;
-	}
+	mii_phy_update(sc, cmd);
 	return (0);
 }
 
@@ -252,6 +218,7 @@ qsphy_status(sc)
 	struct mii_softc *sc;
 {
 	struct mii_data *mii = sc->mii_pdata;
+	struct ifmedia_entry *ife = mii->mii_media.ifm_cur;
 	int bmsr, bmcr, pctl;
 
 	mii->mii_media_status = IFM_AVALID;
@@ -302,7 +269,7 @@ qsphy_status(sc)
 			break;
 		}
 	} else
-		mii->mii_media_active = mii_media_from_bmcr(bmcr);
+		mii->mii_media_active = ife->ifm_media;
 }
 
 void

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_epic_pci.c,v 1.7 1999/07/27 00:37:34 thorpej Exp $	*/
+/*	$NetBSD: if_epic_pci.c,v 1.7.2.1 2000/11/20 11:42:21 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.
@@ -100,8 +100,8 @@ struct epic_pci_softc {
 	void	*sc_ih;			/* interrupt handle */
 };
 
-int	epic_pci_match __P((struct device *, struct cfdata *, void *));
-void	epic_pci_attach __P((struct device *, struct device *, void *));
+int	epic_pci_match(struct device *, struct cfdata *, void *);
+void	epic_pci_attach(struct device *, struct device *, void *);
 
 struct cfattach epic_pci_ca = {
 	sizeof(struct epic_pci_softc), epic_pci_match, epic_pci_attach,
@@ -116,8 +116,7 @@ const struct epic_pci_product {
 	{ 0,				NULL },
 };
 
-const struct epic_pci_product *epic_pci_lookup
-    __P((const struct pci_attach_args *));
+const struct epic_pci_product *epic_pci_lookup(const struct pci_attach_args *);
 
 const struct epic_pci_product *
 epic_pci_lookup(pa)
@@ -163,7 +162,33 @@ epic_pci_attach(parent, self, aux)
 	const struct epic_pci_product *epp;
 	bus_space_tag_t iot, memt;
 	bus_space_handle_t ioh, memh;
-	int ioh_valid, memh_valid;
+	pcireg_t reg;
+	int pmreg, ioh_valid, memh_valid;
+
+	if (pci_get_capability(pc, pa->pa_tag, PCI_CAP_PWRMGMT, &pmreg, 0)) {
+		reg = pci_conf_read(pc, pa->pa_tag, pmreg + 4);
+		switch (reg & PCI_PMCSR_STATE_MASK) {
+		case PCI_PMCSR_STATE_D1:
+		case PCI_PMCSR_STATE_D2:
+			printf(": waking up from power state D%d\n%s",
+			    reg & PCI_PMCSR_STATE_MASK, sc->sc_dev.dv_xname);
+			pci_conf_write(pc, pa->pa_tag, pmreg + 4,
+			    (reg & ~PCI_PMCSR_STATE_MASK) |
+			    PCI_PMCSR_STATE_D0);
+			break;
+		case PCI_PMCSR_STATE_D3:
+			/*
+			 * IO and MEM are disabled. We can't enable
+			 * the card because the BARs might be invalid.
+			 */
+			printf(": unable to wake up from power state D3, "
+			       "reboot required.\n");
+			pci_conf_write(pc, pa->pa_tag, pmreg + 4,
+			    (reg & ~PCI_PMCSR_STATE_MASK) |
+			    PCI_PMCSR_STATE_D0);
+			return;
+		}
+	}
 
 	/*
 	 * Map the device.

@@ -1,4 +1,4 @@
-/*	$NetBSD: wdc_isa.c,v 1.15 1999/05/19 14:41:25 bouyer Exp $ */
+/*	$NetBSD: wdc_isa.c,v 1.15.2.1 2000/11/20 11:41:22 bouyer Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -76,7 +76,7 @@ struct cfattach wdc_isa_ca = {
 
 static void	wdc_isa_dma_setup __P((struct wdc_isa_softc *));
 static int	wdc_isa_dma_init __P((void*, int, int, void *, size_t, int));
-static void 	wdc_isa_dma_start __P((void*, int, int, int));
+static void 	wdc_isa_dma_start __P((void*, int, int));
 static int	wdc_isa_dma_finish __P((void*, int, int, int));
 
 int
@@ -85,9 +85,11 @@ wdc_isa_probe(parent, match, aux)
 	struct cfdata *match;
 	void *aux;
 {
-	struct channel_softc ch = { 0 };
+	struct channel_softc ch;
 	struct isa_attach_args *ia = aux;
 	int result = 0;
+
+	memset(&ch, 0, sizeof(ch));
 
 	ch.cmd_iot = ia->ia_iot;
 	if (bus_space_map(ch.cmd_iot, ia->ia_iobase, WDC_ISA_REG_NPORTS, 0,
@@ -172,6 +174,15 @@ static void
 wdc_isa_dma_setup(sc)
 	struct wdc_isa_softc *sc;
 {
+	bus_size_t maxsize;
+
+	if ((maxsize = isa_dmamaxsize(sc->sc_ic, sc->sc_drq)) < MAXPHYS) {
+		printf("%s: max DMA size %lu is less than required %d\n",
+		    sc->sc_wdcdev.sc_dev.dv_xname, (u_long)maxsize, MAXPHYS);
+		sc->sc_wdcdev.cap &= ~WDC_CAPABILITY_DMA;
+		return;
+	}
+
 	if (isa_dmamap_create(sc->sc_ic, sc->sc_drq,
 	    MAXPHYS, BUS_DMA_NOWAIT|BUS_DMA_ALLOCNOW)) {
 		printf("%s: can't create map for drq %d\n",
@@ -196,7 +207,7 @@ wdc_isa_dma_init(v, channel, drive, databuf, datalen, read)
 }
 
 static void
-wdc_isa_dma_start(v, channel, drive, read)
+wdc_isa_dma_start(v, channel, drive)
 	void *v;
 	int channel, drive;
 {

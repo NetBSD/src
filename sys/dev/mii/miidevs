@@ -1,4 +1,4 @@
-$NetBSD: miidevs,v 1.8 1999/09/07 19:29:52 soren Exp $
+$NetBSD: miidevs,v 1.8.2.1 2000/11/20 11:42:11 bouyer Exp $
 
 /*-
  * Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.
@@ -49,6 +49,8 @@ $NetBSD: miidevs,v 1.8 1999/09/07 19:29:52 soren Exp $
  */
 
 oui AMD				0x00001a	Advanced Micro Devices
+oui BROADCOM			0x001018	Broadcom
+oui ENABLESEMI			0x0010dd	Enable Semiconductor
 oui DAVICOM			0x00606e	Davicom Semiconductor
 oui ICS				0x00a0be	Integrated Circuit Systems
 oui INTEL			0x00aa00	Intel
@@ -87,7 +89,12 @@ oui xxDAVICOM			0x006040	Davicom Semiconductor
 
 /* Advanced Micro Devices PHYs */
 model xxAMD 79C873		0x0000 Am79C873 10/100 media interface
-model AMD 79c973phy		0x0036 Am79c973 internal PHY
+model AMD 79c973phy		0x0036 Am79C973 internal PHY
+model AMD 79c901		0x0037 Am79C901 10 PHY
+model AMD 79c901home		0x0039 Am79C901 HomePHY
+
+/* Broadcom PHYs */
+model BROADCOM BCM5201		0x0021 BCM5201 10/100 media interface
 
 /* Davicom Semiconductor PHYs */
 model xxDAVICOM DM9101		0x0000 DM9101 10/100 media interface

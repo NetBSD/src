@@ -1,4 +1,4 @@
-/*      $NetBSD: sv.c,v 1.9 1999/07/10 16:46:19 kleink Exp $ */
+/*      $NetBSD: sv.c,v 1.9.2.1 2000/11/20 11:42:37 bouyer Exp $ */
 /*      $OpenBSD: sv.c,v 1.2 1998/07/13 01:50:15 csapuntz Exp $ */
 
 /*
@@ -151,7 +151,7 @@ int	sv_query_devinfo __P((void *, mixer_devinfo_t *));
 void   *sv_malloc __P((void *, int, size_t, int, int));
 void	sv_free __P((void *, void *, int));
 size_t	sv_round_buffersize __P((void *, int, size_t));
-int	sv_mappage __P((void *, void *, int, int));
+paddr_t	sv_mappage __P((void *, void *, off_t, int));
 int	sv_get_props __P((void *));
 
 #ifdef AUDIO_DEBUG
@@ -709,26 +709,26 @@ sv_set_params(addr, setmode, usemode, play, rec)
 		case AUDIO_ENCODING_ULINEAR_BE:
 			if (p->precision == 16) {
 				if (mode == AUMODE_PLAY)
-					p->sw_code = swap_bytes_change_sign16;
+					p->sw_code = swap_bytes_change_sign16_le;
 				else
-					p->sw_code = change_sign16_swap_bytes;
+					p->sw_code = change_sign16_swap_bytes_le;
 			}
 			break;
 		case AUDIO_ENCODING_ULINEAR_LE:
 			if (p->precision == 16)
-				p->sw_code = change_sign16;
+				p->sw_code = change_sign16_le;
 			break;
 		case AUDIO_ENCODING_ULAW:
 			if (mode == AUMODE_PLAY) {
 				p->factor = 2;
-				p->sw_code = mulaw_to_slinear16;
+				p->sw_code = mulaw_to_slinear16_le;
 			} else
 				p->sw_code = ulinear8_to_mulaw;
 			break;
 		case AUDIO_ENCODING_ALAW:
 			if (mode == AUMODE_PLAY) {
 				p->factor = 2;
-				p->sw_code = alaw_to_slinear16;
+				p->sw_code = alaw_to_slinear16_le;
 			} else
 				p->sw_code = ulinear8_to_alaw;
 			break;
@@ -1480,11 +1480,11 @@ sv_round_buffersize(addr, direction, size)
 	return (size);
 }
 
-int
+paddr_t
 sv_mappage(addr, mem, off, prot)
 	void *addr;
 	void *mem;
-	int off;
+	off_t off;
 	int prot;
 {
 	struct sv_softc *sc = addr;

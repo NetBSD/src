@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_states.c,v 1.7 1999/07/08 00:45:24 oster Exp $	*/
+/*	$NetBSD: rf_states.c,v 1.7.2.1 2000/11/20 11:42:59 bouyer Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -34,7 +34,6 @@
 #include "rf_dag.h"
 #include "rf_desc.h"
 #include "rf_aselect.h"
-#include "rf_threadid.h"
 #include "rf_general.h"
 #include "rf_states.h"
 #include "rf_dagutils.h"
@@ -42,14 +41,7 @@
 #include "rf_engine.h"
 #include "rf_map.h"
 #include "rf_etimer.h"
-
-#if defined(KERNEL) && (DKUSAGE > 0)
-#include <sys/dkusage.h>
-#include <io/common/iotypes.h>
-#include <io/cam/dec_cam.h>
-#include <io/cam/cam.h>
-#include <io/cam/pdrv.h>
-#endif				/* KERNEL && DKUSAGE > 0 */
+#include "rf_kintf.h"
 
 /* prototypes for some of the available states.
 
@@ -97,6 +89,7 @@ rf_ContinueRaidAccess(RF_RaidAccessDesc_t * desc)
 	int     suspended = RF_FALSE;
 	int     current_state_index = desc->state;
 	RF_AccessState_t current_state = desc->states[current_state_index];
+	int     unit = desc->raidPtr->raidid;
 
 	do {
 
@@ -142,12 +135,10 @@ rf_ContinueRaidAccess(RF_RaidAccessDesc_t * desc)
 		 * renter this function or loop back up, desc should be valid. */
 
 		if (rf_printStatesDebug) {
-			int     tid;
-			rf_get_threadid(tid);
-
-			printf("[%d] State: %-24s StateIndex: %3i desc: 0x%ld %s\n",
-			    tid, StateName(current_state), current_state_index, (long) desc,
-			    suspended ? "callback scheduled" : "looping");
+			printf("raid%d: State: %-24s StateIndex: %3i desc: 0x%ld %s\n",
+			       unit, StateName(current_state), 
+			       current_state_index, (long) desc,
+			       suspended ? "callback scheduled" : "looping");
 		}
 	} while (!suspended && current_state != rf_LastState);
 
@@ -185,16 +176,17 @@ rf_ContinueDagAccess(RF_DagList_t * dagList)
 		 * free all dags and start over */
 		desc->status = 1;	/* bad status */
 		{
-			printf("[%d] DAG failure: %c addr 0x%lx (%ld) nblk 0x%x (%d) buf 0x%lx\n",
-			    desc->tid, desc->type, (long) desc->raidAddress,
-			    (long) desc->raidAddress, (int) desc->numBlocks,
-			    (int) desc->numBlocks, (unsigned long) (desc->bufPtr));
+			printf("raid%d: DAG failure: %c addr 0x%lx (%ld) nblk 0x%x (%d) buf 0x%lx\n",
+			       desc->raidPtr->raidid, desc->type, 
+			       (long) desc->raidAddress,
+			       (long) desc->raidAddress, (int) desc->numBlocks,
+			       (int) desc->numBlocks, 
+			       (unsigned long) (desc->bufPtr));
 		}
 	}
 	dagList->numDagsDone++;
 	rf_ContinueRaidAccess(desc);
 }
-
 
 int 
 rf_State_LastState(RF_RaidAccessDesc_t * desc)
@@ -203,33 +195,33 @@ rf_State_LastState(RF_RaidAccessDesc_t * desc)
 	RF_CBParam_t callbackArg;
 
 	callbackArg.p = desc->callbackArg;
+	
+	/*
+	 * If this is not an async request, wake up the caller
+	 */
+	if (desc->async_flag == 0)
+		wakeup(desc->bp);
 
-	if (!(desc->flags & RF_DAG_TEST_ACCESS)) {	/* don't biodone if this */
-#if DKUSAGE > 0
-		RF_DKU_END_IO(((RF_Raid_t *) desc->raidPtr)->raidid, (struct buf *) desc->bp);
-#else
-		RF_DKU_END_IO(((RF_Raid_t *) desc->raidPtr)->raidid);
-#endif				/* DKUSAGE > 0 */
+	/*
+	 * That's all the IO for this one... unbusy the 'disk'.
+	 */
 
-		/*
-	         * If this is not an async request, wake up the caller
-	         */
-		if (desc->async_flag == 0)
-			wakeup(desc->bp);
+	rf_disk_unbusy(desc);
 
-		/* 
-		 * Wakeup any requests waiting to go.
-		 */
+	/* 
+	 * Wakeup any requests waiting to go.
+	 */
+	
+	RF_LOCK_MUTEX(((RF_Raid_t *) desc->raidPtr)->mutex);
+	((RF_Raid_t *) desc->raidPtr)->openings++;
+	RF_UNLOCK_MUTEX(((RF_Raid_t *) desc->raidPtr)->mutex);
 
-		RF_LOCK_MUTEX(((RF_Raid_t *) desc->raidPtr)->mutex);
-		((RF_Raid_t *) desc->raidPtr)->openings++;
-		wakeup(&(((RF_Raid_t *) desc->raidPtr)->openings));
-		RF_UNLOCK_MUTEX(((RF_Raid_t *) desc->raidPtr)->mutex);
+	/* wake up any pending IO */
+	raidstart(((RF_Raid_t *) desc->raidPtr));
+		
+	/* printf("Calling biodone on 0x%x\n",desc->bp); */
+	biodone(desc->bp);	/* access came through ioctl */
 
-
-		/* printf("Calling biodone on 0x%x\n",desc->bp); */
-		biodone(desc->bp);	/* access came through ioctl */
-	}
 	if (callbackFunc)
 		callbackFunc(callbackArg);
 	rf_FreeRaidAccDesc(desc);
@@ -387,14 +379,16 @@ rf_State_Lock(RF_RaidAccessDesc_t * desc)
 					}
 				} else {
 					if (rf_pssDebug) {
-						printf("[%d] skipping force/block because already done, psid %ld\n",
-						    desc->tid, (long) asm_p->stripeID);
+						printf("raid%d: skipping force/block because already done, psid %ld\n",
+						       desc->raidPtr->raidid, 
+						       (long) asm_p->stripeID);
 					}
 				}
 			} else {
 				if (rf_pssDebug) {
-					printf("[%d] skipping force/block because not write or not under recon, psid %ld\n",
-					    desc->tid, (long) asm_p->stripeID);
+					printf("raid%d: skipping force/block because not write or not under recon, psid %ld\n",
+					       desc->raidPtr->raidid, 
+					       (long) asm_p->stripeID);
 				}
 			}
 		}
@@ -457,7 +451,7 @@ rf_State_CreateDAG(RF_RaidAccessDesc_t * desc)
 		/* failed to create a dag */
 		/* this happens when there are too many faults or incomplete
 		 * dag libraries */
-		printf("[Failed to create a DAG\n]");
+		printf("[Failed to create a DAG]\n");
 		RF_PANIC();
 	} else {
 		/* bind dags to desc */
@@ -589,11 +583,9 @@ rf_State_Cleanup(RF_RaidAccessDesc_t * desc)
 	RF_AccessStripeMap_t *asm_p;
 	RF_DagHeader_t *dag_h;
 	RF_Etimer_t timer;
-	int     tid, i;
+	int i;
 
 	desc->state++;
-
-	rf_get_threadid(tid);
 
 	timer = tracerec->timer;
 	RF_ETIMER_STOP(timer);
@@ -633,8 +625,9 @@ rf_State_Cleanup(RF_RaidAccessDesc_t * desc)
 			    asm_p->parityInfo &&
 			    !(desc->flags & RF_DAG_SUPPRESS_LOCKS)) {
 				RF_ASSERT_VALID_LOCKREQ(&asm_p->lockReqDesc);
-				rf_ReleaseStripeLock(raidPtr->lockTable, asm_p->stripeID,
-				    &asm_p->lockReqDesc);
+				rf_ReleaseStripeLock(raidPtr->lockTable, 
+						     asm_p->stripeID,
+						     &asm_p->lockReqDesc);
 			}
 			if (asm_p->flags & RF_ASM_FLAGS_RECON_BLOCKED) {
 				rf_UnblockRecon(raidPtr, asm_p);

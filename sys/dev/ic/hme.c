@@ -1,4 +1,4 @@
-/*	$NetBSD: hme.c,v 1.1 1999/06/27 12:26:32 pk Exp $	*/
+/*	$NetBSD: hme.c,v 1.1.4.1 2000/11/20 11:40:34 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -43,14 +43,13 @@
 #define HMEDEBUG
 
 #include "opt_inet.h"
-#include "opt_ccitt.h"
-#include "opt_llc.h"
 #include "opt_ns.h"
 #include "bpfilter.h"
 #include "rnd.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
+#include <sys/kernel.h>
 #include <sys/mbuf.h> 
 #include <sys/syslog.h>
 #include <sys/socket.h>
@@ -96,10 +95,12 @@
 void		hme_start __P((struct ifnet *));
 void		hme_stop __P((struct hme_softc *));
 int		hme_ioctl __P((struct ifnet *, u_long, caddr_t));
+void		hme_tick __P((void *));
 void		hme_watchdog __P((struct ifnet *));
 void		hme_shutdown __P((void *));
 void		hme_init __P((struct hme_softc *));
 void		hme_meminit __P((struct hme_softc *));
+void		hme_mifinit __P((struct hme_softc *));
 void		hme_reset __P((struct hme_softc *));
 void		hme_setladrf __P((struct hme_softc *));
 
@@ -132,6 +133,8 @@ hme_config(sc)
 {
 	struct ifnet *ifp = &sc->sc_ethercom.ec_if;
 	struct mii_data *mii = &sc->sc_mii;
+	struct mii_softc *child;
+	bus_dma_tag_t dmatag = sc->sc_dmatag;
 	bus_dma_segment_t seg;
 	bus_size_t size;
 	int rseg, error;
@@ -175,9 +178,13 @@ hme_config(sc)
 	 * eg. use things as `dma_load_mbuf()' on transmit,
 	 *     and a pool of `EXTMEM' mbufs (with buffers DMA-mapped
 	 *     all the time) on the reveiver side.
+	 *
+	 * Note: receive buffers must be 64-byte aligned.
+	 * Also, apparently, the buffers must extend to a DMA burst
+	 * boundary beyond the maximum packet size.
 	 */
 #define _HME_NDESC	32
-#define _HME_BUFSZ	32
+#define _HME_BUFSZ	1600
 
 	/* Note: the # of descriptors must be a multiple of 16 */
 	sc->sc_rb.rb_ntbuf = _HME_NDESC;
@@ -194,34 +201,46 @@ hme_config(sc)
 		2048 +					/* RX descriptors */
 		sc->sc_rb.rb_ntbuf * _HME_BUFSZ +	/* TX buffers */
 		sc->sc_rb.rb_nrbuf * _HME_BUFSZ;	/* TX buffers */
-	if ((error = bus_dmamem_alloc(sc->sc_dmatag, size,
+
+	/* Allocate DMA buffer */
+	if ((error = bus_dmamem_alloc(dmatag, size,
 				      2048, 0,
 				      &seg, 1, &rseg, BUS_DMA_NOWAIT)) != 0) {
 		printf("%s: DMA buffer alloc error %d\n",
 			sc->sc_dev.dv_xname, error);
+		return;
 	}
-	sc->sc_rb.rb_dmabase = seg.ds_addr;
 
-	/* Map DMA memory in CPU adressable space */
-	if ((error = bus_dmamem_map(sc->sc_dmatag, &seg, rseg, size,
+	/* Map DMA memory in CPU addressable space */
+	if ((error = bus_dmamem_map(dmatag, &seg, rseg, size,
 				    &sc->sc_rb.rb_membase,
 				    BUS_DMA_NOWAIT|BUS_DMA_COHERENT)) != 0) {
 		printf("%s: DMA buffer map error %d\n",
 			sc->sc_dev.dv_xname, error);
-		bus_dmamem_free(sc->sc_dmatag, &seg, rseg);
+		bus_dmamap_unload(dmatag, sc->sc_dmamap);
+		bus_dmamem_free(dmatag, &seg, rseg);
 		return;
 	}
 
-#if 0
-	/*
-	 * Install default copy routines if not supplied.
-	 */
-	if (sc->sc_copytobuf == NULL)
-		sc->sc_copytobuf = hme_copytobuf_contig;
+	if ((error = bus_dmamap_create(dmatag, size, 1, size, 0,
+				    BUS_DMA_NOWAIT, &sc->sc_dmamap)) != 0) {
+		printf("%s: DMA map create error %d\n",
+			sc->sc_dev.dv_xname, error);
+		return;
+	}
 
-	if (sc->sc_copyfrombuf == NULL)
-		sc->sc_copyfrombuf = hme_copyfrombuf_contig;
-#endif
+	/* Load the buffer */
+	if ((error = bus_dmamap_load(dmatag, sc->sc_dmamap,
+	    sc->sc_rb.rb_membase, size, NULL,
+	    BUS_DMA_NOWAIT|BUS_DMA_COHERENT)) != 0) {
+		printf("%s: DMA buffer map load error %d\n",
+			sc->sc_dev.dv_xname, error);
+		bus_dmamem_free(dmatag, &seg, rseg);
+		return;
+	}
+	sc->sc_rb.rb_dmabase = sc->sc_dmamap->dm_segs[0].ds_addr;
+
+	printf(": address %s\n", ether_sprintf(sc->sc_enaddr));
 
 	/* Initialize ifnet structure. */
 	bcopy(sc->sc_dev.dv_xname, ifp->if_xname, IFNAMSIZ);
@@ -240,11 +259,42 @@ hme_config(sc)
 
 	ifmedia_init(&mii->mii_media, 0, hme_mediachange, hme_mediastatus);
 
-	if (LIST_FIRST(&sc->sc_mii.mii_phys) == NULL) {
+	hme_mifinit(sc);
+
+	mii_attach(&sc->sc_dev, mii, 0xffffffff,
+			MII_PHY_ANY, MII_OFFSET_ANY, 0);
+
+	child = LIST_FIRST(&mii->mii_phys);
+	if (child == NULL) {
 		/* No PHY attached */
 		ifmedia_add(&sc->sc_media, IFM_ETHER|IFM_MANUAL, 0, NULL);
 		ifmedia_set(&sc->sc_media, IFM_ETHER|IFM_MANUAL);
 	} else {
+		/*
+		 * Walk along the list of attached MII devices and
+		 * establish an `MII instance' to `phy number'
+		 * mapping. We'll use this mapping in media change
+		 * requests to determine which phy to use to program
+		 * the MIF configuration register.
+		 */
+		for (; child != NULL; child = LIST_NEXT(child, mii_list)) {
+			/*
+			 * Note: we support just two PHYs: the built-in
+			 * internal device and an external on the MII
+			 * connector.
+			 */
+			if (child->mii_phy > 1 || child->mii_inst > 1) {
+				printf("%s: cannot accomodate MII device %s"
+				       " at phy %d, instance %d\n",
+				       sc->sc_dev.dv_xname,
+				       child->mii_dev.dv_xname,
+				       child->mii_phy, child->mii_inst);
+				continue;
+			}
+
+			sc->sc_phys[child->mii_inst] = child->mii_phy;
+		}
+
 		/*
 		 * XXX - we can really do the following ONLY if the
 		 * phy indeed has the auto negotiation capability!!
@@ -259,8 +309,6 @@ hme_config(sc)
 #if NBPFILTER > 0
 	bpfattach(&ifp->if_bpf, ifp, DLT_EN10MB, sizeof(struct ether_header));
 #endif
-
-	printf(": address %s\n", ether_sprintf(sc->sc_enaddr));
 
 	sc->sc_sh = shutdownhook_establish(hme_shutdown, sc);
 	if (sc->sc_sh == NULL)
@@ -279,6 +327,22 @@ hme_config(sc)
 	rnd_attach_source(&sc->rnd_source, sc->sc_dev.dv_xname,
 			  RND_TYPE_NET, 0);
 #endif
+
+	callout_init(&sc->sc_tick_ch);
+}
+
+void
+hme_tick(arg)
+	void *arg;
+{
+	struct hme_softc *sc = arg;
+	int s;
+
+	s = splnet();
+	mii_tick(&sc->sc_mii);
+	splx(s);
+
+	callout_reset(&sc->sc_tick_ch, hz, hme_tick, sc);
 }
 
 void
@@ -299,6 +363,9 @@ hme_stop(sc)
 	bus_space_tag_t t = sc->sc_bustag;
 	bus_space_handle_t seb = sc->sc_seb;
 	int n;
+
+	callout_stop(&sc->sc_tick_ch);
+	mii_down(&sc->sc_mii);
 
 	/* Reset transmitter and receiver */
 	bus_space_write_4(t, seb, HME_SEBI_RESET,
@@ -337,17 +404,20 @@ hme_meminit(sc)
 	hr->rb_txddma = dma;
 	p += ntbuf * HME_XD_SIZE;
 	dma += ntbuf * HME_XD_SIZE;
+	/* We have reserved descriptor space until the next 2048 byte boundary.*/
+	dma = (bus_addr_t)roundup((u_long)dma, 2048);
+	p = (caddr_t)roundup((u_long)p, 2048);
 
 	/*
 	 * Allocate receive descriptors
-	 * Buffer descriptors must be aligned on a 2048 byte boundary.
 	 */
-	dma = (bus_addr_t)roundup((long)dma, 2048);
-	p = (caddr_t)roundup((long)p, 2048);
 	hr->rb_rxd = p;
 	hr->rb_rxddma = dma;
 	p += nrbuf * HME_XD_SIZE;
 	dma += nrbuf * HME_XD_SIZE;
+	/* Again move forward to the next 2048 byte boundary.*/
+	dma = (bus_addr_t)roundup((u_long)dma, 2048);
+	p = (caddr_t)roundup((u_long)p, 2048);
 
 
 	/*
@@ -370,16 +440,16 @@ hme_meminit(sc)
 	 * Initialize transmit buffer descriptors
 	 */
 	for (i = 0; i < ntbuf; i++) {
-		HME_XD_SETADDR(hr->rb_txd, i, txbufdma + i * _HME_BUFSZ);
-		HME_XD_SETFLAGS(hr->rb_txd, i, 0);
+		HME_XD_SETADDR(sc->sc_pci, hr->rb_txd, i, txbufdma + i * _HME_BUFSZ);
+		HME_XD_SETFLAGS(sc->sc_pci, hr->rb_txd, i, 0);
 	}
 
 	/*
 	 * Initialize receive buffer descriptors
 	 */
 	for (i = 0; i < nrbuf; i++) {
-		HME_XD_SETADDR(hr->rb_txd, i, rxbufdma + i * _HME_BUFSZ);
-		HME_XD_SETFLAGS(hr->rb_txd, i,
+		HME_XD_SETADDR(sc->sc_pci, hr->rb_rxd, i, rxbufdma + i * _HME_BUFSZ);
+		HME_XD_SETFLAGS(sc->sc_pci, hr->rb_rxd, i,
 				HME_XD_OWN | HME_XD_ENCODE_RSIZE(_HME_BUFSZ));
 	}
 
@@ -415,6 +485,9 @@ hme_init(sc)
 
 	/* step 1 & 2. Reset the Ethernet Channel */
 	hme_stop(sc);
+
+	/* Re-initialize the MIF */
+	hme_mifinit(sc);
 
 	/* Call MI reset function if any */
 	if (sc->sc_hwreset)
@@ -463,8 +536,14 @@ hme_init(sc)
 
 	/* step 8. Global Configuration & Interrupt Mask */
 	bus_space_write_4(t, seb, HME_SEBI_IMASK,
-			  HME_SEB_STAT_SENTFRAME | HME_SEB_STAT_TXPERR |
-			  HME_SEB_STAT_GOTFRAME  | HME_SEB_STAT_RCNTEXP);
+			~(
+			  /*HME_SEB_STAT_GOTFRAME | HME_SEB_STAT_SENTFRAME |*/
+			  HME_SEB_STAT_HOSTTOTX |
+			  HME_SEB_STAT_RXTOHOST |
+			  HME_SEB_STAT_TXALL |
+			  HME_SEB_STAT_TXPERR |
+			  HME_SEB_STAT_RCNTEXP |
+			  HME_SEB_STAT_ALL_ERRORS ));
 
 	switch (sc->sc_burst) {
 	default:
@@ -485,23 +564,48 @@ hme_init(sc)
 	/* step 9. ETX Configuration: use mostly default values */
 
 	/* Enable DMA */
-	v = bus_space_read_4(t, erx, HME_ETXI_CFG);
+	v = bus_space_read_4(t, etx, HME_ETXI_CFG);
 	v |= HME_ETX_CFG_DMAENABLE;
-	bus_space_write_4(t, erx, HME_ETXI_CFG, v);
+	bus_space_write_4(t, etx, HME_ETXI_CFG, v);
 
-	/* Descriptor ring size: in increments of 16 */
-	bus_space_write_4(t, erx, HME_ETXI_RSIZE, _HME_NDESC / 16);
+	/* Transmit Descriptor ring size: in increments of 16 */
+	bus_space_write_4(t, etx, HME_ETXI_RSIZE, _HME_NDESC / 16 - 1);
 
 
-	/* step 10. ERX Configuration: use default values; enable DMA */
-	v = bus_space_read_4(t, etx, HME_ERXI_CFG);
+	/* step 10. ERX Configuration */
+	v = bus_space_read_4(t, erx, HME_ERXI_CFG);
+
+	/* Encode Receive Descriptor ring size: four possible values */
+	switch (_HME_NDESC /*XXX*/) {
+	case 32:
+		v |= HME_ERX_CFG_RINGSIZE32;
+		break;
+	case 64:
+		v |= HME_ERX_CFG_RINGSIZE64;
+		break;
+	case 128:
+		v |= HME_ERX_CFG_RINGSIZE128;
+		break;
+	case 256:
+		v |= HME_ERX_CFG_RINGSIZE256;
+		break;
+	default:
+		printf("hme: invalid Receive Descriptor ring size\n");
+		break;
+	}
+
+	/* Enable DMA */
 	v |= HME_ERX_CFG_DMAENABLE;
-	bus_space_write_4(t, etx, HME_ERXI_CFG, v);
+	bus_space_write_4(t, erx, HME_ERXI_CFG, v);
 
 	/* step 11. XIF Configuration */
 	v = bus_space_read_4(t, mac, HME_MACI_XIF);
 	v |= HME_MAC_XIF_OE;
+	/* If an external transceiver is connected, enable its MII drivers */
+	if ((bus_space_read_4(t, mif, HME_MIFI_CFG) & HME_MIF_CFG_MDI1) != 0)
+		v |= HME_MAC_XIF_MIIENABLE;
 	bus_space_write_4(t, mac, HME_MACI_XIF, v);
+
 
 	/* step 12. RX_MAC Configuration Register */
 	v = bus_space_read_4(t, mac, HME_MACI_RXCFG);
@@ -510,22 +614,17 @@ hme_init(sc)
 
 	/* step 13. TX_MAC Configuration Register */
 	v = bus_space_read_4(t, mac, HME_MACI_TXCFG);
-	v |= HME_MAC_TXCFG_ENABLE;
+	v |= (HME_MAC_TXCFG_ENABLE | HME_MAC_TXCFG_DGIVEUP);
 	bus_space_write_4(t, mac, HME_MACI_TXCFG, v);
 
 	/* step 14. Issue Transmit Pending command */
 
-	/*
-	 * Put MIF in frame mode
-	 * XXX - do bit-bang mode later
-	 */
-	v = bus_space_read_4(t, mif, HME_MIFI_CFG);
-	v &= ~HME_MIF_CFG_BBMODE;
-	bus_space_write_4(t, mif, HME_MIFI_CFG, v);
-
 	/* Call MI initialization function if any */
 	if (sc->sc_hwinit)
 		(*sc->sc_hwinit)(sc);
+
+	/* Start the one second timer. */
+	callout_reset(&sc->sc_tick_ch, hz, hme_tick, sc);
 
 	ifp->if_flags |= IFF_RUNNING;
 	ifp->if_flags &= ~IFF_OACTIVE;
@@ -652,7 +751,6 @@ hme_read(sc, ix, len)
 {
 	struct ifnet *ifp = &sc->sc_ethercom.ec_if;
 	struct mbuf *m;
-	struct ether_header *eh;
 
 	if (len <= sizeof(struct ether_header) ||
 	    len > ETHERMTU + sizeof(struct ether_header)) {
@@ -673,29 +771,13 @@ hme_read(sc, ix, len)
 
 	ifp->if_ipackets++;
 
-	/* We assume that the header fit entirely in one mbuf. */
-	eh = mtod(m, struct ether_header *);
-
 #if NBPFILTER > 0
 	/*
 	 * Check if there's a BPF listener on this interface.
 	 * If so, hand off the raw packet to BPF.
 	 */
-	if (ifp->if_bpf) {
+	if (ifp->if_bpf)
 		bpf_mtap(ifp->if_bpf, m);
-
-		/*
-		 * Note that the interface cannot be in promiscuous mode if
-		 * there are no BPF listeners.  And if we are in promiscuous
-		 * mode, we have to check if this packet is really ours.
-		 */
-		if ((ifp->if_flags & IFF_PROMISC) != 0 &&
-		    (eh->ether_dhost[0] & 1) == 0 && /* !mcast and !bcast */
-		    ether_cmp(eh->ether_dhost, sc->sc_enaddr)) {
-			m_freem(m);
-			return;
-		}
-	}
 #endif
 
 	/* Pass the packet up. */
@@ -739,10 +821,11 @@ hme_start(ifp)
 		/*
 		 * Initialize transmit registers and start transmission
 		 */
-		HME_XD_SETFLAGS(txd, ri,
+		HME_XD_SETFLAGS(sc->sc_pci, txd, ri,
 			HME_XD_OWN | HME_XD_SOP | HME_XD_EOP |
 			HME_XD_ENCODE_TSIZE(len));
 
+		/*if (sc->sc_rb.rb_td_nbusy <= 0)*/
 		bus_space_write_4(sc->sc_bustag, sc->sc_etx, HME_ETXI_PENDING,
 				  HME_ETX_TP_DMAWAKEUP);
 
@@ -794,7 +877,7 @@ hme_tint(sc)
 		if (sc->sc_rb.rb_td_nbusy <= 0)
 			break;
 
-		txflags = HME_XD_GETFLAGS(sc->sc_rb.rb_txd, ri);
+		txflags = HME_XD_GETFLAGS(sc->sc_pci, sc->sc_rb.rb_txd, ri);
 
 		if (txflags & HME_XD_OWN)
 			break;
@@ -802,12 +885,13 @@ hme_tint(sc)
 		ifp->if_flags &= ~IFF_OACTIVE;
 		ifp->if_opackets++;
 
-		if (++ri == sc->sc_rb.rb_nrbuf)
+		if (++ri == sc->sc_rb.rb_ntbuf)
 			ri = 0;
 
 		--sc->sc_rb.rb_td_nbusy;
 	}
 
+	/* Update ring */
 	sc->sc_rb.rb_tdtail = ri;
 
 	hme_start(ifp);
@@ -836,15 +920,20 @@ hme_rint(sc)
 	 * Process all buffers with valid data.
 	 */
 	for (;;) {
-		flags = HME_XD_GETFLAGS(xdr, ri);
+		flags = HME_XD_GETFLAGS(sc->sc_pci, xdr, ri);
 		if (flags & HME_XD_OWN)
 			break;
 
-		len = HME_XD_DECODE_RSIZE(flags);
-		hme_read(sc, ri, len);
+		if (flags & HME_XD_OFL) {
+			printf("%s: buffer overflow, ri=%d; flags=0x%x\n",
+					sc->sc_dev.dv_xname, ri, flags);
+		} else {
+			len = HME_XD_DECODE_RSIZE(flags);
+			hme_read(sc, ri, len);
+		}
 
 		/* This buffer can be used by the hardware again */
-		HME_XD_SETFLAGS(xdr, ri,
+		HME_XD_SETFLAGS(sc->sc_pci, xdr, ri,
 				HME_XD_OWN | HME_XD_ENCODE_RSIZE(_HME_BUFSZ));
 
 		if (++ri == nrbuf)
@@ -911,6 +1000,23 @@ hme_watchdog(ifp)
 }
 
 /*
+ * Initialize the MII Management Interface
+ */
+void
+hme_mifinit(sc)
+	struct hme_softc *sc;
+{
+	bus_space_tag_t t = sc->sc_bustag;
+	bus_space_handle_t mif = sc->sc_mif;
+	u_int32_t v;
+
+	/* Configure the MIF in frame mode */
+	v = bus_space_read_4(t, mif, HME_MIFI_CFG);
+	v &= ~HME_MIF_CFG_BBMODE;
+	bus_space_write_4(t, mif, HME_MIFI_CFG, v);
+}
+
+/*
  * MII interface
  */
 static int
@@ -924,6 +1030,15 @@ hme_mii_readreg(self, phy, reg)
 	int n;
 	u_int32_t v;
 
+	/* Select the desired PHY in the MIF configuration register */
+	v = bus_space_read_4(t, mif, HME_MIFI_CFG);
+	/* Clear PHY select bit */
+	v &= ~HME_MIF_CFG_PHY;
+	if (phy == HME_PHYAD_EXTERNAL)
+		/* Set PHY select bit to get at external device */
+		v |= HME_MIF_CFG_PHY;
+	bus_space_write_4(t, mif, HME_MIFI_CFG, v);
+
 	/* Construct the frame command */
 	v = (MII_COMMAND_START << HME_MIF_FO_ST_SHIFT) |
 	    HME_MIF_FO_TAMSB |
@@ -933,6 +1048,7 @@ hme_mii_readreg(self, phy, reg)
 
 	bus_space_write_4(t, mif, HME_MIFI_FO, v);
 	for (n = 0; n < 100; n++) {
+		DELAY(1);
 		v = bus_space_read_4(t, mif, HME_MIFI_FO);
 		if (v & HME_MIF_FO_TALSB)
 			return (v & HME_MIF_FO_DATA);
@@ -953,6 +1069,15 @@ hme_mii_writereg(self, phy, reg, val)
 	int n;
 	u_int32_t v;
 
+	/* Select the desired PHY in the MIF configuration register */
+	v = bus_space_read_4(t, mif, HME_MIFI_CFG);
+	/* Clear PHY select bit */
+	v &= ~HME_MIF_CFG_PHY;
+	if (phy == HME_PHYAD_EXTERNAL)
+		/* Set PHY select bit to get at external device */
+		v |= HME_MIF_CFG_PHY;
+	bus_space_write_4(t, mif, HME_MIFI_CFG, v);
+
 	/* Construct the frame command */
 	v = (MII_COMMAND_START << HME_MIF_FO_ST_SHIFT)	|
 	    HME_MIF_FO_TAMSB				|
@@ -963,41 +1088,40 @@ hme_mii_writereg(self, phy, reg, val)
 
 	bus_space_write_4(t, mif, HME_MIFI_FO, v);
 	for (n = 0; n < 100; n++) {
+		DELAY(1);
 		v = bus_space_read_4(t, mif, HME_MIFI_FO);
 		if (v & HME_MIF_FO_TALSB)
 			return;
 	}
 
-	printf("%s: mii_read timeout\n", sc->sc_dev.dv_xname);
+	printf("%s: mii_write timeout\n", sc->sc_dev.dv_xname);
 }
 
 static void
 hme_mii_statchg(dev)
 	struct device *dev;
 {
-}
-
-int
-hme_mediachange(ifp)
-	struct ifnet *ifp;
-{
-	struct hme_softc *sc = ifp->if_softc;
-	struct ifmedia *ifm = &sc->sc_media;
-	int newmedia = ifm->ifm_media;
+	struct hme_softc *sc = (void *)dev;
+	int instance = IFM_INST(sc->sc_mii.mii_media.ifm_cur->ifm_media);
+	int phy = sc->sc_phys[instance];
 	bus_space_tag_t t = sc->sc_bustag;
+	bus_space_handle_t mif = sc->sc_mif;
 	bus_space_handle_t mac = sc->sc_mac;
 	u_int32_t v;
-	int error;
 
-	if (IFM_TYPE(newmedia) != IFM_ETHER)
-		return (EINVAL);
+#ifdef HMEDEBUG
+	if (sc->sc_debug)
+		printf("hme_mii_statchg: status change: phy = %d\n", phy);
+#endif
 
-	if ((ifp->if_flags & IFF_UP) == 0)
-		return (0);
+	/* Select the current PHY in the MIF configuration register */
+	v = bus_space_read_4(t, mif, HME_MIFI_CFG);
+	v &= ~HME_MIF_CFG_PHY;
+	if (phy == HME_PHYAD_EXTERNAL)
+		v |= HME_MIF_CFG_PHY;
+	bus_space_write_4(t, mif, HME_MIFI_CFG, v);
 
-	if ((error = mii_mediachg(&sc->sc_mii)) != 0)
-		return (error);
-
+	/* Set the MAC Full Duplex bit appropriately */
 	v = bus_space_read_4(t, mac, HME_MACI_TXCFG);
 	if ((IFM_OPTIONS(sc->sc_mii.mii_media_active) & IFM_FDX) != 0)
 		v |= HME_MAC_TXCFG_FULLDPLX;
@@ -1005,7 +1129,24 @@ hme_mediachange(ifp)
 		v &= ~HME_MAC_TXCFG_FULLDPLX;
 	bus_space_write_4(t, mac, HME_MACI_TXCFG, v);
 
-	return (0);
+	/* If an external transceiver is selected, enable its MII drivers */
+	v = bus_space_read_4(t, mac, HME_MACI_XIF);
+	v &= ~HME_MAC_XIF_MIIENABLE;
+	if (phy == HME_PHYAD_EXTERNAL)
+		v |= HME_MAC_XIF_MIIENABLE;
+	bus_space_write_4(t, mac, HME_MACI_XIF, v);
+}
+
+int
+hme_mediachange(ifp)
+	struct ifnet *ifp;
+{
+	struct hme_softc *sc = ifp->if_softc;
+
+	if (IFM_TYPE(sc->sc_media.ifm_media) != IFM_ETHER)
+		return (EINVAL);
+
+	return (mii_mediachg(&sc->sc_mii));
 }
 
 void
@@ -1158,7 +1299,26 @@ hme_setladrf(sc)
 	u_char *cp;
 	u_int32_t crc;
 	u_int32_t hash[4];
+	u_int32_t v;
 	int len;
+
+	/* Clear hash table */
+	hash[3] = hash[2] = hash[1] = hash[0] = 0;
+
+	/* Get current RX configuration */
+	v = bus_space_read_4(t, mac, HME_MACI_RXCFG);
+
+	if ((ifp->if_flags & IFF_PROMISC) != 0) {
+		/* Turn on promiscuous mode; turn off the hash filter */
+		v |= HME_MAC_RXCFG_PMISC;
+		v &= ~HME_MAC_RXCFG_HENABLE;
+		ifp->if_flags |= IFF_ALLMULTI;
+		goto chipit;
+	}
+
+	/* Turn off promiscuous mode; turn on the hash filter */
+	v &= ~HME_MAC_RXCFG_PMISC;
+	v |= HME_MAC_RXCFG_HENABLE;
 
 	/*
 	 * Set up multicast address filter by passing all multicast addresses
@@ -1168,15 +1328,6 @@ hme_setladrf(sc)
 	 * the word.
 	 */
 
-	if ((ifp->if_flags & IFF_PROMISC) != 0) {
-		u_int32_t v = bus_space_read_4(t, mac, HME_MACI_RXCFG);
-		v |= HME_MAC_RXCFG_PMISC;
-		bus_space_write_4(t, mac, HME_MACI_RXCFG, v);
-		goto allmulti;
-	}
-
-	/* Clear hash table */
-	hash[3] = hash[2] = hash[1] = hash[0] = 0;
 	ETHER_FIRST_MULTI(step, ec, enm);
 	while (enm != NULL) {
 		if (ether_cmp(enm->enm_addrlo, enm->enm_addrhi)) {
@@ -1188,7 +1339,9 @@ hme_setladrf(sc)
 			 * ranges is for IP multicast routing, for which the
 			 * range is big enough to require all bits set.)
 			 */
-			goto allmulti;
+			hash[3] = hash[2] = hash[1] = hash[0] = 0xffff;
+			ifp->if_flags |= IFF_ALLMULTI;
+			goto chipit;
 		}
 
 		cp = enm->enm_addrlo;
@@ -1217,21 +1370,15 @@ hme_setladrf(sc)
 		ETHER_NEXT_MULTI(step, enm);
 	}
 
-	/* Now load the hash table onto the chip */
+	ifp->if_flags &= ~IFF_ALLMULTI;
+
+chipit:
+	/* Now load the hash table into the chip */
 	bus_space_write_4(t, mac, HME_MACI_HASHTAB0, hash[0]);
 	bus_space_write_4(t, mac, HME_MACI_HASHTAB1, hash[1]);
 	bus_space_write_4(t, mac, HME_MACI_HASHTAB2, hash[2]);
 	bus_space_write_4(t, mac, HME_MACI_HASHTAB3, hash[3]);
-
-	ifp->if_flags &= ~IFF_ALLMULTI;
-	return;
-
-allmulti:
-	ifp->if_flags |= IFF_ALLMULTI;
-	bus_space_write_4(t, mac, HME_MACI_HASHTAB0, 0xffff);
-	bus_space_write_4(t, mac, HME_MACI_HASHTAB1, 0xffff);
-	bus_space_write_4(t, mac, HME_MACI_HASHTAB2, 0xffff);
-	bus_space_write_4(t, mac, HME_MACI_HASHTAB3, 0xffff);
+	bus_space_write_4(t, mac, HME_MACI_RXCFG, v);
 }
 
 /*

@@ -1,10 +1,10 @@
-/*	$NetBSD: cardbusdevs_data.h,v 1.1 1999/10/15 06:24:25 haya Exp $	*/
+/*	$NetBSD: cardbusdevs_data.h,v 1.1.2.1 2000/11/20 11:39:53 bouyer Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	Id: cardbusdevs,v 1.1 1999/10/15 06:07:18 haya Exp 
+ *	NetBSD: cardbusdevs,v 1.12 2000/08/28 10:33:58 haya Exp 
  */
 
 /*
@@ -43,19 +43,49 @@ struct cardbus_knowndev cardbus_knowndevs[] = {
 	    CARDBUS_VENDOR_3COM, CARDBUS_PRODUCT_3COM_3C575TX,
 	    0,
 	    "3Com",
-	    "3c575 100Base-TX",
+	    "3c575-TX",
 	},
 	{
 	    CARDBUS_VENDOR_3COM, CARDBUS_PRODUCT_3COM_3C575BTX,
 	    0,
 	    "3Com",
-	    "3c575B 100Base-TX",
+	    "3CCFE575BT",
+	},
+	{
+	    CARDBUS_VENDOR_3COM, CARDBUS_PRODUCT_3COM_3C575CTX,
+	    0,
+	    "3Com",
+	    "3CCFE575CT",
+	},
+	{
+	    CARDBUS_VENDOR_3COM, CARDBUS_PRODUCT_3COM_3C656_E,
+	    0,
+	    "3Com",
+	    "3CCFEM656 10/100 Ethernet",
+	},
+	{
+	    CARDBUS_VENDOR_3COM, CARDBUS_PRODUCT_3COM_3C656B_E,
+	    0,
+	    "3Com",
+	    "3CCFEM656B 10/100 Ethernet",
+	},
+	{
+	    CARDBUS_VENDOR_3COM, CARDBUS_PRODUCT_3COM_3C656C_E,
+	    0,
+	    "3Com",
+	    "3CXFEM656C 10/100 Ethernet",
 	},
 	{
 	    CARDBUS_VENDOR_ADP, CARDBUS_PRODUCT_ADP_1480,
 	    0,
 	    "Adaptec",
 	    "APA-1480",
+	},
+	{
+	    CARDBUS_VENDOR_ACCTON, CARDBUS_PRODUCT_ACCTON_MPX5030,
+	    0,
+	    "Accton Technology",
+	    "MPX 5030/5038 Ethernet",
 	},
 	{
 	    CARDBUS_VENDOR_DEC, CARDBUS_PRODUCT_DEC_21142,
@@ -70,10 +100,40 @@ struct cardbus_knowndev cardbus_knowndevs[] = {
 	    "82557 Fast Ethernet LAN Controller",
 	},
 	{
+	    CARDBUS_VENDOR_INTEL, CARDBUS_PRODUCT_INTEL_MODEM56,
+	    0,
+	    "Intel",
+	    "56k Modem",
+	},
+	{
 	    CARDBUS_VENDOR_OPTI, CARDBUS_PRODUCT_OPTI_82C861,
 	    0,
 	    "Opti",
 	    "82C861 USB Host Controller (OHCI)",
+	},
+	{
+	    CARDBUS_VENDOR_XIRCOM, CARDBUS_PRODUCT_XIRCOM_X3201_3,
+	    0,
+	    "Xircom",
+	    "X3201-3 Fast Ethernet Controller",
+	},
+	{
+	    CARDBUS_VENDOR_XIRCOM, CARDBUS_PRODUCT_XIRCOM_X3201_3_21143,
+	    0,
+	    "Xircom",
+	    "X3201-3 Fast Ethernet Controller (21143)",
+	},
+	{
+	    CARDBUS_VENDOR_XIRCOM, CARDBUS_PRODUCT_XIRCOM_MODEM56,
+	    0,
+	    "Xircom",
+	    "56k Modem",
+	},
+	{
+	    CARDBUS_VENDOR_REALTEK, CARDBUS_PRODUCT_REALTEK_RT8138,
+	    0,
+	    "Realtek Semiconductor",
+	    "8138 Ethernet",
 	},
 	{
 	    CARDBUS_VENDOR_DEC, 0,
@@ -106,9 +166,33 @@ struct cardbus_knowndev cardbus_knowndevs[] = {
 	    NULL,
 	},
 	{
+	    CARDBUS_VENDOR_XIRCOM, 0,
+	    CARDBUS_KNOWNDEV_NOPROD,
+	    "Xircom",
+	    NULL,
+	},
+	{
+	    CARDBUS_VENDOR_ACCTON, 0,
+	    CARDBUS_KNOWNDEV_NOPROD,
+	    "Accton Technology",
+	    NULL,
+	},
+	{
+	    CARDBUS_VENDOR_REALTEK, 0,
+	    CARDBUS_KNOWNDEV_NOPROD,
+	    "Realtek Semiconductor",
+	    NULL,
+	},
+	{
 	    CARDBUS_VENDOR_INTEL, 0,
 	    CARDBUS_KNOWNDEV_NOPROD,
 	    "Intel",
+	    NULL,
+	},
+	{
+	    CARDBUS_VENDOR_INVALID, 0,
+	    CARDBUS_KNOWNDEV_NOPROD,
+	    "INVALID VENDOR ID",
 	    NULL,
 	},
 	{ 0, 0, 0, NULL, NULL, }

@@ -1,4 +1,4 @@
-/*	$NetBSD: sbdspvar.h,v 1.47 1999/10/10 00:10:26 mycroft Exp $	*/
+/*	$NetBSD: sbdspvar.h,v 1.47.2.1 2000/11/20 11:41:20 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1991-1993 Regents of the University of California.
@@ -103,7 +103,9 @@ struct sbdsp_softc {
 	int	sc_irq;			/* interrupt */
 
 	int	sc_drq8;		/* DMA (8-bit) */
+	bus_size_t sc_drq8_maxsize;
 	int	sc_drq16;		/* DMA (16-bit) */
+	bus_size_t sc_drq16_maxsize;
 
 	int	sc_open;		/* reference count of open calls */
 #define SB_CLOSED 0
@@ -238,7 +240,7 @@ int	sbdsp_mixer_query_devinfo __P((void *, mixer_devinfo_t *));
 void 	*sb_malloc __P((void *, int, size_t, int, int));
 void	sb_free __P((void *, void *, int));
 size_t	sb_round_buffersize __P((void *, int, size_t));
-int	sb_mappage __P((void *, void *, int, int));
+paddr_t	sb_mappage __P((void *, void *, off_t, int));
 
 int	sbdsp_get_props __P((void *));
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: ukbdvar.h,v 1.1 1999/05/13 23:34:38 thorpej Exp $	*/
+/*	$NetBSD: ukbdvar.h,v 1.1.6.1 2000/11/20 11:43:27 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -40,6 +40,6 @@
 #ifndef _DEV_USB_UKBDVAR_H_
 #define	_DEV_USB_UKBDVAR_H_
 
-int	ukbd_cnattach __P((void));
+int	ukbd_cnattach(void);
 
 #endif /* _DEV_USB_UKBDVAR_H_ */

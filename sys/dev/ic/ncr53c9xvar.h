@@ -1,4 +1,4 @@
-/*	$NetBSD: ncr53c9xvar.h,v 1.18.2.1 1999/10/19 17:47:41 thorpej Exp $	*/
+/*	$NetBSD: ncr53c9xvar.h,v 1.18.2.2 2000/11/20 11:40:48 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -156,7 +156,7 @@ struct ncr53c9x_tinfo {
 	u_char  period;		/* Period suggestion */
 	u_char  offset;		/* Offset suggestion */
 	u_char	pad[3];
-} tinfo_t;
+};
 
 /* Register a linenumber (for debugging) */
 #define LOGLINE(p)
@@ -234,6 +234,7 @@ struct ncr53c9x_softc {
 	struct evcnt sc_intrcnt;		/* intr count */
 	struct scsipi_adapter sc_adapter;	/* out scsipi adapter */
 	struct scsipi_channel sc_channel;	/* our scsipi channel */
+	struct device *sc_child;		/* attached scsibus, if any */
 
 	struct ncr53c9x_glue *sc_glue;		/* glue to MD code */
 
@@ -244,6 +245,8 @@ struct ncr53c9x_softc {
 	u_char	sc_cfg2;			/* Config 2, not ESP100 */
 	u_char	sc_cfg3;			/* Config 3, only ESP200 */
 	u_char	sc_cfg3_fscsi;			/* Chip-specific FSCSI bit */
+	u_char	sc_cfg4;			/* Config 3, only ESP200 */
+	u_char	sc_cfg5;			/* Config 3, only ESP200 */
 	u_char	sc_ccf;				/* Clock Conversion */
 	u_char	sc_timeout;
 
@@ -393,9 +396,11 @@ struct ncr53c9x_softc {
 	((250 * (cpb)) / (sc)->sc_freq)
 
 void	ncr53c9x_attach __P((struct ncr53c9x_softc *));
+int	ncr53c9x_detach __P((struct ncr53c9x_softc *, int));
 void	ncr53c9x_scsipi_request __P((struct scsipi_channel *chan,
 	    scsipi_adapter_req_t req, void *));
 void	ncr53c9x_reset __P((struct ncr53c9x_softc *));
-int	ncr53c9x_intr __P((struct ncr53c9x_softc *));
+int	ncr53c9x_intr __P((void *));
+void	ncr53c9x_init __P((struct ncr53c9x_softc *, int));
 
 extern	int ncr53c9x_dmaselect;

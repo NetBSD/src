@@ -1,4 +1,4 @@
-/*	$NetBSD: aha.c,v 1.24.2.5 1999/11/01 22:54:16 thorpej Exp $	*/
+/*	$NetBSD: aha.c,v 1.24.2.6 2000/11/20 11:40:14 bouyer Exp $	*/
 
 #include "opt_ddb.h"
 
@@ -64,6 +64,7 @@
 #include <sys/types.h>
 #include <sys/param.h>
 #include <sys/systm.h>
+#include <sys/callout.h>
 #include <sys/kernel.h>
 #include <sys/errno.h>
 #include <sys/ioctl.h>
@@ -140,7 +141,7 @@ aha_cmd(iot, ioh, sc, icnt, ibuf, ocnt, obuf)
 	u_char *ibuf, *obuf;
 {
 	const char *name;
-	register int i;
+	int i;
 	int wait;
 	u_char sts;
 	u_char opcode = ibuf[0];
@@ -380,7 +381,7 @@ AGAIN:
 			goto next;
 		}
 
-		untimeout(aha_timeout, ccb);
+		callout_stop(&ccb->xs->xs_callout);
 		aha_done(sc, ccb);
 
 	next:
@@ -668,7 +669,8 @@ aha_start_ccbs(sc)
 		bus_space_write_1(iot, ioh, AHA_CMD_PORT, AHA_START_SCSI);
 
 		if ((ccb->xs->xs_control & XS_CTL_POLL) == 0)
-			timeout(aha_timeout, ccb, (ccb->timeout * hz) / 1000);
+			callout_reset(&ccb->xs->xs_callout,
+			    (ccb->timeout * hz) / 1000, aha_timeout, ccb);
 
 		++sc->sc_mbofull;
 		aha_nextmbx(wmbo, wmbx, mbo);
@@ -1136,6 +1138,7 @@ ahaminphys(bp)
  * start a scsi operation given the command and the data address. Also needs
  * the unit, target and lu.
  */
+
 void
 aha_scsipi_request(chan, req, arg)
 	struct scsipi_channel *chan;
@@ -1219,7 +1222,7 @@ aha_scsipi_request(chan, req, arg)
 				xs->error = XS_DRIVER_STUFFUP;
 				printf("%s: error %d loading DMA map\n",
 				    sc->sc_dev.dv_xname, error);
- out_bad:
+out_bad:
 				aha_free_ccb(sc, ccb);
 				scsipi_done(xs);
 				return;

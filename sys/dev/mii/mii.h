@@ -1,4 +1,4 @@
-/*	$NetBSD: mii.h,v 1.2 1999/09/29 22:49:33 thorpej Exp $	*/
+/*	$NetBSD: mii.h,v 1.2.2.1 2000/11/20 11:42:10 bouyer Exp $	*/
  
 /*
  * Copyright (c) 1997 Manuel Bouyer.  All rights reserved.
@@ -67,6 +67,7 @@
 #define	BMSR_100TXHDX	0x2000	/* 100 base Tx half duplex capable */
 #define	BMSR_10TFDX	0x1000	/* 10 base T full duplex capable */
 #define	BMSR_10THDX	0x0800	/* 10 base T half duplex capable */
+#define	BMSR_MFPS	0x0040	/* MII Frame Preamble Suppression */
 #define	BMSR_ACOMP	0x0020	/* Autonegotiation complete */
 #define	BMSR_RFAULT	0x0010	/* Link partner fault */
 #define	BMSR_ANEG	0x0008	/* Autonegotiation capable */

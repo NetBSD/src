@@ -1,4 +1,4 @@
-/*	$NetBSD: ad1848_isa.c,v 1.13 1999/10/05 03:44:31 itohy Exp $	*/
+/*	$NetBSD: ad1848_isa.c,v 1.13.2.1 2000/11/20 11:41:10 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -114,7 +114,6 @@
 #include <machine/bus.h>
 
 #include <sys/audioio.h>
-#include <vm/vm.h>
 
 #include <dev/audio_if.h>
 #include <dev/auconv.h>
@@ -436,6 +435,13 @@ ad1848_isa_attach(isc)
 	sc->sc_readreg = ad1848_isa_read;
 	sc->sc_writereg = ad1848_isa_write;
 
+	if (isc->sc_playdrq != -1)
+		isc->sc_play_maxsize = isa_dmamaxsize(isc->sc_ic,
+		    isc->sc_playdrq);
+	if (isc->sc_recdrq != -1 && isc->sc_recdrq != isc->sc_playdrq)
+		isc->sc_rec_maxsize = isa_dmamaxsize(isc->sc_ic,
+		    isc->sc_recdrq);
+
 	ad1848_attach(sc);
 }
 
@@ -453,7 +459,7 @@ ad1848_isa_open(addr, flags)
 
 	if (isc->sc_playdrq != -1) {
 		error = isa_dmamap_create(isc->sc_ic, isc->sc_playdrq,
-		    MAX_ISADMA, BUS_DMA_NOWAIT);
+		    isc->sc_play_maxsize, BUS_DMA_NOWAIT);
 		if (error) {
 			printf("%s: can't create map for drq %d\n",
 			    sc->sc_dev.dv_xname, isc->sc_playdrq);
@@ -463,7 +469,7 @@ ad1848_isa_open(addr, flags)
 	}
 	if (isc->sc_recdrq != -1 && isc->sc_recdrq != isc->sc_playdrq) {
 		error = isa_dmamap_create(isc->sc_ic, isc->sc_recdrq,
-		    MAX_ISADMA, BUS_DMA_NOWAIT);
+		    isc->sc_rec_maxsize, BUS_DMA_NOWAIT);
 		if (error) {
 			printf("%s: can't create map for drq %d\n",
 			    sc->sc_dev.dv_xname, isc->sc_recdrq);
@@ -702,16 +708,26 @@ ad1848_isa_round_buffersize(addr, direction, size)
 	int direction;
 	size_t size;
 {
-	if (size > MAX_ISADMA)
-		size = MAX_ISADMA;
+	struct ad1848_isa_softc *isc = addr;
+	bus_size_t maxsize;
+
+	if (direction == AUMODE_PLAY)
+		maxsize = isc->sc_play_maxsize;
+	else if (isc->sc_recdrq == isc->sc_playdrq)
+		maxsize = isc->sc_play_maxsize;
+	else
+		maxsize = isc->sc_rec_maxsize;
+
+	if (size > maxsize)
+		size = maxsize;
 	return (size);
 }
 
-int
+paddr_t
 ad1848_isa_mappage(addr, mem, off, prot)
 	void *addr;
         void *mem;
-        int off;
+        off_t off;
 	int prot;
 {
 	return isa_mappage(mem, off, prot);

@@ -1,4 +1,4 @@
-/*	$NetBSD: rcons.h,v 1.9 1999/08/26 20:48:09 thorpej Exp $ */
+/*	$NetBSD: rcons.h,v 1.9.2.1 2000/11/20 11:43:03 bouyer Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -48,6 +48,8 @@
 
 #include "opt_rcons.h"
 
+#include <sys/callout.h>
+
 /* Avoid dragging in dev/wscons/wsdisplayvar.h */
 struct wsdisplay_emulops;
 
@@ -63,6 +65,8 @@ struct rconsole {
 	u_int	rc_row;			/* emulator row */
 	u_int	rc_col;			/* emulator column */
 
+	struct callout rc_belltmr_ch;
+
 	/* These may be overridden in the kernel config file. */
 	int	rc_deffgcolor;		/* default fg color */
 	int	rc_defbgcolor;		/* default bg color */
@@ -76,7 +80,8 @@ struct rconsole {
 	int	rc_p1;			/* escape sequence parameter 1 */
 	int	rc_fgcolor;		/* current fg color */
 	int	rc_bgcolor;		/* current bg color */
-	long	rc_attr;		/* wscons text attribute */
+	long	rc_attr;		/* current wscons text attribute */
+	long	rc_defattr;		/* default text attribute */
 	long	rc_kern_attr;		/* kernel output attribute */
 	u_int	rc_wsflg;		/* wscons attribute flags */
 	u_int	rc_supwsflg;		/* supported attribute flags */
@@ -98,6 +103,7 @@ struct rconsole {
 void rcons_cnputc __P((int));
 void rcons_bell __P((struct rconsole *));
 void rcons_init __P((struct rconsole *, int));
+void rcons_ttyinit __P((struct tty *));
 
 /* rcons_subr.c */
 void rcons_init_ops __P((struct rconsole *rc));

@@ -1,11 +1,11 @@
-/*	$NetBSD: ohci_cardbus.c,v 1.1 1999/10/15 11:52:45 augustss Exp $	*/
+/*	$NetBSD: ohci_cardbus.c,v 1.1.2.1 2000/11/20 11:39:54 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
- * by Lennart Augustsson (augustss@carlstedt.se) at
+ * by Lennart Augustsson (lennart@augustsson.net) at
  * Carlstedt Research & Technology.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -56,13 +56,9 @@
 #if defined pciinc
 #include <dev/pci/pcidevs.h>
 #endif
-#if pccard
-#include <dev/pccard/cardbusvar.h>
-#include <dev/pccard/pccardcis.h>
-#else
+
 #include <dev/cardbus/cardbusvar.h>
 #include <dev/cardbus/cardbusdevs.h>
-#endif
 
 #include <dev/usb/usb.h>
 #include <dev/usb/usbdi.h>
@@ -80,7 +76,7 @@ struct ohci_cardbus_softc {
 	ohci_softc_t		sc;
 	cardbus_chipset_tag_t	sc_cc;
 	cardbus_function_tag_t	sc_cf;
-	bus_size_t		sc_size;
+	cardbus_devfunc_t	sc_ct;
 	void 			*sc_ih;		/* interrupt vectoring */
 };
 
@@ -132,8 +128,8 @@ ohci_cardbus_attach(parent, self, aux)
 	       CARDBUS_REVISION(ca->ca_class));
 
 	/* Map I/O registers */
-	if (cardbus_mapreg_map(ct, CARDBUS_CBMEM, CARDBUS_MAPREG_TYPE_MEM, 0,
-			   &sc->sc.iot, &sc->sc.ioh, NULL, &sc->sc_size)) {
+	if (Cardbus_mapreg_map(ct, CARDBUS_CBMEM, CARDBUS_MAPREG_TYPE_MEM, 0,
+			   &sc->sc.iot, &sc->sc.ioh, NULL, &sc->sc.sc_size)) {
 		printf("%s: can't map mem space\n", devname);
 		return;
 	}
@@ -144,6 +140,7 @@ ohci_cardbus_attach(parent, self, aux)
 
 	sc->sc_cc = cc;
 	sc->sc_cf = cf;
+	sc->sc_ct = ct;
 	sc->sc.sc_bus.dmatag = ca->ca_dmat;
 
 #if rbus
@@ -151,6 +148,7 @@ ohci_cardbus_attach(parent, self, aux)
 XXX	(ct->ct_cf->cardbus_mem_open)(cc, 0, iob, iob + 0x40);
 #endif
 	(ct->ct_cf->cardbus_ctrl)(cc, CARDBUS_MEM_ENABLE);
+	(ct->ct_cf->cardbus_ctrl)(cc, CARDBUS_BM_ENABLE);
 
 	/* Enable the device. */
 	csr = cardbus_conf_read(cc, cf, ca->ca_tag,
@@ -199,18 +197,20 @@ ohci_cardbus_detach(self, flags)
 	int flags;
 {
 	struct ohci_cardbus_softc *sc = (struct ohci_cardbus_softc *)self;
+	struct cardbus_devfunc *ct = sc->sc_ct;
 	int rv;
 
 	rv = ohci_detach(&sc->sc, flags);
 	if (rv)
 		return (rv);
-	if (sc->sc_ih) {
+	if (sc->sc_ih != NULL) {
 		cardbus_intr_disestablish(sc->sc_cc, sc->sc_cf, sc->sc_ih);
-		sc->sc_ih = 0;
+		sc->sc_ih = NULL;
 	}
-	if (sc->sc_size) {
-		bus_space_unmap(sc->sc.iot, sc->sc.ioh, sc->sc_size);
-		sc->sc_size = 0;
+	if (sc->sc.sc_size) {
+		Cardbus_mapreg_unmap(ct, CARDBUS_CBMEM, sc->sc.iot,
+		    sc->sc.ioh, sc->sc.sc_size);
+		sc->sc.sc_size = 0;
 	}
 	return (0);
 }

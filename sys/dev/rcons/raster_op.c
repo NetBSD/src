@@ -1,4 +1,4 @@
-/*	$NetBSD: raster_op.c,v 1.7 1999/03/27 00:07:59 dbj Exp $ */
+/*	$NetBSD: raster_op.c,v 1.7.8.1 2000/11/20 11:43:03 bouyer Exp $ */
 
 /*-
  * Copyright (c) 1991, 1993
@@ -50,11 +50,16 @@
  *   src required
  *       1-bit to 1-bit
  *       1-bit to 2-bits
+ *       1-bit to 4-bits
  *       1-bit to 8-bits
  *       1-bit to 16-bits
  *       2-bits to 2-bits
+ *       2-bits to 4-bits (not implemented)
  *       2-bits to 8-bits (not implemented)
  *       2-bits to 16-bits (not implemented)
+ *       4-bits to 4-bits
+ *       4-bits to 8-bits (not implemented)
+ *       4-bits to 16-bits (not implemented)
  *       8-bits to 8-bits
  *       8-bits to 16-bits (not implemented)
  *       16-bits to 16-bits
@@ -67,8 +72,8 @@
 
 #include <sys/types.h>
 #ifdef _KERNEL
-#include <dev/rcons/raster.h>
 #include "opt_rcons.h"
+#include <dev/rcons/raster.h>
 #else
 #include "raster.h"
 #endif
@@ -509,6 +514,13 @@ static u_int32_t twobitmask[16] = {
   0x0000c000, 0x00003000, 0x00000c00, 0x00000300,
   0x000000c0, 0x00000030, 0x0000000c, 0x00000003 };
 #endif /* RCONS_2BPP */
+#ifdef RCONS_4BPP
+static u_int32_t fourbitmask[8] = {
+  0xf0000000, 0x0f000000,
+  0x00f00000, 0x000f0000,
+  0x0000f000, 0x00000f00,
+  0x000000f0, 0x0000000f };
+#endif /* RCONS_4BPP */
 #ifdef RCONS_16BPP
 static u_int32_t twobytemask[2] = { 0xffff0000, 0x0000ffff };
 #endif /* RCONS_16BPP */
@@ -521,6 +533,13 @@ static u_int32_t twobitmask[16] = {
   0x00030000, 0x000c0000, 0x00300000, 0x00c00000,
   0x03000000, 0x0c000000, 0x30000000, 0xc0000000 };
 #endif /* RCONS_2BPP */
+#ifdef RCONS_4BPP
+static u_int32_t fourbitmask[16] = {
+  0x0000000f, 0x000000f0,
+  0x00000f00, 0x0000f000,
+  0x000f0000, 0x00f00000,
+  0x0f000000, 0xf0000000 };
+#endif /* RCONS_4BPP */
 #ifdef RCONS_16BPP
 static u_int32_t twobytemask[2] = { 0x0000ffff, 0xffff0000 };
 #endif /* RCONS_16BPP */
@@ -679,10 +698,10 @@ raster_op_noclip( dst, dx, dy, w, h, rop, src, sx, sy )
 	    u_int32_t* srclin2;
 	    u_int32_t* srclin;
 	    u_int32_t* dstlin;
-	    register u_int32_t* srclong;
-	    register u_int32_t* dstlong;
-	    register u_int32_t color, dl;
-	    register int srcbit, dstbyte, i;
+	    u_int32_t* srclong;
+	    u_int32_t* dstlong;
+	    u_int32_t color, dl;
+	    int srcbit, dstbyte, i;
 
 	    color = RAS_GETCOLOR( rop );
 	    if ( color == 0 )
@@ -743,6 +762,78 @@ raster_op_noclip( dst, dx, dy, w, h, rop, src, sx, sy )
 		}
           }
 #endif /* RCONS_2BPP */
+#ifdef RCONS_4BPP
+	else if ( dst->depth == 4 )
+          {
+            /* One to four, using the color in the rop.  */
+	    u_int32_t* srclin1;
+	    u_int32_t* dstlin1;
+	    u_int32_t* srclin2;
+	    u_int32_t* srclin;
+	    u_int32_t* dstlin;
+	    u_int32_t* srclong;
+	    u_int32_t* dstlong;
+	    u_int32_t color, dl;
+	    int srcbit, dstbyte, i;
+
+	    color = RAS_GETCOLOR( rop );
+	    if ( color == 0 )
+              color = 15;
+
+	    /* Make 32 bits of color so we can do the ROP without shifting. */
+	    color |= (( color << 28 ) | ( color << 24 )
+                      | ( color << 20 ) | ( color << 16 )
+                      | ( color << 12 ) | ( color << 8 )
+                      | ( color << 4 ));
+
+	    /* Don't have to worry about overlapping blits here. */
+	    srclin1 = RAS_ADDR( src, sx, sy );
+	    srclin2 = srclin1 + h * src->linelongs;
+	    dstlin1 = RAS_ADDR( dst, dx, dy );
+	    srclin = srclin1;
+	    dstlin = dstlin1;
+            
+	    while ( srclin != srclin2 )
+		{
+		srclong = srclin;
+		srcbit = sx & 31;
+		dstlong = dstlin;
+		dstbyte = dx & 7;
+		i = w;
+
+		/* WARNING: this code is KNOWN TO FAIL on Sun 3's / CG2's. */
+		ROP_SRCDSTCOLOR(
+		/*op*/  op,
+		/*pre*/ while ( i > 0 )
+			    {
+			    dl = *dstlong;,
+		/*s*/       *srclong & raster_bitmask[srcbit],
+		/*d*/       dl,
+		/*c*/       color,
+		/*pst*/     *dstlong = ( *dstlong & ~fourbitmask[dstbyte] ) |
+				       ( dl & fourbitmask[dstbyte] );
+			    if ( srcbit == 31 )
+				{
+				srcbit = 0;
+				++srclong;
+				}
+			    else
+				++srcbit;
+			    if ( dstbyte == 7 )
+				{
+				dstbyte = 0;
+				++dstlong;
+				}
+			    else
+				++dstbyte;
+			    --i;
+			    } )
+
+		srclin += src->linelongs;
+		dstlin += dst->linelongs;
+		}
+          }
+#endif /* RCONS_4BPP */
 	else if ( dst->depth == 8 )
 	    {
 	    /* One to eight, using the color in the rop.  This could
@@ -755,10 +846,10 @@ raster_op_noclip( dst, dx, dy, w, h, rop, src, sx, sy )
 	    u_int32_t* srclin2;
 	    u_int32_t* srclin;
 	    u_int32_t* dstlin;
-	    register u_int32_t* srclong;
-	    register u_int32_t* dstlong;
-	    register u_int32_t color, dl;
-	    register int srcbit, dstbyte, i;
+	    u_int32_t* srclong;
+	    u_int32_t* dstlong;
+	    u_int32_t color, dl;
+	    int srcbit, dstbyte, i;
 
 	    color = RAS_GETCOLOR( rop );
 	    if ( color == 0 )
@@ -826,14 +917,14 @@ raster_op_noclip( dst, dx, dy, w, h, rop, src, sx, sy )
 	    u_int32_t* srclin2;
 	    u_int32_t* srclin;
 	    u_int32_t* dstlin;
-	    register u_int32_t* srclong;
-	    register u_int32_t* dstlong;
-	    register u_int32_t color, dl;
-	    register int srcbit, dstbyte, i;
+	    u_int32_t* srclong;
+	    u_int32_t* dstlong;
+	    u_int32_t color, dl;
+	    int srcbit, dstbyte, i;
 
 	    color = RAS_GETCOLOR( rop );
 	    if ( color == 0 )
-		color = 255;
+		color = 0xffff;
 
 	    /* Make 32 bits of color so we can do the ROP without shifting. */
 	    color |= ( color << 16 );
@@ -910,6 +1001,30 @@ raster_op_noclip( dst, dx, dy, w, h, rop, src, sx, sy )
 		dst, dstlin1, dstleftignore, dstrightignore, dstlongs, h, op );
 	    }
 #endif /* RCONS_2BPP */
+#ifdef RCONS_4BPP
+    else if ( src->depth == 4 ) 
+      {
+        /* Four to four blit. */
+	    u_int32_t* srclin1;
+	    u_int32_t* dstlin1;
+	    int srcleftignore, srcrightignore, srclongs;
+	    int dstleftignore, dstrightignore, dstlongs;
+
+	    srclin1 = RAS_ADDR( src, sx, sy );
+	    dstlin1 = RAS_ADDR( dst, dx, dy );
+
+	    srcleftignore = ( sx & 7 ) * 4;
+	    srclongs = ( srcleftignore + w * 4 + 31 ) >> 5;
+	    srcrightignore = ( srclongs * 32 - w * 4 - srcleftignore ) & 31;
+	    dstleftignore = ( dx & 7 ) * 4;
+	    dstlongs = ( dstleftignore + w * 4 + 31 ) >> 5;
+	    dstrightignore = ( dstlongs * 32 - w * 4 - dstleftignore ) & 31;
+
+	    return raster_blit(
+		src, srclin1, srcleftignore, srcrightignore, srclongs,
+		dst, dstlin1, dstleftignore, dstrightignore, dstlongs, h, op );
+	    }
+#endif /* RCONS_4BPP */
 
     else if ( src->depth == 8 )
 	{
@@ -994,8 +1109,8 @@ raster_op_nosrc_noclip( dst, dx, dy, w, h, rop )
 	u_int32_t* dstlin;
 	int dstleftignore, dstrightignore, dstlongs;
 	u_int32_t dl, lm, nlm, rm, nrm;
-	register u_int32_t* dstlong2;
-	register u_int32_t* dstlong;
+	u_int32_t* dstlong2;
+	u_int32_t* dstlong;
 
 	dstlin1 = RAS_ADDR( dst, dx, dy );
 
@@ -1084,14 +1199,14 @@ raster_op_nosrc_noclip( dst, dx, dy, w, h, rop )
     else if ( dst->depth == 2 ) 
 	{
 	/* Two-bit no-src blit. */
-	register u_int32_t color;
+	u_int32_t color;
 	u_int32_t* dstlin1;
 	u_int32_t* dstlin2;
 	u_int32_t* dstlin;
 	int dstleftignore, dstrightignore, dstlongs;
 	u_int32_t dl, lm, nlm, rm, nrm;
-	register u_int32_t* dstlong2;
-	register u_int32_t* dstlong;
+	u_int32_t* dstlong2;
+	u_int32_t* dstlong;
 
 	dstlin1 = RAS_ADDR( dst, dx, dy );
 
@@ -1187,17 +1302,123 @@ raster_op_nosrc_noclip( dst, dx, dy, w, h, rop )
 	    }
 	}
 #endif /* RCONS_2BPP */
-    else if ( dst->depth == 8)
+#ifdef RCONS_4BPP
+    else if ( dst->depth == 4 ) 
 	{
-	/* Eight-bit no-src blit. */
-	register u_int32_t color;
+	/* Two-bit no-src blit. */
+	u_int32_t color;
 	u_int32_t* dstlin1;
 	u_int32_t* dstlin2;
 	u_int32_t* dstlin;
 	int dstleftignore, dstrightignore, dstlongs;
 	u_int32_t dl, lm, nlm, rm, nrm;
-	register u_int32_t* dstlong2;
-	register u_int32_t* dstlong;
+	u_int32_t* dstlong2;
+	u_int32_t* dstlong;
+
+	dstlin1 = RAS_ADDR( dst, dx, dy );
+
+#ifdef BCOPY_FASTER
+	/* Special-case full-width clears. */
+	if ( op == RAS_CLEAR && dst->width == w && dst->linelongs == w >> 3 )
+	    {
+	    bzero( (char*) dstlin1, h * dst->linelongs * sizeof(u_int32_t) );
+	    return 0;
+	    }
+#endif /*BCOPY_FASTER*/
+
+	color = RAS_GETCOLOR( rop );
+	if ( color == 0 )
+	    color = 15;
+
+	/* Make 32 bits of color so we can do the ROP without shifting. */
+	color |= (( color << 28 ) | ( color << 24 )
+		  | ( color << 20 ) | ( color << 16 )
+		  | ( color << 12 ) | ( color << 8 )
+		  | ( color << 4 ));
+       
+	dstleftignore = ( dx & 7 ) * 4;
+	dstlongs = ( dstleftignore + w * 4 + 31 ) >> 5;
+	dstrightignore = ( dstlongs * 32 - w * 4 - dstleftignore ) & 31;
+
+	dstlin2 = dstlin1 + h * dst->linelongs;
+	dstlin = dstlin1;
+
+	if ( dstlongs == 1 )
+	    {
+	    /* It fits into a single longword. */
+	    lm = leftmask[dstleftignore] | rightmask[dstrightignore];
+	    nlm = ~lm;
+	    while ( dstlin != dstlin2 )
+		{
+		ROP_DST(
+		/*op*/  op,
+		/*pre*/ dl = *dstlin;,
+		/*d*/   dl,
+		/*pst*/ *dstlin = ( *dstlin & lm ) | ( dl & nlm ); )
+
+		dstlin += dst->linelongs;
+		}
+	    }
+	else
+	    {
+	    lm = leftmask[dstleftignore];
+	    rm = rightmask[dstrightignore];
+	    nrm = ~rm;
+	    nlm = ~lm;
+
+	    while ( dstlin != dstlin2 )
+		{
+		dstlong = dstlin;
+		dstlong2 = dstlong + dstlongs;
+		if ( dstrightignore != 0 )
+		    --dstlong2;
+
+		/* Leading edge. */
+		if ( dstleftignore != 0 )
+		    {
+		    ROP_DST(
+		    /*op*/  op,
+		    /*pre*/ dl = *dstlong;,
+		    /*d*/   dl,
+		    /*pst*/ *dstlong = ( *dstlong & lm ) | ( dl & nlm ); )
+		    ++dstlong;
+		    }
+
+		/* Main rop. */
+		ROP_DST(
+		/*op*/  op,
+		/*pre*/ while ( dstlong != dstlong2 )
+			    {,
+		/*d*/       *dstlong,
+		/*pst*/     ++dstlong;
+			    } )
+
+		/* Trailing edge. */
+		if ( dstrightignore != 0 )
+		    {
+		    ROP_DST(
+		    /*op*/  op,
+		    /*pre*/ dl = *dstlong;,
+		    /*d*/   dl,
+		    /*pst*/ *dstlong = ( dl & nrm ) | ( *dstlong & rm ); )
+		    }
+
+		dstlin += dst->linelongs;
+		}
+	    }
+	}
+#endif /* RCONS_4BPP */
+    else if ( dst->depth == 8)
+	{
+	/* Eight-bit no-src blit. */
+	u_int32_t color;
+	u_int32_t* dstlin1;
+	u_int32_t* dstlin2;
+	u_int32_t* dstlin;
+	int dstleftignore, dstrightignore, dstlongs;
+	u_int32_t dl, lm, nlm, rm, nrm;
+	u_int32_t* dstlong2;
+	u_int32_t* dstlong;
 
 	dstlin1 = RAS_ADDR( dst, dx, dy );
 
@@ -1295,14 +1516,14 @@ raster_op_nosrc_noclip( dst, dx, dy, w, h, rop )
     else 
 	{
 	/* Sixteen-bit no-src blit. */
-	register u_int32_t color;
+	u_int32_t color;
 	u_int32_t* dstlin1;
 	u_int32_t* dstlin2;
 	u_int32_t* dstlin;
 	int dstleftignore, dstrightignore, dstlongs;
 	u_int32_t dl, lm, nlm, rm, nrm;
-	register u_int32_t* dstlong2;
-	register u_int32_t* dstlong;
+	u_int32_t* dstlong2;
+	u_int32_t* dstlong;
 
 	dstlin1 = RAS_ADDR( dst, dx, dy );
 
@@ -1317,7 +1538,7 @@ raster_op_nosrc_noclip( dst, dx, dy, w, h, rop )
 
 	color = RAS_GETCOLOR( rop );
 	if ( color == 0 )
-		color = 255; /* XXX */
+		color = 0xffff; /* XXX */
 
 	/* Make 32 bits of color so we can do the ROP without shifting. */
 	color |= ( color << 16 );
@@ -1419,12 +1640,12 @@ raster_blit( src, srclin1, srcleftignore, srcrightignore, srclongs, dst, dstlin1
     int srclininc, dstlininc;
     u_int32_t* srclin;
     u_int32_t* dstlin;
-    register int prevleftshift, currrightshift;
+    int prevleftshift, currrightshift;
     int longinc;
-    register u_int32_t* srclong;
-    register u_int32_t* dstlong;
-    register u_int32_t* dstlong2;
-    register u_int32_t dl, lm, nlm, rm, nrm;
+    u_int32_t* srclong;
+    u_int32_t* dstlong;
+    u_int32_t* dstlong2;
+    u_int32_t dl, lm, nlm, rm, nrm;
 
     prevleftshift = ( srcleftignore - dstleftignore ) & 31;
 
@@ -1597,7 +1818,7 @@ raster_blit( src, srclin1, srcleftignore, srcrightignore, srclongs, dst, dstlin1
     else
 	{
 	/* General case, with shifting and everything. */
-	register u_int32_t sl, prevsl;
+	u_int32_t sl, prevsl;
 
 	currrightshift = 32 - prevleftshift;
 	if ( srclongs == 1 && dstlongs == 1 )

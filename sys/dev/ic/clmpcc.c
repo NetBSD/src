@@ -1,4 +1,4 @@
-/*	$NetBSD: clmpcc.c,v 1.7 1999/09/18 09:45:05 scw Exp $ */
+/*	$NetBSD: clmpcc.c,v 1.7.2.1 2000/11/20 11:40:26 bouyer Exp $ */
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -59,6 +59,7 @@
 #include <sys/malloc.h>
 
 #include <machine/bus.h>
+#include <machine/intr.h>
 #include <machine/param.h>
 
 #include <dev/ic/clmpccreg.h>
@@ -298,7 +299,16 @@ clmpcc_attach(sc)
 	printf(": Cirrus Logic CD240%c Serial Controller\n",
 		(clmpcc_rd_msvr(sc) & CLMPCC_MSVR_PORT_ID) ? '0' : '1');
 
+#ifndef __GENERIC_SOFT_INTERRUPTS
 	sc->sc_soft_running = 0;
+#else
+	sc->sc_softintr_cookie =
+	    softintr_establish(IPL_SOFTSERIAL, clmpcc_softintr, sc);
+#ifdef DEBUG
+	if (sc->sc_softintr_cookie == NULL)
+		panic("clmpcc_attach: softintr_establish");
+#endif
+#endif
 	memset(&(sc->sc_chans[0]), 0, sizeof(sc->sc_chans));
 
 	for (chan = 0; chan < CLMPCC_NUM_CHANS; chan++) {
@@ -496,12 +506,10 @@ clmpccopen(dev, flag, mode, p)
 	struct tty *tp;
 	int oldch;
 	int error;
-	int unit;
- 
-	if ( (unit = CLMPCCUNIT(dev)) >= clmpcc_cd.cd_ndevs ||
-	     (sc = clmpcc_cd.cd_devs[unit]) == NULL ) {
-		return ENXIO;
-	}
+
+	sc = device_lookup(&clmpcc_cd, CLMPCCUNIT(dev));
+	if (sc == NULL)
+		return (ENXIO);
 
 	ch = &sc->sc_chans[CLMPCCCHAN(dev)];
 
@@ -600,7 +608,8 @@ clmpccclose(dev, flag, mode, p)
 	int flag, mode;
 	struct proc *p;
 {
-	struct clmpcc_softc	*sc = clmpcc_cd.cd_devs[CLMPCCUNIT(dev)];
+	struct clmpcc_softc	*sc =
+		device_lookup(&clmpcc_cd, CLMPCCUNIT(dev));
 	struct clmpcc_chan	*ch = &sc->sc_chans[CLMPCCCHAN(dev)];
 	struct tty		*tp = ch->ch_tty;
 	int s;
@@ -634,7 +643,7 @@ clmpccread(dev, uio, flag)
 	struct uio *uio;
 	int flag;
 {
-	struct clmpcc_softc *sc = clmpcc_cd.cd_devs[CLMPCCUNIT(dev)];
+	struct clmpcc_softc *sc = device_lookup(&clmpcc_cd, CLMPCCUNIT(dev));
 	struct tty *tp = sc->sc_chans[CLMPCCCHAN(dev)].ch_tty;
  
 	return ((*linesw[tp->t_line].l_read)(tp, uio, flag));
@@ -646,7 +655,7 @@ clmpccwrite(dev, uio, flag)
 	struct uio *uio;
 	int flag;
 {
-	struct clmpcc_softc *sc = clmpcc_cd.cd_devs[CLMPCCUNIT(dev)];
+	struct clmpcc_softc *sc = device_lookup(&clmpcc_cd, CLMPCCUNIT(dev));
 	struct tty *tp = sc->sc_chans[CLMPCCCHAN(dev)].ch_tty;
  
 	return ((*linesw[tp->t_line].l_write)(tp, uio, flag));
@@ -656,7 +665,7 @@ struct tty *
 clmpcctty(dev)
 	dev_t dev;
 {
-	struct clmpcc_softc *sc = clmpcc_cd.cd_devs[CLMPCCUNIT(dev)];
+	struct clmpcc_softc *sc = device_lookup(&clmpcc_cd, CLMPCCUNIT(dev));
 
 	return (sc->sc_chans[CLMPCCCHAN(dev)].ch_tty);
 }
@@ -669,7 +678,7 @@ clmpccioctl(dev, cmd, data, flag, p)
 	int flag;
 	struct proc *p;
 {
-	struct clmpcc_softc *sc = clmpcc_cd.cd_devs[CLMPCCUNIT(dev)];
+	struct clmpcc_softc *sc = device_lookup(&clmpcc_cd, CLMPCCUNIT(dev));
 	struct clmpcc_chan *ch = &sc->sc_chans[CLMPCCCHAN(dev)];
 	struct tty *tp = ch->ch_tty;
 	int error;
@@ -828,7 +837,8 @@ clmpcc_param(tp, t)
 	struct tty *tp;
 	struct termios *t;
 {
-	struct clmpcc_softc *sc = clmpcc_cd.cd_devs[CLMPCCUNIT(tp->t_dev)];
+	struct clmpcc_softc *sc =
+	    device_lookup(&clmpcc_cd, CLMPCCUNIT(tp->t_dev));
 	struct clmpcc_chan *ch = &sc->sc_chans[CLMPCCCHAN(tp->t_dev)];
 	u_char cor;
 	u_char oldch;
@@ -965,7 +975,7 @@ clmpcc_set_params(ch)
 	u_char r1;
 	u_char r2;
 
-	if ( ch->ch_tcor && ch->ch_tbpr ) {
+	if ( ch->ch_tcor || ch->ch_tbpr ) {
 		r1 = clmpcc_rdreg(sc, CLMPCC_REG_TCOR);
 		r2 = clmpcc_rdreg(sc, CLMPCC_REG_TBPR);
 		/* Only write Tx rate if it really has changed */
@@ -975,7 +985,7 @@ clmpcc_set_params(ch)
 		}
 	}
 
-	if ( ch->ch_rcor && ch->ch_rbpr ) {
+	if ( ch->ch_rcor || ch->ch_rbpr ) {
 		r1 = clmpcc_rdreg(sc, CLMPCC_REG_RCOR);
 		r2 = clmpcc_rdreg(sc, CLMPCC_REG_RBPR);
 		/* Only write Rx rate if it really has changed */
@@ -997,10 +1007,10 @@ clmpcc_set_params(ch)
 	r1 = clmpcc_rdreg(sc, CLMPCC_REG_COR4);
 	if ( ch->ch_cor4 != (r1 & CLMPCC_COR4_FIFO_MASK) ) {
 		/*
-		 * Note: If the Rx FIFO has changed, we always set it to
+		 * Note: If the FIFO has changed, we always set it to
 		 * zero here and disable the Receive Timeout interrupt.
 		 * It's up to the Rx Interrupt handler to pick the
-		 * appropriate moment to write the Rx FIFO length.
+		 * appropriate moment to write the new FIFO length.
 		 */
 		clmpcc_wrreg(sc, CLMPCC_REG_COR4, r1 & ~CLMPCC_COR4_FIFO_MASK);
 		r1 = clmpcc_rdreg(sc, CLMPCC_REG_IER);
@@ -1019,7 +1029,8 @@ static void
 clmpcc_start(tp)
 	struct tty *tp;
 {
-	struct clmpcc_softc *sc = clmpcc_cd.cd_devs[CLMPCCUNIT(tp->t_dev)];
+	struct clmpcc_softc *sc =
+	    device_lookup(&clmpcc_cd, CLMPCCUNIT(tp->t_dev));
 	struct clmpcc_chan *ch = &sc->sc_chans[CLMPCCCHAN(tp->t_dev)];
 	u_int oldch;
 	int s;
@@ -1035,9 +1046,15 @@ clmpcc_start(tp)
 			selwakeup(&tp->t_wsel);
 		}
 
-		if ( tp->t_outq.c_cc > 0 ) {
-			ch->ch_obuf_addr = tp->t_outq.c_cf;
-			ch->ch_obuf_size = ndqb(&tp->t_outq, 0);
+		if ( ISSET(ch->ch_flags, CLMPCC_FLG_START_BREAK |
+					 CLMPCC_FLG_END_BREAK) ||
+		     tp->t_outq.c_cc > 0 ) {
+
+			if ( ISCLR(ch->ch_flags, CLMPCC_FLG_START_BREAK |
+						 CLMPCC_FLG_END_BREAK) ) {
+				ch->ch_obuf_addr = tp->t_outq.c_cf;
+				ch->ch_obuf_size = ndqb(&tp->t_outq, 0);
+			}
 
 			/* Enable TX empty interrupts */
 			oldch = clmpcc_select_channel(ch->ch_sc, ch->ch_car);
@@ -1060,7 +1077,8 @@ clmpccstop(tp, flag)
 	struct tty *tp;
 	int flag;
 {
-	struct clmpcc_softc *sc = clmpcc_cd.cd_devs[CLMPCCUNIT(tp->t_dev)];
+	struct clmpcc_softc *sc =
+	    device_lookup(&clmpcc_cd, CLMPCCUNIT(tp->t_dev));
 	struct clmpcc_chan *ch = &sc->sc_chans[CLMPCCCHAN(tp->t_dev)];
 	int s;
 
@@ -1114,7 +1132,7 @@ clmpcc_rxintr(arg)
 		 * further receive timeout interrupts.
 		 */
 		reg = clmpcc_rdreg(sc, CLMPCC_REG_COR4);
-		clmpcc_wrreg(sc, CLMPCC_REG_COR4, reg & CLMPCC_COR4_FIFO_MASK);
+		clmpcc_wrreg(sc, CLMPCC_REG_COR4, reg & ~CLMPCC_COR4_FIFO_MASK);
 		reg = clmpcc_rdreg(sc, CLMPCC_REG_IER);
 		clmpcc_wrreg(sc, CLMPCC_REG_IER, reg & ~CLMPCC_IER_RET);
 		clmpcc_wrreg(sc, CLMPCC_REG_REOIR, CLMPCC_REOIR_NO_TRANS);
@@ -1210,10 +1228,14 @@ rx_done:
 		}
 
 		clmpcc_wrreg(sc, CLMPCC_REG_REOIR, 0);
+#ifndef __GENERIC_SOFT_INTERRUPTS
 		if ( sc->sc_soft_running == 0 ) {
 			sc->sc_soft_running = 1;
 			(sc->sc_softhook)(sc);
 		}
+#else
+		softintr_schedule(sc->sc_softintr_cookie);
+#endif
 	} else
 		clmpcc_wrreg(sc, CLMPCC_REG_REOIR, CLMPCC_REOIR_NO_TRANS);
 
@@ -1239,7 +1261,8 @@ clmpcc_txintr(arg)
 	struct clmpcc_chan *ch;
 	struct tty *tp;
 	u_char ftc, oftc;
-	u_char tir;
+	u_char tir, teoir;
+	int etcmode = 0;
 
 	/* Tx interrupt active? */
 	tir = clmpcc_rdreg(sc, CLMPCC_REG_TIR);
@@ -1258,6 +1281,9 @@ clmpcc_txintr(arg)
 	/* Dummy read of the interrupt status register */
 	(void) clmpcc_rdreg(sc, CLMPCC_REG_TISR);
 
+	/* Make sure embedded transmit commands are disabled */
+	clmpcc_wrreg(sc, CLMPCC_REG_COR2, ch->ch_cor2);
+
 	ftc = oftc = clmpcc_rdreg(sc, CLMPCC_REG_TFTC);
 
 	/* Handle a delayed parameter change */
@@ -1274,42 +1300,73 @@ clmpcc_txintr(arg)
 		ftc -= n;
 		ch->ch_obuf_size -= n;
 		ch->ch_obuf_addr += n;
+
 	} else {
 		/*
-		 * No data to send -- check if we should
-		 * start/stop a break
+		 * Check if we should start/stop a break
 		 */
 		if ( ISSET(ch->ch_flags, CLMPCC_FLG_START_BREAK) ) {
 			CLR(ch->ch_flags, CLMPCC_FLG_START_BREAK);
-			/* TBD */
+			/* Enable embedded transmit commands */
+			clmpcc_wrreg(sc, CLMPCC_REG_COR2,
+					ch->ch_cor2 | CLMPCC_COR2_ETC);
+			clmpcc_wr_txdata(sc, CLMPCC_ETC_MAGIC);
+			clmpcc_wr_txdata(sc, CLMPCC_ETC_SEND_BREAK);
+			ftc -= 2;
+			etcmode = 1;
 		}
 
 		if ( ISSET(ch->ch_flags, CLMPCC_FLG_END_BREAK) ) {
 			CLR(ch->ch_flags, CLMPCC_FLG_END_BREAK);
-			/* TBD */
+			/* Enable embedded transmit commands */
+			clmpcc_wrreg(sc, CLMPCC_REG_COR2,
+					ch->ch_cor2 | CLMPCC_COR2_ETC);
+			clmpcc_wr_txdata(sc, CLMPCC_ETC_MAGIC);
+			clmpcc_wr_txdata(sc, CLMPCC_ETC_STOP_BREAK);
+			ftc -= 2;
+			etcmode = 1;
 		}
+	}
 
+	tir = clmpcc_rdreg(sc, CLMPCC_REG_IER);
+
+	if ( ftc != oftc ) {
 		/*
-		 * Disable transmit interrupt
+		 * Enable/disable the Tx FIFO threshold interrupt
+		 * according to how much data is in the FIFO.
+		 * However, always disable the FIFO threshold if
+		 * we've left the channel in 'Embedded Transmit
+		 * Command' mode.
 		 */
-		clmpcc_wrreg(sc, CLMPCC_REG_IER,
-			clmpcc_rdreg(sc, CLMPCC_REG_IER) &
-					~CLMPCC_IER_TX_EMPTY);
+		if ( etcmode || ftc >= ch->ch_cor4 )
+			tir &= ~CLMPCC_IER_TX_FIFO;
+		else
+			tir |= CLMPCC_IER_TX_FIFO;
+		teoir = 0;
+	} else {
+		/*
+		 * No data was sent.
+		 * Disable transmit interrupt.
+		 */
+		tir &= ~(CLMPCC_IER_TX_EMPTY|CLMPCC_IER_TX_FIFO);
+		teoir = CLMPCC_TEOIR_NO_TRANS;
 
 		/*
 		 * Request Tx processing in the soft interrupt handler
 		 */
 		ch->ch_tx_done = 1;
-		if ( ! sc->sc_soft_running ) {
+#ifndef __GENERIC_SOFT_INTERRUPTS
+		if ( sc->sc_soft_running == 0 ) {
 			sc->sc_soft_running = 1;
 			(sc->sc_softhook)(sc);
 		}
+#else
+		softintr_schedule(sc->sc_softintr_cookie);
+#endif
 	}
 
-	if ( ftc != oftc )
-		clmpcc_wrreg(sc, CLMPCC_REG_TEOIR, 0);
-	else
-		clmpcc_wrreg(sc, CLMPCC_REG_TEOIR, CLMPCC_TEOIR_NO_TRANS);
+	clmpcc_wrreg(sc, CLMPCC_REG_IER, tir);
+	clmpcc_wrreg(sc, CLMPCC_REG_TEOIR, teoir);
 
 	return 1;
 }
@@ -1343,15 +1400,19 @@ clmpcc_mdintr(arg)
 
 	clmpcc_wrreg(sc, CLMPCC_REG_MEOIR, 0);
 
+#ifndef __GENERIC_SOFT_INTERRUPTS
 	if ( sc->sc_soft_running == 0 ) {
 		sc->sc_soft_running = 1;
 		(sc->sc_softhook)(sc);
 	}
+#else
+	softintr_schedule(sc->sc_softintr_cookie);
+#endif
 
 	return 1;
 }
 
-int
+void
 clmpcc_softintr(arg)
 	void *arg;
 {
@@ -1364,7 +1425,9 @@ clmpcc_softintr(arg)
 	u_int c;
 	int chan;
 
+#ifndef __GENERIC_SOFT_INTERRUPTS
 	sc->sc_soft_running = 0;
+#endif
 
 	/* Handle Modem state changes too... */
 
@@ -1432,8 +1495,6 @@ clmpcc_softintr(arg)
 			(*linesw[tp->t_line].l_start)(tp);
 		}
 	}
-
-	return 0;
 }
 
 
@@ -1541,14 +1602,6 @@ clmpcc_common_putc(sc, chan, c)
 
 	/* Save the currently active channel */
 	old_chan = clmpcc_select_channel(sc, chan);
-
-	/*
-	 * We wait here until the Tx FIFO is empty, and
-	 * the chip signifies that the Tx output is idle.
-	 */
-	while ((clmpcc_rdreg(sc,CLMPCC_REG_TISR) & CLMPCC_TISR_TX_EMPTY) ==0 &&
-	       (clmpcc_rdreg(sc,CLMPCC_REG_TFTC) & CLMPCC_TFTC_MASK) != 0 )
-		; /* Do nothing */
 
 	/*
 	 * Since we can only access the Tx Data register from within

@@ -1,7 +1,7 @@
-/*	$NetBSD: mii.c,v 1.13 1999/09/25 00:10:13 thorpej Exp $	*/
+/*	$NetBSD: mii.c,v 1.13.2.1 2000/11/20 11:42:10 bouyer Exp $	*/
 
 /*-
- * Copyright (c) 1998 The NetBSD Foundation, Inc.
+ * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -62,22 +62,34 @@ int	mii_submatch __P((struct device *, struct cfdata *, void *));
  * to the network interface driver parent.
  */
 void
-mii_phy_probe(parent, mii, capmask)
+mii_attach(parent, mii, capmask, phyloc, offloc, flags)
 	struct device *parent;
 	struct mii_data *mii;
-	int capmask;
+	int capmask, phyloc, offloc, flags;
 {
 	struct mii_attach_args ma;
 	struct mii_softc *child;
 	int bmsr, offset = 0;
+	int phymin, phymax;
 
-	LIST_INIT(&mii->mii_phys);
+	if (phyloc != MII_PHY_ANY && offloc != MII_PHY_ANY)
+		panic("mii_attach: phyloc and offloc specified");
 
-	for (ma.mii_phyno = 0; ma.mii_phyno < MII_NPHY; ma.mii_phyno++) {
-#if 0 /* XXX not yet --thorpej */
+	if (phyloc == MII_PHY_ANY) {
+		phymin = 0;
+		phymax = MII_NPHY - 1;
+	} else
+		phymin = phymax = phyloc;
+
+	if ((mii->mii_flags & MIIF_INITDONE) == 0) {
+		LIST_INIT(&mii->mii_phys);
+		mii->mii_flags |= MIIF_INITDONE;
+	}
+
+	for (ma.mii_phyno = phymin; ma.mii_phyno <= phymax; ma.mii_phyno++) {
 		/*
 		 * Make sure we haven't already configured a PHY at this
-		 * address.  This allows mii_phy_probe() to be called
+		 * address.  This allows mii_attach() to be called
 		 * multiple times.
 		 */
 		for (child = LIST_FIRST(&mii->mii_phys); child != NULL;
@@ -87,11 +99,10 @@ mii_phy_probe(parent, mii, capmask)
 				 * Yes, there is already something
 				 * configured at this address.
 				 */
-				continue;
 				offset++;
+				continue;
 			}
 		}
-#endif
 
 		/*
 		 * Check to see if there is a PHY at this address.  Note,
@@ -102,6 +113,15 @@ mii_phy_probe(parent, mii, capmask)
 		if (bmsr == 0 || bmsr == 0xffff ||
 		    (bmsr & BMSR_MEDIAMASK) == 0) {
 			/* Assume no PHY at this address. */
+			continue;
+		}
+
+		/*
+		 * There is a PHY at this address.  If we were given an
+		 * `offset' locator, skip this PHY if it doesn't match.
+		 */
+		if (offloc != MII_OFFSET_ANY && offloc != offset) {
+			offset++;
 			continue;
 		}
 
@@ -117,17 +137,85 @@ mii_phy_probe(parent, mii, capmask)
 
 		ma.mii_data = mii;
 		ma.mii_capmask = capmask;
+		ma.mii_flags = flags;
 
 		if ((child = (struct mii_softc *)config_found_sm(parent, &ma,
 		    mii_print, mii_submatch)) != NULL) {
 			/*
 			 * Link it up in the parent's MII data.
 			 */
+			callout_init(&child->mii_nway_ch);
 			LIST_INSERT_HEAD(&mii->mii_phys, child, mii_list);
 			child->mii_offset = offset;
 			mii->mii_instance++;
 		}
 		offset++;
+	}
+}
+
+void
+mii_activate(mii, act, phyloc, offloc)
+	struct mii_data *mii;
+	enum devact act;
+	int phyloc, offloc;
+{
+	struct mii_softc *child;
+
+	if (phyloc != MII_PHY_ANY && offloc != MII_PHY_ANY)
+		panic("mii_activate: phyloc and offloc specified");
+
+	if ((mii->mii_flags & MIIF_INITDONE) == 0)
+		return;
+
+	for (child = LIST_FIRST(&mii->mii_phys);
+	     child != NULL; child = LIST_NEXT(child, mii_list)) {
+		if (phyloc != MII_PHY_ANY || offloc != MII_OFFSET_ANY) {
+			if (phyloc != MII_PHY_ANY &&
+			    phyloc != child->mii_phy)
+				continue;
+			if (offloc != MII_OFFSET_ANY &&
+			    offloc != child->mii_offset)
+				continue;
+		}
+		switch (act) {
+		case DVACT_ACTIVATE:
+			panic("mii_activate: DVACT_ACTIVATE");
+			break;
+
+		case DVACT_DEACTIVATE:
+			if (config_deactivate(&child->mii_dev) != 0)
+				panic("%s: config_activate(%d) failed\n",
+				    child->mii_dev.dv_xname, act);
+		}
+	}
+}
+
+void
+mii_detach(mii, phyloc, offloc)
+	struct mii_data *mii;
+	int phyloc, offloc;
+{
+	struct mii_softc *child, *nchild;
+
+	if (phyloc != MII_PHY_ANY && offloc != MII_PHY_ANY)
+		panic("mii_detach: phyloc and offloc specified");
+
+	if ((mii->mii_flags & MIIF_INITDONE) == 0)
+		return;
+
+	for (child = LIST_FIRST(&mii->mii_phys);
+	     child != NULL; child = nchild) {
+		nchild = LIST_NEXT(child, mii_list);
+		if (phyloc != MII_PHY_ANY || offloc != MII_OFFSET_ANY) {
+			if (phyloc != MII_PHY_ANY &&
+			    phyloc != child->mii_phy)
+				continue;
+			if (offloc != MII_OFFSET_ANY &&
+			    offloc != child->mii_offset)
+				continue;
+		}
+		LIST_REMOVE(child, mii_list);
+		(void) config_detach(&child->mii_dev, DETACH_FORCE);
 	}
 }
 
@@ -177,7 +265,7 @@ mii_mediachg(mii)
 
 	for (child = LIST_FIRST(&mii->mii_phys); child != NULL;
 	     child = LIST_NEXT(child, mii_list)) {
-		rv = (*child->mii_service)(child, mii, MII_MEDIACHG);
+		rv = PHY_SERVICE(child, mii, MII_MEDIACHG);
 		if (rv)
 			return (rv);
 	}
@@ -195,7 +283,7 @@ mii_tick(mii)
 
 	for (child = LIST_FIRST(&mii->mii_phys); child != NULL;
 	     child = LIST_NEXT(child, mii_list))
-		(void) (*child->mii_service)(child, mii, MII_TICK);
+		(void) PHY_SERVICE(child, mii, MII_TICK);
 }
 
 /*
@@ -212,5 +300,19 @@ mii_pollstat(mii)
 
 	for (child = LIST_FIRST(&mii->mii_phys); child != NULL;
 	     child = LIST_NEXT(child, mii_list))
-		(void) (*child->mii_service)(child, mii, MII_POLLSTAT);
+		(void) PHY_SERVICE(child, mii, MII_POLLSTAT);
+}
+
+/*
+ * Inform the PHYs that the interface is down.
+ */
+void
+mii_down(mii)
+	struct mii_data *mii;
+{
+	struct mii_softc *child;
+
+	for (child = LIST_FIRST(&mii->mii_phys); child != NULL;
+	     child = LIST_NEXT(child, mii_list))
+		(void) PHY_SERVICE(child, mii, MII_DOWN);
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: i82557var.h,v 1.6 1999/08/05 01:35:41 thorpej Exp $	*/
+/*	$NetBSD: i82557var.h,v 1.6.2.1 2000/11/20 11:40:36 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 1999 The NetBSD Foundation, Inc.
@@ -65,6 +65,8 @@
  *
  *	Id: if_fxpvar.h,v 1.4 1997/11/29 08:11:01 davidg Exp
  */
+
+#include <sys/callout.h>
 
 /*
  * Misc. defintions for the Intel i82557 fast Ethernet controller
@@ -160,8 +162,10 @@ struct fxp_softc {
 	struct ethercom sc_ethercom;	/* ethernet common part */
 	void *sc_sdhook;		/* shutdown hook */
 	void *sc_ih;			/* interrupt handler cookie */
+	void *sc_powerhook;		/* power hook */
 
 	struct mii_data sc_mii;		/* MII/media information */
+	struct callout sc_callout;	/* MII callout */
 
 	/*
 	 * We create a single DMA map that maps all data structure
@@ -186,10 +190,14 @@ struct fxp_softc {
 	 */
 	struct fxp_control_data *sc_control_data;
 
+	bus_dma_segment_t sc_cdseg;	/* control dma segment */
+	int	sc_cdnseg;
+
 	int	sc_flags;		/* misc. flags */
 
 #define	FXPF_WANTINIT		0x01	/* want a re-init */
 #define	FXPF_MII		0x02	/* device uses MII */
+#define FXPF_ATTACHED		0x04	/* attach has succeeded */
 
 	int	sc_txpending;		/* number of TX requests pending */
 	int	sc_txdirty;		/* first dirty TX descriptor */
@@ -198,9 +206,16 @@ struct fxp_softc {
 	int phy_primary_addr;		/* address of primary PHY */
 	int phy_primary_device;		/* device type of primary PHY */
 	int phy_10Mbps_only;		/* PHY is 10Mbps-only device */
+
+	int	sc_enabled;	/* boolean; power enabled on interface */
+	int	(*sc_enable) __P((struct fxp_softc *));
+	void	(*sc_disable) __P((struct fxp_softc *));
+
+	int	sc_eeprom_size;		/* log2 size of EEPROM */
 #if NRND > 0
 	rndsource_element_t rnd_source;	/* random source */
 #endif
+	
 };
 
 #define	FXP_RXMAP_GET(sc)	((sc)->sc_rxmaps[(sc)->sc_rxfree++])
@@ -234,6 +249,10 @@ struct fxp_softc {
 	bus_dmamap_sync((sc)->sc_dmat, (sc)->sc_dmamap,			\
 	    FXP_CDMCSOFF, sizeof(struct fxp_cb_mcs), (ops))
 
+#define	FXP_CDSTATSSYNC(sc, ops)					\
+	bus_dmamap_sync((sc)->sc_dmat, (sc)->sc_dmamap,			\
+	    FXP_CDSTATSOFF, sizeof(struct fxp_stats), (ops))
+
 #define	FXP_RXBUFSIZE(m)	((m)->m_ext.ext_size -			\
 				 (sizeof(struct fxp_rfa) +		\
 				  RFA_ALIGNMENT_FUDGE))
@@ -261,13 +280,16 @@ do {									\
 	    RFA_ALIGNMENT_FUDGE;					\
 									\
 	__rfa = FXP_MTORFA((m));					\
-	__rfa->size = FXP_RXBUFSIZE((m));				\
+	__rfa->size = htole16(FXP_RXBUFSIZE((m)));			\
+	/* BIG_ENDIAN: no need to swap to store 0 */			\
 	__rfa->rfa_status = 0;						\
-	__rfa->rfa_control = FXP_RFA_CONTROL_EL;			\
+	__rfa->rfa_control = htole16(FXP_RFA_CONTROL_EL);		\
+	/* BIG_ENDIAN: no need to swap to store 0 */			\
 	__rfa->actual_size = 0;						\
 									\
 	/* NOTE: the RFA is misaligned, so we must copy. */		\
-	__v = -1;							\
+	/* BIG_ENDIAN: no need to swap to store 0xffffffff */		\
+	__v = 0xffffffff;						\
 	memcpy((void *)&__rfa->link_addr, &__v, sizeof(__v));		\
 	memcpy((void *)&__rfa->rbd_addr, &__v, sizeof(__v));		\
 									\
@@ -278,12 +300,13 @@ do {									\
 									\
 	if ((__p_m = (sc)->sc_rxq.ifq_tail) != NULL) {			\
 		__p_rfa = FXP_MTORFA(__p_m);				\
-		__v = __rxmap->dm_segs[0].ds_addr + RFA_ALIGNMENT_FUDGE;\
+		__v = htole32(__rxmap->dm_segs[0].ds_addr +		\
+		    RFA_ALIGNMENT_FUDGE);				\
 		FXP_RFASYNC((sc), __p_m,				\
 		    BUS_DMASYNC_POSTREAD|BUS_DMASYNC_POSTWRITE);	\
 		memcpy((void *)&__p_rfa->link_addr, &__v,		\
 		    sizeof(__v));					\
-		__p_rfa->rfa_control &= ~FXP_RFA_CONTROL_EL;		\
+		__p_rfa->rfa_control &= htole16(~FXP_RFA_CONTROL_EL);	\
 		FXP_RFASYNC((sc), __p_m,				\
 		    BUS_DMASYNC_PREREAD|BUS_DMASYNC_PREWRITE);		\
 	}								\
@@ -305,4 +328,9 @@ do {									\
 	bus_space_write_4((sc)->sc_st, (sc)->sc_sh, (reg), (val))
 
 void	fxp_attach __P((struct fxp_softc *));
+int	fxp_activate __P((struct device *, enum devact));
+int	fxp_detach __P((struct fxp_softc *));
 int	fxp_intr __P((void *));
+
+int	fxp_enable __P((struct fxp_softc*));
+void	fxp_disable __P((struct fxp_softc*));

@@ -1,4 +1,4 @@
-#	$NetBSD: files.isa,v 1.90 1999/10/05 03:48:27 itohy Exp $
+#	$NetBSD: files.isa,v 1.90.2.1 2000/11/20 11:41:14 bouyer Exp $
 #
 # Config file and device description for machine-independent ISA code.
 # Included by ports that need it.  Requires that the SCSI files be
@@ -39,10 +39,20 @@ device	boca: commulti
 attach	boca at isa
 file	dev/isa/boca.c			boca
 
+# Addonics FlexPort multiport serial card
+device	addcom: commulti
+attach	addcom at isa with addcom_isa
+file	dev/isa/addcom_isa.c		addcom
+
 # IBM RT PC 4-port board
 device	rtfps: commulti
 attach	rtfps at isa
 file	dev/isa/rtfps.c			rtfps
+
+# BOCA 6-port board (3x 16552)
+device  ioat: commulti
+attach  ioat at isa
+file    dev/isa/ioat66.c                ioat
 
 #
 # Serial and parallel drivers
@@ -87,15 +97,19 @@ attach	aic at isa with aic_isa: isadma
 file	dev/isa/aic_isa.c		aic_isa
 
 # Qlogic ESP406/FAS408 boards
-# ncr53c9x device declaration in sys/conf/files
-device	esp: scsi, ncr53c9x, isadma
-attach	esp at isa with esp_isa
+# device declaration in sys/conf/files
+attach	esp at isa with esp_isa: isadma
 file	dev/isa/esp_isa.c		esp_isa
 
 # BusLogic BT-[45]4x ISA family
 # device declaration in sys/conf/files
 attach	bha at isa with bha_isa: isadma
 file	dev/isa/bha_isa.c		bha_isa
+
+# DPT SmartCache/SmartRAID III/IV ISA family
+# device declaration in sys/conf/files
+attach	dpt at isa with dpt_isa: isadma
+file	dev/isa/dpt_isa.c		dpt_isa
 
 # Seagate ST0[12] ICs
 device	sea: scsi, isadma
@@ -170,6 +184,12 @@ file	dev/isa/if_el.c			el
 attach	ep at isa with ep_isa: elink
 file	dev/isa/if_ep_isa.c		ep_isa
 
+# SDL Communications N2 PCI Network Interface
+# device in sys/conf/files
+attach	ntwoc at isa with ntwoc_isa
+file	dev/isa/if_ntwoc_isa.c          ntwoc_isa
+
+
 # Allied Telesis MB8695-based boards
 # (Allied Telesis AT1700)
 device	ate: arp, ether, ifnet, mb86960
@@ -203,9 +223,8 @@ file    dev/isa/if_iy.c			iy
 
 # the probe routine of this "recognizes" the iy. Probe after it.
 # NCR 5380-based boards
-device	nca: scsi, ncr5380sbc
-attach	nca at isa
-file	dev/isa/nca.c			nca
+attach	nca at isa with nca_isa
+file	dev/isa/nca_isa.c		nca_isa
 
 # AMD am7990 (Lance) -based boards
 # (BICC Isolan, NE2100, DEPCA)
@@ -217,14 +236,12 @@ device bicc {}
 attach bicc at isa
 attach le at bicc with le_bicc: le24, isadma
 file	dev/isa/if_le_isa.c	nele | bicc
-device depca {}
 attach	depca at isa with depca_isa
-attach	le at depca with le_depca: le24
-file	dev/isa/if_depca_isa.c	depca
+file	dev/isa/depca_isa.c	depca
 
 # DEC EtherWORKS III (LEMAC-based: DE203, DE204, DE205) cards
 attach  lc at isa with lc_isa
-file    dev/isa/if_lc_isa.c		lc
+file    dev/isa/if_lc_isa.c		lc_isa
 
 # Novell NE1000, NE2000, and clones
 attach	ne at isa with ne_isa: rtl80x9
@@ -255,6 +272,10 @@ file	dev/isa/if_tr_isa.c		tr_isa
 attach	tr at isa with tr_isa: tr_isa, elink
 file	dev/isa/if_tribm_isa.c		tr_isa
 file	dev/isa/if_trtcm_isa.c		tr_isa
+
+# ISA NCR/AT&T/Lucent WaveLAN (non-802.11) card
+attach	wl at isa with wl_isa: i82586, wavelan
+file	dev/isa/if_wl_isa.c		wl_isa
 
 #
 # ISA Sound hardware
@@ -351,6 +372,11 @@ device	aria: audio, mulaw, auconv
 attach	aria at isa
 file	dev/isa/aria.c			aria needs-flag
 
+# Creative Music System (CMS)
+device	cms: midibus
+attach	cms at isa
+file	dev/isa/cms.c			cms needs-flag
+
 #
 # PlanetConnect satellite receiver driver.
 #
@@ -358,16 +384,18 @@ device satlink: isadma
 attach satlink at isa
 file dev/isa/satlink.c			satlink	needs-flag
 
-#
-# PC keyboard controller
-#
-device  pckbc {[slot = -1]}
-attach  pckbc at isa
-file    dev/isa/pckbc.c          pckbc	needs-flag
+# ISA PC keyboard controller
+attach  pckbc at isa with pckbc_isa
+file    dev/isa/pckbc_isa.c		pckbc	needs-flag
 
 # generic ISA VGA
 attach	vga at isa with vga_isa
 file	dev/isa/vga_isa.c	vga_isa	needs-flag
+
+# generic EGA
+device ega: wsemuldisplaydev, pcdisplayops
+attach	ega at isa
+file	dev/isa/ega.c		ega	needs-flag
 
 # generic PC graphics adapter (MGA, CGA, ...)
 device pcdisplay: wsemuldisplaydev, pcdisplayops
@@ -383,6 +411,15 @@ attach spkr at pcppi
 file	dev/isa/spkr.c		spkr	needs-flag
 attach midi at pcppi with midi_pcppi: midisyn
 file	dev/isa/midi_pcppi.c    midi_pcppi
+
+#
+# Environmental monitors
+#
+
+# LM78 temp/fanspeed monitor
+attach  lm at isa with lm_isa
+file    dev/isa/lm_isa.c	lm_isa
+
 
 #
 # ISA Plug 'n Play autoconfiguration glue.

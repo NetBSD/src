@@ -1,4 +1,33 @@
-/* $NetBSD: isp_netbsd.c,v 1.18.2.5 1999/10/26 23:10:16 thorpej Exp $ */
+/* $NetBSD: isp_netbsd.c,v 1.18.2.6 2000/11/20 11:40:39 bouyer Exp $ */
+/*
+ * This driver, which is contained in NetBSD in the files:
+ *
+ *	sys/dev/ic/isp.c
+ *	sys/dev/ic/ic/isp.c
+ *	sys/dev/ic/ic/isp_inline.h
+ *	sys/dev/ic/ic/isp_netbsd.c
+ *	sys/dev/ic/ic/isp_netbsd.h
+ *	sys/dev/ic/ic/isp_target.c
+ *	sys/dev/ic/ic/isp_target.h
+ *	sys/dev/ic/ic/isp_tpublic.h
+ *	sys/dev/ic/ic/ispmbox.h
+ *	sys/dev/ic/ic/ispreg.h
+ *	sys/dev/ic/ic/ispvar.h
+ *	sys/microcode/isp/asm_sbus.h
+ *	sys/microcode/isp/asm_1040.h
+ *	sys/microcode/isp/asm_1080.h
+ *	sys/microcode/isp/asm_12160.h
+ *	sys/microcode/isp/asm_2100.h
+ *	sys/microcode/isp/asm_2200.h
+ *	sys/pci/isp_pci.c
+ *	sys/sbus/isp_sbus.c
+ *
+ * Is being actively maintained by Matthew Jacob (mjacob@netbsd.org).
+ * This driver also is shared source with FreeBSD, OpenBSD, Linux, Solaris,
+ * Linux versions. This tends to be an interesting maintenance problem.
+ *
+ * Please coordinate with Matthew Jacob on changes you wish to make here.
+ */
 /*
  * Platform (NetBSD) dependent common attachment code for Qlogic adapters.
  * Matthew Jacob <mjacob@nas.nasa.gov>
@@ -33,15 +62,35 @@
 #include <dev/ic/isp_netbsd.h>
 #include <sys/scsiio.h>
 
-static void ispminphys __P((struct buf *));
-static void isp_scsipi_request __P((struct scsipi_channel *,
-	scsipi_adapter_req_t, void *));
-static int
-ispioctl __P((struct scsipi_channel *, u_long, caddr_t, int, struct proc *));
 
-static int isp_poll __P((struct ispsoftc *, ISP_SCSI_XFER_T *, int));
-static void isp_watch __P((void *));
+/*
+ * Set a timeout for the watchdogging of a command.
+ *
+ * The dimensional analysis is
+ *
+ *	milliseconds * (seconds/millisecond) * (ticks/second) = ticks
+ *
+ *			=
+ *
+ *	(milliseconds / 1000) * hz = ticks
+ *
+ *
+ * For timeouts less than 1 second, we'll get zero. Because of this, and
+ * because we want to establish *our* timeout to be longer than what the
+ * firmware might do, we just add 3 seconds at the back end.
+ */
+#define	_XT(xs)	((((xs)->timeout/1000) * hz) + (3 * hz))
+
+static void ispminphys __P((struct buf *));
+static int32_t ispcmd __P((XS_T *));
+static int
+ispioctl __P((struct scsipi_link *, u_long, caddr_t, int, struct proc *));
+
+static struct scsipi_device isp_dev = { NULL, NULL, NULL, NULL };
+static int isp_polled_cmd __P((struct ispsoftc *, XS_T *));
+static void isp_dog __P((void *));
 static void isp_command_requeue __P((void *));
+static void isp_internal_restart __P((void *));
 
 /*
  * Complete attachment of hardware, include subdevices.
@@ -50,98 +99,96 @@ void
 isp_attach(isp)
 	struct ispsoftc *isp;
 {
-	struct scsipi_adapter *adapt = &isp->isp_osinfo._adapter;
-	struct scsipi_channel *chan;
-	int i;
+	int maxluns;
+	isp->isp_osinfo._adapter.scsipi_minphys = ispminphys;
+	isp->isp_osinfo._adapter.scsipi_ioctl = ispioctl;
+	isp->isp_osinfo._adapter.scsipi_cmd = ispcmd;
 
 	isp->isp_state = ISP_RUNSTATE;
-
+	isp->isp_osinfo._link.scsipi_scsi.channel =
+	    (IS_DUALBUS(isp))? 0 : SCSI_CHANNEL_ONLY_ONE;
+	isp->isp_osinfo._link.adapter_softc = isp;
+	isp->isp_osinfo._link.device = &isp_dev;
+	isp->isp_osinfo._link.adapter = &isp->isp_osinfo._adapter;
+	isp->isp_osinfo._link.openings = isp->isp_maxcmds;
+	isp->isp_osinfo._link.scsipi_scsi.max_lun = maxluns;
 	/*
-	 * Fill in the scsipi_adapter.
+	 * Until the midlayer is fixed to use REPORT LUNS, limit to 8 luns.
 	 */
-	adapt->adapt_dev = &isp->isp_osinfo._dev;
-	if (IS_FC(isp) == 0 && IS_12X0(isp) != 0)
-		adapt->adapt_nchannels = 2;
-	else
-		adapt->adapt_nchannels = 1;
-	adapt->adapt_openings = isp->isp_maxcmds;
-	adapt->adapt_max_periph = adapt->adapt_openings;
-	adapt->adapt_request = isp_scsipi_request;
-	adapt->adapt_minphys = ispminphys;
-	adapt->adapt_ioctl = ispioctl;
+	isp->isp_osinfo._link.scsipi_scsi.max_lun =
+	   (isp->isp_maxluns < 7)? isp->isp_maxluns - 1 : 7;
+	TAILQ_INIT(&isp->isp_osinfo.waitq);	/* The 2nd bus will share.. */
 
-	/*
-	 * Fill in the scsipi_channel(s).
-	 */
-	for (i = 0; i < adapt->adapt_nchannels; i++) {
-		chan = &isp->isp_osinfo._channels[i];
-		chan->chan_adapter = adapt;
-		chan->chan_bustype = &scsi_bustype;
-		chan->chan_channel = i;
-
-		if (IS_FC(isp)) {
-			fcparam *fcp = isp->isp_param;
-			fcp = &fcp[i];
-
-			/*
-			 * Give it another chance here to come alive...
-			 */
-			if (fcp->isp_fwstate != FW_READY) {
-				(void) isp_control(isp, ISPCTL_FCLINK_TEST,
-				    NULL);
-			}
-			chan->chan_ntargets = MAX_FC_TARG;
-#ifdef	ISP2100_SCCLUN
-			/*
-			 * 16 bits worth, but let's be reasonable..
-			 */
-			chan->chan_nluns = 256;
-#else
-			chan->chan_nluns = 16;
-#endif
-			chan->chan_id = fcp->isp_loopid;
-		} else {
-			sdparam *sdp = isp->isp_param;
-			sdp = &sdp[i];
-
-			chan->chan_ntargets = MAX_TARGETS;
-			if (isp->isp_bustype == ISP_BT_SBUS)
-				chan->chan_nluns = 8;
-			else {
-#if 0
-				/* Too many broken targets... */
-				if (isp->isp_fwrev >= ISP_FW_REV(7,55,0))
-					chan->chan_nluns = 32;
-				else
-#endif
-					chan->chan_nluns = 7;
-			}
-			chan->chan_id = sdp->isp_initiator_id;
+	if (IS_FC(isp)) {
+		isp->isp_osinfo._link.scsipi_scsi.max_target = MAX_FC_TARG-1;
+	} else {
+		sdparam *sdp = isp->isp_param;
+		isp->isp_osinfo._link.scsipi_scsi.max_target = MAX_TARGETS-1;
+		isp->isp_osinfo._link.scsipi_scsi.adapter_target =
+		    sdp->isp_initiator_id;
+		isp->isp_osinfo.discovered[0] = 1 << sdp->isp_initiator_id;
+		if (IS_DUALBUS(isp)) {
+			isp->isp_osinfo._link_b = isp->isp_osinfo._link;
+			sdp++;
+			isp->isp_osinfo.discovered[1] =
+			    1 << sdp->isp_initiator_id;
+			isp->isp_osinfo._link_b.scsipi_scsi.adapter_target =
+			    sdp->isp_initiator_id;
+			isp->isp_osinfo._link_b.scsipi_scsi.channel = 1;
+			isp->isp_osinfo._link_b.scsipi_scsi.max_lun =
+			    isp->isp_osinfo._link.scsipi_scsi.max_lun;
 		}
 	}
+	isp->isp_osinfo._link.type = BUS_SCSI;
 
 	/*
-	 * Send a SCSI Bus Reset (used to be done as part of attach,
-	 * but now left to the OS outer layers).
+	 * Send a SCSI Bus Reset.
 	 */
 	if (IS_SCSI(isp)) {
-		for (i = 0; i < adapt->adapt_nchannels; i++)
-			(void) isp_control(isp, ISPCTL_RESET_BUS, &i);
-		SYS_DELAY(2*1000000);
+		int bus = 0;
+		ISP_LOCK(isp);
+		(void) isp_control(isp, ISPCTL_RESET_BUS, &bus);
+		if (IS_DUALBUS(isp)) {
+			bus++;
+			(void) isp_control(isp, ISPCTL_RESET_BUS, &bus);
+		}
+		ISP_UNLOCK(isp);
+	} else {
+		int defid;
+		fcparam *fcp = isp->isp_param;
+		delay(2 * 1000000);
+		defid = MAX_FC_TARG;
+		ISP_LOCK(isp);
+		/*
+		 * We probably won't have clock interrupts running,
+		 * so we'll be really short (smoke test, really)
+		 * at this time.
+		 */
+		if (isp_control(isp, ISPCTL_FCLINK_TEST, NULL)) {
+			(void) isp_control(isp, ISPCTL_PDB_SYNC, NULL);
+			if (fcp->isp_fwstate == FW_READY &&
+			    fcp->isp_loopstate >= LOOP_PDB_RCVD) { 
+				defid = fcp->isp_loopid;
+			}
+		}
+		ISP_UNLOCK(isp);
+		isp->isp_osinfo._link.scsipi_scsi.adapter_target = defid;
 	}
 
 	/*
-	 * Start the watchdog.
+	 * After this point, we'll be doing the new configuration
+	 * schema which allows interrups, so we can do tsleep/wakeup
+	 * for mailbox stuff at that point.
 	 */
-	isp->isp_dogactive = 1;
-	timeout(isp_watch, isp, WATCH_INTERVAL * hz);
+	isp->isp_osinfo.no_mbox_ints = 0;
 
 	/*
 	 * And attach children (if any).
 	 */
-	for (i = 0; i < adapt->adapt_nchannels; i++)
-		(void) config_found((void *)isp, &isp->isp_osinfo._channels[i],
-		    scsiprint);
+	config_found((void *)isp, &isp->isp_osinfo._link, scsiprint);
+	if (IS_DUALBUS(isp)) {
+		config_found((void *)isp, &isp->isp_osinfo._link_b, scsiprint);
+	}
 }
 
 /*
@@ -166,21 +213,50 @@ ispminphys(bp)
 }
 
 static int      
-ispioctl(chan, cmd, addr, flag, p)
-	struct scsipi_channel *chan;
+ispioctl(sc_link, cmd, addr, flag, p)
+	struct scsipi_link *sc_link;
 	u_long cmd;
 	caddr_t addr;
 	int flag;
 	struct proc *p;
 {
-	struct ispsoftc *isp = (void *)chan->chan_adapter->adapt_dev;
-	int s, ch, retval = ENOTTY;
+	struct ispsoftc *isp = sc_link->adapter_softc;
+	int s, chan, retval = ENOTTY;
 	
+	chan = (sc_link->scsipi_scsi.channel == SCSI_CHANNEL_ONLY_ONE)? 0 :
+	    sc_link->scsipi_scsi.channel;
+
 	switch (cmd) {
+	case SCBUSACCEL:
+	{
+		struct scbusaccel_args *sp = (struct scbusaccel_args *)addr;
+		if (IS_SCSI(isp) && sp->sa_lun == 0) {
+			int dflags = 0;
+			sdparam *sdp = SDPARAM(isp);
+
+			sdp += chan;
+			if (sp->sa_flags & SC_ACCEL_TAGS)
+				dflags |= DPARM_TQING;
+			if (sp->sa_flags & SC_ACCEL_WIDE)
+				dflags |= DPARM_WIDE;
+			if (sp->sa_flags & SC_ACCEL_SYNC)
+				dflags |= DPARM_SYNC;
+			s = splbio();
+			sdp->isp_devparam[sp->sa_target].dev_flags |= dflags;
+			dflags = sdp->isp_devparam[sp->sa_target].dev_flags;
+			sdp->isp_devparam[sp->sa_target].dev_update = 1;
+			isp->isp_update |= (1 << chan);
+			splx(s);
+			isp_prt(isp, ISP_LOGDEBUG1,
+			    "ispioctl: device flags 0x%x for %d.%d.X",
+			    dflags, chan, sp->sa_target);
+		}
+		retval = 0;
+		break;
+	}
 	case SCBUSIORESET:
-		ch = chan->chan_channel;
 		s = splbio();
-		if (isp_control(isp, ISPCTL_RESET_BUS, &ch))
+		if (isp_control(isp, ISPCTL_RESET_BUS, &chan))
 			retval = EIO;
 		else
 			retval = 0;
@@ -192,203 +268,253 @@ ispioctl(chan, cmd, addr, flag, p)
 	return (retval);
 }
 
-static void
-isp_scsipi_request(chan, req, arg)
-	struct scsipi_channel *chan;
-	scsipi_adapter_req_t req;
-	void *arg;
+
+static int32_t
+ispcmd(xs)
+	XS_T *xs;
 {
-	struct scsipi_xfer *xs;
-	struct ispsoftc *isp = (void *)chan->chan_adapter->adapt_dev;
+	struct ispsoftc *isp;
 	int result, s;
 
-	switch (req) {
-	case ADAPTER_REQ_RUN_XFER:
-		xs = arg;
-		s = splbio();
-		if (isp->isp_state < ISP_RUNSTATE) {
-			DISABLE_INTS(isp);
-			isp_init(isp);
-			if (isp->isp_state != ISP_INITSTATE) {
-				ENABLE_INTS(isp);
-				(void) splx(s);
-				XS_SETERR(xs, HBA_BOTCH);
-				XS_CMD_DONE(xs);
-				return;
-			}
-			isp->isp_state = ISP_RUNSTATE;
-			ENABLE_INTS(isp);
-		}
-
+	isp = XS_ISP(xs);
+	s = splbio();
+	if (isp->isp_state < ISP_RUNSTATE) {
 		DISABLE_INTS(isp);
-		result = ispscsicmd(xs);
+		isp_init(isp);
+                if (isp->isp_state != ISP_INITSTATE) {
+			ENABLE_INTS(isp);
+                        (void) splx(s);
+                        XS_SETERR(xs, HBA_BOTCH);
+                        return (COMPLETE);
+                }
+                isp->isp_state = ISP_RUNSTATE;
 		ENABLE_INTS(isp);
+        }
 
-		switch (result) {
-		case CMD_QUEUED:
-			/*
-			 * If we're not polling for completion, just return.
-			 */
-			if ((xs->xs_control & XS_CTL_POLL) == 0) {
-				(void) splx(s);
-				return;
-			}
-			break;
-
-		case CMD_EAGAIN:
-			/*
-			 * Adapter resource shortage of some sort.  Should
-			 * retry later.
-			 */
-			XS_SETERR(xs, XS_RESOURCE_SHORTAGE);
-			XS_CMD_DONE(xs);
-			(void) splx(s);
-			return;
-
-		case CMD_RQLATER:
-			/*
-			 * XXX I think what we should do here is freeze
-			 * XXX the channel queue, and do a timed thaw
-			 * XXX of it.  Need to add this to the mid-layer.
-			 */
-			if ((xs->xs_control & XS_CTL_POLL) != 0) {
-				XS_SETERR(xs, XS_DRIVER_STUFFUP);
-				XS_CMD_DONE(xs);
-			} else
-				timeout(isp_command_requeue, xs, hz);
-			(void) splx(s);
-			return;
-
-		case CMD_COMPLETE:
-			/*
-			 * Something went horribly wrong, xs->error is set,
-			 * and we just need to finish it off.
-			 */
-			XS_CMD_DONE(xs);
-			(void) splx(s);
-			return;
+	/*
+	 * Check for queue blockage...
+	 */
+	if (isp->isp_osinfo.blocked) {
+		if (xs->xs_control & XS_CTL_POLL) {
+			xs->error = XS_DRIVER_STUFFUP;
+			splx(s);
+			return (TRY_AGAIN_LATER);
 		}
-
-		/*
-		 * If we can't use interrupts, poll on completion.
-		 */
-		if (isp_poll(isp, xs, XS_TIME(xs))) {
-			/*
-			 * If no other error occurred but we didn't finish,
-			 * something bad happened.
-			 */
-			if (XS_IS_CMD_DONE(xs) == 0) {
-				if (isp_control(isp, ISPCTL_ABORT_CMD, xs)) {
-					isp_restart(isp);
-				}
-				if (XS_NOERR(xs)) {
-					XS_SETERR(xs, HBA_BOTCH);
-				}
-				XS_CMD_DONE(xs);
-			}
-		}
-		(void) splx(s);
-		return;
-
-	case ADAPTER_REQ_GROW_RESOURCES:
-		/* XXX Not supported. */
-		return;
-
-	case ADAPTER_REQ_SET_XFER_MODE:
-		if (isp->isp_type & ISP_HA_SCSI) {
-			sdparam *sdp = isp->isp_param;
-			struct scsipi_xfer_mode *xm = arg;
-			u_int16_t flags;
-
-			sdp = &sdp[chan->chan_channel];
-
-			flags =
-			    sdp->isp_devparam[xm->xm_target].dev_flags;
-			flags &= ~(DPARM_WIDE|DPARM_SYNC|DPARM_TQING);
-
-			if (xm->xm_mode & PERIPH_CAP_SYNC)
-				flags |= DPARM_SYNC;
-
-			if (xm->xm_mode & PERIPH_CAP_WIDE16)
-				flags |= DPARM_WIDE;
-
-			if (xm->xm_mode & PERIPH_CAP_TQING)
-				flags |= DPARM_TQING;
-
-			sdp->isp_devparam[xm->xm_target].dev_flags =
-			    flags;
-			sdp->isp_devparam[xm->xm_target].dev_update = 1;
-			isp->isp_update |= (1 << chan->chan_channel);
-			(void) isp_control(isp, ISPCTL_UPDATE_PARAMS, NULL);
-		}
-		return;
+		TAILQ_INSERT_TAIL(&isp->isp_osinfo.waitq, xs, adapter_q);
+		splx(s);
+		return (SUCCESSFULLY_QUEUED);
 	}
+
+	if (xs->xs_control & XS_CTL_POLL) {
+		volatile u_int8_t ombi = isp->isp_osinfo.no_mbox_ints;
+		isp->isp_osinfo.no_mbox_ints = 1;
+		result = isp_polled_cmd(isp, xs);
+		isp->isp_osinfo.no_mbox_ints = ombi;
+		(void) splx(s);
+		return (result);
+	}
+
+	result = isp_start(xs);
+#if	0
+{
+	static int na[16] = { 0 };
+	if (na[isp->isp_unit] < isp->isp_nactive) {
+		isp_prt(isp, ISP_LOGALL, "active hiwater %d", isp->isp_nactive);
+		na[isp->isp_unit] = isp->isp_nactive;
+	}
+}
+#endif
+	switch (result) {
+	case CMD_QUEUED:
+		result = SUCCESSFULLY_QUEUED;
+		if (xs->timeout) {
+			callout_reset(&xs->xs_callout, _XT(xs), isp_dog, xs);
+		}
+		break;
+	case CMD_EAGAIN:
+		result = TRY_AGAIN_LATER;
+		break;
+	case CMD_RQLATER:
+		result = SUCCESSFULLY_QUEUED;
+		callout_reset(&xs->xs_callout, hz, isp_command_requeue, xs);
+		break;
+	case CMD_COMPLETE:
+		result = COMPLETE;
+		break;
+	}
+	(void) splx(s);
+	return (result);
 }
 
 static int
-isp_poll(isp, xs, mswait)
+isp_polled_cmd(isp, xs)
 	struct ispsoftc *isp;
-	ISP_SCSI_XFER_T *xs;
-	int mswait;
+	XS_T *xs;
 {
+	int result;
+	int infinite = 0, mswait;
 
-	while (mswait) {
-		/* Try the interrupt handling routine */
-		(void)isp_intr((void *)isp);
+	result = isp_start(xs);
 
-		/* See if the xs is now done */
-		if (XS_IS_CMD_DONE(xs)) {
-			return (0);
+	switch (result) {
+	case CMD_QUEUED:
+		result = SUCCESSFULLY_QUEUED;
+		break;
+	case CMD_RQLATER:
+	case CMD_EAGAIN:
+		if (XS_NOERR(xs)) {
+			xs->error = XS_DRIVER_STUFFUP;
 		}
-		SYS_DELAY(1000);	/* wait one millisecond */
-		mswait--;
+		result = TRY_AGAIN_LATER;
+		break;
+	case CMD_COMPLETE:
+		result = COMPLETE;
+		break;
+		
 	}
-	return (1);
+
+	if (result != SUCCESSFULLY_QUEUED) {
+		return (result);
+	}
+
+	/*
+	 * If we can't use interrupts, poll on completion.
+	 */
+	if ((mswait = XS_TIME(xs)) == 0)
+		infinite = 1;
+
+	while (mswait || infinite) {
+		if (isp_intr((void *)isp)) {
+			if (XS_CMD_DONE_P(xs)) {
+				break;
+			}
+		}
+		USEC_DELAY(1000);
+		mswait -= 1;
+	}
+
+	/*
+	 * If no other error occurred but we didn't finish,
+	 * something bad happened.
+	 */
+	if (XS_CMD_DONE_P(xs) == 0) {
+		if (isp_control(isp, ISPCTL_ABORT_CMD, xs)) {
+			isp_reinit(isp);
+		}
+		if (XS_NOERR(xs)) {
+			XS_SETERR(xs, HBA_BOTCH);
+		}
+	}
+	result = COMPLETE;
+	return (result);
+}
+
+void
+isp_done(xs)
+	XS_T *xs;
+{
+	XS_CMD_S_DONE(xs);
+	if (XS_CMD_WDOG_P(xs) == 0) {
+		struct ispsoftc *isp = XS_ISP(xs);
+		callout_stop(&xs->xs_callout);
+		if (XS_CMD_GRACE_P(xs)) {
+			isp_prt(isp, ISP_LOGDEBUG1,
+			    "finished command on borrowed time");
+		}
+		XS_CMD_S_CLEAR(xs);
+		scsipi_done(xs);
+	}
 }
 
 static void
-isp_watch(arg)
+isp_dog(arg)
 	void *arg;
 {
-	int i;
-	struct ispsoftc *isp = arg;
-	struct scsipi_xfer *xs;
-	int s;
+	XS_T *xs = arg;
+	struct ispsoftc *isp = XS_ISP(xs);
+	u_int32_t handle;
 
+	ISP_ILOCK(isp);
 	/*
-	 * Look for completely dead commands (but not polled ones).
+	 * We've decided this command is dead. Make sure we're not trying
+	 * to kill a command that's already dead by getting it's handle and
+	 * and seeing whether it's still alive.
 	 */
-	s = splbio();
-	for (i = 0; i < isp->isp_maxcmds; i++) {
-		xs = isp->isp_xflist[i];
-		if (xs == NULL) {
-			continue;
+	handle = isp_find_handle(isp, xs);
+	if (handle) {
+		u_int16_t r, r1, i;
+
+		if (XS_CMD_DONE_P(xs)) {
+			isp_prt(isp, ISP_LOGDEBUG1,
+			    "watchdog found done cmd (handle 0x%x)", handle);
+			ISP_IUNLOCK(isp);
+			return;
 		}
-		if (xs->timeout == 0 || (xs->xs_control & XS_CTL_POLL)) {
-			continue;
+
+		if (XS_CMD_WDOG_P(xs)) {
+			isp_prt(isp, ISP_LOGDEBUG1,
+			    "recursive watchdog (handle 0x%x)", handle);
+			ISP_IUNLOCK(isp);
+			return;
 		}
-		xs->timeout -= (WATCH_INTERVAL * 1000);
-		/*
-		 * Avoid later thinking that this
-		 * transaction is not being timed.
-		 * Then give ourselves to watchdog
-		 * periods of grace.
-		 */
-		if (xs->timeout == 0) {
-			xs->timeout = 1;
-		} else if (xs->timeout > -(2 * WATCH_INTERVAL * 1000)) {
-			continue;
+
+		XS_CMD_S_WDOG(xs);
+
+		i = 0;
+		do {
+			r = ISP_READ(isp, BIU_ISR);
+			USEC_DELAY(1);
+			r1 = ISP_READ(isp, BIU_ISR);
+		} while (r != r1 && ++i < 1000);
+
+		if (INT_PENDING(isp, r) && isp_intr(isp) && XS_CMD_DONE_P(xs)) {
+			isp_prt(isp, ISP_LOGDEBUG1, "watchdog cleanup (%x, %x)",
+			    handle, r);
+			XS_CMD_C_WDOG(xs);
+			isp_done(xs);
+		} else if (XS_CMD_GRACE_P(xs)) {
+			isp_prt(isp, ISP_LOGDEBUG1, "watchdog timeout (%x, %x)",
+			    handle, r);
+			/*
+			 * Make sure the command is *really* dead before we
+			 * release the handle (and DMA resources) for reuse.
+			 */
+			(void) isp_control(isp, ISPCTL_ABORT_CMD, arg);
+
+			/*
+			 * After this point, the comamnd is really dead.
+			 */
+			if (XS_XFRLEN(xs)) {
+				ISP_DMAFREE(isp, xs, handle);
+			}
+			isp_destroy_handle(isp, handle);
+			XS_SETERR(xs, XS_TIMEOUT);
+			XS_CMD_S_CLEAR(xs);
+			isp_done(xs);
+		} else {
+			u_int16_t iptr, optr;
+			ispreq_t *mp;
+			isp_prt(isp, ISP_LOGDEBUG2,
+			    "possible command timeout (%x, %x)", handle, r);
+			XS_CMD_C_WDOG(xs);
+			callout_reset(&xs->xs_callout, hz, isp_dog, xs);
+			if (isp_getrqentry(isp, &iptr, &optr, (void **) &mp)) {
+				ISP_IUNLOCK(isp);
+				return;
+			}
+			XS_CMD_S_GRACE(xs);
+			MEMZERO((void *) mp, sizeof (*mp));
+			mp->req_header.rqs_entry_count = 1;
+			mp->req_header.rqs_entry_type = RQSTYPE_MARKER;
+			mp->req_modifier = SYNC_ALL;
+			mp->req_target = XS_CHANNEL(xs) << 7;
+			ISP_SWIZZLE_REQUEST(isp, mp);
+			ISP_ADD_REQUEST(isp, iptr);
 		}
-		if (isp_control(isp, ISPCTL_ABORT_CMD, xs)) {
-			printf("%s: isp_watch failed to abort command\n",
-			    isp->isp_name);
-			isp_restart(isp);
-			break;
-		}
+	} else {
+		isp_prt(isp, ISP_LOGDEBUG0, "watchdog with no command");
 	}
-	timeout(isp_watch, isp, WATCH_INTERVAL * hz);
-	isp->isp_dogactive = 1;
-	(void) splx(s);
+	ISP_IUNLOCK(isp);
 }
 
 /*
@@ -402,22 +528,12 @@ void
 isp_uninit(isp)
 	struct ispsoftc *isp;
 {
-	ISP_ILOCKVAL_DECL;
-	ISP_ILOCK(isp);
+	isp_lock(isp);
 	/*
 	 * Leave with interrupts disabled.
 	 */
 	DISABLE_INTS(isp);
-
-	/*
-	 * Turn off the watchdog (if active).
-	 */
-	if (isp->isp_dogactive) {
-		untimeout(isp_watch, isp);
-		isp->isp_dogactive = 0;
-	}
-
-	ISP_IUNLOCK(isp);
+	isp_unlock(isp);
 }
 
 /*
@@ -428,12 +544,69 @@ isp_command_requeue(arg)
 	void *arg;
 {
 	struct scsipi_xfer *xs = arg;
-	int s;
+	struct ispsoftc *isp = XS_ISP(xs);
+	ISP_ILOCK(isp);
+	switch (ispcmd(xs)) {
+	case SUCCESSFULLY_QUEUED:
+		isp_prt(isp, ISP_LOGINFO,
+		    "requeued commands for %d.%d", XS_TGT(xs), XS_LUN(xs));
+		if (xs->timeout) {
+			callout_reset(&xs->xs_callout, _XT(xs), isp_dog, xs);
+		}
+		break;
+	case TRY_AGAIN_LATER:
+		isp_prt(isp, ISP_LOGINFO,
+		    "EAGAIN on requeue for %d.%d", XS_TGT(xs), XS_LUN(xs));
+		callout_reset(&xs->xs_callout, hz, isp_command_requeue, xs);
+		break;
+	case COMPLETE:
+		/* can only be an error */
+		XS_CMD_S_DONE(xs);
+		callout_stop(&xs->xs_callout);
+		if (XS_NOERR(xs)) {
+			XS_SETERR(xs, HBA_BOTCH);
+		}
+		scsipi_done(xs);
+		break;
+	}
+	ISP_IUNLOCK(isp);
+}
 
-	s = splbio();
-	scsipi_adapter_request(xs->xs_periph->periph_channel,
-	    ADAPTER_REQ_RUN_XFER, xs);
-	(void) splx(s);
+/*
+ * Restart function after a LOOP UP event (e.g.),
+ * done as a timeout for some hysteresis.
+ */
+static void
+isp_internal_restart(arg)
+	void *arg;
+{
+	struct ispsoftc *isp = arg;
+	int result, nrestarted = 0;
+
+	ISP_ILOCK(isp);
+	if (isp->isp_osinfo.blocked == 0) {
+		struct scsipi_xfer *xs;
+		while ((xs = TAILQ_FIRST(&isp->isp_osinfo.waitq)) != NULL) {
+			TAILQ_REMOVE(&isp->isp_osinfo.waitq, xs, adapter_q);
+			result = isp_start(xs);
+			if (result != CMD_QUEUED) {
+				isp_prt(isp, ISP_LOGERR,
+				    "botched command restart (err=%d)", result);
+				XS_CMD_S_DONE(xs);
+				if (xs->error == XS_NOERROR)
+					xs->error = XS_DRIVER_STUFFUP;
+				callout_stop(&xs->xs_callout);
+				scsipi_done(xs);
+			} else if (xs->timeout) {
+				callout_reset(&xs->xs_callout,
+				    _XT(xs), isp_dog, xs);
+			}
+			nrestarted++;
+		}
+		isp_prt(isp, ISP_LOGINFO,
+		    "isp_restart requeued %d commands", nrestarted);
+	}
+	ISP_IUNLOCK(isp);
 }
 
 int
@@ -446,36 +619,73 @@ isp_async(isp, cmd, arg)
 	int s = splbio();
 	switch (cmd) {
 	case ISPASYNC_NEW_TGT_PARAMS:
-	if (isp->isp_type & ISP_HA_SCSI) {
-		struct scsipi_xfer_mode xm;
+	if (IS_SCSI(isp) && isp->isp_dblev) {
 		sdparam *sdp = isp->isp_param;
-		u_int16_t flags;
+		char *wt;
+		int mhz, flags, period;
 
 		tgt = *((int *) arg);
 		bus = (tgt >> 16) & 0xffff;
 		tgt &= 0xffff;
-
-		sdp = &sdp[bus];
-
-		xm.xm_target = tgt;
-		xm.xm_mode = 0;
-		xm.xm_period = 0;
-		xm.xm_offset = 0;
-
+		sdp += bus;
 		flags = sdp->isp_devparam[tgt].cur_dflags;
+		period = sdp->isp_devparam[tgt].cur_period;
 
-		if (flags & DPARM_SYNC) {
-			xm.xm_mode |= PERIPH_CAP_SYNC;
-			xm.xm_period = sdp->isp_devparam[tgt].cur_period;
-			xm.xm_offset = sdp->isp_devparam[tgt].cur_offset;
+		if ((flags & DPARM_SYNC) && period &&
+		    (sdp->isp_devparam[tgt].cur_offset) != 0) {
+			/*
+			 * There's some ambiguity about our negotiated speed
+			 * if we haven't detected LVD mode correctly (which
+			 * seems to happen, unfortunately). If we're in LVD
+			 * mode, then different rules apply about speed.
+			 */
+			if (sdp->isp_lvdmode || period < 0xc) {
+				switch (period) {
+				case 0x9:
+					mhz = 80;
+					break;
+				case 0xa:
+					mhz = 40;
+					break;
+				case 0xb:
+					mhz = 33;
+					break;
+				case 0xc:
+					mhz = 25;
+					break;
+				default:
+					mhz = 1000 / (period * 4);
+					break;
+				}
+			} else {
+				mhz = 1000 / (period * 4);
+			}
+		} else {
+			mhz = 0;
 		}
-		if (flags & DPARM_WIDE)
-			xm.xm_mode |= PERIPH_CAP_WIDE16;
-		if (flags & DPARM_TQING)
-			xm.xm_mode |= PERIPH_CAP_TQING;
-
-		scsipi_async_event(&isp->isp_osinfo._channels[bus],
-		    ASYNC_EVENT_XFER_MODE, &xm);
+		switch (flags & (DPARM_WIDE|DPARM_TQING)) {
+		case DPARM_WIDE:
+			wt = ", 16 bit wide";
+			break;
+		case DPARM_TQING:
+			wt = ", Tagged Queueing Enabled";
+			break;
+		case DPARM_WIDE|DPARM_TQING:
+			wt = ", 16 bit wide, Tagged Queueing Enabled";
+			break;
+		default:
+			wt = " ";
+			break;
+		}
+		if (mhz) {
+			isp_prt(isp, ISP_LOGINFO,
+			    "Bus %d Target %d at %dMHz Max Offset %d%s",
+			    bus, tgt, mhz, sdp->isp_devparam[tgt].cur_offset,
+			    wt);
+		} else {
+			isp_prt(isp, ISP_LOGINFO,
+			    "Bus %d Target %d Async Mode%s", bus, tgt, wt);
+		}
 		break;
 	}
 	case ISPASYNC_BUS_RESET:
@@ -483,32 +693,26 @@ isp_async(isp, cmd, arg)
 			bus = *((int *) arg);
 		else
 			bus = 0;
-		printf("%s: SCSI bus %d reset detected\n", isp->isp_name, bus);
+		isp_prt(isp, ISP_LOGINFO, "SCSI bus %d reset detected", bus);
 		break;
 	case ISPASYNC_LOOP_DOWN:
 		/*
 		 * Hopefully we get here in time to minimize the number
 		 * of commands we are firing off that are sure to die.
-		 *
-		 * XXX Hard-code channel 0, but only one channel on FC
-		 * XXX adapters, right?
 		 */
-		scsipi_channel_freeze(&isp->isp_osinfo._channels[0], 1);
-		printf("%s: Loop DOWN\n", isp->isp_name);
+		isp->isp_osinfo.blocked = 1;
+		isp_prt(isp, ISP_LOGINFO, "Loop DOWN");
 		break;
         case ISPASYNC_LOOP_UP:
-		/*
-		 * XXX Hard-code channel 0, but only one channel on FC
-		 * XXX adapters, right?
-		 */
-		timeout(scsipi_channel_timed_thaw,
-		    &isp->isp_osinfo._channels[0], 1);
-		printf("%s: Loop UP\n", isp->isp_name);
+		isp->isp_osinfo.blocked = 0;
+		callout_reset(&isp->isp_osinfo._restart, 1,
+		    isp_internal_restart, isp);
+		isp_prt(isp, ISP_LOGINFO, "Loop UP");
 		break;
 	case ISPASYNC_PDB_CHANGED:
 	if (IS_FC(isp) && isp->isp_dblev) {
-		const char *fmt = "%s: Target %d (Loop 0x%x) Port ID 0x%x "
-		    "role %s %s\n Port WWN 0x%08x%08x\n Node WWN 0x%08x%08x\n";
+		const char *fmt = "Target %d (Loop 0x%x) Port ID 0x%x "
+		    "role %s %s\n Port WWN 0x%08x%08x\n Node WWN 0x%08x%08x";
 		const static char *roles[4] = {
 		    "No", "Target", "Initiator", "Target/Initiator"
 		};
@@ -522,7 +726,7 @@ isp_async(isp, cmd, arg)
 		} else {
 			ptr = "disappeared";
 		}
-		printf(fmt, isp->isp_name, tgt, lp->loopid, lp->portid,
+		isp_prt(isp, ISP_LOGINFO, fmt, tgt, lp->loopid, lp->portid,
 		    roles[lp->roles & 0x3], ptr,
 		    (u_int32_t) (lp->port_wwn >> 32),
 		    (u_int32_t) (lp->port_wwn & 0xffffffffLL),
@@ -532,7 +736,7 @@ isp_async(isp, cmd, arg)
 	}
 #ifdef	ISP2100_FABRIC
 	case ISPASYNC_CHANGE_NOTIFY:
-		printf("%s: Name Server Database Changed\n", isp->isp_name);
+		isp_prt(isp, ISP_LOGINFO, "Name Server Database Changed");
 		break;
 	case ISPASYNC_FABRIC_DEV:
 	{
@@ -556,12 +760,12 @@ isp_async(isp, cmd, arg)
 		    (((u_int64_t)resp->snscb_portname[5]) << 16) |
 		    (((u_int64_t)resp->snscb_portname[6]) <<  8) |
 		    (((u_int64_t)resp->snscb_portname[7]));
-		printf("%s: Fabric Device (Type 0x%x)@PortID 0x%x WWN "
-		    "0x%08x%08x\n", isp->isp_name, resp->snscb_port_type,
-		    portid, ((u_int32_t)(wwn >> 32)),
+
+		isp_prt(isp, ISP_LOGINFO,
+		    "Fabric Device (Type 0x%x)@PortID 0x%x WWN 0x%08x%08x",
+		    resp->snscb_port_type, portid, ((u_int32_t)(wwn >> 32)),
 		    ((u_int32_t)(wwn & 0xffffffff)));
-		if (resp->snscb_port_type != 2)
-			break;
+
 		for (target = FC_SNS_ID+1; target < MAX_FC_TARG; target++) {
 			lp = &fcp->portdb[target];
 			if (lp->port_wwn == wwn)
@@ -576,8 +780,8 @@ isp_async(isp, cmd, arg)
 				break;
 		}
 		if (target == MAX_FC_TARG) {
-			printf("%s: no more space for fabric devices\n",
-			    isp->isp_name);
+			isp_prt(isp, ISP_LOGWARN,
+			    "no more space for fabric devices");
 			return (-1);
 		}
 		lp->port_wwn = lp->node_wwn = wwn;
@@ -590,4 +794,26 @@ isp_async(isp, cmd, arg)
 	}
 	(void) splx(s);
 	return (0);
+}
+
+#include <machine/stdarg.h>
+void
+#ifdef	__STDC__
+isp_prt(struct ispsoftc *isp, int level, const char *fmt, ...)
+#else
+isp_prt(isp, fmt, va_alist)
+	struct ispsoftc *isp;
+	char *fmt;
+	va_dcl;
+#endif
+{
+	va_list ap;
+	if (level != ISP_LOGALL && (level & isp->isp_dblev) == 0) {
+		return;
+	}
+	printf("%s: ", isp->isp_name);
+	va_start(ap, fmt);
+	vprintf(fmt, ap);
+	va_end(ap);
+	printf("\n");
 }

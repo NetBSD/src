@@ -1,4 +1,4 @@
-/* $NetBSD: wscons_callbacks.h,v 1.10 1999/07/29 18:20:02 augustss Exp $ */
+/* $NetBSD: wscons_callbacks.h,v 1.10.2.1 2000/11/20 11:43:36 bouyer Exp $ */
 
 /*
  * Copyright (c) 1996, 1997 Christopher G. Demetriou.  All rights reserved.
@@ -48,7 +48,11 @@ void	wsdisplay_reset __P((struct device *, enum wsdisplay_resetops));
 void	wsdisplay_kbdholdscreen __P((struct device *v, int));
 
 void	wsdisplay_set_cons_kbd __P((int (*get)(dev_t),
-				    void (*poll)(dev_t, int)));
+				    void (*poll)(dev_t, int),
+				    void (*bell)(dev_t, u_int, u_int, u_int)));
+void	wsdisplay_unset_cons_kbd __P((void));
+struct wsdisplay_param;
+int	wsdisplay_param __P((struct device*, u_long, struct wsdisplay_param*));
 
 /*
  * Calls to the keyboard interface from the glue code.

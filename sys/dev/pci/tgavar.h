@@ -1,4 +1,4 @@
-/* $NetBSD: tgavar.h,v 1.4 1998/08/18 08:23:46 thorpej Exp $ */
+/* $NetBSD: tgavar.h,v 1.4.12.1 2000/11/20 11:42:38 bouyer Exp $ */
 
 /*
  * Copyright (c) 1995, 1996 Carnegie-Mellon University.
@@ -27,49 +27,23 @@
  * rights to redistribute these changes.
  */
 
+#include <dev/ic/ramdac.h>
 #include <dev/pci/tgareg.h>
-#include <dev/rcons/raster.h>
 #include <dev/wscons/wsconsio.h>
 #include <dev/wscons/wscons_raster.h>
+#include <dev/wscons/wsdisplayvar.h>
+#include <dev/rasops/rasops.h>
 
 struct tga_devconfig;
 struct fbcmap;
 struct fbcursor;
 struct fbcurpos;
 
-struct tga_ramdac_conf {
-	char	*tgar_name;
-	void	(*tgar_init) __P((struct tga_devconfig *, int));
-	int	(*tgar_intr) __P((void *));
-	int	(*tgar_set_cmap) __P((struct tga_devconfig *,
-		    struct wsdisplay_cmap *));
-	int	(*tgar_get_cmap) __P((struct tga_devconfig *,
-		    struct wsdisplay_cmap *));
-	int	(*tgar_set_cursor) __P((struct tga_devconfig *,
-		    struct wsdisplay_cursor *));
-	int	(*tgar_get_cursor) __P((struct tga_devconfig *,
-		    struct wsdisplay_cursor *));
-	int	(*tgar_set_curpos) __P((struct tga_devconfig *,
-		    struct wsdisplay_curpos *));
-	int	(*tgar_get_curpos) __P((struct tga_devconfig *,
-		    struct wsdisplay_curpos *));
-	int	(*tgar_get_curmax) __P((struct tga_devconfig *,
-		    struct wsdisplay_curpos *));
-
-	/* Only called from the TGA built-in cursor handling code. */
-	int	(*tgar_check_curcmap) __P((struct tga_devconfig *,
-		    struct wsdisplay_cursor *));
-	void	(*tgar_set_curcmap) __P((struct tga_devconfig *,
-		    struct wsdisplay_cursor *));
-	int	(*tgar_get_curcmap) __P((struct tga_devconfig *,
-		    struct wsdisplay_cursor *));
-};
-
 struct tga_conf {
 	char	    *tgac_name;		/* name for this board type */
 
-	const struct tga_ramdac_conf
-		    *tgac_ramdac;	/* the RAMDAC type; see above */
+	struct ramdac_funcs *(*ramdac_funcs) __P((void));
+
 	int	    tgac_phys_depth;	/* physical frame buffer depth */
 	vsize_t   tgac_cspace_size;	/* core space size */
 	vsize_t   tgac_vvbr_units;	/* what '1' in the VVBR means */
@@ -85,15 +59,21 @@ struct tga_conf {
 
 struct tga_devconfig {
 	bus_space_tag_t dc_memt;
-	pci_chipset_tag_t dc_pc;
+	bus_space_handle_t dc_memh;
 
 	pcitag_t   	 dc_pcitag;	/* PCI tag */
 	bus_addr_t	 dc_pcipaddr;	/* PCI phys addr. */
 
-	tga_reg_t   *dc_regs;		/* registers; XXX: need aliases */
+	bus_space_handle_t dc_regs;	/* registers; XXX: need aliases */
 
 	int	    dc_tga_type;	/* the device type; see below */
+	int	    dc_tga2;		/* True if it is a TGA2 */
 	const struct tga_conf *dc_tgaconf; /* device buffer configuration */
+
+	struct ramdac_funcs
+		    *dc_ramdac_funcs;	/* The RAMDAC functions */
+	struct ramdac_cookie
+		    *dc_ramdac_cookie;	/* the RAMDAC type; see above */
 
 	vaddr_t dc_vaddr;		/* memory space virtual base address */
 	paddr_t dc_paddr;		/* memory space physical base address */
@@ -104,11 +84,13 @@ struct tga_devconfig {
 
 	vaddr_t dc_videobase;	/* base of flat frame buffer */
 
-	struct raster	dc_raster;	/* raster description */
-	struct rcons	dc_rcons;	/* raster blitter control info */
+	struct rasops_info dc_rinfo;	/* raster display data */
 
 	int	    dc_blanked;		/* currently had video disabled */
 	void	    *dc_ramdac_private; /* RAMDAC private storage */
+
+	void	    (*dc_ramdac_intr) __P((void *));
+	int		dc_intrenabled; /* can we depend on interrupts yet? */
 };
 	
 struct tga_softc {
@@ -131,17 +113,15 @@ struct tga_softc {
 #define	TGA_TYPE_UNKNOWN	7	/* unknown */
 
 #define	DEVICE_IS_TGA(class, id)					\
-	    ((PCI_VENDOR(id) == PCI_VENDOR_DEC &&			\
-	     PCI_PRODUCT(id) == PCI_PRODUCT_DEC_21030) ? 10 : 0)
+	    (((PCI_VENDOR(id) == PCI_VENDOR_DEC &&			\
+	       PCI_PRODUCT(id) == PCI_PRODUCT_DEC_21030) ||		\
+	       PCI_PRODUCT(id) == PCI_PRODUCT_DEC_PBXGB) ? 10 : 0)
 
 int tga_cnattach __P((bus_space_tag_t, bus_space_tag_t, pci_chipset_tag_t,
 		      int, int, int));
 
-int	tga_identify __P((tga_reg_t *));
+int	tga_identify __P((struct tga_devconfig *));
 const struct tga_conf *tga_getconf __P((int));
-
-extern const struct tga_ramdac_conf tga_ramdac_bt463;
-extern const struct tga_ramdac_conf tga_ramdac_bt485;
 
 int     tga_builtin_set_cursor __P((struct tga_devconfig *,
 	    struct wsdisplay_cursor *));
@@ -153,3 +133,33 @@ int     tga_builtin_get_curpos __P((struct tga_devconfig *,
 	    struct wsdisplay_curpos *));
 int     tga_builtin_get_curmax __P((struct tga_devconfig *,
 	    struct wsdisplay_curpos *));
+
+/* Read a TGA register */
+#define TGARREG(dc,reg) (bus_space_read_4((dc)->dc_memt, (dc)->dc_regs, \
+	(reg) << 2))
+
+/* Write a TGA register */
+#define TGAWREG(dc,reg,val) bus_space_write_4((dc)->dc_memt, (dc)->dc_regs, \
+	(reg) << 2, (val))
+
+/* Write a TGA register at an alternate aliased location */
+#define TGAWALREG(dc,reg,alias,val) bus_space_write_4( \
+	(dc)->dc_memt, (dc)->dc_regs, \
+	((alias) * TGA_CREGS_ALIAS) + ((reg) << 2), \
+	(val))
+
+/* Insert a write barrier */
+#define TGAREGWB(dc,reg, nregs) bus_space_barrier( \
+	(dc)->dc_memt, (dc)->dc_regs, \
+	((reg) << 2), 4 * (nregs), BUS_SPACE_BARRIER_WRITE)
+
+/* Insert a read barrier */
+#define TGAREGRB(dc,reg, nregs) bus_space_barrier( \
+	(dc)->dc_memt, (dc)->dc_regs, \
+	((reg) << 2), 4 * (nregs), BUS_SPACE_BARRIER_READ)
+
+/* Insert a read/write barrier */
+#define TGAREGRWB(dc,reg, nregs) bus_space_barrier( \
+	(dc)->dc_memt, (dc)->dc_regs, \
+	((reg) << 2), 4 * (nregs), \
+	BUS_SPACE_BARRIER_READ | BUS_SPACE_BARRIER_WRITE)

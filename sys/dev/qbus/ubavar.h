@@ -1,4 +1,4 @@
-/*	$NetBSD: ubavar.h,v 1.25 1999/06/06 19:14:49 ragge Exp $	*/
+/*	$NetBSD: ubavar.h,v 1.25.4.1 2000/11/20 11:42:51 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986 Regents of the University of California.
@@ -34,6 +34,8 @@
  *
  *	@(#)ubavar.h	7.7 (Berkeley) 6/28/90
  */
+#ifndef _QBUS_UBAVAR_H
+#define	_QBUS_UBAVAR_H
 
 /*
  * This file contains definitions related to the kernel structures
@@ -67,10 +69,9 @@
  */
 struct	uba_softc {
 	struct	device uh_dev;		/* Device struct, autoconfig */
+	struct	evcnt uh_intrcnt;		/* interrupt counting */
 	SIMPLEQ_HEAD(, uba_unit) uh_resq;	/* resource wait chain */
-	void	(**uh_reset) __P((int));/* UBA reset function array */
-	int	*uh_resarg;		/* array of ubareset args */
-	int	uh_resno;		/* Number of devices to reset */
+	SIMPLEQ_HEAD(, uba_reset) uh_resetq;	/* ubareset queue */
 	int	uh_lastiv;		/* last free interrupt vector */
 	int	(*uh_errchk) __P((struct uba_softc *));
 	void	(*uh_beforescan) __P((struct uba_softc *));
@@ -100,17 +101,25 @@ struct	uba_unit {
 };
 
 /*
+ * Reset structure. All devices that needs to be reinitialized
+ * after an ubareset registers with this struct.
+ */
+struct	uba_reset {
+	SIMPLEQ_ENTRY(uba_reset) ur_resetq;
+	void (*ur_reset)(struct device *);
+	struct device *ur_dev;
+};
+
+/*
  * uba_attach_args is used during autoconfiguration. It is sent
  * from ubascan() to each (possible) device.
  */
 struct uba_attach_args {
 	bus_space_tag_t	ua_iot;		/* Tag for this bus I/O-space */
 	bus_addr_t	ua_ioh;		/* I/O regs addr */
-	bus_dma_tag_t	ua_dmat;
-		    /* Pointer to int routine, filled in by probe*/
-	void		(*ua_ivec) __P((int));
-		    /* UBA reset routine, filled in by probe */
-	void		(*ua_reset) __P((int));
+	bus_dma_tag_t	ua_dmat;	/* DMA tag for this bus'es dma */
+	struct evcnt	*ua_evcnt;
+	void		*ua_icookie;	/* Cookie for interrupt establish */
 	int		ua_iaddr;	/* Full CSR address of device */
 	int		ua_br;		/* IPL this dev interrupted on */
 	int		ua_cvec;	/* Vector for this device */
@@ -129,15 +138,15 @@ struct uba_attach_args {
  * Some common defines for all subtypes of U/Q-buses/adapters.
  */
 #define	MAXUBAXFER	(63*1024)	/* Max transfer size in bytes */
-#define	UBAIOSIZE	(8*1024)	/* 8K I/O space */
 #define ubdevreg(addr) ((addr) & 017777)
 
 #ifdef _KERNEL
-#define b_forw  b_hash.le_next	/* Nice to have when handling uba queues */
-
-void	uba_attach __P((struct uba_softc *, unsigned long));
-void	uba_enqueue __P((struct uba_unit *));
-void	uba_done __P((struct uba_softc *));
-void	ubareset __P((int));
-
+void uba_intr_establish(void *, int, void (*)(void *), void *, struct evcnt *);
+void uba_reset_establish(void (*)(struct device *), struct device *);
+void uba_attach(struct uba_softc *, unsigned long);
+void uba_enqueue(struct uba_unit *);
+void uba_done(struct uba_softc *);
+void ubareset(struct uba_softc *);
 #endif /* _KERNEL */
+
+#endif /* _QBUS_UBAVAR_H */

@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_archs.h,v 1.6 1999/08/26 02:40:27 oster Exp $	*/
+/*	$NetBSD: rf_archs.h,v 1.6.2.1 2000/11/20 11:42:51 bouyer Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -48,11 +48,6 @@
 #ifndef _RF__RF_ARCHS_H_
 #define _RF__RF_ARCHS_H_
 
-/*
- * Khalil's performance-displaying demo stuff.
- * Relies on CMU meter tools.
- */
-
 #define RF_INCLUDE_EVENODD       1
 
 #define RF_INCLUDE_RAID5_RS      1
@@ -70,10 +65,6 @@
 
 #define RF_MEMORY_REDZONES 0
 #define RF_RECON_STATS     1
-
-#define RF_INCLUDE_QUEUE_RANDOM 0
-
-#define RF_KEEP_DISKSTATS 1
 
 #include "rf_options.h"
 

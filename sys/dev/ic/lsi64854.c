@@ -1,4 +1,4 @@
-/*	$NetBSD: lsi64854.c,v 1.8 1999/06/05 08:35:45 pk Exp $ */
+/*	$NetBSD: lsi64854.c,v 1.8.2.1 2000/11/20 11:40:43 bouyer Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -287,7 +287,7 @@ lsi64854_setup(sc, addr, len, datain, dmasize)
 			panic("%s: cannot allocate DVMA address",
 			      sc->sc_dev.dv_xname);
 		bus_dmamap_sync(sc->sc_dmatag, sc->sc_dmamap,
-				(bus_addr_t)sc->sc_dvmaaddr, sc->sc_dmasize,
+				(bus_addr_t)(u_long)sc->sc_dvmaaddr, sc->sc_dmasize,
 				datain
 					? BUS_DMASYNC_PREREAD
 					: BUS_DMASYNC_PREWRITE);
@@ -422,7 +422,7 @@ lsi64854_scsi_intr(arg)
 
 	if (sc->sc_dmamap->dm_nsegs > 0) {
 		bus_dmamap_sync(sc->sc_dmatag, sc->sc_dmamap,
-				(bus_addr_t)sc->sc_dvmaaddr, sc->sc_dmasize,
+				(bus_addr_t)(u_long)sc->sc_dvmaaddr, sc->sc_dmasize,
 				(csr & D_WRITE) != 0
 					? BUS_DMASYNC_POSTREAD
 					: BUS_DMASYNC_POSTWRITE);
@@ -454,9 +454,13 @@ lsi64854_enet_intr(arg)
 	struct lsi64854_softc *sc = arg;
 	char bits[64];
 	u_int32_t csr;
-static int dodrain=0;
+	static int dodrain = 0;
+	int rv;
 
 	csr = L64854_GCSR(sc);
+
+	/* If the DMA logic shows an interrupt, claim it */
+	rv = ((csr & E_INT_PEND) != 0) ? 1 : 0;
 
 	if (csr & (E_ERR_PEND|E_SLAVE_ERR)) {
 		printf("%s: error: csr=%s\n", sc->sc_dev.dv_xname,
@@ -478,7 +482,7 @@ static int dodrain=0;
 			delay(1);
 	}
 
-	return (*sc->sc_intrchain)(sc->sc_intrchainarg);
+	return (rv | (*sc->sc_intrchain)(sc->sc_intrchainarg));
 }
 
 /*
@@ -522,7 +526,7 @@ lsi64854_setup_pp(sc, addr, len, datain, dmasize)
 			panic("%s: cannot allocate DVMA address",
 			      sc->sc_dev.dv_xname);
 		bus_dmamap_sync(sc->sc_dmatag, sc->sc_dmamap,
-				(bus_addr_t)sc->sc_dvmaaddr, sc->sc_dmasize,
+				(bus_addr_t)(u_long)sc->sc_dvmaaddr, sc->sc_dmasize,
 				datain
 					? BUS_DMASYNC_PREREAD
 					: BUS_DMASYNC_PREWRITE);
@@ -597,7 +601,7 @@ lsi64854_pp_intr(arg)
 
 	if (sc->sc_dmamap->dm_nsegs > 0) {
 		bus_dmamap_sync(sc->sc_dmatag, sc->sc_dmamap,
-				(bus_addr_t)sc->sc_dvmaaddr, sc->sc_dmasize,
+				(bus_addr_t)(u_long)sc->sc_dvmaaddr, sc->sc_dmasize,
 				(csr & D_WRITE) != 0
 					? BUS_DMASYNC_POSTREAD
 					: BUS_DMASYNC_POSTWRITE);

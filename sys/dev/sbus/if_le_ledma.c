@@ -1,4 +1,4 @@
-/*	$NetBSD: if_le_ledma.c,v 1.5 1998/09/26 08:31:20 pk Exp $	*/
+/*	$NetBSD: if_le_ledma.c,v 1.5.12.1 2000/11/20 11:43:06 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -57,8 +57,8 @@
 #include <netinet/if_inarp.h>
 #endif
 
-#include <machine/autoconf.h>
-#include <machine/cpu.h>
+#include <machine/bus.h>
+#include <machine/intr.h>
 
 #include <dev/sbus/sbusvar.h>
 
@@ -80,6 +80,7 @@ struct	le_softc {
 	struct	am7990_softc	sc_am7990;	/* glue to MI code */
 	struct	sbusdev		sc_sd;		/* sbus device */
 	bus_space_tag_t		sc_bustag;
+	bus_dmamap_t		sc_dmamap;
 	bus_space_handle_t	sc_reg;		/* LANCE registers */
 	struct	lsi64854_softc	*sc_dma;	/* pointer to my dma */
 	u_int			sc_laddr;	/* LANCE DMA address */
@@ -338,9 +339,6 @@ lematch_ledma(parent, cf, aux)
 }
 
 
-#define SAME_LANCE(bp, sa) \
-	(bp->val[0] == sa->sa_slot && bp->val[1] == sa->sa_offset)
-
 void
 leattach_ledma(parent, self, aux)
 	struct device *parent, *self;
@@ -350,6 +348,7 @@ leattach_ledma(parent, self, aux)
 	struct le_softc *lesc = (struct le_softc *)self;
 	struct lsi64854_softc *lsi = (struct lsi64854_softc *)parent;
 	struct lance_softc *sc = &lesc->sc_am7990.lsc;
+	bus_dma_tag_t dmatag = sa->sa_dmatag;
 	bus_dma_segment_t seg;
 	int rseg, error;
 	/* XXX the following declarations should be elsewhere */
@@ -374,35 +373,51 @@ leattach_ledma(parent, self, aux)
 
 	/* Allocate buffer memory */
 	sc->sc_memsize = MEMSIZE;
-	error = bus_dmamem_alloc(sa->sa_dmatag, MEMSIZE, NBPG, LEDMA_BOUNDARY,
-				 &seg, 1, &rseg, BUS_DMA_NOWAIT);
-	if (error) {
+
+	/* Get a DMA handle */
+	if ((error = bus_dmamap_create(dmatag, MEMSIZE, 1, MEMSIZE,
+					LEDMA_BOUNDARY, BUS_DMA_NOWAIT,
+					&lesc->sc_dmamap)) != 0) {
+		printf("%s: DMA map create error %d\n", self->dv_xname, error);
+		return;
+	}
+
+	/* Allocate DMA buffer */
+	if ((error = bus_dmamem_alloc(dmatag, MEMSIZE, 0, LEDMA_BOUNDARY,
+				 &seg, 1, &rseg, BUS_DMA_NOWAIT)) != 0) {
 		printf("%s @ ledma: DMA buffer alloc error %d\n",
 			self->dv_xname, error);
 		return;
 	}
-	error = bus_dmamem_map(sa->sa_dmatag, &seg, rseg, MEMSIZE,
+
+	/* Map DMA buffer into kernel space */
+	if ((error = bus_dmamem_map(dmatag, &seg, rseg, MEMSIZE,
 			       (caddr_t *)&sc->sc_mem,
-			       BUS_DMA_NOWAIT|BUS_DMA_COHERENT);
-	if (error) {
+			       BUS_DMA_NOWAIT|BUS_DMA_COHERENT)) != 0) {
 		printf("%s @ ledma: DMA buffer map error %d\n",
 			self->dv_xname, error);
-		bus_dmamem_free(sa->sa_dmatag, &seg, rseg);
+		bus_dmamem_free(dmatag, &seg, rseg);
 		return;
 	}
 
-	sc->sc_addr = seg.ds_addr & 0xffffff;
+	/* Load DMA buffer */
+	if ((error = bus_dmamap_load(dmatag, lesc->sc_dmamap, sc->sc_mem,
+			MEMSIZE, NULL, BUS_DMA_NOWAIT|BUS_DMA_COHERENT)) != 0) {
+		printf("%s: DMA buffer map load error %d\n",
+			self->dv_xname, error);
+		bus_dmamem_free(dmatag, &seg, rseg);
+		bus_dmamem_unmap(dmatag, sc->sc_mem, MEMSIZE);
+		return;
+	}
+
+	lesc->sc_laddr = lesc->sc_dmamap->dm_segs[0].ds_addr;
+	sc->sc_addr = lesc->sc_laddr & 0xffffff;
 	sc->sc_conf3 = LE_C3_BSWP | LE_C3_ACON | LE_C3_BCON;
 
-	lesc->sc_laddr = seg.ds_addr;
 
 	/* Assume SBus is grandparent */
 	lesc->sc_sd.sd_reset = (void *)lance_reset;
 	sbus_establish(&lesc->sc_sd, parent);
-
-	if (sa->sa_bp != NULL && strcmp(sa->sa_bp->name, le_cd.cd_name) == 0 &&
-	    SAME_LANCE(sa->sa_bp, sa))
-		sa->sa_bp->dev = &sc->sc_dev;
 
 	sc->sc_mediachange = lemediachange;
 	sc->sc_mediastatus = lemediastatus;
@@ -424,8 +439,10 @@ leattach_ledma(parent, self, aux)
 	sc->sc_nocarrier = lenocarrier;
 	sc->sc_hwreset = lehwreset;
 
-	(void)bus_intr_establish(sa->sa_bustag, sa->sa_pri, 0,
-				 am7990_intr, sc);
+	/* Establish interrupt handler */
+	if (sa->sa_nintr != 0)
+		(void)bus_intr_establish(sa->sa_bustag, sa->sa_pri, IPL_NET, 0,
+					 am7990_intr, sc);
 
 	am7990_config(&lesc->sc_am7990);
 

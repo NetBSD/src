@@ -1,4 +1,4 @@
-/* $NetBSD: tga_conf.c,v 1.1 1998/04/15 20:16:32 drochner Exp $ */
+/* $NetBSD: tga_conf.c,v 1.1.14.1 2000/11/20 11:42:38 bouyer Exp $ */
 
 /*
  * Copyright (c) 1995, 1996 Carnegie-Mellon University.
@@ -34,6 +34,9 @@
 #include <dev/pci/tgareg.h>
 #include <dev/pci/tgavar.h>
 
+#include <dev/ic/bt485var.h>
+#include <dev/ic/bt463var.h>
+
 #undef KB
 #define KB		* 1024
 #undef MB
@@ -43,7 +46,7 @@ static const struct tga_conf tga_configs[TGA_TYPE_UNKNOWN] = {
 	/* TGA_TYPE_T8_01 */
 	{
 		"T8-01",
-		&tga_ramdac_bt485,
+		bt485_funcs,
 		8,
 		4 MB,
 		2 KB,
@@ -53,7 +56,7 @@ static const struct tga_conf tga_configs[TGA_TYPE_UNKNOWN] = {
 	/* TGA_TYPE_T8_02 */
 	{
 		"T8-02",
-		&tga_ramdac_bt485,
+		bt485_funcs,
 		8,
 		4 MB,
 		4 KB,
@@ -63,7 +66,7 @@ static const struct tga_conf tga_configs[TGA_TYPE_UNKNOWN] = {
 	/* TGA_TYPE_T8_22 */
 	{
 		"T8-22",
-		&tga_ramdac_bt485,
+		bt485_funcs,
 		8,
 		8 MB,
 		4 KB,
@@ -73,7 +76,7 @@ static const struct tga_conf tga_configs[TGA_TYPE_UNKNOWN] = {
 	/* TGA_TYPE_T8_44 */
 	{
 		"T8-44",
-		&tga_ramdac_bt485,
+		bt485_funcs,
 		8,
 		16 MB,
 		4 KB,
@@ -83,7 +86,7 @@ static const struct tga_conf tga_configs[TGA_TYPE_UNKNOWN] = {
 	/* TGA_TYPE_T32_04 */
 	{
 		"T32-04",
-		&tga_ramdac_bt463,
+		bt463_funcs,
 		32,
 		16 MB,
 		8 KB,
@@ -93,7 +96,7 @@ static const struct tga_conf tga_configs[TGA_TYPE_UNKNOWN] = {
 	/* TGA_TYPE_T32_08 */
 	{
 		"T32-08",
-		&tga_ramdac_bt463,
+		bt463_funcs,
 		32,
 		16 MB,
 		16 KB,
@@ -103,7 +106,7 @@ static const struct tga_conf tga_configs[TGA_TYPE_UNKNOWN] = {
 	/* TGA_TYPE_T32_88 */
 	{
 		"T32-88",
-		&tga_ramdac_bt463,
+		bt463_funcs,
 		32,
 		32 MB,
 		16 KB,
@@ -116,15 +119,19 @@ static const struct tga_conf tga_configs[TGA_TYPE_UNKNOWN] = {
 #undef MB
 
 int
-tga_identify(regs)
-	tga_reg_t *regs;
+tga_identify(dc)
+	struct tga_devconfig *dc;
 {
 	int type;
+	int gder;
 	int deep, addrmask, wide;
 
-	deep = (regs[TGA_REG_GDER] & 0x1) != 0;		/* XXX */
-	addrmask = ((regs[TGA_REG_GDER] >> 2) & 0x7);	/* XXX */
-	wide = (regs[TGA_REG_GDER] & 0x200) == 0;	/* XXX */
+	gder = TGARREG(dc, TGA_REG_GDER);
+
+	deep = (gder & 0x1) != 0; /* XXX */
+	addrmask = (gder >> 2) & 0x7; /* XXX */
+	wide = (gder & 0x200) == 0; /* XXX */
+
 
 	type = TGA_TYPE_UNKNOWN;
 

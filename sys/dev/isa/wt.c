@@ -1,4 +1,4 @@
-/*	$NetBSD: wt.c,v 1.46 1999/01/10 21:57:19 augustss Exp $	*/
+/*	$NetBSD: wt.c,v 1.46.8.1 2000/11/20 11:41:24 bouyer Exp $	*/
 
 /*
  * Streamer tape driver.
@@ -52,6 +52,7 @@
 
 #include <sys/param.h>
 #include <sys/systm.h>
+#include <sys/callout.h>
 #include <sys/kernel.h>
 #include <sys/buf.h>
 #include <sys/fcntl.h>
@@ -61,8 +62,6 @@
 #include <sys/device.h>
 #include <sys/proc.h>
 #include <sys/conf.h>
-
-#include <vm/vm_param.h>
 
 #include <machine/intr.h>
 #include <machine/bus.h>
@@ -123,6 +122,8 @@ struct wt_softc {
 	bus_space_tag_t		sc_iot;
 	bus_space_handle_t	sc_ioh;
 	isa_chipset_tag_t	sc_ic;
+
+	struct callout		sc_timer_ch;
 
 	enum wttype type;	/* type of controller */
 	int chan;		/* dma channel number, 1..3 */
@@ -230,6 +231,7 @@ wtattach(parent, self, aux)
 	struct isa_attach_args *ia = aux;
 	bus_space_tag_t iot = ia->ia_iot;
 	bus_space_handle_t ioh;
+	bus_size_t maxsize;
 
 	/* Map i/o space */
 	if (bus_space_map(iot, ia->ia_iobase, AV_NPORT, 0, &ioh)) {
@@ -240,6 +242,8 @@ wtattach(parent, self, aux)
 	sc->sc_iot = iot;
 	sc->sc_ioh = ioh;
 	sc->sc_ic = ia->ia_ic;
+
+	callout_init(&sc->sc_timer_ch);
 
 	/* Try Wangtek. */
 	if (wtreset(iot, ioh, &wtregs)) {
@@ -268,6 +272,12 @@ ok:
 	sc->dens = -1;			/* unknown density */
 
 	sc->chan = ia->ia_drq;
+
+	if ((maxsize = isa_dmamaxsize(sc->sc_ic, sc->chan)) < MAXPHYS) {
+		printf("%s: max DMA size %lu is less than required %d\n",
+		    sc->sc_dev.dv_xname, (u_long)maxsize, MAXPHYS);
+		return;
+	}
 
 	if (isa_dmamap_create(sc->sc_ic, sc->chan, MAXPHYS,
 	    BUS_DMA_NOWAIT|BUS_DMA_ALLOCNOW)) {
@@ -315,11 +325,9 @@ wtopen(dev, flag, mode, p)
 	struct wt_softc *sc;
 	int error;
 
-	if (unit >= wt_cd.cd_ndevs)
-		return ENXIO;
-	sc = wt_cd.cd_devs[unit];
-	if (!sc)
-		return ENXIO;
+	sc = device_lookup(&wt_cd, unit);
+	if (sc == NULL)
+		return (ENXIO);
 
 	/* Check that device is not in use */
 	if (sc->flags & TPINUSE)
@@ -402,8 +410,7 @@ wtclose(dev, flags, mode, p)
 	int mode;
 	struct proc *p;
 {
-	int unit = minor(dev) & T_UNIT;
-	struct wt_softc *sc = wt_cd.cd_devs[unit];
+	struct wt_softc *sc = device_lookup(&wt_cd, minor(dev) & T_UNIT);
 
 	/* If rewind is pending, do nothing */
 	if (sc->flags & TPREW)
@@ -457,8 +464,7 @@ wtioctl(dev, cmd, addr, flag, p)
 	int flag;
 	struct proc *p;
 {
-	int unit = minor(dev) & T_UNIT;
-	struct wt_softc *sc = wt_cd.cd_devs[unit];
+	struct wt_softc *sc = device_lookup(&wt_cd, minor(dev) & T_UNIT);
 	int error, count, op;
 
 	switch (cmd) {
@@ -557,8 +563,7 @@ void
 wtstrategy(bp)
 	struct buf *bp;
 {
-	int unit = minor(bp->b_dev) & T_UNIT;
-	struct wt_softc *sc = wt_cd.cd_devs[unit];
+	struct wt_softc *sc = device_lookup(&wt_cd, minor(bp->b_dev) & T_UNIT);
 	int s;
 
 	bp->b_resid = bp->b_bcount;
@@ -965,7 +970,8 @@ wtclock(sc)
 	 * Some controllers seem to lose dma interrupts too often.  To make the
 	 * tape stream we need 1 tick timeout.
 	 */
-	timeout(wttimer, sc, (sc->flags & TPACTIVE) ? 1 : hz);
+	callout_reset(&sc->sc_timer_ch, (sc->flags & TPACTIVE) ? 1 : hz,
+	    wttimer, sc);
 }
 
 /*

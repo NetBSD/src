@@ -1,4 +1,4 @@
-/*	$NetBSD: bivar.h,v 1.4 1999/08/04 19:12:22 ragge Exp $ */
+/*	$NetBSD: bivar.h,v 1.4.2.1 2000/11/20 11:39:51 bouyer Exp $ */
 /*
  * Copyright (c) 1996, 1999 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -42,6 +42,7 @@ struct bi_softc {
 	bus_addr_t sc_addr;		/* Address base address for this bus */
 	int sc_busnr;			/* (Physical) number of this bus */
 	int sc_lastiv;			/* last available interrupt vector */
+	int sc_intcpu;
 };
 
 /*
@@ -55,6 +56,7 @@ struct bi_attach_args {
 	int ba_nodenr;
 	int ba_intcpu;	/* Mask of which cpus to interrupt */
 	int ba_ivec;	/* Interrupt vector to use */
+	void *ba_icookie;
 };
 
 /*
@@ -66,5 +68,13 @@ struct bi_list {
 	char *bl_name;		/* DEC name */
 };
 
+/* bl_havedriver field meaning */
+#define	DT_UNSUPP	0	/* pseudo define */
+#define	DT_HAVDRV	1	/* device have driver */
+#define	DT_ADAPT	2	/* is an adapter */
+#define	DT_QUIET	4	/* don't complain when not conf'ed */
+#define	DT_VEC		8	/* uses a interrupt vector */
+
 /* Prototype */
-void	bi_attach __P((struct bi_softc *));
+void bi_attach (struct bi_softc *);
+void bi_intr_establish (void *, int, void (*)(void *), void *, struct evcnt *);

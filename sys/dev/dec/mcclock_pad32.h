@@ -1,4 +1,4 @@
-/*	$NetBSD: mcclock_pad32.h,v 1.9 1998/04/19 07:50:26 jonathan Exp $	*/
+/*	$NetBSD: mcclock_pad32.h,v 1.9.14.1 2000/11/20 11:39:54 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995, 1996 Carnegie-Mellon University.
@@ -51,4 +51,4 @@ struct mcclock_pad32_softc {
 };
 
 /* register read/write functions */
-const struct mcclock_busfns mcclock_pad32_busfns;
+extern const struct mcclock_busfns mcclock_pad32_busfns;

@@ -1,0 +1,76 @@
+***************
+*** 93,106 ****
+  	sizeof(struct nca_softc), nca_match, nca_attach
+  };
+  
+- struct scsipi_device nca_dev = {
+- 	NULL,			/* Use default error handler */
+- 	NULL,			/* have a queue, served by this */
+- 	NULL,			/* have no async handler */
+- 	NULL,			/* Use default 'done' routine */
+- };
+- 
+- 
+  /* Supported controller types */
+  #define MAX_NCA_CONTROLLER	3
+  #define CTLR_NCR_5380	1
+--- 93,98 ----
+  	sizeof(struct nca_softc), nca_match, nca_attach
+  };
+  
+  /* Supported controller types */
+  #define MAX_NCA_CONTROLLER	3
+  #define CTLR_NCR_5380	1
+***************
+*** 415,436 ****
+  	sc->sc_min_dma_len = MIN_DMA_LEN;
+  
+  	/*
+- 	 * Fill in the adapter.
+  	 */
+- 	sc->sc_adapter.scsipi_cmd = ncr5380_scsi_cmd;
+- 	sc->sc_adapter.scsipi_minphys = minphys;
+  
+  	/*
+- 	 * Fill in the prototype scsi_link.
+  	 */
+- 	sc->sc_link.scsipi_scsi.channel = SCSI_CHANNEL_ONLY_ONE;
+- 	sc->sc_link.scsipi_scsi.adapter_target = 7;
+- 	sc->sc_link.scsipi_scsi.max_target = 7;
+- 	sc->sc_link.type = BUS_SCSI;
+- 	sc->sc_link.adapter_softc = sc;
+- 	sc->sc_link.adapter = &sc->sc_adapter;
+- 	sc->sc_link.device = &nca_dev;
+- 	sc->sc_link.openings = 1;
+  
+  	/*
+  	 * Initialize fields used by the MI code
+--- 407,421 ----
+  	sc->sc_min_dma_len = MIN_DMA_LEN;
+  
+  	/*
++ 	 * Fill in our portion of the scsipi_adapter.
+  	 */
++ 	sc->sc_adapter.adapt_request = ncr5380_scsipi_request;
++ 	sc->sc_adapter.adapt_minphys = minphys;
+  
+  	/*
++ 	 * Fill in our portion of the scsipi_channel.
+  	 */
++ 	sc->sc_channel.chan_id = 7;
+  
+  	/*
+  	 * Initialize fields used by the MI code
+***************
+*** 447,451 ****
+  	 */
+  	ncr5380_init(sc);
+  	ncr5380_reset_scsibus(sc);
+- 	config_found(&(sc->sc_dev), &(sc->sc_link), scsiprint);
+  }
+--- 432,436 ----
+  	 */
+  	ncr5380_init(sc);
+  	ncr5380_reset_scsibus(sc);
++ 	config_found(&(sc->sc_dev), &(sc->sc_channel), scsiprint);
+  }

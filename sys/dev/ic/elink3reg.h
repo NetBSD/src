@@ -1,4 +1,4 @@
-/*	$NetBSD: elink3reg.h,v 1.21 1999/10/11 17:41:56 thorpej Exp $	*/
+/*	$NetBSD: elink3reg.h,v 1.21.2.1 2000/11/20 11:40:32 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1995 Herb Peyerl <hpeyerl@beer.org>
@@ -60,7 +60,7 @@
 
 /*
  * These are the registers for the 3Com 3c509 and their bit patterns when
- * applicable.  They have been taken out the the "EtherLink III Parallel
+ * applicable.  They have been taken out of the "EtherLink III Parallel
  * Tasking EISA and ISA Technical Reference" "Beta Draft 10/30/92" manual
  * from 3com.
  */

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ie_vme.c,v 1.7 1999/06/30 15:07:45 drochner Exp $	*/
+/*	$NetBSD: if_ie_vme.c,v 1.7.2.1 2000/11/20 11:43:34 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1995 Charles D. Cranor
@@ -122,7 +122,7 @@
  *	or in the 4 bits from the status word as bits 17-20 (remember that
  *	the board ignores the chip's top 4 address lines). For example:
  *	if the register is @ 0xffe88000, then the top 12 bits are 0xffe00000.
- *	to get the 4 bits from the the status word just do status & IEVME_HADDR.
+ *	to get the 4 bits from the status word just do status & IEVME_HADDR.
  *	suppose the value is "4".   Then just shift it left 16 bits to get
  *	it into bits 17-20 (e.g. 0x40000).    Then or it to get the
  *	address of RAM (in our example: 0xffe40000).   see the attach routine!
@@ -156,8 +156,6 @@
 #include <net/if_dl.h>
 #include <net/if_media.h>
 #include <net/if_ether.h>
-
-#include <vm/vm.h>
 
 #include <machine/bus.h>
 #include <machine/intr.h>
@@ -492,7 +490,7 @@ ie_vme_attach(parent, self, aux)
 	void   *aux;
 {
 	u_int8_t myaddr[ETHER_ADDR_LEN];
-#ifdef sparc
+#ifdef __sparc__
 	extern void myetheraddr(u_char *);	/* should be elsewhere */
 #endif
 	struct ie_vme_softc *vsc = (void *) self;
@@ -593,7 +591,7 @@ ie_vme_attach(parent, self, aux)
 
 	printf("\n%s:", self->dv_xname);
 
-#ifdef sparc
+#ifdef __sparc__
 	myetheraddr(myaddr);
 #endif
 	i82586_attach(sc, "multibus/vme", myaddr, media, NMEDIA, media[0]);

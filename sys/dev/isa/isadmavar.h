@@ -1,7 +1,7 @@
-/*	$NetBSD: isadmavar.h,v 1.15 1999/02/22 02:32:43 mycroft Exp $	*/
+/*	$NetBSD: isadmavar.h,v 1.15.8.1 2000/11/20 11:41:18 bouyer Exp $	*/
 
 /*-
- * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
+ * Copyright (c) 1997, 1998, 2000 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -40,8 +40,6 @@
 #ifndef _DEV_ISA_ISADMAVAR_H_
 #define	_DEV_ISA_ISADMAVAR_H_
 
-#define MAX_ISADMA	65536
-
 #define	DMAMODE_WRITE		0x00
 #define	DMAMODE_READ		0x01
 #define	DMAMODE_SINGLE		0x00
@@ -63,6 +61,7 @@ struct isa_dma_state {
 	bus_dma_tag_t ids_dmat;		/* DMA tag for DMA controller */
 	bus_dmamap_t ids_dmamaps[8];	/* DMA maps for each channel */
 	bus_size_t ids_dmalength[8];	/* size of DMA transfer per channel */
+	bus_size_t ids_maxsize[8];	/* max size per channel */
 	int	ids_drqmap;		/* available DRQs (bitmap) */
 	int	ids_dmareads;		/* state for isa_dmadone() (bitmap) */
 	int	ids_dmafinished;	/* DMA completion state (bitmap) */
@@ -106,6 +105,8 @@ void	   _isa_dmainit __P((struct isa_dma_state *, bus_space_tag_t,
 
 int	   _isa_dmacascade __P((struct isa_dma_state *, int));
 
+bus_size_t _isa_dmamaxsize __P((struct isa_dma_state *, int));
+
 int	   _isa_dmamap_create __P((struct isa_dma_state *, int,
 	       bus_size_t, int));
 void	   _isa_dmamap_destroy __P((struct isa_dma_state *, int));
@@ -128,14 +129,14 @@ int	   _isa_dmamem_map __P((struct isa_dma_state *, int, bus_addr_t,
 	       bus_size_t, caddr_t *, int));
 void	   _isa_dmamem_unmap __P((struct isa_dma_state *, int, caddr_t,
 	       size_t));
-int	   _isa_dmamem_mmap __P((struct isa_dma_state *, int, bus_addr_t,
-	       bus_size_t, int, int, int));
+paddr_t	   _isa_dmamem_mmap __P((struct isa_dma_state *, int, bus_addr_t,
+	       bus_size_t, off_t, int, int));
 
 int	   _isa_drq_isfree __P((struct isa_dma_state *, int));
 
 void      *_isa_malloc __P((struct isa_dma_state *, int, size_t, int, int));
 void	   _isa_free __P((void *, int));
-int	   _isa_mappage __P((void *, int, int));
+paddr_t	   _isa_mappage __P((void *, off_t, int));
 #endif /* _KERNEL */
 
 #endif /* _DEV_ISA_ISADMAVAR_H_ */

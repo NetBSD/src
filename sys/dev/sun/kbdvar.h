@@ -1,4 +1,4 @@
-/*	$NetBSD: kbdvar.h,v 1.1 1999/05/14 07:07:16 mrg Exp $	*/
+/*	$NetBSD: kbdvar.h,v 1.1.4.1 2000/11/20 11:43:11 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -44,6 +44,8 @@
  *	@(#)kbd.c	8.2 (Berkeley) 10/30/93
  */
 
+#include <sys/callout.h>
+
 /*
  * How many input characters we can buffer.
  * The port-specific var.h may override this.
@@ -81,11 +83,21 @@ struct kbd_softc {
 
 	/* Stuff our parent setup */
 	union {
-		struct	zs_chanstate *ku_zcs;
-		struct	ucom_softc *ku_usc;
-	} k_cs_u;
-#define	k_cs k_cs_u.ku_zcs
-#define	k_usc k_cs_u.ku_usc
+		struct zs_chanstate *ku_cs;
+		struct ucom_softc *ku_usc;
+		void *ku_priv;
+	} k_u;
+#define	k_cs k_u.ku_cs
+#define	k_usc k_u.ku_usc
+#define k_priv k_u.ku_priv
+
+	/*
+	 * The deviopen and deviclose routines are provided
+	 * by the lower level driver and used as a back door
+	 * when opening and closing the internal device.
+	 */
+	int	(*k_deviopen)	__P((struct device *, int));
+	int	(*k_deviclose)	__P((struct device *, int));
 	void	(*k_write_data) __P((struct kbd_softc *, int));
 
 	/* Flags to communicate with kbd_softint() */
@@ -115,10 +127,15 @@ struct kbd_softc {
 	int	k_repeating;		/* we've called timeout() */
 	struct	kbd_state k_state;	/* ASCII translation state */
 
+	struct callout k_repeat_ch;
+
+	/* Console hooks */
+	char k_isconsole;
+	struct cons_channel *k_cc;
+
 	/*
 	 * Magic sequence stuff (L1-A)
 	 */
-	char k_isconsole;
 	char k_magic1_down;
 	u_char k_magic1;	/* L1 */
 	u_char k_magic2;	/* A */
@@ -143,3 +160,25 @@ struct kbd_softc {
 void	kbd_input_raw __P((struct kbd_softc *k, int));
 void	kbd_output(struct kbd_softc *k, int c);
 void	kbd_start_tx(struct kbd_softc *k);
+int	kbd_cc_open __P((struct cons_channel *));
+int	kbd_cc_close __P((struct cons_channel *));
+
+/*
+ * kbd console input channel interface.
+ * XXX - does not belong in this header; but for now, kbd is the only user..
+ */
+struct cons_channel {
+	/* Provided by lower driver */
+	void	*cc_dev;			/* Lower device private data */
+	struct callout	cc_callout;
+	int	(*cc_iopen)			/* Open lower device */
+			__P((struct cons_channel *));
+	int	(*cc_iclose)			/* Close lower device */
+			__P((struct cons_channel *));
+
+	/* Provided by upper driver */
+	void	(*cc_upstream)__P((int));	/* Send a character upstream */
+};
+
+/* Special hook to attach the keyboard driver to the console */
+void	cons_attach_input __P((struct cons_channel *, struct consdev *));

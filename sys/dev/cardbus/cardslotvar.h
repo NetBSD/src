@@ -1,4 +1,4 @@
-/*	$NetBSD: cardslotvar.h,v 1.2 1999/10/15 06:42:22 haya Exp $	*/
+/*	$NetBSD: cardslotvar.h,v 1.2.2.1 2000/11/20 11:39:53 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1999
@@ -32,8 +32,8 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#if !defined SYS_DEV_CARDBUS_CARDSLOTVAR_H
-#define SYS_DEV_CARDBUS_CARDSLOTVAR_H
+#ifndef _DEV_CARDBUS_CARDSLOTVAR_H_
+#define _DEV_CARDBUS_CARDSLOTVAR_H_
 
 /* require sys/device.h */
 /* require sys/queue.h */
@@ -76,7 +76,7 @@ struct cardslot_softc {
   struct proc *sc_event_thread;
   int sc_th_enable;		/* true if the thread is enabled */
 
-  /* An event queue for the thead which processes slot state events. */
+  /* An event queue for the thread which processes slot state events. */
 
   SIMPLEQ_HEAD(, cardslot_event) sc_events;
 };
@@ -95,6 +95,11 @@ struct cardslot_softc {
 #define CARDSLOT_STATUS_WORK_MASK     0x08
 #define CARDSLOT_STATUS_WORKING	      0x08  /* at least one function works */
 #define CARDSLOT_STATUS_NOTWORK	      0x00  /* no functions are working */
+
+#define CARDSLOT_WORK(x) ((x) & CARDSLOT_STATUS_WORK_MASK)
+#define CARDSLOT_SET_WORK(x, type) \
+	do {(x) &= ~CARDSLOT_STATUS_WORK_MASK;\
+	    (x) |= (CARDSLOT_STATUS_WORK_MASK & (type));} while(0)
 
 
 struct cardslot_event {
@@ -118,4 +123,4 @@ typedef struct cardslot_softc *cardslot_t;
 
 void cardslot_event_throw __P((cardslot_t cs, int ev));
 
-#endif /* SYS_DEV_CARDBUS_CARDSLOTVAR_H */
+#endif /* !_DEV_CARDBUS_CARDSLOTVAR_H_ */

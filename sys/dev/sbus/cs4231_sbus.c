@@ -1,4 +1,4 @@
-/*	$NetBSD: cs4231_sbus.c,v 1.11 1999/06/05 14:29:11 mrg Exp $	*/
+/*	$NetBSD: cs4231_sbus.c,v 1.11.2.1 2000/11/20 11:43:04 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.
@@ -45,8 +45,10 @@
 #include <sys/device.h>
 #include <sys/malloc.h>
 
-#include <machine/autoconf.h>
-#include <machine/cpu.h>
+#include <machine/bus.h>
+#include <machine/intr.h>
+
+#include <dev/sbus/sbusvar.h>
 
 #include <sys/audioio.h>
 #include <dev/audio_if.h>
@@ -119,7 +121,7 @@ cs4231_attach_sbus(parent, self, aux)
 	}
 
 	sc->sc_ad1848.sc_ioh = bh;
-	sc->sc_dmareg = (struct apc_dma *)(bh + CS4231_REG_SIZE);
+	sc->sc_dmareg = (struct apc_dma *)(u_long)(bh + CS4231_REG_SIZE);
 
 	cs4231_init(sc);
 
@@ -132,11 +134,13 @@ cs4231_attach_sbus(parent, self, aux)
 	sbus_establish(&sc->sc_sd, &sc->sc_ad1848.sc_dev);
 
 	/* Establish interrupt channel */
-	bus_intr_establish(sa->sa_bustag,
-			   sa->sa_pri, 0,
-			   cs4231_intr, sc);
+	if (sa->sa_nintr)
+		bus_intr_establish(sa->sa_bustag,
+				   sa->sa_pri, IPL_AUDIO, 0,
+				   cs4231_intr, sc);
 
-	evcnt_attach(&sc->sc_ad1848.sc_dev, "intr", &sc->sc_intrcnt);
+	evcnt_attach_dynamic(&sc->sc_intrcnt, EVCNT_TYPE_INTR, NULL,
+	    sc->sc_ad1848.sc_dev.dv_xname, "intr");
 	audio_attach_mi(&audiocs_hw_if, sc, &sc->sc_ad1848.sc_dev);
 }
 #endif

@@ -1,4 +1,4 @@
-/*	$NetBSD: dhu.c,v 1.16 1999/06/06 19:14:48 ragge Exp $	*/
+/*	$NetBSD: dhu.c,v 1.16.4.1 2000/11/20 11:42:48 bouyer Exp $	*/
 /*
  * Copyright (c) 1996  Ken C. Wellsch.  All rights reserved.
  * Copyright (c) 1992, 1993
@@ -68,6 +68,8 @@
 
 struct	dhu_softc {
 	struct	device	sc_dev;		/* Device struct used by config */
+	struct	evcnt	sc_rintrcnt;	/* Interrupt statistics */
+	struct	evcnt	sc_tintrcnt;	/* Interrupt statistics */
 	int		sc_type;	/* controller type, DHU or DHV */
 	bus_space_tag_t	sc_iot;
 	bus_space_handle_t sc_ioh;
@@ -136,8 +138,8 @@ static struct speedtab dhuspeedtab[] = {
 
 static int	dhu_match __P((struct device *, struct cfdata *, void *));
 static void	dhu_attach __P((struct device *, struct device *, void *));
-static	void	dhurint __P((int));
-static	void	dhuxint __P((int));
+static	void	dhurint __P((void *));
+static	void	dhuxint __P((void *));
 static	void	dhustart __P((struct tty *));
 static	int	dhuparam __P((struct tty *, struct termios *));
 static	int	dhuiflow __P((struct tty *, int));
@@ -164,7 +166,7 @@ dhu_match(parent, cf, aux)
         void *aux;
 {
 	struct uba_attach_args *ua = aux;
-	register int n;
+	int n;
 
 	/* Reset controller to initialize, enable TX/RX interrupts */
 	/* to catch floating vector info elsewhere when completed */
@@ -193,10 +195,6 @@ dhu_match(parent, cf, aux)
 	    DHU_CSR_DIAG_FAIL) != 0)
 		return 0;
 
-	/* Register the RX interrupt handler */
-
-	ua->ua_ivec = dhurint;
-
        	return 1;
 }
 
@@ -205,10 +203,10 @@ dhu_attach(parent, self, aux)
         struct device *parent, *self;
         void *aux;
 {
-	register struct dhu_softc *sc = (void *)self;
-	register struct uba_attach_args *ua = aux;
-	register unsigned c;
-	register int n, i;
+	struct dhu_softc *sc = (void *)self;
+	struct uba_attach_args *ua = aux;
+	unsigned c;
+	int n, i;
 
 	sc->sc_iot = ua->ua_iot;
 	sc->sc_ioh = ua->ua_ioh;
@@ -247,20 +245,28 @@ dhu_attach(parent, self, aux)
 			
 	}
 
-	/* Now stuff TX interrupt handler in place */
-	scb_vecalloc(ua->ua_cvec + 4, dhuxint, self->dv_unit, SCB_ISTACK);
+	/* Now establish RX & TX interrupt handlers */
+
+	uba_intr_establish(ua->ua_icookie, ua->ua_cvec,
+		dhurint, sc, &sc->sc_rintrcnt);
+	uba_intr_establish(ua->ua_icookie, ua->ua_cvec + 4,
+		dhuxint, sc, &sc->sc_tintrcnt);
+	evcnt_attach_dynamic(&sc->sc_rintrcnt, EVCNT_TYPE_INTR, ua->ua_evcnt,
+		sc->sc_dev.dv_xname, "rintr");
+	evcnt_attach_dynamic(&sc->sc_tintrcnt, EVCNT_TYPE_INTR, ua->ua_evcnt,
+		sc->sc_dev.dv_xname, "tintr");
 }
 
 /* Receiver Interrupt */
 
 static void
-dhurint(unit)
-	int unit;
+dhurint(arg)
+	void *arg;
 {
-	struct	dhu_softc *sc = dhu_cd.cd_devs[unit];
-	register struct tty *tp;
-	register int cc, line;
-	register unsigned c, delta;
+	struct	dhu_softc *sc = arg;
+	struct tty *tp;
+	int cc, line;
+	unsigned c, delta;
 	int overrun = 0;
 
 	while ((c = DHU_READ_WORD(DHU_UBA_RBUF)) & DHU_RBUF_DATA_VALID) {
@@ -327,12 +333,12 @@ dhurint(unit)
 /* Transmitter Interrupt */
 
 static void
-dhuxint(unit)
-	int unit;
+dhuxint(arg)
+	void *arg;
 {
-	register struct	dhu_softc *sc = dhu_cd.cd_devs[unit];
-	register struct tty *tp;
-	register int line;
+	struct	dhu_softc *sc = arg;
+	struct tty *tp;
+	int line;
 
 	line = DHU_LINE(DHU_READ_BYTE(DHU_UBA_CSR_HI));
 
@@ -363,8 +369,8 @@ dhuopen(dev, flag, mode, p)
 	int flag, mode;
 	struct proc *p;
 {
-	register struct tty *tp;
-	register int unit, line;
+	struct tty *tp;
+	int unit, line;
 	struct dhu_softc *sc;
 	int s, error = 0;
 
@@ -429,8 +435,8 @@ dhuclose(dev, flag, mode, p)
 	int flag, mode;
 	struct proc *p;
 {
-	register struct tty *tp;
-	register int unit, line;
+	struct tty *tp;
+	int unit, line;
 	struct dhu_softc *sc;
 
 	unit = DHU_M2U(minor(dev));
@@ -460,8 +466,8 @@ dhuread(dev, uio, flag)
 	dev_t dev;
 	struct uio *uio;
 {
-	register struct dhu_softc *sc;
-	register struct tty *tp;
+	struct dhu_softc *sc;
+	struct tty *tp;
 
 	sc = dhu_cd.cd_devs[DHU_M2U(minor(dev))];
 
@@ -474,8 +480,8 @@ dhuwrite(dev, uio, flag)
 	dev_t dev;
 	struct uio *uio;
 {
-	register struct dhu_softc *sc;
-	register struct tty *tp;
+	struct dhu_softc *sc;
+	struct tty *tp;
 
 	sc = dhu_cd.cd_devs[DHU_M2U(minor(dev))];
 
@@ -492,9 +498,9 @@ dhuioctl(dev, cmd, data, flag, p)
 	int flag;
 	struct proc *p;
 {
-	register struct dhu_softc *sc;
-	register struct tty *tp;
-	register int unit, line;
+	struct dhu_softc *sc;
+	struct tty *tp;
+	int unit, line;
 	int error;
 
 	unit = DHU_M2U(minor(dev));
@@ -561,10 +567,10 @@ dhutty(dev)
 /*ARGSUSED*/
 void
 dhustop(tp, flag)
-	register struct tty *tp;
+	struct tty *tp;
 {
-	register struct dhu_softc *sc;
-	register int line;
+	struct dhu_softc *sc;
+	int line;
 	int s;
 
 	s = spltty();
@@ -592,11 +598,11 @@ dhustop(tp, flag)
 
 static void
 dhustart(tp)
-	register struct tty *tp;
+	struct tty *tp;
 {
-	register struct dhu_softc *sc;
-	register int line, cc;
-	register int addr;
+	struct dhu_softc *sc;
+	int line, cc;
+	int addr;
 	int s;
 
 	s = spltty();
@@ -655,14 +661,14 @@ out:
 
 static int
 dhuparam(tp, t)
-	register struct tty *tp;
-	register struct termios *t;
+	struct tty *tp;
+	struct termios *t;
 {
 	struct dhu_softc *sc;
-	register int cflag = t->c_cflag;
+	int cflag = t->c_cflag;
 	int ispeed = ttspeedtab(t->c_ispeed, dhuspeedtab);
 	int ospeed = ttspeedtab(t->c_ospeed, dhuspeedtab);
-	register unsigned lpr, lnctrl;
+	unsigned lpr, lnctrl;
 	int unit, line;
 	int s;
 
@@ -749,8 +755,8 @@ dhuiflow(tp, flag)
 	struct tty *tp;
 	int flag;
 {
-	register struct dhu_softc *sc;
-	register int line = DHU_LINE(minor(tp->t_dev));
+	struct dhu_softc *sc;
+	int line = DHU_LINE(minor(tp->t_dev));
 
 	if (tp->t_cflag & CRTSCTS) {
 		sc = dhu_cd.cd_devs[DHU_M2U(minor(tp->t_dev))];
@@ -765,9 +771,9 @@ dhumctl(sc, line, bits, how)
 	struct dhu_softc *sc;
 	int line, bits, how;
 {
-	register unsigned status;
-	register unsigned lnctrl;
-	register unsigned mbits;
+	unsigned status;
+	unsigned lnctrl;
+	unsigned mbits;
 	int s;
 
 	s = spltty();

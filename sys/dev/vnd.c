@@ -1,4 +1,4 @@
-/*	$NetBSD: vnd.c,v 1.61 1999/04/21 22:14:15 thorpej Exp $	*/
+/*	$NetBSD: vnd.c,v 1.61.2.1 2000/11/20 11:39:48 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -134,8 +134,6 @@ int dovndcluster = 1;
 int vnddebug = 0x00;
 #endif
 
-#define b_cylin	b_resid
-
 #define	vndunit(x)	DISKUNIT(x)
 
 struct vndxfer {
@@ -183,20 +181,23 @@ void
 vndattach(num)
 	int num;
 {
+	int i;
 	char *mem;
-	register u_long size;
 
 	if (num <= 0)
 		return;
-	size = num * sizeof(struct vnd_softc);
-	mem = malloc(size, M_DEVBUF, M_NOWAIT);
+	i = num * sizeof(struct vnd_softc);
+	mem = malloc(i, M_DEVBUF, M_NOWAIT);
 	if (mem == NULL) {
 		printf("WARNING: no memory for vnode disks\n");
 		return;
 	}
-	bzero(mem, size);
+	bzero(mem, i);
 	vnd_softc = (struct vnd_softc *)mem;
 	numvnd = num;
+
+	for (i = 0; i < numvnd; i++)
+		BUFQ_INIT(&vnd_softc[i].sc_tab);
 }
 
 int
@@ -308,12 +309,13 @@ vndclose(dev, flags, mode, p)
  */
 void
 vndstrategy(bp)
-	register struct buf *bp;
+	struct buf *bp;
 {
 	int unit = vndunit(bp->b_dev);
 	struct vnd_softc *vnd = &vnd_softc[unit];
 	struct vndxfer *vnx;
-	int s, bn, bsize, resid;
+	int s, bsize, resid;
+	off_t bn;
 	caddr_t addr;
 	int sz, flags, error, wlabel;
 	struct disklabel *lp;
@@ -374,7 +376,7 @@ vndstrategy(bp)
 
  	bsize = vnd->sc_vp->v_mount->mnt_stat.f_iosize;
 	addr = bp->b_data;
-	flags = bp->b_flags | B_CALL;
+	flags = (bp->b_flags & (B_READ|B_ASYNC)) | B_CALL;
 
 	/* Allocate a header for this transfer and link it to the buffer */
 	s = splbio();
@@ -427,8 +429,8 @@ vndstrategy(bp)
 			sz = resid;
 #ifdef DEBUG
 		if (vnddebug & VDB_IO)
-			printf("vndstrategy: vp %p/%p bn 0x%x/0x%x sz 0x%x\n",
-			    vnd->sc_vp, vp, bn, nbn, sz);
+			printf("vndstrategy: vp %p/%p bn 0x%qx/0x%x sz 0x%x\n",
+			    vnd->sc_vp, vp, (long long)bn, nbn, sz);
 #endif
 
 		s = splbio();
@@ -439,12 +441,13 @@ vndstrategy(bp)
 		nbp->vb_buf.b_bufsize = bp->b_bufsize;
 		nbp->vb_buf.b_error = 0;
 		nbp->vb_buf.b_data = addr;
-		nbp->vb_buf.b_blkno = nbn + btodb(off);
+		nbp->vb_buf.b_blkno = nbp->vb_buf.b_rawblkno = nbn + btodb(off);
 		nbp->vb_buf.b_proc = bp->b_proc;
 		nbp->vb_buf.b_iodone = vndiodone;
 		nbp->vb_buf.b_vp = NULLVP;
 		nbp->vb_buf.b_rcred = vnd->sc_cred;	/* XXX crdup? */
 		nbp->vb_buf.b_wcred = vnd->sc_cred;	/* XXX crdup? */
+		LIST_INIT(&nbp->vb_buf.b_dep);
 		if (bp->b_dirtyend == 0) {
 			nbp->vb_buf.b_dirtyoff = 0;
 			nbp->vb_buf.b_dirtyend = sz;
@@ -471,7 +474,6 @@ vndstrategy(bp)
 		/*
 		 * Just sort by block number
 		 */
-		nbp->vb_buf.b_cylin = nbp->vb_buf.b_blkno;
 		s = splbio();
 		if (vnx->vx_error != 0) {
 			VND_PUTBUF(vnd, nbp);
@@ -479,7 +481,7 @@ vndstrategy(bp)
 		}
 		vnx->vx_pending++;
 		bgetvp(vp, &nbp->vb_buf);
-		disksort(&vnd->sc_tab, &nbp->vb_buf);
+		disksort_blkno(&vnd->sc_tab, &nbp->vb_buf);
 		vndstart(vnd);
 		splx(s);
 		bn += sz;
@@ -513,7 +515,7 @@ out: /* Arrive here at splbio */
  */
 void
 vndstart(vnd)
-	register struct vnd_softc *vnd;
+	struct vnd_softc *vnd;
 {
 	struct buf	*bp;
 
@@ -527,17 +529,18 @@ vndstart(vnd)
 
 	vnd->sc_flags |= VNF_BUSY;
 
-	while (vnd->sc_tab.b_active < vnd->sc_maxactive) {
-		bp = vnd->sc_tab.b_actf;
+	while (vnd->sc_active < vnd->sc_maxactive) {
+		bp = BUFQ_FIRST(&vnd->sc_tab);
 		if (bp == NULL)
 			break;
-		vnd->sc_tab.b_actf = bp->b_actf;
-		vnd->sc_tab.b_active++;
+		BUFQ_REMOVE(&vnd->sc_tab, bp);
+		vnd->sc_active++;
 #ifdef DEBUG
 		if (vnddebug & VDB_IO)
-			printf("vndstart(%ld): bp %p vp %p blkno 0x%x addr %p cnt 0x%lx\n",
+			printf("vndstart(%ld): bp %p vp %p blkno 0x%x"
+				" flags %lx addr %p cnt 0x%lx\n",
 			    (long) (vnd-vnd_softc), bp, bp->b_vp, bp->b_blkno,
-			    bp->b_data, bp->b_bcount);
+			    bp->b_flags, bp->b_data, bp->b_bcount);
 #endif
 
 		/* Instrumentation. */
@@ -554,10 +557,10 @@ void
 vndiodone(bp)
 	struct buf *bp;
 {
-	register struct vndbuf *vbp = (struct vndbuf *) bp;
-	register struct vndxfer *vnx = (struct vndxfer *)vbp->vb_xfer;
-	register struct buf *pbp = vnx->vx_bp;
-	register struct vnd_softc *vnd = &vnd_softc[vndunit(pbp->b_dev)];
+	struct vndbuf *vbp = (struct vndbuf *) bp;
+	struct vndxfer *vnx = (struct vndxfer *)vbp->vb_xfer;
+	struct buf *pbp = vnx->vx_bp;
+	struct vnd_softc *vnd = &vnd_softc[vndunit(pbp->b_dev)];
 	int s, resid;
 
 	s = splbio();
@@ -622,7 +625,7 @@ vndiodone(bp)
 		}
 	}
 
-	vnd->sc_tab.b_active--;
+	vnd->sc_active--;
 	vndstart(vnd);
 	splx(s);
 }
@@ -687,7 +690,7 @@ vndioctl(dev, cmd, data, flag, p)
 	struct proc *p;
 {
 	int unit = vndunit(dev);
-	register struct vnd_softc *vnd;
+	struct vnd_softc *vnd;
 	struct vnd_ioctl *vio;
 	struct vattr vattr;
 	struct nameidata nd;
@@ -963,7 +966,7 @@ vndioctl(dev, cmd, data, flag, p)
  */
 int
 vndsetcred(vnd, cred)
-	register struct vnd_softc *vnd;
+	struct vnd_softc *vnd;
 	struct ucred *cred;
 {
 	struct uio auio;
@@ -1007,7 +1010,7 @@ vndsetcred(vnd, cred)
  */
 void
 vndthrottle(vnd, vp)
-	register struct vnd_softc *vnd;
+	struct vnd_softc *vnd;
 	struct vnode *vp;
 {
 #ifdef NFS
@@ -1026,7 +1029,7 @@ vndthrottle(vnd, vp)
 void
 vndshutdown()
 {
-	register struct vnd_softc *vnd;
+	struct vnd_softc *vnd;
 
 	for (vnd = &vnd_softc[0]; vnd < &vnd_softc[numvnd]; vnd++)
 		if (vnd->sc_flags & VNF_INITED)
@@ -1035,9 +1038,9 @@ vndshutdown()
 
 void
 vndclear(vnd)
-	register struct vnd_softc *vnd;
+	struct vnd_softc *vnd;
 {
-	register struct vnode *vp = vnd->sc_vp;
+	struct vnode *vp = vnd->sc_vp;
 	struct proc *p = curproc;		/* XXX */
 
 #ifdef DEBUG

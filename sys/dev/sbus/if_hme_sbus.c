@@ -1,4 +1,4 @@
-/*	$NetBSD: if_hme_sbus.c,v 1.1 1999/06/27 12:47:52 pk Exp $	*/
+/*	$NetBSD: if_hme_sbus.c,v 1.1.4.1 2000/11/20 11:43:05 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -55,8 +55,9 @@
 #include <dev/mii/mii.h>
 #include <dev/mii/miivar.h>
 
+#include <machine/bus.h>
+#include <machine/intr.h>
 #include <machine/autoconf.h>
-#include <machine/cpu.h>
 
 #include <dev/sbus/sbusvar.h>
 #include <dev/ic/hmevar.h>
@@ -81,7 +82,8 @@ hmematch_sbus(parent, cf, aux)
 {
 	struct sbus_attach_args *sa = aux;
 
-	return (strcmp(cf->cf_driver->cd_name, sa->sa_name) == 0);
+	return (strcmp(cf->cf_driver->cd_name, sa->sa_name) == 0 ||
+	    strcmp("SUNW,hme", sa->sa_name) == 0);
 }
 
 void
@@ -186,8 +188,11 @@ hmeattach_sbus(parent, self, aux)
 	sc->sc_burst =  (burst & SBUS_BURST_32) ? 32 :
 			(burst & SBUS_BURST_16) ? 16 : 0;
 
+	sc->sc_pci = 0; /* XXXXX should all be done in bus_dma. */
 	hme_config(sc);
 
-	(void)bus_intr_establish(sa->sa_bustag, sa->sa_pri, 0,
-				 hme_intr, sc);
+	/* Establish interrupt handler */
+	if (sa->sa_nintr != 0)
+		(void)bus_intr_establish(sa->sa_bustag, sa->sa_pri, IPL_NET, 0,
+					 hme_intr, sc);
 }

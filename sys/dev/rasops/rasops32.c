@@ -1,11 +1,11 @@
-/*	 $NetBSD: rasops32.c,v 1.4 1999/05/18 21:51:59 ad Exp $ */
+/*	 $NetBSD: rasops32.c,v 1.4.4.1 2000/11/20 11:43:02 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
- * by Andy Doran.
+ * by Andrew Doran.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -38,7 +38,7 @@
 
 #include "opt_rasops.h"
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rasops32.c,v 1.4 1999/05/18 21:51:59 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rasops32.c,v 1.4.4.1 2000/11/20 11:43:02 bouyer Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -50,8 +50,6 @@ __KERNEL_RCSID(0, "$NetBSD: rasops32.c,v 1.4 1999/05/18 21:51:59 ad Exp $");
 #include <dev/rasops/rasops.h>
 
 static void 	rasops32_putchar __P((void *, int, int, u_int, long attr));
-void		rasops32_init __P((struct rasops_info *ri));
-
 
 /*
  * Initalize a 'rasops_info' descriptor for this depth.
@@ -69,10 +67,9 @@ rasops32_init(ri)
 		ri->ri_bnum = 8;
 		ri->ri_bpos = 16;
 	}
-		
+
 	ri->ri_ops.putchar = rasops32_putchar;
 }
-
 
 /*
  * Paint a single character.
@@ -84,30 +81,30 @@ rasops32_putchar(cookie, row, col, uc, attr)
 	u_int uc;
 	long attr;
 {
+	int width, height, cnt, fs, fb, clr[2];
 	struct rasops_info *ri;
-	int32_t *dp, *rp, clr[2];
+	int32_t *dp, *rp;
 	u_char *fr;
-	int width, height, cnt, fs, fb;
-	
+
 	ri = (struct rasops_info *)cookie;
 
-#ifdef RASOPS_CLIPPING	
-	/* Catches 'row < 0' case too */ 
+#ifdef RASOPS_CLIPPING
+	/* Catches 'row < 0' case too */
 	if ((unsigned)row >= (unsigned)ri->ri_rows)
 		return;
 
 	if ((unsigned)col >= (unsigned)ri->ri_cols)
 		return;
 #endif
-	
+
 	rp = (int32_t *)(ri->ri_bits + row*ri->ri_yscale + col*ri->ri_xscale);
 
 	height = ri->ri_font->fontheight;
 	width = ri->ri_font->fontwidth;
 
-	clr[0] = ri->ri_devcmap[(attr >> 16) & 15];	
-	clr[1] = ri->ri_devcmap[(attr >> 24) & 15];	
-		
+	clr[0] = ri->ri_devcmap[(attr >> 16) & 0xf];
+	clr[1] = ri->ri_devcmap[(attr >> 24) & 0xf];
+
 	if (uc == ' ') {
 		while (height--) {
 			dp = rp;
@@ -123,22 +120,23 @@ rasops32_putchar(cookie, row, col, uc, attr)
 
 		while (height--) {
 			dp = rp;
-			fb = fr[3] | (fr[2] << 8) | (fr[1] << 16) | (fr[0] << 24);
+			fb = fr[3] | (fr[2] << 8) | (fr[1] << 16) |
+			    (fr[0] << 24);
 			fr += fs;
 			DELTA(rp, ri->ri_stride, int32_t *);
-			
+
 			for (cnt = width; cnt; cnt--) {
 				*dp++ = clr[(fb >> 31) & 1];
 				fb <<= 1;
 			}
 		}
-	}	
+	}
 
 	/* Do underline */
-	if (attr & 1) {
+	if ((attr & 1) != 0) {
 		DELTA(rp, -(ri->ri_stride << 1), int32_t *);
 
 		while (width--)
 			*rp++ = clr[1];
-	}	
+	}
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: interwavevar.h,v 1.6 1999/02/17 21:44:55 mycroft Exp $	*/
+/*	$NetBSD: interwavevar.h,v 1.6.8.1 2000/11/20 11:40:37 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1997, 1999 The NetBSD Foundation, Inc.
@@ -107,7 +107,9 @@ struct iw_softc {
 	void	*sc_recarg;
 	void	*sc_recdma_bp;
 	int	sc_playdrq;
+	bus_size_t sc_play_maxsize;
 	int	sc_recdrq;
+	bus_size_t sc_rec_maxsize;
 	int	sc_recdma_cnt;
 	int	sc_playing;
 	int	sc_maxdma;
@@ -248,7 +250,7 @@ int     iw_query_devinfo __P((void *, mixer_devinfo_t *));
 void *  iw_malloc __P((void *, int, size_t, int, int));
 void    iw_free __P((void *,void *,int));
 size_t	iw_round_buffersize __P((void *, int, size_t));
-int     iw_mappage __P((void *, void *, int, int));
+paddr_t	iw_mappage __P((void *, void *, off_t, int));
 int     iw_get_props __P((void *));
 
 #endif /* INTERWAVEVAR_H */

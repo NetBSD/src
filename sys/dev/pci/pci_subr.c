@@ -1,8 +1,8 @@
-/*	$NetBSD: pci_subr.c,v 1.32 1999/09/27 03:20:47 cgd Exp $	*/
+/*	$NetBSD: pci_subr.c,v 1.32.2.1 2000/11/20 11:42:30 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1997 Zubin D. Dittia.  All rights reserved.
- * Copyright (c) 1995, 1996, 1998
+ * Copyright (c) 1995, 1996, 1998, 2000
  *	Christopher G. Demetriou.  All rights reserved.
  * Copyright (c) 1994 Charles M. Hannum.  All rights reserved.
  *
@@ -36,7 +36,7 @@
  * PCI autoconfiguration support functions.
  */
 
-#include "opt_pciverbose.h"
+#include "opt_pci.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -52,16 +52,16 @@
 
 static void pci_conf_print_common __P((pci_chipset_tag_t, pcitag_t,
     const pcireg_t *regs));
-static void pci_conf_print_bar __P((pci_chipset_tag_t, pcitag_t, 
-    const pcireg_t *regs, int, const char *));
+static int pci_conf_print_bar __P((pci_chipset_tag_t, pcitag_t, 
+    const pcireg_t *regs, int, const char *, int));
 static void pci_conf_print_regs __P((const pcireg_t *regs, int first,
     int pastlast));
 static void pci_conf_print_type0 __P((pci_chipset_tag_t, pcitag_t,
-    const pcireg_t *regs));
+    const pcireg_t *regs, int sizebars));
 static void pci_conf_print_type1 __P((pci_chipset_tag_t, pcitag_t,
-    const pcireg_t *regs));
+    const pcireg_t *regs, int sizebars));
 static void pci_conf_print_type2 __P((pci_chipset_tag_t, pcitag_t,
-    const pcireg_t *regs));
+    const pcireg_t *regs, int sizebars));
 
 /*
  * Descriptions of known PCI classes and subclasses.
@@ -87,6 +87,7 @@ struct pci_class pci_subclass_mass_storage[] = {
 	{ "floppy",		PCI_SUBCLASS_MASS_STORAGE_FLOPPY,	},
 	{ "IPI",		PCI_SUBCLASS_MASS_STORAGE_IPI,		},
 	{ "RAID",		PCI_SUBCLASS_MASS_STORAGE_RAID,		},
+	{ "ATA",		PCI_SUBCLASS_MASS_STORAGE_ATA,		},
 	{ "miscellaneous",	PCI_SUBCLASS_MASS_STORAGE_MISC,		},
 	{ 0 },
 };
@@ -97,6 +98,8 @@ struct pci_class pci_subclass_network[] = {
 	{ "FDDI",		PCI_SUBCLASS_NETWORK_FDDI,		},
 	{ "ATM",		PCI_SUBCLASS_NETWORK_ATM,		},
 	{ "ISDN",		PCI_SUBCLASS_NETWORK_ISDN,		},
+	{ "WorldFip",		PCI_SUBCLASS_NETWORK_WORLDFIP,		},
+	{ "PCMIG Multi Computing", PCI_SUBCLASS_NETWORK_PCIMGMULTICOMP,	},
 	{ "miscellaneous",	PCI_SUBCLASS_NETWORK_MISC,		},
 	{ 0 },
 };
@@ -134,6 +137,8 @@ struct pci_class pci_subclass_bridge[] = {
 	{ "NuBus",		PCI_SUBCLASS_BRIDGE_NUBUS,		},
 	{ "CardBus",		PCI_SUBCLASS_BRIDGE_CARDBUS,		},
 	{ "RACEway",		PCI_SUBCLASS_BRIDGE_RACEWAY,		},
+	{ "Semi-transparent PCI", PCI_SUBCLASS_BRIDGE_STPCI,		},
+	{ "InfiniBand",		PCI_SUBCLASS_BRIDGE_INFINIBAND,		},
 	{ "miscellaneous",	PCI_SUBCLASS_BRIDGE_MISC,		},
 	{ 0 },
 };
@@ -192,6 +197,10 @@ struct pci_class pci_subclass_serialbus[] = {
 	/* XXX Fiber Channel/_FIBRECHANNEL */
 	{ "Fiber Channel",	PCI_SUBCLASS_SERIALBUS_FIBER,		},
 	{ "SMBus",		PCI_SUBCLASS_SERIALBUS_SMBUS,		},
+	{ "InfiniBand",		PCI_SUBCLASS_SERIALBUS_INFINIBAND,	},
+	{ "IPMI",		PCI_SUBCLASS_SERIALBUS_IPMI,		},
+	{ "SERCOS",		PCI_SUBCLASS_SERIALBUS_SERCOS,		},
+	{ "CANbus",		PCI_SUBCLASS_SERIALBUS_CANBUS,		},
 	{ 0 },
 };
 
@@ -204,7 +213,7 @@ struct pci_class pci_subclass_wireless[] = {
 };
 
 struct pci_class pci_subclass_i2o[] = {
-	{ "1.0",		PCI_SUBCLASS_I2O_10,			},
+	{ "standard",		PCI_SUBCLASS_I2O_STANDARD,		},
 	{ 0 },
 };
 
@@ -225,6 +234,7 @@ struct pci_class pci_subclass_crypto[] = {
 
 struct pci_class pci_subclass_dasp[] = {
 	{ "DPIO",		PCI_SUBCLASS_DASP_DPIO,			},
+	{ "Time and Frequency",	PCI_SUBCLASS_DASP_TIMEFREQ,		},
 	{ "miscellaneous",	PCI_SUBCLASS_DASP_MISC,			},
 	{ 0 },
 };
@@ -464,6 +474,7 @@ pci_conf_print_common(pc, tag, regs)
 	onoff("Fast back-to-back transactions", PCI_COMMAND_BACKTOBACK_ENABLE);
 
 	printf("    Status register: 0x%04x\n", (rval >> 16) & 0xffff);
+	onoff("Capability List support", PCI_STATUS_CAPLIST_SUPPORT);
 	onoff("66 MHz capable", PCI_STATUS_66MHZ_SUPPORT);
 	onoff("User Definable Features (UDF) support", PCI_STATUS_UDF_SUPPORT);
 	onoff("Fast back-to-back capable", PCI_STATUS_BACKTOBACK_SUPPORT);
@@ -527,16 +538,20 @@ pci_conf_print_common(pc, tag, regs)
 	printf("    Cache Line Size: 0x%02x\n", PCI_CACHELINE(rval));
 }
 
-static void
-pci_conf_print_bar(pc, tag, regs, reg, name)
+static int
+pci_conf_print_bar(pc, tag, regs, reg, name, sizebar)
 	pci_chipset_tag_t pc;
 	pcitag_t tag;
 	const pcireg_t *regs;
 	int reg;
 	const char *name;
+	int sizebar;
 {
-	int s;
+	int s, width;
 	pcireg_t mask, rval;
+	pcireg_t mask64h, rval64h;
+	
+	width = 4;
 
 	/*
 	 * Section 6.2.5.1, `Address Maps', tells us that:
@@ -549,7 +564,8 @@ pci_conf_print_bar(pc, tag, regs, reg, name)
 	 * we write all 1s and see what we get back.
 	 */
 	rval = regs[o2i(reg)];
-	if (rval != 0) {
+	/* XXX don't size unknown memory type? */
+	if (rval != 0 && sizebar) {
 		/*
 		 * The following sequence seems to make some devices
 		 * (e.g. host bus bridges, which don't normally
@@ -563,6 +579,14 @@ pci_conf_print_bar(pc, tag, regs, reg, name)
 		pci_conf_write(pc, tag, reg, 0xffffffff);
 		mask = pci_conf_read(pc, tag, reg);
 		pci_conf_write(pc, tag, reg, rval);
+		if (PCI_MAPREG_TYPE(rval) == PCI_MAPREG_TYPE_MEM &&
+		    PCI_MAPREG_MEM_TYPE(rval) == PCI_MAPREG_MEM_TYPE_64BIT) {
+			rval64h = regs[o2i(reg + 4)];
+			pci_conf_write(pc, tag, reg + 4, 0xffffffff);
+			mask64h = pci_conf_read(pc, tag, reg + 4);
+			pci_conf_write(pc, tag, reg + 4, rval64h);
+			width = 8;
+		}
 		splx(s);
 	} else
 		mask = 0;
@@ -573,11 +597,11 @@ pci_conf_print_bar(pc, tag, regs, reg, name)
 	printf("\n      ");
 	if (rval == 0) {
 		printf("not implemented(?)\n");
-		return;
-	}
+		return width;
+	} 
 	printf("type: ");
 	if (PCI_MAPREG_TYPE(rval) == PCI_MAPREG_TYPE_MEM) {
-		const char *type, *cache;
+		const char *type, *prefetch;
 
 		switch (PCI_MAPREG_MEM_TYPE(rval)) {
 		case PCI_MAPREG_MEM_TYPE_32BIT:
@@ -593,20 +617,50 @@ pci_conf_print_bar(pc, tag, regs, reg, name)
 			type = "unknown (XXX)";
 			break;
 		}
-		if (PCI_MAPREG_MEM_CACHEABLE(rval))
-			cache = "";
+		if (PCI_MAPREG_MEM_PREFETCHABLE(rval))
+			prefetch = "";
 		else
-			cache = "non";
-		printf("%s %scacheable memory\n", type, cache);
-		printf("      base: 0x%08x, size: 0x%08x\n",
-		    PCI_MAPREG_MEM_ADDR(rval),
-		    PCI_MAPREG_MEM_SIZE(mask));
+			prefetch = "non";
+		printf("%s %sprefetchable memory\n", type, prefetch);
+		switch (PCI_MAPREG_MEM_TYPE(rval)) {
+		case PCI_MAPREG_MEM_TYPE_64BIT:
+			printf("      base: 0x%016llx, ",
+			    PCI_MAPREG_MEM64_ADDR(
+				((((long long) rval64h) << 32) | rval)));
+			if (sizebar)
+				printf("size: 0x%016llx",
+				    PCI_MAPREG_MEM64_SIZE(
+				      ((((long long) mask64h) << 32) | mask)));
+			else
+				printf("not sized");
+			printf("\n");
+			break;
+		case PCI_MAPREG_MEM_TYPE_32BIT:
+		case PCI_MAPREG_MEM_TYPE_32BIT_1M:
+		default:
+			printf("      base: 0x%08x, ",
+			    PCI_MAPREG_MEM_ADDR(rval));
+			if (sizebar)
+				printf("size: 0x%08x",
+				    PCI_MAPREG_MEM_SIZE(mask));
+			else
+				printf("not sized");
+			printf("\n");
+			break;
+		}
 	} else {
+		if (sizebar)
+			printf("%d-bit ", mask & ~0x0000ffff ? 32 : 16);
 		printf("i/o\n");
-		printf("      base: 0x%08x, size: 0x%08x\n",
-		    PCI_MAPREG_IO_ADDR(rval),
-		    PCI_MAPREG_IO_SIZE(mask));
+		printf("      base: 0x%08x, ", PCI_MAPREG_IO_ADDR(rval));
+		if (sizebar)
+			printf("size: 0x%08x", PCI_MAPREG_IO_SIZE(mask));
+		else
+			printf("not sized");
+		printf("\n");
 	}
+
+	return width;
 }
 
 static void
@@ -635,16 +689,17 @@ pci_conf_print_regs(regs, first, pastlast)
 }
 
 static void
-pci_conf_print_type0(pc, tag, regs)
+pci_conf_print_type0(pc, tag, regs, sizebars)
 	pci_chipset_tag_t pc;
 	pcitag_t tag;
 	const pcireg_t *regs;
+	int sizebars;
 {
-	int off;
+	int off, width;
 	pcireg_t rval;
 
-	for (off = PCI_MAPREG_START; off < PCI_MAPREG_END; off += 4)
-		pci_conf_print_bar(pc, tag, regs, off, NULL);
+	for (off = PCI_MAPREG_START; off < PCI_MAPREG_END; off += width)
+		width = pci_conf_print_bar(pc, tag, regs, off, NULL, sizebars);
 
 	printf("    Cardbus CIS Pointer: 0x%08x\n", regs[o2i(0x28)]);
 
@@ -654,7 +709,13 @@ pci_conf_print_type0(pc, tag, regs)
 
 	/* XXX */
 	printf("    Expansion ROM Base Address: 0x%08x\n", regs[o2i(0x30)]);
-	printf("    Reserved @ 0x34: 0x%08x\n", regs[o2i(0x34)]);
+
+	if (regs[o2i(PCI_COMMAND_STATUS_REG)] & PCI_STATUS_CAPLIST_SUPPORT)
+		printf("    Capability list pointer: 0x%02x\n",
+		    PCI_CAPLIST_PTR(regs[o2i(PCI_CAPLISTPTR_REG)]));
+	else
+		printf("    Reserved @ 0x34: 0x%08x\n", regs[o2i(0x34)]);
+
 	printf("    Reserved @ 0x38: 0x%08x\n", regs[o2i(0x38)]);
 
 	rval = regs[o2i(PCI_INTERRUPT_REG)];
@@ -678,20 +739,79 @@ pci_conf_print_type0(pc, tag, regs)
 		printf("(pin D)");
 		break;
 	default:
-		printf("(???)");
+		printf("(? ? ?)");
 		break;
 	}
 	printf("\n");
 	printf("    Interrupt line: 0x%02x\n", PCI_INTERRUPT_LINE(rval));
+
+	if (regs[o2i(PCI_COMMAND_STATUS_REG)] & PCI_STATUS_CAPLIST_SUPPORT) {
+		for (off = PCI_CAPLIST_PTR(regs[o2i(PCI_CAPLISTPTR_REG)]);
+		     off != 0;
+		     off = PCI_CAPLIST_NEXT(regs[o2i(off)])) {
+			rval = regs[o2i(off)];
+			printf("    Capability register at 0x%02x\n", off);
+
+			printf("      type: 0x%02x (", PCI_CAPLIST_CAP(rval));
+			switch (PCI_CAPLIST_CAP(rval)) {
+			case PCI_CAP_RESERVED0:
+				printf("reserved");
+				break;
+			case PCI_CAP_PWRMGMT:
+				printf("Power Management, rev. %d.0",
+				    (rval >> 0) & 0x07); /* XXX not clear */
+				break;
+			case PCI_CAP_AGP:
+				printf("AGP, rev. %d.%d",
+				    (rval >> 24) & 0x0f,
+				    (rval >> 20) & 0x0f);
+				break;
+			case PCI_CAP_VPD:
+				printf("VPD");
+				break;
+			case PCI_CAP_SLOTID:
+				printf("SlotID");
+				break;
+			case PCI_CAP_MBI:
+				printf("MBI");
+				break;
+			case PCI_CAP_CPCI_HOTSWAP:
+				printf("CompactPCI Hot-swapping");
+				break;
+			case PCI_CAP_PCIX:
+				printf("PCI-X");
+				break;
+			case PCI_CAP_LDT:
+				printf("LDT");
+				break;
+			case PCI_CAP_VENDSPEC:
+				printf("Vendor-specific");
+				break;
+			case PCI_CAP_DEBUGPORT:
+				printf("Debug Port");
+				break;
+			case PCI_CAP_CPCI_RSRCCTL:
+				printf("CompactPCI Resource Control");
+				break;
+			case PCI_CAP_HOTPLUG:
+				printf("Hot-Plug");
+				break;
+			default:
+				printf("unknown");
+			}
+			printf(")\n");
+		}
+	}
 }
 
 static void
-pci_conf_print_type1(pc, tag, regs)
+pci_conf_print_type1(pc, tag, regs, sizebars)
 	pci_chipset_tag_t pc;
 	pcitag_t tag;
 	const pcireg_t *regs;
+	int sizebars;
 {
-	int off;
+	int off, width;
 	pcireg_t rval;
 
 	/*
@@ -703,8 +823,8 @@ pci_conf_print_type1(pc, tag, regs)
 	 * respect to various standards. (XXX)
 	 */
 
-	for (off = 0x10; off < 0x18; off += 4)
-		pci_conf_print_bar(pc, tag, regs, off, NULL);
+	for (off = 0x10; off < 0x18; off += width)
+		width = pci_conf_print_bar(pc, tag, regs, off, NULL, sizebars);
 
 	printf("    Primary bus number: 0x%02x\n",
 	    (regs[o2i(0x18)] >> 0) & 0xff);
@@ -795,7 +915,7 @@ pci_conf_print_type1(pc, tag, regs)
 		printf("(pin D)");
 		break;
 	default:
-		printf("(???)");
+		printf("(? ? ?)");
 		break;
 	}
 	printf("\n");
@@ -811,10 +931,11 @@ pci_conf_print_type1(pc, tag, regs)
 }
 
 static void
-pci_conf_print_type2(pc, tag, regs)
+pci_conf_print_type2(pc, tag, regs, sizebars)
 	pci_chipset_tag_t pc;
 	pcitag_t tag;
 	const pcireg_t *regs;
+	int sizebars;
 {
 	pcireg_t rval;
 
@@ -828,7 +949,7 @@ pci_conf_print_type2(pc, tag, regs)
 	 */
 
 	pci_conf_print_bar(pc, tag, regs, 0x10,
-	    "CardBus socket/ExCA registers");
+	    "CardBus socket/ExCA registers", sizebars);
 
 	printf("    Reserved @ 0x14: 0x%04x\n",
 	    (regs[o2i(0x14)] >> 0) & 0xffff);
@@ -908,7 +1029,7 @@ pci_conf_print_type2(pc, tag, regs)
 		printf("(pin D)");
 		break;
 	default:
-		printf("(???)");
+		printf("(? ? ?)");
 		break;
 	}
 	printf("\n");
@@ -929,7 +1050,8 @@ pci_conf_print_type2(pc, tag, regs)
 	printf("    Subsystem vendor ID: 0x%04x\n", PCI_VENDOR(rval));
 	printf("    Subsystem ID: 0x%04x\n", PCI_PRODUCT(rval));
 
-	pci_conf_print_bar(pc, tag, regs, 0x44, "legacy-mode registers");
+	pci_conf_print_bar(pc, tag, regs, 0x44, "legacy-mode registers",
+	    sizebars);
 }
 
 void
@@ -941,12 +1063,18 @@ pci_conf_print(pc, tag, printfn)
 	pcireg_t regs[o2i(256)];
 	int off, endoff, hdrtype;
 	const char *typename;
-	void (*typeprintfn)(pci_chipset_tag_t, pcitag_t, const pcireg_t *);
+	void (*typeprintfn)(pci_chipset_tag_t, pcitag_t, const pcireg_t *, int);
+	int sizebars;
 
 	printf("PCI configuration registers:\n");
 
 	for (off = 0; off < 256; off += 4)
 		regs[o2i(off)] = pci_conf_read(pc, tag, off);
+
+	sizebars = 1;
+	if (PCI_CLASS(regs[o2i(PCI_CLASS_REG)]) == PCI_CLASS_BRIDGE &&
+	    PCI_SUBCLASS(regs[o2i(PCI_CLASS_REG)]) == PCI_SUBCLASS_BRIDGE_HOST)
+		sizebars = 0;
 
 	/* common header */
 	printf("  Common header:\n");
@@ -990,7 +1118,7 @@ pci_conf_print(pc, tag, printfn)
 	pci_conf_print_regs(regs, 16, endoff);
 	printf("\n");
 	if (typeprintfn)
-		(*typeprintfn)(pc, tag, regs);
+		(*typeprintfn)(pc, tag, regs, sizebars);
 	else
 		printf("    Don't know how to pretty-print type %d header.\n",
 		    hdrtype);

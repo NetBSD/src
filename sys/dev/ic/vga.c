@@ -1,4 +1,4 @@
-/* $NetBSD: vga.c,v 1.20 1999/09/29 17:29:24 ad Exp $ */
+/* $NetBSD: vga.c,v 1.20.2.1 2000/11/20 11:41:04 bouyer Exp $ */
 
 /*
  * Copyright (c) 1995, 1996 Carnegie-Mellon University.
@@ -29,14 +29,12 @@
 
 #include <sys/param.h>
 #include <sys/systm.h>
+#include <sys/callout.h>
 #include <sys/kernel.h>
 #include <sys/device.h>
 #include <sys/malloc.h>
 #include <sys/queue.h>
 #include <machine/bus.h>
-
-#include <dev/isa/isavar.h>
-#include <dev/isa/isareg.h>
 
 #include <dev/ic/mc6845reg.h>
 #include <dev/ic/pcdisplayvar.h>
@@ -98,6 +96,14 @@ struct vga_config {
 	bus_space_handle_t vc_bioshdl;
 
 	struct vgafont *vc_fonts[8];
+
+	struct vgascreen *wantedscreen;
+	void (*switchcb) __P((void *, int, int));
+	void *switchcbarg;
+
+	paddr_t (*vc_mmap) __P((void *, off_t, int));
+
+	struct callout vc_switch_callout;
 };
 
 static int vgaconsole, vga_console_type, vga_console_attached;
@@ -154,17 +160,17 @@ static unsigned char fgansitopc[] = {
 #endif
 };
 
-const struct wsscreen_descr vga_stdscreen = {
+const struct wsscreen_descr vga_25lscreen = {
 	"80x25", 80, 25,
 	&vga_emulops,
 	8, 16,
 	WSSCREEN_WSCOLORS | WSSCREEN_HILIT | WSSCREEN_BLINK
-}, vga_stdscreen_mono = {
+}, vga_25lscreen_mono = {
 	"80x25", 80, 25,
 	&vga_emulops,
 	8, 16,
 	WSSCREEN_HILIT | WSSCREEN_UNDERLINE | WSSCREEN_BLINK | WSSCREEN_REVERSE
-}, vga_stdscreen_bf = {
+}, vga_25lscreen_bf = {
 	"80x25bf", 80, 25,
 	&vga_emulops,
 	8, 16,
@@ -199,22 +205,40 @@ const struct wsscreen_descr vga_stdscreen = {
 	&vga_emulops,
 	8, 8,
 	WSSCREEN_WSCOLORS | WSSCREEN_BLINK
+}, vga_24lscreen = {
+	"80x24", 80, 24,
+	&vga_emulops,
+	8, 16,
+	WSSCREEN_WSCOLORS | WSSCREEN_HILIT | WSSCREEN_BLINK
+}, vga_24lscreen_mono = {
+	"80x24", 80, 24,
+	&vga_emulops,
+	8, 16,
+	WSSCREEN_HILIT | WSSCREEN_UNDERLINE | WSSCREEN_BLINK | WSSCREEN_REVERSE
+}, vga_24lscreen_bf = {
+	"80x24bf", 80, 24,
+	&vga_emulops,
+	8, 16,
+	WSSCREEN_WSCOLORS | WSSCREEN_BLINK
 };
 
 #define VGA_SCREEN_CANTWOFONTS(type) (!((type)->capabilities & WSSCREEN_HILIT))
 
 const struct wsscreen_descr *_vga_scrlist[] = {
-	&vga_stdscreen,
-	&vga_stdscreen_bf,
+	&vga_25lscreen,
+	&vga_25lscreen_bf,
 	&vga_40lscreen,
 	&vga_40lscreen_bf,
 	&vga_50lscreen,
 	&vga_50lscreen_bf,
+	&vga_24lscreen,
+	&vga_24lscreen_bf,
 	/* XXX other formats, graphics screen? */
 }, *_vga_scrlist_mono[] = {
-	&vga_stdscreen_mono,
+	&vga_25lscreen_mono,
 	&vga_40lscreen_mono,
 	&vga_50lscreen_mono,
+	&vga_24lscreen_mono,
 	/* XXX other formats, graphics screen? */
 };
 
@@ -227,12 +251,15 @@ const struct wsscreen_list vga_screenlist = {
 };
 
 static int	vga_ioctl __P((void *, u_long, caddr_t, int, struct proc *));
-static int	vga_mmap __P((void *, off_t, int));
+static paddr_t	vga_mmap __P((void *, off_t, int));
 static int	vga_alloc_screen __P((void *, const struct wsscreen_descr *,
 				      void **, int *, int *, long *));
 static void	vga_free_screen __P((void *, void *));
-static void	vga_show_screen __P((void *, void *));
+static int	vga_show_screen __P((void *, void *, int,
+				     void (*) (void *, int, int), void *));
 static int	vga_load_font __P((void *, void *, struct wsdisplay_font *));
+
+void vga_doswitch __P((struct vga_config *));
 
 const struct wsdisplay_accessops vga_accessops = {
 	vga_ioctl,
@@ -321,7 +348,8 @@ bad:
  */
 #define vga_valid_primary_font(f) \
 	(f->encoding == WSDISPLAY_FONTENC_IBM || \
-	f->encoding == WSDISPLAY_FONTENC_ISO)
+	f->encoding == WSDISPLAY_FONTENC_ISO || \
+	f->encoding == WSDISPLAY_FONTENC_ISO7)
 
 int
 vga_selectfont(vc, scr, name1, name2)
@@ -408,11 +436,6 @@ vga_init_screen(vc, scr, type, existing, attrp)
 		if (scr->pcs.dispoffset < scr->mindispoffset ||
 		    scr->pcs.dispoffset > scr->maxdispoffset)
 			scr->pcs.dispoffset = scr->mindispoffset;
-#ifdef PCDISPLAY_SOFTCURSOR
-		/* disable hardware cursor */
-		vga_6845_write(&vc->hdl, curstart, 0x10);
-		vga_6845_write(&vc->hdl, curend, 0x10);
-#endif
 	} else {
 		cpos = 0;
 		scr->pcs.dispoffset = scr->mindispoffset;
@@ -420,11 +443,7 @@ vga_init_screen(vc, scr, type, existing, attrp)
 
 	scr->pcs.vc_crow = cpos / type->ncols;
 	scr->pcs.vc_ccol = cpos % type->ncols;
-#ifdef PCDISPLAY_SOFTCURSOR
-	scr->pcs.cursoron = 0;
-#else
-	scr->pcs.cursoron = 1;
-#endif
+	pcdisplay_cursor_init(&scr->pcs, existing);
 
 #ifdef __alpha__
 	if (!vc->hdl.vh_mono)
@@ -497,20 +516,22 @@ vga_init(vc, iot, memt)
 	vc->nscreens = 0;
 	LIST_INIT(&vc->screens);
 	vc->active = NULL;
-	vc->currenttype = vh->vh_mono ? &vga_stdscreen_mono : &vga_stdscreen;
+	vc->currenttype = vh->vh_mono ? &vga_25lscreen_mono : &vga_25lscreen;
+	callout_init(&vc->vc_switch_callout);
 
 	vc->vc_fonts[0] = &vga_builtinfont;
-	for (i = 1; i < 7; i++)
+	for (i = 1; i < 8; i++)
 		vc->vc_fonts[i] = 0;
 
 	vc->currentfontset1 = vc->currentfontset2 = 0;
 }
 
 void
-vga_common_attach(self, iot, memt, type)
+vga_common_attach(self, iot, memt, type, map)
 	struct device *self;
 	bus_space_tag_t iot, memt;
 	int type;
+	paddr_t (*map) __P((void *, off_t, int));
 {
 	int console;
 	struct vga_config *vc;
@@ -525,6 +546,8 @@ vga_common_attach(self, iot, memt, type)
 		vc = malloc(sizeof(struct vga_config), M_DEVBUF, M_WAITOK);
 		vga_init(vc, iot, memt);
 	}
+
+	vc->vc_mmap = map;
 
 	aa.console = console;
 	aa.scrdata = (vc->hdl.vh_mono ? &vga_screenlist_mono : &vga_screenlist);
@@ -547,7 +570,20 @@ vga_cnattach(iot, memt, type, check)
 
 	/* set up bus-independent VGA configuration */
 	vga_init(&vga_console_vc, iot, memt);
+#ifdef VGA_CONSOLE_SCREENTYPE
+	scr = wsdisplay_screentype_pick(vga_console_vc.hdl.vh_mono ?
+	       &vga_screenlist_mono : &vga_screenlist, VGA_CONSOLE_SCREENTYPE);
+	if (!scr)
+		panic("vga_cnattach: invalid screen type");
+	if (scr->fontheight != 16)
+		panic("vga_cnattach: console screen type w/o font");
+	if (scr != vga_console_vc.currenttype) {
+		vga_setscreentype(&vga_console_vc.hdl, scr);
+		vga_console_vc.currenttype = scr;
+	}
+#else
 	scr = vga_console_vc.currenttype;
+#endif
 	vga_init_screen(&vga_console_vc, &vga_console_screen, scr, 1, &defattr);
 
 	vga_console_screen.pcs.active = 1;
@@ -617,14 +653,18 @@ vga_ioctl(v, cmd, data, flag, p)
 	return -1;
 }
 
-static int
+static paddr_t
 vga_mmap(v, offset, prot)
 	void *v;
 	off_t offset;
 	int prot;
 {
 
-	/* XXX */
+	struct vga_config *vc = v;
+
+	if (vc->vc_mmap != NULL)
+		return (*vc->vc_mmap)(v, offset, prot);
+
 	return -1;
 }
 
@@ -704,16 +744,50 @@ vga_setfont(vc, scr)
 	}
 }
 
-void
-vga_show_screen(v, cookie)
+int
+vga_show_screen(v, cookie, waitok, cb, cbarg)
 	void *v;
 	void *cookie;
+	int waitok;
+	void (*cb) __P((void *, int, int));
+	void *cbarg;
 {
 	struct vgascreen *scr = cookie, *oldscr;
 	struct vga_config *vc = scr->cfg;
-	struct vga_handle *vh = &vc->hdl;
-	const struct wsscreen_descr *type = scr->pcs.type;
 
+	oldscr = vc->active; /* can be NULL! */
+	if (scr == oldscr) {
+		return (0);
+	}
+
+	vc->wantedscreen = cookie;
+	vc->switchcb = cb;
+	vc->switchcbarg = cbarg;
+	if (cb) {
+		callout_reset(&vc->vc_switch_callout, 0,
+		    (void(*)(void *))vga_doswitch, vc);
+		return (EAGAIN);
+	}
+
+	vga_doswitch(vc);
+	return (0);
+}
+
+void
+vga_doswitch(vc)
+	struct vga_config *vc;
+{
+	struct vgascreen *scr, *oldscr;
+	struct vga_handle *vh = &vc->hdl;
+	const struct wsscreen_descr *type;
+
+	scr = vc->wantedscreen;
+	if (!scr) {
+		printf("vga_doswitch: disappeared\n");
+		(*vc->switchcb)(vc->switchcbarg, EIO, 0);
+		return;
+	}
+	type = scr->pcs.type;
 	oldscr = vc->active; /* can be NULL! */
 #ifdef DIAGNOSTIC
 	if (oldscr) {
@@ -763,6 +837,10 @@ vga_show_screen(v, cookie)
 
 	pcdisplay_cursor(&scr->pcs, scr->pcs.cursoron,
 			 scr->pcs.vc_crow, scr->pcs.vc_ccol);
+
+	vc->wantedscreen = 0;
+	if (vc->switchcb)
+		(*vc->switchcb)(vc->switchcbarg, 0, 0);
 }
 
 static int
@@ -878,8 +956,9 @@ vga_copyrows(id, srcrow, dstrow, nrows)
 #ifdef PCDISPLAY_SOFTCURSOR
 			int cursoron = scr->pcs.cursoron;
 
-			pcdisplay_cursor(&scr->pcs, 0, scr->pcs.vc_crow, 
-			    scr->pcs.vc_ccol);
+			if (cursoron)
+				pcdisplay_cursor(&scr->pcs, 0,
+				    scr->pcs.vc_crow, scr->pcs.vc_ccol);
 #endif
 			/* scroll up whole screen */
 			if ((scr->pcs.dispoffset + srcrow * ncols * 2)
@@ -897,8 +976,9 @@ vga_copyrows(id, srcrow, dstrow, nrows)
 			vga_6845_write(&scr->cfg->hdl, startadrl,
 				       scr->pcs.dispoffset >> 1);
 #ifdef PCDISPLAY_SOFTCURSOR
-			pcdisplay_cursor(&scr->pcs, cursoron,
-			    scr->pcs.vc_crow, scr->pcs.vc_ccol);
+			if (cursoron)
+				pcdisplay_cursor(&scr->pcs, 1,
+				    scr->pcs.vc_crow, scr->pcs.vc_ccol);
 #endif
 		} else {
 			bus_space_copy_region_2(memt, memh,
@@ -1048,6 +1128,31 @@ vga_pcvt_mapchar(uni, index)
 
 #endif /* WSCONS_SUPPORT_PCVTFONTS */
 
+#ifdef WSCONS_SUPPORT_ISO7FONTS
+
+static int
+vga_iso7_mapchar(int uni, unsigned int *index)
+{
+
+	/*
+	 * U+0384 (GREEK TONOS) to
+	 * U+03ce (GREEK SMALL LETTER OMEGA WITH TONOS)
+	 * map directly to the iso-9 font
+	 */
+	if (uni >= 0x0384 && uni <= 0x03ce) {
+		/* U+0384 is at offset 0xb4 in the font */
+		*index = uni - 0x0384 + 0xb4;
+		return (5);
+	}
+
+	/* XXX more chars in the iso-9 font */
+
+	*index = 0xa4; /* shaded rectangle */
+	return (0);
+}
+
+#endif /* WSCONS_SUPPORT_ISO7FONTS */
+
 static int _vga_mapchar __P((void *, struct vgafont *, int, unsigned int *));
 
 static int
@@ -1073,6 +1178,10 @@ _vga_mapchar(id, font, uni, index)
 #ifdef WSCONS_SUPPORT_PCVTFONTS
 	case WSDISPLAY_FONTENC_PCVT:
 		return (vga_pcvt_mapchar(uni, index));
+#endif
+#ifdef WSCONS_SUPPORT_ISO7FONTS
+	case WSDISPLAY_FONTENC_ISO7:
+		return (vga_iso7_mapchar(uni, index));
 #endif
 	default:
 #ifdef VGAFONTDEBUG

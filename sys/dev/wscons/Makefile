@@ -1,9 +1,6 @@
-#	$NetBSD: Makefile,v 1.2 1999/01/06 12:24:51 drochner Exp $
+#	$NetBSD: Makefile,v 1.2.8.1 2000/11/20 11:43:35 bouyer Exp $
 
 INCSDIR= /usr/include/dev/wscons
-
-INCS=	ascii.h wscons_callbacks.h wscons_raster.h wscons_rfont.h wsconsio.h \
-	wsdisplay_usl_io.h wsdisplayvar.h wsemulvar.h wseventvar.h \
-	wskbdvar.h wsksymdef.h wsksymvar.h wsmousevar.h
+INCS=	wsconsio.h wsdisplay_usl_io.h wsksymdef.h wsksymvar.h
 
 .include <bsd.kinc.mk>

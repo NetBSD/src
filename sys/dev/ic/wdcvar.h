@@ -1,4 +1,4 @@
-/*	$NetBSD: wdcvar.h,v 1.19.2.2 1999/10/20 22:33:28 thorpej Exp $	*/
+/*	$NetBSD: wdcvar.h,v 1.19.2.3 2000/11/20 11:41:06 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -36,11 +36,11 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-/*
- * XXX For scsipi_adapter and scsipi_channel.
- */
+/* XXX For scsipi_adapter and scsipi_channel. */
 #include <dev/scsipi/scsipi_all.h>
-#include <dev/scsipi/scsipiconf.h>
+#include <dev/scsipi/atapiconf.h>
+
+#include <sys/callout.h>
 
 #define	WAITTIME    (10 * hz)    /* time to wait for a completion */
 	/* this is a lot for hard drives, but not for cdroms */
@@ -50,6 +50,8 @@ struct channel_queue {  /* per channel queue (may be shared) */
 };
 
 struct channel_softc { /* Per channel data */
+	/* Our timeout callout */
+	struct callout ch_callout;
 	/* Our location */
 	int channel;
 	/* Our controller's softc */
@@ -66,6 +68,7 @@ struct channel_softc { /* Per channel data */
 	int ch_flags;
 #define WDCF_ACTIVE   0x01	/* channel is active */
 #define WDCF_IRQ_WAIT 0x10	/* controller is waiting for irq */
+#define WDCF_DMA_WAIT 0x20	/* controller is waiting for DMA */
 	u_int8_t ch_status;         /* copy of status register */
 	u_int8_t ch_error;          /* copy of error register */
 	/* per-drive infos */
@@ -96,6 +99,7 @@ struct wdc_softc { /* Per controller state */
 #define	WDC_CAPABILITY_ATAPI_NOSTREAM 0x0080 /* Don't use stream f on ATAPI */
 #define WDC_CAPABILITY_NO_EXTRA_RESETS 0x0100 /* only reset once */
 #define WDC_CAPABILITY_PREATA 0x0200 /* ctrl can be a pre-ata one */
+#define WDC_CAPABILITY_IRQACK 0x0400 /* callback to ack interrupt */
 	u_int8_t      PIO_cap; /* highest PIO mode supported */
 	u_int8_t      DMA_cap; /* highest DMA mode supported */
 	u_int8_t      UDMA_cap; /* highest UDMA mode supported */
@@ -105,18 +109,21 @@ struct wdc_softc { /* Per controller state */
 	/*
 	 * The reference count here is used for both IDE and ATAPI devices.
 	 */
-	struct scsipi_adapter sc_atapi_adapter;
-	int		sc_dying;
+	struct atapi_adapter sc_atapi_adapter;
 
 	/* if WDC_CAPABILITY_DMA set in 'cap' */
 	void            *dma_arg;
 	int            (*dma_init) __P((void *, int, int, void *, size_t,
 	                int));
-	void           (*dma_start) __P((void *, int, int, int));
+	void           (*dma_start) __P((void *, int, int));
 	int            (*dma_finish) __P((void *, int, int, int));
-/* flags passed to DMA functions */
+/* flags passed to dma_init */
 #define WDC_DMA_READ 0x01
-#define WDC_DMA_POLL 0x02
+#define WDC_DMA_IRQW 0x02
+	int		dma_status; /* status returned from dma_finish() */
+#define WDC_DMAST_NOIRQ	0x01	/* missing IRQ */
+#define WDC_DMAST_ERR	0x02	/* DMA error */
+#define WDC_DMAST_UNDER	0x04	/* DMA underrun */
 
 	/* if WDC_CAPABILITY_HWLOCK set in 'cap' */
 	int            (*claim_hw) __P((void *, int));
@@ -124,6 +131,9 @@ struct wdc_softc { /* Per controller state */
 
 	/* if WDC_CAPABILITY_MODE set in 'cap' */
 	void 		(*set_modes) __P((struct channel_softc *));
+
+	/* if WDC_CAPABILITY_IRQACK set in 'cap' */
+	void		(*irqack) __P((struct channel_softc *));
 };
 
  /*
@@ -174,6 +184,7 @@ int   wdcreset	__P((struct channel_softc *, int));
 #define VERBOSE 1 
 #define SILENT 0 /* wdcreset will not print errors */
 int   wdcwait __P((struct channel_softc *, int, int, int));
+int   wdc_dmawait __P((struct channel_softc *, struct wdc_xfer *, int));
 void  wdcbit_bucket __P(( struct channel_softc *, int));
 void  wdccommand __P((struct channel_softc *, u_int8_t, u_int8_t, u_int16_t,
 	                  u_int8_t, u_int8_t, u_int8_t, u_int8_t));
@@ -196,4 +207,3 @@ void	wdc_kill_pending __P((struct channel_softc *));
 #define WDC_RESET_WAIT 31000
 
 void wdc_atapibus_attach __P((struct channel_softc *));
-int   atapi_print       __P((void *, const char *));

@@ -1,4 +1,4 @@
-/*	$NetBSD: smc90cx6.c,v 1.33 1999/09/25 20:43:43 is Exp $ */
+/*	$NetBSD: smc90cx6.c,v 1.33.2.1 2000/11/20 11:40:56 bouyer Exp $ */
 
 /*-
  * Copyright (c) 1994, 1995, 1998 The NetBSD Foundation, Inc.
@@ -219,6 +219,7 @@ bah_attach_subr(sc)
 		(void (*) __P((void *)))bah_start, ifp);
 #endif
 
+	callout_init(&sc->sc_recon_ch);
 }
 
 /*
@@ -805,7 +806,7 @@ bahintr(arg)
 			 * double time if necessary.
 			 */
 	
-			untimeout(bah_reconwatch, (void *)sc);
+			callout_stop(&sc->sc_recon_ch);
 			newsec = time.tv_sec;
 			if ((newsec - sc->sc_recontime <= 2) && 
 			    (++sc->sc_reconcount == ARC_EXCESSIVE_RECONS)) {
@@ -814,7 +815,8 @@ bahintr(arg)
 				    "cable problem?\n", sc->sc_dev.dv_xname);
 			}
 			sc->sc_recontime = newsec;
-			timeout(bah_reconwatch, (void *)sc, 15*hz);
+			callout_reset(&sc->sc_recon_ch, 15 * hz,
+			    bah_reconwatch, (void *)sc);
 		}
 
 		if (maskedisr & BAH_RI) {
@@ -905,12 +907,12 @@ bah_reconwatch(arg)
  */
 int
 bah_ioctl(ifp, command, data)
-	register struct ifnet *ifp;
+	struct ifnet *ifp;
 	u_long command;
 	caddr_t data;
 {
 	struct bah_softc *sc;
-	register struct ifaddr *ifa;
+	struct ifaddr *ifa;
 	struct ifreq *ifr;
 	int s, error;
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: hmevar.h,v 1.1 1999/06/27 12:26:33 pk Exp $	*/
+/*	$NetBSD: hmevar.h,v 1.1.4.1 2000/11/20 11:40:34 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -38,6 +38,7 @@
 
 #include "rnd.h"
 
+#include <sys/callout.h>
 #if NRND > 0
 #include <sys/rnd.h>
 #endif
@@ -67,16 +68,21 @@ struct hme_softc {
 	struct ethercom	sc_ethercom;	/* Ethernet common part */
 	struct mii_data	sc_mii;		/* MII media control */
 #define sc_media	sc_mii.mii_media/* shorthand */
+	struct callout	sc_tick_ch;	/* tick callout */
 
 	/* The following bus handles are to be provided by the bus front-end */
 	bus_space_tag_t	sc_bustag;	/* bus tag */
 	bus_dma_tag_t	sc_dmatag;	/* bus dma tag */
+	bus_dmamap_t	sc_dmamap;	/* bus dma handle */
 	bus_space_handle_t sc_seb;	/* HME Global registers */
 	bus_space_handle_t sc_erx;	/* HME ERX registers */
 	bus_space_handle_t sc_etx;	/* HME ETX registers */
 	bus_space_handle_t sc_mac;	/* HME MAC registers */
 	bus_space_handle_t sc_mif;	/* HME MIF registers */
 	int		sc_burst;	/* DVMA burst size in effect */
+	int		sc_phys[2];	/* MII instance -> PHY map */
+
+	int		sc_pci;		/* XXXXX -- PCI buses are LE. */
 
 	/* Ring descriptor */
 	struct hme_ring		sc_rb;
@@ -89,7 +95,7 @@ struct hme_softc {
 
 	int			sc_debug;
 	void			*sc_sh;		/* shutdownhook cookie */
-	u_int8_t		sc_enaddr[6];	/* MAC address */
+	u_int8_t		sc_enaddr[ETHER_ADDR_LEN]; /* MAC address */
 
 	/* Special hardware hooks */
 	void	(*sc_hwreset) __P((struct hme_softc *));

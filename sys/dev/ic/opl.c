@@ -1,4 +1,4 @@
-/*	$NetBSD: opl.c,v 1.10 1999/10/05 03:29:22 itohy Exp $	*/
+/*	$NetBSD: opl.c,v 1.10.2.1 2000/11/20 11:40:50 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -482,7 +482,7 @@ oplsyn_noteon(ms, voice, freq, vel)
 	m_mult = (chars0 & OPL_MULTIPLE_MASK) * mult;
 	c_mult = (chars1 & OPL_MULTIPLE_MASK) * mult;
 	if ((block_fnum == OPL_FNUM_FAIL) || (m_mult > 15) || (c_mult > 15)) {
-		printf("oplsyn_noteon: frequence out of range %d\n",
+		printf("oplsyn_noteon: frequency out of range %d\n",
 		       MIDISYN_FREQ_TO_HZ(freq));
 		return;
 	}

@@ -1,4 +1,4 @@
-/*	$NetBSD: spkr.c,v 1.1 1998/04/15 20:26:18 drochner Exp $	*/
+/*	$NetBSD: spkr.c,v 1.1.14.1 2000/11/20 11:41:21 bouyer Exp $	*/
 
 /*
  * spkr.c -- device driver for console speaker on 80386
@@ -52,7 +52,7 @@ void tone(hz, ticks)
 /* emit tone of frequency hz for given number of ticks */
     u_int hz, ticks;
 {
-	pcppi_bell(ppicookie, hz, ticks, 1);
+	pcppi_bell(ppicookie, hz, ticks, PCPPI_BELL_SLEEP);
 }
 
 static void
@@ -151,7 +151,7 @@ playtone(pitch, value, sustain)
 /* play tone of proper duration for current rhythm signature */
     int	pitch, value, sustain;
 {
-    register int	sound, silence, snum = 1, sdenom = 1;
+    int	sound, silence, snum = 1, sdenom = 1;
 
     /* this weirdness avoids floating-point arithmetic */
     for (; sustain; sustain--)
@@ -192,7 +192,7 @@ playstring(cp, slen)
     for (; slen--; cp++)
     {
 	int		sustain, timeval, tempo;
-	register char	c = toupper(*cp);
+	char	c = toupper(*cp);
 
 #ifdef SPKRDEBUG
 	printf("playstring: %c (%x)\n", c, c);
@@ -413,7 +413,7 @@ spkrwrite(dev, uio, flags)
     struct uio *uio;
     int flags;
 {
-    register int n;
+    int n;
     int error;
 #ifdef SPKRDEBUG
     printf("spkrwrite: entering with dev = %x, count = %d\n",

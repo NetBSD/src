@@ -1,4 +1,4 @@
-/* $NetBSD: vga_subr.c,v 1.5 1999/09/19 21:48:08 ad Exp $ */
+/* $NetBSD: vga_subr.c,v 1.5.2.1 2000/11/20 11:41:05 bouyer Exp $ */
 
 /*
  * Copyright (c) 1998
@@ -141,11 +141,7 @@ vga_setscreentype(vh, type)
 	/* lo byte */
 	vga_6845_write(vh, vde, type->fontheight * type->nrows - 1);
 
-#ifdef PCDISPLAY_SOFTCURSOR
-	/* disable hardware cursor */
-	vga_6845_write(vh, curstart, 0x10);
-	vga_6845_write(vh, curend, 0x10);
-#else
+#ifndef PCDISPLAY_SOFTCURSOR
 	/* set cursor to last 2 lines */
 	vga_6845_write(vh, curstart, type->fontheight - 2);
 	vga_6845_write(vh, curend, type->fontheight - 1);

@@ -1,4 +1,4 @@
-/*	$NetBSD: kbd_zs.c,v 1.1 1999/05/14 06:42:02 mrg Exp $	*/
+/*	$NetBSD: kbd_zs.c,v 1.1.4.1 2000/11/20 11:43:11 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -62,6 +62,7 @@
 #include <sys/conf.h>
 #include <sys/device.h>
 #include <sys/kernel.h>
+#include <sys/malloc.h>
 #include <sys/proc.h>
 #include <sys/signal.h>
 #include <sys/signalvar.h>
@@ -142,11 +143,27 @@ kbd_zs_attach(parent, self, aux)
 	k->k_cs = cs;
 	k->k_write_data = kbd_zs_write_data;
 
-	if (args->hwflags & ZS_HWFLAG_CONSOLE) {
+	if ((args->hwflags & ZS_HWFLAG_CONSOLE_INPUT) != 0) {
+		/*
+		 * Hookup ourselves as the console input channel
+		 */
+		struct cons_channel *cc;
+
+		if ((cc = malloc(sizeof *cc, M_DEVBUF, M_NOWAIT)) == NULL)
+			return;
+
+		cc->cc_dev = self;
+		cc->cc_iopen = kbd_cc_open;
+		cc->cc_iclose = kbd_cc_close;
+		cc->cc_upstream = NULL;
+		cons_attach_input(cc, args->consdev);
+		k->k_cc = cc;
 		k->k_isconsole = 1;
-		printf(" (console)");
+		printf(" (console input)");
 	}
 	printf("\n");
+
+	callout_init(&k->k_repeat_ch);
 
 	/* Initialize the speed, etc. */
 	s = splzs();
@@ -173,9 +190,6 @@ kbd_zs_attach(parent, self, aux)
 	/* Magic sequence. */
 	k->k_magic1 = KBD_L1;
 	k->k_magic2 = KBD_A;
-
-	/* Now attach the (kd) pseudo-driver. */
-	kd_init(kbd_unit);
 }
 
 /*
@@ -196,11 +210,11 @@ kbd_zs_write_data(k, c)
 
 static void
 kbd_zs_rxint(cs)
-	register struct zs_chanstate *cs;
+	struct zs_chanstate *cs;
 {
-	register struct kbd_softc *k;
-	register int put, put_next;
-	register u_char c, rr1;
+	struct kbd_softc *k;
+	int put, put_next;
+	u_char c, rr1;
 
 	k = cs->cs_private;
 	put = k->k_rbput;
@@ -260,9 +274,9 @@ kbd_zs_rxint(cs)
 
 static void
 kbd_zs_txint(cs)
-	register struct zs_chanstate *cs;
+	struct zs_chanstate *cs;
 {
-	register struct kbd_softc *k;
+	struct kbd_softc *k;
 
 	k = cs->cs_private;
 	zs_write_csr(cs, ZSWR0_RESET_TXINT);
@@ -274,11 +288,11 @@ kbd_zs_txint(cs)
 
 static void
 kbd_zs_stint(cs, force)
-	register struct zs_chanstate *cs;
+	struct zs_chanstate *cs;
 	int force;
 {
-	register struct kbd_softc *k;
-	register int rr0;
+	struct kbd_softc *k;
+	int rr0;
 
 	k = cs->cs_private;
 
@@ -316,10 +330,10 @@ static void
 kbd_zs_softint(cs)
 	struct zs_chanstate *cs;
 {
-	register struct kbd_softc *k;
-	register int get, c, s;
+	struct kbd_softc *k;
+	int get, c, s;
 	int intr_flags;
-	register u_short ring_data;
+	u_short ring_data;
 
 	k = cs->cs_private;
 

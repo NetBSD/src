@@ -1,7 +1,7 @@
-/*	$NetBSD: tlphy.c,v 1.18 1999/05/14 11:40:28 drochner Exp $	*/
+/*	$NetBSD: tlphy.c,v 1.18.2.1 2000/11/20 11:42:12 bouyer Exp $	*/
 
 /*-
- * Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.
+ * Copyright (c) 1998, 1999, 2000 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -106,13 +106,18 @@ int	tlphymatch __P((struct device *, struct cfdata *, void *));
 void	tlphyattach __P((struct device *, struct device *, void *));
 
 struct cfattach tlphy_ca = {
-	sizeof(struct tlphy_softc), tlphymatch, tlphyattach
+	sizeof(struct tlphy_softc), tlphymatch, tlphyattach, mii_phy_detach,
+	    mii_phy_activate
 };
 
 int	tlphy_service __P((struct mii_softc *, struct mii_data *, int));
 int	tlphy_auto __P((struct tlphy_softc *, int));
 void	tlphy_acomp __P((struct tlphy_softc *));
-void	tlphy_status __P((struct tlphy_softc *));
+void	tlphy_status __P((struct mii_softc *));
+
+const struct mii_phy_funcs tlphy_funcs = {
+	tlphy_service, tlphy_status, mii_phy_reset,
+};
 
 int
 tlphymatch(parent, match, aux)
@@ -145,10 +150,11 @@ tlphyattach(parent, self, aux)
 
 	sc->sc_mii.mii_inst = mii->mii_instance;
 	sc->sc_mii.mii_phy = ma->mii_phyno;
-	sc->sc_mii.mii_service = tlphy_service;
+	sc->sc_mii.mii_funcs = &tlphy_funcs;
 	sc->sc_mii.mii_pdata = mii;
+	sc->sc_mii.mii_flags = mii->mii_flags;
 
-	mii_phy_reset(&sc->sc_mii);
+	PHY_RESET(&sc->sc_mii);
 
 	/*
 	 * Note that if we're on a device that also supports 100baseTX,
@@ -164,15 +170,8 @@ tlphyattach(parent, self, aux)
 	else
 		sc->sc_mii.mii_capabilities = 0;
 
+
 #define	ADD(m, c)	ifmedia_add(&mii->mii_media, (m), (c), NULL)
-
-	ADD(IFM_MAKEWORD(IFM_ETHER, IFM_NONE, 0, sc->sc_mii.mii_inst),
-	    BMCR_ISO);
-
-	if ((sc->sc_tlphycap & TLPHY_MEDIA_NO_10_T) == 0)
-		ADD(IFM_MAKEWORD(IFM_ETHER, IFM_10_T, IFM_LOOP,
-		    sc->sc_mii.mii_inst), BMCR_LOOP);
-
 #define	PRINT(s)	printf("%s%s", sep, s); sep = ", "
 
 	printf("%s: ", sc->sc_mii.mii_dev.dv_xname);
@@ -180,19 +179,18 @@ tlphyattach(parent, self, aux)
 		if (sc->sc_tlphycap & TLPHY_MEDIA_10_2) {
 			ADD(IFM_MAKEWORD(IFM_ETHER, IFM_10_2, 0,
 			    sc->sc_mii.mii_inst), 0);
-			PRINT("10base2/BNC");
+			PRINT("10base2");
 		} else if (sc->sc_tlphycap & TLPHY_MEDIA_10_5) {
 			ADD(IFM_MAKEWORD(IFM_ETHER, IFM_10_5, 0,
 			    sc->sc_mii.mii_inst), 0);
-			PRINT("10base5/AUI");
+			PRINT("10base5");
 		}
 	}
 	if (sc->sc_mii.mii_capabilities & BMSR_MEDIAMASK) {
-		printf(sep);
-		mii_add_media(mii, sc->sc_mii.mii_capabilities,
-		    sc->sc_mii.mii_inst);
-	} else if ((sc->sc_tlphycap & (TLPHY_MEDIA_10_2 | TLPHY_MEDIA_10_5))
-	    == 0)
+		printf("%s", sep);
+		mii_phy_add_media(&sc->sc_mii);
+	} else if ((sc->sc_tlphycap &
+		    (TLPHY_MEDIA_10_2 | TLPHY_MEDIA_10_5)) == 0)
 		printf("no media present");
 	printf("\n");
 #undef ADD
@@ -208,6 +206,9 @@ tlphy_service(self, mii, cmd)
 	struct tlphy_softc *sc = (struct tlphy_softc *)self;
 	struct ifmedia_entry *ife = mii->mii_media.ifm_cur;
 	int reg;
+
+	if ((sc->sc_mii.mii_dev.dv_flags & DVF_ACTIVE) == 0)
+		return (ENXIO);
 
 	if ((sc->sc_mii.mii_flags & MIIF_DOINGAUTO) == 0 && sc->sc_need_acomp)
 		tlphy_acomp(sc);
@@ -256,9 +257,7 @@ tlphy_service(self, mii, cmd)
 		default:
 			PHY_WRITE(&sc->sc_mii, MII_TLPHY_CTRL, 0);
 			delay(100000);
-			PHY_WRITE(&sc->sc_mii, MII_ANAR,
-			    mii_anar(ife->ifm_media));
-			PHY_WRITE(&sc->sc_mii, MII_BMCR, ife->ifm_data);
+			mii_phy_setmedia(&sc->sc_mii);
 		}
 		break;
 
@@ -282,46 +281,31 @@ tlphy_service(self, mii, cmd)
 			return (0);
 
 		/*
-		 * Check to see if we have link.  If we do, we don't
-		 * need to restart the autonegotiation process.  Read
-		 * the BMSR twice in case it's latched.
-		 *
 		 * XXX WHAT ABOUT CHECKING LINK ON THE BNC/AUI?!
 		 */
-		reg = PHY_READ(&sc->sc_mii, MII_BMSR) |
-		    PHY_READ(&sc->sc_mii, MII_BMSR);
-		if (reg & BMSR_LINK)
-			return (0);
 
-		/*
-		 * Only retry autonegotiation every 5 seconds.
-		 */
-		if (++sc->sc_mii.mii_ticks != 5)
-			return (0);
-
-		sc->sc_mii.mii_ticks = 0;
-		mii_phy_reset(&sc->sc_mii);
-		if (tlphy_auto(sc, 0) == EJUSTRETURN)
+		if (mii_phy_tick(&sc->sc_mii) == EJUSTRETURN)
 			return (0);
 		break;
+
+	case MII_DOWN:
+		mii_phy_down(&sc->sc_mii);
+		return (0);
 	}
 
 	/* Update the media status. */
-	tlphy_status(sc);
+	mii_phy_status(&sc->sc_mii);
 
 	/* Callback if something changed. */
-	if (sc->sc_mii.mii_active != mii->mii_media_active ||
-	    cmd == MII_MEDIACHG) {
-		(*mii->mii_statchg)(sc->sc_mii.mii_dev.dv_parent);
-		sc->sc_mii.mii_active = mii->mii_media_active;
-	}
+	mii_phy_update(&sc->sc_mii, cmd);
 	return (0);
 }
 
 void
-tlphy_status(sc)
-	struct tlphy_softc *sc;
+tlphy_status(physc)
+	struct mii_softc *physc;
 {
+	struct tlphy_softc *sc = (void *) physc;
 	struct mii_data *mii = sc->sc_mii.mii_pdata;
 	struct tl_softc *tlsc = (struct tl_softc *)sc->sc_mii.mii_dev.dv_parent;
 	int bmsr, bmcr, tlctrl;

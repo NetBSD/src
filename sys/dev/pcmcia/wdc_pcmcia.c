@@ -1,4 +1,4 @@
-/*	$NetBSD: wdc_pcmcia.c,v 1.21.2.2 1999/10/20 22:38:06 thorpej Exp $ */
+/*	$NetBSD: wdc_pcmcia.c,v 1.21.2.3 2000/11/20 11:42:48 bouyer Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -37,26 +37,12 @@
  */
 
 #include <sys/param.h>
-#include <sys/systm.h>
-#include <sys/kernel.h>
-#include <sys/conf.h>
-#include <sys/file.h>
-#include <sys/stat.h>
-#include <sys/ioctl.h>
-#include <sys/buf.h>
-#include <sys/uio.h>
-#include <sys/malloc.h>
 #include <sys/device.h>
-#include <sys/disklabel.h>
-#include <sys/disk.h>
-#include <sys/syslog.h>
-#include <sys/proc.h>
+#include <sys/malloc.h>
+#include <sys/systm.h>
 
-#include <vm/vm.h>
-
-#include <machine/cpu.h>
-#include <machine/intr.h>
 #include <machine/bus.h>
+#include <machine/intr.h>
 
 #include <dev/pcmcia/pcmciareg.h>
 #include <dev/pcmcia/pcmciavar.h>
@@ -96,7 +82,6 @@ struct wdc_pcmcia_product {
 	u_int32_t	wpp_vendor;	/* vendor ID */
 	u_int32_t	wpp_product;	/* product ID */
 	int		wpp_quirk_flag;	/* Quirk flags */
-#define WDC_PCMCIA_FORCE_16BIT_IO	0x01 /* Don't use PCMCIA_WIDTH_AUTO */
 #define WDC_PCMCIA_NO_EXTRA_RESETS	0x02 /* Only reset ctrl once */
 	const char	*wpp_cis_info[4];	/* XXX necessary? */
 	const char	*wpp_name;	/* product name */
@@ -108,15 +93,9 @@ struct wdc_pcmcia_product {
 	  PCMCIA_STR_DIGITAL_MOBILE_MEDIA_CDROM },
 
 	{ PCMCIA_VENDOR_IBM,
-	  PCMCIA_PRODUCT_IBM_PORTABLE_CDROM_DRIVE,
+	  PCMCIA_PRODUCT_IBM_PORTABLE_CDROM,
 	  0, { NULL, "PCMCIA Portable CD-ROM Drive", NULL, NULL },
-	  PCMCIA_STR_IBM_PORTABLE_CDROM_DRIVE },
-
-	{ PCMCIA_VENDOR_HAGIWARASYSCOM,
-	  -1,			/* XXX */
-	  WDC_PCMCIA_FORCE_16BIT_IO,
-	  { NULL, NULL, NULL, NULL },
-	  "Hagiwara SYS-COM CompactFlash Card" },
+	  PCMCIA_STR_IBM_PORTABLE_CDROM },
 
 	/* The TEAC IDE/Card II is used on the Sony Vaio */
 	{ PCMCIA_VENDOR_TEAC,
@@ -124,6 +103,28 @@ struct wdc_pcmcia_product {
 	  WDC_PCMCIA_NO_EXTRA_RESETS,
 	  PCMCIA_CIS_TEAC_IDECARDII,
 	  PCMCIA_STR_TEAC_IDECARDII },
+
+	/*
+	 * EXP IDE/ATAPI DVD Card use with some DVD players.
+	 * Does not have a vendor ID or product ID.
+	 */
+	{ -1,
+	  -1,
+	  0,
+	  PCMCIA_CIS_EXP_EXPMULTIMEDIA,
+	  PCMCIA_STR_EXP_EXPMULTIMEDIA },
+
+	/* Mobile Dock 2, which doesn't have vendor ID nor product ID */
+	{ -1, -1, 0,
+	  { "SHUTTLE TECHNOLOGY LTD.", "PCCARD-IDE/ATAPI Adapter", NULL, NULL},
+	  "SHUTTLE TECHNOLOGY IDE/ATAPI Adapter"
+	},
+
+	/* Toshiba Portege 3110 CD, with neither vendor ID nor product ID */
+	{ -1, -1, 0,
+	  { "FREECOM", "PCCARD-IDE", NULL, NULL},
+	  "FREECOM PCCARD-IDE"
+	},
 
 	{ 0, 0, 0, { NULL, NULL, NULL, NULL}, NULL }
 };
@@ -283,49 +284,39 @@ wdc_pcmcia_attach(parent, self, aux)
 
 	if (cfe == NULL) {
 		printf(": can't handle card info\n");
-		return;
+		goto no_config_entry;
 	}
 
 	/* Enable the card. */
 	pcmcia_function_init(pa->pf, cfe);
 	if (pcmcia_function_enable(pa->pf)) {
 		printf(": function enable failed\n");
-		return;
+		goto enable_failed;
 	}
 
-	/*
-	 * XXX  DEC Mobile Media CDROM is not yet tested whether it works
-	 * XXX  with PCMCIA_WIDTH_IO16.  HAGIWARA SYS-COM HPC-CF32 doesn't
-	 * XXX  work with PCMCIA_WIDTH_AUTO.
-	 * XXX  CANON FC-8M (SANDISK SDCFB 8M) works for both _AUTO and IO16.
-	 * XXX  So, here is temporary work around.
-	 */
 	wpp = wdc_pcmcia_lookup(pa);
 	if (wpp != NULL)
 		quirks = wpp->wpp_quirk_flag;
 	else
 		quirks = 0;
 
-	if (pcmcia_io_map(pa->pf, quirks & WDC_PCMCIA_FORCE_16BIT_IO ?
-	    PCMCIA_WIDTH_IO16 : PCMCIA_WIDTH_AUTO, 0,
+	if (pcmcia_io_map(pa->pf, PCMCIA_WIDTH_AUTO, 0,
 	    sc->sc_pioh.size, &sc->sc_pioh, &sc->sc_iowindow)) {
 		printf(": can't map first I/O space\n");
-		return;
+		goto iomap_failed;
 	} 
 
-	/*
-	 * Currently, # of iospace is 1 except DIGITAL Mobile Media CD-ROM.
-	 * So whether the work around like above is necessary or not
-	 * is unknown.  XXX.
-	 */
-	if (cfe->num_iospace > 1 &&
-	    pcmcia_io_map(pa->pf, PCMCIA_WIDTH_AUTO, 0,
+	if (cfe->num_iospace <= 1)
+		sc->sc_auxiowindow = -1;
+	else if (pcmcia_io_map(pa->pf, PCMCIA_WIDTH_AUTO, 0,
 	    sc->sc_auxpioh.size, &sc->sc_auxpioh, &sc->sc_auxiowindow)) {
 		printf(": can't map second I/O space\n");
-		return;
-	} else
-		sc->sc_auxiowindow = -1;
+		goto iomapaux_failed;
+	}
 
+	if ((wpp != NULL) && (wpp->wpp_name != NULL))
+		printf(": %s", wpp->wpp_name);
+	
 	printf("\n");
 
 	sc->wdc_channel.cmd_iot = sc->sc_pioh.iot;
@@ -346,17 +337,41 @@ wdc_pcmcia_attach(parent, self, aux)
 	if (sc->wdc_channel.ch_queue == NULL) {
 		printf("%s: can't allocate memory for command queue\n",
 		    sc->sc_wdcdev.sc_dev.dv_xname);
-		return;
+		goto ch_queue_alloc_failed;
 	}
 	if (quirks & WDC_PCMCIA_NO_EXTRA_RESETS)
 		sc->sc_wdcdev.cap |= WDC_CAPABILITY_NO_EXTRA_RESETS;
 
 	/* We can enable and disable the controller. */
-	sc->sc_wdcdev.sc_atapi_adapter.adapt_enable = wdc_pcmcia_enable;
+	sc->sc_wdcdev.sc_atapi_adapter._generic.adapt_enable =
+	    wdc_pcmcia_enable;
 
 	sc->sc_flags |= WDC_PCMCIA_ATTACH;
-	wdcattach(&sc->wdc_channel);
+	wdcattach(&sc->wdc_channel);	/* should return an error XXX */
 	sc->sc_flags &= ~WDC_PCMCIA_ATTACH;
+	return;
+
+ ch_queue_alloc_failed:
+	/* Unmap our aux i/o window. */
+	if (sc->sc_auxiowindow != -1)
+		pcmcia_io_unmap(sc->sc_pf, sc->sc_auxiowindow);
+
+ iomapaux_failed:
+	/* Unmap our i/o window. */
+	pcmcia_io_unmap(sc->sc_pf, sc->sc_iowindow);
+
+ iomap_failed:
+	/* Disable the function */
+	pcmcia_function_disable(sc->sc_pf);
+
+ enable_failed:
+	/* Unmap our i/o space. */
+	pcmcia_io_free(sc->sc_pf, &sc->sc_pioh);
+	if (cfe->num_iospace == 2)
+		pcmcia_io_free(sc->sc_pf, &sc->sc_auxpioh);
+
+ no_config_entry:
+	sc->sc_iowindow = -1;
 }
 
 int
@@ -367,10 +382,15 @@ wdc_pcmcia_detach(self, flags)
 	struct wdc_pcmcia_softc *sc = (struct wdc_pcmcia_softc *)self;
 	int error;
 
+	if (sc->sc_iowindow == -1)
+		/* Nothing to detach */
+		return (0);
+
 	if ((error = wdcdetach(self, flags)) != 0)
 		return (error);
 
-	free(sc->wdc_channel.ch_queue, M_DEVBUF);
+	if (sc->wdc_channel.ch_queue != NULL)
+		free(sc->wdc_channel.ch_queue, M_DEVBUF);
 
 	/* Unmap our i/o window and i/o space. */
 	pcmcia_io_unmap(sc->sc_pf, sc->sc_iowindow);
@@ -391,16 +411,18 @@ wdc_pcmcia_enable(self, onoff)
 	struct wdc_pcmcia_softc *sc = (void *)self;
 
 	if (onoff) {
-		/* Establish the interrupt handler. */
-		sc->sc_ih = pcmcia_intr_establish(sc->sc_pf, IPL_BIO, wdcintr,
-		    &sc->wdc_channel);
-		if (sc->sc_ih == NULL) {
-			printf("%s: couldn't establish interrupt handler\n",
-			    sc->sc_wdcdev.sc_dev.dv_xname);
-			return (EIO);
-		}
-
+		/* See the comment in aic_pcmcia_enable */
 		if ((sc->sc_flags & WDC_PCMCIA_ATTACH) == 0) {
+			/* Establish the interrupt handler. */
+			sc->sc_ih = pcmcia_intr_establish(sc->sc_pf, IPL_BIO,
+			    wdcintr, &sc->wdc_channel);
+			if (sc->sc_ih == NULL) {
+				printf("%s: "
+				    "couldn't establish interrupt handler\n",
+				    sc->sc_wdcdev.sc_dev.dv_xname);
+				return (EIO);
+			}
+
 			if (pcmcia_function_enable(sc->sc_pf)) {
 				printf("%s: couldn't enable PCMCIA function\n",
 				    sc->sc_wdcdev.sc_dev.dv_xname);
@@ -411,7 +433,8 @@ wdc_pcmcia_enable(self, onoff)
 		}
 	} else {
 		pcmcia_function_disable(sc->sc_pf);
-		pcmcia_intr_disestablish(sc->sc_pf, sc->sc_ih);
+		if ((sc->sc_flags & WDC_PCMCIA_ATTACH) == 0)
+			pcmcia_intr_disestablish(sc->sc_pf, sc->sc_ih);
 	}
 
 	return (0);

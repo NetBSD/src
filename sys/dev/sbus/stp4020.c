@@ -1,4 +1,4 @@
-/*	$NetBSD: stp4020.c,v 1.5 1999/07/06 21:44:11 thorpej Exp $ */
+/*	$NetBSD: stp4020.c,v 1.5.2.1 2000/11/20 11:43:07 bouyer Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -55,7 +55,7 @@
 #include <dev/pcmcia/pcmciachip.h>
 
 #include <machine/bus.h>
-#include <machine/autoconf.h>
+#include <machine/intr.h>
 
 #include <dev/sbus/sbusvar.h>
 #include <dev/sbus/stp4020reg.h>
@@ -129,6 +129,9 @@ struct cfattach nell_ca = {
 	sizeof(struct stp4020_softc), stp4020match, stp4020attach
 };
 
+#ifdef STP4020_DEBUG
+static void	stp4020_dump_regs __P((struct stp4020_socket *));
+#endif
 
 static int	stp4020_rd_sockctl __P((struct stp4020_socket *, int));
 static void	stp4020_wr_sockctl __P((struct stp4020_socket *, int, int));
@@ -278,7 +281,7 @@ stp4020attach(parent, self, aux)
 	sc->sc_socks[0].sc = sc->sc_socks[1].sc = sc;
 	sc->sc_socks[0].tag = sc->sc_socks[1].tag = sa->sa_bustag;
 
-	if (sa->sa_nreg < 7) {
+	if (sa->sa_nreg < 8) {
 		printf("%s: only %d register sets\n",
 			self->dv_xname, sa->sa_nreg);
 		return;
@@ -290,9 +293,10 @@ stp4020attach(parent, self, aux)
 		return;
 	}
 
+#define STP4020_BANK_PROM	0
 #define STP4020_BANK_CTRL	4
 	for (i = 0; i < 8; i++) {
-		int s, w;
+
 		/*
 		 * STP4020 Register address map:
 		 *	bank  0:   Forth PROM
@@ -300,89 +304,51 @@ stp4020attach(parent, self, aux)
 		 *	bank  4:   control registers
 		 *	banks 5-7: socket 1, windows 0-2
 		 */
-		if (i == STP4020_BANK_CTRL) {
-			if (sbus_bus_map(sa->sa_bustag,
-					 sa->sa_reg[i].sbr_slot,
-					 sa->sa_reg[i].sbr_offset,
-					 sa->sa_reg[i].sbr_size,
-					 BUS_SPACE_MAP_LINEAR, 0,
-					 &bh) != 0) {
-				printf("%s: attach: cannot map registers\n",
-					self->dv_xname);
-				return;
-			}
-			/*
-			 * Copy tag and handle to both socket structures
-			 * for easy access in control/status IO functions.
-			 */
-			sc->sc_socks[0].regs = sc->sc_socks[1].regs = bh;
-		}
 
-		if (i < STP4020_BANK_CTRL)
-			s = 0, w = i;		/* banks 0-2 */
-		else
-			s = 1, w = i - 4;	/* banks 4-6 */
+		if (i == STP4020_BANK_PROM)
+			/* Skip the PROM */
+			continue;
 
 		if (sbus_bus_map(sa->sa_bustag,
 				 sa->sa_reg[i].sbr_slot,
 				 sa->sa_reg[i].sbr_offset,
 				 sa->sa_reg[i].sbr_size,
 				 BUS_SPACE_MAP_LINEAR, 0,
-				 &sc->sc_socks[s].windows[w].winaddr) != 0) {
+				 &bh) != 0) {
 			printf("%s: attach: cannot map registers\n",
 				self->dv_xname);
 			return;
 		}
+
+		if (i == STP4020_BANK_CTRL) {
+			/*
+			 * Copy tag and handle to both socket structures
+			 * for easy access in control/status IO functions.
+			 */
+			sc->sc_socks[0].regs = sc->sc_socks[1].regs = bh;
+		} else if (i < STP4020_BANK_CTRL) {
+			/* banks 1-3 */
+			sc->sc_socks[0].windows[i-1].winaddr = bh;
+		} else {
+			/* banks 5-7 */
+			sc->sc_socks[1].windows[i-5].winaddr = bh;
+		}
 	}
 
 	sbus_establish(&sc->sc_sd, &sc->sc_dev);
-
-#if 0 /*XXX-think about tracking boot devices*/
-	/* Propagate bootpath */
-	if (sa->sa_bp != NULL)
-		bp = sa->sa_bp + 1;
-	else
-		bp = NULL;
-#endif
 
 	/*
 	 * We get to use two SBus interrupt levels.
 	 * The higher level we use for status change interrupts;
 	 * the lower level for PC card I/O.
 	 */
-	bus_intr_establish(sa->sa_bustag, sa->sa_intr[1].sbi_pri,
-			   0, stp4020_statintr, sc);
+	if (sa->sa_nintr != 0) {
+		bus_intr_establish(sa->sa_bustag, sa->sa_intr[1].sbi_pri,
+				   IPL_NONE, 0, stp4020_statintr, sc);
 
-	bus_intr_establish(sa->sa_bustag, sa->sa_intr[0].sbi_pri,
-			   0, stp4020_iointr, sc);
-
-#ifdef STP4020_DEBUG
-	/*
-	 * Dump control and status registers.
-	 */
-	for (i = 0; i < STP4020_NSOCK; i++) {
-		char bits[64];
-		struct stp4020_socket *h;
-
-		h = &sc->sc_socks[i];
-		printf("socket[%d] registers:\n", i);
-		bitmask_snprintf(stp4020_rd_sockctl(h, STP4020_ICR0_IDX),
-				 STP4020_ICR0_BITS, bits, sizeof(bits));
-		printf("\tICR0=%s\n", bits);
-
-		bitmask_snprintf(stp4020_rd_sockctl(h, STP4020_ICR1_IDX),
-				 STP4020_ICR1_BITS, bits, sizeof(bits));
-		printf("\tICR1=%s\n", bits);
-
-		bitmask_snprintf(stp4020_rd_sockctl(h, STP4020_ISR0_IDX),
-				 STP4020_ISR0_IOBITS, bits, sizeof(bits));
-		printf("\tISR0=%s\n", bits);
-
-		bitmask_snprintf(stp4020_rd_sockctl(h, STP4020_ISR1_IDX),
-				 STP4020_ISR1_BITS, bits, sizeof(bits));
-		printf("\tISR1=%s\n", bits);
+		bus_intr_establish(sa->sa_bustag, sa->sa_intr[0].sbi_pri,
+				   IPL_NONE, 0, stp4020_iointr, sc);
 	}
-#endif
 
 	rev = stp4020_rd_sockctl(&sc->sc_socks[0], STP4020_ISR1_IDX) &
 		STP4020_ISR1_REV_M;
@@ -401,6 +367,9 @@ stp4020attach(parent, self, aux)
 		struct stp4020_socket *h = &sc->sc_socks[i];
 		h->sock = i;
 		h->sc = sc;
+#ifdef STP4020_DEBUG
+		stp4020_dump_regs(h);
+#endif
 		stp4020_attach_socket(h);
 	}
 }
@@ -416,6 +385,7 @@ stp4020_attach_socket(h)
 	h->winalloc = 0;
 
 	/* Configure one pcmcia device per socket */
+	paa.paa_busname = "pcmcia";
 	paa.pct = (pcmcia_chipset_tag_t)h->sc->sc_pct;
 	paa.pch = (pcmcia_chipset_handle_t)h;
 	paa.iobase = 0;
@@ -698,6 +668,17 @@ stp4020_chip_mem_map(pch, kind, card_addr, size, pcmhp, offsetp, windowp)
 	struct stp4020_socket *h = (struct stp4020_socket *)pch;
 	bus_addr_t offset;
 	int win, v;
+
+	int mem8 = (kind & PCMCIA_WIDTH_MEM_MASK) == PCMCIA_WIDTH_MEM8;
+	kind &= ~PCMCIA_WIDTH_MEM_MASK;
+
+	if(mem8) {
+	    /* XXX Fix 8-bit memory accesses (can this be done at all?) */
+#ifdef DIAGNOSTIC
+	    printf("stp4020_chip_mem_map: can't handle 8-bit memory\n");
+#endif
+	    return (-1);
+	}
 
 	win = pcmhp->mhandle;
 	*windowp = win;
@@ -1010,3 +991,31 @@ extern	int cold;
 #endif
 	tsleep(&ticks, 0, "stp4020_delay", ticks);
 }
+
+#ifdef STP4020_DEBUG
+void
+stp4020_dump_regs(h)
+	struct stp4020_socket *h;
+{
+	char bits[64];
+	/*
+	 * Dump control and status registers.
+	 */
+	printf("socket[%d] registers:\n", h->sock);
+	bitmask_snprintf(stp4020_rd_sockctl(h, STP4020_ICR0_IDX),
+			 STP4020_ICR0_BITS, bits, sizeof(bits));
+	printf("\tICR0=%s\n", bits);
+
+	bitmask_snprintf(stp4020_rd_sockctl(h, STP4020_ICR1_IDX),
+			 STP4020_ICR1_BITS, bits, sizeof(bits));
+	printf("\tICR1=%s\n", bits);
+
+	bitmask_snprintf(stp4020_rd_sockctl(h, STP4020_ISR0_IDX),
+			 STP4020_ISR0_IOBITS, bits, sizeof(bits));
+	printf("\tISR0=%s\n", bits);
+
+	bitmask_snprintf(stp4020_rd_sockctl(h, STP4020_ISR1_IDX),
+			 STP4020_ISR1_BITS, bits, sizeof(bits));
+	printf("\tISR1=%s\n", bits);
+}
+#endif /* STP4020_DEBUG */

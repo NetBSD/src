@@ -1,11 +1,11 @@
-/* 	$NetBSD: rasops_masks.h,v 1.2 1999/05/18 21:51:59 ad Exp $ */
+/* 	$NetBSD: rasops_masks.h,v 1.2.4.1 2000/11/20 11:43:02 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
- * by Andy Doran.
+ * by Andrew Doran.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -45,7 +45,7 @@
 /*
  * Convenience macros. To get around the problem of dealing with properly
  * ordered bits on little-endian machines, we just convert everything to
- * big-endian and back again when we're done.  
+ * big-endian and back again when we're done.
  *
  * MBL: move bits left
  * MBR: move bits right
@@ -74,33 +74,29 @@
  */
 
 /* Get a number of bits ( <= 32 ) from *sp and store in dw */
-#define GETBITS(sp, x, w, dw) do { \
-    dw = MBL(*(sp), (x)); \
-    if (((x) + (w)) > 32) \
-	dw |= (MBR((sp)[1], 32 - (x))); \
+#define GETBITS(sp, x, w, dw) do {					\
+	dw = MBL(*(sp), (x));						\
+	if (((x) + (w)) > 32)						\
+		dw |= (MBR((sp)[1], 32 - (x))); 			\
 } while(0);
 
-/* Put a number of bits ( <= 32 ) from sw to *dp */ 
-#define PUTBITS(sw, x, w, dp) do { \
-    int n = (x) + (w) - 32; \
-    \
-    if (n <= 0) { \
-	n = rasops_pmask[x & 31][w & 31]; \
-	*(dp) = (*(dp) & ~n) | (MBR(sw, x) & n); \
-    } else { \
-	*(dp) = (*(dp) & rasops_rmask[x]) | (MBR((sw), x)); \
-	(dp)[1] = ((dp)[1] & rasops_rmask[n]) | \
-		(MBL(sw, 32-(x)) & rasops_lmask[n]); \
-    } \
+/* Put a number of bits ( <= 32 ) from sw to *dp */
+#define PUTBITS(sw, x, w, dp) do {					\
+	int n = (x) + (w) - 32;						\
+									\
+	if (n <= 0) {							\
+		n = rasops_pmask[x & 31][w & 31];			\
+		*(dp) = (*(dp) & ~n) | (MBR(sw, x) & n);		\
+	} else {							\
+		*(dp) = (*(dp) & rasops_rmask[x]) | (MBR((sw), x));	\
+		(dp)[1] = ((dp)[1] & rasops_rmask[n]) |			\
+			(MBL(sw, 32-(x)) & rasops_lmask[n]);		\
+	}								\
 } while(0);
 
 /* rasops_masks.c */
 extern int32_t	rasops_lmask[32+1];
 extern int32_t	rasops_rmask[32+1];
 extern int32_t	rasops_pmask[32][32];
-#ifdef notyet
-extern int32_t	rasops_lbmask[4+1];
-extern int32_t	rasops_rbmask[4+1];
-#endif
 
 #endif /* _RASOPS_MASKS_H_ */

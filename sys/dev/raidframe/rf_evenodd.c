@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_evenodd.c,v 1.3 1999/08/13 03:41:56 oster Exp $	*/
+/*	$NetBSD: rf_evenodd.c,v 1.3.2.1 2000/11/20 11:42:54 bouyer Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -45,7 +45,6 @@
 #include "rf_dagdegwr.h"
 #include "rf_dagutils.h"
 #include "rf_dagfuncs.h"
-#include "rf_threadid.h"
 #include "rf_etimer.h"
 #include "rf_general.h"
 #include "rf_evenodd.h"

@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_dagffrd.c,v 1.3 1999/02/05 00:06:07 oster Exp $	*/
+/*	$NetBSD: rf_dagffrd.c,v 1.3.8.1 2000/11/20 11:42:52 bouyer Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -38,7 +38,6 @@
 #include "rf_dag.h"
 #include "rf_dagutils.h"
 #include "rf_dagfuncs.h"
-#include "rf_threadid.h"
 #include "rf_debugMem.h"
 #include "rf_memchunk.h"
 #include "rf_general.h"

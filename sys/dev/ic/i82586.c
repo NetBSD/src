@@ -1,4 +1,4 @@
-/*	$NetBSD: i82586.c,v 1.25 1999/08/23 12:12:42 pk Exp $	*/
+/*	$NetBSD: i82586.c,v 1.25.2.1 2000/11/20 11:40:36 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -353,106 +353,19 @@ check_eh(sc, eh, to_bpf)
 	int *to_bpf;
 {
 	struct ifnet *ifp;
-	int i;
 
 	ifp = &sc->sc_ethercom.ec_if;
 
-	switch(sc->promisc) {
-	case IFF_ALLMULTI:
-		/*
-		 * Receiving all multicasts, but no unicasts except those
-		 * destined for us.
-		 */
 #if NBPFILTER > 0
-		/* BPF gets this packet if anybody cares */
-		*to_bpf = (ifp->if_bpf != 0);
-#endif
-		if (eh->ether_dhost[0] & 1)
-			return (1);
-		if (ether_equal(eh->ether_dhost, LLADDR(ifp->if_sadl)))
-			return (1);
-		return (0);
-
-	case IFF_PROMISC:
-		/*
-		 * Receiving all packets.  These need to be passed on to BPF.
-		 */
-#if NBPFILTER > 0
-		*to_bpf = (ifp->if_bpf != 0);
-#endif
-		/*
-		 * If for us, accept and hand up to BPF.
-		 */
-		if (ether_equal(eh->ether_dhost, LLADDR(ifp->if_sadl)))
-			return (1);
-
-		/*
-		 * If it's the broadcast address, accept and hand up to BPF.
-		 */
-		if (ether_equal(eh->ether_dhost, etherbroadcastaddr))
-			return (1);
-
-		/*
-		 * If it's one of our multicast groups, accept it
-		 * and pass it up.
-		 */
-		for (i = 0; i < sc->mcast_count; i++) {
-			if (ether_equal(eh->ether_dhost,
-					(u_char *)&sc->mcast_addrs[i])) {
-#if NBPFILTER > 0
-				if (*to_bpf)
-					*to_bpf = 1;
-#endif
-				return (1);
-			}
-		}
-
-#if NBPFILTER > 0
-		/* Not for us; BPF wants to see it but we don't. */
-		if (*to_bpf)
-			*to_bpf = 2;
+	*to_bpf = (ifp->if_bpf != 0);
+#else
+	*to_bpf = 0;
 #endif
 
-		return (1);
-
-	case IFF_ALLMULTI | IFF_PROMISC:
-		/*
-		 * Acting as a multicast router, and BPF running at the same
-		 * time.  Whew!  (Hope this is a fast machine...)
-		 */
-#if NBPFILTER > 0
-		*to_bpf = (ifp->if_bpf != 0);
-#endif
-		/* We want to see multicasts. */
-		if (eh->ether_dhost[0] & 1)
-			return (1);
-
-		/* We want to see our own packets */
-		if (ether_equal(eh->ether_dhost, LLADDR(ifp->if_sadl)))
-			return (1);
-
-		/* Anything else goes to BPF but nothing else. */
-#if NBPFILTER > 0
-		if (*to_bpf)
-			*to_bpf = 2;
-#endif
-		return (1);
-
-	default:
-		/*
-		 * Only accept unicast packets destined for us, or multicasts
-		 * for groups that we belong to.  For now, we assume that the
-		 * '586 will only return packets that we asked it for.  This
-		 * isn't strictly true (it uses hashing for the multicast
-		 * filter), but it will do in this case, and we want to get
-		 * out of here as quickly as possible.
-		 */
-#if NBPFILTER > 0
-		*to_bpf = (ifp->if_bpf != 0);
-#endif
-		return (1);
-	}
-	return (0);
+	/*
+	 * This is all handled at a higher level now.
+	 */
+	return (1);
 }
 
 static int
@@ -561,6 +474,8 @@ ie_ack(sc, mask)
 	bus_space_barrier(sc->bt, sc->bh, 0, 0, BUS_SPACE_BARRIER_READ);
 	status = (sc->ie_bus_read16)(sc, IE_SCB_STATUS(sc->scb));
 	i82586_start_cmd(sc, status & mask, 0, 0, 0);
+	if (sc->intrhook)
+		sc->intrhook(sc, INTR_ACK);
 }
 
 /*
@@ -1235,7 +1150,7 @@ ie_readframe(sc, num)
 		printf("%s: frame from ether %s type 0x%x len %d\n",
 			sc->sc_dev.dv_xname,
 			ether_sprintf(eh->ether_shost),
-			(u_int)eh->ether_type,
+			(u_int)ntohs(eh->ether_type),
 			pktlen);
 	}
 #endif
@@ -1446,12 +1361,12 @@ i82586_proberam(sc)
 
 	/* Put in 16-bit mode */
 	off = IE_SCP_BUS_USE(sc->scp);
-	bus_space_write_1(sc->bt, sc->bh, off, 0);
+	(sc->ie_bus_write16)(sc, off, 0);
 	bus_space_barrier(sc->bt, sc->bh, off, 1, BUS_SPACE_BARRIER_WRITE);
 
 	/* Set the ISCP `busy' bit */
 	off = IE_ISCP_BUSY(sc->iscp);
-	bus_space_write_1(sc->bt, sc->bh, off, 1);
+	(sc->ie_bus_write16)(sc, off, 1);
 	bus_space_barrier(sc->bt, sc->bh, off, 1, BUS_SPACE_BARRIER_WRITE);
 
 	if (sc->hwreset)
@@ -1464,7 +1379,7 @@ i82586_proberam(sc)
 	/* Read back the ISCP `busy' bit; it should be clear by now */
 	off = IE_ISCP_BUSY(sc->iscp);
 	bus_space_barrier(sc->bt, sc->bh, off, 1, BUS_SPACE_BARRIER_READ);
-	result = bus_space_read_1(sc->bt, sc->bh, off) == 0;
+	result = (sc->ie_bus_read16)(sc, off) == 0;
 
 	/* Acknowledge any interrupts we may have caused. */
 	ie_ack(sc, IE_ST_WHENCE);
@@ -1742,21 +1657,22 @@ ie_cfg_setup(sc, cmd, promiscuous, manchester)
 	int promiscuous, manchester;
 {
 	int cmdresult, status;
+	u_int8_t buf[IE_CMD_CFG_SZ]; /* XXX malloc? */
 
+	*IE_CMD_CFG_CNT(buf)       = 0x0c;
+	*IE_CMD_CFG_FIFO(buf)      = 8;
+        *IE_CMD_CFG_SAVEBAD(buf)   = 0x40;
+	*IE_CMD_CFG_ADDRLEN(buf)   = 0x2e;
+	*IE_CMD_CFG_PRIORITY(buf)  = 0;
+	*IE_CMD_CFG_IFS(buf)       = 0x60;
+	*IE_CMD_CFG_SLOT_LOW(buf)  = 0;
+	*IE_CMD_CFG_SLOT_HIGH(buf) = 0xf2;
+	*IE_CMD_CFG_PROMISC(buf)   = !!promiscuous | manchester << 2;
+	*IE_CMD_CFG_CRSCDT(buf)    = 0;
+	*IE_CMD_CFG_MINLEN(buf)    = 64;
+	*IE_CMD_CFG_JUNK(buf)      = 0xff;
+	sc->memcopyout(sc, buf, cmd, IE_CMD_CFG_SZ);
 	setup_simple_command(sc, IE_CMD_CONFIG, cmd);
-	bus_space_write_1(sc->bt, sc->bh, IE_CMD_CFG_CNT(cmd), 0x0c);
-	bus_space_write_1(sc->bt, sc->bh, IE_CMD_CFG_FIFO(cmd), 8);
-	bus_space_write_1(sc->bt, sc->bh, IE_CMD_CFG_SAVEBAD(cmd), 0x40);
-	bus_space_write_1(sc->bt, sc->bh, IE_CMD_CFG_ADDRLEN(cmd), 0x2e);
-	bus_space_write_1(sc->bt, sc->bh, IE_CMD_CFG_PRIORITY(cmd), 0);
-	bus_space_write_1(sc->bt, sc->bh, IE_CMD_CFG_IFS(cmd), 0x60);
-	bus_space_write_1(sc->bt, sc->bh, IE_CMD_CFG_SLOT_LOW(cmd), 0);
-	bus_space_write_1(sc->bt, sc->bh, IE_CMD_CFG_SLOT_HIGH(cmd), 0xf2);
-	bus_space_write_1(sc->bt, sc->bh, IE_CMD_CFG_PROMISC(cmd),
-					  !!promiscuous | manchester << 2);
-	bus_space_write_1(sc->bt, sc->bh, IE_CMD_CFG_CRSCDT(cmd), 0);
-	bus_space_write_1(sc->bt, sc->bh, IE_CMD_CFG_MINLEN(cmd), 64);
-	bus_space_write_1(sc->bt, sc->bh, IE_CMD_CFG_JUNK(cmd), 0xff);
 	bus_space_barrier(sc->bt, sc->bh, cmd, IE_CMD_CFG_SZ,
 			  BUS_SPACE_BARRIER_WRITE);
 
@@ -1969,7 +1885,7 @@ iestop(sc)
 
 int
 i82586_ioctl(ifp, cmd, data)
-	register struct ifnet *ifp;
+	struct ifnet *ifp;
 	u_long cmd;
 	caddr_t data;
 {

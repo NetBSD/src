@@ -1,4 +1,4 @@
-/*	$NetBSD: lance.c,v 1.9 1999/05/18 23:52:55 thorpej Exp $	*/
+/*	$NetBSD: lance.c,v 1.9.2.1 2000/11/20 11:40:41 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -172,9 +172,9 @@ static inline u_int16_t
 ether_cmp(one, two)
 	void *one, *two;
 {
-	register u_int16_t *a = (u_short *) one;
-	register u_int16_t *b = (u_short *) two;
-	register u_int16_t diff;
+	u_int16_t *a = (u_short *) one;
+	u_int16_t *b = (u_short *) two;
+	u_int16_t diff;
 
 #ifdef	m68k
 	/*
@@ -239,14 +239,6 @@ lance_config(sc)
 		ifmedia_set(&sc->sc_media, IFM_ETHER|IFM_MANUAL);
 	}
 
-	/* Attach the interface. */
-	if_attach(ifp);
-	ether_ifattach(ifp, sc->sc_enaddr);
-
-#if NBPFILTER > 0
-	bpfattach(&ifp->if_bpf, ifp, DLT_EN10MB, sizeof(struct ether_header));
-#endif
-
 	switch (sc->sc_memsize) {
 	case 8192:
 		sc->sc_nrbuf = 4;
@@ -279,6 +271,16 @@ lance_config(sc)
 	printf(": address %s\n", ether_sprintf(sc->sc_enaddr));
 	printf("%s: %d receive buffers, %d transmit buffers\n",
 	    sc->sc_dev.dv_xname, sc->sc_nrbuf, sc->sc_ntbuf);
+
+	/* claim 802.1q capability */
+	sc->sc_ethercom.ec_capabilities |= ETHERCAP_VLAN_MTU;
+	/* Attach the interface. */
+	if_attach(ifp);
+	ether_ifattach(ifp, sc->sc_enaddr);
+
+#if NBPFILTER > 0
+	bpfattach(&ifp->if_bpf, ifp, DLT_EN10MB, sizeof(struct ether_header));
+#endif
 
 	sc->sc_sh = shutdownhook_establish(lance_shutdown, sc);
 	if (sc->sc_sh == NULL)
@@ -319,9 +321,9 @@ lance_stop(sc)
  */
 void
 lance_init(sc)
-	register struct lance_softc *sc;
+	struct lance_softc *sc;
 {
-	register int timo;
+	int timo;
 	u_long a;
 
 	(*sc->sc_wrcsr)(sc, LE_CSR0, LE_C0_STOP);
@@ -374,10 +376,10 @@ int
 lance_put(sc, boff, m)
 	struct lance_softc *sc;
 	int boff;
-	register struct mbuf *m;
+	struct mbuf *m;
 {
-	register struct mbuf *n;
-	register int len, tlen = 0;
+	struct mbuf *n;
+	int len, tlen = 0;
 
 	for (; m; m = n) {
 		len = m->m_len;
@@ -461,14 +463,15 @@ bad:
  */
 void
 lance_read(sc, boff, len)
-	register struct lance_softc *sc;
+	struct lance_softc *sc;
 	int boff, len;
 {
 	struct mbuf *m;
-	struct ether_header *eh;
 
 	if (len <= sizeof(struct ether_header) ||
-	    len > ETHERMTU + sizeof(struct ether_header)) {
+	    len > ((sc->sc_ethercom.ec_capenable & ETHERCAP_VLAN_MTU) ?
+		ETHER_VLAN_ENCAP_LEN + ETHERMTU + sizeof(struct ether_header) :
+		ETHERMTU + sizeof(struct ether_header))) {
 #ifdef LEDEBUG
 		printf("%s: invalid packet size %d; dropping\n",
 		    sc->sc_dev.dv_xname, len);
@@ -486,31 +489,13 @@ lance_read(sc, boff, len)
 
 	ifp->if_ipackets++;
 
-	/* We assume that the header fit entirely in one mbuf. */
-	eh = mtod(m, struct ether_header *);
-
 #if NBPFILTER > 0
 	/*
 	 * Check if there's a BPF listener on this interface.
 	 * If so, hand off the raw packet to BPF.
 	 */
-	if (ifp->if_bpf) {
+	if (ifp->if_bpf)
 		bpf_mtap(ifp->if_bpf, m);
-
-#ifndef LANCE_REVC_BUG
-		/*
-		 * Note that the interface cannot be in promiscuous mode if
-		 * there are no BPF listeners.  And if we are in promiscuous
-		 * mode, we have to check if this packet is really ours.
-		 */
-		if ((ifp->if_flags & IFF_PROMISC) != 0 &&
-		    (eh->ether_dhost[0] & 1) == 0 && /* !mcast and !bcast */
-		    ETHER_CMP(eh->ether_dhost, sc->sc_enaddr)) {
-			m_freem(m);
-			return;
-		}
-#endif
-	}
 #endif
 
 #ifdef LANCE_REVC_BUG
@@ -580,11 +565,11 @@ lance_mediastatus(ifp, ifmr)
  */
 int
 lance_ioctl(ifp, cmd, data)
-	register struct ifnet *ifp;
+	struct ifnet *ifp;
 	u_long cmd;
 	caddr_t data;
 {
-	register struct lance_softc *sc = ifp->if_softc;
+	struct lance_softc *sc = ifp->if_softc;
 	struct ifaddr *ifa = (struct ifaddr *)data;
 	struct ifreq *ifr = (struct ifreq *)data;
 	int s, error = 0;
@@ -606,7 +591,7 @@ lance_ioctl(ifp, cmd, data)
 #ifdef NS
 		case AF_NS:
 		    {
-			register struct ns_addr *ina = &IA_SNS(ifa)->sns_addr;
+			struct ns_addr *ina = &IA_SNS(ifa)->sns_addr;
 
 			if (ns_nullhost(*ina))
 				ina->x_host =
@@ -717,15 +702,7 @@ lance_setladrf(ac, af)
 {
 	struct ifnet *ifp = &ac->ec_if;
 	struct ether_multi *enm;
-	register u_char *cp;
-	register u_int32_t crc;
-	static const u_int32_t crctab[] = {
-		0x00000000, 0x1db71064, 0x3b6e20c8, 0x26d930ac,
-		0x76dc4190, 0x6b6b51f4, 0x4db26158, 0x5005713c,
-		0xedb88320, 0xf00f9344, 0xd6d6a3e8, 0xcb61b38c,
-		0x9b64c2b0, 0x86d3d2d4, 0xa00ae278, 0xbdbdf21c
-	};
-	register int len;
+	u_int32_t crc;
 	struct ether_multistep step;
 
 	/*
@@ -754,13 +731,8 @@ lance_setladrf(ac, af)
 			goto allmulti;
 		}
 
-		cp = enm->enm_addrlo;
-		crc = 0xffffffff;
-		for (len = sizeof(enm->enm_addrlo); --len >= 0;) {
-			crc ^= *cp++;
-			crc = (crc >> 4) ^ crctab[crc & 0xf];
-			crc = (crc >> 4) ^ crctab[crc & 0xf];
-		}
+		crc = ether_crc32_le(enm->enm_addrlo, ETHER_ADDR_LEN);
+
 		/* Just want the 6 most significant bits. */
 		crc >>= 26;
 
@@ -852,11 +824,11 @@ lance_copytobuf_gap2(sc, fromv, boff, len)
 	struct lance_softc *sc;
 	void *fromv;
 	int boff;
-	register int len;
+	int len;
 {
 	volatile caddr_t buf = sc->sc_mem;
-	register caddr_t from = fromv;
-	register volatile u_int16_t *bptr;
+	caddr_t from = fromv;
+	volatile u_int16_t *bptr;
 
 	if (boff & 0x1) {
 		/* handle unaligned first byte */
@@ -883,9 +855,9 @@ lance_copyfrombuf_gap2(sc, tov, boff, len)
 	int boff, len;
 {
 	volatile caddr_t buf = sc->sc_mem;
-	register caddr_t to = tov;
-	register volatile u_int16_t *bptr;
-	register u_int16_t tmp;
+	caddr_t to = tov;
+	volatile u_int16_t *bptr;
+	u_int16_t tmp;
 
 	if (boff & 0x1) {
 		/* handle unaligned first byte */
@@ -912,7 +884,7 @@ lance_zerobuf_gap2(sc, boff, len)
 	int boff, len;
 {
 	volatile caddr_t buf = sc->sc_mem;
-	register volatile u_int16_t *bptr;
+	volatile u_int16_t *bptr;
 
 	if ((unsigned)boff & 0x1) {
 		bptr = ((volatile u_int16_t *)buf) + (boff - 1);
@@ -939,12 +911,12 @@ lance_copytobuf_gap16(sc, fromv, boff, len)
 	struct lance_softc *sc;
 	void *fromv;
 	int boff;
-	register int len;
+	int len;
 {
 	volatile caddr_t buf = sc->sc_mem;
-	register caddr_t from = fromv;
-	register caddr_t bptr;
-	register int xfer;
+	caddr_t from = fromv;
+	caddr_t bptr;
+	int xfer;
 
 	bptr = buf + ((boff << 1) & ~0x1f);
 	boff &= 0xf;
@@ -966,9 +938,9 @@ lance_copyfrombuf_gap16(sc, tov, boff, len)
 	int boff, len;
 {
 	volatile caddr_t buf = sc->sc_mem;
-	register caddr_t to = tov;
-	register caddr_t bptr;
-	register int xfer;
+	caddr_t to = tov;
+	caddr_t bptr;
+	int xfer;
 
 	bptr = buf + ((boff << 1) & ~0x1f);
 	boff &= 0xf;
@@ -989,8 +961,8 @@ lance_zerobuf_gap16(sc, boff, len)
 	int boff, len;
 {
 	volatile caddr_t buf = sc->sc_mem;
-	register caddr_t bptr;
-	register int xfer;
+	caddr_t bptr;
+	int xfer;
 
 	bptr = buf + ((boff << 1) & ~0x1f);
 	boff &= 0xf;

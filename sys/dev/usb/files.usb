@@ -1,4 +1,4 @@
-#	$NetBSD: files.usb,v 1.12 1999/09/12 17:40:57 augustss Exp $
+#	$NetBSD: files.usb,v 1.12.2.1 2000/11/20 11:43:19 bouyer Exp $
 #
 # Config file and device description for machine-independent USB code.
 # Included by ports that need it.  Ports that use it must provide
@@ -24,10 +24,18 @@ file	dev/usb/uhub.c			usb
 
 attach	uhub at uhub with uhub_uhub
 
+# Modem and com serial port "bus"
+define	ucombus {[ portno = -1 ]}
+
 # Audio devices
 device	uaudio: audio, auconv, mulaw
 attach	uaudio at uhub
 file	dev/usb/uaudio.c		uaudio
+
+# Modem and com serial port
+device	ucom
+attach	ucom at ucombus
+file	dev/usb/ucom.c			ucom | ucombus	needs-flag
 
 # Generic devices
 device	ugen
@@ -51,16 +59,58 @@ attach	ulpt at uhub
 file	dev/usb/ulpt.c			ulpt		needs-flag
 
 # Mass storage
-device	umass: scsi
+device	umass: scsi, atapi
 attach	umass at uhub
 file	dev/usb/umass.c			umass
 
 # Modems
-device	umodem
+device	umodem: ucombus
 attach	umodem at uhub
-file	dev/usb/umodem.c		umodem		needs-flag
+file	dev/usb/umodem.c		umodem
 
 # Mice
 device	ums: wsmousedev
 attach	ums at uhub
 file	dev/usb/ums.c			ums
+
+# Diamond Multimedia Rio 500
+device	urio
+attach	urio at uhub
+file	dev/usb/urio.c			urio		needs-flag
+
+# Handspring Visor
+device	uvisor: ucombus
+attach	uvisor at uhub
+file	dev/usb/uvisor.c		uvisor
+
+# Ethernet adapters
+# ADMtek AN986 Pegasus
+device	aue: arp, ether, ifnet, mii, mii_phy
+attach	aue at uhub
+file	dev/usb/if_aue.c		aue
+
+# CATC USB-EL1201A
+device	cue: arp, ether, ifnet
+attach	cue at uhub
+file	dev/usb/if_cue.c		cue
+
+# Kawasaki LSI KL5KUSB101B
+device	kue: arp, ether, ifnet
+attach	kue at uhub
+file	dev/usb/if_kue.c		kue
+
+# Prolific PL2302 host-host
+device	upl: ifnet
+attach	upl at uhub
+file	dev/usb/if_upl.c		upl
+
+# Serial drivers
+# FTDI serial driver
+device	uftdi: ucombus
+attach	uftdi at uhub
+file	dev/usb/uftdi.c			uftdi
+
+# Scanners
+device	uscanner
+attach	uscanner at uhub
+file	dev/usb/uscanner.c		uscanner	needs-flag

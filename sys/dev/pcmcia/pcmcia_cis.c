@@ -1,4 +1,4 @@
-/*	$NetBSD: pcmcia_cis.c,v 1.12 1999/07/11 00:34:37 bad Exp $	*/
+/*	$NetBSD: pcmcia_cis.c,v 1.12.2.1 2000/11/20 11:42:46 bouyer Exp $	*/
 
 #define	PCMCIACISDEBUG
 
@@ -60,6 +60,8 @@ struct cis_state {
 };
 
 int	pcmcia_parse_cis_tuple __P((struct pcmcia_tuple *, void *));
+static int decode_funce __P((struct pcmcia_tuple *, struct pcmcia_function *));
+
 
 void
 pcmcia_read_cis(sc)
@@ -67,8 +69,7 @@ pcmcia_read_cis(sc)
 {
 	struct cis_state state;
 
-	state.count = 0;
-	state.gotmfc = 0;
+	memset(&state, 0, sizeof state);
 
 	state.card = &sc->card;
 
@@ -267,17 +268,53 @@ pcmcia_scan_cis(dev, fct, arg)
 					    "short %d\n", tuple.length));
 					break;
 				}
+				if (((tuple.length - 1) % 5) != 0) {
+					DPRINTF(("CISTPL_LONGLINK_MFC bogus "
+					    "length %d\n", tuple.length));
+					break;
+				}
 				/*
 				 * this is kind of ad hoc, as I don't have
 				 * any real documentation
 				 */
 				{
-					int i;
+					int i, tmp_count;
 
-					mfc_count =
+					/*
+					 * put count into tmp var so that
+					 * if we have to bail (because it's
+					 * a bogus count) it won't be
+					 * remembered for later use.
+					 */
+					tmp_count =
 					    pcmcia_tuple_read_1(&tuple, 0);
 					DPRINTF(("CISTPL_LONGLINK_MFC %d",
-					    mfc_count));
+					    tmp_count));
+
+					/*
+					 * make _sure_ it's the right size;
+					 * if too short, it may be a weird
+					 * (unknown/undefined) format
+					 */
+					if (tuple.length != (tmp_count*5 + 1)) {
+						DPRINTF((" bogus length %d\n",
+						    tuple.length));
+						break;
+					}
+
+#ifdef PCMCIACISDEBUG	/* maybe enable all the time? */
+					/*
+					 * sanity check for a programming
+					 * error which is difficult to find
+					 * when debugging.
+					 */
+					if (tmp_count >
+					    howmany(sizeof mfc, sizeof mfc[0]))
+						panic("CISTPL_LONGLINK_MFC mfc "
+						    "count would blow stack");
+#endif
+
+					mfc_count = tmp_count;
 					for (i = 0; i < mfc_count; i++) {
 						mfc[i].common =
 						    (pcmcia_tuple_read_1(&tuple,
@@ -357,7 +394,8 @@ pcmcia_scan_cis(dev, fct, arg)
 					longlink_addr *= 2;
 
 				pcmcia_chip_mem_map(pct, pch, longlink_common ?
-				    PCMCIA_MEM_COMMON : PCMCIA_MEM_ATTR,
+				    (PCMCIA_WIDTH_MEM8 | PCMCIA_MEM_COMMON) :
+				    PCMCIA_MEM_ATTR,
 				    longlink_addr, PCMCIA_CIS_SIZE,
 				    &pcmh, &tuple.ptr, &window);
 
@@ -377,7 +415,8 @@ pcmcia_scan_cis(dev, fct, arg)
 
 				pcmcia_chip_mem_map(pct, pch,
 				    mfc[mfc_index].common ?
-				    PCMCIA_MEM_COMMON : PCMCIA_MEM_ATTR,
+				    (PCMCIA_WIDTH_MEM8 | PCMCIA_MEM_COMMON) :
+				    PCMCIA_MEM_ATTR,
 				    mfc[mfc_index].addr, PCMCIA_CIS_SIZE,
 				    &pcmh, &tuple.ptr, &window);
 
@@ -492,6 +531,13 @@ pcmcia_print_cis(sc)
 			break;
 		case PCMCIA_FUNCTION_DISK:
 			printf("fixed disk");
+			switch (pf->pf_funce_disk_interface) {
+			case PCMCIA_TPLFE_DDI_PCCARD_ATA:
+				printf("(ata)");
+				break;
+			default:
+				break;
+			}
 			break;
 		case PCMCIA_FUNCTION_VIDEO:
 			printf("video adapter");
@@ -540,27 +586,28 @@ pcmcia_print_cis(sc)
 			if (cfe->num_iospace) {
 				printf("; iomask %lx, iospace", cfe->iomask);
 
-				for (i = 0; i < cfe->num_iospace; i++)
-					printf(" %lx",
-					    cfe->iospace[i].start);
+				for (i = 0; i < cfe->num_iospace; i++) {
+					printf(" %lx", cfe->iospace[i].start);
 					if (cfe->iospace[i].length)
 						printf("-%lx",
 						    cfe->iospace[i].start +
-						      cfe->iospace[i].length - 1);
+						    cfe->iospace[i].length - 1);
+				}
 			}
 			if (cfe->num_memspace) {
 				printf("; memspace");
 
-				for (i = 0; i < cfe->num_memspace; i++)
+				for (i = 0; i < cfe->num_memspace; i++) {
 					printf(" %lx",
 					    cfe->memspace[i].cardaddr);
 					if (cfe->memspace[i].length)
 						printf("-%lx",
 						    cfe->memspace[i].cardaddr +
-						      cfe->memspace[i].length - 1);
+						    cfe->memspace[i].length - 1);
 					if (cfe->memspace[i].hostaddr)
 						printf("@%lx",
 						    cfe->memspace[i].hostaddr);
+				}
 			}
 			if (cfe->maxtwins)
 				printf("; maxtwins %d", cfe->maxtwins);
@@ -740,8 +787,14 @@ pcmcia_parse_cis_tuple(tuple, arg)
 			for (count = 0, start = 0, i = 0;
 			    (count < 4) && ((i + 4) < 256); i++) {
 				ch = pcmcia_tuple_read_1(tuple, 2 + i);
-				if (ch == 0xff)
+				if (ch == 0xff) {
+					if (i > start) {
+						state->card->cis1_info_buf[i] = 0;
+						state->card->cis1_info[count] =
+						    state->card->cis1_info_buf + start;
+					}
 					break;
+				}
 				state->card->cis1_info_buf[i] = ch;
 				if (ch == 0) {
 					state->card->cis1_info[count] =
@@ -783,6 +836,16 @@ pcmcia_parse_cis_tuple(tuple, arg)
 		state->pf->function = pcmcia_tuple_read_1(tuple, 0);
 
 		DPRINTF(("CISTPL_FUNCID\n"));
+		break;
+	case PCMCIA_CISTPL_FUNCE:
+		if (state->pf == NULL || state->pf->function <= 0) {
+			DPRINTF(("CISTPL_FUNCE is not followed by "
+			    "valid CISTPL_FUNCID\n"));
+			break;
+		}
+		if (tuple->length >= 2) {
+			decode_funce(tuple, state->pf);
+		}
 		break;
 	case PCMCIA_CISTPL_CONFIG:
 		if (tuple->length < 3) {
@@ -879,6 +942,11 @@ pcmcia_parse_cis_tuple(tuple, arg)
 			 * cis, create new entry in the queue and start it
 			 * with the current default
 			 */
+			if (state->default_cfe == NULL) {
+				DPRINTF(("CISTPL_CFTABLE_ENTRY with no "
+				    "default\n"));
+				break;
+			}
 			if (num != state->default_cfe->number) {
 				cfe = (struct pcmcia_config_entry *)
 				    malloc(sizeof(*cfe), M_DEVBUF, M_NOWAIT);
@@ -929,6 +997,10 @@ pcmcia_parse_cis_tuple(tuple, arg)
 			if (intface) {
 				reg = pcmcia_tuple_read_1(tuple, idx);
 				idx++;
+				cfe->flags &= ~(PCMCIA_CFE_MWAIT_REQUIRED
+				    | PCMCIA_CFE_RDYBSY_ACTIVE
+				    | PCMCIA_CFE_WP_ACTIVE
+				    | PCMCIA_CFE_BVD_ACTIVE);
 				if (reg & PCMCIA_TPCE_IF_MWAIT)
 					cfe->flags |= PCMCIA_CFE_MWAIT_REQUIRED;
 				if (reg & PCMCIA_TPCE_IF_RDYBSY)
@@ -997,6 +1069,8 @@ pcmcia_parse_cis_tuple(tuple, arg)
 				reg = pcmcia_tuple_read_1(tuple, idx);
 				idx++;
 
+				cfe->flags &=
+				    ~(PCMCIA_CFE_IO8 | PCMCIA_CFE_IO16);
 				if (reg & PCMCIA_TPCE_IO_BUSWIDTH_8BIT)
 					cfe->flags |= PCMCIA_CFE_IO8;
 				if (reg & PCMCIA_TPCE_IO_BUSWIDTH_16BIT)
@@ -1074,6 +1148,9 @@ pcmcia_parse_cis_tuple(tuple, arg)
 				reg = pcmcia_tuple_read_1(tuple, idx);
 				idx++;
 
+				cfe->flags &= ~(PCMCIA_CFE_IRQSHARE
+				    | PCMCIA_CFE_IRQPULSE
+				    | PCMCIA_CFE_IRQLEVEL);
 				if (reg & PCMCIA_TPCE_IR_SHARE)
 					cfe->flags |= PCMCIA_CFE_IRQSHARE;
 				if (reg & PCMCIA_TPCE_IR_PULSE)
@@ -1196,12 +1273,15 @@ pcmcia_parse_cis_tuple(tuple, arg)
 				reg = pcmcia_tuple_read_1(tuple, idx);
 				idx++;
 
+				cfe->flags &= ~(PCMCIA_CFE_POWERDOWN
+				    | PCMCIA_CFE_READONLY
+				    | PCMCIA_CFE_AUDIO);
 				if (reg & PCMCIA_TPCE_MI_PWRDOWN)
-					cfe->flags = PCMCIA_CFE_POWERDOWN;
+					cfe->flags |= PCMCIA_CFE_POWERDOWN;
 				if (reg & PCMCIA_TPCE_MI_READONLY)
-					cfe->flags = PCMCIA_CFE_READONLY;
+					cfe->flags |= PCMCIA_CFE_READONLY;
 				if (reg & PCMCIA_TPCE_MI_AUDIO)
-					cfe->flags = PCMCIA_CFE_AUDIO;
+					cfe->flags |= PCMCIA_CFE_AUDIO;
 				cfe->maxtwins = reg & PCMCIA_TPCE_MI_MAXTWINS;
 
 				while (reg & PCMCIA_TPCE_MI_EXT) {
@@ -1221,4 +1301,42 @@ pcmcia_parse_cis_tuple(tuple, arg)
 	}
 
 	return (0);
+}
+
+
+
+static int
+decode_funce(tuple, pf)
+	struct pcmcia_tuple *tuple;
+	struct pcmcia_function *pf;
+{
+	int type = pcmcia_tuple_read_1(tuple, 0);
+
+	switch (pf->function) {
+	case PCMCIA_FUNCTION_DISK:
+		if (type == PCMCIA_TPLFE_TYPE_DISK_DEVICE_INTERFACE) {
+			pf->pf_funce_disk_interface
+			    = pcmcia_tuple_read_1(tuple, 1);
+		}
+		break;
+	case PCMCIA_FUNCTION_NETWORK:
+		if (type == PCMCIA_TPLFE_TYPE_LAN_NID) {
+			int i;
+			int len = pcmcia_tuple_read_1(tuple, 1);
+			if (tuple->length < 2 + len || len > 8) {
+				/* tuple length not enough or nid too long */
+				break;
+			}
+			for (i = 0; i < len; ++i) {
+				pf->pf_funce_lan_nid[i]
+				    = pcmcia_tuple_read_1(tuple, 2 + i);
+			}
+			pf->pf_funce_lan_nidlen = len;
+		}
+		break;
+	default:
+		break;
+	}
+
+	return 0;
 }

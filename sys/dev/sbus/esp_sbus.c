@@ -1,4 +1,4 @@
-/*	$NetBSD: esp_sbus.c,v 1.6.8.1 1999/10/19 17:54:18 thorpej Exp $	*/
+/*	$NetBSD: esp_sbus.c,v 1.6.8.2 2000/11/20 11:43:04 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -51,8 +51,8 @@
 #include <dev/scsipi/scsi_message.h>
 
 #include <machine/bus.h>
+#include <machine/intr.h>
 #include <machine/autoconf.h>
-#include <machine/cpu.h>
 
 #include <dev/ic/lsi64854reg.h>
 #include <dev/ic/lsi64854var.h>
@@ -74,16 +74,6 @@ struct esp_softc {
 
 	int	sc_pri;				/* SBUS priority */
 };
-
-/*
- * Is this esp on the bootpath?
- * We may get two forms of the bootpath:
- *	(1) ../sbus@.../esp@<offset>,<slot>/sd@..	(PROM v3 style)
- *	(2) /sbus0/esp0/sd@..				(PROM v2 style)
- */
-#define SAME_ESP(sc, bp, sa) \
-	((bp->val[0] == sa->sa_slot && bp->val[1] == sa->sa_offset) || \
-	 (bp->val[0] == -1 && bp->val[1] == sc->sc_dev.dv_unit))
 
 void	espattach_sbus	__P((struct device *, struct device *, void *));
 void	espattach_dma	__P((struct device *, struct device *, void *));
@@ -214,15 +204,20 @@ espattach_sbus(parent, self, aux)
 		}
 	}
 
+	if (sa->sa_nintr == 0) {
+		/*
+		 * No interrupt properties: we quit; this might
+		 * happen on e.g. a Sparc X terminal.
+		 */
+		printf("\n%s: no interrupt property\n", self->dv_xname);
+		return;
+	}
+
 	esc->sc_pri = sa->sa_pri;
 
 	/* add me to the sbus structures */
 	esc->sc_sd.sd_reset = (void *) ncr53c9x_reset;
 	sbus_establish(&esc->sc_sd, &sc->sc_dev);
-
-	if (sa->sa_bp != NULL && strcmp("esp", sa->sa_bp->name) == 0 &&
-	    SAME_ESP(sc, sa->sa_bp, sa))
-		bootpath_store(1, sa->sa_bp + 1);
 
 	if (strcmp("ptscII", sa->sa_name) == 0) {
 		espattach(esc, &esp_sbus_glue1);
@@ -272,16 +267,20 @@ espattach_dma(parent, self, aux)
 		}
 	}
 
-	/* Establish interrupt handler */
+	if (sa->sa_nintr == 0) {
+		/*
+		 * No interrupt properties: we quit; this might
+		 * happen on e.g. a Sparc X terminal.
+		 */
+		printf("\n%s: no interrupt property\n", self->dv_xname);
+		return;
+	}
+
 	esc->sc_pri = sa->sa_pri;
 
 	/* Assume SBus is grandparent */
 	esc->sc_sd.sd_reset = (void *) ncr53c9x_reset;
 	sbus_establish(&esc->sc_sd, parent);
-
-	if (sa->sa_bp != NULL && strcmp("esp", sa->sa_bp->name) == 0 &&
-	    SAME_ESP(sc, sa->sa_bp, sa))
-		bootpath_store(1, sa->sa_bp + 1);
 
 	espattach(esc, &esp_sbus_glue);
 }
@@ -385,22 +384,19 @@ espattach(esc, gluep)
 	}
 
 	/* Establish interrupt channel */
-	icookie = bus_intr_establish(esc->sc_bustag,
-				     esc->sc_pri, 0,
-				     (int(*)__P((void*)))ncr53c9x_intr, sc);
+	icookie = bus_intr_establish(esc->sc_bustag, esc->sc_pri, IPL_BIO, 0,
+				     ncr53c9x_intr, sc);
 
 	/* register interrupt stats */
-	evcnt_attach(&sc->sc_dev, "intr", &sc->sc_intrcnt);
+	evcnt_attach_dynamic(&sc->sc_intrcnt, EVCNT_TYPE_INTR, NULL,
+	    sc->sc_dev.dv_xname, "intr");
 
 	/* Turn on target selection using the `dma' method */
 	ncr53c9x_dmaselect = 1;
 
 	/* Do the common parts of attachment. */
-	sc->sc_adapter.adapt_request = ncr53c9x_scsipi_request;
-	sc->sc_adapter.adapt_minphys = minphys;
-	ncr53c9x_attach(sc);
+	ncr53c9x_attach(sc, NULL, NULL);
 
-	bootpath_store(1, NULL);
 }
 
 /*

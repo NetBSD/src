@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ex_pci.c,v 1.8 1999/09/01 20:26:43 fvdl Exp $	*/
+/*	$NetBSD: if_ex_pci.c,v 1.8.2.1 2000/11/20 11:42:21 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -90,6 +90,12 @@
 #include <dev/pci/pcireg.h>
 #include <dev/pci/pcidevs.h>
 
+struct ex_pci_softc {
+	struct ex_softc sc_ex;
+	pci_chipset_tag_t sc_chiptag;
+	pcitag_t sc_pcitag;
+};
+
 /*
  * PCI constants.
  * XXX These should be in a common file!
@@ -97,12 +103,16 @@
 #define PCI_CONN		0x48    /* Connector type */
 #define PCI_CBIO		0x10    /* Configuration Base IO Address */
 #define PCI_POWERCTL		0xe0
+#define PCI_FUNCMEM		0x18
+
+#define PCI_INTRACK		0x00008000
 
 int ex_pci_match __P((struct device *, struct cfdata *, void *));
 void ex_pci_attach __P((struct device *, struct device *, void *));
+void ex_pci_intr_ack __P((struct ex_softc *));
 
 struct cfattach ex_pci_ca = {
-	sizeof(struct ex_softc), ex_pci_match, ex_pci_attach
+	sizeof(struct ex_pci_softc), ex_pci_match, ex_pci_attach
 };
 
 const struct ex_pci_product {
@@ -131,14 +141,42 @@ const struct ex_pci_product {
 	  "3c905B-TX 10/100 Ethernet" },
 	{ PCI_PRODUCT_3COM_3C905BT4,	EX_CONF_90XB|EX_CONF_MII,
 	  "3c905B-T4 10/100 Ethernet" },
+	{ PCI_PRODUCT_3COM_3C905BCOMBO,	EX_CONF_90XB/*|EX_CONF_MII|EX_CONF_INTPHY*/,
+	  "3c905B-COMBO 10/100 Ethernet" },
 	{ PCI_PRODUCT_3COM_3C905BFX,	EX_CONF_90XB,
 	  "3c905B-FX 10/100 Ethernet" },
 
 	/* XXX Internal PHY? */
-	{ PCI_PRODUCT_3COM_3C980SRV,	EX_CONF_90XB|EX_CONF_MII,
+	{ PCI_PRODUCT_3COM_3C980SRV,	EX_CONF_90XB,
 	  "3c980 Server Adapter 10/100 Ethernet" },
+	{ PCI_PRODUCT_3COM_3C980CTXM,	EX_CONF_90XB,
+	  "3c980C-TXM 10/100 Ethernet" },
+
 	{ PCI_PRODUCT_3COM_3C905CTX,	EX_CONF_90XB|EX_CONF_MII,
 	  "3c905C-TX 10/100 Ethernet with mngmt" },
+
+	{ PCI_PRODUCT_3COM_3C450TX,		EX_CONF_90XB,
+	  "3c450-TX 10/100 Ethernet" },
+
+	{ PCI_PRODUCT_3COM_3CSOHO100TX,	EX_CONF_90XB,
+	  "3cSOHO100-TX 10/100 Ethernet" },
+
+	{ PCI_PRODUCT_3COM_3C555,
+	   EX_CONF_90XB | EX_CONF_MII | EX_CONF_EEPROM_OFF |
+	   EX_CONF_EEPROM_8BIT,
+	  "3c555 MiniPCI 10/100 Ethernet" },
+
+	{ PCI_PRODUCT_3COM_3C556,
+	   EX_CONF_90XB | EX_CONF_MII | EX_CONF_EEPROM_OFF |
+	   EX_CONF_PCI_FUNCREG | EX_CONF_RESETHACK | EX_CONF_INV_LED_POLARITY |
+	   EX_CONF_PHY_POWER | EX_CONF_EEPROM_8BIT,
+	  "3c556 MiniPCI 10/100 Ethernet" },
+
+	{ PCI_PRODUCT_3COM_3C556B,
+	   EX_CONF_90XB | EX_CONF_MII | EX_CONF_EEPROM_OFF |
+	   EX_CONF_PCI_FUNCREG | EX_CONF_RESETHACK | EX_CONF_INV_LED_POLARITY |
+	   EX_CONF_PHY_POWER,
+	  "3c556B MiniPCI 10/100 Ethernet" },
 
 	{ 0,				0,
 	  NULL },
@@ -182,12 +220,14 @@ ex_pci_attach(parent, self, aux)
 	void *aux;
 {
 	struct ex_softc *sc = (void *)self;
+	struct ex_pci_softc *psc = (void *)self;
 	struct pci_attach_args *pa = aux;
 	pci_chipset_tag_t pc = pa->pa_pc;
 	pci_intr_handle_t ih;
 	const struct ex_pci_product *epp;
 	const char *intrstr = NULL;
-	int pmode;
+	int rev, pmreg;
+	pcireg_t reg;
 
 	if (pci_mapreg_map(pa, PCI_CBIO, PCI_MAPREG_TYPE_IO, 0,
 	    &sc->sc_iot, &sc->sc_ioh, NULL, NULL)) {
@@ -201,7 +241,8 @@ ex_pci_attach(parent, self, aux)
 		panic("ex_pci_attach: impossible");
 	}
 
-	printf(": 3Com %s\n", epp->epp_name);
+	rev = PCI_REVISION(pci_conf_read(pc, pa->pa_tag, PCI_CLASS_REG));
+	printf(": 3Com %s (rev. 0x%x)\n", epp->epp_name, rev);
 
 	sc->enable = NULL;
 	sc->disable = NULL;
@@ -218,9 +259,9 @@ ex_pci_attach(parent, self, aux)
 	    PCI_COMMAND_MASTER_ENABLE);
 
 	/* Get it out of power save mode if needed (BIOS bugs) */
-	if (pci_get_capability(pc, pa->pa_tag, PCI_CAP_PWRMGMT, 0, 0)) {
-		pmode = pci_conf_read(pc, pa->pa_tag, PCI_POWERCTL) & 0x3;
-		if (pmode == 3) {
+	if (pci_get_capability(pc, pa->pa_tag, PCI_CAP_PWRMGMT, &pmreg, 0)) {
+		reg = pci_conf_read(pc, pa->pa_tag, pmreg + 4) & 0x3;
+		if (reg == 3) {
 			/*
 			 * The card has lost all configuration data in
 			 * this state, so punt.
@@ -229,10 +270,10 @@ ex_pci_attach(parent, self, aux)
 			    sc->sc_dev.dv_xname);
 			return;
 		}
-		if (pmode != 0) {
+		if (reg != 0) {
 			printf("%s: waking up from power state D%d\n",
-			    sc->sc_dev.dv_xname, pmode);
-			pci_conf_write(pc, pa->pa_tag, PCI_POWERCTL, 0);
+			    sc->sc_dev.dv_xname, reg);
+			pci_conf_write(pc, pa->pa_tag, pmreg + 4, 0);
 		}
 	}
 
@@ -242,6 +283,13 @@ ex_pci_attach(parent, self, aux)
 		printf("%s: couldn't map interrupt\n", sc->sc_dev.dv_xname);
 		return;
 	}
+
+	if (sc->ex_conf & EX_CONF_PCI_FUNCREG) {
+		sc->intr_ack = ex_pci_intr_ack;
+		psc->sc_chiptag = pa->pa_pc;
+		psc->sc_pcitag = pa->pa_tag;
+	}
+
 	intrstr = pci_intr_string(pc, ih);
 	sc->sc_ih = pci_intr_establish(pc, ih, IPL_NET, ex_intr, sc);
 	if (sc->sc_ih == NULL) {
@@ -255,4 +303,14 @@ ex_pci_attach(parent, self, aux)
 	printf("%s: interrupting at %s\n", sc->sc_dev.dv_xname, intrstr);
 
 	ex_config(sc);
+}
+
+void            
+ex_pci_intr_ack(sc)
+	struct ex_softc *sc;
+{
+	struct ex_pci_softc *psc = (struct ex_pci_softc *)sc;
+        
+	pci_conf_write(psc->sc_chiptag, psc->sc_pcitag, PCI_FUNCMEM + 4,
+	    PCI_INTRACK);
 }

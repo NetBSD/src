@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_shutdown.c,v 1.4 1999/02/05 00:06:17 oster Exp $	*/
+/*	$NetBSD: rf_shutdown.c,v 1.4.8.1 2000/11/20 11:42:59 bouyer Exp $	*/
 /*
  * rf_shutdown.c
  */
@@ -38,7 +38,6 @@
 #include "rf_shutdown.h"
 #include "rf_debugMem.h"
 #include "rf_freelist.h"
-#include "rf_threadid.h"
 
 static void 
 rf_FreeShutdownEnt(RF_ShutdownList_t * ent)
@@ -60,7 +59,10 @@ _rf_ShutdownCreate(
          * Have to directly allocate memory here, since we start up before
          * and shutdown after RAIDframe internal allocation system.
          */
-	ent = (RF_ShutdownList_t *) malloc(sizeof(RF_ShutdownList_t), M_RAIDFRAME, M_WAITOK);
+	/* 	ent = (RF_ShutdownList_t *) malloc(sizeof(RF_ShutdownList_t), 
+		M_RAIDFRAME, M_WAITOK); */
+	ent = (RF_ShutdownList_t *) malloc(sizeof(RF_ShutdownList_t), 
+					   M_RAIDFRAME, M_NOWAIT);
 	if (ent == NULL)
 		return (ENOMEM);
 	ent->cleanup = cleanup;
@@ -85,16 +87,12 @@ rf_ShutdownList(RF_ShutdownList_t ** list)
 		line = r->line;
 
 		if (rf_shutdownDebug) {
-			int     tid;
-			rf_get_threadid(tid);
-			printf("[%d] call shutdown, created %s:%d\n", tid, file, line);
+			printf("call shutdown, created %s:%d\n", file, line);
 		}
 		r->cleanup(r->arg);
 
 		if (rf_shutdownDebug) {
-			int     tid;
-			rf_get_threadid(tid);
-			printf("[%d] completed shutdown, created %s:%d\n", tid, file, line);
+			printf("completed shutdown, created %s:%d\n", file, line);
 		}
 		rf_FreeShutdownEnt(r);
 	}

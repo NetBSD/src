@@ -1,4 +1,4 @@
-/*	$NetBSD: rrunner.c,v 1.13 1999/06/20 16:44:49 thorpej Exp $	*/
+/*	$NetBSD: rrunner.c,v 1.13.2.1 2000/11/20 11:40:52 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -59,8 +59,6 @@
 #include <sys/device.h>
 #include <sys/proc.h>
 #include <sys/kernel.h>
-
-#include <vm/vm.h>
 
 #include <uvm/uvm_extern.h>
 
@@ -132,7 +130,7 @@ void esh_fpstop __P((struct tty *tp, int rw));
 int esh_fppoll __P((dev_t dev, int events, struct proc *p));
 
 #ifdef MORE_DONE
-int esh_fpmmap __P((dev_t, int, int));
+paddr_t esh_fpmmap __P((dev_t, off_t, int));
 #endif
 
 /* General routines, not externally visable */
@@ -300,6 +298,7 @@ eshconfig(sc)
 	sc->sc_send.ec_offset = 0;
 	sc->sc_send.ec_descr = sc->sc_send_ring;
     	TAILQ_INIT(&sc->sc_send.ec_di_queue);
+	BUFQ_INIT(&sc->sc_send.ec_buf_queue);
 
 	for (i = 0; i < RR_MAX_SNAP_RECV_RING_SIZE; i++)
 		if (bus_dmamap_create(sc->sc_dmat, RR_DMA_MAX, 1, RR_DMA_MAX, 
@@ -460,9 +459,9 @@ bad_dmamem_map:
 
 void
 eshinit(sc)
-	register struct esh_softc *sc;
+	struct esh_softc *sc;
 {
-	register struct ifnet *ifp = &sc->sc_if;
+	struct ifnet *ifp = &sc->sc_if;
 	bus_space_tag_t iot = sc->sc_iot;
 	bus_space_handle_t ioh = sc->sc_ioh;
 	struct rr_ring_ctl *ring;
@@ -710,21 +709,19 @@ esh_fpopen(dev, oflags, devtype, p)
 	struct esh_softc *sc;
 	struct rr_ring_ctl *ring_ctl;
 	struct esh_fp_ring_ctl *recv;
-	int unit = ESHUNIT(dev);
 	int ulp = ESHULP(dev);
 	int error = 0;
 	bus_size_t size;
 	int rseg;
 	int s;
 
-
-	if (unit >= esh_cd.cd_ndevs || ulp == HIPPI_ULP_802)
+	sc = device_lookup(&esh_cd, ESHUNIT(dev));
+	if (sc == NULL || ulp == HIPPI_ULP_802)
 		return (ENXIO);
 
-	sc = esh_cd.cd_devs[unit];
-
 #ifdef ESH_PRINTF
-	printf("esh_fpopen:  opening board %d, ulp %d\n", unit, ulp);
+	printf("esh_fpopen:  opening board %d, ulp %d\n",
+	    sc->sc_dev.dv_unit, ulp);
 #endif
 
 	/* If the card is not up, initialize it. */
@@ -934,25 +931,24 @@ esh_fpclose(dev, fflag, devtype, p)
 	struct esh_softc *sc;
 	struct rr_ring_ctl *ring_ctl;
 	struct esh_fp_ring_ctl *ring;
-	int unit = ESHUNIT(dev);
 	int ulp = ESHULP(dev);
 	int index;
 	int error = 0;
 	int s;
 
-
-	if (unit >= esh_cd.cd_ndevs || ulp == HIPPI_ULP_802)
+	sc = device_lookup(&esh_cd, ESHUNIT(dev));
+	if (sc == NULL || ulp == HIPPI_ULP_802)
 		return (ENXIO);
 
 	s = splnet();
 
-	sc = esh_cd.cd_devs[unit];
 	ring = sc->sc_fp_recv[ulp];
 	ring_ctl = &sc->sc_recv_ring_table[ulp];
 	index = ring->ec_index;
 
 #ifdef ESH_PRINTF
-	printf("esh_fpclose:  closing unit %d, ulp %d\n", unit, ulp);
+	printf("esh_fpclose:  closing unit %d, ulp %d\n",
+	    sc->sc_dev.dv_unit, ulp);
 #endif
 	assert(ring);
 	assert(ring_ctl);
@@ -1011,7 +1007,6 @@ esh_fpread(dev, uio, ioflag)
 	struct esh_softc *sc;
 	struct esh_fp_ring_ctl *ring;
 	struct esh_dmainfo *di;
-	int unit = ESHUNIT(dev);
 	int ulp = ESHULP(dev);
 	int flags = B_READ;
 	int error;
@@ -1022,13 +1017,12 @@ esh_fpread(dev, uio, ioflag)
 	printf("esh_fpread:  dev %x\n", dev);
 #endif
 
-	s = splnet();
-	if (unit >= esh_cd.cd_ndevs || ulp == HIPPI_ULP_802) {
-		error = ENXIO;
-		goto fpread_done;
-	}
+	sc = device_lookup(&esh_cd, ESHUNIT(dev));
+	if (sc == NULL || ulp == HIPPI_ULP_802)
+		return (ENXIO);
 
-	sc = esh_cd.cd_devs[unit];
+	s = splnet();
+
 	ring = sc->sc_fp_recv[ulp];
 
 	if ((sc->sc_flags & ESH_FL_INITIALIZED) == 0) {
@@ -1184,7 +1178,6 @@ esh_fpwrite(dev, uio, ioflag)
 	struct esh_softc *sc;
 	struct esh_send_ring_ctl *ring;
 	struct esh_dmainfo *di;
-	int unit = ESHUNIT(dev);
 	int ulp = ESHULP(dev);
 	int flags = B_WRITE;
 	int error;
@@ -1196,13 +1189,12 @@ esh_fpwrite(dev, uio, ioflag)
 	printf("esh_fpwrite:  dev %x\n", dev);
 #endif
 
-	s = splnet();
-	if (unit >= esh_cd.cd_ndevs || ulp == HIPPI_ULP_802) {
-		error = EPROTOTYPE;  /* XXX:  Not really kosher, but obvious */
-		goto fpwrite_done;
-	}
+	sc = device_lookup(&esh_cd, ESHUNIT(dev));
+	if (sc == NULL || ulp == HIPPI_ULP_802)
+		return (ENXIO);
 
-	sc = esh_cd.cd_devs[unit];
+	s = splnet();
+
 	ring = &sc->sc_send;
 
 	if ((sc->sc_flags & ESH_FL_INITIALIZED) == 0) {
@@ -1350,7 +1342,6 @@ esh_fpstrategy(bp)
 	struct buf *bp;
 {
 	struct esh_softc *sc;
-	int unit = ESHUNIT(bp->b_dev);
 	int ulp = ESHULP(bp->b_dev);
 	int error = 0;
 	int s;
@@ -1360,15 +1351,15 @@ esh_fpstrategy(bp)
 	       "\tunit %x, ulp %d\n",
 		bp->b_bcount, bp->b_flags, bp->b_dev, unit, ulp);
 #endif
-        
+
+	sc = device_lookup(&esh_cd, ESHUNIT(bp->b_dev));
+
 	s = splnet();
-	if (unit >= esh_cd.cd_ndevs || ulp == HIPPI_ULP_802) {
+	if (sc == NULL || ulp == HIPPI_ULP_802) {
 		bp->b_error = ENXIO;
 		bp->b_flags |= B_ERROR;
 		goto done;
 	}
-
-	sc = esh_cd.cd_devs[unit];
 
 	if (bp->b_bcount == 0)
 		goto done;
@@ -1428,16 +1419,7 @@ esh_fpstrategy(bp)
 		 */
 
 		struct esh_send_ring_ctl *ring = &sc->sc_send;
-
-		if (ring->ec_queue != NULL) {
-			assert(ring->ec_lastqueue);
-			
-			ring->ec_lastqueue->b_actf = bp;
-		} else {
-			ring->ec_queue = bp;
-		}
-		ring->ec_lastqueue = bp;
-		bp->b_actf = NULL;
+		BUFQ_INSERT_TAIL(&ring->ec_buf_queue, bp);
 #ifdef ESH_PRINTF
 		printf("esh_fpstrategy:  ready to call eshstart to write!\n");
 #endif
@@ -1495,7 +1477,7 @@ int
 eshintr(arg)
 	void *arg;
 {
-	register struct esh_softc *sc = arg;
+	struct esh_softc *sc = arg;
 	bus_space_tag_t iot = sc->sc_iot;
 	bus_space_handle_t ioh = sc->sc_ioh;
 	struct ifnet *ifp = &sc->sc_if;
@@ -1999,7 +1981,7 @@ void
 eshstart(ifp)
 	struct ifnet *ifp;
 {
-	register struct esh_softc *sc = ifp->if_softc;
+	struct esh_softc *sc = ifp->if_softc;
 	struct esh_send_ring_ctl *send = &sc->sc_send;
 	struct mbuf *m = NULL;
 	int error;
@@ -2080,7 +2062,8 @@ eshstart(ifp)
 
 	if ((sc->sc_flags & ESH_FL_FP_RING_UP) != 0 &&
 	    send->ec_cur_mbuf == NULL && send->ec_cur_buf == NULL &&
-	    send->ec_cur_dmainfo == NULL && send->ec_queue != NULL) {
+	    send->ec_cur_dmainfo == NULL &&
+	    BUFQ_FIRST(&send->ec_buf_queue) != NULL) {
 		struct buf *bp;
 
 #ifdef ESH_PRINTF
@@ -2088,10 +2071,8 @@ eshstart(ifp)
 		       send->ec_queue);
 #endif
 
-		bp = send->ec_cur_buf = send->ec_queue;
-		send->ec_queue = send->ec_queue->b_actf;
-		if (send->ec_queue == NULL)
-			send->ec_lastqueue = NULL;
+		bp = send->ec_cur_buf = BUFQ_FIRST(&send->ec_buf_queue);
+		BUFQ_REMOVE(&send->ec_buf_queue, bp);
 		send->ec_offset = 0;
 		send->ec_len = bp->b_bcount;
 
@@ -2236,7 +2217,7 @@ esh_send(sc)
 
 static void
 eshstart_cleanup(sc, consumer, error)
-	register struct esh_softc *sc;
+	struct esh_softc *sc;
 	u_int16_t consumer;
 	int error;
 {
@@ -2419,7 +2400,7 @@ bogosity:
 
 static void
 esh_read_snap_ring(sc, consumer, error)
-	register struct esh_softc *sc;
+	struct esh_softc *sc;
 	u_int16_t consumer;
 	int error;
 {
@@ -2711,7 +2692,7 @@ esh_init_fp_rings(sc)
 
 static void
 esh_read_fp_ring(sc, consumer, error, ulp)
-	register struct esh_softc *sc;
+	struct esh_softc *sc;
 	u_int16_t consumer;
 	int error;
 	int ulp;
@@ -3023,7 +3004,7 @@ esh_flush_fp_ring(sc, recv, di)
 
 int
 eshioctl(ifp, cmd, data)
-	register struct ifnet *ifp;
+	struct ifnet *ifp;
 	u_long cmd;
 	caddr_t data;
 {
@@ -3076,7 +3057,7 @@ eshioctl(ifp, cmd, data)
 #ifdef NS
 		case AF_NS:
 		{
-			register struct ns_addr *ina = 
+			struct ns_addr *ina = 
 				&IA_SNS(ifa)->sns_addr;
 
 			if (ns_nullhost(*ina))
@@ -3170,7 +3151,6 @@ esh_generic_ioctl(struct esh_softc *sc, u_long cmd, caddr_t data,
 	u_int32_t offset;
 	u_int32_t length;
 	int error = 0;
-	int s = 0;
 	int i;
 
 	/* 
@@ -3276,7 +3256,6 @@ esh_generic_ioctl(struct esh_softc *sc, u_long cmd, caddr_t data,
 		if (cmd == EIOCSEEPROM) {
 			printf("%s:  writing EEPROM\n", sc->sc_dev.dv_xname);
 			sc->sc_flags |= ESH_FL_EEPROM_BUSY;
-			s = spl0();
 		}
 
 		/* Do that EEPROM voodoo that you do so well... */
@@ -3326,7 +3305,6 @@ esh_generic_ioctl(struct esh_softc *sc, u_long cmd, caddr_t data,
 		if (cmd == EIOCSEEPROM) {
 			sc->sc_flags &= ~ESH_FL_EEPROM_BUSY;
 			wakeup((void *)&sc->sc_flags);
-			splx(s);
 			printf("%s:  done writing EEPROM\n", 
 			       sc->sc_dev.dv_xname);
 		}
@@ -3397,7 +3375,7 @@ eshwatchdog(ifp)
 
 void
 eshstop(sc)
-	register struct esh_softc *sc;
+	struct esh_softc *sc;
 {
 	struct ifnet *ifp = &sc->sc_if;
 	bus_space_tag_t iot = sc->sc_iot;

@@ -1,7 +1,7 @@
-/*	$NetBSD: if_tlp_eisa.c,v 1.2 1999/09/14 22:25:48 thorpej Exp $	*/
+/*	$NetBSD: if_tlp_eisa.c,v 1.2.2.1 2000/11/20 11:40:01 bouyer Exp $	*/
 
 /*-
- * Copyright (c) 1999 The NetBSD Foundation, Inc.
+ * Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -55,6 +55,8 @@
 #include <sys/ioctl.h>
 #include <sys/errno.h>
 #include <sys/device.h>
+
+#include <machine/endian.h>
  
 #include <net/if.h>
 #include <net/if_dl.h>
@@ -79,6 +81,7 @@
 #include <machine/intr.h>
 
 #include <dev/mii/miivar.h>
+#include <dev/mii/mii_bitbang.h>
 
 #include <dev/ic/tulipreg.h>
 #include <dev/ic/tulipvar.h>
@@ -209,6 +212,11 @@ tlp_eisa_attach(parent, self, aux)
 	sc->sc_regshift = 4;
 
 	/*
+	 * No power management hooks.
+	 */
+	sc->sc_flags |= TULIPF_ENABLED;
+
+	/*
 	 * CBIO must map the EISA slot, and I/O access and Bus Mastering
 	 * must be enabled.
 	 */
@@ -246,7 +254,8 @@ tlp_eisa_attach(parent, self, aux)
 	/*
 	 * ...and now read the contents of the Ethernet Address ROM.
 	 */
-	memset(sc->sc_srom, 0, sizeof(sc->sc_srom));
+	sc->sc_srom = malloc(32, M_DEVBUF, M_WAITOK);
+	memset(sc->sc_srom, 32, sizeof(sc->sc_srom));
 	for (i = 0; i < 32; i++)
 		sc->sc_srom[i] = bus_space_read_1(iot, ioh, DE425_ENETROM);
 

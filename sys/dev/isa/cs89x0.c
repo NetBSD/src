@@ -1,4 +1,4 @@
-/*	$NetBSD: cs89x0.c,v 1.10 1999/05/18 23:52:57 thorpej Exp $	*/
+/*	$NetBSD: cs89x0.c,v 1.10.2.1 2000/11/20 11:41:12 bouyer Exp $	*/
 
 /*
  * Copyright 1997
@@ -217,7 +217,7 @@
 #include <net/bpfdesc.h>
 #endif
 
-#include <vm/vm.h>
+#include <uvm/uvm_extern.h>
 
 #include <machine/bus.h>
 #include <machine/intr.h>
@@ -442,7 +442,16 @@ cs_attach(sc, enaddr, media, nmedia, defmedia)
 		printf("%s: invalid DMA channel, not using DMA\n",
 		    sc->sc_dev.dv_xname);
 	else {
+		bus_size_t maxsize;
 		bus_addr_t dma_addr;
+
+		maxsize = isa_dmamaxsize(sc->sc_ic, sc->sc_drq);
+		if (maxsize < CS8900_DMASIZE) {
+			printf("%s: max DMA size %lu is less than required %d\n",
+			    sc->sc_dev.dv_xname, (u_long)maxsize,
+			    CS8900_DMASIZE);
+			goto after_dma_block;
+		}
 
 		if (isa_dmamap_create(sc->sc_ic, sc->sc_drq,
 		    CS8900_DMASIZE, BUS_DMA_NOWAIT) != 0) {
@@ -1554,39 +1563,16 @@ cs_ether_input(sc, m)
 	struct mbuf *m;
 {
 	struct ifnet *ifp = &sc->sc_ethercom.ec_if;
-	struct ether_header *eh;
 
 	ifp->if_ipackets++;
-
-	/*
-	 * the first thing in the mbuf is the ethernet header. we need to
-	 * pass this header to the upper layers as a structure, so cast the
-	 * start of the mbuf, and adjust the mbuf to point to the end of the
-	 * ethernet header, ie the ethernet packet data.
-	 */
-	eh = mtod(m, struct ether_header *);
 
 #if NBPFILTER > 0
 	/*
 	 * Check if there's a BPF listener on this interface.
 	 * If so, hand off the raw packet to BPF.
 	 */
-	if (ifp->if_bpf) {
+	if (ifp->if_bpf)
 		bpf_mtap(ifp->if_bpf, m);
-
-		/*
-		 * Note that the interface cannot be in promiscuous mode if
-		 * there are no BPF listeners.  And if we are in promiscuous
-		 * mode, we have to check if this packet is really ours.
-		 */
-		if ((ifp->if_flags & IFF_PROMISC) &&
-		    (eh->ether_dhost[0] & 1) == 0 &&	/* !mcast and !bcast */
-		    bcmp(eh->ether_dhost, sc->sc_enaddr,
-			 sizeof(eh->ether_dhost)) != 0) {
-			m_freem(m);
-			return;
-		}
-	}
 #endif
 
 	/* Pass the packet up. */

@@ -1,4 +1,4 @@
-/*	$NetBSD: aic_pcmcia.c,v 1.12.2.2 1999/10/20 22:38:06 thorpej Exp $	*/
+/*	$NetBSD: aic_pcmcia.c,v 1.12.2.3 2000/11/20 11:42:41 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1997 Marc Horowitz.  All rights reserved.
@@ -61,7 +61,7 @@ struct aic_pcmcia_softc {
 	struct pcmcia_function *sc_pf;		/* our PCMCIA function */
 	void *sc_ih;				/* interrupt handler */
 	int sc_flags;
-#define AIC_PCMCIA_ATTACH	0x0001
+#define AIC_PCMCIA_ATTACH	0x0001		/* attach is in progress */
 };
 
 struct cfattach aic_pcmcia_ca = {
@@ -71,39 +71,18 @@ struct cfattach aic_pcmcia_ca = {
 
 int	aic_pcmcia_enable __P((struct device *, int));
 
-struct aic_pcmcia_product {
-	u_int32_t	app_vendor;		/* PCMCIA vendor ID */
-	u_int32_t	app_product;		/* PCMCIA product ID */
-	int		app_expfunc;		/* expected function number */
-	const char	*app_name;		/* device name */
-} aic_pcmcia_products[] = {
-	{ PCMCIA_VENDOR_ADAPTEC,	PCMCIA_PRODUCT_ADAPTEC_APA1460,
-	  0,				PCMCIA_STR_ADAPTEC_APA1460 },
-	{ PCMCIA_VENDOR_ADAPTEC,	PCMCIA_PRODUCT_ADAPTEC_APA1460A,
-	  0,				PCMCIA_STR_ADAPTEC_APA1460A },
-	{ PCMCIA_VENDOR_NEWMEDIA,	PCMCIA_PRODUCT_NEWMEDIA_BUSTOASTER,
-	  0,				PCMCIA_STR_NEWMEDIA_BUSTOASTER },
+const struct pcmcia_product aic_pcmcia_products[] = {
+	{ PCMCIA_STR_ADAPTEC_APA1460,		PCMCIA_VENDOR_ADAPTEC,
+	  PCMCIA_PRODUCT_ADAPTEC_APA1460,	0 },
 
-	{ 0,				0,
-	  0,				NULL },
+	{ PCMCIA_STR_ADAPTEC_APA1460A,		PCMCIA_VENDOR_ADAPTEC,
+	  PCMCIA_PRODUCT_ADAPTEC_APA1460A,	0 },
+
+	{ PCMCIA_STR_NEWMEDIA_BUSTOASTER,	PCMCIA_VENDOR_NEWMEDIA,
+	  PCMCIA_PRODUCT_NEWMEDIA_BUSTOASTER,	0 },
+
+	{ NULL }
 };
-
-struct aic_pcmcia_product *aic_pcmcia_lookup __P((struct pcmcia_attach_args *));
-
-struct aic_pcmcia_product *
-aic_pcmcia_lookup(pa)
-	struct pcmcia_attach_args *pa;
-{
-	struct aic_pcmcia_product *app;
-
-	for (app = aic_pcmcia_products; app->app_name != NULL; app++) {
-		if (pa->manufacturer == app->app_vendor &&
-		    pa->product == app->app_product &&
-		    pa->pf->number == app->app_expfunc)
-			return (app);
-	}
-	return (NULL);
-}
 
 int
 aic_pcmcia_match(parent, match, aux)
@@ -113,7 +92,8 @@ aic_pcmcia_match(parent, match, aux)
 {
 	struct pcmcia_attach_args *pa = aux;
 
-	if (aic_pcmcia_lookup(pa) != NULL)
+        if (pcmcia_product_lookup(pa, aic_pcmcia_products,
+            sizeof aic_pcmcia_products[0], NULL) != NULL)
 		return (1);
 	return (0);
 }
@@ -128,7 +108,7 @@ aic_pcmcia_attach(parent, self, aux)
 	struct pcmcia_attach_args *pa = aux;
 	struct pcmcia_config_entry *cfe;
 	struct pcmcia_function *pf = pa->pf;
-	struct aic_pcmcia_product *app;
+	const struct pcmcia_product *pp;
 
 	psc->sc_pf = pf;
 
@@ -138,9 +118,10 @@ aic_pcmcia_attach(parent, self, aux)
 		    cfe->num_iospace != 1)
 			continue;
 
-		/* The bustoaster has a default config as first
-		 * entry, we don't want to use that. */
-
+		/*
+		 * The bustoaster has a default config as first
+		 * entry, we don't want to use that.
+		 */
 		if (pa->manufacturer == PCMCIA_VENDOR_NEWMEDIA &&
 		    pa->product == PCMCIA_PRODUCT_NEWMEDIA_BUSTOASTER &&
 		    cfe->iospace[0].start == 0)
@@ -153,7 +134,7 @@ aic_pcmcia_attach(parent, self, aux)
 
 	if (cfe == 0) {
 		printf(": can't alloc i/o space\n");
-		return;
+		goto no_config_entry;
 	}
 
 	sc->sc_iot = psc->sc_pcioh.iot;
@@ -163,28 +144,29 @@ aic_pcmcia_attach(parent, self, aux)
 	pcmcia_function_init(pf, cfe);
 	if (pcmcia_function_enable(pf)) {
 		printf(": function enable failed\n");
-		return;
+		goto enable_failed;
 	}
 
 	/* Map in the io space */
 	if (pcmcia_io_map(pa->pf, PCMCIA_WIDTH_AUTO, 0, psc->sc_pcioh.size,
 	    &psc->sc_pcioh, &psc->sc_io_window)) {
 		printf(": can't map i/o space\n");
-		return;
+		goto iomap_failed;
 	}
 
 	if (!aic_find(sc->sc_iot, sc->sc_ioh)) {
 		printf(": unable to detect chip!\n");
-		return;
+		goto no_aic_found;
 	}
 
-	app = aic_pcmcia_lookup(pa);
-	if (app == NULL) {
+	pp = pcmcia_product_lookup(pa, aic_pcmcia_products,
+	    sizeof aic_pcmcia_products[0], NULL);
+	if (pp == NULL) {
 		printf("\n");
 		panic("aic_pcmcia_attach: impossible");
 	}
 
-	printf(": %s\n", app->app_name);
+	printf(": %s\n", pp->pp_name);
 
 	/* We can enable and disable the controller. */
 	sc->sc_adapter.adapt_enable = aic_pcmcia_enable;
@@ -192,6 +174,22 @@ aic_pcmcia_attach(parent, self, aux)
 	psc->sc_flags |= AIC_PCMCIA_ATTACH;
 	aicattach(sc);
 	psc->sc_flags &= ~AIC_PCMCIA_ATTACH;
+	return;
+
+ no_aic_found:
+	/* Unmap our i/o window. */
+	pcmcia_io_unmap(psc->sc_pf, psc->sc_io_window);
+
+ iomap_failed:
+	/* Disable the device. */
+	pcmcia_function_disable(psc->sc_pf);
+
+ enable_failed:
+	/* Unmap our i/o space. */
+	pcmcia_io_free(psc->sc_pf, &psc->sc_pcioh);
+
+ no_config_entry:
+	psc->sc_io_window = -1;
 }
 
 int
@@ -201,6 +199,10 @@ aic_pcmcia_detach(self, flags)
 {
 	struct aic_pcmcia_softc *sc = (struct aic_pcmcia_softc *)self;
 	int error;
+
+	if (sc->sc_io_window == -1)
+		/* Nothing to detach. */
+		return (0);
 
 	if ((error = aic_detach(self, flags)) != 0)
 		return (error);
@@ -228,6 +230,11 @@ aic_pcmcia_enable(self, onoff)
 			return (EIO);
 		}
 
+		/*
+		 * If attach is in progress, we know that card power is
+		 * enabled and chip will be initialized later.
+		 * Otherwise, enable and reset now.
+		 */
 		if ((psc->sc_flags & AIC_PCMCIA_ATTACH) == 0) {
 			if (pcmcia_function_enable(psc->sc_pf)) {
 				printf("%s: couldn't enable PCMCIA function\n",

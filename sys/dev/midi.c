@@ -1,4 +1,4 @@
-/*	$NetBSD: midi.c,v 1.12.2.1 1999/10/20 22:02:51 thorpej Exp $	*/
+/*	$NetBSD: midi.c,v 1.12.2.2 2000/11/20 11:39:47 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -48,6 +48,7 @@
 #include <sys/malloc.h>
 #include <sys/proc.h>
 #include <sys/systm.h>
+#include <sys/callout.h>
 #include <sys/syslog.h>
 #include <sys/kernel.h>
 #include <sys/signalvar.h>
@@ -112,7 +113,7 @@ midiprobe(parent, match, aux)
 
 	DPRINTFN(6,("midiprobe: type=%d sa=%p hw=%p\n", 
 		 sa->type, sa, sa->hwif));
-	return (sa->type == AUDIODEV_TYPE_MIDI) ? 1 : 0;
+	return (sa->type == AUDIODEV_TYPE_MIDI);
 }
 
 void
@@ -137,6 +138,9 @@ midiattach(parent, self, aux)
 		return;
 	}
 #endif
+
+	callout_init(&sc->sc_callout);
+
 	sc->hw_if = hwp;
 	sc->hw_hdl = hdlp;
 	midi_attach(sc, parent);
@@ -235,7 +239,10 @@ midi_in(addr, data)
 		return;
 	if (data == MIDI_ACK)
 		return;
-	DPRINTFN(3, ("midi_in: %p 0x%02x\n", sc, data));
+
+	DPRINTFN(3, ("midi_in: sc=%p data=0x%02x state=%d pos=%d\n", 
+		     sc, data, sc->in_state, sc->in_pos));
+
 	if (!(sc->flags & FREAD))
 		return;		/* discard data if not reading */
 
@@ -268,8 +275,7 @@ midi_in(addr, data)
 					sc->in_state = MIDI_IN_DATA;
 					sc->in_msg[0] = sc->in_status = data;
 					sc->in_pos = 1;
-					sc->in_left = 
-						MIDI_LENGTH(sc->in_status);
+					sc->in_left = MIDI_LENGTH(data);
 				}
 				break;
 			}
@@ -338,14 +344,14 @@ midiopen(dev, flags, ifmt, p)
 	int flags, ifmt;
 	struct proc *p;
 {
-	int unit = MIDIUNIT(dev);
 	struct midi_softc *sc;
 	struct midi_hw_if *hw;
 	int error;
 
-	if (unit >= midi_cd.cd_ndevs ||
-	    (sc = midi_cd.cd_devs[unit]) == NULL)
-		return ENXIO;
+	sc = device_lookup(&midi_cd, MIDIUNIT(dev));
+	if (sc == NULL)
+		return (ENXIO);
+
 	DPRINTF(("midiopen %p\n", sc));
 
 	hw = sc->hw_if;
@@ -516,7 +522,8 @@ midi_start_output(sc, intr)
 		psignal(sc->async, SIGIO);
 	if (mb->used > 0) {
 		if (!(sc->props & MIDI_PROP_OUT_INTR))
-			timeout(midi_timeout, sc, midi_wait);
+			callout_reset(&sc->sc_callout, midi_wait,
+			    midi_timeout, sc);
 	} else
 		sc->pbus = 0;
 	splx(s);
@@ -719,12 +726,12 @@ midi_getinfo(dev, mi)
 	dev_t dev;
 	struct midi_info *mi;
 {
-	int unit = MIDIUNIT(dev);
 	struct midi_softc *sc;
 
-	if (unit >= midi_cd.cd_ndevs ||
-	    (sc = midi_cd.cd_devs[unit]) == NULL)
+	sc = device_lookup(&midi_cd, MIDIUNIT(dev));
+	if (sc == NULL)
 		return;
+
 	sc->hw_if->getinfo(sc->hw_hdl, mi);
 }
 

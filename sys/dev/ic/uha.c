@@ -1,4 +1,4 @@
-/*	$NetBSD: uha.c,v 1.22.2.5 1999/11/01 22:54:17 thorpej Exp $	*/
+/*	$NetBSD: uha.c,v 1.22.2.6 2000/11/20 11:41:01 bouyer Exp $	*/
 
 #undef UHADEBUG
 #ifdef DDB
@@ -418,6 +418,7 @@ uhaminphys(bp)
  * start a scsi operation given the command and the data address.  Also
  * needs the unit, target and lu.
  */
+
 void
 uha_scsipi_request(chan, req, arg)
 	struct scsipi_channel *chan;
@@ -585,7 +586,6 @@ uha_scsipi_request(chan, req, arg)
 		return;
 	}
 }
-
 void
 uha_timeout(arg)
 	void *arg;

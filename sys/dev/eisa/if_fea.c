@@ -1,4 +1,4 @@
-/*	$NetBSD: if_fea.c,v 1.19 1998/07/05 00:51:18 jonathan Exp $	*/
+/*	$NetBSD: if_fea.c,v 1.19.14.1 2000/11/20 11:40:00 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1996 Matt Thomas <matt@3am-software.com>
@@ -70,10 +70,6 @@
 #else
 #include <net/if_fddi.h>
 #endif
-
-#include <vm/vm.h>
-#include <vm/vm_kern.h>
-#include <vm/vm_param.h>
 
 #if defined(__FreeBSD__)
 #include <netinet/if_ether.h>
@@ -396,8 +392,8 @@ pdq_eisa_attach(
     void *aux)
 {
     pdq_softc_t *sc = (pdq_softc_t *) self;
-    register struct isa_attach_args *ia = (struct isa_attach_args *) aux;
-    register struct ifnet *ifp = &sc->sc_if;
+    struct isa_attach_args *ia = (struct isa_attach_args *) aux;
+    struct ifnet *ifp = &sc->sc_if;
 
     sc->sc_if.if_unit = sc->sc_dev.dv_unit;
     sc->sc_if.if_name = "fea";

@@ -1,4 +1,4 @@
-/* $NetBSD: tfb.c,v 1.18.2.1 1999/10/20 22:55:00 thorpej Exp $ */
+/* $NetBSD: tfb.c,v 1.18.2.2 2000/11/20 11:43:17 bouyer Exp $ */
 
 /*
  * Copyright (c) 1998, 1999 Tohru Nishimura.  All rights reserved.
@@ -32,7 +32,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: tfb.c,v 1.18.2.1 1999/10/20 22:55:00 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tfb.c,v 1.18.2.2 2000/11/20 11:43:17 bouyer Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -41,15 +41,15 @@ __KERNEL_RCSID(0, "$NetBSD: tfb.c,v 1.18.2.1 1999/10/20 22:55:00 thorpej Exp $")
 #include <sys/malloc.h>
 #include <sys/buf.h>
 #include <sys/ioctl.h>
-#include <vm/vm.h>
 
 #include <machine/bus.h>
 #include <machine/intr.h>
 
-#include <dev/rcons/raster.h>
 #include <dev/wscons/wsconsio.h>
-#include <dev/wscons/wscons_raster.h>
 #include <dev/wscons/wsdisplayvar.h>
+
+#include <dev/rasops/rasops.h>
+#include <dev/wsfont/wsfont.h>
 
 #include <dev/tc/tcvar.h>
 #include <dev/ic/bt463reg.h>
@@ -157,9 +157,9 @@ struct fb_devconfig {
 	int	dc_depth;		/* depth, bits per pixel */
 	int	dc_rowbytes;		/* bytes in a FB scan line */
 	vaddr_t dc_videobase;		/* base of flat frame buffer */
-	struct raster	dc_raster;	/* raster description */
-	struct rcons	dc_rcons;	/* raster blitter control info */
 	int	    dc_blanked;		/* currently has video disabled */
+
+	struct rasops_info rinfo;
 };
 
 struct hwcmap256 {
@@ -215,52 +215,42 @@ struct tfb_softc {
 #define	TX_CTL_SEG_ENA	0x10
 #define	TX_CTL_SEG	0x0f
 
-int  tfbmatch __P((struct device *, struct cfdata *, void *));
-void tfbattach __P((struct device *, struct device *, void *));
+static int  tfbmatch __P((struct device *, struct cfdata *, void *));
+static void tfbattach __P((struct device *, struct device *, void *));
 
-struct cfattach tfb_ca = {
+const struct cfattach tfb_ca = {
 	sizeof(struct tfb_softc), tfbmatch, tfbattach,
 };
 
-void tfb_getdevconfig __P((tc_addr_t, struct fb_devconfig *));
-struct fb_devconfig tfb_console_dc;
-tc_addr_t tfb_consaddr;
+static void tfb_getdevconfig __P((tc_addr_t, struct fb_devconfig *));
+static struct fb_devconfig tfb_console_dc;
+static tc_addr_t tfb_consaddr;
 
-struct wsdisplay_emulops tfb_emulops = {
-	rcons_cursor,			/* could use hardware cursor; punt */
-	rcons_mapchar,
-	rcons_putchar,
-	rcons_copycols,
-	rcons_erasecols,
-	rcons_copyrows,
-	rcons_eraserows,
-	rcons_alloc_attr
-};
-
-struct wsscreen_descr tfb_stdscreen = {
+static struct wsscreen_descr tfb_stdscreen = {
 	"std", 0, 0,
-	&tfb_emulops,
+	0, /* textops */
 	0, 0,
 	WSSCREEN_REVERSE
 };
 
-const struct wsscreen_descr *_tfb_scrlist[] = {
+static const struct wsscreen_descr *_tfb_scrlist[] = {
 	&tfb_stdscreen,
 };
 
-struct wsscreen_list tfb_screenlist = {
+static const struct wsscreen_list tfb_screenlist = {
 	sizeof(_tfb_scrlist) / sizeof(struct wsscreen_descr *), _tfb_scrlist
 };
 
-int	tfbioctl __P((void *, u_long, caddr_t, int, struct proc *));
-int	tfbmmap __P((void *, off_t, int));
+static int	tfbioctl __P((void *, u_long, caddr_t, int, struct proc *));
+static paddr_t	tfbmmap __P((void *, off_t, int));
 
-int	tfb_alloc_screen __P((void *, const struct wsscreen_descr *,
+static int	tfb_alloc_screen __P((void *, const struct wsscreen_descr *,
 				      void **, int *, int *, long *));
-void	tfb_free_screen __P((void *, void *));
-void	tfb_show_screen __P((void *, void *));
+static void	tfb_free_screen __P((void *, void *));
+static int	tfb_show_screen __P((void *, void *, int,
+				     void (*) (void *, int, int), void *));
 
-struct wsdisplay_accessops tfb_accessops = {
+static const struct wsdisplay_accessops tfb_accessops = {
 	tfbioctl,
 	tfbmmap,
 	tfb_alloc_screen,
@@ -270,8 +260,8 @@ struct wsdisplay_accessops tfb_accessops = {
 };
 
 int  tfb_cnattach __P((tc_addr_t));
-int  tfbintr __P((void *));
-void tfbinit __P((struct fb_devconfig *));
+static int  tfbintr __P((void *));
+static void tfbinit __P((struct fb_devconfig *));
 
 static int  get_cmap __P((struct tfb_softc *, struct wsdisplay_cmap *));
 static int  set_cmap __P((struct tfb_softc *, struct wsdisplay_cmap *));
@@ -281,7 +271,7 @@ static void set_curpos __P((struct tfb_softc *, struct wsdisplay_curpos *));
 static void bt431_set_curpos __P((struct tfb_softc *));
 
 /* bit order reverse */
-const static u_int8_t flip[256] = {
+static const u_int8_t flip[256] = {
 	0x00, 0x80, 0x40, 0xc0, 0x20, 0xa0, 0x60, 0xe0,
 	0x10, 0x90, 0x50, 0xd0, 0x30, 0xb0, 0x70, 0xf0,
 	0x08, 0x88, 0x48, 0xc8, 0x28, 0xa8, 0x68, 0xe8,
@@ -316,7 +306,7 @@ const static u_int8_t flip[256] = {
 	0x1f, 0x9f, 0x5f, 0xdf, 0x3f, 0xbf, 0x7f, 0xff,
 };
 
-int
+static int
 tfbmatch(parent, match, aux)
 	struct device *parent;
 	struct cfdata *match;
@@ -331,14 +321,12 @@ tfbmatch(parent, match, aux)
 	return (1);
 }
 
-void
+static void
 tfb_getdevconfig(dense_addr, dc)
 	tc_addr_t dense_addr;
 	struct fb_devconfig *dc;
 {
-	struct raster *rap;
-	struct rcons *rcp;
-	int i;
+	int i, cookie;
 
 	dc->dc_vaddr = dense_addr;
 	dc->dc_paddr = MACHINE_KSEG0_TO_PHYS(dc->dc_vaddr);
@@ -357,27 +345,39 @@ tfb_getdevconfig(dense_addr, dc)
 	for (i = 0; i < dc->dc_ht * dc->dc_rowbytes; i += sizeof(u_int32_t))
 		*(u_int32_t *)(dc->dc_videobase + i) = 0x0;
 
-	/* initialize the raster */
-	rap = &dc->dc_raster;
-	rap->width = dc->dc_wid;
-	rap->height = dc->dc_ht;
-	rap->depth = dc->dc_depth;
-	rap->linelongs = dc->dc_rowbytes / sizeof(u_int32_t);
-	rap->pixels = (u_int32_t *)dc->dc_videobase;
+	dc->rinfo.ri_flg = RI_CENTER;
+	dc->rinfo.ri_depth = dc->dc_depth;
+	dc->rinfo.ri_bits = (void *)dc->dc_videobase;
+	dc->rinfo.ri_width = dc->dc_wid;
+	dc->rinfo.ri_height = dc->dc_ht;
+	dc->rinfo.ri_stride = dc->dc_rowbytes;
 
-	/* initialize the raster console blitter */
-	rcp = &dc->dc_rcons;
-	rcp->rc_sp = rap;
-	rcp->rc_crow = rcp->rc_ccol = -1;
-	rcp->rc_crowp = &rcp->rc_crow;
-	rcp->rc_ccolp = &rcp->rc_ccol;
-	rcons_init(rcp, 34, 80);
+	wsfont_init();
+	/* prefer 8 pixel wide font */
+	if ((cookie = wsfont_find(NULL, 8, 0, 0)) <= 0)
+		cookie = wsfont_find(NULL, 0, 0, 0);
+	if (cookie <= 0) {
+		printf("tfb: font table is empty\n");
+		return;
+	}
 
-	tfb_stdscreen.nrows = dc->dc_rcons.rc_maxrow;
-	tfb_stdscreen.ncols = dc->dc_rcons.rc_maxcol;
+	if (wsfont_lock(cookie, &dc->rinfo.ri_font,
+	    WSDISPLAY_FONTORDER_L2R, WSDISPLAY_FONTORDER_L2R) <= 0) {
+		printf("tfb: couldn't lock font\n");
+		return;
+	}
+	dc->rinfo.ri_wsfcookie = cookie;
+
+	rasops_init(&dc->rinfo, 34, 80);
+
+	/* XXX shouldn't be global */
+	tfb_stdscreen.nrows = dc->rinfo.ri_rows;
+	tfb_stdscreen.ncols = dc->rinfo.ri_cols;
+	tfb_stdscreen.textops = &dc->rinfo.ri_ops;
+	tfb_stdscreen.capabilities = dc->rinfo.ri_caps;
 }
 
-void
+static void
 tfbattach(parent, self, aux)
 	struct device *parent, *self;
 	void *aux;
@@ -385,7 +385,6 @@ tfbattach(parent, self, aux)
 	struct tfb_softc *sc = (struct tfb_softc *)self;
 	struct tc_attach_args *ta = aux;
 	struct wsemuldisplaydev_attach_args waa;
-	struct hwcmap256 *cm;
 	int console;
 
 	console = (ta->ta_addr == tfb_consaddr);
@@ -400,14 +399,12 @@ tfbattach(parent, self, aux)
 	}
 	printf(": %d x %d, 8,24bpp\n", sc->sc_dc->dc_wid, sc->sc_dc->dc_ht);
 
-	cm = &sc->sc_cmap;
-	memset(cm, 255, sizeof(struct hwcmap256));	/* XXX */
-	cm->r[0] = cm->g[0] = cm->b[0] = 0;		/* XXX */
+	memcpy(&sc->sc_cmap, rasops_cmap, sizeof(struct hwcmap256));
 
 	sc->sc_cursor.cc_magic.x = TX_MAGIC_X;
 	sc->sc_cursor.cc_magic.y = TX_MAGIC_Y;
 
-	tc_intr_establish(parent, ta->ta_cookie, TC_IPL_TTY, tfbintr, sc);
+	tc_intr_establish(parent, ta->ta_cookie, IPL_TTY, tfbintr, sc);
 
 	*(u_int8_t *)(sc->sc_dc->dc_vaddr + TX_CONTROL) &= ~0x40;
 	*(u_int8_t *)(sc->sc_dc->dc_vaddr + TX_CONTROL) |= 0x40;
@@ -420,7 +417,7 @@ tfbattach(parent, self, aux)
 	config_found(self, &waa, wsemuldisplaydevprint);
 }
 
-int
+static int
 tfbioctl(v, cmd, data, flag, p)
 	void *v;
 	u_long cmd;
@@ -492,7 +489,7 @@ tfbioctl(v, cmd, data, flag, p)
 	return (ENOTTY);
 }
 
-int
+static paddr_t
 tfbmmap(v, offset, prot)
 	void *v;
 	off_t offset;
@@ -505,7 +502,7 @@ tfbmmap(v, offset, prot)
 	return machine_btop(sc->sc_dc->dc_paddr + TX_8BPP_OFFSET + offset);
 }
 
-int
+static int
 tfb_alloc_screen(v, type, cookiep, curxp, curyp, attrp)
 	void *v;
 	const struct wsscreen_descr *type;
@@ -519,16 +516,16 @@ tfb_alloc_screen(v, type, cookiep, curxp, curyp, attrp)
 	if (sc->nscreens > 0)
 		return (ENOMEM);
 
-	*cookiep = &sc->sc_dc->dc_rcons; /* one and only for now */
+	*cookiep = &sc->sc_dc->rinfo; /* one and only for now */
 	*curxp = 0;
 	*curyp = 0;
-	rcons_alloc_attr(&sc->sc_dc->dc_rcons, 0, 0, 0, &defattr);
+	(*sc->sc_dc->rinfo.ri_ops.alloc_attr)(&sc->sc_dc->rinfo, 0, 0, 0, &defattr);
 	*attrp = defattr;
 	sc->nscreens++;
 	return (0);
 }
 
-void
+static void
 tfb_free_screen(v, cookie)
 	void *v;
 	void *cookie;
@@ -541,31 +538,33 @@ tfb_free_screen(v, cookie)
 	sc->nscreens--;
 }
 
-void
-tfb_show_screen(v, cookie)
+static int
+tfb_show_screen(v, cookie, waitok, cb, cbarg)
 	void *v;
 	void *cookie;
+	int waitok;
+	void (*cb) __P((void *, int, int));
+	void *cbarg;
 {
+
+	return (0);
 }
 
-int
+/* EXPORT */ int
 tfb_cnattach(addr)
-        tc_addr_t addr;
+	tc_addr_t addr;
 {
-        struct fb_devconfig *dcp = &tfb_console_dc;
-        long defattr;
+	struct fb_devconfig *dcp = &tfb_console_dc;
+	long defattr;
 
-        tfb_getdevconfig(addr, dcp);
- 
-        rcons_alloc_attr(&dcp->dc_rcons, 0, 0, 0, &defattr);
-
-        wsdisplay_cnattach(&tfb_stdscreen, &dcp->dc_rcons,
-                           0, 0, defattr);
-        tfb_consaddr = addr;
-        return(0);
+	tfb_getdevconfig(addr, dcp);
+	(*dcp->rinfo.ri_ops.alloc_attr)(&dcp->rinfo, 0, 0, 0, &defattr);
+	wsdisplay_cnattach(&tfb_stdscreen, &dcp->rinfo, 0, 0, defattr);
+	tfb_consaddr = addr;
+	return (0);
 }
 
-int
+static int
 tfbintr(arg)
 	void *arg;
 {
@@ -656,7 +655,7 @@ done:
 	return (1);
 }
 
-void
+static void
 tfbinit(dc)
 	struct fb_devconfig *dc;
 {
@@ -696,13 +695,13 @@ tfbinit(dc)
 #endif
 
 	SELECT463(vdac, BT463_IREG_CPALETTE_RAM);
-	BYTE(vdac, bt_cmap) = 0;		tc_wmb();
-	BYTE(vdac, bt_cmap) = 0;		tc_wmb();
-	BYTE(vdac, bt_cmap) = 0;		tc_wmb();
-	for (i = 1; i < 256; i++) {
-		BYTE(vdac, bt_cmap) = 0xff;	tc_wmb();
-		BYTE(vdac, bt_cmap) = 0xff;	tc_wmb();
-		BYTE(vdac, bt_cmap) = 0xff;	tc_wmb();
+	for (i = 0; i < 256; i++) {
+		BYTE(vdac, bt_cmap) = rasops_cmap[3 * i + 0];
+		tc_wmb();
+		BYTE(vdac, bt_cmap) = rasops_cmap[3 * i + 1];
+		tc_wmb();
+		BYTE(vdac, bt_cmap) = rasops_cmap[3 * i + 2];
+		tc_wmb();
 	}
 
 	/* !? Eeeh !? */
@@ -866,7 +865,7 @@ set_curpos(sc, curpos)
 	sc->sc_cursor.cc_pos.y = y;
 }
 
-void
+static void
 bt431_set_curpos(sc)
 	struct tfb_softc *sc;
 {

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_tl.c,v 1.24 1999/05/18 23:52:58 thorpej Exp $	*/
+/*	$NetBSD: if_tl.c,v 1.24.2.1 2000/11/20 11:42:24 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1997 Manuel Bouyer.  All rights reserved.
@@ -83,12 +83,9 @@
 #include <netns/ns_if.h>
 #endif
 
-#include <vm/vm.h>
-#include <vm/vm_param.h>
-#include <vm/vm_kern.h>
-
 #if defined(__NetBSD__)
 #include <net/if_ether.h>
+#include <uvm/uvm_extern.h>
 #if defined(INET)
 #include <netinet/if_inarp.h>
 #endif
@@ -302,6 +299,9 @@ tl_pci_attach(parent, self, aux)
 
 	printf("\n");
 
+	callout_init(&sc->tl_tick_ch);
+	callout_init(&sc->tl_restart_ch);
+
 	tp = tl_lookup_product(pa->pa_id);
 	if (tp == NULL)
 		panic("tl_pci_attach: impossible");
@@ -428,7 +428,8 @@ tl_pci_attach(parent, self, aux)
 	sc->tl_mii.mii_statchg = tl_statchg;
 	ifmedia_init(&sc->tl_mii.mii_media, IFM_IMASK, tl_mediachange,
 	    tl_mediastatus);
-	mii_phy_probe(self, &sc->tl_mii, 0xffffffff);
+	mii_attach(self, &sc->tl_mii, 0xffffffff, MII_PHY_ANY,
+	    MII_OFFSET_ANY, 0);
 	if (LIST_FIRST(&sc->tl_mii.mii_phys) == NULL) { 
 		ifmedia_add(&sc->tl_mii.mii_media, IFM_ETHER|IFM_NONE, 0, NULL);
 		ifmedia_set(&sc->tl_mii.mii_media, IFM_ETHER|IFM_NONE);
@@ -458,7 +459,7 @@ tl_reset(sc)
 
 	/* read stats */
 	if (sc->tl_if.if_flags & IFF_RUNNING) {
-		untimeout(tl_ticks, sc);
+		callout_stop(&sc->tl_tick_ch);
 		tl_read_stats(sc);
 	}
 	/* Reset adapter */
@@ -512,8 +513,11 @@ static void tl_shutdown(v)
 	DELAY(100000);
 
 	/* stop statistics reading loop, read stats */ 
-	untimeout(tl_ticks, sc);
+	callout_stop(&sc->tl_tick_ch);
 	tl_read_stats(sc);
+
+	/* Down the MII. */
+	mii_down(&sc->tl_mii);
 
 	/* deallocate memory allocations */
 	for (i=0; i< TL_NBUF; i++) {
@@ -601,7 +605,7 @@ static int tl_init(sc)
 		if (i > 0) { /* chain the list */
 			sc->Rx_list[i-1].next = &sc->Rx_list[i];
 			sc->Rx_list[i-1].hw_list.fwd =
-			    vtophys(&sc->Rx_list[i].hw_list);
+			    vtophys((vaddr_t)&sc->Rx_list[i].hw_list);
 #ifdef DIAGNOSTIC
 			if (sc->Rx_list[i-1].hw_list.fwd & 0x7)
 				printf("%s: physical addr 0x%x of list not "
@@ -636,9 +640,9 @@ static int tl_init(sc)
 	mii_mediachg(&sc->tl_mii);
 
 	/* start ticks calls */
-	timeout(tl_ticks, sc, hz);
+	callout_reset(&sc->tl_tick_ch, hz, tl_ticks, sc);
 	/* write adress of Rx list and enable interrupts */
-	TL_HR_WRITE(sc, TL_HOST_CH_PARM, vtophys(&sc->Rx_list[0].hw_list));
+	TL_HR_WRITE(sc, TL_HOST_CH_PARM, vtophys((vaddr_t)&sc->Rx_list[0].hw_list));
 	TL_HR_WRITE(sc, TL_HOST_CMD,
 	    HOST_CMD_GO | HOST_CMD_RT | HOST_CMD_Nes | HOST_CMD_IntOn);
 	sc->tl_if.if_flags |= IFF_RUNNING;
@@ -805,8 +809,6 @@ tl_statchg(self)
 	else
 		reg &= ~TL_NETCOMMAND_DUPLEX;
 	tl_intreg_write_byte(sc, TL_INT_NET + TL_INT_NetCmd, reg);
-
-	/* XXX Update ifp->if_baudrate */
 }
 
 void tl_i2c_set(v, bit)
@@ -928,7 +930,7 @@ tl_intr(v)
 			}
 			Rx->next = NULL;
 			Rx->hw_list.fwd = 0;
-			sc->last_Rx->hw_list.fwd = vtophys(&Rx->hw_list);
+			sc->last_Rx->hw_list.fwd = vtophys((vaddr_t)&Rx->hw_list);
 #ifdef DIAGNOSTIC
 			if (sc->last_Rx->hw_list.fwd & 0x7)
 				printf("%s: physical addr 0x%x of list not "
@@ -941,36 +943,21 @@ tl_intr(v)
 
 			/* deliver packet */
 			if (m) {
-				struct ether_header *eh;
 				if (size < sizeof(struct ether_header)) {
 					m_freem(m);
 					continue;
 				}
 				m->m_pkthdr.rcvif = ifp;
 				m->m_pkthdr.len = m->m_len = size;
-				eh = mtod(m, struct ether_header *);
 #ifdef TLDEBUG_RX
+				{ struct ether_header *eh =
+				    mtod(m, struct ether_header *);
 				printf("tl_intr: Rx packet:\n");
-				ether_printheader(eh);
+				ether_printheader(eh); }
 #endif
 #if NBPFILTER > 0
-				if (ifp->if_bpf) {
-					bpf_tap(ifp->if_bpf,
-					    mtod(m, caddr_t), size);
-					/*
-				 	 * Only pass this packet up
-				 	 * if it is for us.
-				 	 */
-					if ((ifp->if_flags & IFF_PROMISC) &&
-					    /* !mcast and !bcast */
-					    (eh->ether_dhost[0] & 1) == 0 &&
-					    bcmp(eh->ether_dhost,
-						LLADDR(ifp->if_sadl),
-						sizeof(eh->ether_dhost)) != 0) {
-						m_freem(m);
-						continue;
-					}
-				}
+				if (ifp->if_bpf)
+					bpf_mtap(ifp->if_bpf, m);
 #endif /* NBPFILTER > 0 */
 				(*ifp->if_input)(ifp, m);
 			}
@@ -983,7 +970,7 @@ tl_intr(v)
 			    sc->sc_dev.dv_xname);
 			tl_reset(sc);
 			/* shedule reinit of the board */
-			timeout(tl_restart, sc, 1);
+			callout_reset(&sc->tl_restart_ch, 1, tl_restart, sc);
 			return(1);
 		}
 #endif
@@ -1006,7 +993,7 @@ tl_intr(v)
 		 * interrupt and enable interrupts in one command
 		 */
 		TL_HR_WRITE(sc, TL_HOST_CH_PARM,
-		    vtophys(&sc->active_Rx->hw_list));
+		    vtophys((vaddr_t)&sc->active_Rx->hw_list));
 		TL_HR_WRITE(sc, TL_HOST_CMD,
 		    HOST_CMD_GO | HOST_CMD_RT | HOST_CMD_Nes | ack | int_type |
 		    HOST_CMD_ACK | HOST_CMD_IntOn);
@@ -1020,7 +1007,7 @@ tl_intr(v)
 			ack++;
 #ifdef TLDEBUG_TX
 			printf("TL_INTR_TxEOC: list 0x%xp done\n",
-			    vtophys(&Tx->hw_list));
+			    vtophys((vaddr_t)&Tx->hw_list));
 #endif
 			Tx->hw_list.stat = 0;
 			m_freem(Tx->m);
@@ -1042,7 +1029,7 @@ tl_intr(v)
 			if ( sc->active_Tx != NULL) {
 				/* needs a Tx go command */
 				TL_HR_WRITE(sc, TL_HOST_CH_PARM,
-				    vtophys(&sc->active_Tx->hw_list));
+				    vtophys((vaddr_t)&sc->active_Tx->hw_list));
 				TL_HR_WRITE(sc, TL_HOST_CMD, HOST_CMD_GO);
 			}
 			sc->tl_if.if_timer = 0;
@@ -1075,7 +1062,7 @@ tl_intr(v)
 			    TL_HR_READ(sc, TL_HOST_CH_PARM));
 			tl_reset(sc);
 			/* shedule reinit of the board */
-			timeout(tl_restart, sc, 1);
+			callout_reset(&sc->tl_restart_ch, 1, tl_restart, sc);
 			return(1);
 		} else {
 			u_int8_t netstat;
@@ -1329,7 +1316,7 @@ tbdinit:
 		Tx->hw_list.seg[segment].data_count =
 		    ETHER_MIN_TX - size;
 		Tx->hw_list.seg[segment].data_addr =
-		    vtophys(nullbuf);
+		    vtophys((vaddr_t)nullbuf);
 		size = ETHER_MIN_TX;
 		segment++;
 	}
@@ -1354,16 +1341,16 @@ tbdinit:
 		sc->active_Tx = sc->last_Tx = Tx;
 #ifdef TLDEBUG_TX
 		printf("%s: Tx GO, addr=0x%x\n", sc->sc_dev.dv_xname,
-		    vtophys(&Tx->hw_list));
+		    vtophys((vaddr_t)&Tx->hw_list));
 #endif
-		TL_HR_WRITE(sc, TL_HOST_CH_PARM, vtophys(&Tx->hw_list));
+		TL_HR_WRITE(sc, TL_HOST_CH_PARM, vtophys((vaddr_t)&Tx->hw_list));
 		TL_HR_WRITE(sc, TL_HOST_CMD, HOST_CMD_GO);
 	} else {
 #ifdef TLDEBUG_TX
 		printf("%s: Tx addr=0x%x queued\n", sc->sc_dev.dv_xname,
-		    vtophys(&Tx->hw_list));
+		    vtophys((vaddr_t)&Tx->hw_list));
 #endif
-		sc->last_Tx->hw_list.fwd = vtophys(&Tx->hw_list);
+		sc->last_Tx->hw_list.fwd = vtophys((vaddr_t)&Tx->hw_list);
 		sc->last_Tx->next = Tx;
 		sc->last_Tx = Tx;
 #ifdef DIAGNOSTIC
@@ -1460,7 +1447,7 @@ static int tl_add_RxBuff(Rx, oldm)
 	Rx->m = m;
 	Rx->hw_list.stat = ((MCLBYTES -2) << 16) | 0x3000;
 	Rx->hw_list.seg.data_count = (MCLBYTES -2);
-	Rx->hw_list.seg.data_addr = vtophys(m->m_data);
+	Rx->hw_list.seg.data_addr = vtophys((vaddr_t)m->m_data);
 	return (m != oldm);
 }
 
@@ -1522,7 +1509,7 @@ static void tl_ticks(v)
 	}
 
 	/* read statistics every seconds */
-	timeout(tl_ticks, v, hz);
+	callout_reset(&sc->tl_tick_ch, hz, tl_ticks, sc);
 }
 
 static void

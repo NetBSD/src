@@ -1,0 +1,216 @@
+***************
+*** 1537,1543 ****
+  
+  #if 0
+  static char ident[] =
+- 	"\n$NetBSD: ncr.c.rej,v 1.1.2.1 2000/11/20 11:42:27 bouyer Exp $\n";
+  #endif
+  
+  static const u_long	ncr_version = NCR_VERSION	* 11
+--- 1535,1541 ----
+  
+  #if 0
+  static char ident[] =
++ 	"\n$NetBSD: ncr.c.rej,v 1.1.2.1 2000/11/20 11:42:27 bouyer Exp $\n";
+  #endif
+  
+  static const u_long	ncr_version = NCR_VERSION	* 11
+***************
+*** 1580,1645 ****
+  #define	NCR_895_ID	(0x000c1000ul)
+  #define	NCR_896_ID	(0x000b1000ul)
+  
+- #ifdef __NetBSD__
+- 
+  struct	cfattach ncr_ca = {
+  	sizeof(struct ncb), ncr_probe, ncr_attach
+  };
+  
+- #else /* !__NetBSD__ */
+- 
+- static u_long ncr_count;
+- 
+- static struct	pci_device ncr_device = {
+- 	"ncr",
+- 	ncr_probe,
+- 	ncr_attach,
+- 	&ncr_count,
+- 	NULL
+- };
+- 
+- DATA_SET (pcidevice_set, ncr_device);
+- 
+- #endif /* !__NetBSD__ */
+- 
+- #ifndef __NetBSD__
+- static struct scsipi_adapter ncr_switch =
+- {
+- 	ncr_start,
+- 	ncr_min_phys,
+- 	0,
+- 	0,
+- 	ncr_info,
+- 	"ncr",
+- 	NULL,			/* scsipi_ioctl */
+- };
+- #endif /* !__NetBSD__ */
+- 
+- static struct scsipi_device ncr_dev =
+- {
+- 	NULL,			/* Use default error handler */
+- 	NULL,			/* have a queue, served by this */
+- 	NULL,			/* have no async handler */
+- 	NULL,			/* Use default 'done' routine */
+- #ifndef __NetBSD__
+- 	"ncr",
+- #endif /* !__NetBSD__ */
+- };
+- 
+- #ifdef __NetBSD__
+- 
+  #define	ncr_name(np)	(np->sc_dev.dv_xname)
+  
+- #else /* !__NetBSD__ */
+- 
+- static char *ncr_name (ncb_p np)
+- {
+- 	static char name[10];
+- 	sprintf(name, "ncr0", np->unit);
+- 	return (name);
+- }
+- #endif
+- 
+  /*==========================================================
+  **
+  **
+--- 1578,1589 ----
+  #define	NCR_895_ID	(0x000c1000ul)
+  #define	NCR_896_ID	(0x000b1000ul)
+  
+  struct	cfattach ncr_ca = {
+  	sizeof(struct ncb), ncr_probe, ncr_attach
+  };
+  
+  #define	ncr_name(np)	(np->sc_dev.dv_xname)
+  
+  /*==========================================================
+  **
+  **
+***************
+*** 4370,4432 ****
+  	**	Now let the generic SCSI driver
+  	**	look for the SCSI devices on the bus ..
+  	*/
+- 
+- #ifdef __NetBSD__
+- 	np->sc_adapter.scsipi_cmd = ncr_start;
+- 	np->sc_adapter.scsipi_minphys = ncr_minphys;
+- 
+- 	np->sc_link.adapter_softc = np;
+- 	np->sc_link.scsipi_scsi.adapter_target = np->myaddr;
+- 	np->sc_link.openings = 1;
+- 	np->sc_link.scsipi_scsi.channel = SCSI_CHANNEL_ONLY_ONE;
+- 	np->sc_link.scsipi_scsi.max_target   = np->maxwide ? 15 : 7;
+- 	np->sc_link.scsipi_scsi.max_lun = MAX_LUN-1;
+- 	np->sc_link.type = BUS_SCSI;
+- 	np->sc_link.adapter      = &np->sc_adapter;
+- #else /* !__NetBSD__ */
+- 	np->sc_link.adapter_unit = unit;
+- 	np->sc_link.adapter_softc = np;
+- 	np->sc_link.adapter_targ = np->myaddr;
+- 	np->sc_link.fordriver	 = 0;
+- 	np->sc_link.adapter      = &ncr_switch;
+- #endif /* !__NetBSD__ */
+- 	np->sc_link.device       = &ncr_dev;
+- 	np->sc_link.flags	 = 0;
+- 
+- #ifdef __NetBSD__
+- 	config_found(self, &np->sc_link, scsiprint);
+- #else /* !__NetBSD__ */
+- #if (__FreeBSD__ >= 2)
+- 	scbus = scsi_alloc_bus();
+- 	if(!scbus)
+- 		return;
+- 	scbus->adapter_link = &np->sc_link;
+  
+- 	if(np->maxwide)
+- 		scbus->maxtarg = 15;
+  
+- 	if (bootverbose) {
+- 		unsigned t_from = 0;
+- 		unsigned t_to   = scbus->maxtarg;
+- 		unsigned myaddr = np->myaddr;
+- 
+- 		char *txt_and = "";
+- 		printf (" scanning for targets ", ncr_name (np));
+- 		if (t_from < myaddr) {
+- 			printf ("0..0 ", t_from, myaddr -1);
+- 			txt_and = "and ";
+- 		}
+- 		if (myaddr < t_to)
+- 			printf ("0..0 ", txt_and, myaddr +1, t_to);
+- 		printf ("(V0 " NCR_DATE ")\n", NCR_VERSION);
+- 	}
+- 		
+- 	scsi_attachdevs (scbus);
+- 	scbus = NULL;   /* Upper-level SCSI code owns this now */
+- #else
+- 	scsi_attachdevs (&np->sc_link);
+- #endif /* !__FreeBSD__ >= 2 */
+- #endif /* !__NetBSD__ */
+  
+  	/*
+  	**	start the timeout daemon
+--- 4254,4277 ----
+  	**	Now let the generic SCSI driver
+  	**	look for the SCSI devices on the bus ..
+  	*/
+  
++ 	memset(adapt, 0, sizeof(*adapt));
++ 	adapt->adapt_dev = &np->sc_dev;
++ 	adapt->adapt_nchannels = 1;
++ 	adapt->adapt_openings = MAX_START - 4;	/* XXX I hate this driver */
++ 	adapt->adapt_max_periph = 1;		/* XXX I hate this driver */
++ 	adapt->adapt_request = ncr_scsipi_request;
++ 	adapt->adapt_minphys = ncr_minphys;
++ 
++ 	memset(chan, 0, sizeof(*chan));
++ 	chan->chan_adapter = adapt;
++ 	chan->chan_bustype = &scsi_bustype;
++ 	chan->chan_channel = 0;
++ 	chan->chan_ntargets = np->maxwide ? 16 : 8;
++ 	chan->chan_nluns = MAX_LUN;
++ 	chan->chan_id = np->myaddr;
+  
++ 	config_found(self, &np->sc_channel, scsiprint);
+  
+  	/*
+  	**	start the timeout daemon
+***************
+*** 4605,4616 ****
+  
+  	oldspl = splbio();
+  
+- 	if (!(cp=ncr_get_ccb (np, flags, xp->sc_link->scsipi_scsi.target,
+- 		xp->sc_link->scsipi_scsi.lun))) {
+  		printf (": no ccb.\n", ncr_name (np));
+- 		xp->error = XS_DRIVER_STUFFUP;
+  		splx(oldspl);
+- 		return(TRY_AGAIN_LATER);
+  	};
+  	cp->xfer = xp;
+  
+--- 4471,4483 ----
+  
+  	oldspl = splbio();
+  
++ 	if (!(cp=ncr_get_ccb (np, flags, periph->periph_target,
++ 		periph->periph_lun))) {
+  		printf (": no ccb.\n", ncr_name (np));
++ 		xp->error = XS_RESOURCE_SHORTAGE;
+  		splx(oldspl);
++ 		scsipi_done(xp);
++ 		return;
+  	};
+  	cp->xfer = xp;
+  

@@ -1,4 +1,4 @@
-/*	$NetBSD: satlink.c,v 1.7 1998/06/09 07:25:05 thorpej Exp $	*/
+/*	$NetBSD: satlink.c,v 1.7.14.1 2000/11/20 11:41:20 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -46,6 +46,7 @@
 
 #include <sys/param.h>
 #include <sys/systm.h>
+#include <sys/callout.h>
 #include <sys/errno.h>
 #include <sys/ioctl.h>
 #include <sys/device.h>
@@ -75,6 +76,7 @@ struct satlink_softc {
 	bus_space_handle_t sc_ioh;	/* space handle */
 	isa_chipset_tag_t sc_ic;	/* ISA chipset info */
 	int	sc_drq;			/* the DRQ we're using */
+	bus_size_t sc_bufsize;		/* DMA buffer size */
 	caddr_t	sc_buf;			/* ring buffer for incoming data */
 	int	sc_uptr;		/* user index into ring buffer */
 	int	sc_sptr;		/* satlink index into ring buffer */
@@ -82,6 +84,7 @@ struct satlink_softc {
 	int	sc_lastresid;		/* residual */
 	struct selinfo sc_selq;		/* our select/poll queue */
 	struct	satlink_id sc_id;	/* ID cached at attach time */
+	struct callout sc_ch;		/* callout pseudo-interrupt */
 };
 
 /* sc_flags */
@@ -92,10 +95,7 @@ struct satlink_softc {
  * Our pesudo-interrupt.  Since up to 328 bytes can arrive in 1/100 of
  * a second, this gives us 3280 bytes per timeout.
  */
-#define	SATLINK_TIMEOUT		(hz/5)
-
-/* max that the DMA controller allows! */
-#define	SATLINK_BUFSIZE		65535
+#define	SATLINK_TIMEOUT		(hz/10)
 
 int	satlinkprobe __P((struct device *, struct cfdata *, void *));
 void	satlinkattach __P((struct device *, struct device *, void *));
@@ -187,29 +187,33 @@ satlinkattach(parent, self, aux)
 	    sc->sc_id.sid_grpid, sc->sc_id.sid_userid,
 	    sc->sc_id.sid_serial);
 
+	callout_init(&sc->sc_ch);
+
+	sc->sc_bufsize = isa_dmamaxsize(sc->sc_ic, sc->sc_drq);
+
 	/* Allocate and map the ring buffer. */
-	if (isa_dmamem_alloc(sc->sc_ic, sc->sc_drq, SATLINK_BUFSIZE,
+	if (isa_dmamem_alloc(sc->sc_ic, sc->sc_drq, sc->sc_bufsize,
 	    &ringaddr, BUS_DMA_NOWAIT)) {
 		printf("%s: can't allocate ring buffer\n",
 		    sc->sc_dev.dv_xname);
 		return;
 	}
-	if (isa_dmamem_map(sc->sc_ic, sc->sc_drq, ringaddr, SATLINK_BUFSIZE,
+	if (isa_dmamem_map(sc->sc_ic, sc->sc_drq, ringaddr, sc->sc_bufsize,
 	    &sc->sc_buf, BUS_DMA_NOWAIT|BUS_DMA_COHERENT)) {
 		printf("%s: can't map ring buffer\n", sc->sc_dev.dv_xname);
 		isa_dmamem_free(sc->sc_ic, sc->sc_drq, ringaddr,
-		    SATLINK_BUFSIZE);
+		    sc->sc_bufsize);
 		return;
 	}
 
 	/* Create the DMA map. */
-	if (isa_dmamap_create(sc->sc_ic, sc->sc_drq, SATLINK_BUFSIZE,
+	if (isa_dmamap_create(sc->sc_ic, sc->sc_drq, sc->sc_bufsize,
 	    BUS_DMA_NOWAIT)) {
 		printf("%s: can't create DMA map\n", sc->sc_dev.dv_xname);
 		isa_dmamem_unmap(sc->sc_ic, sc->sc_drq, sc->sc_buf,
-		    SATLINK_BUFSIZE);
+		    sc->sc_bufsize);
 		isa_dmamem_free(sc->sc_ic, sc->sc_drq, ringaddr,
-		    SATLINK_BUFSIZE);
+		    sc->sc_bufsize);
 		return;
 	}
 }
@@ -220,11 +224,11 @@ satlinkopen(dev, flags, fmt, p)
 	int flags, fmt;
 	struct proc *p;
 {
-	int error, unit = minor(dev);
 	struct satlink_softc *sc;
+	int error;
 
-	if (unit >= satlink_cd.cd_ndevs ||
-	    (sc = satlink_cd.cd_devs[unit]) == NULL)
+	sc = device_lookup(&satlink_cd, minor(dev));
+	if (sc == NULL)
 		return (ENXIO);
 
 	if (sc->sc_flags & SATF_ISOPEN)
@@ -236,16 +240,16 @@ satlinkopen(dev, flags, fmt, p)
 	/* Reset the ring buffer, and start the DMA loop. */
 	sc->sc_uptr = 0; 
 	sc->sc_sptr = 0; 
-	sc->sc_lastresid = SATLINK_BUFSIZE;
-	bzero(sc->sc_buf, SATLINK_BUFSIZE);
+	sc->sc_lastresid = sc->sc_bufsize;
+	bzero(sc->sc_buf, sc->sc_bufsize);
 	error = isa_dmastart(sc->sc_ic, sc->sc_drq, sc->sc_buf,
-	    SATLINK_BUFSIZE, NULL, DMAMODE_READ|DMAMODE_LOOP, BUS_DMA_WAITOK);
+	    sc->sc_bufsize, NULL, DMAMODE_READ|DMAMODE_LOOP, BUS_DMA_WAITOK);
 	if (error)
 		return (error);
 
 	sc->sc_flags |= SATF_ISOPEN;
 
-	timeout(satlinktimeout, sc, SATLINK_TIMEOUT);
+	callout_reset(&sc->sc_ch, SATLINK_TIMEOUT, satlinktimeout, sc);
 
 	return (0);
 }
@@ -256,8 +260,7 @@ satlinkclose(dev, flags, fmt, p)
 	int flags, fmt;
 	struct proc *p;
 {
-	int unit = minor(dev);
-	struct satlink_softc *sc = satlink_cd.cd_devs[unit];
+	struct satlink_softc *sc = device_lookup(&satlink_cd, minor(dev));
 	int s;
 
 	s = splsoftclock();
@@ -265,7 +268,7 @@ satlinkclose(dev, flags, fmt, p)
 	splx(s);
 
 	isa_dmaabort(sc->sc_ic, sc->sc_drq);
-	untimeout(satlinktimeout, sc);
+	callout_stop(&sc->sc_ch);
 
 	return (0);
 }
@@ -276,8 +279,7 @@ satlinkread(dev, uio, flags)
 	struct uio *uio;
 	int flags;
 {
-	int unit = minor(dev);
-	struct satlink_softc *sc = satlink_cd.cd_devs[unit];
+	struct satlink_softc *sc = device_lookup(&satlink_cd, minor(dev));
 	int error, s, count, sptr;
 	int wrapcnt, oresid;
 
@@ -303,7 +305,7 @@ satlinkread(dev, uio, flags)
 	if (sptr > sc->sc_uptr)
 		count = sptr - sc->sc_uptr;
 	else
-		count = SATLINK_BUFSIZE - sc->sc_uptr + sptr;
+		count = sc->sc_bufsize - sc->sc_uptr + sptr;
 
 	if (count > uio->uio_resid)
 		count = uio->uio_resid;
@@ -316,7 +318,7 @@ satlinkread(dev, uio, flags)
 		error = uiomove(&sc->sc_buf[sc->sc_uptr], count, uio);
 		if (error == 0) {
 			sc->sc_uptr += count;
-			if (sc->sc_uptr == SATLINK_BUFSIZE)
+			if (sc->sc_uptr == sc->sc_bufsize)
 				sc->sc_uptr = 0;
 		}
 		return (error);
@@ -325,7 +327,7 @@ satlinkread(dev, uio, flags)
 	/*
 	 * We wrap around.  Copy to the end of the ring...
 	 */
-	wrapcnt = SATLINK_BUFSIZE - sc->sc_uptr;
+	wrapcnt = sc->sc_bufsize - sc->sc_uptr;
 	oresid = uio->uio_resid;
 	if (wrapcnt > uio->uio_resid)
 		wrapcnt = uio->uio_resid;
@@ -338,7 +340,7 @@ satlinkread(dev, uio, flags)
 	count -= wrapcnt;
 	error = uiomove(sc->sc_buf, count, uio);
 	sc->sc_uptr += count;
-	if (sc->sc_uptr == SATLINK_BUFSIZE)
+	if (sc->sc_uptr == sc->sc_bufsize)
 		sc->sc_uptr = 0;
 
 	return (error);
@@ -362,8 +364,7 @@ satlinkioctl(dev, cmd, data, flags, p)
 	int flags;
 	struct proc *p;
 {
-	int unit = minor(dev);
-	struct satlink_softc *sc = satlink_cd.cd_devs[unit];
+	struct satlink_softc *sc = device_lookup(&satlink_cd, minor(dev));
 
 	switch (cmd) {
 	case SATIORESET:
@@ -390,8 +391,7 @@ satlinkpoll(dev, events, p)
 	int events;
 	struct proc *p;
 {
-	int unit = minor(dev);
-	struct satlink_softc *sc = satlink_cd.cd_devs[unit];
+	struct satlink_softc *sc = device_lookup(&satlink_cd, minor(dev));
 	int s, revents;
 
 	revents = events & (POLLOUT | POLLWRNORM);
@@ -427,8 +427,8 @@ satlinktimeout(arg)
 	 * and compute the satlink's index into the ring buffer.
 	 */
 	resid = isa_dmacount(sc->sc_ic, sc->sc_drq);
-	newidx = SATLINK_BUFSIZE - resid;
-	if (newidx == SATLINK_BUFSIZE)
+	newidx = sc->sc_bufsize - resid;
+	if (newidx == sc->sc_bufsize)
 		newidx = 0;
 
 	if (newidx == sc->sc_sptr)
@@ -446,5 +446,5 @@ satlinktimeout(arg)
 	selwakeup(&sc->sc_selq);
 
  out:
-	timeout(satlinktimeout, sc, SATLINK_TIMEOUT);
+	callout_reset(&sc->sc_ch, SATLINK_TIMEOUT, satlinktimeout, sc);
 }

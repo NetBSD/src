@@ -1,4 +1,4 @@
-/*	$NetBSD: ess.c,v 1.46 1999/06/18 20:25:23 augustss Exp $	*/
+/*	$NetBSD: ess.c,v 1.46.2.1 2000/11/20 11:41:13 bouyer Exp $	*/
 
 /*
  * Copyright 1997
@@ -146,7 +146,7 @@ int	ess_get_port __P((void *, mixer_ctrl_t *));
 void   *ess_malloc __P((void *, int, size_t, int, int));
 void	ess_free __P((void *, void *, int));
 size_t	ess_round_buffersize __P((void *, int, size_t));
-int	ess_mappage __P((void *, void *, int, int));
+paddr_t	ess_mappage __P((void *, void *, off_t, int));
 
 
 int	ess_query_devinfo __P((void *, mixer_devinfo_t *));
@@ -776,6 +776,10 @@ ess_setup_sc(sc, doinit)
 	struct ess_softc *sc;
 	int doinit;
 {
+
+	callout_init(&sc->sc_poll1_ch);
+	callout_init(&sc->sc_poll2_ch);
+
 	/* Reset the chip. */
 	if (ess_reset(sc) != 0) {
 		DPRINTF(("ess_setup_sc: couldn't reset chip\n"));
@@ -903,8 +907,9 @@ essattach(sc)
 		    sc->sc_dev.dv_xname, sc->sc_audio1.irq);
 	} else
 		printf("%s: audio1 polled\n", sc->sc_dev.dv_xname);
+	sc->sc_audio1.maxsize = isa_dmamaxsize(sc->sc_ic, sc->sc_audio1.drq);
 	if (isa_dmamap_create(sc->sc_ic, sc->sc_audio1.drq,
-	    MAX_ISADMA, BUS_DMA_NOWAIT|BUS_DMA_ALLOCNOW)) {
+	    sc->sc_audio1.maxsize, BUS_DMA_NOWAIT|BUS_DMA_ALLOCNOW)) {
 		printf("%s: can't create map for drq %d\n",
 		       sc->sc_dev.dv_xname, sc->sc_audio1.drq);
 		return;
@@ -920,8 +925,10 @@ essattach(sc)
 			    sc->sc_dev.dv_xname, sc->sc_audio2.irq);
 		} else
 			printf("%s: audio2 polled\n", sc->sc_dev.dv_xname);
+		sc->sc_audio2.maxsize = isa_dmamaxsize(sc->sc_ic,
+		    sc->sc_audio2.drq);
 		if (isa_dmamap_create(sc->sc_ic, sc->sc_audio2.drq,
-		    MAX_ISADMA, BUS_DMA_NOWAIT|BUS_DMA_ALLOCNOW)) {
+		    sc->sc_audio2.maxsize, BUS_DMA_NOWAIT|BUS_DMA_ALLOCNOW)) {
 			printf("%s: can't create map for drq %d\n",
 			       sc->sc_dev.dv_xname, sc->sc_audio2.drq);
 			return;
@@ -1026,6 +1033,7 @@ ess_open(addr, flags)
 	int flags;
 {
 	struct ess_softc *sc = addr;
+	int i;
 
 	DPRINTF(("ess_open: sc=%p\n", sc));
     
@@ -1033,6 +1041,10 @@ ess_open(addr, flags)
 		return ENXIO;
 
 	ess_setup(sc);		/* because we did a reset */
+
+	/* Set all mixer controls again since some change at reset. */
+	for (i = 0; i < ESS_MAX_NDEVS; i++)
+		ess_set_gain(sc, i, 1);
 
 	sc->sc_open = 1;
 
@@ -1237,14 +1249,14 @@ ess_set_params(addr, setmode, usemode, play, rec)
 		case AUDIO_ENCODING_ULAW:
 			if (mode == AUMODE_PLAY) {
 				p->factor = 2;
-				p->sw_code = mulaw_to_ulinear16;
+				p->sw_code = mulaw_to_ulinear16_le;
 			} else
 				p->sw_code = ulinear8_to_mulaw;
 			break;
 		case AUDIO_ENCODING_ALAW:
 			if (mode == AUMODE_PLAY) {
 				p->factor = 2;
-				p->sw_code = alaw_to_ulinear16;
+				p->sw_code = alaw_to_ulinear16_le;
 			} else
 				p->sw_code = ulinear8_to_alaw;
 			break;
@@ -1295,7 +1307,8 @@ ess_audio1_trigger_output(addr, start, end, blksize, intr, arg, param)
 		sc->sc_audio1.buffersize = (char *)end - (char *)start;
 		sc->sc_audio1.dmacount = 0;
 		sc->sc_audio1.blksize = blksize;
-		timeout(ess_audio1_poll, sc, hz/30);
+		callout_reset(&sc->sc_poll1_ch, hz / 30,
+		    ess_audio1_poll, sc);
 	}
 
 	reg = ess_read_x_reg(sc, ESS_XCMD_AUDIO_CTRL);
@@ -1373,7 +1386,8 @@ ess_audio2_trigger_output(addr, start, end, blksize, intr, arg, param)
 		sc->sc_audio2.buffersize = (char *)end - (char *)start;
 		sc->sc_audio2.dmacount = 0;
 		sc->sc_audio2.blksize = blksize;
-		timeout(ess_audio2_poll, sc, hz/30);
+		callout_reset(&sc->sc_poll2_ch, hz / 30,
+		    ess_audio2_poll, sc);
 	}
 
 	reg = ess_read_mix_reg(sc, ESS_MREG_AUDIO2_CTRL2);
@@ -1442,7 +1456,8 @@ ess_audio1_trigger_input(addr, start, end, blksize, intr, arg, param)
 		sc->sc_audio1.buffersize = (char *)end - (char *)start;
 		sc->sc_audio1.dmacount = 0;
 		sc->sc_audio1.blksize = blksize;
-		timeout(ess_audio1_poll, sc, hz/30);
+		callout_reset(&sc->sc_poll1_ch, hz / 30,
+		    ess_audio1_poll, sc);
 	}
 
 	reg = ess_read_x_reg(sc, ESS_XCMD_AUDIO_CTRL);
@@ -1507,7 +1522,7 @@ ess_audio1_halt(addr)
 		    ESS_AUDIO1_CTRL2_FIFO_ENABLE);
 		isa_dmaabort(sc->sc_ic, sc->sc_audio1.drq);
 		if (sc->sc_audio1.polled)
-			untimeout(ess_audio1_poll, sc);
+			callout_stop(&sc->sc_poll1_ch);
 		sc->sc_audio1.active = 0;
 	}
 
@@ -1528,7 +1543,7 @@ ess_audio2_halt(addr)
 		    ESS_AUDIO2_CTRL1_FIFO_ENABLE);
 		isa_dmaabort(sc->sc_ic, sc->sc_audio2.drq);
 		if (sc->sc_audio2.polled)
-			untimeout(ess_audio2_poll, sc);
+			callout_stop(&sc->sc_poll2_ch);
 		sc->sc_audio2.active = 0;
 	}
 
@@ -1612,7 +1627,7 @@ ess_audio1_poll(addr)
 	(*sc->sc_audio1.intr)(sc->sc_audio1.arg, dmacount);
 #endif
 
-	timeout(ess_audio1_poll, sc, hz/30);
+	callout_reset(&sc->sc_poll1_ch, hz / 30, ess_audio1_poll, sc);
 }
 
 void
@@ -1643,7 +1658,7 @@ ess_audio2_poll(addr)
 	(*sc->sc_audio2.intr)(sc->sc_audio2.arg, dmacount);
 #endif
 
-	timeout(ess_audio2_poll, sc, hz/30);
+	callout_reset(&sc->sc_poll2_ch, hz / 30, ess_audio2_poll, sc);
 }
 
 int
@@ -2180,16 +2195,24 @@ ess_round_buffersize(addr, direction, size)
 	int direction;
 	size_t size;
 {
-	if (size > MAX_ISADMA)
-		size = MAX_ISADMA;
+	struct ess_softc *sc = addr;
+	bus_size_t maxsize;
+
+	if ((!ESS_USE_AUDIO1(sc->sc_model)) && direction == AUMODE_PLAY)
+		maxsize = sc->sc_audio2.maxsize;
+	else
+		maxsize = sc->sc_audio1.maxsize;
+
+	if (size > maxsize)
+		size = maxsize;
 	return (size);
 }
 
-int
+paddr_t
 ess_mappage(addr, mem, off, prot)
 	void *addr;
 	void *mem;
-	int off;
+	off_t off;
 	int prot;
 {
 	return (isa_mappage(mem, off, prot));
@@ -2231,7 +2254,7 @@ ess_reset(sc)
 	sc->sc_audio2.active = 0;
 
 	EWRITE1(iot, ioh, ESS_DSP_RESET, ESS_RESET_EXT);
-	delay(10000);
+	delay(10000);		/* XXX shouldn't delay so long */
 	EWRITE1(iot, ioh, ESS_DSP_RESET, 0);
 	if (ess_rdsp(sc) != ESS_MAGIC)
 		return (1);
@@ -2416,18 +2439,16 @@ void
 ess_speaker_on(sc)
 	struct ess_softc *sc;
 {
-	/* Disable mute on left- and right-master volume. */
-	ess_clear_mreg_bits(sc, ESS_MREG_VOLUME_LEFT, ESS_VOLUME_MUTE);
-	ess_clear_mreg_bits(sc, ESS_MREG_VOLUME_RIGHT, ESS_VOLUME_MUTE);
+	/* Unmute the DAC. */
+	ess_set_gain(sc, ESS_DAC_PLAY_VOL, 1);
 }
 
 void
 ess_speaker_off(sc)
 	struct ess_softc *sc;
 {
-	/* Enable mute on left- and right-master volume. */
-	ess_set_mreg_bits(sc, ESS_MREG_VOLUME_LEFT, ESS_VOLUME_MUTE);
-	ess_set_mreg_bits(sc, ESS_MREG_VOLUME_RIGHT, ESS_VOLUME_MUTE);
+	/* Mute the DAC. */
+	ess_set_gain(sc, ESS_DAC_PLAY_VOL, 0);
 }
 
 /*

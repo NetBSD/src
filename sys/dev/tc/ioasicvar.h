@@ -1,4 +1,4 @@
-/*	$NetBSD: ioasicvar.h,v 1.10 1999/10/01 09:19:42 nisimura Exp $	*/
+/*	$NetBSD: ioasicvar.h,v 1.10.2.1 2000/11/20 11:43:15 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
@@ -27,11 +27,9 @@
  * rights to redistribute these changes.
  */
 
-/*
- * IOASIC subdevice attachment information.
- */
+#ifndef _DEV_TC_IOASICVAR_H_
+#define _DEV_TC_IOASICVAR_H_
 
-/* motherboard-specific autoconfiguration tables of ioasic child devices. */
 struct ioasic_dev {
 	char		*iad_modname;
 	tc_offset_t	iad_offset;
@@ -39,7 +37,6 @@ struct ioasic_dev {
 	u_int32_t	iad_intrbits;
 };
 
-/* Attachment arguments. */
 struct ioasicdev_attach_args {
 	char	iada_modname[TC_ROM_LLEN];
 	tc_offset_t iada_offset;
@@ -55,14 +52,11 @@ struct ioasicdev_attach_args {
 
 struct ioasic_softc {
 	struct	device sc_dv;
-
-	tc_addr_t sc_base;
-	void	*sc_cookie;
-
 	bus_space_tag_t sc_bst;
 	bus_space_handle_t sc_bsh;
 	bus_dma_tag_t sc_dmat;
-	bus_dmamap_t sc_lance_dmam;
+
+	tc_addr_t sc_base;		/* XXX offset XXX */
 };
 
 extern struct cfdriver ioasic_cd;
@@ -72,19 +66,12 @@ extern struct cfdriver ioasic_cd;
  */
 extern tc_addr_t ioasic_base;
 
-
-/*
- * Interrupt establishment/disestablishment functions
- */
-void    ioasic_intr_establish __P((struct device *, void *, tc_intrlevel_t,
-	    int (*)(void *), void *));
+const struct evcnt *ioasic_intr_evcnt __P((struct device *, void *));
+void    ioasic_intr_establish __P((struct device *, void *,
+	    int, int (*)(void *), void *));
 void    ioasic_intr_disestablish __P((struct device *, void *));
-
-
-/*
- * Miscellaneous helper functions.
- */
-int	ioasicprint __P((void *, const char *));
 int	ioasic_submatch __P((struct cfdata *, struct ioasicdev_attach_args *));
-void	ioasic_attach_devs __P((struct ioasic_softc *sc, 
-	    struct ioasic_dev *ioasic_devs, int ioasic_ndevs));
+void	ioasic_attach_devs __P((struct ioasic_softc *,
+	    struct ioasic_dev *, int));
+
+#endif /* _DEV_TC_IOASICVAR_ */

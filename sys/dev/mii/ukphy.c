@@ -1,7 +1,7 @@
-/*	$NetBSD: ukphy.c,v 1.2 1999/04/23 04:24:32 thorpej Exp $	*/
+/*	$NetBSD: ukphy.c,v 1.2.2.1 2000/11/20 11:42:12 bouyer Exp $	*/
 
 /*-
- * Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.
+ * Copyright (c) 1998, 1999, 2000 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -70,6 +70,8 @@
  * driver for generic unknown PHYs
  */
 
+#include "opt_mii.h"
+
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/kernel.h>
@@ -84,14 +86,29 @@
 #include <dev/mii/mii.h>
 #include <dev/mii/miivar.h>
 
+#ifdef MIIVERBOSE
+struct mii_knowndev {
+	int oui;
+	int model;
+	const char *descr;
+};
+#include <dev/mii/miidevs.h>
+#include <dev/mii/miidevs_data.h>
+#endif
+
 int	ukphymatch __P((struct device *, struct cfdata *, void *));
 void	ukphyattach __P((struct device *, struct device *, void *));
 
 struct cfattach ukphy_ca = {
-	sizeof(struct mii_softc), ukphymatch, ukphyattach
+	sizeof(struct mii_softc), ukphymatch, ukphyattach, mii_phy_detach,
+	    mii_phy_activate
 };
 
 int	ukphy_service __P((struct mii_softc *, struct mii_data *, int));
+
+const struct mii_phy_funcs ukphy_funcs = {
+	ukphy_service, ukphy_status, mii_phy_reset,
+};
 
 int
 ukphymatch(parent, match, aux)
@@ -114,27 +131,40 @@ ukphyattach(parent, self, aux)
 	struct mii_softc *sc = (struct mii_softc *)self;
 	struct mii_attach_args *ma = aux;
 	struct mii_data *mii = ma->mii_data;
+	int oui = MII_OUI(ma->mii_id1, ma->mii_id2);
+	int model = MII_MODEL(ma->mii_id2);
+	int rev = MII_REV(ma->mii_id2);
+#ifdef MIIVERBOSE
+	int i;
+#endif
 
 	printf(": Generic IEEE 802.3u media interface\n");
-	printf("%s: OUI 0x%06x, model 0x%04x, rev. %d\n",
-	    sc->mii_dev.dv_xname, MII_OUI(ma->mii_id1, ma->mii_id2),
-	    MII_MODEL(ma->mii_id2), MII_REV(ma->mii_id2));
+#ifdef MIIVERBOSE
+	for (i = 0; mii_knowndevs[i].descr != NULL; i++)
+		if (mii_knowndevs[i].oui == oui &&
+		    mii_knowndevs[i].model == model)
+			break;
+	if (mii_knowndevs[i].descr != NULL)
+		printf("%s: %s (OUI 0x%06x, model 0x%04x), rev. %d\n",
+		       sc->mii_dev.dv_xname, mii_knowndevs[i].descr,
+		       oui, model, rev);
+	else
+#endif
+		printf("%s: OUI 0x%06x, model 0x%04x, rev. %d\n",
+		       sc->mii_dev.dv_xname, oui, model, rev);
 
 	sc->mii_inst = mii->mii_instance;
 	sc->mii_phy = ma->mii_phyno;
-	sc->mii_service = ukphy_service;
+	sc->mii_funcs = &ukphy_funcs;
 	sc->mii_pdata = mii;
+	sc->mii_flags = mii->mii_flags;
 
-#define	ADD(m, c)	ifmedia_add(&mii->mii_media, (m), (c), NULL)
+	/*
+	 * Don't do loopback on unknown PHYs.  It might confuse some of them.
+	 */
+	sc->mii_flags |= MIIF_NOLOOP;
 
-	ADD(IFM_MAKEWORD(IFM_ETHER, IFM_NONE, 0, sc->mii_inst),
-	    BMCR_ISO);
-#if 0
-	ADD(IFM_MAKEWORD(IFM_ETHER, IFM_100_TX, IFM_LOOP, sc->mii_inst),
-	    BMCR_LOOP|BMCR_S100);
-#endif
-
-	mii_phy_reset(sc);
+	PHY_RESET(sc);
 
 	sc->mii_capabilities =
 	    PHY_READ(sc, MII_BMSR) & ma->mii_capmask;
@@ -142,10 +172,8 @@ ukphyattach(parent, self, aux)
 	if ((sc->mii_capabilities & BMSR_MEDIAMASK) == 0)
 		printf("no media present");
 	else
-		mii_add_media(mii, sc->mii_capabilities,
-		    sc->mii_inst);
+		mii_phy_add_media(sc);
 	printf("\n");
-#undef ADD
 }
 
 int
@@ -156,6 +184,9 @@ ukphy_service(sc, mii, cmd)
 {
 	struct ifmedia_entry *ife = mii->mii_media.ifm_cur;
 	int reg;
+
+	if ((sc->mii_dev.dv_flags & DVF_ACTIVE) == 0)
+		return (ENXIO);
 
 	switch (cmd) {
 	case MII_POLLSTAT:
@@ -183,28 +214,7 @@ ukphy_service(sc, mii, cmd)
 		if ((mii->mii_ifp->if_flags & IFF_UP) == 0)
 			break;
 
-		switch (IFM_SUBTYPE(ife->ifm_media)) {
-		case IFM_AUTO:
-			/*
-			 * If we're already in auto mode, just return.
-			 */
-			if (PHY_READ(sc, MII_BMCR) & BMCR_AUTOEN)
-				return (0);
-			(void) mii_phy_auto(sc, 1);
-			break;
-		case IFM_100_T4:
-			/*
-			 * XXX Not supported as a manual setting right now.
-			 */
-			return (EINVAL);
-		default:
-			/*
-			 * BMCR data is stored in the ifmedia entry.
-			 */
-			PHY_WRITE(sc, MII_ANAR,
-			    mii_anar(ife->ifm_media));
-			PHY_WRITE(sc, MII_BMCR, ife->ifm_data);
-		}
+		mii_phy_setmedia(sc);
 		break;
 
 	case MII_TICK:
@@ -220,42 +230,19 @@ ukphy_service(sc, mii, cmd)
 		if (IFM_SUBTYPE(ife->ifm_media) != IFM_AUTO)
 			return (0);
 
-		/*
-		 * Is the interface even up?
-		 */
-		if ((mii->mii_ifp->if_flags & IFF_UP) == 0)
-			return (0);
-
-		/*
-		 * Check to see if we have link.  If we do, we don't
-		 * need to restart the autonegotiation process.  Read
-		 * the BMSR twice in case it's latched.
-		 */
-		reg = PHY_READ(sc, MII_BMSR) |
-		    PHY_READ(sc, MII_BMSR);
-		if (reg & BMSR_LINK)
-			return (0);
-
-		/*
-		 * Only retry autonegotiation every 5 seconds.
-		 */
-		if (++sc->mii_ticks != 5)
-			return (0);
-		
-		sc->mii_ticks = 0;
-		mii_phy_reset(sc);
-		if (mii_phy_auto(sc, 0) == EJUSTRETURN)
+		if (mii_phy_tick(sc) == EJUSTRETURN)
 			return (0);
 		break;
+
+	case MII_DOWN:
+		mii_phy_down(sc);
+		return (0);
 	}
 
 	/* Update the media status. */
-	ukphy_status(sc);
+	mii_phy_status(sc);
 
 	/* Callback if something changed. */
-	if (sc->mii_active != mii->mii_media_active || cmd == MII_MEDIACHG) {
-		(*mii->mii_statchg)(sc->mii_dev.dv_parent);
-		sc->mii_active = mii->mii_media_active;
-	}
+	mii_phy_update(sc, cmd);
 	return (0);
 }

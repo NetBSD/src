@@ -1,11 +1,11 @@
-/*	$NetBSD: ohci_pci.c,v 1.14 1999/10/12 11:21:24 augustss Exp $	*/
+/*	$NetBSD: ohci_pci.c,v 1.14.2.1 2000/11/20 11:42:29 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
- * by Lennart Augustsson (augustss@carlstedt.se) at
+ * by Lennart Augustsson (lennart@augustsson.net) at
  * Carlstedt Research & Technology.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -37,13 +37,6 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-/*
- * USB Open Host Controller driver.
- *
- * OHCI spec: http://www.intel.com/design/usb/ohci11d.pdf
- * USB spec: http://www.teleport.com/cgi-bin/mailmerge.cgi/~usb/cgiform.tpl
- */
-
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/kernel.h>
@@ -63,14 +56,13 @@
 #include <dev/usb/ohcireg.h>
 #include <dev/usb/ohcivar.h>
 
-int	ohci_pci_match __P((struct device *, struct cfdata *, void *));
-void	ohci_pci_attach __P((struct device *, struct device *, void *));
-int	ohci_pci_detach __P((device_ptr_t, int));
+int	ohci_pci_match(struct device *, struct cfdata *, void *);
+void	ohci_pci_attach(struct device *, struct device *, void *);
+int	ohci_pci_detach(device_ptr_t, int);
 
 struct ohci_pci_softc {
 	ohci_softc_t		sc;
 	pci_chipset_tag_t	sc_pc;
-	bus_size_t		sc_size;
 	void 			*sc_ih;		/* interrupt vectoring */
 };
 
@@ -80,10 +72,7 @@ struct cfattach ohci_pci_ca = {
 };
 
 int
-ohci_pci_match(parent, match, aux)
-	struct device *parent;
-	struct cfdata *match;
-	void *aux;
+ohci_pci_match(struct device *parent, struct cfdata *match, void *aux)
 {
 	struct pci_attach_args *pa = (struct pci_attach_args *) aux;
 
@@ -96,14 +85,12 @@ ohci_pci_match(parent, match, aux)
 }
 
 void
-ohci_pci_attach(parent, self, aux)
-	struct device *parent;
-	struct device *self;
-	void *aux;
+ohci_pci_attach(struct device *parent, struct device *self, void *aux)
 {
 	struct ohci_pci_softc *sc = (struct ohci_pci_softc *)self;
 	struct pci_attach_args *pa = (struct pci_attach_args *)aux;
 	pci_chipset_tag_t pc = pa->pa_pc;
+	pcitag_t tag = pa->pa_tag;
 	char const *intrstr;
 	pci_intr_handle_t ih;
 	pcireg_t csr;
@@ -117,7 +104,7 @@ ohci_pci_attach(parent, self, aux)
 
 	/* Map I/O registers */
 	if (pci_mapreg_map(pa, PCI_CBMEM, PCI_MAPREG_TYPE_MEM, 0,
-			   &sc->sc.iot, &sc->sc.ioh, NULL, &sc->sc_size)) {
+			   &sc->sc.iot, &sc->sc.ioh, NULL, &sc->sc.sc_size)) {
 		printf("%s: can't map mem space\n", devname);
 		return;
 	}
@@ -130,8 +117,8 @@ ohci_pci_attach(parent, self, aux)
 	sc->sc.sc_bus.dmatag = pa->pa_dmat;
 
 	/* Enable the device. */
-	csr = pci_conf_read(pa->pa_pc, pa->pa_tag, PCI_COMMAND_STATUS_REG);
-	pci_conf_write(pa->pa_pc, pa->pa_tag, PCI_COMMAND_STATUS_REG,
+	csr = pci_conf_read(pc, tag, PCI_COMMAND_STATUS_REG);
+	pci_conf_write(pc, tag, PCI_COMMAND_STATUS_REG,
 		       csr | PCI_COMMAND_MASTER_ENABLE);
 
 	/* Map and establish the interrupt. */
@@ -173,9 +160,7 @@ ohci_pci_attach(parent, self, aux)
 }
 
 int
-ohci_pci_detach(self, flags)
-	device_ptr_t self;
-	int flags;
+ohci_pci_detach(device_ptr_t self, int flags)
 {
 	struct ohci_pci_softc *sc = (struct ohci_pci_softc *)self;
 	int rv;
@@ -183,13 +168,13 @@ ohci_pci_detach(self, flags)
 	rv = ohci_detach(&sc->sc, flags);
 	if (rv)
 		return (rv);
-	if (sc->sc_ih) {
+	if (sc->sc_ih != NULL) {
 		pci_intr_disestablish(sc->sc_pc, sc->sc_ih);
-		sc->sc_ih = 0;
+		sc->sc_ih = NULL;
 	}
-	if (sc->sc_size) {
-		bus_space_unmap(sc->sc.iot, sc->sc.ioh, sc->sc_size);
-		sc->sc_size = 0;
+	if (sc->sc.sc_size) {
+		bus_space_unmap(sc->sc.iot, sc->sc.ioh, sc->sc.sc_size);
+		sc->sc.sc_size = 0;
 	}
 	return (0);
 }

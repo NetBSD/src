@@ -1,4 +1,4 @@
-/*	$NetBSD: wsksymdef.h,v 1.25 1999/05/11 09:21:07 drochner Exp $ */
+/*	$NetBSD: wsksymdef.h,v 1.25.2.1 2000/11/20 11:43:38 bouyer Exp $ */
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -321,6 +321,7 @@
 #define	KS_KP_Tab 		0xf209
 #define	KS_KP_Enter 		0xf20d
 #define	KS_KP_Equal 		0xf23d
+#define	KS_KP_Numbersign	0xf223
 #define	KS_KP_Multiply 		0xf22a
 #define	KS_KP_Add 		0xf22b
 #define	KS_KP_Separator 	0xf22c
@@ -419,6 +420,16 @@
 #define KS_Cmd_Debugger		0xf420
 #define KS_Cmd_ResetEmul	0xf421
 #define KS_Cmd_ResetClose	0xf422
+#define KS_Cmd_BacklightOn	0xf423
+#define KS_Cmd_BacklightOff	0xf424
+#define KS_Cmd_BacklightToggle	0xf425
+#define KS_Cmd_BrightnessUp	0xf426
+#define KS_Cmd_BrightnessDown	0xf427
+#define KS_Cmd_BrightnessRotate	0xf428
+#define KS_Cmd_ContrastUp	0xf429
+#define KS_Cmd_ContrastDown	0xf42a
+#define KS_Cmd_ContrastRotate	0xf42b
+
 
 /*
  * Group 5 (internal)
@@ -453,11 +464,11 @@
 			    (((k) & 0xf800) == 0xf000 ? ((k) & 0x00ff) : (k)))
 
 /*
- * Keyboard types: 8bit encoding, 8bit variant
+ * Keyboard types: 8bit encoding, 24bit variant
  */
 
-#define KB_ENCODING(e)		((e) & 0xff00)
-#define KB_VARIANT(e)		((e) & 0x00ff)
+#define KB_ENCODING(e)		((e) & 0x0000ff00)
+#define KB_VARIANT(e)		((e) & 0xffff00ff)
 
 #define KB_USER			0x0100
 #define KB_US			0x0200
@@ -468,14 +479,19 @@
 #define KB_UK			0x0700
 #define KB_JP			0x0800
 #define KB_SV			0x0900
+#define KB_NO			0x0a00
+#define KB_ES			0x0b00
 
 #define KB_NODEAD		0x0001
 #define KB_DECLK		0x0002	/* DEC LKnnn layout */
 #define KB_LK401		0x0004	/* DEC LK401 instead LK201 */
-#define KB_SWAPCTRLCAPS		0x0008	/* Swap Control-L and Caps-Lock */
+#define KB_SWAPCTRLCAPS		0x0008	/* Swap Left-Control and Caps-Lock */
 #define KB_DVORAK		0x0010	/* Dvorak layout */
+#define KB_METAESC		0x0020	/* generate ESC prefix on ALT-key */
+#define KB_IOPENER		0x0040	/* f1-f12 -> ESC,f1-f11 */
+#define KB_MACHDEP		0x0080	/* machine dependent */
 
-#define KB_NAMETAB \
+#define KB_ENCTAB \
 	{ KB_USER,	"user" }, \
 	{ KB_US,	"us" }, \
 	{ KB_DE,	"de" }, \
@@ -485,10 +501,17 @@
 	{ KB_UK,	"uk" }, \
 	{ KB_JP,	"jp" }, \
 	{ KB_SV,	"sv" }, \
+	{ KB_NO,	"no" }, \
+	{ KB_ES,	"es" }
+
+#define KB_VARTAB \
 	{ KB_NODEAD,	"nodead" }, \
 	{ KB_DECLK,	"declk" }, \
 	{ KB_LK401,	"lk401" }, \
 	{ KB_SWAPCTRLCAPS, "swapctrlcaps" }, \
-	{ KB_DVORAK,	"dvorak" }
+	{ KB_DVORAK,	"dvorak" }, \
+	{ KB_METAESC,	"metaesc" }, \
+	{ KB_IOPENER,	"iopener" }, \
+	{ KB_MACHDEP,	"machdep" }
 
 #endif /* !_DEV_WSCONS_WSKSYMDEF_H_ */

@@ -1,4 +1,4 @@
-/*	$NetBSD: aic6360.c,v 1.63.2.4 1999/10/26 23:10:15 thorpej Exp $	*/
+/*	$NetBSD: aic6360.c,v 1.63.2.5 2000/11/20 11:40:16 bouyer Exp $	*/
 
 #include "opt_ddb.h"
 #ifdef DDB
@@ -123,6 +123,7 @@
 #include <sys/types.h>
 #include <sys/param.h>
 #include <sys/systm.h>
+#include <sys/callout.h>
 #include <sys/kernel.h>
 #include <sys/errno.h>
 #include <sys/ioctl.h>
@@ -152,7 +153,6 @@
 int aic_debug = 0x00; /* AIC_SHOWSTART|AIC_SHOWMISC|AIC_SHOWTRACE; */
 #endif
 
-void	aicattach	__P((struct aic_softc *));
 void	aic_minphys	__P((struct buf *));
 void	aic_done	__P((struct aic_softc *, struct aic_acb *));
 void	aic_dequeue	__P((struct aic_softc *, struct aic_acb *));
@@ -266,8 +266,6 @@ aicattach(sc)
 	sc->sc_minsync = (2 * 250) / sc->sc_freq;
 	sc->sc_maxsync = (9 * 250) / sc->sc_freq;
 
-	aic_init(sc, 1);	/* Init chip and driver */
-
 	/*
 	 * Fill in the scsipi_adapter.
 	 */
@@ -289,9 +287,22 @@ aicattach(sc)
 	chan->chan_id = sc->sc_initiator;
 
 	/*
-	 * ask the adapter what subunits are present
+	 * Add reference to adapter so that we drop the reference after
+	 * config_found() to make sure the adatper is disabled.
+	 */
+	if (scsipi_adapter_addref(adapt) != 0) {
+		printf("%s: unable to enable controller\n",
+		    sc->sc_dev.dv_xname);
+		return;
+	}
+
+	aic_init(sc, 1);	/* Init chip and driver */
+
+	/*
+	 * Ask the adapter what subunits are present
 	 */
 	sc->sc_child = config_found(&sc->sc_dev, &sc->sc_channel, scsiprint);
+	scsipi_adapter_delref(adapt);
 }
 
 int
@@ -309,11 +320,8 @@ aic_activate(self, act)
 		break;
 
 	case DVACT_DEACTIVATE:
-		if (sc->sc_child != NULL && !sc->sc_dying) {
+		if (sc->sc_child != NULL)
 			rv = config_deactivate(sc->sc_child);
-			if (rv == 0)
-				sc->sc_dying = 1;
-		}
 		break;
 	}
 	splx(s);
@@ -435,12 +443,12 @@ aic_init(sc, bus_reset)
 		sc->sc_state = AIC_CLEANING;
 		if ((acb = sc->sc_nexus) != NULL) {
 			acb->xs->error = XS_DRIVER_STUFFUP;
-			untimeout(aic_timeout, acb);
+			callout_stop(&acb->xs->xs_callout);
 			aic_done(sc, acb);
 		}
 		while ((acb = sc->nexus_list.tqh_first) != NULL) {
 			acb->xs->error = XS_DRIVER_STUFFUP;
-			untimeout(aic_timeout, acb);
+			callout_stop(&acb->xs->xs_callout);
 			aic_done(sc, acb);
 		}
 	}
@@ -534,7 +542,7 @@ aic_scsipi_request(chan, req, arg)
 		AIC_CMDS(("[0x%x, %d]->%d ", (int)xs->cmd->opcode, xs->cmdlen,
 		    periph->periph_target));
 
-		if (sc->sc_dying) {
+		if ((sc->sc_dev.dv_flags & DVF_ACTIVE) == 0) {
 			xs->error = XS_DRIVER_STUFFUP;
 			scsipi_done(xs);
 			return;
@@ -846,7 +854,7 @@ abort:
  */
 void
 aic_sched(sc)
-	register struct aic_softc *sc;
+	struct aic_softc *sc;
 {
 	struct aic_acb *acb;
 	struct scsipi_periph *periph;
@@ -854,7 +862,7 @@ aic_sched(sc)
 	bus_space_tag_t iot = sc->sc_iot;
 	bus_space_handle_t ioh = sc->sc_ioh;
 
-	if (sc->sc_dying)
+	if ((sc->sc_dev.dv_flags & DVF_ACTIVE) == 0)
 		return;
 
 	/*
@@ -1012,7 +1020,7 @@ aic_dequeue(sc, acb)
  */
 void
 aic_msgin(sc)
-	register struct aic_softc *sc;
+	struct aic_softc *sc;
 {
 	bus_space_tag_t iot = sc->sc_iot;
 	bus_space_handle_t ioh = sc->sc_ioh;
@@ -1291,7 +1299,7 @@ out:
  */
 void
 aic_msgout(sc)
-	register struct aic_softc *sc;
+	struct aic_softc *sc;
 {
 	bus_space_tag_t iot = sc->sc_iot;
 	bus_space_handle_t ioh = sc->sc_ioh;
@@ -1485,13 +1493,13 @@ out:
  */
 int
 aic_dataout_pio(sc, p, n)
-	register struct aic_softc *sc;
+	struct aic_softc *sc;
 	u_char *p;
 	int n;
 {
 	bus_space_tag_t iot = sc->sc_iot;
 	bus_space_handle_t ioh = sc->sc_ioh;
-	register u_char dmastat = 0;
+	u_char dmastat = 0;
 	int out = 0;
 #define DOUTAMOUNT 128		/* Full FIFO */
 
@@ -1536,7 +1544,7 @@ aic_dataout_pio(sc, p, n)
 
 			p += DOUTAMOUNT;
 		} else {
-			register int xfer;
+			int xfer;
 
 			xfer = n;
 			AIC_MISC(("%d> ", xfer));
@@ -1631,13 +1639,13 @@ phasechange:
  */
 int
 aic_datain_pio(sc, p, n)
-	register struct aic_softc *sc;
+	struct aic_softc *sc;
 	u_char *p;
 	int n;
 {
 	bus_space_tag_t iot = sc->sc_iot;
 	bus_space_handle_t ioh = sc->sc_ioh;
-	register u_char dmastat;
+	u_char dmastat;
 	int in = 0;
 #define DINAMOUNT 128		/* Full FIFO */
 
@@ -1680,7 +1688,7 @@ aic_datain_pio(sc, p, n)
 
 			p += DINAMOUNT;
 		} else {
-			register int xfer;
+			int xfer;
 
 			xfer = min(bus_space_read_1(iot, ioh, FIFOSTAT), n);
 			AIC_MISC((">%d ", xfer));
@@ -1757,16 +1765,16 @@ int
 aicintr(arg)
 	void *arg;
 {
-	register struct aic_softc *sc = arg;
+	struct aic_softc *sc = arg;
 	bus_space_tag_t iot = sc->sc_iot;
 	bus_space_handle_t ioh = sc->sc_ioh;
 	u_char sstat0, sstat1;
-	register struct aic_acb *acb;
-	register struct scsipi_periph *periph;
+	struct aic_acb *acb;
+	struct scsipi_periph *periph;
 	struct aic_tinfo *ti;
 	int n;
 
-	if (sc->sc_dying)
+	if ((sc->sc_dev.dv_flags & DVF_ACTIVE) == 0)
 		return (0);
 
 	/*
@@ -1892,8 +1900,9 @@ loop:
 
 			/* On our first connection, schedule a timeout. */
 			if ((acb->xs->xs_control & XS_CTL_POLL) == 0)
-				timeout(aic_timeout, acb,
-				    (acb->timeout * hz) / 1000);
+				callout_reset(&acb->xs->xs_callout,
+				    (acb->timeout * hz) / 1000,
+				    aic_timeout, acb);
 
 			sc->sc_state = AIC_CONNECTED;
 		} else if ((sstat1 & SELTO) != 0) {
@@ -2109,7 +2118,7 @@ reset:
 	return 1;
 
 finish:
-	untimeout(aic_timeout, acb);
+	callout_stop(&acb->xs->xs_callout);
 	aic_done(sc, acb);
 	goto out;
 

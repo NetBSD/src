@@ -1,11 +1,11 @@
-/*	 $NetBSD: bold8x16.h,v 1.3 1999/05/18 21:51:58 ad Exp $ */
+/*	 $NetBSD: bold8x16.h,v 1.3.4.1 2000/11/20 11:43:38 bouyer Exp $ */
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
- * by Andy Doran.
+ * by Andrew Doran.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -50,6 +50,8 @@ struct wsdisplay_font bold8x16 = {
 	8,				/* width */
 	16,				/* height */
 	1,				/* stride */
+	WSDISPLAY_FONTORDER_L2R,	/* bit order */
+	WSDISPLAY_FONTORDER_L2R,	/* byte order */
 	bold8x16_data			/* data */
 };
 
