@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.509 2004/11/17 02:46:39 soren Exp $
+# $NetBSD: mi,v 1.510 2004/11/18 15:34:23 wiz Exp $
 .						base-sys-root
 ./altroot					base-sys-root
 ./bin						base-sys-root
@@ -412,7 +412,7 @@
 ./usr/bin/diff3					base-util-bin
 ./usr/bin/dig					base-netutil-bin
 ./usr/bin/dirname				base-util-bin
-./usr/bin/dnsquery				base-netutil-bin	obsolete
+./usr/bin/dnsquery				base-obsolete	obsolete
 ./usr/bin/du					base-util-bin
 ./usr/bin/egrep					base-util-bin
 ./usr/bin/eject					base-util-bin
@@ -818,7 +818,7 @@
 ./usr/libexec/atrun				base-cron-bin
 ./usr/libexec/comsat				base-mail-bin
 ./usr/libexec/cpp				base-obsolete		obsolete
-./usr/libexec/dnskeygen				base-bind-bin		obsolete
+./usr/libexec/dnskeygen				base-obsolete		obsolete
 ./usr/libexec/fingerd				base-netutil-bin
 ./usr/libexec/ftp-proxy				base-netutil-bin
 ./usr/libexec/ftpd				base-netutil-bin
@@ -840,7 +840,7 @@
 ./usr/libexec/mail.local			base-mail-bin
 ./usr/libexec/makekey				base-crypto-bin
 ./usr/libexec/makewhatis			base-man-bin
-./usr/libexec/named-xfer			base-bind-bin		obsolete
+./usr/libexec/named-xfer			base-obsolete		obsolete
 ./usr/libexec/ntalkd				base-netutil-bin
 ./usr/libexec/postfix				base-postfix-usr
 ./usr/libexec/postfix/bounce			base-postfix-bin	postfix
@@ -850,7 +850,7 @@
 ./usr/libexec/postfix/lmtp			base-postfix-bin	postfix
 ./usr/libexec/postfix/local			base-postfix-bin	postfix
 ./usr/libexec/postfix/master			base-postfix-bin	postfix
-./usr/libexec/postfix/nqmgr			base-postfix-bin	obsolete
+./usr/libexec/postfix/nqmgr			base-obsolete	obsolete
 ./usr/libexec/postfix/oqmgr			base-postfix-bin	postfix
 ./usr/libexec/postfix/pickup			base-postfix-bin	postfix
 ./usr/libexec/postfix/pipe			base-postfix-bin	postfix
@@ -1016,11 +1016,11 @@
 ./usr/sbin/mtrace6				base-obsolete		obsolete
 ./usr/sbin/mtree				base-sysutil-bin
 ./usr/sbin/named				base-bind-bin
-./usr/sbin/named-bootconf			base-bind-bin		obsolete
-./usr/sbin/named.reload				base-bind-bin		obsolete
-./usr/sbin/named.restart			base-bind-bin		obsolete
+./usr/sbin/named-bootconf			base-obsolete		obsolete
+./usr/sbin/named.reload				base-obsolete		obsolete
+./usr/sbin/named.restart			base-obsolete		obsolete
 ./usr/sbin/ndbootd				base-bootserver-bin
-./usr/sbin/ndc					base-bind-bin		obsolete
+./usr/sbin/ndc					base-obsolete		obsolete
 ./usr/sbin/ndp					base-netutil-bin
 ./usr/sbin/netgroup_mkdb			base-nis-bin
 ./usr/sbin/nfsd					base-nfsserver-bin
@@ -1220,7 +1220,7 @@
 ./usr/share/doc/smm/07.lpd			base-smm-share
 ./usr/share/doc/smm/08.sendmailop		base-smm-share
 ./usr/share/doc/smm/09.sendmail			base-smm-share
-./usr/share/doc/smm/10.named			base-smm-share		obsolete
+./usr/share/doc/smm/10.named			base-obsolete		obsolete
 ./usr/share/doc/smm/11.timedop			base-smm-share
 ./usr/share/doc/smm/12.timed			base-smm-share
 ./usr/share/doc/smm/13.amd			base-smm-share
@@ -1282,7 +1282,7 @@
 ./usr/share/examples/isdn			base-isdn-examples
 ./usr/share/examples/kerberos			base-krb5-examples
 ./usr/share/examples/mount_portal		base-miscfs-examples
-./usr/share/examples/named			base-bind-examples	obsolete
+./usr/share/examples/named			base-obsolete	obsolete
 ./usr/share/examples/openssl			base-crypto-examples
 ./usr/share/examples/postfix			base-postfix-examples
 ./usr/share/examples/racoon			base-netutil-examples
@@ -2024,8 +2024,8 @@
 ./usr/share/locale/zh_CN/LC_MESSAGES		base-locale-zh
 ./usr/share/locale/zh_CN/LC_MESSAGES/texinfo.mo	base-texinfo_locale-zh	nls
 ./usr/share/locale/zh_TW			base-locale-zh
-./usr/share/locale/zh_TW.BIG5			base-locale-zh		obsolete
-./usr/share/locale/zh_TW.BIG5/LC_CTYPE		base-locale-zh		obsolete
+./usr/share/locale/zh_TW.BIG5			base-obsolete		obsolete
+./usr/share/locale/zh_TW.BIG5/LC_CTYPE		base-obsolete		obsolete
 ./usr/share/locale/zh_TW.Big5			base-locale-zh
 ./usr/share/locale/zh_TW.Big5/LC_CTYPE		base-locale-zh		nls
 ./usr/share/locale/zh_TW.eucTW			base-locale-zh
@@ -2391,7 +2391,7 @@
 ./usr/share/misc/mail.tildehelp			base-reference-share	share
 ./usr/share/misc/map3270			base-reference-share	share
 ./usr/share/misc/more.help			base-obsolete		obsolete
-./usr/share/misc/nslookup.help			base-reference-share	obsolete
+./usr/share/misc/nslookup.help			base-obsolete		obsolete
 ./usr/share/misc/termcap			base-termcap-share	share
 ./usr/share/misc/termcap.db			base-termcap-share	share
 ./usr/share/misc/units.lib			base-reference-share	share
