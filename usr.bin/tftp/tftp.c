@@ -1,4 +1,4 @@
-/*	$NetBSD: tftp.c,v 1.5 1995/04/29 05:55:25 cgd Exp $	*/
+/*	$NetBSD: tftp.c,v 1.6 1997/10/07 09:19:43 mrg Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -33,11 +33,13 @@
  * SUCH DAMAGE.
  */
 
+#include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)tftp.c	8.1 (Berkeley) 6/6/93";
+#else
+__RCSID("$NetBSD: tftp.c,v 1.6 1997/10/07 09:19:43 mrg Exp $");
 #endif
-static char rcsid[] = "$NetBSD: tftp.c,v 1.5 1995/04/29 05:55:25 cgd Exp $";
 #endif /* not lint */
 
 /* Many bug fixes are from Jim Guyton <guyton@rand-unix> */
@@ -96,7 +98,7 @@ sendfile(fd, name, mode)
 	char *mode;
 {
 	register struct tftphdr *ap;	   /* data and ack packets */
-	struct tftphdr *r_init(), *dp;
+	struct tftphdr *dp;
 	register int n;
 	volatile int block, size, convert;
 	volatile unsigned long amount;
@@ -201,7 +203,7 @@ recvfile(fd, name, mode)
 	char *mode;
 {
 	register struct tftphdr *ap;
-	struct tftphdr *dp, *w_init();
+	struct tftphdr *dp;
 	register int n;
 	volatile int block, size, firsttrip;
 	volatile unsigned long amount;
@@ -351,7 +353,6 @@ nak(error)
 	register struct errmsg *pe;
 	register struct tftphdr *tp;
 	int length;
-	char *strerror();
 
 	tp = (struct tftphdr *)ackbuf;
 	tp->th_opcode = htons((u_short)ERROR);
@@ -382,7 +383,6 @@ tpacket(s, tp, n)
 	   { "#0", "RRQ", "WRQ", "DATA", "ACK", "ERROR" };
 	register char *cp, *file;
 	u_short op = ntohs(tp->th_opcode);
-	char *index();
 
 	if (op < RRQ || op > ERROR)
 		printf("%s opcode=%x ", s, op);
@@ -435,11 +435,12 @@ printstats(direction, amount)
 	unsigned long amount;
 {
 	double delta;
-			/* compute delta in 1/10's second units */
+
+	/* compute delta in 1/10's second units */
 	delta = ((tstop.tv_sec*10.)+(tstop.tv_usec/100000)) -
 		((tstart.tv_sec*10.)+(tstart.tv_usec/100000));
 	delta = delta/10.;      /* back to seconds */
-	printf("%s %d bytes in %.1f seconds", direction, amount, delta);
+	printf("%s %ld bytes in %.1f seconds", direction, amount, delta);
 	if (verbose)
 		printf(" [%.0f bits/sec]", (amount*8.)/delta);
 	putchar('\n');
