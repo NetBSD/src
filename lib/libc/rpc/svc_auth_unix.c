@@ -1,4 +1,4 @@
-/*	$NetBSD: svc_auth_unix.c,v 1.12 1998/11/22 05:37:13 mrg Exp $	*/
+/*	$NetBSD: svc_auth_unix.c,v 1.13 1998/11/22 06:09:00 mrg Exp $	*/
 
 /*
  * Sun RPC is a product of Sun Microsystems, Inc. and is provided for
@@ -35,7 +35,7 @@
 static char *sccsid = "@(#)svc_auth_unix.c 1.28 88/02/08 Copyr 1984 Sun Micro";
 static char *sccsid = "@(#)svc_auth_unix.c	2.3 88/08/01 4.0 RPCSRC";
 #else
-__RCSID("$NetBSD: svc_auth_unix.c,v 1.12 1998/11/22 05:37:13 mrg Exp $");
+__RCSID("$NetBSD: svc_auth_unix.c,v 1.13 1998/11/22 06:09:00 mrg Exp $");
 #endif
 #endif
 
@@ -112,8 +112,8 @@ _svcauth_unix(rqst, msg)
 		 * timestamp, hostname len (0), uid, gid, and gids len (0).
 		 */
 		if ((5 + gid_len) * BYTES_PER_XDR_UNIT + str_len > auth_len) {
-			(void) printf("bad auth_len gid %d str %ld auth %d\n",
-			    gid_len, (long)str_len, auth_len);
+			(void) printf("bad auth_len gid %ld str %ld auth %u\n",
+			    (long)gid_len, (long)str_len, auth_len);
 			stat = AUTH_BADCRED;
 			goto done;
 		}
