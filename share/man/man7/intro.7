@@ -1,4 +1,4 @@
-.\"	$NetBSD: intro.7,v 1.8 2000/03/24 22:48:33 enami Exp $
+.\"	$NetBSD: intro.7,v 1.9 2000/05/22 09:02:07 jhawk Exp $
 .\"
 .\" Copyright (c) 1983, 1990, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -33,7 +33,7 @@
 .\"
 .\"     @(#)intro.7	8.1 (Berkeley) 6/5/93
 .\"
-.Dd April 21, 1997
+.Dd May 22, 2000
 .Dt INTRO 7
 .Os
 .Sh NAME
@@ -50,20 +50,38 @@ macro packages.
 map of ASCII character set
 .It Sy environ
 user environment
-.It Sy eqnchar
-special character definitions for eqn
+.\" .It Sy eqnchar
+.\" special character definitions for eqn
 .It Sy hier
 file system hierarchy
+.It Sy hostname
+host name resoution description
 .It Sy mailaddr
 mail addressing description
-.It Sy man
-macros to typeset manual pages
-.It Sy \&me
-macros for formatting papers
-.It Sy \&ms
-macros for formatting manuscripts
-.It Sy term
-conventional names for terminals
+.\" .It Sy man
+.\" macros to typeset manual pages
+.It Sy mdoc
+macros for typesetting
+.Nm \-mdoc
+style manual pages
+.It Sy mdoc.samples
+tutorial for writing BSD manuals with
+.Nm \-mdoc
+.\" .It Sy \&me
+.\" macros for formatting papers
+.\" .It Sy \&ms
+.\" macros for formatting manuscripts
+.It Sy operator
+C operator precedence and order of evaluation
+.It Sy release
+layout of NetBSD releases and snapshots
+.It Sy signal
+available signals under
+.Nx
+.It Sy symlink
+symbolic link handling
+.\" .It Sy term
+.\" conventional names for terminals
 .El
 .Sh HISTORY
 .Nm
