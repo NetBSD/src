@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.14 2003/10/26 07:25:37 lukem Exp $
+#	$NetBSD: Makefile,v 1.15 2003/10/30 22:23:51 he Exp $
 
 NOMAN=		# defined
 
@@ -41,7 +41,7 @@ CPPFLAGS+= -DBOOT=\"$(BOOT)\" -DBOOT_VERS=\"$(VERSION)\"
 CPPFLAGS+= -DSCSI_ADHOC_BOOTPART
 #CPPFLAGS+= -DBOOT_DEBUG
 CPPFLAGS+= -DUSE_FFS -DUSE_LFS -DUSE_UFS1 -DUSE_UFS2 -D__daddr_t=int32_t
-CPPFLAGS+= -I${COMMONDIR} -I${LIBIOCS}
+CPPFLAGS+= -I${COMMONDIR} -I${LIBIOCS} -I${S}
 AFLAGS=	   ${CFLAGS:M-[ID]*}
 .if ${OBJECT_FMT} == "ELF"
 LDFLAGS=   -n -Bstatic -T ${.CURDIR}/${BOOT}.ldscript -M
@@ -50,6 +50,8 @@ LDFLAGS+=  -noinhibit-exec	# XXX
 LDFLAGS=   -n -Bstatic -Ttext ${TEXT} -M
 OBJCOPY?=  objcopy
 .endif
+
+.include "${.CURDIR}/../Makefile.booters"
 
 CLEANFILES+=	$(PROG).x $(PROG).map
 
