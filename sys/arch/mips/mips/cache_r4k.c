@@ -1,4 +1,4 @@
-/*	$NetBSD: cache_r4k.c,v 1.2 2001/11/14 18:26:23 thorpej Exp $	*/
+/*	$NetBSD: cache_r4k.c,v 1.3 2001/11/18 18:46:20 thorpej Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -322,6 +322,108 @@ r4k_sdcache_wb_range_32(vaddr_t va, vsize_t size)
 	while (va < eva) {
 		cache_op_r4k_line(va, CACHE_R4K_SD|CACHEOP_R4K_HIT_WB);
 		va += 32;
+	}
+}
+
+#undef round_line
+#undef trunc_line
+
+#define	round_line(x)		(((x) + 127) & ~127)
+#define	trunc_line(x)		((x) & ~127)
+
+void
+r4k_sdcache_wbinv_all_128(void)
+{
+	vaddr_t va = MIPS_PHYS_TO_KSEG0(0);
+	vaddr_t eva = va + mips_sdcache_size;
+
+	while (va < eva) {
+		cache_r4k_op_32lines_128(va,
+		    CACHE_R4K_SD|CACHEOP_R4K_INDEX_WB_INV);
+		va += (32 * 128);
+	}
+}
+
+void
+r4k_sdcache_wbinv_range_128(vaddr_t va, vsize_t size)
+{
+	vaddr_t eva = round_line(va + size);
+
+	va = trunc_line(va);
+
+	while ((eva - va) >= (32 * 128)) {
+		cache_r4k_op_32lines_128(va,
+		    CACHE_R4K_SD|CACHEOP_R4K_HIT_WB_INV);
+		va += (32 * 128);
+	}
+
+	while (va < eva) {
+		cache_op_r4k_line(va, CACHE_R4K_SD|CACHEOP_R4K_HIT_WB_INV);
+		va += 128;
+	}
+}
+
+void
+r4k_sdcache_wbinv_range_index_128(vaddr_t va, vsize_t size)
+{
+	vaddr_t eva;
+
+	/*
+	 * Since we're doing Index ops, we expect to not be able
+	 * to access the address we've been given.  So, get the
+	 * bits that determine the cache index, and make a KSEG0
+	 * address out of them.
+	 */
+	va = MIPS_PHYS_TO_KSEG0(va & (mips_sdcache_size - 1));
+
+	eva = round_line(va + size);
+	va = trunc_line(va);
+
+	while ((eva - va) >= (32 * 128)) {
+		cache_r4k_op_32lines_128(va,
+		    CACHE_R4K_SD|CACHEOP_R4K_INDEX_WB_INV);
+		va += (32 * 128);
+	}
+
+	while (va < eva) {
+		cache_op_r4k_line(va, CACHE_R4K_SD|CACHEOP_R4K_INDEX_WB_INV);
+		va += 128;
+	}
+}
+
+void
+r4k_sdcache_inv_range_128(vaddr_t va, vsize_t size)
+{
+	vaddr_t eva = round_line(va + size);
+
+	va = trunc_line(va);
+
+	while ((eva - va) >= (32 * 128)) {
+		cache_r4k_op_32lines_128(va, CACHE_R4K_SD|CACHEOP_R4K_HIT_INV);
+		va += (32 * 128);
+	}
+
+	while (va < eva) {
+		cache_op_r4k_line(va, CACHE_R4K_SD|CACHEOP_R4K_HIT_INV);
+		va += 128;
+	}
+}
+
+void
+r4k_sdcache_wb_range_128(vaddr_t va, vsize_t size)
+{
+	vaddr_t eva = round_line(va + size);
+
+	va = trunc_line(va);
+
+	while ((eva - va) >= (32 * 128)) {
+		cache_r4k_op_32lines_128(va, CACHE_R4K_SD|CACHEOP_R4K_HIT_WB);
+		va += (32 * 128);
+	}
+
+	while (va < eva) {
+		cache_op_r4k_line(va, CACHE_R4K_SD|CACHEOP_R4K_HIT_WB);
+		va += 128;
 	}
 }
 
