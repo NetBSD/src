@@ -1,4 +1,4 @@
-/*	$NetBSD: targ.c,v 1.25 2002/01/27 01:50:55 reinoud Exp $	*/
+/*	$NetBSD: targ.c,v 1.26 2002/02/10 12:03:08 pk Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -39,14 +39,14 @@
  */
 
 #ifdef MAKE_BOOTSTRAP
-static char rcsid[] = "$NetBSD: targ.c,v 1.25 2002/01/27 01:50:55 reinoud Exp $";
+static char rcsid[] = "$NetBSD: targ.c,v 1.26 2002/02/10 12:03:08 pk Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)targ.c	8.2 (Berkeley) 3/19/94";
 #else
-__RCSID("$NetBSD: targ.c,v 1.25 2002/01/27 01:50:55 reinoud Exp $");
+__RCSID("$NetBSD: targ.c,v 1.26 2002/02/10 12:03:08 pk Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -561,6 +561,8 @@ Targ_PrintType (type)
 	    /*XXX: MEMBER is defined, so CONCAT(OP_,MEMBER) gives OP_"%" */
 	    case OP_MEMBER: if (DEBUG(TARG)) printf(".MEMBER "); break;
 	    PRINTDBIT(ARCHV);
+	    PRINTDBIT(MADE);
+	    PRINTDBIT(PHONY);
 	}
     }
 }
