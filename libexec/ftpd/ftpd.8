@@ -1,4 +1,4 @@
-.\"	$NetBSD: ftpd.8,v 1.17.2.3 1997/11/17 16:43:08 mrg Exp $
+.\"	$NetBSD: ftpd.8,v 1.17.2.4 1998/01/29 11:37:31 mellon Exp $
 .\"
 .\" Copyright (c) 1985, 1988, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -308,8 +308,10 @@ PORT
 command will fail if the IP address specified does not match the ftp
 command connection, or if the remote TCP port number is less than
 .Dv IPPORT_RESERVED .
-This option should be used for sites concerned with potential security
-problems with ftp bounce attacks.
+It is
+.Em strongly
+encouraged that this option be used, espcially for sites concerned
+with potential security problems with ftp bounce attacks.  
 If class is
 .Dq none
 or
@@ -543,7 +545,7 @@ Configure file conversions and other settings.
 .It Pa /etc/ftpusers
 List of unwelcome/restricted users.
 .It Pa /etc/ftpwelcome
-Welcome notice.
+Welcome notice before login.
 .It Pa /etc/motd
 Welcome notice after login.
 .It Pa /etc/nologin
@@ -561,6 +563,19 @@ an effective user id of the logged in user, reverting to
 the super-user only when binding addresses to sockets.  The
 possible security holes have been extensively
 scrutinized, but are possibly incomplete.
+.Pp
+.Cm RFC-959
+provides no restrictions on the PORT command, and this can lead
+to security problems, as
+.Nm
+can be fooled into connecting to any service on any host.  With the
+``checkportcmd'' feature of the
+.Pa /etc/ftpd.conf ,
+PORT commands with different host addresses, or TCP ports lower than
+.Dv IPPORT_RESERVED
+will be rejected.  Use of this option is
+.Em strongly
+recommended.
 .Pp
 The feedback to the client is inadequate in the case of an
 error that occurs during a retrieval that uses a
