@@ -1,4 +1,4 @@
-/*	$NetBSD: gzip.c,v 1.16 2004/01/02 03:12:21 wiz Exp $	*/
+/*	$NetBSD: gzip.c,v 1.17 2004/01/02 10:09:42 simonb Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 2003 Matthew R. Green
@@ -32,7 +32,7 @@
 #ifndef lint
 __COPYRIGHT("@(#) Copyright (c) 1997, 1998, 2003 Matthew R. Green\n\
      All rights reserved.\n");
-__RCSID("$NetBSD: gzip.c,v 1.16 2004/01/02 03:12:21 wiz Exp $");
+__RCSID("$NetBSD: gzip.c,v 1.17 2004/01/02 10:09:42 simonb Exp $");
 #endif /* not lint */
 
 /*
@@ -349,7 +349,7 @@ prepend_gzip(char *gzip, int *argc, char ***argv)
 	*argc += nenvarg;
 	ac = *argv;
 
-	nargv = (char **)malloc(*argc * sizeof(char *));
+	nargv = (char **)malloc((*argc + 1) * sizeof(char *));
 	if (nargv == NULL)
 		maybe_err(1, "malloc");
 
