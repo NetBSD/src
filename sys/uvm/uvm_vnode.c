@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_vnode.c,v 1.12 1998/06/24 20:58:49 sommerfe Exp $	*/
+/*	$NetBSD: uvm_vnode.c,v 1.13 1998/07/07 23:22:13 thorpej Exp $	*/
 
 /*
  * XXXCDC: "ROUGH DRAFT" QUALITY UVM PRE-RELEASE FILE!   
@@ -61,6 +61,12 @@
 #include <sys/proc.h>
 #include <sys/malloc.h>
 #include <sys/vnode.h>
+#include <sys/disklabel.h>
+#include <sys/ioctl.h>
+#include <sys/fcntl.h>
+#include <sys/conf.h>
+
+#include <miscfs/specfs/specdev.h>
 
 #include <vm/vm.h>
 #include <vm/vm_page.h>
@@ -173,10 +179,13 @@ uvn_attach(arg, accessprot)
 	struct uvm_vnode *uvn = &vp->v_uvm;
 	struct vattr vattr;
 	int oldflags, result;
+	struct partinfo pi;
 	u_quad_t used_vnode_size;
 	UVMHIST_FUNC("uvn_attach"); UVMHIST_CALLED(maphist);
 
 	UVMHIST_LOG(maphist, "(vn=0x%x)", arg,0,0,0);
+
+	used_vnode_size = (u_quad_t)0;	/* XXX gcc -Wuninitialized */
 
 	/*
 	 * first get a lock on the uvn.
@@ -189,6 +198,15 @@ uvn_attach(arg, accessprot)
 		    "uvn_attach", 0);
 		simple_lock(&uvn->u_obj.vmobjlock);
 		UVMHIST_LOG(maphist,"  WOKE UP",0,0,0,0);
+	}
+
+	/*
+	 * if we're maping a BLK device, make sure it is a disk.
+	 */
+	if (vp->v_type == VBLK && bdevsw[major(vp->v_rdev)].d_type != D_DISK) {
+		simple_unlock(&uvn->u_obj.vmobjlock); /* drop lock */
+		UVMHIST_LOG(maphist,"<- done (VBLK not D_DISK!)", 0,0,0,0);
+		return(NULL);
 	}
 
 	/*
@@ -235,19 +253,27 @@ uvn_attach(arg, accessprot)
 	uvn->u_flags = UVM_VNODE_ALOCK;
 	simple_unlock(&uvn->u_obj.vmobjlock); /* drop lock in case we sleep */
 		/* XXX: curproc? */
-	result = VOP_GETATTR(vp, &vattr, curproc->p_ucred, curproc);
 
-	/*
-	 * make sure that the newsize fits within a vm_offset_t
-	 * XXX: need to revise addressing data types
-	 */
-	used_vnode_size = vattr.va_size;
-	if (used_vnode_size > (vm_offset_t) -PAGE_SIZE) {
-#ifdef DEBUG
-		printf("uvn_attach: vn %p size truncated %qx->%x\n", vp,
-		    used_vnode_size, -PAGE_SIZE);
-#endif    
-		used_vnode_size = (vm_offset_t) -PAGE_SIZE;
+	if (vp->v_type == VBLK) {
+		/*
+		 * We could implement this as a specfs getattr call, but:
+		 *
+		 *	(1) VOP_GETATTR() would get the file system
+		 *	    vnode operation, not the specfs operation.
+		 *
+		 *	(2) All we want is the size, anyhow.
+		 */
+		result = (*bdevsw[major(vp->v_rdev)].d_ioctl)(vp->v_rdev,
+		    DIOCGPART, (caddr_t)&pi, FREAD, curproc);
+		if (result == 0) {
+			/* XXX should remember blocksize */
+			used_vnode_size = (u_quad_t)pi.disklab->d_secsize *
+			    (u_quad_t)pi.part->p_size;
+		}
+	} else {
+		result = VOP_GETATTR(vp, &vattr, curproc->p_ucred, curproc);
+		if (result == 0)
+			used_vnode_size = vattr.va_size;
 	}
 
 	/* relock object */
@@ -261,7 +287,20 @@ uvn_attach(arg, accessprot)
 		UVMHIST_LOG(maphist,"<- done (VOP_GETATTR FAILED!)", 0,0,0,0);
 		return(NULL);
 	}
-	
+
+	/*
+	 * make sure that the newsize fits within a vm_offset_t
+	 * XXX: need to revise addressing data types
+	 */
+if (vp->v_type == VBLK) printf("used_vnode_size = %qu\n", used_vnode_size);
+	if (used_vnode_size > (vm_offset_t) -PAGE_SIZE) {
+#ifdef DEBUG
+		printf("uvn_attach: vn %p size truncated %qx->%x\n", vp,
+		    used_vnode_size, -PAGE_SIZE);
+#endif    
+		used_vnode_size = (vm_offset_t) -PAGE_SIZE;
+	}
+
 	/*
 	 * now set up the uvn.
 	 */

@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_mmap.c,v 1.58 1998/05/30 22:21:03 kleink Exp $	*/
+/*	$NetBSD: vm_mmap.c,v 1.59 1998/07/07 23:22:13 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -223,7 +223,8 @@ sys_mmap(p, v, retval)
 		if (fp->f_type != DTYPE_VNODE)
 			return (ENODEV);
 		vp = (struct vnode *)fp->f_data;
-		if (vp->v_type != VREG && vp->v_type != VCHR)
+		if (vp->v_type != VREG && vp->v_type != VCHR &&
+		    vp->v_type != VBLK)
 			return (ENODEV);
 		/*
 		 * XXX hack to handle use of /dev/zero to map anon
@@ -824,7 +825,7 @@ vm_mmap(map, addr, size, prot, maxprot, flags, handle, foff)
 			goto out;
 	}
 	/*
-	 * A regular file
+	 * A regular file or block special file
 	 */
 	else {
 #ifdef DEBUG
