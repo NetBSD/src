@@ -1,4 +1,4 @@
-/*	$NetBSD: conf.c,v 1.58 1995/01/26 06:23:02 mycroft Exp $	*/
+/*	$NetBSD: conf.c,v 1.59 1995/02/09 19:04:13 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1994 Charles Hannum.  All rights reserved.
@@ -305,6 +305,16 @@ cdev_decl(cd);
 cdev_decl(mcd);
 cdev_decl(vnd);
 
+#include "pc.h"
+#include "vt.h"
+cdev_decl(pc);
+/* open, close, read, write, ioctl, tty, mmap */
+#define cdev_pc_init(c,n) { \
+	dev_init(c,n,open), dev_init(c,n,close), dev_init(c,n,read), \
+	dev_init(c,n,write), dev_init(c,n,ioctl), dev_init(c,n,stop), \
+	(dev_type_reset((*))) nullop, dev_tty_init(c,n), ttselect, \
+	dev_init(c,n,mmap), 0 }
+
 #include "lpt.h"
 cdev_decl(lpt);
 /* open, close, write, ioctl */
@@ -332,8 +342,6 @@ cdev_decl(audio);
 	(dev_type_reset((*))) nullop, 0, dev_init(c,n,select), \
 	(dev_type_mmap((*))) enodev, 0 }
 
-#include "pc.h"
-#include "vt.h"
 #include "com.h"
 #include "cy.h"
 #include "mms.h"
