@@ -1,4 +1,4 @@
-/*	$NetBSD: cd9660.c,v 1.2 1997/01/24 00:29:19 cgd Exp $	*/
+/*	$NetBSD: cd9660.c,v 1.3 1997/01/24 00:53:40 cgd Exp $	*/
 
 /*
  * Copyright (C) 1996 Wolfgang Solfrank.
@@ -43,21 +43,6 @@
 
 #include "stand.h"
 #include "cd9660.h"
-
-/* These once were in iso.h, but got deleted??? */
-extern __inline int
-isonum_722(p)
-	unsigned char *p;
-{
-	return ((char)*p << 8)|p[1];
-}
-
-extern __inline int
-isonum_732(p)
-	unsigned char *p;
-{
-	return (*p << 24)|(p[1] << 16)|(p[2] << 8)|p[3];
-}
 
 struct file {
 	off_t off;			/* Current offset within file */
