@@ -1,4 +1,4 @@
-/* $NetBSD: ppbus_conf.c,v 1.2 2004/01/21 00:33:37 bjh21 Exp $ */
+/* $NetBSD: ppbus_conf.c,v 1.3 2004/01/25 00:28:01 bjh21 Exp $ */
 
 /*-
  * Copyright (c) 1997, 1998, 1999 Nicolas Souchu
@@ -25,9 +25,13 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * $FreeBSD: src/sys/dev/ppbus/ppbconf.c,v 1.17.2.1 2000/05/24 00:20:57 n_hibma Exp $
+ * FreeBSD: src/sys/dev/ppbus/ppbconf.c,v 1.17.2.1 2000/05/24 00:20:57 n_hibma Exp
  *
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: ppbus_conf.c,v 1.3 2004/01/25 00:28:01 bjh21 Exp $");
+
 #include "opt_ppbus.h"
 
 #include <sys/param.h>

@@ -1,4 +1,4 @@
-/* $NetBSD: ppbus_msq.c,v 1.4 2004/01/22 01:16:02 bjh21 Exp $ */
+/* $NetBSD: ppbus_msq.c,v 1.5 2004/01/25 00:28:01 bjh21 Exp $ */
 
 /*-
  * Copyright (c) 1998, 1999 Nicolas Souchu
@@ -25,9 +25,13 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * $FreeBSD: src/sys/dev/ppbus/ppb_msq.c,v 1.9.2.1 2000/05/24 00:20:57 n_hibma Exp $
+ * FreeBSD: src/sys/dev/ppbus/ppb_msq.c,v 1.9.2.1 2000/05/24 00:20:57 n_hibma Exp
  *
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: ppbus_msq.c,v 1.5 2004/01/25 00:28:01 bjh21 Exp $");
+
 #include <machine/stdarg.h>
 
 #include <sys/param.h>
