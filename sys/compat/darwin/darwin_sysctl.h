@@ -1,4 +1,4 @@
-/*	$NetBSD: darwin_sysctl.h,v 1.6 2003/09/07 08:05:48 manu Exp $ */
+/*	$NetBSD: darwin_sysctl.h,v 1.7 2003/09/14 09:48:43 manu Exp $ */
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -40,13 +40,22 @@
 #define	_DARWIN_SYSCTL_H_
 
 extern pid_t darwin_init_pid;
+extern int darwin_ioframebuffer_unit;
+extern int darwin_ioframebuffer_screen;
+extern int darwin_iohidsystem_mux;
 
-#define EMUL_DARWIN_INIT_PID	1
-#define EMUL_DARWIN_MAXID	2
+#define EMUL_DARWIN_INIT_PID			1
+#define EMUL_DARWIN_IOFRAMEBUFFER_UNIT		2
+#define EMUL_DARWIN_IOFRAMEBUFFER_SCREEN	3
+#define EMUL_DARWIN_IOHIDSYSTEM_MUX		4
+#define EMUL_DARWIN_MAXID			5
 
 #define EMUL_DARWIN_NAMES { \
 	{ 0, 0 }, \
 	{ "init_pid", CTLTYPE_INT }, \
+	{ "ioframebuffer_unit", CTLTYPE_INT }, \
+	{ "ioframebuffer_screen", CTLTYPE_INT }, \
+	{ "iohidsystem_mux", CTLTYPE_INT }, \
 }
 
 int darwin_sysctl(int *, u_int, void *, 
