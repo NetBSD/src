@@ -1,4 +1,4 @@
-.\"	$NetBSD: calendar.1,v 1.7 1995/03/27 08:46:13 glass Exp $
+.\"	$NetBSD: calendar.1,v 1.8 1997/08/26 19:58:10 thorpej Exp $
 .\"
 .\" Copyright (c) 1989, 1990, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -42,16 +42,14 @@
 .Sh SYNOPSIS
 .Nm calendar
 .Op Fl a
+.Op Fl f Ar file
+.Op Fl l Ar days
+.Op Fl w Ar days
+.Op Fl d Ar MMDD[[YY]YY]
 .Sh DESCRIPTION
 The 
 .Nm calendar
-utility checks the current directory or the directory specified by the
-.Dq Ev CALENDAR_DIR
-environment variable for a file named
-.Pa calendar
-and displays lines that begin with either today's date
-or tomorrow's.
-On Fridays, events on Friday through Monday are displayed.
+utility processes text files and displays lines that match certain dates.
 .Pp
 The following options are available:
 .Bl -tag -width Ds
@@ -59,6 +57,31 @@ The following options are available:
 Process the ``calendar'' files of all users and mail the results
 to them.
 This requires super-user privileges.
+.It Fl d Ar MMDD[[YY]YY]
+Display lines for the given date. By default, the current date is used.
+The year, which may be given in either two or four digit format, is used
+only for purposes of determining wether the given date falls on a Friday
+in that year (see below). If the year is not specified, the current
+year is assumed.
+.It Fl f Ar file
+Display matching calendar files from the given filename, by default
+.Pa calendar .
+The filename may be absolute. If not absolute, it is taken
+relative to the current directory or the directory specified by the
+.Dq Ev CALENDAR_DIR
+environment variable. Or, if the
+.Fl a
+flag is given, a non-absolute filename is taken relative to each user's
+home directory in turn.
+.It Fl l Ar days
+Causes the program to ``look ahead'' a given number of days (default
+one) from the specified date and display their entries as well.
+.It Fl w Ar days
+Causes the program to add the specified number of days to the ``look
+ahead'' number if and only if the day specified is a Friday. The default
+value is two, which causes
+.Nm calendar
+to print entries through the weekend on Fridays.
 .El
 .Pp
 Lines should begin with a month and day.
