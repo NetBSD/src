@@ -1,4 +1,4 @@
-/*	$NetBSD: fd.c,v 1.69 1995/01/13 10:35:58 mycroft Exp $	*/
+/*	$NetBSD: fd.c,v 1.70 1995/01/13 11:14:27 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994, 1995 Charles Hannum.
@@ -160,6 +160,7 @@ struct fd_softc {
 	int sc_bcount;		/* byte count left */
 	int sc_skip;		/* bytes already transferred */
 	int sc_nblks;		/* number of blocks currently tranferring */
+	int sc_nbytes;		/* number of bytes currently tranferring */
 
 	int sc_drive;		/* physical unit number */
 	int sc_flags;
@@ -892,6 +893,7 @@ loop:
 		nblks = min(nblks, fd->sc_bcount / FDC_BSIZE);
 		nblks = min(nblks, FDC_MAXIOSIZE / FDC_BSIZE);
 		fd->sc_nblks = nblks;
+		fd->sc_nbytes = nblks * FDC_BSIZE;
 		head = sec / type->sectrac;
 		sec -= head * type->sectrac;
 #ifdef DIAGNOSTIC
@@ -906,10 +908,10 @@ loop:
 #endif
 		read = bp->b_flags & B_READ;
 #ifdef NEWCONFIG
-		at_dma(read, bp->b_data + fd->sc_skip, nblks * FDC_BSIZE,
+		at_dma(read, bp->b_data + fd->sc_skip, fd->sc_nbytes,
 		    fdc->sc_drq);
 #else
-		isa_dmastart(read, bp->b_data + fd->sc_skip, nblks * FDC_BSIZE,
+		isa_dmastart(read, bp->b_data + fd->sc_skip, fd->sc_nbytes,
 		    fdc->sc_drq);
 #endif
 		outb(iobase + fdctl, type->rate);
@@ -985,12 +987,12 @@ loop:
 			fdcretry(fdc);
 			goto loop;
 		}
-		nblks = fd->sc_nblks;
 #ifdef NEWCONFIG
 		at_dma_terminate(fdc->sc_drq);
 #else
-		isa_dmadone(bp->b_flags & B_READ, bp->b_data + fd->sc_skip,
-		    nblks * FDC_BSIZE, fdc->sc_drq);
+		read = bp->b_flags & B_READ;
+		isa_dmadone(read, bp->b_data + fd->sc_skip, fd->sc_nbytes,
+		    fdc->sc_drq);
 #endif
 		if (fdc->sc_errors) {
 			diskerr(bp, "fd", "soft error", LOG_PRINTF,
@@ -998,9 +1000,9 @@ loop:
 			printf("\n");
 			fdc->sc_errors = 0;
 		}
-		fd->sc_blkno += nblks;
-		fd->sc_skip += nblks * FDC_BSIZE;
-		fd->sc_bcount -= nblks * FDC_BSIZE;
+		fd->sc_blkno += fd->sc_nblks;
+		fd->sc_skip += fd->sc_nbytes;
+		fd->sc_bcount -= fd->sc_nbytes;
 		if (fd->sc_bcount > 0) {
 			bp->b_cylin = fd->sc_blkno / fd->sc_type->seccyl;
 			goto doseek;
