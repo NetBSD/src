@@ -1,10 +1,10 @@
-/*	$NetBSD: podules.h,v 1.14 2000/05/09 21:56:04 bjh21 Exp $	*/
+/*	$NetBSD: podules.h,v 1.15 2000/11/26 15:04:22 bjh21 Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: podules,v 1.10 1999/11/12 07:37:21 mark Exp 
+ *	NetBSD: podules,v 1.13 2000/11/26 15:03:25 bjh21 Exp 
  */
 
 /*
@@ -48,6 +48,7 @@
 #define	MANUFACTURER_CCONCEPTS	0x0004		/* Computer Concepts */
 #define	MANUFACTURER_ARMADILLO	0x0007		/* Armadillo Systems */
 #define	MANUFACTURER_WILDVISION	0x0009		/* Wild Vision */
+#define	MANUFACTURER_HCCS	0x000c		/* HCCS */
 #define	MANUFACTURER_ATOMWIDE	0x0011		/* Atomwide */
 #define	MANUFACTURER_ATOMWIDE2	0x0017		/* Atomwide */
 #define	MANUFACTURER_LINGENUITY	0x001a		/* Lingenuity */
@@ -95,6 +96,8 @@
 #define	PODULE_WILDVISION_LARKA16	0x00ce		/* lark A16 */
 #define	PODULE_WILDVISION_MIDIMAX	0x0200		/* MIDI max */
 
+#define	PODULE_HCCS_IDE	0x0022		/* IDE interface */
+
 #define	PODULE_ATOMWIDE_ETHER3	0x00A4		/* ether 3/5 interface */
 
 #define	PODULE_ATOMWIDE2_SERIAL	0x0090		/* multiport serial interface */
@@ -127,14 +130,15 @@
 
 #define	PODULE_ALEPH1_PCCARD	0x00ea		/* PC card */
 
-#define	PODULE_ICUBED_ETHERLAN600	0x00ec		/* etherlan 600 network slot interface */
-#define	PODULE_ICUBED_ETHERLAN600A	0x011e		/* etherlan 600A network slot interface */
-#define	PODULE_ICUBED_ETHERLAN500	0x00d4		/* etherlen 500 interface */
-#define	PODULE_ICUBED_ETHERLAN500A	0x011f		/* etherlen 500A interface */
-#define	PODULE_ICUBED_ETHERLAN200	0x00bd		/* etherlen 200 interface */
-#define	PODULE_ICUBED_ETHERLAN200A	0x011d		/* etherlen 200A interface */
-#define	PODULE_ICUBED_ETHERLAN100	0x00c4		/* etherlen 100 interface */
-#define	PODULE_ICUBED_ETHERLAN100A	0x011c		/* etherlen 100A interface */
+#define	PODULE_ICUBED_ETHERLAN600	0x00ec		/* EtherLan 600 network slot interface */
+#define	PODULE_ICUBED_ETHERLAN600A	0x011e		/* EtherLan 600A network slot interface */
+#define	PODULE_ICUBED_ETHERLAN500	0x00d4		/* EtherLan 500 interface */
+#define	PODULE_ICUBED_ETHERLAN500A	0x011f		/* EtherLan 500A interface */
+#define	PODULE_ICUBED_ETHERLAN200	0x00bd		/* EtherLan 200 interface */
+#define	PODULE_ICUBED_ETHERLAN200A	0x011d		/* EtherLan 200A interface */
+#define	PODULE_ICUBED_ETHERLAN100	0x00c4		/* EtherLan 100 interface */
+#define	PODULE_ICUBED_ETHERLAN100LK	0x00cf		/* EtherLan 100Lk interface */
+#define	PODULE_ICUBED_ETHERLAN100A	0x011c		/* EtherLan 100A interface */
 
 #define	PODULE_BRINI_PORT	0x0000		/* BriniPort intelligent I/O interface */
 #define	PODULE_BRINI_LINK	0x00df		/* BriniLink transputer link adapter */
