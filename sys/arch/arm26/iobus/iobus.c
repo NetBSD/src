@@ -1,4 +1,4 @@
-/* $NetBSD: iobus.c,v 1.4 2001/01/23 23:58:32 bjh21 Exp $ */
+/* $NetBSD: iobus.c,v 1.5 2001/03/20 00:03:10 bjh21 Exp $ */
 /*-
  * Copyright (c) 1998 Ben Harris
  * All rights reserved.
@@ -32,12 +32,13 @@
 
 #include <sys/param.h>
 
-__RCSID("$NetBSD: iobus.c,v 1.4 2001/01/23 23:58:32 bjh21 Exp $");
+__RCSID("$NetBSD: iobus.c,v 1.5 2001/03/20 00:03:10 bjh21 Exp $");
 
 #include <sys/device.h>
 #include <sys/systm.h>
 
 #include <machine/bus.h>
+#include <machine/memcreg.h>
 
 #include <arch/arm26/iobus/iobusvar.h>
 
@@ -92,7 +93,7 @@ iobus_search_ioc(struct device *parent, struct cfdata *cf, void *aux)
 	struct iobus_attach_args ioa;
 
 	ioa.ioa_tag = 2;
-	ioa.ioa_base = cf->cf_loc[IOBUSCF_BASE];
+	ioa.ioa_base = (bus_addr_t)MEMC_IO_BASE + cf->cf_loc[IOBUSCF_BASE];
 	if (strcmp(cf->cf_driver->cd_name, "ioc") == 0 &&
 	    (cf->cf_attach->ca_match)(parent, cf, &ioa) > 0)
 		config_attach(parent, cf, &ioa, iobus_print);
@@ -106,7 +107,7 @@ iobus_search(struct device *parent, struct cfdata *cf, void *aux)
 	struct iobus_attach_args ioa;
 	
 	ioa.ioa_tag = 2;
-	ioa.ioa_base = cf->cf_loc[IOBUSCF_BASE];
+	ioa.ioa_base = (bus_addr_t)MEMC_IO_BASE + cf->cf_loc[IOBUSCF_BASE];
 	if ((cf->cf_attach->ca_match)(parent, cf, &ioa) > 0)
 		config_attach(parent, cf, &ioa, iobus_print);
 
@@ -119,6 +120,7 @@ iobus_print(void *aux, const char *pnp)
 	struct iobus_attach_args *ioa = aux;
 
 	if (ioa->ioa_base != IOBUSCF_BASE_DEFAULT)
-		printf(" base 0x%06x", ioa->ioa_base);
+		printf(" base 0x%06x",
+		    ioa->ioa_base - (bus_addr_t)MEMC_IO_BASE);
 	return UNCONF;
 }
