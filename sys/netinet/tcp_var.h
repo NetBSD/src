@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_var.h,v 1.41 1998/04/13 21:18:20 kml Exp $	*/
+/*	$NetBSD: tcp_var.h,v 1.42 1998/04/29 05:16:47 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -397,6 +397,7 @@ extern	int tcp_do_rfc1323;	/* enabled/disabled? */
 extern	int tcp_mssdflt;	/* default seg size */
 extern	int tcp_init_win;	/* initial window */
 extern	int tcp_mss_ifmtu;	/* take MSS from interface, not in_maxmtu */
+extern	int tcp_compat_42;	/* work around ancient broken TCP peers */
 extern	int tcp_syn_cache_limit; /* max entries for compressed state engine */
 extern	int tcp_syn_bucket_limit;/* max entries per hash bucket */
 extern	int tcp_syn_cache_interval; /* compressed state timer */

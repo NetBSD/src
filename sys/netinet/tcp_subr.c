@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_subr.c,v 1.47 1998/04/13 21:18:19 kml Exp $	*/
+/*	$NetBSD: tcp_subr.c,v 1.48 1998/04/29 05:16:46 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -111,6 +111,11 @@ int 	tcp_rttdflt = TCPTV_SRTTDFLT / PR_SLOWHZ;
 int	tcp_do_rfc1323 = 1;
 int	tcp_init_win = 1;
 int	tcp_mss_ifmtu = 0;
+#ifdef TCP_COMPAT_42
+int	tcp_compat_42 = 1;
+#else
+int	tcp_compat_42 = 0;
+#endif
 
 #ifndef TCBHASHSIZE
 #define	TCBHASHSIZE	128
@@ -204,11 +209,12 @@ tcp_respond(tp, ti, m, ack, seq, flags)
 		m = m_gethdr(M_DONTWAIT, MT_HEADER);
 		if (m == NULL)
 			return (ENOBUFS);
-#ifdef TCP_COMPAT_42
-		tlen = 1;
-#else
-		tlen = 0;
-#endif
+
+		if (tcp_compat_42)
+			tlen = 1;
+		else
+			tlen = 0;
+
 		m->m_data += max_linkhdr;
 		*mtod(m, struct tcpiphdr *) = *ti;
 		ti = mtod(m, struct tcpiphdr *);
@@ -830,13 +836,14 @@ tcp_new_iss(tp, len, addin)
 #endif
 	}
 
-#ifdef TCP_COMPAT_42
-	/*
-	 * limit it to the positive range for really old TCP implementations
-	 */
-	if ((int)tcp_iss < 0)
-		tcp_iss &= 0x7fffffff;		/* XXX */
-#endif
+	if (tcp_compat_42) {
+		/*
+		 * Limit it to the positive range for really old TCP
+		 * implementations.
+		 */
+		if ((int)tcp_iss < 0)
+			tcp_iss &= 0x7fffffff;		/* XXX */
+	}
 
 	return tcp_iss;
 }
@@ -861,5 +868,3 @@ tcp_optlen(tp)
 	else
 		return 0;
 }
-
-
