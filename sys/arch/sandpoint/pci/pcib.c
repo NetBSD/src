@@ -1,4 +1,4 @@
-/*	$NetBSD: pcib.c,v 1.7 2003/01/01 02:04:22 thorpej Exp $	*/
+/*	$NetBSD: pcib.c,v 1.8 2003/03/06 00:20:41 matt Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1998 The NetBSD Foundation, Inc.
@@ -66,8 +66,8 @@ CFATTACH_DECL(pcib, sizeof(struct pcib_softc),
 void	pcib_callback __P((struct device *));
 int	pcib_print __P((void *, const char *));
 
-extern const struct powerpc_bus_space sandpoint_isa_io_bs_tag;
-extern const struct powerpc_bus_space sandpoint_isa_mem_bs_tag;
+extern struct powerpc_bus_space sandpoint_isa_io_bs_tag;
+extern struct powerpc_bus_space sandpoint_isa_mem_bs_tag;
 
 int
 pcibmatch(parent, match, aux)

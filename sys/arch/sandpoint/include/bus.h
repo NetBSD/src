@@ -1,4 +1,4 @@
-/*	$NetBSD: bus.h,v 1.3 2001/06/10 03:16:30 briggs Exp $	*/
+/*	$NetBSD: bus.h,v 1.4 2003/03/06 00:20:40 matt Exp $	*/
 /*	$OpenBSD: bus.h,v 1.1 1997/10/13 10:53:42 pefo Exp $	*/
 
 #ifndef _SANDPOINT_BUS_H_
@@ -18,12 +18,12 @@
 /*
  * Address conversion as seen from a PCI master.
  */
-#define PHYS_TO_PCI_MEM(x)	(x)
-#define PCI_MEM_TO_PHYS(x)	(x)
+#define PHYS_TO_BUS_MEM(t,x)	(x)
+#define BUS_MEM_TO_PHYS(t,x)	(x)
 
-extern const struct powerpc_bus_space sandpoint_io_bs_tag;
-extern const struct powerpc_bus_space sandpoint_isa_io_bs_tag;
-extern const struct powerpc_bus_space sandpoint_mem_bs_tag;
+extern struct powerpc_bus_space sandpoint_io_bs_tag;
+extern struct powerpc_bus_space sandpoint_isa_io_bs_tag;
+extern struct powerpc_bus_space sandpoint_mem_bs_tag;
 
 void	sandpoint_bus_space_init(void);
 void	sandpoint_bus_space_mallocok(void);
