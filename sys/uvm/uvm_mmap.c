@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_mmap.c,v 1.86 2005/01/01 21:00:06 yamt Exp $	*/
+/*	$NetBSD: uvm_mmap.c,v 1.87 2005/01/23 15:58:13 chs Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -51,7 +51,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_mmap.c,v 1.86 2005/01/01 21:00:06 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_mmap.c,v 1.87 2005/01/23 15:58:13 chs Exp $");
 
 #include "opt_compat_netbsd.h"
 
@@ -334,16 +334,6 @@ sys_mmap(l, v, retval)
 	size = (vsize_t)round_page(size);	/* round up */
 	if ((ssize_t) size < 0)
 		return (EINVAL);			/* don't allow wrap */
-
-#ifndef pmap_wired_count
-	/*
-	 * if we're going to wire the mapping, restrict it to superuser.
-	 */
-
-	if ((flags & MAP_WIRED) != 0 &&
-	    (error = suser(p->p_ucred, &p->p_acflag)) != 0)
-		return (error);
-#endif
 
 	/*
 	 * now check (MAP_FIXED) or get (!MAP_FIXED) the "addr"
@@ -924,14 +914,9 @@ sys_mlock(l, v, retval)
 	if (atop(size) + uvmexp.wired > uvmexp.wiredmax)
 		return (EAGAIN);
 
-#ifdef pmap_wired_count
 	if (size + ptoa(pmap_wired_count(vm_map_pmap(&p->p_vmspace->vm_map))) >
 			p->p_rlimit[RLIMIT_MEMLOCK].rlim_cur)
 		return (EAGAIN);
-#else
-	if ((error = suser(p->p_ucred, &p->p_acflag)) != 0)
-		return (error);
-#endif
 
 	error = uvm_map_pageable(&p->p_vmspace->vm_map, addr, addr+size, FALSE,
 	    0);
@@ -979,11 +964,6 @@ sys_munlock(l, v, retval)
 	if (addr + size < addr)
 		return (EINVAL);
 
-#ifndef pmap_wired_count
-	if ((error = suser(p->p_ucred, &p->p_acflag)) != 0)
-		return (error);
-#endif
-
 	error = uvm_map_pageable(&p->p_vmspace->vm_map, addr, addr+size, TRUE,
 	    0);
 	if (error == EFAULT)
@@ -1012,11 +992,6 @@ sys_mlockall(l, v, retval)
 	if (flags == 0 ||
 	    (flags & ~(MCL_CURRENT|MCL_FUTURE)) != 0)
 		return (EINVAL);
-
-#ifndef pmap_wired_count
-	if ((error = suser(p->p_ucred, &p->p_acflag)) != 0)
-		return (error);
-#endif
 
 	error = uvm_map_pageable_all(&p->p_vmspace->vm_map, flags,
 	    p->p_rlimit[RLIMIT_MEMLOCK].rlim_cur);
@@ -1207,13 +1182,10 @@ uvm_mmap(map, addr, size, prot, maxprot, flags, handle, foff, locklimit)
 	}
 	vm_map_lock(map);
 	if ((flags & MAP_WIRED) != 0 || (map->flags & VM_MAP_WIREFUTURE) != 0) {
-		if ((atop(size) + uvmexp.wired) > uvmexp.wiredmax
-#ifdef pmap_wired_count
-		    || (locklimit != 0 && (size +
-		    ptoa(pmap_wired_count(vm_map_pmap(map)))) >
-			locklimit)
-#endif
-		) {
+		if (atop(size) + uvmexp.wired > uvmexp.wiredmax ||
+		    (locklimit != 0 &&
+		     size + ptoa(pmap_wired_count(vm_map_pmap(map))) >
+		     locklimit)) {
 			vm_map_unlock(map);
 			uvm_unmap(map, *addr, *addr + size);
 			return ENOMEM;
