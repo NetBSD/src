@@ -1,4 +1,4 @@
-/*	$NetBSD: ossaudio.c,v 1.45.2.1 2003/07/02 15:25:52 darrenr Exp $	*/
+/*	$NetBSD: ossaudio.c,v 1.45.2.2 2003/08/19 15:47:20 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ossaudio.c,v 1.45.2.1 2003/07/02 15:25:52 darrenr Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ossaudio.c,v 1.45.2.2 2003/08/19 15:47:20 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -1152,12 +1152,12 @@ setblocksize(fp, info, l)
 	struct audio_info set;
 	int s;
 
-		fp->f_ops->fo_ioctl(fp, AUDIO_SETINFO, (caddr_t)&set, l);
-		fp->f_ops->fo_ioctl(fp, AUDIO_GETINFO, (caddr_t)info, l);
+	 if (info->blocksize & (info->blocksize-1)) {
+		for(s = 32; s < info->blocksize; s <<= 1)
 			;
 		AUDIO_INITINFO(&set);
 		set.blocksize = s;
-		fp->f_ops->fo_ioctl(fp, AUDIO_SETINFO, (caddr_t)&set, p);
-		fp->f_ops->fo_ioctl(fp, AUDIO_GETINFO, (caddr_t)info, p);
+		fp->f_ops->fo_ioctl(fp, AUDIO_SETINFO, (caddr_t)&set, l);
+		fp->f_ops->fo_ioctl(fp, AUDIO_GETINFO, (caddr_t)info, l);
 	}
 }
