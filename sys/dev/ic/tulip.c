@@ -1,4 +1,4 @@
-/*	$NetBSD: tulip.c,v 1.62 2000/05/12 16:45:43 thorpej Exp $	*/
+/*	$NetBSD: tulip.c,v 1.63 2000/05/12 17:09:27 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2000 The NetBSD Foundation, Inc.
@@ -1086,10 +1086,13 @@ tlp_intr(arg)
 				printf("%s: receive ring overrun\n",
 				    sc->sc_dev.dv_xname);
 				/* Get the receive process going again. */
-				tlp_idle(sc, OPMODE_SR);
-				TULIP_WRITE(sc, CSR_RXLIST,
-				    TULIP_CDRXADDR(sc, sc->sc_rxptr));
-				TULIP_WRITE(sc, CSR_OPMODE, sc->sc_opmode);
+				if (sc->sc_tdctl_er != TDCTL_ER) {
+					tlp_idle(sc, OPMODE_SR);
+					TULIP_WRITE(sc, CSR_RXLIST,
+					    TULIP_CDRXADDR(sc, sc->sc_rxptr));
+					TULIP_WRITE(sc, CSR_OPMODE,
+					    sc->sc_opmode);
+				}
 				TULIP_WRITE(sc, CSR_RXPOLL, RXPOLL_RPD);
 				break;
 			}
