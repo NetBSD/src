@@ -1,7 +1,7 @@
-/*	$NetBSD: strptime.c,v 1.10 1998/01/20 20:47:46 mycroft Exp $	*/
+/*	$NetBSD: strptime.c,v 1.11 1998/01/20 21:10:09 mycroft Exp $	*/
 
 /*-
- * Copyright (c) 1997 The NetBSD Foundation, Inc.
+ * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code was contributed to The NetBSD Foundation by Klaus Klein.
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: strptime.c,v 1.10 1998/01/20 20:47:46 mycroft Exp $");
+__RCSID("$NetBSD: strptime.c,v 1.11 1998/01/20 21:10:09 mycroft Exp $");
 #endif
 
 #include "namespace.h"
