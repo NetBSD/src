@@ -1,4 +1,4 @@
-/* $NetBSD: exec_coff.c,v 1.4 2000/06/14 17:25:59 cgd Exp $ */
+/* $NetBSD: exec_coff.c,v 1.5 2002/06/30 03:26:59 tsutsui Exp $ */
 
 /*
  * Copyright (c) 1997 Christopher G. Demetriou
@@ -36,7 +36,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: exec_coff.c,v 1.4 2000/06/14 17:25:59 cgd Exp $");
+__RCSID("$NetBSD: exec_coff.c,v 1.5 2002/06/30 03:26:59 tsutsui Exp $");
 #endif
  
 #include <stdio.h>
@@ -45,6 +45,7 @@ __RCSID("$NetBSD: exec_coff.c,v 1.4 2000/06/14 17:25:59 cgd Exp $");
 #include <unistd.h>
 #include <errno.h>
 #include <a.out.h>
+#include <limits.h>
 #include <sys/types.h>
 #include <sys/stat.h>
 
