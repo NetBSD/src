@@ -1,4 +1,4 @@
-/*	$NetBSD: reverse.c,v 1.13 2001/01/16 02:41:18 cgd Exp $	*/
+/*	$NetBSD: reverse.c,v 1.14 2002/06/14 00:47:41 wiz Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)reverse.c	8.1 (Berkeley) 6/6/93";
 #endif
-__RCSID("$NetBSD: reverse.c,v 1.13 2001/01/16 02:41:18 cgd Exp $");
+__RCSID("$NetBSD: reverse.c,v 1.14 2002/06/14 00:47:41 wiz Exp $");
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -56,8 +56,8 @@ __RCSID("$NetBSD: reverse.c,v 1.13 2001/01/16 02:41:18 cgd Exp $");
 #include <string.h>
 #include "extern.h"
 
-static void r_buf __P((FILE *));
-static void r_reg __P((FILE *, enum STYLE, long, struct stat *));
+static void r_buf(FILE *);
+static void r_reg(FILE *, enum STYLE, long, struct stat *);
 
 /*
  * reverse -- display input in reverse order by line.
@@ -78,11 +78,7 @@ static void r_reg __P((FILE *, enum STYLE, long, struct stat *));
  *	NOREG	cyclically read input into a linked list of buffers
  */
 void
-reverse(fp, style, off, sbp)
-	FILE *fp;
-	enum STYLE style;
-	long off;
-	struct stat *sbp;
+reverse(FILE *fp, enum STYLE style, long int off, struct stat *sbp)
 {
 	if (style != REVERSE && off == 0)
 		return;
@@ -111,11 +107,7 @@ reverse(fp, style, off, sbp)
  * r_reg -- display a regular file in reverse order by line.
  */
 static void
-r_reg(fp, style, off, sbp)
-	FILE *fp;
-	enum STYLE style;
-	long off;
-	struct stat *sbp;
+r_reg(FILE *fp, enum STYLE style, long int off, struct stat *sbp)
 {
 	off_t size;
 	int llen;
@@ -174,8 +166,7 @@ typedef struct bf {
  * user warned).
  */
 static void
-r_buf(fp)
-	FILE *fp;
+r_buf(FILE *fp)
 {
 	BF *mark, *tl, *tr;
 	int ch, len, llen;

@@ -1,4 +1,4 @@
-/*	$NetBSD: process.c,v 1.31 2002/06/11 06:06:20 itojun Exp $	*/
+/*	$NetBSD: process.c,v 1.32 2002/06/14 00:41:42 wiz Exp $	*/
 
 /*-
  * Copyright (c) 1992 Diomidis Spinellis.
@@ -42,7 +42,7 @@
 #if 0
 static char sccsid[] = "@(#)process.c	8.6 (Berkeley) 4/20/94";
 #else
-__RCSID("$NetBSD: process.c,v 1.31 2002/06/11 06:06:20 itojun Exp $");
+__RCSID("$NetBSD: process.c,v 1.32 2002/06/14 00:41:42 wiz Exp $");
 #endif
 #endif /* not lint */
 
@@ -71,12 +71,12 @@ static SPACE HS, PS, SS;
 #define	hs		HS.space
 #define	hsl		HS.len
 
-static inline int	 applies __P((struct s_command *));
-static void		 flush_appends __P((void));
-static void		 lputs __P((char *));
-static inline int	 regexec_e __P((regex_t *, const char *, int, int, size_t));
-static void		 regsub __P((SPACE *, char *, char *));
-static int		 substitute __P((struct s_command *));
+static inline int	 applies(struct s_command *);
+static void		 flush_appends(void);
+static void		 lputs(char *);
+static inline int	 regexec_e(regex_t *, const char *, int, int, size_t);
+static void		 regsub(SPACE *, char *, char *);
+static int		 substitute(struct s_command *);
 
 struct s_appends *appends;	/* Array of pointers to strings to append. */
 static int appendx;		/* Index into appends array. */
@@ -92,7 +92,7 @@ regmatch_t *match;
 #define OUT(s) { fwrite(s, sizeof(u_char), psl, stdout); }
 
 void
-process()
+process(void)
 {
 	struct s_command *cp;
 	SPACE tspace;
@@ -279,8 +279,7 @@ new:		if (!nflag && !pd)
  * flag to process ranges.  Interprets the non-select (``!'') flag.
  */
 static inline int
-applies(cp)
-	struct s_command *cp;
+applies(struct s_command *cp)
 {
 	int r;
 
@@ -321,8 +320,7 @@ applies(cp)
  *	and then swap them.
  */
 static int
-substitute(cp)
-	struct s_command *cp;
+substitute(struct s_command *cp)
 {
 	SPACE tspace;
 	regex_t *re;
@@ -431,7 +429,7 @@ substitute(cp)
  * therefore it also resets the substitution done (sdone) flag.
  */
 static void
-flush_appends()
+flush_appends(void)
 {
 	FILE *f;
 	int count, i;
@@ -466,8 +464,7 @@ flush_appends()
 }
 
 static void
-lputs(s)
-	char *s;
+lputs(char *s)
 {
 	int count;
 	char *escapes, *p;
@@ -511,11 +508,7 @@ lputs(s)
 }
 
 static inline int
-regexec_e(preg, string, eflags, nomatch, slen)
-	regex_t *preg;
-	const char *string;
-	int eflags, nomatch;
-	size_t slen;
+regexec_e(regex_t *preg, const char *string, int eflags, int nomatch, size_t slen)
 {
 	int eval;
 #ifndef REG_STARTEND
@@ -562,9 +555,7 @@ regexec_e(preg, string, eflags, nomatch, slen)
  * Based on a routine by Henry Spencer
  */
 static void
-regsub(sp, string, src)
-	SPACE *sp;
-	char *string, *src;
+regsub(SPACE *sp, char *string, char *src)
 {
 	int len, no;
 	char c, *dst;
@@ -608,11 +599,7 @@ regsub(sp, string, src)
  *	space as necessary.
  */
 void
-cspace(sp, p, len, spflag)
-	SPACE *sp;
-	char *p;
-	size_t len;
-	enum e_spflag spflag;
+cspace(SPACE *sp, char *p, size_t len, enum e_spflag spflag)
 {
 	size_t tlen;
 
@@ -635,8 +622,7 @@ cspace(sp, p, len, spflag)
  * Close all cached opened files and report any errors
  */
 void
-cfclose(cp, end)
-	struct s_command *cp, *end;
+cfclose(struct s_command *cp, struct s_command *end)
 {
 
 	for (; cp != end; cp = cp->next)
