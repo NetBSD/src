@@ -1,4 +1,4 @@
-/* $NetBSD: pci_2100_a500.c,v 1.5 2002/09/27 15:35:37 provos Exp $ */
+/* $NetBSD: pci_2100_a500.c,v 1.5.20.1 2005/03/30 10:21:32 tron Exp $ */
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: pci_2100_a500.c,v 1.5 2002/09/27 15:35:37 provos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pci_2100_a500.c,v 1.5.20.1 2005/03/30 10:21:32 tron Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -662,7 +662,8 @@ dec_2100_a500_iointr(void *arg, u_long vec)
 		alpha_shared_intr_stray(tcp->tc_intrtab, irq, "T2 irq");
 		if (ALPHA_SHARED_INTR_DISABLE(tcp->tc_intrtab, irq))
 			(*tcp->tc_enable_intr)(tcp, irq, 0);
-	}
+	} else
+		alpha_shared_intr_reset_strays(tcp->tc_intrtab, irq);
 }
 
 void
