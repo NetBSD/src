@@ -2,7 +2,7 @@
 ./sbin/binpatch
 ./usr/lib/libamu.so.0.0
 ./usr/lib/libbfd.so.0.0
-./usr/lib/libc.so.12.21
+./usr/lib/libc.so.12.24
 ./usr/lib/libcrypt.so.0.0
 ./usr/lib/libcurses.so.2.1
 ./usr/lib/libedit.so.1.1
