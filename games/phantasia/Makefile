@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.25 2001/12/19 06:18:25 gmcgarry Exp $
+#	$NetBSD: Makefile,v 1.26 2002/03/05 21:31:23 thorpej Exp $
 #	@(#)Makefile	8.1 (Berkeley) 5/31/93
 
 .include <bsd.own.mk>
@@ -31,7 +31,7 @@ CLEANFILES+=map setup setup.lo host_phantglobs.lo ${ALLFILES}
 realall: ${FILES}
 
 ${FILES}: setup
-	${.OBJDIR}/setup -m ${.CURDIR}/monsters.asc
+	./setup -m ${.CURDIR}/monsters.asc
 
 setup: host_phantglobs.lo setup.lo monsters.asc ${LIBM} 
 	${HOST_LINK.c} host_phantglobs.lo setup.lo -o ${.TARGET} -lm
