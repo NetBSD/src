@@ -1,4 +1,4 @@
-/*	$NetBSD: dp83932.c,v 1.6 2003/01/15 21:53:18 bouyer Exp $	*/
+/*	$NetBSD: dp83932.c,v 1.7 2003/01/18 13:12:55 tsutsui Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dp83932.c,v 1.6 2003/01/15 21:53:18 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dp83932.c,v 1.7 2003/01/18 13:12:55 tsutsui Exp $");
 
 #include "bpfilter.h"
 
@@ -325,7 +325,7 @@ sonic_start(struct ifnet *ifp)
 		if ((error = bus_dmamap_load_mbuf(sc->sc_dmat, dmamap, m0,
 		    BUS_DMA_WRITE|BUS_DMA_NOWAIT)) != 0 ||
 		    (m0->m_pkthdr.len < ETHER_PAD_LEN &&
-		    dmamap-> dm_nsegs == EPIC_NFRAGS)) {
+		    dmamap->dm_nsegs == SONIC_NTXFRAGS)) {
 			if (error == 0)
 				bus_dmamap_unload(sc->sc_dmat, dmamap);
 			MGETHDR(m, M_DONTWAIT, MT_DATA);
@@ -394,10 +394,10 @@ sonic_start(struct ifnet *ifp)
 			if (totlen < ETHER_PAD_LEN) {
 				tda32->tda_frags[seg].frag_ptr1 =
 				    htosonic32(sc,
-				    (sc->sc_nulldma & >> 16) & 0xffff);
+				    (sc->sc_nulldma >> 16) & 0xffff);
 				tda32->tda_frags[seg].frag_ptr0 =
 				    htosonic32(sc,
-				    sc->sc_nulldma & & 0xffff);
+				    sc->sc_nulldma & 0xffff);
 				tda32->tda_frags[seg].frag_size =
 				    htosonic32(sc, ETHER_PAD_LEN - totlen);
 				totlen = ETHER_PAD_LEN;
