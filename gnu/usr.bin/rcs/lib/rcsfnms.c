@@ -1,4 +1,4 @@
-/*	$NetBSD: rcsfnms.c,v 1.5 1996/10/15 07:00:19 veego Exp $	*/
+/*	$NetBSD: rcsfnms.c,v 1.6 1997/03/25 13:56:39 lukem Exp $	*/
 
 /* RCS filename and pathname handling */
 
@@ -41,6 +41,14 @@ Report problems and direct all questions to:
 
 /*
  * $Log: rcsfnms.c,v $
+ * Revision 1.6  1997/03/25 13:56:39  lukem
+ * Add "#define has_mkstemp 1" (which needs "#define has_mktemp 1"),
+ * and hack to use mkstemp() instead of mktemp(). This *does* cause the
+ * tempfile to be created at name generation time, but that's ok because
+ * the code will fopen(tempname), use it, and the unlink it. Kinda cute
+ * (``ugly but interesting'' :), but seems to work, and passes
+ * 'sh ./rcstest' as well as rudimentary tests by me.
+ *
  * Revision 1.5  1996/10/15 07:00:19  veego
  * Merge rcs 5.7.
  *
@@ -297,14 +305,24 @@ maketemp(n)
 	catchints();
 	{
 #	if has_mktemp
+#	if has_mkstemp
+	    int fd;
+#       endif
 	    char const *tp = tmp();
 	    size_t tplen = dir_useful_len(tp);
 	    p = testalloc(tplen + 10);
 	    VOID sprintf(p, "%.*s%cT%cXXXXXX", (int)tplen, tp, SLASH, '0'+n);
+#	    if has_mkstemp
+	    if ((fd = mkstemp(p)) == -1)
+#	    else
 	    if (!mktemp(p) || !*p)
+#	    endif
 		faterror("can't make temporary pathname `%.*s%cT%cXXXXXX'",
 			(int)tplen, tp, SLASH, '0'+n
 		);
+#	    if has_mkstemp
+	    close(fd);
+#	    endif
 #	else
 	    static char tpnamebuf[TEMPNAMES][L_tmpnam];
 	    p = tpnamebuf[n];
