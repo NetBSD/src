@@ -1,4 +1,4 @@
-/*	$NetBSD: job.c,v 1.87 2004/07/01 20:38:09 jmc Exp $	*/
+/*	$NetBSD: job.c,v 1.88 2005/01/31 22:41:43 christos Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -70,14 +70,14 @@
  */
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: job.c,v 1.87 2004/07/01 20:38:09 jmc Exp $";
+static char rcsid[] = "$NetBSD: job.c,v 1.88 2005/01/31 22:41:43 christos Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)job.c	8.2 (Berkeley) 3/19/94";
 #else
-__RCSID("$NetBSD: job.c,v 1.87 2004/07/01 20:38:09 jmc Exp $");
+__RCSID("$NetBSD: job.c,v 1.88 2005/01/31 22:41:43 christos Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -218,7 +218,7 @@ static Shell    shells[] = {
 {
     "csh",
     TRUE, "unset verbose", "set verbose", "unset verbose", 10,
-    FALSE, "echo \"%s\"\n", "csh -c \"%s || exit 0\"", "", '#',
+    FALSE, "echo \"%s\"\n", "csh -c \"%s || exit 0\"\n", "", '#',
     "v", "e",
 },
     /*
@@ -673,7 +673,7 @@ JobPrintCommand(ClientData cmdp, ClientData jobp)
     char	  *escCmd = NULL;    /* Command with quotes/backticks escaped */
     char     	  *cmd = (char *) cmdp;
     Job           *job = (Job *) jobp;
-    char	  *cp;
+    char	  *cp, *tmp;
     int           i, j;
 
     noSpecials = NoExecute(job->node);
@@ -846,8 +846,9 @@ JobPrintCommand(ClientData cmdp, ClientData jobp)
     
     if ((cp = Check_Cwd_Cmd(cmd)) != NULL) {
 	    DBPRINTF("test -d %s && ", cp);
-	    DBPRINTF("cd %s; ", cp);
-    }		    
+	    DBPRINTF("cd %s\n", cp);
+    }
+
     DBPRINTF(cmdTemplate, cmd);
     free(cmdStart);
     if (escCmd)
@@ -866,6 +867,10 @@ JobPrintCommand(ClientData cmdp, ClientData jobp)
     }
     if (shutUp && commandShell->hasEchoCtl) {
 	DBPRINTF("%s\n", commandShell->echoOn);
+    }
+    if (cp != NULL) {
+	    DBPRINTF("test -d %s && ", cp);
+	    DBPRINTF("cd %s\n", Var_Value(".OBJDIR", VAR_GLOBAL, &tmp));
     }
     return 0;
 }
