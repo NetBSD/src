@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_term.c,v 1.27 2001/08/20 11:34:01 wiz Exp $	*/
+/*	$NetBSD: sys_term.c,v 1.28 2001/08/24 00:14:04 wiz Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)sys_term.c	8.4+1 (Berkeley) 5/30/95";
 #else
-__RCSID("$NetBSD: sys_term.c,v 1.27 2001/08/20 11:34:01 wiz Exp $");
+__RCSID("$NetBSD: sys_term.c,v 1.28 2001/08/24 00:14:04 wiz Exp $");
 #endif
 #endif /* not lint */
 
@@ -77,16 +77,6 @@ char	wtmpf[]	= "/etc/wtmp";
 # ifdef CRAY
 #include <tmpdir.h>
 #include <sys/wait.h>
-#  if (UNICOS_LVL == '7.0') || (UNICOS_LVL == '7.1')
-#   define UNICOS7x
-#  endif
-
-#  ifdef UNICOS7x
-#include <sys/sysv.h>
-#include <sys/secstat.h>
-extern int secflag;
-extern struct sysv sysv;
-#  endif /* UNICOS7x */
 # endif	/* CRAY */
 #endif	/* NEWINIT */
 
@@ -122,9 +112,6 @@ extern struct sysv sysv;
 #undef	t_lnextc
 #endif
 
-#if defined(UNICOS5) && defined(CRAY2) && !defined(EXTPROC)
-# define EXTPROC 0400
-#endif
 
 #ifndef	USE_TERMIO
 struct termbuf {
@@ -256,9 +243,6 @@ set_termbuf()
 		(void) tcsetattr(ttyfd, TCSANOW, &termbuf);
 # else
 		(void) tcsetattr(pty, TCSANOW, &termbuf);
-# endif
-# if	defined(CRAY2) && defined(UNICOS5)
-	needtermstat = 1;
 # endif
 #endif	/* USE_TERMIO */
 }
@@ -1059,14 +1043,6 @@ tty_rspeed(val)
 #endif	/* DECODE_BAUD */
 }
 
-#if	defined(CRAY2) && defined(UNICOS5)
-	int
-tty_isnewmap()
-{
-	return((termbuf.c_oflag & OPOST) && (termbuf.c_oflag & ONLCR) &&
-			!(termbuf.c_oflag & ONLRET));
-}
-#endif
 
 #ifdef PARENT_DOES_UTMP
 # ifndef NEWINIT
@@ -1131,7 +1107,6 @@ getptyslave()
 # ifdef	LINEMODE
 	waslm = tty_linemode();
 # endif
-
 
 	/*
 	 * Make sure that we don't have a controlling tty, and
@@ -1260,9 +1235,6 @@ cleanopen(ttyline)
 	return ptyslavefd;
 #else /* ! OPENPTY_PTY */
 	register int t;
-#ifdef	UNICOS7x
-	struct secstat secbuf;
-#endif	/* UNICOS7x */
 
 #ifndef STREAMSPTY
 	/*
@@ -1276,27 +1248,9 @@ cleanopen(ttyline)
 # if !defined(CRAY) && (BSD > 43)
 	(void) revoke(ttyline);
 # endif
-#ifdef	UNICOS7x
-	if (secflag) {
-		if (secstat(ttyline, &secbuf) < 0)
-			return(-1);
-		if (setulvl(secbuf.st_slevel) < 0)
-			return(-1);
-		if (setucmp(secbuf.st_compart) < 0)
-			return(-1);
-	}
-#endif	/* UNICOS7x */
 
 	t = open(ttyline, O_RDWR|O_NOCTTY);
 
-#ifdef	UNICOS7x
-	if (secflag) {
-		if (setulvl(sysv.sy_minlvl) < 0)
-			return(-1);
-		if (setucmp(0) < 0)
-			return(-1);
-	}
-#endif	/* UNICOS7x */
 
 	if (t < 0)
 		return(-1);
@@ -1313,41 +1267,17 @@ cleanopen(ttyline)
 	if (t < 0)
 		return(-1);
 # endif
-# if	defined(CRAY) && defined(TCVHUP)
+# if	defined(CRAY)
 	{
 		register int i;
-		(void) signal(SIGHUP, SIG_IGN);
-		(void) ioctl(t, TCVHUP, (char *)0);
-		(void) signal(SIGHUP, SIG_DFL);
-
-#ifdef	UNICOS7x
-		if (secflag) {
-			if (secstat(ttyline, &secbuf) < 0)
-				return(-1);
-			if (setulvl(secbuf.st_slevel) < 0)
-				return(-1);
-			if (setucmp(secbuf.st_compart) < 0)
-				return(-1);
-		}
-#endif	/* UNICOS7x */
-
 		i = open(ttyline, O_RDWR);
 
-#ifdef	UNICOS7x
-		if (secflag) {
-			if (setulvl(sysv.sy_minlvl) < 0)
-				return(-1);
-			if (setucmp(0) < 0)
-				return(-1);
-		}
-#endif	/* UNICOS7x */
-
+		(void) close(t);
 		if (i < 0)
 			return(-1);
-		(void) close(t);
 		t = i;
 	}
-# endif	/* defined(CRAY) && defined(TCVHUP) */
+# endif	/* defined(CRAY) */
 	return(t);
 #endif /* OPENPTY_PTY */
 }
@@ -1395,7 +1325,7 @@ login_tty(t)
 #  else
 	(void) setpgrp();
 #  endif
-	close(open(ttyline, O_RDWR));
+	close(open(line, O_RDWR));
 # endif
 	if (t != 0)
 		(void) dup2(t, 0);
@@ -1485,7 +1415,13 @@ startslave(host, autologin, autoname)
 			(void) close(i);
 		}
 #ifdef	CRAY
-		(void) signal(WJSIGNAL, sigjob);
+		{
+		  struct sigaction act;
+		  act.sa_handler = sigjob;
+		  act.sa_mask = sigmask(SIGCHLD) | sigmask(WJSIGNAL);
+		  act.sa_flags = 0;
+		  (void) sigaction(WJSIGNAL, &act, 0);
+		}
 #endif
 		utmp_sig_notify(pid);
 # endif	/* PARENT_DOES_UTMP */
@@ -1512,10 +1448,8 @@ startslave(host, autologin, autoname)
 	SCPYN(request.tty_id, &line[8]);
 	SCPYN(request.host, host);
 	SCPYN(request.term_type, terminaltype ? terminaltype : "network");
-#if	!defined(UNICOS5)
 	request.signal = SIGCLD;
 	request.pid = getpid();
-#endif
 #ifdef BFTPDAEMON
 	/*
 	 * Are we working as the bftp daemon?
@@ -2001,17 +1935,6 @@ cleanup(sig)
 	}
 	incleanup = 1;
 	sigsetmask(t);
-#ifdef	UNICOS7x
-	if (secflag) {
-		/*
-		 *	We need to set ourselves back to a null
-		 *	label to clean up.
-		 */
-
-		setulvl(sysv.sy_minlvl);
-		setucmp((long)0);
-	}
-#endif	/* UNICOS7x */
 
 	t = cleantmp(&wtmp);
 	setutent();	/* just to make sure */
