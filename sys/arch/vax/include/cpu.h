@@ -1,4 +1,4 @@
-/*      $NetBSD: cpu.h,v 1.67 2004/01/04 11:33:31 jdolecek Exp $      */
+/*      $NetBSD: cpu.h,v 1.68 2004/01/22 01:24:10 matt Exp $      */
 
 /*
  * Copyright (c) 1994 Ludd, University of Lule}, Sweden
@@ -166,12 +166,17 @@ struct cpu_mp_softc {
 };
 #endif /* defined(MULTIPROCESSOR) */
 
-#define	curcpu() ((struct cpu_info *)mfpr(PR_SSP))
-#define	curlwp	(curcpu()->ci_curlwp)
-#define	cpu_number() (curcpu()->ci_dev->dv_unit)
-#define	ci_cpuid ci_dev->dv_unit
-#define	need_resched(ci) {(ci)->ci_want_resched++; mtpr(AST_OK,PR_ASTLVL); }
-#define	cpu_proc_fork(x, y)
+#define	ci_cpuid		ci_dev->dv_unit
+#define	curcpu()		((struct cpu_info *)mfpr(PR_SSP))
+#define	curlwp			(curcpu()->ci_curlwp)
+#define	cpu_number()		(curcpu()->ci_cpuid)
+#define	need_resched(ci)			\
+	do {					\
+		(ci)->ci_want_resched = 1;	\
+		mtpr(AST_OK,PR_ASTLVL);		\
+	} while (/*CONSTCOND*/ 0)
+#define	cpu_proc_fork(x, y)	do { } while (/*CONSCOND*/0)
+#define	cpu_lwp_free(l, f)	do { } while (/*CONSCOND*/0)
 #if defined(MULTIPROCESSOR)
 #define	CPU_IS_PRIMARY(ci)	((ci)->ci_flags & CI_MASTERCPU)
 
