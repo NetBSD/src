@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.29 2000/06/26 14:20:54 mrg Exp $	*/
+/*	$NetBSD: pmap.c,v 1.30 2000/06/29 07:48:18 mrg Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -37,8 +37,6 @@
 #include <sys/user.h>
 #include <sys/queue.h>
 #include <sys/systm.h>
-
-#include <vm/vm.h>
 
 #include <uvm/uvm.h>
 

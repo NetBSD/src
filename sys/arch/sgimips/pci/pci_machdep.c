@@ -1,4 +1,4 @@
-/*	$NetBSD: pci_machdep.c,v 1.2 2000/06/26 14:20:56 mrg Exp $	*/
+/*	$NetBSD: pci_machdep.c,v 1.3 2000/06/29 07:44:10 mrg Exp $	*/
 
 /*
  * Copyright (c) 2000 Soren S. Jorvang
@@ -39,7 +39,7 @@
 #include <sys/errno.h>
 #include <sys/device.h>
 
-#include <vm/vm.h>
+#include <uvm/uvm_extern.h>
 
 #define _SGIMIPS_BUS_DMA_PRIVATE
 #include <machine/bus.h>

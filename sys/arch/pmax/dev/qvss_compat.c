@@ -1,4 +1,4 @@
-/*	$NetBSD: qvss_compat.c,v 1.25 2000/01/10 03:24:33 simonb Exp $	*/
+/*	$NetBSD: qvss_compat.c,v 1.26 2000/06/29 07:51:08 mrg Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -72,7 +72,7 @@
 #include <sys/vnode.h>
 #include <sys/resourcevar.h>
 
-#include <vm/vm.h>
+#include <uvm/uvm_extern.h>
 #include <miscfs/specfs/specdev.h>
 
 #include <dev/dec/lk201.h>		/* LK-201 keycodes */
