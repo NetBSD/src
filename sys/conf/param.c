@@ -1,4 +1,4 @@
-/*	$NetBSD: param.c,v 1.28 1999/04/25 04:51:53 simonb Exp $	*/
+/*	$NetBSD: param.c,v 1.29 1999/04/26 21:53:59 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1980, 1986, 1989 Regents of the University of California.
@@ -97,9 +97,24 @@ int	maxproc = NPROC;
 int	desiredvnodes = NVNODE;
 int	maxfiles = 3 * (NPROC + MAXUSERS) + 80;
 int	ncallout = 16 + NPROC;
-int	nmbclusters = NMBCLUSTERS;
 u_long	sb_max = SB_MAX;	/* maximum socket buffer size */
 int	fscale = FSCALE;	/* kernel uses `FSCALE', user uses `fscale' */
+
+/*
+ * Various mbuf-related parameters.  These can also be changed at run-time
+ * with sysctl.
+ */
+int	nmbclusters = NMBCLUSTERS;
+
+#ifndef MBLOWAT
+#define	MBLOWAT		16
+#endif
+int	mblowat = MBLOWAT;
+
+#ifndef MCLLOWAT
+#define	MCLLOWAT	8
+#endif
+int	mcllowat = MCLLOWAT;
 
 /*
  * Values in support of System V compatible shared memory.	XXX
