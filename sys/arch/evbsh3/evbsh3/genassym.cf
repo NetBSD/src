@@ -1,4 +1,4 @@
-#	$NetBSD: genassym.cf,v 1.5 2000/02/24 23:32:31 msaitoh Exp $
+#	$NetBSD: genassym.cf,v 1.6 2000/05/26 00:36:45 thorpej Exp $
 
 #
 # Copyright (c) 1995, 1997 Charles M. Hannum.  All rights reserved.
@@ -58,6 +58,7 @@ include <machine/pmap.h>
 include <machine/vmparam.h>
 
 define	SRUN			SRUN
+define	SONPROC			SONPROC
 
 define	PDSLOT_PTE		PDSLOT_PTE
 define	PDSLOT_APTE		PDSLOT_APTE

@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_glue.c,v 1.32 2000/03/30 12:31:50 augustss Exp $	*/
+/*	$NetBSD: uvm_glue.c,v 1.33 2000/05/26 00:36:53 thorpej Exp $	*/
 
 /* 
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -554,6 +554,7 @@ uvm_swapout_threads()
 			continue;
 		switch (p->p_stat) {
 		case SRUN:
+		case SONPROC:
 			if (p->p_swtime > outpri2) {
 				outp2 = p;
 				outpri2 = p->p_swtime;

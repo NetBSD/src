@@ -1,4 +1,4 @@
-#	$NetBSD: genassym.cf,v 1.1 2000/01/05 08:49:03 nisimura Exp $
+#	$NetBSD: genassym.cf,v 1.2 2000/05/26 00:36:46 thorpej Exp $
 
 #
 # Copyright (c) 1982, 1990, 1993
@@ -111,6 +111,7 @@ define	P_MD_FLAGS		offsetof(struct proc, p_md.md_flags)
 define	P_MD_REGS		offsetof(struct proc, p_md.md_regs)
 define	SSLEEP			SSLEEP
 define	SRUN			SRUN
+define	SONPROC			SONPROC
 
 # interrupt/fault metering
 define	UVMEXP_INTRS		offsetof(struct uvmexp, intrs)

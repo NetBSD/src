@@ -1,4 +1,4 @@
-/*	$NetBSD: init_main.c,v 1.166 2000/03/24 11:57:14 enami Exp $	*/
+/*	$NetBSD: init_main.c,v 1.167 2000/05/26 00:36:52 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1995 Christopher G. Demetriou.  All rights reserved.
@@ -259,7 +259,7 @@ main()
 	 * for us.
 	 */
 	p->p_flag = P_INMEM | P_SYSTEM | P_NOCLDWAIT;
-	p->p_stat = SRUN;
+	p->p_stat = SONPROC;
 	p->p_nice = NZERO;
 	p->p_emul = &emul_netbsd;
 	strncpy(p->p_comm, "swapper", MAXCOMLEN);
