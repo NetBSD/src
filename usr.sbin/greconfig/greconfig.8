@@ -1,4 +1,4 @@
-.\" $NetBSD: greconfig.8,v 1.7 2000/05/27 10:42:25 kleink Exp $
+.\" $NetBSD: greconfig.8,v 1.8 2001/04/11 19:36:59 wiz Exp $
 .\"
 .\" Copyright 1998 (c) The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -18,23 +18,23 @@
 .\"    must display the following acknowledgement:
 .\"     This product includes software developed by the NetBSD
 .\"	Foundation, Inc. and its contributors.
-.\" 4. Neither the name of the The NetBSD Foundation nor the names of its 
-.\"    contributors may be used to endorse or promote products derived 
+.\" 4. Neither the name of the The NetBSD Foundation nor the names of its
+.\"    contributors may be used to endorse or promote products derived
 .\"    from this software without specific prior written permission.
 .\"
-.\" THIS SOFTWARE IS PROVIDED BY THE NETBSD FOUNDATION, INC. AND CONTRIBUTORS 
-.\" ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED 
-.\" TO, THE  IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR 
+.\" THIS SOFTWARE IS PROVIDED BY THE NETBSD FOUNDATION, INC. AND CONTRIBUTORS
+.\" ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
+.\" TO, THE  IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
 .\" PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL THE FOUNDATION OR CONTRIBUTORS
-.\" BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR 
-.\" CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF 
-.\" SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS 
-.\" INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN 
-.\" CONTRACT, STRICT  LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) 
+.\" BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+.\" CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
+.\" SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+.\" INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
+.\" CONTRACT, STRICT  LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
 .\" ARISING IN ANY WAY  OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd 14 August 1998
+.Dd August 14, 1998
 .Dt GRECONFIG 8
 .Os
 .Sh NAME
@@ -54,7 +54,7 @@ pseudo device.
 .Op Fl v
 .Sh DESCRIPTION
 .Nm
-is used to manipulate or display the characteristics of the 
+is used to manipulate or display the characteristics of the
 .Xr gre 4
 tunnel device. The first form shown above displays the current
 parameters, while the second one sets parameters to new values.
@@ -69,12 +69,12 @@ units. This option is always required.
 .It Fl d Ar dst
 Sets the IP address of the remote tunnel end. This may be the same as the
 tunnel destination set with
-.Xr ifconfig
+.Xr ifconfig 8
 when IP packets are to be encapsulated.
 .It Fl s Ar src
 Sets the IP address of the local tunnel end. This may be the same as
 the tunnel gateway set with
-.Xr ifconfig
+.Xr ifconfig 8
 when IP packets are to be encapsulated.
 .It Fl p Ar proto
 Sets the way how packets are encapsulated. Currently supported values are:
@@ -83,11 +83,11 @@ Sets the way how packets are encapsulated. Currently supported values are:
 .It 55 MOBILE encapsulation as described in RFC 2004
 .El
 .It Fl v
-Give a little more verbose output when running 
+Give a little more verbose output when running
 .Nm Ns .
 .El
 .Pp
-Note that the values for 
+Note that the values for
 .Ar src ,
 .Ar dst ,
 .Ar proto
@@ -95,14 +95,14 @@ must be coordinated with the remote end of the tunnel.
 .Pp
 For tunnels that run IP as encapsulated protocol, the tunnel endpoints
 can be set with the normal
-.Xr ifconfig .
+.Xr ifconfig 8 .
 In this case, the encapsulation protocol can be chosen by giving
 .Dq link0
-for IPIP encapsulation and 
+for IPIP encapsulation and
 .Dq -link0
 GRE encapsulation
 as arguments to
-.Xr ifconfig .
+.Xr ifconfig 8 .
 .Sh SEE ALSO
 .Xr ifconfig 8 ,
 .Xr gre 4 ,
