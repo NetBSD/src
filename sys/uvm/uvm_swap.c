@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_swap.c,v 1.63 2002/04/01 12:24:11 manu Exp $	*/
+/*	$NetBSD: uvm_swap.c,v 1.64 2002/05/09 21:43:44 fredette Exp $	*/
 
 /*
  * Copyright (c) 1995, 1996, 1997 Matthew R. Green
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_swap.c,v 1.63 2002/04/01 12:24:11 manu Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_swap.c,v 1.64 2002/05/09 21:43:44 fredette Exp $");
 
 #include "fs_nfs.h"
 #include "opt_uvmhist.h"
@@ -906,6 +906,20 @@ swap_on(p, sdp)
 		mp = rootvnode->v_mount;
 		sp = &mp->mnt_stat;
 		rootblocks = sp->f_blocks * btodb(sp->f_bsize);
+		/*
+		 * XXX: sp->f_blocks isn't the total number of
+		 * blocks in the filesystem, it's the number of
+		 * data blocks.  so, our rootblocks almost
+		 * definitely underestimates the total size 
+		 * of the filesystem - how badly depends on the
+		 * details of the filesystem type.  there isn't 
+		 * an obvious way to deal with this cleanly
+		 * and perfectly, so for now we just pad our 
+		 * rootblocks estimate with an extra 5 percent.
+		 */
+		rootblocks += (rootblocks >> 5) +
+			(rootblocks >> 6) +
+			(rootblocks >> 7);
 		rootpages = round_page(dbtob(rootblocks)) >> PAGE_SHIFT;
 		if (rootpages > size)
 			panic("swap_on: miniroot larger than swap?");
