@@ -1,4 +1,4 @@
-/*	$NetBSD: ata_wdc.c,v 1.4 1998/10/13 09:33:59 bouyer Exp $	*/
+/*	$NetBSD: ata_wdc.c,v 1.5 1998/10/13 15:02:41 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1998 Manuel Bouyer.
@@ -533,7 +533,9 @@ wdc_ata_bio_done(chp, xfer)
 	int need_done = xfer->c_flags & C_NEEDDONE;
 	int drive = xfer->drive;
 
-	WDCDEBUG_PRINT(("wdc_ata_bio_done: flags 0x%x\n", (u_int)xfer->c_flags),
+	WDCDEBUG_PRINT(("wdc_ata_bio_done %s:%d:%d: flags 0x%x\n",
+	    chp->wdc->sc_dev.dv_xname, chp->channel, xfer->drive, 
+	    (u_int)xfer->c_flags),
 	    DEBUG_XFERS);
 
 	/* feed back residual bcount to our caller */
