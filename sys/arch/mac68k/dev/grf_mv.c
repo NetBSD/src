@@ -1,4 +1,4 @@
-/*	$NetBSD: grf_mv.c,v 1.25 1997/05/11 19:11:29 scottr Exp $	*/
+/*	$NetBSD: grf_mv.c,v 1.26 1997/05/12 20:35:50 scottr Exp $	*/
 
 /*
  * Copyright (c) 1995 Allen Briggs.  All rights reserved.
@@ -240,7 +240,7 @@ bad:
 		break;
 	case NUBUS_DRHW_FIILX:
 	case NUBUS_DRHW_FIISXDSP:
-		sc->cli_offset = 0xF05000;
+		sc->cli_offset = 0xf05000;
 		sc->cli_value = 0x80;
 		add_nubus_intr(na->slot, grfmv_intr_generic, sc);
 		break;
@@ -310,17 +310,14 @@ grfmv_intr_generic(vsc, slot)
 	void	*vsc;
 	int	slot;
 {
-	static char zero = 0;
-	struct grfbus_softc *sc;
-	volatile char *slotbase;
+	struct grfbus_softc *sc = (struct grfbus_softc *)vsc;
 
-	sc = (struct grfbus_softc *)vsc;
-	slotbase = (volatile char *)sc->sc_handle;	/* XXX evil hack */
-	slotbase[sc->cli_offset] = zero;
+	bus_space_write_1(sc->sc_tag, sc->sc_handle,
+	    sc->cli_offset, sc->cli_value);
 }
 
 /*
- * Routine to clear interrupts for (XXX an unidentified!) Radius card.
+ * Routine to clear interrupts for the Radius PrecisionColor 8xj card.
  */
 /*ARGSUSED*/
 static void
@@ -328,12 +325,8 @@ grfmv_intr_radius(vsc, slot)
 	void	*vsc;
 	int	slot;
 {
-	u_char c;
-	struct grfbus_softc *sc;
-	volatile char *slotbase;
-
-	sc = (struct grfbus_softc *)vsc;
-	slotbase = (volatile char *)sc->sc_handle;	/* XXX evil hack */
+	struct grfbus_softc *sc = (struct grfbus_softc *)vsc;
+	u_int8_t c;
 
 	/*
 	 * The value 0x66 was the observed value on one	card.  It is read
@@ -343,9 +336,9 @@ grfmv_intr_radius(vsc, slot)
 	c = 0x66;
 
 	c |= 0x80;
-	slotbase[0xD00403] = c;
-	c &= 0x7F;
-	slotbase[0xD00403] = c;
+	bus_space_write_1(sc->sc_tag, sc->sc_handle, 0xd00403, c);
+	c &= 0x7f;
+	bus_space_write_1(sc->sc_tag, sc->sc_handle, 0xd00403, c);
 }
 
 /*
@@ -363,14 +356,14 @@ grfmv_intr_cti(vsc, slot)
 	void	*vsc;
 	int	slot;
 {
-	struct grfbus_softc *sc;
-	volatile char *slotbase;
+	struct grfbus_softc *sc = (struct grfbus_softc *)vsc;
+	u_int8_t c;
 
-	sc = (struct grfbus_softc *)vsc;
-	slotbase = ((volatile char *)sc->sc_handle)	/* XXX evil hack */
-	    + 0x00080000;
-	*slotbase = (*slotbase | 0x02);
-	*slotbase = (*slotbase & 0xFD);
+	c = bus_space_read_1(sc->sc_tag, sc->sc_handle, 0x80000);
+	c |= 0x02;
+	bus_space_write_1(sc->sc_tag, sc->sc_handle, 0x80000, c);
+	c &= 0xfd;
+	bus_space_write_1(sc->sc_tag, sc->sc_handle, 0x80000, c);
 }
 
 /*ARGSUSED*/
