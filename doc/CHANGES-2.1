@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-2.1,v 1.1.2.9 2005/01/11 06:44:06 jmc Exp $
+#	$NetBSD: CHANGES-2.1,v 1.1.2.10 2005/01/12 22:56:55 he Exp $
 
 A complete list of changes from the NetBSD 2.0 release to the NetBSD 2.1 
 release
@@ -11,10 +11,10 @@ gnu/usr.bin/groff/tmac/mdoc.local               patch
 
 	Welcome to 2.0_STABLE
 
-src/sys/dev/mii/igphy.c				1.5
-src/sys/dev/mii/igphyreg.h			1.2
-src/sys/dev/pci/if_wmreg.h			1.12
-src/sys/dev/pci/if_wm.c				1.78
+sys/dev/mii/igphy.c				1.5
+sys/dev/mii/igphyreg.h				1.2
+sys/dev/pci/if_wmreg.h				1.12
+sys/dev/pci/if_wm.c				1.78
 
 	Fix major performance issues with the i82547 Gig-E chip:
 	- enable the SmartSpeed work-around code for the IGP phy, with some
@@ -44,7 +44,7 @@ sys/arch/powerpc/powerpc/trap.c			1.104
 	DIAGNOSTIC kernel when crossing segment boundaries.
 	[matt, ticket #985]
 
-src/sys/arch/macppc/conf/INSTALL		1.78
+sys/arch/macppc/conf/INSTALL			1.78
 
 	Now that we have ofwboot load at 0xe00000, it doesn't make sense for
 	this kernel to load at 0x800000 - move back to the default and we
@@ -142,3 +142,41 @@ sys/dev/ic/tulip.c				1.130
 	Silence the 'receive process failed to idle' message on the Davicom 
 	DM9102A.
 	[sketch, ticket #1084]
+
+usr.sbin/ypserv/ypinit/ypinit.sh		1.12
+
+	Fix a bug which caused "ypinit" to die with a strange error message
+	if "/var/yp/binding" does not exist.
+	[tron, ticket #893]
+
+sys/dev/pci/if_wm.c				1.79 via patch
+sys/dev/pci/if_wmreg.h				1.13
+
+	Largest Tx descriptor buffer size is actually 4K.
+	[thorpej, ticket #898]
+
+sys/dev/pci/if_wm.c				1.80 via patch
+
+	Restructure the loop in wm_start() that passes over the
+	DMA map segments slightly to make it easier to drop in
+	errata work-arounds that require adding extra descriptors
+	onto the end of the packet.
+	[thorpej, ticket #899]
+
+dist/ntp/ntpd/ntp_io.c				1.11
+dist/ntp/ntpd/ntp_proto.c			1.4
+
+	Fix core dump problem if local system and ntp server do
+	not have overlapping protocol family support (IPv4 vs.
+	IPv6).  Instead, report server as unreachable, and ignore
+	entry.  Fixes PR#27137.
+	[christos, ticket #901]
+
+sys/kern/sysv_sem.c				1.55
+
+	Update sem_otime on successful call to semop().
+	Fixes long-standing bug in the SYSV semaphore code which
+	causes an example in Stevens' UNPv2 to fail when trying
+	to compensate for a race condition in a file locking
+	implementation.
+	[briggs, ticket #903]
