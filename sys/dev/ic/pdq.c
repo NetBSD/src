@@ -1,4 +1,4 @@
-/*	$NetBSD: pdq.c,v 1.23 1998/09/28 18:01:43 matt Exp $	*/
+/*	$NetBSD: pdq.c,v 1.24 1998/09/28 20:37:12 matt Exp $	*/
 
 /*-
  * Copyright (c) 1995,1996 Matt Thomas <matt@3am-software.com>
@@ -750,7 +750,7 @@ pdq_process_received_data(
 	     * Update the lengths of the data buffers now that we know
 	     * the real length.
 	     */
-	    pdulen = datalen - 4 /* CRC */;
+	    pdulen = datalen + (PDQ_RX_FC_OFFSET - PDQ_OS_HDR_OFFSET) - 4 /* CRC */;
 	    segcnt = (pdulen + PDQ_OS_HDR_OFFSET + PDQ_OS_DATABUF_SIZE - 1) / PDQ_OS_DATABUF_SIZE; 
 	    PDQ_OS_DATABUF_ALLOC(pdq, npdu);
 	    if (npdu == NULL) {
