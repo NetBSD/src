@@ -1,4 +1,4 @@
-/*	$NetBSD: exec.c,v 1.3 1994/10/26 05:44:44 cgd Exp $	*/
+/*	$NetBSD: exec.c,v 1.4 1994/11/25 23:08:31 deraadt Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1990, 1993
@@ -83,7 +83,7 @@ exec(path, loadaddr, howto)
 		goto shread;
 	addr += x.a_text;
 	if (N_GETMAGIC(x) == ZMAGIC || N_GETMAGIC(x) == NMAGIC)
-		while ((int)addr & CLOFSET)
+		while ((int)addr & __LDPGSZ)
 			*addr++ = 0;
         /* Data */
 	printf("+%d", x.a_data);
