@@ -1,11 +1,11 @@
-/*	$NetBSD: umass.c,v 1.103 2003/09/10 06:38:28 mycroft Exp $	*/
+/*	$NetBSD: umass.c,v 1.104 2003/09/13 03:18:13 mycroft Exp $	*/
 
 /*
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
- * by Charles M. Hamnnum.
+ * by Charles M. Hannum.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -131,7 +131,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: umass.c,v 1.103 2003/09/10 06:38:28 mycroft Exp $");
+__KERNEL_RCSID(0, "$NetBSD: umass.c,v 1.104 2003/09/13 03:18:13 mycroft Exp $");
 
 #include "atapibus.h"
 #include "scsibus.h"
@@ -423,6 +423,14 @@ USB_ATTACH(umass)
 	printf("%s: using %s over %s\n", USBDEVNAME(sc->sc_dev), sCommand,
 	       sWire);
 
+	if (quirk != NULL && quirk->uq_init != NULL) {
+		err = (*quirk->uq_init)(sc);
+		if (err) {
+			umass_disco(sc);
+			USB_ATTACH_ERROR_RETURN;
+		}
+	}
+
 	/*
 	 * In addition to the Control endpoint the following endpoints
 	 * are required:
@@ -586,14 +594,6 @@ USB_ATTACH(umass)
 	default:
 		umass_disco(sc);
 		USB_ATTACH_ERROR_RETURN;
-	}
-
-	if (quirk != NULL && quirk->uq_init != NULL) {
-		err = (*quirk->uq_init)(sc);
-		if (err) {
-			umass_disco(sc);
-			USB_ATTACH_ERROR_RETURN;
-		}
 	}
 
 	error = 0;
