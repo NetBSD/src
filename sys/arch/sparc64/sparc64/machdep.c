@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.56 2000/01/19 20:05:48 thorpej Exp $ */
+/*	$NetBSD: machdep.c,v 1.57 2000/04/06 12:17:27 mrg Exp $ */
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -82,7 +82,8 @@
  */
 
 #include "opt_compat_sunos.h"
-#include "opt_compat_netbsd.h"
+#include "opt_compat_sunos.h"
+#include "opt_ddb.h"
 
 #include <sys/param.h>
 #include <sys/signal.h>
@@ -474,7 +475,7 @@ sendsig(catcher, sig, mask, code)
 	int onstack;
 
 	tf = p->p_md.md_tf;
-	oldsp = (struct rwindow *)(tf->tf_out[6] + STACK_OFFSET);
+	oldsp = (struct rwindow *)(u_long)(tf->tf_out[6] + STACK_OFFSET);
 
 	/* Do we need to jump onto the signal stack? */
 	onstack =
@@ -977,7 +978,7 @@ stackdump()
 			       fp64->fr_pc, fp64->fr_arg[0], fp64->fr_arg[1], fp64->fr_arg[2],
 			       fp64->fr_arg[3], fp64->fr_arg[4], fp64->fr_arg[5], fp64->fr_arg[6],
 			       fp64->fr_fp);
-			fp = (struct frame32*)fp64->fr_fp;
+			fp = (struct frame32 *)(u_long)fp64->fr_fp;
 		} else {
 			/* 32-bit frame */
 			printf("  pc = %x  args = (%x, %x, %x, %x, %x, %x, %x) fp = %p\n",
@@ -1090,15 +1091,13 @@ _bus_dmamap_load(t, map, buf, buflen, p, flags)
 	map->dm_nsegs = 0;
 
 	if (buflen > map->_dm_size)
-#ifdef DEBUG
 	{ 
+#ifdef DEBUG
 		printf("_bus_dmamap_load(): error %d > %d -- map size exceeded!\n", buflen, map->_dm_size);
 		Debugger();
+#endif
 		return (EINVAL);
 	}		
-#else	
-		return (EINVAL);
-#endif
 
 	sgsize = round_page(buflen + ((int)vaddr & PGOFSET));
 
@@ -1579,8 +1578,8 @@ bus_space_probe(tag, btype, paddr, size, offset, flags, callback, arg)
 	if (bus_space_map2(tag, btype, paddr, size, flags, TMPMAP_VA, &bh) != 0)
 		return (0);
 
-	tmp = (caddr_t)bh;
-	result = (probeget(tmp + offset, bus_type_asi[tag->type], size) != -1);
+	tmp = (caddr_t)(u_long)bh;
+	result = (probeget((u_long)tmp + offset, bus_type_asi[tag->type], size) != -1);
 	if (result && callback != NULL)
 		result = (*callback)(tmp, arg);
 	bus_space_unmap(tag, bh, size);
