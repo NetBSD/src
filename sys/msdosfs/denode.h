@@ -1,5 +1,35 @@
-/*	$NetBSD: denode.h,v 1.5 1994/07/16 21:33:17 cgd Exp $	*/
+/*	$NetBSD: denode.h,v 1.6 1994/07/18 21:38:08 cgd Exp $	*/
 
+/*-
+ * Copyright (C) 1994 Wolfgang Solfrank.
+ * Copyright (C) 1994 TooLs GmbH.
+ * All rights reserved.
+ *
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions
+ * are met:
+ * 1. Redistributions of source code must retain the above copyright
+ *    notice, this list of conditions and the following disclaimer.
+ * 2. Redistributions in binary form must reproduce the above copyright
+ *    notice, this list of conditions and the following disclaimer in the
+ *    documentation and/or other materials provided with the distribution.
+ * 3. All advertising materials mentioning features or use of this software
+ *    must display the following acknowledgement:
+ *	This product includes software developed by TooLs GmbH.
+ * 4. The name of TooLs GmbH may not be used to endorse or promote products
+ *    derived from this software without specific prior written permission.
+ *
+ * THIS SOFTWARE IS PROVIDED BY TOOLS GMBH ``AS IS'' AND ANY EXPRESS OR
+ * IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
+ * OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
+ * IN NO EVENT SHALL TOOLS GMBH BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,
+ * SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO,
+ * PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS;
+ * OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY,
+ * WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR
+ * OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF
+ * ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+ */
 /*
  * Written by Paul Popelka (paulp@uts.amdahl.com)
  * 
@@ -132,14 +162,10 @@ struct denode {
 /*
  * Values for the de_flag field of the denode.
  */
-#define	DELOCKED	0x0001	/* directory entry is locked */
-#define	DEWANT		0x0002	/* someone wants this de */
-#define	DERENAME	0x0004	/* de is being renamed */
-#define	DEUPD		0x0008	/* file has been modified */
-#define	DESHLOCK	0x0010	/* file has shared lock */
-#define	DEEXLOCK	0x0020	/* file has exclusive lock */
-#define	DELWAIT		0x0040	/* someone waiting on file lock */
-#define	DEMOD		0x0080	/* denode wants to be written back to disk */
+#define	DE_LOCKED	0x0001	/* directory entry is locked */
+#define	DE_WANT		0x0002	/* someone wants this de */
+#define	DE_UPD		0x0004	/* file has been modified */
+#define	DE_MOD		0x0080	/* denode wants to be written back to disk */
 
 /*
  * Transfer directory entries between internal and external form.
@@ -165,23 +191,20 @@ struct denode {
 #define	de_forw		de_chain[0]
 #define	de_back		de_chain[1]
 
-#if defined(KERNEL)
+#ifdef KERNEL
 
 #define	VTODE(vp)	((struct denode *)(vp)->v_data)
 #define	DETOV(de)	((de)->de_vnode)
 
-#define	DELOCK(de)	delock(de)
-#define	DEUNLOCK(de)	deunlock(de)
-
-#define	DEUPDAT(dep, t, waitfor) \
-	if (dep->de_flag & DEUPD) \
+#define	DE_UPDAT(dep, t, waitfor) \
+	if (dep->de_flag & DE_UPD) \
 		(void) deupdat(dep, t, waitfor);
 
-#define	DETIMES(dep, t) \
-	if (dep->de_flag & DEUPD) { \
-		(dep)->de_flag |= DEMOD; \
+#define	DE_TIMES(dep, t) \
+	if (dep->de_flag & DE_UPD) { \
+		(dep)->de_flag |= DE_MOD; \
 		unix2dostime(t, &dep->de_Date, &dep->de_Time); \
-		(dep)->de_flag &= ~DEUPD; \
+		(dep)->de_flag &= ~DE_UPD; \
 	}
 
 /*
@@ -239,11 +262,4 @@ int msdosfs_reallocblks __P((struct vop_reallocblks_args *));
  * Internal service routine prototypes.
  */
 int deget __P((struct msdosfsmount * pmp, u_long dirclust, u_long diroffset, struct direntry * direntptr, struct denode ** depp));
-
-static void deput __P((struct denode *dep));
-static __inline void deput(dep)
-struct denode *dep;
-{
-	vput(DETOV(dep));
-}
-#endif				/* defined(KERNEL) */
+#endif	/* KERNEL */

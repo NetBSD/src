@@ -1,5 +1,35 @@
-/*	$NetBSD: msdosfs_lookup.c,v 1.11 1994/07/16 21:33:23 cgd Exp $	*/
+/*	$NetBSD: msdosfs_lookup.c,v 1.12 1994/07/18 21:38:16 cgd Exp $	*/
 
+/*-
+ * Copyright (C) 1994 Wolfgang Solfrank.
+ * Copyright (C) 1994 TooLs GmbH.
+ * All rights reserved.
+ *
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions
+ * are met:
+ * 1. Redistributions of source code must retain the above copyright
+ *    notice, this list of conditions and the following disclaimer.
+ * 2. Redistributions in binary form must reproduce the above copyright
+ *    notice, this list of conditions and the following disclaimer in the
+ *    documentation and/or other materials provided with the distribution.
+ * 3. All advertising materials mentioning features or use of this software
+ *    must display the following acknowledgement:
+ *	This product includes software developed by TooLs GmbH.
+ * 4. The name of TooLs GmbH may not be used to endorse or promote products
+ *    derived from this software without specific prior written permission.
+ *
+ * THIS SOFTWARE IS PROVIDED BY TOOLS GMBH ``AS IS'' AND ANY EXPRESS OR
+ * IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
+ * OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
+ * IN NO EVENT SHALL TOOLS GMBH BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,
+ * SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO,
+ * PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS;
+ * OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY,
+ * WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR
+ * OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF
+ * ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+ */
 /*
  * Written by Paul Popelka (paulp@uts.amdahl.com)
  * 
@@ -80,18 +110,18 @@ msdosfs_lookup(ap)
 	int flags = cnp->cn_flags;
 	int nameiop = cnp->cn_nameiop;
 
-#if defined(MSDOSFSDEBUG)
+#ifdef MSDOSFS_DEBUG
 	printf("msdosfs_lookup(): looking for %s\n", cnp->cn_nameptr);
-#endif				/* defined(MSDOSFSDEBUG) */
+#endif
 	dp = VTODE(vdp);
 	pmp = dp->de_pmp;
 	*vpp = NULL;
 	lockparent = flags & LOCKPARENT;
 	wantparent = flags & (LOCKPARENT | WANTPARENT);
-#if defined(MSDOSFSDEBUG)
+#ifdef MSDOSFS_DEBUG
 	printf("msdosfs_lookup(): vdp %08x, dp %08x, Attr %02x\n",
 	       vdp, dp, dp->de_Attributes);
-#endif				/* defined(MSDOSFSDEBUG) */
+#endif
 
 	/*
 	 * Be sure vdp is a directory.  Since dos filesystems don't have
@@ -130,9 +160,10 @@ msdosfs_lookup(ap)
 
 		if (!error) {
 			if (vpid == vdp->v_id) {
-#if defined(MSDOSFSDEBUG)
-				printf("msdosfs_lookup(): cache hit, vnode %08x, file %s\n", vdp, dp->de_Name);
-#endif				/* defined(MSDOSFSDEBUG) */
+#ifdef MSDOSFS_DEBUG
+				printf("msdosfs_lookup(): cache hit, vnode %08x, file %s\n",
+				       vdp, dp->de_Name);
+#endif
 				return 0;
 			}
 			vput(vdp);
@@ -156,9 +187,9 @@ msdosfs_lookup(ap)
 		(cnp->cn_namelen == 2 && cnp->cn_nameptr[1] == '.'))) {
 		isadir = ATTR_DIRECTORY;
 		scn = MSDOSFSROOT;
-#if defined(MSDOSFSDEBUG)
+#ifdef MSDOSFS_DEBUG
 		printf("msdosfs_lookup(): looking for . or .. in root directory\n");
-#endif				/* defined(MSDOSFSDEBUG) */
+#endif
 		cluster = MSDOSFSROOT;
 		diroff = MSDOSFSROOT_OFS;
 		goto foundroot;
@@ -176,10 +207,10 @@ msdosfs_lookup(ap)
 
 	unix2dosfn((u_char *) cnp->cn_nameptr, dosfilename, cnp->cn_namelen);
 	dosfilename[11] = 0;
-#if defined(MSDOSFSDEBUG)
+#ifdef MSDOSFS_DEBUG
 	printf("msdosfs_lookup(): dos version of filename %s, length %d\n",
 	       dosfilename, cnp->cn_namelen);
-#endif				/* defined(MSDOSFSDEBUG) */
+#endif
 	/*
 	 * Search the directory pointed at by vdp for the name pointed at
 	 * by cnp->cn_nameptr.
@@ -234,9 +265,10 @@ msdosfs_lookup(ap)
 				 */
 				if ((dep->deAttributes & ATTR_VOLUME) == 0 &&
 				    bcmp(dosfilename, dep->deName, 11) == 0) {
-#if defined(MSDOSFSDEBUG)
-					printf("msdosfs_lookup(): match diroff %d, rootreloff %d\n", diroff, rootreloff);
-#endif				/* defined(MSDOSFSDEBUG) */
+#ifdef MSDOSFS_DEBUG
+					printf("msdosfs_lookup(): match diroff %d, rootreloff %d\n",
+					       diroff, rootreloff);
+#endif
 					/*
 					 * Remember where this directory
 					 * entry came from for whoever did
@@ -271,25 +303,25 @@ notfound:;
 	 * that's ok if we are creating or renaming and are at the end of
 	 * the pathname and the directory hasn't been removed.
 	 */
-#if defined(MSDOSFSDEBUG)
+#ifdef MSDOSFS_DEBUG
 	printf("msdosfs_lookup(): op %d, refcnt %d, slotstatus %d\n",
 	       nameiop, dp->de_refcnt, slotstatus);
 	printf("               slotoffset %d, slotcluster %d\n",
 	       slotoffset, slotcluster);
-#endif				/* defined(MSDOSFSDEBUG) */
+#endif
 	if ((nameiop == CREATE || nameiop == RENAME) &&
 	    (flags & ISLASTCN) && dp->de_refcnt != 0) {
 		if (slotstatus == NONE) {
 			dp->de_fndoffset = (u_long)-1;
 			dp->de_fndclust = (u_long)-1;
 		} else {
-#if defined(MSDOSFSDEBUG)
+#ifdef MSDOSFS_DEBUG
 			printf("msdosfs_lookup(): saving empty slot location\n");
-#endif				/* defined(MSDOSFSDEBUG) */
+#endif
 			dp->de_fndoffset = slotoffset;
 			dp->de_fndclust = slotcluster;
 		}
-		/* dp->de_flag |= DEUPD; /* never update dos directories */
+		/* dp->de_flag |= DE_UPD; /* never update dos directories */
 		cnp->cn_flags |= SAVENAME;
 		if (!lockparent)/* leave searched dir locked?	 */
 			VOP_UNLOCK(vdp);
@@ -432,9 +464,9 @@ createde(dep, ddep, depp)
 	struct msdosfsmount *pmp = ddep->de_pmp;
 	struct buf *bp;
 
-#if defined(MSDOSFSDEBUG)
+#ifdef MSDOSFS_DEBUG
 	printf("createde(dep %08x, ddep %08x, depp %08x)\n", dep, ddep, depp);
-#endif				/* defined(MSDOSFSDEBUG) */
+#endif
 
 	/*
 	 * If no space left in the directory then allocate another cluster
@@ -445,7 +477,7 @@ createde(dep, ddep, depp)
 	 * case.
 	 */
 	if (ddep->de_fndclust == (u_long)-1) {
-		if (error = extendfile(ddep, &bp, &dirclust))
+		if (error = extendfile(ddep, 1, &bp, &dirclust, DE_CLEAR))
 			return error;
 		ndep = (struct direntry *) bp->b_data;
 		/*
@@ -482,7 +514,7 @@ createde(dep, ddep, depp)
 			return error;
 	}
 	if (error = bwrite(bp)) {
-		deput(*depp);	/* free the vnode we got on error */
+		vput(DETOV(*depp));	/* free the vnode we got on error */
 		return error;
 	}
 	return 0;
@@ -524,15 +556,11 @@ removede(pdep,dep)
 	struct msdosfsmount *pmp = pdep->de_pmp;
 	int error;
 
-#if defined(MSDOSFSDEBUG)
-	/*
-	 * printf("removede(): filename %s\n", dep->de_Name);
-	 * printf("removede(): dep %08x, ndpcluster %d, ndpoffset %d\n",
-	 *	  dep,
-	 * 	  pdep->de_fndclust,
-	 * 	  pdep->de_fndoffset);
-	 */
-#endif				/* defined(MSDOSFSDEBUG) */
+#ifdef MSDOSFS_DEBUG
+	printf("removede(): filename %s\n", dep->de_Name);
+	printf("removede(): dep %08x, ndpcluster %d, ndpoffset %d\n",
+	       dep, pdep->de_fndclust, pdep->de_fndoffset);
+#endif
 
 	/*
 	 * Read the directory block containing the directory entry we are
@@ -596,10 +624,10 @@ dosdirempty(dep)
 				if (bcmp(dentp->deName, ".          ", 11) &&
 				    bcmp(dentp->deName, "..         ", 11)) {
 					brelse(bp);
-#if defined(MSDOSFSDEBUG)
-					printf("dosdirempty(): entry %d found %02x, %02x\n", dei, dentp->deName[0],
-					    dentp->deName[1]);
-#endif				/* defined(MSDOSFSDEBUG) */
+#ifdef MSDOSFS_DEBUG
+					printf("dosdirempty(): entry %d found %02x, %02x\n",
+					       dei, dentp->deName[0], dentp->deName[1]);
+#endif
 					return 0;	/* not empty */
 				}
 			}
@@ -673,7 +701,7 @@ doscheckpath(source, target)
 		}
 		if (scn == MSDOSFSROOT)
 			break;
-		deput(dep);
+		vput(DETOV(dep));
 		/* NOTE: deget() clears dep on error */
 		error = deget(pmp, scn, 0, ep, &dep);
 		brelse(bp);
@@ -687,7 +715,7 @@ out:	;
 	if (error == ENOTDIR)
 		printf("doscheckpath(): .. not a directory?\n");
 	if (dep != NULL)
-		deput(dep);
+		vput(DETOV(dep));
 	return error;
 }
 

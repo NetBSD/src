@@ -1,5 +1,35 @@
-/*	$NetBSD: msdosfsmount.h,v 1.5 1994/07/16 21:33:29 cgd Exp $	*/
+/*	$NetBSD: msdosfsmount.h,v 1.6 1994/07/18 21:38:22 cgd Exp $	*/
 
+/*-
+ * Copyright (C) 1994 Wolfgang Solfrank.
+ * Copyright (C) 1994 TooLs GmbH.
+ * All rights reserved.
+ *
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions
+ * are met:
+ * 1. Redistributions of source code must retain the above copyright
+ *    notice, this list of conditions and the following disclaimer.
+ * 2. Redistributions in binary form must reproduce the above copyright
+ *    notice, this list of conditions and the following disclaimer in the
+ *    documentation and/or other materials provided with the distribution.
+ * 3. All advertising materials mentioning features or use of this software
+ *    must display the following acknowledgement:
+ *	This product includes software developed by TooLs GmbH.
+ * 4. The name of TooLs GmbH may not be used to endorse or promote products
+ *    derived from this software without specific prior written permission.
+ *
+ * THIS SOFTWARE IS PROVIDED BY TOOLS GMBH ``AS IS'' AND ANY EXPRESS OR
+ * IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
+ * OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
+ * IN NO EVENT SHALL TOOLS GMBH BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,
+ * SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO,
+ * PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS;
+ * OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY,
+ * WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR
+ * OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF
+ * ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+ */
 /*
  * Written by Paul Popelka (paulp@uts.amdahl.com)
  * 
@@ -35,7 +65,6 @@ struct msdosfsmount {
 	u_long pm_nmbrofclusters;	/* # of clusters in filesystem */
 	u_long pm_maxcluster;	/* maximum cluster number */
 	u_long pm_freeclustercount;	/* number of free clusters */
-	u_long pm_lookhere;	/* start free cluster search here */
 	u_long pm_bnshift;	/* shift file offset right this amount to get a block number */
 	u_long pm_brbomask;	/* and a file offset with this mask to get block rel offset */
 	u_long pm_cnshift;	/* shift file offset right this amount to get a cluster number */
@@ -46,11 +75,14 @@ struct msdosfsmount {
 	u_long pm_fatblocksize;	/* size of fat blocks in bytes */
 	u_long pm_fatblocksec;	/* size of fat blocks in sectors */
 	u_long pm_fatsize;	/* size of fat in bytes */
-	u_char *pm_inusemap;	/* ptr to bitmap of in-use clusters */
+	u_int *pm_inusemap;	/* ptr to bitmap of in-use clusters */
 	char pm_ronly;		/* read only if non-zero */
 	char pm_waitonfat;	/* wait for writes of the fat to complt, when 0 use bdwrite, else use bwrite */
 	struct netexport pm_export;	/* export information */
 };
+
+/* Number of bits in one pm_inusemap item: */
+#define	N_INUSEBITS	(8 * sizeof(u_int))
 
 /*
  * How to compute pm_cnshift and pm_crbomask.
@@ -121,6 +153,18 @@ struct msdosfsmount {
 	((struct direntry *)((bp)->b_data)	\
 	 + (dirofs) % (pmp)->pm_depclust)
 
+
+/*
+ * Convert filesize to block number
+ */
+#define de_blk(pmp, off) \
+	((off) >> (pmp)->pm_cnshift)
+
+/*
+ * Clusters required to hold size bytes
+ */
+#define	de_clcount(pmp, size) \
+	(((size) + (pmp)->pm_bpcluster - 1) >> (pmp)->pm_cnshift)
 
 /*
  * Prototypes for MSDOSFS virtual filesystem operations

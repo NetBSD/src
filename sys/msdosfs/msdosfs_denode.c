@@ -1,14 +1,44 @@
-/*	$NetBSD: msdosfs_denode.c,v 1.6 1994/07/16 21:33:20 cgd Exp $	*/
+/*	$NetBSD: msdosfs_denode.c,v 1.7 1994/07/18 21:38:12 cgd Exp $	*/
 
+/*-
+ * Copyright (C) 1994 Wolfgang Solfrank.
+ * Copyright (C) 1994 TooLs GmbH.
+ * All rights reserved.
+ *
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions
+ * are met:
+ * 1. Redistributions of source code must retain the above copyright
+ *    notice, this list of conditions and the following disclaimer.
+ * 2. Redistributions in binary form must reproduce the above copyright
+ *    notice, this list of conditions and the following disclaimer in the
+ *    documentation and/or other materials provided with the distribution.
+ * 3. All advertising materials mentioning features or use of this software
+ *    must display the following acknowledgement:
+ *	This product includes software developed by TooLs GmbH.
+ * 4. The name of TooLs GmbH may not be used to endorse or promote products
+ *    derived from this software without specific prior written permission.
+ *
+ * THIS SOFTWARE IS PROVIDED BY TOOLS GMBH ``AS IS'' AND ANY EXPRESS OR
+ * IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
+ * OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
+ * IN NO EVENT SHALL TOOLS GMBH BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,
+ * SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO,
+ * PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS;
+ * OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY,
+ * WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR
+ * OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF
+ * ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+ */
 /*
  * Written by Paul Popelka (paulp@uts.amdahl.com)
  * 
  * You can do anything you want with this software, just don't say you wrote
- * it, and don't reoove this notice.
+ * it, and don't remove this notice.
  * 
  * This software is provided "as is".
  * 
- * The authop supplies this software to be publicly redistributed on the
+ * The author supplies this software to be publicly redistributed on the
  * understanding that the author is not responsible for the correct
  * functioning of this software in any circumstances and is not liable for
  * any damages caused by this software.
@@ -58,8 +88,8 @@ msdosfs_hashget(dev, dirclust, diroff)
 			    || dev != dep->de_dev
 			    || dep->de_refcnt == 0)
 				continue;
-			if (dep->de_flag & DELOCKED) {
-				dep->de_flag |= DEWANT;
+			if (dep->de_flag & DE_LOCKED) {
+				dep->de_flag |= DE_WANT;
 				sleep((caddr_t)dep, PINOD);
 				break;
 			}
@@ -82,13 +112,13 @@ msdosfs_hashins(dep)
 	dep->de_next = deq;
 	dep->de_prev = depp;
 	*depp = dep;
-	if (dep->de_flag & DELOCKED)
+	if (dep->de_flag & DE_LOCKED)
 		panic("msdosfs_hashins: already locked");
 	if (curproc)
 		dep->de_lockholder = curproc->p_pid;
 	else
 		dep->de_lockholder = -1;
-	dep->de_flag |= DELOCKED;
+	dep->de_flag |= DE_LOCKED;
 }
 
 static void
@@ -135,10 +165,10 @@ deget(pmp, dirclust, diroffset, direntptr, depp)
 	struct vnode *nvp;
 	struct buf *bp;
 
-#if defined(MSDOSFSDEBUG)
+#ifdef MSDOSFS_DEBUG
 	printf("deget(pmp %08x, dirclust %d, diroffset %x, direntptr %x, depp %08x)\n",
 	       pmp, dirclust, diroffset, direntptr, depp);
-#endif				/* defined(MSDOSFSDEBUG) */
+#endif
 
 	/*
 	 * If dir entry is given and refers to a directory, convert to
@@ -284,9 +314,9 @@ deupdat(dep, tp, waitfor)
 	struct timespec ts;
 	struct vnode *vp = DETOV(dep);
 
-#if defined(MSDOSFSDEBUG)
+#ifdef MSDOSFS_DEBUG
 	printf("deupdat(): dep %08x\n", dep);
-#endif				/* defined(MSDOSFSDEBUG) */
+#endif
 
 	/*
 	 * If the update bit is off, or this denode is from a readonly
@@ -295,7 +325,7 @@ deupdat(dep, tp, waitfor)
 	 * directory entries that describe a directory do not ever get
 	 * updated.  This is the way dos treats them.
 	 */
-	if ((dep->de_flag & DEUPD) == 0 ||
+	if ((dep->de_flag & DE_UPD) == 0 ||
 	    vp->v_mount->mnt_flag & MNT_RDONLY ||
 	    dep->de_Attributes & ATTR_DIRECTORY ||
 	    dep->de_refcnt <= 0)
@@ -313,7 +343,7 @@ deupdat(dep, tp, waitfor)
 	 */
 	TIMEVAL_TO_TIMESPEC(&time, &ts);
 	unix2dostime(&ts, &dep->de_Date, &dep->de_Time);
-	dep->de_flag &= ~DEUPD;
+	dep->de_flag &= ~DE_UPD;
 
 	/*
 	 * Copy the directory entry out of the denode into the cluster it
@@ -356,9 +386,9 @@ detrunc(dep, length, flags, cred, p)
 	struct buf *bp;
 	struct msdosfsmount *pmp = dep->de_pmp;
 
-#if defined(MSDOSFSDEBUG)
+#ifdef MSDOSFS_DEBUG
 	printf("detrunc(): file %s, length %d, flags %d\n", dep->de_Name, length, flags);
-#endif				/* defined(MSDOSFSDEBUG) */
+#endif
 
 	/*
 	 * Disallow attempts to truncate the root directory since it is of
@@ -376,14 +406,8 @@ detrunc(dep, length, flags, cred, p)
 
 	vnode_pager_setsize(DETOV(dep), length);
 
-	if (dep->de_FileSize <= length) {
-		dep->de_flag |= DEUPD;
-		error = deupdat(dep, &time, 1);
-#if defined(MSDOSFSDEBUG)
-		printf("detrunc(): file is shorter return point, errno %d\n", error);
-#endif				/* defined(MSDOSFSDEBUG) */
-		return error;
-	}
+	if (dep->de_FileSize < length)
+		return deextend(dep, length, cred);
 
 	/*
 	 * If the desired length is 0 then remember the starting cluster of
@@ -399,12 +423,10 @@ detrunc(dep, length, flags, cred, p)
 		dep->de_StartCluster = 0;
 		eofentry = ~0;
 	} else {
-		error = pcbmap(dep, (length - 1) >> pmp->pm_cnshift,
-		    0, &eofentry);
-		if (error) {
-#if defined(MSDOSFSDEBUG)
+		if (error = pcbmap(dep, de_clcount(pmp, length) - 1, 0, &eofentry)) {
+#ifdef MSDOSFS_DEBUG
 			printf("detrunc(): pcbmap fails %d\n", error);
-#endif				/* defined(MSDOSFSDEBUG) */
+#endif
 			return error;
 		}
 	}
@@ -426,14 +448,14 @@ detrunc(dep, length, flags, cred, p)
 			error = bread(pmp->pm_devvp, bn, pmp->pm_bpcluster,
 			    NOCRED, &bp);
 		} else {
-			bn = (length - 1) >> pmp->pm_cnshift;
+			bn = de_blk(pmp, length);
 			error = bread(DETOV(dep), bn, pmp->pm_bpcluster,
 			    NOCRED, &bp);
 		}
 		if (error) {
-#if defined(MSDOSFSDEBUG)
+#ifdef MSDOSFS_DEBUG
 			printf("detrunc(): bread fails %d\n", error);
-#endif				/* defined(MSDOSFSDEBUG) */
+#endif
 			return error;
 		}
 		vnode_pager_uncache(DETOV(dep));	/* what's this for? */
@@ -452,14 +474,14 @@ detrunc(dep, length, flags, cred, p)
 	 * we free the trailing clusters.
 	 */
 	dep->de_FileSize = length;
-	dep->de_flag |= DEUPD;
+	dep->de_flag |= DE_UPD;
 	vflags = (length > 0 ? V_SAVE : 0) | V_SAVEMETA;
 	vinvalbuf(DETOV(dep), vflags, cred, p, 0, 0);
-	allerror = deupdat(dep, &time, MNT_WAIT);
-#if defined(MSDOSFSDEBUG)
+	allerror = deupdat(dep, &time, 1);
+#ifdef MSDOSFS_DEBUG
 	printf("detrunc(): allerror %d, eofentry %d\n",
 	       allerror, eofentry);
-#endif				/* defined(MSDOSFSDEBUG) */
+#endif
 
 	/*
 	 * If we need to break the cluster chain for the file then do it
@@ -469,9 +491,9 @@ detrunc(dep, length, flags, cred, p)
 		error = fatentry(FAT_GET_AND_SET, pmp, eofentry,
 				 &chaintofree, CLUST_EOFE);
 		if (error) {
-#if defined(MSDOSFSDEBUG)
+#ifdef MSDOSFS_DEBUG
 			printf("detrunc(): fatentry errors %d\n", error);
-#endif				/* defined(MSDOSFSDEBUG) */
+#endif
 			return error;
 		}
 		fc_setcache(dep, FC_LASTFC, (length - 1) >> pmp->pm_cnshift,
@@ -498,9 +520,8 @@ deextend(dep, length, cred)
 	struct ucred *cred;
 {
 	struct msdosfsmount *pmp = dep->de_pmp;
-	off_t foff;
+	u_long count;
 	int error;
-	struct buf *bp;
 	
 	/*
 	 * The root of a DOS filesystem cannot be extended.
@@ -521,20 +542,22 @@ deextend(dep, length, cred)
 		panic("deextend: file too large");
 	
 	/*
-	 * Compute the offset of the first byte after the last block in the
-	 * file.
+	 * Compute the number of clusters to allocate.
 	 */
-	foff = (dep->de_FileSize + (pmp->pm_bpcluster - 1)) & ~pmp->pm_crbomask;
-	while (foff < length) {
-		if (error = extendfile(dep, &bp, 0))
+	count = de_clcount(pmp, length) - de_clcount(pmp, dep->de_FileSize);
+	if (count > 0) {
+		if (count > pmp->pm_freeclustercount)
+			return ENOSPC;
+		if (error = extendfile(dep, count, NULL, NULL, DE_CLEAR)) {
+			/* truncate the added clusters away again */
+			(void) detrunc(dep, dep->de_FileSize, 0, cred, NULL);
 			return error;
-		dep->de_flag |= DEUPD;
-		bdwrite(bp);
-		foff += pmp->pm_bpcluster;
-		dep->de_FileSize += pmp->pm_bpcluster;
+		}
 	}
+		
+	dep->de_flag |= DE_UPD;
 	dep->de_FileSize = length;
-	return deupdat(dep, &time);
+	return deupdat(dep, &time, 1);
 }
 
 /*
@@ -544,7 +567,6 @@ deextend(dep, length, cred)
 reinsert(dep)
 	struct denode *dep;
 {
-	struct msdosfsmount *pmp = dep->de_pmp;
 	union dehead *deh;
 
 	/*
@@ -572,10 +594,10 @@ msdosfs_reclaim(ap)
 	int i;
 	extern int prtactive;
 	
-#if defined(MSDOSFSDEBUG)
+#ifdef MSDOSFS_DEBUG
 	printf("msdosfs_reclaim(): dep %08x, file %s, refcnt %d\n",
 	    dep, dep->de_Name, dep->de_refcnt);
-#endif				/* defined(MSDOSFSDEBUG) */
+#endif
 
 	if (prtactive && vp->v_usecount != 0)
 		vprint("msdosfs_reclaim(): pushing active", vp);
@@ -613,9 +635,9 @@ msdosfs_inactive(ap)
 	int error = 0;
 	extern int prtactive;
 	
-#if defined(MSDOSFSDEBUG)
+#ifdef MSDOSFS_DEBUG
 	printf("msdosfs_inactive(): dep %08x, de_Name[0] %x\n", dep, dep->de_Name[0]);
-#endif				/* defined(MSDOSFSDEBUG) */
+#endif
 
 	if (prtactive && vp->v_usecount != 0)
 		vprint("msdosfs_inactive(): pushing active", vp);
@@ -635,63 +657,29 @@ msdosfs_inactive(ap)
 	 * filesystem, then truncate the file, and mark the directory slot
 	 * as empty.  (This may not be necessary for the dos filesystem.)
 	 */
-#if defined(MSDOSFSDEBUG)
+#ifdef MSDOSFS_DEBUG
 	printf("msdosfs_inactive(): dep %08x, refcnt %d, mntflag %x, MNT_RDONLY %x\n",
 	       dep, dep->de_refcnt, vp->v_mount->mnt_flag, MNT_RDONLY);
-#endif				/* defined(MSDOSFSDEBUG) */
-	DELOCK(dep);
+#endif
+	VOP_LOCK(vp);
 	if (dep->de_refcnt <= 0 && (vp->v_mount->mnt_flag & MNT_RDONLY) == 0) {
 		error = detrunc(dep, (u_long) 0, 0, NOCRED, NULL);
-		dep->de_flag |= DEUPD;
+		dep->de_flag |= DE_UPD;
 		dep->de_Name[0] = SLOT_DELETED;
 	}
-	DEUPDAT(dep, &time, 0);
-	DEUNLOCK(dep);
+	DE_UPDAT(dep, &time, 0);
+	VOP_UNLOCK(vp);
 	dep->de_flag = 0;
 
 	/*
 	 * If we are done with the denode, then reclaim it so that it can
 	 * be reused now.
 	 */
-#if defined(MSDOSFSDEBUG)
+#ifdef MSDOSFS_DEBUG
 	printf("msdosfs_inactive(): v_usecount %d, de_Name[0] %x\n", vp->v_usecount,
 	       dep->de_Name[0]);
-#endif				/* defined(MSDOSFSDEBUG) */
+#endif
 	if (vp->v_usecount == 0 && dep->de_Name[0] == SLOT_DELETED)
 		vgone(vp);
 	return error;
-}
-
-int
-delock(dep)
-	struct denode *dep;
-{
-	while (dep->de_flag & DELOCKED) {
-		dep->de_flag |= DEWANT;
-		if (dep->de_lockholder == curproc->p_pid)
-			panic("delock: locking against myself");
-		dep->de_lockwaiter = curproc->p_pid;
-		(void) sleep((caddr_t) dep, PINOD);
-	}
-	dep->de_lockwaiter = 0;
-	dep->de_lockholder = curproc->p_pid;
-	dep->de_flag |= DELOCKED;
-
-	return 0;
-}
-
-int
-deunlock(dep)
-	struct denode *dep;
-{
-	if ((dep->de_flag & DELOCKED) == 0)
-		vprint("deunlock: found unlocked denode", DETOV(dep));
-	dep->de_lockholder = 0;
-	dep->de_flag &= ~DELOCKED;
-	if (dep->de_flag & DEWANT) {
-		dep->de_flag &= ~DEWANT;
-		wakeup((caddr_t) dep);
-	}
-
-	return 0;
 }
