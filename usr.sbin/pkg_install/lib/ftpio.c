@@ -1,8 +1,8 @@
-/*	$NetBSD: ftpio.c,v 1.55 2003/09/23 09:36:06 wiz Exp $	*/
+/*	$NetBSD: ftpio.c,v 1.56 2003/09/25 22:14:16 wiz Exp $	*/
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: ftpio.c,v 1.55 2003/09/23 09:36:06 wiz Exp $");
+__RCSID("$NetBSD: ftpio.c,v 1.56 2003/09/25 22:14:16 wiz Exp $");
 #endif
 
 /*
@@ -480,7 +480,7 @@ ftp_start(char *base)
 			return -1;
 		}
 		
-		/* lukemftp now issues a CWD for each part of the path
+		/* nbftp now issues a CWD for each part of the path
 		 * and will return a code for each of them. No idea how to
 		 * deal with that other than to issue a 'prompt off' to
 		 * get something that we can wait for and that does NOT
@@ -612,7 +612,7 @@ expandURL(char *expandedurl, const char *wildcardurl)
 		while (fgets(filename, sizeof(filename), f)) {
 
 			/*
-			 * We need to stripp of any .t[bg]z etc.
+			 * We need to strip off any .t[bg]z etc.
 			 * suffix here
 			 */
 
