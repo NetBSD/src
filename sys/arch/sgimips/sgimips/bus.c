@@ -1,4 +1,4 @@
-/*	$NetBSD: bus.c,v 1.35 2004/11/28 17:34:46 thorpej Exp $	*/
+/*	$NetBSD: bus.c,v 1.36 2004/12/13 08:31:54 sekiya Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bus.c,v 1.35 2004/11/28 17:34:46 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bus.c,v 1.36 2004/12/13 08:31:54 sekiya Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -86,15 +86,12 @@ void
 sgimips_bus_dma_init(void)
 {
 	switch (mach_type) {
-#ifdef MIPS1
 	/* R2000/R3000 */
 	case MACH_SGI_IP12:
 		sgimips_default_bus_dma_tag._dmamap_sync =
 		    _bus_dmamap_sync_mips1;
 		break;
-#endif
 
-#if defined(MIPS3) || defined(MIPS64)
 	/* >=R4000*/
 	case MACH_SGI_IP20:
 	case MACH_SGI_IP22:
@@ -103,7 +100,6 @@ sgimips_bus_dma_init(void)
 		sgimips_default_bus_dma_tag._dmamap_sync =
 		    _bus_dmamap_sync_mips3;
 		break;
-#endif
 
 	default:
 		panic("sgimips_bus_dma_init: unsupported mach type IP%d\n",
@@ -667,7 +663,6 @@ _bus_dmamap_unload(bus_dma_tag_t t, bus_dmamap_t map)
 	map->_dm_flags &= ~SGIMIPS_DMAMAP_COHERENT;
 }
 
-#ifdef MIPS1
 /* Common function from DMA map synchronization. May be called
  * by chipset-specific DMA map synchronization functions.
  *
@@ -768,9 +763,7 @@ _bus_dmamap_sync_mips1(bus_dma_tag_t t, bus_dmamap_t map, bus_addr_t offset,
 		len -= minlen;
 	}
 }	
-#endif /* MIPS1 */
 
-#if defined(MIPS3) || defined(MIPS64)
 /*
  * Common function for DMA map synchronization.  May be called
  * by chipset-specific DMA map synchronization functions.
@@ -925,7 +918,6 @@ _bus_dmamap_sync_mips3(bus_dma_tag_t t, bus_dmamap_t map, bus_addr_t offset,
 		len -= minlen;
 	}
 }
-#endif /* MIPS3 || MIPS64 */
 
 /*
  * Common function for DMA-safe memory allocation.  May be called
