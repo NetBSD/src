@@ -1,4 +1,4 @@
-/*	$NetBSD: fb.c,v 1.38 1999/06/02 12:11:39 mycroft Exp $ */
+/*	$NetBSD: fb.c,v 1.39 1999/06/02 23:24:00 christos Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -63,11 +63,7 @@
 #include <machine/eeprom.h>
 #include <sparc/dev/pfourreg.h>
 
-#include <dev/wscons/wsdisplayvar.h>
-#include <dev/rasops/rasops.h>
-
 static struct fbdevice *devfb;
-
 
 void
 fb_unblank()
