@@ -16,6 +16,9 @@ Bugs:
 - MI/MD bug: The PMC framework does not work with SAs .. at all.  This
   needs to be straightened out.
 
+- MI bug: systrace has some assumptions about processes that aren't
+  true in the LWP/SA universe, and need to be fixed.
+  
 ABI concerns:
 
 - mcontext needs to be sanity-checked on every platform before it is
