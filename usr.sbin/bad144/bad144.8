@@ -30,7 +30,7 @@
 .\" SUCH DAMAGE.
 .\"
 .\"     from: @(#)bad144.8	8.1 (Berkeley) 6/6/93
-.\"	$NetBSD: bad144.8,v 1.7 1999/03/22 18:43:48 garbled Exp $
+.\"	$NetBSD: bad144.8,v 1.8 2000/10/02 21:14:05 hubertf Exp $
 .\"
 .Dd June 6, 1993
 .Dt BAD144 8
@@ -137,7 +137,7 @@ array are filled with all bits set, a putatively
 illegal value.
 .Pp
 .Nm
-is invoked by giving a device name (e.g. hk0, hp1, etc.).
+is invoked by giving a device name (e.g. wd0, hk0, hp1, etc.).
 With no optional arguments
 it reads the first sector of the last track
 of the corresponding disk and prints out the bad sector information.
@@ -156,8 +156,7 @@ information which was destroyed.
 It is no longer necessary to reboot to allow the kernel
 to reread the bad-sector table from the drive.
 .Sh SEE ALSO
-.Xr badsect 8 ,
-.Xr format 8
+.Xr badsect 8
 .Sh BUGS
 It should be possible to format disks on-line under
 .Bx 4 .
