@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.5 1999/09/26 07:35:22 uch Exp $	*/
+/*	$NetBSD: main.c,v 1.6 1999/09/26 12:46:57 takemura Exp $	*/
 
 /*-
  * Copyright (c) 1999 Shin Takemura.
@@ -395,7 +395,7 @@ BOOL CALLBACK DlgProc2(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 	case WM_INITDIALOG:
 		SetDlgItemText(hWnd, IDC_ABOUT_EDIT,
 			       TEXT("PocketBSD boot loader\r\n")
-			       TEXT("Version 1.6.1 1999.09.26\r\n")
+			       TEXT("Version 1.7.0 1999.09.26\r\n")
 			       TEXT("\r\n")
 			       TEXT("Copyright(C) 1999 Shin Takemura,\r\n")
 			       TEXT("All rights reserved.\r\n")
@@ -744,6 +744,8 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message,
 		       	TCHAR wkernel_name[PATHBUFLEN];
 			TCHAR woptions[PATHBUFLEN];
 			char options[PATHBUFLEN*2], kernel_name[PATHBUFLEN*2];
+			platid_t platid;
+
 			char *p, *argv[32];
 			struct bootinfo bi;
 
@@ -884,7 +886,9 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message,
 				/* 
 				 * Set system infomation
 				 */
-				if (set_system_info()) {
+				platid.dw.dw0 = bi.platid_cpu;
+				platid.dw.dw1 = bi.platid_machine;
+				if (set_system_info(&platid)) {
 					/*
 					*  boot !
 					*/

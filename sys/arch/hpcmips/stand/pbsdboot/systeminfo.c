@@ -1,4 +1,4 @@
-/* $NetBSD: systeminfo.c,v 1.1 1999/09/26 02:42:51 takemura Exp $ */
+/* $NetBSD: systeminfo.c,v 1.2 1999/09/26 12:46:58 takemura Exp $ */
 
 /*
  * Copyright (c) 1999, by UCHIYAMA Yasushi
@@ -26,23 +26,42 @@
  *
  */
 #include <pbsdboot.h>
+#include <machine/platid_mask.h>
+#if 0
 #define PROCESSOR_LEVEL_R4000 4
 #define PROCESSOR_LEVEL_R3000 3
 #define PROCESSOR_REVMAJOR_VR41XX 0x0c
 #define PROCESSOR_REVMAJOR_TX39XX 0x22
+#endif
 
 struct system_info system_info;
 
 static void dump_archinfo(SYSTEM_INFO*);
 
 int
-set_system_info()
+set_system_info(platid_t *platid)
 {
 	SYSTEM_INFO info;
 	/*
 	 * Set machine dependent information.
 	 */
 	GetSystemInfo(&info);
+	if (platid_match(platid, &platid_mask_CPU_MIPS)) {
+		if (platid_match(platid, &platid_mask_CPU_MIPS_VR_41XX)) {
+			vr41xx_init(&info);
+		} else
+		if (platid_match(platid, &platid_mask_CPU_MIPS_TX)) {
+			tx39xx_init(&info);
+		} else {
+			dump_archinfo(&info);
+			return 0;
+		}
+	} else {
+		dump_archinfo(&info);
+		return 0;
+	}
+
+#if 0
 	switch (info.wProcessorArchitecture) {
 	default:
 		dump_archinfo(&info);
@@ -87,6 +106,7 @@ set_system_info()
 		return 0;
 		break;
 	}
+#endif
 
 	if (system_info.si_asmcodelen > (signed)system_info.si_pagesize) {
 		msg_printf(MSG_ERROR, whoami, 
@@ -102,10 +122,13 @@ set_system_info()
 static void
 dump_archinfo(SYSTEM_INFO *info)
 {
+	msg_printf(MSG_ERROR, whoami, TEXT("Unsupported CPU\n"));
+#if 0
 	msg_printf(MSG_ERROR, whoami, 
 		   TEXT("Unknown machine ARCHITECTURE %#x, LEVEL %#x REVISION %#x.\n LCD(%dx%d)\n"),
 		   info->wProcessorArchitecture, info->wProcessorLevel, 
 		   info->wProcessorRevision,
 		   GetSystemMetrics(SM_CXSCREEN),
 		   GetSystemMetrics(SM_CYSCREEN));
+#endif
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: pbsdboot.h,v 1.3 1999/09/26 02:42:50 takemura Exp $	*/
+/*	$NetBSD: pbsdboot.h,v 1.4 1999/09/26 12:46:57 takemura Exp $	*/
 
 /*-
  * Copyright (c) 1999 Shin Takemura.
@@ -167,7 +167,7 @@ int pref_write(TCHAR* filename, struct preference_s* buf);
 /*
  *  systeminfo.c
  */
-int set_system_info(void);
+int set_system_info(platid_t* platid);
 
 
 /*
