@@ -1,4 +1,4 @@
-/*	$NetBSD: wdlink.h,v 1.4 1998/01/14 23:42:01 cgd Exp $	*/
+/*	$NetBSD: wdlink.h,v 1.5 1998/04/23 13:30:39 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Charles M. Hannum.  All rights reserved.
@@ -103,7 +103,6 @@ struct wdc_xfer {
 	int c_skip;		/* bytes already transferred */
 	int c_nblks;		/* number of blocks currently transferring */
 	int c_nbytes;		/* number of bytes currently transferring */
-	u_long c_p_offset;	/* offset of the partition */
 	TAILQ_ENTRY(wdc_xfer) c_xferchain;
 	LIST_ENTRY(wdc_xfer) free_list;
 };

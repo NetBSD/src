@@ -1,4 +1,4 @@
-/*	$NetBSD: wdc.c,v 1.19 1998/04/07 19:51:57 leo Exp $ */
+/*	$NetBSD: wdc.c,v 1.20 1998/04/23 13:30:40 bouyer Exp $ */
 
 /*
  * Copyright (c) 1994, 1995 Charles M. Hannum.  All rights reserved.
@@ -481,15 +481,10 @@ wdc_ata_start(wdc, xfer)
 
 	/* When starting a transfer... */
 	if (xfer->c_skip == 0) {
-		daddr_t blkno;
-
 		WDDEBUG_PRINT(("\n%s: wdc_ata_start %s %d@%d; map ",
 		    wdc->sc_dev.dv_xname,
 		    (xfer->c_flags & B_READ) ? "read" : "write",
 		    xfer->c_bcount, xfer->c_blkno));
-
-		blkno = xfer->c_blkno+xfer->c_p_offset;
-		xfer->c_blkno = blkno / (d_link->sc_lp->d_secsize / DEV_BSIZE);
 	} else {
 		WDDEBUG_PRINT((" %d)%x", xfer->c_skip,
 		    bus_space_read_1(wdc->sc_iot, wdc->sc_ioh, wd_altsts)));
