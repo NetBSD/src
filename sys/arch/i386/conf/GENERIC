@@ -1,4 +1,4 @@
-#	$NetBSD: GENERIC,v 1.58 1996/09/24 19:10:41 christos Exp $
+#	$NetBSD: GENERIC,v 1.59 1996/10/02 22:20:52 mycroft Exp $
 #
 #	GENERIC -- everything that's currently supported
 #
@@ -51,6 +51,10 @@ options		COMPAT_SVR4	# binary compatibility with SVR4
 options		COMPAT_IBCS2	# binary compatibility with SCO and ISC
 options		COMPAT_LINUX	# binary compatibility with Linux
 options		COMPAT_FREEBSD	# binary compatibility with FreeBSD
+
+options		EXEC_SCRIPT	# #! scripts
+options		EXEC_AOUT	# a.out executables (native, BSD/OS, Linux, FreeBSD)
+options		EXEC_ELF32	# 32-bit ELF executables (SVR4, Linux)
 
 options		USER_LDT	# user-settable LDT; used by WINE
 options		LKM		# loadable kernel modules
