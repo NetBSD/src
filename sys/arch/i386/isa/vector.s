@@ -1,4 +1,4 @@
-/*	$NetBSD: vector.s,v 1.27 1995/05/01 08:25:42 mycroft Exp $	*/
+/*	$NetBSD: vector.s,v 1.28 1995/05/03 14:31:35 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1993, 1994, 1995 Charles M. Hannum.  All rights reserved.
@@ -33,9 +33,9 @@
 #include <dev/isa/isareg.h>
 
 /*
- * These macros are fairly self explanatory.  If SPECIAL_MASK_MODE is defined,
- * we try to take advantage of the ICU's `special mask mode' by only EOIing
- * the interrupts on return.  This avoids the requirement of masking and
+ * These macros are fairly self explanatory.  If ICU_SPECIAL_MASK_MODE is
+ * defined, we try to take advantage of the ICU's `special mask mode' by only
+ * EOIing the interrupts on return.  This avoids the requirement of masking and
  * unmasking.  We can't do this without special mask mode, because the ICU
  * would also hold interrupts that it thinks are of lower priority.
  *
@@ -46,18 +46,18 @@
 #define	IRQ_BIT(irq_num)	(1 << ((irq_num) % 8))
 #define	IRQ_BYTE(irq_num)	((irq_num) / 8)
 
-#ifdef SPECIAL_MASK_MODE
+#ifdef ICU_SPECIAL_MASK_MODE
 
 #define	ENABLE_ICU1(irq_num)
 #define	ENABLE_ICU1_AND_2(irqnum) \
-	movb	$(0x60|2),%al		/* specific EOI for IRQ2 */	;\
+	movb	$(0x60|IRQ_SLAVE),%al	/* specific EOI for IRQ2 */	;\
 	outb	%al,$IO_ICU1
 #define	MASK(irq_num, icu)
 #define	UNMASK(irq_num, icu) \
 	movb	$(0x60|(irq_num%8)),%al	/* specific EOI */		;\
 	outb	%al,$icu
 
-#else /* SPECIAL_MASK_MODE */
+#else /* ICU_SPECIAL_MASK_MODE */
 
 #ifndef	AUTO_EOI_1
 #define	ENABLE_ICU1(irq_num) \
@@ -71,11 +71,13 @@
 #define	ENABLE_ICU1_AND_2(irq_num) \
 	movb	$(0x60|(irq_num%8)),%al	/* specific EOI */		;\
 	outb	%al,$IO_ICU2		/* do the second ICU first */	;\
-	movb	$(0x60|2),%al		/* specific EOI for IRQ2 */	;\
+	movb	$(0x60|IRQ_SLAVE),%al	/* specific EOI for IRQ2 */	;\
 	outb	%al,$IO_ICU1
 #else
 #define	ENABLE_ICU1_AND_2(irq_num)
 #endif
+
+#ifdef ICU_HARDWARE_MASK
 
 #define	MASK(irq_num, icu) \
 	movb	_imen + IRQ_BYTE(irq_num),%al				;\
@@ -83,7 +85,6 @@
 	movb	%al,_imen + IRQ_BYTE(irq_num)				;\
 	FASTER_NOP							;\
 	outb	%al,$(icu+1)
-
 #define	UNMASK(irq_num, icu) \
 	cli								;\
 	movb	_imen + IRQ_BYTE(irq_num),%al				;\
@@ -93,7 +94,14 @@
 	outb	%al,$(icu+1)						;\
 	sti
 
-#endif /* SPECIAL_MASK_MODE */
+#else /* ICU_HARDWARE_MASK */
+
+#define	MASK(irq_num, icu)
+#define	UNMASK(irq_num, icu)
+
+#endif /* ICU_HARDWARE_MASK */
+
+#endif /* ICU_SPECIAL_MASK_MODE */
 
 /*
  * Macros for interrupt entry, call to handler, and exit.
