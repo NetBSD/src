@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-2.1,v 1.1.2.15 2005/01/30 15:05:01 he Exp $
+#	$NetBSD: CHANGES-2.1,v 1.1.2.16 2005/02/06 08:05:24 jmc Exp $
 
 A complete list of changes from the NetBSD 2.0 release to the NetBSD 2.1 
 release
@@ -405,3 +405,163 @@ distrib/sets/lists/xbase4/mi			1.14 via patch
 
 	Add new NetBSD logo pixmaps.
 	[jschauma, ticket #978]
+
+sys/dist/ipf/netinet/fil.c			1.7 (new)
+sys/dist/ipf/netinet/ip_auth.c			1.2 (new)
+sys/dist/ipf/netinet/ip_auth.h			1.1 (new)
+sys/dist/ipf/netinet/ip_compat.h		1.3 (new)
+sys/dist/ipf/netinet/ip_fil.h			1.1 (new)
+sys/dist/ipf/netinet/ip_fil_netbsd.c		1.3 (new)
+sys/dist/ipf/netinet/ip_frag.c			1.1 (new)
+sys/dist/ipf/netinet/ip_frag.h			1.1 (new)
+sys/dist/ipf/netinet/ip_ftp_pxy.c		1.4 (new)
+sys/dist/ipf/netinet/ip_h323_pxy.c		1.1 (new)
+sys/dist/ipf/netinet/ip_htable.c		1.1 (new)
+sys/dist/ipf/netinet/ip_htable.h		1.1 (new)
+sys/dist/ipf/netinet/ip_ipsec_pxy.c		1.1 (new)
+sys/dist/ipf/netinet/ip_irc_pxy.c		1.2 (new)
+sys/dist/ipf/netinet/ip_log.c			1.1 (new)
+sys/dist/ipf/netinet/ip_lookup.c		1.1 (new)
+sys/dist/ipf/netinet/ip_lookup.h		1.1 (new)
+sys/dist/ipf/netinet/ip_nat.c			1.3 (new)
+sys/dist/ipf/netinet/ip_nat.h			1.2 (new)
+sys/dist/ipf/netinet/ip_netbios_pxy.c		1.1 (new)
+sys/dist/ipf/netinet/ip_pool.c			1.1 (new)
+sys/dist/ipf/netinet/ip_pool.h			1.1 (new)
+sys/dist/ipf/netinet/ip_pptp_pxy.c		1.1 (new)
+sys/dist/ipf/netinet/ip_proxy.c			1.1 (new)
+sys/dist/ipf/netinet/ip_proxy.h			1.1 (new)
+sys/dist/ipf/netinet/ip_raudio_pxy.c		1.1 (new)
+sys/dist/ipf/netinet/ip_rcmd_pxy.c		1.4 (new)
+sys/dist/ipf/netinet/ip_rpcb_pxy.c		1.4 (new)
+sys/dist/ipf/netinet/ip_scan.c			1.2 (new)
+sys/dist/ipf/netinet/ip_scan.h			1.1 (new)
+sys/dist/ipf/netinet/ip_state.c			1.2 (new)
+sys/dist/ipf/netinet/ip_state.h			1.1 (new)
+sys/dist/ipf/netinet/ip_sync.c			1.1 (new)
+sys/dist/ipf/netinet/ip_sync.h			1.1 (new)
+sys/dist/ipf/netinet/ipl.h			1.1 (new)
+sys/netinet/fil.c				deleted
+sys/netinet/ip_auth.c				deleted
+sys/netinet/ip_auth.h				deleted
+sys/netinet/ip_compat.h				deleted
+sys/netinet/ip_fil.h				deleted
+sys/netinet/ip_fil_netbsd.c			deleted
+sys/netinet/ip_frag.c				deleted
+sys/netinet/ip_frag.h				deleted
+sys/netinet/ip_ftp_pxy.c			deleted
+sys/netinet/ip_h323_pxy.c			deleted
+sys/netinet/ip_htable.c				deleted
+sys/netinet/ip_htable.h				deleted
+sys/netinet/ip_ipsec_pxy.c			deleted
+sys/netinet/ip_irc_pxy.c			deleted
+sys/netinet/ip_log.c				deleted
+sys/netinet/ip_lookup.c				deleted
+sys/netinet/ip_lookup.h				deleted
+sys/netinet/ip_nat.c				deleted
+sys/netinet/ip_nat.h				deleted
+sys/netinet/ip_netbios_pxy.c			deleted
+sys/netinet/ip_pool.c				deleted
+sys/netinet/ip_pool.h				deleted
+sys/netinet/ip_pptp_pxy.c			deleted
+sys/netinet/ip_proxy.c				deleted
+sys/netinet/ip_proxy.h				deleted
+sys/netinet/ip_raudio_pxy.c			deleted
+sys/netinet/ip_rcmd_pxy.c			deleted
+sys/netinet/ip_rpcb_pxy.c			deleted
+sys/netinet/ip_scan.c				deleted
+sys/netinet/ip_scan.h				deleted
+sys/netinet/ip_state.c				deleted
+sys/netinet/ip_state.h				deleted
+sys/netinet/ip_sync.c				deleted
+sys/netinet/ip_sync.h				deleted
+sys/netinet/ipl.h				deleted
+sys/lkm/netinet/if_ipl/Makefile			1.17
+sys/lkm/netinet/if_ipl/mln_ipl.c		1.35
+dist/ipf/ip_fil.c				1.4
+dist/ipf/l4check/l4check.c			1.2
+dist/ipf/lib/addicmp.c				1.2-1.4
+dist/ipf/lib/getportproto.c			1.2-1.4
+dist/ipf/lib/getproto.c				1.2
+dist/ipf/lib/hexdump.c				1.2
+dist/ipf/lib/hostnum.c				1.2-1.4
+dist/ipf/lib/icmpcode.c				1.2-1.4
+dist/ipf/lib/inet_addr.c			1.2
+dist/ipf/lib/ipft_hx.c				1.2-1.4
+dist/ipf/lib/ipft_tx.c				1.2-1.4
+dist/ipf/lib/natparse.c				1.2
+dist/ipf/lib/parse.c				1.2
+dist/ipf/lib/portnum.c				1.2-1.4
+dist/ipf/lib/ports.c				1.2-1.4
+dist/ipf/lib/printbuf.c				1.2-1.4
+dist/ipf/lib/printsbuf.c			1.2
+dist/ipf/lib/var.c				1.4
+dist/ipf/tools/ipfstat.c			1.7-1.8
+dist/ipf/tools/ipmon.c				1.5
+dist/ipf/tools/ipnat_y.y			1.6-1.8
+dist/ipf/tools/ipscan_y.y			1.2
+dist/ipf/tools/lexer.c				1.8-1.9
+dist/ipf/iplang/iplang_y.y			1.6
+dist/ipf/ipsd/sbpf.c				1.3
+dist/ipf/ipsd/sdlpi.c				1.3
+dist/ipf/ipsend/ipsend.c			1.10-1.12
+dist/ipf/ipsend/sbpf.c				1.5-1.6
+dist/ipf/ipsend/sdlpi.c				1.4
+dist/ipf/ipf2netbsd				1.16-1.17
+usr.sbin/ipf/Makefile.inc			1.14
+usr.sbin/ipf/ipfstat/Makefile			1.19
+usr.sbin/ipf/ipftest/Makefile			1.29-1.30
+usr.sbin/ipf/ipsend/Makefile			1.24
+usr.sbin/ipf/ipmon/Makefile			1.21
+distrib/sets/lists/man/mi			1.745
+regress/sys/kern/ipf/expected/ni10		1.2
+regress/sys/kern/ipf/expected/ni11		1.2
+sys/arch/acorn26/conf/Makefile.acorn26		patch
+sys/arch/acorn32/conf/Makefile.acorn32		patch
+sys/arch/alpha/conf/Makefile.alpha		patch
+sys/arch/amd64/conf/Makefile.amd64		patch
+sys/arch/amiga/conf/Makefile.amiga		patch
+sys/arch/amigappc/conf/Makefile.amigappc	patch
+sys/arch/arc/conf/Makefile.arc.inc		patch
+sys/arch/arm/conf/Makefile.arm			patch
+sys/arch/atari/conf/Makefile.atari		patch
+sys/arch/cats/conf/Makefile.cats.inc		patch
+sys/arch/cesfic/conf/Makefile.cesfic		patch
+sys/arch/dreamcast/conf/Makefile.dreamcast.inc	patch
+sys/arch/evbarm/conf/Makefile.evbarm.inc	patch
+sys/arch/evbmips/conf/Makefile.evbmips.inc	patch
+sys/arch/evbppc/conf/Makefile.evbppc.inc	patch
+sys/arch/hp300/conf/Makefile.hp300		patch
+sys/arch/hp700/conf/Makefile.hp700		patch
+sys/arch/hpcarm/conf/Makefile.hpcarm		patch
+sys/arch/luna68k/conf/Makefile.luna68k		patch
+sys/arch/mac68k/conf/Makefile.mac68k		patch
+sys/arch/mips/conf/Makefile.mips		patch
+sys/arch/mipsco/conf/Makefile.mipsco.inc	patch
+sys/arch/mmeye/conf/Makefile.mmeye.inc		patch
+sys/arch/mvme68k/conf/Makefile.mvme68k		patch
+sys/arch/netwinder/conf/Makefile.netwinder.inc	patch
+sys/arch/news68k/conf/Makefile.news68k		patch
+sys/arch/next68k/conf/Makefile.next68k		patch
+sys/arch/pc532/conf/Makefile.pc532		patch
+sys/arch/pdp10/conf/Makefile.pdp10		patch
+sys/arch/playstation2/conf/Makefile.playstation2.inc		patch
+sys/arch/pmax/conf/Makefile.pmax.inc		patch
+sys/arch/powerpc/conf/Makefile.powerpc		patch
+sys/arch/sbmips/conf/Makefile.sbmips.inc	patch
+sys/arch/sgimips/conf/Makefile.sgimips.inc	patch
+sys/arch/sh3/conf/Makefile.sh3			patch
+sys/arch/sh5/conf/Makefile.sh5			patch
+sys/arch/shark/conf/Makefile.shark.inc		patch
+sys/arch/sparc/conf/Makefile.sparc		patch
+sys/arch/sparc64/conf/Makefile.sparc64		patch
+sys/arch/sun2/conf/Makefile.sun2		patch
+sys/arch/sun3/conf/Makefile.sun3		patch
+sys/arch/vax/conf/Makefile.vax			patch
+sys/arch/x68k/conf/Makefile.x68k		patch
+sys/arch/xen/conf/Makefile.xen			patch
+sys/netinet/Makefile				patch
+sys/netinet/files.ipfilter			patch
+
+	Move ipf to sys/dist/ipf and sync w. trunk
+	[martti, ticket #1086]
