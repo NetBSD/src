@@ -1,4 +1,4 @@
-/* 	$NetBSD: iomd_dma.c,v 1.2 1998/01/18 03:39:25 mark Exp $	*/
+/* 	$NetBSD: iomd_dma.c,v 1.3 1998/02/21 23:09:37 mark Exp $	*/
 
 /*
  * Copyright (c) 1995 Scott Stevens
@@ -394,6 +394,6 @@ dma_init(ch, extp, dmasize, ipl)
 	int ipl;
 {
 	panic("dma_init\n");
-	reutrn(NULL);
+	return(NULL);
 }
 #endif
