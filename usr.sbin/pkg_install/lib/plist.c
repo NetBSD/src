@@ -1,11 +1,11 @@
-/*	$NetBSD: plist.c,v 1.6.2.1 1998/05/05 08:54:58 mycroft Exp $	*/
+/*	$NetBSD: plist.c,v 1.6.2.2 1998/08/29 04:14:23 mellon Exp $	*/
 
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static const char *rcsid = "from FreeBSD Id: plist.c,v 1.24 1997/10/08 07:48:15 charnier Exp";
 #else
-__RCSID("$NetBSD: plist.c,v 1.6.2.1 1998/05/05 08:54:58 mycroft Exp $");
+__RCSID("$NetBSD: plist.c,v 1.6.2.2 1998/08/29 04:14:23 mellon Exp $");
 #endif
 #endif
 
@@ -229,6 +229,8 @@ plist_cmd(char *s, char **arg)
 	return PLIST_DISPLAY;
     else if (!strcmp(cmd, "pkgdep"))
 	return PLIST_PKGDEP;
+    else if (!strcmp(cmd, "pkgcfl"))
+	return PLIST_PKGCFL;
     else if (!strcmp(cmd, "mtree"))
 	return PLIST_MTREE;
     else if (!strcmp(cmd, "dirrm"))
@@ -328,6 +330,10 @@ write_plist(Package *pkg, FILE *fp)
 
 	case PLIST_PKGDEP:
 	    fprintf(fp, "%cpkgdep %s\n", CMD_CHAR, plist->name);
+	    break;
+
+	case PLIST_PKGCFL:
+	    fprintf(fp, "%cpkgcfl %s\n", CMD_CHAR, plist->name);
 	    break;
 
 	case PLIST_MTREE:
@@ -501,11 +507,12 @@ delete_hierarchy(char *dir, Boolean ign_err, Boolean nukedirs)
 	    *cp2 = '\0';
 	if (!isemptydir(dir))
 	    return 0;
-	if (RMDIR(dir) && !ign_err)
+	if (RMDIR(dir) && !ign_err) {
 	    if (!fexists(dir))
 		warnx("directory `%s' doesn't really exist", dir);
 	    else
 		return 1;
+	}
 	/* back up the pathname one component */
 	if (cp2) {
 	    cp1 = dir;
