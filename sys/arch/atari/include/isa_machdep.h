@@ -1,4 +1,4 @@
-/*	$NetBSD: isa_machdep.h,v 1.9 2000/06/04 19:14:33 cgd Exp $	*/
+/*	$NetBSD: isa_machdep.h,v 1.10 2001/04/12 07:17:30 leo Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -72,9 +72,6 @@
 #include <machine/bus.h>
 #include <dev/isa/isadmavar.h>
 #include <atari/atari/intr.h>
-
-#define	ISA_IOSTART	0xfff30000	/* XXX: Range with byte frobbing */
-#define	ISA_MEMSTART	0xff000000	/* XXX: Hades only	*/
 
 struct atari_isa_chipset {
 	struct isa_dma_state ic_dmastate;
