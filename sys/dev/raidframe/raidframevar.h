@@ -1,4 +1,4 @@
-/*	$NetBSD: raidframevar.h,v 1.2 2003/02/01 06:23:40 thorpej Exp $ */
+/*	$NetBSD: raidframevar.h,v 1.3 2003/02/01 18:34:14 tron Exp $ */
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -164,7 +164,9 @@ typedef u_int64_t RF_uint64;
 #define RF_FALSE 0
 
 /* Malloc types. */
+#ifdef _KERNEL
 MALLOC_DECLARE(M_RAIDFRAME);
+#endif
 
 /*
  * Now, some generic types
