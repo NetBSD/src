@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_synch.c,v 1.136 2003/08/07 16:31:50 agc Exp $	*/
+/*	$NetBSD: kern_synch.c,v 1.137 2003/09/08 11:14:18 itojun Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
@@ -74,7 +74,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_synch.c,v 1.136 2003/08/07 16:31:50 agc Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_synch.c,v 1.137 2003/09/08 11:14:18 itojun Exp $");
 
 #include "opt_ddb.h"
 #include "opt_ktrace.h"
@@ -467,7 +467,8 @@ ltsleep(const void *ident, int priority, const char *wmesg, int timo,
 	 */
 	if (catch) {
 		l->l_flag |= L_SINTR;
-		if (((sig = CURSIG(l)) != 0) || (p->p_flag & P_WEXIT)) {
+		if (((sig = CURSIG(l)) != 0) ||
+		    ((p->p_flag & P_WEXIT) && p->p_nlwps > 1)) {
 			if (l->l_wchan != NULL)
 				unsleep(l);
 			l->l_stat = LSONPROC;
@@ -555,7 +556,7 @@ ltsleep(const void *ident, int priority, const char *wmesg, int timo,
 	 * wait4() and _lwp_wait() from wedging an exiting process
 	 * would be preferred.
 	 */
-	if (catch && ((p->p_flag & P_WEXIT) && exiterr))
+	if (catch && ((p->p_flag & P_WEXIT) && p->p_nlwps > 1 && exiterr))
 		return (EINTR);
 	return (0);
 }
