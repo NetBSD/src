@@ -1,4 +1,4 @@
-/* $NetBSD: inftrees.c,v 1.5 1999/07/03 12:30:56 simonb Exp $ */
+/* $NetBSD: inftrees.c,v 1.6 2001/01/08 14:48:20 itojun Exp $ */
 
 /* inftrees.c -- generate Huffman trees for efficient decoding
  * Copyright (C) 1995-1998 Mark Adler
@@ -27,7 +27,7 @@ struct internal_state  {int dummy;}; /* for buggy compilers */
 #define bits word.what.Bits
 
 
-local int huft_build OF((
+local int huft_build __P((
     uIntf *,            /* code lengths in bits */
     uInt,               /* number of codes */
     uInt,               /* number of "simple" codes */

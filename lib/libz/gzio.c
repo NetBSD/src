@@ -1,4 +1,4 @@
-/* $NetBSD: gzio.c,v 1.9 1999/07/03 12:30:53 simonb Exp $ */
+/* $NetBSD: gzio.c,v 1.10 2001/01/08 14:48:20 itojun Exp $ */
 
 /* gzio.c -- IO on .gz files
  * Copyright (C) 1995-1998 Jean-loup Gailly.
@@ -55,13 +55,13 @@ typedef struct gz_stream {
 } gz_stream;
 
 
-local gzFile gz_open      OF((const char *path, const char *mode, int  fd));
-local int do_flush        OF((gzFile file, int flush));
-local int    get_byte     OF((gz_stream *s));
-local void   check_header OF((gz_stream *s));
-local int    destroy      OF((gz_stream *s));
-local void   putLong      OF((FILE *file, uLong x));
-local uLong  getLong      OF((gz_stream *s));
+local gzFile gz_open      __P((const char *path, const char *mode, int  fd));
+local int do_flush        __P((gzFile file, int flush));
+local int    get_byte     __P((gz_stream *s));
+local void   check_header __P((gz_stream *s));
+local int    destroy      __P((gz_stream *s));
+local void   putLong      __P((FILE *file, uLong x));
+local uLong  getLong      __P((gz_stream *s));
 
 /* ===========================================================================
      Opens a gzip (.gz) file for reading or writing. The mode parameter

@@ -1,4 +1,4 @@
-/* $NetBSD: crc32.c,v 1.6 1999/07/03 12:30:53 simonb Exp $ */
+/* $NetBSD: crc32.c,v 1.7 2001/01/08 14:48:19 itojun Exp $ */
 
 /* crc32.c -- compute the CRC-32 of a data stream
  * Copyright (C) 1995-1998 Mark Adler
@@ -15,7 +15,7 @@
 
 local int crc_table_empty = 1;
 local uLongf crc_table[256];
-local void make_crc_table OF((void));
+local void make_crc_table __P((void));
 
 /*
   Generate a table for a byte-wise 32-bit CRC calculation on the polynomial:
