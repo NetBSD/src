@@ -1,4 +1,4 @@
-/*	$NetBSD: cache_mipsNN.c,v 1.3 2002/11/08 07:35:20 cgd Exp $	*/
+/*	$NetBSD: cache_mipsNN.c,v 1.4 2002/11/10 11:11:39 simonb Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -431,8 +431,8 @@ mipsNN_pdcache_wbinv_range_index_16_2way(vaddr_t va, vsize_t size)
 	}
 
 	while (va < eva) {
-		cache_op_r4k_line(va,   CACHE_R4K_D|CACHEOP_R4K_HIT_WB_INV);
-		cache_op_r4k_line(w2va, CACHE_R4K_D|CACHEOP_R4K_HIT_WB_INV);
+		cache_op_r4k_line(va,   CACHE_R4K_D|CACHEOP_R4K_INDEX_WB_INV);
+		cache_op_r4k_line(w2va, CACHE_R4K_D|CACHEOP_R4K_INDEX_WB_INV);
 		va   += 16;
 		w2va += 16;
 	}
@@ -461,7 +461,7 @@ mipsNN_pdcache_wbinv_range_index_16_4way(vaddr_t va, vsize_t size)
 
 	while ((eva - va) >= (8 * 16)) {
 		cache_r4k_op_8lines_16_4way(va, w2va, w3va, w4va,
-		    CACHE_R4K_D|CACHEOP_R4K_HIT_WB_INV);
+		    CACHE_R4K_D|CACHEOP_R4K_INDEX_WB_INV);
 		va   += (8 * 16);
 		w2va += (8 * 16);
 		w3va += (8 * 16);
@@ -469,10 +469,10 @@ mipsNN_pdcache_wbinv_range_index_16_4way(vaddr_t va, vsize_t size)
 	}
 
 	while (va < eva) {
-		cache_op_r4k_line(va,   CACHE_R4K_D|CACHEOP_R4K_HIT_WB_INV);
-		cache_op_r4k_line(w2va, CACHE_R4K_D|CACHEOP_R4K_HIT_WB_INV);
-		cache_op_r4k_line(w3va, CACHE_R4K_D|CACHEOP_R4K_HIT_WB_INV);
-		cache_op_r4k_line(w4va, CACHE_R4K_D|CACHEOP_R4K_HIT_WB_INV);
+		cache_op_r4k_line(va,   CACHE_R4K_D|CACHEOP_R4K_INDEX_WB_INV);
+		cache_op_r4k_line(w2va, CACHE_R4K_D|CACHEOP_R4K_INDEX_WB_INV);
+		cache_op_r4k_line(w3va, CACHE_R4K_D|CACHEOP_R4K_INDEX_WB_INV);
+		cache_op_r4k_line(w4va, CACHE_R4K_D|CACHEOP_R4K_INDEX_WB_INV);
 		va   += 16;
 		w2va += 16;
 		w3va += 16;
@@ -501,14 +501,14 @@ mipsNN_pdcache_wbinv_range_index_32_2way(vaddr_t va, vsize_t size)
 
 	while ((eva - va) >= (16 * 32)) {
 		cache_r4k_op_16lines_32_2way(va, w2va,
-		    CACHE_R4K_D|CACHEOP_R4K_HIT_WB_INV);
+		    CACHE_R4K_D|CACHEOP_R4K_INDEX_WB_INV);
 		va   += (16 * 32);
 		w2va += (16 * 32);
 	}
 
 	while (va < eva) {
-		cache_op_r4k_line(va,   CACHE_R4K_D|CACHEOP_R4K_HIT_WB_INV);
-		cache_op_r4k_line(w2va, CACHE_R4K_D|CACHEOP_R4K_HIT_WB_INV);
+		cache_op_r4k_line(va,   CACHE_R4K_D|CACHEOP_R4K_INDEX_WB_INV);
+		cache_op_r4k_line(w2va, CACHE_R4K_D|CACHEOP_R4K_INDEX_WB_INV);
 		va   += 32;
 		w2va += 32;
 	}
@@ -541,7 +541,7 @@ mipsNN_pdcache_wbinv_range_index_32_4way(vaddr_t va, vsize_t size)
 
 	while ((eva - va) >= (8 * 32)) {
 		cache_r4k_op_8lines_32_4way(va, w2va, w3va, w4va,
-		    CACHE_R4K_D|CACHEOP_R4K_HIT_WB_INV);
+		    CACHE_R4K_D|CACHEOP_R4K_INDEX_WB_INV);
 		va   += (8 * 32);
 		w2va += (8 * 32);
 		w3va += (8 * 32);
@@ -549,10 +549,10 @@ mipsNN_pdcache_wbinv_range_index_32_4way(vaddr_t va, vsize_t size)
 	}
 
 	while (va < eva) {
-		cache_op_r4k_line(va,   CACHE_R4K_D|CACHEOP_R4K_HIT_WB_INV);
-		cache_op_r4k_line(w2va, CACHE_R4K_D|CACHEOP_R4K_HIT_WB_INV);
-		cache_op_r4k_line(w3va, CACHE_R4K_D|CACHEOP_R4K_HIT_WB_INV);
-		cache_op_r4k_line(w4va, CACHE_R4K_D|CACHEOP_R4K_HIT_WB_INV);
+		cache_op_r4k_line(va,   CACHE_R4K_D|CACHEOP_R4K_INDEX_WB_INV);
+		cache_op_r4k_line(w2va, CACHE_R4K_D|CACHEOP_R4K_INDEX_WB_INV);
+		cache_op_r4k_line(w3va, CACHE_R4K_D|CACHEOP_R4K_INDEX_WB_INV);
+		cache_op_r4k_line(w4va, CACHE_R4K_D|CACHEOP_R4K_INDEX_WB_INV);
 		va   += 32;
 		w2va += 32;
 		w3va += 32;
@@ -655,10 +655,10 @@ mipsNN_pdcache_wb_range_32(vaddr_t va, vsize_t size)
 
 #define	cache_r4k_op_32_4way_load_off(va1, va2, va3, va4, off, op)	\
 do {									\
-	cache_r4k_op_line_load_off((va ), (off), (op));			\
-	cache_r4k_op_line_load_off((va2), (off), (op));			\
 	cache_r4k_op_line_load_off((va1), (off), (op));			\
+	cache_r4k_op_line_load_off((va2), (off), (op));			\
 	cache_r4k_op_line_load_off((va3), (off), (op));			\
+	cache_r4k_op_line_load_off((va4), (off), (op));			\
 } while (/*CONSTCOND*/0)
 
 #define	cache_r4k_op_8lines_32_4way_load(va1, va2, va3, va4, op)	\
@@ -767,7 +767,7 @@ mipsNN_pdcache_wbinv_range_index_32_4way_sb1(vaddr_t va, vsize_t size)
 	s = splhigh();
 	while ((eva - va) >= (8 * 32)) {
 		cache_r4k_op_8lines_32_4way_load(va, w2va, w3va, w4va,
-		    CACHE_R4K_D|CACHEOP_R4K_HIT_WB_INV);
+		    CACHE_R4K_D|CACHEOP_R4K_INDEX_WB_INV);
 		va   += (8 * 32);
 		w2va += (8 * 32);
 		w3va += (8 * 32);
@@ -775,10 +775,10 @@ mipsNN_pdcache_wbinv_range_index_32_4way_sb1(vaddr_t va, vsize_t size)
 	}
 
 	while (va < eva) {
-		cache_r4k_op_line_load(va,   CACHE_R4K_D|CACHEOP_R4K_HIT_WB_INV);
-		cache_r4k_op_line_load(w2va, CACHE_R4K_D|CACHEOP_R4K_HIT_WB_INV);
-		cache_r4k_op_line_load(w3va, CACHE_R4K_D|CACHEOP_R4K_HIT_WB_INV);
-		cache_r4k_op_line_load(w4va, CACHE_R4K_D|CACHEOP_R4K_HIT_WB_INV);
+		cache_r4k_op_line_load(va,   CACHE_R4K_D|CACHEOP_R4K_INDEX_WB_INV);
+		cache_r4k_op_line_load(w2va, CACHE_R4K_D|CACHEOP_R4K_INDEX_WB_INV);
+		cache_r4k_op_line_load(w3va, CACHE_R4K_D|CACHEOP_R4K_INDEX_WB_INV);
+		cache_r4k_op_line_load(w4va, CACHE_R4K_D|CACHEOP_R4K_INDEX_WB_INV);
 		va   += 32;
 		w2va += 32;
 		w3va += 32;
