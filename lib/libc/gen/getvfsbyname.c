@@ -1,3 +1,5 @@
+/*	$NetBSD: getvfsbyname.c,v 1.2 1998/02/02 02:41:26 perry Exp $	*/
+
 /*
  * Copyright (c) 1995
  *	The Regents of the University of California.  All rights reserved.
@@ -31,9 +33,14 @@
  * SUCH DAMAGE.
  */
 
-#ifndef lint
+#include <sys/cdefs.h>
+#if defined(LIBC_SCCS) && !defined(lint)
+#if 0
 static char sccsid[] = "@(#)kvm_getvfsbyname.c	8.1 (Berkeley) 4/3/95";
-#endif /* not lint */
+#else
+__RCSID("$NetBSD");
+#endif
+#endif /* LIBC_SCCS and not lint */
 
 #include <sys/param.h>
 #include <sys/mount.h>
@@ -47,6 +54,7 @@ int getvfsbyname __P((const char *, struct vfsconf *));
  * Given a filesystem name, determine if it is resident in the kernel,
  * and if it is resident, return its vfsconf structure.
  */
+int
 getvfsbyname(fsname, vfcp)
 	const char *fsname;
 	struct vfsconf *vfcp;

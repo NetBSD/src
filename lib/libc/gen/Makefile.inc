@@ -1,26 +1,29 @@
-#	$NetBSD: Makefile.inc,v 1.85 1997/12/20 20:23:16 kleink Exp $
-#	@(#)Makefile.inc	8.3 (Berkeley) 4/16/94
+#	$NetBSD: Makefile.inc,v 1.86 1998/02/02 02:41:17 perry Exp $
+#	from: @(#)Makefile.inc	8.6 (Berkeley) 5/4/95
 
 # gen sources
 .PATH: ${.CURDIR}/arch/${MACHINE_ARCH}/gen ${.CURDIR}/gen
 
-SRCS+=	_errno.c alarm.c assert.c basename.c clock.c closedir.c confstr.c \
-	ctermid.c ctype_.c daemon.c devname.c dirname.c disklabel.c err.c \
-	errx.c errlist.c errno.c execl.c execle.c execlp.c execv.c execvp.c \
-	fnmatch.c fstab.c ftok.c __fts13.c fts.c getbsize.c getcap.c \
-	getcwd.c getdomainname.c getgrent.c getgrouplist.c gethostname.c \
-	getloadavg.c getlogin.c getmntinfo.c getnetgrent.c getpagesize.c \
-	getpass.c getpwent.c getsubopt.c getttyent.c getusershell.c __glob13.c \
-	glob.c \
-	initgroups.c isatty.c isctype.c lockf.c nice.c nlist.c nlist_aout.c \
-	nlist_ecoff.c nlist_elf32.c nlist_elf64.c opendir.c pause.c \
-	popen.c psignal.c pwcache.c raise.c readdir.c rewinddir.c scandir.c \
-	seekdir.c setdomainname.c sethostname.c setjmperr.c setmode.c \
+# XXX add getvfsbyname.c
+SRCS+=	_errno.c alarm.c assert.c basename.c clock.c closedir.c \
+	confstr.c ctermid.c ctype_.c daemon.c devname.c dirname.c \
+	disklabel.c err.c errx.c errlist.c errno.c execl.c execle.c \
+	execlp.c execv.c execvp.c fnmatch.c fstab.c ftok.c __fts13.c \
+	fts.c getbsize.c getcap.c getcwd.c getdomainname.c getgrent.c \
+	getgrouplist.c gethostname.c getloadavg.c getlogin.c \
+	getmntinfo.c getnetgrent.c getpagesize.c getpass.c getpwent.c \
+	getsubopt.c getttyent.c getusershell.c \
+	__glob13.c glob.c initgroups.c isatty.c isctype.c lockf.c \
+	nice.c nlist.c nlist_aout.c nlist_ecoff.c nlist_elf32.c \
+	nlist_elf64.c opendir.c pause.c popen.c psignal.c pwcache.c \
+	raise.c readdir.c rewinddir.c scandir.c seekdir.c \
+	setdomainname.c sethostname.c setjmperr.c setmode.c \
 	setproctitle.c siginterrupt.c siglist.c signal.c signame.c \
-	sigsetops.c sleep.c stringlist.c sysconf.c sysctl.c syslog.c telldir.c \
-	time.c times.c timezone.c tolower_.c ttyname.c ttyslot.c toupper_.c \
-	ualarm.c uname.c unvis.c usleep.c utime.c valloc.c vis.c wait.c \
-	wait3.c waitpid.c warn.c warnx.c vwarn.c vwarnx.c verr.c verrx.c
+	sigsetops.c sleep.c stringlist.c sysconf.c sysctl.c syslog.c \
+	telldir.c time.c times.c timezone.c tolower_.c ttyname.c \
+	ttyslot.c toupper_.c ualarm.c uname.c unvis.c usleep.c utime.c \
+	valloc.c vis.c wait.c wait3.c waitpid.c warn.c warnx.c vwarn.c \
+	vwarnx.c verr.c verrx.c
 
 # indirect reference stubs, to be removed soon.
 SRCS+=	_err.c _errx.c _sys_errlist.c _sys_nerr.c _sys_siglist.c \
@@ -33,20 +36,22 @@ SRCS+=	_err.c _errx.c _sys_errlist.c _sys_nerr.c _sys_siglist.c \
 
 .include "${.CURDIR}/arch/${MACHINE_ARCH}/gen/Makefile.inc"
 
-MAN+=	alarm.3 basename.3 clock.3 confstr.3 ctermid.3 ctype.3 daemon.3 \
-	devname.3 directory.3 dirname.3 err.3 exec.3 fnmatch.3 frexp.3 ftok.3 \
-	fts.3 getbsize.3 getcap.3 getcwd.3 getdomainname.3 getdiskbyname.3 \
-	getfsent.3 getgrent.3 getgrouplist.3 gethostname.3 getloadavg.3 \
-	getmntinfo.3 getnetgrent.3 getpagesize.3 getpass.3 getpwent.3 \
-	getsubopt.3 getttyent.3 getusershell.3 glob.3 initgroups.3 isalnum.3 \
-	isalpha.3 isascii.3 isblank.3 iscntrl.3 isdigit.3 isgraph.3 isinf.3 \
-	islower.3 isprint.3 ispunct.3 isspace.3 isupper.3 isxdigit.3 \
-	ldexp.3 lockf.3 modf.3 nice.3 nlist.3 pause.3 popen.3 psignal.3 pwcache.3 \
-	raise.3 scandir.3 setjmp.3 setmode.3 setproctitle.3 siginterrupt.3 \
-	signal.3 sigsetops.3 sleep.3 stringlist.3 sysconf.3 sysctl.3 syslog.3 \
-	time.3 times.3 timezone.3 toascii.3 \
-	tolower.3 toupper.3 ttyname.3 ualarm.3 uname.3 unvis.3 \
-	usleep.3 utime.3 valloc.3 vis.3
+# XXX add getvfsbyname.3
+MAN+=	alarm.3 basename.3 clock.3 confstr.3 ctermid.3 ctype.3 \
+	daemon.3 devname.3 directory.3 dirname.3 err.3 exec.3 \
+	fnmatch.3 frexp.3 ftok.3 fts.3 getbsize.3 getcap.3 getcwd.3 \
+	getdomainname.3 getdiskbyname.3 getfsent.3 getgrent.3 \
+	getgrouplist.3 gethostname.3 getloadavg.3 getmntinfo.3 \
+	getnetgrent.3 getpagesize.3 getpass.3 getpwent.3 getsubopt.3 \
+	getttyent.3 getusershell.3 glob.3 initgroups.3 \
+	isalnum.3 isalpha.3 isascii.3 isblank.3 iscntrl.3 isdigit.3 \
+	isgraph.3 isinf.3 islower.3 isprint.3 ispunct.3 isspace.3 \
+	isupper.3 isxdigit.3 ldexp.3 lockf.3 modf.3 nice.3 nlist.3 \
+	pause.3 popen.3 psignal.3 pwcache.3 raise.3 scandir.3 setjmp.3 \
+	setmode.3 setproctitle.3 siginterrupt.3 signal.3 sigsetops.3 \
+	sleep.3 stringlist.3 sysconf.3 sysctl.3 syslog.3 time.3 \
+	times.3 timezone.3 toascii.3 tolower.3 toupper.3 ttyname.3 \
+	ualarm.3 uname.3 unvis.3 usleep.3 utime.3 valloc.3 vis.3
 
 MLINKS+=directory.3 closedir.3 directory.3 dirfd.3 directory.3 opendir.3 \
 	directory.3 readdir.3 directory.3 rewinddir.3 directory.3 seekdir.3 \

@@ -1,4 +1,4 @@
-/*	$NetBSD: getgrouplist.c,v 1.7 1997/07/21 14:07:06 jtc Exp $	*/
+/*	$NetBSD: getgrouplist.c,v 1.8 1998/02/02 02:41:23 perry Exp $	*/
 
 /*
  * Copyright (c) 1991, 1993
@@ -36,9 +36,9 @@
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
 #if 0
-static char sccsid[] = "@(#)getgrouplist.c	8.1 (Berkeley) 6/4/93";
+static char sccsid[] = "@(#)getgrouplist.c	8.2 (Berkeley) 12/8/94";
 #else
-__RCSID("$NetBSD: getgrouplist.c,v 1.7 1997/07/21 14:07:06 jtc Exp $");
+__RCSID("$NetBSD: getgrouplist.c,v 1.8 1998/02/02 02:41:23 perry Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
