@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.15 2002/05/02 18:02:59 lukem Exp $
+#	$NetBSD: Makefile,v 1.16 2003/01/03 15:34:35 lukem Exp $
 
 .include <bsd.own.mk>
 .include "${NETBSDSRCDIR}/distrib/common/Makefile.distrib"
@@ -8,6 +8,6 @@ TARGETS+=	release
 
 release: check_RELEASEDIR .WAIT ${DESTDIR}/usr/mdec/boot
 	${RELEASE_INSTALL} ${DESTDIR}/usr/mdec/boot \
-	    ${RELEASEDIR}/installation/netboot
+	    ${RELEASEDIR}/${MACHINE}/installation/netboot
 
 .include <bsd.subdir.mk>

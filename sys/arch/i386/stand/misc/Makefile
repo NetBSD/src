@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.1 2002/04/12 23:11:59 tv Exp $
+#	$NetBSD: Makefile,v 1.2 2003/01/03 15:34:43 lukem Exp $
 
 MISCFILES=	pfdisk.doc pfdisk.exe pfdisktc.zip \
 		rawr32.zip rawr32src.zip \
@@ -26,5 +26,6 @@ release:
 	@false
 .else
 release: ${MISCFILES}
-	${HOST_INSTALL_FILE} -m 0644 $> ${RELEASEDIR}/installation/misc
+	${HOST_INSTALL_FILE} -m ${NONBINMODE} ${.ALLSRC} \
+	    ${RELEASEDIR}/${MACHINE}/installation/misc
 .endif
