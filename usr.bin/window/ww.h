@@ -1,4 +1,4 @@
-/*	$NetBSD: ww.h,v 1.4 1995/12/21 10:46:05 mycroft Exp $	*/
+/*	$NetBSD: ww.h,v 1.5 1995/12/21 11:05:58 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -128,7 +128,6 @@ struct ww_tty {
 #else
 	struct termios ww_termios;
 #endif
-	int ww_fflags;
 };
 
 union ww_char {
