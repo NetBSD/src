@@ -1,4 +1,4 @@
-/*	$NetBSD: msg.mi.en,v 1.106 2003/06/13 11:45:49 dsl Exp $	*/
+/*	$NetBSD: msg.mi.en,v 1.107 2003/06/13 22:27:03 dsl Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -897,14 +897,6 @@ message config_open_error
 
 message config_read_error
 {Could not read config file %s\n}
-
-message nobiosgeom
-{Sysinst could not automatically determine the BIOS geometry of the disk.
-The physical geometry is %d cylinders %d sectors %d heads\n}
-
-message biosguess
-{Using the information already on the disk, my best guess for the BIOS
-geometry is %d cylinders %d sectors %d heads\n}
 
 message cmdfail
 {Command

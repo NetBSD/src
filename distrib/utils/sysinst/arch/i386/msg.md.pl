@@ -1,4 +1,4 @@
-/*	$NetBSD: msg.md.pl,v 1.12 2003/06/12 12:41:56 dsl Exp $	*/
+/*	$NetBSD: msg.md.pl,v 1.13 2003/06/13 22:27:08 dsl Exp $	*/
 /*	Based on english version: */
 /*	NetBSD: msg.md.en,v 1.24 2001/01/27 07:34:39 jmc Exp 	*/
 
@@ -92,13 +92,13 @@ message onebiosmatch
 
 }
 
-message onebiosmatch_header
-{BIOS # cylindry  glowice sektory
------- ---------- ------- -------
+message onebiosmatch_header	/* XXX translate total */
+{BIOS # cylindry glowice sektory total sektory  GB
+------ -------- ------- ------- ------------- ---
 }
 
 message onebiosmatch_row
-{%-6x %-10d %-7d %d\n}
+{%#6x %8d %6d %7d %13u %3u\n}
 
 message This_is_the_correct_geometry
 {To jest prawidlowa geometria}
@@ -112,10 +112,13 @@ message biosmultmatch
 
 }
 
-message biosmultmatch_header
-{   BIOS # cylindry  glowice sektory
-   ------ ---------- ------- -------
+message biosmultmatch_header	/* XXX translate total */
+{   BIOS # cylindry glowice sektory total sektory  GB
+   ------ -------- ------- ------- ------------- ---
 }
+
+message biosmultmatch_row
+{%-1d: %6x %8d %7d %7d %13u %3u\n}
 
 message biosgeom_advise
 {
@@ -124,9 +127,6 @@ wybrales i powiazac go z dyskiem BIOS, wartosci wyswietlane powyzej sa
 bardzo prawdopodobnie prawidlowe i nie powinny byc zmieniane. Zmieniaj je
 tylko wtedy jesli sa naprawde _obrzydliwie_ zle.
 }
-
-message biosmultmatch_row
-{%-1d: %-6x %-10d %-7d %d\n}
 
 message pickdisk
 {Wybierz dysk: }
