@@ -1,4 +1,4 @@
-/*	$NetBSD: esp_obio.c,v 1.12 2002/09/27 20:35:46 thorpej Exp $	*/
+/*	$NetBSD: esp_obio.c,v 1.13 2002/10/01 18:57:51 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -75,9 +75,8 @@ void	espattach_obio	__P((struct device *, struct device *, void *));
 int	espmatch_obio	__P((struct device *, struct cfdata *, void *));
 
 /* Linkup to the rest of the kernel */
-const struct cfattach esp_obio_ca = {
-	sizeof(struct esp_softc), espmatch_obio, espattach_obio
-};
+CFATTACH_DECL(esp_obio, sizeof(struct esp_softc),
+    espmatch_obio, espattach_obio, NULL, NULL)
 
 /*
  * Functions and the switch for the MI code.

@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.179 2002/09/27 20:35:57 thorpej Exp $ */
+/*	$NetBSD: autoconf.c,v 1.180 2002/10/01 18:57:48 thorpej Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -1336,10 +1336,8 @@ extern struct sparc_bus_space_tag mainbus_space_tag;
 #endif /* SUN4C || SUN4M */
 }
 
-const struct cfattach mainbus_ca = {
-	sizeof(struct device), mainbus_match, mainbus_attach
-};
-
+CFATTACH_DECL(mainbus, sizeof(struct device),
+    mainbus_match, mainbus_attach, NULL, NULL)
 
 int
 makememarr(ap, max, which)

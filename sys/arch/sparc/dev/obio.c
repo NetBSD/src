@@ -1,4 +1,4 @@
-/*	$NetBSD: obio.c,v 1.56 2002/09/27 20:35:50 thorpej Exp $	*/
+/*	$NetBSD: obio.c,v 1.57 2002/10/01 18:57:52 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1997,1998 The NetBSD Foundation, Inc.
@@ -76,10 +76,8 @@ union obio_softc {
 static	int obiomatch  __P((struct device *, struct cfdata *, void *));
 static	void obioattach __P((struct device *, struct device *, void *));
 
-const struct cfattach obio_ca = {
-	sizeof(union obio_softc), obiomatch, obioattach
-};
-
+CFATTACH_DECL(obio, sizeof(union obio_softc),
+    obiomatch, obioattach, NULL, NULL)
 
 /*
  * This `obio4_busattachargs' data structure only exists to pass down

@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.c,v 1.132 2002/09/27 20:35:59 thorpej Exp $ */
+/*	$NetBSD: cpu.c,v 1.133 2002/10/01 18:57:48 thorpej Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -103,17 +103,15 @@ static	int cpu_instance;		/* current # of CPUs wired by us */
 static void cpu_mainbus_attach __P((struct device *, struct device *, void *));
 int  cpu_mainbus_match __P((struct device *, struct cfdata *, void *));
 
-const struct cfattach cpu_mainbus_ca = {
-	sizeof(struct cpu_softc), cpu_mainbus_match, cpu_mainbus_attach
-};
+CFATTACH_DECL(cpu_mainbus, sizeof(struct cpu_softc),
+    cpu_mainbus_match, cpu_mainbus_attach, NULL, NULL)
 
 #if defined(SUN4D)
 static int cpu_cpuunit_match(struct device *, struct cfdata *, void *);
 static void cpu_cpuunit_attach(struct device *, struct device *, void *);
 
-const struct cfattach cpu_cpuunit_ca = {
-	sizeof(struct cpu_softc), cpu_cpuunit_match, cpu_cpuunit_attach
-};
+CFATTACH_DECL(cpu_cpuunit, sizeof(struct cpu_softc),
+    cpu_cpuunit_match, cpu_cpuunit_attach, NULL, NULL)
 #endif /* SUN4D */
 
 static void cpu_attach(struct cpu_softc *, int, int);

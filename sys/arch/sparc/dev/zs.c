@@ -1,4 +1,4 @@
-/*	$NetBSD: zs.c,v 1.89 2002/09/27 20:35:55 thorpej Exp $	*/
+/*	$NetBSD: zs.c,v 1.90 2002/10/01 18:57:53 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -177,21 +177,18 @@ static void zs_attach_obio __P((struct device *, struct device *, void *));
 static int  zs_match_bootbus __P((struct device *, struct cfdata *, void *));
 static void zs_attach_bootbus __P((struct device *, struct device *, void *));
 
-const struct cfattach zs_bootbus_ca = {
-	sizeof(struct zsc_softc), zs_match_bootbus, zs_attach_bootbus
-};
+CFATTACH_DECL(zs_bootbus, sizeof(struct zsc_softc),
+    zs_match_bootbus, zs_attach_bootbus, NULL, NULL)
 #endif /* SUN4D */
 
 static void zs_attach __P((struct zsc_softc *, struct zsdevice *, int));
 static int  zs_print __P((void *, const char *name));
 
-const struct cfattach zs_mainbus_ca = {
-	sizeof(struct zsc_softc), zs_match_mainbus, zs_attach_mainbus
-};
+CFATTACH_DECL(zs_mainbus, sizeof(struct zsc_softc),
+    zs_match_mainbus, zs_attach_mainbus, NULL, NULL)
 
-const struct cfattach zs_obio_ca = {
-	sizeof(struct zsc_softc), zs_match_obio, zs_attach_obio
-};
+CFATTACH_DECL(zs_obio, sizeof(struct zsc_softc),
+    zs_match_obio, zs_attach_obio, NULL, NULL)
 
 extern struct cfdriver zs_cd;
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: timer_sun4.c,v 1.2 2002/09/27 20:36:06 thorpej Exp $	*/
+/*	$NetBSD: timer_sun4.c,v 1.3 2002/10/01 18:57:50 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -161,9 +161,8 @@ timerattach_mainbus(struct device *parent, struct device *self, void *aux)
 	timerattach(&timerreg4->t_c14.t_counter, &timerreg4->t_c14.t_limit);
 }
 
-const struct cfattach timer_mainbus_ca = {
-	sizeof(struct device), timermatch_mainbus, timerattach_mainbus
-};
+CFATTACH_DECL(timer_mainbus, sizeof(struct device),
+    timermatch_mainbus, timerattach_mainbus, NULL, NULL)
 #endif /* SUN4C */
 
 #if defined(SUN4)
