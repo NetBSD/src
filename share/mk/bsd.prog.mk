@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.prog.mk,v 1.56 1996/10/18 02:34:47 thorpej Exp $
+#	$NetBSD: bsd.prog.mk,v 1.57 1996/11/26 17:37:39 mrg Exp $
 #	@(#)bsd.prog.mk	5.26 (Berkeley) 6/25/91
 
 .if exists(${.CURDIR}/../Makefile.inc)
@@ -33,7 +33,9 @@ LIBRPCSVC?=	${DESTDIR}/usr/lib/librpcsvc.a
 LIBSKEY?=	${DESTDIR}/usr/lib/libskey.a
 LIBTERMCAP?=	${DESTDIR}/usr/lib/libtermcap.a
 LIBUTIL?=	${DESTDIR}/usr/lib/libutil.a
+LIBWRAP?=	${DESTDIR}/usr/lib/libwrap.a
 LIBY?=		${DESTDIR}/usr/lib/liby.a
+LIBZ?=		${DESTDIR}/usr/lib/libz.a
 
 .if defined(SHAREDSTRINGS)
 CLEANFILES+=strings
