@@ -1,43 +1,7 @@
-# $NetBSD: std.next68k,v 1.4 1998/11/16 04:37:56 dbj Exp $
+# $NetBSD: std.next68k,v 1.5 1999/01/09 05:08:55 dbj Exp $
 
 # Standard information for next68k
 machine	next68k m68k
-
-# Devices that should be present in any next kernel
-
-# The root node:
-mainbus0 at root
-
-#fpu0 at mainbus?
-
-# device space
-intio0  at mainbus?
-
-# INTIO
-zsc0    at intio? ipl 5
-#zsc1    at intio? ipl 5
-
-xe*     at intio? ipl 3         # ethernet
-
-esp0    at intio? ipl 3         flags 0xff00 # Turn off sync negotiation
-
-#
-# Serial ports
-#
-zstty0	at zsc0 channel 0	# ttya
-zstty1	at zsc0 channel 1	# ttyb
-
-# SCSI bus support
-scsibus* at scsi?
-
-# SCSI devices
-sd*	at scsibus? target ? lun ?	# SCSI disk drives
-st*	at scsibus? target ? lun ?	# SCSI tape drives
-cd*	at scsibus? target ? lun ?	# SCSI CD-ROM drives
-ch*	at scsibus? target ? lun ?	# SCSI autochangers
-se*	at scsibus? target ? lun ?	# SCSI ethernet
-ss*	at scsibus? target ? lun ?	# SCSI scanners
-uk*	at scsibus? target ? lun ?	# SCSI unknown
 
 # Standard defines
 options 	EXEC_AOUT
