@@ -1,3 +1,5 @@
+/*	$NetBSD: clock.c,v 1.3 1996/03/28 12:26:31 jonathan Exp $	*/
+
 /*
  * Copyright (c) 1988 University of Utah.
  * Copyright (c) 1992, 1993
@@ -38,7 +40,6 @@
  * from: Utah Hdr: clock.c 1.18 91/01/21
  *
  *	from: @(#)clock.c	8.1 (Berkeley) 6/10/93
- *      $Id: clock.c,v 1.2 1996/03/17 01:42:23 thorpej Exp $
  */
 
 #include <sys/param.h>
@@ -125,7 +126,8 @@ clockattach(parent, self, aux)
 	/*
 	 * establish the clock interrupt; it's a special case
 	 */
-	BUS_INTR_ESTABLISH((struct confargs *)aux, hardclock, self);
+	BUS_INTR_ESTABLISH((struct confargs *)aux,
+			   (intr_handler_t) hardclock, self);
 
 	printf("\n");
 }
