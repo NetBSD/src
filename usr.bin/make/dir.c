@@ -38,7 +38,7 @@
 
 #ifndef lint
 /* from: static char sccsid[] = "@(#)dir.c	5.6 (Berkeley) 12/28/90"; */
-static char *rcsid = "$Id: dir.c,v 1.5 1994/03/05 00:34:41 cgd Exp $";
+static char *rcsid = "$Id: dir.c,v 1.6 1994/06/06 22:45:25 jtc Exp $";
 #endif /* not lint */
 
 /*-
@@ -49,6 +49,8 @@ static char *rcsid = "$Id: dir.c,v 1.5 1994/03/05 00:34:41 cgd Exp $";
  *
  * The interface for this module is:
  *	Dir_Init  	    Initialize the module.
+ *
+ *	Dir_End  	    Cleanup the module.
  *
  *	Dir_HasWildcards    Returns TRUE if the name given it needs to
  *	    	  	    be wildcard-expanded.
@@ -185,12 +187,12 @@ static Hash_Table mtimes;   /* Results of doing a last-resort stat in
 			     * should be ok, but... */
 
 
-static int DirFindName __P((Path *, char *));
+static int DirFindName __P((ClientData, ClientData));
 static int DirMatchFiles __P((char *, Path *, Lst));
 static void DirExpandCurly __P((char *, char *, Lst, Lst));
 static void DirExpandInt __P((char *, Lst, Lst));
-static int DirPrintWord __P((char *));
-static int DirPrintDir __P((Path *));
+static int DirPrintWord __P((ClientData, ClientData));
+static int DirPrintDir __P((ClientData, ClientData));
 
 /*-
  *-----------------------------------------------------------------------
@@ -229,6 +231,30 @@ Dir_Init ()
 
 /*-
  *-----------------------------------------------------------------------
+ * Dir_End --
+ *	cleanup things for this module
+ *
+ * Results:
+ *	none
+ *
+ * Side Effects:
+ *	none
+ *-----------------------------------------------------------------------
+ */
+void
+Dir_End()
+{
+    dot->refCount -= 1;
+    Dir_Destroy((ClientData) dot);
+    Dir_ClearPath(dirSearchPath);
+    Lst_Destroy(dirSearchPath, NOFREE);
+    Dir_ClearPath(openDirectories);
+    Lst_Destroy(openDirectories, NOFREE);
+    Hash_DeleteTable(&mtimes);
+}
+
+/*-
+ *-----------------------------------------------------------------------
  * DirFindName --
  *	See if the Path structure describes the same directory as the
  *	given one by comparing their names. Called from Dir_AddDir via
@@ -243,10 +269,10 @@ Dir_Init ()
  */
 static int
 DirFindName (p, dname)
-    Path          *p;	      /* Current name */
-    char	  *dname;     /* Desired name */
+    ClientData    p;	      /* Current name */
+    ClientData	  dname;      /* Desired name */
 {
-    return (strcmp (p->name, dname));
+    return (strcmp (((Path *)p)->name, (char *) dname));
 }
 
 /*-
@@ -491,12 +517,13 @@ DirExpandInt(word, path, expansions)
  *-----------------------------------------------------------------------
  */
 static int
-DirPrintWord(word)
-    char    *word;
+DirPrintWord(word, dummy)
+    ClientData  word;
+    ClientData  dummy;
 {
-    printf("%s ", word);
+    printf("%s ", (char *) word);
 
-    return(0);
+    return(dummy ? 0 : 0);
 }
 
 /*-
@@ -607,7 +634,7 @@ Dir_Expand (word, path, expansions)
 	}
     }
     if (DEBUG(DIR)) {
-	Lst_ForEach(expansions, DirPrintWord, NULL);
+	Lst_ForEach(expansions, DirPrintWord, (ClientData) 0);
 	fputc('\n', stdout);
     }
 }
@@ -713,7 +740,7 @@ Dir_FindFile (name, path)
 		 */
 		p1 = p->name + strlen (p->name) - 1;
 		p2 = cp - 2;
-		while (p2 >= name && *p1 == *p2) {
+		while (p2 >= name && p1 >= p->name && *p1 == *p2) {
 		    p1 -= 1; p2 -= 1;
 		}
 		if (p2 >= name || (p1 >= p->name && *p1 != '/')) {
@@ -947,7 +974,7 @@ Dir_MTime (gn)
     }
     
     if (fullName == (char *)NULL) {
-	fullName = gn->name;
+	fullName = strdup(gn->name);
     }
 
     entry = Hash_FindEntry(&mtimes, fullName);
@@ -965,6 +992,8 @@ Dir_MTime (gn)
 	Hash_DeleteEntry(&mtimes, entry);
     } else if (stat (fullName, &stb) < 0) {
 	if (gn->type & OP_MEMBER) {
+	    if (fullName != gn->path)
+		free(fullName);
 	    return Arch_MemMTime (gn);
 	} else {
 	    stb.st_mtime = 0;
@@ -1040,7 +1069,7 @@ Dir_AddDir (path, name)
 		if (dp->d_fileno == 0) {
 		    continue;
 		}
-#endif sun
+#endif /* sun */
 		(void)Hash_CreateEntry(&p->files, dp->d_name, (Boolean *)NULL);
 	    }
 	    (void) closedir (d);
@@ -1069,9 +1098,9 @@ Dir_AddDir (path, name)
  */
 ClientData
 Dir_CopyDir(p)
-    Path    *p;	  	/* Directory descriptor to copy */
+    ClientData p;
 {
-    p->refCount += 1;
+    ((Path *) p)->refCount += 1;
 
     return ((ClientData)p);
 }
@@ -1133,9 +1162,10 @@ Dir_MakeFlags (flag, path)
  *-----------------------------------------------------------------------
  */
 void
-Dir_Destroy (p)
-    Path    	  *p;	    /* The directory descriptor to nuke */
+Dir_Destroy (pp)
+    ClientData 	  pp;	    /* The directory descriptor to nuke */
 {
+    Path    	  *p = (Path *) pp;
     p->refCount -= 1;
 
     if (p->refCount == 0) {
@@ -1171,7 +1201,7 @@ Dir_ClearPath(path)
     Path    *p;
     while (!Lst_IsEmpty(path)) {
 	p = (Path *)Lst_DeQueue(path);
-	Dir_Destroy(p);
+	Dir_Destroy((ClientData) p);
     }
 }
 	    
@@ -1229,7 +1259,13 @@ Dir_PrintDirectories()
     }
 }
 
-static int DirPrintDir (p) Path *p; { printf ("%s ", p->name); return (0); }
+static int DirPrintDir (p, dummy)
+    ClientData	p;
+    ClientData	dummy;
+{ 
+    printf ("%s ", ((Path *) p)->name);
+    return (dummy ? 0 : 0);
+}
 
 void
 Dir_PrintPath (path)
