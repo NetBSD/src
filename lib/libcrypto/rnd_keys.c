@@ -1,4 +1,4 @@
-/*	$NetBSD: rnd_keys.c,v 1.1.2.2 2000/06/22 06:56:01 thorpej Exp $	*/
+/*	$NetBSD: rnd_keys.c,v 1.1.2.3 2002/08/29 16:51:12 he Exp $	*/
 
 #include "des_locl.h"
 #include <sys/time.h>
@@ -77,7 +77,7 @@ des_init_random_number_generator(des_cblock *seed)
 
 	memcpy(&seed_q, seed, sizeof(seed_q));
 
-	snprintf(accum, sizeof(accum), "%ld%ld%d%s%d%qd",
+	snprintf(accum, sizeof(accum), "%ld%ld%d%s%d%lld",
 	    when.tv_sec, when.tv_usec, getpid(), hname, getuid(),
 	    (long long) seed_q);
 
