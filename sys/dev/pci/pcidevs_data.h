@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs_data.h,v 1.635 2004/07/27 01:01:17 christos Exp $	*/
+/*	$NetBSD: pcidevs_data.h,v 1.636 2004/07/29 12:12:08 cube Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.636 2004/07/27 01:01:00 christos Exp 
+ *	NetBSD: pcidevs,v 1.637 2004/07/29 12:11:31 cube Exp 
  */
 
 /*
@@ -2056,6 +2056,18 @@ const struct pci_knowndev pci_knowndevs[] = {
 	    "Radeon 9200SE",
 	},
 	{
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RADEON_X300,
+	    0,
+	    "ATI Technologies",
+	    "Radeon X300 Series",
+	},
+	{
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RADEON_X300_S,
+	    0,
+	    "ATI Technologies",
+	    "Radeon X300 Series Secondary",
+	},
+	{
 	    PCI_VENDOR_AURAVISION, PCI_PRODUCT_AURAVISION_VXP524,
 	    0,
 	    "Auravision",
@@ -2366,6 +2378,12 @@ const struct pci_knowndev pci_knowndevs[] = {
 	    0,
 	    "Broadcom Corporation",
 	    "BCM5705 10/100/1000 Ethernet",
+	},
+	{
+	    PCI_VENDOR_BROADCOM, PCI_PRODUCT_BROADCOM_BCM5751,
+	    0,
+	    "Broadcom Corporation",
+	    "BCM5751 10/100/1000 Ethernet",
 	},
 	{
 	    PCI_VENDOR_BROADCOM, PCI_PRODUCT_BROADCOM_BCM5782,
@@ -5380,6 +5398,18 @@ const struct pci_knowndev pci_knowndevs[] = {
 	    "82875P AGP",
 	},
 	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82915P_HB,
+	    0,
+	    "Intel",
+	    "82915P Host",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82915P_EXP,
+	    0,
+	    "Intel",
+	    "82915P PCI Express Bridge",
+	},
+	{
 	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_6300ESB_IDE,
 	    0,
 	    "Intel",
@@ -5390,6 +5420,78 @@ const struct pci_knowndev pci_knowndevs[] = {
 	    0,
 	    "Intel",
 	    "6300ESB SATA Controller",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82801FB_LPC,
+	    0,
+	    "Intel",
+	    "82801FB LPC Interface Bridge",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82801FR_SATA,
+	    0,
+	    "Intel",
+	    "82801FR Serial ATA Controller",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82801FB_USB_0,
+	    0,
+	    "Intel",
+	    "82801FB/FR USB UHCI Controller #0",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82801FB_USB_1,
+	    0,
+	    "Intel",
+	    "82801FB/FR USB UHCI Controller #1",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82801FB_USB_2,
+	    0,
+	    "Intel",
+	    "82801FB/FR USB UHCI Controller #2",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82801FB_USB_3,
+	    0,
+	    "Intel",
+	    "82801FB/FR USB UHCI Controller #3",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82801FB_EHCI,
+	    0,
+	    "Intel",
+	    "82801FB/FR USB EHCI Controller",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82801FB_EXP_0,
+	    0,
+	    "Intel",
+	    "82801FB/FR PCI Express Port #0",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82801FB_EXP_1,
+	    0,
+	    "Intel",
+	    "82801FB/FR PCI Express Port #1",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82801FB_SMB,
+	    0,
+	    "Intel",
+	    "82801FB/FR SMBus Controller",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82801FB_AC,
+	    0,
+	    "Intel",
+	    "82801FB/FR AC'97 Audio Controller",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82801FB_IDE,
+	    0,
+	    "Intel",
+	    "82801FB/FR IDE Controller",
 	},
 	{
 	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_31244,
