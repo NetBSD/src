@@ -298,12 +298,16 @@ extract_archive()
 			 * On raw V7 we won't let them specify -k (f_keep), but
 			 * we just bull ahead and create the files.
 			 */
+			if (f_force)
+				unlink(skipcrud+head->header.name);
 			fd = creat(skipcrud+head->header.name, 
 				hstat.st_mode);
 #else
 			/*
 			 * With 3-arg open(), we can do this up right.
 			 */
+			if (f_force)
+				unlink(skipcrud+head->header.name);
 			fd = open(skipcrud+head->header.name, openflag,
 				hstat.st_mode);
 #endif
@@ -503,6 +507,8 @@ extract_archive()
 	{
 		struct stat st1,st2;
 
+		if (f_force)
+			unlink(skipcrud+head->header.name);
 		check = link (head->header.linkname,
 			      skipcrud+head->header.name);
 		if (check == 0)
@@ -524,6 +530,8 @@ extract_archive()
 #ifdef S_IFLNK
 	case LF_SYMLINK:
 	again_symlink:
+		if (f_force)
+			unlink(skipcrud+head->header.name);
 		check = symlink(head->header.linkname,
 			        skipcrud+head->header.name);
 		/* FIXME, don't worry uid, gid, etc... */
@@ -556,6 +564,8 @@ extract_archive()
 #endif
 
 	make_node:
+		if (f_force)
+			unlink(skipcrud+head->header.name);
 		check = mknod(skipcrud+head->header.name,
 			      (int) hstat.st_mode, (int) hstat.st_rdev);
 		if (check != 0) {
