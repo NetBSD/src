@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.25 2001/09/10 21:19:37 chris Exp $	*/
+/*	$NetBSD: pmap.c,v 1.26 2001/09/16 05:40:46 chs Exp $	*/
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -1715,17 +1715,6 @@ pmap_extract(pmap_t pm, vaddr_t va, paddr_t *pap)
 	if (pvo != NULL) {
 		PMAP_PVO_CHECK(pvo);		/* sanity check */
 		*pap = (pvo->pvo_pte.pte_lo & PTE_RPGN) | (va & ADDR_POFF);
-#ifdef DEBUG
-	} else {
-		if (pm == pmap_kernel()) {
-			if (va >= VM_MIN_KERNEL_ADDRESS) {
-				printf("pmap_extract: va=%#lx: no pa\n", va);
-#ifdef DDB
-				Debugger();
-#endif
-			}
-		}
-#endif
 	}
 	pmap_interrupts_restore(msr);
 	splx(s);
