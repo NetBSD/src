@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.27 1995/04/13 16:46:55 pk Exp $ */
+/*	$NetBSD: autoconf.c,v 1.28 1995/06/10 21:48:29 pk Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -1205,14 +1205,14 @@ setroot()
 
 	if (boothowto & RB_ASKNAME) {
 		for (;;) {
-			if (bootdv->dv_class == DV_DISK)
-				printf("root device (default %sa)? ",
-					bootdv->dv_xname);
-			else
-				printf("root device (default %s)? ",
-					bootdv->dv_xname);
+			printf("root device ");
+			if (bootdv != NULL)
+				printf("(default %s%c)",
+					bootdv->dv_xname,
+					bootdv->dv_class == DV_DISK?'a':' ');
+			printf(": ");
 			len = getstr(buf, sizeof(buf));
-			if (len == 0) {
+			if (len == 0 && bootdv != NULL) {
 				strcpy(buf, bootdv->dv_xname);
 				len = strlen(buf);
 			}
@@ -1240,14 +1240,14 @@ setroot()
 			goto gotswap;
 		}
 		for (;;) {
-			if (bootdv->dv_class == DV_DISK)
-				printf("swap device (default %sb)? ",
-					bootdv->dv_xname);
-			else
-				printf("swap device (default %s)? ",
-					bootdv->dv_xname);
+			printf("swap device ");
+			if (bootdv != NULL)
+				printf("(default %s%c)",
+					bootdv->dv_xname,
+					bootdv->dv_class == DV_DISK?'b':' ');
+			printf(": ");
 			len = getstr(buf, sizeof(buf));
-			if (len == 0) {
+			if (len == 0 && bootdv != NULL) {
 				switch (bootdv->dv_class) {
 				case DV_IFNET:
 					nswapdev = NODEV;
