@@ -33,7 +33,7 @@
 
 #ifndef lint
 static char sccsid[] = "from: @(#)lex.c	8.1 (Berkeley) 6/6/93";
-static char rcsid[] = "$Id: lex.c,v 1.4 1994/06/29 05:09:28 deraadt Exp $";
+static char rcsid[] = "$Id: lex.c,v 1.5 1994/11/28 20:03:33 jtc Exp $";
 #endif /* not lint */
 
 #include "rcv.h"
@@ -65,7 +65,7 @@ setfile(name)
 	char isedit = *name != '%';
 	char *who = name[1] ? name + 1 : myname;
 	static int shudclob;
-	extern char tempMesg[];
+	extern char *tempMesg;
 	extern int errno;
 
 	if ((name = expand(name)) == NOSTR)

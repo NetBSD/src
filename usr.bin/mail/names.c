@@ -33,7 +33,7 @@
 
 #ifndef lint
 static char sccsid[] = "from: @(#)names.c	8.1 (Berkeley) 6/6/93";
-static char rcsid[] = "$Id: names.c,v 1.3 1994/06/29 05:09:35 deraadt Exp $";
+static char rcsid[] = "$Id: names.c,v 1.4 1994/11/28 20:03:34 jtc Exp $";
 #endif /* not lint */
 
 /*
@@ -224,7 +224,7 @@ outof(names, fo, hp)
 	char *date, *fname, *ctime();
 	FILE *fout, *fin;
 	int ispipe;
-	extern char tempEdit[];
+	extern char *tempEdit;
 
 	top = names;
 	np = names;
