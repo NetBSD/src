@@ -1,4 +1,4 @@
-/*	$NetBSD: dns_pw.c,v 1.1.1.1 1999/11/20 18:54:08 veego Exp $	*/
+/*	$NetBSD: dns_pw.c,v 1.1.1.1.10.1 2002/06/28 11:46:43 lukem Exp $	*/
 
 /*
  * Copyright (c) 1996,1999 by Internet Software Consortium.
@@ -18,7 +18,7 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static const char rcsid[] = "Id: dns_pw.c,v 1.18 1999/09/04 22:06:14 vixie Exp";
+static const char rcsid[] = "Id: dns_pw.c,v 1.19 2001/05/29 05:48:32 marka Exp";
 #endif
 
 #include "port_before.h"
@@ -135,17 +135,20 @@ pw_byuid(struct irs_pw *this, uid_t uid) {
 
 static struct passwd *
 pw_next(struct irs_pw *this) {
+	UNUSED(this);
 	errno = ENODEV;
 	return (NULL);
 }
 
 static void
 pw_rewind(struct irs_pw *this) {
+	UNUSED(this);
 	/* NOOP */
 }
 
 static void
 pw_minimize(struct irs_pw *this) {
+	UNUSED(this);
 	/* NOOP */
 }
 
