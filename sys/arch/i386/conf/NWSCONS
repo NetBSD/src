@@ -1,4 +1,4 @@
-#	$NetBSD: NWSCONS,v 1.20 1999/01/06 23:30:53 thorpej Exp $
+#	$NetBSD: NWSCONS,v 1.21 1999/01/22 22:47:16 tron Exp $
 #
 #	like GENERIC, with new console drivers
 #
@@ -606,6 +606,7 @@ pseudo-device	sl		2	# Serial Line IP
 pseudo-device	strip		2	# Starmode Radio IP (Metricom)
 pseudo-device	tun		2	# network tunneling over tty
 pseudo-device	gre		2	# generic L3 over IP tunnel
+pseudo-device	ipip		2	# IP Encapsulation within IP (RFC 2003)
 
 # miscellaneous pseudo-devices
 pseudo-device	pty		64	# pseudo-terminals

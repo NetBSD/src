@@ -1,4 +1,4 @@
-#	$NetBSD: GENERIC,v 1.213 1999/01/22 05:40:16 sakamoto Exp $
+#	$NetBSD: GENERIC,v 1.214 1999/01/22 22:47:16 tron Exp $
 #
 #	GENERIC -- everything that's currently supported
 #
@@ -579,6 +579,7 @@ pseudo-device	sl		2	# Serial Line IP
 pseudo-device	strip		2	# Starmode Radio IP (Metricom)
 pseudo-device	tun		2	# network tunneling over tty
 pseudo-device	gre		2	# generic L3 over IP tunnel
+pseudo-device	ipip		2	# IP Encapsulation within IP (RFC 2003)
 
 # miscellaneous pseudo-devices
 pseudo-device	pty		64	# pseudo-terminals
