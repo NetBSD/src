@@ -1,4 +1,4 @@
-/*	$NetBSD: atari_init.c,v 1.42 1998/12/20 14:32:34 thomas Exp $	*/
+/*	$NetBSD: atari_init.c,v 1.43 1999/09/22 07:16:05 leo Exp $	*/
 
 /*
  * Copyright (c) 1995 Leo Weppelman
@@ -672,7 +672,7 @@ u_int		ptextra;	/* #of additional I/O pte's	*/
 		epg           = &pg[btoc(PCI_CONF_SIZE)];
 		mask          = PCI_CONFM_PHYS;
 		pg_proto      = PCI_CONFB_PHYS | PG_RW | PG_CI | PG_V;
-		for(; pg < epg; mask >>= 1)
+		for(; pg < epg; mask <<= 1)
 			*pg++ = pg_proto | mask;
 
 		pci_io_addr   = ioaddr;
