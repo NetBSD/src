@@ -1,6 +1,8 @@
-#	$NetBSD: TEAL,v 1.9 2001/11/22 01:11:51 soren Exp $
+#	$NetBSD: TEAL,v 1.10 2002/04/25 15:06:36 atatat Exp $
 
 include		"arch/sgimips/conf/std.sgimips"
+
+#options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
 makeoptions	TEXTADDR=0x88069000	# Indy/Indigo2
 

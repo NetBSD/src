@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.96 2002/04/12 08:11:26 gmcgarry Exp $
+# $NetBSD: GENERIC,v 1.97 2002/04/25 15:06:39 atatat Exp $
 #
 # GENERIC machine description file
 # 
@@ -20,7 +20,9 @@
 
 include		"arch/vax/conf/std.vax"
 
-#ident 		"GENERIC-$Revision: 1.96 $"
+options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
+
+#ident 		"GENERIC-$Revision: 1.97 $"
 
 # Here are all different supported CPU types listed.
 #options 	VAX8800		# VAX 8500, 8530, 8550, 8700, 8800

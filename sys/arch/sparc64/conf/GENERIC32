@@ -1,8 +1,10 @@
-# 	$NetBSD: GENERIC32,v 1.35 2002/04/17 02:22:55 mycroft Exp $
+# 	$NetBSD: GENERIC32,v 1.36 2002/04/25 15:06:37 atatat Exp $
 
 include "arch/sparc64/conf/std.sparc64"
 
-#ident 		"GENERIC-$Revision: 1.35 $"
+options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
+
+#ident 		"GENERIC-$Revision: 1.36 $"
 
 maxusers	64
 

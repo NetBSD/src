@@ -1,9 +1,11 @@
-#	$NetBSD: DUMMY,v 1.18 2002/04/12 08:11:14 gmcgarry Exp $
+#	$NetBSD: DUMMY,v 1.19 2002/04/25 15:06:35 atatat Exp $
 #
 # DUMMY: Matthias Pfaller's second pc532
 #
 
 include	"arch/pc532/conf/std.pc532"
+
+#options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
 maxusers	8			# estimated number of users
 

@@ -1,9 +1,11 @@
-#	$NetBSD: INSTALL,v 1.20 2002/04/18 15:44:22 wiz Exp $
+#	$NetBSD: INSTALL,v 1.21 2002/04/25 15:06:25 atatat Exp $
 #
 # First try for BEBOX config file
 #
 
 include "arch/bebox/conf/std.bebox"
+
+#options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
 maxusers	32
 

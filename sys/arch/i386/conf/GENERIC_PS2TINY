@@ -1,4 +1,4 @@
-#	$NetBSD: GENERIC_PS2TINY,v 1.11 2002/04/12 08:11:02 gmcgarry Exp $
+#	$NetBSD: GENERIC_PS2TINY,v 1.12 2002/04/25 15:06:29 atatat Exp $
 #
 #	GENERIC-style kernel config for IBM PS/2 with MCA bus. It only contains
 #	IBM PS/2 related stuff and has been generally trimmed down somewhat,
@@ -10,6 +10,8 @@
 #	 stage and should be used with caution.
 
 include "arch/i386/conf/std.i386"
+
+#options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
 maxusers	16		# estimated number of users
 

@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.126 2002/04/17 02:22:53 mycroft Exp $
+# $NetBSD: GENERIC,v 1.127 2002/04/25 15:06:31 atatat Exp $
 #
 # GENERIC machine description file
 # 
@@ -20,7 +20,9 @@
 
 include		"arch/macppc/conf/std.macppc"
 
-#ident 		"GENERIC-$Revision: 1.126 $"
+options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
+
+#ident 		"GENERIC-$Revision: 1.127 $"
 
 maxusers	32
 

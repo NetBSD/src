@@ -1,4 +1,4 @@
-# $NetBSD: INSTALL,v 1.4 2002/04/12 08:10:57 gmcgarry Exp $
+# $NetBSD: INSTALL,v 1.5 2002/04/25 15:06:27 atatat Exp $
 #
 # INSTALL machine description file
 #
@@ -6,6 +6,8 @@
 # for the installation media.
 
 include 	"arch/hp300/conf/std.hp300"
+
+#options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
 # optimise for smaller kernels
 makeoptions 	COPTS="-Os"

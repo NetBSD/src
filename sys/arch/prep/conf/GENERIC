@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.47 2002/04/24 09:46:15 kleink Exp $
+# $NetBSD: GENERIC,v 1.48 2002/04/25 15:06:36 atatat Exp $
 #
 # GENERIC machine description file
 # 
@@ -20,7 +20,9 @@
 
 include 	"arch/prep/conf/std.prep"
 
-#ident		"GENERIC-$Revision: 1.47 $"
+options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
+
+#ident		"GENERIC-$Revision: 1.48 $"
 
 maxusers	32
 

@@ -1,11 +1,13 @@
-#	$NetBSD: JORNADA720,v 1.18 2002/04/12 08:10:58 gmcgarry Exp $
+#	$NetBSD: JORNADA720,v 1.19 2002/04/25 15:06:27 atatat Exp $
 #
 #	JORNADA -- Windows-CE based jornada 720
 #
 
 include	"arch/hpcarm/conf/std.hpcarm"
 
-#ident 		"GENERIC-$Revision: 1.18 $"
+#options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
+
+#ident 		"GENERIC-$Revision: 1.19 $"
 
 # estimated number of users
 maxusers	32

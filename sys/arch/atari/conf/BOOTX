@@ -1,5 +1,5 @@
 #
-# $NetBSD: BOOTX,v 1.39 2002/04/16 22:44:27 bjh21 Exp $
+# $NetBSD: BOOTX,v 1.40 2002/04/25 15:06:24 atatat Exp $
 #
 # This file was automatically created. Changes will be
 # lost when running makeconf in this directory.
@@ -16,6 +16,8 @@
 #Generic atari
 
 include "arch/atari/conf/std.atari"
+
+options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
 #Add support for about 16 users. This variable is used to size
 #various kernel structures.
@@ -125,7 +127,7 @@ ser0		at mainbus0	# UART on first 68901 (ttyB0)
 wdc0		at mainbus0	# IDE-bus
 wd*		at wdc? channel ? drive ?
 
- # ATAPI bus support
+ #ATAPI bus support
 atapibus* at wdc? channel ?
 
 #ATAPI devices
