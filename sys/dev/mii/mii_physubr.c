@@ -1,4 +1,4 @@
-/*	$NetBSD: mii_physubr.c,v 1.25 2001/06/30 17:53:58 bjh21 Exp $	*/
+/*	$NetBSD: mii_physubr.c,v 1.26 2001/07/25 22:00:43 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2000, 2001 The NetBSD Foundation, Inc.
@@ -163,6 +163,21 @@ mii_phy_extcap_to_gtcr(struct mii_softc *sc)
 	return (gtcr);
 }
 
+static int
+mii_phy_extcap_to_anar(struct mii_softc *sc)
+{
+	int anar = 0;
+
+	if (sc->mii_extcapabilities & EXTSR_1000XFDX)
+		anar |= ANAR_X_FD;
+	if (sc->mii_extcapabilities & EXTSR_1000XHDX)
+		anar |= ANAR_X_HD;
+
+	/* XXX PAUSE */
+
+	return (anar);
+}
+
 int
 mii_phy_auto(sc, waitfor)
 	struct mii_softc *sc;
@@ -171,10 +186,21 @@ mii_phy_auto(sc, waitfor)
 	int bmsr, i;
 
 	if ((sc->mii_flags & MIIF_DOINGAUTO) == 0) {
-		PHY_WRITE(sc, MII_ANAR,
-		    BMSR_MEDIA_TO_ANAR(sc->mii_capabilities) | ANAR_CSMA);
-		if (sc->mii_flags & MIIF_HAVE_GTCR)
-			PHY_WRITE(sc, MII_100T2CR, mii_phy_extcap_to_gtcr(sc));
+		/*
+		 * Check for 1000BASE-X.  Autonegotiation is a bit
+		 * different on such devices.
+		 */
+
+		if (sc->mii_extcapabilities & (EXTSR_1000XFDX|EXTSR_1000XHDX))
+			PHY_WRITE(sc, MII_ANAR, mii_phy_extcap_to_anar(sc));
+		else {
+			PHY_WRITE(sc, MII_ANAR,
+			    BMSR_MEDIA_TO_ANAR(sc->mii_capabilities) |
+			    ANAR_CSMA);
+			if (sc->mii_flags & MIIF_HAVE_GTCR)
+				PHY_WRITE(sc, MII_100T2CR,
+				mii_phy_extcap_to_gtcr(sc));
+		}
 		PHY_WRITE(sc, MII_BMCR, BMCR_AUTOEN | BMCR_STARTNEG);
 	}
 
