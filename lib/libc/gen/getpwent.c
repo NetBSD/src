@@ -1,4 +1,4 @@
-/*	$NetBSD: getpwent.c,v 1.25 1998/02/10 03:56:33 mrg Exp $	*/
+/*	$NetBSD: getpwent.c,v 1.26 1998/06/08 03:18:00 lukem Exp $	*/
 
 /*
  * Copyright (c) 1988, 1993
@@ -39,7 +39,7 @@
 #if 0
 static char sccsid[] = "@(#)getpwent.c	8.2 (Berkeley) 4/27/95";
 #else
-__RCSID("$NetBSD: getpwent.c,v 1.25 1998/02/10 03:56:33 mrg Exp $");
+__RCSID("$NetBSD: getpwent.c,v 1.26 1998/06/08 03:18:00 lukem Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -93,6 +93,8 @@ const char __yp_token[] = "__YP!";	/* Let pwd_mkdb pull this in. */
 enum _ypmode { YPMODE_NONE, YPMODE_FULL, YPMODE_USER, YPMODE_NETGRP };
 static enum _ypmode __ypmode;
 
+enum _ypmap { YPMAP_NONE, YPMAP_ADJUNCT, YPMAP_MASTER };
+
 static char     *__ypcurrent, *__ypdomain;
 static int      __ypcurrentlen;
 static struct passwd *__ypproto = (struct passwd *)NULL;
@@ -104,12 +106,19 @@ static DB *__ypexclude = (DB *)NULL;
 static int __has_yppw __P((void));
 static int __ypexclude_add __P((const char *));
 static int __ypexclude_is __P((const char *));
+static int __ypmaptype __P((void));
 static void __ypproto_set __P((void));
 static int __ypparse __P((struct passwd *, char *));
 
+	/* macros for deciding which YP maps to use. */
+#define PASSWD_BYNAME	(__ypmaptype() == YPMAP_MASTER \
+			    ? "master.passwd.byname" : "passwd.byname")
+#define PASSWD_BYUID	(__ypmaptype() == YPMAP_MASTER \
+			    ? "master.passwd.byuid" : "passwd.byuid")
+
 static int
 __ypexclude_add(name)
-const char *name;
+	const char *name;
 {
 	DBT key, data;
 
@@ -137,7 +146,7 @@ const char *name;
 
 static int
 __ypexclude_is(name)
-const char *name;
+	const char *name;
 {
 	DBT key, data;
 
@@ -232,35 +241,61 @@ __ypproto_set()
 }
 
 static int
-__ypparse(pw, s)
-struct passwd *pw;
-char *s;
+__ypmaptype()
 {
-	char *bp, *cp, *ep;
-	unsigned long id;
+	static int maptype = -1;
+	int order, r;
 
-	/* since this is currently using strsep(), parse it first */
-	bp = s;
-	pw->pw_name = strsep(&bp, ":\n");
-	pw->pw_passwd = strsep(&bp, ":\n");
-	if (!(cp = strsep(&bp, ":\n")))
+	if (maptype != -1)
+		return (maptype);
+
+	maptype = YPMAP_NONE;
+	if (geteuid() != 0)
+		return (maptype);
+
+	if (!__ypdomain) {
+		if( _yp_check(&__ypdomain) == 0)
+			return (maptype);
+	}
+
+	r = yp_order(__ypdomain, "master.passwd.byname", &order);
+	if (r == 0) {
+		maptype = YPMAP_MASTER;
+		return (maptype);
+	}
+
+	/*
+	 * NIS+ in YP compat mode doesn't support
+	 * YPPROC_ORDER -- no point in continuing.
+	 */
+	if (r == YPERR_YPERR)
+		return (maptype);
+
+	/* master.passwd doesn't exist -- try passwd.adjunct */
+	if (r == YPERR_MAP) {
+		r = yp_order(__ypdomain, "passwd.adjunct.byname", &order);
+		if (r == 0)
+			maptype = YPMAP_ADJUNCT;
+		return (maptype);
+	}
+
+	return (maptype);
+}
+
+static int
+__ypparse(pw, s)
+	struct passwd *pw;
+	char *s;
+{
+	static char adjunctpw[YPMAXRECORD + 2];
+	int flags, maptype;
+
+	maptype = __ypmaptype();
+	flags = _PASSWORD_NOWARN;
+	if (maptype != YPMAP_MASTER)
+		flags |= _PASSWORD_OLDFMT;
+	if (! pw_scan(s, pw, &flags))
 		return 1;
-	id = strtoul(cp, &ep, 10);
-	if (id > UID_MAX || *ep != '\0')
-		return 1;
-	pw->pw_uid = (uid_t)id;
-	if (!(cp = strsep(&bp, ":\n")))
-		return 1;
-	id = strtoul(cp, &ep, 10);
-	if (id > GID_MAX || *ep != '\0')
-		return 1;
-	pw->pw_gid = (gid_t)id;
-	pw->pw_change = 0;
-	pw->pw_class = "";
-	pw->pw_gecos = strsep(&bp, ":\n");
-	pw->pw_dir = strsep(&bp, ":\n");
-	pw->pw_shell = strsep(&bp, ":\n");
-	pw->pw_expire = 0;
 
 	/* now let the prototype override, if set. */
 	if(__ypproto != (struct passwd *)NULL) {
@@ -278,6 +313,23 @@ char *s;
 			pw->pw_dir = __ypproto->pw_dir;
 		if(__ypproto->pw_shell != (char *)NULL)
 			pw->pw_shell = __ypproto->pw_shell;
+	}
+	if ((maptype == YPMAP_ADJUNCT) &&
+	    (strstr(pw->pw_passwd, "##") != NULL)) {
+		char *data, *bp;
+		int datalen;
+
+		if (yp_match(__ypdomain, "passwd.adjunct.byname", pw->pw_name,
+		    strlen(pw->pw_name), &data, &datalen) == 0) {
+			if (datalen > sizeof(adjunctpw) - 1)
+				datalen = sizeof(adjunctpw) - 1;
+			strncpy(adjunctpw, data, datalen);
+
+				/* skip name to get password */
+			if ((bp = strsep(&data, ":")) != NULL &&
+			    (bp = strsep(&data, ":")) != NULL)
+				pw->pw_passwd = bp;
+		}
 	}
 	return 0;
 }
@@ -317,7 +369,7 @@ again:
 			data = NULL;
 			if(__ypcurrent) {
 				key = NULL;
-				r = yp_next(__ypdomain, "passwd.byname",
+				r = yp_next(__ypdomain, PASSWD_BYNAME,
 					__ypcurrent, __ypcurrentlen,
 					&key, &keylen, &data, &datalen);
 				free(__ypcurrent);
@@ -331,7 +383,7 @@ again:
 					__ypcurrentlen = keylen;
 				}
 			} else {
-				r = yp_first(__ypdomain, "passwd.byname",
+				r = yp_first(__ypdomain, PASSWD_BYNAME,
 					&__ypcurrent, &__ypcurrentlen,
 					&data, &datalen);
 			}
@@ -355,7 +407,7 @@ again:
 			}
 			if(user && *user) {
 				data = NULL;
-				r = yp_match(__ypdomain, "passwd.byname",
+				r = yp_match(__ypdomain, PASSWD_BYNAME,
 					user, strlen(user),
 					&data, &datalen);
 			} else
@@ -376,7 +428,7 @@ again:
 		case YPMODE_USER:
 			if(name != (char *)NULL) {
 				data = NULL;
-				r = yp_match(__ypdomain, "passwd.byname",
+				r = yp_match(__ypdomain, PASSWD_BYNAME,
 					name, strlen(name),
 					&data, &datalen);
 				__ypmode = YPMODE_NONE;
@@ -535,7 +587,7 @@ getpwnam(name)
 						__ypcurrent = NULL;
 					}
 					r = yp_match(__ypdomain,
-						"passwd.byname",
+						PASSWD_BYNAME,
 						name, strlen(name),
 						&__ypcurrent, &__ypcurrentlen);
 					if(r != 0) {
@@ -561,7 +613,7 @@ pwnam_netgrp:
 					} else {
 						if(user && *user) {
 							r = yp_match(__ypdomain,
-							    "passwd.byname",
+							    PASSWD_BYNAME,
 							    user, strlen(user),
 							    &__ypcurrent,
 							    &__ypcurrentlen);
@@ -587,7 +639,7 @@ pwnam_netgrp:
 					}
 					user = _pw_passwd.pw_name + 1;
 					r = yp_match(__ypdomain,
-						"passwd.byname",
+						PASSWD_BYNAME,
 						user, strlen(user),
 						&__ypcurrent,
 						&__ypcurrentlen);
@@ -720,7 +772,7 @@ getpwuid(uid)
 						free(__ypcurrent);
 						__ypcurrent = NULL;
 					}
-					r = yp_match(__ypdomain, "passwd.byuid",
+					r = yp_match(__ypdomain, PASSWD_BYUID,
 						uidbuf, strlen(uidbuf),
 						&__ypcurrent, &__ypcurrentlen);
 					if(r != 0) {
@@ -746,7 +798,7 @@ pwuid_netgrp:
 					} else {
 						if(user && *user) {
 							r = yp_match(__ypdomain,
-							    "passwd.byname",
+							    PASSWD_BYNAME,
 							    user, strlen(user),
 							    &__ypcurrent,
 							    &__ypcurrentlen);
@@ -772,7 +824,7 @@ pwuid_netgrp:
 					}
 					user = _pw_passwd.pw_name + 1;
 					r = yp_match(__ypdomain,
-						"passwd.byname",
+						PASSWD_BYNAME,
 						user, strlen(user),
 						&__ypcurrent,
 						&__ypcurrentlen);
