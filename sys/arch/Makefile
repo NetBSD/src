@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.3 1998/08/25 11:52:26 matthias Exp $
+#	$NetBSD: Makefile,v 1.4 1999/03/03 12:00:19 jonathan Exp $
 
 # For now, we install the machine and arch includes, and symlink 'machine'
 # to the location of the machine includes.
@@ -6,8 +6,8 @@
 # Eventually, we should install everything.
 
 SUBDIR=	${MACHINE}
-.if ${MACHINE} != ${MACHINE_ARCH} && exists(${MACHINE_ARCH})
-SUBDIR+= ${MACHINE_ARCH}
+.if ${MACHINE} != ${MACHINE_ARCH} && exists(${MACHINE_ARCH:S/mipse[bl]/mips/})
+SUBDIR+= ${MACHINE_ARCH:S/mipse[bl]/mips/}
 .endif
 
 #SUBDIR= alpha amiga arm32 atari bebox hp300 i386 m68k mac68k macppc mips \
