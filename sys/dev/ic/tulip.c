@@ -1,4 +1,4 @@
-/*	$NetBSD: tulip.c,v 1.8 1999/09/14 05:52:21 thorpej Exp $	*/
+/*	$NetBSD: tulip.c,v 1.9 1999/09/14 22:25:50 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.
@@ -186,9 +186,8 @@ u_int32_t tlp_crc32 __P((const u_int8_t *, size_t));
  *	Attach a Tulip interface to the system.
  */
 void
-tlp_attach(sc, name, enaddr)
+tlp_attach(sc, enaddr)
 	struct tulip_softc *sc;
-	const char *name;
 	const u_int8_t *enaddr;
 {
 	struct ifnet *ifp = &sc->sc_ethercom.ec_if;
@@ -339,7 +338,8 @@ tlp_attach(sc, name, enaddr)
 
 	/* Announce ourselves. */
 	printf("%s: %s%sEthernet address %s\n", sc->sc_dev.dv_xname,
-	    name != NULL ? name : "", name != NULL ? ", " : "",
+	    sc->sc_name[0] != '\0' ? sc->sc_name : "",
+	    sc->sc_name[0] != '\0' ? ", " : "",
 	    ether_sprintf(enaddr));
 
 	/*
