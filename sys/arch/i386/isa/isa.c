@@ -35,7 +35,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)isa.c	7.2 (Berkeley) 5/13/91
- *	$Id: isa.c,v 1.28.2.13 1993/10/16 04:00:59 mycroft Exp $
+ *	$Id: isa.c,v 1.28.2.14 1993/10/16 05:25:18 mycroft Exp $
  */
 
 /*
@@ -111,7 +111,6 @@ isaattach(parent, self, aux)
 
 	isa_flushintrs();
 	enable_intr();
-	splnone();
 }
 
 /*
@@ -175,6 +174,20 @@ isasubmatch(isa, cf, aux)
 	config_attach(isa, cf, &ia, isaprint);
 
 	return 0;
+}
+
+/*
+ * XXX It's not clear to me why this is useful.
+ */
+void
+isa_establish(id, dv)
+	struct isadev *id;
+	struct device *dv;
+{
+	struct isa_softc *idv = (struct isa_softc *)dv->dv_parent;
+	id->id_dev = dv;
+	id->id_bchain = idv->sc_isadev;
+	idv->sc_isadev = id;
 }
 
 /*
