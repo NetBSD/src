@@ -33,7 +33,7 @@
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)mkfs.c	8.3 (Berkeley) 2/3/94";*/
-static char *rcsid = "$Id: mkfs.c,v 1.10 1994/07/20 20:06:52 cgd Exp $";
+static char *rcsid = "$Id: mkfs.c,v 1.11 1994/07/20 20:31:58 cgd Exp $";
 #endif /* not lint */
 
 #include <unistd.h>
@@ -588,7 +588,7 @@ next:
 		initcg(cylno, utime);
 		if (mfs)
 			continue;
-		if (cylno % 9 == 0)
+		if (cylno % 8 == 0)
 			printf("\n");
 		printf(" %d,", fsbtodb(&sblock, cgsblock(&sblock, cylno)));
 	}
