@@ -1,4 +1,4 @@
-# $NetBSD: files.arm26,v 1.28 2001/04/22 00:26:35 bjh21 Exp $
+# $NetBSD: files.arm26,v 1.29 2001/04/22 15:02:51 bjh21 Exp $
 
 # Copyright (c) 1997, 1998, 2000 Ben Harris
 # All rights reserved.
@@ -139,8 +139,9 @@ attach	hd at hdc
 #major	{hd = ?}
 
 # On-board printer port (usually at bank 5 addr 0x10 irq 0/2)
-device	arclpt
-attach	arclpt at ioc
+device	arcpp
+attach	arcpp at ioc
+file	arch/arm26/ioc/arcpp.c			arcpp		needs-flag
 
 # VIDC/MEMC audio/video subsystems.
 device	arcvideo: rasops1, rasops2, rasops4, rasops8, wsemuldisplaydev
