@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs.h,v 1.27 2001/04/02 11:47:23 fvdl Exp $	*/
+/*	$NetBSD: nfs.h,v 1.28 2001/04/03 15:08:38 chs Exp $	*/
 /*
  * Copyright (c) 1989, 1993, 1995
  *	The Regents of the University of California.  All rights reserved.
@@ -97,18 +97,8 @@ extern int nfs_niothreads;              /* Number of async_daemons desired */
  * DIRBLKSIZ.
  */
 
-#if 1
-/*
- * XXXUBC temp hack because of the removal of b_validend.
- * eventually we'll store NFS VDIR data in the page cache as well,
- * we'll fix this at that point.
- */
-#define	NFS_DIRBLKSIZ	PAGE_SIZE
-#define	NFS_DIRFRAGSIZ	PAGE_SIZE
-#else
 #define	NFS_DIRBLKSIZ	8192		/* Must be a multiple of DIRBLKSIZ */
 #define NFS_DIRFRAGSIZ	 512		/* Same as DIRBLKSIZ, generally */
-#endif
 
 /*
  * Maximum number of directory entries cached per NFS node, to avoid
