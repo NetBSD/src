@@ -35,6 +35,13 @@
 #endif
 
 
+/* Provide a STARTFILE_SPEC appropriate for NetBSD.  Here we provide
+   support for the special GCC option -static.  */
+
+#undef STARTFILE_SPEC
+#define STARTFILE_SPEC \
+  "%{!shared:%{pg:gcrt0%O%s}%{!pg:%{p:mcrt0%O%s}%{!p:%{!static:crt0%O%s}%{static:scrt0%O%s}}}}"
+
 /* Provide a CPP_SPEC appropriate for NetBSD.  Current we just deal with
    the GCC option `-posix'.  */
 
