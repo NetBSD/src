@@ -1,4 +1,4 @@
-/*	$NetBSD: pf_ioctl.c,v 1.3 2004/06/22 18:04:32 christos Exp $	*/
+/*	$NetBSD: pf_ioctl.c,v 1.4 2004/06/22 18:59:14 martin Exp $	*/
 /*	$OpenBSD: pf_ioctl.c,v 1.112 2004/03/22 04:54:18 mcbride Exp $ */
 
 /*
@@ -2762,6 +2762,7 @@ pfil4_wrapper(void *arg, struct mbuf **mp, struct ifnet *ifp, int dir)
 		return (0);
 }
 
+#ifdef INET6
 int
 pfil6_wrapper(void *arg, struct mbuf **mp, struct ifnet *ifp, int dir)
 {
@@ -2771,6 +2772,7 @@ pfil6_wrapper(void *arg, struct mbuf **mp, struct ifnet *ifp, int dir)
 	else
 		return (0);
 }
+#endif
 
 extern void pfi_kifaddr_update(void *);
 
