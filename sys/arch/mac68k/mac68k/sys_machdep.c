@@ -65,8 +65,8 @@
  */
 /*
  *	from: from: @(#)sys_machdep.c	7.7 (Berkeley) 5/7/91
- *	$Id: sys_machdep.c,v 1.2 1993/11/29 00:41:05 briggs Exp $
- *	$Id: sys_machdep.c,v 1.2 1993/11/29 00:41:05 briggs Exp $
+ *	$Id: sys_machdep.c,v 1.3 1994/10/20 05:17:30 cgd Exp $
+ *	$Id: sys_machdep.c,v 1.3 1994/10/20 05:17:30 cgd Exp $
  */
 
 #include "sys/param.h"
@@ -86,11 +86,11 @@ int	nvualarm;
 
 vtrace(p, uap, retval)
 	struct proc *p;
-	register struct args {
-		int	request;
-		int	value;
-	} *uap;
-	int *retval;
+	register struct vtrace_args /* {
+		syscallarg(int) request;
+		syscallarg(int) value;
+	} */ *uap;
+	register_t *retval;
 {
 	int vdoualarm();
 
@@ -175,8 +175,11 @@ cachectl(req, addr, len)
 
 int sysarch(p, uap, retval)
 	struct proc *p;
-	void	    *uap;
-	int	    *retval;
+	struct sysarch_args /* {
+		syscallarg(int) op;
+		syscallarg(char *) parms;
+	} */ *uap;
+	register_t *retval;
 {
 	return ENOSYS;
 }
