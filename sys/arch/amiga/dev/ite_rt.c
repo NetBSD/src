@@ -1,4 +1,4 @@
-/*	$NetBSD: ite_rt.c,v 1.13 1995/04/06 19:19:48 chopps Exp $	*/
+/*	$NetBSD: ite_rt.c,v 1.14 1995/04/08 05:30:58 chopps Exp $	*/
 
 /*
  * Copyright (c) 1993 Markus Wild
@@ -474,7 +474,7 @@ retina_scroll(struct ite_softc *ip, int sy, int sx, int count, int dir)
 		bcopy(fb + sy * ip->cols, fb + (sy + count) * ip->cols,
 		    4 * (ip->bottom_margin - sy - count + 1) * ip->cols);
 		retina_clear(ip, sy, 0, count, ip->cols);
-#else
+#endif
 	} else if (dir == SCROLL_RIGHT) {
 		bcopy(fb + sx + sy * ip->cols, fb + sx + sy * ip->cols + count,
 		    4 * (ip->cols - (sx + count)));
