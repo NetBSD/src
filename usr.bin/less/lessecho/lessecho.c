@@ -1,4 +1,4 @@
-/*	$NetBSD: lessecho.c,v 1.3 2001/07/26 13:43:47 mrg Exp $	*/
+/*	$NetBSD: lessecho.c,v 1.4 2002/03/05 12:28:37 mrg Exp $	*/
 
 /*
  * Copyright (C) 1984-2000  Mark Nudelman
@@ -20,17 +20,24 @@
  * -cx	Specifies "x" to be the close quote character.
  * -pn	Specifies "n" to be the open quote character, as an integer.
  * -dn	Specifies "n" to be the close quote character, as an integer.
+ * -mx  Specifies "x" to be a metachar.
+ * -nn  Specifies "n" to be a metachar, as an integer.
+ * -ex  Specifies "x" to be the escape char for metachars.
+ * -fn  Specifies "x" to be the escape char for metachars, as an integer.
  * -a	Specifies that all arguments are to be quoted.
  *	The default is that only arguments containing spaces are quoted.
  */
 
 #include "less.h"
 
-static char *version = "$Revision: 1.3 $";
+static char *version = "$Revision: 1.4 $";
 
 static int quote_all = 0;
 static char openquote = '"';
 static char closequote = '"';
+static char *meta_escape = "\\";
+static char metachars[64] = "";
+static int num_metachars = 0;
 
 static void pr_usage __P((void));
 static void pr_version __P((void));
@@ -41,7 +48,7 @@ static long lstrtol __P((char *, int, char **));
 pr_usage()
 {
 	fprintf(stderr,
-		"usage: lessecho [-ox] [-cx] [-pn] [-dn] [-a] file ...\n");
+		"usage: lessecho [-ox] [-cx] [-pn] [-dn] [-mx] [-nn] [-a] file ...\n");
 }
 
 	static void
@@ -176,21 +183,37 @@ main(argc, argv)
 		case 'a':
 			quote_all = 1;
 			break;
-		case 'o':
-			openquote = *++arg;
-			break;
 		case 'c':
 			closequote = *++arg;
-			break;
-		case 'p':
-			openquote = lstrtol(++arg, 0, &s);
-			if (s == arg)
-				pr_error("Missing number after -O");
 			break;
 		case 'd':
 			closequote = lstrtol(++arg, 0, &s);
 			if (s == arg)
-				pr_error("Missing number after -C");
+				pr_error("Missing number after -d");
+			break;
+		case 'e':
+			if (strcmp(++arg, "-") == 0)
+				meta_escape = "";
+			else
+				meta_escape = arg;
+			break;
+		case 'o':
+			openquote = *++arg;
+			break;
+		case 'p':
+			openquote = lstrtol(++arg, 0, &s);
+			if (s == arg)
+				pr_error("Missing number after -p");
+			break;
+		case 'm':
+			metachars[num_metachars++] = *++arg;
+			metachars[num_metachars] = '\0';
+			break;
+		case 'n':
+			metachars[num_metachars++] = lstrtol(++arg, 0, &s);
+			if (s == arg)
+				pr_error("Missing number after -n");
+			metachars[num_metachars] = '\0';
 			break;
 		case '?':
 			pr_usage();
@@ -219,11 +242,27 @@ main(argc, argv)
 
 	while (argc-- > 0)
 	{
+		int has_meta = 0;
 		arg = *argv++;
-		if (quote_all || strchr(arg, ' ') != NULL)
+		for (s = arg;  *s != '\0';  s++)
+		{
+			if (strchr(metachars, *s) != NULL)
+			{
+				has_meta = 1;
+				break;
+			}
+		}
+		if (quote_all || (has_meta && strlen(meta_escape) == 0))
 			printf("%c%s%c", openquote, arg, closequote);
-		else
-			printf("%s", arg);
+		else 
+		{
+			for (s = arg;  *s != '\0';  s++)
+			{
+				if (strchr(metachars, *s) != NULL)
+					printf("%s", meta_escape);
+				printf("%c", *s);
+			}
+		}
 		if (argc > 0)
 			printf(" ");
 		else

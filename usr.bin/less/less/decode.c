@@ -1,4 +1,4 @@
-/*	$NetBSD: decode.c,v 1.4 2001/07/26 13:43:44 mrg Exp $	*/
+/*	$NetBSD: decode.c,v 1.5 2002/03/05 12:28:32 mrg Exp $	*/
 
 /*
  * Copyright (C) 1984-2000  Mark Nudelman
@@ -142,6 +142,8 @@ static unsigned char cmdtable[] =
 	CONTROL('X'),CONTROL('V'),0,	A_EXAMINE,
 	':','n',0,			A_NEXT_FILE,
 	':','p',0,			A_PREV_FILE,
+	't',0,				A_NEXT_TAG,
+	'T',0,				A_PREV_TAG,
 	':','x',0,			A_INDEX_FILE,
 	':','d',0,			A_REMOVE_FILE,
 	'-',0,				A_OPT_TOGGLE,
@@ -265,7 +267,7 @@ expand_special_keys(table, len)
 			repl = special_key_str(fm[1]);
 			klen = fm[2] & 0377;
 			fm += klen;
-			if (repl == NULL || strlen(repl) > klen)
+			if (repl == NULL || (int) strlen(repl) > klen)
 				repl = "\377";
 			while (*repl != '\0')
 				*to++ = *repl++;
@@ -299,6 +301,13 @@ init_cmds()
 	add_fcmd_table((char*)cmdtable, sizeof(cmdtable));
 	add_ecmd_table((char*)edittable, sizeof(edittable));
 #if USERFILE
+	/*
+	 * For backwards compatibility,
+	 * try to add tables in the OLD system lesskey file.
+	 */
+#ifdef BINDIR
+	add_hometable(NULL, BINDIR "/.sysless", 1);
+#endif
 	/*
 	 * Try to add the tables in the system lesskey file.
 	 */
@@ -651,7 +660,7 @@ lesskey(filename, sysvar)
 	/*
 	 * Try to open the lesskey file.
 	 */
-	filename = unquote_file(filename);
+	filename = shell_unquote(filename);
 	f = open(filename, OPEN_READ);
 	free(filename);
 	if (f < 0)
@@ -715,7 +724,7 @@ add_hometable(envname, def_filename, sysvar)
 	char *filename;
 	PARG parg;
 
-	if ((filename = lgetenv(envname)) != NULL)
+	if (envname != NULL && (filename = lgetenv(envname)) != NULL)
 		filename = save(filename);
 	else if (sysvar)
 		filename = save(def_filename);
@@ -771,6 +780,16 @@ editchar(c, flags)
 		action = ecmd_decode(usercmd, &s);
 	} while (action == A_PREFIX);
 	
+	if (flags & EC_NORIGHTLEFT)
+	{
+		switch (action)
+		{
+		case EC_RIGHT:
+		case EC_LEFT:
+			action = A_INVALID;
+			break;
+		}
+	}
 #if CMD_HISTORY
 	if (flags & EC_NOHISTORY) 
 	{

@@ -1,4 +1,4 @@
-/*	$NetBSD: funcs.h,v 1.6 2001/07/26 14:20:48 mrg Exp $	*/
+/*	$NetBSD: funcs.h,v 1.7 2002/03/05 12:28:33 mrg Exp $	*/
 
 	public char * save ();
 	public VOID_POINTER ecalloc ();
@@ -14,6 +14,7 @@
 	public void home ();
 	public void add_line ();
 	public void remove_top ();
+	public void win32_scroll_up ();
 	public void lower_left ();
 	public void check_winch ();
 	public void goto_line ();
@@ -44,7 +45,7 @@
 	public POSITION ch_tell ();
 	public int ch_forw_get ();
 	public int ch_back_get ();
-	public int ch_nbuf ();
+	public void ch_setbufspace ();
 	public void ch_flush ();
 	public int seekable ();
 	public void ch_init ();
@@ -97,19 +98,20 @@
 	public int edit_stdin ();
 	public void cat_file ();
 	public void use_logfile ();
-	public char * unquote_file ();
+	public char * shell_unquote ();
+	public char * get_meta_escape ();
+	public char * shell_quote ();
 	public char * homefile ();
 	public char * fexpand ();
 	public char * fcomplete ();
 	public int bin_file ();
-	public char * esc_metachars ();
-	public char * esc_metachars ();
 	public char * lglob ();
 	public char * open_altfile ();
 	public void close_altfile ();
 	public int is_dir ();
 	public char * bad_file ();
 	public POSITION filesize ();
+	public char * shell_coption ();
 	public void forw ();
 	public void back ();
 	public void forward ();
@@ -144,6 +146,7 @@
 	public void init_line ();
 	public void prewind ();
 	public void plinenum ();
+	public int is_ansi_end ();
 	public int pappend ();
 	public void pdone ();
 	public int gline ();
@@ -177,6 +180,7 @@
 	public void opt_i ();
 	public void opt__V ();
 	public void opt_D ();
+	public void opt_x ();
 	public void opt_quote ();
 	public void opt_query ();
 	public int get_swindow ();
@@ -188,8 +192,8 @@
 	public void nopendopt ();
 	public int getnum ();
 	public void init_option ();
-	public struct option * findopt ();
-	public struct option * findopt_name ();
+	public struct loption * findopt ();
+	public struct loption * findopt_name ();
 	public int iread ();
 	public void intread ();
 	public long get_time ();
@@ -197,7 +201,6 @@
 	public int percentage ();
 	public POSITION percent_pos ();
 	public int  os9_signal ();
-	public int  isatty ();
 	public void put_line ();
 	public void flush ();
 	public int putchr ();
@@ -220,6 +223,7 @@
 	public char * pr_expand ();
 	public char * eq_message ();
 	public char * pr_string ();
+	public char * wait_message ();
 	public void repaint_hilite ();
 	public void clear_attn ();
 	public void undo_search ();
@@ -233,9 +237,15 @@
 	public RETSIGTYPE winch ();
 	public void init_signals ();
 	public void psignals ();
+	public void cleantags ();
+	public int gettagtype ();
 	public void findtag ();
-	public int edit_tagfile ();
 	public POSITION tagsearch ();
+	public char * nexttag ();
+	public char * prevtag ();
+	public int ntags ();
+	public int curr_tag ();
+	public int edit_tagfile ();
 	public void open_getchr ();
 	public void close_getchr ();
 	public int getchr ();
