@@ -1,5 +1,5 @@
 #
-#	$Id: files.amiga,v 1.6 1994/05/25 21:54:09 chopps Exp $
+#	$Id: files.amiga,v 1.7 1994/05/29 01:44:37 chopps Exp $
 #
 
 maxusers 2 8 64
@@ -34,7 +34,7 @@ file	arch/amiga/dev/par.c		par needs-count
 pseudo-device	mouse
 file	arch/amiga/dev/ms.c		mouse needs-count
 
-device	fdc at mainbus {}
+device	fdc at mainbus { unit = -1 }
 
 device	fd at fdc
 file	arch/amiga/dev/fd.c		fd needs-flag

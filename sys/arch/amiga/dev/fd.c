@@ -1,43 +1,5 @@
-/*-
- * Copyright (c) 1993, 1994 Charles Hannum.
- * Copyright (c) 1990 The Regents of the University of California.
- * All rights reserved.
- *
- * This code is derived from software contributed to Berkeley by
- * Don Ahn.
- *
- * Redistribution and use in source and binary forms, with or without
- * modification, are permitted provided that the following conditions
- * are met:
- * 1. Redistributions of source code must retain the above copyright
- *    notice, this list of conditions and the following disclaimer.
- * 2. Redistributions in binary form must reproduce the above copyright
- *    notice, this list of conditions and the following disclaimer in the
- *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *	This product includes software developed by the University of
- *	California, Berkeley and its contributors.
- * 4. Neither the name of the University nor the names of its contributors
- *    may be used to endorse or promote products derived from this software
- *    without specific prior written permission.
- *
- * THIS SOFTWARE IS PROVIDED BY THE REGENTS AND CONTRIBUTORS ``AS IS'' AND
- * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
- * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
- * ARE DISCLAIMED.  IN NO EVENT SHALL THE REGENTS OR CONTRIBUTORS BE LIABLE
- * FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
- * DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS
- * OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
- * HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
- * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
- * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
- * SUCH DAMAGE.
- *
- *	from: @(#)fd.c	7.4 (Berkeley) 5/25/91
- */
 /*
- * Copyright (c) 1994 Brad Pepers
+ * Copyright (c) 1994 Christian E. Hopps
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -50,7 +12,7 @@
  *    documentation and/or other materials provided with the distribution.
  * 3. All advertising materials mentioning features or use of this software
  *    must display the following acknowledgement:
- *      This product includes software developed by Brad Pepers
+ *      This product includes software developed by Christian E. Hopps.
  * 4. The name of the author may not be used to endorse or promote products
  *    derived from this software without specific prior written permission
  *
@@ -65,1486 +27,1816 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
- *	$Id: fd.c,v 1.4 1994/04/22 02:20:48 chopps Exp $
- *
- *
+ *	$Id: fd.c,v 1.5 1994/05/29 01:44:50 chopps Exp $
  */
-
-/*
- * floppy interface
- */
-
-#include "fd.h"
-#if NFD > 0
-
 #include <sys/param.h>
 #include <sys/systm.h>
-#include <sys/buf.h>
-#include <sys/dkstat.h>
-#include <sys/disklabel.h>
+#include <sys/kernel.h>
 #include <sys/malloc.h>
-#include <sys/proc.h>
-#include <sys/reboot.h>
-#include <sys/file.h>
+#include <sys/buf.h>
+#include <sys/device.h>
 #include <sys/ioctl.h>
-
-#include <amiga/dev/device.h>
-#include <amiga/amiga/cia.h>
+#include <sys/fcntl.h>
+#include <sys/conf.h>
+#include <sys/disklabel.h>
+#include <sys/disk.h>
+#include <sys/dkbad.h>
+#include <amiga/amiga/device.h>
 #include <amiga/amiga/custom.h>
+#include <amiga/amiga/cia.h>
+#include <amiga/amiga/cc.h>
 
-#define UNIT(x)		(minor(x) & 3)
-#define	b_cylin		b_resid
-#define FDBLK 512
-#define MAX_SECTS 22
-#define IMMED_WRITE 0
-
-int fdattach();
-struct	driver fddriver = {
-	fdattach, "fd",
-};
-
-/* defines */
-#define MFM_SYNC	0x4489
-#define DSKLEN_DMAEN    (1<<15)
-#define DSKLEN_WRITE    (1<<14)
-
-/* drive type values */
-#define FD_NONE		0xffffffff
-#define FD_DD_3		0x00000000	/* double-density 3.5" (880K) */
-#define FD_HD_3		0xaaaaaaaa	/* high-density 3.5" (1760K) */
-#define	FD_DD_5		0x55555555	/* double-density 5.25" (440K) */
-
-struct fd_type {
-	int id;
-	char *name;
-	int tracks;
-	int heads;
-	int read_size;
-	int write_size;
-	int gap_size;
-	int sect_mult;
-	int precomp1;
-	int precomp2;
-	int step_delay;
-	int side_time;
-	int settle_time;
-};
-
-struct fd_type drive_types[] = {
-/*	    id       name      tr he  rdsz   wrsz   gap sm pc1  pc2 sd  st st  */
-	{ FD_DD_3, "DD 3.5\"", 80, 2, 14716, 13630, 414, 1, 80, 161, 3, 2, 18 },
-	{ FD_HD_3, "HD 3.5\"", 80, 2, 29432, 27260, 828, 2, 80, 161, 3, 2, 18 },
-	{ FD_DD_5, "DD 5.25\"",40, 2, 14716, 13630, 414, 1, 40,  80, 3, 2, 18 },
-	{ FD_NONE, "No Drive", 0, }
-};
-int num_dr_types = sizeof(drive_types) / sizeof(drive_types[0]);
-
+enum fdc_bits { FDB_CHANGED = 2, FDB_PROTECT, FDB_CYLZERO, FDB_READY };
 /*
- * Per drive structure.
- * N per controller (presently 4) (DRVS_PER_CTLR)
+ * partitions in fd represent different format floppies
+ * partition a is 0 etc..
  */
-#define DRVS_PER_CTLR 4
-struct fd_data {
-	int fdu;		/* This unit number */
-	struct buf head;	/* Head of buf chain      */
-	struct buf rhead;	/* Raw head of buf chain  */
-	int type;		/* Drive type */
-	struct fd_type *ft;	/* Pointer to type descriptor */
-	int flags;
-#define	FDF_OPEN	0x01	/* it's open		*/
-	int skip;
-	int sects;		/* number of sectors in a track */
-	int size;		/* size of disk in sectors */
-	int side;		/* current side disk is on */
-	int dir;		/* current direction of stepping */
-	int cyl;		/* current cylinder disk is on */
-	int buf_track;
-	int buf_dirty;
-	char *buf_data;
-	char *buf_labels;
-	int write_cnt;
-};
-
-/*
- * Per controller structure.
- */
-struct fdc_data
-{
-	int fdcu;		/* our unit number */
-	struct fd_data *fd;	/* drive we are currently doing work for */
-	int motor_fdu;	/* drive that has its motor on */
-	int state;
-	int saved;
-	int retry;
-	struct fd_data fd_data[DRVS_PER_CTLR];
-};
-struct fdc_data fdc_data[NFD];
-
-/*
- * Throughout this file the following conventions will be used:
- *
- * fd is a pointer to the fd_data struct for the drive in question
- * fdc is a pointer to the fdc_data struct for the controller
- * fdu is the floppy drive unit number
- * fdcu is the floppy controller unit number
- * fdsu is the floppy drive unit number on that controller. (sub-unit)
- */
-typedef int	fdu_t;
-typedef int	fdcu_t;
-typedef int	fdsu_t;
-typedef	struct fd_data *fd_p;
-typedef struct fdc_data *fdc_p;
-
-/*
- * protos.
- */
-static int delay __P((int));
-void encode __P((u_long, u_long *, u_long *));
-void fd_step __P((void));
-void fd_seek __P((fd_p, int));
-void correct __P((u_long *));
-void fd_probe __P((fd_p));
-void fd_turnon __P((fdc_p, fdu_t));
-void fd_turnoff __P((fdc_p));
-void track_read __P((fdc_p, fd_p, int));
-void fd_timeout __P((fdc_p));
-void fd_motor_to __P((fdcu_t));
-void fd_motor_on __P((fdc_p, fdu_t));
-void track_write __P((fdc_p, fd_p));
-void amiga_write __P((fd_p));
-void fd_calibrate __P((fd_p));
-void encode_block __P((u_long *, u_char *, int, u_long *));
-void fd_select_dir __P((fd_p, int));
-void fd_pseudointr __P((fdc_p));
-void fd_select_side __P((fd_p, int));
-
-u_long scan_sync __P((u_long, u_long, int));
-u_long encode_long __P((u_long, u_long *));
-u_long loop_read_id __P((int));
-u_long get_drive_id __P((int));
-
-int fdstate __P((fdc_p));
-int retrier __P((fdc_p));
-int amiga_read __P((fd_p));
-int get_drive_type __P((u_long));
-
-/* device routines */
-int Fdopen __P((dev_t, int));
-int fdsize __P((dev_t));
-int fdioctl __P((dev_t, int, caddr_t, int, struct proc *));
-int fdclose __P((dev_t, int));
-int fdattach __P((struct amiga_device *));
-
-void fdintr __P((fdcu_t));
-void fdstart __P((fdc_p));
-void fdstrategy __P((struct buf *bp));
-
-#define DEVIDLE		0
-#define FINDWORK	1
-#define	DOSEEK		2
-#define DO_IO	 	3
-#define	DONE_IO		4
-#define	WAIT_READ	5
-#define	WAIT_WRITE	6
-#define DELAY_WRITE	7
-#define RECALCOMPLETE	8
-#define	STARTRECAL	9
-#define	RESETCTLR	10
-#define	SEEKWAIT	11
-#define	RECALWAIT	12
-#define	MOTORWAIT	13
-
-#undef DEBUG
-
-#ifdef DEBUG 
-
-char *fdstates[] =
-{
-"DEVIDLE",
-"FINDWORK",
-"DOSEEK",
-"DO_IO",
-"DONE_IO",
-"WAIT_READ",
-"WAIT_WRITE",
-"DELAY_WRITE",
-"RECALCOMPLETE",
-"STARTRECAL",
-"RESETCTLR",
-"SEEKWAIT",
-"RECALWAIT",
-"MOTORWAIT",
-};
-
-#define TRACE0(arg) if (fd_debug == 1) printf(arg)
-#define TRACE1(arg1,arg2) if (fd_debug == 1) printf(arg1,arg2)
-
-#else	/* !DEBUG */
-
-#define TRACE0(arg)
-#define TRACE1(arg1,arg2)
-
-#endif	/* !DEBUG */
-
-extern int hz;
-
-unsigned char *raw_buf = NULL;
-#ifdef DEBUG
-int fd_debug = 1;
-#else
-int fd_debug = 0;
+enum fd_parttypes { 
+	FDAMIGAPART = 0, 
+#ifdef not_yet
+	FDMSDOSPART,
 #endif
+	FDMAXPARTS
+};
+
+#define FDBBSIZE	(8192)
+#define FDSBSIZE	(8192)
+
+#define b_cylin	b_resid
+#define FDUNIT(dev)	(minor(dev) / MAXPARTITIONS)
+#define FDPART(dev)	(minor(dev) % MAXPARTITIONS)
+#define FDMAKEDEV(m, u, p)	makedev((m), (u) * MAXPARTITIONS + (p))
+
+#define FDNHEADS	(2)	/* amiga drives always have 2 heads */
+#define FDSECSIZE	(512)	/* amiga drives always have 512 byte sectors */
+#define FDSECLWORDS	(128)
+
+#define FDSETTLEDELAY	(18000)	/* usec delay after seeking after switch dir */
+#define FDSTEPDELAY	(3500)	/* usec delay after steping */
+#define FDPRESIDEDELAY	(1000)	/* usec delay before writing can occur */
+#define FDWRITEDELAY	(1300)	/* usec delay after write */
+
+#define FDSTEPOUT	(1)	/* decrease track step */
+#define FDSTEPIN	(0)	/* increase track step */
+
+#define FDCUNITMASK	(0x78)	/* mask for all units (bits 6-3) */
+
+#define FDRETRIES	(2)	/* default number of retries */
+#define FDMAXUNITS	(4)	/* maximum number of supported units */
+
+#define DISKLEN_READ	(0)	/* fake mask for reading */
+#define DISKLEN_WRITE	(1 << 14)	/* bit for writing */
+#define DISKLEN_DMAEN	(1 << 15)	/* dma go */
+#define DMABUFSZ ((DISKLEN_WRITE - 1) * 2)	/* largest dma possible */
+
+#define FDMFMSYNC	(0x4489)
 
 /*
- * Floppy Support Routines
+ * floppy device type
  */
-#define MOTOR_ON		(ciab.prb &= ~CIAB_PRB_MTR)
-#define MOTOR_OFF		(ciab.prb |= CIAB_PRB_MTR)
-#define SELECT(mask)		(ciab.prb &= ~mask)
-#define DESELECT(mask)		(ciab.prb |= mask)
-#define SELMASK(drive)		(1 << (3 + (drive & 3)))
+struct fdtype {
+	u_int driveid;		/* drive identification (from drive) */
+	u_int ncylinders;	/* number of cylinders on drive */
+	u_int amiga_nsectors;	/* number of sectors per amiga track */
+	u_int msdos_nsectors;	/* number of sectors per msdos track */
+	u_int nreadw;		/* number of words (short) read per track */
+	u_int nwritew;		/* number of words (short) written per track */
+	u_int gap;		/* track gap size in long words */
+	u_int precomp[2];	/* 1st and 2nd precomp values */
+	char *desc;		/* description of drive type (useq) */
+};
 
 /*
- * Delay for a number of milliseconds
- *	- tried ciab.tod but seems to miss values and screw up
- *	- stupid busy loop for now
+ * floppy disk device data
  */
-static int
-delay(delay_ms)
-	int delay_ms;
-{
-	long cnt, inner;
-	int val;
+struct fd_softc {
+	struct dkdevice dkdev;
+	struct buf bufq;	/* queue of buf's */
+	struct fdtype *type;
+	void *cachep;		/* cached track data (write through) */
+	int cachetrk;		/* cahced track -1 for none */
+	int hwunit;		/* unit for amiga controlling hw */
+	int unitmask;		/* mask for cia select deslect */
+	int pstepdir;		/* previous step direction */
+	int ctrack;		/* current track head is positioned over */
+	int flags;		/* misc flags */
+	int wlabel;
+	int stepdelay;		/* useq to delay after seek user setable */
+	int nsectors;		/* number of sectors per track */
+	int openpart;		/* which partition [ab] == [12] is open */
+	short retries;		/* number of times to retry failed io */
+	short retried;		/* number of times current io retried */
+};
 
-	DELAY (delay_ms * 1000 * 25);	/* NOTE:  DELAY seems to run too fast */
-	return(val);
-}
+/* fd_softc->flags */
+#define FDF_MOTORON	(0x01)	/* motor is running */
+#define FDF_MOTOROFF	(0x02)	/* motor is waiting to be turned off */
+#define FDF_WMOTOROFF	(0x04)	/* unit wants a wakeup after off */
+#define FDF_DIRTY	(0x08)	/* track cache needs write */
+#define FDF_WRITEWAIT	(0x10)	/* need to head select delay on next setpos */
+#define FDF_HAVELABEL	(0x20)	/* label is valid */
+#define FDF_JUSTFLUSH	(0x40)	/* don't bother caching track. */
+
+int fdc_wantwakeup;
+void  *fdc_dmap;
+struct fd_softc *fdc_indma;
+
+struct fdcargs {
+	struct fdtype *type;
+	int unit;
+};
+
+int fdmatch __P((struct device *, struct cfdata *, void *));
+int fdcmatch __P((struct device *, struct cfdata *, void *));
+int fdcprint __P((void *, char *));
+void fdcattach __P((struct device *, struct device *, void *));
+void fdattach __P((struct device *, struct device *, void *));
+
+void fdstart __P((struct fd_softc *));
+void fddone __P((struct fd_softc *));
+void fdfindwork __P((int));
+void fddmastart __P((struct fd_softc *, int));
+void fddmadone __P((struct fd_softc *, int));
+void fdsetpos __P((struct fd_softc *, int, int));
+void fdmotoroff __P((void *));
+void fdmotorwait __P((void *));
+int fdminphys __P((struct buf *));
+void fdcachetoraw __P((struct fd_softc *));
+int fdrawtocache __P((struct fd_softc *));
+int fdloaddisk __P((struct fd_softc *));
+u_long *mfmblkencode __P((u_long *, u_long *, u_long *, int));
+u_long *mfmblkdecode __P((u_long *, u_long *, u_long *, int));
+struct fdtype * fdcgetfdtype __P((int));
+
+void fdstrategy __P((struct buf *));
+
+struct dkdriver fddkdriver = { fdstrategy };
 
 /*
- * motor control stuff
+ * read size is (nsectors + 1) * mfm secsize + gap bytes + 2 shorts 
+ * write size is nsectors * mfm secsize + gap bytes + 3 shorts
+ * the extra shorts are to deal with a dma hw bug in the controller
+ * they are probably too much (I belive the bug is 1 short on write and
+ * 3 bits on read) but there is no need to be cheap here.
  */
-void
-fd_motor_to(fdcu)
-	fdcu_t fdcu;
-{
-	printf("timeout starting motor\n");	/* XXXX */
-	fdc_data[fdcu].motor_fdu = -2;
-}
+#define MAXTRKSZ (22 * FDSECSIZE)
+struct fdtype fdtype[] = {
+	{ 0x00000000, 80, 11, 9, 7358, 6815, 414, { 80, 161 }, "3.5dd" },
+	{ 0x55555555, 40, 11, 9, 7358, 6815, 414, { 80, 161 }, "5.25dd" },
+	{ 0xAAAAAAAA, 80, 22, 18, 14716, 13630, 828, { 80, 161 }, "3.5hd" }
+};
+int nfdtype = sizeof(fdtype) / sizeof(*fdtype);
 
-void
-fd_motor_on(fdc, fdu)
-	fdc_p fdc;
-	fdu_t fdu;
-{
-	int i;
+struct cfdriver fdcd = {
+	NULL, "fd", fdmatch, fdattach, DV_DISK,
+	sizeof(struct fd_softc), NULL, 0 };
 
-	/* deselect all drives */
-	for (i = 0; i < DRVS_PER_CTLR; i++)
-		DESELECT(SELMASK(i));
-
-	/* turn on the unit's motor */
-	MOTOR_ON;
-	SELECT(SELMASK(fdu));
-
-	timeout((timeout_t)fd_motor_to, (caddr_t)fdc->fdcu, hz);
-	while (ciaa.pra & CIAA_PRA_RDY)
-		;
-	untimeout((timeout_t)fd_motor_to, (caddr_t)fdc->fdcu);
-	fdc->motor_fdu = fdu;
-}
-
-void
-fd_turnoff(fdc)
-	fdc_p fdc;
-{
-	int i;
-
-	if (fdc->motor_fdu != -1) {
-		/* deselect all drives */
-		for (i = 0; i < DRVS_PER_CTLR; i++)
-			DESELECT(SELMASK(i));
-
-		/* turn off the unit's motor */
-		MOTOR_OFF;
-		SELECT(SELMASK(fdc->motor_fdu));
-		MOTOR_ON;
-		DESELECT(SELMASK(fdc->motor_fdu));
-	}
-
-	fdc->motor_fdu = -1;
-}
-
-void
-fd_turnon(fdc, fdu)
-	fdc_p fdc;
-	fdu_t fdu;
-{
-	if (fdc->motor_fdu == fdu)
-		return;
-
-	fd_turnoff(fdc);
-	fd_motor_on(fdc, fdu);
-}
+struct cfdriver fdccd = {
+	NULL, "fdc", fdcmatch, fdcattach, DV_DULL,
+	sizeof(struct device), NULL, 0 };
 
 /*
- * Step the drive once in its current direction
+ * all hw access through macros, this helps to hide the active low 
+ * properties
  */
-void
-fd_step()
-{
-	ciab.prb &= ~CIAB_PRB_STEP;
-	ciab.prb |= CIAB_PRB_STEP;
-}
+
+#define FDUNITMASK(unit)	(1 << (3 + (unit)))
 
 /*
- * Select the side to use for a particular drive.
- * The drive must have been calibrated at some point before this.
- * The drive must also be active and the motor must be running.
+ * select units using mask
  */
-void
-fd_select_side(fd, side)
-	fd_p fd;
-	int side;
-{
-	if (fd->side == side)
-		return;
-
-	/* select the requested side */
-	if (side == 0)
-		ciab.prb &= ~CIAB_PRB_SIDE;
-	else
-		ciab.prb |= CIAB_PRB_SIDE;
-	delay(fd->ft->side_time);
-	fd->side = side;
-}
+#define FDSELECT(um)	do { ciab.prb &= ~(um); } while (0)
 
 /*
- * Select the direction to use for the current particular drive.
+ * deselect units using mask
  */
-void
-fd_select_dir(fd, dir)
-	fd_p fd;
-	int dir;
-{
-	if (fd->dir == dir)
-		return;
-
-	/* select the requested direction */
-	if (dir == 0)
-		ciab.prb &= ~CIAB_PRB_DIR;
-	else
-		ciab.prb |= CIAB_PRB_DIR;
-	delay(fd->ft->settle_time);
-	fd->dir = dir;
-}
+#define FDDESELECT(um)	do { ciab.prb |= (um); delay(1); } while (0)
 
 /*
- * Seek the drive to track 0.
- * The drive must be active and the motor must be running.
- * Returns standard floppy error code. /* XXXX doesn't return anything
+ * test hw condition bits
  */
-void
-fd_calibrate(fd)
-	fd_p fd;
-{
-	fd_select_dir(fd, 1);
-
-	/* loop until we hit track 0 */
-	while (ciaa.pra & CIAA_PRA_TK0) {
-		fd_step();
-		delay(4);
-	}
-
-	/* set known values */
-	fd->cyl = 0;
-
-	delay (fd->ft->settle_time);
-}
+#define FDTESTC(bit)	((ciaa.pra & (1 << (bit))) == 0)
 
 /*
- * Seek the drive to the requested track.
- * The drive must be active and the motor must be running.
+ * set motor for select units, true motor on else off
  */
-void
-fd_seek(fd, track)
-	fd_p fd;
-	int track;
-{
-	int cyl, side;
-	int dir, cnt;
-
-	cyl = track >> 1;
-	side = (track % 2) ^ 1;
-
-	if (fd->cyl == -1)
-		fd_calibrate(fd);
-
-	fd_select_side(fd, side);
-
-	if (cyl < fd->cyl) {
-		dir = 1;
-		cnt = fd->cyl - cyl;
-	} else {
-		dir = 0;
-		cnt = cyl - fd->cyl;
-	}
-
-	fd_select_dir(fd, dir);
-
-	if (cnt) {
-		while (cnt) {
-			fd_step();
-			delay(fd->ft->step_delay);
-			--cnt;
-		}
-		delay(fd->ft->settle_time);
-	}
-
-	fd->cyl = cyl;
-}
-
-void
-encode(data, dest, csum)
-	u_long data;
-	u_long *dest, *csum;
-{
-	u_long data2;
-
-	data &= 0x55555555;
-	data2 = data ^ 0x55555555;
-	data |= ((data2 >> 1) | 0x80000000) & (data2 << 1);
-
-	if (*(dest - 1) & 0x00000001)
-		data &= 0x7FFFFFFF;
-
-	*csum ^= data;
-	*dest = data;
-}
-
-u_long
-encode_long(data, dest)
-	u_long data;
-	u_long *dest;
-{
-	u_long csum;
-
-	csum = 0;
-
-	encode(data >> 1, dest, &csum);
-	encode(data, dest + 1, &csum);
-
-	return(csum & 0x55555555);
-}
-
-void
-encode_block(dest, from, len, csum)
-	u_long *dest, *csum;
-	u_char *from;
-	int len;
-{
-	int cnt, to_cnt = 0;
-	u_long data, *src;
-
-	to_cnt = 0;
-	src = (u_long *)from;
-
-	/* odd bits */
-	for (cnt = 0; cnt < len / 4; cnt++) {
-		data = src[cnt] >> 1;
-		encode(data, dest + to_cnt++, csum);
-	}
-
-	/* even bits */
-	for (cnt = 0; cnt < len / 4; cnt++) {
-		data = src[cnt];
-		encode(data, dest + to_cnt++, csum);
-	}
-
-	*csum &= 0x55555555;
-}
-
-void
-correct(raw)
-	u_long *raw;
-{
-	u_char data, *ptr;
-
-	ptr = (u_char *)raw;
-
-	data = *ptr;
-	if (*(ptr - 1) & 0x01) {	/* XXXX will choke on old GVP's */
-		*ptr = data & 0x7f;
-		return;
-	}
-
-	if (data & 0x40) 
-		return;
-
-	*ptr |= 0x80;
-}
+#define FDSETMOTOR(on)	do { \
+	if (on) ciab.prb &= ~CIAB_PRB_MTR; else ciab.prb |= CIAB_PRB_MTR; \
+	} while (0)
 
 /*
- * amiga_write converts track/labels data to raw track data
+ * set head for select units
  */
-void
-amiga_write(fd)
-	fd_p fd;
-{
-	u_long *raw, csum, format;
-	u_char *data, *labels;
-	int cnt, track;
-
-	raw = (u_long *)raw_buf;	/* XXXX never used while intr? */
-					/* XXXX never waits after here? */
-	data = fd->buf_data;
-	labels = fd->buf_labels;
-	track = fd->buf_track;
-
-	/* gap space */
-	for (cnt = fd->ft->gap_size; cnt; cnt--)
-		*raw++ = 0xaaaaaaaa;
-
-	/* sectors */
-	for (cnt = 0; cnt < fd->sects; cnt++) {
-		*raw = 0xaaaaaaaa;
-		correct(raw);
-		++raw;
-
-		*raw++ = 0x44894489;
-
-		format = 0xff000000 | (track << 16) | (cnt << 8) | (fd->sects - cnt);
-		csum = encode_long(format,raw);
-		raw += 2;
-
-		encode_block(raw, labels + cnt * 16, 16, &csum);
-		raw += 8;
-		csum = encode_long(csum, raw);
-		raw += 2;
-
-		csum = 0;
-		encode_block(raw+2, data + cnt * 512, 512, &csum);
-		csum = encode_long(csum, raw);
-		correct (raw+2);
-		raw += 256 + 2;
-	}
-	*raw = 0xaaa80000;
-	correct(raw);
-
-}
-
-#define get_word(raw) (*(u_short *)(raw))
-#define get_long(raw) (*(u_long *)(raw))
-
-#define decode_long(raw) \
-    (((get_long(raw) & 0x55555555) << 1) | \
-    (get_long((raw)+4) & 0x55555555))
-
-#define MFM_NOSYNC	1
-#define MFM_HEADER	2
-#define MFM_DATA	3
-#define MFM_TRACK	4
+#define FDSETHEAD(head)	do { \
+	if (head) ciab.prb &= ~CIAB_PRB_SIDE; else ciab.prb |= CIAB_PRB_SIDE; \
+	delay(1); } while (0)
 
 /*
- * scan_sync - looks for the next start of sector marked by a sync. When
- *	sect != 0, can't be certain of a starting sync.
+ * select direction, true towards spindle else outwards
  */
-u_long
-scan_sync(raw, end, sect)
-	u_long raw, end;
-	int sect;
+#define FDSETDIR(in)	do { \
+	if (in) ciab.prb &= ~CIAB_PRB_DIR; else ciab.prb |= CIAB_PRB_DIR; \
+	delay(1); } while (0)
+
+/*
+ * step the selected units
+ */
+#define FDSTEP	do { \
+    ciab.prb &= ~CIAB_PRB_STEP; ciab.prb |= CIAB_PRB_STEP; \
+    } while (0)
+
+#define FDDMASTART(len, towrite)	do { \
+    int dmasz = (len) | ((towrite) ? DISKLEN_WRITE : 0) | DISKLEN_DMAEN; \
+    custom.dsklen = dmasz; custom.dsklen = dmasz; } while (0)
+
+#define FDDMASTOP	do { custom.dsklen = 0; } while (0)
+
+
+int
+fdcmatch(pdp, cfp, auxp)
+	struct device *pdp;
+	struct cfdata *cfp;
+	void *auxp;
 {
-	u_short data;
-
-	if (sect == 0) {
-		while (raw < end) {
-			data = get_word(raw);
-			if (data == 0x4489)
-				break;
-			raw += 2;
-		}
-		if (raw > end)
-			return(0);
-	}
-
-	while (raw < end) {
-		data = get_word(raw);
-		if (data != 0x4489)
-			break;
-		raw += 2;
-	}
-	if (raw > end)
+	if (matchname("fdc", auxp) == 0 || cfp->cf_unit != 0)
 		return(0);
-	return(raw);
-}
-
-/*
- * amiga_read reads a raw track of data into a track buffer
- */
-int
-amiga_read(fd)
-	fd_p fd;
-{
-	u_char *track_data, *label_data;
-	u_long raw, end, val1, val2, csum, data_csum;
-	u_long *data, *labels;
-	int scnt, cnt, format, tnum, sect, snext;
-
-	track_data = fd->buf_data;
-	label_data = fd->buf_labels;
-	raw = (u_long)raw_buf;		/* XXXX see above about glb */
-
-	end = raw + fd->ft->read_size;
-
-	for (scnt = fd->sects-1; scnt >= 0; scnt--) {
-		if ((raw = scan_sync(raw, end, scnt == fd->sects-1)) == 0) {
-			/* XXXX */
-			printf("can't find sync for sector %d\n", scnt);
-			return(1);
-		}
-
-		val1 = decode_long(raw);
-
-		format = (val1 >> 24) & 0xFF;
-		tnum   = (val1 >> 16) & 0xFF;
-		sect   = (val1 >>  8) & 0xFF;
-		snext  = (val1)       & 0xFF;
-
-		labels = (u_long *)(label_data + (sect << 4));
-
-		csum = 0;
-		val1 = get_long(raw);
-		raw += 4;
-		csum ^= val1;
-		val1 = get_long(raw);
-		raw += 4;
-		csum ^= val1;
-
-		for (cnt = 0; cnt < 4; cnt++) {
-			val1 = get_long(raw+16);
-			csum ^= val1;
-			val1 &= 0x55555555;
-			val2 = get_long(raw);
-			raw += 4;
-			csum ^= val2;
-			val2 &= 0x55555555;
-			val2 = val2 << 1;
-			val1 |= val2;
-			*labels++ = val1;
-		}
-
-		csum &= 0x55555555;
-		raw += 16;
-		val1 = decode_long(raw);
-		raw += 8;
-		if (val1 != csum) {
-			/* XXXX */
-			printf("MFM_HEADER %d: %08x,%08x\n", scnt,
-			    val1, csum);
-			return(MFM_HEADER);
-		}
-
-		/* verify track */
-		if (tnum != fd->buf_track) {
-			/* XXXX */
-			printf("MFM_TRACK %d: %d, %d\n", scnt, tnum,
-			    fd->buf_track);
-			return(MFM_TRACK);
-		}
-
-		data_csum = decode_long(raw);
-		raw += 8;
-		data = (u_long *)(track_data + (sect << 9));
-
-		csum = 0;
-		for (cnt = 0; cnt < 128; cnt++) {
-			val1 = get_long(raw + 512);
-			csum ^= val1;
-			val1 &= 0x55555555;
-			val2 = get_long(raw);
-			raw += 4;
-			csum ^= val2;
-			val2 &= 0x55555555;
-			val2 = val2 << 1;
-			val1 |= val2;
-			*data++ = val1;
-		}
-
-		csum &= 0x55555555;
-		raw += 512;
-
-		if (data_csum != csum) {
-			printf(
-			    "MFM_DATA: f=%d t=%d s=%d sn=%d sc=%d %lx, %lx\n", 
-			    format, tnum, sect, snext, scnt, data_csum, csum);
-			return(MFM_DATA);
-		}
+	if ((fdc_dmap = alloc_chipmem(DMABUFSZ)) == NULL) {
+		printf("fdc: unable to allocate dma buffer\n");
+		return(0);
 	}
-	return(0);
-}
-
-/*
- * Return unit ID number of given disk
- * XXXX This function doesn't return anything.
- */
-u_long
-loop_read_id(unit)
-	int unit;
-{
-	u_long id;
-	u_long id_bit;
-
-	id = 0;
-
-	/* loop and read disk ID */
-	for (id_bit = 0x80000000; id_bit; id_bit >>= 1) {
-		SELECT(SELMASK(unit));
-
-		/* read and store value of DSKRDY */
-		if (ciaa.pra & CIAA_PRA_RDY)
-			id |= id_bit;
-
-		DESELECT(SELMASK(unit));
-	}
-}
-
-u_long
-get_drive_id(unit)
-	int unit;
-{
-	int t;
-	u_long id, id_bit;
-	u_char mask1, mask2;
-	volatile u_char *a_ptr;
-	volatile u_char *b_ptr;
-
-	id = 0;
-	a_ptr = &ciaa.pra;
-	b_ptr = &ciab.prb;
-	mask1 = ~(1 << (3 + unit));
-	mask2 = 1 << (3 + unit);
-
-	*b_ptr &= ~CIAB_PRB_MTR;
-	*b_ptr &= mask1;
-	*b_ptr |= mask2;
-	*b_ptr |= CIAB_PRB_MTR;
-	*b_ptr &= mask1;
-	*b_ptr |= mask2;
-
-	for (id_bit = 0x80000000; id_bit;  id_bit >>= 1) {
-		*b_ptr &= mask1;
-		if ((*a_ptr) & CIAA_PRA_RDY)
-			id |= id_bit;
-		*b_ptr |= mask2;
-	}
-
-	/* all amigas have internal drives at 0. */
-	if (unit == 0 && id == FD_NONE)
-		return(FD_DD_3);
-	return(id);
-#if 0
-  /* set up for ID */
-  MOTOR_ON;
-  SELECT(SELMASK(unit));
-  DESELECT(SELMASK(unit));
-  MOTOR_OFF;
-  SELECT(SELMASK(unit));
-  DESELECT(SELMASK(unit));
-
-  return loop_read_id(unit); /* XXXX gotta fix loop_read_id() if use */
-#endif
-}
-
-int
-get_drive_type(u_long id)
-{
-	int type;
-
-	for (type = 0; type < num_dr_types; type++)
-		if (drive_types[type].id == id)
-			return(type);
-	return(-1);
-}
-
-void
-fd_probe(fd)
-	fd_p fd;
-{
-	u_long id;
-	int type, data;
-
-	fd->ft = NULL;
-
-	id = get_drive_id(fd->fdu);
-	type = get_drive_type(id);
-
-	/* get_drive_id shuts off the motor */
-	/* XXXX fdc_data[0] only as long as there is one controller */
-	if (fd->fdu == fdc_data[0].motor_fdu)
-		fdc_data[0].motor_fdu = -1;
-
-	if (type == -1) {
-		/* XXXX */
-		printf("fd_probe: unsupported drive type %08x found\n", id);
-		return;
-	}
-
-	fd->type = type;
-	fd->ft = &drive_types[type];
-	if (fd->ft->tracks == 0) {
-		/* XXXX */
-		printf("no drive type %d\n", type);
-	}
-	fd->side = -1;
-	fd->dir = -1;
-	fd->cyl = -1;
-
-	fd->sects = 11 * drive_types[type].sect_mult;
-	fd->size = fd->sects * 
-	    drive_types[type].tracks * 
-	    drive_types[type].heads;
-	fd->flags = 0;
-}
-
-void
-track_read(fdc, fd, track)
-	fdc_p fdc;
-	fd_p fd;
-	int track;
-{
-	u_long len;
-
-	fd->buf_track = track;
-	fdc->state = WAIT_READ;
-
-	fd_seek(fd, track);
-
-	len = fd->ft->read_size >> 1;
-
-	/* setup adkcon bits correctly */
-	custom.adkcon = ADKF_MSBSYNC;
-	custom.adkcon = ADKF_SETCLR | ADKF_WORDSYNC | ADKF_FAST;
-
-	custom.dsksync = MFM_SYNC;
-
-	custom.dsklen = 0;
-	delay(fd->ft->side_time);
-	timeout((timeout_t)fd_timeout, (caddr_t)fdc, 2 * hz);
-
-	custom.dskpt = (u_char *)kvtop(raw_buf);
-	custom.dsklen = len | DSKLEN_DMAEN;
-	custom.dsklen = len | DSKLEN_DMAEN;
-}
-
-void
-track_write(fdc, fd)
-	fdc_p fdc;
-	fd_p fd;
-{
-	int track;
-	u_long len;
-	u_short adk;
-
-	amiga_write(fd);
-
-	track = fd->buf_track;
-	fd->write_cnt += 1;
-
-	fdc->saved = fdc->state;
-	fdc->state = WAIT_WRITE;
-
-	fd_seek(fd, track);
-
-	len = fd->ft->write_size >> 1;
-
-	if ((ciaa.pra & CIAA_PRA_WPRO) == 0)
-		return;
-
-	/* clear adkcon bits */
-	custom.adkcon = ADKF_PRECOMP1 | ADKF_PRECOMP0 | ADKF_WORDSYNC |
-	    ADKF_MSBSYNC;
-
-	/* set appropriate adkcon bits */
-	adk = ADKF_SETCLR | ADKF_FAST | ADKF_MFMPREC;
-	if (track >= fd->ft->precomp2)
-		adk |= ADKF_PRECOMP1;
-	else if (track >= fd->ft->precomp1)
-		adk |= ADKF_PRECOMP0;
-	custom.adkcon = adk;
-
-	custom.dsklen = DSKLEN_WRITE;
-	delay(fd->ft->side_time);
-	timeout((timeout_t)fd_timeout, (caddr_t)fdc, 2 * hz);
-
-	custom.dskpt = (u_char *)kvtop(raw_buf);	/* XXXX again raw */
-	custom.dsklen = len | DSKLEN_DMAEN | DSKLEN_WRITE;
-	custom.dsklen = len | DSKLEN_DMAEN | DSKLEN_WRITE;
-}
-
-/*
- * Floppy Device Code
- */
-int
-fdattach(ad)
-	struct amiga_device *ad;
-{
-	int fdcu = 0;
-	fdc_p fdc = fdc_data + fdcu;
-	int i;
-	unsigned long id;
-	int type;
-
-	fdc->fdcu = fdcu;
-	fdc->state = FINDWORK;
-	fdc->fd = NULL;
-	fdc->motor_fdu = -1;
-
-	for (i = 0; i < DRVS_PER_CTLR; i++) {
-		fdc->fd_data[i].fdu = i;
-		fdc->fd_data[i].flags = 0;
-
-		fdc->fd_data[i].buf_track = -1;
-		fdc->fd_data[i].buf_dirty = 0;
-		fdc->fd_data[i].buf_data = 
-		    malloc(MAX_SECTS * 512, M_DEVBUF, 0);
-		fdc->fd_data[i].buf_labels =
-		    malloc(MAX_SECTS * 16, M_DEVBUF, 0);
-
-		if (fdc->fd_data[i].buf_data == NULL ||
-		    fdc->fd_data[i].buf_labels == NULL) {
-			printf("Cannot alloc buffer memory for fd device\n");
-			return(0);
-		}
-
-		id = get_drive_id(i);
-		type = get_drive_type(id);
-
-		if (type != -1 && drive_types[type].tracks != 0) {
-			printf("floppy drive %d: %s\n", i, 
-			    drive_types[type].name);
-		}
-	}
-
-	raw_buf = (char *)alloc_chipmem(30000);
-	if (raw_buf == NULL) {
-		printf("Cannot alloc chipmem for fd device\n");
-		return 0;
-	}
-
-	/* enable disk DMA */
-	custom.dmacon = DMAF_SETCLR | DMAF_DISK;
-
-	/* enable interrupts for IRQ_DSKBLK */
-	ciaa.icr = CIA_ICR_IR_SC | CIA_ICR_FLG;
-	custom.intena = INTF_SETCLR | INTF_SOFTINT;
-
-	/* enable disk block interrupts */
-	custom.intena = INTF_SETCLR | INTF_DSKBLK;
-
 	return(1);
 }
 
-int
-Fdopen(dev, flags)
-	dev_t dev;
-	int flags;
+void
+fdcattach(pdp, dp, auxp)
+	struct device *pdp, *dp;
+	void *auxp;
 {
-	fdcu_t fdcu;
-	fdc_p fdc;
-	fdu_t fdu;
-	fd_p fd;
+	struct fdcargs args;
 
-	fdcu = 0;
-	fdc = fdc_data + fdcu;
-	fdu = UNIT(dev);
-	fd = fdc->fd_data + fdu;
+	printf(": dmabuf pa 0x%x\n", kvtop(fdc_dmap));
+	args.unit = 0;
+	args.type = fdcgetfdtype(args.unit);
 
-	/* check bounds */
-	if (fdu >= DRVS_PER_CTLR) 
-		return(ENXIO);
+	config_found(dp, &args, fdcprint);
+	for (args.unit++; args.unit < FDMAXUNITS; args.unit++) {
+		if ((args.type = fdcgetfdtype(args.unit)) == NULL)
+			continue;
+		config_found(dp, &args, fdcprint);
+	}
+}
+
+int
+fdcprint(auxp, pnp)
+	void *auxp;
+	char *pnp;
+{
+	return(UNCONF);
+}
+
+/*ARGSUSED*/
+int
+fdmatch(pdp, cfp, auxp)
+	struct device *pdp;
+	struct cfdata *cfp;
+	void *auxp;
+{
+#define cf_unit	cf_loc[0]
+	struct fdcargs *fdap;
+
+	fdap = auxp;
+	if (cfp->cf_unit == fdap->unit || cfp->cf_unit == -1)
+		return(1);
+	return(0);
+#undef cf_unit
+}
+
+void
+fdattach(pdp, dp, auxp)
+	struct device *pdp, *dp;
+	void *auxp;
+{
+	struct fdcargs *ap;
+	struct fd_softc *sc;
+
+	ap = auxp;
+	sc = (struct fd_softc *)dp;
+
+	sc->ctrack = sc->cachetrk = -1;
+	sc->openpart = -1;
+	sc->type = ap->type;
+	sc->hwunit = ap->unit;
+	sc->unitmask = 1 << (3 + ap->unit);
+	sc->retries = FDRETRIES;
+	sc->dkdev.dk_driver = &fddkdriver;
+	sc->stepdelay = FDSTEPDELAY;
+	printf(": %s %d cyl, %d head, %d sec [%d sec], 512 bytes/sec\n",
+	    sc->type->desc, sc->type->ncylinders, FDNHEADS,
+	    sc->type->amiga_nsectors, sc->type->msdos_nsectors);
 
 	/*
-	 * XXXX don't probe if device is currently selected
-	 * it may be in the middle of a DMA transfer and fd_probe
-	 * will deselect all drives
+	 * calibrate the drive
 	 */
-	if (fdc->motor_fdu < 0)
-		fd_probe(fd);
-#if 0
-	else
-		printf ("fd: Fdopen called with a drive selected\n");
-#endif
+	fdsetpos(sc, 0, 0);
+	fdsetpos(sc, sc->type->ncylinders, 0);
+	fdsetpos(sc, 0, 0);
+	fdmotoroff(sc);
 
-
-	if (fd->ft == NULL || fd->ft->tracks == 0)
-		return(ENXIO);
-
-	fd->flags |= FDF_OPEN;
-	fd->write_cnt = 0;
-
-	return(0);
+	/*
+	 * enable disk related interrupts
+	 */
+	custom.dmacon = DMAF_SETCLR | DMAF_DISK;
+	/* XXX why softint */
+	custom.intena = INTF_SETCLR |INTF_SOFTINT | INTF_DSKBLK;
+	ciaa.icr = CIA_ICR_IR_SC | CIA_ICR_FLG;
 }
 
+/*ARGSUSED*/
 int
-fdclose(dev, flags)
+Fdopen(dev, flags, devtype, p)
 	dev_t dev;
-	int flags;
-{
-	struct buf *dp,*bp;
-	fdcu_t fdcu;
-	fdc_p fdc;
-	fdu_t fdu;
-	fd_p fd;
-
-	fdcu = 0;
-	fdc = fdc_data + fdcu;
-	fdu = UNIT(dev);
-	fd = fdc->fd_data + fdu;
-
-
-	/* wait until activity is done for this drive */
-	/* XXXX ACK! sleep.. */
-	do {
-		dp = &(fd->head);
-		bp = dp->b_actf;
-	} while (bp);
-
-	/* XXXX */
-	printf("wrote %d tracks (%d)\n", fd->write_cnt, fd->buf_dirty);
-
-	fd->buf_track = -1;
-	fd->buf_dirty = 0;
-	fd->flags &= ~FDF_OPEN;
-
-	return(0);
-}
-
-int
-fdioctl(dev, cmd, data, flag, p)
-	dev_t dev;
-	int cmd, flag;
-	caddr_t data;
+	int flags, devtype;
 	struct proc *p;
 {
-	struct disklabel *fd_label;
-	fdcu_t fdcu;
-	fdc_p fdc;
-	fdu_t fdu;
-	fd_p fd;
-	int error;
+	struct fd_softc *sc;
+	int wasopen, fwork, error, s;
 
-	fdcu = 0;
-	fdc = fdc_data + fdcu;
-	fdu = UNIT(dev);
-	fd = fdc->fd_data + fdu;
 	error = 0;
 
-	if (cmd != DIOCGDINFO)
-		return (EINVAL);
+	if (FDPART(dev) >= FDMAXPARTS)
+		return(ENXIO);
 
-	fd_label = (struct disklabel *)data;
+	if ((sc = getsoftc(fdcd, FDUNIT(dev))) == NULL)
+		return(ENXIO);
+	if (sc->cachep == NULL)
+		sc->cachep = malloc(MAXTRKSZ, M_DEVBUF, M_WAITOK);
 
-	bzero(fd_label, sizeof(fd_label));
-	fd_label->d_magic = DISKMAGIC;
-	fd_label->d_type = DTYPE_FLOPPY;
-	strncpy(fd_label->d_typename, "fd", sizeof(fd_label->d_typename) - 1);
-	strcpy(fd_label->d_packname, fd->ft->name);
+	s = splbio();
+	/*
+	 * if we are sleeping in fdclose(); waiting for a chance to
+	 * shut the motor off, do a sleep here also.
+	 */
+	while (sc->flags & FDF_WMOTOROFF)
+		tsleep(fdmotoroff, PRIBIO, "Fdopen", 0);
 
-	fd_label->d_rpm = 300 / fd->ft->sect_mult;
-	fd_label->d_secsize = 512;
-	fd_label->d_nsectors = fd->sects;
-	fd_label->d_ntracks = fd->ft->heads;
-	fd_label->d_ncylinders = fd->ft->tracks;
-	fd_label->d_secpercyl = fd_label->d_nsectors * fd_label->d_ntracks;
-	fd_label->d_secperunit= fd_label->d_ncylinders * fd_label->d_secpercyl;
+	fwork = 0;
+	/*
+	 * if not open let user open request type, otherwise 
+	 * ensure they are trying to open same type.
+	 */
+	if (sc->openpart == FDPART(dev))
+		wasopen = 1;
+	else if (sc->openpart == -1) {
+		sc->openpart = FDPART(dev);
+		wasopen = 0;
+	} else {
+		wasopen = 1;
+		error = EPERM;
+		goto done;
+	} 
 
-	fd_label->d_magic2 = DISKMAGIC;
-	fd_label->d_partitions[0].p_offset = 0;
-	fd_label->d_partitions[0].p_size = fd_label->d_secperunit;
-	fd_label->d_partitions[0].p_fstype = FS_UNUSED;
-	fd_label->d_npartitions = 1;
+	/*
+	 * wait for current io to complete if any
+	 */
+	if (fdc_indma) {
+		fwork = 1;
+		fdc_wantwakeup++;	
+		tsleep(Fdopen, PRIBIO, "Fdopen", 0);
+	}
+	if (error = fdloaddisk(sc))
+		goto done;
+	if (error = fdgetdisklabel(sc, dev))
+		goto done;
+#ifdef FDDEBUG
+	printf("  open successful\n");
+#endif
+done:
+	/*
+	 * if we requested that fddone()->fdfindwork() wake us, allow it to 
+	 * complete its job now
+	 */
+	if (fwork)
+		fdfindwork(FDUNIT(dev));
+	splx(s);
 
-	fd_label->d_checksum = 0;
-	fd_label->d_checksum = dkcksum(fd_label);
+	/* 
+	 * if we were not open and we marked us so reverse that.
+	 */
+	if (error && wasopen == 0)
+		sc->openpart = 0;
+	return(error);
+}
 
+/*ARGSUSED*/
+int
+fdclose(dev, flags, devtype, p)
+	dev_t dev;
+	int flags, devtype;
+	struct proc *p;
+{
+	struct fd_softc *sc;
+	int s;
+
+#ifdef FDDEBUG
+	printf("fdclose()\n");
+#endif
+	sc = getsoftc(fdcd, FDUNIT(dev));
+	s = splbio();
+	if (sc->flags & FDF_MOTORON) {
+		sc->flags |= FDF_WMOTOROFF;
+		tsleep(fdmotoroff, PRIBIO, "fdclose", 0);
+		sc->flags &= ~FDF_WMOTOROFF;
+		wakeup(fdmotoroff);
+	}
+	sc->openpart = -1;
+	splx(s);
 	return(0);
 }
 
+int
+fdioctl(dev, cmd, addr, flag, p)
+	dev_t dev;
+	int cmd, flag;
+	caddr_t addr;
+	struct proc *p;
+{
+	struct fd_softc *sc;
+	void *data;
+	int error, wlab;
+
+	sc = getsoftc(fdcd, FDUNIT(dev));
+	
+	if ((sc->flags & FDF_HAVELABEL) == 0)
+		return(EBADF);
+
+	switch (cmd) {
+	case DIOCSBAD:
+		return(EINVAL);
+	case DIOCSRETRIES:
+		if (*(int *)addr < 0)
+			return(EINVAL);
+		sc->retries = *(int *)addr;
+		return(0);
+	case DIOCSSTEP:
+		if (*(int *)addr < FDSTEPDELAY)
+			return(EINVAL);
+		sc->dkdev.dk_label.d_trkseek = sc->stepdelay = *(int *)addr;
+		return(0);
+	case DIOCGDINFO:
+		*(struct disklabel *)addr = sc->dkdev.dk_label;
+		return(0);
+	case DIOCGPART:
+		((struct partinfo *)addr)->disklab = &sc->dkdev.dk_label;
+		((struct partinfo *)addr)->part = 
+		    &sc->dkdev.dk_label.d_partitions[FDPART(dev)];
+		return(0);
+	case DIOCSDINFO:
+		if ((flag & FWRITE) == 0)
+			return(EBADF);
+		return(fdsetdisklabel(sc, (struct disklabel *)addr));
+	case DIOCWDINFO:
+		if ((flag & FWRITE) == 0)
+			return(EBADF);
+		if (error = fdsetdisklabel(sc, (struct disklabel *)addr))
+			return(error);
+		wlab = sc->wlabel;
+		sc->wlabel = 1;
+		error = fdputdisklabel(sc, dev);
+		sc->wlabel = wlab;
+		return(error);
+	case DIOCWLABEL:
+		if ((flag & FWRITE) == 0)
+			return(EBADF);
+		sc->wlabel = *(int *)addr;
+		return(0);
+	default:
+		return(ENOTTY);
+	}
+}
+
+/* 
+ * no dumps to floppy disks thank you.
+ */
 int
 fdsize(dev)
 	dev_t dev;
 {
-	/* check UNIT? */
-	return((fdc_data + 0)->fd_data[UNIT(dev)].size);
+	return(-1);
+}
+
+int
+fdread(dev, uio)
+	dev_t dev;
+	struct uio *uio;
+{
+	return (physio(cdevsw[major(dev)].d_strategy, (struct buf *)NULL,
+	    dev, B_READ, fdminphys, uio));
+}
+
+int
+fdwrite(dev, uio)
+	dev_t dev;
+	struct uio *uio;
+{
+	return (physio(cdevsw[major(dev)].d_strategy, (struct buf *)NULL,
+	    dev, B_WRITE, fdminphys, uio));
+}
+
+
+int
+fdintr()
+{
+	int s;
+	
+	s = splbio();
+	if (fdc_indma)
+		fddmadone(fdc_indma, 0);
+	splx(s);
 }
 
 void
 fdstrategy(bp)
 	struct buf *bp;
 {
-	fdcu_t fdcu;
-	fdc_p fdc;
-	fdu_t fdu;
-	fd_p fd;
-	long nblocks, blknum;
+	struct disklabel *lp;
+	struct fd_softc *sc;
 	struct buf *dp;
-	int s;
-	
-	fdcu = 0;
-	fdc = fdc_data + fdcu;
-	fdu = UNIT(bp->b_dev);
-	fd = fdc->fd_data + fdu;
+	int unit, part, s;
 
-	if (bp->b_blkno < 0) {
-		/* XXXX */
-		printf("fdstrat error: fdu = %d, blkno = %d, bcount = %d\n",
-		    fdu, bp->b_blkno, bp->b_bcount);
-		bp->b_error = EINVAL;
+	unit = FDUNIT(bp->b_dev);
+	part = FDPART(bp->b_dev);
+	sc = getsoftc(fdcd, unit);
+
+#ifdef FDDEBUG
+	printf("fdstrategy: 0x%x\n", bp);
+#endif
+	/*
+	 * check for valid partition and bounds
+	 */
+	lp = &sc->dkdev.dk_label;
+	if ((sc->flags & FDF_HAVELABEL) == 0) {
+		bp->b_error = EIO;
+		goto bad;
+	}		
+	if (bounds_check_with_label(bp, lp, sc->wlabel) <= 0)
+		goto done;
+
+	/*
+	 * trans count of zero or bounds check indicates io is done
+	 * we are done.
+	 */
+	if (bp->b_bcount == 0)
+		goto done;
+
+	/*
+	 * queue the buf and kick the low level code
+	 */
+	s = splbio();
+	dp = &sc->bufq;
+	disksort(dp, bp);
+	fdstart(sc);
+	splx(s);
+	return;
+bad:
+	bp->b_flags |= B_ERROR;
+done:
+	bp->b_resid = bp->b_bcount;
+	biodone(bp);
+}
+
+/*
+ * make sure disk is loaded and label is up-to-date.
+ */
+int
+fdloaddisk(sc)
+	struct fd_softc *sc;
+{
+	/*
+	 * if diskchange is low step drive to 0 then up one then to zero.
+	 */
+	fdsetpos(sc, 0, 0);
+	if (FDTESTC(FDB_CHANGED)) {
+		sc->cachetrk = -1;		/* invalidate the cache */
+		sc->flags &= ~FDF_HAVELABEL;
+		fdsetpos(sc, FDNHEADS, 0);
+		fdsetpos(sc, 0, 0);
+		if (FDTESTC(FDB_CHANGED)) {
+			fdmotoroff(sc);
+			return(ENXIO);
+		}
+	}
+	fdmotoroff(sc);
+	sc->type = fdcgetfdtype(sc->hwunit);
+	if (sc->type == NULL)
+		return(ENXIO);
+#ifdef not_yet
+	if (sc->openpart == FDMSDOSPART)
+		sc->nsectors = sc->type->msdos_nsectors;
+	else
+#endif
+		sc->nsectors = sc->type->amiga_nsectors;
+	return(0);
+}
+
+/*
+ * read disk label, if present otherwise create one
+ * return a new label if raw part and none found, otherwise err.
+ */
+int
+fdgetdisklabel(sc, dev)
+	struct fd_softc *sc;
+	dev_t dev;
+{
+	struct disklabel *lp, *dlp;
+	struct cpu_disklabel *clp;
+	struct buf *bp;
+	int error, part;
+
+	if (sc->flags & FDF_HAVELABEL)
+		return(0);
+#ifdef FDDEBUG
+	printf("fdgetdisklabel()\n");
+#endif
+	part = FDPART(dev);
+	lp = &sc->dkdev.dk_label;
+	clp =  &sc->dkdev.dk_cpulabel;
+	bzero(lp, sizeof(struct disklabel));
+	bzero(clp, sizeof(struct cpu_disklabel));
+	
+	lp->d_secsize = FDSECSIZE;
+	lp->d_ntracks = FDNHEADS;
+	lp->d_ncylinders = sc->type->ncylinders;
+	lp->d_nsectors = sc->nsectors;
+	lp->d_secpercyl = lp->d_ntracks * lp->d_nsectors;
+	lp->d_secperunit = lp->d_secpercyl * lp->d_ncylinders;
+	lp->d_npartitions = part + 1;
+	lp->d_partitions[part].p_size = lp->d_secperunit;
+	lp->d_partitions[part].p_fstype = FS_UNUSED;
+	lp->d_partitions[part].p_fsize = 512;
+	lp->d_partitions[part].p_frag = 8;
+	
+	sc->flags |= FDF_HAVELABEL;
+	
+	bp = (void *)geteblk((int)lp->d_secsize);
+	bp->b_dev = dev; 
+	bp->b_blkno = 0;
+	bp->b_cylin = 0;
+	bp->b_bcount = FDSECSIZE;
+	bp->b_flags = B_BUSY | B_READ;
+	fdstrategy(bp);
+	if (error = biowait(bp))
+		goto nolabel;
+	dlp = (struct disklabel *)(bp->b_data + LABELOFFSET);
+	if (dlp->d_magic != DISKMAGIC || dlp->d_magic2 != DISKMAGIC ||
+	    dkcksum(dlp)) {
+		error = EINVAL;
+		goto nolabel;
+	}
+	bcopy(dlp, lp, sizeof(struct disklabel));
+	if (lp->d_trkseek > FDSTEPDELAY)
+		sc->stepdelay = lp->d_trkseek;
+	brelse(bp);
+	return(0);
+nolabel:
+	bzero(lp, sizeof(struct disklabel));
+	lp->d_secsize = FDSECSIZE;
+	lp->d_ntracks = FDNHEADS;
+	lp->d_ncylinders = sc->type->ncylinders;
+	lp->d_nsectors = sc->nsectors;
+	lp->d_secpercyl = lp->d_ntracks * lp->d_nsectors;
+	lp->d_type = DTYPE_FLOPPY;
+	lp->d_secperunit = lp->d_secpercyl * lp->d_ncylinders;
+	lp->d_rpm = 300; 		/* good guess I suppose. */
+	lp->d_interleave = 1;		/* should change when adding msdos */
+	sc->stepdelay = lp->d_trkseek = FDSTEPDELAY;	
+	lp->d_bbsize = 0;
+	lp->d_sbsize = 0;
+	lp->d_partitions[part].p_size = lp->d_secperunit;
+	lp->d_partitions[part].p_fstype = FS_UNUSED;
+	lp->d_partitions[part].p_fsize = 512;
+	lp->d_partitions[part].p_frag = 8;
+	lp->d_npartitions = part + 1;
+	lp->d_magic = lp->d_magic2 = DISKMAGIC;
+	lp->d_checksum = dkcksum(lp);
+	brelse(bp);
+	return(0);
+}
+
+/*
+ * set the incore copy of this units disklabel
+ */
+int
+fdsetdisklabel(sc, lp)
+	struct fd_softc *sc;
+	struct disklabel *lp;
+{
+	struct disklabel *clp;
+	struct partition *pp;
+
+	/*
+	 * must have at least opened raw unit to fetch the 
+	 * raw_part stuff.
+	 */
+	if ((sc->flags & FDF_HAVELABEL) == 0)
+		return(EINVAL);
+	clp = &sc->dkdev.dk_label;
+	/*
+	 * make sure things check out and we only have one valid
+	 * partition
+	 */
+#ifdef FDDEBUG
+	printf("fdsetdisklabel\n");
+#endif
+	if (lp->d_secsize != FDSECSIZE ||
+	    lp->d_nsectors != clp->d_nsectors ||
+	    lp->d_ntracks != FDNHEADS ||
+	    lp->d_ncylinders != clp->d_ncylinders ||
+	    lp->d_secpercyl != clp->d_secpercyl ||
+	    lp->d_secperunit != clp->d_secperunit ||
+	    lp->d_magic != DISKMAGIC ||
+	    lp->d_magic2 != DISKMAGIC ||
+	    lp->d_npartitions != RAW_PART + 1 ||
+	    (lp->d_partitions[0].p_offset && lp->d_partitions[1].p_offset) ||
+	    dkcksum(lp))
+		return(EINVAL);
+	/* 
+	 * if any partitions are present make sure they 
+	 * represent the currently open type
+	 */
+	if ((pp = &lp->d_partitions[0])->p_size) {
+		if ((pp = &lp->d_partitions[1])->p_size == 0)
+			goto done;
+		else if (sc->openpart != 1)
+			return(EINVAL);
+	} else if (sc->openpart != 0)
+		return(EINVAL);
+	/* 
+	 * make sure selected partition is within bounds
+	 */
+	if (pp->p_offset + pp->p_size >= lp->d_secperunit)
+		return(EINVAL);
+done:
+	bcopy(lp, clp, sizeof(struct disklabel));
+	return(0);
+}
+
+/*
+ * write out the incore copy of this units disklabel
+ */
+int
+fdputdisklabel(sc, dev)
+	struct fd_softc *sc;
+	dev_t dev;
+{
+	struct disklabel *lp, *dlp;
+	struct buf *bp;
+	int error;
+	
+	if ((sc->flags & FDF_HAVELABEL) == 0)
+		return(EBADF);
+#ifdef FDDEBUG
+	printf("fdputdisklabel\n");
+#endif
+	/*
+	 * get buf and read in sector 0
+	 */
+	lp = &sc->dkdev.dk_label;
+	bp = (void *)geteblk((int)lp->d_secsize);
+	bp->b_dev = FDMAKEDEV(major(dev), FDUNIT(dev), RAW_PART);
+	bp->b_blkno = 0;
+	bp->b_cylin = 0;
+	bp->b_bcount = FDSECSIZE;
+	bp->b_flags = B_BUSY | B_READ;
+	fdstrategy(bp);
+	if (error = biowait(bp))
+		goto done;
+	/*
+	 * copy disklabel to buf and write it out syncronous
+	 */
+	dlp = (struct disklabel *)(bp->b_data + LABELOFFSET);
+	bcopy(lp, dlp, sizeof(struct disklabel));
+	bp->b_blkno = 0;
+	bp->b_cylin = 0;
+	bp->b_flags = B_WRITE;
+	fdstrategy(bp);
+	error = biowait(bp);
+done:
+	brelse(bp);
+	return(error);
+}
+
+/*
+ * figure out drive type or NULL if none.
+ */
+struct fdtype *
+fdcgetfdtype(unit)
+	int unit;
+{
+	struct fdtype *ftp;
+	u_long id, idb;
+	int cnt, umask;
+
+	id = 0;
+	umask = 1 << (3 + unit);
+
+	FDDESELECT(FDCUNITMASK);
+
+	FDSETMOTOR(1);
+	delay(1);
+	FDSELECT(umask);
+	delay(1);
+	FDDESELECT(umask);
+
+	FDSETMOTOR(0);
+	delay(1);
+	FDSELECT(umask);
+	delay(1);
+	FDDESELECT(umask);
+
+	for (idb = 0x80000000; idb; idb >>= 1) {
+		FDSELECT(umask);
+		delay(1);
+		if (FDTESTC(FDB_READY) == 0)
+			id |= idb;
+		FDDESELECT(umask);
+		delay(1);
+	}
+#ifdef FDDEBUG
+	printf("fdcgettype unit %d id 0x%x\n", unit, id);
+#endif
+
+	for (cnt = 0, ftp = fdtype; cnt < nfdtype; ftp++, cnt++)
+		if (ftp->driveid == id)
+			return(ftp);
+	/*
+	 * 3.5dd's at unit 0 do not always return id.
+	 */
+	if (unit == 0)
+		return(fdtype);
+	return(NULL);
+}
+
+/*
+ * turn motor off if possible otherwise mark as needed and will be done
+ * later.
+ */
+void
+fdmotoroff(arg)
+	void *arg;
+{
+	struct fd_softc *sc;
+	int unitmask, s;
+
+	sc = arg;
+	s = splbio();
+
+#ifdef FDDEBUG
+	printf("fdmotoroff: unit %d\n", sc->hwunit);
+#endif
+	if ((sc->flags & FDF_MOTORON) == 0) 
+		goto done;
+	/*
+	 * if we have a timeout on a dma operation let fddmadone()
+	 * deal with it.
+	 */
+	if (fdc_indma == sc) {
+		fddmadone(sc, 1);
+		goto done;
+	}
+#ifdef FDDEBUG
+	printf(" motor was on, turning off\n");
+#endif
+
+	/*
+	 * flush cache if needed
+	 */
+	if (sc->flags & FDF_DIRTY) {
+		sc->flags |= FDF_JUSTFLUSH | FDF_MOTOROFF;
+#ifdef FDDEBUG
+		printf("  flushing dirty buffer first\n");
+#endif
+		/*
+		 * if dma'ing done for now, fddone() will call us again
+		 */
+		if (fdc_indma)
+			goto done;
+		fddmastart(sc, sc->cachetrk);
+		goto done;
+	}
+
+	/*
+	 * if controller is busy just schedule us to be called back
+	 */
+	if (fdc_indma) {
+		/*
+		 * someone else has the controller now
+		 * just set flag and let fddone() call us again.
+		 */
+		sc->flags |= FDF_MOTOROFF;
+		goto done;
+	}
+
+#ifdef FDDEBUG
+	printf("  hw turing unit off\n");
+#endif
+
+	sc->flags &= ~(FDF_MOTORON | FDF_MOTOROFF);
+	FDDESELECT(FDCUNITMASK);
+	FDSETMOTOR(0);
+	delay(1);
+	FDSELECT(sc->unitmask);
+	delay(4);
+	FDDESELECT(sc->unitmask);
+	delay(1);
+	if (sc->flags & FDF_WMOTOROFF)
+		wakeup(fdmotoroff);
+done:
+	splx(s);
+}
+
+/*
+ * select drive seek to track exit with motor on.
+ * fdsetpos(x, 0, 0) does calibrates the drive.
+ */
+void
+fdsetpos(sc, trk, towrite)
+	struct fd_softc *sc;
+	int trk, towrite;
+{
+	int hsw, nstep, sdir;
+
+	FDDESELECT(FDCUNITMASK);
+	FDSETMOTOR(1);
+	delay(1);
+	FDSELECT(sc->unitmask);
+	delay(1);
+	if ((sc->flags & FDF_MOTORON) == 0)
+		while (FDTESTC(FDB_READY) == 0)
+			;
+	sc->flags |= FDF_MOTORON;
+
+	if (trk == sc->ctrack)
+		return;
+	if (towrite)
+		sc->flags |= FDF_WRITEWAIT;
+	
+#ifdef FDDEBUG
+	printf("fdsetpos: cyl %d head %d towrite %d\n", trk / FDNHEADS, 
+	    trk % FDNHEADS, towrite);
+#endif
+	/*
+	 * need to switch heads?
+	 */
+	if ((trk % FDNHEADS) != (sc->ctrack % FDNHEADS) || sc->ctrack == -1)
+		hsw = 1;
+	else
+		hsw = 0;
+
+	nstep = (trk / FDNHEADS) - (sc->ctrack / FDNHEADS);
+	if (nstep) {
+		/*
+		 * figure direction
+		 */
+		if (nstep > 0) {
+			sdir = FDSTEPIN;
+			FDSETDIR(1);
+		} else {
+			nstep = -nstep;
+			sdir = FDSTEPOUT;
+			FDSETDIR(0);
+		}
+		if (trk == 0) {
+			/*
+			 * either just want cylinder 0 or doing 
+			 * a calibrate.
+			 */
+			while (FDTESTC(FDB_CYLZERO) == 0) {
+				FDSTEP;
+				delay(sc->stepdelay);
+			}
+		} else {
+			/*
+			 * step the needed amount amount.
+			 */
+			while (nstep--) {
+				FDSTEP;
+				delay(sc->stepdelay);
+			}
+		}
+		/*
+		 * if switched directions 
+		 * allow drive to settle.
+		 */
+		if (sc->pstepdir != sdir)
+			delay(FDSETTLEDELAY);
+		sc->pstepdir = sdir;
+	}
+	sc->ctrack = trk;
+
+	if (hsw == 0)
+		return;
+
+	/*
+	 * select side
+	 */
+	FDSETHEAD(trk % FDNHEADS);
+
+	/*
+	 * delay at least FDPRESIDEDELAY
+	 * and indicate need to do write delay if needed.
+	 */
+	delay(FDPRESIDEDELAY);
+	if (towrite) {
+		sc->flags |= FDF_WRITEWAIT;
+		delay(FDSETTLEDELAY);
+	}
+}
+
+void
+fdselunit(sc)
+	struct fd_softc *sc;
+{
+	FDDESELECT(FDCUNITMASK);		/* deselect all */
+	FDSETMOTOR(sc->flags & FDF_MOTORON);	/* set motor to unit's state */
+	delay(1);
+	FDSELECT(sc->unitmask);			/* select unit */
+	delay(1);
+}
+
+/*
+ * process next buf on device queue.
+ * normall sequence of events:
+ * fdstart() -> fddmastart(); 
+ * fdintr() -> fddmadone() -> fddone();
+ * if the track is in the cache then fdstart() will short-circuit
+ * to fddone() else if the track cache is dirty it will flush.  If
+ * the buf is not an entire track it will cache the requested track.
+ */
+void
+fdstart(sc)
+	struct fd_softc *sc;
+{
+	int trk, error, write;
+	struct buf *bp, *dp;
+
+#ifdef FDDEBUG
+	printf("fdstart: unit %d\n", sc->hwunit);
+#endif
+
+	/*
+	 * if dma'ing just return. we must have been called from fdstartegy.
+	 */
+	if (fdc_indma)
+		return;
+
+	/*
+	 * get next buf if there.
+	 */
+	dp = &sc->bufq;
+	if ((bp = dp->b_actf) == NULL) {
+#ifdef FDDEBUG
+		printf("  nothing to do\n");
+#endif
+		return;
+	}
+	
+	/*
+	 * make sure same disk is loaded
+	 */
+	fdselunit(sc);
+	if (FDTESTC(FDB_CHANGED)) {
+		/*
+		 * disk missing, invalidate all future io on 
+		 * this unit until re-open()'ed also invalidate 
+		 * all current io
+		 */
+#ifdef FDDEBUG
+		printf("  disk was removed invalidating all io\n");
+#endif
+		sc->flags &= ~FDF_HAVELABEL;
+		for (;;) {
+			bp->b_flags |= B_ERROR;
+			bp->b_error = EIO;
+			if (bp->b_actf == NULL)
+				break;
+			biodone(bp);
+			bp = bp->b_actf;
+		}
+		/*
+		 * do fddone() on last buf to allow other units to start.
+		 */
+		dp->b_actf = bp;
+		fddone(sc);
+		return;
+	}
+
+	/* 
+	 * we have a valid buf, setup our local version
+	 * we use this count to allow reading over multiple tracks.
+	 * into a single buffer
+	 */
+	dp->b_bcount = bp->b_bcount;
+	dp->b_blkno = bp->b_blkno;
+	dp->b_data = bp->b_data;
+	dp->b_flags = bp->b_flags;
+	dp->b_resid = 0;
+	
+	if (bp->b_flags & B_READ)
+		write = 0;
+	else if (FDTESTC(FDB_PROTECT) == 0)
+		write = 1;
+	else {
+		error = EPERM;
+		goto bad;
+	}
+
+	/*
+	 * figure trk given blkno
+	 */
+	trk = bp->b_blkno / sc->nsectors;
+	
+	/*
+	 * check to see if same as currently cached track
+	 * if so we need to do no dma read.
+	 */
+	if (trk == sc->cachetrk) {
+		fddone(sc);
+		return;
+	}
+		
+	/*
+	 * if we will be overwriting the entire cache, don't bother to 
+	 * fetch it.
+	 */
+	if (bp->b_bcount == (sc->nsectors * FDSECSIZE) && write) {
+		if (sc->flags & FDF_DIRTY)
+			sc->flags |= FDF_JUSTFLUSH;
+		else {
+			sc->cachetrk = trk;
+			fddone(sc);
+			return;
+		}
+	}
+	
+	/*
+	 * start dma read of `trk'
+	 */
+	fddmastart(sc, trk);
+	return;
+bad:
+	bp->b_flags |= B_ERROR;
+	bp->b_error = error;
+	fddone(sc);
+}
+
+/*
+ * continue a started operation on next track.
+ */
+void
+fdcont(sc)
+	struct fd_softc *sc;
+{
+	struct buf *dp, *bp;
+	int trk, write;
+	
+	dp = &sc->bufq;
+	bp = dp->b_actf;
+	dp->b_data += (dp->b_bcount - bp->b_resid);
+	dp->b_blkno += (dp->b_bcount - bp->b_resid) / FDSECSIZE;
+	dp->b_bcount = bp->b_resid;
+
+	/*
+	 * figure trk given blkno
+	 */
+	trk = dp->b_blkno / sc->nsectors;
+#ifdef DEBUG
+	if (trk == sc->cachetrk || trk != sc->cachetrk + 1)
+		panic("fdcont: confused");
+#endif
+	if (dp->b_flags & B_READ)
+		write = 0;
+	else
+		write = 1;
+	/*
+	 * if we will be overwriting the entire cache, don't bother to 
+	 * fetch it.
+	 */
+	if (dp->b_bcount == (sc->nsectors * FDSECSIZE) && write) {
+		if (sc->flags & FDF_DIRTY)
+			sc->flags |= FDF_JUSTFLUSH;
+		else {
+			sc->cachetrk = trk;
+			fddone(sc);
+			return;
+		}
+	}
+	/*
+	 * start dma read of `trk'
+	 */
+	fddmastart(sc, trk);
+	return;
+}
+
+void
+fddmastart(sc, trk)
+	struct fd_softc *sc;
+	int trk;
+{
+	int adkmask, ndmaw, write, dmatrk;
+
+#ifdef FDDEBUG
+	printf("fddmastart: unit %d cyl %d head %d", sc->hwunit, 
+	    trk / FDNHEADS, trk % FDNHEADS);
+#endif
+	/*
+	 * flush the cached track if dirty else read requested track.
+	 */
+	if (sc->flags & FDF_DIRTY) {
+		fdcachetoraw(sc);
+		ndmaw = sc->type->nwritew;
+		dmatrk = sc->cachetrk;
+		write = 1;
+	} else {
+		ndmaw = sc->type->nreadw;
+		dmatrk = trk;
+		write = 0;
+	}
+
+#ifdef FDDEBUG
+	printf(" %s", write ? " flushing cache\n" : " loading cache\n");
+#endif
+	sc->cachetrk = trk;
+	fdc_indma = sc;
+	fdsetpos(sc, dmatrk, write);
+
+	/*
+	 * setup dma stuff
+	 */
+	if (write == 0) {
+		custom.adkcon = ADKF_MSBSYNC;
+		custom.adkcon = ADKF_SETCLR | ADKF_WORDSYNC | ADKF_FAST;
+		custom.dsksync = FDMFMSYNC;
+	} else {
+		custom.adkcon = ADKF_PRECOMP1 | ADKF_PRECOMP0 | ADKF_WORDSYNC |
+		    ADKF_MSBSYNC;
+		adkmask = ADKF_SETCLR | ADKF_FAST | ADKF_MFMPREC;
+		if (dmatrk >= sc->type->precomp[0])
+			adkmask |= ADKF_PRECOMP0;
+		if (dmatrk >= sc->type->precomp[1])
+			adkmask |= ADKF_PRECOMP1;
+		custom.adkcon = adkmask;
+	}
+	custom.dskpt = (u_char *)kvtop(fdc_dmap);
+	FDDMASTART(ndmaw, write);
+
+#ifdef FDDEBUG
+	printf("  dma started\n");
+#endif
+}
+
+/*
+ * recalibrate the drive
+ */
+void
+fdcalibrate(arg)
+	void *arg;
+{
+	struct fd_softc *sc;
+	static int loopcnt;
+
+	sc = arg;
+
+	if (loopcnt == 0) {
+		/*
+		 * seek cyl 0
+		 */
+		fdc_indma = sc;
+		sc->stepdelay += 900;
+		if (sc->cachetrk > 1)
+			fdsetpos(sc, sc->cachetrk % FDNHEADS, 0);
+		sc->stepdelay -= 900;
+	}
+	if (loopcnt++ & 1)
+		fdsetpos(sc, sc->cachetrk, 0);
+	else
+		fdsetpos(sc, sc->cachetrk + FDNHEADS, 0);
+	/*
+	 * trk++, trk, trk++, trk, trk++, trk, trk++, trk and dma
+	 */
+	if (loopcnt < 8)
+		timeout(fdcalibrate, sc, hz / 8);
+	else {
+		loopcnt = 0;
+		fdc_indma = NULL;
+		timeout(fdmotoroff, sc, 3 * hz / 2);
+		fddmastart(sc, sc->cachetrk);
+	}
+}
+
+void
+fddmadone(sc, timeo)
+	struct fd_softc *sc;
+	int timeo;
+{
+#ifdef FDDEBUG
+	printf("fddmadone: unit %d, timeo %d\n", sc->hwunit, timeo);
+#endif
+	fdc_indma = NULL;
+	untimeout(fdmotoroff, sc);
+	FDDMASTOP;
+
+	/*
+	 * guarantee the drive has been at current head and cyl
+	 * for at least FDWRITEDELAY after a write.
+	 */
+	if (sc->flags & FDF_WRITEWAIT) {
+		delay(FDWRITEDELAY);
+		sc->flags &= ~FDF_WRITEWAIT;
+	}
+
+	if ((sc->flags & FDF_MOTOROFF) == 0) {
+		/*
+		 * motor runs for 1.5 seconds after last dma
+		 */
+		timeout(fdmotoroff, sc, 3 * hz / 2);
+	}
+	if (sc->flags & FDF_DIRTY) {
+		/*
+		 * if buffer dirty, the last dma cleaned it
+		 */
+		sc->flags &= ~FDF_DIRTY;
+		if (timeo)
+			printf("%s: write of track cache timed out.\n",
+			    sc->dkdev.dk_dev.dv_xname);
+		if (sc->flags & FDF_JUSTFLUSH) {
+			/*
+			 * we are done dma'ing
+			 */
+			fddone(sc);
+			return;
+		}
+		/*
+		 * load the cache
+		 */
+		fddmastart(sc, sc->cachetrk);
+		return;
+	}
+#ifdef FDDEBUG
+	else if (sc->flags & FDF_MOTOROFF)
+		panic("fddmadone: FDF_MOTOROFF with no FDF_DIRTY");
+#endif
+
+	/*
+	 * cache loaded decode it into cache buffer
+	 */
+	if (timeo == 0 && fdrawtocache(sc) == 0)
+		sc->retried = 0;
+	else {
+#ifdef FDDEBUG
+		if (timeo)
+			printf("%s: fddmadone: cache load timed out.\n",
+			    sc->dkdev.dk_dev.dv_xname);
+#endif
+		if (sc->retried >= sc->retries) {
+			sc->retried = 0;
+			sc->cachetrk = -1;
+		} else {
+			sc->retried++;
+			/*
+			 * this will be restarted at end of calibrate loop.
+			 */
+			untimeout(fdmotoroff, sc);
+			fdcalibrate(sc);
+			return;
+		}
+	}
+	fddone(sc);
+}
+
+void
+fddone(sc)
+	struct fd_softc *sc;
+{
+	struct buf *dp, *bp;
+	char *data;
+	int sz, blk;
+
+#ifdef FDDEBUG
+	printf("fddone: unit %d\n", sc->hwunit);
+#endif
+	/*
+	 * check to see if unit is just flushing the cache,
+	 * if bufq is not for us.
+	 */
+	if (sc->flags & FDF_JUSTFLUSH) {
+		sc->flags &= ~FDF_JUSTFLUSH;
+		goto nobuf;
+	}
+
+#ifdef DEBUG
+	if (sc->flags & FDF_MOTOROFF)
+		panic("fddone: motoroff on dma unit");
+#endif
+
+	dp = &sc->bufq;
+	if ((bp = dp->b_actf) == NULL)
+		panic ("fddone");
+	/*
+	 * check for an error that may have occured
+	 * while getting the track.
+	 */
+	if (sc->cachetrk == -1) {
+		sc->retried = 0;
 		bp->b_flags |= B_ERROR;
-		biodone(bp);
+		bp->b_error = EIO;
+	} else if ((bp->b_flags & B_ERROR) == 0) {
+		data = sc->cachep;
+		/*
+		 * get offset of data in track cache and limit
+		 * the copy size to not exceed the cache's end.
+		 */
+		data += (dp->b_blkno % sc->nsectors) * FDSECSIZE;
+		sz = sc->nsectors - dp->b_blkno % sc->nsectors;
+		sz *= FDSECSIZE;
+		sz = min(dp->b_bcount, sz);
+		if (bp->b_flags & B_READ)
+			bcopy(data, dp->b_data, sz);
+		else {
+			bcopy(dp->b_data, data, sz);
+			sc->flags |= FDF_DIRTY;
+		}
+		bp->b_resid = dp->b_bcount - sz;
+		if (bp->b_resid == 0) {
+			bp->b_error = 0;
+		} else {
+			/*
+			 * not done yet need to read next track
+			 */
+			fdcont(sc);
+			return;
+		}
+	}
+	/*
+	 * remove from queue.
+	 */
+	dp->b_actf = bp->b_actf;
+	biodone(bp);
+nobuf:
+	fdfindwork(sc->dkdev.dk_dev.dv_unit);
+}
+
+void
+fdfindwork(unit)
+	int unit;
+{ 
+	struct fd_softc *ssc, *sc;
+	int i, last;
+
+	/*
+	 * first see if we have any Fdopen()'s waiting
+	 */
+	if (fdc_wantwakeup) {
+		wakeup(Fdopen);
+		fdc_wantwakeup--;
 		return;
 	}
 
 	/*
-	 * Set up block calculations.
+	 * start next available unit, linear search from the next unit
+	 * wrapping and finally this unit.
 	 */
-	blknum = (unsigned long) bp->b_blkno * DEV_BSIZE / FDBLK;
-	nblocks = fd->sects * fd->ft->tracks * fd->ft->heads;
-	if (blknum + (bp->b_bcount / FDBLK) > nblocks) {
-		nblocks -= blknum;
-		if (nblocks == 0) {
-			bp->b_resid = bp->b_bcount;
-			goto done;
+	last = 0;
+	ssc = NULL;
+	for (i = unit + 1; last == 0; i++) {
+		if (i == unit)
+			last = 1;
+		if (i >= fdcd.cd_ndevs) {
+			i = -1;
+			continue;
 		}
-		if (nblocks < 0) {
-			bp->b_error = EINVAL;
-			bp->b_flags |= B_ERROR;
-done:
-			biodone(bp);
-			return;
-		}
-		bp->b_bcount = dbtob(nblocks);
-	}
-
-	bp->b_cylin = blknum;	/* set here for disksort */
-	dp = &(fd->head);
-
-	s = splbio();
-	disksort(dp, bp);
-	untimeout((timeout_t)fd_turnoff, (caddr_t)fdc); /* a good idea */
-	fdstart(fdc);
-	splx(s);
-}
-
-/*
- * We have just queued something.. if the controller is not busy
- * then simulate the case where it has just finished a command
- * So that it (the interrupt routine) looks on the queue for more
- * work to do and picks up what we just added.
- * If the controller is already busy, we need do nothing, as it
- * will pick up our work when the present work completes
- */
-void
-fdstart(fdc)
-	fdc_p fdc;
-{
-	int s;
-
-	s = splbio();
-	if (fdc->state == FINDWORK)
-		fdintr(fdc->fdcu);
-	splx(s);
-}
-
-/* 
- * just ensure it has the right spl
- */
-void
-fd_pseudointr(fdc)
-	fdc_p fdc;
-{
-	int s;
-
-	s = splbio();
-	fdintr(fdc->fdcu);
-	splx(s);
-}
-
-void
-fd_timeout(fdc)
-	fdc_p fdc;
-{
-	struct buf *dp,*bp;
-	fd_p fd;
-
-	fd = fdc->fd;
-	dp = &fd->head;
-	bp = dp->b_actf;
-
-	if (fd == NULL) {
-		printf ("fd_timeout called with no active drive?\n");
-		return;
-	}
-
-	/* XXXX */
-	printf("fd%d: Operation timeout; state %d\n", fd->fdu, fdc->state);
-	if (bp) {
-		retrier(fdc);
-#if 0	/* XXX retrier already set fdc->state? */
-		fdc->state = DONE_IO;
-#endif
-		if (fdc->retry < 6)
-			fdc->retry = 6;
-	} else {
-		fdc->fd = NULL;
-		fdc->state = FINDWORK;
-	}
-
-	fd_pseudointr(fdc);
-}
-
-/*
- * keep calling the state machine until it returns a 0
- * ALWAYS called at SPLBIO
- */
-void
-fdintr(fdcu)
-	fdcu_t fdcu;
-{
-	fdc_p fdc;
-
-	fdc = fdc_data + fdcu;
-	while (fdstate(fdc))
-		;
-}
-
-/*
- * The controller state machine.
- * if it returns a non zero value, it should be called again immediatly
- */
-int
-fdstate(fdc)
-	fdc_p fdc;
-{
-	struct buf *dp,*bp;
-	int track, read, sec, i;
-	u_long blknum;
-	fd_p fd;
-
-	fd = fdc->fd;
-
-	if (fd == NULL) {
-		/* search for a unit do work with */
-		for (i = 0; i < DRVS_PER_CTLR; i++) {
-			fd = fdc->fd_data + i;
-			dp = &(fd->head);
-			bp = dp->b_actf;
-			if (bp) {
-				fdc->fd = fd;
-				break;
-			}
-		}
-
-		if (fdc->fd)
-			return(1);
-
-		fdc->state = FINDWORK;
-		TRACE1("[fdc%d IDLE]\n", fdc->fdcu);
-		return(0);
-	}
-
-	dp = &(fd->head);
-	bp = dp->b_actf;
-
-	blknum = (u_long)bp->b_blkno * DEV_BSIZE / FDBLK + fd->skip / FDBLK;
-	track = blknum / fd->sects;
-	sec = blknum % fd->sects;
-
-	read = bp->b_flags & B_READ;
-	TRACE1("fd%d", fd->fdu);
-	TRACE1("[%s]", fdstates[fdc->state]);
-	TRACE1("(0x%x) ", fd->flags);
-	TRACE1("%d\n", fd->buf_track);
-
-	untimeout((timeout_t)fd_turnoff, (caddr_t)fdc);
-	timeout((timeout_t)fd_turnoff, (caddr_t)fdc, 4 * hz);
-
-	switch (fdc->state) {
-	case FINDWORK:
-		if (!bp) {
-			if (fd->buf_dirty) {
-				track_write(fdc, fd);
-				return(0);
-			}
-			fdc->fd = NULL;
-			return(1);
-		}
-
-		fdc->state = DOSEEK;
-		fdc->retry = 0;
-		fd->skip = 0;
-		return(1);
-	case DOSEEK:
-		fd_turnon(fdc, fd->fdu);
+		if ((sc = fdcd.cd_devs[i]) == NULL)
+			continue;
 
 		/*
-		 * If not started, error starting it
+		 * if unit has requested to be turned off 
+		 * and it has no buf's queued do it now
 		 */
-		if (fdc->motor_fdu != fd->fdu) {
-			/* XXXX */
-			printf("motor not on!\n");
-		}
-
-		/*
-		 * If track not in buffer, read it in
-		 */
-		if (fd->buf_track != track) {
-			TRACE1("do track %d\n", track);
-
-			if (fd->buf_dirty) {
-				track_write(fdc, fd);
-				return (0);
-			} else {
-				if (read || sec != 0 ||
-				    ((bp->b_bcount - fd->skip)/FDBLK) % fd->sects) {
-					track_read(fdc, fd, track);
-					return(0);
-				}
-				/*
-				 * if writing a full track, don't bother reading
-				 * in the old track - we're just going to overwrite
-				 * it all anyway.
-				 */
-				fd_seek (fd, track);
-				fd->buf_track = track;
-				/* clear sector labels */
-				bzero(fd->buf_labels, MAX_SECTS * 16);
-			}
-		}
-
-		fdc->state = DO_IO;
-		return(1);
-	case DO_IO:
-		if (read) 
-			bcopy(&fd->buf_data[sec * FDBLK], 
-			    bp->b_un.b_addr + fd->skip, FDBLK);
-		else {
-			bcopy(bp->b_un.b_addr + fd->skip, 
-			    &fd->buf_data[sec * FDBLK], FDBLK);
-			fd->buf_dirty = 1;
-			if (IMMED_WRITE) {
-				fdc->state = DONE_IO;
-				track_write(fdc, fd);
-				return(0);
-			}
-		}
-	case DONE_IO:
-		fd->skip += FDBLK;
-		if (fd->skip < bp->b_bcount)
-			fdc->state = DOSEEK;
-		else {
-			fd->skip = 0;
-			if (bp == NULL)
-				printf ("fd: fdstate DONE_IO bp == NULL\n");
+		if (sc->flags & FDF_MOTOROFF) {
+			if (sc->bufq.b_actf == NULL)
+				fdmotoroff(sc);
 			else {
-				bp->b_resid = 0;
-				dp->b_actf = bp->b_actf;
-				biodone(bp);
+				/*
+				 * we gained a buf request while 
+				 * we waited, forget the motoroff
+				 */
+				sc->flags &= ~FDF_MOTOROFF;
 			}
-			fdc->state = FINDWORK;
-		}
-		return(1);
-	case WAIT_READ:
-		untimeout((timeout_t)fd_timeout, (caddr_t)fdc);
-		custom.dsklen = 0;
-		if (amiga_read(fd) == 0) {
-			fdc->retry = 0;
-			fdc->state = DO_IO;
-			return(1);
-		}
-		if (fdc->retry++ < 6) {
-			track_read(fdc, fd, track);
-			return(0);
-		}
-		if (bp) {
-			bp->b_flags |= B_ERROR;
-			bp->b_error = EIO;
-			bp->b_resid = bp->b_bcount - fd->skip;
-			dp->b_actf = bp->b_actf;
-			fd->skip = 0;
-			biodone(bp);
-		}
-		fdc->state = FINDWORK;
-		return (1);
-	case WAIT_WRITE:
-		untimeout((timeout_t)fd_timeout, (caddr_t)fdc);
-		custom.dsklen = 0;
-		fdc->state = fdc->saved;
-		fd->buf_dirty = 0;
+			/*
+			 * if we now have dma unit must have needed
+			 * flushing, quit
+			 */
+			if (fdc_indma)
+				return;
+		} 
 		/*
-		 * post-write delay - should delay only if changing sides
-		 * after a write?
+		 * if we have no start unit and the current unit has
+		 * io waiting choose this unit to start.
 		 */
-		delay (4);
-		return(1);
-	default:
-		/* XXXX */
-		printf("Unexpected FD int->%d\n", fdc->state);
-		return 0;
+		if (ssc == NULL && sc->bufq.b_actf)
+			ssc = sc;
 	}
-
-	/* Come back immediatly to new state */
-	return(1);
+	if (ssc)
+		fdstart(ssc);
 }
 
+/*
+ * min byte count to whats left of the track in question
+ */
 int
-retrier(fdc)
-	fdc_p fdc;
+fdminphys(bp)
+	struct buf *bp;
 {
-	struct buf *dp,*bp;
-	fd_p fd;
+	struct fd_softc *sc;
+	int trk, sec, toff, tsz;
 
-	fd = fdc->fd;
-	dp = &(fd->head);
-	bp = dp->b_actf;
+	if ((sc = getsoftc(fdcd, FDUNIT(bp->b_dev))) == NULL)
+		return(ENXIO);
 
-#if 0
-	switch(fdc->retry) {
-	case 0: 
-	case 1:
-	case 2:
-		fdc->state = SEEKCOMPLETE;
-		break;
-	case 3:
-	case 4:
-	case 5:
-		fdc->state = STARTRECAL;
-		break;
-	case 6:
-		fdc->state = RESETCTLR;
-		break;
-	case 7:
-		break;
-	default:
+	trk = bp->b_blkno / sc->nsectors;
+	sec = bp->b_blkno % sc->nsectors;
+
+	toff = sec * FDSECSIZE;
+	tsz = sc->nsectors * FDSECSIZE;
+#ifdef FDDEBUG
+	printf("fdminphys: before %d", bp->b_bcount);
 #endif
-	/* XXXX */
-	printf("fd%d: hard error\n", fd->fdu);
-
-	if (bp == NULL)
-		printf ("fd: retrier bp == NULL\n");
-	else {
-		bp->b_flags |= B_ERROR;
-		bp->b_error = EIO;
-		bp->b_resid = bp->b_bcount - fd->skip;
-		dp->b_actf = bp->b_actf;
-		fd->skip = 0;
-		biodone(bp);
-	}
-	fdc->state = FINDWORK;
-	return(1);
-#if 0
-	fdc->retry++;
-	return(1);
+	bp->b_bcount = min(bp->b_bcount, tsz - toff);
+#ifdef FDDEBUG
+	printf(" after %d\n", bp->b_bcount);
 #endif
+	return(bp->b_bcount);
 }
 
+/*
+ * encode the track cache into raw MFM ready for dma
+ * when we go to multiple disk formats, this will call type dependent
+ * functions
+ */
+void
+fdcachetoraw(sc)
+	struct fd_softc *sc;
+{
+	static u_long mfmnull[4];
+	u_long *rp, *crp, *dp, hcksum, dcksum, info, zero;
+	int sec, i;
+
+	rp = fdc_dmap;
+
+	/*
+	 * not yet one sector (- 1 long) gap.
+	 * for now use previous drivers values
+	 */
+	for (i = 0; i < sc->type->gap; i++)
+		*rp++ = 0xaaaaaaaa;
+	/*
+	 * process sectors
+	 */
+	dp = sc->cachep;
+	zero = 0;
+	info = 0xff000000 | (sc->cachetrk << 16) | sc->nsectors;
+	for (sec = 0; sec < sc->nsectors; sec++, info += (1 << 8) - 1) {
+		hcksum = dcksum = 0;
+		/*
+		 * sector format
+		 *	offset		description
+		 *-----------------------------------
+		 *  0			null 
+		 *  1			sync 
+		 * oddbits	evenbits
+		 *----------------------
+		 *  2		3	[0xff]b [trk]b [sec]b [togap]b
+		 *  4-7		8-11	null
+		 * 12		13	header cksum [2-11]
+		 * 14		15	data cksum [16-271]
+		 * 16-143	144-271	data
+		 */
+		*rp = 0xaaaaaaaa;
+		if (*(rp - 1) & 0x1)
+			*rp &= 0x7fffffff;	/* clock bit correction */
+		rp++;
+		*rp++ = (FDMFMSYNC << 16) | FDMFMSYNC;
+		rp = mfmblkencode(&info, rp, &hcksum, 1);
+		rp = mfmblkencode(mfmnull, rp, &hcksum, 4);
+		rp = mfmblkencode(&hcksum, rp, NULL, 1);
+
+		crp = rp;
+		rp = mfmblkencode(dp, rp + 2, &dcksum, FDSECLWORDS);
+		dp += FDSECLWORDS;
+		crp = mfmblkencode(&dcksum, crp, NULL, 1);
+		if (*(crp - 1) & 0x1)
+			*crp &= 0x7fffffff;	/* clock bit correction */
+		else if ((*crp & 0x40000000) == 0)
+			*crp |= 0x80000000;
+        }
+	*rp = 0xaaa80000;
+	if (*(rp - 1) & 0x1)
+		*rp &= 0x7fffffff;
+}
+
+u_long *
+fdfindsync(rp, ep)
+	u_long *rp, *ep;
+{
+	u_short *sp;
+
+	sp = (u_short *)rp;
+	while ((u_long *)sp < ep && *sp != FDMFMSYNC)
+		sp++;
+	while ((u_long *)sp < ep && *sp == FDMFMSYNC)
+		sp++;
+	if ((u_long *)sp < ep)
+		return((u_long *)sp);
+	return(NULL);
+}
+
+/*
+ * decode raw MFM from dma into units track cache.
+ * when we go to multiple disk formats, this will call type dependent
+ * functions
+ */
+int
+fdrawtocache(sc)
+	struct fd_softc *sc;
+{
+	u_long mfmnull[4];
+	u_long *dp, *rp, *erp, *crp, *srp, hcksum, dcksum, info, cktmp;
+	int cnt, doagain;
+
+	doagain = 1;
+	srp = rp = fdc_dmap;
+	erp = (u_long *)((u_short *)rp + sc->type->nreadw);
+	cnt = 0;
+again:
+	if (doagain == 0 || (rp = srp = fdfindsync(srp, erp)) == NULL) {
+#ifdef DIAGNOSTIC
+		printf("%s: corrupted track (%d) data.\n",
+		    sc->dkdev.dk_dev.dv_xname, sc->cachetrk);
 #endif
+		return(-1);
+	}
+	
+	/*
+	 * process sectors
+	 */
+	for (; cnt < sc->nsectors; cnt++) {
+		hcksum = dcksum = 0;
+		rp = mfmblkdecode(rp, &info, &hcksum, 1);
+		rp = mfmblkdecode(rp, mfmnull, &hcksum, 4);
+		rp = mfmblkdecode(rp, &cktmp, NULL, 1);
+		if (cktmp != hcksum) {
+#ifdef FDDEBUG
+			printf("  info 0x%x hchksum 0x%x trkhcksum 0x%x\n",
+			    info, hcksum, cktmp);
+#endif
+			goto again;
+		}
+		if (((info >> 16) & 0xff) != sc->cachetrk) {
+#ifdef DEBUG
+			printf("%s: incorrect track found: 0x%0x %d\n",
+			    sc->dkdev.dk_dev.dv_xname, info, sc->cachetrk);
+#endif
+			goto again;
+		}
+#ifdef FDDEBUG
+		printf("  info 0x%x\n", info);
+#endif
+
+		rp = mfmblkdecode(rp, &cktmp, NULL, 1);
+		dp = sc->cachep;
+		dp += FDSECLWORDS * ((info >> 8) & 0xff);
+		crp = mfmblkdecode(rp, dp, &dcksum, FDSECLWORDS);
+		if (cktmp != dcksum) {
+#ifdef FDDEBUG
+			printf("  info 0x%x dchksum 0x%x trkdcksum 0x%x\n",
+			    info, dcksum, cktmp);
+#endif
+			goto again;
+		}
+
+		/*
+		 * if we are at gap then we can no longer be sure
+		 * of correct sync marks
+		 */
+		if ((info && 0xff) == 1)
+			doagain = 1;
+		else
+			doagain = 0;
+		srp = rp = fdfindsync(crp, erp);
+	}
+	return(0);
+}
+
+/*
+ * encode len longwords of `dp' data in amiga mfm block format (`rp')
+ * this format specified that the odd bits are at current pos and even
+ * bits at len + current pos
+ */
+u_long *
+mfmblkencode(dp, rp, cp, len)
+	u_long *dp, *rp, *cp;
+	int len;
+{
+	u_long *sdp, *edp, d, dtmp, correct;
+	int i;
+	
+	sdp = dp;
+	edp = dp + len;
+
+	if (*(rp - 1) & 0x1)
+		correct = 1;
+	else
+		correct = 0;
+	/*
+	 * do odd bits
+	 */
+	while (dp < edp) {
+		d = (*dp >> 1) & 0x55555555;	/* remove clock bits */
+		dtmp = d ^ 0x55555555;
+		d |= ((dtmp >> 1) | 0x80000000) & (dtmp << 1);
+		/*
+		 * correct upper clock bit if needed
+		 */
+		if (correct)
+			d &= 0x7fffffff;
+		if (d & 0x1)
+			correct = 1;
+		else
+			correct = 0;
+		/*
+		 * do checksums and store in raw buffer
+		 */
+		if (cp)
+			*cp ^= d;
+		*rp++ = d;
+		dp++;
+	}
+	/*
+	 * do even bits
+	 */
+	dp = sdp;
+	while (dp < edp) {
+		d = *dp & 0x55555555;	/* remove clock bits */
+		dtmp = d ^ 0x55555555;
+		d |= ((dtmp >> 1) | 0x80000000) & (dtmp << 1);
+		/*
+		 * correct upper clock bit if needed
+		 */
+		if (correct)
+			d &= 0x7fffffff;
+		if (d & 0x1)
+			correct = 1;
+		else
+			correct = 0;
+		/*
+		 * do checksums and store in raw buffer
+		 */
+		if (cp)
+			*cp ^= d;
+		*rp++ = d;
+		dp++;
+	}
+	if (cp)
+		*cp &= 0x55555555;
+	return(rp);
+}
+
+/*
+ * decode len longwords of `dp' data in amiga mfm block format (`rp')
+ * this format specified that the odd bits are at current pos and even
+ * bits at len + current pos
+ */
+u_long *
+mfmblkdecode(rp, dp, cp, len)
+	u_long *rp, *dp, *cp;
+	int len;
+{
+	u_long o, e;
+	int cnt;
+
+	cnt = len;
+	while (cnt--) {
+		o = *rp;
+		e = *(rp + len);
+		if (cp) {
+			*cp ^= o;
+			*cp ^= e;
+		}
+		o &= 0x55555555;
+		e &= 0x55555555;
+		*dp++ = (o << 1) | e;
+		rp++;
+	}
+	if (cp)
+		*cp &= 0x55555555;
+	return(rp + len);
+}
