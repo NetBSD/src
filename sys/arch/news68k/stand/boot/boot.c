@@ -1,4 +1,4 @@
-/*	$NetBSD: boot.c,v 1.2 2000/02/08 16:17:34 tsutsui Exp $	*/
+/*	$NetBSD: boot.c,v 1.3 2000/11/25 04:42:06 tsutsui Exp $	*/
 
 /*-
  * Copyright (C) 1999 Izumi Tsutsui.  All rights reserved.
@@ -102,8 +102,14 @@ boot(d4, d5, d6, d7)
 		if (fd != -1)
 			break;
 	}
-	if (fd == -1)
+	if (fd == -1) {
+#if 0 /* bootxx() may be overrided by loaded kernel */
 		return;
+#else
+		rom_halt();
+		/* NOTREACHED */
+#endif
+	}
 
 	DPRINTF("entry = 0x%x\n", (int)marks[MARK_ENTRY]);
 	DPRINTF("ssym = 0x%x\n", (int)marks[MARK_SYM]);
