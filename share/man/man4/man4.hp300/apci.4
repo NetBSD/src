@@ -1,4 +1,4 @@
-.\"     $NetBSD: apci.4,v 1.1 2001/09/11 06:30:03 gmcgarry Exp $
+.\"     $NetBSD: apci.4,v 1.2 2001/09/13 23:37:48 gmcgarry Exp $
 .\"
 .\" Copyright (c) 2001 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -39,17 +39,16 @@
 .Os
 .Sh NAME
 .Nm apci
-.Nd
-.Tn APCI UART driver
+.Nd four-port serial mux interface
 .Sh SYNOPSIS
 .Cd "apci at frodo? offset ?"
 .Sh DESCRIPTION
 The
 .Nm
-driver provides support for the APCI 8250-like UARTs found on the
-Frodo ASIC on HP Apollo 9000/4xx series workstations.  There are four
-APCI UARTs on the Frodo ASIC.  The first one is used to communicatie
-with the Domain keyboard.  The second one is the serial console port
+driver provides support for the four-port serial mux interface containing
+8250-like UARTs found on the Frodo ASIC on HP Apollo 9000/4xx series
+workstations.  The first UART is directly connected to communicatie
+with the Domain keyboard.  The second UART is the serial console port
 when the firmware is in Domain/OS mode.
 .Sh SEE ALSO
 .Xr dnkbd 4 ,
