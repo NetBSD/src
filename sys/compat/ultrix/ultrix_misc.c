@@ -1,4 +1,4 @@
-/*	$NetBSD: ultrix_misc.c,v 1.37 1997/10/10 08:31:10 jonathan Exp $	*/
+/*	$NetBSD: ultrix_misc.c,v 1.38 1997/10/19 00:15:31 jonathan Exp $	*/
 
 /*
  * Copyright (c) 1995, 1997 Jonathan Stone (hereinafter referred to as the author)
@@ -78,6 +78,10 @@
  *
  * from: Header: sun_misc.c,v 1.16 93/04/07 02:46:27 torek Exp 
  */
+
+#include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
+
+__KERNEL_RCSID(0, "$NetBSD: ultrix_misc.c,v 1.38 1997/10/19 00:15:31 jonathan Exp $");
 
 /*
  * SunOS compatibility module.
@@ -332,8 +336,8 @@ ultrix_sys_mmap(p, v, retval)
 
 	if ((SCARG(&ouap, flags) & MAP_FIXED) == 0 &&
 	    SCARG(&ouap, addr) != 0 &&
-	    SCARG(&ouap, addr) < (caddr_t)round_page(p->p_vmspace->vm_daddr+MAXDSIZ))
-		SCARG(&ouap, addr) = (caddr_t)round_page(p->p_vmspace->vm_daddr+MAXDSIZ);
+	    SCARG(&ouap, addr) < (void *)round_page(p->p_vmspace->vm_daddr+MAXDSIZ))
+		SCARG(&ouap, addr) = (void *)round_page(p->p_vmspace->vm_daddr+MAXDSIZ);
 
 	SCARG(&ouap, len) = SCARG(uap, len);
 	SCARG(&ouap, prot) = SCARG(uap, prot);
