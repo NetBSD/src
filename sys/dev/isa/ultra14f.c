@@ -67,11 +67,12 @@
 /**/
 
 #ifdef  __386BSD__
-#ifdef DDB
+#include "ddb.h"
+#if     NDDB > 0
 int     Debugger();
-#else
+#else   NDDB
 #define Debugger() panic("should call debugger here")
-#endif /*!DDB*/
+#endif  NDDB
 #endif  __386BSD__
 
 #ifdef  MACH
@@ -436,7 +437,7 @@ struct isa_dev *dev;
 
 	
 	uha_unit ++;
-return(1);
+	return(8);
 }
 
 /***********************************************\
@@ -445,25 +446,35 @@ return(1);
 uha_attach(dev)
 struct  isa_dev *dev;
 {
-	int     unit = dev->dev_unit;
+	int unit = dev->id_unit;
+	extern struct isa_device isa_biotab_dktp[];
+	struct isa_device *dvp;
 
-
-#ifdef  __386BSD__
-	printf("uha%d: probing for scsi devices..", unit);
-#endif  __386BSD__
-
-	/***********************************************\
-	* ask the adapter what subunits are present     *
-	\***********************************************/
-	scsi_attachdevs( unit, uha_data[unit].our_id, &uha_switch);
-
-#if defined(OSF)
-	uha_attached[unit]=1;
-#endif /* defined(OSF) */
-	if(!unit)  /* only one for all boards */
-	{
-		uha_timeout(0);
+	for (dvp = isa_biotab_dktp; dvp->id_driver != 0; dvp++) {
+		if (dvp->id_driver != &uhadriver)
+			continue;
+		if (dvp->id_masunit != dev->id_unit)
+			continue;
+		if (dvp->id_physid == -1)
+			continue;
+		scsi_attach(dev->id_unit, uha_data[unit].our_id, &uha_switch,
+			&dvp->id_physid, &dvp->id_unit, dvp->id_flags);
 	}
+	for (dvp = isa_biotab_dktp; dvp->id_driver != 0; dvp++) {
+		if (dvp->id_driver != &uhadriver)
+			continue;
+		if (dvp->id_masunit != dev->id_unit)
+			continue;
+		if (dvp->id_physid != -1)
+			continue;
+		scsi_attach(dev->id_unit, uha_data[unit].our_id, &uha_switch,
+			&dvp->id_physid, &dvp->id_unit, dvp->id_flags);
+	}
+	scsi_warn(dev->id_unit, uha_data[unit].our_id, &uha_switch);
+
+	/* only one for all boards */
+	if(!unit)
+		uha_timeout(0);
 	return;
 }
 

@@ -24,7 +24,11 @@
 /*
  * HISTORY
  * $Log: bt742a.c,v $
- * Revision 1.2  1993/04/10 12:05:14  glass
+ * Revision 1.3  1993/04/12 08:17:28  deraadt
+ * new scsi subsystem.
+ * changes also in config/mkioconf.c & sys/scsi/*
+ *
+ * Revision 1.2  1993/04/10  12:05:14  glass
  * fixed to be compliant, subservient, and to take advantage of the newly
  * hacked config(8)
  *
@@ -636,7 +640,7 @@ struct isa_dev *dev;
 #endif  __386BSD__
 
 	btunit++;
-	return(1);
+	return(8);
 }
 
 /***********************************************\
@@ -645,27 +649,35 @@ struct isa_dev *dev;
 btattach(dev)
 struct	isa_dev	*dev;
 {
-	int	unit = dev->dev_unit;
+	int unit = dev->id_unit;
+	extern struct isa_device isa_biotab_dktp[];
+	struct isa_device *dvp;
 
-
-#ifdef  __386BSD__
-	printf(" probing for scsi devices**\n");
-#endif  __386BSD__
-
-	/***********************************************\
-	* ask the adapter what subunits are present	*
-	\***********************************************/
-	scsi_attachdevs( unit, bt_scsi_dev[unit], &bt_switch);
-#if defined(OSF)
-	bt_attached[unit]=1;
-#endif /* defined(OSF) */
-	if(!unit) /* only one for all boards */
-	{
-		bt_timeout(0);
+	for (dvp = isa_biotab_dktp; dvp->id_driver != 0; dvp++) {
+		if (dvp->id_driver != &btdriver)
+			continue;
+		if (dvp->id_masunit != dev->id_unit)
+			continue;
+		if (dvp->id_physid == -1)
+			continue;
+		scsi_attach(dev->id_unit, bt_scsi_dev[unit], &bt_switch,
+			&dvp->id_physid, &dvp->id_unit, dvp->id_flags);
 	}
-#ifdef  __386BSD__
-	printf("bt%d",unit);
-#endif  __386BSD__
+	for (dvp = isa_biotab_dktp; dvp->id_driver != 0; dvp++) {
+		if (dvp->id_driver != &btdriver)
+			continue;
+		if (dvp->id_masunit != dev->id_unit)
+			continue;
+		if (dvp->id_physid != -1)
+			continue;
+		scsi_attach(dev->id_unit, bt_scsi_dev[unit], &bt_switch,
+			&dvp->id_physid, &dvp->id_unit, dvp->id_flags);
+	}
+	scsi_warn(dev->id_unit, bt_scsi_dev[unit], &bt_switch);
+
+	/* only one for all boards */
+	if(!unit)
+		bt_timeout(0);
 	return;
 }
 
