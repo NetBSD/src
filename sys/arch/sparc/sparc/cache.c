@@ -1,4 +1,4 @@
-/*	$NetBSD: cache.c,v 1.64 2002/12/15 15:01:08 pk Exp $ */
+/*	$NetBSD: cache.c,v 1.65 2002/12/15 23:01:09 martin Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -233,7 +233,7 @@ hypersparc_cache_enable()
 #if defined(MULTIPROCESSOR)
 	v = HYPERSPARC_ICCR_ICE | (ncpu == 1 ? HYPERSPARC_ICCR_FTD : 0);
 #else
-	v = HYPERSPARC_ICCR_ICE | HYPERSPARC_ICCR_FTD);
+	v = HYPERSPARC_ICCR_ICE | HYPERSPARC_ICCR_FTD;
 #endif
 	wrasr(v, HYPERSPARC_ASRNUM_ICCR);
 }
