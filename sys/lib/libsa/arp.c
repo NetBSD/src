@@ -1,4 +1,4 @@
-/*	$NetBSD: arp.c,v 1.5 1995/06/27 15:18:57 gwr Exp $	*/
+/*	$NetBSD: arp.c,v 1.6 1995/08/04 01:17:26 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1992 Regents of the University of California.
@@ -51,9 +51,6 @@
 
 #include "stand.h"
 #include "net.h"
-
-/* Might as well have this here... */
-u_char	bcea[6] = { 0xff, 0xff, 0xff, 0xff, 0xff, 0xff };
 
 /* Cache stuff */
 #define ARP_NUM 8			/* need at most 3 arp entries */
