@@ -1,4 +1,4 @@
-/*	$NetBSD: hist.c,v 1.14 2003/08/07 16:44:31 agc Exp $	*/
+/*	$NetBSD: hist.c,v 1.15 2003/11/01 23:36:39 christos Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)hist.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: hist.c,v 1.14 2003/08/07 16:44:31 agc Exp $");
+__RCSID("$NetBSD: hist.c,v 1.15 2003/11/01 23:36:39 christos Exp $");
 #endif
 #endif /* not lint && not SCCSID */
 
@@ -162,7 +162,7 @@ hist_command(EditLine *el, int argc, const char **argv)
 	if (el->el_history.ref == NULL)
 		return (-1);
 
-	if (argc == 0 || strcmp(argv[0], "list") == 1) {
+	if (argc == 1 || strcmp(argv[1], "list") == 0) {
 		 /* List history entries */
 
 		for (str = HIST_LAST(el); str != NULL; str = HIST_PREV(el))
@@ -171,15 +171,15 @@ hist_command(EditLine *el, int argc, const char **argv)
 		return (0);
 	}
 
-	if (argc != 2)
+	if (argc != 3)
 		return (-1);
 
-	num = (int)strtol(argv[1], NULL, 0);
+	num = (int)strtol(argv[2], NULL, 0);
 
-	if (strcmp(argv[0], "size") == 0)
+	if (strcmp(argv[1], "size") == 0)
 		return history(el->el_history.ref, &ev, H_SETSIZE, num);
 
-	if (strcmp(argv[0], "unique") == 0)
+	if (strcmp(argv[1], "unique") == 0)
 		return history(el->el_history.ref, &ev, H_SETUNIQUE, num);
 
 	return -1;
