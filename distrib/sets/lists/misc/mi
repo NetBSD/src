@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.37.2.11 2001/04/25 14:13:07 he Exp $
+# $NetBSD: mi,v 1.37.2.12 2001/05/09 20:58:19 he Exp $
 ./usr/share/dict/README
 ./usr/share/dict/eign
 ./usr/share/dict/propernames
@@ -401,6 +401,7 @@
 ./usr/share/examples/postfix/transport
 ./usr/share/examples/postfix/virtual
 ./usr/share/examples/supfiles/sup.au.netbsd.org
+./usr/share/examples/supfiles/sup2.fr.netbsd.org
 ./usr/share/examples/supfiles/sup.jp.netbsd.org
 ./usr/share/examples/supfiles/sup.netbsd.org
 ./usr/share/examples/supfiles/sup.uk.netbsd.org
