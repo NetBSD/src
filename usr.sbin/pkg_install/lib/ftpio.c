@@ -1,8 +1,8 @@
-/*	$NetBSD: ftpio.c,v 1.11.2.9 2000/07/31 18:19:04 he Exp $	*/
+/*	$NetBSD: ftpio.c,v 1.11.2.10 2000/07/31 19:00:35 he Exp $	*/
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: ftpio.c,v 1.11.2.9 2000/07/31 18:19:04 he Exp $");
+__RCSID("$NetBSD: ftpio.c,v 1.11.2.10 2000/07/31 19:00:35 he Exp $");
 #endif
 
 /*
@@ -253,13 +253,13 @@ setupCoproc(const char *base)
     case 0:
 	    /* Child */
 	    
-	    close(command_pipe[1]);
+	    (void) close(command_pipe[1]);
 	    dup2(command_pipe[0], 0);
-	    close(command_pipe[0]);
+	    (void) close(command_pipe[0]);
 	    
-	    close(answer_pipe[0]);
+	    (void) close(answer_pipe[0]);
 	    dup2(answer_pipe[1], 1);
-	    close(answer_pipe[1]);
+	    (void) close(answer_pipe[1]);
 	    
 	    setbuf(stdout, NULL);
 	    
@@ -271,12 +271,12 @@ setupCoproc(const char *base)
 	    break;
     default: 
 	    /* Parent */
-	    close(command_pipe[0]);
-	    close(answer_pipe[1]);
+	    (void) close(command_pipe[0]);
+	    (void) close(answer_pipe[1]);
 	    
-	    snprintf(buf, sizeof(buf), "%d", command_pipe[1]);
+	    (void) snprintf(buf, sizeof(buf), "%d", command_pipe[1]);
 	    setenv(PKG_FTPIO_COMMAND, buf, 1);
-	    snprintf(buf, sizeof(buf), "%d", answer_pipe[0]);
+	    (void) snprintf(buf, sizeof(buf), "%d", answer_pipe[0]);
 	    setenv(PKG_FTPIO_ANSWER, buf, 1);
 	    
 	    ftpio.command = command_pipe[1];
@@ -314,6 +314,9 @@ sigpipe_handler(int n)
 void 
 ftp_stop(void)
 {
+#if defined(__svr4__) && defined(__sun__)
+	char	env[BUFSIZ];
+#endif
 	char *tmp1, *tmp2;
 	
 	if (!ftp_started)
@@ -327,12 +330,19 @@ ftp_stop(void)
 		if (needclose)
 			ftp_cmd("close\n", "\n(221 Goodbye.|Not connected.)\n");
 		
-		close(ftpio.command);
-		close(ftpio.answer);
+		(void) close(ftpio.command);
+		(void) close(ftpio.answer);
 	}
 
+#if defined(__svr4__) && defined(__sun__)
+	(void) snprintf(env, sizeof(env), "%s=", PKG_FTPIO_COMMAND);
+	putenv(env);
+	(void) snprintf(env, sizeof(env), "%s=", PKG_FTPIO_ANSWER);
+	putenv(env);
+#else
 	unsetenv(PKG_FTPIO_COMMAND); 
 	unsetenv(PKG_FTPIO_ANSWER);
+#endif
 }
 
 
@@ -358,7 +368,7 @@ ftp_start(char *base)
 	    && ( strcmp(newHost, currentHost) != 0
 		 || strcmp(newDir, currentDir) != 0)) { /* could handle new dir case better here, w/o reconnect */
 		if (Verbose) {
-			printf("ftp_stgart: new host or dir, stopping previous connect...\n");
+			printf("ftp_start: new host or dir, stopping previous connect...\n");
 			printf("currentHost='%s', newHost='%s'\n", currentHost, newHost);
 			printf("currentDir='%s', newDir='%s'\n", currentDir, newDir);
 		}
@@ -435,7 +445,7 @@ expandURL(char *expandedurl, const char *wildcardurl)
 	warnx("expandURL: no '/' in url %s?!", wildcardurl);
 	return -1;
     }
-    snprintf(base, FILENAME_MAX, "%*.*s/", (int)(pkg-wildcardurl),
+    (void) snprintf(base, sizeof(base), "%*.*s/", (int)(pkg-wildcardurl),
              (int)(pkg-wildcardurl), wildcardurl);
     pkg++;
 
@@ -473,7 +483,7 @@ expandURL(char *expandedurl, const char *wildcardurl)
 		 * we can't use the pkg wildcards here as dewey compare
 		 * and alternates won't be handled by ftp(1); sort
 		 * out later, using pmatch() */
-		(void) snprintf(buf, sizeof(buf), "nlist %*.*s*.tgz %s\n",
+		(void) snprintf(buf,  sizeof(buf), "nlist %*.*s*.tgz %s\n",
                          (int)(s-pkg), (int)(s-pkg), pkg, tmpname);
 	}
 	
@@ -508,7 +518,7 @@ expandURL(char *expandedurl, const char *wildcardurl)
 		matches=0;
 		/* The following loop is basically the same as the readdir() loop
 		 * in findmatchingname() */
-		while (fgets(filename, FILENAME_MAX, f)) {
+		while (fgets(filename, sizeof(buf), f)) {
 			filename[strlen(filename)-1] = '\0';
 			if (pmatch(pkg, filename)) {
 				matches++;
@@ -517,7 +527,7 @@ expandURL(char *expandedurl, const char *wildcardurl)
 				findbestmatchingname_fn(filename, best);
 			}
 		}
-		fclose(f);
+		(void) fclose(f);
 		
 		if (matches == 0)
 			warnx("nothing appropriate found\n");
@@ -570,9 +580,9 @@ unpackURL(const char *url, const char *dir)
 		warnx("unpackURL: no '/' in url %s?!", url);
 		return -1;
 	}
-	snprintf(base, FILENAME_MAX, "%*.*s/", (int)(pkg-url),
+	(void) snprintf(base, sizeof(base), "%*.*s/", (int)(pkg-url),
                  (int)(pkg-url), url);
-	snprintf(pkg_path, FILENAME_MAX, "%*.*s", (int)(pkg-url),
+	(void) snprintf(pkg_path, sizeof(pkg_path), "%*.*s", (int)(pkg-url),
                  (int)(pkg-url), url); /* no trailing '/' */
 	pkg++;
 
@@ -595,7 +605,7 @@ unpackURL(const char *url, const char *dir)
 			printf("unpackURL '%s' to '%s'\n", url, dir);
 
 		/* yes, this is gross, but needed for borken ftp(1) */
-		snprintf(cmd, sizeof(cmd), "get %s \"| ( cd %s ; gunzip 2>/dev/null | tar -%sx -f - )\"\n", pkg, dir, Verbose?"vv":"");
+		(void) snprintf(cmd, sizeof(cmd), "get %s \"| ( cd %s ; gunzip 2>/dev/null | tar -%sx -f - )\"\n", pkg, dir, Verbose?"vv":"");
 		rc = ftp_cmd(cmd, "\n(226|550).*\n");
 		if (rc != 226) {
 			warnx("Cannot fetch file (%d!=226)!", rc);
@@ -623,7 +633,7 @@ miscstuff(const char *url)
 	warnx("miscstuff: no '/' in url %s?!", url);
 	return -1;
     }
-    snprintf(base, FILENAME_MAX, "%*.*s/", (int)(pkg-url), (int)(pkg-url),
+    (void) snprintf(base, sizeof(base), "%*.*s/", (int)(pkg-url), (int)(pkg-url),
              url);
     pkg++;
 
@@ -653,7 +663,7 @@ miscstuff(const char *url)
 	mkdir(tmpdir, 0755);
 
 	/* yes, this is gross, but needed for borken ftp(1) */
-	snprintf(cmd, sizeof(cmd), "get xpmroot-1.01.tgz \"| ( cd %s ; gunzip 2>/dev/null | tar -vvx -f - )\"\n", tmpdir);
+	(void) snprintf(cmd, sizeof(cmd), "get xpmroot-1.01.tgz \"| ( cd %s ; gunzip 2>/dev/null | tar -vvx -f - )\"\n", tmpdir);
 	rc = ftp_cmd(cmd, "\n(226|550).*\n");
 	if (rc != 226) {
 	    warnx("Cannot fetch file (%d != 226)!", rc);
@@ -695,7 +705,7 @@ miscstuff(const char *url)
 		count=0;
 		while (fgetln(f, &len))
 		    count++;
-		fclose(f);
+		(void) fclose(f);
 		
 		printf("#lines = %d\n", count);
 	    }
@@ -713,10 +723,10 @@ miscstuff(const char *url)
 	char *s, buf[FILENAME_MAX];
 
 	if ((s=getenv(PKG_FTPIO_CNT)) && atoi(s)>0){
-	    snprintf(buf,FILENAME_MAX,"%d", atoi(s)-1);
+	    (void) snprintf(buf, sizeof(buf),"%d", atoi(s)-1);
 	    setenv(PKG_FTPIO_CNT, buf, 1);
 
-	    snprintf(buf, FILENAME_MAX, "%s \"%s/%s\"", argv0, url, pkg);
+	    (void) snprintf(buf, sizeof(buf), "%s \"%s/%s\"", argv0, url, pkg);
 	    printf("%s>>> %s\n", s, buf);
 	    system(buf);
 	}
@@ -773,10 +783,10 @@ main(int argc, char *argv[])
 		    char *s, buf[FILENAME_MAX];
 		    
 		    if ((s=getenv(PKG_FTPIO_CNT)) && atoi(s)>0){
-			    snprintf(buf,FILENAME_MAX,"%d", atoi(s)-1);
+			    (void) snprintf(buf, sizeof(buf),"%d", atoi(s)-1);
 			    setenv(PKG_FTPIO_CNT, buf, 1);
 			    
-			    snprintf(buf, FILENAME_MAX, "%s -v '%s'", argv0, argv[0]);
+			    (void) snprintf(buf, sizeof(buf), "%s -v '%s'", argv0, argv[0]);
 			    printf("%s>>> %s\n", s, buf);
 			    system(buf);
 		    }
