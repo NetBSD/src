@@ -1,4 +1,4 @@
-/*	$NetBSD: trap_subr.S,v 1.2 2001/06/17 13:38:33 simonb Exp $	*/
+/*	$NetBSD: trap_subr.S,v 1.3 2002/03/13 19:11:53 eeh Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -168,6 +168,7 @@ _C_LABEL(name ## size) = .-_C_LABEL(name ## trap)
 	ACCESS_EXC_HANDLER(dsi)
 	ACCESS_EXC_HANDLER(isi)
 	STANDARD_EXC_HANDLER(debug)
+	CRITICAL_EXC_HANDLER(mchk)
 
 /*
  * This one for the external interrupt handler.
