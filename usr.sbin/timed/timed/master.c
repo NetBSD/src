@@ -1,4 +1,4 @@
-/*	$NetBSD: master.c,v 1.12 2003/05/16 18:28:18 itojun Exp $	*/
+/*	$NetBSD: master.c,v 1.13 2003/05/17 20:55:44 itojun Exp $	*/
 
 /*-
  * Copyright (c) 1985, 1993 The Regents of the University of California.
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)master.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: master.c,v 1.12 2003/05/16 18:28:18 itojun Exp $");
+__RCSID("$NetBSD: master.c,v 1.13 2003/05/17 20:55:44 itojun Exp $");
 #endif
 #endif /* not lint */
 
@@ -635,7 +635,7 @@ addmach(char *name, struct sockaddr_in *addr, struct netinfo *ntp)
 		}
 		ret->addr = *addr;
 		ret->ntp = ntp;
-		(void)strncpy(ret->name, name, sizeof(ret->name));
+		(void)strlcpy(ret->name, name, sizeof(ret->name));
 		ret->good = good_host_name(name);
 		ret->l_fwd = &self;
 		ret->l_bak = self.l_bak;
