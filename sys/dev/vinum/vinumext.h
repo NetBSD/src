@@ -33,8 +33,7 @@
  * otherwise) arising in any way out of the use of this software, even if
  * advised of the possibility of such damage.
  *
- * $Id: vinumext.h,v 1.1.1.1 2003/10/10 03:08:08 grog Exp $
- * $FreeBSD$
+ * $Id: vinumext.h,v 1.2 2003/10/15 01:31:39 grog Exp $
  */
 
 /* vinumext.h: external definitions */
@@ -160,11 +159,11 @@ void vinum_meminfo(caddr_t data);
 int vinum_mallocinfo(caddr_t data);
 int vinum_rqinfo(caddr_t data);
 void LongJmp(label_t *);
-char *basename(char *);
 #else
 void longjmp(label_t *);				    /* the kernel doesn't define this */
 #endif
 
+char *basename(char *);
 typedef int cmp_t __P((const void *, const void *));
 void qsort(void *a, size_t n, size_t es, cmp_t * cmp);
 void expand_table(void **, int, int);
@@ -249,10 +248,13 @@ caddr_t MMalloc(int size, char *, int);
 void FFree(void *mem, char *, int);
 #define LOCKDRIVE(d) lockdrive (d, __FILE__, __LINE__)
 #else
+/* kernel, no debug */
+#define Malloc(x)  malloc ((x), M_DEVBUF, M_NOWAIT)
 #define Free(x)    free((x), M_DEVBUF)
 #define LOCKDRIVE(d) lockdrive (d)
 #endif
 #else
+/* not kernel */
 #define Malloc(x)  malloc ((x))				    /* just the size */
 #define Free(x)	   free ((x))				    /* just the address */
 #endif
