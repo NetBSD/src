@@ -1,4 +1,4 @@
-/*	$NetBSD: ls.c,v 1.16 1996/02/14 05:58:53 jtc Exp $	*/
+/*	$NetBSD: ls.c,v 1.17 1996/07/08 10:20:16 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993, 1994
@@ -46,7 +46,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)ls.c	8.7 (Berkeley) 8/5/94";
 #else
-static char rcsid[] = "$NetBSD: ls.c,v 1.16 1996/02/14 05:58:53 jtc Exp $";
+static char rcsid[] = "$NetBSD: ls.c,v 1.17 1996/07/08 10:20:16 mycroft Exp $";
 #endif
 #endif /* not lint */
 
@@ -538,7 +538,12 @@ mastercmp(a, b)
 		return (0);
 
 	if (a_info == FTS_NS || b_info == FTS_NS)
-		return (namecmp(*a, *b));
+		if (b_info != FTS_NS)
+			return (1);
+		else if (a_info != FTS_NS)
+			return (-1);
+		else
+			return (0);
 
 	if (a_info == b_info)
 		return (sortfcn(*a, *b));
