@@ -1,4 +1,4 @@
-/*	$NetBSD: reader.c,v 1.9 2000/10/11 14:46:24 is Exp $	*/
+/*	$NetBSD: reader.c,v 1.10 2001/02/04 17:45:25 christos Exp $	*/
 
 /*
  * Copyright (c) 1989 The Regents of the University of California.
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)reader.c	5.7 (Berkeley) 1/20/91";
 #else
-__RCSID("$NetBSD: reader.c,v 1.9 2000/10/11 14:46:24 is Exp $");
+__RCSID("$NetBSD: reader.c,v 1.10 2001/02/04 17:45:25 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -115,7 +115,6 @@ void check_symbols __P((void));
 void pack_symbols __P((void));
 void pack_grammar __P((void));
 void print_grammar __P((void));
-void reader __P((void));
 
 
 static const char line_format[] = "#line %d \"%s\"\n";

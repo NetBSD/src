@@ -1,4 +1,4 @@
-/*	$NetBSD: output.c,v 1.9 2001/01/23 22:31:40 jdolecek Exp $	*/
+/*	$NetBSD: output.c,v 1.10 2001/02/04 17:45:25 christos Exp $	*/
 
 /*
  * Copyright (c) 1989 The Regents of the University of California.
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)output.c	5.7 (Berkeley) 5/24/93";
 #else
-__RCSID("$NetBSD: output.c,v 1.9 2001/01/23 22:31:40 jdolecek Exp $");
+__RCSID("$NetBSD: output.c,v 1.10 2001/02/04 17:45:25 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -63,7 +63,6 @@ static short *check;
 static int lowzero;
 static int high;
 
-void output __P((void));
 void output_prefix __P((void));
 void output_rule_data __P((void));
 void output_yydefred __P((void));

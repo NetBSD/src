@@ -1,4 +1,4 @@
-/*	$NetBSD: defs.h,v 1.9 2001/01/23 15:35:01 jdolecek Exp $	*/
+/*	$NetBSD: defs.h,v 1.10 2001/02/04 17:45:24 christos Exp $	*/
 
 /*
  * Copyright (c) 1989 The Regents of the University of California.
@@ -325,7 +325,6 @@ extern void fatal __P((char *));
 extern void reflexive_transitive_closure __P((unsigned *, int));
 extern void done __P((int));
 
-extern void fatal __P((char *));
 extern void no_space __P((void));
 extern void open_error(char *);
 extern void unexpected_EOF __P((void));

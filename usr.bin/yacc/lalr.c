@@ -1,4 +1,4 @@
-/*	$NetBSD: lalr.c,v 1.5 1997/07/25 16:46:32 perry Exp $	*/
+/*	$NetBSD: lalr.c,v 1.6 2001/02/04 17:45:25 christos Exp $	*/
 
 /*
  * Copyright (c) 1989 The Regents of the University of California.
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)lalr.c	5.3 (Berkeley) 6/1/90";
 #else
-__RCSID("$NetBSD: lalr.c,v 1.5 1997/07/25 16:46:32 perry Exp $");
+__RCSID("$NetBSD: lalr.c,v 1.6 2001/02/04 17:45:25 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -68,7 +68,6 @@ short *from_state;
 short *to_state;
 
 short **transpose(short **, int);
-void set_state_table __P((void));
 void set_state_table __P((void));
 void set_accessing_symbol __P((void));
 void set_shift_table __P((void));

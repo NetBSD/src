@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.10 1997/10/31 07:46:08 mycroft Exp $	*/
+/*	$NetBSD: main.c,v 1.11 2001/02/04 17:45:25 christos Exp $	*/
 
 /*
  * Copyright (c) 1989 The Regents of the University of California.
@@ -46,7 +46,7 @@ __COPYRIGHT("@(#) Copyright (c) 1989 The Regents of the University of California
 #if 0
 static char sccsid[] = "@(#)main.c	5.5 (Berkeley) 5/24/93";
 #else
-__RCSID("$NetBSD: main.c,v 1.10 1997/10/31 07:46:08 mycroft Exp $");
+__RCSID("$NetBSD: main.c,v 1.11 2001/02/04 17:45:25 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -116,11 +116,9 @@ char *nullable;
 int main __P((int, char *[]));
 
 void onintr __P((int));
-__dead void done __P((int));
 void set_signals __P((void));
 void usage __P((void));
 void getargs __P((int, char *[]));
-char * allocate __P((unsigned));
 void create_file_names __P((void));
 void open_files __P((void));
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: mkpar.c,v 1.6 1998/08/25 20:59:44 ross Exp $	*/
+/*	$NetBSD: mkpar.c,v 1.7 2001/02/04 17:45:25 christos Exp $	*/
 
 /*
  * Copyright (c) 1989 The Regents of the University of California.
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)mkpar.c	5.3 (Berkeley) 1/20/91";
 #else
-__RCSID("$NetBSD: mkpar.c,v 1.6 1998/08/25 20:59:44 ross Exp $");
+__RCSID("$NetBSD: mkpar.c,v 1.7 2001/02/04 17:45:25 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -68,7 +68,6 @@ action *add_reduce __P((action *, int, int));
 int sole_reduction __P((int));
 void free_action_row __P((action *));
 
-void make_parser __P((void));
 void find_final_state __P((void));
 void unused_rules __P((void));
 void remove_conflicts __P((void));
