@@ -1,4 +1,4 @@
-/* $NetBSD: tsvar.h,v 1.2 2000/06/25 19:17:40 thorpej Exp $ */
+/* $NetBSD: tsvar.h,v 1.3 2000/11/29 06:30:09 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1999 by Ross Harvey.  All rights reserved.
@@ -80,3 +80,5 @@ void	tsp_dma_init __P((struct tsp_config *));
 
 void	tsp_bus_io_init __P((bus_space_tag_t, void *));
 void	tsp_bus_mem_init __P((bus_space_tag_t, void *));
+
+void	tsp_bus_mem_init2 __P((bus_space_tag_t, void *));
