@@ -1,4 +1,4 @@
-/*	$NetBSD: ss_scanjet.c,v 1.10 1996/12/22 10:35:08 cgd Exp $	*/
+/*	$NetBSD: ss_scanjet.c,v 1.11 1997/01/18 02:18:47 cgd Exp $	*/
 
 /*
  * Copyright (c) 1995 Kenneth Stailey.  All rights reserved.
@@ -66,7 +66,6 @@ int scanjet_set_window __P((struct ss_softc *));
 int scanjet_compute_sizes __P((struct ss_softc *));
 /* Maybe move to libkern? */
 __inline static int atoi __P((const char *));
-__inline static char *strchr __P((const char *, char));
 
 
 /*
@@ -418,8 +417,8 @@ scanjet_set_window(ss)
 	return (scanjet_ctl_write(ss, escape_codes, p - escape_codes, 0));
 }
 
-/* atoi() and strchr() are from /sys/arch/amiga/dev/ite.c
-   and are only used in scanjet_compute_sizes */
+/* atoi() is from /sys/arch/amiga/dev/ite.c
+   and is only used in scanjet_compute_sizes */
 
 __inline static int
 atoi(cp)
@@ -431,15 +430,6 @@ atoi(cp)
 		n = n * 10 + *cp - '0';
 
 	return (n);
-}
-
-__inline static char *
-strchr(cp, ch)
-	const char *cp;
-	char ch;
-{
-	while (*cp && *cp != ch) cp++;
-	return (*cp ? (char *)cp : 0);			/* XXX kills const */
 }
 
 int
