@@ -1,4 +1,4 @@
-/*	$NetBSD: bootp.c,v 1.15 1998/04/24 18:50:23 drochner Exp $	*/
+/*	$NetBSD: bootp.c,v 1.16 1999/02/12 10:56:18 drochner Exp $	*/
 
 /*
  * Copyright (c) 1992 Regents of the University of California.
@@ -55,6 +55,12 @@
 #include "bootp.h"
 
 struct in_addr servip;
+#ifdef SUPPORT_LINUX
+char linuxcmdline[256];
+#ifndef TAG_LINUX_CMDLINE
+#define TAG_LINUX_CMDLINE 123
+#endif
+#endif
 
 static n_long	nmask, smask;
 
@@ -353,7 +359,7 @@ vend_rfc1048(cp, len)
 		}
 		if (tag == TAG_SWAPSERVER) {
 			/* let it override bp_siaddr */
-			bcopy(cp, &rootip.s_addr, sizeof(swapip.s_addr));
+			bcopy(cp, &rootip.s_addr, sizeof(rootip.s_addr));
 		}
 		if (tag == TAG_ROOTPATH) {
 			strncpy(rootpath, (char *)cp, sizeof(rootpath));
@@ -372,6 +378,12 @@ vend_rfc1048(cp, len)
 		if (tag == TAG_SERVERID) {
 			bcopy(cp, &dhcp_serverip.s_addr,
 			      sizeof(dhcp_serverip.s_addr));
+		}
+#endif
+#ifdef SUPPORT_LINUX
+		if (tag == TAG_LINUX_CMDLINE) {
+			strncpy(linuxcmdline, (char *)cp, sizeof(linuxcmdline));
+			linuxcmdline[size] = '\0';
 		}
 #endif
 		cp += size;
