@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.44 2003/12/04 19:38:21 atatat Exp $	*/
+/*	$NetBSD: machdep.c,v 1.45 2004/03/23 03:36:32 uwe Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.44 2003/12/04 19:38:21 atatat Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.45 2004/03/23 03:36:32 uwe Exp $");
 
 #include "opt_md.h"
 #include "opt_ddb.h"
@@ -204,6 +204,16 @@ machine_startup(int argc, char *argv[], struct bootinfo *bi)
 		sh_cpu_init(CPU_ARCH_SH3, CPU_PRODUCT_7709A);
 	else if (platid_match(&platid, &platid_mask_CPU_SH_4))
 		sh_cpu_init(CPU_ARCH_SH4, CPU_PRODUCT_7750);
+
+#ifndef RTC_OFFSET
+	/*
+	 * rtc_offset from bootinfo.timezone set by hpcboot.exe
+	 */
+	if (rtc_offset == 0
+	    && bootinfo->timezone > (-12*60)
+	    && bootinfo->timezone <= (12*60))
+		rtc_offset = bootinfo->timezone;
+#endif
 
 	/* Start to determine heap area */
 	kernend = (vaddr_t)sh3_round_page(end + symbolsize);
