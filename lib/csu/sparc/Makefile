@@ -1,9 +1,9 @@
 #	from: @(#)Makefile	5.5 (Berkeley) 5/21/91
-#	$Id: Makefile,v 1.5 1995/01/07 23:10:47 mycroft Exp $
+#	$Id: Makefile,v 1.6 1995/06/03 13:16:17 pk Exp $
 
-CFLAGS+=	-DLIBC_SCCS -DDYNAMIC
+CFLAGS+=	-DLIBC_SCCS -DDYNAMIC -I${.CURDIR}/..
 OBJS=		crt0.o gcrt0.o
-CLEANFILES+=	gmon.o moncrt0.o core a.out
+CLEANFILES+=	core a.out
 
 all: ${OBJS}
 
