@@ -1,4 +1,4 @@
-/*	$NetBSD: locate.code.c,v 1.5 1995/08/31 22:36:33 jtc Exp $	*/
+/*	$NetBSD: locate.code.c,v 1.6 1997/10/19 04:11:54 lukem Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -36,17 +36,17 @@
  * SUCH DAMAGE.
  */
 
+#include <sys/cdefs.h>
 #ifndef lint
-static char copyright[] =
-"@(#) Copyright (c) 1989, 1993\n\
-	The Regents of the University of California.  All rights reserved.\n";
+__COPYRIGHT("@(#) Copyright (c) 1989, 1993\n\
+	The Regents of the University of California.  All rights reserved.\n");
 #endif /* not lint */
 
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)locate.code.c	8.4 (Berkeley) 5/4/95";
 #endif
-static char rcsid[] = "$NetBSD: locate.code.c,v 1.5 1995/08/31 22:36:33 jtc Exp $";
+__RCSID("$NetBSD: locate.code.c,v 1.6 1997/10/19 04:11:54 lukem Exp $");
 #endif /* not lint */
 
 /*
@@ -102,6 +102,7 @@ char buf2[MAXPATHLEN];
 char bigrams[BGBUFSIZE + 1] = { 0 };
 
 int	bgindex __P((char *));
+int	main __P((int, char **));
 void	usage __P((void));
 
 int
@@ -109,11 +110,11 @@ main(argc, argv)
 	int argc;
 	char *argv[];
 {
-	register char *cp, *oldpath, *path;
+	char *cp, *oldpath, *path;
 	int ch, code, count, diffcount, oldcount;
 	FILE *fp;
 
-	while ((ch = getopt(argc, argv, "")) != EOF)
+	while ((ch = getopt(argc, argv, "")) != -1)
 		switch(ch) {
 		case '?':
 		default:
@@ -200,7 +201,7 @@ int
 bgindex(bg)			/* Return location of bg in bigrams or -1. */
 	char *bg;
 {
-	register char bg0, bg1, *p;
+	char bg0, bg1, *p;
 
 	bg0 = bg[0];
 	bg1 = bg[1];
