@@ -1,4 +1,4 @@
-LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.173 $>
+LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.174 $>
 
 
 [Note: This file does not mention every change made to the NetBSD source tree.
@@ -419,3 +419,5 @@ Changes from NetBSD 1.6 to NetBSD 2.0:
 	groff(1): Updated to 1.19. [wiz 20030630]
 	texinfo(1): upgraded to 4.6.  [wiz 20030703]
 	locale(1): Added.  Obtained from FreeBSD.  [tshiozak 20030704]
+	pax(1): Add support for gnutar's -O "extract to stdout" option in tar
+		mode.  [simonb 20030708]
