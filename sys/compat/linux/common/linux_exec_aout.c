@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_exec_aout.c,v 1.15 1996/06/13 19:27:01 christos Exp $	*/
+/*	$NetBSD: linux_exec_aout.c,v 1.16 1996/09/03 03:12:28 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1995 Frank van der Linden
@@ -564,10 +564,15 @@ linux_sys_execve(p, v, retval)
 		syscallarg(char **) argv;
 		syscallarg(char **) envp;
 	} */ *uap = v;
+	struct sys_execve_args ap;
 	caddr_t sg;
 
 	sg = stackgap_init(p->p_emul);
 	LINUX_CHECK_ALT_EXIST(p, &sg, SCARG(uap, path));
 
-	return sys_execve(p, uap, retval);
+	SCARG(&ap, path) = SCARG(uap, path);
+	SCARG(&ap, argp) = SCARG(uap, argp);
+	SCARG(&ap, envp) = SCARG(uap, envp);
+
+	return sys_execve(p, &ap, retval);
 }
