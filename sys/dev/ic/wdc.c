@@ -1,4 +1,4 @@
-/*	$NetBSD: wdc.c,v 1.175 2004/05/24 20:45:30 bouyer Exp $ */
+/*	$NetBSD: wdc.c,v 1.176 2004/05/25 20:42:41 thorpej Exp $ */
 
 /*
  * Copyright (c) 1998, 2001, 2003 Manuel Bouyer.  All rights reserved.
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wdc.c,v 1.175 2004/05/24 20:45:30 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wdc.c,v 1.176 2004/05/25 20:42:41 thorpej Exp $");
 
 #ifndef WDCDEBUG
 #define WDCDEBUG
@@ -174,6 +174,17 @@ int wdc_nxfer = 0;
 struct atabus_initq_head atabus_initq_head =
     TAILQ_HEAD_INITIALIZER(atabus_initq_head);
 struct simplelock atabus_interlock = SIMPLELOCK_INITIALIZER;
+
+/*
+ * Initialize the "shadow register" handles for a standard wdc controller.
+ */
+void
+wdc_init_shadow_regs(struct wdc_channel *chp)
+{
+
+	chp->cmd_iohs[wd_status] = chp->cmd_iohs[wd_command];
+	chp->cmd_iohs[wd_features] = chp->cmd_iohs[wd_error];
+}
 
 /* Test to see controller with at last one attached drive is there.
  * Returns a bit for each possible drive found (0x01 for drive 0,

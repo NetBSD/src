@@ -1,4 +1,4 @@
-/*	$NetBSD: rside.c,v 1.2 2004/01/04 13:49:49 chris Exp $	*/
+/*	$NetBSD: rside.c,v 1.3 2004/05/25 20:42:40 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2004 Christopher Gilbert
@@ -56,7 +56,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rside.c,v 1.2 2004/01/04 13:49:49 chris Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rside.c,v 1.3 2004/05/25 20:42:40 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -213,6 +213,7 @@ rside_attach(struct device *parent, struct device *self, void *aux)
 				continue;
 			}
 		}
+		wdc_init_shadow_regs(cp);
 
 		if (bus_space_map(cp->ctl_iot,
 		    rside_info[channel].aux_register, 0x4, 0, &cp->ctl_ioh))

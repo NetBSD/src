@@ -1,4 +1,4 @@
-/*	$NetBSD: wdc_pioc.c,v 1.15 2004/01/03 22:56:52 thorpej Exp $	*/
+/*	$NetBSD: wdc_pioc.c,v 1.16 2004/05/25 20:42:40 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1997-1998 Mark Brinicombe.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wdc_pioc.c,v 1.15 2004/01/03 22:56:52 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wdc_pioc.c,v 1.16 2004/05/25 20:42:40 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -114,6 +114,7 @@ wdc_pioc_probe(parent, cf, aux)
 			return 0;
 		}
 	}
+	wdc_init_shadow_regs(&ch);
 
 	if (bus_space_map(ch.ctl_iot, iobase + WDC_PIOC_AUXREG_OFFSET,
 	    WDC_PIOC_AUXREG_NPORTS, 0, &ch.ctl_ioh)) {
@@ -163,7 +164,8 @@ wdc_pioc_attach(parent, self, aux)
 			panic("%s: couldn't submap drive registers",
 			    self->dv_xname);
 	}
-	    
+	wdc_init_shadow_regs(&sc->wdc_channel);
+
 	if (bus_space_map(sc->wdc_channel.ctl_iot,
 	    iobase + WDC_PIOC_AUXREG_OFFSET, WDC_PIOC_AUXREG_NPORTS, 0,
 	    &sc->wdc_channel.ctl_ioh))

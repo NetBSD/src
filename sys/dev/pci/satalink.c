@@ -1,4 +1,4 @@
-/*	$NetBSD: satalink.c,v 1.13 2004/05/07 13:01:49 sekiya Exp $	*/
+/*	$NetBSD: satalink.c,v 1.14 2004/05/25 20:42:41 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -596,6 +596,7 @@ sii3114_mapchan(struct pciide_channel *cp)
 			goto bad;
 		}
 	}
+	wdc_init_shadow_regs(wdc_cp);
 	wdc_cp->data32iot = wdc_cp->cmd_iot;
 	wdc_cp->data32ioh = wdc_cp->cmd_iohs[0];
 	wdcattach(wdc_cp);

@@ -1,4 +1,4 @@
-/*	$NetBSD: wdc_obio.c,v 1.36 2004/01/04 07:08:13 dbj Exp $	*/
+/*	$NetBSD: wdc_obio.c,v 1.37 2004/05/25 20:42:41 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2003 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wdc_obio.c,v 1.36 2004/01/04 07:08:13 dbj Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wdc_obio.c,v 1.37 2004/05/25 20:42:41 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -172,6 +172,7 @@ wdc_obio_attach(parent, self, aux)
 			return;
 		}
 	}
+	wdc_init_shadow_regs(chp);
 #if 0
 	chp->data32iot = chp->cmd_iot;
 	chp->data32ioh = chp->cmd_ioh;

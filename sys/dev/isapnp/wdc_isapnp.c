@@ -1,4 +1,4 @@
-/*	$NetBSD: wdc_isapnp.c,v 1.26 2004/01/03 22:56:53 thorpej Exp $	*/
+/*	$NetBSD: wdc_isapnp.c,v 1.27 2004/05/25 20:42:41 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2003 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wdc_isapnp.c,v 1.26 2004/01/03 22:56:53 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wdc_isapnp.c,v 1.27 2004/05/25 20:42:41 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -142,6 +142,7 @@ wdc_isapnp_attach(parent, self, aux)
 			return;
 		}
 	}
+	wdc_init_shadow_regs(&sc->wdc_channel);
 	sc->wdc_channel.data32iot = sc->wdc_channel.cmd_iot;
 	sc->wdc_channel.data32ioh = sc->wdc_channel.cmd_iohs[0];
 

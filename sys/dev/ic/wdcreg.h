@@ -1,4 +1,4 @@
-/*	$NetBSD: wdcreg.h,v 1.32 2003/12/30 19:30:13 thorpej Exp $	*/
+/*	$NetBSD: wdcreg.h,v 1.33 2004/05/25 20:42:41 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1991 The Regents of the University of California.
@@ -45,7 +45,6 @@
 #define	wd_data			0	/* data register (R/W - 16 bits) */
 #define	wd_error		1	/* error register (R) */
 #define	wd_precomp		1	/* write precompensation (W) */
-#define	wd_features		1	/* features (W), same as wd_precomp */
 #define	wd_seccnt		2	/* sector count (R/W) */
 #define	wd_ireason		2	/* interrupt reason (R/W) (for atapi) */
 #define	wd_sector		3	/* first sector number (R/W) */
@@ -53,10 +52,13 @@
 #define	wd_cyl_hi		5	/* cylinder address, high byte (R/W) */
 #define	wd_sdh			6	/* sector size/drive/head (R/W) */
 #define	wd_command		7	/* command register (W)	*/
-#define	wd_status		7	/* immediate status (R)	*/
 #define	wd_lba_lo		3	/* lba address, low byte (RW) */
 #define	wd_lba_mi		4	/* lba address, middle byte (RW) */
 #define	wd_lba_hi		5	/* lba address, high byte (RW) */
+
+/* "shadow" registers; these may or may not overlap regular registers */
+#define	wd_status		8	/* immediate status (R) */
+#define	wd_features		9	/* features (W) */
 
 /* offsets of registers in the auxiliary register region */
 #define	wd_aux_altsts		0	/* alternate fixed disk status (R) */

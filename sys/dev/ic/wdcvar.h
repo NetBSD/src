@@ -1,4 +1,4 @@
-/*	$NetBSD: wdcvar.h,v 1.56 2004/04/13 19:51:06 bouyer Exp $	*/
+/*	$NetBSD: wdcvar.h,v 1.57 2004/05/25 20:42:41 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2003 The NetBSD Foundation, Inc.
@@ -39,16 +39,19 @@
 #ifndef _DEV_IC_WDCVAR_H_
 #define	_DEV_IC_WDCVAR_H_
 
+#include <sys/callout.h>
+
 /* XXX For scsipi_adapter and scsipi_channel. */
 #include <dev/scsipi/scsipi_all.h>
 #include <dev/scsipi/atapiconf.h>
 
-#include <sys/callout.h>
+#include <dev/ic/wdcreg.h>
 
 #define	WAITTIME    (10 * hz)    /* time to wait for a completion */
 	/* this is a lot for hard drives, but not for cdroms */
 
 #define WDC_NREG	8 /* number of command registers */
+#define	WDC_NSHADOWREG	2 /* number of command "shadow" registers */
 
 /*
  * Per-channel data
@@ -61,7 +64,7 @@ struct wdc_channel {
 	/* Our registers */
 	bus_space_tag_t       cmd_iot;
 	bus_space_handle_t    cmd_baseioh;
-	bus_space_handle_t    cmd_iohs[WDC_NREG];
+	bus_space_handle_t    cmd_iohs[WDC_NREG+WDC_NSHADOWREG];
 	bus_space_tag_t       ctl_iot;
 	bus_space_handle_t    ctl_ioh;
 
@@ -171,6 +174,8 @@ struct wdc_softc {
  * Public functions which can be called by ATA or ATAPI specific parts,
  * or bus-specific backends.
  */
+
+void	wdc_init_shadow_regs(struct wdc_channel *);
 
 int	wdcprobe(struct wdc_channel *);
 void	wdcattach(struct wdc_channel *);

@@ -1,4 +1,4 @@
-/*	$NetBSD: wdc_obio.c,v 1.14 2004/01/09 17:00:02 fredb Exp $ */
+/*	$NetBSD: wdc_obio.c,v 1.15 2004/05/25 20:42:40 thorpej Exp $ */
 
 /*
  * Copyright (c) 2002 Takeshi Shibagaki  All rights reserved.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wdc_obio.c,v 1.14 2004/01/09 17:00:02 fredb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wdc_obio.c,v 1.15 2004/05/25 20:42:40 thorpej Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -112,6 +112,7 @@ wdc_obio_match(parent, match, aux)
 				return 0;
 			}
 		}
+		wdc_init_shadow_regs(&ch);
 
 
 		if (bus_space_subregion(ch.cmd_iot, ch.cmd_baseioh,
@@ -183,6 +184,7 @@ wdc_obio_attach(parent, self, aux)
 			return;
 		}
 	}
+	wdc_init_shadow_regs(&sc->wdc_channel);
 
 	if (bus_space_subregion(sc->wdc_channel.cmd_iot,
 				sc->wdc_channel.cmd_baseioh,

@@ -1,4 +1,4 @@
-/*	$NetBSD: simide.c,v 1.18 2004/01/03 22:56:52 thorpej Exp $	*/
+/*	$NetBSD: simide.c,v 1.19 2004/05/25 20:42:40 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1997-1998 Mark Brinicombe
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: simide.c,v 1.18 2004/01/03 22:56:52 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: simide.c,v 1.19 2004/05/25 20:42:40 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -270,6 +270,7 @@ simide_attach(parent, self, aux)
 				continue;
 			}
 		}
+		wdc_init_shadow_regs(cp);
 		if (bus_space_map(cp->ctl_iot, iobase +
 		    simide_info[channel].aux_register, 4, 0, &cp->ctl_ioh)) {
 			bus_space_unmap(cp->cmd_iot, cp->cmd_baseioh,

@@ -1,4 +1,4 @@
-/*	$NetBSD: wdc_ofisa.c,v 1.19 2004/01/03 22:56:53 thorpej Exp $	*/
+/*	$NetBSD: wdc_ofisa.c,v 1.20 2004/05/25 20:42:41 thorpej Exp $	*/
 
 /*
  * Copyright 1997, 1998
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wdc_ofisa.c,v 1.19 2004/01/03 22:56:53 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wdc_ofisa.c,v 1.20 2004/05/25 20:42:41 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -151,7 +151,7 @@ wdc_ofisa_attach(parent, self, aux)
 			return;
 		}
 	}
-			
+	wdc_init_shadow_regs(&sc->wdc_channel);
 
 	sc->sc_ih = isa_intr_establish(aa->ic, intr.irq, intr.share,
 	    IPL_BIO, wdcintr, &sc->wdc_channel);

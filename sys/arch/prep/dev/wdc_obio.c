@@ -1,4 +1,4 @@
-/*	$NetBSD: wdc_obio.c,v 1.15 2004/03/10 15:14:49 nonaka Exp $	*/
+/*	$NetBSD: wdc_obio.c,v 1.16 2004/05/25 20:42:41 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2003 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wdc_obio.c,v 1.15 2004/03/10 15:14:49 nonaka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wdc_obio.c,v 1.16 2004/05/25 20:42:41 thorpej Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -93,6 +93,7 @@ wdc_obio_probe(struct device *parent, struct cfdata *match, void *aux)
 		    i == 0 ? 4 : 1, &ch.cmd_iohs[i]) != 0)
 			goto outunmap;
 	}
+	wdc_init_shadow_regs(&ch);
 
 	ch.ctl_iot = oa->oa_iot;
 	if (bus_space_map(ch.ctl_iot, oa->oa_iobase + WDC_OBIO_AUXREG_OFFSET,
@@ -140,6 +141,7 @@ wdc_obio_attach(struct device *parent, struct device *self, void *aux)
 			return;
 		}
 	}
+	wdc_init_shadow_regs(&sc->wdc_channel);
 
 	sc->wdc_channel.data32iot = sc->wdc_channel.cmd_iot;
 	sc->wdc_channel.data32ioh = sc->wdc_channel.cmd_iohs[0];

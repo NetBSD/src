@@ -1,4 +1,4 @@
-/*	$NetBSD: wdc_spd.c,v 1.13 2004/01/06 18:46:07 he Exp $	*/
+/*	$NetBSD: wdc_spd.c,v 1.14 2004/05/25 20:42:41 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2003 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wdc_spd.c,v 1.13 2004/01/06 18:46:07 he Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wdc_spd.c,v 1.14 2004/05/25 20:42:41 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -227,6 +227,7 @@ __wdc_spd_bus_space(struct wdc_channel *ch)
 	ch->cmd_iot = &_wdc_spd_space;
 	for (i = 0; i < 8; i++)
 		ch->cmd_iohs[i] = SPD_HDD_IO_BASE + i * 2; /*  wdc register is 16 bit wide. */
+	wdc_init_shadow_regs(ch);
 	ch->ctl_iot = &_wdc_spd_space;
 	ch->ctl_ioh = SPD_HDD_IO_BASE + WDC_SPD_HDD_AUXREG_OFFSET;
 	ch->data32iot = ch->cmd_iot;

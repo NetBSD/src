@@ -1,4 +1,4 @@
-/*	$NetBSD: pciide_pnpbios.c,v 1.14 2004/01/03 22:56:53 thorpej Exp $	*/
+/*	$NetBSD: pciide_pnpbios.c,v 1.15 2004/05/25 20:42:40 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1999 Soren S. Jorvang.  All rights reserved.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pciide_pnpbios.c,v 1.14 2004/01/03 22:56:53 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pciide_pnpbios.c,v 1.15 2004/05/25 20:42:40 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -156,6 +156,7 @@ pciide_pnpbios_attach(parent, self, aux)
 			    return;
 		}
 	}
+	wdc_init_shadow_regs(wdc_cp);
 
 	wdc_cp->ctl_iot = wdc_cp->data32iot = compat_iot;
 	wdc_cp->ctl_ioh = wdc_cp->data32ioh = ctl_ioh;

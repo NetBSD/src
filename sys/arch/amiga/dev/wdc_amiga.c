@@ -1,4 +1,4 @@
-/*	$NetBSD: wdc_amiga.c,v 1.20 2004/01/06 18:46:07 he Exp $ */
+/*	$NetBSD: wdc_amiga.c,v 1.21 2004/05/25 20:42:40 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2000, 2003 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wdc_amiga.c,v 1.20 2004/01/06 18:46:07 he Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wdc_amiga.c,v 1.21 2004/05/25 20:42:40 thorpej Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -128,6 +128,7 @@ wdc_amiga_attach(struct device *parent, struct device *self, void *aux)
 			return;
 		}
 	}
+	wdc_init_shadow_regs(&sc->wdc_channel);
 
 	if (sc->sc_a1200)
 		sc->wdc_channel.ctl_ioh = sc->ctl_iot.base;
