@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_sa.c,v 1.5 2003/02/03 23:31:42 nathanw Exp $	*/
+/*	$NetBSD: kern_sa.c,v 1.6 2003/02/04 15:54:26 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_sa.c,v 1.5 2003/02/03 23:31:42 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_sa.c,v 1.6 2003/02/04 15:54:26 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -81,6 +81,7 @@ struct sadata_upcall *
 sadata_upcall_alloc(int waitok)
 {
 
+	/* XXX zero the memory? */
 	return (pool_get(&saupcall_pool, waitok ? PR_WAITOK : PR_NOWAIT));
 }
 
@@ -301,8 +302,7 @@ sa_yield(struct lwp *l)
 		if (p->p_userret == NULL) {
 			sa->sa_idle = l;
 			l->l_flag &= ~L_SA;
-			tsleep((caddr_t) sa->sa_idle, PUSER | PCATCH,
-			    "sawait", 0);
+			tsleep((caddr_t) l, PUSER | PCATCH, "sawait", 0);
 			l->l_flag |= L_SA;
 			sa->sa_idle = NULL;
 			sa->sa_vp = l;
@@ -927,6 +927,12 @@ sa_upcall_userret(struct lwp *l)
 		if (copyout(sau->sau_arg, ap, sau->sau_argsize) != 0) {
 			/* Copying onto the stack didn't work. Die. */
 			sadata_upcall_free(sau);
+#ifdef DIAGNOSTIC
+			printf("sa_upcall_userret(%d.%d): couldn't copyout"
+			    " sadata_upcall arg %p size %d to %p \n",
+			    p->p_pid, l->l_lid,
+			    sau->sau_arg, sau->sau_argsize, ap);
+#endif
 			sigexit(l, SIGILL);
 			/* NOTREACHED */
 		}
