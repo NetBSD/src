@@ -42,7 +42,7 @@
  *	@(#)clock.c	8.1 (Berkeley) 6/11/93
  *
  * from: Header: clock.c,v 1.17 92/11/26 03:04:47 torek Exp  (LBL)
- * $Id: clock.c,v 1.4 1993/12/08 18:26:19 pk Exp $
+ * $Id: clock.c,v 1.5 1993/12/09 20:27:53 pk Exp $
  */
 
 /*
@@ -425,7 +425,7 @@ inittodr(base)
 {
 	register struct clockreg *cl = clockreg;
 	int sec, min, hour, day, mon, year;
-	int badbase = 0;
+	int badbase = 0, waszero = base == 0;
 
 	if (base < 5 * SECYR) {
 		/*
@@ -462,7 +462,7 @@ inittodr(base)
 
 		if (deltat < 0)
 			deltat = -deltat;
-		if (base == 0 || deltat < 2 * SECDAY)
+		if (waszero || deltat < 2 * SECDAY)
 			return;
 		printf("WARNING: clock %s %d days",
 		    time.tv_sec < base ? "lost" : "gained", deltat / SECDAY);
