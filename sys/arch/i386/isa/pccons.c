@@ -1,4 +1,4 @@
-/*	$NetBSD: pccons.c,v 1.98 1996/05/05 19:48:15 christos Exp $	*/
+/*	$NetBSD: pccons.c,v 1.99 1996/05/12 23:12:33 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994, 1995 Charles Hannum.  All rights reserved.
@@ -59,6 +59,7 @@
 #include <dev/cons.h>
 
 #include <machine/cpu.h>
+#include <machine/intr.h>
 #include <machine/pio.h>
 #include <machine/pc/display.h>
 #include <machine/pccons.h>
