@@ -1,4 +1,4 @@
-/* $NetBSD: if_eh.c,v 1.8 2000/12/20 23:08:44 bjh21 Exp $ */
+/* $NetBSD: if_eh.c,v 1.9 2000/12/22 22:21:37 bjh21 Exp $ */
 
 /*-
  * Copyright (c) 2000 Ben Harris
@@ -53,7 +53,7 @@
 
 #include <sys/param.h>
 
-__KERNEL_RCSID(0, "$NetBSD: if_eh.c,v 1.8 2000/12/20 23:08:44 bjh21 Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_eh.c,v 1.9 2000/12/22 22:21:37 bjh21 Exp $");
 
 #include <sys/systm.h>
 #include <sys/device.h>
@@ -121,6 +121,7 @@ void	eh_writemem(struct eh_softc *, u_int8_t *, int, size_t);
 void	eh_readmem(struct eh_softc *, int, u_int8_t *, size_t);
 static void eh_init_card(struct dp8390_softc *);
 static int eh_availmedia(struct eh_softc *);
+/*static*/ int eh_identifymau(struct eh_softc *);
 
 /* if_media glue */
 static int eh_mediachange(struct dp8390_softc *);
@@ -172,7 +173,7 @@ eh_attach(struct device *parent, struct device *self, void *aux)
 	struct eh_softc *sc = (struct eh_softc *)self;
 	struct dp8390_softc *dsc = &sc->sc_dp;
 	int *media;
-	int mediaset, nmedia;
+	int mediaset, mautype, nmedia;
 	int i;
 	char *ptr;
 	u_int8_t *myaddr;
@@ -249,21 +250,35 @@ eh_attach(struct device *parent, struct device *self, void *aux)
 
 	sc->sc_ctrl = 0x00;
 
-	if (!(sc->sc_flags & EHF_MAU))
+	if (sc->sc_flags & EHF_MAU) {
+		mautype = eh_identifymau(sc);
+		switch (mautype) {
+		case EH200_MAUID_10_2:
+			printf(", 10base2 MAU");
+			mediaset = EH_MEDIA_2;
+			break;
+		case EH200_MAUID_10_T:
+			printf(", 10baseT MAU");
+			mediaset = EH_MEDIA_T;
+			break;
+		default:
+			printf(", unknown MAU id %d", mautype);
+			mediaset = EH_MEDIA_2; /* XXX */
+			break;
+		}
+	} else {
 		mediaset = eh_availmedia(sc);
-	else
-		/* XXX get MAU type */
-		mediaset = EH_MEDIA_2_T;
-	switch (mediaset) {
-	case EH_MEDIA_2:
-		printf(", 10base2 only");
-		break;
-	case EH_MEDIA_T:
-		printf(", 10baseT only");
-		break;
-	case EH_MEDIA_2_T:
-		printf(", combo 10base2/T");
-		break;
+		switch (mediaset) {
+		case EH_MEDIA_2:
+			printf(", 10base2 only");
+			break;
+		case EH_MEDIA_T:
+			printf(", 10baseT only");
+			break;
+		case EH_MEDIA_2_T:
+			printf(", combo 10base2/T");
+			break;
+		}
 	}
 	media = media_switch[mediaset].media;
 	nmedia = media_switch[mediaset].nmedia;
@@ -717,6 +732,40 @@ eh_availmedia(struct eh_softc *sc)
 	/* If both of them worked, this is a combo card. */
 	bus_space_write_1(sc->sc_ctlt, sc->sc_ctlh, 0, sc->sc_ctrl);
 	return EH_MEDIA_2_T;
+}
+
+/*
+ * Identify the MAU attached to an EtherLan 200-series network slot card.
+ *
+ * Follows the protocol described at the back of the Acorn A3020 and A4000
+ * Network Interface Specification.
+ */
+int
+eh_identifymau(struct eh_softc *sc)
+{
+	int id;
+	bus_space_tag_t ctlt;
+	bus_space_handle_t ctlh;
+
+	ctlt = sc->sc_ctlt;
+	ctlh = sc->sc_ctlh;
+	/* Reset: Output 1 for 100us. */
+	bus_space_write_1(ctlt, ctlh, 0, EH200_CTRL_MAU);
+	DELAY(100);
+	for (id = 0; id < 128; id++) {
+		/* Output 0 for 10us. */
+		/* XXX For some reason, a read is necessary between writes. */
+		bus_space_read_1(ctlt, ctlh, 0);
+		bus_space_write_1(ctlt, ctlh, 0, 0);
+		DELAY(10);
+		/* Read state. */
+		if (bus_space_read_1(ctlt, ctlh, 0) & EH200_CTRL_MAU)
+			break;
+		/* Output 1 for 10us. */
+		bus_space_write_1(ctlt, ctlh, 0, EH200_CTRL_MAU);
+		DELAY(10);
+	}
+	return id;
 }
 
 /*
