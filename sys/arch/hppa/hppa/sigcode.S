@@ -1,4 +1,4 @@
-/*	$NetBSD: sigcode.S,v 1.1 2002/06/05 01:04:20 fredette Exp $	*/
+/*	$NetBSD: sigcode.S,v 1.2 2002/07/01 16:10:02 fredette Exp $	*/
 
 /*	$OpenBSD: locore.S,v 1.46 2001/09/20 18:33:03 mickey Exp $	*/
 
@@ -75,6 +75,15 @@
  */
 ENTRY(sigcode,0)
 	.call
+	/*
+	 * Our sendsig() places the address of the signal handler 
+	 * in %arg3.  It may actually be a PLABEL.
+	 */
+	bb,>=,n	%arg3, 30, L$sigcode_bounce	; branch if not a PLABEL
+	depi	0, 31, 2, %arg3			; zero L bit in PLABEL pointer
+	ldw	4(%arg3), %r19			; load shared library linkage
+	ldw	0(%arg3), %arg3			; load real catcher address
+L$sigcode_bounce
 	/*
 	 * This blr puts the address of the following nop in rp.
 	 * It also schedules the nop for execution, which is why
