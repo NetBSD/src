@@ -1,4 +1,4 @@
-/*	$NetBSD: events.c,v 1.4 1997/10/12 21:24:46 christos Exp $	*/
+/*	$NetBSD: events.c,v 1.5 1997/10/13 22:05:26 cjs Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -38,11 +38,12 @@
 #if 0
 static char sccsid[] = "@(#)events.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: events.c,v 1.4 1997/10/12 21:24:46 christos Exp $");
+__RCSID("$NetBSD: events.c,v 1.5 1997/10/13 22:05:26 cjs Exp $");
 #endif
 #endif /* not lint */
 
 #include <stdio.h>
+#include <string.h>
 #include <math.h>
 #include "getpar.h"
 #include "trek.h"
