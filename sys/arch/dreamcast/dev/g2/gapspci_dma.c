@@ -1,4 +1,4 @@
-/*	$NetBSD: gapspci_dma.c,v 1.1 2001/02/01 01:04:55 thorpej Exp $	*/
+/*	$NetBSD: gapspci_dma.c,v 1.2 2001/02/01 19:35:04 marcus Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -114,10 +114,10 @@ gaps_dma_init(struct gaps_softc *sc)
 	 * with an extent map.
 	 */
 	sc->sc_dma_ex = extent_create("gaps dma",
-	    sc->sc_dmabase, sc->sc_dmabase + (32768 - 1),
+	    sc->sc_dmabase, sc->sc_dmabase + (sc->sc_dmasize - 1),
 	    M_DEVBUF, NULL, 0, EX_WAITOK | EXF_NOCOALESCE);
 
-	if (bus_space_map(sc->sc_memt, sc->sc_dmabase, 32768,
+	if (bus_space_map(sc->sc_memt, sc->sc_dmabase, sc->sc_dmasize,
 	    0, &sc->sc_dma_memh) != 0)
 		panic("gaps_dma_init: can't map SRAM buffer");
 }
