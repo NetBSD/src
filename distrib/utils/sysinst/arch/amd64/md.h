@@ -1,4 +1,4 @@
-/*	$NetBSD: md.h,v 1.10 2003/06/14 12:58:47 dsl Exp $	*/
+/*	$NetBSD: md.h,v 1.11 2003/07/25 08:26:24 dsl Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -73,7 +73,7 @@
 #define SET_MD_1_NAME		"toolchain"
 
 /* Bootblock type */
-EXTERN char *boottype INIT("");
+EXTERN const char *boottype INIT("");
 
 /*
  * Machine-specific command to write a new label to a disk.
@@ -93,7 +93,7 @@ EXTERN char *boottype INIT("");
  * Default fileystem type for floppy disks.
  * On x86_64, that is  msdos.
  */
-EXTERN	char *fdtype INIT("msdos");
+EXTERN	const char *fdtype INIT("msdos");
 
 #define _PATH_MBR	DEFAULT_BOOTDIR "/" DEFAULT_BOOTCODE
 #define _PATH_BOOTSEL	DEFAULT_BOOTDIR "/" DEFAULT_BOOTSELCODE

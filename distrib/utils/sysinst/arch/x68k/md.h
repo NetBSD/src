@@ -1,4 +1,4 @@
-/*	$NetBSD: md.h,v 1.12 2003/06/13 11:57:37 dsl Exp $	*/
+/*	$NetBSD: md.h,v 1.13 2003/07/25 08:26:35 dsl Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -96,4 +96,4 @@
  * Default fileystem type for floppy disks.
  * On x68k, that is  msdos.
  */
-EXTERN	char *fdtype INIT("msdos");
+EXTERN	const char *fdtype INIT("msdos");
