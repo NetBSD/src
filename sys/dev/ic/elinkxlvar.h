@@ -1,4 +1,4 @@
-/*	$NetBSD: elinkxlvar.h,v 1.6 2000/05/29 17:37:13 jhawk Exp $	*/
+/*	$NetBSD: elinkxlvar.h,v 1.6.2.1 2000/09/01 00:56:40 haya Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -83,6 +83,8 @@ struct ex_softc {
 #define EX_CONF_MII		0x0001	/* has MII bus */
 #define EX_CONF_INTPHY		0x0002	/* has internal PHY */
 #define EX_CONF_90XB		0x0004	/* is 90xB */
+#define EX_CONF_INV_LED_POLARITY	0x0010	/* CardBus: LED polarity */
+#define EX_CONF_PHY_POWER	0x0020	/* CardBus: controllable PHY power */
 
 
 	/*
