@@ -1,4 +1,4 @@
-/* $NetBSD: cgd.c,v 1.5 2002/11/01 11:31:55 mrg Exp $ */
+/* $NetBSD: cgd.c,v 1.6 2003/02/02 20:55:16 bouyer Exp $ */
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cgd.c,v 1.5 2002/11/01 11:31:55 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cgd.c,v 1.6 2003/02/02 20:55:16 bouyer Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -339,7 +339,7 @@ cgdiodone(struct buf *vbp)
 	DPRINTF_FOLLOW(("cgdiodone(%p)\n", vbp));
 	DPRINTF(CGDB_IO, ("cgdiodone: bp %p bcount %ld resid %ld\n",
 	    obp, obp->b_bcount, obp->b_resid));
-	DPRINTF(CGDB_IO, (" dev 0x%x, cbp %p bn %d addr %p bcnt %ld\n",
+	DPRINTF(CGDB_IO, (" dev 0x%x, cbp %p bn %" PRId64 " addr %p bcnt %ld\n",
 	    cbp->cb_buf.b_dev, cbp, cbp->cb_buf.b_blkno, cbp->cb_buf.b_data,
 	    cbp->cb_buf.b_bcount));
 	s = splbio();
@@ -465,7 +465,7 @@ cgddump(dev_t dev, daddr_t blkno, caddr_t va, size_t size)
 {
 	struct	cgd_softc *cs;
 
-	DPRINTF_FOLLOW(("cgddump(%d, %d, %p, %lu)\n", dev, blkno, va,
+	DPRINTF_FOLLOW(("cgddump(%d, %" PRId64 ", %p, %lu)\n", dev, blkno, va,
 	    (unsigned long)size));
 	GETCGD_SOFTC(cs, dev);
 	return dk_dump(di, &cs->sc_dksc, dev, blkno, va, size);
