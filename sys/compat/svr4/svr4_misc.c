@@ -1,4 +1,4 @@
-/*	$NetBSD: svr4_misc.c,v 1.46 1997/07/21 23:02:36 christos Exp $	 */
+/*	$NetBSD: svr4_misc.c,v 1.47 1997/08/04 09:48:12 bouyer Exp $	 */
 
 /*
  * Copyright (c) 1994 Christos Zoulas
@@ -277,9 +277,9 @@ again:
 		reclen = bdp->d_reclen;
 		if (reclen & 3)
 			panic("svr4_getdents");
-		off = *cookie++;	/* each entry points to the next */
 		if (bdp->d_fileno == 0) {
 			inp += reclen;	/* it is a hole; squish it out */
+			off = *cookie++;
 			continue;
 		}
 		svr4_reclen = SVR4_RECLEN(&idb, bdp->d_namlen);
@@ -288,6 +288,7 @@ again:
 			outp++;
 			break;
 		}
+		off = *cookie++;	/* each entry points to the next */
 		/*
 		 * Massage in place to make a SVR4-shaped dirent (otherwise
 		 * we have to worry about touching user memory outside of

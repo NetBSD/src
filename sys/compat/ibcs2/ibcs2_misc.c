@@ -1,4 +1,4 @@
-/*	$NetBSD: ibcs2_misc.c,v 1.25 1997/06/27 05:29:34 kleink Exp $	*/
+/*	$NetBSD: ibcs2_misc.c,v 1.26 1997/08/04 09:48:07 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Scott Bartram
@@ -401,9 +401,9 @@ again:
 		reclen = bdp->d_reclen;
 		if (reclen & 3)
 			panic("ibcs2_getdents");
-		off = *cookie++;	/* each entry points to the next */
 		if (bdp->d_fileno == 0) {
 			inp += reclen;	/* it is a hole; squish it out */
+			off = *cookie++;
 			continue;
 		}
 		ibcs2_reclen = IBCS2_RECLEN(&idb, bdp->d_namlen);
@@ -412,6 +412,7 @@ again:
 			outp++;
 			break;
 		}
+		off = *cookie++;	/* each entry points to the next */
 		/*
 		 * Massage in place to make a iBCS2-shaped dirent (otherwise
 		 * we have to worry about touching user memory outside of
