@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.subdir.mk,v 1.30 1997/11/13 09:18:19 thorpej Exp $
+#	$NetBSD: bsd.subdir.mk,v 1.31 1999/02/11 05:01:39 tv Exp $
 #	@(#)bsd.subdir.mk	8.1 (Berkeley) 6/8/93
 
 .if !target(__initialized__)
@@ -28,10 +28,6 @@ ${targ}-${dir}: .MAKE
 subdir-${targ}: ${targ}-${dir}
 ${targ}: subdir-${targ}
 .endfor
-
-# Backward-compatibility with the old rules.  If this went away,
-# 'xlint' could become 'lint', 'xinstall' could become 'install', etc.
-${dir}: all-${dir}
 .endfor
 
 # Make sure all of the standard targets are defined, even if they do nothing.
