@@ -1,4 +1,4 @@
-/*	$NetBSD: util.c,v 1.3 1999/01/03 02:22:05 lukem Exp $	*/
+/*	$NetBSD: util.c,v 1.4 1999/02/05 21:40:49 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: util.c,v 1.3 1999/01/03 02:22:05 lukem Exp $");
+__RCSID("$NetBSD: util.c,v 1.4 1999/02/05 21:40:49 lukem Exp $");
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -71,15 +71,19 @@ logcmd(command, bytes, file1, file2)
 	if (logging <=1)
 		return;
 
-	if ((p = realpath(file1, realfile)) == NULL)
+	if ((p = realpath(file1, realfile)) == NULL) {
+		syslog(LOG_WARNING, "realpath failed: %s", realfile);
 		p = file1;
+	}
 	snprintf(buf, sizeof(buf), "%s %s", command, p);
 
 	if (bytes != (off_t)-1) {
 		syslog(LOG_INFO, "%s = %qd bytes", buf, (long long) bytes);
 	} else if (file2 != NULL) {
-		if ((p = realpath(file2, realfile)) == NULL)
+		if ((p = realpath(file2, realfile)) == NULL) {
+			syslog(LOG_WARNING, "realpath failed: %s", realfile);
 			p = file2;
+		}
 		syslog(LOG_INFO, "%s %s", buf, p);
 	} else {
 		syslog(LOG_INFO, "%s", buf);
