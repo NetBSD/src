@@ -1,5 +1,6 @@
 ./usr/X11R6/bin/SuperProbe
 ./usr/X11R6/bin/X
+./usr/X11R6/bin/XF86_3DLabs
 ./usr/X11R6/bin/XF86_8514
 ./usr/X11R6/bin/XF86_AGX
 ./usr/X11R6/bin/XF86_I128
@@ -23,6 +24,7 @@
 ./usr/X11R6/lib/X11/doc/Monitors
 ./usr/X11R6/lib/X11/doc/QuickStart.doc
 ./usr/X11R6/lib/X11/doc/README
+./usr/X11R6/lib/X11/doc/README.3DLabs
 ./usr/X11R6/lib/X11/doc/README.Config
 ./usr/X11R6/lib/X11/doc/README.DECtga
 ./usr/X11R6/lib/X11/doc/README.DGA
@@ -47,7 +49,11 @@
 ./usr/X11R6/lib/X11/doc/README.chips
 ./usr/X11R6/lib/X11/doc/README.cirrus
 ./usr/X11R6/lib/X11/doc/README.clkprog
+./usr/X11R6/lib/X11/doc/README.cyrix
+./usr/X11R6/lib/X11/doc/README.epson
 ./usr/X11R6/lib/X11/doc/README.mouse
+./usr/X11R6/lib/X11/doc/README.neo
+./usr/X11R6/lib/X11/doc/README.rendition
 ./usr/X11R6/lib/X11/doc/README.trident
 ./usr/X11R6/lib/X11/doc/README.tseng
 ./usr/X11R6/lib/X11/doc/RELNOTES
@@ -58,7 +64,10 @@
 ./usr/X11R6/lib/X11/etc/et4000clock.c
 ./usr/X11R6/lib/modules
 ./usr/X11R6/lib/modules/pex5.so
+./usr/X11R6/lib/modules/xf86AceCad.so
+./usr/X11R6/lib/modules/xf86Dial.so
 ./usr/X11R6/lib/modules/xf86Elo.so
+./usr/X11R6/lib/modules/xf86MuTouch.so
 ./usr/X11R6/lib/modules/xf86Summa.so
 ./usr/X11R6/lib/modules/xf86Wacom.so
 ./usr/X11R6/lib/modules/xie.so
