@@ -1,4 +1,4 @@
-/*	$NetBSD: network.c,v 1.8 2002/06/14 00:30:57 wiz Exp $	*/
+/*	$NetBSD: network.c,v 1.9 2002/09/18 19:40:34 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1988, 1993
@@ -38,13 +38,14 @@
 #if 0
 static char sccsid[] = "@(#)network.c	8.2 (Berkeley) 12/15/93";
 #else
-__RCSID("$NetBSD: network.c,v 1.8 2002/06/14 00:30:57 wiz Exp $");
+__RCSID("$NetBSD: network.c,v 1.9 2002/09/18 19:40:34 mycroft Exp $");
 #endif
 #endif /* not lint */
 
 #include <sys/types.h>
 #include <sys/socket.h>
 #include <sys/time.h>
+#include <sys/poll.h>
 
 #include <errno.h>
 #include <unistd.h>
@@ -85,22 +86,21 @@ init_network()
     int
 stilloob()
 {
-    static struct timeval timeout = { 0 };
-    fd_set	excepts;
+    struct pollfd set[0];
     int value;
 
     do {
-	FD_ZERO(&excepts);
-	FD_SET(net, &excepts);
-	value = select(net+1, (fd_set *)0, (fd_set *)0, &excepts, &timeout);
+	set[0].fd = net;
+	set[0].events = POLLPRI;
+	value = poll(set, 1, 0);
     } while ((value == -1) && (errno == EINTR));
 
     if (value < 0) {
-	perror("select");
+	perror("poll");
 	(void) quit(0, NULL);
 	/* NOTREACHED */
     }
-    if (FD_ISSET(net, &excepts)) {
+    if (set[0].revents & POLLPRI) {
 	return 1;
     } else {
 	return 0;

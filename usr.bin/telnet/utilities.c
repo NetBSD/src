@@ -1,4 +1,4 @@
-/*	$NetBSD: utilities.c,v 1.10 2002/06/14 00:30:57 wiz Exp $	*/
+/*	$NetBSD: utilities.c,v 1.11 2002/09/18 19:40:35 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1988, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)utilities.c	8.3 (Berkeley) 5/30/95";
 #else
-__RCSID("$NetBSD: utilities.c,v 1.10 2002/06/14 00:30:57 wiz Exp $");
+__RCSID("$NetBSD: utilities.c,v 1.11 2002/09/18 19:40:35 mycroft Exp $");
 #endif
 #endif /* not lint */
 
@@ -51,6 +51,7 @@ __RCSID("$NetBSD: utilities.c,v 1.10 2002/06/14 00:30:57 wiz Exp $");
 #ifndef	NOT43
 #include <sys/socket.h>
 #endif
+#include <sys/poll.h>
 #include <unistd.h>
 
 #include <ctype.h>
@@ -895,24 +896,23 @@ printsub(direction, pointer, length)
 EmptyTerminal()
 {
 #if	defined(unix)
-    fd_set	o;
+    struct pollfd set[1];
 
-    FD_ZERO(&o);
 #endif	/* defined(unix) */
 
     if (TTYBYTES() == 0) {
 #if	defined(unix)
-	FD_SET(tout, &o);
-	(void) select(tout+1, (fd_set *) 0, &o, (fd_set *) 0,
-			(struct timeval *) 0);	/* wait for TTLOWAT */
+	set[0].fd = tout;
+	set[0].events = POLLOUT;
+	(void) poll(set, 1, INFTIM);
 #endif	/* defined(unix) */
     } else {
 	while (TTYBYTES()) {
 	    (void) ttyflush(0);
 #if	defined(unix)
-	    FD_SET(tout, &o);
-	    (void) select(tout+1, (fd_set *) 0, &o, (fd_set *) 0,
-				(struct timeval *) 0);	/* wait for TTLOWAT */
+	    set[0].fd = tout;
+	    set[0].events = POLLOUT;
+	    (void) poll(set, 1, INFTIM);
 #endif	/* defined(unix) */
 	}
     }

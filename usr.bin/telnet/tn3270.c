@@ -1,4 +1,4 @@
-/*	$NetBSD: tn3270.c,v 1.10 2002/06/14 09:55:08 wiz Exp $	*/
+/*	$NetBSD: tn3270.c,v 1.11 2002/09/18 19:40:35 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1988, 1993
@@ -38,12 +38,13 @@
 #if 0
 static char sccsid[] = "@(#)tn3270.c	8.2 (Berkeley) 5/30/95";
 #else
-__RCSID("$NetBSD: tn3270.c,v 1.10 2002/06/14 09:55:08 wiz Exp $");
+__RCSID("$NetBSD: tn3270.c,v 1.11 2002/09/18 19:40:35 mycroft Exp $");
 #endif
 #endif /* not lint */
 
 #include <sys/types.h>
 #include <sys/time.h>
+#include <sys/poll.h>
 #include <arpa/telnet.h>
 #include <unistd.h>
 
@@ -132,14 +133,13 @@ DataToNetwork(buffer, count, done)
     while (count) {
 	/* If not enough room for EORs, IACs, etc., wait */
 	if (NETROOM() < 6) {
-	    fd_set o;
+	    struct pollfd set[1];
 
-	    FD_ZERO(&o);
 	    netflush();
 	    while (NETROOM() < 6) {
-		FD_SET(net, &o);
-		(void) select(net+1, (fd_set *) 0, &o, (fd_set *) 0,
-						(struct timeval *) 0);
+		set[0].fd = net;
+		set[0].events = POLLOUT;
+		(void) poll(set, 1, INFTIM);
 		netflush();
 	    }
 	}
@@ -216,16 +216,15 @@ DataToTerminal(buffer, count)
     while (count) {
 	if (TTYROOM() == 0) {
 #if	defined(unix)
-	    fd_set o;
+	    struct pollfd set[1];
 
-	    FD_ZERO(&o);
 #endif	/* defined(unix) */
 	    (void) ttyflush(0);
 	    while (TTYROOM() == 0) {
 #if	defined(unix)
-		FD_SET(tout, &o);
-		(void) select(tout+1, (fd_set *) 0, &o, (fd_set *) 0,
-						(struct timeval *) 0);
+		set[0].fd = tout;
+		set[0].events = POLLOUT;
+		(void) poll(set, 1, INFTIM);
 #endif	/* defined(unix) */
 		(void) ttyflush(0);
 	    }

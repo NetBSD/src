@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_bsd.c,v 1.19 2002/06/14 00:30:57 wiz Exp $	*/
+/*	$NetBSD: sys_bsd.c,v 1.20 2002/09/18 19:40:35 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1988, 1990, 1993
@@ -38,7 +38,7 @@
 #if 0
 from: static char sccsid[] = "@(#)sys_bsd.c	8.4 (Berkeley) 5/30/95";
 #else
-__RCSID("$NetBSD: sys_bsd.c,v 1.19 2002/06/14 00:30:57 wiz Exp $");
+__RCSID("$NetBSD: sys_bsd.c,v 1.20 2002/09/18 19:40:35 mycroft Exp $");
 #endif
 #endif /* not lint */
 
@@ -52,6 +52,7 @@ __RCSID("$NetBSD: sys_bsd.c,v 1.19 2002/06/14 00:30:57 wiz Exp $");
 #include <sys/types.h>
 #include <sys/time.h>
 #include <sys/socket.h>
+#include <sys/poll.h>
 #include <signal.h>
 #include <stdlib.h>
 #include <unistd.h>
@@ -132,17 +133,12 @@ extern struct termio new_tc;
 # endif
 #endif	/* USE_TERMIO */
 
-static fd_set ibits, obits, xbits;
-
 
     void
 init_sys()
 {
     tout = fileno(stdout);
     tin = fileno(stdin);
-    FD_ZERO(&ibits);
-    FD_ZERO(&obits);
-    FD_ZERO(&xbits);
 
     errno = 0;
 }
@@ -988,10 +984,11 @@ sys_telnet_init()
  */
 
     int
-process_rings(netin, netout, netex, ttyin, ttyout, poll)
+process_rings(netin, netout, netex, ttyin, ttyout, dopoll)
 	int netin, netout, netex, ttyin, ttyout;
-    int poll;		/* If 0, then block until something to do */
+    int dopoll;		/* If 0, then block until something to do */
 {
+    struct pollfd set[3];
     int c;
 		/* One wants to be a bit careful about setting returnValue
 		 * to one, since a one implies we did some useful work,
@@ -999,35 +996,16 @@ process_rings(netin, netout, netex, ttyin, ttyout, poll)
 		 * time (TN3270 mode only).
 		 */
     int returnValue = 0;
-    static struct timeval TimeValue = { 0 };
-    int maxfd;
 
-    maxfd = -1;
-#define MAXFD(fd) if(maxfd < (fd)) maxfd=(fd)
+    set[0].fd = net;
+    set[0].events = (netout ? POLLOUT : 0) | (netin ? POLLIN : 0) |
+	(netex ? POLLPRI : 0);
+    set[1].fd = tout;
+    set[1].events = ttyout ? POLLOUT : 0;
+    set[2].fd = tin;
+    set[2].events = ttyin ? POLLIN : 0;
 
-    if (netout) {
-	FD_SET(net, &obits);
-	MAXFD(net);
-    }
-    if (ttyout) {
-	FD_SET(tout, &obits);
-	MAXFD(tout);
-    }
-    if (ttyin) {
-	FD_SET(tin, &ibits);
-	MAXFD(tin);
-    }
-    if (netin) {
-	FD_SET(net, &ibits);
-	MAXFD(net);
-    }
-    if (netex) {
-	FD_SET(net, &xbits);
-	MAXFD(net);
-    }
-#undef MAXFD
-    if ((c = select(maxfd+1, &ibits, &obits, &xbits,
-		    (poll == 0)? (struct timeval *)0 : &TimeValue)) < 0) {
+    if ((c = poll(set, 3, dopoll ? 0 : INFTIM)) < 0) {
 	if (c == -1) {
 		    /*
 		     * we can get EINTR if we are in line mode,
@@ -1042,17 +1020,8 @@ process_rings(netin, netout, netex, ttyin, ttyout, poll)
 		     * we can get EBADF if we were in transparent
 		     * mode, and the transcom process died.
 		    */
-	    if (errno == EBADF) {
-			/*
-			 * zero the bits (even though kernel does it)
-			 * to make sure we are selecting on the right
-			 * ones.
-			*/
-		FD_ZERO(&ibits);
-		FD_ZERO(&obits);
-		FD_ZERO(&xbits);
+	    if (errno == EBADF)
 		return 0;
-	    }
 #	    endif /* defined(TN3270) */
 		    /* I don't like this, does it ever happen? */
 	    printf("sleep(5) from telnet, after select\r\n");
@@ -1064,8 +1033,7 @@ process_rings(netin, netout, netex, ttyin, ttyout, poll)
     /*
      * Any urgent data?
      */
-    if (FD_ISSET(net, &xbits)) {
-	FD_CLR(net, &xbits);
+    if (set[0].revents & POLLPRI) {
 	SYNCHing = 1;
 	(void) ttyflush(1);	/* flush already enqueued data */
     }
@@ -1073,10 +1041,9 @@ process_rings(netin, netout, netex, ttyin, ttyout, poll)
     /*
      * Something to read from the network...
      */
-    if (FD_ISSET(net, &ibits)) {
+    if (set[0].revents & POLLIN) {
 	int canread;
 
-	FD_CLR(net, &ibits);
 	canread = ring_empty_consecutive(&netiring);
 #if	!defined(SO_OOBINLINE)
 	    /*
@@ -1186,8 +1153,7 @@ process_rings(netin, netout, netex, ttyin, ttyout, poll)
     /*
      * Something to read from the tty...
      */
-    if (FD_ISSET(tin, &ibits)) {
-	FD_CLR(tin, &ibits);
+    if (set[2].revents & POLLIN) {
 	c = TerminalRead(ttyiring.supply, ring_empty_consecutive(&ttyiring));
 	if (c < 0 && errno == EIO)
 	    c = 0;
@@ -1216,12 +1182,10 @@ process_rings(netin, netout, netex, ttyin, ttyout, poll)
 	returnValue = 1;		/* did something useful */
     }
 
-    if (FD_ISSET(net, &obits)) {
-	FD_CLR(net, &obits);
+    if (set[0].revents & POLLOUT) {
 	returnValue |= netflush();
     }
-    if (FD_ISSET(tout, &obits)) {
-	FD_CLR(tout, &obits);
+    if (set[1].revents & POLLOUT) {
 	returnValue |= (ttyflush(SYNCHing|flushout) > 0);
     }
 
