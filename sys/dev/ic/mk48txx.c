@@ -1,4 +1,4 @@
-/*	$NetBSD: mk48txx.c,v 1.2 2000/09/01 19:04:49 eeh Exp $ */
+/*	$NetBSD: mk48txx.c,v 1.3 2000/10/03 13:52:39 tsutsui Exp $ */
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -157,7 +157,7 @@ mk48txx_gettime(handle, tv)
 	year = FROMBCD(bus_space_read_1(bt, bh, clkoff + MK48TXX_IYEAR));
 
 	year += mk->mk_year0;
-	if (year < 1970 && mk48txx_auto_century_adjust != 0)
+	if (year < POSIX_BASE_YEAR && mk48txx_auto_century_adjust != 0)
 		year += 100;
 
 	dt.dt_year = year;
