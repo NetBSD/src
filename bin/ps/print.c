@@ -1,4 +1,4 @@
-/*	$NetBSD: print.c,v 1.38 1998/07/27 17:06:48 mycroft Exp $	*/
+/*	$NetBSD: print.c,v 1.39 1998/07/28 18:41:59 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993, 1994
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)print.c	8.6 (Berkeley) 4/16/94";
 #else
-__RCSID("$NetBSD: print.c,v 1.38 1998/07/27 17:06:48 mycroft Exp $");
+__RCSID("$NetBSD: print.c,v 1.39 1998/07/28 18:41:59 mycroft Exp $");
 #endif
 #endif /* not lint */
 
@@ -72,6 +72,7 @@ extern int needenv, needcomm, commandonly;
 
 static char *cmdpart __P((char *));
 static void  printval __P((char *, VAR *));
+static int   titlecmp __P((char *, char **));
 
 #define	min(a,b)	((a) <= (b) ? (a) : (b))
 #define	max(a,b)	((a) >= (b) ? (a) : (b))
@@ -106,6 +107,36 @@ printheader()
 	(void)putchar('\n');
 }
 
+static int
+titlecmp(name, argv)
+	char *name;
+	char **argv;
+{
+	char *title;
+	int namelen;
+
+	if (argv == 0 || argv[0] == 0)
+		return (1);
+
+	title = cmdpart(argv[0]);
+
+	if (!strcmp(name, title))
+		return (0);
+
+	if (title[0] == '-' && !strcmp(name, title+1))
+		return (0);
+
+	namelen = strlen(name);
+
+	if (argv[1] == 0 &&
+	    !strncmp(name, title, namelen) &&
+	    title[namelen+0] == ':' &&
+	    title[namelen+1] == ' ')
+		return (0);
+
+	return (1);
+}
+
 void
 command(ki, ve)
 	KINFO *ki;
@@ -113,7 +144,7 @@ command(ki, ve)
 {
 	VAR *v;
 	int left;
-	char **argv, **p;
+	char **argv, **p, *name;
 
 	v = ve->var;
 	if (ve->next != NULL || termwidth != UNLIMITED) {
@@ -136,6 +167,7 @@ command(ki, ve)
 		}
 	}
 	if (needcomm) {
+		name = KI_PROC(ki)->p_comm;
 		if (!commandonly) {
 			argv = kvm_getargv(kd, ki->ki_p, termwidth);
 			if ((p = argv) != NULL) {
@@ -145,14 +177,13 @@ command(ki, ve)
 					fmt_putc(' ', &left);
 				}
 			}
-			if (argv == 0 || argv[0] == 0 ||
-			    strcmp(cmdpart(argv[0]), KI_PROC(ki)->p_comm)) {
+			if (titlecmp(name, argv)) {
 				fmt_putc('(', &left);
-				fmt_puts(KI_PROC(ki)->p_comm, &left);
+				fmt_puts(name, &left);
 				fmt_putc(')', &left);
 			}
 		} else {
-			fmt_puts(KI_PROC(ki)->p_comm, &left);
+			fmt_puts(name, &left);
 		}
 	}
 	if (ve->next && left > 0)
