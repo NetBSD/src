@@ -1,4 +1,4 @@
-/*	$NetBSD: routesock.c,v 1.1 2000/01/28 19:32:51 itojun Exp $	*/
+/*	$NetBSD: routesock.c,v 1.1.4.1 2000/07/26 23:12:26 mycroft Exp $	*/
 
 /*
  *  Copyright (c) 1998 by the University of Southern California.
@@ -134,8 +134,8 @@ init_routesock()
 	log(LOG_ERR, 0, "\n Routing socket error");
 	return -1;
     }
-// TODO : UTILITY ?
 #if 0
+// TODO : UTILITY ?
     {
 	int             off;
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.2 2000/05/19 10:43:48 itojun Exp $	*/
+/*	$NetBSD: main.c,v 1.2.4.1 2000/07/26 23:12:25 mycroft Exp $	*/
 
 /*
  *  Copyright (c) 1998 by the University of Southern California.
@@ -375,7 +375,9 @@ usage:
 
 #ifdef LOG_DAEMON
     (void) openlog("pim6sd", LOG_PID, LOG_DAEMON);
-//  (void) setlogmask(LOG_UPTO(LOG_NOTICE));
+#if 0
+    (void) setlogmask(LOG_UPTO(LOG_NOTICE));
+#endif
 #else
     (void) openlog("pim6sd", LOG_PID);
 #endif				/* LOG_DAEMON */

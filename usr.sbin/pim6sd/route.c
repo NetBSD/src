@@ -1,4 +1,4 @@
-/*	$NetBSD: route.c,v 1.1 2000/01/28 19:32:50 itojun Exp $	*/
+/*	$NetBSD: route.c,v 1.1.4.1 2000/07/26 23:12:26 mycroft Exp $	*/
 
 /*
  *  Copyright (c) 1998 by the University of Southern California.
@@ -993,8 +993,8 @@ process_cache_miss(im)
 	    else
 		rp_addr = mrtentry_ptr->group->rpaddr;
 	    mfc_source = source;
-// TODO 
 #ifdef KERNEL_MFC_WC_G
+// TODO 
 	    if (mrtentry_ptr->flags & (MRTF_WC | MRTF_PMBR))
 		if (!(mrtentry_ptr->flags & MRTF_MFC_CLONE_SG))
 		    mfc_source = IN6ADDR_ANY_N;
