@@ -116,51 +116,6 @@ _initialize_core_netbsd ()
   add_core_fns (&netbsd_core_fns);
 }
 
-/* Single stepping support */
-
-static char breakpoint_shadow[BREAKPOINT_MAX];
-static CORE_ADDR next_pc;
-
-/* single_step() is called just before we want to resume the inferior,
- * if we want to single-step it but there is no hardware or kernel
- * single-step support.  We find all the possible targets of the
- * coming instruction and breakpoint them.
- *
- * single_step is also called just after the inferior stops.  If we had
- * set up a simulated single-step, we undo our damage.
- */
-
-void
-arm_single_step (ignore, insert_breakpoints_p)
-     unsigned int ignore; /* signal, but we don't need it */
-     int insert_breakpoints_p;
-{
-  CORE_ADDR arm_pc;
-
-  if (insert_breakpoints_p)
-    {
-      /*
-       * Ok arm_pc is the address of the instruction will will run
-       * when we resume.
-       * Analyse the instruction at this address to work out the
-       * address of the next instruction.
-       */
-
-      arm_pc = read_register(PC_REGNUM);
-      next_pc = arm_get_next_pc(arm_pc);
-      
-      target_insert_breakpoint(next_pc, breakpoint_shadow);
-/*      printf_unfiltered("pc=%x: set break at %x\n", arm_pc, next_pc);*/
-
-      return;
-    }
-  else
-    {
-      /* Remove breakpoints */
-      target_remove_breakpoint(next_pc, breakpoint_shadow);
-    }
-}
-
 /*
  * Temporary routine to warn folks this code is still experimental
  */

@@ -1487,6 +1487,8 @@ condition_true (unsigned long cond, unsigned long status_reg)
   return 1;
 }
 
+#if SOFTWARE_SINGLE_STEP_P
+/* Support routines for single stepping.  Calculate the next PC value.  */
 #define submask(x) ((1L << ((x) + 1)) - 1)
 #define bit(obj,st) (((obj) >> (st)) & 1)
 #define bits(obj,st,fn) (((obj) >> (st)) & submask ((fn) - (st)))
@@ -1820,6 +1822,32 @@ arm_get_next_pc (CORE_ADDR pc)
 
   return nextpc;
 }
+
+/* single_step() is called just before we want to resume the inferior,
+   if we want to single-step it but there is no hardware or kernel
+   single-step support.  We find the target of the coming instruction
+   and breakpoint it.
+
+   single_step is also called just after the inferior stops.  If we had
+   set up a simulated single-step, we undo our damage.  */
+
+void
+arm_software_single_step (ignore, insert_bpt)
+     int ignore; /* Signal, not needed */
+     int insert_bpt;
+{
+  static int next_pc; /* State between setting and unsetting. */
+  static char break_mem[BREAKPOINT_MAX]; /* Temporary storage for mem@bpt */
+
+  if (insert_bpt)
+    {
+      next_pc = arm_get_next_pc (read_register (PC_REGNUM));
+      target_insert_breakpoint (next_pc, break_mem);
+    }
+  else
+    target_remove_breakpoint (next_pc, break_mem);
+}
+#endif /* SOFTWARE_SINGLE_STEP_P */
 
 #include "bfd-in2.h"
 #include "libcoff.h"
