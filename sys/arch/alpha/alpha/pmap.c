@@ -1,4 +1,4 @@
-/* $NetBSD: pmap.c,v 1.166 2001/04/22 23:42:12 thorpej Exp $ */
+/* $NetBSD: pmap.c,v 1.167 2001/04/23 15:26:08 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1998, 1999, 2000, 2001 The NetBSD Foundation, Inc.
@@ -154,7 +154,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.166 2001/04/22 23:42:12 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.167 2001/04/23 15:26:08 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1312,16 +1312,14 @@ pmap_destroy(pmap_t pmap)
 	 * mappings at this point, this should never happen.
 	 */
 	if (pmap->pm_lev1map != kernel_lev1map) {
-		printf("pmap_release: pmap still contains valid mappings!\n");
+		printf("pmap_destroy: pmap still contains valid mappings!\n");
 		if (pmap->pm_nlev2)
-			printf("pmap_release: %ld level 2 tables left\n",
+			printf("pmap_destroy: %ld level 2 tables left\n",
 			    pmap->pm_nlev2);
 		if (pmap->pm_nlev3)
-			printf("pmap_release: %ld level 3 tables left\n",
+			printf("pmap_destroy: %ld level 3 tables left\n",
 			    pmap->pm_nlev3);
-		pmap_remove(pmap, VM_MIN_ADDRESS, VM_MAX_ADDRESS);
-		if (pmap->pm_lev1map != kernel_lev1map)
-			panic("pmap_release: pmap_remove() didn't");
+		panic("pmap_destroy");
 	}
 #endif
 
