@@ -1,4 +1,4 @@
-/*	$NetBSD: an.c,v 1.16 2001/06/28 10:34:17 onoe Exp $	*/
+/*	$NetBSD: an.c,v 1.17 2001/06/29 11:24:42 onoe Exp $	*/
 /*
  * Copyright (c) 1997, 1998, 1999
  *	Bill Paul <wpaul@ctr.columbia.edu>.  All rights reserved.
@@ -111,6 +111,7 @@
 #include <sys/socket.h>
 #include <sys/device.h>
 #include <sys/proc.h>
+#include <sys/md4.h>
 #ifdef ANCACHE
 #include <sys/syslog.h>
 #include <sys/sysctl.h>
@@ -150,6 +151,10 @@ static void an_reset		__P((struct an_softc *));
 static void an_wait		__P((struct an_softc *));
 static int an_ioctl		__P((struct ifnet *, u_long, caddr_t));
 static int an_set_nwkey		__P((struct an_softc *,
+					struct ieee80211_nwkey *));
+static int an_set_nwkey_wep	__P((struct an_softc *,
+					struct ieee80211_nwkey *));
+static int an_set_nwkey_eap	__P((struct an_softc *,
 					struct ieee80211_nwkey *));
 static int an_get_nwkey		__P((struct an_softc *,
 					struct ieee80211_nwkey *));
@@ -474,21 +479,19 @@ an_ioctl(struct ifnet *ifp, u_long command, caddr_t data)
 
 	switch (command) {
 	case SIOCSIFFLAGS:
-		/*
-		 * Handle special case for IFF_PROMISC.  If only IFF_PROMISC
-		 * flag is changed, do not call an_init() to avoid initiating
-		 * reassociation to another access point.  It is really
-		 * helpful for tcpdump(8).
-		 */
-		if (sc->sc_enabled &&
-		    (ifp->if_flags ^ sc->an_if_flags) == IFF_PROMISC)
-			error = an_cmd(sc, AN_CMD_SET_MODE,
-			    (ifp->if_flags & IFF_PROMISC) ? 0xffff : 0);
-		else if (ifp->if_flags & IFF_UP)
-			error = an_init(ifp);
-		else if (sc->sc_enabled)
+		if (ifp->if_flags & IFF_UP) {
+			if (sc->sc_enabled) {
+				/*
+				 * To avoid rescanning another access point,
+				 * do not call an_init() here.  Instead, only
+				 * reflect promisc mode settings.
+				 */
+				error = an_cmd(sc, AN_CMD_SET_MODE,
+				    (ifp->if_flags & IFF_PROMISC) ? 0xffff : 0);
+			} else
+				error = an_init(ifp);
+		} else if (sc->sc_enabled)
 			an_stop(ifp, 1);
-		sc->an_if_flags = ifp->if_flags;
 		break;
 	case SIOCGAIRONET:
 		areq = &sc->an_reqbuf;
@@ -612,10 +615,8 @@ out:
 static int
 an_set_nwkey(struct an_softc *sc, struct ieee80211_nwkey *nwkey)
 {
-	int i, len, anysetkey, needreset, error;
+	int error;
 	u_int16_t prevauth;
-	struct an_req *areq;
-	struct an_wepkey keys[IEEE80211_WEP_NKID], *key;
 
 	error = 0;
 	prevauth = sc->an_config.an_authtype;
@@ -627,135 +628,183 @@ an_set_nwkey(struct an_softc *sc, struct ieee80211_nwkey *nwkey)
 
 	case IEEE80211_NWKEY_WEP:
 	case IEEE80211_NWKEY_WEP | IEEE80211_NWKEY_PERSIST:
-		memset(keys, 0, sizeof(keys));
-		anysetkey = 0;
-		for (i = 0, key = keys; i < IEEE80211_WEP_NKID; i++, key++) {
-			key->an_wep_keylen = nwkey->i_key[i].i_keylen;
-			if (key->an_wep_keylen < 0)
-				continue;
-			if (key->an_wep_keylen != 0 &&
-			    key->an_wep_keylen < IEEE80211_WEP_KEYLEN)
-				return EINVAL;
-			if (key->an_wep_keylen > sizeof(key->an_wep_key))
-				return EINVAL;
-			if ((error = copyin(nwkey->i_key[i].i_keydat,
-			    key->an_wep_key, key->an_wep_keylen)) != 0)
-				return error;
-			anysetkey++;
-		}
-		i = nwkey->i_defkid - 1;
-		if (i != -1) {
-			if (i < 0 || i >= IEEE80211_WEP_NKID)
-				return EINVAL;
-			/* default key must have a valid value */
-			if (keys[i].an_wep_keylen == 0 ||
-			    (keys[i].an_wep_keylen < 0 &&
-			    sc->an_perskeylen[i] == 0))
-				return EINVAL;
-			anysetkey++;
-		}
-		if (!(nwkey->i_wepon & IEEE80211_NWKEY_PERSIST)) {
+		error = an_set_nwkey_wep(sc, nwkey);
+		if (error == 0 || error == ENETRESET)
 			sc->an_config.an_authtype =
 			    AN_AUTHTYPE_OPEN | AN_AUTHTYPE_PRIVACY_IN_USE;
-			if (anysetkey) {
-				/* set temporary keys */
-				sc->an_tx_key = i;
-				for (i = 0; i < IEEE80211_WEP_NKID; i++) {
-					if (keys[i].an_wep_keylen >= 0)
-						memcpy(&sc->an_wepkeys[i],
-						    &keys[i], sizeof(keys[i]));
-				}
-				error = ENETRESET;
-			}
-			break;
-		}
-		/* program persist keys */
-		needreset = 0;
-		if (anysetkey) {
-			/* prepare to program nvram */
-			if (!sc->sc_enabled) {
-				if (sc->sc_enable) {
-					(*sc->sc_enable)(sc);
-					an_wait(sc);
-				}
-				sc->sc_enabled = 1;
-				error = an_write_wepkey(sc,
-				    AN_RID_WEP_PERSISTENT, keys, i);
-				if (sc->sc_disable)
-					(*sc->sc_disable)(sc);
-				sc->sc_enabled = 0;
-			} else {
-				an_cmd(sc, AN_CMD_DISABLE, 0);
-				error = an_write_wepkey(sc,
-				    AN_RID_WEP_PERSISTENT, keys, i);
-				an_cmd(sc, AN_CMD_ENABLE, 0);
-			}
-			if (error)
-				break;
-		}
-		if (i != -1)
-			sc->an_tx_perskey = i;
-		if (sc->an_tx_key != -1 && sc->an_tx_key != i)
-			needreset++;
-		sc->an_tx_key = -1;
-		for (i = 0; i < IEEE80211_WEP_NKID; i++) {
-			if (sc->an_wepkeys[i].an_wep_keylen != -1) {
-				needreset++;
-				memset(&sc->an_wepkeys[i].an_wep_key, 0,
-				    sizeof(sc->an_wepkeys[i].an_wep_key));
-				sc->an_wepkeys[i].an_wep_keylen = -1;
-			}
-			if (keys[i].an_wep_keylen >= 0)
-				sc->an_perskeylen[i] = keys[i].an_wep_keylen;
-		}
-		sc->an_config.an_authtype =
-		    AN_AUTHTYPE_OPEN | AN_AUTHTYPE_PRIVACY_IN_USE;
-		if (needreset) {
-			/* firmware restart to reload persistent key */
-			an_reset(sc);
-		}
-		if (anysetkey || needreset)
-			error = ENETRESET;
 		break;
 
 	case IEEE80211_NWKEY_EAP:
-		sc->an_config.an_authtype = AN_AUTHTYPE_OPEN |
-		    AN_AUTHTYPE_PRIVACY_IN_USE | AN_AUTHTYPE_LEAP;
-		if (nwkey->i_key[0].i_keydat == NULL &&
-		    nwkey->i_key[1].i_keydat == NULL)
-			break;
-		if (!sc->sc_enabled)
-			return ENXIO;
-		an_cmd(sc, AN_CMD_DISABLE, 0);
-		areq = &sc->an_reqbuf;
-		for (i = 0; i < 2; i++) {
-			if (nwkey->i_key[i].i_keydat == NULL)
-				continue;
-			len = i ? AN_LEAP_PASS_MAX : AN_LEAP_USER_MAX;
-			memset(areq, 0, len + 4);
-			areq->an_type = i ? AN_RID_LEAP_PASS : AN_RID_LEAP_USER;
-			areq->an_len = len + 4;
-			areq->an_val[i] = nwkey->i_key[i].i_keylen;
-			if ((error = copyin(nwkey->i_key[i].i_keydat,
-			    areq->an_val + 1, nwkey->i_key[i].i_keylen)) != 0)
-				break;
-			an_write_record(sc, (struct an_ltv_gen *)areq);
-		}
-		if (error)
-			break;
-		error = an_cmd(sc, AN_CMD_ENABLE, 0);
-		if (error) {
-			printf("%s: an_set_nwkey: failed to enable MAC\n",
-			    sc->an_dev.dv_xname);
-			break;
-		}
-		error = ENETRESET;
+		error = an_set_nwkey_eap(sc, nwkey);
+		if (error == 0 || error == ENETRESET)
+			sc->an_config.an_authtype = AN_AUTHTYPE_OPEN |
+			    AN_AUTHTYPE_PRIVACY_IN_USE | AN_AUTHTYPE_LEAP;
 		break;
 	default:
 		error = EINVAL;
 		break;
 	}
 	if (error == 0 && prevauth != sc->an_config.an_authtype)
+		error = ENETRESET;
+	return error;
+}
+
+static int
+an_set_nwkey_wep(struct an_softc *sc, struct ieee80211_nwkey *nwkey)
+{
+	int i, txkey, anysetkey, needreset, error;
+	struct an_wepkey keys[IEEE80211_WEP_NKID], *key;
+
+	error = 0;
+	memset(keys, 0, sizeof(keys));
+	anysetkey = needreset = 0;
+
+	/* load argument and sanity check */
+	for (i = 0, key = keys; i < IEEE80211_WEP_NKID; i++, key++) {
+		key->an_wep_keylen = nwkey->i_key[i].i_keylen;
+		if (key->an_wep_keylen < 0)
+			continue;
+		if (key->an_wep_keylen != 0 &&
+		    key->an_wep_keylen < IEEE80211_WEP_KEYLEN)
+			return EINVAL;
+		if (key->an_wep_keylen > sizeof(key->an_wep_key))
+			return EINVAL;
+		if ((error = copyin(nwkey->i_key[i].i_keydat,
+		    key->an_wep_key, key->an_wep_keylen)) != 0)
+			return error;
+		anysetkey++;
+	}
+	txkey = nwkey->i_defkid - 1;
+	if (txkey >= 0) {
+		if (txkey >= IEEE80211_WEP_NKID)
+			return EINVAL;
+		/* default key must have a valid value */
+		if (keys[txkey].an_wep_keylen == 0 ||
+		    (keys[txkey].an_wep_keylen < 0 &&
+		    sc->an_perskeylen[txkey] == 0))
+			return EINVAL;
+		anysetkey++;
+	}
+	if (!(nwkey->i_wepon & IEEE80211_NWKEY_PERSIST)) {
+		/* set temporary keys */
+		sc->an_tx_key = txkey;
+		for (i = 0, key = keys; i < IEEE80211_WEP_NKID; i++, key++) {
+			if (keys[i].an_wep_keylen < 0)
+				continue;
+			memcpy(&sc->an_wepkeys[i], keys, sizeof(*keys));
+		}
+	} else {
+		/* set persist keys */
+		if (anysetkey) {
+			/* prepare to write nvram */
+			if (!sc->sc_enabled) {
+				if (sc->sc_enable)
+					(*sc->sc_enable)(sc);
+				an_wait(sc);
+				sc->sc_enabled = 1;
+				error = an_write_wepkey(sc,
+				    AN_RID_WEP_PERSISTENT, keys, txkey);
+				if (sc->sc_disable)
+					(*sc->sc_disable)(sc);
+				sc->sc_enabled = 0;
+			} else {
+				an_cmd(sc, AN_CMD_DISABLE, 0);
+				error = an_write_wepkey(sc,
+				    AN_RID_WEP_PERSISTENT, keys, txkey);
+				an_cmd(sc, AN_CMD_ENABLE, 0);
+			}
+			if (error)
+				return error;
+		}
+		if (txkey >= 0)
+			sc->an_tx_perskey = txkey;
+		if (sc->an_tx_key >= 0) {
+			sc->an_tx_key = -1;
+			needreset++;
+		}
+		for (i = 0; i < IEEE80211_WEP_NKID; i++) {
+			if (sc->an_wepkeys[i].an_wep_keylen >= 0) {
+				memset(&sc->an_wepkeys[i].an_wep_key, 0,
+				    sizeof(sc->an_wepkeys[i].an_wep_key));
+				sc->an_wepkeys[i].an_wep_keylen = -1;
+				needreset++;
+			}
+			if (keys[i].an_wep_keylen >= 0)
+				sc->an_perskeylen[i] = keys[i].an_wep_keylen;
+		}
+	}
+	if (needreset) {
+		/* firmware restart to reload persistent key */
+		an_reset(sc);
+	}
+	if (anysetkey || needreset)
+		error = ENETRESET;
+	return error;
+}
+
+static int
+an_set_nwkey_eap(struct an_softc *sc, struct ieee80211_nwkey *nwkey)
+{
+	int i, error;
+	struct an_ltv_leapkey *key;
+	u_int16_t unibuf[sizeof(key->an_key)];
+	MD4_CTX ctx;
+
+	error = 0;
+
+	if (nwkey->i_key[0].i_keydat == NULL &&
+	    nwkey->i_key[1].i_keydat == NULL)
+		return 0;
+	if (!sc->sc_enabled)
+		return ENXIO;
+	an_cmd(sc, AN_CMD_DISABLE, 0);
+	key = (struct an_ltv_leapkey *)&sc->an_reqbuf;
+	if (nwkey->i_key[0].i_keydat != NULL) {
+		memset(key, 0, sizeof(*key));
+		key->an_type = AN_RID_LEAP_USER;
+		key->an_len = sizeof(*key);
+		key->an_key_len = nwkey->i_key[0].i_keylen;
+		if (key->an_key_len > sizeof(key->an_key))
+			return EINVAL;
+		if ((error = copyin(nwkey->i_key[0].i_keydat, key->an_key,
+		    key->an_key_len)) != 0)
+			return error;
+		an_write_record(sc, (struct an_ltv_gen *)key);
+	}
+	if (nwkey->i_key[1].i_keydat != NULL) {
+		memset(key, 0, sizeof(*key));
+		key->an_type = AN_RID_LEAP_PASS;
+		key->an_len = sizeof(*key);
+		key->an_key_len = nwkey->i_key[1].i_keylen;
+		if (key->an_key_len > sizeof(key->an_key))
+			return EINVAL;
+		if ((error = copyin(nwkey->i_key[1].i_keydat, key->an_key,
+		    key->an_key_len)) != 0)
+			return error;
+		/*
+		 * Cisco seems to use PasswordHash and PasswordHashHash
+		 * in RFC-2759 (MS-CHAP-V2).
+		 */
+		memset(unibuf, 0, sizeof(unibuf));
+		/* XXX: convert password to unicode */
+		for (i = 0; i < key->an_key_len; i++)
+			unibuf[i] = key->an_key[i];
+		/* set PasswordHash */
+		MD4Init(&ctx);
+		MD4Update(&ctx, (u_int8_t *)unibuf, key->an_key_len * 2);
+		MD4Final(key->an_key, &ctx);
+		/* set PasswordHashHash */
+		MD4Init(&ctx);
+		MD4Update(&ctx, key->an_key, 16);
+		MD4Final(key->an_key + 16, &ctx);
+		key->an_key_len = 32;
+		an_write_record(sc, (struct an_ltv_gen *)key);
+	}
+	error = an_cmd(sc, AN_CMD_ENABLE, 0);
+	if (error)
+		printf("%s: an_set_nwkey: failed to enable MAC\n",
+		    sc->an_dev.dv_xname);
+	else
 		error = ENETRESET;
 	return error;
 }
