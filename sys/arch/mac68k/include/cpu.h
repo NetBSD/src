@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.65 2000/08/25 01:04:08 thorpej Exp $	*/
+/*	$NetBSD: cpu.h,v 1.66 2000/12/19 21:09:56 scw Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -358,9 +358,6 @@ int	cachectl1 __P((unsigned long, vaddr_t, size_t, struct proc *));
 void	physaccess __P((caddr_t, caddr_t, register int, register int));
 void	physunaccess __P((caddr_t, register int));
 int	kvtop __P((caddr_t));
-
-/* trap.c */
-void	child_return __P((void *));
 
 #endif
 
