@@ -1,4 +1,4 @@
-/*	$NetBSD: convfp.c,v 1.3 2003/06/16 07:11:52 martin Exp $	*/
+/*	$NetBSD: convfp.c,v 1.4 2004/05/01 18:00:19 martin Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -46,8 +46,20 @@
 /* The same for unsigned long */
 #define ULONG_TESTVALUE	(LONG_MAX+42UL)
 
+static void test1();
+static void test2();
+
 int
 main()
+{
+	test1();
+	test2();
+	printf("PASSED\n");
+	return 0;
+}
+
+static void
+test1()
 {
 	unsigned int ui;
 	unsigned long ul;
@@ -79,7 +91,7 @@ main()
 		printf("sizeof(long) = %d, sizeof(double) = %d, "
 		    "sizeof(long double) = %d\n", 
 		    sizeof(ul), sizeof(d), sizeof(dt));
-		goto done;
+		return;
 	}
 
 	if (ul != ULONG_TESTVALUE) {
@@ -87,9 +99,21 @@ main()
 		    ul, ul, ULONG_TESTVALUE, ULONG_TESTVALUE);
 		exit(1);
 	}
+}
 
-done:
-	printf("PASSED\n");
+static void
+test2()
+{
+	double nv;
+	unsigned long uv;
 
-	exit(0);
+	printf("testing double to unsigned long cast\n");
+	nv = 5.6;
+	uv = (unsigned long)nv;
+
+	if (uv == 5)
+		return;
+
+	printf("FAILED: %.3f casted to unsigned long is %lu\n", nv, uv);
+	exit(1);
 }
