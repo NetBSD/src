@@ -1,4 +1,4 @@
-/*	$NetBSD: bsddisklabel.c,v 1.26 2003/11/30 14:36:43 dsl Exp $	*/
+/*	$NetBSD: bsddisklabel.c,v 1.27 2004/03/26 19:55:13 dsl Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -546,7 +546,7 @@ make_bsd_partitions(void)
 	md_set_sizemultname();
 
 	/* Build standard partitions */
-	emptylabel(bsdlabel);
+	memset(&bsdlabel, 0, sizeof bsdlabel);
 
 	/* Set initial partition types to unused */
 	for (part = 0 ; part < maxpart ; ++part)

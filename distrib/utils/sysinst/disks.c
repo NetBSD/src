@@ -1,4 +1,4 @@
-/*	$NetBSD: disks.c,v 1.75 2004/03/26 17:28:55 dsl Exp $ */
+/*	$NetBSD: disks.c,v 1.76 2004/03/26 19:55:13 dsl Exp $ */
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -195,6 +195,7 @@ find_disks(const char *doingwhat)
 	dlcylsize = dlhead * dlsec;
 
 	/* Get existing/default label */
+	memset(&oldlabel, 0, sizeof oldlabel);
 	incorelabel(diskdev, oldlabel);
 
 	/* Set 'target' label to current label in case we don't change it */

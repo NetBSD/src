@@ -1,4 +1,4 @@
-/*	$NetBSD: label.c,v 1.42 2003/11/30 14:36:43 dsl Exp $	*/
+/*	$NetBSD: label.c,v 1.43 2004/03/26 19:55:13 dsl Exp $	*/
 
 /*
  * Copyright 1997 Jonathan Stone
@@ -36,7 +36,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: label.c,v 1.42 2003/11/30 14:36:43 dsl Exp $");
+__RCSID("$NetBSD: label.c,v 1.43 2004/03/26 19:55:13 dsl Exp $");
 #endif
 
 #include <sys/types.h>
@@ -143,7 +143,7 @@ check_one_root(partinfo *lp, int nparts)
 {
 	int part;
 	int foundroot = 0;
-	
+
 	for (part = 0; part < nparts; lp++, part++) {
 #if 0
 		if (!PI_ISBSDFS(lp))
@@ -630,7 +630,7 @@ edit_and_check_label(partinfo *lp, int nparts, int rawpart, int bsdpart)
 				msg_display(MSG_partitions_overlap,'a'+i,'a'+j);
 			else
 				return 1;
-		 
+
 		/*XXX ???*/
 		msg_display_add(MSG_edit_partitions_again);
 		process_menu(MENU_yesno, NULL);
@@ -639,14 +639,6 @@ edit_and_check_label(partinfo *lp, int nparts, int rawpart, int bsdpart)
 	}
 
 	/*NOTREACHED*/
-}
-
-	
-void
-emptylabel(partinfo *lp)
-{
-
-	memset(lp, 0, sizeof *lp);
 }
 
 /*
@@ -660,8 +652,6 @@ incorelabel(const char *dkname, partinfo *lp)
 	struct partition *pp;
 	int fd;
 	char buf[64];
-
-	emptylabel(lp);
 
 	if (get_real_geom(dkname, &lab) == 0)
 		return -1;
@@ -702,6 +692,7 @@ const char *
 get_last_mounted(int fd, int partstart)
 {
 	static char sblk[SBLOCKSIZE];		/* is this enough? */
+	#define SB ((struct fs *)sblk)
 	const static int sblocks[] = SBLOCKSEARCH;
 	const int *sbp;
 	char *cp;
@@ -719,10 +710,18 @@ get_last_mounted(int fd, int partstart)
 		/* Maybe we should validate the checksum??? */
 		switch (((struct fs *)sblk)->fs_magic) {
 		case FS_UFS1_MAGIC:
-		case FS_UFS2_MAGIC:
 		case FS_UFS1_MAGIC_SWAPPED:
+			if (!(SB->fs_old_flags & FS_FLAGS_UPDATED)) {
+				if (*sbp == SBLOCK_UFS1)
+					mnt = SB->fs_fsmnt;
+				continue;
+			}
+			/* FALLTHROUGH */
+		case FS_UFS2_MAGIC:
 		case FS_UFS2_MAGIC_SWAPPED:
-			mnt = ((struct fs *)sblk)->fs_fsmnt;
+			/* Check we have the main superblock */
+			if (SB->fs_sblockloc == *sbp)
+				mnt = SB->fs_fsmnt;
 			continue;
 		}
 
@@ -755,6 +754,7 @@ get_last_mounted(int fd, int partstart)
 			return mnt + l;
 	}
 	return mnt;
+	#undef SB
 }
 
 /* Ask for a partition offset, check bounds and do the needed roundups */
