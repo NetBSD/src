@@ -1,4 +1,4 @@
-/* $NetBSD: pci_bwx_bus_io_chipdep.c,v 1.11 2000/06/26 18:19:26 thorpej Exp $ */
+/* $NetBSD: pci_bwx_bus_io_chipdep.c,v 1.12 2001/09/04 05:31:28 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1997, 1998, 2000 The NetBSD Foundation, Inc.
@@ -111,6 +111,9 @@ void		__C(CHIP,_io_free) __P((void *, bus_space_handle_t,
 
 /* get kernel virtual address */
 void *		__C(CHIP,_io_vaddr) __P((void *, bus_space_handle_t));
+
+/* mmap for user */
+paddr_t		__C(CHIP,_io_mmap) __P((void *, bus_addr_t, off_t, int, int));
 
 /* barrier */
 inline void	__C(CHIP,_io_barrier) __P((void *, bus_space_handle_t,
@@ -241,6 +244,9 @@ __C(CHIP,_bus_io_init)(t, v)
 
 	/* get kernel virtual address */
 	t->abs_vaddr =		__C(CHIP,_io_vaddr);
+
+	/* mmap for user */
+	t->abs_mmap =		__C(CHIP,_io_mmap);
 
 	/* barrier */
 	t->abs_barrier =	__C(CHIP,_io_barrier);
@@ -513,6 +519,19 @@ __C(CHIP,_io_vaddr)(v, bsh)
 	 * so we shouldn't get here
 	 */
 	panic("_io_vaddr");
+}
+
+paddr_t
+__C(CHIP,_io_vaddr)(v, addr, off, prot, flags)
+	void *v;
+	bus_addr_t addr;
+	off_t off;
+	int prot;
+	int flags;
+{
+
+	/* Not supported for I/O space. */
+	return (-1);
 }
 
 inline void
