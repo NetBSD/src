@@ -163,6 +163,13 @@ override_options ()
 	       || ! strcmp (alpha_cpu_string, "21264"))
 	{
 	  alpha_cpu = PROCESSOR_EV6;
+	  target_flags |= MASK_BWX | MASK_MAX;
+	  target_flags &= ~ MASK_CIX;
+	}
+      else if (! strcmp (alpha_cpu_string, "ev67")
+	       || ! strcmp (alpha_cpu_string, "21264a"))
+	{
+	  alpha_cpu = PROCESSOR_EV6;
 	  target_flags |= MASK_BWX | MASK_CIX | MASK_MAX;
 	}
       else
