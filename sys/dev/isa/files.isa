@@ -1,4 +1,4 @@
-#	$NetBSD: files.isa,v 1.33.2.5 1997/10/14 01:05:43 thorpej Exp $
+#	$NetBSD: files.isa,v 1.33.2.6 1997/10/14 10:23:27 thorpej Exp $
 #
 # Config file and device description for machine-independent ISA code.
 # Included by ports that need it.  Requires that the SCSI files be
@@ -69,9 +69,9 @@ attach	aha at isa with aha_isa: isadma
 file	dev/isa/aha_isa.c		aha_isa
 
 # Adaptec AIC-6[32]60 ICs
-device	aic: scsi, isadma
-attach	aic at isa
-file	dev/isa/aic6360.c		aic
+# device declaration in sys/conf/files
+attach	aic at isa with aic_isa: isadma
+file	dev/isa/aic_isa.c		aic_isa
 
 # Qlogic ESP406/FAS408 boards
 # ncr53c9x device declaration in sys/conf/files
@@ -138,9 +138,8 @@ file	dev/isa/elink.c			elink
 # National Semiconductor DS8390/WD83C690-based boards
 # (WD/SMC 80x3 family, SMC Ultra [8216], 3Com 3C503)
 device	ed: ether, ifnet, arp
+attach	ed at isa
 file	dev/isa/if_ed.c			ed
-attach	ed at isa with ed_isa
-file	dev/isa/if_ed_isa.c		ed_isa
 
 # 3Com 3C505
 device	eg: ether, ifnet, arp

@@ -1,4 +1,4 @@
-# 	$NetBSD: Makefile.sparc,v 1.45.2.1 1997/09/29 07:20:31 thorpej Exp $
+# 	$NetBSD: Makefile.sparc,v 1.45.2.2 1997/10/14 10:18:21 thorpej Exp $
 
 # Makefile for NetBSD
 #
@@ -24,8 +24,9 @@
 CC?=	cc
 LD?=	ld
 MKDEP?=	mkdep
+SIZE?=	size
 STRIP?=	strip
-COPTS?= 	-O2
+COPTS?=	-O2
 
 # source tree is located via $S relative to the compilation directory
 .ifndef S
@@ -82,7 +83,7 @@ SYSTEM_DEP=	Makefile ${SYSTEM_OBJ}
 SYSTEM_LD_HEAD=	@rm -f $@
 SYSTEM_LD=	@echo ${LD} ${LINKFLAGS} -o $@ '$${SYSTEM_OBJ}' vers.o; \
 		${LD} ${LINKFLAGS} -o $@ ${SYSTEM_OBJ} vers.o
-SYSTEM_LD_TAIL=	@size $@; chmod 755 $@
+SYSTEM_LD_TAIL=	@${SIZE} $@; chmod 755 $@
 
 DEBUG?=
 .if ${DEBUG} == "-g"
@@ -115,11 +116,17 @@ newvers: ${SYSTEM_DEP} ${SYSTEM_SWAP_DEP}
 	sh $S/conf/newvers.sh
 	${CC} ${CFLAGS} ${CPPFLAGS} ${PROF} -c vers.c
 
-
-clean: cleankernel
-cleankernel:
+__CLEANKERNEL: .USE
+	@echo "${.TARGET}ing the kernel objects"
 	rm -f eddep *netbsd netbsd.gdb tags *.[io] [a-z]*.s \
 	    [Ee]rrs linterrs makelinks assym.h.tmp assym.h
+
+__CLEANDEPEND: .USE
+	rm -f .depend
+
+clean: __CLEANKERNEL
+
+cleandir: __CLEANKERNEL __CLEANDEPEND
 
 lint:
 	@lint -hbxncez -Dvolatile= ${CPPFLAGS} -UKGDB \

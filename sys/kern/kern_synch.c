@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_synch.c,v 1.44 1997/05/07 18:49:10 gwr Exp $	*/
+/*	$NetBSD: kern_synch.c,v 1.44.4.1 1997/10/14 10:26:05 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1990, 1991, 1993
@@ -223,8 +223,6 @@ schedcpu(arg)
 		splx(s);
 	}
 	vmmeter();
-	if (bclnlist != NULL)
-		wakeup((caddr_t)pageproc);
 	timeout(schedcpu, (void *)0, hz);
 }
 
@@ -289,7 +287,7 @@ int
 tsleep(ident, priority, wmesg, timo)
 	void *ident;
 	int priority, timo;
-	char *wmesg;
+	const char *wmesg;
 {
 	register struct proc *p = curproc;
 	register struct slpque *qp;

@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.18.4.2 1997/09/22 06:32:50 thorpej Exp $	*/
+/*	$NetBSD: machdep.c,v 1.18.4.3 1997/10/14 10:19:49 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -148,6 +148,7 @@ static void initcpu __P((void));
 void
 consinit()
 {
+	/* Note: cninit() done earlier.  (See _startup.c) */
 
 #ifdef KGDB
 	/* XXX - Ask on console for kgdb_dev? */
@@ -255,8 +256,8 @@ cpu_startup()
 	 * Also, offset some to avoid PROM scribbles.
 	 */
 	v = (caddr_t) KERNBASE;
-	msgbufaddr = (caddr_t)(v + 0x1000);
-	initmsgbuf(msgbufaddr, m68k_round_page(MSGBUFSIZE));
+	msgbufaddr = (caddr_t)(v + MSGBUFOFF);
+	initmsgbuf(msgbufaddr, MSGBUFSIZE);
 
 	/*
 	 * Good {morning,afternoon,evening,night}.
@@ -422,7 +423,7 @@ setregs(p, pack, stack)
 /*
  * Info for CTL_HW
  */
-char	machine[] = MACHINE;	/* from <machine/param.h> */
+char	machine[16] = MACHINE;	/* from <machine/param.h> */
 char	cpu_model[120];
 
 /*
@@ -555,6 +556,9 @@ cpu_reboot(howto, user_boot_string)
 	if (cold)
 		goto haltsys;
 
+	/* Un-blank the screen if appropriate. */
+	cnpollc(1);
+
 	if ((howto & RB_NOSYNC) == 0) {
 		reboot_sync();
 		/*
@@ -647,6 +651,10 @@ cpu_dumpconf()
 	int maj;
 	int (*getsize)__P((dev_t));
 
+	/* Validate space in page zero for the kcore header. */
+	if (MSGBUFOFF < (sizeof(kcore_seg_t) + sizeof(cpu_kcore_hdr_t)))
+		panic("cpu_dumpconf: MSGBUFOFF too small");
+
 	if (dumpdev == NODEV)
 		return;
 
@@ -719,19 +727,31 @@ dumpsys()
 		return;
 	}
 
-	printf("\ndumping to dev %x, offset %d\n",
+	printf("\ndumping to dev 0x%x, offset %d\n",
 		   (int) dumpdev, (int) dumplo);
 
 	/*
 	 * We put the dump header is in physical page zero,
 	 * so there is no extra work here to write it out.
+	 * All we do is initialize the header.
 	 */
+
+	/* Set pointers to all three parts. */
 	kseg_p = (kcore_seg_t *)KERNBASE;
 	chdr_p = (cpu_kcore_hdr_t *) (kseg_p + 1);
 	sh = &chdr_p->un._sun3x;
+
+	/* Fill in kcore_seg_t part. */
 	CORE_SETMAGIC(*kseg_p, KCORE_MAGIC, MID_MACHINE, CORE_CPU);
 	kseg_p->c_size = sizeof(*chdr_p);
-	pmap_set_kcore_hdr(chdr_p);
+
+	/* Fill in cpu_kcore_hdr_t part. */
+	bcopy(machine, chdr_p->name, sizeof(chdr_p->name));
+	chdr_p->page_size = NBPG;
+	chdr_p->kernbase = KERNBASE;
+
+	/* Fill in the sun3x_kcore_hdr part. */
+	pmap_kcore_hdr(sh);
 
 	/*
 	 * Now dump physical memory.  Note that physical memory

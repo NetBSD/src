@@ -1,4 +1,4 @@
-/*	$NetBSD: ossaudio.c,v 1.14.2.2 1997/08/27 23:17:48 thorpej Exp $	*/
+/*	$NetBSD: ossaudio.c,v 1.14.2.3 1997/10/14 10:21:42 thorpej Exp $	*/
 #include <sys/param.h>
 #include <sys/proc.h>
 #include <sys/systm.h>
@@ -31,22 +31,23 @@ static void setblocksize __P((struct file *, struct audio_info *, struct proc *)
 
 int
 oss_ioctl_audio(p, uap, retval)
-	register struct proc *p;
-	register struct oss_sys_ioctl_args /* {
+	struct proc *p;
+	struct oss_sys_ioctl_args /* {
 		syscallarg(int) fd;
 		syscallarg(u_long) com;
 		syscallarg(caddr_t) data;
 	} */ *uap;
 	register_t *retval;
 {	       
-	register struct file *fp;
-	register struct filedesc *fdp;
+	struct file *fp;
+	struct filedesc *fdp;
 	u_long com;
 	struct audio_info tmpinfo;
 	struct audio_offset tmpoffs;
 	struct oss_audio_buf_info bufinfo;
 	struct oss_count_info cntinfo;
 	struct audio_encoding tmpenc;
+	u_int u;
 	int idat, idata;
 	int error;
 	int (*ioctlf) __P((struct file *, u_long, caddr_t, struct proc *));
@@ -278,11 +279,18 @@ oss_ioctl_audio(p, uap, retval)
 			return EINVAL;
 		tmpinfo.blocksize = 1 << (idat & 0xffff);
 		tmpinfo.hiwat = (idat >> 16) & 0xffff;
+		DPRINTF(("oss_audio: SETFRAGMENT blksize=%d, hiwat=%d\n",
+			 tmpinfo.blocksize, tmpinfo.hiwat));
+		if (tmpinfo.hiwat == 0)	/* 0 means set to max */
+			tmpinfo.hiwat = 65536;
 		(void) ioctlf(fp, AUDIO_SETINFO, (caddr_t)&tmpinfo, p);
 		error = ioctlf(fp, AUDIO_GETINFO, (caddr_t)&tmpinfo, p);
 		if (error)
 			return error;
-		idat = tmpinfo.blocksize;
+		u = tmpinfo.blocksize;
+		for(idat = 0; u; idat++, u >>= 1)
+			;
+		idat |= (tmpinfo.hiwat & 0xffff) << 16;
 		error = copyout(&idat, SCARG(uap, data), sizeof idat);
 		if (error)
 			return error;
@@ -570,8 +578,8 @@ getdevinfo(fp, p)
 
 int
 oss_ioctl_mixer(p, uap, retval)
-	register struct proc *p;
-	register struct oss_sys_ioctl_args /* {
+	struct proc *p;
+	struct oss_sys_ioctl_args /* {
 		syscallarg(int) fd;
 		syscallarg(u_long) com;
 		syscallarg(caddr_t) data;
@@ -737,16 +745,16 @@ oss_ioctl_mixer(p, uap, retval)
 /* XXX hook for sequencer emulation */
 int
 oss_ioctl_sequencer(p, uap, retval)
-	register struct proc *p;
-	register struct oss_sys_ioctl_args /* {
+	struct proc *p;
+	struct oss_sys_ioctl_args /* {
 		syscallarg(int) fd;
 		syscallarg(u_long) com;
 		syscallarg(caddr_t) data;
 	} */ *uap;
 	register_t *retval;
 {	       
-	register struct file *fp;
-	register struct filedesc *fdp;
+	struct file *fp;
+	struct filedesc *fdp;
 #if 0
 	u_long com;
 	int idat;

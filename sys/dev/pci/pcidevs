@@ -1,4 +1,4 @@
-$NetBSD: pcidevs,v 1.31.2.7 1997/10/14 01:14:52 thorpej Exp $
+$NetBSD: pcidevs,v 1.31.2.8 1997/10/14 10:24:27 thorpej Exp $
 
 /*
  * Copyright (c) 1995, 1996 Christopher G. Demetriou
@@ -523,7 +523,10 @@ product	3COM 3C905TX	0x9050	3c905 100Base-TX
 product	3COM 3C905T4	0x9051	3c905 100Base-T4
 
 /* 3D Labs products */
-product 3DLABS 300SX	0x0001	300SX (\"Glint\")
+product 3DLABS 300SX	0x0001	GLINT 300SX
+product 3DLABS 500TX	0x0002	GLINT 500TX
+product 3DLABS DELTA	0x0003	GLINT DELTA
+product 3DLABS 500MX	0x0006	GLINT 500MX
 
 /* ACC Products */
 product ACC 2188	0x0000	ACCM 2188 VL-PCI Bridge
@@ -730,35 +733,38 @@ product IBM 0x0036	0x0036	Miami/PCI
 product IMS 8849	0x8849	8849
 
 /* Intel products */
-product INTEL PCEB	0x0482	82375EB PCI-EISA Bridge
-product INTEL CDC	0x0483	82424ZX (Saturn) Cache and DRAM controller
-product INTEL SIO	0x0484	82378IB PCI-ISA Bridge (System I/O)
-product INTEL PCIB	0x0486	82426EX PCI-ISA Bridge
-product INTEL PCMC	0x04a3	82434LX/NX (Mercury/Neptune) PCI, Cache, and DRAM Controller
+product INTEL PCEB	0x0482	82375EB/SB PCI-EISA Bridge (PCEB)
+product INTEL CDC	0x0483	82424ZX Cache and DRAM controller (CDC)
+product INTEL SIO	0x0484	82378ZB System I/O (SIO)
+product INTEL 82426EX	0x0486	82426EX PCI-to-ISA Bridge (PCIB)
+product INTEL PCMC	0x04a3	82434LX/NX PCI, Cache and Memory Controller (PCMC)
 product INTEL 82092AA	0x1222	82092AA IDE controller
 product INTEL SAA7116	0x1223	SAA7116
 product INTEL 82596	0x1226	82596 LAN Controller
 product INTEL EEPRO100	0x1227	EE Pro 100 10/100 Fast Ethernet
 product INTEL EEPRO100S	0x1228	EE Pro 100 Smart 10/100 Fast Ethernet
 product INTEL 82557	0x1229	82557 Fast Ethernet LAN Controller
-product INTEL 82437	0x122d	82437FX (Triton) PCI, Cache, and DRAM Controller
-product INTEL 82471	0x122e	82471FB (Triton) PCI-ISA Bridge
-product INTEL 82438	0x1230	82438 (Triton) IDE controller
-product INTEL 82371MX	0x1234	82371 (Triton MX) PCI-ISA Bridge and IDE Controller
-product INTEL 82437MX	0x1235	82437 (Triton MX) PCI, Cache, and DRAM Controller
-product INTEL 82440FX	0x1237	82440FX (Natoma) PCI and Memory Controller
-product INTEL 82439	0x1250	82439 (Triton II) TXC Host Bridge
-product INTEL 82371SB	0x7000	82371SB (Triton II) PCI-ISA Bridge
-product INTEL 82371IDE	0x7010	82371SB (Triton II) IDE controller
-product INTEL 82371USB	0x7020	82371SB (Triton II) USB Interface
-product INTEL 82430VX	0x7030	82430VX (Triton VX) Host Bridge
-product INTEL 82439TX	0x7100	82439TX (Triton TX) Host Bridge
-product INTEL 82371AB	0x7110	82371AB PIIX4 ISA Bridge
-product INTEL 82371ABIDE	0x7111	82371AB IDE Controller
-product INTEL 82371ABUSB	0x7112	82371AB USB Interface
-product INTEL 82371ABPM	0x7113	82371AB Power Management / SMBus Controller
-product INTEL PCI450_PB	0x84c4	450 PCIset (Orion) Host-PCI bridge
-product INTEL PCI450_MC	0x84c5	450 PCIset (Orion) Memory Controller
+product INTEL 82437FX	0x122d	82437FX System Controller (TSC)
+product INTEL 82471FB_ISA	0x122e	82371FB PCI-to-ISA Bridge (PIIX)
+product INTEL 82471FB_IDE	0x1230	82371FB IDE controller (PIIX)
+product INTEL 82371MX	0x1234	82371MX Mobile PCI I/O IDE Xcelerator (MPIIX)
+product INTEL 82437MX	0x1235	82437MX Mobile System Controller (MTSC)
+product INTEL 82441FX	0x1237	82441FX PCI and Memory Controller (PMC)
+product INTEL 82380AB	0x123c	82380AB Mobile PCI-to-ISA Bridge (MISA)
+product INTEL 82380FB	0x124b	82380FB Mobile PCI-to-PCI Bridge (MPCI2)
+product INTEL 82439HX	0x1250	82439HX System Controller (TXC)
+product INTEL 82371SB_ISA	0x7000	82371SB PCI-to-ISA Bridge (PIIX3)
+product INTEL 82371SB_IDE	0x7010	82371SB IDE Interface (PIIX3)
+product INTEL 82371SB_USB	0x7020	82371SB USB Host Controller (PIIX3)
+product INTEL 82437VX	0x7030	82437VX System Controller (TVX)
+product INTEL 82439TX	0x7100	82439TX System Controller (MTXC)
+product INTEL 82371AB_ISA	0x7110	82371AB PCI-to-ISA Bridge (PIIX4)
+product INTEL 82371AB_IDE	0x7111	82371AB IDE controller (PIIX4)
+product INTEL 82371AB_USB	0x7112	82371AB USB Host Controller (PIIX4)
+product INTEL 82371AB_PMC	0x7113	82371AB Power Management Controller (PIIX4)
+product INTEL 82443LX	0x7180	82443LX PCI AGP Controller (PAC)
+product INTEL PCI450_PB	0x84c4	82454KX/GX PCI Bridge (PB)
+product INTEL PCI450_MC	0x84c5	82451KX/GX Memory Controller (MC)
 
 /* I. T. T. products */
 product ITT AGX016	0x0001	AGX016
@@ -774,7 +780,7 @@ product MADGE COLLAGE155	0x1001	Collage 155 ATM adapter
 /* Matrox products */
 product MATROX IMPRESSION	0x0d10	MGA Impression
 product MATROX ATLAS		0x0518	MGA PX2085 (\"Atlas\")
-product MATROX MILLENIUM	0x0519	MGA Millenium 2064W (\"Storm\")
+product MATROX MILLENNIUM	0x0519	MGA Millennium 2064W (\"Storm\")
 product MATROX MYSTIQUE		0x102B	MGA 1064SG
 
 /* Mylex products */
@@ -849,11 +855,12 @@ product S3 864_3	0x88c3	86C864-3 (\"Vision864\")
 product S3 964_0	0x88d0	86C964-0 (\"Vision964\")
 product S3 964_1	0x88d1	86C964-1 (\"Vision964\")
 product S3 964_2	0x88d2	86C964-2 (\"Vision964\")
-product S3 964_3	0x88d1	86C964-3 (\"Vision964\")
+product S3 964_3	0x88d3	86C964-3 (\"Vision964\")
 product S3 968_0	0x88f0	86C968-0 (\"Vision968\")
 product S3 968_1	0x88f1	86C968-1 (\"Vision968\")
 product S3 968_2	0x88f2	86C968-2 (\"Vision968\")
 product S3 968_3	0x88f3	86C968-3 (\"Vision968\")
+product S3 TRIO64V2_DX	0x8901	Trio64V2/DX
 
 /* SGS Thomson products */
 product SGSTHOMSON 2000	0x0008	STG 2000X
@@ -941,10 +948,12 @@ product VIATECH VT82C505	0x0505	VT82C505 (Pluto)
 product VIATECH VT82C561	0x0561	VT82C561
 product VIATECH VT82C576	0x0576	VT82C576 3V
 product VIATECH VT82C586	0x0586	VT82C586 (Apollo VP) PCI-ISA Bridge
+product VIATECH VT86C926	0x0926	VT86C926 Amazon PCI-Ethernet Controller
 product VIATECH	VT82C570M	0x1000	VT82C570M (Apollo) Host-PCI Bridge
 product VIATECH VT82C570MV	0x1006	VT82C570M (Apollo) PCI-ISA Bridge
 product VIATECH VT82C416MV	0x1571	VT82C416MV
 product VIATECH VT82C595	0x1595	VT82C595 (Apollo VP2) Host-PCI Bridge
+product VIATECH VT83C572	0x3038	VT83C572 USB Controller
 
 /* Vortex Computer Systems products */
 product VORTEX GDT_6000B	0x0001	GDT 6000b

@@ -1,4 +1,4 @@
-/*	$NetBSD: wd.c,v 1.162.2.1 1997/08/27 23:32:07 thorpej Exp $ */
+/*	$NetBSD: wd.c,v 1.162.2.2 1997/10/14 10:24:04 thorpej Exp $ */
 
 /*
  * Copyright (c) 1994, 1995 Charles M. Hannum.  All rights reserved.
@@ -32,6 +32,8 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
+#include "rnd.h"
+
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/kernel.h>
@@ -47,6 +49,9 @@
 #include <sys/disk.h>
 #include <sys/syslog.h>
 #include <sys/proc.h>
+#if NRND > 0
+#include <sys/rnd.h>
+#endif
 
 #include <vm/vm.h>
 
@@ -80,6 +85,9 @@ struct wd_softc {
 	struct disk sc_dk;
 	struct wd_link *d_link;
 	struct buf sc_q;
+#if NRND > 0
+	rndsource_element_t	rnd_source;
+#endif
 };
 
 int	wdprobe		__P((struct device *, void *, void *));
@@ -94,6 +102,7 @@ struct cfdriver wd_cd = {
 	NULL, "wd", DV_DISK
 };
 
+void	wdgetdefaultlabel __P((struct wd_softc *, struct disklabel *));
 void	wdgetdisklabel	__P((struct wd_softc *));
 int	wd_get_parms	__P((struct wd_softc *));
 void	wdstrategy	__P((struct buf *));
@@ -205,6 +214,10 @@ wdattach(parent, self, aux)
 		printf(" lba addressing\n");
 	else
 		printf(" chs addressing\n");
+
+#if NRND > 0
+	rnd_attach_source(&wd->rnd_source, wd->sc_dev.dv_xname, RND_TYPE_DISK);
+#endif
 }
 
 /*
@@ -496,21 +509,14 @@ wdclose(dev, flag, fmt, p)
 	return 0;
 }
 
-/*
- * Fabricate a default disk label, and try to read the correct one.
- */
 void
-wdgetdisklabel(wd)
+wdgetdefaultlabel(wd, lp)
 	struct wd_softc *wd;
+	struct disklabel *lp;
 {
-	struct disklabel *lp = wd->sc_dk.dk_label;
 	struct wd_link *d_link = wd->d_link;
-	char *errstring;
-
-	WDDEBUG_PRINT(("wdgetdisklabel\n"));
 
 	bzero(lp, sizeof(struct disklabel));
-	bzero(wd->sc_dk.dk_cpulabel, sizeof(struct cpu_disklabel));
 
 	lp->d_secsize = DEV_BSIZE;
 	lp->d_ntracks = d_link->sc_params.wdp_heads;
@@ -537,6 +543,24 @@ wdgetdisklabel(wd)
 	lp->d_magic = DISKMAGIC;
 	lp->d_magic2 = DISKMAGIC;
 	lp->d_checksum = dkcksum(lp);
+}
+
+/*
+ * Fabricate a default disk label, and try to read the correct one.
+ */
+void
+wdgetdisklabel(wd)
+	struct wd_softc *wd;
+{
+	struct disklabel *lp = wd->sc_dk.dk_label;
+	struct wd_link *d_link = wd->d_link;
+	char *errstring;
+
+	WDDEBUG_PRINT(("wdgetdisklabel\n"));
+
+	bzero(wd->sc_dk.dk_cpulabel, sizeof(struct cpu_disklabel));
+
+	wdgetdefaultlabel(wd, lp);
 
 	d_link->sc_badsect[0] = -1;
 
@@ -662,7 +686,11 @@ wdioctl(dev, xfer, addr, flag, p)
 		else
 			d_link->sc_flags &= ~WDF_WLABEL;
 		return 0;
-	
+
+	case DIOCGDEFLABEL:
+		wdgetdefaultlabel(wd, (struct disklabel *)addr);
+		return 0;
+
 #ifdef notyet
 	case DIOCWFORMAT:
 		if ((flag & FWRITE) == 0)
@@ -950,4 +978,7 @@ wddone(d_link, bp)
 	struct wd_softc *wd = (void *)d_link->wd_softc;
 
 	disk_unbusy(&wd->sc_dk, (bp->b_bcount - bp->b_resid));
+#if NRND > 0
+	rnd_add_uint32(&wd->rnd_source, bp->b_blkno);
+#endif
 }

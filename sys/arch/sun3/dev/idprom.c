@@ -1,4 +1,4 @@
-/*	$NetBSD: idprom.c,v 1.19 1997/04/28 21:55:59 gwr Exp $	*/
+/*	$NetBSD: idprom.c,v 1.19.4.1 1997/10/14 10:18:59 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -65,7 +65,8 @@ void
 idprom_init()
 {
 	struct idprom *idp;
-	char *src, *dst;
+	char *dst;
+	vm_offset_t src;
 	int len, x, xorsum;
 	union {
 		long l;
@@ -75,7 +76,7 @@ idprom_init()
 	/* Copy the IDPROM contents and do the checksum. */
 	idp = &identity_prom;
 	dst = (char*)idp;
-	src = (char*)IDPROM_BASE;
+	src = IDPROM_BASE;
 	len = IDPROM_SIZE;
 	xorsum = 0;	/* calculated as xor of data */
 

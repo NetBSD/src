@@ -1,4 +1,4 @@
-/*	$NetBSD: fd.c,v 1.12 1997/07/17 02:16:19 jtk Exp $	*/
+/*	$NetBSD: fd.c,v 1.12.2.1 1997/10/14 10:20:12 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994, 1995 Charles Hannum.
@@ -113,17 +113,16 @@ struct fdc_softc {
 	u_char sc_status[7];		/* copy of registers */
 } fdc_softc;
 
-/* controller driver configuration */
-int fdcinit();
-void fdcstart();
-void fdcgo();
-int fdcintr ();
-void fdcdone();
-void fdcreset();
+bdev_decl(fd);
+cdev_decl(fd);
+
+int fdcintr __P((void));
+void fdcreset __P((void));
 
 /* controller driver configuration */
 int fdcprobe __P((struct device *, void *, void *));
 void fdcattach __P((struct device *, struct device *, void *));
+int fdprint __P((void *, const char *));
 
 struct cfattach fdc_ca = {
 	sizeof(struct fdc_softc), fdcprobe, fdcattach
@@ -211,12 +210,8 @@ struct cfdriver fd_cd = {
 	NULL, "fd", DV_DISK
 };
 
-/* floppy driver configuration */
-void fdstart __P((struct fd_softc *fd));
-void fdgo();
-void fdintr();
-
 void fdstrategy __P((struct buf *));
+void fdstart __P((struct fd_softc *fd));
 
 struct dkdriver fddkdriver = { fdstrategy };
 
@@ -231,9 +226,17 @@ void fdctimeout __P((void *arg));
 void fdcpseudointr __P((void *arg));
 void fdcretry __P((struct fdc_softc *fdc));
 void fdfinish __P((struct fd_softc *fd, struct buf *bp));
+__inline struct fd_type *fd_dev_to_type __P((struct fd_softc *, dev_t));
+static int fdcpoll __P((struct fdc_softc *));
 static int fdgetdisklabel __P((struct fd_softc *, dev_t));
 static void fd_do_eject __P((int));
+
 void fd_mountroot_hook __P((struct device *));
+
+/* dma transfer routines */
+__inline static void fdc_dmastart __P((int, caddr_t, int));
+void fdcdmaintr __P((void));
+void fdcdmaerrintr __P((void));
 
 #define FDDI_EN	0x02
 #define FDCI_EN	0x04
@@ -247,7 +250,7 @@ void fd_mountroot_hook __P((struct device *));
 
 static u_char *fdc_dmabuf;
 
-static inline void
+__inline static void
 fdc_dmastart(read, addr, count)
 	int read;
 	caddr_t addr;
@@ -277,7 +280,7 @@ fdc_dmastart(read, addr, count)
 	asm("nop");
 	asm("nop");
 	dmac->mar = (unsigned long)kvtop(addr);
-#if defined(M68040)
+#if defined(M68040) || defined(M68060)
 		/*
 		 * Push back dirty cache lines
 		 */
@@ -383,7 +386,7 @@ fdcattach(parent, self, aux)
 
 	fdc_dmabuf = (u_char *)malloc(NBPG, M_DEVBUF, M_WAITOK);
 	if (fdc_dmabuf == 0)
-		printf("fdcinit: WARNING!! malloc() failed.\n");
+		printf("fdcattach: WARNING!! malloc() failed.\n");
 	dma_bouncebuf[DRQ] = fdc_dmabuf;
 
 	/* physical limit: four drives per controller. */
@@ -529,7 +532,7 @@ fdattach(parent, self, aux)
 	mountroothook_establish(fd_mountroot_hook, &fd->sc_dev);
 }
 
-inline struct fd_type *
+__inline struct fd_type *
 fd_dev_to_type(fd, dev)
 	struct fd_softc *fd;
 	dev_t dev;
@@ -662,18 +665,20 @@ fdfinish(fd, bp)
 }
 
 int
-fdread(dev, uio)
+fdread(dev, uio, flags)
 	dev_t dev;
 	struct uio *uio;
+	int flags;
 {
 
 	return (physio(fdstrategy, NULL, dev, B_READ, minphys, uio));
 }
 
 int
-fdwrite(dev, uio)
+fdwrite(dev, uio, flags)
 	dev_t dev;
 	struct uio *uio;
+	int flags;
 {
 
 	return (physio(fdstrategy, NULL, dev, B_WRITE, minphys, uio));
@@ -775,9 +780,10 @@ out_fdc(x)
 }
 
 int
-Fdopen(dev, flags, fmt)
+fdopen(dev, flags, mode, p)
 	dev_t dev;
-	int flags, fmt;
+	int flags, mode;
+	struct proc *p;
 {
  	int unit;
 	struct fd_softc *fd;
@@ -806,7 +812,7 @@ Fdopen(dev, flags, fmt)
 	fd->sc_type = type;
 	fd->sc_cylin = -1;
 
-	switch (fmt) {
+	switch (mode) {
 	case S_IFCHR:
 		fd->sc_flags |= FD_COPEN;
 		break;
@@ -821,16 +827,17 @@ Fdopen(dev, flags, fmt)
 }
 
 int
-fdclose(dev, flags, fmt)
+fdclose(dev, flags, mode, p)
 	dev_t dev;
-	int flags, fmt;
+	int flags, mode;
+	struct proc *p;
 {
  	int unit = FDUNIT(dev);
 	struct fd_softc *fd = fd_cd.cd_devs[FDUNIT(dev)];
 
 	DPRINTF(("fdclose %d\n", unit));
 
-	switch (fmt) {
+	switch (mode) {
 	case S_IFCHR:
 		fd->sc_flags &= ~FD_COPEN;
 		break;
@@ -1428,11 +1435,12 @@ fddump(dev, blkno, va, size)
 }
 
 int
-fdioctl(dev, cmd, addr, flag)
+fdioctl(dev, cmd, addr, flag, p)
 	dev_t dev;
 	u_long cmd;
 	caddr_t addr;
 	int flag;
+	struct proc *p;
 {
 	struct fd_softc *fd = fd_cd.cd_devs[FDUNIT(dev)];
 	int unit = FDUNIT(dev);
@@ -1556,7 +1564,10 @@ fdgetdisklabel(sc, dev)
 	return(0);
 }
 
-/* ARGSUSED */
+/*
+ * Mountroot hook: prompt the user to enter the root file system
+ * floppy.
+ */
 void
 fd_mountroot_hook(dev)
 	struct device *dev;
@@ -1569,7 +1580,7 @@ fd_mountroot_hook(dev)
 		c = cngetc();
 		if ((c == '\r') || (c == '\n')) {
 			printf("\n");
-			return;
+			break;
 		}
 	}
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: cache.c,v 1.8 1997/01/27 20:43:51 gwr Exp $	*/
+/*	$NetBSD: cache.c,v 1.8.8.1 1997/10/14 10:19:10 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -188,9 +188,9 @@ cache_enable()
 	cache_clear_tags();
 
 	/* OK, just set the "enable" bit. */
-	enab_reg = get_control_byte((char *) SYSTEM_ENAB);
+	enab_reg = get_control_byte(SYSTEM_ENAB);
 	enab_reg |= SYSTEM_ENAB_CACHE;
-	set_control_byte((char *) SYSTEM_ENAB, enab_reg);
+	set_control_byte(SYSTEM_ENAB, enab_reg);
 
 	/* Brag... */
 	printf("cache enabled\n");

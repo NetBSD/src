@@ -1,4 +1,4 @@
-/*	$NetBSD: z8530sc.c,v 1.5 1996/12/17 20:42:40 gwr Exp $	*/
+/*	$NetBSD: z8530sc.c,v 1.5.10.1 1997/10/14 10:23:04 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1994 Gordon W. Ross
@@ -228,54 +228,47 @@ int
 zsc_intr_hard(arg)
 	void *arg;
 {
-	register struct zsc_softc *zsc = arg;
-	register struct zs_chanstate *cs_a;
-	register struct zs_chanstate *cs_b;
-	register int rval;
-	register u_char rr3, rr3a;
+	struct zsc_softc *zsc = arg;
+	register struct zs_chanstate *cs;
+	register u_char rr3;
 
-	cs_a = zsc->zsc_cs[0];
-	cs_b = zsc->zsc_cs[1];
-	rval = 0;
-	rr3a = 0;
-
+	/* First look at channel A. */
+	cs = zsc->zsc_cs[0];
 	/* Note: only channel A has an RR3 */
-	while ((rr3 = zs_read_reg(cs_a, 3)) != 0) {
+	rr3 = zs_read_reg(cs, 3);
 
-		/* Handle receive interrupts first. */
+	/*
+	 * Clear interrupt first to avoid a race condition.
+	 * If a new interrupt condition happens while we are
+	 * servicing this one, we will get another interrupt
+	 * shortly.  We can NOT just sit here in a loop, or
+	 * we will cause horrible latency for other devices
+	 * on this interrupt level (i.e. sun3x floppy disk).
+	 */
+	if (rr3 & (ZSRR3_IP_A_RX | ZSRR3_IP_A_TX | ZSRR3_IP_A_STAT)) {
+		zs_write_csr(cs, ZSWR0_CLR_INTR);
 		if (rr3 & ZSRR3_IP_A_RX)
-			(*cs_a->cs_ops->zsop_rxint)(cs_a);
-		if (rr3 & ZSRR3_IP_B_RX)
-			(*cs_b->cs_ops->zsop_rxint)(cs_b);
-
-		/* Handle status interrupts (i.e. flow control). */
+			(*cs->cs_ops->zsop_rxint)(cs);
 		if (rr3 & ZSRR3_IP_A_STAT)
-			(*cs_a->cs_ops->zsop_stint)(cs_a);
-		if (rr3 & ZSRR3_IP_B_STAT)
-			(*cs_b->cs_ops->zsop_stint)(cs_b);
-
-		/* Handle transmit done interrupts. */
+			(*cs->cs_ops->zsop_stint)(cs);
 		if (rr3 & ZSRR3_IP_A_TX)
-			(*cs_a->cs_ops->zsop_txint)(cs_a);
+			(*cs->cs_ops->zsop_txint)(cs);
+	}
+
+	/* Now look at channel B. */
+	cs = zsc->zsc_cs[1];
+	if (rr3 & (ZSRR3_IP_B_RX | ZSRR3_IP_B_TX | ZSRR3_IP_B_STAT)) {
+		zs_write_csr(cs, ZSWR0_CLR_INTR);
+		if (rr3 & ZSRR3_IP_B_RX)
+			(*cs->cs_ops->zsop_rxint)(cs);
+		if (rr3 & ZSRR3_IP_B_STAT)
+			(*cs->cs_ops->zsop_stint)(cs);
 		if (rr3 & ZSRR3_IP_B_TX)
-			(*cs_b->cs_ops->zsop_txint)(cs_b);
-
-		/* Accumulate so we know what needs to be cleared. */
-		rr3a |= rr3;
-	}
-
-	/* Clear interrupt. */
-	if (rr3a & (ZSRR3_IP_A_RX | ZSRR3_IP_A_TX | ZSRR3_IP_A_STAT)) {
-		zs_write_csr(cs_a, ZSWR0_CLR_INTR);
-		rval |= 1;
-	}
-	if (rr3a & (ZSRR3_IP_B_RX | ZSRR3_IP_B_TX | ZSRR3_IP_B_STAT)) {
-		zs_write_csr(cs_b, ZSWR0_CLR_INTR);
-		rval |= 2;
+			(*cs->cs_ops->zsop_txint)(cs);
 	}
 
 	/* Note: caller will check cs_x->cs_softreq and DTRT. */
-	return (rval);
+	return (rr3);
 }
 
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: nubus.h,v 1.28.2.2 1997/09/29 07:20:15 thorpej Exp $	*/
+/*	$NetBSD: nubus.h,v 1.28.2.3 1997/10/14 10:16:58 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1995 Allen Briggs.  All rights reserved.
@@ -63,6 +63,7 @@
 #define    NUBUS_DRHW_MICRON	0x0146
 #define    NUBUS_DRHW_SPECTRUM	0x017c	/* SuperMac Spectrum/24 Series III */
 #define    NUBUS_DRHW_CB364	0x026F	/* RasterOps ColorBoard 364 */
+#define	   NUBUS_DRHW_RPC8	0x0291	/* Radius PrecisionColor 8 */
 #define    NUBUS_DRHW_THUNDER24	0x02CB	/* SuperMac Thunder/24 */
 #define	   NUBUS_DRHW_RPC8XJ	0x040B	/* Radius PrecisionColor 8xj */
 #define	   NUBUS_DRHW_FIILX	0x0417	/* Futura II LX */

@@ -1,4 +1,4 @@
-/*	$NetBSD: sbdsp.c,v 1.63.2.4 1997/09/16 03:50:28 thorpej Exp $	*/
+/*	$NetBSD: sbdsp.c,v 1.63.2.5 1997/10/14 10:24:01 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1991-1993 Regents of the University of California.
@@ -468,7 +468,7 @@ sbdsp_query_encoding(addr, fp)
 		fp->flags = AUDIO_ENCODINGFLAG_EMULATED;
 		return 0;
 	case 3:
-		strcpy(fp->name, AudioElinear);
+		strcpy(fp->name, AudioEslinear);
 		fp->encoding = AUDIO_ENCODING_SLINEAR;
 		fp->precision = 8;
 		fp->flags = emul;
@@ -479,7 +479,7 @@ sbdsp_query_encoding(addr, fp)
 
         switch(fp->index) {
         case 4:
-		strcpy(fp->name, AudioElinear_le);
+		strcpy(fp->name, AudioEslinear_le);
 		fp->encoding = AUDIO_ENCODING_SLINEAR_LE;
 		fp->precision = 16;
 		fp->flags = 0;
@@ -491,7 +491,7 @@ sbdsp_query_encoding(addr, fp)
 		fp->flags = emul;
 		return 0;
 	case 6:
-		strcpy(fp->name, AudioElinear_be);
+		strcpy(fp->name, AudioEslinear_be);
 		fp->encoding = AUDIO_ENCODING_SLINEAR_BE;
 		fp->precision = 16;
 		fp->flags = AUDIO_ENCODINGFLAG_EMULATED;
@@ -797,8 +797,7 @@ sbdsp_set_in_ports(sc, mask)
 		default:
 			return (EINVAL);
 		}
-		sbdsp_mix_write(sc, SBP_RECORD_SOURCE,
-		    SBP_RECORD_FROM(sbport, SBP_FILTER_OFF, SBP_IFILTER_HIGH));
+		sbdsp_mix_write(sc, SBP_RECORD_SOURCE, sbport | sc->in_filter);
 		break;
 	case SBM_CT1XX5:
 	case SBM_CT1745:
@@ -2093,7 +2092,7 @@ sbdsp_mixer_query_devinfo(addr, dip)
 		dip->type = AUDIO_MIXER_CLASS;
 		dip->mixer_class = SB_OUTPUT_CLASS;
 		dip->next = dip->prev = AUDIO_MIXER_LAST;
-		strcpy(dip->label.name, AudioCOutputs);
+		strcpy(dip->label.name, AudioCoutputs);
 		return 0;
 	}
 
@@ -2190,7 +2189,7 @@ sbdsp_mixer_query_devinfo(addr, dip)
 		dip->type = AUDIO_MIXER_CLASS;
 		dip->mixer_class = SB_RECORD_CLASS;
 		dip->next = dip->prev = AUDIO_MIXER_LAST;
-		strcpy(dip->label.name, AudioCRecord);
+		strcpy(dip->label.name, AudioCrecord);
 		return 0;
 
 	}
@@ -2242,14 +2241,14 @@ sbdsp_mixer_query_devinfo(addr, dip)
 		dip->type = AUDIO_MIXER_CLASS;
 		dip->mixer_class = SB_INPUT_CLASS;
 		dip->next = dip->prev = AUDIO_MIXER_LAST;
-		strcpy(dip->label.name, AudioCInputs);
+		strcpy(dip->label.name, AudioCinputs);
 		return 0;
 
 	case SB_EQUALIZATION_CLASS:
 		dip->type = AUDIO_MIXER_CLASS;
 		dip->mixer_class = SB_EQUALIZATION_CLASS;
 		dip->next = dip->prev = AUDIO_MIXER_LAST;
-		strcpy(dip->label.name, AudioCEqualization);
+		strcpy(dip->label.name, AudioCequalization);
 		return 0;
 
 	case SB_CD_IN_MUTE:

@@ -1,4 +1,4 @@
-/*	$NetBSD: wss.c,v 1.29.2.3 1997/09/01 20:26:51 thorpej Exp $	*/
+/*	$NetBSD: wss.c,v 1.29.2.4 1997/10/14 10:24:07 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1994 John Brezak
@@ -708,21 +708,21 @@ wss_query_devinfo(addr, dip)
 	dip->type = AUDIO_MIXER_CLASS;
 	dip->mixer_class = WSS_INPUT_CLASS;
 	dip->next = dip->prev = AUDIO_MIXER_LAST;
-	strcpy(dip->label.name, AudioCInputs);
+	strcpy(dip->label.name, AudioCinputs);
 	break;
 
     case WSS_MONITOR_CLASS:			/* monitor class descriptor */
 	dip->type = AUDIO_MIXER_CLASS;
 	dip->mixer_class = WSS_MONITOR_CLASS;
 	dip->next = dip->prev = AUDIO_MIXER_LAST;
-	strcpy(dip->label.name, AudioCMonitor);
+	strcpy(dip->label.name, AudioCmonitor);
 	break;
 	    
     case WSS_RECORD_CLASS:			/* record source class */
 	dip->type = AUDIO_MIXER_CLASS;
 	dip->mixer_class = WSS_RECORD_CLASS;
 	dip->next = dip->prev = AUDIO_MIXER_LAST;
-	strcpy(dip->label.name, AudioCRecord);
+	strcpy(dip->label.name, AudioCrecord);
 	break;
 	
     case WSS_MIC_IN_MUTE:

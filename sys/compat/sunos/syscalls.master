@@ -1,4 +1,4 @@
-	$NetBSD: syscalls.master,v 1.41 1997/06/13 19:09:12 thorpej Exp $
+	$NetBSD: syscalls.master,v 1.41.4.1 1997/10/14 10:21:51 thorpej Exp $
 
 ;	@(#)syscalls.master	8.1 (Berkeley) 7/19/93
 
@@ -240,7 +240,7 @@
 #else
 155	UNIMPL		
 #endif
-156	NOARGS		{ int sys_getdirentries(int fd, char *buf, \
+156	NOARGS		{ int compat_12_sys_getdirentries(int fd, char *buf, \
 			    u_int count, long *basep); }
 157	STD		{ int sunos_sys_statfs(char *path, \
 			    struct sunos_statfs *buf); }

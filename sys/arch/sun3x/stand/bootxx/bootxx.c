@@ -1,4 +1,4 @@
-/*	$NetBSD: bootxx.c,v 1.1.1.1 1997/03/13 16:27:27 gwr Exp $ */
+/*	$NetBSD: bootxx.c,v 1.1.1.1.4.1 1997/10/14 10:19:36 thorpej Exp $ */
 
 /*
  * Copyright (c) 1994 Paul Kranenburg
@@ -47,6 +47,8 @@
 #include <machine/mon.h>
 #include "stand.h"
 
+extern void ICIA();
+
 /*
  * Boot device is derived from ROM provided information.
  */
@@ -90,6 +92,7 @@ main()
 		printf("bootxx: start 0x%x\n", (long)addr);
 #endif
 		entry = (void (*)())addr;
+		ICIA();
 		(*entry)();
 	}
 	/* copyboot had a problem... */

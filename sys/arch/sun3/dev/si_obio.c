@@ -1,4 +1,4 @@
-/*	$NetBSD: si_obio.c,v 1.13.2.1 1997/08/27 22:47:22 thorpej Exp $	*/
+/*	$NetBSD: si_obio.c,v 1.13.2.2 1997/10/14 10:19:02 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -474,7 +474,7 @@ si_obio_dma_stop(ncr_sc)
 	}
 
 	/*
-	 * Now try to figure out how much actually transferred
+	 * Now try to figure out how much actually transferred.
 	 * The fifo_count might not reflect how many bytes were
 	 * actually transferred.
 	 */

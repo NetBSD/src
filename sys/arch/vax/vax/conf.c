@@ -1,4 +1,4 @@
-/*	$NetBSD: conf.c,v 1.28 1997/02/04 19:13:17 ragge Exp $	*/
+/*	$NetBSD: conf.c,v 1.28.8.1 1997/10/14 10:19:58 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986 The Regents of the University of California.
@@ -355,6 +355,8 @@ cdev_decl(ss);
 #include "uk.h"
 cdev_decl(uk);
 
+#include "rnd.h"
+
 dev_decl(filedesc,open);
 
 struct cdevsw	cdevsw[] =
@@ -426,6 +428,7 @@ struct cdevsw	cdevsw[] =
 	cdev_scanner_init(NSS,ss),	/* 64: SCSI scanner */
 	cdev_uk_init(NUK,uk),		/* 65: SCSI unknown */
 	cdev_tty_init(NDL,dl),		/* 66: DL11 */
+	cdev_rnd_init(NRND,rnd),	/* 67: random source pseudo-device */
 };
 int	nchrdev = sizeof(cdevsw) / sizeof(cdevsw[0]);
 
@@ -509,6 +512,8 @@ int	chrtoblktbl[] = {
 	NODEV,	/* 63 */
 	NODEV,	/* 64 */
 	NODEV,	/* 65 */
+	NODEV,	/* 66 */
+	NODEV,	/* 67 */
 };
 
 int

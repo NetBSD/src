@@ -1,4 +1,4 @@
-/*	$NetBSD: x68k_init.c,v 1.2 1997/02/04 11:45:03 oki Exp $	*/
+/*	$NetBSD: x68k_init.c,v 1.2.8.1 1997/10/14 10:21:12 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1996 Masaru Oki.
@@ -30,10 +30,14 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
+#include <sys/param.h>
+
 #include <x68k/x68k/iodevice.h>
 #define zschan IODEVbase->io_inscc.zs_chan
 
 volatile struct IODEVICE *IODEVbase = (volatile struct IODEVICE *) PHYS_IODEV;
+
+void intr_reset __P((void));
 
 /*
  * disable all interrupt.

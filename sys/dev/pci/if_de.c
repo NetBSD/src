@@ -1,4 +1,4 @@
-/*	$NetBSD: if_de.c,v 1.46.2.3 1997/09/29 07:20:55 thorpej Exp $	*/
+/*	$NetBSD: if_de.c,v 1.46.2.4 1997/10/14 10:24:20 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1994-1997 Matt Thomas (matt@3am-software.com)
@@ -52,6 +52,13 @@
 #include <machine/clock.h>
 #elif defined(__bsdi__) || defined(__NetBSD__)
 #include <sys/device.h>
+#endif
+
+#if defined(__NetBSD__)
+#include "rnd.h"
+#if NRND > 0
+#include <sys/rnd.h>
+#endif
 #endif
 
 #include <net/if.h>
@@ -3590,8 +3597,22 @@ tulip_intr_handler(
 {
     TULIP_PERFSTART(intr)
     u_int32_t csr;
+#if defined(__NetBSD__) && !defined(TULIP_USE_SOFTINTR)
+    int only_once;
+
+    only_once = 1;
+#endif
 
     while ((csr = TULIP_CSR_READ(sc, csr_status)) & sc->tulip_intrmask) {
+#if defined(__NetBSD__) && !defined(TULIP_USE_SOFTINTR)
+        if (only_once == 1) {
+#if NRND > 0
+	    rnd_add_uint32(&sc->tulip_rndsource, csr);
+#endif
+	    only_once = 0;
+	}
+#endif
+
 	*progress_p = 1;
 	TULIP_CSR_WRITE(sc, csr_status, csr);
 
@@ -3714,6 +3735,15 @@ tulip_hardintr_handler(
      * mark it as needing a software interrupt
      */
     tulip_softintr_mask |= (1U << sc->tulip_unit);
+
+#if defined(__NetBSD__) && NRND > 0
+    /*
+     * This isn't all that random (the value we feed in) but it is
+     * better than a constant probably.  It isn't used in entropy
+     * calculation anyway, just to add something to the pool.
+     */
+    rnd_add_uint32(&sc->tulip_rndsource, sc->tulip_flags);
+#endif
 }
 
 static void
@@ -3783,10 +3813,10 @@ static tulip_intrfunc_t
 tulip_intr_shared(
     void *arg)
 {
-    tulip_softc_t * sc;
+    tulip_softc_t * sc = arg;
     int progress = 0;
 
-    for (sc = (tulip_softc_t *) arg; sc != NULL; sc = sc->tulip_slaves) {
+    for (; sc != NULL; sc = sc->tulip_slaves) {
 #if defined(TULIP_DEBUG)
 	sc->tulip_dbg.dbg_intrs++;
 #endif
@@ -4580,6 +4610,11 @@ tulip_attach(
 
 #if NBPFILTER > 0
     TULIP_BPF_ATTACH(sc);
+#endif
+
+#if defined(__NetBSD__) && NRND > 0
+    rnd_attach_source(&sc->tulip_rndsource, sc->tulip_dev.dv_xname,
+		      RND_TYPE_NET);
 #endif
 }
 

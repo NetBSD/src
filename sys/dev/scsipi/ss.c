@@ -1,4 +1,4 @@
-/*	$NetBSD: ss.c,v 1.16.2.2 1997/08/27 23:33:34 thorpej Exp $	*/
+/*	$NetBSD: ss.c,v 1.16.2.3 1997/10/14 10:25:33 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1995 Kenneth Stailey.  All rights reserved.
@@ -117,7 +117,7 @@ ssmatch(parent, match, aux)
 	int priority;
 
 	(void)scsipi_inqmatch(&sa->sa_inqbuf,
-	    (caddr_t)ss_patterns, sizeof(ss_patterns)/sizeof(ss_patterns[0]),
+	    (caddr_t)ss_patterns, sizeof(ss_patterns) / sizeof(ss_patterns[0]),
 	    sizeof(ss_patterns[0]), &priority);
 	return (priority);
 }

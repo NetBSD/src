@@ -1,4 +1,4 @@
-/*	$NetBSD: if_sn_obio.c,v 1.10.4.1 1997/08/23 07:10:14 thorpej Exp $	*/
+/*	$NetBSD: if_sn_obio.c,v 1.10.4.2 1997/10/14 10:16:57 thorpej Exp $	*/
 
 /*
  * Copyright (C) 1997 Allen Briggs
@@ -74,10 +74,23 @@ sn_obio_match(parent, cf, aux)
 	struct cfdata *cf;
 	void *aux;
 {
-	if (mac68k_machine.sonic)
-		return 1;
+	struct obio_attach_args *oa = (struct obio_attach_args *)aux;
+	bus_space_handle_t	bsh;
+	int			found = 0;
 
-	return 0;
+	if (!mac68k_machine.sonic)
+		return 0;
+
+	if (bus_space_map(oa->oa_tag,
+	    		  SONIC_REG_BASE, SN_REGSIZE, 0, &bsh))
+		return 0;
+
+	if (bus_probe(oa->oa_tag, bsh, 0, 4))
+		found = 1;
+
+	bus_space_unmap(oa->oa_tag, bsh, SN_REGSIZE);
+
+	return found;
 }
 
 /*

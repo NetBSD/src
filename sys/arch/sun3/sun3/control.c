@@ -1,4 +1,4 @@
-/*	$NetBSD: control.c,v 1.15 1997/01/27 19:41:12 gwr Exp $	*/
+/*	$NetBSD: control.c,v 1.15.8.1 1997/10/14 10:19:12 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -42,47 +42,48 @@
 #include <machine/pte.h>
 #include <machine/control.h>
 
-#define CONTROL_ALIGN(x) (x & CONTROL_ADDR_MASK)
-#define CONTROL_ADDR_BUILD(space, va) (CONTROL_ALIGN(va)|space)
+#define CONTROL_ADDR_BUILD(as, va) \
+	((as) | ((va) & CONTROL_ADDR_MASK))
 
-int get_context()
+int
+get_context()
 {
+	return (get_control_byte(CONTEXT_REG) & CONTEXT_MASK);
+}
+
+void
+set_context(c)
 	int c;
-
-	c = get_control_byte((char *) CONTEXT_REG);
-	return (c & CONTEXT_MASK);
-}
-
-void set_context(int c)
 {
-	set_control_byte((char *) CONTEXT_REG, c & CONTEXT_MASK);
+	set_control_byte(CONTEXT_REG, (c & CONTEXT_MASK));
 }
 
-vm_offset_t get_pte(va)
+int
+get_pte(va)
 	vm_offset_t va;
 {
-	return (vm_offset_t)
-		get_control_word((char *) CONTROL_ADDR_BUILD(PGMAP_BASE, va));
+	return (get_control_word(CONTROL_ADDR_BUILD(PGMAP_BASE, va)));
 }
 
 void set_pte(va, pte)
-	vm_offset_t va, pte;
+	vm_offset_t va;
+	int pte;
 {
-	set_control_word((char *) CONTROL_ADDR_BUILD(PGMAP_BASE, va),
-			 (unsigned int) pte);
+	set_control_word(CONTROL_ADDR_BUILD(PGMAP_BASE, va), pte);
 }
 
-unsigned char get_segmap(va)
+int
+get_segmap(va)
 	vm_offset_t va;
 {
-	return get_control_byte((char *) CONTROL_ADDR_BUILD(SEGMAP_BASE, va));
+	return (get_control_byte(CONTROL_ADDR_BUILD(SEGMAP_BASE, va)));
 }
 
 void set_segmap(va, sme)
 	vm_offset_t va;
-	unsigned char sme;
+	int sme;
 {
-	set_control_byte((char *) CONTROL_ADDR_BUILD(SEGMAP_BASE, va), sme);
+	set_control_byte(CONTROL_ADDR_BUILD(SEGMAP_BASE, va), sme);
 }
 
 /*
@@ -91,23 +92,26 @@ void set_segmap(va, sme)
  * XXX - Should optimize:  "(get|set)_control_(word|byte)"
  * calls so this does save/restore of sfc/dfc only once!
  */
-void set_segmap_allctx(va, sme)
+void
+set_segmap_allctx(va, sme)
 	vm_offset_t va;
-	unsigned char sme;	/* segmap entry */
+	int sme;	/* segmap entry */
 {
-	register char ctx, oldctx;
+	vm_offset_t ctrladdr;
+	register int ctx, oldctx;
 
 	/* Inline get_context() */
-	oldctx = get_control_byte((char *) CONTEXT_REG);
+	oldctx = get_control_byte(CONTEXT_REG);
 	oldctx &= CONTEXT_MASK;
 
+	ctrladdr = CONTROL_ADDR_BUILD(SEGMAP_BASE, va);
 	for (ctx = 0; ctx < NCONTEXT; ctx++) {
 		/* Inlined set_context() */
-		set_control_byte((char *) CONTEXT_REG, ctx);
+		set_control_byte(CONTEXT_REG, ctx);
 		/* Inlined set_segmap() */
-		set_control_byte((char *) CONTROL_ADDR_BUILD(SEGMAP_BASE, va), sme);
+		set_control_byte(ctrladdr, sme);
 	}
 
 	/* Inlined set_context(ctx); */
-	set_control_byte((char *) CONTEXT_REG, oldctx);
+	set_control_byte(CONTEXT_REG, oldctx);
 }

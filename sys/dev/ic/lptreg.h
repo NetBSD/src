@@ -1,4 +1,4 @@
-/*	$NetBSD: lptreg.h,v 1.5 1996/11/23 23:22:50 cgd Exp $	*/
+/*	$NetBSD: lptreg.h,v 1.5.2.1 1997/10/14 10:22:49 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.

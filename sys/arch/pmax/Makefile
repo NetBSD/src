@@ -1,33 +1,32 @@
-#	$NetBSD: Makefile,v 1.6 1997/05/07 17:29:00 mycroft Exp $
-#	@(#)Makefile	7.3 (Berkeley) 6/9/91
+#	$NetBSD: Makefile,v 1.6.4.1 1997/10/14 10:18:01 thorpej Exp $
 
 # Makefile for pmax tags file and boot blocks
 
-NOPROG=	noprog
-NOMAN=	noman
-
-# Find where mips source fils are for inclusion in tags
+# Find where mips source files are for inclusion in tags
 .include <../mips/Makefile.inc>
-
-SUBDIR=	stand
 
 TPMAX=	../pmax/tags
 SPMAX=	../pmax/pmax/*.[ch] ../pmax/include/*.h \
 	../pmax/dev/*.[ch] ../pmax/tc/*.[ch]
 APMAX=	../pmax/pmax/*.S
 
-# Directories in which to place pmax (mips) tags links
+# Directories in which to place tags links
 DPMAX=	dev tc include
 
-tags:	${COMM} ${SPMAX} ${SMIPS} ${APMAX} ${AMIPS}
-	-ctags -dtf ${TPMAX} ${COMM} ${SPMAX} ${SMIPS}
+.include "../../kern/Make.tags.inc"
+
+tags:
+	-ctags -wdtf ${TPMAX} ${SPMAX} ${SMIPS} ${COMM}
 	egrep "^ENTRY(.*)|^ALTENTRY(.*)" ${APMAX} ${AMIPS} | \
 	    sed "s;\([^:]*\):\([^(]*\)(\([^, )]*\)\(.*\);\3 \1 /^\2(\3\4$$/;" \
-		>> ${TPMAX}
+	    >> ${TPMAX}
 	sort -o ${TPMAX} ${TPMAX}
 
 links:
 	-for i in ${DPMAX}; do \
 	    cd $$i && rm -f tags; ln -s ../tags tags; done
 
-.include <bsd.prog.mk>
+
+SUBDIR=	stand
+
+.include <bsd.subdir.mk>

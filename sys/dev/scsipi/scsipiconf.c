@@ -1,4 +1,4 @@
-/*	$NetBSD: scsipiconf.c,v 1.2.2.2 1997/08/27 23:33:29 thorpej Exp $	*/
+/*	$NetBSD: scsipiconf.c,v 1.2.2.3 1997/10/14 10:25:26 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1994 Charles Hannum.  All rights reserved.
@@ -114,10 +114,11 @@ scsipi_dtype(type)
 	int type;
 {
 	char *dtype;
+
 	switch (type) {
 	case T_DIRECT:
 		dtype = "direct";
-			break;
+		break;
 	case T_SEQUENTIAL:
 		dtype = "sequential";
 		break;
@@ -127,11 +128,11 @@ scsipi_dtype(type)
 	case T_PROCESSOR:
 		dtype = "processor";
 		break;
-	case T_CDROM:
-		dtype = "cdrom";
-		break;
 	case T_WORM:
 		dtype = "worm";
+		break;
+	case T_CDROM:
+		dtype = "cdrom";
 		break;
 	case T_SCANNER:
 		dtype = "scanner";
@@ -145,13 +146,23 @@ scsipi_dtype(type)
 	case T_COMM:
 		dtype = "communication";
 		break;
+	case T_IT8_1:
+	case T_IT8_2:
+		dtype = "it8";		/* ??? */
+		break;
+	case T_STORARRAY:
+		dtype = "storage array";
+		break;
+	case T_ENCLOSURE:
+		dtype = "enclosure services";
+		break;
 	case T_NODEVICE:
 		panic("scsipi_dtype: impossible device type");
 	default:
 		dtype = "unknown";
 		break;
 	}
-	return dtype;
+	return (dtype);
 }
 
 void

@@ -1,4 +1,4 @@
-/*	$NetBSD: atapiconf.c,v 1.2.2.3 1997/09/01 20:58:57 thorpej Exp $	*/
+/*	$NetBSD: atapiconf.c,v 1.2.2.4 1997/10/14 10:24:41 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1996 Manuel Bouyer.  All rights reserved.
@@ -35,20 +35,21 @@
 #include <sys/malloc.h>
 #include <sys/device.h>
 #include <sys/buf.h>
-#include <sys/proc.h>  
+#include <sys/proc.h>
 
 #include <dev/scsipi/scsipi_all.h>
 #include <dev/scsipi/scsi_all.h>
 #include <dev/scsipi/scsipiconf.h>
 #include <dev/scsipi/atapiconf.h>
+
 #include "locators.h"
 
 #define SILENT_PRINTF(flags,string) if (!(flags & A_SILENT)) printf string
 
 struct atapibus_softc {
 	struct device sc_dev;
-	struct scsipi_link *adapter_link; /* proto supplied by adapter */
-	struct scsipi_link **sc_link;     /* dynamically allocated */
+	struct scsipi_link *adapter_link;	/* proto supplied by adapter */
+	struct scsipi_link **sc_link;		/* dynamically allocated */
 };
 
 #ifdef __BROKEN_INDIRECT_CONFIG
@@ -76,19 +77,19 @@ int atapibusprint __P((void *, const char *));
 
 struct scsi_quirk_inquiry_pattern atapi_quirk_patterns[] = {
 	{{T_CDROM, T_REMOV,
-	 "GCD-R580B", "", "1.00"},							ADEV_LITTLETOC},
+	 "GCD-R580B", "", "1.00"},                ADEV_LITTLETOC},
 	{{T_CDROM, T_REMOV,
-	 "SANYO CRD-256P", "", "1.02"},						ADEV_NOCAPACITY},
+	 "SANYO CRD-256P", "", "1.02"},           ADEV_NOCAPACITY},
 	{{T_CDROM, T_REMOV,
-	 "SANYO CRD-254P", "", "1.02"},						ADEV_NOCAPACITY},
+	 "SANYO CRD-254P", "", "1.02"},           ADEV_NOCAPACITY},
 	{{T_CDROM, T_REMOV,
-	 "UJDCD8730", "", "1.14"},							ADEV_NODOORLOCK},
+	 "UJDCD8730", "", "1.14"},                ADEV_NODOORLOCK},
 	{{T_CDROM, T_REMOV,
-	 "ALPS ELECTRIC CO.,LTD. DC544C", "", "SW03D"},		ADEV_NOTUR},
+	 "ALPS ELECTRIC CO.,LTD. DC544C", "", "SW03D"}, ADEV_NOTUR},
 	{{T_CDROM, T_REMOV,
-	 "NEC                 CD-ROM DRIVE:273", "", "4.21"},	ADEV_NOTUR},
+	 "NEC                 CD-ROM DRIVE:273", "", "4.21"}, ADEV_NOTUR},
 	{{T_CDROM, T_REMOV,
-	 "MATSHITA CR-574", "", "1.06"},					ADEV_NOCAPACITY},
+	 "MATSHITA CR-574", "", "1.06"},          ADEV_NOCAPACITY},
 };
 
 int
@@ -107,10 +108,10 @@ atapibusmatch(parent, cf, aux)
 	struct scsipi_link *sc_link = aux;
 
 	if (sc_link == NULL)
-		return 0;
+		return (0);
 	if (sc_link->type != BUS_ATAPI)
-		return 0;
-	return 1;
+		return (0);
+	return (1);
 }
 
 int
@@ -131,37 +132,32 @@ atapibussubmatch(parent, cf, aux)
 	struct scsipi_link *sc_link = sa->sa_sc_link;
 
 	if (cf->cf_loc[ATAPIBUSCF_DRIVE] != ATAPIBUSCF_DRIVE_DEFAULT &&
-		cf->cf_loc[ATAPIBUSCF_DRIVE] != sc_link->scsipi_atapi.drive)
-		return 0;
+	    cf->cf_loc[ATAPIBUSCF_DRIVE] != sc_link->scsipi_atapi.drive)
+		return (0);
 	return ((*cf->cf_attach->ca_match)(parent, cf, aux));
 }
-	
 
 #if 0
 void
 atapi_fixquirk(sc_link)
-        struct scsipi_link *ad_link;
+	struct scsipi_link *ad_link;
 {
-        struct atapi_identify *id = &ad_link->id;
-        struct atapi_quirk_inquiry_pattern *quirk;
+	struct atapi_identify *id = &ad_link->id;
+	struct atapi_quirk_inquiry_pattern *quirk;
 
-
-        /*
-         * Clean up the model name, serial and
-         * revision numbers.
-         */
-        btrim(id->model, sizeof(id->model));
-        btrim(id->serial_number, sizeof(id->serial_number));
-        btrim(id->firmware_revision, sizeof(id->firmware_revision));
-
+	/*
+	 * Clean up the model name, serial and revision numbers.
+	 */
+	btrim(id->model, sizeof(id->model));
+	btrim(id->serial_number, sizeof(id->serial_number));
+	btrim(id->firmware_revision, sizeof(id->firmware_revision));
 }
 #endif
 
-
 void
 atapibusattach(parent, self, aux)
-        struct device *parent, *self;
-        void *aux;
+	struct device *parent, *self;
+	void *aux;
 {
 	struct atapibus_softc *ab = (struct atapibus_softc *)self;
 	struct scsipi_link *sc_link_proto = aux;
@@ -176,7 +172,7 @@ atapibusattach(parent, self, aux)
 
 	ab->adapter_link = sc_link_proto;
 
-	nbytes =  2 * sizeof(struct scsipi_link **);
+	nbytes = 2 * sizeof(struct scsipi_link **);
 	ab->sc_link = (struct scsipi_link **)malloc(nbytes, M_DEVBUF,
 	    M_NOWAIT);
 	if (ab->sc_link == NULL)
@@ -185,30 +181,30 @@ atapibusattach(parent, self, aux)
 	atapi_probe_bus(ab->sc_dev.dv_unit, -1);
 }
 
-int 
+int
 atapi_probe_bus(bus, target)
-int bus, target;
+	int bus, target;
 {
 	int maxtarget, mintarget;
 	struct atapibus_softc *atapi;
+
 	if (bus < 0 || bus >= atapibus_cd.cd_ndevs)
-		return ENXIO;
+		return (ENXIO);
 	atapi = atapibus_cd.cd_devs[bus];
-	if (!atapi)
-		return ENXIO;
+	if (atapi == NULL)
+		return (ENXIO);
 
 	if (target == -1) {
 		maxtarget = 1;
 		mintarget = 0;
 	} else {
 		if (target < 0 || target > 1)
-			return ENXIO;
+			return (ENXIO);
 		maxtarget = mintarget = target;
 	}
-	for (target = mintarget; target <= maxtarget; target++) {
+	for (target = mintarget; target <= maxtarget; target++)
 		atapi_probedev(atapi, target);
-	}
-	return 0;
+	return (0);
 }
 
 void
@@ -291,7 +287,7 @@ atapi_probedev(atapi, target)
 		finger = (struct scsi_quirk_inquiry_pattern *)scsipi_inqmatch(
 		    &sa.sa_inqbuf, (caddr_t)atapi_quirk_patterns,
 		    sizeof(atapi_quirk_patterns) /
-		      sizeof(atapi_quirk_patterns[0]),
+		        sizeof(atapi_quirk_patterns[0]),
 		    sizeof(atapi_quirk_patterns[0]), &priority);
 		if (priority != 0)
 			sc_link->quirks |= finger->quirks;

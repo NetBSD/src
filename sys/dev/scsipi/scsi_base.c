@@ -1,4 +1,4 @@
-/*	$NetBSD: scsi_base.c,v 1.47.2.4 1997/09/16 03:50:51 thorpej Exp $	*/
+/*	$NetBSD: scsi_base.c,v 1.47.2.5 1997/10/14 10:25:01 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995, 1997 Charles M. Hannum.  All rights reserved.
@@ -53,13 +53,14 @@
 #include <dev/scsipi/scsipi_base.h>
 
 #ifdef SCSIVERBOSE
-char *scsi_decode_sense __P((void *, int));
+static	void asc2ascii __P((unsigned char, unsigned char, char *));
+char	*scsi_decode_sense __P((void *, int));
 #endif
 
 /*
  * Do a scsi operation, asking a device to run as SCSI-II if it can.
  */
-int 
+int
 scsi_change_def(sc_link, flags)
 	struct scsipi_link *sc_link;
 	int flags;
@@ -70,8 +71,9 @@ scsi_change_def(sc_link, flags)
 	scsipi_cmd.opcode = SCSI_CHANGE_DEFINITION;
 	scsipi_cmd.how = SC_SCSI_2;
 
-	return sc_link->scsipi_cmd(sc_link, (struct scsipi_generic *) &scsipi_cmd,
-				sizeof(scsipi_cmd), 0, 0, 2, 100000, NULL, flags);
+	return ((*sc_link->scsipi_cmd)(sc_link,
+	    (struct scsipi_generic *) &scsipi_cmd, sizeof(scsipi_cmd),
+	    0, 0, 2, 100000, NULL, flags));
 }
 
 /*
@@ -80,7 +82,7 @@ scsi_change_def(sc_link, flags)
  * long the data is supposed to be. If we have  a buf
  * to associate with the transfer, we need that too.
  */
-int 
+int
 scsi_scsipi_cmd(sc_link, scsipi_cmd, cmdlen, data_addr, datalen,
 	retries, timeout, bp, flags)
 	struct scsipi_link *sc_link;
@@ -103,19 +105,19 @@ scsi_scsipi_cmd(sc_link, scsipi_cmd, cmdlen, data_addr, datalen,
 		panic("scsi_scsipi_cmd: buffer without nosleep");
 #endif
 
-	if ((xs = scsipi_make_xs(sc_link, scsipi_cmd, cmdlen, data_addr, datalen,
-		retries, timeout, bp, flags)) == NULL)
-		return ENOMEM;
+	if ((xs = scsipi_make_xs(sc_link, scsipi_cmd, cmdlen, data_addr,
+	    datalen, retries, timeout, bp, flags)) == NULL)
+		return (ENOMEM);
 
 	if ((error = scsipi_execute_xs(xs)) == EJUSTRETURN)
-		return 0;
+		return (0);
 
 	/*
 	 * we have finished with the xfer stuct, free it and
 	 * check if anyone else needs to be started up.
 	 */
 	scsipi_free_xs(xs, flags);
-	return error;
+	return (error);
 }
 
 /*
@@ -124,7 +126,7 @@ scsi_scsipi_cmd(sc_link, scsipi_cmd, cmdlen, data_addr, datalen,
  *
  * THIS IS THE DEFAULT ERROR HANDLER FOR SCSI DEVICES
  */
-int 
+int
 scsi_interpret_sense(xs)
 	struct scsipi_xfer *xs;
 {
@@ -166,8 +168,8 @@ scsi_interpret_sense(xs)
 			sense->info[3],
 			sense->extra_len);
 		printf("extra: ");
-		for (count = 0; count < sense->extra_len; count++)
-			printf("0x%x ", sense->extra_bytes[count]);
+		for (count = 0; count < ADD_BYTES_LIM(sense); count++)
+			printf("0x%x ", sense->cmd_spec_info[count]);
 		printf("\n");
 	}
 #endif	/* SCSIDEBUG */
@@ -177,15 +179,17 @@ scsi_interpret_sense(xs)
 	 * it wants us to continue with normal error processing.
 	 */
 	if (sc_link->device->err_handler) {
-		SC_DEBUG(sc_link, SDEV_DB2, ("calling private err_handler()\n"));
-		error = (*sc_link->device->err_handler) (xs);
+		SC_DEBUG(sc_link, SDEV_DB2,
+		    ("calling private err_handler()\n"));
+		error = (*sc_link->device->err_handler)(xs);
 		if (error != -1)
-			return error;		/* error >= 0  better ? */
+			return (error);		/* error >= 0  better ? */
 	}
 	/* otherwise use the default */
 	switch (sense->error_code & SSD_ERRCODE) {
 		/*
-		 * If it's code 70, use the extended stuff and interpret the key
+		 * If it's code 70, use the extended stuff and
+		 * interpret the key
 		 */
 	case 0x71:		/* delayed error */
 		sc_link->sc_print_addr(sc_link);
@@ -211,16 +215,16 @@ scsi_interpret_sense(xs)
 			if ((sc_link->flags & SDEV_REMOVABLE) != 0)
 				sc_link->flags &= ~SDEV_MEDIA_LOADED;
 			if ((xs->flags & SCSI_IGNORE_NOT_READY) != 0)
-				return 0;
+				return (0);
 			if ((xs->flags & SCSI_SILENT) != 0)
-				return EIO;
+				return (EIO);
 			error = EIO;
 			break;
 		case 0x5:	/* ILLEGAL REQUEST */
 			if ((xs->flags & SCSI_IGNORE_ILLEGAL_REQUEST) != 0)
-				return 0;
+				return (0);
 			if ((xs->flags & SCSI_SILENT) != 0)
-				return EIO;
+				return (EIO);
 			error = EINVAL;
 			break;
 		case 0x6:	/* UNIT ATTENTION */
@@ -229,9 +233,9 @@ scsi_interpret_sense(xs)
 			if ((xs->flags & SCSI_IGNORE_MEDIA_CHANGE) != 0 ||
 				/* XXX Should reupload any transient state. */
 				(sc_link->flags & SDEV_REMOVABLE) == 0)
-				return ERESTART;
+				return (ERESTART);
 			if ((xs->flags & SCSI_SILENT) != 0)
-				return EIO;
+				return (EIO);
 			error = EIO;
 			break;
 		case 0x7:	/* DATA PROTECT */
@@ -252,7 +256,8 @@ scsi_interpret_sense(xs)
 		}
 
 #ifdef SCSIVERBOSE
-		scsi_print_sense(xs, 0);
+		if ((xs->flags & SCSI_SILENT) == 0)
+			scsi_print_sense(xs, 0);
 #else
 		if (key) {
 			sc_link->sc_print_addr(sc_link);
@@ -266,13 +271,13 @@ scsi_interpret_sense(xs)
 					break;
 				case 0x8:	/* BLANK CHECK */
 					printf(", requested size: %d (decimal)",
-						info);
+					    info);
 					break;
 				case 0xb:
 					if (xs->retries)
 						printf(", retrying");
 					printf(", cmd 0x%x, info 0x%x",
-						xs->cmd->opcode, info);
+					    xs->cmd->opcode, info);
 					break;
 				default:
 					printf(", info = %d (decimal)", info);
@@ -282,28 +287,28 @@ scsi_interpret_sense(xs)
 				int n;
 				printf(", data =");
 				for (n = 0; n < sense->extra_len; n++)
-					printf(" %02x", sense->cmd_spec_info[n]);
+					printf(" %02x",
+					    sense->cmd_spec_info[n]);
 			}
 			printf("\n");
 		}
 #endif
-		return error;
+		return (error);
 
 	/*
 	 * Not code 70, just report it
 	 */
 	default:
 		sc_link->sc_print_addr(sc_link);
-		printf("error code %d",
-			sense->error_code & SSD_ERRCODE);
+		printf("error code %d", sense->error_code & SSD_ERRCODE);
 		if ((sense->error_code & SSD_ERRCODE_VALID) != 0) {
 			struct scsipi_sense_data_unextended *usense =
-				(struct scsipi_sense_data_unextended *)sense;
+			    (struct scsipi_sense_data_unextended *)sense;
 			printf(" at block no. %d (decimal)",
-				_3btol(usense->block));
+			    _3btol(usense->block));
 		}
 		printf("\n");
-		return EIO;
+		return (EIO);
 	}
 }
 
@@ -321,10 +326,10 @@ scsi_print_addr(sc_link)
 {
 
 	printf("%s(%s:%d:%d): ",
-		sc_link->device_softc ?
-		((struct device *)sc_link->device_softc)->dv_xname : "probe",
-		((struct device *)sc_link->adapter_softc)->dv_xname,
-		sc_link->scsipi_scsi.target, sc_link->scsipi_scsi.lun);		
+	    sc_link->device_softc ?
+	    ((struct device *)sc_link->device_softc)->dv_xname : "probe",
+	    ((struct device *)sc_link->adapter_softc)->dv_xname,
+	    sc_link->scsipi_scsi.target, sc_link->scsipi_scsi.lun);
 }
 
 #ifdef SCSIVERBOSE
@@ -540,34 +545,33 @@ static const struct {
 { 0x61, 0x01, "Unable To Acquire Video" },
 { 0x61, 0x02, "Out Of Focus" },
 { 0x62, 0x00, "Scan Head Positioning Error" },
-{ 0x63, 0x00, "End Of User Area Encountered On This Track" }, 
+{ 0x63, 0x00, "End Of User Area Encountered On This Track" },
 { 0x64, 0x00, "Illegal Mode For This Track" },
-{ 0x00, 0x00, (char *) 0 }
-}; 
+{ 0x00, 0x00, NULL }
+};
 
 static inline void
-asc2ascii(unsigned char asc, unsigned char ascq, char *result)
+asc2ascii(asc, ascq, result)
+	unsigned char asc, ascq;
+	char *result;
 {
 	register int i = 0;
- 
-	while (adesc[i].description != (char *) 0) {
-		if (adesc[i].asc == asc && adesc[i].ascq == ascq) {
+
+	while (adesc[i].description != NULL) {
+		if (adesc[i].asc == asc && adesc[i].ascq == ascq)
 			break;
-		}
 		i++;
 	}
-	if (adesc[i].description == (char *) 0) {
-		if (asc == 0x40 && ascq != 0) {
-			(void) sprintf(result,
-				"Diagnostic Failure on Component 0x%02x",
-				ascq & 0xff);
-		} else {
-			(void) sprintf(result, "ASC 0x%02x ASCQ 0x%02x",
-				asc & 0xff, ascq & 0xff);
-		}
-	} else {
-		(void) strcpy(result, adesc[i].description);
-	}
+	if (adesc[i].description == NULL) {
+		if (asc == 0x40 && ascq != 0)
+			(void)sprintf(result,
+			    "Diagnostic Failure on Component 0x%02x",
+			    ascq & 0xff);
+		else
+			(void)sprintf(result, "ASC 0x%02x ASCQ 0x%02x",
+			    asc & 0xff, ascq & 0xff);
+	} else
+		(void)strcpy(result, adesc[i].description);
 }
 
 void
@@ -581,7 +585,7 @@ scsi_print_sense(xs, verbosity)
 
 	xs->sc_link->sc_print_addr(xs->sc_link);
 	s = (char *) &xs->sense.scsi_sense;
-	printf(" Check Condition on opcode %x\n", xs->cmd->opcode);
+	printf(" Check Condition on opcode 0x%x\n", xs->cmd->opcode);
 
 	/*
 	 * Basics- print out SENSE KEY
@@ -603,9 +607,8 @@ scsi_print_sense(xs, verbosity)
 			printf("%c EOM Detected", pad);
 			pad = ',';
 		}
-		if (s[2] & SSD_ILI) {
+		if (s[2] & SSD_ILI)
 			printf("%c Incorrect Length Indicator Set", pad);
-		}
 	}
 
 	/*
@@ -615,9 +618,8 @@ scsi_print_sense(xs, verbosity)
 	 * 32 bit integer.
 	 */
 	info = _4btol(&s[3]);
-	if (info) {
+	if (info)
 		printf("\n   INFO FIELD:  %d", info);
-	}
 
 	/*
 	 * Now we check additional length to see whether there is
@@ -630,25 +632,21 @@ scsi_print_sense(xs, verbosity)
 		return;
 	}
 	info = _4btol(&s[8]);
-	if (info) {
+	if (info)
 		printf("\n COMMAND INFO:  %d (0x%x)", info, info);
-	}
 
 	/*
 	 * Decode ASC && ASCQ info, plus FRU, plus the rest...
 	 */
 
 	sbs = scsi_decode_sense(s, 1);
-	if (sbs) {
+	if (sbs)
 		printf("\n     ASC/ASCQ:  %s", sbs);
-	}
-	if (s[14] != 0) {
+	if (s[14] != 0)
 		printf("\n     FRU CODE:  0x%x\n", s[14] & 0xff);
-	}
 	sbs = scsi_decode_sense(s, 3);
-	if (sbs) {
-		printf("\n         SKSV:  %s", sbs);
-	}
+	if (sbs)
+		printf("         SKSV:  %s", sbs);
 	printf("\n");
 	if (verbosity == 0) {
 		printf("\n");
@@ -665,15 +663,13 @@ scsi_print_sense(xs, verbosity)
 	 * nonzero data. If we have some, go back and print the lot,
 	 * otherwise we're done.
 	 */
-	if (sbs) {
+	if (sbs)
 		i = 18;
-	} else {
+	else
 		i = 15;
-	}
-	for (j = i; j < sizeof (xs->sense); j++) {
+	for (j = i; j < sizeof (xs->sense); j++)
 		if (s[j])
 			break;
-	}
 	if (j == sizeof (xs->sense))
 		return;
 
@@ -702,7 +698,9 @@ scsi_print_sense(xs, verbosity)
 }
 
 char *
-scsi_decode_sense(void *sinfo, int flag)
+scsi_decode_sense(sinfo, flag)
+	void *sinfo;
+	int flag;
 {
 	unsigned char *snsbuf;
 	unsigned char skey;
@@ -711,13 +709,12 @@ scsi_decode_sense(void *sinfo, int flag)
 	skey = 0;
 
 	snsbuf = (unsigned char *) sinfo;
-	if (flag == 0 || flag == 2 || flag == 3) {
+	if (flag == 0 || flag == 2 || flag == 3)
 		skey = snsbuf[2] & 0xf;
-	}
-	if (flag == 0) {				/* Sense Key Only */
+	if (flag == 0) {			/* Sense Key Only */
 		(void) strcpy(rqsbuf, sense_keys[skey]);
 		return (rqsbuf);
-	} else if (flag == 1) {		 /* ASC/ASCQ Only */
+	} else if (flag == 1) {			/* ASC/ASCQ Only */
 		asc2ascii(snsbuf[12], snsbuf[13], rqsbuf);
 		return (rqsbuf);
 	} else  if (flag == 2) {		/* Sense Key && ASC/ASCQ */
@@ -725,40 +722,39 @@ scsi_decode_sense(void *sinfo, int flag)
 		asc2ascii(snsbuf[12], snsbuf[13], localbuf);
 		(void) sprintf(rqsbuf, "%s, %s", sense_keys[skey], localbuf);
 		return (rqsbuf);
-	} else if (flag == 3  && snsbuf[7] >= 9 && (snsbuf[15] & 0x80)) {
+	} else if (flag == 3 && snsbuf[7] >= 9 && (snsbuf[15] & 0x80)) {
 		/*
 		 * SKSV Data
 		 */
 		switch (skey) {
-		case 0x5:	   /* Illegal Request */
-			if (snsbuf[15] & 0x8) {
-				(void) sprintf(rqsbuf,
-					"Error in %s, Offset %d, bit %d",
-					(snsbuf[15] & 0x40)? "CDB" : "Parameters",
-					(snsbuf[16] & 0xff) << 8 |
-					(snsbuf[17] & 0xff), snsbuf[15] & 0xf);
-			} else {
-				(void) sprintf(rqsbuf,
-					"Error in %s, Offset %d",
-					(snsbuf[15] & 0x40)? "CDB" : "Parameters",
-					(snsbuf[16] & 0xff) << 8 |
-					(snsbuf[17] & 0xff));
-			}
+		case 0x5:			/* Illegal Request */
+			if (snsbuf[15] & 0x8)
+				(void)sprintf(rqsbuf,
+				    "Error in %s, Offset %d, bit %d",
+				    (snsbuf[15] & 0x40)? "CDB" : "Parameters",
+				    (snsbuf[16] & 0xff) << 8 |
+				    (snsbuf[17] & 0xff), snsbuf[15] & 0x7);
+			else
+				(void)sprintf(rqsbuf,
+				    "Error in %s, Offset %d",
+				    (snsbuf[15] & 0x40)? "CDB" : "Parameters",
+				    (snsbuf[16] & 0xff) << 8 |
+				    (snsbuf[17] & 0xff));
 			return (rqsbuf);
 		case 0x1:
 		case 0x3:
 		case 0x4:
-			(void) sprintf(rqsbuf, "Actual Retry Count: %d",
-				(snsbuf[16] & 0xff) << 8 | (snsbuf[17] & 0xff));
+			(void)sprintf(rqsbuf, "Actual Retry Count: %d",
+			    (snsbuf[16] & 0xff) << 8 | (snsbuf[17] & 0xff));
 			return (rqsbuf);
 		case 0x2:
-			(void) sprintf(rqsbuf, "Progress Indicator: %d",
-				(snsbuf[16] & 0xff) << 8 | (snsbuf[17] & 0xff));
+			(void)sprintf(rqsbuf, "Progress Indicator: %d",
+			    (snsbuf[16] & 0xff) << 8 | (snsbuf[17] & 0xff));
 			return (rqsbuf);
 		default:
 			break;
 		}
 	}
-	return ((char *) 0);
+	return (NULL);
 }
 #endif

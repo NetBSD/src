@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.21.4.2 1997/09/22 06:32:09 thorpej Exp $	*/
+/*	$NetBSD: machdep.c,v 1.21.4.3 1997/10/14 10:17:47 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -181,12 +181,15 @@ void	mvme167_init __P((void));
 #endif
 
 /*
- * Wrapper around the machine-specific initialization funtion,
- * to save some hair in locore.s
+ * Early initialization, right before main is called.
  */
 void
 mvme68k_init()
 {
+	int i;
+
+	/* Initialize interrupt handlers. */
+	isrinit();
 
 	switch (machineid) {
 #ifdef MVME147
@@ -207,6 +210,15 @@ mvme68k_init()
 	default:
 		panic("mvme68k_init: impossible machineid");
 	}
+
+	/*
+	 * Initialize error message buffer (at end of core).
+	 * avail_end was pre-decremented in pmap_bootstrap to compensate.
+	 */
+	for (i = 0; i < btoc(MSGBUFSIZE); i++)
+		pmap_enter(pmap_kernel(), (vm_offset_t)msgbufaddr + i * NBPG,
+		    avail_end + i * NBPG, VM_PROT_ALL, TRUE);
+	initmsgbuf(msgbufaddr, round_page(MSGBUFSIZE));
 }
 
 #ifdef MVME147
@@ -312,15 +324,6 @@ cpu_startup()
 	 * Initialize the kernel crash dump header.
 	 */
 	cpu_init_kcore_hdr();
-
-	/*
-	 * Initialize error message buffer (at end of core).
-	 * avail_end was pre-decremented in pmap_bootstrap to compensate.
-	 */
-	for (i = 0; i < btoc(MSGBUFSIZE); i++)
-		pmap_enter(pmap_kernel(), (vm_offset_t)msgbufaddr + i * NBPG,
-				avail_end + i * NBPG, VM_PROT_ALL, TRUE);
-	initmsgbuf(msgbufaddr, round_page(MSGBUFSIZE));
 
 	/*
 	 * Good {morning,afternoon,evening,night}.

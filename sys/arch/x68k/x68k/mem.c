@@ -1,4 +1,4 @@
-/*	$NetBSD: mem.c,v 1.6 1997/06/10 19:50:23 veego Exp $	*/
+/*	$NetBSD: mem.c,v 1.6.4.1 1997/10/14 10:21:06 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -59,6 +59,11 @@
 extern u_int lowram;
 static caddr_t devzeropage;
 
+int	mmopen __P((dev_t, int, int));
+int	mmclose __P((dev_t, int, int));
+int	mmrw __P((dev_t, struct uio *, int));
+int	mmmmap __P((dev_t, int, int));
+
 /*ARGSUSED*/
 int
 mmopen(dev, flag, mode)
@@ -86,9 +91,9 @@ mmrw(dev, uio, flags)
 	struct uio *uio;
 	int flags;
 {
-	register vm_offset_t o, v;
-	register int c;
-	register struct iovec *iov;
+	vm_offset_t o, v;
+	int c;
+	struct iovec *iov;
 	int error = 0;
 	static int physlock;
 

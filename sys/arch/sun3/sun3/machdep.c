@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.95.2.3 1997/09/22 06:32:46 thorpej Exp $	*/
+/*	$NetBSD: machdep.c,v 1.95.2.4 1997/10/14 10:19:18 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Gordon W. Ross
@@ -108,6 +108,10 @@ int	physmem;
 int	fputype;
 caddr_t	msgbufaddr;
 
+/* Our private scratch page for dumping the MMU. */
+static vm_offset_t dumppage;
+
+/* Virtual page frame for /dev/mem (see map.c) */
 vm_offset_t vmmap;
 
 /*
@@ -144,6 +148,7 @@ static void initcpu __P((void));
 void
 consinit()
 {
+	/* Note: cninit() done earlier.  (See _startup.c) */
 
 #ifdef KGDB
 	/* XXX - Ask on console for kgdb_dev? */
@@ -251,7 +256,7 @@ cpu_startup()
 	 * Also, offset some to avoid PROM scribbles.
 	 */
 	v = (caddr_t) KERNBASE;
-	msgbufaddr = (caddr_t)(v + 0x1000);
+	msgbufaddr = (caddr_t)(v + MSGBUFOFF);
 	initmsgbuf(msgbufaddr, MSGBUFSIZE);
 
 	/*
@@ -262,6 +267,12 @@ cpu_startup()
 	initfpu();	/* also prints FPU type */
 
 	printf("real mem = %d\n", ctob(physmem));
+
+	/*
+	 * Get scratch page for dumpsys().
+	 */
+	if ((dumppage = kmem_alloc(kernel_map, NBPG)) == 0)
+		panic("startup: alloc dumppage");
 
 	/*
 	 * Find out how much space we need, allocate it,
@@ -417,7 +428,7 @@ setregs(p, pack, stack)
 /*
  * Info for CTL_HW
  */
-char	machine[] = MACHINE;	/* from <machine/param.h> */
+char	machine[16] = MACHINE;	/* from <machine/param.h> */
 char	cpu_model[120];
 
 /*
@@ -518,6 +529,9 @@ cpu_reboot(howto, user_boot_string)
 	if (cold)
 		goto haltsys;
 
+	/* Un-blank the screen if appropriate. */
+	cnpollc(1);
+
 	if ((howto & RB_NOSYNC) == 0) {
 		reboot_sync();
 		/*
@@ -585,10 +599,6 @@ cpu_reboot(howto, user_boot_string)
 u_long	dumpmag = 0x8fca0101;	/* magic number */
 int 	dumpsize = 0;		/* pages */
 long	dumplo = 0; 		/* blocks */
-
-/* Our private scratch page for dumping the MMU. */
-vm_offset_t dumppage_va;
-vm_offset_t dumppage_pa;
 
 #define	DUMP_EXTRA 	3	/* CPU-dependent extra pages */
 
@@ -660,7 +670,7 @@ dumpsys()
 	msgbufmapped = 0;
 	if (dumpdev == NODEV)
 		return;
-	if (dumppage_va == 0)
+	if (dumppage == 0)
 		return;
 
 	/*
@@ -688,24 +698,27 @@ dumpsys()
 	 */
 	blkno = dumplo;
 	todo = dumpsize - DUMP_EXTRA;	/* pages */
-	vaddr = (char*)dumppage_va;
+	vaddr = (char*)dumppage;
 	bzero(vaddr, NBPG);
 
-	/* kcore header */
+	/* Set pointers to all three parts. */
 	kseg_p = (kcore_seg_t *)vaddr;
-	CORE_SETMAGIC(*kseg_p, KCORE_MAGIC, MID_MACHINE, CORE_CPU);
-	kseg_p->c_size = (ctob(DUMP_EXTRA) - sizeof(kcore_seg_t));
-
-	/* MMU state and dispatch info */
 	chdr_p = (cpu_kcore_hdr_t *) (kseg_p + 1);
 	sh = &chdr_p->un._sun3;
-	strcpy(chdr_p->name, machine);
+
+	/* Fill in kcore_seg_t part. */
+	CORE_SETMAGIC(*kseg_p, KCORE_MAGIC, MID_MACHINE, CORE_CPU);
+	kseg_p->c_size = (ctob(DUMP_EXTRA) - sizeof(*kseg_p));
+
+	/* Fill in cpu_kcore_hdr_t part. */
+	bcopy(machine, chdr_p->name, sizeof(chdr_p->name));
 	chdr_p->page_size = NBPG;
 	chdr_p->kernbase = KERNBASE;
-	sh->segshift = SEGSHIFT;
-	sh->pg_frame = PG_FRAME;
-	sh->pg_valid = PG_VALID;
-	pmap_get_ksegmap(sh->ksegmap);
+
+	/* Fill in the sun3_kcore_hdr part (MMU state). */
+	pmap_kcore_hdr(sh);
+
+	/* Write out the dump header. */
 	error = (*dsw->d_dump)(dumpdev, blkno, vaddr, NBPG);
 	if (error)
 		goto fail;

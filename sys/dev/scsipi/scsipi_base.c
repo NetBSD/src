@@ -1,4 +1,4 @@
-/*	$NetBSD: scsipi_base.c,v 1.2.2.2 1997/08/27 23:33:23 thorpej Exp $	*/
+/*	$NetBSD: scsipi_base.c,v 1.2.2.3 1997/10/14 10:25:17 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995, 1997 Charles M. Hannum.  All rights reserved.
@@ -51,11 +51,11 @@
 #include <dev/scsipi/scsipi_base.h>
 
 struct xs_free_list xs_free_list;
-int sc_err1 __P((struct scsipi_xfer *, int));
+int	sc_err1 __P((struct scsipi_xfer *, int));
 
 /*
  * Get a scsipi transfer structure for the caller. Charge the structure
- * to the device that is referenced by the sc_link structure. If the 
+ * to the device that is referenced by the sc_link structure. If the
  * sc_link structure has no 'credits' then the device already has the
  * maximum number or outstanding operations under way. In this stage,
  * wait on the structure so that when one is freed, we are awoken again
@@ -78,10 +78,10 @@ scsipi_get_xs(sc_link, flags)
 		SC_DEBUG(sc_link, SDEV_DB3, ("sleeping\n"));
 		if ((flags & SCSI_NOSLEEP) != 0) {
 			splx(s);
-			return 0;
+			return (0);
 		}
 		sc_link->flags |= SDEV_WAITING;
-		(void) tsleep(sc_link, PRIBIO, "getxs", 0);
+		(void)tsleep(sc_link, PRIBIO, "getxs", 0);
 	}
 	sc_link->openings--;
 	if ((xs = xs_free_list.lh_first) != NULL) {
@@ -92,18 +92,21 @@ scsipi_get_xs(sc_link, flags)
 		SC_DEBUG(sc_link, SDEV_DB3, ("making\n"));
 		xs = malloc(sizeof(*xs), M_DEVBUF,
 		    ((flags & SCSI_NOSLEEP) != 0 ? M_NOWAIT : M_WAITOK));
-		if (!xs) {
+		if (xs == NULL) {
 			sc_link->sc_print_addr(sc_link);
 			printf("cannot allocate scsipi xs\n");
-			return 0;
+			return (0);
 		}
 	}
 
 	SC_DEBUG(sc_link, SDEV_DB3, ("returning\n"));
-	/* zero's out the command, as ATAPI may use longer commands than SCSI */
+	/*
+	 * zero's out the command, as ATAPI may use longer commands
+	 * than SCSI
+	 */
 	bzero(&xs->cmdstore, sizeof(xs->cmdstore));
 	xs->flags = INUSE | flags;
-	return xs;
+	return (xs);
 }
 
 /*
@@ -111,7 +114,7 @@ scsipi_get_xs(sc_link, flags)
  * return the struct to the free pool and credit the device with it
  * If another process is waiting for an xs, do a wakeup, let it proceed
  */
-void 
+void
 scsipi_free_xs(xs, flags)
 	struct scsipi_xfer *xs;
 	int flags;
@@ -129,8 +132,9 @@ scsipi_free_xs(xs, flags)
 		wakeup(sc_link);
 	} else {
 		if (sc_link->device->start) {
-			SC_DEBUG(sc_link, SDEV_DB2, ("calling private start()\n"));
-			(*(sc_link->device->start)) (sc_link->device_softc);
+			SC_DEBUG(sc_link, SDEV_DB2,
+			    ("calling private start()\n"));
+			(*(sc_link->device->start))(sc_link->device_softc);
 		}
 	}
 }
@@ -158,20 +162,20 @@ scsipi_size(sc_link, flags)
 	 * number of blocks
 	 */
 	if (sc_link->scsipi_cmd(sc_link, (struct scsipi_generic *)&scsipi_cmd,
-			  sizeof(scsipi_cmd), (u_char *)&rdcap, sizeof(rdcap),
-			  2, 20000, NULL, flags | SCSI_DATA_IN) != 0) {
+	    sizeof(scsipi_cmd), (u_char *)&rdcap, sizeof(rdcap),
+	    2, 20000, NULL, flags | SCSI_DATA_IN) != 0) {
 		sc_link->sc_print_addr(sc_link);
 		printf("could not get size\n");
-		return 0;
+		return (0);
 	}
 
-	return _4btol(rdcap.addr) + 1;
+	return (_4btol(rdcap.addr) + 1);
 }
 
 /*
  * Get scsipi driver to send a "are you ready?" command
  */
-int 
+int
 scsipi_test_unit_ready(sc_link, flags)
 	struct scsipi_link *sc_link;
 	int flags;
@@ -180,13 +184,14 @@ scsipi_test_unit_ready(sc_link, flags)
 
 	/* some ATAPI drives don't support TEST_UNIT_READY. Sigh */
 	if (sc_link->quirks & ADEV_NOTUR)
-		return 0;
+		return (0);
 
 	bzero(&scsipi_cmd, sizeof(scsipi_cmd));
 	scsipi_cmd.opcode = TEST_UNIT_READY;
 
-	return sc_link->scsipi_cmd(sc_link, (struct scsipi_generic *) &scsipi_cmd,
-			     sizeof(scsipi_cmd), 0, 0, 2, 10000, NULL, flags);
+	return ((*sc_link->scsipi_cmd)(sc_link,
+	    (struct scsipi_generic *)&scsipi_cmd, sizeof(scsipi_cmd),
+	    0, 0, 2, 10000, NULL, flags));
 }
 
 /*
@@ -196,7 +201,7 @@ scsipi_test_unit_ready(sc_link, flags)
  * that some atapi CDROM may not implement it, althouh it marked as mandatory
  * in the atapi specs.
  */
-int 
+int
 scsipi_inquire(sc_link, inqbuf, flags)
 	struct scsipi_link *sc_link;
 	struct scsipi_inquiry_data *inqbuf;
@@ -208,16 +213,16 @@ scsipi_inquire(sc_link, inqbuf, flags)
 	scsipi_cmd.opcode = INQUIRY;
 	scsipi_cmd.length = sizeof(struct scsipi_inquiry_data);
 
-	return sc_link->scsipi_cmd(sc_link, (struct scsipi_generic *) &scsipi_cmd,
-			     sizeof(scsipi_cmd), (u_char *) inqbuf,
-			     sizeof(struct scsipi_inquiry_data), 2, 10000, NULL,
-			     SCSI_DATA_IN | flags);
+	return ((*sc_link->scsipi_cmd)(sc_link,
+	    (struct scsipi_generic *) &scsipi_cmd, sizeof(scsipi_cmd),
+	    (u_char *) inqbuf, sizeof(struct scsipi_inquiry_data),
+	    2, 10000, NULL, SCSI_DATA_IN | flags));
 }
 
 /*
  * Prevent or allow the user to remove the media
  */
-int 
+int
 scsipi_prevent(sc_link, type, flags)
 	struct scsipi_link *sc_link;
 	int type, flags;
@@ -225,19 +230,20 @@ scsipi_prevent(sc_link, type, flags)
 	struct scsipi_prevent scsipi_cmd;
 
 	if (sc_link->quirks & ADEV_NODOORLOCK)
-		return 0;
+		return (0);
 
 	bzero(&scsipi_cmd, sizeof(scsipi_cmd));
 	scsipi_cmd.opcode = PREVENT_ALLOW;
 	scsipi_cmd.how = type;
-	return sc_link->scsipi_cmd(sc_link, (struct scsipi_generic *) &scsipi_cmd,
-			     sizeof(scsipi_cmd), 0, 0, 2, 5000, NULL, flags);
+	return ((*sc_link->scsipi_cmd)(sc_link,
+	    (struct scsipi_generic *) &scsipi_cmd, sizeof(scsipi_cmd),
+	    0, 0, 2, 5000, NULL, flags));
 }
 
 /*
  * Get scsipi driver to send a "start up" command
  */
-int 
+int
 scsipi_start(sc_link, type, flags)
 	struct scsipi_link *sc_link;
 	int type, flags;
@@ -248,15 +254,16 @@ scsipi_start(sc_link, type, flags)
 	scsipi_cmd.opcode = START_STOP;
 	scsipi_cmd.byte2 = 0x00;
 	scsipi_cmd.how = type;
-	return sc_link->scsipi_cmd(sc_link, (struct scsipi_generic *) &scsipi_cmd,
-			     sizeof(scsipi_cmd), 0, 0, 2,
-			     type == SSS_START ? 30000 : 10000, NULL, flags);
+	return ((*sc_link->scsipi_cmd)(sc_link,
+	    (struct scsipi_generic *) &scsipi_cmd, sizeof(scsipi_cmd),
+	    0, 0, 2, type == SSS_START ? 30000 : 10000, NULL, flags));
 }
 
 /*
- * This routine is called by the scsipi interrupt when the transfer is complete.
+ * This routine is called by the scsipi interrupt when the transfer is
+ * complete.
  */
-void 
+void
 scsipi_done(xs)
 	struct scsipi_xfer *xs;
 {
@@ -271,10 +278,11 @@ scsipi_done(xs)
 #endif /* SCSIDEBUG */
 
 	/*
- 	 * If it's a user level request, bypass all usual completion processing,
- 	 * let the user work it out.. We take reponsibility for freeing the
- 	 * xs when the user returns. (and restarting the device's queue).
- 	 */
+	 * If it's a user level request, bypass all usual completion
+	 * processing, let the user work it out..  We take
+	 * reponsibility for freeing the xs when the user returns.
+	 * (and restarting the device's queue).
+	 */
 	if ((xs->flags & SCSI_USER) != 0) {
 		SC_DEBUG(sc_link, SDEV_DB3, ("calling user done()\n"));
 		scsipi_user_done(xs); /* to take a copy of the sense etc. */
@@ -301,8 +309,8 @@ scsipi_done(xs)
 	 */
 retry:
 	error = sc_err1(xs, 1);
-	if (error == ERESTART) {
-		switch ((*(sc_link->adapter->scsipi_cmd)) (xs)) {
+	if (error == ERESTART)
+		switch ((*(sc_link->adapter->scsipi_cmd))(xs)) {
 		case SUCCESSFULLY_QUEUED:
 			return;
 
@@ -311,7 +319,6 @@ retry:
 		case COMPLETE:
 			goto retry;
 		}
-	}
 
 	bp = xs->bp;
 	if (bp) {
@@ -354,12 +361,12 @@ retry:
 	 * Do the transfer. If we are polling we will return:
 	 * COMPLETE,  Was poll, and scsipi_done has been called
 	 * TRY_AGAIN_LATER, Adapter short resources, try again
-	 * 
+	 *
 	 * if under full steam (interrupts) it will return:
 	 * SUCCESSFULLY_QUEUED, will do a wakeup when complete
 	 * TRY_AGAIN_LATER, (as for polling)
 	 * After the wakeup, we must still check if it succeeded
-	 * 
+	 *
 	 * If we have a SCSI_NOSLEEP (typically because we have a buf)
 	 * we just return.  All the error proccessing and the buffer
 	 * code both expect us to return straight to them, so as soon
@@ -372,10 +379,10 @@ retry:
 		printf("\n");
 	}
 #endif
-	switch ((*(xs->sc_link->adapter->scsipi_cmd)) (xs)) {
+	switch ((*(xs->sc_link->adapter->scsipi_cmd))(xs)) {
 	case SUCCESSFULLY_QUEUED:
 		if ((xs->flags & (SCSI_NOSLEEP | SCSI_POLL)) == SCSI_NOSLEEP)
-			return EJUSTRETURN;
+			return (EJUSTRETURN);
 #ifdef DIAGNOSTIC
 		if (xs->flags & SCSI_NOSLEEP)
 			panic("scsipi_execute_xs: NOSLEEP and POLL");
@@ -386,11 +393,11 @@ retry:
 		splx(s);
 	case COMPLETE:		/* Polling command completed ok */
 		if (xs->bp)
-			return EJUSTRETURN;
+			return (EJUSTRETURN);
 	doit:
 		SC_DEBUG(xs->sc_link, SDEV_DB3, ("back in cmd()\n"));
 		if ((error = sc_err1(xs, 0)) != ERESTART)
-			return error;
+			return (error);
 		goto retry;
 
 	case TRY_AGAIN_LATER:	/* adapter resource shortage */
@@ -404,10 +411,10 @@ retry:
 #ifdef DIAGNOSTIC
 	panic("scsipi_execute_xs: impossible");
 #endif
-	return EINVAL;
+	return (EINVAL);
 }
 
-int 
+int
 sc_err1(xs, async)
 	struct scsipi_xfer *xs;
 	int async;
@@ -429,7 +436,8 @@ sc_err1(xs, async)
 		break;
 
 	case XS_SENSE:
-		if ((error = xs->sc_link->scsipi_interpret_sense(xs)) == ERESTART)
+		if ((error = (*xs->sc_link->scsipi_interpret_sense)(xs)) ==
+		    ERESTART)
 			goto retry;
 		SC_DEBUG(xs->sc_link, SDEV_DB3,
 		    ("scsipi_interpret_sense returned %d\n", error));
@@ -453,7 +461,7 @@ sc_err1(xs, async)
 		if (xs->retries--) {
 			xs->error = XS_NOERROR;
 			xs->flags &= ~ITSDONE;
-			return ERESTART;
+			return (ERESTART);
 		}
 	case XS_DRIVER_STUFFUP:
 	lose:
@@ -466,13 +474,13 @@ sc_err1(xs, async)
 		break;
 
 	default:
-		xs->sc_link->sc_print_addr(xs->sc_link);
+		(*xs->sc_link->sc_print_addr)(xs->sc_link);
 		printf("unknown error category from scsipi driver\n");
 		error = EIO;
 		break;
 	}
 
-	return error;
+	return (error);
 }
 
 #ifdef	SCSIDEBUG
@@ -483,6 +491,7 @@ void
 show_scsipi_xs(xs)
 	struct scsipi_xfer *xs;
 {
+
 	printf("xs(%p): ", xs);
 	printf("flg(0x%x)", xs->flags);
 	printf("sc_link(%p)", xs->sc_link);
@@ -503,9 +512,9 @@ show_scsipi_cmd(xs)
 	struct scsipi_xfer *xs;
 {
 	u_char *b = (u_char *) xs->cmd;
-	int     i = 0;
+	int i = 0;
 
-	xs->sc_link->sc_print_addr(xs->sc_link);
+	(*xs->sc_link->sc_print_addr)(xs->sc_link);
 	printf("command: ");
 
 	if ((xs->flags & SCSI_RESET) == 0) {
