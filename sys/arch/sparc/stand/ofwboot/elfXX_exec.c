@@ -1,4 +1,4 @@
-/*	$NetBSD: elfXX_exec.c,v 1.3 2001/08/30 23:00:19 eeh Exp $	*/
+/*	$NetBSD: elfXX_exec.c,v 1.3.24.1 2004/05/06 05:13:55 jmc Exp $	*/
 
 /*
  * Copyright (c) 1998-2000 Eduardo Horvath.  All rights reserved.
@@ -150,7 +150,7 @@ CAT3(elf, ELFSIZE, _exec)(fd, elf, entryp, ssymp, esymp)
 			shp->sh_type = SHT_NOBITS;
 			continue;
 		}
-		size += shp->sh_size;
+		size += ELF_ALIGN(shp->sh_size);
 	}
 	shp = addr;
 
