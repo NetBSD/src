@@ -1,4 +1,4 @@
-.\"	$NetBSD: isblank.3,v 1.4.12.3 2002/03/22 20:42:10 nathanw Exp $
+.\"	$NetBSD: isblank.3,v 1.4.12.4 2002/08/01 03:28:09 nathanw Exp $
 .\"
 .\" Copyright (c) 1991 The Regents of the University of California.
 .\" All rights reserved.
@@ -90,3 +90,11 @@ returns non-zero if the character tests true.
 .Xr tolower 3 ,
 .Xr toupper 3 ,
 .Xr ascii 7
+.Sh CAVEATS
+The argument to
+.Fn isblank
+must be
+.Dv EOF
+or representable as an
+.Li unsigned char ;
+otherwise, the result is undefined.

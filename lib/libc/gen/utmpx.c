@@ -1,4 +1,4 @@
-/*	$NetBSD: utmpx.c,v 1.3.2.3 2002/04/25 04:01:42 nathanw Exp $	 */
+/*	$NetBSD: utmpx.c,v 1.3.2.4 2002/08/01 03:28:12 nathanw Exp $	 */
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
 #include <sys/cdefs.h>
 
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: utmpx.c,v 1.3.2.3 2002/04/25 04:01:42 nathanw Exp $");
+__RCSID("$NetBSD: utmpx.c,v 1.3.2.4 2002/08/01 03:28:12 nathanw Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include <sys/types.h>
@@ -55,10 +55,13 @@ __RCSID("$NetBSD: utmpx.c,v 1.3.2.3 2002/04/25 04:01:42 nathanw Exp $");
 #include <utmpx.h>
 #include <unistd.h>
 #include <fcntl.h>
+#include <errno.h>
+#include <db.h>
 
 static FILE *fp;
 static struct utmpx ut;
 static char utfile[MAXPATHLEN] = _PATH_UTMPX;
+static char llfile[MAXPATHLEN] = _PATH_LASTLOGX;
 
 static struct utmpx *utmp_update(const struct utmpx *);
 
@@ -67,6 +70,7 @@ static const char vers[] = "utmpx-1.00";
 void
 setutxent()
 {
+
 	(void)memset(&ut, 0, sizeof(ut));
 	if (fp == NULL)
 		return;
@@ -77,15 +81,19 @@ setutxent()
 void
 endutxent()
 {
+
 	(void)memset(&ut, 0, sizeof(ut));
-	if (fp != NULL)
+	if (fp != NULL) {
 		(void)fclose(fp);
+		fp = NULL;
+	}
 }
 
 
 struct utmpx *
 getutxent()
 {
+
 	if (fp == NULL) {
 		struct stat st;
 
@@ -130,6 +138,7 @@ fail:
 struct utmpx *
 getutxid(const struct utmpx *utx)
 {
+
 	if (utx->ut_type == EMPTY)
 		return NULL;
 
@@ -166,8 +175,7 @@ getutxid(const struct utmpx *utx)
 		default:
 			return NULL;
 		}
-	}
-	while (getutxent() != NULL);
+	} while (getutxent() != NULL);
 	return NULL;
 }
 
@@ -175,6 +183,7 @@ getutxid(const struct utmpx *utx)
 struct utmpx *
 getutxline(const struct utmpx *utx)
 {
+
 	do {
 		switch (ut.ut_type) {
 		case EMPTY:
@@ -188,8 +197,7 @@ getutxline(const struct utmpx *utx)
 		default:
 			break;
 		}
-	}
-	while (getutxent() != NULL);
+	} while (getutxent() != NULL);
 	return NULL;
 }
 
@@ -274,13 +282,14 @@ utmp_update(const struct utmpx *utx)
 
 }
 
-void
+int
 updwtmpx(const char *file, const struct utmpx *utx)
 {
-	int fd = open(file, O_WRONLY | O_APPEND);
+	int fd = open(file, O_WRONLY|O_APPEND|O_EXLOCK);
+
 	if (fd == -1) {
-		if ((fd = open(file, O_CREAT | O_WRONLY, 0644)) == -1)
-			return;
+		if ((fd = open(file, O_CREAT|O_WRONLY|O_EXLOCK, 0644)) == -1)
+			return -1;
 		(void)memset(&ut, 0, sizeof(ut));
 		ut.ut_type = SIGNATURE;
 		(void)memcpy(ut.ut_user, vers, sizeof(vers));
@@ -288,6 +297,7 @@ updwtmpx(const char *file, const struct utmpx *utx)
 	}
 	(void)write(fd, utx, sizeof(*utx));
 	(void)close(fd);
+	return 0;
 }
 
 
@@ -315,6 +325,7 @@ utmpxname(const char *fname)
 void
 getutmp(const struct utmpx *ux, struct utmp *u)
 {
+
 	(void)memcpy(u->ut_name, ux->ut_name, sizeof(u->ut_name));
 	(void)memcpy(u->ut_line, ux->ut_line, sizeof(u->ut_line));
 	(void)memcpy(u->ut_host, ux->ut_host, sizeof(u->ut_host));
@@ -324,6 +335,7 @@ getutmp(const struct utmpx *ux, struct utmp *u)
 void
 getutmpx(const struct utmp *u, struct utmpx *ux)
 {
+
 	(void)memcpy(ux->ut_name, u->ut_name, sizeof(u->ut_name));
 	(void)memcpy(ux->ut_line, u->ut_line, sizeof(u->ut_line));
 	(void)memcpy(ux->ut_host, u->ut_host, sizeof(u->ut_host));
@@ -335,4 +347,74 @@ getutmpx(const struct utmp *u, struct utmpx *ux)
 	ux->ut_session = 0;
 	ux->ut_exit.e_termination = 0;
 	ux->ut_exit.e_exit = 0;
+}
+
+int
+lastlogxname(const char *fname)
+{
+	size_t len = strlen(fname);
+
+	if (len >= sizeof(llfile))
+		return 0;
+
+	/* must end in x! */
+	if (fname[len - 1] != 'x')
+		return 0;
+
+	(void)strcpy(llfile, fname);
+	return 1;
+}
+
+struct lastlogx *
+getlastlogx(uid_t uid, struct lastlogx *ll)
+{
+	DBT key, data;
+	DB *db = dbopen(llfile, O_RDONLY|O_SHLOCK, 0, DB_HASH, NULL);
+
+	if (db == NULL)
+		return NULL;
+
+	key.data = &uid;
+	key.size = sizeof(uid);
+
+	if ((db->get)(db, &key, &data, 0) != 0)
+		goto error;
+
+	if (data.size != sizeof(*ll)) {
+		errno = EFTYPE;
+		goto error;
+	}
+
+	if (ll == NULL)
+		if ((ll = malloc(sizeof(*ll))) == NULL)
+			goto done;
+
+	(void)memcpy(ll, data.data, sizeof(*ll));
+	goto done;
+error:
+	ll = NULL;
+done:
+	(db->close)(db);
+	return ll;
+}
+
+int
+updlastlogx(const char *fname, uid_t uid, struct lastlogx *ll)
+{
+	DBT key, data;
+	int error = 0;
+	DB *db = dbopen(fname, O_RDWR|O_CREAT|O_EXLOCK, 0, DB_HASH, NULL);
+
+	if (db == NULL)
+		return -1;
+
+	key.data = &uid;
+	key.size = sizeof(uid);
+	data.data = ll;
+	data.size = sizeof(*ll);
+	if ((db->put)(db, &key, &data, 0) != 0)
+		error = -1;
+
+	(db->close)(db);
+	return error;
 }

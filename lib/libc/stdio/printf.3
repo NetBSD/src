@@ -1,4 +1,4 @@
-.\"	$NetBSD: printf.3,v 1.15.2.5 2002/03/22 20:42:27 nathanw Exp $
+.\"	$NetBSD: printf.3,v 1.15.2.6 2002/08/01 03:28:16 nathanw Exp $
 .\"
 .\" Copyright (c) 1990, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -721,6 +721,48 @@ The functions
 and
 .Fn vasprintf
 are modeled on the ones that first appeared in the GNU C library.
+.Sh CAVEATS
+Because
+.Fn sprintf
+and
+.Fn vsprintf
+assume an infinitely long string, callers must be careful not to
+overflow the actual space; this is often impossible to assure.
+For safety, programmers should use the
+.Fn snprintf
+and
+.Fn asprintf
+family of interfaces instead.
+Unfortunately, the
+.Fn snprintf
+interfaces are not available on older
+systems and the
+.Fn asprintf
+interfaces are not yet portable.
+.Pp
+It is important never to pass a string with user-supplied data as a
+format without using
+.Ql %s .
+An attacker can put format specifiers in the string to mangle your stack,
+leading to a possible security hole.
+This holds true even if you have built the string
+.Dq by hand
+using a function like
+.Fn snprintf ,
+as the resulting string may still contain user-supplied conversion specifiers
+for later interpolation by
+.Fn printf .
+.Pp
+Be sure to use the proper secure idiom:
+.Bd -literal -offset indent
+snprintf(buffer, sizeof(buffer), "%s", string);
+.Ed
+.Pp
+There is no way for printf to know the size of each argument passed.
+If you use positional arguments you must ensure that all parameters, up to the
+last positionally specified parameter, are used in the format string.
+This allows for the format string to be parsed for this information.
+Failure to do this will mean your code is non-portable and liable to fail.
 .Sh BUGS
 The conversion formats
 .Cm \&%D ,
@@ -742,21 +784,3 @@ and
 conversions, as well as other nonsensical combinations such as
 .Cm %Ld ,
 are not standard; such combinations should be avoided.
-.Sh SECURITY CONSIDERATIONS
-Because
-.Fn sprintf
-and
-.Fn vsprintf
-assume an infinitely long string, callers must be careful not to
-overflow the actual space; this is often impossible to assure.
-For safety, programmers should use the
-.Fn snprintf
-and
-.Fn asprintf
-family of interfaces instead.
-Unfortunately, the
-.Fn snprintf
-interfaces are not available on older
-systems and the
-.Fn asprintf
-interfaces are not yet portable.

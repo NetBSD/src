@@ -1,4 +1,4 @@
-/*	$NetBSD: getaddrinfo.c,v 1.53.2.2 2002/06/21 18:18:14 nathanw Exp $	*/
+/*	$NetBSD: getaddrinfo.c,v 1.53.2.3 2002/08/01 03:28:13 nathanw Exp $	*/
 /*	$KAME: getaddrinfo.c,v 1.29 2000/08/31 17:26:57 itojun Exp $	*/
 
 /*
@@ -79,7 +79,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: getaddrinfo.c,v 1.53.2.2 2002/06/21 18:18:14 nathanw Exp $");
+__RCSID("$NetBSD: getaddrinfo.c,v 1.53.2.3 2002/08/01 03:28:13 nathanw Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include "namespace.h"
@@ -236,7 +236,7 @@ static const struct afd *find_afd __P((int));
 static int addrconfig __P((const struct addrinfo *));
 #endif
 #ifdef INET6
-static int ip6_str2scopeid __P((char *, struct sockaddr_in6 *));
+static int ip6_str2scopeid __P((char *, struct sockaddr_in6 *, u_int32_t *));
 #endif
 
 static struct addrinfo *getanswer __P((const querybuf *, int, const char *, int,
@@ -354,8 +354,9 @@ str_isnumber(p)
 	if (*p == '\0')
 		return NO;
 	ep = NULL;
+	errno = 0;
 	(void)strtoul(p, &ep, 10);
-	if (ep && *ep == '\0')
+	if (errno == 0 && ep && *ep == '\0')
 		return YES;
 	else
 		return NO;
@@ -848,13 +849,13 @@ explore_numeric_scope(pai, hostname, servname, res)
 
 	error = explore_numeric(pai, addr, servname, res);
 	if (error == 0) {
-		int scopeid;
+		u_int32_t scopeid;
 
 		for (cur = *res; cur; cur = cur->ai_next) {
 			if (cur->ai_family != AF_INET6)
 				continue;
 			sin6 = (struct sockaddr_in6 *)(void *)cur->ai_addr;
-			if ((scopeid = ip6_str2scopeid(scope, sin6)) == -1) {
+			if (ip6_str2scopeid(scope, sin6, &scopeid) == -1) {
 				free(hostname2);
 				return(EAI_NODATA); /* XXX: is return OK? */
 			}
@@ -977,9 +978,10 @@ get_port(ai, servname, matchonly)
 	if (str_isnumber(servname)) {
 		if (!allownumeric)
 			return EAI_SERVICE;
-		port = htons(atoi(servname));
+		port = atoi(servname);
 		if (port < 0 || port > 65535)
 			return EAI_SERVICE;
+		port = htons(port);
 	} else {
 		switch (ai->ai_socktype) {
 		case SOCK_DGRAM:
@@ -1058,16 +1060,18 @@ addrconfig(pai)
 #ifdef INET6
 /* convert a string to a scope identifier. XXX: IPv6 specific */
 static int
-ip6_str2scopeid(scope, sin6)
+ip6_str2scopeid(scope, sin6, scopeid)
 	char *scope;
 	struct sockaddr_in6 *sin6;
+	u_int32_t *scopeid;
 {
-	int scopeid;
+	u_long lscopeid;
 	struct in6_addr *a6;
 	char *ep;
 
 	_DIAGASSERT(scope != NULL);
 	_DIAGASSERT(sin6 != NULL);
+	_DIAGASSERT(scopeid != NULL);
 
 	a6 = &sin6->sin6_addr;
 
@@ -1081,10 +1085,10 @@ ip6_str2scopeid(scope, sin6)
 		 * and interfaces, so we simply use interface indices for
 		 * like-local scopes.
 		 */
-		scopeid = if_nametoindex(scope);
-		if (scopeid == 0)
+		*scopeid = if_nametoindex(scope);
+		if (*scopeid == 0)
 			goto trynumeric;
-		return(scopeid);
+		return 0;
 	}
 
 	/* still unclear about literal, allow numeric only - placeholder */
@@ -1097,9 +1101,11 @@ ip6_str2scopeid(scope, sin6)
 
 	/* try to convert to a numeric id as a last resort */
   trynumeric:
-	scopeid = (int)strtoul(scope, &ep, 10);
-	if (*ep == '\0')
-		return scopeid;
+	errno = 0;
+	lscopeid = strtoul(scope, &ep, 10);
+	*scopeid = (u_int32_t)(lscopeid & 0xffffffffUL);
+	if (errno == 0 && ep && *ep == '\0' && *scopeid == lscopeid)
+		return 0;
 	else
 		return -1;
 }
@@ -1127,8 +1133,8 @@ getanswer(answer, anslen, qname, qtype, pai)
 	const u_char *cp;
 	int n;
 	const u_char *eom;
-	char *bp;
-	int type, class, buflen, ancount, qdcount;
+	char *bp, *ep;
+	int type, class, ancount, qdcount;
 	int haveanswer, had_error;
 	char tbuf[MAXDNAME];
 	int (*name_ok) __P((const char *));
@@ -1159,13 +1165,13 @@ getanswer(answer, anslen, qname, qtype, pai)
 	ancount = ntohs(hp->ancount);
 	qdcount = ntohs(hp->qdcount);
 	bp = hostbuf;
-	buflen = sizeof hostbuf;
+	ep = hostbuf + sizeof hostbuf;
 	cp = answer->buf + HFIXEDSZ;
 	if (qdcount != 1) {
 		h_errno = NO_RECOVERY;
 		return (NULL);
 	}
-	n = dn_expand(answer->buf, eom, cp, bp, buflen);
+	n = dn_expand(answer->buf, eom, cp, bp, ep - bp);
 	if ((n < 0) || !(*name_ok)(bp)) {
 		h_errno = NO_RECOVERY;
 		return (NULL);
@@ -1183,14 +1189,13 @@ getanswer(answer, anslen, qname, qtype, pai)
 		}
 		canonname = bp;
 		bp += n;
-		buflen -= n;
 		/* The qname can be abbreviated, but h_name is now absolute. */
 		qname = canonname;
 	}
 	haveanswer = 0;
 	had_error = 0;
 	while (ancount-- > 0 && cp < eom && !had_error) {
-		n = dn_expand(answer->buf, eom, cp, bp, buflen);
+		n = dn_expand(answer->buf, eom, cp, bp, ep - bp);
 		if ((n < 0) || !(*name_ok)(bp)) {
 			had_error++;
 			continue;
@@ -1217,14 +1222,13 @@ getanswer(answer, anslen, qname, qtype, pai)
 			cp += n;
 			/* Get canonical name. */
 			n = strlen(tbuf) + 1;	/* for the \0 */
-			if (n > buflen || n >= MAXHOSTNAMELEN) {
+			if (n > ep - bp || n >= MAXHOSTNAMELEN) {
 				had_error++;
 				continue;
 			}
 			strcpy(bp, tbuf);
 			canonname = bp;
 			bp += n;
-			buflen -= n;
 			continue;
 		}
 		if (qtype == T_ANY) {
@@ -1264,7 +1268,6 @@ getanswer(answer, anslen, qname, qtype, pai)
 				canonname = bp;
 				nn = strlen(bp) + 1;	/* for the \0 */
 				bp += nn;
-				buflen -= nn;
 			}
 
 			/* don't overwrite pai */
@@ -1734,7 +1737,7 @@ res_queryN(name, target)
 			rcode = hp->rcode;	/* record most recent error */
 #ifdef DEBUG
 			if (_res.options & RES_DEBUG)
-				printf(";; rcode = %d, ancount=%d\n", hp->rcode,
+				printf(";; rcode = %u, ancount=%u\n", hp->rcode,
 				    ntohs(hp->ancount));
 #endif
 			continue;

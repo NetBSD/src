@@ -1,4 +1,4 @@
-.\"	$NetBSD: isupper.3,v 1.7.12.2 2002/03/22 20:42:11 nathanw Exp $
+.\"	$NetBSD: isupper.3,v 1.7.12.3 2002/08/01 03:28:10 nathanw Exp $
 .\"
 .\" Copyright (c) 1991 The Regents of the University of California.
 .\" All rights reserved.
@@ -93,3 +93,11 @@ The
 .Fn isupper
 function conforms to
 .St -ansiC .
+.Sh CAVEATS
+The argument to
+.Fn isupper
+must be
+.Dv EOF
+or representable as an
+.Li unsigned char ;
+otherwise, the result is undefined.

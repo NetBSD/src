@@ -1,4 +1,4 @@
-/*	$NetBSD: sysconf.c,v 1.12.6.3 2002/03/22 20:42:13 nathanw Exp $	*/
+/*	$NetBSD: sysconf.c,v 1.12.6.4 2002/08/01 03:28:11 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)sysconf.c	8.2 (Berkeley) 3/20/94";
 #else
-__RCSID("$NetBSD: sysconf.c,v 1.12.6.3 2002/03/22 20:42:13 nathanw Exp $");
+__RCSID("$NetBSD: sysconf.c,v 1.12.6.4 2002/08/01 03:28:11 nathanw Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -78,6 +78,8 @@ sysconf(name)
 	struct rlimit rl;
 	size_t len;
 	int mib[2], value;
+	struct clockinfo tmpclock;
+	static int clk_tck;
 
 	len = sizeof(value);
 
@@ -89,8 +91,28 @@ sysconf(name)
 		break;
 	case _SC_CHILD_MAX:
 		return (getrlimit(RLIMIT_NPROC, &rl) ? -1 : (long)rl.rlim_cur);
+	case _O_SC_CLK_TCK:
+		/*
+		 * For applications compiled when CLK_TCK was a compile-time
+		 * constant.
+		 */
+		return 100;
 	case _SC_CLK_TCK:
-		return (CLK_TCK);
+		/*
+		 * Has to be handled specially because it returns a
+		 * struct clockinfo instead of an integer. Also, since
+		 * this might be called often by some things that
+		 * don't grok CLK_TCK can be a macro expanding to a
+		 * function, cache the value.
+		 */
+		if (clk_tck == 0) {
+			mib[0] = CTL_KERN;
+			mib[1] = KERN_CLOCKRATE;
+			len = sizeof(struct clockinfo);
+			clk_tck = sysctl(mib, 2, &tmpclock, &len, NULL, 0)
+			    == -1 ? -1 : tmpclock.hz;
+		}
+		return(clk_tck);
 	case _SC_JOB_CONTROL:
 		mib[0] = CTL_KERN;
 		mib[1] = KERN_JOB_CONTROL;
