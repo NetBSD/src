@@ -31,7 +31,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)tty_pty.c	7.21 (Berkeley) 5/30/91
- *	$Id: tty_pty.c,v 1.6 1993/06/06 23:05:15 cgd Exp $
+ *	$Id: tty_pty.c,v 1.7 1993/06/27 06:06:47 andrew Exp $
  */
 
 /*
@@ -82,9 +82,13 @@ int	npty = NPTY;		/* for pstat -t */
 #define	PF_NOSTOP	0x40
 #define PF_UCNTL	0x80		/* user control mode */
 
+void ptcwakeup __P((struct tty *tp, int flag));
+
 /*ARGSUSED*/
+int
 ptsopen(dev, flag, devtype, p)
 	dev_t dev;
+	int flag, devtype;
 	struct proc *p;
 {
 	register struct tty *tp;
@@ -122,11 +126,12 @@ ptsopen(dev, flag, devtype, p)
 		    ttopen, 0))
 			return (error);
 	}
-	error = (*linesw[tp->t_line].l_open)(dev, tp, flag);
+	error = (*linesw[tp->t_line].l_open)(dev, tp);
 	ptcwakeup(tp, FREAD|FWRITE);
 	return (error);
 }
 
+int
 ptsclose(dev, flag, mode, p)
 	dev_t dev;
 	int flag, mode;
@@ -141,9 +146,11 @@ ptsclose(dev, flag, mode, p)
 	return(0);
 }
 
+int
 ptsread(dev, uio, flag)
 	dev_t dev;
 	struct uio *uio;
+	int flag;
 {
 	struct proc *p = curproc;
 	register struct tty *tp = pt_tty[minor(dev)];
@@ -192,9 +199,11 @@ again:
  * Wakeups of controlling tty will happen
  * indirectly, when tty driver calls ptsstart.
  */
+int
 ptswrite(dev, uio, flag)
 	dev_t dev;
 	struct uio *uio;
+	int flag;
 {
 	register struct tty *tp;
 
@@ -208,22 +217,27 @@ ptswrite(dev, uio, flag)
  * Start output on pseudo-tty.
  * Wake up process selecting or sleeping for input from controlling tty.
  */
+int
 ptsstart(tp)
 	struct tty *tp;
 {
 	register struct pt_ioctl *pti = &pt_ioctl[minor(tp->t_dev)];
 
 	if (tp->t_state & TS_TTSTOP)
-		return;
+		return 0;	/* XXX should we return 1? */
 	if (pti->pt_flags & PF_STOPPED) {
 		pti->pt_flags &= ~PF_STOPPED;
 		pti->pt_send = TIOCPKT_START;
 	}
 	ptcwakeup(tp, FREAD);
+
+	return 0;
 }
 
+void
 ptcwakeup(tp, flag)
 	struct tty *tp;
+	int flag;
 {
 	struct pt_ioctl *pti = &pt_ioctl[minor(tp->t_dev)];
 
@@ -239,8 +253,10 @@ ptcwakeup(tp, flag)
 
 /*ARGSUSED*/
 #ifdef __STDC__
+int
 ptcopen(dev_t dev, int flag, int devtype, struct proc *p)
 #else
+int
 ptcopen(dev, flag, devtype, p)
 	dev_t dev;
 	int flag, devtype;
@@ -271,6 +287,8 @@ ptcopen(dev, flag, devtype, p)
 }
 
 extern struct tty *constty;	/* -hv- 06.Oct.92*/
+
+int
 ptcclose(dev)
 	dev_t dev;
 {
@@ -300,9 +318,11 @@ ptcclose(dev)
 	return (0);
 }
 
+int
 ptcread(dev, uio, flag)
 	dev_t dev;
 	struct uio *uio;
+	int flag;
 {
 	register struct tty *tp = pt_tty[minor(dev)];
 	struct pt_ioctl *pti = &pt_ioctl[minor(dev)];
@@ -324,7 +344,8 @@ ptcread(dev, uio, flag)
 				if (pti->pt_send & TIOCPKT_IOCTL) {
 					cc = MIN(uio->uio_resid,
 						sizeof(tp->t_termios));
-					uiomove(&tp->t_termios, cc, uio);
+					uiomove((caddr_t)&tp->t_termios, cc,
+						uio);
 				}
 				pti->pt_send = 0;
 				return (0);
@@ -374,6 +395,7 @@ ptcread(dev, uio, flag)
 	return (error);
 }
 
+void
 ptsstop(tp, flush)
 	register struct tty *tp;
 	int flush;
@@ -397,6 +419,7 @@ ptsstop(tp, flush)
 	ptcwakeup(tp, flag);
 }
 
+int
 ptcselect(dev, rw, p)
 	dev_t dev;
 	int rw;
@@ -404,7 +427,6 @@ ptcselect(dev, rw, p)
 {
 	register struct tty *tp = pt_tty[minor(dev)];
 	struct pt_ioctl *pti = &pt_ioctl[minor(dev)];
-	struct proc *prev;
 	int s;
 
 	if ((tp->t_state&TS_CARR_ON) == 0)
@@ -452,9 +474,11 @@ ptcselect(dev, rw, p)
 	return (0);
 }
 
+int
 ptcwrite(dev, uio, flag)
 	dev_t dev;
 	register struct uio *uio;
+	int flag;
 {
 	register struct tty *tp = pt_tty[minor(dev)];
 	register u_char *cp;
@@ -547,15 +571,16 @@ block:
 }
 
 /*ARGSUSED*/
+int
 ptyioctl(dev, cmd, data, flag)
 	caddr_t data;
+	int cmd, flag;
 	dev_t dev;
 {
 	register struct tty *tp = pt_tty[minor(dev)];
 	register struct pt_ioctl *pti = &pt_ioctl[minor(dev)];
 	register u_char *cc = tp->t_cc;
 	int stop, error;
-	extern ttyinput();
 
 	/*
 	 * IF CONTROLLER STTY THEN MUST FLUSH TO PREVENT A HANG.
@@ -656,7 +681,7 @@ ptyioctl(dev, cmd, data, flag)
 	if (linesw[tp->t_line].l_rint != ttyinput) {
 		(*linesw[tp->t_line].l_close)(tp, flag);
 		tp->t_line = TTYDISC;
-		(void)(*linesw[tp->t_line].l_open)(dev, tp, flag);
+		(void)(*linesw[tp->t_line].l_open)(dev, tp);
 		error = ENOTTY;
 	}
 	if (error < 0) {
