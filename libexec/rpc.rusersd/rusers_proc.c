@@ -1,4 +1,4 @@
-/*	$NetBSD: rusers_proc.c,v 1.16 1998/01/20 17:39:14 christos Exp $	*/
+/*	$NetBSD: rusers_proc.c,v 1.17 1998/04/01 14:47:01 kleink Exp $	*/
 
 /*-
  *  Copyright (c) 1993 John Brezak
@@ -30,22 +30,23 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: rusers_proc.c,v 1.16 1998/01/20 17:39:14 christos Exp $");
+__RCSID("$NetBSD: rusers_proc.c,v 1.17 1998/04/01 14:47:01 kleink Exp $");
 #endif /* not lint */
-
-#include <stdio.h>
-#include <string.h>
-#include <stdlib.h>
-#include <unistd.h>
-#include <signal.h>
-#include <syslog.h>
-#include <utmp.h>
 
 #include <sys/types.h>
 #include <sys/time.h>
 #include <sys/socket.h>
 #include <sys/param.h>
 #include <sys/stat.h>
+
+#include <stdio.h>
+#include <string.h>
+#include <stdlib.h>
+#include <time.h>
+#include <unistd.h>
+#include <signal.h>
+#include <syslog.h>
+#include <utmp.h>
 
 #include <rpc/rpc.h>
 
