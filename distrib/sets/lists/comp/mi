@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.286 2000/12/17 13:52:04 ad Exp $
+#	$NetBSD: mi,v 1.287 2000/12/21 05:41:37 itojun Exp $
 ./sys			comp-sysutil-root
 ./usr/bin/addr2line	comp-miscutil-bin
 ./usr/bin/ar		comp-util-bin
@@ -1170,6 +1170,7 @@
 ./usr/include/varargs.h		comp-c-include
 ./usr/include/vis.h		comp-c-include
 ./usr/include/wchar.h		comp-c-include
+./usr/include/wctype.h		comp-c-include
 ./usr/include/zconf.h		comp-c-include
 ./usr/include/zlib.h		comp-c-include
 ./usr/lib/crt0.o		comp-c-lib
