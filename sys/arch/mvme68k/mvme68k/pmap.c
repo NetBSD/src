@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.45 2000/09/13 15:00:20 thorpej Exp $        */
+/*	$NetBSD: pmap.c,v 1.46 2000/09/22 08:27:00 scw Exp $        */
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -1650,6 +1650,46 @@ pmap_zero_page(phys)
 #endif
 
 	splx(s);
+}
+
+/*
+ * pmap_zero_page_uncached:
+ *
+ *	Same as above, except uncached.  Used in uvm_pageidlezero,
+ *	through PMAP_PAGEIDLEZERO macro.  Returns TRUE if the page
+ *	was zero'd, FALSE if we aborted.
+ */
+void
+pmap_zero_page_uncached(phys)
+	paddr_t phys;
+{
+	int s, npte;
+
+	PMAP_DPRINTF(PDB_FOLLOW, ("pmap_zero_page_uncached(%lx)\n", phys));
+
+#if defined(M68040) || defined(M68060)
+	if (mmutype == MMU_68040) {
+		DCPP(phys);
+	}
+#endif
+
+	npte = phys | PG_V | PG_CI;
+
+	s = splimp();
+
+	*caddr1_pte = npte;
+	TBIS((vaddr_t)CADDR1);
+
+	zeropage(CADDR1);
+
+#ifdef DEBUG
+	*caddr1_pte = PG_NV;
+	TBIS((vaddr_t)CADDR1);
+#endif
+
+	splx(s);
+
+	return (TRUE);
 }
 
 /*
