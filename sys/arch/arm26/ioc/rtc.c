@@ -1,4 +1,4 @@
-/*	$NetBSD: rtc.c,v 1.1 2000/05/09 21:56:02 bjh21 Exp $	*/
+/*	$NetBSD: rtc.c,v 1.2 2000/06/28 15:25:03 bjh21 Exp $	*/
 
 /*
  * Copyright (c) 2000 Ben Harris
@@ -46,7 +46,7 @@
 
 #include <sys/param.h>
 
-__RCSID("$NetBSD: rtc.c,v 1.1 2000/05/09 21:56:02 bjh21 Exp $");
+__RCSID("$NetBSD: rtc.c,v 1.2 2000/06/28 15:25:03 bjh21 Exp $");
 
 #include <sys/systm.h>
 #include <sys/kernel.h>
@@ -128,11 +128,11 @@ rtcattach(parent, self, aux)
 
 		if (iic_control(self->dv_parent, sc->sc_addr | IIC_WRITE,
 				buff, 1))
-			return;
+			goto out;
 
 		if (iic_control(self->dv_parent, sc->sc_addr | IIC_READ,
 				buff, 1))
-			return;
+			goto out;
 
 		switch (buff[0] & PCF8583_CSR_FN_MASK) {
 		case PCF8583_CSR_FN_32768HZ:
@@ -156,6 +156,7 @@ rtcattach(parent, self, aux)
 		sc->sc_flags &= ~RTC_BROKEN;
 	}
 
+ out:
 	printf("\n");
 }
 
