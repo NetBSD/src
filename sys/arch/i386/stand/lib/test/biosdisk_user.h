@@ -1,4 +1,4 @@
-/*	$NetBSD: biosdisk_user.h,v 1.1 1998/05/15 17:07:15 drochner Exp $	*/
+/*	$NetBSD: biosdisk_user.h,v 1.2 1999/03/30 11:51:36 drochner Exp $	*/
 
 /*
  * Copyright (c) 1998
@@ -41,7 +41,7 @@
 struct emuldisktabentry {
 	int biosdev;
 	char *name;
-	int spt, heads;
+	int spt, heads, cyls;
 };
 
 extern struct emuldisktabentry emuldisktab[];
@@ -49,10 +49,10 @@ extern struct emuldisktabentry emuldisktab[];
 #if 0
 This is an example:
 struct emuldisktabentry emuldisktab[] = {
-	{0, "/dev/rfd0a", 18, 2},
-	{1, "fdimage", 18, 2},
-	{0x80, "/dev/rwd0d", 100, 4},
-	{0x81, "hdimage", 100, 4},
+	{0, "/dev/rfd0a", 18, 2, 80},
+	{1, "fdimage", 18, 2, 80},
+	{0x80, "/dev/rwd0d", 100, 4, 1000},
+	{0x81, "hdimage", 100, 4, 1000},
 	{-1}
 };
 #endif
