@@ -1,4 +1,4 @@
-/*	$NetBSD: faithd.c,v 1.4 1999/12/20 15:35:55 itojun Exp $	*/
+/*	$NetBSD: faithd.c,v 1.5 1999/12/20 16:01:31 itojun Exp $	*/
 
 /*
  * Copyright (C) 1997 and 1998 WIDE Project.
@@ -539,7 +539,7 @@ faith_prefix(struct sockaddr *dst)
 		switch (dst->sa_family) {
 		case AF_INET6:
 			if (sin6->sin6_scope_id == dst6->sin6_scope_id
-			 && IN6_ARE_ADDR_EQUAL(&sin6->sin6_addr, &dst6->sin6_addr) == 0)
+			 && IN6_ARE_ADDR_EQUAL(&sin6->sin6_addr, &dst6->sin6_addr))
 				return 0;
 			break;
 		case AF_INET:
