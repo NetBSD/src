@@ -1,4 +1,4 @@
-/*	$NetBSD: msg.mi.eng,v 1.7.2.1 1997/10/27 19:36:23 thorpej Exp $	*/
+/*	$NetBSD: msg.mi.eng,v 1.7.2.2 1997/10/30 06:12:21 mellon Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -37,6 +37,10 @@
  */
 
 /* MI Message catalog -- english, machine independent */
+
+message yes {Yes}
+
+message no {No}
 
 message install
 {install}
@@ -253,6 +257,14 @@ you are ready at a later time, you may select "upgrade" from the main
 menu to complete the installation.
 }
 
+message distset
+{The NetBSD distribution is broken into a collection of distribution
+sets.  There are some basic sets that are needed by all instalations
+and there are some other sets that are not needed by all installations.
+You may choose to install all of them (Full installation) or you 
+select from the optional distribution sets.
+}
+
 message ftpsource
 {The following is the ftp site, directory, user, and password currently
 ready to use.  If "user" is "ftp", then the password is not needed.
@@ -432,16 +444,17 @@ they are upgraded.  Do you want this file system upgraded?
 message fddev
 {What floppy device do you want to use? }
 
-message fdload
-{Do you want to load the distribution set "%s"? }
-
 message fdmount
-{Please load the floppy containing the file named "%s/%s". }
+{Please load the floppy containing the file named "%s". }
+
+message fdnotfound
+{Could not find the file named "%s" on the disk.  Please load the
+floppy with that file on it.}
 
 message fdremount
 {The floppy was not mounted successfully.  You may:
 
-    Try again and put in the floppy containing the file named "%s/%s".
+    Try again and put in the floppy containing the file named "%s".
 
     Not load any more files from floppy and abort the process.
 }
@@ -449,3 +462,8 @@ message fdremount
 message mntnetconfig
 {Is the network information you entered accurate for this machine
 in regular operation and do you want it installed in /etc? }
+
+message cur_distsets
+{The following is the list of distribution sets that will be used.
+
+}
