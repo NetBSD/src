@@ -43,7 +43,7 @@
 
 #ifndef lint
 static char copyright[] =
-"$Id: bootp.c,v 1.13 2000/09/04 23:19:37 mellon Exp $ Copyright (c) 1995-2000 The Internet Software Consortium.  All rights reserved.\n";
+"$Id: bootp.c,v 1.14 2000/10/17 16:10:44 taca Exp $ Copyright (c) 1995-2000 The Internet Software Consortium.  All rights reserved.\n";
 #endif /* not lint */
 
 #include "dhcpd.h"
@@ -241,7 +241,8 @@ void bootp (packet)
 			cons_options (packet, outgoing.raw, lease, 0,
 				      packet -> options, options,
 				      &lease -> scope,
-				      0, 0, 1, (struct data_string *)0);
+				      0, 0, 1, (struct data_string *)0,
+				      (const char *)0);
 		if (outgoing.packet_length < BOOTP_MIN_LEN)
 			outgoing.packet_length = BOOTP_MIN_LEN;
 	}
