@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.README,v 1.38 1998/05/13 13:58:00 simonb Exp $
+#	$NetBSD: bsd.README,v 1.39 1998/06/12 23:28:53 cgd Exp $
 #	@(#)bsd.README	8.2 (Berkeley) 4/2/94
 
 This is the README file for the new make "include" files for the BSD
@@ -421,6 +421,14 @@ variables:
 INCS	The list of include files
 
 INCSDIR	The location to install the include files.
+
+=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
+
+The include file <bsd.kinc.mk> defines the many targets (includes,
+subdirectories, etc.), and is used by kernel makefiles to handle
+include file installation.  It is intended to be included alone, by
+kernel Makefiles.  Please see bsd.kinc.mk for more details, and keep
+the documentation in that file up to date.
 
 =-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
 
