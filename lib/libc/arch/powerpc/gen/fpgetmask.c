@@ -1,4 +1,4 @@
-/*	$NetBSD: fpgetmask.c,v 1.4 2004/04/02 22:55:19 matt Exp $	*/
+/*	$NetBSD: fpgetmask.c,v 1.5 2004/04/04 19:27:19 matt Exp $	*/
 
 /*
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -50,11 +50,12 @@ __weak_alias(fpgetmask,_fpgetmask)
 
 #define	MASKBITS	(FPSCR_VE|FPSCR_OE|FPSCR_UE|FPSCR_ZE|FPSCR_XE)
 #define	MASKSHFT	3
+
 fp_except
 fpgetmask(void)
 {
-	u_int64_t fpscr;
+	uint64_t fpscr;
 
 	__asm__ __volatile("mffs %0" : "=f"(fpscr));
-	return (((fp_except)fpscr & MASKBITS) >> MASKSHFT);
+	return (((uint32_t)fpscr & MASKBITS) >> MASKSHFT);
 }
