@@ -1,4 +1,4 @@
-/*	$NetBSD: rexecd.c,v 1.14 2002/12/06 02:01:35 thorpej Exp $	*/
+/*	$NetBSD: rexecd.c,v 1.15 2003/03/03 18:57:53 dsl Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -40,7 +40,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1993\n\
 #if 0
 static char sccsid[] = "from: @(#)rexecd.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: rexecd.c,v 1.14 2002/12/06 02:01:35 thorpej Exp $");
+__RCSID("$NetBSD: rexecd.c,v 1.15 2003/03/03 18:57:53 dsl Exp $");
 #endif
 #endif /* not lint */
 
@@ -249,7 +249,6 @@ doit(f, fromp)
 			} while ((fds[0].events | fds[1].events) & POLLIN);
 			_exit(0);
 		}
-		(void)setpgrp(0, getpid());
 		(void)close(s);
 		(void)close(pv[0]);
 		if (dup2(pv[1], 2) < 0) {
@@ -263,7 +262,8 @@ doit(f, fromp)
 		pwd->pw_shell = _PATH_BSHELL;
 	if (f > 2)
 		(void)close(f);
-	if (setlogin(pwd->pw_name) < 0 ||
+	if (setsid() < 0 ||
+	    setlogin(pwd->pw_name) < 0 ||
 	    initgroups(pwd->pw_name, pwd->pw_gid) < 0 ||
 	    setgid((gid_t)pwd->pw_gid) < 0 || 
 	    setuid((uid_t)pwd->pw_uid) < 0) {
