@@ -1,4 +1,4 @@
-/*	$NetBSD: binpatch.c,v 1.2 1997/11/01 06:49:20 lukem Exp $	*/
+/*	$NetBSD: binpatch.c,v 1.3 1999/04/06 19:34:31 pk Exp $	*/
 
 /*
  * Copyright (c) 1994 Christian E. Hopps
@@ -15,7 +15,7 @@
  * 3. All advertising materials mentioning features or use of this software
  *    must display the following acknowledgement:
  *      This product includes software developed by Christian E. Hopps.
- * 3. The name of the author may not be used to endorse or promote products
+ * 4. The name of the author may not be used to endorse or promote products
  *    derived from this software without specific prior written permission
  *
  * THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR
