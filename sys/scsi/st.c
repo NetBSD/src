@@ -13,7 +13,7 @@
  * on the understanding that TFS is not responsible for the correct
  * functioning of this software in any circumstances.
  *
- *	$Id: st.c,v 1.12 1993/06/27 06:59:23 andrew Exp $
+ *	$Id: st.c,v 1.13 1993/07/09 04:28:55 cgd Exp $
  */
 
 /*
@@ -574,7 +574,7 @@ st_done(int unit, struct scsi_xfer *xs)
 				 * again for more data... we have it all
 				 * SO SET THE ERROR BIT!
 				 *
-				 * UNDER MACH:(CMU)
+				 * UNDER MACH (CMU) and NetBSD:
 				 * To indicate the same as above, we
 				 * need only have a non 0 resid that is
 				 * less than the b_bcount, but the
@@ -596,7 +596,7 @@ st_done(int unit, struct scsi_xfer *xs)
 				 * for EOM and resid == count for EOF).
 				 * We will report the EOx NEXT time..
 				 */
-				bp->b_flags |= B_ERROR;
+				bp->b_flags &= ~B_ERROR;
 				bp->b_error = 0;
 				bp->b_resid = xs->resid;
 				if((st->flags & ST_FIXEDBLOCKS)) {
