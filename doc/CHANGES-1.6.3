@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-1.6.3,v 1.1.2.91 2004/05/06 18:41:01 jmc Exp $
+#	$NetBSD: CHANGES-1.6.3,v 1.1.2.92 2004/05/06 18:48:11 jmc Exp $
 
 A complete list of changes from NetBSD 1.6.2 to NetBSD 1.6.3:
 
@@ -663,3 +663,8 @@ sys/dev/microcode/isp/asm_2100.h		1.4-1.5
 	stable under heavy load with the current driver on multiple systems 
 	on which we can reproduce the failure with newer versions.
 	[tls, ticket #1683]
+
+dist/am-utils/libamu/misc_rpc.c			1.2-1.3
+
+	Avoid a cast between pointers to different integer sizes
+	[aymeric, ticket #1681]
