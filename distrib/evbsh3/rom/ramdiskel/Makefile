@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.3 2000/11/01 07:57:57 garbled Exp $
+#	$NetBSD: Makefile,v 1.4 2000/11/14 06:37:07 msaitoh Exp $
 
 TOP=		${.CURDIR}/..
 WARNS=1
@@ -18,14 +18,18 @@ VND_CRDEV=	/dev/r${VND}d
 IMAGE?=		xxx.fs
 MDEC=		${DESTDIR}/usr/mdec
 
-SUDO=		sudo
-CRUNCHGEN?=	/usr/local/bin/sh-crunchgen
-DISKLABEL=	${SUDO} disklabel
-MOUNT=		${SUDO} mount
-MTREE=		${SUDO} mtree
-NEWFS=		${SUDO} newfs
-UMOUNT=		${SUDO} umount
-VNCONFIG=	${SUDO} vnconfig
+#CRUNCHGEN?=	sh-crunchgen
+
+# for cross compile
+#CRUNCHIDE?=	sh-crunchide
+
+SUDO?=		sudo
+DISKLABEL?=	${SUDO} disklabel
+MOUNT?=		${SUDO} mount
+MTREE?=		${SUDO} mtree
+NEWFS?=		${SUDO} newfs
+UMOUNT?=	${SUDO} umount
+VNCONFIG?=	${SUDO} vnconfig
 
 LISTS=		../ramdiskcommon/list
 CRUNCHCONF=	../ramdiskcommon/${CBIN}.conf
@@ -66,7 +70,6 @@ ${CBIN}.mk ${CBIN}.cache ${CBIN}.c: ${CRUNCHCONF}
 	${CRUNCHGEN} -D ${TOP}/../../.. -L ${.CURDIR} ${.ALLSRC}
 
 ${CBIN}: ${CBIN}.mk ${CBIN}.cache ${CBIN}.c
-	PATH=/usr/local/shel-evbsh3112-netbsdcoff/bin:${PATH} \
 	${MAKE} -f ${CBIN}.mk all
 
 # This is listed in stonebin.conf but is built here.
