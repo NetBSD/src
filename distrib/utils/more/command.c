@@ -1,4 +1,4 @@
-/*	$NetBSD: command.c,v 1.6 2001/01/04 16:17:14 lukem Exp $	*/
+/*	$NetBSD: command.c,v 1.7 2003/08/06 13:36:54 itojun Exp $	*/
 
 /*
  * Copyright (c) 1988 Mark Nudleman
@@ -39,7 +39,7 @@
 #if 0
 static char sccsid[] = "@(#)command.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: command.c,v 1.6 2001/01/04 16:17:14 lukem Exp $");
+__RCSID("$NetBSD: command.c,v 1.7 2003/08/06 13:36:54 itojun Exp $");
 #endif
 #endif /* not lint */
 
@@ -185,19 +185,22 @@ prompt()
 		putstr(current_name);
 		putstr(":");
 		if (!ispipe) {
-			(void)sprintf(pbuf, " file %d/%d", curr_ac + 1, ac);
+			(void)snprintf(pbuf, sizeof(pbuf), " file %d/%d",
+			    curr_ac + 1, ac);
 			putstr(pbuf);
 		}
 		if (linenums) {
-			(void)sprintf(pbuf, " line %d", currline(BOTTOM));
+			(void)snprintf(pbuf, sizeof(pbuf), " line %d",
+			    currline(BOTTOM));
 			putstr(pbuf);
 		}
 		if ((pos = position(BOTTOM)) != NULL_POSITION) {
-			(void)sprintf(pbuf, " byte %lld", (long long)pos);
+			(void)snprintf(pbuf, sizeof(pbuf), " byte %lld",
+			    (long long)pos);
 			putstr(pbuf);
 			if (!ispipe && (len = ch_length())) {
-				(void)sprintf(pbuf, "/%lld pct %lld%%",
-				    (long long)len,
+				(void)snprintf(pbuf, sizeof(pbuf),
+				    "/%lld pct %lld%%", (long long)len,
 				    (long long)((100 * pos) / len));
 				putstr(pbuf);
 			}
@@ -219,7 +222,7 @@ prompt()
 		else if (!ispipe &&
 		    (pos = position(BOTTOM)) != NULL_POSITION &&
 		    (len = ch_length())) {
-			(void)sprintf(pbuf, " (%lld%%)",
+			(void)snprintf(pbuf, sizeof(pbuf), " (%lld%%)",
 			    (long long)((100 * pos) / len));
 			putstr(pbuf);
 		}
@@ -593,9 +596,10 @@ editfile()
 			dolinenumber = 0;
 	}
 	if (dolinenumber && (c = currline(MIDDLE)))
-		(void)sprintf(buf, "%s +%d %s", editor, c, current_file);
+		(void)snprintf(buf, sizeof(buf), "%s +%d %s", editor, c,
+		    current_file);
 	else
-		(void)sprintf(buf, "%s %s", editor, current_file);
+		(void)snprintf(buf, sizeof(buf), "%s %s", editor, current_file);
 	lsystem(buf);
 }
 
