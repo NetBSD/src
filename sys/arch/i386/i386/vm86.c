@@ -1,4 +1,4 @@
-/*	$NetBSD: vm86.c,v 1.1 1996/01/08 13:51:40 mycroft Exp $	*/
+/*	$NetBSD: vm86.c,v 1.2 1996/01/08 19:11:00 mycroft Exp $	*/
 
 /*
  *  Copyright (c) 1995 John T. Kohl
@@ -67,13 +67,82 @@
 static void return_to_32bit __P((struct proc *, int));
 static void fast_intxx __P((struct proc *, int));
 
-#define	ADDR(segment, addr)	((caddr_t)((segment << 4) + addr))
-
-#define IP_ADVANCE(x)	{ ip += (x); tf->tf_eip = ip; }
-#define SP_ADJUST(x)	{ sp += (x); tf->tf_esp = sp; }
-
 #define	SETDIRECT	((~(PSL_USERSTATIC|PSL_NT)) & 0xffff)
 #define	GETDIRECT	(SETDIRECT|0x02a) /* add in two MBZ bits */
+
+
+/*
+ * Boy are these ugly, but we need to do the correct 16-bit arithmetic.
+ * Gcc makes a mess of it, so we do it inline and use non-obvious calling
+ * conventions..
+ */
+#define putbyte(base, ptr, val) \
+__asm__ __volatile__( \
+	"decw %w0\n\t" \
+	"movb %2,0(%1,%0)" \
+	: "=r" (ptr) \
+	: "r" (base), "q" (val), "0" (ptr))
+
+#define putword(base, ptr, val) \
+__asm__ __volatile__( \
+	"decw %w0\n\t" \
+	"movb %h2,0(%1,%0)\n\t" \
+	"decw %w0\n\t" \
+	"movb %b2,0(%1,%0)" \
+	: "=r" (ptr) \
+	: "r" (base), "q" (val), "0" (ptr))
+
+#define putdword(base, ptr, val) \
+__asm__ __volatile__( \
+	"decw %w0\n\t" \
+	"rorl $16,%2\n\t" \
+	"movb %h2,0(%1,%0)\n\t" \
+	"decw %w0\n\t" \
+	"movb %b2,0(%1,%0)\n\t" \
+	"decw %w0\n\t" \
+	"rorl $16,%2\n\t" \
+	"movb %h2,0(%1,%0)\n\t" \
+	"decw %w0\n\t" \
+	"movb %b2,0(%1,%0)" \
+	: "=r" (ptr) \
+	: "r" (base), "q" (val), "0" (ptr))
+
+#define getbyte(base, ptr) \
+({ unsigned long __res; \
+__asm__ __volatile__( \
+	"movb 0(%1,%0),%b2\n\t" \
+	"incw %w0" \
+	: "=r" (ptr), "=r" (base), "=q" (__res) \
+	: "0" (ptr), "1" (base), "2" (0)); \
+__res; })
+
+#define getword(base, ptr) \
+({ unsigned long __res; \
+__asm__ __volatile__( \
+	"movb 0(%1,%0),%b2\n\t" \
+	"incw %w0\n\t" \
+	"movb 0(%1,%0),%h2\n\t" \
+	"incw %w0" \
+	: "=r" (ptr), "=r" (base), "=q" (__res) \
+	: "0" (ptr), "1" (base), "2" (0)); \
+__res; })
+
+#define getdword(base, ptr) \
+({ unsigned long __res; \
+__asm__ __volatile__( \
+	"movb 0(%1,%0),%b2\n\t" \
+	"incw %w0\n\t" \
+	"movb 0(%1,%0),%h2\n\t" \
+	"incw %w0\n\t" \
+	"rorl $16,%2\n\t" \
+	"movb 0(%1,%0),%b2\n\t" \
+	"incw %w0\n\t" \
+	"movb 0(%1,%0),%h2\n\t" \
+	"incw %w0\n\t" \
+	"rorl $16,%2" \
+	: "=r" (ptr), "=r" (base), "=q" (__res) \
+	: "0" (ptr), "1" (base)); \
+__res; })
 
 
 static __inline__ int
@@ -163,7 +232,8 @@ fast_intxx(p, intrno)
 	struct { u_short ip, cs; } ihand;
 	struct { u_short short1, short2, short3; } threeshorts;
 
-	u_short ip, cs, sp, ss;
+	u_short cs;
+	u_long ss;
 
 	/* 
 	 * Note: u_vm86p points to user-space, we only compute offsets
@@ -203,16 +273,12 @@ fast_intxx(p, intrno)
 	 * Otherwise, push flags, cs, eip, and jump to handler to
 	 * simulate direct INT call.
 	 */
-	ip = tf->tf_eip;
-	sp = tf->tf_esp;
-	ss = tf->tf_ss;
+	ss = tf->tf_ss << 4;
+	tf->tf_esp &= 0xffff;
 
-	threeshorts.short1 = ip;
-	threeshorts.short2 = cs;
-	SP_ADJUST(-6);
-	threeshorts.short3 = get_vflags(p);
-	if (copyout(&threeshorts, ADDR(ss, sp), sizeof(threeshorts)))
-		goto bad;
+	putword(ss, tf->tf_esp, get_vflags(p));
+	putword(ss, tf->tf_esp, tf->tf_cs);
+	putword(ss, tf->tf_esp, tf->tf_eip);
 
 	tf->tf_eip = ihand.ip;
 	tf->tf_cs = ihand.cs;
@@ -279,102 +345,75 @@ vm86_gpfault(p, type)
 	 * address space for checking.  remember that the frame's
 	 * segment selectors are real-mode style selectors.
 	 */
-	u_short tmpshort;	/* for fetching */
-	u_int tmpint;		/* for fetching */
-	struct { u_short short1, short2, short3; } threeshorts;
-	struct { u_int int1, int2, int3; } threeints;
+	u_long cs, ss;
 
-	u_short ip, cs, sp, ss;
-
-	ip = tf->tf_eip;
-	cs = tf->tf_cs;
-	sp = tf->tf_esp;
-	ss = tf->tf_ss;
+	cs = tf->tf_cs << 4;
+	tf->tf_eip &= 0xffff;
+	ss = tf->tf_ss << 4;
+	tf->tf_esp &= 0xffff;
 
 	/*
 	 * For most of these, we must set all the registers before calling
 	 * macros/functions which might do a return_to_32bit.
 	 */
-	switch (fubyte(ADDR(cs, ip))) {
+	switch (getbyte(cs, tf->tf_eip)) {
 	case CLI:
 		/* simulate handling of IF */
-		IP_ADVANCE(1);
 		VM86_EFLAGS(p) &= ~PSL_VIF;
 		tf->tf_eflags &= ~PSL_VIF;
-		return;
+		break;
 
 	case STI:
 		/* simulate handling of IF.
 		 * XXX the i386 enables interrupts one instruction later.
 		 * code here is wrong, but much simpler than doing it Right.
 		 */
-		IP_ADVANCE(1);
 		set_vif(p);
-		return;
+		break;
 
 	case INTxx:
 		/* try fast intxx, or return to 32bit mode to handle it. */
-		IP_ADVANCE(2);
-		fast_intxx(p, fubyte(ADDR(cs, ip - 1)));
-		return;
-
-	case POPF:
-		tmpshort = fusword(ADDR(ss, sp));
-		SP_ADJUST(2);
-		IP_ADVANCE(1);
-		set_vflags_short(p, tmpshort);
-		return;
+		fast_intxx(p, getbyte(cs, tf->tf_eip));
+		break;
 
 	case PUSHF:
-		tmpshort = get_vflags(p);
-		SP_ADJUST(-2);
-		IP_ADVANCE(1);
-		susword(ADDR(ss, sp), tmpshort);
-		return;
+		putword(ss, tf->tf_esp, get_vflags(p));
+		break;
 
 	case IRET:
-		/* pop ip, cs, flags */
-		if (copyin(ADDR(ss, sp), &threeshorts, sizeof(threeshorts)))
-			break;
-
-		tf->tf_eip = threeshorts.short1;
-		tf->tf_cs = threeshorts.short2;
-		SP_ADJUST(6);
-		set_vflags_short(p, threeshorts.short3);
-		return;
+		tf->tf_eip = getword(ss, tf->tf_esp);
+		tf->tf_cs = getword(ss, tf->tf_esp);
+	case POPF:
+		set_vflags_short(p, getword(ss, tf->tf_esp));
+		break;
 
 	case OPSIZ:
-		switch (fubyte(ADDR(cs, ip + 1))) {
-		case POPF:			/* popfd */
-			tmpint = fuword(ADDR(ss, sp));
-			SP_ADJUST(4);
-			IP_ADVANCE(2);
-			set_vflags(p, tmpint);
-			return;
-
-		case PUSHF:			/* pushfd */
-			tmpint = get_vflags(p);
-			SP_ADJUST(-4);
-			IP_ADVANCE(2);
-			suword(ADDR(ss, sp), tmpint);
-			return;
+		switch (getbyte(cs, tf->tf_eip)) {
+		case PUSHF:
+			putdword(ss, tf->tf_esp, get_vflags(p));
+			break;
 
 		case IRET:
-			if (copyin(ADDR(ss, sp), &threeints, sizeof(threeints)))
-				break;
+			tf->tf_eip = getdword(ss, tf->tf_esp);
+			tf->tf_cs = getdword(ss, tf->tf_esp);
+		case POPF:
+			set_vflags(p, getdword(ss, tf->tf_esp));
+			break;
 
-			tf->tf_eip = threeints.int1;
-			tf->tf_cs = threeints.int2;
-			SP_ADJUST(12);
-			set_vflags(p, threeints.int3);
-			return;
+		default:
+			tf->tf_eip -= 2;
+			goto bad;
 		}
 		break;
 
 	case LOCK:
-		break;
+	default:
+		tf->tf_eip -= 1;
+		goto bad;
 	}
+	return;
 
+bad:
 	return_to_32bit(p, VM86_UNKNOWN);
 	return;
 }
