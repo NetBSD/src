@@ -1,4 +1,4 @@
-/*	$NetBSD: init.c,v 1.29 1997/10/28 22:52:52 christos Exp $	*/
+/*	$NetBSD: init.c,v 1.30 1997/11/01 22:15:54 drochner Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -46,7 +46,7 @@ __COPYRIGHT("@(#) Copyright (c) 1991, 1993\n"
 #if 0
 static char sccsid[] = "@(#)init.c	8.2 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: init.c,v 1.29 1997/10/28 22:52:52 christos Exp $");
+__RCSID("$NetBSD: init.c,v 1.30 1997/11/01 22:15:54 drochner Exp $");
 #endif
 #endif /* not lint */
 
@@ -1365,7 +1365,7 @@ msdosfs_root()
 	int fd = -1;
 	struct stat st;
 	pid_t pid;
-	int status, i;
+	int status;
 	void *ptr;
 	struct statfs sfs;
 
@@ -1410,16 +1410,6 @@ msdosfs_root()
 			goto done;
 		break;
 	}
-
-	/* Make sure that the mfs is up and running */
-	for (i = 0; i < 10; i++) {
-		if (access("/dev/MAKEDEV", F_OK) != 0) 
-			break;
-		sleep(1);
-	}
-
-	if (i == 10)
-		return;
 
 	/* Create a MAKEDEV script in /dev */
 	if ((fd = open("/dev/MAKEDEV", O_WRONLY|O_CREAT|O_TRUNC, 0755)) == -1)
