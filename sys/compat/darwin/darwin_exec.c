@@ -1,4 +1,4 @@
-/*	$NetBSD: darwin_exec.c,v 1.10 2002/12/30 18:44:34 manu Exp $ */
+/*	$NetBSD: darwin_exec.c,v 1.11 2002/12/31 15:47:39 manu Exp $ */
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
 
 #include "opt_compat_darwin.h" /* For COMPAT_DARWIN in mach_port.h */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: darwin_exec.c,v 1.10 2002/12/30 18:44:34 manu Exp $");
+__KERNEL_RCSID(0, "$NetBSD: darwin_exec.c,v 1.11 2002/12/31 15:47:39 manu Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -279,8 +279,7 @@ darwin_e_proc_exit(p)
 	if (ded->ded_fakepid == 2)
 		mach_bootstrap_port = mach_saved_bootstrap_port;
 
-	free(p->p_emuldata, M_EMULDATA);
-	p->p_emuldata = NULL;
+	mach_e_proc_exit(p);
 
 	return;
 }

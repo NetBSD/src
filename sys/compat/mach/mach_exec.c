@@ -1,4 +1,4 @@
-/*	$NetBSD: mach_exec.c,v 1.20 2002/12/27 19:57:47 manu Exp $	 */
+/*	$NetBSD: mach_exec.c,v 1.21 2002/12/31 15:47:37 manu Exp $	 */
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mach_exec.c,v 1.20 2002/12/27 19:57:47 manu Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mach_exec.c,v 1.21 2002/12/31 15:47:37 manu Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -62,7 +62,6 @@ static int mach_cold = 1; /* Have we initialized COMPAT_MACH structures? */
 
 static void mach_e_proc_exec(struct proc *, struct exec_package *);
 static void mach_e_proc_fork(struct proc *, struct proc *);
-static void mach_e_proc_exit(struct proc *);
 static void mach_init(void);
 
 extern char sigcode[], esigcode[];
@@ -239,6 +238,7 @@ mach_e_proc_init(p, vmspace)
 	med->med_p = 0;
 
 	LIST_INIT(&med->med_right);
+	med->med_nextright = 0x60b;
 
 	med->med_kernel = mach_port_get();
 	med->med_host = mach_port_get();
@@ -255,7 +255,7 @@ mach_e_proc_init(p, vmspace)
 	return;
 }
 
-static void 
+void 
 mach_e_proc_exit(p)
 	struct proc *p;
 {

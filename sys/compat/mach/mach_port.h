@@ -1,4 +1,4 @@
-/*	$NetBSD: mach_port.h,v 1.13 2002/12/30 18:44:34 manu Exp $ */
+/*	$NetBSD: mach_port.h,v 1.14 2002/12/31 15:47:38 manu Exp $ */
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -214,6 +214,7 @@ extern struct mach_port *mach_saved_bootstrap_port;
 
 /* In-kernel Mach port right description */
 struct mach_right {
+	mach_port_t mr_name;		/* The right name */
 	struct proc *mr_p;		/* points back to struct proc */
 	int mr_type;			/* right type (recv, send, sendonce) */
 	LIST_ENTRY(mach_right) mr_list; /* Right list for a process */
@@ -232,12 +233,14 @@ struct mach_right {
 	struct mach_right *mr_sethead;	/* Points back to right set */
 };
 
-struct mach_right *mach_right_get(struct mach_port *, struct proc *, int);
+mach_port_t mach_right_newname(struct proc *, mach_port_t);
+struct mach_right *mach_right_get(struct mach_port *, 
+    struct proc *, int, mach_port_t);
 void mach_right_put(struct mach_right *);
 void mach_right_put_shlocked(struct mach_right *);
 void mach_right_put_exclocked(struct mach_right *);
-int mach_right_check(struct mach_right *, struct proc *, int);
-int mach_right_check_all(struct mach_right *, int);
+struct mach_right *mach_right_check(mach_port_t, struct proc *, int);
+struct mach_right *mach_right_check_all(mach_port_t, int);
 
 /* In-kernel Mach port description */
 struct mach_port {
