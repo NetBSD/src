@@ -1,4 +1,4 @@
-/*	$NetBSD: kvm.c,v 1.73 2002/09/16 17:20:45 christos Exp $	*/
+/*	$NetBSD: kvm.c,v 1.74 2002/09/17 19:38:26 drochner Exp $	*/
 
 /*-
  * Copyright (c) 1989, 1992, 1993
@@ -42,7 +42,7 @@
 #if 0
 static char sccsid[] = "@(#)kvm.c	8.2 (Berkeley) 2/13/94";
 #else
-__RCSID("$NetBSD: kvm.c,v 1.73 2002/09/16 17:20:45 christos Exp $");
+__RCSID("$NetBSD: kvm.c,v 1.74 2002/09/17 19:38:26 drochner Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -159,9 +159,7 @@ open_cloexec(fname, flags, mode)
 
 	if ((fd = open(fname, flags, mode)) == -1)
 		return fd;
-	if ((flags = fcntl(fd, F_GETFL, 0)) == -1)
-		goto error;
-	if (fcntl(fd, F_SETFL, flags | 1) == -1)
+	if (fcntl(fd, F_SETFD, (void *)1) == -1)
 		goto error;
 
 	return fd;
