@@ -1,4 +1,4 @@
-$NetBSD: pcidevs,v 1.410 2002/03/01 13:47:30 kleink Exp $
+$NetBSD: pcidevs,v 1.411 2002/03/11 23:17:37 joda Exp $
 
 /*
  * Copyright (c) 1995, 1996 Christopher G. Demetriou
@@ -850,6 +850,10 @@ product ATI RAGE4AGP4X 		0x5055	Rage 128 Pro AGP 4x
 product ATI RAGE4PCIT  		0x5056	Rage 128 Pro PCI (TMDS)
 product ATI RAGE4AGP2XT		0x5057	Rage 128 Pro AGP 2x (TMDS)
 product ATI RAGE4AGP4XT		0x5058	Rage 128 Pro AGP 4x (TMDS)
+product ATI RADEON_7200		0x5144	Radeon 7200
+product ATI RADEON_8500		0x514c	Radeon 8500
+product ATI RADEON_7500		0x5157	Radeon 7500
+product ATI RADEON_7000		0x5159	Radeon 7000/VE
 product ATI RAGEGLPCI		0x5245	Rage 128 GL PCI
 product ATI RAGEGLAGP		0x5246	Rage 128 GL AGP 2x
 product ATI RAGEVRPCI		0x524b	Rage 128 VR PCI
@@ -1299,6 +1303,8 @@ product INTEL 80960_RP		0x1960	ROB-in i960RP Microprocessor
 product INTEL 82840_HB		0x1a21	82840 Host
 product INTEL 82840_AGP		0x1a23	82840 AGP
 product INTEL 82840_PCI		0x1a24	82840 PCI
+product INTEL 82845_HB		0x1a30	82845 Host
+product INTEL 82845_AGP		0x1a31	82845 AGP
 product INTEL 82801AA_LPC	0x2410	82801AA LPC Interface Bridge
 product INTEL 82801AA_IDE	0x2411	82801AA IDE Controller
 product INTEL 82801AA_USB	0x2412	82801AA USB Controller
