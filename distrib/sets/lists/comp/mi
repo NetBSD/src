@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.448 2002/06/09 16:12:53 itojun Exp $
+#	$NetBSD: mi,v 1.449 2002/06/24 22:47:58 gmcgarry Exp $
 ./sys				comp-sysutil-root
 ./usr/bin/addr2line		comp-debug-bin
 ./usr/bin/ar			comp-util-bin
@@ -3374,6 +3374,7 @@
 ./usr/share/man/cat9/sun3/isr_add_autovect.0	comp-sys-catman
 ./usr/share/man/cat9/sun3/isr_add_custom.0	comp-sys-catman
 ./usr/share/man/cat9/sun3/isr_add_vectored.0	comp-sys-catman
+./usr/share/man/cat9/suser.0	comp-sys-catman
 ./usr/share/man/cat9/suswintr.0		comp-sys-catman
 ./usr/share/man/cat9/susword.0		comp-sys-catman
 ./usr/share/man/cat9/suword.0		comp-sys-catman
@@ -5910,6 +5911,7 @@
 ./usr/share/man/man9/sun3/isr_add_autovect.9		comp-sys-man
 ./usr/share/man/man9/sun3/isr_add_custom.9		comp-sys-man
 ./usr/share/man/man9/sun3/isr_add_vectored.9		comp-sys-man
+./usr/share/man/man9/suser.9	comp-sys-man
 ./usr/share/man/man9/suswintr.9		comp-sys-man
 ./usr/share/man/man9/susword.9		comp-sys-man
 ./usr/share/man/man9/suword.9		comp-sys-man
