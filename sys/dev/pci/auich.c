@@ -1,4 +1,4 @@
-/*	$NetBSD: auich.c,v 1.52 2003/10/30 19:30:26 kent Exp $	*/
+/*	$NetBSD: auich.c,v 1.53 2003/10/31 08:15:53 kent Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -118,7 +118,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: auich.c,v 1.52 2003/10/30 19:30:26 kent Exp $");
+__KERNEL_RCSID(0, "$NetBSD: auich.c,v 1.53 2003/10/31 08:15:53 kent Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1435,8 +1435,9 @@ void
 auich_calibrate(struct auich_softc *sc)
 {
 	struct timeval t1, t2;
-	u_int8_t ociv, nciv;
-	u_int32_t wait_us, actual_48k_rate, bytes, ac97rate;
+	uint8_t ociv, nciv;
+	uint64_t wait_us;
+	uint32_t actual_48k_rate, bytes, ac97rate;
 	void *temp_buffer;
 	struct auich_dma *p;
 
@@ -1448,7 +1449,7 @@ auich_calibrate(struct auich_softc *sc)
 	 */
 
 	/* Setup a buffer */
-	bytes = 16000;
+	bytes = 64000;
 	temp_buffer = auich_allocm(sc, AUMODE_RECORD, bytes, M_DEVBUF, M_WAITOK);
 	for (p = sc->sc_dmas; p && KERNADDR(p) != temp_buffer; p = p->next)
 		;
@@ -1491,6 +1492,7 @@ auich_calibrate(struct auich_softc *sc)
 		nciv = bus_space_read_1(sc->iot, sc->aud_ioh,
 					ICH_PCMI + ICH_CIV);
 	} while (nciv == ociv);
+	microtime(&t2);
 
 	/* stop */
 	bus_space_write_1(sc->iot, sc->aud_ioh, ICH_PCMI + ICH_CTRL, 0);
@@ -1505,17 +1507,17 @@ auich_calibrate(struct auich_softc *sc)
 	auich_freem(sc, temp_buffer, M_DEVBUF);
 
 	if (nciv == ociv) {
-		printf("%s: ac97 link rate calibration timed out after %d us\n",
-		       sc->sc_dev.dv_xname, wait_us);
+		printf("%s: ac97 link rate calibration timed out after %"
+		       PRIu64 " us\n", sc->sc_dev.dv_xname, wait_us);
 		return;
 	}
 
-	actual_48k_rate = (bytes * 250000U) / wait_us;
+	actual_48k_rate = (bytes * UINT64_C(250000)) / wait_us;
 
-	if (actual_48k_rate <= 48500)
+	if (actual_48k_rate < 50000)
 		ac97rate = 48000;
 	else
-		ac97rate = actual_48k_rate;
+		ac97rate = ((actual_48k_rate + 500) / 1000) * 1000;
 
 	printf("%s: measured ac97 link rate at %d Hz",
 	       sc->sc_dev.dv_xname, actual_48k_rate);
