@@ -1,4 +1,4 @@
-/*	$NetBSD: siop.c,v 1.38 2001/01/26 22:00:01 bouyer Exp $	*/
+/*	$NetBSD: siop.c,v 1.39 2001/02/11 18:04:49 bouyer Exp $	*/
 
 /*
  * Copyright (c) 2000 Manuel Bouyer.
@@ -361,6 +361,7 @@ siop_intr(v)
 	bus_addr_t dsa;
 	struct siop_cbd *cbdp;
 	int freetarget = 0;
+	int restart = 0;
 
 	istat = bus_space_read_1(sc->sc_rt, sc->sc_rh, SIOP_ISTAT);
 	if ((istat & (ISTAT_INTF | ISTAT_DIP | ISTAT_SIP)) == 0)
@@ -948,7 +949,16 @@ scintr:
 	panic("siop_intr: I shouldn't be there !");
 	return 1;
 end:
-	CALL_SCRIPT(Ent_script_sched);
+	/*
+	 * restart the script now if command completed properly
+	 * Otherwise wait for siop_scsicmd_end(), it may need to put
+	 * a cmd in front of the queue
+	 */
+	if (le32toh(siop_cmd->siop_tables.status) == SCSI_OK &&
+	    TAILQ_FIRST(&sc->urgent_list) != NULL)
+		CALL_SCRIPT(Ent_script_sched);
+	else
+		restart = 1;
 	siop_scsicmd_end(siop_cmd);
 	siop_lun->siop_tag[tag].active = NULL;
 	if (siop_cmd->status == CMDST_FREE) {
@@ -958,6 +968,8 @@ end:
 			siop_del_dev(sc, target, lun);
 	}
 	siop_start(sc);
+	if (restart)
+		CALL_SCRIPT(Ent_script_sched);
 	return 1;
 }
 
@@ -1385,11 +1397,12 @@ siop_start(sc)
 	/*
 	 * If the instruction is 0x80000000 (JUMP foo, IF FALSE) the slot is
 	 * free. As this is the last used slot, all previous slots are free,
-	 * we can restart from 0.
+	 * we can restart from 1.
+	 * slot 0 is reserved for request sense commands.
 	 */
 	if (siop_script_read(sc, (Ent_script_sched_slot0 / 4) + slot * 2) ==
 	    0x80000000) {
-		slot = sc->sc_currschedslot = 0;
+		slot = sc->sc_currschedslot = 1;
 	} else {
 		slot++;
 	}
@@ -1428,20 +1441,31 @@ again:
 			tag = 0;
 		}
 		siop_cmd->tag = tag;
-		/* find a free scheduler slot and load it */
-		for (; slot < SIOP_NSLOTS; slot++) {
-			/*
-			 * If cmd if 0x80000000 the slot is free
-			 */
-			if (siop_script_read(sc,
-			    (Ent_script_sched_slot0 / 4) + slot * 2) ==
-			    0x80000000)
-				break;
+		/*
+		 * find a free scheduler slot and load it. If it's a request
+		 * sense we need to use slot 0.
+		 */
+		if (siop_cmd->status != CMDST_SENSE) {
+			for (; slot < SIOP_NSLOTS; slot++) {
+				/*
+				 * If cmd if 0x80000000 the slot is free
+				 */
+				if (siop_script_read(sc,
+				    (Ent_script_sched_slot0 / 4) + slot * 2) ==
+				    0x80000000)
+					break;
+			}
+			/* no more free slot, no need to continue */
+			if (slot == SIOP_NSLOTS) {
+				goto end;
+			}
+		} else {
+			slot = 0;
+			if (siop_script_read(sc, Ent_script_sched_slot0 / 4)
+			    != 0x80000000) 
+				goto end;
 		}
-		/* no more free slot, no need to continue */
-		if (slot == SIOP_NSLOTS) {
-			goto end;
-		}
+
 #ifdef SIOP_DEBUG_SCHED
 		printf("using slot %d for DSA 0x%lx\n", slot,
 		    (u_long)siop_cmd->dsa);
@@ -1515,6 +1539,9 @@ again:
 		 */
 		siop_script_write(sc, (Ent_script_sched_slot0 / 4) + slot * 2,
 		    0x80080000);
+		/* if we're using the request sense slot, stop here */
+		if (slot == 0)
+			goto end;
 		sc->sc_currschedslot = slot;
 		slot++;
 	}
