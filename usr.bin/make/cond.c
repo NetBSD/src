@@ -1,4 +1,4 @@
-/*	$NetBSD: cond.c,v 1.24 2004/05/07 00:04:38 ross Exp $	*/
+/*	$NetBSD: cond.c,v 1.25 2005/02/16 15:11:52 christos Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -70,14 +70,14 @@
  */
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: cond.c,v 1.24 2004/05/07 00:04:38 ross Exp $";
+static char rcsid[] = "$NetBSD: cond.c,v 1.25 2005/02/16 15:11:52 christos Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)cond.c	8.2 (Berkeley) 1/2/94";
 #else
-__RCSID("$NetBSD: cond.c,v 1.24 2004/05/07 00:04:38 ross Exp $");
+__RCSID("$NetBSD: cond.c,v 1.25 2005/02/16 15:11:52 christos Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -292,7 +292,7 @@ CondGetArg(char **linePtr, char **argPtr, const char *func, Boolean parens)
 	cp++;
     }
     if (parens && *cp != ')') {
-	Parse_Error (PARSE_WARNING, "Missing closing parenthesis for %s()",
+	Parse_Error(PARSE_WARNING, "Missing closing parenthesis for %s()",
 		     func);
 	return (0);
     } else if (parens) {
@@ -327,7 +327,7 @@ CondDoDefined(int argLen, char *arg)
     Boolean result;
 
     arg[argLen] = '\0';
-    if (Var_Value (arg, VAR_CMD, &p1) != (char *)NULL) {
+    if (Var_Value(arg, VAR_CMD, &p1) != (char *)NULL) {
 	result = TRUE;
     } else {
 	result = FALSE;
@@ -378,7 +378,7 @@ CondDoMake(int argLen, char *arg)
     Boolean result;
 
     arg[argLen] = '\0';
-    if (Lst_Find (create, (ClientData)arg, CondStrMatch) == NILLNODE) {
+    if (Lst_Find(create, (ClientData)arg, CondStrMatch) == NILLNODE) {
 	result = FALSE;
     } else {
 	result = TRUE;
@@ -849,7 +849,7 @@ error:
 		     */
 		    evalProc = CondDoDefined;
 		    condExpr += 7;
-		    arglen = CondGetArg (&condExpr, &arg, "defined", TRUE);
+		    arglen = CondGetArg(&condExpr, &arg, "defined", TRUE);
 		    if (arglen == 0) {
 			condExpr -= 7;
 			goto use_default;
@@ -862,7 +862,7 @@ error:
 		     */
 		    evalProc = CondDoMake;
 		    condExpr += 4;
-		    arglen = CondGetArg (&condExpr, &arg, "make", TRUE);
+		    arglen = CondGetArg(&condExpr, &arg, "make", TRUE);
 		    if (arglen == 0) {
 			condExpr -= 4;
 			goto use_default;
@@ -1074,7 +1074,7 @@ CondF(Boolean doEval)
 	    /*
 	     * F -> T
 	     */
-	    CondPushBack (o);
+	    CondPushBack(o);
 	}
     }
     return (l);
@@ -1121,7 +1121,7 @@ CondE(Boolean doEval)
 	    /*
 	     * E -> F
 	     */
-	    CondPushBack (o);
+	    CondPushBack(o);
 	}
     }
     return (l);
@@ -1176,7 +1176,7 @@ Cond_EvalExpression(int dosetup, char *line, Boolean *value, int eprint)
     case Err:
 err:
 	if (eprint)
-	    Parse_Error (PARSE_FATAL, "Malformed conditional (%s)",
+	    Parse_Error(PARSE_FATAL, "Malformed conditional (%s)",
 			 line);
 	return (COND_INVALID);
     default:
@@ -1247,7 +1247,7 @@ Cond_Eval(char *line)
 	    return (COND_SKIP);
 	} else {
 	    if (condTop == MAXIF) {
-		Parse_Error (level, "if-less endif");
+		Parse_Error(level, "if-less endif");
 		return (COND_INVALID);
 	    } else {
 		skipLine = FALSE;
@@ -1277,12 +1277,12 @@ Cond_Eval(char *line)
 	 */
 	if (isElse && (line[0] == 's') && (line[1] == 'e')) {
 	    if (finalElse[condTop][skipIfLevel]) {
-		Parse_Error (PARSE_WARNING, "extra else");
+		Parse_Error(PARSE_WARNING, "extra else");
 	    } else {
 		finalElse[condTop][skipIfLevel] = TRUE;
 	    }
 	    if (condTop == MAXIF) {
-		Parse_Error (level, "if-less else");
+		Parse_Error(level, "if-less else");
 		return (COND_INVALID);
 	    } else if (skipIfLevel == 0) {
 		value = !condStack[condTop];
@@ -1298,7 +1298,7 @@ Cond_Eval(char *line)
     } else {
 	if (isElse) {
 	    if (condTop == MAXIF) {
-		Parse_Error (level, "if-less elif");
+		Parse_Error(level, "if-less elif");
 		return (COND_INVALID);
 	    } else if (skipIfLevel != 0) {
 		/*
@@ -1316,7 +1316,7 @@ Cond_Eval(char *line)
 	     */
 	    skipIfLevel += 1;
 	    if (skipIfLevel >= MAXIF) {
-		Parse_Error (PARSE_FATAL, "Too many nested if's. %d max.", MAXIF);
+		Parse_Error(PARSE_FATAL, "Too many nested if's. %d max.", MAXIF);
 		return (COND_INVALID);
 	    }
 	    finalElse[condTop][skipIfLevel] = FALSE;
@@ -1353,7 +1353,7 @@ Cond_Eval(char *line)
 	 * This is the one case where we can definitely proclaim a fatal
 	 * error. If we don't, we're hosed.
 	 */
-	Parse_Error (PARSE_FATAL, "Too many nested if's. %d max.", MAXIF);
+	Parse_Error(PARSE_FATAL, "Too many nested if's. %d max.", MAXIF);
 	return (COND_INVALID);
     } else {
 	condStack[condTop] = value;

@@ -1,4 +1,4 @@
-/*	$NetBSD: str.c,v 1.22 2004/05/07 00:04:40 ross Exp $	*/
+/*	$NetBSD: str.c,v 1.23 2005/02/16 15:11:52 christos Exp $	*/
 
 /*-
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -69,14 +69,14 @@
  */
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: str.c,v 1.22 2004/05/07 00:04:40 ross Exp $";
+static char rcsid[] = "$NetBSD: str.c,v 1.23 2005/02/16 15:11:52 christos Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char     sccsid[] = "@(#)str.c	5.8 (Berkeley) 6/1/90";
 #else
-__RCSID("$NetBSD: str.c,v 1.22 2004/05/07 00:04:40 ross Exp $");
+__RCSID("$NetBSD: str.c,v 1.23 2005/02/16 15:11:52 christos Exp $");
 #endif
 #endif				/* not lint */
 #endif
@@ -139,7 +139,7 @@ brk_string(const char *str, int *store_argc, Boolean expand, char **buffer)
 	const char *p;
 	int len;
 	int argmax = 50, curlen = 0;
-    	char **argv = (char **)emalloc((argmax + 1) * sizeof(char *));
+    	char **argv = emalloc((argmax + 1) * sizeof(char *));
 
 	/* skip leading space chars. */
 	for (; *str == ' ' || *str == '\t'; ++str)

@@ -1,4 +1,4 @@
-/*	$NetBSD: lstEnQueue.c,v 1.10 2004/05/07 00:04:41 ross Exp $	*/
+/*	$NetBSD: lstEnQueue.c,v 1.11 2005/02/16 15:11:53 christos Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -33,14 +33,14 @@
  */
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: lstEnQueue.c,v 1.10 2004/05/07 00:04:41 ross Exp $";
+static char rcsid[] = "$NetBSD: lstEnQueue.c,v 1.11 2005/02/16 15:11:53 christos Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)lstEnQueue.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: lstEnQueue.c,v 1.10 2004/05/07 00:04:41 ross Exp $");
+__RCSID("$NetBSD: lstEnQueue.c,v 1.11 2005/02/16 15:11:53 christos Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -73,6 +73,6 @@ Lst_EnQueue(Lst l, ClientData d)
 	return (FAILURE);
     }
 
-    return (Lst_Append (l, Lst_Last(l), d));
+    return (Lst_Append(l, Lst_Last(l), d));
 }
 
