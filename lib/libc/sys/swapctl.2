@@ -1,4 +1,4 @@
-.\"	$NetBSD: swapctl.2,v 1.1 1997/06/12 15:46:59 mrg Exp $
+.\"	$NetBSD: swapctl.2,v 1.2 1997/06/12 22:39:17 mrg Exp $
 .\"
 .\" Copyright (c) 1980, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -41,8 +41,21 @@
 .Nd modify swap configuration
 .Sh SYNOPSIS
 .Fd #include <unistd.h>
+.Fd #include <vm/vm_swap.h>
 .Ft int
 .Fn swapctl "int cmd" "const void *arg" "int misc"
+.Fn swapon "const char *name"
+.Sh DESCRIPTION
+The
+.Nm
+function is used to add swap devices, and modify their configuration.
+The
+.Nm swapon
+function only exists as as backwards compatibility feature until the
+next major bump of the
+.Pa libc
+major from 12.  It should never be used in new code, and should be
+removed form existed code.
 .Sh SEE ALSO
 .Xr swapctl 8 ,
 .Xr config 8
