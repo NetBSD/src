@@ -1,4 +1,4 @@
-#	$NetBSD: files.isa,v 1.5 1995/04/19 19:03:43 mycroft Exp $
+#	$NetBSD: files.isa,v 1.6 1995/04/26 21:45:57 brezak Exp $
 #
 # Config.new file and device description for machine-independent ISA code.
 # Included by ports that need it.  Requires that the SCSI files be
@@ -173,11 +173,11 @@ file	dev/isa/sb.c			sb needs-flag
 device	pas at isa: audio, isadma, sbdsp
 file	dev/isa/pas.c			pas needs-flag
 
-# ad1848 (XXX what is it?) chip spport; used by other drivers
+# AD1848 (CS4248, CS4231, AD1845) audio codec support; used by other drivers
 define	ad1848
 file	dev/isa/ad1848.c		ad1848
 
-# (XXX what is this?)
+# Audio systems based on Echo Speech Corp. ESC61[45] ASICs
 device	pss at isa {[port = -1], [size = 0],
 		    [iomem = -1], [iosiz = 0],
 		    [irq = -1], [drq = -1]}

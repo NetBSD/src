@@ -1,4 +1,4 @@
-/*	$NetBSD: sbdsp.c,v 1.8 1995/04/17 23:48:06 mycroft Exp $	*/
+/*	$NetBSD: sbdsp.c,v 1.9 1995/04/26 21:46:10 brezak Exp $	*/
 
 /*
  * Copyright (c) 1991-1993 Regents of the University of California.
@@ -32,7 +32,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	$Id: sbdsp.c,v 1.8 1995/04/17 23:48:06 mycroft Exp $
+ *	$Id: sbdsp.c,v 1.9 1995/04/26 21:46:10 brezak Exp $
  */
 /*
  * SoundBlaster Pro code provided by John Kohl, based on lots of
@@ -188,7 +188,7 @@ sbdsp_attach(sc)
 		for (i = 0; i < SB_NDEVS; i++)
 		    sc->gain[i] = sbdsp_stereo_vol(SBP_MAXVOL, SBP_MAXVOL);
 	}
-	printf(": dsp v%d.%d\n",
+	printf(": dsp v%d.%02d\n",
 	       SBVER_MAJOR(sc->sc_model), SBVER_MINOR(sc->sc_model));
 }
 

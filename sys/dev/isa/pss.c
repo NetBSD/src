@@ -1,4 +1,4 @@
-/*	$NetBSD: pss.c,v 1.5 1995/04/17 15:48:26 cgd Exp $	*/
+/*	$NetBSD: pss.c,v 1.6 1995/04/26 21:46:05 brezak Exp $	*/
 
 /*
  * Copyright (c) 1994 John Brezak
@@ -33,7 +33,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	$Id: pss.c,v 1.5 1995/04/17 15:48:26 cgd Exp $
+ *	$Id: pss.c,v 1.6 1995/04/26 21:46:05 brezak Exp $
  */
 
 /*
@@ -67,7 +67,7 @@
 #include <dev/audio_if.h>
 
 #include <dev/isa/isavar.h>
-#include <dev/isa/dmavar.h>
+#include <dev/isa/isadmavar.h>
 #include <i386/isa/icu.h>			/* XXX BROKEN; WHY? */
 
 #include <dev/isa/ad1848var.h>
