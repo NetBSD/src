@@ -1,4 +1,4 @@
-.\"	$NetBSD: curses_window.3,v 1.4 2003/02/14 16:29:12 grant Exp $
+.\"	$NetBSD: curses_window.3,v 1.5 2003/03/03 14:21:12 dsl Exp $
 .\"
 .\" Copyright (c) 2002
 .\"	Brett Lymn (blymn@NetBSD.org, brett_lymn@yahoo.com.au)
@@ -162,15 +162,23 @@ with an origin at
 .Fa begin_x .
 If
 .Fa lines
-is zero then the number of rows for the window defaults to
+is less than or equal to zero then the number of rows
+for the window is set to
 .Dv LINES -
-.Fa begin_x .
-If
+.Fa begin_x
++
+.Fa lines .
+Similarly if
 .Fa cols
-is zero then the number of columns for the window defaults to
-.Dv COLS
-\-
-.Fa begin_y .
+is less than or equal to zero then the number of columns
+for the window is set to
+.Dv COLS -
+.Fa begin_y
++
+.Fa cols .
+If the terminal, or in the case of a subwindow then enclosing window,
+is resized then the window size will be recalculated so that the window
+ends the same number of columns from the far edge.
 .Pp
 .Fn subwin
 is similar to
