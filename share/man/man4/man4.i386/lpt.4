@@ -27,7 +27,7 @@
 .\" (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.\"	$Id: lpt.4,v 1.3 1994/02/20 14:18:24 mycroft Exp $
+.\"	$Id: lpt.4,v 1.4 1994/10/17 14:33:26 glass Exp $
 .\"
 .Dd August 6, 1993
 .Dt LPT 4 i386
@@ -38,7 +38,7 @@
 Parallel port driver
 .Sh SYNOPSIS
 .\" XXX this is awful hackery to get it to work right... -- cgd
-.Cd "device lpt0 at isa? port" \&"IO_LPT1\&" tty irq 7 vector lptintr
+.Cd "device lpt0 at isa? port" \&"IO_LPT1\&" irq 7
 .Cd "device lpt1 at isa? port" \&"IO_LPT2\&"
 .Sh DESCRIPTION
 This driver provides access to parallel ports.  The highest bit in the minor
