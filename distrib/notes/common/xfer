@@ -1,4 +1,4 @@
-.\"	$NetBSD: xfer,v 1.24.2.6 2002/07/20 02:30:21 lukem Exp $
+.\"	$NetBSD: xfer,v 1.24.2.7 2002/07/22 13:16:48 lukem Exp $
 .\"
 .\" Copyright (c) 1999-2002 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -488,10 +488,10 @@ CD-ROM
 .It
 FTP
 .
-.if \n[x68k] \{\
+.if r_x68k \{\
 .It
 Magneto-Optical (M-O) or other removable SCSI disk
-.\} \" \n[x68k]
+.\} \" r_x68k
 .
 .It
 Remote NFS partition
