@@ -1,4 +1,4 @@
-#	$NetBSD: LAMB,v 1.5 2001/05/10 22:12:38 tron Exp $
+#	$NetBSD: LAMB,v 1.6 2001/06/01 16:50:31 itojun Exp $
 #
 #	LAMB -- for "LAMB" router, http://www.wildlab.com/
 #
@@ -6,7 +6,7 @@
 include "arch/i386/conf/std.i386"
 
 # based on:
-#ident 		"GENERIC-Revision: 1.400"
+#ident 		"GENERIC-Revision: 1.405"
 
 maxusers	32		# estimated number of users
 
@@ -61,7 +61,7 @@ options 	LKM		# loadable kernel modules
 options 	"TIMER_FREQ=1189200"	# LAMB uses nonstandard timer freq
 
 # Diagnostic/debugging support options
-options 	DIAGNOSTIC	# expensive kernel consistency checks
+#options 	DIAGNOSTIC	# expensive kernel consistency checks
 #options 	DEBUG		# expensive debugging checks/support
 #options 	KMEMSTATS	# kernel memory statistics (vmstat -m)
 options 	DDB		# in-kernel debugger
@@ -270,7 +270,6 @@ wsmouse*	at pmsi? mux 0
 # no buzzer installed
 #pcppi0		at isa?
 #sysbeep0	at pcppi?
-#midi*	at pcppi?		# MIDI interface to the PC speaker
 
 # Serial Devices
 
