@@ -1,4 +1,4 @@
-/*	$NetBSD: wdc_isa.c,v 1.2 1998/01/17 00:40:45 cgd Exp $ */
+/*	$NetBSD: wdc_isa.c,v 1.3 1998/01/22 23:42:39 mycroft Exp $ */
 
 /*
  * Copyright (c) 1994, 1995 Charles M. Hannum.  All rights reserved.
@@ -34,32 +34,22 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
+#include <sys/types.h>
 #include <sys/param.h>
 #include <sys/systm.h>
-#include <sys/kernel.h>
-#include <sys/conf.h>
-#include <sys/file.h>
-#include <sys/stat.h>
-#include <sys/ioctl.h>
-#include <sys/buf.h>
-#include <sys/uio.h>
-#include <sys/malloc.h>
 #include <sys/device.h>
-#include <sys/disklabel.h>
-#include <sys/disk.h>
-#include <sys/syslog.h>
-#include <sys/proc.h>
 
-#include <machine/intr.h>
 #include <machine/bus.h>
+#include <machine/intr.h>
 
 #include <dev/isa/isavar.h>
 #include <dev/isa/isadmavar.h>
+
 #include <dev/ic/wdcvar.h>
 
 #define	WDC_ISA_REG_NPORTS	8
 #define	WDC_ISA_AUXREG_OFFSET	0x206
-#define	WDC_ISA_AUXREG_NPORTS	1
+#define	WDC_ISA_AUXREG_NPORTS	2
 
 /*
  * XXX This code currently doesn't even try to allow 32-bit data port use.
