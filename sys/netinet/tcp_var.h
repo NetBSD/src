@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_var.h,v 1.38 1998/04/03 07:54:01 thorpej Exp $	*/
+/*	$NetBSD: tcp_var.h,v 1.39 1998/04/03 08:02:45 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -212,8 +212,7 @@ struct tcp_opt_info {
  */
 struct syn_cache {
 	struct syn_cache *sc_next;
-	u_int32_t sc_tstmp		: 1,
-		  sc_hash		: 31;
+	u_int32_t sc_hash;
 	struct in_addr sc_src;
 	struct in_addr sc_dst;
 	tcp_seq sc_irs;
@@ -221,6 +220,7 @@ struct syn_cache {
 	int sc_flags;
 
 #define	SCF_SYNACK_REXMT	0x0001		/* SYN,ACK was retransmitted */
+#define	SCF_TIMESTAMP		0x0002		/* peer will do timestamps */
 
 	u_int16_t sc_sport;
 	u_int16_t sc_dport;
