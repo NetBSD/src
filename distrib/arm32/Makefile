@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.2 2000/11/12 00:51:36 matt Exp $
+# $NetBSD: Makefile,v 1.3 2001/11/14 00:48:37 tv Exp $
 
 ITARGET=	${RELEASEDIR}/installation
 IINST=		${INSTALL} ${RENAME} ${PRESERVE} ${COPY}	\
@@ -16,8 +16,8 @@ release:
 	@echo setenv RELEASEDIR first
 	@false
 .else
-RAMDISKOBJ != cd ${.CURDIR}/ramdisk; ${MAKE} print-objdir
-KERNELOBJ != cd ${.CURDIR}/kernels; ${MAKE} print-objdir
+RAMDISKOBJ != cd ${.CURDIR}/ramdisk && ${PRINTOBJDIR}
+KERNELOBJ != cd ${.CURDIR}/kernels && ${PRINTOBJDIR}
 
 release:
 	${IINST} ${RAMDISKOBJ}/ramdisk-${REV}.fs.gz ${ITARGET}/misc/

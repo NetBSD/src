@@ -1,8 +1,7 @@
-#	$NetBSD: Makefile,v 1.5 2001/10/21 23:23:20 jmc Exp $
+#	$NetBSD: Makefile,v 1.6 2001/11/14 00:48:38 tv Exp $
 
 .include "../Makefile.inc"
 
-.include <bsd.own.mk>
 .include <bsd.obj.mk>
 .include <bsd.kernobj.mk>
 
@@ -25,7 +24,7 @@ release:
 	@false
 .else
 MINIROOTDIR = ${.CURDIR}/../miniroot
-MINIROOTOBJ != cd ${MINIROOTDIR}; ${MAKE} print-objdir
+MINIROOTOBJ != cd ${MINIROOTDIR} && ${PRINTOBJDIR}
 
 release:
 	rm -f netbsd netbsd.gz
