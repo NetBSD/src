@@ -1,4 +1,4 @@
-/*	$NetBSD: time.h,v 1.24 2000/01/10 16:58:38 kleink Exp $	*/
+/*	$NetBSD: time.h,v 1.24.4.1 2000/07/18 00:14:30 hubertf Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -87,7 +87,7 @@ struct tm {
 	int	tm_wday;	/* days since Sunday [0-6] */
 	int	tm_yday;	/* days since January 1 [0-365] */
 	int	tm_isdst;	/* Daylight Savings Time flag */
-	long	tm_gmtoff;	/* offset from CUT in seconds */
+	long	tm_gmtoff;	/* offset from UTC in seconds */
 	__aconst char *tm_zone;	/* timezone abbreviation */
 };
 
