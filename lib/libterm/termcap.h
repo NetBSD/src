@@ -1,4 +1,4 @@
-/*	$NetBSD: termcap.h,v 1.8 1999/10/04 23:16:52 lukem Exp $	*/
+/*	$NetBSD: termcap.h,v 1.9 2000/02/20 13:32:52 kleink Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -38,12 +38,10 @@
  *	@(#)termcap.h	8.1 (Berkeley) 6/4/93
  */
 
-#include <sys/types.h>
-
 #ifndef _TERMCAP_H_
 #define _TERMCAP_H_
 
-struct tinfo;
+#include <sys/types.h>
 
 __BEGIN_DECLS
 int   tgetent	__P((char *, const char *));
@@ -56,6 +54,8 @@ void  tputs	__P((const char *, int, int (*)(int)));
 /*
  * New interface
  */
+struct tinfo;
+
 int   t_getent	__P((struct tinfo **, const char *));
 int   t_getnum  __P((struct tinfo *, const char *));
 int   t_getflag __P((struct tinfo *, const char *));
@@ -71,4 +71,4 @@ extern	char *UP;
 extern	short ospeed;
 __END_DECLS
 
-#endif /* _TERMCAP_H_ */
+#endif /* !_TERMCAP_H_ */
