@@ -1,4 +1,4 @@
-/*	$NetBSD: extintr.c,v 1.8 2003/04/26 22:07:16 wiz Exp $	*/
+/*	$NetBSD: extintr.c,v 1.9 2003/04/29 15:11:45 scw Exp $	*/
 
 /*
  * Copyright (c) 2002 Allegro Networks, Inc., Wasabi Systems, Inc.
@@ -747,19 +747,19 @@ loop:
 			is->is_evcnt.ev_count++;
 			EXT_INTR_STATS_PRE(irq, tstart);
 			for (ih = is->is_hand; ih != NULL; ih = ih->ih_next) {
-				int rv;
-
 				if (ih->ih_flags & IH_ACTIVE) {
+					int rv;
+
 					if (irq >= SIR_BASE)
 						ih->ih_flags &= ~IH_ACTIVE;
 					(void)extintr_enable();
 					rv = (*ih->ih_fun)(ih->ih_arg);
 					(void)extintr_disable();
+					if (rv != 0)
+						ih->ih_count++;
 				}
 
 				KASSERT(ci->ci_cpl == ipl);
-				if (rv != 0)
-					ih->ih_count++;
 			}
 			EXT_INTR_STATS_POST(irq, tstart);
 			if (irq >= ICU_LEN)
