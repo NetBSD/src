@@ -1,4 +1,4 @@
-/*	$NetBSD: awacs.c,v 1.1 2000/08/25 12:44:42 tsubai Exp $	*/
+/*	$NetBSD: awacs.c,v 1.2 2000/11/03 12:26:06 tsubai Exp $	*/
 
 /*-
  * Copyright (c) 2000 Tsubai Masanari.  All rights reserved.
@@ -206,6 +206,10 @@ awacs_match(parent, match, aux)
 		return 0;
 
 	if (ca->ca_nreg < 24 || ca->ca_nintr < 12)
+		return 0;
+
+	/* XXX for now */
+	if (ca->ca_nintr > 12)
 		return 0;
 
 	return 1;
