@@ -1,4 +1,4 @@
-/*	$NetBSD: md.c,v 1.59 2002/05/29 20:36:40 tv Exp $ */
+/*	$NetBSD: md.c,v 1.60 2002/06/14 03:29:28 lukem Exp $ */
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -593,6 +593,15 @@ configure_bootsel()
 
 	mbs = (struct mbr_bootsel *)&mbr[MBR_BOOTSELOFF];
 	mbs->flags = BFL_SELACTIVE;
+
+	/* Setup default labels for partitions, since if not done by user */
+	/* they don't get set and and bootselector doesn't 'appear' when  */
+	/* it's loaded.                                                   */
+	for (i = 0; i < NMBRPART; i++) {
+		if (parts[i].mbrp_typ != 0 && mbs->nametab[i][0] == '\0')
+			snprintf(mbs->nametab[i], sizeof(mbs->nametab[0]),
+			    "entry %d", i+1);
+	}
 
 	process_menu(MENU_configbootsel);
 
