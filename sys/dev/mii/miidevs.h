@@ -1,10 +1,10 @@
-/*	$NetBSD: miidevs.h,v 1.21 2001/05/31 03:32:38 thorpej Exp $	*/
+/*	$NetBSD: miidevs.h,v 1.22 2001/05/31 19:41:07 thorpej Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: miidevs,v 1.21 2001/05/31 03:32:20 thorpej Exp 
+ *	NetBSD: miidevs,v 1.22 2001/05/31 19:40:33 thorpej Exp 
  */
 
 /*-
@@ -67,6 +67,7 @@
 #define	MII_OUI_ICS	0x00a0be	/* Integrated Circuit Systems */
 #define	MII_OUI_INTEL	0x00aa00	/* Intel */
 #define	MII_OUI_LEVEL1	0x00207b	/* Level 1 */
+#define	MII_OUI_MARVELL	0x005043	/* Marvell Semiconductor */
 #define	MII_OUI_MYSON	0x00c0b4	/* Myson Technology */
 #define	MII_OUI_NATSEMI	0x080017	/* National Semiconductor */
 #define	MII_OUI_PMCSIERRA	0x00e004	/* PMC-Sierra */
@@ -100,9 +101,6 @@
 #define	MII_OUI_xxDAVICOM	0x000602	/* Davicom Semiconductor */
 #define	MII_OUI_xxPMCSIERRA	0x0009c0	/* PMC-Sierra */
 
-/* Contrived vendor for dcphy */
-#define	MII_OUI_xxDEC	0x040440	/* Digital Clone */
-
 
 /*
  * List of known models.  Grouped by oui.
@@ -131,14 +129,14 @@
 #define	MII_STR_BROADCOM_BCM5221	"BCM5221 10/100 PHY"
 #define	MII_MODEL_BROADCOM_BCM5400	0x0004
 #define	MII_STR_BROADCOM_BCM5400	"BCM5400 1000baseTX PHY"
+#define	MII_MODEL_BROADCOM_BCM5401	0x0005
+#define	MII_STR_BROADCOM_BCM5401	"BCM5401 1000baseTX PHY"
+#define	MII_MODEL_BROADCOM_BCM5411	0x0007
+#define	MII_STR_BROADCOM_BCM5411	"BCM5411 1000baseTX PHY"
 
 /* Davicom Semiconductor PHYs */
 #define	MII_MODEL_xxDAVICOM_DM9101	0x0000
 #define	MII_STR_xxDAVICOM_DM9101	"DM9101 10/100 media interface"
-
-/* Contrived vendor/model for dcphy */
-#define	MII_MODEL_xxDEC_xxDC	0x0001
-#define	MII_STR_xxDEC_xxDC	"DC"
 
 /* Integrated Circuit Systems PHYs */
 #define	MII_MODEL_ICS_1890	0x0002
@@ -162,6 +160,10 @@
 #define	MII_MODEL_xxLEVEL1_LXT970	0x0000
 #define	MII_STR_xxLEVEL1_LXT970	"LXT970 10/100 media interface"
 
+/* Marvell Semiconductor PHYs */
+#define	MII_MODEL_MARVELL_E1000	0x0000
+#define	MII_STR_MARVELL_E1000	"Marvell 88E1000 Gigabit PHY"
+
 /* Myson Technology PHYs */
 #define	MII_MODEL_xxMYSON_MTD972	0x0000
 #define	MII_STR_xxMYSON_MTD972	"MTD972 10/100 media interface"
@@ -171,6 +173,8 @@
 #define	MII_STR_xxNATSEMI_DP83840	"DP83840 10/100 media interface"
 #define	MII_MODEL_xxNATSEMI_DP83843	0x0001
 #define	MII_STR_xxNATSEMI_DP83843	"DP83843 10/100 media interface"
+#define	MII_MODEL_xxNATSEMI_DP83815	0x0002
+#define	MII_STR_xxNATSEMI_DP83815	"DP83815 10/100 media interface"
 #define	MII_MODEL_xxNATSEMI_DP83891	0x0005
 #define	MII_STR_xxNATSEMI_DP83891	"DP83891 1000baseTX PHY"
 #define	MII_MODEL_xxNATSEMI_DP83861	0x0006
