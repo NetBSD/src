@@ -1,4 +1,4 @@
-# $NetBSD: NET4501,v 1.25 2004/02/16 17:11:27 wiz Exp $
+# $NetBSD: NET4501,v 1.25.2.1 2004/07/15 20:16:09 he Exp $
 #
 # NET4501 -- kernel configuration for a Soekris Engineering net4501
 # single-board computer.
@@ -10,7 +10,7 @@ include 	"arch/i386/conf/std.i386"
 
 #options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"NET4501-$Revision: 1.25 $"
+#ident 		"NET4501-$Revision: 1.25.2.1 $"
 
 maxusers	32		# estimated number of users
 
@@ -74,6 +74,7 @@ options 	LKM		# loadable kernel modules
 
 options 	USERCONF	# userconf(4) support
 #options 	PIPE_SOCKETPAIR	# smaller, but slower pipe(2)
+#options 	SYSCTL_INCLUDE_DESCR	# Include sysctl descriptions in kernel
 
 # Diagnostic/debugging support options
 #options 	DIAGNOSTIC	# expensive kernel consistency checks
