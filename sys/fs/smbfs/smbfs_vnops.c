@@ -1,4 +1,4 @@
-/*	$NetBSD: smbfs_vnops.c,v 1.30 2004/01/26 10:39:30 hannken Exp $	*/
+/*	$NetBSD: smbfs_vnops.c,v 1.31 2004/02/22 11:14:08 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: smbfs_vnops.c,v 1.30 2004/01/26 10:39:30 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: smbfs_vnops.c,v 1.31 2004/02/22 11:14:08 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -610,7 +610,8 @@ smbfs_create(v)
 		cache_enter(dvp, *ap->a_vpp, cnp);
 
   out:
-	PNBUF_PUT(cnp->cn_pnbuf);
+	if (error || ((cnp->cn_flags & SAVESTART) == 0))
+		PNBUF_PUT(cnp->cn_pnbuf);
 	VN_KNOTE(dvp, NOTE_WRITE);
 	vput(dvp);
 	return (error);
@@ -642,7 +643,6 @@ smbfs_remove(v)
 		error = smbfs_smb_delete(np, &scred);
 	}
 
-	PNBUF_PUT(cnp->cn_pnbuf);
 	VN_KNOTE(ap->a_vp, NOTE_DELETE);
 	VN_KNOTE(ap->a_dvp, NOTE_WRITE);
 	if (dvp == vp)
@@ -806,7 +806,8 @@ smbfs_mkdir(v)
 	*ap->a_vpp = vp;
 
  out:
-	PNBUF_PUT(cnp->cn_pnbuf);
+	if (error || ((cnp->cn_flags & SAVESTART) == 0))
+		PNBUF_PUT(cnp->cn_pnbuf);
 	VN_KNOTE(dvp, NOTE_WRITE | NOTE_LINK);
 	vput(dvp);
 	
@@ -837,13 +838,11 @@ smbfs_rmdir(v)
 	if (dvp == vp) {
 		vrele(dvp);
 		vput(dvp);
-		PNBUF_PUT(cnp->cn_pnbuf);
 		return (EINVAL);
 	}
 
 	smb_makescred(&scred, cnp->cn_proc, cnp->cn_cred);
 	error = smbfs_smb_rmdir(np, &scred);
-	PNBUF_PUT(cnp->cn_pnbuf);
 	dnp->n_flag |= NMODIFIED;
 	smbfs_attr_cacheremove(dvp);
 	VN_KNOTE(dvp, NOTE_WRITE | NOTE_LINK);
