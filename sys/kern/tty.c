@@ -1,4 +1,4 @@
-/*	$NetBSD: tty.c,v 1.157 2003/09/21 18:40:38 manu Exp $	*/
+/*	$NetBSD: tty.c,v 1.158 2003/09/21 19:17:09 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1990, 1991, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tty.c,v 1.157 2003/09/21 18:40:38 manu Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tty.c,v 1.158 2003/09/21 19:17:09 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -782,6 +782,7 @@ ttioctl(struct tty *tp, u_long cmd, caddr_t data, int flag, struct proc *p)
 	case  TIOCSETAW:
 #ifdef notdef
 	case  TIOCSPGRP:
+	case  FIOSETOWN:
 #endif
 	case  TIOCSTAT:
 	case  TIOCSTI:
@@ -892,6 +893,11 @@ ttioctl(struct tty *tp, u_long cmd, caddr_t data, int flag, struct proc *p)
 		break;
 	case TIOCGWINSZ:		/* get window size */
 		*(struct winsize *)data = tp->t_winsize;
+		break;
+	case FIOGETOWN:
+		if (!isctty(p, tp))
+			return (ENOTTY);
+		*(int *)data = tp->t_pgrp ? -tp->t_pgrp->pg_id : 0;
 		break;
 	case TIOCGPGRP:			/* get pgrp of tty */
 		if (!isctty(p, tp))
@@ -1087,6 +1093,29 @@ ttioctl(struct tty *tp, u_long cmd, caddr_t data, int flag, struct proc *p)
 		p->p_session->s_ttyp = tp;
 		p->p_flag |= P_CONTROLT;
 		break;
+	case FIOSETOWN: {		/* set pgrp of tty */
+		pid_t pgid = *(int *)data;
+		struct pgrp *pgrp;
+
+		if (!isctty(p, tp))
+			return (ENOTTY);
+
+		if (pgid < 0)
+			pgrp = pgfind(-pgid);
+		else {
+			struct proc *p1 = pfind(pgid);
+			if (!p1)
+				return (ESRCH);
+			pgrp = p1->p_pgrp;
+		}
+
+		if (pgrp == NULL)
+			return (EINVAL);
+		else if (pgrp->pg_session != p->p_session)
+			return (EPERM);
+		tp->t_pgrp = pgrp;
+		break;
+	}
 	case TIOCSPGRP: {		/* set pgrp of tty */
 		struct pgrp *pgrp = pgfind(*(int *)data);
 

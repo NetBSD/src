@@ -1,4 +1,4 @@
-/*	$NetBSD: mm.c,v 1.4 2003/06/29 22:30:01 fvdl Exp $	*/
+/*	$NetBSD: mm.c,v 1.5 2003/09/21 19:16:55 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mm.c,v 1.4 2003/06/29 22:30:01 fvdl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mm.c,v 1.5 2003/09/21 19:16:55 jdolecek Exp $");
 
 /*
  * Memory special file
@@ -71,6 +71,8 @@ mmioctl(dev, cmd, data, flag, p)
 		switch (cmd) {
 		case FIONBIO:	/* We never block anyway */
 			return 0;
+		case FIOSETOWN:
+		case FIOGETOWN:
 		case TIOCGPGRP:
 		case TIOCSPGRP:
 			return ENOTTY;
