@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_sig.c,v 1.124 2002/09/04 01:32:35 matt Exp $	*/
+/*	$NetBSD: kern_sig.c,v 1.125 2002/09/22 05:36:48 gmcgarry Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1991, 1993
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_sig.c,v 1.124 2002/09/04 01:32:35 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_sig.c,v 1.125 2002/09/22 05:36:48 gmcgarry Exp $");
 
 #include "opt_ktrace.h"
 #include "opt_compat_sunos.h"
@@ -1081,7 +1081,7 @@ issignal(struct proc *p)
 			if (dolock)
 				SCHED_LOCK(s);
 			proc_stop(p);
-			mi_switch(p);
+			mi_switch(p, NULL);
 			SCHED_ASSERT_UNLOCKED();
 			if (dolock)
 				splx(s);
@@ -1152,7 +1152,7 @@ issignal(struct proc *p)
 				if (dolock)
 					SCHED_LOCK(s);
 				proc_stop(p);
-				mi_switch(p);
+				mi_switch(p, NULL);
 				SCHED_ASSERT_UNLOCKED();
 				if (dolock)
 					splx(s);
