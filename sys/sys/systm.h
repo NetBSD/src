@@ -1,4 +1,4 @@
-/*	$NetBSD: systm.h,v 1.39 1996/02/09 18:25:42 christos Exp $	*/
+/*	$NetBSD: systm.h,v 1.40 1996/02/10 00:13:28 christos Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1988, 1991, 1993
@@ -159,6 +159,8 @@ long	fuword __P((void *base));
 long	fuiword __P((void *base));
 int	suword __P((void *base, long word));
 int	suiword __P((void *base, long word));
+int	fuswintr __P((caddr_t));
+int	suswintr __P((caddr_t, u_int));
 
 struct timeval;
 int	hzto __P((struct timeval *tv));
