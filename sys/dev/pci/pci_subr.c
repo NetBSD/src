@@ -1,4 +1,4 @@
-/*	$NetBSD: pci_subr.c,v 1.54 2002/11/24 11:55:13 scw Exp $	*/
+/*	$NetBSD: pci_subr.c,v 1.55 2003/06/29 14:41:11 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1997 Zubin D. Dittia.  All rights reserved.
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pci_subr.c,v 1.54 2002/11/24 11:55:13 scw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pci_subr.c,v 1.55 2003/06/29 14:41:11 jdolecek Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_pci.h"
@@ -1240,7 +1240,7 @@ pci_conf_print(
 		    hdrtype);
 	printf("\n");
 
-	/* papability list, if present */
+	/* capability list, if present */
 	if ((regs[o2i(PCI_COMMAND_STATUS_REG)] & PCI_STATUS_CAPLIST_SUPPORT)
 		&& (capoff > 0)) {
 #ifdef _KERNEL
