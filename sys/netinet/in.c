@@ -1,4 +1,4 @@
-/*	$NetBSD: in.c,v 1.59 2000/03/30 13:24:54 augustss Exp $	*/
+/*	$NetBSD: in.c,v 1.60 2000/04/03 03:50:05 enami Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -984,6 +984,7 @@ in_addmulti(ap, ifp)
 			return (NULL);
 		}
 		inm->inm_ia = ia;
+		IFAREF(&inm->inm_ia->ia_ifa);
 		LIST_INSERT_HEAD(&ia->ia_multiaddrs, inm, inm_list);
 		/*
 		 * Ask the network driver to update its multicast reception
@@ -1028,6 +1029,7 @@ in_delmulti(inm)
 		 * Unlink from list.
 		 */
 		LIST_REMOVE(inm, inm_list);
+		IFAFREE(&inm->inm_ia->ia_ifa);
 		/*
 		 * Notify the network driver to update its multicast reception
 		 * filter.
