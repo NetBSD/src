@@ -1,4 +1,4 @@
-/*	$NetBSD: psl.h,v 1.2 1995/03/28 18:14:00 jtc Exp $	*/
+/*	$NetBSD: psl.h,v 1.3 1995/08/03 00:03:09 cgd Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Carnegie-Mellon University.
@@ -70,7 +70,12 @@
 /*
  * Cache invalidation/flush routines.
  */
-#define	MB()		alpha_mb()	/* Flush all write buffers */
+#if 0
+#define	wbflush()	alpha_mb()	/* Flush all write buffers */
+#else
+/* Flush all write buffers */
+#define	wbflush()	__asm __volatile("mb")
+#endif
 #define	IMB()		pal_imb()	/* Sync instruction cache w/data */
 
 void alpha_mb __P((void));		/* Flush all write buffers */
