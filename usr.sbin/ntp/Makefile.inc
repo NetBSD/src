@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.14 2005/01/10 03:03:28 lukem Exp $
+#	$NetBSD: Makefile.inc,v 1.15 2005/03/09 03:11:23 christos Exp $
 
 .if !defined(NTP_MAKEFILE_INC)
 NTP_MAKEFILE_INC=1
@@ -26,8 +26,8 @@ LDADD+=		-L${LIBNTP} -lntp
 DPADD+=		${LIBNTP}/libntp.a
 
 .if (${MKCRYPTO} != "no")
-LDADD+=		-lcrypto
-DPADD+=		${LIBCRYPTO}
+LDADD+=		-lcrypto -lcrypt
+DPADD+=		${LIBCRYPTO} ${LIBCRYPT}
 .endif
 
 SRCS+=	version.c
