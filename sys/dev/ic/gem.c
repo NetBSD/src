@@ -1,7 +1,7 @@
-/*	$NetBSD: gem.c,v 1.30 2003/10/26 19:11:33 christos Exp $ */
+/*	$NetBSD: gem.c,v 1.31 2004/10/17 21:49:08 heas Exp $ */
 
 /*
- * 
+ *
  * Copyright (C) 2001 Eduardo Horvath.
  * All rights reserved.
  *
@@ -14,7 +14,7 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- *  
+ *
  * THIS SOFTWARE IS PROVIDED BY THE AUTHOR  ``AS IS'' AND
  * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
  * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
@@ -34,14 +34,14 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: gem.c,v 1.30 2003/10/26 19:11:33 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gem.c,v 1.31 2004/10/17 21:49:08 heas Exp $");
 
 #include "bpfilter.h"
 
 #include <sys/param.h>
-#include <sys/systm.h> 
+#include <sys/systm.h>
 #include <sys/callout.h>
-#include <sys/mbuf.h>   
+#include <sys/mbuf.h>
 #include <sys/syslog.h>
 #include <sys/malloc.h>
 #include <sys/kernel.h>
@@ -53,15 +53,15 @@ __KERNEL_RCSID(0, "$NetBSD: gem.c,v 1.30 2003/10/26 19:11:33 christos Exp $");
 #include <machine/endian.h>
 
 #include <uvm/uvm_extern.h>
- 
+
 #include <net/if.h>
 #include <net/if_dl.h>
 #include <net/if_media.h>
 #include <net/if_ether.h>
 
-#if NBPFILTER > 0 
+#if NBPFILTER > 0
 #include <net/bpf.h>
-#endif 
+#endif
 
 #include <machine/bus.h>
 #include <machine/intr.h>
@@ -229,11 +229,11 @@ gem_attach(sc, enaddr)
 
 	/* Get RX FIFO size */
 	sc->sc_rxfifosize = 64 *
-	    bus_space_read_4(sc->sc_bustag, sc->sc_h, GEM_RX_FIFO_SIZE); 
+	    bus_space_read_4(sc->sc_bustag, sc->sc_h, GEM_RX_FIFO_SIZE);
 	aprint_normal(", %uKB RX fifo", sc->sc_rxfifosize / 1024);
 
 	/* Get TX FIFO size */
-	v = bus_space_read_4(sc->sc_bustag, sc->sc_h, GEM_TX_FIFO_SIZE); 
+	v = bus_space_read_4(sc->sc_bustag, sc->sc_h, GEM_TX_FIFO_SIZE);
 	aprint_normal(", %uKB TX fifo\n", v / 16);
 
 	/* Initialize ifnet structure. */
@@ -250,7 +250,7 @@ gem_attach(sc, enaddr)
 
 	/* Initialize ifmedia structures and MII info */
 	mii->mii_ifp = ifp;
-	mii->mii_readreg = gem_mii_readreg; 
+	mii->mii_readreg = gem_mii_readreg;
 	mii->mii_writereg = gem_mii_writereg;
 	mii->mii_statchg = gem_mii_statchg;
 
@@ -291,7 +291,6 @@ gem_attach(sc, enaddr)
 			}
 
 			sc->sc_phys[child->mii_inst] = child->mii_phy;
-			
 		}
 
 		/*
@@ -311,7 +310,7 @@ gem_attach(sc, enaddr)
 #endif
 			sc->sc_mif_config &= ~GEM_MIF_CONFIG_PHY_SEL;
 		}
-		bus_space_write_4(sc->sc_bustag, sc->sc_h, GEM_MIF_CONFIG, 
+		bus_space_write_4(sc->sc_bustag, sc->sc_h, GEM_MIF_CONFIG,
 			sc->sc_mif_config);
 
 		/*
@@ -441,7 +440,7 @@ gem_tick(arg)
 	splx(s);
 
 	callout_reset(&sc->sc_tick_ch, hz, gem_tick, sc);
-	
+
 }
 
 void
@@ -461,7 +460,7 @@ gem_reset(sc)
 	/* Do a full reset */
 	bus_space_write_4(t, h, GEM_RESET, GEM_RESET_RX|GEM_RESET_TX);
 	for (i=TRIES; i--; delay(100))
-		if ((bus_space_read_4(t, h, GEM_RESET) & 
+		if ((bus_space_read_4(t, h, GEM_RESET) &
 			(GEM_RESET_RX|GEM_RESET_TX)) == 0)
 			break;
 	if ((bus_space_read_4(t, h, GEM_RESET) &
@@ -494,7 +493,7 @@ gem_rxdrain(struct gem_softc *sc)
 	}
 }
 
-/* 
+/*
  * Reset the whole thing.
  */
 void
@@ -638,7 +637,7 @@ gem_disable_rx(struct gem_softc *sc)
 	bus_space_write_4(t, h, GEM_MAC_RX_CONFIG, cfg);
 
 	/* Wait for it to finish */
-	for (i=TRIES; i--; delay(100)) 
+	for (i=TRIES; i--; delay(100))
 		if ((bus_space_read_4(t, h, GEM_MAC_RX_CONFIG) &
 			GEM_MAC_RX_ENABLE) == 0)
 			return (0);
@@ -662,7 +661,7 @@ gem_disable_tx(struct gem_softc *sc)
 	bus_space_write_4(t, h, GEM_MAC_TX_CONFIG, cfg);
 
 	/* Wait for it to finish */
-	for (i=TRIES; i--; delay(100)) 
+	for (i=TRIES; i--; delay(100))
 		if ((bus_space_read_4(t, h, GEM_MAC_TX_CONFIG) &
 			GEM_MAC_TX_ENABLE) == 0)
 			return (0);
@@ -822,7 +821,7 @@ gem_init(struct ifnet *ifp)
 
 	/* Enable DMA */
 	v = gem_ringsize(GEM_NTXDESC /*XXX*/);
-	bus_space_write_4(t, h, GEM_TX_CONFIG, 
+	bus_space_write_4(t, h, GEM_TX_CONFIG,
 		v|GEM_TX_CONFIG_TXDMA_EN|
 		((0x400<<10)&GEM_TX_CONFIG_TXFIFO_TH));
 	bus_space_write_4(t, h, GEM_TX_KICK, sc->sc_txnext);
@@ -833,7 +832,7 @@ gem_init(struct ifnet *ifp)
 	v = gem_ringsize(GEM_NRXDESC /*XXX*/);
 
 	/* Enable DMA */
-	bus_space_write_4(t, h, GEM_RX_CONFIG, 
+	bus_space_write_4(t, h, GEM_RX_CONFIG,
 		v|(GEM_THRSH_1024<<GEM_RX_CONFIG_FIFO_THRS_SHIFT)|
 		(2<<GEM_RX_CONFIG_FBOFF_SHFT)|GEM_RX_CONFIG_RXDMA_EN|
 		(0<<GEM_RX_CONFIG_CXM_START_SHFT));
@@ -1182,7 +1181,7 @@ gem_start(ifp)
 		DPRINTF(sc, ("%s: packets enqueued, IC on %d, OWN on %d\n",
 		    sc->sc_dev.dv_xname, lasttx, firsttx));
 		/*
-		 * The entire packet chain is set up.  
+		 * The entire packet chain is set up.
 		 * Kick the transmitter.
 		 */
 		DPRINTF(sc, ("%s: gem_start: kicking tx %d\n",
@@ -1464,7 +1463,7 @@ gem_rint(sc)
 			GEM_COUNTER_INCR(sc, sc_ev_rxhist[5]);
 		else
 			GEM_COUNTER_INCR(sc, sc_ev_rxhist[6]);
-			
+
 	} else {
 		if (progress < 64)
 			GEM_COUNTER_INCR(sc, sc_ev_rxhist[7]);
@@ -1704,7 +1703,7 @@ gem_mii_writereg(self, phy, reg, val)
 
 #ifdef GEM_DEBUG1
 	if (sc->sc_debug)
-		printf("gem_mii_writereg: phy %d reg %d val %x\n", 
+		printf("gem_mii_writereg: phy %d reg %d val %x\n",
 			phy, reg, val);
 #endif
 
@@ -1749,7 +1748,7 @@ gem_mii_statchg(dev)
 
 #ifdef GEM_DEBUG
 	if (sc->sc_debug)
-		printf("gem_mii_statchg: status change: phy = %d\n", 
+		printf("gem_mii_statchg: status change: phy = %d\n",
 			sc->sc_phys[instance]);
 #endif
 
@@ -1785,7 +1784,7 @@ gem_mii_statchg(dev)
 			v |= GEM_MAC_XIF_GMII_MODE;
 		else
 			v &= ~GEM_MAC_XIF_GMII_MODE;
-	} else 
+	} else
 		/* Internal MII needs buf enable */
 		v |= GEM_MAC_XIF_MII_BUF_ENA;
 	bus_space_write_4(t, mac, GEM_MAC_XIF_CONFIG, v);
@@ -1842,7 +1841,7 @@ gem_ioctl(ifp, cmd, data)
 
 	default:
 		error = ether_ioctl(ifp, cmd, data);
-		if (error == ENETRESET) { 
+		if (error == ENETRESET) {
 			/*
 			 * Multicast list has changed; set the hardware filter
 			 * accordingly.
