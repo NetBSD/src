@@ -1,4 +1,4 @@
-/* $NetBSD: adw.c,v 1.15 2000/03/23 07:01:28 thorpej Exp $	 */
+/* $NetBSD: adw.c,v 1.16 2000/04/30 18:52:15 dante Exp $	 */
 
 /*
  * Generic driver for the Advanced Systems Inc. SCSI controllers
@@ -535,9 +535,22 @@ adw_init(sc)
 	} else {
 		AdvResetChip(sc->sc_iot, sc->sc_ioh);
 
-		warn_code = (sc->chip_type == ADV_CHIP_ASC3550)?
-				AdvInitFrom3550EEP(sc) :
-				AdvInitFrom38C0800EEP(sc);
+		switch(sc->chip_type) {
+		case ADV_CHIP_ASC3550:
+			warn_code = AdvInitFrom3550EEP(sc);
+			break;
+
+		case ADV_CHIP_ASC38C0800:
+			warn_code = AdvInitFrom38C0800EEP(sc);
+			break;
+
+		case ADV_CHIP_ASC38C1600:
+			warn_code = AdvInitFrom38C1600EEP(sc);
+			break;
+
+		default:
+			return -1;
+		}
 
 		if (warn_code & ASC_WARN_EEPROM_CHKSUM)
 			printf("%s: Bad checksum found. "
@@ -552,7 +565,7 @@ adw_init(sc)
 	sc->isr_callback = (ADW_CALLBACK) adw_isr_callback;
 	sc->async_callback = (ADW_CALLBACK) adw_async_callback;
 
-	return (0);
+	return 0;
 }
 
 
@@ -612,11 +625,25 @@ adw_attach(sc)
 
 
 	/*
-	 * Initialize the ASC3550.
+	 * Initialize the adapter
 	 */
-	error = (sc->chip_type == ADV_CHIP_ASC3550)?
-			AdvInitAsc3550Driver(sc) :
-			AdvInitAsc38C0800Driver(sc);
+	switch(sc->chip_type) {
+	case ADV_CHIP_ASC3550:
+		error = AdvInitAsc3550Driver(sc);
+		break;
+
+	case ADV_CHIP_ASC38C0800:
+		error = AdvInitAsc38C0800Driver(sc);
+		break;
+
+	case ADV_CHIP_ASC38C1600:
+		error = AdvInitAsc38C1600Driver(sc);
+		break;
+
+	default:
+		return;
+	}
+
 	switch (error) {
 	case ASC_IERR_MCODE_CHKSUM:
 		panic("%s: Microcode checksum error",
@@ -837,8 +864,13 @@ adw_build_req(xs, ccb, flags)
 
 	/*
 	 * Set CDB length and copy it to the request structure.
+	 * For wide  boards a CDB length maximum of 16 bytes
+	 * is supported.
 	 */
-	bcopy(xs->cmd, &scsiqp->cdb, scsiqp->cdb_len = xs->cmdlen);
+	bcopy(xs->cmd, &scsiqp->cdb, ((scsiqp->cdb_len = xs->cmdlen) <= 12)?
+			xs->cmdlen : 12 );
+	if(xs->cmdlen > 12)
+		bcopy(&(xs->cmd[12]),  &scsiqp->cdb16, xs->cmdlen - 12);
 
 	scsiqp->target_id = sc_link->scsipi_scsi.target;
 	scsiqp->target_lun = sc_link->scsipi_scsi.lun;
@@ -981,9 +1013,11 @@ adw_intr(arg)
 	         */
 		if ((xs = TAILQ_FIRST(&sc->sc_queue)) != NULL)
 			(void) adw_scsi_cmd(xs);
+
+		return (1);
 	}
 
-	return (1);
+	return (0);
 }
 
 

@@ -1,4 +1,4 @@
-/*      $NetBSD: adwlib.h,v 1.7 2000/02/03 20:29:16 dante Exp $        */
+/*      $NetBSD: adwlib.h,v 1.8 2000/04/30 18:52:15 dante Exp $        */
 
 /*
  * Definitions for low level routines and data structures
@@ -42,10 +42,10 @@
  */
 /*
  * advansys.c - Linux Host Driver for AdvanSys SCSI Adapters
- *     
- * Copyright (c) 1995-1996 Advanced System Products, Inc.
+ * 
+ * Copyright (c) 1995-2000 Advanced System Products, Inc.
  * All Rights Reserved.
- *   
+ *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that redistributions of source
  * code retain the above copyright notice and this comment without
@@ -61,7 +61,7 @@
  */
 
 #define ADW_LIB_VERSION_MAJOR	5
-#define ADW_LIB_VERSION_MINOR	2
+#define ADW_LIB_VERSION_MINOR	8
 
 /*
  * Define Adv Reset Hold Time grater than 25 uSec.
@@ -100,8 +100,7 @@
  *  this field may be set, but later if a device is found to be incapable
  *  of the feature, the field is cleared.
  *
- * Default values are maintained in a_init.c in the structure
- * Default_EEPROM_Config.
+ * Default values are maintained in the structure Default_EEPROM_Config.
  */
 #define ADV_EEPROM_BIG_ENDIAN          0x8000   /* EEPROM Bit 15 */
 #define ADV_EEPROM_BIOS_ENABLE         0x4000   /* EEPROM Bit 14 */
@@ -113,6 +112,19 @@
 #define ADV_EEPROM_TERM_POL            0x2000   /* EEPROM Bit 13 */
 #define ADV_EEPROM_CIS_LD              0x2000   /* EEPROM Bit 13 */
 
+/*
+ * ASC38C1600 Bit 11
+ *
+ * If EEPROM Bit 11 is 0 for Function 0, then Function 0 will specify
+ * INT A in the PCI Configuration Space Int Pin field. If it is 1, then
+ * Function 0 will specify INT B.
+ *
+ * If EEPROM Bit 11 is 0 for Function 1, then Function 1 will specify
+ * INT B in the PCI Configuration Space Int Pin field. If it is 1, then
+ * Function 1 will specify INT A.
+ */
+#define ADW_EEPROM_INTAB               0x0800   /* EEPROM Bit 11 */
+
 typedef struct adw_eep_3550_config
 {                              
 						/* Word Offset, Description */
@@ -121,7 +133,7 @@ typedef struct adw_eep_3550_config
 						/*  bit 13 set - Term Polarity Control */
 						/*  bit 14 set - BIOS Enable */
 						/*  bit 15 set - Big Endian Mode */
-	u_int16_t	cfg_msw;		/* 01 unused	   */
+	u_int16_t	cfg_msw;		/* 01 unused	*/
 	u_int16_t	disc_enable;		/* 02 disconnect enable */
 	u_int16_t	wdtr_able;		/* 03 Wide DTR able */
 	u_int16_t	sdtr_able;		/* 04 Synchronous DTR able */
@@ -138,7 +150,7 @@ typedef struct adw_eep_3550_config
 						/*    high nibble is lun */
 						/*    low nibble is scsi id */
 
-	u_int8_t	termination;  		 /* 11 0 - automatic */
+	u_int8_t	termination;		/* 11 0 - automatic */
 						/*    1 - low off / high off */
 						/*    2 - low off / high on */
 						/*    3 - low on  / high on */
@@ -147,22 +159,22 @@ typedef struct adw_eep_3550_config
 	u_int8_t	reserved1;		/*    reserved byte (not used) */
 
 	u_int16_t	bios_ctrl;		/* 12 BIOS control bits */
-						/*  bit 0  set: BIOS don't act as initiator. */
-						/*  bit 1  set: BIOS > 1 GB support */
-						/*  bit 2  set: BIOS > 2 Disk Support */
-						/*  bit 3  set: BIOS don't support removables */
-						/*  bit 4  set: BIOS support bootable CD */
-						/*  bit 5  set: */
-						/*  bit 6  set: BIOS support multiple LUNs */
-						/*  bit 7  set: BIOS display of message */
-						/*  bit 8  set: */
-						/*  bit 9  set: Reset SCSI bus during init. */
-						/*  bit 10 set: */
-						/*  bit 11 set: No verbose initialization. */
-						/*  bit 12 set: SCSI parity enabled */
-						/*  bit 13 set: */
-						/*  bit 14 set: */
-						/*  bit 15 set: */
+						  	  /*  bit 0  BIOS don't act as initiator. */
+						/*  bit 1  BIOS > 1 GB support */
+						/*  bit 2  BIOS > 2 Disk Support */
+						/*  bit 3  BIOS don't support removables */
+						/*  bit 4  BIOS support bootable CD */
+						/*  bit 5  BIOS scan enabled */
+						/*  bit 6  BIOS support multiple LUNs */
+						/*  bit 7  BIOS display of message */
+						/*  bit 8  SCAM disabled */
+						/*  bit 9  Reset SCSI bus during init. */
+						/*  bit 10 */
+						/*  bit 11 No verbose initialization. */
+						/*  bit 12 SCSI parity enabled */
+						/*  bit 13 */
+						/*  bit 14 */
+						/*  bit 15 */
 	u_int16_t	ultra_able;		/* 13 ULTRA speed able */
 	u_int16_t	reserved2;		/* 14 reserved */
 	u_int8_t	max_host_qng;		/* 15 maximum host queuing */
@@ -177,9 +189,9 @@ typedef struct adw_eep_3550_config
 	u_int16_t	dvc_err_code;		/* 30 last device driver error code */
 	u_int16_t	adv_err_code;		/* 31 last uc and Adv Lib error code */
 	u_int16_t	adv_err_addr;		/* 32 last uc error address */
-	u_int16_t	saved_dvc_err_code;	/* 33 saved last dev. driver error code   */
+	u_int16_t	saved_dvc_err_code;	/* 33 saved last dev. driver error code	*/
 	u_int16_t	saved_adv_err_code;	/* 34 saved last uc and Adv Lib error code */
-	u_int16_t	saved_adv_err_addr;	/* 35 saved last uc error address	 */
+	u_int16_t	saved_adv_err_addr;	/* 35 saved last uc error address 	*/
 	u_int16_t	num_of_err;		/* 36 number of error */
 } ADW_EEP_3550_CONFIG; 
 
@@ -191,7 +203,7 @@ typedef struct adw_eep_38C0800_config
 						/*  bit 13 set - Load CIS */
 						/*  bit 14 set - BIOS Enable */
 						/*  bit 15 set - Big Endian Mode */
-	u_int16_t	cfg_msw;		/* 01 unused      */
+	u_int16_t	cfg_msw;		/* 01 unused	*/
 	u_int16_t	disc_enable;		/* 02 disconnect enable */
 	u_int16_t	wdtr_able;		/* 03 Wide DTR able */
 	u_int16_t	sdtr_speed1;		/* 04 SDTR Speed TID 0-3 */
@@ -221,29 +233,132 @@ typedef struct adw_eep_38C0800_config
 						/*    There is no low on  / high off */
 
 	u_int16_t	bios_ctrl;		/* 12 BIOS control bits */
-						/*  bit 0  set: BIOS don't act as initiator. */
-						/*  bit 1  set: BIOS > 1 GB support */
-						/*  bit 2  set: BIOS > 2 Disk Support */
-						/*  bit 3  set: BIOS don't support removables */
-						/*  bit 4  set: BIOS support bootable CD */
-						/*  bit 5  set: BIOS scan enabled */
-						/*  bit 6  set: BIOS support multiple LUNs */
-						/*  bit 7  set: BIOS display of message */
-						/*  bit 8  set: */
-						/*  bit 9  set: Reset SCSI bus during init. */
-						/*  bit 10 set: */
-						/*  bit 11 set: No verbose initialization. */
-						/*  bit 12 set: SCSI parity enabled */
-						/*  bit 13 set: */
-						/*  bit 14 set: */
-						/*  bit 15 set: */
+						/*  bit 0  BIOS don't act as initiator. */
+						/*  bit 1  BIOS > 1 GB support */
+						/*  bit 2  BIOS > 2 Disk Support */
+						/*  bit 3  BIOS don't support removables */
+						/*  bit 4  BIOS support bootable CD */
+						/*  bit 5  BIOS scan enabled */
+						/*  bit 6  BIOS support multiple LUNs */
+						/*  bit 7  BIOS display of message */
+						/*  bit 8  SCAM disabled */
+						/*  bit 9  Reset SCSI bus during init. */
+						/*  bit 10 */
+						/*  bit 11 No verbose initialization. */
+						/*  bit 12 SCSI parity enabled */
+						/*  bit 13 */
+						/*  bit 14 */
+						/*  bit 15 */
 	u_int16_t	sdtr_speed2;		/* 13 SDTR speed TID 4-7 */
 	u_int16_t	sdtr_speed3;		/* 14 SDTR speed TID 8-11 */
 	u_int8_t	max_host_qng;		/* 15 maximum host queueing */
 	u_int8_t	max_dvc_qng;		/*    maximum per device queuing */
 	u_int16_t	dvc_cntl;		/* 16 control bit for driver */
 	u_int16_t	sdtr_speed4;		/* 17 SDTR speed 4 TID 12-15 */
-	u_int16_t 	serial_number_word1;	/* 18 Board serial number word 1 */
+	u_int16_t	serial_number_word1;	/* 18 Board serial number word 1 */
+	u_int16_t	serial_number_word2;	/* 19 Board serial number word 2 */
+	u_int16_t	serial_number_word3;	/* 20 Board serial number word 3 */
+	u_int16_t	check_sum;		/* 21 EEP check sum */
+	u_int8_t	oem_name[16];		/* 22 OEM name */
+	u_int16_t	dvc_err_code;		/* 30 last device driver error code */
+	u_int16_t	adv_err_code;		/* 31 last uc and Adv Lib error code */
+	u_int16_t	adv_err_addr;		/* 32 last uc error address */
+	u_int16_t	saved_dvc_err_code;	/* 33 saved last dev. driver error code	*/
+	u_int16_t	saved_adv_err_code;	/* 34 saved last uc and Adv Lib error code */
+	u_int16_t	saved_adv_err_addr;	/* 35 saved last uc error address 	*/
+	u_int16_t	reserved36;		/* 36 reserved */
+	u_int16_t	reserved37;		/* 37 reserved */
+	u_int16_t	reserved38;		/* 38 reserved */
+	u_int16_t	reserved39;		/* 39 reserved */
+	u_int16_t	reserved40;		/* 40 reserved */
+	u_int16_t	reserved41;		/* 41 reserved */
+	u_int16_t	reserved42;		/* 42 reserved */
+	u_int16_t	reserved43;		/* 43 reserved */
+	u_int16_t	reserved44;		/* 44 reserved */
+	u_int16_t	reserved45;		/* 45 reserved */
+	u_int16_t	reserved46;		/* 46 reserved */
+	u_int16_t	reserved47;		/* 47 reserved */
+	u_int16_t	reserved48;		/* 48 reserved */
+	u_int16_t	reserved49;		/* 49 reserved */
+	u_int16_t	reserved50;		/* 50 reserved */
+	u_int16_t	reserved51;		/* 51 reserved */
+	u_int16_t	reserved52;		/* 52 reserved */
+	u_int16_t	reserved53;		/* 53 reserved */
+	u_int16_t	reserved54;		/* 54 reserved */
+	u_int16_t	reserved55;		/* 55 reserved */
+	u_int16_t	cisptr_lsw;		/* 56 CIS PTR LSW */
+	u_int16_t	cisprt_msw;		/* 57 CIS PTR MSW */
+	u_int16_t	subsysvid;		/* 58 SubSystem Vendor ID */
+	u_int16_t	subsysid;		/* 59 SubSystem ID */
+	u_int16_t	reserved60;		/* 60 reserved */
+	u_int16_t	reserved61;		/* 61 reserved */
+	u_int16_t	reserved62;		/* 62 reserved */
+	u_int16_t	reserved63;		/* 63 reserved */
+} ADW_EEP_38C0800_CONFIG;
+
+typedef struct adw_eep_38C1600_config
+{
+						/* Word Offset, Description */
+
+	u_int16_t	cfg_lsw;		/* 00 power up initialization */
+						/*  bit 11 set - Func. 0 INTB, Func. 1 INTA */
+						/*	 clear - Func. 0 INTA, Func. 1 INTB */
+						/*  bit 13 set - Load CIS */
+						/*  bit 14 set - BIOS Enable */
+						/*  bit 15 set - Big Endian Mode */
+	u_int16_t	cfg_msw;		/* 01 unused */
+	u_int16_t	disc_enable;		/* 02 disconnect enable */
+	u_int16_t	wdtr_able;		/* 03 Wide DTR able */
+	u_int16_t	sdtr_speed1;		/* 04 SDTR Speed TID 0-3 */
+	u_int16_t	start_motor;		/* 05 send start up motor */
+	u_int16_t	tagqng_able;		/* 06 tag queuing able */
+	u_int16_t	bios_scan;		/* 07 BIOS device control */
+	u_int16_t	scam_tolerant;		/* 08 no scam */
+
+	u_int8_t	adapter_scsi_id;	/* 09 Host Adapter ID */
+	u_int8_t	bios_boot_delay;	/*    power up wait */
+
+	u_int8_t	scsi_reset_delay;	/* 10 reset delay */
+	u_int8_t	bios_id_lun;		/*    first boot device scsi id & lun */
+						/*    high nibble is lun */
+						/*    low nibble is scsi id */
+
+	u_int8_t	termination_se;		/* 11 0 - automatic */
+						/*    1 - low off / high off */
+						/*    2 - low off / high on */
+						/*    3 - low on  / high on */
+						/*    There is no low on  / high off */
+
+	u_int8_t	termination_lvd;	/* 11 0 - automatic */
+						/*    1 - low off / high off */
+						/*    2 - low off / high on */
+						/*    3 - low on  / high on */
+						/*    There is no low on  / high off */
+
+	u_int16_t	bios_ctrl;		/* 12 BIOS control bits */
+						/*  bit 0  BIOS don't act as initiator. */
+						/*  bit 1  BIOS > 1 GB support */
+						/*  bit 2  BIOS > 2 Disk Support */
+						/*  bit 3  BIOS don't support removables */
+						/*  bit 4  BIOS support bootable CD */
+						/*  bit 5  BIOS scan enabled */
+						/*  bit 6  BIOS support multiple LUNs */
+						/*  bit 7  BIOS display of message */
+						/*  bit 8  SCAM disabled */
+						/*  bit 9  Reset SCSI bus during init. */
+						/*  bit 10 Basic Integrity Checking disabled */
+						/*  bit 11 No verbose initialization. */
+						/*  bit 12 SCSI parity enabled */
+						/*  bit 13 AIPP (Asyn. Info. Ph. Prot.) dis. */
+						/*  bit 14 */
+						/*  bit 15 */
+	u_int16_t	sdtr_speed2;		/* 13 SDTR speed TID 4-7 */
+	u_int16_t	sdtr_speed3;		/* 14 SDTR speed TID 8-11 */
+	u_int8_t	max_host_qng;		/* 15 maximum host queueing */
+	u_int8_t	max_dvc_qng;		/*    maximum per device queuing */
+	u_int16_t	dvc_cntl;		/* 16 control bit for driver */
+	u_int16_t	sdtr_speed4;		/* 17 SDTR speed 4 TID 12-15 */
+	u_int16_t	serial_number_word1;	/* 18 Board serial number word 1 */
 	u_int16_t	serial_number_word2;	/* 19 Board serial number word 2 */
 	u_int16_t	serial_number_word3;	/* 20 Board serial number word 3 */
 	u_int16_t	check_sum;		/* 21 EEP check sum */
@@ -253,36 +368,37 @@ typedef struct adw_eep_38C0800_config
 	u_int16_t	adv_err_addr;		/* 32 last uc error address */
 	u_int16_t	saved_dvc_err_code;	/* 33 saved last dev. driver error code   */
 	u_int16_t	saved_adv_err_code;	/* 34 saved last uc and Adv Lib error code */
-	u_int16_t	saved_adv_err_addr;	/* 35 saved last uc error address         */
+	u_int16_t	saved_adv_err_addr;	/* 35 saved last uc error address	  */
 	u_int16_t	reserved36;		/* 36 reserved */
 	u_int16_t	reserved37;		/* 37 reserved */
-	u_int16_t	reserved38;	   	/* 38 reserved */
-	u_int16_t	reserved39;	   	/* 39 reserved */
-	u_int16_t	reserved40;	   	/* 40 reserved */
-	u_int16_t	reserved41;	   	/* 41 reserved */
-	u_int16_t	reserved42;	   	/* 42 reserved */
-	u_int16_t	reserved43;	   	/* 43 reserved */
-	u_int16_t	reserved44;	   	/* 44 reserved */
-	u_int16_t	reserved45;	   	/* 45 reserved */
-	u_int16_t	reserved46;	   	/* 46 reserved */
-	u_int16_t	reserved47;	   	/* 47 reserved */
-	u_int16_t	reserved48;	   	/* 48 reserved */
-	u_int16_t	reserved49;	   	/* 49 reserved */
-	u_int16_t	reserved50;	   	/* 50 reserved */
-	u_int16_t	reserved51;	   	/* 51 reserved */
-	u_int16_t	reserved52;	   	/* 52 reserved */
-	u_int16_t	reserved53;	   	/* 53 reserved */
-	u_int16_t	reserved54;	   	/* 54 reserved */
-	u_int16_t	reserved55;	   	/* 55 reserved */
-	u_int16_t	cisptr_lsw;	   	/* 56 CIS PTR LSW */
-	u_int16_t	cisprt_msw;	   	/* 57 CIS PTR MSW */
+	u_int16_t	reserved38;		/* 38 reserved */
+	u_int16_t	reserved39;		/* 39 reserved */
+	u_int16_t	reserved40;		/* 40 reserved */
+	u_int16_t	reserved41;		/* 41 reserved */
+	u_int16_t	reserved42;		/* 42 reserved */
+	u_int16_t	reserved43;		/* 43 reserved */
+	u_int16_t	reserved44;		/* 44 reserved */
+	u_int16_t	reserved45;		/* 45 reserved */
+	u_int16_t	reserved46;		/* 46 reserved */
+	u_int16_t	reserved47;		/* 47 reserved */
+	u_int16_t	reserved48;		/* 48 reserved */
+	u_int16_t	reserved49;		/* 49 reserved */
+	u_int16_t	reserved50;		/* 50 reserved */
+	u_int16_t	reserved51;		/* 51 reserved */
+	u_int16_t	reserved52;		/* 52 reserved */
+	u_int16_t	reserved53;		/* 53 reserved */
+	u_int16_t	reserved54;		/* 54 reserved */
+	u_int16_t	reserved55;		/* 55 reserved */
+	u_int16_t	cisptr_lsw;		/* 56 CIS PTR LSW */
+	u_int16_t	cisprt_msw;		/* 57 CIS PTR MSW */
 	u_int16_t	subsysvid;		/* 58 SubSystem Vendor ID */
 	u_int16_t	subsysid;		/* 59 SubSystem ID */
-	u_int16_t	reserved60;	   	/* 60 reserved */
-	u_int16_t	reserved61;	   	/* 61 reserved */
-	u_int16_t	reserved62;	   	/* 62 reserved */
-	u_int16_t	reserved63;	   	/* 63 reserved */
-} ADW_EEP_38C0800_CONFIG;
+	u_int16_t	reserved60;		/* 60 reserved */
+	u_int16_t	reserved61;		/* 61 reserved */
+	u_int16_t	reserved62;		/* 62 reserved */
+	u_int16_t	reserved63;		/* 63 reserved */
+} ADW_EEP_38C1600_CONFIG;
+
 
 /*
  * EEPROM Commands
@@ -310,6 +426,7 @@ typedef struct adw_eep_38C0800_config
 #define BIOS_CTRL_RESET_SCSI_BUS     0x0200
 #define BIOS_CTRL_INIT_VERBOSE       0x0800
 #define BIOS_CTRL_SCSI_PARITY        0x1000
+#define BIOS_CTRL_AIPP_DIS           0x2000
 
 #define ADV_3550_MEMSIZE             0x2000	/* 8 KB Internal Memory */
 #define ADV_3550_IOLEN               0x40	/* I/O Port Range in bytes */
@@ -317,7 +434,7 @@ typedef struct adw_eep_38C0800_config
 #define ADV_38C0800_MEMSIZE          0x4000	/* 16 KB Internal Memory */
 #define ADV_38C0800_IOLEN            0x100	/* I/O Port Range in bytes */
 
-#define ADV_38C1600_MEMSIZE          0x4000	/* 16 KB Internal Memory */
+#define ADV_38C1600_MEMSIZE          0x8000	/* 32 KB Internal Memory */
 #define ADV_38C1600_IOLEN            0x100	/* I/O Port Range 256 bytes */
 #define ADV_38C1600_MEMLEN           0x1000	/* Memory Range 4KB bytes */
 
@@ -531,6 +648,14 @@ typedef struct adw_eep_38C0800_config
 
 /*
  * Addendum for ASC-38C0800 Chip
+ *
+ * The ASC-38C1600 Chip uses the same definitions except that the
+ * bus mode override bits [12:10] have been moved to byte register
+ * offset 0xE (IOPB_SOFT_OVER_WR) bits [12:10]. The [12:10] bits in
+ * SCSI_CFG1 are read-only and always available. Bit 14 (DIS_TERM_DRV)
+ * is not needed. The [12:10] bits in IOPB_SOFT_OVER_WR are write-only.
+ * Also each ASC-38C1600 function or channel uses only cable bits [5:4]
+ * and [1:0]. Bits [14], [7:6], [3:2] are unused.
  */
 #define ADW_DIS_TERM_DRV    0x4000  /* 1: Read c_det[3:0], 0: cannot read */
 #define ADW_HVD_LVD_SE      0x1C00  /* Device Detect Bits */
@@ -639,6 +764,33 @@ typedef struct adw_eep_38C0800_config
 #define PRE_TEST_VALUE        0x05
 #define NORMAL_VALUE          0x00
 
+/*
+ * ASC38C1600 Definitions
+ *
+ * IOPB_PCI_INT_CFG Bit Field Definitions
+ */
+
+#define INTAB_LD	0x80    /* Value loaded from EEPROM Bit 11. */
+
+/*
+ * Bit 1 can be set to change the interrupt for the Function to operate in
+ * Totem Pole mode. By default Bit 1 is 0 and the interrupt operates in
+ * Open Drain mode. Both functions of the ASC38C1600 must be set to the same
+ * mode, otherwise the operating mode is undefined.
+ */
+#define TOTEMPOLE	0x02
+
+/*
+ * Bit 0 can be used to change the Int Pin for the Function. The value is
+ * 0 by default for both Functions with Function 0 using INT A and Function
+ * B using INT B. For Function 0 if set, INT B is used. For Function 1 if set,
+ * INT A is used.
+ *
+ * EEPROM Word 0 Bit 11 for each Function may change the initial Int Pin
+ * value specified in the PCI Configuration Space.
+ */
+#define INTAB		0x01
+
 
 /*
  * Adv Library Status Definitions
@@ -722,6 +874,7 @@ typedef struct adw_eep_38C0800_config
 #define ASC_MC_CAM_MODE_MASK            0x015E /* CAM mode TID bitmask. */
 #define ASC_MC_ICQ                      0x0160
 #define ASC_MC_IRQ                      0x0164
+#define ASC_MC_PPR_ABLE                 0x017A
 
 /*
  * BIOS LRAM variable absolute offsets.
@@ -738,6 +891,7 @@ typedef struct adw_eep_38C0800_config
  * and handled by the microcode.
  */
 #define CONTROL_FLAG_IGNORE_PERR        0x0001 /* Ignore DMA Parity Errors */
+#define CONTROL_FLAG_ENABLE_AIPP        0x0002 /* Enabled AIPP checking. */
 
 /*
  * ASC_MC_DEVICE_HSHK_CFG_TABLE microcode table or HSHK_CFG register format
@@ -871,6 +1025,7 @@ typedef struct adw_softc {
 	u_int16_t	sdtr_speed3;	/* EEPROM SDTR Speed for TID 8-11  */
 	u_int16_t	sdtr_speed4;	/* EEPROM SDTR Speed for TID 12-15 */
 	u_int16_t	tagqng_able;	/* try tagged queuing with a device */
+	u_int16_t	ppr_able;	/* PPR message capable per TID bitmask. */
 	u_int16_t	start_motor;	/* start motor command allowed */
 	u_int8_t	max_dvc_qng;	/* maximum number of tagged commands per device */
 	u_int8_t	scsi_reset_wait; /* delay in seconds after scsi bus reset */
@@ -913,16 +1068,16 @@ typedef struct adw_scsi_req_q {
 	u_int32_t	carr_pa;	/* Carrier p-address */
 	u_int8_t	mflag;		/* Adv Library flag field. */
 	u_int8_t	sense_len;	/* Auto-sense length. uCode sets to residual. */
-	u_int8_t	cdb_len;	/* SCSI CDB length. */
+	u_int8_t	cdb_len;	/* SCSI CDB length. Must <= 16 bytes. */
 	u_int8_t	scsi_cntl;
 	u_int8_t	done_status;	/* Completion status. */
 	u_int8_t	scsi_status;	/* SCSI status byte. (see below) */
 	u_int8_t	host_status;	/* Ucode host status. */
 	u_int8_t	sg_working_ix;	/* Ucode working SG variable. */
-	u_int8_t	cdb[12];	/* SCSI command block. */
+	u_int8_t	cdb[12];	/* SCSI CDB bytes 0-11. */
 	u_int32_t	sg_real_addr;	/* SG list physical address. */
 	u_int32_t	scsiq_rptr;	/* Iternal pointer to ADW_SCSI_REQ_Q */
-	u_int32_t	sg_working_data_cnt;
+	u_int8_t	cdb16[4];	/* SCSI CDB bytes 12-15. */
 	u_int32_t	ccb_ptr;	/* CCB Physical Address */
 	u_int32_t	carr_va;	/* Carrier v-address (unused) */
 	/*
@@ -987,6 +1142,10 @@ typedef struct adw_scsi_req_q {
 /* Write word (2 bytes) to a register. */
 #define ADW_WRITE_WORD_REGISTER(iot, ioh, reg_off, word) \
 	bus_space_write_2((iot), (ioh), (reg_off), (word))
+
+/* Write double word (4 bytes) to a register. */
+#define ADW_WRITE_DWORD_REGISTER(iot, ioh, reg_off, dword) \
+	bus_space_write_4((iot), (ioh), (reg_off), (dword))
 
 /* Read byte from LRAM. */
 #define ADW_READ_BYTE_LRAM(iot, ioh, addr, byte) \
@@ -1143,6 +1302,10 @@ do { \
  * SCSI Iquiry structure
  */
 
+#define INQ_CLOCKING_ST_ONLY    0x0
+#define INQ_CLOCKING_DT_ONLY    0x1
+#define INQ_CLOCKING_ST_AND_DT  0x3
+
 typedef struct {
 	u_int8_t	peri_dvc_type	: 5;	/* peripheral device type */
 	u_int8_t	peri_qualifier  : 3;	/* peripheral qualifier */
@@ -1253,8 +1416,10 @@ typedef struct asc_req_sense {
 
 int	AdvInitAsc3550Driver __P((ADW_SOFTC *));
 int	AdvInitAsc38C0800Driver __P((ADW_SOFTC *));
+int	AdvInitAsc38C1600Driver __P((ADW_SOFTC *));
 int	AdvInitFrom3550EEP __P((ADW_SOFTC *));
 int	AdvInitFrom38C0800EEP __P((ADW_SOFTC *));
+int	AdvInitFrom38C1600EEP __P((ADW_SOFTC *));
 int	AdvExeScsiQueue __P((ADW_SOFTC *, ADW_SCSI_REQ_Q *));
 int	AdvISR __P((ADW_SOFTC *));
 void	AdvResetChip __P((bus_space_tag_t, bus_space_handle_t));

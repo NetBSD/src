@@ -1,4 +1,4 @@
-/*      $NetBSD: adw.h,v 1.5 2000/02/03 20:29:15 dante Exp $        */
+/*      $NetBSD: adw.h,v 1.6 2000/04/30 18:52:15 dante Exp $        */
 
 /*
  * Generic driver definitions and exported functions for the Advanced
@@ -80,10 +80,11 @@ typedef struct adw_carrier ADW_CARRIER;
 /*
  * Mask used to eliminate low 4 bits of carrier 'next_vpa' field.
  */
-#define ASC_NEXT_VPA_MASK       0xFFFFFFF0
+#define ASC_NEXT_VPA_MASK	0xFFFFFFF0
 
-#define ASC_RQ_DONE             0x00000001
-#define ASC_CQ_STOPPER          0x00000000
+#define ASC_RQ_DONE		0x00000001
+#define ASC_RQ_GOOD		0x00000002
+#define ASC_CQ_STOPPER		0x00000000
 
 #define ASC_GET_CARRP(carrp) ((carrp) & ASC_NEXT_VPA_MASK)
 
