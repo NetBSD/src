@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_sysctl.c,v 1.65 2000/05/27 04:52:36 thorpej Exp $	*/
+/*	$NetBSD: kern_sysctl.c,v 1.66 2000/05/31 05:02:34 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -1226,12 +1226,11 @@ fill_kproc2(p, ki)
 	ki->p_pctcpu = p->p_pctcpu;
 	ki->p_swtime = p->p_swtime;
 	ki->p_slptime = p->p_slptime;
-	/*
-	 * XXX curcpu() is wrong; should be CPU process is running on.
-	 * XXX   --thorpej
-	 */
-	ki->p_schedflags = (p->p_stat == SONPROC) ?
-	    curcpu()->ci_schedstate.spc_flags : 0;
+	if (p->p_stat == SONPROC) {
+		KDASSERT(p->p_cpu != NULL);
+		ki->p_schedflags = p->p_cpu->ci_schedstate.spc_flags;
+	} else
+		ki->p_schedflags = 0;
 
 	ki->p_uticks = p->p_uticks;
 	ki->p_sticks = p->p_sticks;

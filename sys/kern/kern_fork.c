@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_fork.c,v 1.65 2000/05/28 05:49:05 thorpej Exp $	*/
+/*	$NetBSD: kern_fork.c,v 1.66 2000/05/31 05:02:32 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1991, 1993
@@ -41,6 +41,7 @@
  */
 
 #include "opt_ktrace.h"
+#include "opt_multiprocessor.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -272,6 +273,17 @@ again:
 	    (unsigned) ((caddr_t)&p2->p_endzero - (caddr_t)&p2->p_startzero));
 	memcpy(&p2->p_startcopy, &p1->p_startcopy,
 	    (unsigned) ((caddr_t)&p2->p_endcopy - (caddr_t)&p2->p_startcopy));
+
+#if !defined(MULTIPROCESSOR)
+	/*
+	 * In the single-processor case, all processes will always run
+	 * on the same CPU.  So, initialize the child's CPU to the parent's
+	 * now.  In the multiprocessor case, the child's CPU will be
+	 * initialized in the low-level context switch code when the
+	 * process runs.
+	 */
+	p2->p_cpu = p1->p_cpu;
+#endif /* ! MULTIPROCESSOR */
 
 	/*
 	 * Duplicate sub-structures as needed.

@@ -1,4 +1,4 @@
-/*	$NetBSD: init_main.c,v 1.170 2000/05/28 18:52:32 jhawk Exp $	*/
+/*	$NetBSD: init_main.c,v 1.171 2000/05/31 05:02:31 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1995 Christopher G. Demetriou.  All rights reserved.
@@ -197,6 +197,7 @@ main()
 	 */
 	p = &proc0;
 	curproc = p;
+	p->p_cpu = curcpu();
 	/*
 	 * Attempt to find console and initialize
 	 * in case of early panic or other messages.
@@ -463,11 +464,12 @@ main()
 	 * munched in mi_switch() after the time got set.
 	 */
 	proclist_lock_read();
-	s = splclock();		/* so we can read time */
+	s = splhigh();		/* block clock and statclock */
 	for (p = LIST_FIRST(&allproc); p != NULL;
 	     p = LIST_NEXT(p, p_list)) {
-		p->p_stats->p_start = curcpu()->ci_schedstate.spc_runtime =
-		    mono_time = boottime = time;
+		p->p_stats->p_start = mono_time = boottime = time;
+		if (p->p_cpu != NULL)
+			p->p_cpu->ci_schedstate.spc_runtime = time;
 		p->p_rtime.tv_sec = p->p_rtime.tv_usec = 0;
 	}
 	splx(s);

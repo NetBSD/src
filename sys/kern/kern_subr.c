@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_subr.c,v 1.68 2000/05/27 01:43:27 enami Exp $	*/
+/*	$NetBSD: kern_subr.c,v 1.69 2000/05/31 05:02:33 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 1999 The NetBSD Foundation, Inc.
@@ -145,7 +145,9 @@ uiomove(buf, n, uio)
 		switch (uio->uio_segflg) {
 
 		case UIO_USERSPACE:
-			if (curcpu()->ci_schedstate.spc_flags &
+			KDASSERT(p->p_cpu != NULL);
+			KDASSERT(p->p_cpu == curcpu());
+			if (p->p_cpu->ci_schedstate.spc_flags &
 			    SPCF_SHOULDYIELD)
 				preempt(NULL);
 			if (uio->uio_rw == UIO_READ)

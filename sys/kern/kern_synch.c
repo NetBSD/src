@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_synch.c,v 1.75 2000/05/27 05:00:48 thorpej Exp $	*/
+/*	$NetBSD: kern_synch.c,v 1.76 2000/05/31 05:02:33 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
@@ -424,7 +424,9 @@ tsleep(ident, priority, wmesg, timo)
 	asm(".globl bpendtsleep ; bpendtsleep:");
 #endif
 resume:
-	curcpu()->ci_schedstate.spc_curpriority = p->p_usrpri;
+	KDASSERT(p->p_cpu != NULL);
+	KDASSERT(p->p_cpu == curcpu());
+	p->p_cpu->ci_schedstate.spc_curpriority = p->p_usrpri;
 	splx(s);
 	p->p_flag &= ~P_SINTR;
 	if (p->p_flag & P_TIMEOUT) {
@@ -679,10 +681,15 @@ void
 mi_switch(p)
 	struct proc *p;
 {
-	struct schedstate_percpu *spc = &curcpu()->ci_schedstate;
+	struct schedstate_percpu *spc;
 	struct rlimit *rlim;
 	long s, u;
 	struct timeval tv;
+
+	KDASSERT(p->p_cpu != NULL);
+	KDASSERT(p->p_cpu == curcpu());
+
+	spc = &p->p_cpu->ci_schedstate;
 
 #ifdef DEBUG
 	if (p->p_simple_locks) {
@@ -737,11 +744,20 @@ mi_switch(p)
 	spc->spc_flags &= ~SPCF_SWITCHCLEAR;
 
 	/*
-	 * Pick a new current process and record its start time.
+	 * Pick a new current process and switch to it.  When we
+	 * run again, we'll return back here.
 	 */
 	uvmexp.swtch++;
 	cpu_switch(p);
-	microtime(&spc->spc_runtime);
+
+	/*
+	 * We're running again; record our new start time.  We might
+	 * be running on a new CPU now, so don't use the cache'd
+	 * schedstate_percpu pointer.
+	 */
+	KDASSERT(p->p_cpu != NULL);
+	KDASSERT(p->p_cpu == curcpu());
+	microtime(&p->p_cpu->ci_schedstate.spc_runtime);
 }
 
 /*
@@ -803,8 +819,26 @@ setrunnable(p)
 	p->p_slptime = 0;
 	if ((p->p_flag & P_INMEM) == 0)
 		wakeup((caddr_t)&proc0);
-	else if (p->p_priority < curcpu()->ci_schedstate.spc_curpriority)
+	else if (p->p_priority < curcpu()->ci_schedstate.spc_curpriority) {
+		/*
+		 * XXXSMP
+		 * This is wrong.  It will work, but what really
+		 * needs to happen is:
+		 *
+		 *	- Need to check if p is higher priority
+		 *	  than the process currently running on
+		 *	  the CPU p last ran on (let p_cpu persist
+		 *	  after a context switch?), and preempt
+		 *	  that one (or, if there is no process
+		 *	  there, simply need_resched() that CPU.
+		 *
+		 *	- Failing that, traverse a list of
+		 *	  available CPUs and need_resched() the
+		 *	  CPU with the lowest priority that's
+		 *	  lower than p's.
+		 */
 		need_resched();
+	}
 }
 
 /*
@@ -821,8 +855,13 @@ resetpriority(p)
 	newpriority = PUSER + p->p_estcpu + NICE_WEIGHT * (p->p_nice - NZERO);
 	newpriority = min(newpriority, MAXPRI);
 	p->p_usrpri = newpriority;
-	if (newpriority < curcpu()->ci_schedstate.spc_curpriority)
+	if (newpriority < curcpu()->ci_schedstate.spc_curpriority) {
+		/*
+		 * XXXSMP
+		 * Same applies as in setrunnable() above.
+		 */
 		need_resched();
+	}
 }
 
 /*
