@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_subr.c,v 1.112.4.4 1999/10/26 19:15:16 fvdl Exp $	*/
+/*	$NetBSD: vfs_subr.c,v 1.112.4.5 1999/11/03 23:40:30 fvdl Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -657,16 +657,13 @@ vinvalbuf(vp, flags, cred, p, slpflag, slptimeo)
 			 * XXX Since there are no node locks for NFS, I believe
 			 * there is a slight chance that a delayed write will
 			 * occur while sleeping just above, so check for it.
-			 *
-			 * XXX If a buffer shows up as DELWRI, also call
-			 * VOP_FSYNC to sync the metadata softdeps, or we
-			 * might get stuck with a dependency that we can't
-			 * get rid of (VOP_FSYNC will call
-			 * softdep_sync_meta which will do the trick).
 			 */
 			if ((bp->b_flags & B_DELWRI) && (flags & V_SAVE)) {
 				VOP_BWRITE(bp);
-				VOP_FSYNC(vp, cred, FSYNC_WAIT, p);
+#ifdef DEBUG
+				printf("buffer still DELWRI\n");
+#endif
+				/* VOP_FSYNC(vp, cred, FSYNC_WAIT, p); */
 				continue;
 			}
 			bp->b_flags |= B_INVAL;
