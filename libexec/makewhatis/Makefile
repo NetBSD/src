@@ -1,6 +1,7 @@
-#	$NetBSD: Makefile,v 1.7 1999/02/13 23:53:57 lukem Exp $
+#	$NetBSD: Makefile,v 1.8 1999/09/25 21:17:37 tron Exp $
 
-MAN=makewhatis.8
-SCRIPTS=makewhatis.sh
+PROG=	makewhatis
+LDADD=	-lz
+MAN=	${PROG}.8
 
 .include <bsd.prog.mk>
