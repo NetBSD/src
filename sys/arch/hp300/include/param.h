@@ -37,7 +37,7 @@
  *
  *	from: Utah Hdr: machparam.h 1.11 89/08/14
  *	from: @(#)param.h	7.8 (Berkeley) 6/28/91
- *	$Id: param.h,v 1.8 1994/02/22 07:29:02 hpeyerl Exp $
+ *	$Id: param.h,v 1.9 1994/05/04 04:10:29 mycroft Exp $
  */
 
 /*
@@ -197,7 +197,7 @@ int	cpuspeed;
 #define	DELAY(n)	{ register int N = (n); while (--N > 0); }
 #endif
 
-#ifdef HPUXCOMPAT
+#ifdef COMPAT_HPUX
 /*
  * Constants/macros for HPUX multiple mapping of user address space.
  * Pages in the first 256Mb are mapped in at every 256Mb segment.

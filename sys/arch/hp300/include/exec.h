@@ -24,7 +24,7 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
- *	$Id: exec.h,v 1.6 1994/01/28 23:43:55 jtc Exp $
+ *	$Id: exec.h,v 1.7 1994/05/04 04:10:28 mycroft Exp $
  */
 
 #ifndef _HP300_EXEC_H_
@@ -32,7 +32,7 @@
 
 #ifdef KERNEL
 
-#ifdef HPUXCOMPAT
+#ifdef COMPAT_HPUX
 #include "user.h"			/* for pcb */
 #include "hp300/hpux/hpux_exec.h"
 #endif
@@ -50,7 +50,7 @@ int cpu_exec_makecmds __P((struct proc *p, struct exec_package *epp));
  * type (a_mid) field is valid for this architecture
  * a non-zero return value indicates that the machine type is correct.
  */
-#ifdef HPUXCOMPAT
+#ifdef COMPAT_HPUX
 #define cpu_exec_checkmid(mid) ((mid == MID_HP200) || (mid == MID_HP300) || \
 				(mid == MID_HPUX))
 #else
