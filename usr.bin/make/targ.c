@@ -1,4 +1,4 @@
-/*	$NetBSD: targ.c,v 1.23 2001/08/20 12:00:56 wiz Exp $	*/
+/*	$NetBSD: targ.c,v 1.24 2001/11/12 01:33:49 tv Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -39,14 +39,14 @@
  */
 
 #ifdef MAKE_BOOTSTRAP
-static char rcsid[] = "$NetBSD: targ.c,v 1.23 2001/08/20 12:00:56 wiz Exp $";
+static char rcsid[] = "$NetBSD: targ.c,v 1.24 2001/11/12 01:33:49 tv Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)targ.c	8.2 (Berkeley) 3/19/94";
 #else
-__RCSID("$NetBSD: targ.c,v 1.23 2001/08/20 12:00:56 wiz Exp $");
+__RCSID("$NetBSD: targ.c,v 1.24 2001/11/12 01:33:49 tv Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -303,6 +303,7 @@ Targ_FindNode (name, flags)
 	if (isNew) {
 	    gn = Targ_NewGN (name);
 	    Hash_SetValue (he, gn);
+	    Var_Append(".ALLTARGETS", name, VAR_GLOBAL);
 	    (void) Lst_AtEnd (allTargets, (ClientData)gn);
 	}
     } else {
