@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.prog.mk,v 1.75 1997/05/07 17:06:28 mycroft Exp $
+#	$NetBSD: bsd.prog.mk,v 1.76 1997/05/08 21:21:25 gwr Exp $
 #	@(#)bsd.prog.mk	8.2 (Berkeley) 4/2/94
 
 .if exists(${.CURDIR}/../Makefile.inc)
@@ -86,6 +86,7 @@ LOBJS+=	${LSRCS:.c=.ln} ${SRCS:M*.c:.c=.ln}
 .endif
 
 .if defined(OBJS) && !empty(OBJS)
+.NOPATH: ${OBJS}
 .if defined(DESTDIR)
 
 ${PROG}: ${LIBCRT0} ${OBJS} ${LIBC} ${LIBCRTBEGIN} ${LIBCRTEND} ${DPADD}
