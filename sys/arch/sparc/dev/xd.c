@@ -1,4 +1,4 @@
-/*	$NetBSD: xd.c,v 1.32 1997/06/10 20:59:12 pk Exp $	*/
+/*	$NetBSD: xd.c,v 1.33 1997/06/18 20:45:57 pk Exp $	*/
 
 /*
  *
@@ -36,7 +36,7 @@
  * x d . c   x y l o g i c s   7 5 3 / 7 0 5 3   v m e / s m d   d r i v e r
  *
  * author: Chuck Cranor <chuck@ccrc.wustl.edu>
- * id: $NetBSD: xd.c,v 1.32 1997/06/10 20:59:12 pk Exp $
+ * id: $NetBSD: xd.c,v 1.33 1997/06/18 20:45:57 pk Exp $
  * started: 27-Feb-95
  * references: [1] Xylogics Model 753 User's Manual
  *                 part number: 166-753-001, Revision B, May 21, 1988.
@@ -992,24 +992,27 @@ xdsize(dev)
 
 {
 	struct xd_softc *xdsc;
-	int     part, size;
+	int     unit, part, size, omask;
 
-	/* valid unit?  try an open */
+	/* valid unit? */
+	unit = DISKUNIT(dev);
+	if (unit >= xd_cd.cd_ndevs || (xdsc = xd_cd.cd_devs[unit]) == NULL)
+		return (-1);
 
-	if (xdopen(dev, 0, S_IFBLK, NULL) != 0)
+	part = DISKPART(dev);
+	omask = xdsc->sc_dk.dk_openmask & (1 << part);
+
+	if (omask == 0 && xdopen(dev, 0, S_IFBLK, NULL) != 0)
 		return (-1);
 
 	/* do it */
-
-	xdsc = xd_cd.cd_devs[DISKUNIT(dev)];
-	part = DISKPART(dev);
 	if (xdsc->sc_dk.dk_label->d_partitions[part].p_fstype != FS_SWAP)
 		size = -1;	/* only give valid size for swap partitions */
 	else
 		size = xdsc->sc_dk.dk_label->d_partitions[part].p_size;
-	if (xdclose(dev, 0, S_IFBLK, NULL) != 0)
-		return -1;
-	return size;
+	if (omask == 0 && xdclose(dev, 0, S_IFBLK, NULL) != 0)
+		return (-1);
+	return (size);
 }
 /*
  * xdstrategy: buffering system interface to xd.
