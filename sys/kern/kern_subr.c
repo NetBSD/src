@@ -1,7 +1,7 @@
-/*	$NetBSD: kern_subr.c,v 1.35 1998/02/13 17:36:41 tls Exp $	*/
+/*	$NetBSD: kern_subr.c,v 1.36 1998/02/18 07:11:46 thorpej Exp $	*/
 
 /*-
- * Copyright (c) 1997 The NetBSD Foundation, Inc.
+ * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -415,7 +415,7 @@ setroot(bootdv, bootpartition, nam2blk)
 	struct devnametobdevmaj *nam2blk;
 {
 	struct device *dv;
-	int len, i, print_newline = 0;
+	int len, print_newline = 0;
 	dev_t nrootdev;
 	dev_t ndumpdev = NODEV;
 	char buf[128];
@@ -569,17 +569,19 @@ setroot(bootdv, bootpartition, nam2blk)
 		rootdev = nrootdev;
 		dumpdev = ndumpdev;
 
-		for (i = 0; i < nvfssw; i++) {
-			if (vfssw[i] != NULL &&
-			    vfssw[i]->vfs_mountroot != NULL &&
-			    vfssw[i]->vfs_mountroot == mountroot)
+		for (vops = LIST_FIRST(&vfs_list); vops != NULL;
+		     vops = LIST_NEXT(vops, vfs_list)) {
+			if (vops->vfs_mountroot != NULL &&
+			    vops->vfs_mountroot == mountroot)
 				break;
 		}
-		if (i >= nvfssw) {
+
+		if (vops == NULL) {
 			mountroot = NULL;
 			deffsname = "generic";
 		} else
-			deffsname = vfssw[i]->vfs_name;
+			deffsname = vops->vfs_name;
+
 		for (;;) {
 			printf("file system (default %s): ", deffsname);
 			len = getstr(buf, sizeof(buf));
@@ -594,11 +596,12 @@ setroot(bootdv, bootpartition, nam2blk)
 			vops = vfs_getopsbyname(buf);
 			if (vops == NULL || vops->vfs_mountroot == NULL) {
 				printf("use one of: generic");
-				for (i = 0; i < nvfssw; i++)
-					if (vfssw[i] != NULL &&
-					    vfssw[i]->vfs_mountroot != NULL)
-						printf(" %s",
-						    vfssw[i]->vfs_name);
+				for (vops = LIST_FIRST(&vfs_list);
+				     vops != NULL;
+				     vops = LIST_NEXT(vops, vfs_list)) {
+					if (vops->vfs_mountroot != NULL)
+						printf(" %s", vops->vfs_name);
+				}
 				printf(" halt\n");
 			} else {
 				mountroot = vops->vfs_mountroot;
