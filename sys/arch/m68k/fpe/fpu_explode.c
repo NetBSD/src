@@ -1,4 +1,4 @@
-/*	$NetBSD: fpu_explode.c,v 1.2.24.1 1999/06/21 15:19:03 perry Exp $ */
+/*	$NetBSD: fpu_explode.c,v 1.2.24.2 2000/02/06 17:12:32 he Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -105,6 +105,7 @@ fpu_itof(fp, i)
 	fp->fp_mant[0] = (int)i < 0 ? -i : i;
 	fp->fp_mant[1] = 0;
 	fp->fp_mant[2] = 0;
+	fp->fp_mant[3] = 0;
 	fpu_norm(fp);
 	return (FPC_NUM);
 }
@@ -123,6 +124,7 @@ fpu_itof(fp, i)
 		fp->fp_mant[0] = f0; \
 		fp->fp_mant[1] = f1; \
 		fp->fp_mant[2] = f2; \
+		fp->fp_mant[3] = f3; \
 		fpu_norm(fp); \
 		return (FPC_NUM); \
 	} \
@@ -132,12 +134,14 @@ fpu_itof(fp, i)
 		fp->fp_mant[0] = f0; \
 		fp->fp_mant[1] = f1; \
 		fp->fp_mant[2] = f2; \
+		fp->fp_mant[3] = f3; \
 		return (FPC_QNAN); \
 	} \
 	fp->fp_exp = exp - expbias; \
 	fp->fp_mant[0] = FP_1 | f0; \
 	fp->fp_mant[1] = f1; \
 	fp->fp_mant[2] = f2; \
+	fp->fp_mant[3] = f3; \
 	return (FPC_NUM)
 
 /*
@@ -209,6 +213,7 @@ fpu_xtof(fp, i, j, k)
 		fp->fp_mant[0] = f0;
 		fp->fp_mant[1] = f1;
 		fp->fp_mant[2] = f2;
+		fp->fp_mant[3] = 0;
 		fpu_norm(fp);
 		return (FPC_NUM);
 	}
@@ -218,12 +223,14 @@ fpu_xtof(fp, i, j, k)
 		fp->fp_mant[0] = f0;
 		fp->fp_mant[1] = f1;
 		fp->fp_mant[2] = f2;
+		fp->fp_mant[3] = 0;
 		return (FPC_QNAN);
 	}
 	fp->fp_exp = exp - EXT_EXP_BIAS;
 	fp->fp_mant[0] = FP_1 | f0;
 	fp->fp_mant[1] = f1;
 	fp->fp_mant[2] = f2;
+	fp->fp_mant[3] = 0;
 	return (FPC_NUM);
 }
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: fpu_fscale.c,v 1.9.8.1 1999/06/21 15:19:30 perry Exp $	*/
+/*	$NetBSD: fpu_fscale.c,v 1.9.8.2 2000/02/06 17:12:32 he Exp $	*/
 
 /*
  * Copyright (c) 1995 Ken Nakata
@@ -56,19 +56,17 @@ fpu_emul_fscale(fe, insn)
     int scale, sign, exp;
     u_int m0, m1;
     u_int buf[3], fpsr;
-#if DEBUG_FPE
     int flags;
     char regname;
-#endif
 
     scale = sig = 0;
     frame = fe->fe_frame;
     fpregs = &(fe->fe_fpframe->fpf_regs[0]);
     /* clear all exceptions and conditions */
     fpsr = fe->fe_fpsr & ~FPSR_EXCP & ~FPSR_CCB;
-#if DEBUG_FPE
-    printf("fpu_emul_fscale: FPSR = %08x, FPCR = %08x\n", fpsr, fe->fe_fpcr);
-#endif
+    if (fpu_debug_level & DL_FSCALE) {
+	printf("  fpu_emul_fscale: FPSR = %08x, FPCR = %08x\n", fpsr, fe->fe_fpcr);
+    }
 
     word1 = insn->is_word1;
     format = (word1 >> 10) & 7;
@@ -79,14 +77,16 @@ fpu_emul_fscale(fe, insn)
 
     /* get the source operand */
     if ((word1 & 0x4000) == 0) {
-#if DEBUG_FPE
-	printf("fpu_emul_fscale: FP%d op FP%d => FP%d\n",
-	       format, regnum, regnum);
+	if (fpu_debug_level & DL_FSCALE) {
+	    printf("  fpu_emul_fscale: FP%d op FP%d => FP%d\n",
+		   format, regnum, regnum);
+	}
 	/* the operand is an FP reg */
-	printf("fpu_emul_scale: src opr FP%d=%08x%08x%08x\n",
-	       format, fpregs[format*3], fpregs[format*3+1],
-	       fpregs[format*3+2]);
-#endif
+	if (fpu_debug_level & DL_FSCALE) {
+	    printf("  fpu_emul_scale: src opr FP%d=%08x%08x%08x\n",
+		   format, fpregs[format*3], fpregs[format*3+1],
+		   fpregs[format*3+2]);
+	}
 	fpu_explode(fe, &fe->fe_f2, FTYPE_EXT, &fpregs[format * 3]);
 	fpu_implode(fe, &fe->fe_f2, FTYPE_LNG, buf);
       scale = buf[0];
@@ -109,48 +109,48 @@ fpu_emul_fscale(fe, insn)
 	}
 
 	/* Get effective address. (modreg=opcode&077) */
-	sig = fpu_decode_ea(frame, insn, &insn->is_ea, insn->is_opcode);
+	sig = fpu_decode_ea(frame, insn, &insn->is_ea0, insn->is_opcode);
 	if (sig) {
-#if DEBUG_FPE
-	    printf("fpu_emul_fscale: error in decode_ea\n");
-#endif
+	    if (fpu_debug_level & DL_FSCALE) {
+		printf("  fpu_emul_fscale: error in decode_ea\n");
+	    }
 	    return sig;
 	}
 
-#if DEBUG_FPE
-	printf("fpu_emul_fscale: addr mode = ");
-	flags = insn->is_ea.ea_flags;
-	regname = (insn->is_ea.ea_regnum & 8) ? 'a' : 'd';
+	if (fpu_debug_level & DL_FSCALE) {
+	    printf("  fpu_emul_fscale: addr mode = ");
+	    flags = insn->is_ea0.ea_flags;
+	    regname = (insn->is_ea0.ea_regnum & 8) ? 'a' : 'd';
 
-	if (flags & EA_DIRECT) {
-	    printf("%c%d\n", regname, insn->is_ea.ea_regnum & 7);
-	} else if (flags & EA_PREDECR) {
-	    printf("%c%d@-\n", regname, insn->is_ea.ea_regnum & 7);
-	} else if (flags & EA_POSTINCR) {
-		printf("%c%d@+\n", regname, insn->is_ea.ea_regnum & 7);
-	} else if (flags & EA_OFFSET) {
-	    printf("%c%d@(%d)\n", regname, insn->is_ea.ea_regnum & 7,
-		   insn->is_ea.ea_offset);
-	} else if (flags & EA_INDEXED) {
-	    printf("%c%d@(...)\n", regname, insn->is_ea.ea_regnum & 7);
-	} else if (flags & EA_ABS) {
-		printf("0x%08x\n", insn->is_ea.ea_absaddr);
-	} else if (flags & EA_PC_REL) {
-	    printf("pc@(%d)\n", insn->is_ea.ea_offset);
-	} else if (flags & EA_IMMED) {
-	    printf("#0x%08x%08x%08x\n",
-		       insn->is_ea.ea_immed[0], insn->is_ea.ea_immed[1],
-		   insn->is_ea.ea_immed[2]);
-	} else {
-	    printf("%c%d@\n", regname, insn->is_ea.ea_regnum & 7);
+	    if (flags & EA_DIRECT) {
+		printf("%c%d\n", regname, insn->is_ea0.ea_regnum & 7);
+	    } else if (insn->is_ea0.ea_flags & EA_PREDECR) {
+		printf("%c%d@-\n", regname, insn->is_ea0.ea_regnum & 7);
+	    } else if (insn->is_ea0.ea_flags & EA_POSTINCR) {
+		printf("%c%d@+\n", regname, insn->is_ea0.ea_regnum & 7);
+	    } else if (insn->is_ea0.ea_flags & EA_OFFSET) {
+		printf("%c%d@(%d)\n", regname, insn->is_ea0.ea_regnum & 7,
+		       insn->is_ea0.ea_offset);
+	    } else if (insn->is_ea0.ea_flags & EA_INDEXED) {
+		printf("%c%d@(...)\n", regname, insn->is_ea0.ea_regnum & 7);
+	    } else if (insn->is_ea0.ea_flags & EA_ABS) {
+		printf("0x%08x\n", insn->is_ea0.ea_absaddr);
+	    } else if (insn->is_ea0.ea_flags & EA_PC_REL) {
+		printf("pc@(%d)\n", insn->is_ea0.ea_offset);
+	    } else if (flags & EA_IMMED) {
+		printf("#0x%08x%08x%08x\n",
+		       insn->is_ea0.ea_immed[0], insn->is_ea0.ea_immed[1],
+		       insn->is_ea0.ea_immed[2]);
+	    } else {
+		printf("%c%d@\n", regname, insn->is_ea0.ea_regnum & 7);
+	    }
 	}
-#endif
-	fpu_load_ea(frame, insn, &insn->is_ea, (char*)buf);
+	fpu_load_ea(frame, insn, &insn->is_ea0, (char*)buf);
 
-#if DEBUG_FPE
-	printf("fpu_emul_fscale: src = %08x%08x%08x, siz = %d\n",
-	       buf[0], buf[1], buf[2], insn->is_datasize);
-#endif
+	if (fpu_debug_level & DL_FSCALE) {
+	    printf(" fpu_emul_fscale: src = %08x%08x%08x, siz = %d\n",
+		   buf[0], buf[1], buf[2], insn->is_datasize);
+	}
 	if (format == FTYPE_LNG) {
 	    /* nothing */
           scale = buf[0];
@@ -307,7 +307,7 @@ fpu_emul_fscale(fe, insn)
 	break;
     default:
 #ifdef DEBUG
-	panic("fpu_emul_fscale: invalid fp class");
+	panic("  fpu_emul_fscale: invalid fp class");
 #endif
 	break;
     }
@@ -324,10 +324,10 @@ fpu_emul_fscale(fe, insn)
     /* update fpsr according to the result of operation */
     fe->fe_fpframe->fpf_fpsr = fe->fe_fpsr = fpsr;
 
-#if DEBUG_FPE
-    printf("fpu_emul_fscale: FPSR = %08x, FPCR = %08x\n",
-	   fe->fe_fpsr, fe->fe_fpcr);
-#endif
+    if (fpu_debug_level & DL_FSCALE) {
+	printf("  fpu_emul_fscale: FPSR = %08x, FPCR = %08x\n",
+	       fe->fe_fpsr, fe->fe_fpcr);
+    }
 
     return (fpsr & fe->fe_fpcr & FPSR_EXCP) ? SIGFPE : sig;
 }
