@@ -1,4 +1,4 @@
-/*	$NetBSD: if_le_ledma.c,v 1.4 1998/09/06 22:43:16 eeh Exp $	*/
+/*	$NetBSD: if_le_ledma.c,v 1.5 1998/09/26 08:31:20 pk Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -271,6 +271,7 @@ lehwreset(sc)
 	csr = L64854_GCSR(dma);
 	csr |= (E_DSBL_WR_INVAL | aui_bit);
 	L64854_SCSR(dma, csr);
+	delay(20000);	/* must not touch le for 20ms */
 }
 
 hide void
