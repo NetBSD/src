@@ -1,4 +1,4 @@
-/*	$NetBSD: stp4020.c,v 1.19 2002/03/10 16:18:44 martin Exp $ */
+/*	$NetBSD: stp4020.c,v 1.20 2002/03/11 16:00:58 pk Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: stp4020.c,v 1.19 2002/03/10 16:18:44 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: stp4020.c,v 1.20 2002/03/11 16:00:58 pk Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -327,8 +327,7 @@ stp4020attach(parent, self, aux)
 				 sa->sa_reg[i].sbr_slot,
 				 sa->sa_reg[i].sbr_offset,
 				 sa->sa_reg[i].sbr_size,
-				 BUS_SPACE_MAP_LINEAR, 0,
-				 &bh) != 0) {
+				 BUS_SPACE_MAP_LINEAR, &bh) != 0) {
 			printf("%s: attach: cannot map registers\n",
 				self->dv_xname);
 			return;

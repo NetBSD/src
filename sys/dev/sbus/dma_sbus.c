@@ -1,4 +1,4 @@
-/*	$NetBSD: dma_sbus.c,v 1.9 2002/01/14 13:32:46 tsutsui Exp $ */
+/*	$NetBSD: dma_sbus.c,v 1.10 2002/03/11 16:00:56 pk Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dma_sbus.c,v 1.9 2002/01/14 13:32:46 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dma_sbus.c,v 1.10 2002/03/11 16:00:56 pk Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -168,10 +168,9 @@ dmaattach_sbus(parent, self, aux)
 	if (sa->sa_npromvaddrs != 0)
 		sc->sc_regs = (bus_space_handle_t)sa->sa_promvaddrs[0];
 	else {
-		if (sbus_bus_map(sa->sa_bustag, sa->sa_slot,
-				 sa->sa_offset,
-				 sa->sa_size,
-				 0, 0, &bh) != 0) {
+		if (sbus_bus_map(sa->sa_bustag,
+				 sa->sa_slot, sa->sa_offset, sa->sa_size,
+				 BUS_SPACE_MAP_LINEAR, &bh) != 0) {
 			printf("%s: cannot map registers\n", self->dv_xname);
 			return;
 		}
