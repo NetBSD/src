@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.30 1999/06/07 20:16:10 thorpej Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.31 1999/09/15 18:10:35 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1994-1998 Mark Brinicombe.
@@ -169,14 +169,14 @@ cpu_rootconf()
 
 
 /*
- * void configure()
+ * void cpu_configure()
  *
  * Configure all the root devices
  * The root devices are expected to configure their own children
  */
 
 void
-configure()
+cpu_configure()
 {
 	/*
 	 * Configure all the roots.

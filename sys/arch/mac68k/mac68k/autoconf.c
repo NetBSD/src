@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.51 1999/06/07 20:16:11 thorpej Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.52 1999/09/15 18:10:37 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -77,11 +77,11 @@ static void findbootdev __P((void));
 static int target_to_unit __P((u_long, u_long, u_long));
 
 /*
- * configure:
+ * cpu_configure:
  * called at boot time, configure all devices on the system
  */
 void
-configure()
+cpu_configure()
 {
 	extern int	cold;
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.6 1999/06/07 20:16:12 thorpej Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.7 1999/09/15 18:10:40 thorpej Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -51,7 +51,7 @@ int booted_partition;		/* ...and partition on that device */
  * Determine device configuration for a machine.
  */
 void
-configure()
+cpu_configure()
 {
 	if (config_rootfound("mainbus", NULL) == NULL)
 		panic("configure: mainbus not configured");

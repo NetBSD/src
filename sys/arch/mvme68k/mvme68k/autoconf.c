@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.21 1999/08/23 22:29:39 thorpej Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.22 1999/09/15 18:10:37 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -179,7 +179,7 @@ mainbus_print(aux, cp)
  * Determine mass storage and memory configuration for a machine.
  */
 void
-configure()
+cpu_configure()
 {
 
 	booted_device = NULL;	/* set by device drivers (if found) */
