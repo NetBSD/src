@@ -1,4 +1,4 @@
-/*	$NetBSD: run.c,v 1.22 1999/07/04 21:32:48 cgd Exp $	*/
+/*	$NetBSD: run.c,v 1.23 1999/07/04 21:39:34 cgd Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -419,7 +419,7 @@ loop:
  */
 
 int
-run_prog(int fatal, int display, const char *errmsg, const char *cmd, ...)
+run_prog(int fatal, int display, msg errmsg, const char *cmd, ...)
 {
 	va_list ap;
 	struct winsize win;
@@ -530,8 +530,8 @@ run_prog(int fatal, int display, const char *errmsg, const char *cmd, ...)
 	va_end(ap);
 	if (fatal && ret != 0)
 		exit(ret);
-	if (ret && errmsg) {
-		msg_printf(errmsg, command);
+	if (ret && errmsg != MSG_NONE) {
+		msg_display(errmsg, command);
 		process_menu(MENU_ok);
 	}
 	return(ret);
