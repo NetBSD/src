@@ -1,3 +1,71 @@
+/*	$NetBSD: route.c,v 1.24.6.1 1999/06/28 06:36:57 itojun Exp $	*/
+
+/*-
+ * Copyright (c) 1998 The NetBSD Foundation, Inc.
+ * All rights reserved.
+ *
+ * This code is derived from software contributed to The NetBSD Foundation
+ * by Kevin M. Lahey of the Numerical Aerospace Simulation Facility,
+ * NASA Ames Research Center.
+ *
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions
+ * are met:
+ * 1. Redistributions of source code must retain the above copyright
+ *    notice, this list of conditions and the following disclaimer.
+ * 2. Redistributions in binary form must reproduce the above copyright
+ *    notice, this list of conditions and the following disclaimer in the
+ *    documentation and/or other materials provided with the distribution.
+ * 3. All advertising materials mentioning features or use of this software
+ *    must display the following acknowledgement:
+ *	This product includes software developed by the NetBSD
+ *	Foundation, Inc. and its contributors.
+ * 4. Neither the name of The NetBSD Foundation nor the names of its
+ *    contributors may be used to endorse or promote products derived
+ *    from this software without specific prior written permission.
+ *
+ * THIS SOFTWARE IS PROVIDED BY THE NETBSD FOUNDATION, INC. AND CONTRIBUTORS
+ * ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
+ * TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
+ * PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL THE FOUNDATION OR CONTRIBUTORS
+ * BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+ * CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
+ * SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+ * INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
+ * CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+ * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+ * POSSIBILITY OF SUCH DAMAGE.
+ */
+
+/*
+ * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
+ * All rights reserved.
+ * 
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions
+ * are met:
+ * 1. Redistributions of source code must retain the above copyright
+ *    notice, this list of conditions and the following disclaimer.
+ * 2. Redistributions in binary form must reproduce the above copyright
+ *    notice, this list of conditions and the following disclaimer in the
+ *    documentation and/or other materials provided with the distribution.
+ * 3. Neither the name of the project nor the names of its contributors
+ *    may be used to endorse or promote products derived from this software
+ *    without specific prior written permission.
+ * 
+ * THIS SOFTWARE IS PROVIDED BY THE PROJECT AND CONTRIBUTORS ``AS IS'' AND
+ * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+ * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+ * ARE DISCLAIMED.  IN NO EVENT SHALL THE PROJECT OR CONTRIBUTORS BE LIABLE
+ * FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+ * DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS
+ * OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
+ * HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
+ * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
+ * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
+ * SUCH DAMAGE.
+ */
+
 /*
  * Copyright (c) 1980, 1986, 1991, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -33,6 +101,8 @@
  *	@(#)route.c	8.3 (Berkeley) 1/9/95
  */
 
+#include "opt_ns.h"
+
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/proc.h>
@@ -41,7 +111,9 @@
 #include <sys/socketvar.h>
 #include <sys/domain.h>
 #include <sys/protosw.h>
+#include <sys/kernel.h>
 #include <sys/ioctl.h>
+#include <sys/pool.h>
 
 #include <net/if.h>
 #include <net/route.h>
@@ -59,6 +131,9 @@
 int	rttrash;		/* routes not in table but not freed */
 struct	sockaddr wildcard;	/* zero valued cookie for wildcard searches */
 
+struct pool rtentry_pool;	/* pool for rtentry structures */
+struct pool rttimer_pool;	/* pool for rttimer structures */
+
 void
 rtable_init(table)
 	void **table;
@@ -73,6 +148,10 @@ rtable_init(table)
 void
 route_init()
 {
+
+	pool_init(&rtentry_pool, sizeof(struct rtentry), 0, 0, 0, "rtentpl",
+	    0, NULL, NULL, M_RTABLE);
+
 	rn_init();	/* initialize all zeroes, all ones, mask table */
 	rtable_init((void **)rt_tables);
 }
@@ -89,6 +168,18 @@ rtalloc(ro)
 	ro->ro_rt = rtalloc1(&ro->ro_dst, 1);
 }
 
+#if 1
+/* for INET6 */
+void
+rtcalloc(ro)
+	register struct route *ro;
+{
+	if (ro->ro_rt && ro->ro_rt->rt_ifp && (ro->ro_rt->rt_flags & RTF_UP))
+		return;				 /* XXX */
+	ro->ro_rt = rtalloc1(&ro->ro_dst, 0);
+}
+#endif
+
 struct rtentry *
 rtalloc1(dst, report)
 	register struct sockaddr *dst;
@@ -99,7 +190,7 @@ rtalloc1(dst, report)
 	register struct radix_node *rn;
 	struct rtentry *newrt = 0;
 	struct rt_addrinfo info;
-	int  s = splnet(), err = 0, msgtype = RTM_MISS;
+	int  s = splsoftnet(), err = 0, msgtype = RTM_MISS;
 
 	if (rnh && (rn = rnh->rnh_matchaddr((caddr_t)dst, rnh)) &&
 	    ((rn->rn_flags & RNF_ROOT) == 0)) {
@@ -144,13 +235,14 @@ rtfree(rt)
 			panic ("rtfree 2");
 		rttrash--;
 		if (rt->rt_refcnt < 0) {
-			printf("rtfree: %x not freed (neg refs)\n", rt);
+			printf("rtfree: %p not freed (neg refs)\n", rt);
 			return;
 		}
+		rt_timer_remove_all(rt);
 		ifa = rt->rt_ifa;
 		IFAFREE(ifa);
 		Free(rt_key(rt));
-		Free(rt);
+		pool_put(&rtentry_pool, rt);
 	}
 }
 
@@ -172,10 +264,9 @@ ifafree(ifa)
  * Normally called as a result of a routing redirect
  * message from the network layer.
  *
- * N.B.: must be called at splnet
- *
+ * N.B.: must be called at splsoftnet
  */
-int
+void
 rtredirect(dst, gateway, netmask, flags, src, rtp)
 	struct sockaddr *dst, *gateway, *netmask, *src;
 	int flags;
@@ -264,8 +355,8 @@ out:
 }
 
 /*
-* Routing table ioctl interface.
-*/
+ * Routing table ioctl interface.
+ */
 int
 rtioctl(req, data, p)
 	u_long req;
@@ -329,7 +420,7 @@ rtrequest(req, dst, gateway, netmask, flags, ret_nrt)
 	struct sockaddr *dst, *gateway, *netmask;
 	struct rtentry **ret_nrt;
 {
-	int s = splnet(); int error = 0;
+	int s = splsoftnet(); int error = 0;
 	register struct rtentry *rt;
 	register struct radix_node *rn;
 	register struct radix_node_head *rnh;
@@ -377,14 +468,20 @@ rtrequest(req, dst, gateway, netmask, flags, ret_nrt)
 	case RTM_ADD:
 		if ((ifa = ifa_ifwithroute(flags, dst, gateway)) == 0)
 			senderr(ENETUNREACH);
+
+		/* The interface found in the previous statement may
+		 * be overridden later by rt_setif.  See the code
+		 * for case RTM_ADD in rtsock.c:route_output.
+		 */
 	makeroute:
-		R_Malloc(rt, struct rtentry *, sizeof(*rt));
+		rt = pool_get(&rtentry_pool, PR_NOWAIT);
 		if (rt == 0)
 			senderr(ENOBUFS);
 		Bzero(rt, sizeof(*rt));
 		rt->rt_flags = RTF_UP | flags;
+		LIST_INIT(&rt->rt_timer);
 		if (rt_setgate(rt, dst, gateway)) {
-			Free(rt);
+			pool_put(&rtentry_pool, rt);
 			senderr(ENOBUFS);
 		}
 		ndst = rt_key(rt);
@@ -392,13 +489,16 @@ rtrequest(req, dst, gateway, netmask, flags, ret_nrt)
 			rt_maskedcopy(dst, ndst, netmask);
 		} else
 			Bcopy(dst, ndst, dst->sa_len);
+if (!rt->rt_rmx.rmx_mtu && !(rt->rt_rmx.rmx_locks & RTV_MTU)) { /* XXX */
+  rt->rt_rmx.rmx_mtu = ifa->ifa_ifp->if_mtu;
+}
 		rn = rnh->rnh_addaddr((caddr_t)ndst, (caddr_t)netmask,
 					rnh, rt->rt_nodes);
 		if (rn == 0) {
 			if (rt->rt_gwroute)
 				rtfree(rt->rt_gwroute);
 			Free(rt_key(rt));
-			Free(rt);
+			pool_put(&rtentry_pool, rt);
 			senderr(EEXIST);
 		}
 		ifa->ifa_refcnt++;
@@ -497,7 +597,7 @@ rtinit(ifa, cmd, flags)
 			rt_maskedcopy(dst, deldst, ifa->ifa_netmask);
 			dst = deldst;
 		}
-		if (rt = rtalloc1(dst, 0)) {
+		if ((rt = rtalloc1(dst, 0)) != NULL) {
 			rt->rt_refcnt--;
 			if (rt->rt_ifa != ifa) {
 				if (m)
@@ -521,13 +621,14 @@ rtinit(ifa, cmd, flags)
 	if (cmd == RTM_ADD && error == 0 && (rt = nrt)) {
 		rt->rt_refcnt--;
 		if (rt->rt_ifa != ifa) {
-			printf("rtinit: wrong ifa (%x) was (%x)\n", ifa,
+			printf("rtinit: wrong ifa (%p) was (%p)\n", ifa,
 				rt->rt_ifa);
 			if (rt->rt_ifa->ifa_rtrequest)
 			    rt->rt_ifa->ifa_rtrequest(RTM_DELETE, rt, SA(0));
 			IFAFREE(rt->rt_ifa);
 			rt->rt_ifa = ifa;
 			rt->rt_ifp = ifa->ifa_ifp;
+			rt->rt_rmx.rmx_mtu = ifa->ifa_ifp->if_mtu;	/*XXX*/
 			ifa->ifa_refcnt++;
 			if (ifa->ifa_rtrequest)
 			    ifa->ifa_rtrequest(RTM_ADD, rt, SA(0));
@@ -535,4 +636,183 @@ rtinit(ifa, cmd, flags)
 		rt_newaddrmsg(cmd, ifa, error, nrt);
 	}
 	return (error);
+}
+
+/*
+ * Route timer routines.  These routes allow functions to be called
+ * for various routes at any time.  This is useful in supporting
+ * path MTU discovery and redirect route deletion.
+ *
+ * This is similar to some BSDI internal functions, but it provides
+ * for multiple queues for efficiency's sake...
+ */
+
+LIST_HEAD(, rttimer_queue) rttimer_queue_head;
+static int rt_init_done = 0;
+
+#define RTTIMER_CALLOUT(r)	{				\
+	if (r->rtt_func != NULL) {				\
+		(*r->rtt_func)(r->rtt_rt, r);			\
+	} else {						\
+		rtrequest((int) RTM_DELETE,			\
+			  (struct sockaddr *)rt_key(r->rtt_rt),	\
+			  0, 0, 0, 0);				\
+	}							\
+}
+
+/* 
+ * Some subtle order problems with domain initialization mean that
+ * we cannot count on this being run from rt_init before various
+ * protocol initializations are done.  Therefore, we make sure
+ * that this is run when the first queue is added...
+ */
+
+void	 
+rt_timer_init()
+{
+	assert(rt_init_done == 0);
+
+	pool_init(&rttimer_pool, sizeof(struct rttimer), 0, 0, 0, "rttmrpl",
+	    0, NULL, NULL, M_RTABLE);
+
+	LIST_INIT(&rttimer_queue_head);
+	timeout(rt_timer_timer, NULL, hz);  /* every second */
+	rt_init_done = 1;
+}
+
+struct rttimer_queue *
+rt_timer_queue_create(timeout)
+	u_int	timeout;
+{
+	struct rttimer_queue *rtq;
+
+	if (rt_init_done == 0)
+		rt_timer_init();
+
+	R_Malloc(rtq, struct rttimer_queue *, sizeof *rtq);
+	if (rtq == NULL)
+		return (NULL);		
+
+	rtq->rtq_timeout = timeout;
+	TAILQ_INIT(&rtq->rtq_head);
+	LIST_INSERT_HEAD(&rttimer_queue_head, rtq, rtq_link);
+
+	return (rtq);
+}
+
+void
+rt_timer_queue_change(rtq, timeout)
+	struct rttimer_queue *rtq;
+	long timeout;
+{
+
+	rtq->rtq_timeout = timeout;
+}
+
+
+void
+rt_timer_queue_destroy(rtq, destroy)
+	struct rttimer_queue *rtq;
+	int destroy;
+{
+	struct rttimer *r;
+
+	while ((r = TAILQ_FIRST(&rtq->rtq_head)) != NULL) {
+		LIST_REMOVE(r, rtt_link);
+		TAILQ_REMOVE(&rtq->rtq_head, r, rtt_next);
+		if (destroy)
+			RTTIMER_CALLOUT(r);
+		pool_put(&rttimer_pool, r);
+	}
+
+	LIST_REMOVE(rtq, rtq_link);
+
+	/*
+	 * Caller is responsible for freeing the rttimer_queue structure.
+	 */
+}
+
+void     
+rt_timer_remove_all(rt)
+	struct rtentry *rt;
+{
+	struct rttimer *r;
+
+	while ((r = LIST_FIRST(&rt->rt_timer)) != NULL) {
+		LIST_REMOVE(r, rtt_link);
+		TAILQ_REMOVE(&r->rtt_queue->rtq_head, r, rtt_next);
+		pool_put(&rttimer_pool, r);
+	}
+}
+
+int      
+rt_timer_add(rt, func, queue)
+	struct rtentry *rt;
+	void(*func) __P((struct rtentry *, struct rttimer *));
+	struct rttimer_queue *queue;
+{
+	struct rttimer *r;
+	long current_time;
+	int s;
+
+	s = splclock();
+	current_time = mono_time.tv_sec;
+	splx(s);
+
+	/*
+	 * If there's already a timer with this action, destroy it before
+	 * we add a new one.
+	 */
+	for (r = LIST_FIRST(&rt->rt_timer); r != NULL;
+	     r = LIST_NEXT(r, rtt_link)) {
+		if (r->rtt_func == func) {
+			LIST_REMOVE(r, rtt_link);
+			TAILQ_REMOVE(&r->rtt_queue->rtq_head, r, rtt_next);
+			pool_put(&rttimer_pool, r);
+			break;  /* only one per list, so we can quit... */
+		}
+	}
+
+	r = pool_get(&rttimer_pool, PR_NOWAIT);
+	if (r == NULL)
+		return (ENOBUFS);
+
+	r->rtt_rt = rt;
+	r->rtt_time = current_time;
+	r->rtt_func = func;
+	r->rtt_queue = queue;
+	LIST_INSERT_HEAD(&rt->rt_timer, r, rtt_link);
+	TAILQ_INSERT_TAIL(&queue->rtq_head, r, rtt_next);
+	
+	return (0);
+}
+
+/* ARGSUSED */
+void
+rt_timer_timer(arg)
+	void *arg;
+{
+	struct rttimer_queue *rtq;
+	struct rttimer *r;
+	long current_time;
+	int s;
+
+	s = splclock();
+	current_time = mono_time.tv_sec;
+	splx(s);
+
+	s = splsoftnet();
+	for (rtq = LIST_FIRST(&rttimer_queue_head); rtq != NULL; 
+	     rtq = LIST_NEXT(rtq, rtq_link)) {
+		while ((r = TAILQ_FIRST(&rtq->rtq_head)) != NULL &&
+		    (r->rtt_time + rtq->rtq_timeout) < current_time) {
+			LIST_REMOVE(r, rtt_link);
+			TAILQ_REMOVE(&rtq->rtq_head, r, rtt_next);
+			RTTIMER_CALLOUT(r);
+			pool_put(&rttimer_pool, r);
+		}
+	}
+	splx(s);
+
+	timeout(rt_timer_timer, NULL, hz);  /* every second */
 }

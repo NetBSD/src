@@ -1,3 +1,5 @@
+/*	$NetBSD: tcp_debug.h,v 1.6.12.1 1999/06/28 06:37:01 itojun Exp $	*/
+
 /*
  * Copyright (c) 1982, 1986, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -33,12 +35,24 @@
  *	@(#)tcp_debug.h	8.1 (Berkeley) 6/10/93
  */
 
+#ifndef _NETINET_TCP_DEBUG_H_
+#define _NETINET_TCP_DEBUG_H_
+
 struct	tcp_debug {
 	n_time	td_time;
 	short	td_act;
 	short	td_ostate;
 	caddr_t	td_tcb;
+	int	td_family;
 	struct	tcpiphdr td_ti;
+	struct {
+#ifdef INET6
+		struct ip6_hdr ip6;
+#else
+		u_char ip6_dummy[40];	/* just to keep struct align/size */
+#endif
+		struct tcphdr th;
+	} td_ti6;
 	short	td_req;
 	struct	tcpcb td_cb;
 };
@@ -57,3 +71,5 @@ char	*tanames[] =
 #define	TCP_NDEBUG 100
 struct	tcp_debug tcp_debug[TCP_NDEBUG];
 int	tcp_debx;
+
+#endif /* _NETINET_TCP_DEBUG_H_ */

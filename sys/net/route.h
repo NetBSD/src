@@ -1,3 +1,34 @@
+/*	$NetBSD: route.h,v 1.17.6.1 1999/06/28 06:36:57 itojun Exp $	*/
+
+/*
+ * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
+ * All rights reserved.
+ * 
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions
+ * are met:
+ * 1. Redistributions of source code must retain the above copyright
+ *    notice, this list of conditions and the following disclaimer.
+ * 2. Redistributions in binary form must reproduce the above copyright
+ *    notice, this list of conditions and the following disclaimer in the
+ *    documentation and/or other materials provided with the distribution.
+ * 3. Neither the name of the project nor the names of its contributors
+ *    may be used to endorse or promote products derived from this software
+ *    without specific prior written permission.
+ * 
+ * THIS SOFTWARE IS PROVIDED BY THE PROJECT AND CONTRIBUTORS ``AS IS'' AND
+ * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+ * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+ * ARE DISCLAIMED.  IN NO EVENT SHALL THE PROJECT OR CONTRIBUTORS BE LIABLE
+ * FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+ * DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS
+ * OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
+ * HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
+ * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
+ * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
+ * SUCH DAMAGE.
+ */
+
 /*
  * Copyright (c) 1980, 1986, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -33,6 +64,12 @@
  *	@(#)route.h	8.5 (Berkeley) 2/8/95
  */
 
+#ifndef _NET_ROUTE_H_
+#define _NET_ROUTE_H_
+
+#include <sys/queue.h>
+#include <sys/socket.h>
+
 /*
  * Kernel resident routing tables.
  * 
@@ -40,6 +77,8 @@
  * are set by making entries for all directly connected interfaces.
  */
 
+#ifndef _ROUTE_H_
+#define _ROUTE_H_
 /*
  * A route consists of a destination address and a reference
  * to a routing entry.  These are often held by protocols
@@ -83,6 +122,26 @@ struct rt_metrics {
  * gateways are marked so that the output routines know to address the
  * gateway rather than the ultimate destination.
  */
+#ifdef RADISH
+#ifndef _RADISH_H_
+#include <net/radish.h>
+#endif
+struct rtentry {
+	struct radish *rt_radish;
+#define	rt_key(r)	((r)->rt_radish->rd_route)
+#define	rt_mask(r)	((r)->rt_radish->rd_mask)
+	struct	sockaddr *rt_gateway;	/* value */
+	short	rt_flags;		/* up/down?, host/net */
+	short	rt_refcnt;		/* # held references */
+	u_long	rt_use;			/* raw # packets forwarded */
+	struct	ifnet *rt_ifp;		/* the answer: interface to use */
+	struct	ifaddr *rt_ifa;		/* the answer: interface to use */
+	struct	sockaddr *rt_genmask;	/* for generation of cloned routes */
+	caddr_t	rt_llinfo;		/* pointer to link level info cache */
+	struct	rt_metrics rt_rmx;	/* metrics used by rx'ing protocols */
+	struct	rtentry *rt_gwroute;	/* implied entry for gatewayed routes */
+};
+#else /* RADISH */
 #ifndef RNF_NORMAL
 #include <net/radix.h>
 #endif
@@ -100,19 +159,21 @@ struct rtentry {
 	caddr_t	rt_llinfo;		/* pointer to link level info cache */
 	struct	rt_metrics rt_rmx;	/* metrics used by rx'ing protocols */
 	struct	rtentry *rt_gwroute;	/* implied entry for gatewayed routes */
+	LIST_HEAD(, rttimer) rt_timer;  /* queue of timeouts for misc funcs */
 };
+#endif /* RADISH */
 
 /*
  * Following structure necessary for 4.3 compatibility;
  * We should eventually move it to a compat file.
  */
 struct ortentry {
-	u_long	rt_hash;		/* to speed lookups */
+	u_int32_t rt_hash;		/* to speed lookups */
 	struct	sockaddr rt_dst;	/* key */
 	struct	sockaddr rt_gateway;	/* value */
-	short	rt_flags;		/* up/down?, host/net */
-	short	rt_refcnt;		/* # held references */
-	u_long	rt_use;			/* raw # packets forwarded */
+	int16_t	rt_flags;		/* up/down?, host/net */
+	int16_t	rt_refcnt;		/* # held references */
+	u_int32_t rt_use;		/* raw # packets forwarded */
 	struct	ifnet *rt_ifp;		/* the answer: interface to use */
 };
 
@@ -219,28 +280,59 @@ struct rt_addrinfo {
 
 struct route_cb {
 	int	ip_count;
+	int	ip6_count;
+	int	ipx_count;
 	int	ns_count;
 	int	iso_count;
 	int	any_count;
 };
 
-#ifdef KERNEL
+/* 
+ * This structure, and the prototypes for the rt_timer_{init,remove_all,
+ * add,timer} functions all used with the kind permission of BSDI.
+ * These allow functions to be called for routes at specific times.
+ */
+
+struct rttimer {
+	TAILQ_ENTRY(rttimer)	rtt_next;  /* entry on timer queue */
+	LIST_ENTRY(rttimer) 	rtt_link;  /* multiple timers per rtentry */
+	struct rttimer_queue	*rtt_queue;/* back pointer to queue */
+	struct rtentry  	*rtt_rt;   /* Back pointer to the route */
+	void            	(*rtt_func) __P((struct rtentry *, 
+						 struct rttimer *));
+	time_t          	rtt_time; /* When this timer was registered */
+};
+
+struct rttimer_queue {
+	long				rtq_timeout;
+	TAILQ_HEAD(, rttimer)		rtq_head;
+	LIST_ENTRY(rttimer_queue)	rtq_link;
+};
+
+
+#ifdef _KERNEL
 #define	RTFREE(rt) \
+do { \
 	if ((rt)->rt_refcnt <= 1) \
 		rtfree(rt); \
 	else \
-		(rt)->rt_refcnt--;
+		(rt)->rt_refcnt--; \
+} while (0)
 
 struct	route_cb route_cb;
 struct	rtstat	rtstat;
+#ifdef RADISH
+struct	radish_head *rt_tables[AF_MAX+1];
+#else /* RADISH */
 struct	radix_node_head *rt_tables[AF_MAX+1];
+#endif /* RADISH */
 
 struct socket;
 
 void	 route_init __P((void));
-int	 route_output __P((struct mbuf *, struct socket *));
+int	 route_output __P((struct mbuf *, ...));
 int	 route_usrreq __P((struct socket *,
-	    int, struct mbuf *, struct mbuf *, struct mbuf *));
+	    int, struct mbuf *, struct mbuf *, struct mbuf *, struct proc *));
 void	 rt_ifmsg __P((struct ifnet *));
 void	 rt_maskedcopy __P((struct sockaddr *,
 	    struct sockaddr *, struct sockaddr *));
@@ -249,15 +341,30 @@ void	 rt_newaddrmsg __P((int, struct ifaddr *, int, struct rtentry *));
 int	 rt_setgate __P((struct rtentry *,
 	    struct sockaddr *, struct sockaddr *));
 void	 rt_setmetrics __P((u_long, struct rt_metrics *, struct rt_metrics *));
+int      rt_timer_add __P((struct rtentry *,
+             void(*)(struct rtentry *, struct rttimer *),
+	     struct rttimer_queue *));
+void	 rt_timer_init __P((void));
+struct rttimer_queue *
+	 rt_timer_queue_create __P((u_int));
+void	 rt_timer_queue_change __P((struct rttimer_queue *, long));
+void	 rt_timer_queue_destroy __P((struct rttimer_queue *, int));
+void	 rt_timer_remove_all __P((struct rtentry *));
+void	 rt_timer_timer __P((void *));
 void	 rtable_init __P((void **));
 void	 rtalloc __P((struct route *));
+#if 1 /*for INET6*/
+void	 rtcalloc __P((struct route *));
+#endif
 struct rtentry *
 	 rtalloc1 __P((struct sockaddr *, int));
 void	 rtfree __P((struct rtentry *));
 int	 rtinit __P((struct ifaddr *, int, int));
 int	 rtioctl __P((u_long, caddr_t, struct proc *));
-int	 rtredirect __P((struct sockaddr *, struct sockaddr *,
+void	 rtredirect __P((struct sockaddr *, struct sockaddr *,
 	    struct sockaddr *, int, struct sockaddr *, struct rtentry **));
 int	 rtrequest __P((int, struct sockaddr *,
 	    struct sockaddr *, struct sockaddr *, int, struct rtentry **));
-#endif
+#endif /* _KERNEL */
+#endif /* _ROUTE_H_ */
+#endif /* _NET_ROUTE_H_ */

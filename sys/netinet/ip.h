@@ -1,3 +1,5 @@
+/*	$NetBSD: ip.h,v 1.18.12.1 1999/06/28 06:36:59 itojun Exp $	*/
+
 /*
  * Copyright (c) 1982, 1986, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -33,6 +35,9 @@
  *	@(#)ip.h	8.2 (Berkeley) 6/1/94
  */
 
+#ifndef _NETINET_IP_H_
+#define _NETINET_IP_H_
+
 /*
  * Definitions for internet protocol version 4.
  * Per RFC 791, September 1981.
@@ -41,31 +46,28 @@
 
 /*
  * Structure of an internet header, naked of options.
- *
- * We declare ip_len and ip_off to be short, rather than u_short
- * pragmatically since otherwise unsigned comparisons can result
- * against negative integers quite easily, and fail in subtle ways.
  */
 struct ip {
-#if BYTE_ORDER == LITTLE_ENDIAN 
-	u_char	ip_hl:4,		/* header length */
-		ip_v:4;			/* version */
+#if BYTE_ORDER == LITTLE_ENDIAN
+	u_int8_t  ip_hl:4,		/* header length */
+		  ip_v:4;		/* version */
 #endif
-#if BYTE_ORDER == BIG_ENDIAN 
-	u_char	ip_v:4,			/* version */
-		ip_hl:4;		/* header length */
+#if BYTE_ORDER == BIG_ENDIAN
+	u_int8_t  ip_v:4,		/* version */
+		  ip_hl:4;		/* header length */
 #endif
-	u_char	ip_tos;			/* type of service */
-	short	ip_len;			/* total length */
-	u_short	ip_id;			/* identification */
-	short	ip_off;			/* fragment offset field */
+	u_int8_t  ip_tos;		/* type of service */
+	u_int16_t ip_len;		/* total length */
+	u_int16_t ip_id;		/* identification */
+	u_int16_t ip_off;		/* fragment offset field */
+#define	IP_RF 0x8000			/* reserved fragment flag */
 #define	IP_DF 0x4000			/* dont fragment flag */
 #define	IP_MF 0x2000			/* more fragments flag */
 #define	IP_OFFMASK 0x1fff		/* mask for fragmenting bits */
-	u_char	ip_ttl;			/* time to live */
-	u_char	ip_p;			/* protocol */
-	u_short	ip_sum;			/* checksum */
-	struct	in_addr ip_src,ip_dst;	/* source and dest address */
+	u_int8_t  ip_ttl;		/* time to live */
+	u_int8_t  ip_p;			/* protocol */
+	u_int16_t ip_sum;		/* checksum */
+	struct	  in_addr ip_src, ip_dst; /* source and dest address */
 };
 
 #define	IP_MAXPACKET	65535		/* maximum packet size */
@@ -76,6 +78,12 @@ struct ip {
 #define	IPTOS_LOWDELAY		0x10
 #define	IPTOS_THROUGHPUT	0x08
 #define	IPTOS_RELIABILITY	0x04
+/*	IPTOS_LOWCOST		0x02 XXX */
+#if 1
+/* ECN bits proposed by Sally Floyd */
+#define IPTOS_CE		0x01	/* congestion experienced */
+#define IPTOS_ECT		0x02	/* ECN-capable transport */
+#endif
 
 /*
  * Definitions for IP precedence (also in ip_tos) (hopefully unused)
@@ -116,30 +124,30 @@ struct ip {
  */
 #define	IPOPT_OPTVAL		0		/* option ID */
 #define	IPOPT_OLEN		1		/* option length */
-#define IPOPT_OFFSET		2		/* offset within option */
+#define	IPOPT_OFFSET		2		/* offset within option */
 #define	IPOPT_MINOFF		4		/* min value of above */
 
 /*
  * Time stamp option structure.
  */
 struct	ip_timestamp {
-	u_char	ipt_code;		/* IPOPT_TS */
-	u_char	ipt_len;		/* size of structure (variable) */
-	u_char	ipt_ptr;		/* index of current entry */
-#if BYTE_ORDER == LITTLE_ENDIAN 
-	u_char	ipt_flg:4,		/* flags, see below */
-		ipt_oflw:4;		/* overflow counter */
+	u_int8_t ipt_code;		/* IPOPT_TS */
+	u_int8_t ipt_len;		/* size of structure (variable) */
+	u_int8_t ipt_ptr;		/* index of current entry */
+#if BYTE_ORDER == LITTLE_ENDIAN
+	u_int8_t ipt_flg:4,		/* flags, see below */
+		 ipt_oflw:4;		/* overflow counter */
 #endif
-#if BYTE_ORDER == BIG_ENDIAN 
-	u_char	ipt_oflw:4,		/* overflow counter */
-		ipt_flg:4;		/* flags, see below */
+#if BYTE_ORDER == BIG_ENDIAN
+	u_int8_t ipt_oflw:4,		/* overflow counter */
+		 ipt_flg:4;		/* flags, see below */
 #endif
 	union ipt_timestamp {
-		n_long	ipt_time[1];
-		struct	ipt_ta {
+		 n_time	ipt_time[1];
+		 struct	ipt_ta {
 			struct in_addr ipt_addr;
-			n_long ipt_time;
-		} ipt_ta[1];
+			n_time ipt_time;
+		 } ipt_ta[1];
 	} ipt_timestamp;
 };
 
@@ -166,3 +174,5 @@ struct	ip_timestamp {
 #define	IPTTLDEC	1		/* subtracted when forwarding */
 
 #define	IP_MSS		576		/* default maximum segment size */
+
+#endif /* _NETINET_IP_H_ */

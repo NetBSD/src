@@ -1,3 +1,5 @@
+/*	$NetBSD: radix.c,v 1.13.12.1 1999/06/28 06:36:57 itojun Exp $	*/
+
 /*
  * Copyright (c) 1988, 1989, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -33,12 +35,13 @@
  *	@(#)radix.c	8.6 (Berkeley) 10/17/95
  */
 
+#ifndef RADISH
 /*
  * Routines to build and maintain radix trees for routing lookups.
  */
-#ifndef _RADIX_H_
+#ifndef _NET_RADIX_H_
 #include <sys/param.h>
-#ifdef	KERNEL
+#ifdef	_KERNEL
 #include <sys/systm.h>
 #include <sys/malloc.h>
 #define	M_DONTWAIT M_NOWAIT
@@ -60,6 +63,12 @@ static char *rn_zeros, *rn_ones;
 #define rn_masktop (mask_rnhead->rnh_treetop)
 #undef Bcmp
 #define Bcmp(a, b, l) (l == 0 ? 0 : bcmp((caddr_t)(a), (caddr_t)(b), (u_long)l))
+
+static int rn_satsifies_leaf __P((char *, struct radix_node *, int));
+static int rn_lexobetter __P((void *, void *));
+static struct radix_mask *rn_new_radix_mask __P((struct radix_node *,
+    struct radix_mask *));
+
 /*
  * The data structure for the keys is a radix tree with one way
  * branching removed.  The index rn_b at an internal node n represents a bit
@@ -788,7 +797,7 @@ on1:
 					m = mm;
 				}
 			if (m)
-				log(LOG_ERR, "%s %x at %x\n",
+				log(LOG_ERR, "%s %p at %p\n",
 					    "rn_delete: Orphaned Mask", m, x);
 		}
 	}
@@ -815,7 +824,7 @@ out:
 int
 rn_walktree(h, f, w)
 	struct radix_node_head *h;
-	register int (*f)();
+	register int (*f) __P((struct radix_node *, void *));
 	void *w;
 {
 	int error;
@@ -839,7 +848,7 @@ rn_walktree(h, f, w)
 			rn = rn->rn_l;
 		next = rn;
 		/* Process leaves */
-		while (rn = base) {
+		while ((rn = base) != NULL) {
 			base = rn->rn_dupedkey;
 			if (!(rn->rn_flags & RNF_ROOT) && (error = (*f)(rn, w)))
 				return (error);
@@ -887,7 +896,7 @@ void
 rn_init()
 {
 	char *cp, *cplim;
-#ifdef KERNEL
+#ifdef _KERNEL
 	struct domain *dom;
 
 	for (dom = domains; dom; dom = dom->dom_next)
@@ -910,3 +919,4 @@ rn_init()
 	if (rn_inithead((void **)&mask_rnhead, 0) == 0)
 		panic("rn_init 2");
 }
+#endif /* !RADISH */

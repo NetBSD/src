@@ -1,3 +1,5 @@
+/*	$NetBSD: uipc_domain.c,v 1.25.6.1 1999/06/28 06:36:53 itojun Exp $	*/
+
 /*
  * Copyright (c) 1982, 1986, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -33,6 +35,13 @@
  *	@(#)uipc_domain.c	8.3 (Berkeley) 2/14/95
  */
 
+#include "opt_inet.h"
+#include "opt_atalk.h"
+#include "opt_ccitt.h"
+#include "opt_iso.h"
+#include "opt_ns.h"
+#include "opt_natm.h"
+
 #include <sys/param.h>
 #include <sys/socket.h>
 #include <sys/protosw.h>
@@ -48,6 +57,14 @@
 void	pffasttimo __P((void *));
 void	pfslowtimo __P((void *));
 
+/*
+ * Current time values for fast and slow timeouts.  We can use u_int
+ * relatively safely.  The fast timer will roll over in 27 years and
+ * the slow timer in 68 years.
+ */
+u_int	pfslowtimo_now;
+u_int	pffasttimo_now;
+
 #define	ADDDOMAIN(x)	{ \
 	extern struct domain __CONCAT(x,domain); \
 	__CONCAT(x,domain.dom_next) = domains; \
@@ -61,11 +78,17 @@ domaininit()
 	register struct protosw *pr;
 
 #undef unix
+	/*
+	 * KAME NOTE: ADDDOMAIN(route) is moved to the last part so that
+	 * it will be initialized as the *first* element.  confusing!
+	 */
 #ifndef lint
 	ADDDOMAIN(unix);
-	ADDDOMAIN(route);
 #ifdef INET
 	ADDDOMAIN(inet);
+#endif
+#ifdef INET6
+	ADDDOMAIN(inet6);
 #endif
 #ifdef NS
 	ADDDOMAIN(ns);
@@ -76,11 +99,17 @@ domaininit()
 #ifdef CCITT
 	ADDDOMAIN(ccitt);
 #endif
-#include "imp.h"
-#if NIMP > 0
-	ADDDOMAIN(imp);
+#ifdef NATM
+	ADDDOMAIN(natm);
 #endif
+#ifdef NETATALK
+	ADDDOMAIN(atalk);
 #endif
+#ifdef IPSEC
+	ADDDOMAIN(key);
+#endif
+	ADDDOMAIN(route);
+#endif /* ! lint */
 
 	for (dp = domains; dp; dp = dp->dom_next) {
 		if (dp->dom_init)
@@ -90,8 +119,8 @@ domaininit()
 				(*pr->pr_init)();
 	}
 
-if (max_linkhdr < 16)		/* XXX */
-max_linkhdr = 16;
+	if (max_linkhdr < 16)		/* XXX */
+		max_linkhdr = 16;
 	max_hdr = max_linkhdr + max_protohdr;
 	max_datalen = MHLEN - max_hdr;
 	timeout(pffasttimo, NULL, 1);
@@ -157,14 +186,15 @@ net_sysctl(name, namelen, oldp, oldlenp, newp, newlen, p)
 	int family, protocol;
 
 	/*
-	 * All sysctl names at this level are nonterminal;
-	 * next two components are protocol family and protocol number,
-	 * then at least one addition component.
+	 * All sysctl names at this level are nonterminal.
+	 * PF_KEY: next component is protocol family, and then at least one
+	 *	additional component.
+	 * usually: next two components are protocol family and protocol
+	 *	number, then at least one addition component.
 	 */
-	if (namelen < 3)
+	if (namelen < 2)
 		return (EISDIR);		/* overloaded */
 	family = name[0];
-	protocol = name[1];
 
 	if (family == 0)
 		return (0);
@@ -173,6 +203,21 @@ net_sysctl(name, namelen, oldp, oldlenp, newp, newlen, p)
 			goto found;
 	return (ENOPROTOOPT);
 found:
+	switch (family) {
+#ifdef IPSEC
+	case PF_KEY:
+		pr = dp->dom_protosw;
+		if (pr->pr_sysctl)
+			return ((*pr->pr_sysctl)(name + 1, namelen - 1,
+				oldp, oldlenp, newp, newlen));
+		return (ENOPROTOOPT);
+#endif
+	default:
+		break;
+	}
+	if (namelen < 3)
+		return (EISDIR);		/* overloaded */
+	protocol = name[1];
 	for (pr = dp->dom_protosw; pr < dp->dom_protoswNPROTOSW; pr++)
 		if (pr->pr_protocol == protocol && pr->pr_sysctl)
 			return ((*pr->pr_sysctl)(name + 2, namelen - 2,
@@ -191,7 +236,7 @@ pfctlinput(cmd, sa)
 	for (dp = domains; dp; dp = dp->dom_next)
 		for (pr = dp->dom_protosw; pr < dp->dom_protoswNPROTOSW; pr++)
 			if (pr->pr_ctlinput)
-				(*pr->pr_ctlinput)(cmd, sa, (caddr_t)0);
+				(*pr->pr_ctlinput)(cmd, sa, NULL);
 }
 
 void
@@ -200,6 +245,8 @@ pfslowtimo(arg)
 {
 	register struct domain *dp;
 	register struct protosw *pr;
+
+	pfslowtimo_now++;
 
 	for (dp = domains; dp; dp = dp->dom_next)
 		for (pr = dp->dom_protosw; pr < dp->dom_protoswNPROTOSW; pr++)
@@ -214,6 +261,8 @@ pffasttimo(arg)
 {
 	register struct domain *dp;
 	register struct protosw *pr;
+
+	pffasttimo_now++;
 
 	for (dp = domains; dp; dp = dp->dom_next)
 		for (pr = dp->dom_protosw; pr < dp->dom_protoswNPROTOSW; pr++)

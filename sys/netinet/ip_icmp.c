@@ -1,3 +1,71 @@
+/*	$NetBSD: ip_icmp.c,v 1.36.6.1 1999/06/28 06:37:00 itojun Exp $	*/
+
+/*-
+ * Copyright (c) 1998 The NetBSD Foundation, Inc.
+ * All rights reserved.
+ *
+ * This code is derived from software contributed to The NetBSD Foundation
+ * by Public Access Networks Corporation ("Panix").  It was developed under
+ * contract to Panix by Eric Haszlakiewicz and Thor Lancelot Simon.
+ *
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions
+ * are met:
+ * 1. Redistributions of source code must retain the above copyright
+ *    notice, this list of conditions and the following disclaimer.
+ * 2. Redistributions in binary form must reproduce the above copyright
+ *    notice, this list of conditions and the following disclaimer in the
+ *    documentation and/or other materials provided with the distribution.
+ * 3. All advertising materials mentioning features or use of this software
+ *    must display the following acknowledgement:
+ *	This product includes software developed by the NetBSD
+ *	Foundation, Inc. and its contributors.
+ * 4. Neither the name of The NetBSD Foundation nor the names of its
+ *    contributors may be used to endorse or promote products derived
+ *    from this software without specific prior written permission.
+ *
+ * THIS SOFTWARE IS PROVIDED BY THE NETBSD FOUNDATION, INC. AND CONTRIBUTORS
+ * ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
+ * TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
+ * PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL THE FOUNDATION OR CONTRIBUTORS
+ * BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+ * CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
+ * SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+ * INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
+ * CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+ * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+ * POSSIBILITY OF SUCH DAMAGE.
+ */
+
+/*
+ * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
+ * All rights reserved.
+ * 
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions
+ * are met:
+ * 1. Redistributions of source code must retain the above copyright
+ *    notice, this list of conditions and the following disclaimer.
+ * 2. Redistributions in binary form must reproduce the above copyright
+ *    notice, this list of conditions and the following disclaimer in the
+ *    documentation and/or other materials provided with the distribution.
+ * 3. Neither the name of the project nor the names of its contributors
+ *    may be used to endorse or promote products derived from this software
+ *    without specific prior written permission.
+ * 
+ * THIS SOFTWARE IS PROVIDED BY THE PROJECT AND CONTRIBUTORS ``AS IS'' AND
+ * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+ * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+ * ARE DISCLAIMED.  IN NO EVENT SHALL THE PROJECT OR CONTRIBUTORS BE LIABLE
+ * FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+ * DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS
+ * OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
+ * HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
+ * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
+ * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
+ * SUCH DAMAGE.
+ */
+
 /*
  * Copyright (c) 1982, 1986, 1988, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -41,6 +109,10 @@
 #include <sys/socket.h>
 #include <sys/time.h>
 #include <sys/kernel.h>
+#include <sys/proc.h>
+
+#include <vm/vm.h>
+#include <sys/sysctl.h>
 
 #include <net/if.h>
 #include <net/route.h>
@@ -50,7 +122,16 @@
 #include <netinet/in_var.h>
 #include <netinet/ip.h>
 #include <netinet/ip_icmp.h>
+#include <netinet/ip_var.h>
 #include <netinet/icmp_var.h>
+
+#ifdef IPSEC
+#include <netinet6/ipsec.h>
+#include <netkey/key.h>
+#include <netkey/key_debug.h>
+#endif
+
+#include <machine/stdarg.h>
 
 /*
  * ICMP routines: error generation, receive packet processing, and
@@ -63,7 +144,16 @@ int	icmpmaskrepl = 0;
 int	icmpprintfs = 0;
 #endif
 
+#if 0
+static int	ip_next_mtu __P((int, int));
+#else
+/*static*/ int	ip_next_mtu __P((int, int));
+#endif
+
 extern	struct protosw inetsw[];
+
+static void icmp_mtudisc __P((struct icmp *));
+static void icmp_mtudisc_timeout __P((struct rtentry *, struct rttimer *));
 
 /*
  * Generate an error packet of type error
@@ -110,7 +200,7 @@ icmp_error(n, type, code, dest, destifp)
 	m = m_gethdr(M_DONTWAIT, MT_HEADER);
 	if (m == NULL)
 		goto freeit;
-	icmplen = oiplen + min(8, oip->ip_len);
+	icmplen = oiplen + min(8, oip->ip_len - oiplen);
 	m->m_len = icmplen + ICMP_MINLEN;
 	MH_ALIGN(m, m->m_len);
 	icp = mtod(m, struct icmp *);
@@ -130,15 +220,15 @@ icmp_error(n, type, code, dest, destifp)
 			icp->icmp_pptr = code;
 			code = 0;
 		} else if (type == ICMP_UNREACH &&
-			code == ICMP_UNREACH_NEEDFRAG && destifp) {
+		    code == ICMP_UNREACH_NEEDFRAG && destifp)
 			icp->icmp_nextmtu = htons(destifp->if_mtu);
-		}
 	}
 
+	HTONS(oip->ip_off);
+	HTONS(oip->ip_len);
 	icp->icmp_code = code;
 	bcopy((caddr_t)oip, (caddr_t)&icp->icmp_ip, icmplen);
 	nip = &icp->icmp_ip;
-	nip->ip_len = htons((u_short)(nip->ip_len + oiplen));
 
 	/*
 	 * Now, copy old ip header (without options)
@@ -171,35 +261,48 @@ struct sockaddr_in icmpmask = { 8, 0 };
  * Process a received ICMP message.
  */
 void
-icmp_input(m, hlen)
-	register struct mbuf *m;
-	int hlen;
+#if __STDC__
+icmp_input(struct mbuf *m, ...)
+#else
+icmp_input(m, va_alist)
+	struct mbuf *m;
+	va_dcl
+#endif
 {
+	int proto;
 	register struct icmp *icp;
 	register struct ip *ip = mtod(m, struct ip *);
-	int icmplen = ip->ip_len;
+	int icmplen;
 	register int i;
 	struct in_ifaddr *ia;
-	void (*ctlfunc) __P((int, struct sockaddr *, struct ip *));
+	void *(*ctlfunc) __P((int, struct sockaddr *, void *));
 	int code;
 	extern u_char ip_protox[];
+	int hlen;
+	va_list ap;
+
+	va_start(ap, m);
+	hlen = va_arg(ap, int);
+	proto = va_arg(ap, int);
+	va_end(ap);
 
 	/*
 	 * Locate icmp structure in mbuf, and check
 	 * that not corrupted and of at least minimum length.
 	 */
+	icmplen = ip->ip_len - hlen;
 #ifdef ICMPPRINTFS
 	if (icmpprintfs)
 		printf("icmp_input from %x to %x, len %d\n",
-			ntohl(ip->ip_src.s_addr), ntohl(ip->ip_dst.s_addr),
-			icmplen);
+		    ntohl(ip->ip_src.s_addr), ntohl(ip->ip_dst.s_addr),
+		    icmplen);
 #endif
 	if (icmplen < ICMP_MINLEN) {
 		icmpstat.icps_tooshort++;
 		goto freeit;
 	}
 	i = hlen + min(icmplen, ICMP_ADVLENMIN);
-	if (m->m_len < i && (m = m_pullup(m, i)) == 0)  {
+	if (m->m_len < i && (m = m_pullup(m, i)) == 0) {
 		icmpstat.icps_tooshort++;
 		return;
 	}
@@ -221,6 +324,13 @@ icmp_input(m, hlen)
 	if (icmpprintfs)
 		printf("icmp_input, type %d code %d\n", icp->icmp_type,
 		    icp->icmp_code);
+#endif
+#ifdef IPSEC
+	/* drop it if it does not match the policy */
+	if (ipsec4_in_reject(m, NULL)) {
+		ipsecstat.in_polvio++;
+		goto freeit;
+	}
 #endif
 	if (icp->icmp_type > ICMP_MAXTYPE)
 		goto raw;
@@ -276,6 +386,8 @@ icmp_input(m, hlen)
 		if (code)
 			goto badcode;
 		code = PRC_QUENCH;
+		goto deliver;
+
 	deliver:
 		/*
 		 * Problem with datagram; advise higher level routines.
@@ -285,15 +397,23 @@ icmp_input(m, hlen)
 			icmpstat.icps_badlen++;
 			goto freeit;
 		}
+		if (IN_MULTICAST(icp->icmp_ip.ip_dst.s_addr))
+			goto badcode;
 		NTOHS(icp->icmp_ip.ip_len);
 #ifdef ICMPPRINTFS
 		if (icmpprintfs)
 			printf("deliver to protocol %d\n", icp->icmp_ip.ip_p);
 #endif
 		icmpsrc.sin_addr = icp->icmp_ip.ip_dst;
-		if (ctlfunc = inetsw[ip_protox[icp->icmp_ip.ip_p]].pr_ctlinput)
-			(*ctlfunc)(code, (struct sockaddr *)&icmpsrc,
-			    &icp->icmp_ip);
+		if (code == PRC_MSGSIZE && ip_mtudisc)
+			icmp_mtudisc(icp);
+		/*
+		 * XXX if the packet contains [IPv4 AH TCP], we can't make a
+		 * notification to TCP layer.
+		 */
+		ctlfunc = inetsw[ip_protox[icp->icmp_ip.ip_p]].pr_ctlinput;
+		if (ctlfunc)
+			(*ctlfunc)(code, sintosa(&icmpsrc), &icp->icmp_ip);
 		break;
 
 	badcode:
@@ -315,39 +435,34 @@ icmp_input(m, hlen)
 		goto reflect;
 		
 	case ICMP_MASKREQ:
-#define	satosin(sa)	((struct sockaddr_in *)(sa))
 		if (icmpmaskrepl == 0)
 			break;
 		/*
 		 * We are not able to respond with all ones broadcast
 		 * unless we receive it over a point-to-point interface.
 		 */
-		if (icmplen < ICMP_MASKLEN)
+		if (icmplen < ICMP_MASKLEN) {
+			icmpstat.icps_badlen++;
 			break;
-		switch (ip->ip_dst.s_addr) {
-
-		case INADDR_BROADCAST:
-		case INADDR_ANY:
-			icmpdst.sin_addr = ip->ip_src;
-			break;
-
-		default:
-			icmpdst.sin_addr = ip->ip_dst;
 		}
-		ia = (struct in_ifaddr *)ifaof_ifpforaddr(
-			    (struct sockaddr *)&icmpdst, m->m_pkthdr.rcvif);
+		if (ip->ip_dst.s_addr == INADDR_BROADCAST ||
+		    in_nullhost(ip->ip_dst))
+			icmpdst.sin_addr = ip->ip_src;
+		else
+			icmpdst.sin_addr = ip->ip_dst;
+		ia = ifatoia(ifaof_ifpforaddr(sintosa(&icmpdst),
+		    m->m_pkthdr.rcvif));
 		if (ia == 0)
 			break;
 		icp->icmp_type = ICMP_MASKREPLY;
 		icp->icmp_mask = ia->ia_sockmask.sin_addr.s_addr;
-		if (ip->ip_src.s_addr == 0) {
+		if (in_nullhost(ip->ip_src)) {
 			if (ia->ia_ifp->if_flags & IFF_BROADCAST)
-			    ip->ip_src = satosin(&ia->ia_broadaddr)->sin_addr;
+				ip->ip_src = ia->ia_broadaddr.sin_addr;
 			else if (ia->ia_ifp->if_flags & IFF_POINTOPOINT)
-			    ip->ip_src = satosin(&ia->ia_dstaddr)->sin_addr;
+				ip->ip_src = ia->ia_dstaddr.sin_addr;
 		}
 reflect:
-		ip->ip_len += hlen;	/* since ip_input deducts this */
 		icmpstat.icps_reflect++;
 		icmpstat.icps_outhist[icp->icmp_type]++;
 		icmp_reflect(m);
@@ -373,14 +488,16 @@ reflect:
 #ifdef	ICMPPRINTFS
 		if (icmpprintfs)
 			printf("redirect dst %x to %x\n", icp->icmp_ip.ip_dst,
-				icp->icmp_gwaddr);
+			    icp->icmp_gwaddr);
 #endif
 		icmpsrc.sin_addr = icp->icmp_ip.ip_dst;
-		rtredirect((struct sockaddr *)&icmpsrc,
-		  (struct sockaddr *)&icmpdst,
-		  (struct sockaddr *)0, RTF_GATEWAY | RTF_HOST,
-		  (struct sockaddr *)&icmpgw, (struct rtentry **)0);
-		pfctlinput(PRC_REDIRECT_HOST, (struct sockaddr *)&icmpsrc);
+		rtredirect(sintosa(&icmpsrc), sintosa(&icmpdst),
+		    (struct sockaddr *)0, RTF_GATEWAY | RTF_HOST,
+		    sintosa(&icmpgw), (struct rtentry **)0);
+		pfctlinput(PRC_REDIRECT_HOST, sintosa(&icmpsrc));
+#ifdef IPSEC
+		key_sa_routechange((struct sockaddr *)&icmpsrc);
+#endif
 		break;
 
 	/*
@@ -398,11 +515,12 @@ reflect:
 	}
 
 raw:
-	rip_input(m);
+	rip_input(m, hlen, proto);
 	return;
 
 freeit:
 	m_freem(m);
+	return;
 }
 
 /*
@@ -414,15 +532,16 @@ icmp_reflect(m)
 {
 	register struct ip *ip = mtod(m, struct ip *);
 	register struct in_ifaddr *ia;
+	register struct ifaddr *ifa;
 	struct in_addr t;
-	struct mbuf *opts = 0, *ip_srcroute();
+	struct mbuf *opts = 0;
 	int optlen = (ip->ip_hl << 2) - sizeof(struct ip);
 
 	if (!in_canforward(ip->ip_src) &&
-	    ((ntohl(ip->ip_src.s_addr) & IN_CLASSA_NET) !=
-	     (IN_LOOPBACKNET << IN_CLASSA_NSHIFT))) {
+	    ((ip->ip_src.s_addr & IN_CLASSA_NET) !=
+	     htonl(IN_LOOPBACKNET << IN_CLASSA_NSHIFT))) {
 		m_freem(m);	/* Bad return address */
-		goto done;	/* Ip_output() will check for broadcast */
+		goto done;	/* ip_output() will check for broadcast */
 	}
 	t = ip->ip_dst;
 	ip->ip_dst = ip->ip_src;
@@ -432,24 +551,45 @@ icmp_reflect(m)
 	 * or anonymous), use the address which corresponds
 	 * to the incoming interface.
 	 */
-	for (ia = in_ifaddr; ia; ia = ia->ia_next) {
-		if (t.s_addr == IA_SIN(ia)->sin_addr.s_addr)
-			break;
-		if ((ia->ia_ifp->if_flags & IFF_BROADCAST) &&
-		    t.s_addr == satosin(&ia->ia_broadaddr)->sin_addr.s_addr)
-			break;
+	INADDR_TO_IA(t, ia);
+	if (ia == NULL && (m->m_pkthdr.rcvif->if_flags & IFF_BROADCAST)) {
+		for (ifa = m->m_pkthdr.rcvif->if_addrlist.tqh_first;  
+		    ifa != NULL; ifa = ifa->ifa_list.tqe_next) {
+			if (ifa->ifa_addr->sa_family != AF_INET)
+				continue;
+			ia = ifatoia(ifa);
+			if (in_hosteq(t, ia->ia_broadaddr.sin_addr))
+				break;
+		}
 	}
+
 	icmpdst.sin_addr = t;
 	if (ia == (struct in_ifaddr *)0)
-		ia = (struct in_ifaddr *)ifaof_ifpforaddr(
-			(struct sockaddr *)&icmpdst, m->m_pkthdr.rcvif);
+		ia = ifatoia(ifaof_ifpforaddr(sintosa(&icmpdst),
+		    m->m_pkthdr.rcvif));
 	/*
 	 * The following happens if the packet was not addressed to us,
-	 * and was received on an interface with no IP address.
+	 * and was received on an interface with no IP address:
+	 * We find the first AF_INET address on the first non-loopback
+	 * interface.
 	 */
 	if (ia == (struct in_ifaddr *)0)
-		ia = in_ifaddr;
-	t = IA_SIN(ia)->sin_addr;
+		for (ia = in_ifaddr.tqh_first; ia != NULL;
+		    ia = ia->ia_list.tqe_next) {
+			if (ia->ia_ifp->if_flags & IFF_LOOPBACK)
+				continue;
+			break;
+		}
+	/*
+	 * If we still didn't find an address, punt.  We could have an
+	 * interface up (and receiving packets) with no address.
+	 */
+	if (ia == (struct in_ifaddr *)0) {
+		m_freem(m);
+		goto done;
+	}
+
+	t = ia->ia_addr.sin_addr;
 	ip->ip_src = t;
 	ip->ip_ttl = MAXTTL;
 
@@ -466,7 +606,7 @@ icmp_reflect(m)
 		if ((opts = ip_srcroute()) == 0 &&
 		    (opts = m_gethdr(M_DONTWAIT, MT_HEADER))) {
 			opts->m_len = sizeof(struct in_addr);
-			mtod(opts, struct in_addr *)->s_addr = 0;
+			*mtod(opts, struct in_addr *) = zeroin_addr;
 		}
 		if (opts) {
 #ifdef ICMPPRINTFS
@@ -496,7 +636,7 @@ icmp_reflect(m)
 			    }
 		    }
 		    /* Terminate & pad, if necessary */
-		    if (cnt = opts->m_len % 4) {
+		    if ((cnt = opts->m_len % 4) != 0) {
 			    for (; cnt < 4; cnt++) {
 				    *(mtod(opts, caddr_t) + opts->m_len) =
 					IPOPT_EOL;
@@ -553,6 +693,9 @@ icmp_send(m, opts)
 	if (icmpprintfs)
 		printf("icmp_send dst %x src %x\n", ip->ip_dst, ip->ip_src);
 #endif
+#ifdef IPSEC
+	m->m_pkthdr.rcvif = NULL;
+#endif /*IPSEC*/
 	(void) ip_output(m, opts, NULL, 0, NULL);
 }
 
@@ -588,4 +731,149 @@ icmp_sysctl(name, namelen, oldp, oldlenp, newp, newlen)
 		return (ENOPROTOOPT);
 	}
 	/* NOTREACHED */
+}
+
+static void
+icmp_mtudisc(icp)
+	struct icmp *icp;
+{
+	struct rtentry *rt;
+	struct sockaddr *dst = sintosa(&icmpsrc);
+	u_long mtu = ntohs(icp->icmp_nextmtu);  /* Why a long?  IPv6 */
+	int    error;
+
+	/* Table of common MTUs: */
+
+	static u_long mtu_table[] = {65535, 65280, 32000, 17914, 9180, 8166, 
+				     4352, 2002, 1492, 1006, 508, 296, 68, 0};
+    
+	rt = rtalloc1(dst, 1);
+	if (rt == 0)
+		return;
+    
+	/* If we didn't get a host route, allocate one */
+    
+	if ((rt->rt_flags & RTF_HOST) == 0) {
+		struct rtentry *nrt;
+
+		error = rtrequest((int) RTM_ADD, dst, 
+		    (struct sockaddr *) rt->rt_gateway,
+		    (struct sockaddr *) 0, 
+		    RTF_GATEWAY | RTF_HOST | RTF_DYNAMIC, &nrt);
+		if (error) {
+			rtfree(rt);
+			rtfree(nrt);
+			return;
+		}
+		nrt->rt_rmx = rt->rt_rmx;
+		rtfree(rt);
+		rt = nrt;
+	}
+	error = rt_timer_add(rt, icmp_mtudisc_timeout, ip_mtudisc_timeout_q);
+	if (error) {
+		rtfree(rt);
+		return;
+	}
+
+	if (mtu == 0) {
+		int i = 0;
+
+		mtu = icp->icmp_ip.ip_len; /* NTOHS happened in deliver: */
+		/* Some 4.2BSD-based routers incorrectly adjust the ip_len */
+		if (mtu > rt->rt_rmx.rmx_mtu && rt->rt_rmx.rmx_mtu != 0)
+			mtu -= (icp->icmp_ip.ip_hl << 2);
+
+		/* If we still can't guess a value, try the route */
+
+		if (mtu == 0) {
+			mtu = rt->rt_rmx.rmx_mtu;
+
+			/* If no route mtu, default to the interface mtu */
+
+			if (mtu == 0)
+				mtu = rt->rt_ifp->if_mtu;
+		}
+
+		for (i = 0; i < sizeof(mtu_table) / sizeof(mtu_table[0]); i++)
+			if (mtu > mtu_table[i]) {
+				mtu = mtu_table[i];
+				break;
+			}
+	}
+
+	/*
+	 * XXX:   RTV_MTU is overloaded, since the admin can set it
+	 *	  to turn off PMTU for a route, and the kernel can
+	 *	  set it to indicate a serious problem with PMTU
+	 *	  on a route.  We should be using a separate flag
+	 *	  for the kernel to indicate this.
+	 */
+
+	if ((rt->rt_rmx.rmx_locks & RTV_MTU) == 0) {
+		if (mtu < 296 || mtu > rt->rt_ifp->if_mtu)
+			rt->rt_rmx.rmx_locks |= RTV_MTU;
+		else if (rt->rt_rmx.rmx_mtu > mtu || 
+			 rt->rt_rmx.rmx_mtu == 0)
+			rt->rt_rmx.rmx_mtu = mtu;
+	}
+
+	if (rt)
+		rtfree(rt);
+}
+
+/*
+ * Return the next larger or smaller MTU plateau (table from RFC 1191)
+ * given current value MTU.  If DIR is less than zero, a larger plateau
+ * is returned; otherwise, a smaller value is returned.
+ */
+int
+ip_next_mtu(mtu, dir)	/* XXX */
+	int mtu;
+	int dir;
+{
+	static int mtutab[] = {
+		65535, 32000, 17914, 8166, 4352, 2002, 1492, 1006, 508, 296,
+		68, 0
+	};
+	int i;
+
+	for (i = 0; i < (sizeof mtutab) / (sizeof mtutab[0]); i++) {
+		if (mtu >= mtutab[i])
+			break;
+	}
+
+	if (dir < 0) {
+		if (i == 0) {
+			return 0;
+		} else {
+			return mtutab[i - 1];
+		}
+	} else {
+		if (mtutab[i] == 0) {
+			return 0;
+		} else if(mtu > mtutab[i]) {
+			return mtutab[i];
+		} else {
+			return mtutab[i + 1];
+		}
+	}
+}
+
+
+static void
+icmp_mtudisc_timeout(rt, r)
+	struct rtentry *rt;
+	struct rttimer *r;
+{
+	if (rt == NULL)
+		panic("icmp_mtudisc_timeout:  bad route to timeout");
+	if ((rt->rt_flags & (RTF_DYNAMIC | RTF_HOST)) == 
+	    (RTF_DYNAMIC | RTF_HOST)) {
+		rtrequest((int) RTM_DELETE, (struct sockaddr *)rt_key(rt),
+		    rt->rt_gateway, rt_mask(rt), rt->rt_flags, 0);
+	} else {
+		if ((rt->rt_rmx.rmx_locks & RTV_MTU) == 0) {
+			rt->rt_rmx.rmx_mtu = 0;
+		}
+	}
 }
