@@ -1,7 +1,7 @@
-#	$NetBSD: Makefile,v 1.2.2.1 2004/09/13 17:28:37 tron Exp $
+#	$NetBSD: Makefile,v 1.2.2.2 2004/09/13 17:36:42 tron Exp $
 
 FLOPPYBASE=	boot-com
-FLOPPYMAX=	3
+FLOPPYMAX=	2
 FLOPPYKERNEL=	netbsd-INSTALL.gz
 FLOPPYBOOTOPTIONS=	-o console=com0
 
