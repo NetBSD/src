@@ -1,4 +1,4 @@
-/*	$NetBSD: ite.c,v 1.2 1998/07/02 18:58:32 tsubai Exp $	*/
+/*	$NetBSD: ite.c,v 1.3 1998/07/13 19:14:43 tsubai Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -67,21 +67,19 @@
 #include <machine/bus.h>
 #include <machine/cpu.h>
 #include <machine/frame.h>
+
+#define KEYBOARD_ARRAY
+#include <machine/keyboard.h>
 #include <machine/adbsys.h>
 #include <machine/iteioctl.h>
 #include <machine/grfioctl.h>
 
-#include <vm/vm.h>
-#include <vm/pmap.h>
-
-/*#include <powermac/dev/viareg.h>*/
 #include <macppc/dev/itevar.h>
 #include <macppc/dev/grfvar.h>
 
-/*#include "6x10.h"*/
-extern u_char fontdata_8x16[];
-#define CHARWIDTH	8
-#define CHARHEIGHT	16
+static u_char *fontdata_6x11;
+#define CHARWIDTH	6
+#define CHARHEIGHT	11
 
 /* Local function prototypes */
 static inline void putpixel1 __P((int, int, int *, int));
@@ -158,6 +156,10 @@ static int	scrreg_bottom;
 static int	bell_freq = 1880;	/* frequency */
 static int	bell_length = 10;	/* duration */
 static int	bell_volume = 100;	/* volume */
+
+/* For polled ADB mode */
+static int	polledkey;
+extern int	adb_polling;
 
 struct tty	*ite_tty;		/* Our tty */
 
@@ -364,21 +366,20 @@ writechar(ch, x, y, attr)
 	x *= CHARWIDTH;
 	y *= CHARHEIGHT;
 
-	rev = (attr & ATTR_REVERSE) ? 255 : 0;
+	rev = (attr & ATTR_REVERSE) ? 15 : 0;
 
-	/*c = &Font6x10[ch * CHARHEIGHT];*/
-	c = &fontdata_8x16[ch * CHARHEIGHT];
+	c = &fontdata_6x11[ch * CHARHEIGHT];
 
 	switch (videobitdepth) {
 	case 1:
 		for (j = 0; j < CHARWIDTH; j++) {
-			mask = 1 << (CHARWIDTH - 1 - j);
+			mask = 1 << (7 - j);
 			for (i = 0; i < CHARHEIGHT; i++)
-				col[i] = ((c[i] & mask) ? 255 : 0) ^ rev;
+				col[i] = ((c[i] & mask) ? 15 : 0) ^ rev;
 			putpixel1(x + j, y, col, CHARHEIGHT);
 		}
 		if (attr & ATTR_UNDER) {
-			col[0] = 255;
+			col[0] = 15;
 			for (j = 0; j < CHARWIDTH; j++)
 				putpixel1(x + j, y + CHARHEIGHT - 1, col, 1);
 		}
@@ -389,13 +390,13 @@ writechar(ch, x, y, attr)
 	case 16:
 	case 32:
 		for (j = 0; j < CHARWIDTH; j++) {
-			mask = 1 << (CHARWIDTH - 1 - j);
+			mask = 1 << (7 - j);
 			for (i = 0; i < CHARHEIGHT; i++)
-				col[i] = ((c[i] & mask) ? 255 : 0) ^ rev;
+				col[i] = ((c[i] & mask) ? 15 : 0) ^ rev;
 			putpixel(x + j, y, col, CHARHEIGHT);
 		}
 		if (attr & ATTR_UNDER) {
-			col[0] = 255;
+			col[0] = 15;
 			for (j = 0; j < CHARWIDTH; j++)
 				putpixel(x + j, y + CHARHEIGHT - 1, col, 1);
 		}
@@ -871,6 +872,46 @@ ite_putchar(ch)
 
 
 /*
+ * Keyboard support functions
+ */
+
+static int 
+ite_pollforchar()
+{
+	int s;
+	register int intbits;
+
+	s = splhigh();
+
+	polledkey = -1;
+	adb_polling = 1;
+
+	/* pretend we're VIA interrupt dispatcher */
+	while (polledkey == -1) {
+		adb_intr_cuda();
+#if 0
+		intbits = via_reg(VIA1, vIFR);
+
+		if (intbits & V1IF_ADBRDY) {
+			mrg_adbintr();
+			via_reg(VIA1, vIFR) = V1IF_ADBRDY;
+		}
+		if (intbits & 0x10) {
+			mrg_pmintr();
+			via_reg(VIA1, vIFR) = 0x10;
+		}
+#endif
+	}
+
+	adb_polling = 0;
+
+	splx(s);
+
+	return polledkey;
+}
+
+
+/*
  * Autoconfig attachment
  */
 
@@ -1093,23 +1134,91 @@ itestop(struct tty * tp, int flag)
 	splx(s);
 }
 
+int
+kbd_intr(adb_event_t * event)
+{
+	static int shift = 0, control = 0, capslock = 0;
+	int key, press, val, state;
+	char str[10], *s;
+
+	key = event->u.k.key;
+	press = ADBK_PRESS(key);
+	val = ADBK_KEYVAL(key);
+
+/*printf("ite_intr: (%x %x ", press, val);*/
+	if (val == ADBK_SHIFT)
+		shift = press;
+	else if (val == ADBK_CAPSLOCK)
+		capslock = !capslock;
+	else if (val == ADBK_CONTROL)
+		control = press;
+	else if (press) {
+		switch (val) {
+		case ADBK_UP:
+			str[0] = '\e';
+			str[1] = 'O';
+			str[2] = 'A';
+			str[3] = '\0';
+			break;
+		case ADBK_DOWN:
+			str[0] = '\e';
+			str[1] = 'O';
+			str[2] = 'B';
+			str[3] = '\0';
+			break;
+		case ADBK_RIGHT:
+			str[0] = '\e';
+			str[1] = 'O';
+			str[2] = 'C';
+			str[3] = '\0';
+			break;
+		case ADBK_LEFT:
+			str[0] = '\e';
+			str[1] = 'O';
+			str[2] = 'D';
+			str[3] = '\0';
+			break;
+		default:
+			state = 0;
+			if (capslock && isealpha(keyboard[val][1]))
+				state = 1;
+			if (shift)
+				state = 1;
+			if (control)
+				state = 2;
+			str[0] = keyboard[val][state];
+			str[1] = '\0';
+			break;
+		}
+		if (adb_polling)
+			polledkey = str[0];
+		else
+			for (s = str; *s; s++)
+				(*linesw[ite_tty->t_line].l_rint)(*s, ite_tty);
+	}
+/*printf("%x) ", str[0]);*/
+	return 0;
+}
 /*
  * Console functions
  */
 
+static int stdout;
+
 void
-itecnprobe(struct consdev * cp)
+itecnprobe(struct consdev *cp)
 {
 	int maj, unit;
 	int l;
+	int chosen, node;
 	char type[32];
-	extern int console_node;
 
-	if (console_node == -1)
+	chosen = OF_finddevice("/chosen");
+	if ((l = OF_getprop(chosen, "stdout", &stdout, sizeof(stdout))) == -1)
 		return;
-
-	l = OF_getprop(console_node, "device_type", type, sizeof(type));
-	if (l == -1 || l >= sizeof(type) - 1)
+	if ((node = OF_instance_to_package(stdout)) == -1)
+		return;
+	if ((l = OF_getprop(node, "device_type", type, sizeof(type))) == -1)
 		return;
 
 	if (strcmp(type, "display") != 0)
@@ -1176,31 +1285,47 @@ itereset()
 }
   
 void
-itecninit(struct consdev * cp)
+itecninit(struct consdev *cp)
 {
-	int node, options;
-	u_int reg[5];
-	extern int console_node;
+	int node;
+	int i;
+	char *romfont;
+	char cmd[32];
 
 	if (ite_initted)
 		return;
 
-	node = console_node;
-	if (node == -1)
+	if ((node = OF_instance_to_package(stdout)) == -1)
 		return;
 
 	OF_getprop(node, "width", &width, sizeof(width));
 	OF_getprop(node, "height", &height, sizeof(height));
 	OF_getprop(node, "depth", &videobitdepth, sizeof(videobitdepth));
 	OF_getprop(node, "linebytes", &videorowbytes, sizeof(videorowbytes));
-	OF_getprop(node, "assigned-addresses", reg, sizeof(reg));
 
-	videoaddr = reg[2] + 0x400;	/* XXX ATI only */
+	OF_interpret("frame-buffer-adr", 1, &videoaddr);
+	OF_interpret("font-adr", 1, &romfont);
+
+	/* Use rom font.  This begins code 32. */
+	fontdata_6x11 = &romfont[- 32 * CHARHEIGHT];
+
 	videosize = width | (height << 16);
 
 	ite_initted = 1;
 	itereset();
-	iteon(cp->cn_dev, 0);
+
+	/* Invert screen. */
+	for (i = 0; i < videorowbytes * height; i++)
+		*(u_char *)(videoaddr + i) ^= 0x0f;
+
+	/* Set cursor position to rom's one. */
+	OF_interpret("line#", 1, &y);
+	y++;
+	x = 0;
+
+	/* Move rom cursor to bottom line. */
+	sprintf(cmd, "0 to column# %x to line#", height / CHARHEIGHT - 1);
+	OF_interpret(cmd, 0);
 }
 
 int
