@@ -1,4 +1,4 @@
-/*	$NetBSD: pchb.c,v 1.14 1998/06/08 06:45:55 thorpej Exp $	*/
+/*	$NetBSD: pchb.c,v 1.15 1998/07/13 03:30:52 mark Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1998 The NetBSD Foundation, Inc.
@@ -126,6 +126,7 @@ pchbmatch(parent, match, aux)
 		case PCI_PRODUCT_ALI_M1445:
 		case PCI_PRODUCT_ALI_M1451:
 		case PCI_PRODUCT_ALI_M1461:
+		case PCI_PRODUCT_ALI_M1541:
 			return (1);
 		}
 		break;
