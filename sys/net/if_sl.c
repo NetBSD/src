@@ -32,7 +32,7 @@
  *
  *	from: if_sl.c,v 1.11 84/10/04 12:54:47 rick Exp
  *	from: @(#)if_sl.c	7.22 (Berkeley) 4/20/91
- *	$Id: if_sl.c,v 1.26 1994/02/10 05:39:07 cgd Exp $
+ *	$Id: if_sl.c,v 1.27 1994/03/08 07:27:23 cgd Exp $
  */
 
 /*
@@ -155,7 +155,12 @@ Huh? Slip without inet?
 #endif
 #define	SLMAX		(MCLBYTES - BUFOFFSET)
 #define	SLBUFSIZE	(SLMAX + BUFOFFSET)
+#ifndef SLMTU
 #define	SLMTU		296
+#endif
+#if (SLMTU < 3)
+Huh?  SLMTU way too small.
+#endif
 #define	SLIP_HIWAT	roundup(50,CBSIZE)
 #ifndef __NetBSD__						/* XXX - cgd */
 #define	CLISTRESERVE	1024	/* Can't let clists get too low */
@@ -249,6 +254,9 @@ slopen(dev, tp)
 	register struct sl_softc *sc;
 	register int nsl;
 	int error;
+#ifdef __NetBSD__
+	int s;
+#endif
 
 	if (error = suser(p->p_ucred, &p->p_acflag))
 		return (error);
@@ -264,6 +272,30 @@ slopen(dev, tp)
 			sc->sc_ttyp = tp;
 			sc->sc_if.if_baudrate = tp->t_ospeed;
 			ttyflush(tp, FREAD | FWRITE);
+#ifdef __NetBSD__
+			/*
+			 * make sure tty output queue is large enough
+			 * to hold a full-sized packet (including frame
+			 * end, and a possible extra frame end).  full-sized
+			 * packet occupies a max of 2*SLMTU bytes (because
+			 * of possible escapes), and add two on for frame
+			 * ends.
+			 */
+			s = spltty();
+			if (tp->t_outq.c_cn < 2*SLMTU+2) {
+				sc->sc_oldbufsize = tp->t_outq.c_cn;
+				sc->sc_oldbufquot = tp->t_outq.c_cq != 0;
+
+				clfree(&tp->t_outq);
+				error = clalloc(&tp->t_outq, 3*SLMTU, 0);
+				if (error) {
+					splx(s);
+					return(error);
+				}
+			} else
+				sc->sc_oldbufsize = sc->sc_oldbufquot = 0;
+			splx(s);
+#endif /* __NetBSD__ */
 			return (0);
 		}
 	return (ENXIO);
@@ -293,6 +325,13 @@ slclose(tp)
 		sc->sc_mp = 0;
 		sc->sc_buf = 0;
 	}
+#ifdef __NetBSD__
+	/* if necessary, install a new outq buffer of the appropriate size */
+	if (sc->sc_oldbufsize != 0) {
+		clfree(&tp->t_outq);
+		clalloc(&tp->t_outq, sc->sc_oldbufsize, sc->sc_oldbufquot);
+	}
+#endif
 	splx(s);
 }
 
@@ -370,6 +409,16 @@ sloutput(ifp, m, dst, rtp)
 	if (ip->ip_tos & IPTOS_LOWDELAY)
 		ifq = &sc->sc_fastq;
 	s = splimp();
+	if (sc->sc_oqlen && sc->sc_ttyp->t_outq.c_cc == sc->sc_oqlen) {
+		struct timeval tv = time;
+
+		/* if output's been stalled for too long, and restart */
+		timevalsub(&tv, &sc->sc_if.if_lastchange);
+		if (tv.tv_sec > 0) {
+			sc->sc_otimeout++;
+			slstart(sc->sc_ttyp);
+		}
+	}
 	if (IF_QFULL(ifq)) {
 		IF_DROP(ifq);
 		m_freem(m);
@@ -379,12 +428,8 @@ sloutput(ifp, m, dst, rtp)
 	}
 	IF_ENQUEUE(ifq, m);
 	sc->sc_if.if_lastchange = time;
-	if (sc->sc_ttyp->t_outq.c_cc == 0)
+	if ((sc->sc_oqlen = sc->sc_ttyp->t_outq.c_cc) == 0)
 		slstart(sc->sc_ttyp);
-#ifdef __NetBSD__ 
-	else							/* XXX - cgd */
-		(*sc->sc_ttyp->t_oproc)(sc->sc_ttyp);
-#endif
 	splx(s);
 	return (0);
 }
@@ -434,11 +479,9 @@ slstart(tp)
 		 * Do not remove the packet from the IP queue if it
 		 * doesn't look like the packet will fit into the
 		 * current serial output queue, with a packet full of
-		 * escapes this could be as bad as SLMTU*2.  The size
-		 * of the ring buffer must be at least SLMTU*2 to
-		 * avoid deadlock.
+		 * escapes this could be as bad as SLMTU*2+2.
 		 */
-		if (tp->t_outq.c_cn - tp->t_outq.c_cc < 2 * SLMTU)
+		if (tp->t_outq.c_cn - tp->t_outq.c_cc < 2*SLMTU+2)
 			return;
 #endif /* __NetBSD__ */
 
