@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.113 2002/03/25 08:42:35 shin Exp $
+# $NetBSD: GENERIC,v 1.114 2002/03/25 10:02:50 shin Exp $
 #
 # GENERIC machine description file
 # 
@@ -22,7 +22,7 @@ include		"arch/hpcmips/conf/std.hpcmips"
 include		"arch/hpcmips/conf/std.hpcmips.vr41"
 include		"arch/hpcmips/conf/std.hpcmips.tx39"
 
-#ident 		"GENERIC-$Revision: 1.113 $"
+#ident 		"GENERIC-$Revision: 1.114 $"
 
 maxusers	16
 
@@ -109,7 +109,7 @@ options 	NFS_BOOT_BOOTP
 #options 	NFS_BOOT_BOOTPARAM
 
 # compile options
-makeoptions	DEFGP="-G 14"
+makeoptions	DEFGP="-G 10"
 
 config		netbsd		root on ? type ?
 
