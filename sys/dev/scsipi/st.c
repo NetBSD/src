@@ -1,4 +1,4 @@
-/*	$NetBSD: st.c,v 1.173 2004/10/28 07:07:45 yamt Exp $ */
+/*	$NetBSD: st.c,v 1.174 2005/01/31 21:13:16 reinoud Exp $ */
 
 /*-
  * Copyright (c) 1998, 2004 The NetBSD Foundation, Inc.
@@ -57,7 +57,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: st.c,v 1.173 2004/10/28 07:07:45 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: st.c,v 1.174 2005/01/31 21:13:16 reinoud Exp $");
 
 #include "opt_scsi.h"
 
@@ -1288,7 +1288,7 @@ ststart(struct scsipi_periph *periph)
 		 */
 		xs = scsipi_make_xs(periph,
 		    (struct scsipi_generic *)&cmd, sizeof(cmd),
-		    (u_char *)bp->b_data, bp->b_bcount,
+		    (uint8_t *)bp->b_data, bp->b_bcount,
 		    0, ST_IO_TIME, bp, flags);
 		if (__predict_false(xs == NULL)) {
 			/*
@@ -1460,7 +1460,7 @@ stioctl(dev_t dev, u_long cmd, caddr_t arg, int flag, struct proc *p)
 
 		/* compat: in U*x it is a short */
 		number = mt->mt_count;
-		switch ((short) (mt->mt_op)) {
+		switch ((int16_t) (mt->mt_op)) {
 		case MTWEOF:	/* write an end-of-file record */
 			error = st_write_filemarks(st, number, flags);
 			break;
@@ -1616,7 +1616,7 @@ try_new_value:
 	 * are persistent now across mounts.
 	 */
 	if (STMODE(dev) == CTRL_MODE) {
-		switch ((short) (mt->mt_op)) {
+		switch ((int16_t) (mt->mt_op)) {
 		case MTSETBSIZ:
 			st->modes[dsty].blksize = st->blksize;
 			st->modeflags[dsty] |= BLKSIZE_SET_BY_USER;
@@ -2087,7 +2087,7 @@ st_interpret_sense(struct scsipi_xfer *xs)
 	st->mt_erreg = key;
 	st->asc = sense->add_sense_code;
 	st->ascq = sense->add_sense_code_qual;
-	st->mt_resid = (short) info;
+	st->mt_resid = (int16_t) info;
 
 	if (key == SKEY_NOT_READY && st->asc == 0x4 && st->ascq == 0x1) {
 		/* Not Ready, Logical Unit Is in Process Of Becoming Ready */

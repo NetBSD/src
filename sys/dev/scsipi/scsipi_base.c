@@ -1,4 +1,4 @@
-/*	$NetBSD: scsipi_base.c,v 1.123 2004/12/07 23:14:03 thorpej Exp $	*/
+/*	$NetBSD: scsipi_base.c,v 1.124 2005/01/31 21:13:16 reinoud Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2000, 2002, 2003, 2004 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: scsipi_base.c,v 1.123 2004/12/07 23:14:03 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: scsipi_base.c,v 1.124 2005/01/31 21:13:16 reinoud Exp $");
 
 #include "opt_scsi.h"
 
@@ -2638,7 +2638,7 @@ show_scsipi_xs(struct scsipi_xfer *xs)
 void
 show_scsipi_cmd(struct scsipi_xfer *xs)
 {
-	u_char *b = (u_char *) xs->cmd;
+	uint8_t *b = (uint8_t *) xs->cmd;
 	int i = 0;
 
 	scsipi_printaddr(xs->xs_periph);
@@ -2658,7 +2658,7 @@ show_scsipi_cmd(struct scsipi_xfer *xs)
 }
 
 void
-show_mem(u_char *address, int num)
+show_mem(uint8_t *address, int num)
 {
 	int x;
 

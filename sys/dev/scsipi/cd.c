@@ -1,4 +1,4 @@
-/*	$NetBSD: cd.c,v 1.214 2005/01/30 23:42:58 reinoud Exp $	*/
+/*	$NetBSD: cd.c,v 1.215 2005/01/31 21:13:16 reinoud Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2001, 2003, 2004 The NetBSD Foundation, Inc.
@@ -54,7 +54,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cd.c,v 1.214 2005/01/30 23:42:58 reinoud Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cd.c,v 1.215 2005/01/31 21:13:16 reinoud Exp $");
 
 #include "rnd.h"
 
@@ -838,7 +838,7 @@ cdstart(struct scsipi_periph *periph)
 		 * Note: we cannot sleep as we may be an interrupt
 		 */
 		xs = scsipi_make_xs(periph, cmdp, cmdlen,
-		    (u_char *)bp->b_data, bp->b_bcount,
+		    (uint8_t *)bp->b_data, bp->b_bcount,
 		    CDRETRIES, 30000, bp, flags);
 		if (__predict_false(xs == NULL)) {
 			/*
@@ -1070,7 +1070,7 @@ cdwrite(dev_t dev, struct uio *uio, int ioflag)
  * addresses format
  */
 static void
-lba2msf(u_long lba, u_char *m, u_char *s, u_char *f)
+lba2msf(u_long lba, uint8_t *m, uint8_t *s, uint8_t *f)
 {   
 	u_long tmp;
 
@@ -1083,7 +1083,7 @@ lba2msf(u_long lba, u_char *m, u_char *s, u_char *f)
 }
 
 static u_long
-msf2lba(u_char m, u_char s, u_char f)
+msf2lba(uint8_t m, uint8_t s, uint8_t f)
 {
 
 	return ((((m * CD_SECS) + s) * CD_FRAMES + f) - CD_BLOCK_OFFSET);

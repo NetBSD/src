@@ -1,4 +1,4 @@
-/*	$NetBSD: ss_scanjet.c,v 1.37 2004/10/28 07:07:45 yamt Exp $	*/
+/*	$NetBSD: ss_scanjet.c,v 1.38 2005/01/31 21:13:16 reinoud Exp $	*/
 
 /*
  * Copyright (c) 1995 Kenneth Stailey.  All rights reserved.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ss_scanjet.c,v 1.37 2004/10/28 07:07:45 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ss_scanjet.c,v 1.38 2005/01/31 21:13:16 reinoud Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -283,7 +283,7 @@ scanjet_read(struct ss_softc *ss, struct buf *bp)
 	 */
 	xs = scsipi_make_xs(periph,
 	    (struct scsipi_generic *) &cmd, sizeof(cmd),
-	    (u_char *) bp->b_data, bp->b_bcount,
+	    (uint8_t *) bp->b_data, bp->b_bcount,
 	    SCANJET_RETRIES, 100000, bp,
 	    XS_CTL_NOSLEEP | XS_CTL_ASYNC | XS_CTL_DATA_IN);
 	if (xs == NULL) {

@@ -1,4 +1,4 @@
-/*	$NetBSD: scsipiconf.h,v 1.92 2004/12/04 19:02:25 thorpej Exp $	*/
+/*	$NetBSD: scsipiconf.h,v 1.93 2005/01/31 21:13:16 reinoud Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2000, 2004 The NetBSD Foundation, Inc.
@@ -506,7 +506,7 @@ struct scsipi_xfer {
 	int	timeout;		/* in milliseconds */
 	struct	scsipi_generic *cmd;	/* The scsipi command to execute */
 	int	cmdlen;			/* how long it is */
-	u_char	*data;			/* DMA address OR a uio address */
+	uint8_t	*data;			/* DMA address OR a uio address */
 	int	datalen;		/* data len (blank if uio) */
 	int	resid;			/* how much buffer was not touched */
 	scsipi_xfer_result_t error;	/* an error value */
@@ -625,12 +625,12 @@ struct scsi_quirk_inquiry_pattern {
 #ifdef _KERNEL
 void	scsipi_init(void);
 int	scsipi_command(struct scsipi_periph *, struct scsipi_generic *, int,
-	    u_char *, int, int, int, struct buf *, int);
+	    uint8_t *, int, int, int, struct buf *, int);
 void	scsipi_create_completion_thread(void *);
 caddr_t	scsipi_inqmatch(struct scsipi_inquiry_pattern *, caddr_t,
 	    int, int, int *);
 const char *scsipi_dtype(int);
-void	scsipi_strvis(u_char *, int, u_char *, int);
+void	scsipi_strvis(uint8_t *, int, uint8_t *, int);
 int	scsipi_execute_xs(struct scsipi_xfer *);
 u_int64_t scsipi_size(struct scsipi_periph *, int);
 int	scsipi_test_unit_ready(struct scsipi_periph *, int);
@@ -697,7 +697,7 @@ int	scsipi_sync_factor_to_freq(int);
 
 void	show_scsipi_xs(struct scsipi_xfer *);
 void	show_scsipi_cmd(struct scsipi_xfer *);
-void	show_mem(u_char *, int);
+void	show_mem(uint8_t *, int);
 #endif /* _KERNEL */
 
 static __inline void __unused

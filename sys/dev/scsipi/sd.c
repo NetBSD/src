@@ -1,4 +1,4 @@
-/*	$NetBSD: sd.c,v 1.232 2004/12/07 23:16:40 thorpej Exp $	*/
+/*	$NetBSD: sd.c,v 1.233 2005/01/31 21:13:16 reinoud Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2003, 2004 The NetBSD Foundation, Inc.
@@ -54,7 +54,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sd.c,v 1.232 2004/12/07 23:16:40 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sd.c,v 1.233 2005/01/31 21:13:16 reinoud Exp $");
 
 #include "opt_scsi.h"
 #include "rnd.h"
@@ -888,7 +888,7 @@ sdstart(struct scsipi_periph *periph)
 		 * Note: we cannot sleep as we may be an interrupt
 		 */
 		xs = scsipi_make_xs(periph, cmdp, cmdlen,
-		    (u_char *)bp->b_data, bp->b_bcount,
+		    (uint8_t *)bp->b_data, bp->b_bcount,
 		    SDRETRIES, SD_IO_TIMEOUT, bp, flags);
 		if (__predict_false(xs == NULL)) {
 			/*
