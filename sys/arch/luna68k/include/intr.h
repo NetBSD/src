@@ -1,4 +1,4 @@
-/* $NetBSD: intr.h,v 1.1 2000/01/05 08:49:01 nisimura Exp $ */
+/* $NetBSD: intr.h,v 1.2 2000/08/22 19:46:29 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -57,6 +57,7 @@
 #define splvm()         spl7()
 #define splhigh()       spl7()
 #define splsched()      spl7()
+#define spllock()	spl7()
 
 /* watch out for side effects */
 #define splx(s)         ((s) & PSL_IPL ? _spl(s) : spl0())
