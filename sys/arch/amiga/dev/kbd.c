@@ -1,4 +1,4 @@
-/*	$NetBSD: kbd.c,v 1.20 1996/05/10 15:36:05 is Exp $	*/
+/*	$NetBSD: kbd.c,v 1.21 1996/05/16 17:50:25 is Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1990 The Regents of the University of California.
@@ -134,7 +134,9 @@ void
 kbdenable()
 {
 	int s;
-
+#ifdef DRACO
+	u_char c;
+#endif
 	/*
 	 * collides with external ints from SCSI, watch out for this when
 	 * enabling/disabling interrupts there !!
