@@ -1,4 +1,4 @@
-/*	$NetBSD: clnt_dg.c,v 1.2 2000/06/04 03:55:20 thorpej Exp $	*/
+/*	$NetBSD: clnt_dg.c,v 1.2.2.1 2000/07/14 16:48:12 fvdl Exp $	*/
 
 /*
  * Sun RPC is a product of Sun Microsystems, Inc. and is provided for
@@ -350,7 +350,7 @@ call_again:
 	 * the transaction is the first thing in the out buffer
 	 */
 	(*(u_int32_t *)(cu->cu_outbuf))++;
-	if ((! XDR_PUTLONG(xdrs, (long *)&proc)) ||
+	if ((! XDR_PUTINT32(xdrs, &proc)) ||
 	    (! AUTH_MARSHALL(cl->cl_auth, xdrs)) ||
 	    (! (*xargs)(xdrs, argsp))) {
 		release_fd_lock(cu->cu_fd, mask);
