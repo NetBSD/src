@@ -1,4 +1,4 @@
-/*	$NetBSD: makedbm.c,v 1.8 1997/11/01 14:24:58 lukem Exp $	*/
+/*	$NetBSD: makedbm.c,v 1.9 1997/11/04 11:28:46 lukem Exp $	*/
 
 /*
  * Copyright (c) 1994 Mats O Jansson <moj@stacken.kth.se>
@@ -33,7 +33,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: makedbm.c,v 1.8 1997/11/01 14:24:58 lukem Exp $");
+__RCSID("$NetBSD: makedbm.c,v 1.9 1997/11/04 11:28:46 lukem Exp $");
 #endif
 
 #include <sys/param.h>
@@ -326,34 +326,39 @@ bad_record:
 	if (add_record(new_db, YP_LAST_KEY, file_date(infile), FALSE))
 		goto bad_record;
 
-	if (yp_input_file)
+	if (yp_input_file) {
 		if (add_record(new_db, YP_INPUT_KEY, yp_input_file, FALSE))
 			goto bad_record;
+	}
 
-	if (yp_output_file)
+	if (yp_output_file) {
 		if (add_record(new_db, YP_OUTPUT_KEY, yp_output_file, FALSE))
 			goto bad_record;
+	}
 
-	if (yp_master_name)
+	if (yp_master_name) {
 		if (add_record(new_db, YP_MASTER_KEY, yp_master_name, FALSE))
 			goto bad_record;
-	else {
+	} else {
 		localhostname(myname, sizeof(myname) - 1);
 		if (add_record(new_db, YP_MASTER_KEY, myname, FALSE))
 			goto bad_record;
 	}
 
-	if (yp_domain_name)
+	if (yp_domain_name) {
 		if (add_record(new_db, YP_DOMAIN_KEY, yp_domain_name, FALSE))
 			goto bad_record;
+	}
 
-	if (bflag)
+	if (bflag) {
 		if (add_record(new_db, YP_INTERDOMAIN_KEY, empty_str, FALSE))
 			goto bad_record;
+	}
 
-	if (sflag)
+	if (sflag) {
 		if (add_record(new_db, YP_SECURE_KEY, empty_str, FALSE))
 			goto bad_record;
+	}
 
 	ypdb_close(new_db);
 	if (rename(db_mapname, db_outfile) < 0) {
