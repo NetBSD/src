@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ie_obio.c,v 1.9 1997/03/15 18:10:51 is Exp $	*/
+/*	$NetBSD: if_ie_obio.c,v 1.10 1997/04/28 21:59:19 gwr Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -91,6 +91,10 @@ ie_obio_match(parent, cf, args)
 {
 	struct confargs *ca = args;
 
+	/* We use obio_mapin(), so require OBIO. */
+	if (ca->ca_bustype != BUS_OBIO)
+		return (0);
+
 	/* Make sure there is something there... */
 	if (bus_peek(ca->ca_bustype, ca->ca_paddr, 1) == -1)
 		return (0);
@@ -126,7 +130,7 @@ ie_obio_attach(parent, self, args)
 	sc->sc_msize = 0x8000; /* MEMSIZE 32K */
 
 	/* Map in the control registers. */
-	sc->sc_reg = obio_alloc(ca->ca_paddr, OBIO_INTEL_ETHER_SIZE);
+	sc->sc_reg = obio_mapin(ca->ca_paddr, OBIO_INTEL_ETHER_SIZE);
 
 	/* Allocate "shared" memory (in DVMA space). */
 	sc->sc_maddr = dvma_malloc(sc->sc_msize);

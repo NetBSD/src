@@ -1,4 +1,4 @@
-/*	$NetBSD: obio.h,v 1.19 1997/01/27 19:41:05 gwr Exp $	*/
+/*	$NetBSD: obio.h,v 1.20 1997/04/28 21:59:25 gwr Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -77,7 +77,7 @@
 
 #ifdef	_KERNEL
 
-caddr_t	obio_alloc __P((int, int));
+caddr_t	obio_mapin __P((int, int));
 void	obio_init __P((void));
 caddr_t	obio_find_mapping __P((int pa, int size));
 caddr_t	obio_vm_alloc __P((int));

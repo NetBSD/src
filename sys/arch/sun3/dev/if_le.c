@@ -1,4 +1,4 @@
-/*	$NetBSD: if_le.c,v 1.37 1997/03/17 03:17:39 thorpej Exp $	*/
+/*	$NetBSD: if_le.c,v 1.38 1997/04/28 21:59:21 gwr Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -124,6 +124,10 @@ le_match(parent, cf, aux)
 {
 	struct confargs *ca = aux;
 
+	/* We use obio_mapin(), so require OBIO. */
+	if (ca->ca_bustype != BUS_OBIO)
+		return (0);
+
 	/* Make sure there is something there... */
 	if (bus_peek(ca->ca_bustype, ca->ca_paddr, 1) == -1)
 		return (0);
@@ -145,7 +149,7 @@ le_attach(parent, self, aux)
 	struct confargs *ca = aux;
 
 	lesc->sc_r1 = (struct lereg1 *)
-	    obio_alloc(ca->ca_paddr, sizeof(struct lereg1));
+	    obio_mapin(ca->ca_paddr, sizeof(struct lereg1));
 
 	sc->sc_memsize = 0x4000;	/* 16K */
 	sc->sc_mem = dvma_malloc(sc->sc_memsize);
