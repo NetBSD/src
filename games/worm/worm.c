@@ -1,4 +1,4 @@
-/*	$NetBSD: worm.c,v 1.6 1995/04/24 12:26:16 cgd Exp $	*/
+/*	$NetBSD: worm.c,v 1.7 1995/04/29 01:12:41 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -43,7 +43,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)worm.c	8.1 (Berkeley) 5/31/93";
 #else
-static char rcsid[] = "$NetBSD: worm.c,v 1.6 1995/04/24 12:26:16 cgd Exp $";
+static char rcsid[] = "$NetBSD: worm.c,v 1.7 1995/04/29 01:12:41 mycroft Exp $";
 #endif
 #endif /* not lint */
 
@@ -64,9 +64,6 @@ static char rcsid[] = "$NetBSD: worm.c,v 1.6 1995/04/24 12:26:16 cgd Exp $";
 #define LENGTH 7
 #define RUNLEN 8
 #define CNTRL(p) (p-'A'+1)
-#ifndef baudrate
-# define	baudrate()	_tty.sg_ospeed
-#endif
 
 WINDOW *tv;
 WINDOW *stw;
