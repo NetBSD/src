@@ -61,3 +61,5 @@ Ideas to play with:
   in?
 - Figure out whether/how to expose the inline version of
   pthread_self().
+- Along the same lines, figure out whether/how to use registers reserved
+  in the ABI for thread-specific-data to implement pthread_self().
