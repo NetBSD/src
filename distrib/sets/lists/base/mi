@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.318 2002/04/27 19:17:16 atatat Exp $
+# $NetBSD: mi,v 1.319 2002/05/02 17:03:57 wiz Exp $
 .			base-sys-root
 ./altroot		base-sys-root
 ./bin			base-sys-root
@@ -1222,7 +1222,6 @@
 ./usr/share/man/cat9/acorn26		base-man-share
 ./usr/share/man/cat9/alpha		base-man-share
 ./usr/share/man/cat9/amiga		base-man-share
-./usr/share/man/cat9/arm32		base-man-share
 ./usr/share/man/cat9/atari		base-man-share
 ./usr/share/man/cat9/hp300		base-man-share
 ./usr/share/man/cat9/i386		base-man-share
@@ -1308,7 +1307,6 @@
 ./usr/share/man/man9/acorn26		base-man-share
 ./usr/share/man/man9/alpha		base-man-share
 ./usr/share/man/man9/amiga		base-man-share
-./usr/share/man/man9/arm32		base-man-share
 ./usr/share/man/man9/atari		base-man-share
 ./usr/share/man/man9/hp300		base-man-share
 ./usr/share/man/man9/i386		base-man-share
@@ -1393,7 +1391,6 @@
 ./usr/share/man/html9/acorn26		base-man-share
 ./usr/share/man/html9/alpha		base-man-share
 ./usr/share/man/html9/amiga		base-man-share
-./usr/share/man/html9/arm32		base-man-share
 ./usr/share/man/html9/atari		base-man-share
 ./usr/share/man/html9/hp300		base-man-share
 ./usr/share/man/html9/i386		base-man-share
