@@ -1,4 +1,4 @@
-/*	$NetBSD: smbfs_node.c,v 1.6 2003/02/20 15:39:58 jdolecek Exp $	*/
+/*	$NetBSD: smbfs_node.c,v 1.7 2003/02/23 21:33:06 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 2000-2001 Boris Popov
@@ -52,8 +52,6 @@
 
 #include <uvm/uvm.h>
 #include <uvm/uvm_extern.h>
-/*#include <vm/vm_page.h>
-#include <vm/vm_object.h>*/
 
 #include <fs/smbfs/smbfs.h>
 #include <fs/smbfs/smbfs_node.h>
@@ -66,11 +64,7 @@
 MALLOC_DEFINE(M_SMBNODE, "SMBFS node", "SMBFS vnode private part");
 static MALLOC_DEFINE(M_SMBNODENAME, "SMBFS nname", "SMBFS node name");
 
-#ifdef __NetBSD__
 extern int (**smbfs_vnodeop_p) __P((void *));
-#else
-extern vop_t **smbfs_vnodeop_p;
-#endif /* !NetBSD */
 
 #if 0
 static int smbfs_hashprint(struct mount *mp);
@@ -115,7 +109,7 @@ smbfs_hashprint(struct mount *mp)
 }
 #endif
 
-static char *
+static inline char *
 smbfs_name_alloc(const u_char *name, int nmlen)
 {
 	u_char *cp;
@@ -126,7 +120,7 @@ smbfs_name_alloc(const u_char *name, int nmlen)
 	return cp;
 }
 
-static void
+static inline void
 smbfs_name_free(u_char *name)
 {
 	free(name, M_SMBNODENAME);
@@ -143,23 +137,20 @@ smbfs_node_alloc(struct mount *mp, struct vnode *dvp,
 	u_long hashval;
 	int error;
 
-	*vpp = NULL;
-	if (smp->sm_root != NULL && dvp == NULL) {
-		SMBERROR("do not allocate root vnode twice!\n");
-		return EINVAL;
-	}
+	/* do not allow allocating root vnode twice */
+	KASSERT(dvp != NULL || smp->sm_root == NULL);
+	/* do not call with dot */
+	KASSERT(nmlen != 1 || name[0] != '.');
+
 	if (nmlen == 2 && memcmp(name, "..", 2) == 0) {
 		if (dvp == NULL)
 			return EINVAL;
 		vp = VTOSMB(dvp)->n_parent->n_vnode;
-		error = vget(vp, LK_EXCLUSIVE);
-		if (error == 0)
+		if ((error = vget(vp, LK_EXCLUSIVE)) == 0)
 			*vpp = vp;
-		return error;
-	} else if (nmlen == 1 && name[0] == '.') {
-		SMBERROR("do not call me with dot!\n");
-		return EINVAL;
+		return (error);
 	}
+
 	dnp = dvp ? VTOSMB(dvp) : NULL;
 	if (dnp == NULL && dvp != NULL) {
 		vprint("smbfs_node_alloc: dead parent vnode", dvp);
@@ -180,7 +171,7 @@ loop:
 		if (vget(vp, LK_EXCLUSIVE | LK_INTERLOCK) != 0)
 			goto retry;
 		*vpp = vp;
-		return 0;
+		return (0);
 	}
 	smbfs_hash_unlock(smp);
 	/*
@@ -206,6 +197,10 @@ loop:
 	np->n_nmlen = nmlen;
 	np->n_name = smbfs_name_alloc(name, nmlen);
 	np->n_ino = fap->fa_ino;
+	np->n_size = fap->fa_size;
+
+	/* new file vnode has to have a parent */
+	KASSERT(vp->v_type != VREG || dvp != NULL);
 
 	if (dvp) {
 		np->n_parent = dnp;
@@ -213,9 +208,6 @@ loop:
 			vref(dvp);
 			np->n_flag |= NREFPARENT;
 		}
-	} else if (vp->v_type == VREG) {
-		SMBERROR("new vnode '%.*s' born without parent ?\n",
-			(int) nmlen, np->n_name);
 	}
 
 	vn_lock(vp, LK_EXCLUSIVE | LK_RETRY);
@@ -226,11 +218,14 @@ loop:
 		    || np2->n_nmlen != nmlen
 		    || memcmp(name, np2->n_name, nmlen) != 0)
 			continue;
-		vput(vp);
+		vput(vp); /* XXX ungetnewvnode/free! */
 		goto loop;
 	}
+
 	LIST_INSERT_HEAD(nhpp, np, n_hash);
 	smbfs_hash_unlock(smp);
+
+	uvm_vnp_setsize(vp, np->n_size);
 	*vpp = vp;
 	return 0;
 }
@@ -239,14 +234,12 @@ int
 smbfs_nget(struct mount *mp, struct vnode *dvp, const char *name, int nmlen,
 	struct smbfattr *fap, struct vnode **vpp)
 {
-	struct smbnode *np;
 	struct vnode *vp;
 	int error;
 
 	error = smbfs_node_alloc(mp, dvp, name, nmlen, fap, &vp);
 	if (error)
 		return error;
-	np = VTOSMB(vp);
 	if (fap)
 		smbfs_attr_cacheenter(vp, fap);
 	*vpp = vp;
