@@ -1,9 +1,9 @@
-#	$NetBSD: Makefile.inc,v 1.4 2002/05/08 12:17:47 jdolecek Exp $
+#	$NetBSD: Makefile.inc,v 1.5 2002/05/13 01:27:01 soren Exp $
 #
 #	etc.sgimips/Makefile.inc -- sgimips-specific etc Makefile targets
 #
 
-KERNEL_SETS=		GENERIC_INDY
+KERNEL_SETS=		GENERIC GENERIC_INDY
 
 BUILD_KERNELS=		RAMDISK
 
