@@ -1,4 +1,4 @@
-/*	$NetBSD: stdlib.h,v 1.60 2003/04/14 08:37:29 kleink Exp $	*/
+/*	$NetBSD: stdlib.h,v 1.61 2003/04/14 08:38:24 kleink Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -221,7 +221,7 @@ unsigned long long int
 #endif
 
 /*
- * Open Group Base Specifications, Issue 6; IEEE Std 1003.1-2001 (POSIX)
+ * The Open Group Base Specifications, Issue 6; IEEE Std 1003.1-2001 (POSIX)
  */
 #if (!defined(_POSIX_C_SOURCE) && !defined(_XOPEN_SOURCE)) || \
     (_POSIX_C_SOURCE - 0) >= 200112L || \
