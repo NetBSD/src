@@ -1,4 +1,4 @@
-/*	$NetBSD: newwin.c,v 1.38 2003/07/05 19:03:32 jdc Exp $	*/
+/*	$NetBSD: newwin.c,v 1.39 2003/07/30 11:19:00 dsl Exp $	*/
 
 /*
  * Copyright (c) 1981, 1993, 1994
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)newwin.c	8.3 (Berkeley) 7/27/94";
 #else
-__RCSID("$NetBSD: newwin.c,v 1.38 2003/07/05 19:03:32 jdc Exp $");
+__RCSID("$NetBSD: newwin.c,v 1.39 2003/07/30 11:19:00 dsl Exp $");
 #endif
 #endif				/* not lint */
 
@@ -272,19 +272,21 @@ __makenew(SCREEN *screen, int nlines, int ncols, int by, int bx, int sub,
 		return NULL;
 	}
 	if ((win->lspace = malloc(nlines * sizeof(__LINE))) == NULL) {
-		free(win);
 		free(win->lines);
+		free(win);
 		return NULL;
 	}
 	/* Don't allocate window and line space if it's a subwindow */
-	if (!sub) {
+	if (sub)
+		win->wspace = NULL;
+	else {
 		/*
 		 * Allocate window space in one chunk.
 		 */
 		if ((win->wspace =
 			malloc(ncols * nlines * sizeof(__LDATA))) == NULL) {
-			free(win->lines);
 			free(win->lspace);
+			free(win->lines);
 			free(win);
 			return NULL;
 		}
@@ -293,8 +295,8 @@ __makenew(SCREEN *screen, int nlines, int ncols, int by, int bx, int sub,
 		 */
 		if ((wlp = malloc(sizeof(struct __winlist))) == NULL) {
 			free(win->wspace);
-			free(win->lines);
 			free(win->lspace);
+			free(win->lines);
 			free(win);
 			return NULL;
 		}
@@ -332,6 +334,7 @@ __makenew(SCREEN *screen, int nlines, int ncols, int by, int bx, int sub,
 #ifdef DEBUG
 	__CTRACE("makenew: ncols = %d\n", ncols);
 #endif
+	win->screen = screen;
 	win->cury = win->curx = 0;
 	win->maxy = nlines;
 	win->maxx = ncols;

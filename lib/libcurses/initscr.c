@@ -1,4 +1,4 @@
-/*	$NetBSD: initscr.c,v 1.24 2003/01/27 21:09:20 jdc Exp $	*/
+/*	$NetBSD: initscr.c,v 1.25 2003/07/30 11:19:00 dsl Exp $	*/
 
 /*
  * Copyright (c) 1981, 1993, 1994
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)initscr.c	8.2 (Berkeley) 5/4/94";
 #else
-__RCSID("$NetBSD: initscr.c,v 1.24 2003/01/27 21:09:20 jdc Exp $");
+__RCSID("$NetBSD: initscr.c,v 1.25 2003/07/30 11:19:00 dsl Exp $");
 #endif
 #endif	/* not lint */
 
@@ -47,9 +47,6 @@ __RCSID("$NetBSD: initscr.c,v 1.24 2003/01/27 21:09:20 jdc Exp $");
 
 #include "curses.h"
 #include "curses_private.h"
-
-/* Window list */
-struct __winlist	*__winlistp;
 
 
 /*
