@@ -330,25 +330,25 @@ fetch_inferior_registers (regno)
   struct xmmctx inferior_xmmregisters;
 #endif
 
-  ptrace (PT_GETREGS, inferior_pid,
-          (PTRACE_ARG3_TYPE) &inferior_registers, 0);
+  ptrace (PT_GETREGS, GET_PROCESS(inferior_pid),
+          (PTRACE_ARG3_TYPE) &inferior_registers, GET_LWP(inferior_pid));
 
 #ifdef PT_GETXMMREGS
   if (have_ptrace_xmmregs != 0 &&
-      ptrace(PT_GETXMMREGS, inferior_pid,
-             (PTRACE_ARG3_TYPE) &inferior_xmmregisters, 0) == 0)
+      ptrace(PT_GETXMMREGS, GET_PROCESS(inferior_pid),
+             (PTRACE_ARG3_TYPE) &inferior_xmmregisters, GET_LWP(inferior_pid)) == 0)
     {
       have_ptrace_xmmregs = 1;
     }
   else
     {
-      ptrace (PT_GETFPREGS, inferior_pid,
-              (PTRACE_ARG3_TYPE) &inferior_fpregisters, 0);
+      ptrace (PT_GETFPREGS, GET_PROCESS(inferior_pid),
+              (PTRACE_ARG3_TYPE) &inferior_fpregisters, GET_LWP(inferior_pid));
       have_ptrace_xmmregs = 0;
     }
 #else
-    ptrace (PT_GETFPREGS, inferior_pid,
-            (PTRACE_ARG3_TYPE) &inferior_fpregisters, 0);
+    ptrace (PT_GETFPREGS, GET_PROCESS(inferior_pid),
+            (PTRACE_ARG3_TYPE) &inferior_fpregisters, GET_LWP(inferior_pid));
 #endif
 
   supply_regs (&inferior_registers);
@@ -386,16 +386,16 @@ store_inferior_registers (regno)
 #endif
       unsupply_387regs(&inferior_fpregisters);
 
-  ptrace (PT_SETREGS, inferior_pid,
-          (PTRACE_ARG3_TYPE) &inferior_registers, 0);
+  ptrace (PT_SETREGS, GET_PROCESS(inferior_pid),
+          (PTRACE_ARG3_TYPE) &inferior_registers, GET_LWP(inferior_pid));
 #ifdef PT_GETXMMREGS
   if (have_ptrace_xmmregs != 0)
-    ptrace (PT_SETXMMREGS, inferior_pid,
-            (PTRACE_ARG3_TYPE) &inferior_xmmregisters, 0);
+    ptrace (PT_SETXMMREGS, GET_PROCESS(inferior_pid),
+            (PTRACE_ARG3_TYPE) &inferior_xmmregisters, GET_LWP(inferior_pid));
   else
 #endif
-    ptrace (PT_SETFPREGS, inferior_pid,
-            (PTRACE_ARG3_TYPE) &inferior_fpregisters, 0);
+    ptrace (PT_SETFPREGS, GET_PROCESS(inferior_pid),
+            (PTRACE_ARG3_TYPE) &inferior_fpregisters, GET_LWP(inferior_pid));
 }
 
 struct md_core

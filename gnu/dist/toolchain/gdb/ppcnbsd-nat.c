@@ -121,11 +121,13 @@ fetch_inferior_registers (regno)
   struct fpreg inffpreg;
 
   /* Integer registers */
-  ptrace(PT_GETREGS, inferior_pid, (PTRACE_ARG3_TYPE) &infreg, 0);
+  ptrace(PT_GETREGS, GET_PROCESS(inferior_pid), (PTRACE_ARG3_TYPE) &infreg, 
+      GET_LWP(inferior_pid));
   supply_regs ((char *) &infreg);
 
   /* Floating point registers */
-  ptrace(PT_GETFPREGS, inferior_pid, (PTRACE_ARG3_TYPE) &inffpreg, 0);
+  ptrace(PT_GETFPREGS, GET_PROCESS(inferior_pid), (PTRACE_ARG3_TYPE) &inffpreg,
+      GET_LWP(inferior_pid));
   supply_fpregs ((char *) &inffpreg);
 }
 
@@ -137,11 +139,13 @@ store_inferior_registers (regno)
   struct fpreg inffpreg;
 
   unsupply_regs((char *)&infreg);
-  ptrace(PT_SETREGS, inferior_pid, (PTRACE_ARG3_TYPE) &infreg, 0);
+  ptrace(PT_SETREGS, GET_PROCESS(inferior_pid), (PTRACE_ARG3_TYPE) &infreg,
+      GET_LWP(inferior_pid));
 
   /* Floating point registers */
   unsupply_fpregs(&inffpreg);
-  ptrace(PT_SETFPREGS, inferior_pid, (PTRACE_ARG3_TYPE) &inffpreg, 0);
+  ptrace(PT_SETFPREGS, GET_PROCESS(inferior_pid), (PTRACE_ARG3_TYPE) &inffpreg,
+      GET_LWP(inferior_pid));
 }
 
 static void
