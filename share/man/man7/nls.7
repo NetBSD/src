@@ -1,4 +1,4 @@
-.\"     $NetBSD: nls.7,v 1.6 2003/05/08 04:48:27 wiz Exp $
+.\"     $NetBSD: nls.7,v 1.7 2003/05/17 02:57:39 gmcgarry Exp $
 .\"
 .\" Copyright (c) 2003 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -60,7 +60,7 @@ Date and time formatting
 .It
 Message-text language
 .It
-Code sets
+Character sets
 .El
 .Pp
 All information pertaining to cultural conventions and language is
@@ -294,7 +294,7 @@ ZULU	ZU	NEGRO-AFRICAN
 .ta.fi
 .Pp
 For example, the locale for the Danish language spoken in Denmark
-using the ISO8859-1 code set is da_DK.ISO8859-1.
+using the ISO8859-1 character set is da_DK.ISO8859-1.
 The da stands for the Danish language and the DK stands for Denmark.
 The short form of da_DK is sufficient to indicate this locale.
 .Pp
@@ -338,33 +338,47 @@ category defaults to the C locale.
 The C or POSIX locale assumes the 7-bit ASCII character set and defines
 information for the six categories.
 .El
-.Ss Code Sets
+.Ss Character Sets
 A character is any symbol used for the organization, control, or
 representation of data.
 A group of such symbols used to describe a
 particular language make up a character set.
-A code set contains the encoding values (conversion from bits to
-displayed characters) for a character set.
-It is the encoding values in a code set that provide
+It is the encoding values in a character set that provide
 the interface between the system and its input and output devices.
 .Pp
-The following code sets are supported in
+The following character sets are supported in
 .Nx
 .Bl -tag -width ISO8859_family
 .It ISO8859 family
-Industry-standard code sets are provided by means of the ISO8859
-family of code sets, which provide a range of single-byte code set
+Industry-standard character sets are provided by means of the ISO8859
+family of character sets, which provide a range of single-byte character set
 support that includes Latin-1, Latin-2, Arabic, Cyrillic, Hebrew,
 Greek, and Turkish.
-The eucJP code set is the industry-standard code set used to support
+The eucJP character set is the industry-standard character set used to support
 the Japanese locale.
 .It Unicode
-A Unicode environment based on the UTF-8 codeset is supported for all
+A Unicode environment based on the UTF-8 character set is supported for all
 supported language/territories.
 UTF-8 provides character support for most of the major languages of the
 world and can be used in environments where multiple languages must be
 processed simultaneously.
 .El
+.Ss Font Sets
+A font set contains the glyphs to be displayed on the screen for a
+corresponding character in a character set.
+A display must support a suitable font to display a character set.
+If suitable fonts are available to the X server, then X clients can
+include support for different character sets.
+.Xr xterm 1
+includes support for UTF-8 character sets.
+.Pp
+The NetBSD
+.Xr wscons 4
+console provides support for loading fonts using the
+.Xr wsfontload 8
+utility.
+Currently, only fonts for the ISO8859-1 family of character sets are
+supported.
 .Ss Internationalization for Programmers
 To facilitate translations of messages into various languages and to
 make the translated messages available to the program based on a
@@ -396,18 +410,98 @@ interface has the advantage that it belongs to a standard which is
 well supported.
 Unfortunately the interface is complicated to use and
 maintenance of the catalogs is difficult.
-The implementation also doesn't support different codesets.
+The implementation also doesn't support different character sets.
 The
 .Xr gettext 3
 interface has not been standardized yet, however it is being supported
 by an increasing number of systems.
 It also provides many additional tools which make programming and
 catalog maintenance much easier.
+.Ss Support for Multibyte Characters and Wide Characters
+character sets with multibyte characters may be difficult to decode, or may
+contain state (i.e. adjacent characters are dependent).  ISO C
+specifies a set of functions using 'wide characters' which can handle
+multibyte characters properly.  A wide character is specified in ISO C
+as being a fixed number of bits wide and is stateless.
+.Pp
+There are two types for wide characters:
+.Em wchar_t
+and
+.Em wint_t .
+.Em wchar_t
+is a type which can contain one wide character and operates like
+'char' type does for one character.
+.Em wint_t
+can contain one wide character or WEOF (wide EOF).
+.Pp
+There are functions that operate on
+.Em wchar_t ,
+and substitute for functions operating on 'char'.
+See
+.Xr wmemchr 3
+and
+.Xr towlower 3 
+for details.
+There are some additional functions that operate on
+.Em wchar_t .
+See
+.Xr wctype 3
+and
+.Xr wctran
+for details.
+.Pp
+Wide characters should be used for all I/O processing which may rely
+on locale-specific strings.  The two primary issues requiring special
+use of wide characters are:
+.Bl -bullet -indent
+.It
+All I/O is performed using multibyte characters.
+Input data is converted into wide characters immediately after
+reading and data for output is converted from wide characters to
+multibyte characters immediately before writing.
+Conversion is achieved using
+.Xr mbstowcs 3 ,
+.Xr mbsrtowcs 3 ,
+.Xr wcstombs 3 ,
+.Xr wcsrtombs 3 ,
+.Xr mblen 3,
+.Xr mbrlen 3 ,
+and
+.Xr  mbsinit 3 .
+.It
+Wide characters are used directly for I/O, using
+.Xr getwchar 3 ,
+.Xr fgetwc ,
+.Xr getwc ,
+.Xr ungetwc 3 ,
+.Xr fgetws 3 ,
+.Xr putwchar 3 ,
+.Xr fputwc 3 ,
+.Xr putwc 3 ,
+and
+.Xr fputws 3 .
+They are also used for formatted I/O functions for wide characters
+such as
+.Xr fwscanf 3 ,
+.Xr wscanf 3 ,
+.Xr swscanf 3 ,
+.Xr fwprintf 3 ,
+.Xr wprintf 3 ,
+.Xr swprintf 3 ,
+.Xr vfwprintf 3 ,
+.Xr vwprintf 3 ,
+and
+.Xr vswprintf 3 ,
+and wide character identifier of %lc, %C, %ls, %S for conventional
+formatted I/O functions.
+.El
 .Sh SEE ALSO
 .Xr gencat 1 ,
+.Xr xterm 1 ,
 .Xr catgets 3 ,
 .Xr gettext 3 ,
 .Xr nl_langinfo 3 ,
-.Xr setlocale 3
+.Xr setlocale 3 ,
+.Xr wsfontload 8
 .Sh BUGS
 This man page is incomplete.
