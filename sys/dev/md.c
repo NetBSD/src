@@ -1,4 +1,4 @@
-/*	$NetBSD: md.c,v 1.12 1997/01/11 06:26:41 thorpej Exp $	*/
+/*	$NetBSD: md.c,v 1.13 1997/05/23 23:44:34 jeremy Exp $	*/
 
 /*
  * Copyright (c) 1995 Gordon W. Ross, Leo Weppelman.
@@ -33,7 +33,7 @@
 
 /*
  * This implements a general-purpose memory-disk.
- * See ramdisk.h for notes on the config types.
+ * See md.h for notes on the config types.
  *
  * Note that this driver provides the same functionality
  * as the MFS filesystem hack, but this is better because
