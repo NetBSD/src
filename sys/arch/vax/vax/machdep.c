@@ -1,4 +1,4 @@
-/*      $NetBSD: machdep.c,v 1.5 1994/11/25 19:09:57 ragge Exp $  */
+/*      $NetBSD: machdep.c,v 1.6 1995/02/13 00:46:11 ragge Exp $  */
 
 /* Copyright (c) 1994 Ludd, University of Lule}, Sweden.
  * Copyright (c) 1993 Adam Glass
@@ -87,7 +87,7 @@ int	msgbufmapped=0;
 struct	msgbuf *msgbufp;
 int	physmem;
 struct	cfdriver nexuscd;
-int	todrstopped,glurg;
+int	todrstopped=0,glurg;
 int	dumpsize=0;
 
 caddr_t allocsys __P((caddr_t));
@@ -126,6 +126,11 @@ cpu_startup() {
                 pmap_enter(kernel_pmap, (vm_offset_t)msgbufp,
                     avail_end + i * NBPG, VM_PROT_ALL, TRUE);
         msgbufmapped = 1;
+#endif
+#ifdef VAX750
+	if(cpunumber==VAX_750)
+		if(!mfpr(PR_TODR))
+			mtpr(todrstopped=1,PR_TODR);
 #endif
         /*
          * Good {morning,afternoon,evening,night}.
@@ -223,18 +228,10 @@ cpu_startup() {
         /*
          * Configure the system.
          */
-	switch(MACHID(cpu_type)){
-
-#ifdef VAX750
-	case VAX_750:
-	strcpy(cpu_model,"VAX 11/750");
-		conf_750();
-		break;
-#endif
-	default:
-		printf("Cpu type %d not configured.\n",MACHID(cpu_type));
-		asm("halt");
-	}
+#if 1
+	configure();
+#else
+	(*cpu_calls[cpunumber].cpu_conf)();
 #if GENERIC
         if ((boothowto & RB_ASKNAME) == 0)
                 setroot();
@@ -246,11 +243,12 @@ cpu_startup() {
          * Configure swap area and related system
          * parameter based on device(s) used.
          */
-	gencnslask(); /* XXX inte g|ras h{r */
+        gencnslask(); /* XXX inte g|ras h{r */
         swapconf();
-	cold=0;
-        return;
+        cold=0;
+#endif
 }
+
 /*
  * Allocate space for system data structures.  We are given
  * a starting virtual address and we return a final virtual
@@ -294,9 +292,6 @@ allocsys(v)
          * hold 5% of total physical memory, but at least 16).
          * Allocate 1/2 as many swap buffer headers as file i/o buffers.
          */
-#ifdef DEBUG
-printf("physmem: %x, btoc %x, CLSIZE %x\n",physmem,btoc(2*1024*1024),CLSIZE);
-#endif
         if (bufpages == 0)
             if (physmem < btoc(2 * 1024 * 1024))
                 bufpages = (physmem / 10) / CLSIZE;
@@ -316,42 +311,6 @@ printf("physmem: %x, btoc %x, CLSIZE %x\n",physmem,btoc(2*1024*1024),CLSIZE);
         valloc(buf, struct buf, nbuf);
         return v;
 }
-
-/*
- * disktid contains time from superblock of the root filesystem.
- * We compare this with the time in mfpr(PR_TODR) which updates
- * 100 times/second. Because todr is only 32 bits, it is simplest 
- * to start counting from 1/1 00.00 and reset todr an year later.
- * (And that was the way they did it in old BSD Unix... :)
- * One year is about 3153600000 in todr.
- */
-#if 0
-inittodr(time_t disktid){
-	int todrtid,nytid;
-
-	if(todrstopped){
-		printf(
-		"TODR clock not started - time taken from file system.\n");
-		nytid=disktid;
-	} else {
-		/* XXX This is ugly time counting :( */
-		todrtid=(disktid/(3600*24*365))+1970+(mfpr(PR_TODR)/100);
-		if(disktid>todrtid){
-			printf(
-		"WARNING: todr too small -- CHECK AND RESET THE DATE!\n");
-			/* Use filesystem time anyway */
-			nytid=disktid;
-		} else {
-			nytid=todrtid;
-		}
-	}
-	time.tv_sec=nytid;
-}
-
-resettodr(){
-	printf("Time reset routine resettodr() not implemented yet.\n");
-}
-#endif
 
 dumpconf()
 {
@@ -378,7 +337,7 @@ dumpconf()
 }
 
 cpu_initclocks(){
-	todrstopped=clock_750();
+	(cpu_calls[cpunumber].cpu_clock)();
 }
 
 cpu_sysctl(){
@@ -387,44 +346,7 @@ cpu_sysctl(){
 }
 
 setstatclockrate(){
-	printf("setstatclockrate\n");
-	asm("halt");
-}
-
-struct queue {
-        struct queue *q_next, *q_prev;
-};
-
-/*
- * insert an element into a queue
- */
-void
-_insque(elem, head)
-        register struct queue *elem, *head;
-{
-        register struct queue *next;
-
-        next = head->q_next;
-        elem->q_next = next;
-        head->q_next = elem;
-        elem->q_prev = head;
-        next->q_prev = elem;
-}
-
-/*
- * remove an element from a queue
- */
-void
-_remque(elem)
-        register struct queue *elem;
-{
-        register struct queue *next, *prev;
-
-        next = elem->q_next;
-        prev = elem->q_prev;
-        next->q_prev = prev;
-        prev->q_next = next;
-        elem->q_prev = 0;
+	panic("setstatclockrate");
 }
 
 consinit(){
@@ -440,14 +362,14 @@ sigreturn(p, uap, retval)
 	struct sigretargs *uap;
 	int *retval;
 {
-	struct sysc_frame *scf=(struct sysc_frame *)mfpr(PR_SSP);
+	struct trapframe *scf=(struct trapframe *)mfpr(PR_SSP);
 	struct sigcontext *cntx=uap->cntxp;
-/*
-printf("sigreturn: cntx %x, sysc_frame %x, uap %x\n",cntx, scf,uap);
-	asm("halt");
-*/
-	/* XXX Here we must do some checking of privileges... */
-
+	/* Compatibility mode? */
+	if((cntx->sc_ps&(PSL_IPL|PSL_IS))||
+		((cntx->sc_ps&(PSL_U|PSL_PREVU))!=(PSL_U|PSL_PREVU))||
+		(cntx->sc_ps&PSL_CM)){
+			return(EINVAL);
+	}
         if (cntx->sc_onstack & 01)
                 p->p_sigacts->ps_sigstk.ss_flags |= SA_ONSTACK;
         else
@@ -475,19 +397,15 @@ void
 sendsig(catcher, sig, mask, code)
         sig_t catcher;
         int sig, mask;
-        unsigned code;
+        u_long code;
 {
         struct proc *p = curproc;
         struct sigacts *psp = p->p_sigacts;
-	struct sysc_frame *syscf;
+	struct trapframe *syscf;
 	struct sigcontext *sigctx;
 	struct trampframe *trampf;
 	u_int *cursp;
 	int oonstack;
-/*
-printf("sendsig: catcher %x, sig %x, mask %x, code %x\n",catcher,sig,mask,code);
-        oonstack = psp->ps_sigstk.ss_flags & SA_ONSTACK;
-*/
         /*
          * Allocate and validate space for the signal handler
          * context. Note that if the stack is in P0 space, the
@@ -512,7 +430,7 @@ printf("sendsig: catcher %x, sig %x, mask %x, code %x\n",catcher,sig,mask,code);
 	trampf=(struct trampframe *)((u_int)sigctx-sizeof(struct trampframe));
 	cursp=(u_int*)sigctx-2; /* Place for pointer to arg list in sigreturn */
 
-	syscf=(struct sysc_frame*)mfpr(PR_SSP); /* Where registers are placed */
+	syscf=(struct trapframe*)mfpr(PR_SSP); /* Where registers are placed */
 
         if(useracc((caddr_t)cursp, sizeof(struct sigcontext)+
 			sizeof(struct trampframe), B_WRITE)==0) {
@@ -545,14 +463,9 @@ printf("sendsig: catcher %x, sig %x, mask %x, code %x\n",catcher,sig,mask,code);
 	sigctx->sc_mask=mask;
 
 	syscf->pc=(u_int)0x7fffe000; /* XXX signal trampoline code */
+	syscf->psl=PSL_U|PSL_PREVU;
 	syscf->ap=(u_int)cursp;
-/*
-printf("sendsig: ap %x, sp %x, sigctx %x, trampf %x\n",
-		syscf->ap, cursp,sigctx,trampf);
-	asm("halt");
-*/
 	mtpr(cursp,PR_USP);
-
 }
 
 int	waittime=-1;
@@ -644,3 +557,74 @@ netintr()
         }
 #endif
 }
+
+machinecheck(frame)
+	u_int frame;
+{
+	if((*cpu_calls[cpunumber].cpu_mchk)(frame)==0)
+		return;
+	(*cpu_calls[cpunumber].cpu_memerr)();
+	panic("machine check");
+}
+
+dumpsys()
+{
+	extern int dumpdev, dumplo;
+
+	msgbufmapped = 0;
+	if (dumpdev == NODEV)
+		return;
+	/*
+	 * For dumps during autoconfiguration,
+	 * if dump device has already configured...
+	 */
+	if (dumpsize == 0)
+		dumpconf();
+	if (dumplo < 0)
+		return;
+	printf("\ndumping to dev %x, offset %d\n", dumpdev, dumplo);
+	printf("dump ");
+	switch ((*bdevsw[major(dumpdev)].d_dump)(dumpdev)) {
+
+	case ENXIO:
+		printf("device bad\n");
+		break;
+
+	case EFAULT:
+		printf("device not ready\n");
+		break;
+
+	case EINVAL:
+		printf("area improper\n");
+		break;
+
+	case EIO:
+		printf("i/o error\n");
+		break;
+
+	default:
+		printf("succeeded\n");
+		break;
+	}
+}
+
+fuswintr(){
+	panic("fuswintr: need to be implemented");
+}
+
+suibyte(){
+	panic("suibyte: need to be implemented");
+}
+
+suswintr(){
+	panic("suswintr: need to be implemented");
+}
+
+process_set_pc(){
+	panic("process_set_pc:need to be implemented");
+}
+
+process_sstep(){
+	panic("process_sstep: need to be implemented");
+}
+
