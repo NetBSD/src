@@ -1,5 +1,5 @@
 #!/bin/sh
-#	$NetBSD: install.sub,v 1.5.2.7 1996/08/26 15:45:20 gwr Exp $
+#	$NetBSD: install.sub,v 1.5.2.8 1996/09/02 23:25:02 pk Exp $
 #
 # Copyright (c) 1996 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -296,9 +296,10 @@ addifconfig() {
 	# $2 - interface symbolic name
 	# $3 - interface IP address
 	# $4 - interface netmask
+	# $5 - (optional) interface link-layer directives
 
 	# Create a hostname.* file for the interface.
-	echo "inet $2 $4" > /tmp/hostname.$1
+	echo "inet $2 $4 NONE $5" > /tmp/hostname.$1
 
 	addhostent $3 $2
 }
@@ -353,6 +354,7 @@ configure_ifs() {
 	local _interface_ip
 	local _interface_mask
 	local _interface_symname
+	local _interface_extra
 
 	_interface_name=$1
 
@@ -393,6 +395,16 @@ configure_ifs() {
 		_interface_mask=$resp
 	done
 
+	echo "Your network interface might require additional link-layer"
+	echo "directives (like \`link0'). If this is the case you can enter"
+	echo "these at the next prompt."
+	echo ""
+	echo -n "Additional link-layer arguments? [$_interface_extra] "
+	getresp "$_interface_extra"
+	if [ "X${resp}" != X"" ]; then
+		_interface_extra=$resp
+	fi
+
 	# Configure the interface.  If it
 	# succeeds, add it to the permanent
 	# network configuration info.
@@ -400,12 +412,12 @@ configure_ifs() {
 		ifconfig ${_interface_name} down
 		if ifconfig ${_interface_name} inet \
 		    ${_interface_ip} \
-		    netmask ${_interface_mask} up ; then
+		    netmask ${_interface_mask} ${_interface_extra} up ; then
 			addifconfig \
 			    ${_interface_name} \
 			    ${_interface_symname} \
 			    ${_interface_ip} \
-			    ${_interface_mask}
+			    ${_interface_mask} ${_interface_extra}
 			return 0
 		fi
 	else
@@ -415,7 +427,7 @@ configure_ifs() {
 		    ${_interface_name} \
 		    ${_interface_symname} \
 		    ${_interface_ip} \
-		    ${_interface_mask}
+		    ${_interface_mask} ${_interface_extra}
 	fi
 	return 1
 }
