@@ -1,4 +1,4 @@
-/*	$NetBSD: fwohci.c,v 1.50 2002/01/16 01:47:36 eeh Exp $	*/
+/*	$NetBSD: fwohci.c,v 1.51 2002/02/03 07:24:48 jmc Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -49,7 +49,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fwohci.c,v 1.50 2002/01/16 01:47:36 eeh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fwohci.c,v 1.51 2002/02/03 07:24:48 jmc Exp $");
 
 #define DOUBLEBUF 1
 #define NO_THREAD 1
@@ -169,6 +169,7 @@ static int  fwohci_write_ack(struct fwohci_softc *, void *, struct fwohci_pkt *)
 static int  fwohci_read_multi_resp(struct fwohci_softc *, void *,
     struct fwohci_pkt *);
 static int  fwohci_inreg(struct ieee1394_abuf *, int);
+static int  fwohci_unreg(struct ieee1394_abuf *, int);
 static int  fwohci_parse_input(struct fwohci_softc *, void *,
     struct fwohci_pkt *);
 static int  fwohci_submatch(struct device *, struct cfdata *, void *);
@@ -2378,8 +2379,8 @@ fwohci_selfid_init(struct fwohci_softc *sc)
 	fb = &sc->sc_buf_selfid;
 #ifdef DIAGNOSTIC
 	if ((fb->fb_dmamap->dm_segs[0].ds_addr & 0x7ff) != 0)
-		panic("fwohci_selfid_init: not aligned: %p (%ld) %p",
-		    (caddr_t)(unsigned long)fb->fb_dmamap->dm_segs[0].ds_addr,
+		panic("fwohci_selfid_init: not aligned: %ld (%ld) %p",
+		    (unsigned long)fb->fb_dmamap->dm_segs[0].ds_addr,
 		    (unsigned long)fb->fb_dmamap->dm_segs[0].ds_len, fb->fb_buf);
 #endif
 	memset(fb->fb_buf, 0, fb->fb_dmamap->dm_segs[0].ds_len);
@@ -2659,6 +2660,7 @@ fwohci_uid_input(struct fwohci_softc *sc, void *arg, struct fwohci_pkt *res)
 			fwa.read = fwohci_read;
 			fwa.write = fwohci_write;
 			fwa.inreg = fwohci_inreg;
+			fwa.unreg = fwohci_unreg;
 			iea = (struct ieee1394_softc *)
 			    config_found_sm(&sc->sc_sc1394.sc1394_dev, &fwa, 
 			    fwohci_print, fwohci_submatch);
@@ -3110,9 +3112,6 @@ fwohci_if_output(struct device *self, struct mbuf *m0,
  *
  * int fwohci_unreg(struct ieee1394_abuf *, int)
  *
- * XXX: TBD. For now passing in a NULL ab_cb to inreg will unregister. This
- * routine will simply verify ab_cb is NULL and call inreg.
- *
  * This simply unregisters the respective callback done via inreg for items
  * which only need to register an area for a one-time operation (like a status
  * buffer a remote node will write to when the current operation is done). The
@@ -3140,8 +3139,8 @@ fwohci_read(struct ieee1394_abuf *ab)
 	fcb->count = 0;
 	fcb->abuf_valid = 1;
 	
-	high = ((ab->ab_csr & 0x0000ffff00000000) >> 32);
-	lo = (ab->ab_csr & 0x00000000ffffffff);
+	high = ((ab->ab_addr & 0x0000ffff00000000) >> 32);
+	lo = (ab->ab_addr & 0x00000000ffffffff);
 
 	memset(&pkt, 0, sizeof(pkt));
 	pkt.fp_hdr[1] = ((0xffc0 | ab->ab_req->sc1394_node_id) << 16) | high;
@@ -3187,18 +3186,26 @@ fwohci_write(struct ieee1394_abuf *ab)
 	u_int32_t high, lo;
 	int rv;
 
-	if (ab->ab_length > sc->sc1394_max_receive) {
+	if (ab->ab_length > IEEE1394_MAX_REC(sc->sc1394_max_receive)) {
 		DPRINTF(("Packet too large: %d\n", ab->ab_length));
 		return E2BIG;
 	}
 
+	if (ab->ab_data && ab->ab_uio) 
+		panic("Can't call with uio and data set\n");
+	if ((ab->ab_data == NULL) && (ab->ab_uio == NULL))
+		panic("One of either ab_data or ab_uio must be set\n");
+
 	memset(&pkt, 0, sizeof(pkt));
 
 	pkt.fp_tcode = ab->ab_tcode;
-	pkt.fp_uio.uio_iov = pkt.fp_iov;
-	pkt.fp_uio.uio_segflg = UIO_SYSSPACE;
-	pkt.fp_uio.uio_rw = UIO_WRITE;
-
+	if (ab->ab_data) {
+		pkt.fp_uio.uio_iov = pkt.fp_iov;
+		pkt.fp_uio.uio_segflg = UIO_SYSSPACE;
+		pkt.fp_uio.uio_rw = UIO_WRITE;
+	} else 
+		memcpy(&pkt.fp_uio, ab->ab_uio, sizeof(struct uio));
+	
 	pkt.fp_statusarg = ab;
 	pkt.fp_statuscb = fwohci_write_ack;
 
@@ -3217,8 +3224,8 @@ fwohci_write(struct ieee1394_abuf *ab)
 		break;
 	default:
 		pkt.fp_hlen = 16;
-		high = ((ab->ab_csr & 0x0000ffff00000000) >> 32);
-		lo = (ab->ab_csr & 0x00000000ffffffff);
+		high = ((ab->ab_addr & 0x0000ffff00000000) >> 32);
+		lo = (ab->ab_addr & 0x00000000ffffffff);
 		pkt.fp_hdr[0] = 0x00000100 | (sc->sc1394_link_speed << 16) |
 		    (psc->sc_tlabel << 10) | (pkt.fp_tcode << 4);
 		break;
@@ -3233,10 +3240,12 @@ fwohci_write(struct ieee1394_abuf *ab)
 		}  else {
 			pkt.fp_hdr[3] = (ab->ab_length << 16);
 			pkt.fp_dlen = ab->ab_length;
-			pkt.fp_uio.uio_iovcnt = 1;
-			pkt.fp_uio.uio_resid = ab->ab_length;
-			pkt.fp_iov[0].iov_base = ab->ab_data;
-			pkt.fp_iov[0].iov_len = ab->ab_length;
+			if (ab->ab_data) {
+				pkt.fp_uio.uio_iovcnt = 1;
+				pkt.fp_uio.uio_resid = ab->ab_length;
+				pkt.fp_iov[0].iov_base = ab->ab_data;
+				pkt.fp_iov[0].iov_len = ab->ab_length;
+			}
 		}
 	}
 	switch (ab->ab_tcode) {
@@ -3322,8 +3331,8 @@ fwohci_read_resp(struct fwohci_softc *sc, void *arg, struct fwohci_pkt *pkt)
 
 		memset(&newpkt, 0, sizeof(newpkt));
 
-		high = ((ab->ab_csr & 0x0000ffff00000000) >> 32);
-		lo = (ab->ab_csr & 0x00000000ffffffff);
+		high = ((ab->ab_addr & 0x0000ffff00000000) >> 32);
+		lo = (ab->ab_addr & 0x00000000ffffffff);
 
 		newpkt.fp_tcode = IEEE1394_TCODE_READ_REQ_QUAD;
 		newpkt.fp_hlen = 12;
@@ -3443,8 +3452,8 @@ fwohci_read_multi_resp(struct fwohci_softc *sc, void *arg,
 	if (ab->ab_retlen < ab->ab_length) {
 		memset(&newpkt, 0, sizeof(newpkt));
 
-		high = ((ab->ab_csr & 0x0000ffff00000000) >> 32);
-		lo = (ab->ab_csr & 0x00000000ffffffff) + ab->ab_retlen;
+		high = ((ab->ab_addr & 0x0000ffff00000000) >> 32);
+		lo = (ab->ab_addr & 0x00000000ffffffff) + ab->ab_retlen;
 
 		newpkt.fp_tcode = IEEE1394_TCODE_READ_REQ_QUAD;
 		newpkt.fp_hlen = 12;
@@ -3525,8 +3534,8 @@ fwohci_inreg(struct ieee1394_abuf *ab, int allow)
 	u_int32_t high, lo;
 	int i, j, rv;
 
-	high = ((ab->ab_csr & 0x0000ffff00000000) >> 32);
-	lo = (ab->ab_csr & 0x00000000ffffffff);
+	high = ((ab->ab_addr & 0x0000ffff00000000) >> 32);
+	lo = (ab->ab_addr & 0x00000000ffffffff);
 
 	rv = 0;
 	switch (ab->ab_tcode) {
@@ -3558,8 +3567,13 @@ fwohci_inreg(struct ieee1394_abuf *ab, int allow)
 				for (i = 0; i < j; i++) 
 					fwohci_handler_set(psc, ab->ab_tcode,
 					    high, lo + (i * 4), NULL, NULL);
-			} else
-				ab->ab_data = (void *)1;
+			}
+			/*
+			 * XXX: Need something to indicate writing a smaller
+			 * amount is ok.
+			 */ 
+			if (ab->ab_cb)
+                                ab->ab_data = (void *)1;
 		} else {
 			if (ab->ab_cb) 
 				rv = fwohci_handler_set(psc, ab->ab_tcode, high,
@@ -3578,16 +3592,29 @@ fwohci_inreg(struct ieee1394_abuf *ab, int allow)
 }
 
 static int
+fwohci_unreg(struct ieee1394_abuf *ab, int allow)
+{
+	void *save;
+	int rv;
+	
+	save = ab->ab_cb;
+	ab->ab_cb = NULL;
+	rv = fwohci_inreg(ab, allow);
+	ab->ab_cb = save;
+	return rv;
+}
+
+static int
 fwohci_parse_input(struct fwohci_softc *sc, void *arg, struct fwohci_pkt *pkt)
 {
 	struct ieee1394_abuf *ab = (struct ieee1394_abuf *)arg;
-	u_int64_t csr;
+	u_int64_t addr;
 	u_int32_t *cur;
 	int i, count;
 
 	ab->ab_tcode = (pkt->fp_hdr[0] >> 4) & 0xf;
 	ab->ab_tlabel = (pkt->fp_hdr[0] >> 10) & 0x3f;
-	csr = (((u_int64_t)(pkt->fp_hdr[1] & 0xffff) << 32) | pkt->fp_hdr[2]);
+	addr = (((u_int64_t)(pkt->fp_hdr[1] & 0xffff) << 32) | pkt->fp_hdr[2]);
 
 	switch (ab->ab_tcode) {
 	case IEEE1394_TCODE_READ_REQ_QUAD:
@@ -3596,8 +3623,8 @@ fwohci_parse_input(struct fwohci_softc *sc, void *arg, struct fwohci_pkt *pkt)
 	case IEEE1394_TCODE_READ_REQ_BLOCK:
 		ab->ab_retlen = (pkt->fp_hdr[3] >> 16) & 0xffff;
 		if (ab->ab_data) {
-			if ((csr + ab->ab_retlen) >
-			    (ab->ab_csr + ab->ab_length))
+			if ((addr + ab->ab_retlen) >
+			    (ab->ab_addr + ab->ab_length))
 				return IEEE1394_RCODE_ADDRESS_ERROR;
 			ab->ab_data = NULL;
 		} else
@@ -3610,8 +3637,8 @@ fwohci_parse_input(struct fwohci_softc *sc, void *arg, struct fwohci_pkt *pkt)
 		if (!ab->ab_retlen) 
 			ab->ab_retlen = (pkt->fp_hdr[3] >> 16) & 0xffff;
 		if (ab->ab_data) {
-			if ((csr + ab->ab_retlen) >
-			    (ab->ab_csr + ab->ab_length))
+			if ((addr + ab->ab_retlen) >
+			    (ab->ab_addr + ab->ab_length))
 				return IEEE1394_RCODE_ADDRESS_ERROR;
 			ab->ab_data = NULL;
 		} else
@@ -3641,7 +3668,7 @@ fwohci_parse_input(struct fwohci_softc *sc, void *arg, struct fwohci_pkt *pkt)
 		    ab->ab_tcode);
 		break;
 	}
-	ab->ab_csr = csr;
+	ab->ab_addr = addr;
 	ab->ab_cb(ab, IEEE1394_RCODE_COMPLETE);
 	return -1;
 }
