@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_configure.c,v 1.11 2000/10/10 20:24:53 is Exp $	*/
+/*	$NetBSD: rf_configure.c,v 1.12 2000/12/31 01:58:03 wiz Exp $	*/
 
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
@@ -293,7 +293,10 @@ rf_MakeLayoutSpecificDeclustered(configfp, cfgPtr, arg)
 		RF_ERRORMSG1("RAID: config error: Can't open layout table file %s\n", bdfile);
 		return (EINVAL);
 	}
-	fgets(buf, 256, fp);
+	if (fgets(buf, 256, fp) == NULL) {
+		RF_ERRORMSG1("RAID: config error: Can't read layout from layout table file %s\n", bdfile);
+		return (EINVAL);
+	}
 	i = sscanf(buf, "%u %u %u %u %u %u", &b, &v, &k, &r, &lambda, &norotate);
 	if (i == 5)
 		norotate = 0;	/* no-rotate flag is optional */
