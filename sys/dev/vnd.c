@@ -490,11 +490,11 @@ vnthrottle(vn, vp)
 #ifdef NFSCLIENT
 #ifdef BSD44
 	extern int (**nfsv2_vnodeop_p)();
+	if (vp->v_op == nfsv2_vnodeop_p)
 #else
  	extern struct vnodeops nfsv2_vnodeops;
-	struct vnodeops (**nfsv2_vnodeop_p)() = nfsv2_vnodeops;
+        if (vp->v_op == &nfsv2_vnodeops)
 #endif
-	if (vp->v_op == nfsv2_vnodeop_p)
 		vn->sc_maxactive = 2;
 	else
 #endif
