@@ -1,4 +1,4 @@
-/* $NetBSD: wsemulvar.h,v 1.6 1999/01/17 15:46:15 drochner Exp $ */
+/* $NetBSD: wsemulvar.h,v 1.7 2001/05/30 11:46:35 mrg Exp $ */
 
 /*
  * Copyright (c) 1996, 1997 Christopher G. Demetriou.  All rights reserved.
@@ -53,7 +53,7 @@ struct wsemul_ops {
 	void    (*reset) __P((void *, enum wsemul_resetops));
 };
 
-#if defined(_KERNEL) && !defined(_LKM)
+#if defined(_KERNEL_OPT)
 #include "opt_wsemul.h"
 #endif
 

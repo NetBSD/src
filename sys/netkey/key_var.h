@@ -1,4 +1,4 @@
-/*	$NetBSD: key_var.h,v 1.8 2000/06/12 10:40:48 itojun Exp $	*/
+/*	$NetBSD: key_var.h,v 1.9 2001/05/30 11:42:14 mrg Exp $	*/
 /*	$KAME: key_var.h,v 1.8 2000/05/24 17:28:23 itojun Exp $	*/
 
 /*
@@ -34,7 +34,7 @@
 #define _NETKEY_KEY_VAR_H_
 
 #ifdef __NetBSD__
-#if defined(_KERNEL) && !defined(_LKM)
+#if defined(_KERNEL_OPT)
 #include "opt_inet.h"
 #endif
 #endif

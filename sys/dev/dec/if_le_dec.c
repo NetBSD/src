@@ -1,4 +1,4 @@
-/*	$NetBSD: if_le_dec.c,v 1.10 1998/07/21 17:36:05 drochner Exp $	*/
+/*	$NetBSD: if_le_dec.c,v 1.11 2001/05/30 11:46:34 mrg Exp $	*/
 
 /*-
  * Copyright (c) 1997 Jonathan Stone. All rights reserved.
@@ -74,7 +74,7 @@ void le_dec_writereg __P((volatile u_short *regptr, u_short val));
 #define	LERDWR(cntl, src, dst)	{ (dst) = (src); tc_mb(); }
 #define	LEWREG(src, dst)	le_dec_writereg(&(dst), (src))
 
-#if defined(_KERNEL) && !defined(_LKM)
+#if defined(_KERNEL_OPT)
 #include "opt_ddb.h"
 #endif
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_le_lebuffer.c,v 1.6 2000/07/09 20:57:42 pk Exp $	*/
+/*	$NetBSD: if_le_lebuffer.c,v 1.7 2001/05/30 11:46:35 mrg Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -102,7 +102,7 @@ struct cfattach le_lebuffer_ca = {
 
 extern struct cfdriver le_cd;
 
-#if defined(_KERNEL) && !defined(_LKM)
+#if defined(_KERNEL_OPT)
 #include "opt_ddb.h"
 #endif
 

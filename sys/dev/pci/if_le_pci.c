@@ -1,4 +1,4 @@
-/*	$NetBSD: if_le_pci.c,v 1.30 2000/12/28 22:59:13 sommerfeld Exp $	*/
+/*	$NetBSD: if_le_pci.c,v 1.31 2001/05/30 11:46:34 mrg Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -119,7 +119,7 @@ struct cfattach le_pci_ca = {
 	sizeof(struct le_softc), le_pci_match, le_pci_attach
 };
 
-#if defined(_KERNEL) && !defined(_LKM)
+#if defined(_KERNEL_OPT)
 #include "opt_ddb.h"
 #endif
 

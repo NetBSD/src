@@ -1,4 +1,4 @@
-/*	$NetBSD: am7990.c,v 1.61 2000/12/14 06:27:23 thorpej Exp $	*/
+/*	$NetBSD: am7990.c,v 1.62 2001/05/30 11:46:33 mrg Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -109,7 +109,7 @@
 void am7990_meminit __P((struct lance_softc *));
 void am7990_start __P((struct ifnet *));
 
-#if defined(_KERNEL) && !defined(_LKM)
+#if defined(_KERNEL_OPT)
 #include "opt_ddb.h"
 #endif
 

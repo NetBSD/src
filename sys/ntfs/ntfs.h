@@ -1,4 +1,4 @@
-/*	$NetBSD: ntfs.h,v 1.13 2001/05/15 22:17:05 jdolecek Exp $	*/
+/*	$NetBSD: ntfs.h,v 1.14 2001/05/30 11:42:13 mrg Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999 Semen Ustimenko
@@ -29,7 +29,7 @@
  */
 
 /*#define NTFS_DEBUG 1*/
-#if defined(__NetBSD__) && defined(_KERNEL) && !defined(_LKM)
+#if defined(__NetBSD__) && defined(_KERNEL_OPT)
 #include "opt_ntfs.h"
 #endif
 

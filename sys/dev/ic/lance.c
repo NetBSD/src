@@ -1,4 +1,4 @@
-/*	$NetBSD: lance.c,v 1.18 2001/04/27 17:08:02 jdolecek Exp $	*/
+/*	$NetBSD: lance.c,v 1.19 2001/05/30 11:46:33 mrg Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -129,7 +129,7 @@
 #include <dev/ic/lancereg.h>
 #include <dev/ic/lancevar.h>
 
-#if defined(_KERNEL) && !defined(_LKM)
+#if defined(_KERNEL_OPT)
 #include "opt_ddb.h"
 #endif
 

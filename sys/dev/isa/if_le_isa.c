@@ -1,4 +1,4 @@
-/*	$NetBSD: if_le_isa.c,v 1.25 2000/11/14 18:28:16 thorpej Exp $	*/
+/*	$NetBSD: if_le_isa.c,v 1.26 2001/05/30 11:46:33 mrg Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -148,7 +148,7 @@ void le_isa_attach __P((struct device *, struct le_softc *,
 
 int le_isa_intredge __P((void *));
 
-#if defined(_KERNEL) && !defined(_LKM)
+#if defined(_KERNEL_OPT)
 #include "opt_ddb.h"
 #endif
 

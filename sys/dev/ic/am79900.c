@@ -1,4 +1,4 @@
-/*	$NetBSD: am79900.c,v 1.8 2000/12/14 06:27:24 thorpej Exp $	*/
+/*	$NetBSD: am79900.c,v 1.9 2001/05/30 11:46:33 mrg Exp $	*/
 
 /*-
  * Copyright (c) 1998
@@ -76,7 +76,7 @@
 void am79900_meminit __P((struct lance_softc *));
 void am79900_start __P((struct ifnet *));
 
-#if defined(_KERNEL) && !defined(_LKM)
+#if defined(_KERNEL_OPT)
 #include "opt_ddb.h"
 #endif
 

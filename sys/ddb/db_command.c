@@ -1,4 +1,4 @@
-/*	$NetBSD: db_command.c,v 1.57 2001/02/11 21:12:24 jhawk Exp $	*/
+/*	$NetBSD: db_command.c,v 1.58 2001/05/30 11:42:12 mrg Exp $	*/
 
 /* 
  * Mach Operating System
@@ -42,7 +42,7 @@
 
 #include <machine/db_machdep.h>		/* type definitions */
 
-#if defined(_KERNEL) && !defined(_LKM)
+#if defined(_KERNEL_OPT)
 #include "opt_multiprocessor.h"
 #endif
 #ifdef MULTIPROCESSOR

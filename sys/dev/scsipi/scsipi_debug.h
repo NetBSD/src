@@ -1,4 +1,4 @@
-/*	$NetBSD: scsipi_debug.h,v 1.13 2001/04/25 17:53:40 bouyer Exp $	*/
+/*	$NetBSD: scsipi_debug.h,v 1.14 2001/05/30 11:46:34 mrg Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#if defined(_KERNEL) && !defined(_LKM)
+#if defined(_KERNEL_OPT)
 #include "opt_scsipi_debug.h"
 #endif
 
