@@ -1,4 +1,4 @@
-/*	$NetBSD: chared.c,v 1.16 2002/10/27 21:41:50 christos Exp $	*/
+/*	$NetBSD: chared.c,v 1.17 2002/11/15 14:32:32 christos Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)chared.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: chared.c,v 1.16 2002/10/27 21:41:50 christos Exp $");
+__RCSID("$NetBSD: chared.c,v 1.17 2002/11/15 14:32:32 christos Exp $");
 #endif
 #endif /* not lint && not SCCSID */
 
@@ -58,18 +58,36 @@ __RCSID("$NetBSD: chared.c,v 1.16 2002/10/27 21:41:50 christos Exp $");
  *	Handle state for the vi undo command
  */
 protected void
-cv_undo(EditLine *el, int size, char *ptr)
+cv_undo(EditLine *el)
 {
 	c_undo_t *vu = &el->el_chared.c_undo;
+	c_redo_t *r = &el->el_chared.c_redo;
+	uint size;
 
-	vu->len = el->el_line.lastchar - el->el_line.buffer;
+	/* Save entire line for undo */
+	size = el->el_line.lastchar - el->el_line.buffer;
+	vu->len = size;
 	vu->cursor = el->el_line.cursor - el->el_line.buffer;
-	memcpy(vu->buf, el->el_line.buffer, vu->len + 1u);
+	memcpy(vu->buf, el->el_line.buffer, size);
 
-	if (ptr) {
-		memcpy(vu->paste, ptr, size +0u);
-		vu->paste_len = size;
-	}
+	/* save command info for redo */
+	r->count = el->el_state.doingarg ? el->el_state.argument : 0;
+	r->action = el->el_chared.c_vcmd.action;
+	r->pos = r->buf;
+	r->cmd = el->el_state.thiscmd;
+	r->ch = el->el_state.thisch;
+}
+
+/* cv_yank():
+ *	Save yank/delete data for paste
+ */
+protected void
+cv_yank(EditLine *el, const char *ptr, int size)
+{
+	c_kill_t *k = &el->el_chared.c_kill;
+
+	memcpy(k->buf, ptr, size +0u);
+	k->last = k->buf + size;
 }
 
 
@@ -81,8 +99,10 @@ c_insert(EditLine *el, int num)
 {
 	char *cp;
 
-	if (el->el_line.lastchar + num >= el->el_line.limit)
-		return;			/* can't go past end of buffer */
+	if (el->el_line.lastchar + num >= el->el_line.limit) {
+		if (!ch_enlargebufs(el, num +0u))
+			return;		/* can't go past end of buffer */
+	}
 
 	if (el->el_line.cursor < el->el_line.lastchar) {
 		/* if I must move chars */
@@ -103,8 +123,10 @@ c_delafter(EditLine *el, int num)
 	if (el->el_line.cursor + num > el->el_line.lastchar)
 		num = el->el_line.lastchar - el->el_line.cursor;
 
-	if (el->el_map.current != el->el_map.emacs)
-		cv_undo(el, num, el->el_line.cursor);
+	if (el->el_map.current != el->el_map.emacs) {
+		cv_undo(el);
+		cv_yank(el, el->el_line.cursor, num);
+	}
 
 	if (num > 0) {
 		char *cp;
@@ -127,8 +149,10 @@ c_delbefore(EditLine *el, int num)
 	if (el->el_line.cursor - num < el->el_line.buffer)
 		num = el->el_line.cursor - el->el_line.buffer;
 
-	if (el->el_map.current != el->el_map.emacs)
-		cv_undo(el, num, el->el_line.cursor - num);
+	if (el->el_map.current != el->el_map.emacs) {
+		cv_undo(el);
+		cv_yank(el, el->el_line.cursor - num, num);
+	}
 
 	if (num > 0) {
 		char *cp;
@@ -159,7 +183,11 @@ ce__isword(int p)
 protected int
 cv__isword(int p)
 {
-	return (isalnum(p));
+	if (isalnum(p) || p == '_')
+		return 1;
+	if (isgraph(p))
+		return 2;
+	return 0;
 }
 
 
@@ -311,27 +339,34 @@ protected void
 cv_delfini(EditLine *el)
 {
 	int size;
+	int action = el->el_chared.c_vcmd.action;
 
-	if (el->el_chared.c_vcmd.action & INSERT)
+	if (action & INSERT)
 		el->el_map.current = el->el_map.key;
 
-	el->el_chared.c_vcmd.action = NOP;
-
 	if (el->el_chared.c_vcmd.pos == 0)
+		/* sanity */
 		return;
 
-	size = (int) (el->el_line.cursor - el->el_chared.c_vcmd.pos);
+	size = el->el_line.cursor - el->el_chared.c_vcmd.pos;
+	if (size == 0)
+		size = 1;
 	el->el_line.cursor = el->el_chared.c_vcmd.pos;
-	if (size > 0) {
-		c_delafter(el, size);
-		re_refresh_cursor(el);
-	} else if (size < 0) {
-		c_delbefore(el, -size);
-		el->el_line.cursor += size;
+	if (action & YANK) {
+		if (size > 0)
+			cv_yank(el, el->el_line.cursor, size);
+		else
+			cv_yank(el, el->el_line.cursor + size, -size);
 	} else {
-		c_delafter(el, 1);
-		el->el_line.cursor--;
+		if (size > 0) {
+			c_delafter(el, size);
+			re_refresh_cursor(el);
+		} else  {
+			c_delbefore(el, -size);
+			el->el_line.cursor += size;
+		}
 	}
+	el->el_chared.c_vcmd.action = NOP;
 }
 
 
@@ -400,10 +435,12 @@ ch_init(EditLine *el)
 	(void) memset(el->el_chared.c_undo.buf, 0, EL_BUFSIZ);
 	el->el_chared.c_undo.len	= -1;
 	el->el_chared.c_undo.cursor	= 0;
-	el->el_chared.c_undo.paste	= (char *) el_malloc(EL_BUFSIZ);
-	if (el->el_chared.c_undo.paste == NULL)
+	el->el_chared.c_redo.buf	= (char *) el_malloc(EL_BUFSIZ);
+	if (el->el_chared.c_redo.buf == NULL)
 		return (-1);
-	el->el_chared.c_undo.paste_len	= 0;
+	el->el_chared.c_redo.pos	= el->el_chared.c_redo.buf;
+	el->el_chared.c_redo.lim	= el->el_chared.c_redo.buf + EL_BUFSIZ;
+	el->el_chared.c_redo.cmd	= ED_UNASSIGNED;
 
 	el->el_chared.c_vcmd.action	= NOP;
 	el->el_chared.c_vcmd.pos	= el->el_line.buffer;
@@ -532,10 +569,14 @@ ch_enlargebufs(el, addlen)
 	(void) memset(&newbuffer[sz], 0, newsz - sz);
 	el->el_chared.c_undo.buf = newbuffer;
 
-	newbuffer = el_realloc(el->el_chared.c_undo.paste, newsz);
+	newbuffer = el_realloc(el->el_chared.c_redo.buf, newsz);
 	if (!newbuffer)
 		return 0;
-	el->el_chared.c_undo.paste = newbuffer;
+	el->el_chared.c_redo.pos = newbuffer +
+			(el->el_chared.c_redo.pos - el->el_chared.c_redo.buf);
+	el->el_chared.c_redo.lim = newbuffer +
+			(el->el_chared.c_redo.lim - el->el_chared.c_redo.buf);
+	el->el_chared.c_redo.buf = newbuffer;
 	
 	if (!hist_enlargebuf(el, sz, newsz))
 		return 0;
@@ -556,9 +597,11 @@ ch_end(EditLine *el)
 	el->el_line.limit = NULL;
 	el_free((ptr_t) el->el_chared.c_undo.buf);
 	el->el_chared.c_undo.buf = NULL;
-	el_free((ptr_t) el->el_chared.c_undo.paste);
-	el->el_chared.c_undo.paste = NULL;
-	el->el_chared.c_undo.paste_len	= 0;
+	el_free((ptr_t) el->el_chared.c_redo.buf);
+	el->el_chared.c_redo.buf = NULL;
+	el->el_chared.c_redo.pos = NULL;
+	el->el_chared.c_redo.lim = NULL;
+	el->el_chared.c_redo.cmd = ED_UNASSIGNED;
 	el_free((ptr_t) el->el_chared.c_kill.buf);
 	el->el_chared.c_kill.buf = NULL;
 	el_free((ptr_t) el->el_chared.c_macro.macro);

@@ -1,4 +1,4 @@
-/*	$NetBSD: chared.h,v 1.9 2002/10/27 21:41:50 christos Exp $	*/
+/*	$NetBSD: chared.h,v 1.10 2002/11/15 14:32:33 christos Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -77,9 +77,18 @@ typedef struct c_undo_t {
 	int	 len;			/* length of saved line */
 	int	 cursor;		/* position of saved cursor */
 	char	*buf;			/* full saved text */
-	size_t	 paste_len;		/* bytes to paste */
-	char	*paste;			/* paste string */
 } c_undo_t;
+
+/* redo for vi */
+typedef struct c_redo_t {
+	char	*buf;			/* redo insert key sequence */
+	char	*pos;
+	char	*lim;
+	el_action_t	cmd;		/* command to redo */
+	char	ch;			/* char that invoked it */
+	int	count;
+	int	action;			/* from cv_action() */
+} c_redo_t;
 
 /*
  * Current action information for vi
@@ -105,6 +114,7 @@ typedef struct c_kill_t {
 typedef struct el_chared_t {
 	c_undo_t	c_undo;
 	c_kill_t	c_kill;
+	c_redo_t	c_redo;
 	c_vcmd_t	c_vcmd;
 	c_macro_t	c_macro;
 } el_chared_t;
@@ -119,9 +129,10 @@ typedef struct el_chared_t {
 #define	NOP		0x00
 #define	DELETE		0x01
 #define	INSERT		0x02
+#define	YANK		0x04
 
-#define	CHAR_FWD	0
-#define	CHAR_BACK	1
+#define	CHAR_FWD	(+1)
+#define	CHAR_BACK	(-1)
 
 #define	MODE_INSERT	0
 #define	MODE_REPLACE	1
@@ -139,7 +150,8 @@ protected int	 cv__isWord(int);
 protected void	 cv_delfini(EditLine *);
 protected char	*cv__endword(char *, char *, int, int (*)(int));
 protected int	 ce__isword(int);
-protected void	 cv_undo(EditLine *, /* int,*/ int, char *);
+protected void	 cv_undo(EditLine *);
+protected void	 cv_yank(EditLine *, const char *, int);
 protected char	*cv_next_word(EditLine*, char *, char *, int, int (*)(int));
 protected char	*cv_prev_word(char *, char *, int, int (*)(int));
 protected char	*c__next_word(char *, char *, int, int (*)(int));

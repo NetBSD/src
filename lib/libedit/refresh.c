@@ -1,4 +1,4 @@
-/*	$NetBSD: refresh.c,v 1.21 2002/11/12 00:01:21 thorpej Exp $	*/
+/*	$NetBSD: refresh.c,v 1.22 2002/11/15 14:32:34 christos Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)refresh.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: refresh.c,v 1.21 2002/11/12 00:01:21 thorpej Exp $");
+__RCSID("$NetBSD: refresh.c,v 1.22 2002/11/15 14:32:34 christos Exp $");
 #endif
 #endif /* not lint && not SCCSID */
 
@@ -208,6 +208,14 @@ re_refresh(EditLine *el)
 	/* reset the Drawing cursor */
 	el->el_refresh.r_cursor.h = 0;
 	el->el_refresh.r_cursor.v = 0;
+
+	if (el->el_line.cursor >= el->el_line.lastchar) {
+		if (el->el_map.current == el->el_map.alt
+		    && el->el_line.lastchar != el->el_line.buffer)
+			el->el_line.cursor = el->el_line.lastchar - 1;
+		else
+			el->el_line.cursor = el->el_line.lastchar;
+	}
 
 	cur.h = -1;		/* set flag in case I'm not set */
 	cur.v = 0;
@@ -932,6 +940,14 @@ re_refresh_cursor(EditLine *el)
 	char *cp, c;
 	int h, v, th;
 
+	if (el->el_line.cursor >= el->el_line.lastchar) {
+		if (el->el_map.current == el->el_map.alt
+		    && el->el_line.lastchar != el->el_line.buffer)
+			el->el_line.cursor = el->el_line.lastchar - 1;
+		else
+			el->el_line.cursor = el->el_line.lastchar;
+	}
+
 	/* first we must find where the cursor is... */
 	h = el->el_prompt.p_pos.h;
 	v = el->el_prompt.p_pos.v;
@@ -1054,8 +1070,8 @@ re_fastaddc(EditLine *el)
 		re_fastputc(el, c);
 	} else {
 		re_fastputc(el, '\\');
-		re_fastputc(el, (int) ((((unsigned int) c >> 6) & 7) + '0'));
-		re_fastputc(el, (int) ((((unsigned int) c >> 3) & 7) + '0'));
+		re_fastputc(el, ((((u_int32_t)c) >> 6) & 3) + '0');
+		re_fastputc(el, ((((u_int32_t)c) >> 3) & 7) + '0');
 		re_fastputc(el, (c & 7) + '0');
 	}
 	term__flush();

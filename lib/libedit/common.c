@@ -1,4 +1,4 @@
-/*	$NetBSD: common.c,v 1.12 2002/10/27 21:41:50 christos Exp $	*/
+/*	$NetBSD: common.c,v 1.13 2002/11/15 14:32:33 christos Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)common.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: common.c,v 1.12 2002/10/27 21:41:50 christos Exp $");
+__RCSID("$NetBSD: common.c,v 1.13 2002/11/15 14:32:33 christos Exp $");
 #endif
 #endif /* not lint && not SCCSID */
 
@@ -72,6 +72,7 @@ ed_end_of_file(EditLine *el, int c)
 protected el_action_t
 ed_insert(EditLine *el, int c)
 {
+	int count = el->el_state.argument;
 
 	if (c == '\0')
 		return (CC_ERROR);
@@ -79,23 +80,22 @@ ed_insert(EditLine *el, int c)
 	if (el->el_line.lastchar + el->el_state.argument >=
 	    el->el_line.limit) {
 		/* end of buffer space, try to allocate more */
-		if (!ch_enlargebufs(el, (size_t) el->el_state.argument))
+		if (!ch_enlargebufs(el, (size_t) count))
 			return CC_ERROR;	/* error allocating more */
 	}
 
-	if (el->el_state.argument == 1) {
+	if (count == 1) {
 		if (el->el_state.inputmode == MODE_INSERT
 		    || el->el_line.cursor >= el->el_line.lastchar)
 			c_insert(el, 1);
 
 		*el->el_line.cursor++ = c;
-		el->el_state.doingarg = 0;	/* just in case */
 		re_fastaddc(el);		/* fast refresh for one char. */
 	} else {
 		if (el->el_state.inputmode != MODE_REPLACE_1)
 			c_insert(el, el->el_state.argument);
 
-		while (el->el_state.argument--)
+		while (count-- && el->el_line.cursor < el->el_line.lastchar)
 			*el->el_line.cursor++ = c;
 		re_refresh(el);
 	}
@@ -221,7 +221,7 @@ ed_move_to_end(EditLine *el, int c)
 #ifdef VI_MOVE
 		el->el_line.cursor--;
 #endif
-		if (el->el_chared.c_vcmd.action & DELETE) {
+		if (el->el_chared.c_vcmd.action != NOP) {
 			cv_delfini(el);
 			return (CC_REFRESH);
 		}
@@ -245,7 +245,7 @@ ed_move_to_beg(EditLine *el, int c)
 			/* We want FIRST non space character */
 		while (isspace((unsigned char) *el->el_line.cursor))
 			el->el_line.cursor++;
-		if (el->el_chared.c_vcmd.action & DELETE) {
+		if (el->el_chared.c_vcmd.action != NOP) {
 			cv_delfini(el);
 			return (CC_REFRESH);
 		}
@@ -287,16 +287,20 @@ protected el_action_t
 /*ARGSUSED*/
 ed_next_char(EditLine *el, int c)
 {
+	char *lim = el->el_line.lastchar;
 
-	if (el->el_line.cursor >= el->el_line.lastchar)
+	if (el->el_line.cursor >= lim ||
+	    (el->el_line.cursor == lim - 1 &&
+	    el->el_map.type == MAP_VI &&
+	    el->el_chared.c_vcmd.action == NOP))
 		return (CC_ERROR);
 
 	el->el_line.cursor += el->el_state.argument;
-	if (el->el_line.cursor > el->el_line.lastchar)
-		el->el_line.cursor = el->el_line.lastchar;
+	if (el->el_line.cursor > lim)
+		el->el_line.cursor = lim;
 
 	if (el->el_map.type == MAP_VI)
-		if (el->el_chared.c_vcmd.action & DELETE) {
+		if (el->el_chared.c_vcmd.action != NOP) {
 			cv_delfini(el);
 			return (CC_REFRESH);
 		}
@@ -322,7 +326,7 @@ ed_prev_word(EditLine *el, int c)
 	    ce__isword);
 
 	if (el->el_map.type == MAP_VI)
-		if (el->el_chared.c_vcmd.action & DELETE) {
+		if (el->el_chared.c_vcmd.action != NOP) {
 			cv_delfini(el);
 			return (CC_REFRESH);
 		}
@@ -345,7 +349,7 @@ ed_prev_char(EditLine *el, int c)
 			el->el_line.cursor = el->el_line.buffer;
 
 		if (el->el_map.type == MAP_VI)
-			if (el->el_chared.c_vcmd.action & DELETE) {
+			if (el->el_chared.c_vcmd.action != NOP) {
 				cv_delfini(el);
 				return (CC_REFRESH);
 			}
@@ -436,9 +440,7 @@ protected el_action_t
 ed_unassigned(EditLine *el, int c)
 {
 
-	term_beep(el);
-	term__flush();
-	return (CC_NORM);
+	return (CC_ERROR);
 }
 
 
@@ -637,6 +639,7 @@ protected el_action_t
 ed_prev_history(EditLine *el, int c)
 {
 	char beep = 0;
+	int sv_event = el->el_history.eventno;
 
 	el->el_chared.c_undo.len = -1;
 	*el->el_line.lastchar = '\0';		/* just in case */
@@ -651,15 +654,17 @@ ed_prev_history(EditLine *el, int c)
 	el->el_history.eventno += el->el_state.argument;
 
 	if (hist_get(el) == CC_ERROR) {
+		if (el->el_map.type == MAP_VI) {
+			el->el_history.eventno = sv_event;
+			return CC_ERROR;
+		}
 		beep = 1;
 		/* el->el_history.eventno was fixed by first call */
 		(void) hist_get(el);
 	}
-	re_refresh(el);
 	if (beep)
-		return (CC_ERROR);
-	else
-		return (CC_NORM);	/* was CC_UP_HIST */
+		return CC_REFRESH_BEEP;
+	return CC_REFRESH;
 }
 
 
@@ -671,6 +676,7 @@ protected el_action_t
 /*ARGSUSED*/
 ed_next_history(EditLine *el, int c)
 {
+	el_action_t beep = CC_REFRESH, rval;
 
 	el->el_chared.c_undo.len = -1;
 	*el->el_line.lastchar = '\0';	/* just in case */
@@ -679,9 +685,13 @@ ed_next_history(EditLine *el, int c)
 
 	if (el->el_history.eventno < 0) {
 		el->el_history.eventno = 0;
-		return (CC_ERROR);/* make it beep */
+		beep = CC_REFRESH_BEEP;
 	}
-	return (hist_get(el));
+	rval = hist_get(el);
+	if (rval == CC_REFRESH)
+		return beep;
+	return rval;
+
 }
 
 
