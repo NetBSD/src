@@ -32,7 +32,7 @@ NOOBJ=	noobj
 SHARED= 	copies
 #SHARED= 	symlinks
 
-install: _PROGSUBDIR ${SHARED}
+install: beforeinstall _PROGSUBDIR ${SHARED}
 	@echo installing ${FILES}
 	@-for i in ${FILES}; do \
 		cmp -s $$i ${DESTDIR}/usr/include/$$i || \
@@ -65,6 +65,16 @@ install: _PROGSUBDIR ${SHARED}
 		ln -s machine/$$i ${DESTDIR}/usr/include/$$i; \
 		chown ${BINOWN}.${BINGRP} ${DESTDIR}/usr/include/$$i; \
 	done
+
+beforeinstall:
+	@if [ ! -d ${DESTDIR}/usr/include ]; then \
+                /bin/rm -f ${DESTDIR}/usr/include ; \
+                mkdir -p ${DESTDIR}/usr/include ; \
+                chown root.wheel ${DESTDIR}/usr/include ; \
+                chmod 755 ${DESTDIR}/usr/include ; \
+        else \
+                true ; \
+        fi
 
 copies:
 	@echo copies: ${LDIRS}
