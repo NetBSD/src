@@ -1,4 +1,4 @@
-/*	$NetBSD: conf.c,v 1.59 1995/02/09 19:04:13 mycroft Exp $	*/
+/*	$NetBSD: conf.c,v 1.60 1995/03/03 06:09:01 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1994 Charles Hannum.  All rights reserved.
@@ -383,7 +383,7 @@ struct cdevsw	cdevsw[] =
 #undef	fdclose
 	cdev_tape_init(NWT,wt),		/* 10: QIC-02/QIC-36 tape */
 	cdev_notdef(),			/* 11: unused */
-	cdev_tty_init(NPC + NVT,pc),	/* 12: PC console */
+	cdev_pc_init(NPC + NVT,pc),	/* 12: PC console */
 	cdev_disk_init(NSD,sd),		/* 13: SCSI disk */
 	cdev_tape_init(NST,st),		/* 14: SCSI tape */
 	cdev_disk_init(NCD,cd),		/* 15: SCSI CD-ROM */
