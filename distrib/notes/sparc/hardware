@@ -1,10 +1,10 @@
-NetBSD/sparc RELEASE runs on the following classes of machines:
+NetBSD/sparc _VER runs on the following classes of machines:
 	- sun4c (e.g. the SS1, SS1+, SS2, IPC, ELC, IPX, and SLC)
 	- sun4 (e.g. the 4/100, 4/200, and 4/300.   note that support
 		for the 4/400 processor is incomplete)
 	- sun4m (e.g. Classic, LX, SS4, SS5, SS10, and SS20)
 
-NetBSD/sparc RELEASE does *not* run on these machines (yet):
+NetBSD/sparc _VER does *not* run on these machines (yet):
 	- sun-4/400 (lacking support for the I/O cache, and has
 			ethernet problems)
 	- sun4d (e.g. sparc center 2000)
