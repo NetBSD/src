@@ -1,4 +1,4 @@
-/*	$NetBSD: udp_var.h,v 1.24 2004/04/21 17:49:46 itojun Exp $	*/
+/*	$NetBSD: udp_var.h,v 1.25 2004/12/15 04:25:21 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -71,18 +71,21 @@ struct	udpstat {
 #define	UDPCTL_CHECKSUM		1	/* checksum UDP packets */
 #define	UDPCTL_SENDSPACE	2	/* default send buffer */
 #define	UDPCTL_RECVSPACE	3	/* default recv buffer */
-#define	UDPCTL_MAXID		4
+#define	UDPCTL_LOOPBACKCKSUM	4	/* do UDP checksum on loopback */
+#define	UDPCTL_MAXID		5
 
 #define UDPCTL_NAMES { \
 	{ 0, 0 }, \
 	{ "checksum", CTLTYPE_INT }, \
 	{ "sendspace", CTLTYPE_INT }, \
 	{ "recvspace", CTLTYPE_INT }, \
+	{ "do_loopback_cksum", CTLTYPE_INT }, \
 }
 
 #ifdef _KERNEL
 extern	struct	inpcbtable udbtable;
 extern	struct	udpstat udpstat;
+extern	int	udp_do_loopback_cksum;
 
 #ifdef __NO_STRICT_ALIGNMENT
 #define	UDP_HDR_ALIGNED_P(uh)	1

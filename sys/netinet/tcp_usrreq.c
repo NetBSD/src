@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_usrreq.c,v 1.92 2004/05/25 04:34:00 atatat Exp $	*/
+/*	$NetBSD: tcp_usrreq.c,v 1.93 2004/12/15 04:25:20 thorpej Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -98,7 +98,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tcp_usrreq.c,v 1.92 2004/05/25 04:34:00 atatat Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tcp_usrreq.c,v 1.93 2004/12/15 04:25:20 thorpej Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -1391,6 +1391,13 @@ sysctl_net_inet_tcp_setup2(struct sysctllog **clog, int pf, const char *pfname,
 		       SYSCTL_DESCR("RFC1413 Identification Protocol lookups"),
 		       sysctl_net_inet_tcp_ident, 0, NULL, sizeof(uid_t),
 		       CTL_NET, pf, IPPROTO_TCP, TCPCTL_IDENT, CTL_EOL);
+	sysctl_createv(clog, 0, NULL, NULL,
+		       CTLFLAG_PERMANENT|CTLFLAG_READWRITE,
+		       CTLTYPE_INT, "do_loopback_cksum",
+		       SYSCTL_DESCR("Perform TCP checksum on loopback"),
+		       NULL, 0, &tcp_do_loopback_cksum, 0,
+		       CTL_NET, pf, IPPROTO_TCP, TCPCTL_LOOPBACKCKSUM,
+		       CTL_EOL);
 }
 
 /*

@@ -1,4 +1,4 @@
-/*	$NetBSD: udp_usrreq.c,v 1.124 2004/09/03 18:14:09 darrenr Exp $	*/
+/*	$NetBSD: udp_usrreq.c,v 1.125 2004/12/15 04:25:20 thorpej Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: udp_usrreq.c,v 1.124 2004/09/03 18:14:09 darrenr Exp $");
+__KERNEL_RCSID(0, "$NetBSD: udp_usrreq.c,v 1.125 2004/12/15 04:25:20 thorpej Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -141,6 +141,7 @@ int	udpcksum = 1;
 #else
 int	udpcksum = 0;		/* XXX */
 #endif
+int	udp_do_loopback_cksum = 0;
 
 struct	inpcbtable udbtable;
 struct	udpstat udpstat;
@@ -287,10 +288,17 @@ udp_input(struct mbuf *m, ...)
 			break;
 
 		default:
-			/* Need to compute it ourselves. */
-			UDP_CSUM_COUNTER_INCR(&udp_swcsum);
-			if (in4_cksum(m, IPPROTO_UDP, iphlen, len) != 0)
-				goto badcsum;
+			/*
+			 * Need to compute it ourselves.  Maybe skip checksum
+			 * on loopback interfaces.
+			 */
+			if (__predict_true(!(m->m_pkthdr.rcvif->if_flags &
+					     IFF_LOOPBACK) ||
+					   udp_do_loopback_cksum)) {
+				UDP_CSUM_COUNTER_INCR(&udp_swcsum);
+				if (in4_cksum(m, IPPROTO_UDP, iphlen, len) != 0)
+					goto badcsum;
+			}
 			break;
 		}
 	}
@@ -419,15 +427,20 @@ udp6_input(struct mbuf **mp, int *offp, int proto)
 	}
 
 	/*
-	 * Checksum extended UDP header and data.
+	 * Checksum extended UDP header and data.  Maybe skip checksum
+	 * on loopback interfaces.
 	 */
-	if (uh->uh_sum == 0) {
-		udp6stat.udp6s_nosum++;
-		goto bad;
-	}
-	if (in6_cksum(m, IPPROTO_UDP, off, ulen) != 0) {
-		udp6stat.udp6s_badsum++;
-		goto bad;
+	if (__predict_true(!(m->m_pkthdr.rcvif->if_flags &
+			     IFF_LOOPBACK) ||
+			   udp_do_loopback_cksum)) {
+		if (uh->uh_sum == 0) {
+			udp6stat.udp6s_nosum++;
+			goto bad;
+		}
+		if (in6_cksum(m, IPPROTO_UDP, off, ulen) != 0) {
+			udp6stat.udp6s_badsum++;
+			goto bad;
+		}
 	}
 
 	/*
@@ -830,6 +843,7 @@ udp_output(struct mbuf *m, ...)
 {
 	struct inpcb *inp;
 	struct udpiphdr *ui;
+	struct route *ro;
 	int len = m->m_pkthdr.len;
 	int error = 0;
 	va_list ap;
@@ -870,6 +884,8 @@ udp_output(struct mbuf *m, ...)
 	ui->ui_dport = inp->inp_fport;
 	ui->ui_ulen = htons((u_int16_t)len + sizeof(struct udphdr));
 
+	ro = &inp->inp_route;
+
 	/*
 	 * Set up checksum and output datagram.
 	 */
@@ -877,11 +893,18 @@ udp_output(struct mbuf *m, ...)
 		/*
 		 * XXX Cache pseudo-header checksum part for
 		 * XXX "connected" UDP sockets.
+		 * Maybe skip checksums on loopback interfaces.
 		 */
 		ui->ui_sum = in_cksum_phdr(ui->ui_src.s_addr,
 		    ui->ui_dst.s_addr, htons((u_int16_t)len +
 		    sizeof(struct udphdr) + IPPROTO_UDP));
-		m->m_pkthdr.csum_flags = M_CSUM_UDPv4;
+		if (__predict_true(ro->ro_rt == NULL ||
+				   !(ro->ro_rt->rt_ifp->if_flags &
+				     IFF_LOOPBACK) ||
+				   udp_do_loopback_cksum))
+			m->m_pkthdr.csum_flags = M_CSUM_UDPv4;
+		else
+			m->m_pkthdr.csum_flags = 0;
 		m->m_pkthdr.csum_data = offsetof(struct udphdr, uh_sum);
 	} else
 		ui->ui_sum = 0;
@@ -890,7 +913,7 @@ udp_output(struct mbuf *m, ...)
 	((struct ip *)ui)->ip_tos = inp->inp_ip.ip_tos;	/* XXX */
 	udpstat.udps_opackets++;
 
-	return (ip_output(m, inp->inp_options, &inp->inp_route,
+	return (ip_output(m, inp->inp_options, ro,
 	    inp->inp_socket->so_options & (SO_DONTROUTE | SO_BROADCAST),
 	    inp->inp_moptions, inp->inp_socket));
 
@@ -1116,6 +1139,13 @@ SYSCTL_SETUP(sysctl_net_inet_udp_setup, "sysctl net.inet.udp subtree setup")
 		       SYSCTL_DESCR("Default UDP receive buffer size"),
 		       NULL, 0, &udp_recvspace, 0,
 		       CTL_NET, PF_INET, IPPROTO_UDP, UDPCTL_RECVSPACE,
+		       CTL_EOL);
+	sysctl_createv(clog, 0, NULL, NULL,
+		       CTLFLAG_PERMANENT|CTLFLAG_READWRITE,
+		       CTLTYPE_INT, "do_loopback_cksum",
+		       SYSCTL_DESCR("Perform UDP checksum on loopback"),
+		       NULL, 0, &udp_do_loopback_cksum, 0,
+		       CTL_NET, PF_INET, IPPROTO_UDP, UDPCTL_LOOPBACKCKSUM,
 		       CTL_EOL);
 }
 #endif

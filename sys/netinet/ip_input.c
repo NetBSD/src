@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_input.c,v 1.205 2004/10/06 01:34:11 darrenr Exp $	*/
+/*	$NetBSD: ip_input.c,v 1.206 2004/12/15 04:25:19 thorpej Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -98,7 +98,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip_input.c,v 1.205 2004/10/06 01:34:11 darrenr Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip_input.c,v 1.206 2004/12/15 04:25:19 thorpej Exp $");
 
 #include "opt_inet.h"
 #include "opt_gateway.h"
@@ -200,6 +200,7 @@ int	ipprintfs = 0;
 #endif
 
 int	ip_do_randomid = 0;
+int	ip_do_loopback_cksum = 0;
 
 /*
  * XXX - Setting ip_checkinterface mostly implements the receive side of
@@ -572,10 +573,16 @@ ip_input(struct mbuf *m)
 		break;
 
 	default:
-		/* Must compute it ourselves. */
-		INET_CSUM_COUNTER_INCR(&ip_swcsum);
-		if (in_cksum(m, hlen) != 0)
-			goto badcsum;
+		/*
+		 * Must compute it ourselves.  Maybe skip checksum on
+		 * loopback interfaces.
+		 */
+		if (__predict_true(!(m->m_pkthdr.rcvif->if_flags &
+				     IFF_LOOPBACK) || ip_do_loopback_cksum)) {
+			INET_CSUM_COUNTER_INCR(&ip_swcsum);
+			if (in_cksum(m, hlen) != 0)
+				goto badcsum;
+		}
 		break;
 	}
 
@@ -2342,4 +2349,11 @@ SYSCTL_SETUP(sysctl_net_inet_ip_setup, "sysctl net.inet.ip subtree setup")
 		       NULL, 0, &ip_do_randomid, 0,
 		       CTL_NET, PF_INET, IPPROTO_IP,
 		       IPCTL_RANDOMID, CTL_EOL);
+	sysctl_createv(clog, 0, NULL, NULL,
+		       CTLFLAG_PERMANENT|CTLFLAG_READWRITE,
+		       CTLTYPE_INT, "do_loopback_cksum",
+		       SYSCTL_DESCR("Perform IP checksum on loopback"),
+		       NULL, 0, &ip_do_loopback_cksum, 0,
+		       CTL_NET, PF_INET, IPPROTO_IP,
+		       IPCTL_LOOPBACKCKSUM, CTL_EOL);
 }
