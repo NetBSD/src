@@ -1,10 +1,10 @@
-.\"	$NetBSD: hpc.4,v 1.4 2004/02/08 13:25:39 sekiya Exp $
+.\" $NetBSD: wdsc.4,v 1.1 2004/02/08 13:25:39 sekiya Exp $
 .\"
-.\" Copyright (c) 2002 The NetBSD Foundation, Inc.
+.\" Copyright (c) 1999 The NetBSD Foundation, Inc.
 .\" All rights reserved.
 .\"
-.\" This document is derived from work contributed to The NetBSD Foundation
-.\" by Antti Kantee.
+.\" This code is derived from software contributed to The NetBSD Foundation
+.\" by Steve C. Woodford.
 .\"
 .\" Redistribution and use in source and binary forms, with or without
 .\" modification, are permitted provided that the following conditions
@@ -25,8 +25,8 @@
 .\" THIS SOFTWARE IS PROVIDED BY THE NETBSD FOUNDATION, INC. AND CONTRIBUTORS
 .\" ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
 .\" TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
-.\" PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL THE FOUNDATION OR CONTRIBUTORS BE
-.\" LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+.\" PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL THE FOUNDATION OR CONTRIBUTORS
+.\" BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
 .\" CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
 .\" SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
 .\" INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
@@ -34,46 +34,38 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd January 24, 2004
-.Dt HPC 4 sgimips
+.Dd January 24, 2004 
 .Os
+.Dt WDSC 4 sgimips 
 .Sh NAME
-.Nm hpc
-.Nd SGI High performance Peripheral Controller
+.Nm wdsc
+.Nd Western Digital WD33c93 SCSI Bus Interface Controller
 .Sh SYNOPSIS
-.Cd "hpc0 at gio0 addr 0x1fb80000"
+.Cd "wdsc* at hpc? offset ?"
 .Sh DESCRIPTION
-.Nm hpc
-interfaces the peripherals connected to it to the
-.Xr gio 4
-bus.
-.Nm
-is found on the Personal Iris 4D/3x, Indigo, Indy and Indigo2 machines.
-.Sh HARDWARE
-.Bl -tag -width dsclock -offset indent
-.It dsclock
-DS1286-based RTC
-.It dpclock
-DP8573A-based RTC
-.It haltwo
-HAL2 audio controller
-.It sq
-Seeq 8003 and 80C03
-.Tn Ethernet
-controllers
-.It wdsc
-WD33c93
-.Tn SCSI
-controller
-.It zsc
-Zilog Z8530 UART
-.El
-.Sh SEE ALSO
-.Xr gio 4 ,
-.Xr imc 4 ,
-.Xr pic 4
-.Sh HISTORY
 The
 .Nm
-driver first appeared in
+driver provides an abstraction layer between the SCSI hardware
+found in multitudinous SGI machines (including Personal Iris series,
+Indigo, Indy, and Indigo2) and the machine independent SCSI drivers
+described in
+.Xr scsibus 4 .
+.Pp
+In addition to sending the required SCSI commands to
+target devices on the SCSI bus, the
+.Nm
+driver deals with DMA, device interrupts, sync/async negotiation
+and target disconnects/reconnects.
+.Sh SEE ALSO
+.Xr hpc 4 ,
+.Xr scsibus 4
+.Sh BUGS
+The current
+.Nm
+driver should be blown away and replaced with a machine independent
+version as variants also exist in the amiga, atari, and mvme68k ports.
+.Sh HISTORY
+Wayne Knowles ported the sgimips incarnation of the
+.Nm
+driver from the amiga and atari ports.  It first appeared in
 .Nx 1.6 .

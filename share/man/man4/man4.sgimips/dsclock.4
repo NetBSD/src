@@ -1,10 +1,10 @@
-.\"	$NetBSD: hpc.4,v 1.4 2004/02/08 13:25:39 sekiya Exp $
+.\"	$NetBSD: dsclock.4,v 1.1 2004/02/08 13:25:39 sekiya Exp $
 .\"
-.\" Copyright (c) 2002 The NetBSD Foundation, Inc.
+.\" Copyright (c) 2004 The NetBSD Foundation, Inc.
 .\" All rights reserved.
 .\"
 .\" This document is derived from work contributed to The NetBSD Foundation
-.\" by Antti Kantee.
+.\" by Steve Rumble.
 .\"
 .\" Redistribution and use in source and binary forms, with or without
 .\" modification, are permitted provided that the following conditions
@@ -35,43 +35,22 @@
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
 .Dd January 24, 2004
-.Dt HPC 4 sgimips
+.Dt DSCLOCK 4 sgimips
 .Os
 .Sh NAME
-.Nm hpc
-.Nd SGI High performance Peripheral Controller
+.Nm dsclock 
+.Nd DS1286 real-time clock 
 .Sh SYNOPSIS
-.Cd "hpc0 at gio0 addr 0x1fb80000"
+.Cd "dsclock* at hpc0 offset ?" 
 .Sh DESCRIPTION
-.Nm hpc
-interfaces the peripherals connected to it to the
-.Xr gio 4
-bus.
+The
 .Nm
-is found on the Personal Iris 4D/3x, Indigo, Indy and Indigo2 machines.
-.Sh HARDWARE
-.Bl -tag -width dsclock -offset indent
-.It dsclock
-DS1286-based RTC
-.It dpclock
-DP8573A-based RTC
-.It haltwo
-HAL2 audio controller
-.It sq
-Seeq 8003 and 80C03
-.Tn Ethernet
-controllers
-.It wdsc
-WD33c93
-.Tn SCSI
-controller
-.It zsc
-Zilog Z8530 UART
-.El
+driver provides support for the DS1286 real-time clock (RTC).  This device
+appears on SGI Indy and Indigo2 machines. Note that the kernel expects the
+RTC to run in UTC.
 .Sh SEE ALSO
-.Xr gio 4 ,
-.Xr imc 4 ,
-.Xr pic 4
+.Xr dpclock 4 ,
+.Xr intro 4
 .Sh HISTORY
 The
 .Nm
