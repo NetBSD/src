@@ -1,4 +1,4 @@
-/*	$NetBSD: flsc.c,v 1.16 1997/10/04 04:01:31 mhitch Exp $	*/
+/*	$NetBSD: flsc.c,v 1.16.2.1 1997/10/24 20:46:31 mellon Exp $	*/
 
 /*
  * Copyright (c) 1997 Michael L. Hitch
@@ -211,6 +211,8 @@ flscattach(parent, self, aux)
 
 	fsc->sc_portbits = 0xa0 | FLSC_PB_EDI | FLSC_PB_ESI;
 	fsc->sc_hardbits = fsc->sc_reg[0x40];
+
+	fsc->sc_alignbuf = (char *)((u_long)fsc->sc_unalignbuf & -4);
 
 	sc->sc_dev.dv_cfdata->cf_flags |= (scsi_nosync >> shift_nosync) & 0xffff;
 	shift_nosync += 16;
@@ -584,8 +586,8 @@ flsc_dma_setup(sc, addr, len, datain, dmasize)
 	 * If unaligned address, read unaligned bytes into alignment buffer
 	 */
 	else if ((int)ptr & 3 || xfer & 3) {
-		pa = kvtop((caddr_t)&fsc->sc_alignbuf);
-		xfer = fsc->sc_dmasize = min(xfer, sizeof (fsc->sc_alignbuf));
+		pa = kvtop((caddr_t)fsc->sc_alignbuf);
+		xfer = fsc->sc_dmasize = min(xfer, sizeof (fsc->sc_unalignbuf));
 		NCR_DMA(("flsc_dma_setup: align read by %d bytes\n", xfer));
 		fsc->sc_xfr_align = 1;
 	}
@@ -596,7 +598,7 @@ flsc_dma_setup(sc, addr, len, datain, dmasize)
 	else if (fsc->sc_dmasize < 4) {
 		NCR_DMA(("flsc_dma_setup: read remaining %d bytes\n",
 		    fsc->sc_dmasize));
-		pa = kvtop((caddr_t)&fsc->sc_alignbuf);
+		pa = kvtop((caddr_t)fsc->sc_alignbuf);
 		fsc->sc_xfr_align = 1;
 	}
 	/*
@@ -623,10 +625,10 @@ flsc_dma_setup(sc, addr, len, datain, dmasize)
 	if (mmutype == MMU_68040) {
 		if (fsc->sc_xfr_align) {
 			int n;
-			for (n = 0; n < sizeof (fsc->sc_alignbuf); ++n)
+			for (n = 0; n < sizeof (fsc->sc_unalignbuf); ++n)
 				fsc->sc_alignbuf[n] = n | 0x80;
 			dma_cachectl(fsc->sc_alignbuf,
-			    sizeof(fsc->sc_alignbuf));
+			    sizeof(fsc->sc_unalignbuf));
 		}
 		else
 			dma_cachectl(*fsc->sc_dmaaddr, fsc->sc_dmasize);
