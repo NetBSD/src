@@ -1,6 +1,42 @@
-/*	$NetBSD: ps.c,v 1.39 2000/06/07 04:58:01 simonb Exp $	*/
+/*	$NetBSD: ps.c,v 1.40 2000/06/08 13:30:40 simonb Exp $	*/
 
-/*-
+/*
+ * Copyright (c) 2000 The NetBSD Foundation, Inc.
+ * All rights reserved.
+ *
+ * This code is derived from software contributed to The NetBSD Foundation
+ * by Simon Burge.
+ *
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions
+ * are met:
+ * 1. Redistributions of source code must retain the above copyright
+ *    notice, this list of conditions and the following disclaimer.
+ * 2. Redistributions in binary form must reproduce the above copyright
+ *    notice, this list of conditions and the following disclaimer in the
+ *    documentation and/or other materials provided with the distribution.
+ * 3. All advertising materials mentioning features or use of this software
+ *    must display the following acknowledgement:
+ *        This product includes software developed by the NetBSD
+ *        Foundation, Inc. and its contributors.
+ * 4. Neither the name of The NetBSD Foundation nor the names of its
+ *    contributors may be used to endorse or promote products derived
+ *    from this software without specific prior written permission.
+ *
+ * THIS SOFTWARE IS PROVIDED BY THE NETBSD FOUNDATION, INC. AND CONTRIBUTORS
+ * ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
+ * TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
+ * PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL THE FOUNDATION OR CONTRIBUTORS
+ * BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+ * CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
+ * SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+ * INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
+ * CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+ * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+ * POSSIBILITY OF SUCH DAMAGE.
+ */
+
+/*
  * Copyright (c) 1990, 1993, 1994
  *	The Regents of the University of California.  All rights reserved.
  *
@@ -43,7 +79,7 @@ __COPYRIGHT("@(#) Copyright (c) 1990, 1993, 1994\n\
 #if 0
 static char sccsid[] = "@(#)ps.c	8.4 (Berkeley) 4/2/94";
 #else
-__RCSID("$NetBSD: ps.c,v 1.39 2000/06/07 04:58:01 simonb Exp $");
+__RCSID("$NetBSD: ps.c,v 1.40 2000/06/08 13:30:40 simonb Exp $");
 #endif
 #endif /* not lint */
 
@@ -71,6 +107,13 @@ __RCSID("$NetBSD: ps.c,v 1.39 2000/06/07 04:58:01 simonb Exp $");
 #include <unistd.h>
 
 #include "ps.h"
+
+/*
+ * ARGOPTS must contain all option characters that take arguments
+ * (except for 't'!) - it is used in kludge_oldps_options()
+ */
+#define	GETOPTSTR	"acCeghjKLlM:mN:O:o:p:rSTt:U:uvW:wx"
+#define	ARGOPTS		"MNOopUW"
 
 struct kinfo_proc2 *kinfo;
 struct varent *vhead, *vtail;
@@ -133,8 +176,7 @@ main(argc, argv)
 	flag = myuid = getuid();
 	memf = nlistf = swapf = NULL;
 	mode = PRINTMODE;
-	while ((ch = getopt(argc, argv,
-	    "acCeghjKLlM:mN:O:o:p:rSTt:U:uvW:wx")) != -1)
+	while ((ch = getopt(argc, argv, GETOPTSTR)) != -1)
 		switch((char)ch) {
 		case 'a':
 			what = KERN_PROC_ALL;
@@ -478,11 +520,12 @@ kludge_oldps_options(s)
 	 */
 	cp = s + len - 1;
 	/*
-	 * if last letter is a 't' flag with no argument (in the context
-	 * of the oldps options -- option string NOT starting with a '-' --
-	 * then convert to 'T' (meaning *this* terminal, i.e. ttyname(0)).
+	 * if the last letter is a 't' flag and there are no other option
+	 * characters that take arguments (eg U, p, o) in the option
+	 * string and the option string doesn't start with a '-' then
+	 * convert to 'T' (meaning *this* terminal, i.e. ttyname(0)).
 	 */
-	if (*cp == 't' && *s != '-')
+	if (*cp == 't' && *s != '-' && strpbrk(s, ARGOPTS) == NULL)
 		*cp = 'T';
 	else {
 		/*
@@ -504,7 +547,7 @@ kludge_oldps_options(s)
 	     (cp - 1 == s || cp[-2] != 't'))))
 		*ns++ = 'p';
 	/* and append the number */
-	(void)strcpy(ns, cp);		/* XXX strcpy is safe */
+	(void)strcpy(ns, cp);		/* XXX strcpy is safe here */
 
 	return (newopts);
 }
