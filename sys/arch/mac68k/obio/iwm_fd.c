@@ -1,4 +1,4 @@
-/*	$NetBSD: iwm_fd.c,v 1.16 2002/10/02 05:36:39 thorpej Exp $	*/
+/*	$NetBSD: iwm_fd.c,v 1.17 2002/10/02 20:35:28 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998 Hauke Fath.  All rights reserved.
@@ -213,22 +213,7 @@ enum {
  * {device}_cd
  * references all found devices of a type.
  */
-#ifdef _LKM
-
-struct cfdriver iwm_cd = {
-	NULL,			/* Ptr to array of devices found	 */
-	"iwm",			/* Device name string			 */
-	DV_DULL,		/* Device classification		 */
-	0			/* Number of devices found		 */
-};
-struct cfdriver fd_cd = {
-	NULL,
-	"fd",
-	DV_DISK,
-	0
-};
-
-#else /* defined _LKM */
+#ifndef _LKM
 
 extern struct cfdriver iwm_cd;
 extern struct cfdriver fd_cd;
