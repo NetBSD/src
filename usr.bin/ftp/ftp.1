@@ -1,4 +1,4 @@
-.\" 	$NetBSD: ftp.1,v 1.32 1999/01/24 02:39:30 lukem Exp $
+.\" 	$NetBSD: ftp.1,v 1.33 1999/03/07 11:29:59 mycroft Exp $
 .\"
 .\" Copyright (c) 1985, 1989, 1990, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -44,7 +44,7 @@
 .Tn ARPANET
 file transfer program
 .Sh SYNOPSIS
-.Nm
+.Nm ""
 .Op Fl A
 .Op Fl a
 .Op Fl d
@@ -53,27 +53,41 @@ file transfer program
 .Op Fl i
 .Op Fl n
 .Op Fl p
+.Bk -words
 .Op Fl P Ar port
+.Ek
+.Bk -words
 .Op Fl r Ar seconds
+.Ek
 .Op Fl t
 .Op Fl v
 .Op Fl V
+.Bk -words
 .Op Ar host Op Ar port
+.Ek
 .Nm ftp
 .Op Fl f
+.Bk -words
 .Op Fl o Ar output
+.Ek
 file:///\fIfile\fR
 .Nm ftp
 .Op Fl f
+.Bk -words
 .Op Fl o Ar output
+.Ek
 ftp://[\fIuser\fR:\fIpassword\fR@]\fIhost\fR[:\fIport\fR]/\fIfile\fR[/]
 .Nm ftp
 .Op Fl f
+.Bk -words
 .Op Fl o Ar output
+.Ek
 http://\fIhost\fR[:\fIport\fR]/\fIfile\fR
 .Nm ftp
 .Op Fl f
+.Bk -words
 .Op Fl o Ar output
+.Ek
 \fIhost\fR:[/\fIpath\fR/]\fIfile\fR[/]
 .Sh DESCRIPTION
 .Nm

@@ -1,4 +1,4 @@
-.\"	$NetBSD: install.1,v 1.15 1999/02/04 11:56:48 christos Exp $
+.\"	$NetBSD: install.1,v 1.16 1999/03/07 11:30:00 mycroft Exp $
 .\"
 .\" Copyright (c) 1987, 1990, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -40,35 +40,67 @@
 .Nm install
 .Nd install binaries
 .Sh SYNOPSIS
-.Nm
+.Nm ""
 .Op Fl bcps
+.Bk -words
 .Op Fl B Ar suffix
+.Ek
+.Bk -words
 .Op Fl f Ar flags
+.Ek
+.Bk -words
 .Op Fl m Ar mode
+.Ek
+.Bk -words
 .Op Fl o Ar owner
+.Ek
+.Bk -words
 .Op Fl g Ar group
+.Ek
+.Bk -words
 .Op Fl l Ar linkflags
+.Ek
+.Bk -words
 .Op Fl S Ar stripflag
+.Ek
 .Ar file1 file2
 .Nm ""
 .Op Fl bcprs
+.Bk -words
 .Op Fl B Ar suffix
+.Ek
+.Bk -words
 .Op Fl f Ar flags
+.Ek
+.Bk -words
 .Op Fl m Ar mode
+.Ek
+.Bk -words
 .Op Fl o Ar owner
+.Ek
+.Bk -words
 .Op Fl g Ar group
+.Ek
+.Bk -words
 .Op Fl l Ar linkflags
+.Ek
+.Bk -words
 .Op Fl S Ar stripflag
-.Ar file1
-\&...
+.Ek
+.Ar file1 ...\&
 .Ar fileN directory
 .Nm ""
 .Fl pd
+.Bk -words
 .Op Fl m Ar mode
+.Ek
+.Bk -words
 .Op Fl o Ar owner
+.Ek
+.Bk -words
 .Op Fl g Ar group
-.Ar directory
-\&...
+.Ek
+.Ar directory ...\&
 .Sh DESCRIPTION
 The file(s) are moved (copied if the
 .Fl c

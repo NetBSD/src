@@ -1,4 +1,4 @@
-.\"	$NetBSD: ipcrm.1,v 1.3 1997/10/19 03:18:18 lukem Exp $
+.\"	$NetBSD: ipcrm.1,v 1.4 1999/03/07 11:30:00 mycroft Exp $
 .\"
 .\" Copyright (c) 1994 Adam Glass
 .\" All rights reserved.
@@ -23,7 +23,7 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\" 
-.\" $NetBSD: ipcrm.1,v 1.3 1997/10/19 03:18:18 lukem Exp $
+.\" $NetBSD: ipcrm.1,v 1.4 1999/03/07 11:30:00 mycroft Exp $
 .\""
 .Dd August 8th, 1994
 .Dt ipcrm 1
@@ -33,13 +33,25 @@
 .Nd remove the specified message queues, semaphore sets, and shared memory
 segments
 .Sh SYNOPSIS
-.Nm
+.Nm ""
+.Bk -words
 .Op Fl q Ar msqid
+.Ek
+.Bk -words
 .Op Fl m Ar shmid
+.Ek
+.Bk -words
 .Op Fl s Ar semid
+.Ek
+.Bk -words
 .Op Fl Q Ar msgkey
+.Ek
+.Bk -words
 .Op Fl M Ar shmkey
+.Ek
+.Bk -words
 .Op Fl S Ar semkey
+.Ek
 .Ar ...
 .Sh DESCRIPTION
 .Nm

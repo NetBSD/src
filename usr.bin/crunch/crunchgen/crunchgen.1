@@ -1,4 +1,4 @@
-.\"	$NetBSD: crunchgen.1,v 1.7 1998/12/21 13:41:38 mrg Exp $
+.\"	$NetBSD: crunchgen.1,v 1.8 1999/03/07 11:29:58 mycroft Exp $
 .\"
 .\" Copyright (c) 1994 University of Maryland
 .\" All Rights Reserved.
@@ -31,14 +31,26 @@
 .Nm crunchgen
 .Nd generates build environment for a crunched binary
 .Sh SYNOPSIS
-.Nm
+.Nm ""
 .Op Fl fq
+.Bk -words
 .Op Fl m Ar makefile-name
+.Ek
+.Bk -words
 .Op Fl c Ar c-file-name
+.Ek
+.Bk -words
 .Op Fl e Ar exec-file-name
+.Ek
+.Bk -words
 .Op Fl D Ar src-root
+.Ek
+.Bk -words
 .Op Fl L Ar lib-dir
+.Ek
+.Bk -words
 .Op Ar conf-file
+.Ek
 .Sh DESCRIPTION
 A crunched binary is a program made up of many other programs linked
 together into a single executable.  The crunched binary main()
