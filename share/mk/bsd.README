@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.README,v 1.57 2000/01/06 19:09:35 drochner Exp $
+#	$NetBSD: bsd.README,v 1.58 2000/01/08 01:41:13 sommerfeld Exp $
 #	@(#)bsd.README	8.2 (Berkeley) 4/2/94
 
 This is the README file for the new make "include" files for the BSD
@@ -636,10 +636,12 @@ doesn't exist, it looks for "obj".
 Object directories are not created automatically by make(1) if they
 don't exist; you need to run a separate "make obj".  (This will happen
 during a top-level build if "MKOBJDIRS" is set to a value other than
-"no").  When the source directory is a subdirectory of ${BSDSRCDIR},
-object directories are created in a separate object directory tree,
-and a symlink to the object directory in that tree is created in the
-source directory.
+"no").  When the source directory is a subdirectory of ${BSDSRCDIR} --
+and this is determined by a simple string prefix comparison -- object
+directories are created in a separate object directory tree, and a
+symlink to the object directory in that tree is created in the source
+directory; otherwise, "make obj" assumes that you're not in the main
+source tree and that it's not safe to use a separate object tree.
 
 Several variables used by <bsd.obj.mk> control exactly what
 directories and links get created during a "make obj":
