@@ -1,4 +1,4 @@
-/* $NetBSD: sci.c,v 1.36 2004/12/13 02:14:13 chs Exp $ */
+/* $NetBSD: sci.c,v 1.37 2005/03/11 07:08:33 matt Exp $ */
 
 /*-
  * Copyright (C) 1999 T.Horiuchi and SAITOH Masanobu.  All rights reserved.
@@ -100,7 +100,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sci.c,v 1.36 2004/12/13 02:14:13 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sci.c,v 1.37 2005/03/11 07:08:33 matt Exp $");
 
 #include "opt_kgdb.h"
 #include "opt_sci.h"
@@ -336,7 +336,7 @@ sci_putc(unsigned char c)
 {
 
 	/* wait for ready */
-	while ((SHREG_SCSSR & SCSSR_TDRE) == NULL)
+	while ((SHREG_SCSSR & SCSSR_TDRE) == 0)
 		;
 
 	/* write send data to send register */
