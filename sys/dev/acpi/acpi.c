@@ -1,4 +1,4 @@
-/*	$NetBSD: acpi.c,v 1.60 2004/03/30 15:18:55 kochi Exp $	*/
+/*	$NetBSD: acpi.c,v 1.61 2004/03/31 11:19:39 tron Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -77,7 +77,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi.c,v 1.60 2004/03/30 15:18:55 kochi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi.c,v 1.61 2004/03/31 11:19:39 tron Exp $");
 
 #include "opt_acpi.h"
 
@@ -294,7 +294,9 @@ acpi_attach(struct device *parent, struct device *self, void *aux)
 	}
 
 	/* early EC handler initialization if ECDT table is available */
+#if NACPIEC > 0
 	acpiec_early_attach(&sc->sc_dev);
+#endif
 
 	rv = AcpiInitializeObjects(0);
 	if (ACPI_FAILURE(rv)) {
