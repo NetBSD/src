@@ -13,7 +13,7 @@
 /*	The \fBcleanup\fR daemon always performs the following transformations:
 /* .IP \(bu
 /*	Insert missing message headers: (\fBResent-\fR) \fBFrom:\fR,
-/*	\fBMessage-Id:\fR, and \fBDate:\fR.
+/*	\fBTo:\fR, \fBMessage-Id:\fR, and \fBDate:\fR.
 /* .IP \(bu
 /*	Extract envelope recipient addresses from (\fBResent-\fR) \fBTo:\fR,
 /*	\fBCc:\fR and \fBBcc:\fR message headers when no recipients are
@@ -67,6 +67,9 @@
 /*	Address to send a copy of each message that enters the system.
 /* .IP \fBhopcount_limit\fR
 /*	Limit the number of \fBReceived:\fR message headers.
+/* .IP \fBrecipients_witheld_header\fR
+/*	The header line that is inserted when no recipients were
+/*	specified in (Resent-)To: or (Resent-)Cc: message headers.
 /* .SH "Address transformations"
 /* .ad
 /* .fi
@@ -177,6 +180,7 @@ char   *var_empty_addr;			/* destination of bounced bounces */
 int     var_delay_warn_time;		/* delay that triggers warning */
 char   *var_prop_extension;		/* propagate unmatched extension */
 char   *var_always_bcc;
+char   *var_rcpt_witheld;		/* recipients not disclosed */
 
  /*
   * Mappings.
@@ -471,6 +475,7 @@ int     main(int argc, char **argv)
 	VAR_HEADER_CHECKS, DEF_HEADER_CHECKS, &var_header_checks, 0, 0,
 	VAR_PROP_EXTENSION, DEF_PROP_EXTENSION, &var_prop_extension, 0, 0,
 	VAR_ALWAYS_BCC, DEF_ALWAYS_BCC, &var_always_bcc, 0, 0,
+	VAR_RCPT_WITHELD, DEF_RCPT_WITHELD, &var_rcpt_witheld, 1, 0,
 	0,
     };
 
