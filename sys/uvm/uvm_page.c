@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_page.c,v 1.85 2003/04/09 16:34:10 thorpej Exp $	*/
+/*	$NetBSD: uvm_page.c,v 1.86 2003/04/22 14:28:15 yamt Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_page.c,v 1.85 2003/04/09 16:34:10 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_page.c,v 1.86 2003/04/22 14:28:15 yamt Exp $");
 
 #include "opt_uvmhist.h"
 
@@ -174,7 +174,11 @@ uvm_pageinsert(pg)
 	TAILQ_INSERT_TAIL(buck, pg, hashq);
 	simple_unlock(&uvm.hashlock);
 
-	if (UVM_OBJ_IS_AOBJ(uobj)) {
+	if (UVM_OBJ_IS_VTEXT(uobj)) {
+		uvmexp.execpages++;
+	} else if (UVM_OBJ_IS_VNODE(uobj)) {
+		uvmexp.filepages++;
+	} else if (UVM_OBJ_IS_AOBJ(uobj)) {
 		uvmexp.anonpages++;
 	}
 
