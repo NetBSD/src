@@ -1,4 +1,4 @@
- 	$Id: syscalls.master,v 1.11 1994/03/08 23:57:00 cgd Exp $
+ 	$Id: syscalls.master,v 1.12 1994/03/27 08:34:59 cgd Exp $
 ;	from: @(#)syscalls.master	7.26 (Berkeley) 3/25/91
 ; System call name/number master file.
 ; Processed to created init_sysent.c, syscalls.c and syscall.h.
@@ -46,7 +46,7 @@
 16	STD	3 chown
 17	STD	1 obreak break
 18	STD	3 getfsstat
-19	STD	3 lseek
+19	COMPAT	3 lseek
 20	STD	0 getpid
 21	STD	4 mount
 22	STD	2 unmount
@@ -65,9 +65,9 @@
 35	STD	2 fchflags
 36	STD	0 sync
 37	STD	2 kill
-38	STD	2 stat
+38	COMPAT	2 stat
 39	STD	0 getppid
-40	STD	2 lstat
+40	COMPAT	2 lstat
 41	STD	2 dup
 42	STD	0 pipe
 43	STD	0 getegid
@@ -97,7 +97,7 @@
 59	STD	3 execve
 60	STD	1 umask
 61	STD	1 chroot
-62	STD	2 fstat
+62	COMPAT	2 fstat
 63	STD	4 getkerninfo
 64	STD	0 getpagesize
 65	STD	2 msync
@@ -106,7 +106,7 @@
 68	OBSOL	0 vwrite
 69	STD	1 sbrk
 70	STD	1 sstk
-71	STD	6 smmap mmap
+71	COMPAT	7 mmap
 72	STD	1 ovadvise vadvise
 73	STD	2 munmap
 74	STD	3 mprotect
@@ -168,8 +168,8 @@
 126	LIBCOMPAT	2 setreuid
 127	LIBCOMPAT	2 setregid
 128	STD	2 rename
-129	STD	2 truncate
-130	STD	2 ftruncate
+129	COMPAT	2 truncate
+130	COMPAT	2 ftruncate
 131	STD	2 flock
 132	STD	2 mkfifo
 133	STD	6 sendto
@@ -255,20 +255,20 @@
 185	UNIMPL	0 nosys
 186	UNIMPL	0 nosys
 187	UNIMPL	0 nosys
-188	UNIMPL	0 nosys
-189	UNIMPL	0 nosys
-190	UNIMPL	0 nosys
+188	STD	2 stat
+189	STD	2 fstat
+190	STD	2 lstat
 191	UNIMPL	0 nosys
 192	UNIMPL	0 nosys
 193	UNIMPL	0 nosys
 194	UNIMPL	0 nosys
 195	UNIMPL	0 nosys
 196	UNIMPL	0 nosys
-197	UNIMPL	0 nosys
+197	STD	8 smmap mmap
 198	UNIMPL	0 nosys
-199	UNIMPL	0 nosys
-200	UNIMPL	0 nosys
-201	UNIMPL	0 nosys
+199	STD	5 lseek
+200	STD	4 truncate
+201	STD	4 ftruncate
 202	UNIMPL	0 nosys
 203	UNIMPL	0 nosys
 204	UNIMPL	0 nosys
