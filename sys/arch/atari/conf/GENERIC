@@ -1,5 +1,5 @@
 #
-#	$NetBSD: GENERIC,v 1.47 1998/09/02 14:28:58 mrg Exp $
+#	$NetBSD: GENERIC,v 1.48 1998/10/02 12:50:35 leo Exp $
 #
 # Generic atari
 #
@@ -42,12 +42,12 @@ options 	FPU_EMULATE	# Support for MC68881/MC68882 emulator
 #
 #options 	GATEWAY         # packet forwarding
 options 	INET            # IP + ICMP + TCP + UDP
-#options 	MROUTING        # IP multicast routing
-options 	NS              # XNS
+options 	MROUTING        # IP multicast routing
+#options 	NS              # XNS
 #options 	NSIP            # XNS tunneling over IP
-options 	ISO,TPIP        # OSI
-options 	EON             # OSI tunneling over IP
-options 	CCITT,LLC,HDLC  # X.25
+#options 	ISO,TPIP        # OSI
+#options 	EON             # OSI tunneling over IP
+#options 	CCITT,LLC,HDLC  # X.25
 options 	NETATALK        # AppleTalk networking protocols
 #options 	PPP_BSDCOMP     # BSD-Compress compression support for PPP
 #options 	PPP_DEFLATE     # Deflate compression support for PPP
