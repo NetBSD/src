@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.24 1999/12/04 21:21:16 ragge Exp $	*/
+/*	$NetBSD: machdep.c,v 1.25 2000/01/19 02:52:20 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -663,14 +663,14 @@ microtime(tvp)
 	*tvp = time;
 #ifdef notdef
 	tvp->tv_usec += clkread();
-	while (tvp->tv_usec > 1000000) {
+	while (tvp->tv_usec >= 1000000) {
 		tvp->tv_sec++;
 		tvp->tv_usec -= 1000000;
 	}
 #endif
 	if (tvp->tv_sec == lasttime.tv_sec &&
 	    tvp->tv_usec <= lasttime.tv_usec &&
-	    (tvp->tv_usec = lasttime.tv_usec + 1) > 1000000) {
+	    (tvp->tv_usec = lasttime.tv_usec + 1) >= 1000000) {
 		tvp->tv_sec++;
 		tvp->tv_usec -= 1000000;
 	}
