@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.427 2002/02/11 18:51:55 kleink Exp $
+#	$NetBSD: mi,v 1.428 2002/02/12 02:27:59 thorpej Exp $
 ./sys				comp-sysutil-root
 ./usr/bin/addr2line		comp-debug-bin
 ./usr/bin/ar			comp-util-bin
@@ -2350,6 +2350,8 @@
 ./usr/share/man/cat3/pw_scan.0	comp-c-catman
 ./usr/share/man/cat3/pw_setprefix.0	comp-c-catman
 ./usr/share/man/cat3/pwcache.0	comp-c-catman
+./usr/share/man/cat3/pwcache_groupdb.0	comp-c-catman
+./usr/share/man/cat3/pwcache_userdb.0	comp-c-catman
 ./usr/share/man/cat3/qabs.0	comp-c-catman
 ./usr/share/man/cat3/qdiv.0	comp-c-catman
 ./usr/share/man/cat3/qsort.0	comp-c-catman
@@ -4816,6 +4818,8 @@
 ./usr/share/man/man3/pw_scan.3		comp-c-man
 ./usr/share/man/man3/pw_setprefix.3	comp-c-man
 ./usr/share/man/man3/pwcache.3		comp-c-man
+./usr/share/man/man3/pwcache_groupdb.3	comp-c-man
+./usr/share/man/man3/pwcache_userdb.3	comp-c-man
 ./usr/share/man/man3/qabs.3		comp-c-man
 ./usr/share/man/man3/qdiv.3		comp-c-man
 ./usr/share/man/man3/qsort.3		comp-c-man
