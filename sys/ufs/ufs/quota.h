@@ -1,4 +1,4 @@
-/*	$NetBSD: quota.h,v 1.6 1995/03/26 20:38:17 jtc Exp $	*/
+/*	$NetBSD: quota.h,v 1.7 1996/09/28 19:07:06 christos Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1993
@@ -208,6 +208,10 @@ __BEGIN_DECLS
 void	chkdquot __P((struct inode *));
 __END_DECLS
 #endif
+#else
+__BEGIN_DECLS
+int quotactl __P((const char *, int , int, void *));
+__END_DECLS
 #endif /* _KERNEL */
 
 #endif /* _QUOTA_ */
