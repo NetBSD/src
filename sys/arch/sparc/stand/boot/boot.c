@@ -1,4 +1,4 @@
-/*	$NetBSD: boot.c,v 1.9 1999/11/08 23:29:56 pk Exp $ */
+/*	$NetBSD: boot.c,v 1.10 2001/06/21 03:13:05 uwe Exp $ */
 
 /*-
  * Copyright (c) 1982, 1986, 1990, 1993
@@ -47,6 +47,8 @@
 
 #include "bootinfo.h"
 
+extern void	prom_patch __P((void));	/* prompatch.c */
+
 static int	bootoptions __P((char *));
 #if 0
 static void	promsyms __P((int, struct exec *));
@@ -63,7 +65,6 @@ char			fbuf[80], dbuf[128];
 
 int	main __P((void));
 typedef void (*entry_t)__P((caddr_t, int, int, int, long, long));
-
 
 /*
  * Boot device is derived from ROM provided information, or if there is none,
@@ -133,6 +134,9 @@ main()
 
 	printf(">> %s, Revision %s\n", bootprog_name, bootprog_rev);
 	printf(">> (%s, %s)\n", bootprog_maker, bootprog_date);
+
+	/* massage machine prom */
+	prom_patch();
 
 	/*
 	 * get default kernel.
