@@ -1,4 +1,4 @@
-# $NetBSD: md.cats,v 1.1 2002/08/04 00:04:33 chris Exp $
+# $NetBSD: md.cats,v 1.2 2003/08/26 04:50:22 lukem Exp $
 ./usr/X11R6/bin/X
 ./usr/X11R6/bin/XFree86
 ./usr/X11R6/bin/Xnest
@@ -50,8 +50,6 @@
 ./usr/X11R6/lib/X11/etc/sun.termcap
 ./usr/X11R6/lib/X11/etc/sun.terminfo
 ./usr/X11R6/lib/X11/etc/xmodmap.std
-./usr/X11R6/lib/X11/etc/xterm.termcap
-./usr/X11R6/lib/X11/etc/xterm.terminfo
 ./usr/X11R6/lib/libXxf86dga.a
 ./usr/X11R6/lib/libXxf86misc.a
 ./usr/X11R6/lib/libXxf86vm.a
