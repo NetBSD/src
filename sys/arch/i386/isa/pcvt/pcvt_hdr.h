@@ -99,9 +99,11 @@
 #else
 #include <i386/isa/isavar.h>
 #endif
-
-#include <i386/cpufunc.h>
+#include <machine/cpufunc.h>
+#else
 #include <i386/isa/isa_device.h>
+#endif
+
 #include <i386/isa/icu.h>
 
 #if PCVT_NETBSD > 100
