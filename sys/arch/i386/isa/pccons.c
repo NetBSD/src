@@ -1,4 +1,4 @@
-/*	$NetBSD: pccons.c,v 1.124 1998/04/02 02:46:02 cgd Exp $	*/
+/*	$NetBSD: pccons.c,v 1.125 1998/04/17 13:09:23 drochner Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994, 1995 Charles Hannum.  All rights reserved.
@@ -81,7 +81,8 @@
 #include <dev/isa/isareg.h>
 #include <dev/isa/isavar.h>
 #include <i386/isa/isa_machdep.h>
-#include <i386/isa/kbdreg.h>
+#include <dev/ic/i8042reg.h>
+#include <dev/pckbc/pckbdreg.h>
 
 #define	XFREE86_BUG_COMPAT
 
@@ -2408,7 +2409,7 @@ strans(dt)
 #endif /* XSERVER */
 
 	switch (dt) {
-	case KBR_EXTENDED:
+	case KBR_EXTENDED0:
 		extended = 1;
 		return (0);
 	}
