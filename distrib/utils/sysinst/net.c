@@ -1,4 +1,4 @@
-/*	$NetBSD: net.c,v 1.81 2003/01/10 20:00:28 christos Exp $	*/
+/*	$NetBSD: net.c,v 1.82 2003/02/10 02:24:27 shin Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -857,7 +857,7 @@ mnt_net_config(void)
 	if (*ans != 'y')
 		return;
 
-	/* Write hostname to /etc/rc.cofn */
+	/* Write hostname to /etc/rc.conf */
 	if ((net_dhcpconf & DHCPCONF_HOST) == 0)
 		add_rc_conf("hostname=%s\n", net_host);
 
