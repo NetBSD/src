@@ -1,4 +1,4 @@
-/*	$NetBSD: in6.h,v 1.36 2002/05/13 14:15:34 kleink Exp $	*/
+/*	$NetBSD: in6.h,v 1.37 2002/05/13 14:25:13 kleink Exp $	*/
 /*	$KAME: in6.h,v 1.83 2001/03/29 02:55:07 jinmei Exp $	*/
 
 /*
@@ -108,11 +108,13 @@
  * The range is IPPORT_RESERVEDMIN to IPPORT_RESERVEDMAX.
  */
 
+#if !defined(_POSIX_C_SOURCE) && !defined(_XOPEN_SOURCE)
 #define	IPV6PORT_RESERVED	1024
 #define	IPV6PORT_ANONMIN	49152
 #define	IPV6PORT_ANONMAX	65535
 #define	IPV6PORT_RESERVEDMIN	600
 #define	IPV6PORT_RESERVEDMAX	(IPV6PORT_RESERVED-1)
+#endif
 
 /*
  * IPv6 address
