@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.332 1998/11/01 09:51:09 lukem Exp $	*/
+/*	$NetBSD: machdep.c,v 1.333 1998/12/13 19:31:27 christos Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -83,6 +83,7 @@
 #include "opt_pmap_new.h"
 #include "opt_compat_netbsd.h"
 #include "opt_cpureset_delay.h"
+#include "opt_compat_svr4.h"
 #include "opt_sysv.h"
 
 #include <sys/param.h>
@@ -1805,6 +1806,9 @@ typedef void (vector) __P((void));
 extern vector IDTVEC(syscall);
 extern vector IDTVEC(osyscall);
 extern vector *IDTVEC(exceptions)[];
+#ifdef COMPAT_SVR4
+extern vector IDTVEC(svr4_fasttrap);
+#endif /* COMPAT_SVR4 */
 
 void
 init386(first_avail)
@@ -1946,6 +1950,10 @@ init386(first_avail)
 
 	/* new-style interrupt gate for syscalls */
 	setgate(&idt[128].gd, &IDTVEC(syscall), 0, SDT_SYS386TGT, SEL_UPL);
+#ifdef COMPAT_SVR4
+	setgate(&idt[0xd2].gd, &IDTVEC(svr4_fasttrap), 0, SDT_SYS386TGT,
+	    SEL_UPL);
+#endif /* COMPAT_SVR4 */
 
 	setregion(&region, gdt, NGDT * sizeof(gdt[0]) - 1);
 	lgdt(&region);

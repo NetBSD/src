@@ -1,4 +1,4 @@
-/*	$NetBSD: svr4_machdep.c,v 1.40 1998/12/13 18:07:27 christos Exp $	 */
+/*	$NetBSD: svr4_machdep.c,v 1.41 1998/12/13 19:31:27 christos Exp $	 */
 
 /*-
  * Copyright (c) 1994 The NetBSD Foundation, Inc.
@@ -72,8 +72,11 @@
 #include <machine/svr4_machdep.h>
 
 static void svr4_getsiginfo __P((union svr4_siginfo *, int, u_long, caddr_t));
+void svr4_fasttrap __P((struct trapframe));
+
 #ifdef DEBUG_SVR4
 static void svr4_printcontext __P((const char *, struct svr4_ucontext *));
+
 
 static void
 svr4_printcontext(fun, uc)
@@ -543,5 +546,56 @@ svr4_sys_sysarch(p, v, retval)
 		printf("svr4_sysarch(%d), a1 %p\n", SCARG(uap, op),
 		       SCARG(uap, a1));
 		return 0;
+	}
+}
+
+/*
+ * Fast syscall gate trap...
+ */
+void
+svr4_fasttrap(frame)
+	struct trapframe frame;
+{
+	extern struct emul emul_svr4;
+	struct proc *p = curproc;
+
+	p->p_md.md_regs = &frame;
+
+	if (p->p_emul != &emul_svr4) {
+		trapsignal(p, SIGBUS, 0);
+		return;
+	}
+
+	switch (frame.tf_eax) {
+	case SVR4_TRAP_GETHRTIME:
+		/*
+		 * this list like gethrtime(3). To implement this
+		 * correctly we need a timer that does not get affected
+		 * adjtime(), or settimeofday(). For now we use
+		 * microtime, and convert to nanoseconds...
+		 */
+		/*FALLTHROUGH*/
+	case SVR4_TRAP_GETHRVTIME:
+		/*
+		 * This is like gethrvtime(3). Since we don't have lwp
+		 * we massage microtime() output
+		 */
+		{
+			struct timeval  tv;
+
+			microtime(&tv);
+			frame.tf_eax = tv.tv_sec;
+			frame.tf_edx = tv.tv_usec * 1000;
+		}
+		break;
+
+	case SVR4_TRAP_CLOCK_SETTIME:
+		uprintf("unimplemented svr4 fast trap CLOCK_SETTIME\n");
+		break;
+
+	default:
+		uprintf("unknown svr4 fast trap %d\n",
+		    frame.tf_eax);
+		break;
 	}
 }

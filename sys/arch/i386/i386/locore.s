@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.204 1998/12/01 04:31:00 thorpej Exp $	*/
+/*	$NetBSD: locore.s,v 1.205 1998/12/13 19:31:26 christos Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -2441,6 +2441,25 @@ syscall1:
 	jmp	2b
 4:	.asciz	"WARNING: SPL NOT LOWERED ON SYSCALL EXIT\n"
 #endif /* DIAGNOSTIC */
+
+#ifdef COMPAT_SVR4
+IDTVEC(svr4_fasttrap)
+	pushl	$2		# size of instruction for restart
+	pushl	$T_ASTFLT	# trap # for doing ASTs
+	INTRENTRY
+	call	_C_LABEL(svr4_fasttrap)
+2:	/* Check for ASTs on exit to user mode. */
+	cli
+	cmpb	$0,_C_LABEL(astpending)
+	je	1f
+	/* Always returning to user mode here. */
+	movb	$0,_C_LABEL(astpending)
+	sti
+	/* Pushed T_ASTFLT into tf_trapno on entry. */
+	call	_C_LABEL(trap)
+	jmp	2b
+1:	INTRFASTEXIT
+#endif /* COMPAT_SVR4 */
 
 #include <i386/isa/vector.s>
 #include <i386/isa/icu.s>
