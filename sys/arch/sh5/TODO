@@ -1,4 +1,4 @@
-$NetBSD: TODO,v 1.6 2002/10/19 11:13:11 scw Exp $
+$NetBSD: TODO,v 1.7 2002/10/22 13:11:06 scw Exp $
 
 TODO List For NetBSD/sh5
 ~~~~~~~~~~~~~~~~~~~~~~~~
@@ -69,7 +69,7 @@ DONE.	Test the whole lot using a 64-bit kernel/userland.
 
 12.	Support for nathan_sa when the branch is merged.
 
-13.	In the pmap, we should clear the Referenced bit in the PTE (after
+DONE.	In the pmap, we should clear the Referenced bit in the PTE (after
 	saving its value in the mdpg_attrs/pvo, if it's a managed page)
 	after purging the mapping from the cache. Right now, there are
 	some cases where the cache can be purged several times for the
