@@ -1,4 +1,4 @@
-/*	$NetBSD: gettext.c,v 1.9 2001/02/16 07:20:35 minoura Exp $	*/
+/*	$NetBSD: gettext.c,v 1.10 2001/09/27 15:29:06 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2001 Citrus Project,
@@ -24,11 +24,13 @@
  * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
+ *
+ * $Citrus: xpg4dl/FreeBSD/lib/libintl/gettext.c,v 1.31 2001/09/27 15:18:45 yamt Exp $
  */
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: gettext.c,v 1.9 2001/02/16 07:20:35 minoura Exp $");
+__RCSID("$NetBSD: gettext.c,v 1.10 2001/09/27 15:29:06 yamt Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include <sys/types.h>
@@ -53,7 +55,7 @@ __RCSID("$NetBSD: gettext.c,v 1.9 2001/02/16 07:20:35 minoura Exp $");
 static const char *lookup_category __P((int));
 static const char *split_locale __P((const char *));
 static const char *lookup_mofile __P((char *, size_t, const char *,
-	char *, const char *, const char *, struct domainbinding *));
+	const char *, const char *, const char *, struct domainbinding *));
 static u_int32_t flip __P((u_int32_t, u_int32_t));
 static int validate __P((void *, struct mohandle *));
 static int mapit __P((const char *, struct domainbinding *));
@@ -61,6 +63,7 @@ static int unmapit __P((struct domainbinding *));
 static const char *lookup_hash __P((const char *, struct domainbinding *));
 static const char *lookup_bsearch __P((const char *, struct domainbinding *));
 static const char *lookup __P((const char *, struct domainbinding *));
+static const char *get_lang_env(const char *);
 
 /*
  * shortcut functions.  the main implementation resides in dcngettext().
@@ -220,15 +223,17 @@ lookup_mofile(buf, len, dir, lpath, category, domainname, db)
 	char *buf;
 	size_t len;
 	const char *dir;
-	char *lpath;	/* list of locales to be tried */
+	const char *lpath;	/* list of locales to be tried */
 	const char *category;
 	const char *domainname;
 	struct domainbinding *db;
 {
 	struct stat st;
 	char *p, *q;
+	char lpath_tmp[BUFSIZ];
 
-	q = lpath;
+	strlcpy(lpath_tmp, lpath, sizeof(lpath_tmp));
+	q = lpath_tmp;
 	/* CONSTCOND */
 	while (1) {
 		p = strsep(&q, ":");
@@ -519,6 +524,28 @@ lookup(msgid, db)
 	return lookup_bsearch(msgid, db);
 }
 
+static const char *get_lang_env(const char *category_name)
+{
+	const char *lang;
+
+	/* 1. see LANGUAGE variable first. */
+	lang = getenv("LANGUAGE");
+	if (lang)
+		return lang;
+
+	/* 2. if LANGUAGE isn't set, see LC_ALL, LC_xxx, LANG. */
+	lang = getenv(category_name);
+	if (!lang)
+		lang = getenv("LC_ALL");
+	if (!lang)
+		lang = getenv("LANG");
+
+	if (!lang)
+		return 0; /* error */
+
+	return split_locale(lang);
+}
+
 char *
 dcngettext(domainname, msgid1, msgid2, n, category)
 	const char *domainname;
@@ -529,10 +556,8 @@ dcngettext(domainname, msgid1, msgid2, n, category)
 {
 	const char *msgid;
 	char path[PATH_MAX];
-	static char lpath[PATH_MAX];
+	const char *lpath;
 	static char olpath[PATH_MAX];
-	const char *locale;
-	const char *language;
 	const char *cname = NULL;
 	const char *v;
 	static char *ocname = NULL;
@@ -549,25 +574,10 @@ dcngettext(domainname, msgid1, msgid2, n, category)
 	if (!domainname || !cname)
 		goto fail;
 
-	language = getenv("LANGUAGE");
-	locale = setlocale(LC_MESSAGES, NULL);	/*XXX*/
-	if (locale)
-		locale = split_locale(locale);
-	if (language && locale) {
-		if (strlen(language) + strlen(locale) + 2 > sizeof(lpath))
-			goto fail;
-		snprintf(lpath, sizeof(lpath), "%s:%s", language, locale);
-	} else if (language) {
-		if (strlen(language) + 1 > sizeof(lpath))
-			goto fail;
-		strlcpy(lpath, language, sizeof(lpath));
-	} else if (locale) {
-		if (strlen(locale) + 1 > sizeof(lpath))
-			goto fail;
-		strlcpy(lpath, locale, sizeof(lpath));
-	} else
+	lpath = get_lang_env(cname);
+	if (!lpath)
 		goto fail;
-
+	
 	for (db = __bindings; db; db = db->next)
 		if (strcmp(db->domainname, domainname) == 0)
 			break;
@@ -600,10 +610,9 @@ dcngettext(domainname, msgid1, msgid2, n, category)
 		if (ocname)
 			free(ocname);
 		odomainname = ocname = NULL;
-		goto fail;
 	}
-
-	strlcpy(olpath, lpath, sizeof(olpath));
+	else
+		strlcpy(olpath, lpath, sizeof(olpath));
 
 found:
 	v = lookup(msgid, db);
