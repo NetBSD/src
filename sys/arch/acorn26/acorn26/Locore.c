@@ -1,4 +1,4 @@
-/*	$NetBSD: Locore.c,v 1.3.2.3 2002/10/18 02:33:23 nathanw Exp $	*/
+/*	$NetBSD: Locore.c,v 1.3.2.4 2002/12/03 05:03:21 gmcgarry Exp $	*/
 
 /*
  * Copyright (c) 2000 Ben Harris.
@@ -41,7 +41,7 @@
 
 #include <sys/param.h>
 
-__RCSID("$NetBSD: Locore.c,v 1.3.2.3 2002/10/18 02:33:23 nathanw Exp $");
+__RCSID("$NetBSD: Locore.c,v 1.3.2.4 2002/12/03 05:03:21 gmcgarry Exp $");
 
 #include <sys/proc.h>
 #include <sys/sched.h>
@@ -128,7 +128,7 @@ extern int want_resched; /* XXX should be in <machine/cpu.h> */
 /*
  * Find the highest-priority runnable process and switch to it.
  */
-void
+int
 cpu_switch(struct lwp *l1, struct lwp *newl)
 {
 	int which;
@@ -169,7 +169,7 @@ cpu_switch(struct lwp *l1, struct lwp *newl)
 	/* Check for Restartable Atomic Sequences. */
 	p2 = l2->l_proc;
 	if (p2->p_nras != 0) {
-		struct trapframe *tf = p2->p_addr->u_pcb.pcb_tf;
+		struct trapframe *tf = l2->l_addr->u_pcb.pcb_tf;
 		caddr_t pc;
 
 		pc = ras_lookup(p2, (caddr_t) tf->tf_pc);
