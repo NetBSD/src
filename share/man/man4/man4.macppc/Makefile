@@ -1,6 +1,6 @@
-#	$NetBSD: Makefile,v 1.1 2001/04/06 10:47:20 wiz Exp $
+#	$NetBSD: Makefile,v 1.2 2001/04/09 20:55:11 wiz Exp $
 
-MAN=		intro.4
+MAN=		autoconf.4 intro.4
 
 MANSUBDIR=	/macppc
 
