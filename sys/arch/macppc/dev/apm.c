@@ -1,4 +1,4 @@
-/*	$NetBSD: apm.c,v 1.10 2004/04/15 11:03:15 aymeric Exp $	*/
+/*	$NetBSD: apm.c,v 1.11 2005/02/01 02:03:01 briggs Exp $	*/
 /*	$OpenBSD: apm.c,v 1.5 2002/06/07 07:13:59 miod Exp $	*/
 
 /*-
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: apm.c,v 1.10 2004/04/15 11:03:15 aymeric Exp $");
+__KERNEL_RCSID(0, "$NetBSD: apm.c,v 1.11 2005/02/01 02:03:01 briggs Exp $");
 
 #include "apm.h"
 
@@ -68,7 +68,6 @@ __KERNEL_RCSID(0, "$NetBSD: apm.c,v 1.10 2004/04/15 11:03:15 aymeric Exp $");
 #include <machine/apmvar.h>
 
 #include <macppc/dev/adbvar.h>
-#include <macppc/dev/adb_direct.h>
 #include <macppc/dev/pm_direct.h>
 
 #if defined(APMDEBUG)
