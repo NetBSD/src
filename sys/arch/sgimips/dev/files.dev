@@ -1,6 +1,10 @@
-#	$NetBSD: files.dev,v 1.1 2004/01/18 04:07:17 sekiya Exp $
+#	$NetBSD: files.dev,v 1.2 2004/01/19 00:12:31 sekiya Exp $
 
 define giobus {}
+
+device int
+attach int at mainbus
+file arch/sgimips/dev/int.c		int
 
 device imc: giobus, eisabus
 attach imc at mainbus
