@@ -1,4 +1,4 @@
-/*	$NetBSD: print-sll.c,v 1.2 2001/06/25 20:00:00 itojun Exp $	*/
+/*	$NetBSD: print-sll.c,v 1.3 2002/02/18 09:37:09 itojun Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1991, 1992, 1993, 1994, 1995, 1996, 1997
@@ -24,9 +24,9 @@
 #ifndef lint
 #if 0
 static const char rcsid[] =
-    "@(#) Header: /tcpdump/master/tcpdump/print-sll.c,v 1.5 2001/06/08 04:48:23 guy Exp (LBL)";
+    "@(#) Header: /tcpdump/master/tcpdump/print-sll.c,v 1.6 2001/07/05 18:54:18 guy Exp (LBL)";
 #else
-__RCSID("$NetBSD: print-sll.c,v 1.2 2001/06/25 20:00:00 itojun Exp $");
+__RCSID("$NetBSD: print-sll.c,v 1.3 2002/02/18 09:37:09 itojun Exp $");
 #endif
 #endif
 
@@ -117,6 +117,7 @@ sll_if_print(u_char *user, const struct pcap_pkthdr *h, const u_char *p)
 	u_short ether_type;
 	u_short extracted_ethertype;
 
+	++infodelay;
 	ts_print(&h->ts);
 
 	if (caplen < SLL_HDR_LEN) {
@@ -246,4 +247,7 @@ sll_if_print(u_char *user, const struct pcap_pkthdr *h, const u_char *p)
 		default_print(p, caplen);
  out:
 	putchar('\n');
+	--infodelay;
+	if (infoprint)
+		info(0);
 }
