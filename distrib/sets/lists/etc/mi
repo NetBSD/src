@@ -2,7 +2,6 @@
 ./.profile
 ./dev/MAKEDEV.local
 ./etc/aliases
-./etc/aliases.db
 ./etc/bootptab
 ./etc/changelist
 ./etc/csh.cshrc
