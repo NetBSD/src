@@ -1,6 +1,6 @@
-#	$NetBSD: Makefile,v 1.2 2000/06/08 17:39:44 matt Exp $
+#	$NetBSD: Makefile,v 1.3 2000/06/12 23:02:45 matt Exp $
 
-#	$NetBSD: Makefile,v 1.2 2000/06/08 17:39:44 matt Exp $
+#	$NetBSD: Makefile,v 1.3 2000/06/12 23:02:45 matt Exp $
 
 .include <bsd.own.mk>		# Use /etc/mk.conf.
 
@@ -22,5 +22,6 @@ BOOTOBJ != cd ${.CURDIR}/../../sys/arch/macppc/stand/ofwboot; make print-objdir
 
 release:
 	${IINST} ${BOOTOBJ}/ofwboot.elf ${ITARGET}/
+	${IINST} ${BOOTOBJ}/ofwboot.xcf ${ITARGET}/
 	${IINST} ${INSTKERNOBJ}/netbsd.ram.gz ${ITARGET}/netbsd.ram.gz
 .endif
