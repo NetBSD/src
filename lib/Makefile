@@ -1,9 +1,9 @@
-#	$NetBSD: Makefile,v 1.48 1998/09/05 14:48:39 lukem Exp $
+#	$NetBSD: Makefile,v 1.49 1998/09/14 06:39:53 ross Exp $
 #	from: @(#)Makefile	5.25.1.1 (Berkeley) 5/7/91
 
 .include <bsd.own.mk>			# for EXPORTABLE_SYSTEM definition
 
-SUBDIR=	csu libarch libc libcompat libcrypt libcurses libedit libkvm \
+SUBDIR=	csu libarch libbz2 libc libcompat libcrypt libcurses libedit libkvm \
 	libl libm libntp libossaudio libpcap libposix libresolv librmt \
 	librpcsvc libskey libterm libutil libwrap liby libz
 
