@@ -1,4 +1,4 @@
-/*	$NetBSD: proc.h,v 1.1 1996/09/30 16:34:31 ws Exp $	*/
+/*	$NetBSD: proc.h,v 1.2 1997/04/16 22:57:48 thorpej Exp $	*/
 
 /*-
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -35,5 +35,5 @@
  * Machine-dependent part of the proc structure
  */
 struct mdproc {
-	int dummy;
+	int md_regs;
 };
