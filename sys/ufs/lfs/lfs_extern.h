@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_extern.h,v 1.39 2003/02/17 23:48:18 perseant Exp $	*/
+/*	$NetBSD: lfs_extern.h,v 1.40 2003/02/18 02:00:08 perseant Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003 The NetBSD Foundation, Inc.
@@ -192,6 +192,7 @@ void lfs_segunlock(struct lfs *);
 int lfs_fastvget(struct mount *, ino_t, daddr_t, struct vnode **, struct dinode *);
 struct buf *lfs_fakebuf(struct lfs *, struct vnode *, int, size_t, caddr_t);
 int lfs_do_segclean(struct lfs *, unsigned long);
+void lfs_fakebuf_iodone(struct buf *);
 
 /* lfs_vfsops.c */
 void lfs_init(void);

@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_syscalls.c,v 1.80 2003/02/17 23:48:20 perseant Exp $	*/
+/*	$NetBSD: lfs_syscalls.c,v 1.81 2003/02/18 02:00:08 perseant Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003 The NetBSD Foundation, Inc.
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_syscalls.c,v 1.80 2003/02/17 23:48:20 perseant Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_syscalls.c,v 1.81 2003/02/18 02:00:08 perseant Exp $");
 
 #define LFS		/* for prototypes in syscallargs.h */
 
@@ -128,7 +128,6 @@ extern TAILQ_HEAD(bqueues, buf) bufqueues[BQUEUES];
 
 static int lfs_bmapv(struct proc *, fsid_t *, BLOCK_INFO *, int);
 static int lfs_markv(struct proc *, fsid_t *, BLOCK_INFO *, int);
-static void lfs_fakebuf_iodone(struct buf *);
 
 /*
  * sys_lfs_markv:
@@ -1222,7 +1221,7 @@ lfs_fastvget(struct mount *mp, ino_t ino, daddr_t daddr, struct vnode **vpp, str
 	return (0);
 }
 
-static void
+void
 lfs_fakebuf_iodone(struct buf *bp)
 {
 	struct buf *obp = bp->b_saveaddr;
