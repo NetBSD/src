@@ -1,4 +1,4 @@
-#	$NetBSD: GENERIC,v 1.4 2001/07/08 17:02:36 uch Exp $
+#	$NetBSD: GENERIC,v 1.5 2001/07/13 16:27:48 uch Exp $
 #
 #	GENERIC kernel for SH3+HD64461 based machines.
 #
@@ -107,6 +107,8 @@ wi*	at pcmcia0 function ?		# Lucent WaveLan IEEE (802.11)
 mhzc*	at pcmcia0 function ?		# Megahertz Ethernet/Modem combo cards
 com*	at mhzc?
 sm*	at mhzc?
+
+ukphy*	at mii? phy ?			# generic unknown PHYs
 
 # PCMCIA SCSI interfaces
 aic*	at pcmcia0 function ?		# Adaptec APA-1460 SCSI
