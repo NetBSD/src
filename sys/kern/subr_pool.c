@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_pool.c,v 1.66 2002/03/08 20:48:41 thorpej Exp $	*/
+/*	$NetBSD: subr_pool.c,v 1.67 2002/03/08 20:51:26 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1999, 2000 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_pool.c,v 1.66 2002/03/08 20:48:41 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_pool.c,v 1.67 2002/03/08 20:51:26 thorpej Exp $");
 
 #include "opt_pool.h"
 #include "opt_poollog.h"
@@ -594,9 +594,6 @@ pool_destroy(struct pool *pp)
 	if ((pp->pr_roflags & PR_LOGGING) != 0)
 		free(pp->pr_log, M_TEMP);
 #endif
-
-	if (pp->pr_roflags & PR_FREEHEADER)
-		free(pp, M_POOL);
 }
 
 static __inline struct pool_item_header *
