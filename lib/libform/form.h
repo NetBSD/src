@@ -1,4 +1,4 @@
-/*	$NetBSD: form.h,v 1.15 2001/07/18 12:27:53 blymn Exp $	*/
+/*	$NetBSD: form.h,v 1.16 2002/05/20 15:00:11 blymn Exp $	*/
 
 /*-
  * Copyright (c) 1998-1999 Brett Lymn
@@ -205,6 +205,8 @@ struct _form_field {
 	unsigned int start_char; /* starting char in string (horiz scroll) */
 	unsigned int start_line; /* starting line in field (vert scroll) */
 	unsigned int row_count; /* number of rows actually used in field */
+	unsigned int row_xpos; /* char offset of cursor in field, not same
+				  as cursor_xpos due to tab expansion */
 	unsigned int cursor_xpos; /* x pos of cursor in field */
 	unsigned int cursor_ypos; /* y pos of cursor in field */
 	short page_break; /* start of a new page on the form if 1 */

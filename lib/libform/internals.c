@@ -1,4 +1,4 @@
-/*	$NetBSD: internals.c,v 1.22 2001/08/05 01:51:23 blymn Exp $	*/
+/*	$NetBSD: internals.c,v 1.23 2002/05/20 15:00:11 blymn Exp $	*/
 
 /*-
  * Copyright (c) 1998-1999 Brett Lymn
@@ -44,6 +44,23 @@
  *  the form is first posted.
  */
 FILE *dbg = NULL;
+
+/*
+ * map the request numbers to strings for debug
+ */
+char *reqs[] = {
+	"NEXT_PAGE", "PREV_PAGE", "FIRST_PAGE",	"LAST_PAGE", "NEXT_FIELD",
+	"PREV_FIELD", "FIRST_FIELD", "LAST_FIELD", "SNEXT_FIELD",
+	"SPREV_FIELD", "SFIRST_FIELD", "SLAST_FIELD", "LEFT_FIELD",
+	"RIGHT_FIELD", "UP_FIELD", "DOWN_FIELD", "NEXT_CHAR", "PREV_CHAR",
+	"NEXT_LINE", "PREV_LINE", "NEXT_WORD", "PREV_WORD", "BEG_FIELD",
+	"END_FIELD", "BEG_LINE", "END_LINE", "LEFT_CHAR", "RIGHT_CHAR",
+	"UP_CHAR", "DOWN_CHAR", "NEW_LINE", "INS_CHAR", "INS_LINE",
+	"DEL_CHAR", "DEL_PREV", "DEL_LINE", "DEL_WORD", "CLR_EOL",
+	"CLR_EOF", "CLR_FIELD", "OVL_MODE", "INS_MODE", "SCR_FLINE",
+	"SCR_BLINE", "SCR_FPAGE", "SCR_BPAGE", "SCR_FHPAGE", "SCR_BHPAGE",
+	"SCR_FCHAR", "SCR_BCHAR", "SCR_HFLINE", "SCR_HBLINE", "SCR_HFHALF",
+	"SCR_HBHALF", "VALIDATION", "PREV_CHOICE", "NEXT_CHOICE" };
 #endif
 
 /* define our own min function - this is not generic but will do here
@@ -85,6 +102,14 @@ static void
 bump_lines(FIELD *field, int pos, int amt, bool do_len);
 static bool
 check_field_size(FIELD *field);
+static int
+add_tab(FORM *form, FIELD *field, unsigned row, unsigned int i, char c);
+static int
+tab_size(FIELD *field, unsigned int offset, unsigned int i);
+static unsigned int
+tab_fit_len(FIELD *field, unsigned int row, unsigned int len);
+static int
+tab_fit_window(FIELD *field, unsigned int pos, unsigned int window);
 
 
 /*
@@ -115,7 +140,7 @@ _formi_create_dbg_file(void)
 static void
 bump_lines(FIELD *field, int pos, int amt, bool do_len)
 {
-	int i, row;
+	int i, row, old_len;
 #ifdef DEBUG
 	int dbg_ok = FALSE;
 #endif
@@ -139,16 +164,32 @@ bump_lines(FIELD *field, int pos, int amt, bool do_len)
 		
 	if (((int)field->lines[row].length + amt) < 0) {
 		field->lines[row].length = 0;
-		field->lines[row].end = 0;
+		old_len = 0;
 	} else {
-		if (do_len == TRUE)
-			field->lines[row].length += amt;
+		old_len = field->lines[row].length;
+		if (do_len == TRUE) {
+			field->lines[row].length =
+				_formi_tab_expanded_length(
+					&field->buffers[0].string[
+						field->lines[row].start], 0,
+					field->lines[row].end + amt
+					    -field->lines[row].start);
+		}
 	}
 	
-	if (field->lines[row].length > 1)
-		field->lines[row].end += amt;
-	else
+	if (old_len > 0) {
+		if ((amt < 0) && (- amt > field->lines[row].end))
+			field->lines[row].end = field->lines[row].start;
+		else
+			field->lines[row].end += amt;
+	} else
 		field->lines[row].end = field->lines[row].start;
+
+#ifdef DEBUG
+	if (dbg_ok)
+		fprintf(dbg, "bump_lines: expanded length %d\n",
+			field->lines[row].length);
+#endif
 	
 	for (i = row + 1; i < field->row_count; i++) {
 #ifdef DEBUG
@@ -164,6 +205,16 @@ bump_lines(FIELD *field, int pos, int amt, bool do_len)
 #endif
 		field->lines[i].start += amt;
 		field->lines[i].end += amt;
+		field->lines[i].length = _formi_tab_expanded_length(
+			&field->buffers[0].string[field->lines[i].start],
+			0, field->lines[i].end - field->lines[i].start);
+#ifdef DEBUG
+		if (dbg_ok) {
+			fprintf(dbg,
+				"bump_lines: row %d, expanded length %d\n",
+				i, field->lines[i].length);
+		}
+#endif
 	}
 }
 
@@ -192,7 +243,7 @@ check_field_size(FIELD *field)
 		}
 	} else {
 		if ((field->rows + field->nrows) == 1) {
-			return (field->buffers[0].length < field->cols);
+			return (field->buffers[0].length <= field->cols);
 		} else {
 			return (field->row_count <= (field->rows
 						     + field->nrows));
@@ -302,6 +353,10 @@ find_cur_line(FIELD *cur, unsigned pos)
 {
 	unsigned row;
 
+	  /* if there is only one row then that must be it */
+	if (cur->row_count == 1)
+		return 0;
+	
 	  /* first check if pos is at the end of the string, if this
 	   * is true then just return the last row since the pos may
 	   * not have been added to the lines array yet.
@@ -338,10 +393,6 @@ _formi_wrap_field(FIELD *field, unsigned int loc)
 	
 	str = field->buffers[0].string;
 
-	  /* Don't bother if the field string is too short. */
-	if (field->buffers[0].length < field->cols)
-		return E_OK;
-	
 	if ((field->opts & O_STATIC) == O_STATIC) {
 		if ((field->rows + field->nrows) == 1) {
 			return E_OK; /* cannot wrap a single line */
@@ -408,10 +459,20 @@ _formi_wrap_field(FIELD *field, unsigned int loc)
 					return E_REQUEST_DENIED;
 			}
 			
-			  /* split on first whitespace before current word */
-			pos = width + field->lines[row].start - 1;
-			if (pos >= field->buffers[0].length)
-				pos = field->buffers[0].length - 1;
+			  /*
+			   * split on first whitespace before current word
+			   * if the line has tabs we need to work out where
+			   * the field border lies when the tabs are expanded.
+			   */
+			if (field->lines[row].tabs == NULL) {
+				pos = width + field->lines[row].start - 1;
+				if (pos >= field->buffers[0].length)
+					pos = field->buffers[0].length - 1;
+			} else {
+				pos = tab_fit_len(field, (unsigned) row,
+						  field->cols);
+			}
+			
 			
 			if ((!isblank(str[pos])) &&
 			    ((field->opts & O_WRAP) == O_WRAP)) {
@@ -436,7 +497,8 @@ _formi_wrap_field(FIELD *field, unsigned int loc)
 			   * a trailing blank, don't wrap the blank.
 			   */
 			if ((pos == field->buffers[0].length - 1) &&
-			    (isblank(str[pos])))
+			    (isblank(str[pos])) &&
+			    field->lines[row].length <= field->cols)
 				continue;
 
 			  /*
@@ -445,7 +507,8 @@ _formi_wrap_field(FIELD *field, unsigned int loc)
 			   * move forward one char so the blank
 			   * is on the line boundary.
 			   */
-			if (isblank(str[pos]))
+			if ((isblank(str[pos])) &&
+			    (pos != field->buffers[0].length - 1))
 				pos++;
 			
 			if (split_line(field, pos) != E_OK) {
@@ -519,7 +582,12 @@ _formi_join_line(FIELD *field, unsigned int pos, int direction)
 #endif
 		
 		field->lines[row].end = field->lines[row + 1].end;
-		field->lines[row].length += field->lines[row + 1].length;
+		field->lines[row].length =
+			_formi_tab_expanded_length(field->buffers[0].string,
+					    field->lines[row].start,
+					    field->lines[row].end);
+		_formi_calculate_tabs(field, row);
+		
 		  /* shift all the remaining lines up.... */
 		for (i = row + 2; i < field->row_count; i++)
 			field->lines[i - 1] = field->lines[i];
@@ -543,7 +611,10 @@ _formi_join_line(FIELD *field, unsigned int pos, int direction)
 #endif
 		
 		field->lines[row - 1].end = field->lines[row].end;
-		field->lines[row - 1].length += field->lines[row].length;
+		field->lines[row - 1].length =
+			_formi_tab_expanded_length(field->buffers[0].string,
+					    field->lines[row - 1].start,
+					    field->lines[row].end);
 		  /* shift all the remaining lines up */
 		for (i = row + 1; i < field->row_count; i++)
 			field->lines[i - 1] = field->lines[i];
@@ -566,6 +637,8 @@ _formi_join_line(FIELD *field, unsigned int pos, int direction)
 			field->lines = saved;
 			field->lines_alloced = old_alloced;
 			field->row_count = old_row_count;
+			for (i = 0; i < field->row_count; i++)
+				_formi_calculate_tabs(field, i);
 			return E_REQUEST_DENIED;
 		}
 	}
@@ -632,10 +705,18 @@ split_line(FIELD *field, unsigned pos)
 
 	field->lines[row + 1].end = field->lines[row].end;
 	field->lines[row].end = pos - 1;
-	field->lines[row].length = pos - field->lines[row].start;
+	field->lines[row].length =
+		_formi_tab_expanded_length(field->buffers[0].string,
+				    field->lines[row].start,
+				    field->lines[row].end);
+	_formi_calculate_tabs(field, row);
 	field->lines[row + 1].start = pos;
-	field->lines[row + 1].length = field->lines[row + 1].end
-		- field->lines[row + 1].start + 1;
+	field->lines[row + 1].length =
+		_formi_tab_expanded_length(field->buffers[0].string,
+				    field->lines[row + 1].start,
+				    field->lines[row + 1].end);
+	field->lines[row + 1].tabs = NULL;
+	_formi_calculate_tabs(field, row + 1);
 
 #ifdef DEBUG
 	assert(((field->lines[row + 1].end < INT_MAX) &&
@@ -835,8 +916,82 @@ _formi_scroll_back(FIELD *field, unsigned int amt)
 void
 _formi_hscroll_fwd(FIELD *field, int unsigned amt)
 {
-	field->start_char += min(amt,
-		field->lines[field->start_line + field->cursor_ypos].end);
+	unsigned int row, end, scroll_amt, expanded;
+	_formi_tab_t *ts;
+	
+	row = field->start_line + field->cursor_ypos;
+
+	if ((field->lines[row].tabs == NULL)
+	    || (field->lines[row].tabs->in_use == FALSE)) {
+		  /* if the line has no tabs things are easy... */
+		end =  field->start_char + field->cols + amt - 1;
+		scroll_amt = amt;
+		if (end > field->lines[row].end) {
+			end = field->lines[row].end;
+			scroll_amt = end - field->start_char - field->cols + 1;
+		}
+	} else {
+		  /*
+		   * If there are tabs we need to add on the scroll amount,
+		   * find the last char position that will fit into
+		   * the field and finally fix up the start_char.  This
+		   * is a lot of work but handling the case where there
+		   * are not enough chars to scroll by amt is difficult.
+		   */
+		end = field->start_char + field->row_xpos + amt;
+		if (end >= field->buffers[0].length)
+			end = field->buffers[0].length - 1;
+		else {
+			expanded = _formi_tab_expanded_length(
+				field->buffers[0].string,
+				field->start_char + amt,
+				field->start_char + field->row_xpos + amt);
+			ts = field->lines[0].tabs;
+			  /* skip tabs to the lhs of our starting point */
+			while ((ts != NULL) && (ts->in_use == TRUE)
+			       && (ts->pos < end))
+				ts = ts->fwd;
+			
+			while ((expanded <= field->cols)
+			       && (end < field->buffers[0].length)) {
+				if (field->buffers[0].string[end] == '\t') {
+#ifdef DEBUG
+					assert((ts != NULL)
+					       && (ts->in_use == TRUE));
+#endif
+					if (ts->pos == end) {
+						if ((expanded + ts->size)
+						    > field->cols)
+							break;
+						expanded += ts->size;
+						ts = ts->fwd;
+					}
+#ifdef DEBUG
+					else
+						assert(ts->pos == end);
+#endif
+				} else
+					expanded++;
+				end++;
+			}
+		}
+
+		scroll_amt = tab_fit_window(field, end, field->cols);
+		if (scroll_amt < field->start_char)
+			scroll_amt = 1;
+		else
+			scroll_amt -= field->start_char;
+
+		scroll_amt = min(scroll_amt, amt);
+	}
+
+	field->start_char += scroll_amt;
+	field->cursor_xpos =
+		_formi_tab_expanded_length(field->buffers[0].string,
+					   field->start_char,
+					   field->row_xpos
+					   + field->start_char) - 1;
+	
 }
 	
 /*
@@ -846,6 +1001,15 @@ void
 _formi_hscroll_back(FIELD *field, unsigned int amt)
 {
 	field->start_char -= min(field->start_char, amt);
+	field->cursor_xpos =
+		_formi_tab_expanded_length(field->buffers[0].string,
+					   field->start_char,
+					   field->row_xpos
+					   + field->start_char) - 1;
+	if (field->cursor_xpos >= field->cols) {
+		field->row_xpos = 0;
+		field->cursor_xpos = 0;
+	}
 }
 	
 /*
@@ -896,8 +1060,9 @@ _formi_find_pages(FORM *form)
 void
 _formi_redraw_field(FORM *form, int field)
 {
-	unsigned int pre, post, flen, slen, i, row, start, last_row;
-	char *str;
+	unsigned int pre, post, flen, slen, i, row, start;
+	unsigned int last_row, tab, cpos, len;
+	char *str, c;
 	FIELD *cur;
 #ifdef DEBUG
 	char buffer[100];
@@ -919,7 +1084,19 @@ _formi_redraw_field(FORM *form, int field)
 		      (int) (cur->form_row + row - cur->start_line),
 		      (int) cur->form_col);
 		start = cur->lines[row].start;
-		slen = cur->lines[row].length;
+		if ((cur->rows + cur->nrows) == 1) {
+			if ((cur->start_char + cur->cols)
+			    >= cur->buffers[0].length)
+				len = cur->buffers[0].length;
+			else
+				len = cur->cols + cur->start_char;
+			slen = _formi_tab_expanded_length(
+				cur->buffers[0].string, cur->start_char, len);
+			if (slen > cur->cols)
+				slen = cur->cols;
+			slen += cur->start_char;
+		} else
+			slen = cur->lines[row].length;
 		
 		if ((cur->opts & O_STATIC) == O_STATIC) {
 			switch (cur->justification) {
@@ -1020,22 +1197,46 @@ _formi_redraw_field(FORM *form, int field)
 		fprintf(dbg, "redraw_field: will add %d chars\n",
 			min(slen, flen));
 #endif
-		for (i = 0; i < min(slen, flen); i++) 
+		str = &cur->buffers[0].string[cur->start_char
+					     + cur->lines[row].start];
+		
+		for (i = 0, cpos = cur->start_char; i < min(slen, flen);
+		     i++, str++, cpos++) 
 		{
+			c = *str;
+			tab = 0; /* just to shut gcc up */
 #ifdef DEBUG
 			fprintf(dbg, "adding char str[%d]=%c\n",
-				i + cur->start_char + cur->lines[row].start,
-				str[i + cur->start_char
-				   + cur->lines[row].start]);
+				cpos + cur->start_char + cur->lines[row].start,
+				c);
 #endif
 			if (((cur->opts & O_PUBLIC) != O_PUBLIC)) {
-				waddch(form->scrwin, cur->pad);
+				if (c == '\t')
+					tab = add_tab(form, cur, row,
+						      cpos, cur->pad);
+				else
+					waddch(form->scrwin, cur->pad);
 			} else if ((cur->opts & O_VISIBLE) == O_VISIBLE) {
-				waddch(form->scrwin, str[i + cur->start_char
-				+ cur->lines[row].start]);
+				if (c == '\t')
+					tab = add_tab(form, cur, row, cpos,
+						      ' ');
+				else
+					waddch(form->scrwin, c);
 			} else {
-				waddch(form->scrwin, ' ');
+				if (c == '\t')
+					tab = add_tab(form, cur, row, cpos,
+						      ' ');
+				else
+					waddch(form->scrwin, ' ');
 			}
+
+			  /*
+			   * If we have had a tab then skip forward
+			   * the requisite number of chars to keep
+			   * things in sync.
+			   */
+			if (c == '\t')
+				i += tab - 1;
 		}
 
 		for (i = 0; i < post; i++)
@@ -1053,6 +1254,30 @@ _formi_redraw_field(FORM *form, int field)
 	return;
 }
 
+/*
+ * Add the correct number of the given character to simulate a tab
+ * in the field.
+ */
+static int
+add_tab(FORM *form, FIELD *field, unsigned row, unsigned int i, char c)
+{
+	int j;
+	_formi_tab_t *ts = field->lines[row].tabs;
+
+	while ((ts != NULL) && (ts->pos != i))
+		ts = ts->fwd;
+
+#ifdef DEBUG
+	assert(ts != NULL);
+#endif
+	
+	for (j = 0; j < ts->size; j++)
+		waddch(form->scrwin, c);
+
+	return ts->size;
+}
+
+	
 /*
  * Display the fields attached to the form that are on the current page
  * on the screen.
@@ -1099,12 +1324,19 @@ _formi_add_char(FIELD *field, unsigned int pos, char c)
 #endif
 		return E_INVALID_FIELD;
 	}
+
+	if ((c == '\t') && (field->cols <= 8)) {
+#ifdef DEBUG
+		fprintf(dbg, "add_char: field too small for a tab\n");
+#endif
+		return E_NO_ROOM;
+	}
 	
 #ifdef DEBUG
 	fprintf(dbg, "add_char: pos=%d, char=%c\n", pos, c);
-	fprintf(dbg,
-	   "add_char enter: xpos=%d, start=%d, length=%d(%d), allocated=%d\n",
-		field->cursor_xpos, field->start_char,
+	fprintf(dbg, "add_char enter: xpos=%d, row_pos=%d, start=%d\n",
+		field->cursor_xpos, field->row_xpos, field->start_char);
+	fprintf(dbg, "add_char enter: length=%d(%d), allocated=%d\n",
 		field->buffers[0].length, strlen(field->buffers[0].string),
 		field->buffers[0].allocated);
 	fprintf(dbg, "add_char enter: %s\n", field->buffers[0].string);
@@ -1112,13 +1344,14 @@ _formi_add_char(FIELD *field, unsigned int pos, char c)
 #endif
 	if (((field->opts & O_BLANK) == O_BLANK) &&
 	    (field->buf0_status == FALSE) &&
-	    ((field->cursor_xpos + field->start_char) == 0)) {
+	    ((field->row_xpos + field->start_char) == 0)) {
 		field->buffers[0].length = 0;
 		field->buffers[0].string[0] = '\0';
 		pos = 0;
 		field->start_char = 0;
 		field->start_line = 0;
 		field->row_count = 1;
+		field->row_xpos = 0;
 		field->cursor_xpos = 0;
 		field->cursor_ypos = 0;
 		field->lines[0].start = 0;
@@ -1168,11 +1401,17 @@ _formi_add_char(FIELD *field, unsigned int pos, char c)
 	    || ((field->overlay == 1) && (pos >= field->buffers[0].length))) {
 		field->buffers[0].length++;
 		bump_lines(field, (int) pos, 1, TRUE);
-	}
-	
+	} else if (field->overlay == 1)
+		bump_lines(field, (int) pos, 0, TRUE);
 
+	new_size = find_cur_line(field, pos);
+	_formi_calculate_tabs(field, new_size);
+	
 	  /* wrap the field, if needed */
 	status = _formi_wrap_field(field, pos);
+
+	  /* just in case the row we are on wrapped */
+	new_size = find_cur_line(field, pos);
 	
 	  /*
 	   * check the wrap worked or that we have not exceeded the
@@ -1192,25 +1431,56 @@ _formi_add_char(FIELD *field, unsigned int pos, char c)
 			      field->buffers[0].length - pos);
 			field->buffers[0].length--;
 			bump_lines(field, (int) pos, -1, TRUE);
+			if (pos > 0)
+				pos--;
 		} else if (field->overlay == 1) {
 			  /* back out character overlay */
 			field->buffers[0].string[pos] = old_c;
 		}
 		
-		_formi_wrap_field(field, ((pos > 0)? pos - 1 : 0));
+		new_size = find_cur_line(field, pos);
+		_formi_calculate_tabs(field, new_size);
+		
+		_formi_wrap_field(field, pos);
+		  /*
+		   * If we are here then either the status is bad or we
+		   * simply ran out of room.  If the status is E_OK then
+		   * we ran out of room, let the form driver know this.
+		   */
+		if (status == E_OK)
+			status = E_REQUEST_DENIED;
+		
 	} else {
 		field->buf0_status = TRUE;
 		if ((field->rows + field->nrows) == 1) {
 			if ((field->cursor_xpos < (field->cols - 1)) ||
-			    ((field->opts & O_STATIC) != O_STATIC))
-				field->cursor_xpos++;
-		
-			if (field->cursor_xpos > field->cols) {
-				field->start_char++;
-				field->cursor_xpos = field->cols;
+			    ((field->opts & O_STATIC) != O_STATIC)) {
+				field->row_xpos++;
+				field->cursor_xpos =
+					_formi_tab_expanded_length(
+						field->buffers[0].string,
+						field->start_char,
+						field->row_xpos
+						+ field->start_char);
+				if ((field->start_char + field->row_xpos)
+				    < field->buffers[0].length)
+					field->cursor_xpos--;
+			}
+			
+			if (field->cursor_xpos > (field->cols - 1)) {
+				field->start_char =
+					tab_fit_window(field,
+						       field->start_char + field->row_xpos,
+						       field->cols);
+				field->row_xpos = pos - field->start_char + 1;
+				field->cursor_xpos =
+					_formi_tab_expanded_length(
+						field->buffers[0].string,
+						field->start_char,
+						field->row_xpos
+						+ field->start_char - 1);
 			}
 		} else {
-			new_size = find_cur_line(field, pos);
 			if (new_size >= field->rows) {
 				field->cursor_ypos = field->rows - 1;
 				field->start_line = field->row_count
@@ -1219,9 +1489,15 @@ _formi_add_char(FIELD *field, unsigned int pos, char c)
 				field->cursor_ypos = new_size;
 
 			if ((field->lines[new_size].start) <= (pos + 1)) {
-				field->cursor_xpos = pos
+				field->row_xpos = pos
 					- field->lines[new_size].start + 1;
+				field->cursor_xpos =
+					_formi_tab_expanded_length(
+						&field->buffers[0].string[
+						    field->lines[new_size].start], 0,
+						field->row_xpos - 1);
 			} else {
+				field->row_xpos = 0;
 				field->cursor_xpos = 0;
 			}
 			
@@ -1245,9 +1521,9 @@ _formi_add_char(FIELD *field, unsigned int pos, char c)
 	       && (field->cursor_ypos < 400000)
 	       && (field->start_line < 400000));
 	       
-	fprintf(dbg,
-	    "add_char exit: xpos=%d, start=%d, length=%d(%d), allocated=%d\n",
-		field->cursor_xpos, field->start_char,
+	fprintf(dbg, "add_char exit: xpos=%d, row_pos=%d, start=%d\n",
+		field->cursor_xpos, field->row_xpos, field->start_char);
+	fprintf(dbg, "add_char_exit: length=%d(%d), allocated=%d\n",
 		field->buffers[0].length, strlen(field->buffers[0].string),
 		field->buffers[0].allocated);
 	fprintf(dbg, "add_char exit: ypos=%d, start_line=%d\n",
@@ -1270,16 +1546,18 @@ _formi_manipulate_field(FORM *form, int c)
 {
 	FIELD *cur;
 	char *str, saved;
-	unsigned int i, start, end, pos, row, status, old_count;
+	unsigned int i, start, end, pos, row, status, old_count, size;
+	unsigned int old_xpos, old_row_pos;
 	int len;
 	
 	cur = form->fields[form->cur_field];
 
 #ifdef DEBUG
+	fprintf(dbg, "entry: request is REQ_%s\n", reqs[c - REQ_MIN_REQUEST]);
 	fprintf(dbg,
-		"entry: xpos=%d, start_char=%d, length=%d, allocated=%d\n",
-		cur->cursor_xpos, cur->start_char, cur->buffers[0].length,
-		cur->buffers[0].allocated);
+	"entry: xpos=%d, row_pos=%d, start_char=%d, length=%d, allocated=%d\n",
+		cur->cursor_xpos, cur->row_xpos, cur->start_char,
+		cur->buffers[0].length,	cur->buffers[0].allocated);
 	fprintf(dbg, "entry: start_line=%d, ypos=%d\n", cur->start_line,
 		cur->cursor_ypos);
 	fprintf(dbg, "entry: string=");
@@ -1292,8 +1570,26 @@ _formi_manipulate_field(FORM *form, int c)
 	  /* Cannot manipulate a null string! */
 	if (cur->buffers[0].string == NULL)
 		return E_REQUEST_DENIED;
+
+	row = cur->start_line + cur->cursor_ypos;
+	saved = cur->buffers[0].string[cur->start_char + cur->row_xpos
+				      + cur->lines[row].start];
 	
 	switch (c) {
+	case REQ_RIGHT_CHAR:
+		  /*
+		   * The right_char request performs the same function
+		   * as the next_char request except that the cursor is
+		   * not wrapped if it is at the end of the line, so
+		   * check if the cursor is at the end of the line and
+		   * deny the request otherwise just fall through to
+		   * the next_char request handler.
+		   */
+		if (cur->cursor_xpos >= cur->lines[row].length - 1)
+			return E_REQUEST_DENIED;
+
+		  /* FALLTHRU */
+		
 	case REQ_NEXT_CHAR:
 		  /* for a dynamic field allow an offset of one more
 		   * char so we can insert chars after end of string.
@@ -1301,68 +1597,163 @@ _formi_manipulate_field(FORM *form, int c)
 		   * cursor is at the end of the field.
 		   */
 		if (((cur->opts & O_STATIC) == O_STATIC) &&
-		    (cur->cursor_xpos == cur->cols - 1) &&
+		    (cur->row_xpos == cur->cols - 1) &&
 		    ((cur->rows + cur->nrows) == 1))
 			return E_REQUEST_DENIED;
 								
-		if ((cur->cursor_xpos + cur->start_char + 1)
+		if ((cur->row_xpos + cur->start_char + 1)
 		    > cur->buffers[0].length)
 			return E_REQUEST_DENIED;
 
 		if ((cur->rows + cur->nrows) == 1) {
-			cur->cursor_xpos++;
+			if (saved == '\t')
+				cur->cursor_xpos += tab_size(cur, 0,
+							     cur->row_xpos
+							    + cur->start_char);
+			else
+				cur->cursor_xpos++;
+			cur->row_xpos++;
 			if (cur->cursor_xpos >= cur->cols - 1) {
-				cur->cursor_xpos = cur->cols - 1;
-				if ((cur->opts & O_STATIC) != O_STATIC)
-					cur->start_char++;
+				pos = cur->row_xpos + cur->start_char;
+				cur->start_char =
+					tab_fit_window(cur,
+						       cur->start_char + cur->row_xpos,
+						       cur->cols);
+				cur->row_xpos = pos - cur->start_char;
+				cur->cursor_xpos =
+					_formi_tab_expanded_length(
+						cur->buffers[0].string,
+						cur->start_char,
+						cur->row_xpos
+						+ cur->start_char);
+				if ((cur->row_xpos + cur->start_char) <
+				    cur->buffers[0].length)
+					cur->cursor_xpos--;
 			}
 		} else {
-			row = cur->start_line + cur->cursor_ypos;
-			if (cur->cursor_xpos == (cur->lines[row].length - 1)) {
+			if (cur->cursor_xpos >= (cur->lines[row].length - 1)) {
 				if ((row + 1) >= cur->row_count)
 					return E_REQUEST_DENIED;
 				
 				cur->cursor_xpos = 0;
+				cur->row_xpos = 0;
 				if (cur->cursor_ypos == (cur->rows - 1))
 					cur->start_line++;
 				else
 					cur->cursor_ypos++;
-			} else
-				cur->cursor_xpos++;
+			} else {
+				old_xpos = cur->cursor_xpos;
+				old_row_pos = cur->row_xpos;
+				if (saved == '\t')
+					cur->cursor_xpos += tab_size(cur,
+							cur->lines[row].start,
+							cur->row_xpos);
+				else
+					cur->cursor_xpos++;
+				cur->row_xpos++;
+				if (cur->cursor_xpos
+				    >= cur->lines[row].length) {
+					if ((row + 1) >= cur->row_count) {
+						cur->cursor_xpos = old_xpos;
+						cur->row_xpos = old_row_pos;
+						return E_REQUEST_DENIED;
+					}
+
+					cur->cursor_xpos = 0;
+					cur->row_xpos = 0;
+					if (cur->cursor_ypos
+					    == (cur->rows - 1))
+						cur->start_line++;
+					else
+						cur->cursor_ypos++;
+				}
+			}
 		}
 			
 		break;
-			
+	
+	case REQ_LEFT_CHAR:
+		  /*
+		   * The behaviour of left_char is the same as prev_char
+		   * except that the cursor will not wrap if it has
+		   * reached the LHS of the field, so just check this
+		   * and fall through if we are not at the LHS.
+		   */
+		if (cur->cursor_xpos == 0)
+			return E_REQUEST_DENIED;
+
+		  /* FALLTHRU */
 	case REQ_PREV_CHAR:
 		if ((cur->rows + cur->nrows) == 1) {
-			if (cur->cursor_xpos == 0) {
+			if (cur->row_xpos == 0) {
 				if (cur->start_char > 0)
 					cur->start_char--;
 				else
 					return E_REQUEST_DENIED;
-			} else
-				cur->cursor_xpos--;
+			} else {
+				cur->row_xpos--;
+				cur->cursor_xpos =
+					_formi_tab_expanded_length(
+						cur->buffers[0].string,
+						cur->start_char,
+						cur->row_xpos
+						+ cur->start_char) - 1;
+			}
 		} else {
 			if ((cur->cursor_xpos == 0) &&
 			    (cur->cursor_ypos == 0) &&
 			    (cur->start_line == 0))
 				return E_REQUEST_DENIED;
 
+			row = cur->start_line + cur->cursor_ypos;
+			pos = cur->lines[row].start + cur->row_xpos;
+			if ((pos >= cur->buffers[0].length) && (pos > 0))
+				pos--;
+			
 			if (cur->cursor_xpos > 0) {
-				cur->cursor_xpos--;
+				if (cur->buffers[0].string[pos] == '\t') {
+					size = tab_size(cur,
+							cur->lines[row].start,
+							pos
+							- cur->lines[row].start);
+					if (size > cur->cursor_xpos) {
+						cur->cursor_xpos = 0;
+						cur->row_xpos = 0;
+					} else {
+						cur->row_xpos--;
+						cur->cursor_xpos -= size;
+					}
+				} else {
+					cur->cursor_xpos--;
+					cur->row_xpos--;
+				}
 			} else {
 				if (cur->cursor_ypos > 0)
 					cur->cursor_ypos--;
 				else
 					cur->start_line--;
-				cur->cursor_xpos =
-					cur->lines[cur->start_line
-						  + cur->cursor_ypos].length
-					- 1;
+				row = cur->start_line + cur->cursor_ypos;
+				cur->cursor_xpos = cur->lines[row].length - 1;
+				cur->row_xpos = cur->lines[row].end -
+					cur->lines[row].start;
 			}
 		}
 		
 		break;
+
+	case REQ_DOWN_CHAR:
+		  /*
+		   * The down_char request has the same functionality as
+		   * the next_line request excepting that the field is not
+		   * scrolled if the cursor is at the bottom of the field.
+		   * Check to see if the cursor is at the bottom of the field
+		   * and if it is then deny the request otherwise fall
+		   * through to the next_line handler.
+		   */
+		if (cur->cursor_ypos >= cur->rows - 1)
+			return E_REQUEST_DENIED;
+
+		  /* FALLTHRU */
 		
 	case REQ_NEXT_LINE:
 		if ((cur->start_line + cur->cursor_ypos + 1) >= cur->row_count)
@@ -1372,7 +1763,27 @@ _formi_manipulate_field(FORM *form, int c)
 			cur->start_line++;
 		} else
 			cur->cursor_ypos++;
+		row = cur->cursor_ypos + cur->start_line;
+		cur->row_xpos =	tab_fit_len(cur, row, cur->cursor_xpos)
+			- cur->lines[row].start;
+		cur->cursor_xpos =
+			_formi_tab_expanded_length(
+				&cur->buffers[0].string[cur->lines[row].start],
+				0, cur->row_xpos);
 		break;
+		
+	case REQ_UP_CHAR:
+		  /*
+		   * The up_char request has the same functionality as
+		   * the prev_line request excepting the field is not
+		   * scrolled, check if the cursor is at the top of the
+		   * field, if it is deny the request otherwise fall
+		   * through to the prev_line handler.
+		   */
+		if (cur->cursor_ypos == 0)
+			return E_REQUEST_DENIED;
+
+		  /* FALLTHRU */
 		
 	case REQ_PREV_LINE:
 		if (cur->cursor_ypos == 0) {
@@ -1381,11 +1792,18 @@ _formi_manipulate_field(FORM *form, int c)
 			cur->start_line--;
 		} else
 			cur->cursor_ypos--;
+		row = cur->cursor_ypos + cur->start_line;
+		cur->row_xpos =	tab_fit_len(cur, row, cur->cursor_xpos + 1)
+			- cur->lines[row].start;
+		cur->cursor_xpos =
+			_formi_tab_expanded_length(
+				&cur->buffers[0].string[cur->lines[row].start],
+				0, cur->row_xpos) - 1;
 		break;
 		
 	case REQ_NEXT_WORD:
 		start = cur->lines[cur->start_line + cur->cursor_ypos].start
-			+ cur->cursor_xpos + cur->start_char;
+			+ cur->row_xpos + cur->start_char;
 		str = cur->buffers[0].string;
 
 		start = find_eow(str, start);
@@ -1397,16 +1815,23 @@ _formi_manipulate_field(FORM *form, int c)
 		  /* otherwise we must have found the start of a word...*/
 		if ((cur->rows + cur->nrows) == 1) {
 			  /* single line field */
-			if (start - cur->start_char < cur->cols) {
-				cur->cursor_xpos = start;
+			size = _formi_tab_expanded_length(str,
+				cur->start_char, start);
+			if (size < cur->cols) {
+				cur->row_xpos = start - cur->start_char;
+				cur->cursor_xpos = size - 1;
 			} else {
 				cur->start_char = start;
+				cur->row_xpos = 0;
 				cur->cursor_xpos = 0;
 			}
 		} else {
 			  /* multiline field */
 			row = find_cur_line(cur, start);
-			cur->cursor_xpos = start - cur->lines[row].start;
+			cur->row_xpos = start - cur->lines[row].start;
+			cur->cursor_xpos = _formi_tab_expanded_length(
+				&str[cur->lines[row].start],
+				0, cur->row_xpos) - 1;
 			if (row != (cur->start_line + cur->cursor_ypos)) {
 				if (cur->cursor_ypos == (cur->rows - 1)) {
 					cur->start_line = row - cur->rows + 1;
@@ -1419,7 +1844,7 @@ _formi_manipulate_field(FORM *form, int c)
 		break;
 		
 	case REQ_PREV_WORD:
-		start = cur->start_char + cur->cursor_xpos
+		start = cur->start_char + cur->row_xpos
 			+ cur->lines[cur->start_line + cur->cursor_ypos].start;
 		if (cur->start_char > 0)
 			start--;
@@ -1433,16 +1858,24 @@ _formi_manipulate_field(FORM *form, int c)
 		
 		if ((cur->rows + cur->nrows) == 1) {
 			  /* single line field */
-			if (start - cur->start_char > 0) {
-				cur->cursor_xpos = start;
+			size = _formi_tab_expanded_length(str,
+				cur->start_char, start);
+			
+			if (start > cur->start_char) {
+				cur->row_xpos = start - cur->start_char;
+				cur->cursor_xpos = size - 1;
 			} else {
 				cur->start_char = start;
 				cur->cursor_xpos = 0;
+				cur->row_xpos = 0;
 			}
 		} else {
 			  /* multiline field */
 			row = find_cur_line(cur, start);
-			cur->cursor_xpos = start - cur->lines[row].start;
+			cur->row_xpos = start - cur->lines[row].start;
+			cur->cursor_xpos = _formi_tab_expanded_length(
+				&str[cur->lines[row].start], 0,
+				cur->row_xpos) - 1;
 			if (row != (cur->start_line + cur->cursor_ypos)) {
 				if (cur->cursor_ypos == 0) {
 					cur->start_line = row;
@@ -1459,16 +1892,18 @@ _formi_manipulate_field(FORM *form, int c)
 		}
 		
 		break;
-		
+
 	case REQ_BEG_FIELD:
 		cur->start_char = 0;
 		cur->start_line = 0;
+		cur->row_xpos = 0;
 		cur->cursor_xpos = 0;
 		cur->cursor_ypos = 0;
 		break;
 		
 	case REQ_BEG_LINE:
 		cur->cursor_xpos = 0;
+		cur->row_xpos = 0;
 		cur->start_char = 0;
 		break;
 			
@@ -1488,136 +1923,58 @@ _formi_manipulate_field(FORM *form, int c)
 		  /* FALLTHRU */
 		
 	case REQ_END_LINE:
-		start = cur->lines[cur->start_line + cur->cursor_ypos].start;
-		end = cur->lines[cur->start_line + cur->cursor_ypos].end;
+		row = cur->start_line + cur->cursor_ypos;
+		start = cur->lines[row].start;
+		end = cur->lines[row].end;
 
 		if ((cur->rows + cur->nrows) == 1) {
-			if (end - start > cur->cols - 1) {
-				cur->cursor_xpos = cur->cols - 1;
-				cur->start_char = end - cur->cols;
-				if ((cur->opts & O_STATIC) != O_STATIC)
-					cur->start_char++;
+			if (cur->lines[row].length > cur->cols - 1) {
+				if ((cur->opts & O_STATIC) != O_STATIC) {
+					cur->start_char = tab_fit_window(
+						cur, end, cur->cols) + 1;
+				} else {
+					cur->start_char = tab_fit_window(
+						cur, end, cur->cols);
+				}
+				cur->row_xpos = cur->buffers[0].length
+					- cur->start_char;
+				cur->cursor_xpos =
+					_formi_tab_expanded_length(
+					     cur->buffers[0].string,
+					     cur->start_char,
+					     cur->row_xpos + cur->start_char);
 			} else {
-				cur->cursor_xpos = end - start + 1;
+				cur->row_xpos = end + 1;
+				cur->cursor_xpos = _formi_tab_expanded_length(
+					cur->buffers[0].string,
+					cur->start_char,
+					cur->row_xpos + cur->start_char);
 				if (((cur->opts & O_STATIC) == O_STATIC) &&
-				    ((end - start) == (cur->cols - 1)))
+				    ((cur->lines[row].length)
+				     == (cur->cols - 1)))
 					cur->cursor_xpos--;
 				
-				cur->start_char = start;
+				cur->start_char = 0;
 			}
 		} else {
-			cur->cursor_xpos = end - start + 1;
-		}
-		break;
-		
-	case REQ_LEFT_CHAR:
-		if ((cur->cursor_xpos == 0) && (cur->start_char == 0)
-		    && (cur->start_line == 0) && (cur->cursor_ypos == 0))
-			return E_REQUEST_DENIED;
-
-		if (cur->cursor_xpos == 0) {
-			if ((cur->rows + cur->nrows) == 1) {
-				if (cur->start_char > 0)
-					cur->start_char--;
-				else
-					return E_REQUEST_DENIED;
-			} else {
-				if ((cur->cursor_ypos == 0) &&
-				    (cur->start_line == 0))
-					return E_REQUEST_DENIED;
-
-				if (cur->cursor_ypos == 0)
-					cur->start_line--;
-				else
-					cur->cursor_ypos--;
-
-				cur->cursor_xpos =
-					cur->lines[cur->cursor_ypos
-						  + cur->start_line].length;
-			}
-		} else
-			cur->cursor_xpos--;
-		break;
-				    
-	case REQ_RIGHT_CHAR:
-		pos = cur->start_char + cur->cursor_xpos;
-		row = cur->start_line + cur->cursor_ypos;
-		end = cur->lines[row].end;
-		
-		if (cur->buffers[0].string[pos] == '\0')
-			return E_REQUEST_DENIED;
-
-#ifdef DEBUG
-		fprintf(dbg, "req_right_char enter: start=%d, xpos=%d, c=%c\n",
-			cur->start_char, cur->cursor_xpos,
-			cur->buffers[0].string[pos]);
-#endif
-		
-		if (pos == end) {
-			start = pos + 1;
-			if ((cur->buffers[0].length <= start)
-			    || ((row + 1) >= cur->row_count))
-				return E_REQUEST_DENIED;
-
-			if ((cur->cursor_ypos + 1) >= cur->rows) {
-				cur->start_line++;
-				cur->cursor_ypos = cur->rows - 1;
-			} else
-				cur->cursor_ypos++;
-
-			cur->cursor_xpos = 0;
-		} else {
-			if (((cur->rows + cur->nrows) == 1) &&
-			    (cur->cursor_xpos == cur->cols - 1))
-				cur->start_char++;
-			else
+			cur->row_xpos = end - start;
+			cur->cursor_xpos = cur->lines[row].length - 1;
+			if (row == (cur->row_count - 1)) {
+				cur->row_xpos++;
 				cur->cursor_xpos++;
+			}
 		}
-#ifdef DEBUG
-		fprintf(dbg, "req_right_char exit: start=%d, xpos=%d, c=%c\n",
-			cur->start_char, cur->cursor_xpos,
-			cur->buffers[0].string[cur->start_char +
-					      cur->cursor_xpos]);
-#endif
 		break;
 		
-	case REQ_UP_CHAR:
-		if (cur->cursor_ypos == 0) {
-			if (cur->start_line == 0)
-				return E_REQUEST_DENIED;
-
-			cur->start_line--;
-		} else
-			cur->cursor_ypos--;
-
-		row = cur->start_line + cur->cursor_ypos;
-		
-		if (cur->cursor_xpos > cur->lines[row].length)
-			cur->cursor_xpos = cur->lines[row].length;
-		break;
-		
-	case REQ_DOWN_CHAR:
-		if (cur->cursor_ypos == cur->rows - 1) {
-			if (cur->start_line + cur->rows == cur->row_count)
-				return E_REQUEST_DENIED;
-			cur->start_line++;
-		} else
-			cur->cursor_ypos++;
-		
-		row = cur->start_line + cur->cursor_ypos;
-		if (cur->cursor_xpos > cur->lines[row].length)
-			cur->cursor_xpos = cur->lines[row].length;
-		break;
-	
 	case REQ_NEW_LINE:
 		if ((status = split_line(cur,
-				cur->start_char + cur->cursor_xpos)) != E_OK)
+				cur->start_char + cur->row_xpos)) != E_OK)
 			return status;
 		break;
 		
 	case REQ_INS_CHAR:
 		if ((status = _formi_add_char(cur, cur->start_char
-					      + cur->cursor_xpos,
+					      + cur->row_xpos,
 					      cur->pad)) != E_OK)
 			return status;
 		break;
@@ -1633,30 +1990,115 @@ _formi_manipulate_field(FORM *form, int c)
 			return E_REQUEST_DENIED;
 
 		row = cur->start_line + cur->cursor_ypos;
-		start = cur->start_char + cur->cursor_xpos
+		start = cur->start_char + cur->row_xpos
 			+ cur->lines[row].start;
 		end = cur->buffers[0].length;
+		if (start >= cur->buffers[0].length)
+			return E_REQUEST_DENIED;
+		
 		if (start == cur->lines[row].end) {
 			if ((cur->rows + cur->nrows) > 1) {
-				if (cur->row_count > 1) {
+				/*
+				 * If we have more than one row, join the
+				 * next row to make things easier unless
+				 * we are at the end of the string, in
+				 * that case the join would fail but we
+				 * really want to delete the last char
+				 * in the field.
+				 */
+				if ((cur->row_count > 1)
+				    && (start != (end - 1))) {
 					if (_formi_join_line(cur,
 							     start,
 							     JOIN_NEXT_NW)
 					    != E_OK) {
 						return E_REQUEST_DENIED;
 					}
-				} else
-					return E_REQUEST_DENIED;
-			} else
-				return E_REQUEST_DENIED;
+				}
+			}
 		}
-
+			
 		saved = cur->buffers[0].string[start];
 		bcopy(&cur->buffers[0].string[start + 1],
 		      &cur->buffers[0].string[start],
 		      (unsigned) end - start + 1);
-		cur->buffers[0].length--;
 		bump_lines(cur, _FORMI_USE_CURRENT, -1, TRUE);
+		cur->buffers[0].length--;
+
+		  /*
+		   * recalculate tabs for a single line field, multiline
+		   * fields will do this when the field is wrapped.
+		   */
+		if ((cur->rows + cur->nrows) == 1)
+			_formi_calculate_tabs(cur, 0);
+		  /*
+		   * if we are at the end of the string then back the
+		   * cursor pos up one to stick on the end of the line
+		   */
+		if (start == cur->buffers[0].length) {
+			if (cur->buffers[0].length > 1) {
+				if ((cur->rows + cur->nrows) == 1) {
+					pos = cur->row_xpos + cur->start_char;
+					cur->start_char =
+						tab_fit_window(cur,
+							       cur->start_char + cur->row_xpos,
+							       cur->cols);
+					cur->row_xpos = pos - cur->start_char
+						- 1;
+					cur->cursor_xpos =
+						_formi_tab_expanded_length(
+							cur->buffers[0].string,
+							cur->start_char,
+							cur->row_xpos
+							+ cur->start_char);
+				} else {
+					if (cur->row_xpos == 0) {
+						if (cur->lines[row].start !=
+						    cur->buffers[0].length) {
+							if (_formi_join_line(
+								cur,
+								cur->lines[row].start,
+								JOIN_PREV_NW)
+							    != E_OK) {
+								return E_REQUEST_DENIED;
+							}
+						} else {
+							if (cur->row_count > 1)
+								cur->row_count--;
+						}
+
+						row = cur->start_line
+							+ cur->cursor_ypos;
+						if (row > 0)
+							row--;
+					}
+					
+					cur->row_xpos = start
+						- cur->lines[row].start - 1;
+					cur->cursor_xpos =
+						_formi_tab_expanded_length(
+							&cur->buffers[0].string[cur->lines[row].start],
+							0, cur->row_xpos);
+					if ((cur->cursor_xpos > 0)
+					    && (start != (cur->buffers[0].length - 1)))
+						cur->cursor_xpos--;
+					if (row >= cur->rows)
+						cur->start_line = row
+							- cur->cursor_ypos;
+					else {
+						cur->start_line = 0;
+						cur->cursor_ypos = row;
+					}
+				}
+				
+				start--;
+			} else {
+				start = 0;
+				cur->row_xpos = 0;
+				cur->cursor_xpos = 0;
+			}
+		}
+		
 		if ((cur->rows + cur->nrows) > 1) {
 			if (_formi_wrap_field(cur, start) != E_OK) {
 				bcopy(&cur->buffers[0].string[start],
@@ -1670,21 +2112,33 @@ _formi_manipulate_field(FORM *form, int c)
 			}
 		}
 		break;
-		
+			
 	case REQ_DEL_PREV:
 		if ((cur->cursor_xpos == 0) && (cur->start_char == 0)
 		    && (cur->start_line == 0) && (cur->cursor_ypos == 0))
 			   return E_REQUEST_DENIED;
 
 		row = cur->start_line + cur->cursor_ypos;
-		start = cur->cursor_xpos + cur->start_char
+		start = cur->row_xpos + cur->start_char
 			+ cur->lines[row].start;
 		end = cur->buffers[0].length;
 
-		if ((cur->start_char + cur->cursor_xpos) == 0) {
-			if (_formi_join_line(cur, cur->lines[row].start,
-					     JOIN_PREV_NW) != E_OK) {
-				return E_REQUEST_DENIED;
+		if ((cur->start_char + cur->row_xpos) == 0) {
+			  /*
+			   * Join this line to the next one, but only if
+			   * we are not at the end of the string because
+			   * in that case there are no characters to join.
+			   */
+			if (cur->lines[row].start != end) {
+				if (_formi_join_line(cur,
+						     cur->lines[row].start,
+						     JOIN_PREV_NW) != E_OK) {
+					return E_REQUEST_DENIED;
+				}
+			} else {
+				/* but we do want the row count decremented */
+				if (cur->row_count > 1)
+					cur->row_count--;
 			}
 		}
 
@@ -1696,13 +2150,21 @@ _formi_manipulate_field(FORM *form, int c)
 		cur->buffers[0].length--;
 
 		if ((cur->rows + cur->nrows) == 1) {
-			if ((cur->cursor_xpos == 0) && (cur->start_char > 0))
-				cur->start_char--;
-			else if ((cur->cursor_xpos == cur->cols - 1)
-				 && (cur->start_char > 0))
-				cur->start_char--;
-			else if (cur->cursor_xpos > 0)
-				cur->cursor_xpos--;
+			_formi_calculate_tabs(cur, 0);
+			pos = cur->row_xpos + cur->start_char;
+			if (pos > 0)
+				pos--;
+			cur->start_char =
+				tab_fit_window(cur,
+					       cur->start_char + cur->row_xpos,
+					       cur->cols);
+			cur->row_xpos = pos - cur->start_char;
+			cur->cursor_xpos =
+				_formi_tab_expanded_length(
+					cur->buffers[0].string,
+					cur->start_char,
+					cur->row_xpos
+					+ cur->start_char);
 		} else {
 			pos = start - 1;
 			if (pos >= cur->buffers[0].length)
@@ -1720,7 +2182,13 @@ _formi_manipulate_field(FORM *form, int c)
 			}
 			
 			row = find_cur_line(cur, pos);
-			cur->cursor_xpos = start - cur->lines[row].start - 1;
+			cur->row_xpos = start - cur->lines[row].start - 1;
+			cur->cursor_xpos = _formi_tab_expanded_length(
+				&cur->buffers[0].string[cur->lines[row].start],
+				0, cur->row_xpos);
+			if ((cur->cursor_xpos > 0)
+			    && (pos != (cur->buffers[0].length - 1)))
+				cur->cursor_xpos--;
 
 			if (row >= cur->rows)
 				cur->start_line = row - cur->cursor_ypos;
@@ -1730,7 +2198,7 @@ _formi_manipulate_field(FORM *form, int c)
 			}
 		}
 		break;
-		
+			
 	case REQ_DEL_LINE:
 		row = cur->start_line + cur->cursor_ypos;
 		start = cur->lines[row].start;
@@ -1744,7 +2212,8 @@ _formi_manipulate_field(FORM *form, int c)
 			  /* single line case */
 			cur->buffers[0].length = 0;
 			cur->lines[0].end = cur->lines[0].length = 0;
-			cur->cursor_xpos = cur->cursor_ypos = 0;
+			cur->cursor_xpos = cur->row_xpos = 0;
+			cur->cursor_ypos = 0;
 		} else {
 			  /* multiline field */
 			old_count = cur->row_count;
@@ -1766,6 +2235,7 @@ _formi_manipulate_field(FORM *form, int c)
 			else if (old_count == 1) {
 				cur->lines[0].end = cur->lines[0].length = 0;
 				cur->cursor_xpos = 0;
+				cur->row_xpos = 0;
 				cur->cursor_ypos = 0;
 			} else if (cur->row_count == 1) {
 				cur->lines[0].length = cur->buffers[0].length
@@ -1787,9 +2257,12 @@ _formi_manipulate_field(FORM *form, int c)
 			}
 
 			if (old_count > 1) {
-				if (cur->cursor_xpos > cur->lines[row].length)
+				if (cur->cursor_xpos > cur->lines[row].length) {
 					cur->cursor_xpos =
 						cur->lines[row].length - 1;
+					cur->row_xpos = cur->lines[row].end;
+				}
+				
 				if (row >= cur->rows)
 					cur->start_line = row
 						- cur->cursor_ypos;
@@ -1800,20 +2273,61 @@ _formi_manipulate_field(FORM *form, int c)
 			} 
 		}
 		break;
-		
+
 	case REQ_DEL_WORD:
-		start = cur->start_char + cur->cursor_xpos;
-		end = find_eow(cur->buffers[0].string, start);
-		start = find_sow(cur->buffers[0].string, start);
-		bcopy(&cur->buffers[0].string[end + 1],
+		start = cur->start_char + cur->row_xpos
+			+ cur->lines[row].start;
+		str = cur->buffers[0].string;
+
+		end = find_eow(str, start);
+
+		  /*
+		   * If not at the start of a word then find the start,
+		   * we cannot blindly call find_sow because this will
+		   * skip back a word if we are already at the start of
+		   * a word.
+		   */
+		if ((start > 0)
+		    && !(isblank(str[start - 1]) && !isblank(str[start])))
+			start = find_sow(cur->buffers[0].string, start);
+		bcopy(&cur->buffers[0].string[end],
 		      &cur->buffers[0].string[start],
 		      (unsigned) cur->buffers[0].length - end + 1);
 		len = end - start;
 		cur->buffers[0].length -= len;
 		bump_lines(cur, _FORMI_USE_CURRENT, - (int) len, TRUE);
-		
-		if (cur->cursor_xpos > cur->lines[row].length)
-			cur->cursor_xpos = cur->lines[row].length;
+
+		if ((cur->rows + cur->nrows) > 1) {
+			row = cur->start_line + cur->cursor_ypos;
+			if ((row + 1) < cur->row_count) {
+				/*
+				 * if not on the last row we need to
+				 * join on the next row so the line
+				 * will be re-wrapped.
+				 */
+				_formi_join_line(cur, cur->lines[row].end,
+						 JOIN_NEXT_NW);
+			}
+			_formi_wrap_field(cur, start);
+			row = find_cur_line(cur, start);
+			cur->row_xpos = start - cur->lines[row].start;
+			cur->cursor_xpos = _formi_tab_expanded_length(
+				&cur->buffers[0].string[cur->lines[row].start],
+				0, cur->row_xpos);
+			if ((cur->cursor_xpos > 0)
+			    && (start != (cur->buffers[0].length - 1)))
+				cur->cursor_xpos--;
+		} else {
+			_formi_calculate_tabs(cur, 0);
+			cur->row_xpos = start - cur->start_char;
+			if (cur->row_xpos > 0)
+				cur->row_xpos--;
+			cur->cursor_xpos = _formi_tab_expanded_length(
+				cur->buffers[0].string, cur->start_char,
+				cur->row_xpos);
+			if (cur->cursor_xpos > 0)
+				cur->cursor_xpos--;
+		}
 		break;
 		
 	case REQ_CLR_EOL:
@@ -1827,8 +2341,10 @@ _formi_manipulate_field(FORM *form, int c)
 		cur->buffers[0].length -= len;
 		bump_lines(cur, _FORMI_USE_CURRENT, - (int) len, TRUE);
 		
-		if (cur->cursor_xpos > cur->lines[row].length)
+		if (cur->cursor_xpos > cur->lines[row].length) {
+			cur->row_xpos = cur->lines[row].end;
 			cur->cursor_xpos = cur->lines[row].length;
+		}
 		break;
 
 	case REQ_CLR_EOF:
@@ -1840,7 +2356,7 @@ _formi_manipulate_field(FORM *form, int c)
 		cur->lines[row].length = cur->lines[row].end
 			- cur->lines[row].start;
 		
-		for (i = cur->start_char + cur->cursor_xpos;
+		for (i = cur->start_char + cur->row_xpos;
 		     i < cur->buffers[0].length; i++)
 			cur->buffers[0].string[i] = cur->pad;
 		break;
@@ -1852,6 +2368,7 @@ _formi_manipulate_field(FORM *form, int c)
 		cur->start_line = 0;
 		cur->cursor_ypos = 0;
 		cur->cursor_xpos = 0;
+		cur->row_xpos = 0;
 		cur->start_char = 0;
 		cur->lines[0].start = 0;
 		cur->lines[0].end = 0;
@@ -1919,12 +2436,15 @@ _formi_manipulate_field(FORM *form, int c)
 	}
 	
 #ifdef DEBUG
-	fprintf(dbg, "exit: xpos=%d, start_char=%d, length=%d, allocated=%d\n",
-		cur->cursor_xpos, cur->start_char, cur->buffers[0].length,
-		cur->buffers[0].allocated);
+	fprintf(dbg,
+	 "exit: xpos=%d, row_pos=%d, start_char=%d, length=%d, allocated=%d\n",
+		cur->cursor_xpos, cur->row_xpos, cur->start_char,
+		cur->buffers[0].length,	cur->buffers[0].allocated);
 	fprintf(dbg, "exit: start_line=%d, ypos=%d\n", cur->start_line,
 		cur->cursor_ypos);
 	fprintf(dbg, "exit: string=\"%s\"\n", cur->buffers[0].string);
+	assert ((cur->cursor_xpos < INT_MAX) && (cur->row_xpos < INT_MAX)
+		&& (cur->cursor_xpos >= cur->row_xpos));
 #endif
 	return 1;
 }
@@ -2290,4 +2810,229 @@ _formi_stitch_fields(FORM *form)
 			
 		}
 	}
+}
+
+/*
+ * Calculate the length of the displayed line allowing for any tab
+ * characters that need to be expanded.  We assume that the tab stops
+ * are 8 characters apart.  The parameters start and end are the
+ * character positions in the string str we want to get the length of,
+ * the function returns the number of characters from the start
+ * position to the end position that should be displayed after any
+ * intervening tabs have been expanded.
+ */
+int
+_formi_tab_expanded_length(char *str, unsigned int start, unsigned int end)
+{
+	int len, start_len, i;
+
+	  /* if we have a null string then there is no length */
+	if (str[0] == '\0')
+		return 0;
+	
+	len = 0;
+	start_len = 0;
+
+	  /*
+	   * preceding tabs affect the length tabs in the span, so
+	   * we need to calculate the length including the stuff before
+	   * start and then subtract off the unwanted bit.
+	   */
+	for (i = 0; i <= end; i++) {
+		if (i == start) /* stash preamble length for later */
+			start_len = len;
+
+		if (str[i] == '\0')
+			break;
+		
+		if (str[i] == '\t')
+			len = len - (len % 8) + 8;
+		else
+			len++;
+	}
+
+#ifdef DEBUG
+	if (dbg != NULL) {
+		fprintf(dbg,
+		    "tab_expanded: start=%d, end=%d, expanded=%d (diff=%d)\n",
+			start, end, (len - start_len), (end - start));
+	}
+#endif
+	
+	return (len - start_len);
+}
+
+/*
+ * Calculate the tab stops on a given line in the field and set up
+ * the tabs list with the results.  We do this by scanning the line for tab
+ * characters and if one is found, noting the position and the number of
+ * characters to get to the next tab stop.  This information is kept to
+ * make manipulating the field (scrolling and so on) easier to handle.
+ */
+void
+_formi_calculate_tabs(FIELD *field, unsigned row)
+{
+	_formi_tab_t *ts = field->lines[row].tabs, *old_ts = NULL, **tsp;
+	int i, j;
+
+	  /*
+	   * If the line already has tabs then invalidate them by
+	   * walking the list and killing the in_use flag.
+	   */
+	for (; ts != NULL; ts = ts->fwd)
+		ts->in_use = FALSE;
+
+
+	  /*
+	   * Now look for tabs in the row and record the info...
+	   */
+	tsp = &field->lines[row].tabs;
+	for (i = field->lines[row].start, j = 0; i <= field->lines[row].end;
+	     i++, j++) {
+		if (field->buffers[0].string[i] == '\t') {
+			if (*tsp == NULL) {
+				if ((*tsp = (_formi_tab_t *)
+				     malloc(sizeof(_formi_tab_t))) == NULL)
+					return;
+				(*tsp)->back = old_ts;
+				(*tsp)->fwd = NULL;
+			}
+			
+			(*tsp)->in_use = TRUE;
+			(*tsp)->pos = i - field->lines[row].start;
+			(*tsp)->size = 8 - (j % 8);
+			j += (*tsp)->size - 1;
+			old_ts = *tsp;
+			tsp = &(*tsp)->fwd;
+		}
+	}
+}
+
+/*
+ * Return the size of the tab padding for a tab character at the given
+ * position.  Return 1 if there is not a tab char entry matching the
+ * given location.
+ */
+static int
+tab_size(FIELD *field, unsigned int offset, unsigned int i)
+{
+	int row;
+	_formi_tab_t *ts;
+
+	row = find_cur_line(field, offset + i);
+	ts = field->lines[row].tabs;
+	
+	while ((ts != NULL) && (ts->pos != i))
+		ts = ts->fwd;
+
+	if (ts == NULL)
+		return 1;
+	else
+		return ts->size;
+}
+
+/*
+ * Find the character offset that corresponds to longest tab expanded
+ * string that will fit into the given window.  Walk the string backwards
+ * evaluating the sizes of any tabs that are in the string.  Note that
+ * using this function on a multi-line window will produce undefined
+ * results - it is really only required for a single row field.
+ */
+static int
+tab_fit_window(FIELD *field, unsigned int pos, unsigned int window)
+{
+	int scroll_amt, i;
+	_formi_tab_t *ts;
+	
+	  /* first find the last tab */
+	ts = field->lines[0].tabs;
+
+	  /*
+	   * unless there are no tabs - just return the window size,
+	   * if there is enough room, otherwise 0.
+	   */
+	if (ts == NULL) {
+		if (field->buffers[0].length < window)
+			return 0;
+		else
+			return field->buffers[0].length - window + 1;
+	}
+		
+	while ((ts->fwd != NULL) && (ts->fwd->in_use == TRUE))
+		ts = ts->fwd;
+
+	  /*
+	   * now walk backwards finding the first tab that is to the
+	   * left of our starting pos.
+	   */
+	while ((ts != NULL) && (ts->in_use == TRUE) && (ts->pos > pos))
+		ts = ts->back;
+	
+	scroll_amt = 0;
+	for (i = pos; i >= 0; i--) {
+		if (field->buffers[0].string[i] == '\t') {
+#ifdef DEBUG
+			assert((ts != NULL) && (ts->in_use == TRUE));
+#endif
+			if (ts->pos == i) {
+				if ((scroll_amt + ts->size) > window) {
+					break;
+				}
+				scroll_amt += ts->size;
+				ts = ts->back;
+			}
+#ifdef DEBUG
+			else
+				assert(ts->pos == i);
+#endif
+		} else {
+			scroll_amt++;
+			if (scroll_amt > window)
+				break;
+		}
+	}
+
+	return ++i;
+}
+
+/*
+ * Return the position of the last character that will fit into the
+ * given width after tabs have been expanded for a given row of a given
+ * field.
+ */
+static unsigned int
+tab_fit_len(FIELD *field, unsigned int row, unsigned int width)
+{
+	unsigned int pos, len, row_pos;
+	_formi_tab_t *ts;
+
+	ts = field->lines[row].tabs;
+	pos = field->lines[row].start;
+	len = 0;
+	row_pos = 0;
+	
+	while ((len < width) && (pos < field->buffers[0].length)) {
+		if (field->buffers[0].string[pos] == '\t') {
+#ifdef DEBUG
+			assert((ts != NULL) && (ts->in_use == TRUE));
+#endif
+			if (ts->pos == row_pos) {
+				if ((len + ts->size) > width)
+					break;
+				len += ts->size;
+				ts = ts->fwd;
+			}
+#ifdef DEBUG
+			else
+				assert(ts->pos == row_pos);
+#endif
+		} else
+			len++;
+		pos++;
+		row_pos++;
+	}
+
+	if (pos > 0)
+		pos--;
+	return pos;
 }

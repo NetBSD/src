@@ -1,4 +1,4 @@
-/*	$NetBSD: internals.h,v 1.7 2001/06/13 10:45:59 wiz Exp $	*/
+/*	$NetBSD: internals.h,v 1.8 2002/05/20 15:00:12 blymn Exp $	*/
 
 /*-
  * Copyright (c) 1998-1999 Brett Lymn
@@ -73,6 +73,17 @@ struct _formi_page_struct
 	int bottom_right;
 };
 
+struct _formi_tab_stops
+{
+	struct _formi_tab_stops *fwd;
+	struct _formi_tab_stops *back;
+	unsigned char in_use;
+	unsigned pos;
+	unsigned size;
+};
+
+typedef struct _formi_tab_stops _formi_tab_t;
+
 /* lines structure for the field - keeps start and ends and length of the
  * lines in a field.
  */
@@ -81,13 +92,17 @@ struct _formi_field_lines
 	unsigned length;
 	unsigned start;
 	unsigned end;
+	_formi_tab_t *tabs;
 };
+
 
 /* function prototypes */
 unsigned
 _formi_skip_blanks(char *, unsigned int);
 int
 _formi_add_char(FIELD *cur, unsigned pos, char c);
+void
+_formi_calculate_tabs(FIELD *field, unsigned row);
 int
 _formi_draw_page(FORM *form);
 int
@@ -106,6 +121,8 @@ void
 _formi_sort_fields(FORM *form);
 void
 _formi_stitch_fields(FORM *form);
+int
+_formi_tab_expanded_length(char *str, unsigned int start, unsigned int end);
 int
 _formi_update_field(FORM *form, int old_field);
 int
