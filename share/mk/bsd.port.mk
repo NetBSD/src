@@ -1,7 +1,7 @@
 #-*- mode: Fundamental; tab-width: 4; -*-
 # ex:ts=4
 #
-#	$NetBSD: bsd.port.mk,v 1.53 1998/02/28 16:02:21 hubertf Exp $
+#	$NetBSD: bsd.port.mk,v 1.54 1998/03/01 13:38:03 tron Exp $
 #
 #	bsd.port.mk - 940820 Jordan K. Hubbard.
 #	This file is in the public domain.
@@ -619,6 +619,7 @@ CAT?=		/bin/cat
 CP?=		/bin/cp
 ECHO?=		/bin/echo
 FALSE?=		/usr/bin/false
+FILE?=		/usr/bin/file
 GREP?=		/usr/bin/grep
 GUNZIP_CMD?=	/usr/bin/gunzip -f
 GZCAT?=		/usr/bin/gzcat
@@ -1301,7 +1302,14 @@ _PORT_USE: .USE
 .elif !defined(MANCOMPRESSED) && defined(MANZ)
 	@${ECHO_MSG} "===>   Compressing manual pages for ${PKGNAME}"
 .for manpage in ${_MANPAGES} ${_CATPAGES}
-	@${GZIP_CMD} ${manpage}
+	@if [ -L ${manpage} ]; then \
+		set - `${FILE} ${manpage}`; \
+		shift `expr $$# - 1`; \
+		${LN} -sf $${1}.gz ${manpage}.gz; \
+		${RM} ${manpage}; \
+	else \
+		${GZIP_CMD} ${manpage}; \
+	fi
 .endfor
 .endif
 .endif
