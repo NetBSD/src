@@ -1,4 +1,4 @@
-/*	$NetBSD: ncr53c9xreg.h,v 1.2 1997/03/15 18:11:32 is Exp $	*/
+/*	$NetBSD: ncr53c9xreg.h,v 1.3 1997/05/01 22:16:26 pk Exp $	*/
 
 /*
  * Copyright (c) 1994 Peter Galbavy.  All rights reserved.
@@ -147,3 +147,30 @@
 #define  NCRCFG3_CDB	0x04		/*	CDB 10-bytes OK		*/
 #define  NCRCFG3_FSCSI	0x02		/*	Fast SCSI		*/
 #define  NCRCFG3_FCLK	0x01		/*	Fast Clock (>25Mhz)	*/
+
+/* Config #4 only on ESP406 or FAS408 */
+#define	NCR_CFG4	0x0d		/* RW - Configuration #4	*/
+#define	 NCRCFG4_CRS1	0x80		/*	Select register set #1	*/
+#define	 NCRCFG4_RSVD1	0x40		/*	reserved		*/
+#define	 NCRCFG4_RSVD2	0x20		/*	reserved		*/
+#define	 NCRCFG4_RSVD3	0x10		/*	reserved		*/
+#define	 NCRCFG4_RSVD4	0x08		/*	reserved		*/
+#define	 NCRCFG4_ACTNEG	0x04		/*	Active negation		*/
+#define	 NCRCFG4_RSVD5	0x02		/*	reserved		*/
+#define	 NCRCFG4_RSVD6	0x01		/*	reserved		*/
+
+#define	NCR_SCSIREGS(sc) do { NCR_WRITE_REG(sc, NCR_CFG4, \
+	~NCRCFG4_CRS1 & NCR_READ_REG(sc, NCR_CFG4)); } while(0)
+#define	NCR_PIOREGS(sc) do { NCR_WRITE_REG(sc, NCR_CFG4, \
+	NCRCFG4_CRS1 | NCR_READ_REG(sc, NCR_CFG4)); } while(0)
+
+/* Config #5 only on ESP406 or FAS408 */
+#define	NCR_CFG5	0x0d		/* RW - Configuration #5	*/
+#define	 NCRCFG5_CRS1	0x80		/*	Select register set #1	*/
+#define	 NCRCFG5_SRAM	0x40		/*	SRAM memory map		*/
+#define  NCRCFG5_AADDR	0x20		/*	Auto address		*/
+#define  NCRCFG5_PTRINC	0x10		/*	Pointer increment	*/
+#define  NCRCFG5_LOWPWR	0x08		/*	Low power mode		*/
+#define  NCRCFG5_SINT	0x04		/*	SCSI interupt enable	*/
+#define  NCRCFG5_INTP	0x02		/*	INT polarity		*/
+#define  NCRCFG5_AINT	0x01		/*	ATA interupt enable	*/
