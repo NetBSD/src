@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.22 1999/01/10 15:01:32 mrg Exp $	*/
+/*	$NetBSD: pmap.c,v 1.23 1999/01/16 20:45:58 chuck Exp $	*/
 /* #define NO_VCACHE */ /* Don't forget the locked TLB in dostart */
 #define HWREF 
 /* #define BOOT_DEBUG */
@@ -342,21 +342,10 @@ int numctx;
 #define CTXENTRY	(sizeof(paddr_t))
 #define CTXSIZE		(numctx*CTXENTRY)
 
-#if defined(MACHINE_NEW_NONCONTIG)
 #if defined(UVM)
 #define	pmap_get_page(p)	uvm_page_physget((p));
 #else
 #define	pmap_get_page(p)	vm_page_physget((p));
-#endif
-#else
-#define	pmap_get_page(p)		\
-	do {				\
-		*(p) = avail->start;	\
-		avail->start += NBPG;	\
-		avail->size -= NBPG;	\
-		if (!avail->size)	\
-			avail++;	\
-	} while (0)
 #endif
 /*
  * This is called during initppc, before the system is really initialized.
@@ -868,7 +857,6 @@ pmap_bootstrap(kernelstart, kernelend, maxctx)
 			mp1->start = s;
 			mp1->size = sz;
 		}
-#if defined(MACHINE_NEW_NONCONTIG)
 		/* 
 		 * In future we should be able to specify both allocated
 		 * and free.
@@ -886,7 +874,6 @@ pmap_bootstrap(kernelstart, kernelend, maxctx)
 			atop(mp->start+mp->size),
 			atop(mp->start),
 			atop(mp->start+mp->size));
-#endif
 #endif
 	}
 
@@ -1087,28 +1074,6 @@ pmap_init()
 	vm_num_phys = avail_end - avail_start;
 }
 
-#if !defined(MACHINE_NEW_NONCONTIG)
-/*
- * Return the index of the given page in terms of pmap_next_page() calls.
- */
-int
-pmap_page_index(pa)
-	paddr_t pa;
-{
-	struct mem_region *mp;
-	psize_t pre;
-	
-	pa &= ~PGOFSET;
-	for (pre = 0, mp = avail; mp->size; mp++) {
-		if (pa >= mp->start
-		    && pa < mp->start + mp->size)
-			return btoc(pre + (pa - mp->start));
-		pre += mp->size;
-	}
-	return -1;
-}
-#endif
-
 /*
  * How much virtual space is available to the kernel?
  */
@@ -1126,55 +1091,6 @@ pmap_virtual_space(start, end)
 	prom_printf("pmap_virtual_space: %x-%x\r\n", *start, *end);
 #endif
 }
-
-#ifdef MACHINE_NONCONTIG
-/*
- * Return the number of possible page indices returned
- * from pmap_page_index for any page provided by pmap_next_page.
- */
-u_int
-pmap_free_pages()
-{
-	return npgs;
-}
-
-/*
- * If there are still physical pages available, put the address of
- * the next available one at paddr and return TRUE.  Otherwise,
- * return FALSE to indicate that there are no more free pages.
- */
-int
-pmap_next_page(paddr)
-	paddr_t *paddr;
-{
-	static int lastidx = -1;
-	
-	if (lastidx < 0
-	    || nextavail >= avail[lastidx].start + avail[lastidx].size) {
-		if (avail[++lastidx].size == 0) {
-#ifdef NOT_DEBUG
-			printf("pmap_next_page: failed lastidx=%d nextavail=%x "
-			       "avail[lastidx]=(%x:%08x,%x:%08x)\n",
-			       lastidx, nextavail,
-			       (int)(avail[lastidx].start>>32), (int)(avail[lastidx].start),
-			       (int)(avail[lastidx].size>>32), (int)(avail[lastidx].size));
-#endif
-			return FALSE;
-		}
-		nextavail = avail[lastidx].start;
-	}
-	*paddr = nextavail;
-	nextavail += NBPG;
-#ifdef NOTDEF_DEBUG
-	printf("pmap_next_page: OK lastidx=%d nextavail=%x "
-	       "avail[lastidx]=(%x:%08x,%x:%08x)\n",
-	       lastidx, nextavail, 
-	       (int)(avail[lastidx].start>>32), (int)(avail[lastidx].start),
-	       (int)(avail[lastidx].size>>32), (int)(avail[lastidx].size));
-#endif
-	return TRUE;
-}
-#endif
 
 /*
  * Create and return a physical map.

@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.40 1998/12/12 05:25:01 gwr Exp $	*/
+/*	$NetBSD: pmap.c,v 1.41 1999/01/16 20:48:46 chuck Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -580,9 +580,7 @@ void   mmu_flusha __P((void));
  ** Most functions used only within this module are defined in
  **   pmap_pvt.h (why not here if used only here?)
  **/
-#ifdef MACHINE_NEW_NONCONTIG
 static void pmap_page_upload __P((void));
-#endif
 
 /** Interface functions
  ** - functions required by the Mach VM Pmap interface, with MACHINE_CONTIG
@@ -915,9 +913,7 @@ pmap_bootstrap(nextva)
 	PAGE_SIZE = NBPG;
 	vm_set_page_size();
 
-#if defined(MACHINE_NEW_NONCONTIG)
 	pmap_page_upload();
-#endif
 }
 
 
@@ -3665,8 +3661,6 @@ pmap_virtual_space(vstart, vend)
 	*vend = virtual_end;
 }
 
-#if defined(MACHINE_NEW_NONCONTIG)
-
 /*
  * Provide memory to the VM system.
  *
@@ -3696,80 +3690,6 @@ pmap_page_upload()
 			break;
 	}
 }
-
-#else	/* MACHINE_NEW_NONCONTIG */
-
-/* pmap_free_pages			INTERFACE
- **
- * Return the number of physical pages still available.
- *
- * This is probably going to be a mess, but it's only called
- * once and it's the only function left that I have to implement!
- */
-u_int
-pmap_free_pages()
-{
-	int i;
-	u_int left;
-	vm_offset_t avail;
-
-	avail = avail_next;
-	left = 0;
-	i = 0;
-	while (avail >= avail_mem[i].pmem_end) {
-		if (avail_mem[i].pmem_next == NULL)
-			return 0;
-		i++;
-	}
-	while (i < SUN3X_NPHYS_RAM_SEGS) {
-		if (avail < avail_mem[i].pmem_start) {
-			/* Avail is inside a hole, march it
-			 * up to the next bank.
-			 */
-			avail = avail_mem[i].pmem_start;
-		}
-		left += m68k_btop(avail_mem[i].pmem_end - avail);
-		if (avail_mem[i].pmem_next == NULL)
-			break;
-		i++;
-	}
-
-	return left;
-}
-
-/* pmap_next_page			INTERFACE
- **
- * Place the physical address of the next available page in the
- * argument given.  Returns FALSE if there are no more pages left.
- *
- * This function must jump over any holes in physical memory.
- * Once this function is used, any use of pmap_bootstrap_alloc()
- * is a sin.  Sinners will be punished with erratic behavior.
- */
-boolean_t
-pmap_next_page(pa)
-	vm_offset_t *pa;
-{
-	static struct pmap_physmem_struct *curbank = avail_mem;
-
-	/* XXX - temporary ROM saving hack. */
-	if (avail_next >= avail_end)
-		return FALSE;
-
-	if (avail_next >= curbank->pmem_end)
-		if (curbank->pmem_next == NULL)
-			return FALSE;
-		else {
-			curbank = curbank->pmem_next;
-			avail_next = curbank->pmem_start;
-		}
-
-	*pa = avail_next;
-	avail_next += NBPG;
-	return TRUE;
-}
-
-#endif /* ! MACHINE_NEW_NONCONTIG */
 
 /* pmap_page_index			INTERFACE
  **

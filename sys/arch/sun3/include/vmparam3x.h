@@ -1,4 +1,4 @@
-/*	$NetBSD: vmparam3x.h,v 1.8 1998/12/12 05:28:24 gwr Exp $	*/
+/*	$NetBSD: vmparam3x.h,v 1.9 1999/01/16 20:48:44 chuck Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -105,8 +105,6 @@
 #define VM_MBUF_SIZE		(NMBCLUSTERS*MCLBYTES)
 #define VM_KMEM_SIZE		(NKMEMCLUSTERS*CLBYTES)
 #define VM_PHYS_SIZE		(USRIOSIZE*CLBYTES)
-
-#define MACHINE_NEW_NONCONTIG	/* VM <=> pmap interface modifier */
 
 #define VM_PHYSSEG_MAX		4
 #define VM_PHYSSEG_STRAT	VM_PSTRAT_BSEARCH
