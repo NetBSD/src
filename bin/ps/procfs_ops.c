@@ -1,4 +1,4 @@
-/*	$NetBSD: procfs_ops.c,v 1.6 1999/10/15 19:31:25 jdolecek Exp $	*/
+/*	$NetBSD: procfs_ops.c,v 1.7 1999/10/15 20:39:52 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -399,13 +399,12 @@ procfs_getargv(kp, nchr)
 	buf[len] = '\0'; /* end the string */
 
 	/* if the name is the same as the p_comm, just enclosed
-	 * in parentheses, remove the parentheses */
+	 * in parentheses, just return NULL - the code in command()
+	 * will DTRT */
 	if (num == 1 && name[0] == '(' && name[len-1] == ')'
 		&& strncmp(name+1, kp->kp_proc.p_comm, len-2) == 0)
 	{
-		len -= 2;
-		strncpy(name, name+1, len);
-		name[len] = '\0';
+		return (NULL);
 	}
 	
 	argv = (char **) malloc(3*sizeof(char *));
