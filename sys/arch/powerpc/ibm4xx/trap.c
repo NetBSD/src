@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.2.6.12 2002/09/26 20:04:52 nathanw Exp $	*/
+/*	$NetBSD: trap.c,v 1.2.6.13 2002/10/06 02:35:26 gmcgarry Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -669,10 +669,9 @@ startlwp(arg)
  * XXX This is a terrible name.
  */
 void
-upcallret(arg)
-	void *arg;
+upcallret(l)
+	struct lwp *l;
 {
-	struct lwp *l = curlwp;
 	int sig;
 
 	/* Take pending signals. */
