@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_var.h,v 1.62 1999/07/09 23:41:17 thorpej Exp $	*/
+/*	$NetBSD: tcp_var.h,v 1.63 1999/07/14 22:37:15 itojun Exp $	*/
 
 /*
 %%% portions-copyright-nrl-98
@@ -646,8 +646,8 @@ void	 tcp_pulloutofband __P((struct socket *,
 	    struct tcphdr *, struct mbuf *));
 void	 tcp_quench __P((struct inpcb *, int));
 int	 tcp_reass __P((struct tcpcb *, struct tcphdr *, struct mbuf *, int *));
-int	 tcp_respond __P((struct tcpcb *,
-	    struct mbuf *, struct mbuf *, tcp_seq, tcp_seq, int));
+int	 tcp_respond __P((struct tcpcb *, struct mbuf *, struct mbuf *,
+	    struct tcphdr *, tcp_seq, tcp_seq, int));
 void	 tcp_rmx_rtt __P((struct tcpcb *));
 void	 tcp_setpersist __P((struct tcpcb *));
 void	 tcp_slowtimo __P((void));
