@@ -1,4 +1,4 @@
-/*	$NetBSD: i82365.c,v 1.2 1997/10/16 23:21:46 thorpej Exp $	*/
+/*	$NetBSD: i82365.c,v 1.3 1997/10/17 07:59:39 enami Exp $	*/
 
 #define	PCICDEBUG
 
@@ -378,8 +378,7 @@ pcic_submatch(parent, cf, aux)
 	struct cfdata *cf = match;
 #endif
 
-	struct pcmciabus_attach_args *paa =
-	    (struct pcmciabus_attach_args *) aux;
+	struct pcmciabus_attach_args *paa = aux;
 	struct pcic_handle *h = (struct pcic_handle *) paa->pch;
 
 	switch (h->sock) {
@@ -423,8 +422,7 @@ pcic_print(arg, pnp)
 	void *arg;
 	const char *pnp;
 {
-	struct pcmciabus_attach_args *paa =
-	    (struct pcmciabus_attach_args *) arg;
+	struct pcmciabus_attach_args *paa = arg;
 	struct pcic_handle *h = (struct pcic_handle *) paa->pch;
 
 	/* Only "pcmcia"s can attach to "pcic"s... easy. */
@@ -455,7 +453,7 @@ int
 pcic_intr(arg)
 	void *arg;
 {
-	struct pcic_softc *sc = (struct pcic_softc *) arg;
+	struct pcic_softc *sc = arg;
 	int i, ret = 0;
 
 	DPRINTF(("%s: intr\n", sc->dev.dv_xname));
