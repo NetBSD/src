@@ -1,4 +1,4 @@
-/*	$NetBSD: irix_swap.c,v 1.3 2002/03/18 17:21:24 manu Exp $ */
+/*	$NetBSD: irix_swap.c,v 1.4 2002/03/18 20:34:54 manu Exp $ */
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: irix_swap.c,v 1.3 2002/03/18 17:21:24 manu Exp $");
+__KERNEL_RCSID(0, "$NetBSD: irix_swap.c,v 1.4 2002/03/18 20:34:54 manu Exp $");
 
 #include <sys/types.h>
 #include <sys/signal.h> 
@@ -79,6 +79,38 @@ irix_sys_swapctl(p, v, retval)
 #endif
 
 	switch (SCARG(uap, cmd)) {
+	case IRIX_SC_ADD: /* Add a swap resource */
+	case IRIX_SC_SGIADD: /* Add a swap resource */
+	case IRIX_SC_REMOVE: {/* Remove a swap resource */
+		struct irix_xswapres isr;
+		size_t len = (SCARG(uap, cmd) == IRIX_SC_SGIADD) ? 
+		    sizeof(struct irix_xswapres) : sizeof(struct irix_swapres);
+
+		if ((error = copyin(SCARG(uap, arg), &isr, len)) != 0)
+			return error;
+#ifdef DEBUG_IRIX
+		printf("irix_sys_swapctl(): sr_start=%d, sr_length=%d",
+		    isr.sr_start, isr.sr_length);
+		if (SCARG(uap, cmd) == IRIX_SC_SGIADD)
+			printf(", sr_maxlength=%d, sr_vlength=%d",
+			    isr.sr_maxlength, isr.sr_vlength);
+		printf("\n");
+#endif
+		if (isr.sr_start != 0) {
+			printf("Warning: irix_sys_swapctl(): ");
+			printf("unsupported non null sr_start\n");
+			return EINVAL;
+		}
+		SCARG(&cup, cmd) = 
+		    (SCARG(uap, cmd) == IRIX_SC_REMOVE) ? SWAP_OFF : SWAP_ON;
+		SCARG(&cup, arg) = isr.sr_name;
+		SCARG(&cup, misc) = 
+		    (SCARG(uap, cmd) == IRIX_SC_SGIADD) ? isr.sr_pri : 0;
+		return sys_swapctl(p, &cup, retval);
+		break;
+	}
+
+
 	case IRIX_SC_GETNSWP: /* Get number of swap items */
 		SCARG(&cup, cmd) = SWAP_NSWAP;
 		SCARG(&cup, arg) = NULL;
