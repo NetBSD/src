@@ -1,4 +1,4 @@
-/*	$NetBSD: if_le.c,v 1.12 1995/05/02 20:00:09 jonathan Exp $	*/
+/*	$NetBSD: if_le.c,v 1.13 1995/05/31 00:15:46 jonathan Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -767,7 +767,14 @@ leread(unit, buf, len)
 	 * If so, hand off the raw packet to enet.
 	 */
 	if (le->sc_if.if_bpf) {
+		M_PREPEND(m, sizeof(struct ether_header), M_DONTWAIT);
+		if (m == 0)
+			return;
+		bcopy(&et, mtod(m, void *), sizeof(struct ether_header));
+
 		bpf_mtap(le->sc_if.if_bpf, m);
+
+		m_adj(m, sizeof(struct ether_header));
 
 		/*
 		 * Keep the packet if it's a broadcast or has our
