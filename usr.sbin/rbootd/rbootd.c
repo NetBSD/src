@@ -1,4 +1,4 @@
-/*	$NetBSD: rbootd.c,v 1.15 2002/07/20 08:40:20 grant Exp $	*/
+/*	$NetBSD: rbootd.c,v 1.16 2002/09/19 03:04:13 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1988, 1992 The University of Utah and the Center
@@ -57,12 +57,13 @@ __COPYRIGHT(
 #if 0
 static char sccsid[] = "@(#)rbootd.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: rbootd.c,v 1.15 2002/07/20 08:40:20 grant Exp $");
+__RCSID("$NetBSD: rbootd.c,v 1.16 2002/09/19 03:04:13 mycroft Exp $");
 #endif
 #endif /* not lint */
 
 #include <sys/param.h>
 #include <sys/time.h>
+#include <sys/poll.h>
 #include <ctype.h>
 #include <err.h>
 #include <errno.h>
@@ -83,8 +84,8 @@ main(argc, argv)
 	int argc;
 	char *argv[];
 {
-	int c, fd, omask, maxfds;
-	fd_set rset;
+	int c, fd, omask;
+	struct pollfd set[1];
 
 	/*
 	 *  Close any open file descriptors.
@@ -95,8 +96,8 @@ main(argc, argv)
 		int i, nfds = getdtablesize();
 
 		for (i = 0; i < nfds; i++)
-			if (i != fileno(stdin) && i != fileno(stdout) &&
-			    i != fileno(stderr))
+			if (i != STDIN_FILENO && i != STDOUT_FILENO &&
+			    i != STDERR_FILENO)
 				(void) close(i);
 	}
 
@@ -209,35 +210,24 @@ main(argc, argv)
 	 *  Main loop: receive a packet, determine where it came from,
 	 *  and if we service this host, call routine to handle request.
 	 */
-	maxfds = fd + 1;
-	FD_ZERO(&rset);
-	FD_SET(fd, &rset);
+	set[0].fd = fd;
+	set[0].events = POLLIN;
 	for (;;) {
-		struct timeval timeout;
-		fd_set r;
 		int nsel;
 
-		r = rset;
-
-		if (RmpConns == NULL) {		/* timeout isnt necessary */
-			nsel = select(maxfds, &r, NULL, NULL, NULL);
-		} else {
-			timeout.tv_sec = RMP_TIMEOUT;
-			timeout.tv_usec = 0;
-			nsel = select(maxfds, &r, NULL, NULL, &timeout);
-		}
+		nsel = poll(set, 1, RmpConns ? RMP_TIMEOUT * 1000 : INFTIM);
 
 		if (nsel < 0) {
 			if (errno == EINTR)
 				continue;
-			syslog(LOG_ERR, "select: %m");
+			syslog(LOG_ERR, "poll: %m");
 			Exit(0);
 		} else if (nsel == 0) {		/* timeout */
 			DoTimeout();			/* clear stale conns */
 			continue;
 		}
 
-		if (FD_ISSET(fd, &r)) {
+		if (set[0].revents & POLLIN) {
 			RMPCONN rconn;
 			CLIENT *client;
 			int doread = 1;
