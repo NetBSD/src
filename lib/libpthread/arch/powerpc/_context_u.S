@@ -1,4 +1,4 @@
-/*	$NetBSD: _context_u.S,v 1.3 2003/06/12 19:09:45 nathanw Exp $	*/
+/*	$NetBSD: _context_u.S,v 1.4 2004/06/02 22:39:52 nathanw Exp $	*/
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
@@ -58,10 +58,6 @@
  * If _getcontext_u is called, set the UC_USER_BIT in the UC_FLAGS.  If
  * _setcontext_u sees that bit, then it will just restore this part of the
  * context, otherwise, it will call through to setcontext(2).
- *
- * Note: 0xd032 (put in MSR) is a magic constant that keeps the kernel
- * setcontext(2) happy as it compares this value to srr1 to see if it
- * should return EINVAL.
  */
 #define GETC(reg)					  \
 	stw	 %r1, (_REG_R0 +  1*4)(reg)		; \
