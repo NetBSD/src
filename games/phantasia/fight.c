@@ -1,4 +1,4 @@
-/*	$NetBSD: fight.c,v 1.5 1999/09/08 21:57:18 jsm Exp $	*/
+/*	$NetBSD: fight.c,v 1.6 2000/03/30 11:01:13 jdolecek Exp $	*/
 
 /*
  * fight.c   Phantasia monster fighting routines
@@ -549,7 +549,7 @@ monsthits()
 			mvprintw(Lines++, 0,
 			    "%s flew away, and left you to contend with one of its friends.",
 			    Enemyname);
-			Whichmonster = 55 + (drandom() > 0.5) ? 22 : 0;
+			Whichmonster = 55 + ((drandom() > 0.5) ? 22 : 0);
 			longjmp(Fightenv, 0);
 			/* NOTREACHED */
 
@@ -869,7 +869,7 @@ callmonster(which)
 			Curmonster.m_energy = Player.p_might * 30.0;
 			Curmonster.m_type = SM_MORGOTH;
 			Curmonster.m_speed = Player.p_speed * 1.1
-			    + (Player.p_specialtype == SC_EXVALAR) ? Player.p_speed : 0.0;
+			    + ((Player.p_specialtype == SC_EXVALAR) ? Player.p_speed : 0.0);
 			Curmonster.m_flock = 0.0;
 			Curmonster.m_treasuretype = 0;
 			Curmonster.m_experience = 0.0;
