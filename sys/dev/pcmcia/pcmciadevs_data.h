@@ -1,10 +1,10 @@
-/*	$NetBSD: pcmciadevs_data.h,v 1.211 2005/03/19 22:00:27 christos Exp $	*/
+/*	$NetBSD: pcmciadevs_data.h,v 1.212 2005/03/23 11:59:38 martin Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcmciadevs,v 1.209 2005/03/19 21:59:56 christos Exp
+ *	NetBSD: pcmciadevs,v 1.210 2005/03/23 11:58:56 martin Exp
  */
 /* $FreeBSD: src/sys/dev/pccard/pccarddevs,v 1.20 2001/11/19 05:02:55 imp Exp $*/
 
@@ -902,6 +902,13 @@ struct pcmcia_knowndev pcmcia_knowndevs[] = {
 	    0,
 	    "Proxim",
 	    "Proxim RangeLAN2 7401",	}
+	,
+	{
+	    PCMCIA_VENDOR_PROXIM, PCMCIA_PRODUCT_PROXIM_RANGELANDS_8430,
+	    PCMCIA_CIS_PROXIM_RANGELANDS_8430,
+	    0,
+	    "Proxim",
+	    "Proxim RangeLAN-DS 8430",	}
 	,
 	{
 	    PCMCIA_VENDOR_PSION, PCMCIA_PRODUCT_PSION_GOLDCARD,
