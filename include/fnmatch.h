@@ -31,7 +31,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)fnmatch.h	8.1 (Berkeley) 6/2/93
- *	$Id: fnmatch.h,v 1.3 1993/11/06 00:58:17 cgd Exp $
+ *	$Id: fnmatch.h,v 1.4 1993/11/11 03:25:48 jtc Exp $
  */
 
 #ifndef	_FNMATCH_H_
@@ -46,9 +46,7 @@
 #include <sys/cdefs.h>
 
 __BEGIN_DECLS
-#ifndef	_POSIX_SOURCE
 int	 fnmatch __P((const char *, const char *, int));
-#endif
 __END_DECLS
 
 #endif /* !_FNMATCH_H_ */
