@@ -1,4 +1,4 @@
-/*	$NetBSD: net.c,v 1.38.2.1 1999/04/07 23:39:53 simonb Exp $	*/
+/*	$NetBSD: net.c,v 1.38.2.2 1999/04/19 15:19:28 perry Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -62,9 +62,6 @@ static char *url_encode __P((char *dst, const char *src, size_t len,
 
 static void get_ifconfig_info __P((void));
 static void get_ifinterface_info __P((void));
-
-/* external */
-const char* target_prefix __P((void));
 
 /*
  * URL encode unsafe characters.  See RFC 1738.
@@ -323,7 +320,7 @@ config_network()
 		fclose(f);
 	}
 
-	run_prog(0, 0, "/sbin/ifconfig lo0 127.0.0.1");
+	run_prog(0, 0, NULL, "/sbin/ifconfig lo0 127.0.0.1");
 
 	/*
 	 * ifconfig does not allow media specifiers on IFM_MANUAL interfaces.
@@ -343,10 +340,12 @@ config_network()
 	}
 
 	if (*net_media != '\0')
-		run_prog(0, 0, "/sbin/ifconfig %s inet %s netmask %s media %s",
+		run_prog(0, 0, NULL,
+		    "/sbin/ifconfig %s inet %s netmask %s media %s",
 			  net_dev, net_ip, net_mask, net_media);
 	else
-		run_prog(0, 0, "/sbin/ifconfig %s inet %s netmask %s", net_dev,
+		run_prog(0, 0, NULL, 
+		    "/sbin/ifconfig %s inet %s netmask %s", net_dev,
 			  net_ip, net_mask);
 
 	/* Set host name */
@@ -355,8 +354,10 @@ config_network()
 
 	/* Set a default route if one was given */
 	if (strcmp(net_defroute, "") != 0) {
-		run_prog(0, 0, "/sbin/route -n flush");
-		run_prog(0, 0, "/sbin/route -n add default %s",
+		run_prog(0, 0, NULL, 
+		    "/sbin/route -n flush");
+		run_prog(0, 0, NULL, 
+		    "/sbin/route -n add default %s",
 			  net_defroute);
 	}
 
@@ -366,11 +367,13 @@ config_network()
 	 */
 
 	if (strcmp(net_namesvr, "") != 0 && network_up)
-		network_up = !run_prog(0, 1, "/sbin/ping -c 2 %s",
+		network_up = !run_prog(0, 1, NULL, 
+		    "/sbin/ping -c 2 %s",
 					net_namesvr);
 
 	if (strcmp(net_defroute, "") != 0 && network_up)
-		network_up = !run_prog(0, 1, "/sbin/ping -c 2 %s",
+		network_up = !run_prog(0, 1, NULL, 
+		    "/sbin/ping -c 2 %s",
 					net_defroute);
 	fflush(NULL);
 
@@ -402,7 +405,7 @@ get_via_ftp()
 	strncat(ftp_dir, machine, STRSIZE - strlen(ftp_dir));
 	strncat(ftp_dir, ftp_prefix, STRSIZE - strlen(ftp_dir));
 	process_menu(MENU_ftpsource);
-	
+
 	list = dist_list;
 	while (list->name) {
 		if (!list->getit) {
@@ -422,13 +425,15 @@ get_via_ftp()
 		 * unsafe by a strict reading of RFC 1738).
 		 */
 		if (strcmp ("ftp", ftp_user) == 0)
-			ret = run_prog(0, 1, "/usr/bin/ftp -a ftp://%s/%s/%s",
+			ret = run_prog(0, 1, NULL, 
+			    "/usr/bin/ftp -a ftp://%s/%s/%s",
 			    ftp_host,
 			    url_encode(ftp_dir_encoded, ftp_dir, STRSIZE,
 					RFC1738_SAFE_LESS_SHELL_PLUS_SLASH),
 			    filename);
 		else {
-			ret = run_prog(0, 1, "/usr/bin/ftp ftp://%s:%s@%s/%s/%s",
+			ret = run_prog(0, 1, NULL, 
+			    "/usr/bin/ftp ftp://%s:%s@%s/%s/%s",
 			    url_encode(ftp_user_encoded, ftp_user, STRSIZE,
 					RFC1738_SAFE_LESS_SHELL),
 			    url_encode(ftp_pass_encoded, ftp_pass, STRSIZE,
@@ -477,10 +482,12 @@ get_via_nfs()
 	process_menu(MENU_nfssource);
 again:
 
-	run_prog(0, 0, "/sbin/umount /mnt2");
+	run_prog(0, 0, NULL, 
+	    "/sbin/umount /mnt2");
 	
 	/* Mount it */
-	if (run_prog(0, 0, "/sbin/mount -r -o -i,-r=1024 -t nfs %s:%s /mnt2",
+	if (run_prog(0, 0, NULL, 
+	    "/sbin/mount -r -o -i,-r=1024 -t nfs %s:%s /mnt2",
 	    nfs_host, nfs_dir)) {
 		msg_display(MSG_nfsbadmount, nfs_host, nfs_dir);
 		process_menu(MENU_nfsbadmount);

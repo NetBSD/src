@@ -1,4 +1,4 @@
-/*	$NetBSD: msg.mi.eng,v 1.36 1999/03/31 00:44:49 fvdl Exp $	*/
+/*	$NetBSD: msg.mi.eng,v 1.36.2.1 1999/04/19 15:19:27 perry Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -122,6 +122,11 @@ message badname
 The following disks are available: %s
 \nOn which disk do you want to install NetBSD? }
 
+message disktoosmall
+{Your hard disk is too small for a standard install. You will have to enter
+the partitions size by hand.
+}
+
 message pleasemountroot
 {The root device is not mounted.  Please mount it.
 
@@ -194,6 +199,20 @@ choose partition sizes that are exact multiples of your actual
 cylinder size, which is %d sectors.
 }
 
+message defaultunit
+{Unless specified with 'M' (megabytes), 'c' (cylinders) or 's' sector
+at the end of input, sizes and offsets are in %s.
+}
+
+message startoutsidedisk
+{The start value you specified is beyond the end of the disk.
+}
+
+message endoutsidedisk
+{With this value, the partition end is beyond the end of the disk. Your
+partition size has been truncated to %d %s.
+}
+
 message fspart
 {We now have your BSD-disklabel partitions as (Size and Offset in %s):
 }
@@ -236,19 +255,54 @@ If the target filesystems look good, the next step is to fetch and
 unpack the distribution filesets.  Press <return> to proceed.
 }
 
+message openfail
+{Could not open %s, error message was: %s.
+}
+
+message statfail
+{Can't get properties of %s, error message was: %s.
+}
+
+message unlink_fail
+{I was unable to delete %s, error message was: %s.
+}
+
+message rename_fail
+{I was unable to rename %s to %s, error message was: %s.
+}
+
+message deleting_files
+{As part of the upgrade procedure, the following have to be deleted:
+}
+
+message deleting_dirs
+{As part of the upgrade procedure, the following directories have to be
+deleted (I will rename those that are not empty):
+}
+
+message renamed_dir
+{The directory %s has been renamed to %s because it was not empty.
+}
+
+message cleanup_warn
+{Cleanup of the existing install failed. This may cause cause the extraction
+of the set to fail.
+}
 
 message nomount
 {Partition %c's type is not 4.2BSD or msdos and therefore does not have
 a mount point.}
 
-message dodisklabel
-{Writing the NetBSD disklabel ...\n}
-
-message donewfs
-{Creating the new file systems on all 4.2BSD partitions...\n}
+message mountfail
+{mount of device %s on %s failed.
+}
 
 message dotar
 {Populating filesystems with bootstrapping binaries and config files...\n}
+
+message dotarfail
+{The bootstrapping binaries and config file installation failed.
+Can't continue ...}
 
 message instcomplete
 {The installation of NetBSD-@@VERSION@@ is now complete.  The system
@@ -501,10 +555,6 @@ proceed by hand, or choose a different source for release sets and try
 again.
 }
 
-message openmsgbuf
-{Could not open /kern/msgbuf.
-}
-
 message anonprog
 {sysinst: running "%s"
 }
@@ -556,10 +606,6 @@ message netnotup
 {There was a problem in setting up the network.  Either your gateway
 or your nameserver was not reachable by a ping.  Do you want to
 configure your network again?  (No aborts the install process.)
-}
-
-message extracting
-{Extracting file %s ...
 }
 
 message makedev
@@ -662,3 +708,8 @@ The physical geometry is % cylinders %d sectors %d heads\n}
 message biosguess
 {Using the information already on the disk, my best guess for the BIOS
 geometry is %d cylinders %d sectors %d heads\n}
+
+message cmdfail
+{Command
+        %s
+failed. I can't continue.}

@@ -1,4 +1,4 @@
-/*	$NetBSD: md.c,v 1.14.2.1 1999/04/09 21:27:31 jonb Exp $	*/
+/*	$NetBSD: md.c,v 1.14.2.2 1999/04/19 15:19:30 perry Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -95,11 +95,12 @@ int	md_get_info (void)
 	return 1;
 }
 
-void	md_pre_disklabel (void)
+int	md_pre_disklabel (void)
 {
+	return 0;
 }
 
-void	md_post_disklabel (void)
+int	md_post_disklabel (void)
 {
 	char bimcmd[256];
 	char sedcmd[256];
@@ -113,14 +114,17 @@ void	md_post_disklabel (void)
 		(void)fprintf(script, "%s\n", sedcmd);
 
 	do_system(bimcmd);
+	return 0;
 }
 
-void	md_post_newfs (void)
+int	md_post_newfs (void)
 {
+	return 0;
 }
 
-void	md_copy_filesystem (void)
+int	md_copy_filesystem (void)
 {
+	return 0;
 }
 
 int md_make_bsd_partitions (void)

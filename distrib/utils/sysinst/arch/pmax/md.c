@@ -1,4 +1,4 @@
-/*	$NetBSD: md.c,v 1.24.2.1 1999/04/05 15:08:02 simonb Exp $	*/
+/*	$NetBSD: md.c,v 1.24.2.2 1999/04/19 15:19:30 perry Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -120,16 +120,18 @@ md_get_info (void)
 /* 
  * hook called before editing new disklabel.
  */
-void	md_pre_disklabel (void)
+int	md_pre_disklabel (void)
 {
+	return 1;
 }
 
 
 /* 
  * hook called after writing  disklabel to new target disk.
  */
-void	md_post_disklabel (void)
+int	md_post_disklabel (void)
 {
+	return 0;
 }
 
 /*
@@ -141,17 +143,18 @@ void	md_post_disklabel (void)
  *
  * On pmax, we take this opportuinty to update the bootblocks.
  */
-void	md_post_newfs (void)
+int	md_post_newfs (void)
 {
 	/* XXX boot blocks ... */
 	if (target_already_root()) {
 		/* /usr is empty and we must already have bootblocks?*/
-		return;
+		return 0;
 	}
 	
 	printf (msg_string(MSG_dobootblks), diskdev);
-	run_prog(0, 1, "/sbin/disklabel -B %s /dev/r%sc",
+	run_prog(0, 1, NULL, "/sbin/disklabel -B %s /dev/r%sc",
 			"-b /usr/mdec/rzboot -s /usr/mdec/bootrz", diskdev);
+	return 0;
 }
 
 
@@ -230,7 +233,7 @@ int	md_make_bsd_partitions (void)
 		i = NUMSEC(layoutkind * 2 * (rammb < 32 ? 32 : rammb),
 			   MEG/sectorsize, dlcylsize) + partstart;
 		partsize = NUMSEC (i/(MEG/sectorsize)+1, MEG/sectorsize,
-			   dlcylsize) - partstart - swapadj;
+			   dlcylsize) - partstart;
 		bsdlabel[B].pi_offset = partstart;
 		bsdlabel[B].pi_size = partsize;
 		partstart += partsize;
@@ -270,11 +273,11 @@ int	md_make_bsd_partitions (void)
 		i = NUMSEC(layoutkind * 2 * (rammb < 32 ? 32 : rammb),
 			   MEG/sectorsize, dlcylsize) + partstart;
 		partsize = NUMSEC (i/(MEG/sectorsize)+1, MEG/sectorsize,
-			   dlcylsize) - partstart - swapadj;
+			   dlcylsize) - partstart;
 		snprintf (isize, 20, "%d", partsize/sizemult);
 		msg_prompt_add (MSG_askfsswap, isize, isize, 20,
 			    remain/sizemult, multname);
-		partsize = NUMSEC(atoi(isize),sizemult, dlcylsize) - swapadj;
+		partsize = NUMSEC(atoi(isize),sizemult, dlcylsize);
 		bsdlabel[B].pi_offset = partstart;
 		bsdlabel[B].pi_size = partsize;
 		partstart += partsize;
@@ -339,7 +342,7 @@ int	md_make_bsd_partitions (void)
 	get_labelname();
 
 	/* Create the disktab.preinstall */
-	run_prog (0, 0, "cp /etc/disktab.preinstall /etc/disktab");
+	run_prog (0, 0, NULL, "cp /etc/disktab.preinstall /etc/disktab");
 #ifdef DEBUG
 	f = fopen ("/tmp/disktab", "a");
 #else
@@ -393,7 +396,7 @@ int	md_make_bsd_partitions (void)
  * already  the current root: we'd clobber the files we're trying to copy.
  */
 
-void	md_copy_filesystem (void)
+int	md_copy_filesystem (void)
 {
 	/*
 	 * Make sure any binaries in a diskimage /usr.install get copied 
@@ -414,10 +417,11 @@ void	md_copy_filesystem (void)
 
 
 	/* test returns 0  on success */
-	dir_exists = (run_prog(0, 0, "test -d %s", diskimage_usr) == 0);
+	dir_exists = (run_prog(0, 0, NULL, "test -d %s", diskimage_usr) == 0);
 	if (dir_exists) {
-		run_prog ( 0, 1, "pax -Xrwpe -s /%s// %s /usr",
-			diskimage_usr, diskimage_usr);
+		if (run_prog ( 0, 1, NULL, "pax -Xrwpe -s /%s// %s /usr",
+			diskimage_usr, diskimage_usr) != 0)
+				return 1;
 	}
 
 	if (target_already_root()) {
@@ -425,20 +429,21 @@ void	md_copy_filesystem (void)
 	  	/* The diskimage /usr subset has served its purpose. */
 	  	/* (but leave it for now, in case of errors.) */
 #if 0
-		run_prog(0, 0, "rm -fr %s", diskimage_usr);
+		run_prog(0, 0, NULL, "rm -fr %s", diskimage_usr);
 #endif
-		return;
+		return 0;
 	}
 
 	/* Copy all the diskimage/ramdisk binaries to the target disk. */
 	printf ("%s", msg_string(MSG_dotar));
-	run_prog (0, 1, "pax -X -r -w -pe / /mnt");
+	if (run_prog (0, 1, NULL, "pax -X -r -w -pe / /mnt") != 0)
+		return 1;
 
 	/* Make sure target has a copy of install kernel. */
 	dup_file_into_target("/netbsd");
 
 	/* Copy next-stage install profile into target /.profile. */
-	cp_to_target ("/tmp/.hdprofile", "/.profile");
+	return cp_to_target ("/tmp/.hdprofile", "/.profile");
 }
 
 
