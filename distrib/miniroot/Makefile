@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.55 2002/04/10 16:14:11 lukem Exp $
+#	$NetBSD: Makefile,v 1.56 2002/04/12 02:34:21 lukem Exp $
 
 .include <bsd.own.mk>
 .include "${_SRC_TOP_}/distrib/Makefile.inc"
@@ -20,19 +20,17 @@ PARSELISTENV=	ARCHDIR=${ARCHDIR:Q} \
 		DISTRIBREV=${DISTRIBREV:Q} \
 		DISTRIBVER=${DISTRIBVER:Q} \
 		KERNOBJDIR=${KERNOBJDIR:Q}
-MAKESUMS=	CKSUM=${CKSUM:Q} sh ${DISTRIBDIR}/sets/makesums
 
 .include "${ARCHDIR}/Makefile.inc"
 
 
 realall: check_DESTDIR .WAIT image
-	@true
 
 release: check_RELEASEDIR .WAIT image
 	mkdir -p ${RELEASEDIR}/installation/miniroot
 	gzip -c -9 < ${.OBJDIR}/miniroot.fs \
 		> ${RELEASEDIR}/installation/miniroot/miniroot.fs.gz
-	 ${MAKESUMS} -t ${RELEASEDIR}/installation/miniroot miniroot.fs.gz
+	${MAKESUMS} -t ${RELEASEDIR}/installation/miniroot miniroot.fs.gz
 
 image:	${IMAGE} image_md_post
 
