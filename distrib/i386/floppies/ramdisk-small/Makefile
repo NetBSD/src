@@ -1,10 +1,10 @@
-#	$NetBSD: Makefile,v 1.1.2.1 2000/10/09 13:43:33 fvdl Exp $
+#	$NetBSD: Makefile,v 1.2.2.2 2000/10/09 13:43:32 fvdl Exp $
 
 TOP=		${.CURDIR}/..
 WARNS=1
 
 .include "${TOP}/Makefile.inc"
-IMAGE=		ramdisk-tiny.fs
+IMAGE=		ramdisk-small.fs
 
 AUXDEPENDS= 	dot.profile disktab.preinstall termcap.mini
 
@@ -24,8 +24,8 @@ LISTS=		list
 CRUNCHCONF=	${CBIN}.conf
 MTREE=		mtree.conf
 
-RAMDISKSPC=	128
-RAMDISKCYLS=	21
+RAMDISKSPC=	165
+RAMDISKCYLS=	16
 RAMDISKSIZE!=	expr ${RAMDISKSPC} \* ${RAMDISKCYLS}
 
 realall: ${IMAGE}
@@ -73,7 +73,8 @@ HACKOBJS:= getcap.o getgrent.o getnet.o getnetgr.o getpwent.o setlocale.o yplib.
 release:
 
 clean cleandir distclean:
-	/bin/rm -f *.core ${IMAGE} ${CBIN} ${CBIN}.mk ${CBIN}.cache *.o *.cro *.c
+	/bin/rm -f *.core ${IMAGE} ${IMAGE}.tmp ${CBIN} \
+	    ${CBIN}.mk ${CBIN}.cache *.o *.cro *.c tmplabel
 
 .include <bsd.own.mk>
 .include <bsd.obj.mk>

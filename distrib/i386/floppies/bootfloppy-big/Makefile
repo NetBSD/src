@@ -1,11 +1,11 @@
-#	$NetBSD: Makefile,v 1.7.4.1 2000/07/20 00:22:43 fvdl Exp $
+#	$NetBSD: Makefile,v 1.7.4.2 2000/10/09 13:43:28 fvdl Exp $
 
 TOP=	${.CURDIR}/..
 
 .include "${TOP}/Makefile.inc"
 
 IMAGE=	boot-big.fs
-KERN!=	cd $(.CURDIR)/../ramdisk-kernel/; \
+KERN!=	cd $(.CURDIR)/../kernel-ramdisk/; \
         printf "xxx: .MAKE\n\t@echo \$${.OBJDIR}/netbsd.INSTALL.gz\n" | \
 	${MAKE} -s -f-
 
