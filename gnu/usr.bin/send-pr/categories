@@ -10,7 +10,7 @@ port-alpha
 port-amiga
 port-arc
 port-arm
-port-arm26
+port-acorn26
 port-arm32
 port-atari
 port-bebox
@@ -41,6 +41,7 @@ port-prep
 port-sbmips
 port-sgimips
 port-sh3
+port-shark
 port-sparc
 port-sparc64
 port-sun2
