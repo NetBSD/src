@@ -28,7 +28,7 @@
 *************************************************************************/
 
 #include "bcdefs.h"
-#include "y.tab.h"
+#include "bc.h"
 #include "global.h"
 #include "proto.h"
 #include <errno.h>
