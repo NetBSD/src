@@ -1,4 +1,4 @@
-/* $NetBSD: if_ea.c,v 1.7 2000/08/10 22:57:01 bjh21 Exp $ */
+/* $NetBSD: if_ea.c,v 1.8 2000/08/10 23:03:04 bjh21 Exp $ */
 
 /*
  * Copyright (c) 1995 Mark Brinicombe
@@ -52,7 +52,7 @@
 #include <sys/types.h>
 #include <sys/param.h>
 
-__RCSID("$NetBSD: if_ea.c,v 1.7 2000/08/10 22:57:01 bjh21 Exp $");
+__RCSID("$NetBSD: if_ea.c,v 1.8 2000/08/10 23:03:04 bjh21 Exp $");
 
 #include <sys/systm.h>
 #include <sys/errno.h>
@@ -1306,7 +1306,7 @@ earead(struct ea_softc *sc, int addr, int len)
 		 * mode, we have to check if this packet is really ours.
 		 */
 		if ((ifp->if_flags & IFF_PROMISC) &&
-		    (eh->ether_dhost[0] & 1) == 0 && /* !mcast and !bcast */
+		    !ETHER_IS_MULTICAST(eh->ether_dhost) &&
 		    bcmp(eh->ether_dhost, LLADDR(ifp->if_sadl),
 			    sizeof(eh->ether_dhost)) != 0) {
 			m_freem(m);
