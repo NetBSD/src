@@ -261,8 +261,8 @@ struct readlink_args {
 
 struct execve_args {
 	syscallarg(char *) path;
-	syscallarg(char * *) argp;
-	syscallarg(char * *) envp;
+	syscallarg(char **) argp;
+	syscallarg(char **) envp;
 };
 
 struct umask_args {
