@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.83.2.26 2001/01/07 22:59:24 sommerfeld Exp $	*/
+/*	$NetBSD: pmap.c,v 1.83.2.27 2001/01/08 13:57:24 sommerfeld Exp $	*/
 
 /*
  *
@@ -336,7 +336,7 @@ int pmap_largepages;
 
 /*
  * i386 physical memory comes in a big contig chunk with a small
- * hole toward the front of it...  the following 4 paddr_t's
+ * hole toward the front of it...  the following two paddr_t's
  * (shared with machdep.c) describe the physical address space
  * of this machine.
  */
@@ -840,26 +840,6 @@ pmap_bootstrap(kva_start)
 	int i;
 
 	/*
-	 * set the page size (default value is 4K which is ok)
-	 */
-
-	uvm_setpagesize();
-
-	/*
-	 * a quick sanity check
-	 */
-
-	if (PAGE_SIZE != NBPG)
-		panic("pmap_bootstrap: PAGE_SIZE != NBPG");
-
-	/*
-	 * use the very last page of physical memory for the message buffer
-	 */
-
-	avail_end -= i386_round_page(MSGBUFSIZE);
-	msgbuf_paddr = avail_end;
-
-	/*
 	 * set up our local static global vars that keep track of the
 	 * usage of KVM before kernel_map is set up
 	 */
@@ -1019,7 +999,6 @@ pmap_bootstrap(kva_start)
 
 	idt_vaddr = virtual_avail;			/* don't need pte */
 	virtual_avail += PAGE_SIZE;
-	avail_end -= PAGE_SIZE;
 	idt_paddr = avail_start;			/* steal a page */
 	avail_start += PAGE_SIZE;
 
