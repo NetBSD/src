@@ -1,4 +1,4 @@
-/*	$NetBSD: zs.c,v 1.72 2000/02/12 12:51:03 pk Exp $	*/
+/*	$NetBSD: zs.c,v 1.73 2000/02/14 18:07:37 pk Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -201,7 +201,7 @@ zs_match_mainbus(parent, cf, aux)
 	if (strcmp(cf->cf_driver->cd_name, ma->ma_name) != 0)
 		return (0);
 
-	return (getpropint(ma->ma_node, "slave", -2) == cf->cf_unit);
+	return (1);
 }
 
 static int
@@ -219,7 +219,7 @@ zs_match_obio(parent, cf, aux)
 		if (strcmp(cf->cf_driver->cd_name, sa->sa_name) != 0)
 			return (0);
 
-		return (getpropint(sa->sa_node, "slave", -2) == cf->cf_unit);
+		return (1);
 	}
 
 	oba = &uoba->uoba_oba4;
