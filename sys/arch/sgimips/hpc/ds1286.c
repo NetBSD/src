@@ -1,4 +1,4 @@
-/*	$NetBSD: ds1286.c,v 1.1 2001/05/11 03:16:59 thorpej Exp $	*/
+/*	$NetBSD: ds1286.c,v 1.2 2001/11/18 08:16:16 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2001 Rafal K. Boni
@@ -85,12 +85,14 @@ struct cfattach dsclock_ca = {
 
 
 static int 
-dsclock_match(struct device *parent, struct cfdata *match, void *aux)
+dsclock_match(struct device *parent, struct cfdata *cf, void *aux)
 {
-	if (mach_type == MACH_SGI_IP22)
-		return 1;
-	else
-		return 0;
+	struct hpc_attach_args *ha = aux;
+
+	if (strcmp(ha->ha_name, cf->cf_driver->cd_name) == 0)
+		return (1);
+
+	return (0);
 }
 
 static void
@@ -102,9 +104,9 @@ dsclock_attach(struct device *parent, struct device *self, void *aux)
 
 	printf("\n");
 
-        sc->sc_rtct = haa->ha_iot;
-        if ((err = bus_space_subregion(haa->ha_iot, haa->ha_ioh,
-                                       0x60000, 0x1ffff, 
+        sc->sc_rtct = haa->ha_st;
+        if ((err = bus_space_subregion(haa->ha_st, haa->ha_sh,
+                                       haa->ha_devoff, 0x1ffff, 
                                        &sc->sc_rtch)) != 0) {
                 printf(": unable to map RTC registers, error = %d\n", err);
                 return;
