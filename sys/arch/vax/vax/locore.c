@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.c,v 1.3 1995/02/23 17:53:54 ragge Exp $	*/
+/*	$NetBSD: locore.c,v 1.4 1995/03/30 21:25:22 ragge Exp $	*/
 
 /*
  * Copyright (c) 1994 Ludd, University of Lule}, Sweden.
@@ -106,6 +106,7 @@ asm("	movw	$0xfff,_arithflt
         ((struct pcb *)proc0paddr)->P0BR = 0;
         ((struct pcb *)proc0paddr)->P1LR = 0;
         ((struct pcb *)proc0paddr)->P1BR = (void *)0x80000000;
+        ((struct pcb *)proc0paddr)->iftrap = NULL;
 	mtpr(0,PR_P0LR);
 	mtpr(0,PR_P0BR);
 	mtpr(0,PR_P1LR);
