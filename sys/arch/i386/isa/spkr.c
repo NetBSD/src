@@ -1,4 +1,4 @@
-/*	$NetBSD: spkr.c,v 1.18 1996/02/22 05:53:28 scottr Exp $	*/
+/*	$NetBSD: spkr.c,v 1.19 1996/03/03 04:12:48 jtk Exp $	*/
 
 /*
  * spkr.c -- device driver for console speaker on 80386
@@ -24,6 +24,7 @@
 #include <machine/spkr.h>
 
 #include <dev/isa/isareg.h>
+#include <dev/isa/isavar.h>
 #include <i386/isa/timerreg.h>
 #include <i386/isa/spkrreg.h>
 
@@ -412,6 +413,8 @@ static struct buf *spkr_inbuf; /* incoming buf */
 
 int spkrprobe (struct device *parent, void *match, void *aux)
 {
+	register struct isa_attach_args *ia = aux;
+	ia->ia_iosize = 0;
 	return 1;
 }
 
