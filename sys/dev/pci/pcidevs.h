@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs.h,v 1.397 2002/01/22 08:33:15 junyoung Exp $	*/
+/*	$NetBSD: pcidevs.h,v 1.398 2002/01/26 16:31:18 ichiro Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.392 2002/01/22 08:32:08 junyoung Exp 
+ *	NetBSD: pcidevs,v 1.393 2002/01/26 16:30:00 ichiro Exp 
  */
 
 /*
@@ -1833,12 +1833,12 @@
 #define	PCI_PRODUCT_TI_TVP4020	0x3d07		/* TVP4020 Permedia 2 */
 #define	PCI_PRODUCT_TI_TSB12LV21	0x8000		/* TSB12LV21 IEEE 1394 Host Controller */
 #define	PCI_PRODUCT_TI_TSB12LV22	0x8009		/* TSB12LV22 OHCI IEEE 1394 Host Controller */
-#define	PCI_PRODUCT_TI_PCI4450LYNX	0x8011		/* PCI4450 OCHI IEEE 1394 HOST Controller w/ PCI-CardBus Bridge */
-#define	PCI_PRODUCT_TI_PCI4410LYNX	0x8017		/* PCI4410 OCHI IEEE 1394 HOST Controller w/ PCI-CardBus Bridge */
+#define	PCI_PRODUCT_TI_PCI4450LYNX	0x8011		/* PCI4450 OHCI IEEE 1394 HOST Controller w/ PCI-CardBus Bridge */
+#define	PCI_PRODUCT_TI_PCI4410LYNX	0x8017		/* PCI4410 OHCI IEEE 1394 HOST Controller w/ PCI-CardBus Bridge */
 #define	PCI_PRODUCT_TI_TSB12LV23	0x8019		/* TSB12LV23 OHCI IEEE 1394 Host Controller */
 #define	PCI_PRODUCT_TI_TSB12LV26	0x8020		/* TSB12LV26 OHCI IEEE 1394 Host Controller */
 #define	PCI_PRODUCT_TI_TSB43AA22	0x8021		/* TSB43AA22 OHCI IEEE 1394 Host Controller */
-#define	PCI_PRODUCT_TI_PCI4451LYNX	0x8027		/* PCI4451 OCHI IEEE 1394 HOST Controller w/ PCI-CardBus Bridge */
+#define	PCI_PRODUCT_TI_PCI4451LYNX	0x8027		/* PCI4451 OHCI IEEE 1394 HOST Controller w/ PCI-CardBus Bridge */
 #define	PCI_PRODUCT_TI_PCI1130	0xac12		/* PCI1130 PCI-CardBus Bridge */
 #define	PCI_PRODUCT_TI_PCI1031	0xac13		/* PCI1031 PCI-PCMCIA Bridge */
 #define	PCI_PRODUCT_TI_PCI1131	0xac15		/* PCI1131 PCI-CardBus Bridge */
@@ -1852,9 +1852,9 @@
 #define	PCI_PRODUCT_TI_PCI1211	0xac1e		/* PCI1211 PCI-CardBus Bridge */
 #define	PCI_PRODUCT_TI_PCI1251B	0xac1f		/* PCI1251B PCI-CardBus Bridge */
 #define	PCI_PRODUCT_TI_PCI2030	0xac20		/* PCI2030 PCI-PCI Bridge */
-#define	PCI_PRODUCT_TI_PCI4450YENTA	0xac40		/* PCI4450 PCI-CardBus Bridge w/ OCHI IEEE 1394 Controller */
-#define	PCI_PRODUCT_TI_PCI4410YENTA	0xac41		/* PCI4410 PCI-CardBus Bridge w/ OCHI IEEE 1394 Controller */
-#define	PCI_PRODUCT_TI_PCI4451YENTA	0xac42		/* PCI4451 PCI-CardBus Bridge w/ OCHI IEEE 1394 Controller */
+#define	PCI_PRODUCT_TI_PCI4450YENTA	0xac40		/* PCI4450 PCI-CardBus Bridge w/ OHCI IEEE 1394 Controller */
+#define	PCI_PRODUCT_TI_PCI4410YENTA	0xac41		/* PCI4410 PCI-CardBus Bridge w/ OHCI IEEE 1394 Controller */
+#define	PCI_PRODUCT_TI_PCI4451YENTA	0xac42		/* PCI4451 PCI-CardBus Bridge w/ OHCI IEEE 1394 Controller */
 #define	PCI_PRODUCT_TI_PCI1410	0xac50		/* PCI1410 PCI-CardBus Bridge */
 #define	PCI_PRODUCT_TI_PCI1420	0xac51		/* PCI1420 PCI-CardBus Bridge */
 #define	PCI_PRODUCT_TI_PCI1451	0xac52		/* PCI1451 PCI-CardBus Bridge */
@@ -1947,7 +1947,7 @@
 #define	PCI_PRODUCT_V3_V96DPC	0xc960		/* V96DPC i960 (Dual) Host-PCI Bridge */
 
 /* VIA Technologies products, from http://www.via.com.tw/ */
-#define	PCI_PRODUCT_VIATECH_VT6305	0x0130		/* VT6305 OCHI IEEE 1394 Controller */
+#define	PCI_PRODUCT_VIATECH_VT6305	0x0130		/* VT6305 OHCI IEEE 1394 Controller */
 #define	PCI_PRODUCT_VIATECH_VT8363_HB	0x0305		/* VT8363 KT133 System Controller */
 #define	PCI_PRODUCT_VIATECH_VT8371_HB	0x0391		/* VT8371 (Apollo KX133) Host Bridge */
 #define	PCI_PRODUCT_VIATECH_VT8501_MVP4	0x0501		/* VT8501 MVP4 System Controller */
@@ -1972,7 +1972,7 @@
 #define	PCI_PRODUCT_VIATECH_VT83C572	0x3038		/* VT83C572 USB Controller */
 #define	PCI_PRODUCT_VIATECH_VT82C586_PWR	0x3040		/* VT82C586 (Apollo VP) Power Management Controller */
 #define	PCI_PRODUCT_VIATECH_VT3043	0x3043		/* VT3043 (Rhine) 10/100 Ethernet */
-#define	PCI_PRODUCT_VIATECH_VT6306	0x3044		/* VT3606 OCHI IEEE 1394 Controller */
+#define	PCI_PRODUCT_VIATECH_VT6306	0x3044		/* VT3606 OHCI IEEE 1394 Controller */
 #define	PCI_PRODUCT_VIATECH_VT82C686A_SMB	0x3057		/* VT82C686A SMBus Controller */
 #define	PCI_PRODUCT_VIATECH_VT82C686A_AC97	0x3058		/* VT82C686A AC-97 Audio Controller */
 #define	PCI_PRODUCT_VIATECH_VT8233_AC97	0x3059		/* VT8233 AC-97 Audio Controller */
