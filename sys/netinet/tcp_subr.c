@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_subr.c,v 1.61 1998/10/07 23:20:03 thorpej Exp $	*/
+/*	$NetBSD: tcp_subr.c,v 1.62 1998/10/08 01:19:26 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -461,7 +461,7 @@ tcp_freeq(tp)
 		LIST_REMOVE(qe, ipqe_q);
 		LIST_REMOVE(qe, ipqe_timeq);
 		m_freem(qe->ipqe_m);
-		FREE(qe, M_IPQ);
+		pool_put(&ipqent_pool, qe);
 		rv = 1;
 	}
 	return (rv);
