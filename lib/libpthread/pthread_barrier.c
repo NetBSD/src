@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread_barrier.c,v 1.2 2003/01/18 10:34:15 thorpej Exp $	*/
+/*	$NetBSD: pthread_barrier.c,v 1.3 2003/01/25 00:47:06 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2003 The NetBSD Foundation, Inc.
@@ -87,6 +87,7 @@ pthread_barrier_init(pthread_barrier_t *barrier,
 
 		barrier->ptb_initcount = count;
 		barrier->ptb_curcount = 0;
+		barrier->ptb_generation = 0;
 
 		pthread_spinunlock(self, &barrier->ptb_lock);
 
@@ -98,6 +99,7 @@ pthread_barrier_init(pthread_barrier_t *barrier,
 	PTQ_INIT(&barrier->ptb_waiters);
 	barrier->ptb_initcount = count;
 	barrier->ptb_curcount = 0;
+	barrier->ptb_generation = 0;
 
 	return 0;
 }
@@ -139,6 +141,7 @@ int
 pthread_barrier_wait(pthread_barrier_t *barrier)
 {
 	pthread_t self;
+	unsigned int gen;
 
 #ifdef ERRORCHECK
 	if ((barrier == NULL) || (barrier->ptb_magic != _PT_BARRIER_MAGIC))
@@ -168,6 +171,7 @@ pthread_barrier_wait(pthread_barrier_t *barrier)
 		blockedq = barrier->ptb_waiters;
 		PTQ_INIT(&barrier->ptb_waiters);
 		barrier->ptb_curcount = 0;
+		barrier->ptb_generation++;
 
 		PTQ_FOREACH(signaled, &blockedq, pt_sleep)
 			pthread__sched(self, signaled);
@@ -177,25 +181,30 @@ pthread_barrier_wait(pthread_barrier_t *barrier)
 		return PTHREAD_BARRIER_SERIAL_THREAD;
 	}
 
-	SDPRINTF(("(barrier wait %p) Waiting on %p\n", self, barrier));
-
-	pthread_spinlock(self, &self->pt_statelock);
-
-	self->pt_state = PT_STATE_BLOCKED_QUEUE;
-	self->pt_sleepobj = barrier;
-	self->pt_sleepq = &barrier->ptb_waiters;
-	self->pt_sleeplock = &barrier->ptb_lock;
-
-	pthread_spinunlock(self, &self->pt_statelock);
-
-	PTQ_INSERT_TAIL(&barrier->ptb_waiters, self, pt_sleep);
 	barrier->ptb_curcount++;
+	gen = barrier->ptb_generation;
+	while (gen == barrier->ptb_generation) {
+		SDPRINTF(("(barrier wait %p) Waiting on %p\n",
+		    self, barrier));
 
-	pthread__block(self, &barrier->ptb_lock);
-	/* Spinlock is unlocked on return */
+		pthread_spinlock(self, &self->pt_statelock);
 
-	SDPRINTF(("(barrier wait %p) Woke up on %p\n",
-	    self, barrier));
+		self->pt_state = PT_STATE_BLOCKED_QUEUE;
+		self->pt_sleepobj = barrier;
+		self->pt_sleepq = &barrier->ptb_waiters;
+		self->pt_sleeplock = &barrier->ptb_lock;
+		
+		pthread_spinunlock(self, &self->pt_statelock);
+
+		PTQ_INSERT_TAIL(&barrier->ptb_waiters, self, pt_sleep);
+
+		pthread__block(self, &barrier->ptb_lock);
+		SDPRINTF(("(barrier wait %p) Woke up on %p\n",
+		    self, barrier));
+		/* Spinlock is unlocked on return */
+		pthread_spinlock(self, &barrier->ptb_lock);
+	}
+	pthread_spinunlock(self, &barrier->ptb_lock);
 
 	return 0;
 }
