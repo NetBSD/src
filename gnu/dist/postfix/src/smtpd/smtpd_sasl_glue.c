@@ -310,8 +310,9 @@ void    smtpd_sasl_connect(SMTPD_STATE *state)
 		      "", " ", "",
 		      &state->sasl_mechanism_list,
 		      IGNORE_MECHANISM_LEN,
-		      &sasl_mechanism_count) != SASL_OK
-	|| sasl_mechanism_count <= 0)
+		      &sasl_mechanism_count) != SASL_OK)
+	msg_fatal("cannot lookup SASL authentication mechanisms");
+    if (sasl_mechanism_count <= 0)
 	msg_fatal("no SASL authentication mechanisms");
 }
 

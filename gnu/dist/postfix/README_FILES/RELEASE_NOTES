@@ -1,9 +1,13 @@
+==============================================================
 NOTICE NOTICE NOTICE NOTICE NOTICE NOTICE NOTICE NOTICE NOTICE
+==============================================================
 Before upgrading from Postfix 1.1 you must stop Postfix ("postfix
 stop").  Some internal protocols have changed.  No mail will be
 lost if you fail to stop and restart Postfix, but Postfix won't be
 able to receive any new mail, either.
+==============================================================
 NOTICE NOTICE NOTICE NOTICE NOTICE NOTICE NOTICE NOTICE NOTICE
+==============================================================
 
 In the text below, changes are labeled with the Postfix snapshot
 that introduced the change, and whether the change introduced a
@@ -19,6 +23,73 @@ parameter contains the release date (both for official release and
 snapshot release).  Patches change the patchlevel and the release
 date. Snapshots change only the release date, unless they include
 the same bugfixes as a patch release.
+
+Incompatible changes with Postfix version 2.0.6 (released 20030305)
+===================================================================
+
+Postfix truncates non-address information in message address headers
+(comments, etc.) to 250 characters per address, in order to protect
+vulnerable Sendmail systems against exploitation of a remote buffer
+overflow problem (CERT advisory CA-2003-07).
+
+Incompatible changes with Postfix version 2.0.5 (released 20030301)
+===================================================================
+
+The smtpd_hard_error_limit and smtpd_soft_error_limit values now
+behave as documented, that is, smtpd_hard_error_limit=1 causes
+Postfix to disconnect upon the first client error. Previously,
+there was an off-by-one error causing Postfix to change behavior
+after smtpd_hard/soft_error_limit+1 errors.
+
+Incompatible changes with Postfix version 2.0.4 (released 20030219)
+===================================================================
+
+The maildir file naming algorithm has changed in accordance with
+an updated version of http://cr.yp.to/proto/maildir.html. The name
+is now TIME.VdevIinum.HOST
+
+Incompatible changes with Postfix version 2.0.3 (released 20030124)
+===================================================================
+
+The maildir file naming algorithm has changed. Pending a usable
+version of http://cr.yp.to/proto/maildir.html, the name is now
+TIME.DEV_INUM.HOST.
+
+Incompatible changes with Postfix version 2.0.1 (released 20030112)
+===================================================================
+
+If you upgrade from Postfix 1.1 you need to restart Postfix.
+
+If you upgrade from Postfix 2.0 you need to "reload" Postfix.
+
+Version 2.0.1 introduces the proxymap service for centralized table
+lookup. The upgrade procedure adds the proxymap service to the
+master.cf file.  If you see errors about problems contacting the
+proxymap service, then you did not properly upgrade Postfix.
+
+The Postfix SMTP server now by default looks up the UNIX passwd
+file via the new proxymap service, in order to make chrooted
+operation easier.
+
+The Postfix build procedure now uses the pcre-config utility (part
+of PCRE version 3) to find out the pathnames of the PCRE include
+file and object library, instead of probing /usr/include and/or
+/usr/lib. To build with PCRE version 2 support you will have to
+specify pathnames as described in PCRE_README. To build without
+PCRE support, specify:  make Makefiles CCARGS="-DNO_PRCE".
+
+Major changes with Postfix version 2.0.1 (released 20030112)
+============================================================
+
+This release introduces the proxymap service for Postfix lookup
+table access. This can be used to overcome chroot restrictions in
+the Postfix SMTP server (specify proxy:unix:passwd.byname for
+password file lookup through the proxymap server) and can be used
+to consolidate the number of open tables by sharing one open table
+among multiple processes (specify proxy:mysql:/file/name to avoid
+"too many connections" conditions). The proxy_read_maps parameter
+specifies what maps are approved for access via the proxy service
+(only map references starting with "proxy:" are considered approved).
 
 Major changes with Postfix version 2.0.0 (released 20021222, 20021223)
 ======================================================================
@@ -81,6 +152,14 @@ is now used for address lookups only.
   in one file, just like before.
 
 For details, see the VIRTUAL_README file.
+
+[Incompat 20021209] If you use the "advanced content filter"
+technique, you MUST NOT override the virtual aliases and virtual
+mailbox settings in the SMTP server that receives mail from the
+content filter, or else mail for virtual recipients will be rejected
+with "User unknown".
+
+For details, see the FILTER_README file.
 
 Incompatible queue file format changes
 ======================================
@@ -265,7 +344,7 @@ TCP/IP stacks have an atrociously large default timeout value.
 [Feature 20020505] Finer control over Berkeley DB memory usage,
 The parameter "berkeley_db_create_buffer_size" (default:  16 MBytes)
 specifies the buffer size for the postmap and postalias commands.
-The parameter "berkeley_db_read_buffer_size" (default:  256 kBytes)
+The parameter "berkeley_db_read_buffer_size" (default:  128 kBytes)
 specifies the buffer size for all other applications.  Specify
 "berkeley_db_read_buffer_size = 1048576" to get the old read buffer
 size. Contributed by Victor Duchovni. For more information, see
@@ -695,6 +774,11 @@ Assorted changes
 [Feature 20021028] The local(8) and virtual(8) delivery agents now record
 the original recipient address in the X-Original-To: message header.
 This header can also be emitted by the pipe(8) delivery agent.
+
+[Incompat 20021028] With "domain in one mailbox", one message with
+multiple recipients is no longer delivered only once. It is now
+delivered as one copy for each original recipient, with the original
+recipient address listed in the X-Original-To: message header.
 
 [Feature 20021024] New proxy_interfaces parameter, for sites behind a
 network address translation gateway or other type of proxy. You

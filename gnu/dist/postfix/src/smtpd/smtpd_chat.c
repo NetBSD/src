@@ -157,7 +157,7 @@ void    smtpd_chat_reply(SMTPD_STATE *state, char *format,...)
      * sleep-on-anything slows down clients that make an excessive number of
      * errors within a session.
      */
-    if (state->error_count > var_smtpd_soft_erlim)
+    if (state->error_count >= var_smtpd_soft_erlim)
 	sleep(delay = (state->error_count > var_smtpd_err_sleep ?
 		       state->error_count : var_smtpd_err_sleep));
     else if (STR(state->buffer)[0] == '4' || STR(state->buffer)[0] == '5')
