@@ -1,4 +1,4 @@
-$NetBSD: pcidevs,v 1.229 2000/06/07 09:52:16 mrg Exp $
+$NetBSD: pcidevs,v 1.230 2000/06/07 19:52:07 ad Exp $
 
 /*
  * Copyright (c) 1995, 1996 Christopher G. Demetriou
@@ -518,6 +518,7 @@ vendor DOMEX		0x134a	Domex
 vendor LMC		0x1376	LAN Media Corporation
 vendor CONEXANT		0x14f1	Conexant Systems
 vendor NETGEAR		0x1385	Netgear
+vendor 3WARE		0x13c1  3ware
 vendor SUNDANCETI	0x13f0	Sundance Technology
 vendor CMEDIA		0x13f6	C-Media Electronics Inc
 vendor DELTA		0x1500	Delta Electronics
@@ -587,6 +588,9 @@ product 3DLABS DELTA	0x0003	GLINT DELTA
 product 3DLABS PERMEDIA	0x0004	GLINT Permedia
 product 3DLABS 500MX	0x0006	GLINT 500MX
 product 3DLABS PERMEDI2	0x0007	GLINT Permedia 2
+
+/* 3ware products */
+product	3WARE ESCALADE	0x1000	Escalade IDE RAID
 
 /* ACC Products */
 product ACC 2188	0x0000	ACCM 2188 VL-PCI Bridge
