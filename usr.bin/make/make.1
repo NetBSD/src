@@ -1,4 +1,4 @@
-.\"	$NetBSD: make.1,v 1.81 2003/07/14 20:39:20 sjg Exp $
+.\"	$NetBSD: make.1,v 1.82 2003/07/16 11:34:16 wiz Exp $
 .\"
 .\" Copyright (c) 1990, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -33,7 +33,7 @@
 .\"
 .\"	from: @(#)make.1	8.4 (Berkeley) 3/19/94
 .\"
-.Dd May 23, 2003
+.Dd July 14, 2003
 .Dt MAKE 1
 .Os
 .Sh NAME
@@ -548,7 +548,7 @@ are both set only while the
 .Ql Pa Makefiles
 are being parsed.
 .It Va .PATH
-A variable that represents the list of directories that 
+A variable that represents the list of directories that
 .Nm
 will search for files.
 The search list should be updated using the target
@@ -623,8 +623,6 @@ safely through recursive invocations of
 Replaces each word in the variable with everything but its suffix.
 .It Cm tl
 Converts variable to lower-case letters.
-.It Cm tu
-Converts variable to upper-case letters.
 .It Cm ts Ar c
 Words in the variable are normally separated by a space on expansion.
 This modifier sets the separator to the character
@@ -632,6 +630,8 @@ This modifier sets the separator to the character
 If
 .Ar c
 is omitted, then no separator is used.
+.It Cm tu
+Converts variable to upper-case letters.
 .Sm off
 .It Cm S No \&/ Ar old_string Xo
 .No \&/ Ar new_string
