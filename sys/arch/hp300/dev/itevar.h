@@ -38,7 +38,7 @@
  * from: Utah $Hdr: itevar.h 1.1 90/07/09$
  *
  *	from: @(#)itevar.h	7.2 (Berkeley) 11/4/90
- *	$Id: itevar.h,v 1.2 1993/05/22 07:56:36 cgd Exp $
+ *	$Id: itevar.h,v 1.3 1993/05/29 19:41:03 cgd Exp $
  */
 
 #define UNIT(dev)       minor(dev)
@@ -153,7 +153,7 @@ struct ite_softc {
 #define KBD_EXT_RIGHT_UP      0x93
 
 #define	TABSIZE		8
-#define	TABEND(u)	(ite_tty[u].t_winsize.ws_col - TABSIZE)
+#define	TABEND(u)	(ite_tty[u]->t_winsize.ws_col - TABSIZE)
 
 #ifdef KERNEL
 extern	struct ite_softc ite_softc[];
