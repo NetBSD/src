@@ -1,4 +1,4 @@
-/*	$NetBSD: darwin_mman.c,v 1.2 2002/11/17 16:51:13 manu Exp $ */
+/*	$NetBSD: darwin_mman.c,v 1.3 2002/12/05 22:48:54 manu Exp $ */
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -104,7 +104,7 @@ darwin_sys_load_shared_file(p, v, retval)
 	if ((error = copyin(SCARG(uap, flags), &flags, sizeof(base))) != 0)
 		return error;
 
-	DPRINTF(("mach_sys_load_shared_file: filename = %p ", 
+	DPRINTF(("darwin_sys_load_shared_file: filename = %p ", 
 	    SCARG(uap, filename)));
 	DPRINTF(("addr = %p len = 0x%08lx base = %p ", 
 	    SCARG(uap, addr), SCARG(uap, len), SCARG(uap, base)));
@@ -201,7 +201,10 @@ darwin_sys_load_shared_file(p, v, retval)
 		evc.ev_len = mapp[i].size;
 		evc.ev_prot = mapp[i].protection & VM_PROT_ALL;
 		evc.ev_flags = 0;
-		evc.ev_proc = vmcmd_map_readvn;
+		if (mapp[i].protection & MACH_VM_PROT_ZF)
+			evc.ev_proc = vmcmd_map_zero;
+		else
+			evc.ev_proc = vmcmd_map_readvn;
 		evc.ev_offset = mapp[i].file_offset;
 		evc.ev_vp = vp;
 
