@@ -1,4 +1,4 @@
-/*	$NetBSD: pio.h,v 1.4 2000/06/08 03:10:06 thorpej Exp $	*/
+/*	$NetBSD: pio.h,v 1.5 2000/06/19 12:19:38 simonb Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -61,7 +61,7 @@ extern const struct alpha_pci_io_ops *alpha_pci_io_switch;
 
 #define	outb(addr, val)	(*alpha_pci_io_switch->apio_outb)((addr), (val))
 #define	outw(addr, val)	(*alpha_pci_io_switch->apio_outw)((addr), (val))
-#define	ouwl(addr, val)	(*alpha_pci_io_switch->apio_outl)((addr), (val))
+#define	outl(addr, val)	(*alpha_pci_io_switch->apio_outl)((addr), (val))
 
 int	alpha_pci_io_enable(int);
 #endif /* _KERNEL */
