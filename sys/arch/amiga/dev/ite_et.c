@@ -1,4 +1,4 @@
-/*	$NetBSD: ite_et.c,v 1.6 2002/01/28 09:57:00 aymeric Exp $ */
+/*	$NetBSD: ite_et.c,v 1.6.18.1 2004/09/10 03:02:34 jmc Exp $ */
 
 /*
  * Copyright (c) 1995 Ezra Story
@@ -36,7 +36,7 @@
 #include "opt_amigacons.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ite_et.c,v 1.6 2002/01/28 09:57:00 aymeric Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ite_et.c,v 1.6.18.1 2004/09/10 03:02:34 jmc Exp $");
 
 #include "grfet.h"
 #if NGRFET > 0
@@ -159,6 +159,9 @@ et_putc(struct ite_softc *ip, int c, int dy, int dx, int mode)
 	unsigned char attr;
 	unsigned char *cp;
 
+	if (ip->flags & ITE_INGRF)
+		return;
+
 	attr =(unsigned char) ((mode & ATTR_INV) ? (0x70) : (0x07));
 	if (mode & ATTR_UL)     attr  = 0x01;	/* ???????? */
 	if (mode & ATTR_BOLD)   attr |= 0x08;
@@ -183,6 +186,9 @@ et_clear(struct ite_softc *ip, int sy, int sx, int h, int w)
 	volatile unsigned char *ba = ip->grf->g_regkva;
 	int len;
 
+	if (ip->flags & ITE_INGRF)
+		return;
+
 	dst = ip->grf->g_fbkva + (sy * ip->cols) + sx;
 	src = dst + (ip->rows*ip->cols);
 	len = w*h;
@@ -199,6 +205,9 @@ et_scroll(struct ite_softc *ip, int sy, int sx, int count, int dir)
 {
 	unsigned char *fb;
 	volatile unsigned char *ba = ip->grf->g_regkva;
+
+	if (ip->flags & ITE_INGRF)
+		return;
 
 	fb = ip->grf->g_fbkva + sy * ip->cols;
 	SetTextPlane(ba, 0x00);
