@@ -1,7 +1,7 @@
 #
 #	ALL -- everything that's currently supported
 #
-#	$Id: ALL,v 1.11 1993/06/06 22:20:03 cgd Exp $
+#	$Id: ALL,v 1.12 1993/06/27 05:33:18 andrew Exp $
 #
 machine		"i386"
 cpu		"I386_CPU"
@@ -59,6 +59,11 @@ device		npx0	at isa? port "IO_NPX" irq 13 vector npxintr
 #serial
 device		com0	at isa? port "IO_COM1" tty irq 4 vector comintr
 device		com1	at isa? port "IO_COM2" tty irq 3 vector comintr
+
+#bus mice
+device		bms0	at isa? port "IO_BMS0" tty irq 5 vector bmsintr
+device		lms0	at isa? port "IO_BMS0" tty irq 5 vector lmsintr
+device		pms0	at isa? port "IO_BMS0" tty irq 5 vector pmsintr
 
 #scsi
 controller	aha0	at isa? port "IO_AHA0" bio irq 11 drq 5 vector ahaintr
