@@ -282,8 +282,8 @@ given in kilobytes),
 STATE is the current state (one of \*(lqSTART\*(rq, \*(lqRUN\*(rq,
 \*(lqSTOP\*(rq, \*(lqZOMB\*(rq, \*(lqDEAD\*(rq, or \*(lqCPU\*(rq)
 or wait channel if the state is SLEEP,
-TIME is the number of system and user cpu seconds that the process has used,
-WCPU, when displayed, is the weighted cpu percentage (this is the same
+TIME is the number of system and user CPU seconds that the process has used,
+WCPU, when displayed, is the weighted CPU percentage (this is the same
 value that
 .IR ps (1)
 displays as CPU),
@@ -292,7 +292,7 @@ the order of the processes, and
 COMMAND is the name of the command that the process is currently running
 (if the process is swapped out, this column is marked \*(lq\*[Lt]swapped\*[Gt]\*(rq).
 On multi-processor systems,
-the STATE field may be followed by a slash and cpu number.
+the STATE field may be followed by a slash and CPU number.
 .SH NOTES
 The \*(lqABANDONED\*(rq state (known in the kernel as \*(lqSWAIT\*(rq) was
 abandoned, thus the name.  A process should never end up in this state.
