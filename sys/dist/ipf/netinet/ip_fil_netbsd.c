@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_fil_netbsd.c,v 1.12 2005/03/26 18:08:42 christos Exp $	*/
+/*	$NetBSD: ip_fil_netbsd.c,v 1.13 2005/04/03 15:05:30 martti Exp $	*/
 
 /*
  * Copyright (C) 1993-2003 by Darren Reed.
@@ -7,7 +7,7 @@
  */
 #if !defined(lint)
 static const char sccsid[] = "@(#)ip_fil.c	2.41 6/5/96 (C) 1993-2000 Darren Reed";
-static const char rcsid[] = "@(#)Id: ip_fil_netbsd.c,v 2.55.2.25 2005/02/01 03:14:31 darrenr Exp";
+static const char rcsid[] = "@(#)Id: ip_fil_netbsd.c,v 2.55.2.27 2005/02/21 22:51:08 darrenr Exp";
 #endif
 
 #if defined(KERNEL) || defined(_KERNEL)
@@ -46,8 +46,8 @@ static const char rcsid[] = "@(#)Id: ip_fil_netbsd.c,v 2.55.2.25 2005/02/01 03:1
 #include <netinet/ip_var.h>
 #include <netinet/tcp.h>
 #if __NetBSD_Version__ >= 105190000	/* 1.5T */
-#include <netinet/tcp_timer.h>
-#include <netinet/tcp_var.h>
+# include <netinet/tcp_timer.h>
+# include <netinet/tcp_var.h>
 #endif
 #include <netinet/udp.h>
 #include <netinet/tcpip.h>
@@ -137,6 +137,7 @@ int dir;
 {
 	struct ip *ip;
 	int rv, hlen;
+
 #if __NetBSD_Version__ >= 200080000
 	/*
 	 * ensure that mbufs are writable beforehand
@@ -205,7 +206,7 @@ struct mbuf **mp;
 struct ifnet *ifp;
 int dir;
 {
-	
+
 	return (fr_check(mtod(*mp, struct ip *), sizeof(struct ip6_hdr),
 	    ifp, (dir == PFIL_OUT), mp));
 }
@@ -855,10 +856,10 @@ fr_info_t *fin;
 mb_t *m, **mpp;
 {
 	fr_info_t fnew;
-	ip_t *ip;
 #ifdef INET
 	ip_t *oip;
 #endif
+	ip_t *ip;
 	int hlen;
 
 	ip = mtod(m, ip_t *);
@@ -1121,16 +1122,19 @@ frdest_t *fdp;
 		}
 		return error;
 	}
+#ifndef INET
+	return EPROTONOSUPPORT;
+#else
 
 	hlen = fin->fin_hlen;
 	ip = mtod(m0, struct ip *);
 
-#if defined(M_CSUM_IPv4)
+# if defined(M_CSUM_IPv4)
 	/*
 	 * Clear any in-bound checksum flags for this packet.
 	 */
 	m0->m_pkthdr.csuminfo = 0;
-#endif /* __NetBSD__ && M_CSUM_IPv4 */
+# endif /* __NetBSD__ && M_CSUM_IPv4 */
 
 	/*
 	 * Route packet.
@@ -1230,22 +1234,20 @@ frdest_t *fdp;
 
 		ip->ip_len = htons(ip->ip_len);
 		ip->ip_off = htons(ip->ip_off);
-#ifdef INET
-#if defined(M_CSUM_IPv4)
-# if (__NetBSD_Version__ >= 105009999)
+# if defined(M_CSUM_IPv4)
+#  if (__NetBSD_Version__ >= 105009999)
 		if (ifp->if_csum_flags_tx & M_CSUM_IPv4)
 			m->m_pkthdr.csuminfo |= M_CSUM_IPv4;
-# else
+#  else
 		if (ifp->if_capabilities & IFCAP_CSUM_IPv4)
 			m->m_pkthdr.csuminfo |= M_CSUM_IPv4;
-# endif /* (__NetBSD_Version__ >= 105009999) */
+#  endif /* (__NetBSD_Version__ >= 105009999) */
 		else if (ip->ip_sum == 0)
 			ip->ip_sum = in_cksum(m, hlen);
-#else
+# else
 		if (!ip->ip_sum)
 			ip->ip_sum = in_cksum(m, hlen);
-#endif /* M_CSUM_IPv4 */
-#endif /* INET */
+# endif /* M_CSUM_IPv4 */
 		error = (*ifp->if_output)(ifp, m, (struct sockaddr *)dst,
 					  ro->ro_rt);
 		if (i) {
@@ -1281,11 +1283,11 @@ frdest_t *fdp;
 	m0 = m;
 	mhlen = sizeof (struct ip);
 	for (off = hlen + len; off < ip->ip_len; off += len) {
-#ifdef MGETHDR
+# ifdef MGETHDR
 		MGETHDR(m, M_DONTWAIT, MT_HEADER);
-#else
+# else
 		MGET(m, M_DONTWAIT, MT_HEADER);
-#endif
+# endif
 		if (m == 0) {
 			m = m0;
 			error = ENOBUFS;
@@ -1343,7 +1345,7 @@ sendorfree:
 		else
 			FREE_MB_T(m);
 	}
-    }	
+    }
 done:
 	if (!error)
 		fr_frouteok[0]++;
@@ -1367,6 +1369,7 @@ bad:
 	}
 	FREE_MB_T(m);
 	goto done;
+#endif /* INET */
 }
 
 
@@ -1543,7 +1546,7 @@ fr_info_t *fin;
 {
 #if __NetBSD_Version__ >= 105190000	/* 1.5T */
 	size_t asz;
-	
+
 	if (fin->fin_v == 4)
 		asz = sizeof(struct in_addr);
 	else if (fin->fin_v == 6)
@@ -1551,11 +1554,11 @@ fr_info_t *fin;
 	else	/* XXX: no way to return error */
 		return 0;
 	return tcp_new_iss1((void *)&fin->fin_src, (void *)&fin->fin_dst,
-	    fin->fin_sport, fin->fin_dport, asz, 0);
+			    fin->fin_sport, fin->fin_dport, asz, 0);
 #else
-	u_32_t newiss;
 	static int iss_seq_off = 0;
 	u_char hash[16];
+	u_32_t newiss;
 	MD5_CTX ctx;
 
 	/*
