@@ -1,4 +1,4 @@
-/* $NetBSD: if_prom.c,v 1.15 1999/11/13 21:38:21 thorpej Exp $ */
+/* $NetBSD: if_prom.c,v 1.16 2001/07/22 15:17:31 wiz Exp $ */
 
 /*
  * Copyright (c) 1997 Christopher G. Demetriou.  All rights reserved.
@@ -144,7 +144,7 @@ prom_get(desc, pkt, len, timeout)
 		cc = min(cc, len);
 	else
 		cc = len;
-	bcopy(hate, pkt, cc);
+	memcpy(pkt, hate, cc);
 
 	return cc;
 }
@@ -213,7 +213,7 @@ prom_init(desc, machdep_hint)
 
 	if (netbbinfovalid && netbbinfo.force) {
 		printf("boot: using hard-coded ethernet address (forced).\n");
-		bcopy(netbbinfo.ether_addr, desc->myea, sizeof desc->myea);
+		memcpy(desc->myea, netbbinfo.ether_addr, sizeof desc->myea);
 	}
 
 gotit:
@@ -224,7 +224,7 @@ punt:
 	broken_firmware = 1;
         if (netbbinfovalid) {
                 printf("boot: using hard-coded ethernet address.\n");
-                bcopy(netbbinfo.ether_addr, desc->myea, sizeof desc->myea);
+                memcpy(desc->myea, netbbinfo.ether_addr, sizeof desc->myea);
                 goto gotit;
         }
 
