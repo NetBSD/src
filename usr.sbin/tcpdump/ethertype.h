@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1990, 1992, 1993, 1994
+ * Copyright (c) 1993, 1994
  *	The Regents of the University of California.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -18,18 +18,53 @@
  * WARRANTIES, INCLUDING, WITHOUT LIMITATION, THE IMPLIED WARRANTIES OF
  * MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE.
  *
- * @(#) Header: addrtoname.h,v 1.11 94/06/14 20:11:41 leres Exp (LBL)
+ * @(#) Header: ethertype.h,v 1.4 94/06/14 20:11:45 leres Exp (LBL)
  */
 
-/* Name to address translation routines. */
+/* Map between Ethernet protocol types and names */
 
-extern char *etheraddr_string(const u_char *);
-extern char *etherproto_string(u_short);
-extern char *tcpport_string(u_short);
-extern char *udpport_string(u_short);
-extern char *getname(const u_char *);
-extern char *intoa(u_int32);
+/* Add other Ethernet packet types here */
+#ifndef	ETHERTYPE_SPRITE
+#define	ETHERTYPE_SPRITE	0x0500
+#endif
+#ifndef	ETHERTYPE_MOPDL
+#define	ETHERTYPE_MOPDL		0x6001
+#endif
+#ifndef	ETHERTYPE_MOPRC
+#define	ETHERTYPE_MOPRC		0x6002
+#endif
+#ifndef	ETHERTYPE_DN
+#define	ETHERTYPE_DN		0x6003
+#endif
+#ifndef	ETHERTYPE_LAT
+#define	ETHERTYPE_LAT		0x6004
+#endif
+#ifndef	ETHERTYPE_LANBRIDGE
+#define	ETHERTYPE_LANBRIDGE	0x8038
+#endif
+#ifndef	ETHERTYPE_DECDNS
+#define	ETHERTYPE_DECDNS	0x803c
+#endif
+#ifndef	ETHERTYPE_DECDTS
+#define	ETHERTYPE_DECDTS	0x803e
+#endif
+#ifndef	ETHERTYPE_VEXP
+#define	ETHERTYPE_VEXP		0x805b
+#endif
+#ifndef	ETHERTYPE_VPROD
+#define	ETHERTYPE_VPROD		0x805c
+#endif
+#ifndef	ETHERTYPE_LOOPBACK
+#define	ETHERTYPE_LOOPBACK	0x9000
+#endif
 
-extern void init_addrtoname(int, u_int32, u_int32);
+#ifndef ETHERTYPE_ATALK
+#define ETHERTYPE_ATALK		0x809b
+#endif
+#ifndef ETHERTYPE_AARP
+#define ETHERTYPE_AARP		0x80f3
+#endif
+#ifndef ETHERTYPE_NS
+#define ETHERTYPE_NS		0x0600
+#endif
 
-#define ipaddr_string(p) getname((const u_char *)(p))

@@ -1,0 +1,181 @@
+#  Copyright (c) 1988, 1989, 1990, 1991, 1992, 1993, 1994
+# 	The Regents of the University of California.  All rights reserved.
+#
+#  Redistribution and use in source and binary forms, with or without
+#  modification, are permitted provided that: (1) source code distributions
+#  retain the above copyright notice and this paragraph in its entirety, (2)
+#  distributions including binary code include the above copyright notice and
+#  this paragraph in its entirety in the documentation or other materials
+#  provided with the distribution, and (3) all advertising materials mentioning
+#  features or use of this software display the following acknowledgement:
+#  ``This product includes software developed by the University of California,
+#  Lawrence Berkeley Laboratory and its contributors.'' Neither the name of
+#  the University nor the names of its contributors may be used to endorse
+#  or promote products derived from this software without specific prior
+#  written permission.
+#  THIS SOFTWARE IS PROVIDED ``AS IS'' AND WITHOUT ANY EXPRESS OR IMPLIED
+#  WARRANTIES, INCLUDING, WITHOUT LIMITATION, THE IMPLIED WARRANTIES OF
+#  MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE.
+#
+# @(#) Header: Makefile.in,v 1.152 94/06/16 20:55:40 leres Exp (LBL)
+
+#
+# You might want to edit these path names.
+#
+
+# Full pathname of where to install the binaries
+BINDEST = /usr/local/sbin/tcpdump
+# Full pathname of where to install the manual entries
+MANDEST = /usr/local/man/man1/tcpdump.1
+
+#
+# You shouldn't need to edit anything below here.
+#
+
+# Possible Options:
+#  -DCSLIP	include support for kernel slip interface
+#  -DPPP	include support for point to point protocol
+#  -DIBMRTPC	enable the MERIT additions to the Stanford Enetfilter
+#  -DDECNETLIB	use the optional DECnet library under Ultrix and others
+#  -DNOVFPRINTF	simulate vfprintf() on systems that don't have it
+#
+# CSLIP and PPP work only under BPF.
+#
+
+#have-cslip#CSLIP_DEFINES = -DCSLIP
+#have-dnet#DNET_DEFINES = -DDECNETLIB
+
+# CFLAGS definitions per machine vs. os
+#mips-irix4#MD_OS_CFLAGS = -xansi -D__STDC__ -Dinline=
+#mips-irix5#MD_OS_CFLAGS = -xansi -D__STDC__ -Dinline= -D_BSD_SIGNALS
+#rt-bsd#MD_OS_CFLAGS = -U__STDC__ -DNOVFPRINTF
+
+#have-ethers#ETHERS_DEFINES = -DETHER_SERVICE
+
+#have-solaris#OS_DEFINES = -DSOLARIS
+
+CCOPT = -O
+INCLUDES = -Ilibpcap -I/usr/local/include
+OPTIONAL_DEFINES = $(ETHERS_DEFINES) $(DNET_DEFINES) $(OS_DEFINES)
+DEFINES = $(CSLIP_DEFINES) -DPPP -DFDDI $(OPTIONAL_DEFINES)
+
+# Standard CFLAGS
+CFLAGS = $(CCOPT) $(DEFINES) $(INCLUDES) $(MD_OS_CFLAGS)
+
+# Optional libraries as available
+#have-dnet#DNET_LIBS = -ldnet
+
+# Optional libraries per machine vs. os
+#sun4-sunos5#MD_OS_LIBS = -lsocket -lnsl
+#alpha-osf1v1#MD_OS_LIBS = /usr/examples/packetfilter/pfopen.c
+#alpha-osf1v2#MD_OS_LIBS =
+
+# Standard LIBS
+LIBS = -Llibpcap -L/usr/local/lib $(DNET_LIBS) $(MD_OS_LIBS) -lpcap
+
+# The installed binary is owned by this group.
+GROUP = staff
+#have-bpf#GROUP = bpf
+#alpha-osf1v1#GROUP = system
+#alpha-osf1v2#GROUP = system
+
+# Standard C compiler
+CC = cc
+#have-gcc#CC = gcc -g -Wall -Wmissing-prototypes -Wstrict-prototypes
+#alpha-osf1v1#CC = cc -g3
+
+MAKE = make
+
+# Explicitly define compiliation rule since SunOS 4's make doesn't like gcc.
+# Also, gcc does not remove the .o before forking 'as', which can be a
+# problem if you don't own the file but can write to the directory.
+.c.o:
+	rm -f $@; $(CC) $(CFLAGS) -c $*.c
+
+CSRC =	tcpdump.c addrtoname.c \
+	print-ether.c print-ip.c print-arp.c print-tcp.c print-udp.c \
+	print-atalk.c print-domain.c print-tftp.c print-bootp.c print-nfs.c \
+	print-icmp.c print-sl.c print-ppp.c print-rip.c \
+	print-snmp.c print-ntp.c print-null.c print-egp.c print-ospf.c \
+	print-fddi.c print-llc.c print-sunrpc.c \
+	print-wb.c print-decnet.c print-isoclns.c print-ipx.c \
+	util.c bpf_dump.c parsenfsfh.c
+GEN =	version.c
+
+SRC =	$(CSRC) $(GEN)
+ALLSRC = \
+	$(CSRC)
+
+OBJ =	$(SRC:.c=.o)
+
+HDR =	addrtoname.h appletalk.h bootp.h decnet.h \
+	ethertype.h extract.h fddi.h interface.h llc.h mib.h \
+	nfsv2.h ntp.h ospf.h nfsfh.h ipx.h
+MDHDR =	md-hp300.h md-sun3.h md-sun4.h md-mips.h md-vax.h md-rt.h md-alpha.h \
+	md-i386.h
+OSHDR =	os-bsd.h os-sunos3.h os-sunos4.h os-sunos5.h os-ultrix4.h os-osf1v1.h \
+	os-osf1v2.h os-irix4.h os-irix5.h
+
+TAGHDR = \
+	/usr/include/netinet/in.h \
+	/usr/include/netinet/udp.h \
+	/usr/include/netinet/tcp.h \
+	/usr/include/arpa/tftp.h \
+	/usr/include/netinet/if_ether.h
+
+TAGFILES = \
+	$(SRC) $(HDR) md.h os.h $(TAGHDR)
+
+AWKS =	atime.awk packetdat.awk send-ack.awk stime.awk
+
+TARFILES = \
+	README CHANGES INSTALL VERSION Makefile.in tcpdump.1 makemib mkdep \
+	$(ALLSRC) $(HDR) $(MDHDR) $(OSHDR) \
+	$(AWKS) configure
+
+tcpdump: $(OBJ)
+	$(CC) $(CFLAGS) -o $@ $(OBJ) $(LIBS)
+
+version.o: version.c
+version.c: VERSION
+	rm -f version.c
+	cat VERSION | sed 's/.*/char version[] = "&";/' > version.c
+
+install: force
+	rm -f $(DESTDIR)$(BINDEST) $(DESTDIR)$(MANDEST)
+	cp tcpdump $(DESTDIR)$(BINDEST)
+	chmod 550 $(DESTDIR)$(BINDEST)
+	chgrp $(GROUP) $(DESTDIR)$(BINDEST)
+	cp tcpdump.1 $(DESTDIR)$(MANDEST)
+
+lint:	$(GEN) force
+	lint -hbxn $(SRC) | \
+	    grep -v 'struct/union .* never defined' | \
+	    grep -v 'possible pointer alignment problem'
+
+clean:
+	rm -f $(OBJ) tcpdump $(GEN)
+
+realclean:
+	rm -f $(OBJ) tcpdump $(GEN) md.h os.h libpcap Makefile tags
+
+tags:	$(TAGFILES)
+	ctags -wtd $(TAGFILES)
+
+tar:	$(GEN) force
+	@cwd=`pwd` ; dir=`basename $$cwd` ; name=tcpdump-`cat VERSION` ; \
+	    list="" ; tar="tar cf" ; \
+	    for i in $(TARFILES) ; do list="$$list $$name/$$i" ; done; \
+	    echo \
+	    "rm -f ../$$name; ln -s $$dir ../$$name" ; \
+	     rm -f ../$$name; ln -s $$dir ../$$name ; \
+	    echo \
+	    "(cd .. ; $$tar - [lots of files]) | compress > /tmp/$$name.tar.Z" ; \
+	     (cd .. ; $$tar - $$list) | compress > /tmp/$$name.tar.Z ; \
+	    echo \
+	    "rm -f ../$$name" ; \
+	     rm -f ../$$name
+
+force:	/tmp
+depend:	$(GEN) force
+	./mkdep $(DEFINES) $(INCLUDES) $(SRC)

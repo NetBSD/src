@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1990, 1992, 1993, 1994
+ * Copyright (c) 1993, 1994
  *	The Regents of the University of California.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -18,18 +18,16 @@
  * WARRANTIES, INCLUDING, WITHOUT LIMITATION, THE IMPLIED WARRANTIES OF
  * MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE.
  *
- * @(#) Header: addrtoname.h,v 1.11 94/06/14 20:11:41 leres Exp (LBL)
+ * @(#) Header: md-i386.h,v 1.5 94/06/14 20:14:40 leres Exp (LBL)
  */
 
-/* Name to address translation routines. */
+#define TCPDUMP_ALIGN
 
-extern char *etheraddr_string(const u_char *);
-extern char *etherproto_string(u_short);
-extern char *tcpport_string(u_short);
-extern char *udpport_string(u_short);
-extern char *getname(const u_char *);
-extern char *intoa(u_int32);
+#include <machine/endian.h>
 
-extern void init_addrtoname(int, u_int32, u_int32);
-
-#define ipaddr_string(p) getname((const u_char *)(p))
+/* 32-bit data types */
+/* N.B.: this doesn't address printf()'s %d vs. %ld formats */
+typedef	long	int32;		/* signed 32-bit integer */
+#ifndef	AUTH_UNIX
+typedef	u_long	u_int32;	/* unsigned 32-bit integer */
+#endif
