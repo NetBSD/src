@@ -1,4 +1,4 @@
-/*	$NetBSD: usbdi.h,v 1.39 2000/01/19 00:23:59 augustss Exp $	*/
+/*	$NetBSD: usbdi.h,v 1.40 2000/02/02 07:34:00 augustss Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/usbdi.h,v 1.18 1999/11/17 22:33:49 n_hibma Exp $	*/
 
 /*
@@ -175,7 +175,8 @@ void usbd_set_polling __P((usbd_device_handle iface, int on));
 
 const char *usbd_errstr __P((usbd_status err));
 
-void usbd_add_event __P((int, usbd_device_handle));
+void usbd_add_dev_event __P((int, usbd_device_handle));
+void usbd_add_drv_event __P((int, usbd_device_handle, device_ptr_t));
 
 void usbd_devinfo __P((usbd_device_handle, int, char *));
 struct usbd_quirks *usbd_get_quirks __P((usbd_device_handle));
@@ -255,5 +256,6 @@ int usbd_driver_load    __P((module_t mod, int what, void *arg));
  */
 /* XXX */
 #define splusb splbio
+#define splhardusb splbio
 #define IPL_USB IPL_BIO
 /* XXX */
