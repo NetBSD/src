@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.21 2002/02/14 06:49:57 enami Exp $
+#	$NetBSD: Makefile,v 1.22 2003/06/27 08:39:59 tshiozak Exp $
 #	from @(#)Makefile	8.1 (Berkeley) 6/5/93
 
 # Missing:  ms
@@ -10,7 +10,7 @@
 SUBDIR=	dict doc examples man me misc mk sushi \
 	tabset termcap tmac wscons zoneinfo
 .if ${MKNLS} != "no"
-SUBDIR+=locale nls
+SUBDIR+=i18n locale nls
 .endif
 .endif
 
