@@ -1,4 +1,4 @@
-	$NetBSD: syscalls.master,v 1.69 2004/08/01 15:34:22 jdolecek Exp $
+	$NetBSD: syscalls.master,v 1.70 2004/09/08 19:45:22 jdolecek Exp $
 
 ;	@(#)syscalls.master	8.1 (Berkeley) 7/19/93
 
@@ -400,7 +400,7 @@
 249	UNIMPL		io_cancel
 250	UNIMPL		fadvise64
 251	UNIMPL		/* unused */
-252	UNIMPL		exit_group
+252	STD		{ int linux_sys_exit_group(int error_code); }
 253	UNIMPL		lookup_dcookie
 254	UNIMPL		epoll_create
 255	UNIMPL		epoll_ctl
