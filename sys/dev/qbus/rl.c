@@ -1,4 +1,4 @@
-/*	$NetBSD: rl.c,v 1.18 2003/01/01 00:10:24 thorpej Exp $	*/
+/*	$NetBSD: rl.c,v 1.19 2003/04/02 20:38:28 he Exp $	*/
 
 /*
  * Copyright (c) 2000 Ludd, University of Lule}, Sweden. All rights reserved.
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rl.c,v 1.18 2003/01/01 00:10:24 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rl.c,v 1.19 2003/04/02 20:38:28 he Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -266,7 +266,7 @@ rlattach(struct device *parent, struct device *self, void *aux)
 	dl->d_partitions[0].p_offset = dl->d_partitions[2].p_offset = 0;
 	dl->d_interleave = dl->d_headswitch = 1;
 	dl->d_bbsize = BBSIZE;
-	dl->d_sbsize = SBSIZE;
+	dl->d_sbsize = SBLOCKSIZE;
 	dl->d_rpm = 2400;
 	dl->d_type = DTYPE_DEC;
 	printf(": %s, %s\n", dl->d_typename,
