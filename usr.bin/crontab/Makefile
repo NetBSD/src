@@ -1,6 +1,4 @@
-#	$Id: Makefile,v 1.12 1994/12/22 12:29:38 cgd Exp $
-
-.include <bsd.own.mk>
+#	$Id: Makefile,v 1.13 1994/12/24 16:28:39 cgd Exp $
 
 PROG=	crontab
 SRCS=	crontab.c misc.c entry.c env.c
