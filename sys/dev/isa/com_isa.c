@@ -1,4 +1,4 @@
-/*	$NetBSD: com_isa.c,v 1.6 1997/09/16 20:34:25 is Exp $	*/
+/*	$NetBSD: com_isa.c,v 1.7 1997/10/15 22:00:10 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994, 1995, 1996
@@ -59,6 +59,13 @@
 #include <dev/isa/comreg.h>
 #include <dev/isa/comvar.h>
 
+struct com_isa_softc {
+	struct	com_softc sc_com;	/* real "com" softc */
+
+	/* ISA-specific goo. */
+	void	*sc_ih;			/* interrupt handler */
+};
+
 #ifdef __BROKEN_INDIRECT_CONFIG
 int com_isa_probe __P((struct device *, void *, void *));
 #else
@@ -68,7 +75,7 @@ void com_isa_attach __P((struct device *, struct device *, void *));
 void com_isa_cleanup __P((void *));
 
 struct cfattach com_isa_ca = {
-	sizeof(struct com_softc), com_isa_probe, com_isa_attach
+	sizeof(struct com_isa_softc), com_isa_probe, com_isa_attach
 };
 
 int
@@ -111,7 +118,8 @@ com_isa_attach(parent, self, aux)
 	struct device *parent, *self;
 	void *aux;
 {
-	struct com_softc *sc = (void *)self;
+	struct com_isa_softc *isc = (void *)self;
+	struct com_softc *sc = &isc->sc_com;
 	int iobase, irq;
 	bus_space_tag_t iot;
 	struct isa_attach_args *ia = aux;
@@ -131,7 +139,7 @@ com_isa_attach(parent, self, aux)
 	com_attach_subr(sc);
 
 	if (irq != IRQUNK) {
-		sc->sc_ih = isa_intr_establish(ia->ia_ic, irq,
+		isc->sc_ih = isa_intr_establish(ia->ia_ic, irq,
 		    IST_EDGE, IPL_SERIAL, comintr, sc);
 	}
 
