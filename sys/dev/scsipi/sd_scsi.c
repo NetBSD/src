@@ -1,4 +1,4 @@
-/*	$NetBSD: sd_scsi.c,v 1.11 1999/09/30 22:57:54 thorpej Exp $	*/
+/*	$NetBSD: sd_scsi.c,v 1.12 2000/03/29 03:43:32 simonb Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -62,7 +62,6 @@
 #include <sys/errno.h>
 #include <sys/device.h>
 #include <sys/disk.h>
-#include <sys/conf.h>
 
 #include <dev/scsipi/scsipi_all.h>
 #include <dev/scsipi/scsi_all.h>

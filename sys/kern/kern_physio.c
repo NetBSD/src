@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_physio.c,v 1.40 2000/02/14 20:12:03 thorpej Exp $	*/
+/*	$NetBSD: kern_physio.c,v 1.41 2000/03/29 03:43:32 simonb Exp $	*/
 
 /*-
  * Copyright (c) 1994 Christopher G. Demetriou
@@ -44,7 +44,6 @@
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/buf.h>
-#include <sys/conf.h>
 #include <sys/malloc.h>
 #include <sys/proc.h>
 
