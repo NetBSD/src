@@ -1,5 +1,5 @@
 #	from: @(#)Makefile	5.9 (Berkeley) 7/1/91
-#	$NetBSD: Makefile,v 1.5 2001/06/26 02:26:06 hubertf Exp $
+#	$NetBSD: Makefile,v 1.6 2001/06/30 00:19:25 hubertf Exp $
 
 .include <bsd.own.mk>
 
@@ -20,10 +20,19 @@ man:
 man.ps:
 	for i in 1 2 3 4 5 6 7 8 9 ; 				\
 	do							\
-		for f in `cat man$${i}` ; 			\
+		for f in `grep "$${i}\$$" intros` `cat man$${i}` ; \
 		do						\
-			echo >&2 $${f} ; 			\
-			troff -msafer -man -Tps $${f} ;		\
+			if [ ! -f $${f} ]; then 		\
+				continue ; 			\
+			fi ;					\
+			if grep -q ^\\.TS back ;		\
+			then					\
+				echo >&2 $${f} ; 			\
+				cat $${f} | tbl | troff -msafer -man -Tps $${f} ; \
+			else 					\
+				echo >&2 $${f} "(tbl)" ;	\
+				cat $${f} | troff -msafer -man -Tps $${f} ;	\
+			fi ; 					\
 		done >man$${i}pages.tmp ;			\
 		grops <man$${i}pages.tmp >man$${i}pages.ps ;	\
 		rm man$${i}pages.tmp ; 				\
