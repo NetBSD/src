@@ -1,4 +1,4 @@
-/*	$NetBSD: pmc.c,v 1.4 2002/01/03 05:04:52 briggs Exp $	*/
+/*	$NetBSD: pmc.c,v 1.4.2.1 2002/06/10 17:15:32 tv Exp $	*/
 
 /*
  * Copyright 2000 Wasabi Systems, Inc.
@@ -280,7 +280,7 @@ main(int argc, char **argv)
 		usage();
 
 	if (i386_pmc_info(&pi) < 0)
-		err(2, "pmc_info");
+		errx(2, "PMC support is not compiled into the kernel");
 	if (pi.type != PMC_TYPE_I686)
 		errx(3, "only 686 counters are supported");
 
