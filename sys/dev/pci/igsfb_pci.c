@@ -1,4 +1,4 @@
-/*	$NetBSD: igsfb_pci.c,v 1.4 2002/09/24 18:17:25 uwe Exp $ */
+/*	$NetBSD: igsfb_pci.c,v 1.5 2002/09/30 20:37:46 thorpej Exp $ */
 
 /*
  * Copyright (c) 2002 Valeriy E. Ushakov
@@ -32,7 +32,7 @@
  * Only tested on IGA 1682 in Krups JavaStation-NC.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: igsfb_pci.c,v 1.4 2002/09/24 18:17:25 uwe Exp $");
+__KERNEL_RCSID(0, "$NetBSD: igsfb_pci.c,v 1.5 2002/09/30 20:37:46 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -59,10 +59,8 @@ __KERNEL_RCSID(0, "$NetBSD: igsfb_pci.c,v 1.4 2002/09/24 18:17:25 uwe Exp $");
 static int	igsfb_pci_match(struct device *, struct cfdata *, void *);
 static void	igsfb_pci_attach(struct device *, struct device *, void *);
 
-const struct cfattach igsfb_pci_ca = {
-	sizeof(struct igsfb_softc), igsfb_pci_match, igsfb_pci_attach,
-};
-
+CFATTACH_DECL(igsfb_pci, sizeof(struct igsfb_softc),
+    igsfb_pci_match, igsfb_pci_attach, NULL, NULL)
 
 static int
 igsfb_pci_match(parent, match, aux)

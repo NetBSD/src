@@ -1,4 +1,4 @@
-/* $NetBSD: btvmeii.c,v 1.6 2002/09/27 20:39:47 thorpej Exp $ */
+/* $NetBSD: btvmeii.c,v 1.7 2002/09/30 20:37:11 thorpej Exp $ */
 
 /*
  * Copyright (c) 1999
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: btvmeii.c,v 1.6 2002/09/27 20:39:47 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: btvmeii.c,v 1.7 2002/09/30 20:37:11 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -121,12 +121,8 @@ struct b3_2706_softc {
 	int strayintrs;
 };
 
-const struct cfattach btvmeii_ca = {
-	sizeof(struct b3_2706_softc), b3_2706_match, b3_2706_attach,
-#if 0
-	b3_2706_detach
-#endif
-};
+CFATTACH_DECL(btvmeii, sizeof(struct b3_2706_softc),
+    b3_2706_match, b3_2706_attach, NULL, NULL)
 
 /*
  * The adapter consists of a DEC PCI-PCI-bridge with two
