@@ -1,4 +1,4 @@
-/*	$NetBSD: msg.mi.fr,v 1.73 2004/01/29 08:48:23 lukem Exp $	*/
+/*	$NetBSD: msg.mi.fr,v 1.74 2004/03/28 19:06:49 bouyer Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -43,17 +43,17 @@ message usage
 }
 
 message sysinst_message_language
-{Installation messages in French}	/* XXX translate */
+{Messages d'installation en Français}
 
 message Yes {Oui}
 message No {Non}
 message All {Tout}
-message Some {Some}	/* XXX translate */
+message Some {Une partie}
 message None {Aucun}
 message none {aucun}
 message OK {OK}
 message ok {ok}
-message unchanged {unchanged}	/* XXX translate */
+message unchanged {non-modifié}
 message On {On}
 message Off {Off}
 
@@ -136,8 +136,8 @@ NetBSD dessus.
 message ask_disk
 {Sur quel disque voulez vous installer NetBSD ?}
 
-message Available_disks	/* XXX translate */
-{Available disks}
+message Available_disks
+{Disques disponibles:}
 
 message cylinders
 {cylindres}
@@ -148,8 +148,8 @@ message heads
 message sectors
 {secteurs}
 
-message fs_isize		/* XXX translate */
-{average file size (octets)}
+message fs_isize
+{taille moyenne de fichier (octets)}
 
 message mountpoint
 {point de montage (ou 'none')}
@@ -236,7 +236,7 @@ message fssizesok
 {Taille de la partition acceptée. Libre: espace %d %s, %d partition}
 
 message fssizesbad
-{Réduire la taille de la partition par %d %s (%d secteurs).}
+{Réduire la taille de la partition de %d %s (%d secteurs).}
 
 message startoutsidedisk
 {La valeur que vous avez spécifiée est en dehors du disque
@@ -260,11 +260,11 @@ message fspart_header
 message fspart_row
 {%9d %9d %10d %-10s %-5s %-5s %s}
 
-message show_all_unused_partitions	/* XXX translate */
-{Show all unused partitions}
+message show_all_unused_partitions
+{Afficher les partitions libres}
 
-message partition_sizes_ok		/* XXX translate */
-{Partition sizes ok}
+message partition_sizes_ok
+{Taille des partitions correcte}
 
 message edfspart
 {Vous devez d'abord préciser le type de système de fichier (FS),
@@ -277,52 +277,52 @@ Les valeurs actuelles pour la partition %c sont :
 
 }
 
-message fstype_fmt	/* XXX translate */
-{        FStype: %9s}
+message fstype_fmt
+{ type de système de fichier: %9s}
 
 message start_fmt
-{         début: %9u %8u%c %9u}
+{                      début: %9u %8u%c %9u}
 
 message size_fmt
-{        taille: %9u %8u%c %9u}
+{                     taille: %9u %8u%c %9u}
 
 message end_fmt
-{           fin: %9u %8u%c %9u}
+{                        fin: %9u %8u%c %9u}
 
-message bsize_fmt	/* XXX translate */
-{    block size: %9d bytes}
+message bsize_fmt
+{            taille de block: %9d bytes}
 
-message fsize_fmt	/* XXX translate */
-{ fragment size: %9d bytes}
+message fsize_fmt
+{         taille de fragment: %9d bytes}
 
-message isize_fmt	/* XXX translate */
-{ Avg file size: %9d bytes}
-message isize_fmt_dflt	/* XXX translate */
-{ Avg file size:         4 fragments}
+message isize_fmt
+{  taille moyenne de fichier: %9d bytes}
+message isize_fmt_dflt
+{  taille moyenne de fichier: 4 fragments}
 
-message newfs_fmt	/* XXX translate */
-{         newfs: %9s}
+message newfs_fmt
+{                  formatter: %9s}
 
-message mount_fmt	/* XXX translate */
-{         mount: %9s}
+message mount_fmt
+{                    montage: %9s}
 
-message mount_options_fmt	/* XXX translate */
-{ mount options: }
+message mount_options_fmt
+{         options de montage: }
 
 message mountpt_fmt
-{ Pt de montage: %9s}
+{              Pt de montage: %9s}
 
-message toggle		/* XXX translate */
-{Toggle}
+message toggle
+{Bascule}
 
-message restore		/* XXX translate */
-{Restore original values}
+message restore	
+{Reprendre les valeurs initiales}
 
 message Select_the_type
 {Selection du type de système de fichier}
 
-message other_types	/* XXX translate */
-{other types}
+message other_types
+{autres types}
 
 message label_size
 {%s
@@ -340,15 +340,15 @@ Valeurs spéciales pouvant être rentrées pour définir la début de la partition:
 
 début (%s)}
 
-message invalid_sector_number	/* XXX translate */
-{Badly formed sector number
+message invalid_sector_number
+{nombre de secteur mal indiqué
 }
 
-message Select_file_system_block_size	/* XXX translate */
-{Select file system block size}
+message Select_file_system_block_size
+{Selectionnez la taille de block du système de fichier}
 
-message Select_file_system_fragment_size	/* XXX translate */
-{Select file system fragment size}
+message Select_file_system_fragment_size
+{Selectionnez la taille de fragment du système de fichier}
 
 message packname
 {veuillez donnez un nom à votre disque.}
@@ -454,8 +454,7 @@ Vous devez éditer /etc/rc.conf et ajouter la variable
 message upgrcomplete
 { L'installation de composants de NetBSD-@@VERSION@@ supplémentaires est
 terminée. L'installation a modifié le /etc de destination.
-un /etc.old sauvé par une mise à jour précédente
-n'a pas été touché.
+Un /etc.old sauvé par une mise à jour précédente n'a pas été touché.
 Suivez les instructions du document d'installation (INSTALL) afin de
 reconfigurer votre ordinateur.
 
@@ -578,9 +577,9 @@ message nonet
 Vous allez retourner au menu précédent.
 }
 
-message netup	/* XXX translate */
-{The following network interfaces are active: %s
-Does one of them connect to the required server?}
+message netup
+{Les interfaces réseau suivantes sont actives: %s
+Est-ce que l'une d'entre elles permet de joindre le serveur ?}
 
 
 message asknetdev
@@ -645,9 +644,9 @@ message netagain
 {Veuillez indiquer à nouveau les informations sur votre réseau.
 }
 
-message wait_network	/* XXX translate */
+message wait_network
 {
-Waiting while network interface comes up.
+Patientez en attendant que l'interface réseau se configure.
 }
 
 message resolv
@@ -669,9 +668,9 @@ message ftperror
 message distdir
 {Quel répertoire dois je utiliser pour %s ?}
 
-message delete_dist_files	/* XXX translate */
-{Do you want to delete the NetBSD sets from %s?
-(You can keep them to install/upgrade a second system.)}
+message delete_dist_files
+{Voulez-vous supprimer les fichiers de distribution de NetBSD de %s ?
+Vous pouvez les conserver pour installer ou mettre a jour d'autre systèmes.)}
 
 message verboseextract
 {Pendant la procédure d'extraction des fichiers,
@@ -884,14 +883,14 @@ message set_X11_misc
 message cur_distsets_row
 {%-33s %3s\n}
 
-message select_all	/* XXX translate */
-{Select all the above sets}
+message select_all
+{Sélectionner tout les composants}
 
-message select_none	/* XXX translate */
-{Deselect all the above sets}
+message select_none
+{Déselectionner tout les composants}
 
-message install_selected_sets	/* XXX translate */
-{Install selected sets}
+message install_selected_sets
+{Installer les composants sélectionnés}
 
 
 message tarerror
@@ -901,8 +900,8 @@ correctement et que votre système n'est pas complet.
 
 Voulez-vous continuer à extraire les composants ?}
 
-message must_be_one_root	/* XXX translate */
-{There must be a single partition marked to be mounted on '/'.}
+message must_be_one_root
+{Il ne doit y avoir qu'une seule partition devant être montée sur '/'.}
 
 message partitions_overlap
 {Les partitions %c et %c se recouvrent.}
@@ -919,7 +918,7 @@ message not_regular_file
 {Le fichier de configuration %s n'est pas un fichier régulier.\n}
 
 message out_of_memory
-{Votre macihne ne dispose pas d'assez de mémoire : échec du malloc()\n}
+{Votre machine ne dispose pas d'assez de mémoire : échec du malloc()\n}
 
 message config_open_error
 {Impossible d'ouvrir le fichier de configuration %s.\n}
@@ -946,8 +945,8 @@ Appuyez sur 'x' puis ENTREE pour quitter la selection de la zone horaire.
  Heure Locale:	%s %s
 }
 
-message tz_back	/* XXX translate */
-{ Back to main timezone list}
+message tz_back
+{ Retour à la liste principale des fuseaux horaires}
 
 message choose_crypt	
 {Sélectionez le type de hachage des mots de passe. NetBSD peut être
@@ -998,16 +997,16 @@ un point de montage "/".
 Appuyer sur <entrée> pour continuer.
 }
 
-message Pick_an_option {Pick an option to turn on or off.}	/* XXX translate */
-message Scripting {Scripting}	/* XXX translate */
-message Logging {Logging}	/* XXX translate */
+message Pick_an_option {Choisissez une option à activer/desactiver}
+message Scripting {Scripting}
+message Logging {Traces}
 
-message Status  { Status: }	/* XXX translate */
-message Command {Command: }	/* XXX translate */
-message Running {Running}	/* XXX translate */
-message Finished {Finished}	/* XXX translate */
-message Command_failed {Command failed}	/* XXX translate */
-message Command_ended_on_signal {Command ended on signal}	/* XXX translate */
+message Status  {    État: }
+message Command {Commande: }
+message Running {En cours d'exécution}
+message Finished {Terminée}
+message Command_failed {Echec}
+message Command_ended_on_signal {Commande terminée par un signal}
 
 
 message NetBSD_VERSION_Install_System {NetBSD-@@VERSION@@ Programme d'installation}
@@ -1019,7 +1018,7 @@ message Reboot_the_computer {Redémarrer l'ordinateur}
 message Utility_menu {Menu utilitaire}
 message NetBSD_VERSION_Utilities {Utilitaires NetBSD-@@VERSION@@}
 message Run_bin_sh {Exécuter /bin/sh}
-message Set_timezone {Set timezone}	/* XXX translate */
+message Set_timezone {Configurer le fuseau horaire}
 message Configure_network {Configuration du réseau}
 message Partition_a_disk {Partitioner un disque}
 message Logging_functions {Traces}
@@ -1027,8 +1026,8 @@ message Halt_the_system {Arrêter le système}
 message yes_or_no {oui ou non?}
 message Hit_enter_to_continue {Presser entrée pour continuer}
 message Choose_your_installation {Choisissez votre type d'installation}
-message Set_Sizes {Set sizes of NetBSD partitions}	/* XXX translate */
-message Use_Existing {Use existing partition sizes}	/* XXX translate */
+message Set_Sizes {Specifier les tailles de partitions NetBSD}
+message Use_Existing {Utiliser les partitions existantes}
 message Choose_your_size_specifier {Choisissez votre unité d'espace disque}
 message Megabytes {Megaoctets}
 message Cylinders {Cylindres}
@@ -1056,23 +1055,23 @@ message What_do_you_want_to_do {Que voulez vous faire?}
 message Try_again {Réessayer}
 message Give_up {Abandonner}
 message Ignore_continue_anyway {Ignorer les erreurs, continuer quand même}
-message Set_finished {Set finished}	/* XXX translate */
+message Set_finished {Extraction terminée}
 message Abort_install {Annuler l'installation}
 message Password_cipher {Password cipher}
 message DES {DES}
 message MD5 {MD5}
 message Blowfish_2_7_round {Blowfish 2^7 round}
-message do_not_change {do not change}	/* XXX translate */
+message do_not_change {ne rien changer}
 message Device {Device}
 message File_system {Système de fichier}
 message Change_directory_path {Changer le chemin d'accès}
 message Select_IPv6_DNS_server {  Choisissez un serveur de noms IPv6 :}
-message other {other }	/* XXX translate */
+message other {autre }
 message Perform_IPv6_autoconfiguration {Faire la configuration automatique IPv6 ?}
 message Perform_DHCP_autoconfiguration {Exécutez la configuration automatique de DHCP?}
-message Root_shell {Root shell}	/* XXX translate */
+message Root_shell {Interpreteur de commande de root}
 message Select_set_extraction_verbosity {Methode d'indication de l'extraction d'ensemble ?}
-message Progress_bar_recommended {Thermometre (recommendeé)}
+message Progress_bar_recommended {Barre de progression (recommendeé)}
 message Silent {Silencieux}
 message Verbose_file_name_listing_slow {Liste verbeuse des fichiers (lent)}
 

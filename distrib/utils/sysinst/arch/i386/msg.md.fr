@@ -1,4 +1,4 @@
-/*	$NetBSD: msg.md.fr,v 1.34 2004/02/23 03:44:29 jschauma Exp $	*/
+/*	$NetBSD: msg.md.fr,v 1.35 2004/03/28 19:06:49 bouyer Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -48,28 +48,28 @@ message dobad144
 }
 
 message getboottype
-{Aimez-vous installer l'ensemble normal de bootblocks ou de bootblocks serial?
+{Voulez-vous installer le programme de démarrage normal ou sur port serie ?
 
-Selected bootblock: }
+Programme de boot sélectionné: }
 
-message console_PC {BIOS console}
-message console_com {Serial port com%d, baud rate %d}
-message console_unchanged {Unchanged}
+message console_PC {Console du BIOS}
+message console_com {Port série com%d, baud rate %d}
+message console_unchanged {Pas de modification}
 
 message Bootblocks_selection
-{Bootblocks selection}
-message Use_normal_bootblocks	{Use BIOS console}
-message Use_serial_com0		{Use serial port com0}
-message Use_serial_com1		{Use serial port com1}
-message Use_serial_com2		{Use serial port com2}
-message Use_serial_com3		{Use serial port com3}
-message serial_baud_rate	{Serial baud rate}
-message Use_existing_bootblocks	{Use existing bootblocks}
+{Sélection du programme de démarrage}
+message Use_normal_bootblocks	{Console du BIOS }
+message Use_serial_com0		{port série com0}
+message Use_serial_com1		{port série com1}
+message Use_serial_com2		{port série com2}
+message Use_serial_com3		{port série com3}
+message serial_baud_rate	{Vitesse du port série}
+message Use_existing_bootblocks	{Conserver le programme de démarrage existant}
 
-message No_Bootcode		{No bootcode for root partition}
+message No_Bootcode		{Pas de programme de démarrage pour la partition racine}
 
 message dobootblks
-{Installation des block de démarrage sur %s ...
+{Installation programme de démarrage sur %s ...
 }
 
 message onebiosmatch
@@ -77,16 +77,16 @@ message onebiosmatch
 
 }
 
-message onebiosmatch_header	/* XXX translate */
-{BIOS # cylinders heads sectors total sectors  GB
------- --------- ----- ------- ------------- ---
+message onebiosmatch_header
+{BIOS # cylindres têtes secteurs nb total de secteurs  GB
+------ --------- ----- -------- -------------------- ---
 }
 
 message onebiosmatch_row	/* XXX adjust for length of titles above */
-{%#6x %9d %5d %7d %13u %3u\n}
+{%#6x %9d %5d %8d %20u %3u\n}
 
 message This_is_the_correct_geometry
-{C'est le bon géométrie}
+{C'est la bonne géométrie}
 message Set_the_geometry_by_hand
 {Entrer la géométrie}
 message Use_one_of_these_disks
@@ -97,19 +97,20 @@ message biosmultmatch
 
 }
 
-message biosmultmatch_header	/* XXX translate */
-{   BIOS # cylinders heads sectors total sectors  GB
-   ------ --------- ----- ------- ------------- ---
+message biosmultmatch_header
+{   BIOS # cylindres têtes secteurs nb total de secteurs  GB
+   ------ --------- ----- -------- -------------------- ---
 }
 
 message biosmultmatch_row	/* XXX adjust for length of titles above */
-{%-1d: %#6x %9d %5d %7d %13u %3u\n}
+{%-1d: %#6x %9d %5d %8d %20u %3u\n}
 
-message biosgeom_advise /* XXX translate */
+message biosgeom_advise
 {
-Note: since sysinst was able to uniquely match the disk you chose with a disk
-known to the BIOS, the values displayed above are very likely correct, and
-should not be changed. Only change them if they are very obviously wrong.
+Note: puisque sysinst a pu trouver une correspondance unique entre le
+disque choisi et un disque connu du BIOS, les valeurs ci-dessus sont
+probablement correctes. Modifiez-les uniquement si elles sont manifestement
+fausses.
 }
 
 message pickdisk
@@ -122,35 +123,34 @@ ne sera peut-etre pas possible. Voulez-vous reelement faire ceci ?
 
 ('Non' vous ramènera au menu d'edition des partitions.)}
 
-message missing_bootmenu_text	/* XXX translate */
-{You have more than one operating system on this disk, but have not
-specified a 'bootmenu' for either the active partition or the
-Netbsd partition that you are going to install into. 
+message missing_bootmenu_text
+{Vous avez plus d'un système d'exploitation sur ce disque, mais vous n'avez
+pas spécifié d'entrée dans le menu de boot pour la partition active ou la
+partition NetBSD sur laquelle vous allez installer.
 
-Do you want to re-edit the partition to add a bootmenu entry?}
+Voulez-vous réediter la partition pour ajouter une entrée dans le menu de boot ?}
 
-message no_extended_bootmenu	/* XXX translate */
-{You have requested that an extended partition be included in the bootmenu.
-However your system BIOS doesn't appear to support the read command used
-by that version of the bootmenu code. 
-Are you sure you that you want to do this?
+message no_extended_bootmenu
+{Vous avez ajouté une partition étendue au menu de boot, mais il semble que
+le BIOS de votre systeme ne supporte pas la commande de lecture utilisée
+par cette version du menu de boot.
+Voulez-vous vraiment faire ceci ?
 
-(Answering 'no' will take you back to the partition edit menu.)}
+('non' vous ramenera au menu d'édition des partitions.)}
 
-message installbootsel	/* XXX translate */
-{Your configuration requires the NetBSD bootselect code to
-select which operating system to use. 
+message installbootsel
+{Votre configutation nécessite le selecteur de boot de NetBSD pour choisir
+le système d'exploitation à démarrer.
+Il n'est pour l'instant pas installé, voulez-vous l'installer maintenant ?}
 
-It is not currently installed, do you want to install it now?}
+message installmbr
+{Le code d'ammorcage dans le secteur de boot ne semble pas etre valide.
 
-message installmbr	/* XXX translate */
-{The bootcode in the Master Boot Record does not appear to be valid.
+Voulez-vous installer le code d'ammorcage de NetBSD ?}
 
-Do you want to install the NetBSD bootcode?}
-
-message updatembr	/* XXX translate */
-{Do you want to update the bootcode in the Master Boot Record to
-the latest version of the NetBSD bootcode?}
+message updatembr
+{Voulez-vous mettre a jour le code d'ammorcage dans le secteur de boot
+avec la dernière version du code d'ammorcage de NetBSD ?}
 
 message set_kernel_1
 {Kernel (GENERIC)}
