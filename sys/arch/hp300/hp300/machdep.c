@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.62 1996/03/13 23:42:45 scottr Exp $	*/
+/*	$NetBSD: machdep.c,v 1.63 1996/04/27 00:39:59 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -138,6 +138,7 @@ int	conforced;		/* console has been forced */
  * before vm init or startup.  Do enough configuration
  * to choose and initialize a console.
  */
+void
 consinit()
 {
 	extern struct map extiomap[];
