@@ -1,4 +1,4 @@
-/*	$NetBSD: talkd.c,v 1.13.2.1 2002/10/02 03:14:24 lukem Exp $	*/
+/*	$NetBSD: talkd.c,v 1.13.2.2 2003/06/16 12:35:08 grant Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -43,7 +43,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1993\n\
 #if 0
 static char sccsid[] = "@(#)talkd.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: talkd.c,v 1.13.2.1 2002/10/02 03:14:24 lukem Exp $");
+__RCSID("$NetBSD: talkd.c,v 1.13.2.2 2003/06/16 12:35:08 grant Exp $");
 #endif
 #endif /* not lint */
 
@@ -129,12 +129,12 @@ main(argc, argv)
 				syslog(LOG_WARNING, "recv: %m");
 			continue;
 		}
-		lastmsgtime = time(0);
-		process_request(mp, &response);
-
 		mp->l_name[sizeof(mp->l_name) - 1] = '\0';
 		mp->r_name[sizeof(mp->r_name) - 1] = '\0';
 		mp->r_tty[sizeof(mp->r_tty) - 1] = '\0';
+
+		lastmsgtime = time(0);
+		process_request(mp, &response);
 
 		(void)memcpy(&ctl_addr, &mp->ctl_addr, sizeof(ctl_addr));
 		ctl_addr.sa_family = mp->ctl_addr.sa_family;
