@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.166 1997/07/05 20:47:35 thorpej Exp $	*/
+/*	$NetBSD: locore.s,v 1.167 1997/07/17 05:15:01 cgd Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994, 1995 Charles M. Hannum.  All rights reserved.
@@ -2256,6 +2256,7 @@ NENTRY(apmcall)
 	movw	%cx,APMREG_CX(%esi)
 	movw	%dx,APMREG_DX(%esi)
 /* todo: do something with %edi? */
+	movl	$1,%eax
 	cmpl	$0,apmstatus
 	jne	1f
 	xorl	%eax,%eax
