@@ -1,4 +1,4 @@
-/*	$NetBSD: exec_elf.h,v 1.56 2001/10/31 17:35:06 thorpej Exp $	*/
+/*	$NetBSD: exec_elf.h,v 1.57 2001/10/31 17:44:42 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1994 The NetBSD Foundation, Inc.
@@ -71,17 +71,14 @@ typedef	__uint64_t	Elf64_Off;
 typedef	__int32_t	Elf64_Shalf;
 #define	ELF64_FSZ_SHALF	4
 
-#ifdef __alpha__
-typedef	__int64_t	Elf64_Sword;
-#define	ELF64_FSZ_SWORD	8
-typedef	__uint64_t	Elf64_Word;
-#define	ELF64_FSZ_WORD	8
-#else
+#ifndef ELF64_FSZ_SWORD
 typedef	__int32_t	Elf64_Sword;
 #define	ELF64_FSZ_SWORD	4
+#endif /* ELF64_FSZ_SWORD */
+#ifndef ELF64_FSZ_WORD
 typedef	__uint32_t	Elf64_Word;
 #define	ELF64_FSZ_WORD	4
-#endif /* __alpha__ */
+#endif /* ELF64_FSZ_WORD */
 
 typedef	__int64_t	Elf64_Sxword;
 #define	ELF64_FSZ_XWORD	8
