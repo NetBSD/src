@@ -1,4 +1,6 @@
+# $NetBSD: md.mmeye,v 1.5 2000/04/21 13:13:47 tsubai Exp $
 ./usr/include/mmeye	comp-c-include
+./usr/include/mmeye/_G_config.h	comp-c-include
 ./usr/include/mmeye/ansi.h	comp-c-include
 ./usr/include/mmeye/aout_machdep.h	comp-c-include
 ./usr/include/mmeye/asm.h	comp-c-include
@@ -16,7 +18,6 @@
 ./usr/include/mmeye/elf_machdep.h	comp-c-include
 ./usr/include/mmeye/endian.h	comp-c-include
 ./usr/include/mmeye/endian_machdep.h	comp-c-include
-./usr/include/mmeye/exec_coff.h	comp-c-include
 ./usr/include/mmeye/float.h	comp-c-include
 ./usr/include/mmeye/frame.h	comp-c-include
 ./usr/include/mmeye/ieee.h	comp-c-include
@@ -38,7 +39,6 @@
 ./usr/include/mmeye/reg.h	comp-c-include
 ./usr/include/mmeye/segments.h	comp-c-include
 ./usr/include/mmeye/setjmp.h	comp-c-include
-./usr/include/mmeye/sh3.h	comp-c-include
 ./usr/include/mmeye/shbvar.h	comp-c-include
 ./usr/include/mmeye/signal.h	comp-c-include
 ./usr/include/mmeye/stdarg.h	comp-c-include
