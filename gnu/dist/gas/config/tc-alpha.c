@@ -2275,7 +2275,9 @@ load_expression (targreg, exp, pbasereg, poffset)
 	/* XXX: Disable this .got minimizing optimization so that we can get
 	   better instruction offset knowledge in the compiler.  This happens
 	   very infrequently anyway.  */
-	if (1 || !range_signed_32 (addend)
+	/* XXX: This causes addends to be added to ELF_LITERALs, which
+	   do not yet work.  Reverted for NetBSD. */
+	if (!range_signed_32 (addend)
 	    && (alpha_noat_on || targreg == AXP_REG_AT))
 	  {
 	    newtok[1] = *exp;
