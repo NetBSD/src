@@ -1,4 +1,4 @@
-/*	$NetBSD: db_command.c,v 1.36 2000/04/10 02:22:13 chs Exp $	*/
+/*	$NetBSD: db_command.c,v 1.37 2000/04/11 02:21:16 chs Exp $	*/
 
 /* 
  * Mach Operating System
@@ -432,6 +432,8 @@ struct db_command db_show_cmds[] = {
 	{ "map",	db_map_print_cmd,	0,	NULL },
 	{ "object",	db_object_print_cmd,	0,	NULL },
 	{ "page",	db_page_print_cmd,	0,	NULL },
+	{ "buf",	db_buf_print_cmd,	0,	NULL },
+	{ "vnode",	db_vnode_print_cmd,	0,	NULL },
 	{ "pool",	db_pool_print_cmd,	0,	NULL },
 	{ "registers",	db_show_regs,		0,	NULL },
 	{ "watches",	db_listwatch_cmd, 	0,	NULL },
