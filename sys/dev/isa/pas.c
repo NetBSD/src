@@ -1,4 +1,4 @@
-/*	$NetBSD: pas.c,v 1.33 1997/07/31 22:33:31 augustss Exp $	*/
+/*	$NetBSD: pas.c,v 1.34 1997/08/19 23:50:03 augustss Exp $	*/
 
 /*
  * Copyright (c) 1991-1993 Regents of the University of California.
@@ -448,7 +448,6 @@ pasattach(parent, self, aux)
 	register struct pas_softc *sc = (struct pas_softc *)self;
 	struct isa_attach_args *ia = (struct isa_attach_args *)aux;
 	register int iobase = ia->ia_iobase;
-	int err;
 	
 	sc->sc_sbdsp.sc_iobase = iobase;
 	sc->sc_sbdsp.sc_ih = isa_intr_establish(ia->ia_ic, ia->ia_irq,
@@ -464,8 +463,7 @@ pasattach(parent, self, aux)
 	sprintf(pas_device.name, "pas,%s", pasnames[sc->model]);
 	sprintf(pas_device.version, "%d", sc->rev);
 
-	if ((err = audio_hardware_attach(&pas_hw_if, &sc->sc_sbdsp, &sc->sc_sbdsp.sc_dev)) != 0)
-		printf("pas: could not attach to audio pseudo-device driver (%d)\n", err);
+	audio_attach_mi(&pas_hw_if, 0, &sc->sc_sbdsp, &sc->sc_sbdsp.sc_dev);
 }
 
 int

@@ -1,4 +1,4 @@
-/*	$NetBSD: aucc.c,v 1.16 1997/07/31 22:33:08 augustss Exp $	*/
+/*	$NetBSD: aucc.c,v 1.17 1997/08/19 23:49:40 augustss Exp $	*/
 #undef AUDIO_DEBUG
 /*
  * Copyright (c) 1997 Stephan Thesing
@@ -262,9 +262,7 @@ auccattach(parent, self, args)
 		return;
 	}
 
-	if (audio_hardware_attach(&sa_hw_if, sc, &sc->sc_dev) != 0)
-		printf("audio: could not attach to audio pseudo-device driver\n");
-	/* XXX: no way to return error, if init fails */
+	audio_attach_mi(&sa_hw_if, 0, sc, &sc->sc_dev);
 }
 
 

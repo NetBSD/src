@@ -1,4 +1,4 @@
-# $NetBSD: ALPHA,v 1.57 1997/07/13 21:24:15 hpeyerl Exp $
+# $NetBSD: ALPHA,v 1.58 1997/08/19 23:49:33 augustss Exp $
 #
 # Alpha kernel with all the options you'd want, and more.
 
@@ -190,6 +190,7 @@ vga*	at	isa?				# ISA (EISA: XXX) VGA
 awdc0	at	isa? port 0x1f0 irq 14		# ST506/ESDI/IDE controllers
 awdc1	at	isa? port 0x170 irq 15
 #wss*	at	isa? port 0x530 irq 9 drq 0	# Windows Sound System
+#audio*	at	wss?
 aha*	at	isa? port 0x330 irq ? drq ?	# Adaptec 154[02] SCSI
 aha*	at	isa? port 0x334 irq ? drq ?	# Adaptec 154[02] SCSI
 bha*	at	isa? port 0x330 irq ? drq ?	# BusLogic [57]4X SCSI (unt.)

@@ -1,4 +1,4 @@
-/* $NetBSD: vidcaudio.c,v 1.16 1997/07/31 22:33:13 augustss Exp $ */
+/* $NetBSD: vidcaudio.c,v 1.17 1997/08/19 23:49:45 augustss Exp $ */
 
 /*
  * Copyright (c) 1995 Melvin Tang-Richardson
@@ -107,7 +107,6 @@ void vidcaudio_dummy_routine	__P((void *arg));
 int vidcaudio_stereo	__P((int channel, int position));
 int vidcaudio_rate	__P((int rate));
 void vidcaudio_shutdown	__P((void));
-int vidcaudio_hw_attach	__P((struct vidcaudio_softc *sc));
 
 static int sound_dma_intr;
 
@@ -228,7 +227,7 @@ vidcaudio_attach(parent, self, aux)
 	vidcaudio_dma_program(ag.silence, ag.silence+NBPG-16,
 	    vidcaudio_dummy_routine, NULL);
 
-	vidcaudio_hw_attach(sc);
+	audio_attach_mi(&vidcaudio_hw_if, 0, sc, &sc->device);
 
 	printf("\n");
 
@@ -522,11 +521,6 @@ void vidcaudio_dummy_routine ( void *arg )
 #ifdef DEBUG
     printf ( "vidcaudio_dummy_routine\n" );
 #endif
-}
-
-int vidcaudio_hw_attach ( struct vidcaudio_softc *sc )
-{
-    return ( audio_hardware_attach ( &vidcaudio_hw_if, sc, &sc->device ) );
 }
 
 int vidcaudio_rate ( int rate )

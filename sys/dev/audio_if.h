@@ -1,4 +1,4 @@
-/*	$NetBSD: audio_if.h,v 1.18 1997/08/18 21:19:03 augustss Exp $	*/
+/*	$NetBSD: audio_if.h,v 1.19 1997/08/19 23:49:58 augustss Exp $	*/
 
 /*
  * Copyright (c) 1994 Havard Eidnes.
@@ -123,9 +123,10 @@ struct audio_hw_if {
 	int 	(*get_props)__P((void *)); /* device properties */
 };
 
-/* Register / deregister hardware driver */
-extern int	audio_hardware_attach __P((struct audio_hw_if *, void *, struct device *));
-extern int	audio_hardware_detach __P((struct audio_hw_if *, void *));
+struct midi_hw_if;
+
+/* Attach the MI driver(s) to the MD driver. */
+extern void	audio_attach_mi __P((struct audio_hw_if *, struct midi_hw_if *, void *, struct device *));
 
 /* Device identity flags */
 #define SOUND_DEVICE		0
