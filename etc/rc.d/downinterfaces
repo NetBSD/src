@@ -1,11 +1,11 @@
 #!/bin/sh
 #
-# $NetBSD: downinterfaces,v 1.1 2001/09/04 18:09:14 martin Exp $
+# $NetBSD: downinterfaces,v 1.2 2001/09/04 20:40:40 martin Exp $
 #
 
 # KEYWORD: shutdown
 
-if [ $1 != "stop" ]; then exit 0; fi
+if [ "x$1" != "xstop" ]; then exit 0; fi
 
 . /etc/rc.conf
 
