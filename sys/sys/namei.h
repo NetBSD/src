@@ -1,4 +1,4 @@
-/*	$NetBSD: namei.h,v 1.17 1999/08/30 14:55:24 jdolecek Exp $	*/
+/*	$NetBSD: namei.h,v 1.18 2000/04/16 21:41:50 chs Exp $	*/
 
 /*
  * Copyright (c) 1985, 1989, 1991, 1993
@@ -174,7 +174,6 @@ struct	namecache {
 };
 
 #ifdef _KERNEL
-u_long	nextvnodeid;
 int	namei __P((struct nameidata *ndp));
 int	lookup __P((struct nameidata *ndp));
 int	relookup __P((struct vnode *dvp, struct vnode **vpp,
