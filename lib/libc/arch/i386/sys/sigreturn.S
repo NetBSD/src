@@ -1,4 +1,4 @@
-/*	$NetBSD: sigreturn.S,v 1.9 2003/08/07 16:42:09 agc Exp $	*/
+/*	$NetBSD: sigreturn.S,v 1.10 2004/03/26 22:15:03 drochner Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -36,7 +36,7 @@
 
 #include <machine/asm.h>
 #if defined(SYSLIBC_SCCS) && !defined(lint)
-	RCSID("$NetBSD: sigreturn.S,v 1.9 2003/08/07 16:42:09 agc Exp $")
+	RCSID("$NetBSD: sigreturn.S,v 1.10 2004/03/26 22:15:03 drochner Exp $")
 #endif /* SYSLIBC_SCCS and not lint */
 
 #include "SYS.h"
@@ -57,6 +57,6 @@
 #endif /* GPROF */
 
 WARN_REFERENCES(sigreturn, \
-    "warning: reference to compatibility sigreturn(); include <signal.h> for correct reference")
+    "warning: reference to compatibility sigreturn()")
 
 PSEUDO(sigreturn,compat_13_sigreturn13)
