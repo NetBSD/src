@@ -1,4 +1,4 @@
-/*	$NetBSD: db_trace.c,v 1.32 2001/02/05 12:37:33 chs Exp $	*/
+/*	$NetBSD: db_trace.c,v 1.33 2001/02/07 06:13:21 chs Exp $	*/
 
 /* 
  * Mach Operating System
@@ -503,7 +503,7 @@ db_stack_trace_print(addr, have_addr, count, modif, pr)
 		 * NOTE: If the argument list for 'trap()' ever changes,
 		 * we lose.
 		 */
-		if (strcmp(_C_LABEL_STRING("trap"), name) == 0) {
+		if (strcmp(__STRING(_C_LABEL(trap)), name) == 0) {
 			int tfp;
 
 			/* Point to 'trap()'s 4th argument (frame structure) */
