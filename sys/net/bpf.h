@@ -1,4 +1,4 @@
-/*	$NetBSD: bpf.h,v 1.16 1997/10/03 16:24:18 christos Exp $	*/
+/*	$NetBSD: bpf.h,v 1.17 1997/10/09 18:18:37 christos Exp $	*/
 
 /*
  * Copyright (c) 1990, 1991, 1993
@@ -38,10 +38,14 @@
  * SUCH DAMAGE.
  *
  *	@(#)bpf.h	8.1 (Berkeley) 6/10/93
+ * @(#) Header: bpf.h,v 1.36 97/06/12 14:29:53 leres Exp  (LBL)
  */
 
 #ifndef _NET_BPF_H_
 #define _NET_BPF_H_
+
+/* BSD style release date */
+#define BPF_RELEASE 199606
 
 /*
  * Alignment macros.  BPF_WORDALIGN rounds up to the next 
@@ -110,8 +114,8 @@ struct bpf_version {
 #define BIOCGSTATS	_IOR(B,111, struct bpf_stat)
 #define BIOCIMMEDIATE	_IOW(B,112, u_int)
 #define BIOCVERSION	_IOR(B,113, struct bpf_version)
-#define BIOCSRSIG	_IOW(B,114, u_int)
-#define BIOCGRSIG	_IOR(B,115, u_int)
+#define BIOCSTCPF	_IOW(B,114, struct bpf_program)
+#define BIOCSUDPF	_IOW(B,115, struct bpf_program)
 #else
 #define	BIOCGBLEN	_IOR('B',102, u_int)
 #define	BIOCSBLEN	_IOWR('B',102, u_int)
@@ -126,8 +130,8 @@ struct bpf_version {
 #define BIOCGSTATS	_IOR('B',111, struct bpf_stat)
 #define BIOCIMMEDIATE	_IOW('B',112, u_int)
 #define BIOCVERSION	_IOR('B',113, struct bpf_version)
-#define BIOCSRSIG	_IOW('B',114, u_int)
-#define BIOCGRSIG	_IOR('B',115, u_int)
+#define BIOCSTCPF	_IOW('B',114, struct bpf_program)
+#define BIOCSUDPF	_IOW('B',115, struct bpf_program)
 #endif
 
 /*
