@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.435 2003/10/25 10:02:05 jandberg Exp $
+# $NetBSD: mi,v 1.436 2003/10/29 21:11:51 kleink Exp $
 .			base-sys-root
 ./altroot		base-sys-root
 ./bin			base-sys-root
@@ -2514,6 +2514,7 @@
 ./usr/share/zoneinfo/America/Aruba		base-sys-share
 ./usr/share/zoneinfo/America/Asuncion		base-sys-share
 ./usr/share/zoneinfo/America/Atka		base-sys-share
+./usr/share/zoneinfo/America/Bahia		base-sys-share
 ./usr/share/zoneinfo/America/Barbados		base-sys-share
 ./usr/share/zoneinfo/America/Belem		base-sys-share
 ./usr/share/zoneinfo/America/Belize		base-sys-share
@@ -2522,6 +2523,7 @@
 ./usr/share/zoneinfo/America/Boise		base-sys-share
 ./usr/share/zoneinfo/America/Buenos_Aires		base-sys-share
 ./usr/share/zoneinfo/America/Cambridge_Bay		base-sys-share
+./usr/share/zoneinfo/America/Campo_Grande	base-sys-share
 ./usr/share/zoneinfo/America/Cancun		base-sys-share
 ./usr/share/zoneinfo/America/Caracas		base-sys-share
 ./usr/share/zoneinfo/America/Catamarca		base-sys-share
@@ -2627,6 +2629,7 @@
 ./usr/share/zoneinfo/America/Thule		base-sys-share
 ./usr/share/zoneinfo/America/Thunder_Bay		base-sys-share
 ./usr/share/zoneinfo/America/Tijuana		base-sys-share
+./usr/share/zoneinfo/America/Toronto		base-sys-share
 ./usr/share/zoneinfo/America/Tortola		base-sys-share
 ./usr/share/zoneinfo/America/Vancouver		base-sys-share
 ./usr/share/zoneinfo/America/Virgin		base-sys-share
