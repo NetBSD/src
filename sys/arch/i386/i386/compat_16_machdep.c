@@ -1,4 +1,4 @@
-/*	$NetBSD: compat_16_machdep.c,v 1.1 2003/09/10 19:48:48 christos Exp $	*/
+/*	$NetBSD: compat_16_machdep.c,v 1.2 2003/09/10 21:40:02 christos Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2000 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: compat_16_machdep.c,v 1.1 2003/09/10 19:48:48 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: compat_16_machdep.c,v 1.2 2003/09/10 21:40:02 christos Exp $");
 
 #include "opt_vm86.h"
 #include "opt_compat_netbsd.h"
@@ -192,8 +192,6 @@ sendsig_sigcontext(ksiginfo_t *ksi, sigset_t *mask)
 
 	default:
 		/* Don't know what trampoline version; kill it. */
-		printf("osendsig: bad version %d\n",
-		    ps->sa_sigdesc[sig].sd_vers);
 		sigexit(l, SIGILL);
 	}
 
@@ -254,7 +252,6 @@ sendsig_sigcontext(ksiginfo_t *ksi, sigset_t *mask)
 		 * Process has trashed its stack; give it an illegal
 		 * instruction to halt it in its tracks.
 		 */
-		printf("osendsig: copyout failed\n");
 		sigexit(l, SIGILL);
 		/* NOTREACHED */
 	}
