@@ -1,4 +1,4 @@
-/*	$NetBSD: hdr.h,v 1.8 1999/07/28 23:23:39 hubertf Exp $	*/
+/*	$NetBSD: hdr.h,v 1.9 2001/02/05 00:20:05 christos Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -158,6 +158,6 @@ extern	int     turns, lmwarn, iwest, knfloc, detail,	/* various flags and
 	        abbnum, maxdie, numdie, holdng, dkill, foobar, bonus, clock1,
 	        clock2, saved, closng, panic, closed, scorng;
 
-extern	int     demo, newloc, limit;
+extern	int     demo, limit;
 
 #define DECR(a,b,c,d,e) decr(a+'+',b+'-',c+'#',d+'&',e+'%')
