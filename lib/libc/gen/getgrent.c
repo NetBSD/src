@@ -1,4 +1,4 @@
-/*	$NetBSD: getgrent.c,v 1.28 1999/01/16 14:44:33 lukem Exp $	*/
+/*	$NetBSD: getgrent.c,v 1.29 1999/01/18 20:37:13 christos Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -39,7 +39,7 @@
 #if 0
 static char sccsid[] = "@(#)getgrent.c	8.2 (Berkeley) 3/21/94";
 #else
-__RCSID("$NetBSD: getgrent.c,v 1.28 1999/01/16 14:44:33 lukem Exp $");
+__RCSID("$NetBSD: getgrent.c,v 1.29 1999/01/18 20:37:13 christos Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -189,6 +189,7 @@ endgrent()
 
 static int _local_grscan __P((void *, void *, va_list));
 
+/*ARGSUSED*/
 static int
 _local_grscan(rv, cb_data, ap)
 	void	*rv;
@@ -224,6 +225,7 @@ _local_grscan(rv, cb_data, ap)
 #ifdef HESIOD
 static int _dns_grscan __P((void *, void *, va_list));
 
+/*ARGSUSED*/
 static int
 _dns_grscan(rv, cb_data, ap)
 	void	*rv;
@@ -261,6 +263,7 @@ _dns_grscan(rv, cb_data, ap)
 				return NS_NOTFOUND;
 			case HES_ER_OK:
 				abort();
+				break;
 			default:
 				return NS_UNAVAIL;
 			}
@@ -281,6 +284,7 @@ _dns_grscan(rv, cb_data, ap)
 #ifdef YP
 static int _nis_grscan __P((void *, void *, va_list));
 
+/*ARGSUSED*/
 static int
 _nis_grscan(rv, cb_data, ap)
 	void	*rv;
@@ -392,6 +396,7 @@ _nis_grscan(rv, cb_data, ap)
  */
 static int _bad_grscan __P((void *, void *, va_list));
 
+/*ARGSUSED*/
 static int
 _bad_grscan(rv, cb_data, ap)
 	void	*rv;
@@ -437,6 +442,7 @@ __grscancompat(search, gid, name)
 
 static int _compat_grscan __P((void *, void *, va_list));
 
+/*ARGSUSED*/
 static int
 _compat_grscan(rv, cb_data, ap)
 	void	*rv;
