@@ -1,4 +1,4 @@
-/*	$NetBSD: advnops.c,v 1.3 2003/01/24 21:55:17 fvdl Exp $	*/
+/*	$NetBSD: advnops.c,v 1.4 2003/01/27 04:08:45 lonewolf Exp $	*/
 
 /*
  * Copyright (c) 1994 Christian E. Hopps
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: advnops.c,v 1.3 2003/01/24 21:55:17 fvdl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: advnops.c,v 1.4 2003/01/27 04:08:45 lonewolf Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_quota.h"
@@ -322,13 +322,13 @@ adosfs_read(v)
 				error = EIO; /* OFS needs the complete block */
 			else if (adoswordn(bp, 0) != BPT_DATA) {
 #ifdef DIAGNOSTIC
-				printf("adosfs: bad primary type blk %ld\n",
+				printf("adosfs: bad primary type blk %" PRId64 "\n",
 				    bp->b_blkno / (amp->bsize / DEV_BSIZE));
 #endif
 				error = EINVAL;
 			} else if (adoscksum(bp, ap->nwords)) {
 #ifdef DIAGNOSTIC
-				printf("adosfs: blk %ld failed cksum.\n",
+				printf("adosfs: blk %" PRId64 " failed cksum.\n",
 				    bp->b_blkno / (amp->bsize / DEV_BSIZE));
 #endif
 				error = EINVAL;
@@ -571,7 +571,7 @@ adosfs_bmap(v)
 		*bnp = adoswordn(flbp, flblkoff) * ap->amp->bsize / DEV_BSIZE;
 	} else {
 #ifdef DIAGNOSTIC
-		printf("flblk offset %ld too large in lblk %ld blk %d\n", 
+		printf("flblk offset %ld too large in lblk %ld blk %" PRId64 "\n", 
 		    flblkoff, (long)bn, flbp->b_blkno);
 #endif
 		error = EINVAL;
