@@ -1,4 +1,4 @@
-/*	$NetBSD: fsirand.c,v 1.7 1997/09/20 16:28:00 christos Exp $	*/
+/*	$NetBSD: fsirand.c,v 1.8 1998/03/18 17:07:14 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1997 Christos Zoulas.  All rights reserved.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: fsirand.c,v 1.7 1997/09/20 16:28:00 christos Exp $");
+__RCSID("$NetBSD: fsirand.c,v 1.8 1998/03/18 17:07:14 bouyer Exp $");
 #endif /* lint */
 
 #include <stdio.h>
@@ -52,14 +52,18 @@ __RCSID("$NetBSD: fsirand.c,v 1.7 1997/09/20 16:28:00 christos Exp $");
 
 #include <ufs/ufs/quota.h>
 #include <ufs/ufs/inode.h>
+#include <ufs/ufs/ufs_bswap.h>
 
 #include <ufs/ffs/fs.h>
+#include <ufs/ffs/ffs_extern.h>
 
 static void usage __P((void));
 static void getsblock __P((int, const char *, struct disklabel *, struct fs *));
 static void fixinodes __P((int, struct fs *, struct disklabel *, int, long));
 
 int main __P((int, char *[]));
+
+int needswap = 0;
 
 static void
 usage()
@@ -102,7 +106,11 @@ getsblock(fd, name, lab, fs)
 		err(1, "Cannot read superblock");
 
 	if (fs->fs_magic != FS_MAGIC)
-		errx(1, "Bad superblock magic number");
+		if(fs->fs_magic == bswap32(FS_MAGIC)) {
+			needswap = 1;
+			ffs_sb_swap(fs, fs, 0);
+		} else
+			errx(1, "Bad superblock magic number");
 
 	if (fs->fs_ncg < 1)
 		errx(1, "Bad ncg in superblock");
@@ -153,9 +161,10 @@ fixinodes(fd, fs, lab, pflag, xorval)
 
 		for (dip = dibuf; dip < &dibuf[inopb]; dip++) {
 			if (pflag)
-				printf("ino %d gen 0x%x\n", ino, dip->di_gen);
+				printf("ino %d gen 0x%x\n", ino,
+					ufs_rw32(dip->di_gen, needswap));
 			else
-				dip->di_gen = random() ^ xorval;
+				dip->di_gen = ufs_rw32(random() ^ xorval, needswap);
 			if (++ino > imax)
 				errx(1, "Exceeded number of inodes");
 		}
