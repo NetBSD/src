@@ -1,4 +1,4 @@
-/* $NetBSD: expr.y,v 1.24 2001/02/04 19:51:14 christos Exp $ */
+/* $NetBSD: expr.y,v 1.25 2001/04/25 02:33:09 simonb Exp $ */
 
 /*_
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
 %{
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: expr.y,v 1.24 2001/02/04 19:51:14 christos Exp $");
+__RCSID("$NetBSD: expr.y,v 1.25 2001/04/25 02:33:09 simonb Exp $");
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -184,7 +184,7 @@ expr:	item { $$ = $1; }
 			/* very simplistic check for over-& underflow */
 			if ((res < 0 && l > 0 && r > 0 && l > r)
 				|| (res > 0 && l < 0 && r < 0 && l < r)) {
-				yyerror("integer overflow or underflow occured\
+				yyerror("integer overflow or underflow occurred\
  for operation '%s %s %s'", $1, $2, $3);
 				/* NOTREACHED */
 			}
@@ -194,7 +194,7 @@ expr:	item { $$ = $1; }
 			/* very simplistic check for over-& underflow */
 			if ((res < 0 && l > 0 && l > r)
 				|| (res > 0 && l < 0 && l < r) ) {
-				yyerror("integer overflow or underflow occured\
+				yyerror("integer overflow or underflow occurred\
  for operation '%s %s %s'", $1, $2, $3);
 				/* NOTREACHED */
 			}
