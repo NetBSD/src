@@ -34,7 +34,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)vm_kern.c	7.4 (Berkeley) 5/7/91
- *	$Id: vm_kern.c,v 1.8 1993/12/20 12:40:08 cgd Exp $
+ *	$Id: vm_kern.c,v 1.9 1994/01/08 04:17:31 mycroft Exp $
  *
  *
  * Copyright (c) 1987, 1990 Carnegie-Mellon University.
@@ -73,6 +73,7 @@
 #include <vm/vm_page.h>
 #include <vm/vm_pageout.h>
 #include <vm/vm_kern.h>
+#include <vm/vm_user.h>
 
 /*
  *	kmem_alloc_pageable:
