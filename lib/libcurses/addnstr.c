@@ -1,4 +1,4 @@
-/*	$NetBSD: addnstr.c,v 1.8 2000/04/15 23:36:55 jdc Exp $	*/
+/*	$NetBSD: addnstr.c,v 1.9 2000/04/17 12:25:45 blymn Exp $	*/
 
 /*
  * Copyright (c) 1993, 1994
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)addnstr.c	8.2 (Berkeley) 5/4/94";
 #else
-__RCSID("$NetBSD: addnstr.c,v 1.8 2000/04/15 23:36:55 jdc Exp $");
+__RCSID("$NetBSD: addnstr.c,v 1.9 2000/04/17 12:25:45 blymn Exp $");
 #endif
 #endif				/* not lint */
 
@@ -54,10 +54,19 @@ __RCSID("$NetBSD: addnstr.c,v 1.8 2000/04/15 23:36:55 jdc Exp $");
  *      Add a string to stdscr starting at (_cury, _curx).
  */
 int
-addstr(s)
-	const char *s;
+addstr(const char *s)
 {
 	return waddnstr(stdscr, s, -1);
+}
+
+/*
+ * waddstr --
+ *      Add a string to the given window starting at (_cury, _curx).
+ */
+int
+waddstr(WINDOW *win, const char *s)
+{
+	return waddnstr(win, s, -1);
 }
 
 /*
@@ -69,16 +78,6 @@ int
 addnstr(const char *str, int n)
 {
 	return waddnstr(stdscr, str, n);
-}
-
-/*
- * mvwaddstr --
- *      Add a string to the given window.
- */
-int
-waddstr(WINDOW *win, const char *str)
-{
-	return waddnstr(win, str, -1);
 }
 
 /*
