@@ -42,7 +42,7 @@
  *	%W% (Berkeley) %G%
  *
  * from: Header: cgthree.c,v 1.8 93/10/31 05:09:24 torek Exp
- * $Id: cgthree.c,v 1.5 1994/04/13 11:01:58 deraadt Exp $
+ * $Id: cgthree.c,v 1.6 1994/07/04 21:37:25 deraadt Exp $
  */
 
 /*
@@ -60,6 +60,8 @@
 #include <sys/malloc.h>
 #include <sys/mman.h>
 #include <sys/tty.h>
+
+#include <vm/vm.h>
 
 #include <machine/fbio.h>
 #include <machine/autoconf.h>
