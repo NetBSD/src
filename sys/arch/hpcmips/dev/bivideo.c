@@ -1,4 +1,4 @@
-/*	$NetBSD: bivideo.c,v 1.6.4.1 2000/06/30 16:27:24 simonb Exp $	*/
+/*	$NetBSD: bivideo.c,v 1.6.4.2 2000/08/06 04:10:03 takemura Exp $	*/
 
 /*-
  * Copyright (c) 1999
@@ -37,7 +37,7 @@
 static const char _copyright[] __attribute__ ((unused)) =
     "Copyright (c) 1999 Shin Takemura.  All rights reserved.";
 static const char _rcsid[] __attribute__ ((unused)) =
-    "$Id: bivideo.c,v 1.6.4.1 2000/06/30 16:27:24 simonb Exp $";
+    "$Id: bivideo.c,v 1.6.4.2 2000/08/06 04:10:03 takemura Exp $";
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -55,6 +55,7 @@ static const char _rcsid[] __attribute__ ((unused)) =
 #include <machine/bootinfo.h>
 #include <machine/platid.h>
 #include <machine/platid_mask.h>
+#include <machine/config_hook.h>
 
 #include <dev/wscons/wsconsio.h>
 #include <dev/wscons/wsdisplayvar.h>
@@ -65,6 +66,11 @@ static const char _rcsid[] __attribute__ ((unused)) =
 #include <arch/hpcmips/dev/hpcfbio.h>
 #include <arch/hpcmips/dev/bivideovar.h>
 #include <arch/hpcmips/dev/hpccmapvar.h>
+
+/*
+ *  global variables
+ */
+int bivideo_dont_attach = 0;
 
 /*
  *  function prototypes
@@ -78,8 +84,11 @@ struct bivideo_softc {
 	struct device		sc_dev;
 	struct hpcfb_fbconf	sc_fbconf;
 	struct hpcfb_dspconf	sc_dspconf;
+	void			*sc_powerhook;	/* power management hook */
+	int			sc_powerstate;
 };
 static int bivideo_init __P((struct hpcfb_fbconf *fb));
+static void bivideo_power __P((int, void *));
 
 /*
  *  static variables
@@ -105,7 +114,8 @@ bivideomatch(parent, match, aux)
 {
 	struct mainbus_attach_args *ma = aux;
     
-	if (strcmp(ma->ma_name, match->cf_driver->cd_name))
+	if (bivideo_dont_attach ||
+	    strcmp(ma->ma_name, match->cf_driver->cd_name))
 		return 0;
 
 	return (1);
@@ -131,6 +141,13 @@ bivideoattach(parent, self, aux)
 		printf(", console");
 	}
 	printf("\n");
+
+	/* Add a suspend hook to power saving */
+	sc->sc_powerstate = 1;
+	sc->sc_powerhook = powerhook_establish(bivideo_power, sc);
+	if (sc->sc_powerhook == NULL)
+		printf("%s: WARNING: unable to establish power hook\n",
+			sc->sc_dev.dv_xname);
 
 	ha.ha_console = console_flag;
 	ha.ha_accessops = &bivideo_ha;
@@ -264,6 +281,31 @@ bivideo_init(fb)
 	}
 
 	return (0); /* no error */
+}
+
+static void 
+bivideo_power(why, arg)
+	int why;
+	void *arg;
+{
+	struct bivideo_softc *sc = arg;
+
+	switch (why) {
+	case PWR_SUSPEND:
+	case PWR_STANDBY:
+		sc->sc_powerstate = 0;
+		break;
+	case PWR_RESUME:
+		sc->sc_powerstate = 1;
+		break;
+	}
+
+	config_hook_call(CONFIG_HOOK_POWERCONTROL,
+			 CONFIG_HOOK_POWERCONTROL_LCD,
+			 (void*)sc->sc_powerstate);
+	config_hook_call(CONFIG_HOOK_POWERCONTROL,
+			 CONFIG_HOOK_POWERCONTROL_LCDLIGHT,
+			 (void*)sc->sc_powerstate);
 }
 
 int
