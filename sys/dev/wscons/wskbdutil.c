@@ -1,4 +1,4 @@
-/*	$NetBSD: wskbdutil.c,v 1.3 1998/04/20 10:47:36 hannken Exp $	*/
+/*	$NetBSD: wskbdutil.c,v 1.4 1998/06/15 17:48:33 drochner Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -180,80 +180,7 @@ static struct compose_tab_s {
 
 #define COMPOSE_SIZE	sizeof(compose_tab)/sizeof(compose_tab[0])
 
-static struct string_tab_s {
-	keysym_t ksym;
-	char value[WSKBD_STRING_LEN];
-} string_tab[] = {
-	{ KS_f1,		"\033[OP" },
-	{ KS_f2,		"\033[OQ" },
-	{ KS_f3,		"\033[OR" },
-	{ KS_f4,		"\033[OS" },
-	{ KS_f5,		"\033[15~" },
-	{ KS_f6,		"\033[17~" },
-	{ KS_f7,		"\033[18~" },
-	{ KS_f8,		"\033[19~" },
-	{ KS_f9,		"\033[20~" },
-	{ KS_f10,		"\033[21~" },
-	{ KS_f11,		"\033[23~" },
-	{ KS_f12,		"\033[24~" },
-	{ KS_f13,		"\033[25~" },
-	{ KS_f14,		"\033[26~" },
-	{ KS_f15,		"\033[28~" },
-	{ KS_f16,		"\033[29~" },
-	{ KS_f17,		"\033[31~" },
-	{ KS_f18,		"\033[32~" },
-	{ KS_f19,		"\033[33~" },
-	{ KS_f20,		"\033[34~" },
-	{ KS_F1,		"\033[OP" },
-	{ KS_F2,		"\033[OQ" },
-	{ KS_F3,		"\033[OR" },
-	{ KS_F4,		"\033[OS" },
-	{ KS_F5,		"\033[15~" },
-	{ KS_F6,		"\033[17~" },
-	{ KS_F7,		"\033[18~" },
-	{ KS_F8,		"\033[19~" },
-	{ KS_F9,		"\033[20~" },
-	{ KS_F10,		"\033[21~" },
-	{ KS_F11,		"\033[23~" },
-	{ KS_F12,		"\033[24~" },
-	{ KS_F13,		"\033[25~" },
-	{ KS_F14,		"\033[26~" },
-	{ KS_F15,		"\033[28~" },
-	{ KS_F16,		"\033[29~" },
-	{ KS_F17,		"\033[31~" },
-	{ KS_F18,		"\033[32~" },
-	{ KS_F19,		"\033[33~" },
-	{ KS_F20,		"\033[34~" },
-	{ KS_KP_F1,		"\033[OP" },
-	{ KS_KP_F2,		"\033[OQ" },
-	{ KS_KP_F3,		"\033[OR" },
-	{ KS_KP_F4,		"\033[OS" },
-	{ KS_KP_Home,		"\033[H" },
-	{ KS_Home,		"\033[H" },
-	{ KS_KP_Left,		"\033[D" },
-	{ KS_Left,		"\033[D" },
-	{ KS_KP_Up,		"\033[A" },
-	{ KS_Up,		"\033[A" },
-	{ KS_KP_Right,		"\033[C" },
-	{ KS_Right,		"\033[C" },
-	{ KS_KP_Down,		"\033[B" },
-	{ KS_Down,		"\033[B" },
-	{ KS_KP_Prior,		"\033[I" },
-	{ KS_Prior,		"\033[I" },
-	{ KS_KP_Next,		"\033[G" },
-	{ KS_Next,		"\033[G" },
-	{ KS_KP_End,		"\033[F" },
-	{ KS_End,		"\033[F" },
-	{ KS_KP_Begin,		"\033[H" },
-	{ KS_KP_Insert,		"\033[L" },
-	{ KS_Insert,		"\033[L" },
-	{ KS_KP_Delete,		"\b" }
-};
-
-#define STRING_SIZE	sizeof(string_tab)/sizeof(string_tab[0])
-
 static int compose_tab_inorder = 0;
-static int string_tab_inorder = 0;
 
 static inline int compose_tab_cmp __P((struct compose_tab_s *, struct compose_tab_s *));
 static keysym_t ksym_upcase __P((keysym_t));
@@ -302,70 +229,6 @@ wskbd_compose_value(compose_buf)
 	}
 
 	return(KS_voidSymbol);
-}
-
-char *
-wskbd_get_string(sym)
-	keysym_t sym;
-{
-	int i, j;
-	struct string_tab_s v;
-
-	if (! string_tab_inorder) {
-		/* Insertion sort. */
-		for (i = 1; i < STRING_SIZE; i++) {
-			v = string_tab[i];
-			/* find correct slot, moving others up */
-			for (j = i; --j >= 0 && v.ksym < string_tab[j].ksym; )
-				string_tab[j + 1] = string_tab[j];
-			string_tab[j + 1] = v;
-		}
-		string_tab_inorder = 1;
-	}
-
-	for (j = 0, i = STRING_SIZE; i != 0; i /= 2) {
-		if (string_tab[j + i/2].ksym == sym)
-			return(string_tab[j + i/2].value);
-		else if (string_tab[j + i/2].ksym < sym) {
-			j += i/2 + 1;
-			i--;
-		}
-	}
-
-	return(NULL);
-}
-
-int
-wskbd_set_string(sym, data)
-	keysym_t sym;
-	char *data;
-{
-	int i, j;
-	struct string_tab_s v;
-
-	if (! string_tab_inorder) {
-		/* Insertion sort. */
-		for (i = 1; i < STRING_SIZE; i++) {
-			v = string_tab[i];
-			/* find correct slot, moving others up */
-			for (j = i; --j >= 0 && v.ksym < string_tab[j].ksym; )
-				string_tab[j + 1] = string_tab[j];
-			string_tab[j + 1] = v;
-		}
-		string_tab_inorder = 1;
-	}
-
-	for (j = 0, i = STRING_SIZE; i != 0; i /= 2) {
-		if (string_tab[j + i/2].ksym == sym) {
-			bcopy(data, string_tab[j + i/2].value, WSKBD_STRING_LEN);
-			return(0);
-		} else if (string_tab[j + i/2].ksym < sym) {
-			j += i/2 + 1;
-			i--;
-		}
-	}
-
-	return(EINVAL);
 }
 
 static const u_char latin1_to_upper[256] = {

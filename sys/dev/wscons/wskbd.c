@@ -1,4 +1,4 @@
-/* $NetBSD: wskbd.c,v 1.8 1998/06/13 14:28:50 drochner Exp $ */
+/* $NetBSD: wskbd.c,v 1.9 1998/06/15 17:48:33 drochner Exp $ */
 
 /*
  * Copyright (c) 1996, 1997 Christopher G. Demetriou.  All rights reserved.
@@ -36,7 +36,7 @@
 static const char _copyright[] __attribute__ ((unused)) =
     "Copyright (c) 1996, 1997 Christopher G. Demetriou.  All rights reserved.";
 static const char _rcsid[] __attribute__ ((unused)) =
-    "$NetBSD: wskbd.c,v 1.8 1998/06/13 14:28:50 drochner Exp $";
+    "$NetBSD: wskbd.c,v 1.9 1998/06/15 17:48:33 drochner Exp $";
 
 /*
  * Copyright (c) 1992, 1993
@@ -149,8 +149,7 @@ struct wskbd_softc {
 	struct wskbd_keyrepeat_data sc_keyrepeat_data;
 
 	int	sc_repeating;		/* we've called timeout() */
-	const u_char *sc_repeatstr;	/* repeated character (string) */
-	u_int	sc_repeatstrlen;	/* repeated character (string) len */
+	keysym_t sc_repeatsym;		/* repeated symbol */
 
 	int	sc_translating;		/* xlate to chars for emulation */
 
@@ -186,7 +185,7 @@ void	wskbd_attach __P((struct device *, struct device *, void *));
 static inline void update_leds __P((struct wskbd_internal *));
 static inline void update_modifier __P((struct wskbd_internal *, u_int, int, int));
 static int internal_command __P((struct wskbd_softc *, u_int *, keysym_t));
-static char *wskbd_translate __P((struct wskbd_internal *, u_int, int));
+static keysym_t wskbd_translate __P((struct wskbd_internal *, u_int, int));
 static void wskbd_holdscreen __P((struct wskbd_softc *, int));
 
 
@@ -362,13 +361,10 @@ wskbd_repeat(v)
 	int s = spltty();
 
 	KASSERT(sc->sc_repeating);
-	if (sc->sc_repeatstrlen != 0) {
-		if (sc->sc_displaydv != NULL)
-			wsdisplay_kbdinput(sc->sc_displaydv, sc->sc_repeatstr,
-			    sc->sc_repeatstrlen);
-		timeout(wskbd_repeat, sc,
-		    (hz * sc->sc_keyrepeat_data.delN) / 1000);
-	}
+	if (sc->sc_displaydv != NULL)
+		wsdisplay_kbdinput(sc->sc_displaydv, sc->sc_repeatsym);
+	timeout(wskbd_repeat, sc,
+		(hz * sc->sc_keyrepeat_data.delN) / 1000);
 	splx(s);
 }
 
@@ -381,7 +377,7 @@ wskbd_input(dev, type, value)
 	struct wskbd_softc *sc = (struct wskbd_softc *)dev; 
 	struct wscons_event *ev;
 	struct timeval xxxtime;
-	const char *cp;
+	keysym_t ks;
 	int put;
 
 	if (sc->sc_repeating) {
@@ -394,20 +390,16 @@ wskbd_input(dev, type, value)
 	 * send upstream.
 	 */
 	if (sc->sc_translating) {
-		cp = wskbd_translate(sc->id, type, value);
-		if (cp != NULL) {
-			sc->sc_repeatstr = cp;
-			sc->sc_repeatstrlen = strlen(cp);
-			if (sc->sc_repeatstrlen != 0) {
-				if (sc->sc_displaydv != NULL)
-					wsdisplay_kbdinput(sc->sc_displaydv,
-					    sc->sc_repeatstr,
-					    sc->sc_repeatstrlen);
-	
-				sc->sc_repeating = 1;
-				timeout(wskbd_repeat, sc,
-				    (hz * sc->sc_keyrepeat_data.del1) / 1000);
-			}
+		ks = wskbd_translate(sc->id, type, value);
+		if (ks != KS_voidSymbol) {
+			sc->sc_repeatsym = ks;
+			if (sc->sc_displaydv != NULL)
+				wsdisplay_kbdinput(sc->sc_displaydv,
+						   sc->sc_repeatsym);
+
+			sc->sc_repeating = 1;
+			timeout(wskbd_repeat, sc,
+				(hz * sc->sc_keyrepeat_data.del1) / 1000);
 		}
 		return;
 	}
@@ -446,8 +438,11 @@ wskbd_rawinput(dev, buf, len)
 	int len;
 {
 	struct wskbd_softc *sc = (struct wskbd_softc *)dev;
+	int i;
 
-	wsdisplay_kbdinput(sc->sc_displaydv, buf, len);
+	for (i = 0; i < len; i++)
+		wsdisplay_kbdinput(sc->sc_displaydv, buf[i]);
+	/* this is KS_GROUP_Ascii */
 }
 #endif
 
@@ -608,7 +603,6 @@ wskbd_displayioctl(dev, cmd, data, flag, p)
 	struct wskbd_softc *sc = (struct wskbd_softc *)dev;
 	struct wskbd_bell_data *ubdp, *kbdp;
 	struct wskbd_keyrepeat_data *ukdp, *kkdp;
-	struct wskbd_string_data *usdp;
 	struct wskbd_map_data *umdp;
 	void *buf;
 	int len, error;
@@ -742,24 +736,6 @@ getkeyrepeat:
 		if (error == 0)
 			sc->id->t_layout = *((kbd_t *)data);
 		return(error);
-
-	case WSKBDIO_GETSTRING:
-		usdp = (struct wskbd_string_data *)data;
-                if (usdp->keycode < 0 || usdp->keycode >= sc->sc_maplen)
-			return(EINVAL);
-		buf = wskbd_get_string(usdp->keycode);
-		if (buf == NULL)
-			return(EINVAL);
-		bcopy(buf, usdp->value, WSKBD_STRING_LEN);
-		return(0);
-
-	case WSKBDIO_SETSTRING:
-		if ((flag & FWRITE) == 0)
-			return (EACCES);
-		usdp = (struct wskbd_string_data *)data;
-                if (usdp->keycode < 0 || usdp->keycode >= sc->sc_maplen)
-			return(EINVAL);
-		return(wskbd_set_string(usdp->keycode, usdp->value));
 	}
 
 	/*
@@ -852,7 +828,7 @@ wskbd_cngetc(dev)
 {
 	u_int type;
 	int data;
-	char *cp;
+	keysym_t ks;
 
 	if (!wskbd_console_initted)
 		return 0;
@@ -861,13 +837,14 @@ wskbd_cngetc(dev)
 	    !wskbd_console_device->sc_translating)
 		return 0;
 
-	do {
+	for(;;) {
 		(*wskbd_console_data.t_getc)(wskbd_console_data.t_accesscookie,
 					     &type, &data);
-		cp = wskbd_translate(&wskbd_console_data, type, data);
-	} while (cp == NULL || cp[1] != '\0');
-
-	return(cp[0]);
+		ks = wskbd_translate(&wskbd_console_data, type, data);
+		
+		if (KS_GROUP(ks) == KS_GROUP_Ascii)
+			return (KS_VALUE(ks));	
+	}
 }
 
 void
@@ -977,7 +954,7 @@ internal_command(sc, type, ksym)
 	return (0);
 }
 
-static char *
+static keysym_t
 wskbd_translate(id, type, value)
 	struct wskbd_internal *id;
 	u_int type;
@@ -987,7 +964,6 @@ wskbd_translate(id, type, value)
 	keysym_t ksym, res, *group;
 	struct wscons_keymap kpbuf, *kp;
 	int iscommand = 0;
-	static char result[2];
 
 	if (sc != NULL) {
 		if (value < 0 || value >= sc->sc_maplen) {
@@ -995,7 +971,7 @@ wskbd_translate(id, type, value)
 			printf("wskbd_translate: keycode %d out of range\n",
 			       value);
 #endif
-			return(NULL);
+			return (KS_voidSymbol);
 		}
 		kp = sc->sc_map + value;
 	} else {
@@ -1061,7 +1037,7 @@ wskbd_translate(id, type, value)
 	/* If this is a key release or we are in command mode, we are done */
 	if (type != WSCONS_EVENT_KEY_DOWN || iscommand) {
 		update_leds(id);
-		return(NULL);
+		return (KS_voidSymbol);
 	}
 
 	/* Get the keysym */
@@ -1123,7 +1099,7 @@ wskbd_translate(id, type, value)
 
 	if (res == KS_voidSymbol) {
 		update_leds(id);
-		return(NULL);
+		return (res);
 	}
 
 	if (id->t_composelen > 0) {
@@ -1132,13 +1108,13 @@ wskbd_translate(id, type, value)
 			res = wskbd_compose_value(id->t_composebuf);
 			update_modifier(id, 0, 0, MOD_COMPOSE);
 		} else {
-			return(NULL);
+			return (KS_voidSymbol);
 		}
 	}
 
 	update_leds(id);
 
-	/* We are done, return the string */
+	/* We are done, return the symbol */
 	if (KS_GROUP(res) == KS_GROUP_Ascii) {
 		if (MOD_ONESET(id, MOD_ANYCONTROL)) {
 			if ((res >= KS_at && res <= KS_z) || res == KS_space)
@@ -1154,12 +1130,5 @@ wskbd_translate(id, type, value)
 			res |= 0x80;
 	}
 
-	if (KS_GROUP(res) == KS_GROUP_Ascii ||
-	    (KS_GROUP(res) == KS_GROUP_Keypad && (res & 0x80) == 0)) {
-		result[0] = res & 0xff;
-		result[1] = '\0';
-		return(result);
-	} else {
-		return(wskbd_get_string(res));
-	}
+	return (res);
 }
