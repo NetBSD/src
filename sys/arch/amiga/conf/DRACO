@@ -1,4 +1,4 @@
-# $NetBSD: DRACO,v 1.84 2004/06/28 21:09:22 bouyer Exp $
+# $NetBSD: DRACO,v 1.85 2004/09/04 23:29:46 manu Exp $
 #
 # This file was automatically created.
 # Changes will be lost when make is run in this directory.
@@ -28,7 +28,7 @@ include "arch/amiga/conf/std.amiga"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.84 $"
+#ident 		"GENERIC-$Revision: 1.85 $"
 
 
 maxusers	8
@@ -56,6 +56,7 @@ options 	INET6		# IPV6
 #options 	DIRECTED_BROADCAST	# Broadcast across subnets
 
 #options 	MROUTING	# Multicast routing
+#options 	PIM		# Protocol Independent Multicast
 options 	NS		# XNS
 #options 	NSIP		# XNS tunneling over IP
 options 	ISO,TPIP	# OSI

@@ -1,4 +1,4 @@
-# $NetBSD: FOURMEG,v 1.14 2004/07/15 03:53:44 atatat Exp $
+# $NetBSD: FOURMEG,v 1.15 2004/09/04 23:29:44 manu Exp $
 
 # FOURMEG arm26 configuration -- something small
 
@@ -66,6 +66,7 @@ options 	INET6		# IPV6
 #options 	IPSEC_ESP	# IP security (encryption part; define w/IPSEC)
 #options 	IPSEC_DEBUG	# debug for IP security
 #options 	MROUTING	# IP multicast routing
+#options 	PIM		# Protocol Independent Multicast
 #options 	NS		# XNS
 #options 	NSIP		# XNS tunneling over IP
 #options 	ISO,TPIP	# OSI

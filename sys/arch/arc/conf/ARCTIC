@@ -1,4 +1,4 @@
-#	$NetBSD: ARCTIC,v 1.27 2004/07/15 03:53:45 atatat Exp $
+#	$NetBSD: ARCTIC,v 1.28 2004/09/04 23:29:46 manu Exp $
 #	$OpenBSD: ARCTIC,v 1.12 1999/08/29 12:14:03 niklas Exp $
 #
 #	configuration file for DeskStation
@@ -97,6 +97,7 @@ options 	INET6		# IPV6
 #options 	IPSEC_ESP	# IP security (encryption part; define w/IPSEC)
 #options 	IPSEC_DEBUG	# debug for IP security
 #options 	MROUTING	# IP multicast routing
+#options 	PIM		# Protocol Independent Multicast
 #options 	NS		# XNS
 #options 	NSIP		# XNS tunneling over IP
 #options 	ISO,TPIP	# OSI networking

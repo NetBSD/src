@@ -1,4 +1,4 @@
-/*	$NetBSD: ip6_mroute.c,v 1.60 2003/12/10 11:46:33 itojun Exp $	*/
+/*	$NetBSD: ip6_mroute.c,v 1.61 2004/09/04 23:30:07 manu Exp $	*/
 /*	$KAME: ip6_mroute.c,v 1.49 2001/07/25 09:21:18 jinmei Exp $	*/
 
 /*
@@ -117,7 +117,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip6_mroute.c,v 1.60 2003/12/10 11:46:33 itojun Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip6_mroute.c,v 1.61 2004/09/04 23:30:07 manu Exp $");
 
 #include "opt_inet.h"
 #include "opt_mrouting.h"
@@ -217,7 +217,7 @@ struct ifnet multicast_register_if;
 static mifi_t nummifs = 0;
 static mifi_t reg_mif_num = (mifi_t)-1;
 
-static struct pim6stat pim6stat;
+struct pim6stat pim6stat;
 static int pim6;
 
 /*

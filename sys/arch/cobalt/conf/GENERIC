@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.61 2004/07/15 03:53:46 atatat Exp $
+# $NetBSD: GENERIC,v 1.62 2004/09/04 23:29:46 manu Exp $
 #
 # GENERIC machine description file
 # 
@@ -22,7 +22,7 @@ include 	"arch/cobalt/conf/std.cobalt"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.61 $"
+#ident 		"GENERIC-$Revision: 1.62 $"
 
 maxusers	32
 
@@ -103,6 +103,7 @@ options 	INET		# Internet protocols
 #options 	IPSEC_ESP	# IP security (encryption part; define w/IPSEC)
 #options 	IPSEC_DEBUG	# debug for IP security
 #options 	MROUTING	# packet forwarding of multicast packets
+#options 	PIM		# Protocol Independent Multicast
 #options 	NS		# Xerox NS networking
 #options 	NSIP		# Xerox NS tunneling over IP
 #options 	ISO,TPIP	# OSI networking
