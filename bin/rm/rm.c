@@ -39,7 +39,7 @@ char copyright[] =
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)rm.c	4.26 (Berkeley) 3/10/91";*/
-static char rcsid[] = "$Id: rm.c,v 1.9 1993/10/25 19:50:23 jtc Exp $";
+static char rcsid[] = "$Id: rm.c,v 1.10 1993/11/16 23:16:49 jtc Exp $";
 #endif /* not lint */
 
 #include <stdio.h>
@@ -279,7 +279,7 @@ check(path, name, sp)
 	first = ch = getchar();
 	while (ch != '\n' && ch != EOF)
 		ch = getchar();
-	return(first == 'y');
+	return(first == 'y' || first == 'Y');
 }
 
 #define ISDOT(a)	((a)[0] == '.' && (!(a)[1] || (a)[1] == '.' && !(a)[2]))
