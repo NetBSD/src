@@ -1,4 +1,4 @@
-/*	$NetBSD: si_obio.c,v 1.11 1997/02/26 22:26:02 gwr Exp $	*/
+/*	$NetBSD: si_obio.c,v 1.12 1997/04/28 21:59:23 gwr Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -153,6 +153,10 @@ si_obio_match(parent, cf, args)
 {
 	struct confargs *ca = args;
 
+	/* We use obio_mapin(), so require OBIO. */
+	if (ca->ca_bustype != BUS_OBIO)
+		return (0);
+
 	/* Make sure there is something there... */
 	if (bus_peek(ca->ca_bustype, ca->ca_paddr + 1, 1) == -1)
 		return (0);
@@ -184,7 +188,7 @@ si_obio_attach(parent, self, args)
 
 	sc->sc_adapter_type = ca->ca_bustype;
 	sc->sc_regs = (struct si_regs *)
-		obio_alloc(ca->ca_paddr, sizeof(struct si_regs));
+		obio_mapin(ca->ca_paddr, sizeof(struct si_regs));
 
 	/*
 	 * MD function pointers used by the MI code.
