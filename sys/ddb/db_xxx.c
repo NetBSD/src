@@ -1,4 +1,4 @@
-/*	$NetBSD: db_xxx.c,v 1.28 2003/09/20 03:02:04 thorpej Exp $	*/
+/*	$NetBSD: db_xxx.c,v 1.29 2004/07/27 02:15:07 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1991, 1993
@@ -39,7 +39,7 @@
 #include "opt_kgdb.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: db_xxx.c,v 1.28 2003/09/20 03:02:04 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_xxx.c,v 1.29 2004/07/27 02:15:07 nathanw Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -273,6 +273,12 @@ db_dmesg(db_expr_t addr, int haddr, db_expr_t count, char *modif)
 		db_printf("\n");
 }
 
+#ifdef __HAVE_BIGENDIAN_BITOPS
+#define	RQMASK(n) (0x80000000 >> (n))
+#else
+#define	RQMASK(n) (0x00000001 << (n))
+#endif
+
 void
 db_show_sched_qs(db_expr_t addr, int haddr, db_expr_t count, char *modif)
 {
@@ -287,7 +293,7 @@ db_show_sched_qs(db_expr_t addr, int haddr, db_expr_t count, char *modif)
 		for (l = ph->ph_link; l != (struct lwp *)ph; l = l->l_forw) {
 			if (first) {
 				db_printf("%c%d",
-				    (sched_whichqs & (1U << i))
+				    (sched_whichqs & RQMASK(i))
 				    ? ' ' : '!', i);
 				first = 0;
 			}
