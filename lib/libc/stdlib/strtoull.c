@@ -1,4 +1,4 @@
-/*	$NetBSD: strtoull.c,v 1.1 2000/03/06 18:32:33 kleink Exp $	*/
+/*	$NetBSD: strtoull.c,v 1.2 2000/03/07 20:02:00 kleink Exp $	*/
 
 /*
  * Copyright (c) 1990, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "from: @(#)strtoul.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: strtoull.c,v 1.1 2000/03/06 18:32:33 kleink Exp $");
+__RCSID("$NetBSD: strtoull.c,v 1.2 2000/03/07 20:02:00 kleink Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -59,6 +59,7 @@ __weak_alias(strtoull, _strtoull)
  * Ignores `locale' stuff.  Assumes that the upper and lower case
  * alphabets and digits are each contiguous.
  */
+/* LONGLONG */
 unsigned long long int
 strtoull(nptr, endptr, base)
 	const char *nptr;
@@ -66,6 +67,7 @@ strtoull(nptr, endptr, base)
 	int base;
 {
 	const char *s;
+	/* LONGLONG */
 	unsigned long long int acc, cutoff;
 	int c;
 	int neg, any, cutlim;
@@ -97,7 +99,9 @@ strtoull(nptr, endptr, base)
 	if (base == 0)
 		base = c == '0' ? 8 : 10;
 
+	/* LONGLONG */
 	cutoff = ULLONG_MAX / (unsigned long long int)base;
+	/* LONGLONG */
 	cutlim = (int)(ULLONG_MAX % (unsigned long long int)base);
 	for (acc = 0, any = 0;; c = (unsigned char) *s++) {
 		if (isdigit(c))
@@ -116,6 +120,7 @@ strtoull(nptr, endptr, base)
 			errno = ERANGE;
 		} else {
 			any = 1;
+			/* LONGLONG */
 			acc *= (unsigned long long int)base;
 			acc += c;
 		}

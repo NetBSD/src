@@ -1,4 +1,4 @@
-/*	$NetBSD: strtoll.c,v 1.1 2000/03/06 18:32:33 kleink Exp $	*/
+/*	$NetBSD: strtoll.c,v 1.2 2000/03/07 20:02:00 kleink Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "from: @(#)strtoq.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: strtoll.c,v 1.1 2000/03/06 18:32:33 kleink Exp $");
+__RCSID("$NetBSD: strtoll.c,v 1.2 2000/03/07 20:02:00 kleink Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -60,6 +60,7 @@ __weak_alias(strtoll, _strtoll)
  * Ignores `locale' stuff.  Assumes that the upper and lower case
  * alphabets and digits are each contiguous.
  */
+/* LONGLONG */
 long long int
 _strtoll(nptr, endptr, base)
 	const char *nptr;
@@ -67,6 +68,7 @@ _strtoll(nptr, endptr, base)
 	int base;
 {
 	const char *s;
+	/* LONGLONG */
 	long long int acc, cutoff;
 	int c;
 	int neg, any, cutlim;
