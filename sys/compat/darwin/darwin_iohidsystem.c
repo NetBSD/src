@@ -1,4 +1,4 @@
-/*	$NetBSD: darwin_iohidsystem.c,v 1.17 2003/10/25 10:43:45 manu Exp $ */
+/*	$NetBSD: darwin_iohidsystem.c,v 1.18 2003/10/25 18:38:07 christos Exp $ */
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: darwin_iohidsystem.c,v 1.17 2003/10/25 10:43:45 manu Exp $");
+__KERNEL_RCSID(0, "$NetBSD: darwin_iohidsystem.c,v 1.18 2003/10/25 18:38:07 christos Exp $");
 
 #include "ioconf.h"
 #include "wsmux.h"
@@ -379,7 +379,7 @@ darwin_iohidsystem_thread(args)
 	struct darwin_iohidsystem_thread_args *dita;
 	struct darwin_iohidsystem_shmem *shmem;
 	struct darwin_iohidsystem_evglobals *evg;
-	darwin_iohidsystem_event_item *diei;
+	darwin_iohidsystem_event_item *diei = NULL; /* XXX: gcc */
 	darwin_iohidsystem_event *die;
 	dev_t dev;
 	const struct cdevsw *wsmux;
