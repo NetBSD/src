@@ -1,4 +1,4 @@
-/*	$NetBSD: siop.c,v 1.16 2000/05/23 17:08:07 bouyer Exp $	*/
+/*	$NetBSD: siop.c,v 1.17 2000/05/25 10:10:56 bouyer Exp $	*/
 
 /*
  * Copyright (c) 2000 Manuel Bouyer.
@@ -125,13 +125,13 @@ siop_table_sync(siop_cmd, ops)
 	    sizeof(struct siop_xfer), ops);
 }
 
-static __inline__ void siop_script_sync __P((struct siop_softc *, int));
+static __inline__ void siop_shed_sync __P((struct siop_softc *, int));
 static __inline__ void
-siop_script_sync(sc, ops)
+siop_shed_sync(sc, ops)
 	struct siop_softc *sc;
 	int ops;
 {
-	bus_dmamap_sync(sc->sc_dmat, sc->sc_scriptdma, 0, NBPG, ops);
+	bus_dmamap_sync(sc->sc_dmat, sc->sc_sheddma, 0, NBPG, ops);
 }
 
 void
@@ -143,34 +143,66 @@ siop_attach(sc)
 	int rseg;
 
 	/*
-	 * Allocate DMA-safe memory for the script itself and internal
-	 * variables and map it.
+	 * Allocate DMA-safe memory for the script and script sheduler
+	 * and map it.
 	 */
+	if ((sc->features & SF_CHIP_RAM) == 0) {
+		error = bus_dmamem_alloc(sc->sc_dmat, NBPG, 
+		    NBPG, 0, &seg, 1, &rseg, BUS_DMA_NOWAIT);
+		if (error) {
+			printf("%s: unable to allocate script DMA memory, "
+			    "error = %d\n", sc->sc_dev.dv_xname, error);
+			return;
+		}
+		error = bus_dmamem_map(sc->sc_dmat, &seg, rseg, NBPG,
+		    (caddr_t *)&sc->sc_script, BUS_DMA_NOWAIT|BUS_DMA_COHERENT);
+		if (error) {
+			printf("%s: unable to map script DMA memory, "
+			    "error = %d\n", sc->sc_dev.dv_xname, error);
+			return;
+		}
+		error = bus_dmamap_create(sc->sc_dmat, NBPG, 1,
+		    NBPG, 0, BUS_DMA_NOWAIT, &sc->sc_scriptdma);
+		if (error) {
+			printf("%s: unable to create script DMA map, "
+			    "error = %d\n", sc->sc_dev.dv_xname, error);
+			return;
+		}
+		error = bus_dmamap_load(sc->sc_dmat, sc->sc_scriptdma,
+		    sc->sc_script,
+		    NBPG, NULL, BUS_DMA_NOWAIT);
+		if (error) {
+			printf("%s: unable to load script DMA map, "
+			    "error = %d\n", sc->sc_dev.dv_xname, error);
+			return;
+		}
+		sc->sc_scriptaddr = sc->sc_scriptdma->dm_segs[0].ds_addr;
+	}
 	error = bus_dmamem_alloc(sc->sc_dmat, NBPG, 
 	    NBPG, 0, &seg, 1, &rseg, BUS_DMA_NOWAIT);
 	if (error) {
-		printf("%s: unable to allocate script DMA memory, error = %d\n",
-		    sc->sc_dev.dv_xname, error);
+		printf("%s: unable to allocate sheduler DMA memory, "
+		    "error = %d\n", sc->sc_dev.dv_xname, error);
 		return;
 	}
 	error = bus_dmamem_map(sc->sc_dmat, &seg, rseg, NBPG,
-	    (caddr_t *)&sc->sc_script, BUS_DMA_NOWAIT|BUS_DMA_COHERENT);
+	    (caddr_t *)&sc->sc_shed, BUS_DMA_NOWAIT|BUS_DMA_COHERENT);
 	if (error) {
-		printf("%s: unable to map script DMA memory, error = %d\n",
+		printf("%s: unable to map sheduler DMA memory, error = %d\n",
 		    sc->sc_dev.dv_xname, error);
 		return;
 	}
 	error = bus_dmamap_create(sc->sc_dmat, NBPG, 1,
-	    NBPG, 0, BUS_DMA_NOWAIT, &sc->sc_scriptdma);
+	    NBPG, 0, BUS_DMA_NOWAIT, &sc->sc_sheddma);
 	if (error) {
-		printf("%s: unable to create script DMA map, error = %d\n",
+		printf("%s: unable to create sheduler DMA map, error = %d\n",
 		    sc->sc_dev.dv_xname, error);
 		return;
 	}
-	error = bus_dmamap_load(sc->sc_dmat, sc->sc_scriptdma, sc->sc_script,
+	error = bus_dmamap_load(sc->sc_dmat, sc->sc_sheddma, sc->sc_shed,
 	    NBPG, NULL, BUS_DMA_NOWAIT);
 	if (error) {
-		printf("%s: unable to load script DMA map, error = %d\n",
+		printf("%s: unable to load sheduler DMA map, error = %d\n",
 		    sc->sc_dev.dv_xname, error);
 		return;
 	}
@@ -178,17 +210,14 @@ siop_attach(sc)
 	TAILQ_INIT(&sc->cmds);
 	/* compute number of sheduler slots */
 	sc->sc_nshedslots = (
-	    NBPG /* memory size allocated for scripts */
-	    - sizeof(siop_script) /* memory for main script */
-	    + 8		/* extra NOP at end of main script */
+	    NBPG /* memory size allocated for sheduler */
 	    - sizeof(endslot_script) /* memory needed at end of sheduler */
 	    ) / (sizeof(slot_script) - 8);
 	sc->sc_currshedslot = 0;
 #ifdef DEBUG
 	printf("%s: script size = %d, PHY addr=0x%x, VIRT=%p nslots %d\n",
 	    sc->sc_dev.dv_xname, (int)sizeof(siop_script),
-	    (u_int)sc->sc_scriptdma->dm_segs[0].ds_addr, sc->sc_script,
-	    sc->sc_nshedslots);
+	    sc->sc_ramaddr, sc->sc_script, sc->sc_nshedslots);
 #endif
 
 	sc->sc_link.adapter_softc = sc;
@@ -243,14 +272,35 @@ siop_reset(sc)
 	siop_common_reset(sc);
 
 	/* copy and patch the script */
-	for (j = 0; j < (sizeof(siop_script) / sizeof(siop_script[0])); j++) {
-		sc->sc_script[j] = htole32(siop_script[j]);
+	if (sc->features & SF_CHIP_RAM) {
+		bus_space_write_region_4(sc->sc_ramt, sc->sc_ramh, 0,
+		    siop_script, sizeof(siop_script) / sizeof(siop_script[0]));
+		for (j = 0; j <
+		    (sizeof(E_script_abs_shed_Used) /
+		    sizeof(E_script_abs_shed_Used[0]));
+		    j++) {
+			bus_space_write_4(sc->sc_ramt, sc->sc_ramh,
+			    E_script_abs_shed_Used[j] * 4,
+			    sc->sc_sheddma->dm_segs[0].ds_addr);
+		}
+	} else {
+		for (j = 0;
+		    j < (sizeof(siop_script) / sizeof(siop_script[0])); j++) {
+			sc->sc_script[j] = htole32(siop_script[j]);
+		}
+		for (j = 0; j <
+		    (sizeof(E_script_abs_shed_Used) /
+		    sizeof(E_script_abs_shed_Used[0]));
+		    j++) {
+			sc->sc_script[E_script_abs_shed_Used[j]] =
+				htole32(sc->sc_sheddma->dm_segs[0].ds_addr);
+		}
 	}
-	/* copy the sheduler slots script */
+	/* copy and init the sheduler slots script */
 	for (i = 0; i < sc->sc_nshedslots; i++) {
-		scr = &sc->sc_script[Ent_sheduler / 4 + (Ent_nextslot / 4) * i];
-		physaddr = sc->sc_scriptdma->dm_segs[0].ds_addr + Ent_sheduler
-		    + Ent_nextslot * i;
+		scr = &sc->sc_shed[(Ent_nextslot / 4) * i];
+		physaddr = sc->sc_sheddma->dm_segs[0].ds_addr +
+		    Ent_nextslot * i;
 		for (j = 0; j < (sizeof(slot_script) / sizeof(slot_script[0]));
 		    j++) {
 			scr[j] = htole32(slot_script[j]);
@@ -265,37 +315,38 @@ siop_reset(sc)
 		    Ent_slotdata + 4);
 		/* JUMP selected, in main script */
 		scr[E_slot_abs_selected_Used[0]] =
-		   htole32(sc->sc_scriptdma->dm_segs[0].ds_addr + Ent_selected);
+		   htole32(sc->sc_scriptaddr + Ent_selected);
 		/* JUMP addr if SELECT fail */
 		scr[E_slot_abs_reselect_Used[0]] = 
-		   htole32(sc->sc_scriptdma->dm_segs[0].ds_addr + Ent_reselect);
+		   htole32(sc->sc_scriptaddr + Ent_reselect);
 	}
 	/* Now the final JUMP */
-	scr = &sc->sc_script[Ent_sheduler / 4 +
-	    (Ent_nextslot / 4) * sc->sc_nshedslots];
+	scr = &sc->sc_shed[(Ent_nextslot / 4) * sc->sc_nshedslots];
 	for (j = 0; j < (sizeof(endslot_script) / sizeof(endslot_script[0]));
 	    j++) {
 		scr[j] = htole32(endslot_script[j]);
 	}
 	scr[E_endslot_abs_reselect_Used[0]] = 
-	    htole32(sc->sc_scriptdma->dm_segs[0].ds_addr + Ent_reselect);
+	    htole32(sc->sc_scriptaddr + Ent_reselect);
 
 	/* start script */
-	siop_script_sync(sc, BUS_DMASYNC_PREREAD | BUS_DMASYNC_PREWRITE);
+	bus_dmamap_sync(sc->sc_dmat, sc->sc_scriptdma, 0, NBPG,
+	    BUS_DMASYNC_PREREAD | BUS_DMASYNC_PREWRITE);
+	siop_shed_sync(sc, BUS_DMASYNC_PREREAD | BUS_DMASYNC_PREWRITE);
 	bus_space_write_4(sc->sc_rt, sc->sc_rh, SIOP_DSP,
-	    sc->sc_scriptdma->dm_segs[0].ds_addr + Ent_reselect);
+	    sc->sc_scriptaddr + Ent_reselect);
 }
 
 #if 0
 #define CALL_SCRIPT(ent) do {\
 	printf ("start script DSA 0x%lx DSP 0x%lx\n", \
 	    siop_cmd->dsa, \
-	    sc->sc_scriptdma->dm_segs[0].ds_addr + ent); \
-bus_space_write_4(sc->sc_rt, sc->sc_rh, SIOP_DSP, sc->sc_scriptdma->dm_segs[0].ds_addr + ent); \
+	    sc->sc_scriptaddr + ent); \
+bus_space_write_4(sc->sc_rt, sc->sc_rh, SIOP_DSP, sc->sc_scriptaddr + ent); \
 } while (0)
 #else
 #define CALL_SCRIPT(ent) do {\
-bus_space_write_4(sc->sc_rt, sc->sc_rh, SIOP_DSP, sc->sc_scriptdma->dm_segs[0].ds_addr + ent); \
+bus_space_write_4(sc->sc_rt, sc->sc_rh, SIOP_DSP, sc->sc_scriptaddr + ent); \
 } while (0)
 #endif
 
@@ -346,7 +397,7 @@ siop_intr(v)
 		if (dstat & DSTAT_SSI) {
 			printf("single step dsp 0x%08x dsa 0x08%x\n",
 			    (int)(bus_space_read_4(sc->sc_rt, sc->sc_rh, SIOP_DSP) -
-			    sc->sc_scriptdma->dm_segs[0].ds_addr),
+			    sc->sc_scriptaddr),
 			    bus_space_read_4(sc->sc_rt, sc->sc_rh, SIOP_DSA));
 			if ((dstat & ~(DSTAT_DFE | DSTAT_SSI)) == 0 &&
 			    (istat & ISTAT_SIP) == 0) {
@@ -370,11 +421,11 @@ siop_intr(v)
 			printf(" dma fifo empty");
 		printf(", DSP=0x%x DSA=0x%x: ",
 		    (int)(bus_space_read_4(sc->sc_rt, sc->sc_rh, SIOP_DSP) -
-		    sc->sc_scriptdma->dm_segs[0].ds_addr),
+		    sc->sc_scriptaddr),
 		    bus_space_read_4(sc->sc_rt, sc->sc_rh, SIOP_DSA));
 		p = sc->sc_script +
 		    (bus_space_read_4(sc->sc_rt, sc->sc_rh, SIOP_DSP) -
-		    sc->sc_scriptdma->dm_segs[0].ds_addr - 8) / 4;
+		    sc->sc_scriptaddr - 8) / 4;
 		printf("0x%x 0x%x 0x%x 0x%x\n", le32toh(p[0]), le32toh(p[1]),
 		    le32toh(p[2]), le32toh(p[3]));
 		if (siop_cmd)
@@ -389,7 +440,7 @@ siop_intr(v)
 		 * SCSI interrupt. If current command is not active,
 		 * we don't need siop_cmd
 		 */
-		if (siop_cmd->status != CMDST_ACTIVE &&
+		if (siop_cmd && siop_cmd->status != CMDST_ACTIVE &&
 		    siop_cmd->status != CMDST_SENSE_ACTIVE) {
 			siop_cmd = NULL;
 		}
@@ -405,7 +456,7 @@ siop_intr(v)
 		    bus_space_read_1(sc->sc_rt, sc->sc_rh, SIOP_SSTAT1),
 		    bus_space_read_4(sc->sc_rt, sc->sc_rh, SIOP_DSA),
 		    (u_long)(bus_space_read_4(sc->sc_rt, sc->sc_rh, SIOP_DSP) -
-		    sc->sc_scriptdma->dm_segs[0].ds_addr));
+		    sc->sc_scriptaddr));
 #endif
 		if (siop_cmd) {
 			xs = siop_cmd->xs;
@@ -519,7 +570,7 @@ siop_intr(v)
 		    bus_space_read_1(sc->sc_rt, sc->sc_rh, SIOP_SSTAT1),
 		    bus_space_read_4(sc->sc_rt, sc->sc_rh, SIOP_DSA),
 		    (int)(bus_space_read_4(sc->sc_rt, sc->sc_rh, SIOP_DSP) -
-		    sc->sc_scriptdma->dm_segs[0].ds_addr));
+		    sc->sc_scriptaddr));
 		if (siop_cmd) {
 			siop_cmd->status = CMDST_DONE;
 			xs->error = XS_SELTIMEOUT;
@@ -571,8 +622,8 @@ reset:
 		switch(irqcode) {
 		case A_int_err:
 			printf("error, DSP=0x%x\n",
-			    (int)(bus_space_read_4(sc->sc_rt, sc->sc_rh, SIOP_DSP) -
-			    sc->sc_scriptdma->dm_segs[0].ds_addr));
+			    (int)(bus_space_read_4(sc->sc_rt, sc->sc_rh,
+			    SIOP_DSP) - sc->sc_scriptaddr));
 			if (xs) {
 				xs->error = XS_SELTIMEOUT;
 				goto end;
@@ -815,18 +866,22 @@ reset:
 				siop_table_sync(siop_cmd,
 				    BUS_DMASYNC_PREREAD | BUS_DMASYNC_PREWRITE);
 			}
-			CALL_SCRIPT(Ent_sheduler);
+			bus_space_write_4(sc->sc_rt, sc->sc_rh, SIOP_DSP,
+			    sc->sc_sheddma->dm_segs[0].ds_addr);
 			return 1;
 		case A_int_resfail:
 			printf("reselect failed\n");
-			CALL_SCRIPT(Ent_sheduler);
+			bus_space_write_4(sc->sc_rt, sc->sc_rh, SIOP_DSP,
+			    sc->sc_sheddma->dm_segs[0].ds_addr);
 			return  1;
 		case A_int_done:
 			if (xs == NULL) {
 				printf("%s: done without command, DSA=0x%lx\n",
 				    sc->sc_dev.dv_xname, (u_long)siop_cmd->dsa);
 				siop_cmd->status = CMDST_FREE;
-				CALL_SCRIPT(Ent_sheduler);
+				bus_space_write_4(sc->sc_rt, sc->sc_rh,
+				    SIOP_DSP,
+				    sc->sc_sheddma->dm_segs[0].ds_addr);
 				siop_start(sc);
 				return 1;
 			}
@@ -885,7 +940,7 @@ check_sense:
 	return 1;
 end:
 	bus_space_write_4(sc->sc_rt, sc->sc_rh, SIOP_DSP,
-	    sc->sc_scriptdma->dm_segs[0].ds_addr + Ent_sheduler);
+	    sc->sc_sheddma->dm_segs[0].ds_addr);
 	lun = siop_cmd->xs->sc_link->scsipi_scsi.lun;
 	siop_scsicmd_end(siop_cmd);
 	if (siop_cmd->status == CMDST_FREE) {
@@ -1192,7 +1247,7 @@ siop_start(sc)
 	/*
 	 * first make sure to read valid data
 	 */
-	siop_script_sync(sc, BUS_DMASYNC_POSTREAD | BUS_DMASYNC_POSTWRITE);
+	siop_shed_sync(sc, BUS_DMASYNC_POSTREAD | BUS_DMASYNC_POSTWRITE);
 
 	/*
 	 * The queue management here is a bit tricky: the script always looks
@@ -1206,8 +1261,7 @@ siop_start(sc)
 	 * A mid-way solution could be to implement 2 queues and swap orders.
 	 */
 	slot = sc->sc_currshedslot;
-	scr = &sc->sc_script[Ent_sheduler / 4 +
-	    (Ent_nextslot / 4) * slot];
+	scr = &sc->sc_shed[(Ent_nextslot / 4) * slot];
 	/*
 	 * if relative addr of first jump is not 0 the slot is free. As this is 
 	 * the last used slot, all previous slots are free, we can restart
@@ -1233,8 +1287,7 @@ siop_start(sc)
 				continue;
 			/* find a free sheduler slot and load it */
 			for (; slot < sc->sc_nshedslots; slot++) {
-				scr = &sc->sc_script[Ent_sheduler / 4 +
-				    (Ent_nextslot / 4) * slot];
+				scr = &sc->sc_shed[(Ent_nextslot / 4) * slot];
 				/*
 				 * if relative addr of first jump is 0 the
 				 * slot isn't free
@@ -1307,7 +1360,7 @@ end:
 	if (newcmd == 0)
 		return;
 	/* make sure SCRIPT processor will read valid data */
-	siop_script_sync(sc, BUS_DMASYNC_PREREAD | BUS_DMASYNC_PREWRITE);
+	siop_shed_sync(sc, BUS_DMASYNC_PREREAD | BUS_DMASYNC_PREWRITE);
 	/* Signal script it has some work to do */
 	bus_space_write_1(sc->sc_rt, sc->sc_rh, SIOP_ISTAT, ISTAT_SIGP);
 	/* and wait for IRQ */
@@ -1354,7 +1407,7 @@ siop_dump_script(sc)
 	struct siop_softc *sc;
 {
 	int i;
-	siop_script_sync(sc, BUS_DMASYNC_POSTREAD | BUS_DMASYNC_POSTWRITE);
+	siop_shed_sync(sc, BUS_DMASYNC_POSTREAD | BUS_DMASYNC_POSTWRITE);
 	for (i = 0; i < NBPG / 4; i += 2) {
 		printf("0x%04x: 0x%08x 0x%08x", i * 4,
 		    le32toh(sc->sc_script[i]), le32toh(sc->sc_script[i+1]));
@@ -1416,7 +1469,7 @@ siop_morecbd(sc)
 	error = bus_dmamap_load(sc->sc_dmat, newcbd->xferdma, newcbd->xfers,
 	    NBPG, NULL, BUS_DMA_NOWAIT);
 	if (error) {
-		printf("%s: unable to load script DMA map, error = %d\n",
+		printf("%s: unable to load cbd DMA map, error = %d\n",
 		    sc->sc_dev.dv_xname, error);
 		goto bad0;
 	}
