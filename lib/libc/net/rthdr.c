@@ -1,4 +1,4 @@
-/*	$NetBSD: rthdr.c,v 1.13 2003/06/06 06:43:18 itojun Exp $	*/
+/*	$NetBSD: rthdr.c,v 1.14 2003/06/06 08:13:45 itojun Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: rthdr.c,v 1.13 2003/06/06 06:43:18 itojun Exp $");
+__RCSID("$NetBSD: rthdr.c,v 1.14 2003/06/06 08:13:45 itojun Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include "namespace.h"
@@ -64,7 +64,7 @@ inet6_rthdr_space(type, seg)
 	case IPV6_RTHDR_TYPE_0:
 		if (seg < 1 || seg > 23)
 			return (0);
-		return (CMSG_SPACE(sizeof(struct in6_addr) * (seg - 1) +
+		return (CMSG_SPACE(sizeof(struct in6_addr) * seg +
 		    sizeof(struct ip6_rthdr0)));
 	default:
 		return (0);
@@ -89,8 +89,7 @@ inet6_rthdr_init(bp, type)
 
 	switch (type) {
 	case IPV6_RTHDR_TYPE_0:
-		ch->cmsg_len = CMSG_LEN(sizeof(struct ip6_rthdr0) -
-		    sizeof(struct in6_addr));
+		ch->cmsg_len = CMSG_LEN(sizeof(struct ip6_rthdr0));
 		(void)memset(rthdr, 0, sizeof(struct ip6_rthdr0));
 		rthdr->ip6r_type = IPV6_RTHDR_TYPE_0;
 		return (ch);
@@ -116,16 +115,10 @@ inet6_rthdr_add(cmsg, addr, flags)
 	case IPV6_RTHDR_TYPE_0:
 	{
 		struct ip6_rthdr0 *rt0 = (struct ip6_rthdr0 *)(void *)rthdr;
-		if (flags != IPV6_RTHDR_LOOSE && flags != IPV6_RTHDR_STRICT)
+		if (flags != IPV6_RTHDR_LOOSE)
 			return (-1);
 		if (rt0->ip6r0_segleft == 23)
 			return (-1);
-		if (flags == IPV6_RTHDR_STRICT) {
-			int c, b;
-			c = rt0->ip6r0_segleft / 8;
-			b = rt0->ip6r0_segleft % 8;
-			rt0->ip6r0_slmap[c] |= (1 << (7 - b));
-		}
 		rt0->ip6r0_segleft++;
 		(void)memcpy(((caddr_t)(void *)rt0) +
 		    ((rt0->ip6r0_len + 1) << 3), addr, sizeof(struct in6_addr));
@@ -155,16 +148,10 @@ inet6_rthdr_lasthop(cmsg, flags)
 	case IPV6_RTHDR_TYPE_0:
 	{
 		struct ip6_rthdr0 *rt0 = (struct ip6_rthdr0 *)(void *)rthdr;
-		if (flags != IPV6_RTHDR_LOOSE && flags != IPV6_RTHDR_STRICT)
+		if (flags != IPV6_RTHDR_LOOSE)
 			return (-1);
 		if (rt0->ip6r0_segleft > 23)
 			return (-1);
-		if (flags == IPV6_RTHDR_STRICT) {
-			int c, b;
-			c = rt0->ip6r0_segleft / 8;
-			b = rt0->ip6r0_segleft % 8;
-			rt0->ip6r0_slmap[c] |= (1 << (7 - b));
-		}
 		break;
 	}
 	default:
@@ -200,7 +187,7 @@ inet6_rthdr_segments(cmsg)
 	case IPV6_RTHDR_TYPE_0:
 	{
 		const struct ip6_rthdr0 *rt0 =
-		(const struct ip6_rthdr0 *)(const void *)rthdr;
+		    (const struct ip6_rthdr0 *)(const void *)rthdr;
 
 		if (rt0->ip6r0_len % 2 || 46 < rt0->ip6r0_len)
 			return (-1);
@@ -235,7 +222,7 @@ inet6_rthdr_getaddr(cmsg, idx)
 		naddr = (rt0->ip6r0_len * 8) / sizeof(struct in6_addr);
 		if (idx <= 0 || naddr < idx)
 			return NULL;
-		return &rt0->ip6r0_addr[idx - 1];
+		return ((struct in6_addr *)(void *)(rt0 + 1)) + idx;
 	}
 
 	default:
@@ -267,10 +254,7 @@ inet6_rthdr_getflags(cmsg, idx)
 		naddr = (rt0->ip6r0_len * 8) / sizeof(struct in6_addr);
 		if (idx < 0 || naddr < idx)
 			return (-1);
-		if (rt0->ip6r0_slmap[idx / 8] & (0x80 >> (idx % 8)))
-			return IPV6_RTHDR_STRICT;
-		else
-			return IPV6_RTHDR_LOOSE;
+		return IPV6_RTHDR_LOOSE;
 	}
 
 	default:
