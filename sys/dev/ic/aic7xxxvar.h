@@ -1,4 +1,4 @@
-/*	$NetBSD: aic7xxxvar.h,v 1.19.10.3 2001/02/11 19:15:27 bouyer Exp $	*/
+/*	$NetBSD: aic7xxxvar.h,v 1.19.10.4 2001/04/02 07:41:57 bouyer Exp $	*/
 
 /*
  * Interface to the generic driver for the aic7xxx based adaptec
@@ -505,22 +505,17 @@ struct scb_data {
 					 */
 };
 
-typedef TAILQ_HEAD(, scsipi_xfer) xs_list_t;
-
 struct ahc_softc {
 	struct device		sc_dev;
 
-	struct  scsipi_link sc_link;
-	struct  scsipi_link sc_link_b;
+	struct  scsipi_channel sc_channel;
+	struct  scsipi_channel sc_channel_b;
 	struct  scsipi_adapter sc_adapter;
 
 	bus_space_tag_t		 tag;
 	bus_space_handle_t	 bsh;
 	struct scb_data		*scb_data;
 
-	xs_list_t		sc_q;
-	int			queue_blocked;
-	u_int16_t		devqueue_blocked[16];
 #define AHC_NEG_PENDING		0x01
 #define AHC_NEG_SDTRDONE	0x02
 #define AHC_NEG_WDTRDONE	0x04
