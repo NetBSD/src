@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.16 1996/10/13 04:10:41 christos Exp $	*/
+/*	$NetBSD: pmap.c,v 1.17 1996/11/06 13:55:38 leo Exp $	*/
 
 /* 
  * Copyright (c) 1991 Regents of the University of California.
@@ -249,7 +249,6 @@ static	vm_size_t	avail_remaining;
        void		pmap_activate __P((pmap_t, struct pcb *));
 static boolean_t	pmap_testbit __P((vm_offset_t, int));
 static void		pmap_enter_ptpage __P((pmap_t, vm_offset_t));
-static void		pmap_changebit __P((vm_offset_t, int, boolean_t));
 static struct pv_entry* pmap_alloc_pv __P((void));
 static void		pmap_free_pv __P((struct pv_entry *));
 static void		atari_protection_init __P((void));
@@ -2019,7 +2018,7 @@ pmap_testbit(pa, bit)
 	return(FALSE);
 }
 
-static void
+void
 pmap_changebit(pa, bit, setem)
 	register vm_offset_t pa;
 	int bit;
