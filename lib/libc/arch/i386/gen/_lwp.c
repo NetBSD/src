@@ -1,7 +1,8 @@
-/*	$Id: _lwp.c,v 1.1.2.1 2001/03/05 23:34:37 nathanw Exp $ */
+/*	$Id: _lwp.c,v 1.1.2.2 2001/12/18 21:25:24 nathanw Exp $ */
 
 /* Copyright */
 
+#include <inttypes.h>
 #include <sys/types.h>
 #include <ucontext.h>
 #include <lwp.h>
@@ -20,12 +21,17 @@ void _lwp_makecontext(ucontext_t *u, void (*start)(void *),
 	u->uc_stack.ss_sp = stack_base;
 	u->uc_stack.ss_size = stack_size;
 
-	u->uc_mcontext.__gregs[_REG_EIP] = (int)start;
+	/* LINTED uintptr_t is safe */
+	u->uc_mcontext.__gregs[_REG_EIP] = (uintptr_t)start;
 	
-	sp = (void **) (stack_base + stack_size);
+	/* Align to a word */
+	sp = (void **) ((uintptr_t)(stack_base + stack_size) & ~0x3);
 	
 	*--sp = arg;
 	*--sp = (void *) _lwp_exit;
+	
+	/* LINTED uintptr_t is safe */
+	u->uc_mcontext.__gregs[_REG_UESP] = (uintptr_t) sp;
 
-	u->uc_mcontext.__gregs[_REG_UESP] = (int) sp;
+	/* LINTED private is currently unused */
 }
