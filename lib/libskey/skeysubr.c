@@ -10,7 +10,7 @@
  *
  * S/KEY misc routines.
  *
- * $Id: skeysubr.c,v 1.2 1994/05/24 06:25:27 deraadt Exp $
+ * $Id: skeysubr.c,v 1.3 1995/05/17 20:24:43 cgd Exp $
  */
 
 #include <stdio.h>
@@ -141,6 +141,20 @@ int n;
     sevenbit (buf);
 
     unset_term ();
+    return buf;
+}
+
+char *readskey (buf, n)
+char *buf;
+int n;
+{
+    fgets (buf, n, stdin);
+
+    rip(buf);
+    printf ("\n");
+
+    sevenbit (buf);
+
     return buf;
 }
 
