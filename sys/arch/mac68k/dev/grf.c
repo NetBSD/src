@@ -1,4 +1,4 @@
-/*	$NetBSD: grf.c,v 1.19 1995/04/21 02:47:49 briggs Exp $	*/
+/*	$NetBSD: grf.c,v 1.20 1995/04/21 03:44:13 briggs Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -91,7 +91,7 @@ static int	macvideo_mode __P((struct grf_softc *gp, int cmd, void *arg));
 
 struct cfdriver grfcd = {
 	NULL, "grf", matchvideocard, grf_attach, DV_DULL,
-	sizeof(struct device)
+	sizeof(struct grf_softc)
 };
 
 struct grfdev grfdev[] = {
@@ -99,7 +99,7 @@ struct grfdev grfdev[] = {
 };
 
 static int ngrfdev=(sizeof(grfdev) / sizeof(grfdev[0]));
-static struct grf_softc grf_softc[NGRF];
+
 static int gNumGrfDev=0;
 
 #ifdef DEBUG
@@ -117,7 +117,9 @@ grfprobe(nu, unit)
 	struct nubus_hw *nu;
 	int     unit;
 {
-	struct grf_softc *gp = &grf_softc[unit];
+	struct grf_softc *gp;
+
+	gp = grfcd.cd_devs[unit];
 
 	if ((gp->g_flags & GF_ALIVE) == 0 && !grfinit(nu, unit)) {
 		printf("\n");
@@ -165,9 +167,11 @@ grfinit(nu, unit)
 	struct nubus_hw *nu;
 	int unit;
 {
-	struct grf_softc *gp = &grf_softc[unit];
+	struct grf_softc *gp;
 	struct grfreg *gr;
 	register struct grfdev *gd;
+
+	gp = grfcd.cd_devs[unit];
 
 	for (gd = grfdev; gd < &grfdev[ngrfdev]; gd++)
 		/* if (gd->gd_hardid == gr->gr_id2) */
@@ -195,7 +199,7 @@ fake_internal()
 		return;
 	}
 	for (i = 0; i < NGRF; i++) {
-		gp = &grf_softc[i];
+		gp = grfcd.cd_devs[i];
 		if ((gp->g_flags & GF_ALIVE) == 0) {
 			break;
 		}
@@ -235,7 +239,7 @@ grfopen(dev, flag, mode, p)
 	int error;
 
 	unit = GRFUNIT(dev);
-	gp = &grf_softc[unit];
+	gp = grfcd.cd_devs[unit];
 	if (!faked) {
 		fake_internal();
 		faked = 1;
@@ -268,7 +272,7 @@ grfclose(dev, flag, mode, p)
 {
 	register struct grf_softc *gp;
 
-	gp = &grf_softc[GRFUNIT(dev)];
+	gp = grfcd.cd_devs[GRFUNIT(dev)];
 
 	(void) grfoff(dev);
 	(void) grfunlock(gp);
@@ -288,7 +292,7 @@ grfioctl(dev, cmd, data, flag, p)
 	register struct grf_softc *gp;
 	int     error;
 
-	gp = &grf_softc[GRFUNIT(dev)];
+	gp = grfcd.cd_devs[GRFUNIT(dev)];
 	error = 0;
 
 	switch (cmd) {
@@ -340,7 +344,7 @@ grflock(gp, block)
 #ifdef DEBUG
 	if (grfdebug & GDB_LOCK)
 		printf("grflock(%d): dev %x flags %x lockpid %x\n",
-		    p->p_pid, gp - grf_softc, gp->g_flags,
+		    p->p_pid, gp->sc_dev.dv_unit, gp->g_flags,
 		    gp->g_lockp ? gp->g_lockp->p_pid : -1);
 #endif
 	if (gp->g_lockp) {
@@ -366,7 +370,7 @@ grfunlock(gp)
 #ifdef DEBUG
 	if (grfdebug & GDB_LOCK)
 		printf("grfunlock(%d): dev %x flags %x lockpid %d\n",
-		    curproc->p_pid, gp - grf_softc, gp->g_flags,
+		    curproc->p_pid, gp->sc_dev.dv_unit, gp->g_flags,
 		    gp->g_lockp ? gp->g_lockp->p_pid : -1);
 #endif
 	if (gp->g_lockp != curproc)
@@ -387,7 +391,7 @@ grfmmap(dev, off, prot)
 	int off;
 	int prot;
 {
-	return (grfaddr(&grf_softc[GRFUNIT(dev)], off));
+	return (grfaddr(grfcd.cd_devs[GRFUNIT(dev)], off));
 }
 
 int
@@ -395,8 +399,9 @@ grfon(dev)
 	dev_t   dev;
 {
 	int     unit = GRFUNIT(dev);
-	struct grf_softc *gp = &grf_softc[unit];
+	struct grf_softc *gp;
 
+	gp = grfcd.cd_devs[unit];
 	/*
 	 * XXX: iteoff call relies on devices being in same order
 	 * as ITEs and the fact that iteoff only uses the minor part
@@ -412,9 +417,10 @@ grfoff(dev)
 	dev_t   dev;
 {
 	int     unit = GRFUNIT(dev);
-	struct grf_softc *gp = &grf_softc[unit];
+	struct grf_softc *gp;
 	int     error;
 
+	gp = grfcd.cd_devs[unit];
 	(void) grfunmap(dev, (caddr_t) 0, curproc);
 	error = (*grfdev[gp->g_type].gd_mode)
 	    (gp, (dev & GRFOVDEV) ? GM_GRFOVOFF : GM_GRFOFF);
@@ -449,12 +455,13 @@ grfmap(dev, addrp, p)
 	caddr_t *addrp;
 	struct proc *p;
 {
-	struct grf_softc *gp = &grf_softc[GRFUNIT(dev)];
+	struct grf_softc *gp;
 	int     len, error;
 	struct vnode vn;
 	struct specinfo si;
 	int     flags;
 
+	gp = grfcd.cd_devs[GRFUNIT(dev)];
 #ifdef DEBUG
 	if (grfdebug & GDB_MMAP)
 		printf("grfmap(%d): addr %x\n", p->p_pid, *addrp);
@@ -487,10 +494,11 @@ grfunmap(dev, addr, p)
 	caddr_t addr;
 	struct proc *p;
 {
-	struct grf_softc *gp = &grf_softc[GRFUNIT(dev)];
+	struct grf_softc *gp;
 	vm_size_t size;
 	int     rv;
 
+	gp = grfcd.cd_devs[GRFUNIT(dev)];
 #ifdef DEBUG
 	if (grfdebug & GDB_MMAP)
 		printf("grfunmap(%d): dev %x addr %x\n", p->p_pid, dev, addr);
@@ -540,7 +548,7 @@ macvideo_init(gp, nu)
 	gp->g_fbkva = gi->gd_fbaddr;
 
 	add_nubus_intr((unsigned int) nu->addr & 0xFF000000, macvideo_intr,
-	    (gp - grf_softc));
+	    (gp->sc_dev.dv_unit));
 
 	gNumGrfDev++;
 

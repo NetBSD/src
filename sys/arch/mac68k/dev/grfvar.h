@@ -1,4 +1,4 @@
-/*	$NetBSD: grfvar.h,v 1.5 1995/04/21 02:47:52 briggs Exp $	*/
+/*	$NetBSD: grfvar.h,v 1.6 1995/04/21 03:44:19 briggs Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -51,6 +51,8 @@ struct grf_lockpage {
 
 /* per display info */
 struct grf_softc {
+	struct	device sc_dev;
+
 	int	g_flags;	/* software flags */
 	int	g_type;		/* type of display */
 	caddr_t g_regkva;	/* KVA of registers */
