@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs.h,v 1.120.2.4 1999/09/24 05:52:04 cgd Exp $	*/
+/*	$NetBSD: pcidevs.h,v 1.120.2.5 1999/10/05 22:11:33 he Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.113.2.3 1999/08/29 20:58:45 he Exp 
+ *	NetBSD: pcidevs,v 1.113.2.4 1999/10/05 22:10:04 he Exp 
  */
 
 /*
@@ -506,9 +506,11 @@
 #define	PCI_VENDOR_TRITECH	0x1292		/* TriTech Microelectronics */
 #define	PCI_VENDOR_KOFAX	0x1296		/* Kofax Image Products */
 #define	PCI_VENDOR_RISCOM	0x12aa		/* RISCom */
+#define	PCI_VENDOR_ALTEON	0x12ae		/* Alteon */
 #define	PCI_VENDOR_PICTUREEL	0x12c5		/* Picture Elements */
 #define	PCI_VENDOR_STB2	0x12d2		/* STB Systems (2nd PCI Vendor ID) */
 #define	PCI_VENDOR_LMC	0x1376		/* LAN Media Corporation */
+#define	PCI_VENDOR_NETGEAR	0x1385		/* Netgear */
 #define	PCI_VENDOR_SYMPHONY2	0x1c1c		/* Symphony Labs (2nd PCI Vendor ID) */
 #define	PCI_VENDOR_TEKRAM2	0x1de1		/* Tekram Technology (2nd PCI Vendor ID) */
 #define	PCI_VENDOR_3DLABS	0x3d3d		/* 3D Labs */
@@ -535,6 +537,7 @@
  */
 
 /* 3COM Products */
+#define	PCI_PRODUCT_3COM_3C985	0x0001		/* 3c985 Gigabit Ethernet */
 #define	PCI_PRODUCT_3COM_3C590	0x5900		/* 3c590 Ethernet */
 #define	PCI_PRODUCT_3COM_3C595TX	0x5950		/* 3c595-TX 10/100 Ethernet */
 #define	PCI_PRODUCT_3COM_3C595T4	0x5951		/* 3c595-T4 10/100 Ethernet */
@@ -621,6 +624,9 @@
 
 /* Alliance products */
 #define	PCI_PRODUCT_ALLIANCE_AT24	0x6424		/* AT24 */
+
+/* Alteon products */
+#define	PCI_PRODUCT_ALTEON_ACENIC	0x0001		/* ACEnic Gigabit Ethernet */
 
 /* AMD products */
 #define	PCI_PRODUCT_AMD_PCNET_PCI	0x2000		/* 79c970 PCnet-PCI LANCE Ethernet */
@@ -960,6 +966,9 @@
 /* Neomagic products */
 #define	PCI_PRODUCT_NEOMAGIC_NMMG128ZV	0x0003		/* MagicGraph 128ZV */
 
+/* Netgear products */
+#define	PCI_PRODUCT_NETGEAR_GA620	0x620a		/* GA620 Gigabit Ethernet */
+
 /* NexGen products */
 #define	PCI_PRODUCT_NEXGEN_NX82C501	0x4e78		/* NX82C501 Host-PCI Bridge */
 
@@ -1044,6 +1053,9 @@
 #define	PCI_PRODUCT_S3_TRIO3D	0x8904		/* 86C365 Trio3D */
 #define	PCI_PRODUCT_S3_VIRGE_DX	0x8a01		/* ViRGE/DX */
 #define	PCI_PRODUCT_S3_SONICVIBES	0xca00		/* SonicVibes */
+
+/* SGI products */
+#define	PCI_PRODUCT_SGI_TIGON	0x0009		/* Tigon Gigabit Ethernet */
 
 /* SGS Thomson products */
 #define	PCI_PRODUCT_SGSTHOMSON_2000	0x0008		/* STG 2000X */
