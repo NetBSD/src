@@ -33,7 +33,7 @@
 
 #if defined(LIBC_SCCS) && !defined(lint)
 	/* .asciz "@(#)setjmp.s	8.1 (Berkeley) 6/4/93" */
-	.asciz "$NetBSD: setjmp.S,v 1.2 1997/12/05 02:11:39 thorpej Exp $"
+	.asciz "$NetBSD: setjmp.S,v 1.3 1998/10/10 00:08:51 matt Exp $"
 #endif /* LIBC_SCCS and not lint */
 
 /*
@@ -85,7 +85,7 @@ loop:
 	bbc	$1,6(fp),2f		# was r1 saved?
 	movl	r1,(r2)
 2:
-	movl	$loop,16(fp)
+	movab	loop,16(fp)
 	ret				# pop another frame
 
 done:

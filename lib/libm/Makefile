@@ -1,4 +1,4 @@
-#  $NetBSD: Makefile,v 1.41 1998/08/22 12:49:08 ragge Exp $
+#  $NetBSD: Makefile,v 1.42 1998/10/10 00:08:51 matt Exp $
 #
 #  @(#)Makefile 5.1beta 93/09/24 
 # 
@@ -135,9 +135,11 @@ SRCS=	${COMMON_SRCS}
 .endfor
 
 .if (${MACHINE_ARCH} == "vax") # XXX until POLYD is written.
-SRCS:=${SRCS} arch/vax/n_sqrt.S arch/vax/n_argred.S arch/vax/n_infnan.S \
-	arch/vax/n_atan2.S arch/vax/n_cabs.S arch/vax/n_cbrt.S \
-	arch/vax/n_support.S 
+#.PATH:	${.CURDIR}/arch/vax
+SRCS:=${SRCS} ${.CURDIR}/arch/vax/n_sqrt.S ${.CURDIR}/arch/vax/n_argred.S \
+	${.CURDIR}/arch/vax/n_infnan.S ${.CURDIR}/arch/vax/n_atan2.S \
+	${.CURDIR}/arch/vax/n_cabs.S ${.CURDIR}/arch/vax/n_cbrt.S \
+	${.CURDIR}/arch/vax/n_support.S 
 .endif
 
 NOLINT=		nolint (XXX lint bugs on some archs and needs stubs)
