@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_nat.c,v 1.2 1997/01/05 21:32:22 veego Exp $	*/
+/*	$NetBSD: ip_nat.c,v 1.3 1997/01/29 02:16:23 thorpej Exp $	*/
 
 /*
  * (C)opyright 1995 by Darren Reed.
@@ -119,7 +119,8 @@ static	int	clear_natlist __P((void));
  */
 int nat_ioctl(data, cmd, mode)
 caddr_t data;
-int cmd, mode;
+u_long cmd;
+int mode;
 {
 	register ipnat_t *nat, *n = NULL, **np = NULL;
 	ipnat_t natd;
