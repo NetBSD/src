@@ -1,4 +1,4 @@
-.\"	$NetBSD: getmntopts.3,v 1.6 2002/02/08 01:30:44 ross Exp $
+.\"	$NetBSD: getmntopts.3,v 1.1 2003/03/22 12:44:04 jdolecek Exp $
 .\"
 .\" Copyright (c) 1994
 .\"	The Regents of the University of California.  All rights reserved.
@@ -33,16 +33,18 @@
 .\"
 .\"	@(#)getmntopts.3	8.3 (Berkeley) 3/30/95
 .\"
-.Dd March 30, 1995
+.Dd March 22, 2003
 .Dt GETMNTOPTS 3
 .Os
 .Sh NAME
 .Nm getmntopts
 .Nd scan mount options
+.Sh LIBRARY
+.Lb libutil
 .Sh SYNOPSIS
 .Fd #include \*[Lt]mntopts.h\*[Gt]
 .Ft void
-.Fn getmntopts "char *options" "struct mntopt *mopts" "int *flagp" "int *altflagp"
+.Fn getmntopts "const char *options" "const struct mntopt *mopts" "int *flagp" "int *altflagp"
 .Sh DESCRIPTION
 The
 .Nm getmntopts
@@ -71,7 +73,7 @@ The table,
 has the following format:
 .Bd -literal
 struct mntopt {
-	char *m_option;		/* option name */
+	const char *m_option;	/* option name */
 	int m_inverse;		/* is this a negative option, eg "dev" */
 	int m_flag;		/* bit to set, eg MNT_RDONLY */
 	int m_altloc;		/* non-zero to use altflagp rather than flagp */
@@ -147,9 +149,9 @@ flag, would also have an
 entry.
 This can be declared and used as follows:
 .Bd -literal
-#include "mntopts.h"
+#include <mntopts.h>
 
-struct mntopt mopts[] = {
+static const struct mntopt mopts[] = {
 	MOPT_STDOPTS,
 	MOPT_UPDATE,
 	{ NULL }
@@ -179,3 +181,5 @@ The
 .Fn getmntopts
 function appeared in
 .Bx 4.4 .
+It was moved to utilities library in
+.Nx 2.0 .

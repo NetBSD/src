@@ -1,9 +1,9 @@
-#	$NetBSD: Makefile,v 1.17 2002/09/21 18:43:35 christos Exp $
+#	$NetBSD: Makefile,v 1.18 2003/03/22 12:44:00 jdolecek Exp $
 
 .include <bsd.own.mk>
 
 PROG=	mount_msdos
-SRCS=	mount_msdos.c getmntopts.c fattr.c
+SRCS=	mount_msdos.c fattr.c
 MAN=	mount_msdos.8
 
 MOUNT=	${NETBSDSRCDIR}/sbin/mount
