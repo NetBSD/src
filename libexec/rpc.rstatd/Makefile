@@ -1,5 +1,6 @@
-#	$NetBSD: Makefile,v 1.10 1997/02/22 01:41:34 thorpej Exp $
+#	$NetBSD: Makefile,v 1.11 1997/10/07 11:28:16 mrg Exp $
 
+WARNS?=	1
 PROG =	rpc.rstatd
 .PATH: ${.CURDIR}/../../usr.bin/vmstat
 
