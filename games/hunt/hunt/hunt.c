@@ -1,4 +1,4 @@
-/*	$NetBSD: hunt.c,v 1.9 2000/01/21 17:08:33 mycroft Exp $	*/
+/*	$NetBSD: hunt.c,v 1.10 2000/03/02 18:22:31 kleink Exp $	*/
 /*
  *  Hunt
  *  Copyright (c) 1985 Conrad C. Huang, Gregory S. Couch, Kenneth C.R.C. Arnold
@@ -7,9 +7,10 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: hunt.c,v 1.9 2000/01/21 17:08:33 mycroft Exp $");
+__RCSID("$NetBSD: hunt.c,v 1.10 2000/03/02 18:22:31 kleink Exp $");
 #endif /* not lint */
 
+# include	<sys/param.h>
 # include	<sys/stat.h>
 # include	<sys/time.h>
 # include	<ctype.h>
