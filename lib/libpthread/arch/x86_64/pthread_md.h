@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread_md.h,v 1.1 2003/01/30 02:10:32 fvdl Exp $	*/
+/*	$NetBSD: pthread_md.h,v 1.2 2003/04/17 10:13:51 fvdl Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -82,59 +82,11 @@ pthread__sp(void)
  * libpthread_dbg.
  */
 
-#define PTHREAD_UCONTEXT_TO_REG(reg, uc) do {				\
-	(reg)->r_gs  = (uc)->uc_mcontext.__gregs[_REG_GS];		\
-	(reg)->r_fs  = (uc)->uc_mcontext.__gregs[_REG_FS];		\
-	(reg)->r_es  = (uc)->uc_mcontext.__gregs[_REG_ES];		\
-	(reg)->r_ds  = (uc)->uc_mcontext.__gregs[_REG_DS];		\
-	(reg)->r_rdi = (uc)->uc_mcontext.__gregs[_REG_RDI];		\
-	(reg)->r_rsi = (uc)->uc_mcontext.__gregs[_REG_RSI];		\
-	(reg)->r_rbp = (uc)->uc_mcontext.__gregs[_REG_RBP];		\
-	(reg)->r_rbx = (uc)->uc_mcontext.__gregs[_REG_RBX];		\
-	(reg)->r_rdx = (uc)->uc_mcontext.__gregs[_REG_RDX];		\
-	(reg)->r_rcx = (uc)->uc_mcontext.__gregs[_REG_RCX];		\
-	(reg)->r_rax = (uc)->uc_mcontext.__gregs[_REG_RAX];		\
-	(reg)->r_r8  = (uc)->uc_mcontext.__gregs[_REG_R8];		\
-	(reg)->r_r9  = (uc)->uc_mcontext.__gregs[_REG_R9];		\
-	(reg)->r_r10 = (uc)->uc_mcontext.__gregs[_REG_R10];		\
-	(reg)->r_r11 = (uc)->uc_mcontext.__gregs[_REG_R11];		\
-	(reg)->r_r12 = (uc)->uc_mcontext.__gregs[_REG_R12];		\
-	(reg)->r_r13 = (uc)->uc_mcontext.__gregs[_REG_R13];		\
-	(reg)->r_r14 = (uc)->uc_mcontext.__gregs[_REG_R14];		\
-	(reg)->r_r15 = (uc)->uc_mcontext.__gregs[_REG_R15];		\
-	(reg)->r_rip = (uc)->uc_mcontext.__gregs[_REG_RIP];		\
-	(reg)->r_cs  = (uc)->uc_mcontext.__gregs[_REG_CS];		\
-	(reg)->r_rflags  = (uc)->uc_mcontext.__gregs[_REG_RFL];		\
-	(reg)->r_rsp = (uc)->uc_mcontext.__gregs[_REG_URSP];		\
-	(reg)->r_ss  = (uc)->uc_mcontext.__gregs[_REG_SS];		\
-	} while (/*CONSTCOND*/0)
+#define PTHREAD_UCONTEXT_TO_REG(reg, uc) \
+	memcpy(reg, (uc)->uc_mcontext.__gregs, _NGREG * sizeof (long));
 
 #define PTHREAD_REG_TO_UCONTEXT(uc, reg) do {				\
-	(uc)->uc_mcontext.__gregs[_REG_GS]  = (reg)->r_gs;		\
-	(uc)->uc_mcontext.__gregs[_REG_FS]  = (reg)->r_fs; 		\
-	(uc)->uc_mcontext.__gregs[_REG_ES]  = (reg)->r_es; 		\
-	(uc)->uc_mcontext.__gregs[_REG_DS]  = (reg)->r_ds; 		\
-	(uc)->uc_mcontext.__gregs[_REG_RDI] = (reg)->r_rdi; 		\
-	(uc)->uc_mcontext.__gregs[_REG_RSI] = (reg)->r_rsi; 		\
-	(uc)->uc_mcontext.__gregs[_REG_RBP] = (reg)->r_rbp; 		\
-	(uc)->uc_mcontext.__gregs[_REG_RBX] = (reg)->r_rbx; 		\
-	(uc)->uc_mcontext.__gregs[_REG_RDX] = (reg)->r_rdx; 		\
-	(uc)->uc_mcontext.__gregs[_REG_RCX] = (reg)->r_rcx; 		\
-	(uc)->uc_mcontext.__gregs[_REG_RAX] = (reg)->r_rax; 		\
-	(uc)->uc_mcontext.__gregs[_REG_R8]  = (reg)->r_r8; 		\
-	(uc)->uc_mcontext.__gregs[_REG_R9]  = (reg)->r_r9; 		\
-	(uc)->uc_mcontext.__gregs[_REG_R10] = (reg)->r_r10; 		\
-	(uc)->uc_mcontext.__gregs[_REG_R11] = (reg)->r_r11; 		\
-	(uc)->uc_mcontext.__gregs[_REG_R12] = (reg)->r_r12; 		\
-	(uc)->uc_mcontext.__gregs[_REG_R13] = (reg)->r_r13; 		\
-	(uc)->uc_mcontext.__gregs[_REG_R14] = (reg)->r_r14; 		\
-	(uc)->uc_mcontext.__gregs[_REG_R15] = (reg)->r_r15; 		\
-	(uc)->uc_mcontext.__gregs[_REG_RIP] = (reg)->r_rip; 		\
-	(uc)->uc_mcontext.__gregs[_REG_CS]  = (reg)->r_cs; 		\
-	(uc)->uc_mcontext.__gregs[_REG_RFL] = (reg)->r_rflags; 		\
-	(uc)->uc_mcontext.__gregs[_REG_URSP]= (reg)->r_rsp;		\
-	(uc)->uc_mcontext.__gregs[_REG_SS]  = (reg)->r_ss; 		\
-	/*LINTED precision loss */					\
+	memcpy((uc)->uc_mcontext.__gregs, reg, _NGREG * sizeof (long)); \
 	(uc)->uc_flags = ((uc)->uc_flags | _UC_CPU) & ~_UC_USER; 	\
 	} while (/*CONSTCOND*/0)
 
