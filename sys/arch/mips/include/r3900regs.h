@@ -1,4 +1,4 @@
-/*	$NetBSD: r3900regs.h,v 1.5 2001/12/02 10:37:25 uch Exp $ */
+/*	$NetBSD: r3900regs.h,v 1.6 2002/03/05 16:02:48 simonb Exp $ */
 
 /*-
  * Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
@@ -87,19 +87,6 @@
  *	3912 ... TLB entry is 64bits wide and R3000A compatible
  *	3922 ... TLB entry is 96bits wide
  */
-
-/*
- *	Index register
- *	3912 ... index field[8:12] (32 entry)
- */
-#define R3900_TLB_NUM_TLB_ENTRIES	32
-#define R3920_TLB_NUM_TLB_ENTRIES	64
-#undef MIPS1_TLB_NUM_TLB_ENTRIES
-#ifdef TX391X
-#define MIPS1_TLB_NUM_TLB_ENTRIES	R3900_TLB_NUM_TLB_ENTRIES
-#elif defined TX392X
-#define MIPS1_TLB_NUM_TLB_ENTRIES	R3920_TLB_NUM_TLB_ENTRIES
-#endif
 
 /*
  *	Config register (R3900 specific)
