@@ -1,4 +1,4 @@
-.\" $NetBSD: doc2html,v 1.22 2001/01/05 15:59:30 garbled Exp $
+.\" $NetBSD: doc2html,v 1.23 2001/04/14 16:58:48 kleink Exp $
 .\"
 .\" Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -1096,7 +1096,7 @@ AT&T UNIX\\$*
 .			as std-tmp1 " \"exactly one space
 .			as std-tmp1 (``\\*(Px.2'')
 .	       \}
-.	       if "\\$1"-isoC" \{\
+.	       if "\\$1"-isoC90" \{\
 .			ds std-tmp1 \&ISO/IEC 9899:1990
 .			as std-tmp1 " \"exactly one space
 .			as std-tmp1 (``ISO C90'')
