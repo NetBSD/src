@@ -1,4 +1,4 @@
-#	$Id: Makefile,v 1.5 1993/12/05 14:51:56 cgd Exp $
+#	$Id: Makefile,v 1.6 1994/02/26 02:26:00 cgd Exp $
 
 .if exists(${.CURDIR}/${MACHINE})
 .PATH:	${.CURDIR}/${MACHINE}
@@ -16,15 +16,17 @@ OBJS+= ${ASM}
 POBJS+=	${ASM:.o=.po}
 CLEANFILES+= ${ASM} ${POBJS}
 
-.if exists(${.CURDIR}/${MACHINE}) || exists(${.CURDIR}/${MACHINE_ARCH})
-LIB=	${MACHINE}
 
+.if exists(${.CURDIR}/${MACHINE}) || exists(${.CURDIR}/${MACHINE_ARCH})
+# then there's a lib for this machine/machine architecture
+LIB=	${MACHINE}
 .include <bsd.lib.mk>
 .else
+# there's NOT, so get the targets right
 all:
 clean:
 cleandir:
 depend:
 install:
-obj:
+.include <bsd.obj.mk>
 .endif
