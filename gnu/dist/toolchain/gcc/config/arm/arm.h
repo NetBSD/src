@@ -152,6 +152,10 @@ Unrecognized value in TARGET_CPU_DEFAULT.
 %{march=armv3m:-D__ARM_ARCH_3M__} \
 %{march=armv4:-D__ARM_ARCH_4__} \
 %{march=armv4t:-D__ARM_ARCH_4T__} \
+%{march=armv5:-D__ARM_ARCH_5__} \
+%{march=armv5t:-D__ARM_ARCH_5T__} \
+%{march=armv5e:-D__ARM_ARCH_5E__} \
+%{march=armv5te:-D__ARM_ARCH_5TE__} \
 %{!march=*: \
  %{mcpu=arm2:-D__ARM_ARCH_2__} \
  %{mcpu=arm250:-D__ARM_ARCH_2__} \
@@ -176,6 +180,8 @@ Unrecognized value in TARGET_CPU_DEFAULT.
  %{mcpu=strongarm:-D__ARM_ARCH_4__} \
  %{mcpu=strongarm110:-D__ARM_ARCH_4__} \
  %{mcpu=strongarm1100:-D__ARM_ARCH_4__} \
+ %{mcpu=xscale:-D__ARM_ARCH_5TE__} \
+ %{mcpu=xscale:-D__XSCALE__} \
  %{!mcpu*:%(cpp_cpu_arch_default)}} \
 "
 
