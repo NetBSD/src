@@ -1,4 +1,4 @@
-/*	$NetBSD: isapnp.c,v 1.12 1997/10/28 21:28:10 christos Exp $	*/
+/*	$NetBSD: isapnp.c,v 1.13 1997/11/30 15:13:31 drochner Exp $	*/
 
 /*
  * Copyright (c) 1996 Christos Zoulas.  All rights reserved.
@@ -64,7 +64,11 @@ static void isapnp_configure __P((struct isapnp_softc *,
 static void isapnp_print_pin __P((const char *, struct isapnp_pin *, size_t));
 static int isapnp_print __P((void *, const char *));
 #ifdef _KERNEL
+#ifdef __BROKEN_INDIRECT_CONFIG
 static int isapnp_submatch __P((struct device *, void *, void *));
+#else
+static int isapnp_submatch __P((struct device *, struct cfdata *, void *));
+#endif
 #endif
 static int isapnp_find __P((struct isapnp_softc *, int));
 #ifdef __BROKEN_INDIRECT_CONFIG
@@ -568,7 +572,8 @@ isapnp_print(aux, str)
 static int
 isapnp_submatch(parent, match, aux)
 	struct device *parent;
-	void *match, *aux;
+	struct cfdata *match;
+	void *aux;
 {
 	struct cfdata *cf = match;
 	return ((*cf->cf_attach->ca_match)(parent, match, aux));
