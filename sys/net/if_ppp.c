@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ppp.c,v 1.23 1995/08/12 23:59:21 mycroft Exp $	*/
+/*	$NetBSD: if_ppp.c,v 1.24 1995/10/05 05:55:09 mycroft Exp $	*/
 
 /*
  * if_ppp.c - Point-to-Point Protocol (PPP) Asynchronous driver.
@@ -687,6 +687,7 @@ pppoutput(ifp, m0, dst, rtp)
 	IF_ENQUEUE(ifq, m0);
 	(*sc->sc_start)(sc);
     }
+    ifp->if_lastchange = time;
 
     splx(s);
     return (0);
@@ -1087,6 +1088,7 @@ ppp_inproc(sc, m)
     struct ppp_softc *sc;
     struct mbuf *m;
 {
+    struct ifnet *ifp = &sc->sc_if;
     struct ifqueue *inq;
     int s, ilen, xlen, proto, rv;
     u_char *cp, adrs, ctrl;
@@ -1094,10 +1096,11 @@ ppp_inproc(sc, m)
     u_char *iphdr;
     u_int hlen;
 
-    sc->sc_if.if_ipackets++;
+    ifp->if_ipackets++;
+    ifp->if_lastchange = time;
 
     if (sc->sc_flags & SC_LOG_INPKT) {
-	printf("ppp%d: got %d bytes\n", sc->sc_if.if_unit, ilen);
+	printf("ppp%d: got %d bytes\n", ifp->if_unit, ilen);
 	pppdumpm(m);
     }
 
@@ -1139,7 +1142,7 @@ ppp_inproc(sc, m)
 	     * CCP down or issue a Reset-Req.
 	     */
 	    if (sc->sc_flags & SC_DEBUG)
-		printf("ppp%d: decompress failed %d\n", sc->sc_if.if_unit, rv);
+		printf("ppp%d: decompress failed %d\n", ifp->if_unit, rv);
 	    s = splhigh();
 	    sc->sc_flags |= SC_VJ_RESET;
 	    if (rv == DECOMP_ERROR)
@@ -1189,7 +1192,7 @@ ppp_inproc(sc, m)
 	if (xlen <= 0) {
 	    if (sc->sc_flags & SC_DEBUG)
 		printf("ppp%d: VJ uncompress failed on type comp\n",
-			sc->sc_if.if_unit);
+			ifp->if_unit);
 	    goto bad;
 	}
 
@@ -1241,7 +1244,7 @@ ppp_inproc(sc, m)
 	if (xlen < 0) {
 	    if (sc->sc_flags & SC_DEBUG)
 		printf("ppp%d: VJ uncompress failed on type uncomp\n",
-			sc->sc_if.if_unit);
+			ifp->if_unit);
 	    goto bad;
 	}
 
@@ -1264,7 +1267,7 @@ ppp_inproc(sc, m)
 	}
     }
     m->m_pkthdr.len = ilen;
-    m->m_pkthdr.rcvif = &sc->sc_if;
+    m->m_pkthdr.rcvif = ifp;
 
 #if NBPFILTER > 0
     /* See if bpf wants to look at the packet. */
@@ -1279,7 +1282,7 @@ ppp_inproc(sc, m)
 	/*
 	 * IP packet - take off the ppp header and pass it up to IP.
 	 */
-	if ((sc->sc_if.if_flags & IFF_UP) == 0
+	if ((ifp->if_flags & IFF_UP) == 0
 	    || sc->sc_npmode[NP_IP] != NPMODE_PASS) {
 	    /* interface is down - drop the packet. */
 	    m_freem(m);
@@ -1311,8 +1314,8 @@ ppp_inproc(sc, m)
 	IF_DROP(inq);
 	splx(s);
 	if (sc->sc_flags & SC_DEBUG)
-	    printf("ppp%d: input queue full\n", sc->sc_if.if_unit);
-	sc->sc_if.if_iqdrops++;
+	    printf("ppp%d: input queue full\n", ifp->if_unit);
+	ifp->if_iqdrops++;
 	goto bad;
     }
     IF_ENQUEUE(inq, m);
