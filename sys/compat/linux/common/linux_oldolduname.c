@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_oldolduname.c,v 1.43 1998/07/07 00:40:27 thorpej Exp $	*/
+/*	$NetBSD: linux_oldolduname.c,v 1.44 1998/08/18 18:30:08 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1995 Frank van der Linden
@@ -399,12 +399,14 @@ linux_sys_uname(p, v, retval)
 
 	/* This part taken from the the uname() in libc */
 	len = sizeof(luts.l_version);
-	for (cp = luts.l_version; len--; ++cp)
-		if (*cp == '\n' || *cp == '\t')
+	for (cp = luts.l_version; len--; ++cp) {
+		if (*cp == '\n' || *cp == '\t') {
 			if (len > 1)
 				*cp = ' ';
 			else
 				*cp = '\0';
+		}
+	}
 
 	return copyout(&luts, SCARG(uap, up), sizeof(luts));
 }
@@ -431,12 +433,14 @@ linux_sys_olduname(p, v, retval)
 
 	/* This part taken from the the uname() in libc */
 	len = sizeof(luts.l_version);
-	for (cp = luts.l_version; len--; ++cp)
-		if (*cp == '\n' || *cp == '\t')
+	for (cp = luts.l_version; len--; ++cp) {
+		if (*cp == '\n' || *cp == '\t') {
 			if (len > 1)
 				*cp = ' ';
 			else
 				*cp = '\0';
+		}
+	}
 
 	return copyout(&luts, SCARG(uap, up), sizeof(luts));
 }
@@ -463,12 +467,14 @@ linux_sys_oldolduname(p, v, retval)
 
 	/* This part taken from the the uname() in libc */
 	len = sizeof(luts.l_version);
-	for (cp = luts.l_version; len--; ++cp)
-		if (*cp == '\n' || *cp == '\t')
+	for (cp = luts.l_version; len--; ++cp) {
+		if (*cp == '\n' || *cp == '\t') {
 			if (len > 1)
 				*cp = ' ';
 			else
 				*cp = '\0';
+		}
+	}
 
 	return copyout(&luts, SCARG(uap, up), sizeof(luts));
 }
