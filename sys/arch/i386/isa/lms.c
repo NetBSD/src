@@ -20,7 +20,7 @@
  * NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
- *	$Id: lms.c,v 1.10 1994/03/29 04:36:06 mycroft Exp $
+ *	$Id: lms.c,v 1.11 1994/03/30 00:54:43 mycroft Exp $
  */
 
 #include <sys/param.h>
@@ -111,6 +111,8 @@ lmsattach(parent, self, aux)
 	struct lms_softc *sc = (void *)self;
 	struct isa_attach_args *ia = aux;
 	u_short iobase = ia->ia_iobase;
+
+	printf("\n");
 
 	/* Other initialization was done by lmsprobe. */
 	sc->sc_iobase = iobase;
