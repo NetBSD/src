@@ -1,4 +1,4 @@
-.\"	$NetBSD: makedev.8,v 1.6 2000/11/07 06:43:28 lukem Exp $
+.\"	$NetBSD: makedev.8,v 1.7 2001/09/05 23:53:22 wiz Exp $
 .\"
 .\" Copyright (c) 1983, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -46,10 +46,10 @@
 .Sh DESCRIPTION
 .Nm
 is a shell script normally used to install
-special files.  It resides in the 
+special files.  It resides in the
 .Pa /dev
 directory, as this is the normal location of special files.
-Arguments to 
+Arguments to
 .Nm
 are usually of the form
 .Ar device-name Ns Sy \&?
@@ -86,7 +86,7 @@ console cassette device(s),
 devices would be made for the appropriate system.
 .It Sy local
 Create those devices specific to the local site.  This
-request causes the shell file 
+request causes the shell file
 .Pa /dev/MAKEDEV.local
 to be executed.  Site specific commands, such as those
 used to setup dialup lines as
@@ -95,7 +95,7 @@ should be included
 in this file.
 .El
 .Pp
-Since all devices are created using 
+Since all devices are created using
 .Xr mknod 8 ,
 this shell script is useful only to the super-user.
 .Sh DIAGNOSTICS

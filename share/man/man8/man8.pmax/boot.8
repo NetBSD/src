@@ -1,4 +1,4 @@
-.\"	$NetBSD: boot.8,v 1.8 2001/07/22 13:34:02 wiz Exp $
+.\"	$NetBSD: boot.8,v 1.9 2001/09/05 23:53:24 wiz Exp $
 .\"
 .\" Copyright (c) 1990, 1991 The Regents of the University of California.
 .\" All rights reserved.
@@ -68,7 +68,7 @@ waits for user commands.   If set to \fBb\fR, the ROM attempts to autoboot.
 On the DECstation 2100 and 3100, the path used for automatic booting is
 stored in the
 .Nm bootpath
-environment variable.   The path is made up of a 
+environment variable.   The path is made up of a
 device type specifier (e.g., rz, tz, mop or tftp) followed by
 a triplet in the form (x,y,z), followed by a filename to load.
 .Pp
@@ -186,7 +186,7 @@ boot 3/rz4/netbsd.new -a
 
 The kernel supports the following arguments:
 .Bd -unfilled -offset indent
-a       Autoboot -- try and boot  to multi-user mode without 
+a       Autoboot -- try and boot  to multi-user mode without
         further input.
 m       use a miniroot already present in memory.
 
