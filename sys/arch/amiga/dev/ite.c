@@ -1,4 +1,4 @@
-/*	$NetBSD: ite.c,v 1.40 1996/05/09 20:31:32 is Exp $	*/
+/*	$NetBSD: ite.c,v 1.41 1996/05/19 19:03:06 is Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -68,6 +68,8 @@
 #include <amiga/dev/kbdmap.h>
 #include <amiga/dev/grfioctl.h>
 #include <amiga/dev/grfvar.h>
+
+#include <machine/cpu.h>	/* for is_draco() */
 
 #include <sys/conf.h>
 #include <machine/conf.h>
