@@ -1,4 +1,4 @@
-/*	$NetBSD: mips_machdep.c,v 1.24 1998/03/12 05:45:06 thorpej Exp $	*/
+/*	$NetBSD: mips_machdep.c,v 1.25 1998/03/22 06:31:40 mhitch Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -52,7 +52,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: mips_machdep.c,v 1.24 1998/03/12 05:45:06 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mips_machdep.c,v 1.25 1998/03/22 06:31:40 mhitch Exp $");
 
 #include "opt_uvm.h"
 
@@ -1086,6 +1086,8 @@ mips_init_proc0(space)
 
 	pa = MIPS_KSEG0_TO_PHYS(proc0.p_addr);
 
+	MachSetPID(1);
+
 	if (CPUISMIPS3) {
 		for (i = 0; i < UPAGES; i += 2) {
 			tlb.tlb_mask = MIPS3_PG_SIZE_4K;
@@ -1114,8 +1116,6 @@ mips_init_proc0(space)
 			pa += PAGE_SIZE;
 		}
 	}
-
-	MachSetPID(1);
 
 	nullproc.p_addr = (struct user *)(space + (UPAGES * PAGE_SIZE));
 	nullproc.p_md.md_regs = nullproc.p_addr->u_pcb.pcb_regs;
