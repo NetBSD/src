@@ -1,4 +1,4 @@
-/*	$NetBSD: wireg.h,v 1.2 2001/05/15 04:14:06 ichiro Exp $	*/
+/*	$NetBSD: wireg.h,v 1.3 2001/05/15 09:01:27 ichiro Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -343,6 +343,7 @@ struct wi_ltv_memsz {
  * NIC Identification (0xFD0B)
  */
 #define WI_RID_CARDID		0xFD0B
+#define WI_RID_IDENT		0xFD20
 struct wi_ltv_ver {
 	u_int16_t		wi_len;
 	u_int16_t		wi_type;

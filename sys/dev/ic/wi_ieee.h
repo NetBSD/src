@@ -1,4 +1,4 @@
-/*	$NetBSD: wi_ieee.h,v 1.2 2001/05/15 04:14:06 ichiro Exp $	*/
+/*	$NetBSD: wi_ieee.h,v 1.3 2001/05/15 09:01:27 ichiro Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -297,7 +297,7 @@ struct wi_ltv_keys {
 #define WI_RID_REG_DOMAINS	0xFD11 /* list of intendted regulatory doms */
 #define WI_RID_TEMP_TYPE	0xFD12 /* hw temp range code */
 #define WI_RID_CIS		0xFD13 /* PC card info struct */
-#define WI_RID_STA_IDENEITY	0xFD20 /* station funcs firmware ident */
+#define WI_RID_STA_IDENTITY	0xFD20 /* station funcs firmware ident */
 #define WI_RID_STA_SUP_RANGE	0xFD21 /* station supplier compat */
 #define WI_RID_MFI_ACT_RANGE	0xFD22
 #define WI_RID_CFI_ACT_RANGE	0xFD33
