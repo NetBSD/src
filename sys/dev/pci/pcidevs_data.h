@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs_data.h,v 1.587 2003/11/03 15:58:48 cube Exp $	*/
+/*	$NetBSD: pcidevs_data.h,v 1.588 2003/11/22 20:56:53 fvdl Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.591 2003/11/03 15:57:46 cube Exp 
+ *	NetBSD: pcidevs,v 1.592 2003/11/22 20:54:01 fvdl Exp 
  */
 
 /*
@@ -7030,106 +7030,154 @@ const struct pci_knowndev pci_knowndevs[] = {
 	    "Ethernet",
 	},
 	{
-	    PCI_VENDOR_PROMISE, PCI_PRODUCT_PROMISE_ULTRA100X,
+	    PCI_VENDOR_PROMISE, PCI_PRODUCT_PROMISE_PDC20246,
 	    0,
 	    "Promise Technology",
-	    "Ultra100X/ATA Bus Master IDE Accelerator",
+	    "PDC20246 Ultra/33 IDE controller",
 	},
 	{
-	    PCI_VENDOR_PROMISE, PCI_PRODUCT_PROMISE_ULTRA66_0,
+	    PCI_VENDOR_PROMISE, PCI_PRODUCT_PROMISE_PDC20262,
 	    0,
 	    "Promise Technology",
-	    "Ultra66/ATA Bus Master IDE Accelerator",
+	    "PDC20262 Ultra/66 IDE controller",
 	},
 	{
-	    PCI_VENDOR_PROMISE, PCI_PRODUCT_PROMISE_MBULTRA133,
+	    PCI_VENDOR_PROMISE, PCI_PRODUCT_PROMISE_PDC20263,
 	    0,
 	    "Promise Technology",
-	    "Ultra133/ATA Bus Master IDE Accelerator (MB)",
+	    "PDC20263 Ultra/66 IDE controller",
 	},
 	{
-	    PCI_VENDOR_PROMISE, PCI_PRODUCT_PROMISE_SATA150TX2PLUSO,
+	    PCI_VENDOR_PROMISE, PCI_PRODUCT_PROMISE_PDC20265,
 	    0,
 	    "Promise Technology",
-	    "Serial ATA/150 TX2 Controller plus one parallel IDE bus",
+	    "PDC20265 Ultra/100 IDE controller",
 	},
 	{
-	    PCI_VENDOR_PROMISE, PCI_PRODUCT_PROMISE_SATA150TX2PLUS,
+	    PCI_VENDOR_PROMISE, PCI_PRODUCT_PROMISE_PDC20267,
 	    0,
 	    "Promise Technology",
-	    "Serial ATA/150 TX2plus Bus Master IDE Accelerator",
+	    "PDC20267 Ultra/100 IDE controller",
 	},
 	{
-	    PCI_VENDOR_PROMISE, PCI_PRODUCT_PROMISE_SATA150FT378,
+	    PCI_VENDOR_PROMISE, PCI_PRODUCT_PROMISE_PDC20268,
 	    0,
 	    "Promise Technology",
-	    "FastTrak 378 Serial ATA/150 Controller",
+	    "PDC20268 Ultra/100 IDE controller",
 	},
 	{
-	    PCI_VENDOR_PROMISE, PCI_PRODUCT_PROMISE_SATA150TX4,
+	    PCI_VENDOR_PROMISE, PCI_PRODUCT_PROMISE_PDC20269,
 	    0,
 	    "Promise Technology",
-	    "Serial ATA/150 TX4 Controller",
+	    "PDC20269 Ultra/133 IDE controller",
 	},
 	{
-	    PCI_VENDOR_PROMISE, PCI_PRODUCT_PROMISE_ULTRA100,
+	    PCI_VENDOR_PROMISE, PCI_PRODUCT_PROMISE_PDC20270,
 	    0,
 	    "Promise Technology",
-	    "Ultra100/ATA Bus Master IDE Accelerator",
+	    "PDC20270 Ultra/100 IDE controller",
 	},
 	{
-	    PCI_VENDOR_PROMISE, PCI_PRODUCT_PROMISE_ULTRA33,
+	    PCI_VENDOR_PROMISE, PCI_PRODUCT_PROMISE_PDC20271,
 	    0,
 	    "Promise Technology",
-	    "Ultra33/ATA Bus Master IDE Accelerator",
+	    "PDC20271 Ultra/133 IDE controller",
 	},
 	{
-	    PCI_VENDOR_PROMISE, PCI_PRODUCT_PROMISE_ULTRA66,
+	    PCI_VENDOR_PROMISE, PCI_PRODUCT_PROMISE_PDC20275,
 	    0,
 	    "Promise Technology",
-	    "Ultra66/ATA Bus Master IDE Accelerator",
+	    "PDC20275 Ultra/133 IDE controller",
 	},
 	{
-	    PCI_VENDOR_PROMISE, PCI_PRODUCT_PROMISE_ULTRA100TX2,
+	    PCI_VENDOR_PROMISE, PCI_PRODUCT_PROMISE_PDC20276,
 	    0,
 	    "Promise Technology",
-	    "Ultra100TX2/ATA Bus Master IDE Accelerator",
+	    "PDC20276 Ultra/133 IDE controller",
 	},
 	{
-	    PCI_VENDOR_PROMISE, PCI_PRODUCT_PROMISE_ULTRA133,
+	    PCI_VENDOR_PROMISE, PCI_PRODUCT_PROMISE_PDC20277,
 	    0,
 	    "Promise Technology",
-	    "Ultra133/ATA Bus Master IDE Accelerator",
+	    "PDC20277 Ultra/133 IDE controller",
 	},
 	{
-	    PCI_VENDOR_PROMISE, PCI_PRODUCT_PROMISE_ULTRA133TX2,
+	    PCI_VENDOR_PROMISE, PCI_PRODUCT_PROMISE_PDC20318,
 	    0,
 	    "Promise Technology",
-	    "Ultra133TX2/ATA Bus Master IDE Accelerator",
+	    "PDC20318 SATA/150 IDE controller",
 	},
 	{
-	    PCI_VENDOR_PROMISE, PCI_PRODUCT_PROMISE_DC5030,
+	    PCI_VENDOR_PROMISE, PCI_PRODUCT_PROMISE_PDC20319,
 	    0,
 	    "Promise Technology",
-	    "DC5030",
+	    "PDC20319 SATA/150 IDE controller",
 	},
 	{
-	    PCI_VENDOR_PROMISE, PCI_PRODUCT_PROMISE_ULTRA100TX2v2,
+	    PCI_VENDOR_PROMISE, PCI_PRODUCT_PROMISE_PDC20371,
 	    0,
 	    "Promise Technology",
-	    "Ultra100TX2v2/ATA Bus Master IDE Accelerator",
+	    "PDC20371 SATA/150 IDE controller",
 	},
 	{
-	    PCI_VENDOR_PROMISE, PCI_PRODUCT_PROMISE_ULTRA133TX2v2,
+	    PCI_VENDOR_PROMISE, PCI_PRODUCT_PROMISE_PDC20375,
 	    0,
 	    "Promise Technology",
-	    "Ultra133TX2v2/ATA Bus Master IDE Accelerator",
+	    "PDC20375 SATA/150 IDE controller",
 	},
 	{
-	    PCI_VENDOR_PROMISE, PCI_PRODUCT_PROMISE_FASTTRAK133LITE,
+	    PCI_VENDOR_PROMISE, PCI_PRODUCT_PROMISE_PDC20376,
 	    0,
 	    "Promise Technology",
-	    "Fasttrak133 Lite Bus Master IDE Accelerator",
+	    "PDC20376 SATA/150 IDE controller",
+	},
+	{
+	    PCI_VENDOR_PROMISE, PCI_PRODUCT_PROMISE_PDC20377,
+	    0,
+	    "Promise Technology",
+	    "PDC20377 SATA/150 IDE controller",
+	},
+	{
+	    PCI_VENDOR_PROMISE, PCI_PRODUCT_PROMISE_PDC20378,
+	    0,
+	    "Promise Technology",
+	    "PDC20378 SATA/150 IDE controller",
+	},
+	{
+	    PCI_VENDOR_PROMISE, PCI_PRODUCT_PROMISE_PDC20379,
+	    0,
+	    "Promise Technology",
+	    "PDC20379 SATA/150 IDE controller",
+	},
+	{
+	    PCI_VENDOR_PROMISE, PCI_PRODUCT_PROMISE_PDC20617,
+	    0,
+	    "Promise Technology",
+	    "PDC20617 dual Ultra/133 IDE controller",
+	},
+	{
+	    PCI_VENDOR_PROMISE, PCI_PRODUCT_PROMISE_PDC20618,
+	    0,
+	    "Promise Technology",
+	    "PDC20618 dual Ultra/133 IDE controller",
+	},
+	{
+	    PCI_VENDOR_PROMISE, PCI_PRODUCT_PROMISE_PDC20619,
+	    0,
+	    "Promise Technology",
+	    "PDC20619 dual Ultra/133 IDE controller",
+	},
+	{
+	    PCI_VENDOR_PROMISE, PCI_PRODUCT_PROMISE_PDC20620,
+	    0,
+	    "Promise Technology",
+	    "PDC20620 dual Ultra/133 IDE controller",
+	},
+	{
+	    PCI_VENDOR_PROMISE, PCI_PRODUCT_PROMISE_PDC20621,
+	    0,
+	    "Promise Technology",
+	    "PDC20621 dual Ultra/133 IDE controller",
 	},
 	{
 	    PCI_VENDOR_QLOGIC, PCI_PRODUCT_QLOGIC_ISP1020,
