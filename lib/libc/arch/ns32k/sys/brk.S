@@ -1,4 +1,4 @@
-/*	$NetBSD: brk.S,v 1.6 1999/01/14 22:48:21 kleink Exp $	*/
+/*	$NetBSD: brk.S,v 1.6.10.1 2000/08/22 07:14:17 kleink Exp $	*/
 
 /* 
  * Copyright (c) 1992 Helsinki University of Technology
@@ -24,12 +24,12 @@
 #include "SYS.h"
 
 #if defined(LIBC_SCCS)
-	RCSID("$NetBSD: brk.S,v 1.6 1999/01/14 22:48:21 kleink Exp $")
+	RCSID("$NetBSD: brk.S,v 1.6.10.1 2000/08/22 07:14:17 kleink Exp $")
 #endif
 
 DATA_D(__minbrk, _C_LABEL(end))
 
-ENTRY(brk)
+ENTRY(_brk)
 	PIC_PROLOGUE
 	cmpd	PIC_S_ARG0,PIC_GOT(_C_LABEL(__minbrk))
 	bge	0f
