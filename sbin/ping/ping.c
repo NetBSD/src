@@ -1,4 +1,4 @@
-/*	$NetBSD: ping.c,v 1.42 1998/10/26 04:45:35 enami Exp $	*/
+/*	$NetBSD: ping.c,v 1.43 1998/11/06 16:52:42 christos Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -62,7 +62,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: ping.c,v 1.42 1998/10/26 04:45:35 enami Exp $");
+__RCSID("$NetBSD: ping.c,v 1.43 1998/11/06 16:52:42 christos Exp $");
 #endif
 
 #include <stdio.h>
@@ -1556,7 +1556,7 @@ fill(void)
 	int pat[16];
 
 	for (cp = fill_pat; *cp != '\0'; cp++) {
-		if (!isxdigit(*cp))
+		if (!isxdigit((unsigned char)*cp))
 			break;
 	}
 	if (cp == fill_pat || *cp != '\0' || (cp-fill_pat) > 16*2) {
