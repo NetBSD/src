@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_alloc.c,v 1.69 2003/06/29 22:32:38 fvdl Exp $	*/
+/*	$NetBSD: lfs_alloc.c,v 1.70 2003/07/12 16:17:06 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003 The NetBSD Foundation, Inc.
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_alloc.c,v 1.69 2003/06/29 22:32:38 fvdl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_alloc.c,v 1.70 2003/07/12 16:17:06 yamt Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_quota.h"
@@ -96,11 +96,11 @@ __KERNEL_RCSID(0, "$NetBSD: lfs_alloc.c,v 1.69 2003/06/29 22:32:38 fvdl Exp $");
 #include <ufs/lfs/lfs.h>
 #include <ufs/lfs/lfs_extern.h>
 
-extern int lfs_dirvcount;
 extern struct lock ufs_hashlock;
 
 static int extend_ifile(struct lfs *, struct ucred *);
-static int lfs_ialloc(struct lfs *, struct vnode *, ino_t, int, struct vnode **);
+static int lfs_ialloc(struct lfs *, struct vnode *, ino_t, int,
+    struct vnode **);
 
 /*
  * Allocate a particular inode with a particular version number, freeing
@@ -488,7 +488,6 @@ lfs_vfree(void *v)
 	struct lfs *fs;
 	daddr_t old_iaddr;
 	ino_t ino, otail;
-	extern int lfs_dirvcount;
 	int s;
 	
 	/* Get the inode number and file system. */

@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_vnops.c,v 1.111 2003/07/02 13:40:54 yamt Exp $	*/
+/*	$NetBSD: lfs_vnops.c,v 1.112 2003/07/12 16:17:09 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003 The NetBSD Foundation, Inc.
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_vnops.c,v 1.111 2003/07/02 13:40:54 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_vnops.c,v 1.112 2003/07/12 16:17:09 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -106,9 +106,6 @@ __KERNEL_RCSID(0, "$NetBSD: lfs_vnops.c,v 1.111 2003/07/02 13:40:54 yamt Exp $")
 #include <ufs/lfs/lfs_extern.h>
 
 extern pid_t lfs_writer_daemon;
-extern int lfs_subsys_pages;
-extern int lfs_dirvcount;
-extern struct simplelock lfs_subsys_lock;
 
 /* Global vfs data structures for lfs. */
 int (**lfs_vnodeop_p)(void *);
@@ -371,7 +368,6 @@ lfs_inactive(void *v)
 #define	SET_DIROP(vp)		SET_DIROP2((vp), NULL)
 #define	SET_DIROP2(vp, vp2)	lfs_set_dirop((vp), (vp2))
 static int lfs_set_dirop(struct vnode *, struct vnode *);
-extern int lfs_dirvcount;
 extern int lfs_do_flush;
 
 #define	NRESERVE(fs)	(btofsb(fs, (NIADDR + 3 + (2 * NIADDR + 3)) << fs->lfs_bshift))
