@@ -1,4 +1,4 @@
-/*	$NetBSD: sysfpga.c,v 1.11 2002/10/05 12:18:58 scw Exp $	*/
+/*	$NetBSD: sysfpga.c,v 1.12 2002/10/14 14:19:29 scw Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -121,13 +121,23 @@ static int sysfpga_intr_handler_irl2(void *);
 static int sysfpga_intr_handler_irl3(void *);
 #endif
 
-static int sysfpga_intr_dispatch(struct sysfpga_softc *,
-	    struct sysfpga_ihandler *, int);
+static int sysfpga_intr_dispatch(const struct sysfpga_ihandler *, int, int);
 
 
 static const char *sysfpga_cpuclksel[] = {
 	"400/200/100MHz", "400/200/66MHz", "400/200/50MHz", "<invalid>"
 };
+
+#if NSUPERIO > 0
+static const char *sysfpga_superio_intr_names[SYSFPGA_SUPERIO_NINTR] = {
+	"dcd0", "lan", "keyboard", "uart2", "uart1", "lpt", "mouse", "ide"
+};
+static struct evcnt sysfpga_superio_intr_events[SYSFPGA_SUPERIO_NINTR];
+#endif
+#if NSH5PCI > 0
+static struct evcnt sysfpga_pci1_intr_events;
+static struct evcnt sysfpga_pci2_intr_events;
+#endif
 
 static struct sysfpga_softc *sysfpga_sc;
 
@@ -152,6 +162,10 @@ sysfpgaattach(struct device *parent, struct device *self, void *args)
 	struct sysfpga_attach_args sa;
 	u_int32_t reg;
 	int i;
+#if (NSUPERIO > 0) || (NSH5PCI > 0)
+	struct evcnt *ev;
+	static const char sysfpga_intr[] = "sysfpga intr";
+#endif
 
 	sysfpga_sc = sc;
 
@@ -194,6 +208,14 @@ sysfpgaattach(struct device *parent, struct device *self, void *args)
 
 	if (sc->sc_ih[SYSFPGA_IGROUP_SUPERIO] == NULL)
 		panic("sysfpga: failed to register superio isr");
+
+	ev = sh5_intr_evcnt(sc->sc_ih[SYSFPGA_IGROUP_SUPERIO]);
+	for (i = 0; i < SYSFPGA_SUPERIO_NINTR; i++) {
+		evcnt_attach_dynamic(&sysfpga_superio_intr_events[i],
+		    EVCNT_TYPE_INTR, ev,
+		    (i >= SYSFPGA_SUPERIO_INUM_KBD) ? "isa intr" : sysfpga_intr,
+		    sysfpga_superio_intr_names[i]);
+	}
 #endif
 
 #if NSH5PCI > 0
@@ -203,6 +225,7 @@ sysfpgaattach(struct device *parent, struct device *self, void *args)
         sc->sc_ih[SYSFPGA_IGROUP_PCI1] =
             sh5_intr_establish(INTC_INTEVT_IRL2, IST_LEVEL, IPL_SH5PCI,
             sysfpga_intr_handler_irl2, sc);
+
         sc->sc_ih[SYSFPGA_IGROUP_PCI2] =
             sh5_intr_establish(INTC_INTEVT_IRL3, IST_LEVEL, IPL_SH5PCI,
             sysfpga_intr_handler_irl3, sc);
@@ -210,6 +233,14 @@ sysfpgaattach(struct device *parent, struct device *self, void *args)
 	if (sc->sc_ih[SYSFPGA_IGROUP_PCI1] == NULL ||
 	    sc->sc_ih[SYSFPGA_IGROUP_PCI2] == NULL)
 		panic("sysfpga: failed to register pci isr");
+
+	ev = sh5_intr_evcnt(sc->sc_ih[SYSFPGA_IGROUP_PCI1]);
+	evcnt_attach_dynamic(&sysfpga_pci1_intr_events,
+	    EVCNT_TYPE_INTR, ev, sysfpga_intr, "pci1");
+
+	ev = sh5_intr_evcnt(sc->sc_ih[SYSFPGA_IGROUP_PCI2]);
+	evcnt_attach_dynamic(&sysfpga_pci2_intr_events,
+	    EVCNT_TYPE_INTR, ev, sysfpga_intr, "pci2");
 #endif
 
 #ifdef DEBUG
@@ -278,6 +309,7 @@ sysfpga_intr_handler_irl1(void *arg)
 {
 	struct sysfpga_softc *sc = arg;
 	struct sysfpga_ihandler *ih;
+	struct evcnt *events = sysfpga_superio_intr_events;
 	u_int8_t intsr, intmr;
 	int sr_reg, h = 0;
 
@@ -289,33 +321,47 @@ sysfpga_intr_handler_irl1(void *arg)
 	    (intsr &= intmr) != 0;
 	    intsr = sysfpga_reg_read(sc, sr_reg)) {
 
-		if (intsr & (1 << SYSFPGA_SUPERIO_INUM_UART1))
-			h |= sysfpga_intr_dispatch(sc, ih,
+		if (intsr & (1 << SYSFPGA_SUPERIO_INUM_UART1)) {
+			h |= sysfpga_intr_dispatch(ih, IPL_SUPERIO,
 			    SYSFPGA_SUPERIO_INUM_UART1);
+			events[SYSFPGA_SUPERIO_INUM_UART1].ev_count++;
+		}
 
-		if (intsr & (1 << SYSFPGA_SUPERIO_INUM_UART2))
-			h |= sysfpga_intr_dispatch(sc, ih,
+		if (intsr & (1 << SYSFPGA_SUPERIO_INUM_UART2)) {
+			h |= sysfpga_intr_dispatch(ih, IPL_SUPERIO,
 			    SYSFPGA_SUPERIO_INUM_UART2);
+			events[SYSFPGA_SUPERIO_INUM_UART2].ev_count++;
+		}
 
-		if (intsr & (1 << SYSFPGA_SUPERIO_INUM_MOUSE))
-			h |= sysfpga_intr_dispatch(sc, ih,
-			    SYSFPGA_SUPERIO_INUM_MOUSE);
-
-		if (intsr & (1 << SYSFPGA_SUPERIO_INUM_KBD))
-			h |= sysfpga_intr_dispatch(sc, ih,
-			    SYSFPGA_SUPERIO_INUM_KBD);
-
-		if (intsr & (1 << SYSFPGA_SUPERIO_INUM_LAN))
-			h |= sysfpga_intr_dispatch(sc, ih,
+		if (intsr & (1 << SYSFPGA_SUPERIO_INUM_LAN)) {
+			h |= sysfpga_intr_dispatch(ih, IPL_SUPERIO,
 			    SYSFPGA_SUPERIO_INUM_LAN);
+			events[SYSFPGA_SUPERIO_INUM_LAN].ev_count++;
+		}
 
-		if (intsr & (1 << SYSFPGA_SUPERIO_INUM_IDE))
-			h |= sysfpga_intr_dispatch(sc, ih,
+		if (intsr & (1 << SYSFPGA_SUPERIO_INUM_MOUSE)) {
+			h |= sysfpga_intr_dispatch(ih, IPL_SUPERIO,
+			    SYSFPGA_SUPERIO_INUM_MOUSE);
+			events[SYSFPGA_SUPERIO_INUM_MOUSE].ev_count++;
+		}
+
+		if (intsr & (1 << SYSFPGA_SUPERIO_INUM_KBD)) {
+			h |= sysfpga_intr_dispatch(ih, IPL_SUPERIO,
+			    SYSFPGA_SUPERIO_INUM_KBD);
+			events[SYSFPGA_SUPERIO_INUM_KBD].ev_count++;
+		}
+
+		if (intsr & (1 << SYSFPGA_SUPERIO_INUM_IDE)) {
+			h |= sysfpga_intr_dispatch(ih, IPL_SUPERIO,
 			    SYSFPGA_SUPERIO_INUM_IDE);
+			events[SYSFPGA_SUPERIO_INUM_IDE].ev_count++;
+		}
 
-		if (intsr & (1 << SYSFPGA_SUPERIO_INUM_LPT))
-			h |= sysfpga_intr_dispatch(sc, ih,
+		if (intsr & (1 << SYSFPGA_SUPERIO_INUM_LPT)) {
+			h |= sysfpga_intr_dispatch(ih, IPL_SUPERIO,
 			    SYSFPGA_SUPERIO_INUM_LPT);
+			events[SYSFPGA_SUPERIO_INUM_LPT].ev_count++;
+		}
 
 		if (h == 0)
 			panic("sysfpga: unclaimed IRL1 interrupt: 0x%02x",
@@ -344,20 +390,26 @@ sysfpga_intr_handler_irl2(void *arg)
 	    intsr = sysfpga_reg_read(sc, sr_reg)) {
 
 		if (intsr & (1 << SYSFPGA_PCI1_INTA))
-			h |= sysfpga_intr_dispatch(sc, ih, SYSFPGA_PCI1_INTA);
+			h |= sysfpga_intr_dispatch(ih, IPL_SH5PCI,
+			    SYSFPGA_PCI1_INTA);
 
 		if (intsr & (1 << SYSFPGA_PCI1_INTB))
-			h |= sysfpga_intr_dispatch(sc, ih, SYSFPGA_PCI1_INTB);
+			h |= sysfpga_intr_dispatch(ih, IPL_SH5PCI,
+			    SYSFPGA_PCI1_INTB);
 
 		if (intsr & (1 << SYSFPGA_PCI1_INTC))
-			h |= sysfpga_intr_dispatch(sc, ih, SYSFPGA_PCI1_INTC);
+			h |= sysfpga_intr_dispatch(ih, IPL_SH5PCI,
+			    SYSFPGA_PCI1_INTC);
 
 		if (intsr & (1 << SYSFPGA_PCI1_INTD))
-			h |= sysfpga_intr_dispatch(sc, ih, SYSFPGA_PCI1_INTD);
+			h |= sysfpga_intr_dispatch(ih, IPL_SH5PCI,
+			    SYSFPGA_PCI1_INTD);
 
 		if (h == 0)
 			panic("sysfpga: unclaimed IRL2 interrupt: 0x%02x",
 			    intsr);
+
+		sysfpga_pci1_intr_events.ev_count++;
 	}
 
 	return (h);
@@ -380,32 +432,42 @@ sysfpga_intr_handler_irl3(void *arg)
 	    intsr = sysfpga_reg_read(sc, sr_reg)) {
 
 		if (intsr & (1 << SYSFPGA_PCI2_INTA))
-			h |= sysfpga_intr_dispatch(sc, ih, SYSFPGA_PCI2_INTA);
+			h |= sysfpga_intr_dispatch(ih, IPL_SH5PCI,
+			    SYSFPGA_PCI2_INTA);
 
 		if (intsr & (1 << SYSFPGA_PCI2_INTB))
-			h |= sysfpga_intr_dispatch(sc, ih, SYSFPGA_PCI2_INTB);
+			h |= sysfpga_intr_dispatch(ih, IPL_SH5PCI,
+			    SYSFPGA_PCI2_INTB);
 
 		if (intsr & (1 << SYSFPGA_PCI2_INTC))
-			h |= sysfpga_intr_dispatch(sc, ih, SYSFPGA_PCI2_INTC);
+			h |= sysfpga_intr_dispatch(ih, IPL_SH5PCI,
+			    SYSFPGA_PCI2_INTC);
 
 		if (intsr & (1 << SYSFPGA_PCI2_INTD))
-			h |= sysfpga_intr_dispatch(sc, ih, SYSFPGA_PCI2_INTD);
+			h |= sysfpga_intr_dispatch(ih, IPL_SH5PCI,
+			    SYSFPGA_PCI2_INTD);
 
 		if (intsr & (1 << SYSFPGA_PCI2_FAL))
-			h |= sysfpga_intr_dispatch(sc, ih, SYSFPGA_PCI2_FAL);
+			h |= sysfpga_intr_dispatch(ih, IPL_SH5PCI,
+			    SYSFPGA_PCI2_FAL);
 
 		if (intsr & (1 << SYSFPGA_PCI2_DEG))
-			h |= sysfpga_intr_dispatch(sc, ih, SYSFPGA_PCI2_DEG);
+			h |= sysfpga_intr_dispatch(ih, IPL_SH5PCI,
+			    SYSFPGA_PCI2_DEG);
 
 		if (intsr & (1 << SYSFPGA_PCI2_INTP))
-			h |= sysfpga_intr_dispatch(sc, ih, SYSFPGA_PCI2_INTP);
+			h |= sysfpga_intr_dispatch(ih, IPL_SH5PCI,
+			    SYSFPGA_PCI2_INTP);
 
 		if (intsr & (1 << SYSFPGA_PCI2_INTS))
-			h |= sysfpga_intr_dispatch(sc, ih, SYSFPGA_PCI2_INTS);
+			h |= sysfpga_intr_dispatch(ih, IPL_SH5PCI,
+			    SYSFPGA_PCI2_INTS);
 
 		if (h == 0)
 			panic("sysfpga: unclaimed IRL3 interrupt: 0x%02x",
 			    intsr);
+
+		sysfpga_pci2_intr_events.ev_count++;
 	}
 
 	return (h);
@@ -413,8 +475,7 @@ sysfpga_intr_handler_irl3(void *arg)
 #endif
 
 static int
-sysfpga_intr_dispatch(struct sysfpga_softc *sc, struct sysfpga_ihandler *ih,
-    int hnum)
+sysfpga_intr_dispatch(const struct sysfpga_ihandler *ih, int level, int hnum)
 {
 	int h, s;
 
@@ -429,22 +490,41 @@ sysfpga_intr_dispatch(struct sysfpga_softc *sc, struct sysfpga_ihandler *ih,
 	 * This splraise() is fine since sysfpga's interrupt handler
 	 * runs at a lower ipl than anything the child drivers could request.
 	 */
-	s = splraise(ih->ih_level);
+	s = (ih->ih_level > level) ? splraise(ih->ih_level) : -1;
+
 	h = (*ih->ih_func)(ih->ih_arg);
-	splx(s);
+
+	if (s >= 0)
+		splx(s);
 
 	return (h);
 }
 
 struct evcnt *
-sysfpga_intr_evcnt(int group)
+sysfpga_intr_evcnt(int group, int inum)
 {
 	struct sysfpga_softc *sc = sysfpga_sc;
+	struct evcnt *ev = NULL;
 
 	KDASSERT(group < SYSFPGA_NGROUPS);
 	KDASSERT(sc->sc_ih[group] != NULL);
 
-	return (sh5_intr_evcnt(sc->sc_ih[group]));
+	switch (group) {
+	case SYSFPGA_IGROUP_SUPERIO:
+		KDASSERT(inum >= 0 && inum < SYSFPGA_SUPERIO_NINTR);
+		ev = &sysfpga_superio_intr_events[inum];
+		break;
+
+	case SYSFPGA_IGROUP_PCI1:
+		ev = &sysfpga_pci1_intr_events;
+		break;
+
+	case SYSFPGA_IGROUP_PCI2:
+		ev = &sysfpga_pci2_intr_events;
+		break;
+	}
+
+	return (ev);
 }
 
 void *

@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.h,v 1.4 2002/10/01 21:07:31 scw Exp $	*/
+/*	$NetBSD: intr.h,v 1.5 2002/10/14 14:19:28 scw Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -99,8 +99,10 @@ extern struct evcnt *sh5_intr_evcnt(void *);
 /* Internal use only */
 extern void	softintr_dispatch(u_int, u_int);
 extern void	softintr_init(void);
-extern void	sh5_intr_init(int, void (*)(void *, u_int, int, int),
+extern void	sh5_intr_init(void (*)(void *, u_int, int, int),
 		    void (*)(void *, u_int), void *);
+extern void	*sh5_intr_alloc_handle(size_t);
+extern void	sh5_intr_free_handle(void *);
 extern struct evcnt _sh5_intr_events[];
 extern void	_cpu_intr_set(u_int);
 extern void	_cpu_intr_resume(u_int);

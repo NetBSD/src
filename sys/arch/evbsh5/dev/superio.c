@@ -1,4 +1,4 @@
-/*	$NetBSD: superio.c,v 1.9 2002/10/02 05:33:54 thorpej Exp $	*/
+/*	$NetBSD: superio.c,v 1.10 2002/10/14 14:19:29 scw Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -59,6 +59,7 @@
 #include <dev/ic/smc91cxxreg.h>
 
 #if NCOM > 0
+#include <evbsh5/evbsh5/machdep.h>
 #include <evbsh5/dev/sysfpgareg.h>
 #endif
 
@@ -571,8 +572,12 @@ isa_attach_hook(struct device *parent, struct device *self,
 const struct evcnt *
 isa_intr_evcnt(isa_chipset_tag_t ic, int irq)
 {
+	int inum, dummy;
 
-	return (sysfpga_intr_evcnt(SYSFPGA_IGROUP_SUPERIO));
+	if ((inum = superio_isa_irq_to_inum(irq, &dummy)) < 0)
+		return (NULL);
+
+	return (sysfpga_intr_evcnt(SYSFPGA_IGROUP_SUPERIO, inum));
 }
 
 int
@@ -668,8 +673,8 @@ superio_console_tag(bus_space_tag_t bt, int port,
 	bus_addr_t base;
 	u_int8_t reg;
 
-	if (bus_space_map(bt, SYSFPGA_OFFSET_SUPERIO, SUPERIO_REG_SZ, 0,
-	    &sc.sc_bush))
+	if (bus_space_subregion(bt, _evbsh5_bh_sysfpga,
+	    SYSFPGA_OFFSET_SUPERIO, SUPERIO_REG_SZ, &sc.sc_bush))
 		return (-1);
 	sc.sc_bust = bt;
 

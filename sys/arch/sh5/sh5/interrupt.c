@@ -1,4 +1,4 @@
-/*	$NetBSD: interrupt.c,v 1.5 2002/10/08 15:55:07 scw Exp $	*/
+/*	$NetBSD: interrupt.c,v 1.6 2002/10/14 14:19:28 scw Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -72,34 +72,49 @@
  */
 
 #include <sys/param.h>
-#include <sys/malloc.h>
+#include <sys/pool.h>
 #include <sys/device.h>
 
 #include <uvm/uvm_extern.h>	/* uvmexp.intrs */
 
 #include <machine/intr.h>
+#include <machine/cacheops.h>
 
 
 /*
- * INTEVT to intrhand mapper.
+ * SH5 interrupt handlers are tracked using instances of the following
+ * structure.
  */
-static int8_t intevt_to_ih[256];
-
 struct intrhand {
 	int	(*ih_func)(void *);
 	void	*ih_arg;
 	int	ih_type;
 	int	ih_level;
 	u_int	ih_intevt;
-	int	ih_idx;
 };
 
-static struct intrhand *intrhand;
-static int szintrhand;
+/*
+ * The list of all possible interrupt handlers, indexed by INTEVT
+ */
+static struct intrhand *intrhand[256];
 
-#define	INTEVT_TO_MAP_INDEX(x)	((x) >> 5)
-#define	INTEVT_TO_IH_INDEX(x)	intevt_to_ih[INTEVT_TO_MAP_INDEX(x)]
-#define	INTEVT_IH(x)		(&intrhand[INTEVT_TO_IH_INDEX(x)])
+#define	INTEVT_TO_IH_INDEX(x)	((int)((x) >> 5) & 0xff)
+#define	INTEVT_IH(x)		(intrhand[INTEVT_TO_IH_INDEX(x)])
+
+/*
+ * Pool of interrupt handles.
+ * This is used by all native SH5 interrupt drivers. It ensures the
+ * handle is allocated from KSEG0, which avoids taking multiple TLB
+ * before the real interrupt handler is even called.
+ */
+static struct pool intrhand_pool;
+
+/*
+ * By default, each interrupt handle is 64-bytes in size. This allows
+ * some room for future growth.
+ */
+#define	INTRHAND_SIZE		64
+
 
 static void (*intr_enable)(void *, u_int, int, int);
 static void (*intr_disable)(void *, u_int);
@@ -109,41 +124,21 @@ struct evcnt _sh5_intr_events[NIPL];
 extern const char intrnames[];		/* Defined in port-specific code */
 
 void sh5_intr_dispatch(struct intrframe *);
-static struct intrhand *alloc_ih(void);
-static void free_ih(struct intrhand *);
-static int spurious_interrupt(void *);
 
-
-/*
- * SH5 Interrupt support.
- */
 void
-sh5_intr_init(int nhandles,
-    void (*int_enable)(void *, u_int, int, int),
+sh5_intr_init(void (*int_enable)(void *, u_int, int, int),
     void (*int_disable)(void *, u_int),
     void *arg)
 {
-	struct intrhand *ih;
 	const char *iname;
 	int i;
 
-	ih = malloc(sizeof(*ih) * (nhandles + 1), M_DEVBUF, M_NOWAIT);
-	if (ih == NULL)
-		panic("sh5_intr_init: Out of memory");
+	pool_init(&intrhand_pool, INTRHAND_SIZE, SH5_CACHELINE_SIZE,
+	    0, 0, NULL, NULL);
 
-	memset(ih, 0, sizeof(*ih) * (nhandles + 1));
-	intrhand = ih;
-	szintrhand = nhandles + 1;
 	intr_enable = int_enable;
 	intr_disable = int_disable;
 	intr_arg = arg;
-
-	ih->ih_func = spurious_interrupt;
-	ih->ih_arg = NULL;
-	ih->ih_idx = 0;
-	ih->ih_level = 0;
-	ih->ih_intevt = 0;
-	ih->ih_type = IST_NONE;
 
 	iname = intrnames;
 	for (i = 0; i < NIPL; i++) {
@@ -158,11 +153,20 @@ sh5_intr_establish(int intevt, int trigger, int level,
     int (*ih_func)(void *), void *ih_arg)
 {
 	struct intrhand *ih;
+	int idx;
 
-	KDASSERT(szintrhand != 0);
+	KDASSERT(intr_enable != NULL);
 	KDASSERT(level > 0 && level < NIPL);
 
-	ih = alloc_ih();
+	idx = INTEVT_TO_IH_INDEX(intevt);
+	KDASSERT(idx < (sizeof(intrhand) / sizeof(struct intrhand *)));
+
+	if (intrhand[idx] != NULL)
+		return (NULL);		/* Perhaps panic? */
+
+	if ((ih = sh5_intr_alloc_handle(sizeof(*ih))) == NULL)
+		return (NULL);
+
 	ih->ih_func = ih_func;
 	ih->ih_arg = ih_arg;
 	ih->ih_level = level;
@@ -170,7 +174,7 @@ sh5_intr_establish(int intevt, int trigger, int level,
 	ih->ih_type = trigger;
 
 	/* Map interrupt handler */
-	INTEVT_TO_IH_INDEX(intevt) = ih->ih_idx;
+	intrhand[idx] = ih;
 
 	(*intr_enable)(intr_arg, intevt, trigger, level);
 
@@ -181,13 +185,18 @@ void
 sh5_intr_disestablish(void *cookie)
 {
 	struct intrhand *ih = cookie;
+	int idx;
+
+	idx = INTEVT_TO_IH_INDEX(ih->ih_intevt);
+	KDASSERT(idx < (sizeof(intrhand) / sizeof(struct intrhand *)));
+	KDASSERT(intrhand[idx] == ih);
 
 	(*intr_disable)(intr_arg, ih->ih_intevt);
 
 	/* Unmap interrupt handler */
-	INTEVT_TO_IH_INDEX(ih->ih_intevt) = 0;
+	intrhand[idx] = NULL;
 
-	free_ih(ih);
+	sh5_intr_free_handle(ih);
 }
 
 struct evcnt *
@@ -198,17 +207,43 @@ sh5_intr_evcnt(void *cookie)
 	return (&_sh5_intr_events[ih->ih_level]);
 }
 
+void *
+sh5_intr_alloc_handle(size_t size)
+{
+
+	if (size > INTRHAND_SIZE)
+		panic("sh5_intr_alloc_handle: size > %d", INTRHAND_SIZE);
+
+	return (pool_get(&intrhand_pool, 0));
+}
+
+void
+sh5_intr_free_handle(void *handle)
+{
+
+	pool_put(&intrhand_pool, handle);
+}
+
 void
 sh5_intr_dispatch(struct intrframe *fr)
 {
 	extern u_long intrcnt[];
 	struct intrhand *ih;
+	int idx;
 
-	KDASSERT(INTEVT_TO_MAP_INDEX(fr->if_state.sf_intevt) < 0x100);
+	idx = INTEVT_TO_IH_INDEX(fr->if_state.sf_intevt);
+	KDASSERT(idx < (sizeof(intrhand) / sizeof(struct intrhand *)));
 
-	ih = INTEVT_IH(fr->if_state.sf_intevt);
-
-	KDASSERT(ih->ih_func != NULL);
+	if ((ih = intrhand[idx]) == NULL) {
+		int level;
+		__asm __volatile("getcon sr, %0" : "=r"(level));
+		printf(
+		    "sh5_intr_dispatch: spurious level %d irq: intevt 0x%lx\n",
+		    (level >> SH5_CONREG_SR_IMASK_SHIFT) &
+		    SH5_CONREG_SR_IMASK_MASK,
+		    (unsigned long)fr->if_state.sf_intevt);
+		return;
+	}
 
 	_sh5_intr_events[ih->ih_level].ev_count++;
 	intrcnt[ih->ih_level]++;
@@ -221,47 +256,12 @@ sh5_intr_dispatch(struct intrframe *fr)
 		/*NOTREACHED*/
 	}
 
+#if 0
+	/* We don't support Edge or Pulse triggered interrupts at this time */
+
 	printf("sh5_intr_dispatch: Unclaimed %s-triggered interrupt...\n",
 	    (ih->ih_type == IST_PULSE) ? "Pulse" : "Edge");
-	printf("sh5_intr_dispatch: INTEVT=0x%x, level=%d\n",
-	    (int) fr->if_state.sf_intevt, ih->ih_level);
-}
-
-/*
- * Interrupt handle allocator.
- */
-static struct intrhand *
-alloc_ih()
-{
-	/* #0 is reserved for unregistered interrupt. */
-	struct intrhand *ih = &intrhand[1];
-	int i;
-
-	for (i = 1; i < szintrhand; i++, ih++)
-		if (ih->ih_idx == 0) {	/* no driver use this. */
-			ih->ih_idx = i;	/* register myself */
-			return (ih);
-		}
-
-	panic("intc_alloc_ih: Out of interrupt handles!");
-	return (NULL);
-}
-
-static void
-free_ih(struct intrhand *ih)
-{
-
-	memset(ih, 0, sizeof(*ih));
-}
-
-static int
-spurious_interrupt(void *arg)
-{
-	struct intrframe *fr = arg;
-
-	printf("Spurious Interrupt: INTEVT=0x%x\n",
-	    (int) fr->if_state.sf_intevt);
-	panic("oops");
-	/* NOTREACHED */
-	return (0);
+	printf("sh5_intr_dispatch: INTEVT=0x%lx, level=%d\n",
+	    (unsigned long) fr->if_state.sf_intevt, ih->ih_level);
+#endif
 }

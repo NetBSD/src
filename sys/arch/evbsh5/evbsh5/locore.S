@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.S,v 1.7 2002/10/08 15:52:02 scw Exp $	*/
+/*	$NetBSD: locore.S,v 1.8 2002/10/14 14:19:29 scw Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -381,8 +381,8 @@ GLOBAL(intrnames)
 	.asciz	"softclock"
 	.asciz	"softnet"
 	.asciz	"irq4"
-	.asciz	"isa-lan"
-	.asciz	"pci"
+	.asciz	"irq5"
+	.asciz	"irq6"
 	.asciz	"irq7"
 	.asciz	"irq8"
 	.asciz	"irq9"

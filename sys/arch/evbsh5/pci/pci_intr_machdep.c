@@ -1,4 +1,4 @@
-/*	$NetBSD: pci_intr_machdep.c,v 1.1 2002/09/28 11:16:39 scw Exp $	*/
+/*	$NetBSD: pci_intr_machdep.c,v 1.2 2002/10/14 14:19:29 scw Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -51,12 +51,13 @@
  * XXX: Right now, assume no other PCI-PCI bridges are present on the
  * primary and secondary buses (they would mess up the bus numbers, and
  * confuse the code). The solution to this will be to scan the bus
- * heirarchy to check subordinate bus numbers...
+ * hierarchy to check subordinate bus numbers...
  */
 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/device.h>
+#include <sys/malloc.h>
 #include <sys/queue.h>
 
 #include <dev/pci/pcireg.h>
@@ -95,12 +96,10 @@ struct sh5pci_intr_hooks cayman_pci_hooks = {
 
 struct cayman_intr_softc {
 	void	*sc_ct;
-	struct sh5pci_ihead sc_primary[PCI_INTERRUPT_PIN_MAX];
-	struct sh5pci_ihead sc_p1[PCI_INTERRUPT_PIN_MAX];
-	struct sh5pci_ihead sc_p2[PCI_INTERRUPT_PIN_MAX];
+	struct sh5pci_ihead *sc_primary[PCI_INTERRUPT_PIN_MAX];
+	struct sh5pci_ihead *sc_p1[PCI_INTERRUPT_PIN_MAX];
+	struct sh5pci_ihead *sc_p2[PCI_INTERRUPT_PIN_MAX];
 };
-
-static struct cayman_intr_softc softc;
 
 /*
  * Magick values stuffed into the interrupt line to identify which
@@ -139,9 +138,11 @@ cayman_intr_init(struct sh5_pci_chipset_tag *ct,
     void **ih_serr, int (*fn_serr)(void *), void *arg_serr,
     void **ih_err,  int (*fn_err)(void *),  void *arg_err)
 {
-	struct cayman_intr_softc *sc = &softc;
-	struct sh5pci_ihead *ih;
+	struct cayman_intr_softc *sc;
 	int i;
+
+	if ((sc = malloc(sizeof(*sc), M_DEVBUF, M_NOWAIT)) == NULL)
+		return (NULL);
 
 	/*
 	 * Hook the ERR and SERR interrupts from the bridge, if required.
@@ -159,45 +160,13 @@ cayman_intr_init(struct sh5_pci_chipset_tag *ct,
 	}
 
 	/*
-	 * Initialise the sh5pci_ihead structures for the PCI INT[A-D] pins
+	 * Initialise the sh5pci_ihead structures for the PCI INT[A-D] pins.
+	 * We lazy-allocate the ihead stuctures as they are required.
 	 */
 	for (i = 0; i < PCI_INTERRUPT_PIN_MAX; i++) {
-		ih = &sc->sc_primary[i];
-
-		SLIST_INIT(&ih->ih_handlers);
-		ih->ih_cookie = NULL;
-		ih->ih_evcnt = NULL;
-		ih->ih_level = 0;
-		switch (i) {
-		case 0:	ih->ih_intevt = INTC_INTEVT_PCI_INTA;
-			break;
-		case 1:	ih->ih_intevt = INTC_INTEVT_PCI_INTB;
-			break;
-		case 2:	ih->ih_intevt = INTC_INTEVT_PCI_INTC;
-			break;
-		case 3:	ih->ih_intevt = INTC_INTEVT_PCI_INTD;
-			break;
-		}
-	}
-
-	for (i = 0; i < PCI_INTERRUPT_PIN_MAX; i++) {
-		ih = &sc->sc_p1[i];
-
-		SLIST_INIT(&ih->ih_handlers);
-		ih->ih_cookie = NULL;
-		ih->ih_evcnt = NULL;
-		ih->ih_level = 0;
-		ih->ih_intevt = INTC_INTEVT_IRL2;
-	}
-
-	for (i = 0; i < PCI_INTERRUPT_PIN_MAX; i++) {
-		ih = &sc->sc_p2[i];
-
-		SLIST_INIT(&ih->ih_handlers);
-		ih->ih_cookie = NULL;
-		ih->ih_evcnt = NULL;
-		ih->ih_level = 0;
-		ih->ih_intevt = INTC_INTEVT_IRL3;
+		sc->sc_primary[i] = NULL;
+		sc->sc_p1[i] = NULL;
+		sc->sc_p2[i] = NULL;
 	}
 
 	sc->sc_ct = ct;
@@ -236,70 +205,158 @@ cayman_intr_conf(void *arg, int bus, int dev, int pin, int swiz, int *line)
 
 /*ARGSUSED*/
 static int
-cayman_intr_map(void *arg, struct pci_attach_args *pa, pci_intr_handle_t *ih)
+cayman_intr_map(void *arg, struct pci_attach_args *pa, pci_intr_handle_t *hp)
 {
 
-	*ih = SH5PCI_IH_CREATE(pa->pa_intrline, pa->pa_intrpin, 0);
+	*hp = SH5PCI_IH_CREATE(pa->pa_intrline, pa->pa_intrpin, 0);
 	return (0);
 }
 
 static struct sh5pci_ihead *
-cayman_intr_ihead(void *arg, pci_intr_handle_t ih)
+cayman_intr_ihead(void *arg, pci_intr_handle_t handle)
 {
 	struct cayman_intr_softc *sc = arg;
-	int pin;
+	struct sh5pci_ihead *ih, **ihp;
+	int pin, evt;
 
-	if (SH5PCI_IH_PIN(ih) == PCI_INTERRUPT_PIN_NONE ||
-	    SH5PCI_IH_PIN(ih) > PCI_INTERRUPT_PIN_MAX)
+	pin = SH5PCI_IH_PIN(handle);
+
+	if (pin == PCI_INTERRUPT_PIN_NONE || pin > PCI_INTERRUPT_PIN_MAX)
 		return (NULL);
 
-	pin = SH5PCI_IH_PIN(ih) - 1;
+	pin -= 1;
 
-	if (CAYMAN_INTR_IS_PRIMARY(ih))
-		return (&sc->sc_primary[pin]);
+	if (CAYMAN_INTR_IS_PRIMARY(handle)) {
+		ihp = &sc->sc_primary[pin];
+		switch (pin) {
+		case 0:	evt = INTC_INTEVT_PCI_INTA;
+			break;
+		case 1:	evt = INTC_INTEVT_PCI_INTB;
+			break;
+		case 2:	evt = INTC_INTEVT_PCI_INTC;
+			break;
+		case 3:	evt = INTC_INTEVT_PCI_INTD;
+			break;
+		}
+	} else
+	if (CAYMAN_INTR_IS_P1(handle)) {
+		ihp = &sc->sc_p1[pin];
+		evt = INTC_INTEVT_IRL2;
+	} else
+	if (CAYMAN_INTR_IS_P2(handle)) {
+		ihp = &sc->sc_p2[pin];
+		evt = INTC_INTEVT_IRL3;
+	} else
+		return (NULL);
 
-	if (CAYMAN_INTR_IS_P1(ih))
-		return (&sc->sc_p1[pin]);
+	if (*ihp)
+		return (*ihp);
 
-	if (CAYMAN_INTR_IS_P2(ih))
-		return (&sc->sc_p2[pin]);
+	if ((ih = sh5_intr_alloc_handle(sizeof(*ih))) == NULL)
+		return (NULL);
 
-	return (NULL);
+	SLIST_INIT(&ih->ih_handlers);
+	ih->ih_cookie = NULL;
+	ih->ih_evcnt = NULL;
+	ih->ih_level = 0;
+	ih->ih_intevt = evt;
+	*ihp = ih;
+
+	return (ih);
 }
 
 /*ARGSUSED*/
 static void *
-cayman_intr_establish(void *arg, pci_intr_handle_t ih,
+cayman_intr_establish(void *arg, pci_intr_handle_t handle,
     int level, int (*func)(void *), void *fnarg)
 {
 	struct sh5pci_ihead *ihead;
-	int inum, group;
+	struct evcnt *evcnt, *parent_evcnt;
+	int pin, inum, group;
+	void *cookie;
+	const char *ename, *gname;
 
-	if ((ihead = cayman_intr_ihead(arg, ih)) == NULL)
+	if ((ihead = cayman_intr_ihead(arg, handle)) == NULL)
 		return (NULL);
 
-	if (CAYMAN_INTR_IS_PRIMARY(ih)) {
-		return (sh5_intr_establish(ihead->ih_intevt, IST_LEVEL, level,
-		    func, fnarg));
+	pin = (SH5PCI_IH_PIN(handle) - 1) & 3;
+	switch (pin) {
+	case 0:	ename = "INTA"; break;
+	case 1:	ename = "INTB"; break;
+	case 2:	ename = "INTC"; break;
+	case 3:	ename = "INTD"; break;
 	}
 
-	inum = SH5PCI_IH_LINE(ih) & 0x03;
+	if (CAYMAN_INTR_IS_PRIMARY(handle)) {
+		cookie = sh5_intr_establish(ihead->ih_intevt, IST_LEVEL, level,
+		    func, fnarg);
+		parent_evcnt = sh5_intr_evcnt(cookie);
+		gname = "pci0";
+	} else {
+		inum = SH5PCI_IH_LINE(handle) & 0x03;
 
-	if (CAYMAN_INTR_IS_P1(ih))
-		group = SYSFPGA_IGROUP_PCI1;
-	else
-		group = SYSFPGA_IGROUP_PCI2;
+		if (CAYMAN_INTR_IS_P1(handle)) {
+			group = SYSFPGA_IGROUP_PCI1;
+			gname = "pci1";
+		} else {
+			group = SYSFPGA_IGROUP_PCI2;
+			gname = "pci2";
+		}
 
-	return (sysfpga_intr_establish(group, level, inum, func, fnarg));
+		cookie = sysfpga_intr_establish(group, level, inum, func,
+		    fnarg);
+		parent_evcnt = sysfpga_intr_evcnt(group, inum);
+	}
+
+	if (ihead->ih_evcnt == NULL &&
+	    (evcnt = sh5_intr_alloc_handle(sizeof(*ihead->ih_evcnt))) != NULL) {
+		evcnt_attach_dynamic(evcnt, EVCNT_TYPE_INTR, parent_evcnt,
+		    gname, ename);
+		ihead->ih_evcnt = evcnt;
+	}
+
+	return (cookie);
 }
 
 /*ARGSUSED*/
 static void
-cayman_intr_disestablish(void *arg, pci_intr_handle_t ih, void *cookie)
+cayman_intr_disestablish(void *arg, pci_intr_handle_t handle, void *cookie)
 {
+	struct cayman_intr_softc *sc = arg;
+	struct sh5pci_ihead **ihp;
+	int pin;
 
-	if (CAYMAN_INTR_IS_PRIMARY(ih))
+	if (CAYMAN_INTR_IS_PRIMARY(handle))
 		sh5_intr_disestablish(cookie);
 	else
 		sysfpga_intr_disestablish(cookie);
+
+	pin = SH5PCI_IH_PIN(handle);
+
+	if (pin == PCI_INTERRUPT_PIN_NONE || pin > PCI_INTERRUPT_PIN_MAX)
+		return;	/* XXX: Should probably panic */
+
+	pin -= 1;
+
+	if (CAYMAN_INTR_IS_PRIMARY(handle))
+		ihp = &sc->sc_primary[pin];
+	else
+	if (CAYMAN_INTR_IS_P1(handle))
+		ihp = &sc->sc_p1[pin];
+	else
+	if (CAYMAN_INTR_IS_P2(handle))
+		ihp = &sc->sc_p2[pin];
+	else
+		return;	/* XXX: Should probably panic */
+
+	if (*ihp == NULL)
+		return;	/* XXX: Should probably panic */
+
+	if ((*ihp)->ih_evcnt) {
+		evcnt_detach((*ihp)->ih_evcnt);
+		sh5_intr_free_handle((*ihp)->ih_evcnt);
+	}
+
+	sh5_intr_free_handle(*ihp);
+	*ihp = NULL;
 }

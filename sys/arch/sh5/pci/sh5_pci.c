@@ -1,4 +1,4 @@
-/*	$NetBSD: sh5_pci.c,v 1.6 2002/10/04 10:22:24 scw Exp $	*/
+/*	$NetBSD: sh5_pci.c,v 1.7 2002/10/14 14:19:28 scw Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -771,13 +771,13 @@ sh5pci_intr_establish(void *arg, pci_intr_handle_t ih,
 	if (ihead == NULL)
 		return (NULL);
 
-	if ((ic = malloc(sizeof(*ic), M_DEVBUF, M_NOWAIT)) == NULL)
+	if ((ic = sh5_intr_alloc_handle(sizeof(*ic))) == NULL)
 		return (NULL);
 
 	s = splhigh();
 	if (ihead->ih_cookie != NULL && ihead->ih_level != level) {
 		splx(s);
-		free(ic, M_DEVBUF);
+		sh5_intr_free_handle(ic);
 		printf("sh5pci_intr_establish: shared level mismatch");
 		return (NULL);
 	}
@@ -821,17 +821,19 @@ sh5pci_intr_disestablish(void *arg, void *cookie)
 	SLIST_REMOVE(&ihead->ih_handlers, ic, sh5pci_icookie, ic_next);
 
 	/*
-	 * If we're removing the last handler, unhook the interrupt
+	 * If we're removing the last handler, unhook the interrupt.
 	 */
 	if (SLIST_EMPTY(&ihead->ih_handlers)) {
 		(*sc->sc_intr->ih_intr_disestablish)(sc->sc_intr_arg,
 		    ic->ic_ih, ihead->ih_cookie);
-		ihead->ih_cookie = NULL;
-		ihead->ih_level = 0;
+		/*
+		 * Note that ihead is likely to be invalid now if the back-end
+		 * does lazy-allocation of the sh5pci_ihead structures...
+		 */
 	}
 	splx(s);
 
-	free(ic, M_DEVBUF);
+	sh5_intr_free_handle(ic);
 }
 
 static int
@@ -845,8 +847,13 @@ sh5pci_intr_dispatch(void *arg)
 	 * Call all the handlers registered for a particular interrupt pin
 	 * and accumulate their "handled" status.
 	 */
-	SLIST_FOREACH(ic, &ihead->ih_handlers, ic_next)
-		rv |= (*ic->ic_func)(ic->ic_arg);
+	SLIST_FOREACH(ic, &ihead->ih_handlers, ic_next) {
+		if ((*ic->ic_func)(ic->ic_arg)) {
+			if (ihead->ih_evcnt)
+				ihead->ih_evcnt->ev_count++;
+			rv++;
+		}
+	}
 
 	return (rv);
 }
