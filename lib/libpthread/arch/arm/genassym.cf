@@ -1,4 +1,4 @@
-#	$NetBSD: genassym.cf,v 1.5 2003/07/17 20:55:26 nathanw Exp $
+#	$NetBSD: genassym.cf,v 1.6 2003/09/07 14:47:47 cl Exp $
 
 # Copyright (c) 2001 Wasabi Systems, Inc.
 # All rights reserved.
@@ -61,10 +61,8 @@ define PT_NEXT		offsetof(struct __pthread_st, pt_next)
 define PT_SPINLOCKS	offsetof(struct __pthread_st, pt_spinlocks)
 define PT_SWITCHTO	offsetof(struct __pthread_st, pt_switchto)
 define PT_SWITCHTOUC	offsetof(struct __pthread_st, pt_switchtouc)
-define PT_STATE		offsetof(struct __pthread_st, pt_state)
 define PT_HELDLOCK	offsetof(struct __pthread_st, pt_heldlock)
 
-define PT_STATE_RECYCLABLE PT_STATE_RECYCLABLE
 define RND_CTXSIZE	((sizeof(ucontext_t) + 7) & ~7)
 define STACKSPACE	STACKSPACE
 define __SIMPLELOCK_UNLOCKED __SIMPLELOCK_UNLOCKED
