@@ -1,4 +1,4 @@
-/*	$NetBSD: systm.h,v 1.37 1995/09/19 21:40:36 thorpej Exp $	*/
+/*	$NetBSD: systm.h,v 1.38 1996/02/04 02:12:45 christos Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1988, 1991, 1993
@@ -111,7 +111,7 @@ extern int boothowto;		/* reboot flags, from console subsystem */
 /*
  * General function declarations.
  */
-int	nullop __P((void));
+int	nullop __P((void *));
 int	enodev __P((void));
 int	enoioctl __P((void));
 int	enxio __P((void));

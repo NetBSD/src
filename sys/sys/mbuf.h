@@ -1,4 +1,4 @@
-/*	$NetBSD: mbuf.h,v 1.17 1995/08/16 01:04:06 mycroft Exp $	*/
+/*	$NetBSD: mbuf.h,v 1.18 1996/02/04 02:12:33 christos Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1988, 1993
@@ -373,6 +373,11 @@ void	m_adj __P((struct mbuf *, int));
 int	m_clalloc __P((int, int));
 void	m_copyback __P((struct mbuf *, int, int, caddr_t));
 void	m_freem __P((struct mbuf *));
+void	m_reclaim __P((void));
+void	m_copydata __P((struct mbuf *, int, int, caddr_t));
+void	m_cat __P((struct mbuf *, struct mbuf *));
+struct mbuf *m_devget __P((char *, int, int, struct ifnet *,
+			   void (*) __P((const void *, void *, size_t))));
 
 #ifdef MBTYPES
 int mbtypes[] = {				/* XXX */

@@ -1,4 +1,4 @@
-/*	$NetBSD: vnode.h,v 1.35 1996/02/02 21:05:10 mycroft Exp $	*/
+/*	$NetBSD: vnode.h,v 1.36 1996/02/04 02:12:50 christos Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -315,7 +315,7 @@ struct vnodeopv_desc {
 /*
  * A default routine which just returns an error.
  */
-int vn_default_error __P((void));
+int vn_default_error __P((void *));
 
 /*
  * A generic structure.
@@ -358,7 +358,6 @@ struct ucred;
 struct uio;
 struct vattr;
 struct vnode;
-struct vop_bwrite_args;
 
 int 	bdevvp __P((dev_t dev, struct vnode **vpp));
 int 	cdevvp __P((dev_t dev, struct vnode **vpp));
@@ -374,7 +373,7 @@ void 	vgoneall __P((struct vnode *vp));
 int	vinvalbuf __P((struct vnode *vp, int save, struct ucred *cred,
 	    struct proc *p, int slpflag, int slptimeo));
 void	vprint __P((char *label, struct vnode *vp));
-int	vn_bwrite __P((struct vop_bwrite_args *ap));
+int	vn_bwrite __P((void *ap));
 int 	vn_close __P((struct vnode *vp,
 	    int flags, struct ucred *cred, struct proc *p));
 int 	vn_closefile __P((struct file *fp, struct proc *p));
