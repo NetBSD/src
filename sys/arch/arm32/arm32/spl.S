@@ -1,4 +1,4 @@
-/* $NetBSD: spl.S,v 1.1 1996/03/08 18:03:15 mark Exp $ */
+/* $NetBSD: spl.S,v 1.2 1996/06/03 21:21:39 mark Exp $ */
 
 /*
  * Copyright (c) 1996 Mark Brinicombe.
@@ -39,8 +39,6 @@
  * spl routines
  *
  * Created      : 01/03/96
- *
- *    $Id: spl.S,v 1.1 1996/03/08 18:03:15 mark Exp $
  */
 
 #include "assym.h"

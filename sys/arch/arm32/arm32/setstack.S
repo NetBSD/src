@@ -1,4 +1,4 @@
-/* $NetBSD: setstack.S,v 1.1 1996/01/31 23:16:59 mark Exp $ */
+/* $NetBSD: setstack.S,v 1.2 1996/06/03 21:21:38 mark Exp $ */
 
 /*
  * Copyright (c) 1994 Mark Brinicombe.
@@ -43,11 +43,8 @@
  * Eventually this routine can be inline assembly.
  *
  * Created      : 17/09/94
- * Last updated : 15/10/94
  *
  * Based of kate/display/setstack.s
- *
- *    $Id: setstack.S,v 1.1 1996/01/31 23:16:59 mark Exp $
  */
 
 #include <machine/cpu.h>

@@ -1,4 +1,4 @@
-/* $NetBSD: scratch.S,v 1.2 1996/02/02 02:35:49 mycroft Exp $ */
+/* $NetBSD: scratch.S,v 1.3 1996/06/03 21:21:36 mark Exp $ */
 
 /*
  * Copyright (c) 1994,1995 Mark Brinicombe.
@@ -39,9 +39,6 @@
  * Miscellaneous routines scratchpad routines
  *
  * Created      : 02/04/95
- * Last updated : 04/06/95
- *
- *    $Id: scratch.S,v 1.2 1996/02/02 02:35:49 mycroft Exp $
  */
 
 #include "assym.h"

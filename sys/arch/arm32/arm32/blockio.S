@@ -1,4 +1,4 @@
-/* $NetBSD: blockio.S,v 1.1 1996/01/31 23:15:22 mark Exp $ */
+/* $NetBSD: blockio.S,v 1.2 1996/06/03 21:21:33 mark Exp $ */
 
 /*
  * Copyright (c) 1994 Mark Brinicombe.
@@ -41,9 +41,6 @@
  * optimised block read/write from/to IO routines.
  *
  * Created      : 08/10/94
- * Last updated : 12/05/95
- *
- *    $Id: blockio.S,v 1.1 1996/01/31 23:15:22 mark Exp $
  */
 
 sp	.req	r13
