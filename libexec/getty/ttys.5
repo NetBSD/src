@@ -30,7 +30,7 @@
 .\" SUCH DAMAGE.
 .\"
 .\"     from: @(#)ttys.5	6.8 (Berkeley) 5/4/91
-.\"	$Id: ttys.5,v 1.4 1994/03/12 06:55:42 cgd Exp $
+.\"	$Id: ttys.5,v 1.5 1994/03/21 00:57:43 cgd Exp $
 .\"
 .Dd May 4, 1991
 .Dt TTYS 5
@@ -97,12 +97,17 @@ should (should not) execute the command given in the second field,
 while ``secure'' (if ``on'' is also specified) allows users with a
 uid of 0 to login on
 this line.
-The flags ``local'', ``rtscts'', and ``softcar''
+The flags ``local'', ``rtscts'', ``mdmbuf'', and ``softcar''
 modify the default behaviour of the terminal line, and their actions
-are driver dependent.  The ``local'' flag causes the driver to
-treat the line as if it locally connected.  The ``rtscts'' flag
+are driver dependent.
+The ``local'' flag causes the driver to
+treat the line as if it locally connected.
+The ``rtscts'' flag
 instructs the driver to use RTS/CTS hardware flow control, if
-possible.  The ``softcar'' flag causes the driver to ignore
+possible.
+The ``mdmbuf'' flag instructs the driver to use
+DTR/DCD flow control, if possible.
+The ``softcar'' flag causes the driver to ignore
 hardware carrier on the line.
 These flag fields should not be quoted.
 .Pp
