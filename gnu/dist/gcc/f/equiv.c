@@ -1,6 +1,6 @@
 /* equiv.c -- Implementation File (module.c template V1.0)
-   Copyright (C) 1995-1997 Free Software Foundation, Inc.
-   Contributed by James Craig Burley (burley@gnu.ai.mit.edu).
+   Copyright (C) 1995-1998 Free Software Foundation, Inc.
+   Contributed by James Craig Burley (burley@gnu.org).
 
 This file is part of GNU Fortran.
 
@@ -368,6 +368,7 @@ ffeequiv_layout_local_ (ffeequiv eq)
 	      ffestorag item_st;		/* Storage for var. */
 	      ffesymbol item_sym;		/* Var itself. */
 	      ffetargetOffset item_offset;	/* Offset for var from root. */
+	      ffetargetOffset new_size;
 
 	      item_exp = ffebld_head (item);
 	      item_sym = ffeequiv_symbol (item_exp);
@@ -433,14 +434,12 @@ ffeequiv_layout_local_ (ffeequiv eq)
 		}
 	      else if (item_offset < ffestorag_offset (st))
 		{
-		  ffetargetOffset new_size;
-
-		  /* Increase size of equiv area to start for lower offset relative
-		     to root symbol.  */
-
-		  if (!ffetarget_offset_add (&new_size,
-					     ffestorag_offset (st) - item_offset,
-					     ffestorag_size (st)))
+		  /* Increase size of equiv area to start for lower offset
+		     relative to root symbol.  */
+		  if (! ffetarget_offset_add (&new_size,
+					      ffestorag_offset (st)
+					      - item_offset,
+					      ffestorag_size (st)))
 		    ffetarget_offset_overflow (ffesymbol_text (s));
 		  else
 		    ffestorag_set_size (st, new_size);
@@ -529,6 +528,42 @@ ffeequiv_layout_local_ (ffeequiv eq)
   ffesymbol_set_equiv (root_sym, NULL);	/* This one has storage now. */
 
   ffeequiv_kill (eq);		/* Fully processed, no longer needed. */
+
+  /* If the offset for this storage area is zero (it cannot be positive),
+     that means the alignment/modulo info is already correct.  Otherwise,
+     the alignment info is correct, but the modulo info reflects a
+     zero offset, so fix it.  */
+
+  if (ffestorag_offset (st) < 0)
+    {
+      /* Calculate the initial padding necessary to preserve
+	 the alignment/modulo requirements for the storage area.
+	 These requirements are themselves kept track of in the
+	 record for the storage area as a whole, but really pertain
+	 to offset 0 of that area, which is where the root symbol
+	 was originally placed.
+
+	 The goal here is to have the offset and size for the area
+	 faithfully reflect the area itself, not extra requirements
+	 like alignment.  So to meet the alignment requirements,
+	 the modulo for the area should be set as if the area had an
+	 alignment requirement of alignment/0 and was aligned/padded
+	 downward to meet the alignment requirements of the area at
+	 offset zero, the amount of padding needed being the desired
+	 value for the modulo of the area.  */
+
+      alignment = ffestorag_alignment (st);
+      modulo = ffestorag_modulo (st);
+
+      /* Since we want to move the whole area *down* (lower memory
+	 addresses) as required by the alignment/modulo paid, negate
+	 the offset to ffetarget_align, which assumes aligning *up*
+	 is desired.  */
+      pad = ffetarget_align (&alignment, &modulo,
+			     - ffestorag_offset (st),
+			     alignment, 0);
+      ffestorag_set_modulo (st, pad);
+    }
 
   if (init)
     ffedata_gather (st);	/* Gather subordinate inits into one init. */
@@ -663,6 +698,9 @@ again:				/* :::::::::::::::::::: */
 	    subscript = ffebld_head (subscripts);
 	    dim = ffebld_head (dims);
 
+	    if (ffebld_op (subscript) == FFEBLD_opANY)
+	      return FALSE;
+
 	    assert (ffebld_op (subscript) == FFEBLD_opCONTER);
 	    assert (ffeinfo_basictype (ffebld_info (subscript))
 		    == FFEINFO_basictypeINTEGER);
@@ -670,6 +708,9 @@ again:				/* :::::::::::::::::::: */
 		    == FFEINFO_kindtypeINTEGERDEFAULT);
 	    arrayval = ffebld_constant_integerdefault (ffebld_conter
 						       (subscript));
+
+	    if (ffebld_op (dim) == FFEBLD_opANY)
+	      return FALSE;
 
 	    assert (ffebld_op (dim) == FFEBLD_opBOUNDS);
 	    low = ffebld_left (dim);
@@ -679,6 +720,10 @@ again:				/* :::::::::::::::::::: */
 	      lowbound = 1;
 	    else
 	      {
+		if (ffebld_op (low) == FFEBLD_opANY)
+		  return FALSE;
+
+		assert (ffebld_op (low) == FFEBLD_opCONTER);
 		assert (ffeinfo_basictype (ffebld_info (low))
 			== FFEINFO_basictypeINTEGER);
 		assert (ffeinfo_kindtype (ffebld_info (low))
@@ -686,6 +731,9 @@ again:				/* :::::::::::::::::::: */
 		lowbound
 		  = ffebld_constant_integerdefault (ffebld_conter (low));
 	      }
+
+	    if (ffebld_op (high) == FFEBLD_opANY)
+	      return FALSE;
 
 	    assert (ffebld_op (high) == FFEBLD_opCONTER);
 	    assert (ffeinfo_basictype (ffebld_info (high))
@@ -731,6 +779,8 @@ again:				/* :::::::::::::::::::: */
 	ffebld begin = ffebld_head (ffebld_right (expr));
 
 	expr = ffebld_left (expr);
+	if (ffebld_op (expr) == FFEBLD_opANY)
+	  return FALSE;
 	if (ffebld_op (expr) == FFEBLD_opARRAYREF)
 	  sym = ffebld_symter (ffebld_left (expr));
 	else if (ffebld_op (expr) == FFEBLD_opSYMTER)
@@ -746,6 +796,8 @@ again:				/* :::::::::::::::::::: */
 	  value = 0;
 	else
 	  {
+	    if (ffebld_op (begin) == FFEBLD_opANY)
+	      return FALSE;
 	    assert (ffebld_op (begin) == FFEBLD_opCONTER);
 	    assert (ffeinfo_basictype (ffebld_info (begin))
 		    == FFEINFO_basictypeINTEGER);
@@ -866,6 +918,7 @@ ffeequiv_add (ffeequiv eq, ffebld list, ffelexToken t)
    ffeequiv eq;
    ffeequiv_dump(eq);  */
 
+#if FFECOM_targetCURRENT == FFECOM_targetFFE
 void
 ffeequiv_dump (ffeequiv eq)
 {
@@ -873,6 +926,7 @@ ffeequiv_dump (ffeequiv eq)
     fprintf (dmpout, "(common %s) ", ffesymbol_text (ffeequiv_common (eq)));
   ffebld_dump (ffeequiv_list (eq));
 }
+#endif
 
 /* ffeequiv_exec_transition -- Do the hard work on all the equivalence objects
 

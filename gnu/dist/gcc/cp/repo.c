@@ -1,5 +1,5 @@
 /* Code to maintain a C++ template repository.
-   Copyright (C) 1995 Free Software Foundation, Inc.
+   Copyright (C) 1995, 1997 Free Software Foundation, Inc.
    Contributed by Jason Merrill (jason@cygnus.com)
 
 This file is part of GNU CC.
@@ -26,26 +26,16 @@ Boston, MA 02111-1307, USA.  */
    explicit code.  */
 
 #include "config.h"
-#include <stdio.h>
+#include "system.h"
 #include "tree.h"
 #include "cp-tree.h"
 #include "input.h"
 #include "obstack.h"
+#include "toplev.h"
 
-#ifdef HAVE_STRING_H
-#include <string.h>
-#else
-extern char * rindex ();
-#endif
-#ifdef HAVE_STDLIB_H
-#include <stdlib.h>
-#else
-extern char * getenv ();
-#endif
-extern char * getpwd PROTO((void));
+extern char *getpwd PROTO((void));
 
 static tree repo_get_id PROTO((tree));
-static char *save_string PROTO((char *, int));
 static char *extract_string PROTO((char **));
 static char *get_base_filename PROTO((char *));
 static void open_repo_file PROTO((char *));
@@ -208,14 +198,6 @@ repo_template_instantiated (t, extern_p)
     }
 }
 
-static char *
-save_string (s, len)
-     char *s;
-     int len;
-{
-  return obstack_copy0 (&temporary_obstack, s, len);
-}
-
 /* Parse a reasonable subset of shell quoting syntax.  */
 
 static char *
@@ -277,11 +259,7 @@ get_base_filename (filename)
       return NULL;
     }
 
-  p = (char *) rindex (filename, '/');
-  if (p)
-    return p+1;
-  else
-    return filename;
+  return file_name_nondirectory (filename);
 }        
 
 static void
@@ -294,10 +272,8 @@ open_repo_file (filename)
   if (s == NULL)
     return;
 
-  p = (char *) rindex (s, '/');
-  if (! p)
-    p = s;
-  p = (char *) rindex (p, '.');
+  p = file_name_nondirectory (s);
+  p = rindex (p, '.');
   if (! p)
     p = s + strlen (s);
 
@@ -334,7 +310,7 @@ init_repo (filename)
   if (repo_file == 0)
     return;
 
-  while (buf = afgets (repo_file))
+  while ((buf = afgets (repo_file)))
     {
       switch (buf[0])
 	{
@@ -394,7 +370,6 @@ void
 finish_repo ()
 {
   tree t;
-  char *p;
   int repo_changed = 0;
   char *dir, *args;
 

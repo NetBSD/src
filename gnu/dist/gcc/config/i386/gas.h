@@ -56,8 +56,8 @@ Boston, MA 02111-1307, USA.  */
 
 /* Specify predefined symbols in preprocessor.  */
 
-#define CPP_PREDEFINES "-Di386 -Dunix"
-#define CPP_SPEC "%(cpp_cpu) %[cpp_cpu] %{posix:-D_POSIX_SOURCE}"
+#define CPP_PREDEFINES "-Dunix"
+#define CPP_SPEC "%(cpp_cpu) %{posix:-D_POSIX_SOURCE}"
 
 /* Allow #sccs in preprocessor.  */
 
@@ -80,25 +80,24 @@ Boston, MA 02111-1307, USA.  */
    doubt or guess work, and since this file is used for both a.out and other
    file formats, we use one of them.  */
 
-#if 0 /* ??? However, not every port uses binutils 2.6 yet.  */
+#ifdef HAVE_GAS_BALIGN_AND_P2ALIGN 
 #undef ASM_OUTPUT_ALIGN
 #define ASM_OUTPUT_ALIGN(FILE,LOG) \
   if ((LOG)!=0) fprintf ((FILE), "\t.balign %d\n", 1<<(LOG))
 #endif
 
-/* Align labels, etc. at 4-byte boundaries.
-   For the 486, align to 16-byte boundary for sake of cache.  */
+/* A C statement to output to the stdio stream FILE an assembler
+   command to advance the location counter to a multiple of 1<<LOG
+   bytes if it is within MAX_SKIP bytes.
 
-#undef ASM_OUTPUT_ALIGN_CODE
-#define ASM_OUTPUT_ALIGN_CODE(FILE) \
-  fprintf ((FILE), "\t.align %d,0x90\n", i386_align_jumps)
+   This is used to align code labels according to Intel recommendations.  */
 
-/* Align start of loop at 4-byte boundary.  */
-
-#undef ASM_OUTPUT_LOOP_ALIGN
-#define ASM_OUTPUT_LOOP_ALIGN(FILE) \
-  fprintf ((FILE), "\t.align %d,0x90\n", i386_align_loops)
-
+#ifdef HAVE_GAS_MAX_SKIP_P2ALIGN
+#  define ASM_OUTPUT_MAX_SKIP_ALIGN(FILE,LOG,MAX_SKIP) \
+     if ((LOG)!=0) \
+       if ((MAX_SKIP)==0) fprintf ((FILE), "\t.p2align %d\n", (LOG)); \
+       else fprintf ((FILE), "\t.p2align %d,,%d\n", (LOG), (MAX_SKIP))
+#endif
 
 /* A C statement or statements which output an assembler instruction
    opcode to the stdio stream STREAM.  The macro-operand PTR is a

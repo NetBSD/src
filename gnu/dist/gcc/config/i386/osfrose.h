@@ -90,10 +90,10 @@ Boston, MA 02111-1307, USA.  */
 
 /* Change default predefines.  */
 #undef	CPP_PREDEFINES
-#define CPP_PREDEFINES "-Di386 -DOSF -DOSF1 -Dunix -Asystem(xpg4)"
+#define CPP_PREDEFINES "-DOSF -DOSF1 -Dunix -Asystem(xpg4)"
 
 #undef  CPP_SPEC
-#define CPP_SPEC "%(cpp_cpu) %[cpp_cpu] \
+#define CPP_SPEC "%(cpp_cpu) \
 %{!melf: -D__ROSE__ %{!pic-none: -D__SHARED__}} \
 %{melf: -D__ELF__ %{fpic: -D__SHARED__}} \
 %{mno-underscores: -D__NO_UNDERSCORES__} \
@@ -381,7 +381,7 @@ while (0)
    i386.md for an explanation of the expression this outputs. */
 
 #undef ASM_OUTPUT_ADDR_DIFF_ELT
-#define ASM_OUTPUT_ADDR_DIFF_ELT(FILE, VALUE, REL) \
+#define ASM_OUTPUT_ADDR_DIFF_ELT(FILE, BODY, VALUE, REL) \
   fprintf (FILE, "\t.long _GLOBAL_OFFSET_TABLE_+[.-%s%d]\n", LPREFIX, VALUE)
 
 /* Output a definition */
@@ -404,10 +404,9 @@ while (0)
    alignment to be done at such a time.  Most machine descriptions do
    not currently define the macro.  */
 
-#undef	ASM_OUTPUT_ALIGN_CODE
-#define ASM_OUTPUT_ALIGN_CODE(STREAM)					\
-  fprintf (STREAM, "\t.align\t%d\n",					\
-	   (!TARGET_LARGE_ALIGN && i386_align_jumps > 2) ? 2 : i386_align_jumps)
+#undef	LABEL_ALIGN_AFTER_BARRIER
+#define LABEL_ALIGN_AFTER_BARRIER(LABEL) \
+  ((!TARGET_LARGE_ALIGN && i386_align_jumps > 2) ? 2 : i386_align_jumps)
 
 /* A C expression to output text to align the location counter in the
    way that is desirable at the beginning of a loop.
@@ -416,9 +415,8 @@ while (0)
    alignment to be done at such a time.  Most machine descriptions do
    not currently define the macro.  */
 
-#undef	ASM_OUTPUT_LOOP_ALIGN
-#define ASM_OUTPUT_LOOP_ALIGN(STREAM) \
-  fprintf (STREAM, "\t.align\t%d\n", i386_align_loops)
+#undef	LOOP_ALIGN
+#define LOOP_ALIGN(LABEL) (i386_align_loops)
 
 /* A C statement to output to the stdio stream STREAM an assembler
    command to advance the location counter to a multiple of 2 to the

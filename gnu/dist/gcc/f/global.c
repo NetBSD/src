@@ -1,6 +1,6 @@
 /* global.c -- Implementation File (module.c template V1.0)
    Copyright (C) 1995, 1997 Free Software Foundation, Inc.
-   Contributed by James Craig Burley (burley@gnu.ai.mit.edu).
+   Contributed by James Craig Burley (burley@gnu.org).
 
 This file is part of GNU Fortran.
 
@@ -437,6 +437,20 @@ ffeglobal_pad_common (ffesymbol s, ffetargetAlign pad, ffewhereLine wl,
       g->u.common.pad = pad;
       g->u.common.pad_where_line = ffewhere_line_use (wl);
       g->u.common.pad_where_col = ffewhere_column_use (wc);
+
+      if (pad != 0)
+	{
+	  char padding[20];
+
+	  sprintf (&padding[0], "%" ffetargetAlign_f "u", pad);
+	  ffebad_start (FFEBAD_COMMON_INIT_PAD);
+	  ffebad_string (ffesymbol_text (s));
+	  ffebad_string (padding);
+	  ffebad_string ((pad == 1)
+			 ? FFECOM_SIZE_UNIT : FFECOM_SIZE_UNITS);
+	  ffebad_here (0, wl, wc);
+	  ffebad_finish ();
+	}
     }
   else
     {
@@ -459,22 +473,15 @@ ffeglobal_pad_common (ffesymbol s, ffetargetAlign pad, ffewhereLine wl,
 	  ffebad_here (1, g->u.common.pad_where_line, g->u.common.pad_where_col);
 	  ffebad_finish ();
 	}
+
+      if (g->u.common.pad < pad)
+	{
+	  g->u.common.pad = pad;
+	  g->u.common.pad_where_line = ffewhere_line_use (wl);
+	  g->u.common.pad_where_col = ffewhere_column_use (wc);
+	}
     }
 #endif
-
-  if (pad != 0)
-    {				/* Warn about initial padding in common area. */
-      char padding[20];
-
-      sprintf (&padding[0], "%" ffetargetAlign_f "u", pad);
-      ffebad_start (FFEBAD_COMMON_INIT_PAD);
-      ffebad_string (ffesymbol_text (s));
-      ffebad_string (padding);
-      ffebad_string ((pad == 1)
-		     ? FFECOM_SIZE_UNIT : FFECOM_SIZE_UNITS);
-      ffebad_here (0, wl, wc);
-      ffebad_finish ();
-    }
 }
 
 /* Collect info for a global's argument.  */
@@ -616,9 +623,11 @@ ffeglobal_proc_def_arg (ffesymbol s, int argno, char *name, ffeglobalArgSummary 
 	      defwhy = "an alternate-return label";
 	      break;
 
+#if 0
 	    case FFEGLOBAL_argsummaryPTR:
 	      defwhy = "a pointer";
 	      break;
+#endif
 
 	    default:
 	      defwhy = "???";
@@ -868,6 +877,7 @@ ffeglobal_proc_ref_arg (ffesymbol s, int argno, ffeglobalArgSummary as,
 	    }
 	  break;
 
+#if 0
 	case FFEGLOBAL_argsummaryPTR:
 	  if ((ai->as != FFEGLOBAL_argsummaryPTR)
 	      && (ai->as != FFEGLOBAL_argsummaryNONE))
@@ -876,6 +886,7 @@ ffeglobal_proc_ref_arg (ffesymbol s, int argno, ffeglobalArgSummary as,
 	      refwhy = "a pointer";
 	    }
 	  break;
+#endif
 
 	default:
 	  break;
@@ -919,9 +930,11 @@ ffeglobal_proc_ref_arg (ffesymbol s, int argno, ffeglobalArgSummary as,
 	      defwhy = "an alternate-return label";
 	      break;
 
+#if 0
 	    case FFEGLOBAL_argsummaryPTR:
 	      defwhy = "a pointer";
 	      break;
+#endif
 
 	    default:
 	      defwhy = "???";
@@ -1360,6 +1373,9 @@ ffeglobal_ref_progunit_ (ffesymbol s, ffelexToken t, ffeglobalType type)
       /* We've learned more, so point to where we learned it.  */
       g->t = ffelex_token_use (t);
       g->type = type;
+#ifdef FFECOM_globalHOOK
+      g->hook = FFECOM_globalNULL;	/* Discard previous _DECL. */
+#endif
       g->u.proc.n_args = -1;
     }
 
@@ -1415,7 +1431,7 @@ ffeglobal_save_common (ffesymbol s, bool save, ffewhereLine wl,
 /* ffeglobal_size_common -- Establish size of COMMON area
 
    ffesymbol s;	 // the common area
-   long size;  // size in units
+   ffetargetOffset size;  // size in units
    if (ffeglobal_size_common(s,size))  // new size is largest seen
 
    In global-enabled mode, set the size if it current size isn't known or is
@@ -1426,7 +1442,7 @@ ffeglobal_save_common (ffesymbol s, bool save, ffewhereLine wl,
 
 #if FFEGLOBAL_ENABLED
 bool
-ffeglobal_size_common (ffesymbol s, long size)
+ffeglobal_size_common (ffesymbol s, ffetargetOffset size)
 {
   ffeglobal g;
 
@@ -1443,13 +1459,18 @@ ffeglobal_size_common (ffesymbol s, long size)
       return TRUE;
     }
 
-  if ((g->u.common.size < size) && (g->tick > 0) && (g->tick < ffe_count_2))
+  if ((g->tick > 0) && (g->tick < ffe_count_2)
+      && (g->u.common.size < size))
     {
       char oldsize[40];
       char newsize[40];
 
-      sprintf (&oldsize[0], "%ld", g->u.common.size);
-      sprintf (&newsize[0], "%ld", size);
+      /* Common block initialized in a previous program unit, which
+	 effectively freezes its size, but now the program is trying
+	 to enlarge it.  */
+
+      sprintf (&oldsize[0], "%" ffetargetOffset_f "d", g->u.common.size);
+      sprintf (&newsize[0], "%" ffetargetOffset_f "d", size);
 
       ffebad_start (FFEBAD_COMMON_ENLARGED);
       ffebad_string (ffesymbol_text (s));
@@ -1481,8 +1502,8 @@ ffeglobal_size_common (ffesymbol s, long size)
 	 that way.  Warnings about differing sizes must therefore
 	 always be issued.  */
 
-      sprintf (&oldsize[0], "%ld", g->u.common.size);
-      sprintf (&newsize[0], "%ld", size);
+      sprintf (&oldsize[0], "%" ffetargetOffset_f "d", g->u.common.size);
+      sprintf (&newsize[0], "%" ffetargetOffset_f "d", size);
 
       ffebad_start (FFEBAD_COMMON_DIFF_SIZE);
       ffebad_string (ffesymbol_text (s));
@@ -1504,6 +1525,7 @@ ffeglobal_size_common (ffesymbol s, long size)
       g->u.common.size = size;
       return TRUE;
     }
+
   return FALSE;
 }
 

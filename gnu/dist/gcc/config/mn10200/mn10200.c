@@ -19,8 +19,8 @@ along with GNU CC; see the file COPYING.  If not, write to
 the Free Software Foundation, 59 Temple Place - Suite 330,
 Boston, MA 02111-1307, USA.  */
 
-#include <stdio.h>
 #include "config.h"
+#include <stdio.h>
 #include "rtl.h"
 #include "regs.h"
 #include "hard-reg-set.h"
@@ -896,7 +896,7 @@ secondary_reload_class (class, mode, in, input)
       && class == ADDRESS_REGS)
     return DATA_REGS;
 
-  /* Address register stores which are not PSImode need a scrach register.  */
+  /* Address register stores which are not PSImode need a scratch register.  */
   if (! input
       && GET_CODE (in) == MEM
       && (mode != PSImode)

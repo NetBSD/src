@@ -20,10 +20,10 @@
 .if n .sp
 .if t .sp 0.4
 ..
-.Id $Id: gcc.1,v 1.1.1.1 1998/03/29 08:14:37 mrg Exp $
+.Id $Id: gcc.1,v 1.1.1.2 1998/08/16 17:37:30 tv Exp $
 .TH GCC 1 "\*(Dt" "GNU Tools" "GNU Tools"
 .SH NAME
-gcc, g++ \- GNU project C and C++ Compiler (egcs-1.0.2)
+gcc, g++ \- GNU project C and C++ Compiler (egcs-1.0)
 .SH SYNOPSIS
 .B gcc
 .RI "[ " option " | " filename " ].\|.\|."
@@ -190,7 +190,10 @@ in the following sections.
 \-Wformat
 .RI \-Wid\-clash\- len
 \-Wimplicit
+\-Wimplicit\-int
+\-Wimplicit\-function\-declaration
 \-Winline
+\-Wlong\-long
 \-Wmain
 \-Wmissing\-prototypes
 \-Wmissing\-declarations
@@ -260,6 +263,7 @@ in the following sections.
 \-funroll\-loops
 \-O
 \-O2
+\-O3
 .TP
 .B Preprocessor Options
 .RI \-A assertion
@@ -1717,8 +1721,14 @@ An unsigned value is compared against zero with `\|\c
 \&\|'.
 .PP
 .TP
+.B \-Wimplicit-int
+Warn whenever a declaration does not specify a type.
+.TP
+.B \-Wimplicit-function-declaration
+Warn whenever a function is used before being declared.
+.TP
 .B \-Wimplicit
-Warn whenever a function or parameter is implicitly declared.
+Same as -Wimplicit-int and -Wimplicit-function-declaration.
 .TP
 .B \-Wmain
 Warn if the
@@ -1994,6 +2004,20 @@ Warn if an \c
 .TP
 .B \-Wenum\-clash
 Warn about conversion between different enumeration types (C++ only).
+.TP
+.B \-Wlong-long
+Warn if
+.B long long \c
+type is used.  This is default.  To inhibit
+the warning messages, use flag `\|\c
+.B \-Wno\-long\-long\c
+\&\|'.  Flags `\|\c
+.B \-W\-long\-long\c
+\&\|' and `\|\c
+.B \-Wno\-long\-long\c
+\&\|' are taken into account only when flag `\|\c
+.B \-pedantic\c
+\&\|' is used.
 .TP
 .B \-Woverloaded\-virtual
 (C++ only.)
@@ -3538,7 +3562,7 @@ be compiled with the same
 value.
 .TP
 .B \-nocpp
-Tell the MIPS assembler to not run it's preprocessor over user
+Tell the MIPS assembler to not run its preprocessor over user
 assembler files (with a `\|\c
 .B .s\c
 \&\|' suffix) when assembling them.
@@ -3990,7 +4014,7 @@ three-way choice.
 .BI "\-fcall\-used\-" "reg"
 Treat the register named \c
 .I reg\c
-\& as an allocatable register that is
+\& as an allocable register that is
 clobbered by function calls.  It may be allocated for temporaries or
 variables that do not live across a call.  Functions compiled this way
 will not save and restore the register \c
@@ -4007,7 +4031,7 @@ three-way choice.
 .BI "\-fcall\-saved\-" "reg"
 Treat the register named \c
 .I reg\c
-\& as an allocatable register saved by
+\& as an allocable register saved by
 functions.  It may be allocated even for temporaries or variables that
 live across a call.  Functions compiled this way will save and restore
 the register \c

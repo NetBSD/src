@@ -1,6 +1,6 @@
 /* Specialized bits of code needed to support construction and
    destruction of file-scope objects in C++ code.
-   Copyright (C) 1991, 1994, 1995, 1996, 1997 Free Software Foundation, Inc.
+   Copyright (C) 1991, 94, 95, 96, 97, 1998 Free Software Foundation, Inc.
    Contributed by Ron Guilmette (rfg@monkeys.com).
 
 This file is part of GNU CC.
@@ -150,7 +150,7 @@ __do_global_dtors_aux ()
 
 /* Stick a call to __do_global_dtors_aux into the .fini section.  */
 
-static void
+static void __attribute__ ((__unused__))
 fini_dummy ()
 {
   asm (FINI_SECTION_ASM_OP);
@@ -173,7 +173,7 @@ frame_dummy ()
   __register_frame_info (__EH_FRAME_BEGIN__, &object);
 }
 
-static void
+static void __attribute__ ((__unused__))
 init_dummy ()
 {
   asm (INIT_SECTION_ASM_OP);
@@ -274,7 +274,7 @@ __frame_dummy ()
 #endif /* defined(INIT_SECTION_ASM_OP) */
 
 /* Force cc1 to switch to .data section.  */
-static func_ptr force_to_data[0] = { };
+static func_ptr force_to_data[0] __attribute__ ((__unused__)) = { };
 
 /* NOTE:  In order to be able to support SVR4 shared libraries, we arrange
    to have one set of symbols { __CTOR_LIST__, __DTOR_LIST__, __CTOR_END__,
@@ -294,7 +294,8 @@ static func_ptr force_to_data[0] = { };
 CTOR_LIST_BEGIN;
 #else
 asm (CTORS_SECTION_ASM_OP);	/* cc1 doesn't know that we are switching! */
-STATIC func_ptr __CTOR_LIST__[1] = { (func_ptr) (-1) };
+STATIC func_ptr __CTOR_LIST__[1] __attribute__ ((__unused__))
+  = { (func_ptr) (-1) };
 #endif
 
 #ifdef DTOR_LIST_BEGIN
@@ -334,7 +335,7 @@ __do_global_ctors_aux ()
 
 /* Stick a call to __do_global_ctors_aux into the .init section.  */
 
-static void
+static void __attribute__ ((__unused__))
 init_dummy ()
 {
   asm (INIT_SECTION_ASM_OP);
@@ -344,7 +345,7 @@ init_dummy ()
 #endif
   asm (TEXT_SECTION_ASM_OP);
 
-/* This is a kludge. The i386 Linux dynamic linker needs ___brk_addr,
+/* This is a kludge. The i386 GNU/Linux dynamic linker needs ___brk_addr,
    __environ and atexit (). We have to make sure they are in the .dynsym
    section. We accomplish it by making a dummy call here. This
    code is never reached.  */
@@ -391,6 +392,12 @@ __do_global_ctors_aux ()	/* prologue goes in .text section */
   ON_EXIT (__do_global_dtors, 0);
 }				/* epilogue and body go in .init section */
 
+#ifdef FORCE_INIT_SECTION_ALIGN
+FORCE_INIT_SECTION_ALIGN;
+#endif
+
+asm (TEXT_SECTION_ASM_OP);
+
 #endif /* OBJECT_FORMAT_ELF */
 
 #else /* defined(INIT_SECTION_ASM_OP) */
@@ -400,6 +407,9 @@ __do_global_ctors_aux ()	/* prologue goes in .text section */
    not an SVR4-style .init section.  __do_global_ctors can be non-static
    in this case because we protect it with -hidden_symbol.  */
 static func_ptr __CTOR_END__[];
+#ifdef EH_FRAME_SECTION_ASM_OP
+extern void __frame_dummy (void);
+#endif
 void
 __do_global_ctors ()
 {
@@ -415,7 +425,7 @@ __do_global_ctors ()
 #endif /* defined(INIT_SECTION_ASM_OP) */
 
 /* Force cc1 to switch to .data section.  */
-static func_ptr force_to_data[0] = { };
+static func_ptr force_to_data[0] __attribute__ ((__unused__)) = { };
 
 /* Put a word containing zero at the end of each of our two lists of function
    addresses.  Note that the words defined here go into the .ctors and .dtors
@@ -434,7 +444,8 @@ STATIC func_ptr __CTOR_END__[1] = { (func_ptr) 0 };
 DTOR_LIST_END;
 #else
 asm (DTORS_SECTION_ASM_OP);	/* cc1 doesn't know that we are switching! */
-STATIC func_ptr __DTOR_END__[1] = { (func_ptr) 0 };
+STATIC func_ptr __DTOR_END__[1] __attribute__ ((__unused__))
+  = { (func_ptr) 0 };
 #endif
 
 #ifdef EH_FRAME_SECTION_ASM_OP
@@ -443,7 +454,7 @@ STATIC func_ptr __DTOR_END__[1] = { (func_ptr) 0 };
 
 typedef unsigned int ui32 __attribute__ ((mode (SI)));
 asm (EH_FRAME_SECTION_ASM_OP);
-STATIC ui32 __FRAME_END__[] = { 0 };
+STATIC ui32 __FRAME_END__[] __attribute__ ((__unused__)) = { 0 };
 #endif /* EH_FRAME_SECTION */
 
 #endif /* defined(CRT_END) */

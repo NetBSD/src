@@ -1088,10 +1088,11 @@ while (0)
    all programs. */
 #define CASE_VECTOR_MODE SImode
 
-/* Define this if the tablejump instruction expects the table
-   to contain offsets from the address of the table.
-   Do not define this if the table should contain absolute addresses.  */
-#define CASE_VECTOR_PC_RELATIVE
+/* Define as C expression which evaluates to nonzero if the tablejump
+   instruction expects the table to contain offsets from the address of the
+   table.
+   Do not define this if the table should contain absolute addresses. */
+#define CASE_VECTOR_PC_RELATIVE 1
 
 /* Specify the tree operation to be used to convert reals to integers.  */
 #define IMPLICIT_FIX_EXPR FIX_ROUND_EXPR
@@ -1382,11 +1383,9 @@ do {									\
 #define ASM_GENERATE_INTERNAL_LABEL(LABEL,PREFIX,NUM)	\
   sprintf (LABEL, "*%s%d", PREFIX, NUM)
 
-/* This is how to align the code that follows an unconditional branch.
-   Note that 0xa2 is a no-op.  */
+/* This is how to align the code that follows an unconditional branch.  */
 
-#define ASM_OUTPUT_ALIGN_CODE(FILE)	\
-  fprintf (FILE, "\t.align 2,0xa2\n")
+#define LABEL_ALIGN_AFTER_BARRIER(LABEL) (2)
 
 /* This is how to output an element of a case-vector that is absolute.
    (The ns32k does not use such vectors,
@@ -1397,7 +1396,7 @@ do {									\
 
 /* This is how to output an element of a case-vector that is relative.  */
 /* ** Notice that the second element is LI format! */
-#define ASM_OUTPUT_ADDR_DIFF_ELT(FILE, VALUE, REL)  \
+#define ASM_OUTPUT_ADDR_DIFF_ELT(FILE, BODY, VALUE, REL)  \
   fprintf (FILE, "\t.long L%d-LI%d\n", VALUE, REL)
 
 /* This is how to output an assembler line

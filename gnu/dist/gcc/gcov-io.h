@@ -22,6 +22,12 @@ Boston, MA 02111-1307, USA.  */
 #ifndef GCOV_IO_H
 #define GCOV_IO_H
 #include <stdio.h>
+#include <sys/types.h>
+
+static int __fetch_long		PROTO ((long *, char *, int));
+static int __store_long		PROTO ((long, char *, size_t));
+static int __read_long		PROTO ((long *, FILE *, size_t));
+static int __write_long		PROTO ((long, FILE *, size_t));
 
 /* These routines only work for signed values. */
 
@@ -33,10 +39,10 @@ static int
 __store_long (value, dest, bytes)
      long value;
      char *dest;
-     int bytes;
+     size_t bytes;
 {
   int upper_bit = (value < 0 ? 128 : 0);
-  int i;
+  size_t i;
 
   if (value < 0)
     {
@@ -100,7 +106,7 @@ static int
 __write_long (value, file, bytes)
      long value;
      FILE *file;
-     int bytes;
+     size_t bytes;
 {
   char c[10];
 
@@ -123,7 +129,7 @@ static int
 __read_long (dest, file, bytes)
      long *dest;
      FILE *file;
-     int bytes;
+     size_t bytes;
 {
   char c[10];
 

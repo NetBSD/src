@@ -2,7 +2,7 @@
    hosting on Windows32, using GNU tools and the Windows32 API Library,
    as distinct from winnt.h, which is used to build GCC for use with a
    windows style library and tool set and uses the Microsoft tools.
-   Copyright (C) 1997 Free Software Foundation, Inc.
+   Copyright (C) 1997, 1998 Free Software Foundation, Inc.
 
 This file is part of GNU CC.
 
@@ -31,17 +31,61 @@ Boston, MA 02111-1307, USA. */
   -D__MINGW32__ -DWINNT  -D_X86_=1 -D__STDC__=1\
   -D__stdcall=__attribute__((__stdcall__)) \
   -D__cdecl=__attribute__((__cdecl__)) \
+  -D__declspec(x)=__attribute__((x)) \
   -Asystem(winnt) -Acpu(i386) -Amachine(i386)"
+
+/* Specific a different directory for the standard include files.  */
+#undef STANDARD_INCLUDE_DIR
+#define STANDARD_INCLUDE_DIR "/usr/local/i386-mingw32/include"
+
+#define STANDARD_INCLUDE_COMPONENT "MINGW32"
 
 /* For Windows applications, include more libraries, but always include
    kernel32.  */
 #undef LIB_SPEC
-#define LIB_SPEC "%{windows:-luser32 -lgdi32 -lcomdlg32} -lkernel32"
+#define LIB_SPEC \
+"%{mwindows:-luser32 -lgdi32 -lcomdlg32} -lkernel32 -ladvapi32 -lshell32"
 
-/* Include in the Windows32 API libraries with libgcc */
+/* Include in the mingw32 libraries with libgcc */
 #undef LIBGCC_SPEC
-#define LIBGCC_SPEC "-lmingw32 -lgcc -lmoldname -lcrtdll"
+#define LIBGCC_SPEC "-lmingw32 -lgcc -lmoldname -lmsvcrt"
 
 /* Specify a different entry point when linking a DLL */
 #undef LINK_SPEC
-#define LINK_SPEC "%{windows:--subsystem windows} %{dll:--dll -e _DllMainCRTStartup@12}"
+#define LINK_SPEC \
+"%{mwindows:--subsystem windows} %{mdll:--dll -e _DllMainCRTStartup@12}"
+
+#undef STARTFILE_SPEC
+#define STARTFILE_SPEC "%{mdll:dllcrt2%O%s} %{!mdll:crt2%O%s}"
+
+#define MATH_LIBRARY "-lmsvcrt"
+
+/* Output STRING, a string representing a filename, to FILE.  We canonicalize
+   it to be in MS-DOS format.  */
+#define OUTPUT_QUOTED_STRING(FILE, STRING) \
+do {						\
+  char c;					\
+						\
+  putc ('\"', asm_file);			\
+  if (STRING[1] == ':'				\
+      && (STRING[2] == '/' || STRING[2] == '\\')) \
+    {						\
+      putc ('/', asm_file);			\
+      putc ('/', asm_file);			\
+      putc (*string, asm_file);			\
+      string += 2;				\
+    }						\
+						\
+  while ((c = *string++) != 0)			\
+    {						\
+      if (c == '\\')				\
+	c = '/';				\
+						\
+      if (c == '\"')				\
+	putc ('\\', asm_file);			\
+      putc (c, asm_file);			\
+    }						\
+						\
+  putc ('\"', asm_file);			\
+} while (0)
+

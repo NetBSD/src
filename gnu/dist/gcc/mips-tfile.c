@@ -2,8 +2,8 @@
    contain debugging information specified by the GNU compiler
    in the form of comments (the mips assembler does not support
    assembly access to debug information).
-   Copyright (C) 1991, 1993, 1994. 1995 Free Software Foundation, Inc.
-   Contributed by Michael Meissner, meissner@osf.org
+   Copyright (C) 1991, 93, 94, 95, 97, 1998 Free Software Foundation, Inc.
+   Contributed by Michael Meissner (meissner@cygnus.com).
    
 This file is part of GNU CC.
 
@@ -599,13 +599,13 @@ Boston, MA 02111-1307, USA.  */
 */
 
 
+#include "config.h"
 #ifdef __STDC__
 #include <stdarg.h>
 #else
 #include <varargs.h>
 #endif
-#include "config.h"
-#include <stdio.h>
+#include "system.h"
 
 #ifndef __SABER__
 #define saber_stop()
@@ -671,15 +671,8 @@ extern PTR_T	xcalloc		__proto((Size_t, Size_t));
 extern PTR_T	xrealloc	__proto((PTR_T, Size_t));
 extern void	xfree		__proto((PTR_T));
 
-#ifdef HAVE_VPRINTF
 extern void	fatal		PVPROTO((const char *format, ...));
 extern void	error		PVPROTO((const char *format, ...));
-#else
-/* We must not provide any prototype here, even if ANSI C.  */
-extern void	fatal		__proto(());
-extern void	error		__proto(());
-#endif
-
 
 #ifndef MIPS_DEBUGGING_INFO
 
@@ -705,11 +698,6 @@ main ()
 #undef rindex
 #undef index
 
-#include <sys/types.h>
-#include <string.h>
-#include <ctype.h>
-#include <fcntl.h>
-#include <errno.h>
 #include <signal.h>
 #include <sys/stat.h>
 
@@ -719,33 +707,18 @@ main ()
 #include "mips/a.out.h"
 #endif /* CROSS_COMPILE */
 
-#if defined (USG) || defined (NO_STAB_H)
+#if defined (USG) || !defined (HAVE_STAB_H)
 #include "gstab.h"  /* If doing DBX on sysV, use our own stab.h.  */
 #else
 #include <stab.h>  /* On BSD, use the system's stab.h.  */
 #endif /* not USG */
 
+#include "machmode.h"
+
 #ifdef __GNU_STAB__
 #define STAB_CODE_TYPE enum __stab_debug_code
 #else
 #define STAB_CODE_TYPE int
-#endif
-
-#ifdef _OSF_SOURCE
-#define HAS_STDLIB_H
-#define HAS_UNISTD_H
-#endif
-
-#ifdef HAS_STDLIB_H
-#include <stdlib.h>
-#endif
-
-#ifdef HAS_UNISTD_H
-#include <unistd.h>
-#endif
-
-#ifndef errno
-extern int errno;			/* MIPS errno.h doesn't declare this */
 #endif
 
 #ifndef MALLOC_CHECK
@@ -755,10 +728,10 @@ extern int errno;			/* MIPS errno.h doesn't declare this */
 #endif
 
 #define IS_ASM_IDENT(ch) \
-  (isalnum (ch) || (ch) == '_' || (ch) == '.' || (ch) == '$')
+  (ISALNUM (ch) || (ch) == '_' || (ch) == '.' || (ch) == '$')
 
 
-/* Redefinition of of storage classes as an enumeration for better
+/* Redefinition of storage classes as an enumeration for better
    debugging.  */
 
 typedef enum sc {
@@ -966,7 +939,7 @@ enum alloc_type {
    grow linearly, and which are written in the object file as sequential
    pages.  On systems with a BSD malloc that define USE_MALLOC, the
    MAX_CLUSTER_PAGES should be 1 less than a power of two, since malloc
-   adds it's overhead, and rounds up to the next power of 2.  Pages are
+   adds its overhead, and rounds up to the next power of 2.  Pages are
    linked together via a linked list.
 
    If PAGE_SIZE is > 4096, the string length in the shash_t structure
@@ -1755,10 +1728,6 @@ STATIC void	  free_thead		__proto((thead_t *));
 STATIC char	 *local_index		__proto((const char *, int));
 STATIC char	 *local_rindex		__proto((const char *, int));
 
-#ifndef __alpha
-extern char  *sbrk			__proto((int));
-extern void   free			__proto((PTR_T));
-#endif
 extern char  *mktemp			__proto((char *));
 extern long   strtol			__proto((const char *, char **, int));
 
@@ -1770,12 +1739,6 @@ extern char *version_string;
 #ifndef SYS_SIGLIST_DECLARED
 extern char *sys_siglist[NSIG + 1];
 #endif
-#endif
-
-#ifndef SEEK_SET	/* Symbolic constants for the "fseek" function: */
-#define	SEEK_SET 0	/* Set file pointer to offset */
-#define	SEEK_CUR 1	/* Set file pointer to its current value plus offset */
-#define	SEEK_END 2	/* Set file pointer to the size of the file plus offset */
 #endif
 
 
@@ -2093,11 +2056,12 @@ add_local_symbol (str_start, str_end_p1, type, storage, value, indx)
 	       value, depth, sc_str);
 
       if (str_start && str_end_p1 - str_start > 0)
-	fprintf (stderr, " st= %-11s name= %.*s\n", st_str, str_end_p1 - str_start, str_start);
+	fprintf (stderr, " st= %-11s name= %.*s\n",
+		 st_str, (int) (str_end_p1 - str_start), str_start);
       else
 	{
 	  Size_t len = strlen (st_str);
-	  fprintf (stderr, " st= %.*s\n", len-1, st_str);
+	  fprintf (stderr, " st= %.*s\n", (int) (len-1), st_str);
 	}
     }
 
@@ -2131,7 +2095,8 @@ add_ext_symbol (str_start, str_end_p1, type, storage, value, indx, ifd)
 	       value, ifd, sc_str);
 
       if (str_start && str_end_p1 - str_start > 0)
-	fprintf (stderr, " st= %-11s name= %.*s\n", st_str, str_end_p1 - str_start, str_start);
+	fprintf (stderr, " st= %-11s name= %.*s\n",
+		 st_str, (int) (str_end_p1 - str_start), str_start);
       else
 	fprintf (stderr, " st= %s\n", st_str);
     }
@@ -2440,8 +2405,8 @@ add_unknown_tag (ptag)
 	default:				break;
 	}
 
-      fprintf (stderr, "unknown %s %.*s found\n", agg_type,
-	       hash_ptr->len, name_start);
+      fprintf (stderr, "unknown %s %.*s found\n",
+	       agg_type, (int) hash_ptr->len, name_start);
     }
 
   sym_index = add_local_symbol (name_start,
@@ -2554,7 +2519,7 @@ add_file (file_start, file_end_p1)
   register efdr_t *file_ptr;
 
   if (debug)
-    fprintf (stderr, "\tfile\t%.*s\n", len, file_start);
+    fprintf (stderr, "\tfile\t%.*s\n", (int) len, file_start);
 
   /* See if the file has already been created.  */
   for (file_ptr = first_file;
@@ -2832,7 +2797,7 @@ parse_begin (start)
       return;
     }
 
-  for (end_p1 = start; (ch = *end_p1) != '\0' && !isspace (ch); end_p1++)
+  for (end_p1 = start; (ch = *end_p1) != '\0' && !ISSPACE (ch); end_p1++)
     ;
 
   hash_ptr = hash_string (start,
@@ -2882,7 +2847,7 @@ parse_bend (start)
       return;
     }
 
-  for (end_p1 = start; (ch = *end_p1) != '\0' && !isspace (ch); end_p1++)
+  for (end_p1 = start; (ch = *end_p1) != '\0' && !ISSPACE (ch); end_p1++)
     ;
 
   hash_ptr = hash_string (start,
@@ -2992,7 +2957,7 @@ parse_def (name_start)
 	   (ch = *dir_end_p1) != ' ' && ch != '\t';
 	   dir_end_p1++)
 	{
-	  if (ch == '\0' || isspace (ch))
+	  if (ch == '\0' || ISSPACE (ch))
 	    {
 	      error_line = __LINE__;
 	      saber_stop ();
@@ -3008,7 +2973,7 @@ parse_def (name_start)
       while (ch == ' ' || ch == '\t')
 	ch = *++arg_start;
 
-      if (isdigit (ch) || ch == '-' || ch == '+')
+      if (ISDIGIT (ch) || ch == '-' || ch == '+')
 	{
 	  int ch2;
 	  arg_number = strtol (arg_start, (char **) &arg_end_p1, 0);
@@ -3016,7 +2981,7 @@ parse_def (name_start)
 	    arg_was_number++;
 	}
 
-      else if (ch == '\0' || isspace (ch))
+      else if (ch == '\0' || ISSPACE (ch))
 	{
 	  error_line = __LINE__;
 	  saber_stop ();
@@ -3064,7 +3029,7 @@ parse_def (name_start)
 		    ch = *++arg_start;
 
 		  arg_was_number = 0;
-		  if (isdigit (ch) || ch == '-' || ch == '+')
+		  if (ISDIGIT (ch) || ch == '-' || ch == '+')
 		    {
 		      int ch2;
 		      arg_number = strtol (arg_start, (char **) &arg_end_p1, 0);
@@ -3138,7 +3103,7 @@ parse_def (name_start)
 		    ch = *++arg_start;
 
 		  arg_was_number = 0;
-		  if (isdigit (ch) || ch == '-' || ch == '+')
+		  if (ISDIGIT (ch) || ch == '-' || ch == '+')
 		    {
 		      int ch2;
 		      arg_number = strtol (arg_start, (char **) &arg_end_p1, 0);
@@ -3263,7 +3228,7 @@ parse_def (name_start)
 		      && eptr == (EXTR *) 0)
 		    {
 		      fprintf (stderr, "warning, %.*s not found in original or external symbol tables, value defaults to 0\n",
-			       arg_end_p1 - arg_start,
+			       (int) (arg_end_p1 - arg_start),
 			       arg_start);
 		      value = 0;
 		    }
@@ -3294,14 +3259,22 @@ parse_def (name_start)
     }
 
 
-  t.extra_sizes = (tag_start != (char *) 0);
+  if (storage_class == sc_Bits)
+    {
+      t.bitfield = 1;
+      t.extra_sizes = 1;
+    }
+  else
+    t.extra_sizes = 0;
+
   if (t.num_dims > 0)
     {
-      int diff = t.num_dims - t.num_sizes;
+      int num_real_sizes = t.num_sizes - t.extra_sizes;
+      int diff = t.num_dims - num_real_sizes;
       int i = t.num_dims - 1;
       int j;
 
-      if (t.num_sizes != 1 || diff < 0)
+      if (num_real_sizes != 1 || diff < 0)
 	{
 	  error_line = __LINE__;
 	  saber_stop ();
@@ -3312,7 +3285,6 @@ parse_def (name_start)
 	 and sizes were passed, creating extra sizes for multiply
 	 dimensioned arrays if not passed.  */
 
-      t.extra_sizes = 0;
       if (diff)
 	{
 	  for (j = (sizeof (t.sizes) / sizeof (t.sizes[0])) - 1; j >= 0; j--)
@@ -3328,14 +3300,6 @@ parse_def (name_start)
 	    }
 	}
     }
-
-  else if (symbol_type == st_Member && t.num_sizes - t.extra_sizes == 1)
-    { /* Is this a bitfield?  This is indicated by a structure member
-	 having a size field that isn't an array.  */
-
-      t.bitfield = 1;
-    }
-
 
   /* Except for enumeration members & begin/ending of scopes, put the
      type word in the aux. symbol table.  */
@@ -3518,7 +3482,7 @@ parse_end (start)
     }
 
   /* Get the function name, skipping whitespace.  */
-  for (start_func = start; isspace (*start_func); start_func++)
+  for (start_func = start; ISSPACE (*start_func); start_func++)
     ;
 
   ch = *start_func;
@@ -3577,7 +3541,7 @@ parse_ent (start)
       return;
     }
 
-  for (start_func = start; isspace (*start_func); start_func++)
+  for (start_func = start; ISSPACE (*start_func); start_func++)
     ;
 
   ch = *start_func;
@@ -3687,7 +3651,7 @@ parse_stabs_common (string_start, string_end, rest)
     mark_stabs ("");
 
   /* Read code from stabs.  */
-  if (!isdigit (*rest))
+  if (!ISDIGIT (*rest))
     {
       error ("Invalid .stabs/.stabn directive, code is non-numeric");
       return;
@@ -3707,7 +3671,7 @@ parse_stabs_common (string_start, string_end, rest)
       shash_t *shash_ptr;
 
       /* Skip ,0, */
-      if (p[0] != ',' || p[1] != '0' || p[2] != ',' || !isdigit (p[3]))
+      if (p[0] != ',' || p[1] != '0' || p[2] != ',' || !ISDIGIT (p[3]))
 	{
 	  error ("Invalid line number .stabs/.stabn directive");
 	  return;
@@ -3715,7 +3679,7 @@ parse_stabs_common (string_start, string_end, rest)
 
       code = strtol (p+3, &p, 0);
       ch = *++p;
-      if (p[-1] != ',' || isdigit (ch) || !IS_ASM_IDENT (ch))
+      if (p[-1] != ',' || ISDIGIT (ch) || !IS_ASM_IDENT (ch))
 	{
 	  error ("Invalid line number .stabs/.stabn directive");
 	  return;
@@ -3757,11 +3721,11 @@ parse_stabs_common (string_start, string_end, rest)
       /* Skip ,<num>,<num>, */
       if (*p++ != ',')
 	goto failure;
-      for (; isdigit (*p); p++)
+      for (; ISDIGIT (*p); p++)
 	;
       if (*p++ != ',')
 	goto failure;
-      for (; isdigit (*p); p++)
+      for (; ISDIGIT (*p); p++)
 	;
       if (*p++ != ',')
 	goto failure;
@@ -3773,7 +3737,7 @@ parse_stabs_common (string_start, string_end, rest)
 	  return;
 	}
 
-      if (isdigit (ch) || ch == '-')
+      if (ISDIGIT (ch) || ch == '-')
 	{
 	  st = st_Nil;
 	  sc = sc_Nil;
@@ -3841,7 +3805,7 @@ parse_stabs_common (string_start, string_end, rest)
 	  ch = *end_p1++;
 	  if (ch != '\n')
 	    {
-	      if (((!isdigit (*end_p1)) && (*end_p1 != '-'))
+	      if (((!ISDIGIT (*end_p1)) && (*end_p1 != '-'))
 		  || ((ch != '+') && (ch != '-')))
 		{
 		  error ("Invalid .stabs/.stabn directive, badly formed value");
@@ -3917,16 +3881,16 @@ parse_input __proto((void))
   while ((p = read_line ()) != (char *) 0)
     {
       /* Skip leading blanks */
-      while (isspace (*p))
+      while (ISSPACE (*p))
 	p++;
 
       /* See if it's a directive we handle.  If so, dispatch handler.  */
       for (i = 0; i < sizeof (pseudo_ops) / sizeof (pseudo_ops[0]); i++)
 	if (memcmp (p, pseudo_ops[i].name, pseudo_ops[i].len) == 0
-	    && isspace (p[pseudo_ops[i].len]))
+	    && ISSPACE (p[pseudo_ops[i].len]))
 	  {
 	    p += pseudo_ops[i].len;	/* skip to first argument */
-	    while (isspace (*p))
+	    while (ISSPACE (*p))
 	      p++;
 
 	    (*pseudo_ops[i].func)( p );
@@ -4157,9 +4121,13 @@ write_varray (vp, offset, str)
     return;
 
   if (debug)
-    fprintf (stderr, "\twarray\tvp = 0x%.8x, offset = %7u, size = %7u, %s\n",
-	     vp, offset, vp->num_allocated * vp->object_size, str);
-
+    {
+      fputs ("\twarray\tvp = ", stderr);
+      fprintf (stderr, HOST_PTR_PRINTF, vp);
+      fprintf (stderr, ", offset = %7lu, size = %7lu, %s\n",
+	       (unsigned long) offset, vp->num_allocated * vp->object_size, str);
+    }
+  
   if (file_offset != offset
       && fseek (object_stream, (long)offset, SEEK_SET) < 0)
     pfatal_with_name (object_name);
@@ -4195,9 +4163,12 @@ write_object __proto((void))
   off_t offset;
 
   if (debug)
-    fprintf (stderr, "\n\twrite\tvp = 0x%.8x, offset = %7u, size = %7u, %s\n",
-	     (PTR_T *) &symbolic_header, 0, sizeof (symbolic_header),
-	     "symbolic header");
+    {
+      fputs ("\n\twrite\tvp = ", stderr);
+      fprintf (stderr, HOST_PTR_PRINTF, (PTR_T *) &symbolic_header);
+      fprintf (stderr, ", offset = %7u, size = %7lu, %s\n",
+	       0, (unsigned long) sizeof (symbolic_header), "symbolic header");
+    }
 
   sys_write = fwrite ((PTR_T) &symbolic_header,
 		      1,
@@ -4225,9 +4196,13 @@ write_object __proto((void))
 	pfatal_with_name (object_name);
 
       if (debug)
-	fprintf (stderr, "\twrite\tvp = 0x%.8x, offset = %7u, size = %7u, %s\n",
-		 (PTR_T *) &orig_linenum, symbolic_header.cbLineOffset,
-		 symbolic_header.cbLine, "Line numbers");
+	{
+	  fputs ("\twrite\tvp = ", stderr);
+	  fprintf (stderr, HOST_PTR_PRINTF, (PTR_T *) &orig_linenum);
+	  fprintf (stderr, ", offset = %7lu, size = %7lu, %s\n",
+		   (long) symbolic_header.cbLineOffset,
+		   (long) symbolic_header.cbLine, "Line numbers");
+	}
 
       sys_write = fwrite ((PTR_T) orig_linenum,
 			  1,
@@ -4256,9 +4231,13 @@ write_object __proto((void))
 	pfatal_with_name (object_name);
 
       if (debug)
-	fprintf (stderr, "\twrite\tvp = 0x%.8x, offset = %7u, size = %7u, %s\n",
-		 (PTR_T *) &orig_opt_syms, symbolic_header.cbOptOffset,
-		 num_write, "Optimizer symbols");
+	{
+	  fputs ("\twrite\tvp = ", stderr);
+	  fprintf (stderr, HOST_PTR_PRINTF, (PTR_T *) &orig_opt_syms);
+	  fprintf (stderr, ", offset = %7lu, size = %7lu, %s\n",
+		   (long) symbolic_header.cbOptOffset,
+		   num_write, "Optimizer symbols");
+	}
 
       sys_write = fwrite ((PTR_T) orig_opt_syms,
 			  1,
@@ -4344,8 +4323,13 @@ write_object __proto((void))
 	   file_ptr = file_ptr->next_file)
 	{
 	  if (debug)
-	    fprintf (stderr, "\twrite\tvp = 0x%.8x, offset = %7u, size = %7u, %s\n",
-		     (PTR_T *) &file_ptr->fdr, file_offset, sizeof (FDR), "File header");
+	    {
+	      fputs ("\twrite\tvp = ", stderr);
+	      fprintf (stderr, HOST_PTR_PRINTF, (PTR_T *) &file_ptr->fdr);
+	      fprintf (stderr, ", offset = %7lu, size = %7lu, %s\n",
+		       file_offset, (unsigned long) sizeof (FDR),
+		       "File header");
+	    }
 
 	  sys_write = fwrite (&file_ptr->fdr,
 			      1,
@@ -4375,9 +4359,13 @@ write_object __proto((void))
 	pfatal_with_name (object_name);
 
       if (debug)
-	fprintf (stderr, "\twrite\tvp = 0x%.8x, offset = %7u, size = %7u, %s\n",
-		 (PTR_T *) &orig_rfds, symbolic_header.cbRfdOffset,
-		 num_write, "Relative file descriptors");
+	{
+	  fputs ("\twrite\tvp = ", stderr);
+	  fprintf (stderr, HOST_PTR_PRINTF, (PTR_T *) &orig_rfds);
+	  fprintf (stderr, ", offset = %7lu, size = %7lu, %s\n",
+		   (long) symbolic_header.cbRfdOffset,
+		   num_write, "Relative file descriptors");
+	}
 
       sys_write = fwrite (orig_rfds,
 			  1,
@@ -4419,8 +4407,9 @@ read_seek (size, offset, str)
     return (page_t *) 0;
 
   if (debug)
-    fprintf (stderr, "\trseek\tsize = %7u, offset = %7u, currently at %7u, %s\n",
-	     size, offset, file_offset, str);
+    fprintf (stderr,
+	     "\trseek\tsize = %7lu, offset = %7lu, currently at %7lu, %s\n",
+	     (unsigned long) size, (unsigned long) offset, file_offset, str);
 
 #ifndef MALLOC_CHECK
   ptr = allocate_multiple_pages ((size + PAGE_USIZE - 1) / PAGE_USIZE);
@@ -5117,7 +5106,7 @@ out_of_bounds (indx, max, str, prog_line)
   if (indx < max)		/* just in case */
     return 0;
 
-  fprintf (stderr, "%s, %s:%ld index %u is out of bounds for %s, max is %u, mips-tfile.c line# %d\n",
+  fprintf (stderr, "%s, %s:%ld index %lu is out of bounds for %s, max is %lu, mips-tfile.c line# %d\n",
 	   progname, input_name, line_number, indx, str, max, prog_line);
 
   exit (1);
@@ -5126,7 +5115,7 @@ out_of_bounds (indx, max, str, prog_line)
 
 
 /* Allocate a cluster of pages.  USE_MALLOC says that malloc does not
-   like sbrk's behind it's back (or sbrk isn't available).  If we use
+   like sbrk's behind its back (or sbrk isn't available).  If we use
    sbrk, we assume it gives us zeroed pages.  */
 
 #ifndef MALLOC_CHECK
@@ -5168,7 +5157,12 @@ allocate_cluster (npages)
     pfatal_with_name ("allocate_cluster");
 
   if (debug > 3)
-    fprintf (stderr, "\talloc\tnpages = %d, value = 0x%.8x\n", npages, ptr);
+    {
+      fprintf (stderr, "\talloc\tnpages = %lu, value = ",
+	       (unsigned long) npages);
+      fprintf (stderr, HOST_PTR_PRINTF, ptr);
+      fputs ("\n", stderr);
+    }
 
   return ptr;
 }
@@ -5598,8 +5592,6 @@ free_thead (ptr)
 #endif /* MIPS_DEBUGGING_INFO */
 
 
-#ifdef HAVE_VPRINTF
-
 /* Output an error message and exit */
 
 /*VARARGS*/
@@ -5663,27 +5655,6 @@ error VPROTO((const char *format, ...))
   saber_stop ();
 }
 
-#else /* not HAVE_VPRINTF */
-
-void
-fatal (msg, arg1, arg2)
-     char *msg, *arg1, *arg2;
-{
-  error (msg, arg1, arg2);
-  exit (1);
-}
-
-void
-error (msg, arg1, arg2)
-     char *msg, *arg1, *arg2;
-{
-  fprintf (stderr, "%s: ", progname);
-  fprintf (stderr, msg, arg1, arg2);
-  fprintf (stderr, "\n");
-}
-
-#endif /* not HAVE_VPRINTF */
-
 /* More 'friendly' abort that prints the line and file.
    config.h can #define abort fancy_abort if you like that sort of thing.  */
 
@@ -5715,7 +5686,11 @@ xmalloc (size)
     fatal ("Virtual memory exhausted.");
 
   if (debug > 3)
-    fprintf (stderr, "\tmalloc\tptr = 0x%.8x, size = %10u\n", value, size);
+    {
+      fputs ("\tmalloc\tptr = ", stderr);
+      fprintf (stderr, HOST_PTR_PRINTF, value);
+      fprintf (stderr, ", size = %10lu\n", (unsigned long) size);
+    }
 
   return value;
 }
@@ -5731,8 +5706,13 @@ xcalloc (size1, size2)
     fatal ("Virtual memory exhausted.");
 
   if (debug > 3)
-    fprintf (stderr, "\tcalloc\tptr = 0x%.8x, size1 = %10u, size2 = %10u [%u]\n",
-	     value, size1, size2, size1+size2);
+    {
+      fputs ("\tcalloc\tptr = ", stderr);
+      fprintf (stderr, HOST_PTR_PRINTF, value);
+      fprintf (stderr, ", size1 = %10lu, size2 = %10lu [%lu]\n",
+	       (unsigned long) size1, (unsigned long) size2,
+	       (unsigned long) size1*size2);
+    }
 
   return value;
 }
@@ -5749,8 +5729,13 @@ xrealloc (ptr, size)
     fatal ("Virtual memory exhausted.");
 
   if (debug > 3)
-    fprintf (stderr, "\trealloc\tptr = 0x%.8x, size = %10u, orig = 0x%.8x\n",
-	     result, size, ptr);
+    {
+      fputs ("\trealloc\tptr = ", stderr);
+      fprintf (stderr, HOST_PTR_PRINTF, result);
+      fprintf (stderr, ", size = %10lu, orig = ", size);
+      fprintf (stderr, HOST_PTR_PRINTF, ptr);
+      fputs ("\n", stderr);
+    }
 
   return result;
 }
@@ -5760,7 +5745,11 @@ xfree (ptr)
      PTR_T ptr;
 {
   if (debug > 3)
-    fprintf (stderr, "\tfree\tptr = 0x%.8x\n", ptr);
+    {
+      fputs ("\tfree\tptr = ", stderr);
+      fprintf (stderr, HOST_PTR_PRINTF, ptr);
+      fputs ("\n", stderr);
+    }
 
   free (ptr);
 }

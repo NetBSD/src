@@ -1,4 +1,4 @@
-@c Copyright (C) 1988,89,92,93,94,96 Free Software Foundation, Inc.
+@c Copyright (C) 1988, 89, 92, 93, 94, 96, 1998 Free Software Foundation, Inc.
 @c This is part of the GCC manual.
 @c For copying conditions, see the file gcc.texi.
 
@@ -174,7 +174,9 @@ Operand numbers must be chosen consecutively counting from zero in
 each instruction pattern.  There may be only one @code{match_operand}
 expression in the pattern for each operand number.  Usually operands
 are numbered in the order of appearance in @code{match_operand}
-expressions.
+expressions.  In the case of a @code{define_expand}, any operand numbers
+used only in @code{match_dup} expressions have higher values than all
+other operand numbers.
 
 @var{predicate} is a string that is the name of a C function that accepts two
 arguments, an expression and a machine mode.  During matching, the
@@ -398,6 +400,25 @@ An insn that matches this pattern might look like:
 @item (match_par_dup @var{n} [@var{subpat}@dots{}])
 Like @code{match_op_dup}, but for @code{match_parallel} instead of
 @code{match_operator}.
+
+@findex match_insn
+@item (match_insn @var{predicate})
+Match a complete insn.  Unlike the other @code{match_*} recognizers,
+@code{match_insn} does not take an operand number.
+
+The machine mode @var{m} of @code{match_insn} works like that of
+@code{match_operand}: it is passed as the second argument to the
+predicate function, and that function is solely responsible for
+deciding whether the expression to be matched ``has'' that mode.
+
+@findex match_insn2
+@item (match_insn2 @var{n} @var{predicate})
+Match a complete insn.
+
+The machine mode @var{m} of @code{match_insn2} works like that of
+@code{match_operand}: it is passed as the second argument to the
+predicate function, and that function is solely responsible for
+deciding whether the expression to be matched ``has'' that mode.
 
 @findex address
 @item (address (match_operand:@var{m} @var{n} "address_operand" ""))
@@ -1667,7 +1688,7 @@ now in existence use constraints.
 Here is a table of the instruction names that are meaningful in the RTL
 generation pass of the compiler.  Giving one of these names to an
 instruction pattern tells the RTL generation pass that it can use the
-pattern in to accomplish a certain task.
+pattern to accomplish a certain task.
 
 @table @asis
 @cindex @code{mov@var{m}} instruction pattern
@@ -1733,23 +1754,23 @@ scratch registers after reload, you must define
 patterns @samp{reload_in@var{m}} or @samp{reload_out@var{m}} to handle
 them.  @xref{Register Classes}.
 
-The constraints on a @samp{move@var{m}} must permit moving any hard
+The constraints on a @samp{mov@var{m}} must permit moving any hard
 register to any other hard register provided that
 @code{HARD_REGNO_MODE_OK} permits mode @var{m} in both registers and
 @code{REGISTER_MOVE_COST} applied to their classes returns a value of 2.
 
-It is obligatory to support floating point @samp{move@var{m}}
+It is obligatory to support floating point @samp{mov@var{m}}
 instructions into and out of any registers that can hold fixed point
 values, because unions and structures (which have modes @code{SImode} or
 @code{DImode}) can be in those registers and they may have floating
 point members.
 
-There may also be a need to support fixed point @samp{move@var{m}}
+There may also be a need to support fixed point @samp{mov@var{m}}
 instructions in and out of floating point registers.  Unfortunately, I
 have forgotten why this was so, and I don't know whether it is still
 true.  If @code{HARD_REGNO_MODE_OK} rejects fixed point values in
 floating point registers, then the constraints of the fixed point
-@samp{move@var{m}} instructions must be designed to avoid ever trying to
+@samp{mov@var{m}} instructions must be designed to avoid ever trying to
 reload into a floating point register.
 
 @cindex @code{reload_in} instruction pattern
@@ -1947,12 +1968,25 @@ The @samp{cmp@var{m}} patterns should be used instead.
 @item @samp{movstr@var{m}}
 Block move instruction.  The addresses of the destination and source
 strings are the first two operands, and both are in mode @code{Pmode}.
+
 The number of bytes to move is the third operand, in mode @var{m}.
+Usually, you specify @code{word_mode} for @var{m}.  However, if you can
+generate better code knowing the range of valid lengths is smaller than
+those representable in a full word, you should provide a pattern with a
+mode corresponding to the range of values you can handle efficiently
+(e.g., @code{QImode} for values in the range 0--127; note we avoid numbers
+that appear negative) and also a pattern with @code{word_mode}.
 
 The fourth operand is the known shared alignment of the source and
 destination, in the form of a @code{const_int} rtx.  Thus, if the
 compiler knows that both source and destination are word-aligned,
 it may provide the value 4 for this operand.
+
+Descriptions of multiple @code{movstr@var{m}} patterns can only be
+beneficial if the patterns for smaller modes have fewer restrictions
+on their first, second and fourth operands.  Note that the mode @var{m}
+in @code{movstr@var{m}} does not impose any restriction on the mode of
+individually moved data units in the block.
 
 These patterns need not give special consideration to the possibility
 that the source and destination strings might overlap.
@@ -1961,12 +1995,15 @@ that the source and destination strings might overlap.
 @item @samp{clrstr@var{m}}
 Block clear instruction.  The addresses of the destination string is the
 first operand, in mode @code{Pmode}.  The number of bytes to clear is
-the second operand, in mode @var{m}.
+the second operand, in mode @var{m}.  See @samp{movstr@var{m}} for
+a discussion of the choice of mode.
 
 The third operand is the known alignment of the destination, in the form
 of a @code{const_int} rtx.  Thus, if the compiler knows that the
 destination is word-aligned, it may provide the value 4 for this
 operand.
+
+The use for multiple @code{clrstr@var{m}} is as for @code{movstr@var{m}}.
 
 @cindex @code{cmpstr@var{m}} instruction pattern
 @item @samp{cmpstr@var{m}}
@@ -2147,8 +2184,8 @@ The above discussion also applies to the @samp{mov@var{mode}cc} and
 @item @samp{call}
 Subroutine call instruction returning no value.  Operand 0 is the
 function to call; operand 1 is the number of bytes of arguments pushed
-(in mode @code{SImode}, except it is normally a @code{const_int});
-operand 2 is the number of registers used as operands.
+as a @code{const_int}; operand 2 is the number of registers used as
+operands.
 
 On most machines, operand 2 is not actually stored into the RTL
 pattern.  It is supplied for the sake of some RISC machines which need
@@ -2301,9 +2338,9 @@ is no @samp{casesi} pattern.
 
 This pattern requires two operands: the address or offset, and a label
 which should immediately precede the jump table.  If the macro
-@code{CASE_VECTOR_PC_RELATIVE} is defined then the first operand is an
-offset which counts from the address of the table; otherwise, it is an
-absolute address to jump to.  In either case, the first operand has
+@code{CASE_VECTOR_PC_RELATIVE} evaluates to a nonzero value then the first
+operand is an offset which counts from the address of the table; otherwise,
+it is an absolute address to jump to.  In either case, the first operand has
 mode @code{Pmode}.
 
 The @samp{tablejump} insn is always the last insn before the jump
@@ -2375,14 +2412,15 @@ such required data.
 @end enumerate
 
 When saving the stack pointer, operand 0 is the save area and operand 1
-is the stack pointer.  The mode used to allocate the save area is the
-mode of operand 0.  You must specify an integral mode, or
-@code{VOIDmode} if no save area is needed for a particular type of save
-(either because no save is needed or because a machine-specific save
-area can be used).  Operand 0 is the stack pointer and operand 1 is the
-save area for restore operations.  If @samp{save_stack_block} is
-defined, operand 0 must not be @code{VOIDmode} since these saves can be
-arbitrarily nested.
+is the stack pointer.  The mode used to allocate the save area defaults
+to @code{Pmode} but you can override that choice by defining the
+@code{STACK_SAVEAREA_MODE} macro (@pxref{Storage Layout}).  You must
+specify an integral mode, or @code{VOIDmode} if no save area is needed
+for a particular type of save (either because no save is needed or
+because a machine-specific save area can be used).  Operand 0 is the
+stack pointer and operand 1 is the save area for restore operations.  If
+@samp{save_stack_block} is defined, operand 0 must not be
+@code{VOIDmode} since these saves can be arbitrarily nested.
 
 A save area is a @code{mem} that is at a constant offset from
 @code{virtual_stack_vars_rtx} when the stack pointer is saved for use by
@@ -2390,8 +2428,16 @@ nonlocal gotos and a @code{reg} in the other two cases.
 
 @cindex @code{allocate_stack} instruction pattern
 @item @samp{allocate_stack}
-Subtract (or add if @code{STACK_GROWS_DOWNWARD} is undefined) operand 0 from
+Subtract (or add if @code{STACK_GROWS_DOWNWARD} is undefined) operand 1 from
 the stack pointer to create space for dynamically allocated data.
+
+Store the resultant pointer to this space into operand 0.  If you
+are allocating space from the main stack, do this by emitting a
+move insn to copy @code{virtual_stack_dynamic_rtx} to operand 0.
+If you are allocating the space elsewhere, generate code to copy the
+location of the space to operand 0.  In the latter case, you must
+ensure this space gets freed when the corresponding space on the main
+stack is free.
 
 Do not define this pattern if all that must be done is the subtraction.
 Some machines require other operations such as stack probes or
@@ -2425,7 +2471,7 @@ limit from a global or thread-specific variable or register.
 Emit code to generate a non-local goto, e.g., a jump from one function
 to a label in an outer function.  This pattern has four arguments,
 each representing a value to be used in the jump.  The first
-argument is to be loadedd into the frame pointer, the second is
+argument is to be loaded into the frame pointer, the second is
 the address to branch to (code to dispatch to the actual label),
 the third is the address of a location where the stack is saved,
 and the last is the address of the label, to be placed in the
@@ -2444,8 +2490,10 @@ This pattern, if defined, contains code needed at the target of a
 nonlocal goto after the code already generated by GNU CC.  You will not
 normally need to define this pattern.  A typical reason why you might
 need this pattern is if some value, such as a pointer to a global table,
-must be restored when the frame pointer is restored.  There are no
-arguments.
+must be restored when the frame pointer is restored.  Note that a nonlocal
+goto only ocurrs within a unit-of-translation, so a global table pointer
+that is shared by all functions of a given module need not be restored.
+There are no arguments.
 
 @cindex @code{exception_receiver} instruction pattern
 @item @samp{exception_receiver}
@@ -2455,6 +2503,34 @@ will not normally need to define this pattern.  A typical reason why you
 might need this pattern is if some value, such as a pointer to a global
 table, must be restored after control flow is branched to the handler of
 an exception.  There are no arguments.
+
+@cindex @code{builtin_setjmp_setup} instruction pattern
+@item @samp{builtin_setjmp_setup}
+This pattern, if defined, contains additional code needed to initialize
+the @code{jmp_buf}.  You will not normally need to define this pattern.
+A typical reason why you might need this pattern is if some value, such
+as a pointer to a global table, must be restored.  Though it is
+preferred that the pointer value be recalculated if possible (given the
+address of a label for instance).  The single argument is a pointer to
+the @code{jmp_buf}.  Note that the buffer is five words long and that
+the first three are normally used by the generic mechanism.
+
+@cindex @code{builtin_setjmp_receiver} instruction pattern
+@item @samp{builtin_setjmp_receiver}
+This pattern, if defined, contains code needed at the site of an
+builtin setjmp that isn't needed at the site of a nonlocal goto.  You
+will not normally need to define this pattern.  A typical reason why you
+might need this pattern is if some value, such as a pointer to a global
+table, must be restored.  It takes one argument, which is the label
+to which builtin_longjmp transfered control; this pattern may be emitted
+at a small offset from that label.
+
+@cindex @code{builtin_longjmp} instruction pattern
+@item @samp{builtin_longjmp}
+This pattern, if defined, performs the entire action of the longjmp.
+You will not normally need to define this pattern unless you also define
+@code{builtin_setjmp_setup}.  The single argument is a pointer to the
+@code{jmp_buf}.
 @end table
 
 @node Pattern Ordering
@@ -3174,8 +3250,7 @@ on this machine.  So it must be copied into a register with
                 (match_dup 2)))]
   ""
   "operands[2]
-     = force_reg (SImode, gen_rtx (CONST_INT,
-                                   VOIDmode, 65535)); ")
+     = force_reg (SImode, GEN_INT (65535)); ")
 @end smallexample
 
 @strong{Note:} If the @code{define_expand} is used to serve a
@@ -3306,8 +3381,8 @@ Here is an example of this use of @code{define_split}, taken from
   if (low & 0x8000)
     high++, low |= 0xffff0000;
 
-  operands[3] = gen_rtx (CONST_INT, VOIDmode, high << 16);
-  operands[4] = gen_rtx (CONST_INT, VOIDmode, low);
+  operands[3] = GEN_INT (high << 16);
+  operands[4] = GEN_INT (low);
 @}")
 @end smallexample
 
@@ -3340,8 +3415,8 @@ an equality comparison of a register and a large constant:
   int sextc = (c << 16) >> 16;
   int xorv = c ^ sextc;
 
-  operands[4] = gen_rtx (CONST_INT, VOIDmode, xorv);
-  operands[5] = gen_rtx (CONST_INT, VOIDmode, sextc);
+  operands[4] = GEN_INT (xorv);
+  operands[5] = GEN_INT (sextc);
 @}")
 @end smallexample
 
@@ -3852,8 +3927,7 @@ not specified, 0 is used.
 If defined, modifies the length assigned to instruction @var{insn} as a
 function of the context in which it is used.  @var{length} is an lvalue
 that contains the initially computed length of the insn and should be
-updated with the correct length of the insn.  If updating is required,
-@var{insn} must not be a varying-length insn.
+updated with the correct length of the insn.
 
 This macro will normally not be required.  A case in which it is
 required is the ROMP.  On this machine, the size of an @code{addr_vec}

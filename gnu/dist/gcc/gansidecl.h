@@ -1,5 +1,5 @@
-/* ANSI and traditional C compatability macros.
-   Copyright (C) 1996 Free Software Foundation, Inc.
+/* ANSI and traditional C compatibility macros.
+   Copyright (C) 1996, 1997, 1998 Free Software Foundation, Inc.
 
 This file is part of GNU CC.
 
@@ -46,19 +46,22 @@ Boston, MA 02111-1307, USA.  */
 #endif
 #endif
 
-#ifndef STDIO_PROTO
-#ifdef BUFSIZ
-#define STDIO_PROTO(ARGS) PROTO(ARGS)
-#else
-#define STDIO_PROTO(ARGS) ()
-#endif
+#if __GNUC__ < 2 || (__GNUC__ == 2 && __GNUC_MINOR__ < 7)
+# define __attribute__(x)
 #endif
 
-/* Define a generic NULL if one hasn't already been defined.  */
+#ifndef ATTRIBUTE_UNUSED
+#define ATTRIBUTE_UNUSED __attribute__ ((__unused__))
+#endif /* ATTRIBUTE_UNUSED */
 
-#ifndef NULL
-#define NULL 0
-#endif
+#ifndef ATTRIBUTE_PRINTF
+#define ATTRIBUTE_PRINTF(m, n) __attribute__ ((format (__printf__, m, n)))
+#define ATTRIBUTE_PRINTF_1 ATTRIBUTE_PRINTF(1, 2)
+#define ATTRIBUTE_PRINTF_2 ATTRIBUTE_PRINTF(2, 3)
+#define ATTRIBUTE_PRINTF_3 ATTRIBUTE_PRINTF(3, 4)
+#define ATTRIBUTE_PRINTF_4 ATTRIBUTE_PRINTF(4, 5)
+#define ATTRIBUTE_PRINTF_5 ATTRIBUTE_PRINTF(5, 6)
+#endif /* ATTRIBUTE_PRINTF */
 
 #ifndef GENERIC_PTR
 #if defined (USE_PROTOTYPES) ? USE_PROTOTYPES : defined (__STDC__)

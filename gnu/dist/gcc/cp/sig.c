@@ -21,12 +21,13 @@ Boston, MA 02111-1307, USA.  */
 
 
 #include "config.h"
-#include <stdio.h>
+#include "system.h"
 #include "obstack.h"
 #include "tree.h"
 #include "cp-tree.h"
 #include "flags.h"
 #include "assert.h"
+#include "toplev.h"
 
 extern struct obstack *current_obstack;
 extern struct obstack permanent_obstack;
@@ -350,7 +351,7 @@ append_signature_fields (list_of_fieldlists)
   tree l, x;
   tree last_x = NULL_TREE;
   tree mfptr;
-  tree last_mfptr;
+  tree last_mfptr = NULL_TREE;
   tree mfptr_list = NULL_TREE;
 	      
   /* For signatures it should actually be only a list with one element.  */
@@ -461,7 +462,7 @@ build_signature_table_constructor (sig_ty, rhs)
   tree sig_field = TYPE_FIELDS (sig_ty);
   tree result = NULL_TREE;
   tree first_rhs_field = NULL_TREE;
-  tree last_rhs_field;
+  tree last_rhs_field = NULL_TREE;
   int sig_ptr_p = IS_SIGNATURE (rhstype);
   int offset_p = sig_ptr_p;
 
@@ -531,19 +532,20 @@ build_signature_table_constructor (sig_ty, rhs)
       else
 	{
 	  /* Find the class method of the correct type.  */
-
+	  tree rhs_methods;
 	  basetypes = TREE_PURPOSE (baselink);
 	  if (TREE_CODE (basetypes) == TREE_LIST)
 	    basetypes = TREE_VALUE (basetypes);
 
-	  rhs_method = TREE_VALUE (baselink);
-	  for (; rhs_method; rhs_method = TREE_CHAIN (rhs_method))
-	    if (sig_mname == DECL_NAME (rhs_method)
+	  rhs_methods = TREE_VALUE (baselink);
+	  for (; rhs_methods; rhs_methods = OVL_NEXT (rhs_methods))
+	    if ((rhs_method = OVL_CURRENT (rhs_methods))
+		&& sig_mname == DECL_NAME (rhs_method)
 		&& ! DECL_STATIC_FUNCTION_P (rhs_method)
 		&& match_method_types (sig_mtype, TREE_TYPE (rhs_method)))
 	      break;
 
-	  if (rhs_method == NULL_TREE
+	  if (rhs_methods == NULL_TREE
 	      || (compute_access (basetypes, rhs_method)
 		  != access_public_node))
 	    {
@@ -574,7 +576,7 @@ build_signature_table_constructor (sig_ty, rhs)
 	}
       else
 	{
-	  tree tag, vb_off, delta, idx, pfn, vt_off;
+	  tree tag, vb_off, delta, idx, pfn = NULL_TREE, vt_off = NULL_TREE;
 	  tree tag_decl, vb_off_decl, delta_decl, index_decl;
 	  tree pfn_decl, vt_off_decl;
 
@@ -724,7 +726,7 @@ build_sigtable (sig_type, rhs_type, init_from)
     }
   if (decl == NULL_TREE)
     {
-      tree init;
+      tree init = NULL_TREE;
 
       /* We allow only one signature table to be generated for signatures
 	 with opaque types.  Otherwise we create a loophole in the type
@@ -753,7 +755,7 @@ build_sigtable (sig_type, rhs_type, init_from)
 	decl = pushdecl_top_level (build_decl (VAR_DECL, name, sig_type));
 	current_function_decl = context;
       }
-      IDENTIFIER_GLOBAL_VALUE (name) = decl;
+      SET_IDENTIFIER_GLOBAL_VALUE (name, decl);
       store_init_value (decl, init_expr);
       if (IS_SIGNATURE (rhs_type))
 	{
@@ -880,7 +882,6 @@ build_signature_pointer_constructor (lhs, rhs)
       result = tree_cons (NULL_TREE, optr_expr,
 			  build_tree_list (NULL_TREE, sptr_expr));
       result = build_nt (CONSTRUCTOR, NULL_TREE, result);
-      TREE_HAS_CONSTRUCTOR (result) = 1;
       result = digest_init (lhstype, result, 0);
     }
   else

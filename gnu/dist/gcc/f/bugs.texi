@@ -1,11 +1,11 @@
-@c Copyright (C) 1995-1997 Free Software Foundation, Inc.
+@c Copyright (C) 1995-1998 Free Software Foundation, Inc.
 @c This is part of the G77 manual.
 @c For copying conditions, see the file g77.texi.
 
 @c The text of this file appears in the file BUGS
 @c in the G77 distribution, as well as in the G77 manual.
 
-@c 1996-09-09
+@c 1998-07-15
 
 @ifclear BUGSONLY
 @node Actual Bugs
@@ -25,20 +25,37 @@ configure, port, build, and install @code{g77},
 @ref{Problems Installing}.
 
 @itemize @bullet
-@cindex Alpha
-@cindex -O2
 @item
-@code{g77}'s version of @code{gcc}, and probably @code{g77}
-itself, cannot be reliably used with the @samp{-O2} option
-(or higher) on Digital Semiconductor Alpha AXP machines.
-The problem is most immediately noticed in differences
-discovered by @kbd{make compare} following a bootstrap
-build using @samp{-O2}.
-It also manifests itself as a failure to compile
-@samp{DATA} statements such as @samp{DATA R/7./} correctly;
-in this case, @samp{R} might be initialized to @samp{4.0}.
+@code{g77} sometimes crashes when compiling code
+containing the construct @samp{CMPLX(0.)} or similar.
+This is a @code{gcc} back-end bug.
+It can be worked around using @samp{-fno-emulate-complex},
+though that might trigger other, older bugs.
+Compiling without optimization is another work-around.
 
-Until this bug is fixed, use only @samp{-O1} or no optimization.
+Fixed in @code{egcs} 1.1.
+
+@item
+@c Tim Prince discovered this.
+Automatic arrays aren't working on HP-UX systems,
+at least in HP-UX version 10.20.
+Writing into them apparently causes over-writing
+of statically declared data in the main program.
+This probably means the arrays themselves are being under-allocated,
+or pointers to them being improperly handled,
+e.g. not passed to other procedures as they should be.
+
+@item
+@c Toon Moene discovered these.
+Some Fortran code has been found to be miscompiled
+by @code{g77} built on @code{gcc} version 2.8.1
+on m68k-next-nextstep3 configurations
+when using the @samp{-O2} option.
+Even a C function is known to miscompile
+on that configuration
+when using the @samp{-O2 -funroll-loops} options.
+
+Fixed in @code{egcs}.
 
 @cindex DNRM2
 @cindex stack, 387 coprocessor
@@ -49,35 +66,19 @@ A code-generation bug afflicts
 Intel x86 targets when @samp{-O2} is specified
 compiling, for example, an old version of
 the @samp{DNRM2} routine.
-The x87 coprocessor stack is being somewhat
+The x87 coprocessor stack is being
 mismanaged in cases where assigned @code{GOTO}
 and @code{ASSIGN} are involved.
 
-Version 0.5.21 of @code{g77} contains an initial
-effort to fix the problem, but this effort is
-incomplete, and a more complete fix is planned
-for the next release.
+Fixed in @code{egcs} version 1.1.
 
-@cindex SIGNAL() intrinsic
-@cindex intrinsics, SIGNAL()
 @item
-Work is needed on the @code{SIGNAL()} intrinsic to ensure
-that pointers and integers are properly handled on all
-targets, including 64-bit machines.
+A compiler crash, or apparently infinite run time,
+can result when compiling complicated expressions
+involving @code{COMPLEX} arithmetic
+(especially multiplication).
 
-@cindex -fugly-comma option
-@cindex options, -fugly-comma
-@item
-When using @samp{-fugly-comma}, @code{g77} assumes an extra
-@samp{%VAL(0)} argument is to be passed to intrinsics
-taking no arguments, such as @code{IARGC()}, which in
-turn reject such a call.
-Although this has been worked around for 0.5.18 due
-to changes in the handling of intrinsics,
-@code{g77} needs to do the ugly-argument-appending trick
-only for external-function invocation, as this would
-probably be more consistent with compilers that default
-to using that trick.
+Fixed in @code{egcs} version 1.1.
 
 @item
 Something about @code{g77}'s straightforward handling of
@@ -86,13 +87,6 @@ from unrolling loops.
 Until this is solved, try inserting or removing @code{CONTINUE}
 statements as the terminal statement, using the @code{END DO}
 form instead, and so on.
-(Probably improved, but not wholly fixed, in 0.5.21.)
-
-@item
-The @code{g77} command itself should more faithfully process
-options the way the @code{gcc} command does.
-For example, @code{gcc} accepts abbreviated forms of long options,
-@code{g77} generally doesn't.
 
 @item
 Some confusion in diagnostics concerning failing @code{INCLUDE}
@@ -205,85 +199,15 @@ is definitely welcome.
 Such information might even lead to all relevant products
 working together properly sooner.
 
-@cindex padding
-@cindex structures
-@cindex common blocks
-@cindex equivalence areas
-@item
-@code{g77} currently inserts needless padding for things like
-@samp{COMMON A,IPAD} where @samp{A} is @code{CHARACTER*1} and @samp{IPAD}
-is @code{INTEGER(KIND=1)} on machines like x86, because
-the back end insists that @samp{IPAD} be aligned to a 4-byte boundary, but
-the processor has no such requirement (though it's good for
-performance).
-
-It is possible that this is not a real bug, and could be considered
-a performance feature, but it might be important to provide
-the ability to Fortran code to specify minimum padding for
-aggregate areas such as common blocks---and, certainly, there
-is the potential, with the current setup, for interface differences
-in the way such areas are laid out between @code{g77} and other
-compilers.
-
-@item
-Some crashes occur when compiling under Solaris on x86
-machines.
-
-Nothing has been heard about any such problems for some time,
-so this is considering a closed item as of 0.5.20.
-Please submit any bug reports pertinent to @code{g77}'s support
-for Solaris/x86 systems.
-
-@cindex RS/6000 support
-@cindex support, RS/6000
-@item
-RS/6000 support is not complete as of the gcc 2.6.3 back end.
-The 2.7.0 back end appears to fix this problem, or at least mitigate
-it significantly, but there is at least one known problem that is
-likely to be a code-generation bug in @file{gcc-2.7.0} plus
-@file{g77-0.5.16}.
-This problem shows up only when compiling the Fortran program with @samp{-O}.
-
-Nothing has been heard about any RS/6000 problems for some time,
-so this is considering a closed item as of 0.5.20.
-Please submit any bug reports pertinent to @code{g77}'s support
-for RS/6000 systems.
-
-@cindex SGI support
-@cindex support, SGI
-@item
-SGI support is known to be a bit buggy.
-The known problem shows up only when compiling the Fortran program with
-@samp{-O}.
-
-It is possible these problems have all been fixed in 0.5.20 by
-emulating complex arithmetic in the front end.
-Please submit any bug reports pertinent to @code{g77}'s support
-for SGI systems.
-
 @cindex Alpha, support
 @cindex support, Alpha
 @item
-@code{g77} doesn't work perfectly on 64-bit configurations such as the Alpha.
-This problem is expected to be largely resolved as of version 0.5.20,
-and further addressed by 0.5.21.
-Version 0.6 should solve most or all related problems (such as
-64-bit machines other than Digital Semiconductor (``DEC'') Alphas).
+@code{g77} doesn't work perfectly on 64-bit configurations
+such as the Digital Semiconductor (``DEC'') Alpha.
 
-One known bug that causes a compile-time crash occurs when compiling
-code such as the following with optimization:
-
-@example
-SUBROUTINE CRASH (TEMP)
-INTEGER*2 HALF(2)
-REAL TEMP
-HALF(1) = NINT (TEMP)
-END
-@end example
-
-It is expected that a future version of @code{g77} will have a fix for this
-problem, almost certainly by the time @code{g77} supports the forthcoming
-version 2.8.0 of @code{gcc}.
+This problem is largely resolved as of version 0.5.23.
+Version 0.6 should solve most or all remaining problems
+(such as cross-compiling involving 64-bit machines).
 
 @cindex COMPLEX support
 @cindex support, COMPLEX
@@ -312,9 +236,82 @@ general expressions (other than simple variables/arrays), to procedures
 when compiling on some systems (such as i386) with @samp{-fPIC}, as in
 when compiling for ELF targets.
 The symptom is that the assembler complains about invalid opcodes.
-More investigation is needed, but the problem is almost certainly
-in the gcc back end, and it apparently occurs only when
+This bug is in the gcc back end,
+and it apparently occurs only when
 compiling sufficiently complicated functions @emph{without} the
 @samp{-O} option.
-@end itemize
 
+Fixed in @code{egcs} version 1.1.
+
+@cindex padding
+@cindex structures
+@cindex common blocks
+@cindex equivalence areas
+@item
+@code{g77} currently inserts needless padding for things like
+@samp{COMMON A,IPAD} where @samp{A} is @code{CHARACTER*1} and @samp{IPAD}
+is @code{INTEGER(KIND=1)} on machines like x86,
+because the back end insists that @samp{IPAD}
+be aligned to a 4-byte boundary,
+but the processor has no such requirement
+(though it is usually good for performance).
+
+The @code{gcc} back end needs to provide a wider array
+of specifications of alignment requirements and preferences for targets,
+and front ends like @code{g77} should take advantage of this
+when it becomes available.
+
+@cindex alignment
+@cindex double-precision performance
+@cindex -malign-double
+@item
+The x86 target's @samp{-malign-double} option
+no longer reliably aligns double-precision variables and arrays
+when they are placed in the stack frame.
+
+This can significantly reduce the performance of some applications,
+even on a run-to-run basis
+(that is, performance measurements can vary fairly widely
+depending on whether frequently used variables are properly aligned,
+and that can change from one program run to the next,
+even from one procedure call to the next).
+
+Versions 0.5.22 and earlier of @code{g77}
+included a patch to @code{gcc} that enabled this,
+but that patch has been deemed an improper (probably buggy) one
+for version 2.8 of @code{gcc} and for @code{egcs}.
+
+Note that version 1.1 of @code{egcs}
+aligns double-precision variables and arrays
+when they are in static storage
+even if @samp{-malign-double} is not specified.
+
+There is ongoing investigation into
+how to make @samp{-malign-double} work properly,
+also into how to make it unnecessary to get
+all double-precision variables and arrays aligned
+when such alignment would not violate
+the relevant specifications for processor
+and inter-procedural interfaces.
+
+For a suite of programs to test double-precision alignment,
+see @uref{ftp://alpha.gnu.org/gnu/g77/align/}.
+
+@cindex complex performance
+@cindex aliasing
+@item
+The @code{libf2c} routines that perform some run-time
+arithmetic on @code{COMPLEX} operands
+were modified circa version 0.5.20 of @code{g77}
+to work properly even in the presence of aliased operands.
+
+While the @code{g77} and @code{netlib} versions of @code{libf2c}
+differ on how this is accomplished,
+the main differences are that we believe
+the @code{g77} version works properly
+even in the presence of @emph{partially} aliased operands.
+
+However, these modifications have reduced performance
+on targets such as x86,
+due to the extra copies of operands involved.
+@end itemize

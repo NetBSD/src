@@ -1,5 +1,5 @@
-/* Front-end tree definitions for GNU compiler.
-   Copyright (C) 1989, 1991, 1994, 1996 Free Software Foundation, Inc.
+/* Definitions of floating-point access for GNU compiler.
+   Copyright (C) 1989, 1991, 1994, 1996, 1997 Free Software Foundation, Inc.
 
 This file is part of GNU CC.
 
@@ -26,6 +26,7 @@ Boston, MA 02111-1307, USA.  */
 #define IEEE_FLOAT_FORMAT 1
 #define VAX_FLOAT_FORMAT 2
 #define IBM_FLOAT_FORMAT 3
+#define C4X_FLOAT_FORMAT 4
 
 /* Default to IEEE float if not specified.  Nearly all machines use it.  */
 
@@ -263,10 +264,18 @@ typedef struct {
    value in host format and then to a single type `long' value which
    is the bitwise equivalent of the `float' value.  */
 #ifndef REAL_VALUE_TO_TARGET_SINGLE
-#define REAL_VALUE_TO_TARGET_SINGLE(IN, OUT)				\
-do { float f = (float) (IN);						\
-     (OUT) = *(long *) &f;						\
-   } while (0)
+#define REAL_VALUE_TO_TARGET_SINGLE(IN, OUT)		\
+do {							\
+  union {						\
+    float f;						\
+    HOST_WIDE_INT l;					\
+  } u;							\
+  if (sizeof(HOST_WIDE_INT) < sizeof(float))		\
+    abort();						\
+  u.l = 0;						\
+  u.f = (IN);						\
+  (OUT) = u.l;						\
+} while (0)
 #endif
 
 /* Convert a type `double' value in host format to a pair of type `long'
@@ -274,18 +283,20 @@ do { float f = (float) (IN);						\
    proper word order for the target.  */
 #ifndef REAL_VALUE_TO_TARGET_DOUBLE
 #define REAL_VALUE_TO_TARGET_DOUBLE(IN, OUT)				\
-do { REAL_VALUE_TYPE in = (IN);  /* Make sure it's not in a register.  */\
-     if (HOST_FLOAT_WORDS_BIG_ENDIAN == FLOAT_WORDS_BIG_ENDIAN)		\
-       {								\
-	 (OUT)[0] = ((long *) &in)[0];					\
-	 (OUT)[1] = ((long *) &in)[1];					\
-       }								\
-     else								\
-       {								\
-	 (OUT)[1] = ((long *) &in)[0];					\
-	 (OUT)[0] = ((long *) &in)[1];					\
-       }								\
-   } while (0)
+do {									\
+  union {								\
+    REAL_VALUE_TYPE f;							\
+    HOST_WIDE_INT l[2];							\
+  } u;									\
+  if (sizeof(HOST_WIDE_INT) * 2 < sizeof(REAL_VALUE_TYPE))		\
+    abort();								\
+  u.l[0] = u.l[1] = 0;							\
+  u.f = (IN);								\
+  if (HOST_FLOAT_WORDS_BIG_ENDIAN == FLOAT_WORDS_BIG_ENDIAN)		\
+    (OUT)[0] = u.l[0], (OUT)[1] = u.l[1];				\
+  else									\
+    (OUT)[1] = u.l[0], (OUT)[0] = u.l[1];				\
+} while (0)
 #endif
 #endif /* HOST_FLOAT_FORMAT == TARGET_FLOAT_FORMAT */
 
@@ -368,8 +379,7 @@ extern double (atof) ();
    size and where `float' is SFmode.  */
 
 /* Don't use REAL_VALUE_TRUNCATE directly--always call real_value_truncate.  */
-extern REAL_VALUE_TYPE real_value_truncate	PROTO ((enum machine_mode,
-							REAL_VALUE_TYPE));
+extern REAL_VALUE_TYPE real_value_truncate PROTO((enum machine_mode, REAL_VALUE_TYPE));
 
 #ifndef REAL_VALUE_TRUNCATE
 #define REAL_VALUE_TRUNCATE(mode, x) \
@@ -391,6 +401,10 @@ extern REAL_VALUE_TYPE real_value_truncate	PROTO ((enum machine_mode,
 #ifndef REAL_VALUE_NEGATIVE
 #define REAL_VALUE_NEGATIVE(x) (target_negative (x))
 #endif
+
+extern int target_isnan			PROTO ((REAL_VALUE_TYPE));
+extern int target_isinf			PROTO ((REAL_VALUE_TYPE));
+extern int target_negative		PROTO ((REAL_VALUE_TYPE));
 
 /* Determine whether a floating-point value X is minus 0. */
 #ifndef REAL_VALUE_MINUS_ZERO
@@ -459,13 +473,9 @@ extern struct rtx_def *immed_real_const_1	PROTO((REAL_VALUE_TYPE,
 /* Replace R by 1/R in the given machine mode, if the result is exact.  */
 extern int exact_real_inverse PROTO((enum machine_mode, REAL_VALUE_TYPE *));
 
-extern int target_isnan			PROTO ((REAL_VALUE_TYPE));
-extern int target_isinf			PROTO ((REAL_VALUE_TYPE));
-extern int target_negative		PROTO ((REAL_VALUE_TYPE));
 extern void debug_real			PROTO ((REAL_VALUE_TYPE));
 
 /* In varasm.c */
 extern void assemble_real		PROTO ((REAL_VALUE_TYPE,
 						enum machine_mode));
-
 #endif /* Not REAL_H_INCLUDED */

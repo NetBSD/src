@@ -1058,7 +1058,7 @@ DEFDOC (DATE, "Get current date as dd-Mon-yy.", "\
 Returns @var{@1@} in the form @samp{@var{dd}-@var{mmm}-@var{yy}},
 representing the numeric day of the month @var{dd}, a three-character
 abbreviation of the month name @var{mmm} and the last two digits of
-the year @var{yy}, e.g.@ @samp{25-Nov-96}.
+the year @var{yy}, e.g.@: @samp{25-Nov-96}.
 
 This intrinsic is not recommended, due to the year 2000 approaching.
 @xref{CTime Intrinsic (subroutine)}, for information on obtaining more digits
@@ -1282,15 +1282,13 @@ Returns the local time in seconds since midnight minus the value
 DEFDOC (SECOND_func, "Get CPU time for process in seconds.", "\
 Returns the process's runtime in seconds---the same value as the
 UNIX function @code{etime} returns.
-
-This routine is known from Cray Fortran.
 ")
 
 DEFDOC (SECOND_subr, "Get CPU time for process@99@in seconds.", "\
 Returns the process's runtime in seconds in @var{@1@}---the same value
 as the UNIX function @code{etime} returns.
 
-This routine is known from Cray Fortran.  @xref{Cpu_Time Intrinsic}
+This routine is known from Cray Fortran.  @xref{CPU_Time Intrinsic}
 for a standard equivalent.
 ")
 
@@ -1445,6 +1443,10 @@ If the @var{@2@} argument is supplied, it contains 0
 on success or a non-zero error code otherwise upon return.
 See @code{chdir(3)}.
 
+@emph{Caution:} Using this routine during I/O to a unit connected with a
+non-absolute file name can cause subsequent I/O on such a unit to fail
+because the I/O library may reopen files by name.
+
 Some non-GNU implementations of Fortran provide this intrinsic as
 only a function, not as a subroutine, or do not support the
 (optional) @var{@2@} argument.
@@ -1454,6 +1456,10 @@ DEFDOC (CHDIR_func, "Change directory.", "\
 Sets the current working directory to be @var{@1@}.
 Returns 0 on success or a non-zero error code.
 See @code{chdir(3)}.
+
+@emph{Caution:} Using this routine during I/O to a unit connected with a
+non-absolute file name can cause subsequent I/O on such a unit to fail
+because the I/O library may reopen files by name.
 
 Due to the side effects performed by this intrinsic, the function
 form is not recommended.
@@ -2039,12 +2045,22 @@ trailing blanks in @var{@1@} are ignored.
 
 DEFDOC (GETLOG, "Get login name.", "\
 Returns the login name for the process in @var{@1@}.
+
+@emph{Caution:} On some systems, the @code{getlogin(3)}
+function, which this intrinsic calls at run time,
+is either not implemented or returns a null pointer.
+In the latter case, this intrinsic returns blanks
+in @var{@1@}.
 ")
 
 DEFDOC (HOSTNM_func, "Get host name.", "\
 Fills @var{@1@} with the system's host name returned by
 @code{gethostname(2)}, returning 0 on success or a non-zero error code
 (@code{ENOSYS} if the system does not provide @code{gethostname(2)}).
+
+On some systems (specifically SCO) it might be necessary to link the
+``socket'' library if you call this routine, i.e.@: append
+@samp{-lg2c -lsocket -lm} to the @code{g77} arguments.
 ")
 
 DEFDOC (HOSTNM_subr, "Get host name.", "\
@@ -2057,9 +2073,11 @@ If the @var{@2@} argument is supplied, it contains
 Some non-GNU implementations of Fortran provide this intrinsic as
 only a function, not as a subroutine, or do not support the
 (optional) @var{@2@} argument.
-")
 
-/* Fixme: stream I/O */
+On some systems (specifically SCO) it might be necessary to link the
+``socket'' library if you call this routine, i.e.@: append
+@samp{-lg2c -lsocket -lm} to the @code{g77} arguments.
+")
 
 DEFDOC (FLUSH, "Flush buffered output.", "\
 Flushes Fortran unit(s) currently open for output.
@@ -2190,12 +2208,13 @@ DEFDOC (SIGNAL_subr, "Muck with signal handling.", "\
 If @var{@2@} is a an @code{EXTERNAL} routine, arranges for it to be
 invoked with a single integer argument (of system-dependent length)
 when signal @var{@1@} occurs.
-If @var{@1@} is an integer, it can be
-used to turn off handling of signal @var{@2@} or revert to its default
+If @var{@2@} is an integer, it can be
+used to turn off handling of signal @var{@1@} or revert to its default
 action.
 See @code{signal(2)}.
 
-Note that @var{@2@} will be called using C conventions, so its value in
+Note that @var{@2@} will be called using C conventions,
+so the value of its argument in Fortran terms
 Fortran terms is obtained by applying @code{%LOC()} (or @var{LOC()}) to it.
 
 The value returned by @code{signal(2)} is written to @var{@3@}, if
@@ -2205,24 +2224,106 @@ Otherwise the return value is ignored.
 Some non-GNU implementations of Fortran provide this intrinsic as
 only a function, not as a subroutine, or do not support the
 (optional) @var{@3@} argument.
+
+@emph{Warning:} Use of the @code{libf2c} run-time library function
+@samp{signal_} directly
+(such as via @samp{EXTERNAL SIGNAL})
+requires use of the @code{%VAL()} construct
+to pass an @code{INTEGER} value
+(such as @samp{SIG_IGN} or @samp{SIG_DFL})
+for the @var{@2@} argument.
+
+However, while @samp{CALL SIGNAL(@var{signum}, %VAL(SIG_IGN))}
+works when @samp{SIGNAL} is treated as an external procedure
+(and resolves, at link time, to @code{libf2c}'s @samp{signal_} routine),
+this construct is not valid when @samp{SIGNAL} is recognized
+as the intrinsic of that name.
+
+Therefore, for maximum portability and reliability,
+code such references to the @samp{SIGNAL} facility as follows:
+
+@smallexample
+INTRINSIC SIGNAL
+@dots{}
+CALL SIGNAL(@var{signum}, SIG_IGN)
+@end smallexample
+
+@code{g77} will compile such a call correctly,
+while other compilers will generally either do so as well
+or reject the @samp{INTRINSIC SIGNAL} statement via a diagnostic,
+allowing you to take appropriate action.
 ")
 
 DEFDOC (SIGNAL_func, "Muck with signal handling.", "\
 If @var{@2@} is a an @code{EXTERNAL} routine, arranges for it to be
 invoked with a single integer argument (of system-dependent length)
 when signal @var{@1@} occurs.
-If @var{@1@} is an integer, it can be
-used to turn off handling of signal @var{@2@} or revert to its default
+If @var{@2@} is an integer, it can be
+used to turn off handling of signal @var{@1@} or revert to its default
 action.
 See @code{signal(2)}.
 
-Note that @var{@2@} will be called using C conventions, so its value in
-Fortran terms is obtained by applying @code{%LOC()} (or @var{LOC()}) to it.
+Note that @var{@2@} will be called using C conventions,
+so the value of its argument in Fortran terms
+is obtained by applying @code{%LOC()} (or @var{LOC()}) to it.
 
 The value returned by @code{signal(2)} is returned.
 
 Due to the side effects performed by this intrinsic, the function
 form is not recommended.
+
+@emph{Warning:} If the returned value is stored in
+an @code{INTEGER(KIND=1)} (default @code{INTEGER}) argument,
+truncation of the original return value occurs on some systems
+(such as Alphas, which have 64-bit pointers but 32-bit default integers),
+with no warning issued by @code{g77} under normal circumstances.
+
+Therefore, the following code fragment might silently fail on
+some systems:
+
+@smallexample
+INTEGER RTN
+EXTERNAL MYHNDL
+RTN = SIGNAL(@var{signum}, MYHNDL)
+@dots{}
+! Restore original handler:
+RTN = SIGNAL(@var{signum}, RTN)
+@end smallexample
+
+The reason for the failure is that @samp{RTN} might not hold
+all the information on the original handler for the signal,
+thus restoring an invalid handler.
+This bug could manifest itself as a spurious run-time failure
+at an arbitrary point later during the program's execution,
+for example.
+
+@emph{Warning:} Use of the @code{libf2c} run-time library function
+@samp{signal_} directly
+(such as via @samp{EXTERNAL SIGNAL})
+requires use of the @code{%VAL()} construct
+to pass an @code{INTEGER} value
+(such as @samp{SIG_IGN} or @samp{SIG_DFL})
+for the @var{@2@} argument.
+
+However, while @samp{RTN = SIGNAL(@var{signum}, %VAL(SIG_IGN))}
+works when @samp{SIGNAL} is treated as an external procedure
+(and resolves, at link time, to @code{libf2c}'s @samp{signal_} routine),
+this construct is not valid when @samp{SIGNAL} is recognized
+as the intrinsic of that name.
+
+Therefore, for maximum portability and reliability,
+code such references to the @samp{SIGNAL} facility as follows:
+
+@smallexample
+INTRINSIC SIGNAL
+@dots{}
+RTN = SIGNAL(@var{signum}, SIG_IGN)
+@end smallexample
+
+@code{g77} will compile such a call correctly,
+while other compilers will generally either do so as well
+or reject the @samp{INTRINSIC SIGNAL} statement via a diagnostic,
+allowing you to take appropriate action.
 ")
 
 DEFDOC (KILL_func, "Signal a process.", "\
@@ -2333,7 +2434,7 @@ Zeros are shifted in from the opposite end.
 DEFDOC (ISHFTC, "Circular bit shift.", "\
 The rightmost @var{@3@} bits of the argument @var{@1@}
 are shifted circularly @var{@2@}
-places, i.e.@ the bits shifted out of one end are shifted into 
+places, i.e.@: the bits shifted out of one end are shifted into 
 the opposite end.
 No bits are lost.
 The unshifted bits of the result are the same as
@@ -2368,8 +2469,29 @@ Causes external subroutine @var{@2@} to be executed after a delay of
 @var{@1@} seconds by using @code{alarm(1)} to set up a signal and
 @code{signal(2)} to catch it.
 If @var{@3@} is supplied, it will be
-returned with the the number of seconds remaining until any previously
+returned with the number of seconds remaining until any previously
 scheduled alarm was due to be delivered, or zero if there was no
 previously scheduled alarm.
 @xref{Signal Intrinsic (subroutine)}.
+")
+
+DEFDOC (DATE_AND_TIME, "Get the current date and time.", "\
+Returns:
+@table @var
+@item @1@
+The date in the form @var{ccyymmdd}: century, year, month and day;
+@item @2@
+The time in the form @samp{@var{hhmmss.ss}}: hours, minutes, seconds
+and milliseconds;
+@item @3@
+The difference between local time and UTC (GMT) in the form @var{Shhmm}:
+sign, hours and minutes, e.g.@: @samp{-0500} (winter in New York);
+@item @4@
+The year, month of the year, day of the month, time difference in
+minutes from UTC, hour of the day, minutes of the hour and milliseconds
+of the second in successive values of the array.
+@end table
+
+On systems where a millisecond timer isn't available, the millisecond
+value is returned as zero.
 ")

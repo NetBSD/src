@@ -1,5 +1,5 @@
 /* Separate lexical analyzer for GNU C++.
-   Copyright (C) 1987, 89, 92, 93, 94, 95, 1996 Free Software Foundation, Inc.
+   Copyright (C) 1987, 89, 92-97, 1998 Free Software Foundation, Inc.
    Hacked by Michael Tiemann (tiemann@cygnus.com)
 
 This file is part of GNU CC.
@@ -26,9 +26,7 @@ Boston, MA 02111-1307, USA.  */
 #define YYDEBUG 1
 
 #include "config.h"
-#include <sys/types.h>
-#include <stdio.h>
-#include <errno.h>
+#include "system.h"
 #include <setjmp.h>
 #include "input.h"
 #include "tree.h"
@@ -38,29 +36,18 @@ Boston, MA 02111-1307, USA.  */
 #include "flags.h"
 #include "obstack.h"
 #include "c-pragma.h"
+#include "toplev.h"
+#include "output.h"
+
+/* MULTIBYTE_CHARS support only works for native compilers.
+   ??? Ideally what we want is to model widechar support after
+   the current floating point support.  */
+#ifdef CROSS_COMPILE
+#undef MULTIBYTE_CHARS
+#endif
 
 #ifdef MULTIBYTE_CHARS
-#include <stdlib.h>
 #include <locale.h>
-#endif
-
-#ifdef HAVE_STDLIB_H
-#ifndef MULTIBYTE_CHARS
-#include <stdlib.h>
-#endif
-#else
-extern double atof ();
-#endif
-
-#ifdef HAVE_STRING_H
-#include <string.h>
-#else
-extern char *index ();
-extern char *rindex ();
-#endif
-
-#ifndef errno
-extern int errno;		/* needed for VAX.  */
 #endif
 
 #define obstack_chunk_alloc xmalloc
@@ -74,14 +61,12 @@ extern struct obstack permanent_obstack;
 extern struct obstack *current_obstack, *saveable_obstack;
 
 extern void yyprint PROTO((FILE *, int, YYSTYPE));
-extern void set_float_handler PROTO((jmp_buf));
 extern void compiler_error PROTO((char *, HOST_WIDE_INT,
 				  HOST_WIDE_INT));
 
 static tree get_time_identifier PROTO((char *));
 static int check_newline PROTO((void));
 static int skip_white_space PROTO((int));
-static int yynextch PROTO((void));
 static void finish_defarg PROTO((void));
 static int my_get_run_time PROTO((void));
 static int get_last_nonwhite_on_line PROTO((void));
@@ -94,6 +79,17 @@ static void feed_defarg PROTO((tree, tree));
 static int set_vardecl_interface_info PROTO((tree, tree));
 static void store_pending_inline PROTO((tree, struct pending_inline *));
 static void reinit_parse_for_expr PROTO((struct obstack *));
+static int *init_cpp_parse PROTO((void));
+static int handle_cp_pragma PROTO((char *));
+#ifdef HANDLE_SYSV_PRAGMA
+static int handle_sysv_pragma PROTO((int));
+#endif
+#ifdef GATHER_STATISTICS
+#ifdef REDUCE_LENGTH
+static int reduce_cmp PROTO((int *, int *));
+static int token_cmp PROTO((int *, int *));
+#endif
+#endif
 
 /* Given a file name X, return the nondirectory portion.
    Keep in mind that X can be computed more than once.  */
@@ -115,6 +111,14 @@ file_name_nondirectory (x)
 struct obstack inline_text_obstack;
 char *inline_text_firstobj;
 
+#if USE_CPPLIB
+#include "cpplib.h"
+extern cpp_reader  parse_in;
+extern cpp_options parse_options;
+extern unsigned char *yy_cur, *yy_lim;
+#else
+FILE *finput;
+#endif
 int end_of_file;
 
 /* Pending language change.
@@ -292,9 +296,6 @@ int interface_unknown;		/* whether or not we know this class
 
 /* lexical analyzer */
 
-/* File used for outputting assembler code.  */
-extern FILE *asm_out_file;
-
 #ifndef WCHAR_TYPE_SIZE
 #ifdef INT_TYPE_SIZE
 #define WCHAR_TYPE_SIZE INT_TYPE_SIZE
@@ -333,7 +334,7 @@ get_time_identifier (name)
       end_temporary_allocation ();
       IDENTIFIER_LOCAL_VALUE (time_identifier) = build_int_2 (0, 0);
       IDENTIFIER_CLASS_VALUE (time_identifier) = build_int_2 (0, 1);
-      IDENTIFIER_GLOBAL_VALUE (time_identifier) = filename_times;
+      SET_IDENTIFIER_GLOBAL_VALUE (time_identifier, filename_times);
       filename_times = time_identifier;
       pop_obstacks ();
     }
@@ -360,8 +361,8 @@ my_get_run_time ()
 
 #define DEFTREECODE(SYM, NAME, TYPE, LENGTH) TYPE,
 
-char *cplus_tree_code_type[] = {
-  "x",
+char cplus_tree_code_type[] = {
+  'x',
 #include "cp-tree.def"
 };
 #undef DEFTREECODE
@@ -391,18 +392,23 @@ char *cplus_tree_code_name[] = {
 /* toplev.c needs to call these.  */
 
 void
+lang_init_options ()
+{
+  /* Default exceptions on.  */
+  flag_exceptions = 1;
+}
+
+void
 lang_init ()
 {
+#if ! USE_CPPLIB
   /* the beginning of the file is a new line; check for # */
   /* With luck, we discover the real source file's name from that
      and put it in input_filename.  */
   put_back (check_newline ());
+#endif
   if (flag_gnu_xref) GNU_xref_begin (input_filename);
   init_repo (input_filename);
-
-  /* See comments in toplev.c before the call to lang_init.  */
-  if (flag_exceptions == 2)
-    flag_exceptions = 1;
 }
 
 void
@@ -432,7 +438,7 @@ init_filename_times ()
 
 /* Change by Bryan Boreham, Kewill, Thu Jul 27 09:46:05 1989.
    Stuck this hack in to get the files open correctly; this is called
-   in place of init_lex if we are an unexec'd binary.    */
+   in place of init_parse if we are an unexec'd binary.    */
 
 #if 0
 void
@@ -443,13 +449,54 @@ reinit_lang_specific ()
 }
 #endif
 
-void
-init_lex ()
+static int *
+init_cpp_parse ()
+{
+#ifdef GATHER_STATISTICS
+#ifdef REDUCE_LENGTH
+  reduce_count = (int *)malloc (sizeof (int) * (REDUCE_LENGTH + 1));
+  bzero (reduce_count, sizeof (int) * (REDUCE_LENGTH + 1));
+  reduce_count += 1;
+  token_count = (int *)malloc (sizeof (int) * (TOKEN_LENGTH + 1));
+  bzero (token_count, sizeof (int) * (TOKEN_LENGTH + 1));
+  token_count += 1;
+#endif
+#endif
+  return token_count;
+}
+
+char *
+init_parse (filename)
+     char *filename;
 {
   extern int flag_no_gnu_keywords;
   extern int flag_operator_names;
 
   int i;
+
+#if USE_CPPLIB
+  yy_cur = "\n";
+  yy_lim = yy_cur + 1;
+
+  parse_in.show_column = 1;
+  if (! cpp_start_read (&parse_in, filename))
+    abort ();
+#else
+  /* Open input file.  */
+  if (filename == 0 || !strcmp (filename, "-"))
+    {
+      finput = stdin;
+      filename = "stdin";
+    }
+  else
+    finput = fopen (filename, "r");
+  if (finput == 0)
+    pfatal_with_name (filename);
+
+#ifdef IO_BUFFER_SIZE
+  setvbuf (finput, (char *) xmalloc (IO_BUFFER_SIZE), _IOFBF, IO_BUFFER_SIZE);
+#endif
+#endif /* !USE_CPPLIB */
 
   /* Initialize the lookahead machinery.  */
   init_spew ();
@@ -460,18 +507,9 @@ init_lex ()
 
   init_cplus_expand ();
 
-  tree_code_type
-    = (char **) realloc (tree_code_type,
-			 sizeof (char *) * LAST_CPLUS_TREE_CODE);
-  tree_code_length
-    = (int *) realloc (tree_code_length,
-		       sizeof (int) * LAST_CPLUS_TREE_CODE);
-  tree_code_name
-    = (char **) realloc (tree_code_name,
-			 sizeof (char *) * LAST_CPLUS_TREE_CODE);
-  bcopy ((char *)cplus_tree_code_type,
-	 (char *)(tree_code_type + (int) LAST_AND_UNUSED_TREE_CODE),
-	 (LAST_CPLUS_TREE_CODE - (int)LAST_AND_UNUSED_TREE_CODE) * sizeof (char *));
+  bcopy (cplus_tree_code_type,
+	 tree_code_type + (int) LAST_AND_UNUSED_TREE_CODE,
+	 (int)LAST_CPLUS_TREE_CODE - (int)LAST_AND_UNUSED_TREE_CODE);
   bcopy ((char *)cplus_tree_code_length,
 	 (char *)(tree_code_length + (int) LAST_AND_UNUSED_TREE_CODE),
 	 (LAST_CPLUS_TREE_CODE - (int)LAST_AND_UNUSED_TREE_CODE) * sizeof (int));
@@ -608,8 +646,8 @@ init_lex ()
   IDENTIFIER_OPNAME_P (ansi_opname[(int) MAX_EXPR]) = 1;
   ansi_opname[(int) COND_EXPR] = get_identifier ("__cn");
   IDENTIFIER_OPNAME_P (ansi_opname[(int) COND_EXPR]) = 1;
-  ansi_opname[(int) METHOD_CALL_EXPR] = get_identifier ("__wr");
-  IDENTIFIER_OPNAME_P (ansi_opname[(int) METHOD_CALL_EXPR]) = 1;
+  ansi_opname[(int) SIZEOF_EXPR] = get_identifier ("__sz");
+  IDENTIFIER_OPNAME_P (ansi_opname[(int) SIZEOF_EXPR]) = 1;
 
   init_method ();
   init_error ();
@@ -740,7 +778,6 @@ init_lex ()
 
   opname_tab[(int) COMPONENT_REF] = "->";
   opname_tab[(int) MEMBER_REF] = "->*";
-  opname_tab[(int) METHOD_CALL_EXPR] = "->()";
   opname_tab[(int) INDIRECT_REF] = "*";
   opname_tab[(int) ARRAY_REF] = "[]";
   opname_tab[(int) MODIFY_EXPR] = "=";
@@ -842,6 +879,7 @@ init_lex ()
       UNSET_RESERVED_WORD ("classof");
       UNSET_RESERVED_WORD ("headof");
     }
+
   if (! flag_handle_signatures || flag_no_gnu_keywords)
     {
       /* Easiest way to not recognize signature
@@ -867,8 +905,20 @@ init_lex ()
       UNSET_RESERVED_WORD ("xor_eq");
     }
 
-  token_count = init_parse ();
+  token_count = init_cpp_parse ();
   interface_unknown = 1;
+
+  return filename;
+}
+
+void
+finish_parse ()
+{
+#if USE_CPPLIB
+  cpp_finish (&parse_in);
+#else
+  fclose (finput);
+#endif
 }
 
 void
@@ -897,13 +947,12 @@ yyprint (file, yychar, yylval)
     case IDENTIFIER_DEFN:
     case TYPENAME_DEFN:
     case PTYPENAME_DEFN:
-    case TYPENAME_ELLIPSIS:
     case SCSPEC:
     case PRE_PARSED_CLASS_DECL:
       t = yylval.ttype;
-      if (TREE_CODE (t) == TYPE_DECL)
+      if (TREE_CODE (t) == TYPE_DECL || TREE_CODE (t) == TEMPLATE_DECL)
 	{
-	  fprintf (file, " `%s'", DECL_NAME (t));
+	  fprintf (file, " `%s'", IDENTIFIER_POINTER (DECL_NAME (t)));
 	  break;
 	}
       my_friendly_assert (TREE_CODE (t) == IDENTIFIER_NODE, 224);
@@ -937,22 +986,6 @@ int *token_count;
 #define REDUCE_LENGTH (sizeof (yyr2) / sizeof (yyr2[0]))
 #define TOKEN_LENGTH (256 + sizeof (yytname) / sizeof (yytname[0]))
 #endif
-
-int *
-init_parse ()
-{
-#ifdef GATHER_STATISTICS
-#ifdef REDUCE_LENGTH
-  reduce_count = (int *)malloc (sizeof (int) * (REDUCE_LENGTH + 1));
-  bzero (reduce_count, sizeof (int) * (REDUCE_LENGTH + 1));
-  reduce_count += 1;
-  token_count = (int *)malloc (sizeof (int) * (TOKEN_LENGTH + 1));
-  bzero (token_count, sizeof (int) * (TOKEN_LENGTH + 1));
-  token_count += 1;
-#endif
-#endif
-  return token_count;
-}
 
 #ifdef GATHER_STATISTICS
 #ifdef REDUCE_LENGTH
@@ -1206,8 +1239,7 @@ do_pending_inlines ()
   context = hack_decl_function_context (t->fndecl);
   if (context)
     push_cp_function_context (context);
-  if (is_member_template (t->fndecl))
-    begin_member_template_processing (t->fndecl);
+  maybe_begin_member_template_processing (t->fndecl);
   if (t->len > 0)
     {
       feed_input (t->buf, t->len);
@@ -1245,8 +1277,7 @@ process_next_inline (t)
   tree context;
   struct pending_inline *i = (struct pending_inline *) TREE_PURPOSE (t);
   context = hack_decl_function_context (i->fndecl);  
-  if (is_member_template (i->fndecl))
-    end_member_template_processing ();
+  maybe_end_member_template_processing (i->fndecl);
   if (context)
     pop_cp_function_context (context);
   i = i->next;
@@ -1269,8 +1300,7 @@ process_next_inline (t)
       context = hack_decl_function_context (i->fndecl);
       if (context)
 	push_cp_function_context (context);
-      if (is_member_template (i->fndecl))
-	begin_member_template_processing (i->fndecl);
+      maybe_begin_member_template_processing (i->fndecl);
       feed_input (i->buf, i->len);
       lineno = i->lineno;
       input_filename = i->filename;
@@ -1388,23 +1418,6 @@ restore_pending_input (p)
   token_obstack = p->token_obstack;
   end_of_file = p->eof;
   free (p);
-}
-
-/* Return next non-whitespace input character, which may come
-   from `finput', or from `nextchar'.  */
-
-static int
-yynextch ()
-{
-  int c;
-
-  if (nextchar >= 0)
-    {
-      c = nextchar;
-      nextchar = -1;
-    }
-  else c = getch ();
-  return skip_white_space (c);
 }
 
 /* Unget character CH from the input stream.
@@ -1679,8 +1692,6 @@ reinit_parse_for_expr (obstackp)
   int starting_lineno = lineno;
   char *starting_filename = input_filename;
   int len;
-  int look_for_semicolon = 0;
-  int look_for_lbrac = 0;
   int plev = 0;
 
   if (nextchar != EOF)
@@ -1886,8 +1897,8 @@ do_pending_defargs ()
 	{
 	  push_nested_class (TREE_PURPOSE (defarg_fns), 1);
 	  pushlevel (0);
-	  if (is_member_template (defarg_fn))
-	    begin_member_template_processing (defarg_fn);
+	  if (TREE_CODE (defarg_fn) == FUNCTION_DECL)
+	    maybe_begin_member_template_processing (defarg_fn);
 
 	  if (TREE_CODE (defarg_fn) == FUNCTION_DECL)
 	    {
@@ -1915,8 +1926,12 @@ do_pending_defargs ()
 	    return;
 	  }
 
-      if (is_member_template (defarg_fn))
-	end_member_template_processing ();
+      if (TREE_CODE (defarg_fn) == FUNCTION_DECL)
+	{
+	  maybe_end_member_template_processing (defarg_fn);
+	  check_default_args (defarg_fn);
+	}
+
       poplevel (0, 0, 0);
       pop_nested_class (1);
     }
@@ -1940,7 +1955,7 @@ cons_up_default_function (type, full_name, kind)
 {
   extern tree void_list_node;
   tree declspecs = NULL_TREE;
-  tree fn, args;
+  tree fn, args = NULL_TREE;
   tree argtype;
   int retref = 0;
   tree name = constructor_name (full_name);
@@ -2002,16 +2017,10 @@ cons_up_default_function (type, full_name, kind)
 
   {
     tree declarator = make_call_declarator (name, args, NULL_TREE, NULL_TREE);
-    int saved_processing_specialization;
     if (retref)
       declarator = build_parse_node (ADDR_EXPR, declarator);
 
-    /* The following is in case we're generating the default
-       implementation in the midst of handling a specialization. */
-    saved_processing_specialization = processing_specialization;
-    processing_specialization = 0;
     fn = grokfield (declarator, declspecs, NULL_TREE, NULL_TREE, NULL_TREE);
-    processing_specialization = saved_processing_specialization;
   }
   
   if (fn == void_type_node)
@@ -2206,9 +2215,6 @@ get_last_nonwhite_on_line ()
 
 int linemode;
 
-#ifdef HANDLE_SYSV_PRAGMA
-static int handle_sysv_pragma PROTO((FILE *, int));
-#endif
 static int handle_cp_pragma PROTO((char *));
 
 static int
@@ -2269,12 +2275,17 @@ check_newline ()
 		goto skipline;
 
 #ifdef HANDLE_SYSV_PRAGMA
-	      if (handle_sysv_pragma (finput, token))
+	      if (handle_sysv_pragma (token))
 		goto skipline;
 #else
 #ifdef HANDLE_PRAGMA
-	      if (HANDLE_PRAGMA (finput, yylval.ttype))
-		goto skipline;
+#if USE_CPPLIB
+              /* TODO: ??? */
+              goto skipline;
+#else
+  	      if (HANDLE_PRAGMA (finput, yylval.ttype))
+  		goto skipline;
+#endif /* !USE_CPPLIB */
 #endif
 #endif
 	    }
@@ -2289,7 +2300,7 @@ check_newline ()
 	      && getch () == 'e'
 	      && ((c = getch ()) == ' ' || c == '\t'))
 	    {
-	      debug_define (lineno, get_directive_line (finput));
+	      debug_define (lineno, GET_DIRECTIVE_LINE ());
 	      goto skipline;
 	    }
 	}
@@ -2301,7 +2312,7 @@ check_newline ()
 	      && getch () == 'f'
 	      && ((c = getch ()) == ' ' || c == '\t'))
 	    {
-	      debug_undef (lineno, get_directive_line (finput));
+	      debug_undef (lineno, GET_DIRECTIVE_LINE ());
 	      goto skipline;
 	    }
 	}
@@ -2321,9 +2332,6 @@ check_newline ()
 	      && getch () == 't'
 	      && ((c = getch ()) == ' ' || c == '\t'))
 	    {
-#ifdef ASM_OUTPUT_IDENT
-              extern FILE *asm_out_file;
-#endif
 	      /* #ident.  The pedantic warning is now in cccp.c.  */
 
 	      /* Here we have just seen `#ident '.
@@ -2603,13 +2611,6 @@ do_pending_lang_change ()
     pop_lang_context ();
 }
 
-#if 0
-#define isalnum(char) (char >= 'a' ? char <= 'z' : char >= '0' ? char <= '9' || (char >= 'A' && char <= 'Z') : 0)
-#define isdigit(char) (char >= '0' && char <= '9')
-#else
-#include <ctype.h>
-#endif
-
 #define ENDFILE -1  /* token that represents end-of-file */
 
 /* Read an escape sequence, returning its equivalent as a character,
@@ -2622,7 +2623,7 @@ readescape (ignore_ptr)
   register int c = getch ();
   register int code;
   register unsigned count;
-  unsigned firstdig;
+  unsigned firstdig = 0;
   int nonnull;
 
   switch (c)
@@ -2634,7 +2635,7 @@ readescape (ignore_ptr)
       while (1)
 	{
 	  c = getch ();
-	  if (! isxdigit (c))
+	  if (! ISXDIGIT (c))
 	    {
 	      put_back (c);
 	      break;
@@ -2736,7 +2737,7 @@ readescape (ignore_ptr)
 /* Value is 1 (or 2) if we should try to make the next identifier look like
    a typename (when it may be a local variable or a class variable).
    Value is 0 if we treat this name in a default fashion.  */
-int looking_for_typename = 0;
+int looking_for_typename;
 
 #ifdef __GNUC__
 __inline
@@ -2755,8 +2756,8 @@ identifier_type (decl)
   if (looking_for_template && really_overloaded_fn (decl))
     {
       tree t;
-      for (t = TREE_VALUE (decl); t != NULL_TREE; t = DECL_CHAIN (t))
-	if (DECL_FUNCTION_TEMPLATE_P (t)) 
+      for (t = decl; t != NULL_TREE; t = OVL_CHAIN (t))
+	if (DECL_FUNCTION_TEMPLATE_P (OVL_FUNCTION (t))) 
 	  return PFUNCNAME;
     }
   if (TREE_CODE (decl) == NAMESPACE_DECL)
@@ -2773,7 +2774,8 @@ identifier_type (decl)
 void
 see_typename ()
 {
-  looking_for_typename = 1;
+  /* Only types expected, not even namespaces. */
+  looking_for_typename = 2;
   if (yychar < 0)
     if ((yychar = yylex ()) < 0) yychar = 0;
   looking_for_typename = 0;
@@ -2790,23 +2792,42 @@ see_typename ()
     }
 }
 
+/* Return true if d is in a global scope. */
+
+static int
+is_global (d)
+  tree d;
+{
+  while (1)
+    switch (TREE_CODE (d))
+      {
+      case OVERLOAD: d = OVL_FUNCTION (d); continue;
+      case TREE_LIST: d = TREE_VALUE (d); continue;
+      default:
+        my_friendly_assert (TREE_CODE_CLASS (TREE_CODE (d)) == 'd', 980629);
+        d = CP_DECL_CONTEXT (d);
+        return TREE_CODE (d) == NAMESPACE_DECL;
+      }
+}
+
 tree
-do_identifier (token, parsing)
+do_identifier (token, parsing, args)
      register tree token;
      int parsing;
+     tree args;
 {
   register tree id;
+  int lexing = (parsing == 1);
+  int in_call = (parsing == 2);
 
-  if (! parsing || IDENTIFIER_OPNAME_P (token))
+  if (! lexing || IDENTIFIER_OPNAME_P (token))
     id = lookup_name (token, 0);
   else
     id = lastiddecl;
 
-  if (parsing && yychar == YYEMPTY)
-    yychar = yylex ();
   /* Scope class declarations before global
      declarations.  */
-  if (id == IDENTIFIER_GLOBAL_VALUE (token)
+  if ((!id || is_global (id))
       && current_class_type != 0
       && TYPE_SIZE (current_class_type) == 0)
     {
@@ -2819,7 +2840,8 @@ do_identifier (token, parsing)
 	   But we still want to return this value.  */
 	id = lookup_field (current_class_type, token, 0, 0);
       else if (TREE_CODE (field) == VAR_DECL
-	       || TREE_CODE (field) == CONST_DECL)
+	       || TREE_CODE (field) == CONST_DECL
+	       || TREE_CODE (field) == TEMPLATE_DECL)
 	id = field;
       else if (TREE_CODE (field) != FIELD_DECL)
 	my_friendly_abort (61);
@@ -2832,6 +2854,15 @@ do_identifier (token, parsing)
 	}
     }
 
+  /* Do Koenig lookup if appropriate (inside templates we build lookup
+     expressions instead).  */
+  if (args && !current_template_parms && (!id || is_global (id)))
+    {
+      /* If we have arguments and we only found global names,
+         do Koenig lookup. */
+      id = lookup_arg_dependent (token, id, args);
+    }
+
   /* Remember that this name has been used in the class definition, as per
      [class.scope0] */
   if (id && current_class_type && parsing
@@ -2841,7 +2872,7 @@ do_identifier (token, parsing)
 	 refers to an overloaded method.  Eventually this will not be
 	 necessary, since default arguments shouldn't be parsed until
 	 after the class is complete.  (jason 3/12/97) */
-      && TREE_CODE (id) != TREE_LIST)
+      && TREE_CODE (id) != OVERLOAD)
     pushdecl_class_level (id);
     
   if (!id || id == error_mark_node)
@@ -2863,7 +2894,7 @@ do_identifier (token, parsing)
 	    cp_error ("`%D' not defined", token);
 	  id = error_mark_node;
 	}
-      else if (parsing && (yychar == '(' || yychar == LEFT_RIGHT))
+      else if (in_call)
 	{
 	  id = implicitly_declare (token);
 	}
@@ -2874,7 +2905,7 @@ do_identifier (token, parsing)
 	}
       else
 	{
-	  if (IDENTIFIER_GLOBAL_VALUE (token) != error_mark_node
+	  if (IDENTIFIER_NAMESPACE_VALUE (token) != error_mark_node
 	      || IDENTIFIER_ERROR_LOCUS (token) != current_function_decl)
 	    {
 	      static int undeclared_variable_notice;
@@ -2890,7 +2921,7 @@ do_identifier (token, parsing)
 	    }
 	  id = error_mark_node;
 	  /* Prevent repeated error messages.  */
-	  IDENTIFIER_GLOBAL_VALUE (token) = error_mark_node;
+	  SET_IDENTIFIER_NAMESPACE_VALUE (token, error_mark_node);
 	  SET_IDENTIFIER_ERROR_LOCUS (token, current_function_decl);
 	}
     }
@@ -2902,7 +2933,7 @@ do_identifier (token, parsing)
 	     && DECL_DEAD_FOR_LOCAL (shadowed))
 	shadowed = DECL_SHADOWED_FOR_VAR (shadowed);
       if (!shadowed)
-	shadowed = IDENTIFIER_GLOBAL_VALUE (DECL_NAME (id));
+	shadowed = IDENTIFIER_NAMESPACE_VALUE (DECL_NAME (id));
       if (shadowed)
 	{
 	  if (!DECL_ERROR_REPORTED (id))
@@ -2947,7 +2978,7 @@ do_identifier (token, parsing)
 	}
       if (! processing_template_decl
 	  || (DECL_INITIAL (id)
-	      && TREE_CODE (DECL_INITIAL (id)) == TEMPLATE_CONST_PARM))
+	      && TREE_CODE (DECL_INITIAL (id)) == TEMPLATE_PARM_INDEX))
 	id = DECL_INITIAL (id);
     }
   else
@@ -2959,7 +2990,7 @@ do_identifier (token, parsing)
 	{
 	  tree t = build_min (LOOKUP_EXPR, unknown_type_node,
 			      token, get_first_fn (id));
-	  if (id != IDENTIFIER_GLOBAL_VALUE (token))
+	  if (id != IDENTIFIER_NAMESPACE_VALUE (token))
 	    TREE_OPERAND (t, 1) = error_mark_node;
 	  id = t;
 	}
@@ -2977,7 +3008,19 @@ do_scoped_id (token, parsing)
      tree token;
      int parsing;
 {
-  tree id = IDENTIFIER_GLOBAL_VALUE (token);
+  tree id;
+  /* during parsing, this is ::name. Otherwise, it is black magic. */
+  if (parsing)
+    {
+      struct tree_binding _b;
+      id = binding_init (&_b);
+      if (!qualified_lookup_using_namespace (token, global_namespace, id, 0))
+	id = NULL_TREE;
+      else
+	id = BINDING_VALUE (id);
+    } 
+  else
+    id = IDENTIFIER_GLOBAL_VALUE (token);
   if (parsing && yychar == YYEMPTY)
     yychar = yylex ();
   if (! id)
@@ -2988,23 +3031,23 @@ do_scoped_id (token, parsing)
 	  LOOKUP_EXPR_GLOBAL (id) = 1;
 	  return id;
 	}
-      if (parsing && yychar == '(' || yychar == LEFT_RIGHT)
+      if (parsing && (yychar == '(' || yychar == LEFT_RIGHT))
 	id = implicitly_declare (token);
       else
 	{
-	  if (IDENTIFIER_GLOBAL_VALUE (token) != error_mark_node)
+	  if (IDENTIFIER_NAMESPACE_VALUE (token) != error_mark_node)
 	    error ("undeclared variable `%s' (first use here)",
 		   IDENTIFIER_POINTER (token));
 	  id = error_mark_node;
 	  /* Prevent repeated error messages.  */
-	  IDENTIFIER_GLOBAL_VALUE (token) = error_mark_node;
+	  SET_IDENTIFIER_NAMESPACE_VALUE (token, error_mark_node);
 	}
     }
   else
     {
       if (TREE_CODE (id) == ADDR_EXPR)
 	mark_used (TREE_OPERAND (id, 0));
-      else if (TREE_CODE (id) != TREE_LIST)
+      else if (TREE_CODE (id) != OVERLOAD)
 	mark_used (id);
     }
   if (TREE_CODE (id) == CONST_DECL && ! processing_template_decl)
@@ -3046,7 +3089,7 @@ identifier_typedecl_value (node)
   }
   do (IDENTIFIER_LOCAL_VALUE (node));
   do (IDENTIFIER_CLASS_VALUE (node));
-  do (IDENTIFIER_GLOBAL_VALUE (node));
+  do (IDENTIFIER_NAMESPACE_VALUE (node));
 #undef do
   /* Will this one ever happen?  */
   if (TYPE_MAIN_DECL (type))
@@ -3169,7 +3212,7 @@ real_yylex ()
 	    /* Make this run fast.  We know that we are reading straight
 	       from FINPUT in this case (since identifiers cannot straddle
 	       input sources.  */
-	    while (isalnum (c) || (c == '_') || c == '$')
+	    while (ISALNUM (c) || (c == '_') || c == '$')
 	      {
 		if (c == '$')
 		  {
@@ -3199,7 +3242,7 @@ real_yylex ()
 	    *p++ = c;
 	    c = getch ();
 
-	    while (isalnum (c) || (c == '_') || c == '$')
+	    while (ISALNUM (c) || (c == '_') || c == '$')
 	      {
 		if (c == '$')
 		  {
@@ -3228,7 +3271,7 @@ real_yylex ()
 	{
 	  register struct resword *ptr;
 
-	  if (ptr = is_reserved_word (token_buffer, p - token_buffer))
+	  if ((ptr = is_reserved_word (token_buffer, p - token_buffer)))
 	    {
 	      if (ptr->rid)
 		{
@@ -3241,7 +3284,7 @@ real_yylex ()
 		      && TREE_CODE (IDENTIFIER_GLOBAL_VALUE (old_ttype)) == TYPE_DECL)
 		    looking_for_typename = 0;
 		  else if (ptr->token == AGGR || ptr->token == ENUM)
-		    looking_for_typename = 1;
+		    looking_for_typename = 2;
 
 		  /* Check if this is a language-type declaration.
 		     Just glimpse the next non-white character.  */
@@ -3392,7 +3435,7 @@ real_yylex ()
 	      }
 	    error ("parse error at `..'");
 	  }
-	if (isdigit (c1))
+	if (ISDIGIT (c1))
 	  {
 	    put_back (c1);
 	    goto resume_numerical_scan;
@@ -3406,7 +3449,7 @@ real_yylex ()
 	/* Optimize for most frequent case.  */
       {
 	register int c1 = getch ();
-	if (! isalnum (c1) && c1 != '.')
+	if (! ISALNUM (c1) && c1 != '.')
 	  {
 	    /* Terminate string.  */
 	    token_buffer[0] = c;
@@ -3471,7 +3514,7 @@ real_yylex ()
 	/* Read all the digits-and-decimal-points.  */
 
 	while (c == '.'
-	       || (isalnum (c) && (c != 'l') && (c != 'L')
+	       || (ISALNUM (c) && (c != 'l') && (c != 'L')
 		   && (c != 'u') && (c != 'U')
 		   && c != 'i' && c != 'I' && c != 'j' && c != 'J'
 		   && (floatflag == NOT_FLOAT || ((c != 'f') && (c != 'F')))))
@@ -3500,7 +3543,7 @@ real_yylex ()
 		   only when it is followed by a digit.
 		   Otherwise, unread the following non-digit
 		   and use the '.' as a structural token.  */
-		if (p == token_buffer + 2 && !isdigit (c))
+		if (p == token_buffer + 2 && !ISDIGIT (c))
 		  {
 		    if (c == '.')
 		      {
@@ -3525,7 +3568,7 @@ real_yylex ()
 		/* It is not a decimal point.
 		   It should be a digit (perhaps a hex digit).  */
 
-		if (isdigit (c))
+		if (ISDIGIT (c))
 		  {
 		    c = c - '0';
 		  }
@@ -3607,9 +3650,9 @@ real_yylex ()
 		    *p++ = c;
 		    c = getch ();
 		  }
-		if (! isdigit (c))
+		if (! ISDIGIT (c))
 		  error ("floating constant exponent has no digits");
-	        while (isdigit (c))
+	        while (ISDIGIT (c))
 		  {
 		    if (p >= token_buffer + maxtoken - 3)
 		      p = extend_token_buffer (p);
@@ -3913,7 +3956,7 @@ real_yylex ()
 		    && (unsigned) c >= (1 << width))
 		  warning ("escape sequence out of range for character");
 #ifdef MAP_CHARACTER
-		if (isprint (c))
+		if (ISPRINT (c))
 		  c = MAP_CHARACTER (c);
 #endif
 	      }
@@ -3956,7 +3999,7 @@ real_yylex ()
 	    num_chars = max_chars;
 	    error ("character constant too long");
 	  }
-	else if (num_chars != 1)
+	else if (num_chars != 1 && warn_multichar)
 	  warning ("multi-character character constant");
 
 	/* If char type is signed, sign-extend the constant.  */
@@ -4070,15 +4113,9 @@ real_yylex ()
 	    bzero (widep + (len * WCHAR_BYTES), WCHAR_BYTES);
 #else
 	    {
-	      union { long l; char c[sizeof (long)]; } u;
-	      int big_endian;
 	      char *wp, *cp;
 
-	      /* Determine whether host is little or big endian.  */
-	      u.l = 1;
-	      big_endian = u.c[sizeof (long) - 1];
-	      wp = widep + (big_endian ? WCHAR_BYTES - 1 : 0);
-
+	      wp = widep + (BYTES_BIG_ENDIAN ? WCHAR_BYTES - 1 : 0);
 	      bzero (widep, (p - token_buffer) * WCHAR_BYTES);
 	      for (cp = token_buffer + 1; cp < p; cp++)
 		*wp = *cp, wp += WCHAR_BYTES;
@@ -4386,6 +4423,8 @@ build_lang_decl (code, name, type)
     DECL_LANGUAGE (t) = lang_cplusplus;
   else if (current_lang_name == lang_name_c)
     DECL_LANGUAGE (t) = lang_c;
+  else if (current_lang_name == lang_name_java)
+    DECL_LANGUAGE (t) = lang_java;
   else my_friendly_abort (64);
 
 #if 0 /* not yet, should get fixed properly later */
@@ -4484,7 +4523,6 @@ make_lang_type (code)
   CLASSTYPE_AS_LIST (t) = build_expr_list (NULL_TREE, t);
   SET_CLASSTYPE_INTERFACE_UNKNOWN_X (t, interface_unknown);
   CLASSTYPE_INTERFACE_ONLY (t) = interface_only;
-  CLASSTYPE_VBASE_SIZE (t) = integer_zero_node;
   TYPE_BINFO (t) = make_binfo (integer_zero_node, t, NULL_TREE, NULL_TREE,
 			       NULL_TREE);
   CLASSTYPE_BINFO_AS_LIST (t) = build_tree_list (NULL_TREE, TYPE_BINFO (t));
@@ -4520,7 +4558,7 @@ dump_time_statistics ()
   for (decl = filename_times; decl; decl = next)
     {
       next = IDENTIFIER_GLOBAL_VALUE (decl);
-      IDENTIFIER_GLOBAL_VALUE (decl) = prev;
+      SET_IDENTIFIER_GLOBAL_VALUE (decl, prev);
       prev = decl;
     }
 
@@ -4755,8 +4793,7 @@ handle_cp_pragma (pname)
    the token types.  */
 
 static int
-handle_sysv_pragma (finput, token)
-     FILE *finput;
+handle_sysv_pragma (token)
      register int token;
 {
   for (;;)

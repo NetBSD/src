@@ -79,8 +79,8 @@ output_file_directive ((FILE), main_input_filename)
 /* The Encore assembler doesn't seem to accept the usual second argument
    and warns that .align may not work in the text section if optimization
    is on.  */
-#undef ASM_OUTPUT_ALIGN_CODE
-#define ASM_OUTPUT_ALIGN_CODE(FILE)
+#undef LABEL_ALIGN_AFTER_BARRIER
+#define LABEL_ALIGN_AFTER_BARRIER(LABEL) 0
 
 /*
  *  Internal labels are prefixed with a period.
@@ -90,7 +90,7 @@ output_file_directive ((FILE), main_input_filename)
 	sprintf (LABEL, "*.%s%d", PREFIX, NUM)
 #define ASM_OUTPUT_INTERNAL_LABEL(FILE,PREFIX,NUM)			\
 	fprintf (FILE, ".%s%d:\n", PREFIX, NUM)
-#define ASM_OUTPUT_ADDR_DIFF_ELT(FILE, VALUE, REL)			\
+#define ASM_OUTPUT_ADDR_DIFF_ELT(FILE, BODY, VALUE, REL)		\
 	fprintf (FILE, "\t.double .L%d-.LI%d\n", VALUE, REL)
 
 /*
