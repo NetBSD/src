@@ -1,4 +1,4 @@
-/*	$NetBSD: scsipi_verbose.c,v 1.8 1998/08/15 10:10:57 mycroft Exp $	*/
+/*	$NetBSD: scsipi_verbose.c,v 1.9 1998/11/17 14:38:42 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -50,7 +50,6 @@
 #include <stdio.h>
 #endif
 #include <dev/scsipi/scsipi_all.h>
-#include <dev/scsipi/scsi_all.h>
 #include <dev/scsipi/scsipiconf.h>
 #include <dev/scsipi/scsiconf.h>
 
@@ -299,7 +298,7 @@ asc2ascii(asc, ascq, result)
 }
 
 void
-scsi_print_sense_data(sense, verbosity)
+scsipi_print_sense_data(sense, verbosity)
 	struct scsipi_sense_data *sense;
 	int verbosity;
 {
@@ -310,7 +309,7 @@ scsi_print_sense_data(sense, verbosity)
 	/*
 	 * Basics- print out SENSE KEY
 	 */
-	printf("    SENSE KEY:  %s", scsi_decode_sense(s, 0));
+	printf("    SENSE KEY:  %s", scsipi_decode_sense(s, 0));
 
 	/*
 	 * Print out, unqualified but aligned, FMK, EOM and ILI status.
@@ -359,12 +358,12 @@ scsi_print_sense_data(sense, verbosity)
 	 * Decode ASC && ASCQ info, plus FRU, plus the rest...
 	 */
 
-	sbs = scsi_decode_sense(s, 1);
+	sbs = scsipi_decode_sense(s, 1);
 	if (sbs)
 		printf("\n     ASC/ASCQ:  %s", sbs);
 	if (s[14] != 0)
 		printf("\n     FRU CODE:  0x%x", s[14] & 0xff);
-	sbs = scsi_decode_sense(s, 3);
+	sbs = scsipi_decode_sense(s, 3);
 	if (sbs)
 		printf("\n         SKSV:  %s", sbs);
 	printf("\n");
@@ -418,7 +417,7 @@ scsi_print_sense_data(sense, verbosity)
 }
 
 char *
-scsi_decode_sense(sinfo, flag)
+scsipi_decode_sense(sinfo, flag)
 	void *sinfo;
 	int flag;
 {
@@ -479,7 +478,7 @@ scsi_decode_sense(sinfo, flag)
 }
 
 void
-scsi_print_sense(xs, verbosity)
+scsipi_print_sense(xs, verbosity)
 	struct scsipi_xfer *xs;
 	int verbosity;
 {
@@ -521,5 +520,5 @@ scsi_print_sense(xs, verbosity)
  	for (i = 0; i < j-1; i++) /* already done the opcode */
  		printf(" %02x", xs->cmd->bytes[i]);
  	printf("\n");
-	scsi_print_sense_data(&xs->sense.scsi_sense, verbosity);
+	scsipi_print_sense_data(&xs->sense.scsi_sense, verbosity);
 }
