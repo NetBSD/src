@@ -1,4 +1,4 @@
-/*	$NetBSD: seagate.c,v 1.37 2000/05/03 21:20:07 mycroft Exp $	*/
+/*	$NetBSD: seagate.c,v 1.38 2000/07/06 02:02:49 thorpej Exp $	*/
 
 /*
  * ST01/02, Future Domain TMC-885, TMC-950 SCSI driver
@@ -705,7 +705,7 @@ sea_main()
 loop:
 	done = 1;
 	for (unit = 0; unit < sea_cd.cd_ndevs; unit++) {
-		sea = sea_cd.cd_devs[unit];
+		sea = device_lookup(&sea_cd, unit);
 		if (!sea)
 			continue;
 		s = splbio();
