@@ -1,11 +1,11 @@
-#	$NetBSD: GENERIC,v 1.1 2001/02/04 18:32:10 briggs Exp $
+#	$NetBSD: GENERIC,v 1.2 2001/02/07 05:51:10 briggs Exp $
 #
 # GENERIC for Motorola Sandpoint
 #
 
 include "arch/sandpoint/conf/std.sandpoint"
 
-#ident 		"GENERIC-$Revision: 1.1 $"
+#ident 		"GENERIC-$Revision: 1.2 $"
 
 maxusers	32
 
@@ -73,6 +73,9 @@ options 	PCIVERBOSE	# verbose PCI device messages
 mainbus0 at root
 
 pci*	at mainbus0 bus ?
+
+ppb*	at pci? dev ? function ?	# PCI-PCI bridges
+pci*	at ppb? bus ?
 
 pchb*	at pci? dev ? function ?	# PCI host bridge
 pcib*	at pci? dev ? function ?	# Winbond 83c553 PCI-ISA bridges
