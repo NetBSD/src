@@ -1,4 +1,4 @@
-/* $NetBSD: wsmoused.c,v 1.7 2003/03/04 14:33:55 jmmv Exp $ */
+/* $NetBSD: wsmoused.c,v 1.8 2003/03/04 19:43:09 jmmv Exp $ */
 
 /*
  * Copyright (c) 2002, 2003 The NetBSD Foundation, Inc.
@@ -32,7 +32,7 @@
 #include <sys/cdefs.h>
 
 #ifndef lint
-__RCSID("$NetBSD: wsmoused.c,v 1.7 2003/03/04 14:33:55 jmmv Exp $");
+__RCSID("$NetBSD: wsmoused.c,v 1.8 2003/03/04 19:43:09 jmmv Exp $");
 #endif /* not lint */
 
 #include <sys/ioctl.h>
@@ -122,6 +122,7 @@ open_files(void)
 	mouse_open_device(&mouse, 0);
 
 	/* Open FIFO, if wanted */
+	mouse.fifo_fd = -1;
 	if (mouse.fifo_name != NULL) {
 		mouse.fifo_fd = open(mouse.fifo_name, O_RDWR | O_NONBLOCK, 0);
 		if (mouse.fifo_fd == -1)
