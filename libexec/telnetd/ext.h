@@ -1,4 +1,4 @@
-/*	$NetBSD: ext.h,v 1.14 2001/08/20 11:12:19 wiz Exp $	*/
+/*	$NetBSD: ext.h,v 1.15 2001/08/20 13:53:47 wiz Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -71,7 +71,7 @@ extern int	got_forwarded_creds;
 
 extern slcfun	slctab[NSLC + 1];	/* slc mapping table */
 
-char	*terminaltype;
+extern char	*terminaltype;
 
 /*
  * I/O data buffers, pointers, and counters.
