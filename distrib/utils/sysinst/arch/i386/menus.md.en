@@ -1,4 +1,4 @@
-/*	$NetBSD: menus.md.en,v 1.32 2000/10/01 22:57:17 thorpej Exp $	*/
+/*	$NetBSD: menus.md.en,v 1.33 2000/10/17 19:52:14 fvdl Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -94,18 +94,47 @@ menu editparttable, title  "Choose your partition", exit;
 menu editpart, title  "Select to change";
 	display action { msg_display (MSG_editpart, editpart);
 			   disp_cur_part((struct mbr_partition *)&mbr[MBR_PARTOFF
-], activepart,editpart);
+], editpart,-1);
 			   msg_display_add(MSG_newline);
 			};
 	option "Kind", sub menu chooseid;
 	option "Start and size", action 
-		{	char buf[40]; int start, size;
+		{	char buf[40]; int start, size, inp, partn;
+
+			msg_table_add(MSG_mbrpart_start_special);
 			msg_prompt_add (MSG_start, NULL, buf, 40);
-			start = NUMSEC(atoi(buf),sizemult,dlcylsize);
+			inp = atoi(buf);
+			/*
+			 * -0, -1, -2, -3: start at end of part # given
+			 * 0: start of disk.
+			 */
+			if ((inp == 0 && buf[0] == '-') ||
+			    (inp < 0 && inp >= -3)) {
+				partn = -inp;
+				start = part[partn].mbrp_start +
+				    part[partn].mbrp_size;
+			} else if (inp == 0)
+				start = bsec;
+			else
+				start = NUMSEC(inp,sizemult,dlcylsize);
+
 			if (sizemult > 1 && start < bsec)
 				start = bsec;
+			msg_table_add(MSG_mbrpart_size_special);
 			msg_prompt_add (MSG_size, NULL, buf, 40);
-			size = NUMSEC(atoi(buf),sizemult,dlcylsize);
+			inp = atoi(buf);
+			/*
+			 * -0, -1, -2, -3: until start of part # given
+			 * 0: end of disk
+			 */
+			if ((inp == 0 && buf[0] == '-') ||
+			    (inp < 0 && inp >= -3)) {
+				partn = -inp;
+				size = part[partn].mbrp_start - start;
+			} else if (inp == 0)
+				size = dlsize - start;
+			else
+				size = NUMSEC(inp,sizemult,dlcylsize);
 			if (sizemult > 1 && start == bsec)
 				size -= bsec;
 			if (start + size > bsize)
@@ -194,7 +223,6 @@ menu md_distcustom, x=26, y=5, exit, title "Selection toggles inclusion";
 	option  "X11 servers",		 action { toggle_getit (10); };
 	option  "X contrib clients",	 action { toggle_getit (11); };
 	option  "X11 programming",	 action { toggle_getit (12); };
-	option  "X11 Misc.",		 action { toggle_getit (13); };
 
 menu biosonematch;
 	option "This is the correct geometry", exit, action {

@@ -1,4 +1,4 @@
-/*	$NetBSD: msg.md.en,v 1.20 2000/10/02 09:36:24 fvdl Exp $	*/
+/*	$NetBSD: msg.md.en,v 1.21 2000/10/17 19:52:14 fvdl Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -69,7 +69,9 @@ real geometry:	%d cylinders, %d heads, %d sectors
 
 /* the %s's will expand into three character strings */
 message part_header
-{   Start(%3s) Size(%3s)  End(%3s)   Kind
+{   Total disksize %d %s.
+
+   Start(%3s) Size(%3s)  End(%3s)   Kind
    ---------- ---------- ---------- ----
 }
 
@@ -129,12 +131,27 @@ message parttable
 }
 
 message editpart
-{Partition %d looks like:\n\n}
+{You are editing partition %d. The highlighthed partition is the partition
+you are editing.}
 
 message editparttable
 {Edit your DOS partition table.  The highlighted partition is the currently
 active partition.  The partition table currently looks like:
 
+}
+
+message mbrpart_start_special
+{
+  Special values that can be entered for the start value:
+ -N:    start at the end of partition N
+  0:    start at the beginning of the disk
+}
+
+message mbrpart_size_special
+{
+  Special values that can be entered for the size value:
+ -N:    size the partition so that it ends where partition N starts
+  0:    end at the end of the disk
 }
 
 message reeditpart
@@ -220,6 +237,13 @@ message biosmultmatch
 message biosmultmatch_header
 {   BIOS # cylinders  heads   sectors
    ------ ---------- ------- -------
+}
+
+message biosgeom_advise
+{
+Note: since sysinst was able to uniquely match the disk you chose with a disk
+known to the BIOS, the values displayed above are very likely correct, and
+should not be changed. Only change them if they are very obviously wrong.
 }
 
 message biosmultmatch_row
