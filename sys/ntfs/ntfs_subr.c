@@ -1,4 +1,4 @@
-/*	$NetBSD: ntfs_subr.c,v 1.4 1999/07/26 14:02:31 jdolecek Exp $	*/
+/*	$NetBSD: ntfs_subr.c,v 1.5 1999/08/02 15:31:31 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999 Semen Ustimenko (semenu@FreeBSD.org)
@@ -1460,9 +1460,16 @@ ntfs_writentvattr_plain(
 				off = ntfs_btocnoff(off);
 
 				while (left && ccl) {
+#if defined(__FreeBSD__)
 					tocopy = min(left,
 						  min(ntfs_cntob(ccl) - off,
 						      MAXBSIZE - off));
+#else
+					/* under NetBSD, bread() can read
+					 * maximum one block worth of data */
+					tocopy = min(left,
+						ntmp->ntm_bps - off);
+#endif
 					cl = ntfs_btocl(tocopy + off);
 					ddprintf(("ntfs_writentvattr_plain: " \
 						"write: cn: 0x%x cl: %d, " \
@@ -1567,9 +1574,16 @@ ntfs_readntvattr_plain(
 				off = ntfs_btocnoff(off);
 
 				while (left && ccl) {
+#if defined(__FreeBSD__)
 					tocopy = min(left,
 						  min(ntfs_cntob(ccl) - off,
 						      MAXBSIZE - off));
+#else
+					/* under NetBSD, bread() can read
+					 * maximum one block worth of data */
+					tocopy = min(left,
+						ntmp->ntm_bps - off);
+#endif
 					cl = ntfs_btocl(tocopy + off);
 					ddprintf(("ntfs_readntvattr_plain: " \
 						"read: cn: 0x%x cl: %d, " \
