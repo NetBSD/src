@@ -1,4 +1,4 @@
-/*	$NetBSD: kvm.c,v 1.71 2002/05/26 18:33:25 wiz Exp $	*/
+/*	$NetBSD: kvm.c,v 1.72 2002/08/08 01:30:09 soren Exp $	*/
 
 /*-
  * Copyright (c) 1989, 1992, 1993
@@ -42,7 +42,7 @@
 #if 0
 static char sccsid[] = "@(#)kvm.c	8.2 (Berkeley) 2/13/94";
 #else
-__RCSID("$NetBSD: kvm.c,v 1.71 2002/05/26 18:33:25 wiz Exp $");
+__RCSID("$NetBSD: kvm.c,v 1.72 2002/08/08 01:30:09 soren Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -273,7 +273,7 @@ _kvm_open(kd, uf, mf, sf, flag, errout)
 				 "%s: not physical memory device", mf);
 			goto failed;
 		}
-		if ((kd->vmfd = open(_PATH_KMEM, flag)) < 0) {
+		if ((kd->vmfd = open(_PATH_KMEM, flag, 0)) < 0) {
 			_kvm_syserr(kd, kd->program, "%s", _PATH_KMEM);
 			goto failed;
 		}
