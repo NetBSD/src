@@ -1,4 +1,4 @@
-/*	$NetBSD: subr.S,v 1.3 2002/03/31 00:11:13 matt Exp $	   */
+/*	$NetBSD: subr.S,v 1.4 2002/04/04 16:40:14 ragge Exp $	   */
 
 /*
  * Copyright (c) 1994 Ludd, University of Lule}, Sweden.
@@ -407,6 +407,10 @@ _C_LABEL(tramp):
 
 ENTRY(cpu_exit,0)
 	movl	4(%ap),%r6	# Process pointer in %r6
+
+	pushl	%r6
+	calls	$1,_C_LABEL(pmap_deactivate)
+
 	mtpr	$IPL_CLOCK,$PR_IPL # Block almost everything
 	mfpr	$PR_SSP,%r7	# get cpu_info ptr
 	movl	CI_EXIT(%r7),%r8	# scratch page address
