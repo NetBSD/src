@@ -1,6 +1,6 @@
 #! /bin/sh
 #
-#	$NetBSD: ntp2netbsd,v 1.2 2000/04/22 15:07:06 simonb Exp $
+#	$NetBSD: ntp2netbsd,v 1.3 2000/05/03 05:38:19 simonb Exp $
 #
 # Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -36,6 +36,27 @@
 # ntp2netbsd:  convert a ntp source tree into a
 # netbsd ntp source tree, under basesrc/dist,
 # based on bind2netbsd by Bernd Ernesti
+#
+# Rough instructions for importing new NTP release:
+#
+#	$ cd /some/where/temporary
+#	$ tar xpfz /new/ntp/release/tar/file
+#	$ sh /usr/src/dist/ntp/ntp2netbsd ntp-4.x.y `pwd`
+#	$ cd basesrc/dist/ntp
+#	$ cvs import -m "Import ntp 4.x.y" basesrc/dist/ntp UDEL ntp-4-x-y
+#	$ cd ../../../ntp-4.x.y
+#	$ run ./configure  --enable-all-clocks --enable-parse-clock
+#	$ cp config.h /usr/src/usr.sbin/ntp/include
+#	$ cp scripts/mkver /usr/src/usr.sbin/ntp/scripts
+#	$ cd ..
+#	$ rm -r basesrc ntp-4.x.y
+#	$ cd /usr/src/usr.sbin/ntp
+#	$ cvs commit -m "Updated autoconf generated files for ntp 4.x.y."
+#
+#	- check makefiles to see if any extra sources have been added,
+#	  esp. libntp and ntpd.
+#	- check for and remove img tags in html docs.
+#	- update distrib/sets if necessary.
 
 if [ $# -ne 2 ]; then echo "ntp2netbsd src dest"; exit 1; fi
 
