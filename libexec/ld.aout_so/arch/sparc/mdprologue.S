@@ -1,4 +1,4 @@
-/*	$NetBSD: mdprologue.S,v 1.7 1998/09/05 13:08:39 pk Exp $	*/
+/*	$NetBSD: mdprologue.S,v 1.8 2004/07/15 03:00:21 chs Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -48,6 +48,22 @@
 _rtld_entry:
 !#PROLOGUE# 0
 	save	%sp,-96,%sp
+	
+	! use mprotect() to make the data segment executable.
+	! this is needed because the PLT is there.  doh!
+
+	call	1f
+	mov	0x4a, %g1
+1:
+	sub	%o7, 4 + 32, %o3
+	ld	[%o3 + 4], %o0
+	add	%o0, %o3, %o0
+	ld	[%o3 + 8], %o1
+	mov	7, %o2
+	ta	0
+
+	! now we can continue as before.
+
 L.1B:
 	call	L.2B
 	sethi	%hi((__GLOBAL_OFFSET_TABLE_-(L.1B-.))),%l7
