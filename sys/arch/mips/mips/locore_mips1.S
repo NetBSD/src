@@ -1,4 +1,4 @@
-/*	$NetBSD: locore_mips1.S,v 1.31 2000/05/10 01:34:14 nisimura Exp $	*/
+/*	$NetBSD: locore_mips1.S,v 1.32 2000/05/21 03:23:16 soren Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -52,6 +52,7 @@
  *
  *	@(#)locore.s	8.5 (Berkeley) 1/4/94
  */
+#include "opt_cputype.h"
 #include "opt_ddb.h"
 #include <mips/asm.h>
 #include <mips/cpuregs.h>
