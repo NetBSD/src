@@ -1,4 +1,4 @@
-/* $NetBSD: bba.c,v 1.3 2000/06/01 21:46:17 gmcgarry Exp $ */
+/* $NetBSD: bba.c,v 1.4 2000/06/04 22:21:09 gmcgarry Exp $ */
 
 /*
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -696,13 +696,8 @@ bba_codec_iwrite16(sc, reg, val)
 	DPRINTF(("bba_codec_iwrite16(): sc=%p, reg=%d, val=%d\n",sc,reg,val));
 
 	bba_codec_dwrite(sc, AM7930_DREG_CR, reg);
-#if 0
-	bba_codec_dwrite(sc, AM7930_DREG_DR, val>>8);
-	bba_codec_dwrite(sc, AM7930_DREG_DR, val);
-#else
 	bba_codec_dwrite(sc, AM7930_DREG_DR, val);
 	bba_codec_dwrite(sc, AM7930_DREG_DR, val>>8);
-#endif
 }
 
 
@@ -715,13 +710,8 @@ bba_codec_iread16(sc, reg)
 	DPRINTF(("bba_codec_iread16(): sc=%p, reg=%d\n",sc,reg));
 
 	bba_codec_dwrite(sc, AM7930_DREG_CR, reg);
-#if 0
-	bba_codec_dwrite(sc, AM7930_DREG_DR, val>>8);
-	bba_codec_dwrite(sc, AM7930_DREG_DR, val);
-#else
 	val = bba_codec_dread(sc, AM7930_DREG_DR) << 8;
 	val |= bba_codec_dread(sc, AM7930_DREG_DR);
-#endif
 
 	return val;
 }
