@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_machdep.c,v 1.73 1998/09/09 11:17:27 thorpej Exp $	*/
+/*	$NetBSD: vm_machdep.c,v 1.74 1998/11/11 06:41:26 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1995 Charles M. Hannum.  All rights reserved.
@@ -111,8 +111,15 @@ cpu_fork(p1, p2)
 
 	p2->p_md.md_flags = p1->p_md.md_flags;
 
-	/* Sync curpcb (which is presumably p1's PCB) and copy it to p2. */
-	savectx(curpcb);
+	/* Copy pcb from proc p1 to p2. */
+	if (p1 == curproc) {
+		/* Sync the PCB before we copy it. */
+		savectx(curpcb);
+	}
+#ifdef DIAGNOSTIC
+	else if (p1 != &proc0)
+		panic("cpu_fork: curproc");
+#endif
 	*pcb = p1->p_addr->u_pcb;
 	pmap_activate(p2);
 
@@ -149,6 +156,8 @@ cpu_fork(p1, p2)
 	/*
 	 * Copy the trapframe, and arrange for the child to return directly
 	 * through rei().
+	 *
+	 * Note the inlined version of cpu_set_kpc().
 	 */
 	p2->p_md.md_regs = tf = (struct trapframe *)pcb->pcb_tss.tss_esp0 - 1;
 	*tf = *p1->p_md.md_regs;
@@ -161,13 +170,16 @@ cpu_fork(p1, p2)
 }
 
 void
-cpu_set_kpc(p, pc)
+cpu_set_kpc(p, pc, arg)
 	struct proc *p;
-	void (*pc) __P((struct proc *));
+	void (*pc) __P((void *));
+	void *arg;
 {
 	struct switchframe *sf = (struct switchframe *)p->p_addr->u_pcb.pcb_esp;
 
 	sf->sf_esi = (int) pc;
+	sf->sf_ebx = (int) arg;
+	sf->sf_eip = (int) proc_trampoline;
 }
 
 void

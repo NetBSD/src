@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.109 1998/09/30 23:47:35 thorpej Exp $	*/
+/*	$NetBSD: locore.s,v 1.110 1998/11/11 06:41:26 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -351,14 +351,10 @@ Lnocache0:
 
 /*
  * proc_trampoline
- *	Call function in register a2 with a3 as an arg and then rei.  Note
- * that we restore the stack before calling, thus giving "a2" more stack.
- * (for the case that, e.g., if curproc had a deeply nested call chain...)
- * cpu_fork() also depends on struct frame being a second arg to the
- * function in a2.
+ *	Call function in register a2 with a3 as an arg and then rei.
  */
 GLOBAL(proc_trampoline)
-	movl	a3,sp@-			| push function arg (curproc)
+	movl	a3,sp@-			| push function arg
 	jbsr	a2@			| call function
 	addql	#4,sp			| pop arg
 	movl	sp@(FR_SP),a0		| usp to a0

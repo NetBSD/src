@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.55 1998/08/22 05:47:37 scottr Exp $	*/
+/*	$NetBSD: cpu.h,v 1.56 1998/11/11 06:41:26 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -317,6 +317,9 @@ void	proc_trampoline __P((void));
 /* vm_machdep.c */
 void	physaccess __P((caddr_t, caddr_t, register int, register int));
 void	physunaccess __P((caddr_t, register int));
+
+/* trap.c */
+void	child_return __P((void *));
 
 #endif
 

@@ -1,4 +1,4 @@
-/* $NetBSD: trap.c,v 1.37 1998/10/07 19:09:53 ross Exp $ */
+/* $NetBSD: trap.c,v 1.38 1998/11/11 06:41:23 thorpej Exp $ */
 
 /*
  * Copyright (c) 1994, 1995, 1996 Carnegie-Mellon University.
@@ -35,7 +35,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.37 1998/10/07 19:09:53 ross Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.38 1998/11/11 06:41:23 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -672,9 +672,10 @@ syscall(code, framep)
  * Process the tail end of a fork() for the child.
  */
 void
-child_return(p)
-	struct proc *p;
+child_return(arg)
+	void *arg;
 {
+	struct proc *p = arg;
 
 	/*
 	 * Return values in the frame set by cpu_fork().

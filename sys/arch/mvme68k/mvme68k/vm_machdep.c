@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_machdep.c,v 1.17 1998/09/09 11:17:29 thorpej Exp $	*/
+/*	$NetBSD: vm_machdep.c,v 1.18 1998/11/11 06:41:28 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -84,17 +84,24 @@ cpu_fork(p1, p2)
 	struct trapframe *tf;
 	struct switchframe *sf;
 	extern struct pcb *curpcb;
-	extern void proc_trampoline(), child_return();
+	extern void proc_trampoline();
 
 	p2->p_md.md_flags = p1->p_md.md_flags & ~MDP_HPUXTRACE;
 
-	/* Sync curpcb (which is presumably p1's PCB) and copy it to p2. */
-	savectx(curpcb);
+	/* Copy pcb from proc p1 to p2. */
+	if (p1 == curproc) {
+		/* Sync the PCB before we copy it. */
+		savectx(curpcb);
+	}
+#ifdef DIAGNOSTIC
+	else if (p1 != &proc0)
+		panic("cpu_fork: curproc");
+#endif
 	*pcb = p1->p_addr->u_pcb;
 
 	/*
 	 * Copy the trap frame, and arrange for the child to return directly
-	 * through return_to_user().
+	 * through child_return().  Note the in-line cpu_set_kpc().
 	 */
 	tf = (struct trapframe *)((u_int)p2->p_addr + USPACE) - 1;
 	p2->p_md.md_regs = (int *)tf;
@@ -106,13 +113,23 @@ cpu_fork(p1, p2)
 	pcb->pcb_regs[11] = (int)sf;		/* SSP */
 }
 
+/*
+ * Arrange for in-kernel execution of a process to continue at the
+ * named pc, as if the code at that address were called as a function
+ * with the supplied argument.
+ *
+ * Note that it's assumed that when the named process returns, rei()
+ * should be invoked, to return to user mode.
+ */
 void
-cpu_set_kpc(p, pc)
+cpu_set_kpc(p, pc, arg)
 	struct proc *p;
-	void (*pc) __P((struct proc *));
+	void (*pc) __P((void *));
+	void *arg;
 {
 
 	p->p_addr->u_pcb.pcb_regs[6] = (u_long) pc;	/* A2 */
+	p->p_addr->u_pcb.pcb_regs[7] = (u_long) arg;	/* A3 */
 }
 
 /*

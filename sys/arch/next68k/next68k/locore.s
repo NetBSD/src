@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.7 1998/11/10 22:45:45 dbj Exp $	*/
+/*	$NetBSD: locore.s,v 1.8 1998/11/11 06:41:28 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1998 Darrin B. Jewell
@@ -478,10 +478,14 @@ Lnocache0:
 	PANIC("main() returned")
 	/* NOTREACHED */
 
+/*
+ * proc_trampoline: call function in register a2 with a3 as an arg
+ * and then rei.
+ */
 GLOBAL(proc_trampoline)
-	movl	a3,sp@-
-	jbsr	a2@
-	addql	#4,sp
+	movl	a3,sp@-			| push function arg
+	jbsr	a2@			| call function
+	addql	#4,sp			| pop arg
 	movl	sp@(FR_SP),a0		| grab and load
 	movl	a0,usp			|   user SP
 	moveml	sp@+,#0x7FFF		| restore most user regs

@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.7 1998/02/13 07:41:58 scottr Exp $	*/
+/*	$NetBSD: cpu.h,v 1.8 1998/11/11 06:41:27 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -183,6 +183,7 @@ void	physaccess __P((caddr_t, caddr_t, int, int));
 void	physunaccess __P((caddr_t, int));
 void	*iomap __P((u_long, size_t));
 void	iounmap __P((void *, size_t));
+void	child_return __P((void *));
 #endif
 
 /* physical memory sections for mvme147 */

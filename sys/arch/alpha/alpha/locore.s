@@ -1,4 +1,4 @@
-/* $NetBSD: locore.s,v 1.53 1998/10/01 16:18:46 erh Exp $ */
+/* $NetBSD: locore.s,v 1.54 1998/11/11 06:41:23 thorpej Exp $ */
 
 /*
  * Copyright (c) 1994, 1995, 1996 Carnegie-Mellon University.
@@ -39,7 +39,7 @@
 
 #include <machine/asm.h>
 
-__KERNEL_RCSID(0, "$NetBSD: locore.s,v 1.53 1998/10/01 16:18:46 erh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: locore.s,v 1.54 1998/11/11 06:41:23 thorpej Exp $");
 
 #ifndef EVCNT_COUNTERS
 #include <machine/intrcnt.h>
@@ -851,13 +851,13 @@ Lcs7:
  * Arrange for a function to be invoked neatly, after a cpu_switch().
  *
  * Invokes the function specified by the s0 register with the return
- * address specified by the s1 register and with one argument, a
- * pointer to the executing process's proc structure.
+ * address specified by the s1 register and with one argument specified
+ * by the s2 register.
  */
 LEAF(switch_trampoline, 0)
 	mov	s0, pv
 	mov	s1, ra
-	ldq	a0, curproc
+	mov	s2, a0
 	jmp	zero, (pv)
 	END(switch_trampoline)
 

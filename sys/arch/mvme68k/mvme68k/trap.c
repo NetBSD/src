@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.24 1998/10/01 02:53:54 thorpej Exp $	*/
+/*	$NetBSD: trap.c,v 1.25 1998/11/11 06:41:27 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -1089,16 +1089,18 @@ syscall(code, frame)
 }
 
 void
-child_return(p, frame)
-	struct proc *p;
-	struct frame frame;
+child_return(arg)
+	void *arg;
 {
+	struct proc *p = arg;
+	/* See cpu_fork() */
+	struct frame *f = (struct frame *)p->p_md.md_regs;
 
-	frame.f_regs[D0] = 0;
-	frame.f_sr &= ~PSL_C;
-	frame.f_format = FMT0;
+	f->f_regs[D0] = 0;
+	f->f_sr &= ~PSL_C;
+	f->f_format = FMT0;
 
-	userret(p, &frame, p->p_sticks, (u_int)0, 0);
+	userret(p, f, p->p_sticks, (u_int)0, 0);
 #ifdef KTRACE
 	if (KTRPOINT(p, KTR_SYSRET))
 		ktrsysret(p->p_tracep, SYS_fork, 0, 0);

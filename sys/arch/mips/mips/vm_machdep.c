@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_machdep.c,v 1.29 1998/09/09 11:17:28 thorpej Exp $	*/
+/*	$NetBSD: vm_machdep.c,v 1.30 1998/11/11 06:41:27 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
-__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.29 1998/09/09 11:17:28 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.30 1998/11/11 06:41:27 thorpej Exp $");
 
 #include "opt_uvm.h"
 
@@ -72,7 +72,6 @@ __KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.29 1998/09/09 11:17:28 thorpej Exp 
 /* XXX will be declared in mips/include/cpu.h XXX */
 extern struct proc *fpcurproc;
 extern void savefpregs __P((struct proc *));
-extern void child_return __P((void));
 
 extern vm_offset_t kvtophys __P((vm_offset_t kva));	/* XXX */
 
@@ -102,6 +101,14 @@ cpu_fork(p1, p2)
 	if (p1 == fpcurproc)
 		savefpregs(p1);
 
+#ifdef DIAGNOSTIC
+	/*
+	 * If p1 != curproc && p1 == &proc0, we're creating a kernel thread.
+	 */
+	if (p1 != curproc && p1 != &proc0)
+		panic("cpu_fork: curproc");
+#endif
+
 	p2->p_addr->u_pcb = p1->p_addr->u_pcb;
 	pcb = &p2->p_addr->u_pcb;
 	pcb->pcb_segtab = (void *)p2->p_vmspace->vm_map.pmap->pm_segtab;
@@ -113,11 +120,15 @@ cpu_fork(p1, p2)
 }
 
 void
-cpu_set_kpc(p, pc)
+cpu_set_kpc(p, pc, arg)
 	struct proc *p;
-	void (*pc) __P((struct proc *));
+	void (*pc) __P((void *));
+	void *arg;
 {
+	p->p_addr->u_pcb.pcb_context[10] =
+	    (int)proc_trampoline;			/* RA */
 	p->p_addr->u_pcb.pcb_context[0] = (int)pc;	/* S0 */
+	p->p_addr->u_pcb.pcb_context[1] = (int)arg;	/* S1 */
 }
 
 /*
