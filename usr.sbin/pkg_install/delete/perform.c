@@ -1,11 +1,11 @@
-/*	$NetBSD: perform.c,v 1.40 2003/01/10 11:55:45 agc Exp $	*/
+/*	$NetBSD: perform.c,v 1.41 2003/06/12 13:50:38 agc Exp $	*/
 
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static const char *rcsid = "from FreeBSD Id: perform.c,v 1.15 1997/10/13 15:03:52 jkh Exp";
 #else
-__RCSID("$NetBSD: perform.c,v 1.40 2003/01/10 11:55:45 agc Exp $");
+__RCSID("$NetBSD: perform.c,v 1.41 2003/06/12 13:50:38 agc Exp $");
 #endif
 #endif
 
@@ -233,7 +233,7 @@ require_delete(char *home, int tryall)
 			    Prefix ? "-p" : "",
 			    Prefix ? Prefix : "",
 			    Verbose ? "-v" : "",
-			    Force ? "-f" : "",
+			    (Force > 1) ? "-f -f" : (Force == 1) ? "-f" : "",
 			    NoDeInstall ? "-D" : "",
 			    CleanDirs ? "-d" : "",
 			    Fake ? "-n" : "",
@@ -550,7 +550,7 @@ pkg_do(char *pkg)
 	}
 	if (fexists(PRESERVE_FNAME)) {
 		printf("Package `%s' is marked as not for deletion\n", pkg);
-		if (!Force) {
+		if (Force <= 1) {
 			return 1;
 		}
 	}
