@@ -1,8 +1,9 @@
-#	$NetBSD: Makefile,v 1.16 2005/03/04 20:41:09 he Exp $
+#	$NetBSD: Makefile,v 1.17 2005/03/27 21:00:58 christos Exp $
 #	from: @(#)Makefile	8.1 (Berkeley) 6/4/93
 
 .include <bsd.own.mk>
 
+WARNS=	3
 PROG=	rshd
 MAN=	rshd.8
 
