@@ -1,4 +1,4 @@
-/*	$NetBSD: auich.c,v 1.44 2003/10/22 11:32:12 fvdl Exp $	*/
+/*	$NetBSD: auich.c,v 1.45 2003/10/22 15:57:33 manu Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -115,7 +115,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: auich.c,v 1.44 2003/10/22 11:32:12 fvdl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: auich.c,v 1.45 2003/10/22 15:57:33 manu Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -489,7 +489,9 @@ auich_attach(struct device *parent, struct device *self, void *aux)
 	/* Reset codec and AC'97 */
 	auich_reset_codec(sc);
 	status = bus_space_read_4(sc->iot, sc->aud_ioh, ICH_GSTS);
-	if (!(status & ICH_PCR)) { /* reset failure */
+
+	/* Reset failure */
+	if (!sc->sc_ignore_codecready && !(status & ICH_PCR)) { 
 			/* It never return ICH_PCR in some cases */
 		if (d->quirks & QUIRK_IGNORE_CODEC_READY_MAYBE) {
 			sc->sc_ignore_codecready = TRUE;
@@ -613,8 +615,9 @@ auich_reset_codec(void *v)
 	for (i = 500000; i-- &&
 	       !(bus_space_read_4(sc->iot, sc->aud_ioh, ICH_GSTS) & ICH_PCR);
 	     DELAY(1));					/*       or ICH_SCR? */
-	if (i <= 0)
-		printf("%s: auich_reset_codec: time out\n", sc->sc_dev.dv_xname);
+	if (!sc->sc_ignore_codecready && (i <= 0))
+		printf("%s: auich_reset_codec: time out\n", 
+		    sc->sc_dev.dv_xname);
 }
 
 int
