@@ -1,4 +1,4 @@
-/*	$NetBSD: uhci.c,v 1.126 2000/11/10 14:11:49 augustss Exp $	*/
+/*	$NetBSD: uhci.c,v 1.127 2000/11/22 05:50:59 soren Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/uhci.c,v 1.33 1999/11/17 22:33:41 n_hibma Exp $	*/
 
 /*
@@ -1152,15 +1152,15 @@ uhci_intr(void *arg)
 	}
 #endif
 
+	status = UREAD2(sc, UHCI_STS);
+	if (status == 0)	/* The interrupt was not for us. */
+		return (0);
+
 	if (sc->sc_suspend != PWR_RESUME) {
 		printf("%s: interrupt while not operating ignored\n",
 		       USBDEVNAME(sc->sc_bus.bdev));
 		return (0);
 	}
-
-	status = UREAD2(sc, UHCI_STS);
-	if (status == 0)	/* The interrupt was not for us. */
-		return (0);
 
 #if defined(DIAGNOSTIC) && defined(__NetBSD__)
 	if (sc->sc_suspend != PWR_RESUME)
