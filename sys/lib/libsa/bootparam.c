@@ -1,4 +1,4 @@
-/*	$NetBSD: bootparam.c,v 1.9 1996/10/13 02:28:59 christos Exp $	*/
+/*	$NetBSD: bootparam.c,v 1.10 1996/10/14 21:16:55 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1995 Gordon W. Ross
@@ -311,7 +311,6 @@ bp_getfile(sockfd, key, serv_addr, pathname)
 	path_len = MAXPATHLEN-1;
 	if (xdr_string_decode(&recv_head, pathname, &path_len)) {
 		RPC_PRINTF(("bp_getfile: bad server path\n"));
-#endif
 		return (-1);
 	}
 
