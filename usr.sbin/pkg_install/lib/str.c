@@ -1,11 +1,11 @@
-/*	$NetBSD: str.c,v 1.23.2.4 2002/02/23 18:15:48 he Exp $	*/
+/*	$NetBSD: str.c,v 1.23.2.5 2002/06/26 16:50:46 he Exp $	*/
 
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static const char *rcsid = "Id: str.c,v 1.5 1997/10/08 07:48:21 charnier Exp";
 #else
-__RCSID("$NetBSD: str.c,v 1.23.2.4 2002/02/23 18:15:48 he Exp $");
+__RCSID("$NetBSD: str.c,v 1.23.2.5 2002/06/26 16:50:46 he Exp $");
 #endif
 #endif
 
@@ -53,7 +53,7 @@ dirname_of(const char *path)
 {
 	size_t  cc;
 	char   *s;
-	char   *t;
+	static char buf[PATH_MAX];
 
 	if ((s = strrchr(path, '/')) == NULL) {
 		return ".";
@@ -63,12 +63,11 @@ dirname_of(const char *path)
 		return "/";
 	}
 	cc = (size_t) (s - path);
-	if ((t = (char *) malloc(cc + 1)) == (char *) NULL) {
-		errx(1, "out of memory in dirname_of");
-	}
-	(void) memcpy(t, path, cc);
-	t[cc] = 0;
-	return t;
+	if (cc >= sizeof(buf))
+		errx(1, "dirname_of: too long dirname: '%s'", path);
+	(void) memcpy(buf, path, cc);
+	buf[cc] = 0;
+	return buf;
 }
 
 /*
@@ -421,13 +420,16 @@ pmatch(const char *pattern, const char *pkg)
  * Returns -1 on error, 1 if found, 0 otherwise.
  */
 int
-findmatchingname(const char *dir, const char *pattern, matchfn match, char *data)
+findmatchingname(const char *dir, const char *pattern, matchfn match, void *data)
 {
 	struct dirent *dp;
-	char tmp_pattern[256];
+	char tmp_pattern[PKG_PATTERN_MAX];
 	DIR    *dirp;
 	int     found;
-	char pat_sfx[256], file_sfx[256];	/* suffixes */
+	char pat_sfx[PKG_SUFFIX_MAX], file_sfx[PKG_SUFFIX_MAX];	/* suffixes */
+
+	if (strlen(pattern) >= PKG_PATTERN_MAX)
+		errx(1, "too long pattern '%s'", pattern);
 
 	found = 0;
 	if ((dirp = opendir(dir)) == (DIR *) NULL) {
@@ -483,11 +485,12 @@ ispkgpattern(const char *pkg)
  * Also called for FTP matching
  */
 int
-findbestmatchingname_fn(const char *found, char *best)
+findbestmatchingname_fn(const char *found, void *vp)
 {
+	char *best = vp;
 	char *found_version, *best_version;
-	char found_no_sfx[255];
-	char best_no_sfx[255];
+	char found_no_sfx[PKG_PATTERN_MAX];
+	char best_no_sfx[PKG_PATTERN_MAX];
 
 	/* The same suffix-hack-off again, but we can't do it
 	 * otherwise without changing the function call interface
@@ -571,26 +574,66 @@ strnncpy(char *to, size_t tosize, char *from, size_t cc)
 void
 strip_txz(char *buf, char *sfx, const char *fname)
 {
-	char *s;
+	static const char *const suffixes[] = {
+		".tgz", ".tbz", ".t[bg]z", 0};
+	const char *const *suffixp;
+	size_t len;
 
-	strcpy(buf, fname);
-	if (sfx) sfx[0] = '\0';
-	
-	s = strstr(buf, ".tgz");
-	if (s) {
-		*s = '\0'; 		/* strip off any ".tgz" */
-		if (sfx) strcpy(sfx, s - buf + fname);
+	len = strlen(fname);
+	assert(len < PKG_PATTERN_MAX);
+
+	if (sfx)
+		sfx[0] = '\0';
+
+	for (suffixp = suffixes; *suffixp; suffixp++) {
+		size_t suffixlen = strlen(*suffixp);
+
+		if (memcmp(&fname[len - suffixlen], *suffixp, suffixlen))
+			continue;
+
+		/* matched! */
+		memcpy(buf, fname, len - suffixlen);
+		buf[len - suffixlen] = 0;
+		if (sfx) {
+			if (suffixlen >= PKG_SUFFIX_MAX)
+				errx(1, "too long suffix '%s'", fname);
+			memcpy(sfx, *suffixp, suffixlen+1);
+			return;
+		}
 	}
-	
-	s = strstr(buf, ".tbz");
-	if (s) {
-		*s = '\0'; 		/* strip off any ".tbz" */
-		if (sfx) strcpy(sfx, s - buf + fname);
+
+	/* not found */
+	memcpy(buf, fname, len+1);
+}
+
+/*
+ * Called to see if pkg is already installed as some other version, 
+ * note found version in "note".
+ */
+int
+note_whats_installed(const char *found, void *vp)
+{
+	char *note = vp;
+
+	(void) strlcpy(note, found, FILENAME_MAX);
+	return 0;
+}
+
+/*
+ * alloc lpkg for pkg and add it to list.
+ */
+int
+add_to_list_fn(const char *pkg, void *vp)
+{
+	lpkg_head_t *pkgs = vp;
+	lpkg_t *lpp;
+	char fn[FILENAME_MAX];
+
+	snprintf(fn, sizeof(fn), "%s/%s", _pkgdb_getPKGDB_DIR(), pkg);
+	if (!isfile(fn)) {	/* might as well use sanity_check() */
+		lpp = alloc_lpkg(pkg);
+		TAILQ_INSERT_TAIL(pkgs, lpp, lp_link);
 	}
-	
-	s = strstr(buf, ".t[bg]z");
-	if (s) {
-		*s = '\0'; 		/* strip off any ".t[bg]z" */
-		if (sfx) strcpy(sfx, s - buf + fname);
-	}
+
+	return 0;
 }
