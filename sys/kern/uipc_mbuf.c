@@ -1,4 +1,4 @@
-/*	$NetBSD: uipc_mbuf.c,v 1.70 2003/08/07 16:31:58 agc Exp $	*/
+/*	$NetBSD: uipc_mbuf.c,v 1.71 2003/08/15 02:59:32 simonb Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2001 The NetBSD Foundation, Inc.
@@ -69,7 +69,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uipc_mbuf.c,v 1.70 2003/08/07 16:31:58 agc Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uipc_mbuf.c,v 1.71 2003/08/15 02:59:32 simonb Exp $");
 
 #include "opt_mbuftrace.h"
 
@@ -357,7 +357,7 @@ m_getclr(int nowait, int type)
 
 	MGET(m, nowait, type);
 	if (m == 0)
-		return (0);
+		return (NULL);
 	memset(mtod(m, caddr_t), 0, MLEN);
 	return (m);
 }
@@ -365,6 +365,7 @@ m_getclr(int nowait, int type)
 void
 m_clget(struct mbuf *m, int nowait)
 {
+
 	MCLGET(m, nowait);
 }
 
@@ -394,6 +395,7 @@ m_freem(struct mbuf *m)
 void
 m_claim(struct mbuf *m, struct mowner *mo)
 {
+
 	for (; m != NULL; m = m->m_next)
 		MCLAIM(m, mo);
 }
@@ -442,12 +444,14 @@ int MCFail;
 struct mbuf *
 m_copym(struct mbuf *m, int off0, int len, int wait)
 {
+
 	return m_copym0(m, off0, len, wait, 0);	/* shallow copy on M_EXT */
 }
 
 struct mbuf *
 m_dup(struct mbuf *m, int off0, int len, int wait)
 {
+
 	return m_copym0(m, off0, len, wait, 1);	/* deep copy */
 }
 
@@ -533,7 +537,7 @@ m_copym0(struct mbuf *m, int off0, int len, int wait, int deep)
 nospace:
 	m_freem(top);
 	MCFail++;
-	return (0);
+	return (NULL);
 }
 
 /*
@@ -586,7 +590,7 @@ m_copypacket(struct mbuf *m, int how)
 nospace:
 	m_freem(top);
 	MCFail++;
-	return 0;
+	return NULL;
 }
 
 /*
@@ -628,6 +632,7 @@ m_copydata(struct mbuf *m, int off, int len, caddr_t cp)
 void
 m_cat(struct mbuf *m, struct mbuf *n)
 {
+
 	while (m->m_next)
 		m = m->m_next;
 	while (n) {
@@ -782,7 +787,7 @@ m_pullup(struct mbuf *n, int len)
 bad:
 	m_freem(n);
 	MPFail++;
-	return (0);
+	return (NULL);
 }
 
 /*
@@ -850,12 +855,12 @@ m_split(struct mbuf *m0, int len0, int wait)
 	for (m = m0; m && len > m->m_len; m = m->m_next)
 		len -= m->m_len;
 	if (m == 0)
-		return (0);
+		return (NULL);
 	remain = m->m_len - len;
 	if (m0->m_flags & M_PKTHDR) {
 		MGETHDR(n, wait, m0->m_type);
 		if (n == 0)
-			return (0);
+			return (NULL);
 		MCLAIM(m, m0->m_owner);
 		n->m_pkthdr.rcvif = m0->m_pkthdr.rcvif;
 		n->m_pkthdr.len = m0->m_pkthdr.len - len0;
@@ -870,7 +875,7 @@ m_split(struct mbuf *m0, int len0, int wait)
 			if (n->m_next == 0) {
 				(void) m_free(n);
 				m0->m_pkthdr.len = len_save;
-				return (0);
+				return (NULL);
 			} else
 				return (n);
 		} else
@@ -882,7 +887,7 @@ m_split(struct mbuf *m0, int len0, int wait)
 	} else {
 		MGET(n, wait, m->m_type);
 		if (n == 0)
-			return (0);
+			return (NULL);
 		MCLAIM(n, m->m_owner);
 		M_ALIGN(n, remain);
 	}
@@ -925,7 +930,7 @@ m_devget(char *buf, int totlen, int off0, struct ifnet *ifp,
 	}
 	MGETHDR(m, M_DONTWAIT, MT_DATA);
 	if (m == 0)
-		return (0);
+		return (NULL);
 	m->m_pkthdr.rcvif = ifp;
 	m->m_pkthdr.len = totlen;
 	m->m_len = MHLEN;
@@ -935,7 +940,7 @@ m_devget(char *buf, int totlen, int off0, struct ifnet *ifp,
 			MGET(m, M_DONTWAIT, MT_DATA);
 			if (m == 0) {
 				m_freem(top);
-				return (0);
+				return (NULL);
 			}
 			m->m_len = MLEN;
 		}
@@ -945,7 +950,7 @@ m_devget(char *buf, int totlen, int off0, struct ifnet *ifp,
 			if ((m->m_flags & M_EXT) == 0) {
 				m_free(m);
 				m_freem(top);
-				return (0);
+				return (NULL);
 			}
 			m->m_len = len = min(len, MCLBYTES);
 		} else {
