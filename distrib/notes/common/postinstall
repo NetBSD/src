@@ -1,6 +1,6 @@
-.\"	$NetBSD: postinstall,v 1.20 2000/11/13 22:05:52 fvdl Exp $
+.\"	$NetBSD: postinstall,v 1.21 2001/04/07 15:19:32 jhawk Exp $
 .\"
-.\" Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
+.\" Copyright (c) 1999-2001 The NetBSD Foundation, Inc.
 .\" All rights reserved.
 .\"
 .\" Redistribution and use in source and binary forms, with or without
@@ -40,7 +40,8 @@ Configuring
 .Pp
 If you or the installation software haven't done any configuration of
 .Pa /etc/rc.conf 
-(sysinst usually will),
+.Ic ( sysinst
+usually will),
 the system will drop you into single user mode on first reboot with the
 message
 .Pp
@@ -185,7 +186,9 @@ Logging in
 .Pp
 After reboot, you can log in as
 .Li root
-at the login prompt. Unless you've set a password in sysinst, there
+at the login prompt. Unless you've set a password in
+.Ic sysinst ,
+there
 is no initial password. If you're using the machine in a
 networked environment, you should create an account for yourself
 (see below) and protect it and the
@@ -195,8 +198,7 @@ Unless you have connected an unusual terminal device as the console
 you can just press
 .Key RETURN
 when it prompts for
-.Li Terminal type? [...]
-.
+.Li Terminal type? [...] .
 .It
 Adding accounts
 .Pp
@@ -212,7 +214,7 @@ for more information on how to add a new user to the system.
 .It
 The X Window System
 .Pp
-If you have installed the X window system, look at the files in
+If you have installed the X Window System, look at the files in
 .Pa /usr/X11R6/lib/X11/doc
 for information.
 .if \n[arm32]:\n[i386] \{\
@@ -244,7 +246,9 @@ make the software run on
 retrieval and installation of any other packages on which the software
 may depend, and simplifies installation (and deinstallation), both
 from source and precompiled binaries.
+.Pp
 .(bullet
+.It
 More information on the package system is at
 .Lk http://www.netbsd.org/Documentation/software/packages.html
 .It
@@ -257,12 +261,14 @@ usually in the
 .Pa \*V/\*M/All
 subdir.  You can install them with the following commands:
 .Pp
-.Dl # Ic export PKG_PATH=ftp://ftp.netbsd.org/pub/NetBSD/packages/\*V/\*M/All
-.Dl # Ic pkg_add -v tcsh
-.Dl # Ic pkg_add -v cvs
-.Dl # Ic pkg_add -v apache
-.Dl # Ic pkg_add -v perl
-.Dl # Ic ...
+.Bd -literal
+.Ic # export\ PKG_PATH=ftp://ftp.netbsd.org/pub/NetBSD/packages/\*V/\*M/All
+.Ic # pkg_add -v tcsh
+.Ic # pkg_add -v cvs
+.Ic # pkg_add -v apache
+.Ic # pkg_add -v perl
+\&...
+.Ed
 .Pp
 The above commands will install the tcsh shell, the CVS source code
 management system, the Apache web server and
