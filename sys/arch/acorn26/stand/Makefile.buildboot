@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.buildboot,v 1.2 2002/05/04 12:25:00 bjh21 Exp $
+#	$NetBSD: Makefile.buildboot,v 1.3 2002/05/05 10:01:26 bjh21 Exp $
 
 S?=	${.CURDIR}/../../../..
 
@@ -23,6 +23,20 @@ CPPFLAGS+=	-I. -I${.CURDIR}/../../.. -I${.CURDIR}/../../../..
 CPPFLAGS+=	-I${.CURDIR}/../lib
 CFLAGS=		-O2
 CFLAGS+=	-Wall -Wstrict-prototypes -Wmissing-prototypes
+
+.if !make(obj) && !make(clean) && !make(cleandir)
+.BEGIN: machine
+.NOPATH: machine
+.endif
+
+realdepend realall: machine
+CLEANFILES+= machine
+
+machine::
+	-rm -f $@
+	ln -s $S/arch/acorn26/include $@
+
+${OBJS}: machine
 
 ### find out what to use for libkern
 KERN_AS=	library
@@ -62,19 +76,5 @@ realall: ${PROG},${RISCOSTYPE}
 
 CLEANFILES+=	${PROG},${RISCOSTYPE}
 FILES+=		${PROG},${RISCOSTYPE}
-
-.if !make(obj) && !make(clean) && !make(cleandir)
-.BEGIN: machine
-.NOPATH: machine
-.endif
-
-realdepend realall: machine
-CLEANFILES+= machine
-
-machine::
-	-rm -f $@
-	ln -s $S/arch/acorn26/include $@
-
-${OBJS}: machine
 
 .include <bsd.prog.mk>
