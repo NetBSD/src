@@ -1,8 +1,8 @@
-/*	$NetBSD: main.c,v 1.28 2002/07/20 08:40:19 grant Exp $	*/
+/*	$NetBSD: main.c,v 1.29 2002/08/04 20:50:55 hubertf Exp $	*/
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: main.c,v 1.28 2002/07/20 08:40:19 grant Exp $");
+__RCSID("$NetBSD: main.c,v 1.29 2002/08/04 20:50:55 hubertf Exp $");
 #endif
 
 /*
@@ -345,6 +345,26 @@ main(int argc, char *argv[])
 		show_version();
 		/* NOTREACHED */
 
+	} else if (strcasecmp(argv[1], "pmatch") == 0) {
+
+		char *pattern, *pkg;
+		
+		argv++;		/* argv[0] */
+		argv++;		/* "pmatch" */
+
+		pattern = argv[0];
+		pkg = argv[1];
+
+		if (pattern == NULL || pkg == NULL) {
+			usage();
+		}
+
+		if (pmatch(pattern, pkg)){
+			return 0;
+		} else {
+			return 1;
+		}
+	  
 	} else if (strcasecmp(argv[1], "rebuild") == 0) {
 
 		rebuild();
@@ -567,7 +587,8 @@ usage(void)
 #endif
 	    " lsall /path/to/pkgpattern   - list all pkgs matching the pattern\n"
 	    " lsbest /path/to/pkgpattern  - list pkgs matching the pattern best\n"
-	    " dump                        - dump database\n");
+	    " dump                        - dump database\n"
+	    " pmatch pattern pkg          - returns true if pkg matches pattern, false else\n");
 	exit(1);
 }
 
