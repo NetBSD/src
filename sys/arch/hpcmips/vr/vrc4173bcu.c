@@ -1,4 +1,4 @@
-/*	$NetBSD: vrc4173bcu.c,v 1.4 2002/01/05 06:45:32 takemura Exp $	*/
+/*	$NetBSD: vrc4173bcu.c,v 1.5 2002/01/06 07:01:20 takemura Exp $	*/
 
 /*-
  * Copyright (c) 2001,2002 Enami Tsugutomo.
@@ -102,6 +102,7 @@ struct vrc4173bcu_softc {
 		int (*ih_func)(void *);
 		void *ih_arg;
 	} sc_intrhand[VRC4173BCU_NINTRHAND];
+	int sc_intrmask;
 
 	struct vrc4173bcu_platdep *sc_platdep;
 };
@@ -250,6 +251,9 @@ vrc4173bcu_attach(struct device *parent, struct device *self, void *aux)
 
 	for (i = 0; i < VRC4173BCU_NINTRHAND; i++)
 		sc->sc_intrhand[i].ih_func = NULL;
+	sc->sc_intrmask = 0;
+	bus_space_write_2(sc->sc_iot, sc->sc_icuh, VRC4173ICU_MSYSINT1,
+	    sc->sc_intrmask);
 
 	/*
 	 * Attach sub units found in vrc4173.  XXX.
@@ -337,6 +341,10 @@ vrc4173bcu_intr_establish(struct vrc4173bcu_softc *sc, int kind,
 
 	ih->ih_func = func;
 	ih->ih_arg = arg;
+	sc->sc_intrmask |= (1 << kind);
+	bus_space_write_2(sc->sc_iot, sc->sc_icuh, VRC4173ICU_MSYSINT1,
+	    sc->sc_intrmask);
+
 	return (ih);
 }
 
@@ -350,6 +358,9 @@ vrc4173bcu_intr_disestablish(struct vrc4173bcu_softc *sc, void *ihp)
 		return;
 
 	ih->ih_func = NULL;
+	sc->sc_intrmask &= ~(1 << (ih - &sc->sc_intrhand[0]));
+	bus_space_write_2(sc->sc_iot, sc->sc_icuh, VRC4173ICU_MSYSINT1,
+	    sc->sc_intrmask);
 }
 
 int
