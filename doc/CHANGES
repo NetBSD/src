@@ -1,4 +1,4 @@
-LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.18 $>
+LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.19 $>
 
 
 [Note: This file does not mention every change made to the NetBSD source tree.
@@ -14,8 +14,8 @@ Changes from NetBSD 1.6 to NetBSD 1.7:
 	tcp: implement path MTU discovery blackhole detection (turn off path
 		MTU discovery if the connection is losing).  PR 12790.
 		[itojun 20020526]
-	pppd: import 2.4.1 [christos 20020529]
-	ftpd: optionally and experimentally use mmap(2) instead of read(2)
+	pppd(8): import 2.4.1 [christos 20020529]
+	ftpd(8): optionally and experimentally use mmap(2) instead of read(2)
 		for binary file transfer [enami 20020530]
 	prep: support IBM RS/6000 43P 7043-140. [nonaka 20020530]
 	pmppc: a port to Artesyn's PM/PPC board.  [augustss 20020531]
@@ -55,7 +55,7 @@ Changes from NetBSD 1.6 to NetBSD 1.7:
 		[scw 20020713]
 	evbarm: Add support for the Intel IXM1200 eval board for
 		the ixp12x0 Network Processor.  [ichiro 20020715]
-	mopd: Added "-s <mopdir>" to avoid hard coding /tftpboot/mop.
+	mopd(8): Added "-s <mopdir>" to avoid hard coding /tftpboot/mop.
 		[mrg 20020719]
 	hpcarm: X server for the Jornada 720 now works [manu 20020722]
 	pciide(4): added support for the Silicon Image 0680 IDE controller.
@@ -116,7 +116,7 @@ Changes from NetBSD 1.6 to NetBSD 1.7:
 		a list that is built at run-time.  [thorpej 20020926]
 	Add support for the Apple UFS variation on ffs
 		See PR 17345 [dbj 20020928]
-	Change /bin/sh to use vfork(2) rather than fork(2) where appropriate.
+	sh(1): Use vfork(2) rather than fork(2) where appropriate.
 		See PR 5475 [christos,elric 20020928]
 	Remove umask setting from /etc/skel/.{cshrc,profile} so that
 		user files are not created group writable by default.
