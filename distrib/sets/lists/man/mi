@@ -425,6 +425,7 @@
 ./usr/share/man/cat4/usb.0
 ./usr/share/man/cat4/vnd.0
 ./usr/share/man/cat4/wd.0
+./usr/share/man/cat4/wdc.0
 ./usr/share/man/cat4/wds.0
 ./usr/share/man/cat4/we.0
 ./usr/share/man/cat4/wscons.0
@@ -1477,6 +1478,7 @@
 ./usr/share/man/man4/usb.4
 ./usr/share/man/man4/vnd.4
 ./usr/share/man/man4/wd.4
+./usr/share/man/man4/wdc.4
 ./usr/share/man/man4/wds.4
 ./usr/share/man/man4/we.4
 ./usr/share/man/man4/wscons.4
