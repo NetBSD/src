@@ -1,4 +1,4 @@
-#	$NetBSD: NC_WSCONS,v 1.16 2002/06/17 05:14:03 lukem Exp $
+#	$NetBSD: NC_WSCONS,v 1.17 2002/08/07 14:42:43 bjh21 Exp $
 #
 #	NC - with wscons
 #
@@ -246,7 +246,7 @@ podulebus0	at root
 #scsibus* at ptsc?
 
 #csc*	at podulebus?			# Cumana SCSI II card
-#scsibus* at csc?			# Not currently working
+#scsibus* at csc?
 
 #oak*	at podulebus?			# Oak SCSI I card
 #scsibus* at oak?
