@@ -1,4 +1,4 @@
-/*	$NetBSD: sbus.c,v 1.12 1999/05/22 20:33:56 eeh Exp $ */
+/*	$NetBSD: sbus.c,v 1.13 1999/05/23 07:24:02 mrg Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -94,6 +94,7 @@
 
 #include <machine/bus.h>
 #include <sparc64/sparc64/vaddrs.h>
+#include <sparc64/dev/iommureg.h>
 #include <sparc64/dev/sbusreg.h>
 #include <dev/sbus/sbusvar.h>
 
