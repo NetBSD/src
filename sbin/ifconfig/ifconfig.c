@@ -1,4 +1,4 @@
-/*	$NetBSD: ifconfig.c,v 1.29 1997/03/25 01:37:11 thorpej Exp $	*/
+/*	$NetBSD: ifconfig.c,v 1.30 1997/03/26 01:46:49 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1997 Jason R. Thorpe.
@@ -75,7 +75,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)ifconfig.c	8.2 (Berkeley) 2/16/94";
 #else
-static char rcsid[] = "$NetBSD: ifconfig.c,v 1.29 1997/03/25 01:37:11 thorpej Exp $";
+static char rcsid[] = "$NetBSD: ifconfig.c,v 1.30 1997/03/26 01:46:49 thorpej Exp $";
 #endif
 #endif /* not lint */
 
@@ -84,6 +84,7 @@ static char rcsid[] = "$NetBSD: ifconfig.c,v 1.29 1997/03/25 01:37:11 thorpej Ex
 #include <sys/ioctl.h>
 
 #include <net/if.h>
+#include <net/if_dl.h>
 #include <net/if_media.h>
 #include <netinet/in.h>
 #include <arpa/inet.h>
@@ -182,7 +183,7 @@ int	getinfo __P((struct ifreq *));
 void	getsock __P((int));
 void	printall __P((void));
 void 	printb __P((char *, unsigned short, char *));
-void 	status();
+void 	status __P((const u_int8_t *, int));
 void 	usage();
 
 void	domediaopt __P((char *, int));
@@ -300,7 +301,7 @@ main(argc, argv)
 
 	/* No more arguments means interface status. */
 	if (argc == 0) {
-		status();
+		status(NULL, 0);
 		exit(0);
 	}
 
@@ -415,6 +416,7 @@ void
 printall()
 {
 	char inbuf[8192];
+	const struct sockaddr_dl *sdl = NULL;
 	struct ifconf ifc;
 	struct ifreq ifreq, *ifr;
 	int i;
@@ -434,6 +436,8 @@ printall()
 			(ifr->ifr_addr.sa_len > sizeof(struct sockaddr)
 				? ifr->ifr_addr.sa_len
 				: sizeof(struct sockaddr));
+		if (ifr->ifr_addr.sa_family == AF_LINK)
+			sdl = (const struct sockaddr_dl *) &ifr->ifr_addr;
 		if (!strncmp(ifreq.ifr_name, ifr->ifr_name,
 			     sizeof(ifr->ifr_name)))
 			continue;
@@ -441,7 +445,12 @@ printall()
 		ifreq = *ifr;
 		if (getinfo(&ifreq) < 0)
 			continue;
-		status();
+		if (sdl == NULL) {
+			status(NULL, 0);
+		} else {
+			status(LLADDR(sdl), sdl->sdl_alen);
+			sdl = NULL;
+		}
 	}
 }
 
@@ -916,7 +925,9 @@ print_media_word(ifmw)
  * specified, show it and it only; otherwise, show them all.
  */
 void
-status()
+status(ap, alen)
+	const u_int8_t *ap;
+	int alen;
 {
 	register struct afswtch *p = afp;
 	struct ifmediareq ifmr;
@@ -927,6 +938,12 @@ status()
 	if (metric)
 		printf(" metric %d", metric);
 	putchar('\n');
+	if (ap && alen > 0) {
+		printf("\taddress:");
+		for (i = 0; i < alen; i++, ap++)
+			printf("%c%02x", i > 0 ? ':' : ' ', *ap);
+		putchar('\n');
+	}
 
 	memset(&ifmr, 0, sizeof(ifmr));
 	strncpy(ifmr.ifm_name, name, sizeof(ifmr.ifm_name));
