@@ -1,4 +1,4 @@
-/*	$NetBSD: types.h,v 1.9 2003/12/07 20:01:58 scw Exp $	*/
+/*	$NetBSD: types.h,v 1.10 2004/01/18 18:23:19 martin Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -79,8 +79,11 @@ typedef	__volatile __int64_t	__cpu_simple_lock_t;
 #define	__HAVE_DEVICE_REGISTER
 #define	__HAVE_GENERIC_SOFT_INTERRUPTS
 #define	__HAVE_SYSCALL_INTERN
-#define	__HAVE_RAS
 #define	__HAVE_FUNCTION_DESCRIPTORS
+
+#if defined(_KERNEL)
+#define	__HAVE_RAS
+#endif
 
 #ifdef notyet
 #define	__HAVE_AST_PERPROC	/* Not reqd. until we support SMP */
