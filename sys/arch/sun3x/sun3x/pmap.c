@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.25 1997/06/10 19:42:25 veego Exp $	*/
+/*	$NetBSD: pmap.c,v 1.26 1997/07/02 03:23:57 jeremy Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -363,7 +363,7 @@ static INLINE vm_offset_t mmu_vtop __P((void * va));
 
 #if	0
 static INLINE a_tmgr_t * mmuA2tmgr __P((mmu_long_dte_t *));
-#endif
+#endif /* 0 */
 static INLINE b_tmgr_t * mmuB2tmgr __P((mmu_short_dte_t *));
 static INLINE c_tmgr_t * mmuC2tmgr __P((mmu_short_pte_t *));
 
@@ -1185,7 +1185,9 @@ pmap_init_c_tables()
 		c_tbl->ct_parent = NULL;	/* clear its parent,  */
 		c_tbl->ct_pidx = 0;		/* parent index,      */
 		c_tbl->ct_wcnt = 0;		/* wired entry count, */
-		c_tbl->ct_ecnt = 0;		/* valid entry count. */
+		c_tbl->ct_ecnt = 0;		/* valid entry count, */
+		c_tbl->ct_pmap = NULL;		/* parent pmap,       */
+		c_tbl->ct_va = 0;		/* base of managed range */
 
 		/* Assign it the next available MMU C table from the pool */ 
 		c_tbl->ct_dtbl = &mmuCbase[i * MMU_C_TBL_SIZE];
@@ -1876,6 +1878,12 @@ pmap_enter(pmap, va, pa, prot, wired)
 		/* Create the necessary back references to the parent table */
 		c_tbl->ct_parent = b_tbl;
 		c_tbl->ct_pidx = b_idx;
+		/*
+		 * Store the pmap and base virtual managed address for faster
+		 * retrieval in the PV functions.
+		 */
+		c_tbl->ct_pmap = pmap;
+		c_tbl->ct_va = (va & (MMU_TIA_MASK|MMU_TIB_MASK));
 
 		/*
 		 * If this table is to be wired, make sure the parent B table
@@ -2482,9 +2490,8 @@ pmap_zero_page(dstpa)
 
 	dstva = tmp_vpages[1];
 	s = splimp();
-	if (tmp_vpages_inuse)
+	if (tmp_vpages_inuse++)
 		panic("pmap_zero_page: temporary vpages are in use.");
-	tmp_vpages_inuse++;
 
 	/* The comments in pmap_copy_page() above apply here also. */
 	pmap_enter_kernel(dstva, dstpa, VM_PROT_READ|VM_PROT_WRITE);
@@ -2492,10 +2499,7 @@ pmap_zero_page(dstpa)
 	/* Hand-optimized version of bzero(ptr, NBPG) */
 	zeropage((char *) dstva);
 
-#if 0
-	/* XXX - See comment above about the PV problem. */
 	pmap_remove_kernel(dstva, dstva + NBPG);
-#endif
 
 	--tmp_vpages_inuse;
 	splx(s);
@@ -2833,9 +2837,6 @@ pmap_get_pteinfo(idx, pmap, tbl)
 	pmap_t *pmap;
 	c_tmgr_t **tbl;
 {
-	a_tmgr_t    *a_tbl;
-	b_tmgr_t    *b_tbl;
-	c_tmgr_t    *c_tbl;
 	vm_offset_t     va = 0;
 
 	/*
@@ -2844,27 +2845,19 @@ pmap_get_pteinfo(idx, pmap, tbl)
 	if (idx >= NUM_KERN_PTES) {
 		/*
 		 * The PTE belongs to a user mapping.
-		 * Find the virtual address by decoding table indices.
-		 * Each successive decode will reveal the address from
-		 * least to most significant bit fashion.
-		 *
-		 * 31                              0
-		 * +-------------------------------+
-		 * |AAAAAAABBBBBBCCCCCC............|
-		 * +-------------------------------+
 		 */
-		/* XXX: c_tbl = mmuC2tmgr(pte); */
 		/* XXX: Would like an inline for this to validate idx... */
-		c_tbl = &Ctmgrbase[(idx - NUM_KERN_PTES) / MMU_C_TBL_SIZE];
-		b_tbl = c_tbl->ct_parent;
-		a_tbl = b_tbl->bt_parent;
-		*pmap = a_tbl->at_parent;
-		*tbl = c_tbl;
+		*tbl = &Ctmgrbase[(idx - NUM_KERN_PTES) / MMU_C_TBL_SIZE];
 
-		/* Start with the 'C' bits, then add B and A... */
-		va |= ((idx % MMU_C_TBL_SIZE) << MMU_TIC_SHIFT);
-		va |= (c_tbl->ct_pidx << MMU_TIB_SHIFT);
-		va |= (b_tbl->bt_pidx << MMU_TIA_SHIFT);
+		*pmap = (*tbl)->ct_pmap;
+		/*
+		 * To find the va to which the PTE maps, we first take
+		 * the table's base virtual address mapping which is stored
+		 * in ct_va.  We then increment this address by a page for
+		 * every slot skipped until we reach the PTE.
+		 */
+		va =    (*tbl)->ct_va;
+		va += m68k_ptob(idx % MMU_C_TBL_SIZE);
 	} else {
 		/*
 		 * The PTE belongs to the kernel map.
