@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_inode.c,v 1.68 2003/03/01 05:07:51 perseant Exp $	*/
+/*	$NetBSD: lfs_inode.c,v 1.69 2003/03/04 19:10:35 perseant Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003 The NetBSD Foundation, Inc.
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_inode.c,v 1.68 2003/03/01 05:07:51 perseant Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_inode.c,v 1.69 2003/03/04 19:10:35 perseant Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_quota.h"
@@ -432,7 +432,7 @@ lfs_truncate(void *v)
 		uvm_vnp_zerorange(ovp, length, eoz - length);
 		simple_lock(&ovp->v_interlock);
 		error = VOP_PUTPAGES(ovp, trunc_page(length), round_page(eoz),
-		    PGO_CLEANIT | PGO_DEACTIVATE | PGO_SYNCIO);
+		    PGO_CLEANIT | PGO_DEACTIVATE | (aflags ? PGO_SYNCIO : 0));
 		if (error) {
 			return error;
 		}
