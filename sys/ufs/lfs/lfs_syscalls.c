@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_syscalls.c,v 1.65 2002/05/14 20:03:54 perseant Exp $	*/
+/*	$NetBSD: lfs_syscalls.c,v 1.66 2002/06/06 00:46:24 perseant Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_syscalls.c,v 1.65 2002/05/14 20:03:54 perseant Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_syscalls.c,v 1.66 2002/06/06 00:46:24 perseant Exp $");
 
 #define LFS		/* for prototypes in syscallargs.h */
 
@@ -834,6 +834,8 @@ lfs_bmapv(struct proc *p, fsid_t *fsidp, BLOCK_INFO *blkiov, int blkcnt)
 				continue;
 			}
 			blkp->bi_daddr = dbtofsb(fs, blkp->bi_daddr);
+			/* Fill in the block size, too */
+			blkp->bi_size = blksize(fs, ip, blkp->bi_lbn);
 		}
 	}
 	
