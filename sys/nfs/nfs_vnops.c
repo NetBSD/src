@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_vnops.c,v 1.186 2004/03/12 16:52:37 yamt Exp $	*/
+/*	$NetBSD: nfs_vnops.c,v 1.187 2004/04/05 10:27:11 yamt Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_vnops.c,v 1.186 2004/03/12 16:52:37 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_vnops.c,v 1.187 2004/04/05 10:27:11 yamt Exp $");
 
 #include "opt_nfs.h"
 #include "opt_uvmhist.h"
@@ -869,7 +869,7 @@ nfs_lookup(v)
 			    cnp->cn_proc) && timespeccmp(&vattr.va_mtime,
 			    &VTONFS(dvp)->n_nctime, ==))
 				return ENOENT;
-			cache_purge(dvp);
+			cache_purge1(dvp, NULL, PURGE_CHILDREN);
 			timespecclear(&np->n_nctime);
 			goto dorpc;
 		}
@@ -886,7 +886,7 @@ nfs_lookup(v)
 				VOP_UNLOCK(dvp, 0);
 			return (0);
 		}
-		cache_purge(newvp);
+		cache_purge1(newvp, NULL, PURGE_PARENTS);
 		if (newvp != dvp)
 			vput(newvp);
 		else
@@ -2226,7 +2226,6 @@ nfs_rmdir(v)
 		NFS_INVALIDATE_ATTRCACHE(VTONFS(dvp));
 	VN_KNOTE(dvp, NOTE_WRITE | NOTE_LINK);
 	VN_KNOTE(vp, NOTE_DELETE);
-	cache_purge(dvp);
 	cache_purge(vp);
 	vput(vp);
 	vput(dvp);
