@@ -1,4 +1,4 @@
-/*	$NetBSD: bus.h,v 1.2 1997/11/23 16:31:30 pk Exp $	*/
+/*	$NetBSD: bus.h,v 1.3 1998/01/13 20:53:38 pk Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -137,16 +137,16 @@ void	bus_space_free __P((bus_space_tag_t t, bus_space_handle_t bsh,
  */
 
 #define	bus_space_read_1(t, h, o)					\
-	    (*(volatile u_int8_t *)((h) + (o))))
+	    (*(volatile u_int8_t *)((h) + (o)))
 
 #define	bus_space_read_2(t, h, o)					\
-	    (*(volatile u_int16_t *)((h) + (o))))
+	    (*(volatile u_int16_t *)((h) + (o)))
 
 #define	bus_space_read_4(t, h, o)					\
-	    (*(volatile u_int32_t *)((h) + (o))))
+	    (*(volatile u_int32_t *)((h) + (o)))
 
 #define	bus_space_read_8(t, h, o)					\
-	    (*(volatile u_int64_t *)((h) + (o))))
+	    (*(volatile u_int64_t *)((h) + (o)))
 
 /*
  *	void bus_space_read_multi_N __P((bus_space_tag_t tag,
