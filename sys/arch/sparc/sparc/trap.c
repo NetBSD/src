@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.62 1998/02/05 07:58:02 mrg Exp $ */
+/*	$NetBSD: trap.c,v 1.63 1998/02/07 17:26:34 chs Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -904,6 +904,7 @@ mem_access_fault4m(type, sfsr, sfva, afsr, afva, tf)
 		/* Translation errors are always fatal, as they indicate
 		 * a corrupt translation (page) table hierarchy.
 		 */
+		rv = KERN_PROTECTION_FAILURE;
 		if (tfaultaddr == sfva)	/* Prevent infinite loops w/a static */
 			goto fault;
 		tfaultaddr = sfva;
