@@ -1,0 +1,14 @@
+#!/bin/sh -
+../ed - <<\EOT
+r \a.d
+0a
+hello world
+.
+2a
+hello world!
+.
+$a
+hello world!!
+.
+w \a.o
+EOT

@@ -1,0 +1,48 @@
+The following commands are recognized.  These are a combination of BSD
+and POSIX.  The POSIX version of a command always overrides any
+BSD version.  The commands are shown together with their permissible number
+of addresses.
+
+!<shell-cmd>		- run <shell-cmd> via sh {1} (POSIX)
+($)=			- print line number
+E <file>		- edit a file unconditionally {1}
+E !<shell-cmd>		- edit the standard output of <shell-cmd> {1} (POSIX)
+(1,$)G/pat/		- interactively edit lines matching a pattern (POSIX) {1}
+H			- print explanations of all errors (POSIX)
+P			- toggle command prompt (POSIX)
+Q			- quit ed unconditionally
+(1,$)V			- interactively edit lines not matching a pattern (POSIX) {1}
+(1,$)W			- append lines to a file (BSD)
+(.)a			- append text to the buffer
+(.,.)c			- change lines in the buffer
+(.,.)d			- delete lines from the buffer
+e <file>		- edit a file {1}
+e !<shell-cmd>		- edit the standard output of shell-cmd {1} (POSIX)
+f <file>		- set the default file to <file> {1} 
+(1,$)g/pat/<cmd-list>	- apply <cmd-list> to lines matching a pattern
+h			- print explanation of the last error (POSIX)
+(.)i			- insert text in the buffer
+(.,.+1)j		- join lines in the buffer
+(.)k<lc>		- mark a line for later '<lc> addressing
+(.,.)l			- print lines unambiguously to stdout
+(.,.)m<addr>		- move lines in the buffer
+(.,.)n			- enumerate lines to stdout (POSIX)
+(.,.)p			- print lines to stdout
+q			- quit ed
+($)r <file>		- read a file {1}
+($)r !<shell-cmd>	- read the stdout of <shell-cmd> {1} (POSIX)
+(.,.)s/pat/sub/g	- substitute matching text in a line via a template
+(.,.)s/pat/sub/<n>	- substitute the <n>th match in a line (POSIX)
+(.,.)s[rgp]*		- repeat the last substitution (BSD)
+(.,.)t<addr>		- copy (transfer) lines in the buffer
+u			- undo the last command (POSIX)
+(1,$)v/pat/<cmd-list>	- apply <cmd-list> to lines not matching a pattern
+(1,$)w <file>		- write lines in the buffer to a file
+(1,$)w !<shell-cmd>	- write lines to the stdin of <shell-cmd> (POSIX)
+x			- prompt for an encryption key (SunOS) {1}
+(.,.+22)z		- page lines in the buffer to stdout (BSD)
+(.,.)<newline>		- print lines to stdout (BSD)
+
+--
+{1}  See the file `extensions' for additional information on these
+     commands.
