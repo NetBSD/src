@@ -1,4 +1,4 @@
-/*	$NetBSD: qec.c,v 1.6 1998/08/30 21:25:30 pk Exp $ */
+/*	$NetBSD: qec.c,v 1.7 1999/01/16 12:46:08 pk Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -54,6 +54,7 @@
 static int	qecprint	__P((void *, const char *));
 static int	qecmatch	__P((struct device *, struct cfdata *, void *));
 static void	qecattach	__P((struct device *, struct device *, void *));
+void		qec_init	__P((struct qec_softc *));
 
 static int qec_bus_map __P((
 		bus_space_tag_t,
@@ -125,11 +126,10 @@ qecattach(parent, self, aux)
 			 sa->sa_reg[0].sbr_slot,
 			 sa->sa_reg[0].sbr_offset,
 			 sa->sa_reg[0].sbr_size,
-			 BUS_SPACE_MAP_LINEAR, 0, &bh) != 0) {
+			 BUS_SPACE_MAP_LINEAR, 0, &sc->sc_regs) != 0) {
 		printf("%s: attach: cannot map registers\n", self->dv_xname);
 		return;
 	}
-	sc->sc_regs = (void *)bh;
 
 	/*
 	 * This device's "register space 1" is just a buffer where the
@@ -147,6 +147,13 @@ qecattach(parent, self, aux)
 	sc->sc_buffer = (caddr_t)bh;
 	sc->sc_bufsiz = (bus_size_t)sa->sa_reg[1].sbr_size;
 
+	/* Get number of on-board channels */
+	sc->sc_nchannels = getpropint(node, "#channels", -1);
+	if (sc->sc_nchannels == -1) {
+		printf(": no channels\n");
+		return;
+	}
+
 	/*
 	 * Get transfer burst size from PROM
 	 */
@@ -163,7 +170,6 @@ qecattach(parent, self, aux)
 	sc->sc_burst &= sbusburst;
 
 	sbus_establish(&sc->sc_sd, &sc->sc_dev);
-
 
 	/*
 	 * Collect address translations from the OBP.
@@ -198,6 +204,8 @@ qecattach(parent, self, aux)
 	sbt->sparc_bus_map = qec_bus_map;
 
 	printf(": %dK memory\n", sc->sc_bufsiz / 1024);
+
+	qec_init(sc);
 
 	/* search through children */
 	for (node = firstchild(node); node; node = nextsibling(node)) {
@@ -238,4 +246,37 @@ qec_bus_map(t, btype, offset, size, flags, vaddr, hp)
 	}
 
 	return (EINVAL);
+}
+
+void
+qec_init(sc)
+	struct qec_softc *sc;
+{
+	bus_space_tag_t t = sc->sc_bustag;
+	bus_space_handle_t qr = sc->sc_regs;
+	u_int32_t v, burst = 0;
+
+	/*
+	 * Cut available buffer size into receive and transmit buffers.
+	 * XXX - should probably be done in be & qe driver...
+	 */
+	v = sc->sc_msize = sc->sc_bufsiz / sc->sc_nchannels;
+	bus_space_write_4(t, qr, QEC_QRI_MSIZE, v);
+
+	v = sc->sc_rsize = sc->sc_bufsiz / (sc->sc_nchannels * 2);
+	bus_space_write_4(t, qr, QEC_QRI_RSIZE, v);
+	bus_space_write_4(t, qr, QEC_QRI_TSIZE, v);
+
+	bus_space_write_4(t, qr, QEC_QRI_PSIZE, QEC_PSIZE_2048);
+
+	if (sc->sc_burst & SBUS_BURST_64)
+		burst = QEC_CTRL_B64;
+	else if (sc->sc_burst & SBUS_BURST_32)
+		burst = QEC_CTRL_B32;
+	else
+		burst = QEC_CTRL_B16;
+
+	v = bus_space_read_4(t, qr, QEC_QRI_CTRL);
+	v = (v & QEC_CTRL_MODEMASK) | burst;
+	bus_space_write_4(t, qr, QEC_QRI_CTRL, v);
 }
