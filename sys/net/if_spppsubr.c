@@ -1,4 +1,4 @@
-/*	$NetBSD: if_spppsubr.c,v 1.48 2002/07/06 18:33:45 itojun Exp $	 */
+/*	$NetBSD: if_spppsubr.c,v 1.49 2002/07/11 21:21:53 yamt Exp $	 */
 
 /*
  * Synchronous PPP/Cisco link level subroutines.
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_spppsubr.c,v 1.48 2002/07/06 18:33:45 itojun Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_spppsubr.c,v 1.49 2002/07/11 21:21:53 yamt Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipx.h"
@@ -733,9 +733,11 @@ sppp_output(struct ifnet *ifp, struct mbuf *m,
 		 * - we flag TCP packets with src ip 0 as an error
 		 */	
 		if (ip && ip->ip_src.s_addr == INADDR_ANY) {
+			u_int8_t proto = ip->ip_p;
+
 			m_freem(m);
 			splx(s);
-			if (ip->ip_p == IPPROTO_TCP)
+			if (proto == IPPROTO_TCP)
 				return(EADDRNOTAVAIL);
 			else
 				return(0);
