@@ -1,4 +1,4 @@
-#	$NetBSD: 3RDPARTY,v 1.245 2004/09/28 00:55:15 dyoung Exp $
+#	$NetBSD: 3RDPARTY,v 1.246 2004/09/30 10:07:45 wiz Exp $
 #
 # This file contains a list of the software that has been integrated into
 # NetBSD where we are not the primary maintainer.
@@ -58,9 +58,9 @@ bc includes dc, both of which are in the NetBSD tree.
 
 Package:	bind/named
 Version:	9.3.0beta3
-Current Vers:	4.9.11/8.3.7/8.4.2/9.3.0beta3
+Current Vers:	4.9.11/8.3.7/8.4.2/9.3.0
 Maintainer:	Paul Vixie <vixie@vix.com>
-Archive Site:	ftp://ftp.isc.org/isc/bind/
+Archive Site:	ftp://ftp.isc.org/isc/bind9/
 Mailing List:
 Responsible:	vixie, itojun, christos
 Notes:
@@ -72,9 +72,9 @@ _res declaration differences.
 
 Package:	bind/resolver
 Version:	4.9.11
-Current Vers:	4.9.11/8.3.7/8.4.2/9.3
+Current Vers:	4.9.11/8.3.7/8.4.2/9.3.0
 Maintainer:	Paul Vixie <vixie@vix.com>
-Archive Site:	ftp://ftp.isc.org/isc/bind/
+Archive Site:	ftp://ftp.isc.org/isc/bind9/
 Mailing List:
 Responsible:	vixie
 Notes:
