@@ -1,4 +1,4 @@
-/*	$NetBSD: isadma.c,v 1.23 1997/03/21 02:17:11 mycroft Exp $	*/
+/*	$NetBSD: isadma.c,v 1.24 1997/05/28 20:02:39 mycroft Exp $	*/
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -20,9 +20,10 @@
 /* region of physical memory known to be contiguous */
 vm_offset_t isaphysmem;
 static caddr_t dma_bounce[8];		/* XXX */
-static char bounced[8];		/* XXX */
+static char dma_bounced[8];		/* XXX */
 #define MAXDMASZ 512		/* XXX */
 static u_int8_t dma_finished;
+static vm_size_t dma_length[8];
 
 /* high byte of address is stored in this port for i-th dma channel */
 static int dmapageport[2][4] = {
@@ -132,7 +133,7 @@ isa_dmastart(flags, addr, nbytes, chan)
 			dma_bounce[chan] =
 			    /*(caddr_t)malloc(MAXDMASZ, M_TEMP, M_WAITOK);*/
 			    (caddr_t) isaphysmem + NBPG*chan;
-		bounced[chan] = 1;
+		dma_bounced[chan] = 1;
 		newaddr = dma_bounce[chan];
 		*(int *) newaddr = 0;	/* XXX */
 		/* copy bounce buffer on write */
@@ -140,6 +141,8 @@ isa_dmastart(flags, addr, nbytes, chan)
 			bcopy(addr, newaddr, nbytes);
 		addr = newaddr;
 	}
+
+	dma_length[chan] = nbytes;
 
 	/* translate to physical */
 	phys = pmap_extract(pmap_kernel(), (vm_offset_t)addr);
@@ -192,7 +195,7 @@ isa_dmaabort(chan)
 
 	isa_dmamask(chan);
 
-	bounced[chan] = 0;
+	dma_bounced[chan] = 0;
 }
 
 vm_size_t
@@ -205,25 +208,33 @@ isa_dmacount(chan)
 
 #ifdef ISADMA_DEBUG
 	if (chan < 0 || chan > 7)
-		panic("isa_dmafinished: impossible request");
+		panic("isa_dmacount: impossible request");
 #endif
 
 	isa_dmamask(chan);
 
-	/* check that the terminal count was reached */
-	if (!isa_dmafinished(chan)) {
-		/* read count */
-		if ((chan & 4) == 0) {
-			waport = DMA1_CHN(ochan);
-			nbytes = inb(waport + 1) + 1;
-			nbytes += inb(waport + 1) << 8;
-		} else {
-			waport = DMA2_CHN(ochan);
-			nbytes = inb(waport + 2) + 1;
-			nbytes += inb(waport + 2) << 8;
-			nbytes <<= 1;
-		}
-	} else
+	/*
+	 * We have to shift the byte count by 1.  If we're in auto-initialize
+	 * mode, the count may have wrapped around to the initial value.  We
+	 * can't use the TC bit to check for this case, so instead we compare
+	 * against the original byte count.
+	 * If we're not in auto-initialize mode, then the count will wrap to
+	 * -1, so we also handle that case.
+	 */
+	if ((chan & 4) == 0) {
+		waport = DMA1_CHN(ochan);
+		nbytes = inb(waport + 1) + 1;
+		nbytes += inb(waport + 1) << 8;
+		nbytes &= 0xffff;
+	} else {
+		waport = DMA2_CHN(ochan);
+		nbytes = inb(waport + 2) + 1;
+		nbytes += inb(waport + 2) << 8;
+		nbytes <<= 1;
+		nbytes &= 0x1ffff;
+	}
+
+	if (nbytes == dma_length[chan])
 		nbytes = 0;
 
 	isa_dmaunmask(chan);
@@ -268,9 +279,9 @@ isa_dmadone(flags, addr, nbytes, chan)
 		printf("isa_dmadone: channel %d not finished\n", chan);
 
 	/* copy bounce buffer on read */
-	if (bounced[chan]) {
+	if (dma_bounced[chan]) {
 		bcopy(dma_bounce[chan], addr, nbytes);
-		bounced[chan] = 0;
+		dma_bounced[chan] = 0;
 	}
 }
 
