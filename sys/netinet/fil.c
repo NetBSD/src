@@ -1,4 +1,4 @@
-/*	$NetBSD: fil.c,v 1.42 2000/11/12 19:29:31 thorpej Exp $	*/
+/*	$NetBSD: fil.c,v 1.43 2000/11/12 19:50:47 thorpej Exp $	*/
 
 /*
  * Copyright (C) 1993-2000 by Darren Reed.
@@ -9,7 +9,7 @@
  */
 #if !defined(lint)
 #if defined(__NetBSD__)
-static const char rcsid[] = "$NetBSD: fil.c,v 1.42 2000/11/12 19:29:31 thorpej Exp $";
+static const char rcsid[] = "$NetBSD: fil.c,v 1.43 2000/11/12 19:50:47 thorpej Exp $";
 #else
 static const char sccsid[] = "@(#)fil.c	1.36 6/5/96 (C) 1993-2000 Darren Reed";
 static const char rcsid[] = "@(#)Id: fil.c,v 2.35.2.19 2000/07/27 13:08:18 darrenr Exp";
@@ -737,7 +737,7 @@ fr_check_wrapper(void *arg, struct mbuf **mp, struct ifnet *ifp, int dir)
 
 	rv = fr_check(ip, hlen, ifp, (dir == PFIL_OUT), mp);
 
-	if (*mp != NULL) {
+	if (rv == 0 && *mp != NULL) {
 		ip = mtod(*mp, struct ip *);
 		HTONS(ip->ip_len);
 		HTONS(ip->ip_off);
