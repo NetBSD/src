@@ -1,4 +1,4 @@
-/*	$NetBSD: ctu.c,v 1.6 2000/01/21 23:39:57 thorpej Exp $ */
+/*	$NetBSD: ctu.c,v 1.7 2000/01/23 18:53:11 matt Exp $ */
 /*
  * Copyright (c) 1996 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -68,7 +68,7 @@ enum tu_state {
 	SC_RESTART,
 };
 
-volatile struct tu_softc {
+struct tu_softc {
 	enum	tu_state sc_state;
 	int	sc_error;
 	char	sc_rsp[15];	/* Should be struct rsb; but don't work */
@@ -102,16 +102,15 @@ int	ctudump __P((dev_t, daddr_t, caddr_t, size_t));
 void
 ctuattach()
 {
-	extern	struct ivec_dsp idsptch;
-
 	BUFQ_INIT(&tu_sc.sc_q);
 
-	bcopy(&idsptch, &tu_recv, sizeof(struct ivec_dsp));
-	bcopy(&idsptch, &tu_xmit, sizeof(struct ivec_dsp));
-	scb->scb_csrint = (void *)&tu_recv;
-	scb->scb_cstint = (void *)&tu_xmit;
+	tu_recv = idsptch;
 	tu_recv.hoppaddr = cturintr;
+	scb->scb_csrint = (void *)&tu_recv;
+
+	tu_xmit = idsptch;
 	tu_xmit.hoppaddr = ctutintr;
+	scb->scb_cstint = (void *)&tu_xmit;
 }
 
 int
