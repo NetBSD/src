@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ether.h,v 1.13 1999/11/19 20:41:19 thorpej Exp $	*/
+/*	$NetBSD: if_ether.h,v 1.14 2000/03/06 20:54:41 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1993
@@ -71,6 +71,12 @@ struct	ether_header {
 
 #define	ETHERMTU	(ETHER_MAX_LEN - ETHER_HDR_LEN - ETHER_CRC_LEN)
 #define	ETHERMIN	(ETHER_MIN_LEN - ETHER_HDR_LEN - ETHER_CRC_LEN)
+
+/*
+ * Ethernet CRC32 polynomials (big- and little-endian verions).
+ */
+#define	ETHER_CRC_POLY_LE	0xedb88320
+#define	ETHER_CRC_POLY_BE	0x04c11db6
 
 #ifndef _STANDALONE
 
@@ -198,10 +204,13 @@ struct ether_multistep {
 	ETHER_NEXT_MULTI((step), (enm)); \
 }
 
+#ifdef _KERNEL
+u_int32_t ether_crc32_le __P((const u_int8_t *, size_t));
+u_int32_t ether_crc32_be __P((const u_int8_t *, size_t));
+#else
 /*
  * Prototype ethers(3) functions.
  */
-#ifndef _KERNEL
 #include <sys/cdefs.h>
 __BEGIN_DECLS
 char *	ether_ntoa __P((struct ether_addr *));
