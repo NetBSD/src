@@ -1,4 +1,4 @@
-/*	$NetBSD: getnameinfo.c,v 1.3 1999/08/01 06:45:28 itojun Exp $	*/
+/*	$NetBSD: getnameinfo.c,v 1.4 1999/08/22 12:54:02 kleink Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -36,6 +36,7 @@
  *   but INRIA implementation returns EAI_xxx defined for getaddrinfo().
  */
 
+#include "namespace.h"
 #include <sys/types.h>
 #include <sys/socket.h>
 #include <netinet/in.h>

@@ -1,4 +1,4 @@
-/*	$NetBSD: getaddrinfo.c,v 1.10 1999/08/13 09:45:51 itojun Exp $	*/
+/*	$NetBSD: getaddrinfo.c,v 1.11 1999/08/22 12:54:02 kleink Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -40,6 +40,7 @@
  * - PF_UNSPEC case would be handled in getipnodebyname() with the AI_ALL flag.
  */
 
+#include "namespace.h"
 #include <sys/types.h>
 #include <sys/param.h>
 #include <sys/sysctl.h>

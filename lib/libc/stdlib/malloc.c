@@ -1,4 +1,4 @@
-/*	$NetBSD: malloc.c,v 1.24 1999/07/08 22:18:06 thorpej Exp $	*/
+/*	$NetBSD: malloc.c,v 1.25 1999/08/22 12:54:03 kleink Exp $	*/
 
 /*
  * ----------------------------------------------------------------------------
@@ -84,6 +84,7 @@
 /*
  * No user serviceable parts behind this point.
  */
+#include "namespace.h"
 #include <sys/types.h>
 #include <sys/mman.h>
 #include <errno.h>
