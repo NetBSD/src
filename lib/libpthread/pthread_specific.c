@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread_specific.c,v 1.3 2003/01/18 18:45:57 christos Exp $	*/
+/*	$NetBSD: pthread_specific.c,v 1.4 2003/01/21 23:29:22 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -243,15 +243,16 @@ pthread__destroy_tsd(pthread_t self)
 	do {
 		done = 1;
 		for (i = 0; i < PTHREAD_KEYS_MAX; i++) {
-			pthread_mutex_lock(&tsd_mutex);
-			destructor = pthread__tsd_destructors[i];
-			pthread_mutex_unlock(&tsd_mutex);
-			if ((self->pt_specific[i] != NULL) &&
-			    destructor != NULL) {
-				done = 0;
-				val = self->pt_specific[i];
-				self->pt_specific[i] = NULL; /* see above */
-				(*destructor)(val);
+			if (self->pt_specific[i] != NULL) {
+				pthread_mutex_lock(&tsd_mutex);
+				destructor = pthread__tsd_destructors[i];
+				pthread_mutex_unlock(&tsd_mutex);
+			    if (destructor != NULL) {
+				    done = 0;
+				    val = self->pt_specific[i];
+				    self->pt_specific[i] = NULL; /* see above */
+				    (*destructor)(val);
+			    }
 			}
 		}
 	} while (!done && iterations--);
