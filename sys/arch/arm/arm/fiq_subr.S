@@ -1,4 +1,4 @@
-/*	$NetBSD: fiq_subr.S,v 1.2 2002/01/01 16:24:33 skrll Exp $	*/
+/*	$NetBSD: fiq_subr.S,v 1.3 2002/04/12 18:50:31 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
@@ -36,10 +36,10 @@
  */
 
 #include "assym.h"
-#include "opt_cputypes.h"
 
 #include <arm/armreg.h>
 #include <arm/asm.h>
+#include <arm/cpuconf.h>
 
 /*
  * MODE_CHANGE_NOP should be inserted between a mode change and a
