@@ -1,4 +1,4 @@
-/*	$NetBSD: histedit.h,v 1.16 2000/09/04 22:06:30 lukem Exp $	*/
+/*	$NetBSD: histedit.h,v 1.17 2001/09/27 19:29:50 christos Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -126,6 +126,9 @@ int		 el_get(EditLine *, int, void *);
 #define	EL_HIST		10	/* , hist_fun_t, const char *);	*/
 #define	EL_EDITMODE	11	/* , int);			*/
 #define	EL_RPROMPT	12	/* , el_pfunc_t);		*/
+#define	EL_GETCFN	13	/* , el_rfunc_t);		*/
+
+#define EL_BUILTIN_GETCFN	(NULL)
 
 /*
  * Source named file or $PWD/.editrc or $HOME/.editrc
