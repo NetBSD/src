@@ -31,7 +31,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	@(#)sendmail.h	8.41 (Berkeley) 2/6/94
+ *	@(#)sendmail.h	8.43 (Berkeley) 4/14/94
  */
 
 /*
@@ -41,7 +41,7 @@
 # ifdef _DEFINE
 # define EXTERN
 # ifndef lint
-static char SmailSccsId[] =	"@(#)sendmail.h	8.41		2/6/94";
+static char SmailSccsId[] =	"@(#)sendmail.h	8.43		4/14/94";
 # endif
 # else /*  _DEFINE */
 # define EXTERN extern
@@ -377,6 +377,7 @@ ENVELOPE
 #define EF_PM_NOTIFY	0x0002000	/* send return mail to postmaster */
 #define EF_METOO	0x0004000	/* send to me too */
 #define EF_LOGSENDER	0x0008000	/* need to log the sender */
+#define EF_NORECEIPT	0x0010000	/* suppress all return-receipts */
 
 EXTERN ENVELOPE	*CurEnv;	/* envelope currently being processed */
 /*
@@ -704,6 +705,7 @@ EXTERN char	OpMode;		/* operation mode, see below */
 #define PRIV_NOEXPN		00010	/* disallow EXPN command entirely */
 #define PRIV_NOVRFY		00020	/* disallow VRFY command entirely */
 #define PRIV_AUTHWARNINGS	00040	/* flag possible authorization probs */
+#define PRIV_NORECEIPTS		00100	/* disallow return receipts */
 #define PRIV_RESTRICTMAILQ	01000	/* restrict mailq command */
 #define PRIV_RESTRICTQRUN	02000	/* restrict queue run */
 #define PRIV_GOAWAY		00777	/* don't give no info, anyway, anyhow */
