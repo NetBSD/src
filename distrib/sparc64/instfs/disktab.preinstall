@@ -1,6 +1,6 @@
-#	$NetBSD: disktab,v 1.2 2001/07/21 06:01:03 eeh Exp $
+#	$NetBSD: disktab.preinstall,v 1.1 2002/05/07 14:41:37 lukem Exp $
 #
-# Disk geometry and partition layout tables.
+# Disk geometry and partition layout tables. 
 # Key:
 #	dt	controller type
 #	ty	type of disk (fixed, removeable, simulated)
@@ -8,7 +8,7 @@
 #	ns	#sectors/track
 #	nt	#tracks/cylinder
 #	nc	#cylinders/disk
-#	sc	#sectors/cylinder, ns*nt default
+#	sc	#sectors/cylinder, nc*nt default
 #	su	#sectors/unit, sc*nc default
 #	se	sector size, DEV_BSIZE default
 #	rm	rpm, 3600 default
@@ -29,6 +29,3 @@
 # All partition sizes reserve space for bad sector tables.
 # (5 cylinders needed for maintenance + replacement sectors)
 #
-
-# Let disklabel figure this out.
-miniroot:ty=simulated:ns#1:nt#1:
