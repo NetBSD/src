@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.44 2002/02/21 05:25:24 thorpej Exp $	*/
+/*	$NetBSD: pmap.c,v 1.45 2002/02/21 06:36:11 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2001 Richard Earnshaw
@@ -142,7 +142,7 @@
 #include <machine/param.h>
 #include <arm/arm32/katelib.h>
 
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.44 2002/02/21 05:25:24 thorpej Exp $");        
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.45 2002/02/21 06:36:11 thorpej Exp $");        
 #ifdef PMAP_DEBUG
 #define	PDEBUG(_lev_,_stat_) \
 	if (pmap_debug_level >= (_lev_)) \
@@ -3823,6 +3823,15 @@ pmap_map_chunk(vaddr_t l1pt, vaddr_t l2pt, vaddr_t va, paddr_t pa,
 			resid -= L1_SEC_SIZE;
 			continue;
 		}
+
+		/*
+		 * Ok, we're going to use an L2 table.  Make sure
+		 * one is actually in the corresponding L1 slot
+		 * for the current VA.
+		 */
+		if ((pde[va >> PDSHIFT] & L1_MASK) != L1_PAGE)
+			panic("pmap_map_chunk: no L2 table for VA 0x%08lx\n",
+			    va);
 
 		/* See if we can use a L2 large page mapping. */
 		if (((pa | va) & (L2_LPAGE_SIZE - 1)) == 0 &&
