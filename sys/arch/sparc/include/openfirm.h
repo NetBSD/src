@@ -1,4 +1,4 @@
-/*	$NetBSD: openfirm.h,v 1.2 2000/11/15 16:13:10 pk Exp $	*/
+/*	$NetBSD: openfirm.h,v 1.3 2004/03/21 15:12:35 pk Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -34,19 +34,37 @@
  * Prototypes for additional OpenFirmware Interface Routines
  */
 
+#ifndef _SPARC_OPENFIRM_H_
+#define _SPARC_OPENFIRM_H_
+
 #include <dev/ofw/openfirm.h>
 
+#ifdef SUN4U
 /* All cells are 8 byte slots */
+typedef u_int64_t cell_t;
+#ifdef __arch64__
+#define HDL2CELL(x)	(cell_t)(u_int)(int)(x)
+#define ADR2CELL(x)	(cell_t)(x)
+#else
+#define HDL2CELL(x)	(cell_t)(u_int)(int)(x)
+#define ADR2CELL(x)	(cell_t)(u_int)(int)(x)
+#endif
+#else /* SUN4U */
+/* All cells are 4 byte slots */
 typedef u_int32_t cell_t;
 #define HDL2CELL(x)	(cell_t)(x)
 #define ADR2CELL(x)	(cell_t)(x)
+#endif /* SUN4U */
 
-void OF_poweroff __P((void)) __attribute__((__noreturn__));
-int  OF_test __P((char* service));
-int  OF_test_method __P((int handle, char* method));
-void OF_set_symbol_lookup __P(( void (*s2v)__P((void *)),
-				void (*v2s)__P((void *)) ));
-void OF_sym2val __P((void *));
-void OF_val2sym __P((void *));
-void OF_interpret __P((char *));
-int  OF_milliseconds __P((void));
+int	OF_test(char* service);
+int	OF_test_method(int handle, char* method);
+void	OF_set_symbol_lookup (void (*s2v)(void *), void (*v2s)(void *));
+int	OF_searchprop (int node, char *prop, void *buf, int buflen);
+int	OF_mapintr(int node, int *interrupt, int validlen, int buflen);
+
+void	OF_poweroff(void) __attribute__((__noreturn__));
+int	OF_interpret(char *, int, int, ...);
+void	OF_sym2val(void *);
+void	OF_val2sym(void *);
+
+#endif /* _SPARC_OPENFIRM_H_ */
