@@ -1,4 +1,4 @@
-/*	$NetBSD: sbc.c,v 1.32 1997/10/10 05:55:01 scottr Exp $	*/
+/*	$NetBSD: sbc.c,v 1.33 1997/12/06 18:53:30 scottr Exp $	*/
 
 /*
  * Copyright (C) 1996 Scott Reynolds.  All rights reserved.
@@ -185,7 +185,9 @@ sbc_irq_intr(p)
 	void *p;
 {
 	struct ncr5380_softc *ncr_sc = p;
+	struct sbc_softc *sc = (struct sbc_softc *)ncr_sc;
 	int claimed = 0;
+	extern int cold;
 
 	/* How we ever arrive here without IRQ set is a mystery... */
 	if (*ncr_sc->sci_csr & SCI_CSR_INT) {
@@ -193,11 +195,15 @@ sbc_irq_intr(p)
 		if (sbc_debug & SBC_DB_INTR)
 			decode_5380_intr(ncr_sc);
 #endif
-		claimed = ncr5380_intr(ncr_sc);
+		if (!cold)
+			claimed = ncr5380_intr(ncr_sc);
 		if (!claimed) {
 			if (((*ncr_sc->sci_csr & ~SCI_CSR_PHASE_MATCH) == SCI_CSR_INT)
-			    && ((*ncr_sc->sci_bus_csr & ~SCI_BUS_RST) == 0))
+			    && ((*ncr_sc->sci_bus_csr & ~SCI_BUS_RST) == 0)) {
 				SCI_CLR_INTR(ncr_sc);	/* RST interrupt */
+				if (sc->sc_clrintr)
+					(*sc->sc_clrintr)(ncr_sc);
+			}
 #ifdef SBC_DEBUG
 			else {
 				printf("%s: spurious intr\n",
@@ -457,7 +463,7 @@ sbc_drq_intr(p)
 	 */
 	nofault = &faultbuf;
 
-	if (setjmp((label_t *)nofault)) {
+	if (setjmp(nofault)) {
 		nofault = (label_t *)0;
 		if ((dh->dh_flags & SBC_DH_DONE) == 0) {
 			count = ((  (u_long)m68k_fault_addr
