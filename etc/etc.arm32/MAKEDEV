@@ -1,6 +1,6 @@
 #!/bin/sh -
 #
-#	$NetBSD: MAKEDEV,v 1.18 1997/10/18 03:59:27 mark Exp $
+#	$NetBSD: MAKEDEV,v 1.18.2.1 1997/11/20 08:17:51 mellon Exp $
 #
 # Copyright (c) 1990 The Regents of the University of California.
 # All rights reserved.
@@ -73,6 +73,7 @@
 #	bpf*	packet filter
 #	beep	riscpc speaker
 #	ipl	ip filter control
+#	random	Random number generator
 #	lkm	loadable kernel modules interface
 #	tun*	network tunnel driver
 #	ch*	SCSI Auto changer
@@ -95,7 +96,7 @@ all)
 	sh $0 ttyv0 ttyv1 ttyv2 ttyv3 ttyv4 ttyv5 ttyv6 ttyv7 ttyv8 ttyv9
 	sh $0 lpa0 lpt0 bpf0 bpf1 bpf2 bpf3 tun0 tun1 tun2 ipl
 	sh $0 beep lkm qms0 pms0 local cpu0 cpu1
-	sh $0 mouse-qms0
+	sh $0 mouse-qms0 random
 	;;
 
 ramdisk|floppy)
@@ -367,6 +368,15 @@ audio*)
 	mknod $audioctl c $major $(($unit + 192))
 	chown root.wheel $audio $sound $mixer $audioctl
 	chmod 666 $audio $sound $mixer $audioctl
+	;;
+
+random)
+	rm -f random urandom
+	mknod random c 52 0
+	mknod urandom c 52 1
+	chown root.wheel random urandom
+	chmod 444 random
+	chmod 644 urandom
 	;;
 
 local)
