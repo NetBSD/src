@@ -1,4 +1,4 @@
-/*	$NetBSD: tropic.c,v 1.8 2000/05/27 04:46:24 thorpej Exp $	*/
+/*	$NetBSD: tropic.c,v 1.9 2000/06/06 16:26:57 soren Exp $	*/
 
 /* 
  * Ported to NetBSD by Onno van der Linden
@@ -32,6 +32,7 @@
  * any improvements or extensions that they make and grant Carnegie Mellon
  * the rights to redistribute these changes.
  */
+
 #include "opt_inet.h"
 #include "opt_ns.h"
 #include "bpfilter.h"
@@ -194,16 +195,17 @@ tr_config(sc)
 		}
 
 		if (i == 30000 && sc->sc_srb == ACA_RDW(sc, ACA_WRBR)) {
-			printf("No response for fast path cfg\n");
+			printf("%s: no response for fast path cfg\n",
+			    sc->sc_dev.dv_xname);
 			return 1;
 		}
 
 		ACA_RSTB(sc, ACA_ISRP_o, ~(SRB_RESP_INT));
 
-
 		if ((SRB_INB(sc, sc->sc_srb, SRB_RETCODE) != 0)) {
-			printf("cfg fast path returned: %02x\n",
-				SRB_INB(sc, sc->sc_srb, SRB_RETCODE));
+			printf("%s: cfg fast path returned: 0x%02x\n",
+			    sc->sc_dev.dv_xname,
+			    SRB_INB(sc, sc->sc_srb, SRB_RETCODE));
 			return 1;
 		}
 
@@ -444,10 +446,7 @@ tr_attach(sc)
 	callout_init(&sc->sc_init_callout);
 	callout_init(&sc->sc_reinit_callout);
 
-/*
- * XXX rnd stuff
- */
-	shutdownhook_establish(tr_shutdown, sc);
+	sc->sd_hook = shutdownhook_establish(tr_shutdown, sc);
 	return 0;
 }
 
@@ -758,7 +757,7 @@ next:
 			TXB_OUTW(sc, txbuf, XMIT_BUFLEN,
 			    (FP_BUF_LEN - XMIT_FP_DATA));
 			txbuf = TXB_INW(sc, txbuf, XMIT_NEXTBUF) - XMIT_NEXTBUF;
-			framedata =  txbuf + XMIT_FP_DATA;
+			framedata = txbuf + XMIT_FP_DATA;
 			bufspace = FP_BUF_LEN - XMIT_FP_DATA;
 		}
 		if (len > 0) {
@@ -1406,8 +1405,8 @@ struct tr_softc *sc;
 		tail = TXCA_INW(sc, TXCA_COMPLETION_QUEUE_TAIL);
 	} while (tail != TXCA_INW(sc, TXCA_COMPLETION_QUEUE_TAIL));
 	while (tail != TXCA_INW(sc, TXCA_FREE_QUEUE_TAIL)) {
-		txbuf =  TXCA_INW(sc, TXCA_FREE_QUEUE_TAIL) - XMIT_NEXTBUF;
-		txbuf =  TXB_INW(sc, txbuf, XMIT_NEXTBUF) - XMIT_NEXTBUF;
+		txbuf = TXCA_INW(sc, TXCA_FREE_QUEUE_TAIL) - XMIT_NEXTBUF;
+		txbuf = TXB_INW(sc, txbuf, XMIT_NEXTBUF) - XMIT_NEXTBUF;
 		if (TXB_INB(sc, txbuf, XMIT_RETCODE) != 0) {
 			ifp->if_oerrors++;
 			printf("tx: retcode = %x\n",
@@ -1728,4 +1727,81 @@ struct ifnet	*ifp;
 	++ifp->if_oerrors;
 
 	tr_reset(sc);
+}
+
+int
+tr_enable(sc)
+	struct tr_softc *sc;
+{       
+	if (sc->enabled == 0 && sc->enable != NULL) {
+		if ((*sc->enable)(sc) != 0) {
+			printf("%s: device enable failed\n",
+				sc->sc_dev.dv_xname);
+			return (EIO);
+		} 
+	}
+        
+	sc->enabled = 1;
+	return (0);
+}               
+        
+void
+tr_disable(sc)
+	struct tr_softc *sc;
+{
+	if (sc->enabled != 0 && sc->disable != NULL) {
+		(*sc->disable)(sc);
+		sc->enabled = 0;
+	} 
+}       
+
+int     
+tr_activate(self, act) 
+	struct device *self;
+	enum devact act;
+{
+	struct tr_softc *sc = (struct tr_softc *)self;
+	struct ifnet *ifp = &sc->sc_ethercom.ec_if;
+	int rv = 0, s;
+
+	s = splnet();
+	switch (act) {
+	case DVACT_ACTIVATE:
+		rv = EOPNOTSUPP;
+		break;
+
+	case DVACT_DEACTIVATE:
+		if_deactivate(ifp);
+		break;
+	}
+	splx(s);                      
+	return (rv);
+}
+
+int
+tr_detach(self, flags)
+	struct device *self;
+	int flags;
+{
+	struct tr_softc *sc = (struct tr_softc *)self;
+	struct ifnet *ifp = &sc->sc_ethercom.ec_if;
+
+	tr_disable(sc);
+
+	callout_stop(&sc->sc_init_callout);
+	callout_stop(&sc->sc_reinit_callout);
+
+	/* Delete all remaining media. */
+	ifmedia_delete_instance(&sc->sc_media, IFM_INST_ANY);
+
+#if NBPFILTER > 0
+	bpfdetach(ifp);
+#endif
+
+	token_ifdetach(ifp);
+	if_detach(ifp);
+
+	shutdownhook_disestablish(sc->sd_hook);
+
+	return (0);
 }
