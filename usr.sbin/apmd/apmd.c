@@ -1,4 +1,4 @@
-/*	$NetBSD: apmd.c,v 1.13 2000/01/13 16:04:53 jlam Exp $	*/
+/*	$NetBSD: apmd.c,v 1.14 2000/03/04 21:27:18 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -67,6 +67,7 @@ const char apmdev[] = _PATH_APM_CTLDEV;
 const char sockfile[] = _PATH_APM_SOCKET;
 
 static int debug = 0;
+static int verbose = 0;
 
 extern char *__progname;
 
@@ -91,7 +92,7 @@ sigexit(int signo)
 void
 usage(void)
 {
-    fprintf(stderr,"usage: %s [-d] [-s] [-a] [-l] [-q] [-t seconds] [-S sockname]\n\t[-m sockmode] [-o sockowner:sockgroup] [-f devname]\n", __progname);
+    fprintf(stderr,"usage: %s [-adlqsv] [-t seconds] [-S sockname]\n\t[-m sockmode] [-o sockowner:sockgroup] [-f devname]\n", __progname);
     exit(1);
 }
 
@@ -113,19 +114,21 @@ power_status(int fd, int force, struct apm_power_info *pinfo)
 	    bstate.battery_state != last.battery_state ||
 	    (bstate.minutes_left && bstate.minutes_left < 15) ||
 	    abs(bstate.battery_life - last.battery_life) > 20) {
-	    if (bstate.minutes_left)
-		syslog(LOG_NOTICE,
-		       "battery status: %s. external power status: %s. "
-		       "estimated battery life %d%% (%d minutes)",
-		       battstate(bstate.battery_state),
-		       ac_state(bstate.ac_state), bstate.battery_life,
-		       bstate.minutes_left);
-	    else
-		syslog(LOG_NOTICE,
-		       "battery status: %s. external power status: %s. "
-		       "estimated battery life %d%%",
-		       battstate(bstate.battery_state),
-		       ac_state(bstate.ac_state), bstate.battery_life);
+	    if (verbose) {
+		if (bstate.minutes_left)
+		    syslog(LOG_NOTICE,
+		           "battery status: %s. external power status: %s. "
+		           "estimated battery life %d%% (%d minutes)",
+		           battstate(bstate.battery_state),
+		           ac_state(bstate.ac_state), bstate.battery_life,
+		           bstate.minutes_left);
+		else
+		    syslog(LOG_NOTICE,
+		           "battery status: %s. external power status: %s. "
+		           "estimated battery life %d%%",
+		           battstate(bstate.battery_state),
+		           ac_state(bstate.ac_state), bstate.battery_life);
+	    }
 	    last = bstate;
 	}
 	if (pinfo)
@@ -315,7 +318,7 @@ main(int argc, char *argv[])
     struct passwd *pw;
     struct group *gr;
 
-    while ((ch = getopt(argc, argv, "qaldsf:t:S:m:o:")) != -1)
+    while ((ch = getopt(argc, argv, "adlqsvf:t:S:m:o:")) != -1)
 	switch(ch) {
 	case 'q':
 	    speaker_ok = FALSE;
@@ -328,6 +331,9 @@ main(int argc, char *argv[])
 	    break;
 	case 'd':
 	    debug = 1;
+	    break;
+	case 'v':
+	    verbose = 1;
 	    break;
 	case 'f':
 	    fname = optarg;
@@ -429,8 +435,9 @@ main(int argc, char *argv[])
 	if (FD_ISSET(ctl_fd, &selcopy)) {
 	    suspends = standbys = resumes = 0;
 	    while (ioctl(ctl_fd, APM_IOC_NEXTEVENT, &apmevent) == 0) {
-		syslog(LOG_DEBUG, "apmevent %04x index %d", apmevent.type,
-		       apmevent.index);
+		if (debug)
+		    syslog(LOG_DEBUG, "apmevent %04x index %d", apmevent.type,
+		           apmevent.index);
 		switch (apmevent.type) {
 		case APM_SUSPEND_REQ:
 		case APM_USER_SUSPEND_REQ:
@@ -468,14 +475,16 @@ main(int argc, char *argv[])
 	    }
 	    if ((standbys || suspends) && noacsleep &&
 		power_status(ctl_fd, 0, 0)) {
-		syslog(LOG_DEBUG, "not sleeping cuz AC is connected");
+		if (debug)
+		    syslog(LOG_DEBUG, "not sleeping cuz AC is connected");
 	    } else if (suspends) {
 		suspend(ctl_fd);
 	    } else if (standbys) {
 		stand_by(ctl_fd);
 	    } else if (resumes) {
 		resume(ctl_fd);
-		syslog(LOG_NOTICE, "system resumed from APM sleep");
+		if (verbose)
+		    syslog(LOG_NOTICE, "system resumed from APM sleep");
 	    }
 	    ready--;
 	}
@@ -507,7 +516,8 @@ do_etc_file(const char *file)
 
     /* If file doesn't exist, do nothing. */
     if (access(file, X_OK|R_OK)) {
-	syslog(LOG_DEBUG, "do_etc_file(): cannot access file %s", file);
+	if (debug)
+	    syslog(LOG_DEBUG, "do_etc_file(): cannot access file %s", file);
 	return;
     }
 
@@ -530,12 +540,12 @@ do_etc_file(const char *file)
     default:
 	/* We are the parent. */
 	wait4(pid, &status, 0, 0);
-	if (WIFEXITED(status))
-	    syslog(LOG_DEBUG, "%s exited with status %d", file,
-		   WEXITSTATUS(status));
-	else {
+	if (WIFEXITED(status)) {
+	    if (debug)
+		syslog(LOG_DEBUG, "%s exited with status %d", file,
+		       WEXITSTATUS(status));
+	} else
 	    syslog(LOG_ERR, "%s exited abnormally.", file);
-	}
 	break;
     }
 }
