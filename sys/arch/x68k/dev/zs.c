@@ -1,4 +1,4 @@
-/*	$NetBSD: zs.c,v 1.2 1996/05/12 20:46:33 oki Exp $ */
+/*	$NetBSD: zs.c,v 1.2.4.1 1996/06/05 18:06:42 oki Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -288,6 +288,8 @@ zsattach(parent, dev, aux)
 		cs->cs_conk = 1;		/* do L1-A processing */
 	}
 #endif
+	if (tp != ctp)
+		tty_attach(tp);
 	ZS_WRITE(cs->cs_zc, 2, 0x70 + zs); /* XXX interrupt vector */
 	unit++;
 	cs++;
@@ -316,6 +318,9 @@ zsattach(parent, dev, aux)
 #ifdef x68k
 		zsms = cs;
 #endif
+	} else {
+		if (tp != ctp)
+			tty_attach(tp);
 	}
 }
 
