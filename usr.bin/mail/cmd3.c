@@ -1,4 +1,4 @@
-/*	$NetBSD: cmd3.c,v 1.23 2003/10/31 01:25:54 ross Exp $	*/
+/*	$NetBSD: cmd3.c,v 1.24 2003/11/10 21:37:36 ross Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)cmd3.c	8.2 (Berkeley) 4/20/95";
 #else
-__RCSID("$NetBSD: cmd3.c,v 1.23 2003/10/31 01:25:54 ross Exp $");
+__RCSID("$NetBSD: cmd3.c,v 1.24 2003/11/10 21:37:36 ross Exp $");
 #endif
 #endif /* not lint */
 
@@ -389,7 +389,7 @@ set(void *v)
 		if (l >= sizeof varbuf)
 			l = sizeof varbuf - 1;
 		strncpy(cp2, *ap, l);
-		ap[0][l] = '\0';
+		varbuf[l] = '\0';
 		if (*cp == '\0')
 			cp = "";
 		else
