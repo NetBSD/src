@@ -1,4 +1,33 @@
-/* $NetBSD: isp_netbsd.h,v 1.28 2000/08/11 21:31:20 tls Exp $ */
+/* $NetBSD: isp_netbsd.h,v 1.29 2000/08/14 07:10:09 mjacob Exp $ */
+/*
+ * This driver, which is contained in NetBSD in the files:
+ *
+ *	sys/dev/ic/isp.c
+ *	sys/dev/ic/ic/isp.c
+ *	sys/dev/ic/ic/isp_inline.h
+ *	sys/dev/ic/ic/isp_netbsd.c
+ *	sys/dev/ic/ic/isp_netbsd.h
+ *	sys/dev/ic/ic/isp_target.c
+ *	sys/dev/ic/ic/isp_target.h
+ *	sys/dev/ic/ic/isp_tpublic.h
+ *	sys/dev/ic/ic/ispmbox.h
+ *	sys/dev/ic/ic/ispreg.h
+ *	sys/dev/ic/ic/ispvar.h
+ *	sys/microcode/isp/asm_sbus.h
+ *	sys/microcode/isp/asm_1040.h
+ *	sys/microcode/isp/asm_1080.h
+ *	sys/microcode/isp/asm_12160.h
+ *	sys/microcode/isp/asm_2100.h
+ *	sys/microcode/isp/asm_2200.h
+ *	sys/pci/isp_pci.c
+ *	sys/sbus/isp_sbus.c
+ *
+ * Is being actively maintained by Matthew Jacob (mjacob@netbsd.org).
+ * This driver also is shared source with FreeBSD, OpenBSD, Linux, Solaris,
+ * Linux versions. This tends to be an interesting maintenance problem.
+ *
+ * Please coordinate with Matthew Jacob on changes you wish to make here.
+ */
 /*
  * NetBSD Specific definitions for the Qlogic ISP Host Adapter
  * Matthew Jacob <mjacob@nas.nasa.gov>
@@ -65,12 +94,11 @@ struct isposinfo {
 	struct scsipi_adapter   _adapter;
 	int	splsaved;
 	int	mboxwaiting;
-	unsigned int
-				: 28,
-		onintstack	: 1,
+	u_int32_t	islocked;
+	u_int32_t	onintstack;
+	unsigned int		: 30,
 		no_mbox_ints	: 1,
-		blocked		: 1,
-		islocked	: 1;
+		blocked		: 1;
 	union {
 		u_int64_t	_wwn;
 		u_int16_t	_discovered[2];
@@ -250,6 +278,8 @@ static void isp_wait_complete __P((struct ispsoftc *));
  */
 #define	ISP_LOCK		isp_lock
 #define	ISP_UNLOCK		isp_unlock
+#define	ISP_ILOCK(x)		isp_lock(x); isp->isp_osinfo.onintstack++
+#define	ISP_IUNLOCK(x)		isp->isp_osinfo.onintstack--; isp_unlock(x)
 
 /*              
  * Platform private flags                                               
@@ -281,8 +311,7 @@ isp_lock(isp)
 	struct ispsoftc *isp;
 {
 	int s = splbio();
-	if (isp->isp_osinfo.islocked == 0) {
-		isp->isp_osinfo.islocked = 1;
+	if (isp->isp_osinfo.islocked++ == 0) {
 		isp->isp_osinfo.splsaved = s;
 	} else {
 		splx(s);
@@ -293,7 +322,7 @@ static inline void
 isp_unlock(isp)
 	struct ispsoftc *isp;
 {
-	if (isp->isp_osinfo.islocked) {
+	if (isp->isp_osinfo.islocked <= 1) {
 		isp->isp_osinfo.islocked = 0;
 		splx(isp->isp_osinfo.splsaved);
 	}
