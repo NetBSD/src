@@ -1,4 +1,4 @@
-.\"	$NetBSD: whois.1,v 1.15 2002/01/13 02:35:03 fair Exp $
+.\"	$NetBSD: whois.1,v 1.16 2002/01/13 11:16:52 wiz Exp $
 .\"
 .\" Copyright (c) 1985, 1990, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -130,7 +130,6 @@ connect with IPv4/TCP only.
 connect with IPv6/TCP only.
 .El
 .Ss RIPE specific extensions
-.Pp
 This version of
 .Nm
 implements protocol extensions compatible with a version of the RIPE
@@ -225,7 +224,6 @@ changed:     tony@ripe.net 940110
 source:      RIPE
 .Ed
 .Ss Other Useful WHOIS Servers
-.Pp
 Herewith follows an incomplete list of other potentially useful
 WHOIS servers on the Internet.
 .Pp
@@ -263,15 +261,6 @@ For questions refer to
 .Aq ncc@ripe.net .
 For more information about the RIPE database please also refer to
 .Aq ncc@ripe.net .
-.Sh BUGS
-Most of the extra flags are ONLY supported by the RIPE whois server,
-or copies of the same version of the software.
-Usage of these flags may cause errors on other whois servers.
-.Pp
-.Nm
-uses
-.Xr getaddrinfo 3
-functions, thus search order depends on the function.
 .Sh SEE ALSO
 .Xr networks 5 ,
 .Xr bind 8 ,
@@ -289,3 +278,12 @@ functions, thus search order depends on the function.
 .%D October 1985
 .%T "NICNAME/WHOIS"
 .Re
+.Sh BUGS
+Most of the extra flags are ONLY supported by the RIPE whois server,
+or copies of the same version of the software.
+Usage of these flags may cause errors on other whois servers.
+.Pp
+.Nm
+uses
+.Xr getaddrinfo 3
+functions, thus search order depends on the function.
