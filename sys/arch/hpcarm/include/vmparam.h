@@ -1,4 +1,4 @@
-/*	$NetBSD: vmparam.h,v 1.4 2001/05/15 16:15:22 toshii Exp $	*/
+/*	$NetBSD: vmparam.h,v 1.5 2001/08/02 14:45:40 toshii Exp $	*/
 
 /*
  * Copyright (c) 1988 The Regents of the University of California.
@@ -103,7 +103,7 @@
 #else /* defined(HPCARM) */
 #define	KERNEL_SPACE_START	0xc0000000
 #define	PAGE_TABLE_SPACE_START	(KERNEL_SPACE_START - PAGE_TABLE_SPACE)
-#define	KERNEL_BASE		0xc0100000
+#define	KERNEL_BASE		0xc0040000
 #define	KERNEL_TEXT_BASE	KERNEL_BASE
 #define	ALT_PAGE_TBLS_BASE	0xc0800000
 #define	KERNEL_VM_BASE		0xc0c00000
