@@ -1,4 +1,4 @@
-/*	$NetBSD: bus_dma.c,v 1.4 2002/11/25 05:37:00 thorpej Exp $	*/
+/*	$NetBSD: bus_dma.c,v 1.5 2003/02/06 23:03:54 matt Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -53,6 +53,30 @@
 
 int	_bus_dmamap_load_buffer (bus_dma_tag_t, bus_dmamap_t, void *,
 	    bus_size_t, struct proc *, int, paddr_t *, int *, int);
+
+static __inline void
+dcbst(paddr_t pa, long len, int dcache_line_size)
+{
+	paddr_t epa;
+	for (epa = pa + len; pa < epa; pa += dcache_line_size)
+		__asm __volatile("dcbst 0,%0" :: "r"(pa));
+}
+
+static __inline void
+dcbi(paddr_t pa, long len, int dcache_line_size)
+{
+	paddr_t epa;
+	for (epa = pa + len; pa < epa; pa += dcache_line_size)
+		__asm __volatile("dcbi 0,%0" :: "r"(pa));
+}
+
+static __inline void
+dcbf(paddr_t pa, long len, int dcache_line_size)
+{
+	paddr_t epa;
+	for (epa = pa + len; pa < epa; pa += dcache_line_size)
+		__asm __volatile("dcbf 0,%0" :: "r"(pa));
+}
 
 /*
  * Common function for DMA map creation.  May be called by bus-specific
@@ -403,7 +427,79 @@ _bus_dmamap_sync(t, map, offset, len, ops)
 	bus_size_t len;
 	int ops;
 {
-	/* Nothing to do here. */
+	const int dcache_line_size = curcpu()->ci_ci.dcache_line_size;
+	int nsegs = map->dm_nsegs;
+	bus_dma_segment_t *ds = map->dm_segs;
+
+	if ((ops & (BUS_DMASYNC_PREREAD|BUS_DMASYNC_PREWRITE)) != 0 &&
+	    (ops & (BUS_DMASYNC_POSTREAD|BUS_DMASYNC_POSTWRITE)) != 0)
+		panic("_bus_dmamap_sync: invalid ops %#x", ops);
+
+#ifdef DIAGNOSTIC
+	if (offset + len > map->dm_mapsize)
+		panic("_bus_dmamap_sync: bad offset and/or length");
+#endif
+
+	/*
+	 * Skip leading amount
+	 */
+	while (offset >= ds->ds_len) {
+		offset -= ds->ds_len;
+		ds++;
+		nsegs--;
+	}
+	__asm __volatile("eieio");
+	for (; len > 0 && nsegs-- > 0; ds++) {
+		bus_size_t seglen = len - offset;
+		if (seglen > len)
+			seglen = len;
+		switch (ops) {
+		case BUS_DMASYNC_PREWRITE:
+			/*
+			 * Make sure cache contents are in memory for the DMA.
+			 */
+			dcbst(ds->ds_addr, seglen, dcache_line_size);
+			break;
+		case BUS_DMASYNC_PREREAD:
+			/*
+			 * If the region to be invalidated doesn't fall on
+			 * cacheline boundary, store that cacheline so we
+			 * preserve the leading content.
+			 */
+			if (ds->ds_addr & (dcache_line_size-1))
+				dcbst(ds->ds_addr, 1, 1);
+			/*
+			 * If the byte after the region to be invalidated
+			 * doesn't fall on cacheline boundary, store that
+			 * cacheline so we preserve the trailing content.
+			 */
+			if ((ds->ds_addr + seglen) & (dcache_line_size-1))
+				dcbst(ds->ds_addr + seglen, 1, 1);
+			__asm __volatile("sync; eieio"); /* is this needed? */
+			/* FALLTHROUGH */
+		case BUS_DMASYNC_POSTREAD|BUS_DMASYNC_POSTWRITE:
+		case BUS_DMASYNC_POSTREAD:
+			/*
+			 * The contents will have changed, make sure to remove
+			 * them from the cache.
+			 */
+			dcbi(ds->ds_addr, seglen, dcache_line_size);
+			break;
+		case BUS_DMASYNC_POSTWRITE:
+			/*
+			 * Do nothing.
+			 */
+			break;
+		case BUS_DMASYNC_PREREAD|BUS_DMASYNC_PREWRITE:
+			/*
+			 * Force it to memory and remove from cache.
+			 */
+			dcbf(ds->ds_addr, seglen, dcache_line_size);
+			break;
+		}
+		len -= seglen;
+	}
+	__asm __volatile("sync");
 }
 
 /*
@@ -498,9 +594,10 @@ _bus_dmamem_map(t, segs, nsegs, size, kvap, flags)
 		    addr += NBPG, va += NBPG, size -= NBPG) {
 			if (size == 0)
 				panic("_bus_dmamem_map: size botch");
-			pmap_enter(pmap_kernel(), va, addr,
-			    VM_PROT_READ | VM_PROT_WRITE,
-			    VM_PROT_READ | VM_PROT_WRITE | PMAP_WIRED);
+			pmap_kenter_pa(va, addr,
+			    VM_PROT_READ | VM_PROT_WRITE |
+			    PMAP_WIRED |
+			    (flags & BUS_DMA_NOCACHE) ? PMAP_NC : 0);
 		}
 	}
 
