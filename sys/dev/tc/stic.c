@@ -1,4 +1,4 @@
-/*	$NetBSD: stic.c,v 1.14 2002/02/11 10:44:40 wiz Exp $	*/
+/*	$NetBSD: stic.c,v 1.15 2002/02/22 16:05:27 ad Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001 The NetBSD Foundation, Inc.
@@ -73,7 +73,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: stic.c,v 1.14 2002/02/11 10:44:40 wiz Exp $");
+__KERNEL_RCSID(0, "$NetBSD: stic.c,v 1.15 2002/02/22 16:05:27 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -389,6 +389,7 @@ stic_reset(struct stic_info *si)
 	config = (yconfig << 1) | xconfig;
 	si->si_stampw = (xconfig ? 5 : 4);
 	si->si_stamph = (1 << yconfig);
+	si->si_stamphm = si->si_stamph - 1;
 #ifdef notyet
 	si->si_option = (char)((modtype >> 12) & 3);
 #endif
@@ -1035,7 +1036,7 @@ stic_putchar(void *cookie, int r, int c, u_int uc, long attr)
 	i = ((font->fontheight > 16 ? 16 : font->fontheight) << 2) - 1;
 	v1 = (c << 19) | ((r << 3) + i);
 	v2 = ((c + font->fontwidth) << 19) | (v1 & 0xffff);
-	xya = XYMASKADDR(si->si_stampw, si->si_stamph, c, r, 0, 0);
+	xya = XYMASKADDR(si->si_stampw, si->si_stamphm, c, r, 0, 0);
 
 	pb[4] = PACK(fr, 0);
 	pb[5] = PACK(fr, 2);

@@ -1,4 +1,4 @@
-/* 	$NetBSD: sticvar.h,v 1.9 2001/09/18 19:51:23 ad Exp $	*/
+/* 	$NetBSD: sticvar.h,v 1.10 2002/02/22 16:05:27 ad Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001 The NetBSD Foundation, Inc.
@@ -101,6 +101,7 @@ struct stic_info {
 	int	si_fontw;
 	int	si_fonth;
 	int	si_stamph;
+	int	si_stamphm;
 	int	si_stampw;
 	int	si_depth;
 	int	si_disptype;
