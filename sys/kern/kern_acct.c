@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_acct.c,v 1.33 1994/10/20 04:22:39 cgd Exp $	*/
+/*	$NetBSD: kern_acct.c,v 1.34 1994/11/14 06:01:16 christos Exp $	*/
 
 /*-
  * Copyright (c) 1994 Christopher G. Demetriou
@@ -115,7 +115,7 @@ acct(p, uap, retval)
 	if (SCARG(uap, path) != NULL) {
 		NDINIT(&nd, LOOKUP, NOFOLLOW, UIO_USERSPACE, SCARG(uap, path),
 		    p);
-		if (error = vn_open(&nd, FWRITE, 0))
+		if (error = vn_open(&nd, FWRITE, 0, NULL))
 			return (error);
 		VOP_UNLOCK(nd.ni_vp);
 		if (nd.ni_vp->v_type != VREG) {

@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_syscalls.c,v 1.36 1994/10/30 21:48:14 cgd Exp $	*/
+/*	$NetBSD: vfs_syscalls.c,v 1.37 1994/11/14 06:01:22 christos Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -617,7 +617,8 @@ open(p, uap, retval)
 	cmode = ((SCARG(uap, mode) &~ fdp->fd_cmask) & ALLPERMS) &~ S_ISTXT;
 	NDINIT(&nd, LOOKUP, FOLLOW, UIO_USERSPACE, SCARG(uap, path), p);
 	p->p_dupfd = -indx - 1;			/* XXX check for fdopen */
-	if (error = vn_open(&nd, flags, cmode)) {
+	fp->f_data = (caddr_t) NULL;
+	if (error = vn_open(&nd, flags, cmode, fp)) {
 		ffree(fp);
 		if ((error == ENODEV || error == ENXIO) &&
 		    p->p_dupfd >= 0 &&			/* XXX from fdopen */
@@ -631,8 +632,23 @@ open(p, uap, retval)
 		fdp->fd_ofiles[indx] = NULL;
 		return (error);
 	}
+
 	p->p_dupfd = 0;
 	vp = nd.ni_vp;
+
+	if (fp->f_data != (caddr_t) NULL) {
+		/* 
+		 * The fp data was changed, so it is a cloning operation
+		 * Cleanup and return
+		 */
+		VOP_UNLOCK(vp);
+		if (flags & FWRITE)
+			vp->v_writecount--;
+		vput(vp);
+		*retval = indx;
+		return (0);
+	}
+
 	fp->f_flag = flags & FMASK;
 	fp->f_type = DTYPE_VNODE;
 	fp->f_ops = &vnops;
