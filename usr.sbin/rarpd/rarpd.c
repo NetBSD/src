@@ -26,7 +26,7 @@ char    copyright[] =
 
 #ifndef lint
 static char rcsid[] =
-"@(#) $Id: rarpd.c,v 1.7 1994/05/25 20:01:15 mycroft Exp $";
+"@(#) $Id: rarpd.c,v 1.8 1995/09/01 21:55:47 thorpej Exp $";
 #endif
 
 
@@ -79,7 +79,6 @@ struct if_info {
 struct if_info *iflist;
 
 int    rarp_open     __P((char *));
-int    rarp_bootable __P((u_long));
 void   init_one      __P((char *));
 void   init_all      __P((void));
 void   rarp_loop     __P((void));
@@ -92,6 +91,10 @@ void   update_arptab __P((u_char *, u_long));
 void   err           __P((int, const char *,...));
 void   debug         __P((const char *,...));
 u_long ipaddrtonetmask __P((u_long));
+
+#ifdef REQUIRE_TFTPBOOT
+int    rarp_bootable __P((u_long));
+#endif
 
 int     aflag = 0;		/* listen on "all" interfaces  */
 int     dflag = 0;		/* print debugging messages */
@@ -447,6 +450,9 @@ rarp_loop()
 		}
 	}
 }
+
+#ifdef REQUIRE_TFTPBOOT
+
 #ifndef TFTP_DIR
 #define TFTP_DIR "/tftpboot"
 #endif
@@ -486,6 +492,8 @@ rarp_bootable(addr)
 			return 1;
 	return 0;
 }
+#endif /* REQUIRE_TFTPBOOT */
+
 /*
  * Given a list of IP addresses, 'alist', return the first address that
  * is on network 'net'; 'netmask' is a mask indicating the network portion
@@ -538,7 +546,9 @@ rarp_process(ii, pkt)
 		    ename, inet_ntoa(in));
 		return;
 	}
+#ifdef REQUIRE_TFTPBOOT
 	if (rarp_bootable(htonl(target_ipaddr)))
+#endif
 		rarp_reply(ii, ep, target_ipaddr);
 }
 /*
