@@ -1,4 +1,4 @@
-/*	$NetBSD: citrus_ctype_template.h,v 1.11 2002/03/28 10:29:11 yamt Exp $	*/
+/*	$NetBSD: citrus_ctype_template.h,v 1.12 2002/03/28 10:38:52 yamt Exp $	*/
 
 /*-
  * Copyright (c)2002 Citrus Project,
@@ -76,11 +76,11 @@
  *             _EUC_ctype_mbrtowc
  *           for EUC locale.
  *
- *   _TO_INTERNAL_STATE(ei, method) :
+ *   _CEI_TO_STATE(cei, method) :
  *     It should be expanded to the pointer of the method-internal state
  *     structures.
- *     e.g. _TO_INTERNAL_STATE(ei, mbrtowc) might be expanded to
- *             (ei)->states.s_mbrtowc
+ *     e.g. _CEI_TO_STATE(cei, mbrtowc) might be expanded to
+ *             (cei)->states.s_mbrtowc
  *     This structure may use if the function is called as
  *           mbrtowc(&wc, s, n, NULL);
  *     Such individual structures are needed by:
@@ -92,8 +92,8 @@
  *           wcrtomb
  *           wcsrtombs
  *           wctomb
- *     These need to be keeped in the encoding information structure,
- *     pointed by "ei".
+ *     These need to be keeped in the ctype encoding information structure,
+ *     pointed by "cei".
  *
  *   _ENCODING_INFO :
  *     It should be expanded to the name of the encoding information structure.
