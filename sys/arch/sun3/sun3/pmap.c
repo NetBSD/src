@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.65 1996/12/17 21:11:38 gwr Exp $	*/
+/*	$NetBSD: pmap.c,v 1.66 1997/01/27 17:23:31 gwr Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -26,8 +26,8 @@
  * THIS SOFTWARE IS PROVIDED BY THE NETBSD FOUNDATION, INC. AND CONTRIBUTORS
  * ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
  * TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
- * PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL THE REGENTS OR CONTRIBUTORS BE
- * LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+ * PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL THE FOUNDATION OR CONTRIBUTORS
+ * BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
  * CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
  * SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
  * INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
@@ -89,8 +89,7 @@
 #include <machine/vmparam.h>
 #include <machine/dvma.h>
 #include <machine/pmap.h>
-
-#include "machdep.h"
+#include <machine/machdep.h>
 
 
 #if	(PMAP_OBIO << PG_MOD_SHIFT) != PGT_OBIO
@@ -391,6 +390,8 @@ static void pmap_protect_range_noctx __P((pmap_t, vm_offset_t, vm_offset_t));
 static void pmap_protect_range_mmu __P((pmap_t, vm_offset_t, vm_offset_t));
 static void pmap_protect_range __P((pmap_t, vm_offset_t, vm_offset_t));
 
+static int  pmap_fault_reload __P((struct pmap *, vm_offset_t, int));
+
 
 /*
  * Debugging support.
@@ -407,6 +408,7 @@ static void pmap_protect_range __P((pmap_t, vm_offset_t, vm_offset_t));
 #define PMD_CREATE	0x200
 #define PMD_SEGMAP	0x400
 #define PMD_SETPTE	0x800
+#define PMD_FAULT  0x1000
 
 #define	PMD_REMOVE	PMD_ENTER
 #define	PMD_UNLINK	PMD_LINK
@@ -2030,8 +2032,8 @@ pmap_remove(pmap, sva, eva)
 		return;
 
 	if (pmap == kernel_pmap) {
-		if (sva < VM_MIN_KERNEL_ADDRESS)
-			sva = VM_MIN_KERNEL_ADDRESS;
+		if (sva < virtual_avail)
+			sva = virtual_avail;
 		if (eva > DVMA_SPACE_END) {
 #ifdef	PMAP_DEBUG
 			printf("pmap_remove: eva=0x%x\n", eva);
@@ -2096,7 +2098,7 @@ pmap_enter_kernel(va, pa, prot, wired, new_pte)
 	}
 #endif
 #ifdef	DIAGNOSTIC
-	if ((va < VM_MIN_KERNEL_ADDRESS) || (va >= DVMA_SPACE_END))
+	if ((va < virtual_avail) || (va >= DVMA_SPACE_END))
 		panic("pmap_enter_kernel: bad va=0x%x", va);
 	if ((new_pte & (PG_VALID | PG_SYSTEM)) != (PG_VALID | PG_SYSTEM))
 		panic("pmap_enter_kernel: bad pte");
@@ -2474,6 +2476,50 @@ pmap_enter(pmap, va, pa, prot, wired)
 	PMAP_UNLOCK();
 }
 
+
+/*
+ * The trap handler calls this so we can try to resolve
+ * user-level faults by reloading a PMEG.
+ * If that does not prodce a valid mapping,
+ * call vm_fault as usual.
+ *
+ * XXX - Should merge this with the next function.
+ */
+int
+_pmap_fault(map, va, ftype)
+	vm_map_t map;
+	vm_offset_t va;
+	vm_prot_t ftype;
+{
+	pmap_t pmap;
+	int rv;
+
+	pmap = vm_map_pmap(map);
+	if (map == kernel_map) {
+		/* Do not allow faults below the "managed" space. */
+		if (va < virtual_avail) {
+			/* Most pages below virtual_avail are read-only. */
+			printf("pmap_fault: kernel_map & va < avail\n");
+			Debugger();
+			return KERN_PROTECTION_FAILURE;
+		}
+	} else {
+		/* User map.  Try reload shortcut. */
+		if (pmap_fault_reload(pmap, va, ftype))
+			return KERN_SUCCESS;
+	}
+	rv = vm_fault(map, va, ftype, FALSE);
+
+#ifdef	PMAP_DEBUG
+	if (pmap_debug & PMD_FAULT) {
+		printf("pmap_fault(%p, %x, %x) -> %x\n",
+			   map, va, ftype, rv);
+	}
+#endif
+
+	return (rv);
+}
+
 /*
  * This is a shortcut used by the trap handler to
  * reload PMEGs into a user segmap without calling
@@ -2491,10 +2537,6 @@ int pmap_fault_reload(pmap, va, ftype)
 	vm_offset_t seg_va;
 	pmeg_t pmegp;
 
-#ifdef	PMAP_DEBUG
-	if (pmap == kernel_pmap)
-		panic("pmap_fault_reload: kernel_pmap");
-#endif
 	if (pmap->pm_segmap == NULL) {
 #ifdef	PMAP_DEBUG
 		printf("pmap_fault_reload: null segmap\n");
@@ -2623,16 +2665,26 @@ pmap_is_referenced(pa)
 }
 
 
+/*
+ * This is called by locore.s:cpu_switch() when it is
+ * switching to a new process.  Load new translations.
+ */
 void
-pmap_activate(pmap, pcbp)
+pmap_activate(pmap)
 	pmap_t pmap;
-	struct pcb *pcbp;
 {
+	int old_ctx;
+
 	CHECK_SPL();
+	old_ctx = get_context();
 
-	if (pmap == kernel_pmap)
-		panic("pmap_activate: kernel_pmap");
-
+	/*
+	 * XXX - Should delay context allocation until later,
+	 * when pmap_enter() is called for this pmap.  That
+	 * could be arranged using a "kernel only" context
+	 * (one with no user-space mappings) for all pmaps
+	 * that do not yet have a "real" context.
+	 */
 	if (!has_context(pmap)) {
 		context_allocate(pmap);
 #ifdef PMAP_DEBUG
@@ -2642,30 +2694,18 @@ pmap_activate(pmap, pcbp)
 #endif
 	}
 
+	if (pmap->pm_ctxnum != old_ctx) {
 #ifdef	PMAP_DEBUG
-	if (pmap_debug & PMD_SWITCH) {
-		int old_ctx = get_context();
-		if (old_ctx != pmap->pm_ctxnum) {
+		if (pmap_debug & PMD_SWITCH) {
 			printf("pmap_activate(%p) old_ctx=%d new_ctx=%d\n",
 				   pmap, old_ctx, pmap->pm_ctxnum);
 		}
+#endif
+		set_context(pmap->pm_ctxnum);
+		ICIA();
 	}
-#endif
-
-	set_context(pmap->pm_ctxnum);
 }
 
-void
-pmap_deactivate(pmap, pcbp)
-	pmap_t pmap;
-	struct pcb *pcbp;
-{
-#ifdef PMAP_DEBUG
-	if (pmap_debug & PMD_SWITCH)
-		printf("pmap_deactivate(%p, %p)\n", pmap, pcbp);
-#endif
-	/* Nothing to do really, and not called anyway... */
-}
 
 /*
  *	Routine:	pmap_change_wiring
@@ -3046,20 +3086,14 @@ pmap_protect(pmap, sva, eva, prot)
 	if (pmap == NULL)
 		return;
 
-	/* If removing all permissions, just unmap. */
-	if ((prot & VM_PROT_READ) == 0) {
-		pmap_remove(pmap, sva, eva);
-		return;
-	}
-
 	/* If leaving writable, nothing to do. */
 	if (prot & VM_PROT_WRITE) {
 		return;
 	}
 
 	if (pmap == kernel_pmap) {
-		if (sva < VM_MIN_KERNEL_ADDRESS)
-			sva = VM_MIN_KERNEL_ADDRESS;
+		if (sva < virtual_avail)
+			sva = virtual_avail;
 		if (eva > DVMA_SPACE_END) {
 #ifdef	PMAP_DEBUG
 			printf("pmap_protect: eva=0x%x\n", eva);
@@ -3069,8 +3103,14 @@ pmap_protect(pmap, sva, eva, prot)
 		}
 	}
 	else {
-		if (eva > VM_MAX_ADDRESS)
-			eva = VM_MAX_ADDRESS;
+		if (eva > VM_MAXUSER_ADDRESS)
+			eva = VM_MAXUSER_ADDRESS;
+	}
+
+	/* If removing all permissions, just unmap. */
+	if ((prot & VM_PROT_READ) == 0) {
+		pmap_remove(pmap, sva, eva);
+		return;
 	}
 
 	va = sva;
