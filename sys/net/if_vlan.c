@@ -1,4 +1,4 @@
-/*	$NetBSD: if_vlan.c,v 1.12 2000/10/03 23:52:39 thorpej Exp $	*/
+/*	$NetBSD: if_vlan.c,v 1.13 2000/10/04 06:20:05 enami Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -338,7 +338,6 @@ vlan_unconfig(struct ifnet *ifp)
 {
 	struct ifvlan *ifv = ifp->if_softc;
 
-	ifv = ifp->if_softc;
 	if (ifv->ifv_p == NULL)
 		return;
 
