@@ -1,4 +1,4 @@
-$NetBSD: usbdevs,v 1.137 2001/01/01 18:50:42 augustss Exp $
+$NetBSD: usbdevs,v 1.138 2001/01/02 09:52:55 augustss Exp $
 
 /*
  * Copyright (c) 1998, 1999, 2000 The NetBSD Foundation, Inc.
@@ -767,6 +767,7 @@ product TELEX MIC1		0x0001	Enhanced USB Microphone
 
 /* Texas Intel products */
 product TI UTUSB41		0x1446	UT-USB41 hub
+product TI TUSB2046		0x2046	TUSB2046 hub
 
 /* Thrustmaster products */
 product THRUST FUSION_PAD	0xa0a3	Fusion Digital Gamepad
