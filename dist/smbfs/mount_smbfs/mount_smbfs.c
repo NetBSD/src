@@ -1,4 +1,4 @@
-/* $NetBSD: mount_smbfs.c,v 1.6 2003/04/04 08:05:38 jdolecek Exp $ */
+/* $NetBSD: mount_smbfs.c,v 1.7 2004/03/21 08:35:18 jdolecek Exp $ */
 
 /*
  * Copyright (c) 2000-2002, Boris Popov
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: mount_smbfs.c,v 1.6 2003/04/04 08:05:38 jdolecek Exp $");
+__RCSID("$NetBSD: mount_smbfs.c,v 1.7 2004/03/21 08:35:18 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/stat.h>
@@ -219,7 +219,10 @@ main(int argc, char *argv[])
 	 * For now, let connection be private for this mount
 	 */
 	ctx->ct_ssn.ioc_opt |= SMBVOPT_PRIVATE;
-	ctx->ct_ssn.ioc_owner = ctx->ct_sh.ioc_owner = 0; /* root */
+	if (getuid() == 0)
+		ctx->ct_ssn.ioc_owner = ctx->ct_sh.ioc_owner = 0; /* root */
+	else
+		ctx->ct_ssn.ioc_owner = ctx->ct_sh.ioc_owner = mdata.uid;
 	ctx->ct_ssn.ioc_group = ctx->ct_sh.ioc_group = mdata.gid;
 	opt = 0;
 	if (mdata.dir_mode & S_IXGRP)
