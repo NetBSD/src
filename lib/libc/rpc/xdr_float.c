@@ -30,7 +30,7 @@
 #if defined(LIBC_SCCS) && !defined(lint)
 /*static char *sccsid = "from: @(#)xdr_float.c 1.12 87/08/11 Copyr 1984 Sun Micro";*/
 /*static char *sccsid = "from: @(#)xdr_float.c	2.1 88/07/29 4.0 RPCSRC";*/
-static char *rcsid = "$Id: xdr_float.c,v 1.4 1994/12/20 16:12:10 cgd Exp $";
+static char *rcsid = "$Id: xdr_float.c,v 1.5 1994/12/22 15:02:58 cgd Exp $";
 #endif
 
 /*
@@ -55,7 +55,8 @@ static char *rcsid = "$Id: xdr_float.c,v 1.4 1994/12/20 16:12:10 cgd Exp $";
  * Sparcs, and Alphas
  */
 
-#if defined(mc68000)||defined(sparc)||defined(i386)||defined(mips)||defined(ns32k)||defined(alpha)
+#if defined(__m68k__) || defined(__sparc__) || defined(__i386__) || \
+    defined(__mips__) || defined(__ns32k__) || defined(__alpha__)
 #define IEEEFP
 #endif
 
