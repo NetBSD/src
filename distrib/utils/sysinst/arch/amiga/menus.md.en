@@ -1,4 +1,4 @@
-/*	$NetBSD: menus.md.en,v 1.6 2001/11/29 23:20:57 thorpej Exp $	*/
+/*	$NetBSD: menus.md.en,v 1.7 2003/06/03 11:54:49 dsl Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -43,13 +43,13 @@ menu wdtype, title  "Select type";
 	option "IDE", 	exit;
 	option "ESDI", 	exit, action
 		{ msg_display (MSG_sectforward);
-		  process_menu (MENU_yesno);
+		  process_menu (MENU_yesno, NULL);
 		  if (yesno)
 			doessf = "sf:";
 		};
 	option "ST506", exit, action
 		{ msg_display (MSG_sectforward);
-		  process_menu (MENU_yesno);
+		  process_menu (MENU_yesno, NULL);
 		  if (yesno)
 			doessf = "sf:";
 		};

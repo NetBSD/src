@@ -1,4 +1,4 @@
-/*	$NetBSD: msg.md.pl,v 1.4 2003/05/18 18:54:06 dsl Exp $	*/
+/*	$NetBSD: msg.md.pl,v 1.5 2003/06/03 11:54:50 dsl Exp $	*/
 /*	Based on english version: */
 /*	NetBSD: msg.md.en,v 1.1 2001/07/04 16:56:01 thorpej Exp */
 
@@ -65,22 +65,21 @@ message dobad144
 {Instalowanie tablicy zlych blokow ...
 }
 
-message askfsroot1
+message askfsroot
 {Bede pytal o informacje o partycjach.
 
 Najpierw partycja glowna. Masz %d %s wolnego miejsca na dysku.
-}
+Rozmiar partycji glownej? }
 
-message askfsroot2
-{Rozmiar partycji glownej? }
-
-message askfsswap1
+message askfsswap
 {
 Nastepnie partycja wymiany. Masz %d %s wolnego miejsca na dysku.
-}
+Rozmiar partycji wymiany? }
 
-message askfsswap2
-{Rozmiar partycji wymiany? }
+message askfsusr
+{
+Nastepnie partycja /usr. Masz %d %s wolnego miejsca na dysku.
+Rozmiar partycji /usr? }
 
 message otherparts
 {Nadal masz wolna przestrzen na dysku. Podaj rozmiary i punkty montazu
@@ -88,12 +87,9 @@ dla ponizszych partycji.
 
 }
 
-message askfspart1
+message askfspart
 {Nastepna partycja jest /dev/%s%c. Masz %d %s wolnego miejsca na dysku.
-}
-
-message askfspart2
-{Rozmiar partycji? }
+Rozmiar partycji? }
 
 message cyl1024
 {Disklabel (zestaw partycji) ktory skonfigurowales ma glowna partycje, ktora

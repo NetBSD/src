@@ -1,4 +1,4 @@
-/*	$NetBSD: net.c,v 1.83 2003/02/11 11:29:35 jmc Exp $	*/
+/*	$NetBSD: net.c,v 1.84 2003/06/03 11:54:49 dsl Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -408,7 +408,7 @@ config_network()
 	if (strlen(net_devices) == 0) {
 		/* No network interfaces found! */
 		msg_display(MSG_nonet);
-		process_menu(MENU_ok);
+		process_menu(MENU_ok, NULL);
 		return (-1);
 	}
 	network_up = 1;
@@ -501,13 +501,13 @@ again:
 	if (!is_v6kernel())
 		v6config = 0;
 	else if (v6config) {
-		process_menu(MENU_ip6autoconf);
+		process_menu(MENU_ip6autoconf, NULL);
 		v6config = yesno ? 1 : 0;
 		net_ip6conf |= yesno ? IP6CONF_AUTOHOST : 0;
 	}
 
 	if (v6config) {
-		process_menu(MENU_namesrv6);
+		process_menu(MENU_namesrv6, NULL);
 		if (!yesno)
 			msg_prompt_add(MSG_net_namesrv6, net_namesvr6,
 			    net_namesvr6, STRSIZE);
@@ -527,7 +527,7 @@ again:
 			(v6config ? "yes" : "no"),
 		     *net_namesvr6 == '\0' ? "<none>" : net_namesvr6);
 #endif
-	process_menu(MENU_yesno);
+	process_menu(MENU_yesno, NULL);
 	if (!yesno)
 		msg_display(MSG_netagain);
 	pass++;
@@ -680,10 +680,10 @@ get_via_ftp()
 		if (ret < 0)
 			return (-1);
 		msg_display(MSG_netnotup);
-		process_menu(MENU_yesno);
+		process_menu(MENU_yesno, NULL);
 		if (!yesno) {
 			msg_display(MSG_netnotup_continueanyway);
-			process_menu(MENU_yesno);
+			process_menu(MENU_yesno, NULL);
 			if (!yesno)
 				return 0;
 			network_up = 1;
@@ -692,7 +692,7 @@ get_via_ftp()
 
 	cd_dist_dir("ftp");
 
-	process_menu(MENU_ftpsource);
+	process_menu(MENU_ftpsource, NULL);
 
 	list = dist_list;
 	while (list->name) {
@@ -741,9 +741,9 @@ get_via_ftp()
 			wclear(stdscr);
 			wrefresh(stdscr);
 			msg_display(MSG_ftperror);
-			process_menu(MENU_yesno);
+			process_menu(MENU_yesno, NULL);
 			if (yesno)
-				process_menu(MENU_ftpsource);
+				process_menu(MENU_ftpsource, NULL);
 			else
 				return 0;
 		} else 
@@ -770,10 +770,10 @@ get_via_nfs()
 		if (ret < 0)
 			return (-1);
                 msg_display(MSG_netnotup);
-                process_menu(MENU_yesno);
+                process_menu(MENU_yesno, NULL);
                 if (!yesno) {
 			msg_display(MSG_netnotup_continueanyway);
-			process_menu(MENU_yesno);
+			process_menu(MENU_yesno, NULL);
 			if (!yesno)
 				return 0;
 			network_up = 1;
@@ -781,7 +781,7 @@ get_via_nfs()
         }
 
 	/* Get server and filepath */
-	process_menu(MENU_nfssource);
+	process_menu(MENU_nfssource, NULL);
 again:
 
 	run_prog(0, NULL, 
@@ -792,7 +792,7 @@ again:
 	    "/sbin/mount -r -o -2,-i,-r=1024 -t nfs %s:%s /mnt2",
 	    nfs_host, nfs_dir)) {
 		msg_display(MSG_nfsbadmount, nfs_host, nfs_dir);
-		process_menu(MENU_nfsbadmount);
+		process_menu(MENU_nfsbadmount, NULL);
 		if (!yesno)
 			return (0);
 		if (!ignorerror)
@@ -802,7 +802,7 @@ again:
 	/* Verify distribution files exist.  */
 	if (distribution_sets_exist_p("/mnt2") == 0) {
 		msg_display(MSG_badsetdir, "/mnt2");
-		process_menu (MENU_nfsbadmount);
+		process_menu (MENU_nfsbadmount, NULL);
 		if (!yesno)
 			return (0);
 		if (!ignorerror)
@@ -972,7 +972,7 @@ char *inter;
 
 	if (!file_mode_match(DHCLIENT_EX, S_IFREG))
 		return 0;
-	process_menu(MENU_dhcpautoconf);
+	process_menu(MENU_dhcpautoconf, NULL);
 	if (yesno) {
 		/* spawn off dhclient and wait for parent to exit */
 		dhcpautoconf = run_prog(RUN_DISPLAY, NULL, "%s -pf /tmp/dhclient.pid -lf /tmp/dhclient.leases %s", DHCLIENT_EX,inter);

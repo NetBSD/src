@@ -1,4 +1,4 @@
-/*	$NetBSD: md.c,v 1.30 2003/05/21 10:05:25 dsl Exp $ */
+/*	$NetBSD: md.c,v 1.31 2003/06/03 11:54:53 dsl Exp $ */
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -619,7 +619,7 @@ edit_diskmap(void)
 
 	/* Ask full/part */
 	msg_display (MSG_fullpart, diskdev);
-	process_menu (MENU_fullpart);
+	process_menu (MENU_fullpart, NULL);
 
 	map.selected = 0;
 	sortmerge();
@@ -629,7 +629,7 @@ edit_diskmap(void)
 	if (usefull) {
 	    if (map.usable_cnt > (map.root_cnt+map.swap_cnt+map.usr_cnt)) {
 		msg_display (MSG_ovrwrite);
-		process_menu (MENU_noyes);
+		process_menu (MENU_noyes, NULL);
 		if (!yesno) {
 			endwin();
 			return (0);
@@ -644,7 +644,7 @@ edit_diskmap(void)
 		    strcpy (map.blk[i].pmPartType, "Apple_Free");
 	    sortmerge();
 	}
-	process_menu (MENU_editparttable);
+	process_menu (MENU_editparttable, NULL);
 	return (1);
 }
 
@@ -704,7 +704,7 @@ md_get_info()
 	dlsize = disklabel.d_secperunit;
 #if 0
 	msg_display(MSG_dldebug, blk_size, dlcyl, dlhead, dlsec, dlsize);
-	process_menu(MENU_ok);
+	process_menu(MENU_ok, NULL);
 #endif
 	map.size = 0;
 	/*
@@ -714,7 +714,7 @@ md_get_info()
 	if (lseek(fd, (off_t)0 * blk_size, SEEK_SET) < 0 ||
 	    read(fd,  &block, sizeof(block)) < sizeof(block) ||
 	    block.pmSig != 0x4552) {
-             process_menu(MENU_nodiskmap);
+             process_menu(MENU_nodiskmap, NULL);
         }
 	else {
 	   /*
@@ -893,7 +893,7 @@ md_post_disklabel(void)
               fst[updated_label.d_partitions[i].p_fstype]);
            msg_table_add(MSG_dump_line, buf);
        }
-       process_menu(MENU_ok2);
+       process_menu(MENU_ok2, NULL);
     }
     return no_match;
 }
@@ -925,7 +925,7 @@ md_debug_dump(title)
 		map.blk[i].pmPyPartStart, fstyp, use, name);
            msg_table_add(MSG_dump_line, buf);
 	}
-	process_menu(MENU_okabort);
+	process_menu(MENU_okabort, NULL);
 	msg_clear();
 	return(yesno);
 }
@@ -963,7 +963,7 @@ md_make_bsd_partitions(void)
 	 */
 	while (1) {
 	    if (check_for_errors()) {
-	        process_menu (MENU_sanity);
+	        process_menu (MENU_sanity, NULL);
 	        if (yesno < 0)
 		    return (0);
 	        else if (yesno)

@@ -1,4 +1,4 @@
-/*	$NetBSD: util.c,v 1.93 2003/05/30 22:17:00 dsl Exp $	*/
+/*	$NetBSD: util.c,v 1.94 2003/06/03 11:54:49 dsl Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -138,7 +138,7 @@ ask_sizemult(cylsize)
 
 	if (!asked) {
 		msg_display(MSG_sizechoice);
-		process_menu(MENU_sizechoice);
+		process_menu(MENU_sizechoice, NULL);
 	}
 	asked = 1;
 }
@@ -212,7 +212,7 @@ get_via_floppy()
 					msg_display(MSG_fdmount, fname);
 				else
 					msg_display(MSG_fdnotfound, fname);
-				process_menu(MENU_fdok);
+				process_menu(MENU_fdok, NULL);
 				if (!yesno)
 					return 0;
 				else if (yesno == 2)
@@ -221,7 +221,7 @@ get_via_floppy()
 				    "/sbin/mount -r -t %s %s /mnt2",
 				    fdtype, fddev)) {
 					msg_display(MSG_fdremount, fname);
-					process_menu(MENU_fdremount);
+					process_menu(MENU_fdremount, NULL);
 					if (!yesno)
 						return 0;
 					else if (yesno == 2)
@@ -262,7 +262,7 @@ get_via_cdrom()
 	int retries = 0;
 
 	/* Get CD-rom device name and path within CD-rom */
-	process_menu(MENU_cdromsource);
+	process_menu(MENU_cdromsource, NULL);
 
 again:
 	run_prog(0, NULL, "/sbin/umount /mnt2");
@@ -275,7 +275,7 @@ again:
 			goto again;
 		}
 		msg_display(MSG_badsetdir, cdrom_dev);
-		process_menu(MENU_cdrombadmount);
+		process_menu(MENU_cdrombadmount, NULL);
 		if (!yesno)
 			return 0;
 		if (!ignorerror)
@@ -287,7 +287,7 @@ again:
 	/* Verify distribution files exist.  */
 	if (distribution_sets_exist_p(tmpdir) == 0) {
 		msg_display(MSG_badsetdir, tmpdir);
-		process_menu(MENU_cdrombadmount);
+		process_menu(MENU_cdrombadmount, NULL);
 		if (!yesno)
 			return (0);
 		if (!ignorerror)
@@ -312,7 +312,7 @@ get_via_localfs()
 	char tmpdir[STRSIZE];
 
 	/* Get device, filesystem, and filepath */
-	process_menu (MENU_localfssource);
+	process_menu (MENU_localfssource, NULL);
 
 again:
 	run_prog(0, NULL, "/sbin/umount /mnt2");
@@ -322,7 +322,7 @@ again:
 	    localfs_fs, localfs_dev)) {
 
 		msg_display(MSG_localfsbadmount, localfs_dir, localfs_dev); 
-		process_menu(MENU_localfsbadmount);
+		process_menu(MENU_localfsbadmount, NULL);
 		if (!yesno)
 			return 0;
 		if (!ignorerror)
@@ -334,7 +334,7 @@ again:
 	/* Verify distribution files exist.  */
 	if (distribution_sets_exist_p(tmpdir) == 0) {
 		msg_display(MSG_badsetdir, tmpdir);
-		process_menu(MENU_localfsbadmount);
+		process_menu(MENU_localfsbadmount, NULL);
 		if (!yesno)
 			return 0;
 		if (!ignorerror)
@@ -356,14 +356,14 @@ int get_via_localdir(void)
 {
 
 	/* Get device, filesystem, and filepath */
-	process_menu(MENU_localdirsource);
+	process_menu(MENU_localdirsource, NULL);
 
 again:
 	/* Complain if not a directory */
 	if (dir_exists_p(localfs_dir) == 0) {
 
 		msg_display(MSG_badlocalsetdir, localfs_dir);
-		process_menu(MENU_localdirbad);
+		process_menu(MENU_localdirbad, NULL);
 		if (!yesno)
 			return (0);
 		if (!ignorerror)
@@ -373,7 +373,7 @@ again:
 	/* Verify distribution files exist.  */
 	if (distribution_sets_exist_p(localfs_dir) == 0) {
 		msg_display(MSG_badsetdir, localfs_dir);
-		process_menu(MENU_localdirbad);
+		process_menu(MENU_localdirbad, NULL);
 		if (!yesno)
 			return (0);
 		if (!ignorerror)
@@ -445,7 +445,7 @@ ask_verbose_dist()
 
 	if (verbose < 0) {
 		msg_display(MSG_verboseextract);
-		process_menu(MENU_extract);
+		process_menu(MENU_extract, NULL);
 		verbose = yesno;
 		wclear(stdscr);
 		wrefresh(stdscr);
@@ -466,7 +466,7 @@ extract_file(path)
 		tarstats.nnotfound++;
 
 		msg_display(MSG_notarfile, path);
-		process_menu(MENU_noyes);
+		process_menu(MENU_noyes, NULL);
 		return (yesno == 0);
 	}
 
@@ -490,7 +490,7 @@ extract_file(path)
 		tarstats.nerror++;
 
 		msg_display(MSG_tarerror, path);
-		process_menu(MENU_noyes);
+		process_menu(MENU_noyes, NULL);
 		rv = (yesno == 0);
 	} else {
 		tarstats.nsuccess++;
@@ -532,7 +532,7 @@ extract_dist()
 #if 0
 			if (cleanup_dist(list->name) == 0) {
 				msg_display(MSG_cleanup_warn);
-				process_menu(MENU_ok);
+				process_menu(MENU_ok, NULL);
 			}
 #endif
 			(void)snprintf(distname, sizeof distname, "%s%s",
@@ -552,14 +552,14 @@ extract_dist()
 
 	if (tarstats.nerror == 0 && tarstats.nsuccess == tarstats.nselected) {
 		msg_display(MSG_endtarok);
-		process_menu(MENU_ok);
+		process_menu(MENU_ok, NULL);
 		return 0;
 	} else {
 		/* We encountered  errors. Let the user know. */
 		msg_display(MSG_endtar,
 		    tarstats.nselected, tarstats.nnotfound, tarstats.nskipped,
 		    tarstats.nfound, tarstats.nsuccess, tarstats.nerror);
-		process_menu(MENU_ok);
+		process_menu(MENU_ok, NULL);
 		return 1;
 	}
 }
@@ -607,7 +607,7 @@ cleanup_dist(name)
 		if (saved_errno == ENOENT)
 			return 1;
 		msg_display_add(MSG_openfail, name, strerror(saved_errno));
-		process_menu(MENU_ok);
+		process_menu(MENU_ok, NULL);
 		return 0;
 	}
 	file_prefix = target_prefix();
@@ -626,7 +626,7 @@ cleanup_dist(name)
 				continue;
 			msg_display_add(MSG_statfail, file_path,
 			    strerror(saved_errno));
-			process_menu(MENU_ok);
+			process_menu(MENU_ok, NULL);
 			return 0;
 		}
 		if (head == NULL) {
@@ -669,7 +669,7 @@ cleanup_dist(name)
 			msg_printf_add("%s ", current->name);
 		}
 	}
-	process_menu(MENU_ok);
+	process_menu(MENU_ok, NULL);
 #endif
 	/* first remove files */
 	for (current = head; current != NULL; current = current->next) {
@@ -742,7 +742,7 @@ cleanup_dist(name)
 		}
 	}
 	if (needok)
-		process_menu(MENU_ok);
+		process_menu(MENU_ok, NULL);
 	return retval;
 }
 #endif	/* } NOMORE */
@@ -767,7 +767,7 @@ get_and_unpack_sets(success_msg, failure_msg)
 	/* Find out which files to "get" if we get files. */
 	wclear(stdscr);
 	wrefresh(stdscr);
-	process_menu(MENU_distset);
+	process_menu(MENU_distset, NULL);
 
 	/* ask user whether to do normal or verbose extraction */
 	ask_verbose_dist();
@@ -775,7 +775,7 @@ get_and_unpack_sets(success_msg, failure_msg)
 	/* Get the distribution files */
 	do {
 		got_dist = 0;
-		process_menu(MENU_distmedium);
+		process_menu(MENU_distmedium, NULL);
 	} while (got_dist == -1);
 
 	if (nodist)
@@ -803,12 +803,12 @@ get_and_unpack_sets(success_msg, failure_msg)
 
 		/* Install/Upgrade complete ... reboot or exit to script */
 		msg_display(success_msg);
-		process_menu(MENU_ok);
+		process_menu(MENU_ok, NULL);
 		return 0;
 	}
 
 	msg_display(failure_msg);
-	process_menu(MENU_ok);
+	process_menu(MENU_ok, NULL);
 	return 1;
 }
 
@@ -880,7 +880,7 @@ sanity_check()
 
 	/* Uh, oh. Something's missing. */
 	msg_display(MSG_badroot);
-	process_menu(MENU_ok);
+	process_menu(MENU_ok, NULL);
 	return 1;
 }
 
@@ -940,7 +940,7 @@ static char tz_env[STRSIZE];
  * Callback from timezone menu
  */
 static int
-set_timezone_select(menudesc *m)
+set_timezone_select(menudesc *m, menu_ent *opt, void *arg)
 {
 	time_t t;
 
@@ -961,7 +961,7 @@ static void
 /*ARGSUSED*/
 timezone_sig(int sig)
 {
-	set_timezone_select(NULL);
+	set_timezone_select(NULL, NULL, NULL);
 	alarm(60);
 }
 
@@ -1059,7 +1059,7 @@ set_timezone()
 	if (menu_no < 0)
 		goto done;	/* error - skip timezone setting */
 
-	process_menu(menu_no);
+	process_menu(menu_no, NULL);
 
 	free_menu(menu_no);
 
@@ -1087,7 +1087,7 @@ set_crypt_type(void)
 	char *fn;
 
 	msg_display(MSG_choose_crypt);
-	process_menu(MENU_crypttype);
+	process_menu(MENU_crypttype, NULL);
 	fn = strdup(target_expand("/etc/passwd.conf"));
 	if (fn == NULL)
 		return -1;
@@ -1132,7 +1132,7 @@ int
 set_root_password()
 {
 	msg_display(MSG_rootpw);
-	process_menu(MENU_yesno);
+	process_menu(MENU_yesno, NULL);
 	if (yesno)
 		run_prog(RUN_DISPLAY|RUN_CHROOT, NULL, "passwd -l root");
 	return 0;
@@ -1142,7 +1142,7 @@ int
 set_root_shell()
 {
 	msg_display(MSG_rootsh);
-	process_menu(MENU_rootsh);
+	process_menu(MENU_rootsh, NULL);
 	run_prog(RUN_DISPLAY|RUN_CHROOT, NULL, "chpass -s %s root", shellpath);
 	return 0;
 }

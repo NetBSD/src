@@ -1,4 +1,4 @@
-/*	$NetBSD: msg.md.pl,v 1.2 2002/04/09 19:48:12 hubertf Exp $	*/
+/*	$NetBSD: msg.md.pl,v 1.3 2003/06/03 11:54:53 dsl Exp $	*/
 /* Based on english version: */
 /*	NetBSD: msg.md.en,v 1.4 2002/03/16 17:25:56 tsutsui Exp */
 
@@ -82,3 +82,10 @@ dla ponizszych partycji.
 message askfspart
 {Nastepna partycja jest /dev/%s%c.  Masz %d %s wolnego miejsca na dysku.
 Rozmiar partycji? }
+
+message emulbackup 
+{Albo /emul/aout albo /emul w twoim systemie byl symbolicznym linkiem
+wskazujacym na niezamontowany system. Zostalo mu dodane rozszerzenie '.old'.
+Kiedy juz uruchomisz swoj zaktualizowany system, mozliwe ze bedziesz musial
+zajac sie polaczeniem nowo utworzonego /emul/aout ze starym. 
+}

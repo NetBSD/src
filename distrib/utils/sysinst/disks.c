@@ -1,4 +1,4 @@
-/*	$NetBSD: disks.c,v 1.52 2003/05/30 11:56:23 dsl Exp $ */
+/*	$NetBSD: disks.c,v 1.53 2003/06/03 11:54:48 dsl Exp $ */
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -136,7 +136,7 @@ find_disks(void)
 	if (numdisks == 0) {
 		/* No disks found! */
 		msg_display(MSG_nodisk);
-		process_menu(MENU_ok);
+		process_menu(MENU_ok, NULL);
 		/*endwin();*/
 		return -1;
 	}
@@ -146,7 +146,7 @@ find_disks(void)
 		/* Remove that space we added. */
 		disknames[strlen(disknames) - 1] = 0;
 		msg_display(MSG_onedisk, disknames, doingwhat);
-		process_menu(MENU_ok);
+		process_menu(MENU_ok, NULL);
 		strlcpy(diskdev, disknames, sizeof diskdev);
 	} else {
 		/* Multiple disks found! */
@@ -299,7 +299,7 @@ do_flfs_newfs(const char *partname, int partno, const char *mountpoint)
 		    "-v -o async" : "-v", dev_name, mountpoint);
 		if (error) {
 			msg_display(MSG_mountfail, dev_name, mountpoint);
-			process_menu(MENU_ok);
+			process_menu(MENU_ok, NULL);
 		}
 	}
 	return error;
@@ -324,7 +324,7 @@ make_fstab(void)
 		msg_display(MSG_createfstab);
 		if (logging)
 			(void)fprintf(logfp, "Failed to make /etc/fstab!\n");
-		process_menu(MENU_ok);
+		process_menu(MENU_ok, NULL);
 		return 1;
 #else
 		f = stdout;
@@ -456,7 +456,7 @@ fsck_with_error_menu(const char *diskpart)
 		fprintf(stderr, "sysinst: do_fsck() returned err %d\n", error);
 #endif
 		msg_display(MSG_badfs, diskpart, "", error);
-		process_menu(MENU_ok);
+		process_menu(MENU_ok, NULL);
 	}
 	return error;
 }
@@ -482,7 +482,7 @@ int target_mount_with_error_menu(const char *opt,
 
 	if ((error = target_mount(opt, dev_name, mntpoint)) != 0) {
 		msg_display (MSG_badmount, dev_name, "");
-		process_menu (MENU_ok);
+		process_menu (MENU_ok, NULL);
 		return error;
 	} else {
 #ifdef DEBUG
@@ -547,7 +547,7 @@ fsck_disks(void)
 	if (target_dir_exists_p("/etc") == 0 ||
 	    target_file_exists_p("/etc/fstab") == 0) {
 		msg_display(MSG_noetcfstab, diskdev);
-		process_menu(MENU_ok);
+		process_menu(MENU_ok, NULL);
 		return 0;
 	}
 
@@ -557,7 +557,7 @@ fsck_disks(void)
 	if (fstabsize < 0) {
 		/* error ! */
 		msg_display(MSG_badetcfstab, diskdev);
-		process_menu(MENU_ok);
+		process_menu(MENU_ok, NULL);
 		return 0;
 	}
 	walk(fstab, (size_t)fstabsize, fstabbuf, numfstabbuf);

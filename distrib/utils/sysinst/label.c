@@ -1,4 +1,4 @@
-/*	$NetBSD: label.c,v 1.26 2003/05/21 10:05:20 dsl Exp $	*/
+/*	$NetBSD: label.c,v 1.27 2003/06/03 11:54:48 dsl Exp $	*/
 
 /*
  * Copyright 1997 Jonathan Stone
@@ -36,7 +36,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: label.c,v 1.26 2003/05/21 10:05:20 dsl Exp $");
+__RCSID("$NetBSD: label.c,v 1.27 2003/06/03 11:54:48 dsl Exp $");
 #endif
 
 #include <sys/types.h>
@@ -160,7 +160,7 @@ edit_and_check_label(lp, nparts, rawpart, bsdpart)
 		int i, j;
 
 		/* first give the user the option to edit the label... */
-		process_menu(MENU_fspartok);
+		process_menu(MENU_fspartok, NULL);
 
 		/* User thinks the label is OK. check for overlaps */
 		if (checklabel(lp, nparts, rawpart, bsdpart, &i, &j) == 0) {
@@ -172,7 +172,7 @@ edit_and_check_label(lp, nparts, rawpart, bsdpart)
 		msg_display(MSG_partitions_overlap, 'a' + i, 'a' + j);
 		/*XXX*/
 		msg_display_add(MSG_edit_partitions_again);
-		process_menu(MENU_yesno);
+		process_menu(MENU_yesno, NULL);
 		if (!yesno)
 			return(0);
 	}
@@ -363,7 +363,7 @@ getpartsize(msg_no, partstart, defpartsize)
 			partend = dlsize;
 			msg_display(MSG_endoutsidedisk,
 			    (partend - partstart) / sizemult, multname);
-			process_menu(MENU_ok);
+			process_menu(MENU_ok, NULL);
 		}
 		/* return value */
 		return (partend - partstart);

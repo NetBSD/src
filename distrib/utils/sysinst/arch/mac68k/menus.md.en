@@ -1,4 +1,4 @@
-/*	$NetBSD: menus.md.en,v 1.16 2003/01/11 19:31:52 christos Exp $	*/
+/*	$NetBSD: menus.md.en,v 1.17 2003/06/03 11:54:53 dsl Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -52,7 +52,7 @@ menu nodiskmap, title "Choose an option", y=16;
 
 		msg_clear();
 		msg_display (MSG_okwritediskmap);
-		process_menu (MENU_okabort);
+		process_menu (MENU_okabort, NULL);
 		if (!yesno) {
 		    endwin();
 		    return 0;
@@ -116,7 +116,7 @@ menu editparttable, title  "Choose your partition", exit, y=15;
 			sortmerge();
 		    } else {
 			msg_display (MSG_diskfull);
-			process_menu (MENU_okabort);
+			process_menu (MENU_okabort, NULL);
 		 	if (!yesno) {
 			    free (map.blk);
 	 		    map.size = NEW_MAP_SIZE;
@@ -148,7 +148,7 @@ menu editparttable, title  "Choose your partition", exit, y=15;
 		    msg_display_add(MSG_parttable_fix_fine,
                         diskdev, bzb->flags.part);
                 }
-                process_menu(MENU_ok);
+                process_menu(MENU_ok, NULL);
                 };
 
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: msg.md.fr,v 1.20 2003/05/16 19:48:29 dsl Exp $	*/
+/*	$NetBSD: msg.md.fr,v 1.21 2003/06/03 11:54:52 dsl Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -92,24 +92,24 @@ message dobootblks
 {Installation des block de démarrage sur %s ...
 }
 
-message askfsroot1
+message askfsroot
 {Je vais vous demander la taille et le point de montage de quelque partitions.
 
 Et tout d'abord la partition racine. Il vous reste %d %s de libre sur
 votre disque.
-}
+Taille de la partition racine ? }
 
-message askfsroot2
-{Taille de la partition racine ? }
-
-message askfsswap1
+message askfsswap
 {
 Et maintenant la taille de swap. Il vous reste %d %s de libre sur
 votre disque.
-}
+Taille du swap ? }
 
-message askfsswap2
-{Taille du swap ? }
+message askfsusr
+{
+Et maintenant la taille de /usr. Il vous reste %d %s de libre sur
+votre disque.
+Taille du /usr ? }
 
 message otherparts
 {Il vous reste de l'espace libre non alloué sur votre disque. SVP donnez la
@@ -117,12 +117,10 @@ taille et le point de " montage " des partitions suivantes.
 
 }
 
-message askfspart1
+message askfspart
 {La partition suivante est /dev/%s%c . Il vous reste %d %s de libre sur
 votre disque.
-}
-message askfspart2
-{Taille de la partition ? }
+Taille de la partition ? }
 
 message cyl1024
 { Le label (liste des partitions) que vous avez entré a une partition racine

@@ -1,4 +1,4 @@
-/*	$NetBSD: bsddisklabel.c,v 1.10 2003/05/30 22:17:00 dsl Exp $	*/
+/*	$NetBSD: bsddisklabel.c,v 1.11 2003/06/03 11:54:48 dsl Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -161,7 +161,7 @@ make_bsd_partitions(void)
 		    (1.0*ptsize*sectorsize)/MEG,
 		    (1.0*minfsdmb*sectorsize)/MEG,
 		    (1.0*minfsdmb*sectorsize)/MEG+rammb+XNEEDMB);
-	process_menu(MENU_layout);
+	process_menu(MENU_layout, NULL);
 
 	if (layoutkind == 3)
 		ask_sizemult(dlcylsize);
@@ -230,7 +230,7 @@ make_bsd_partitions(void)
 		 */
 		layout_swap = layout_usr = 1;
 		layout_var = layout_home = layout_tmp = 0;
-		process_menu(MENU_layoutparts);
+		process_menu(MENU_layoutparts, NULL);
 
 		/* Root */
 		if (layout_usr == 0 && layout_home == 0) {

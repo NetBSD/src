@@ -1,4 +1,4 @@
-/*	$NetBSD: upgrade.c,v 1.32 2002/11/13 00:43:09 chris Exp $	*/
+/*	$NetBSD: upgrade.c,v 1.33 2003/06/03 11:54:49 dsl Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -63,7 +63,7 @@ do_upgrade()
 	doingwhat = msg_string(MSG_upgrade);
 
 	msg_display(MSG_upgradeusure);
-	process_menu(MENU_noyes);
+	process_menu(MENU_noyes, NULL);
 	if (!yesno)
 		return;
 
@@ -78,7 +78,7 @@ do_upgrade()
 	/* if we need the user to mount root, ask them to. */
 	if (must_mount_root()) {
 		msg_display(MSG_pleasemountroot, diskdev, diskdev, diskdev, diskdev);
-		process_menu(MENU_ok);
+		process_menu(MENU_ok, NULL);
 		return;
 	}
 
@@ -137,7 +137,7 @@ save_etc()
 
 	if (target_dir_exists_p("/etc.old")) {
 		msg_display(MSG_etc_oldexists);
-		process_menu(MENU_ok);
+		process_menu(MENU_ok, NULL);
 		return EEXIST;
 	}
 
@@ -193,7 +193,7 @@ save_X()
 	if (target_symlink_exists_p("/usr/X11R6/bin/X")) {
 		if (target_symlink_exists_p("/usr/X11R6/bin/X.old")) {
 			msg_display(MSG_X_oldexists);
-			process_menu(MENU_ok);
+			process_menu(MENU_ok, NULL);
 			return EEXIST;
 		}
 
@@ -250,7 +250,7 @@ do_reinstall_sets()
 
 	unwind_mounts();
 	msg_display(MSG_reinstallusure);
-	process_menu(MENU_noyes);
+	process_menu(MENU_noyes, NULL);
 	if (!yesno)
 		return;
 
@@ -260,7 +260,7 @@ do_reinstall_sets()
 	/* if we need the user to mount root, ask them to. */
 	if (must_mount_root()) {
 		msg_display(MSG_pleasemountroot, diskdev, diskdev, diskdev, diskdev);
-		process_menu(MENU_ok);
+		process_menu(MENU_ok, NULL);
 		return;
 	}
 

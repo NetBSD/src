@@ -1,4 +1,4 @@
-/*	$NetBSD: install.c,v 1.30 2002/11/13 00:43:09 chris Exp $	*/
+/*	$NetBSD: install.c,v 1.31 2003/06/03 11:54:48 dsl Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -52,7 +52,7 @@ do_install()
 	doingwhat = msg_string(MSG_install);
 
 	msg_display(MSG_installusure);
-	process_menu(MENU_noyes);
+	process_menu(MENU_noyes, NULL);
 	if (!yesno)
 		return;
 #if 0
@@ -67,10 +67,10 @@ do_install()
 
 	if (!strcmp(diskdev, swapdev)) {
 		msg_display(MSG_swapactive);
-		process_menu(MENU_ok);
+		process_menu(MENU_ok, NULL);
 		if (set_swap(swapdev, NULL, 0) < 0) {
 			msg_display(MSG_swapdelfailed);
-			process_menu(MENU_ok);
+			process_menu(MENU_ok, NULL);
 			return;
 		}
 	}
@@ -78,19 +78,19 @@ do_install()
 	/* if we need the user to mount root, ask them to. */
 	if (must_mount_root()) {
 		msg_display(MSG_pleasemountroot, diskdev, diskdev, diskdev, diskdev);
-		process_menu(MENU_ok);
+		process_menu(MENU_ok, NULL);
 		return;
 	}
 
 	if (!md_get_info()) {
 		msg_display(MSG_abort);
-		process_menu(MENU_ok);
+		process_menu(MENU_ok, NULL);
 		return;
 	}
 
 	if (md_make_bsd_partitions() == 0) {
 		msg_display(MSG_abort);
-		process_menu(MENU_ok);
+		process_menu(MENU_ok, NULL);
 		return;
 	}
 
@@ -98,7 +98,7 @@ do_install()
 	clear();
 	refresh();
 	msg_display(MSG_lastchance, diskdev);
-	process_menu(MENU_noyes);
+	process_menu(MENU_noyes, NULL);
 	if (!yesno)
 		return;
 
@@ -148,5 +148,5 @@ do_install()
 	md_cleanup_install();
 
 	msg_display(MSG_instcomplete);
-	process_menu(MENU_ok);
+	process_menu(MENU_ok, NULL);
 }

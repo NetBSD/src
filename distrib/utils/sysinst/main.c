@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.30 2003/01/10 20:00:28 christos Exp $	*/
+/*	$NetBSD: main.c,v 1.31 2003/06/03 11:54:48 dsl Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -154,7 +154,7 @@ main(argc, argv)
 	refresh();
 
 	/* Menu processing */
-	process_menu(MENU_netbsd);
+	process_menu(MENU_netbsd, NULL);
 	
 	exit_cleanly = 1;
 	return (0);

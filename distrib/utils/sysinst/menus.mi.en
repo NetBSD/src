@@ -1,4 +1,4 @@
-/*	$NetBSD: menus.mi.en,v 1.66 2003/05/16 19:28:10 dsl Exp $	*/
+/*	$NetBSD: menus.mi.en,v 1.67 2003/06/03 11:54:49 dsl Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -131,9 +131,9 @@ menu edfspart, title "Change what?", exit, y=14;
 	option "FS kind", action
 		{
 			if (check_lfs_progs())
-				process_menu (MENU_selfskindlfs);
+				process_menu (MENU_selfskindlfs, NULL);
 			else
-				process_menu (MENU_selfskind);
+				process_menu (MENU_selfskind, NULL);
 		};
 	option "Start/size", action  
 		{	int start, size;
@@ -152,7 +152,7 @@ menu edfspart, title "Change what?", exit, y=14;
 
 			if (!PI_ISBSDFS(&bsdlabel[editpart])) {
 				msg_display (MSG_not42bsd, 'a'+editpart);
-				process_menu (MENU_ok);
+				process_menu (MENU_ok, NULL);
 				return FALSE;
 			}
 			snprintf(buf, sizeof(buf), "%d",
@@ -176,7 +176,7 @@ menu edfspart, title "Change what?", exit, y=14;
 					fsmount[editpart][0] = '\0';
 			} else {
 				msg_display (MSG_nomount, 'a'+editpart);
-				process_menu (MENU_ok);
+				process_menu (MENU_ok, NULL);
 			}
 		};
 	option "Preserve", action 
