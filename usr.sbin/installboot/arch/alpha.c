@@ -1,4 +1,4 @@
-/*	$NetBSD: alpha.c,v 1.11 2002/05/15 02:18:23 lukem Exp $	*/
+/*	$NetBSD: alpha.c,v 1.11.2.1 2002/05/31 11:30:02 tv Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -98,7 +98,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(__lint)
-__RCSID("$NetBSD: alpha.c,v 1.11 2002/05/15 02:18:23 lukem Exp $");
+__RCSID("$NetBSD: alpha.c,v 1.11.2.1 2002/05/31 11:30:02 tv Exp $");
 #endif	/* !__lint */
 
 #if HAVE_CONFIG_H
@@ -431,7 +431,7 @@ sun_bootstrap(ib_params *params, struct alpha_boot_block * const bb)
 	/*
 	 * Make alpha checksum <47:32> come out to the sun magic.
 	 */
-	bb16[BB_ADJUST_OFFSET + 2] = htons(SUN_DKMAGIC) - bb16[254];
+	bb16[BB_ADJUST_OFFSET + 2] = htobe16(SUN_DKMAGIC) - bb16[254];
 	resum(params, bb, bb16);
 	sunsum = compute_sunsum(bb16);		/* might be the final value */
 	if (params->flags & IB_VERBOSE)
@@ -474,7 +474,7 @@ check_sparc(const struct alpha_boot_block * const bb, const char *when)
 	memcpy(bb16, bb, sizeof(bb16));
 	if (compute_sunsum(bb16) != bb16[255])
 		warnx(wmsg, when, "checksum", bb16[255], compute_sunsum(bb16));
-	if (bb16[254] != htons(SUN_DKMAGIC))
+	if (bb16[254] != htobe16(SUN_DKMAGIC))
 		warnx(wmsg, when, "magic number", bb16[254],
-		    htons(SUN_DKMAGIC));
+		    htobe16(SUN_DKMAGIC));
 }
