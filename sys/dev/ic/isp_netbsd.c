@@ -1,5 +1,5 @@
-/* $NetBSD: isp_netbsd.c,v 1.9 1999/01/30 07:31:50 mjacob Exp $ */
-/* release_01_29_99 */
+/* $NetBSD: isp_netbsd.c,v 1.10 1999/02/09 00:42:22 mjacob Exp $ */
+/* release_02_05_99 */
 /*
  * Platform (NetBSD) dependent common attachment code for Qlogic adapters.
  *
@@ -54,7 +54,11 @@ static int32_t ispcmd __P((ISP_SCSI_XFER_T *));
 
 static struct scsipi_device isp_dev = { NULL, NULL, NULL, NULL };
 static int isp_poll __P((struct ispsoftc *, ISP_SCSI_XFER_T *, int));
-static void isp_watch __P ((void *));
+static void isp_watch __P((void *));
+static void isp_internal_restart __P((void *));
+
+#define	FC_OPENINGS	RQUEST_QUEUE_LEN / (MAX_FC_TARG-1)
+#define	PI_OPENINGS	RQUEST_QUEUE_LEN / (MAX_TARGETS-1)
 
 /*
  * Complete attachment of hardware, include subdevices.
@@ -72,6 +76,7 @@ isp_attach(isp)
 	isp->isp_osinfo._link.adapter_softc = isp;
 	isp->isp_osinfo._link.device = &isp_dev;
 	isp->isp_osinfo._link.adapter = &isp->isp_osinfo._adapter;
+	TAILQ_INIT(&isp->isp_osinfo.waitq);
 
 	if (isp->isp_type & ISP_HA_FC) {
 		isp->isp_osinfo._link.scsipi_scsi.max_target = MAX_FC_TARG-1;
@@ -83,13 +88,11 @@ isp_attach(isp)
 #else
 		isp->isp_osinfo._link.scsipi_scsi.max_lun = 15;
 #endif
-		isp->isp_osinfo._link.openings =
-			RQUEST_QUEUE_LEN / (MAX_FC_TARG-1);
+		isp->isp_osinfo._link.openings = FC_OPENINGS;
 		isp->isp_osinfo._link.scsipi_scsi.adapter_target =
 			((fcparam *)isp->isp_param)->isp_loopid;
 	} else {
-		isp->isp_osinfo._link.openings =
-			RQUEST_QUEUE_LEN / (MAX_TARGETS-1);
+		isp->isp_osinfo._link.openings = PI_OPENINGS;
 		isp->isp_osinfo._link.scsipi_scsi.max_target = MAX_TARGETS-1;
 		if (isp->isp_bustype == ISP_BT_SBUS) {
 			isp->isp_osinfo._link.scsipi_scsi.max_lun = 7;
@@ -110,6 +113,19 @@ isp_attach(isp)
 	if (isp->isp_osinfo._link.openings < 2)
 		isp->isp_osinfo._link.openings = 2;
 	isp->isp_osinfo._link.type = BUS_SCSI;
+
+	/*
+	 * Send a SCSI Bus Reset (used to be done as part of attach,
+	 * but now left to the OS outer layers).
+	 *
+	 * XXX: For now, skip resets for FC because the method by which
+	 * XXX: we deal with loop down after issuing resets (which causes
+	 * XXX: port logouts for all devices) needs interrupts to run so
+	 * XXX: that async events happen.
+	 */
+	
+	if (isp->isp_type & ISP_HA_SCSI)
+		(void) isp_control(isp, ISPCTL_RESET_BUS, NULL);
 
 	/*
 	 * Start the watchdog.
@@ -150,10 +166,10 @@ ispcmd(xs)
 {
 	struct ispsoftc *isp;
 	int result;
-	ISP_LOCKVAL_DECL;
+	int s;
 
 	isp = XS_ISP(xs);
-	ISP_LOCK(isp);
+	s = splbio();
 	/*
 	 * This is less efficient than I would like in that the
 	 * majority of cases will have to do some pointer deferences
@@ -177,11 +193,24 @@ ispcmd(xs)
 			isp->isp_update = 1;
 		}
 	}
-	DISABLE_INTS(isp);
+	/*
+	 * Check for queue blockage...
+	 */
+
+	if (isp->isp_osinfo.blocked) {
+		if (xs->flags & SCSI_POLL) {
+			xs->error = XS_DRIVER_STUFFUP;
+			splx(s);
+			return (TRY_AGAIN_LATER);
+		}
+		TAILQ_INSERT_TAIL(&isp->isp_osinfo.waitq, xs, adapter_q);
+		splx(s);
+		return (CMD_QUEUED);
+	}
+	
 	result = ispscsicmd(xs);
-	ENABLE_INTS(isp);
 	if (result != CMD_QUEUED || (xs->flags & SCSI_POLL) == 0) {
-		ISP_UNLOCK(isp);
+		(void) splx(s);
 		return (result);
 	}
 
@@ -203,7 +232,7 @@ ispcmd(xs)
 			}
 		}
 	}
-	ISP_UNLOCK(isp);
+	(void) splx(s);
 	return (CMD_COMPLETE);
 }
 
@@ -301,13 +330,55 @@ isp_uninit(isp)
 	ISP_IUNLOCK(isp);
 }
 
+/*
+ * Restart function after a LOOP UP event (e.g.),
+ * done as a timeout for some hysteresis.
+ */
+static void
+isp_internal_restart(arg)
+	void *arg;
+{
+	struct ispsoftc *isp = arg;
+	int result, nrestarted = 0, s = splbio();
+
+	if (isp->isp_osinfo.blocked == 0) {
+		struct scsipi_xfer *xs;
+		while ((xs = TAILQ_FIRST(&isp->isp_osinfo.waitq)) != NULL) {
+			TAILQ_REMOVE(&isp->isp_osinfo.waitq, xs, adapter_q);
+			if ((result = ispscsicmd(xs)) != CMD_QUEUED) {
+				printf("%s: botched command restart (0x%x)\n",
+				    isp->isp_name, result);
+				xs->flags |= ITSDONE;
+				if (xs->error == XS_NOERROR)
+					xs->error = XS_DRIVER_STUFFUP;
+				scsipi_done(xs);
+			}
+			nrestarted++;
+		}
+		printf("%s: requeued %d commands\n", isp->isp_name, nrestarted);
+	}
+	(void) splx(s);
+}
+	
 int
 isp_async(isp, cmd, arg)
 	struct ispsoftc *isp;
 	ispasync_t cmd;
 	void *arg;
 {
+	int s = splbio();
 	switch (cmd) {
+	case ISPASYNC_LOOP_DOWN:
+		/*
+		 * Hopefully we get here in time to minimize the number
+		 * of commands we are firing off that are sure to die.
+		 */
+		isp->isp_osinfo.blocked = 1;
+		break;
+        case ISPASYNC_LOOP_UP:
+		isp->isp_osinfo.blocked = 0;
+		timeout(isp_internal_restart, isp, 1);
+		break;
 	case ISPASYNC_NEW_TGT_PARAMS:
 		if (isp->isp_type & ISP_HA_SCSI) {
 			sdparam *sdp = isp->isp_param;
@@ -349,5 +420,6 @@ isp_async(isp, cmd, arg)
 	default:
 		break;
 	}
+	(void) splx(s);
 	return (0);
 }
