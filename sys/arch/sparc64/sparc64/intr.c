@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.c,v 1.40 2001/09/02 01:45:47 eeh Exp $ */
+/*	$NetBSD: intr.c,v 1.41 2001/09/25 00:06:55 eeh Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -268,9 +268,10 @@ intr_establish(level, ih)
 			 * Interrupt is already there.  We need to create a
 			 * new interrupt handler and interpose it.
 			 */
+#ifdef DEBUG
 			printf("intr_establish: intr reused %x\n", 
 				ih->ih_number);
-
+#endif
 			if (q->ih_fun != intr_list_handler) {
 				nih = (struct intrhand *)
 					malloc(sizeof(struct intrhand),
