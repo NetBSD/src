@@ -1,4 +1,4 @@
-/*	$NetBSD: pty.h,v 1.1 2004/11/10 17:32:20 christos Exp $	*/
+/*	$NetBSD: pty.h,v 1.2 2004/11/11 13:45:39 christos Exp $	*/
 
 /*-
  * Copyright (c) 2004 The NetBSD Foundation, Inc.
@@ -39,12 +39,12 @@
 #define _SYS_PTY_H_
 
 int pty_isfree(int, int);
+int pty_check(int);
 
 #ifndef NO_DEV_PTM
 void ptmattach(int);
 int pty_fill_ptmget(dev_t, int, int, void *);
 int pty_grant_slave(struct proc *, dev_t);
-int pty_check(int);
 dev_t pty_makedev(char, int);
 int pty_vn_open(struct vnode *, struct proc *);
 struct ptm_pty *pty_sethandler(struct ptm_pty *);
