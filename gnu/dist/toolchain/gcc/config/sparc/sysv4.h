@@ -103,7 +103,11 @@ Boston, MA 02111-1307, USA.  */
 
 /* This is defined in sparc.h but is not used by svr4.h.  */
 #undef ASM_LONG
+#if TARGET_CPU_DEFAULT == TARGET_CPU_v9 || TARGET_CPU_DEFAULT == TARGET_CPU_ultrasparc
+#define ASM_LONG ".xword"
+#else
 #define ASM_LONG ".long"
+#endif
 
 /* This is the format used to print the second operand of a .type pseudo-op
    for the Sparc/svr4 assembler.  */
