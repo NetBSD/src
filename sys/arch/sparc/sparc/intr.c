@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.c,v 1.8 1995/04/10 16:48:48 mycroft Exp $ */
+/*	$NetBSD: intr.c,v 1.9 1995/07/04 12:34:37 paulus Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -128,6 +128,11 @@ soft01intr(fp)
 #ifdef ISO
 			if (n & (1 << NETISR_ISO))
 				clnlintr();
+#endif
+#include "ppp.h"
+#if NPPP > 0
+			if (n & (1 << NETISR_PPP))
+				pppintr();
 #endif
 		}
 		if (sir.sir_which[SIR_CLOCK]) {
