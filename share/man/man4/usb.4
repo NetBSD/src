@@ -1,6 +1,6 @@
-.\" $NetBSD: usb.4,v 1.39 2001/11/18 22:49:36 wiz Exp $
+.\" $NetBSD: usb.4,v 1.40 2001/12/12 15:29:24 augustss Exp $
 .\"
-.\" Copyright (c) 1999 The NetBSD Foundation, Inc.
+.\" Copyright (c) 2001 The NetBSD Foundation, Inc.
 .\" All rights reserved.
 .\"
 .\" This code is derived from software contributed to The NetBSD Foundation
@@ -132,6 +132,8 @@ generic driver for
 devices.
 .It uhid
 generic driver for Human Interface Devices.
+.It uirda
+driver for USB-IrDA bridges.
 .It ukbd
 keyboard driver.
 .It ulpt
@@ -452,7 +454,7 @@ contains the name of the device (driver) as seen in, e.g.,
 kernel messages.
 .Pp
 Note that that there is a separation between device and device
-driver events.  A driver event is generated when a physical
+driver events.  A device event is generated when a physical
 USB device is attached or detached.  A single USB device may
 have zero, one, or many device drivers associated with it.
 .Sh SEE ALSO
@@ -473,6 +475,7 @@ specifications can be found at:
 .Xr ugen 4 ,
 .Xr uhci 4 ,
 .Xr uhid 4 ,
+.Xr uirda 4 ,
 .Xr ukbd 4 ,
 .Xr ulpt 4 ,
 .Xr umass 4 ,
