@@ -1,4 +1,4 @@
-/*	$NetBSD: ifpgavar.h,v 1.1 2001/10/27 16:19:09 rearnsha Exp $ */
+/*	$NetBSD: ifpgavar.h,v 1.2 2002/10/06 17:13:58 thorpej Exp $ */
 
 /*
  * Copyright (c) 2001 ARM Ltd
@@ -79,3 +79,5 @@ struct ifpga_attach_args {
 
 void ifpga_create_io_bs_tag(struct bus_space *, void *);
 void ifpga_create_mem_bs_tag(struct bus_space *, void *);
+
+void ifpga_reset(void);
