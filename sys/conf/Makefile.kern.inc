@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.kern.inc,v 1.19 2002/07/12 17:48:23 wrstuden Exp $
+#	$NetBSD: Makefile.kern.inc,v 1.20 2002/08/11 10:47:24 lukem Exp $
 #
 # This file contains common `MI' targets and definitions and it is included
 # at the bottom of each `MD' ${MACHINE}/conf/Makefile.${MACHINE}. There are
@@ -187,7 +187,7 @@ ${MD_SFILES:C/\.[Ss]/.o/} ${SFILES:C/\.[Ss]/.o/}: assym.h
 
 .if !target(vers.o)
 newvers: vers.o
-vers.o: ${SYSTEM_DEP} ${SYSTEM_SWAP_DEP}
+vers.o: ${SYSTEM_DEP} ${SYSTEM_SWAP_DEP} $S/conf/newvers.sh $S/conf/osrelease.sh
 	sh $S/conf/newvers.sh
 	${CC} ${CFLAGS} ${CPPFLAGS} ${PROF} -c vers.c
 .endif
