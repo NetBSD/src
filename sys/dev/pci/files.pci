@@ -1,4 +1,4 @@
-#	$NetBSD: files.pci,v 1.75 2000/01/26 06:27:32 thorpej Exp $
+#	$NetBSD: files.pci,v 1.76 2000/02/25 18:22:39 drochner Exp $
 #
 # Config file and device description for machine-independent PCI code.
 # Included by ports that need it.  Requires that the SCSI files be
@@ -253,3 +253,12 @@ file	dev/pci/if_sf_pci.c		sf_pci
 device  cbb: pcmciaslot
 attach	cbb at pci with cbb_pci
 file	dev/pci/pccbb.c			cbb
+
+# Tundra Universe PCI-VME adapter
+define univ_pci
+file dev/pci/universe_pci.c univ_pci
+
+# Bit3 PCI-VME mod. 2706
+device btvmeii: vmebus, univ_pci
+attach btvmeii at pci
+file dev/pci/btvmeii.c btvmeii
