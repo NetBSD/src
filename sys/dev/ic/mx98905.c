@@ -1,4 +1,4 @@
-/*	$NetBSD: mx98905.c,v 1.5 2003/12/04 13:57:30 keihan Exp $	*/
+/*	$NetBSD: mx98905.c,v 1.6 2004/03/18 23:38:17 he Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -66,7 +66,7 @@
 
 #include <sys/param.h>
 
-__KERNEL_RCSID(0, "$NetBSD: mx98905.c,v 1.5 2003/12/04 13:57:30 keihan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mx98905.c,v 1.6 2004/03/18 23:38:17 he Exp $");
 
 #include <sys/device.h>
 #include <sys/mbuf.h>
@@ -312,7 +312,7 @@ mx98905_ring_copy(sc, src, dst, amount)
 	bus_space_tag_t asict = nsc->sc_asict;
 	bus_space_handle_t asich = nsc->sc_asich;
 	u_short tmp_amount;
-	int useword = NE2000_USE_WORD(nsc);
+	int useword = nsc->sc_useword;
 
 	/* Does copy wrap to lower addr in ring buffer? */
 	if (src + amount > sc->mem_end) {
@@ -343,7 +343,7 @@ mx98905_read_hdr(sc, buf, hdr)
 
 	mx98905_readmem(sc->sc_regt, sc->sc_regh, nsc->sc_asict, nsc->sc_asich,
 	    buf, (u_int8_t *)hdr, sizeof(struct dp8390_ring),
-	    NE2000_USE_WORD(nsc));
+	    nsc->sc_useword);
 #if BYTE_ORDER == BIG_ENDIAN
 	hdr->count = bswap16(hdr->count);
 #endif
