@@ -1,4 +1,4 @@
-/*	$NetBSD: irframe.c,v 1.9 2001/12/05 20:00:15 augustss Exp $	*/
+/*	$NetBSD: irframe.c,v 1.10 2001/12/13 00:33:58 augustss Exp $	*/
 
 /*
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -260,6 +260,13 @@ irframeioctl(dev_t dev, u_long cmd, caddr_t addr, int flag, struct proc *p)
 		break;
 
 	case IRDA_SET_PARAMS:
+#ifdef DIAGNOSTIC
+		if (((struct irda_params *)vaddr)->speed != sc->sc_speed) {
+			sc->sc_speed = ((struct irda_params *)vaddr)->speed;
+			printf("%s: set speed %u\n", sc->sc_dev.dv_xname,
+			       sc->sc_speed);
+		}
+#endif
 		error = sc->sc_methods->im_set_params(sc->sc_handle, vaddr);
 		break;
 
