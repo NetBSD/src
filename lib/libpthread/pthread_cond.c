@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread_cond.c,v 1.1.2.8 2002/04/11 02:51:36 nathanw Exp $	*/
+/*	$NetBSD: pthread_cond.c,v 1.1.2.9 2002/04/26 17:45:57 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -107,6 +107,7 @@ pthread_cond_wait(pthread_cond_t *cond, pthread_mutex_t *mutex)
 		pthread_exit(PTHREAD_CANCELED);
 	}
 	self->pt_state = PT_STATE_BLOCKED_QUEUE;
+	self->pt_sleepobj = cond;
 	self->pt_sleepq = &cond->ptc_waiters;
 	self->pt_sleeplock = &cond->ptc_lock;
 	pthread_spinunlock(self, &self->pt_statelock);
