@@ -25,7 +25,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$Id: fdisk.c,v 1.8 1994/12/05 20:15:41 cgd Exp $";
+static char rcsid[] = "$Id: fdisk.c,v 1.9 1995/01/13 10:42:02 mycroft Exp $";
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -142,10 +142,11 @@ struct part_type {
 	{0x75, "PCIX"},
 	{0x80, "Minix 1.1 ... 1.4a"},
 	{0x81, "Minix 1.4b ... 1.5.10"},
-	{0x82, "Linux"},
+	{0x82, "Linux swap"},
+	{0x83, "Linux filesystem"},
 	{0x93, "Amoeba filesystem"},
 	{0x94, "Amoeba bad block table"},
-	{0xA5, "NetBSD"},
+	{0xA5, "NetBSD or 386BSD"},
 	{0xB7, "BSDI BSD/386 filesystem"},
 	{0xB8, "BSDI BSD/386 swap"},
 	{0xDB, "Concurrent CPM or C.DOS or CTOS"},
