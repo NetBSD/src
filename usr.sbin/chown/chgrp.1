@@ -33,7 +33,7 @@
 .\" SUCH DAMAGE.
 .\"
 .\"     from: @(#)chgrp.1	8.3 (Berkeley) 3/31/94
-.\"	$NetBSD: chgrp.1,v 1.8 1997/10/18 04:08:12 lukem Exp $
+.\"	$NetBSD: chgrp.1,v 1.8.2.1 1997/11/27 08:18:25 mellon Exp $
 .\"
 .Dd March 31, 1994
 .Dt CHGRP 1
@@ -121,12 +121,6 @@ or be the super-user.
 The
 .Nm
 utility exits 0 on success, and >0 if an error occurs.
-.Sh COMPATIBILITY
-Previous versions of the
-.Nm
-utility changed the group of symbolic links specified on the command
-line.
-In this system, symbolic links do not have groups.
 .Sh FILES
 .Bl -tag -width /etc/group -compact
 .It Pa /etc/group
@@ -134,9 +128,10 @@ Group ID file
 .El
 .Sh SEE ALSO
 .Xr chown 2 ,
+.Xr lchown 2 ,
+.Xr fts 3 ,
 .Xr group 5 ,
 .Xr passwd 5 ,
-.Xr fts 3 ,
 .Xr symlink 7 ,
 .Xr chown 8
 .Sh STANDARDS
