@@ -1,4 +1,4 @@
-# $Id: Makefile,v 1.11 1993/12/08 11:47:17 mycroft Exp $
+# $Id: Makefile,v 1.12 1994/08/19 04:24:01 cgd Exp $
 #
 
 PROG=	ld
@@ -9,10 +9,10 @@ LDADD+=	-lgnumalloc
 DPADD+= /usr/lib/libgnumalloc.a
 
 SUBDIR=	ldconfig ldd
-.if !defined(NOPIC)
-SUBDIR+= rtld
-.endif
 
 .PATH: $(.CURDIR)/$(MACHINE_ARCH)
 
 .include <bsd.prog.mk>
+.if !defined(NOPIC)
+SUBDIR+= rtld
+.endif
