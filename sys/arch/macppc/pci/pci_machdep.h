@@ -1,4 +1,4 @@
-/*	$NetBSD: pci_machdep.h,v 1.2 1998/07/13 19:27:13 tsubai Exp $	*/
+/*	$NetBSD: pci_machdep.h,v 1.3 1998/07/17 18:38:11 tsubai Exp $	*/
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All rights reserved.
@@ -61,6 +61,8 @@ struct pci_bridge pci_bridges[2];
 
 #define PCI_CHIPSET_BANDIT 0x00
 #define PCI_CHIPSET_MPC106 0x10
+
+extern struct macppc_bus_dma_tag pci_bus_dma_tag;
 
 /*
  * Functions provided to machine-independent PCI code.
