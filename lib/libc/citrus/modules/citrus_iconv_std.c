@@ -1,4 +1,4 @@
-/*	$NetBSD: citrus_iconv_std.c,v 1.3 2003/07/01 08:34:04 tshiozak Exp $	*/
+/*	$NetBSD: citrus_iconv_std.c,v 1.4 2003/07/01 09:42:16 tshiozak Exp $	*/
 
 /*-
  * Copyright (c)2003 Citrus Project,
@@ -28,7 +28,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: citrus_iconv_std.c,v 1.3 2003/07/01 08:34:04 tshiozak Exp $");
+__RCSID("$NetBSD: citrus_iconv_std.c,v 1.4 2003/07/01 09:42:16 tshiozak Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include <assert.h>
@@ -45,9 +45,9 @@ __RCSID("$NetBSD: citrus_iconv_std.c,v 1.3 2003/07/01 08:34:04 tshiozak Exp $");
 #include "citrus_module.h"
 #include "citrus_region.h"
 #include "citrus_mmap.h"
+#include "citrus_hash.h"
 #include "citrus_iconv.h"
 #include "citrus_stdenc.h"
-#include "citrus_hash.h"
 #include "citrus_mapper.h"
 #include "citrus_csmapper.h"
 #include "citrus_memstream.h"
@@ -134,51 +134,24 @@ put_state_resetx(struct _citrus_iconv_std_encoding *se,
 	return _stdenc_put_state_reset(se->se_handle, s, n, se->se_ps, nresult);
 }
 
-
 /*
- * open/close an encoding.
+ * init encoding context
  */
-static __inline void
-close_encoding(struct _citrus_iconv_std_encoding *se)
-{
-	free(se->se_ps); se->se_ps = NULL;
-	free(se->se_pssaved); se->se_pssaved = NULL;
-}
-
-static __inline int
-open_encoding(struct _citrus_iconv_std_encoding *se, struct _esdb *db)
+static int
+init_encoding(struct _citrus_iconv_std_encoding *se, struct _stdenc *cs,
+	      void *ps1, void *ps2)
 {
 	int ret;
 
-	se->se_ps = se->se_pssaved = NULL;
-	ret = _stdenc_open(&se->se_handle, db->db_encname,
-			   db->db_variable, db->db_len_variable);
-	if (ret)
-		return ret;
+	se->se_handle = cs;
+	se->se_ps = ps1;
+	se->se_pssaved = ps2;
 
-	if (_stdenc_get_state_size(se->se_handle) == 0)
-		return 0;
+	if (se->se_ps)
+		ret = _stdenc_init_state(cs, se->se_ps);
+	if (!ret && se->se_pssaved)
+		ret = _stdenc_init_state(cs, se->se_pssaved);
 
-	se->se_ps = malloc(_stdenc_get_state_size(se->se_handle));
-	if (se->se_ps == NULL) {
-		ret = errno;
-		goto err;
-	}
-	ret = _stdenc_init_state(se->se_handle, se->se_ps);
-	if (ret)
-		goto err;
-	se->se_pssaved = malloc(_stdenc_get_state_size(se->se_handle));
-	if (se->se_pssaved == NULL) {
-		ret = errno;
-		goto err;
-	}
-	ret = _stdenc_init_state(se->se_handle, se->se_pssaved);
-	if (ret)
-		goto err;
-	return 0;
-
-err:
-	close_encoding(se);
 	return ret;
 }
 
@@ -314,7 +287,9 @@ err:
 /* do convert a character */
 #define E_NO_CORRESPONDING_CHAR ENOENT /* XXX */
 static int
-do_conv(struct _citrus_iconv_std *is, _csid_t *csid, _index_t *idx)
+/*ARGSUSED*/
+do_conv(struct _citrus_iconv_std_shared *is,
+	struct _citrus_iconv_std_context *sc, _csid_t *csid, _index_t *idx)
 {
 	_index_t tmpidx;
 	int ret;
@@ -353,14 +328,14 @@ do_conv(struct _citrus_iconv_std *is, _csid_t *csid, _index_t *idx)
 
 static int
 /*ARGSUSED*/
-_citrus_iconv_std_iconv_init(struct _citrus_iconv *ci,
-			     const char * __restrict curdir,
-			     const char * __restrict src,
-			     const char * __restrict dst,
-			     const void * __restrict var, size_t lenvar)
+_citrus_iconv_std_iconv_init_shared(struct _citrus_iconv_shared *ci,
+				    const char * __restrict curdir,
+				    const char * __restrict src,
+				    const char * __restrict dst,
+				    const void * __restrict var, size_t lenvar)
 {
 	int ret;
-	struct _citrus_iconv_std *is;
+	struct _citrus_iconv_std_shared *is;
 	struct _citrus_esdb esdbsrc, esdbdst;
 
 	is = malloc(sizeof(*is));
@@ -374,10 +349,12 @@ _citrus_iconv_std_iconv_init(struct _citrus_iconv *ci,
 	ret = _citrus_esdb_open(&esdbdst, dst);
 	if (ret)
 		goto err2;
-	ret = open_encoding(&is->is_src_encoding, &esdbsrc);
+	ret = _stdenc_open(&is->is_src_encoding, esdbsrc.db_encname,
+			   esdbsrc.db_variable, esdbsrc.db_len_variable);
 	if (ret)
 		goto err3;
-	ret = open_encoding(&is->is_dst_encoding, &esdbdst);
+	ret = _stdenc_open(&is->is_dst_encoding, esdbdst.db_encname,
+			   esdbdst.db_variable, esdbdst.db_len_variable);
 	if (ret)
 		goto err4;
 	is->is_use_invalid = esdbdst.db_use_invalid;
@@ -395,9 +372,9 @@ _citrus_iconv_std_iconv_init(struct _citrus_iconv *ci,
 	return 0;
 
 err5:
-	close_encoding(&is->is_dst_encoding);
+	_stdenc_close(is->is_dst_encoding);
 err4:
-	close_encoding(&is->is_src_encoding);
+	_stdenc_close(is->is_src_encoding);
 err3:
 	_esdb_close(&esdbdst);
 err2:
@@ -409,31 +386,72 @@ err0:
 }
 
 static void
-/*ARGSUSED*/
-_citrus_iconv_std_iconv_uninit(struct _citrus_iconv *ci)
+_citrus_iconv_std_iconv_uninit_shared(struct _citrus_iconv_shared *ci)
 {
-	struct _citrus_iconv_std *is;
+	struct _citrus_iconv_std_shared *is = ci->ci_closure;
 
-	if (ci->ci_closure == NULL)
+	if (is == NULL)
 		return;
 
-	is = ci->ci_closure;
-	close_encoding(&is->is_src_encoding);
-	close_encoding(&is->is_dst_encoding);
+	_stdenc_close(is->is_src_encoding);
+	_stdenc_close(is->is_dst_encoding);
 	close_srcs(&is->is_srcs);
 	free(is);
 }
 
 static int
-/*ARGSUSED*/
-_citrus_iconv_std_iconv_convert(struct _citrus_iconv * __restrict ci,
+_citrus_iconv_std_iconv_init_context(struct _citrus_iconv *cv)
+{
+	struct _citrus_iconv_std_shared *is = cv->cv_shared->ci_closure;
+	struct _citrus_iconv_std_context *sc;
+	int ret;
+	size_t szpssrc, szpsdst, sz;
+	char *ptr;
+
+	szpssrc = _stdenc_get_state_size(is->is_src_encoding);
+	szpsdst = _stdenc_get_state_size(is->is_dst_encoding);
+
+	sz = (szpssrc + szpsdst)*2 + sizeof(struct _citrus_iconv_std_context);
+	sc = malloc(sz);
+	if (sc == NULL)
+		return errno;
+
+	ptr = (char *)&sc[1];
+	if (szpssrc)
+		init_encoding(&sc->sc_src_encoding, is->is_src_encoding,
+			      ptr, ptr+szpssrc);
+	else
+		init_encoding(&sc->sc_src_encoding, is->is_src_encoding,
+			      NULL, NULL);
+	ptr += szpssrc*2;
+	if (szpsdst)
+		init_encoding(&sc->sc_dst_encoding, is->is_dst_encoding,
+			      ptr, ptr+szpsdst);
+	else
+		init_encoding(&sc->sc_dst_encoding, is->is_dst_encoding,
+			      NULL, NULL);
+
+	cv->cv_closure = (void *)sc;
+
+	return 0;
+}
+
+static void
+_citrus_iconv_std_iconv_uninit_context(struct _citrus_iconv *cv)
+{
+	free(cv->cv_closure);
+}
+
+static int
+_citrus_iconv_std_iconv_convert(struct _citrus_iconv * __restrict cv,
 				const char * __restrict * __restrict in,
 				size_t * __restrict inbytes,
 				char * __restrict * __restrict out,
 				size_t * __restrict outbytes, u_int32_t flags,
 				size_t * __restrict invalids)
 {
-	struct _citrus_iconv_std *is = ci->ci_closure;
+	struct _citrus_iconv_std_shared *is = cv->cv_shared->ci_closure;
+	struct _citrus_iconv_std_context *sc = cv->cv_closure;
 	_index_t idx;
 	_csid_t csid;
 	int ret;
@@ -446,11 +464,11 @@ _citrus_iconv_std_iconv_convert(struct _citrus_iconv * __restrict ci,
 		/* special cases */
 		if (out!=NULL && *out!=NULL) {
 			/* init output state */
-			save_encoding_state(&is->is_src_encoding);
-			save_encoding_state(&is->is_dst_encoding);
+			save_encoding_state(&sc->sc_src_encoding);
+			save_encoding_state(&sc->sc_dst_encoding);
 			szrout = 0;
 
-			ret = put_state_resetx(&is->is_dst_encoding,
+			ret = put_state_resetx(&sc->sc_dst_encoding,
 					       *out, *outbytes,
 					       &szrout);
 			if (ret)
@@ -465,21 +483,21 @@ _citrus_iconv_std_iconv_convert(struct _citrus_iconv * __restrict ci,
 			*outbytes -= szrout;
 		}
 		*invalids = 0;
-		init_encoding_state(&is->is_src_encoding);
+		init_encoding_state(&sc->sc_src_encoding);
 		return 0;
 	}
 
 	/* normal case */
 	for (;;) {
 		/* save the encoding states for the error recovery */
-		save_encoding_state(&is->is_src_encoding);
-		save_encoding_state(&is->is_dst_encoding);
+		save_encoding_state(&sc->sc_src_encoding);
+		save_encoding_state(&sc->sc_dst_encoding);
 
 		/* mb -> csid/index */
 		tmpin = *in;
 		szrin = szrout = 0;
-		ret = mbtocsx(&is->is_src_encoding, &csid, &idx,
-			     &tmpin, *inbytes, &szrin);
+		ret = mbtocsx(&sc->sc_src_encoding, &csid, &idx,
+			      &tmpin, *inbytes, &szrin);
 		if (ret)
 			goto err;
 
@@ -489,14 +507,14 @@ _citrus_iconv_std_iconv_convert(struct _citrus_iconv * __restrict ci,
 			goto err;
 		}
 		/* convert the character */
-		ret = do_conv(is, &csid, &idx);
+		ret = do_conv(is, sc, &csid, &idx);
 		if (ret) {
 			if (ret == E_NO_CORRESPONDING_CHAR) {
 				inval ++;
 				szrout = 0;
 				if ((flags&_CITRUS_ICONV_F_HIDE_INVALID)==0 &&
 				    is->is_use_invalid) {
-					ret = wctombx(&is->is_dst_encoding,
+					ret = wctombx(&sc->sc_dst_encoding,
 						      *out, *outbytes,
 						      is->is_invalid,
 						      &szrout);
@@ -509,7 +527,7 @@ _citrus_iconv_std_iconv_convert(struct _citrus_iconv * __restrict ci,
 			}
 		}
 		/* csid/index -> mb */
-		ret = cstombx(&is->is_dst_encoding,
+		ret = cstombx(&sc->sc_dst_encoding,
 			      *out, *outbytes, csid, idx, &szrout);
 		if (ret)
 			goto err;
@@ -531,8 +549,8 @@ next:
 	return 0;
 
 err:
-	restore_encoding_state(&is->is_src_encoding);
-	restore_encoding_state(&is->is_dst_encoding);
+	restore_encoding_state(&sc->sc_src_encoding);
+	restore_encoding_state(&sc->sc_dst_encoding);
 err_norestore:
 	*invalids = inval;
 

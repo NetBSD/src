@@ -1,4 +1,4 @@
-/*	$NetBSD: citrus_iconv_none.c,v 1.1 2003/06/25 09:51:43 tshiozak Exp $	*/
+/*	$NetBSD: citrus_iconv_none.c,v 1.2 2003/07/01 09:42:16 tshiozak Exp $	*/
 
 /*-
  * Copyright (c)2003 Citrus Project,
@@ -28,15 +28,18 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: citrus_iconv_none.c,v 1.1 2003/06/25 09:51:43 tshiozak Exp $");
+__RCSID("$NetBSD: citrus_iconv_none.c,v 1.2 2003/07/01 09:42:16 tshiozak Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include <assert.h>
 #include <errno.h>
 #include <stdlib.h>
 #include <string.h>
+#include <sys/queue.h>
+
 #include "citrus_types.h"
 #include "citrus_module.h"
+#include "citrus_hash.h"
 #include "citrus_iconv.h"
 #include "citrus_iconv_none.h"
 
@@ -63,19 +66,32 @@ _citrus_iconv_none_iconv_getops(struct _citrus_iconv_ops *ops, size_t lenops,
 
 static int
 /*ARGSUSED*/
-_citrus_iconv_none_iconv_init(struct _citrus_iconv * __restrict ci,
-			      const char * __restrict curdir,
-			      const char * __restrict in,
-			      const char * __restrict out,
-			      const void * __restrict var, size_t lenvar)
+_citrus_iconv_none_iconv_init_shared(
+	struct _citrus_iconv_shared * __restrict ci,
+	const char * __restrict curdir,
+	const char * __restrict in, const char * __restrict out,
+	const void * __restrict var, size_t lenvar)
 {
 	ci->ci_closure = NULL;
-	return (0);
+	return 0;
 }
 
 static void
 /*ARGSUSED*/
-_citrus_iconv_none_iconv_uninit(struct _citrus_iconv * __restrict ci)
+_citrus_iconv_none_iconv_uninit_shared(struct _citrus_iconv_shared *ci)
+{
+}
+
+static int
+/*ARGSUSED*/
+_citrus_iconv_none_iconv_init_context(struct _citrus_iconv *cv)
+{
+	cv->cv_closure = NULL;
+}
+
+static void
+/*ARGSUSED*/
+_citrus_iconv_none_iconv_uninit_context(struct _citrus_iconv *cv)
 {
 }
 
