@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.89 2002/04/10 01:30:42 thorpej Exp $	*/
+/*	$NetBSD: pmap.c,v 1.90 2002/04/10 04:40:58 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2002 Wasabi Systems, Inc.
@@ -143,7 +143,7 @@
 #include <machine/param.h>
 #include <arm/arm32/katelib.h>
 
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.89 2002/04/10 01:30:42 thorpej Exp $");        
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.90 2002/04/10 04:40:58 thorpej Exp $");        
 #ifdef PMAP_DEBUG
 #define	PDEBUG(_lev_,_stat_) \
 	if (pmap_debug_level >= (_lev_)) \
@@ -2775,10 +2775,8 @@ pmap_kenter_pa(vaddr_t va, paddr_t pa, vm_prot_t prot)
 	pte = vtopte(va);
 	KASSERT(!pmap_pte_v(pte));
 
-	/* XXX r/w! */
 	*pte = L2_S_PROTO | pa |
-	    L2_S_PROT(PTE_KERNEL, VM_PROT_READ|VM_PROT_WRITE) |
-	    pte_l2_s_cache_mode;
+	    L2_S_PROT(PTE_KERNEL, prot) | pte_l2_s_cache_mode;
 }
 
 void
