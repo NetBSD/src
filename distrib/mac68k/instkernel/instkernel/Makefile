@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.6 2002/02/03 19:59:30 wormey Exp $
+#	$NetBSD: Makefile,v 1.7 2002/02/09 13:56:50 lukem Exp $
 
 .include "../../../Makefile.inc"
 
@@ -23,9 +23,8 @@ clean cleandir distclean:
 	rm -f netbsd*
 
 release: all
-	${INSTALL} -d -o root -g wheel -m 755 \
-		${RELEASEDIR}/installation/instkernel/	
-	${INSTALL} ${COPY} -o root -g wheel -m 644 netbsd-${INSTALL_KERNEL}.gz \
+	${INSTALL} -d -m 755 ${RELEASEDIR}/installation/instkernel/	
+	${INSTALL} ${COPY} -m 644 netbsd-${INSTALL_KERNEL}.gz \
 		${RELEASEDIR}/installation/instkernel/	
 
 .include <bsd.kernobj.mk>
