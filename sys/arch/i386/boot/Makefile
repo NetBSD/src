@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.17 1995/01/18 17:28:07 mycroft Exp $
+#	$NetBSD: Makefile,v 1.18 1995/03/23 19:46:45 jtc Exp $
 #
 # Ported to boot 386BSD by Julian Elischer (julian@tfs.com)
 # September 1992
@@ -45,7 +45,7 @@ all: machine-links biosboot bootbios
 NOPROG=	noprog
 NOMAN=	noman
 
-CFLAGS=	-O6 -DKERNEL -DI386_CPU -DI486_CPU -DI586_CPU
+CFLAGS=	-O6 -DKERNEL -D_KERNEL -DI386_CPU -DI486_CPU -DI586_CPU
 CFLAGS+=-DDO_BAD144 -I. -I${.CURDIR} -I$S -I${.CURDIR}/../..
 
 # Uncomment this to make the boot block talk to a serial port.
