@@ -1,4 +1,4 @@
-/*	$NetBSD: pas.c,v 1.22 1997/03/20 06:48:55 mycroft Exp $	*/
+/*	$NetBSD: pas.c,v 1.23 1997/03/24 05:30:28 jtk Exp $	*/
 
 /*
  * Copyright (c) 1991-1993 Regents of the University of California.
@@ -372,7 +372,8 @@ pasprobe(parent, match, aux)
 	}
 
 	sc->sc_sbdsp.sc_irq = ia->ia_irq;
-	sc->sc_sbdsp.sc_drq = ia->ia_drq;
+	sc->sc_sbdsp.sc_drq8 = ia->ia_drq;
+	sc->sc_sbdsp.sc_drq16 = -1; /* XXX */
 	
 	if (sbdsp_probe(&sc->sc_sbdsp) == 0) {
 		DPRINTF(("pas: sbdsp probe failed\n"));
