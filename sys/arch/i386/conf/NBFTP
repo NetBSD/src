@@ -1,4 +1,4 @@
-#	$NetBSD: NBFTP,v 1.9 1999/02/16 17:46:18 abs Exp $
+#	$NetBSD: NBFTP,v 1.10 1999/03/27 07:04:37 explorer Exp $
 #	From: GENERIC,v 1.212 1999/01/06 23:30:53 thorpej Exp
 #
 #	NBFTP -- ftp/sup.netbsd.org server machine
@@ -606,8 +606,8 @@ pseudo-device	pty		128	# pseudo-terminals
 #pseudo-device	tb		1	# tablet line discipline
 #pseudo-device	sequencer	1	# MIDI sequencer
 
-# rnd is EXPERIMENTAL at this point.
-#pseudo-device	rnd			# /dev/random and in-kernel generator
+# rnd works; RND_COM does not on port i386 yet.
+pseudo-device	rnd			# /dev/random and in-kernel generator
 #options 	RND_COM			# use "com" randomness as well (BROKEN)
 
 # a pseudo device needed for Coda	# also needs CODA (above)

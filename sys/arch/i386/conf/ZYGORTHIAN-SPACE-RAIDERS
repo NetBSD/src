@@ -1,4 +1,4 @@
-#	$NetBSD: ZYGORTHIAN-SPACE-RAIDERS,v 1.6 1999/03/22 07:51:28 mycroft Exp $
+#	$NetBSD: ZYGORTHIAN-SPACE-RAIDERS,v 1.7 1999/03/27 07:04:37 explorer Exp $
 #	From: GENERIC,v 1.220 1999/02/16 17:46:17 abs Exp
 #
 #	GENERIC -- everything that's currently supported
@@ -627,7 +627,6 @@ pseudo-device	pty		64	# pseudo-terminals
 #pseudo-device	tb		1	# tablet line discipline
 pseudo-device	sequencer	1	# MIDI sequencer
 
-# rnd is EXPERIMENTAL at this point.
 #pseudo-device	rnd			# /dev/random and in-kernel generator
 #options 	RND_COM			# use "com" randomness as well (BROKEN)
 
