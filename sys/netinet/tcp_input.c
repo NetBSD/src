@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_input.c,v 1.85 1999/07/09 22:57:20 thorpej Exp $	*/
+/*	$NetBSD: tcp_input.c,v 1.86 1999/07/14 22:37:13 itojun Exp $	*/
 
 /*
 %%% portions-copyright-nrl-95
@@ -1989,11 +1989,11 @@ dropwithreset:
 	}
     }
 	if (tiflags & TH_ACK)
-		(void)tcp_respond(tp, m, m, (tcp_seq)0, th->th_ack, TH_RST);
+		(void)tcp_respond(tp, m, m, th, (tcp_seq)0, th->th_ack, TH_RST);
 	else {
 		if (tiflags & TH_SYN)
 			tlen++;
-		(void)tcp_respond(tp, m, m, th->th_seq + tlen, (tcp_seq)0,
+		(void)tcp_respond(tp, m, m, th, th->th_seq + tlen, (tcp_seq)0,
 		    TH_RST|TH_ACK);
 	}
 	return;
@@ -2881,7 +2881,7 @@ syn_cache_get(src, dst, th, hlen, tlen, so, m)
 	return (so);
 
 resetandabort:
-	(void) tcp_respond(NULL, m, m,
+	(void) tcp_respond(NULL, m, m, th,
 			   th->th_seq + tlen, (tcp_seq)0, TH_RST|TH_ACK);
 abort:
 	if (so != NULL)

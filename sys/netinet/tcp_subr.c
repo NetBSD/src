@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_subr.c,v 1.71 1999/07/14 22:08:52 drochner Exp $	*/
+/*	$NetBSD: tcp_subr.c,v 1.72 1999/07/14 22:37:14 itojun Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -354,10 +354,11 @@ tcp_template(tp)
  * segment are as specified by the parameters.
  */
 int
-tcp_respond(tp, template, m, ack, seq, flags)
+tcp_respond(tp, template, m, th0, ack, seq, flags)
 	struct tcpcb *tp;
-	struct mbuf *template;		/* XXX should be struct mbuf? */
+	struct mbuf *template;
 	register struct mbuf *m;
+	struct tcphdr *th0;
 	tcp_seq ack, seq;
 	int flags;
 {
@@ -482,15 +483,18 @@ tcp_respond(tp, template, m, ack, seq, flags)
 			ip = mtod(m, struct ip *);
 			th = (struct tcphdr *)(ip + 1);
 			xchg(ip->ip_dst, ip->ip_src, struct in_addr);
+			ip->ip_p = IPPROTO_TCP;
 			break;
 #ifdef INET6
 		case AF_INET6:
 			ip6 = mtod(m, struct ip6_hdr *);
 			th = (struct tcphdr *)(ip6 + 1);
 			xchg(ip6->ip6_dst, ip6->ip6_src, struct in6_addr);
+			ip6->ip6_nxt = IPPROTO_TCP;
 			break;
 #endif
 		}
+		*th = *th0;
 		xchg(th->th_dport, th->th_sport, u_int16_t);
 #undef xchg
 	}
