@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-2.0,v 1.1.2.214 2004/05/20 12:31:12 grant Exp $
+#	$NetBSD: CHANGES-2.0,v 1.1.2.215 2004/05/20 21:04:46 jmc Exp $
 
 A complete list of changes from the initial NetBSD 2.0 branch on 28 March 2004
 until 2.0 release:
@@ -2642,6 +2642,8 @@ gnu/dist/cvs/src/sanity.sh			patch
 gnu/dist/cvs/src/server.c              		patch
 gnu/dist/cvs/src/stack.c			new file
 gnu/dist/cvs/src/stack.h			new file
+gnu/usr.bin/cvs/include/config.h		patch
+gnu/usr.bin/cvs/cvs/Makefile			patch
 
 	Pullup to version 1.11.16
 	[christos, ticket #366]
