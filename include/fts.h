@@ -1,4 +1,4 @@
-/*	$NetBSD: fts.h,v 1.8 1997/11/04 23:36:19 thorpej Exp $	*/
+/*	$NetBSD: fts.h,v 1.9 1998/11/06 19:44:52 christos Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -47,7 +47,8 @@ typedef struct {
 	int fts_rfd;			/* fd for root */
 	int fts_pathlen;		/* sizeof(path) */
 	int fts_nitems;			/* elements in the sort array */
-	int (*fts_compar)();		/* compare function */
+	int (*fts_compar)		/* compare function */
+	    __P((const struct _ftsent **, const struct _ftsent **));
 
 #define	FTS_COMFOLLOW	0x001		/* follow command line symlinks */
 #define	FTS_LOGICAL	0x002		/* logical walk */
