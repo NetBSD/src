@@ -1,4 +1,4 @@
-$NetBSD: pcidevs,v 1.81 1998/09/18 10:49:11 drochner Exp $
+$NetBSD: pcidevs,v 1.82 1998/09/22 22:59:02 mark Exp $
 
 /*
  * Copyright (c) 1995, 1996 Christopher G. Demetriou
@@ -560,7 +560,8 @@ product	ALI M1445	0x1445	M1445 VL-PCI Bridge
 product	ALI M1449	0x1449	M1449 PCI-ISA Bridge
 product ALI M1451	0x1451	M1451 Host-PCI Bridge
 product ALI M1461	0x1461	M1461 Host-PCI Bridge
-product ALI M1541	0x1541	M1543 Host-PCI Bridge
+product ALI M1531	0x1531	M1531 Host-PCI Bridge
+product ALI M1541	0x1541	M1541 Host-PCI Bridge
 product ALI M1543	0x1533	M1543 PCI-ISA Bridge
 product ALI M4803	0x5215	M4803
 product ALI M5229	0x5229	M5229 UDMA IDE Controller
@@ -669,6 +670,9 @@ product CIRRUS CL_GD6729	0x1100	CL-GD6729
 product CIRRUS CL_GD7542	0x1200	CL-GD7542
 product CIRRUS CL_GD7543	0x1202	CL-GD7543
 product CIRRUS CL_GD7541	0x1204	CL-GD7541
+product CIRRUS CL_CD4400	0x4400	CL-CD4400 Communications Controller
+product CIRRUS CS4610		0x6001	CS4610 SoundFusion Audio Accelerator
+product CIRRUS CS4280		0x6003	CS4280 CrystalClear Audio Interface
 
 /* CMD Technology products -- info gleaned from their web site */
 product CMDTECH 640		0x0640	PCI0640
