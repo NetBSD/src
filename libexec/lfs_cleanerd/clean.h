@@ -1,4 +1,4 @@
-/*	$NetBSD: clean.h,v 1.15 2003/01/24 21:55:03 fvdl Exp $	*/
+/*	$NetBSD: clean.h,v 1.16 2003/02/24 08:48:17 perseant Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -146,12 +146,9 @@ typedef struct fs_info {
 			ctime((time_t *)&(sup)->su_lastmod)); \
 }
 
-__BEGIN_DECLS
-int		 lfs_segwait(fsid_t *, struct timeval *);
-int		 lfs_segclean(fsid_t *, u_long);
-int		 lfs_bmapv(fsid_t *, BLOCK_INFO_15 *, int); 
-int		 lfs_markv(fsid_t *, BLOCK_INFO_15 *, int);
+extern int ifile_fd;	/* Ifile file descriptor */
 
+__BEGIN_DECLS
 /* XXX ondisk32 */
 int		 dump_summary(struct lfs *, SEGSUM *, u_long, int32_t **, daddr_t);
 int		 fs_getmntinfo(struct statfs **, char *, const char *);
@@ -159,7 +156,7 @@ void		 get(int, off_t, void *, size_t);
 struct dinode	*get_dinode (FS_INFO *, ino_t);
 int		 get_rawblock(FS_INFO *, char *, size_t, daddr_t);
 FS_INFO		*get_fs_info(struct statfs *, int);
-int 		 lfs_segmapv(FS_INFO *, int, caddr_t, BLOCK_INFO_15 **, int *);
+int 		 lfs_segmapv(FS_INFO *, int, caddr_t, BLOCK_INFO **, int *);
 int		 mmap_segment(FS_INFO *, int, caddr_t *, int);
 void		 munmap_segment(FS_INFO *, caddr_t, int);
 void		 reread_fs_info(FS_INFO *, int);
@@ -173,4 +170,8 @@ void		 print_CLEANERINFO(CLEANERINFO *);
 int		 clean_inode(struct fs_info *, ino_t);
 int		 clean_all_inodes(struct fs_info *);
 int		 fork_coalesce(struct fs_info *);
+
+int		 lfs_markv_emul(int, BLOCK_INFO *, int);
+int		 lfs_bmapv_emul(int, BLOCK_INFO *, int);
+int		 lfs_segwait_emul(int, struct timeval *);
 __END_DECLS
