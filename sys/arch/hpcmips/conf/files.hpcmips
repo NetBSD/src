@@ -1,4 +1,4 @@
-#	$NetBSD: files.hpcmips,v 1.33 2000/06/11 23:34:31 matt Exp $
+#	$NetBSD: files.hpcmips,v 1.33.2.1 2000/08/06 04:06:49 takemura Exp $
 
 # maxpartitions must be first item in files.${ARCH}.
 maxpartitions 8
@@ -90,6 +90,14 @@ file	arch/hpcmips/dev/btnmgr.c	btnmgr
 file	arch/hpcmips/dev/video_subr.c	tx3912video | plumvideo
 
 #
+# power management
+#
+include "arch/hpcmips/dev/apm/files.apm"
+device hpcapm: apmdevif
+attach hpcapm at mainbus
+file	arch/hpcmips/dev/hpcapm.c	hpcapm
+
+#
 # ISA bus support
 #
 include "dev/isa/files.isa"
@@ -165,6 +173,11 @@ file arch/hpcmips/vr/vrpiu.c			vrpiu
 
 attach ohci at vrip with ohci_vrip
 file arch/hpcmips/dev/ohci_vrip.c		ohci_vrip
+
+device mqvideo: hpcfbif
+attach mqvideo at vrip with mqvideo_vrip
+file arch/hpcmips/vr/mq200_vrip.c		mqvideo_vrip
+file arch/hpcmips/dev/mq200.c			mqvideo
 
 #
 #	TOSHIBA TX3912/3922
