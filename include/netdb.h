@@ -1,4 +1,4 @@
-/*	$NetBSD: netdb.h,v 1.15 1999/12/20 06:48:11 itojun Exp $	*/
+/*	$NetBSD: netdb.h,v 1.16 2000/01/05 14:40:14 mjl Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -168,7 +168,7 @@ struct addrinfo {
 #define	NETDB_SUCCESS	0	/* no problem */
 #endif
 #define	HOST_NOT_FOUND	1 /* Authoritative Answer Host not found */
-#define	TRY_AGAIN	2 /* Non-Authoritive Host not found, or SERVERFAIL */
+#define	TRY_AGAIN	2 /* Non-Authoritative Host not found, or SERVERFAIL */
 #define	NO_RECOVERY	3 /* Non recoverable errors, FORMERR, REFUSED, NOTIMP */
 #define	NO_DATA		4 /* Valid name, no data record of requested type */
 #if !defined(_XOPEN_SOURCE)
