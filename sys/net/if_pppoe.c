@@ -1,4 +1,4 @@
-/* $NetBSD: if_pppoe.c,v 1.24.4.9 2003/02/07 20:08:45 tron Exp $ */
+/* $NetBSD: if_pppoe.c,v 1.24.4.10 2003/02/07 20:10:28 tron Exp $ */
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_pppoe.c,v 1.24.4.9 2003/02/07 20:08:45 tron Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_pppoe.c,v 1.24.4.10 2003/02/07 20:10:28 tron Exp $");
 
 #include "pppoe.h"
 #include "bpfilter.h"
@@ -181,6 +181,7 @@ static int pppoe_output(struct pppoe_softc *, struct mbuf *);
 /* internal helper functions */
 static struct pppoe_softc * pppoe_find_softc_by_session(u_int, struct ifnet *);
 static struct pppoe_softc * pppoe_find_softc_by_hunique(u_int8_t *, size_t, struct ifnet *);
+static struct mbuf *pppoe_get_mbuf(size_t len);
 
 LIST_HEAD(pppoe_softc_head, pppoe_softc) pppoe_softc_list;
 
@@ -602,9 +603,15 @@ pppoe_data_input(struct mbuf *m)
 	u_int16_t session, plen;
 	struct pppoe_softc *sc;
 	struct pppoehdr *ph;
+#ifdef PPPOE_TERM_UNKNOWN_SESSIONS
+	u_int8_t shost[ETHER_ADDR_LEN];
+#endif
 
 	KASSERT(m->m_flags & M_PKTHDR);
 
+#ifdef PPPOE_TERM_UNKNOWN_SESSIONS
+	memcpy(shost, mtod(m, struct ether_header*)->ether_shost, ETHER_ADDR_LEN);
+#endif
 	m_adj(m, sizeof(struct ether_header));
 	if (m->m_pkthdr.len <= PPPOE_HEADERLEN) {
 		printf("pppoe (data): dropping too short packet: %d bytes\n",
@@ -631,8 +638,33 @@ pppoe_data_input(struct mbuf *m)
 
 	session = ntohs(ph->session);
 	sc = pppoe_find_softc_by_session(session, m->m_pkthdr.rcvif);
-	if (sc == NULL)
+	if (sc == NULL) {
+#ifdef PPPOE_TERM_UNKNOWN_SESSIONS
+		struct mbuf *m0;
+		struct sockaddr dst;
+		struct ether_header *eh;
+		u_int8_t *p;
+
+		printf("pppoe: input for unknown session 0x%x, sending PADT\n",
+		    session);
+
+		m0 = pppoe_get_mbuf(PPPOE_HEADERLEN);
+		if (!m0)
+			goto drop;
+		p = mtod(m0, u_int8_t *);
+		PPPOE_ADD_HEADER(p, PPPOE_CODE_PADT, session, 0);
+
+		memset(&dst, 0, sizeof dst);
+		dst.sa_family = AF_UNSPEC;
+		eh = (struct ether_header*)&dst.sa_data;
+		eh->ether_type = htons(ETHERTYPE_PPPOE);
+		memcpy(&eh->ether_dhost, shost, ETHER_ADDR_LEN);
+
+		m0->m_flags &= ~(M_BCAST|M_MCAST);
+		m->m_pkthdr.rcvif->if_output(m->m_pkthdr.rcvif, m0, &dst, NULL);
+#endif
 		goto drop;
+	}
 
 	plen = ntohs(ph->plen);
 
