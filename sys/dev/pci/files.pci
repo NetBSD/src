@@ -1,4 +1,4 @@
-#	$NetBSD: files.pci,v 1.103 2000/10/19 14:24:44 ad Exp $
+#	$NetBSD: files.pci,v 1.104 2000/10/20 15:14:25 ad Exp $
 #
 # Config file and device description for machine-independent PCI code.
 # Included by ports that need it.  Requires that the SCSI files be
@@ -42,7 +42,7 @@ device	twe {unit = -1}
 attach	twe at pci
 file	dev/pci/twe.c			twe
 
-defopt	opt_twe.h	TWE_MAX_QUEUECNT TWE_MAX_PI_QUEUECNT
+defopt	opt_twe.h	TWE_MAX_QUEUECNT TWE_MAX_PU_QUEUECNT
 
 attach	lsu at twe with lsu_twe
 file	dev/lsu/lsu_twe.c		lsu_twe
