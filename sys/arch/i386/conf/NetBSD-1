@@ -1,0 +1,88 @@
+#	$NetBSD: NetBSD-1,v 1.1 1996/08/28 07:17:58 thorpej Exp $
+#
+#	NetBSD-1 - Mail, CVS, and GNATS server
+#
+
+machine		i386		# architecture, used by config; REQUIRED
+
+options		I486_CPU	# CPU classes; at least one is REQUIRED
+
+# Some BIOSes don't get the size of extended memory right.  If you
+# have a broken BIOS, uncomment the following and set the value
+# properly for your system.
+#options	EXTMEM_SIZE=...	# size of extended memory
+
+options 	DUMMY_NOPS	# speed hack; recommended
+options		XSERVER,UCONSOLE
+options		MACHINE_NONCONTIG
+
+maxusers	32		# estimated number of users
+options		TIMEZONE=0	# time zone to adjust RTC time by
+options		DST=0		# daylight savings time used by RTC
+
+options		SWAPPAGER	# paging; REQUIRED
+options		VNODEPAGER	# mmap() of files
+options		DEVPAGER	# mmap() of devices
+
+#options 	DDB		# in-kernel debugger
+#makeoptions	DEBUG="-g"	# compile full symbol table
+options		KTRACE		# system call tracing, a la ktrace(1)
+
+options		COMPAT_NOMID	# compatibility with 386BSD, BSDI, NetBSD 0.8,
+options		COMPAT_09	# NetBSD 0.9,
+options		COMPAT_10	# NetBSD 1.0,
+options		COMPAT_11	# NetBSD 1.1,
+options 	COMPAT_12	# NetBSD 1.2,
+options		COMPAT_43	# and 4.3BSD
+options		TCP_COMPAT_42	# TCP bug compatibility with 4.2BSD
+
+options		FFS		# UFS
+options		MFS		# memory file system
+
+options		NFSCLIENT	# Network File System client
+options		NFSSERVER	# Network File System server
+
+options		CD9660		# ISO 9660 + Rock Ridge file system
+options		FDESC		# /dev/fd
+options		FIFO		# FIFOs; RECOMMENDED
+options		KERNFS		# /kern
+options		PROCFS		# /proc
+
+options		INET		# IP + ICMP + TCP + UDP
+
+# Busy server; bump these up
+options 	NKMEMCLUSTERS=2048	# slots in kmem_map
+options 	NMBCLUSTERS=1024	# slots in mb_map
+
+config		netbsd root on sd0a swap on sd0b and sd1b
+
+mainbus0 at root
+
+pci0	at mainbus0 bus ?
+isa0	at mainbus0
+
+ppb*	at pci? dev ? function ?	# PCI-PCI bridges
+pci*	at ppb? bus ?
+
+npx0	at isa? port 0xf0 irq 13	# math coprocessor
+
+#pc0	at isa? port 0x60 irq 1		# generic PC console device
+vt0	at isa? port 0x60 irq 1
+
+com0	at isa? port 0x3f8 irq 4	# standard PC serial ports
+com1	at isa? port 0x2f8 irq 3
+
+ahc*	at pci? dev ? function ?	# Adaptec [23]94x, aic78x0 SCSI controllers
+scsibus* at ahc?
+
+sd*	at scsibus? target ? lun ?	# SCSI disk drives
+st*	at scsibus? target ? lun ?	# SCSI tape drives
+cd*	at scsibus? target ? lun ?	# SCSI CD-ROM drives
+ch*	at scsibus? target ? lun ?	# SCSI autochangers
+
+ed0	at isa? port 0x300 irq 9	# NE2000 ethernet
+
+pseudo-device	loop	1		# network loopback
+pseudo-device	bpfilter 8		# packet filter
+
+pseudo-device	pty	64		# pseudo-terminals
