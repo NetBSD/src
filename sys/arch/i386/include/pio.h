@@ -1,4 +1,4 @@
-/*	$NetBSD: pio.h,v 1.11 1995/04/22 03:59:59 mycroft Exp $	*/
+/*	$NetBSD: pio.h,v 1.11.2.1 1996/03/01 18:09:02 scottr Exp $	*/
 
 /*
  * Copyright (c) 1993, 1995 Charles M. Hannum.  All rights reserved.
@@ -57,7 +57,7 @@ static __inline u_char
 __inbc(int port)
 {
 	u_char	data;
-	__asm __volatile("inb %1,%0" : "=a" (data) : "i" (port));
+	__asm __volatile("inb %1,%0" : "=a" (data) : "id" (port));
 	return data;
 }
 
@@ -65,7 +65,7 @@ static __inline u_char
 __inb(int port)
 {
 	u_char	data;
-	__asm __volatile("inb %%dx,%0" : "=a" (data) : "d" (port));
+	__asm __volatile("inb %w1,%0" : "=a" (data) : "d" (port));
 	return data;
 }
 
@@ -140,13 +140,13 @@ insl(int port, void *addr, int cnt)
 static __inline void
 __outbc(int port, u_char data)
 {
-	__asm __volatile("outb %0,%1" : : "a" (data), "i" (port));
+	__asm __volatile("outb %0,%1" : : "a" (data), "id" (port));
 }
 
 static __inline void
 __outb(int port, u_char data)
 {
-	__asm __volatile("outb %0,%%dx" : : "a" (data), "d" (port));
+	__asm __volatile("outb %0,%w1" : : "a" (data), "d" (port));
 }
 
 static __inline void
