@@ -1,4 +1,4 @@
-/*	$NetBSD: spec_vnops.c,v 1.23 1995/04/10 00:48:10 mycroft Exp $	*/
+/*	$NetBSD: spec_vnops.c,v 1.24 1995/07/02 07:20:50 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -225,7 +225,6 @@ spec_read(ap)
 	struct partinfo dpart;
 	int n, on, majordev, (*ioctl)();
 	int error = 0;
-	dev_t dev;
 
 #ifdef DIAGNOSTIC
 	if (uio->uio_rw != UIO_READ)
@@ -246,14 +245,15 @@ spec_read(ap)
 		return (error);
 
 	case VBLK:
+		if (uio->uio_resid == 0)
+			return (0);
 		if (uio->uio_offset < 0)
 			return (EINVAL);
 		bsize = BLKDEV_IOSIZE;
 		ssize = DEV_BSIZE;
-		dev = vp->v_rdev;
-		if ((majordev = major(dev)) < nblkdev &&
+		if ((majordev = major(vp->v_rdev)) < nblkdev &&
 		    (ioctl = bdevsw[majordev].d_ioctl) != NULL &&
-		    (*ioctl)(dev, DIOCGPART, (caddr_t)&dpart, FREAD, p) == 0) {
+		    (*ioctl)(vp->v_rdev, DIOCGPART, (caddr_t)&dpart, FREAD, p) == 0) {
 			if (dpart.part->p_fstype == FS_BSDFFS &&
 			    dpart.part->p_frag != 0 && dpart.part->p_fsize != 0)
 				bsize = dpart.part->p_frag *
@@ -308,9 +308,9 @@ spec_write(ap)
 	struct proc *p = uio->uio_procp;
 	struct buf *bp;
 	daddr_t bn;
-	int bsize, blkmask, ssize;
+	long bsize, bscale, ssize;
 	struct partinfo dpart;
-	register int n, on;
+	int n, on, majordev, (*ioctl)();
 	int error = 0;
 
 #ifdef DIAGNOSTIC
@@ -336,8 +336,9 @@ spec_write(ap)
 			return (EINVAL);
 		bsize = BLKDEV_IOSIZE;
 		ssize = DEV_BSIZE;
-		if ((*bdevsw[major(vp->v_rdev)].d_ioctl)(vp->v_rdev, DIOCGPART,
-		    (caddr_t)&dpart, FREAD, p) == 0) {
+		if ((majordev = major(vp->v_rdev)) < nblkdev &&
+		    (ioctl = bdevsw[majordev].d_ioctl) != NULL &&
+		    (*ioctl)(vp->v_rdev, DIOCGPART, (caddr_t)&dpart, FREAD, p) == 0) {
 			if (dpart.part->p_fstype == FS_BSDFFS &&
 			    dpart.part->p_frag != 0 && dpart.part->p_fsize != 0)
 				bsize = dpart.part->p_frag *
@@ -345,9 +346,9 @@ spec_write(ap)
 			if (dpart.disklab->d_secsize != 0)
 				ssize = dpart.disklab->d_secsize;
 		}
-		blkmask = (bsize / ssize) - 1;
+		bscale = bsize / ssize;
 		do {
-			bn = (uio->uio_offset / ssize) &~ blkmask;
+			bn = (uio->uio_offset / ssize) &~ (bscale - 1);
 			on = uio->uio_offset % bsize;
 			n = min((unsigned)(bsize - on), uio->uio_resid);
 			if (n == bsize)
