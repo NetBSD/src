@@ -1,7 +1,7 @@
-/* $NetBSD: vm_machdep.c,v 1.8 2000/12/30 13:33:15 bjh21 Exp $ */
+/* $NetBSD: vm_machdep.c,v 1.9 2001/01/06 13:09:05 bjh21 Exp $ */
 
 /*-
- * Copyright (c) 2000 Ben Harris
+ * Copyright (c) 2000, 2001 Ben Harris
  * Copyright (c) 1994-1998 Mark Brinicombe.
  * Copyright (c) 1994 Brini.
  * All rights reserved.
@@ -66,7 +66,7 @@
 
 #include <sys/param.h>
 
-__RCSID("$NetBSD: vm_machdep.c,v 1.8 2000/12/30 13:33:15 bjh21 Exp $");
+__RCSID("$NetBSD: vm_machdep.c,v 1.9 2001/01/06 13:09:05 bjh21 Exp $");
 
 #include <sys/buf.h>
 #include <sys/exec.h>
@@ -274,10 +274,7 @@ sendsig(sig_t catcher, int sig, sigset_t *mask, u_long code)
  * fault.
  */
 int
-sys___sigreturn14(p, v, retval)
-	struct proc *p;
-	void *v;
-	register_t *retval;
+sys___sigreturn14(struct proc *p, void *v, register_t *retval)
 {
 	struct sys___sigreturn14_args /* {
 		syscallarg(struct sigcontext *) sigcntxp;
@@ -351,9 +348,7 @@ cpu_swapout(struct proc *p)
  */
 /* This code was originally stolen from the alpha port. */
 void
-vmapbuf(bp, len)
-	struct buf *bp;
-	vsize_t len;
+vmapbuf(struct buf *bp, vsize_t len)
 {
 	vaddr_t faddr, taddr, off;
 	paddr_t pa;
@@ -386,9 +381,7 @@ vmapbuf(bp, len)
  * Unmap a previously-mapped user I/O request.
  */
 void
-vunmapbuf(bp, len)
-	struct buf *bp;
-	vsize_t len;
+vunmapbuf(struct buf *bp, vsize_t len)
 {
 	vaddr_t addr, off;
 
