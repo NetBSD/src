@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.S,v 1.117 2000/10/05 00:53:00 cgd Exp $	*/
+/*	$NetBSD: locore.S,v 1.118 2000/10/05 01:17:20 cgd Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -1094,6 +1094,7 @@ LEAF(mips_cp0_cause_write)
 	nop
 END(mips_cp0_cause_write)
 
+
 /*
  * u_int32_t mips_cp0_status_read(void)
  *
@@ -1121,6 +1122,7 @@ LEAF(mips_cp0_status_write)
 	j	ra
 	nop
 END(mips_cp0_status_write)
+
 
 #if !defined(NOFPU) || defined(SOFTFLOAT)
 /*----------------------------------------------------------------------------
