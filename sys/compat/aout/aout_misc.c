@@ -1,4 +1,4 @@
-/*	$NetBSD: aout_misc.c,v 1.4 2000/12/01 12:28:31 jdolecek Exp $	*/
+/*	$NetBSD: aout_misc.c,v 1.5 2000/12/06 21:02:00 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -36,6 +36,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
+#if defined(_KERNEL) && !defined(_LKM)
 #include "opt_ktrace.h"
 #include "opt_nfsserver.h"
 #include "opt_compat_netbsd.h"
@@ -44,6 +45,7 @@
 
 #include "fs_lfs.h"
 #include "fs_nfs.h"
+#endif
 
 #include <sys/param.h>
 #include <sys/systm.h>
