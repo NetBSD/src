@@ -19,7 +19,7 @@
  * Modified by Paul Mackerras (paulus@cs.anu.edu.au)
  * Added PPP_MRU, sc_outm, sc_fastq, sc_bpf.
  *
- * $Id: if_ppp.h,v 1.2 1993/08/31 00:05:31 paulus Exp $
+ * $Id: if_ppp.h,v 1.2.2.1 1993/11/14 21:22:10 mycroft Exp $
  */
 
 /* Portions Copyright (C) 1990 Brad K. Clements (streams support)
@@ -101,8 +101,6 @@ struct ppp_softc {
 /* state bits */
 #define	SC_ESCAPED	0x00010000	/* saw a PPP_ESCAPE */
 #define	SC_FLUSH	0x00020000	/* flush input until next PPP_FLAG */
-
-#define t_sc T_LINEP
 
 /* this stuff doesn't belong here... */
 #define	PPPIOCGFLAGS	_IOR('t', 90, int)	/* get configuration flags */
