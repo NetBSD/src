@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.112 2000/12/07 17:09:26 thorpej Exp $	*/
+/*	$NetBSD: pmap.c,v 1.113 2000/12/07 17:12:21 thorpej Exp $	*/
 
 /*
  *
@@ -427,8 +427,6 @@ static boolean_t	 pmap_try_steal_pv __P((struct pv_head *,
 						struct pv_entry *,
 						struct pv_entry *));
 static void		pmap_unmap_ptes __P((struct pmap *));
-
-void			pmap_release __P((pmap_t));
 
 /*
  * p m a p   i n l i n e   h e l p e r   f u n c t i o n s
@@ -1784,6 +1782,7 @@ void
 pmap_destroy(pmap)
 	struct pmap *pmap;
 {
+	struct vm_page *pg;
 	int refs;
 
 	/*
@@ -1800,25 +1799,6 @@ pmap_destroy(pmap)
 	/*
 	 * reference count is zero, free pmap resources and then free pmap.
 	 */
-
-	pmap_release(pmap);
-	pool_put(&pmap_pmap_pool, pmap);
-}
-
-/*
- * pmap_release: release all resources held by a pmap
- *
- * => if pmap is still referenced it should be locked
- * => XXX: we currently don't expect any busy PTPs because we don't
- *    allow anything to map them (except for the kernel's private
- *    recursive mapping) or make them busy.
- */
-
-void
-pmap_release(pmap)
-	struct pmap *pmap;
-{
-	struct vm_page *pg;
 
 	/*
 	 * remove it from global list of pmaps
@@ -1860,6 +1840,8 @@ pmap_release(pmap)
 			    pmap->pm_ldt_len * sizeof(union descriptor));
 	}
 #endif
+
+	pool_put(&pmap_pmap_pool, pmap);
 }
 
 /*
