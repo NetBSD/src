@@ -1,10 +1,10 @@
-dnl $Heimdal: check-type-extra.m4,v 1.2 1999/03/01 09:52:23 joda Exp $
-dnl $NetBSD: check-type-extra.m4,v 1.1.1.3 2002/09/12 12:41:44 joda Exp $
+dnl $Heimdal: check-type-extra.m4,v 1.2.34.1 2004/04/01 07:27:33 joda Exp $
+dnl $NetBSD: check-type-extra.m4,v 1.1.1.4 2004/04/02 14:48:06 lha Exp $
 dnl
 dnl ac_check_type + extra headers
 
 dnl AC_CHECK_TYPE_EXTRA(TYPE, DEFAULT, HEADERS)
-AC_DEFUN(AC_CHECK_TYPE_EXTRA,
+AC_DEFUN([AC_CHECK_TYPE_EXTRA],
 [AC_REQUIRE([AC_HEADER_STDC])dnl
 AC_MSG_CHECKING(for $1)
 AC_CACHE_VAL(ac_cv_type_$1,

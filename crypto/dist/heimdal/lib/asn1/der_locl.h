@@ -31,8 +31,8 @@
  * SUCH DAMAGE. 
  */
 
-/* $Heimdal: der_locl.h,v 1.4 2001/09/27 16:21:47 assar Exp $
-   $NetBSD: der_locl.h,v 1.1.1.3 2002/09/12 12:41:40 joda Exp $ */
+/* $Heimdal: der_locl.h,v 1.4.6.1 2004/02/09 17:54:05 lha Exp $
+   $NetBSD: der_locl.h,v 1.1.1.4 2004/04/02 14:47:42 lha Exp $ */
 
 #ifndef __DER_LOCL_H__
 #define __DER_LOCL_H__
@@ -53,5 +53,8 @@
 #include <asn1-common.h>
 #include <asn1_err.h>
 #include <der.h>
+
+size_t _heim_len_unsigned (unsigned);
+size_t _heim_len_int (int);
 
 #endif /* __DER_LOCL_H__ */

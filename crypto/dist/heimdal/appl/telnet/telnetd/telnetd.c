@@ -33,8 +33,8 @@
 
 #include "telnetd.h"
 
-__RCSID("$Heimdal: telnetd.c,v 1.69 2002/08/23 19:28:01 assar Exp $"
-        "$NetBSD: telnetd.c,v 1.1.1.6 2002/09/12 12:41:34 joda Exp $");
+__RCSID("$Heimdal: telnetd.c,v 1.69.6.1 2004/03/22 18:17:25 lha Exp $"
+        "$NetBSD: telnetd.c,v 1.1.1.7 2004/04/02 14:47:30 lha Exp $");
 
 #ifdef _SC_CRAY_SECURE_SYS
 #include <sys/sysv.h>
@@ -163,6 +163,8 @@ main(int argc, char **argv)
     pfrontp = pbackp = ptyobuf;
     netip = netibuf;
     nfrontp = nbackp = netobuf;
+
+    setprogname(argv[0]);
 
     progname = *argv;
 #ifdef ENCRYPTION
