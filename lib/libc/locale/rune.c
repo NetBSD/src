@@ -1,4 +1,4 @@
-/*	$NetBSD: rune.c,v 1.6 2001/01/21 03:49:02 itojun Exp $	*/
+/*	$NetBSD: rune.c,v 1.7 2001/01/21 03:56:27 itojun Exp $	*/
 
 /*-
  * Copyright (c)1999 Citrus Project,
@@ -67,7 +67,7 @@
 #if 0
 static char sccsid[] = "@(#)rune.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: rune.c,v 1.6 2001/01/21 03:49:02 itojun Exp $");
+__RCSID("$NetBSD: rune.c,v 1.7 2001/01/21 03:56:27 itojun Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -415,7 +415,7 @@ _Read_CTypeAsRune(fp)
 		/* we don't really trust _B in the file.  see above. */
 		if (new_ctype[1 + x] & _B)
 			rl->__runetype[x] |= _CTYPE_B;
-		if ((new_ctype[1 + x] & (_P|_U|_L|_N)) || x == ' ')
+		if ((new_ctype[1 + x] & (_P|_U|_L|_N|_B)) || x == ' ')
 			rl->__runetype[x] |= (_CTYPE_R | _CTYPE_SW1);
 		if (x == ' ' || x == '\t')
 			rl->__runetype[x] |= _CTYPE_B;
