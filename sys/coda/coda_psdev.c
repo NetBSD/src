@@ -1,4 +1,4 @@
-/*	$NetBSD: coda_psdev.c,v 1.19 2001/11/23 17:42:48 perry Exp $	*/
+/*	$NetBSD: coda_psdev.c,v 1.19.8.1 2002/05/16 04:18:02 gehenna Exp $	*/
 
 /*
  * 
@@ -52,7 +52,7 @@
 /* These routines are the device entry points for Venus. */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: coda_psdev.c,v 1.19 2001/11/23 17:42:48 perry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: coda_psdev.c,v 1.19.8.1 2002/05/16 04:18:02 gehenna Exp $");
 
 extern int coda_nc_initialized;    /* Set if cache has been initialized */
 
@@ -72,6 +72,7 @@ extern int coda_nc_initialized;    /* Set if cache has been initialized */
 #include <sys/ioctl.h>
 #include <sys/poll.h>
 #include <sys/select.h>
+#include <sys/conf.h>
 
 #include <miscfs/syncfs/syncfs.h>
 
@@ -79,7 +80,6 @@ extern int coda_nc_initialized;    /* Set if cache has been initialized */
 #include <coda/cnode.h>
 #include <coda/coda_namecache.h>
 #include <coda/coda_io.h>
-#include <coda/coda_psdev.h>
 
 #define CTL_C
 
@@ -95,6 +95,18 @@ int coda_pcatch = PCATCH;
 #define ENTRY if(coda_psdev_print_entry) myprintf(("Entered %s\n",__func__))
 
 void vcodaattach(int n);
+
+dev_type_open(vc_nb_open);
+dev_type_close(vc_nb_close);
+dev_type_read(vc_nb_read);
+dev_type_write(vc_nb_write);
+dev_type_ioctl(vc_nb_ioctl);
+dev_type_poll(vc_nb_poll);
+
+const struct cdevsw vcoda_cdevsw = {
+	vc_nb_open, vc_nb_close, vc_nb_read, vc_nb_write, vc_nb_ioctl,
+	nostop, notty, vc_nb_poll, nommap,
+};
 
 struct vmsg {
     struct queue vm_chain;
