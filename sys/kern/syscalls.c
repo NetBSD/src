@@ -177,7 +177,7 @@ char *syscallnames[] = {
 	"#152",			/* 152 = nosys */
 	"#153",			/* 153 = nosys */
 	"#154",			/* 154 = nosys */
-#ifdef NFS
+#ifdef NFSSERVER
 	"nfssvc",			/* 155 = nfssvc */
 #else
 	"#155",			/* 155 = nosys */
@@ -186,7 +186,7 @@ char *syscallnames[] = {
 	"statfs",			/* 157 = statfs */
 	"fstatfs",			/* 158 = fstatfs */
 	"#159",			/* 159 = nosys */
-#ifdef NFS
+#ifdef NFSCLIENT
 	"async_daemon",			/* 160 = async_daemon */
 	"getfh",			/* 161 = getfh */
 #else

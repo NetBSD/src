@@ -146,14 +146,14 @@ int	getrlimit();
 int	setrlimit();
 int	setsid();
 int	quotactl();
-#ifdef NFS
+#ifdef NFSSERVER
 int	nfssvc();
 #else
 #endif
 int	getdirentries();
 int	statfs();
 int	fstatfs();
-#ifdef NFS
+#ifdef NFSCLIENT
 int	async_daemon();
 int	getfh();
 #else
@@ -200,10 +200,10 @@ int	ogetpeername();
 int	okillpg();
 int	oquota();
 int	ogetsockname();
-#ifdef NFS
+#ifdef NFSSERVER
 #else
 #endif
-#ifdef NFS
+#ifdef NFSCLIENT
 #else
 #endif
 #ifdef SYSVSHM
@@ -386,7 +386,7 @@ struct sysent sysent[] = {
 	0, nosys,			/* 152 = nosys */
 	0, nosys,			/* 153 = nosys */
 	0, nosys,			/* 154 = nosys */
-#ifdef NFS
+#ifdef NFSSERVER
 	5, nfssvc,			/* 155 = nfssvc */
 #else
 	0, nosys,			/* 155 = nosys */
@@ -395,7 +395,7 @@ struct sysent sysent[] = {
 	2, statfs,			/* 157 = statfs */
 	2, fstatfs,			/* 158 = fstatfs */
 	0, nosys,			/* 159 = nosys */
-#ifdef NFS
+#ifdef NFSCLIENT
 	0, async_daemon,			/* 160 = async_daemon */
 	2, getfh,			/* 161 = getfh */
 #else
