@@ -38,6 +38,7 @@
  * from: Utah $Hdr: cpu.h 1.16 91/03/25$
  *
  *	@(#)cpu.h	7.7 (Berkeley) 6/27/91
+ *	$Id: cpu.h,v 1.7 1994/02/11 07:02:37 chopps Exp $
  */
 
 /*

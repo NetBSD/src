@@ -1,6 +1,7 @@
 ; **
 ; ** 53C710 SCRIPTS for Progressive Peripherals, Inc. Zeus SCSI-2 driver
 ; **
+; **	$Id: Zeus.script,v 1.2 1994/02/11 07:01:20 chopps Exp $
 
 ; **
 ; ** Absolute definitions

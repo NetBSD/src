@@ -31,6 +31,7 @@
  * SUCH DAMAGE.
  *
  *	@(#)device.h	7.3 (Berkeley) 5/7/91
+ *	$Id: device.h,v 1.7 1994/02/11 07:01:31 chopps Exp $
  */
 
 struct driver {

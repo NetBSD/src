@@ -31,6 +31,7 @@
  * SUCH DAMAGE.
  *
  *	@(#)dma.c
+ *	$Id: a2091dma.c,v 1.4 1994/02/11 07:01:23 chopps Exp $
  */
 
 /*

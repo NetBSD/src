@@ -38,6 +38,7 @@
  * from: Utah $Hdr: itevar.h 1.1 90/07/09$
  *
  *	@(#)itevar.h	7.2 (Berkeley) 11/4/90
+ *	$Id: itevar.h,v 1.6 1994/02/11 07:01:54 chopps Exp $
  */
 
 #define UNIT(dev)       minor(dev)

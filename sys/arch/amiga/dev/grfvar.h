@@ -38,6 +38,7 @@
  * from: Utah $Hdr: grfvar.h 1.9 91/01/21$
  *
  *	@(#)grfvar.h	7.3 (Berkeley) 5/7/91
+ *	$Id: grfvar.h,v 1.6 1994/02/11 07:01:45 chopps Exp $
  */
 
 /* internal structure of lock page */

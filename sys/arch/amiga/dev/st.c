@@ -38,6 +38,7 @@
  * from: Utah $Hdr: st.c 1.8 90/10/14$
  *
  *      @(#)st.c	7.3 (Berkeley) 5/4/91
+ *	$Id: st.c,v 1.10 1994/02/11 07:02:22 chopps Exp $
  */
 
 /*

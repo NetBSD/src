@@ -34,6 +34,7 @@
  * SUCH DAMAGE.
  *
  *	@(#)scsivar.h	7.1 (Berkeley) 5/8/90
+ *	$Id: scsivar.h,v 1.7 1994/02/11 07:02:13 chopps Exp $
  */
 
 /*
