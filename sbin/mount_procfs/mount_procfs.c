@@ -27,7 +27,7 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
- *	$Id: mount_procfs.c,v 1.2 1993/08/24 17:16:56 pk Exp $
+ *	$Id: mount_procfs.c,v 1.3 1993/08/25 13:16:27 pk Exp $
  */
 
 #include <stdio.h>
@@ -51,9 +51,7 @@ char **argv;
 	int c;
 	extern char *optarg;
 	extern int optind;
-	int opts;
-
-	opts = MNT_RDONLY;
+	int opts = 0;
 
 	while ((c = getopt (argc, argv, "F:")) != EOF) {
 		switch (c) {
