@@ -1,4 +1,4 @@
-/* $NetBSD: ieee80211_rssadapt.c,v 1.6 2004/05/06 07:11:40 dyoung Exp $ */
+/* $NetBSD: ieee80211_rssadapt.c,v 1.7 2004/05/25 04:33:59 atatat Exp $ */
 /*-
  * Copyright (c) 2003, 2004 David Young.  All rights reserved.
  *
@@ -171,14 +171,16 @@ SYSCTL_SETUP(sysctl_ieee80211_rssadapt,
 		goto err;
 
 	if ((rc = sysctl_createv(clog, 0, &node, &node,
-	    CTLFLAG_PERMANENT, CTLTYPE_NODE, "rssadapt", NULL,
+	    CTLFLAG_PERMANENT, CTLTYPE_NODE, "rssadapt",
+	    SYSCTL_DESCR("Received Signal Strength adaptation controls"),
 	    NULL, 0, NULL, 0, CTL_CREATE, CTL_EOL)) != 0)
 		goto err;
 
 #ifdef IEEE80211_DEBUG
 	/* control debugging printfs */
 	if ((rc = sysctl_createv(clog, 0, &node, NULL,
-	    CTLFLAG_PERMANENT|CTLFLAG_READWRITE, CTLTYPE_INT, "debug", NULL,
+	    CTLFLAG_PERMANENT|CTLFLAG_READWRITE, CTLTYPE_INT, "debug",
+	    SYSCTL_DESCR("Enable RSS adaptation debugging output"),
 	    sysctl_ieee80211_rssadapt_debug, 0, &ieee80211_rssadapt_debug, 0,
 	    CTL_CREATE, CTL_EOL)) != 0)
 		goto err;
@@ -187,7 +189,8 @@ SYSCTL_SETUP(sysctl_ieee80211_rssadapt,
 	/* control rate of decay for exponential averages */
 	if ((rc = sysctl_createv(clog, 0, &node, NULL,
 	    CTLFLAG_PERMANENT|CTLFLAG_READWRITE, CTLTYPE_STRUCT,
-	    "expavgctl", NULL, sysctl_ieee80211_rssadapt_expavgctl, 0,
+	    "expavgctl", SYSCTL_DESCR("RSS exponential averaging control"),
+	    sysctl_ieee80211_rssadapt_expavgctl, 0,
 	    &master_expavgctl, sizeof(master_expavgctl), CTL_CREATE,
 	    CTL_EOL)) != 0)
 		goto err;

@@ -1,4 +1,4 @@
-/*	$NetBSD: udp_usrreq.c,v 1.121 2004/05/07 00:55:15 jonathan Exp $	*/
+/*	$NetBSD: udp_usrreq.c,v 1.122 2004/05/25 04:34:00 atatat Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: udp_usrreq.c,v 1.121 2004/05/07 00:55:15 jonathan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: udp_usrreq.c,v 1.122 2004/05/25 04:34:00 atatat Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -1089,25 +1089,29 @@ SYSCTL_SETUP(sysctl_net_inet_udp_setup, "sysctl net.inet.udp subtree setup")
 		       CTL_NET, PF_INET, CTL_EOL);
 	sysctl_createv(clog, 0, NULL, NULL,
 		       CTLFLAG_PERMANENT,
-		       CTLTYPE_NODE, "udp", NULL,
+		       CTLTYPE_NODE, "udp",
+		       SYSCTL_DESCR("UDPv4 related settings"),
 		       NULL, 0, NULL, 0,
 		       CTL_NET, PF_INET, IPPROTO_UDP, CTL_EOL);
 
 	sysctl_createv(clog, 0, NULL, NULL,
 		       CTLFLAG_PERMANENT|CTLFLAG_READWRITE,
-		       CTLTYPE_INT, "checksum", NULL,
+		       CTLTYPE_INT, "checksum",
+		       SYSCTL_DESCR("Compute and check UDP checksums"),
 		       NULL, 0, &udpcksum, 0,
 		       CTL_NET, PF_INET, IPPROTO_UDP, UDPCTL_CHECKSUM,
 		       CTL_EOL);
 	sysctl_createv(clog, 0, NULL, NULL,
 		       CTLFLAG_PERMANENT|CTLFLAG_READWRITE,
-		       CTLTYPE_INT, "sendspace", NULL,
+		       CTLTYPE_INT, "sendspace",
+		       SYSCTL_DESCR("Default UDP send buffer size"),
 		       NULL, 0, &udp_sendspace, 0,
 		       CTL_NET, PF_INET, IPPROTO_UDP, UDPCTL_SENDSPACE,
 		       CTL_EOL);
 	sysctl_createv(clog, 0, NULL, NULL,
 		       CTLFLAG_PERMANENT|CTLFLAG_READWRITE,
-		       CTLTYPE_INT, "recvspace", NULL,
+		       CTLTYPE_INT, "recvspace",
+		       SYSCTL_DESCR("Default UDP receive buffer size"),
 		       NULL, 0, &udp_recvspace, 0,
 		       CTL_NET, PF_INET, IPPROTO_UDP, UDPCTL_RECVSPACE,
 		       CTL_EOL);
