@@ -1,7 +1,8 @@
-/*	$NetBSD: promdev.c,v 1.10 1995/05/08 18:56:06 pk Exp $ */
+/*	$NetBSD: promdev.c,v 1.11 1995/09/16 23:20:35 pk Exp $ */
 
 /*
  * Copyright (c) 1993 Paul Kranenburg
+ * Copyright (c) 1995 Gordon W. Ross
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -30,38 +31,118 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
+/*
+ * Note: the `#ifndef BOOTXX' in here serve to queeze the code size
+ * of the 1st-stage boot program.
+ */
 #include <sys/param.h>
+#include <sys/reboot.h>
+#include <machine/idprom.h>
+#include <machine/oldmon.h>
+#include <machine/ctlreg.h>
 
-#include "defs.h"
+#include <stand.h>
 
-struct promvec	*promvec;
+#include "promdev.h"
 
-int	promopen __P((struct open_file *, ...));
-int	promclose __P((struct open_file *));
-int	promioctl __P((struct open_file *, u_long, void *));
-int	promstrategy __P((void *, int, daddr_t, u_int, char *, u_int *));
-char	*dev_type __P((int, char *));
+
+int	obp_close __P((struct open_file *));
+int	obp_strategy __P((void *, int, daddr_t, size_t, void *, size_t *));
+ssize_t	obp_xmit __P((struct promdata *, void *, size_t));
+ssize_t	obp_recv __P((struct promdata *, void *, size_t));
+int	prom0_close __P((struct open_file *));
+int	prom0_strategy __P((void *, int, daddr_t, size_t, void *, size_t *));
+void	prom0_iclose __P((struct saioreq *));
+int	prom0_iopen __P((struct promdata *));
+ssize_t	prom0_xmit __P((struct promdata *, void *, size_t));
+ssize_t	prom0_recv __P((struct promdata *, void *, size_t));
+
+static char	*prom_mapin __P((u_long, int, int));
+
+int	getdevtype __P((int, char *));
 int	getprop __P((int, char *, void *, int));
 char	*getpropstring __P((int, char *));
-int	getpropint __P((int, char *, int));
-int	findroot __P((void));
-int	findnode __P((int, char *));
-int	firstchild __P((int));
-int	nextsibling __P((int));
+
+static void	prom0_fake __P((void));
+
+extern struct filesystem file_system_nfs[];
+extern struct filesystem file_system_ufs[];
+
+int prom_open __P((struct open_file *f, ...)) { return 0; }
+int prom_ioctl __P((struct open_file *f, u_long c, void *d)) { return EIO; }
 
 struct devsw devsw[] = {
-	{ "prom", promstrategy, promopen, promclose, promioctl },
+	{ "prom0", prom0_strategy, prom_open, prom0_close, prom_ioctl },
+	{ "prom", obp_strategy, prom_open, obp_close, prom_ioctl }
 };
 
 int	ndevs = (sizeof(devsw)/sizeof(devsw[0]));
 
-struct promdata {
-	int	fd;
-	int	devtype;
-#define BLOCK	1
-#define NET	2
-#define BYTE	3
-};
+char	*prom_bootdevice;
+char	*prom_bootfile;
+int	prom_boothow;
+
+struct	promvec	*promvec;
+static int	saveecho;
+
+void
+prom_init()
+{
+	register char	*ap, *cp, *dp;
+
+	if (cputyp == CPU_SUN4)
+		prom0_fake();
+
+	if (promvec->pv_romvec_vers >= 2) {
+		static char filestore[16];
+
+		prom_bootdevice = *promvec->pv_v2bootargs.v2_bootpath;
+
+#ifndef BOOTXX
+		cp = *promvec->pv_v2bootargs.v2_bootargs;
+		dp = prom_bootfile = filestore;
+		while (*cp && *cp != '-')
+			*dp++ = *cp++;
+		while (dp > prom_bootfile && *--dp == ' ');
+		*++dp = '\0';
+		ap = cp;
+#endif
+	} else {
+		static char bootstore[16];
+		dp = prom_bootdevice = bootstore;
+		cp = (*promvec->pv_v0bootargs)->ba_argv[0];
+		while (*cp) {
+			*dp++ = *cp;
+			if (*cp++ == ')')
+				break;
+		}
+		*dp = '\0';
+#ifndef BOOTXX
+		prom_bootfile = (*promvec->pv_v0bootargs)->ba_kernel;
+		ap = (*promvec->pv_v0bootargs)->ba_argv[1];
+#endif
+	}
+
+#ifndef BOOTXX
+	if (ap == NULL || *ap != '-')
+		return;
+
+	while (*ap) {
+		switch (*ap++) {
+		case 'a':
+			prom_boothow |= RB_ASKNAME;
+			break;
+		case 's':
+			prom_boothow |= RB_SINGLE;
+			break;
+		case 'd':
+			prom_boothow |= RB_KDB;
+			debug = 1;
+			break;
+		}
+	}
+#endif
+}
 
 int
 devopen(f, fname, file)
@@ -69,80 +150,79 @@ devopen(f, fname, file)
 	const char *fname;
 	char **file;
 {
-	int	error, fd;
-	char	*cp, *path, *dev;
-	struct	promdata *pdp;
+	char	*cp;
+	int	error = 0, fd;
+	struct	promdata *pd;
 
-	if (promvec->pv_romvec_vers >= 2) {
-		path = *promvec->pv_v2bootargs.v2_bootpath;
-		fd = (*promvec->pv_v2devops.v2_open)(path);
-		cp = path + strlen(path);
-		while (cp >= path)
-			if (*--cp == '/') {
-				++cp;
-				break;
-			}
-		dev = cp;
-	} else {
-		static char pathbuf[100];
+	pd = (struct promdata *)alloc(sizeof *pd);
 
-		path = pathbuf;
-		cp = (*promvec->pv_v0bootargs)->ba_argv[0];
-		while (*cp) {
-			*path++ = *cp;
-			if (*cp++ == ')')
-				break;
-		}
-		*path = '\0';
-		dev = path = pathbuf;
-		fd = (*promvec->pv_v0devops.v0_open)(path);
-	}
-
-	if (fd == 0) {
-		printf("Can't open device `%s'\n", dev);
-		return ENXIO;
-	}
-
-	pdp = (struct promdata *)alloc(sizeof *pdp);
-	pdp->fd = fd;
-
-	cp = dev_type(findroot(), dev);
-	if (cp == NULL)
-		printf("%s: bummer\n", dev);
-	else if (strcmp(cp, "block") == 0)
-		pdp->devtype = BLOCK;
-	else if (strcmp(cp, "network") == 0)
-		pdp->devtype = NET;
-	else if (strcmp(cp, "byte") == 0)
-		pdp->devtype = BYTE;
-#ifdef DEBUG
-	if (cp) printf("Boot device type: %s\n", cp);
+	if (cputyp == CPU_SUN4) {
+		error = prom0_iopen(pd);
+#ifndef BOOTXX
+		pd->xmit = prom0_xmit;
+		pd->recv = prom0_recv;
 #endif
-	f->f_dev = devsw;
-	f->f_devdata = (void *)pdp;
-	*file = (char *)fname;
+	} else {
+		fd = (promvec->pv_romvec_vers >= 2)
+			? (*promvec->pv_v2devops.v2_open)(prom_bootdevice)
+			: (*promvec->pv_v0devops.v0_open)(prom_bootdevice);
+		if (fd == 0) {
+			error = ENXIO;
+		} else {
+			pd->fd = fd;
+#ifndef BOOTXX
+			pd->xmit = obp_xmit;
+			pd->recv = obp_recv;
+#endif
+		}
+	}
+
+	if (error) {
+		printf("Can't open device `%s'\n", prom_bootdevice);
+		return (error);
+	}
+
+#ifndef BOOTXX
+	pd->devtype = getdevtype(fd, prom_bootdevice);
+	/* Assume type BYTE is a raw device */
+	if (pd->devtype != DT_BYTE)
+		*file = (char *)fname;
+
+	if (pd->devtype == DT_NET) {
+		bcopy(file_system_nfs, file_system, sizeof(struct fs_ops));
+		if ((error = net_open(pd)) != 0) {
+			printf("Can't open network device `%s'\n",
+				prom_bootdevice);
+			return error;
+		}
+	} else
+		bcopy(file_system_ufs, file_system, sizeof(struct fs_ops));
+#endif
+
+	f->f_dev = &devsw[cputyp == CPU_SUN4 ? 0 : 1];
+	f->f_devdata = (void *)pd;
 	return 0;
 }
 
 int
-promstrategy(devdata, flag, dblk, size, buf, rsize)
+obp_strategy(devdata, flag, dblk, size, buf, rsize)
 	void	*devdata;
 	int	flag;
 	daddr_t	dblk;
-	u_int	size;
-	char	*buf;
-	u_int	*rsize;
+	size_t	size;
+	void	*buf;
+	size_t	*rsize;
 {
 	int	error = 0;
-	struct	promdata *pdp = (struct promdata *)devdata;
-	int	fd = pdp->fd;
+	struct	promdata *pd = (struct promdata *)devdata;
+	int	fd = pd->fd;
 
-#ifdef DEBUG
+#ifdef DEBUG_PROM
 	printf("promstrategy: size=%d dblk=%d\n", size, dblk);
 #endif
 
 	if (promvec->pv_romvec_vers >= 2) {
-		if (pdp->devtype == BLOCK)
+		if (pd->devtype == DT_BLOCK)
 			(*promvec->pv_v2devops.v2_seek)(fd, 0, dbtob(dblk));
 
 		*rsize = (*((flag == F_READ)
@@ -157,42 +237,168 @@ promstrategy(devdata, flag, dblk, size, buf, rsize)
 		*rsize = dbtob(n);
 	}
 
-#ifdef DEBUG
+#ifdef DEBUG_PROM
 	printf("rsize = %x\n", *rsize);
 #endif
 	return error;
 }
 
+/*
+ * On old-monitor machines, things work differently.
+ */
 int
-promopen(f)
+prom0_strategy(devdata, flag, dblk, size, buf, rsize)
+	void	*devdata;
+	int	flag;
+	daddr_t	dblk;
+	size_t	size;
+	void	*buf;
+	size_t	*rsize;
+{
+	struct promdata	*pd = devdata;
+	struct saioreq	*si;
+	struct om_boottable *ops;
+	char	*dmabuf;
+	int	si_flag;
+	size_t	xcnt;
+
+	si = pd->si;
+	ops = si->si_boottab;
+
+#ifdef DEBUG_PROM
+	printf("prom_strategy: size=%d dblk=%d\n", size, dblk);
+#endif
+
+	dmabuf = dvma_mapin(buf, size);
+	
+	si->si_bn = dblk;
+	si->si_ma = dmabuf;
+	si->si_cc = size;
+
+	si_flag = (flag == F_READ) ? SAIO_F_READ : SAIO_F_WRITE;
+	xcnt = (*ops->b_strategy)(si, si_flag);
+	dvma_mapout(dmabuf, size);
+
+#ifdef DEBUG_PROM
+	printf("disk_strategy: xcnt = %x\n", xcnt);
+#endif
+
+	if (xcnt <= 0)
+		return (EIO);
+
+	*rsize = xcnt;
+	return (0);
+}
+
+int
+obp_close(f)
 	struct open_file *f;
 {
-#ifdef DEBUG
-	printf("promopen:\n");
+	struct promdata *pd = f->f_devdata;
+	register int fd = pd->fd;
+
+#ifndef BOOTXX
+	if (pd->devtype == DT_NET)
+		net_close(pd);
 #endif
+	if (promvec->pv_romvec_vers >= 2)
+		(void)(*promvec->pv_v2devops.v2_open)(fd);
+	else
+		(void)(*promvec->pv_v0devops.v0_open)(fd);
 	return 0;
 }
 
 int
-promclose(f)
+prom0_close(f)
 	struct open_file *f;
 {
-	return EIO;
+	struct promdata *pd = f->f_devdata;
+
+#ifndef BOOTXX
+	if (pd->devtype == DT_NET)
+		net_close(pd);
+#endif
+	prom0_iclose(pd->si);
+	pd->si = NULL;
+	*romp->echo = saveecho; /* Hmm, probably must go somewhere else */
+	return 0;
+}
+
+#ifndef BOOTXX
+ssize_t
+obp_xmit(pd, buf, len)
+	struct	promdata *pd;
+	void	*buf;
+	size_t	len;
+{
+	return (promvec->pv_romvec_vers >= 2
+		? (*promvec->pv_v2devops.v2_write)(pd->fd, buf, len)
+		: (*promvec->pv_v0devops.v0_wnet)(pd->fd, len, buf));
+}
+
+ssize_t
+obp_recv(pd, buf, len)
+	struct	promdata *pd;
+	void	*buf;
+	size_t	len;
+{
+	int n;
+
+	n = (promvec->pv_romvec_vers >= 2
+		? (*promvec->pv_v2devops.v2_read)(pd->fd, buf, len)
+		: (*promvec->pv_v0devops.v0_rnet)(pd->fd, len, buf));
+	return (n == -2 ? 0 : n);
+}
+
+ssize_t
+prom0_xmit(pd, buf, len)
+	struct	promdata *pd;
+	void	*buf;
+	size_t	len;
+{
+	struct saioreq	*si;
+	struct saif	*sif;
+	char		*dmabuf;
+	int		rv;
+
+	si = pd->si;
+	sif = si->si_sif;
+	if (sif == NULL) {
+		printf("xmit: not a network device\n");
+		return (-1);
+	}
+	dmabuf = dvma_mapin(buf, len);
+	rv = sif->sif_xmit(si->si_devdata, dmabuf, len);
+	dvma_mapout(dmabuf, len);
+
+	return (ssize_t)(rv ? -1 : len);
+}
+
+ssize_t
+prom0_recv(pd, buf, len)
+	struct	promdata *pd;
+	void	*buf;
+	size_t	len;
+{
+	struct saioreq	*si;
+	struct saif	*sif;
+	char		*dmabuf;
+	int		rv;
+
+	si = pd->si;
+	sif = si->si_sif;
+	dmabuf = dvma_mapin(buf, len);
+	rv = sif->sif_poll(si->si_devdata, dmabuf);
+	dvma_mapout(dmabuf, len);
+
+	return (ssize_t)rv;
 }
 
 int
-promioctl(f, cmd, data)
-	struct open_file *f;
-	u_long cmd;
-	void *data;
-{
-	return EIO;
-}
-
 getchar()
 {
 	char c;
-	int n;
+	register int n;
  
 	if (promvec->pv_romvec_vers > 2)
 		while ((n = (*promvec->pv_v2devops.v2_read)
@@ -205,21 +411,32 @@ getchar()
 	return (c);
 }
  
+int
 peekchar()
 {
-	register int c;
+	char c;
+	register int n;
  
-	c = (*promvec->pv_nbgetchar)();
+	if (promvec->pv_romvec_vers > 2) {
+		n = (*promvec->pv_v2devops.v2_read)
+			(*promvec->pv_v2bootargs.v2_fd0, (caddr_t)&c, 1);
+		if (n < 0)
+			return -1;
+	} else
+		c = (*promvec->pv_nbgetchar)();
+
 	if (c == '\r')
 		c = '\n';
 	return (c);
 }
+#endif
 
 static void
 pv_putchar(c)
 	int c;
 {
 	char c0 = c;
+
 	if (promvec->pv_romvec_vers > 2)
 		(*promvec->pv_v2devops.v2_write)
 			(*promvec->pv_v2bootargs.v2_fd1, &c0, 1);
@@ -235,95 +452,103 @@ putchar(c)
 	if (c == '\n')
 		pv_putchar('\r');
 	pv_putchar(c);
-
-#if 0
-	if (c == '\n')
-		(*promvec->pv_putchar)('\r');
-	(*promvec->pv_putchar)(c);
-#endif
 }
 
-char *
-dev_type(node, dev)
-	int	node;
-	char	*dev;
+void
+_rtt()
 {
-	char	*name, *type;
-	register int child;
-
-	for (; node; node = nextsibling(node)) {
-		name = getpropstring(node, "name");
-		if (strncmp(dev, name, strlen(name)) == 0)
-			return getpropstring(node, "device_type");
-
-		child = firstchild(node);
-		if (child)
-			if (type = dev_type(child, dev))
-				return type;
-	}
-	return NULL;
+	promvec->pv_halt();
 }
+
+#ifndef BOOTXX
+int hz = 1000;
+
+time_t
+getsecs()
+{
+	register int ticks = getticks();
+	return ((time_t)(ticks / hz));
+}
+
+int
+getticks()
+{
+	return *(promvec->pv_ticks);
+}
+
+void
+prom_getether(fd, ea)
+	u_char *ea;
+{
+	if (cputyp == CPU_SUN4) {
+		static struct idprom sun4_idprom;
+		u_char *src, *dst;
+		int len, x;
+
+		if (sun4_idprom.id_format == 0) {
+			dst = (char*)&sun4_idprom;
+			src = (char*)AC_IDPROM;
+			len = sizeof(struct idprom);
+			do {
+				x = lduba(src++, ASI_CONTROL);
+				*dst++ = x;
+			} while (--len > 0);
+		}
+		bcopy(sun4_idprom.id_ether, ea, 6);
+	} else if (promvec->pv_romvec_vers < 2) {
+		(void)(*promvec->pv_enaddr)(fd, ea);
+	} else {
+		char buf[64];
+		sprintf(buf, "%x mac-address drop swap 6 cmove", ea);
+		promvec->pv_fortheval.v2_eval(buf);
+	}
+}
+
 
 /*
- * PROM nodes & property routines (from <sparc/autoconf.c>).
+ * A number of well-known devices on sun4s.
  */
-
-static int rootnode;
+static struct dtab {
+	char	*name;
+	int	type;
+} dtab[] = {
+	{ "sd",	DT_BLOCK },
+	{ "st",	DT_BLOCK },
+	{ "xd",	DT_BLOCK },
+	{ "xy",	DT_BLOCK },
+	{ "fd",	DT_BLOCK },
+	{ "le",	DT_NET },
+	{ "ie",	DT_NET },
+	{ NULL, 0 }
+};
 
 int
-findroot()
+getdevtype(fd, name)
+	int	fd;
+	char	*name;
 {
-	register int node;
-
-	if ((node = rootnode) == 0 && (node = nextsibling(0)) == 0)
-		printf("no PROM root device");
-	rootnode = node;
-	return (node);
-}
-
-#if 0
-int
-shownodes(first)
-{
-	register int node, child;
-	char name[32], type[32];
-static	int indent;
-
-	for (node = first; node; node = nextsibling(node)) {
-		int i = indent;
-		strcpy(name, getpropstring(node, "name"));
-		strcpy(type, getpropstring(node, "device_type"));
-		while (i--) putchar(' ');
-		printf("node(%x) name `%s', type `%s'\n", node, name, type);
-		child = firstchild(node);
-		if (child) {
-			indent += 4;
-			shownodes(child);
-			indent -= 4;
+	if (promvec->pv_romvec_vers >= 2) {
+		int node = (*promvec->pv_v2devops.v2_fd_phandle)(fd);
+		char *cp = getpropstring(node, "device_type");
+		if (strcmp(cp, "block") == 0)
+			return DT_BLOCK;
+		else if (strcmp(cp, "network") == 0)
+			return DT_NET;
+		else if (strcmp(cp, "byte") == 0)
+			return DT_BYTE;
+	} else {
+		struct dtab *dp;
+		for (dp = dtab; dp->name; dp++) {
+			if (name[0] == dp->name[0] &&
+			    name[1] == dp->name[1])
+				return dp->type;
 		}
 	}
-}
-#endif
-
-/*
- * Given a `first child' node number, locate the node with the given name.
- * Return the node number, or 0 if not found.
- */
-int
-findnode(first, name)
-	int first;
-	register char *name;
-{
-	register int node;
-
-	for (node = first; node; node = nextsibling(node))
-		if (strcmp(getpropstring(node, "name"), name) == 0)
-			return (node);
-	return (0);
+	return 0;
 }
 
 /*
- * Internal form of getprop().  Returns the actual length.
+ * OpenPROM nodes & property routines (from <sparc/autoconf.c>).
  */
 int
 getprop(node, name, buf, bufsiz)
@@ -357,44 +582,205 @@ getpropstring(node, name)
 	char *name;
 {
 	register int len;
-	static char stringbuf[32];
+	static char stringbuf[64];
 
 	len = getprop(node, name, (void *)stringbuf, sizeof stringbuf - 1);
+	if (len == -1)
+		len = 0;
 	stringbuf[len] = '\0';	/* usually unnecessary */
 	return (stringbuf);
 }
+#endif /* BOOTXX */
 
 /*
- * Fetch an integer (or pointer) property.
- * The return value is the property, or the default if there was none.
+ * Old monitor routines
  */
-int
-getpropint(node, name, deflt)
-	int node;
-	char *name;
-	int deflt;
-{
-	register int len;
-	char intbuf[16];
 
-	len = getprop(node, name, (void *)intbuf, sizeof intbuf);
-	if (len != 4)
-		return (deflt);
-	return (*(int *)intbuf);
+#include <machine/pte.h>
+#include <machine/ctlreg.h>
+
+struct saioreq prom_si;
+static int promdev_inuse;
+
+int
+prom0_iopen(pd)
+	struct promdata	*pd;
+{
+	struct om_bootparam *bp;
+	struct om_boottable *ops;
+	struct devinfo *dip;
+	struct saioreq *si;
+	char	*p;
+	int	error;
+
+	if (promdev_inuse)
+		return(EMFILE);
+
+	bp = *romp->bootParam;
+	ops = bp->bootTable;
+	dip = ops->b_devinfo;
+
+#ifdef DEBUG_PROM
+	printf("Boot device type: %s\n", ops->b_desc);
+	printf("d_devbytes=%d\n", dip->d_devbytes);
+	printf("d_dmabytes=%d\n", dip->d_dmabytes);
+	printf("d_localbytes=%d\n", dip->d_localbytes);
+	printf("d_stdcount=%d\n", dip->d_stdcount);
+	printf("d_stdaddrs[%d]=%x\n", bp->ctlrNum, dip->d_stdaddrs[bp->ctlrNum]);
+	printf("d_devtype=%d\n", dip->d_devtype);
+	printf("d_maxiobytes=%d\n", dip->d_maxiobytes);
+#endif
+
+	dvma_init();
+
+	si = &prom_si;
+	bzero((caddr_t)si, sizeof(*si));
+	si->si_boottab = ops;
+	si->si_ctlr = bp->ctlrNum;
+	si->si_unit = bp->unitNum;
+	si->si_boff = bp->partNum;
+
+	if (si->si_ctlr > dip->d_stdcount) {
+		printf("Invalid controller number\n");
+		return(ENXIO);
+	}
+
+	if (dip->d_devbytes) {
+		si->si_devaddr = prom_mapin(dip->d_stdaddrs[si->si_ctlr],
+			dip->d_devbytes, dip->d_devtype);
+#ifdef	DEBUG_PROM
+		printf("prom_iopen: devaddr=0x%x pte=0x%x\n",
+			si->si_devaddr,
+			getpte((u_long)si->si_devaddr & ~PGOFSET));
+#endif
+	}
+
+	if (dip->d_dmabytes) {
+		si->si_dmaaddr = dvma_alloc(dip->d_dmabytes);
+#ifdef	DEBUG_PROM
+		printf("prom_iopen: dmaaddr=0x%x\n", si->si_dmaaddr);
+#endif
+	}
+
+	if (dip->d_localbytes) {
+		si->si_devdata = alloc(dip->d_localbytes);
+#ifdef	DEBUG_PROM
+		printf("prom_iopen: devdata=0x%x\n", si->si_devdata);
+#endif
+	}
+
+	/* OK, call the PROM device open routine. */
+	error = (*ops->b_open)(si);
+	if (error != 0) {
+		printf("prom_iopen: \"%s\" error=%d\n",
+			   ops->b_desc, error);
+		return (ENXIO);
+	}
+#ifdef	DEBUG_PROM
+	printf("prom_iopen: succeeded, error=%d\n", error);
+#endif
+
+	pd->si = si;
+	promdev_inuse++;
+	return (0);
 }
 
-int
-firstchild(node)
-	int node;
+void
+prom0_iclose(si)
+	struct saioreq *si;
 {
+	struct om_boottable *ops;
+	struct devinfo *dip;
 
-	return (promvec->pv_nodeops->no_child(node));
+	if (promdev_inuse == 0)
+		return;
+
+	ops = si->si_boottab;
+	dip = ops->b_devinfo;
+
+	(*ops->b_close)(si);
+
+	if (si->si_dmaaddr) {
+		dvma_free(si->si_dmaaddr, dip->d_dmabytes);
+		si->si_dmaaddr = NULL;
+	}
+
+	promdev_inuse = 0;
 }
 
-int
-nextsibling(node)
-	int node;
-{
+static struct mapinfo {
+	int maptype;
+	int pgtype;
+	int base;
+} prom_mapinfo[] = {
+	{ MAP_MAINMEM,   PG_OBMEM, 0 },
+	{ MAP_OBIO,      PG_OBIO,  0 },
+	{ MAP_MBMEM,     PG_VME16, 0xFF000000 },
+	{ MAP_MBIO,      PG_VME16, 0xFFFF0000 }, 
+	{ MAP_VME16A16D, PG_VME16, 0xFFFF0000 },
+	{ MAP_VME16A32D, PG_VME32, 0xFFFF0000 },
+	{ MAP_VME24A16D, PG_VME16, 0xFF000000 },
+	{ MAP_VME24A32D, PG_VME32, 0xFF000000 },
+	{ MAP_VME32A16D, PG_VME16, 0 },
+	{ MAP_VME32A32D, PG_VME32, 0 },
+};
+static prom_mapinfo_cnt = sizeof(prom_mapinfo) / sizeof(prom_mapinfo[0]);
 
-	return (promvec->pv_nodeops->no_nextnode(node));
+/* The virtual address we will use for PROM device mappings. */
+static u_long prom_devmap = MONSHORTSEG;
+
+static char *
+prom_mapin(physaddr, length, maptype)
+	u_long physaddr;
+	int length, maptype;
+{
+	int i, pa, pte, va;
+
+	if (length > (4*NBPG))
+		panic("prom_mapin: length=%d\n", length);
+
+	for (i = 0; i < prom_mapinfo_cnt; i++)
+		if (prom_mapinfo[i].maptype == maptype)
+			goto found;
+	panic("prom_mapin: invalid maptype %d\n", maptype);
+found:
+
+	pte = prom_mapinfo[i].pgtype;
+	pte |= (PG_V|PG_W|PG_S|PG_NC);
+	pa = prom_mapinfo[i].base;
+	pa += physaddr;
+	pte |= ((pa >> PGSHIFT) & PG_PFNUM);
+
+	va = prom_devmap;
+	do {
+		setpte(va, pte);
+		va += NBPG;
+		pte += 1;
+		length -= NBPG;
+	} while (length > 0);
+	return ((char*)(prom_devmap | (pa & PGOFSET)));
+}
+
+void
+prom0_fake()
+{
+static	struct promvec promvecstore;
+
+	promvec = &promvecstore;
+
+	promvec->pv_stdin = romp->inSource;
+	promvec->pv_stdout = romp->outSink;
+	promvec->pv_putchar = romp->putChar;
+	promvec->pv_putstr = romp->fbWriteStr;
+	promvec->pv_nbgetchar = romp->mayGet;
+	promvec->pv_getchar = romp->getChar;
+	promvec->pv_romvec_vers = 0;            /* eek! */
+	promvec->pv_reboot = romp->reBoot;
+	promvec->pv_abort = romp->abortEntry;
+	promvec->pv_setctxt = romp->setcxsegmap;
+	promvec->pv_v0bootargs = (struct v0bootargs **)(romp->bootParam);
+	promvec->pv_halt = romp->exitToMon;
+	promvec->pv_ticks = romp->nmiClock;
+	saveecho = *romp->echo;
+	*romp->echo = 0;
 }

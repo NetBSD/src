@@ -1,4 +1,4 @@
-/*	$NetBSD: bootxx.c,v 1.3 1995/02/22 08:18:19 mycroft Exp $ */
+/*	$NetBSD: bootxx.c,v 1.4 1995/09/16 23:20:27 pk Exp $ */
 
 /*
  * Copyright (c) 1994 Paul Kranenburg
@@ -36,7 +36,8 @@
 #include <ufs/ufs/dinode.h>
 #include <ufs/ffs/fs.h>
 
-#include "defs.h"
+#include <stand.h>
+#include "promdev.h"
 
 int debug;
 int netif_debug;
@@ -44,8 +45,6 @@ int netif_debug;
 /*
  * Boot device is derived from ROM provided information.
  */
-#define LOADADDR	0x4000
-extern struct promvec	*promvec;
 struct open_file	io;
 char			sblock[SBSIZE];
 struct fs		*fs;
@@ -53,77 +52,89 @@ struct fs		*fs;
 #if 0
 #define MAXBLOCKNUM	MINBSIZE / sizeof(daddr_t)
 #else
-#define MAXBLOCKNUM	512
+#define MAXBLOCKNUM	256
 #endif
 int			maxblocknum = MAXBLOCKNUM;
 daddr_t			blocknum[MAXBLOCKNUM] = { 0 };
+const char		progname[] = "bootxx";
 
-main(pp)
-	struct promvec *pp;
+void	loadboot __P((struct open_file *, caddr_t));
+
+main()
 {
-	char *dummy;
-	int n;
+	char	*dummy;
+	int	n;
+	register void (*entry)__P((caddr_t)) = (void (*)__P((caddr_t)))LOADADDR;
 
+	prom_init();
 	io.f_flags = F_RAW;
 	if (devopen(&io, 0, &dummy)) {
-		printf("Can't open device\n");
-		_rtt();
+		panic("%s: can't open device", progname);
 	}
 
+	/*
+	 * Read superblock.
+	 */
 	if ((io.f_dev->dv_strategy)(io.f_devdata, F_READ,
 				   btodb(SBOFF), SBSIZE,
-				   sblock, &n) || n != SBSIZE) {
-		printf("Can't read superblock\n");
-		_rtt();
+				   (char *)LOADADDR, &n) || n != SBSIZE) {
+		panic("%s: can't read superblock", progname);
 	}
+	bcopy(LOADADDR, sblock, SBSIZE);
 	fs = (struct fs *)sblock;
 
-	(void)copyboot(&io, LOADADDR);
+	(void)loadboot(&io, LOADADDR);
+	(*entry)(cputyp == CPU_SUN4 ? LOADADDR : (caddr_t)promvec);
 	_rtt();
 }
 
-int
-copyboot(f, addr)
+void
+loadboot(f, addr)
 	register struct open_file	*f;
 	register char			*addr;
 {
-	int	n, i;
-	daddr_t	blk;
-	void	(*entry)() = (void (*)())addr;
+	register int	i;
+	register char	*buf;
+	int		n;
+	daddr_t		blk;
 
-	addr -= sizeof(struct exec); /* XXX */
+	/*
+	 * Allocate a buffer that we can map into DVMA space; only
+	 * needed for sun4 architecture, but use it for all machines
+	 * to keep code size down as much as possible.
+	 */
+	buf = alloc(fs->fs_bsize);
+	if (buf == NULL)
+		panic("%s: alloc failed", progname);
 
 	for (i = 0; i < MAXBLOCKNUM; i++) {
 		if ((blk = blocknum[i]) == 0)
 			break;
 #ifdef DEBUG
-		printf("bootxx: block # %d = %d\n", i, blk);
+		printf("%s: block # %d = %d\n", i, blk);
 #endif
 		if ((f->f_dev->dv_strategy)(f->f_devdata, F_READ,
-					   fsbtodb(fs, blk), fs->fs_bsize,
-					   addr, &n)) {
-			printf("Read failure\n");
-			return -1;
+					    fsbtodb(fs, blk), fs->fs_bsize,
+					    buf, &n)) {
+			panic("%s: read failure", progname);
 		}
-		if (n != fs->fs_bsize) {
-			printf("Short read\n");
-			return -1;
+		bcopy(buf, addr, fs->fs_bsize); /* copy over */
+		if (n != fs->fs_bsize)
+			panic("%s: short read", progname);
+		if (i == 0) {
+			register int m = N_GETMAGIC(*(struct exec *)addr);
+			if (m == ZMAGIC || m == NMAGIC || m == OMAGIC) {
+				/* Move exec header out of the way */
+				bcopy(addr, addr - sizeof(struct exec), n);
+				addr -= sizeof(struct exec);
+			}
 		}
-		addr += fs->fs_bsize;
+		addr += n;
 	}
-	if (blk != 0) {
-		printf("File too long\n");
-		return -1;
-	}
+	if (blk != 0)
+		panic("%s: file too long", progname);
 
 #ifdef DEBUG
-	printf("bootxx: start 0x%x\n", (int)entry);
+	printf("%s: start 0x%x\n", (int)entry);
 #endif
-	(*entry)(promvec);
-	return 0;
-}
-
-_rtt()
-{
-	promvec->pv_halt();
 }

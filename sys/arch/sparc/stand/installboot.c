@@ -1,4 +1,4 @@
-/*	$NetBSD: installboot.c,v 1.6 1995/08/18 21:44:01 pk Exp $ */
+/*	$NetBSD: installboot.c,v 1.7 1995/09/16 23:20:32 pk Exp $ */
 
 /*
  * Copyright (c) 1994 Paul Kranenburg
@@ -46,7 +46,7 @@
 #include <string.h>
 #include <unistd.h>
 
-int	verbose, nowrite;
+int	verbose, nowrite, hflag;
 char	*boot, *proto, *dev;
 struct nlist nl[] = {
 #define X_BLOCKNUM	0
@@ -62,17 +62,19 @@ int	maxblocknum;		/* size of this array */
 char		*loadprotoblocks __P((char *, long *));
 int		loadblocknums __P((char *, int));
 static void	devread __P((int, void *, daddr_t, size_t, char *));
+static void	usage __P((void));
+int 		main __P((int, char *[]));
 
 
-	void
+static void
 usage()
 {
 	fprintf(stderr,
-		"usage: installboot [-n] [-v] <boot> <proto> <device>\n");
+		"usage: installboot [-n] [-v] [-h] <boot> <proto> <device>\n");
 	exit(1);
 }
 
-	int
+int
 main(argc, argv)
 	int argc;
 	char *argv[];
@@ -82,12 +84,18 @@ main(argc, argv)
 	char	*protostore;
 	long	protosize;
 
-	while ((c = getopt(argc, argv, "vn")) != EOF) {
+	while ((c = getopt(argc, argv, "vnh")) != EOF) {
 		switch (c) {
+		case 'h':
+			/* Don't strip a.out header */
+			hflag = 1;
+			break;
 		case 'n':
+			/* Do not actually write the bootblock to disk */
 			nowrite = 1;
 			break;
 		case 'v':
+			/* Chat */
 			verbose = 1;
 			break;
 		default:
@@ -142,12 +150,12 @@ main(argc, argv)
 	return 0;
 }
 
-	char *
+char *
 loadprotoblocks(fname, size)
 	char *fname;
 	long *size;
 {
-	int	fd;
+	int	fd, sz;
 	char	*bp;
 	struct	stat statbuf;
 	struct	exec *hp;
@@ -190,7 +198,8 @@ loadprotoblocks(fname, size)
 	close(fd);
 
 	hp = (struct exec *)bp;
-	*size = roundup(sizeof(*hp) + hp->a_text + hp->a_data, DEV_BSIZE);
+	sz = (hflag ? sizeof(*hp) : 0) + hp->a_text + hp->a_data;
+	sz = roundup(sz, DEV_BSIZE);
 
 	/* Calculate the symbols' location within the proto file */
 	off = N_DATOFF(*hp) - N_DATADDR(*hp) - (hp->a_entry - N_TXTADDR(*hp));
@@ -200,15 +209,16 @@ loadprotoblocks(fname, size)
 
 	if (verbose) {
 		printf("%s: entry point %#x\n", fname, hp->a_entry);
-		printf("proto bootblock size %ld\n", *size);
+		printf("proto bootblock size %ld\n", sz);
 		printf("room for %d filesystem blocks at %#x\n",
 			maxblocknum, nl[X_BLOCKNUM].n_value);
 	}
 
-	return bp;
+	*size = sz;
+	return (hflag ? bp : (bp + sizeof(struct exec)));
 }
 
-	static void
+static void
 devread(fd, buf, blk, size, msg)
 	int	fd;
 	void	*buf;
@@ -302,4 +312,3 @@ int	devfd;
 		errx(1, "Too many blocks");
 	return 0;
 }
-
