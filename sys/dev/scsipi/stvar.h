@@ -1,4 +1,4 @@
-/*	$NetBSD: stvar.h,v 1.3 2001/12/01 00:03:45 bouyer Exp $ */
+/*	$NetBSD: stvar.h,v 1.4 2001/12/07 11:26:31 yamt Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -175,5 +175,7 @@ struct st_softc {
 			 ST_2FM_AT_EOD | ST_PER_ACTION)
 
 void	stattach __P((struct device *, struct st_softc *, void *));
+int stactivate __P((struct device *, enum devact));
+int stdetach __P((struct device *, int));
 
 extern struct cfdriver st_cd;
