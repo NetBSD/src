@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.99 1996/10/13 03:19:54 christos Exp $	*/
+/*	$NetBSD: trap.c,v 1.100 1997/03/19 03:19:01 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1995 Charles M. Hannum.  All rights reserved.
@@ -277,6 +277,7 @@ trap(frame)
 			goto out;
 		}
 #endif
+	case T_TSSFLT|T_USER:
 	case T_SEGNPFLT|T_USER:
 	case T_STKFLT|T_USER:
 	case T_ALIGNFLT|T_USER:
