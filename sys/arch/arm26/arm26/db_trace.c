@@ -1,4 +1,4 @@
-/*	$NetBSD: db_trace.c,v 1.4 2000/05/26 03:34:30 jhawk Exp $	*/
+/*	$NetBSD: db_trace.c,v 1.5 2001/01/18 17:05:06 bjh21 Exp $	*/
 
 /* 
  * Copyright (c) 1996 Scott K. Stevens
@@ -53,13 +53,13 @@
  *          return fp value         [fp, #-12]
  *          [saved v7 value]
  *          [saved v6 value]
- *          [saved v5 value}
+ *          [saved v5 value]
  *          [saved v4 value]
  *          [saved v3 value]
  *          [saved v2 value]
  *          [saved v1 value]
  *          [saved a4 value]
- *          [saved a3 value}
+ *          [saved a3 value]
  *          [saved a2 value]
  *          [saved a1 value]
  *
