@@ -1,4 +1,4 @@
-/*	$NetBSD: spec.c,v 1.19 2000/10/10 14:30:41 enami Exp $	*/
+/*	$NetBSD: spec.c,v 1.20 2001/02/20 19:45:51 hubertf Exp $	*/
 
 /*-
  * Copyright (c) 1989, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)spec.c	8.2 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: spec.c,v 1.19 2000/10/10 14:30:41 enami Exp $");
+__RCSID("$NetBSD: spec.c,v 1.20 2001/02/20 19:45:51 hubertf Exp $");
 #endif
 #endif /* not lint */
 
@@ -242,21 +242,12 @@ set(t, ip)
 				mtree_err("memory allocation error");
 			break;
 		case F_TIME:
-#ifndef __APPLE__
 			ip->st_mtimespec.tv_sec =
 			    (time_t)strtoul(val, &ep, 10);
-#else
-			ip->st_mtimespec.ts_sec =
-			    (time_t)strtoul(val, &ep, 10);
-#endif
 			if (*ep != '.')
 				mtree_err("invalid time %s", val);
 			val = ep + 1;
-#ifndef __APPLE__
 			ip->st_mtimespec.tv_nsec = strtol(val, &ep, 10);
-#else
-			ip->st_mtimespec.ts_nsec = strtol(val, &ep, 10);
-#endif
 			if (*ep)
 				mtree_err("invalid time %s", val);
 			break;
