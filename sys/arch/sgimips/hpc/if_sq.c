@@ -1,4 +1,4 @@
-/*	$NetBSD: if_sq.c,v 1.2 2001/06/07 12:20:42 rafal Exp $	*/
+/*	$NetBSD: if_sq.c,v 1.3 2001/06/07 23:05:51 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2001 Rafal K. Boni
@@ -115,6 +115,7 @@ static void	sq_stop(struct ifnet *, int);
 static void	sq_watchdog(struct ifnet *);
 static int	sq_ioctl(struct ifnet *, u_long, caddr_t);
 
+static void	sq_set_filter(struct sq_softc *);
 static int	sq_intr(void *);
 static int	sq_rxintr(struct sq_softc *);
 static int	sq_txintr(struct sq_softc *);
@@ -273,12 +274,28 @@ sq_attach(struct device *parent, struct device *self, void *aux)
 		goto fail_6;
 	}
 
+	/* Reset the chip to a known state. */
+	sq_reset(sc);
 
-	printf(": SGI Seeq-8003\n");
+	/*
+	 * Determine if we're an 8003 or 80c03 by setting the first
+	 * MAC address register to non-zero, and then reading it back.
+	 * If it's zero, we have an 80c03, because we will have read
+	 * the TxCollLSB register.
+	 */
+	bus_space_write_1(sc->sc_regt, sc->sc_regh, SEEQ_TXCOLLS0, 0xa5);
+	if (bus_space_read_1(sc->sc_regt, sc->sc_regh, SEEQ_TXCOLLS0) == 0)
+		sc->sc_type = SQ_TYPE_80C03;
+	else
+		sc->sc_type = SQ_TYPE_8003;
+	bus_space_write_1(sc->sc_regt, sc->sc_regh, SEEQ_TXCOLLS0, 0x00);
+
+	printf(": SGI Seeq %s\n",
+	    sc->sc_type == SQ_TYPE_80C03 ? "80c03" : "8003");
 
 	enaddr_aton(macaddr, sc->sc_enaddr);
 
-	printf("%s: station address %s\n", sc->sc_dev.dv_xname, 
+	printf("%s: Ethernet address %s\n", sc->sc_dev.dv_xname, 
 					   ether_sprintf(sc->sc_enaddr));
 
 	bcopy(sc->sc_dev.dv_xname, ifp->if_xname, IFNAMSIZ);
@@ -289,7 +306,7 @@ sq_attach(struct device *parent, struct device *self, void *aux)
 	ifp->if_start = sq_start;
 	ifp->if_ioctl = sq_ioctl;
 	ifp->if_watchdog = sq_watchdog;
-	ifp->if_flags = IFF_BROADCAST | IFF_NOTRAILERS;
+	ifp->if_flags = IFF_BROADCAST | IFF_NOTRAILERS | IFF_MULTICAST;
 	IFQ_SET_READY(&ifp->if_snd);
 
 	if_attach(ifp);
@@ -355,7 +372,22 @@ sq_init(struct ifnet *ifp)
 
 	/* Now write the address */
 	for (i = 0; i < ETHER_ADDR_LEN; i++)
-	    bus_space_write_1(sc->sc_regt, sc->sc_regh, i, sc->sc_enaddr[i]);
+		bus_space_write_1(sc->sc_regt, sc->sc_regh, i,
+		    sc->sc_enaddr[i]);
+
+	sc->sc_rxcmd = RXCMD_IE_CRC |
+		       RXCMD_IE_DRIB |
+		       RXCMD_IE_SHORT |
+		       RXCMD_IE_END |
+		       RXCMD_IE_GOOD;
+
+	/*
+	 * Set the receive filter -- this will add some bits to the
+	 * prototype RXCMD register.  Do this before setting the
+	 * transmit config register, since we might need to switch
+	 * banks.
+	 */
+	sq_set_filter(sc);
 
 	/* Set up Seeq transmit command register */
 	bus_space_write_1(sc->sc_regt, sc->sc_regh, SEEQ_TXCMD, 
@@ -364,14 +396,8 @@ sq_init(struct ifnet *ifp)
 						    TXCMD_IE_16COLL |
 						    TXCMD_IE_GOOD);
 
-	/* And the receive command register */
-	bus_space_write_1(sc->sc_regt, sc->sc_regh, SEEQ_RXCMD, 
-						    RXCMD_REC_BROAD |
-						    RXCMD_IE_CRC |
-						    RXCMD_IE_DRIB | 
-						    RXCMD_IE_SHORT |
-						    RXCMD_IE_END |
-						    RXCMD_IE_GOOD);
+	/* Now write the receive command register. */
+	bus_space_write_1(sc->sc_regt, sc->sc_regh, SEEQ_RXCMD, sc->sc_rxcmd);
 
 	/* Set up HPC ethernet DMA config */
 	reg = bus_space_read_4(sc->sc_hpct, sc->sc_hpch, HPC_ENETR_DMACFG);
@@ -392,6 +418,43 @@ sq_init(struct ifnet *ifp)
 	ifp->if_flags &= ~IFF_OACTIVE;
 
 	return 0;
+}
+
+static void
+sq_set_filter(struct sq_softc *sc)
+{
+	struct ethercom *ec = &sc->sc_ethercom;
+	struct ifnet *ifp = &sc->sc_ethercom.ec_if;
+	struct ether_multi *enm;
+	struct ether_multistep step;
+
+	/*
+	 * Check for promiscuous mode.  Also implies
+	 * all-multicast.
+	 */
+	if (ifp->if_flags & IFF_PROMISC) {
+		sc->sc_rxcmd |= RXCMD_REC_ALL;
+		ifp->if_flags |= IFF_ALLMULTI;
+		return;
+	}
+
+	/*
+	 * The 8003 has no hash table.  If we have any multicast
+	 * addresses on the list, enable reception of all multicast
+	 * frames.
+	 *
+	 * XXX The 80c03 has a hash table.  We should use it.
+	 */
+
+	ETHER_FIRST_MULTI(step, ec, enm);
+
+	if (enm == NULL) {
+		sc->sc_rxcmd |= RXCMD_REC_BROAD;
+		return;
+	}
+
+	sc->sc_rxcmd |= RXCMD_REC_MULTI;
+	ifp->if_flags |= IFF_ALLMULTI;
 }
 
 int
@@ -740,7 +803,7 @@ sq_intr(void * arg)
 
 #if NRND > 0
 	if (handled)
-		rnd_add_uint32(&sc->sc_rnd_source, status);
+		rnd_add_uint32(&sc->rnd_source, stat);
 #endif
 	return (handled);
 }
@@ -1043,4 +1106,3 @@ enaddr_aton(const char* str, u_int8_t* eaddr)
 		}
 	}
 }
-
