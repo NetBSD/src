@@ -629,6 +629,7 @@
 ./usr/share/man/cat8/fsck.0
 ./usr/share/man/cat8/fsck_ext2fs.0
 ./usr/share/man/cat8/fsck_ffs.0
+./usr/share/man/cat8/fsck_lfs.0
 ./usr/share/man/cat8/fsck_msdos.0
 ./usr/share/man/cat8/fsdb.0
 ./usr/share/man/cat8/fsinfo.0
@@ -1721,6 +1722,7 @@
 ./usr/share/man/man8/fsck.8
 ./usr/share/man/man8/fsck_ext2fs.8
 ./usr/share/man/man8/fsck_ffs.8
+./usr/share/man/man8/fsck_lfs.8
 ./usr/share/man/man8/fsck_msdos.8
 ./usr/share/man/man8/fsdb.8
 ./usr/share/man/man8/fsinfo.8
