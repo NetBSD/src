@@ -1,3 +1,5 @@
+/*	$NetBSD: test-pfkey.c,v 1.2 1999/07/06 13:13:03 itojun Exp $	*/
+
 /*
  * Copyright (C) 1995, 1996, 1997, 1998, and 1999 WIDE Project.
  * All rights reserved.
@@ -26,7 +28,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  */
-/* KAME $Id: test-pfkey.c,v 1.1 1999/07/02 17:41:25 itojun Exp $ */
+/* KAME Id: test-pfkey.c,v 1.1.4.3 1999/05/28 19:44:38 sakane Exp */
 
 #include <sys/types.h>
 #include <sys/param.h>
