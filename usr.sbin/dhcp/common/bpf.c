@@ -47,7 +47,7 @@
 
 #ifndef lint
 static char copyright[] =
-"$Id: bpf.c,v 1.3.2.3 2001/04/04 20:55:17 he Exp $ Copyright (c) 1995-2000 The Internet Software Consortium.  All rights reserved.\n";
+"$Id: bpf.c,v 1.3.2.4 2001/04/21 19:42:04 he Exp $ Copyright (c) 1995-2000 The Internet Software Consortium.  All rights reserved.\n";
 #endif /* not lint */
 
 #include "dhcpd.h"
@@ -254,7 +254,7 @@ void if_register_receive (info)
 
 	if (v.bv_major != BPF_MAJOR_VERSION ||
 	    v.bv_minor < BPF_MINOR_VERSION)
-		log_fatal ("Kernel BPF version out of range - recompile dhcpd!");
+		log_fatal ("BPF version mismatch - recompile DHCP!");
 
 	/* Set immediate mode so that reads return as soon as a packet
 	   comes in, rather than waiting for the input buffer to fill with
@@ -422,8 +422,14 @@ ssize_t receive_packet (interface, buf, len, from, hfrom)
 			length = read (interface -> rfdesc,
 				       interface -> rbuf,
 				       interface -> rbuf_max);
-			if (length <= 0)
+			if (length <= 0) {
+				if (errno == EIO) {
+					dhcp_interface_remove
+						((omapi_object_t *)interface,
+						 (omapi_object_t *)0);
+				}
 				return length;
+			}
 			interface -> rbuf_offset = 0;
 			interface -> rbuf_len = BPF_WORDALIGN (length);
 		}
