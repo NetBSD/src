@@ -1,4 +1,4 @@
-.\"	$NetBSD: vlan.4,v 1.18 2001/12/18 13:31:45 ad Exp $
+.\"	$NetBSD: vlan.4,v 1.19 2002/08/20 15:47:46 wiz Exp $
 .\"
 .\" Copyright (c) 2000 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -74,11 +74,11 @@ Ethernet MTU. Drivers supporting this increased MTU are:
 .Pp
 .Bl -dash -compact
 .It
-drivers using the dp8390 core
-.Ns ( Ns Xr ec 4 ,
+drivers using the dp8390 core (such as
+.Xr ec 4 ,
 .Xr ne 4 ,
 .Xr we 4 ,
-possibly others)
+and possibly others)
 .It
 .Xr ea 4
 .It
