@@ -1,4 +1,4 @@
-/*	$NetBSD: mca_machdep.c,v 1.21 2003/05/08 12:47:39 fvdl Exp $	*/
+/*	$NetBSD: mca_machdep.c,v 1.22 2003/12/15 08:38:01 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2001 The NetBSD Foundation, Inc.
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mca_machdep.c,v 1.21 2003/05/08 12:47:39 fvdl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mca_machdep.c,v 1.22 2003/12/15 08:38:01 jdolecek Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -308,7 +308,7 @@ mca_busprobe()
 	struct bioscallregs regs;
 	struct bios_config *scp;
 	paddr_t             paddr;
-	char buf[50];
+	char buf[80];
 
 	memset(&regs, 0, sizeof(regs));
 	regs.AH = 0xc0;
@@ -325,7 +325,7 @@ mca_busprobe()
 	scp = (struct bios_config *)ISA_HOLE_VADDR(paddr);
 
 #if 1 /* MCAVERBOSE */
-	bitmask_snprintf(((scp->feature2 & 1)<< 8) | scp->feature1,
+	bitmask_snprintf((scp->feature2 << 8) | scp->feature1,
 		"\20"
 		"\01MCA+ISA"
 		"\02MCA"
@@ -335,7 +335,14 @@ mca_busprobe()
 		"\06RTC"
 		"\07IC2"
 		"\010DMA3B"
-		"\011DMA32\n",
+		"\011res"
+		"\012DSTR"
+		"\013n8042"
+		"\014CPUF"
+		"\015MMF"
+		"\016GPDF"
+		"\017KBDF"
+		"\020DMA32\n",
 		buf, sizeof(buf));
 
 	printf("BIOS CFG: Model-SubM-Rev: %02x-%02x-%02x, 0x%s\n",
