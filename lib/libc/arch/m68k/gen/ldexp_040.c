@@ -1,4 +1,4 @@
-/*	$NetBSD: ldexp_040.c,v 1.5 1999/08/30 18:01:41 mycroft Exp $	*/
+/*	$NetBSD: ldexp_040.c,v 1.6 1999/08/30 18:28:25 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: ldexp_040.c,v 1.5 1999/08/30 18:01:41 mycroft Exp $");
+__RCSID("$NetBSD: ldexp_040.c,v 1.6 1999/08/30 18:28:25 mycroft Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include <sys/types.h>
@@ -111,16 +111,7 @@ ldexp(val, exp)
 	 */
 	newexp = oldexp + exp;
 
-	if (newexp >= DBL_EXP_INFNAN) {
-		/*
-		 * The result overflowed; return +/-Inf.
-		 */
-		u.s.dbl_exp = DBL_EXP_INFNAN;
-		u.s.dbl_frach = 0;
-		u.s.dbl_fracl = 0;
-		errno = ERANGE;
-		return (u.v);
-	} else if (newexp <= 0) {
+	if (newexp <= 0) {
 		/*
 		 * The output number is either denormal or underflows (see
 		 * comments in machine/ieee.h).
@@ -142,6 +133,15 @@ ldexp(val, exp)
 		mul.v = 0.0;
 		mul.s.dbl_exp = exp + DBL_EXP_BIAS;
 		u.v *= mul.v;
+		return (u.v);
+	} else if (newexp >= DBL_EXP_INFNAN) {
+		/*
+		 * The result overflowed; return +/-Inf.
+		 */
+		u.s.dbl_exp = DBL_EXP_INFNAN;
+		u.s.dbl_frach = 0;
+		u.s.dbl_fracl = 0;
+		errno = ERANGE;
 		return (u.v);
 	} else {
 		/*
