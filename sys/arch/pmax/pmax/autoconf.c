@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.8 1995/08/02 07:19:37 jonathan Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.9 1995/08/04 01:14:17 jonathan Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -74,22 +74,22 @@ int	dkn;		/* number of iostat dk numbers assigned so far */
 int	cpuspeed = 30;	/* approx # instr per usec. */
 extern	int pmax_boardtype;
 extern	tc_option_t tc_slot_info[TC_MAX_LOGICAL_SLOTS];
-extern void	(*tc_enable_interrupt)();
+
+
+extern int cputype;	/* glue for new-style config */
+int cputype;
+
+extern int initcpu __P((void));		/*XXX*/
+void cpu_configure __P((void));
+void configure_scsi __P((void));
 
 /*
- * Determine mass storage and memory configuration for a machine.
- * Get cpu type, and then switch out to machine specific procedures
- * which will probe adaptors to see what is out there.
+ * Print cpu type. (This should be moved into cpu.c)
  */
-configure()
+
+void
+cpu_configure()
 {
-	register struct pmax_ctlr *cp;
-	register struct scsi_device *dp;
-	register struct driver *drp;
-	register int i;
-
-	/* print what type of CPU and FPU we have */
-
 	/*
 	 * for some reason the Pmax has an R2000 cpu with an implementation
 	 * level of 2 and DEC's R3000s are level 2 as well?
@@ -142,6 +142,91 @@ configure()
 	printf("data cache size %dK inst cache size %dK\n",
 		machDataCacheSize >> 10, machInstCacheSize >> 10);
 
+}
+
+#ifdef DS5000
+/*
+ * Autoconfigure a single turbochannel slot.
+ * Return 1 if we succeed in configuring the slot.
+ */
+int
+tc_config_slot(cp, drp)
+	register struct pmax_ctlr *cp;
+	register struct driver *drp;
+{
+	register int i;
+
+	/*
+	 * If the device is still in an unknown slot,
+	 * then it was not found by tc_find_all_options().
+	 */
+	if (cp->pmax_addr == (char *)QUES)
+	    return 0;
+
+	if (!(*drp->d_init)(cp)) {
+		cp->pmax_alive = 0;
+		return 0;
+	}
+
+	/*
+	 * Only enable interrupts if there is an interrupt handler for it.
+	 * (e.g., PMAG-BA  can't disable the vertical retrace interrupt,
+	 * and we might want to ignore it).
+	 */
+	if (drp->d_intr && (i = cp->pmax_pri) >= 0) {
+		if (tc_slot_info[i].intr == drp->d_intr)
+		    printf("%s: slot %d already set\n",
+			   drp->d_name, i);
+		else if (tc_slot_info[i].intr)
+		    printf("%s: slot %d already in use\n", drp->d_name, i);
+		tc_slot_info[i].intr = drp->d_intr;
+		tc_slot_info[i].unit = cp->pmax_unit;
+		
+#if defined(DIAGNOSTIC) || defined(NEWCONF)
+		printf("enable %s%d pri %d\n", drp->d_name, cp->pmax_unit, i);
+#endif
+		(*tc_enable_interrupt)(i, drp->d_intr, cp->pmax_unit, 1);
+	}
+
+	return 1;
+}
+#endif /* DS5000 */
+
+/*
+ * Determine mass storage and memory configuration for a machine.
+ * Print cpu type, and then iterate over an array of devices
+ * found on the baseboard or in turbochannel option slots.
+ * Once devices are configured, enable interrupts, and probe
+ * for attached scsi devices.
+ */
+void
+configure()
+{
+	register struct pmax_ctlr *cp;
+	register struct driver *drp;
+
+	/*
+	 * Set CPU type for new-style config. 
+	 * Should support Decstations with CPUs on daughterboards,
+	 * where system-type (board type) and CPU type aren't
+	 * necessarily the same.
+	 * (On hold until someone donates an r4400 daughterboard).
+	 */
+	cputype = pmax_boardtype;		/*XXX*/
+
+	/* print what type of CPU and FPU we have */
+	cpu_configure();
+
+
+#ifdef NEWCONF
+	/* start new-style config */
+	(void)splhigh();
+	if (config_rootfound("mainbus", "mainbus") == 0)
+	    panic("no mainbus found");
+
+	/*if (0)*/
+#endif /*NEWCONF*/
+
 	/* probe and initialize controllers */
 	for (cp = pmax_cinit; drp = cp->pmax_driver; cp++) {
 		switch (pmax_boardtype) {
@@ -151,63 +236,35 @@ configure()
 			if (!(*drp->d_init)(cp))
 				continue;
 			break;
+		default:
+			panic("configure: unknown boardtype 0x%x\n",
+			      pmax_boardtype);
+			break;
+
 #ifdef DS5000
 		case DS_3MAX:
 		case DS_3MIN:
 		case DS_MAXINE:
 		case DS_3MAXPLUS:
-			/*
-			 * If the device is still in an unknown slot,
-			 * then it was not found by tc_find_all_options().
-			 */
-			if (cp->pmax_addr == (char *)QUES)
-				continue;
-			if (!(*drp->d_init)(cp)) {
-				cp->pmax_alive = 0;
-				continue;
-			}
-			if (drp->d_intr && (i = cp->pmax_pri) >= 0) {
-				if (tc_slot_info[i].intr)
-					printf("%s: slot %d already in use\n",
-						drp->d_name, i);
-				tc_slot_info[i].intr = drp->d_intr;
-				tc_slot_info[i].unit = cp->pmax_unit;
-
-				/*
-				 * Only enable interrupts if there is an
-				 * interrupt handler for it. (e.g., PMAG-BA 
-				 * can't disable the vertical retrace interrupt
-				 * and we might want to ignore it).
-				 */
-#ifdef DIAGNOSTIC
-				printf("autoenable %s pri %d\n",
-					drp->d_name, i);
-#endif
-				(*tc_enable_interrupt)(i, 1);
-				/*cp->pmax_alive = 1;*/ /*XXX*/
-			}
+			if (!tc_config_slot(cp, drp)) continue;
 			break;
-#endif /* DS5000 */
+#endif
 		};
 
 		cp->pmax_alive = 1;
 
-		/* probe and initialize devices connected to controller */
-		for (dp = scsi_dinit; drp = dp->sd_driver; dp++) {
-			/* might want to get fancier later */
-			if (dp->sd_cdriver != cp->pmax_driver ||
-			    dp->sd_ctlr != cp->pmax_unit)
-				continue;	/* not connected */
-			if (!(*drp->d_init)(dp))
-				continue;
-			dp->sd_alive = 1;
-			/* if device is a disk, assign number for statistics */
-			if (dp->sd_dk && dkn < DK_NDRIVE)
-				dp->sd_dk = dkn++;
-			else
-				dp->sd_dk = -1;
-		}
+
 	}
+
+	initcpu(); 	/* causes panic on 3MAX? old-conf wedge on 3max+ */
+
+	/* Configuration is finished,  turn on interrupts. */
+	spl0();
+
+	/*
+	 * Probe scsi bus. (there is no polled scsi?)
+	 */
+	configure_scsi();
 
 #ifdef GENERIC
 	if ((boothowto & RB_ASKNAME) == 0)
@@ -221,6 +278,46 @@ configure()
 }
 
 /*
+ * Configure scsi devices on old-style pmax scsi drivers.
+ * Interrupts must be enabled or this will hang.
+ */
+void
+configure_scsi()
+{
+	register struct pmax_ctlr *cp;
+	register struct scsi_device *dp;
+	register struct driver *drp;
+
+
+#ifdef DIAGNOSTIC
+	printf("Probing scsi\n");
+#endif
+
+	/* probe and initialize SCSI buses */
+	for (cp = pmax_cinit; drp = cp->pmax_driver; cp++) {
+
+		if (!cp->pmax_alive)
+		    continue;
+
+		/* probe and initialize devices connected to controller */
+		for (dp = scsi_dinit; drp = dp->sd_driver; dp++) {
+			/* might want to get fancier later */
+			if (dp->sd_cdriver != cp->pmax_driver ||
+			    dp->sd_ctlr != cp->pmax_unit)
+			    continue;	/* not connected */
+			if (!(*drp->d_init)(dp))
+			    continue;
+			dp->sd_alive = 1;
+			/* if device is a disk, assign number for statistics */
+			if (dp->sd_dk && dkn < DK_NDRIVE)
+			    dp->sd_dk = dkn++;
+			else
+			    dp->sd_dk = -1;
+		}
+	}
+}
+
+/*
  * Configure swap space and related parameters.
  */
 swapconf()
@@ -228,19 +325,24 @@ swapconf()
 	register struct swdevt *swp;
 	register int nblks;
 
-	for (swp = swdevt; swp->sw_dev != NODEV; swp++)
-		if (bdevsw[major(swp->sw_dev)].d_psize) {
-			nblks =
-			  (*bdevsw[major(swp->sw_dev)].d_psize)(swp->sw_dev);
+	for (swp = swdevt; swp->sw_dev != NODEV; swp++) {
+		int maj = major(swp->sw_dev);
+
+		if (maj > nblkdev)
+			break;
+		if (bdevsw[maj].d_psize) {
+			nblks = (*bdevsw[maj].d_psize)(swp->sw_dev);
 			if (nblks != -1 &&
 			    (swp->sw_nblks == 0 || swp->sw_nblks > nblks))
 				swp->sw_nblks = nblks;
+			swp->sw_nblks = ctod(dtoc(swp->sw_nblks));
 		}
+	}
 	dumpconf();
 }
 
 #define	DOSWAP			/* Change swdevt and dumpdev too */
-u_long	bootdev;		/* should be dev_t, but not until 32 bits */
+u_long	bootdev = 0;		/* should be dev_t, but not until 32 bits */
 
 static	char devname[][2] = {
 	  0, 0,		/*  0 = 4.4bsd rz */
@@ -279,10 +381,10 @@ static	char devname[][2] = {
  */
 setroot()
 {
-	register struct scsi_device *dp;
 	int  majdev, mindev, unit, part, controller;
 	dev_t temp, orootdev;
 	struct swdevt *swp;
+	register struct scsi_device *dp;
 
 	if (boothowto & RB_DFLTROOT ||
 	    (bootdev & B_MAGICMASK) != B_DEVMAGIC)
