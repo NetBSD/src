@@ -1,4 +1,4 @@
-#	$NetBSD: files.sparc64,v 1.19 1999/05/23 02:45:19 eeh Exp $
+#	$NetBSD: files.sparc64,v 1.20 1999/06/05 03:16:19 mrg Exp $
 
 # @(#)files.sparc64	8.1 (Berkeley) 7/19/93
 # sparc64-specific configuration info
@@ -8,16 +8,36 @@ maxpartitions 8
 
 maxusers 2 8 1024
 
-device mainbus {}
+define mainbus {}
+device mainbus: pcibus, mainbus
 attach mainbus at root
 
-device iommu {}
-attach iommu at mainbus
-file	arch/sparc64/sparc64/iommu.c		iommu
-
 include "dev/sbus/files.sbus"
-attach sbus at mainbus, iommu
+attach sbus at mainbus
 file	arch/sparc64/dev/sbus.c			sbus
+
+device  psycho: pcibus
+attach  psycho at mainbus
+include "dev/pci/files.pci"
+file	arch/sparc64/dev/psycho.c		psycho
+file	arch/sparc64/dev/psycho_bus.c		psycho
+file	arch/sparc64/dev/pci_machdep.c		psycho
+
+# IOMMU is for both
+file	arch/sparc64/dev/iommu.c		sbus | psycho
+
+# can't use ppb for SUNW,simba
+device  simba: pcibus
+attach  simba at pci
+file	arch/sparc64/dev/simba.c		simba
+
+include "dev/ata/files.ata"
+file	arch/sparc64/dev/pciide_machdep.c	pciide
+
+device ebus {[addr = -1]}: pcibus
+attach ebus at pci
+file	arch/sparc64/dev/ebus.c			ebus
+file	arch/sparc64/dev/ebus_bus.c		ebus
 
 # network devices MII bus
 include "dev/mii/files.mii"
@@ -27,17 +47,18 @@ include "dev/mii/files.mii"
 #file	arch/sparc64/sparc64/auxreg.c
 
 device clock
-attach clock at mainbus, sbus
+attach clock at mainbus, sbus with clock_sbus
+attach clock at ebus with clock_ebus
 
 device timer
 attach timer at mainbus, sbus
 
 device eeprom
-attach eeprom at sbus
+attach eeprom at sbus, ebus
 file	arch/sparc64/sparc64/clock.c
 
 device power
-attach power at sbus
+attach power at sbus, ebus
 file	arch/sparc64/dev/power.c			power
 
 device cpu
@@ -49,8 +70,25 @@ attach zs at mainbus, sbus
 file	arch/sparc64/dev/zs.c			zs needs-count
 file	dev/ic/z8530sc.c			zs
 
+# siemens SAB82532; found on U5/U10/... for tty ports.
+#device sab {channel = -1}
+#attach sab at ebus
+#file	arch/sparc64/dev/sab_ebus.c		sab
+#file	dev/ic/sab82532.c			sab
+
+# "com" attachments for the kbd/mouse of the U5/U10/...
+#device ucom {}
+#attach ucom at ebus with com
+#file	arch/sparc64/dev/ucom_ebus.c		ucom
+
+# XXX bogus; this is in dev/isa/files.isa.  fix me please!
+device lpt {}
+attach lpt at ebus with lpt_ebus
+file	arch/sparc64/dev/lpt_ebus.c		lpt_ebus
+
 device fdc {}
-attach fdc at mainbus, sbus
+attach fdc at mainbus, sbus, ebus
+# attach fdc at ebus
 device fd: disk
 attach fd at fdc
 file	dev/sun/fd.c				fdc | fd needs-flag
@@ -65,20 +103,28 @@ attach zstty at zs
 file dev/ic/z8530tty.c			zstty needs-flag
 file arch/sparc/dev/zs_kgdb.c		kgdb
 
+#device sabtty: tty
+#attach sabtty at sab
+#file dev/ic/sabtty.c			sabtty needs-flag
+
 define zsevent
 file dev/sun/event.c			zsevent
 
 device kbd: zsevent
 attach kbd at zs with kbd_zs
+attach kbd at ucom with kbd_ucom
 file dev/sun/kbd_zs.c			kbd_zs
 file dev/sun/kbd.c			kbd needs-flag
 file dev/sun/kbd_tables.c 		kbd
 file arch/sparc64/dev/kd.c 		kbd
+file arch/sparc64/dev/kbd_ucom.c 	kbd_ucom
 
 device ms: zsevent
 attach ms at zs with ms_zs
+attach ms at ucom with ms_ucom
 file dev/sun/ms_zs.c			ms_zs
 file dev/sun/ms.c			ms needs-flag
+file arch/sparc64/dev/ms_ucom.c 	ms_ucom
 
 
 #
@@ -91,6 +137,7 @@ major	{ fd = 16 }
 major	{ md = 5 }
 major	{ sd = 7 }
 major	{ vnd = 8 }
+major	{ wd = 12 }
 
 # Brooktree DAC attribute
 define bt_dac
