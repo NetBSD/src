@@ -1,4 +1,4 @@
-/*	$NetBSD: time.c,v 1.10 1998/10/14 00:57:40 wsanchez Exp $	*/
+/*	$NetBSD: time.c,v 1.11 1999/06/05 19:19:19 kleink Exp $	*/
 
 /*
  * Copyright (c) 1987, 1988, 1993
@@ -43,23 +43,23 @@ __COPYRIGHT("@(#) Copyright (c) 1987, 1988, 1993\n\
 #if 0
 static char sccsid[] = "@(#)time.c	8.1 (Berkeley) 6/6/93";
 #endif
-__RCSID("$NetBSD: time.c,v 1.10 1998/10/14 00:57:40 wsanchez Exp $");
+__RCSID("$NetBSD: time.c,v 1.11 1999/06/05 19:19:19 kleink Exp $");
 #endif /* not lint */
 
 #include <sys/types.h>
 #include <sys/time.h>
 #include <sys/resource.h>
 #include <sys/wait.h>
+#include <errno.h>
+#include <locale.h>
 #include <signal.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <unistd.h>
-#include <errno.h>
 
-int lflag;
-int portableflag;
 
-int	main __P((int, char **));
+int		main __P((int, char **));
+static void	usage __P((void));
 
 int
 main(argc, argv)
@@ -68,15 +68,21 @@ main(argc, argv)
 {
 	int pid;
 	int ch, status;
+	int lflag, portableflag;
+	const char *decpt;
+	const struct lconv *lconv;
 	struct timeval before, after;
 	struct rusage ru;
 
 #ifdef __GNUC__		/* XXX: borken gcc */
 	(void)&argv;
 #endif
-	lflag = 0;
-	while ((ch = getopt(argc, argv, "lp")) != -1)
-		switch((char)ch) {
+
+	(void)setlocale(LC_ALL, "");
+
+	lflag = portableflag = 0;
+	while ((ch = getopt(argc, argv, "lp")) != -1) {
+		switch (ch) {
 		case 'p':
 			portableflag = 1;
 			break;
@@ -85,21 +91,23 @@ main(argc, argv)
 			break;
 		case '?':
 		default:
-			fprintf(stderr, "usage: time [-lp] command.\n");
-			exit(1);
+			usage();
 		}
-
-	if (!(argc -= optind))
-		exit(0);
+	}
+	argc -= optind;
 	argv += optind;
+
+	if (argc < 1)
+		usage();
 
 	gettimeofday(&before, (struct timezone *)NULL);
 	switch(pid = vfork()) {
 	case -1:			/* error */
-		perror("time");
-		exit(1);
+		perror("vfork");
+		exit(EXIT_FAILURE);
 		/* NOTREACHED */
 	case 0:				/* child */
+		/* LINTED will return only on failure */
 		execvp(*argv, argv);
 		perror(*argv);
 		_exit((errno == ENOENT) ? 127 : 126);
@@ -115,25 +123,29 @@ main(argc, argv)
 		fprintf(stderr, "Command terminated abnormally.\n");
 	timersub(&after, &before, &after);
 
+	if ((lconv = localeconv()) == NULL ||
+	    (decpt = lconv->decimal_point) == NULL)
+		decpt = ".";
+
 	if (portableflag) {
-		fprintf (stderr, "real %9ld.%02ld\n", 
-			(long)after.tv_sec, (long)after.tv_usec/10000);
-		fprintf (stderr, "user %9ld.%02ld\n",
-			(long)ru.ru_utime.tv_sec, (long)ru.ru_utime.tv_usec/10000);
-		fprintf (stderr, "sys  %9ld.%02ld\n",
-			(long)ru.ru_stime.tv_sec, (long)ru.ru_stime.tv_usec/10000);
+		fprintf (stderr, "real %9ld%s%02ld\n", 
+			(long)after.tv_sec, decpt, (long)after.tv_usec/10000);
+		fprintf (stderr, "user %9ld%s%02ld\n",
+			(long)ru.ru_utime.tv_sec, decpt, (long)ru.ru_utime.tv_usec/10000);
+		fprintf (stderr, "sys  %9ld%s%02ld\n",
+			(long)ru.ru_stime.tv_sec, decpt, (long)ru.ru_stime.tv_usec/10000);
 	} else {
 
-		fprintf(stderr, "%9ld.%02ld real ", 
-			(long)after.tv_sec, (long)after.tv_usec/10000);
-		fprintf(stderr, "%9ld.%02ld user ",
-			(long)ru.ru_utime.tv_sec, (long)ru.ru_utime.tv_usec/10000);
-		fprintf(stderr, "%9ld.%02ld sys\n",
-			(long)ru.ru_stime.tv_sec, (long)ru.ru_stime.tv_usec/10000);
+		fprintf(stderr, "%9ld%s%02ld real ", 
+			(long)after.tv_sec, decpt, (long)after.tv_usec/10000);
+		fprintf(stderr, "%9ld%s%02ld user ",
+			(long)ru.ru_utime.tv_sec, decpt, (long)ru.ru_utime.tv_usec/10000);
+		fprintf(stderr, "%9ld%s%02ld sys\n",
+			(long)ru.ru_stime.tv_sec, decpt, (long)ru.ru_stime.tv_usec/10000);
 	}
 
 	if (lflag) {
-		int hz = 100;			/* XXX */
+		int hz = (int)sysconf(_SC_CLK_TCK);
 		long ticks;
 
 		ticks = hz * (ru.ru_utime.tv_sec + ru.ru_stime.tv_sec) +
@@ -169,5 +181,14 @@ main(argc, argv)
 			ru.ru_nivcsw, "involuntary context switches");
 	}
 
-	exit (WIFEXITED(status) ? WEXITSTATUS(status) : EXIT_FAILURE);
+	exit(WIFEXITED(status) ? WEXITSTATUS(status) : EXIT_FAILURE);
+	/* NOTREACHED */
+}
+
+static void
+usage()
+{
+
+	fprintf(stderr, "usage: time [-lp] utility [argument ...]\n");
+	exit(EXIT_FAILURE);
 }
