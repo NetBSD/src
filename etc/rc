@@ -1,4 +1,4 @@
-#	$NetBSD: rc,v 1.132 1999/09/28 14:53:17 bouyer Exp $
+#	$NetBSD: rc,v 1.133 1999/10/05 10:32:56 darrenr Exp $
 #	originally from: @(#)rc	8.2 (Berkeley) 3/17/94
 
 # System startup script run by init on autoboot
@@ -106,6 +106,47 @@ fi
 
 mount_critical_filesystems local
 
+if [ -e /etc/etc.current ] ; then
+	if [ -h /etc/etc.default ] ; then
+		def=`ls -ld /etc/etc.default 2>&1`
+		default=`expr "$def" : '.*-> etc\.\(.*\)' 2>&1`
+	else
+		default=current
+	fi
+	spc=""
+	conflist=`cd /etc; ls -1d etc.* 2>&1 | egrep -v 'current|default'`
+	for i in $conflist; do
+		name=`expr $i : 'etc\.\(.*\)' 2>&1`
+		if [ $name = $default ] ; then
+			echo -n "${spc}[${name}]"
+		else
+			echo -n "${spc}${name}"
+		fi
+		spc=" "
+	done
+	echo
+	master=$$
+	conf=/etc/passwd
+	while [ ! -d /etc/etc.$conf ] ; do
+		trap 'conf=$default; echo; echo Using default of $conf' 14
+		echo -n "Which configuration [$default] ? "
+		(sleep 30 && kill -ALRM $master) >/dev/null 2>&1 &
+		read conf
+		trap "" 14
+		if [ -z $conf ] ; then
+			conf=$default
+		fi
+		if [ ! -d /etc/etc.$conf -a ! -h /etc/etc.$conf ] ; then
+			conf=/etc/passwd
+		fi
+	done
+	rm -f /etc/etc.current
+	ln -s /etc/etc.$conf /etc/etc.current
+	if [ -f /etc/rc.conf ] ; then
+		. /etc/rc.conf
+	fi
+fi
+
 # set hostname, turn on network
 echo 'starting network'
 sh /etc/netstart
@@ -143,7 +184,7 @@ rm -f /var/spool/uucp/STST/*
 
 # if this kernel supports machdep.booted_kernel, use that to build the KVM
 # db so dmesg will run work when we boot /netbsd.new, etc.
-sysctl machdep | grep -q booted_kernel
+sysctl machdep 2>/dev/null | grep -q booted_kernel
 if [ $? -eq 0 ] ; then
         kvm_mkdb `sysctl -n machdep.booted_kernel`
 fi
@@ -253,57 +294,59 @@ fi
 mount -a
 
 # now start the rpc servers, for NFS server/client.
-echo -n 'starting nfs daemons:'
+if checkyesno nfs_client || checkyesno nfs_server; then
+	echo -n 'starting nfs daemons:'
 
-nfs_locking=NO
+	nfs_locking=NO
 
-if checkyesno nfs_server; then
-	if [ -r /etc/exports ]; then
-		rm -f /var/db/mountdtab
-		echo -n > /var/db/mountdtab
-		echo -n ' mountd';              mountd $mountd_flags
-		echo -n ' nfsd';                nfsd $nfsd_flags
-		nfs_locking=YES
-	else
-		echo
-		logger -s "WARNING: /etc/exports not readable; " \
-		    "NFS server not started."
-	fi
-fi
-
-if checkyesno nfs_client; then
-        echo -n ' nfsiod';              nfsiod $nfsiod_flags
-	nfs_locking=YES
-fi
-
-if checkyesno nfs_locking; then
-	if checkyesno statd; then
-		echo -n ' rpc.statd';		rpc.statd $statd_flags
-	fi
-	if checkyesno lockd; then
-		echo -n ' rpc.lockd';		rpc.lockd $lockd_flags
-	fi
-fi
-
-if checkyesno amd; then
-	if [ -d "$amd_dir" ]; then
-		if [ -r "$amd_master" ]; then
-			echo -n ' amd'
-			amd $amd_flags -p -a $amd_dir \
-			`sed s/#.*$// <$amd_master`  >/var/run/amd.pid
+	if checkyesno nfs_server; then
+		if [ -r /etc/exports ]; then
+			rm -f /var/db/mountdtab
+			echo -n > /var/db/mountdtab
+			echo -n ' mountd';              mountd $mountd_flags
+			echo -n ' nfsd';                nfsd $nfsd_flags
+			nfs_locking=YES
 		else
 			echo
-			logger -s "WARNING: \$amd_master ($amd_master)not " \
-			    "readable; amd not started."
+			logger -s "WARNING: /etc/exports not readable; " \
+			    "NFS server not started."
 		fi
-	else
-		echo
-		logger -s "WARNING: \$amd_dir ($amd_dir) not a directory; " \
-		    "amd not started."
 	fi
+
+	if checkyesno nfs_client; then
+		echo -n ' nfsiod';              nfsiod $nfsiod_flags
+		nfs_locking=YES
+	fi
+
+	if checkyesno nfs_locking; then
+		if checkyesno statd; then
+			echo -n ' rpc.statd';		rpc.statd $statd_flags
+		fi
+		if checkyesno lockd; then
+			echo -n ' rpc.lockd';		rpc.lockd $lockd_flags
+		fi
+	fi
+
+	if checkyesno amd; then
+		if [ -d "$amd_dir" ]; then
+			if [ -r "$amd_master" ]; then
+				echo -n ' amd'
+				amd $amd_flags -p -a $amd_dir \
+				`sed s/#.*$// <$amd_master`  >/var/run/amd.pid
+			else
+				echo
+				logger -s "WARNING: \$amd_master ($amd_master)not " \
+				    "readable; amd not started."
+			fi
+		else
+			echo
+			logger -s "WARNING: \$amd_dir ($amd_dir) not a directory; " \
+			    "amd not started."
+		fi
+	fi
+	echo '.'
 fi
 
-echo '.'
 
 if [ -f /sbin/ldconfig ]; then
 	echo 'creating runtime link editor directory cache.'
