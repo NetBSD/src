@@ -1,6 +1,6 @@
 #! /bin/sh
 #
-#	$NetBSD: less2netbsd,v 1.4 2001/07/26 13:47:24 mrg Exp $
+#	$NetBSD: less2netbsd,v 1.5 2002/03/05 12:32:16 mrg Exp $
 #
 # Copyright (c) 1996 Matthew R. Green
 # All rights reserved.
@@ -13,7 +13,7 @@
 # 2. Redistributions in binary form must reproduce the above copyright
 #    notice, this list of conditions and the following disclaimer in the
 #    documentation and/or other materials provided with the distribution.
-# 4. The name of the author may not be used to endorse or promote products
+# 3. The name of the author may not be used to endorse or promote products
 #    derived from this software without specific prior written permission.
 #
 # THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR
@@ -60,7 +60,7 @@ mkdir -p src/usr.bin/less/less src/usr.bin/less/lesskey src/usr.bin/less/lessech
 ### start less ###############################
 cd $r
 echo less:
-src='INSTALL NEWS README acconfig.h brac.c ch.c charset.c cmd.h cmdbuf.c command.c decode.c defines.h edit.c filename.c forwback.c funcs.h help.c ifile.c input.c jump.c less.h less.nro lglob.h line.c linenum.c lsystem.c main.c mark.c optfunc.c option.c option.h opttbl.c os.c output.c pckeys.h position.c position.h prompt.c regexp.c regexp.h screen.c search.c signal.c tags.c ttyin.c version.c'
+src='INSTALL LICENSE NEWS README acconfig.h brac.c ch.c charset.c cmd.h cmdbuf.c command.c decode.c defines.h edit.c filename.c forwback.c funcs.h help.c ifile.c input.c jump.c less.h less.nro lglob.h line.c linenum.c lsystem.c main.c mark.c optfunc.c option.c option.h opttbl.c os.c output.c pckeys.h position.c position.h prompt.c regexp.c regexp.h screen.c search.c signal.c tags.c ttyin.c version.c'
 
 pax -rvw $src $d/src/usr.bin/less/less
 
@@ -92,13 +92,6 @@ pax -rvw $src $d/src/usr.bin/less/lessecho
 
 find $d -name '*.[ch]' -print | while read c; do
 	chmod u+w $c
-	sed 1q < $c | grep '\$NetBSD' || (
-cat <<'__eof_header'
-/*	$NetBSD: less2netbsd,v 1.4 2001/07/26 13:47:24 mrg Exp $	*/
-
-__eof_header
-cat $c
-	) > /tmp/l2n$$ && cp /tmp/l2n$$ $c && echo added RCS tags to $c
 done
 
 echo done
