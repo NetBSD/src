@@ -20,7 +20,9 @@ Boston, MA 02111-1307, USA.  */
 
 /* Define default target values. */
 
+#ifndef TARGET_ENDIAN_DEFAULT
 #define TARGET_ENDIAN_DEFAULT 0
+#endif
 #define TARGET_DEFAULT MASK_GAS
 
 #ifdef hpcmips /* XXX should use distinct target name -uch */
@@ -45,10 +47,17 @@ Boston, MA 02111-1307, USA.  */
 /* Define mips-specific netbsd predefines... */
 
 #undef CPP_PREDEFINES
+#if TARGET_ENDIAN_DEFAULT == MASK_BIG_ENDIAN
+#define CPP_PREDEFINES \
+ "-D__ANSI_COMPAT -DMIPSEB -DR3000 -DSYSTYPE_BSD -D_SYSTYPE_BSD \
+  -D__NetBSD__ -D__ELF__ -Dmips -D__NO_LEADING_UNDERSCORES__ -D__GP_SUPPORT__ \
+  -D_R3000 -Asystem(unix) -Asystem(NetBSD) -Amachine(mips)"
+#else
 #define CPP_PREDEFINES \
  "-D__ANSI_COMPAT -DMIPSEL -DR3000 -DSYSTYPE_BSD -D_SYSTYPE_BSD \
   -D__NetBSD__ -D__ELF__ -Dmips -D__NO_LEADING_UNDERSCORES__ -D__GP_SUPPORT__ \
   -D_R3000 -Asystem(unix) -Asystem(NetBSD) -Amachine(mips)"
+#endif
 
 /* Always uses gas.  */
 
