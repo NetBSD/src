@@ -1,3 +1,5 @@
+/*	$NetBSD: strlen.S,v 1.2 1994/10/26 06:39:37 cgd Exp $	*/
+
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
  * All rights reserved.
@@ -37,8 +39,10 @@
 
 #if defined(LIBC_SCCS) && !defined(lint)
 	.text
-	/*.asciz "from: @(#)strlen.s	5.1 (Berkeley) 5/12/90"*/
-	.asciz "$Id: strlen.S,v 1.1 1994/03/29 07:14:57 chopps Exp $"
+#ifdef notdef
+	.asciz "@(#)strlen.s	5.1 (Berkeley) 5/12/90"
+#endif
+	.asciz "$NetBSD: strlen.S,v 1.2 1994/10/26 06:39:37 cgd Exp $"
 #endif /* LIBC_SCCS and not lint */
 
 #include "DEFS.h"

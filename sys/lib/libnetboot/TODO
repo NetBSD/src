@@ -1,3 +1,5 @@
+$NetBSD: TODO,v 1.2 1994/10/26 06:42:59 cgd Exp $
+
 Necessary:
 	need support for bootparam
 	small printf

@@ -1,3 +1,5 @@
+/*	$NetBSD: locc.S,v 1.2 1994/10/26 06:39:28 cgd Exp $	*/
+
 /*
  * Copyright (c) 1988 University of Utah.
  * Copyright (c) 1980, 1990 The Regents of the University of California.
@@ -36,8 +38,7 @@
  * SUCH DAMAGE.
  *
  *	from: Utah Hdr: locore.s 1.58 91/04/22
- *	from: @(#)locore.s	7.11 (Berkeley) 5/9/91
- *	$Id: locc.S,v 1.1 1993/10/13 05:41:02 cgd Exp $
+ *	@(#)locore.s	7.11 (Berkeley) 5/9/91
  */
 
 #include "DEFS.h"

@@ -1,3 +1,5 @@
+/*	$NetBSD: skpc.c,v 1.2 1994/10/26 06:42:43 cgd Exp $	*/
+
 /*
  * Copyright (c) 1982, 1986, 1989 Regents of the University of California.
  * All rights reserved.
@@ -30,8 +32,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	from: @(#)ufs_subr.c	7.13 (Berkeley) 6/28/90
- *	$Id: skpc.c,v 1.1 1993/10/13 05:40:46 cgd Exp $
+ *	@(#)ufs_subr.c	7.13 (Berkeley) 6/28/90
  */
 
 #include <sys/types.h>

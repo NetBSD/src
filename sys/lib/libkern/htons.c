@@ -1,3 +1,5 @@
+/*	$NetBSD: htons.c,v 1.3 1994/10/26 06:42:23 cgd Exp $	*/
+
 /*
  * Copyright (c) 1993 Winning Strategies, Inc.
  * All rights reserved.
@@ -26,12 +28,10 @@
  * THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
- *
- *	$Id: htons.c,v 1.2 1994/01/28 23:47:32 jtc Exp $
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static char *rcsid = "$Id: htons.c,v 1.2 1994/01/28 23:47:32 jtc Exp $";
+static char *rcsid = "$NetBSD: htons.c,v 1.3 1994/10/26 06:42:23 cgd Exp $";
 #endif
 
 #include <machine/endian.h>

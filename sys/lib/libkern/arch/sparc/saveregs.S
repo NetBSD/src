@@ -1,3 +1,5 @@
+/*	$NetBSD: saveregs.S,v 1.2 1994/10/26 06:40:07 cgd Exp $	*/
+
 /*
  * Copyright (c) 1992, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -34,8 +36,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * from: Header: saveregs.s,v 1.1 91/07/06 17:22:33 torek Exp
- * $Id: saveregs.S,v 1.1 1994/06/30 06:53:16 deraadt Exp $
+ * Header: saveregs.s,v 1.1 91/07/06 17:22:33 torek Exp
  */
 
 /*
