@@ -1,17 +1,12 @@
-#	$NetBSD: Makefile.cc1,v 1.1.1.1 1998/03/29 11:34:20 mrg Exp $
+#	$NetBSD: Makefile.cc1,v 1.2 1998/04/01 21:51:26 mrg Exp $
 
 NOMAN=
 
 BINDIR=	/usr/libexec
 
-#COMMONOBJ!=cd $(.CURDIR)/../common; \
-#	 printf "xxx: .MAKE\n\t@echo \$${.OBJDIR}\n" | ${MAKE} -s -f-
-
-#CPPFLAGS+=	-I$(COMMONOBJ)
-
 YFLAGS=
 
-LDADD+=	-L${COMMONOBJ} -lcc1
-DPADD+=	${COMMONOBJ}/libcc1.a
+LDADD+=	-L$(COMMONOBJ) -lcc1
+DPADD+=	$(COMMONOBJ)/libcc1.a
 
 .include <bsd.prog.mk>
