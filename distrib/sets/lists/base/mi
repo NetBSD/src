@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.429 2003/09/29 19:33:06 mycroft Exp $
+# $NetBSD: mi,v 1.430 2003/10/05 01:38:47 chuck Exp $
 .			base-sys-root
 ./altroot		base-sys-root
 ./bin			base-sys-root
@@ -1806,6 +1806,7 @@
 ./usr/share/man/cat8/evbmips		base-man-share
 ./usr/share/man/cat8/evbppc		base-man-share
 ./usr/share/man/cat8/evbsh3		base-man-share
+./usr/share/man/cat8/evbsh5		base-man-share
 ./usr/share/man/cat8/hp300		base-man-share
 ./usr/share/man/cat8/hp700		base-man-share
 ./usr/share/man/cat8/hpcarm		base-man-share
@@ -1904,6 +1905,7 @@
 ./usr/share/man/html8/evbmips		base-man-share
 ./usr/share/man/html8/evbppc		base-man-share
 ./usr/share/man/html8/evbsh3		base-man-share
+./usr/share/man/html8/evbsh5		base-man-share
 ./usr/share/man/html8/hp300		base-man-share
 ./usr/share/man/html8/hp700		base-man-share
 ./usr/share/man/html8/hpcarm		base-man-share
@@ -2003,6 +2005,7 @@
 ./usr/share/man/man8/evbmips		base-man-share
 ./usr/share/man/man8/evbppc		base-man-share
 ./usr/share/man/man8/evbsh3		base-man-share
+./usr/share/man/man8/evbsh5		base-man-share
 ./usr/share/man/man8/hp300		base-man-share
 ./usr/share/man/man8/hp700		base-man-share
 ./usr/share/man/man8/hpcarm		base-man-share
