@@ -1,4 +1,4 @@
-/*	$NetBSD: sysv_shm.c,v 1.55 2000/04/15 16:49:40 simonb Exp $	*/
+/*	$NetBSD: sysv_shm.c,v 1.56 2000/06/02 15:53:05 simonb Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -73,19 +73,16 @@
 #include <sys/param.h>
 #include <sys/kernel.h>
 #include <sys/shm.h>
-#include <sys/proc.h>
-#include <sys/uio.h>
-#include <sys/time.h>
 #include <sys/malloc.h>
 #include <sys/mman.h>
-#include <sys/systm.h>
 #include <sys/stat.h>
-
-#include <sys/mount.h>
-#include <sys/syscallargs.h>
 
 #include <vm/vm.h>
 #include <uvm/uvm_extern.h>
+
+#include <sys/sysctl.h>
+#include <sys/mount.h>		/* XXX for <sys/syscallargs.h> */
+#include <sys/syscallargs.h>
 
 struct shmid_ds *shm_find_segment_by_shmid __P((int));
 
