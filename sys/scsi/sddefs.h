@@ -1,5 +1,5 @@
 /*
- *	$Id: sddefs.h,v 1.3 1993/05/20 03:46:46 cgd Exp $
+ *	$Id: sddefs.h,v 1.4 1993/05/20 23:14:22 deraadt Exp $
  */
 
 struct sd_data {
@@ -8,7 +8,7 @@ struct sd_data {
 #define	SDINIT		0x04		/* device has been init'd */
 #define	SDWAIT		0x08		/* device has someone waiting */
 #define SDHAVELABEL	0x10		/* have read the label */
-#define SDDOSPART	0x20		/* Have read the DOS partition table */
+#define SDDOSPART	0x20		/* Have read host-dependent partition table */
 #define SDWRITEPROT	0x40		/* Device in readonly mode (S/W)*/
 	struct scsi_switch *sc_sw;	/* address of scsi low level switch */
 	struct scsi_xfer *freexfer;	/* chain of free ones */
@@ -27,9 +27,9 @@ struct sd_data {
 		u_short	secsiz;		/* Number of bytes/sector */
 		u_long	disksize;		/* total number sectors */
 	} params;
-	unsigned int sd_start_of_unix;	/* unix vs dos partitions */
+	unsigned int sd_start_of_unix;	/* unix vs host-dependent partitions */
 	struct disklabel disklabel;
-	struct dos_partition dosparts[NDOSPART]; /* DOS view of disk */
+	struct cpu_disklabel cpudisklabel;
 	int partflags[MAXPARTITIONS];	/* per partition flags */
 #define SDOPEN	0x01
 	int openparts;		/* one bit for each open partition */

@@ -13,7 +13,7 @@
  * on the understanding that TFS is not responsible for the correct
  * functioning of this software in any circumstances.
  *
- *	$Id: sd.c,v 1.9 1993/05/20 03:46:42 cgd Exp $
+ *	$Id: sd.c,v 1.10 1993/05/20 23:12:53 deraadt Exp $
  */
 
 #include "sd.h"
@@ -601,6 +601,7 @@ sdioctl(dev_t dev, int cmd, caddr_t addr, int flag)
 {
 	/* struct sd_cmd_buf *args;*/
 	struct scsi_format_parms *fparms;
+	struct cpu_disklabel osdep;
 	extern struct proc *curproc;
 	register struct sd_data *sd;
 	unsigned char unit, part;
@@ -676,7 +677,7 @@ unlock:
 		else {
 			error = setdisklabel(&sd->disklabel, (struct disklabel *)addr,
 			    /*(sd->flags & DKFL_BSDLABEL) ? sd->openparts : */0,
-			    sd->dosparts);
+			    &sd->cpudisklabel);
 		}
 		if (error == 0)
 			sd->flags |= SDHAVELABEL;
@@ -696,7 +697,7 @@ unlock:
 			if ((error = setdisklabel(&sd->disklabel,
 			    (struct disklabel *)addr,
 			    /*(sd->flags & SDHAVELABEL) ? sd->openparts :*/0,
-			    sd->dosparts)) == 0) {
+			    &sd->cpudisklabel)) == 0) {
 				int wlab;
 
 				sd->flags |= SDHAVELABEL; /* ok write will succeed */
@@ -706,7 +707,7 @@ unlock:
 				wlab = sd->wlabel;
 				sd->wlabel = 1;
 				error = writedisklabel(dev, sdstrategy,
-					&sd->disklabel, sd->dosparts);
+					&sd->disklabel, &sd->cpudisklabel);
 				sd->wlabel = wlab;
 			}
 		}
@@ -725,10 +726,10 @@ unlock:
 int
 sdgetdisklabel(u_char unit)
 {
-	struct dos_partition *dos_partition_p;
 	struct sd_data *sd = sd_data[unit];
 	/*unsigned int n, m;*/
 	char *errstring;
+	struct cpu_disklabel osdep;
 
 	/* If the inflo is already loaded, use it */
 	if(sd->flags & SDHAVELABEL)
@@ -756,7 +757,7 @@ sdgetdisklabel(u_char unit)
 
 	/* all the generic disklabel extraction routine */
 	if(errstring = readdisklabel(makedev(0 ,(unit<<UNITSHIFT )+3),
-	    sdstrategy, &sd->disklabel, sd->dosparts, 0, 0)) {
+	    sdstrategy, &sd->disklabel, &sd->cpudisklabel)) {
 		printf("sd%d: %s\n",unit, errstring);
 		return ENXIO;
 	}
