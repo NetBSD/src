@@ -1,4 +1,4 @@
-/*	$NetBSD: rmd160hl.c,v 1.1 2000/07/05 11:44:04 ad Exp $	*/
+/*	$NetBSD: rmd160hl.c,v 1.2 2000/07/05 13:49:25 ad Exp $	*/
 
 /* rmd160hl.c
  * ----------------------------------------------------------------------------
@@ -13,11 +13,10 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: rmd160hl.c,v 1.1 2000/07/05 11:44:04 ad Exp $");
+__RCSID("$NetBSD: rmd160hl.c,v 1.2 2000/07/05 13:49:25 ad Exp $");
 #endif	/* not lint */
 
 #include <sys/types.h>
-#include <sys/uio.h>
 
 #include "namespace.h"
 
@@ -28,11 +27,8 @@ __RCSID("$NetBSD: rmd160hl.c,v 1.1 2000/07/05 11:44:04 ad Exp $");
 #include <unistd.h>
 #include <rmd160.h>
 
-/* ARGSUSED */
 char *
-RMD160End(ctx, buf)
-    RMD160_CTX *ctx;
-    char *buf;
+RMD160End(RMD160_CTX *ctx, char *buf)
 {
     int i;
     char *p = buf;
@@ -52,9 +48,7 @@ RMD160End(ctx, buf)
 }
 
 char *
-RMD160File (filename, buf)
-    char *filename;
-    char *buf;
+RMD160File(char *filename, char *buf)
 {
     u_char buffer[BUFSIZ];
     RMD160_CTX ctx;
@@ -75,10 +69,7 @@ RMD160File (filename, buf)
 }
 
 char *
-RMD160Data (data, len, buf)
-    const u_char *data;
-    size_t len;
-    char *buf;
+RMD160Data(const u_char *data, size_t len, char *buf)
 {
     RMD160_CTX ctx;
 
