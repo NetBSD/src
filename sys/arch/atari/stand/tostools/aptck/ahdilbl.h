@@ -1,4 +1,4 @@
-/*	$NetBSD: ahdilbl.h,v 1.2 1996/02/09 20:52:04 leo Exp $	*/
+/*	$NetBSD: ahdilbl.h,v 1.3 2001/07/26 23:07:57 wiz Exp $	*/
 
 /*
  * Copyright (c) 1995 Leo Weppelman.
@@ -52,7 +52,7 @@
 #define	RAW_PART	2		/* xx?c is raw partition	   */
 
 #define	NO_BOOT_BLOCK	((u_int)-1)
-#define	MAXAUXROOTS	29		/* max. # of auxilary root sectors */
+#define	MAXAUXROOTS	29		/* max. # of auxiliary root sectors */
 
 struct bootblock {
 	u_int8_t	bb_xxboot[LABELOFFSET - sizeof(u_int32_t)];
@@ -98,7 +98,7 @@ struct bootblock {
 #define	AHDI_MAXRPD	4		/* max. # of partition descriptors */
 					/* in the AHDI bootblock (aka root)*/
 #define	AHDI_MAXARPD	2		/* max. # of partition descriptors */
-					/* in an AHDI auxilary root sector */
+					/* in an AHDI auxiliary root sector */
 
 struct ahdi_part {
 	u_int8_t	ap_flg;		/* bit 0 is in-use flag            */
