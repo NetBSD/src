@@ -1,9 +1,10 @@
-#	$NetBSD: Makefile,v 1.5 2001/03/31 12:13:34 aymeric Exp $
+#	$NetBSD: Makefile,v 1.6 2001/03/31 13:58:56 itojun Exp $
 #
 #	@(#)Makefile	8.29 (Berkeley) 10/19/96
 
 CAT=		dutch english french german ru_RU.KOI8-R spanish swedish
-VI_FILES=	../cl/*.c ../common/*.c ../ex/*.c ../vi/*.c
+VI_FILES=	${.CURDIR}/../cl/*.c ${.CURDIR}/../common/*.c \
+		${.CURDIR}/../ex/*.c ${.CURDIR}/../vi/*.c
 FILES=		${CAT}
 FILESDIR=	/usr/share/vi/catalog
 
@@ -18,7 +19,12 @@ all: ${CAT}
 ${CAT}: english.base ${HOSTPROG}
 	@echo "... $@";							\
 	rm -f $@;							\
-	sort -u $@.base |						\
+	if test -f $@.base; then					\
+		f=$@.base;						\
+	else								\
+		f=${.CURDIR}/$@.base;					\
+	fi;								\
+	sort -u $$f |							\
 	awk '{								\
 		if ($$1 == 1) {						\
 			print "\nMESSAGE NUMBER 1 IS NOT LEGAL";	\
@@ -53,10 +59,10 @@ ${CHK}: ${CAT}
 	awk '{								\
 		while (++nline < $$1)					\
 			printf "%03d\n", nline;				\
-	}' < $$f.base;							\
+	}' < ${.CURDIR}/$$f.base;					\
 	echo =========================;					\
 	echo "MISSING ERROR MESSAGES (Please add!):";			\
-	awk '{print $$1}' < $$f.base | sort -u > __ck1;			\
+	awk '{print $$1}' < ${.CURDIR}/$$f.base | sort -u > __ck1;	\
 	awk '{print $$1}' < english.base | sort -u > __ck2;		\
 	comm -13 __ck1 __ck2;						\
 	echo =========================;					\
