@@ -1,4 +1,4 @@
-# $NetBSD: VR41XX,v 1.17 2004/04/03 16:29:06 sato Exp $
+# $NetBSD: VR41XX,v 1.18 2004/04/15 14:58:30 tv Exp $
 #
 # GENERIC machine description file
 # 
@@ -20,13 +20,14 @@
 
 include		"arch/hpcmips/conf/std.hpcmips"
 include		"arch/hpcmips/conf/std.hpcmips.vr41"
-#ident 		"GENERIC-$Revision: 1.17 $"
+#ident 		"GENERIC-$Revision: 1.18 $"
 
 #options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
 maxusers	16
 
 # Support for specific models of H/PC MIPS
+makeoptions	CPUFLAGS="-mips2"	# CPU codegen options
 options 	VR4102			# NEC VR4102
 options 	VR4111			# NEC VR4111
 options 	VR4121			# NEC VR4121
