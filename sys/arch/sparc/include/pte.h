@@ -1,4 +1,4 @@
-/*	$NetBSD: pte.h,v 1.20 1998/09/12 13:59:19 pk Exp $ */
+/*	$NetBSD: pte.h,v 1.21 1998/10/08 21:47:35 pk Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -398,3 +398,22 @@ struct srmmu_pte {
 #define IOMMU_PTE_BITS	"\177\020"					\
 	"f\10\23PPN\0b\2W\0b\1V\0"
 
+
+/*
+ * Macros to get and set the processor context.
+ */
+#define getcontext4()		lduba(AC_CONTEXT, ASI_CONTROL)
+#define getcontext4m()		lda(SRMMU_CXR, ASI_SRMMU)
+#define getcontext()		(CPU_ISSUN4M ? getcontext4m() : getcontext4())
+
+#define setcontext4(c)		stba(AC_CONTEXT, ASI_CONTROL, c)
+#define setcontext4m(c)		sta(SRMMU_CXR, ASI_SRMMU, c)
+#define setcontext(c)		(CPU_ISSUN4M ? setcontext4m(c) : setcontext4(c))
+
+/* sun4/sun4c access to MMU-resident PTEs */
+#define	getpte4(va)		lda(va, ASI_PTE)
+#define	setpte4(va, pte)	sta(va, ASI_PTE, pte)
+
+/* sun4m TLB probe */
+#define getpte4m(va)		lda((va & 0xFFFFF000) | ASI_SRMMUFP_L3, \
+				    ASI_SRMMUFP)
