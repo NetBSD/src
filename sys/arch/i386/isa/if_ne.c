@@ -229,7 +229,7 @@ word:
 	for(i=0; i < 6; i++)
 		ns->ns_addrp[i] = boarddata[i];
 	splx(s);
-	return (1);
+	return (8);
 }
 
 /*
