@@ -1,4 +1,4 @@
-/*	$NetBSD: vfprintf.c,v 1.45 2003/08/07 16:43:34 agc Exp $	*/
+/*	$NetBSD: vfprintf.c,v 1.46 2004/03/03 11:19:05 drochner Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -37,7 +37,7 @@
 #if 0
 static char *sccsid = "@(#)vfprintf.c	5.50 (Berkeley) 12/16/92";
 #else
-__RCSID("$NetBSD: vfprintf.c,v 1.45 2003/08/07 16:43:34 agc Exp $");
+__RCSID("$NetBSD: vfprintf.c,v 1.46 2004/03/03 11:19:05 drochner Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -227,7 +227,7 @@ vfprintf_unlocked(fp, fmt0, ap)
 #ifdef FLOATING_POINT
 	char *decimal_point = localeconv()->decimal_point;
 	char softsign;		/* temporary negative sign for floats */
-	double _double = 0;	/* double precision arguments %[eEfgG] */
+	double _double;		/* double precision arguments %[eEfgG] */
 	int expt;		/* integer value of exponent */
 	int expsize = 0;	/* character count for expstr */
 	int ndig;		/* actual number of digits returned by cvt */
