@@ -1,4 +1,4 @@
-/* 	$NetBSD: linux_signal.h,v 1.1 1998/12/15 19:25:41 itohy Exp $	*/
+/* 	$NetBSD: linux_signal.h,v 1.2 2002/03/19 20:51:59 christos Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -75,18 +75,19 @@
 #define LINUX_SIGIO	29
 #define LINUX_SIGPWR	30
 #define LINUX_SIGUNUSED	31
+#define LINUX_SIGSYS	31
 
 #define LINUX_SIGIOT	LINUX_SIGABRT
 #define LINUX_SIGPOLL	LINUX_SIGIO
+
+/* Min/max real-time linux signal */
+#define LINUX_SIGRTMIN		32
+#define LINUX_SIGRTMAX		(LINUX__NSIG-1)
 
 #define LINUX__NSIG		64
 #define LINUX__NSIG_BPW		32
 #define LINUX__NSIG_WORDS	(LINUX__NSIG / LINUX__NSIG_BPW)
 #define LINUX_NSIG		32
-
-/* Min/max real-time linux signal */
-#define LINUX_SIGRTMIN		32
-#define LINUX_SIGRTMAX		(LINUX__NSIG-1)
 
 /* sa_flags */
 #define LINUX_SA_NOCLDSTOP	0x00000001
