@@ -1,0 +1,43 @@
+#	$NetBSD: LAST_MINUTE,v 1.1 2002/09/21 08:17:38 lukem Exp $
+
+This file contains important information on the NetBSD 1.6 release that
+did not make it into the main documentation.
+
+[all]
+	The Kerberos ticket forwarding programs kf(1) and kfd(8) have
+	some security issues, and should be disabled to ensure that
+	they can not be used, even though the server (kfd(8)) is not
+	enabled by default.
+
+	They can be disabled with:
+		chmod 0 /usr/bin/kf /usr/libexec/kfd
+
+[amiga]
+	The loadbsd program does not yet have the ability to load
+	ELF kernels (the new executable format for NetBSD 1.6), so
+	the only way to boot NetBSD is using the bootblock method.
+	Because some Amigas are unable to boot from bootblocks,
+	there is an experimental program provided to emulate booting
+	from the bootblocks.  The program is runbootblock, which
+	will be found in the amiga/installation/misc directory.
+
+[atari]
+	The xbase.tgz set that was available before "Sep 16 13:57"
+	was a "shared" copy with other m68k ports.  However, as the
+	atari currently requires its own copy of this set this was
+	corrected on that time.
+
+	The sum entries for the correct set are:
+	    BSDSUM    29517 2522 xbase.tgz
+	    CKSUM     4259307667 2581755 xbase.tgz
+	    MD5       MD5 (xbase.tgz) = 7b65569fd7143ff1c8baf86a19c04f61
+	    SYSVSUM   15857 5043 xbase.tgz
+
+[m68k MACHINE_ARCH, including: amiga, atari, mac68k, x68k]
+	A problem with the floating point emulator used by certain
+	Motorola 680x0-based systems can cause erratic faults in
+	applications that use floating point calculations. 
+	Systems using the 68020 or 68030 microprocessor but lacking
+	a 68881 or 68882 floating point processor may be vulnerable
+	to the flaw.
+	This issue may affect both installation and normal operation.
