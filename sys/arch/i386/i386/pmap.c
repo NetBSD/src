@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.81 1999/11/24 18:32:50 drochner Exp $	*/
+/*	$NetBSD: pmap.c,v 1.82 1999/12/03 18:49:37 thorpej Exp $	*/
 
 /*
  *
@@ -265,14 +265,14 @@ simple_lock_data_t pmap_zero_page_lock;
 simple_lock_data_t pmap_tmpptp_lock;
 
 #define PMAP_MAP_TO_HEAD_LOCK() \
-     lockmgr(&pmap_main_lock, LK_SHARED, (void *) 0)
+     spinlockmgr(&pmap_main_lock, LK_SHARED, (void *) 0)
 #define PMAP_MAP_TO_HEAD_UNLOCK() \
-     lockmgr(&pmap_main_lock, LK_RELEASE, (void *) 0)
+     spinlockmgr(&pmap_main_lock, LK_RELEASE, (void *) 0)
 
 #define PMAP_HEAD_TO_MAP_LOCK() \
-     lockmgr(&pmap_main_lock, LK_EXCLUSIVE, (void *) 0)
+     spinlockmgr(&pmap_main_lock, LK_EXCLUSIVE, (void *) 0)
 #define PMAP_HEAD_TO_MAP_UNLOCK() \
-     lockmgr(&pmap_main_lock, LK_RELEASE, (void *) 0)
+     spinlockmgr(&pmap_main_lock, LK_RELEASE, (void *) 0)
 
 #else
 
@@ -866,7 +866,7 @@ pmap_bootstrap(kva_start)
 	 */
 
 #if defined(MULTIPROCESSOR) || defined(LOCKDEBUG)
-	lockinit(&pmap_main_lock, PVM, "pmaplk", 0, 0);
+	spinlockinit(&pmap_main_lock, "pmaplk", 0, 0);
 	simple_lock_init(&pvalloc_lock);
 	simple_lock_init(&pmaps_lock);
 	simple_lock_init(&pmap_copy_page_lock);
