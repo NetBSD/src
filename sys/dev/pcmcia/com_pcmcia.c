@@ -1,4 +1,4 @@
-/*	$NetBSD: com_pcmcia.c,v 1.10 1998/07/30 20:47:11 thorpej Exp $	*/
+/*	$NetBSD: com_pcmcia.c,v 1.11 1998/08/13 15:08:54 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994, 1995, 1996
@@ -109,11 +109,6 @@ static struct com_dev com_devs[] = {
 	  PCMCIA_CIS_SIMPLETECH_COMMUNICATOR288 },
 };
 
-static struct com_dev generic = {
-	"Generic Modem",
-	PCMCIA_VENDOR_INVALID, PCMCIA_PRODUCT_INVALID,
-	PCMCIA_CIS_INVALID
-};
 
 static int com_devs_size = sizeof(com_devs) / sizeof(com_devs[0]);
 static struct com_dev *com_dev_match __P((struct pcmcia_card *));
@@ -149,7 +144,7 @@ com_dev_match(card)
 
 	/* 1. check our table */
 	for (i = 0; i < com_devs_size; i++) {
-		if (com_devs[i].manufacturer != -1) {
+		if (com_devs[i].manufacturer != PCMCIA_VENDOR_INVALID) {
 			/* manufacturer/product match */
 			if (com_devs[i].manufacturer == card->manufacturer &&
 			    com_devs[i].product == card->product)
@@ -158,6 +153,8 @@ com_dev_match(card)
 			/* cis strings match */
 			int j;
 
+			if (com_devs[i].cis1_info[0] == NULL)
+				continue;
 			for (j = 0; j < 4; j++)
 				if (com_devs[i].cis1_info[j] &&
 				    strcmp(com_devs[i].cis1_info[j],
@@ -167,17 +164,6 @@ com_dev_match(card)
 				return &com_devs[i];
 		}
 	}
-			
-
-	/*
-	 * 2. Be selective about devices by checking for the word modem in
-	 *    the cis strings.
-	 */
-	for (i = 0; i < 4; i++)
-		if (card->cis1_info[i] &&
-		    pmatch(card->cis1_info[i],
-			   "*[Mm][Oo][Dd][Ee][Mm]*", NULL) > 0)
-			return &generic;
 
 	return NULL;
 }
@@ -189,30 +175,42 @@ com_pcmcia_match(parent, match, aux)
 	struct cfdata *match;
 	void *aux;
 {
+	int comportmask;
 	struct pcmcia_attach_args *pa = aux;
 	struct pcmcia_config_entry *cfe;
 
-	/* find a cfe we can use (if it matches a standard COM port) */
+	/* 1. Does it claim to be a serial device? */
+	if (pa->pf->function == PCMCIA_FUNCTION_SERIAL)
+	    return 1;
+
+	/* 2. Does it have all four 'standard' port ranges? */
+	comportmask = 0;
 	for (cfe = pa->pf->cfe_head.sqh_first; cfe;
-	    cfe = cfe->cfe_list.sqe_next)
-		if (cfe->iospace[0].start == IO_COM1 ||
-		    cfe->iospace[0].start == IO_COM2 ||
-		    cfe->iospace[0].start == IO_COM3 ||
-		    cfe->iospace[0].start == IO_COM4)
-			break;
+	     cfe = cfe->cfe_list.sqe_next) {
+	  switch (cfe->iospace[0].start) {
+	  case IO_COM1:
+	    comportmask |= 1;
+	    break;
+	  case IO_COM2:
+	    comportmask |= 2;
+	    break;
+	  case IO_COM3:
+	    comportmask |= 4;
+	    break;
+	  case IO_COM4:
+	    comportmask |= 8;
+	    break;
+	  }
+	}
 
-	/* No appropriate cfe, bail out */
-	if (cfe == NULL)
-		return 0;
+	if (comportmask == 15)
+	    return 1;
 
-	/*
-	 * We found a cfe at a standard com port location; check if it
-	 * is really a modem/serial device
-	 */
-	if (com_dev_match(pa->card) == NULL)
-		return 0;
+	/* 3. Is this a card we know about? */
+	if (com_dev_match(pa->card) != NULL)
+	    return 1;
 
-	return 1;
+	return 0;
 }
 
 void
@@ -285,6 +283,8 @@ com_pcmcia_attach(parent, self, aux)
 
 	if ((comdev = com_dev_match(pa->card)) != NULL)
 		printf(": %s", comdev->name);
+	else
+		printf(": Generic serial device");
 
 	com_attach_subr(sc);
 
