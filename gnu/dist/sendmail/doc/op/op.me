@@ -9,9 +9,43 @@
 .\" the sendmail distribution.
 .\"
 .\"
-.\"	Id: op.me,v 8.317.4.56 2001/02/15 23:38:16 ca Exp
+.\"	Id: op.me,v 8.317.4.71 2001/08/14 15:26:00 ca Exp
 .\"
 .\" eqn op.me | pic | troff -me
+.\"
+.\" Define \(sc if not defined (for text output)
+.\"
+.if !c \(sc .char \(sc S
+.\"
+.\" Define \(dg as "*" for text output and create a new .DG macro
+.\" which describes the symbol.
+.\"
+.ie !c \(dg \{\
+.char \(dg *
+.de DG
+an asterick
+..
+.\}
+.el \{\
+.de DG
+a dagger
+..
+.\}
+.\"
+.\" Define \(dd as "#" for text output and create a new .DD macro
+.\" which describes the symbol.
+.\"
+.ie !c \(dd \{\
+.char \(dd #
+.de DD
+a pound sign
+..
+.\}
+.el \{\
+.de DD
+a double dagger
+..
+.\}
 .eh 'SMM:08-%''Sendmail Installation and Operation Guide'
 .oh 'Sendmail Installation and Operation Guide''SMM:08-%'
 .\" SD is lib if sendmail is installed in /usr/lib, sbin if in /usr/sbin
@@ -53,7 +87,7 @@ eric@Sendmail.COM
 .de Ve
 Version \\$2
 ..
-.Ve Revision: 8.317.4.56
+.Ve Revision: 8.317.4.71
 .rm Ve
 .sp
 For Sendmail Version 8.11
@@ -2189,8 +2223,12 @@ For compatibility with old configuration files,
 if no
 .i suboption
 is specified,
-all the timeouts marked with a dagger (\(dg) are set to the indicated value.
-All but those marked with a double dagger (\(dd) apply to client SMTP.
+all the timeouts marked with
+.DG
+(\(dg) are set to the indicated value.
+All but those marked with
+.DD
+(\(dd) apply to client SMTP.
 .pp
 Many of the RFC 1123 minimum values
 may well be too short.
@@ -2413,7 +2451,7 @@ option divided by the difference in the current load average and the
 .b QueueLA
 option
 plus one
-exceeds the priority of the message \(em
+is less than the priority of the message \(em
 that is, the message is queued iff:
 .EQ
 pri > { bold QueueFactor } over { LA - { bold QueueLA } + 1 }
@@ -2455,7 +2493,7 @@ Legal modes are:
 i	deliver interactively (synchronously)
 b	deliver in background (asynchronously)
 q	queue only (don't deliver)
-d	defer delvery attempts (don't deliver)
+d	defer delivery attempts (don't deliver)
 .)b
 There are tradeoffs.
 Mode
@@ -3357,13 +3395,14 @@ The
 .b $#
 syntax should
 .i only
-be used in ruleset zero
-or a subroutine of ruleset zero.
+be used in ruleset zero,
+a subroutine of ruleset zero,
+or rulesets that return decisions (e.g., check_rcpt).
 It causes evaluation of the ruleset to terminate immediately,
 and signals to
 .i sendmail
 that the address has completely resolved.
-The complete syntax is:
+The complete syntax for ruleset 0 is:
 .(b
 \fB$#\fP\fImailer\fP \fB$@\fP\fIhost\fP \fB$:\fP\fIuser\fP
 .)b
@@ -5299,7 +5338,7 @@ i.e., not the header field-name; see also
 ${hdr_name} and ${currHeader}.
 The header is treated as a structured field,
 that is,
-comments (in parentheses) are deleted before processing,
+text in parentheses is deleted before processing,
 unless the second form
 .b $>+
 is used.
@@ -5498,6 +5537,8 @@ Defaults to space (i.e., no change is made).
 .ip CACERTPath
 [no short name]
 Path to directory with certificates of CAs.
+This directory directory must contain the hashes of each CA certificate
+as filenames (or as links to them).
 .ip CACERTFile
 [no short name]
 File containing one CA certificate.
@@ -5700,6 +5741,12 @@ The modifiers that are marked with "(.cf)" have only
 effect in the standard configuration file, in which
 they are available via
 .b ${daemon_flags} .
+Notice: Do
+.b not
+use the ``a'' modifier on a public accessible MTA!
+It should only be used for a MSA that is accessed by authorized
+users for initial mail submission.
+Users must authenticate to use a MSA which has this option turned on.
 The flags ``c'' and ``C'' can change the default for
 hostname canonification in the
 .i sendmail.cf
@@ -6394,7 +6441,7 @@ only root and the owner of the queue directory
 can run the queue.
 Authentication Warnings add warnings about various conditions
 that may indicate attempts to spoof the mail system,
-such as using an non-standard queue directory.
+such as using a non-standard queue directory.
 .ip ProcessTitlePrefix=\fIstring\fP
 [no short name]
 Prefix the process title shown on 'ps' listings with
@@ -6435,7 +6482,15 @@ Defaults to 600000.
 .ip QueueLA=\fILA\fP
 [x]
 When the system load average exceeds
-.i LA ,
+.i LA
+and the
+.b QueueFactor
+(\c
+.b q )
+option divided by the difference in the current load average and the
+.b QueueLA
+option plus one
+is less than the priority of the message, 
 just queue messages
 (i.e., don't try to send them).
 Defaults to 8 multiplied by
@@ -6757,7 +6812,10 @@ This should really
 be set.
 .ip TempFileMode=\fImode\fP
 [F]
-The file mode for queue files.
+The file mode for queue files, files to which
+.i sendmail
+delivers directly, and files in the
+.b HostStatusDirectory .
 It is interpreted in octal by default.
 Defaults to 0600.
 .ip Timeout.\fItype\fP=\|\fItimeout\fP
@@ -6825,13 +6883,13 @@ Don't change this unless your system uses a different UNIX mailbox format
 (very unlikely).
 .ip UnsafeGroupWrites
 [no short name]
-If set,
+If set (default),
 :include: and .forward files that are group writable are considered
 .q unsafe ,
 that is,
 they cannot reference programs or write directly to files.
 World writable :include: and .forward files
-are always unsafe..
+are always unsafe.
 .ip UseErrorsTo
 [l]
 If there is an
@@ -8695,7 +8753,8 @@ has been compiled with support for STARTTLS.
 When acting as a server,
 .i sendmail
 requires X.509 certificates to support STARTTLS:
-one as certificate for the server (ServerCertFile)
+one as certificate for the server (ServerCertFile and corresponding
+private ServerKeyFile)
 at least one root CA (CACERTFile),
 i.e., a certificate that is used to sign other certificates,
 and a path to a directory which contains other CAs (CACERTPath).
@@ -8705,8 +8764,16 @@ can contain several certificates of CAs.
 The DNs of these certificates are sent
 to the client during the TLS handshake (as part of the
 CertificateRequest) as the list of acceptable CAs.
+The CACERTPath directory must contain the hashes of each CA certificate
+as filenames (or as links to them).
+Symbolic links can be generated with the following
+two (Bourne) shell commands:
+.(b
+C=FileName_of_CA_Certificate
+ln -s $C `openssl x509 -noout -hash < $C`.0
+.)b
 An X.509 certificate is also required for authentication in client mode
-(ClientCertFile), however,
+(ClientCertFile and corresponding private ClientKeyFile), however,
 .i sendmail
 will always use STARTTLS when offered by a server.
 The client and server certificates can be identical.
@@ -9259,10 +9326,6 @@ after a disastrous disk crash.
 .ip $
 A macro definition.
 The values of certain macros
-(as of this writing, only
-.b $r
-and
-.b $s )
 are passed through to the queue run phase.
 .ip B
 The body type.
@@ -9412,7 +9475,7 @@ replace it with a blank sheet for double-sided output.
 .\".sz 10
 .\"Eric Allman
 .\".sp
-.\"Version Revision: 8.317.4.56
+.\"Version Revision: 8.317.4.71
 .\".ce 0
 .bp 3
 .ce

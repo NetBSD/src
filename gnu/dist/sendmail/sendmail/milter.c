@@ -9,7 +9,7 @@
  */
 
 #ifndef lint
-static char id[] = "@(#)Id: milter.c,v 8.50.4.44 2001/01/23 19:43:57 gshapiro Exp";
+static char id[] = "@(#)Id: milter.c,v 8.50.4.53 2001/08/15 02:01:03 ca Exp";
 #endif /* ! lint */
 
 #if _FFR_MILTER
@@ -26,6 +26,7 @@ static char id[] = "@(#)Id: milter.c,v 8.50.4.44 2001/01/23 19:43:57 gshapiro Ex
 #  define SM_FD_ISSET	FD_ISSET
 #  define SM_FD_SETSIZE	FD_SETSIZE
 
+static void	milter_connect_timeout __P((void));
 static void	milter_error __P((struct milter *));
 static int	milter_open __P((struct milter *, bool, ENVELOPE *));
 static void	milter_parse_timeouts __P((char *, struct milter *));
@@ -62,7 +63,7 @@ static char *MilterEnvRcptMacros[MAXFILTERMACROS + 1];
 	    !isascii(response[2]) || !isdigit(response[2])) \
 	{ \
 		if (response != NULL) \
-			free(response); \
+			sm_free(response); \
 		response = newstr(default); \
 	} \
 	else \
@@ -74,7 +75,7 @@ static char *MilterEnvRcptMacros[MAXFILTERMACROS + 1];
 		{ \
 			if (*ptr == '%' && *++ptr != '%') \
 			{ \
-				free(response); \
+				sm_free(response); \
 				response = newstr(default); \
 				break; \
 			} \
@@ -354,7 +355,7 @@ milter_read(m, cmd, rlen, to, e)
 
 	if (milter_sysread(m, buf, expl, to, e) == NULL)
 	{
-		free(buf);
+		sm_free(buf);
 		return NULL;
 	}
 
@@ -510,6 +511,8 @@ milter_write(m, cmd, buf, len, to, e)
 **		0 upon parse success if parseonly,
 **		-1 otherwise.
 */
+
+static jmp_buf	MilterConnectTimeout;
 
 static int
 milter_open(m, parseonly, e)
@@ -950,8 +953,23 @@ milter_open(m, parseonly, e)
 			return -1;
 		}
 
-		if (connect(sock, (struct sockaddr *) &addr, addrlen) >= 0)
-			break;
+		if (setjmp(MilterConnectTimeout) == 0)
+		{
+			EVENT *ev = NULL;
+			int i;
+
+			if (m->mf_timeout[SMFTO_CONNECT] > 0)
+				ev = setevent(m->mf_timeout[SMFTO_CONNECT],
+					      milter_connect_timeout, 0);
+
+			i = connect(sock, (struct sockaddr *) &addr, addrlen);
+			save_errno = errno;
+			if (ev != NULL)
+				clrevent(ev);
+			errno = save_errno;
+			if (i >= 0)
+				break;
+		}
 
 		/* couldn't connect.... try next address */
 		save_errno = errno;
@@ -1006,13 +1024,16 @@ milter_open(m, parseonly, e)
 			}
 			continue;
 		}
+		p = CurHostName;
+		CurHostName = at;
 		if (tTd(64, 5))
-			dprintf("X%s: error connecting to filter\n",
-				m->mf_name);
+			dprintf("X%s: error connecting to filter: %s\n",
+				m->mf_name, errstring(save_errno));
 		if (LogLevel > 0)
 			sm_syslog(LOG_ERR, e->e_id,
-				  "X%s: error connecting to filter",
-				  m->mf_name);
+				  "X%s: error connecting to filter: %s",
+				  m->mf_name, errstring(save_errno));
+		CurHostName = p;
 		milter_error(m);
 # if _FFR_FREEHOSTENT && NETINET6
 		if (hp != NULL)
@@ -1029,6 +1050,19 @@ milter_open(m, parseonly, e)
 	}
 # endif /* _FFR_FREEHOSTENT && NETINET6 */
 	return sock;
+}
+
+static void
+milter_connect_timeout()
+{
+	/*
+	**  NOTE: THIS CAN BE CALLED FROM A SIGNAL HANDLER.  DO NOT ADD
+	**	ANYTHING TO THIS ROUTINE UNLESS YOU KNOW WHAT YOU ARE
+	**	DOING.
+	*/
+
+	errno = ETIMEDOUT;
+	longjmp(MilterConnectTimeout, 1);
 }
 /*
 **  MILTER_SETUP -- setup structure for a mail filter
@@ -1066,6 +1100,7 @@ milter_setup(line)
 	m->mf_name = newstr(line);
 	m->mf_state = SMFS_READY;
 	m->mf_sock = -1;
+	m->mf_timeout[SMFTO_CONNECT] = (time_t) 0;
 	m->mf_timeout[SMFTO_WRITE] = (time_t) 10;
 	m->mf_timeout[SMFTO_READ] = (time_t) 10;
 	m->mf_timeout[SMFTO_EOM] = (time_t) 300;
@@ -1242,6 +1277,14 @@ milter_parse_timeouts(spec, m)
 		/* install the field into the filter struct */
 		switch (fcode)
 		{
+		  case 'C':
+			m->mf_timeout[SMFTO_CONNECT] = convtime(p, 's');
+			if (tTd(64, 5))
+				printf("X%s: %c=%ld\n",
+				       m->mf_name, fcode,
+				       (u_long) m->mf_timeout[SMFTO_CONNECT]);
+			break;
+
 		  case 'S':
 			m->mf_timeout[SMFTO_WRITE] = convtime(p, 's');
 			if (tTd(64, 5))
@@ -1681,7 +1724,7 @@ milter_send_macros(m, macros, cmd, e)
 	}
 	(void) milter_write(m, SMFIC_MACRO, buf, s,
 			    m->mf_timeout[SMFTO_WRITE], e);
-	free(buf);
+	sm_free(buf);
 }
 
 /*
@@ -1836,7 +1879,7 @@ milter_send_command(m, command, data, sz, e, state)
 	if (*state != SMFIR_REPLYCODE &&
 	    response != NULL)
 	{
-		free(response);
+		sm_free(response);
 		response = NULL;
 	}
 	return response;
@@ -1970,7 +2013,7 @@ milter_negotiate(m, e)
 				  "milter_negotiate(%s): returned %c instead of %c",
 				  m->mf_name, rcmd, SMFIC_OPTNEG);
 		if (response != NULL)
-			free(response);
+			sm_free(response);
 		milter_error(m);
 		return -1;
 	}
@@ -1986,7 +2029,7 @@ milter_negotiate(m, e)
 				  "milter_negotiate(%s): did not return valid info",
 				  m->mf_name);
 		if (response != NULL)
-			free(response);
+			sm_free(response);
 		milter_error(m);
 		return -1;
 	}
@@ -2005,7 +2048,7 @@ milter_negotiate(m, e)
 				  "milter_negotiate(%s): did not return enough info",
 				  m->mf_name);
 		if (response != NULL)
-			free(response);
+			sm_free(response);
 		milter_error(m);
 		return -1;
 	}
@@ -2014,7 +2057,7 @@ milter_negotiate(m, e)
 		      MILTER_LEN_BYTES);
 	(void) memcpy((char *) &pflags, response + (MILTER_LEN_BYTES * 2),
 		      MILTER_LEN_BYTES);
-	free(response);
+	sm_free(response);
 	response = NULL;
 
 	m->mf_fvers = ntohl(fvers);
@@ -2178,7 +2221,7 @@ milter_headers(m, e, state)
 		/* send it over */
 		response = milter_send_command(m, SMFIC_HEADER, buf,
 					       s, e, state);
-		free(buf);
+		sm_free(buf);
 		if (m->mf_state == SMFS_ERROR ||
 		    m->mf_state == SMFS_DONE ||
 		    *state != SMFIR_CONTINUE)
@@ -2280,7 +2323,7 @@ milter_body(m, e, state)
 			*state = SMFIR_TEMPFAIL;
 			if (response != NULL)
 			{
-				free(response);
+				sm_free(response);
 				response = NULL;
 			}
 		}
@@ -2522,7 +2565,7 @@ milter_changeheader(response, rlen, e)
 	if (h != sysheader && h->h_value != NULL)
 	{
 		e->e_msgsize -= strlen(h->h_value);
-		free(h->h_value);
+		sm_free(h->h_value);
 	}
 
 	if (*val == '\0')
@@ -2851,7 +2894,10 @@ milter_connect(hostname, addr, e, state)
 
 # if NETINET6
 	  case AF_INET6:
-		family = SMFIA_INET6;
+		if (IN6_IS_ADDR_V4MAPPED(&addr.sin6.sin6_addr))
+			family = SMFIA_INET;
+		else
+			family = SMFIA_INET6;
 		port = htons(addr.sin6.sin6_port);
 		sockinfo = anynet_ntop(&addr.sin6.sin6_addr, buf6,
 				       sizeof buf6);
@@ -2889,7 +2935,7 @@ milter_connect(hostname, addr, e, state)
 
 	response = milter_command(SMFIC_CONNECT, buf, s,
 				  MilterConnectMacros, e, state);
-	free(buf);
+	sm_free(buf);
 
 	/*
 	**  If this message connection is done for,
@@ -2916,7 +2962,7 @@ milter_connect(hostname, addr, e, state)
 			*state = SMFIR_REJECT;
 		if (response != NULL)
 		{
-			free(response);
+			sm_free(response);
 			response = NULL;
 		}
 	}
@@ -3042,7 +3088,7 @@ milter_envfrom(args, e, state)
 	/* send it over */
 	response = milter_command(SMFIC_MAIL, buf, s,
 				  MilterEnvFromMacros, e, state);
-	free(buf);
+	sm_free(buf);
 
 	/*
 	**  If filter rejects/discards a per message command,
@@ -3106,7 +3152,7 @@ milter_envrcpt(args, e, state)
 	/* send it over */
 	response = milter_command(SMFIC_RCPT, buf, s,
 				  MilterEnvRcptMacros, e, state);
-	free(buf);
+	sm_free(buf);
 	return response;
 }
 /*
@@ -3382,7 +3428,7 @@ milter_data(e, state)
 			if (rcmd != SMFIR_REPLYCODE &&
 			    response != NULL)
 			{
-				free(response);
+				sm_free(response);
 				response = NULL;
 			}
 
@@ -3414,7 +3460,7 @@ finishup:
 			*state = SMFIR_TEMPFAIL;
 			if (response != NULL)
 			{
-				free(response);
+				sm_free(response);
 				response = NULL;
 			}
 		}
@@ -3446,7 +3492,7 @@ finishup:
 			*state = SMFIR_TEMPFAIL;
 			if (response != NULL)
 			{
-				free(response);
+				sm_free(response);
 				response = NULL;
 			}
 		}
