@@ -1,4 +1,4 @@
-/*	$NetBSD: wdcvar.h,v 1.65 2004/08/12 04:57:19 thorpej Exp $	*/
+/*	$NetBSD: wdcvar.h,v 1.66 2004/08/12 05:02:50 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2003 The NetBSD Foundation, Inc.
@@ -225,9 +225,6 @@ void	wdc_reset_drive(struct ata_drive_datas *, int);
 void	wdc_reset_channel(struct wdc_channel *, int);
 
 int	wdc_exec_command(struct ata_drive_datas *, struct ata_command*);
-#define WDC_COMPLETE 0x01
-#define WDC_QUEUED   0x02
-#define WDC_TRY_AGAIN 0x03
 
 int	wdc_addref(struct wdc_channel *);
 void	wdc_delref(struct wdc_channel *);
