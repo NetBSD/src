@@ -13,6 +13,6 @@ G_LIB2_DIVMOD_FUNCS=_divdi3 _moddi3 _udivdi3 _umoddi3 _udiv_w_sdiv _udivmoddi4
 G_LIB2FUNCS_ST=_eprintf _bb __gcc_bcmp
 G_LIBGCC2_CFLAGS=-O2  -DIN_GCC   -W -Wall -Wwrite-strings -Wstrict-prototypes -Wmissing-prototypes -isystem ./include  -fomit-frame-pointer -fpic -g0 -DHAVE_GTHR_DEFAULT -DIN_LIBGCC2 -D__GCC_FLOAT_NOT_NEEDED
 G_MAYBE_USE_COLLECT2=
-G_tm_defines=NETBSD_ENABLE_PTHREADS
+G_tm_defines=NETBSD_ENABLE_PTHREADS TARGET_ENDIAN_DEFAULT=ARM_FLAG_BIG_END
 G_xm_file=ansidecl.h  dbxelf.h elfos.h netbsd.h netbsd-elf.h arm/elf.h arm/aout.h arm/arm.h arm/netbsd-elf.h defaults.h
 G_xm_defines=POSIX
