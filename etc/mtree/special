@@ -1,4 +1,4 @@
-#	$NetBSD: special,v 1.74 2003/04/30 09:05:56 lukem Exp $
+#	$NetBSD: special,v 1.75 2003/05/09 00:10:52 lukem Exp $
 #	@(#)special	8.2 (Berkeley) 1/23/94
 #
 # Hand-crafted mtree specification for the dangerous files.
@@ -81,7 +81,7 @@
 ./etc/login.conf		type=file mode=0644 optional
 ./etc/mail			type=dir  mode=0755
 ./etc/mail/aliases		type=file mode=0644
-./etc/mail/aliases.db		type=file mode=0644 tags=exclude
+./etc/mail/aliases.db		type=file mode=0644 optional tags=exclude
 ./etc/mail/helpfile		type=file mode=0444
 ./etc/mail/local-host-names	type=file mode=0644 optional
 ./etc/mail/sendmail.cf		type=file mode=0644
