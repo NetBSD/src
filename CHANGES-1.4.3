@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-1.4.3,v 1.1.2.29 2000/07/02 21:49:07 he Exp $
+#	$NetBSD: CHANGES-1.4.3,v 1.1.2.30 2000/07/03 20:11:21 he Exp $
 
 A complete list of changes from NetBSD 1.4.2 to NetBSD 1.4.3:
 
@@ -718,3 +718,9 @@ sys/netinet/if_arp.c				1.63 partial, via patch
 
   Protect arp table handling with splnet() to avoid interrupt races
   when ip_flow is in use.  Fixes PR#10351.
+
+lib/checkver					patch
+
+  Handle use of "tiny" version numbers, to allow version bumps of
+  shared libraries on a release branch without reusing version
+  numbers.
