@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.414 2001/10/20 09:10:34 manu Exp $
+# $NetBSD: mi,v 1.415 2001/10/27 06:29:42 jmc Exp $
 ./usr/share/info/am-utils.info			man-amd-info
 ./usr/share/info/as.info			man-computil-info
 ./usr/share/info/awk.info			man-util-info
@@ -555,6 +555,7 @@
 ./usr/share/man/cat4/clcs.0			man-sys-catman
 ./usr/share/man/cat4/clct.0			man-sys-catman
 ./usr/share/man/cat4/clnp.0			man-sys-catman
+./usr/share/man/cat4/clockctl.0			man-sys-catman
 ./usr/share/man/cat4/cltp.0			man-sys-catman
 ./usr/share/man/cat4/cmpci.0			man-sys-catman
 ./usr/share/man/cat4/cms.0			man-sys-catman
