@@ -1,4 +1,4 @@
-/*	$NetBSD: nsphy.c,v 1.8 1998/08/12 22:41:21 thorpej Exp $	*/
+/*	$NetBSD: nsphy.c,v 1.9 1998/08/14 00:23:26 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -205,12 +205,38 @@ nsphy_service(self, mii, cmd)
 		if ((mii->mii_ifp->if_flags & IFF_UP) == 0)
 			break;
 
+		reg = NSPHY_READ(sc, MII_NSPHY_PCR);
+
 		/*
 		 * Set up the PCR to use LED4 to indicate full-duplex
 		 * in both 10baseT and 100baseTX modes.
 		 */
-		reg = NSPHY_READ(sc, MII_NSPHY_PCR);
-		NSPHY_WRITE(sc, MII_NSPHY_PCR, reg | PCR_LED4MODE);
+		reg |= PCR_LED4MODE;
+
+		/*
+		 * Make sure Carrier Intgrity Monitor function is
+		 * disabled (normal for Node operation, but sometimes
+		 * it's not set?!)
+		 */
+		reg |= PCR_CIMDIS;
+
+		/*
+		 * Make sure "force link good" is not set.  It's only
+		 * intended for debugging, but sometimes it's set
+		 * after a reset.
+		 */
+		reg &= ~PCR_FLINK100;
+
+#if 0
+		/*
+		 * Mystery bits which are supposedly `reserved',
+		 * but we seem to need to set them when the PHY
+		 * is connected to some interfaces!
+		 */
+		reg |= 0x0100 | 0x0400;
+#endif
+
+		NSPHY_WRITE(sc, MII_NSPHY_PCR, reg);
 
 		switch (IFM_SUBTYPE(mii->mii_media.ifm_media)) {
 		case IFM_AUTO:
