@@ -1,4 +1,4 @@
-/*	$NetBSD: stat.c,v 1.11 2003/07/20 14:12:13 lukem Exp $ */
+/*	$NetBSD: stat.c,v 1.12 2003/07/23 07:23:23 lukem Exp $ */
 
 /*
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: stat.c,v 1.11 2003/07/20 14:12:13 lukem Exp $");
+__RCSID("$NetBSD: stat.c,v 1.12 2003/07/23 07:23:23 lukem Exp $");
 #endif
 
 #if HAVE_CONFIG_H
@@ -62,14 +62,14 @@ __RCSID("$NetBSD: stat.c,v 1.11 2003/07/20 14:12:13 lukem Exp $");
 #include <unistd.h>
 
 #define DEF_FORMAT \
-	"%d %i %Sp %l %Su %Sg %r %z \"%Sa\" \"%Sm\" \"%Sc\" \"%SB\" %k %b %N"
-#define RAW_FORMAT	"%d %i %#p %l %u %g %r %z %a %m %c %B %k %b %N"
+	"%d %i %Sp %l %Su %Sg %r %z \"%Sa\" \"%Sm\" \"%Sc\" %k %b %N"
+#define RAW_FORMAT	"%d %i %#p %l %u %g %r %z %a %m %c %k %b %N"
 #define LS_FORMAT	"%Sp %l %Su %Sg %Z %Sm %N%SY"
 #define LSF_FORMAT	"%Sp %l %Su %Sg %Z %Sm %N%T%SY"
 #define SHELL_FORMAT \
 	"st_dev=%d st_ino=%i st_mode=%#p st_nlink=%l " \
 	"st_uid=%u st_gid=%g st_rdev=%r st_size=%z " \
-	"st_atime=%a st_mtime=%m st_ctime=%c st_birthtime=%B " \
+	"st_atime=%a st_mtime=%m st_ctime=%c " \
 	"st_blksize=%k st_blocks=%b"
 #define LINUX_FORMAT \
 	"  File: \"%N\"%n" \
@@ -636,9 +636,11 @@ format1(const struct stat *st,
 		if (tsp == NULL)
 			tsp = &st->st_ctimespec;
 		/* FALLTHROUGH */
+#if !defined(HOSTPROG)
 	case SHOW_st_btime:
 		if (tsp == NULL)
 			tsp = &st->st_birthtimespec;
+#endif
 		ts = *tsp;		/* copy so we can muck with it */
 		small = (sizeof(ts.tv_sec) == 4);
 		data = ts.tv_sec;
