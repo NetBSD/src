@@ -1,4 +1,4 @@
-/*	$NetBSD: inet.c,v 1.39 2000/02/26 09:55:24 itojun Exp $	*/
+/*	$NetBSD: inet.c,v 1.40 2000/07/03 05:02:38 enami Exp $	*/
 
 /*
  * Copyright (c) 1983, 1988, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "from: @(#)inet.c	8.4 (Berkeley) 4/20/94";
 #else
-__RCSID("$NetBSD: inet.c,v 1.39 2000/02/26 09:55:24 itojun Exp $");
+__RCSID("$NetBSD: inet.c,v 1.40 2000/07/03 05:02:38 enami Exp $");
 #endif
 #endif /* not lint */
 
@@ -377,7 +377,7 @@ ip_stats(off, name)
 	ps(ips_badlen, "\t%llu with data length < header length\n");
 	ps(ips_badoptions, "\t%llu with bad options\n");
 	ps(ips_badvers, "\t%llu with incorrect version number\n");
-	p(ips_fragments, "\t%llu fragment%s received");
+	p(ips_fragments, "\t%llu fragment%s received\n");
 	p(ips_fragdropped, "\t%llu fragment%s dropped (dup or out of space)\n");
 	p(ips_badfrags, "\t%llu malformed fragment%s dropped\n");
 	p(ips_fragtimeout, "\t%llu fragment%s dropped after timeout\n");
