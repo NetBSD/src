@@ -1,4 +1,4 @@
-/*	$NetBSD: fold.c,v 1.12 2003/08/07 11:13:48 agc Exp $	*/
+/*	$NetBSD: fold.c,v 1.13 2003/10/16 06:48:03 itojun Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -42,7 +42,7 @@ __COPYRIGHT("@(#) Copyright (c) 1990, 1993\n\
 #if 0
 static char sccsid[] = "@(#)fold.c	8.1 (Berkeley) 6/6/93";
 #endif
-__RCSID("$NetBSD: fold.c,v 1.12 2003/08/07 11:13:48 agc Exp $");
+__RCSID("$NetBSD: fold.c,v 1.13 2003/10/16 06:48:03 itojun Exp $");
 #endif /* not lint */
 
 #include <stdio.h>
@@ -126,6 +126,7 @@ static void
 fold(int width)
 {
 	static char *buf = NULL;
+	char *nbuf;
 	static int   buf_max = 0;
 	int ch, col;
 	int indx;
@@ -176,11 +177,12 @@ fold(int width)
 
 		if (indx + 1 > buf_max) {
 			/* Allocate buffer in LINE_MAX increments */
-			buf_max += 2048;
-			if((buf = realloc (buf, buf_max)) == NULL) {
+			if ((nbuf = realloc (buf, buf_max + 2048)) == NULL) {
 				err (1, "realloc");
 				/* NOTREACHED */
 			}
+			buf = nbuf;
+			buf_max += 2048;
 		}
 		buf[indx++] = ch;
 	}

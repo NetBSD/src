@@ -1,4 +1,4 @@
-/*	$NetBSD: column.c,v 1.10 2003/08/07 11:13:26 agc Exp $	*/
+/*	$NetBSD: column.c,v 1.11 2003/10/16 06:46:46 itojun Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993, 1994
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1989, 1993, 1994\n\
 #if 0
 static char sccsid[] = "@(#)column.c	8.4 (Berkeley) 5/4/95";
 #endif
-__RCSID("$NetBSD: column.c,v 1.10 2003/08/07 11:13:26 agc Exp $");
+__RCSID("$NetBSD: column.c,v 1.11 2003/10/16 06:46:46 itojun Exp $");
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -213,9 +213,9 @@ maketbl()
 	TBL *t;
 	int coloff, cnt;
 	char *p, **lp;
-	int *lens, maxcols;
+	int *lens, *nlens, maxcols;
 	TBL *tbl;
-	char **cols;
+	char **cols, **ncols;
 
 	t = tbl = emalloc(entries * sizeof(TBL));
 	cols = emalloc((maxcols = DEFCOLS) * sizeof(char *));
@@ -225,11 +225,13 @@ maketbl()
 		    (cols[coloff] = strtok(p, separator)) != NULL;
 		    p = NULL)
 			if (++coloff == maxcols) {
-				if (!(cols = realloc(cols, (u_int)maxcols +
+				if (!(ncols = realloc(cols, (u_int)maxcols +
 				    DEFCOLS * sizeof(char *))) ||
-				    !(lens = realloc(lens,
+				    !(nlens = realloc(lens,
 				    (u_int)maxcols + DEFCOLS * sizeof(int))))
 					err(1, "realloc");
+				cols = ncols;
+				lens = nlens;
 				memset((char *)lens + maxcols * sizeof(int),
 				    0, DEFCOLS * sizeof(int));
 				maxcols += DEFCOLS;
@@ -261,6 +263,7 @@ input(fp)
 	static int maxentry;
 	int len;
 	char *p, buf[MAXLINELEN];
+	char **n;
 
 	if (!list)
 		list = emalloc((maxentry = DEFNUM) * sizeof(char *));
@@ -279,9 +282,10 @@ input(fp)
 			maxlength = len;
 		if (entries == maxentry) {
 			maxentry += DEFNUM;
-			if (!(list = realloc(list,
+			if (!(n = realloc(list,
 			    (u_int)maxentry * sizeof(char *))))
 				err(1, "realloc");
+			list = n;
 		}
 		list[entries++] = strdup(buf);
 	}

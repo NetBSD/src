@@ -1,4 +1,4 @@
-/*	$NetBSD: fpr.c,v 1.6 2003/08/07 11:13:48 agc Exp $	*/
+/*	$NetBSD: fpr.c,v 1.7 2003/10/16 06:50:17 itojun Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -42,7 +42,7 @@ __COPYRIGHT("@(#) Copyright (c) 1989, 1993\n\
 #if 0
 static char sccsid[] = "@(#)fpr.c	8.1 (Berkeley) 6/6/93";
 #endif
-__RCSID("$NetBSD: fpr.c,v 1.6 2003/08/07 11:13:48 agc Exp $");
+__RCSID("$NetBSD: fpr.c,v 1.7 2003/10/16 06:50:17 itojun Exp $");
 #endif				/* not lint */
 
 #include <err.h>
@@ -212,6 +212,7 @@ get_text()
 	char ateol;
 	int ch;
 	int pos;
+	char *n;
 
 	i = 0;
 	ateol = FALSE;
@@ -224,10 +225,11 @@ get_text()
 			if (ch == TAB) {
 				pos = (1 + i / TABSIZE) * TABSIZE;
 				if (pos > maxpos) {
-					maxpos = pos + 10;
-					text = realloc(text, (unsigned) maxpos);
-					if (text == NULL)
+					n = realloc(text, (unsigned)(pos + 10));
+					if (n == NULL)
 						nospace();
+					text = n;
+					maxpos = pos + 10;
 				}
 				while (i < pos) {
 					text[i] = BLANK;
@@ -252,10 +254,10 @@ get_text()
 							i = 0;
 						} else {
 							if (i >= maxpos) {
-								maxpos = i + 10;
-								text = realloc(text, (unsigned) maxpos);
-								if (text == NULL)
+								n = realloc(text, (unsigned)(i + 10));
+								if (n == NULL)
 									nospace();
+								maxpos = i + 10;
 							}
 							text[i] = ch;
 							i++;
@@ -275,6 +277,7 @@ savech(col)
 	COLUMN *cend;
 	char *sp;
 	int newcount;
+	COLUMN *newline;
 
 	ch = text[col];
 	if (ch == BLANK)
@@ -286,11 +289,13 @@ savech(col)
 		highcol = col;
 
 	if (col >= maxcol) {
+		newline = (COLUMN *) realloc(line,
+		    (unsigned) (col + 10) * sizeof(COLUMN));
+		if (newline == NULL)
+			nospace();
+		line = newline;
 		oldmax = maxcol;
 		maxcol = col + 10;
-		line = (COLUMN *) realloc(line, (unsigned) maxcol * sizeof(COLUMN));
-		if (line == NULL)
-			nospace();
 		cp = line + oldmax;
 		cend = line + (maxcol - 1);
 		while (cp <= cend) {
