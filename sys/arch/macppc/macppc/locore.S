@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.S,v 1.9 1999/01/11 08:49:58 tsubai Exp $	*/
+/*	$NetBSD: locore.S,v 1.10 1999/01/27 14:46:28 tsubai Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -88,6 +88,8 @@ GLOBAL(eintrcnt)
 
 GLOBAL(ofbat)
 	.long	0,0			/* batu, batl */
+GLOBAL(ofmsr)
+	.long	0			/* msr used in Open Firmware */
 
 /*
  * File-scope for locore.S
@@ -96,8 +98,6 @@ idle_u:
 	.long	0			/* fake uarea during idle after exit */
 openfirmware_entry:
 	.long	0			/* openfirmware entry point */
-ofmsr:
-	.long	0			/* msr used in Open Firmware */
 
 /*
  * This symbol is here for the benefit of kvm_mkdb, and is supposed to
