@@ -1,4 +1,4 @@
-/*	$NetBSD: spec_vnops.c,v 1.76 2004/01/25 18:06:49 hannken Exp $	*/
+/*	$NetBSD: spec_vnops.c,v 1.77 2004/02/14 00:00:56 hannken Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -32,9 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: spec_vnops.c,v 1.76 2004/01/25 18:06:49 hannken Exp $");
-
-#include "fss.h"
+__KERNEL_RCSID(0, "$NetBSD: spec_vnops.c,v 1.77 2004/02/14 00:00:56 hannken Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -55,10 +53,6 @@ __KERNEL_RCSID(0, "$NetBSD: spec_vnops.c,v 1.76 2004/01/25 18:06:49 hannken Exp 
 
 #include <miscfs/genfs/genfs.h>
 #include <miscfs/specfs/specdev.h>
-
-#if NFSS > 0
-#include <dev/fssvar.h>
-#endif
 
 /* symbolic sleep message strings for devices */
 const char	devopn[] = "devopn";
@@ -588,14 +582,32 @@ spec_strategy(v)
 	} */ *ap = v;
 	struct vnode *vp = ap->a_vp;
 	struct buf *bp = ap->a_bp;
+	int s;
+	struct spec_cow_entry *e;
 
 	bp->b_dev = vp->v_rdev;
 	if (!(bp->b_flags & B_READ) &&
 	    (LIST_FIRST(&bp->b_dep)) != NULL && bioops.io_start)
 		(*bioops.io_start)(bp);
-#if NFSS > 0
-	fss_cow_hook(bp);
-#endif
+
+	if (!(bp->b_flags & B_READ) && !SLIST_EMPTY(&vp->v_spec_cow_head)) {
+		SPEC_COW_LOCK(vp->v_specinfo, s);
+		while (vp->v_spec_cow_req > 0)
+			ltsleep(&vp->v_spec_cow_req, PRIBIO, "cowlist", 0,
+			    &vp->v_spec_cow_slock);
+		vp->v_spec_cow_count++;
+		SPEC_COW_UNLOCK(vp->v_specinfo, s);
+
+		SLIST_FOREACH(e, &vp->v_spec_cow_head, ce_list)
+			(*e->ce_func)(e->ce_cookie, bp);
+
+		SPEC_COW_LOCK(vp->v_specinfo, s);
+		vp->v_spec_cow_count--;
+		if (vp->v_spec_cow_req && vp->v_spec_cow_count == 0)
+			wakeup(&vp->v_spec_cow_req);
+		SPEC_COW_UNLOCK(vp->v_specinfo, s);
+	}
+
 	DEV_STRATEGY(bp);
 
 	return (0);
