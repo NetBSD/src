@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.27 2002/03/22 18:10:24 thorpej Exp $
+#	$NetBSD: Makefile,v 1.28 2002/10/23 01:25:39 itojun Exp $
 #	from: @(#)Makefile	8.1 (Berkeley) 7/19/93
 
 .include <bsd.own.mk>
@@ -26,11 +26,14 @@ LDADD+= -lkafs
 .endif
 
 CPPFLAGS+=-DKERBEROS5 -I${DESTDIR}/usr/include/krb5
+DPADD+=	${LIBKRB5} ${LIBASN1}
 LDADD+= -lkrb5 -lasn1
 
 CPPFLAGS+=-DKERBEROS -I${DESTDIR}/usr/include/kerberosIV
+DPADD+=	${LIBKRB}
 LDADD+= -lkrb
 
+DPADD+=	${LIBCRYPTO} ${LIBROKEN} ${LIBCOM_ERR}
 LDADD+=	-lcrypto -lroken -lcom_err
 .endif
 
@@ -45,3 +48,5 @@ LDADD+= -lskey
 .ifdef SUROOTAUTH
 CPPFLAGS+=-DROOTAUTH=\"${SUROOTAUTH}\"
 .endif
+
+LDSTATIC=-static
