@@ -1,4 +1,4 @@
-/* $NetBSD: gzio.c,v 1.16 2003/03/08 07:42:34 lukem Exp $ */
+/* $NetBSD: gzio.c,v 1.17 2003/03/18 19:53:15 mycroft Exp $ */
 
 /* gzio.c -- IO on .gz files
  * Copyright (C) 1995-2002 Jean-loup Gailly.
@@ -7,10 +7,10 @@
  * Compile this file with -DNO_DEFLATE to avoid the compression code.
  */
 
-/* @(#) $Id: gzio.c,v 1.16 2003/03/08 07:42:34 lukem Exp $ */
+/* @(#) $Id: gzio.c,v 1.17 2003/03/18 19:53:15 mycroft Exp $ */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: gzio.c,v 1.16 2003/03/08 07:42:34 lukem Exp $");
+__RCSID("$NetBSD: gzio.c,v 1.17 2003/03/18 19:53:15 mycroft Exp $");
 
 #include <stdio.h>
 
@@ -32,7 +32,7 @@ struct internal_state {int dummy;}; /* for buggy compilers */
 #define ALLOC(size) malloc(size)
 #define TRYFREE(p) {if (p) free(p);}
 
-static int gz_magic[2] = {0x1f, 0x8b}; /* gzip magic header */
+static const int gz_magic[2] = {0x1f, 0x8b}; /* gzip magic header */
 
 /* gzip flag byte */
 #define ASCII_FLAG   0x01 /* bit 0 set: file probably ascii text */

@@ -1,4 +1,4 @@
-/* $NetBSD: trees.c,v 1.10 2003/03/08 07:42:36 lukem Exp $ */
+/* $NetBSD: trees.c,v 1.11 2003/03/18 19:53:16 mycroft Exp $ */
 
 /* trees.c -- output deflated data using Huffman coding
  * Copyright (C) 1995-2002 Jean-loup Gailly
@@ -31,10 +31,10 @@
  *          Addison-Wesley, 1983. ISBN 0-201-06672-6.
  */
 
-/* @(#) $Id: trees.c,v 1.10 2003/03/08 07:42:36 lukem Exp $ */
+/* @(#) $Id: trees.c,v 1.11 2003/03/18 19:53:16 mycroft Exp $ */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: trees.c,v 1.10 2003/03/08 07:42:36 lukem Exp $");
+__RCSID("$NetBSD: trees.c,v 1.11 2003/03/18 19:53:16 mycroft Exp $");
 
 /* #define GEN_TREES_H */
 
@@ -92,7 +92,7 @@ local const uch bl_order[BL_CODES]
 #if defined(GEN_TREES_H) || !defined(STDC)
 /* non ANSI compilers may not accept trees.h */
 
-local ct_data static_ltree[L_CODES+2];
+local const ct_data static_ltree[L_CODES+2];
 /* The static literal tree. Since the bit lengths are imposed, there is no
  * need for the L_CODES extra codes used during heap construction. However
  * The codes 286 and 287 are needed to build a canonical tree (see _tr_init
@@ -131,13 +131,13 @@ struct static_tree_desc_s {
     int     max_length;          /* max bit length for the codes */
 };
 
-local static_tree_desc  static_l_desc =
+local const static_tree_desc  static_l_desc =
 {static_ltree, extra_lbits, LITERALS+1, L_CODES, MAX_BITS};
 
-local static_tree_desc  static_d_desc =
+local const static_tree_desc  static_d_desc =
 {static_dtree, extra_dbits, 0,          D_CODES, MAX_BITS};
 
-local static_tree_desc  static_bl_desc =
+local const static_tree_desc  static_bl_desc =
 {(const ct_data *)0, extra_blbits, 0,   BL_CODES, MAX_BL_BITS};
 
 /* ===========================================================================

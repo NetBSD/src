@@ -1,4 +1,4 @@
-/* $NetBSD: zutil.c,v 1.9 2003/03/08 07:42:37 lukem Exp $ */
+/* $NetBSD: zutil.c,v 1.10 2003/03/18 19:53:16 mycroft Exp $ */
 
 /* zutil.c -- target dependent utility functions for the compression library
  * Copyright (C) 1995-2002 Jean-loup Gailly.
@@ -8,7 +8,7 @@
 /* @(#) Id */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: zutil.c,v 1.9 2003/03/08 07:42:37 lukem Exp $");
+__RCSID("$NetBSD: zutil.c,v 1.10 2003/03/18 19:53:16 mycroft Exp $");
 
 #include <stdio.h>
 
@@ -20,7 +20,7 @@ struct internal_state      {int dummy;}; /* for buggy compilers */
 extern void exit __P((int));
 #endif
 
-const char *z_errmsg[10] = {
+const char *const z_errmsg[10] = {
 "need dictionary",     /* Z_NEED_DICT       2  */
 "stream end",          /* Z_STREAM_END      1  */
 "",                    /* Z_OK              0  */

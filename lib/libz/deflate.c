@@ -1,4 +1,4 @@
-/* $NetBSD: deflate.c,v 1.11 2003/03/08 07:42:33 lukem Exp $ */
+/* $NetBSD: deflate.c,v 1.12 2003/03/18 19:53:15 mycroft Exp $ */
 
 /* deflate.c -- compress data using the deflation algorithm
  * Copyright (C) 1995-2002 Jean-loup Gailly.
@@ -49,10 +49,10 @@
  *
  */
 
-/* @(#) $Id: deflate.c,v 1.11 2003/03/08 07:42:33 lukem Exp $ */
+/* @(#) $Id: deflate.c,v 1.12 2003/03/18 19:53:15 mycroft Exp $ */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: deflate.c,v 1.11 2003/03/08 07:42:33 lukem Exp $");
+__RCSID("$NetBSD: deflate.c,v 1.12 2003/03/18 19:53:15 mycroft Exp $");
 
 #include "deflate.h"
 
@@ -217,7 +217,7 @@ int ZEXPORT deflateInit2_(strm, level, method, windowBits, memLevel, strategy,
 {
     deflate_state *s;
     int noheader = 0;
-    static const char* my_version = ZLIB_VERSION;
+    static const char*const my_version = ZLIB_VERSION;
 
     ushf *overlay;
     /* We overlay pending_buf and d_buf+l_buf. This works since the average

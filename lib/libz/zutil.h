@@ -1,4 +1,4 @@
-/* $NetBSD: zutil.h,v 1.11 2002/03/11 23:40:24 fvdl Exp $ */
+/* $NetBSD: zutil.h,v 1.12 2003/03/18 19:53:16 mycroft Exp $ */
 
 /* zutil.h -- internal interface and configuration of the compression library
  * Copyright (C) 1995-2002 Jean-loup Gailly.
@@ -10,7 +10,7 @@
    subject to change. Applications should only use zlib.h.
  */
 
-/* @(#) $Id: zutil.h,v 1.11 2002/03/11 23:40:24 fvdl Exp $ */
+/* @(#) $Id: zutil.h,v 1.12 2003/03/18 19:53:16 mycroft Exp $ */
 
 #ifndef _Z_UTIL_H
 #define _Z_UTIL_H
@@ -46,7 +46,7 @@ typedef unsigned short ush;
 typedef ush FAR ushf;
 typedef unsigned long  ulg;
 
-extern const char *z_errmsg[10]; /* indexed by 2-zlib_error */
+extern const char *const z_errmsg[10]; /* indexed by 2-zlib_error */
 /* (size given to avoid silly warnings with Visual C++) */
 
 #define ERR_MSG(err) z_errmsg[Z_NEED_DICT-(err)]
