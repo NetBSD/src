@@ -30,7 +30,7 @@
 #if defined(LIBC_SCCS) && !defined(lint)
 /*static char *sccsid = "from: @(#)clnt_generic.c 1.4 87/08/11 (C) 1987 SMI";*/
 /*static char *sccsid = "from: @(#)clnt_generic.c	2.2 88/08/01 4.0 RPCSRC";*/
-static char *rcsid = "$Id: clnt_generic.c,v 1.1 1993/10/07 07:29:41 cgd Exp $";
+static char *rcsid = "$Id: clnt_generic.c,v 1.2 1993/12/05 14:36:48 deraadt Exp $";
 #endif
 
 /*
@@ -73,9 +73,9 @@ clnt_create(hostname, prog, vers, proto)
 		rpc_createerr.cf_error.re_errno = EAFNOSUPPORT; 
 		return (NULL);
 	}
+	bzero((char *)&sin, sizeof sin);
 	sin.sin_family = h->h_addrtype;
 	sin.sin_port = 0;
-	bzero(sin.sin_zero, sizeof(sin.sin_zero));
 	bcopy(h->h_addr, (char*)&sin.sin_addr, h->h_length);
 	p = getprotobyname(proto);
 	if (p == NULL) {
