@@ -1,4 +1,4 @@
-#	$NetBSD: NetBSD.dist,v 1.135 2001/01/21 15:01:36 itojun Exp $
+#	$NetBSD: NetBSD.dist,v 1.136 2001/01/22 17:48:17 itojun Exp $
 #	@(#)4.4BSD.dist	8.1 (Berkeley) 6/13/93
 
 /set type=dir uname=root gname=wheel mode=0755
@@ -1546,21 +1546,6 @@ ru_RU.ISO8859-5
 # ./usr/share/locale/ru_RU.KOI8-R
 ru_RU.KOI8-R
 # ./usr/share/locale/ru_RU.KOI8-R
-..
-
-# ./usr/share/locale/ru_SU.CP866
-ru_SU.CP866
-# ./usr/share/locale/ru_SU.CP866
-..
-
-# ./usr/share/locale/ru_SU.ISO8859-5
-ru_SU.ISO8859-5
-# ./usr/share/locale/ru_SU.ISO8859-5
-..
-
-# ./usr/share/locale/ru_SU.KOI8-R
-ru_SU.KOI8-R
-# ./usr/share/locale/ru_SU.KOI8-R
 ..
 
 # ./usr/share/locale/sl
