@@ -1,4 +1,4 @@
-/*	$NetBSD: db_trace.c,v 1.17 2002/12/23 13:21:10 pk Exp $ */
+/*	$NetBSD: db_trace.c,v 1.18 2003/01/13 19:44:06 pk Exp $ */
 
 /*
  * Mach Operating System
@@ -37,6 +37,10 @@
 #include <ddb/db_output.h>
 
 #define INKERNEL(va)	(((vaddr_t)(va)) >= USRSTACK)
+#define ONINTSTACK(fr)	(						\
+	(u_int)(fr) <  (u_int)ddb_cpuinfo->eintstack &&		 	\
+	(u_int)(fr) >= (u_int)ddb_cpuinfo->eintstack - INT_STACK_SIZE	\
+)
 
 void
 db_stack_trace_print(addr, have_addr, count, modif, pr)
@@ -46,11 +50,14 @@ db_stack_trace_print(addr, have_addr, count, modif, pr)
 	char            *modif;
 	void		(*pr)(const char *, ...);
 {
-	struct frame	*frame;
+	struct frame	*frame, *prevframe;
 	db_addr_t	pc;
 	boolean_t	kernel_only = TRUE;
 	boolean_t	trace_thread = FALSE;
 	char		c, *cp = modif;
+
+	if (ddb_cpuinfo == NULL)
+		ddb_cpuinfo = curcpu();
 
 	while ((c = *cp++) != 0) {
 		if (c == 't')
@@ -90,21 +97,27 @@ db_stack_trace_print(addr, have_addr, count, modif, pr)
 		int		i;
 		db_expr_t	offset;
 		char		*name;
-		db_addr_t	opc;
+		db_addr_t	prevpc;
 
 #define FR(framep,field) (INKERNEL(framep)			\
 				? (u_int)(framep)->##field	\
 				: fuword(&(framep)->##field))
 
-		/* Fetch return address */
-		opc = (db_addr_t)FR(frame, fr_pc);
+		/* Fetch return address and arguments frame */
+		prevpc = (db_addr_t)FR(frame, fr_pc);
+		prevframe = (struct frame *)FR(frame, fr_fp);
 
 		/*
 		 * Switch to frame that contains arguments
 		 */
-		frame = (struct frame *)FR(frame, fr_fp);
-		if (frame == NULL || (!INKERNEL(frame) && kernel_only))
+		if (prevframe == NULL || (!INKERNEL(prevframe) && kernel_only))
 			return;
+
+		if ((ONINTSTACK(frame) && !ONINTSTACK(prevframe)) ||
+		    (INKERNEL(frame) && !INKERNEL(prevframe))) {
+			/* We're crossing a trap frame; pc = %l1 */
+			prevpc = (db_addr_t)FR(frame, fr_local[1]);
+		}
 
 		name = NULL;
 		if (INKERNEL(pc))
@@ -121,8 +134,13 @@ db_stack_trace_print(addr, have_addr, count, modif, pr)
 		for (i = 0; i < 6; i++)
 			(*pr)("0x%x%s", FR(frame, fr_arg[i]),
 				(i < 5) ? ", " : ") at ");
-		db_printsym(opc, DB_STGY_PROC, pr);
+		if (INKERNEL(prevpc))
+			db_printsym(prevpc, DB_STGY_PROC, pr);
+		else
+			(*pr)("0x%lx", prevpc);
 		(*pr)("\n");
-		pc = opc;
+
+		pc = prevpc;
+		frame = prevframe;
 	}
 }
