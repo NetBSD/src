@@ -1,4 +1,4 @@
-/*	$NetBSD: atw.c,v 1.75 2004/07/24 04:59:01 dyoung Exp $	*/
+/*	$NetBSD: atw.c,v 1.76 2004/07/24 23:53:49 dyoung Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2000, 2002, 2003, 2004 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: atw.c,v 1.75 2004/07/24 04:59:01 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: atw.c,v 1.76 2004/07/24 23:53:49 dyoung Exp $");
 
 #include "bpfilter.h"
 
@@ -222,12 +222,8 @@ void	atw_txintr(struct atw_softc *);
 /* 802.11 state machine */
 static int	atw_newstate(struct ieee80211com *, enum ieee80211_state, int);
 static void	atw_next_scan(void *);
-static void	atw_recv_beacon(struct ieee80211com *, struct mbuf *,
-		                struct ieee80211_node *, int, int, u_int32_t);
 static void	atw_recv_mgmt(struct ieee80211com *, struct mbuf *,
 		              struct ieee80211_node *, int, int, u_int32_t);
-static void	atw_tsf(struct atw_softc *);
-static void	atw_tsft(struct atw_softc *, uint32_t *, uint32_t *);
 static int	atw_tune(struct atw_softc *);
 
 /* Device initialization */
@@ -250,6 +246,7 @@ static void	atw_write_sram(struct atw_softc *, u_int, u_int8_t *, u_int);
 static int	atw_read_srom(struct atw_softc *);
 
 /* BSS setup */
+static void	atw_predict_beacon(struct atw_softc *);
 static void	atw_start_beacon(struct atw_softc *, int);
 static void	atw_write_bssid(struct atw_softc *);
 static void	atw_write_ssid(struct atw_softc *);
@@ -263,8 +260,13 @@ static void	atw_media_status(struct ifnet *, struct ifmediareq *);
 static void	atw_filter_setup(struct atw_softc *);
 
 /* 802.11 utilities */
+static void			atw_change_ibss(struct ieee80211com *);
 static void			atw_frame_setdurs(struct atw_softc *,
 				                  struct atw_frame *, int, int);
+static void			atw_get_tsft(struct ieee80211com *, uint32_t *,
+			                     uint32_t *);
+static __inline void		atw_get_tsft1(struct atw_softc *, uint32_t *,
+				              uint32_t *);
 static __inline uint32_t	atw_last_even_tsft(uint32_t, uint32_t,
 				                   uint32_t);
 static struct ieee80211_node	*atw_node_alloc(struct ieee80211com *);
@@ -826,6 +828,9 @@ atw_attach(struct atw_softc *sc)
 
 	sc->sc_node_alloc = ic->ic_node_alloc;
 	ic->ic_node_alloc = atw_node_alloc;
+
+	ic->ic_get_tsft = atw_get_tsft;
+	ic->ic_change_ibss = atw_change_ibss;
 
 	/* possibly we should fill in our own sc_send_prresp, since
 	 * the ADM8211 is probably sending probe responses in ad hoc
@@ -2180,8 +2185,6 @@ atw_write_wep(struct atw_softc *sc)
 	    sizeof(buf));
 }
 
-const struct timeval atw_beacon_mininterval = {.tv_sec = 1, .tv_usec = 0};
-
 static void
 atw_recv_mgmt(struct ieee80211com *ic, struct mbuf *m,
     struct ieee80211_node *ni, int subtype, int rssi, u_int32_t rstamp)
@@ -2194,152 +2197,27 @@ atw_recv_mgmt(struct ieee80211com *ic, struct mbuf *m,
 		break;
 	case IEEE80211_FC0_SUBTYPE_PROBE_RESP:
 	case IEEE80211_FC0_SUBTYPE_BEACON:
-		atw_recv_beacon(ic, m, ni, subtype, rssi, rstamp);
+		if (ic->ic_opmode == IEEE80211_M_IBSS &&
+		    ic->ic_state == IEEE80211_S_RUN) {
+			ieee80211_ibss_merge(ic, sc->sc_recv_mgmt, m, ni,
+			    subtype, rssi, rstamp);
+			return;
+		}
 		break;
 	default:
-		(*sc->sc_recv_mgmt)(ic, m, ni, subtype, rssi, rstamp);
 		break;
 	}
+	(*sc->sc_recv_mgmt)(ic, m, ni, subtype, rssi, rstamp);
 	return;
 }
 
-static __inline void
-atw_tsft(struct atw_softc *sc, uint32_t *tsfth, uint32_t *tsftl)
-{
-	int i;
-	for (i = 0; i < 2; i++) {
-		*tsfth = ATW_READ(sc, ATW_TSFTH);
-		*tsftl = ATW_READ(sc, ATW_TSFTL);
-		if (ATW_READ(sc, ATW_TSFTH) == *tsfth)
-			break;
-	}
-}
-
-static int
-do_slow_print(struct atw_softc *sc, int *did_print)
-{
-	if ((sc->sc_if.if_flags & IFF_LINK0) == 0)
-		return 0;
-	if (!*did_print && (sc->sc_if.if_flags & IFF_DEBUG) == 0 &&
-	    !ratecheck(&sc->sc_last_beacon, &atw_beacon_mininterval))
-		return 0;
-
-	*did_print = 1;
-	return 1;
-}
-
-/* In ad hoc mode, atw_recv_beacon is responsible for the coalescence
- * of IBSSs with like SSID/channel but different BSSID. It joins the
- * oldest IBSS (i.e., with greatest TSF time), since that is the WECA
- * convention. Possibly the ADMtek chip does this for us; I will have
- * to test to find out.
- *
- * XXX we should add the duration field of the received beacon to
- * the TSF time it contains before comparing it with the ADM8211's
- * TSF.
- */
 static void
-atw_recv_beacon(struct ieee80211com *ic, struct mbuf *m0,
-    struct ieee80211_node *ni, int subtype, int rssi, u_int32_t rstamp)
+atw_change_ibss(struct ieee80211com *ic)
 {
 	struct atw_softc *sc;
-	struct ieee80211_frame *wh;
-	uint32_t tsftl, tsfth;
-	uint32_t bcn_tsftl, bcn_tsfth;
-	int did_print = 0, sign;
-	union {
-		uint32_t	words[2];
-		uint8_t		tstamp[8];
-	} u;
-
-	sc = (struct atw_softc*)ic->ic_if.if_softc;
-
-	(*sc->sc_recv_mgmt)(ic, m0, ni, subtype, rssi, rstamp);
-
-	if (ic->ic_state != IEEE80211_S_RUN)
-		return;
-
-	atw_tsft(sc, &tsfth, &tsftl);
-
-	(void)memcpy(&u, &ni->ni_tstamp[0], sizeof(u));
-	bcn_tsftl = le32toh(u.words[0]);
-	bcn_tsfth = le32toh(u.words[1]);
-
-	/* we are faster, let the other guy catch up */
-	if (bcn_tsfth < tsfth)
-		sign = -1;
-	else if (bcn_tsfth == tsfth && bcn_tsftl < tsftl)
-		sign = -1;
-	else
-		sign = 1;
-
-	if (memcmp(ni->ni_bssid, ic->ic_bss->ni_bssid,
-	    IEEE80211_ADDR_LEN) == 0) {
-		if (!do_slow_print(sc, &did_print))
-			return;
-		printf("%s: tsft offset %s%" PRIu64 "\n", sc->sc_dev.dv_xname,
-		    (sign < 0) ? "-" : "",
-		    (sign < 0)
-			? ((((uint64_t)tsfth << 32) | tsftl) -
-			   (((uint64_t)bcn_tsfth << 32) | bcn_tsftl))
-			: ((((uint64_t)bcn_tsfth << 32) | bcn_tsftl) -
-			   (((uint64_t)tsfth << 32) | tsftl)));
-		return;
-	}
-
-	if (sign < 0)
-		return;
-
-	if (ieee80211_match_bss(ic, ni) != 0)
-		return;
-
-	if (do_slow_print(sc, &did_print)) {
-		printf("%s: atw_recv_beacon: bssid mismatch %s\n",
-		    sc->sc_dev.dv_xname, ether_sprintf(ni->ni_bssid));
-	}
-
-	if (ic->ic_opmode != IEEE80211_M_IBSS)
-		return;
-
-	if (do_slow_print(sc, &did_print)) {
-		printf("%s: my tsft %" PRIu64 " beacon tsft %" PRIu64 "\n",
-		    sc->sc_dev.dv_xname, ((uint64_t)tsfth << 32) | tsftl,
-		    ((uint64_t)bcn_tsfth << 32) | bcn_tsftl);
-	}
-
-	wh = mtod(m0, struct ieee80211_frame *);
-
-	if (do_slow_print(sc, &did_print)) {
-		printf("%s: sync TSF with %s\n",
-		    sc->sc_dev.dv_xname, ether_sprintf(wh->i_addr2));
-	}
-
-	ic->ic_flags &= ~IEEE80211_F_SIBSS;
-
-	(void)memcpy(&ic->ic_bss->ni_tstamp[0], &u, sizeof(u));
-
-	atw_tsf(sc);
-
-	/* negotiate rates with new IBSS */
-	ieee80211_fix_rate(ic, ni, IEEE80211_F_DOFRATE |
-	    IEEE80211_F_DONEGO | IEEE80211_F_DODEL);
-	if (ni->ni_rates.rs_nrates == 0) {
-		if (do_slow_print(sc, &did_print)) {
-			printf("%s: rates mismatch, BSSID %s\n",
-			    sc->sc_dev.dv_xname, ether_sprintf(ni->ni_bssid));
-		}
-		return;
-	}
-
-	if (do_slow_print(sc, &did_print)) {
-		printf("%s: sync BSSID %s -> ",
-		    sc->sc_dev.dv_xname, ether_sprintf(ic->ic_bss->ni_bssid));
-		printf("%s ", ether_sprintf(ni->ni_bssid));
-		printf("(from %s)\n", ether_sprintf(wh->i_addr2));
-	}
-
-	(*ic->ic_node_copy)(ic, ic->ic_bss, ni);
-
+	
+	sc = (struct atw_softc *)ic->ic_if.if_softc;
+	atw_predict_beacon(sc);
 	atw_write_bssid(sc);
 	atw_start_beacon(sc, 1);
 }
@@ -2487,6 +2365,28 @@ atw_last_even_tsft(uint32_t tsfth, uint32_t tsftl, uint32_t ival)
 	return ((0xFFFFFFFF % ival + 1) * tsfth + tsftl) % ival;
 }
 
+static __inline void
+atw_get_tsft1(struct atw_softc *sc, uint32_t *tsfth, uint32_t *tsftl)
+{
+	int i;
+	for (i = 0; i < 2; i++) {
+		*tsfth = ATW_READ(sc, ATW_TSFTH);
+		*tsftl = ATW_READ(sc, ATW_TSFTL);
+		if (ATW_READ(sc, ATW_TSFTH) == *tsfth)
+			break;
+	}
+}
+
+static void
+atw_get_tsft(struct ieee80211com *ic, uint32_t *tsfth, uint32_t *tsftl)
+{
+	struct atw_softc *sc;
+
+	sc = (struct atw_softc *)ic->ic_if.if_softc;
+
+	atw_get_tsft1(sc, tsfth, tsftl);
+}
+
 /* If we've created an IBSS, write the TSF time in the ADM8211 to
  * the ieee80211com.
  *
@@ -2494,7 +2394,7 @@ atw_last_even_tsft(uint32_t tsfth, uint32_t tsftl, uint32_t ival)
  * write it to the ADM8211.
  */
 static void
-atw_tsf(struct atw_softc *sc)
+atw_predict_beacon(struct atw_softc *sc)
 {
 #define TBTTOFS 20 /* TU */
 
@@ -2508,7 +2408,7 @@ atw_tsf(struct atw_softc *sc)
 	if ((ic->ic_opmode == IEEE80211_M_HOSTAP) ||
 	    ((ic->ic_opmode == IEEE80211_M_IBSS) &&
 	     (ic->ic_flags & IEEE80211_F_SIBSS))) {
-		atw_tsft(sc, &tsfth, &tsftl);
+		atw_get_tsft1(sc, &tsfth, &tsftl);
 		u.words[0] = htole32(tsftl);
 		u.words[1] = htole32(tsfth);
 		(void)memcpy(&ic->ic_bss->ni_tstamp[0], &u,
@@ -2609,7 +2509,7 @@ atw_newstate(struct ieee80211com *ic, enum ieee80211_state nstate, int arg)
 		DPRINTF(sc, ("%s: reg[ATW_BPLI] = %08x\n",
 		    sc->sc_dev.dv_xname, ATW_READ(sc, ATW_BPLI)));
 
-		atw_tsf(sc);
+		atw_predict_beacon(sc);
 		break;
 	}
 
