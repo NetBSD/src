@@ -1,4 +1,4 @@
-/* -*-C++-*-	$NetBSD: framebuffer.cpp,v 1.1 2001/02/09 18:34:40 uch Exp $	*/
+/* -*-C++-*-	$NetBSD: framebuffer.cpp,v 1.2 2001/02/21 16:01:53 uch Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -108,9 +108,12 @@ FrameBufferInfo::_table[] =
 #endif // SHx
 #ifdef ARM
 	// SA-1100 (can't determine frame buffer address)
-	{ PLATID_CPU_ARM_STRONGARM_SA1100 , PLATID_MACH_HP_JORNADA_820     ,       16,      640,      480,        0, 0x00000000 },
-	{ PLATID_CPU_ARM_STRONGARM_SA1100 , PLATID_MACH_HP_JORNADA_820JP   ,       16,      640,      480,        0, 0x00000000 },
+	{ PLATID_CPU_ARM_STRONGARM_SA1100 , PLATID_MACH_HP_JORNADA_820     ,        8,      640,      480,        0, 0x00000000 },
+	{ PLATID_CPU_ARM_STRONGARM_SA1100 , PLATID_MACH_HP_JORNADA_820JP   ,        8,      640,      480,        0, 0x00000000 },
 	// SA-1110
+	{ PLATID_CPU_ARM_STRONGARM_SA1110 , PLATID_MACH_HP_JORNADA_720     ,       16,      640,      240,        0, 0x00000000 },
+	{ PLATID_CPU_ARM_STRONGARM_SA1110 , PLATID_MACH_HP_JORNADA_720JP   ,       16,      640,      240,        0, 0x00000000 },
+	{ PLATID_CPU_ARM_STRONGARM_SA1110 , PLATID_MACH_COMPAQ_IPAQ_H3600  ,       16,      240,      320,        0, 0x00000000 },
 #endif // ARM
 	{ 0, 0, 0, 0, 0, 0, 0 } // TERMINATOR
 };
