@@ -1,4 +1,4 @@
-/* $NetBSD: trap.c,v 1.84 2003/09/21 15:14:51 skd Exp $ */
+/* $NetBSD: trap.c,v 1.85 2003/10/07 17:04:18 skd Exp $ */
 
 /*-
  * Copyright (c) 2000, 2001 The NetBSD Foundation, Inc.
@@ -100,7 +100,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.84 2003/09/21 15:14:51 skd Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.85 2003/10/07 17:04:18 skd Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -117,6 +117,7 @@ __KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.84 2003/09/21 15:14:51 skd Exp $");
 #include <machine/cpu.h>
 #include <machine/reg.h>
 #include <machine/alpha.h>
+#include <machine/fpu.h>
 #include <machine/rpb.h>
 #ifdef DDB
 #include <machine/db_machdep.h>
@@ -125,7 +126,8 @@ __KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.84 2003/09/21 15:14:51 skd Exp $");
 #include <machine/userret.h>
 
 static int unaligned_fixup(u_long, u_long, u_long, struct lwp *);
-static int handle_opdec(struct lwp *l, u_int64_t *ucodep);
+static int handle_opdec(struct lwp *l, u_long *ucodep);
+static int alpha_ucode_to_ksiginfo(u_long ucode);
 
 struct evcnt fpevent_use;
 struct evcnt fpevent_reuse;
@@ -233,8 +235,10 @@ trap(const u_long a0, const u_long a1, const u_long a2, const u_long entry,
     struct trapframe *framep)
 {
 	struct lwp *l;
-	u_int64_t ucode;
+	struct proc *p;
+	ksiginfo_t ksi;
 	vm_prot_t ftype;
+	u_int64_t ucode;
 	int i, user;
 #if defined(DDB)
 	int call_debugger = 1;
@@ -242,10 +246,14 @@ trap(const u_long a0, const u_long a1, const u_long a2, const u_long entry,
 
 	l = curlwp;
 
-	ucode = 0;
+
+
 	user = (framep->tf_regs[FRAME_PS] & ALPHA_PSL_USERMODE) != 0;
-	if (user)
+	if (user) {
 		l->l_md.md_tf = framep;
+		p = l->l_proc;
+		(void)memset(&ksi, 0, sizeof(ksi));
+	}
 
 	switch (entry) {
 	case ALPHA_KENTRY_UNA:
@@ -261,7 +269,10 @@ trap(const u_long a0, const u_long a1, const u_long a2, const u_long entry,
 			if (i == 0)
 				goto out;
 
-			ucode = a0;		/* VA */
+			ksi.ksi_signo = i;
+			ksi.ksi_code = BUS_ADRALN;
+			ksi.ksi_addr = (void *)a0;		/* VA */
+			ksi.ksi_trap = BUS_ADRALN;      /* XXX appropriate? */
 			break;
 		}
 
@@ -287,6 +298,15 @@ trap(const u_long a0, const u_long a1, const u_long a2, const u_long entry,
 			i = alpha_fp_complete(a0, a1, l, &ucode);
 			if (i == 0)
 				goto out;
+			ksi.ksi_signo = i;
+			if (i == SIGSEGV)
+				ksi.ksi_code = SEGV_MAPERR; /* just pick one */
+			else {
+				ksi.ksi_code = alpha_ucode_to_ksiginfo(ucode);
+				ksi.ksi_addr = 
+					(void *)l->l_md.md_tf->tf_regs[FRAME_PC];
+				ksi.ksi_trap = (int)ucode;
+			}
 			break;
 		}
 
@@ -319,15 +339,20 @@ trap(const u_long a0, const u_long a1, const u_long a2, const u_long entry,
 		switch (a0) {
 		case ALPHA_IF_CODE_GENTRAP:
 			if (framep->tf_regs[FRAME_A0] == -2) { /* weird! */
-				i = SIGFPE;
-				ucode =  a0;	/* exception summary */
+				ksi.ksi_signo = SIGFPE;
+				ksi.ksi_code =  alpha_ucode_to_ksiginfo(ucode);
+				ksi.ksi_addr = 
+					(void *)l->l_md.md_tf->tf_regs[FRAME_PC];
+				ksi.ksi_trap =  a0;	/* exception summary */
 				break;
 			}
 			/* FALLTHROUTH */
 		case ALPHA_IF_CODE_BPT:
 		case ALPHA_IF_CODE_BUGCHK:
-			ucode = a0;		/* trap type */
-			i = SIGTRAP;
+			ksi.ksi_signo = SIGTRAP;
+			ksi.ksi_code = TRAP_BRKPT;
+			ksi.ksi_addr = (void *)l->l_md.md_tf->tf_regs[FRAME_PC];
+			ksi.ksi_trap = a0;		/* trap type */
 			break;
 
 		case ALPHA_IF_CODE_OPDEC:
@@ -336,6 +361,14 @@ trap(const u_long a0, const u_long a1, const u_long a2, const u_long entry,
 			KERNEL_PROC_UNLOCK(l);
 			if (i == 0)
 				goto out;
+			else if (i == SIGSEGV)
+				ksi.ksi_code = SEGV_MAPERR;
+			else if (i == SIGILL)
+				ksi.ksi_code = ILL_ILLOPC;
+			ksi.ksi_signo = i;
+			ksi.ksi_addr = 
+				(void *)l->l_md.md_tf->tf_regs[FRAME_PC];
+			ksi.ksi_trap = (int)ucode;
 			break;
 
 		case ALPHA_IF_CODE_FEN:
@@ -500,16 +533,21 @@ do_fault:
 				}
 				goto dopanic;
 			}
-			ucode = a0;
+			ksi.ksi_addr = (void *)a0;
+			ksi.ksi_trap = a1; /* MMCSR VALUE */
 			if (rv == ENOMEM) {
 				printf("UVM: pid %d (%s), uid %d killed: "
 				       "out of swap\n", l->l_proc->p_pid, 
 				       l->l_proc->p_comm,
 				       l->l_proc->p_cred && l->l_proc->p_ucred ?
 				       l->l_proc->p_ucred->cr_uid : -1);
-				i = SIGKILL;
+				ksi.ksi_signo = SIGKILL;
 			} else
-				i = SIGSEGV;
+				ksi.ksi_signo = SIGSEGV;
+			if (rv == EACCES)
+				ksi.ksi_code = SEGV_ACCERR;
+			else
+				ksi.ksi_code = SEGV_MAPERR;
 			l->l_flag &= ~L_SA_PAGEFAULT;
 			KERNEL_PROC_UNLOCK(l);
 			break;
@@ -529,7 +567,7 @@ do_fault:
 	printtrap(a0, a1, a2, entry, framep, 1, user);
 #endif
 	KERNEL_PROC_LOCK(l);
-	trapsignal(l, i, ucode);
+	(*p->p_emul->e_trapsignal)(l, &ksi);
 	KERNEL_PROC_UNLOCK(l);
 out:
 	if (user)
@@ -1033,7 +1071,7 @@ out:
  * and fills in *ucodep with the code to be delivered.
  */
 int
-handle_opdec(struct lwp *l, u_int64_t *ucodep)
+handle_opdec(struct lwp *l, u_long *ucodep)
 {
 	alpha_instruction inst;
 	register_t *regptr, memaddr;
@@ -1178,6 +1216,28 @@ sigsegv:
 unaligned_fixup_sig:
 	*ucodep = memaddr;				/* faulting address */
 	return (sig);
+}
+
+/* map alpha fp flags to ksiginfo fp codes */
+static int
+alpha_ucode_to_ksiginfo(u_long ucode)
+{
+	long i;
+	long flags = ucode >> 1;
+
+	static int alpha_ksiginfo_table[] = { FPE_FLTINV,
+					     FPE_FLTDIV,
+					     FPE_FLTOVF,
+					     FPE_FLTUND,
+					     FPE_FLTRES,
+					     FPE_INTOVF };
+
+	for(i=0;i < sizeof(alpha_ksiginfo_table)/sizeof(int); i++) {
+		if (flags & (1 << i))
+			return (alpha_ksiginfo_table[i]);
+	}
+	/* punt if the flags weren't set */
+	return (0);
 }
 
 /* 
