@@ -1,4 +1,4 @@
-/*	$NetBSD: cdefs.h,v 1.38 2000/08/09 03:23:10 tv Exp $	*/
+/*	$NetBSD: cdefs.h,v 1.39 2000/09/27 10:44:12 kleink Exp $	*/
 
 /*
  * Copyright (c) 1991, 1993
@@ -165,6 +165,16 @@
 #ifndef __dead
 #define	__dead
 #define	__pure
+#endif
+
+/*
+ * C99 defines the restrict type qualifier keyword, which was made available
+ * in GCC 2.92.
+ */
+#if __STDC_VERSION__ >= 199901L || __GNUC_PREREQ__(2, 92)
+#define	__restrict	restrict
+#else
+#define	__restrict	/* delete __restrict when not supported */
 #endif
 
 #if defined(_KERNEL)
