@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_subr.c,v 1.114 1999/11/18 05:50:25 enami Exp $	*/
+/*	$NetBSD: vfs_subr.c,v 1.115 1999/11/23 23:52:40 fvdl Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -624,6 +624,8 @@ vinvalbuf(vp, flags, cred, p, slpflag, slptimeo)
 		splx(s);
 	}
 
+	s = splbio();
+
 	for (;;) {
 		if ((blist = vp->v_cleanblkhd.lh_first) && (flags & V_SAVEMETA))
 			while (blist && blist->b_lblkno < 0)
@@ -640,19 +642,18 @@ vinvalbuf(vp, flags, cred, p, slpflag, slptimeo)
 			nbp = bp->b_vnbufs.le_next;
 			if (flags & V_SAVEMETA && bp->b_lblkno < 0)
 				continue;
-			s = splbio();
 			if (bp->b_flags & B_BUSY) {
 				bp->b_flags |= B_WANTED;
 				error = tsleep((caddr_t)bp,
 					slpflag | (PRIBIO + 1), "vinvalbuf",
 					slptimeo);
-				splx(s);
-				if (error)
+				if (error) {
+					splx(s);
 					return (error);
+				}
 				break;
 			}
 			bp->b_flags |= B_BUSY | B_VFLUSH;
-			splx(s);
 			/*
 			 * XXX Since there are no node locks for NFS, I believe
 			 * there is a slight chance that a delayed write will
@@ -670,9 +671,13 @@ vinvalbuf(vp, flags, cred, p, slpflag, slptimeo)
 			brelse(bp);
 		}
 	}
+
 	if (!(flags & V_SAVEMETA) &&
 	    (vp->v_dirtyblkhd.lh_first || vp->v_cleanblkhd.lh_first))
 		panic("vinvalbuf: flush failed");
+
+	splx(s);
+
 	return (0);
 }
 
@@ -727,10 +732,12 @@ bgetvp(vp, bp)
 	register struct vnode *vp;
 	register struct buf *bp;
 {
+	int s;
 
 	if (bp->b_vp)
 		panic("bgetvp: not free");
 	VHOLD(vp);
+	s = splbio();
 	bp->b_vp = vp;
 	if (vp->v_type == VBLK || vp->v_type == VCHR)
 		bp->b_dev = vp->v_rdev;
@@ -740,6 +747,7 @@ bgetvp(vp, bp)
 	 * Insert onto list for new vnode.
 	 */
 	bufinsvn(bp, &vp->v_cleanblkhd);
+	splx(s);
 }
 
 /*
@@ -750,9 +758,12 @@ brelvp(bp)
 	register struct buf *bp;
 {
 	struct vnode *vp;
+	int s;
 
 	if (bp->b_vp == (struct vnode *) 0)
 		panic("brelvp: NULL");
+
+	s = splbio();
 	vp = bp->b_vp;
 	/*
 	 * Delete from old vnode list, if on one.
@@ -765,12 +776,15 @@ brelvp(bp)
 	}
 	bp->b_vp = (struct vnode *) 0;
 	HOLDRELE(vp);
+	splx(s);
 }
 
 /*
  * Reassign a buffer from one vnode to another.
  * Used to assign file specific control information
  * (indirect blocks) to the vnode to which they belong.
+ *
+ * This function must be called at splbio().
  */
 void
 reassignbuf(bp, newvp)
@@ -784,6 +798,7 @@ reassignbuf(bp, newvp)
 		printf("reassignbuf: NULL");
 		return;
 	}
+
 	/*
 	 * Delete from old vnode list, if on one.
 	 */
