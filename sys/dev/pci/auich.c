@@ -1,4 +1,4 @@
-/*	$NetBSD: auich.c,v 1.70 2004/10/31 19:28:31 mycroft Exp $	*/
+/*	$NetBSD: auich.c,v 1.71 2004/10/31 20:00:42 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -118,7 +118,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: auich.c,v 1.70 2004/10/31 19:28:31 mycroft Exp $");
+__KERNEL_RCSID(0, "$NetBSD: auich.c,v 1.71 2004/10/31 20:00:42 mycroft Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -729,59 +729,37 @@ auich_close(void *v)
 int
 auich_query_encoding(void *v, struct audio_encoding *aep)
 {
+	static const struct auich_encoding {
+		const char *name;
+		int encoding, precision, flags;
+	} *p, auich_encoding[] = {
+		{AudioEulinear,    AUDIO_ENCODING_ULINEAR,
+					      8, AUDIO_ENCODINGFLAG_EMULATED},
+		{AudioEmulaw,      AUDIO_ENCODING_ULAW,
+					      8, AUDIO_ENCODINGFLAG_EMULATED},
+		{AudioEalaw,       AUDIO_ENCODING_ALAW,
+					      8, AUDIO_ENCODINGFLAG_EMULATED},
+		{AudioEslinear,    AUDIO_ENCODING_SLINEAR,
+					      8, AUDIO_ENCODINGFLAG_EMULATED},
+		{AudioEslinear_le, AUDIO_ENCODING_SLINEAR_LE,
+					     16, 0},
+		{AudioEulinear_le, AUDIO_ENCODING_ULINEAR_LE,
+					     16, AUDIO_ENCODINGFLAG_EMULATED},
+		{AudioEslinear_be, AUDIO_ENCODING_SLINEAR_BE,
+					     16, AUDIO_ENCODINGFLAG_EMULATED},
+		{AudioEulinear_be, AUDIO_ENCODING_ULINEAR_BE,
+					     16, AUDIO_ENCODINGFLAG_EMULATED},
+	};
 
-	switch (aep->index) {
-	case 0:
-		strcpy(aep->name, AudioEulinear);
-		aep->encoding = AUDIO_ENCODING_ULINEAR;
-		aep->precision = 8;
-		aep->flags = AUDIO_ENCODINGFLAG_EMULATED;
-		return (0);
-	case 1:
-		strcpy(aep->name, AudioEmulaw);
-		aep->encoding = AUDIO_ENCODING_ULAW;
-		aep->precision = 8;
-		aep->flags = AUDIO_ENCODINGFLAG_EMULATED;
-		return (0);
-	case 2:
-		strcpy(aep->name, AudioEalaw);
-		aep->encoding = AUDIO_ENCODING_ALAW;
-		aep->precision = 8;
-		aep->flags = AUDIO_ENCODINGFLAG_EMULATED;
-		return (0);
-	case 3:
-		strcpy(aep->name, AudioEslinear);
-		aep->encoding = AUDIO_ENCODING_SLINEAR;
-		aep->precision = 8;
-		aep->flags = AUDIO_ENCODINGFLAG_EMULATED;
-		return (0);
-	case 4:
-		strcpy(aep->name, AudioEslinear_le);
-		aep->encoding = AUDIO_ENCODING_SLINEAR_LE;
-		aep->precision = 16;
-		aep->flags = 0;
-		return (0);
-	case 5:
-		strcpy(aep->name, AudioEulinear_le);
-		aep->encoding = AUDIO_ENCODING_ULINEAR_LE;
-		aep->precision = 16;
-		aep->flags = AUDIO_ENCODINGFLAG_EMULATED;
-		return (0);
-	case 6:
-		strcpy(aep->name, AudioEslinear_be);
-		aep->encoding = AUDIO_ENCODING_SLINEAR_BE;
-		aep->precision = 16;
-		aep->flags = AUDIO_ENCODINGFLAG_EMULATED;
-		return (0);
-	case 7:
-		strcpy(aep->name, AudioEulinear_be);
-		aep->encoding = AUDIO_ENCODING_ULINEAR_BE;
-		aep->precision = 16;
-		aep->flags = AUDIO_ENCODINGFLAG_EMULATED;
-		return (0);
-	default:
+	if (aep->index >= 8)
 		return (EINVAL);
-	}
+
+	p = &auich_encoding[aep->index];
+	strcpy(aep->name, p->name);
+	aep->encoding = p->encoding;
+	aep->precision = p->precision;
+	aep->flags = p->flags;
+	return (0);
 }
 
 int
@@ -828,20 +806,14 @@ auich_set_params(void *v, int setmode, int usemode, struct audio_params *play,
 		if (p == NULL)
 			continue;
 
-		if ((p->sample_rate !=  8000) &&
-		    (p->sample_rate != 11025) &&
-		    (p->sample_rate != 12000) &&
-		    (p->sample_rate != 16000) &&
-		    (p->sample_rate != 22050) &&
-		    (p->sample_rate != 24000) &&
-		    (p->sample_rate != 32000) &&
-		    (p->sample_rate != 44100) &&
-		    (p->sample_rate != 48000))
+		if (p->sample_rate <  8000 ||
+		    p->sample_rate > 48000)
 			return (EINVAL);
 
-		p->factor = 1;
 		if (p->precision == 8)
-			p->factor *= 2;
+			p->factor = 2;
+		else
+			p->factor = 1;
 
 		p->sw_code = NULL;
 		/* setup hardware formats */
