@@ -1,4 +1,4 @@
-#	$NetBSD: vnode_if.src,v 1.37 2004/01/24 01:40:57 wiz Exp $
+#	$NetBSD: vnode_if.src,v 1.38 2004/01/25 18:02:04 hannken Exp $
 #
 # Copyright (c) 1992, 1993
 #	The Regents of the University of California.  All rights reserved.
@@ -434,11 +434,12 @@ vop_bmap {
 };
 
 #
-# Needs work: no vp?
+#% strategy   vp      = = =
 #
-#vop_strategy {
-#	IN struct buf *bp;
-#};
+vop_strategy {
+	IN struct vnode *vp;
+	IN struct buf *bp;
+};
 
 #
 #% print      vp      = = =
