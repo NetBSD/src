@@ -35,7 +35,7 @@
 #include <getarg.h>
 #include <parse_bytes.h>
 
-RCSID("$Id: config.c,v 1.3 2000/09/10 19:29:44 joda Exp $");
+RCSID("$Id: config.c,v 1.4 2001/02/11 14:13:09 assar Exp $");
 
 static char *config_file;	/* location of kdc config file */
 
@@ -250,7 +250,7 @@ configure(int argc, char **argv)
 	usage(1);
     
     if(config_file == NULL)
-      config_file = _PATH_KDC_CONF;
+	config_file = _PATH_KDC_CONF;
     
     if(krb5_config_parse_file(config_file, &cf))
 	cf = NULL;
