@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-2.1,v 1.1.2.45 2005/04/06 10:19:40 he Exp $
+#	$NetBSD: CHANGES-2.1,v 1.1.2.46 2005/04/06 10:40:03 he Exp $
 
 A complete list of changes from the NetBSD 2.0 release to the NetBSD 2.1 
 release
@@ -1032,3 +1032,21 @@ tools/compat/configure.ac			1.48 (via patch)
 	Convert remaining host tools for amiga to correct cross tools.
 	Now allows complete amiga builds on non-NetBSD and non-BSD hosts.
 	[jmc, ticket #1026]
+
+distrib/sets/lists/base/md.bebox		1.13
+share/mk/bsd.own.mk				1.425
+sys/arch/bebox/stand/Makefile.inc		1.1 (new)
+sys/arch/bebox/stand/boot/Makefile		1.21
+sys/arch/bebox/stand/elf2pef/Makefile		1.4
+sys/arch/bebox/stand/elf2pef/elf2pef.c		1.10
+sys/arch/bebox/stand/mkbootimage/mkbootimage.c	1.4
+sys/arch/bebox/stand/mkbootimage/Makefile	1.4
+tools/bebox-elf2pef/Makefile			1.1 (new)
+tools/bebox-elf2pef/sys/exec_elf.h		1.1 (new)
+tools/bebox-mkbootimage/Makefile		1.1 (new)
+tools/Makefile					1.84
+
+	Convert bebox's remaining host tools over to the cross tools
+	scheme.  Now allows complete bebox builds on non-NetBSD and
+	non-BSD hosts.
+	[jmc, ticket #1027]
