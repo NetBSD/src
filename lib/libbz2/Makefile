@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.3 2000/11/08 02:15:13 wiz Exp $
+#	$NetBSD: Makefile,v 1.4 2000/11/10 02:00:10 wiz Exp $
 
 LIB=	bz2
 MKMAN=	no
@@ -16,6 +16,14 @@ bzip2.texi:   manual.texi
 		    -e 's/@parskip.*//' \
 		    -e 's/@node Overview, Implementation, Top, Top/@node Top, (dir), (dir), (dir)/' \
 		    <$> >$@
+
+.include <bsd.own.mk>
+
+.if ${MKSHARE} != "no"
+FILESDIR=	${HTMLDOCDIR}/bzip2
+FILES=		manual_toc.html manual_1.html manual_2.html manual_3.html \
+		manual_4.html
+.endif
 
 .include <bsd.info.mk>
 .include <bsd.lib.mk>
