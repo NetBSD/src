@@ -1,4 +1,4 @@
-LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.271 $>
+LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.272 $>
 
 
 [Note: This file does not mention every change made to the NetBSD source tree.
@@ -429,6 +429,7 @@ Changes from NetBSD 1.6 to NetBSD 2.0:
 		MKUPDATE=yes, MKUNPRIVED=yes respectively.  [lukem 20030718]
 	ipsec: support hmac-sha2 for AH/ESP auth.  [itojun 20030722]
 	sparc: Update sparc port to use XFree86 4.x base.  [mrg 20030722]
+	GCC: Import GCC 3.3.1-20030720.  [mrg 20030723]
 	libcrypto: upgrade to 0.9.7b. [itojun 20030724]
 	ipsec: support hmac-ripemd160 and aes-xcbc-mac for AH/ESP auth.
 		support aes-ctr for ESP. [itojun 20030725]
@@ -441,6 +442,7 @@ Changes from NetBSD 1.6 to NetBSD 2.0:
 	hp300: Switch to MI SCSI at last. [tsutsui 20030801]
 	evbarm: Add support for the Samsung SMDK2410 eval board for
 		the S3C2410 Processor.  [bsh 20030804]
+	GCC: Import GCC 3.3.1.  [mrg 20030809]
 	dlsym(3): Add support for RTLD_DEFAULT, RTLD_NEXT and RTLD_SELF
 		[christos,skrll 20030812]
 	gdb(1): Import gdb-5.3 and add support for i386 [christos 20030814]
@@ -506,7 +508,7 @@ Changes from NetBSD 1.6 to NetBSD 2.0:
 		[lukem 20031017]
 	ccdconfig(8): add CCDF_NOLABEL to ignore the on-disk (raw) disklabel
 		when creating a ccd.  [lukem 20031017]
-	GCC: Update to GCC 3.3.2.  [mrg 20031018]
+	GCC: Import GCC 3.3.2.  [mrg 20031018]
 	hpcsh: Added j6x0tp(4) driver for Jornada 680/690 touch screen.
 		[uwe 20031019]
 	i386: pmap changed from linked list to splay tree for
@@ -610,5 +612,6 @@ Changes from NetBSD 1.6 to NetBSD 2.0:
 		/etc/locate.conf.  [itohy 20040206]
 	kernel: add underlying support needed to support multiple mbuf cluster
 		sizes.  [matt 20040209]
-	sh3:	switch to gcc3. [uwe 20040222]
-	hpcsh:	Enable building of Xhpc server for hpcsh. [uwe 20040222]
+	GCC: Import GCC 3.3.3-20040209.  [mrg 20040210]
+	sh3: Switch to GCC 3.3. [uwe 20040222]
+	hpcsh: Enable building of Xhpc server for hpcsh. [uwe 20040222]
