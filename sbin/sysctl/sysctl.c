@@ -1,4 +1,4 @@
-/*	$NetBSD: sysctl.c,v 1.48 2001/07/02 20:55:16 jdolecek Exp $	*/
+/*	$NetBSD: sysctl.c,v 1.49 2001/07/27 04:22:09 itojun Exp $	*/
 
 /*
  * Copyright (c) 1993
@@ -44,7 +44,7 @@ __COPYRIGHT(
 #if 0
 static char sccsid[] = "@(#)sysctl.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: sysctl.c,v 1.48 2001/07/02 20:55:16 jdolecek Exp $");
+__RCSID("$NetBSD: sysctl.c,v 1.49 2001/07/27 04:22:09 itojun Exp $");
 #endif
 #endif /* not lint */
 
@@ -799,9 +799,6 @@ sysctl_inet(string, bufpp, mib, flags, typep)
 struct ctlname inet6name[] = CTL_IPV6PROTO_NAMES;
 struct ctlname ip6name[] = IPV6CTL_NAMES;
 struct ctlname icmp6name[] = ICMPV6CTL_NAMES;
-#ifdef TCP6
-struct ctlname tcp6name[] = TCP6CTL_NAMES;
-#endif
 struct ctlname udp6name[] = UDP6CTL_NAMES;
 struct ctlname pim6name[] = PIM6CTL_NAMES;
 struct ctlname ipsec6name[] = IPSEC6CTL_NAMES;
@@ -809,11 +806,7 @@ struct list inet6list = { inet6name, IPV6PROTO_MAXID };
 struct list inet6vars[] = {
 /*0*/	{ 0, 0 }, { 0, 0 }, { 0, 0 }, { 0, 0 }, { 0, 0 },
 	{ 0, 0 },
-#ifdef TCP6
-	{ tcp6name, TCP6CTL_MAXID },	/* tcp6 */
-#else
-	{ 0, 0 },
-#endif
+	{ tcpname, TCPCTL_MAXID },	/* tcp6 */
 	{ 0, 0 },
 	{ 0, 0 },
 	{ 0, 0 },
