@@ -1,4 +1,4 @@
-/*	$NetBSD: if_arc.h,v 1.11 1999/08/27 19:23:19 is Exp $	*/
+/*	$NetBSD: if_arc.h,v 1.12 1999/09/25 17:49:28 is Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1993
@@ -102,6 +102,8 @@ struct	arc_header {
 #define	ARCMTU			507
 #define	ARCMIN			0
 
+#define ARC_PHDS_MAXMTU		60480
+
 struct	arccom {
 	struct 	  ifnet ac_if;		/* network-visible interface */
 
@@ -118,6 +120,7 @@ struct	arccom {
 
 #ifdef _KERNEL
 u_int8_t arcbroadcastaddr;
+extern int arc_ipmtu;	/* XXX new ip only, no RFC 1051! */
 
 void	arc_ifattach __P((struct ifnet *, u_int8_t));
 void	arc_storelladdr __P((struct ifnet *, u_int8_t));
