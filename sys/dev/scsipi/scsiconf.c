@@ -1,4 +1,4 @@
-/*	$NetBSD: scsiconf.c,v 1.135 2000/03/13 09:56:26 martin Exp $	*/
+/*	$NetBSD: scsiconf.c,v 1.136 2000/03/17 11:45:49 soren Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -117,24 +117,6 @@ int scsibusprint __P((void *, const char *));
 void scsibus_config_interrupts __P((struct device *));
 
 cdev_decl(scsibus);
-
-int
-scsiprint(aux, pnp)
-	void *aux;
-	const char *pnp;
-{
-	struct scsipi_link *l = aux;
-
-	/* only "scsibus"es can attach to "scsi"s; easy. */
-	if (pnp)
-		printf("scsibus at %s", pnp);
-
-	/* don't print channel if the controller says there can be only one. */
-	if (l->scsipi_scsi.channel != SCSI_CHANNEL_ONLY_ONE)
-		printf(" channel %d", l->scsipi_scsi.channel);
-
-	return (UNCONF);
-}
 
 int
 scsibusmatch(parent, cf, aux)
