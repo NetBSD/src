@@ -1,4 +1,4 @@
-/*	$NetBSD: kvm_m68k.c,v 1.10 1997/03/21 18:44:23 gwr Exp $	*/
+/*	$NetBSD: kvm_m68k.h,v 1.1 1997/03/21 18:44:24 gwr Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -36,98 +36,13 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-/*
- * Run-time kvm dispatcher for m68k machines.
- * The actual MD code is in the files:
- * kvm_m68k_cmn.c kvm_sun3.c ...
- *
- * Note: This file has to build on ALL m68k machines,
- * so do NOT include any <machine/*.h> files here.
- */
-
-#include <sys/param.h>
-#include <sys/sysctl.h>
-
-#include <stdio.h>
-#include <string.h>
-#include <stdlib.h>
-
-#include <unistd.h>
-#include <limits.h>
-#include <nlist.h>
-#include <kvm.h>
-#include <db.h>
-
-#include "kvm_private.h"
-#include "kvm_m68k.h"
-
-/* Could put this in struct vmstate, but this is easier. */
-static struct kvm_ops *ops;
-
-struct name_ops {
-	char *name;
-	struct kvm_ops *ops;
+struct kvm_ops {
+	int   (*initvtop) __P((kvm_t *));
+	void  (*freevtop) __P((kvm_t *));
+	int	  (*kvatop)   __P((kvm_t *, u_long, u_long *));
+	off_t (*pa2off)   __P((kvm_t *, u_long));
 };
 
-static struct name_ops optbl[] = {
-	{ "amiga", &_kvm_ops_cmn },
-	{ "atari", &_kvm_ops_cmn },
-	{ "sun3",  &_kvm_ops_sun3 },
-	{ "sun3x",  &_kvm_ops_sun3x },
-	{ NULL, NULL },
-};
-
-
-/*
- * Prepare for translation of kernel virtual addresses into offsets
- * into crash dump files.  This is where we do the dispatch work.
- */
-int
-_kvm_initvtop(kd)
-	kvm_t *kd;
-{
-	char machine[256];
-	int mib[2], len, rval;
-	struct name_ops *nop;
-
-	/* Which set of kvm functions should we use? */
-	mib[0] = CTL_HW;
-	mib[1] = HW_MACHINE;
-	len = sizeof(machine);
-	if (sysctl(mib, 2, machine, &len, NULL, 0) == -1)
-		return (-1);
-
-	for (nop = optbl; nop->name; nop++)
-		if (!strcmp(machine, nop->name))
-			goto found;
-	_kvm_err(kd, 0, "%s: unknown machine!", machine);
-	return (-1);
-
-found:
-	ops = nop->ops;
-	return ((ops->initvtop)(kd));
-}
-
-void
-_kvm_freevtop(kd)
-	kvm_t *kd;
-{
-	(ops->freevtop)(kd);
-}
-
-int
-_kvm_kvatop(kd, va, pap)
-	kvm_t *kd;
-	u_long va;
-	u_long *pap;
-{
-	return ((ops->kvatop)(kd, va, pap));
-}
-
-off_t
-_kvm_pa2off(kd, pa)
-	kvm_t	*kd;
-	u_long	pa;
-{
-	return ((ops->pa2off)(kd, pa));
-}
+extern struct kvm_ops _kvm_ops_cmn;
+extern struct kvm_ops _kvm_ops_sun3;
+extern struct kvm_ops _kvm_ops_sun3x;

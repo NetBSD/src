@@ -1,4 +1,4 @@
-/*	$NetBSD: kvm_sun3.c,v 1.4 1996/05/05 04:32:18 gwr Exp $	*/
+/*	$NetBSD: kvm_sun3.c,v 1.5 1997/03/21 18:44:25 gwr Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -41,21 +41,18 @@
 #if 0
 static char sccsid[] = "@(#)kvm_sparc.c	8.1 (Berkeley) 6/4/93";
 #else
-static char *rcsid = "$NetBSD: kvm_sun3.c,v 1.4 1996/05/05 04:32:18 gwr Exp $";
+static char *rcsid = "$NetBSD: kvm_sun3.c,v 1.5 1997/03/21 18:44:25 gwr Exp $";
 #endif
 #endif /* LIBC_SCCS and not lint */
 
 /*
  * Sun3 machine dependent routines for kvm.
+ *
+ * Note: This file has to build on ALL m68k machines,
+ * so do NOT include any <machine/*.h> files here.
  */
 
-#include <sys/param.h>
-#include <sys/user.h>
-#include <sys/proc.h>
-#include <sys/stat.h>
-
-#include <sys/core.h>
-#include <sys/exec_aout.h>
+#include <sys/types.h>
 #include <sys/kcore.h>
 
 #include <unistd.h>
@@ -64,15 +61,51 @@ static char *rcsid = "$NetBSD: kvm_sun3.c,v 1.4 1996/05/05 04:32:18 gwr Exp $";
 #include <kvm.h>
 #include <db.h>
 
-#include <vm/vm.h>
-#include <vm/vm_param.h>
-
-#include <machine/kcore.h>
-#include <machine/pte.h>
-
 #include "kvm_private.h"
+#include "kvm_m68k.h"
 
-#define NKSEG (NSEGMAP/8)	/* kernel segmap entries */
+int   _kvm_sun3_initvtop __P((kvm_t *));
+void  _kvm_sun3_freevtop __P((kvm_t *));
+int	  _kvm_sun3_kvatop   __P((kvm_t *, u_long, u_long *));
+off_t _kvm_sun3_pa2off   __P((kvm_t *, u_long));
+
+struct kvm_ops _kvm_ops_sun3 = {
+	_kvm_sun3_initvtop,
+	_kvm_sun3_freevtop,
+	_kvm_sun3_kvatop,
+	_kvm_sun3_pa2off };
+
+/*
+ * XXX: I don't like this, but until all arch/.../include files
+ * are exported into some user-accessable place, there is no
+ * convenient alternative to copying these definitions here.
+ */
+
+/* sun3/include/param.h */
+#define PGSHIFT 	13
+#define NBPG		8192
+#define PGOFSET 	(NBPG-1)
+#define SEGSHIFT	17
+#define KERNBASE	0x0E000000
+
+/* sun3/include/pte.h */
+#define NKSEG 256	/* kernel segmap entries */
+#define NPAGSEG 16	/* pages per segment */
+#define PG_VALID	0x80000000
+#define PG_FRAME	0x0007FFFF
+#define PG_PA(pte) ((pte & PG_FRAME) <<PGSHIFT)
+
+#define VA_SEGNUM(x)	((u_int)(x) >> SEGSHIFT)
+#define VA_PTE_NUM_MASK (0xF << PGSHIFT)
+#define VA_PTE_NUM(va) ((va & VA_PTE_NUM_MASK) >> PGSHIFT)
+
+/* sun3/include/kcore.h */
+typedef struct cpu_kcore_hdr {
+	phys_ram_seg_t	ram_segs[4];
+	u_char ksegmap[NKSEG];
+} cpu_kcore_hdr_t;
+
+/* Finally, our local stuff... */
 struct vmstate {
 	/* Page Map Entry Group (PMEG) */
 	int   pmeg[NKSEG][NPAGSEG];
@@ -85,7 +118,7 @@ struct vmstate {
  * Note: sun3 MMU specific!
  */
 int
-_kvm_initvtop(kd)
+_kvm_sun3_initvtop(kd)
 	kvm_t *kd;
 {
 	register char *p;
@@ -98,7 +131,7 @@ _kvm_initvtop(kd)
 }
 
 void
-_kvm_freevtop(kd)
+_kvm_sun3_freevtop(kd)
 	kvm_t *kd;
 {
 	/* This was set by pointer arithmetic, not allocation. */
@@ -112,7 +145,7 @@ _kvm_freevtop(kd)
  * physical address.  This routine is used only for crashdumps.
  */
 int
-_kvm_kvatop(kd, va, pap)
+_kvm_sun3_kvatop(kd, va, pap)
 	kvm_t *kd;
 	u_long va;
 	u_long *pap;
@@ -159,9 +192,10 @@ _kvm_kvatop(kd, va, pap)
  * Translate a physical address to a file-offset in the crash-dump.
  */
 off_t
-_kvm_pa2off(kd, pa)
+_kvm_sun3_pa2off(kd, pa)
 	kvm_t	*kd;
 	u_long	pa;
 {
 	return(kd->dump_off + pa);
 }
+
