@@ -1,7 +1,9 @@
-/*-
+/*
+ * ++Copyright++ 1985, 1993
+ * -
  * Copyright (c) 1985, 1993
- *	The Regents of the University of California.  All rights reserved.
- *
+ *    The Regents of the University of California.  All rights reserved.
+ * 
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
  * are met:
@@ -12,12 +14,12 @@
  *    documentation and/or other materials provided with the distribution.
  * 3. All advertising materials mentioning features or use of this software
  *    must display the following acknowledgement:
- *	This product includes software developed by the University of
- *	California, Berkeley and its contributors.
+ * 	This product includes software developed by the University of
+ * 	California, Berkeley and its contributors.
  * 4. Neither the name of the University nor the names of its contributors
  *    may be used to endorse or promote products derived from this software
  *    without specific prior written permission.
- *
+ * 
  * THIS SOFTWARE IS PROVIDED BY THE REGENTS AND CONTRIBUTORS ``AS IS'' AND
  * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
  * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
@@ -53,16 +55,27 @@
 
 #if defined(LIBC_SCCS) && !defined(lint)
 static char sccsid[] = "@(#)res_comp.c	8.1 (Berkeley) 6/4/93";
-static char rcsid[] = "$Id: res_comp.c,v 1.1.1.2 1995/02/25 03:54:46 cgd Exp $";
+static char rcsid[] = "$Id: res_comp.c,v 1.1.1.3 1997/04/13 09:12:04 mrg Exp $";
 #endif /* LIBC_SCCS and not lint */
 
+#include <sys/types.h>
 #include <sys/param.h>
-#include <arpa/nameser.h>
 #include <netinet/in.h>
-#include <resolv.h>
-#include <stdio.h>
+#include <arpa/nameser.h>
 
-static int dn_find();
+#include <stdio.h>
+#include <resolv.h>
+#include <ctype.h>
+
+#if defined(BSD) && (BSD >= 199103)
+# include <unistd.h>
+# include <string.h>
+#else
+# include "../conf/portability.h"
+#endif
+
+static int	dn_find __P((u_char *exp_dn, u_char *msg,
+			     u_char **dnptrs, u_char **lastdnptr));
 
 /*
  * Expand compressed domain name 'comp_dn' to full domain name.
@@ -71,18 +84,20 @@ static int dn_find();
  * 'exp_dn' is a pointer to a buffer of size 'length' for the result.
  * Return size of compressed name or -1 if there was an error.
  */
+int
 dn_expand(msg, eomorig, comp_dn, exp_dn, length)
 	const u_char *msg, *eomorig, *comp_dn;
-	u_char *exp_dn;
+	char *exp_dn;
 	int length;
 {
-	register u_char *cp, *dn;
+	register const u_char *cp;
+	register char *dn;
 	register int n, c;
-	u_char *eom;
+	char *eom;
 	int len = -1, checked = 0;
 
 	dn = exp_dn;
-	cp = (u_char *)comp_dn;
+	cp = comp_dn;
 	eom = exp_dn + length;
 	/*
 	 * fetch next label in domain name
@@ -102,23 +117,23 @@ dn_expand(msg, eomorig, comp_dn, exp_dn, length)
 				return (-1);
 			checked += n + 1;
 			while (--n >= 0) {
-				if ((c = *cp++) == '.') {
+				if (((c = *cp++) == '.') || (c == '\\')) {
 					if (dn + n + 2 >= eom)
 						return (-1);
 					*dn++ = '\\';
 				}
 				*dn++ = c;
 				if (cp >= eomorig)	/* out of range */
-					return(-1);
+					return (-1);
 			}
 			break;
 
 		case INDIR_MASK:
 			if (len < 0)
 				len = cp - comp_dn + 1;
-			cp = (u_char *)msg + (((n & 0x3f) << 8) | (*cp & 0xff));
+			cp = msg + (((n & 0x3f) << 8) | (*cp & 0xff));
 			if (cp < msg || cp >= eomorig)	/* out of range */
-				return(-1);
+				return (-1);
 			checked += 2;
 			/*
 			 * Check for loops in the compressed name;
@@ -151,8 +166,9 @@ dn_expand(msg, eomorig, comp_dn, exp_dn, length)
  * If 'dnptr' is NULL, we don't try to compress names. If 'lastdnptr'
  * is NULL, we don't update the list.
  */
+int
 dn_comp(exp_dn, comp_dn, length, dnptrs, lastdnptr)
-	const u_char *exp_dn;
+	const char *exp_dn;
 	u_char *comp_dn, **dnptrs, **lastdnptr;
 	int length;
 {
@@ -164,6 +180,7 @@ dn_comp(exp_dn, comp_dn, length, dnptrs, lastdnptr)
 	dn = (u_char *)exp_dn;
 	cp = comp_dn;
 	eob = cp + length;
+	lpp = cpp = NULL;
 	if (dnptrs != NULL) {
 		if ((msg = *dnptrs++) != NULL) {
 			for (cpp = dnptrs; *cpp != NULL; cpp++)
@@ -229,29 +246,42 @@ dn_comp(exp_dn, comp_dn, length, dnptrs, lastdnptr)
 /*
  * Skip over a compressed domain name. Return the size or -1.
  */
+int
 __dn_skipname(comp_dn, eom)
 	const u_char *comp_dn, *eom;
 {
-	register u_char *cp;
+	register const u_char *cp;
 	register int n;
 
-	cp = (u_char *)comp_dn;
+	cp = comp_dn;
 	while (cp < eom && (n = *cp++)) {
 		/*
 		 * check for indirection
 		 */
 		switch (n & INDIR_MASK) {
-		case 0:		/* normal case, n == len */
+		case 0:			/* normal case, n == len */
 			cp += n;
 			continue;
-		default:	/* illegal type */
-			return (-1);
 		case INDIR_MASK:	/* indirection */
 			cp++;
+			break;
+		default:		/* illegal type */
+			return (-1);
 		}
 		break;
 	}
+	if (cp > eom)
+		return (-1);
 	return (cp - comp_dn);
+}
+
+static int
+mklower(ch)
+	register int ch;
+{
+	if (isascii(ch) && isupper(ch))
+		return (tolower(ch));
+	return (ch);
 }
 
 /*
@@ -283,7 +313,7 @@ dn_find(exp_dn, msg, dnptrs, lastdnptr)
 						goto next;
 					if (*dn == '\\')
 						dn++;
-					if (*dn++ != *cp++)
+					if (mklower(*dn++) != mklower(*cp++))
 						goto next;
 				}
 				if ((n = *dn++) == '\0' && *cp == '\0')
@@ -292,11 +322,12 @@ dn_find(exp_dn, msg, dnptrs, lastdnptr)
 					continue;
 				goto next;
 
-			default:	/* illegal type */
-				return (-1);
-
 			case INDIR_MASK:	/* indirection */
 				cp = msg + (((n & 0x3f) << 8) | *cp);
+				break;
+
+			default:	/* illegal type */
+				return (-1);
 			}
 		}
 		if (*dn == '\0')
@@ -307,16 +338,124 @@ dn_find(exp_dn, msg, dnptrs, lastdnptr)
 }
 
 /*
- * Routines to insert/extract short/long's. Must account for byte
- * order and non-alignment problems. This code at least has the
- * advantage of being portable.
- *
- * used by sendmail.
+ * Verify that a domain name uses an acceptable character set.
  */
 
-u_short
+/*
+ * Note the conspicuous absence of ctype macros in these definitions.  On
+ * non-ASCII hosts, we can't depend on string literals or ctype macros to
+ * tell us anything about network-format data.  The rest of the BIND system
+ * is not careful about this, but for some reason, we're doing it right here.
+ */
+#define PERIOD 0x2e
+#define	hyphenchar(c) ((c) == 0x2d)
+#define bslashchar(c) ((c) == 0x5c)
+#define periodchar(c) ((c) == PERIOD)
+#define asterchar(c) ((c) == 0x2a)
+#define alphachar(c) (((c) >= 0x41 && (c) <= 0x5a) \
+		   || ((c) >= 0x61 && (c) <= 0x7a))
+#define digitchar(c) ((c) >= 0x30 && (c) <= 0x39)
+
+#define borderchar(c) (alphachar(c) || digitchar(c))
+#define middlechar(c) (borderchar(c) || hyphenchar(c))
+#define	domainchar(c) ((c) > 0x20 && (c) < 0x7f)
+
+int
+res_hnok(dn)
+	const char *dn;
+{
+	int ppch = '\0', pch = PERIOD, ch = *dn++;
+
+	while (ch != '\0') {
+		int nch = *dn++;
+
+		if (periodchar(ch)) {
+			NULL;
+		} else if (periodchar(pch)) {
+			if (!borderchar(ch))
+				return (0);
+		} else if (periodchar(nch) || nch == '\0') {
+			if (!borderchar(ch))
+				return (0);
+		} else {
+			if (!middlechar(ch))
+				return (0);
+		}
+		ppch = pch, pch = ch, ch = nch;
+	}
+	return (1);
+}
+
+/*
+ * hostname-like (A, MX, WKS) owners can have "*" as their first label
+ * but must otherwise be as a host name.
+ */
+int
+res_ownok(dn)
+	const char *dn;
+{
+	if (asterchar(dn[0])) {
+		if (periodchar(dn[1]))
+			return (res_hnok(dn+2));
+		if (dn[1] == '\0')
+			return (1);
+	}
+	return (res_hnok(dn));
+}
+
+/*
+ * SOA RNAMEs and RP RNAMEs can have any printable character in their first
+ * label, but the rest of the name has to look like a host name.
+ */
+int
+res_mailok(dn)
+	const char *dn;
+{
+	int ch, escaped = 0;
+
+	/* "." is a valid missing representation */
+	if (*dn == '\0')
+		return(1);
+
+	/* otherwise <label>.<hostname> */
+	while ((ch = *dn++) != '\0') {
+		if (!domainchar(ch))
+			return (0);
+		if (!escaped && periodchar(ch))
+			break;
+		if (escaped)
+			escaped = 0;
+		else if (bslashchar(ch))
+			escaped = 1;
+	}
+	if (periodchar(ch))
+		return (res_hnok(dn));
+	return(0);
+}
+
+/*
+ * This function is quite liberal, since RFC 1034's character sets are only
+ * recommendations.
+ */
+int
+res_dnok(dn)
+	const char *dn;
+{
+	int ch;
+
+	while ((ch = *dn++) != '\0')
+		if (!domainchar(ch))
+			return (0);
+	return (1);
+}
+
+/*
+ * Routines to insert/extract short/long's.
+ */
+
+u_int16_t
 _getshort(msgp)
-	register u_char *msgp;
+	register const u_char *msgp;
 {
 	register u_int16_t u;
 
@@ -324,9 +463,21 @@ _getshort(msgp)
 	return (u);
 }
 
+#ifdef NeXT
+/*
+ * nExt machines have some funky library conventions, which we must maintain.
+ */
+u_int16_t
+res_getshort(msgp)
+	register const u_char *msgp;
+{
+	return (_getshort(msgp));
+}
+#endif
+
 u_int32_t
 _getlong(msgp)
-	register u_char *msgp;
+	register const u_char *msgp;
 {
 	register u_int32_t u;
 
@@ -336,7 +487,7 @@ _getlong(msgp)
 
 void
 #if defined(__STDC__) || defined(__cplusplus)
-__putshort(register u_short s, register u_char *msgp)
+__putshort(register u_int16_t s, register u_char *msgp)	/* must match proto */
 #else
 __putshort(s, msgp)
 	register u_int16_t s;
