@@ -1,4 +1,4 @@
-/*	$NetBSD: mc68851.h,v 1.4 1997/03/13 17:40:33 gwr Exp $	*/
+/*	$NetBSD: mc68851.h,v 1.5 1997/05/14 01:37:23 jeremy Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -37,10 +37,10 @@
  */
 
 /*
- * This file should contain the machine-independent definitions
- * related to the Motorola MC68881 Memory Management Unit (MMU).
+ * This file contains the machine-independent definitions
+ * related to the Motorola MC68851 Memory Management Unit (MMU).
  * Things that depend on the contents of the Translation Control
- * (TC) register should be in <machine/pte.h>, not here.
+ * (TC) register are in <machine/pte.h>.
  */
 
 #ifndef _SUN3X_MC68851_H
@@ -49,66 +49,7 @@
 /**************************** MMU STRUCTURES ****************************
  * MMU structures define the format of data used by the MC68851.        *
  ************************************************************************
- * A virtual address is translated into a physical address by dividing its
- * bits into four fields.  The first three fields are used as indexes into
- * descriptor tables and the last field (the 13 lowest significant 
- * bits) is an offset to be added to the base address found at the final
- * table.  The first three fields are named TIA, TIB and TIC respectively.
- *  31                                    12                        0
- *  +-.-.-.-.-.-.-+-.-.-.-.-.-+-.-.-.-.-.-+-.-.-.-.-.-.-.-.-.-.-.-.-+
- *  |     TIA     |    TIB    |    TIC    |        OFFSET           |
- *  +-.-.-.-.-.-.-+-.-.-.-.-.-+-.-.-.-.-.-+-.-.-.-.-.-.-.-.-.-.-.-.-+
- */
-#define MMU_TIA_SHIFT (13+6+6)
-#define MMU_TIA_MASK  (0xfe000000)
-#define MMU_TIA_RANGE (0x02000000)
-#define MMU_TIB_SHIFT (13+6)
-#define MMU_TIB_MASK  (0x01f80000)
-#define MMU_TIB_RANGE (0x00080000)
-#define MMU_TIC_SHIFT (13)
-#define MMU_TIC_MASK  (0x0007e000)
-#define MMU_TIC_RANGE (0x00002000)
-#define MMU_PAGE_SHIFT (13)
-#define MMU_PAGE_MASK (0xffffe000)
-#define MMU_PAGE_SIZE (0x00002000)
-
-/* Macros which extract each of these fields out of a given
- * VA.
- */
-#define MMU_TIA(va) \
-	((unsigned long) ((va) & MMU_TIA_MASK) >> MMU_TIA_SHIFT)
-#define MMU_TIB(va) \
-	((unsigned long) ((va) & MMU_TIB_MASK) >> MMU_TIB_SHIFT)
-#define MMU_TIC(va) \
-	((unsigned long) ((va) & MMU_TIC_MASK) >> MMU_TIC_SHIFT)
-
-/* The widths of the TIA, TIB, and TIC fields determine the size (in 
- * elements) of the tables they index.
- */
-#define MMU_A_TBL_SIZE (128)
-#define MMU_B_TBL_SIZE (64)
-#define MMU_C_TBL_SIZE (64)
-
-/* Rounding macros.
- * The MMU_ROUND macros are named misleadingly.  MMU_ROUND_A actually
- * rounds an address to the nearest B table boundary, and so on.
- * MMU_ROUND_C() is synonmous with _round_page().
- */
-#define	MMU_ROUND_A(pa)\
-	((unsigned long) (pa) & MMU_TIA_MASK)
-#define	MMU_ROUND_UP_A(pa)\
-	((unsigned long) (pa + MMU_TIA_RANGE - 1) & MMU_TIA_MASK)
-#define	MMU_ROUND_B(pa)\
-	((unsigned long) (pa) & (MMU_TIA_MASK|MMU_TIB_MASK))
-#define	MMU_ROUND_UP_B(pa)\
-	((unsigned long) (pa + MMU_TIB_RANGE - 1) & (MMU_TIA_MASK|MMU_TIB_MASK))
-#define	MMU_ROUND_C(pa)\
-	((unsigned long) (pa) & MMU_PAGE_MASK)
-#define	MMU_ROUND_UP_C(pa)\
-	((unsigned long) (pa + MMU_PAGE_SIZE - 1) & MMU_PAGE_MASK)
-
-
-/** MC68851 Root Pointer
+ ** MC68851 Root Pointer
  * All address translations begin with the examination of the value
  * in the MC68851 Root Pointer register.  It describes the base address
  * (in physical memory) of the root table to be used as well as any limits
