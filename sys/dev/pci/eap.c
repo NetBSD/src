@@ -1,4 +1,4 @@
-/*	$NetBSD: eap.c,v 1.48 2001/11/13 07:48:42 lukem Exp $	*/
+/*	$NetBSD: eap.c,v 1.49 2002/07/04 02:20:22 gson Exp $	*/
 /*      $OpenBSD: eap.c,v 1.6 1999/10/05 19:24:42 csapuntz Exp $ */
 
 /*
@@ -56,7 +56,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: eap.c,v 1.48 2001/11/13 07:48:42 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: eap.c,v 1.49 2002/07/04 02:20:22 gson Exp $");
 
 #include "midi.h"
 
@@ -811,6 +811,8 @@ eap_intr(void *p)
 		if (sc->sc_pintr)
 			sc->sc_pintr(sc->sc_parg);
 	}
+	if (intr & EAP_I_MCCB)
+		panic("eap_intr: unexpected MCCB interrupt");
 #if NMIDI > 0
 	if ((intr & EAP_I_UART) && sc->sc_iintr != NULL) {
 		u_int32_t data;
@@ -1054,7 +1056,14 @@ eap_set_params(void *addr, int setmode, int usemode,
 		else
 			div |= EAP_SET_PCLKDIV(EAP_XTAL_FREQ / 
 				play->sample_rate - 2);
+#if 0
 		div |= EAP_CCB_INTRM;
+#else
+		/*
+		 * It is not obvious how to acknowledge MCCB interrupts, so
+		 * we had better not enable them.
+		 */
+#endif
 		EWRITE4(sc, EAP_ICSC, div);
 		DPRINTFN(2, ("eap_set_params: set ICSC = 0x%08x\n", div));
 	}
