@@ -1,4 +1,4 @@
-/*	$NetBSD: globalcmds.c,v 1.8 2000/07/05 11:03:21 ad Exp $ */
+/*	$NetBSD: globalcmds.c,v 1.9 2000/12/01 02:19:43 simonb Exp $ */
 
 /*-
  * Copyright (c) 1999
@@ -34,13 +34,14 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: globalcmds.c,v 1.8 2000/07/05 11:03:21 ad Exp $");
+__RCSID("$NetBSD: globalcmds.c,v 1.9 2000/12/01 02:19:43 simonb Exp $");
 #endif /* not lint */
 
 #include <curses.h>
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
+
 #include "systat.h"
 #include "extern.h"
 
