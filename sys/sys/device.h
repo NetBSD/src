@@ -1,4 +1,4 @@
-/*	$NetBSD: device.h,v 1.9 1996/02/09 18:25:04 christos Exp $	*/
+/*	$NetBSD: device.h,v 1.10 1996/02/27 21:45:51 cgd Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -140,10 +140,13 @@ struct	evcnt *allevents;	/* head of list of all events */
 
 void *config_search __P((cfmatch_t, struct device *, void *));
 void *config_rootsearch __P((cfmatch_t, char *, void *));
-int config_found __P((struct device *, void *, cfprint_t));
+int config_found_sm __P((struct device *, void *, cfprint_t, cfmatch_t));
 int config_rootfound __P((char *, void *));
 void config_scan __P((cfscan_t, struct device *));
 void config_attach __P((struct device *, void *, void *, cfprint_t));
 void evcnt_attach __P((struct device *, const char *, struct evcnt *));
+
+/* compatibility definitions */
+#define config_found(d, a, p)	config_found_sm((d), (a), (p), NULL)
 
 #endif /* !_SYS_DEVICE_H_ */
