@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.38 2000/04/11 02:30:14 nisimura Exp $	*/
+/*	$NetBSD: cpu.h,v 1.39 2000/04/15 22:05:53 soda Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -166,11 +166,6 @@ extern int want_resched;	/* resched() was called */
 extern u_int	mips_L2CacheSize;
 extern int	mips_L2CacheIsSnooping; /* L2 cache snoops uncached writes ? */
 extern int	mips_L2CacheMixed;
-
-#ifdef MIPS3_INTERNAL_TIMER_INTERRUPT
-extern u_int32_t mips3_intr_cycle_count;
-extern u_int32_t mips3_timer_delta;
-#endif
 #endif /* MIPS3 */
 
 /*

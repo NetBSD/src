@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.11 2000/03/30 21:37:51 soren Exp $	*/
+/*	$NetBSD: cpu.h,v 1.12 2000/04/15 22:05:52 soda Exp $	*/
 /*	$OpenBSD: cpu.h,v 1.9 1998/01/28 13:46:10 pefo Exp $ */
 
 #ifndef _ARC_CPU_H_
@@ -7,7 +7,6 @@
 /*
  *  Internal timer causes hard interrupt 5.
  */
-#define MIPS3_INTERNAL_TIMER_INTERRUPT
 #define MIPS_INT_MASK_CLOCK	MIPS_INT_MASK_5
 
 #include <mips/cpu.h>

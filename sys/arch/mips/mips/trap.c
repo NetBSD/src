@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.126 2000/04/15 06:21:01 nisimura Exp $	*/
+/*	$NetBSD: trap.c,v 1.127 2000/04/15 22:05:53 soda Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -44,7 +44,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.126 2000/04/15 06:21:01 nisimura Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.127 2000/04/15 22:05:53 soda Exp $");
 
 #include "opt_cputype.h"	/* which mips CPU levels do we support? */
 #include "opt_inet.h"
@@ -139,14 +139,6 @@ __KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.126 2000/04/15 06:21:01 nisimura Exp $");
 
 int astpending;
 int want_resched;
-unsigned ssir;
-
-int (*mips_hardware_intr) __P((unsigned, unsigned, unsigned, unsigned)) = 0;
-
-#if defined(MIPS3) && defined(MIPS3_INTERNAL_TIMER_INTERRUPT)
-u_int32_t mips3_intr_cycle_count;
-u_int32_t mips3_timer_delta;
-#endif
 
 const char *trap_type[] = {
 	"external interrupt",
@@ -186,10 +178,7 @@ const char *trap_type[] = {
 void userret __P((struct proc *, unsigned, u_quad_t));
 void trap __P((unsigned, unsigned, unsigned, unsigned, struct trapframe *));
 void syscall __P((unsigned, unsigned, unsigned));
-void interrupt __P((unsigned, unsigned, unsigned));
 void ast __P((unsigned));
-void netintr __P((void));
-extern void softserial __P((void));
 
 vaddr_t MachEmulateBranch __P((struct frame *, vaddr_t, unsigned, int));
 extern void MachEmulateFP __P((unsigned));
@@ -720,6 +709,9 @@ trap(status, cause, vaddr, opc, frame)
 	return;
 }
 
+/*
+ * Software (low priority) network interrupt. i.e. softnet().
+ */
 void
 netintr()
 {
