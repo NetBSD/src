@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_segment.c,v 1.39 2000/01/16 05:56:14 perseant Exp $	*/
+/*	$NetBSD: lfs_segment.c,v 1.40 2000/01/19 00:03:04 perseant Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -1679,7 +1679,10 @@ lfs_vunref(vp)
 	 * insert at tail of LRU list
 	 */
 	simple_lock(&vnode_free_list_slock);
-	TAILQ_INSERT_TAIL(&vnode_free_list, vp, v_freelist);
+	if (vp->v_holdcnt > 0)
+		TAILQ_INSERT_TAIL(&vnode_hold_list, vp, v_freelist);
+	else
+		TAILQ_INSERT_TAIL(&vnode_free_list, vp, v_freelist);
 	simple_unlock(&vnode_free_list_slock);
 	simple_unlock(&vp->v_interlock);
 }
