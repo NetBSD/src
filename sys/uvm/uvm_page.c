@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_page.c,v 1.16 1999/03/25 18:48:53 mrg Exp $	*/
+/*	$NetBSD: uvm_page.c,v 1.17 1999/03/26 21:58:39 mycroft Exp $	*/
 
 /* 
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -426,7 +426,8 @@ uvm_pageboot_alloc(size)
 		pmap_kenter_pa(vaddr, paddr, VM_PROT_READ|VM_PROT_WRITE);
 #else
 		pmap_enter(pmap_kernel(), vaddr, paddr,
-		    VM_PROT_READ|VM_PROT_WRITE, FALSE);
+		    VM_PROT_READ|VM_PROT_WRITE, FALSE,
+		    VM_PROT_READ|VM_PROT_WRITE);
 #endif
 
 	}
