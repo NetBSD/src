@@ -1,4 +1,4 @@
-/*	$NetBSD: grf_compat.c,v 1.1.2.1 1999/11/15 23:31:19 scottr Exp $	*/
+/*	$NetBSD: grf_compat.c,v 1.1.2.2 1999/11/17 08:11:54 scottr Exp $	*/
 
 /*
  * Copyright (C) 1999 Scott Reynolds
@@ -63,8 +63,8 @@ cdev_decl(grf);
 void	grf_scinit __P((struct grf_softc *, const char *, int));
 void	grf_init __P((int));
 void	grfattach __P((int));
-int	grfmap __P((struct macfb_softc *, caddr_t *, struct proc *));
-int	grfunmap __P((struct macfb_softc *, caddr_t, struct proc *));
+int	grfmap __P((dev_t, struct macfb_softc *, caddr_t *, struct proc *));
+int	grfunmap __P((dev_t, struct macfb_softc *, caddr_t, struct proc *));
 
 /* Non-private for the benefit of libkvm. */
 struct	grf_softc *grf_softc;
@@ -142,7 +142,7 @@ grfattach(n)
 		return;
 	}
 
-#if 0
+#if 0 /* XXX someday, if we implement a way to attach after autoconfig */
 	grf_init(n);
 #endif
 }
@@ -277,11 +277,11 @@ grfioctl(dev, cmd, data, flag, p)
 		break;
 
 	case GRFIOCMAP:
-		rv = grfmap(sc->mfb_sc, (caddr_t *)data, p);
+		rv = grfmap(dev, sc->mfb_sc, (caddr_t *)data, p);
 		break;
 
 	case GRFIOCUNMAP:
-		rv = grfunmap(sc->mfb_sc, *(caddr_t *)data, p);
+		rv = grfunmap(dev, sc->mfb_sc, *(caddr_t *)data, p);
 		break;
 
 	case GRFIOCGMODE:
@@ -350,7 +350,8 @@ grfmmap(dev, off, prot)
 }
 
 int
-grfmap(sc, addrp, p)
+grfmap(dev, sc, addrp, p)
+	dev_t dev;
 	struct macfb_softc *sc;
 	caddr_t *addrp;
 	struct proc *p;
@@ -362,11 +363,11 @@ grfmap(sc, addrp, p)
 
 	*addrp = (caddr_t)sc->sc_dc->dc_paddr;
 	len = m68k_round_page(sc->sc_dc->dc_offset + sc->sc_dc->dc_size);
-	flags = MAP_SHARED | MAP_FIXED;
+	flags = MAP_SHARED;
 
-	vn.v_type = VCHR;				/* XXX */
-	vn.v_specinfo = &si;				/* XXX */
-	vn.v_rdev = makedev(10,sc->sc_dev.dv_unit);	/* XXX */
+	vn.v_type = VCHR;		/* XXX */
+	vn.v_specinfo = &si;		/* XXX */
+	vn.v_rdev = dev;		/* XXX */
 
 	error = uvm_mmap(&p->p_vmspace->vm_map, (vaddr_t *)addrp,
 	    (vsize_t)len, VM_PROT_ALL, VM_PROT_ALL,
@@ -379,7 +380,8 @@ grfmap(sc, addrp, p)
 }
 
 int
-grfunmap(sc, addr, p)
+grfunmap(dev, sc, addr, p)
+	dev_t dev;
 	struct macfb_softc *sc;
 	caddr_t addr;
 	struct proc *p;
