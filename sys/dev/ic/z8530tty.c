@@ -1,4 +1,4 @@
-/*	$NetBSD: z8530tty.c,v 1.59 1999/03/27 01:22:36 wrstuden Exp $	*/
+/*	$NetBSD: z8530tty.c,v 1.59.2.1 1999/04/23 15:07:26 perry Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994, 1995, 1996, 1997, 1998, 1999
@@ -1579,6 +1579,13 @@ zstty_rxsoft(zst, tp)
 			timeout(zstty_diag, zst, 60 * hz);
 	}
 
+	/* If not yet open, drop the entire buffer content here */
+	if (!ISSET(tp->t_state, TS_ISOPEN)) {
+		get += cc << 1;
+		if (get >= end)
+			get -= zstty_rbuf_size << 1;
+		cc = 0;
+	}
 	while (cc) {
 		code = get[0];
 		rr1 = get[1];
