@@ -1,4 +1,4 @@
-/*	$NetBSD: db_trace.c,v 1.2 2001/09/09 10:33:42 toshii Exp $	*/
+/*	$NetBSD: db_trace.c,v 1.3 2001/11/09 16:49:29 thorpej Exp $	*/
 
 /* 
  * Copyright (c) 2000, 2001 Ben Harris
@@ -31,7 +31,7 @@
 
 #include <sys/param.h>
 
-__RCSID("$NetBSD: db_trace.c,v 1.2 2001/09/09 10:33:42 toshii Exp $");
+__RCSID("$NetBSD: db_trace.c,v 1.3 2001/11/09 16:49:29 thorpej Exp $");
 
 #include <sys/proc.h>
 #include <sys/user.h>
@@ -132,12 +132,11 @@ db_stack_trace_print(addr, have_addr, count, modif, pr)
 	scp_offset = -(get_pc_str_offset() >> 2);
 
 	while (count-- && frame != NULL) {
-		db_expr_t	offset;
-		char		*name;
 		db_addr_t	scp;
 		u_int32_t	savecode;
 		int		r;
 		u_int32_t	*rp;
+		const char	*sep;
 
 		/*
 		 * In theory, the SCP isn't guaranteed to be in the function
@@ -149,34 +148,35 @@ db_stack_trace_print(addr, have_addr, count, modif, pr)
 		scp = frame[FR_SCP];
 #endif
 
-		db_find_sym_and_offset(scp, &name, &offset);
-		if (name == NULL)
-			name = "?";
-
-		(*pr)("%s", name);
-		(*pr)("(scp=0x%x(", frame[FR_SCP]);
 		db_printsym(scp, DB_STGY_PROC, pr);
-		(*pr)("), rlv=0x%x(", frame[FR_RLV]);
+		(*pr)("\n\t");
 #ifdef PROG26
+		(*pr)("scp=0x%08x rlv=0x%08x (", scp, frame[FR_RLV] & R15_PC);
 		db_printsym(frame[FR_RLV] & R15_PC, DB_STGY_PROC, pr);
+		(*pr)(")\n");
 #else
+		(*pr)("scp=0x%08x rlv=0x%08x (", scp, frame[FR_RLV]);
 		db_printsym(frame[FR_RLV], DB_STGY_PROC, pr);
+		(*pr)(")\n");
 #endif
-		(*pr)("),\n\trsp=0x%x", frame[FR_RSP]);
-		(*pr)(", rfp=0x%x", frame[FR_RFP]);
+		(*pr)("\trsp=0x%08x rfp=0x%08x", frame[FR_RSP], frame[FR_RFP]);
 
 		savecode = ((u_int32_t *)scp)[scp_offset];
 		if ((savecode & 0x0e100000) == 0x08000000) {
 			/* Looks like an STM */
 			rp = frame - 4;
-			for (r = 10; r >= 0; r--)
-				if (savecode & (1 << r))
-					(*pr)(",%sr%d=0x%x",
-						  (frame - rp) % 4 == 2 ?
-						  "\n\t" : " ", r, *rp--);
+			sep = "\n\t";
+			for (r = 10; r >= 0; r--) {
+				if (savecode & (1 << r)) {
+					(*pr)("%sr%d=0x%08x",
+					    sep, r, *rp--);
+					sep = (frame - rp) % 4 == 2 ?
+					    "\n\t" : " ";
+				}
+			}
 		}
 
-		(*pr)(")\n");
+		(*pr)("\n");
 
 		/*
 		 * Switch to next frame up
