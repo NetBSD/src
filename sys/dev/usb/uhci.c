@@ -1,4 +1,4 @@
-/*	$NetBSD: uhci.c,v 1.38 1999/08/17 20:59:04 augustss Exp $	*/
+/*	$NetBSD: uhci.c,v 1.39 1999/08/19 19:52:38 augustss Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -65,6 +65,7 @@
 #include <machine/bus_pio.h>
 #endif
 #include <machine/bus.h>
+#include <machine/endian.h>
 
 #include <dev/usb/usb.h>
 #include <dev/usb/usbdi.h>
@@ -87,6 +88,16 @@
 struct cfdriver uhci_cd = {
 	NULL, "uhci", DV_DULL
 };
+#endif
+
+/*
+ * The UHCI controller is little endian, so on big endian machines
+ * the data strored in memory needs to be swapped.
+ */
+#if BYTE_ORDER == BIG_ENDIAN
+#define LE(x) (bswap32(x))
+#else
+#define LE(x) (x)
 #endif
 
 struct uhci_pipe {
@@ -336,8 +347,8 @@ uhci_init(sc)
 	bsqh = uhci_alloc_sqh(sc);
 	if (!bsqh)
 		return (USBD_NOMEM);
-	bsqh->qh->qh_hlink = UHCI_PTR_T;	/* end of QH chain */
-	bsqh->qh->qh_elink = UHCI_PTR_T;
+	bsqh->qh->qh_hlink = LE(UHCI_PTR_T);	/* end of QH chain */
+	bsqh->qh->qh_elink = LE(UHCI_PTR_T);
 	sc->sc_bulk_start = sc->sc_bulk_end = bsqh;
 
 	/* Allocate the dummy QH where control traffic will be queued. */
@@ -345,8 +356,8 @@ uhci_init(sc)
 	if (!csqh)
 		return (USBD_NOMEM);
 	csqh->qh->hlink = bsqh;
-	csqh->qh->qh_hlink = bsqh->physaddr | UHCI_PTR_Q;
-	csqh->qh->qh_elink = UHCI_PTR_T;
+	csqh->qh->qh_hlink = LE(bsqh->physaddr | UHCI_PTR_Q);
+	csqh->qh->qh_elink = LE(UHCI_PTR_T);
 	sc->sc_ctl_start = sc->sc_ctl_end = csqh;
 
 	/* 
@@ -360,14 +371,14 @@ uhci_init(sc)
 		if (!std || !sqh)
 			return (USBD_NOMEM);
 		std->td->link.sqh = sqh;
-		std->td->td_link = sqh->physaddr | UHCI_PTR_Q;
-		std->td->td_status = UHCI_TD_IOS;	/* iso, inactive */
-		std->td->td_token = 0;
-		std->td->td_buffer = 0;
+		std->td->td_link = LE(sqh->physaddr | UHCI_PTR_Q);
+		std->td->td_status = LE(UHCI_TD_IOS);	/* iso, inactive */
+		std->td->td_token = LE(0);
+		std->td->td_buffer = LE(0);
 		sqh->qh->hlink = csqh;
-		sqh->qh->qh_hlink = csqh->physaddr | UHCI_PTR_Q;
+		sqh->qh->qh_hlink = LE(csqh->physaddr | UHCI_PTR_Q);
 		sqh->qh->elink = 0;
-		sqh->qh->qh_elink = UHCI_PTR_T;
+		sqh->qh->qh_elink = LE(UHCI_PTR_T);
 		sc->sc_vframes[i].htd = std;
 		sc->sc_vframes[i].etd = std;
 		sc->sc_vframes[i].hqh = sqh;
@@ -375,7 +386,7 @@ uhci_init(sc)
 		for (j = i; 
 		     j < UHCI_FRAMELIST_COUNT; 
 		     j += UHCI_VFRAMELIST_COUNT)
-			sc->sc_pframes[j] = std->physaddr;
+			sc->sc_pframes[j] = LE(std->physaddr);
 	}
 
 	LIST_INIT(&sc->sc_intrhead);
@@ -486,25 +497,25 @@ uhci_dump_td(p)
 	printf("TD(%p) at %08lx = link=0x%08lx status=0x%08lx "
 	       "token=0x%08lx buffer=0x%08lx\n",
 	       p, (long)p->physaddr,
-	       (long)p->td->td_link,
-	       (long)p->td->td_status,
-	       (long)p->td->td_token,
-	       (long)p->td->td_buffer);
+	       (long)LE(p->td->td_link),
+	       (long)LE(p->td->td_status),
+	       (long)LE(p->td->td_token),
+	       (long)LE(p->td->td_buffer));
 	if (uhci_longtd)
 		printf("  %b %b,errcnt=%d,actlen=%d pid=%02x,addr=%d,endpt=%d,"
 		       "D=%d,maxlen=%d\n",
-		       (int)p->td->td_link,
+		       (int)LE(p->td->td_link),
 		       "\20\1T\2Q\3VF",
-		       (int)p->td->td_status,
+		       (int)LE(p->td->td_status),
 		       "\20\22BITSTUFF\23CRCTO\24NAK\25BABBLE\26DBUFFER\27"
 		       "STALLED\30ACTIVE\31IOC\32ISO\33LS\36SPD",
-		       UHCI_TD_GET_ERRCNT(p->td->td_status),
-		       UHCI_TD_GET_ACTLEN(p->td->td_status),
-		       UHCI_TD_GET_PID(p->td->td_token),
-		       UHCI_TD_GET_DEVADDR(p->td->td_token),
-		       UHCI_TD_GET_ENDPT(p->td->td_token),
-		       UHCI_TD_GET_DT(p->td->td_token),
-		       UHCI_TD_GET_MAXLEN(p->td->td_token));
+		       UHCI_TD_GET_ERRCNT(LE(p->td->td_status)),
+		       UHCI_TD_GET_ACTLEN(LE(p->td->td_status)),
+		       UHCI_TD_GET_PID(LE(p->td->td_token)),
+		       UHCI_TD_GET_DEVADDR(LE(p->td->td_token)),
+		       UHCI_TD_GET_ENDPT(LE(p->td->td_token)),
+		       UHCI_TD_GET_DT(LE(p->td->td_token)),
+		       UHCI_TD_GET_MAXLEN(LE(p->td->td_token)));
 }
 
 void
@@ -512,7 +523,7 @@ uhci_dump_qh(p)
 	uhci_soft_qh_t *p;
 {
 	printf("QH(%p) at %08x: hlink=%08x elink=%08x\n", p, (int)p->physaddr,
-	       p->qh->qh_hlink, p->qh->qh_elink);
+	       LE(p->qh->qh_hlink), LE(p->qh->qh_elink));
 }
 
 
@@ -645,7 +656,7 @@ uhci_add_ctrl(sc, sqh)
 	sqh->qh->hlink     = eqh->hlink;
 	sqh->qh->qh_hlink  = eqh->qh_hlink;
 	eqh->hlink         = sqh;
-	eqh->qh_hlink      = sqh->physaddr | UHCI_PTR_Q;
+	eqh->qh_hlink      = LE(sqh->physaddr | UHCI_PTR_Q);
 	sc->sc_ctl_end = sqh;
 }
 
@@ -660,7 +671,7 @@ uhci_remove_ctrl(sc, sqh)
 	DPRINTFN(10, ("uhci_remove_ctrl: sqh=%p\n", sqh));
 	for (pqh = sc->sc_ctl_start; pqh->qh->hlink != sqh; pqh=pqh->qh->hlink)
 #if defined(DIAGNOSTIC) || defined(USB_DEBUG)		
-		if (pqh->qh->qh_hlink & UHCI_PTR_T) {
+		if (LE(pqh->qh->qh_hlink) & UHCI_PTR_T) {
 			printf("uhci_remove_ctrl: QH not found\n");
 			return;
 		}
@@ -686,7 +697,7 @@ uhci_add_bulk(sc, sqh)
 	sqh->qh->hlink     = eqh->hlink;
 	sqh->qh->qh_hlink  = eqh->qh_hlink;
 	eqh->hlink         = sqh;
-	eqh->qh_hlink      = sqh->physaddr | UHCI_PTR_Q;
+	eqh->qh_hlink      = LE(sqh->physaddr | UHCI_PTR_Q);
 	sc->sc_bulk_end = sqh;
 }
 
@@ -703,7 +714,7 @@ uhci_remove_bulk(sc, sqh)
 	     pqh->qh->hlink != sqh; 
 	     pqh = pqh->qh->hlink)
 #if defined(DIAGNOSTIC) || defined(USB_DEBUG)		
-		if (pqh->qh->qh_hlink & UHCI_PTR_T) {
+		if (LE(pqh->qh->qh_hlink) & UHCI_PTR_T) {
 			printf("uhci_remove_bulk: QH not found\n");
 			return;
 		}
@@ -814,10 +825,10 @@ uhci_check_intr(sc, ii)
 	 * is a an error somewhere in the middle, or whether there was a
 	 * short packet (SPD and not ACTIVE).
 	 */
-	if (lstd->td->td_status & UHCI_TD_ACTIVE) {
+	if (LE(lstd->td->td_status) & UHCI_TD_ACTIVE) {
 		DPRINTFN(15, ("uhci_check_intr: active ii=%p\n", ii));
 		for (std = ii->stdstart; std != lstd; std = std->td->link.std){
-			status = std->td->td_status;
+			status = LE(std->td->td_status);
 			if ((status & UHCI_TD_STALLED) ||
 			     (status & (UHCI_TD_SPD | UHCI_TD_ACTIVE)) == 
 			     UHCI_TD_SPD)
@@ -872,15 +883,16 @@ uhci_idone(ii)
 	/* XXX Is this correct for control xfers? */
 	actlen = 0;
 	for (std = ii->stdstart; std; std = std->td->link.std) {
-		status = std->td->td_status;
+		status = LE(std->td->td_status);
 		if (status & UHCI_TD_ACTIVE)
 			break;
-		if (UHCI_TD_GET_PID(std->td->td_token) != UHCI_TD_PID_SETUP)
+		if (UHCI_TD_GET_PID(LE(std->td->td_token)) != 
+		    UHCI_TD_PID_SETUP)
 			actlen += UHCI_TD_GET_ACTLEN(status);
 	}
 	/* If there are left over TDs we need to update the toggle. */
 	if (std)
-		upipe->nexttoggle = UHCI_TD_GET_DT(std->td->td_token);
+		upipe->nexttoggle = UHCI_TD_GET_DT(LE(std->td->td_token));
 
 	status &= UHCI_TD_ERROR;
 	DPRINTFN(10, ("uhci_check_intr: actlen=%d, status=0x%x\n", 
@@ -1100,11 +1112,11 @@ uhci_free_std(sc, std)
 {
 #ifdef DIAGNOSTIC
 #define TD_IS_FREE 0x12345678
-	if (std->td->td_token == TD_IS_FREE) {
+	if (LE(std->td->td_token) == TD_IS_FREE) {
 		printf("uhci_free_std: freeing free TD %p\n", std);
 		return;
 	}
-	std->td->td_token = TD_IS_FREE;
+	std->td->td_token = LE(TD_IS_FREE);
 #endif
 	std->td->link.std = sc->sc_freetds;
 	sc->sc_freetds = std;
@@ -1214,6 +1226,7 @@ uhci_alloc_std_chain(upipe, sc, len, rd, shortok, dma, sp, ep)
 		return (USBD_INVAL);
 	}
 	ntd = (len + maxp - 1) / maxp;
+	DPRINTFN(10, ("uhci_alloc_std_chain: maxp=%d ntd=%d\n", maxp, ntd));
 	tog = upipe->nexttoggle;
 	if (ntd % 2 == 0)
 		tog ^= 1;
@@ -1233,10 +1246,10 @@ uhci_alloc_std_chain(upipe, sc, len, rd, shortok, dma, sp, ep)
 			return (USBD_NOMEM);
 		}
 		p->td->link.std = lastp;
-		p->td->td_link = lastlink;
+		p->td->td_link = LE(lastlink);
 		lastp = p;
 		lastlink = p->physaddr;
-		p->td->td_status = status;
+		p->td->td_status = LE(status);
 		if (i == ntd) {
 			/* last TD */
 			l = len % maxp;
@@ -1245,9 +1258,9 @@ uhci_alloc_std_chain(upipe, sc, len, rd, shortok, dma, sp, ep)
 		} else
 			l = maxp;
 		p->td->td_token = 
-		    rd ? UHCI_TD_IN (l, endpt, addr, tog) :
-			 UHCI_TD_OUT(l, endpt, addr, tog);
-		p->td->td_buffer = DMAADDR(dma) + i * maxp;
+		    LE(rd ? UHCI_TD_IN (l, endpt, addr, tog) :
+			    UHCI_TD_OUT(l, endpt, addr, tog));
+		p->td->td_buffer = LE(DMAADDR(dma) + i * maxp);
 		tog ^= 1;
 	}
 	*sp = lastp;
@@ -1324,7 +1337,7 @@ uhci_device_bulk_start(reqh)
 				 dmap, &xfer, &xferend);
 	if (r != USBD_NORMAL_COMPLETION)
 		goto ret2;
-	xferend->td->td_status |= UHCI_TD_IOC;
+	xferend->td->td_status |= LE(UHCI_TD_IOC);
 
 	if (!isread && len != 0)
 		memcpy(KERNADDR(dmap), reqh->buffer, len);
@@ -1345,7 +1358,7 @@ uhci_device_bulk_start(reqh)
 #endif
 
 	sqh->qh->elink = xfer;
-	sqh->qh->qh_elink = xfer->physaddr;
+	sqh->qh->qh_elink = LE(xfer->physaddr);
 	sqh->intr_info = ii;
 
 	s = splusb();
@@ -1401,7 +1414,7 @@ uhci_abort_req(reqh, status)
 
 	/* make hardware ignore it, */
 	for (std = ii->stdstart; std != 0; std = std->td->link.std)
-		std->td->td_status &= ~UHCI_TD_ACTIVE;
+		std->td->td_status &= LE(~UHCI_TD_ACTIVE);
 	/* make sure hardware has completed, */
 	usb_delay_ms(reqh->pipe->device->bus, 1);
 
@@ -1511,7 +1524,7 @@ uhci_device_intr_start(reqh)
 				 dmap, &xfer, &xferend);
 	if (r != USBD_NORMAL_COMPLETION)
 		goto ret2;
-	xferend->td->td_status |= UHCI_TD_IOC;
+	xferend->td->td_status |= LE(UHCI_TD_IOC);
 
 #ifdef USB_DEBUG
 	if (uhcidebug > 10) {
@@ -1535,7 +1548,7 @@ uhci_device_intr_start(reqh)
 	for (i = 0; i < upipe->u.intr.npoll; i++) {
 		sqh = upipe->u.intr.qhs[i];
 		sqh->qh->elink = xfer;
-		sqh->qh->qh_elink = xfer->physaddr;
+		sqh->qh->qh_elink = LE(xfer->physaddr);
 	}
 	splx(s);
 
@@ -1674,7 +1687,7 @@ uhci_device_request(reqh)
 			goto ret2;
 		next = xfer;
 		xferend->td->link.std = stat;
-		xferend->td->td_link = stat->physaddr;
+		xferend->td->td_link = LE(stat->physaddr);
 	} else {
 		next = stat;
 	}
@@ -1685,19 +1698,19 @@ uhci_device_request(reqh)
 		memcpy(KERNADDR(dmap), reqh->buffer, len);
 
 	setup->td->link.std = next;
-	setup->td->td_link = next->physaddr;
-	setup->td->td_status = UHCI_TD_SET_ERRCNT(2) | ls | UHCI_TD_ACTIVE;
-	setup->td->td_token = UHCI_TD_SETUP(sizeof *req, endpt, addr);
-	setup->td->td_buffer = DMAADDR(&upipe->u.ctl.reqdma);
+	setup->td->td_link = LE(next->physaddr);
+	setup->td->td_status = LE(UHCI_TD_SET_ERRCNT(3) | ls | UHCI_TD_ACTIVE);
+	setup->td->td_token = LE(UHCI_TD_SETUP(sizeof *req, endpt, addr));
+	setup->td->td_buffer = LE(DMAADDR(&upipe->u.ctl.reqdma));
 
 	stat->td->link.std = 0;
-	stat->td->td_link = UHCI_PTR_T;
-	stat->td->td_status = UHCI_TD_SET_ERRCNT(2) | ls | 
-		UHCI_TD_ACTIVE | UHCI_TD_IOC;
+	stat->td->td_link = LE(UHCI_PTR_T);
+	stat->td->td_status = LE(UHCI_TD_SET_ERRCNT(3) | ls | 
+		UHCI_TD_ACTIVE | UHCI_TD_IOC);
 	stat->td->td_token = 
-		isread ? UHCI_TD_OUT(0, endpt, addr, 1) :
-		         UHCI_TD_IN (0, endpt, addr, 1);
-	stat->td->td_buffer = 0;
+		LE(isread ? UHCI_TD_OUT(0, endpt, addr, 1) :
+		            UHCI_TD_IN (0, endpt, addr, 1));
+	stat->td->td_buffer = LE(0);
 
 #ifdef USB_DEBUG
 	if (uhcidebug > 20) {
@@ -1717,7 +1730,7 @@ uhci_device_request(reqh)
 #endif
 
 	sqh->qh->elink = setup;
-	sqh->qh->qh_elink = setup->physaddr;
+	sqh->qh->qh_elink = LE(setup->physaddr);
 	sqh->intr_info = ii;
 
 	s = splusb();
@@ -1734,7 +1747,7 @@ uhci_device_request(reqh)
 		for (std = sc->sc_vframes[0].htd, link = 0;
 		     (link & UHCI_PTR_Q) == 0;
 		     std = std->td->link.std) {
-			link = std->td->td_link;
+			link = LE(std->td->td_link);
 			uhci_dump_td(std);
 		}
 		for (sxqh = xqh = (uhci_soft_qh_t *)std;
@@ -1815,7 +1828,7 @@ uhci_device_isoc_close(pipe)
 	iso = &upipe->u.iso;
 
 	for (i = 0; i < UHCI_VFRAMELIST_COUNT; i++)
-		iso->stds[i]->td->td_status &= ~UHCI_TD_ACTIVE;
+		iso->stds[i]->td->td_status &= LE(~UHCI_TD_ACTIVE);
 	usb_delay_ms(&sc->sc_bus, 2); /* wait for completion */
 
 	uhci_lock_frames(sc);
@@ -1904,17 +1917,17 @@ uhci_device_isoc_setbuf(pipe, bufsize, nbuf)
 		uhci_soft_td_t *std, *vstd;
 
 		std = iso->stds[i];
-		std->td->td_status = UHCI_TD_IOS;	/* iso, inactive */
+		std->td->td_status = LE(UHCI_TD_IOS);	/* iso, inactive */
 		std->td->td_token =
-		    rd ? UHCI_TD_IN (0, endpt, addr, 0) :
-			 UHCI_TD_OUT(0, endpt, addr, 0);
-		std->td->td_buffer = DMAADDR(&iso->bufs[i % nbuf]);
+		    LE(rd ? UHCI_TD_IN (0, endpt, addr, 0) :
+			    UHCI_TD_OUT(0, endpt, addr, 0));
+		std->td->td_buffer = LE(DMAADDR(&iso->bufs[i % nbuf]));
 
 		vstd = sc->sc_vframes[i % UHCI_VFRAMELIST_COUNT].htd;
 		std->td->link = vstd->td->link;
 		std->td->td_link = vstd->td->td_link;
 		vstd->td->link.std = std;
-		vstd->td->td_link = std->physaddr;
+		vstd->td->td_link = LE(std->physaddr);
 	}
 	uhci_unlock_frames(sc);
 
@@ -1956,7 +1969,7 @@ uhci_intr_done(ii)
 	for(i = 0; i < npoll; i++) {
 		sqh = upipe->u.intr.qhs[i];
 		sqh->qh->elink = 0;
-		sqh->qh->qh_elink = UHCI_PTR_T;
+		sqh->qh->qh_elink = LE(UHCI_PTR_T);
 	}
 	uhci_free_std_chain(sc, ii->stdstart, 0);
 
@@ -1968,7 +1981,7 @@ uhci_intr_done(ii)
 		uhci_alloc_std_chain(upipe, sc, reqh->length, 1,
 				     reqh->flags & USBD_SHORT_XFER_OK,
 				     dma, &xfer, &xferend);
-		xferend->td->td_status |= UHCI_TD_IOC;
+		xferend->td->td_status |= LE(UHCI_TD_IOC);
 
 #ifdef USB_DEBUG
 		if (uhcidebug > 10) {
@@ -1986,7 +1999,7 @@ uhci_intr_done(ii)
 		for (i = 0; i < npoll; i++) {
 			sqh = upipe->u.intr.qhs[i];
 			sqh->qh->elink = xfer;
-			sqh->qh->qh_elink = xfer->physaddr;
+			sqh->qh->qh_elink = LE(xfer->physaddr);
 		}
 	} else {
 		usb_freemem(sc->sc_dmatag, dma);
@@ -2065,7 +2078,7 @@ uhci_add_intr(sc, n, sqh)
 	sqh->qh->hlink     = eqh->hlink;
 	sqh->qh->qh_hlink  = eqh->qh_hlink;
 	eqh->hlink         = sqh;
-	eqh->qh_hlink      = sqh->physaddr | UHCI_PTR_Q;
+	eqh->qh_hlink      = LE(sqh->physaddr | UHCI_PTR_Q);
 	vf->eqh = sqh;
 	vf->bandwidth++;
 }
@@ -2084,7 +2097,7 @@ uhci_remove_intr(sc, n, sqh)
 
 	for (pqh = vf->hqh; pqh->qh->hlink != sqh; pqh = pqh->qh->hlink)
 #if defined(DIAGNOSTIC) || defined(USB_DEBUG)		
-		if (pqh->qh->qh_hlink & UHCI_PTR_T) {
+		if (LE(pqh->qh->qh_hlink) & UHCI_PTR_T) {
 			printf("uhci_remove_intr: QH not found\n");
 			return;
 		}
@@ -2142,7 +2155,7 @@ uhci_device_setintr(sc, upipe, ival)
 	for(i = 0; i < npoll; i++) {
 		upipe->u.intr.qhs[i] = sqh = uhci_alloc_sqh(sc);
 		sqh->qh->elink = 0;
-		sqh->qh->qh_elink = UHCI_PTR_T;
+		sqh->qh->qh_elink = LE(UHCI_PTR_T);
 		sqh->pos = MOD(i * ival + bestoffs);
 		sqh->intr_info = upipe->iinfo;
 	}
