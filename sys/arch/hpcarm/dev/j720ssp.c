@@ -1,4 +1,4 @@
-/* $NetBSD: j720ssp.c,v 1.12 2002/09/27 20:32:08 thorpej Exp $ */
+/* $NetBSD: j720ssp.c,v 1.13 2002/09/29 13:16:22 bsh Exp $ */
 
 /*-
  * Copyright (c) 1998, 2001 The NetBSD Foundation, Inc.
@@ -233,7 +233,9 @@ j720sspattach(parent, self, aux)
 	struct sa11x0_attach_args *sa = aux;
 	struct wskbddev_attach_args kbd_args;
 	struct wsmousedev_attach_args mouse_args;
+#if NAPM > 0
 	struct apm_attach_args apm_args;
+#endif
 
 	printf("\n");
 
