@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.4 1998/04/03 02:20:29 tv Exp $
+#	$NetBSD: Makefile.inc,v 1.5 1998/04/15 21:54:05 tv Exp $
 
 .if !defined(GCC_MAKEFILE_INC)
 GCC_MAKEFILE_INC=1
@@ -23,12 +23,19 @@ CPPFLAGS+=-I${.CURDIR} \
 LDADD+=		-lgnumalloc
 DPADD+=		${LIBGNUMALLOC}
 
-.PATH: ${DIST} ${DIST}/config ${DIST}/config/${MACHINE_ARCH} \
+# Some GNU architecture names don't match NetBSD architecture names.  Most do.
+.if ${MACHINE_ARCH} == "arm32"
+TARGET_GNU_ARCH=arm
+.else
+TARGET_GNU_ARCH=${MACHINE_ARCH}	
+.endif
+
+.PATH: ${DIST} ${DIST}/config ${DIST}/config/${TARGET_GNU_ARCH} \
 	${COMMON} ${COMMONOBJ}
 
 # XXX
 version=egcs-2.90.27
-target_alias=${MACHINE_ARCH}-netbsd
+target_alias=${TARGET_GNU_ARCH}-netbsd
 CPPFLAGS+= \
 	-DDEFAULT_TARGET_VERSION=\"${version}\" \
 	-DDEFAULT_TARGET_MACHINE=\"${target_alias}\" \
