@@ -1,4 +1,4 @@
-.\"	$NetBSD: ipnat.5,v 1.4 2002/01/24 08:21:42 martti Exp $
+.\"	$NetBSD: ipnat.5,v 1.5 2002/04/14 07:53:46 martin Exp $
 .\"
 .TH IPNAT 5
 .SH NAME
@@ -9,9 +9,9 @@ The format for files accepted by ipnat is described by the following grammar:
 .nf
 ipmap :: = mapblock | redir | map .
 
-map ::= mapit ifname ipmask "->" ipmask [ mapport ] .
-map ::= mapit ifname fromto "->" ipmask [ mapport ] .
-mapblock ::= "map-block" ifname ipmask "->" ipmask [ ports ] .
+map ::= mapit ifname ipmask "->" ipmask [ mapport ] [ clamp ] .
+map ::= mapit ifname fromto "->" ipmask [ mapport ] [ clamp ] .
+mapblock ::= "map-block" ifname ipmask "->" ipmask [ ports ] [ clamp ] .
 redir ::= "rdr" ifname ipmask dport "->" ip [ "," ip ] rdrport options .
 
 dport ::= "port" portnum [ "-" portnum ] .
@@ -21,6 +21,7 @@ mapit ::= "map" | "bimap" .
 fromto ::= "from" object "to" object .
 ipmask ::= ip "/" bits | ip "/" mask | ip "netmask" mask .
 mapport ::= "portmap" tcpudp portnumber ":" portnumber .
+clamp ::= "mssclamp" number .
 options ::= [ tcpudp ] [ rr ] .
 
 object  = addr [ port-comp | port-range ] .
@@ -202,6 +203,22 @@ own.  As opposed to the above use of \fBmap\fP, if for some reason the user
 of (say) 172.192.0.2 wanted 260 simultaneous connections going out, they would
 be limited to 252 with \fBmap-block\fP but would just \fImove on\fP to the next
 IP address with the \fBmap\fP command.
+.LP
+.nf
+map pppoe0 10.0.0.0/8 -> 209.1.2.0/24 mssclamp 1452
+.fi
+.PP
+The mssclamp clause tells the NAT processor to scan for TCP packets in the
+three-way handshake and limit their negotiated MSS value to the number
+given in the rule. This is usefull to make hosts behind a connection with
+low MTU (like PPPoE or tunnels) communicate without any outside proxies
+with broken sides that use a misconfigured firewall. Unfortunately such
+sites are not rare.
+.PP
+The value for the clamping clause is calculated as interface-mtu less
+40 bytes (size of IP header plus maximum IP options size), so for
+PPPoE interface it is 1492 - 40 = 1452. Some sites seem to require clamping
+to even smaller values, but there is no rationale for this behaviour.
 .SH FILES
 /dev/ipnat
 .br
