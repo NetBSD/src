@@ -31,23 +31,23 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)isofs_inode.c
- *	$Id: isofs_node.c,v 1.8 1993/11/26 19:56:53 ws Exp $
+ *	$Id: isofs_node.c,v 1.9 1993/12/18 04:31:46 mycroft Exp $
  */
 
-#include "param.h"
-#include "systm.h"
-#include "mount.h"
-#include "proc.h"
-#include "file.h"
-#include "buf.h"
-#include "vnode.h"
-#include "kernel.h"
-#include "malloc.h"
-#include "stat.h"
+#include <sys/param.h>
+#include <sys/systm.h>
+#include <sys/mount.h>
+#include <sys/proc.h>
+#include <sys/file.h>
+#include <sys/buf.h>
+#include <sys/vnode.h>
+#include <sys/kernel.h>
+#include <sys/malloc.h>
+#include <sys/stat.h>
 
-#include "iso.h"
-#include "isofs_node.h"
-#include "iso_rrip.h"
+#include <isofs/iso.h>
+#include <isofs/isofs_node.h>
+#include <isofs/iso_rrip.h>
 
 #define	IFTOVT(mode)	(iftovt_tab[((mode) & 0170000) >> 12])
 static enum vtype iftovt_tab[16] = {

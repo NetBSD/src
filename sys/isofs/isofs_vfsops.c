@@ -1,25 +1,26 @@
 /*
- *	$Id: isofs_vfsops.c,v 1.9 1993/11/12 05:55:12 cgd Exp $
+ *	$Id: isofs_vfsops.c,v 1.10 1993/12/18 04:32:01 mycroft Exp $
  */
 
-#include "param.h"
-#include "systm.h"
-#include "namei.h"
-#include "proc.h"
-#include "kernel.h"
-#include "vnode.h"
-#include "miscfs/specfs/specdev.h" /* XXX */
-#include "mount.h"
-#include "buf.h"
-#include "file.h"
-#include "dkbad.h"
-#include "disklabel.h"
-#include "ioctl.h"
-#include "errno.h"
-#include "malloc.h"
+#include <sys/param.h>
+#include <sys/systm.h>
+#include <sys/namei.h>
+#include <sys/proc.h>
+#include <sys/kernel.h>
+#include <sys/vnode.h>
+#include <sys/mount.h>
+#include <sys/buf.h>
+#include <sys/file.h>
+#include <sys/dkbad.h>
+#include <sys/disklabel.h>
+#include <sys/ioctl.h>
+#include <sys/errno.h>
+#include <sys/malloc.h>
 
-#include "iso.h"
-#include "isofs_node.h"
+#include <miscfs/specfs/specdev.h> /* XXX */
+
+#include <isofs/iso.h>
+#include <isofs/isofs_node.h>
 
 extern int enodev ();
 
