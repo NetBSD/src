@@ -1,4 +1,4 @@
-/*	$NetBSD: usb.c,v 1.46 2000/06/07 00:33:51 thorpej Exp $	*/
+/*	$NetBSD: usb.c,v 1.47 2000/08/24 14:12:34 augustss Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/usb.c,v 1.20 1999/11/17 22:33:46 n_hibma Exp $	*/
 
 /*
@@ -159,16 +159,11 @@ Static SIMPLEQ_HEAD(, usb_event_q) usb_events =
 	SIMPLEQ_HEAD_INITIALIZER(usb_events);
 Static int usb_nevents = 0;
 Static struct selinfo usb_selevent;
-Static struct proc *usb_async_proc;  /* process who wants USB SIGIO */
+Static struct proc *usb_async_proc;  /* process that wants USB SIGIO */
 Static int usb_dev_open = 0;
 Static void usb_add_event(int, struct usb_event *);
 
 Static int usb_get_next_event(struct usb_event *);
-
-#if defined(__NetBSD__) || defined(__OpenBSD__)
-/* Flag to see if we are in the cold boot process. */
-extern int cold;
-#endif
 
 Static const char *usbrev_str[] = USBREV_STR;
 
