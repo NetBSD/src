@@ -1,4 +1,4 @@
-/*	$NetBSD: param.h,v 1.9 1994/12/05 19:27:20 phil Exp $	*/
+/*	$NetBSD: param.h,v 1.10 1995/03/18 07:23:39 cgd Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -139,9 +139,9 @@
 #define	btoc(x)	(((unsigned)(x)+(NBPG-1))>>PGSHIFT)
 
 #define	btodb(bytes)	 		/* calculates (bytes / DEV_BSIZE) */ \
-	((unsigned)(bytes) >> DEV_BSHIFT)
+	((bytes) >> DEV_BSHIFT)
 #define	dbtob(db)			/* calculates (db * DEV_BSIZE) */ \
-	((unsigned)(db) << DEV_BSHIFT)
+	((db) << DEV_BSHIFT)
 
 
 /*

@@ -1,4 +1,4 @@
-/*	$NetBSD: param3.h,v 1.23 1994/11/28 19:13:18 gwr Exp $	*/
+/*	$NetBSD: param3.h,v 1.24 1995/03/18 07:23:54 cgd Exp $	*/
 
 /*
  * Copyright (c) 1994 Gordon W. Ross
@@ -124,9 +124,9 @@
 #define	btoc(x)	(((unsigned)(x)+(NBPG-1))>>PGSHIFT)
 
 #define	btodb(bytes)	 		/* calculates (bytes / DEV_BSIZE) */ \
-	((unsigned)(bytes) >> DEV_BSHIFT)
+	((bytes) >> DEV_BSHIFT)
 #define	dbtob(db)			/* calculates (db * DEV_BSIZE) */ \
-	((unsigned)(db) << DEV_BSHIFT)
+	((db) << DEV_BSHIFT)
 
 /*
  * Map a ``block device block'' to a file system block.
