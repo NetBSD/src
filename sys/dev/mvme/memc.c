@@ -1,4 +1,4 @@
-/*	$NetBSD: memc.c,v 1.3 2004/04/22 00:17:12 itojun Exp $	*/
+/*	$NetBSD: memc.c,v 1.4 2004/05/16 15:44:11 wiz Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2002 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: memc.c,v 1.3 2004/04/22 00:17:12 itojun Exp $");
+__KERNEL_RCSID(0, "$NetBSD: memc.c,v 1.4 2004/05/16 15:44:11 wiz Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -627,7 +627,7 @@ memecc_log_error(struct memc_softc *sc, u_int8_t errlog, int off, int mbepanic)
 	if (mbepanic && (errlog & MEMECC_ERROR_LOGGER_MBE) &&
 	    (errlog & (MEMECC_ERROR_LOGGER_ESCRB|MEMECC_ERROR_LOGGER_EALT))) {
 		/*
-		 * Ensure we don't get a Bus Error while panicing...
+		 * Ensure we don't get a Bus Error while panicking...
 		 */
 		rv = memc_reg_read(sc, MEMECC_REG_DRAM_CONTROL + off);
 		rv &= ~(MEMECC_DRAM_CONTROL_NCEBEN |
