@@ -1,5 +1,5 @@
 #if !defined(lint) && !defined(SABER)
-static const char rcsid[] = "$Id: res_findzonecut.c,v 1.1.1.6 2001/04/02 21:57:09 mellon Exp $";
+static const char rcsid[] = "$Id: res_findzonecut.c,v 1.1.1.7 2001/04/06 17:00:23 mellon Exp $";
 #endif /* not lint */
 
 /*
@@ -266,7 +266,7 @@ get_soa(res_state statp, const char *dname, ns_class class,
 		/* Is there an SOA? */
 		rcode = do_query(statp, dname, class, ns_t_soa,
 				 resp, &msg, &n);
-		if (n < 0) {
+		if (rcode != ISC_R_SUCCESS) {
 			DPRINTF(("get_soa: do_query('%s', %s) failed (%d)",
 				 dname, p_class(class), n));
 			return rcode;
