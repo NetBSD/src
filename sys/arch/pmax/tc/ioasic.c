@@ -1,4 +1,4 @@
-/*	$NetBSD: ioasic.c,v 1.13 2000/06/04 19:14:55 cgd Exp $	*/
+/*	$NetBSD: ioasic.c,v 1.14 2000/07/11 04:10:25 nisimura Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Carnegie-Mellon University.
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
-__KERNEL_RCSID(0, "$NetBSD: ioasic.c,v 1.13 2000/06/04 19:14:55 cgd Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ioasic.c,v 1.14 2000/07/11 04:10:25 nisimura Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -53,11 +53,11 @@ __KERNEL_RCSID(0, "$NetBSD: ioasic.c,v 1.13 2000/06/04 19:14:55 cgd Exp $");
 
 #if defined(DEC_3MIN)
 static struct ioasic_dev kmin_ioasic_devs[] = {
-	{ "lance",	0x0C0000, C(SYS_DEV_LANCE),	IOASIC_INTR_LANCE, },
-	{ "scc",	0x100000, C(SYS_DEV_SCC0),	IOASIC_INTR_SCC_0, },
-	{ "scc",	0x180000, C(SYS_DEV_SCC1),	IOASIC_INTR_SCC_1, },
-	{ "mc146818",	0x200000, C(SYS_DEV_BOGUS),		0 },
-	{ "asc",	0x300000, C(SYS_DEV_SCSI),	IOASIC_INTR_SCSI, },
+	{ "PMAD-BA ",	0x0C0000, C(SYS_DEV_LANCE),	},
+	{ "scc",	0x100000, C(SYS_DEV_SCC0),	},
+	{ "scc",	0x180000, C(SYS_DEV_SCC1),	},
+	{ "mc146818",	0x200000, C(SYS_DEV_BOGUS),	},
+	{ "asc",	0x300000, C(SYS_DEV_SCSI),	},
 };
 static int kmin_builtin_ndevs = ARRAY_SIZEOF(kmin_ioasic_devs);
 static int kmin_ioasic_ndevs = ARRAY_SIZEOF(kmin_ioasic_devs);
@@ -65,16 +65,16 @@ static int kmin_ioasic_ndevs = ARRAY_SIZEOF(kmin_ioasic_devs);
 
 #if defined(DEC_MAXINE)
 static struct ioasic_dev xine_ioasic_devs[] = {
-	{ "lance",	0x0C0000, C(SYS_DEV_LANCE),	IOASIC_INTR_LANCE },
-	{ "scc",	0x100000, C(SYS_DEV_SCC0),	IOASIC_INTR_SCC_0 },
-	{ "mc146818",	0x200000, C(SYS_DEV_BOGUS),		0 },
-	{ "isdn",	0x240000, C(SYS_DEV_ISDN),	XINE_INTR_ISDN, },
-	{ "dtop",	0x280000, C(SYS_DEV_DTOP),	XINE_INTR_DTOP, },
-	{ "fdc",	0x2C0000, C(SYS_DEV_FDC),	0 },
-	{ "asc",	0x300000, C(SYS_DEV_SCSI),	IOASIC_INTR_SCSI, },
-	{ "(TC0)",	0x0,	  C(SYS_DEV_OPT0),	XINE_INTR_TC_0,	},
-	{ "(TC1)",	0x0,	  C(SYS_DEV_OPT1),	XINE_INTR_TC_1,	},
-	{ "(TC2)",	0x0,	  C(SYS_DEV_OPT2),	XINE_INTR_VINT,	},
+	{ "PMAD-BA ",	0x0C0000, C(SYS_DEV_LANCE),	},
+	{ "scc",	0x100000, C(SYS_DEV_SCC0),	},
+	{ "mc146818",	0x200000, C(SYS_DEV_BOGUS),	},
+	{ "isdn",	0x240000, C(SYS_DEV_ISDN),	},
+	{ "dtop",	0x280000, C(SYS_DEV_DTOP),	},
+	{ "fdc",	0x2C0000, C(SYS_DEV_FDC),	},
+	{ "asc",	0x300000, C(SYS_DEV_SCSI),	},
+	{ "(TC0)",	0x0,	  C(SYS_DEV_OPT0),	},
+	{ "(TC1)",	0x0,	  C(SYS_DEV_OPT1),	},
+	{ "(TC2)",	0x0,	  C(SYS_DEV_OPT2),	},
 };
 static int xine_builtin_ndevs = ARRAY_SIZEOF(xine_ioasic_devs) - 3;
 static int xine_ioasic_ndevs = ARRAY_SIZEOF(xine_ioasic_devs);
@@ -82,14 +82,14 @@ static int xine_ioasic_ndevs = ARRAY_SIZEOF(xine_ioasic_devs);
 
 #if defined(DEC_3MAXPLUS)
 static struct ioasic_dev kn03_ioasic_devs[] = {
-	{ "lance",	0x0C0000, C(SYS_DEV_LANCE),	IOASIC_INTR_LANCE, },
-	{ "z8530   ",	0x100000, C(SYS_DEV_SCC0),	IOASIC_INTR_SCC_0, },
-	{ "z8530   ",	0x180000, C(SYS_DEV_SCC1),	IOASIC_INTR_SCC_1, },
-	{ "mc146818",	0x200000, C(SYS_DEV_BOGUS),	0,		},
-	{ "asc",	0x300000, C(SYS_DEV_SCSI),	IOASIC_INTR_SCSI, },
-	{ "(TC0)",	0x0,	  C(SYS_DEV_OPT0),	KN03_INTR_TC_0,	},
-	{ "(TC1)",	0x0,	  C(SYS_DEV_OPT1),	KN03_INTR_TC_1,	},
-	{ "(TC2)",	0x0,	  C(SYS_DEV_OPT2),	KN03_INTR_TC_2,	},
+	{ "PMAD-BA ",	0x0C0000, C(SYS_DEV_LANCE),	},
+	{ "z8530   ",	0x100000, C(SYS_DEV_SCC0),	},
+	{ "z8530   ",	0x180000, C(SYS_DEV_SCC1),	},
+	{ "mc146818",	0x200000, C(SYS_DEV_BOGUS),	},
+	{ "asc",	0x300000, C(SYS_DEV_SCSI),	},
+	{ "(TC0)",	0x0,	  C(SYS_DEV_OPT0),	},
+	{ "(TC1)",	0x0,	  C(SYS_DEV_OPT1),	},
+	{ "(TC2)",	0x0,	  C(SYS_DEV_OPT2),	},
 };
 static int kn03_builtin_ndevs = ARRAY_SIZEOF(kn03_ioasic_devs) - 3;
 static int kn03_ioasic_ndevs = ARRAY_SIZEOF(kn03_ioasic_devs);
@@ -134,7 +134,6 @@ ioasicattach(parent, self, aux)
 	struct tc_attach_args *ta = aux;
 	struct ioasic_dev *ioasic_devs;
 	int ioasic_ndevs, builtin_ndevs;
-	int i, imsk;
 
 	ioasicfound = 1;
 
@@ -176,14 +175,16 @@ ioasicattach(parent, self, aux)
 		panic("ioasicmatch: how did we get here?");
 	}
 
+#if 0 /* IMSK has been sanitized */
 	/*
 	 * Turn off all device interrupt bits.
-	 * (This _does_ include TC option slot bits.
+	 * (This _does_ include TC option slot bits.)
 	 */
 	imsk = bus_space_read_4(sc->sc_bst, sc->sc_bsh, IOASIC_IMSK);
 	for (i = 0; i < ioasic_ndevs; i++)
 		imsk &= ~ioasic_devs[i].iad_intrbits;
 	bus_space_write_4(sc->sc_bst, sc->sc_bsh, IOASIC_IMSK, imsk);
+#endif
 
 	/*
 	 * Try to configure each device.
@@ -201,7 +202,6 @@ ioasic_intr_evcnt(dev, cookie)
 	return NULL;
 }
 
-#if 1 /* XXX for now XXX */
 void
 ioasic_intr_establish(dev, cookie, level, handler, val)
 	struct device *dev;
@@ -212,32 +212,3 @@ ioasic_intr_establish(dev, cookie, level, handler, val)
 {
 	(*platform.intr_establish)(dev, cookie, level, handler, val);
 }
-
-#else /* XXX eventually XXX */
-
-void
-ioasic_intr_establish(ioa, cookie, level, func, arg)
-	struct device *ioa;
-	void *cookie, *arg;
-	int level;
-	int (*func) __P((void *));
-{
-	struct ioasic_softc *sc = (void *)ioasic_cd.cd_devs[0];
-	int i, intrbits;
-
-	for (i = 0; i < ioasic_ndevs; i++) {
-		if (ioasic_devs[i].iad_cookie == cookie)
-			goto found;
-	}
-	panic("ioasic_intr_establish: invalid cookie %d", (int)cookie);
-found:
-
-	intrtab[(int)cookie].ih_func = func;
-	intrtab[(int)cookie].ih_arg = arg;
-	
-	intrbits = ioasic_devs[i].iad_intrbits;
-	i = bus_space_read_4(sc->sc_bst, sc->sc_bsh, IOASIC_IMSK);
-	i |= intrbits;
-	bus_space_write_4(sc->sc_bst, sc->sc_bsh, IOASIC_IMSK, i);
-}
-#endif
