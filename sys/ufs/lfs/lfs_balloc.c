@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_balloc.c,v 1.48 2004/01/25 18:06:49 hannken Exp $	*/
+/*	$NetBSD: lfs_balloc.c,v 1.49 2005/02/26 05:40:42 perseant Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_balloc.c,v 1.48 2004/01/25 18:06:49 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_balloc.c,v 1.49 2005/02/26 05:40:42 perseant Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_quota.h"
@@ -81,6 +81,7 @@ __KERNEL_RCSID(0, "$NetBSD: lfs_balloc.c,v 1.48 2004/01/25 18:06:49 hannken Exp 
 #include <sys/mount.h>
 #include <sys/resourcevar.h>
 #include <sys/trace.h>
+#include <sys/malloc.h>
 
 #include <miscfs/specfs/specdev.h>
 
@@ -95,6 +96,8 @@ __KERNEL_RCSID(0, "$NetBSD: lfs_balloc.c,v 1.48 2004/01/25 18:06:49 hannken Exp 
 #include <uvm/uvm.h>
 
 int lfs_fragextend(struct vnode *, int, int, daddr_t, struct buf **, struct ucred *);
+
+u_int64_t locked_fakequeue_count;
 
 /*
  * Allocate a block, and to inode and filesystem block accounting for it
@@ -162,6 +165,10 @@ lfs_balloc(void *v)
 	if (bpp)
 		*bpp = NULL;
 	
+	/* Bomb out immediately if there's no space left */
+	if (fs->lfs_bfree <= 0)
+		return ENOSPC;
+
 	/* Check for block beyond end of file and fragment extension needed. */
 	lastblock = lblkno(fs, ip->i_size);
 	if (lastblock < NDADDR && lastblock < lbn) {
@@ -227,6 +234,10 @@ lfs_balloc(void *v)
 	error = ufs_bmaparray(vp, lbn, &daddr, &indirs[0], &num, NULL, NULL);
 	if (error)
 		return (error);
+
+	daddr = (daddr_t)((int32_t)daddr); /* XXX ondisk32 */
+	KASSERT(daddr <= LFS_MAX_DADDR);
+
 	/*
 	 * Do byte accounting all at once, so we can gracefully fail *before*
 	 * we start assigning blocks.
@@ -295,6 +306,12 @@ lfs_balloc(void *v)
 	if (bpp)
 		*bpp = bp = getblk(vp, lbn, blksize(fs, ip, lbn), 0, 0);
 	
+	/*
+	 * Do accounting on blocks that represent pages.
+	 */
+	if (!bpp)
+		lfs_register_block(vp, lbn);
+
 	/* 
 	 * The block we are writing may be a brand new block
 	 * in which case we need to do accounting.
@@ -443,4 +460,92 @@ lfs_fragextend(struct vnode *vp, int osize, int nsize, daddr_t lbn, struct buf *
 		lockmgr(&fs->lfs_fraglock, LK_RELEASE, 0);
 	}
 	return (error);
+}
+
+/*
+ * Record this lbn as being "write pending".  We used to have this information
+ * on the buffer headers, but since pages don't have buffer headers we
+ * record it here instead.
+ */
+
+void
+lfs_register_block(struct vnode *vp, daddr_t lbn)
+{
+	struct lfs *fs;
+	struct inode *ip;
+	struct lbnentry *lbp;
+	int hash;
+
+	/* Don't count metadata */
+	if (lbn < 0 || vp->v_type != VREG || VTOI(vp)->i_number == LFS_IFILE_INUM)
+		return;
+
+	ip = VTOI(vp);
+	fs = ip->i_lfs;
+
+	/* If no space, wait for the cleaner */
+	lfs_availwait(fs, btofsb(fs, 1 << fs->lfs_bshift));
+
+	hash = lbn % LFS_BLIST_HASH_WIDTH;
+	LIST_FOREACH(lbp, &(ip->i_lfs_blist[hash]), entry) {
+		if (lbp->lbn == lbn)
+			return;
+	}
+
+	lbp = (struct lbnentry *)pool_get(&lfs_lbnentry_pool, PR_WAITOK);
+	lbp->lbn = lbn;
+	LIST_INSERT_HEAD(&(ip->i_lfs_blist[hash]), lbp, entry);
+	fs->lfs_favail += btofsb(fs, (1 << fs->lfs_bshift));
+	++locked_fakequeue_count;
+}
+
+static void
+lfs_do_deregister(struct lfs *fs, struct lbnentry *lbp)
+{
+	LIST_REMOVE(lbp, entry);
+	pool_put(&lfs_lbnentry_pool, lbp);
+	if (fs->lfs_favail > btofsb(fs, (1 << fs->lfs_bshift)))
+		fs->lfs_favail -= btofsb(fs, (1 << fs->lfs_bshift));
+	if (locked_fakequeue_count > 0)
+		--locked_fakequeue_count;
+}
+
+void
+lfs_deregister_block(struct vnode *vp, daddr_t lbn)
+{
+	struct lfs *fs;
+	struct inode *ip;
+	struct lbnentry *lbp;
+	int hash;
+
+	/* Don't count metadata */
+	if (lbn < 0 || vp->v_type != VREG || VTOI(vp)->i_number == LFS_IFILE_INUM)
+		return;
+
+	ip = VTOI(vp);
+	fs = ip->i_lfs;
+	hash = lbn % LFS_BLIST_HASH_WIDTH;
+	LIST_FOREACH(lbp, &(ip->i_lfs_blist[hash]), entry) {
+		if (lbp->lbn == lbn)
+			break;
+	}
+	if (lbp == NULL)
+		return;
+
+	lfs_do_deregister(fs, lbp);
+}
+
+void
+lfs_deregister_all(struct vnode *vp)
+{
+	struct lbnentry *lbp;
+	struct lfs *fs;
+	struct inode *ip;
+	int i;
+
+	ip = VTOI(vp);
+	fs = ip->i_lfs;
+	for (i = 0; i < LFS_BLIST_HASH_WIDTH; i++)
+		while((lbp = LIST_FIRST(&(ip->i_lfs_blist[i]))) != NULL)
+			lfs_do_deregister(fs, lbp);
 }
