@@ -1,4 +1,4 @@
-/*	$NetBSD: rmpproto.c,v 1.10 1997/10/18 11:23:16 lukem Exp $	*/
+/*	$NetBSD: rmpproto.c,v 1.11 1999/02/01 17:00:44 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1988, 1992 The University of Utah and the Center
@@ -51,7 +51,7 @@
 #if 0
 static char sccsid[] = "@(#)rmpproto.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: rmpproto.c,v 1.10 1997/10/18 11:23:16 lukem Exp $");
+__RCSID("$NetBSD: rmpproto.c,v 1.11 1999/02/01 17:00:44 bouyer Exp $");
 #endif
 #endif /* not lint */
 
@@ -330,9 +330,15 @@ SendBootRepl(req, rconn, filelist)
 	/*
 	 *  Copy file name to `filepath' string, and into reply packet.
 	 */
-	src = &req->r_brq.rmp_flnm;
 	dst1 = filepath;
 	dst2 = &rpl->r_brpl.rmp_flnm;
+	if (req->r_brq.rmp_flnmsize)
+		src = &req->r_brq.rmp_flnm;
+	else {
+		/* no file supplied, substitute the first one */
+		src = filelist[0];
+		req->r_brq.rmp_flnmsize = strlen(src);
+	}
 	for (i = 0; i < req->r_brq.rmp_flnmsize; i++)
 		*dst1++ = *dst2++ = *src++;
 	*dst1 = '\0';
