@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.1 2002/05/08 13:50:22 jdolecek Exp $
+#	$NetBSD: Makefile.inc,v 1.2 2002/05/10 21:19:05 jdolecek Exp $
 #
 #	etc.luna68k/Makefile.inc -- luna68k-specific etc Makefile targets
 #
@@ -12,5 +12,5 @@ snap_md_post:
 	cd ${.CURDIR}/../distrib && ${MAKE} cleandir
 .endif
 	cd ${.CURDIR}/../distrib && ${MAKE} depend && ${MAKE}
-	cd ${.CURDIR}/../distrib/prep && ${MAKE} release
+	#cd ${.CURDIR}/../distrib/luna68k && ${MAKE} release
 	cd ${.CURDIR}/../distrib/notes && ${MAKE} release
