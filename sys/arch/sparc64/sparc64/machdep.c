@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.77 2000/07/09 22:39:17 eeh Exp $ */
+/*	$NetBSD: machdep.c,v 1.78 2000/07/10 01:15:17 eeh Exp $ */
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -109,6 +109,14 @@
 #include <uvm/uvm.h>
 
 #include <sys/sysctl.h>
+#ifndef	ELFSIZE
+#ifdef __arch64__
+#define	ELFSIZE	64
+#else
+#define	ELFSIZE	32
+#endif
+#endif
+#include <sys/exec_elf.h>
 
 #define _SPARC_BUS_DMA_PRIVATE
 #include <machine/autoconf.h>
@@ -323,7 +331,7 @@ setregs(p, pack, stack)
 	register struct fpstate64 *fs;
 	register int64_t tstate;
 	int pstate = PSTATE_USER;
-	Elf_Ehdr *eh = epp->ep_hdr;
+	Elf_Ehdr *eh = pack->ep_hdr;
 
 	/* Don't allow misaligned code by default */
 	p->p_md.md_flags &= ~MDP_FIXALIGN;
