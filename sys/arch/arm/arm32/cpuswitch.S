@@ -1,4 +1,4 @@
-/*	$NetBSD: cpuswitch.S,v 1.3.2.23 2002/09/17 23:50:18 nathanw Exp $	*/
+/*	$NetBSD: cpuswitch.S,v 1.3.2.24 2002/09/18 23:57:32 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1994-1998 Mark Brinicombe.
@@ -634,24 +634,29 @@ ENTRY(cpu_switch)
         msr	cpsr_c, r3		/* Restore the old mode */
 
 	/* Restore all the save registers */
-	add	r7, r1, #PCB_R8
+	add	r7, r9, #PCB_R8
 	ldmia	r7, {r8-r13}
 
-	mov	r7, r1			/* preserve PCB pointer */
+	sub	r7, r7, #PCB_R8		/* restore PCB pointer */
+
+	ldr	r5, [r6, #(L_PROC)]	/* fetch the proc for below */
+
+	/* rem: r4 = return value */
+	/* rem: r5 = new lwp's proc */
+	/* rem: r6 = new lwp */
+	/* rem: r7 = new pcb */
 
 #ifdef ARMFPE
-	add	r0, r9, #(USER_SIZE) & 0x00ff
+	add	r0, r7, #(USER_SIZE) & 0x00ff
 	add	r0, r0, #(USER_SIZE) & 0xff00 
 	bl	_C_LABEL(arm_fpe_core_changecontext)
 #endif
 
 	/* We can enable interrupts again */
 	IRQenable
-	/*
-	 * NOTE: We can now no longer use r8-r13.
-	 */
 
 	/* rem: r4 = return value */
+	/* rem: r5 = new lwp's proc */
 	/* rem: r6 = new lwp */
 	/* rem: r7 = new PCB */
 
@@ -659,7 +664,6 @@ ENTRY(cpu_switch)
 	 * Check for restartable atomic sequences (RAS).
 	 */
 
-	ldr	r5, [r6, #(L_PROC)]
 	ldr	r2, [r5, #(P_NRAS)]
 	ldr	r4, [r7, #(PCB_TF)]	/* r4 = trapframe (used below) */
 	teq	r2, #0			/* p->p_nras == 0? */
