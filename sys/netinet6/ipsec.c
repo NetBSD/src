@@ -1,4 +1,4 @@
-/*	$NetBSD: ipsec.c,v 1.6 1999/07/09 22:57:28 thorpej Exp $	*/
+/*	$NetBSD: ipsec.c,v 1.7 1999/07/11 17:45:11 itojun Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -1532,7 +1532,7 @@ ipsec4_hdrsiz(m, inp)
 	KEYDEBUG(KEYDEBUG_IPSEC_STAMP,
 		printf("DP ipsec4_hdrsiz call free SP:%p\n", sp));
 	KEYDEBUG(KEYDEBUG_IPSEC_DATA,
-		printf("ipsec4_hdrsiz: size:%d.\n", size));
+		printf("ipsec4_hdrsiz: size:%lu.\n", (unsigned long)size));
 	key_freesp(sp);
 
 	return size;
@@ -1570,7 +1570,7 @@ ipsec6_hdrsiz(m, in6p)
 	KEYDEBUG(KEYDEBUG_IPSEC_STAMP,
 		printf("DP ipsec6_hdrsiz call free SP:%p\n", sp));
 	KEYDEBUG(KEYDEBUG_IPSEC_DATA,
-		printf("ipsec6_hdrsiz: size:%d.\n", size));
+		printf("ipsec6_hdrsiz: size:%lu.\n", (unsigned long)size));
 	key_freesp(sp);
 
 	return size;
