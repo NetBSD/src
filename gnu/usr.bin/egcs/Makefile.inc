@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.24 2000/02/19 00:44:32 tsutsui Exp $
+#	$NetBSD: Makefile.inc,v 1.25 2000/03/05 05:41:05 shin Exp $
 
 .if !defined(GCC_MAKEFILE_INC)
 GCC_MAKEFILE_INC=1
@@ -50,11 +50,6 @@ CPPFLAGS+=-DTARGET_BIG_ENDIAN_DEFAULT
 
 .if (${MACHINE_ARCH} == "mipsel")
 CPPFLAGS+=-DTARGET_LITTLE_ENDIAN_DEFAULT
-.endif
-
-.if (${MACHINE} == "hpcmips") # XXX
-CPPFLAGS+=-D${MACHINE}
-HOST_CPPFLAGS += -D${MACHINE}
 .endif
 
 .PATH:		${.CURDIR}/../arch \
