@@ -1,4 +1,4 @@
-/* $NetBSD: lmcaudio.c,v 1.14 1997/10/11 12:44:04 mycroft Exp $ */
+/*	$NetBSD: lmcaudio.c,v 1.15 1997/10/14 12:03:17 mark Exp $	*/
 
 /*
  * Copyright (c) 1996, Danny C Tsen.
@@ -55,15 +55,15 @@
 #include <dev/audio_if.h>
 
 #include <machine/irqhandler.h>
-#include <machine/iomd.h>
 #include <machine/vidc.h>
 #include <machine/katelib.h>
 
+#include <arm32/iomd/iomdreg.h>
 #include <arm32/mainbus/mainbus.h>
-#include <arm32/mainbus/waveform.h>
+#include <arm32/vidc/waveform.h>
 #include "lmcaudio.h"
 
-#include <arm32/mainbus/lmc1982.h>
+#include <arm32/vidc/lmc1982.h>
  
 struct audio_general {
 	vm_offset_t silence;
@@ -95,9 +95,9 @@ struct lmcaudio_softc {
 	int outport;
 };
 
-int  lmcaudio_probe	__P((struct device *parent, void *match, void *aux));
+int  lmcaudio_probe	__P((struct device *parent, struct cfdata *cf, void *aux));
 void lmcaudio_attach	__P((struct device *parent, struct device *self, void *aux));
-int  lmcaudio_open	__P((void *, int flags));
+int  lmcaudio_open	__P((void *addr, int flags));
 void lmcaudio_close	__P((void *addr));
 int lmcaudio_drain	__P((void *addr));
 void lmcaudio_timeout	__P((void *arg));
@@ -119,6 +119,65 @@ struct cfdriver lmcaudio_cd = {
 
 int curr_rate = 11;
 
+int    lmcaudio_query_encoding   __P((void *, struct audio_encoding *));
+int    lmcaudio_set_params       __P((void *, int, int, struct audio_params *, struct audio_params *));
+int    lmcaudio_round_blocksize  __P((void *, int));
+int    lmcaudio_set_out_port	 __P((void *, int));
+int    lmcaudio_get_out_port	 __P((void *));
+int    lmcaudio_set_in_port	 __P((void *, int));
+int    lmcaudio_get_in_port  	 __P((void *));
+int    lmcaudio_start_output	 __P((void *, void *, int, void (*)(), void *));
+int    lmcaudio_start_input	 __P((void *, void *, int, void (*)(), void *));
+int    lmcaudio_halt_output	 __P((void *));
+int    lmcaudio_halt_input 	 __P((void *));
+int    lmcaudio_cont_output	 __P((void *));
+int    lmcaudio_cont_input	 __P((void *));
+int    lmcaudio_speaker_ctl	 __P((void *, int));
+int    lmcaudio_getdev		 __P((void *, struct audio_device *));
+int    lmcaudio_set_port	 __P((void *, mixer_ctrl_t *));
+int    lmcaudio_get_port	 __P((void *, mixer_ctrl_t *));
+int    lmcaudio_query_devinfo	 __P((void *, mixer_devinfo_t *));
+int    lmcaudio_get_props	 __P((void *));
+
+struct audio_device lmcaudio_device = {
+	"LMCAudio 16-bit",
+	"x",
+	"lmcaudio"
+};
+
+struct audio_hw_if lmcaudio_hw_if = {
+	lmcaudio_open,
+	lmcaudio_close,
+	lmcaudio_drain,
+	lmcaudio_query_encoding,
+	lmcaudio_set_params,
+	lmcaudio_round_blocksize,
+	lmcaudio_set_out_port,
+	lmcaudio_get_out_port,
+	lmcaudio_set_in_port,
+	lmcaudio_get_in_port,
+	0,
+	0,
+	0,
+	lmcaudio_start_output,
+	lmcaudio_start_input,
+	lmcaudio_halt_output,
+	lmcaudio_halt_input,
+	lmcaudio_cont_output,
+	lmcaudio_cont_input,
+	lmcaudio_speaker_ctl,
+	lmcaudio_getdev,
+	0,
+	lmcaudio_set_port,
+	lmcaudio_get_port,
+	lmcaudio_query_devinfo,
+	0,
+	0,
+	0,
+	0,
+	lmcaudio_get_props,
+};
+
 void
 lmcaudio_beep_generate()
 {
@@ -129,9 +188,9 @@ lmcaudio_beep_generate()
 
 static int sdma_channel;
 int
-lmcaudio_probe(parent, match, aux)
+lmcaudio_probe(parent, cf, aux)
 	struct device *parent;
-	void *match;
+	struct cfdata *cf;
 	void *aux;
 {
 	int id;
@@ -185,7 +244,7 @@ lmcaudio_attach(parent, self, aux)
 	/*
 	 * Video LCD and Serial Sound Mux control.  - Japanese format.
 	 */
-	outb(IOMD_VIDMUX, 0x02);
+	IOMD_WRITE_BYTE(IOMD_VIDMUX, 0x02);
  
 	volume_ctl(VINPUTSEL, VIN1);
 	volume_ctl(VLOUD, 0);
@@ -309,32 +368,6 @@ lmcaudio_drain(addr)
 /* ************************************************************************* * 
  | Interface to the generic audio driver                                     |
  * ************************************************************************* */
-
-int    lmcaudio_query_encoding   __P((void *, struct audio_encoding *));
-int    lmcaudio_set_params       __P((void *, int, int, struct audio_params *, struct audio_params *));
-int    lmcaudio_round_blocksize  __P((void *, int));
-int    lmcaudio_set_out_port	 __P((void *, int));
-int    lmcaudio_get_out_port	 __P((void *));
-int    lmcaudio_set_in_port	 __P((void *, int));
-int    lmcaudio_get_in_port  	 __P((void *));
-int    lmcaudio_start_output	 __P((void *, void *, int, void (*)(), void *));
-int    lmcaudio_start_input	 __P((void *, void *, int, void (*)(), void *));
-int    lmcaudio_halt_output	 __P((void *));
-int    lmcaudio_halt_input 	 __P((void *));
-int    lmcaudio_cont_output	 __P((void *));
-int    lmcaudio_cont_input	 __P((void *));
-int    lmcaudio_speaker_ctl	 __P((void *, int));
-int    lmcaudio_getdev		 __P((void *, struct audio_device *));
-int    lmcaudio_set_port	 __P((void *, mixer_ctrl_t *));
-int    lmcaudio_get_port	 __P((void *, mixer_ctrl_t *));
-int    lmcaudio_query_devinfo	 __P((void *, mixer_devinfo_t *));
-int    lmcaudio_get_props	 __P((void *));
-
-struct audio_device lmcaudio_device = {
-	"LMCAudio 16-bit",
-	"x",
-	"lmcaudio"
-};
 
 int
 lmcaudio_set_params(addr, setmode, usemode, p, r)
@@ -565,39 +598,6 @@ lmcaudio_query_devinfo(addr, dip)
 	return(ENXIO);
 }
 
-struct audio_hw_if lmcaudio_hw_if = {
-	lmcaudio_open,
-	lmcaudio_close,
-	lmcaudio_drain,
-	lmcaudio_query_encoding,
-	lmcaudio_set_params,
-	lmcaudio_round_blocksize,
-	lmcaudio_set_out_port,
-	lmcaudio_get_out_port,
-	lmcaudio_set_in_port,
-	lmcaudio_get_in_port,
-	0,
-	0,
-	0,
-	lmcaudio_start_output,
-	lmcaudio_start_input,
-	lmcaudio_halt_output,
-	lmcaudio_halt_input,
-	lmcaudio_cont_output,
-	lmcaudio_cont_input,
-	lmcaudio_speaker_ctl,
-	lmcaudio_getdev,
-	0,
-	lmcaudio_set_port,
-	lmcaudio_get_port,
-	lmcaudio_query_devinfo,
-	0,
-	0,
-	0,
-	0,
-	lmcaudio_get_props,
-};
-
 void
 lmcaudio_dummy_routine(arg)
 	void *arg;
@@ -638,13 +638,13 @@ lmcaudio_dma_program(cur, end, intr, arg)
 	/* If there isn't a transfer in progress then start a new one */
 	if (ag.in_progress == 0) {
 		ag.buffer = 0;
-		outl(IOMD_SD0CR, 0x90);	/* Reset State Machine */
-		outl(IOMD_SD0CR, 0x30);	/* Reset State Machine */
+		IOMD_WRITE_WORD(IOMD_SD0CR, 0x90);	/* Reset State Machine */
+		IOMD_WRITE_WORD(IOMD_SD0CR, 0x30);	/* Reset State Machine */
 
-		outl(IOMD_SD0CURA, PHYS(cur));
-		outl(IOMD_SD0ENDA, (PHYS(cur) + size - 16)|stopflag);
-		outl(IOMD_SD0CURB, PHYS(cur));
-		outl(IOMD_SD0ENDB, (PHYS(cur) + size - 16)|stopflag);
+		IOMD_WRITE_WORD(IOMD_SD0CURA, PHYS(cur));
+		IOMD_WRITE_WORD(IOMD_SD0ENDA, (PHYS(cur) + size - 16)|stopflag);
+		IOMD_WRITE_WORD(IOMD_SD0CURB, PHYS(cur));
+		IOMD_WRITE_WORD(IOMD_SD0ENDB, (PHYS(cur) + size - 16)|stopflag);
 
 		ag.in_progress = 1;
 
@@ -693,10 +693,10 @@ lmcaudio_shutdown()
 #endif
 
 	bzero((char *)ag.silence, NBPG);
-	outl(IOMD_SD0CURA, PHYS(ag.silence));
-	outl(IOMD_SD0ENDA, (PHYS(ag.silence) + NBPG - 16) | 0x80000000);
+	IOMD_WRITE_WORD(IOMD_SD0CURA, PHYS(ag.silence));
+	IOMD_WRITE_WORD(IOMD_SD0ENDA, (PHYS(ag.silence) + NBPG - 16) | 0x80000000);
 	disable_irq(sdma_channel);
-	outl(IOMD_SD0CR, 0x90);	/* Reset State Machine */
+	IOMD_WRITE_WORD(IOMD_SD0CR, 0x90);	/* Reset State Machine */
 }
 
 #define OVERRUN 	(0x04)
@@ -708,7 +708,7 @@ int
 lmcaudio_intr(arg)
 	void *arg;
 {
-	int status = inb(IOMD_SD0ST);
+	int status = IOMD_READ_BYTE(IOMD_SD0ST);
 	void (*nintr)();
 	void *narg;
 	void (*xintr)();
@@ -758,20 +758,20 @@ lmcaudio_intr(arg)
 		}
 
 		if (direction) {
-			outl(IOMD_SD0CURB, xcur);
-			outl(IOMD_SD0ENDB, xend);
+			IOMD_WRITE_WORD(IOMD_SD0CURB, xcur);
+			IOMD_WRITE_WORD(IOMD_SD0ENDB, xend);
 		} else {
-			outl(IOMD_SD0CURA, xcur);
-			outl(IOMD_SD0ENDA, xend);
+			IOMD_WRITE_WORD(IOMD_SD0CURA, xcur);
+			IOMD_WRITE_WORD(IOMD_SD0ENDA, xend);
 		}
 		status = inb(IOMD_SD0ST);
 		if (status & OVERRUN) {
 			if (status & BANK_B) {
-				outl(IOMD_SD0CURB, xcur);
-				outl(IOMD_SD0ENDB, xend);
+				IOMD_WRITE_WORD(IOMD_SD0CURB, xcur);
+				IOMD_WRITE_WORD(IOMD_SD0ENDB, xend);
 			} else {
-				outl(IOMD_SD0CURA, xcur);
-				outl(IOMD_SD0ENDA, xend);
+				IOMD_WRITE_WORD(IOMD_SD0CURA, xcur);
+				IOMD_WRITE_WORD(IOMD_SD0ENDA, xend);
 			}
 		}
 	}

@@ -1,4 +1,4 @@
-/* $NetBSD: waveform.h,v 1.2 1996/03/18 20:50:06 mark Exp $ */
+/*	$NetBSD: waveform.h,v 1.3 1997/10/14 12:03:20 mark Exp $	*/
 
 /*
  * Copyright (c) 1994,1995 Mark Brinicombe.
