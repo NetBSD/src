@@ -1,4 +1,4 @@
-/*	$NetBSD: cd9660_vnops.c,v 1.34 1996/09/07 12:40:57 mycroft Exp $	*/
+/*	$NetBSD: cd9660_vnops.c,v 1.35 1996/09/30 15:52:00 ws Exp $	*/
 
 /*-
  * Copyright (c) 1994
@@ -899,11 +899,57 @@ cd9660_pathconf(v)
 }
 
 /*
+ * Allow changing the size for special files (and fifos).
+ */
+int
+cd9660_setattr(v)
+	void *v;
+{
+	struct vop_setattr_args /* {
+		struct vnode *a_vp;
+		struct vattr *a_vap;
+		struct ucred *a_cred;
+		struct proc *a_p;
+	} */ *ap = v;
+	struct vattr *vap = ap->a_vap;
+	struct vnode *vp = ap->a_vp;
+	
+	/*
+	 * Only size is changeable.
+	 */
+	if (vap->va_type != VNON
+	    || vap->va_nlink != VNOVAL
+	    || vap->va_fsid != VNOVAL
+	    || vap->va_fileid != VNOVAL
+	    || vap->va_blocksize != VNOVAL
+	    || vap->va_rdev != VNOVAL
+	    || (int)vap->va_bytes != VNOVAL
+	    || vap->va_gen != VNOVAL
+	    || vap->va_flags != VNOVAL
+	    || vap->va_uid != (uid_t)VNOVAL
+	    || vap->va_gid != (gid_t)VNOVAL
+	    || vap->va_atime.tv_sec != VNOVAL
+	    || vap->va_mtime.tv_sec != VNOVAL
+	    || vap->va_mode != (mode_t)VNOVAL)
+		return EOPNOTSUPP;
+	
+	if (vap->va_size != VNOVAL
+	    && vp->v_type != VCHR
+	    && vp->v_type != VBLK
+#ifdef	FIFO
+	    && vp->v_type != VFIFO
+#endif
+	    )
+		return EOPNOTSUPP;
+	
+	return VOP_TRUNCATE(vp, vap->va_size, 0, ap->a_cred, ap->a_p);
+}
+
+/*
  * Global vfs data structures for isofs
  */
 #define	cd9660_create	genfs_eopnotsupp
 #define	cd9660_mknod	genfs_eopnotsupp
-#define	cd9660_setattr	genfs_eopnotsupp
 #define	cd9660_write	genfs_eopnotsupp
 #ifdef	NFSSERVER
 int	lease_check	__P((void *));
