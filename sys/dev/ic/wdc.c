@@ -1,4 +1,4 @@
-/*	$NetBSD: wdc.c,v 1.72 1999/08/25 17:08:20 bouyer Exp $ */
+/*	$NetBSD: wdc.c,v 1.73 1999/08/30 12:58:58 bouyer Exp $ */
 
 
 /*
@@ -988,13 +988,23 @@ wdc_downgrade_mode(drvp)
 		return 0;
 
 	/*
+	 * If we were using Ultra-DMA mode > 2, downgrade to mode 2 first.
+	 * Maybe we didn't properly notice the cable type
+	 */
+	if ((drvp->drive_flags & DRIVE_UDMA) && drvp->UDMA_mode > 2) {
+		drvp->UDMA_mode = 2;
+		printf("%s: transfer error, downgrading to DMA mode %d\n",
+		    drv_dev->dv_xname, drvp->UDMA_mode);
+	}
+
+	/*
 	 * If we were using ultra-DMA, don't downgrade to multiword DMA
 	 * if we noticed a CRC error. It has been noticed that CRC errors
 	 * in ultra-DMA lead to silent data corruption in multiword DMA.
 	 * Data corruption is less likely to occur in PIO mode.
 	 */
 
-	if ((drvp->drive_flags & DRIVE_UDMA) &&
+	else if ((drvp->drive_flags & DRIVE_UDMA) &&
 	    (drvp->drive_flags & DRIVE_DMAERR) == 0) {
 		drvp->drive_flags &= ~DRIVE_UDMA;
 		drvp->drive_flags |= DRIVE_DMA;
