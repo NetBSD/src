@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_fork.c,v 1.85 2001/07/01 18:06:11 thorpej Exp $	*/
+/*	$NetBSD: kern_fork.c,v 1.86 2001/07/07 23:33:54 fvdl Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2001 The NetBSD Foundation, Inc.
@@ -155,6 +155,8 @@ sys___clone(struct proc *p, void *v, register_t *retval)
 	 */
 	if (SCARG(uap, flags) & (CLONE_PID|CLONE_PTRACE))
 		return (EINVAL);
+
+	flags = 0;
 
 	if (SCARG(uap, flags) & CLONE_VM)
 		flags |= FORK_SHAREVM;
