@@ -1,4 +1,4 @@
-/*	$NetBSD: mopprobe.c,v 1.4 1997/04/17 21:09:27 christos Exp $	*/
+/*	$NetBSD: mopprobe.c,v 1.5 1997/10/16 23:25:24 lukem Exp $	*/
 
 /*
  * Copyright (c) 1993-96 Mats O Jansson.  All rights reserved.
@@ -29,8 +29,9 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef LINT
-static char rcsid[] = "$NetBSD: mopprobe.c,v 1.4 1997/04/17 21:09:27 christos Exp $";
+#include <sys/cdefs.h>
+#ifndef lint
+__RCSID("$NetBSD: mopprobe.c,v 1.5 1997/10/16 23:25:24 lukem Exp $");
 #endif
 
 /*
@@ -41,14 +42,14 @@ static char rcsid[] = "$NetBSD: mopprobe.c,v 1.4 1997/04/17 21:09:27 christos Ex
  */
 
 #include "os.h"
-#include "common/common.h"
-#include "common/mopdef.h"
-#include "common/device.h"
-#include "common/print.h"
-#include "common/get.h"
-#include "common/cmp.h"
-#include "common/pf.h"
-#include "common/nmadef.h"
+#include "cmp.h"
+#include "common.h"
+#include "device.h"
+#include "get.h"
+#include "mopdef.h"
+#include "nmadef.h"
+#include "pf.h"
+#include "print.h"
 
 /*
  * The list of all interfaces that are being listened to.  rarp_loop()
@@ -56,15 +57,9 @@ static char rcsid[] = "$NetBSD: mopprobe.c,v 1.4 1997/04/17 21:09:27 christos Ex
  */
 struct if_info *iflist;
 
-#ifdef NO__P
-void   Loop	     (/* void */);
-void   Usage         (/* void */);
-void   mopProcess    (/* struct if_info *, u_char * */);
-#else
-void   Loop	     __P((void));
-void   Usage         __P((void));
-void   mopProcess    __P((struct if_info *, u_char *));
-#endif
+void	Usage __P((void));
+int	main __P((int, char **));
+void	mopProcess __P((struct if_info *, u_char *));
 
 int     AllFlag = 0;		/* listen on "all" interfaces  */
 int     DebugFlag = 0;		/* print debugging messages    */
@@ -72,9 +67,10 @@ int	Not3Flag = 0;		/* Not MOP V3 messages         */
 int	Not4Flag = 0;		/* Not MOP V4 messages         */
 int     oflag = 0;		/* print only once             */
 int	promisc = 1;		/* Need promisc mode           */
-char	*Program;
 
-void
+extern char *__progname;	/* from crt0.o */
+
+int
 main(argc, argv)
 	int     argc;
 	char  **argv;
@@ -82,20 +78,11 @@ main(argc, argv)
 	int     op;
 	char   *interface;
 
-	extern int optind, opterr;
-
-	if ((Program = strrchr(argv[0], '/')))
-		Program++;
-	else
-		Program = argv[0];
-	if (*Program == '-')
-		Program++;
-
 	/* All error reporting is done through syslogs. */
-	openlog(Program, LOG_PID | LOG_CONS, LOG_DAEMON);
+	openlog(__progname, LOG_PID | LOG_CONS, LOG_DAEMON);
 
 	opterr = 0;
-	while ((op = getopt(argc, argv, "ado")) != EOF) {
+	while ((op = getopt(argc, argv, "ado")) != -1) {
 		switch (op) {
 		case '3':
 			Not3Flag++;
@@ -131,13 +118,15 @@ main(argc, argv)
 		deviceInitOne(interface);
 
 	Loop();
+	/* NOTREACHED */
+	return (0);
 }
 
 void
 Usage()
 {
-	(void) fprintf(stderr, "usage: %s -a [ -3 | -4 ]\n",Program);
-	(void) fprintf(stderr, "       %s [ -3 | -4 ] interface\n",Program);
+	(void) fprintf(stderr, "usage: %s -a [ -3 | -4 ]\n", __progname);
+	(void) fprintf(stderr, "       %s [ -3 | -4 ] interface\n", __progname);
 	exit(1);
 }
 

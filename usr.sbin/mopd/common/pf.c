@@ -1,4 +1,4 @@
-/*	$NetBSD: pf.c,v 1.3 1997/03/25 03:07:27 thorpej Exp $	*/
+/*	$NetBSD: pf.c,v 1.4 1997/10/16 23:24:55 lukem Exp $	*/
 
 /*
  * Copyright (c) 1993-95 Mats O Jansson.  All rights reserved.
@@ -33,40 +33,23 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef LINT
-static char rcsid[] = "$NetBSD: pf.c,v 1.3 1997/03/25 03:07:27 thorpej Exp $";
+#include <sys/cdefs.h>
+#ifndef lint
+__RCSID("$NetBSD: pf.c,v 1.4 1997/10/16 23:24:55 lukem Exp $");
 #endif
 
-#include <stdio.h>
-#include <unistd.h>
-#include <sys/types.h>
-#include <sys/time.h>
-#include <sys/ioctl.h>
-#include <sys/file.h>
-#include <sys/socket.h>
+#include "os.h"
+
 #include <sys/uio.h>
-#include <net/if.h>
-
 #include <net/bpf.h>
-#include <sys/errno.h>
 
-#include <netinet/in.h>
-#include <netinet/if_inarp.h>
-
-#include <netdb.h>
-#include <ctype.h>
-#include <strings.h>
-
-#include <syslog.h>
-#include <varargs.h>
-
-#include "common/mopdef.h"
+#include "mopdef.h"
+#include "pf.h"
 
 /*
  * Variables
  */
 
-extern int errno;
 extern int promisc;
 
 /*
@@ -179,7 +162,7 @@ pfAddMulti(s, interface, addr)
 	strcpy(ifr.ifr_name, interface);
 
 	ifr.ifr_addr.sa_family = AF_UNSPEC;
-	bcopy(addr, ifr.ifr_addr.sa_data, 6);
+	memmove(ifr.ifr_addr.sa_data, addr, 6);
 	
 	/*
 	 * open a socket, temporarily, to use for SIOC* ioctls
@@ -214,7 +197,7 @@ pfDelMulti(s, interface, addr)
 	strcpy(ifr.ifr_name, interface);
 	
 	ifr.ifr_addr.sa_family = AF_UNSPEC;
-	bcopy(addr, ifr.ifr_addr.sa_data, 6);
+	memmove(ifr.ifr_addr.sa_data, addr, 6);
 	
 	/*
 	 * open a socket, temporarily, to use for SIOC* ioctls

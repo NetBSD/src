@@ -1,4 +1,4 @@
-/*	$NetBSD: mopchk.c,v 1.5 1997/10/16 07:36:50 lukem Exp $	*/
+/*	$NetBSD: mopchk.c,v 1.6 1997/10/16 23:25:12 lukem Exp $	*/
 
 /*
  * Copyright (c) 1995-96 Mats O Jansson.  All rights reserved.
@@ -29,8 +29,9 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef LINT
-static char rcsid[] = "$NetBSD: mopchk.c,v 1.5 1997/10/16 07:36:50 lukem Exp $";
+#include <sys/cdefs.h>
+#ifndef lint
+__RCSID("$NetBSD: mopchk.c,v 1.6 1997/10/16 23:25:12 lukem Exp $");
 #endif
 
 /*
@@ -40,11 +41,11 @@ static char rcsid[] = "$NetBSD: mopchk.c,v 1.5 1997/10/16 07:36:50 lukem Exp $";
  */
 
 #include "os.h"
-#include "common/common.h"
-#include "common/mopdef.h"
-#include "common/device.h"
-#include "common/pf.h"
-#include "common/file.h"
+#include "common.h"
+#include "device.h"
+#include "file.h"
+#include "mopdef.h"
+#include "pf.h"
 
 /*
  * The list of all interfaces that are being listened to.  rarp_loop()
@@ -52,21 +53,18 @@ static char rcsid[] = "$NetBSD: mopchk.c,v 1.5 1997/10/16 07:36:50 lukem Exp $";
  */
 struct if_info *iflist;
 
-#ifdef NO__P
-void   Usage         (/* void */);
-void   mopProcess    (/* struct if_info *, u_char * */);
-#else
-void   Usage         __P((void));
-void   mopProcess    __P((struct if_info *, u_char *));
-#endif
+void	Usage __P((void));
+int	main __P((int, char **));
+void	mopProcess __P((struct if_info *, u_char *));
 
 int     AllFlag = 0;		/* listen on "all" interfaces  */
 int	VersionFlag = 0;	/* Show version */
 int	promisc = 0;		/* promisc mode not needed */
-char	*Program;
+
+extern char	*__progname;	/* from crt0.o */
 extern char	version[];
 
-void
+int
 main(argc, argv)
 	int     argc;
 	char  **argv;
@@ -76,18 +74,11 @@ main(argc, argv)
 	struct if_info *ii;
 	int	err, aout;
 
-	if ((Program = strrchr(argv[0], '/')))
-		Program++;
-	else
-		Program = argv[0];
-	if (*Program == '-')
-		Program++;
-
 	/* All error reporting is done through syslogs. */
-	openlog(Program, LOG_PID | LOG_CONS, LOG_DAEMON);
+	openlog(__progname, LOG_PID | LOG_CONS, LOG_DAEMON);
 
 	opterr = 0;
-	while ((op = getopt(argc, argv, "av")) != EOF) {
+	while ((op = getopt(argc, argv, "av")) != -1) {
 		switch (op) {
 		case 'a':
 			AllFlag++;
@@ -102,23 +93,22 @@ main(argc, argv)
 	}
 	
 	if (VersionFlag)
-		printf("%s: Version %s\n",Program,version);
+		printf("%s: Version %s\n", __progname, version);
 
 	if (AllFlag) {
 		if (VersionFlag)
 			printf("\n");
 		iflist = NULL;
 		deviceInitAll();
-		if (iflist == NULL) {
+		if (iflist == NULL)
 			printf("No interface\n");
-		} else {
+		else {
 			printf("Interface Address\n");
-			for (ii = iflist; ii; ii = ii->next) {
+			for (ii = iflist; ii; ii = ii->next)
 				printf("%-9s %x:%x:%x:%x:%x:%x\n",
-				       ii->if_name,
-				       ii->eaddr[0],ii->eaddr[1],ii->eaddr[2],
-				       ii->eaddr[3],ii->eaddr[4],ii->eaddr[5]);
-			}
+				    ii->if_name, ii->eaddr[0], ii->eaddr[1],
+				    ii->eaddr[2], ii->eaddr[3], ii->eaddr[4],
+				    ii->eaddr[5]);
 		}
 	}
 	
@@ -131,42 +121,43 @@ main(argc, argv)
 		if (i)	printf("\n");
 		i++;
 		filename = argv[optind++];
-		printf("Checking: %s\n",filename);
+		printf("Checking: %s\n", filename);
 		fd = open(filename, O_RDONLY, 0);
-		if (fd == -1) {
+		if (fd == -1)
 			printf("Unknown file.\n");
-		} else {
+		else {
 			err = CheckAOutFile(fd);
 			if (err == 0) {
 				if (GetAOutFileInfo(fd, 0, 0, 0, 0,
 						    0, 0, 0, 0, &aout) < 0) {
-					printf("Some failure in GetAOutFileInfo\n");
+					printf(
+					"Some failure in GetAOutFileInfo\n");
 					aout = -1;
 				}
-			} else {
+			} else
 				aout = -1;
-			}
 			if (aout == -1)
 				err = CheckMopFile(fd);
-			if (aout == -1 && err == 0) {
-				if (GetMopFileInfo(fd, 0, 0) < 0) {
-					printf("Some failure in GetMopFileInfo\n");
-				}
-			};
+			if (aout == -1 && err == 0)
+				if (GetMopFileInfo(fd, 0, 0) < 0)
+					printf(
+					    "Some failure in GetMopFileInfo\n");
 		}
 	}
-
+	return (0);
 }
 
 void
 Usage()
 {
-	(void) fprintf(stderr, "usage: %d [-a] [-v] [filename...]\n",Program);
+	(void) fprintf(stderr, "usage: %s [-a] [-v] [filename...]\n",
+	    __progname);
 	exit(1);
 }
 
 /*
- * Process incomming packages, NOT. 
+ * Process incomming packages.
+ * Doesn't actually do anything for mopchk(1)
  */
 void
 mopProcess(ii, pkt)
@@ -174,4 +165,3 @@ mopProcess(ii, pkt)
 	u_char *pkt;
 {
 }
-

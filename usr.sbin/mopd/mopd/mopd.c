@@ -1,4 +1,4 @@
-/*	$NetBSD: mopd.c,v 1.4 1997/04/17 21:09:19 christos Exp $	*/
+/*	$NetBSD: mopd.c,v 1.5 1997/10/16 23:25:17 lukem Exp $	*/
 
 /*
  * Copyright (c) 1993-96 Mats O Jansson.  All rights reserved.
@@ -29,8 +29,9 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef LINT
-static char rcsid[] = "$NetBSD: mopd.c,v 1.4 1997/04/17 21:09:19 christos Exp $";
+#include <sys/cdefs.h>
+#ifndef lint
+__RCSID("$NetBSD: mopd.c,v 1.5 1997/10/16 23:25:17 lukem Exp $");
 #endif
 
 /*
@@ -41,16 +42,16 @@ static char rcsid[] = "$NetBSD: mopd.c,v 1.4 1997/04/17 21:09:19 christos Exp $"
  */
 
 #include "os.h"
-#include "common/common.h"
-#include "common/mopdef.h"
-#include "common/device.h"
-#include "common/print.h"
-#include "common/pf.h"
-#include "common/cmp.h"
-#include "common/get.h"
-#include "common/dl.h"
-#include "common/rc.h"
+#include "cmp.h"
+#include "common.h"
+#include "device.h"
+#include "dl.h"
+#include "get.h"
+#include "mopdef.h"
+#include "pf.h"
+#include "print.h"
 #include "process.h"
+#include "rc.h"
 
 /*
  * The list of all interfaces that are being listened to. 
@@ -58,15 +59,9 @@ static char rcsid[] = "$NetBSD: mopd.c,v 1.4 1997/04/17 21:09:19 christos Exp $"
  */
 struct if_info *iflist;
 
-#ifdef NO__P
-void   Loop	     (/* void */);
-void   Usage         (/* void */);
-void   mopProcess    (/* struct if_info *, u_char * */);
-#else
-void   Loop	     __P((void));
-void   Usage         __P((void));
-void   mopProcess    __P((struct if_info *, u_char *));
-#endif
+void	Usage __P((void));
+int	main __P((int, char **));
+void	mopProcess __P((struct if_info *, u_char *));
 
 int     AllFlag = 0;		/* listen on "all" interfaces */
 int     DebugFlag = 0;		/* print debugging messages   */
@@ -75,28 +70,20 @@ int	VersionFlag = 0;	/* print version              */
 int	Not3Flag = 0;		/* Not MOP V3 messages.       */
 int	Not4Flag = 0;		/* Not MOP V4 messages.       */
 int	promisc = 1;		/* Need promisc mode    */
-char    *Program;
 
-void
+extern char *__progname;	/* from crt0.o */
+
+int
 main(argc, argv)
 	int     argc;
 	char  **argv;
 {
-	int	c, pid, devnull, f;
+	int	c, pid;
 	char   *interface;
 
-	extern int optind;
 	extern char version[];
 
-	if ((Program = strrchr(argv[0], '/')))
-		Program++;
-	else
-		Program = argv[0];
-
-	if (*Program == '-')
-		Program++;
-
-	while ((c = getopt(argc, argv, "34adfv")) != EOF)
+	while ((c = getopt(argc, argv, "34adfv")) != -1)
 		switch (c) {
 			case '3':
 				Not3Flag++;
@@ -122,7 +109,7 @@ main(argc, argv)
 		}
 	
 	if (VersionFlag) {
-		fprintf(stdout,"%s: version %s\n", Program, version);
+		fprintf(stdout,"%s: version %s\n", __progname, version);
 		exit(0);
 	}
 
@@ -135,16 +122,13 @@ main(argc, argv)
 		Usage();
 
 	/* All error reporting is done through syslogs. */
-	openlog(Program, LOG_PID | LOG_CONS, LOG_DAEMON);
+	openlog(__progname, LOG_PID | LOG_CONS, LOG_DAEMON);
 
-	if ((!ForegroundFlag) && DebugFlag) {
+	if ((!ForegroundFlag) && DebugFlag)
 		fprintf(stdout,
-			"%s: not running as daemon, -d given.\n",
-			Program);
-	}
+		    "%s: not running as daemon, -d given.\n", __progname);
 
 	if ((!ForegroundFlag) && (!DebugFlag)) {
-
 		pid = fork();
 		if (pid > 0)
 			/* Parent exits, leaving child in background. */
@@ -156,32 +140,10 @@ main(argc, argv)
 			}
 
 		/* Fade into the background */
-		f = open("/dev/tty", O_RDWR);
-		if (f >= 0) {
-			if (ioctl(f, TIOCNOTTY, 0) < 0) {
-				syslog(LOG_ERR, "TIOCNOTTY: %m");
-				exit(0);
-			}
-			(void) close(f);
-		}
-		
-		(void) chdir("/");
-#ifdef SETPGRP_NOPARAM
-		(void) setpgrp();
-#else
-		(void) setpgrp(0, getpid());
-#endif
-		devnull = open("/dev/null", O_RDWR);
-		if (devnull >= 0) {
-			(void) dup2(devnull, 0);
-			(void) dup2(devnull, 1);
-			(void) dup2(devnull, 2);
-			if (devnull > 2)
-				(void) close(devnull);
-		}
+		daemon(0, 0);
 	}
 
-	syslog(LOG_INFO, "%s %s started.", Program, version);
+	syslog(LOG_INFO, "%s %s started.", __progname, version);
 
 	if (AllFlag)
  		deviceInitAll();
@@ -189,13 +151,17 @@ main(argc, argv)
 		deviceInitOne(interface);
 
 	Loop();
+	/* NOTREACHED */
+	return (0);
 }
 
 void
 Usage()
 {
-	(void) fprintf(stderr, "usage: %s -a [ -d -f -v ] [ -3 | -4 ]\n",Program);
-	(void) fprintf(stderr, "       %s [ -d -f -v ] [ -3 | -4 ] interface\n",Program);
+	(void) fprintf(stderr, "usage: %s -a [ -d -f -v ] [ -3 | -4 ]\n",
+	    __progname);
+	(void) fprintf(stderr, "       %s [ -d -f -v ] [ -3 | -4 ] interface\n",
+	    __progname);
 	exit(1);
 }
 
