@@ -1,4 +1,4 @@
-/*	$NetBSD: ss_scanjet.c,v 1.14 1997/10/18 19:51:11 thorpej Exp $	*/
+/*	$NetBSD: ss_scanjet.c,v 1.14.2.1 1997/11/22 04:02:52 mellon Exp $	*/
 
 /*
  * Copyright (c) 1995 Kenneth Stailey.  All rights reserved.
@@ -114,6 +114,10 @@ scanjet_attach(ss, sa)
 	if (!bcmp(sa->sa_inqbuf.product, "C1130A", 6)) {
 		ss->sio.scan_scanner_type = HP_SCANJET_IIC;
 		printf("HP ScanJet 4p");
+	}
+	if (!bcmp(sa->sa_inqbuf.product, "C5110A", 6)) {
+		ss->sio.scan_scanner_type = HP_SCANJET_IIC;
+		printf("HP ScanJet 5p");
 	}
 
 	SC_DEBUG(sc_link, SDEV_DB1, ("scanjet_attach: scanner_type = %d\n",
