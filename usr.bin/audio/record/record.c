@@ -1,4 +1,4 @@
-/*	$NetBSD: record.c,v 1.18 2002/01/15 08:59:21 mrg Exp $	*/
+/*	$NetBSD: record.c,v 1.19 2002/01/15 17:02:52 mrg Exp $	*/
 
 /*
  * Copyright (c) 1999 Matthew R. Green
@@ -48,6 +48,7 @@
 #include <unistd.h>
 
 #include "libaudio.h"
+#include "auconv.h"
 
 audio_info_t info, oinfo;
 ssize_t	total_size = -1;
@@ -71,9 +72,7 @@ int	channels;
 struct timeval record_time;
 struct timeval start_time;	/* XXX because that's what gettimeofday returns */
 
-void (*conv_func) (char *, size_t);
-void swap16 (char *, size_t);
-void swap32 (char *, size_t);
+void (*conv_func) (u_char *, size_t);
 
 void usage (void);
 int main (int, char *[]);
@@ -274,7 +273,7 @@ main(argc, argv)
 		if (read(audiofd, buffer, bufsize) != bufsize)
 			err(1, "read failed");
 		if (conv_func)
-			conv_func(buffer, bufsize);
+			(*conv_func)(buffer, bufsize);
 		if (write(outfd, buffer, bufsize) != bufsize)
 			err(1, "write failed");
 		total_size += bufsize;
@@ -322,14 +321,35 @@ write_header_sun(hdrp, lenp, leftp)
 {
 	static int warned = 0;
 	static sun_audioheader auh;
-	int sunenc;
+	int sunenc, oencoding = encoding;
 
+	if (encoding == AUDIO_ENCODING_ULINEAR_LE) {
+		if (precision == 16)
+			conv_func = swap_bytes;
+		else if (precision == 32)
+			conv_func = swap_bytes32;
+		encoding = AUDIO_ENCODING_SLINEAR_BE;
+	} else if (encoding == AUDIO_ENCODING_ULINEAR_BE) {
+		if (precision == 16)
+			conv_func = change_sign16_be;
+		else if (precision == 32)
+			conv_func = change_sign32_be;
+		encoding = AUDIO_ENCODING_SLINEAR_BE;
+	} else if (encoding == AUDIO_ENCODING_SLINEAR_LE) {
+		if (precision == 16)
+			conv_func = change_sign16_swap_bytes_le;
+		else if (precision == 32)
+			conv_func = change_sign32_swap_bytes_le;
+		encoding = AUDIO_ENCODING_SLINEAR_BE;
+	}
+	
 	/* if we can't express this as a Sun header, don't write any */
 	if (audio_encoding_to_sun(encoding, precision, &sunenc) != 0) {
 		if (!qflag && !warned)
 			warnx("failed to convert to sun encoding from %d:%d; "
 			      "Sun audio header not written",
-			      encoding, precision);
+			      oencoding, precision);
+		conv_func = 0;
 		warned = 1;
 		return -1;
 	}
@@ -355,37 +375,6 @@ write_header_sun(hdrp, lenp, leftp)
 	*(sun_audioheader **)hdrp = &auh;
 	*lenp = sizeof auh;
 	return 0;
-}
-
-void
-swap16(buf, len)
-	char *buf;
-	size_t len;
-{
-	char *p, t;
-
-	for (p = buf; p < buf + len + 1; p += 2) {
-		t = p[0];
-		p[0] = p[1];
-		p[1] = t;
-	}
-}
-
-void
-swap32(buf, len)
-	char *buf;
-	size_t len;
-{
-	char *p, t;
-
-	for (p = buf; p < buf + len + 3; p += 4) {
-		t = p[0];
-		p[0] = p[3];
-		p[3] = t;
-		t = p[1];
-		p[1] = p[2];
-		p[2] = t;
-	}
 }
 
 int
@@ -479,9 +468,9 @@ write_header_wav(hdrp, lenp, leftp)
 	case AUDIO_ENCODING_ULINEAR_BE:
 	case AUDIO_ENCODING_SLINEAR_BE:
 		if (bps == 16)
-			conv_func = swap16;
+			conv_func = swap_bytes;
 		else if (bps == 32)
-			conv_func = swap32;
+			conv_func = swap_bytes32;
 		/* FALLTHROUGH */
 	case AUDIO_ENCODING_PCM16:
 	case AUDIO_ENCODING_ULINEAR_LE:
