@@ -1,4 +1,4 @@
-/*	$NetBSD: ohci.c,v 1.64 2000/01/19 00:23:58 augustss Exp $	*/
+/*	$NetBSD: ohci.c,v 1.65 2000/01/25 12:06:21 augustss Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/ohci.c,v 1.22 1999/11/17 22:33:40 n_hibma Exp $	*/
 
 /*
@@ -160,6 +160,7 @@ static usbd_status	ohci_root_ctrl_transfer __P((usbd_xfer_handle));
 static usbd_status	ohci_root_ctrl_start __P((usbd_xfer_handle));
 static void		ohci_root_ctrl_abort __P((usbd_xfer_handle));
 static void		ohci_root_ctrl_close __P((usbd_pipe_handle));
+static void		ohci_root_ctrl_done  __P((usbd_xfer_handle));
 
 static usbd_status	ohci_root_intr_transfer __P((usbd_xfer_handle));
 static usbd_status	ohci_root_intr_start __P((usbd_xfer_handle));
@@ -275,7 +276,7 @@ static struct usbd_pipe_methods ohci_root_ctrl_methods = {
 	ohci_root_ctrl_abort,
 	ohci_root_ctrl_close,
 	ohci_noop,
-	0,
+	ohci_root_ctrl_done,
 };
 
 static struct usbd_pipe_methods ohci_root_intr_methods = {	
@@ -1253,6 +1254,13 @@ ohci_rhsc(sc, xfer)
 
 void
 ohci_root_intr_done(xfer)
+	usbd_xfer_handle xfer;
+{
+	xfer->hcpriv = NULL;
+}
+
+void
+ohci_root_ctrl_done(xfer)
 	usbd_xfer_handle xfer;
 {
 	xfer->hcpriv = NULL;
