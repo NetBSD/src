@@ -1,4 +1,4 @@
-/* $NetBSD: bus_dma.h,v 1.2 1999/08/03 09:16:00 dbj Exp $ */
+/* $NetBSD: bus_dma.h,v 1.3 1999/08/05 01:50:59 dbj Exp $ */
 
 /*
  * This file was extracted from from alpha/include/bus.h
@@ -117,7 +117,7 @@ struct next68k_bus_dma_segment {
 	bus_size_t	ds_len;		/* length of transfer */
 
 	/* Machine dependant fields: */
-	bus_size_t  ds_read_len;	/* length of successful transfer */
+	bus_size_t  ds_xfer_len;			/* length of successful transfer */
 };
 typedef struct next68k_bus_dma_segment	bus_dma_segment_t;
 
