@@ -1,4 +1,4 @@
-/*	$NetBSD: db_interface.c,v 1.30 1999/10/28 06:49:20 lukem Exp $	*/
+/*	$NetBSD: db_interface.c,v 1.31 2000/06/29 08:52:57 mrg Exp $	*/
 
 /* 
  * Copyright (c) 1996 Scott K. Stevens
@@ -41,7 +41,7 @@
 #include <sys/systm.h>	/* just for boothowto */
 #include <sys/exec.h>
 
-#include <vm/vm.h>
+#include <uvm/uvm_extern.h>
 
 #include <machine/db_machdep.h>
 #include <machine/katelib.h>

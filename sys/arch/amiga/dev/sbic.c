@@ -1,4 +1,4 @@
-/*	$NetBSD: sbic.c,v 1.41 2000/06/27 04:18:52 mrg Exp $	*/
+/*	$NetBSD: sbic.c,v 1.42 2000/06/29 08:44:05 mrg Exp $	*/
 
 /*
  * Copyright (c) 1994 Christian E. Hopps
@@ -55,7 +55,6 @@
 #include <dev/scsipi/scsi_all.h>
 #include <dev/scsipi/scsipi_all.h>
 #include <dev/scsipi/scsiconf.h>
-#include <vm/vm.h>
 #include <uvm/uvm_extern.h>
 #include <machine/cpu.h>
 #include <amiga/amiga/device.h>

@@ -1,4 +1,4 @@
-/*	$NetBSD: footbridge_machdep.c,v 1.3 2000/06/26 14:20:35 mrg Exp $	*/
+/*	$NetBSD: footbridge_machdep.c,v 1.4 2000/06/29 08:53:00 mrg Exp $	*/
 
 /*
  * Copyright (c) 1997 Mark Brinicombe.
@@ -36,7 +36,6 @@
 
 #include <sys/param.h>
 #include <sys/systm.h>
-#include <vm/vm.h>
 #include <uvm/uvm_extern.h>
 #include <machine/pmap.h>
 #include <machine/pte.h>

@@ -1,4 +1,4 @@
-/*	$NetBSD: db_memrw.c,v 1.10 1999/09/25 21:47:04 is Exp $	*/
+/*	$NetBSD: db_memrw.c,v 1.11 2000/06/29 08:44:03 mrg Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -46,7 +46,7 @@
 #include <sys/param.h>
 #include <sys/proc.h>
 
-#include <vm/vm.h>
+#include <uvm/uvm_extern.h>
 
 #include <machine/db_machdep.h>
 #include <ddb/db_sym.h>

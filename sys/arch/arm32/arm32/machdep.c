@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.80 2000/06/26 14:20:34 mrg Exp $	*/
+/*	$NetBSD: machdep.c,v 1.81 2000/06/29 08:52:58 mrg Exp $	*/
 
 /*
  * Copyright (c) 1994-1998 Mark Brinicombe.
@@ -58,7 +58,7 @@
 #include <sys/vnode.h>
 #include <sys/msgbuf.h>
 #include <sys/device.h>
-#include <vm/vm.h>
+#include <uvm/uvm_extern.h>
 #include <sys/sysctl.h>
 #include <sys/syscallargs.h>
 
