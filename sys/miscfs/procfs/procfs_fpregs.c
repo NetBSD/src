@@ -1,4 +1,4 @@
-/*	$NetBSD: procfs_fpregs.c,v 1.6 1997/08/27 08:52:52 thorpej Exp $	*/
+/*	$NetBSD: procfs_fpregs.c,v 1.6.28.1 2001/03/30 21:47:41 he Exp $	*/
 
 /*
  * Copyright (c) 1993 Jan-Simon Pendry
@@ -98,8 +98,9 @@ procfs_dofpregs(curp, p, pfs, uio)
 }
 
 int
-procfs_validfpregs(p)
+procfs_validfpregs(p, mp)
 	struct proc *p;
+	struct mount *mp;
 {
 
 #if defined(PT_SETFPREGS) || defined(PT_GETFPREGS)
