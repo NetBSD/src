@@ -1,4 +1,4 @@
-/*	$NetBSD: mount_portal.c,v 1.14 1999/03/04 03:02:43 bgrayson Exp $	*/
+/*	$NetBSD: mount_portal.c,v 1.15 1999/08/16 06:34:50 bgrayson Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993, 1994
@@ -46,7 +46,7 @@ __COPYRIGHT("@(#) Copyright (c) 1992, 1993, 1994\n\
 #if 0
 static char sccsid[] = "@(#)mount_portal.c	8.6 (Berkeley) 4/26/95";
 #else
-__RCSID("$NetBSD: mount_portal.c,v 1.14 1999/03/04 03:02:43 bgrayson Exp $");
+__RCSID("$NetBSD: mount_portal.c,v 1.15 1999/08/16 06:34:50 bgrayson Exp $");
 #endif
 #endif /* not lint */
 
@@ -160,6 +160,16 @@ main(argc, argv)
 	mountpt = argv[optind+1];
 
 	/*
+	 * If configuration file is not specified with an
+	 * absolute pathname, complain and die.  We want to
+	 * check for this before we call daemon() and lose
+	 * access to stderr.
+	 */
+	if (conf[0] != '/') {
+	  errx(-1, "Error:  the configuration file must be specified as an\n"
+	      "absolute path, as the daemon chdir's to / immediately.\n");
+	}
+	/*
 	 * Construct the listening socket
 	 */
 	un.sun_family = AF_LOCAL;
@@ -190,7 +200,11 @@ main(argc, argv)
 	/*
 	 * Everything is ready to go - now is a good time to fork
 	 */
+#ifndef DEBUG
 	daemon(0, 0);
+#else
+	daemon(0, 1);	/* Keep stderr around. */
+#endif
 
 	/*
 	 * Start logging (and change name)
