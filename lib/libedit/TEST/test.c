@@ -46,7 +46,7 @@ __COPYRIGHT("@(#) Copyright (c) 1992, 1993\n\
 #if 0
 static char sccsid[] = "@(#)test.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: test.c,v 1.5 1998/05/20 01:12:25 christos Exp $");
+__RCSID("$NetBSD: test.c,v 1.6 1998/05/20 01:38:53 christos Exp $");
 #endif
 #endif /* not lint && not SCCSID */
 
@@ -185,6 +185,7 @@ main(argc, argv)
 	if (tok_line(tok, buf, &ac, &av) > 0)
 	    ncontinuation = 1;
 
+#if 0
 	if (continuation) {
 	    /*
 	     * Append to the right event in case the user
@@ -198,6 +199,10 @@ main(argc, argv)
 	    history(hist, &ev, H_ENTER, buf);
 	    lastevent = ev.num;
 	}
+#else
+	/* Simpler */
+	history(hist, &ev, continuation ? H_APPEND : H_ENTER, buf);
+#endif
 
 	continuation = ncontinuation;
 	ncontinuation = 0;
