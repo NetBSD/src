@@ -1,4 +1,4 @@
-.\"	$NetBSD: menu_cursor.3,v 1.3 2001/02/26 01:26:05 blymn Exp $
+.\"	$NetBSD: menu_cursor.3,v 1.4 2001/04/29 19:07:06 wiz Exp $
 .\"
 .\" Copyright (c) 1999
 .\"	Brett Lymn - blymn@baea.com.au, brett_lymn@yahoo.com.au
@@ -29,12 +29,12 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.Dd September, 1999
+.Dd September 10, 1999
 .Dt MENU_CURSOR 3
-.Os BSD 4
+.Os
 .Sh NAME
 .Nm pos_menu_cursor
-.Nd menu library
+.Nd position cursor in menu window
 .Sh LIBRARY
 .Lb libmenu
 .Sh SYNOPSIS
@@ -50,36 +50,43 @@ correct position in the menu.
 .Sh RETURN VALUES
 The functions return one of the following error values:
 .Pp
-.ta 20
-.nf
-E_OK			The function was successful
-E_SYSTEM_ERROR		There was a system error during the call.
-E_BAD_ARGUMENT		One or more of the arguments passed to the function
-			was incorrect.
-E_POSTED		The menu is already posted.
-E_CONNECTED		An item was already connected to a menu.
-E_BAD_STATE		The function was called from within an initialisation
-			or termination routine.
-E_NO_ROOM		The menu does not fit within the subwindow.
-E_NOT_POSTED		The menu is not posted
-E_UNKNOWN_COMMAND	The menu driver does not recognise the request
-			passed to it.
-E_NO_MATCH		The character search failed to find a match.
-E_NOT_SELECTABLE	The item could not be selected.
-E_NOT_CONNECTED		The item is not connected to a menu.
-E_REQUEST_DENIED	The menu driver could not process the request.
-.fi
-.ft 1
-.br
-.ne 8
+.Bl -tag -width E_UNKNOWN_COMMAND -compact
+.It Er E_OK
+The function was successful.
+.It Er E_SYSTEM_ERROR
+There was a system error during the call.
+.It Er E_BAD_ARGUMENT
+One or more of the arguments passed to the function was incorrect.
+.It Er E_POSTED
+The menu is already posted.
+.It Er E_CONNECTED
+An item was already connected to a menu.
+.It Er E_BAD_STATE
+The function was called from within an initialisation or termination
+routine.
+.It Er E_NO_ROOM
+The menu does not fit within the subwindow.
+.It Er E_NOT_POSTED
+The menu is not posted.
+.It Er E_UNKNOWN_COMMAND
+The menu driver does not recognise the request passed to it.
+.It Er E_NO_MATCH
+The character search failed to find a match.
+.It Er E_NOT_SELECTABLE
+The item could not be selected.
+.It Er E_NOT_CONNECTED
+The item is not connected to a menu.
+.It Er E_REQUEST_DENIED
+The menu driver could not process the request.
+.El
 .Sh SEE ALSO
 .Xr curses 3 ,
 .Xr menus 3
 .Sh NOTES
 The header
-.Xr <menu.h>
+.Pa <menu.h>
 automatically includes both
-.Xr <curses.h>
+.Pa <curses.h>
 and
-.Xr <eti.h>
+.Pa <eti.h> .
 
