@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs_data.h,v 1.310.2.12 2002/02/28 17:52:39 nathanw Exp $	*/
+/*	$NetBSD: pcidevs_data.h,v 1.310.2.13 2002/02/28 18:39:48 nathanw Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD
+ *	NetBSD: pcidevs,v 1.306.2.11 2002/02/28 18:37:05 nathanw Exp 
  */
 
 /*
@@ -1096,7 +1096,7 @@ const struct pci_knowndev pci_knowndevs[] = {
 	    "3D Rage Pro (AGP 1x)",
 	},
 	{
-	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RAGE_PRO_PCI,
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RAGE_PRO_PCI_B,
 	    0,
 	    "ATI Technologies",
 	    "3D Rage Pro",
@@ -1108,7 +1108,7 @@ const struct pci_knowndev pci_knowndevs[] = {
 	    "Rage XL (AGP)",
 	},
 	{
-	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RAGE_PRO_PCI_1,
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RAGE_PRO_PCI_P,
 	    0,
 	    "ATI Technologies",
 	    "3D Rage Pro",
@@ -1118,6 +1118,12 @@ const struct pci_knowndev pci_knowndevs[] = {
 	    0,
 	    "ATI Technologies",
 	    "3D Rage Pro (limited 3D)",
+	},
+	{
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RAGE_XL_PCI,
+	    0,
+	    "ATI Technologies",
+	    "Rage XL",
 	},
 	{
 	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RAGE_II,

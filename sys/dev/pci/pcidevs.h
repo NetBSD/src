@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs.h,v 1.312.2.12 2002/02/28 17:52:38 nathanw Exp $	*/
+/*	$NetBSD: pcidevs.h,v 1.312.2.13 2002/02/28 18:39:47 nathanw Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD
+ *	NetBSD: pcidevs,v 1.306.2.11 2002/02/28 18:37:05 nathanw Exp 
  */
 
 /*
@@ -815,10 +815,11 @@
 #define	PCI_PRODUCT_ATI_MACH64_CX	0x4358		/* Mach64 CX */
 #define	PCI_PRODUCT_ATI_RAGE_PRO_AGP	0x4742		/* 3D Rage Pro (AGP) */
 #define	PCI_PRODUCT_ATI_RAGE_PRO_AGP1X	0x4744		/* 3D Rage Pro (AGP 1x) */
-#define	PCI_PRODUCT_ATI_RAGE_PRO_PCI	0x4749		/* 3D Rage Pro */
+#define	PCI_PRODUCT_ATI_RAGE_PRO_PCI_B	0x4749		/* 3D Rage Pro */
 #define	PCI_PRODUCT_ATI_RAGE_XL_AGP	0x474d		/* Rage XL (AGP) */
-#define	PCI_PRODUCT_ATI_RAGE_PRO_PCI_1	0x4750		/* 3D Rage Pro */
+#define	PCI_PRODUCT_ATI_RAGE_PRO_PCI_P	0x4750		/* 3D Rage Pro */
 #define	PCI_PRODUCT_ATI_RAGE_PRO_PCI_L	0x4751		/* 3D Rage Pro (limited 3D) */
+#define	PCI_PRODUCT_ATI_RAGE_XL_PCI	0x4752		/* Rage XL */
 #define	PCI_PRODUCT_ATI_RAGE_II	0x4754		/* 3D Rage I/II */
 #define	PCI_PRODUCT_ATI_RAGE_IIP	0x4755		/* 3D Rage II+ */
 #define	PCI_PRODUCT_ATI_RAGE_IIC_PCI	0x4756		/* 3D Rage IIC */
