@@ -41,7 +41,7 @@
  * otherwise) arising in any way out of the use of this software, even if
  * advised of the possibility of such damage.
  *
- * $Id: vinumioctl.c,v 1.1.1.1 2003/10/10 03:08:38 grog Exp $
+ * $Id: vinumioctl.c,v 1.2 2004/09/17 19:21:03 jdolecek Exp $
  * $FreeBSD$
  */
 
@@ -107,8 +107,6 @@ vinumioctl(dev_t dev,
 		return ENOTTY;				    /* not my kind of ioctl */
 	    }
 
-	    return 0;					    /* pretend we did it */
-
 	case VINUM_PLEX_TYPE:
 	    objno = Plexno(dev);
 
@@ -131,8 +129,6 @@ vinumioctl(dev_t dev,
 	    default:
 		return ENOTTY;				    /* not my kind of ioctl */
 	    }
-
-	    return 0;					    /* pretend we did it */
 
 	case VINUM_VOLUME_TYPE:
 	    objno = Volno(dev);
@@ -181,7 +177,8 @@ vinumioctl(dev_t dev,
 	    }
 	    break;
 	}
-    return 0;						    /* XXX */
+
+    return EINVAL;
 }
 
 /* Handle ioctls for the super device */
@@ -423,10 +420,9 @@ vinum_super_ioctl(dev_t dev,
 	return 0;
 
     default:
-	/* FALLTHROUGH */
-	break;
+	/* unsupported ioctl */
+	return EINVAL;
     }
-    return 0;						    /* to keep the compiler happy */
 }
 
 /*
