@@ -1,4 +1,4 @@
-/*	$NetBSD: ifconfig.c,v 1.78 2000/04/13 07:39:57 itojun Exp $	*/
+/*	$NetBSD: ifconfig.c,v 1.79 2000/04/20 02:08:55 enami Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 2000 The NetBSD Foundation, Inc.
@@ -80,7 +80,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1993\n\
 #if 0
 static char sccsid[] = "@(#)ifconfig.c	8.2 (Berkeley) 2/16/94";
 #else
-__RCSID("$NetBSD: ifconfig.c,v 1.78 2000/04/13 07:39:57 itojun Exp $");
+__RCSID("$NetBSD: ifconfig.c,v 1.79 2000/04/20 02:08:55 enami Exp $");
 #endif
 #endif /* not lint */
 
@@ -124,7 +124,7 @@ __RCSID("$NetBSD: ifconfig.c,v 1.78 2000/04/13 07:39:57 itojun Exp $");
 #include <ifaddrs.h>
 #endif
 
-struct	ifreq		ifr, flagreq, ridreq;
+struct	ifreq		ifr, ridreq;
 struct	ifaliasreq	addreq __attribute__((aligned(4)));
 #ifdef INET6
 struct	in6_ifreq	ifr6;
@@ -348,6 +348,7 @@ main(argc, argv)
 	int argc;
 	char *argv[];
 {
+	struct ifreq ifreq;
 	int ch;
 
 	/* Parse command-line options */
@@ -555,8 +556,13 @@ main(argc, argv)
 		if (ioctl(s, afp->af_aifaddr, afp->af_addreq) < 0)
 			warn("SIOCAIFADDR");
 	}
-	if (reset_if_flags && ioctl(s, SIOCSIFFLAGS, (caddr_t)&flagreq) < 0)
-		err(1, "SIOCSIFFLAGS");
+
+	if (reset_if_flags) {
+		(void) strncpy(ifreq.ifr_name, name, sizeof(ifreq.ifr_name));
+		ifreq.ifr_flags = flags;
+		if (ioctl(s, SIOCSIFFLAGS, (caddr_t)&ifreq) < 0)
+			err(1, "SIOCSIFFLAGS");
+	}
 	exit(0);
 }
 
@@ -857,18 +863,20 @@ setifflags(vname, value)
 	char *vname;
 	int value;
 {
-	(void) strncpy(flagreq.ifr_name, name, sizeof (flagreq.ifr_name));
- 	if (ioctl(s, SIOCGIFFLAGS, (caddr_t)&flagreq) < 0)
+	struct ifreq ifreq;
+
+	(void) strncpy(ifreq.ifr_name, name, sizeof(ifreq.ifr_name));
+ 	if (ioctl(s, SIOCGIFFLAGS, (caddr_t)&ifreq) < 0)
 		err(1, "SIOCGIFFLAGS");
- 	flags = flagreq.ifr_flags;
+ 	flags = ifreq.ifr_flags;
 
 	if (value < 0) {
 		value = -value;
 		flags &= ~value;
 	} else
 		flags |= value;
-	flagreq.ifr_flags = flags;
-	if (ioctl(s, SIOCSIFFLAGS, (caddr_t)&flagreq) < 0)
+	ifreq.ifr_flags = flags;
+	if (ioctl(s, SIOCSIFFLAGS, (caddr_t)&ifreq) < 0)
 		err(1, "SIOCSIFFLAGS");
 
 	reset_if_flags = 1;
