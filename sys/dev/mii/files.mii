@@ -1,4 +1,4 @@
-#	$NetBSD: files.mii,v 1.20 2001/05/31 16:06:58 thorpej Exp $
+#	$NetBSD: files.mii,v 1.21 2001/06/01 16:50:00 thorpej Exp $
 
 file	dev/mii/mii.c				mii
 
@@ -9,6 +9,10 @@ file	dev/mii/mii_physubr.c			mii_phy
 
 define	ukphy_subr
 file	dev/mii/ukphy_subr.c			ukphy_subr
+
+device	brgphy: mii_phy
+attach	brgphy at mii
+file	dev/mii/brgphy.c			brgphy
 
 device	tlphy: mii_phy
 attach	tlphy at mii
