@@ -36,7 +36,7 @@
 #include <machine/asm.h>
 
 #if defined(LIBC_SCCS)
-	RCSID("$NetBSD: bcopy.S,v 1.5 1995/04/28 22:57:57 jtc Exp $")
+	RCSID("$NetBSD: bcopy.S,v 1.6 1996/11/12 00:50:06 jtc Exp $")
 #endif
 
 	/*
@@ -63,8 +63,10 @@ ENTRY(bcopy)
 	movl	16(%esp),%edi
 #endif
 	movl	20(%esp),%ecx
-	cmpl	%esi,%edi	/* potentially overlapping? */
-	jnb	1f
+	movl	%edi,%eax
+	subl	%esi,%eax
+	cmpl	%ecx,%eax	/* overlapping? */
+	jb	1f
 	cld			/* nope, copy forwards. */
 	shrl	$2,%ecx		/* copy by words */
 	rep
