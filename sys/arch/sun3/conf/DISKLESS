@@ -1,4 +1,4 @@
-# $NetBSD: DISKLESS,v 1.20 1997/10/17 03:17:50 gwr Exp $
+# $NetBSD: DISKLESS,v 1.20.2.1 1997/12/14 01:21:58 mellon Exp $
 
 # DISKLESS Sun3 (3/50, 3/60, 3/110, 3/160, 3/260)
 # Root and swap on NFS
@@ -91,6 +91,14 @@ ie1 at vmes0 addr 0xffe88000 level 3 vect 0x75
 
 # Lance Ethernet (only onboard)
 le0 at obio0 addr   0x120000 level 3
+
+#
+# Sun3/E stuff
+#
+sebuf0 at vmes0 addr 0xff300000 level 2 vect 0x74
+sebuf1 at vmes0 addr 0xff340000 level 2 vect 0x76
+#si* at sebuf?
+ie* at sebuf?
 
 #
 # Frame buffer devices
