@@ -39,7 +39,7 @@ char copyright[] =
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)mount.c	5.44 (Berkeley) 2/26/91";*/
-static char rcsid[] = "$Id: mount.c,v 1.10 1994/04/15 00:47:33 cgd Exp $";
+static char rcsid[] = "$Id: mount.c,v 1.11 1994/04/18 06:15:08 cgd Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -318,7 +318,6 @@ mountfs(spec, name, flags, type, options, mntopts)
 	} else
 #endif /* NFS */
 	    {
-#ifndef	LETS_GET_SMALL
 		argv[0] = mntname;
 		argc = 1;
 		if (flags) {
@@ -359,8 +358,6 @@ mountfs(spec, name, flags, type, options, mntopts)
 			perror((char *)NULL);
 			exit (1);
 		}
-#else
-#endif
 	}
 	if (!fake && mount(mnttype, name, flags, argp)) {
 #ifdef NFS
