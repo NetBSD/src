@@ -1,4 +1,4 @@
-/*	$NetBSD: pppd.h,v 1.15 1998/07/27 00:52:02 mycroft Exp $	*/
+/*	$NetBSD: pppd.h,v 1.16 1998/09/02 20:55:57 christos Exp $	*/
 
 /*
  * pppd.h - PPP daemon global declarations.
@@ -50,11 +50,7 @@
 #define NUM_PPP		1	/* One PPP interface supported (per process) */
 #define MAXWORDLEN	1024	/* max length of word in file (incl null) */
 #define MAXARGS		1	/* max # args to a command */
-#ifdef MAXHOSTNAMELEN
-#define MAXNAMELEN	MAXHOSTNAMELEN	/* max length of hostname or name for auth */
-#else
 #define MAXNAMELEN	256	/* max length of hostname or name for auth */
-#endif
 #define MAXSECRETLEN	256	/* max length of password or secret */
 
 /*
@@ -65,7 +61,7 @@ extern int	hungup;		/* Physical layer has disconnected */
 extern int	ifunit;		/* Interface unit number */
 extern char	ifname[];	/* Interface name */
 extern int	ttyfd;		/* Serial device file descriptor */
-extern char	hostname[MAXNAMELEN+1];	/* Our hostname */
+extern char	hostname[];	/* Our hostname */
 extern u_char	outpacket_buf[]; /* Buffer for outgoing packets */
 extern int	phase;		/* Current state of link - see values below */
 extern int	baud_rate;	/* Current link speed in bits/sec */
@@ -191,7 +187,7 @@ void timeout __P((void (*func)(void *), void *arg, int t));
 				/* Call func(arg) after t seconds */
 void untimeout __P((void (*func)(void *), void *arg));
 				/* Cancel call to func(arg) */
-int run_program __P((const char *prog, const char **args, int must_exist));
+int run_program __P((char *prog, char **args, int must_exist));
 				/* Run program prog with args in child */
 void demuxprotrej __P((int, int));
 				/* Demultiplex a Protocol-Reject */
@@ -202,7 +198,7 @@ void log_packet __P((u_char *, int, char *, int));
 void print_string __P((char *, int,  void (*) (void *, char *, ...),
 		void *));	/* Format a string for output */
 int fmtmsg __P((char *, int, char *, ...));		/* sprintf++ */
-int vfmtmsg __P((char *, int, const char *, va_list));	/* vsprintf++ */
+int vfmtmsg __P((char *, int, char *, va_list));	/* vsprintf++ */
 void script_setenv __P((char *, char *));	/* set script env var */
 void script_unsetenv __P((char *));		/* unset script env var */
 
@@ -308,6 +304,10 @@ int  get_host_seed __P((void));	/* Get host-dependent random number seed */
 #ifdef PPP_FILTER
 int  set_filters __P((struct bpf_program *pass, struct bpf_program *active));
 				/* Set filter programs in kernel */
+#endif
+#ifdef IPX_CHANGE
+int  sipxfaddr __P((int, unsigned long, unsigned char *));
+int  cipxfaddr __P((int));
 #endif
 
 /* Procedures exported from options.c */

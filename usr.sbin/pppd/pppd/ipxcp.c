@@ -1,4 +1,4 @@
-/*	$NetBSD: ipxcp.c,v 1.4 1998/05/02 14:19:14 christos Exp $	*/
+/*	$NetBSD: ipxcp.c,v 1.5 1998/09/02 20:55:56 christos Exp $	*/
 
 /*
  * ipxcp.c - PPP IPX Control Protocol.
@@ -25,7 +25,7 @@
 #if 0
 static char rcsid[] = "Id: ipxcp.c,v 1.6 1998/03/25 03:08:16 paulus Exp ";
 #else
-__RCSID("$NetBSD: ipxcp.c,v 1.4 1998/05/02 14:19:14 christos Exp $");
+__RCSID("$NetBSD: ipxcp.c,v 1.5 1998/09/02 20:55:56 christos Exp $");
 #endif
 #endif
 
@@ -36,6 +36,7 @@ __RCSID("$NetBSD: ipxcp.c,v 1.4 1998/05/02 14:19:14 christos Exp $");
 #include <stdio.h>
 #include <string.h>
 #include <syslog.h>
+#include <unistd.h>
 #include <sys/types.h>
 #include <sys/socket.h>
 #include <netinet/in.h>
@@ -44,6 +45,7 @@ __RCSID("$NetBSD: ipxcp.c,v 1.4 1998/05/02 14:19:14 christos Exp $");
 #include "fsm.h"
 #include "ipxcp.h"
 #include "pathnames.h"
+#include "magic.h"
 
 /* global vars */
 ipxcp_options ipxcp_wantoptions[NUM_PPP];	/* Options that we want to request */

@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.32 1998/07/27 00:52:02 mycroft Exp $	*/
+/*	$NetBSD: main.c,v 1.33 1998/09/02 20:55:56 christos Exp $	*/
 
 /*
  * main.c - Point-to-Point Protocol main module
@@ -24,7 +24,7 @@
 #if 0
 static char rcsid[] = "Id: main.c,v 1.47 1998/03/30 06:25:34 paulus Exp ";
 #else
-__RCSID("$NetBSD: main.c,v 1.32 1998/07/27 00:52:02 mycroft Exp $");
+__RCSID("$NetBSD: main.c,v 1.33 1998/09/02 20:55:56 christos Exp $");
 #endif
 #endif
 
@@ -79,7 +79,7 @@ char ifname[32];		/* Interface name */
 int ifunit;			/* Interface unit number */
 
 char *progname;			/* Name of this program */
-char hostname[MAXNAMELEN + 1];	/* Our hostname */
+char hostname[MAXNAMELEN];	/* Our hostname */
 static char pidfilename[MAXPATHLEN];	/* name of pid file */
 static char default_devnam[MAXPATHLEN];	/* name of default device */
 static pid_t pid;		/* Our pid */
@@ -173,7 +173,7 @@ main(argc, argv)
 {
     int i, fdflags;
     struct sigaction sa;
-    const char *p;
+    char *p;
     struct passwd *pw;
     struct timeval timo;
     sigset_t mask;
@@ -197,11 +197,11 @@ main(argc, argv)
     setlogmask(LOG_UPTO(LOG_INFO));
 #endif
 
-    if (gethostname(hostname, sizeof(hostname)) < 0 ) {
+    if (gethostname(hostname, MAXNAMELEN) < 0 ) {
 	option_error("Couldn't get hostname: %m");
 	die(1);
     }
-    hostname[sizeof(hostname) - 1] = 0;
+    hostname[MAXNAMELEN-1] = 0;
 
     uid = getuid();
     privileged = uid == 0;
@@ -1044,6 +1044,11 @@ static void
 bad_signal(sig)
     int sig;
 {
+    static int crashed = 0;
+
+    if (crashed)
+	_exit(127);
+    crashed = 1;
     syslog(LOG_ERR, "Fatal signal %d", sig);
     if (conn_running)
 	kill_my_pg(SIGTERM);
@@ -1130,8 +1135,8 @@ device_script(program, in, out)
  */
 int
 run_program(prog, args, must_exist)
-    const char *prog;
-    const char **args;
+    char *prog;
+    char **args;
     int must_exist;
 {
     int pid;
@@ -1179,7 +1184,7 @@ run_program(prog, args, must_exist)
 	/* SysV recommends a second fork at this point. */
 
 	/* run the program; give it a null environment */
-	execve(prog, (char **)args, script_env);
+	execve(prog, args, script_env);
 	if (must_exist || errno != ENOENT)
 	    syslog(LOG_WARNING, "Can't execute %s: %m", prog);
 	_exit(-1);
@@ -1294,10 +1299,9 @@ pr_log __V((void *arg, char *fmt, ...))
     fmt = va_arg(pvar, char *);
 #endif
 
-    vsprintf(buf, fmt, pvar);
+    n = vfmtmsg(buf, sizeof(buf), fmt, pvar);
     va_end(pvar);
 
-    n = strlen(buf);
     if (linep + n + 1 > line + sizeof(line)) {
 	syslog(LOG_DEBUG, "%s", line);
 	linep = line;
@@ -1394,19 +1398,18 @@ int
 vfmtmsg(buf, buflen, fmt, args)
     char *buf;
     int buflen;
-    const char *fmt;
+    char *fmt;
     va_list args;
 {
     int c, i, n;
     int width, prec, fillch;
     int base, len, neg, quoted;
     unsigned long val = 0;
-    char *buf0, *s;
-    const char *str, *f;
+    char *str, *f, *buf0;
     unsigned char *p;
     char num[32];
     time_t t;
-    static const char hexchars[] = "0123456789abcdef";
+    static char hexchars[] = "0123456789abcdef";
 
     buf0 = buf;
     --buflen;
@@ -1506,9 +1509,9 @@ vfmtmsg(buf, buflen, fmt, args)
 	    continue;
 	case 't':
 	    time(&t);
-	    s = ctime(&t);
-	    s[19] = 0;		/* chop off year and newline */
-	    str = s + 4;	/* chop off the day name */
+	    str = ctime(&t);
+	    str += 4;		/* chop off the day name */
+	    str[15] = 0;	/* chop off year and newline */
 	    break;
 	case 'v':		/* "visible" string */
 	case 'q':		/* quoted string */
@@ -1564,25 +1567,24 @@ vfmtmsg(buf, buflen, fmt, args)
 	    continue;
 	}
 	if (base != 0) {
-	    s = num + sizeof(num);
-	    *--s = 0;
-	    while (s > num + neg) {
-		*--s = hexchars[val % base];
+	    str = num + sizeof(num);
+	    *--str = 0;
+	    while (str > num + neg) {
+		*--str = hexchars[val % base];
 		val = val / base;
 		if (--prec <= 0 && val == 0)
 		    break;
 	    }
 	    switch (neg) {
 	    case 1:
-		*--s = '-';
+		*--str = '-';
 		break;
 	    case 2:
-		*--s = 'x';
-		*--s = '0';
+		*--str = 'x';
+		*--str = '0';
 		break;
 	    }
-	    len = num + sizeof(num) - 1 - s;
-	    str = s;
+	    len = num + sizeof(num) - 1 - str;
 	} else {
 	    len = strlen(str);
 	    if (prec > 0 && len > prec)

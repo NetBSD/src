@@ -1,4 +1,4 @@
-/*	$NetBSD: lcp.c,v 1.17 1998/05/02 14:19:15 christos Exp $	*/
+/*	$NetBSD: lcp.c,v 1.18 1998/09/02 20:55:56 christos Exp $	*/
 
 /*
  * lcp.c - PPP Link Control Protocol.
@@ -24,7 +24,7 @@
 #if 0
 static char rcsid[] = "Id: lcp.c,v 1.31 1997/11/27 06:08:44 paulus Exp ";
 #else
-__RCSID("$NetBSD: lcp.c,v 1.17 1998/05/02 14:19:15 christos Exp $");
+__RCSID("$NetBSD: lcp.c,v 1.18 1998/09/02 20:55:56 christos Exp $");
 #endif
 #endif
 
@@ -1627,6 +1627,20 @@ lcp_printpkt(p, plen, printer, arg)
 			break;
 		    case PPP_CHAP:
 			printer(arg, "chap");
+			if (p < optend) {
+			    switch (*p) {
+			    case CHAP_DIGEST_MD5:
+				printer(arg, " MD5");
+				++p;
+				break;
+#ifdef CHAPMS
+			    case CHAP_MICROSOFT:
+				printer(arg, " m$oft");
+				++p;
+				break;
+#endif
+			    }
+			}
 			break;
 		    default:
 			printer(arg, "0x%x", cishort);
