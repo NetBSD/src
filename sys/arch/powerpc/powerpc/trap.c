@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.63 2002/07/05 18:45:22 matt Exp $	*/
+/*	$NetBSD: trap.c,v 1.64 2002/07/24 04:59:33 chs Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -605,4 +605,95 @@ fix_unaligned(p, frame)
 	}
 
 	return -1;
+}
+
+int
+copyinstr(udaddr, kaddr, len, done)
+	const void *udaddr;
+	void *kaddr;
+	size_t len;
+	size_t *done;
+{
+	const char *up = udaddr;
+	char *kp = kaddr;
+	char *p;
+	size_t l, ls, d;
+	faultbuf env;
+	int rv;
+
+	if ((rv = setfault(env)) != 0) {
+		curpcb->pcb_onfault = 0;
+		return rv;
+	}
+	d = 0;
+	while (len > 0) {
+		p = (char *)USER_ADDR + ((uintptr_t)up & ~SEGMENT_MASK);
+		l = ((char *)USER_ADDR + SEGMENT_LENGTH) - p;
+		if (l > len)
+			l = len;
+		setusr(curpcb->pcb_pm->pm_sr[(uintptr_t)up >> ADDR_SR_SHFT]);
+		for (ls = l; ls > 0; ls--) {
+			if ((*kp++ = *p++) == 0) {
+				d += l - ls + 1;
+				rv = 0;
+				goto out;
+			}
+		}
+		d += l;
+		len -= l;
+	}
+	rv = ENAMETOOLONG;
+
+ out:
+	curpcb->pcb_onfault = 0;
+	if (done != NULL) {
+		*done = d;
+	}
+	return rv;
+}
+
+
+int
+copyoutstr(kaddr, udaddr, len, done)
+	const void *kaddr;
+	void *udaddr;
+	size_t len;
+	size_t *done;
+{
+	const char *kp = kaddr;
+	char *up = udaddr;
+	char *p;
+	int rv;
+	size_t l, ls, d;
+	faultbuf env;
+
+	if ((rv = setfault(env)) != 0) {
+		curpcb->pcb_onfault = 0;
+		return rv;
+	}
+	d = 0;
+	while (len > 0) {
+		p = (char *)USER_ADDR + ((uintptr_t)up & ~SEGMENT_MASK);
+		l = ((char *)USER_ADDR + SEGMENT_LENGTH) - p;
+		if (l > len)
+			l = len;
+		setusr(curpcb->pcb_pm->pm_sr[(uintptr_t)up >> ADDR_SR_SHFT]);
+		for (ls = l; ls > 0; ls--) {
+			if ((*p++ = *kp++) == 0) {
+				d += l - ls + 1;
+				rv = 0;
+				goto out;
+			}
+		}
+		d += l;
+		len -= l;
+	}
+	rv = ENAMETOOLONG;
+
+ out:
+	curpcb->pcb_onfault = 0;
+	if (done != NULL) {
+		*done = d;
+	}
+	return rv;
 }
