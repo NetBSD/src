@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.50 2000/12/20 16:53:50 scw Exp $        */
+/*	$NetBSD: pmap.c,v 1.51 2001/01/14 03:28:26 thorpej Exp $        */
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -673,7 +673,7 @@ pmap_collect_pv()
 	for (ph = &pv_table[page_cnt - 1]; ph >= &pv_table[0]; ph--) {
 		if (ph->pv_pmap == 0)
 			continue;
-		s = splimp();
+		s = splvm();
 		for (ppv = ph; (pv = ppv->pv_next) != 0; ) {
 			pvp = (struct pv_page *) trunc_page((vaddr_t)pv);
 			if (pvp->pvp_pgi.pgi_nfree == -1) {
@@ -985,7 +985,7 @@ pmap_page_protect(pg, prot)
 		break;
 	}
 	pv = pa_to_pvh(pa);
-	s = splimp();
+	s = splvm();
 	while (pv->pv_pmap != NULL) {
 		pt_entry_t *pte;
 
@@ -1216,7 +1216,7 @@ pmap_enter(pmap, va, pa, prot, flags)
 		int s;
 
 		pv = pa_to_pvh(pa);
-		s = splimp();
+		s = splvm();
 
 		PMAP_DPRINTF(PDB_ENTER,
 		    ("enter: pv at %p: %lx/%p/%p\n",
@@ -1615,7 +1615,7 @@ pmap_collect(pmap)
 		 * XXX pages much differently.
 		 */
 
-		s = splimp();
+		s = splvm();
 		for (bank = 0; bank < vm_nphysseg; bank++)
 			pmap_collect1(pmap, ptoa(vm_physmem[bank].start),
 			    ptoa(vm_physmem[bank].end));
@@ -1752,7 +1752,7 @@ ok:
  *	machine dependent page at a time.
  *
  *	Note: WE DO NOT CURRENTLY LOCK THE TEMPORARY ADDRESSES!
- *	      (Actually, we go to splimp(), and since we don't
+ *	      (Actually, we go to splvm(), and since we don't
  *	      support multiple processors, this is sufficient.)
  */
 void
@@ -1779,7 +1779,7 @@ pmap_zero_page(phys)
 	}
 #endif
 
-	s = splimp();
+	s = splvm();
 
 	*caddr1_pte = npte;
 	TBIS((vaddr_t)CADDR1);
@@ -1818,7 +1818,7 @@ pmap_zero_page_uncached(phys)
 
 	npte = phys | PG_V | PG_CI;
 
-	s = splimp();
+	s = splvm();
 
 	*caddr1_pte = npte;
 	TBIS((vaddr_t)CADDR1);
@@ -1843,7 +1843,7 @@ pmap_zero_page_uncached(phys)
  *	dependent page at a time.
  *
  *	Note: WE DO NOT CURRENTLY LOCK THE TEMPORARY ADDRESSES!
- *	      (Actually, we go to splimp(), and since we don't
+ *	      (Actually, we go to splvm(), and since we don't
  *	      support multiple processors, this is sufficient.)
  */
 void
@@ -1872,7 +1872,7 @@ pmap_copy_page(src, dst)
 	}
 #endif
 
-	s = splimp();
+	s = splvm();
 
 	*caddr1_pte = npte1;
 	TBIS((vaddr_t)CADDR1);
@@ -2150,7 +2150,7 @@ pmap_remove_mapping(pmap, va, pte, flags)
 	 */
 	pv = pa_to_pvh(pa);
 	ste = ST_ENTRY_NULL;
-	s = splimp();
+	s = splvm();
 	/*
 	 * If it is the first entry on the list, it is actually
 	 * in the header and we must copy the following entry up
@@ -2293,7 +2293,7 @@ pmap_testbit(pa, bit)
 		return(FALSE);
 
 	pv = pa_to_pvh(pa);
-	s = splimp();
+	s = splvm();
 	/*
 	 * Check saved info first
 	 */
@@ -2348,7 +2348,7 @@ pmap_changebit(pa, set, mask)
 		return(r);
 
 	pv = pa_to_pvh(pa);
-	s = splimp();
+	s = splvm();
 
 	/*
 	 * Clear saved attributes (modify, reference)
@@ -2514,7 +2514,7 @@ pmap_enter_ptpage(pmap, va)
 	if (pmap == pmap_kernel()) {
 		struct kpt_page *kpt;
 
-		s = splimp();
+		s = splvm();
 		if ((kpt = kpt_free_list) == (struct kpt_page *)0) {
 			/*
 			 * No PT pages available.
@@ -2597,7 +2597,7 @@ pmap_enter_ptpage(pmap, va)
 	 * the STE when we remove the mapping for the page.
 	 */
 	pv = pa_to_pvh(ptpa);
-	s = splimp();
+	s = splvm();
 	if (pv) {
 		pv->pv_flags |= PV_PTPAGE;
 		do {
