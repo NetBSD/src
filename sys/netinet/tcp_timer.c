@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_timer.c,v 1.14.4.1 1996/12/10 18:21:12 mycroft Exp $	*/
+/*	$NetBSD: tcp_timer.c,v 1.14.4.2 1996/12/11 04:01:09 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1988, 1990, 1993
@@ -122,7 +122,8 @@ tcp_slowtimo()
 			if (tp->t_timer[i] && --tp->t_timer[i] == 0) {
 				(void) tcp_usrreq(tp->t_inpcb->inp_socket,
 				    PRU_SLOWTIMO, (struct mbuf *)0,
-				    (struct mbuf *)i, (struct mbuf *)0);
+				    (struct mbuf *)i, (struct mbuf *)0,
+				    (struct proc *)0);
 				/* XXX NOT MP SAFE */
 				if ((ipnxt == (void *)&tcbtable.inpt_queue &&
 				    tcbtable.inpt_queue.cqh_last != ip) ||
