@@ -1,4 +1,4 @@
-/*	$NetBSD: boot.c,v 1.5 1995/11/30 00:59:06 jtc Exp $	*/
+/*	$NetBSD: boot.c,v 1.6 1996/10/09 07:42:13 matthias Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1990, 1993
@@ -36,7 +36,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$NetBSD: boot.c,v 1.5 1995/11/30 00:59:06 jtc Exp $";
+static char rcsid[] = "$NetBSD: boot.c,v 1.6 1996/10/09 07:42:13 matthias Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -74,7 +74,7 @@ main()
 	cninit();
 	scsiinit();
 
-	printf("\n>> NetBSD BOOT pc532 [$Revision: 1.5 $]\n");
+	printf("\n>> NetBSD BOOT pc532 [$Revision: 1.6 $]\n");
 
 	bdev  = B_TYPE(bootdev);
 	bctlr = B_CONTROLLER(bootdev);
@@ -195,7 +195,7 @@ copyunix(howto, devtype, io)
 	}
 #define	round_to_size(x,t) \
 	(((int)(x) + sizeof(t) - 1) & ~(sizeof(t) - 1))
-	esym = (char *)round_to_size(addr - load,int);
+	esym = (char *)round_to_size(addr, int);
 #undef round_to_size
 
 	/* and note the end address of all this	*/
