@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_time.c,v 1.29 1997/04/26 21:22:57 tls Exp $	*/
+/*	$NetBSD: kern_time.c,v 1.30 1997/10/15 17:04:08 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -408,16 +408,17 @@ sys_getitimer(p, v, retval)
 	register_t *retval;
 {
 	register struct sys_getitimer_args /* {
-		syscallarg(u_int) which;
+		syscallarg(int) which;
 		syscallarg(struct itimerval *) itv;
 	} */ *uap = v;
+	int which = SCARG(uap, which);
 	struct itimerval aitv;
 	int s;
 
-	if (SCARG(uap, which) > ITIMER_PROF)
+	if ((u_int)which > ITIMER_PROF)
 		return (EINVAL);
 	s = splclock();
-	if (SCARG(uap, which) == ITIMER_REAL) {
+	if (which == ITIMER_REAL) {
 		/*
 		 * Convert from absolute to relative time in .it_value
 		 * part of real time timer.  If time for real time timer
@@ -431,7 +432,7 @@ sys_getitimer(p, v, retval)
 			else
 				timersub(&aitv.it_value, &time, &aitv.it_value);
 	} else
-		aitv = p->p_stats->p_timer[SCARG(uap, which)];
+		aitv = p->p_stats->p_timer[which];
 	splx(s);
 	return (copyout(&aitv, SCARG(uap, itv), sizeof (struct itimerval)));
 }
@@ -444,22 +445,23 @@ sys_setitimer(p, v, retval)
 	register_t *retval;
 {
 	register struct sys_setitimer_args /* {
-		syscallarg(u_int) which;
+		syscallarg(int) which;
 		syscallarg(const struct itimerval *) itv;
 		syscallarg(struct itimerval *) oitv;
 	} */ *uap = v;
+	int which = SCARG(uap, which);
 	struct sys_getitimer_args getargs;
 	struct itimerval aitv;
 	register const struct itimerval *itvp;
 	int s, error;
 
-	if (SCARG(uap, which) > ITIMER_PROF)
+	if ((u_int)which > ITIMER_PROF)
 		return (EINVAL);
 	itvp = SCARG(uap, itv);
 	if (itvp && (error = copyin(itvp, &aitv, sizeof(struct itimerval))))
 		return (error);
 	if (SCARG(uap, oitv) != NULL) {
-		SCARG(&getargs, which) = SCARG(uap, which);
+		SCARG(&getargs, which) = which;
 		SCARG(&getargs, itv) = SCARG(uap, oitv);
 		if ((error = sys_getitimer(p, &getargs, retval)) != 0)
 			return (error);
@@ -469,7 +471,7 @@ sys_setitimer(p, v, retval)
 	if (itimerfix(&aitv.it_value) || itimerfix(&aitv.it_interval))
 		return (EINVAL);
 	s = splclock();
-	if (SCARG(uap, which) == ITIMER_REAL) {
+	if (which == ITIMER_REAL) {
 		untimeout(realitexpire, p);
 		if (timerisset(&aitv.it_value)) {
 			timeradd(&aitv.it_value, &time, &aitv.it_value);
@@ -477,7 +479,7 @@ sys_setitimer(p, v, retval)
 		}
 		p->p_realtimer = aitv;
 	} else
-		p->p_stats->p_timer[SCARG(uap, which)] = aitv;
+		p->p_stats->p_timer[which] = aitv;
 	splx(s);
 	return (0);
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_resource_43.c,v 1.4 1996/03/14 19:31:46 christos Exp $	*/
+/*	$NetBSD: kern_resource_43.c,v 1.5 1997/10/15 17:03:52 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1991, 1993
@@ -61,17 +61,18 @@ compat_43_sys_getrlimit(p, v, retval)
 	register_t *retval;
 {
 	register struct compat_43_sys_getrlimit_args /* {
-		syscallarg(u_int) which;
-		syscallarg(struct ogetrlimit *) rlp;
+		syscallarg(int) which;
+		syscallarg(struct orlimit *) rlp;
 	} */ *uap = v;
+	int which = SCARG(uap, which);
 	struct orlimit olim;
 
-	if (SCARG(uap, which) >= RLIM_NLIMITS)
+	if ((u_int)which >= RLIM_NLIMITS)
 		return (EINVAL);
-	olim.rlim_cur = p->p_rlimit[SCARG(uap, which)].rlim_cur;
+	olim.rlim_cur = p->p_rlimit[which].rlim_cur;
 	if (olim.rlim_cur == -1)
 		olim.rlim_cur = 0x7fffffff;
-	olim.rlim_max = p->p_rlimit[SCARG(uap, which)].rlim_max;
+	olim.rlim_max = p->p_rlimit[which].rlim_max;
 	if (olim.rlim_max == -1)
 		olim.rlim_max = 0x7fffffff;
 	return (copyout((caddr_t)&olim, (caddr_t)SCARG(uap, rlp),
@@ -86,9 +87,10 @@ compat_43_sys_setrlimit(p, v, retval)
 	register_t *retval;
 {
 	struct compat_43_sys_setrlimit_args /* {
-		syscallarg(u_int) which;
-		syscallarg(struct ogetrlimit *) rlp;
+		syscallarg(int) which;
+		syscallarg(const struct orlimit *) rlp;
 	} */ *uap = v;
+	int which = SCARG(uap, which);
 	struct orlimit olim;
 	struct rlimit lim;
 	int error;
@@ -99,5 +101,5 @@ compat_43_sys_setrlimit(p, v, retval)
 		return (error);
 	lim.rlim_cur = olim.rlim_cur;
 	lim.rlim_max = olim.rlim_max;
-	return (dosetrlimit(p, SCARG(uap, which), &lim));
+	return (dosetrlimit(p, which, &lim));
 }
