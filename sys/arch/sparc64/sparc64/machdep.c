@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.91 2000/12/04 16:01:19 fvdl Exp $ */
+/*	$NetBSD: machdep.c,v 1.92 2000/12/04 17:26:41 eeh Exp $ */
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -520,15 +520,14 @@ sendsig(catcher, sig, mask, code)
 	tf = p->p_md.md_tf;
 	oldsp = (struct rwindow *)(u_long)(tf->tf_out[6] + STACK_OFFSET);
 
-	/* Do we need to jump onto the signal stack? */
-	onstack =
-	    (psp->ps_sigstk.ss_flags & (SS_DISABLE | SS_ONSTACK)) == 0 &&
-	    (psp->ps_sigact[sig].sa_flags & SA_ONSTACK) != 0;
-
 	/*
 	 * Compute new user stack addresses, subtract off
 	 * one signal frame, and align.
 	 */
+	onstack =
+	    (psp->ps_sigstk.ss_flags & (SS_DISABLE | SS_ONSTACK)) == 0 &&
+	    (psp->ps_sigact[sig].sa_flags & SA_ONSTACK) != 0;
+
 	if (onstack)
 		fp = (struct sigframe *)((caddr_t)psp->ps_sigstk.ss_sp +
 						  psp->ps_sigstk.ss_size);
@@ -581,7 +580,6 @@ sendsig(catcher, sig, mask, code)
 	sf.sf_sc.sc_tstate = tf->tf_tstate; /* XXX */
 	sf.sf_sc.sc_g1 = tf->tf_global[1];
 	sf.sf_sc.sc_o0 = tf->tf_out[0];
-
 
 	/*
 	 * Put the stack in a consistent state before we whack away
@@ -673,9 +671,13 @@ sys___sigreturn14(p, v, retval)
 	} */ *uap = v;
 	struct sigcontext sc, *scp;
 	register struct trapframe64 *tf;
+	int error = EINVAL;
 
 	/* First ensure consistent stack state (see sendsig). */
 	write_user_windows();
+if (p->p_addr->u_pcb.pcb_nsaved) 
+printf("sigreturn14: pid %d nsaved %d\n",
+       p->p_pid, (p->p_addr->u_pcb.pcb_nsaved));
 	if (rwindow_save(p)) {
 #ifdef DEBUG
 		printf("sigreturn14: rwindow_save(%p) failed, sending SIGILL\n", p);
@@ -695,17 +697,17 @@ sys___sigreturn14(p, v, retval)
 	}
 #endif
 	scp = SCARG(uap, sigcntxp);
- 	if ((vaddr_t)scp & 3 || (copyin((caddr_t)scp, &sc, sizeof sc) != 0))
+ 	if ((vaddr_t)scp & 3 || (error = copyin((caddr_t)scp, &sc, sizeof sc) != 0))
 #ifdef DEBUG
 	{
 		printf("sigreturn14: copyin failed: scp=%p\n", scp);
 #ifdef DDB
 		Debugger();
 #endif
-		return (EINVAL);
+		return (error);
 	}
 #else
-		return (EINVAL);
+		return (error);
 #endif
 	scp = &sc;
 
@@ -728,12 +730,12 @@ sys___sigreturn14(p, v, retval)
 		return (EINVAL);
 #endif
 	/* take only psr ICC field */
-	tf->tf_tstate = (int64_t)(tf->tf_tstate & ~TSTATE_CCR) | (scp->sc_tstate & TSTATE_CCR);
-	tf->tf_pc = (int64_t)scp->sc_pc;
-	tf->tf_npc = (int64_t)scp->sc_npc;
-	tf->tf_global[1] = (int64_t)scp->sc_g1;
-	tf->tf_out[0] = (int64_t)scp->sc_o0;
-	tf->tf_out[6] = (int64_t)scp->sc_sp;
+	tf->tf_tstate = (u_int64_t)(tf->tf_tstate & ~TSTATE_CCR) | (scp->sc_tstate & TSTATE_CCR);
+	tf->tf_pc = (u_int64_t)scp->sc_pc;
+	tf->tf_npc = (u_int64_t)scp->sc_npc;
+	tf->tf_global[1] = (u_int64_t)scp->sc_g1;
+	tf->tf_out[0] = (u_int64_t)scp->sc_o0;
+	tf->tf_out[6] = (u_int64_t)scp->sc_sp;
 #ifdef DEBUG
 	if (sigdebug & SDB_FOLLOW) {
 		printf("sigreturn14: return trapframe pc=%p sp=%p tstate=%llx\n",
@@ -1232,8 +1234,25 @@ _bus_dmamap_load_uio(t, map, uio, flags)
 	struct uio *uio;
 	int flags;
 {
+#if 0
+	int i;
+	struct proc *p = uio->uio_procp;
+	struct pmap *pm;
 
+	if (uio->uio_segflg == UIO_USERSPACE) 
+		pm = uio->uio_procp->p_vmspace.vm_map.pmap;
+	else
+		pm = pmap_kernel();
+
+	for (i=0; i<uio->uio_iovcnt; i++) {
+		struct iovec *iov = &uio->uio_iov[i];
+		void *buf = iov->iov_base;
+		bus_size_t buflen = iov->iov_len;
+
+		bus_dmamap_load(t, map, buf, buflen, p, flags);
+	}
 	panic("_bus_dmamap_load_uio: not implemented");
+#endif
 }
 
 /*
@@ -1332,7 +1351,7 @@ _bus_dmamap_sync(t, map, offset, len, ops)
 			for (m = TAILQ_FIRST(mlist);
 			     m != NULL; m = TAILQ_NEXT(m,pageq)) {
 				paddr_t start;
-				psize_t size;
+				psize_t size = NBPG;
 
 				if (offset < NBPG) {
 					start = VM_PAGE_TO_PHYS(m) + offset;
