@@ -19,12 +19,17 @@
  * Modified by Paul Mackerras (paulus@cs.anu.edu.au)
  * Added PPP_MRU, sc_outm, sc_fastq, sc_bpf.
  *
- * $Id: if_ppp.h,v 1.3 1993/11/09 06:23:01 glass Exp $
+ * $Id: if_ppp.h,v 1.4 1994/01/15 20:13:11 deraadt Exp $
  */
 
-/* Portions Copyright (C) 1990 Brad K. Clements (streams support)
-   (huh?  there isn't any streams support in this file)
-*/
+/*
+ *na Portions Copyright (C) 1990 Brad K. Clements (streams support)
+ *  (huh?  there isn't any streams support in this file)
+ */
+
+#ifndef _IF_PPP_H_
+#define _IF_PPP_H_
+
 
 /*
  * Standard PPP header.
@@ -118,3 +123,4 @@ struct ppp_softc {
 #define ifr_mtu	ifr_metric
 #endif
 
+#endif /* _IF_PPP_H_ */
