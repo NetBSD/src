@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.20 2001/07/22 11:29:45 wiz Exp $	*/
+/*	$NetBSD: pmap.c,v 1.21 2001/08/08 21:09:58 matt Exp $	*/
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -2746,7 +2746,7 @@ pmap_bootstrap(paddr_t kernelstart, paddr_t kernelend)
 	/*
 	 * Make sure kernel vsid is allocated as well as VSID 0.
 	 */
-	pmap_vsid_bitmap[(KERNEL_VSIDBITS / VSID_NBPW) & (NPMAPS-1)]
+	pmap_vsid_bitmap[(KERNEL_VSIDBITS & (NPMAPS-1)) / VSID_NBPW]
 		|= 1 << (KERNEL_VSIDBITS % VSID_NBPW);
 	pmap_vsid_bitmap[0] |= 1;
 
