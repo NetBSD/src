@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.493 2002/10/23 21:41:34 mycroft Exp $	*/
+/*	$NetBSD: machdep.c,v 1.494 2002/10/24 07:43:21 fvdl Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2000 The NetBSD Foundation, Inc.
@@ -76,7 +76,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.493 2002/10/23 21:41:34 mycroft Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.494 2002/10/24 07:43:21 fvdl Exp $");
 
 #include "opt_cputype.h"
 #include "opt_ddb.h"
@@ -1414,10 +1414,9 @@ transmeta_cpu_info(struct cpu_info *ci)
 void
 transmeta_cpu_setup(struct cpu_info *ci)
 {
-	u_int regs[4], nreg = 0;
+	u_int nreg = 0, dummy;
 
-	do_cpuid(0x80860000, regs);
-	nreg = regs[0];
+	CPUID(0x80860000, nreg, dummy, dummy, dummy);
 	if (nreg >= 0x80860007)
 		tmx86_has_longrun = 1;
 }
