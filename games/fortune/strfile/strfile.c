@@ -1,4 +1,4 @@
-/*	$NetBSD: strfile.c,v 1.5 1996/10/13 00:01:05 christos Exp $	*/
+/*	$NetBSD: strfile.c,v 1.6 1997/10/10 13:04:42 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1989, 1993
@@ -46,7 +46,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)strfile.c	8.1 (Berkeley) 5/31/93";
 #else
-static char rcsid[] = "$NetBSD: strfile.c,v 1.5 1996/10/13 00:01:05 christos Exp $";
+static char rcsid[] = "$NetBSD: strfile.c,v 1.6 1997/10/10 13:04:42 lukem Exp $";
 #endif
 #endif /* not lint */
 
@@ -266,7 +266,7 @@ char	**argv;
 	extern int	optind;
 	int	ch;
 
-	while ((ch = getopt(argc, argv, "c:iorsx")) != EOF)
+	while ((ch = getopt(argc, argv, "c:iorsx")) != -1)
 		switch(ch) {
 		case 'c':			/* new delimiting char */
 			Delimch = *optarg;
