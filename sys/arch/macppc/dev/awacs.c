@@ -1,4 +1,4 @@
-/*	$NetBSD: awacs.c,v 1.15 2002/10/13 14:43:20 wiz Exp $	*/
+/*	$NetBSD: awacs.c,v 1.16 2003/03/04 13:28:20 soren Exp $	*/
 
 /*-
  * Copyright (c) 2000 Tsubai Masanari.  All rights reserved.
@@ -211,6 +211,9 @@ awacs_match(parent, match, aux)
 {
 	struct confargs *ca = aux;
 
+	if (strcmp(ca->ca_name, "i2s") == 0)
+		return 1;
+
 	if (strcmp(ca->ca_name, "awacs") != 0 &&
 	    strcmp(ca->ca_name, "davbus") != 0)
 		return 0;
@@ -230,7 +233,7 @@ awacs_attach(parent, self, aux)
 	struct awacs_softc *sc = (struct awacs_softc *)self;
 	struct confargs *ca = aux;
 	int cirq, oirq, iirq, cirq_type, oirq_type, iirq_type;
-
+	
 	ca->ca_reg[0] += ca->ca_baseaddr;
 	ca->ca_reg[2] += ca->ca_baseaddr;
 	ca->ca_reg[4] += ca->ca_baseaddr;
@@ -242,7 +245,26 @@ awacs_attach(parent, self, aux)
 	sc->sc_odmacmd = dbdma_alloc(20 * sizeof(struct dbdma_command));
 	sc->sc_idmacmd = dbdma_alloc(20 * sizeof(struct dbdma_command));
 
-	if (ca->ca_nintr == 24) {
+	if (strcmp(ca->ca_name, "i2s") == 0) {
+		int node, intr[6];
+
+		node = OF_child(ca->ca_node);
+		if (node == NULL) {
+			printf("no i2s-a child\n");
+			return;
+		}
+		if (OF_getprop(node, "interrupts", intr, sizeof(intr)) == -1) {
+			printf("no interrupt property\n");
+			return;
+		}
+
+		cirq = intr[0];
+		oirq = intr[2];
+		iirq = intr[4];
+		cirq_type = intr[1] ? IST_LEVEL : IST_EDGE;
+		oirq_type = intr[3] ? IST_LEVEL : IST_EDGE;
+		iirq_type = intr[5] ? IST_LEVEL : IST_EDGE;
+	} else if (ca->ca_nintr == 24) {
 		cirq = ca->ca_intr[0];
 		oirq = ca->ca_intr[2];
 		iirq = ca->ca_intr[4];
@@ -255,6 +277,7 @@ awacs_attach(parent, self, aux)
 		iirq = ca->ca_intr[2];
 		cirq_type = oirq_type = iirq_type = IST_LEVEL;
 	}
+
 	intr_establish(cirq, cirq_type, IPL_AUDIO, awacs_intr, sc);
 	intr_establish(oirq, oirq_type, IPL_AUDIO, awacs_intr, sc);
 	/* intr_establish(iirq, iirq_type, IPL_AUDIO, awacs_intr, sc); */
