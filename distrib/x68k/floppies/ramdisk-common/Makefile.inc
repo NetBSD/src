@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.1.2.3 2000/12/15 05:11:36 he Exp $
+#	$NetBSD: Makefile.inc,v 1.1.2.4 2002/03/25 17:33:06 he Exp $
 
 .include "${TOP}/Makefile.inc"
 
@@ -48,7 +48,7 @@ unconfig:
 ${CBIN}.mk ${CBIN}.cache ${CBIN}.c: ${CRUNCHCONF}
 	${CRUNCHGEN} -D ${TOP}/../../.. -L ${DESTDIR}/usr/lib ${.ALLSRC}
 
-${CBIN}: ${CBIN}.mk ${CBIN}.cache ${CBIN}.c
+${CBIN}: ${CBIN}.mk ${CBIN}.cache ${CBIN}.c ${VERDEP}
 	${MAKE} -f ${CBIN}.mk all
 
 # Use size-reduced libhack.

@@ -1,10 +1,11 @@
-#	$NetBSD: Makefile,v 1.32 2000/05/18 02:12:45 matt Exp $
+#	$NetBSD: Makefile,v 1.32.4.1 2002/03/25 17:32:56 he Exp $
 
 .include "../../Makefile.inc"
 .include <bsd.own.mk>
 .include <bsd.kernobj.mk>
 
 REV!=sh ${.CURDIR}/../../sys/conf/osrelease.sh -s
+VERDEP= ${.CURDIR}/../../sys/conf/osrelease.sh
 
 CBIN=		instbin
 ARCHDIR=	${.CURDIR}/../${MACHINE}/miniroot
@@ -69,7 +70,7 @@ ${CBIN}.conf: ${LISTS}
 ${CBIN}.mk ${CBIN}.cache ${CBIN}.c: ${CRUNCHCONF}
 	crunchgen -D ${.CURDIR}/../.. -L ${DESTDIR}/usr/lib ${CRUNCHCONF}
 
-${CBIN}: ${CBIN}.mk ${CBIN}.cache ${CBIN}.c
+${CBIN}: ${CBIN}.mk ${CBIN}.cache ${CBIN}.c ${VERDEP}
 	make -f ${CBIN}.mk all
 
 .ifndef RELEASEDIR

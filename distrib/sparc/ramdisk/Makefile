@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.18.4.2 2000/11/01 03:06:26 tv Exp $
+#	$NetBSD: Makefile,v 1.18.4.3 2002/03/25 17:33:03 he Exp $
 #
 # ramdisk.fs is the microroot filesystem intended for use with
 # the INSTALL kernel. It provides just enough tools to extract the
@@ -61,7 +61,7 @@ ${CBIN}.mk ${CBIN}.cache ${CBIN}.c: ${CBIN}.conf
 ${CBIN}.conf: ${LISTS}
 	awk -f ${MINIROOT}/makeconf.awk CBIN=${CBIN} ${.CURDIR}/${LISTS} > ${CBIN}.conf
 
-${CBIN}: ${CBIN}.mk ${CBIN}.cache ${CBIN}.c
+${CBIN}: ${CBIN}.mk ${CBIN}.cache ${CBIN}.c ${VERDEP}
 	make -f ${CBIN}.mk all
 
 # This is listed in ramdiskbin.conf but is built here.

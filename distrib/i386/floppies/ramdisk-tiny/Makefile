@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.1.2.2 2002/02/09 20:33:58 he Exp $
+#	$NetBSD: Makefile,v 1.1.2.3 2002/03/25 17:32:49 he Exp $
 
 TOP=		${.CURDIR}/..
 WARNS=1
@@ -57,7 +57,7 @@ unconfig:
 ${CBIN}.mk ${CBIN}.cache ${CBIN}.c: ${CRUNCHCONF}
 	crunchgen -D ${TOP}/../../.. -L ${DESTDIR}/usr/lib ${.ALLSRC}
 
-${CBIN}: ${CBIN}.mk ${CBIN}.cache ${CBIN}.c
+${CBIN}: ${CBIN}.mk ${CBIN}.cache ${CBIN}.c ${VERDEP}
 	${MAKE} -f ${CBIN}.mk all
 
 # This is listed in ramdiskbin.conf but is built here.

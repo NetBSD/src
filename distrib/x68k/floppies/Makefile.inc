@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.8 2000/05/02 16:06:56 sjg Exp $
+#	$NetBSD: Makefile.inc,v 1.8.4.1 2002/03/25 17:33:05 he Exp $
 
 .include "../../../Makefile.inc"
 
@@ -6,3 +6,4 @@
 # VER is revision with dots, as in "1.2C"
 REV!=sh ${BSDSRCDIR}/sys/conf/osrelease.sh -s
 VER!=sh ${BSDSRCDIR}/sys/conf/osrelease.sh 
+VERDEP= ${BSDSRCDIR}/sys/conf/osrelease.sh
