@@ -1,4 +1,4 @@
-/*	$NetBSD: dirent.h,v 1.15 2003/04/28 23:16:27 bjh21 Exp $	*/
+/*	$NetBSD: dirent.h,v 1.16 2003/05/28 20:04:48 christos Exp $	*/
 
 /*-
  * Copyright (c) 1989, 1993
@@ -83,9 +83,7 @@ struct dirent {
  */
 #define	IFTODT(mode)	(((mode) & 0170000) >> 12)
 #define	DTTOIF(dirtype)	((dirtype) << 12)
-#endif /* defined(_NETBSD_SOURCE) */
 
-#ifdef _KERNEL
 /*
  * The DIRENT_SIZE macro gives the minimum record length which will hold
  * the directory entry.  This requires the amount of space in struct dirent
@@ -95,6 +93,6 @@ struct dirent {
 #define	DIRENT_SIZE(dp) \
     ((sizeof (struct dirent) - (MAXNAMLEN+1)) + (((dp)->d_namlen+1 + 3) &~ 3))
 
-#endif	/* !_KERNEL */
+#endif /* defined(_NETBSD_SOURCE) */
 
 #endif	/* !_SYS_DIRENT_H_ */
