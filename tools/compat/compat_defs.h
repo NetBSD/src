@@ -1,4 +1,4 @@
-/*	$NetBSD: compat_defs.h,v 1.31.2.1 2004/06/14 20:19:44 tron Exp $	*/
+/*	$NetBSD: compat_defs.h,v 1.31.2.2 2004/06/22 07:24:33 tron Exp $	*/
 
 #ifndef	__NETBSD_COMPAT_DEFS_H__
 #define	__NETBSD_COMPAT_DEFS_H__
@@ -15,16 +15,25 @@
 #include <features.h>
 #endif
 
+/* So _NETBSD_SOURCE doesn't end up defined. Define enough to pull in standard
+   defs. Other platforms may need similiar defines. */
+#ifdef __NetBSD__
+#define _POSIX_SOURCE	1
+#define _POSIX_C_SOURCE	200112L
+#define _XOPEN_SOURCE 600
+#else
 #undef _POSIX_SOURCE
 #undef _POSIX_C_SOURCE
+#endif
 
 /* System headers needed for (re)definitions below. */
 
 #include <sys/types.h>
 #include <sys/mman.h>
 #include <sys/param.h>
-#include <sys/stat.h>
+/* time.h needs to be pulled in first at least on netbsd w/o _NETBSD_SOURCE */
 #include <sys/time.h>
+#include <sys/stat.h>
 #include <errno.h>
 #include <fcntl.h>
 #include <grp.h>
@@ -32,19 +41,7 @@
 #include <paths.h>
 #include <stdarg.h>
 #include <stdio.h>
-
-/* So extra NetBSD extentions don't get pulled in */
-#ifdef __NetBSD__
-#define _POSIX_C_SOURCE
-#undef _NETBSD_SOURCE
-#endif
-
 #include <stdlib.h>
-
-#ifdef __NetBSD__
-#undef _POSIX_C_SOURCE
-#endif
-
 #include <string.h>
 
 #if HAVE_SYS_CDEFS_H
@@ -87,6 +84,13 @@ struct passwd;
 #if !defined(__attribute__) && !defined(__GNUC__)
 #define __attribute__(x)
 #endif
+#if !defined(__packed)
+#if __GNUC__ > 2 || (__GNUC__ == 2 && __GNUC_MINOR__ >= 7)
+#define __packed	__attribute__((__packed__))
+#else
+#define	__packed	error: no __packed for this compiler
+#endif
+#endif /* !__packed */
 #ifndef __RENAME
 #define __RENAME(x)
 #endif
@@ -130,6 +134,18 @@ typedef int socklen_t;
 typedef unsigned long u_long;
 #endif
 
+#if !HAVE_U_CHAR
+typedef unsigned char u_char;
+#endif
+
+#if !HAVE_U_INT
+typedef unsigned int u_int;
+#endif
+
+#if !HAVE_U_SHORT
+typedef unsigned short u_short;
+#endif
+
 /* Prototypes for replacement functions. */
 
 #if !HAVE_ATOLL
@@ -162,7 +178,24 @@ char *dirname(char *);
 #if HAVE_DIR_DD_FD
 #define dirfd(dirp) ((dirp)->dd_fd)
 #else
+/*XXX: Very hacky but no other way to bring this into scope w/o defining
+  _NETBSD_SOURCE which we're avoiding. */
+#ifdef __NetBSD__
+struct _dirdesc {
+        int     dd_fd;          /* file descriptor associated with directory */
+	long    dd_loc;         /* offset in current buffer */
+	long    dd_size;        /* amount of data returned by getdents */
+	char    *dd_buf;        /* data buffer */
+	int     dd_len;         /* size of data buffer */
+	off_t   dd_seek;        /* magic cookie returned by getdents */
+	long    dd_rewind;      /* magic cookie for rewinding */
+	int     dd_flags;       /* flags for readdir */
+	void    *dd_lock;       /* lock for concurrent access */
+};
+#define dirfd(dirp)     (((struct _dirdesc *)dirp)->dd_fd)
+#else
 #error cannot figure out how to turn a DIR * into a fd
+#endif
 #endif
 #endif
 
@@ -173,7 +206,7 @@ void warn(const char *, ...);
 void warnx(const char *, ...);
 #endif
 
-#if !HAVE_FGETLN
+#if !HAVE_FGETLN || defined(__NetBSD__)
 char *fgetln(FILE *, size_t *);
 #endif
 
@@ -185,7 +218,7 @@ char *fgetln(FILE *, size_t *);
 int flock(int, int);
 #endif
 
-#if !HAVE_FPARSELN
+#if !HAVE_FPARSELN || defined(__NetBSD__)
 # define FPARSELN_UNESCESC	0x01
 # define FPARSELN_UNESCCONT	0x02
 # define FPARSELN_UNESCCOMM	0x04
@@ -214,16 +247,33 @@ int lchmod(const char *, mode_t);
 int lchown(const char *, uid_t, gid_t);
 #endif
 
-#if !HAVE_MACHINE_BSWAP_H
-#define bswap16(x)	((((x) << 8) & 0xff00) | (((x) >> 8) & 0x00ff))
+#define __nbcompat_bswap16(x)	((((x) << 8) & 0xff00) | (((x) >> 8) & 0x00ff))
 
-#define bswap32(x)	((((x) << 24) & 0xff000000) | \
-			 (((x) <<  8) & 0x00ff0000) | \
-			 (((x) >>  8) & 0x0000ff00) | \
-			 (((x) >> 24) & 0x000000ff))
+#define __nbcompat_bswap32(x)	((((x) << 24) & 0xff000000) | \
+				 (((x) <<  8) & 0x00ff0000) | \
+				 (((x) >>  8) & 0x0000ff00) | \
+				 (((x) >> 24) & 0x000000ff))
 
-#define bswap64(x)	(((u_int64_t)bswap32((x)) << 32) | \
-			 ((u_int64_t)bswap32((x) >> 32)))
+#define __nbcompat_bswap64(x)	(((u_int64_t)bswap32((x)) << 32) | \
+				 ((u_int64_t)bswap32((x) >> 32)))
+
+#if !HAVE_BSWAP16
+#ifdef bswap16
+#undef bswap16
+#endif
+#define bswap16(x)	__nbcompat_bswap16(x)
+#endif
+#if !HAVE_BSWAP32
+#ifdef bswap32
+#undef bswap32
+#endif
+#define bswap32(x)	__nbcompat_bswap32(x)
+#endif
+#if !HAVE_BSWAP64
+#ifdef bswap64
+#undef bswap64
+#endif
+#define bswap64(x)	__nbcompat_bswap64(x)
 #endif
 
 #if !HAVE_MKSTEMP
@@ -251,6 +301,10 @@ int gid_from_group(const char *, gid_t *);
 int pwcache_groupdb(int (*)(int), void (*)(void),
 		struct group * (*)(const char *), struct group * (*)(gid_t));
 #endif
+/* Make them use our version */
+#  define user_from_uid __nbcompat_user_from_uid
+/* Make them use our version */
+#  define group_from_gid __nbcompat_group_from_gid
 
 #if !HAVE_PWRITE
 ssize_t pwrite(int, const void *, size_t, off_t);
@@ -268,7 +322,7 @@ int setgroupent(int);
 int setpassent(int);
 #endif
 
-#if !HAVE_SETPROGNAME
+#if !HAVE_SETPROGNAME || defined(__NetBSD__)
 const char *getprogname(void);
 void setprogname(const char *);
 #endif
@@ -285,7 +339,7 @@ size_t strlcat(char *, const char *, size_t);
 size_t strlcpy(char *, const char *, size_t);
 #endif
 
-#if !HAVE_STRSEP
+#if !HAVE_STRSEP || defined(__NetBSD__)
 char *strsep(char **, const char *);
 #endif
 
@@ -301,6 +355,9 @@ long long strtoll(const char *, char **, int);
 
 #if !HAVE_USER_FROM_UID
 const char *user_from_uid(uid_t, int);
+#endif
+
+#if !HAVE_GROUP_FROM_GID
 const char *group_from_gid(gid_t, int);
 #endif
 
@@ -457,10 +514,10 @@ char *alloca ();
 
 char	*cgetcap(char *, const char *, int);
 int	 cgetclose(void);
-int	 cgetent(char **, char **, const char *);
-int	 cgetfirst(char **, char **);
+int	 cgetent(char **, const char * const *, const char *);
+int	 cgetfirst(char **, const char * const *);
 int	 cgetmatch(const char *, const char *);
-int	 cgetnext(char **, char **);
+int	 cgetnext(char **, const char * const *);
 int	 cgetnum(char *, const char *, long *);
 int	 cgetset(const char *);
 int	 cgetstr(char *, const char *, char **);
@@ -468,29 +525,61 @@ int	 cgetustr(char *, const char *, char **);
 
 /* <sys/endian.h> */
 
-#ifdef HAVE_SYS_ENDIAN_H
-#include <sys/endian.h>
-#else
 #if WORDS_BIGENDIAN
+#if !HAVE_HTOBE16
 #define htobe16(x)	(x)
+#endif
+#if !HAVE_HTOBE32
 #define htobe32(x)	(x)
+#endif
+#if !HAVE_HTOBE64
 #define htobe64(x)	(x)
+#endif
+#if !HAVE_HTOLE16
 #define htole16(x)	bswap16((u_int16_t)(x))
+#endif
+#if !HAVE_HTOLE32
 #define htole32(x)	bswap32((u_int32_t)(x))
+#endif
+#if !HAVE_HTOLE64
 #define htole64(x)	bswap64((u_int64_t)(x))
+#endif
 #else
+#if !HAVE_HTOBE16
 #define htobe16(x)	bswap16((u_int16_t)(x))
+#endif
+#if !HAVE_HTOBE32
 #define htobe32(x)	bswap32((u_int32_t)(x))
+#endif
+#if !HAVE_HTOBE64
 #define htobe64(x)	bswap64((u_int64_t)(x))
+#endif
+#if !HAVE_HTOLE16
 #define htole16(x)	(x)
+#endif
+#if !HAVE_HTOLE32
 #define htole32(x)	(x)
+#endif
+#if !HAVE_HTOLE64
 #define htole64(x)	(x)
 #endif
+#endif
+#if !HAVE_BE16TOH
 #define be16toh(x)	htobe16(x)
+#endif
+#if !HAVE_BE32TOH
 #define be32toh(x)	htobe32(x)
+#endif
+#if !HAVE_BE64TOH
 #define be64toh(x)	htobe64(x)
+#endif
+#if !HAVE_LE16TOH
 #define le16toh(x)	htole16(x)
+#endif
+#if !HAVE_LE32TOH
 #define le32toh(x)	htole32(x)
+#endif
+#if !HAVE_LE64TOH
 #define le64toh(x)	htole64(x)
 #endif
 
@@ -576,6 +665,19 @@ int	 cgetustr(char *, const char *, char **);
 #endif
 #endif
 
+/* Protected by _NETBSD_SOURCE otherwise. */
+#if HAVE_STRUCT_STAT_ST_FLAGS && defined(__NetBSD__)
+#define UF_SETTABLE     0x0000ffff
+#define UF_NODUMP       0x00000001
+#define UF_IMMUTABLE    0x00000002
+#define UF_APPEND       0x00000004
+#define UF_OPAQUE       0x00000008
+#define SF_SETTABLE     0xffff0000
+#define SF_ARCHIVED     0x00010000
+#define SF_IMMUTABLE    0x00020000
+#define SF_APPEND       0x00040000
+#endif
+
 /* <sys/syslimits.h> */
 
 #ifndef LINE_MAX
@@ -614,6 +716,26 @@ int	 cgetustr(char *, const char *, char **);
 #endif
 
 /* <sys/types.h> */
+
+#ifdef major
+#undef major
+#endif
+#define major(x)        ((int32_t)((((x) & 0x000fff00) >>  8)))
+
+#ifdef minor
+#undef minor
+#endif
+#define minor(x)        ((int32_t)((((x) & 0xfff00000) >> 12) | \
+                                   (((x) & 0x000000ff) >>  0)))
+#ifdef makedev
+#undef makedev
+#endif
+#define makedev(x,y)    ((dev_t)((((x) <<  8) & 0x000fff00) | \
+			(((y) << 12) & 0xfff00000) | \
+			(((y) <<  0) & 0x000000ff)))
+#ifndef NBBY
+#define NBBY 8
+#endif
 
 #if !HAVE_U_QUAD_T
 /* #define, not typedef, as quad_t exists as a struct on some systems */
