@@ -1,4 +1,4 @@
-/*	$NetBSD: route.c,v 1.5 1995/12/10 10:07:12 mycroft Exp $	*/
+/*	$NetBSD: route.c,v 1.6 2000/03/13 23:22:54 soren Exp $	*/
 
 /*
  * The mrouted program is covered by the license in the accompanying file
@@ -285,8 +285,7 @@ find_route(origin, mask)
  * pointing to the new entry.
  *
  * Only the origin, originmask, originwidth and flags fields are initialized
- * in the new route entry; the caller is responsible for filling in the the
- * rest.
+ * in the new route entry; the caller is responsible for filling in the rest.
  */
 static void
 create_route(origin, mask)

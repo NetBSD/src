@@ -1,4 +1,4 @@
-/*	$NetBSD: sched.c,v 1.8 1999/02/01 19:05:11 christos Exp $	*/
+/*	$NetBSD: sched.c,v 1.9 2000/03/13 23:22:53 soren Exp $	*/
 
 /*
  * Copyright (c) 1997-1999 Erez Zadok
@@ -221,7 +221,7 @@ do_task_notify(void)
   /*
    * Keep taking the first item off the list and processing it.
    *
-   * Done this way because the the callback can, quite reasonably,
+   * Done this way because the callback can, quite reasonably,
    * queue a new task, so no local reference into the list can be
    * held here.
    */

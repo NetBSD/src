@@ -1,4 +1,4 @@
-/*	$NetBSD: v_scroll.c,v 1.7 1998/01/09 08:08:37 perry Exp $	*/
+/*	$NetBSD: v_scroll.c,v 1.8 2000/03/13 23:22:52 soren Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993, 1994
@@ -337,7 +337,7 @@ v_hpagedown(sp, vp)
  * !!!
  * Historic vi did not move to the EOF if the screen couldn't move, i.e.
  * if EOF was already displayed on the screen.  This implementation does
- * move to EOF in that case, making ^F more like the the historic ^D.
+ * move to EOF in that case, making ^F more like the historic ^D.
  *
  * PUBLIC: int v_pagedown __P((SCR *, VICMD *));
  */

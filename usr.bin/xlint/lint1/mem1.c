@@ -1,4 +1,4 @@
-/*	$NetBSD: mem1.c,v 1.3 1998/02/22 15:40:40 christos Exp $	*/
+/*	$NetBSD: mem1.c,v 1.4 2000/03/13 23:22:53 soren Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -33,7 +33,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: mem1.c,v 1.3 1998/02/22 15:40:40 christos Exp $");
+__RCSID("$NetBSD: mem1.c,v 1.4 2000/03/13 23:22:53 soren Exp $");
 #endif
 
 #include <sys/types.h>
@@ -318,7 +318,7 @@ getnode()
 }
 
 /*
- * Free all memory which is allocated by the the current expression.
+ * Free all memory which is allocated by the current expression.
  */
 void
 tfreeblk()

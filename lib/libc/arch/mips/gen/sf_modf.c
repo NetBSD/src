@@ -1,4 +1,4 @@
-/*	$NetBSD: modf.c,v 1.2 2000/03/13 22:59:20 soren Exp $	*/
+/*	$NetBSD: sf_modf.c,v 1.3 2000/03/13 22:59:21 soren Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Carnegie-Mellon University.
@@ -28,7 +28,7 @@
  */
 
 #include <sys/types.h>
-#include <machine/ieee.h>
+#include "ieee.h"
 #include <errno.h>
 #include <math.h>
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: timer.c,v 1.4 1999/12/10 06:13:32 itojun Exp $	*/
+/*	$NetBSD: timer.c,v 1.5 2000/03/13 23:22:55 soren Exp $	*/
 
 /*
  *  Copyright (c) 1998 by the University of Oregon.
@@ -192,7 +192,7 @@ age_routes()
 	ucast_flag = FALSE;
     }
 
-    /* Walk the the (S,G) entries */
+    /* Walk the (S,G) entries */
     if(grplist == (grpentry_t *)NULL) 
 	return;
     for(grpentry_ptr = grplist;

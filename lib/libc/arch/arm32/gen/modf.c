@@ -1,4 +1,4 @@
-/*	$NetBSD: modf.c,v 1.2 1997/10/06 00:18:34 mark Exp $	*/
+/*	$NetBSD: modf.c,v 1.3 2000/03/13 22:59:21 soren Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Carnegie-Mellon University.
@@ -83,7 +83,7 @@ modf(val, iptr)
 	 * If you look at the math involved for a few seconds, it's
 	 * plain to see that the integral part is the input, with the
 	 * low (DBL_FRACBITS - (exponent - DBL_EXP_BIAS)) bits zeroed,
-	 * the the fractional part is the part with the rest of the
+	 * the fractional part is the part with the rest of the
 	 * bits zeroed.  Just zeroing the high bits to get the
 	 * fractional part would yield a fraction in need of
 	 * normalization.  Therefore, we take the easy way out, and

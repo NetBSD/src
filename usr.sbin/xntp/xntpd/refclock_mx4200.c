@@ -1,4 +1,4 @@
-/*	$NetBSD: refclock_mx4200.c,v 1.4 1998/08/12 14:11:55 christos Exp $	*/
+/*	$NetBSD: refclock_mx4200.c,v 1.5 2000/03/13 23:22:56 soren Exp $	*/
 
 /*
  * This software was developed by the Computer Systems Engineering group
@@ -1412,7 +1412,7 @@ static day1tab[] = {31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31};
 static day2tab[] = {31, 29, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31};
 
 /*
- * Calculate the the Julian Day
+ * Calculate the Julian Day
  */
 static int
 mx4200_jday(year, month, monthday)

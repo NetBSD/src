@@ -1,4 +1,4 @@
-.\"	$NetBSD: fsinterface.ms,v 1.2 1998/01/09 06:41:06 perry Exp $
+.\"	$NetBSD: fsinterface.ms,v 1.3 2000/03/13 23:03:36 soren Exp $
 .\"
 .\" Copyright (c) 1986 The Regents of the University of California.
 .\" All rights reserved.
@@ -252,7 +252,7 @@ otherwise, the inode describes the next directory to be searched.
 The inode returned may be used in various ways by the caller;
 it may be examined, the file may be read or written,
 types and access may be checked, and fields may be modified.
-Modified inodes are automatically written back the the filesystem
+Modified inodes are automatically written back the filesystem
 on disk when the last reference is released with \fIiput\fP.
 Although the details are considerably different,
 the same general scheme is used in the faster filesystem in 4.2BSD

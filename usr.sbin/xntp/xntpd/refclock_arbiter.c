@@ -1,4 +1,4 @@
-/*	$NetBSD: refclock_arbiter.c,v 1.4 1998/08/12 14:11:54 christos Exp $	*/
+/*	$NetBSD: refclock_arbiter.c,v 1.5 2000/03/13 23:22:56 soren Exp $	*/
 
 /*
  * refclock_arbiter - clock driver for Arbiter 1088A/B Satellite
@@ -251,7 +251,7 @@ arb_receive(rbufp)
 	 * and expects the echo followed some time later by the on-time
 	 * character <cr> and then the <lf> beginning the timecode
 	 * itself. Finally, at the <cr> beginning the next timecode at
-	 * the next second, the program sends a B0 shutting down the the
+	 * the next second, the program sends a B0 shutting down the
 	 * timecode broadcast.
 	 *
 	 * If flag4 is set, the program snatches the latitude, longitude

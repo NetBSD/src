@@ -1,4 +1,4 @@
-/*	$NetBSD: internals.c,v 1.4 1999/12/22 14:38:12 kleink Exp $	*/
+/*	$NetBSD: internals.c,v 1.5 2000/03/13 22:59:22 soren Exp $	*/
 
 /*-
  * Copyright (c) 1998-1999 Brett Lymn (blymn@baea.com.au, brett_lymn@yahoo.com.au)
@@ -111,8 +111,7 @@ _menui_stitch_items(menu)
    * Calculate the neighbours for an item in menu.  This routine deliberately
    * does not refer to up/down/left/right as these concepts depend on the menu
    * layout style (row major or not).  By arranging the arguments in the right
-   * order the caller can generate the the neighbours for either menu layout
-   * style.
+   * order the caller can generate the neighbours for either menu layout style.
    */
 static void
 _menui_calc_neighbours(menu, item_no, cycle, item_rows, item_cols, next, prev,

@@ -1,4 +1,4 @@
-/*	$NetBSD: lstConcat.c,v 1.8 1997/09/28 03:31:19 lukem Exp $	*/
+/*	$NetBSD: lstConcat.c,v 1.9 2000/03/13 23:22:52 soren Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -37,14 +37,14 @@
  */
 
 #ifdef MAKE_BOOTSTRAP
-static char rcsid[] = "$NetBSD: lstConcat.c,v 1.8 1997/09/28 03:31:19 lukem Exp $";
+static char rcsid[] = "$NetBSD: lstConcat.c,v 1.9 2000/03/13 23:22:52 soren Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)lstConcat.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: lstConcat.c,v 1.8 1997/09/28 03:31:19 lukem Exp $");
+__RCSID("$NetBSD: lstConcat.c,v 1.9 2000/03/13 23:22:52 soren Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -70,7 +70,7 @@ __RCSID("$NetBSD: lstConcat.c,v 1.8 1997/09/28 03:31:19 lukem Exp $");
  *	SUCCESS if all went well. FAILURE otherwise.
  *
  * Side Effects:
- *	New elements are created and appended the the first list.
+ *	New elements are created and appended the first list.
  *-----------------------------------------------------------------------
  */
 ReturnStatus

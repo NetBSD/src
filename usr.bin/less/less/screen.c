@@ -1,4 +1,4 @@
-/*	$NetBSD: screen.c,v 1.9 1999/10/04 23:34:06 lukem Exp $	*/
+/*	$NetBSD: screen.c,v 1.10 2000/03/13 23:22:51 soren Exp $	*/
 
 /*
  * Copyright (c) 1984,1985,1989,1994,1995,1996,1999  Mark Nudelman
@@ -2021,7 +2021,7 @@ clear_bot()
 
 		/*
 		 * Clear bottom, but with the background color of the text
-		 * window, not with background of stand-out color, so the the
+		 * window, not with background of stand-out color, so the
 		 * bottom line stays stand-out only to the extent of prompt.
 		 */
 		gettextinfo(&txinfo);
