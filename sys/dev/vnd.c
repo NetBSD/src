@@ -1,4 +1,4 @@
-/*	$NetBSD: vnd.c,v 1.64 2000/02/07 20:16:55 thorpej Exp $	*/
+/*	$NetBSD: vnd.c,v 1.65 2000/03/30 12:45:27 augustss Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -309,7 +309,7 @@ vndclose(dev, flags, mode, p)
  */
 void
 vndstrategy(bp)
-	register struct buf *bp;
+	struct buf *bp;
 {
 	int unit = vndunit(bp->b_dev);
 	struct vnd_softc *vnd = &vnd_softc[unit];
@@ -514,7 +514,7 @@ out: /* Arrive here at splbio */
  */
 void
 vndstart(vnd)
-	register struct vnd_softc *vnd;
+	struct vnd_softc *vnd;
 {
 	struct buf	*bp;
 
@@ -555,10 +555,10 @@ void
 vndiodone(bp)
 	struct buf *bp;
 {
-	register struct vndbuf *vbp = (struct vndbuf *) bp;
-	register struct vndxfer *vnx = (struct vndxfer *)vbp->vb_xfer;
-	register struct buf *pbp = vnx->vx_bp;
-	register struct vnd_softc *vnd = &vnd_softc[vndunit(pbp->b_dev)];
+	struct vndbuf *vbp = (struct vndbuf *) bp;
+	struct vndxfer *vnx = (struct vndxfer *)vbp->vb_xfer;
+	struct buf *pbp = vnx->vx_bp;
+	struct vnd_softc *vnd = &vnd_softc[vndunit(pbp->b_dev)];
 	int s, resid;
 
 	s = splbio();
@@ -688,7 +688,7 @@ vndioctl(dev, cmd, data, flag, p)
 	struct proc *p;
 {
 	int unit = vndunit(dev);
-	register struct vnd_softc *vnd;
+	struct vnd_softc *vnd;
 	struct vnd_ioctl *vio;
 	struct vattr vattr;
 	struct nameidata nd;
@@ -964,7 +964,7 @@ vndioctl(dev, cmd, data, flag, p)
  */
 int
 vndsetcred(vnd, cred)
-	register struct vnd_softc *vnd;
+	struct vnd_softc *vnd;
 	struct ucred *cred;
 {
 	struct uio auio;
@@ -1008,7 +1008,7 @@ vndsetcred(vnd, cred)
  */
 void
 vndthrottle(vnd, vp)
-	register struct vnd_softc *vnd;
+	struct vnd_softc *vnd;
 	struct vnode *vp;
 {
 #ifdef NFS
@@ -1027,7 +1027,7 @@ vndthrottle(vnd, vp)
 void
 vndshutdown()
 {
-	register struct vnd_softc *vnd;
+	struct vnd_softc *vnd;
 
 	for (vnd = &vnd_softc[0]; vnd < &vnd_softc[numvnd]; vnd++)
 		if (vnd->sc_flags & VNF_INITED)
@@ -1036,9 +1036,9 @@ vndshutdown()
 
 void
 vndclear(vnd)
-	register struct vnd_softc *vnd;
+	struct vnd_softc *vnd;
 {
-	register struct vnode *vp = vnd->sc_vp;
+	struct vnode *vp = vnd->sc_vp;
 	struct proc *p = curproc;		/* XXX */
 
 #ifdef DEBUG

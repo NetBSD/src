@@ -1,4 +1,4 @@
-/*	$NetBSD: ufs_inode.c,v 1.13 1999/03/05 21:09:50 mycroft Exp $	*/
+/*	$NetBSD: ufs_inode.c,v 1.14 2000/03/30 12:41:14 augustss Exp $	*/
 
 /*
  * Copyright (c) 1991, 1993
@@ -115,7 +115,7 @@ ufs_reclaim(vp, p)
 	struct vnode *vp;
 	struct proc *p;
 {
-	register struct inode *ip;
+	struct inode *ip;
 	extern int prtactive;
 
 	if (prtactive && vp->v_usecount != 0)

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_uba.c,v 1.16 1999/06/06 20:45:21 ragge Exp $	*/
+/*	$NetBSD: if_uba.c,v 1.17 2000/03/30 12:45:37 augustss Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1988 Regents of the University of California.
@@ -76,13 +76,13 @@ static	void restor_xmtbuf __P((struct ifxmt *));
  */
 int
 if_ubaminit(ifu, uh, hlen, nmr, ifr, nr, ifw, nw)
-	register struct ifubinfo *ifu;
+	struct ifubinfo *ifu;
 	struct uba_softc *uh;
 	int hlen, nmr, nr, nw;
-	register struct ifrw *ifr;
-	register struct ifxmt *ifw;
+	struct ifrw *ifr;
+	struct ifxmt *ifw;
 {
-	register caddr_t p;
+	caddr_t p;
 	caddr_t cp;
 	int i, nclbytes, off;
 
@@ -152,10 +152,10 @@ bad:
 static int
 if_ubaalloc(ifu, ifrw, nmr)
 	struct ifubinfo *ifu;
-	register struct ifrw *ifrw;
+	struct ifrw *ifrw;
 	int nmr;
 {
-	register int info;
+	int info;
 
 	info =
 	    uballoc(ifu->iff_softc, ifrw->ifrw_addr, nmr*VAX_NBPG + ifu->iff_hlen,
@@ -185,14 +185,14 @@ if_ubaalloc(ifu, ifrw, nmr)
 struct mbuf *
 if_ubaget(ifu, ifr, totlen, ifp)
 	struct ifubinfo *ifu;
-	register struct ifrw *ifr;
-	register int totlen;
+	struct ifrw *ifr;
+	int totlen;
 	struct ifnet *ifp;
 {
 	struct mbuf *top, **mp;
-	register struct mbuf *m;
-	register caddr_t cp = ifr->ifrw_addr + ifu->iff_hlen, pp;
-	register int len;
+	struct mbuf *m;
+	caddr_t cp = ifr->ifrw_addr + ifu->iff_hlen, pp;
+	int len;
 	top = 0;
 	mp = &top;
 	MGETHDR(m, M_DONTWAIT, MT_DATA);
@@ -285,11 +285,11 @@ out:
  */
 static void
 rcv_xmtbuf(ifw)
-	register struct ifxmt *ifw;
+	struct ifxmt *ifw;
 {
-	register struct mbuf *m;
+	struct mbuf *m;
 	struct mbuf **mprev;
-	register int i;
+	int i;
 	char *cp;
 
 	while ((i = ffs((long)ifw->ifw_xswapd)) != 0) {
@@ -316,9 +316,9 @@ rcv_xmtbuf(ifw)
  */
 static void
 restor_xmtbuf(ifw)
-	register struct ifxmt *ifw;
+	struct ifxmt *ifw;
 {
-	register int i;
+	int i;
 
 	for (i = 0; i < ifw->ifw_nmr; i++)
 		ifw->ifw_wmap[i] = ifw->ifw_mr[i];
@@ -334,12 +334,12 @@ restor_xmtbuf(ifw)
 int
 if_ubaput(ifu, ifw, m)
 	struct ifubinfo *ifu;
-	register struct ifxmt *ifw;
-	register struct mbuf *m;
+	struct ifxmt *ifw;
+	struct mbuf *m;
 {
-	register struct mbuf *mp;
-	register caddr_t cp, dp;
-	register int i;
+	struct mbuf *mp;
+	caddr_t cp, dp;
+	int i;
 	int xswapd = 0;
 	int x, cc, t;
 

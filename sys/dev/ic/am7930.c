@@ -1,4 +1,4 @@
-/*	$NetBSD: am7930.c,v 1.41 1999/03/14 22:29:01 jonathan Exp $	*/
+/*	$NetBSD: am7930.c,v 1.42 2000/03/30 12:45:29 augustss Exp $	*/
 
 /*
  * Copyright (c) 1995 Rolf Grossmann
@@ -175,8 +175,8 @@ am7930_init(sc)
 
 static void
 init_amd(bt, bh)
-	register bus_space_tag_t bt;
-	register bus_space_handle_t bh;
+	bus_space_tag_t bt;
+	bus_space_handle_t bh;
 {
 	/* disable interrupts */
 	AM7930_WRITE_REG(bt, bh, cr, AMDR_INIT);
@@ -222,7 +222,7 @@ void
 am7930_close(addr)
 	void *addr;
 {
-	register struct am7930_softc *sc = addr;
+	struct am7930_softc *sc = addr;
 
 	DPRINTF(("sa_close: sc=%p\n", sc));
 	/*
@@ -282,11 +282,11 @@ int
 am7930_commit_settings(addr)
 	void *addr;
 {
-	register struct am7930_softc *sc = addr;
-	register struct mapreg *map;
-	register bus_space_tag_t bt = sc->sc_bustag;
-	register bus_space_handle_t bh = sc->sc_bh;
-	register int s, level;
+	struct am7930_softc *sc = addr;
+	struct mapreg *map;
+	bus_space_tag_t bt = sc->sc_bustag;
+	bus_space_handle_t bh = sc->sc_bh;
+	int s, level;
 
 	DPRINTF(("sa_commit.\n"));
 
@@ -336,9 +336,9 @@ int
 am7930_halt_output(addr)
 	void *addr;
 {
-	register struct am7930_softc *sc = addr;
-	register bus_space_tag_t bt = sc->sc_bustag;
-	register bus_space_handle_t bh = sc->sc_bh;
+	struct am7930_softc *sc = addr;
+	bus_space_tag_t bt = sc->sc_bustag;
+	bus_space_handle_t bh = sc->sc_bh;
 
 	/* XXX only halt, if input is also halted ?? */
 	AM7930_WRITE_REG(bt, bh, cr, AMDR_INIT);
@@ -353,9 +353,9 @@ int
 am7930_halt_input(addr)
 	void *addr;
 {
-	register struct am7930_softc *sc = addr;
-	register bus_space_tag_t bt = sc->sc_bustag;
-	register bus_space_handle_t bh = sc->sc_bh;
+	struct am7930_softc *sc = addr;
+	bus_space_tag_t bt = sc->sc_bustag;
+	bus_space_handle_t bh = sc->sc_bh;
 
 	/* XXX only halt, if output is also halted ?? */
 	AM7930_WRITE_REG(bt, bh, cr, AMDR_INIT);

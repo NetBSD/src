@@ -1,4 +1,4 @@
-/*	$NetBSD: ms.c,v 1.17 1999/08/02 01:50:27 matt Exp $	*/
+/*	$NetBSD: ms.c,v 1.18 2000/03/30 12:45:42 augustss Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -156,7 +156,7 @@ int
 msioctl(dev, cmd, data, flag, p)
 	dev_t dev;
 	u_long cmd;
-	register caddr_t data;
+	caddr_t data;
 	int flag;
 	struct proc *p;
 {
@@ -213,11 +213,11 @@ mspoll(dev, events, p)
  */
 void
 ms_input(ms, c)
-	register struct ms_softc *ms;
-	register int c;
+	struct ms_softc *ms;
+	int c;
 {
-	register struct firm_event *fe;
-	register int mb, ub, d, get, put, any;
+	struct firm_event *fe;
+	int mb, ub, d, get, put, any;
 	static const char to_one[] = { 1, 2, 2, 4, 4, 4, 4 };
 	static const int to_id[] = { MS_RIGHT, MS_MIDDLE, 0, MS_LEFT };
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: ms_zs.c,v 1.2 1999/08/02 01:44:22 matt Exp $	*/
+/*	$NetBSD: ms_zs.c,v 1.3 2000/03/30 12:45:42 augustss Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -164,11 +164,11 @@ ms_zs_attach(parent, self, aux)
 
 static void
 ms_zs_rxint(cs)
-	register struct zs_chanstate *cs;
+	struct zs_chanstate *cs;
 {
-	register struct ms_softc *ms;
-	register int put, put_next;
-	register u_char c, rr1;
+	struct ms_softc *ms;
+	int put, put_next;
+	u_char c, rr1;
 
 	ms = cs->cs_private;
 	put = ms->ms_rbput;
@@ -205,9 +205,9 @@ ms_zs_rxint(cs)
 
 static void
 ms_zs_txint(cs)
-	register struct zs_chanstate *cs;
+	struct zs_chanstate *cs;
 {
-	register struct ms_softc *ms;
+	struct ms_softc *ms;
 
 	ms = cs->cs_private;
 	zs_write_csr(cs, ZSWR0_RESET_TXINT);
@@ -218,11 +218,11 @@ ms_zs_txint(cs)
 
 static void
 ms_zs_stint(cs, force)
-	register struct zs_chanstate *cs;
+	struct zs_chanstate *cs;
 	int force;
 {
-	register struct ms_softc *ms;
-	register int rr0;
+	struct ms_softc *ms;
+	int rr0;
 
 	ms = cs->cs_private;
 
@@ -248,10 +248,10 @@ static void
 ms_zs_softint(cs)
 	struct zs_chanstate *cs;
 {
-	register struct ms_softc *ms;
-	register int get, c, s;
+	struct ms_softc *ms;
+	int get, c, s;
 	int intr_flags;
-	register u_short ring_data;
+	u_short ring_data;
 
 	ms = cs->cs_private;
 

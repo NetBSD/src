@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_inode.c,v 1.31 2000/03/12 01:45:01 bouyer Exp $	*/
+/*	$NetBSD: lfs_inode.c,v 1.32 2000/03/30 12:41:13 augustss Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -103,9 +103,9 @@ lfs_ifind(fs, ino, bp)
 	ino_t ino;
 	struct buf *bp;
 {
-	register int cnt;
-	register struct dinode *dip = (struct dinode *)bp->b_data;
-	register struct dinode *ldip;
+	int cnt;
+	struct dinode *dip = (struct dinode *)bp->b_data;
+	struct dinode *ldip;
 	
 	for (cnt = INOPB(fs), ldip = dip + (cnt - 1); cnt--; --ldip)
 		if (ldip->di_inumber == ino)
@@ -225,10 +225,10 @@ lfs_truncate(v)
 		struct ucred *a_cred;
 		struct proc *a_p;
 	} */ *ap = v;
-	register struct indir *inp;
-	register int i;
-	register ufs_daddr_t *daddrp;
-	register struct vnode *vp = ap->a_vp;
+	struct indir *inp;
+	int i;
+	ufs_daddr_t *daddrp;
+	struct vnode *vp = ap->a_vp;
 	off_t length = ap->a_length;
 	struct buf *bp, *sup_bp;
 	struct ifile *ifp;
@@ -498,12 +498,12 @@ lfs_truncate(v)
  */
 int
 lfs_vinvalbuf(vp, cred, p, maxblk)
-	register struct vnode *vp;
+	struct vnode *vp;
 	struct ucred *cred;
 	struct proc *p;
 	ufs_daddr_t maxblk;
 {
-	register struct buf *bp;
+	struct buf *bp;
 	struct buf *nbp, *blist;
 	int i, s, error, dirty;
 

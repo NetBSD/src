@@ -1,4 +1,4 @@
-/*	$NetBSD: mscp_subr.c,v 1.14 2000/03/26 11:37:55 ragge Exp $	*/
+/*	$NetBSD: mscp_subr.c,v 1.15 2000/03/30 12:45:34 augustss Exp $	*/
 /*
  * Copyright (c) 1996 Ludd, University of Lule}, Sweden.
  * Copyright (c) 1988 Regents of the University of California.
@@ -560,10 +560,10 @@ mscp_dgo(mi, mxi)
  */
 void
 mscp_hexdump(mp)
-	register struct mscp *mp;
+	struct mscp *mp;
 {
-	register long *p = (long *) mp;
-	register int i = mp->mscp_msglen;
+	long *p = (long *) mp;
+	int i = mp->mscp_msglen;
 
 	if (i > 256)		/* sanity */
 		i = 256;
@@ -755,8 +755,8 @@ void
 mscp_printevent(mp)
 	struct mscp *mp;
 {
-	register int event = mp->mscp_event;
-	register struct code_decode *cdc;
+	int event = mp->mscp_event;
+	struct code_decode *cdc;
 	int c, sc;
 	char *cm, *scm;
 
@@ -796,7 +796,7 @@ static char *codemsg[16] = {
 int
 mscp_decodeerror(name, mp, mi)
 	char *name;
-	register struct mscp *mp;
+	struct mscp *mp;
 	struct mscp_softc *mi;
 {
 	int issoft;

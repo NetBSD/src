@@ -1,4 +1,4 @@
-/*	$NetBSD: mscp_tape.c,v 1.14 1999/06/06 19:16:18 ragge Exp $ */
+/*	$NetBSD: mscp_tape.c,v 1.15 2000/03/30 12:45:34 augustss Exp $ */
 /*
  * Copyright (c) 1996 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -197,7 +197,7 @@ mtopen(dev, flag, fmt, p)
 	int flag, fmt;
 	struct	proc *p;
 {
-	register struct mt_softc *mt;
+	struct mt_softc *mt;
 	int unit;
 
 	/*
@@ -251,10 +251,10 @@ mtclose(dev, flags, fmt, p)
 
 void
 mtstrategy(bp)
-	register struct buf *bp;
+	struct buf *bp;
 {
-	register int unit;
-	register struct mt_softc *mt;
+	int unit;
+	struct mt_softc *mt;
 
 	/*
 	 * Make sure this is a reasonable drive to use.
@@ -344,7 +344,7 @@ mtonline(usc, mp)
 	struct device *usc;
 	struct mscp *mp;
 {
-	register struct mt_softc *mt = (void *)usc;
+	struct mt_softc *mt = (void *)usc;
 
 	wakeup((caddr_t)&mt->mt_state);
 	if ((mp->mscp_status & M_ST_MASK) == M_ST_SUCCESS) 
@@ -358,8 +358,8 @@ mtonline(usc, mp)
  */
 int
 mtgotstatus(usc, mp)
-	register struct device *usc;
-	register struct mscp *mp;
+	struct device *usc;
+	struct mscp *mp;
 {
 	return (MSCP_DONE);
 }
@@ -390,8 +390,8 @@ static char *mt_ioerrs[] = {
 /*ARGSUSED*/
 int
 mtioerror(usc, mp, bp)
-	register struct device *usc;
-	register struct mscp *mp;
+	struct device *usc;
+	struct mscp *mp;
 	struct buf *bp;
 {
 	struct mt_softc *mt = (void *)usc;
@@ -425,8 +425,8 @@ mtioctl(dev, cmd, data, flag, p)
 	int flag;
 	struct proc *p;
 {
-	register int unit = mtunit(dev);
-	register struct mt_softc *mt = mt_cd.cd_devs[unit];
+	int unit = mtunit(dev);
+	struct mt_softc *mt = mt_cd.cd_devs[unit];
 	struct	mtop *mtop;
 	struct	mtget *mtget;
 	int error = 0, count;

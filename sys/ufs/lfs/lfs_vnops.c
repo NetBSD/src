@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_vnops.c,v 1.34 1999/12/15 07:19:07 perseant Exp $	*/
+/*	$NetBSD: lfs_vnops.c,v 1.35 2000/03/30 12:41:14 augustss Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -639,9 +639,9 @@ lfs_getattr(v)
 		struct ucred *a_cred;
 		struct proc *a_p;
 	} */ *ap = v;
-	register struct vnode *vp = ap->a_vp;
-	register struct inode *ip = VTOI(vp);
-	register struct vattr *vap = ap->a_vap;
+	struct vnode *vp = ap->a_vp;
+	struct inode *ip = VTOI(vp);
+	struct vattr *vap = ap->a_vap;
 	/*
 	 * Copy from inode table
 	 */
@@ -692,8 +692,8 @@ lfs_close(v)
 		struct ucred *a_cred;
 		struct proc *a_p;
 	} */ *ap = v;
-	register struct vnode *vp = ap->a_vp;
-	register struct inode *ip = VTOI(vp);
+	struct vnode *vp = ap->a_vp;
+	struct inode *ip = VTOI(vp);
 	int mod;
 	struct timespec ts;
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: elink3.c,v 1.78 2000/03/23 07:01:30 thorpej Exp $	*/
+/*	$NetBSD: elink3.c,v 1.79 2000/03/30 12:45:30 augustss Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -311,8 +311,8 @@ ep_reset_cmd(sc, cmd, arg)
 	struct ep_softc *sc;
 	u_int cmd, arg;
 {
-	register bus_space_tag_t iot = sc->sc_iot;
-	register bus_space_handle_t ioh = sc->sc_ioh;
+	bus_space_tag_t iot = sc->sc_iot;
+	bus_space_handle_t ioh = sc->sc_ioh;
 
 	bus_space_write_2(iot, ioh, cmd, arg);
 	ep_finish_reset(iot, ioh);
@@ -321,8 +321,8 @@ ep_reset_cmd(sc, cmd, arg)
 
 static inline void
 ep_discard_rxtop(iot, ioh)
-	register bus_space_tag_t iot;
-	register bus_space_handle_t ioh;
+	bus_space_tag_t iot;
+	bus_space_handle_t ioh;
 {
 	int i;
 
@@ -751,9 +751,9 @@ ep_tick(arg)
  */
 void
 epinit(sc)
-	register struct ep_softc *sc;
+	struct ep_softc *sc;
 {
-	register struct ifnet *ifp = &sc->sc_ethercom.ec_if;
+	struct ifnet *ifp = &sc->sc_ethercom.ec_if;
 	bus_space_tag_t iot = sc->sc_iot;
 	bus_space_handle_t ioh = sc->sc_ioh;
 	int i;
@@ -872,9 +872,9 @@ epinit(sc)
  */
 void
 epsetfilter(sc)
-	register struct ep_softc *sc;
+	struct ep_softc *sc;
 {
-	register struct ifnet *ifp = &sc->sc_ethercom.ec_if;
+	struct ifnet *ifp = &sc->sc_ethercom.ec_if;
 
 	GO_WINDOW(1);		/* Window 1 is operating window */
 	bus_space_write_2(sc->sc_iot, sc->sc_ioh, ELINK_COMMAND,
@@ -887,7 +887,7 @@ int
 ep_media_change(ifp)
 	struct ifnet *ifp;
 {
-	register struct ep_softc *sc = ifp->if_softc;
+	struct ep_softc *sc = ifp->if_softc;
 
 	if (sc->enabled && (ifp->if_flags & IFF_UP) != 0)
 		epreset(sc);
@@ -1073,7 +1073,7 @@ ep_media_status(ifp, req)
 	struct ifnet *ifp;
 	struct ifmediareq *req;
 {
-	register struct ep_softc *sc = ifp->if_softc;
+	struct ep_softc *sc = ifp->if_softc;
 	bus_space_tag_t iot = sc->sc_iot;
 	bus_space_handle_t ioh = sc->sc_ioh;
 
@@ -1124,7 +1124,7 @@ void
 epstart(ifp)
 	struct ifnet *ifp;
 {
-	register struct ep_softc *sc = ifp->if_softc;
+	struct ep_softc *sc = ifp->if_softc;
 	bus_space_tag_t iot = sc->sc_iot;
 	bus_space_handle_t ioh = sc->sc_ioh;
 	struct mbuf *m, *m0;
@@ -1303,7 +1303,7 @@ readcheck:
  */
 static int
 epstatus(sc)
-	register struct ep_softc *sc;
+	struct ep_softc *sc;
 {
 	bus_space_tag_t iot = sc->sc_iot;
 	bus_space_handle_t ioh = sc->sc_ioh;
@@ -1348,7 +1348,7 @@ epstatus(sc)
 
 static void
 eptxstat(sc)
-	register struct ep_softc *sc;
+	struct ep_softc *sc;
 {
 	bus_space_tag_t iot = sc->sc_iot;
 	bus_space_handle_t ioh = sc->sc_ioh;
@@ -1393,7 +1393,7 @@ int
 epintr(arg)
 	void *arg;
 {
-	register struct ep_softc *sc = arg;
+	struct ep_softc *sc = arg;
 	bus_space_tag_t iot = sc->sc_iot;
 	bus_space_handle_t ioh = sc->sc_ioh;
 	struct ifnet *ifp = &sc->sc_ethercom.ec_if;
@@ -1486,7 +1486,7 @@ epintr(arg)
 
 void
 epread(sc)
-	register struct ep_softc *sc;
+	struct ep_softc *sc;
 {
 	bus_space_tag_t iot = sc->sc_iot;
 	bus_space_handle_t ioh = sc->sc_ioh;
@@ -1756,7 +1756,7 @@ epget(sc, totlen)
 
 int
 epioctl(ifp, cmd, data)
-	register struct ifnet *ifp;
+	struct ifnet *ifp;
 	u_long cmd;
 	caddr_t data;
 {
@@ -1784,7 +1784,7 @@ epioctl(ifp, cmd, data)
 #ifdef NS
 		case AF_NS:
 		    {
-			register struct ns_addr *ina = &IA_SNS(ifa)->sns_addr;
+			struct ns_addr *ina = &IA_SNS(ifa)->sns_addr;
 
 			if (ns_nullhost(*ina))
 				ina->x_host = *(union ns_host *)
@@ -1892,7 +1892,7 @@ epwatchdog(ifp)
 
 void
 epstop(sc)
-	register struct ep_softc *sc;
+	struct ep_softc *sc;
 {
 	bus_space_tag_t iot = sc->sc_iot;
 	bus_space_handle_t ioh = sc->sc_ioh;
@@ -1940,7 +1940,7 @@ static void
 epshutdown(arg)
 	void *arg;
 {
-	register struct ep_softc *sc = arg;
+	struct ep_softc *sc = arg;
 	int s = splnet(); 
 
 	if (sc->enabled) {
