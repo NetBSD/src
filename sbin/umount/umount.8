@@ -1,4 +1,4 @@
-.\"	$NetBSD: umount.8,v 1.6 1997/12/18 07:11:48 mikel Exp $
+.\"	$NetBSD: umount.8,v 1.7 1998/04/17 01:19:42 fair Exp $
 .\"
 .\" Copyright (c) 1980, 1989, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -41,11 +41,11 @@
 .Nd unmount filesystems
 .Sh SYNOPSIS
 .Nm
-.Op Fl fvF
+.Op Fl fvFR
 .Ar special | node
 .Nm ""
 .Fl a | A
-.Op Fl fvF
+.Op Fl fvFR
 .Op Fl h Ar host
 .Op Fl t Ar type
 .Sh DESCRIPTION
@@ -73,8 +73,7 @@ All the filesystems described in
 .Xr fstab 5
 are unmounted.
 .It Fl A
-All the currently mounted filesystems except
-the root are unmounted.
+All the currently mounted filesystems except the root are unmounted.
 .It Fl f
 The filesystem is forcibly unmounted.
 Active special devices continue to work,
@@ -82,11 +81,29 @@ but all other files return errors if further accesses are attempted.
 The root filesystem cannot be forcibly unmounted.
 .It Fl F
 Fake the unmount; perform all other processing but do not actually
-attempt the unmount.  (This is most useful in conjunction with
+attempt the unmount.
+(This is most useful in conjunction with
 .Fl v ,
 to see what
 .Nm
-would attempt to do.)
+would attempt to do).
+.It Fl R
+Take the
+.Ar special | node
+argument as a path to be passed directly to
+.Xr unmount 2 ,
+bypassing all attempts to be smart about mechanically determining the
+correct path from the argument.
+This option is incompatible with any option that potentially umounts
+more than one filesystem, such as
+.Fl a ,
+but it can be used with
+.Fl f
+and/or
+.Fl v .
+This is the only way to unmount something that does not appear as a
+directory (such as a nullfs mount of a plain file); there are probably
+other cases where it is necessary.
 .It Fl h Ar host
 Only filesystems mounted from the specified host will be
 unmounted.

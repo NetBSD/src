@@ -1,4 +1,4 @@
-/*	$NetBSD: umount.c,v 1.23 1998/04/01 15:20:25 kleink Exp $	*/
+/*	$NetBSD: umount.c,v 1.24 1998/04/17 01:19:42 fair Exp $	*/
 
 /*-
  * Copyright (c) 1980, 1989, 1993
@@ -43,7 +43,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1989, 1993\n\
 #if 0
 static char sccsid[] = "@(#)umount.c	8.8 (Berkeley) 5/8/95";
 #else
-__RCSID("$NetBSD: umount.c,v 1.23 1998/04/01 15:20:25 kleink Exp $");
+__RCSID("$NetBSD: umount.c,v 1.24 1998/04/17 01:19:42 fair Exp $");
 #endif
 #endif /* not lint */
 
@@ -68,7 +68,7 @@ __RCSID("$NetBSD: umount.c,v 1.23 1998/04/01 15:20:25 kleink Exp $");
 
 typedef enum { MNTANY, MNTON, MNTFROM } mntwhat;
 
-int	fake, fflag, verbose;
+int	fake, fflag, verbose, raw;
 char	*nfshost;
 
 int	 checkvfsname __P((const char *, char **));
@@ -95,7 +95,7 @@ main(argc, argv)
 	sync();
 
 	all = 0;
-	while ((ch = getopt(argc, argv, "AaFfh:t:v")) != -1)
+	while ((ch = getopt(argc, argv, "AaFfRh:t:v")) != -1)
 		switch (ch) {
 		case 'A':
 			all = 2;
@@ -113,6 +113,9 @@ main(argc, argv)
 			all = 2;
 			nfshost = optarg;
 			break;
+		case 'R':
+			raw = 1;
+			break;
 		case 't':
 			if (typelist != NULL)
 				errx(1, "only one -t option may be specified.");
@@ -128,7 +131,7 @@ main(argc, argv)
 	argc -= optind;
 	argv += optind;
 
-	if ((argc == 0 && !all) || (argc != 0 && all))
+	if ((argc == 0 && !all) || (argc != 0 && all) || (all && raw))
 		usage();
 
 	/* -h implies "-t nfs" if no -t flag. */
@@ -209,65 +212,71 @@ umountfs(name, typelist)
 
 	hp = NULL;
 	delimp = NULL;
-	if (realpath(name, rname) == NULL) {
-		warn("%s", rname);
-		return (1);
-	}
 
-	what = MNTANY;
-	mntpt = name = rname;
+	if (raw) {
+		mntpt = name;
+	} else {
 
-	if (stat(name, &sb) == 0) {
-		if (S_ISBLK(sb.st_mode))
-			what = MNTON;
-		else if (S_ISDIR(sb.st_mode))
-			what = MNTFROM;
-	}
-
-	switch (what) {
-	case MNTON:
-		if ((mntpt = getmntname(name, MNTON, &type)) == NULL) {
-			warnx("%s: not currently mounted", name);
+		if (realpath(name, rname) == NULL) {
+			warn("%s", rname);
 			return (1);
 		}
-		break;
-	case MNTFROM:
-		if ((name = getmntname(mntpt, MNTFROM, &type)) == NULL) {
-			warnx("%s: not currently mounted", mntpt);
-			return (1);
+
+		what = MNTANY;
+		mntpt = name = rname;
+
+		if (stat(name, &sb) == 0) {
+			if (S_ISBLK(sb.st_mode))
+				what = MNTON;
+			else if (S_ISDIR(sb.st_mode))
+				what = MNTFROM;
 		}
-		break;
-	default:
-		if ((name = getmntname(mntpt, MNTFROM, &type)) == NULL) {
-			name = rname;
+
+		switch (what) {
+		case MNTON:
 			if ((mntpt = getmntname(name, MNTON, &type)) == NULL) {
 				warnx("%s: not currently mounted", name);
 				return (1);
 			}
+			break;
+		case MNTFROM:
+			if ((name = getmntname(mntpt, MNTFROM, &type)) == NULL) {
+				warnx("%s: not currently mounted", mntpt);
+				return (1);
+			}
+			break;
+		default:
+			if ((name = getmntname(mntpt, MNTFROM, &type)) == NULL) {
+				name = rname;
+				if ((mntpt = getmntname(name, MNTON, &type)) == NULL) {
+					warnx("%s: not currently mounted", name);
+					return (1);
+				}
+			}
 		}
-	}
 
-	if (checkvfsname(type, typelist))
-		return (1);
+		if (checkvfsname(type, typelist))
+			return (1);
 
-	hp = NULL;
-	if (!strncmp(type, MOUNT_NFS, MFSNAMELEN)) {
-		if ((delimp = strchr(name, '@')) != NULL) {
-			hostp = delimp + 1;
-			*delimp = '\0';
-			hp = gethostbyname(hostp);
-			*delimp = '@';
-		} else if ((delimp = strchr(name, ':')) != NULL) {
-			*delimp = '\0';
-			hostp = name;
-			hp = gethostbyname(hostp);
-			name = delimp + 1;
-			*delimp = ':';
+		hp = NULL;
+		if (!strncmp(type, MOUNT_NFS, MFSNAMELEN)) {
+			if ((delimp = strchr(name, '@')) != NULL) {
+				hostp = delimp + 1;
+				*delimp = '\0';
+				hp = gethostbyname(hostp);
+				*delimp = '@';
+			} else if ((delimp = strchr(name, ':')) != NULL) {
+				*delimp = '\0';
+				hostp = name;
+				hp = gethostbyname(hostp);
+				name = delimp + 1;
+				*delimp = ':';
+			}
 		}
-	}
 
-	if (!namematch(hp))
-		return (1);
+		if (!namematch(hp))
+			return (1);
+	}
 
 	if (verbose)
 		(void)printf("%s: unmount from %s\n", name, mntpt);
@@ -384,7 +393,7 @@ usage()
 {
 	(void)fprintf(stderr,
 	    "usage: %s\n       %s\n",
-	    "umount [-fvF] [-t fstypelist] special | node",
+	    "umount [-fvFR] [-t fstypelist] special | node",
 	    "umount -a[fvF] [-h host] [-t fstypelist]");
 	exit(1);
 }
