@@ -1,4 +1,4 @@
-/*	$NetBSD: ttycom.h,v 1.7 1998/02/13 23:14:53 thorpej Exp $	*/
+/*	$NetBSD: ttycom.h,v 1.8 1998/03/26 02:45:01 jonathan Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1990, 1993, 1994
@@ -129,6 +129,8 @@ struct winsize {
 #define		TIOCFLAG_CRTSCTS	0x04	/* set crtscts on open */
 #define		TIOCFLAG_MDMBUF		0x08	/* set mdmbuf on open */
 #define		TIOCFLAG_CDTRCTS	0x10	/* set cdtrcts on open */
+#define	TIOCDCDTIMESTAMP _IOR('t', 88, struct timeval) /* get timestamp of last
+						 * Cd rise, stamp next rise */
 
 #define	TTYDISC		0		/* termios tty line discipline */
 #define	TABLDISC	3		/* tablet discipline */
