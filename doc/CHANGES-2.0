@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-2.0,v 1.1.2.351 2004/07/23 18:13:47 tron Exp $
+#	$NetBSD: CHANGES-2.0,v 1.1.2.352 2004/07/23 23:55:54 he Exp $
 
 A complete list of changes from the initial NetBSD 2.0 branch on 28 March 2004
 until 2.0 release:
@@ -6011,3 +6011,107 @@ usr.bin/audio/record/record.c			1.37-1.38
 	Convert 8-bit signed linear data to unsigned for .wav files.
 	[mycroft, ticket #690]
 
+sys/dev/pci/pcidevs				1.633
+sys/dev/pci/pcidevs_data.h			regenerate
+sys/dev/pci/pcidevs.h				regenerate
+sys/dev/pci/siside.c				1.7
+
+	Add support for SiS 741.  Fixes PR#26394.
+	[mycroft, ticket #691]
+
+sys/dev/cardbus/if_ex_cardbus.c			1.31-1.32
+sys/dev/cardbus/com_cardbus.c			1.12
+sys/dev/cardbus/cardbusdevs			1.28
+sys/dev/cardbus/cardbusdevs_data.h		regenerate
+sys/dev/cardbus/cardbusdevs.h			regenerate
+
+	Add entries for the 3c656 line.  Fixes PR#22880.  Add 3c656
+	modem IDs, and support modem portion.  Fixes PR#23710
+	[mycroft, ticket #691]
+
+sys/dev/cardbus/cardbus.c			1.50
+
+	If the CIS pointer is all-0s, don't try to read the CIS.
+	[mycroft, ticket #692]
+
+sys/dev/pci/pccbb.c				1.98
+sys/dev/pci/pccbbvar.h				1.21
+
+	If the bus number has not been initialized, do not attach
+	a cardslot, and instead output a diagnostic pointing the
+	administrator towards the PCIBIOS_BUS_FIXUP option.
+	[mycroft, ticket #692]
+
+sys/dev/ic/ath.c				1.28
+
+	Support promiscuous mode for an AP too(!).
+	[mycroft, ticket #693]
+
+sys/arch/i386/i386/machdep.c			1.556
+
+	Use pmap_kenter_pa() to map pages to dump, not pmap_enter(),
+	so that it is more resistant to VM lossage.
+	[mycroft, ticket #694]
+
+usr.sbin/pppd/pppd/Makefile			1.32
+
+	It is not needed to leave the executable unstripped to load
+	modules, so save some space instead.
+	[mycroft, ticket #695]
+
+sys/dev/isa/if_ix.c				1.18
+
+	Allow a board with no memory window configured to be
+	attached.  Fixes PR#20436.
+	[mycroft, ticket #696]
+
+sys/net/if_vlan.c				1.41
+
+	If the parent interface is not IFF_RUNNING, do not call
+	its start function.  This prevents a variety of panics,
+	and therefore fixes PR#12932, PR#17561, and PR#18376.
+	[mycroft, ticket #697]
+
+sys/dev/pci/if_ste.c				1.18
+
+	Program the "MaxFrameSize" register so that it is correct
+	for VLAN encapsulation.  Fixes PR#20195.
+	[mycroft, ticket #698]
+
+sys/dev/audio.c					1.183
+
+	If we are short-circuiting audiostartp() because there is
+	not enough data present, do an extra wakeup() on the write
+	channel.  This happens when we change parameters during
+	playback, at which point we flush the buffer and would
+	stall.
+	[mycroft, ticket #699]
+
+sys/dev/ic/wi.c					1.162-1.181
+sys/dev/ic/wivar.h				1.44-1.49
+sys/net80211/ieee80211.c			1.23 via patch
+
+	Many bug fixes and performance fixes for the wi(4) driver,
+	as well as changes paving the way for further performance
+	improvements.
+	[mycroft, tickets #700, #701]
+
+sys/arch/i386/conf/GENERIC			1.623
+sys/arch/i386/conf/GENERIC_LAPTOP		1.107
+sys/arch/i386/conf/INSTALL			1.245
+sys/arch/i386/conf/INSTALL_LAPTOP		1.63
+
+	Enable ehci(4) by default.
+	[tron, ticket #702]
+
+doc/CHANGES					1.330 via patch
+
+	Note addition of strcasestr(3).
+	[junyoung, ticket #703]
+
+sys/kern/vfs_cache.c				1.57
+
+	Concurrent lookups in the same directory may race for a
+	cache entry.  Handle this, and upon detection free the
+	tentative entry and return.  Fixes PR#26400.
+	[hannken, ticket #706]
