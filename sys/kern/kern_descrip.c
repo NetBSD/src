@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_descrip.c,v 1.47 1997/10/20 22:05:10 thorpej Exp $	*/
+/*	$NetBSD: kern_descrip.c,v 1.48 1998/01/05 04:51:16 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1991, 1993
@@ -621,6 +621,91 @@ ffree(fp)
 #endif
 	nfiles--;
 	FREE(fp, M_FILE);
+}
+
+/*
+ * Create an initial filedesc structure, using the same current and root
+ * directories as p.
+ */
+struct filedesc *
+fdinit(p)
+	struct proc *p;
+{
+	struct filedesc0 *newfdp;
+	struct filedesc *fdp = p->p_fd;
+
+	MALLOC(newfdp, struct filedesc0 *, sizeof(struct filedesc0),
+	    M_FILEDESC, M_WAITOK);
+	bzero(newfdp, sizeof(struct filedesc0));
+	newfdp->fd_fd.fd_cdir = fdp->fd_cdir;
+	VREF(newfdp->fd_fd.fd_cdir);
+	newfdp->fd_fd.fd_rdir = fdp->fd_rdir;
+	if (newfdp->fd_fd.fd_rdir)
+		VREF(newfdp->fd_fd.fd_rdir);
+
+	fdinit1(newfdp);
+
+	return (&newfdp->fd_fd);
+}
+
+/*
+ * Initialize a file descriptor table.
+ */
+void
+fdinit1(newfdp)
+	struct filedesc0 *newfdp;
+{
+	extern int cmask;		/* init_main.c */
+
+	newfdp->fd_fd.fd_refcnt = 1;
+	newfdp->fd_fd.fd_cmask = cmask;
+	newfdp->fd_fd.fd_ofiles = newfdp->fd_dfiles;
+	newfdp->fd_fd.fd_ofileflags = newfdp->fd_dfileflags;
+	newfdp->fd_fd.fd_nfiles = NDFILE;
+}
+
+/*
+ * Make p2 share p1's filedesc structure.
+ */
+void
+fdshare(p1, p2)
+	struct proc *p1, *p2;
+{
+
+	p2->p_fd = p1->p_fd;
+	p1->p_fd->fd_refcnt++;
+}
+
+/*
+ * Make this process not share its filedesc structure, maintaining
+ * all file descriptor state.
+ */
+void
+fdunshare(p)
+	struct proc *p;
+{
+	struct filedesc *newfd;
+
+	if (p->p_fd->fd_refcnt == 1)
+		return;
+
+	newfd = fdcopy(p);
+	fdfree(p);
+	p->p_fd = newfd;
+}
+
+/*
+ * Clear a process's fd table.
+ */
+void
+fdclear(p)
+	struct proc *p;
+{
+	struct filedesc *newfd;
+
+	newfd = fdinit(p);
+	fdfree(p);
+	p->p_fd = newfd;
 }
 
 /*
