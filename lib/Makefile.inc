@@ -1,3 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.1 1997/10/09 14:36:17 lukem Exp $
+#	$NetBSD: Makefile.inc,v 1.2 2000/10/10 19:09:38 is Exp $
 
 WARNS?=	1
+WFORMAT?= 2
