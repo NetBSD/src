@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap_pvt.h,v 1.6 1997/07/02 03:23:58 jeremy Exp $	*/
+/*	$NetBSD: pmap_pvt.h,v 1.6.6.1 1997/12/18 06:28:38 mellon Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -57,6 +57,7 @@ struct a_tmgr_struct {
 	mmu_long_dte_t	*at_dtbl;  /* the MMU table being managed        */
 	u_char          at_wcnt;   /* no. of wired entries in this table */
 	u_char          at_ecnt;   /* no. of valid entries in this table */
+	u_int16_t	at_dum1;   /* structure padding                  */
     	TAILQ_ENTRY(a_tmgr_struct) at_link;  /* list linker              */
 };
 
@@ -72,6 +73,7 @@ struct b_tmgr_struct {
 	u_char		bt_pidx;    /* this table's index in the parent */
 	u_char		bt_wcnt;    /* no. of wired entries in table    */
 	u_char		bt_ecnt;    /* no. of valid entries in table    */
+	u_char		bt_dum1;    /* structure padding                */
     	TAILQ_ENTRY(b_tmgr_struct) bt_link; /* list linker              */
 };
 
@@ -92,6 +94,7 @@ struct c_tmgr_struct {
 	u_char		ct_pidx;    /* this table's index in the parent */
 	u_char		ct_wcnt;    /* no. of wired entries in table    */
 	u_char		ct_ecnt;    /* no. of valid entries in table    */
+	u_char		ct_dum1;    /* structure padding                */
 	TAILQ_ENTRY(c_tmgr_struct) ct_link; /* list linker              */
 #define	MMU_SHORT_PTE_WIRED	MMU_SHORT_PTE_UN1
 #define MMU_PTE_WIRED		((*pte)->attr.raw & MMU_SHORT_PTE_WIRED)
