@@ -1,4 +1,4 @@
-/*	$NetBSD: __strerror.c,v 1.19 2002/11/11 01:12:04 thorpej Exp $	*/
+/*	$NetBSD: __strerror.c,v 1.20 2002/11/17 01:51:25 itojun Exp $	*/
 
 /*
  * Copyright (c) 1988 Regents of the University of California.
@@ -38,7 +38,7 @@
 #if 0
 static char *sccsid = "@(#)strerror.c	5.6 (Berkeley) 5/4/91";
 #else
-__RCSID("$NetBSD: __strerror.c,v 1.19 2002/11/11 01:12:04 thorpej Exp $");
+__RCSID("$NetBSD: __strerror.c,v 1.20 2002/11/17 01:51:25 itojun Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -79,9 +79,8 @@ __strerror(num, buf, buflen)
 	errnum = num;				/* convert to unsigned */
 	if (errnum < (unsigned int) sys_nerr) {
 #ifdef NLS
-		(void)strncpy(buf, catgets(catd, 1, (int)errnum,
+		(void)strlcpy(buf, catgets(catd, 1, (int)errnum,
 		    sys_errlist[errnum]), buflen); 
-		buf[buflen - 1] = '\0';
 #else
 		return(sys_errlist[errnum]);
 #endif

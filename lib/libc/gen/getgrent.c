@@ -1,4 +1,4 @@
-/*	$NetBSD: getgrent.c,v 1.42 2002/02/02 15:21:29 lukem Exp $	*/
+/*	$NetBSD: getgrent.c,v 1.43 2002/11/17 01:51:24 itojun Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -39,7 +39,7 @@
 #if 0
 static char sccsid[] = "@(#)getgrent.c	8.2 (Berkeley) 3/21/94";
 #else
-__RCSID("$NetBSD: getgrent.c,v 1.42 2002/02/02 15:21:29 lukem Exp $");
+__RCSID("$NetBSD: getgrent.c,v 1.43 2002/11/17 01:51:24 itojun Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -265,7 +265,7 @@ _dns_grscan(void *rv, void *cb_data, va_list ap)
 	for (;;) {
 		if (search) {
 			if (name)
-				strncpy(line, name, sizeof(line));
+				strlcpy(line, name, sizeof(line));
 			else
 				snprintf(line, sizeof(line), "%u",
 				    (unsigned int)gid);
@@ -274,7 +274,6 @@ _dns_grscan(void *rv, void *cb_data, va_list ap)
 			_gr_hesnum++;
 		}
 
-		line[sizeof(line) - 1] = '\0';
 		hp = hesiod_resolve(context, line, "group");
 		if (hp == NULL) {
 			if (errno == ENOENT) {
@@ -286,8 +285,7 @@ _dns_grscan(void *rv, void *cb_data, va_list ap)
 		}
 
 						/* only check first elem */
-		strncpy(line, hp[0], sizeof(line));
-		line[sizeof(line) - 1] = '\0';
+		strlcpy(line, hp[0], sizeof(line));
 		hesiod_free_list(context, hp);
 		if (grmatchline(search, gid, name)) {
 			r = NS_SUCCESS;
@@ -330,10 +328,9 @@ _nis_grscan(void *rv, void *cb_data, va_list ap)
 
 	if (search) {			/* specific group or gid */
 		if (name)
-			strncpy(line, name, sizeof(line));
+			strlcpy(line, name, sizeof(line));
 		else
 			snprintf(line, sizeof(line), "%u", (unsigned int)gid);
-		line[sizeof(line) - 1] = '\0';
 		data = NULL;
 		r = yp_match(__ypdomain,
 				(name) ? "group.byname" : "group.bygid",
@@ -351,8 +348,7 @@ _nis_grscan(void *rv, void *cb_data, va_list ap)
 			return NS_UNAVAIL;
 		}
 		data[datalen] = '\0';			/* clear trailing \n */
-		strncpy(line, data, sizeof(line));
-		line[sizeof(line) - 1] = '\0';
+		strlcpy(line, data, sizeof(line));
 		free(data);
 		if (grmatchline(search, gid, name))
 			return NS_SUCCESS;
@@ -401,8 +397,7 @@ _nis_grscan(void *rv, void *cb_data, va_list ap)
 			}
 		}
 		data[datalen] = '\0';			/* clear trailing \n */
-		strncpy(line, data, sizeof(line));
-		line[sizeof(line) - 1] = '\0';
+		strlcpy(line, data, sizeof(line));
 		free(data);
 		if (grmatchline(search, gid, name))
 			return NS_SUCCESS;

@@ -1,4 +1,4 @@
-/*	$NetBSD: getpwent.c,v 1.52 2002/11/11 17:15:51 thorpej Exp $	*/
+/*	$NetBSD: getpwent.c,v 1.53 2002/11/17 01:51:25 itojun Exp $	*/
 
 /*
  * Copyright (c) 1988, 1993
@@ -39,7 +39,7 @@
 #if 0
 static char sccsid[] = "@(#)getpwent.c	8.2 (Berkeley) 4/27/95";
 #else
-__RCSID("$NetBSD: getpwent.c,v 1.52 2002/11/11 17:15:51 thorpej Exp $");
+__RCSID("$NetBSD: getpwent.c,v 1.53 2002/11/17 01:51:25 itojun Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -481,7 +481,7 @@ _dns_getpw(rv, cb_data, ap)
 		break;
 	case _PW_KEYBYNAME:
 		name = va_arg(ap, const char *);
-		strncpy(line, name, sizeof(line));
+		strlcpy(line, name, sizeof(line));
 		map = "passwd";
 		break;
 	case _PW_KEYBYUID:
@@ -492,7 +492,6 @@ _dns_getpw(rv, cb_data, ap)
 	default:
 		abort();
 	}
-	line[sizeof(line) - 1] = '\0';
 
 	r = NS_UNAVAIL;
 	if (hesiod_init(&context) == -1)
@@ -509,8 +508,7 @@ _dns_getpw(rv, cb_data, ap)
 		goto cleanup_dns_getpw;
 	}
 
-	strncpy(line, hp[0], sizeof(line));	/* only check first elem */
-	line[sizeof(line) - 1] = '\0';
+	strlcpy(line, hp[0], sizeof(line));	/* only check first elem */
 	hesiod_free_list(context, hp);
 	if (__pwparse(&_pw_passwd, line)) {
 		if (search == _PW_KEYBYNUM)
@@ -557,7 +555,7 @@ _nis_getpw(rv, cb_data, ap)
 		break;
 	case _PW_KEYBYNAME:
 		name = va_arg(ap, const char *);
-		strncpy(line, name, sizeof(line));
+		strlcpy(line, name, sizeof(line));
 		break;
 	case _PW_KEYBYUID:
 		uid = va_arg(ap, uid_t);
@@ -567,7 +565,6 @@ _nis_getpw(rv, cb_data, ap)
 	default:
 		abort();
 	}
-	line[sizeof(line) - 1] = '\0';
 	rval = NS_UNAVAIL;
 	if (search != _PW_KEYBYNUM) {
 		data = NULL;
@@ -581,8 +578,7 @@ _nis_getpw(rv, cb_data, ap)
 			return (rval);
 		}
 		data[datalen] = '\0';		/* clear trailing \n */
-		strncpy(line, data, sizeof(line));
-		line[sizeof(line) - 1] = '\0';
+		strlcpy(line, data, sizeof(line));
 		free(data);
 		if (__pwparse(&_pw_passwd, line))
 			return NS_UNAVAIL;
@@ -621,9 +617,8 @@ _nis_getpw(rv, cb_data, ap)
 			return (rval);
 		}
 		data[datalen] = '\0';		/* clear trailing \n */
-		strncpy(line, data, sizeof(line));
-		line[sizeof(line) - 1] = '\0';
-				free(data);
+		strlcpy(line, data, sizeof(line));
+		free(data);
 		if (! __pwparse(&_pw_passwd, line))
 			return NS_SUCCESS;
 	}
