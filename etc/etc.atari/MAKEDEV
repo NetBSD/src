@@ -1,6 +1,6 @@
 #!/bin/sh -
 #
-#	$NetBSD: MAKEDEV,v 1.63 2003/02/02 18:05:08 thomas Exp $
+#	$NetBSD: MAKEDEV,v 1.64 2003/03/31 03:58:58 perry Exp $
 #
 # Copyright (c) 1990 The Regents of the University of California.
 # All rights reserved.
@@ -101,7 +101,7 @@
 #	bpf*	Berkeley Packet Filter
 #	ch	SCSI changer
 #	grf*	Motherboard bitmapped video.
-#	ipl	IP Filter devices
+#	ipl	IP Filter
 #	kbd	Atari keyboard.
 #	lkm	loadable kernel modules interface
 #	random	Random number generator

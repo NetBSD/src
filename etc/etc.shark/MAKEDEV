@@ -1,6 +1,6 @@
 #!/bin/sh -
 #
-#	$NetBSD: MAKEDEV,v 1.15 2003/03/30 17:41:58 wiz Exp $
+#	$NetBSD: MAKEDEV,v 1.16 2003/03/31 03:59:12 perry Exp $
 #
 # Copyright (c) 1990 The Regents of the University of California.
 # All rights reserved.
@@ -103,7 +103,7 @@
 #	fd	file descriptors
 #	bpf*	packet filter
 #	beep	riscpc speaker
-#	ipl	IP filter control
+#	ipl	IP Filter
 #	openfirm OpenFirmware accessor
 #	random	Random number generator
 #	lkm	loadable kernel modules interface

@@ -1,5 +1,5 @@
 #!/bin/sh -
-#	$NetBSD: MAKEDEV,v 1.8 2003/03/30 18:11:34 wiz Exp $
+#	$NetBSD: MAKEDEV,v 1.9 2003/03/31 03:58:56 perry Exp $
 #
 # Copyright (c) 1990 The Regents of the University of California.
 # All rights reserved.
@@ -103,7 +103,7 @@
 #	bpf*	Berkeley packet filter devices
 #	ch*	SCSI media changer
 #	fd	file descriptors (/dev/fd/*)
-#	ipl	IP filter
+#	ipl	IP Filter
 #	kbd	keyboard (provides events, for X11)
 #	lkm	loadable kernel modules interface
 #	mouse	mouse (provides events, for X11)

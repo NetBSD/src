@@ -1,5 +1,5 @@
 #!/bin/sh -
-#	$NetBSD: MAKEDEV,v 1.10 2003/03/30 18:11:36 wiz Exp $
+#	$NetBSD: MAKEDEV,v 1.11 2003/03/31 03:59:11 perry Exp $
 #
 # Copyright (c) 1990 The Regents of the University of California.
 # All rights reserved.
@@ -94,7 +94,7 @@
 #	ch*	SCSI media changer
 #	clockctl clock control for non root users
 #	fd	file descriptors (/dev/fd/*)
-#	ipl	IP filter
+#	ipl	IP Filter
 #	lkm	loadable kernel modules interface
 #	mlx*	Mylex DAC960 control interface
 #	pci*	PCI bus access devices
