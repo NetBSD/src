@@ -1,4 +1,4 @@
-/*	$NetBSD: irix_syssgi.c,v 1.22 2002/03/16 20:43:52 christos Exp $ */
+/*	$NetBSD: irix_syssgi.c,v 1.23 2002/03/25 20:42:50 manu Exp $ */
 
 /*-
  * Copyright (c) 2001-2002 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: irix_syssgi.c,v 1.22 2002/03/16 20:43:52 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: irix_syssgi.c,v 1.23 2002/03/25 20:42:50 manu Exp $");
 
 #include "opt_ddb.h"
 
@@ -84,6 +84,7 @@ void	ELFNAME(load_psection)(struct exec_vmcmd_set *, struct vnode *,
 static int irix_syssgi_mapelf __P((int, Elf_Phdr *, int, 
     struct proc *, register_t *));
 static int irix_syssgi_sysconf __P((int name, struct proc *, register_t *));
+static int irix_syssgi_pathconf __P((char *, int, struct proc *, register_t *));
 
 int
 irix_sys_syssgi(p, v, retval)
@@ -143,6 +144,20 @@ irix_sys_syssgi(p, v, retval)
 		return (sys_getpgid(p, &cup, retval)); 
 		break;
 	}
+
+	case IRIX_SGI_SETPGID: {/* Get parent process GID: setpgid(2) */
+		struct sys_setpgid_args cup;
+
+		SCARG(&cup, pid) = (pid_t)SCARG(uap, arg1); 
+		SCARG(&cup, pgid) = (pid_t)SCARG(uap, arg2); 
+		return (sys_setpgid(p, &cup, retval)); 
+		break;
+	}
+
+	case IRIX_SGI_PATHCONF: /* Get file limits: pathconf(3) */ 
+		return irix_syssgi_pathconf((char *)SCARG(uap, arg1),
+		    (int)SCARG(uap, arg2), p, retval);
+		break;
 
 	case IRIX_SGI_RDNAME: {	/* Read Processes' name */
 		struct proc *tp;
@@ -466,4 +481,46 @@ irix_syssgi_sysconf(name, p, retval)
 	SCARG(&cup, newlen) = 0;
 
 	return sys___sysctl(p, &cup, retval);
+}
+
+static int 
+irix_syssgi_pathconf(path, name, p, retval)
+	char *path;
+	int name;
+	struct proc *p;
+	register_t *retval;
+{
+	struct sys_pathconf_args cup;
+	int bname;
+
+	switch (name) {
+	case IRIX_PC_LINK_MAX:
+	case IRIX_PC_MAX_CANON:
+	case IRIX_PC_MAX_INPUT:
+	case IRIX_PC_NAME_MAX:
+	case IRIX_PC_PATH_MAX:
+	case IRIX_PC_PIPE_BUF:
+	case IRIX_PC_CHOWN_RESTRICTED:
+	case IRIX_PC_NO_TRUNC:
+	case IRIX_PC_VDISABLE:
+	case IRIX_PC_SYNC_IO:
+		bname = name;
+		break;
+	case IRIX_PC_FILESIZEBITS:
+		bname = _PC_FILESIZEBITS;
+		break;
+	case IRIX_PC_PRIO_IO:
+	case IRIX_PC_ASYNC_IO:
+	case IRIX_PC_ABI_ASYNC_IO:
+	case IRIX_PC_ABI_AIO_XFER_MAX:
+	default:
+		printf("Warning: unimplemented IRIX pathconf() command %d\n",
+		    name);
+		*retval = 0;
+		return 0;
+		break;
+	}
+	SCARG(&cup, path) = path;
+	SCARG(&cup, name) = bname;
+	return sys_pathconf(p, &cup, retval);
 }
