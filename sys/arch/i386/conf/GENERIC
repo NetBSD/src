@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.610 2004/06/07 15:33:52 kochi Exp $
+# $NetBSD: GENERIC,v 1.611 2004/06/08 12:46:11 kochi Exp $
 #
 # GENERIC machine description file
 #
@@ -22,7 +22,7 @@ include 	"arch/i386/conf/std.i386"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.610 $"
+#ident 		"GENERIC-$Revision: 1.611 $"
 
 maxusers	32		# estimated number of users
 
@@ -267,7 +267,7 @@ cpu* at mainbus?
 
 # Basic Bus Support
 
-# Advanced Control and Power Interface
+# Advanced Configuration and Power Interface
 
 # This option can be used to retrieve CPU and APIC information.
 # that I/O APICs can be used if ACPI is enabled below.
