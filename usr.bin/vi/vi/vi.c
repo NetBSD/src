@@ -1,4 +1,4 @@
-/*	$NetBSD: vi.c,v 1.13 2002/04/15 08:31:42 pooka Exp $	*/
+/*	$NetBSD: vi.c,v 1.14 2004/11/05 19:50:13 dsl Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993, 1994
@@ -16,7 +16,7 @@
 #if 0
 static const char sccsid[] = "@(#)vi.c	10.57 (Berkeley) 10/13/96";
 #else
-__RCSID("$NetBSD: vi.c,v 1.13 2002/04/15 08:31:42 pooka Exp $");
+__RCSID("$NetBSD: vi.c,v 1.14 2004/11/05 19:50:13 dsl Exp $");
 #endif
 #endif /* not lint */
 
@@ -1073,7 +1073,7 @@ v_keyword(sp)
 	 * follow the same rule.
 	 */
 	for (moved = 0,
-	    beg = sp->cno; beg < len && isspace(p[beg]); moved = 1, ++beg);
+	    beg = sp->cno; beg < len && isspace((unsigned char)p[beg]); moved = 1, ++beg);
 	if (beg >= len) {
 		msgq(sp, M_BERR, "212|Cursor not in a word");
 		return (1);

@@ -1,4 +1,4 @@
-/*	$NetBSD: msg.c,v 1.9 2002/04/09 01:47:31 thorpej Exp $	*/
+/*	$NetBSD: msg.c,v 1.10 2004/11/05 19:50:12 dsl Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993, 1994
@@ -16,7 +16,7 @@
 #if 0
 static const char sccsid[] = "@(#)msg.c	10.48 (Berkeley) 9/15/96";
 #else
-__RCSID("$NetBSD: msg.c,v 1.9 2002/04/09 01:47:31 thorpej Exp $");
+__RCSID("$NetBSD: msg.c,v 1.10 2004/11/05 19:50:12 dsl Exp $");
 #endif
 #endif /* not lint */
 
@@ -829,8 +829,9 @@ msg_cat(sp, str, lenp)
 	 * If it's not a catalog message, i.e. has doesn't have a leading
 	 * number and '|' symbol, we're done.
 	 */
-	if (isdigit(str[0]) &&
-	    isdigit(str[1]) && isdigit(str[2]) && str[3] == '|') {
+	if (isdigit((unsigned char)str[0]) &&
+	    isdigit((unsigned char)str[1]) &&
+	    isdigit((unsigned char)str[2]) && str[3] == '|') {
 		key.data = &msgno;
 		key.size = sizeof(recno_t);
 		msgno = atoi(str);
@@ -878,7 +879,7 @@ msg_print(sp, s, needfree)
 	*needfree = 0;
 
 	for (cp = s; *cp != '\0'; ++cp)
-		if (!isprint(*cp))
+		if (!isprint((unsigned char)*cp))
 			break;
 	if (*cp == '\0')
 		return ((char *)s);	/* SAFE: needfree set to 0. */
