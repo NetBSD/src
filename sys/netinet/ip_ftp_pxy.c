@@ -1,7 +1,7 @@
-/*	$NetBSD: ip_ftp_pxy.c,v 1.26.6.1 2004/08/03 10:54:39 skrll Exp $	*/
+/*	$NetBSD: ip_ftp_pxy.c,v 1.26.6.2 2004/08/05 21:01:24 skrll Exp $	*/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(1, "$NetBSD: ip_ftp_pxy.c,v 1.26.6.1 2004/08/03 10:54:39 skrll Exp $");
+__KERNEL_RCSID(1, "$NetBSD: ip_ftp_pxy.c,v 1.26.6.2 2004/08/05 21:01:24 skrll Exp $");
 
 /*
  * Copyright (C) 1997-2003 by Darren Reed
@@ -977,16 +977,6 @@ int rv;
 #else
 	mlen = MSGDSIZE(m) - off;
 #endif
-	if (mlen <= 0) {
-		if ((tcp->th_flags & TH_OPENING) == TH_OPENING) {
-			f->ftps_seq[0] = thseq + 1;
-			t->ftps_seq[0] = thack;
-		}
-		return 0;
-	}
-	aps = nat->nat_aps;
-
-	mlen = MSGDSIZE(m) - off;
 	if (mlen <= 0) {
 		if ((tcp->th_flags & TH_OPENING) == TH_OPENING) {
 			f->ftps_seq[0] = thseq + 1;
