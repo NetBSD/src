@@ -1,4 +1,4 @@
-.\"	$NetBSD: uname.1,v 1.7 1997/10/20 02:16:38 lukem Exp $
+.\"	$NetBSD: uname.1,v 1.8 1998/11/09 13:24:05 kleink Exp $
 .\"
 .\" Copyright (c) 1990 The Regents of the University of California.
 .\" All rights reserved.
@@ -32,9 +32,9 @@
 .\" SUCH DAMAGE.
 .\"
 .\"     from: @(#)du.1	6.13 (Berkeley) 6/20/91
-.\"	$NetBSD: uname.1,v 1.7 1997/10/20 02:16:38 lukem Exp $
+.\"	$NetBSD: uname.1,v 1.8 1998/11/09 13:24:05 kleink Exp $
 .\"
-.Dd January 26, 1994
+.Dd November 9, 1998
 .Dt UNAME 1
 .Os
 .Sh NAME
@@ -42,7 +42,7 @@
 .Nd Print operating system name
 .Sh SYNOPSIS
 .Nm
-.Op Fl amnsrv
+.Op Fl amnpsrv
 .Sh DESCRIPTION
 The
 .Nm
@@ -61,6 +61,8 @@ print the machine hardware name.
 print the nodename (the nodename may be a name
 that the system is known by to a communications
 network).
+.It Fl p
+print the machine processor architecture name.
 .It Fl s
 print the operating system name.
 .It Fl r
@@ -83,4 +85,6 @@ The
 .Nm
 utility conforms to
 .St -p1003.2-92 .
-
+The
+.Fl p
+option is an extension to the standard.
