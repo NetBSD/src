@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.S,v 1.132 2002/03/05 15:48:31 simonb Exp $	*/
+/*	$NetBSD: locore.S,v 1.133 2002/04/01 21:06:21 manu Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -199,6 +199,7 @@ LEAF_NOPROFILE(linux_sigcode)
 	break	0			# just in case sigreturn fails
 END(linux_sigcode)
 XLEAF(linux_esigcode)
+#undef SYSCALL_SHIFT
 #endif
 
 #ifdef COMPAT_IRIX
@@ -210,6 +211,7 @@ LEAF_NOPROFILE(irix_sigcode)
 	break	0			# just in case sigreturn fails
 END(irix_sigcode)
 XLEAF(irix_esigcode)
+#undef SYSCALL_SHIFT
 #endif
 
 /*
