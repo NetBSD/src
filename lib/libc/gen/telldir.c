@@ -1,4 +1,4 @@
-/*	$NetBSD: telldir.c,v 1.13 2001/12/30 19:27:42 thorpej Exp $	*/
+/*	$NetBSD: telldir.c,v 1.14 2003/05/28 20:03:37 christos Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -38,11 +38,12 @@
 #if 0
 static char sccsid[] = "@(#)telldir.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: telldir.c,v 1.13 2001/12/30 19:27:42 thorpej Exp $");
+__RCSID("$NetBSD: telldir.c,v 1.14 2003/05/28 20:03:37 christos Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
 #include "namespace.h"
+#include "reentrant.h"
 #include <sys/param.h>
 
 #include <assert.h>
@@ -90,6 +91,10 @@ telldir(dirp)
 	long idx;
 	struct ddloc *lp;
 
+#ifdef _REENTRANT
+	if (__isthreaded)
+		mutex_lock((mutex_t *)dirp->dd_lock);
+#endif
 
 	if ((lp = (struct ddloc *)malloc(sizeof(struct ddloc))) == NULL)
 		return (-1);
@@ -99,6 +104,10 @@ telldir(dirp)
 	lp->loc_loc = dirp->dd_loc;
 	lp->loc_next = dd_hash[LOCHASH(idx)];
 	dd_hash[LOCHASH(idx)] = lp;
+#ifdef _REENTRANT
+	if (__isthreaded)
+		mutex_unlock((mutex_t *)dirp->dd_lock);
+#endif
 	return (idx);
 }
 

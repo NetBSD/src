@@ -1,4 +1,4 @@
-/*	$NetBSD: opendir.c,v 1.21 2003/03/02 14:17:07 enami Exp $	*/
+/*	$NetBSD: opendir.c,v 1.22 2003/05/28 20:03:37 christos Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -38,11 +38,12 @@
 #if 0
 static char sccsid[] = "@(#)opendir.c	8.7 (Berkeley) 12/10/94";
 #else
-__RCSID("$NetBSD: opendir.c,v 1.21 2003/03/02 14:17:07 enami Exp $");
+__RCSID("$NetBSD: opendir.c,v 1.22 2003/05/28 20:03:37 christos Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
 #include "namespace.h"
+#include "reentrant.h"
 #include <sys/param.h>
 #include <sys/mount.h>
 #include <sys/stat.h>
@@ -77,8 +78,9 @@ __opendir2(name, flags)
 	const char *name;
 	int flags;
 {
-	DIR *dirp;
+	DIR *dirp = NULL;
 	int fd;
+	int serrno;
 	struct stat sb;
 	int pagesz;
 	int incr;
@@ -90,15 +92,15 @@ __opendir2(name, flags)
 	if ((fd = open(name, O_RDONLY | O_NONBLOCK)) == -1)
 		return (NULL);
 	if (fstat(fd, &sb) || !S_ISDIR(sb.st_mode)) {
-		errno = ENOTDIR;
 		close(fd);
+		errno = ENOTDIR;
 		return (NULL);
 	}
 	if (fcntl(fd, F_SETFD, FD_CLOEXEC) == -1 ||
 	    (dirp = (DIR *)malloc(sizeof(DIR))) == NULL) {
-		close(fd);
-		return (NULL);
+		goto error;
 	}
+	dirp->dd_buf = NULL;
 
 	/*
 	 * If the machine's page size is an exact multiple of DIRBLKSIZ,
@@ -115,11 +117,8 @@ __opendir2(name, flags)
 	 * Determine whether this directory is the top of a union stack.
 	 */
 
-	if (fstatfs(fd, &sfb) < 0) {
-		free(dirp);
-		close(fd);
-		return (NULL);
-	}
+	if (fstatfs(fd, &sfb) < 0)
+		goto error;
 
 	if (flags & DTF_NODUP)
 		unionstack = !(strncmp(sfb.f_fstypename, MOUNT_UNION,
@@ -167,10 +166,8 @@ retry:
 				len += incr;
 				nbuf = realloc(buf, len);
 				if (nbuf == NULL) {
-					free(buf);
-					free(dirp);
-					close(fd);
-					return (NULL);
+					dirp->dd_buf = buf;
+					goto error;
 				}
 				buf = nbuf;
 				ddptr = buf + (len - space);
@@ -208,9 +205,8 @@ retry:
 		if (flags & DTF_REWIND) {
 			(void) close(fd);
 			if ((fd = open(name, O_RDONLY)) == -1) {
-				free(buf);
-				free(dirp);
-				return (NULL);
+				dirp->dd_buf = buf;
+				goto error;
 			}
 		}
 
@@ -296,11 +292,8 @@ retry:
 	} else {
 		dirp->dd_len = incr;
 		dirp->dd_buf = malloc((size_t)dirp->dd_len);
-		if (dirp->dd_buf == NULL) {
-			free(dirp);
-			close(fd);
-			return (NULL);
-		}
+		if (dirp->dd_buf == NULL)
+			goto error;
 		dirp->dd_seek = 0;
 		flags &= ~DTF_REWIND;
 	}
@@ -313,6 +306,22 @@ retry:
 	 * Set up seek point for rewinddir.
 	 */
 	dirp->dd_rewind = telldir(dirp);
-
+#ifdef _REENTRANT
+	if (__isthreaded) {
+		if ((dirp->dd_lock = malloc(sizeof(mutex_t))) == NULL)
+			goto error;
+		mutex_init((mutex_t *)dirp->dd_lock, NULL);
+	}
+#endif
 	return (dirp);
+error:
+	serrno = errno;
+	if (dirp && dirp->dd_buf)
+		free(dirp->dd_buf);
+	if (dirp)
+		free(dirp);
+	if (fd != -1)
+		(void)close(fd);
+	errno = serrno;
+	return NULL;
 }
