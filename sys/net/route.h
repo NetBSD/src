@@ -1,4 +1,4 @@
-/*	$NetBSD: route.h,v 1.26 2001/01/27 10:39:33 itojun Exp $	*/
+/*	$NetBSD: route.h,v 1.27 2001/02/21 05:45:11 itojun Exp $	*/
 
 /*
  * Copyright (c) 1980, 1986, 1993
@@ -148,11 +148,11 @@ struct ortentry {
  * Routing statistics.
  */
 struct	rtstat {
-	short	rts_badredirect;	/* bogus redirect calls */
-	short	rts_dynamic;		/* routes created by redirects */
-	short	rts_newgateway;		/* routes modified by redirects */
-	short	rts_unreach;		/* lookups which failed */
-	short	rts_wildcard;		/* lookups satisfied by a wildcard */
+	u_quad_t rts_badredirect;	/* bogus redirect calls */
+	u_quad_t rts_dynamic;		/* routes created by redirects */
+	u_quad_t rts_newgateway;		/* routes modified by redirects */
+	u_quad_t rts_unreach;		/* lookups which failed */
+	u_quad_t rts_wildcard;		/* lookups satisfied by a wildcard */
 };
 /*
  * Structures for routing messages.
