@@ -1,4 +1,4 @@
-/*	$NetBSD: passwd.c,v 1.24 2005/02/22 01:08:43 christos Exp $	*/
+/*	$NetBSD: passwd.c,v 1.25 2005/02/26 07:19:25 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988, 1993, 1994
@@ -39,10 +39,11 @@ __COPYRIGHT("@(#) Copyright (c) 1988, 1993, 1994\n\
 #if 0
 static char sccsid[] = "from: @(#)passwd.c    8.3 (Berkeley) 4/2/94";
 #else
-__RCSID("$NetBSD: passwd.c,v 1.24 2005/02/22 01:08:43 christos Exp $");
+__RCSID("$NetBSD: passwd.c,v 1.25 2005/02/26 07:19:25 thorpej Exp $");
 #endif
 #endif /* not lint */
 
+#include <assert.h>
 #include <err.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -51,6 +52,149 @@ __RCSID("$NetBSD: passwd.c,v 1.24 2005/02/22 01:08:43 christos Exp $");
 #include <pwd.h>
 
 #include "extern.h"
+
+#ifdef USE_PAM
+
+static void global_usage(const char *);
+
+static const struct pw_module_s {
+	const char *argv0;
+	const char *dbname;
+	char compat_opt;
+	void (*pw_usage)(const char *);
+	void (*pw_process)(const char *, int, char **);
+} pw_modules[] = {
+	/* "files" -- local password database */
+	{ NULL, "files", 'l', pwlocal_usage, pwlocal_process },
+#ifdef YP
+	/* "nis" -- YP/NIS password database */
+	{ NULL, "nis", 'y', pwyp_usage, pwyp_process },
+	{ "yppasswd", NULL, 0, pwyp_argv0_usage, pwyp_process },
+#endif
+#ifdef KERBEROS5
+	/* "krb5" -- Kerberos 5 password database */
+	{ NULL, "krb5", 'k', pwkrb5_usage, pwkrb5_process },
+	{ "kpasswd", NULL, 0, pwkrb5_argv0_usage, pwkrb5_process },
+#endif
+	/* default -- use whatever PAM decides */
+	{ NULL, NULL, 0, NULL, pwpam_process },
+
+	{ 0 }
+};
+
+static const struct pw_module_s *personality;
+
+static void
+global_usage(const char *prefix)
+{
+	const struct pw_module_s *pwm;
+
+	(void) fprintf(stderr, "%s %s [user]\n", prefix, getprogname());
+	for (pwm = pw_modules; pwm->pw_process != NULL; pwm++) {
+		if (pwm->argv0 == NULL && pwm->pw_usage != NULL)
+			(*pwm->pw_usage)("      ");
+	}
+}
+
+void
+usage(void)
+{
+
+	if (personality != NULL && personality->pw_usage != NULL)
+		(*personality->pw_usage)("usage:");
+	else
+		global_usage("usage:");
+	exit(1);
+}
+
+int
+main(int argc, char **argv)
+{
+	const struct pw_module_s *pwm;
+	const char *username;
+	int ch, i;
+	char opts[16];
+
+	/* Build opts string from module compat_opts */
+	i = 0;
+	opts[i++] = 'd';
+	opts[i++] = ':';
+	for (pwm = pw_modules; pwm->pw_process != NULL; pwm++) {
+		if (pwm->compat_opt != 0)
+			opts[i++] = pwm->compat_opt;
+	}
+	opts[i++] = '\0';
+
+	/* First, look for personality based on argv[0]. */
+	for (pwm = pw_modules; pwm->pw_process != NULL; pwm++) {
+		if (pwm->argv0 != NULL &&
+		    strcmp(pwm->argv0, getprogname()) == 0)
+			goto got_personality;
+	}
+
+	/* Try based on compat_opt or -d. */
+	for (ch = 0, pwm = pw_modules; pwm->pw_process != NULL; pwm++) {
+		if (pwm->argv0 == NULL && pwm->dbname == NULL &&
+		    pwm->compat_opt == 0) {
+			/*
+			 * We have reached the default personality case.
+			 * Make sure the user didn't provide a bogus
+			 * personality name.
+			 */
+			if (ch == 'd')
+				usage();
+			break;
+		}
+
+		ch = getopt(argc, argv, opts);
+		if (ch == '?')
+			usage();
+
+		if (ch == 'd' && pwm->dbname != NULL &&
+		    strcmp(pwm->dbname, optarg) == 0) {
+			/*
+			 * "passwd -d dbname" matches; this is our
+			 * chosen personality.
+			 */
+			break;
+		}
+
+		if (pwm->compat_opt != 0 && ch == pwm->compat_opt) {
+			/*
+			 * Legacy "passwd -l" or similar matches; this
+			 * is our chosen personality.
+			 */
+			break;
+		}
+
+		/* Reset getopt() and go around again. */
+		optind = 1;
+		optreset = 1;
+	}
+
+ got_personality:
+	personality = pwm;
+
+	/*
+	 * At this point, optind should be either 1 ("passwd"),
+	 * 2 ("passwd -l"), or 3 ("passwd -d files").  Consume
+	 * these arguments and reset getopt() for the modules to use.
+	 */
+	assert(optind >= 1 && optind <= 3);
+	argc -= optind;
+	argv += optind;
+	optind = 0;
+	optreset = 1;
+
+	username = getlogin();
+	if (username == NULL)
+		errx(1, "who are you ??");
+
+	(*personality->pw_process)(username, argc, argv);
+	exit(0);
+}
+
+#else /* ! USE_PAM */
 
 static struct pw_module_s {
 	const char *argv0;
@@ -85,11 +229,6 @@ static struct pw_module_s {
 	{ "yppasswd", "", "[-y]",
 	    yp_init, yp_arg, yp_arg_end, yp_end, yp_chpw, 0, 0 },
 #endif
-#ifdef USE_PAM
-	/* PAM */
-	{ NULL, "pd:s:", "[-p] [-d ypdomain] [-s ypserver]",
-	    pwpam_init, pwpam_arg, pwpam_arg_end, pwpam_end, pwpam_chpw, 0, 0 },
-#endif
 	/* local */
 	{ NULL, "l", "[-l]",
 	    local_init, local_arg, local_arg_end, local_end, local_chpw, 0, 0 },
@@ -98,14 +237,21 @@ static struct pw_module_s {
 	{ 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 }
 };
  
-void	usage __P((void)); 
+static void
+usage(void)
+{
+	int i;
 
-int	main __P((int, char **));
+	fprintf(stderr, "usage:\n");
+	for (i = 0; pw_modules[i].pw_init != NULL; i++)
+		if (! (pw_modules[i].invalid & INIT_INVALID))
+			fprintf(stderr, "\t%s %s [user]\n", getprogname(),
+			    pw_modules[i].usage);
+	exit(1);
+}
 
 int
-main(argc, argv)
-	int argc;
-	char **argv;
+main(int argc, char **argv)
 {
 	int ch;
 	char *username;
@@ -262,15 +408,4 @@ main(argc, argv)
 	exit(1);
 }
 
-void
-usage()
-{
-	int i;
-
-	fprintf(stderr, "usage:\n");
-	for (i = 0; pw_modules[i].pw_init != NULL; i++)
-		if (! (pw_modules[i].invalid & INIT_INVALID))
-			fprintf(stderr, "\t%s %s [user]\n", getprogname(),
-			    pw_modules[i].usage);
-	exit(1);
-}
+#endif /* USE_PAM */
