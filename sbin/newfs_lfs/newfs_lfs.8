@@ -1,4 +1,4 @@
-.\"	$NetBSD: newfs_lfs.8,v 1.18 2002/10/01 13:40:46 wiz Exp $
+.\"	$NetBSD: newfs_lfs.8,v 1.19 2003/02/23 04:53:17 perseant Exp $
 .\"
 .\" Copyright (c) 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -127,6 +127,8 @@ The size of the file system in sectors.
 .It Fl v Ar version
 Make a filesystem with the specified disk layout version.
 Valid options are 1 or 2 (the default).
+.Em Note ,
+however, that LFS version 1 is deprecated.
 .El
 .Sh SEE ALSO
 .Xr disktab 5 ,
