@@ -1,7 +1,28 @@
+2003-01-16  Derek Price  <derek@ximbiot.com>
+
+	* NEWS: Add 1.11.4 entry in regards to
+	<http://cve.mitre.org/cgi-bin/cvename.cgi?name=CAN-2003-0015>.
+	The Common Vulnerabilities and Exposures project (cve.mitre.org)
+	has assigned the name CAN-2003-0015 to this issue.
+	* configure.in: Update to CVS version 1.11.5.
+
+	* configure: Regenerated.
+
+2002-01-16  Derek Price  <derek@ximbiot.com>
+
+	* configure.in: Update to dev version (1.11.4.1).
+	* configure: Regenerated.
+
+2002-12-28  Derek Price  <derek@ximbiot.com>
+
+	* NEWS: Add since 1.11.3 entry.
+	* configure.in: Update to version 1.11.4.
+	* configure: Regenerated.
+
 2002-12-27  Derek Price  <derek@ximbiot.com>
 
 	* NEWS: Add dummy entry for since 1.11.3.
-	* configure.in: Update to dev version 1.11.3.
+	* configure.in: Update to dev version 1.11.3.1.
 	* configure: Regenerated.
 
 2002-12-27  Derek Price  <derek@ximbiot.com>
