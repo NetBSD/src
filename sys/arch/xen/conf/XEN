@@ -1,4 +1,4 @@
-# $NetBSD: XEN,v 1.5 2004/04/24 20:05:49 cl Exp $
+# $NetBSD: XEN,v 1.6 2004/04/24 20:58:59 cl Exp $
 
 include 	"arch/xen/conf/std.xen"
 
@@ -126,6 +126,9 @@ xbd*		at hypervisor?		# Xen virtual block device
 wd*		at hypervisor?		# Xen vbd (wd identity)
 sd*		at hypervisor?		# Xen vbd (sd identity)
 cd*		at hypervisor?		# Xen vbd (cd identity)
+
+vga*		at hypervisor?		# Xen VGA display
+wsdisplay*	at vga? console ?
 
 
 include	"arch/xen/conf/GENERIC.local"

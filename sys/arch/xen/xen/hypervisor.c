@@ -1,4 +1,4 @@
-/* $NetBSD: hypervisor.c,v 1.2 2004/04/24 18:24:14 cl Exp $ */
+/* $NetBSD: hypervisor.c,v 1.3 2004/04/24 20:58:59 cl Exp $ */
 
 /*
  *
@@ -33,7 +33,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hypervisor.c,v 1.2 2004/04/24 18:24:14 cl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hypervisor.c,v 1.3 2004/04/24 20:58:59 cl Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -42,6 +42,7 @@ __KERNEL_RCSID(0, "$NetBSD: hypervisor.c,v 1.2 2004/04/24 18:24:14 cl Exp $");
 #include "xencons.h"
 #include "xennet.h"
 #include "xbd.h"
+#include "vga_xen.h"
 #include "npx.h"
 
 #include "opt_xen.h"
@@ -63,6 +64,11 @@ __KERNEL_RCSID(0, "$NetBSD: hypervisor.c,v 1.2 2004/04/24 18:24:14 cl Exp $");
 #include <machine/xbdvar.h>
 #endif
 
+#if NVGA_XEN > 0
+#include <machine/bus.h>
+#include <machine/vga_xenvar.h>
+#endif
+
 int	hypervisor_match(struct device *, struct cfdata *, void *);
 void	hypervisor_attach(struct device *, struct device *, void *);
 
@@ -73,6 +79,9 @@ int	hypervisor_print(void *, const char *);
 
 union hypervisor_attach_cookie {
 	const char *hac_device;		/* first elem of all */
+#if NVGA_XEN > 0
+	struct xen_vga_attach_args hac_vga_xen;
+#endif
 #if NXENCONS > 0
 	struct xencons_attach_args hac_xencons;
 #endif
@@ -115,6 +124,13 @@ hypervisor_attach(parent, self, aux)
 	union hypervisor_attach_cookie hac;
 
 	printf("\n");
+
+#if NVGA_XEN > 0
+	hac.hac_vga_xen.xa_device = "vga_xen";
+	hac.hac_vga_xen.xa_iot = X86_BUS_SPACE_IO;
+	hac.hac_vga_xen.xa_memt = X86_BUS_SPACE_MEM;
+	config_found(self, &hac.hac_vga_xen, hypervisor_print);
+#endif
 
 #if NXENCONS > 0
 	hac.hac_xencons.xa_device = "xencons";
