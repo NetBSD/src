@@ -1,10 +1,10 @@
-# 	$NetBSD: GENERIC,v 1.17 2000/01/23 23:46:15 hubertf Exp $
+# 	$NetBSD: GENERIC,v 1.18 2000/02/12 03:35:13 thorpej Exp $
 #
 #	GENERIC kernel for RISC-NEWS
 
 include		"arch/newsmips/conf/std.newsmips"
 
-#ident 		"GENERIC-$Revision: 1.17 $"
+#ident 		"GENERIC-$Revision: 1.18 $"
 
 maxusers	16
 
@@ -21,7 +21,6 @@ options 	SYSVSEM			# System V semaphores
 options 	SYSVSHM			# System V shared memory
 #options 	SHMMAXPGS=1024		# 1024 pages is the default
 options 	LKM			# loadable kernel modules
-options 	NKMEMCLUSTERS=1024	# 4K pages in kernel malloc pool
 #options 	NTP			# network time protocol
 #options 	UCONSOLE		# users can redirect console (unsafe)
 

@@ -1,5 +1,5 @@
 #
-#	$NetBSD: BOOT,v 1.29 2000/01/26 14:56:40 leo Exp $
+#	$NetBSD: BOOT,v 1.30 2000/02/12 03:31:48 thorpej Exp $
 #
 # BOOT
 #
@@ -66,7 +66,6 @@ options 	COMPAT_14	# Compatibility to NetBSD1.4
 #
 options 	KTRACE			# Add kernel tracing system call
 options 	DIAGNOSTIC		# Add additional error checking code
-options 	NKMEMCLUSTERS=256	# Size of kernel malloc area
 
 #
 # Atari specific kernel options:

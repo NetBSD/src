@@ -1,4 +1,4 @@
-#	$NetBSD: DUALITY,v 1.36 1999/07/31 20:19:31 thorpej Exp $
+#	$NetBSD: DUALITY,v 1.37 2000/02/12 03:32:47 thorpej Exp $
 #
 # Generic kernel - one size fits all.
 #
@@ -37,7 +37,6 @@ options 	SYSVSHM		# System V-style shared memory
 #options 	SYSVSEM		# System V-style semaphores
 #options 	SYSVMSG		# System V-style message queues
 options 	KTRACE		# system call tracing support
-#options 	NKMEMCLUSTERS=1024	# 4K pages in kernel malloc pool
 options 	LKM		# Loadable kernel modules
 
 # Filesystems

@@ -1,5 +1,5 @@
 #
-#	$NetBSD: HADES,v 1.21 2000/01/26 14:56:43 leo Exp $
+#	$NetBSD: HADES,v 1.22 2000/02/12 03:31:49 thorpej Exp $
 #
 # Medusa-Hades
 #
@@ -74,7 +74,6 @@ options 	COMPAT_14	# Compatibility to NetBSD1.4
 #
 options 	KTRACE			# Add kernel tracing system call
 options 	DIAGNOSTIC		# Add additional error checking code
-options 	NKMEMCLUSTERS=256	# Size of kernel malloc area
 
 #
 # Atari specific kernel options:
