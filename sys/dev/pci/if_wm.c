@@ -1,4 +1,4 @@
-/*	$NetBSD: if_wm.c,v 1.37.2.11 2005/03/04 16:45:19 skrll Exp $	*/
+/*	$NetBSD: if_wm.c,v 1.37.2.12 2005/03/08 13:53:10 skrll Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002, 2003, 2004 Wasabi Systems, Inc.
@@ -47,7 +47,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.37.2.11 2005/03/04 16:45:19 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.37.2.12 2005/03/08 13:53:10 skrll Exp $");
 
 #include "bpfilter.h"
 #include "rnd.h"
@@ -276,13 +276,6 @@ struct wm_softc {
 	struct evcnt sc_ev_rxtusum;	/* TCP/UDP cksums checked in-bound */
 	struct evcnt sc_ev_txipsum;	/* IP checksums comp. out-bound */
 	struct evcnt sc_ev_txtusum;	/* TCP/UDP cksums comp. out-bound */
-
-			/* m_pullup() needed for Tx offload */
-	struct evcnt sc_ev_txpullup_needed;
-			/* ...failed due to no memory */
-	struct evcnt sc_ev_txpullup_nomem;
-			/* ...failed due to lack of space in first mbuf */
-	struct evcnt sc_ev_txpullup_fail;
 
 	struct evcnt sc_ev_txseg[WM_NTXSEGS]; /* Tx packets w/ N segments */
 	struct evcnt sc_ev_txdrop;	/* Tx packets dropped (too many segs) */
@@ -1257,13 +1250,6 @@ wm_attach(struct device *parent, struct device *self, void *aux)
 	evcnt_attach_dynamic(&sc->sc_ev_txtusum, EVCNT_TYPE_MISC,
 	    NULL, sc->sc_dev.dv_xname, "txtusum");
 
-	evcnt_attach_dynamic(&sc->sc_ev_txpullup_needed, EVCNT_TYPE_MISC,
-	    NULL, sc->sc_dev.dv_xname, "txpullup needed");
-	evcnt_attach_dynamic(&sc->sc_ev_txpullup_nomem, EVCNT_TYPE_MISC,
-	    NULL, sc->sc_dev.dv_xname, "txpullup nomem");
-	evcnt_attach_dynamic(&sc->sc_ev_txpullup_fail, EVCNT_TYPE_MISC,
-	    NULL, sc->sc_dev.dv_xname, "txpullup fail");
-
 	for (i = 0; i < WM_NTXSEGS; i++) {
 		sprintf(wm_txseg_evcnt_names[i], "txseg%d", i);
 		evcnt_attach_dynamic(&sc->sc_ev_txseg[i], EVCNT_TYPE_MISC,
@@ -1350,10 +1336,10 @@ wm_tx_offload(struct wm_softc *sc, struct wm_txsoft *txs, uint32_t *cmdp,
 {
 	struct mbuf *m0 = txs->txs_mbuf;
 	struct livengood_tcpip_ctxdesc *t;
-	uint32_t ipcs, tucs;
+	uint32_t ipcs, tucs, cmd, cmdlen, seg;
 	struct ether_header *eh;
 	int offset, iphl;
-	uint8_t fields = 0;
+	uint8_t fields;
 
 	/*
 	 * XXX It would be nice if the mbuf pkthdr had offset
@@ -1380,6 +1366,11 @@ wm_tx_offload(struct wm_softc *sc, struct wm_txsoft *txs, uint32_t *cmdp,
 	}
 
 	iphl = M_CSUM_DATA_IPv4_IPHL(m0->m_pkthdr.csum_data);
+
+	cmd = WTX_CMD_DEXT | WTX_DTYP_D;
+	cmdlen = WTX_CMD_DEXT | WTX_DTYP_C | WTX_CMD_IDE;
+	seg = 0;
+	fields = 0;
 
 	/*
 	 * NOTE: Even if we're not using the IP or TCP/UDP checksum
@@ -1415,14 +1406,14 @@ wm_tx_offload(struct wm_softc *sc, struct wm_txsoft *txs, uint32_t *cmdp,
 	    &sc->sc_txdescs[sc->sc_txnext];
 	t->tcpip_ipcs = htole32(ipcs);
 	t->tcpip_tucs = htole32(tucs);
-	t->tcpip_cmdlen = htole32(WTX_CMD_DEXT | WTX_DTYP_C);
-	t->tcpip_seg = 0;
+	t->tcpip_cmdlen = htole32(cmdlen);
+	t->tcpip_seg = htole32(seg);
 	WM_CDTXSYNC(sc, sc->sc_txnext, 1, BUS_DMASYNC_PREWRITE);
 
 	sc->sc_txnext = WM_NEXTTX(sc, sc->sc_txnext);
 	txs->txs_ndesc++;
 
-	*cmdp = WTX_CMD_DEXT | WTX_DTYP_D;
+	*cmdp = cmd;
 	*fieldsp = fields;
 
 	return (0);
@@ -1705,7 +1696,7 @@ wm_start(struct ifnet *ifp)
 			cksumfields = 0;
 		}
 
-		cksumcmd |= WTX_CMD_IDE;
+		cksumcmd |= WTX_CMD_IDE | WTX_CMD_IFCS;
 
 		/* Sync the DMA map. */
 		bus_dmamap_sync(sc->sc_dmat, dmamap, 0, dmamap->dm_mapsize,
@@ -1751,7 +1742,7 @@ wm_start(struct ifnet *ifp)
 		 * delay the interrupt.
 		 */
 		sc->sc_txdescs[lasttx].wtx_cmdlen |=
-		    htole32(WTX_CMD_EOP | WTX_CMD_IFCS | WTX_CMD_RS);
+		    htole32(WTX_CMD_EOP | WTX_CMD_RS);
 
 #if 0 /* XXXJRT */
 		/*

@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.76.2.5 2005/03/04 16:39:11 skrll Exp $ */
+/*	$NetBSD: autoconf.c,v 1.76.2.6 2005/03/08 13:53:10 skrll Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -48,7 +48,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.76.2.5 2005/03/04 16:39:11 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.76.2.6 2005/03/08 13:53:10 skrll Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -771,8 +771,8 @@ romgetcursoraddr(rowp, colp)
 	 * 64-bit values.  To convert them to pointers to integers, add
 	 * 4 to the address.
 	 */
-	*rowp = (int *)(row+4);
-	*colp = (int *)(col+4);
+	*rowp = (int *)(intptr_t)(row+4);
+	*colp = (int *)(intptr_t)(col+4);
 	return (row == 0UL || col == 0UL);
 }
 

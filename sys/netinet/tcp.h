@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp.h,v 1.14.2.4 2004/12/18 09:33:05 skrll Exp $	*/
+/*	$NetBSD: tcp.h,v 1.14.2.5 2005/03/08 13:53:12 skrll Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1993
@@ -91,6 +91,8 @@ struct tcphdr {
 
 #define	TCPOPT_SIGNATURE	19		/* Keyed MD5: RFC 2385 */
 #define	   TCPOLEN_SIGNATURE		18
+
+#define MAX_TCPOPTLEN	40	/* max # bytes that go in options */
 
 /*
  * Default maximum segment size for TCP.

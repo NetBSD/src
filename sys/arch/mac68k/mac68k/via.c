@@ -1,4 +1,4 @@
-/*	$NetBSD: via.c,v 1.71.28.4 2005/01/17 19:29:49 skrll Exp $	*/
+/*	$NetBSD: via.c,v 1.71.28.5 2005/03/08 13:53:09 skrll Exp $	*/
 
 /*-
  * Copyright (C) 1993	Allen K. Briggs, Chris P. Caputo,
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: via.c,v 1.71.28.4 2005/01/17 19:29:49 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: via.c,v 1.71.28.5 2005/03/08 13:53:09 skrll Exp $");
 
 #include "opt_mac68k.h"
 
@@ -72,7 +72,7 @@ static void	slot_noint(void *);
 int	VIA2 = VIA2OFF;		/* default for II, IIx, IIcx, SE/30. */
 
 /* VIA1 interrupt handler table */
-void (*via1itab[7]) __P((void *)) = {
+void (*via1itab[7])(void *) = {
 	via1_noint,
 	via1_noint,
 	mrg_adbintr,
@@ -94,7 +94,7 @@ void *via1iarg[7] = {
 };
 
 /* VIA2 interrupt handler table */
-void (*via2itab[7]) __P((void *)) = {
+void (*via2itab[7])(void *) = {
 	via2_noint,
 	via2_nubus_intr,
 	via2_noint,
@@ -121,7 +121,7 @@ void *via2iarg[7] = {
  * as a slot 15 interrupt; this slot is quite fictitious in real-world
  * Macs.  See also GMFH, pp. 165-167, and "Monster, Loch Ness."
  */
-void (*slotitab[7]) __P((void *)) = {
+void (*slotitab[7])(void *) = {
 	slot_noint,
 	slot_noint,
 	slot_noint,

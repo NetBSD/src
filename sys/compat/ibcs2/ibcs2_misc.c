@@ -1,4 +1,4 @@
-/*	$NetBSD: ibcs2_misc.c,v 1.66.2.6 2005/03/04 16:39:37 skrll Exp $	*/
+/*	$NetBSD: ibcs2_misc.c,v 1.66.2.7 2005/03/08 13:53:10 skrll Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -95,7 +95,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ibcs2_misc.c,v 1.66.2.6 2005/03/04 16:39:37 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ibcs2_misc.c,v 1.66.2.7 2005/03/08 13:53:10 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -244,8 +244,7 @@ ibcs2_sys_waitsys(l, v, retval)
 	if ((error = sys_wait4(l, &w4, retval)) != 0)
 		return error;
 
-	return copyin((caddr_t)SCARG(&w4, status), (caddr_t)&retval[1],
-		      sizeof(int));
+	return copyin(SCARG(&w4, status), &retval[1], sizeof(int));
 }
 
 int
@@ -330,9 +329,9 @@ ibcs2_sys_mount(l, v, retval)
 	char fsname[MFSNAMELEN];
 
 	if (oflags & (IBCS2_MS_NOSUB | IBCS2_MS_SYS5))
-		return (EINVAL);
+		return EINVAL;
 	if ((oflags & IBCS2_MS_NEWTYPE) == 0)
-		return (EINVAL);
+		return EINVAL;
 	nflags = 0;
 	if (oflags & IBCS2_MS_RDONLY)
 		nflags |= MNT_RDONLY;
@@ -342,14 +341,13 @@ ibcs2_sys_mount(l, v, retval)
 		nflags |= MNT_UPDATE;
 	SCARG(uap, flags) = nflags;
 
-	if (error = copyinstr((caddr_t)SCARG(uap, type), fsname, sizeof fsname,
-			      (u_int *)0))
-		return (error);
+	if (error = copyinstr(SCARG(uap, type), fsname, sizeof fsname, NULL))
+		return error;
 
 	if (strncmp(fsname, "4.2", sizeof fsname) == 0) {
 		SCARG(uap, type) = (caddr_t)STACK_ALLOC();
 		if (error = copyout("ffs", SCARG(uap, type), sizeof("ffs")))
-			return (error);
+			return error;
 	} else if (strncmp(fsname, "nfs", sizeof fsname) == 0) {
 		struct ibcs2_nfs_args sna;
 		struct sockaddr_in sain;
@@ -357,13 +355,13 @@ ibcs2_sys_mount(l, v, retval)
 		struct sockaddr sa;
 
 		if (error = copyin(SCARG(uap, data), &sna, sizeof sna))
-			return (error);
+			return error;
 		if (error = copyin(sna.addr, &sain, sizeof sain))
-			return (error);
+			return error;
 		memcpy(&sa, &sain, sizeof sa);
 		sa.sa_len = sizeof(sain);
-		SCARG(uap, data) = (caddr_t)STACK_ALLOC();
-		na.addr = (struct sockaddr *)((int)SCARG(uap, data) + sizeof na);
+		SCARG(uap, data) = STACK_ALLOC();
+		na.addr = (void *)((unsigned long)SCARG(uap, data) + sizeof na);
 		na.sotype = SOCK_DGRAM;
 		na.proto = IPPROTO_UDP;
 		na.fh = (nfsv2fh_t *)sna.fh;
@@ -375,11 +373,11 @@ ibcs2_sys_mount(l, v, retval)
 		na.hostname = sna.hostname;
 
 		if (error = copyout(&sa, na.addr, sizeof sa))
-			return (error);
+			return error;
 		if (error = copyout(&na, SCARG(uap, data), sizeof na))
-			return (error);
+			return error;
 	}
-	return (sys_mount(p, uap, retval));
+	return sys_mount(p, uap, retval);
 #else
 	return EINVAL;
 #endif
@@ -513,7 +511,7 @@ out:
 	if (cookiebuf)
 		free(cookiebuf, M_TEMP);
 	free(buf, M_TEMP);
- out1:
+out1:
 	FILE_UNUSE(fp, l);
 	return (error);
 }
@@ -561,7 +559,7 @@ ibcs2_sys_read(l, v, retval)
 		error = EBADF;
 		goto out1;
 	}
-	vp = (struct vnode *)fp->f_data;
+	vp = fp->f_data;
 	if (vp->v_type != VDIR) {
 		FILE_UNUSE(fp, l);
 		return sys_read(l, uap, retval);
@@ -712,14 +710,13 @@ ibcs2_sys_getgroups(l, v, retval)
 		gidsetsize = retval[0];
 		if (gidsetsize < 0)
 			gidsetsize = 0;
-		error = copyin((caddr_t)SCARG(&sa, gidset), (caddr_t)nset,
+		error = copyin(SCARG(&sa, gidset), nset,
 		    sizeof(gid_t) * gidsetsize);
 		if (error)
 			return error;
 		for (i = 0; i < gidsetsize; i++)
 			iset[i] = (ibcs2_gid_t)nset[i];
-		error = copyout((caddr_t)iset,
-		    (caddr_t)SCARG(uap, gidset),
+		error = copyout(iset, SCARG(uap, gidset),
 		    sizeof(ibcs2_gid_t) * retval[0]);
 	}
         return error;
@@ -748,7 +745,7 @@ ibcs2_sys_setgroups(l, v, retval)
 	SCARG(&sa, gidsetsize) = SCARG(uap, gidsetsize);
 
 	if (SCARG(&sa, gidsetsize)) {
-		error = copyin((caddr_t)SCARG(uap, gidset), (caddr_t)iset,
+		error = copyin(SCARG(uap, gidset), iset,
 		    sizeof(ibcs2_gid_t) * SCARG(uap, gidsetsize));
 		if (error)
 			return error;
@@ -811,7 +808,7 @@ xenix_sys_ftime(l, v, retval)
 	/* NetBSD has no kernel notion of timezone -- fake it. */
 	itb.timezone = 0;
 	itb.dstflag = 0;
-	return copyout((caddr_t)&itb, (caddr_t)SCARG(uap, tp), xenix_timeb_len);
+	return copyout(&itb, SCARG(uap, tp), xenix_timeb_len);
 }
 
 int
@@ -829,8 +826,8 @@ ibcs2_sys_time(l, v, retval)
 	microtime(&tv);
 	*retval = tv.tv_sec;
 	if (p->p_emuldata == IBCS2_EXEC_XENIX && SCARG(uap, tp))
-		return copyout((caddr_t)&tv.tv_sec, (caddr_t)SCARG(uap, tp),
-			       sizeof(ibcs2_time_t));
+		return copyout(&tv.tv_sec, SCARG(uap, tp),
+		    sizeof(ibcs2_time_t));
 	else
 		return 0;
 }
@@ -875,7 +872,6 @@ ibcs2_sys_sysconf(l, v, retval)
 	struct proc *p = l->l_proc;
 	int mib[2], value, error;
 	size_t len;
-	struct sys_getrlimit_args ga;
 
 	switch(SCARG(uap, name)) {
 	case IBCS2_SC_ARG_MAX:
@@ -883,16 +879,8 @@ ibcs2_sys_sysconf(l, v, retval)
 		break;
 
 	case IBCS2_SC_CHILD_MAX:
-	    {
-		caddr_t sg = stackgap_init(p, 0);
-
-		SCARG(&ga, which) = RLIMIT_NPROC;
-		SCARG(&ga, rlp) = stackgap_alloc(p, &sg, sizeof(struct rlimit *));
-		if ((error = sys_getrlimit(l, &ga, retval)) != 0)
-			return error;
-		*retval = SCARG(&ga, rlp)->rlim_cur;
+		*retval = p->p_rlimit[RLIMIT_NPROC].rlim_cur;
 		return 0;
-	    }
 
 	case IBCS2_SC_CLK_TCK:
 		*retval = hz;
@@ -903,16 +891,8 @@ ibcs2_sys_sysconf(l, v, retval)
 		break;
 
 	case IBCS2_SC_OPEN_MAX:
-	    {
-		caddr_t sg = stackgap_init(p, 0);
-
-		SCARG(&ga, which) = RLIMIT_NOFILE;
-		SCARG(&ga, rlp) = stackgap_alloc(p, &sg, sizeof(struct rlimit *));
-		if ((error = sys_getrlimit(l, &ga, retval)) != 0)
-			return error;
-		*retval = SCARG(&ga, rlp)->rlim_cur;
+		*retval = p->p_rlimit[RLIMIT_NPROC].rlim_cur;
 		return 0;
-	    }
 
 	case IBCS2_SC_JOB_CONTROL:
 		mib[1] = KERN_JOB_CONTROL;
@@ -962,15 +942,19 @@ ibcs2_sys_alarm(l, v, retval)
 	} */ *uap = v;
 	struct proc *p = l->l_proc;
 	int error;
-        struct itimerval *itp, *oitp;
+        struct itimerval it, *itp, *oitp;
 	struct sys_setitimer_args sa;
 	caddr_t sg = stackgap_init(p, 0);
 
         itp = stackgap_alloc(p, &sg, sizeof(*itp));
 	oitp = stackgap_alloc(p, &sg, sizeof(*oitp));
-        timerclear(&itp->it_interval);
-        itp->it_value.tv_sec = SCARG(uap, sec);
-        itp->it_value.tv_usec = 0;
+
+        timerclear(&it.it_interval);
+        it.it_value.tv_sec = SCARG(uap, sec);
+        it.it_value.tv_usec = 0;
+
+	if ((error = copyout(&it, itp, sizeof(*itp))) != 0)
+		return error;
 
 	SCARG(&sa, which) = ITIMER_REAL;
 	SCARG(&sa, itv) = itp;
@@ -978,9 +962,11 @@ ibcs2_sys_alarm(l, v, retval)
         error = sys_setitimer(l, &sa, retval);
 	if (error)
 		return error;
-        if (oitp->it_value.tv_usec)
-                oitp->it_value.tv_sec++;
-        *retval = oitp->it_value.tv_sec;
+	if ((error = copyin(oitp, &it, sizeof(it))) != 0)
+		return error;
+        if (it.it_value.tv_usec)
+                it.it_value.tv_sec++;
+        *retval = it.it_value.tv_sec;
         return 0;
 }
 
@@ -1056,8 +1042,7 @@ ibcs2_sys_times(l, v, retval)
 	microtime(&t);
         *retval = CONVTCK(t);
 
-	return copyout((caddr_t)&tms, (caddr_t)SCARG(uap, tp),
-		       sizeof(struct tms));
+	return copyout(&tms, SCARG(uap, tp), sizeof(tms));
 }
 
 int
@@ -1657,26 +1642,22 @@ ibcs2_sys_scoinfo(l, v, retval)
 		syscallarg(struct scoutsname *) bp;
 		syscallarg(int) len;
 	} */ *uap = v;
-	struct proc *p = l->l_proc;
-	caddr_t sg = stackgap_init(p, 0);
-	struct scoutsname *utsp = stackgap_alloc(p, &sg,
-						 sizeof(struct scoutsname));
+	struct scoutsname uts;
 
-	memset(utsp, 0, sizeof(struct scoutsname));
-	strncpy(utsp->sysname, ostype, 8);
-	strncpy(utsp->nodename, hostname, 8);
-	strncpy(utsp->release, osrelease, 15);
-	strncpy(utsp->kid, "kernel id 1", 19);
-	strncpy(utsp->machine, machine, 8);
-	strncpy(utsp->bustype, "pci", 8);
-	strncpy(utsp->serial, "1234", 9);
-	utsp->origin = 0;
-	utsp->oem = 0;
-	strncpy(utsp->nusers, "unlim", 8);
-	utsp->ncpu = 1;
+	(void)memset(&uts, 0, sizeof(uts));
+	(void)strncpy(uts.sysname, ostype, 8);
+	(void)strncpy(uts.nodename, hostname, 8);
+	(void)strncpy(uts.release, osrelease, 15);
+	(void)strncpy(uts.kid, "kernel id 1", 19);
+	(void)strncpy(uts.machine, machine, 8);
+	(void)strncpy(uts.bustype, "pci", 8);
+	(void)strncpy(uts.serial, "1234", 9);
+	uts.origin = 0;
+	uts.oem = 0;
+	(void)strncpy(uts.nusers, "unlim", 8);
+	uts.ncpu = 1;
 
-	return copyout((caddr_t)utsp, (caddr_t)SCARG(uap, bp),
-		       sizeof(struct scoutsname));
+	return copyout(&uts, SCARG(uap, bp), sizeof(uts));
 }
 
 #define X_LK_UNLCK  0
@@ -1702,10 +1683,10 @@ xenix_sys_locking(l, v, retval)
 	} */ *uap = v;
 	struct proc *p = l->l_proc;
 	struct sys_fcntl_args fa;
-	struct flock *flp;
+	struct flock *flp, fl;
 	struct filedesc *fdp = p->p_fd;
 	struct file *fp;
-	int cmd;
+	int cmd, error;
 	off_t off;
 	caddr_t sg = stackgap_init(p, 0);
 
@@ -1718,36 +1699,40 @@ xenix_sys_locking(l, v, retval)
 
 	if ((fp = fd_getfile(fdp, SCARG(uap, fd))) == NULL)
 		return (EBADF);
+	FILE_USE(fp);
 	off = fp->f_offset;
+	FILE_UNUSE(fp, l);
 
-	flp = stackgap_alloc(p, &sg, sizeof(*flp));
-	flp->l_start = off;
+	fl.l_start = off;
 	switch SCARG(uap, blk) {
 	case X_LK_UNLCK:
 		cmd = F_SETLK;
-		flp->l_type = F_UNLCK;
+		fl.l_type = F_UNLCK;
 		break;
 	case X_LK_LOCK:
 		cmd = F_SETLKW;
-		flp->l_type = F_WRLCK;
+		fl.l_type = F_WRLCK;
 		break;
 	case X_LK_NBRLCK:
 		cmd = F_SETLK;
-		flp->l_type = F_RDLCK;
+		fl.l_type = F_RDLCK;
 		break;
 	case X_LK_NBLCK:
 		cmd = F_SETLK;
-		flp->l_type = F_WRLCK;
+		fl.l_type = F_WRLCK;
 		break;
 	default:
 		return EINVAL;
 	}
-	flp->l_len = SCARG(uap, size);
-	flp->l_whence = SEEK_SET;
+	fl.l_len = SCARG(uap, size);
+	fl.l_whence = SEEK_SET;
 
+	flp = stackgap_alloc(p, &sg, sizeof(*flp));
+	if ((error = copyout(&fl, flp, sizeof(*flp))) != 0)
+		return error;
 	SCARG(&fa, fd) = SCARG(uap, fd);
 	SCARG(&fa, cmd) = cmd;
-	SCARG(&fa, arg) = (void *)flp;
+	SCARG(&fa, arg) = flp;
 
 	return sys_fcntl(l, &fa, retval);
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_alloc.c,v 1.69.2.7 2005/03/04 16:54:46 skrll Exp $	*/
+/*	$NetBSD: lfs_alloc.c,v 1.69.2.8 2005/03/08 13:53:12 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_alloc.c,v 1.69.2.7 2005/03/04 16:54:46 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_alloc.c,v 1.69.2.8 2005/03/08 13:53:12 skrll Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_quota.h"
@@ -127,7 +127,7 @@ lfs_rf_valloc(struct lfs *fs, ino_t ino, int version, struct lwp *l,
 	 */
 	error = VFS_VGET(fs->lfs_ivnode->v_mount, ino, &vp);
 	if (error == 0) {
-		/* printf("lfs_rf_valloc[1]: ino %d vp %p\n", ino, vp); */
+		DLOG((DLOG_RF, "lfs_rf_valloc[1]: ino %d vp %p\n", ino, vp));
 
 		*vpp = vp;
 		ip = VTOI(vp);
@@ -139,8 +139,8 @@ lfs_rf_valloc(struct lfs *fs, ino_t ino, int version, struct lwp *l,
 			LFS_SET_UINO(ip, IN_CHANGE | IN_UPDATE);
 			return 0;
 		} else {
-			/* printf("ino %d: asked for version %d but got %d\n",
-			       ino, version, ip->i_ffs1_gen); */
+			DLOG((DLOG_RF, "ino %d: sought version %d, got %d\n",
+			       ino, version, ip->i_ffs1_gen));
 			vput(vp);
 			*vpp = NULLVP;
 			return EEXIST;
@@ -196,7 +196,7 @@ lfs_rf_valloc(struct lfs *fs, ino_t ino, int version, struct lwp *l,
 		ufs_vinit(vp->v_mount, lfs_specop_p, lfs_fifoop_p, &vp);
 		ip = VTOI(vp);
 
-		/* printf("lfs_rf_valloc: ino %d vp %p\n", ino, vp); */
+		DLOG((DLOG_RF, "lfs_rf_valloc: ino %d vp %p\n", ino, vp));
 
 		/* The dirop-nature of this vnode is past */
 		lfs_unmark_vnode(vp);
@@ -246,7 +246,6 @@ extend_ifile(struct lfs *fs, struct ucred *cred)
 		panic("inode 0 allocated [2]");
 #endif /* DIAGNOSTIC */
 	max = i + fs->lfs_ifpb;
-	/* printf("extend_ifile: new block ino %d--%d\n", i, max - 1); */
 
 	if (fs->lfs_version == 1) {
 		for (ifp_v1 = (IFILE_V1 *)bp->b_data; i < max; ++ifp_v1) {
@@ -310,9 +309,7 @@ lfs_valloc(void *v)
 		panic("inode 0 allocated [1]");
 	}
 #endif /* DIAGNOSTIC */
-#ifdef ALLOCPRINT
-	printf("lfs_valloc: allocate inode %d\n", new_ino);
-#endif
+	DLOG((DLOG_ALLOC, "lfs_valloc: allocate inode %d\n", new_ino));
 
 	/*
 	 * Remove the inode from the free list and write the new start
@@ -322,7 +319,8 @@ lfs_valloc(void *v)
 	if (ifp->if_daddr != LFS_UNUSED_DADDR)
 		panic("lfs_valloc: inuse inode %d on the free list", new_ino);
 	LFS_PUT_HEADFREE(fs, cip, cbp, ifp->if_nextfree);
-	/* printf("lfs_valloc: headfree %d -> %d\n", new_ino, ifp->if_nextfree); */
+	DLOG((DLOG_ALLOC, "lfs_valloc: headfree %d -> %d\n", new_ino,
+	      ifp->if_nextfree));
 
 	new_gen = ifp->if_version; /* version was updated by vfree */
 	brelse(bp);
@@ -360,7 +358,8 @@ lfs_ialloc(struct lfs *fs, struct vnode *pvp, ino_t new_ino, int new_gen,
 	CLEANERINFO *cip;
 
 	error = getnewvnode(VT_LFS, pvp->v_mount, lfs_vnodeop_p, &vp);
-	/* printf("lfs_ialloc: ino %d vp %p error %d\n", new_ino, vp, error);*/
+	DLOG((DLOG_ALLOC, "lfs_ialloc: ino %d vp %p error %d\n", new_ino,
+	      vp, error));
 	if (error)
 		goto errout;
 
@@ -385,7 +384,6 @@ lfs_ialloc(struct lfs *fs, struct vnode *pvp, ino_t new_ino, int new_gen,
 
 	ufs_vinit(vp->v_mount, lfs_specop_p, lfs_fifoop_p, &vp);
 	ip = VTOI(vp);
-	/* printf("lfs_ialloc[2]: ino %d vp %p\n", new_ino, vp);*/
 
 	memset(ip->i_lfs_fragsize, 0, NDADDR * sizeof(*ip->i_lfs_fragsize));
 
@@ -449,7 +447,7 @@ lfs_vcreate(struct mount *mp, ino_t ino, struct vnode *vp)
 	for (i = 0; i < MAXQUOTAS; i++)
 		ip->i_dquot[i] = NODQUOT;
 #endif
-#ifdef DEBUG_LFS_VNLOCK
+#ifdef DEBUG
 	if (ino == LFS_IFILE_INUM)
 		vp->v_vnlock->lk_wmesg = "inlock";
 #endif
@@ -529,7 +527,8 @@ lfs_vfree(void *v)
 		ifp->if_nextfree = ino;
 		LFS_BWRITE_LOG(bp);
 		LFS_PUT_TAILFREE(fs, cip, cbp, ino);
-		/* printf("lfs_vfree: tailfree %d -> %d\n", otail, ino); */
+		DLOG((DLOG_ALLOC, "lfs_vfree: tailfree %d -> %d\n", otail,
+		      ino));
 	}
 #ifdef DIAGNOSTIC
 	if (ino == LFS_UNUSED_INUM) {

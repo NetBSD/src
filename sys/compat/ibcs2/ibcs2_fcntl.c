@@ -1,4 +1,4 @@
-/*	$NetBSD: ibcs2_fcntl.c,v 1.16.2.5 2005/03/04 16:39:37 skrll Exp $	*/
+/*	$NetBSD: ibcs2_fcntl.c,v 1.16.2.6 2005/03/08 13:53:10 skrll Exp $	*/
 
 /*
  * Copyright (c) 1995 Scott Bartram
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ibcs2_fcntl.c,v 1.16.2.5 2005/03/04 16:39:37 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ibcs2_fcntl.c,v 1.16.2.6 2005/03/08 13:53:10 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -189,11 +189,13 @@ ibcs2_sys_open(l, v, retval)
 		struct filedesc *fdp = p->p_fd;
 		struct file *fp;
 
-		fp = fd_getfile(fdp, *retval);
-
-		/* ignore any error, just give it a try */
-		if (fp != NULL && fp->f_type == DTYPE_VNODE)
-			(fp->f_ops->fo_ioctl)(fp, TIOCSCTTY, (caddr_t) 0, l);
+		if ((fp = fd_getfile(fdp, *retval)) != NULL) {
+			FILE_USE(fp);
+			/* ignore any error, just give it a try */
+			if (fp->f_type == DTYPE_VNODE)
+				(fp->f_ops->fo_ioctl)(fp, TIOCSCTTY, NULL, l);
+			FILE_UNUSE(fp, l);
+		}
 	}
 	return ret;
 }

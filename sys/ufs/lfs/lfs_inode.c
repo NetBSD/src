@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_inode.c,v 1.77.2.6 2005/03/04 16:54:48 skrll Exp $	*/
+/*	$NetBSD: lfs_inode.c,v 1.77.2.7 2005/03/08 13:53:12 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_inode.c,v 1.77.2.6 2005/03/04 16:54:48 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_inode.c,v 1.77.2.7 2005/03/08 13:53:12 skrll Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_quota.h"
@@ -107,20 +107,12 @@ lfs_ifind(struct lfs *fs, ino_t ino, struct buf *bp)
 	struct ufs1_dinode *dip = (struct ufs1_dinode *)bp->b_data;
 	struct ufs1_dinode *ldip, *fin;
 
-#ifdef LFS_IFILE_FRAG_ADDRESSING
-	if (fs->lfs_version == 1)
-		fin = dip + INOPB(fs);
-	else
-		fin = dip + INOPF(fs);
-#else
-	fin = dip + INOPB(fs);
-#endif
-
 	/*
 	 * Read the inode block backwards, since later versions of the
 	 * inode will supercede earlier ones.  Though it is unlikely, it is
 	 * possible that the same inode will appear in the same inode block.
 	 */
+	fin = dip + INOPB(fs);
 	for (ldip = fin - 1; ldip >= dip; --ldip)
 		if (ldip->di_inumber == ino)
 			return (ldip);
@@ -165,10 +157,8 @@ lfs_update(void *v)
 	s = splbio();
 	while ((ap->a_flags & (UPDATE_WAIT|UPDATE_DIROP)) == UPDATE_WAIT &&
 	    WRITEINPROG(vp)) {
-#ifdef DEBUG_LFS
-		printf("lfs_update: sleeping on inode %d (in-progress)\n",
-		       ip->i_number);
-#endif
+		DLOG((DLOG_SEG, "lfs_update: sleeping on ino %d"
+		      " (in progress)\n", ip->i_number));
 		tsleep(vp, (PRIBIO+1), "lfs_update", 0);
 	}
 	splx(s);
@@ -188,12 +178,10 @@ lfs_update(void *v)
 		/* Avoid flushing VDIROP. */
 		++fs->lfs_diropwait;
 		while (vp->v_flag & VDIROP) {
-#ifdef DEBUG_LFS
-			printf("lfs_update: sleeping on inode %d (dirops)\n",
-			       ip->i_number);
-			printf("lfs_update: vflags 0x%x, iflags 0x%x\n",
-				vp->v_flag, ip->i_flag);
-#endif
+			DLOG((DLOG_DIROP, "lfs_update: sleeping on inode %d"
+			      " (dirops)\n", ip->i_number));
+			DLOG((DLOG_DIROP, "lfs_update: vflags 0x%x, iflags"
+			      " 0x%x\n", vp->v_flag, ip->i_flag));
 			if (fs->lfs_dirops == 0)
 				lfs_flush_fs(fs, SEGM_SYNC);
 			else
