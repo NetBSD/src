@@ -1,4 +1,4 @@
-/* $NetBSD: pmap.c,v 1.2 2000/05/13 17:56:32 bjh21 Exp $ */
+/* $NetBSD: pmap.c,v 1.3 2000/06/26 14:20:33 mrg Exp $ */
 /*-
  * Copyright (c) 1997, 1998, 2000 Ben Harris
  * All rights reserved.
@@ -85,7 +85,7 @@
 
 #include <sys/param.h>
 
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.2 2000/05/13 17:56:32 bjh21 Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.3 2000/06/26 14:20:33 mrg Exp $");
 
 #include <sys/kernel.h> /* for cold */
 #include <sys/malloc.h>
@@ -94,8 +94,6 @@ __KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.2 2000/05/13 17:56:32 bjh21 Exp $");
 #include <sys/systm.h>
 
 #include <vm/vm.h>
-#include <vm/pmap.h>
-#include <vm/vm_kern.h>
 
 #include <machine/machdep.h>
 #include <machine/memcreg.h>

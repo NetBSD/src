@@ -1,4 +1,4 @@
-/*	$NetBSD: bus_dma_jazz.c,v 1.1 2000/06/09 05:22:22 soda Exp $	*/
+/*	$NetBSD: bus_dma_jazz.c,v 1.2 2000/06/26 14:20:32 mrg Exp $	*/
 
 /*-
  * Copyright (C) 2000 Shuichiro URATA.  All rights reserved.
@@ -32,7 +32,8 @@
 #include <sys/device.h>
 
 #include <vm/vm.h>
-#include <vm/vm_kern.h>
+
+#include <uvm/uvm_extern.h>
 
 #define _ARC_BUS_DMA_PRIVATE
 #include <machine/bus.h>

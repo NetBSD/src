@@ -1,4 +1,4 @@
-/*	$NetBSD: ebsa285_machdep.c,v 1.12 2000/06/09 04:58:34 soda Exp $	*/
+/*	$NetBSD: ebsa285_machdep.c,v 1.13 2000/06/26 14:20:35 mrg Exp $	*/
 
 /*
  * Copyright (c) 1997,1998 Mark Brinicombe.
@@ -57,8 +57,6 @@
 #include <machine/db_machdep.h>
 #include <ddb/db_sym.h>
 #include <ddb/db_extern.h>
-
-#include <vm/vm_kern.h>
 
 #include <machine/bootconfig.h>
 #include <machine/bus.h>

@@ -1,4 +1,4 @@
-/*	$NetBSD: uba.c,v 1.53 2000/06/05 00:09:18 matt Exp $	   */
+/*	$NetBSD: uba.c,v 1.54 2000/06/26 14:21:13 mrg Exp $	   */
 /*
  * Copyright (c) 1996 Jonathan Stone.
  * Copyright (c) 1994, 1996 Ludd, University of Lule}, Sweden.
@@ -52,7 +52,6 @@
 #include <sys/device.h>
 
 #include <vm/vm.h>
-#include <vm/vm_kern.h>
 
 #include <machine/bus.h>
 #include <machine/scb.h>

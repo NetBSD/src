@@ -1,4 +1,4 @@
-/*	$NetBSD: siop.c,v 1.22 2000/06/20 17:16:22 bouyer Exp $	*/
+/*	$NetBSD: siop.c,v 1.23 2000/06/26 14:21:10 mrg Exp $	*/
 
 /*
  * Copyright (c) 2000 Manuel Bouyer.
@@ -43,8 +43,6 @@
 #include <machine/bus.h>
 
 #include <vm/vm.h>
-#include <vm/vm_param.h>
-#include <vm/vm_kern.h>
 
 #include <dev/microcode/siop/siop.out>
 

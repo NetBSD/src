@@ -1,4 +1,4 @@
-/*	$NetBSD: bus_space.c,v 1.4 1999/12/02 18:41:56 uch Exp $	*/
+/*	$NetBSD: bus_space.c,v 1.5 2000/06/26 14:20:43 mrg Exp $	*/
 
 /*
  * Copyright (c) 1999, by UCHIYAMA Yasushi
@@ -25,7 +25,7 @@
  * SUCH DAMAGE.
  *
  */
-/*	$NetBSD: bus_space.c,v 1.4 1999/12/02 18:41:56 uch Exp $	*/
+/*	$NetBSD: bus_space.c,v 1.5 2000/06/26 14:20:43 mrg Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -71,8 +71,7 @@
 #include <sys/extent.h>
 
 #include <vm/vm.h>
-#include <vm/vm_kern.h>
-#include <vm/vm_page.h>
+
 #include <uvm/uvm_extern.h>
 
 #include <mips/cpuregs.h>

@@ -1,4 +1,4 @@
-/*	$NetBSD: isa_machdep.c,v 1.17 2000/06/04 19:14:34 cgd Exp $	*/
+/*	$NetBSD: isa_machdep.c,v 1.18 2000/06/26 14:20:40 mrg Exp $	*/
 
 /*
  * Copyright (c) 1997 Leo Weppelman.  All rights reserved.
@@ -39,7 +39,6 @@
 #include <sys/device.h>
 
 #include <vm/vm.h>
-#include <vm/vm_kern.h>
 
 #include <dev/isa/isavar.h>
 #include <dev/isa/isareg.h>

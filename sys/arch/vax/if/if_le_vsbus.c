@@ -1,4 +1,4 @@
-/*	$NetBSD: if_le_vsbus.c,v 1.8 2000/06/05 00:09:19 matt Exp $	*/
+/*	$NetBSD: if_le_vsbus.c,v 1.9 2000/06/26 14:21:04 mrg Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -84,7 +84,6 @@
 #include <sys/reboot.h>
 
 #include <vm/vm.h>
-#include <vm/vm_kern.h>
 
 #include <net/if.h>
 #include <net/if_ether.h>

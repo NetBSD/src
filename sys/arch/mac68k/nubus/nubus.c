@@ -1,4 +1,4 @@
-/*	$NetBSD: nubus.c,v 1.47 1999/08/23 22:29:39 thorpej Exp $	*/
+/*	$NetBSD: nubus.c,v 1.48 2000/06/26 14:20:47 mrg Exp $	*/
 
 /*
  * Copyright (c) 1995, 1996 Allen Briggs.  All rights reserved.
@@ -36,8 +36,6 @@
 #include <sys/conf.h>
 
 #include <vm/vm.h>
-#include <vm/vm_kern.h>
-#include <vm/vm_map.h>
 
 #include <machine/autoconf.h>
 #include <machine/bus.h>
@@ -46,8 +44,6 @@
 #include <machine/cpu.h>
 #include <machine/pte.h>
 #include <machine/viareg.h>
-
-#include <vm/vm.h>
 
 #include <mac68k/nubus/nubus.h>
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: ka660.c,v 1.1 2000/05/08 18:45:27 ragge Exp $	*/
+/*	$NetBSD: ka660.c,v 1.2 2000/06/26 14:21:06 mrg Exp $	*/
 /*
  * Copyright (c) 2000 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -37,7 +37,6 @@
 #include <sys/systm.h>
 
 #include <vm/vm.h>
-#include <vm/vm_kern.h>
 
 #include <machine/pte.h>
 #include <machine/cpu.h>

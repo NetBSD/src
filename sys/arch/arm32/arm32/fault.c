@@ -1,4 +1,4 @@
-/*	$NetBSD: fault.c,v 1.43 1999/05/05 22:06:15 mycroft Exp $	*/
+/*	$NetBSD: fault.c,v 1.44 2000/06/26 14:20:34 mrg Exp $	*/
 
 /*
  * Copyright (c) 1994-1997 Mark Brinicombe.
@@ -54,7 +54,6 @@
 #include <sys/kernel.h>
 
 #include <vm/vm.h>
-#include <vm/vm_kern.h>
 
 #include <uvm/uvm_extern.h>
 

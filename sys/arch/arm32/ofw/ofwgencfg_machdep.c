@@ -1,4 +1,4 @@
-/*	$NetBSD: ofwgencfg_machdep.c,v 1.11 2000/03/24 17:05:31 ws Exp $	*/
+/*	$NetBSD: ofwgencfg_machdep.c,v 1.12 2000/06/26 14:20:36 mrg Exp $	*/
 
 /*
  * Copyright 1997
@@ -53,8 +53,6 @@
 #include <machine/db_machdep.h>
 #include <ddb/db_sym.h>
 #include <ddb/db_extern.h>
-
-#include <vm/vm_kern.h>
 
 #include <machine/frame.h>
 #include <machine/bootconfig.h>

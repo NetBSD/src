@@ -1,4 +1,4 @@
-/*	$NetBSD: if_de.c,v 1.90 2000/03/23 07:01:37 thorpej Exp $	*/
+/*	$NetBSD: if_de.c,v 1.91 2000/06/26 14:21:11 mrg Exp $	*/
 
 /*-
  * Copyright (c) 1994-1997 Matt Thomas (matt@3am-software.com)
@@ -100,8 +100,6 @@
 #endif
 
 #include <vm/vm.h>
-#include <vm/vm_param.h>
-#include <vm/vm_kern.h>
 
 #if defined(__FreeBSD__)
 #include <vm/pmap.h>

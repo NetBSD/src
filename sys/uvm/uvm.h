@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm.h,v 1.22 2000/06/08 05:52:34 thorpej Exp $	*/
+/*	$NetBSD: uvm.h,v 1.23 2000/06/26 14:21:16 mrg Exp $	*/
 
 /*
  *
@@ -132,12 +132,11 @@ struct uvm {
 #define UVM_ET_ISCOPYONWRITE(E)	(((E)->etype & UVM_ET_COPYONWRITE) != 0)
 #define UVM_ET_ISNEEDSCOPY(E)	(((E)->etype & UVM_ET_NEEDSCOPY) != 0)
 
-/*
- * macros
- */
-
 #ifdef _KERNEL
 
+/*
+ * holds all the internal UVM data
+ */
 extern struct uvm uvm;
 
 /*

@@ -1,4 +1,4 @@
-/*	$NetBSD: sbic.c,v 1.13 2000/03/23 06:41:28 thorpej Exp $	*/
+/*	$NetBSD: sbic.c,v 1.14 2000/06/26 14:20:50 mrg Exp $	*/
 
 /*
  * Changes Copyright (c) 1996 Steve Woodford
@@ -67,11 +67,6 @@
 #include <dev/scsipi/scsiconf.h>
 
 #include <vm/vm.h>
-#include <vm/vm_kern.h>
-#include <vm/vm_page.h>
-#include <vm/pmap.h>
-
-#include <machine/pmap.h>
 
 #include <mvme68k/mvme68k/isr.h>
 #include <mvme68k/dev/dmavar.h>

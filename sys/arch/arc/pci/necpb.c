@@ -1,4 +1,4 @@
-/*	$NetBSD: necpb.c,v 1.2 2000/06/17 07:25:57 soda Exp $	*/
+/*	$NetBSD: necpb.c,v 1.3 2000/06/26 14:20:33 mrg Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -77,7 +77,8 @@
 #include <sys/extent.h>
 
 #include <vm/vm.h>
-#include <vm/vm_kern.h>
+
+#include <uvm/uvm_extern.h>
 
 #define _ARC_BUS_DMA_PRIVATE
 #include <machine/bus.h>

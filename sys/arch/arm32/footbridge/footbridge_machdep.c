@@ -1,4 +1,4 @@
-/*	$NetBSD: footbridge_machdep.c,v 1.2 1999/03/24 05:50:56 mrg Exp $	*/
+/*	$NetBSD: footbridge_machdep.c,v 1.3 2000/06/26 14:20:35 mrg Exp $	*/
 
 /*
  * Copyright (c) 1997 Mark Brinicombe.
@@ -37,8 +37,7 @@
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <vm/vm.h>
-#include <vm/vm_kern.h>
-#include <vm/vm_page.h>
+#include <uvm/uvm_extern.h>
 #include <machine/pmap.h>
 #include <machine/pte.h>
 #include <arm32/footbridge/dc21285mem.h>
