@@ -1,4 +1,4 @@
-/*	$NetBSD: z8530tty.c,v 1.32 1997/11/02 08:55:53 mycroft Exp $	*/
+/*	$NetBSD: z8530tty.c,v 1.33 1997/11/02 09:15:46 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994, 1995, 1996, 1997
@@ -916,27 +916,27 @@ zsparam(tp, t)
 			zs_loadchannelregs(cs);
 	}
 
-	splx(s);
-
-	/*
-	 * Update the tty layer's idea of the carrier bit, in case we changed
-	 * CLOCAL or MDMBUF.  We don't hang up here; we only do that if we
-	 * lose carrier while carrier detection is on.
-	 */
-	(void) (*line->l_modem)(tp, (cs->cs_rr0 & cs->cs_rr0_dcd) != 0);
-
-	/* If we can throttle input, enable "high water" detection. */
-	if (cflag & CHWFLOW) {
-		zst->zst_rbhiwat = zstty_rbuf_hiwat;
-	} else {
+	if ((cflag & CHWFLOW) == 0) {
 		/* This impossible value prevents a "high water" trigger. */
 		zst->zst_rbhiwat = zstty_rbuf_size;
-		s = splzs();
 		if (zst->zst_rx_blocked) {
 			zst->zst_rx_blocked = 0;
 			zs_hwiflow(zst);
 		}
-		splx(s);
+	} else {
+		zst->zst_rbhiwat = zstty_rbuf_hiwat;
+	}
+
+	splx(s);
+
+	/*
+	 * Update the tty layer's idea of the carrier bit, in case we changed
+	 * CLOCAL or MDMBUF.  We don't hang up here; we only do that by
+	 * explicit request.
+	 */
+	(void) (*line->l_modem)(tp, (cs->cs_rr0 & cs->cs_rr0_dcd) != 0);
+
+	if ((cflag & CHWFLOW) == 0) {
 		if (zst->zst_tx_stopped) {
 			zst->zst_tx_stopped = 0;
 			zsstart(tp);
