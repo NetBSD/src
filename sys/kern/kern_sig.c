@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_sig.c,v 1.112.2.22 2002/08/01 02:46:20 nathanw Exp $	*/
+/*	$NetBSD: kern_sig.c,v 1.112.2.23 2002/08/01 03:25:26 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1991, 1993
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_sig.c,v 1.112.2.22 2002/08/01 02:46:20 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_sig.c,v 1.112.2.23 2002/08/01 03:25:26 nathanw Exp $");
 
 #include "opt_ktrace.h"
 #include "opt_compat_sunos.h"
@@ -296,7 +296,7 @@ sys___sigaction14(struct lwp *l, void *v, register_t *retval)
 
 /* ARGSUSED */
 int
-sys___sigaction_sigtramp(struct proc *p, void *v, register_t *retval)
+sys___sigaction_sigtramp(struct lwp *l, void *v, register_t *retval)
 {
 	struct sys___sigaction_sigtramp_args /* {
 		syscallarg(int)				signum;
@@ -305,6 +305,7 @@ sys___sigaction_sigtramp(struct proc *p, void *v, register_t *retval)
 		syscallarg(void *)			tramp;
 		syscallarg(int)				vers;
 	} */ *uap = v;
+	struct proc *p = l->l_proc;
 	struct sigaction nsa, osa;
 	int error;
 
@@ -1067,7 +1068,7 @@ psendsig(struct lwp *l, sig_t catcher, int sig, sigset_t *mask, u_long code)
 		return;
 	}
 
-	(*p->p_emul->e_sendsig)(catcher, sig, mask, code);
+	(*p->p_emul->e_sendsig)(sig, mask, code);
 }
 
 static __inline int firstsig(const sigset_t *);
