@@ -1,4 +1,4 @@
-/*	$NetBSD: icside.c,v 1.16 2003/12/02 23:47:20 bjh21 Exp $	*/
+/*	$NetBSD: icside.c,v 1.17 2003/12/31 02:41:22 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1997-1998 Mark Brinicombe
@@ -42,7 +42,7 @@
 
 #include <sys/param.h>
 
-__KERNEL_RCSID(0, "$NetBSD: icside.c,v 1.16 2003/12/02 23:47:20 bjh21 Exp $");
+__KERNEL_RCSID(0, "$NetBSD: icside.c,v 1.17 2003/12/31 02:41:22 thorpej Exp $");
 
 #include <sys/systm.h>
 #include <sys/conf.h>
@@ -86,6 +86,7 @@ struct icside_softc {
 	struct channel_softc *sc_chp[ICSIDE_MAX_CHANNELS];
 	struct icside_channel {
 		struct channel_softc	wdc_channel;	/* generic part */
+		struct channel_queue	wdc_chqueue;	/* channel queue */
 		void			*ic_ih;		/* interrupt handler */
 		struct evcnt		ic_intrcnt;	/* interrupt count */
 		u_int			ic_irqaddr;	/* interrupt flag */
@@ -262,14 +263,7 @@ icside_attach(struct device *parent, struct device *self, void *aux)
 
 		cp->channel = channel;
 		cp->wdc = &sc->sc_wdcdev;
-		cp->ch_queue = malloc(sizeof(struct channel_queue), M_DEVBUF,
-		    M_NOWAIT);
-		if (cp->ch_queue == NULL) {
-			printf("%s:%d: "
-			    "can't allocate memory for command queue",
-			    sc->sc_wdcdev.sc_dev.dv_xname, channel);
-			continue;
-		}
+		cp->ch_queue = &icp->wdc_chqueue;
 		cp->cmd_iot = &sc->sc_tag;
 		cp->ctl_iot = &sc->sc_tag;
 		if (ide->modspace)
