@@ -1,4 +1,4 @@
-/*	$NetBSD: kd.c,v 1.12 1995/04/10 07:33:53 mycroft Exp $	*/
+/*	$NetBSD: kd.c,v 1.13 1995/04/26 23:20:15 gwr Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Gordon W. Ross
@@ -56,6 +56,10 @@
 
 #define BURST	64
 
+/*
+ * There is no point in pretending there might be
+ * more than one keyboard/display device.
+ */
 struct tty *kd_tty[1];
 
 int kdopen(dev_t, int, int, struct proc *);
@@ -78,6 +82,13 @@ kd_attach(n)
 
 	/* Tell keyboard module where to send read data. */
 	kbd_ascii(kd_tty[0]);
+}
+
+struct tty *
+kdtty(dev)
+	dev_t dev;
+{
+	return kd_tty[0];
 }
 
 int
