@@ -1,11 +1,11 @@
-/*	$NetBSD: file.c,v 1.21 1998/11/02 22:40:11 christos Exp $	*/
+/*	$NetBSD: file.c,v 1.22 1999/01/26 14:26:23 hubertf Exp $	*/
 
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static const char *rcsid = "from FreeBSD Id: file.c,v 1.29 1997/10/08 07:47:54 charnier Exp";
 #else
-__RCSID("$NetBSD: file.c,v 1.21 1998/11/02 22:40:11 christos Exp $");
+__RCSID("$NetBSD: file.c,v 1.22 1999/01/26 14:26:23 hubertf Exp $");
 #endif
 #endif
 
@@ -335,6 +335,12 @@ fileGetURL(char *base, char *spec)
     return rp;
 }
 
+/*
+ *  Look for filename/pattern "fname" in
+ *   - current dir, and if not found there, look
+ *   - $base/../All
+ *   - all dirs in $PKG_PATH
+ */
 char *
 fileFindByPath(char *base, char *fname)
 {
@@ -377,9 +383,9 @@ fileFindByPath(char *base, char *fname)
 		}
 	    } else {
 		if (fexists(tmp)) {
-		return tmp;
-	}
-    }
+		    return tmp;
+		}
+	    }
 	}
     }
 
@@ -399,8 +405,8 @@ fileFindByPath(char *base, char *fname)
 	    }
 	}else{
 	    if (fexists(tmp) && isfile(tmp)) {
-	    return tmp;
-    }
+		return tmp;
+	    }
 	}
     }
     
