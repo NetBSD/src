@@ -1,4 +1,4 @@
-/*	$NetBSD: parse.c,v 1.9 2002/02/04 12:00:52 martti Exp $	*/
+/*	$NetBSD: parse.c,v 1.10 2002/02/04 19:07:47 martti Exp $	*/
 
 /*
  * Copyright (C) 1993-2001 by Darren Reed.
@@ -998,6 +998,10 @@ int linenum;
 				linenum, **cp);
 			return -1;
 		}
+ 	} else if (fp->fr_proto == IPPROTO_ICMPV6) {
+		fprintf(stderr, "%d: Unknown ICMPv6 type (%s) specified "
+			"(use numeric value instead)\n", linenum, **cp);
+		return -1;
 	} else {
 		for (t = icmptypes, i = 0; ; t++, i++) {
 			if (!*t)
@@ -1291,7 +1295,7 @@ struct frentry	*fp;
 			printf(" frag");
 		}
 	}
-	if (fp->fr_proto == IPPROTO_ICMP && fp->fr_icmpm) {
+	if (fp->fr_proto == IPPROTO_ICMP && fp->fr_icmpm != 0) {
 		int	type = fp->fr_icmp, code;
 
 		type = ntohs(fp->fr_icmp);
@@ -1302,6 +1306,16 @@ struct frentry	*fp;
 			printf(" icmp-type %s", icmptypes[type]);
 		else
 			printf(" icmp-type %d", type);
+		if (ntohs(fp->fr_icmpm) & 0xff)
+			printf(" code %d", code);
+	}
+	if (fp->fr_proto == IPPROTO_ICMPV6 && fp->fr_icmpm != 0) {
+		int	type = fp->fr_icmp, code;
+
+		type = ntohs(fp->fr_icmp);
+		code = type & 0xff;
+		type /= 256;
+		printf(" icmp-type %d", type);
 		if (ntohs(fp->fr_icmpm) & 0xff)
 			printf(" code %d", code);
 	}
