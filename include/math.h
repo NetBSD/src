@@ -11,7 +11,7 @@
 
 /*
  * from: @(#)fdlibm.h 5.1 93/09/24
- * $Id: math.h,v 1.8 1994/03/01 17:16:19 jtc Exp $
+ * $Id: math.h,v 1.9 1994/08/10 20:48:16 jtc Exp $
  */
 
 #ifndef _MATH_H_
@@ -181,44 +181,93 @@ extern double log1p __P((double));
 extern double gamma_r __P((double, int *));
 extern double lgamma_r __P((double, int *));
 #endif /* _REENTRANT */
+
+
+/* float versions of ANSI/POSIX functions */
+extern float acosf __P((float));
+extern float asinf __P((float));
+extern float atanf __P((float));
+extern float atan2f __P((float, float));
+extern float cosf __P((float));
+extern float sinf __P((float));
+extern float tanf __P((float));
+
+extern float coshf __P((float));
+extern float sinhf __P((float));
+extern float tanhf __P((float));
+
+extern float expf __P((float));
+extern float frexpf __P((float, int *));
+extern float ldexpf __P((float, int));
+extern float logf __P((float));
+extern float log10f __P((float));
+extern float modff __P((float, float *));
+
+extern float powf __P((float, float));
+extern float sqrtf __P((float));
+
+extern float ceilf __P((float));
+extern float fabsf __P((float));
+extern float floorf __P((float));
+extern float fmodf __P((float, float));
+
+extern float erff __P((float));
+extern float erfcf __P((float));
+extern float gammaf __P((float));
+extern float hypotf __P((float, float));
+extern int isnanf __P((float));
+extern int finitef __P((float));
+extern float j0f __P((float));
+extern float j1f __P((float));
+extern float jnf __P((int, float));
+extern float lgammaf __P((float));
+extern float y0f __P((float));
+extern float y1f __P((float));
+extern float ynf __P((int, float));
+
+extern float acoshf __P((float));
+extern float asinhf __P((float));
+extern float atanhf __P((float));
+extern float cbrtf __P((float));
+extern float logbf __P((float));
+extern float nextafterf __P((float, float));
+extern float remainderf __P((float, float));
+extern float scalbf __P((float, float));
+
+/*
+ * float version of IEEE Test Vector
+ */
+extern float significandf __P((float));
+
+/*
+ * Float versions of functions callable from C, intended to support
+ * IEEE arithmetic.
+ */
+extern float copysignf __P((float, float));
+extern int ilogbf __P((float));
+extern float rintf __P((float));
+extern float scalbnf __P((float, int));
+
+/*
+ * float versions of BSD math library entry points
+ */
+extern float cabsf ();
+extern float dremf __P((float, float));
+extern float expm1f __P((float));
+extern float log1pf __P((float));
+
+/*
+ * Float versions of reentrant version of gamma & lgamma; passes
+ * signgam back by reference as the second argument; user must
+ * allocate space for signgam.
+ */
+#ifdef _REENTRANT
+extern float gammaf_r __P((float, int *));
+extern float lgammaf_r __P((float, int *));
+#endif	/* _REENTRANT */
+
 #endif /* !_XOPEN_SOURCE */
 #endif /* !_ANSI_SOURCE && !_POSIX_SOURCE */
-
-/* ieee style elementary functions */
-extern double __ieee754_sqrt __P((double));			
-extern double __ieee754_acos __P((double));			
-extern double __ieee754_acosh __P((double));			
-extern double __ieee754_log __P((double));			
-extern double __ieee754_atanh __P((double));			
-extern double __ieee754_asin __P((double));			
-extern double __ieee754_atan2 __P((double,double));			
-extern double __ieee754_exp __P((double));
-extern double __ieee754_cosh __P((double));
-extern double __ieee754_fmod __P((double,double));
-extern double __ieee754_pow __P((double,double));
-extern double __ieee754_lgamma_r __P((double,int *));
-extern double __ieee754_gamma_r __P((double,int *));
-extern double __ieee754_lgamma __P((double));
-extern double __ieee754_gamma __P((double));
-extern double __ieee754_log10 __P((double));
-extern double __ieee754_sinh __P((double));
-extern double __ieee754_hypot __P((double,double));
-extern double __ieee754_j0 __P((double));
-extern double __ieee754_j1 __P((double));
-extern double __ieee754_y0 __P((double));
-extern double __ieee754_y1 __P((double));
-extern double __ieee754_jn __P((int,double));
-extern double __ieee754_yn __P((int,double));
-extern double __ieee754_remainder __P((double,double));
-extern int    __ieee754_rem_pio2 __P((double,double*));
-extern double __ieee754_scalb __P((double,double));
-
-/* fdlibm kernel function */
-extern double __kernel_standard __P((double,double,int));	
-extern double __kernel_sin __P((double,double,int));
-extern double __kernel_cos __P((double,double));
-extern double __kernel_tan __P((double,double,int));
-extern int    __kernel_rem_pio2 __P((double*,double*,int,int,int,const int*));
 __END_DECLS
 
 #endif /* _MATH_H_ */
