@@ -1,7 +1,8 @@
-#   $Id: Makefile,v 1.2 1994/12/22 11:34:57 cgd Exp $	
+#   $NetBSD: Makefile,v 1.3 1995/05/12 21:04:26 leo Exp $
 
 PROG=iteconfig
-MAN=iteconfig.8
-CFLAGS+=-I${.CURDIR}/../../sys/arch
+MAN=	iteconfig_${MACHINE}.8
+MLINKS=	iteconfig_${MACHINE}.8 iteconfig.8
+CFLAGS+=-I${.CURDIR}/../../sys/arch -D${MACHINE}
 
 .include <bsd.prog.mk>
