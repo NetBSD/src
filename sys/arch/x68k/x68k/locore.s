@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.24 1997/10/19 20:41:02 oki Exp $	*/
+/*	$NetBSD: locore.s,v 1.24.2.1 1998/10/13 21:52:51 cgd Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -57,8 +57,6 @@
 	.text
 GLOBAL(kernel_text)
 
-#include <x68k/x68k/vectors.s>
-
 /*
  * Temporary stack for a variety of purposes.
  * Try and make this the first thing is the data segment so it
@@ -68,6 +66,8 @@ GLOBAL(kernel_text)
 	.data
 	.space	NBPG
 ASLOCAL(tmpstk)
+
+#include <x68k/x68k/vectors.s>
 
 	.text
 /*
@@ -875,6 +875,9 @@ BSS(esym,4)
 
 ASENTRY_NOPROFILE(start)
 	movw	#PSL_HIGHIPL,sr		| no interrupts
+
+	movl	#_C_LABEL(vectab),d0	| set Vector Base Register
+	movc	d0,vbr
 
 	addql	#4,sp
 	movel	sp@+,a5			| firstpa
@@ -1840,9 +1843,13 @@ Lm68060fprdone:
  */
 	.globl	_doboot
 _doboot:
+	movw	#PSL_HIGHIPL,sr		| cut off any interrupts
+	subal	a1,a1			| a1 = 0
+
 	movl	#CACHE_OFF,d0
 #if defined(M68040) || defined(M68060)
-	cmpl	#MMU_68040,_mmutype	| 68040?
+	movl	_mmutype,d2		| d2 = mmutype
+	addl	#-MMU_68040,d2		| 68040?
 	jne	Ldoboot0		| no, skip
 	.word	0xf4f8			| cpusha bc - push and invalidate caches
 	nop
@@ -1851,25 +1858,23 @@ Ldoboot0:
 #endif
 	movc	d0,cacr			| disable on-chip cache(s)
 
-	movw	#0x2700,sr		| cut off any interrupts
-
 	| ok, turn off MMU..
 Ldoreboot:
 #if defined(M68040) || defined(M68060)
-	cmpl	#MMU_68040,_mmutype	| 68040?
+	tstl	d2			| 68040?
 	jne	LmotommuF		| no, skip
-	moveq	#0,d0
-	movc	d0,cacr			| caches off
-	.long	0x4e7b0003		| movc d0,tc
-	moval	0x00ff0004:l,a0
-	jmp	a0@			| reboot X680x0
+	movc	a1,cacr			| caches off
+	.long	0x4e7b9003		| movc a1(=0),tc ; disable MMU
+	jra	Ldoreboot1
 LmotommuF:
 #endif
-	clrl	sp@			| value for pmove to TC (turn off MMU)
+	clrl	sp@
 	pmove	sp@,tc			| disable MMU
-	movl	0x00ff0000:l,_vectab
-	movl	0x00ff0004:l,_vectab+4
-	moval	0x00ff0004:l,a0
+Ldoreboot1:
+	moveml	0x00ff0000,#0x0101	| get RESET vectors in ROM
+					|	(d0: ssp, a0: pc)
+	moveml	#0x0101,a1@		| put them at 0x0000 (for Xellent30)
+	movc	a1,vbr			| reset Vector Base Register
 	jmp	a0@			| reboot X680x0
 Lebootcode:
 
