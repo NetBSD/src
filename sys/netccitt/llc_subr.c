@@ -1,4 +1,4 @@
-/*	$NetBSD: llc_subr.c,v 1.11 1999/09/10 03:24:14 simonb Exp $	*/
+/*	$NetBSD: llc_subr.c,v 1.12 2000/03/30 13:53:34 augustss Exp $	*/
 
 /* 
  * Copyright (c) 1990, 1991, 1992
@@ -145,7 +145,7 @@ struct sockaddr_dl *
 sdl_getaddrif(ifp)
 	struct ifnet *ifp;
 {
-	register struct ifaddr *ifa;
+	struct ifaddr *ifa;
 
 	for (ifa = ifp->if_addrlist.tqh_first; ifa != 0;
 	     ifa = ifa->ifa_list.tqe_next)
@@ -161,7 +161,7 @@ sdl_checkaddrif(ifp, sdl_c)
 	struct ifnet *ifp;
 	struct sockaddr_dl *sdl_c;
 {
-	register struct ifaddr *ifa;
+	struct ifaddr *ifa;
 
 	for (ifa = ifp->if_addrlist.tqh_first; ifa != 0;
 	     ifa = ifa->ifa_list.tqe_next)
@@ -181,7 +181,7 @@ sdl_setaddrif(ifp, mac_addr, dlsap_addr, mac_len, sdl_to)
         u_char mac_len;
 	struct sockaddr_dl *sdl_to;
 {
-	register struct sockaddr_dl *sdl_tmp;
+	struct sockaddr_dl *sdl_tmp;
 
 	if ((sdl_tmp = sdl_getaddrif(ifp))) {
 		sdl_copy(sdl_tmp, sdl_to);
@@ -349,7 +349,7 @@ llc_seq2slot(linkp, seqn)
 	struct llc_linkcb *linkp;
 	short seqn;
 {
-	register int sn = 0;
+	int sn = 0;
 
 	sn = (linkp->llcl_freeslot + linkp->llcl_window -
 	      (linkp->llcl_projvs + LLC_MAX_SEQUENCE - seqn) %
@@ -979,8 +979,8 @@ llc_state_NORMAL(linkp, frame, frame_kind, cmdrsp, pollfinal)
 		break;
 	case LLC_INVALID_NS + LLC_CMD:
 	case LLC_INVALID_NS + LLC_RSP:{
-			register int    p = LLC_GETFLAG(linkp,P);
-			register int    nr =
+			int    p = LLC_GETFLAG(linkp,P);
+			int    nr =
 				LLCGBITS(frame->llc_control_ext,s_nr);
 
 			if (cmdrsp == LLC_CMD && pollfinal == 1) {
@@ -1011,8 +1011,8 @@ llc_state_NORMAL(linkp, frame, frame_kind, cmdrsp, pollfinal)
 		}
 	case LLCFT_INFO + LLC_CMD:
 	case LLCFT_INFO + LLC_RSP:{
-			register int    p = LLC_GETFLAG(linkp,P);
-			register int    nr = 
+			int    p = LLC_GETFLAG(linkp,P);
+			int    nr = 
 				LLCGBITS(frame->llc_control_ext,s_nr);
 
 			if (cmdrsp == LLC_CMD && pollfinal == 1) {
@@ -1040,8 +1040,8 @@ llc_state_NORMAL(linkp, frame, frame_kind, cmdrsp, pollfinal)
 		}
 	case LLCFT_RR + LLC_CMD:
 	case LLCFT_RR + LLC_RSP:{
-			register int    p = LLC_GETFLAG(linkp,P);
-			register int    nr =
+			int    p = LLC_GETFLAG(linkp,P);
+			int    nr =
 				LLCGBITS(frame->llc_control_ext,s_nr);
 
 			if (cmdrsp == LLC_CMD && pollfinal == 1) {
@@ -1058,8 +1058,8 @@ llc_state_NORMAL(linkp, frame, frame_kind, cmdrsp, pollfinal)
 		}
 	case LLCFT_RNR + LLC_CMD:
 	case LLCFT_RNR + LLC_RSP:{
-			register int    p = LLC_GETFLAG(linkp,P);
-			register int    nr = 
+			int    p = LLC_GETFLAG(linkp,P);
+			int    nr = 
 				LLCGBITS(frame->llc_control_ext,s_nr);
 
 			if (cmdrsp == LLC_CMD && pollfinal == 1) {
@@ -1076,8 +1076,8 @@ llc_state_NORMAL(linkp, frame, frame_kind, cmdrsp, pollfinal)
 		}
 	case LLCFT_REJ + LLC_CMD:
 	case LLCFT_REJ + LLC_RSP:{
-			register int    p = LLC_GETFLAG(linkp,P);
-			register int    nr =
+			int    p = LLC_GETFLAG(linkp,P);
+			int    nr =
 				LLCGBITS(frame->llc_control_ext,s_nr);
 
 			if (cmdrsp == LLC_CMD && pollfinal == 1) {
@@ -1173,8 +1173,8 @@ llc_state_BUSY(linkp, frame, frame_kind, cmdrsp, pollfinal)
 		}
 		break;
 	case LLC_LOCAL_BUSY_CLEARED:{
-			register int    p = LLC_GETFLAG(linkp,P);
-			register int    df = LLC_GETFLAG(linkp,DATA);
+			int    p = LLC_GETFLAG(linkp,P);
+			int    df = LLC_GETFLAG(linkp,DATA);
 
 			switch (df) {
 			case 1:
@@ -1223,8 +1223,8 @@ llc_state_BUSY(linkp, frame, frame_kind, cmdrsp, pollfinal)
 		}
 	case LLC_INVALID_NS + LLC_CMD:
 	case LLC_INVALID_NS + LLC_RSP:{
-			register int    p = LLC_GETFLAG(linkp,P);
-			register int    nr = 
+			int    p = LLC_GETFLAG(linkp,P);
+			int    nr = 
 				LLCGBITS(frame->llc_control_ext,s_nr);
 
 			if (cmdrsp == LLC_CMD && pollfinal == 1) {
@@ -1256,8 +1256,8 @@ llc_state_BUSY(linkp, frame, frame_kind, cmdrsp, pollfinal)
 		}
 	case LLCFT_INFO + LLC_CMD:
 	case LLCFT_INFO + LLC_RSP:{
-			register int    p = LLC_GETFLAG(linkp,P);
-			register int    nr =
+			int    p = LLC_GETFLAG(linkp,P);
+			int    nr =
 				LLCGBITS(frame->llc_control_ext, s_nr);
 
 			if (cmdrsp == LLC_CMD && pollfinal == 1) {
@@ -1295,9 +1295,9 @@ llc_state_BUSY(linkp, frame, frame_kind, cmdrsp, pollfinal)
 	case LLCFT_RNR + LLC_CMD:
 	case LLCFT_RNR + LLC_RSP:{
 #if 0
-			register int    p = LLC_GETFLAG(linkp,P);
+			int    p = LLC_GETFLAG(linkp,P);
 #endif
-			register int    nr =
+			int    nr =
 				LLCGBITS(frame->llc_control_ext,s_nr);
 
 			if (cmdrsp == LLC_CMD && pollfinal == 1) {
@@ -1322,8 +1322,8 @@ llc_state_BUSY(linkp, frame, frame_kind, cmdrsp, pollfinal)
 		}
 	case LLCFT_REJ + LLC_CMD:
 	case LLCFT_REJ + LLC_RSP:{
-			register int    p = LLC_GETFLAG(linkp,P);
-			register int    nr =
+			int    p = LLC_GETFLAG(linkp,P);
+			int    nr =
 				LLCGBITS(frame->llc_control_ext,s_nr);
 
 			if (cmdrsp == LLC_CMD && pollfinal == 1) {
@@ -1452,8 +1452,8 @@ llc_state_REJECT(linkp, frame, frame_kind, cmdrsp, pollfinal)
 		break;
 	case LLC_INVALID_NS + LLC_CMD:
 	case LLC_INVALID_NS + LLC_RSP:{
-			register int    p = LLC_GETFLAG(linkp,P);
-			register int    nr = LLCGBITS(frame->llc_control_ext, s_nr);
+			int    p = LLC_GETFLAG(linkp,P);
+			int    nr = LLCGBITS(frame->llc_control_ext, s_nr);
 
 			if (cmdrsp == LLC_CMD && pollfinal == 1) {
 				llc_send(linkp, LLCFT_RR, LLC_RSP, 1);
@@ -1472,8 +1472,8 @@ llc_state_REJECT(linkp, frame, frame_kind, cmdrsp, pollfinal)
 		}
 	case LLCFT_INFO + LLC_CMD:
 	case LLCFT_INFO + LLC_RSP:{
-			register int    p = LLC_GETFLAG(linkp,P);
-			register int    nr = LLCGBITS(frame->llc_control_ext, s_nr);
+			int    p = LLC_GETFLAG(linkp,P);
+			int    nr = LLCGBITS(frame->llc_control_ext, s_nr);
 
 			if (cmdrsp == LLC_CMD && pollfinal == 1) {
 				LLC_INC(linkp->llcl_vr);
@@ -1504,8 +1504,8 @@ llc_state_REJECT(linkp, frame, frame_kind, cmdrsp, pollfinal)
 		}
 	case LLCFT_RR + LLC_CMD:
 	case LLCFT_RR + LLC_RSP:{
-			register int    p = LLC_GETFLAG(linkp,P);
-			register int    nr = LLCGBITS(frame->llc_control_ext, s_nr);
+			int    p = LLC_GETFLAG(linkp,P);
+			int    nr = LLCGBITS(frame->llc_control_ext, s_nr);
 
 			if (cmdrsp == LLC_CMD && pollfinal == 1) {
 				LLC_SENDACKNOWLEDGE(linkp, LLC_RSP, 1);
@@ -1521,8 +1521,8 @@ llc_state_REJECT(linkp, frame, frame_kind, cmdrsp, pollfinal)
 		}
 	case LLCFT_RNR + LLC_CMD:
 	case LLCFT_RNR + LLC_RSP:{
-			register int    p = LLC_GETFLAG(linkp,P);
-			register int    nr = LLCGBITS(frame->llc_control_ext, s_nr);
+			int    p = LLC_GETFLAG(linkp,P);
+			int    nr = LLCGBITS(frame->llc_control_ext, s_nr);
 
 			if (cmdrsp == LLC_CMD && pollfinal == 1) {
 				llc_send(linkp, LLCFT_RR, LLC_RSP, 1);
@@ -1538,8 +1538,8 @@ llc_state_REJECT(linkp, frame, frame_kind, cmdrsp, pollfinal)
 		}
 	case LLCFT_REJ + LLC_CMD:
 	case LLCFT_REJ + LLC_RSP:{
-			register int    p = LLC_GETFLAG(linkp,P);
-			register int    nr = LLCGBITS(frame->llc_control_ext, s_nr);
+			int    p = LLC_GETFLAG(linkp,P);
+			int    nr = LLCGBITS(frame->llc_control_ext, s_nr);
 
 			if (cmdrsp == LLC_CMD && pollfinal == 1) {
 				linkp->llcl_vs = nr;
@@ -1639,9 +1639,9 @@ llc_state_AWAIT(linkp, frame, frame_kind, cmdrsp, pollfinal)
 	case LLC_INVALID_NS + LLC_CMD:
 	case LLC_INVALID_NS + LLC_RSP:{
 #if 0
-			register int    p = LLC_GETFLAG(linkp,P);
+			int    p = LLC_GETFLAG(linkp,P);
 #endif
-			register int    nr = LLCGBITS(frame->llc_control_ext, s_nr);
+			int    nr = LLCGBITS(frame->llc_control_ext, s_nr);
 
 			if (cmdrsp == LLC_CMD && pollfinal == 1) {
 				llc_send(linkp, LLCFT_REJ, LLC_RSP, 1);
@@ -1670,9 +1670,9 @@ llc_state_AWAIT(linkp, frame, frame_kind, cmdrsp, pollfinal)
 	case LLCFT_INFO + LLC_RSP:
 	case LLCFT_INFO + LLC_CMD:{
 #if 0
-			register int    p = LLC_GETFLAG(linkp,P);
+			int    p = LLC_GETFLAG(linkp,P);
 #endif
-			register int    nr = LLCGBITS(frame->llc_control_ext, s_nr);
+			int    nr = LLCGBITS(frame->llc_control_ext, s_nr);
 
 			LLC_INC(linkp->llcl_vr);
 			if (cmdrsp == LLC_CMD && pollfinal == 1) {
@@ -1699,9 +1699,9 @@ llc_state_AWAIT(linkp, frame, frame_kind, cmdrsp, pollfinal)
 	case LLCFT_REJ + LLC_CMD:
 	case LLCFT_REJ + LLC_RSP:{
 #if 0
-			register int    p = LLC_GETFLAG(linkp,P);
+			int    p = LLC_GETFLAG(linkp,P);
 #endif
-			register int    nr = LLCGBITS(frame->llc_control_ext, s_nr);
+			int    nr = LLCGBITS(frame->llc_control_ext, s_nr);
 
 			if (cmdrsp == LLC_CMD && pollfinal == 1) {
 				llc_send(linkp, LLCFT_RR, LLC_RSP, 1);
@@ -1723,9 +1723,9 @@ llc_state_AWAIT(linkp, frame, frame_kind, cmdrsp, pollfinal)
 	case LLCFT_RNR + LLC_CMD:
 	case LLCFT_RNR + LLC_RSP:{
 #if 0
-			register int    p = LLC_GETFLAG(linkp,P);
+			int    p = LLC_GETFLAG(linkp,P);
 #endif
-			register int    nr = LLCGBITS(frame->llc_control_ext, s_nr);
+			int    nr = LLCGBITS(frame->llc_control_ext, s_nr);
 
 			if (pollfinal == 1 && cmdrsp == LLC_CMD) {
 				llc_send(linkp, LLCFT_RR, LLC_RSP, 1);
@@ -1803,9 +1803,9 @@ llc_state_AWAIT_BUSY(linkp, frame, frame_kind, cmdrsp, pollfinal)
 	case LLC_INVALID_NS + LLC_CMD:
 	case LLC_INVALID_NS + LLC_RSP:{
 #if 0
-			register int    p = LLC_GETFLAG(linkp,P);
+			int    p = LLC_GETFLAG(linkp,P);
 #endif
-			register int    nr = LLCGBITS(frame->llc_control_ext, s_nr);
+			int    nr = LLCGBITS(frame->llc_control_ext, s_nr);
 
 			if (cmdrsp == LLC_CMD && pollfinal == 1) {
 				llc_send(linkp, LLCFT_RNR, LLC_RSP, 1);
@@ -1833,9 +1833,9 @@ llc_state_AWAIT_BUSY(linkp, frame, frame_kind, cmdrsp, pollfinal)
 	case LLCFT_INFO + LLC_CMD:
 	case LLCFT_INFO + LLC_RSP:{
 #if 0
-			register int    p = LLC_GETFLAG(linkp,P);
+			int    p = LLC_GETFLAG(linkp,P);
 #endif
-			register int    nr = LLCGBITS(frame->llc_control_ext, s_nr);
+			int    nr = LLCGBITS(frame->llc_control_ext, s_nr);
 
 			if (cmdrsp == LLC_CMD && pollfinal == 1) {
 				llc_send(linkp, LLCFT_RNR, LLC_RSP, 1);
@@ -1868,9 +1868,9 @@ llc_state_AWAIT_BUSY(linkp, frame, frame_kind, cmdrsp, pollfinal)
 	case LLCFT_RR + LLC_RSP:
 	case LLCFT_REJ + LLC_RSP:{
 #if 0
-			register int    p = LLC_GETFLAG(linkp,P);
+			int    p = LLC_GETFLAG(linkp,P);
 #endif
-			register int    nr = LLCGBITS(frame->llc_control_ext, s_nr);
+			int    nr = LLCGBITS(frame->llc_control_ext, s_nr);
 
 			if (cmdrsp == LLC_CMD && pollfinal == 1) {
 				llc_send(linkp, LLCFT_RNR, LLC_RSP, 1);
@@ -1895,9 +1895,9 @@ llc_state_AWAIT_BUSY(linkp, frame, frame_kind, cmdrsp, pollfinal)
 	case LLCFT_RNR + LLC_CMD:
 	case LLCFT_RNR + LLC_RSP:{
 #if 0
-			register int    p = LLC_GETFLAG(linkp,P);
+			int    p = LLC_GETFLAG(linkp,P);
 #endif
-			register int    nr = LLCGBITS(frame->llc_control_ext, s_nr);
+			int    nr = LLCGBITS(frame->llc_control_ext, s_nr);
 
 			if (cmdrsp == LLC_CMD && pollfinal == 1) {
 				llc_send(linkp, LLCFT_RNR, LLC_RSP, 1);
@@ -1963,7 +1963,7 @@ llc_state_AWAIT_REJECT(linkp, frame, frame_kind, cmdrsp, pollfinal)
 		break;
 	case LLC_INVALID_NS + LLC_CMD:
 	case LLC_INVALID_NS + LLC_RSP:{
-			register int    nr = LLCGBITS(frame->llc_control_ext, s_nr);
+			int    nr = LLCGBITS(frame->llc_control_ext, s_nr);
 
 			if (cmdrsp == LLC_CMD && pollfinal == 1) {
 				llc_send(linkp, LLCFT_RR, LLC_RSP, 1);
@@ -1984,7 +1984,7 @@ llc_state_AWAIT_REJECT(linkp, frame, frame_kind, cmdrsp, pollfinal)
 		}
 	case LLCFT_INFO + LLC_CMD:
 	case LLCFT_INFO + LLC_RSP:{
-			register int    nr = LLCGBITS(frame->llc_control_ext, s_nr);
+			int    nr = LLCGBITS(frame->llc_control_ext, s_nr);
 
 			if (cmdrsp == LLC_CMD && pollfinal == 1) {
 				LLC_INC(linkp->llcl_vr);
@@ -2017,7 +2017,7 @@ llc_state_AWAIT_REJECT(linkp, frame, frame_kind, cmdrsp, pollfinal)
 	case LLCFT_REJ + LLC_CMD:
 	case LLCFT_RR + LLC_RSP:
 	case LLCFT_REJ + LLC_RSP:{
-			register int    nr = LLCGBITS(frame->llc_control_ext, s_nr);
+			int    nr = LLCGBITS(frame->llc_control_ext, s_nr);
 
 			if (cmdrsp == LLC_CMD && pollfinal == 1) {
 				llc_send(linkp, LLCFT_RR, LLC_RSP, 1);
@@ -2038,7 +2038,7 @@ llc_state_AWAIT_REJECT(linkp, frame, frame_kind, cmdrsp, pollfinal)
 		}
 	case LLCFT_RNR + LLC_CMD:
 	case LLCFT_RNR + LLC_RSP:{
-			register int    nr =
+			int    nr =
 				LLCGBITS(frame->llc_control_ext,s_nr);
 
 			if (cmdrsp == LLC_CMD && pollfinal == 1) {
@@ -2088,7 +2088,7 @@ llc_statehandler(linkp, frame, frame_kind, cmdrsp, pollfinal)
 	int cmdrsp;
 	int pollfinal;
 {
-	register int    action = 0;
+	int    action = 0;
 
 	/*
 	 * To check for ``zombie'' links each time llc_statehandler() gets called
@@ -2199,9 +2199,9 @@ void
 llc_resetwindow(linkp)
 	struct llc_linkcb *linkp;
 {
-	register struct mbuf *mptr = (struct mbuf *) 0;
-	register struct mbuf *anchor = (struct mbuf *) 0;
-	register short  i;
+	struct mbuf *mptr = (struct mbuf *) 0;
+	struct mbuf *anchor = (struct mbuf *) 0;
+	short  i;
 
 	/* Pick up all queued frames and collect them in a linked mbuf list */
 	if (linkp->llcl_slotsfree != linkp->llcl_window) {
@@ -2322,10 +2322,10 @@ void
 llc_dellink(linkp)
 	struct llc_linkcb *linkp;
 {
-	register struct mbuf *m;
-	register struct mbuf *n;
-	register struct npaidbentry *sapinfo = linkp->llcl_sapinfo;
-	register int i;
+	struct mbuf *m;
+	struct mbuf *n;
+	struct npaidbentry *sapinfo = linkp->llcl_sapinfo;
+	int i;
 
 	/* notify upper layer of imminent death */
 	if (linkp->llcl_nlnext && sapinfo->si_ctlinput)
@@ -2365,7 +2365,7 @@ llc_decode(frame, linkp)
 	struct llc *frame;
 	struct llc_linkcb *linkp;
 {
-	register int    ft = LLC_BAD_PDU;
+	int    ft = LLC_BAD_PDU;
 
 	if ((frame->llc_control & 01) == 0) {
 		ft = LLCFT_INFO;
@@ -2449,7 +2449,7 @@ int
 llc_anytimersup(linkp)
 	struct llc_linkcb *linkp;
 {
-	register int    i;
+	int    i;
 
 	FOR_ALL_LLC_TIMERS(i)
 		if (linkp->llcl_timers[i] > 0)
@@ -2496,7 +2496,7 @@ llc_link_dump(linkp, message)
 	struct llc_linkcb *linkp;
 	const char *message;
 {
-	register int    i;
+	int    i;
 
 	/* print interface */
 	printf("if %s\n", linkp->llcl_if->if_xname);

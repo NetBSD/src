@@ -1,4 +1,4 @@
-/*	$NetBSD: pk_usrreq.c,v 1.18 2000/03/13 23:52:40 soren Exp $	*/
+/*	$NetBSD: pk_usrreq.c,v 1.19 2000/03/30 13:53:37 augustss Exp $	*/
 
 /*
  * Copyright (c) 1984 University of British Columbia.
@@ -109,9 +109,9 @@ pk_usrreq(so, req, m, nam, control, p)
 	struct mbuf *m, *nam, *control;
 	struct proc *p;
 {
-	register struct pklcd *lcp;
+	struct pklcd *lcp;
 	int s;
-	register int error = 0;
+	int error = 0;
 
 	if (req == PRU_CONTROL)
 		return (pk_control(so, (long)m, (caddr_t)nam,
@@ -229,7 +229,7 @@ pk_usrreq(so, req, m, nam, control, p)
 		 */
 	case PRU_SEND:
 		if (control) {
-			register struct cmsghdr *ch = mtod(m, struct cmsghdr *);
+			struct cmsghdr *ch = mtod(m, struct cmsghdr *);
 			control->m_len -= sizeof(*ch);
 			control->m_data += sizeof(*ch);
 			error = pk_ctloutput(PRCO_SETOPT, so, ch->cmsg_level,
@@ -261,7 +261,7 @@ pk_usrreq(so, req, m, nam, control, p)
 		 */
 	case PRU_RCVOOB:
 		if (so->so_options & SO_OOBINLINE) {
-			register struct mbuf *n = so->so_rcv.sb_mb;
+			struct mbuf *n = so->so_rcv.sb_mb;
 			if (n && n->m_type == MT_OOBDATA) {
 				unsigned        len = n->m_pkthdr.len;
 				so->so_rcv.sb_mb = n->m_nextpkt;
@@ -283,7 +283,7 @@ pk_usrreq(so, req, m, nam, control, p)
 		 */
 	case PRU_SENDOOB:
 		if (control) {
-			register struct cmsghdr *ch = mtod(m, struct cmsghdr *);
+			struct cmsghdr *ch = mtod(m, struct cmsghdr *);
 			control->m_len -= sizeof(*ch);
 			control->m_data += sizeof(*ch);
 			error = pk_ctloutput(PRCO_SETOPT, so, ch->cmsg_level,
@@ -330,7 +330,7 @@ release:
 /* ARGSUSED */
 int
 pk_start(lcp)
-	register struct pklcd *lcp;
+	struct pklcd *lcp;
 {
 	pk_output(lcp);
 	return (0);		/* XXX pk_output should return a value */
@@ -348,12 +348,12 @@ pk_control(so, cmd, data, ifp, p)
 	struct socket *so;
 	u_long cmd;
 	caddr_t data;
-	register struct ifnet *ifp;
+	struct ifnet *ifp;
 	struct proc *p;
 {
-	register struct ifreq_x25 *ifr = (struct ifreq_x25 *) data;
-	register struct ifaddr *ifa = 0;
-	register struct x25_ifaddr *ia = 0;
+	struct ifreq_x25 *ifr = (struct ifreq_x25 *) data;
+	struct ifaddr *ifa = 0;
+	struct x25_ifaddr *ia = 0;
 	int             error = 0, s, old_maxlcn;
 
 	/*
@@ -402,7 +402,7 @@ pk_control(so, cmd, data, ifp, p)
 		ia->ia_dstaddr.x25_net = ia->ia_xc.xc_addr.x25_net;
 		if (ia->ia_maxlcn != old_maxlcn && old_maxlcn != 0) {
 			/* VERY messy XXX */
-			register struct pkcb *pkp;
+			struct pkcb *pkp;
 			FOR_ALL_PKCBS(pkp)
 				if (pkp->pk_ia == ia)
 				pk_resize(pkp);
@@ -437,8 +437,8 @@ pk_ctloutput(cmd, so, level, optname, mp)
 	int             cmd, level, optname;
 {
 	struct proc *p = curproc;		/* XXX */
-	register struct mbuf *m = *mp;
-	register struct pklcd *lcp = (struct pklcd *) so->so_pcb;
+	struct mbuf *m = *mp;
+	struct pklcd *lcp = (struct pklcd *) so->so_pcb;
 	int             error = EOPNOTSUPP;
 
 	if (m == 0)
@@ -484,11 +484,11 @@ pk_ctloutput(cmd, so, level, optname, mp)
 
 static void
 old_to_new(m)
-	register struct mbuf *m;
+	struct mbuf *m;
 {
-	register struct x25_sockaddr *oldp;
-	register struct sockaddr_x25 *newp;
-	register char  *ocp, *ncp;
+	struct x25_sockaddr *oldp;
+	struct sockaddr_x25 *newp;
+	char  *ocp, *ncp;
 	struct sockaddr_x25 new;
 
 	oldp = mtod(m, struct x25_sockaddr *);
@@ -526,11 +526,11 @@ old_to_new(m)
 
 static void
 new_to_old(m)
-	register struct mbuf *m;
+	struct mbuf *m;
 {
-	register struct x25_sockaddr *oldp;
-	register struct sockaddr_x25 *newp;
-	register char  *ocp, *ncp;
+	struct x25_sockaddr *oldp;
+	struct sockaddr_x25 *newp;
+	char  *ocp, *ncp;
 	struct x25_sockaddr old;
 
 	oldp = &old;
@@ -561,8 +561,8 @@ int
 pk_checksockaddr(m)
 	struct mbuf    *m;
 {
-	register struct sockaddr_x25 *sa = mtod(m, struct sockaddr_x25 *);
-	register char  *cp;
+	struct sockaddr_x25 *sa = mtod(m, struct sockaddr_x25 *);
+	char  *cp;
 
 	if (m->m_len != sizeof(struct sockaddr_x25))
 		return (1);
@@ -579,13 +579,13 @@ pk_checksockaddr(m)
 
 int
 pk_send(m, v)
-	register struct mbuf *m;
+	struct mbuf *m;
 	void *v;
 {
 	struct pklcd   *lcp = v;
 	int             mqbit = 0, error = 0;
-	register struct x25_packet *xp;
-	register struct socket *so;
+	struct x25_packet *xp;
+	struct socket *so;
 
 	if (m->m_type == MT_OOBDATA) {
 		if (lcp->lcd_intrconf_pending)

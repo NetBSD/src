@@ -1,4 +1,4 @@
-/*	$NetBSD: pk_debug.c,v 1.9 1998/09/13 16:21:18 christos Exp $	*/
+/*	$NetBSD: pk_debug.c,v 1.10 2000/03/30 13:53:35 augustss Exp $	*/
 
 /*
  * Copyright (c) 1984 University of British Columbia.
@@ -72,12 +72,12 @@ char   *pk_name[] = {
 void
 pk_trace (xcp, m, dir)
 	struct x25config *xcp;
-	register struct mbuf *m;
+	struct mbuf *m;
 	char *dir;
 {
-	register char *s;
+	char *s;
 	struct x25_packet *xp = mtod(m, struct x25_packet *);
-	register int i, len = 0, cnt = 0;
+	int i, len = 0, cnt = 0;
 
 	if (xcp -> xc_ptrace == 0)
 		return;
@@ -96,10 +96,10 @@ pk_trace (xcp, m, dir)
 
 void
 mbuf_cache(c, m)
-	register struct mbuf_cache *c;
+	struct mbuf_cache *c;
 	struct mbuf *m;
 {
-	register struct mbuf **mp;
+	struct mbuf **mp;
 
 	if (c->mbc_size != c->mbc_oldsize) {
 		unsigned zero_size, copy_size;
@@ -117,7 +117,7 @@ mbuf_cache(c, m)
 		} else
 			c->mbc_cache = 0;
 		if (c->mbc_size < c->mbc_oldsize) {
-			register struct mbuf **mplim;
+			struct mbuf **mplim;
 			mp = c->mbc_size + (struct mbuf **)cache;
 			mplim = c->mbc_oldsize + (struct mbuf **)cache;
 			while (mp < mplim)

@@ -1,4 +1,4 @@
-/*	$NetBSD: pk_timer.c,v 1.7 1998/09/13 16:21:19 christos Exp $	*/
+/*	$NetBSD: pk_timer.c,v 1.8 2000/03/30 13:53:37 augustss Exp $	*/
 
 /* 
  * Copyright (c) 1990, 1991, 1992
@@ -70,9 +70,9 @@ int             pk_t23 = 18 * PR_SLOWHZ;	/* clear timer */
 void
 pk_timer()
 {
-	register struct pkcb *pkp;
-	register struct pklcd *lcp, **pp;
-	register int    lcns_jammed, cant_restart;
+	struct pkcb *pkp;
+	struct pklcd *lcp, **pp;
+	int    lcns_jammed, cant_restart;
 
 	FOR_ALL_PKCBS(pkp) {
 		switch (pkp->pk_state) {

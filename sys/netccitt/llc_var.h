@@ -1,4 +1,4 @@
-/*	$NetBSD: llc_var.h,v 1.10 1998/09/13 16:21:18 christos Exp $	*/
+/*	$NetBSD: llc_var.h,v 1.11 2000/03/30 13:53:35 augustss Exp $	*/
 
 /* 
  * Copyright (c) 1990, 1991, 1992
@@ -496,7 +496,7 @@ struct sdl_hdr {
 #define LLC_UPDATE_NR_RECEIVED(l,nr) { \
 	while ((l)->llcl_nr_received != (nr)) { \
 		struct mbuf *_m; \
-		register short seq; \
+		short seq; \
 		seq = llc_seq2slot((l),(l)->llcl_nr_received); \
 		if ((_m = (l)->llcl_output_buffers[seq]) != NULL) \
 			m_freem(_m); \

@@ -1,4 +1,4 @@
-/*	$NetBSD: pk_llcsubr.c,v 1.9 2000/02/01 00:02:01 thorpej Exp $	*/
+/*	$NetBSD: pk_llcsubr.c,v 1.10 2000/03/30 13:53:36 augustss Exp $	*/
 
 /* 
  * Copyright (c) 1990, 1991, 1992
@@ -151,8 +151,8 @@ cons_rtrequest_internal(cmd, rt, dst)
 	struct rtentry *rt;
 	struct sockaddr *dst;
 {
-	register struct pkcb *pkp;
-	register char   one_to_one;
+	struct pkcb *pkp;
+	char   one_to_one;
 
 	pkp = XTRACTPKP(rt);
 
@@ -302,13 +302,13 @@ npaidb_enter(key, value, rt, link)
 	struct llc_linkcb *link;
 {
 	struct rtentry *nprt;
-	register int    i;
+	int    i;
 
 	USES_AF_LINK_RTS;
 
 	if ((nprt = rtalloc1(SA(key), 0)) == 0) {
-		register u_int  size = sizeof(struct npaidbentry);
-		register u_char saploc = LLSAPLOC(key, rt->rt_ifp);
+		u_int  size = sizeof(struct npaidbentry);
+		u_char saploc = LLSAPLOC(key, rt->rt_ifp);
 
 		/*
 		 * set up netmask: LLC2 packets have the lowest bit set in
@@ -388,7 +388,7 @@ x25_llcglue(prc, addr)
 	int             prc;
 	struct sockaddr *addr;
 {
-	register struct x25_ifaddr *x25ifa;
+	struct x25_ifaddr *x25ifa;
 	struct dll_ctlinfo ctlinfo;
 	long rv;
 

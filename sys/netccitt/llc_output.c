@@ -1,4 +1,4 @@
-/*	$NetBSD: llc_output.c,v 1.4 1998/09/13 16:21:18 christos Exp $	*/
+/*	$NetBSD: llc_output.c,v 1.5 2000/03/30 13:53:34 augustss Exp $	*/
 
 /* 
  * Copyright (c) 1990, 1991, 1992
@@ -78,7 +78,7 @@ llc_output(m, va_alist)
 #endif
 {
 	struct llc_linkcb *linkp;
-	register int    i = splimp();
+	int    i = splimp();
 	va_list ap;
 
 	va_start(ap, m);
@@ -100,7 +100,7 @@ void
 llc_start(linkp)
 	struct llc_linkcb *linkp;
 {
-	register struct mbuf *m;
+	struct mbuf *m;
 
 	while ((LLC_STATEEQ(linkp,NORMAL) || LLC_STATEEQ(linkp,BUSY) ||
 		LLC_STATEEQ(linkp,REJECT)) &&
@@ -127,8 +127,8 @@ llc_send(linkp, frame_kind, cmdrsp, pollfinal)
 	int cmdrsp;
 	int pollfinal;
 {
-	register struct mbuf *m = (struct mbuf *) 0;
-	register struct llc *frame;
+	struct mbuf *m = (struct mbuf *) 0;
+	struct llc *frame;
 
 	if (frame_kind == LLCFT_INFO)
 		m = linkp->llcl_output_buffers[llc_seq2slot(linkp,
@@ -151,9 +151,9 @@ llc_resend(linkp, cmdrsp, pollfinal)
 	int cmdrsp;
 	int pollfinal;
 {
-	register struct llc *frame;
-	register struct mbuf *m;
-	register int   slot;
+	struct llc *frame;
+	struct mbuf *m;
+	int   slot;
 
 	if (linkp->llcl_slotsfree < linkp->llcl_window)
 		/* assert lock between nr_received & V(S) */
@@ -202,7 +202,7 @@ llc_rawsend(linkp, m, frame, frame_kind, vs, cmdrsp, pollfinal)
 	int cmdrsp;
 	int pollfinal;
 {
-	register short  adjust = LLC_UFRAMELEN;
+	short  adjust = LLC_UFRAMELEN;
 	struct ifnet   *ifp;
 
 	switch (frame_kind) {
