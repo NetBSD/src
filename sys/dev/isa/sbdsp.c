@@ -1,4 +1,4 @@
-/*	$NetBSD: sbdsp.c,v 1.37 1997/03/20 16:04:22 mycroft Exp $	*/
+/*	$NetBSD: sbdsp.c,v 1.38 1997/03/20 20:15:25 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1991-1993 Regents of the University of California.
@@ -631,13 +631,14 @@ sbdsp_round_blocksize(addr, blk)
 
 	sc->sc_last_hs_size = 0;
 
-	/* don't try to DMA too much at once, though. */
+	/* Don't try to DMA too much at once. */
 	if (blk > NBPG)
 		blk = NBPG;
-	if (sc->sc_channels == 2)
-		return (blk & ~1); /* must be even to preserve stereo separation */
-	else
-		return (blk);	/* Anything goes :-) */
+
+	/* Round to a multiple of the sample size. */
+	blk &= -(sc->sc_channels * sc->sc_precision / 8);
+
+	return (blk);
 }
 
 int

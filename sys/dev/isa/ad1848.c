@@ -1,4 +1,4 @@
-/*	$NetBSD: ad1848.c,v 1.20 1997/03/20 16:04:24 mycroft Exp $	*/
+/*	$NetBSD: ad1848.c,v 1.21 1997/03/20 20:15:24 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1994 John Brezak
@@ -1108,14 +1108,14 @@ ad1848_round_blocksize(addr, blk)
 
     sc->sc_lastcc = -1;
 
-    /* don't try to DMA too much at once, though. */
+    /* Don't try to DMA too much at once. */
     if (blk > NBPG)
 	blk = NBPG;
 
-    if (sc->channels == 2)
-	return (blk & ~1); /* must be even to preserve stereo separation */
-    else
-	return (blk);	/* Anything goes :-) */
+    /* Round to a multiple of the sample size. */
+    blk &= -(sc->sc_channels * sc->sc_precision / 8);
+
+    return (blk);
 }
 
 int
