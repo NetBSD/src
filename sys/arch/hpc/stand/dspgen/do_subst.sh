@@ -1,4 +1,4 @@
-# $NetBSD: do_subst.sh,v 1.2 2001/03/04 16:51:05 uch Exp $
+# $NetBSD: do_subst.sh,v 1.3 2004/08/06 17:20:32 uch Exp $
 #
 # Copyright (c) 1999, 2000 Christopher G. Demetriou.  All rights reserved.
 #
@@ -40,7 +40,7 @@ if [ "X$1" = "X--show-libdeps" ]; then
 	exit
 fi
 
-AWK=awk
+AWK=gawk
 if [ `uname` = SunOS ]; then
 	AWK=nawk
 fi
