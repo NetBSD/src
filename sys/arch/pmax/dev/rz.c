@@ -1,4 +1,4 @@
-/*	$NetBSD: rz.c,v 1.28.4.5 1998/05/08 06:32:21 mycroft Exp $	*/
+/*	$NetBSD: rz.c,v 1.28.4.6 1998/11/07 00:10:52 cgd Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
-__KERNEL_RCSID(0, "$NetBSD: rz.c,v 1.28.4.5 1998/05/08 06:32:21 mycroft Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rz.c,v 1.28.4.6 1998/11/07 00:10:52 cgd Exp $");
 
 /*
  * SCSI CCS (Command Command Set) disk driver.
@@ -375,6 +375,10 @@ rz_getsize(sc, flags)
 		register int cdsize;
 		 cdsize = rz_cdsize(sc, flags);
 		sc->params.disksize = cdsize;
+		sc->sc_bshift = 0;
+		for (i = sc->sc_blksize; i > DEV_BSIZE; i >>= 1)
+			++sc->sc_bshift;
+		sc->sc_blks <<= sc->sc_bshift;
 		return (cdsize);
 	}
 
@@ -1107,9 +1111,6 @@ rzread(dev, uio, ioflag)
 {
 	register struct rz_softc *sc = &rz_softc[rzunit(dev)];
 
-	if (sc->sc_type == SCSI_ROM_TYPE)
-		return (EROFS);
-
 	if (sc->sc_format_pid && sc->sc_format_pid != curproc->p_pid)
 		return (EPERM);
 
@@ -1124,6 +1125,9 @@ rzwrite(dev, uio, ioflag)
 	int ioflag;
 {
 	register struct rz_softc *sc = &rz_softc[rzunit(dev)];
+
+	if (sc->sc_type == SCSI_ROM_TYPE)
+		return (EROFS);
 
 	if (sc->sc_format_pid && sc->sc_format_pid != curproc->p_pid)
 		return (EPERM);
