@@ -1,4 +1,4 @@
-/*	$NetBSD: mpbios.c,v 1.2 2002/10/01 12:56:57 fvdl Exp $	*/
+/*	$NetBSD: mpbios.c,v 1.3 2002/10/04 06:02:38 explorer Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -223,7 +223,7 @@ mp_match(parent, cf, aux)
 	if (strcmp(caa->caa_name, cf->cf_name))
 		return 0;
 
-	return ((*cf->cf_attach->ca_match)(parent, cf, aux));
+	return (config_match(parent, cf, aux));
 }
 
 /*
