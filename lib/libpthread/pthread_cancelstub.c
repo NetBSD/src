@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread_cancelstub.c,v 1.1.2.4 2002/08/14 23:22:05 nathanw Exp $	*/
+/*	$NetBSD: pthread_cancelstub.c,v 1.1.2.5 2002/11/03 12:29:02 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -45,7 +45,8 @@
 #include <stdarg.h>
 #include <unistd.h>
 
-/* XXX this is necessary to get the prototypes for the __sigsuspend14
+/*
+ * XXX this is necessary to get the prototypes for the __sigsuspend14
  * XXX and __msync13 internal names, instead of the application-visible
  * XXX sigsuspend and msync names. It's kind of gross, but we're pretty
  * XXX intimate with libc already.
