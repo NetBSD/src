@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.376 2000/02/04 14:21:33 minoura Exp $	*/
+/*	$NetBSD: machdep.c,v 1.376.2.1 2000/02/20 18:01:05 sommerfeld Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -119,6 +119,7 @@
 
 #include <machine/cpu.h>
 #include <machine/cpufunc.h>
+#include <machine/cpuvar.h>
 #include <machine/gdt.h>
 #include <machine/pio.h>
 #include <machine/psl.h>
@@ -198,6 +199,10 @@ extern	int biosbasemem, biosextmem;
 extern	paddr_t avail_start, avail_end;
 extern	paddr_t hole_start, hole_end;
 
+void (*delay_func) __P((int)) = i8254_delay;
+void (*microtime_func) __P((struct timeval *)) = i8254_microtime;
+void (*initclock_func) __P((void)) = i8254_initclocks;
+
 /*
  * Size of memory segments, before any memory is stolen.
  */
@@ -208,7 +213,6 @@ int	cpu_dump __P((void));
 int	cpu_dumpsize __P((void));
 u_long	cpu_dump_mempagecnt __P((void));
 void	dumpsys __P((void));
-void	identifycpu __P((void));
 void	init386 __P((paddr_t));
 
 #ifdef COMPAT_NOMID
@@ -262,8 +266,6 @@ cpu_startup()
 	initmsgbuf((caddr_t)msgbuf_vaddr, round_page(MSGBUFSIZE));
 
 	printf(version);
-	identifycpu();
-
 	format_bytes(pbuf, sizeof(pbuf), ctob(physmem));
 	printf("total memory = %s\n", pbuf);
 
@@ -367,10 +369,31 @@ void
 i386_proc0_tss_ldt_init()
 {
 	struct pcb *pcb;
-	int x;
 
 	gdt_init();
 	curpcb = pcb = &proc0.p_addr->u_pcb;
+
+	pcb->pcb_tss.tss_ss0 = GSEL(GDATA_SEL, SEL_KPL);
+	pcb->pcb_tss.tss_esp0 = (int)proc0.p_addr + USPACE - 16;
+
+	i386_init_pcb_tss_ldt(pcb);
+	
+	ltr(pcb->pcb_tss_sel);
+	lldt(pcb->pcb_ldt_sel);
+
+	proc0.p_md.md_regs = (struct trapframe *)pcb->pcb_tss.tss_esp0 - 1;
+}
+
+/*
+ * Set up TSS and LDT for a new PCB.
+ */
+
+void
+i386_init_pcb_tss_ldt(pcb)
+	struct pcb *pcb;
+{
+	int x;
+
 	pcb->pcb_flags = 0;
 	pcb->pcb_tss.tss_ioopt =
 	    ((caddr_t)pcb->pcb_iomap - (caddr_t)&pcb->pcb_tss) << 16;
@@ -379,15 +402,10 @@ i386_proc0_tss_ldt_init()
 
 	pcb->pcb_ldt_sel = GSEL(GLDT_SEL, SEL_KPL);
 	pcb->pcb_cr0 = rcr0();
-	pcb->pcb_tss.tss_ss0 = GSEL(GDATA_SEL, SEL_KPL);
-	pcb->pcb_tss.tss_esp0 = (int)proc0.p_addr + USPACE - 16;
 	tss_alloc(pcb);
-
-	ltr(pcb->pcb_tss_sel);
-	lldt(pcb->pcb_ldt_sel);
-
-	proc0.p_md.md_regs = (struct trapframe *)pcb->pcb_tss.tss_esp0 - 1;
 }
+
+
 
 /*
  * XXX Finish up the deferred buffer cache allocation and initialization.
@@ -652,17 +670,32 @@ cyrix6x86_cpu_setup()
 	cyrix_write_reg(0xC3, cyrix_read_reg(0xC3) & ~0x10);
 }
 
+/*
+ * Print identification for the given CPU.
+ * XXX XXX
+ * This is not as clean as one might like, because it references
+ *
+ * the "cpuid_level" and "cpu_vendor" globals.
+ * cpuid_level isn't so bad, since both CPU's will hopefully
+ * be of the same level.
+ *
+ * The Intel multiprocessor spec doesn't give us the cpu_vendor
+ * information; however, the chance of multi-vendor SMP actually
+ * ever *working* is sufficiently low that it's probably safe to assume
+ * all processors are of the same vendor.
+ */
+ 
 void
-identifycpu()
+identifycpu(ci)
+	struct cpu_info *ci;
 {
 	extern char cpu_vendor[];
-	extern int cpu_id;
 	const char *name, *modifier, *vendorname;
 	int class = CPUCLASS_386, vendor, i, max;
 	int family, model, step, modif;
 	struct cpu_cpuid_nameclass *cpup = NULL;
-	void (*cpu_setup) __P((void));
-
+	char *cpuname = ci->ci_dev.dv_xname;
+	
 	if (cpuid_level == -1) {
 #ifdef DIAGNOSTIC
 		if (cpu < 0 || cpu >=
@@ -673,19 +706,19 @@ identifycpu()
 		vendor = i386_nocpuid_cpus[cpu].cpu_vendor;
 		vendorname = i386_nocpuid_cpus[cpu].cpu_vendorname;
 		class = i386_nocpuid_cpus[cpu].cpu_class;
-		cpu_setup = i386_nocpuid_cpus[cpu].cpu_setup;
+		ci->cpu_setup = i386_nocpuid_cpus[cpu].cpu_setup;
 		modifier = "";
 	} else {
 		max = sizeof (i386_cpuid_cpus) / sizeof (i386_cpuid_cpus[0]);
-		modif = (cpu_id >> 12) & 3;
-		family = (cpu_id >> 8) & 15;
+		modif = (ci->ci_signature >> 12) & 0x3;
+		family = (ci->ci_signature >> 8) & 0xf;
 		if (family < CPU_MINFAMILY)
 			panic("identifycpu: strange family value");
-		model = (cpu_id >> 4) & 15;
-		step = cpu_id & 15;
+		model = (ci->ci_signature >> 4) & 0xf;
+		step = ci->ci_signature & 0xf;
 #ifdef CPUDEBUG
-		printf("cpu0: family %x model %x step %x\n", family, model,
-			step);
+		printf("%s: family %x model %x step %x\n", cpuname, family, 
+			model, step);
 #endif
 
 		for (i = 0; i < max; i++) {
@@ -707,7 +740,7 @@ identifycpu()
 			class = family - 3;
 			modifier = "";
 			name = "";
-			cpu_setup = NULL;
+			ci->cpu_setup = NULL;
 		} else {
 			vendor = cpup->cpu_vendor;
 			vendorname = cpup->cpu_vendorname;
@@ -722,16 +755,27 @@ identifycpu()
 			if (name == NULL)
 			    name = cpup->cpu_family[i].cpu_models[CPU_DEFMODEL];
 			class = cpup->cpu_family[i].cpu_class;
-			cpu_setup = cpup->cpu_family[i].cpu_setup;
+			ci->cpu_setup = cpup->cpu_family[i].cpu_setup;
 		}
 	}
 
 	sprintf(cpu_model, "%s %s%s (%s-class)", vendorname, modifier, name,
 		classnames[class]);
-	printf("cpu0: %s\n", cpu_model);
+	printf("%s: %s\n", cpuname, cpu_model);
 
+	if (ci->ci_feature_flags) {
+		char buf[1024];
+		bitmask_snprintf(ci->ci_feature_flags, CPUID_FLAGS1,
+		    buf, sizeof(buf));
+		printf("%s: features %s\n", cpuname, buf);
+		bitmask_snprintf(ci->ci_feature_flags, CPUID_FLAGS2,
+		    buf, sizeof(buf));
+		printf("%s: features %s\n", cpuname, buf);
+	}
+	
 	cpu_class = class;
-
+	ci->cpu_class = class;
+	
 	/*
 	 * Now that we have told the user what they have,
 	 * let them know if that machine type isn't configured.
@@ -776,9 +820,6 @@ identifycpu()
 		break;
 	}
 
-	/* configure the CPU if needed */
-	if (cpu_setup != NULL)
-		cpu_setup();
 	if (cpu == CPU_486DLC) {
 #ifndef CYRIX_CACHE_WORKS
 		printf("WARNING: CYRIX 486DLC CACHE UNCHANGED.\n");
@@ -790,14 +831,6 @@ identifycpu()
 #endif
 #endif
 	}
-
-#if defined(I486_CPU) || defined(I586_CPU) || defined(I686_CPU)
-	/*
-	 * On a 486 or above, enable ring 0 write protection.
-	 */
-	if (cpu_class >= CPUCLASS_486)
-		lcr0(rcr0() | CR0_WP);
-#endif
 }
 
 /*  
@@ -1461,6 +1494,21 @@ setgate(gd, func, args, type, dpl)
 }
 
 void
+unsetgate(gd)
+	struct gate_descriptor *gd;
+{
+	gd->gd_p = 0;
+	gd->gd_hioffset = 0;
+	gd->gd_looffset = 0;
+	gd->gd_selector = 0;
+	gd->gd_xx = 0;
+	gd->gd_stkcpy = 0;
+	gd->gd_type = 0;
+	gd->gd_dpl = 0;
+}
+
+
+void
 setregion(rd, base, limit)
 	struct region_descriptor *rd;
 	void *base;
@@ -1499,6 +1547,17 @@ extern vector *IDTVEC(exceptions)[];
 #ifdef COMPAT_SVR4
 extern vector IDTVEC(svr4_fasttrap);
 #endif /* COMPAT_SVR4 */
+
+void cpu_init_idt()
+{
+	struct region_descriptor region;
+#ifdef I586_CPU
+	setregion(&region, pentium_idt, NIDT * sizeof(idt[0]) - 1);
+#else
+	setregion(&region, idt, NIDT * sizeof(idt[0]) - 1);
+#endif
+        lidt(&region);
+}
 
 void
 init386(first_avail)
@@ -1552,12 +1611,18 @@ init386(first_avail)
 	}
 #endif
 
+#ifdef MULTIPROCESSOR
+	/* leave room for bioscall just to avoid too much chaos */
+	avail_start = 4*NBPG;	/* save us a page for trampoline code and
+				 one additional PT page! */
+#else
 #if NBIOSCALL > 0
 	avail_start = 3*NBPG;	/* save us a page for trampoline code and
 				 one additional PT page! */
 #else
 	avail_start = NBPG;	/* BIOS leaves data in low memory */
 				/* and VM system doesn't work with phys 0 */
+#endif
 #endif
 	avail_end = IOM_END + trunc_page(biosextmem * 1024);
 
@@ -1568,7 +1633,7 @@ init386(first_avail)
 	/* Call pmap initialization to make new kernel address space. */
 	pmap_bootstrap((vaddr_t)atdevbase + IOM_SIZE);
 
-#if NBIOSCALL > 0
+#if NBIOSCALL > 0 || defined(MULTIPROCESSOR)
 	/* install page 2 (reserved above) as PT page for first 4M */
 	pmap_enter(pmap_kernel(), (u_long)vtopte(0), 2*NBPG,
 	    VM_PROT_READ|VM_PROT_WRITE, PMAP_WIRED|VM_PROT_READ|VM_PROT_WRITE);
@@ -1578,11 +1643,13 @@ init386(first_avail)
 	pmap_enter(pmap_kernel(), idt_vaddr, idt_paddr,
 	    VM_PROT_READ|VM_PROT_WRITE, PMAP_WIRED|VM_PROT_READ|VM_PROT_WRITE);
 	idt = (union descriptor *)idt_vaddr;
+	
 #ifdef I586_CPU
 	pmap_enter(pmap_kernel(), pentium_idt_vaddr, idt_paddr,
 	    VM_PROT_READ, PMAP_WIRED|VM_PROT_READ);
 	pentium_idt = (union descriptor *)pentium_idt_vaddr;
 #endif
+
 	gdt = idt + NIDT;
 	ldt = gdt + NGDT;
 
@@ -1625,6 +1692,9 @@ init386(first_avail)
 
 	setregion(&region, gdt, NGDT * sizeof(gdt[0]) - 1);
 	lgdt(&region);
+
+	cpu_init_idt();
+	
 #ifdef I586_CPU
 	setregion(&region, pentium_idt, NIDT * sizeof(idt[0]) - 1);
 #else
@@ -1664,7 +1734,7 @@ init386(first_avail)
 	isa_defaultirq();
 #endif
 
-	splraise(-1);
+	splraise(IPL_SERIAL);	/* XXX MP clean me */
 	enable_intr();
 
 	/* number of pages of physmem addr space */
@@ -1833,12 +1903,22 @@ int type;
 	return(0);
 }
 
+#include <dev/ic/mc146818reg.h>		/* for NVRAM POST */
+#include <i386/isa/nvram.h>		/* for NVRAM POST */
+
 void
 cpu_reset()
 {
 
 	disable_intr();
 
+	/*
+	 * Ensure the NVRAM reset byte contains something vaguely sane.
+	 */
+
+	outb(IO_RTC, NVRAM_RESET);
+	outb(IO_RTC+1, NVRAM_RESET_RST);
+	
 	/*
 	 * The keyboard controller has 4 random output pins, one of which is
 	 * connected to the RESET pin on the CPU in many PCs.  We tell the
@@ -1866,4 +1946,50 @@ cpu_reset()
 #endif
 
 	for (;;);
+}
+
+void cpu_initclocks()
+{
+	(*initclock_func)();
+}
+
+#ifdef MULTIPROCESSOR
+void need_resched()
+{
+	struct cpu_info *ci = curcpu();
+	ci->ci_want_resched = 1;
+	ci->ci_astpending = 1;
+}
+#endif
+
+/*
+ * Allocate an IDT vector slot within the given range.
+ * XXX needs locking to avoid MP allocation races.
+ */
+
+int
+idt_vec_alloc (low, high)
+	int low;
+	int high;
+{
+	int vec;
+
+	for (vec=low; vec<=high; vec++)
+		if (idt[vec].gd.gd_p == 0)
+			return vec;
+	return 0;
+}
+
+void idt_vec_set (vec, function)
+	int vec;
+	void (*function) __P((void));
+{
+	setgate (&idt[vec].gd, function, 0, SDT_SYS386IGT, SEL_KPL);
+}
+
+void
+idt_vec_free (vec)
+	int vec;
+{
+	unsetgate(&idt[vec].gd);
 }
