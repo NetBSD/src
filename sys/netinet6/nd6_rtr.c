@@ -1,4 +1,4 @@
-/*	$NetBSD: nd6_rtr.c,v 1.14 2000/03/04 02:39:58 thorpej Exp $	*/
+/*	$NetBSD: nd6_rtr.c,v 1.15 2000/03/21 11:34:25 itojun Exp $	*/
 /*	$KAME: nd6_rtr.c,v 1.27 2000/02/26 06:53:11 itojun Exp $	*/
 
 /*
@@ -613,7 +613,7 @@ defrouter_select()
 				 */
 				defrouter_addifreq(nd6_defifp);
 			}
-#ifdef ND6DEBUG
+#ifdef ND6_DEBUG
 			else	/* noisy log? */
 				log(LOG_INFO, "defrouter_select: "
 				    "there's no default router and no default"
