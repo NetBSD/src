@@ -1,4 +1,4 @@
-/*	$NetBSD: ddp_input.c,v 1.3 1998/06/10 00:43:58 wrstuden Exp $	 */
+/*	$NetBSD: ddp_input.c,v 1.4 1999/03/27 01:24:50 aidan Exp $	 */
 
 /*
  * Copyright (c) 1990,1994 Regents of The University of Michigan.
@@ -326,6 +326,10 @@ ddp_input(m, ifp, elh, phase)
 		m_freem(m);
 		return;
 	}
+#if IFA_STATS
+	if (aa)
+		aa->aa_ifa.ifa_data.ifad_inbytes += dlen;
+#endif
 	sorwakeup(ddp->ddp_socket);
 }
 
