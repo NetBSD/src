@@ -1,4 +1,4 @@
-/*	$NetBSD: trpt.c,v 1.15 2003/02/04 00:20:50 thorpej Exp $	*/
+/*	$NetBSD: trpt.c,v 1.16 2003/02/04 01:22:10 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -81,7 +81,7 @@ __COPYRIGHT(
 #if 0
 static char sccsid[] = "@(#)trpt.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: trpt.c,v 1.15 2003/02/04 00:20:50 thorpej Exp $");
+__RCSID("$NetBSD: trpt.c,v 1.16 2003/02/04 01:22:10 thorpej Exp $");
 #endif
 #endif /* not lint */
 
@@ -133,9 +133,11 @@ __RCSID("$NetBSD: trpt.c,v 1.15 2003/02/04 00:20:50 thorpej Exp $");
 #include <unistd.h>
 
 struct nlist nl[] = {
-#define	N_TCP_DEBUG	0
+#define	N_HARDCLOCK_TICKS	0
+	{ "_hardclock_ticks" },
+#define	N_TCP_DEBUG		1
 	{ "_tcp_debug" },
-#define	N_TCP_DEBX	1
+#define	N_TCP_DEBX		2
 	{ "_tcp_debx" },
 	{ NULL },
 };
@@ -515,12 +517,17 @@ skipact:
 	if (tflag) {
 		register char *cp = "\t";
 		register int i;
+		int hardticks;
+
+		if (kvm_read(kd, nl[N_HARDCLOCK_TICKS].n_value,
+		    (char *)&hardticks, sizeof(hardticks)) != sizeof(hardticks))
+			errx(3, "hardclock_ticks: %s", kvm_geterr(kd));
 
 		for (i = 0; i < TCPT_NTIMERS; i++) {
 			if ((tp->t_timer[i].c_flags & CALLOUT_PENDING) == 0)
 				continue;
-			printf("%s%s=%llu", cp, tcptimers[i],
-			    (unsigned long long) tp->t_timer[i].c_time);
+			printf("%s%s=%d", cp, tcptimers[i],
+			    tp->t_timer[i].c_time - hardticks);
 			if (i == TCPT_REXMT)
 				printf(" (t_rxtshft=%d)", tp->t_rxtshift);
 			cp = ", ";
