@@ -1,4 +1,4 @@
-.\" $NetBSD: main,v 1.4 1999/03/23 20:55:38 perry Exp $
+.\" $NetBSD: main,v 1.5 1999/03/23 21:17:44 perry Exp $
 .\"
 .\" Copyright (c) 1999 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -266,6 +266,9 @@ periodically organizing workshops for developers and other
 interested people to discuss ongoing work.
 .El
 .Pp
+We intend to begin narrowing the time delay between releases. Our
+ambition is to provide a full release every six to eight months.
+.Pp
 We hope to support even
 .Em more
 hardware in the future, and we have a
@@ -273,11 +276,14 @@ rather large number of other ideas about what can be done to improve
 .Nx .
 .Pp
 We intend to continue our current practice of making the
-NetBSD-current development source available on a daily basis.
+NetBSD-current development source available on a daily basis.  In
+addition, we intend to provide Anonymous CVS access to the NetBSD
+source tree in the near future, so that anyone on the internet can
+examine the full NetBSD source code repository.
 .Pp
 We intend to integrate free, positive changes from whatever sources
-will provide them, providing that they are well thought-out and
-increase the usability of the system.
+submit them, providing that they are well thought-out and increase the
+usability of the system.
 .Pp
 Above all, we hope to create a stable and accessible system, and to be
 responsive to the needs and desires of
@@ -476,6 +482,10 @@ Users upgrading from previous versions of
 may wish to bear the
 following problems and compatibility issues in mind when upgrading to
 .Nx \*V
+.Pp
+.Em NOTE: ALL THESE ARE OBSOLETE PROBLEMS.
+They cover the 1.2->1.3 transition. We need new information for 1.4!!!
+.Pp
 .
 .
 .Bl -bullet
@@ -760,11 +770,11 @@ Rob Robertson, too, has added his unique sense of humor to things, and
 for a long time provided the primary FTP site for
 .Nx .
 .It
-Best Internet Communications for hosting the
+Vixie Enterprises for hosting the
 .Nx
 FTP and SUP server.
 .It
-Cygnus Support for hosting the
+Redback Networks, Inc. for hosting the
 .Nx
 Mail server.
 .It
@@ -811,7 +821,6 @@ them, and would like to mentioned, tell us!)
 .It Ta Paul Kranenburg Ta Mt pk@NetBSD.ORG
 .It Ta Herb Peyerl Ta Mt hpeyerl@NetBSD.ORG
 .It Ta Scott Reynolds Ta Mt scottr@NetBSD.ORG
-.It Ta Jason Thorpe Ta Mt thorpej@NetBSD.ORG
 .It Ta Christos Zoulas Ta Mt christos@NetBSD.ORG
 .It Ta Ta
 .br_ne 2i
@@ -820,7 +829,7 @@ them, and would like to mentioned, tell us!)
 .It Ta Mark Brinicombe Ta Mt mark@NetBSD.ORG Ta Sy arm32
 .It Ta Jeremy Cooper Ta Mt jeremy@NetBSD.ORG Ta Sy sun3x
 .It Ta Ross Harvey Ta Mt ross@NetBSD.ORG Ta Sy alpha
-.It Ta Chris Hopps Ta Mt chopps@NetBSD.ORG Ta Sy amiga
+.It Ta Ignatios Souvatzis Ta Mt is@NetBSD.ORG Ta Sy amiga
 .It Ta Eduardo Horvath Ta Mt eeh@NetBSD.ORG Ta Sy sparc64
 .It Ta Paul Kranenburg Ta Mt pk@NetBSD.ORG Ta Sy sparc
 .It Ta Anders Magnusson Ta Mt ragge@NetBSD.ORG Ta Sy vax
@@ -829,6 +838,7 @@ them, and would like to mentioned, tell us!)
 .It Ta Phil Nelson Ta Mt phil@NetBSD.ORG Ta Sy pc532
 .It Ta Masaru Oki Ta Mt oki@NetBSD.ORG Ta Sy x68k
 .It Ta Scott Reynolds Ta Mt scottr@NetBSD.ORG Ta Sy mac68k
+.It Ta Darrin Jewell Ta Mt dbj@NetBSD.ORG Ta Sy next68k
 .It Ta Gordon Ross Ta Mt gwr@NetBSD.ORG Ta Sy sun3,\ sun3x
 .It Ta Kazuki Sakamoto Ta Mt sakamoto@NetBSD.ORG Ta Sy bebox
 .It Ta Wolfgang Solfrank Ta Mt ws@NetBSD.ORG Ta Sy powerpc
@@ -844,7 +854,6 @@ them, and would like to mentioned, tell us!)
 .It Ta Chris G. Demetriou Ta Mt cgd@NetBSD.ORG
 .It Ta Ted Lemon Ta Mt mellon@NetBSD.ORG
 .It Ta Perry Metzger Ta Mt perry@NetBSD.ORG
-.It Ta Jason Thorpe Ta Mt thorpej@NetBSD.ORG
 .It Ta Ta
 .br_ne 2i
 .It-span Em "Developers and other contributors:"
@@ -929,6 +938,7 @@ them, and would like to mentioned, tell us!)
 .It Ta Kevin Sullivan Ta Mt sullivan@NetBSD.ORG
 .It Ta Kimmo Suominen Ta Mt kim@NetBSD.ORG
 .It Ta Matt Thomas Ta Mt matt@NetBSD.ORG
+.It Ta Jason Thorpe Ta Mt thorpej@NetBSD.ORG
 .It Ta Christoph Toshok Ta Mt toshok@NetBSD.ORG
 .It Ta Todd Vierling Ta Mt tv@NetBSD.ORG
 .It Ta Paul Vixie Ta Mt vixie@NetBSD.ORG
