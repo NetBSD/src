@@ -1,7 +1,7 @@
-/*	$NetBSD: comvar.h,v 1.1 1996/03/09 01:01:33 cgd Exp $	*/
+/*	$NetBSD: comvar.h,v 1.2 1996/03/09 23:37:14 cgd Exp $	*/
 
 /*
- * Copyright (c) 1994 Christopher G. Demetriou.  All rights reserved.
+ * Copyright (c) 1996 Christopher G. Demetriou.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
