@@ -1,4 +1,4 @@
-/*	$NetBSD: sysmon_power.c,v 1.2 2003/04/18 01:31:35 thorpej Exp $	*/
+/*	$NetBSD: sysmon_power.c,v 1.3 2003/04/20 20:48:28 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2003 Wasabi Systems, Inc.
@@ -432,6 +432,21 @@ sysmon_pswitch_event(struct sysmon_pswitch *smpsw, int event)
 		printf("%s: power button pressed, shutting down!\n",
 		    smpsw->smpsw_name);
 		cpu_reboot(RB_POWERDOWN, NULL);
+		break;
+
+	case PSWITCH_TYPE_RESET:
+		if (event != PSWITCH_EVENT_PRESSED) {
+			/* just ignore it */
+			return;
+		}
+
+		/*
+		 * Attempt a somewhat graceful reboot of the system,
+		 * as if the user had issued a reboot(2) call.
+		 */
+		printf("%s: reset button pressed, rebooting!\n",
+		    smpsw->smpsw_name);
+		cpu_reboot(0, NULL);
 		break;
 
 	case PSWITCH_TYPE_SLEEP:

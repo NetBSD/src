@@ -1,4 +1,4 @@
-/*	$NetBSD: power.h,v 1.1 2003/04/18 01:31:35 thorpej Exp $	*/
+/*	$NetBSD: power.h,v 1.2 2003/04/20 20:48:27 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2003 Wasabi Systems, Inc.
@@ -60,7 +60,15 @@
  *				daemon present, an event on this button will
  *				cause a semi-graceful shutdown of the system
  *				to occur.  This kind of button doesn't keep
- *				state; we only know (care) if an event occurrs.
+ *				state; we only know (care) if an event occurs.
+ *
+ *	Reset button		This is the "reset" button on a system, or
+ *				another button which provides a similar
+ *				function.  If there is no power management
+ *				daemon present, an event on this button will
+ *				cause a semi-graceful reboot of the system
+ *				to occur.  This kind of button doesn't keep
+ *				state; we only know (care) if an event occurs.
  *
  *	Sleep button		This is a button which is dedicated to a
  *				"sleep" function.  This kind of button doesn't
@@ -75,6 +83,7 @@
 #define	PSWITCH_TYPE_POWER	0	/* power button */
 #define	PSWITCH_TYPE_SLEEP	1	/* sleep button */
 #define	PSWITCH_TYPE_LID	2	/* lid switch */
+#define	PSWITCH_TYPE_RESET	3	/* reset button */
 
 #define	PSWITCH_EVENT_PRESSED	0	/* button pressed */
 #define	PSWITCH_EVENT_RELEASED	1	/* button released */
