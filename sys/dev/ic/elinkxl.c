@@ -1,4 +1,4 @@
-/*	$NetBSD: elinkxl.c,v 1.61 2001/12/28 20:35:46 christos Exp $	*/
+/*	$NetBSD: elinkxl.c,v 1.62 2002/04/06 19:28:01 mhitch Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: elinkxl.c,v 1.61 2001/12/28 20:35:46 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: elinkxl.c,v 1.62 2002/04/06 19:28:01 mhitch Exp $");
 
 #include "bpfilter.h"
 #include "rnd.h"
@@ -1376,8 +1376,15 @@ ex_getstats(sc)
 	 */
 	ifp->if_collisions += 2 * bus_space_read_1(iot, ioh,
 	    TX_AFTER_X_COLLISIONS);
-	ifp->if_ibytes += bus_space_read_2(iot, ioh, RX_TOTAL_OK);
-	ifp->if_obytes += bus_space_read_2(iot, ioh, TX_TOTAL_OK);
+	/*
+	 * Interface byte counts are counted by ether_input() and
+	 * ether_output(), so don't accumulate them here.  Just
+	 * read the NIC counters so they don't generate overflow interrupts.
+	 * Upper byte counters are latched from reading the totals, so
+	 * they don't need to be read if we don't need their values.
+	 */
+	bus_space_read_2(iot, ioh, RX_TOTAL_OK);
+	bus_space_read_2(iot, ioh, TX_TOTAL_OK);
 
 	/*
 	 * Clear the following to avoid stats overflow interrupts
@@ -1388,9 +1395,6 @@ ex_getstats(sc)
 	bus_space_read_1(iot, ioh, TX_CD_LOST);
 	GO_WINDOW(4);
 	bus_space_read_1(iot, ioh, ELINK_W4_BADSSD);
-	upperok = bus_space_read_1(iot, ioh, ELINK_W4_UBYTESOK);
-	ifp->if_ibytes += (upperok & 0x0f) << 16;
-	ifp->if_obytes += (upperok & 0xf0) << 12;
 	GO_WINDOW(1);
 }
 
