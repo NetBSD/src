@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_exit.c,v 1.72 1999/07/22 18:13:37 thorpej Exp $	*/
+/*	$NetBSD: kern_exit.c,v 1.73 1999/07/22 21:08:31 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.
@@ -152,10 +152,12 @@ exit1(p, rv)
 {
 	register struct proc *q, *nq;
 	register struct vmspace *vm;
+	int s;
 
 	if (p == initproc)
 		panic("init died (signal %d, exit %d)",
 		    WTERMSIG(rv), WEXITSTATUS(rv));
+
 #ifdef PGINPROF
 	vmsizmon();
 #endif
@@ -257,9 +259,11 @@ exit1(p, rv)
 	 * deadproc list later (using the p_hash member), and
 	 * wake up the reaper when we do.
 	 */
+	s = proclist_lock_write();
 	LIST_REMOVE(p, p_hash);
 	LIST_REMOVE(p, p_list);
 	LIST_INSERT_HEAD(&zombproc, p, p_list);
+	proclist_unlock_write(s);
 
 	/*
 	 * Give orphaned children to init(8).
@@ -424,7 +428,7 @@ sys_wait4(q, v, retval)
 	} */ *uap = v;
 	register int nfound;
 	register struct proc *p, *t;
-	int status, error;
+	int status, error, s;
 
 	if (SCARG(uap, pid) == 0)
 		SCARG(uap, pid) = -q->p_pgid;
@@ -494,7 +498,9 @@ loop:
 			 */
 			leavepgrp(p);
 
+			s = proclist_lock_write();
 			LIST_REMOVE(p, p_list);	/* off zombproc */
+			proclist_unlock_write(s);
 
 			LIST_REMOVE(p, p_sibling);
 

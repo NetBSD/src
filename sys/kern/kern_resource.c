@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_resource.c,v 1.50 1999/03/24 05:51:23 mrg Exp $	*/
+/*	$NetBSD: kern_resource.c,v 1.51 1999/07/22 21:08:31 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1991, 1993
@@ -104,10 +104,12 @@ sys_getpriority(curp, v, retval)
 	case PRIO_USER:
 		if (SCARG(uap, who) == 0)
 			SCARG(uap, who) = curp->p_ucred->cr_uid;
+		proclist_lock_read(0);
 		for (p = allproc.lh_first; p != 0; p = p->p_list.le_next)
 			if (p->p_ucred->cr_uid == SCARG(uap, who) &&
 			    p->p_nice < low)
 				low = p->p_nice;
+		proclist_unlock_read();
 		break;
 
 	default:
@@ -165,11 +167,13 @@ sys_setpriority(curp, v, retval)
 	case PRIO_USER:
 		if (SCARG(uap, who) == 0)
 			SCARG(uap, who) = curp->p_ucred->cr_uid;
+		proclist_lock_read(0);
 		for (p = allproc.lh_first; p != 0; p = p->p_list.le_next)
 			if (p->p_ucred->cr_uid == SCARG(uap, who)) {
 				error = donice(curp, p, SCARG(uap, prio));
 				found++;
 			}
+		proclist_unlock_read();
 		break;
 
 	default:

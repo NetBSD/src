@@ -1,4 +1,41 @@
-/*	$NetBSD: kern_proc.c,v 1.32 1999/07/22 18:13:37 thorpej Exp $	*/
+/*	$NetBSD: kern_proc.c,v 1.33 1999/07/22 21:08:31 thorpej Exp $	*/
+
+/*-
+ * Copyright (c) 1999 The NetBSD Foundation, Inc.
+ * All rights reserved.
+ *
+ * This code is derived from software contributed to The NetBSD Foundation
+ * by Jason R. Thorpe of the Numerical Aerospace Simulation Facility,
+ * NASA Ames Research Center.
+ *
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions
+ * are met:
+ * 1. Redistributions of source code must retain the above copyright
+ *    notice, this list of conditions and the following disclaimer.
+ * 2. Redistributions in binary form must reproduce the above copyright
+ *    notice, this list of conditions and the following disclaimer in the
+ *    documentation and/or other materials provided with the distribution.
+ * 3. All advertising materials mentioning features or use of this software
+ *    must display the following acknowledgement:
+ *	This product includes software developed by the NetBSD
+ *	Foundation, Inc. and its contributors.
+ * 4. Neither the name of The NetBSD Foundation nor the names of its
+ *    contributors may be used to endorse or promote products derived
+ *    from this software without specific prior written permission.
+ *
+ * THIS SOFTWARE IS PROVIDED BY THE NETBSD FOUNDATION, INC. AND CONTRIBUTORS
+ * ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
+ * TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
+ * PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL THE FOUNDATION OR CONTRIBUTORS
+ * BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+ * CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
+ * SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+ * INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
+ * CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+ * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+ * POSSIBILITY OF SUCH DAMAGE.
+ */
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1991, 1993
@@ -78,6 +115,22 @@ struct proclist allproc;
 struct proclist zombproc;	/* resources have been freed */
 
 /*
+ * Process list locking:
+ *
+ * We have two types of locks on the proclists: read locks and write
+ * locks.  Read locks can be used in interrupt context, so while we
+ * hold the write lock, we must also block softclock interrupts (since
+ * the interrupt context is the timeout-driven schedcpu()).
+ *
+ * The proclist lock locks the following structures:
+ *
+ *	allproc
+ *	zombproc
+ *	pidhashtbl
+ */
+struct lock proclist_lock;
+
+/*
  * Locking of this proclist is special; it's accessed in a
  * critical section of process exit, and thus locking it can't
  * modify interrupt state.  We use a simple spin lock for this
@@ -120,6 +173,8 @@ procinit()
 	for (pd = proclists; pd->pd_list != NULL; pd++)
 		LIST_INIT(pd->pd_list);
 
+	lockinit(&proclist_lock, PZERO, "proclk", 0, 0);
+
 	LIST_INIT(&deadproc);
 	simple_lock_init(&deadproc_slock);
 
@@ -137,6 +192,85 @@ procinit()
 	    0, pool_page_alloc_nointr, pool_page_free_nointr, M_SUBPROC);
 	pool_init(&rusage_pool, sizeof(struct rusage), 0, 0, 0, "rusgepl",
 	    0, pool_page_alloc_nointr, pool_page_free_nointr, M_ZOMBIE);
+}
+
+/*
+ * Acquire a read lock on the proclist.
+ */
+void
+proclist_lock_read(flags)
+	int flags;
+{
+	int error, s;
+
+	/* Block schedcpu() while we acquire the lock. */
+	s = splsoftclock();
+
+	/*
+	 * We spin here if called with LK_NOWAIT; schedcpu() uses that
+	 * to prevent sleeping.
+	 */
+	do {
+		error = lockmgr(&proclist_lock, LK_SHARED | flags, NULL);
+#ifdef DIAGNOSTIC
+		if (error != 0 && error != EBUSY)
+			panic("proclist_lock_read: failed to acquire lock");
+#endif
+	} while (error != 0);
+
+	/* Let schedcpu() back in. */
+	splx(s);
+}
+
+/*
+ * Release a read lock on the proclist.
+ */
+void
+proclist_unlock_read()
+{
+	int s;
+
+	/* Block schedcpu() while we release the lock. */
+	s = splsoftclock();
+
+	(void) lockmgr(&proclist_lock, LK_RELEASE, NULL);
+
+	/* Let schedcpu() back in. */
+	splx(s);
+}
+
+/*
+ * Acquire a write lock on the proclist.
+ */
+int
+proclist_lock_write()
+{
+	int error, s;
+
+	/* Block schedcpu() while lock is held. */
+	s = splsoftclock();
+
+	error = lockmgr(&proclist_lock, LK_EXCLUSIVE, NULL);
+#ifdef DIAGNOSTIC
+	if (error != 0)
+		panic("proclist_lock: failed to acquire lock");
+#endif
+
+	return (s);
+}
+
+/*
+ * Release a write lock on the proclist.
+ */
+void
+proclist_unlock_write(s)
+	int s;
+{
+
+	(void) lockmgr(&proclist_lock, LK_RELEASE, NULL);
+
+	/* Let schedcpu() back in. */
+	splx(s);
 }
 
 /*
@@ -198,12 +332,15 @@ struct proc *
 pfind(pid)
 	register pid_t pid;
 {
-	register struct proc *p;
+	struct proc *p;
 
+	proclist_lock_read(0);
 	for (p = PIDHASH(pid)->lh_first; p != 0; p = p->p_hash.le_next)
 		if (p->p_pid == pid)
-			return (p);
-	return (NULL);
+			goto out;
+ out:
+	proclist_unlock_read();
+	return (p);
 }
 
 /*
