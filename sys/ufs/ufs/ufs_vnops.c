@@ -1,4 +1,4 @@
-/*	$NetBSD: ufs_vnops.c,v 1.98 2003/04/29 07:45:23 yamt Exp $	*/
+/*	$NetBSD: ufs_vnops.c,v 1.99 2003/05/15 20:25:33 kristerw Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993, 1995
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ufs_vnops.c,v 1.98 2003/04/29 07:45:23 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ufs_vnops.c,v 1.99 2003/05/15 20:25:33 kristerw Exp $");
 
 #ifndef _LKM
 #include "opt_quota.h"
@@ -418,7 +418,7 @@ ufs_setattr(void *v)
 			    securelevel > 0)
 				return (EPERM);
 			ip->i_flags = vap->va_flags;
-			DIP(ip, flags) = ip->i_flags;
+			DIP_ASSIGN(ip, flags, ip->i_flags);
 		} else {
 			if ((ip->i_flags & (SF_IMMUTABLE | SF_APPEND)) ||
 			    (vap->va_flags & UF_SETTABLE) != vap->va_flags)
@@ -428,7 +428,7 @@ ufs_setattr(void *v)
 				return (EPERM);
 			ip->i_flags &= SF_SETTABLE;
 			ip->i_flags |= (vap->va_flags & UF_SETTABLE);
-			DIP(ip, flags) = ip->i_flags;
+			DIP_ASSIGN(ip, flags, ip->i_flags);
 		}
 		ip->i_flag |= IN_CHANGE;
 		if (vap->va_flags & (IMMUTABLE | APPEND))
@@ -524,7 +524,7 @@ ufs_chmod(struct vnode *vp, int mode, struct ucred *cred, struct proc *p)
 	ip->i_mode &= ~ALLPERMS;
 	ip->i_mode |= (mode & ALLPERMS);
 	ip->i_flag |= IN_CHANGE;
-	DIP(ip, mode) = ip->i_mode;
+	DIP_ASSIGN(ip, mode, ip->i_mode);
 	return (0);
 }
 
@@ -584,9 +584,9 @@ ufs_chown(struct vnode *vp, uid_t uid, gid_t gid, struct ucred *cred,
 	}
 #endif
 	ip->i_gid = gid;
-	DIP(ip, gid) = gid;
+	DIP_ASSIGN(ip, gid, gid);
 	ip->i_uid = uid;
-	DIP(ip, uid) = uid;
+	DIP_ASSIGN(ip, uid, uid);
 #ifdef QUOTA
 	if ((error = getinoquota(ip)) == 0) {
 		if (ouid == uid) {
@@ -609,9 +609,9 @@ ufs_chown(struct vnode *vp, uid_t uid, gid_t gid, struct ucred *cred,
 		}
 	}
 	ip->i_gid = ogid;
-	DIP(ip, gid) = ogid;
+	DIP_ASSIGN(ip, gid, ogid);
 	ip->i_uid = ouid;
-	DIP(ip, uid) = ouid;
+	DIP_ASSIGN(ip, uid, ouid);
 	if (getinoquota(ip) == 0) {
 		if (ouid == uid) {
 			dqrele(vp, ip->i_dquot[USRQUOTA]);
@@ -715,7 +715,7 @@ ufs_link(void *v)
 	}
 	ip->i_ffs_effnlink++;
 	ip->i_nlink++;
-	DIP(ip, nlink) = ip->i_nlink;
+	DIP_ASSIGN(ip, nlink, ip->i_nlink);
 	ip->i_flag |= IN_CHANGE;
 	if (DOINGSOFTDEP(vp))
 		softdep_change_linkcnt(ip);
@@ -727,7 +727,7 @@ ufs_link(void *v)
 	if (error) {
 		ip->i_ffs_effnlink--;
 		ip->i_nlink--;
-		DIP(ip, nlink) = ip->i_nlink;
+		DIP_ASSIGN(ip, nlink, ip->i_nlink);
 		ip->i_flag |= IN_CHANGE;
 		if (DOINGSOFTDEP(vp))
 			softdep_change_linkcnt(ip);
@@ -964,7 +964,7 @@ ufs_rename(void *v)
 	 */
 	ip->i_ffs_effnlink++;
 	ip->i_nlink++;
-	DIP(ip, nlink) = ip->i_nlink;
+	DIP_ASSIGN(ip, nlink, ip->i_nlink);
 	ip->i_flag |= IN_CHANGE;
 	if (DOINGSOFTDEP(fvp))
 		softdep_change_linkcnt(ip);
@@ -1027,7 +1027,7 @@ ufs_rename(void *v)
 			}
 			dp->i_ffs_effnlink++;
 			dp->i_nlink++;
-			DIP(dp, nlink) = dp->i_nlink;
+			DIP_ASSIGN(dp, nlink, dp->i_nlink);
 			dp->i_flag |= IN_CHANGE;
 			if (DOINGSOFTDEP(tdvp))
 				softdep_change_linkcnt(dp);
@@ -1035,7 +1035,7 @@ ufs_rename(void *v)
 			    UPDATE_DIROP)) != 0) {
 				dp->i_ffs_effnlink--;
 				dp->i_nlink--;
-				DIP(dp, nlink) = dp->i_nlink;
+				DIP_ASSIGN(dp, nlink, dp->i_nlink);
 				dp->i_flag |= IN_CHANGE;
 				if (DOINGSOFTDEP(tdvp))
 					softdep_change_linkcnt(dp);
@@ -1048,7 +1048,7 @@ ufs_rename(void *v)
 			if (doingdirectory && newparent) {
 				dp->i_ffs_effnlink--;
 				dp->i_nlink--;
-				DIP(dp, nlink) = dp->i_nlink;
+				DIP_ASSIGN(dp, nlink, dp->i_nlink);
 				dp->i_flag |= IN_CHANGE;
 				if (DOINGSOFTDEP(tdvp))
 					softdep_change_linkcnt(dp);
@@ -1127,11 +1127,11 @@ ufs_rename(void *v)
 			 */
 			if (!newparent) {
 				dp->i_nlink--;
-				DIP(dp, nlink) = dp->i_nlink;
+				DIP_ASSIGN(dp, nlink, dp->i_nlink);
 				dp->i_flag |= IN_CHANGE;
 			}
 			xp->i_nlink--;
-			DIP(xp, nlink) = xp->i_nlink;
+			DIP_ASSIGN(xp, nlink, xp->i_nlink);
 			xp->i_flag |= IN_CHANGE;
 			if ((error = VOP_TRUNCATE(tvp, (off_t)0, IO_SYNC,
 			    tcnp->cn_cred, tcnp->cn_proc)))
@@ -1211,7 +1211,7 @@ ufs_rename(void *v)
 	if (vn_lock(fvp, LK_EXCLUSIVE) == 0) {
 		ip->i_ffs_effnlink--;
 		ip->i_nlink--;
-		DIP(ip, nlink) = ip->i_nlink;
+		DIP_ASSIGN(ip, nlink, ip->i_nlink);
 		ip->i_flag |= IN_CHANGE;
 		ip->i_flag &= ~IN_RENAME;
 		if (DOINGSOFTDEP(fvp))
@@ -1271,9 +1271,9 @@ ufs_mkdir(void *v)
 		goto out;
 	ip = VTOI(tvp);
 	ip->i_uid = cnp->cn_cred->cr_uid;
-	DIP(ip, uid) = ip->i_uid;
+	DIP_ASSIGN(ip, uid, ip->i_uid);
 	ip->i_gid = dp->i_gid;
-	DIP(ip, gid) = ip->i_gid;
+	DIP_ASSIGN(ip, gid, ip->i_gid);
 #ifdef QUOTA
 	if ((error = getinoquota(ip)) ||
 	    (error = chkiq(ip, 1, cnp->cn_cred, 0))) {
@@ -1286,16 +1286,16 @@ ufs_mkdir(void *v)
 #endif
 	ip->i_flag |= IN_ACCESS | IN_CHANGE | IN_UPDATE;
 	ip->i_mode = dmode;
-	DIP(ip, mode) = dmode;
+	DIP_ASSIGN(ip, mode, dmode);
 	tvp->v_type = VDIR;	/* Rest init'd in getnewvnode(). */
 	ip->i_ffs_effnlink = 2;
 	ip->i_nlink = 2;
-	DIP(ip, nlink) = 2;
+	DIP_ASSIGN(ip, nlink, 2);
 	if (DOINGSOFTDEP(tvp))
 		softdep_change_linkcnt(ip);
 	if (cnp->cn_flags & ISWHITEOUT) {
 		ip->i_flags |= UF_OPAQUE;
-		DIP(ip, flags) = ip->i_flags;
+		DIP_ASSIGN(ip, flags, ip->i_flags);
 	}
 
 	/*
@@ -1305,7 +1305,7 @@ ufs_mkdir(void *v)
 	 */
 	dp->i_ffs_effnlink++;
 	dp->i_nlink++;
-	DIP(dp, nlink) = dp->i_nlink;
+	DIP_ASSIGN(dp, nlink, dp->i_nlink);
 	dp->i_flag |= IN_CHANGE;
 	if (DOINGSOFTDEP(dvp))
 		softdep_change_linkcnt(dp);
@@ -1342,7 +1342,7 @@ ufs_mkdir(void *v)
 	    B_CLRBUF, &bp)) != 0)
 		goto bad;
 	ip->i_size = dirblksiz;
-	DIP(ip, size) = dirblksiz;
+	DIP_ASSIGN(ip, size, dirblksiz);
 	ip->i_flag |= IN_CHANGE | IN_UPDATE;
 	uvm_vnp_setsize(tvp, ip->i_size);
 	memcpy((caddr_t)bp->b_data, (caddr_t)&dirtemplate, sizeof dirtemplate);
@@ -1387,7 +1387,7 @@ ufs_mkdir(void *v)
 	} else {
 		dp->i_ffs_effnlink--;
 		dp->i_nlink--;
-		DIP(dp, nlink) = dp->i_nlink;
+		DIP_ASSIGN(dp, nlink, dp->i_nlink);
 		dp->i_flag |= IN_CHANGE;
 		if (DOINGSOFTDEP(dvp))
 			softdep_change_linkcnt(dp);
@@ -1397,7 +1397,7 @@ ufs_mkdir(void *v)
 		 */
 		ip->i_ffs_effnlink = 0;
 		ip->i_nlink = 0;
-		DIP(ip, nlink) = 0;
+		DIP_ASSIGN(ip, nlink, 0);
 		ip->i_flag |= IN_CHANGE;
 #ifdef LFS
 		/* If IN_ADIROP, account for it */
@@ -1497,10 +1497,10 @@ ufs_rmdir(void *v)
 	 */
 	if (!DOINGSOFTDEP(vp)) {
 		dp->i_nlink--;
-		DIP(dp, nlink) = dp->i_nlink;
+		DIP_ASSIGN(dp, nlink, dp->i_nlink);
 		dp->i_flag |= IN_CHANGE;
 		ip->i_nlink--;
-		DIP(ip, nlink) = ip->i_nlink;
+		DIP_ASSIGN(ip, nlink, ip->i_nlink);
 		ip->i_flag |= IN_CHANGE;
 		error = VOP_TRUNCATE(vp, (off_t)0, IO_SYNC, cnp->cn_cred,
 		    cnp->cn_proc);
@@ -1542,7 +1542,7 @@ ufs_symlink(void *v)
 		ip = VTOI(vp);
 		memcpy((char *)SHORTLINK(ip), ap->a_target, len);
 		ip->i_size = len;
-		DIP(ip, size) = len;
+		DIP_ASSIGN(ip, size, len);
 		uvm_vnp_setsize(vp, ip->i_size);
 		ip->i_flag |= IN_CHANGE | IN_UPDATE;
 	} else
@@ -2079,9 +2079,9 @@ ufs_makeinode(int mode, struct vnode *dvp, struct vnode **vpp,
 	}
 	ip = VTOI(tvp);
 	ip->i_gid = pdir->i_gid;
-	DIP(ip, gid) = ip->i_gid;
+	DIP_ASSIGN(ip, gid, ip->i_gid);
 	ip->i_uid = cnp->cn_cred->cr_uid;
-	DIP(ip, uid) = ip->i_uid;
+	DIP_ASSIGN(ip, uid, ip->i_uid);
 #ifdef QUOTA
 	if ((error = getinoquota(ip)) ||
 	    (error = chkiq(ip, 1, cnp->cn_cred, 0))) {
@@ -2094,23 +2094,23 @@ ufs_makeinode(int mode, struct vnode *dvp, struct vnode **vpp,
 #endif
 	ip->i_flag |= IN_ACCESS | IN_CHANGE | IN_UPDATE;
 	ip->i_mode = mode;
-	DIP(ip, mode) = mode;
+	DIP_ASSIGN(ip, mode, mode);
 	tvp->v_type = IFTOVT(mode);	/* Rest init'd in getnewvnode(). */
 	ip->i_ffs_effnlink = 1;
 	ip->i_nlink = 1;
-	DIP(ip, nlink) = 1;
+	DIP_ASSIGN(ip, nlink, 1);
 	if (DOINGSOFTDEP(tvp))
 		softdep_change_linkcnt(ip);
 	if ((ip->i_mode & ISGID) &&
 		!groupmember(ip->i_gid, cnp->cn_cred) &&
 	    suser(cnp->cn_cred, NULL)) {
 		ip->i_mode &= ~ISGID;
-		DIP(ip, mode) = ip->i_mode;
+		DIP_ASSIGN(ip, mode, ip->i_mode);
 	}
 
 	if (cnp->cn_flags & ISWHITEOUT) {
 		ip->i_flags |= UF_OPAQUE;
-		DIP(ip, flags) = ip->i_flags;
+		DIP_ASSIGN(ip, flags, ip->i_flags);
 	}
 
 	/*
@@ -2136,7 +2136,7 @@ ufs_makeinode(int mode, struct vnode *dvp, struct vnode **vpp,
 	vput(dvp);
 	ip->i_ffs_effnlink = 0;
 	ip->i_nlink = 0;
-	DIP(ip, nlink) = 0;
+	DIP_ASSIGN(ip, nlink, 0);
 	ip->i_flag |= IN_CHANGE;
 #ifdef LFS
 	/* If IN_ADIROP, account for it */
@@ -2184,7 +2184,7 @@ ufs_gop_alloc(struct vnode *vp, off_t off, off_t len, int flags,
                         UVMHIST_LOG(ubchist, "vp %p old 0x%x new 0x%x",
                             vp, ip->i_size, off + bsize, 0);
                         ip->i_size = off + bsize;
-			DIP(ip, size) = ip->i_size;
+			DIP_ASSIGN(ip, size, ip->i_size);
                 }
 
                 off += bsize;

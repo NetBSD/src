@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_alloc.c,v 1.64 2003/05/04 01:52:18 gmcgarry Exp $	*/
+/*	$NetBSD: ffs_alloc.c,v 1.65 2003/05/15 20:25:31 kristerw Exp $	*/
 
 /*
  * Copyright (c) 2002 Networks Associates Technology, Inc.
@@ -45,7 +45,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ffs_alloc.c,v 1.64 2003/05/04 01:52:18 gmcgarry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ffs_alloc.c,v 1.65 2003/05/15 20:25:31 kristerw Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ffs.h"
@@ -179,7 +179,7 @@ ffs_alloc(ip, lbn, bpref, size, cred, bnp)
 	bno = ffs_hashalloc(ip, cg, (long)bpref, size,
 	    			     ffs_alloccg);
 	if (bno > 0) {
-		DIP(ip, blocks) += btodb(size);
+		DIP_ADD(ip, blocks, btodb(size));
 		ip->i_flag |= IN_CHANGE | IN_UPDATE;
 		*bnp = bno;
 		return (0);
@@ -283,7 +283,7 @@ ffs_realloccg(ip, lbprev, bpref, osize, nsize, cred, bpp, blknop)
 	 */
 	cg = dtog(fs, bprev);
 	if ((bno = ffs_fragextend(ip, cg, bprev, osize, nsize)) != 0) {
-		DIP(ip, blocks) += btodb(nsize - osize);
+		DIP_ADD(ip, blocks, btodb(nsize - osize));
 		ip->i_flag |= IN_CHANGE | IN_UPDATE;
 
 		if (bpp != NULL) {
@@ -364,7 +364,7 @@ ffs_realloccg(ip, lbprev, bpref, osize, nsize, cred, bpp, blknop)
 		if (nsize < request)
 			ffs_blkfree(ip, bno + numfrags(fs, nsize),
 			    (long)(request - nsize));
-		DIP(ip, blocks) += btodb(nsize - osize);
+		DIP_ADD(ip, blocks, btodb(nsize - osize));
 		ip->i_flag |= IN_CHANGE | IN_UPDATE;
 		if (bpp != NULL) {
 			bp->b_blkno = fsbtodb(fs, bno);
@@ -727,16 +727,16 @@ ffs_valloc(v)
 	if (DIP(ip, blocks)) {				/* XXX */
 		printf("free inode %s/%d had %" PRId64 " blocks\n",
 		    fs->fs_fsmnt, ino, DIP(ip, blocks));
-		DIP(ip, blocks) = 0;
+		DIP_ASSIGN(ip, blocks, 0);
 	}
 	ip->i_flag &= ~IN_SPACECOUNTED;
 	ip->i_flags = 0;
-	DIP(ip, flags) = 0;
+	DIP_ASSIGN(ip, flags, 0);
 	/*
 	 * Set up a new generation number for this inode.
 	 */
 	ip->i_gen++;
-	DIP(ip, gen) = ip->i_gen;
+	DIP_ASSIGN(ip, gen, ip->i_gen);
 	if (fs->fs_magic == FS_UFS2_MAGIC) {
 		TIMEVAL_TO_TIMESPEC(&time, &ts);
 		ip->i_ffs2_birthtime = ts.tv_sec;

@@ -1,4 +1,4 @@
-/*	$NetBSD: ufs_inode.c,v 1.36 2003/04/02 10:39:44 fvdl Exp $	*/
+/*	$NetBSD: ufs_inode.c,v 1.37 2003/05/15 20:25:33 kristerw Exp $	*/
 
 /*
  * Copyright (c) 1991, 1993
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ufs_inode.c,v 1.36 2003/04/02 10:39:44 fvdl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ufs_inode.c,v 1.37 2003/05/15 20:25:33 kristerw Exp $");
 
 #include "opt_quota.h"
 
@@ -104,10 +104,10 @@ ufs_inactive(v)
 		 * So, rather than creating a new entry point to do the
 		 * same thing, we just use softdep_change_linkcnt().
 		 */
-		DIP(ip, rdev) = 0;
+		DIP_ASSIGN(ip, rdev, 0);
 		mode = ip->i_mode;
 		ip->i_mode = 0;
-		DIP(ip, mode) = 0;
+		DIP_ASSIGN(ip, mode, 0);
 		ip->i_flag |= IN_CHANGE | IN_UPDATE;
 		if (DOINGSOFTDEP(vp))
 			softdep_change_linkcnt(ip);

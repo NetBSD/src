@@ -1,4 +1,4 @@
-/*	$NetBSD: inode.h,v 1.34 2003/04/02 10:39:43 fvdl Exp $	*/
+/*	$NetBSD: inode.h,v 1.35 2003/05/15 20:25:33 kristerw Exp $	*/
 
 /*
  * Copyright (c) 1982, 1989, 1993
@@ -225,6 +225,22 @@ struct inode {
 	(((ip)->i_ump->um_fstype == UFS1) ? \
 	(ip)->i_ffs1_##field : (ip)->i_ffs2_##field)
 
+#define DIP_ASSIGN(ip, field, value)					\
+	do {								\
+		if ((ip)->i_ump->um_fstype == UFS1)			\
+			(ip)->i_ffs1_##field = (value);			\
+		else							\
+			(ip)->i_ffs2_##field = (value);			\
+	} while(0)
+
+#define DIP_ADD(ip, field, value)					\
+	do {								\
+		if ((ip)->i_ump->um_fstype == UFS1)			\
+			(ip)->i_ffs1_##field += (value);		\
+		else							\
+			(ip)->i_ffs2_##field += (value);		\
+	} while(0)
+
 #define  SHORTLINK(ip) \
 	(((ip)->i_ump->um_fstype == UFS1) ? \
 	(caddr_t)(ip)->i_ffs1_db : (caddr_t)(ip)->i_ffs2_db)
@@ -247,19 +263,19 @@ struct indir {
 #define	FFS_ITIMES(ip, acc, mod, cre) {					\
 	if ((ip)->i_flag & (IN_ACCESS | IN_CHANGE | IN_UPDATE)) {	\
 		if ((ip)->i_flag & IN_ACCESS) {				\
-			DIP(ip, atime) = (acc)->tv_sec;			\
-			DIP(ip, atimensec) = (acc)->tv_nsec;		\
+			DIP_ASSIGN(ip, atime, (acc)->tv_sec);		\
+			DIP_ASSIGN(ip, atimensec, (acc)->tv_nsec);	\
 			(ip)->i_flag |= IN_ACCESSED;			\
 		}							\
 		if ((ip)->i_flag & IN_UPDATE) {				\
-			DIP(ip, mtime) = (mod)->tv_sec;			\
-			DIP(ip, mtimensec) = (mod)->tv_nsec;		\
+			DIP_ASSIGN(ip, mtime, (mod)->tv_sec);		\
+			DIP_ASSIGN(ip, mtimensec, (mod)->tv_nsec);	\
 			(ip)->i_modrev++;				\
 			(ip)->i_flag |= IN_MODIFIED;			\
 		}							\
 		if ((ip)->i_flag & IN_CHANGE) {				\
-			DIP(ip, ctime) = (cre)->tv_sec;			\
-			DIP(ip, ctimensec) = (cre)->tv_nsec;		\
+			DIP_ASSIGN(ip, ctime, (cre)->tv_sec);		\
+			DIP_ASSIGN(ip, ctimensec, (cre)->tv_nsec);	\
 			(ip)->i_flag |= IN_MODIFIED;			\
 		}							\
 		(ip)->i_flag &= ~(IN_ACCESS | IN_CHANGE | IN_UPDATE);	\

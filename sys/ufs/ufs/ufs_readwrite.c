@@ -1,4 +1,4 @@
-/*	$NetBSD: ufs_readwrite.c,v 1.51 2003/04/02 10:39:44 fvdl Exp $	*/
+/*	$NetBSD: ufs_readwrite.c,v 1.52 2003/05/15 20:25:33 kristerw Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(1, "$NetBSD: ufs_readwrite.c,v 1.51 2003/04/02 10:39:44 fvdl Exp $");
+__KERNEL_RCSID(1, "$NetBSD: ufs_readwrite.c,v 1.52 2003/05/15 20:25:33 kristerw Exp $");
 
 #ifdef LFS_READWRITE
 #define	BLKSIZE(a, b, c)	blksize(a, b, c)
@@ -443,7 +443,7 @@ WRITE(void *v)
 			break;
 		if (uio->uio_offset + xfersize > ip->i_size) {
 			ip->i_size = uio->uio_offset + xfersize;
-			DIP(ip, size) = ip->i_size;
+			DIP_ASSIGN(ip, size, ip->i_size);
 			uvm_vnp_setsize(vp, ip->i_size);
 			extended = 1;
 		}
@@ -495,7 +495,7 @@ out:
 	ip->i_flag |= IN_CHANGE | IN_UPDATE;
 	if (resid > uio->uio_resid && ap->a_cred && ap->a_cred->cr_uid != 0) {
 		ip->i_mode &= ~(ISUID | ISGID);
-		DIP(ip, mode) = ip->i_mode;
+		DIP_ASSIGN(ip, mode, ip->i_mode);
 	}
 	if (resid > uio->uio_resid)
 		VN_KNOTE(vp, NOTE_WRITE | (extended ? NOTE_EXTEND : 0));

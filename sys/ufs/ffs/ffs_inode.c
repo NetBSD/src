@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_inode.c,v 1.56 2003/04/10 20:02:36 fvdl Exp $	*/
+/*	$NetBSD: ffs_inode.c,v 1.57 2003/05/15 20:25:32 kristerw Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ffs_inode.c,v 1.56 2003/04/10 20:02:36 fvdl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ffs_inode.c,v 1.57 2003/05/15 20:25:32 kristerw Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ffs.h"
@@ -208,7 +208,7 @@ ffs_truncate(v)
 		KDASSERT(length == 0);
 		memset(SHORTLINK(oip), 0, (size_t)oip->i_size);
 		oip->i_size = 0;
-		DIP(oip, size) = 0;
+		DIP_ASSIGN(oip, size, 0);
 		oip->i_flag |= IN_CHANGE | IN_UPDATE;
 		return (VOP_UPDATE(ovp, NULL, NULL, UPDATE_WAIT));
 	}
@@ -330,7 +330,7 @@ ffs_truncate(v)
 		}
 	}
 	oip->i_size = length;
-	DIP(oip, size) = length;
+	DIP_ASSIGN(oip, size, length);
 	uvm_vnp_setsize(ovp, length);
 	/*
 	 * Calculate index into inode's block list of
@@ -352,14 +352,14 @@ ffs_truncate(v)
 	for (level = TRIPLE; level >= SINGLE; level--) {
 		oldblks[NDADDR + level] = DIP(oip, ib[level]);
 		if (lastiblock[level] < 0) {
-			DIP(oip, ib[level]) = 0;
+			DIP_ASSIGN(oip, ib[level], 0);
 			lastiblock[level] = -1;
 		}
 	}
 	for (i = 0; i < NDADDR; i++) {
 		oldblks[i] = DIP(oip, db[i]);
 		if (i > lastblock)
-			DIP(oip, db[i]) = 0;
+			DIP_ASSIGN(oip, db[i], 0);
 	}
 	oip->i_flag |= IN_CHANGE | IN_UPDATE;
 	error = VOP_UPDATE(ovp, NULL, NULL, UPDATE_WAIT);
@@ -374,15 +374,15 @@ ffs_truncate(v)
 	 */
 	for (i = 0; i < NDADDR; i++) {
 		newblks[i] = DIP(oip, db[i]);
-		DIP(oip, db[i]) = oldblks[i];
+		DIP_ASSIGN(oip, db[i], oldblks[i]);
 	}
 	for (i = 0; i < NIADDR; i++) {
 		newblks[NDADDR + i] = DIP(oip, ib[i]);
-		DIP(oip, ib[i]) = oldblks[NDADDR + i];
+		DIP_ASSIGN(oip, ib[i], oldblks[NDADDR + i]);
 	}
 
 	oip->i_size = osize;
-	DIP(oip, size) = osize;
+	DIP_ASSIGN(oip, size, osize);
 	error = vtruncbuf(ovp, lastblock + 1, 0, 0);
 	if (error && !allerror)
 		allerror = error;
@@ -405,7 +405,7 @@ ffs_truncate(v)
 				allerror = error;
 			blocksreleased += count;
 			if (lastiblock[level] < 0) {
-				DIP(oip, ib[level]) = 0;
+				DIP_ASSIGN(oip, ib[level], 0);
 				ffs_blkfree(oip, bn, fs->fs_bsize);
 				blocksreleased += nblocks;
 			}
@@ -426,7 +426,7 @@ ffs_truncate(v)
 			bn = ufs_rw64(oip->i_ffs2_db[i], UFS_FSNEEDSWAP(fs));
 		if (bn == 0)
 			continue;
-		DIP(oip, db[i]) = 0;
+		DIP_ASSIGN(oip, db[i], 0);
 		bsize = blksize(fs, oip, i);
 		ffs_blkfree(oip, bn, bsize);
 		blocksreleased += btodb(bsize);
@@ -451,7 +451,7 @@ ffs_truncate(v)
 		 */
 		oldspace = blksize(fs, oip, lastblock);
 		oip->i_size = length;
-		DIP(oip, size) = length;
+		DIP_ASSIGN(oip, size, length);
 		newspace = blksize(fs, oip, lastblock);
 		if (newspace == 0)
 			panic("itrunc: newspace");
@@ -483,8 +483,8 @@ done:
 	 * Put back the real size.
 	 */
 	oip->i_size = length;
-	DIP(oip, size) = length;
-	DIP(oip, blocks) -= blocksreleased;
+	DIP_ASSIGN(oip, size, length);
+	DIP_ADD(oip, blocks, -blocksreleased);
 	lockmgr(&gp->g_glock, LK_RELEASE, NULL);
 	oip->i_flag |= IN_CHANGE;
 #ifdef QUOTA
@@ -527,7 +527,13 @@ ffs_indirtrunc(ip, lbn, dbn, lastbn, level, countp)
 #endif
 #define RBAP(ip, i) (((ip)->i_ump->um_fstype == UFS1) ? \
 	    ufs_rw32(bap1[i], needswap) : ufs_rw64(bap2[i], needswap))
-#define BAP(ip, i) (((ip)->i_ump->um_fstype == UFS1) ?  bap1[i] : bap2[i])
+#define BAP_ASSIGN(ip, i, value)					\
+	do {								\
+		if ((ip)->i_ump->um_fstype == UFS1)			\
+			bap1[i] = (value);				\
+		else							\
+			bap2[i] = (value);				\
+	} while(0)
 
 	/*
 	 * Calculate index in current block of last
@@ -578,7 +584,7 @@ ffs_indirtrunc(ip, lbn, dbn, lastbn, level, countp)
 		copy = malloc(fs->fs_bsize, M_TEMP, M_WAITOK);
 		memcpy((caddr_t)copy, bp->b_data, (u_int)fs->fs_bsize);
 		for (i = last + 1; i < NINDIR(fs); i++)
-			BAP(ip, i) = 0;
+			BAP_ASSIGN(ip, i, 0);
 		error = bwrite(bp);
 		if (error)
 			allerror = error;
