@@ -1,4 +1,4 @@
-/*	$NetBSD: tftp.c,v 1.15 2000/12/30 18:00:18 itojun Exp $	*/
+/*	$NetBSD: tftp.c,v 1.16 2003/02/01 16:42:31 wiz Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)tftp.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: tftp.c,v 1.15 2000/12/30 18:00:18 itojun Exp $");
+__RCSID("$NetBSD: tftp.c,v 1.16 2003/02/01 16:42:31 wiz Exp $");
 #endif
 #endif /* not lint */
 
@@ -402,7 +402,7 @@ nak(error, peer)
 	msglen = &tp->th_msg[length + 1] - ackbuf;
 	if (trace)
 		tpacket("sent", tp, (int)msglen);
-	if (sendto(f, ackbuf, msglen, 0, peer, peer->sa_len) != length)
+	if (sendto(f, ackbuf, msglen, 0, peer, peer->sa_len) != msglen)
 		warn("nak");
 }
 
