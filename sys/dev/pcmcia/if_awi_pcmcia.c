@@ -1,7 +1,7 @@
-/* $NetBSD: if_awi_pcmcia.c,v 1.29 2004/08/08 23:17:12 mycroft Exp $ */
+/* $NetBSD: if_awi_pcmcia.c,v 1.30 2004/08/10 16:43:47 mycroft Exp $ */
 
 /*-
- * Copyright (c) 1999 The NetBSD Foundation, Inc.
+ * Copyright (c) 1999, 2004 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -45,7 +45,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_awi_pcmcia.c,v 1.29 2004/08/08 23:17:12 mycroft Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_awi_pcmcia.c,v 1.30 2004/08/10 16:43:47 mycroft Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -79,6 +79,7 @@ __KERNEL_RCSID(0, "$NetBSD: if_awi_pcmcia.c,v 1.29 2004/08/08 23:17:12 mycroft E
 #include <dev/pcmcia/pcmciadevs.h>
 
 static int awi_pcmcia_match(struct device *, struct cfdata *, void *);
+static int awi_pcmcia_validate_config(struct pcmcia_config_entry *);
 static void awi_pcmcia_attach(struct device *, struct device *, void *);
 static int awi_pcmcia_detach(struct device *, int);
 static int awi_pcmcia_enable(struct awi_softc *);
@@ -88,16 +89,14 @@ struct awi_pcmcia_softc {
 	struct awi_softc sc_awi;		/* real "awi" softc */
 
 	/* PCMCIA-specific goo */
-	struct pcmcia_io_handle sc_pcioh;	/* PCMCIA i/o space info */
-	struct pcmcia_mem_handle sc_memh;	/* PCMCIA memory space info */
-	int sc_io_window;			/* our i/o window */
-	int sc_mem_window;			/* our memory window */
 	struct pcmcia_function *sc_pf;		/* our PCMCIA function */
 	void *sc_ih;				/* interrupt handler */
-};
 
-static int	awi_pcmcia_find __P((struct awi_pcmcia_softc *,
-    struct pcmcia_attach_args *, struct pcmcia_config_entry *));
+	int sc_state;
+#define	AWI_PCMCIA_ATTACH1	1
+#define	AWI_PCMCIA_ATTACH2	2
+#define	AWI_PCMCIA_ATTACHED	3
+};
 
 CFATTACH_DECL(awi_pcmcia, sizeof(struct awi_pcmcia_softc),
     awi_pcmcia_match, awi_pcmcia_attach, awi_pcmcia_detach, awi_activate);
@@ -109,25 +108,25 @@ static const struct awi_pcmcia_product {
 	const char	*app_name;	/* product name */
 } awi_pcmcia_products[] = {
 	{ PCMCIA_VENDOR_BAY,		PCMCIA_PRODUCT_BAY_STACK_650,
-	  PCMCIA_CIS_BAY_STACK_650,	PCMCIA_STR_BAY_STACK_650 },
+	  PCMCIA_CIS_BAY_STACK_650,	"" },
 
 	{ PCMCIA_VENDOR_BAY,		PCMCIA_PRODUCT_BAY_STACK_660,
-	  PCMCIA_CIS_BAY_STACK_660,	PCMCIA_STR_BAY_STACK_660 },
+	  PCMCIA_CIS_BAY_STACK_660,	"" },
 
 	{ PCMCIA_VENDOR_BAY,		PCMCIA_PRODUCT_BAY_SURFER_PRO,
-	  PCMCIA_CIS_BAY_SURFER_PRO,	PCMCIA_STR_BAY_SURFER_PRO },
+	  PCMCIA_CIS_BAY_SURFER_PRO,	"" },
 
 	{ PCMCIA_VENDOR_AMD,		PCMCIA_PRODUCT_AMD_AM79C930,
-	  PCMCIA_CIS_AMD_AM79C930,	PCMCIA_STR_AMD_AM79C930 },
+	  PCMCIA_CIS_AMD_AM79C930,	"" },
 
 	{ PCMCIA_VENDOR_ICOM,		PCMCIA_PRODUCT_ICOM_SL200,
-	  PCMCIA_CIS_ICOM_SL200,	PCMCIA_STR_ICOM_SL200 },
+	  PCMCIA_CIS_ICOM_SL200,	"" },
 
 	{ PCMCIA_VENDOR_NOKIA,		PCMCIA_PRODUCT_NOKIA_C020_WLAN,
-	  PCMCIA_CIS_NOKIA_C020_WLAN,	PCMCIA_STR_NOKIA_C020_WLAN },
+	  PCMCIA_CIS_NOKIA_C020_WLAN,	"" },
 
 	{ PCMCIA_VENDOR_FARALLON,	PCMCIA_PRODUCT_FARALLON_SKYLINE,
-	  PCMCIA_CIS_FARALLON_SKYLINE,	PCMCIA_STR_FARALLON_SKYLINE },
+	  PCMCIA_CIS_FARALLON_SKYLINE,	"" },
 
 	{ 0,				0,
 	  { NULL, NULL, NULL, NULL },	NULL },
@@ -169,22 +168,25 @@ awi_pcmcia_enable(sc)
 {
 	struct awi_pcmcia_softc *psc = (struct awi_pcmcia_softc *)sc;
 	struct pcmcia_function *pf = psc->sc_pf;
+	int error;
+
+	if (psc->sc_state == AWI_PCMCIA_ATTACH1) {
+		psc->sc_state = AWI_PCMCIA_ATTACH2;
+		return (0);
+	}
 
 	/* establish the interrupt. */
 	psc->sc_ih = pcmcia_intr_establish(pf, IPL_NET, awi_intr, sc);
-	if (psc->sc_ih == NULL) {
-		printf("%s: couldn't establish interrupt\n",
-		    sc->sc_dev.dv_xname);
-		return (1);
-	}
+	if (!psc->sc_ih)
+		return (EIO);
 
-	if (pcmcia_function_enable(pf)) {
+	error = pcmcia_function_enable(pf);
+	if (error) {
 		pcmcia_intr_disestablish(pf, psc->sc_ih);
-		return (1);
+		psc->sc_ih = 0;
 	}
-	DELAY(1000);
 
-	return (0);
+	return (error);
 }
 
 static void
@@ -196,6 +198,7 @@ awi_pcmcia_disable(sc)
 
 	pcmcia_function_disable(pf);
 	pcmcia_intr_disestablish(pf, psc->sc_ih);
+	psc->sc_ih = 0;
 }
 
 static int
@@ -213,59 +216,20 @@ awi_pcmcia_match(parent, match, aux)
 }
 
 static int
-awi_pcmcia_find(psc, pa, cfe)
-	struct awi_pcmcia_softc *psc;
-	struct pcmcia_attach_args *pa;
+awi_pcmcia_validate_config(cfe)
 	struct pcmcia_config_entry *cfe;
 {
-	struct awi_softc *sc = &psc->sc_awi;
-	int fail = 0;
-
-	/*
-	 * see if we can read the firmware version sanely
-	 * through the i/o ports.
-	 * if not, try a different CIS string..
-	 */
-	if (pcmcia_io_alloc(psc->sc_pf, cfe->iospace[0].start,
-	    cfe->iospace[0].length, AM79C930_IO_ALIGN,
-	    &psc->sc_pcioh) != 0)
-		goto fail;
-
-	if (pcmcia_io_map(psc->sc_pf, PCMCIA_WIDTH_AUTO, &psc->sc_pcioh,
-	    &psc->sc_io_window))
-		goto fail_io_free;
-
-	/* Enable the card. */
-	pcmcia_function_init(psc->sc_pf, cfe);
-	if (pcmcia_function_enable(psc->sc_pf))
-		goto fail_io_unmap;
-
-	sc->sc_chip.sc_bustype = AM79C930_BUS_PCMCIA;
-	sc->sc_chip.sc_iot = psc->sc_pcioh.iot;
-	sc->sc_chip.sc_ioh = psc->sc_pcioh.ioh;
-	am79c930_chip_init(&sc->sc_chip, 0);
-
-	DELAY(1000);
-
-	awi_read_bytes(sc, AWI_BANNER, sc->sc_banner, AWI_BANNER_LEN);
-
-	if (memcmp(sc->sc_banner, "PCnetMobile:", 12) == 0)
-		return (0);
-
-	fail++;
-	pcmcia_function_disable(psc->sc_pf);
-
- fail_io_unmap:
-	fail++;
-	pcmcia_io_unmap(psc->sc_pf, psc->sc_io_window);
-
- fail_io_free:
-	fail++;
-	pcmcia_io_free(psc->sc_pf, &psc->sc_pcioh);
- fail:
-	fail++;
-	psc->sc_io_window = -1;
-	return (fail);
+	if (cfe->iftype != PCMCIA_IFTYPE_IO ||
+	    cfe->num_iospace < 1 ||
+	    cfe->iospace[0].length < AM79C930_IO_SIZE)
+		return (EINVAL);
+	if (cfe->num_memspace < 1) {
+		cfe->memspace[0].length = AM79C930_MEM_SIZE;
+		cfe->memspace[0].cardaddr = 0;
+		cfe->memspace[0].hostaddr = 0;
+	} else if (cfe->memspace[0].length < AM79C930_MEM_SIZE)
+		return (EINVAL);
+	return (0);
 }
 
 static void
@@ -275,97 +239,63 @@ awi_pcmcia_attach(parent, self, aux)
 {
 	struct awi_pcmcia_softc *psc = (void *)self;
 	struct awi_softc *sc = &psc->sc_awi;
-	const struct awi_pcmcia_product *app;
 	struct pcmcia_attach_args *pa = aux;
 	struct pcmcia_config_entry *cfe;
-	bus_size_t memoff;
+	int error;
 
-	app = awi_pcmcia_lookup(pa);
-	if (app == NULL)
-		panic("awi_pcmcia_attach: impossible");
-
+	aprint_normal("\n");
 	psc->sc_pf = pa->pf;
 
-	SIMPLEQ_FOREACH(cfe, &pa->pf->cfe_head, cfe_list) {
-		if (cfe->iftype != PCMCIA_IFTYPE_IO)
-			continue;
-		if (cfe->num_iospace < 1)
-			continue;
-		if (cfe->iospace[0].length < AM79C930_IO_SIZE)
-			continue;
-
-		if (awi_pcmcia_find(psc, pa, cfe) == 0)
-			break;
-	}
-	if (cfe == NULL) {
-		printf(": no suitable CIS info found\n");
-		goto no_config_entry;
+	error = pcmcia_function_configure(pa->pf, awi_pcmcia_validate_config);
+	if (error) {
+		aprint_error("%s: configure failed, error=%d\n", self->dv_xname,
+		    error);
+		return;
 	}
 
-	sc->sc_enabled = 1;
-	printf(": %s\n", app->app_name);
-
-	psc->sc_mem_window = -1;
-	if (pcmcia_mem_alloc(psc->sc_pf, AM79C930_MEM_SIZE,
-	    &psc->sc_memh) != 0) {
-		printf("%s: unable to allocate memory space; using i/o only\n",
-		    sc->sc_dev.dv_xname);
-	} else if (pcmcia_mem_map(psc->sc_pf,
-	    PCMCIA_WIDTH_MEM8|PCMCIA_MEM_COMMON, AM79C930_MEM_BASE,
-	    AM79C930_MEM_SIZE, &psc->sc_memh, &memoff, &psc->sc_mem_window)) {
-		printf("%s: unable to map memory space; using i/o only\n",
-		    sc->sc_dev.dv_xname);
-		pcmcia_mem_free(psc->sc_pf, &psc->sc_memh);
-	} else {
-		sc->sc_chip.sc_memt = psc->sc_memh.memt;
-		sc->sc_chip.sc_memh = psc->sc_memh.memh;
+	cfe = pa->pf->cfe;
+	sc->sc_chip.sc_bustype = AM79C930_BUS_PCMCIA;
+	sc->sc_chip.sc_iot = cfe->iospace[0].handle.iot;
+	sc->sc_chip.sc_ioh = cfe->iospace[0].handle.ioh;
+	if (cfe->num_memspace > 0) {
+		sc->sc_chip.sc_memt = cfe->memspace[0].handle.memt;
+		sc->sc_chip.sc_memh = cfe->memspace[0].handle.memh;
 		am79c930_chip_init(&sc->sc_chip, 1);
-	}
+	} else
+		am79c930_chip_init(&sc->sc_chip, 0);
+
+	error = awi_pcmcia_enable(sc);
+        if (error)
+                goto fail;
+
+	awi_read_bytes(sc, AWI_BANNER, sc->sc_banner, AWI_BANNER_LEN);
+	if (memcmp(sc->sc_banner, "PCnetMobile:", 12))
+		goto fail2;
 
 	sc->sc_enable = awi_pcmcia_enable;
 	sc->sc_disable = awi_pcmcia_disable;
 
-	/* establish the interrupt. */
-	psc->sc_ih = pcmcia_intr_establish(psc->sc_pf, IPL_NET, awi_intr, sc);
-	if (psc->sc_ih == NULL) {
-		printf("%s: couldn't establish interrupt\n",
-		    sc->sc_dev.dv_xname);
-		goto no_interrupt;
-	}
 	sc->sc_cansleep = 1;
 
+	psc->sc_state = AWI_PCMCIA_ATTACH1;
+	sc->sc_enabled = 1;
 	if (awi_attach(sc) != 0) {
-		printf("%s: failed to attach controller\n",
-		    sc->sc_dev.dv_xname);
-		goto attach_failed;
+		printf("%s: failed to attach controller\n", self->dv_xname);
+		goto fail2;
 	}
 
+	if (psc->sc_state == AWI_PCMCIA_ATTACH1)
+		awi_pcmcia_disable(sc);
 	sc->sc_enabled = 0;
-	/* disable device and disestablish the interrupt */
-	awi_pcmcia_disable(sc);
+	psc->sc_state = AWI_PCMCIA_ATTACHED;
 	return;
 
- attach_failed:
-	pcmcia_intr_disestablish(psc->sc_pf, psc->sc_ih);
-
- no_interrupt:
-	/* Unmap our memory window and space */
-	if (psc->sc_mem_window != -1) {
-		pcmcia_mem_unmap(psc->sc_pf, psc->sc_mem_window);
-		pcmcia_mem_free(psc->sc_pf, &psc->sc_memh);
-	}
-
-	/* Unmap our i/o window and space */
-	pcmcia_io_unmap(psc->sc_pf, psc->sc_io_window);
-	pcmcia_io_free(psc->sc_pf, &psc->sc_pcioh);
-
-	/* Disable the function */
-	pcmcia_function_disable(psc->sc_pf);
-
- no_config_entry:
-	psc->sc_io_window = -1;
+fail2:
+	awi_pcmcia_disable(sc);
+	sc->sc_enabled = 0;
+fail:
+	pcmcia_function_unconfigure(pa->pf);
 }
-
 
 static int
 awi_pcmcia_detach(self, flags)
@@ -375,24 +305,14 @@ awi_pcmcia_detach(self, flags)
 	struct awi_pcmcia_softc *psc = (struct awi_pcmcia_softc *)self;
 	int error;
 
-	if (psc->sc_io_window == -1)
-		/* Nothing to detach. */
+	if (psc->sc_state != AWI_PCMCIA_ATTACHED)
 		return (0);
 
 	error = awi_detach(&psc->sc_awi);
-	if (error != 0)
+	if (error)
 		return (error);
 
-	/* Unmap our memory window and free memory space */
-	if (psc->sc_mem_window != -1) {
-		pcmcia_mem_unmap(psc->sc_pf, psc->sc_mem_window);
-		pcmcia_mem_free(psc->sc_pf, &psc->sc_memh);
-	}
+	pcmcia_function_unconfigure(psc->sc_pf);
 
-	/* Unmap our i/o window. */
-	pcmcia_io_unmap(psc->sc_pf, psc->sc_io_window);
-
-	/* Free our i/o space. */
-	pcmcia_io_free(psc->sc_pf, &psc->sc_pcioh);
 	return (0);
 }
