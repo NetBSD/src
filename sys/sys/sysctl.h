@@ -1,4 +1,4 @@
-/*	$NetBSD: sysctl.h,v 1.116.2.6 2004/04/26 19:46:10 jdc Exp $	*/
+/*	$NetBSD: sysctl.h,v 1.116.2.7 2004/04/28 05:32:19 jmc Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -1025,37 +1025,8 @@ __END_DECLS
 
 #ifdef __COMPAT_SYSCTL
 /*
- * node version 0
+ * old node definitions go here
  */
-struct sysctlnode0 {
-	uint sysctl0_flags;		/* flags and type */
-	int sysctl0_num;		/* mib number */ 
-	size_t sysctl0_size;		/* size of instrumented data */
-	char sysctl0_name[SYSCTL_NAMELEN]; /* node name */
-	union {
-		struct {
-			uint scn0_csize; /* size of child node array */
-			uint scn0_clen;	/* number of valid children */
-			struct sysctlnode0 *scn0_child; /* array of child nodes */
-		} scu0_node;
-		int scu0_alias;		/* node this node refers to */
-		int scu0_idata;		/* immediate "int" data */
-		u_quad_t scu0_qdata;	/* immediate "u_quad_t" data */
-		void *scu0_data;	/* pointer to external data */
-	} sysctl0_un;
-	sysctlfn sysctl0_func;		/* access helper function */
-	struct sysctlnode0 *sysctl0_parent; /* parent of this node */
-	uint sysctl0_ver;		/* node's version vs. rest of tree */
-};
-
-#define sysctl0_csize	sysctl0_un.scu0_node.scn0_csize
-#define sysctl0_clen	sysctl0_un.scu0_node.scn0_clen
-#define sysctl0_child	sysctl0_un.scu0_node.scn0_child
-#define sysctl0_alias	sysctl0_un.scu0_alias
-#define sysctl0_data	sysctl0_un.scu0_data
-#define sysctl0_idata	sysctl0_un.scu0_idata
-#define sysctl0_qdata	sysctl0_un.scu0_qdata
-
 #endif /* __COMPAT_SYSCTL */
 
 /*
