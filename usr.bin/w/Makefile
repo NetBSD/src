@@ -1,4 +1,5 @@
-#	@(#)Makefile	5.6 (Berkeley) 4/23/91
+#	from: @(#)Makefile	5.6 (Berkeley) 4/23/91
+#	$Id: Makefile,v 1.3 1993/07/30 22:30:00 mycroft Exp $
 
 PROG=	w
 SRCS=	attime.c w.c proc_compare.c
