@@ -42,7 +42,7 @@
  *	@(#)locore.s	8.4 (Berkeley) 12/10/93
  *
  * from: Header: locore.s,v 1.51 93/04/21 06:19:37 torek Exp
- * $Id: locore.s,v 1.16 1994/08/24 09:27:57 deraadt Exp $
+ * $Id: locore.s,v 1.17 1994/09/02 08:13:20 pk Exp $
  */
 
 #define	LOCORE
@@ -2346,8 +2346,8 @@ dostart:
 	 * Sun4 passes in the `load address'.  Although possible, its highly
 	 * unlikely that OpenBoot would place the prom vector there.
 	 */
-	set	0x4000, %o1
-	cmp	%o0, %o1
+	set	0x4000, %g7
+	cmp	%o0, %g7
 	beq	is_sun4
 	 nop
 
