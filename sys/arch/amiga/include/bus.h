@@ -1,4 +1,4 @@
-/*	$NetBSD: bus.h,v 1.13 2000/01/23 21:02:18 aymeric Exp $	*/
+/*	$NetBSD: bus.h,v 1.14 2000/01/31 22:43:36 mhitch Exp $	*/
 
 /*
  * Copyright (c) 1996 Leo Weppelman.  All rights reserved.
@@ -205,22 +205,22 @@ struct amiga_bus_space_methods {
 /* 4: Fake 32-bit macros */
 
 #define bus_space_read_4(t, h, o) \
-	panic("bus_space_read_4 not implemented");
+	panic("bus_space_read_4 not implemented")
 
 #define bus_space_write_4(t, h, o, v) \
-	panic("bus_space_write_4 not implemented");
+	panic("bus_space_write_4 not implemented")
 
 #define bus_space_read_multi_4(t, h, o, p, c) \
-	panic("bus_space_read_multi_4 not implemented");
+	panic("bus_space_read_multi_4 not implemented")
 
 #define bus_space_write_multi_4(t, h, o, p, c) \
-	panic("bus_space_write_multi_4 not implemented");
+	panic("bus_space_write_multi_4 not implemented")
 
 #define bus_space_read_multi_stream_4(t, h, o, p, c) \
-	panic("bus_space_read_multi_stream_4 not implemented");
+	panic("bus_space_read_multi_stream_4 not implemented")
 
 #define bus_space_write_multi_stream_4(t, h, o, p, c) \
-	panic("bus_space_write_multi_stream_4 not implemented");
+	panic("bus_space_write_multi_stream_4 not implemented")
 
 /* 
  * Bus read/write barrier methods.
@@ -244,5 +244,6 @@ struct amiga_bus_space_methods {
 const struct amiga_bus_space_methods amiga_bus_stride_1;
 const struct amiga_bus_space_methods amiga_bus_stride_2;
 const struct amiga_bus_space_methods amiga_bus_stride_4;
+const struct amiga_bus_space_methods amiga_bus_stride_4swap;
 
 #endif /* _AMIGA_BUS_H_ */
