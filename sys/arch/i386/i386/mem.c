@@ -38,7 +38,7 @@
  *
  *	from: Utah Hdr: mem.c 1.13 89/10/08
  *	from: @(#)mem.c 7.2 (Berkeley) 5/9/91
- *	$Id: mem.c,v 1.7 1993/10/06 23:37:09 cgd Exp $
+ *	$Id: mem.c,v 1.8 1993/10/21 23:55:02 cgd Exp $
  */
 
 /*
@@ -240,6 +240,7 @@ mmmmap(dev, offset, nprot)
 	int nprot;
 {
 
+#ifdef notdef
 	switch (minor(dev)) {
 /* minor device 0 is physical memory */
 	case 0:
@@ -273,4 +274,7 @@ printf("kmem mmap request: offset 0x%x failed\n", offset);
 	default:
 		return -1;
 	}
+#else
+	return -1;
+#endif
 }
