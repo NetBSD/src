@@ -1,4 +1,4 @@
-/*	$NetBSD: cksum.c,v 1.16 2002/03/31 14:43:22 bjh21 Exp $	*/
+/*	$NetBSD: cksum.c,v 1.17 2002/10/18 20:30:13 atatat Exp $	*/
 
 /*-
  * Copyright (c) 1997 Jason R. Thorpe.  All rights reserved.
@@ -47,7 +47,7 @@ __COPYRIGHT("@(#) Copyright (c) 1991, 1993\n\
 #if 0
 static char sccsid[] = "@(#)cksum.c	8.2 (Berkeley) 4/28/95";
 #endif
-__RCSID("$NetBSD: cksum.c,v 1.16 2002/03/31 14:43:22 bjh21 Exp $");
+__RCSID("$NetBSD: cksum.c,v 1.17 2002/10/18 20:30:13 atatat Exp $");
 #endif /* not lint */
 
 #include <sys/cdefs.h>
@@ -105,7 +105,7 @@ struct hash {
 };
 
 int	main __P((int, char **));
-int	hash_digest_file __P((char *, struct hash *));
+int	hash_digest_file __P((char *, struct hash *, int));
 void	requirehash __P((const char *));
 void	usage __P((void));
 
@@ -121,10 +121,12 @@ main(argc, argv)
 	int (*cfncn) __P((int, u_int32_t *, u_int32_t *));
 	void (*pfncn) __P((char *, u_int32_t, u_int32_t));
 	struct hash *hash;
+	int normal;
 
 	cfncn = NULL;
 	pfncn = NULL;
 	dosum = pflag = nohashstdin = 0;
+	normal = 0;
 
 	setlocale(LC_ALL, "");
 
@@ -147,7 +149,7 @@ main(argc, argv)
 		}
 	}
 
-	while ((ch = getopt(argc, argv, "mo:ps:tx12456")) != -1)
+	while ((ch = getopt(argc, argv, "mno:ps:tx12456")) != -1)
 		switch(ch) {
 		case '2':
 			if (dosum) {
@@ -184,6 +186,9 @@ main(argc, argv)
 				usage();
 			}
 			hash = &hashes[HASH_RMD160];
+			break;
+		case 'n':
+			normal = 1;
 			break;
 		case 'o':
 			if (hash) {
@@ -239,7 +244,7 @@ main(argc, argv)
 		if (*argv) {
 			fn = *argv++;
 			if (hash != NULL) {
-				if (hash_digest_file(fn, hash)) {
+				if (hash_digest_file(fn, hash, normal)) {
 					warn("%s", fn);
 					rval = 1;
 				}
@@ -267,9 +272,10 @@ main(argc, argv)
 }
 
 int
-hash_digest_file(fn, hash)
+hash_digest_file(fn, hash, normal)
 	char *fn;
 	struct hash *hash;
+	int normal;
 {
 	char buf[41], *cp;
 
@@ -277,7 +283,10 @@ hash_digest_file(fn, hash)
 	if (cp == NULL)
 		return (1);
 
-	printf("%s (%s) = %s\n", hash->hashname, fn, cp);
+	if (normal)
+		printf("%s %s\n", cp, fn);
+	else
+		printf("%s (%s) = %s\n", hash->hashname, fn, cp);
 	return (0);
 }
 
@@ -297,14 +306,14 @@ usage()
 	(void)fprintf(stderr, "usage: cksum [-m | [-o 1 | 2]] [file ...]\n");
 	(void)fprintf(stderr, "       sum [file ...]\n");
 	(void)fprintf(stderr,
-	    "       md2 [-p | -t | -x | -s string] [file ...]\n");
+	    "       md2 [-n] [-p | -t | -x | -s string] [file ...]\n");
 	(void)fprintf(stderr,
-	    "       md4 [-p | -t | -x | -s string] [file ...]\n");
+	    "       md4 [-n] [-p | -t | -x | -s string] [file ...]\n");
 	(void)fprintf(stderr,
-	    "       md5 [-p | -t | -x | -s string] [file ...]\n");
+	    "       md5 [-n] [-p | -t | -x | -s string] [file ...]\n");
 	(void)fprintf(stderr,
-	    "       sha1 [-p | -t | -x | -s string] [file ...]\n");
+	    "       sha1 [-n] [-p | -t | -x | -s string] [file ...]\n");
 	(void)fprintf(stderr,
-	    "       rmd160 [-p | -t | -x | -s string] [file ...]\n");
+	    "       rmd160 [-n] [-p | -t | -x | -s string] [file ...]\n");
 	exit(1);
 }
