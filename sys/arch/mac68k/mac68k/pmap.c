@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.80.4.8 2002/07/12 01:39:36 nathanw Exp $	*/
+/*	$NetBSD: pmap.c,v 1.80.4.9 2002/10/05 06:04:54 gmcgarry Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -990,6 +990,7 @@ pmap_page_protect(pg, prot)
 				printf("%s wired mapping for %lx not removed\n",
 				       "pmap_page_protect:", pa);
 #endif
+		}
 		pmap_remove_mapping(pv->pv_pmap, pv->pv_va,
 		    pte, PRM_TFLUSH|PRM_CFLUSH);
 	}
