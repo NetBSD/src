@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs.c,v 1.12 1998/03/01 02:20:53 fvdl Exp $	*/
+/*	$NetBSD: lfs.c,v 1.13 1998/03/18 17:11:34 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)lfs.c	8.5 (Berkeley) 5/24/95";
 #else
-__RCSID("$NetBSD: lfs.c,v 1.12 1998/03/01 02:20:53 fvdl Exp $");
+__RCSID("$NetBSD: lfs.c,v 1.13 1998/03/18 17:11:34 bouyer Exp $");
 #endif
 #endif /* not lint */
 
@@ -674,12 +674,12 @@ make_dir(bufp, protodir, entries)
 
 	spcleft = DIRBLKSIZ;
 	for (cp = bufp, i = 0; i < entries - 1; i++) {
-		protodir[i].d_reclen = DIRSIZ(NEWDIRFMT, &protodir[i]);
+		protodir[i].d_reclen = DIRSIZ(NEWDIRFMT, &protodir[i], 0);
 		memmove(cp, &protodir[i], protodir[i].d_reclen);
 		cp += protodir[i].d_reclen;
 		if ((spcleft -= protodir[i].d_reclen) < 0)
 			fatal("%s: %s", special, "directory too big");
 	}
 	protodir[i].d_reclen = spcleft;
-	memmove(cp, &protodir[i], DIRSIZ(NEWDIRFMT, &protodir[i]));
+	memmove(cp, &protodir[i], DIRSIZ(NEWDIRFMT, &protodir[i], 0));
 }
