@@ -1,6 +1,6 @@
 #!/bin/sh
 
-# Copyright (c) 1998-2000 Sendmail, Inc. and its suppliers.
+# Copyright (c) 1998-2001 Sendmail, Inc. and its suppliers.
 #	All rights reserved.
 #
 # By using this file, you agree to the terms and conditions set
@@ -8,7 +8,7 @@
 # the sendmail distribution.
 #
 #
-#       Id: find_m4.sh,v 8.7.24.3 2000/10/02 16:23:18 ca Exp
+#       Id: find_m4.sh,v 8.7.24.4 2001/01/23 01:48:03 gshapiro Exp
 #
 
 # Try to find a working M4 program.
@@ -20,7 +20,9 @@ test="ifdef(\`pushdef', \`',
 \`errprint(\`You need a newer version of M4, at least as new as System V or GNU')
 include(NoSuchFile)')
 define(\`BadNumber', \`10')
-ifdef(\`BadNumber', \`', \`errprint(\`This version of m4 is broken')')"
+ifdef(\`BadNumber', \`',
+\`errprint(\`This version of m4 is broken: trailing zero problem')
+include(NoSuchFile)')"
 
 if [ "$M4" ]
 then
@@ -80,4 +82,3 @@ then
 fi
 echo $M4
 exit 0
-
