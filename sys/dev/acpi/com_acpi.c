@@ -1,4 +1,4 @@
-/* $NetBSD: com_acpi.c,v 1.13 2004/04/11 08:36:19 kochi Exp $ */
+/* $NetBSD: com_acpi.c,v 1.14 2004/04/11 10:36:35 kochi Exp $ */
 
 /*
  * Copyright (c) 2002 Jared D. McNeill <jmcneill@invisible.ca>
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: com_acpi.c,v 1.13 2004/04/11 08:36:19 kochi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: com_acpi.c,v 1.14 2004/04/11 10:36:35 kochi Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -114,7 +114,7 @@ com_acpi_attach(struct device *parent, struct device *self, void *aux)
 	if (io == NULL) {
 		printf("%s: unable to find i/o register resource\n",
 		    sc->sc_dev.dv_xname);
-		return;
+		goto out;
 	}
 
 	/* find our IRQ */
@@ -122,7 +122,7 @@ com_acpi_attach(struct device *parent, struct device *self, void *aux)
 	if (irq == NULL) {
 		printf("%s: unable to find irq resource\n",
 		    sc->sc_dev.dv_xname);
-		return;
+		goto out;
 	}
 
 	sc->sc_iot = aa->aa_iot;
@@ -131,7 +131,7 @@ com_acpi_attach(struct device *parent, struct device *self, void *aux)
 		    0, &sc->sc_ioh)) {
 			printf("%s: can't map i/o space\n",
 			    sc->sc_dev.dv_xname);
-			return;
+			goto out;
 		}
 	}
 	sc->sc_iobase = io->ar_base;
@@ -140,7 +140,7 @@ com_acpi_attach(struct device *parent, struct device *self, void *aux)
 
 	if (comprobe1(sc->sc_iot, sc->sc_ioh) == 0) {
 		printf(": com probe failed\n");
-		return;
+		goto out;
 	}
 
 	sc->sc_frequency = 115200 * 16;
@@ -150,4 +150,6 @@ com_acpi_attach(struct device *parent, struct device *self, void *aux)
 	asc->sc_ih = isa_intr_establish(aa->aa_ic, irq->ar_irq,
 	    (irq->ar_type == ACPI_EDGE_SENSITIVE) ? IST_EDGE : IST_LEVEL,
 	    IPL_SERIAL, comintr, sc);
+ out:
+	acpi_resource_cleanup(&res);
 }

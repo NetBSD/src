@@ -1,4 +1,4 @@
-/* $NetBSD: wss_acpi.c,v 1.11 2004/04/11 08:56:48 kochi Exp $ */
+/* $NetBSD: wss_acpi.c,v 1.12 2004/04/11 10:36:35 kochi Exp $ */
 
 /*
  * Copyright (c) 2002 Jared D. McNeill <jmcneill@invisible.ca>
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wss_acpi.c,v 1.11 2004/04/11 08:56:48 kochi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wss_acpi.c,v 1.12 2004/04/11 10:36:35 kochi Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -143,19 +143,19 @@ wss_acpi_attach(struct device *parent, struct device *self, void *aux)
 	if (dspio == NULL || oplio == NULL) {
 		printf("%s: unable to find i/o registers resource\n",
 		    sc->sc_ad1848.sc_ad1848.sc_dev.dv_xname);
-		return;
+		goto out;
 	}
 	if (bus_space_map(sc->sc_iot, dspio->ar_base, dspio->ar_length,
 	    0, &sc->sc_ioh) != 0) {
 		printf("%s: unable to map i/o registers\n",
 		    sc->sc_ad1848.sc_ad1848.sc_dev.dv_xname);
-		return;
+		goto out;
 	}
 	if (bus_space_map(sc->sc_iot, oplio->ar_base, oplio->ar_length,
 	    0, &sc->sc_opl_ioh) != 0) {
 		printf("%s: unable to map opl i/o registers\n",
 		    sc->sc_ad1848.sc_ad1848.sc_dev.dv_xname);
-		return;
+		goto out;
 	}
 
 	sc->wss_ic = aa->aa_ic;
@@ -166,7 +166,7 @@ wss_acpi_attach(struct device *parent, struct device *self, void *aux)
 		printf("%s: unable to find irq resource\n",
 		    sc->sc_ad1848.sc_ad1848.sc_dev.dv_xname);
 		/* XXX bus_space_unmap */
-		return;
+		goto out;
 	}
 	sc->wss_irq = irq->ar_irq;
 
@@ -177,7 +177,7 @@ wss_acpi_attach(struct device *parent, struct device *self, void *aux)
 		printf("%s: unable to find drq resources\n",
 		    sc->sc_ad1848.sc_ad1848.sc_dev.dv_xname);
 		/* XXX bus_space_unmap */
-		return;
+		goto out;
 	}
 	sc->wss_playdrq = playdrq->ar_drq;
 	sc->wss_recdrq = recdrq->ar_drq;
@@ -191,7 +191,7 @@ wss_acpi_attach(struct device *parent, struct device *self, void *aux)
 		printf("%s: ad1848 probe failed\n",
 		    sc->sc_ad1848.sc_ad1848.sc_dev.dv_xname);
 		/* XXX cleanup */
-		return;
+		goto out;
 	}
 
 	printf("%s", sc->sc_ad1848.sc_ad1848.sc_dev.dv_xname);
@@ -202,4 +202,7 @@ wss_acpi_attach(struct device *parent, struct device *self, void *aux)
 	arg.hwif = 0;
 	arg.hdl = 0;
 	config_found(self, &arg, audioprint);
+
+ out:
+	acpi_resource_cleanup(&res);
 }
