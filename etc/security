@@ -1,6 +1,6 @@
 #!/bin/sh -
 #
-#	$NetBSD: security,v 1.84 2003/10/01 04:29:03 jhawk Exp $
+#	$NetBSD: security,v 1.85 2003/11/18 03:23:53 jhawk Exp $
 #	from: @(#)security	8.1 (Berkeley) 6/9/93
 #
 
@@ -174,6 +174,8 @@ awk -F: '{ print $1 " " $9 }' $MP | sort -k2 > $MPBYPATH
 # Check the master password file syntax.
 #
 if checkyesno check_passwd; then
+        # XXX: the sense of permit_star is reversed; the code works as
+        # implemented, but usage needs to be negated.
 	checkyesno check_passwd_permit_star && permit_star=0 || permit_star=1
 	awk -v "len=$max_loginlen" \
 	    -v "nowarn_shells_list=$check_passwd_nowarn_shells" \
@@ -469,15 +471,18 @@ fi
 # or writable.
 #
 if checkyesno check_homes; then
+	checkyesno check_homes_permit_usergroups && \
+		permit_usergroups=1 || permit_usergroups=0
 	while read uid homedir; do
 		if [ -d ${homedir}/ ] ; then
 			file=`ls -ldgT ${homedir}`
 			printf -- "$uid $file\n"
 		fi
 	done < $MPBYPATH |
-	awk '$1 != $4 && $4 != "root" \
+	awk -v "usergroups=$permit_usergroups" '
+	     $1 != $4 && $4 != "root" \
 		{ print "user " $1 " home directory is owned by " $4 }
-	     $2 ~ /^-....w/ \
+	     $2 ~ /^-....w/ (!usergroups || $5 != $1) \
 		{ print "user " $1 " home directory is group writable" }
 	     $2 ~ /^-.......w/ \
 		{ print "user " $1 " home directory is other writable" }' \
@@ -497,13 +502,14 @@ if checkyesno check_homes; then
 			fi
 		done
 	done < $MPBYPATH |
-	awk '$1 != $5 && $5 != "root" \
+	awk  -v "usergroups=$permit_usergroups" '
+	     $1 != $5 && $5 != "root" \
 		{ print "user " $1 " " $2 " file is owned by " $5 }
-	     $3 ~ /^-...r/ \
+	     $3 ~ /^-...r/ && (!usergroups || $6 != $1) \
 		{ print "user " $1 " " $2 " file is group readable" }
 	     $3 ~ /^-......r/ \
 		{ print "user " $1 " " $2 " file is other readable" }
-	     $3 ~ /^-....w/ \
+	     $3 ~ /^-....w/ && (!usergroups || $6 != $1) \
 		{ print "user " $1 " " $2 " file is group writable" }
 	     $3 ~ /^-.......w/ \
 		{ print "user " $1 " " $2 " file is other writable" }' \
@@ -525,9 +531,10 @@ if checkyesno check_homes; then
 			fi
 		done
 	done < $MPBYPATH |
-	awk '$1 != $5 && $5 != "root" \
+	awk -v "usergroups=$permit_usergroups" '
+	     $1 != $5 && $5 != "root" \
 		{ print "user " $1 " " $2 " file is owned by " $5 }
-	     $3 ~ /^-....w/ \
+	     $3 ~ /^-....w/ && (!usergroups || $6 != $1) \
 		{ print "user " $1 " " $2 " file is group writable" }
 	     $3 ~ /^-.......w/ \
 		{ print "user " $1 " " $2 " file is other writable" }' \
