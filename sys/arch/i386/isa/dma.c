@@ -35,7 +35,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)isa.c	7.2 (Berkeley) 5/13/91
- *	$Id: dma.c,v 1.1 1993/10/14 05:22:57 mycroft Exp $
+ *	$Id: dma.c,v 1.2 1993/10/16 03:55:59 mycroft Exp $
  */
 
 /*
@@ -123,7 +123,7 @@ at_dma(read, addr, nbytes, chan)
 
 	if (chan > 7 ||
 	    (chan < 4 && nbytes > (1<<16)) ||
-	    (chan >= 4 && (nbytes > (1<<17) || (u_int)addr & 1)))
+	    (chan >= 4 && (nbytes > (1<<17) || nbytes & 1 || (u_int)addr & 1)))
 		panic("at_dma: impossible request"); 
 
 	if (at_dma_rangecheck((vm_offset_t)addr, nbytes, chan)) {
