@@ -1,4 +1,4 @@
-/*	$NetBSD: mbr.c,v 1.8 1998/07/21 14:53:36 rvb Exp $ */
+/*	$NetBSD: mbr.c,v 1.9 1999/01/21 08:02:18 garbled Exp $ */
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -185,7 +185,8 @@ edit_mbr()
 			msg_display(MSG_ovrwrite);
 			process_menu(MENU_noyes);
 			if (!yesno) {
-				endwin();
+				if (logging)
+					(void)fprintf(log, "User answered no to destroy other data, aborting.\n");
 				return 0;
 			}
 		}

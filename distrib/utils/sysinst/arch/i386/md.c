@@ -1,4 +1,4 @@
-/*	$NetBSD: md.c,v 1.16 1998/10/12 17:00:43 erh Exp $ */
+/*	$NetBSD: md.c,v 1.17 1999/01/21 08:02:18 garbled Exp $ */
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -119,7 +119,7 @@ void md_post_disklabel (void)
 	/* Sector forwarding / badblocks ... */
 	if (*doessf) {
 		printf ("%s", msg_string (MSG_dobad144));
-		run_prog ("/usr/sbin/bad144 %s 0", diskdev);
+		run_prog(0, 1, "/usr/sbin/bad144 %s 0", diskdev);
 	}
 }
 
@@ -127,7 +127,7 @@ void md_post_newfs (void)
 {
 	/* boot blocks ... */
 	printf (msg_string(MSG_dobootblks), diskdev);
-	run_prog ("/usr/mdec/installboot -v /usr/mdec/biosboot.sym "
+	run_prog (0, 1, "/usr/mdec/installboot -v /usr/mdec/biosboot.sym "
 		  "/dev/r%sa", diskdev);
 }
 
@@ -139,8 +139,7 @@ void md_copy_filesystem (void)
 
 	/* Copy the instbin(s) to the disk */
 	printf ("%s", msg_string(MSG_dotar));
-	run_prog ("tar --one-file-system -cf - -C / . |"
-		  "(cd /mnt ; tar --unlink -xpf - )");
+	run_prog(0, 0, "pax -X -r -w / /mnt");
 
 	/* Copy next-stage install profile into target /.profile. */
 	cp_to_target ("/tmp/.hdprofile", "/.profile");
@@ -324,7 +323,7 @@ editlab:
 	msg_prompt (MSG_packname, "mydisk", bsddiskname, DISKNAME_SIZE);
 
 	/* Create the disktab.preinstall */
-	run_prog ("cp /etc/disktab.preinstall /etc/disktab");
+	run_prog (0, 0, "cp /etc/disktab.preinstall /etc/disktab");
 #ifdef DEBUG
 	f = fopen ("/tmp/disktab", "a");
 #else
@@ -382,12 +381,12 @@ md_cleanup_install(void)
 	strncpy(realfrom, target_expand("/etc/rc.conf"), STRSIZE);
 	strncpy(realto, target_expand("/etc/rc.conf.install"), STRSIZE);
 
-	run_prog_or_die(
+	run_prog(1, 0, 
 	    "sed 's/rc_configured=NO/rc_configured=YES/' < %s > %s",
 	    realfrom, realto
 	    );
-	run_prog_or_die("mv -f %s %s", realto, realfrom);
-	run_prog("rm -f %s", target_expand("/sysinst"));
-	run_prog("rm -f %s", target_expand("/.termcap"));
-	run_prog("rm -f %s", target_expand("/.profile"));
+	run_prog(1, 0, "mv -f %s %s", realto, realfrom);
+	run_prog(0, 0, "rm -f %s", target_expand("/sysinst"));
+	run_prog(0, 0, "rm -f %s", target_expand("/.termcap"));
+	run_prog(0, 0, "rm -f %s", target_expand("/.profile"));
 }

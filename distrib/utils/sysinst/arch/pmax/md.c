@@ -1,4 +1,4 @@
-/*	$NetBSD: md.c,v 1.19 1998/05/15 15:12:31 fvdl Exp $	*/
+/*	$NetBSD: md.c,v 1.20 1999/01/21 08:02:19 garbled Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -151,7 +151,7 @@ void	md_post_newfs (void)
 	}
 	
 	printf (msg_string(MSG_dobootblks), diskdev);
-	run_prog_or_continue("/sbin/disklabel -B %s /dev/r%sc",
+	run_prog(0, 1, "/sbin/disklabel -B %s /dev/r%sc",
 			"-b /usr/mdec/rzboot -s /usr/mdec/bootrz", diskdev);
 }
 
@@ -340,7 +340,7 @@ int	md_make_bsd_partitions (void)
 	get_labelname();
 
 	/* Create the disktab.preinstall */
-	run_prog ("cp /etc/disktab.preinstall /etc/disktab");
+	run_prog (0, 0, "cp /etc/disktab.preinstall /etc/disktab");
 #ifdef DEBUG
 	f = fopen ("/tmp/disktab", "a");
 #else
@@ -415,9 +415,9 @@ void	md_copy_filesystem (void)
 
 
 	/* test returns 0  on success */
-	dir_exists = (run_prog("test -d %s", diskimage_usr) == 0);
+	dir_exists = (run_prog(0, 0, "test -d %s", diskimage_usr) == 0);
 	if (dir_exists) {
-		run_prog (
+		run_prog ( 0, 1, 
 		  "tar --one-file-system -cf - -C %s . | tar -xpf - -C /usr",
 		  diskimage_usr);
 	}
@@ -427,14 +427,14 @@ void	md_copy_filesystem (void)
 	  	/* The diskimage /usr subset has served its purpose. */
 	  	/* (but leave it for now, in case of errors.) */
 #if 0
-		run_prog("rm -fr %s 2> /dev/null", diskimage_usr);
+		run_prog(0, 0, "rm -fr %s", diskimage_usr);
 #endif
 		return;
 	}
 
 	/* Copy all the diskimage/ramdisk binaries to the target disk. */
 	printf ("%s", msg_string(MSG_dotar));
-	run_prog ("tar --one-file-system -cf - -C / . |"
+	run_prog (0, 1, "tar --one-file-system -cf - -C / . |"
 		  "(cd /mnt ; tar --unlink -xpf - )");
 
 	/* Make sure target has a copy of install kernel. */
