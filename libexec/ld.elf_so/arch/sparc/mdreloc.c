@@ -1,4 +1,4 @@
-/*	$NetBSD: mdreloc.c,v 1.4 1999/02/27 10:24:52 pk Exp $	*/
+/*	$NetBSD: mdreloc.c,v 1.5 1999/02/27 11:36:02 pk Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -178,7 +178,7 @@ _rtld_relocate_nonplt_object(
 	if (type == R_TYPE(JMP_SLOT))
 		return (0);
 
-	/* COPY relocs are also handles elsewhere */
+	/* COPY relocs are also handled elsewhere */
 	if (type == R_TYPE(COPY))
 		return (0);
 
@@ -193,7 +193,7 @@ _rtld_relocate_nonplt_object(
 
 	/*
 	 * Handle relative relocs here, because we might not
-	 * be able to access globals yet
+	 * be able to access globals yet.
 	 */
 	if (!dodebug && type == R_TYPE(RELATIVE)) {
 		*where += (Elf_Addr)(obj->relocbase + value);
@@ -217,6 +217,25 @@ _rtld_relocate_nonplt_object(
 	}
 
 	if (RELOC_BASE_RELATIVE(type)) {
+		/*
+		 * Note that even though sparcs use `Elf_rela' exclusively
+		 * we still need the implicit memory addend in relocations
+		 * referring to GOT entries. Undoubtedly, someone f*cked
+		 * this up in the distant past, and now we're stuck with
+		 * it in the name of compatibility for all eternity..
+		 *
+		 * In any case, the implicit and explicit should be mutually
+		 * exclusive. We provide a check for that here.
+		 */
+#define DIAGNOSTIC
+#ifdef DIAGNOSTIC
+		if (value != 0 && *where != 0) {
+			xprintf("BASE_REL(%s): where=%p, *where 0x%x, "
+				"addend=0x%x, base %p\n",
+				obj->path, where, *where,
+				rela->r_addend, obj->relocbase);
+		}
+#endif
 		value += (Elf_Word)(obj->relocbase + *where);
 	}
 
