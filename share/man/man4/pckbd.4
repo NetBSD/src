@@ -1,4 +1,4 @@
-.\" $NetBSD: pckbd.4,v 1.11 2003/06/27 18:38:55 wiz Exp $
+.\" $NetBSD: pckbd.4,v 1.12 2004/03/08 12:28:17 wiz Exp $
 .\"
 .\" Copyright (c) 1999
 .\" 	Matthias Drochner.  All rights reserved.
@@ -70,13 +70,11 @@ The builtin mappings are at this time:
 .It Li KB_JP Ta jp Ta Japanese
 .It Li KB_SV Ta sv Ta Swedish with
 .Dq dead accents
-.It Li "KB_US|KB_DECLK" Ta \&us.declk Ta English/US mapping for
-.Tn DEC
-LK400-style keyboards
-.It Ta Ta with PC keyboard interface (e.g., LK461)
+.It Li "KB_US|KB_DECLK" Ta \&us.declk Ta English/US mapping for Tn DEC
+.It Ta Ta LK400-style keyboards with PC keyboard
+.It Ta Ta interface (e.g., LK461)
 .It Li "KB_US|KB_DVORAK" Ta us.dvorak Ta English/US keyboard with
-.Dq Dvorak
-layout
+.It Ta Ta Do Dvorak Dc layout
 .El
 .Pp
 The
