@@ -1,4 +1,4 @@
-/*	$NetBSD: conf.c,v 1.19 1995/09/18 03:04:53 jonathan Exp $	*/
+/*	$NetBSD: conf.c,v 1.20 1995/10/05 01:53:02 jonathan Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -119,7 +119,6 @@ cdev_decl(pts);
 cdev_decl(ptc);
 cdev_decl(log);
 cdev_decl(fd);
-cdev_decl(tz);
 cdev_decl(sd);
 cdev_decl(st);
 cdev_decl(vnd);
@@ -134,7 +133,7 @@ cdev_decl(dc);
 cdev_decl(scc);
 cdev_decl(rz);
 cdev_decl(tz);
-#include "rcons.h"
+#include "rasterconsole.h"
 cdev_decl(rcons);
 #include "fb.h"
 cdev_decl(fb);
@@ -247,7 +246,7 @@ struct cdevsw	cdevsw[] =
 	cdev_notdef(),		/* 82: so-called multimedia video out */
 	cdev_notdef(),		/* 83: fd */
 	cdev_notdef(),		/* 84: DTi */
-	cdev_tty_init(NRCONS,rcons),	/* 85: raster console pseudo-device */
+	cdev_tty_init(NRASTERCONSOLE,rcons), /* 85: rcons pseudo-dev */
 	cdev_fbm_init(NFB,fb),	/* 86: frame buffer pseudo-device */
 	cdev_disk_init(NCCD,ccd),	/* 87: concatenated disk driver */
 };
