@@ -1,4 +1,4 @@
-/*	$NetBSD: ifconfig.c,v 1.58 1999/07/29 15:40:48 itojun Exp $	*/
+/*	$NetBSD: ifconfig.c,v 1.59 1999/12/13 15:24:45 itojun Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -80,7 +80,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1993\n\
 #if 0
 static char sccsid[] = "@(#)ifconfig.c	8.2 (Berkeley) 2/16/94";
 #else
-__RCSID("$NetBSD: ifconfig.c,v 1.58 1999/07/29 15:40:48 itojun Exp $");
+__RCSID("$NetBSD: ifconfig.c,v 1.59 1999/12/13 15:24:45 itojun Exp $");
 #endif
 #endif /* not lint */
 
@@ -143,9 +143,6 @@ int	Lflag;
 #endif
 int	reset_if_flags;
 int	explicit_prefix = 0;
-#if !defined(INET_ONLY) && defined(INET6)
-char ntop_buf[INET6_ADDRSTRLEN];	/*inet_ntop()*/
-#endif /* INET_ONLY */
 
 void 	notealias __P((char *, int));
 void 	notrailers __P((char *, int));
@@ -284,6 +281,7 @@ void	in_alias __P((struct ifreq *));
 void	in_status __P((int));
 void 	in_getaddr __P((char *, int));
 #ifdef INET6
+void	in6_fillscopeid __P((struct sockaddr_in6 *sin6));
 void	in6_alias __P((struct in6_ifreq *));
 void	in6_status __P((int));
 void 	in6_getaddr __P((char *, int));
@@ -1476,12 +1474,32 @@ setifprefixlen(addr, d)
 }
 
 #ifdef INET6
+void
+in6_fillscopeid(sin6)
+	struct sockaddr_in6 *sin6;
+{
+#if defined(__KAME__) && defined(KAME_SCOPEID)
+	if (IN6_IS_ADDR_LINKLOCAL(&sin6->sin6_addr)) {
+		sin6->sin6_scope_id =
+			ntohs(*(u_int16_t *)&sin6->sin6_addr.s6_addr[2]);
+		sin6->sin6_addr.s6_addr[2] = sin6->sin6_addr.s6_addr[3] = 0;
+	}
+#endif
+}
+
 /* XXX not really an alias */
 void
 in6_alias(creq)
 	struct in6_ifreq *creq;
 {
 	struct sockaddr_in6 *sin6;
+	char hbuf[NI_MAXHOST];
+	u_int32_t scopeid;
+#ifdef NI_WITHSCOPEID
+	const int niflag = NI_NUMERICHOST | NI_WITHSCOPEID;
+#else
+	const int niflag = NI_NUMERICHOST;
+#endif
 
 	/* Get the non-alias address for this interface. */
 	getsock(AF_INET6);
@@ -1493,8 +1511,12 @@ in6_alias(creq)
 
 	sin6 = (struct sockaddr_in6 *)&creq->ifr_addr;
 
-	printf("\tinet6 %s", inet_ntop(AF_INET6, &sin6->sin6_addr,
-				       ntop_buf, sizeof(ntop_buf)));
+	in6_fillscopeid(sin6);
+	scopeid = sin6->sin6_scope_id;
+	if (getnameinfo((struct sockaddr *)sin6, sin6->sin6_len,
+			hbuf, sizeof(hbuf), NULL, 0, niflag))
+		strncpy(hbuf, "", sizeof(hbuf));	/* some message? */
+	printf("\tinet6 %s", hbuf);
 
 	if (flags & IFF_POINTOPOINT) {
 		(void) memset(&ifr6, 0, sizeof(ifr6));
@@ -1508,8 +1530,12 @@ in6_alias(creq)
 			ifr6.ifr_addr.sin6_len = sizeof(struct sockaddr_in6);
 		}
 		sin6 = (struct sockaddr_in6 *)&ifr6.ifr_addr;
-		printf(" -> %s", inet_ntop(AF_INET6, &sin6->sin6_addr,
-					   ntop_buf, sizeof(ntop_buf)));
+		in6_fillscopeid(sin6);
+		hbuf[0] = '\0';
+		if (getnameinfo((struct sockaddr *)sin6, sin6->sin6_len,
+				hbuf, sizeof(hbuf), NULL, 0, niflag))
+			strncpy(hbuf, "", sizeof(hbuf)); /* some message? */
+		printf(" -> %s", hbuf);
 	}
 
 	(void) memset(&ifr6, 0, sizeof(ifr6));
@@ -1540,6 +1566,9 @@ in6_alias(creq)
 		if (ifr6.ifr_ifru.ifru_flags6 & IN6_IFF_DETACHED)
 			printf(" detached");
 	}
+
+	if (scopeid)
+		printf(" scopeid 0x%x", scopeid);
 
 	if (Lflag) {
 		struct in6_addrlifetime *lifetime;
@@ -1835,14 +1864,41 @@ in6_getaddr(s, which)
 	char *s;
 	int which;
 {
+#if defined(__KAME__) && defined(KAME_SCOPEID)
+	struct sockaddr_in6 *sin6 = sin6tab[which];
+	struct addrinfo hints, *res;
+	int error;
+
+	memset(&hints, 0, sizeof(hints));
+	hints.ai_family = AF_INET6;
+	hints.ai_socktype = SOCK_DGRAM;
+#if 0 /* in_getaddr() allows FQDN */
+	hints.ai_flags = AI_NUMERICHOST;
+#endif
+	error = getaddrinfo(s, "0", &hints, &res);
+	if (error)
+		errx(1, "%s: %s", s, gai_strerror(error));
+	if (res->ai_next)
+		errx(1, "%s: resolved to multiple hosts", s);
+	if (res->ai_addrlen != sizeof(struct sockaddr_in6))
+		errx(1, "%s: bad value", s);
+	memcpy(sin6, res->ai_addr, res->ai_addrlen);
+	freeaddrinfo(res);
+	if (IN6_IS_ADDR_LINKLOCAL(&sin6->sin6_addr) && sin6->sin6_scope_id) {
+		*(u_int16_t *)&sin6->sin6_addr.s6_addr[2] =
+			htons(sin6->sin6_scope_id);
+		sin6->sin6_scope_id = 0;
+	}
+#else
 	struct sockaddr_in6 *sin = sin6tab[which];
 
 	sin->sin6_len = sizeof(*sin);
 	if (which != MASK)
 		sin->sin6_family = AF_INET6;
 
-	if (inet_pton(AF_INET6, s, &sin->sin6_addr) <= 0)
+	if (inet_pton(AF_INET6, s, &sin->sin6_addr) != 1)
 		errx(1, "%s: bad value", s);
+#endif
 }
 
 void
