@@ -1,4 +1,4 @@
-#	$NetBSD: POWERMAC,v 1.27 2000/11/14 22:33:24 matt Exp $
+#	$NetBSD: POWERMAC,v 1.28 2000/11/27 08:55:42 soren Exp $
 #
 # POWERMAC config file
 #
@@ -8,7 +8,6 @@ include		"arch/macppc/conf/std.macppc"
 maxusers	32
 
 # Standard system options
-options 	BUFPAGES=1280
 options 	KTRACE		# system call tracing via ktrace(1)
 
 # Diagnostic/debugging support options

@@ -1,12 +1,10 @@
-#	$NetBSD: RAQ,v 1.8 2000/09/24 15:59:31 jdolecek Exp $
+#	$NetBSD: RAQ,v 1.9 2000/11/27 08:55:41 soren Exp $
 
 include		"arch/cobalt/conf/std.cobalt"
 
 maxusers	32
 
 options 	KTRACE
-
-options 	BUFCACHE=20
 
 options 	DDB
 options 	DDB_HISTORY_SIZE=100
