@@ -1,4 +1,4 @@
-/*	$NetBSD: nfsstat.c,v 1.14 1998/07/06 07:50:20 mrg Exp $	*/
+/*	$NetBSD: nfsstat.c,v 1.15 2000/04/14 06:11:09 simonb Exp $	*/
 
 /*
  * Copyright (c) 1983, 1989, 1993
@@ -46,7 +46,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1989, 1993\n\
 #if 0
 static char sccsid[] = "from: @(#)nfsstat.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: nfsstat.c,v 1.14 1998/07/06 07:50:20 mrg Exp $");
+__RCSID("$NetBSD: nfsstat.c,v 1.15 2000/04/14 06:11:09 simonb Exp $");
 #endif
 #endif /* not lint */
 
@@ -93,8 +93,6 @@ main(argc, argv)
 	int argc;
 	char **argv;
 {
-	extern int optind;
-	extern char *optarg;
 	u_int interval;
 	int ch;
 	char *memf, *nlistf;

@@ -1,4 +1,4 @@
-/*	$NetBSD: rup.c,v 1.19 2000/03/08 12:10:28 jdolecek Exp $	*/
+/*	$NetBSD: rup.c,v 1.20 2000/04/14 06:11:09 simonb Exp $	*/
 
 /*-
  * Copyright (c) 1993, John Brezak
@@ -35,7 +35,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: rup.c,v 1.19 2000/03/08 12:10:28 jdolecek Exp $");
+__RCSID("$NetBSD: rup.c,v 1.20 2000/04/14 06:11:09 simonb Exp $");
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -316,7 +316,6 @@ main(argc, argv)
 	char *argv[];
 {
 	int ch;
-	extern int optind;
 
 	sort_type = SORT_NONE;
 	while ((ch = getopt(argc, argv, "dhlt")) != -1)

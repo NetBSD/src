@@ -1,4 +1,4 @@
-/*	$NetBSD: units.c,v 1.8 1998/02/03 04:16:02 perry Exp $	*/
+/*	$NetBSD: units.c,v 1.9 2000/04/14 06:11:11 simonb Exp $	*/
 
 /*
  * units.c   Copyright (c) 1993 by Adrian Mariano (adrian@cam.cornell.edu)
@@ -653,9 +653,6 @@ main(int argc, char **argv)
 	int optchar;
 	char *userfile = 0;
 	int quiet = 0;
-
-	extern char *optarg;
-	extern int optind;
 
 	while ((optchar = getopt(argc, argv, "vqf:")) != -1) {
 		switch (optchar) {
