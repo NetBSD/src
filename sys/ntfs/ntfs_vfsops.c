@@ -1,4 +1,4 @@
-/*	$NetBSD: ntfs_vfsops.c,v 1.16 1999/10/09 14:27:42 jdolecek Exp $	*/
+/*	$NetBSD: ntfs_vfsops.c,v 1.17 1999/10/16 23:53:28 wrstuden Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999 Semen Ustimenko
@@ -606,7 +606,9 @@ out:
 #endif
 	if (bp)
 		brelse(bp);
+	vn_lock(devvp, LK_EXCLUSIVE | LK_RETRY);
 	(void)VOP_CLOSE(devvp, ronly ? FREAD : FREAD|FWRITE, NOCRED, p);
+	VOP_UNLOCK(devvp, 0);
 	return (error);
 }
 
@@ -669,8 +671,10 @@ ntfs_unmount(
 #endif
 
 	vinvalbuf(ntmp->ntm_devvp, V_SAVE, NOCRED, p, 0, 0);
+	VOP_LOCK(ntmp->ntm_devvp, LK_EXCLUSIVE | LK_RETRY);
 	error = VOP_CLOSE(ntmp->ntm_devvp, ronly ? FREAD : FREAD|FWRITE,
 		NOCRED, p);
+	VOP_UNLOCK(ntmp->ntm_devvp, 0);
 
 	vrele(ntmp->ntm_devvp);
 
