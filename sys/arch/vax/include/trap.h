@@ -1,4 +1,4 @@
-/*      $NetBSD: trap.h,v 1.11 1996/01/28 12:30:13 ragge Exp $     */
+/*      $NetBSD: trap.h,v 1.12 1996/02/02 19:08:42 mycroft Exp $     */
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -67,7 +67,7 @@
 /* Trap's coming from user mode */
 #define	T_USER	0x100
 
-#ifndef ASSEMBLER
+#ifndef _LOCORE
 struct	trapframe {
 	unsigned	fp;	/* Stack frame pointer */
 	unsigned	ap;     /* Argument pointer on user stack */
@@ -110,6 +110,6 @@ struct ivec_dsp {
 	char	pad;		/* sizeof(struct ivec_dsp) == 16 */
 };
 
-#endif /* ASSEMBLER */
+#endif /* _LOCORE */
 
 #endif _VAX_TRAP_H_

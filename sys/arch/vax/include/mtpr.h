@@ -1,4 +1,4 @@
-/*      $NetBSD: mtpr.h,v 1.6 1996/02/02 18:08:23 mycroft Exp $     */
+/*      $NetBSD: mtpr.h,v 1.7 1996/02/02 19:08:39 mycroft Exp $     */
 
 /*
  * Copyright (c) 1994 Ludd, University of Lule}, Sweden.
@@ -107,7 +107,7 @@
 #define	AST_NO	  4
 #define	AST_OK	  3
 
-#ifndef	ASSEMBLER
+#ifndef	_LOCORE
 
 #define mtpr(val,reg)                                   \
 {                                                       \
@@ -124,6 +124,6 @@
                         : "g" (reg));                   \
         val;                                            \
 })
-#endif	/* ASSEMBLER */
+#endif	/* _LOCORE */
 
 #endif /* _VAX_MTPR_H_ */
