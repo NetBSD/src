@@ -1,4 +1,4 @@
-/*	$NetBSD: db_interface.c,v 1.2 1997/07/07 04:55:27 jonathan Exp $	*/
+/*	$NetBSD: db_interface.c,v 1.2.6.1 1997/11/12 02:00:10 mellon Exp $	*/
 
 /* 
  * Mach Operating System
@@ -89,7 +89,7 @@ kdbpoke(vm_offset_t addr, int newval)
 #endif
 	} else {
 #ifdef MIPS1
-		mips1_FlushICache(MIPS_KSEG0_TO_PHYS(addr), sizeof(int));
+		mips1_FlushICache((vm_offset_t) addr, sizeof(int));
 #endif
 	}
 }
