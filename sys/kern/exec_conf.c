@@ -27,7 +27,7 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
- *	$Id: exec_conf.c,v 1.2 1994/01/28 23:47:04 jtc Exp $
+ *	$Id: exec_conf.c,v 1.3 1994/02/05 02:24:56 cgd Exp $
  */
 
 #define	EXEC_SCRIPT			/* XXX */
@@ -60,3 +60,4 @@ struct execsw execsw[] = {
 #endif
 };
 int nexecs = (sizeof execsw / sizeof(*execsw));
+int exec_maxhdrsz;
