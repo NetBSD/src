@@ -1,4 +1,4 @@
-/*	$NetBSD: dnard_machdep.c,v 1.2 2001/11/02 21:51:57 thorpej Exp $	*/
+/*	$NetBSD: dnard_machdep.c,v 1.3 2001/11/09 06:52:26 thorpej Exp $	*/
 
 /*
  * Copyright 1997
@@ -104,9 +104,6 @@ extern void data_abort_handler		__P((trapframe_t *frame));
 extern void prefetch_abort_handler	__P((trapframe_t *frame));
 extern void undefinedinstruction_bounce	__P((trapframe_t *frame));
 extern void consinit		__P((void));
-#ifdef	DDB
-extern void db_machine_init     __P((void));
-#endif
 int	ofbus_match __P((struct device *, struct cfdata *, void *));
 void	ofbus_attach __P((struct device *, struct device *, void *));
 

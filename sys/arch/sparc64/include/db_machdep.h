@@ -1,4 +1,4 @@
-/*	$NetBSD: db_machdep.h,v 1.12 2001/07/07 15:16:13 eeh Exp $ */
+/*	$NetBSD: db_machdep.h,v 1.13 2001/11/09 06:52:25 thorpej Exp $ */
 
 /*
  * Mach Operating System
@@ -136,7 +136,6 @@ db_addr_t	db_branch_taken __P((int inst, db_addr_t pc, db_regs_t *regs));
 
 #define DB_MACHINE_COMMANDS
 
-void db_machine_init __P((void));
 int kdb_trap __P((int, struct trapframe64 *));
 
 /*

@@ -1,4 +1,4 @@
-/*	$NetBSD: ofwgencfg_machdep.c,v 1.15 2001/11/02 21:19:10 thorpej Exp $	*/
+/*	$NetBSD: ofwgencfg_machdep.c,v 1.16 2001/11/09 06:52:25 thorpej Exp $	*/
 
 /*
  * Copyright 1997
@@ -84,9 +84,6 @@ extern void parse_mi_bootargs		__P((char *args));
 extern void data_abort_handler		__P((trapframe_t *frame));
 extern void prefetch_abort_handler	__P((trapframe_t *frame));
 extern void undefinedinstruction_bounce	__P((trapframe_t *frame));
-#ifdef	DDB
-extern void db_machine_init     __P((void));
-#endif
 int	ofbus_match __P((struct device *, struct cfdata *, void *));
 void	ofbus_attach __P((struct device *, struct device *, void *));
 

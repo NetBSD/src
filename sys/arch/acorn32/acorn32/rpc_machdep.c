@@ -1,4 +1,4 @@
-/*	$NetBSD: rpc_machdep.c,v 1.2 2001/11/09 00:34:34 thorpej Exp $	*/
+/*	$NetBSD: rpc_machdep.c,v 1.3 2001/11/09 06:52:25 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2000-2001 Reinoud Zandijk.
@@ -200,7 +200,6 @@ void undefinedinstruction_bounce	__P((trapframe_t *frame));
 static void process_kernel_args	__P((void));
 
 extern void dump_spl_masks	__P((void));
-extern void db_machine_init	__P((void));
 extern void vidcrender_reinit	__P((void));
 extern int vidcrender_blank	__P((struct vconsole *vc, int type));
 
