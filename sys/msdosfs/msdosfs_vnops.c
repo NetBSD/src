@@ -1,4 +1,4 @@
-/*	$NetBSD: msdosfs_vnops.c,v 1.27 1994/12/27 18:00:26 mycroft Exp $	*/
+/*	$NetBSD: msdosfs_vnops.c,v 1.28 1994/12/27 18:36:31 mycroft Exp $	*/
 
 /*-
  * Copyright (C) 1994 Wolfgang Solfrank.
@@ -105,7 +105,6 @@ msdosfs_create(ap)
 	struct denode ndirent;
 	struct denode *dep;
 	struct denode *pdep = VTODE(ap->a_dvp);
-	struct timespec ts;
 	int error;
 
 #ifdef MSDOSFS_DEBUG
@@ -123,8 +122,7 @@ msdosfs_create(ap)
 	}
 
 	bzero(&ndirent, sizeof(ndirent));
-	TIMEVAL_TO_TIMESPEC(&time, &ts);
-	unix2dostime(&ts, &ndirent.de_Date, &ndirent.de_Time);
+	unix2dostime(NULL, &ndirent.de_Date, &ndirent.de_Time);
 
 	/*
 	 * Create a directory entry for the file, then call createde() to
@@ -208,12 +206,9 @@ msdosfs_close(ap)
 {
 	struct vnode *vp = ap->a_vp;
 	struct denode *dep = VTODE(vp);
-	struct timespec ts;
 
-	if (vp->v_usecount > 1 && !(dep->de_flag & DE_LOCKED)) {
-		TIMEVAL_TO_TIMESPEC(&time, &ts);
-		DE_TIMES(dep, &ts);
-	}
+	if (vp->v_usecount > 1 && !(dep->de_flag & DE_LOCKED))
+		DE_TIMES(dep, NULL);
 	return (0);
 }
 
@@ -288,10 +283,8 @@ msdosfs_getattr(ap)
 	u_int cn;
 	struct denode *dep = VTODE(ap->a_vp);
 	struct vattr *vap = ap->a_vap;
-	struct timespec ts;
 
-	TIMEVAL_TO_TIMESPEC(&time, &ts);
-	DE_TIMES(dep, &ts);
+	DE_TIMES(dep, NULL);
 	vap->va_fsid = dep->de_dev;
 	/*
 	 * The following computation of the fileid must be the same as that
@@ -324,7 +317,9 @@ msdosfs_getattr(ap)
 		TIMEVAL_TO_TIMESPEC(&time, &vap->va_mtime);
 #endif
 	vap->va_ctime = vap->va_atime;
-	vap->va_flags = dep->de_flag;
+	vap->va_flags = 0;
+	if ((dep->de_Attributes & ATTR_ARCHIVE) == 0)
+		vap->va_flags |= SF_ARCHIVED;
 	vap->va_gen = 0;
 	vap->va_blocksize = dep->de_pmp->pm_bpcluster;
 	vap->va_bytes = (dep->de_FileSize + dep->de_pmp->pm_crbomask) &
@@ -355,8 +350,7 @@ msdosfs_setattr(ap)
 	    (vap->va_fsid != VNOVAL) || (vap->va_fileid != VNOVAL) ||
 	    (vap->va_blocksize != VNOVAL) || (vap->va_rdev != VNOVAL) ||
 	    (vap->va_bytes != VNOVAL) || (vap->va_gen != VNOVAL) ||
-	    (vap->va_uid != VNOVAL) || (vap->va_gid != VNOVAL) ||
-	    (vap->va_flags != VNOVAL)) {
+	    (vap->va_uid != VNOVAL) || (vap->va_gid != VNOVAL)) {
 #ifdef MSDOSFS_DEBUG
 		printf("msdosfs_setattr(): returning EINVAL\n");
 		printf("    va_type %d, va_nlink %x, va_fsid %x, va_fileid %x\n",
@@ -390,6 +384,16 @@ msdosfs_setattr(ap)
 			dep->de_Attributes &= ~ATTR_READONLY;
 		else
 			dep->de_Attributes |= ATTR_READONLY;
+		dep->de_flag |= DE_UPDATE;
+	}
+	/*
+	 * Allow the `archived' bit to be toggled.
+	 */
+	if (vap->va_flags != VNOVAL) {
+		if (vap->va_flags & SF_ARCHIVED)
+			dep->de_Attributes &= ~ATTR_ARCHIVE;
+		else
+			dep->de_Attributes |= ATTR_ARCHIVE;
 		dep->de_flag |= DE_UPDATE;
 	}
 	return (0);
@@ -511,7 +515,6 @@ msdosfs_write(ap)
 	struct denode *dep = VTODE(vp);
 	struct msdosfsmount *pmp = dep->de_pmp;
 	struct ucred *cred = ap->a_cred;
-	struct timespec ts;
 	
 #ifdef MSDOSFS_DEBUG
 	printf("msdosfs_write(vp %08x, uio %08x, ioflag %08x, cred %08x\n",
@@ -575,6 +578,9 @@ msdosfs_write(ap)
 		if (error = deextend(dep, uio->uio_offset, cred))
 			return (error);
 	}
+
+	dep->de_Attributes |= ATTR_ARCHIVE;
+	dep->de_flag |= DE_UPDATE;
 
 	/*
 	 * Remember some values in case the write fails.
@@ -690,10 +696,8 @@ errexit:
 			if (uio->uio_resid != resid)
 				error = 0;
 		}
-	} else {
-		TIMEVAL_TO_TIMESPEC(&time, &ts);
-		error = deupdat(dep, &ts, 1);
-	}
+	} else
+		error = deupdat(dep, NULL, 1);
 	return (error);
 }
 
@@ -755,11 +759,9 @@ msdosfs_fsync(ap)
 	} */ *ap;
 {
 	struct vnode *vp = ap->a_vp;
-	struct timespec ts;
 
 	vflushbuf(vp, ap->a_waitfor == MNT_WAIT);
-	TIMEVAL_TO_TIMESPEC(&time, &ts);
-	return (deupdat(VTODE(vp), &ts, ap->a_waitfor == MNT_WAIT));
+	return (deupdat(VTODE(vp), NULL, ap->a_waitfor == MNT_WAIT));
 }
 
 /*
@@ -1161,7 +1163,6 @@ msdosfs_mkdir(ap)
 	struct denode ndirent;
 	struct denode *dep;
 	struct denode *pdep = VTODE(ap->a_dvp);
-	struct timespec ts;
 	int error;
 	int bn;
 	u_long newcluster;
@@ -1186,8 +1187,7 @@ msdosfs_mkdir(ap)
 		goto bad2;
 
 	bzero(&ndirent, sizeof(ndirent));
-	TIMEVAL_TO_TIMESPEC(&time, &ts);
-	unix2dostime(&ts, &ndirent.de_Date, &ndirent.de_Time);
+	unix2dostime(NULL, &ndirent.de_Date, &ndirent.de_Time);
 
 	/*
 	 * Now fill the cluster with the "." and ".." entries. And write

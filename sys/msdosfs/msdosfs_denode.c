@@ -1,4 +1,4 @@
-/*	$NetBSD: msdosfs_denode.c,v 1.10 1994/09/28 11:31:28 mycroft Exp $	*/
+/*	$NetBSD: msdosfs_denode.c,v 1.11 1994/12/27 18:36:27 mycroft Exp $	*/
 
 /*-
  * Copyright (C) 1994 Wolfgang Solfrank.
@@ -381,7 +381,6 @@ detrunc(dep, length, flags, cred, p)
 	int isadir = dep->de_Attributes & ATTR_DIRECTORY;
 	struct buf *bp;
 	struct msdosfsmount *pmp = dep->de_pmp;
-	struct timespec ts;
 
 #ifdef MSDOSFS_DEBUG
 	printf("detrunc(): file %s, length %ld, flags %d\n", dep->de_Name, length, flags);
@@ -470,8 +469,7 @@ detrunc(dep, length, flags, cred, p)
 	dep->de_flag |= DE_UPDATE;
 	vflags = (length > 0 ? V_SAVE : 0) | V_SAVEMETA;
 	vinvalbuf(DETOV(dep), vflags, cred, p, 0, 0);
-	TIMEVAL_TO_TIMESPEC(&time, &ts);
-	allerror = deupdat(dep, &ts, 1);
+	allerror = deupdat(dep, NULL, 1);
 #ifdef MSDOSFS_DEBUG
 	printf("detrunc(): allerror %d, eofentry %d\n",
 	       allerror, eofentry);
@@ -515,7 +513,6 @@ deextend(dep, length, cred)
 	struct msdosfsmount *pmp = dep->de_pmp;
 	u_long count;
 	int error;
-	struct timespec ts;
 	
 	/*
 	 * The root of a DOS filesystem cannot be extended.
@@ -551,8 +548,7 @@ deextend(dep, length, cred)
 		
 	dep->de_flag |= DE_UPDATE;
 	dep->de_FileSize = length;
-	TIMEVAL_TO_TIMESPEC(&time, &ts);
-	return (deupdat(dep, &ts, 1));
+	return (deupdat(dep, NULL, 1));
 }
 
 /*
@@ -640,7 +636,6 @@ msdosfs_inactive(ap)
 	struct denode *dep = VTODE(vp);
 	int error;
 	extern int prtactive;
-	struct timespec ts;
 	
 #ifdef MSDOSFS_DEBUG
 	printf("msdosfs_inactive(): dep %08x, de_Name[0] %x\n", dep, dep->de_Name[0]);
@@ -682,10 +677,8 @@ msdosfs_inactive(ap)
 		dep->de_Name[0] = SLOT_DELETED;
 		dep->de_flag |= DE_UPDATE;
 	}
-	if (dep->de_flag & DE_UPDATE) {
-		TIMEVAL_TO_TIMESPEC(&time, &ts);
-		deupdat(dep, &ts, 0);
-	}
+	if (dep->de_flag & DE_UPDATE)
+		deupdat(dep, NULL, 0);
 	VOP_UNLOCK(vp);
 	/*
 	 * If we are done with the denode, reclaim it
