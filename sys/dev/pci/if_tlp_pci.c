@@ -1,4 +1,4 @@
-/*	$NetBSD: if_tlp_pci.c,v 1.59 2002/03/13 04:15:05 chs Exp $	*/
+/*	$NetBSD: if_tlp_pci.c,v 1.60 2002/03/13 05:05:38 chs Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2000 The NetBSD Foundation, Inc.
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_tlp_pci.c,v 1.59 2002/03/13 04:15:05 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_tlp_pci.c,v 1.60 2002/03/13 05:05:38 chs Exp $");
 
 #include "opt_tlp.h"
 
@@ -230,6 +230,7 @@ const struct tlp_pci_quirks tlp_pci_21140_quirks[] = {
 	{ tlp_pci_dec_quirks,		{ 0x08, 0x00, 0x2b } },
 	{ tlp_pci_dec_quirks,		{ 0x00, 0x00, 0xf8 } },
 	{ tlp_pci_asante_21140_quirks,	{ 0x00, 0x00, 0x94 } },
+	{ tlp_pci_adaptec_quirks,	{ 0x00, 0x00, 0x92 } },
 	{ tlp_pci_adaptec_quirks,	{ 0x00, 0x00, 0xd1 } },
 	{ NULL,				{ 0, 0, 0 } }
 };
