@@ -31,7 +31,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)unistd.h	5.13 (Berkeley) 6/17/91
- *	$Id: unistd.h,v 1.19 1994/05/23 00:32:32 cgd Exp $
+ *	$Id: unistd.h,v 1.20 1994/06/08 11:59:55 mycroft Exp $
  */
 
 #ifndef _UNISTD_H_
@@ -104,7 +104,6 @@ ssize_t	 write __P((int, const void *, size_t));
 #include <sys/time.h>
 
 int	 acct __P((const char *));
-int	 async_daemon __P((void));
 char	*brk __P((const char *));
 int	 chroot __P((const char *));
 char	*crypt __P((const char *, const char *));
@@ -130,7 +129,7 @@ int	 initgroups __P((const char *, int));
 int	 mknod __P((const char *, mode_t, dev_t));
 int	 mkstemp __P((char *));
 char	*mktemp __P((char *));
-int	 nfssvc __P((int));
+int	 nfssvc __P((int, void *));
 int	 nice __P((int));
 void	 psignal __P((u_int, const char *));
 extern const char *const sys_siglist[];
