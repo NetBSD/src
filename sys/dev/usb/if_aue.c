@@ -1,4 +1,4 @@
-/*	$NetBSD: if_aue.c,v 1.76 2002/06/25 01:07:38 nathanw Exp $	*/
+/*	$NetBSD: if_aue.c,v 1.77 2002/07/08 09:00:56 rh Exp $	*/
 /*
  * Copyright (c) 1997, 1998, 1999, 2000
  *	Bill Paul <wpaul@ee.columbia.edu>.  All rights reserved.
@@ -77,7 +77,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_aue.c,v 1.76 2002/06/25 01:07:38 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_aue.c,v 1.77 2002/07/08 09:00:56 rh Exp $");
 
 #if defined(__NetBSD__)
 #include "opt_inet.h"
@@ -219,6 +219,7 @@ Static const struct aue_type aue_devs[] = {
  {{ USB_VENDOR_SIEMENS,		USB_PRODUCT_SIEMENS_SPEEDSTREAM}, PII },
  {{ USB_VENDOR_SMARTBRIDGES,	USB_PRODUCT_SMARTBRIDGES_SMARTNIC},PII },
  {{ USB_VENDOR_SMC,		USB_PRODUCT_SMC_2202USB},	  0 },
+ {{ USB_VENDOR_SMC,		USB_PRODUCT_SMC_2206USB},	  PII },
  {{ USB_VENDOR_SOHOWARE,	USB_PRODUCT_SOHOWARE_NUB100},	  0 },
 };
 #define aue_lookup(v, p) ((struct aue_type *)usb_lookup(aue_devs, v, p))
