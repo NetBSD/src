@@ -1,4 +1,4 @@
-/*	$NetBSD: fpu_fmovecr.c,v 1.1 1995/11/03 04:47:08 briggs Exp $	*/
+/*	$NetBSD: fpu_fmovecr.c,v 1.2 1995/11/05 00:35:23 briggs Exp $	*/
 
 /*
  * Copyright (c) 1995  Ken Nakata
@@ -108,7 +108,7 @@ fpu_emul_fmovecr(fe, insn)
     (void)fpu_const(&fe->fe_f3, offset);
     (void)fpu_upd_fpsr(fe, &fe->fe_f3);
     fpu_implode(fe, &fe->fe_f3, FTYPE_EXT, &fpreg[dstreg * 3]);
-    if (debug_level & DL_RESULT) {
+    if (fpu_debug_level & DL_RESULT) {
 	printf("  fpu_emul_fmovecr: result %08x,%08x,%08x to FP%d\n",
 	       fpreg[dstreg * 3], fpreg[dstreg * 3 + 1], fpreg[dstreg * 3 + 2],
 	       dstreg);

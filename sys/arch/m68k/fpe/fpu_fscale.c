@@ -1,4 +1,4 @@
-/*	$NetBSD: fpu_fscale.c,v 1.1 1995/11/03 04:47:09 briggs Exp $	*/
+/*	$NetBSD: fpu_fscale.c,v 1.2 1995/11/05 00:35:25 briggs Exp $	*/
 
 /*
  * Copyright (c) 1995 Ken Nakata
@@ -63,7 +63,7 @@ fpu_emul_fscale(fe, insn)
     fpregs = &(fe->fe_fpframe->fpf_regs[0]);
     /* clear all exceptions and conditions */
     fpsr = fe->fe_fpsr & ~FPSR_EXCP & ~FPSR_CCB;
-    if (debug_level & DL_FSCALE) {
+    if (fpu_debug_level & DL_FSCALE) {
 	printf("  fpu_emul_fscale: FPSR = %08x, FPCR = %08x\n", fpsr, fe->fe_fpcr);
     }
 
@@ -76,12 +76,12 @@ fpu_emul_fscale(fe, insn)
 
     /* get the source operand */
     if ((word1 & 0x4000) == 0) {
-	if (debug_level & DL_FSCALE) {
+	if (fpu_debug_level & DL_FSCALE) {
 	    printf("  fpu_emul_fscale: FP%d op FP%d => FP%d\n",
 		   format, regnum, regnum);
 	}
 	/* the operand is an FP reg */
-	if (debug_level & DL_FSCALE) {
+	if (fpu_debug_level & DL_FSCALE) {
 	    printf("  fpu_emul_scale: src opr FP%d=%08x%08x%08x\n",
 		   format, fpregs[format*3], fpregs[format*3+1],
 		   fpregs[format*3+2]);
@@ -109,13 +109,13 @@ fpu_emul_fscale(fe, insn)
 	/* Get effective address. (modreg=opcode&077) */
 	sig = fpu_decode_ea(frame, insn, &insn->is_ea0, insn->is_opcode);
 	if (sig) {
-	    if (debug_level & DL_FSCALE) {
+	    if (fpu_debug_level & DL_FSCALE) {
 		printf("  fpu_emul_fscale: error in decode_ea\n");
 	    }
 	    return sig;
 	}
 
-	if (debug_level & DL_FSCALE) {
+	if (fpu_debug_level & DL_FSCALE) {
 	    printf("  fpu_emul_fscale: addr mode = ");
 	    flags = insn->is_ea0.ea_flags;
 	    regname = (insn->is_ea0.ea_regnum & 8) ? 'a' : 'd';
@@ -145,7 +145,7 @@ fpu_emul_fscale(fe, insn)
 	}
 	fpu_load_ea(frame, insn, &insn->is_ea0, (char*)buf);
 
-	if (debug_level & DL_FSCALE) {
+	if (fpu_debug_level & DL_FSCALE) {
 	    printf(" fpu_emul_fscale: src = %08x%08x%08x, siz = %d\n",
 		   buf[0], buf[1], buf[2], insn->is_datasize);
 	}
@@ -320,7 +320,7 @@ fpu_emul_fscale(fe, insn)
     /* update fpsr according to the result of operation */
     fe->fe_fpframe->fpf_fpsr = fe->fe_fpsr = fpsr;
 
-    if (debug_level & DL_FSCALE) {
+    if (fpu_debug_level & DL_FSCALE) {
 	printf("  fpu_emul_fscale: FPSR = %08x, FPCR = %08x\n",
 	       fe->fe_fpsr, fe->fe_fpcr);
     }
