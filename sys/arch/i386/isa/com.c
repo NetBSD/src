@@ -32,7 +32,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)com.c	7.5 (Berkeley) 5/16/91
- *	$Id: com.c,v 1.12.2.2 1993/09/30 17:32:55 mycroft Exp $
+ *	$Id: com.c,v 1.12.2.3 1993/09/30 20:18:59 mycroft Exp $
  */
 
 /*
@@ -55,7 +55,10 @@
 #include "sys/device.h"
 
 #include "machine/cpu.h"
+
 #include "i386/isa/isavar.h"
+#include "i386/isa/isa.h"
+#include "i386/isa/icu.h"
 #include "i386/isa/comreg.h"
 #include "i386/isa/ic/ns16550.h"
 
@@ -150,10 +153,17 @@ comprobe(parent, cf, aux)
 	struct	isa_attach_args *ia = aux;
 	u_short	iobase = ia->ia_iobase;
 
+	if (iobase == IOBASEUNK)
+		return 0;
+
 	if (!_comprobe(iobase))
 		return 0;
 
-	/* XXXX isa_discoverintr */
+	if (ia->ia_irq == IRQUNK) {
+		ia->ia_irq = isa_discoverintr(comforceintr, aux);
+		if (ia->ia_irq == IRQNONE)
+			return 0;
+	}
 
 	ia->ia_iosize = COM_NPORTS;
 	ia->ia_drq = DRQUNK;
@@ -203,6 +213,11 @@ comattach(parent, self, aux)
 		printf(": NS16550\n");
 	} else
 		printf(": NS8250 or NS16450\n");
+	isa_establish(&sc->sc_id, &sc->sc_dev);
+
+	sc->sc_ih.ih_fun = comintr;
+	sc->sc_ih.ih_arg = sc;
+	intr_establish(ia->ia_irq, &sc->sc_ih, DV_TTY);
 
 	outb(iobase + com_ier, 0);
 	outb(iobase + com_mcr, MCR_IENABLE);
@@ -216,8 +231,6 @@ comattach(parent, self, aux)
 		comconsinit = 0;
 		sc->sc_flags |= COM_SOFTCAR;
 	}
-
-	/* XXXX isa_establishintr */
 }
 
 int

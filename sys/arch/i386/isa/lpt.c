@@ -46,7 +46,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	$Id: lpt.c,v 1.7.4.3 1993/09/30 17:33:01 mycroft Exp $
+ *	$Id: lpt.c,v 1.7.4.4 1993/09/30 20:19:06 mycroft Exp $
  */
 
 /*
@@ -60,11 +60,12 @@
 #include "buf.h"
 #include "kernel.h"
 #include "ioctl.h"
-#include "tty.h"
 #include "uio.h"
 #include "sys/device.h"
 
 #include "i386/isa/isavar.h"
+#include "i386/isa/isa.h"
+#include "i386/isa/icu.h"
 #include "i386/isa/lptreg.h"
 
 #define	TIMEOUT		hz*16	/* wait up to 4 seconds for a ready */
@@ -179,6 +180,9 @@ lptprobe(parent, cf, aux)
 	u_char	data;
 	int	i;
 
+	if (iobase == IOBASEUNK)
+		return 0;
+
 	for (;;) {
 		data = 0x55;				/* Alternating zeros */
 		if (!lpt_port_test(port, data, mask))
@@ -209,7 +213,9 @@ lptprobe(parent, cf, aux)
 	outb(iobase + lpt_data, 0);
 	outb(iobase + lpt_control, 0);
 
-	/* XXXX isa_discoverintr */
+	if (ia->ia_irq == IRQUNK)
+		ia->ia_irq = isa_discoverintr(lptforceintr, aux);
+	/* okay if we don't have an irq; will force polling */
 
 	ia->ia_iosize = LPT_NPORTS;
 	ia->ia_drq = DRQUNK;
@@ -232,7 +238,14 @@ lptattach(parent, self, aux)
 	sc->sc_state = 0;
 	outb(iobase + lpt_control, LPC_NINIT);
 
-	/* XXXX isa_establishintr */
+	printf(": %sparallel port\n", irq == IRQNONE ? "polled " : "");
+	isa_establish(&sc->sc_id, &sc->sc_dev);
+
+	if (irq != IRQNONE) {
+		sc->sc_ih.ih_fun = lptintr;
+		sc->sc_ih.ih_arg = sc;
+		intr_establish(ia->ia_irq, &sc->sc_ih, DV_TTY);
+	}
 }
 
 /*
@@ -257,7 +270,7 @@ lptopen(dev, flag)
 	if (!sc)
 		return ENXIO;
 
-	if (sc->sc_irq == IRQUNK && (flags & LPT_NOINTR) == 0)
+	if (sc->sc_irq == IRQNONE && (flags & LPT_NOINTR) == 0)
 		return ENXIO;
 
 	if (sc->sc_state)
