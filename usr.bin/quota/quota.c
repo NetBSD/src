@@ -1,4 +1,4 @@
-/*	$NetBSD: quota.c,v 1.16 1997/10/19 13:16:42 lukem Exp $	*/
+/*	$NetBSD: quota.c,v 1.17 1997/10/20 10:37:09 mrg Exp $	*/
 
 /*
  * Copyright (c) 1980, 1990, 1993
@@ -46,7 +46,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1990, 1993\n\
 #if 0
 static char sccsid[] = "@(#)quota.c	8.4 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: quota.c,v 1.16 1997/10/19 13:16:42 lukem Exp $");
+__RCSID("$NetBSD: quota.c,v 1.17 1997/10/20 10:37:09 mrg Exp $");
 #endif
 #endif /* not lint */
 
@@ -523,6 +523,7 @@ ufshasquota(fs, type, qfnamep)
 	static char buf[BUFSIZ];
 	char *opt, *cp;
 
+	cp = NULL;
 	if (!initname) {
 		(void)snprintf(usrname, sizeof usrname, "%s%s",
 		    qfextension[USRQUOTA], qfname);
