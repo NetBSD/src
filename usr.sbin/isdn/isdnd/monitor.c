@@ -33,7 +33,7 @@
  *	i4b daemon - network monitor server module
  *	------------------------------------------
  *
- *	$Id: monitor.c,v 1.2 2002/03/18 22:49:57 martin Exp $
+ *	$Id: monitor.c,v 1.3 2002/03/24 20:37:48 martin Exp $
  *
  * $FreeBSD$
  *
@@ -644,7 +644,7 @@ monitor_handle_connect(int sockfd, int is_local)
 		u_int8_t ictrl[I4B_MON_ICTRL_SIZE];
 
 		I4B_PREP_CMD(ictrl, I4B_MON_ICTRL_CODE);
-		I4B_PUT_STR(ictrl, I4B_MON_ICTRL_NAME, name_of_controller(isdn_ctrl_tab[i].ctrl_type, isdn_ctrl_tab[i].card_type));
+		I4B_PUT_STR(ictrl, I4B_MON_ICTRL_NAME, isdn_ctrl_tab[i].controller);
 		I4B_PUT_2B(ictrl, I4B_MON_ICTRL_BUSID, 0);
 		I4B_PUT_4B(ictrl, I4B_MON_ICTRL_FLAGS, 0);
 		I4B_PUT_4B(ictrl, I4B_MON_ICTRL_NCHAN, 2);
