@@ -1,11 +1,11 @@
-#	$NetBSD: GENERIC,v 1.66 2000/05/26 00:22:06 tsutsui Exp $
+#	$NetBSD: GENERIC,v 1.67 2000/06/09 16:57:37 wrstuden Exp $
 #
 #	GENERIC -- everything that's currently supported
 #
 
 include		"arch/macppc/conf/std.macppc"
 
-#ident 		"GENERIC-$Revision: 1.66 $"
+#ident 		"GENERIC-$Revision: 1.67 $"
 
 maxusers	32
 
@@ -172,6 +172,9 @@ sqphy*	at mii? phy ?			# Seeq 80220/80221/80223 PHYs
 tlphy*	at mii? phy ?			# ThunderLAN PHYs
 tqphy*	at mii? phy ?			# TDK Semiconductor PHYs
 ukphy*	at mii? phy ?			# generic unknown PHYs
+
+#PCI serial interfaces
+#cz*	at pci? dev ? function ?	# Cyclades-Z multi-port serial boards
 
 bm*	at obio?			# bmac ethernet
 mc*	at obio?			# MACE ethernet
