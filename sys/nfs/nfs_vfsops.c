@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_vfsops.c,v 1.47 1996/05/23 22:47:29 fvdl Exp $	*/
+/*	$NetBSD: nfs_vfsops.c,v 1.48 1996/06/14 22:22:33 cgd Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993, 1995
@@ -438,8 +438,6 @@ nfs_mount_diskless(ndmntp, mntname, mntflag, vpp)
 
 	/* Get mbuf for server sockaddr. */
 	m = m_get(M_WAIT, MT_SONAME);
-	if (m == NULL)
-		panic("nfs_mountroot: mget soname for %s", mntname);
 	bcopy((caddr_t)args.addr, mtod(m, caddr_t),
 	      (m->m_len = args.addr->sa_len));
 

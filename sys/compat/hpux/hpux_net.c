@@ -1,4 +1,4 @@
-/*	$NetBSD: hpux_net.c,v 1.12 1995/10/07 06:26:37 mycroft Exp $	*/
+/*	$NetBSD: hpux_net.c,v 1.13 1996/06/14 22:21:12 cgd Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -215,8 +215,6 @@ hpux_sys_setsockopt(p, v, retval)
 		return (EINVAL);
 	if (SCARG(uap, val)) {
 		m = m_get(M_WAIT, MT_SOOPTS);
-		if (m == NULL)
-			return (ENOBUFS);
 		if (error = copyin(SCARG(uap, val), mtod(m, caddr_t),
 		    (u_int)SCARG(uap, valsize))) {
 			(void) m_free(m);
@@ -230,12 +228,10 @@ hpux_sys_setsockopt(p, v, retval)
 		} else
 			socksetsize(SCARG(uap, valsize), m);
 	} else if (SCARG(uap, name) == ~SO_LINGER) {
+		SCARG(uap, name) = SO_LINGER;
 		m = m_get(M_WAIT, MT_SOOPTS);
-		if (m) {
-			SCARG(uap, name) = SO_LINGER;
-			mtod(m, struct linger *)->l_onoff = 0;
-			m->m_len = sizeof(struct linger);
-		}
+		mtod(m, struct linger *)->l_onoff = 0;
+		m->m_len = sizeof(struct linger);
 	}
 	return (sosetopt((struct socket *)fp->f_data, SCARG(uap, level),
 	    SCARG(uap, name), m));
@@ -259,8 +255,6 @@ hpux_sys_setsockopt2(p, v, retval)
 		return (EINVAL);
 	if (SCARG(uap, val)) {
 		m = m_get(M_WAIT, MT_SOOPTS);
-		if (m == NULL)
-			return (ENOBUFS);
 		if (error = copyin(SCARG(uap, val), mtod(m, caddr_t),
 		    (u_int)SCARG(uap, valsize))) {
 			(void) m_free(m);

@@ -1,4 +1,4 @@
-/*	$NetBSD: ultrix_misc.c,v 1.23 1996/04/07 17:23:04 jonathan Exp $	*/
+/*	$NetBSD: ultrix_misc.c,v 1.24 1996/06/14 22:21:36 cgd Exp $	*/
 
 /*
  * Copyright (c) 1995
@@ -363,8 +363,6 @@ ultrix_sys_setsockopt(p, v, retval)
 #define	SO_DONTLINGER (~SO_LINGER)
 	if (SCARG(uap, name) == SO_DONTLINGER) {
 		m = m_get(M_WAIT, MT_SOOPTS);
-		if (m == NULL)
-			return (ENOBUFS);
 		mtod(m, struct linger *)->l_onoff = 0;
 		m->m_len = sizeof(struct linger);
 		return (sosetopt((struct socket *)fp->f_data, SCARG(uap, level),
@@ -374,8 +372,6 @@ ultrix_sys_setsockopt(p, v, retval)
 		return (EINVAL);
 	if (SCARG(uap, val)) {
 		m = m_get(M_WAIT, MT_SOOPTS);
-		if (m == NULL)
-			return (ENOBUFS);
 		if ((error = copyin(SCARG(uap, val), mtod(m, caddr_t),
 				    (u_int)SCARG(uap, valsize))) != 0) {
 			(void) m_free(m);
