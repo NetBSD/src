@@ -50,7 +50,7 @@
 
 #ifndef lint
 static char copyright[] =
-"$Id: comapi.c,v 1.6 2001/04/06 19:01:07 mellon Exp $ Copyright (c) 1999-2000 The Internet Software Consortium.  All rights reserved.\n";
+"$Id: comapi.c,v 1.7 2001/05/26 00:37:45 christos Exp $ Copyright (c) 1999-2000 The Internet Software Consortium.  All rights reserved.\n";
 #endif /* not lint */
 
 #include "dhcpd.h"
@@ -111,9 +111,7 @@ void dhcp_common_objects_setup ()
 		log_fatal ("Can't register shared network object type: %s",
 			   isc_result_totext (status));
 
-#if !defined (SMALL)
 	interface_setup ();
-#endif
 }
 
 isc_result_t dhcp_group_set_value  (omapi_object_t *h,
