@@ -1,4 +1,4 @@
-# $NetBSD: md_share,v 1.98 2000/08/25 06:33:46 jun Exp $
+# $NetBSD: md_share,v 1.99 2000/09/24 19:57:21 is Exp $
 ./usr/share/man/cat1/atari/edahdi.0
 ./usr/share/man/cat1/atari/msconfig.0
 ./usr/share/man/cat1/grfinfo.0
@@ -247,6 +247,7 @@
 ./usr/share/man/cat8/alpha/setnetbootinfo.0
 ./usr/share/man/cat8/amiga/MAKEDEV.0
 ./usr/share/man/cat8/amiga/binpatch.0
+./usr/share/man/cat8/amiga/boot.0
 ./usr/share/man/cat8/amiga/installboot.0
 ./usr/share/man/cat8/amiga/makedev.0
 ./usr/share/man/cat8/arc/MAKEDEV.0
