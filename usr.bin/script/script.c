@@ -1,4 +1,4 @@
-/*	$NetBSD: script.c,v 1.5 1997/10/19 22:57:49 lukem Exp $	*/
+/*	$NetBSD: script.c,v 1.6 1998/04/02 11:08:34 kleink Exp $	*/
 
 /*
  * Copyright (c) 1980, 1992, 1993
@@ -43,7 +43,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1992, 1993\n\
 #if 0
 static char sccsid[] = "@(#)script.c	8.1 (Berkeley) 6/6/93";
 #endif
-__RCSID("$NetBSD: script.c,v 1.5 1997/10/19 22:57:49 lukem Exp $");
+__RCSID("$NetBSD: script.c,v 1.6 1998/04/02 11:08:34 kleink Exp $");
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -61,6 +61,7 @@ __RCSID("$NetBSD: script.c,v 1.5 1997/10/19 22:57:49 lukem Exp $");
 #include <stdlib.h>
 #include <string.h>
 #include <termios.h>
+#include <time.h>
 #include <tzfile.h>
 #include <unistd.h>
 #include <util.h>
