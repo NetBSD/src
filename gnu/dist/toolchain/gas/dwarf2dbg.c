@@ -122,7 +122,7 @@ struct line_seg {
 static struct line_seg *all_segs;
 
 struct file_entry {
-  char *filename;
+  const char *filename;
   unsigned int dir;
 };
 
