@@ -1,4 +1,4 @@
-/*	$NetBSD: systm.h,v 1.62 1996/11/18 05:18:04 jonathan Exp $	*/
+/*	$NetBSD: systm.h,v 1.63 1997/01/09 16:57:14 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1988, 1991, 1993
@@ -261,6 +261,7 @@ void	kmstartup __P((void));
 /* debugger entry points */
 void	Debugger __P((void));	/* in DDB only */
 int	read_symtab_from_file __P((struct proc *,struct vnode *,const char *));
+extern	int db_onpanic;
 #endif	/* DDB */
 
 #endif	/* !_SYS_SYSTM_H_ */
