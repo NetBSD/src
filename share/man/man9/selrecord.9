@@ -1,4 +1,4 @@
-.\"     $NetBSD: selrecord.9,v 1.1 2003/11/16 15:07:25 yamt Exp $
+.\"     $NetBSD: selrecord.9,v 1.2 2003/11/16 16:17:13 wiz Exp $
 .\"
 .\" Copyright (C) 2002 Chad David <davidc@acns.ab.ca>. All rights reserved.
 .\"
@@ -34,7 +34,7 @@
 .Sh NAME
 .Nm selrecord ,
 .Nm selwakeup
-.Nd "record and wakeup select requests"
+.Nd record and wakeup select requests
 .Sh SYNOPSIS
 .In sys/param.h
 .In sys/select.h
@@ -48,24 +48,24 @@ and
 .Fn selwakeup
 are the two central functions used by
 .Xr select 2 ,
-.Xr poll 2
+.Xr poll 2 ,
 and the objects that are being selected on.
-They handle the task of recording which threads are waiting on which objects
-and the waking of the proper threads when an event of interest occurs on an
-object.
+They handle the task of recording which threads are waiting on
+which objects and the waking of the proper threads when an event
+of interest occurs on an object.
 .Pp
 .Fn selrecord
-records that the calling thread is interested in events related to a given
-object.
-If another thread is already waiting on the object a collision will be flagged
-in
-.Fa sip
+records that the calling thread is interested in events related to
+a given object.
+If another thread is already waiting on the object, a collision will
+be flagged in
+.Fa sip ,
 which will be later dealt with by
 .Fn selwakeup .
 .Pp
 .Fn selwakeup
-is called by the underlying object handling code in order to notify any waiting
-threads that an event of interest has occurred.
+is called by the underlying object handling code in order to notify
+any waiting threads that an event of interest has occurred.
 If a collision has occurred,
 .Fn selwakeup
 will increment
@@ -73,8 +73,8 @@ will increment
 and wakeup all threads waiting on the global variable
 .Va selwait
 so that they can handle it.
-If the thread waiting on the object is not currently sleeping or the wait
-channel is not
+If the thread waiting on the object is not currently sleeping or
+the wait channel is not
 .Va selwait ,
 .Fn selwakeup
 will clear the
