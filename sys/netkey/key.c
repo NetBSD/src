@@ -1,4 +1,4 @@
-/*	$NetBSD: key.c,v 1.47 2001/08/06 10:25:01 itojun Exp $	*/
+/*	$NetBSD: key.c,v 1.48 2001/08/12 11:48:27 itojun Exp $	*/
 /*	$KAME: key.c,v 1.203 2001/07/28 03:12:18 itojun Exp $	*/
 
 /*
@@ -7400,7 +7400,7 @@ key_sysctl(name, namelen, oldp, oldlenp, newp, newlen)
 	if (name[0] >= KEYCTL_MAXID)
 		return EOPNOTSUPP;
 	switch (name[0]) {
-#ifdef KEY_DEBUG
+#ifdef IPSEC_DEBUG
 	case KEYCTL_DEBUG_LEVEL:
 		return sysctl_int(oldp, oldlenp, newp, newlen,
 		    &key_debug_level);
