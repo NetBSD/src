@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_machdep.c,v 1.5 1999/01/19 18:18:43 thorpej Exp $ */
+/*	$NetBSD: sys_machdep.c,v 1.6 1999/02/26 21:34:38 is Exp $ */
 
 /*
  * This file was taken from mvme68k/mvme68k/sys_machdep.c
@@ -139,10 +139,12 @@ vdoualarm(arg)
  * do pages, above that we do the entire cache.
  */
 /*ARGSUSED1*/
-cachectl(req, addr, len)
-	int req;
-	caddr_t	addr;
+int
+cachectl1(req, addr, len, p)
+	unsigned long req;
+	vaddr_t	addr;
 	int len;
+	struct proc *p;
 {
 	int error = 0;
 
@@ -150,11 +152,11 @@ cachectl(req, addr, len)
 	if (mmutype == MMU_68040) {
 		int inc = 0;
 		int pa = 0, doall = 0;
-		caddr_t end;
+		vaddr_t end;
 #ifdef COMPAT_HPUX
 		extern struct emul emul_hpux;
 
-		if ((curproc->p_emul == &emul_hpux) &&
+		if ((p->p_emul == &emul_hpux) &&
 		    len != 16 && len != NBPG)
 			doall = 1;
 #endif
@@ -166,10 +168,10 @@ cachectl(req, addr, len)
 		if (!doall) {
 			end = addr + len;
 			if (len <= 1024) {
-				addr = (caddr_t)((int)addr & ~0xF);
+				addr = addr & ~0xF;
 				inc = 16;
 			} else {
-				addr = (caddr_t)((int)addr & ~PGOFSET);
+				addr = addr & ~PGOFSET;
 				inc = NBPG;
 			}
 		}
@@ -181,8 +183,8 @@ cachectl(req, addr, len)
 			 */
 			if (!doall &&
 			    (pa == 0 || ((int)addr & PGOFSET) == 0)) {
-				pa = pmap_extract(curproc->p_vmspace->vm_map.pmap,
-						  (vaddr_t)addr);
+				pa = pmap_extract(p->p_vmspace->vm_map.pmap,
+						  addr);
 				if (pa == 0)
 					doall = 1;
 			}
