@@ -1,4 +1,4 @@
-/*	$NetBSD: if_lmc_media.c,v 1.10 2001/08/27 17:47:35 eeh Exp $	*/
+/*	$NetBSD: if_lmc_media.c,v 1.11 2001/11/01 17:32:33 uch Exp $	*/
 
 /*-
  * Copyright (c) 1997-1999 LAN Media Corporation (LMC)
@@ -1268,10 +1268,12 @@ lmc_set_protocol(lmc_softc_t * const sc, lmc_ctl_t *ctl)
 		}
 	}
 
+#if NBPFILTER > 0
 	/* just in case we are going to change encap type */
 	if ((sc->lmc_sppp.pp_flags & PP_CISCO) != 0)
 		bpf_change_type(&sc->lmc_if, DLT_HDLC, PPP_HEADER_LEN);
 	else
 		bpf_change_type(&sc->lmc_if, DLT_PPP, PPP_HEADER_LEN);
+#endif /* NBPFILTER > 0 */
 #endif
 }
