@@ -1,4 +1,4 @@
-.\"	$NetBSD: audio.4,v 1.7 1997/07/30 22:40:43 augustss Exp $
+.\"	$NetBSD: audio.4,v 1.8 1997/08/08 00:04:38 augustss Exp $
 .\"
 .\" Copyright (c) 1996 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -222,7 +222,7 @@ Get or set audio information as encoded in the audio_info structure.
 typedef struct audio_info {
 	struct	audio_prinfo play;   /* info for play (output) side */
 	struct	audio_prinfo record; /* info for record (input) side */
-	u_int	buffersize;          /* total size audio buffer */
+	u_int	buffersize;          /* total size of audio buffer */
 	/* BSD extensions */
 	u_int	blocksize;	/* H/W read/write block size */
 	u_int	hiwat;		/* output high water mark */
@@ -271,8 +271,8 @@ set those high- and low-water marks (in audio blocks).
 is the total size of the audio buffer.  The buffer size divided
 by the 
 .Va blocksize
-gives the maximim value for
-.Va hiwat.
+gives the maximum value for
+.Va hiwat .
 Currently the
 .Va blocksize
 can only be read and not set.
@@ -283,6 +283,14 @@ the hardware driver have the opportunity to adjust this block size to
 get it within implementation-required limits.  Upon return from an
 .Dv AUDIO_SETINFO
 call, the actual blocksize set is returned in this field.
+Normally the 
+.Va blocksize
+is calculated to correspond to 50ms of sound and it is recalculated
+when the encoding parameter changes, but if the
+.Va blocksize
+is set explicitely this value becomes sticky, i.e., it is remains
+even when the encoding is changed.  The stickyness can be cleared
+by reopening the device or performing an AUDIO_FLUSH.
 .Pp
 .Va backlog
 is currently unused.
