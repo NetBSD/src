@@ -1,10 +1,10 @@
-/*	$NetBSD: usbdevs_data.h,v 1.18 1999/01/07 22:30:36 augustss Exp $	*/
+/*	$NetBSD: usbdevs_data.h,v 1.19 1999/01/08 11:19:57 augustss Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: usbdevs,v 1.18 1999/01/07 01:51:12 augustss Exp 
+ *	NetBSD: usbdevs,v 1.19 1999/01/08 11:18:38 augustss Exp 
  */
 
 /*
@@ -68,18 +68,6 @@ struct usb_knowndev usb_knowndevs[] = {
 	    0,
 	    "CATC",
 	    "Andromeda hub",
-	},
-	{
-	    USB_VENDOR_NANAO, USB_PRODUCT_NANAO_HUB,
-	    0,
-	    "Nanao",
-	    "hub",
-	},
-	{
-	    USB_VENDOR_NANAO, USB_PRODUCT_NANAO_MONITOR,
-	    0,
-	    "Nanao",
-	    "monitor",
 	},
 	{
 	    USB_VENDOR_UNIXTAR, USB_PRODUCT_UNIXTAR_UTUSB41,
@@ -224,18 +212,6 @@ struct usb_knowndev usb_knowndevs[] = {
 	    0,
 	    "Logitech",
 	    "M4848 mouse",
-	},
-	{
-	    USB_VENDOR_EIZONANAO, USB_PRODUCT_EIZONANAO_HUB,
-	    0,
-	    "EIZO Nanao",
-	    "hub",
-	},
-	{
-	    USB_VENDOR_EIZONANAO, USB_PRODUCT_EIZONANAO_MONITOR,
-	    0,
-	    "EIZO Nanao",
-	    "monitor",
 	},
 	{
 	    USB_VENDOR_CHIC, USB_PRODUCT_CHIC_MOUSE1,

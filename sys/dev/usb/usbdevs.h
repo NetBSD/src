@@ -1,10 +1,10 @@
-/*	$NetBSD: usbdevs.h,v 1.18 1999/01/07 22:30:36 augustss Exp $	*/
+/*	$NetBSD: usbdevs.h,v 1.19 1999/01/08 11:19:57 augustss Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: usbdevs,v 1.18 1999/01/07 01:51:12 augustss Exp 
+ *	NetBSD: usbdevs,v 1.19 1999/01/08 11:18:38 augustss Exp 
  */
 
 /*
@@ -94,10 +94,6 @@
 /* CATC products */
 #define	USB_PRODUCT_CATC_ANDROMEDA	0x1237		/* Andromeda hub */
 
-/* Nanao products */
-#define	USB_PRODUCT_NANAO_HUB	0x0000		/* hub */
-#define	USB_PRODUCT_NANAO_MONITOR	0x0001		/* monitor */
-
 /* Unixtar products */
 #define	USB_PRODUCT_UNIXTAR_UTUSB41	0x1446		/* UT-USB41 hub */
 
@@ -159,10 +155,6 @@
 /* Logitech products */
 #define	USB_PRODUCT_LOGITECH_M2452	0x0203		/* M2452 keyboard */
 #define	USB_PRODUCT_LOGITECH_M4848	0x0301		/* M4848 mouse */
-
-/* EIZO Nanao products */
-#define	USB_PRODUCT_EIZONANAO_HUB	0x0000		/* hub */
-#define	USB_PRODUCT_EIZONANAO_MONITOR	0x0001		/* monitor */
 
 /* Chic Technology products */
 #define	USB_PRODUCT_CHIC_MOUSE1	0x0001		/* mouse */
