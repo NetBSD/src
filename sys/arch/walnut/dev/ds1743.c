@@ -1,4 +1,4 @@
-/*	$NetBSD: ds1743.c,v 1.2 2002/03/13 19:18:07 eeh Exp $	*/
+/*	$NetBSD: ds1743.c,v 1.3 2002/08/12 02:06:21 simonb Exp $	*/
 
 /*
  * Copyright (c) 2001-2002 Wasabi Sysetms, Inc.
@@ -41,12 +41,12 @@
 #include <sys/systm.h>
 #include <sys/device.h>
 
-#include <machine/autoconf.h>
 #include <machine/rtc.h>
 #include <machine/bus.h>
 
 #include <walnut/dev/ds1743reg.h>
 #include <walnut/dev/todclockvar.h>
+#include <walnut/dev/pbusvar.h>
 
 struct dsrtc_softc {
 	struct device	sc_dev;
@@ -85,17 +85,17 @@ int ds1743found = 0;
 static int
 dsrtcmatch(struct device *parent, struct cfdata *cf, void *aux)
 {
-	struct mainbus_attach_args *maa = aux;
+	struct pbus_attach_args *paa = aux;
 	int retval = !ds1743found;
 	bus_space_handle_t h;
 	u_int8_t x;
 
 	/* match only RTC devices */
-	if (strcmp(maa->mb_name, cf->cf_driver->cd_name) != 0)
+	if (strcmp(paa->pb_name, cf->cf_driver->cd_name) != 0)
 		return 0;
 
-	if (bus_space_map(0, maa->mb_addr, DS_SIZE, 0, &h)) {
-		printf("%s: can't map i/o space\n", maa->mb_name);
+	if (bus_space_map(0, paa->pb_addr, DS_SIZE, 0, &h)) {
+		printf("%s: can't map i/o space\n", paa->pb_name);
 		return 0;
 	}
 
@@ -131,14 +131,14 @@ static void
 dsrtcattach(struct device *parent, struct device *self, void *aux)
 {
 	struct dsrtc_softc *sc = (struct dsrtc_softc *)self;
-	struct mainbus_attach_args *maa = aux;
+	struct pbus_attach_args *paa = aux;
 	struct todclock_attach_args ta;
 
 	ds1743found = 1;
 	
 	sc->sc_iot = 0;
-	sc->sc_ioh = maa->mb_addr;
-	if (bus_space_map(sc->sc_iot, maa->mb_addr, DS_SIZE, 0, &sc->sc_ioh)) {
+	sc->sc_ioh = paa->pb_addr;
+	if (bus_space_map(sc->sc_iot, paa->pb_addr, DS_SIZE, 0, &sc->sc_ioh)) {
 		printf(": can't map i/o space\n");
 		return;
 	}

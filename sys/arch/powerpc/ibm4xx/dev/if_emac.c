@@ -1,4 +1,4 @@
-/*	$NetBSD: if_emac.c,v 1.4 2002/08/09 14:10:30 simonb Exp $	*/
+/*	$NetBSD: if_emac.c,v 1.5 2002/08/12 02:06:20 simonb Exp $	*/
 
 /*
  * Copyright 2001, 2002 Wasabi Systems, Inc.
@@ -55,8 +55,7 @@
 #include <net/bpf.h>
 #endif
 
-#include <machine/bus.h>
-#include <machine/autoconf.h>	/* for mainbus_attach_args; should use imb4xx opb */
+#include <powerpc/ibm4xx/dev/opbvar.h>
 
 #include <powerpc/ibm4xx/ibm405gp.h>
 #include <powerpc/ibm4xx/mal405gp.h>
@@ -278,10 +277,10 @@ struct cfattach emac_ca = {
 static int
 emac_match(struct device *parent, struct cfdata *cf, void *aux)
 {
-	struct mainbus_attach_args *maa = aux;
+	struct opb_attach_args *oaa = aux;
 
 	/* match only on-chip ethernet devices */
-	if (strcmp(maa->mb_name, cf->cf_driver->cd_name) == 0)
+	if (strcmp(oaa->opb_name, cf->cf_driver->cd_name) == 0)
 		return (1);
 
 	return (0);
@@ -290,7 +289,7 @@ emac_match(struct device *parent, struct cfdata *cf, void *aux)
 static void
 emac_attach(struct device *parent, struct device *self, void *aux)
 {
-	struct mainbus_attach_args *maa = aux;
+	struct opb_attach_args *oaa = aux;
 	struct emac_softc *sc = (struct emac_softc *)self;
 	struct ifnet *ifp = &sc->sc_ethercom.ec_if;
 	struct mii_data *mii = &sc->sc_mii;
@@ -298,8 +297,8 @@ emac_attach(struct device *parent, struct device *self, void *aux)
 	int error, i, nseg;
 
 	sc->sc_st = galaxy_make_bus_space_tag(0, 0);
-	sc->sc_sh = maa->mb_addr;
-	sc->sc_dmat = maa->mb_dmat;
+	sc->sc_sh = oaa->opb_addr;
+	sc->sc_dmat = oaa->opb_dmat;
 
 	printf(": 405GP EMAC\n");
 
@@ -311,15 +310,15 @@ emac_attach(struct device *parent, struct device *self, void *aux)
 	 */
 	sc->sc_mr1 = MR1_RFS_4KB | MR1_TFS_2KB | MR1_TR0_MULTIPLE;
 
-	intr_establish(maa->mb_irq    , IST_LEVEL, IPL_NET, emac_wol_intr, sc);
-	intr_establish(maa->mb_irq + 1, IST_LEVEL, IPL_NET, emac_serr_intr, sc);
-	intr_establish(maa->mb_irq + 2, IST_LEVEL, IPL_NET, emac_txeob_intr, sc);
-	intr_establish(maa->mb_irq + 3, IST_LEVEL, IPL_NET, emac_rxeob_intr, sc);
-	intr_establish(maa->mb_irq + 4, IST_LEVEL, IPL_NET, emac_txde_intr, sc);
-	intr_establish(maa->mb_irq + 5, IST_LEVEL, IPL_NET, emac_rxde_intr, sc);
-	intr_establish(maa->mb_irq + 6, IST_LEVEL, IPL_NET, emac_intr, sc);
+	intr_establish(oaa->opb_irq    , IST_LEVEL, IPL_NET, emac_wol_intr, sc);
+	intr_establish(oaa->opb_irq + 1, IST_LEVEL, IPL_NET, emac_serr_intr, sc);
+	intr_establish(oaa->opb_irq + 2, IST_LEVEL, IPL_NET, emac_txeob_intr, sc);
+	intr_establish(oaa->opb_irq + 3, IST_LEVEL, IPL_NET, emac_rxeob_intr, sc);
+	intr_establish(oaa->opb_irq + 4, IST_LEVEL, IPL_NET, emac_txde_intr, sc);
+	intr_establish(oaa->opb_irq + 5, IST_LEVEL, IPL_NET, emac_rxde_intr, sc);
+	intr_establish(oaa->opb_irq + 6, IST_LEVEL, IPL_NET, emac_intr, sc);
 	printf("%s: interrupting at irqs %d .. %d\n", sc->sc_dev.dv_xname,
-	    maa->mb_irq, maa->mb_irq + 6);
+	    oaa->opb_irq, oaa->opb_irq + 6);
 
 	/*
 	 * Allocate the control data structures, and create and load the

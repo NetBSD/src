@@ -1,10 +1,10 @@
-/*	$NetBSD: autoconf.h,v 1.2 2002/03/13 19:19:49 eeh Exp $	*/
+/* $NetBSD: opbvar.h,v 1.1 2002/08/12 02:06:20 simonb Exp $ */
 
 /*
- * Copyright 2001-2002 Wasabi Systems, Inc.
+ * Copyright 2002 Wasabi Systems, Inc.
  * All rights reserved.
  *
- * Written by Eduardo Horvath and Simon Burge for Wasabi Systems, Inc.
+ * Written by Simon Burge for Wasabi Systems, Inc.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -37,12 +37,10 @@
 
 #include <machine/bus.h>
 
-struct mainbus_attach_args {
-	const char *mb_name;
-	u_long mb_addr;
-	int mb_irq;
-	bus_space_tag_t mb_bt;		/* Bus space tag */
-	bus_dma_tag_t mb_dmat;		/* DMA tag */
+struct opb_attach_args {
+	const char *opb_name;
+	u_long opb_addr;
+	int opb_irq;
+	bus_space_tag_t opb_bt;		/* Bus space tag */
+	bus_dma_tag_t opb_dmat;		/* DMA tag */
 };
-
-void *mapiodev(paddr_t, psize_t);
