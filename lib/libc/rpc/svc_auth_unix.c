@@ -1,4 +1,4 @@
-/*	$NetBSD: svc_auth_unix.c,v 1.10 1998/02/13 05:52:35 lukem Exp $	*/
+/*	$NetBSD: svc_auth_unix.c,v 1.11 1998/11/15 17:32:45 christos Exp $	*/
 
 /*
  * Sun RPC is a product of Sun Microsystems, Inc. and is provided for
@@ -35,7 +35,7 @@
 static char *sccsid = "@(#)svc_auth_unix.c 1.28 88/02/08 Copyr 1984 Sun Micro";
 static char *sccsid = "@(#)svc_auth_unix.c	2.3 88/08/01 4.0 RPCSRC";
 #else
-__RCSID("$NetBSD: svc_auth_unix.c,v 1.10 1998/02/13 05:52:35 lukem Exp $");
+__RCSID("$NetBSD: svc_auth_unix.c,v 1.11 1998/11/15 17:32:45 christos Exp $");
 #endif
 #endif
 
@@ -75,7 +75,7 @@ _svcauth_unix(rqst, msg)
 		int area_gids[NGRPS];
 	} *area;
 	u_int auth_len;
-	int str_len, gid_len;
+	size_t str_len, gid_len;
 	int i;
 
 	area = (struct area *) rqst->rq_clntcred;
@@ -87,25 +87,25 @@ _svcauth_unix(rqst, msg)
 	buf = XDR_INLINE(&xdrs, auth_len);
 	if (buf != NULL) {
 		aup->aup_time = IXDR_GET_LONG(buf);
-		str_len = IXDR_GET_U_LONG(buf);
+		str_len = (size_t)IXDR_GET_U_LONG(buf);
 		if (str_len > MAX_MACHINE_NAME) {
 			stat = AUTH_BADCRED;
 			goto done;
 		}
-		memmove(aup->aup_machname, (caddr_t)buf, (size_t)str_len);
+		memmove(aup->aup_machname, buf, str_len);
 		aup->aup_machname[str_len] = 0;
 		str_len = RNDUP(str_len);
 		buf += str_len / sizeof (int32_t);
-		aup->aup_uid = IXDR_GET_LONG(buf);
-		aup->aup_gid = IXDR_GET_LONG(buf);
-		gid_len = IXDR_GET_U_LONG(buf);
+		aup->aup_uid = (int)IXDR_GET_LONG(buf);
+		aup->aup_gid = (int)IXDR_GET_LONG(buf);
+		gid_len = (size_t)IXDR_GET_U_LONG(buf);
 		if (gid_len > NGRPS) {
 			stat = AUTH_BADCRED;
 			goto done;
 		}
 		aup->aup_len = gid_len;
 		for (i = 0; i < gid_len; i++) {
-			aup->aup_gids[i] = IXDR_GET_LONG(buf);
+			aup->aup_gids[i] = (int)IXDR_GET_LONG(buf);
 		}
 		/*
 		 * five is the smallest unix credentials structure -

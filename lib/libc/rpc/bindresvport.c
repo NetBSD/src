@@ -1,4 +1,4 @@
-/*	$NetBSD: bindresvport.c,v 1.12 1998/02/13 05:52:14 lukem Exp $	*/
+/*	$NetBSD: bindresvport.c,v 1.13 1998/11/15 17:32:41 christos Exp $	*/
 
 /*
  * Sun RPC is a product of Sun Microsystems, Inc. and is provided for
@@ -35,7 +35,7 @@
 static char *sccsid = "@(#)bindresvport.c 1.8 88/02/08 SMI";
 static char *sccsid = "@(#)bindresvport.c	2.2 88/07/29 4.0 RPCSRC";
 #else
-__RCSID("$NetBSD: bindresvport.c,v 1.12 1998/02/13 05:52:14 lukem Exp $");
+__RCSID("$NetBSD: bindresvport.c,v 1.13 1998/11/15 17:32:41 christos Exp $");
 #endif
 #endif
 
@@ -74,7 +74,7 @@ bindresvport(sd, sin)
 
 	if (sin == NULL) {
 		sin = &myaddr;
-		memset(sin, 0, sinlen);
+		memset(sin, 0, (size_t)sinlen);
 		sin->sin_len = sinlen;
 		sin->sin_family = AF_INET;
 	} else if (sin->sin_family != AF_INET) {
@@ -94,7 +94,7 @@ bindresvport(sd, sin)
 			return(res);
 	}
 
-	res = bind(sd, (struct sockaddr *)sin, sinlen);
+	res = bind(sd, (struct sockaddr *)(void *)sin, sinlen);
 
 	if (sin->sin_port == 0) {
 		int saved_errno = errno;
@@ -107,7 +107,7 @@ bindresvport(sd, sin)
 		}
 
 		if (sin != &myaddr) {	/* What did the kernel assign? */
-			if (getsockname(sd, (struct sockaddr *)sin, &sinlen)
+			if (getsockname(sd, (struct sockaddr *)(void *)sin, &sinlen)
 			    < 0)
 				errno = saved_errno;
 			return (res);
