@@ -1,4 +1,4 @@
-/*	$NetBSD: bootptest.c,v 1.11 2002/09/20 19:23:58 mycroft Exp $	*/
+/*	$NetBSD: bootptest.c,v 1.12 2003/05/17 20:58:40 itojun Exp $	*/
 
 /*
  * bootptest.c - Test out a bootp server.
@@ -36,7 +36,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: bootptest.c,v 1.11 2002/09/20 19:23:58 mycroft Exp $");
+__RCSID("$NetBSD: bootptest.c,v 1.12 2003/05/17 20:58:40 itojun Exp $");
 #endif
 
 char *usage = "bootptest [-h] server-name [vendor-data-template-file]";
@@ -298,7 +298,7 @@ main(int argc, char **argv)
 	xid = (int32) getpid();
 	bp->bp_xid = (u_int32) htonl(xid);
 	if (bp_file)
-		strncpy(bp->bp_file, bp_file, BP_FILE_LEN);
+		strlcpy(bp->bp_file, bp_file, sizeof(bp->bp_file));
 
 	/*
 	 * Fill in the hardware address (or client IP address)
