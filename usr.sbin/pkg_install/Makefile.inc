@@ -1,4 +1,4 @@
-# $NetBSD: Makefile.inc,v 1.14 2001/01/07 08:00:58 enami Exp $
+# $NetBSD: Makefile.inc,v 1.15 2001/03/23 14:06:16 tron Exp $
 # Original from FreeBSD, no rcs id.
 
 .include <bsd.own.mk>
@@ -22,8 +22,8 @@ CHOWN= /usr/sbin/chown
 CHGRP= /usr/bin/chgrp
 .elif ${OPSYS} == "SunOS"
 LOCALBASE?= /usr/local
-TAR_CMD?= gtar
-TAR_FULLPATHNAME?= ${LOCALBASE}/bin/${TAR_CMD}
+TAR_CMD?= tar
+TAR_FULLPATHNAME?= ${LOCALBASE}/bsd/bin/${TAR_CMD}
 CPPFLAGS+=-DTAR_CMD='"${TAR_CMD}"' -DTAR_FULLPATHNAME='"${TAR_FULLPATHNAME}"'
 BINDIR=${LOCALBASE}/bsd/bin
 CHMOD= /usr/bin/chmod
