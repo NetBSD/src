@@ -1,4 +1,4 @@
-/*	$NetBSD: edlabel.c,v 1.1.1.1 1995/10/08 22:39:09 gwr Exp $	*/
+/*	$NetBSD: edlabel.c,v 1.2 1996/01/30 18:34:07 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1995 Gordon W. Ross
@@ -31,7 +31,7 @@
  */
 
 #include <sys/types.h>
-#include <sys/ioccom.h>
+#include <sys/ioctl.h>
 #include <sys/disklabel.h>
 
 #include <fcntl.h>
