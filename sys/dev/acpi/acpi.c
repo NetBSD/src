@@ -1,4 +1,4 @@
-/*	$NetBSD: acpi.c,v 1.59.2.2 2004/04/28 05:25:31 jmc Exp $	*/
+/*	$NetBSD: acpi.c,v 1.59.2.3 2004/06/14 03:18:58 jmc Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -77,7 +77,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi.c,v 1.59.2.2 2004/04/28 05:25:31 jmc Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi.c,v 1.59.2.3 2004/06/14 03:18:58 jmc Exp $");
 
 #include "opt_acpi.h"
 
@@ -380,11 +380,13 @@ acpi_disable(struct acpi_softc *sc)
 {
 	ACPI_STATUS rv = AE_OK;
 
+#ifdef ACPI_DISABLE_ON_POWEROFF
 	if (acpi_active) {
 		rv = AcpiDisable();
 		if (ACPI_SUCCESS(rv))
 			acpi_active = 0;
 	}
+#endif
 	return (rv);
 }
 
