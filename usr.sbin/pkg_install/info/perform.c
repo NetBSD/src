@@ -1,11 +1,11 @@
-/*	$NetBSD: perform.c,v 1.26 1999/08/19 19:37:22 hubertf Exp $	*/
+/*	$NetBSD: perform.c,v 1.27 1999/08/23 15:17:03 hubertf Exp $	*/
 
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static const char *rcsid = "from FreeBSD Id: perform.c,v 1.23 1997/10/13 15:03:53 jkh Exp";
 #else
-__RCSID("$NetBSD: perform.c,v 1.26 1999/08/19 19:37:22 hubertf Exp $");
+__RCSID("$NetBSD: perform.c,v 1.27 1999/08/23 15:17:03 hubertf Exp $");
 #endif
 #endif
 
@@ -54,7 +54,7 @@ pkg_do(char *pkg)
 	char           *cp = NULL;
 	int             code = 0;
 
-	if (URLlength(pkg) > 0) {
+	if (IS_URL(pkg)) {
 		if ((cp = fileGetURL(NULL, pkg)) != NULL) {
 			strcpy(fname, cp);
 			isTMP = TRUE;
@@ -78,7 +78,7 @@ pkg_do(char *pkg)
 	}
 	
 	if (cp) {
-		if (URLlength(pkg) > 0) {
+		if (IS_URL(pkg)) {
 			/* file is already unpacked by fileGetURL() */
 			strcpy(PlayPen, cp);
 		} else {
