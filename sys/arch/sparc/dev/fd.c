@@ -1,4 +1,4 @@
-/*	$NetBSD: fd.c,v 1.59 1998/03/25 23:15:07 pk Exp $	*/
+/*	$NetBSD: fd.c,v 1.60 1998/03/30 14:23:41 pk Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994, 1995 Charles Hannum.
@@ -297,12 +297,13 @@ fdcmatch_mainbus(parent, match, aux)
 	if (strcmp("fd", ma->ma_name) != 0)
 		return (0);
 
-	if (ma->ma_promvaddr &&
-	    probeget(ma->ma_promvaddr, 1) == -1) {
-		return (0);
-	}
-
-	return (1);
+	return (bus_space_probe(ma->ma_bustag,
+				ma->ma_iospace,
+				ma->ma_paddr,
+				1,	/* probe size */
+				0,	/* offset */
+				0,	/* flags */
+				NULL, NULL));
 }
 
 int
@@ -326,12 +327,11 @@ fdcmatch_obio(parent, match, aux)
 	if (strcmp("SUNW,fdtwo", sa->sa_name) != 0)
 		return (0);
 
-	if (sa->sa_promvaddr &&
-	    probeget(sa->sa_promvaddr, 1) == -1) {
-		return (0);
-	}
-
-	return (1);
+	return (bus_space_probe(sa->sa_bustag, sa->sa_slot, sa->sa_offset,
+				1,	/* probe size */
+				0,	/* offset */
+				0,	/* flags */
+				NULL, NULL));
 }
 
 /*
@@ -406,10 +406,10 @@ fdcattach_mainbus(parent, self, aux)
 		fdc->sc_reg = (caddr_t)ma->ma_promvaddr;
 	else {
 		bus_space_handle_t bh;
-		if (sparc_bus_map(
+		if (bus_space_map2(
 				ma->ma_bustag,
 				ma->ma_iospace,
-				(bus_addr_t)ma->ma_paddr,
+				ma->ma_paddr,
 				ma->ma_size,
 				BUS_SPACE_MAP_LINEAR,
 				0,

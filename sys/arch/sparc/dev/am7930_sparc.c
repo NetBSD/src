@@ -1,4 +1,4 @@
-/*	$NetBSD: am7930_sparc.c,v 1.36 1998/03/21 20:14:13 pk Exp $	*/
+/*	$NetBSD: am7930_sparc.c,v 1.37 1998/03/30 14:23:40 pk Exp $	*/
 
 /*
  * Copyright (c) 1995 Rolf Grossmann
@@ -297,10 +297,10 @@ amd7930attach_mainbus(parent, self, aux)
 
 	sc->sc_bustag = ma->ma_bustag;
 
-	if (sparc_bus_map(
+	if (bus_space_map2(
 			ma->ma_bustag,
 			ma->ma_iospace,
-			(bus_addr_t)ma->ma_paddr,
+			ma->ma_paddr,
 			sizeof(struct amd7930),
 			BUS_SPACE_MAP_LINEAR,
 			0,
