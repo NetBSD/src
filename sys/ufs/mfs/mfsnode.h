@@ -1,4 +1,4 @@
-/*	$NetBSD: mfsnode.h,v 1.9 2000/05/16 17:20:23 thorpej Exp $	*/
+/*	$NetBSD: mfsnode.h,v 1.10 2000/05/19 20:42:21 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -45,7 +45,6 @@ struct mfsnode {
 	long	mfs_size;		/* size of memory file system */
 	struct	proc *mfs_proc;		/* supporting process */
 	struct	buf_queue mfs_buflist;	/* list of I/O requests */
-	__volatile int mfs_alive;	/* MFS is alive */
 };
 
 /*
