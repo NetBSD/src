@@ -1,4 +1,4 @@
-/*	$NetBSD: path.c,v 1.2 1997/01/12 19:12:09 tls Exp $	*/
+/*	$NetBSD: path.c,v 1.3 1997/10/20 10:39:26 lukem Exp $	*/
 
 #include "sh.h"
 #include "ksh_stat.h"
@@ -10,46 +10,6 @@
  *	a path name.
  *
  *	Larry Bouzane (larry@cs.mun.ca)
- */
-
-/*
- * $Log: path.c,v $
- * Revision 1.2  1997/01/12 19:12:09  tls
- * RCS ID Police
- *
- * Revision 1.1.1.1  1996/09/21 23:35:15  jtc
- * import pdksh 5.2.8
- *
- * Revision 1.2  1994/05/19  18:32:40  michael
- * Merge complete, stdio replaced, various fixes. (pre autoconf)
- *
- * Revision 1.1  1994/04/06  13:14:03  michael
- * Initial revision
- *
- * Revision 4.2  1990/12/06  18:05:24  larry
- * Updated test code to reflect parameter change.
- * Fixed problem with /a/./.dir being simplified to /a and not /a/.dir due
- * to *(cur+2) == *f test instead of the correct cur+2 == f
- *
- * Revision 4.1  90/10/29  14:42:19  larry
- * base MUN version
- * 
- * Revision 3.1.0.4  89/02/16  20:28:36  larry
- * Forgot to set *pathlist to NULL when last changed make_path().
- * 
- * Revision 3.1.0.3  89/02/13  20:29:55  larry
- * Fixed up cd so that it knew when a node from CDPATH was used and would
- * print a message only when really necessary.
- * 
- * Revision 3.1.0.2  89/02/13  17:51:22  larry
- * Merged with Eric Gisin's version.
- * 
- * Revision 3.1.0.1  89/02/13  17:50:58  larry
- * *** empty log message ***
- * 
- * Revision 3.1  89/02/13  17:49:28  larry
- * *** empty log message ***
- * 
  */
 
 #ifdef S_ISLNK
