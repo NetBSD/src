@@ -1,4 +1,4 @@
-.\"	$NetBSD: sysinst,v 1.5.4.14 2002/02/23 21:02:06 he Exp $
+.\"	$NetBSD: sysinst,v 1.5.4.15 2002/03/06 21:28:10 he Exp $
 .\"
 .\" Copyright (c) 1999-2001 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -619,7 +619,8 @@ you can give an empty response in reply to answers relating to
 this.
 .if r_macppc \{\
 .It
-.Em "Preparation for a disk which will be used for"
+.To 2 "Preparing a disk which will be used for MacOS and NetBSD"
+.Em "Preparing a disk which will be used for"
 .Tn MacOS
 .Em and NetBSD
 .Pp
@@ -1260,8 +1261,15 @@ extracted; the name of each file that is extracted will be shown.
 This can slow down the installation process considerably, especially
 on machines with slow graphics consoles or serial consoles.
 .Pp
-After all the files have been extracted, all the necessary
-device node files will be created. If you have already
+.ie r_macppc \{\
+If you are installing using the 
+.Me "Re-install sets or install additional sets"
+option, then you will need to create the device nodes in
+.Pa /dev ,
+otherwise, 
+.\}
+.el After all the files have been extracted,
+all the necessary device node files will be created.  If you have already
 configured networking, you will be asked if you want to
 use this configuration for normal operation. If so, these
 values will be installed in the network configuration files.
@@ -1269,6 +1277,37 @@ The next menu will allow you to select the time zone that you're in,
 to make sure your clock has the right offset from UTC. 
 Finally you can set a password for the "root" account, to prevent 
 the machine coming up without access restrictions.  
+.if r_macppc \{\
+.It
+.To 2 "Making the device nodes"
+.Em Making the device nodes
+.Pp
+If you are installing using the 
+.Me "Re-install sets or install additional sets"
+option, then you will need to create the device nodes in
+.Pa /dev 
+now.  Otherwise, skip this step.
+.Pp
+Go to the main installation menu, and select
+.Me "Utility menu"
+and then select the
+.Me "Run /bin/sh"
+option, which will give you a shell prompt.
+You may need to type one of the following commands to get your delete key
+to work properly, depending on your keyboard: 
+.Dl # Ic "stty erase '^h'"
+.Dl # Ic "stty erase '^?'"
+.Pp
+Type the following command (replacing
+.Pa wd0a
+with the partition name of your destination root partition):
+Now you need to mount your destination root partition:
+.Dl # Ic "mount /dev/wd0a /mnt"
+.Dl # Ic "cd /mnt/dev"
+.Dl # Ic "sh MAKEDEV all"
+.Dl # Ic "cd /;umount /mnt"
+.Dl # Ic "exit"
+.\}
 .It
 .To 2 "Finalizing your installation"
 .Em Finalizing your installation
