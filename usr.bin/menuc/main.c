@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.3 1997/10/19 05:08:17 lukem Exp $	*/
+/*	$NetBSD: main.c,v 1.4 1998/02/03 03:51:49 perry Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -39,7 +39,7 @@
 /* main.c - main program for menu compiler. */
 
 #include <stdio.h>
-#include <stdlib.h>
+#include <unistd.h>
 
 #define MAIN
 #include "defs.h"
