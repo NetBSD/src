@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.29 1995/04/17 12:06:49 cgd Exp $	*/
+/*	$NetBSD: pmap.c,v 1.30 1995/04/21 06:23:56 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1993, 1994 Charles Hannum.
@@ -284,8 +284,6 @@ pmap_bootstrap(virtual_start)
 	isaphysmem = pmap_steal_memory(DMA_BOUNCE * NBPG);
 #endif
 
-	/* XXX undo temporary double mapping */
-	*PTD = 0;
 	pmap_update();
 }
 
@@ -310,7 +308,6 @@ pmap_init()
 	vm_offset_t addr, addr2;
 	vm_size_t s;
 	int rv;
-	extern int KPTphys;
 
 	if (PAGE_SIZE != NBPG)
 		panic("pmap_init: CLSIZE != 1");
@@ -632,10 +629,10 @@ pmap_pinit(pmap)
 	pmap->pm_pdir = (pd_entry_t *) kmem_alloc(kernel_map, NBPG);
 
 	/* wire in kernel global address entries */
-	bcopy(PTD + KPTDI, pmap->pm_pdir + KPTDI, NKPDE * sizeof(pd_entry_t));
+	bcopy(&PTD[KPTDI], &pmap->pm_pdir[KPTDI], NKPDE * sizeof(pd_entry_t));
 
 	/* install self-referential address mapping entry */
-	*(pmap->pm_pdir + PTDPTDI) =
+	pmap->pm_pdir[PTDPTDI] =
 	    pmap_extract(pmap_kernel(), (vm_offset_t)pmap->pm_pdir) | PG_V | PG_KW;
 
 	pmap->pm_count = 1;
