@@ -1,4 +1,4 @@
-/*	$NetBSD: vnode_pager.c,v 1.31 1997/02/27 17:49:05 mycroft Exp $	*/
+/*	$NetBSD: vnode_pager.c,v 1.32 1997/07/04 20:22:22 drochner Exp $	*/
 
 /*
  * Copyright (c) 1990 University of Utah.
@@ -128,6 +128,7 @@ vnode_pager_alloc(handle, size, prot, foff)
 	vm_object_t object;
 	struct vattr vattr;
 	struct vnode *vp;
+	u_quad_t used_vnode_size;
 	struct proc *p = curproc;	/* XXX */
 
 #ifdef DEBUG
@@ -161,22 +162,31 @@ vnode_pager_alloc(handle, size, prot, foff)
 		/*
 		 * And an object of the appropriate size
 		 */
-		if (VOP_GETATTR(vp, &vattr, p->p_ucred, p) == 0) {
-			object = vm_object_allocate(round_page(vattr.va_size));
-			vm_object_enter(object, pager);
-			vm_object_setpager(object, pager, 0, TRUE);
-		} else {
+		if (VOP_GETATTR(vp, &vattr, p->p_ucred, p) != 0) {
 			free((caddr_t)vnp, M_VMPGDATA);
 			free((caddr_t)pager, M_VMPAGER);
 			return(NULL);
 		}
+		/* make sure mapping fits into numeric range,
+		 truncate if necessary */
+		used_vnode_size = vattr.va_size;
+		if (used_vnode_size > (vm_offset_t)-PAGE_SIZE) {
+#ifdef DEBUG
+			printf("vnode_pager_alloc: vn %p size truncated %qx->%lx\n",
+			       vp, used_vnode_size, (vm_offset_t)-PAGE_SIZE);
+#endif
+			used_vnode_size = (vm_offset_t)-PAGE_SIZE;
+		}
+		object = vm_object_allocate(round_page(used_vnode_size));
+		vm_object_enter(object, pager);
+		vm_object_setpager(object, pager, 0, TRUE);
 		/*
 		 * Hold a reference to the vnode and initialize pager data.
 		 */
 		VREF(vp);
 		vnp->vnp_flags = 0;
 		vnp->vnp_vp = vp;
-		vnp->vnp_size = vattr.va_size;
+		vnp->vnp_size = used_vnode_size;
 		pager->pg_handle = handle;
 		pager->pg_type = PG_VNODE;
 		pager->pg_flags = 0;
@@ -379,7 +389,7 @@ vnode_pager_cluster(pager, offset, loffset, hoffset)
 void
 vnode_pager_setsize(vp, nsize)
 	struct vnode *vp;
-	u_long nsize;
+	u_quad_t nsize;
 {
 	register vn_pager_t vnp;
 	register vm_object_t object;
@@ -390,6 +400,17 @@ vnode_pager_setsize(vp, nsize)
 	 */
 	if (vp == NULL || vp->v_type != VREG || vp->v_vmdata == NULL)
 		return;
+
+	/* make sure mapping fits into numeric range,
+	 truncate if necessary */
+	if (nsize > (vm_offset_t)-PAGE_SIZE) {
+#ifdef DEBUG
+		printf("vnode_pager_setsize: vn %p size truncated %qx->%lx\n",
+		       vp, nsize, (vm_offset_t)-PAGE_SIZE);
+#endif
+		nsize = (vm_offset_t)-PAGE_SIZE;
+	}
+
 	/*
 	 * Hasn't changed size
 	 */
@@ -411,7 +432,7 @@ vnode_pager_setsize(vp, nsize)
 
 #ifdef DEBUG
 	if (vpagerdebug & (VDB_FOLLOW|VDB_SIZE))
-		printf("vnode_pager_setsize: vp %p obj %p osz %ld nsz %ld\n",
+		printf("vnode_pager_setsize: vp %p obj %p osz %ld nsz %qd\n",
 		    vp, object, vnp->vnp_size, nsize);
 #endif
 	/*
