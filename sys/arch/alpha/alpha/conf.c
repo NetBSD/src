@@ -1,4 +1,4 @@
-/* $NetBSD: conf.c,v 1.39 1999/04/24 17:01:15 ross Exp $ */
+/* $NetBSD: conf.c,v 1.40 1999/07/29 19:14:35 augustss Exp $ */
 
 /*-
  * Copyright (c) 1991 The Regents of the University of California.
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: conf.c,v 1.39 1999/04/24 17:01:15 ross Exp $");
+__KERNEL_RCSID(0, "$NetBSD: conf.c,v 1.40 1999/07/29 19:14:35 augustss Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -170,6 +170,8 @@ cdev_decl(wsdisplay);
 cdev_decl(wskbd);
 #include "wsmouse.h"
 cdev_decl(wsmouse);
+#include "wsmux.h"
+cdev_decl(wsmux);
 
 #include "spkr.h"
 cdev_decl(spkr);
@@ -313,6 +315,7 @@ struct cdevsw	cdevsw[] =
 	cdev_notdef(),			/* 54 */
 	cdev_notdef(),			/* 55 */
 #endif
+	cdev_mouse_init(NWSMUX, wsmux),	/* 56: ws multiplexor */
 	
 };
 int	nchrdev = sizeof (cdevsw) / sizeof (cdevsw[0]);
@@ -406,6 +409,12 @@ static int chrtoblktbl[] = {
 	/* 48 */	NODEV,
 	/* 49 */	NODEV,
 	/* 50 */	NODEV,
+	/* 51 */	NODEV,
+	/* 52 */	NODEV,
+	/* 53 */	NODEV,
+	/* 54 */	NODEV,
+	/* 55 */	NODEV,
+	/* 56 */	NODEV,
 };
 
 /*
