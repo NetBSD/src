@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.h,v 1.12 1996/12/07 09:25:01 matthias Exp $	*/
+/*	$NetBSD: pmap.h,v 1.13 1996/12/23 08:37:38 matthias Exp $	*/
 
 /* 
  * Copyright (c) 1995 Charles M. Hannum.  All rights reserved.
@@ -67,7 +67,9 @@
  */
 #define	PTDPTDI		0x3df		/* ptd entry that points to ptd! */
 #define	KPTDI		0x3e0		/* start of kernel virtual pde's */
-#define	NKPDE		12
+#define	NKPDE_BASE	4		/* min. # of kernel PDEs */ 
+#define	NKPDE_MAX	30		/* max. # of kernel PDEs */ 
+#define	NKPDE_SCALE	1		/* # of kernel PDEs to add per meg. */
 #define	APTDPTDI	0x3fe		/* start of alternate page directory */
 
 /*
