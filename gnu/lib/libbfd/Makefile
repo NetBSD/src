@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.32 2003/03/01 13:08:42 mrg Exp $
+#	$NetBSD: Makefile,v 1.33 2003/04/09 22:33:26 thorpej Exp $
 
 NOLINKLIB=	# defined
 NOLINT=		# defined
@@ -6,6 +6,12 @@ NOMAN=		# defined
 NOPROFILE=	# defined
 
 .include <bsd.own.mk>
+
+# If the platform does not support shared libraries, we need to supply
+# *something* for BFD-using programs to link against.
+.if ${MKPIC} == "no"
+MKLINKLIB=	yes
+.endif
 
 LIB=		bfd
 
