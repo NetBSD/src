@@ -1,4 +1,4 @@
-#	$NetBSD: files,v 1.196 1998/06/25 21:05:50 thorpej Exp $
+#	$NetBSD: files,v 1.197 1998/06/25 21:15:35 thorpej Exp $
 
 #	@(#)files.newconf	7.5 (Berkeley) 5/10/93
 
@@ -6,6 +6,7 @@
 # (note, these are case-sensitive)
 defopt	INSECURE
 defopt	KMEMSTATS
+defopt	KTRACE
 defopt	LOCKDEBUG
 defopt	RTC_OFFSET
 defopt	UCONSOLE
