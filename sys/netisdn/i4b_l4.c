@@ -27,7 +27,7 @@
  *	i4b_l4.c - kernel interface to userland
  *	-----------------------------------------
  *
- *	$Id: i4b_l4.c,v 1.9 2002/03/17 09:46:01 martin Exp $ 
+ *	$Id: i4b_l4.c,v 1.10 2002/03/17 11:08:32 martin Exp $ 
  *
  * $FreeBSD$
  *
@@ -36,7 +36,7 @@
  *---------------------------------------------------------------------------*/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: i4b_l4.c,v 1.9 2002/03/17 09:46:01 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: i4b_l4.c,v 1.10 2002/03/17 11:08:32 martin Exp $");
 
 #include "isdn.h"
 #include "irip.h"
@@ -313,7 +313,7 @@ i4b_l4_drvrdisc(int driver, int driver_unit)
  *	send MSG_ACCT_IND message to userland
  *---------------------------------------------------------------------------*/
 void
-i4b_l4_accounting(int driver, int driver_unit, int accttype, int ioutbytes,
+i4b_l4_accounting(int cdid, int accttype, int ioutbytes,
 		int iinbytes, int ro, int ri, int outbytes, int inbytes)
 {
 	struct mbuf *m;
@@ -323,10 +323,7 @@ i4b_l4_accounting(int driver, int driver_unit, int accttype, int ioutbytes,
 		msg_accounting_ind_t *md = (msg_accounting_ind_t *)m->m_data;
 
 		md->header.type = MSG_ACCT_IND;
-		md->header.cdid = -1;
-
-		md->driver = driver;
-		md->driver_unit = driver_unit;	
+		md->header.cdid = cdid;
 
 		md->accttype = accttype;
 		md->ioutbytes = ioutbytes;
@@ -604,41 +601,41 @@ i4b_link_bchandrvr(call_desc_t *cd)
 			cd->channelid);
 	}
 
-	switch(cd->driver)
+	switch(cd->bchan_driver_index)
 	{
 #if NISDNBCHAN > 0
 		case BDRV_RBCH:
-			cd->dlt = rbch_ret_linktab(cd->driver_unit);
+			cd->dlt = rbch_ret_linktab(cd->bchan_driver_unit);
 			break;
 #endif
 		
 #if NISDNTEL > 0
 		case BDRV_TEL:
-			cd->dlt = tel_ret_linktab(cd->driver_unit);
+			cd->dlt = tel_ret_linktab(cd->bchan_driver_unit);
 			break;
 #endif
 
 #if NIRIP > 0
 		case BDRV_IPR:
-			cd->dlt = ipr_ret_linktab(cd->driver_unit);
+			cd->dlt = ipr_ret_linktab(cd->bchan_driver_unit);
 			break;
 #endif
 
 #if NIPPP > 0
 		case BDRV_ISPPP:
-			cd->dlt = i4bisppp_ret_linktab(cd->driver_unit);
+			cd->dlt = i4bisppp_ret_linktab(cd->bchan_driver_unit);
 			break;
 #endif
 
 #if defined(__bsdi__) && NIBC > 0
 		case BDRV_IBC:
-			cd->dlt = ibc_ret_linktab(cd->driver_unit);
+			cd->dlt = ibc_ret_linktab(cd->bchan_driver_unit);
 			break;
 #endif
 
 #if NI4BING > 0
 		case BDRV_ING:
-			cd->dlt = ing_ret_linktab(cd->driver_unit);
+			cd->dlt = ing_ret_linktab(cd->bchan_driver_unit);
 			break;
 #endif
 
@@ -658,41 +655,41 @@ i4b_link_bchandrvr(call_desc_t *cd)
 				cd->dlt);
 	}
 
-	switch(cd->driver)
+	switch(cd->bchan_driver_index)
 	{
 #if NISDNBCHAN > 0
 		case BDRV_RBCH:
-			rbch_set_linktab(cd->driver_unit, cd->ilt);
+			rbch_set_linktab(cd->bchan_driver_unit, cd->ilt);
 			break;
 #endif
 
 #if NISDNTEL > 0
 		case BDRV_TEL:
-			tel_set_linktab(cd->driver_unit, cd->ilt);
+			tel_set_linktab(cd->bchan_driver_unit, cd->ilt);
 			break;
 #endif
 
 #if NIRIP > 0
 		case BDRV_IPR:
-			ipr_set_linktab(cd->driver_unit, cd->ilt);
+			ipr_set_linktab(cd->bchan_driver_unit, cd->ilt);
 			break;
 #endif
 
 #if NIPPP > 0
 		case BDRV_ISPPP:
-			i4bisppp_set_linktab(cd->driver_unit, cd->ilt);
+			i4bisppp_set_linktab(cd->bchan_driver_unit, cd->ilt);
 			break;
 #endif
 
 #if defined(__bsdi__) && NIBC > 0
 		case BDRV_IBC:
-			ibc_set_linktab(cd->driver_unit, cd->ilt);
+			ibc_set_linktab(cd->bchan_driver_unit, cd->ilt);
 			break;
 #endif
 
 #if NI4BING > 0
 		case BDRV_ING:
-			ing_set_linktab(cd->driver_unit, cd->ilt);
+			ing_set_linktab(cd->bchan_driver_unit, cd->ilt);
 			break;
 #endif
 
@@ -778,10 +775,10 @@ idletime_state:      IST_NONCHK             IST_CHECK       IST_SAFE
 static time_t
 i4b_get_idletime(call_desc_t *cd)
 {
-	switch (cd->driver) {
+	switch (cd->bchan_driver_index) {
 #if NIPPP > 0
 		case BDRV_ISPPP:
-			return i4bisppp_idletime(cd->driver_unit);
+			return i4bisppp_idletime(cd->bchan_driver_unit);
 		break;
 #endif
 		default:

@@ -27,7 +27,7 @@
  *	i4b_ipr.c - isdn4bsd IP over raw HDLC ISDN network driver
  *	---------------------------------------------------------
  *
- *	$Id: i4b_ipr.c,v 1.9 2002/03/17 09:46:00 martin Exp $
+ *	$Id: i4b_ipr.c,v 1.10 2002/03/17 11:08:32 martin Exp $
  *
  * $FreeBSD$
  *
@@ -59,7 +59,7 @@
  *---------------------------------------------------------------------------*/ 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: i4b_ipr.c,v 1.9 2002/03/17 09:46:00 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: i4b_ipr.c,v 1.10 2002/03/17 11:08:32 martin Exp $");
 
 #include "irip.h"
 
@@ -725,8 +725,9 @@ iprwatchdog(struct ifnet *ifp)
 		sc->sc_linb = sc->sc_iinb;
 		sc->sc_loutb = sc->sc_ioutb;
 
-		i4b_l4_accounting(BDRV_IPR, unit, ACCT_DURING,
-			 sc->sc_ioutb, sc->sc_iinb, ro, ri, sc->sc_outb, sc->sc_inb);
+		if (sc->sc_cdp)
+			i4b_l4_accounting(sc->sc_cdp->cdid, ACCT_DURING,
+			    sc->sc_ioutb, sc->sc_iinb, ro, ri, sc->sc_outb, sc->sc_inb);
  	}
 	sc->sc_if.if_timer = I4BIPRACCTINTVL; 	
 #ifdef __bsdi__
@@ -853,10 +854,10 @@ ipr_disconnect(void *softc, void *cdp)
 	sc->sc_log_first = IPR_LOG;
 #endif
 
-	i4b_l4_accounting(BDRV_IPR, cd->driver_unit, ACCT_FINAL,
+	i4b_l4_accounting(cd->cdid, ACCT_FINAL,
 		 sc->sc_ioutb, sc->sc_iinb, 0, 0, sc->sc_outb, sc->sc_inb);
 	
-	sc->sc_cdp = (call_desc_t *)0;	
+	sc->sc_cdp = NULL;
 
 	NDBGL4(L4_DIALST, "setting dial state to ST_IDLE");
 
