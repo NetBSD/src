@@ -1,4 +1,4 @@
-/*	$NetBSD: dc21040reg.h,v 1.6 1995/08/19 04:15:29 cgd Exp $	*/
+/*    $NetBSD: dc21040reg.h,v 1.7 1995/12/23 06:23:27 tls Exp $       */
 
 /*-
  * Copyright (c) 1994, 1995 Matt Thomas (thomas@lkg.dec.com)
@@ -27,8 +27,8 @@
 #if !defined(_DC21040_H)
 #define _DC21040_H
 
-typedef	u_int16_t	tulip_uint16_t;
-typedef	u_int32_t	tulip_uint32_t;
+typedef	u_int16_t tulip_uint16_t;
+typedef	u_int32_t   tulip_uint32_t;
 
 #if defined(BYTE_ORDER) && BYTE_ORDER == BIG_ENDIAN
 #define	TULIP_BITFIELD2(a, b)		      b, a
@@ -219,6 +219,9 @@ typedef struct {
 #define	TULIP_DC21041_SIATXRX_BNC	0x0000F73DL
 #define	TULIP_DC21041_SIAGEN_BNC	0x00000006L
 
+#define	TULIP_WATCHDOG_TXDISABLE	0x00000001L
+#define	TULIP_WATCHDOG_RXDISABLE	0x00000010L
+
 #define	TULIP_BUSMODE_SWRESET		0x00000001L
 #define	TULIP_BUSMODE_DESCSKIPLEN_MASK	0x0000007CL
 #define	TULIP_BUSMODE_BIGENDIAN		0x00000080L
@@ -271,7 +274,7 @@ typedef struct {
 #define	TULIP_GP_EM100_INIT		0x00000009	/* No loopback --- point-to-point */
 #define	TULIP_OUI_COGENT_0		0x00
 #define	TULIP_OUI_COGENT_1		0x00
-#define	TULIP_OUI_COGENT_2		0x94
+#define	TULIP_OUI_COGENT_2		0x92
 #define	TULIP_COGENT_EM100_ID		0x12
 
 
