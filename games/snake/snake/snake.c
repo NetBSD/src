@@ -1,6 +1,8 @@
+/*	$NetBSD: snake.c,v 1.5 1995/04/22 08:34:36 cgd Exp $	*/
+
 /*
- * Copyright (c) 1980 Regents of the University of California.
- * All rights reserved.
+ * Copyright (c) 1980, 1993
+ *	The Regents of the University of California.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -32,14 +34,17 @@
  */
 
 #ifndef lint
-char copyright[] =
-"@(#) Copyright (c) 1980 Regents of the University of California.\n\
- All rights reserved.\n";
+static char copyright[] =
+"@(#) Copyright (c) 1980, 1993\n\
+	The Regents of the University of California.  All rights reserved.\n";
 #endif /* not lint */
 
 #ifndef lint
-/*static char sccsid[] = "from: @(#)snake.c	5.10 (Berkeley) 2/28/91";*/
-static char rcsid[] = "$Id: snake.c,v 1.4 1994/04/01 03:02:32 cgd Exp $";
+#if 0
+static char sccsid[] = "@(#)snake.c	8.2 (Berkeley) 1/7/94";
+#else
+static char rcsid[] = "$NetBSD: snake.c,v 1.5 1995/04/22 08:34:36 cgd Exp $";
+#endif
 #endif /* not lint */
 
 /*
@@ -54,11 +59,13 @@ static char rcsid[] = "$Id: snake.c,v 1.4 1994/04/01 03:02:32 cgd Exp $";
  */
 
 #include <sys/param.h>
+
+#include <errno.h>
 #include <fcntl.h>
 #include <pwd.h>
-#include <errno.h>
-#include <stdlib.h>
+#include <stdlib>
 #include <time.h>
+
 #include "snake.h"
 #include "pathnames.h"
 
@@ -538,7 +545,7 @@ struct point *sp, *np;
 	   snake would get too good */
 	struct point d;
 	int w, i, wt[8];
-	double sqrt(), v1, v2, vp, max;
+	double v1, v2, vp, max;
 	point(&d,you.col-sp->col,you.line-sp->line);
 	v1 = sqrt( (double) (d.col*d.col + d.line*d.line) );
 	w=0; 
