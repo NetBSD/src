@@ -1,4 +1,4 @@
-/*	$NetBSD: vnode.h,v 1.130 2005/01/02 16:08:30 thorpej Exp $	*/
+/*	$NetBSD: vnode.h,v 1.131 2005/01/03 16:33:33 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -230,13 +230,15 @@ struct vattr {
 /*
  * Flags for ioflag.
  */
-#define	IO_UNIT		0x01		/* do I/O as atomic unit */
-#define	IO_APPEND	0x02		/* append write to end */
+#define	IO_UNIT		0x001		/* do I/O as atomic unit */
+#define	IO_APPEND	0x002		/* append write to end */
 #define	IO_SYNC		(0x04|IO_DSYNC)	/* sync I/O file integrity completion */
-#define	IO_NODELOCKED	0x08		/* underlying node already locked */
-#define	IO_NDELAY	0x10		/* FNDELAY flag set in file table */
-#define	IO_DSYNC	0x20		/* sync I/O data integrity completion */
-#define	IO_ALTSEMANTICS	0x40		/* use alternate i/o semantics */
+#define	IO_NODELOCKED	0x008		/* underlying node already locked */
+#define	IO_NDELAY	0x010		/* FNDELAY flag set in file table */
+#define	IO_DSYNC	0x020		/* sync I/O data integrity completion */
+#define	IO_ALTSEMANTICS	0x040		/* use alternate i/o semantics */
+#define	IO_NORMAL	0x080		/* operate on regular data */
+#define	IO_EXT		0x100		/* operate on extended attributes */
 
 /*
  *  Modes.
