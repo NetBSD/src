@@ -28,7 +28,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	$Id: clock.c,v 1.15 1994/05/27 14:58:25 gwr Exp $
+ *	$Id: clock.c,v 1.16 1994/06/01 15:45:39 gwr Exp $
  */
 /*
  * machine-dependent clock routines; intersil7170
@@ -290,13 +290,15 @@ int clock_count = 0;
 void clock_intr(frame)
 	struct clockframe *frame;
 {
-    static unsigned char led_pattern = 0;
+    static unsigned char led_pattern = 0xFE;
 
     clock_count++;
-    if ((clock_count%20) == 0) {
-	set_control_byte((char *) DIAG_REG, led_pattern);
-	led_pattern = ~led_pattern;
-    }
+	if ((clock_count & 7) == 0) {
+		led_pattern = (led_pattern << 1) | 1;
+		if (led_pattern == 0xFF)
+			led_pattern = 0xFE;
+		set_control_byte((char *) DIAG_REG, led_pattern);
+	}
     hardclock(frame);
 }
 
