@@ -1,4 +1,4 @@
-/*	$NetBSD: vr.c,v 1.29 2001/09/16 15:45:45 uch Exp $	*/
+/*	$NetBSD: vr.c,v 1.30 2001/09/17 17:03:46 uch Exp $	*/
 
 /*-
  * Copyright (c) 1999
@@ -38,30 +38,22 @@
 #include "opt_kgdb.h"
 
 #include <sys/param.h>
-#include <sys/types.h>
 #include <sys/systm.h>
-#include <sys/device.h>
 #include <sys/reboot.h>
-#include <sys/kcore.h>
 
-#include <machine/cpu.h>
-#include <machine/intr.h>
-#include <machine/reg.h>
-#include <machine/psl.h>
-#include <machine/locore.h>
 #include <machine/sysconf.h>
 #include <machine/bus.h>
-#include <machine/autoconf.h>
+#include <machine/bootinfo.h>
 
 #include <dev/hpc/hpckbdvar.h>
+
+#include <hpcmips/hpcmips/machdep.h>	/* cpu_name, mem_cluster */
 
 #include <hpcmips/vr/vr.h>
 #include <hpcmips/vr/vr_asm.h>
 #include <hpcmips/vr/vrcpudef.h>
 #include <hpcmips/vr/vripreg.h>
 #include <hpcmips/vr/rtcreg.h>
-#include <hpcmips/hpcmips/machdep.h>	/* cpu_name */
-#include <machine/bootinfo.h>
 
 #include "vrip.h"
 #if NVRIP > 0
@@ -128,9 +120,6 @@ static int (*intr_handler[4])(void*, u_int32_t, u_int32_t) =
 	null_handler
 };
 static void *intr_arg[4];
-
-extern phys_ram_seg_t mem_clusters[];
-extern int mem_cluster_cnt;
 
 void
 vr_init()
@@ -253,38 +242,30 @@ void
 vr_cons_init()
 {
 #if NCOM > 0 || NHPCFB > 0 || NVRKIU > 0
-	extern bus_space_tag_t system_bus_iot;
-	extern bus_space_tag_t mb_bus_space_init(void);
-
-	/*
-	 * At this time, system_bus_iot is not initialized yet.
-	 * Just initialize it here.
-	 */
-	mb_bus_space_init();
+	bus_space_tag_t iot = hpcmips_system_bus_space();
 #endif
 
 #if NCOM > 0
 #ifdef KGDB
 	/* if KGDB is defined, always use the serial port for KGDB */
-	if (com_vrip_cndb_attach(system_bus_iot, VRIP_SIU_ADDR, 9600,
-	    VRCOM_FREQ, (TTYDEF_CFLAG & ~(CSIZE | PARENB)) | CS8, 1)) {
+	if (com_vrip_cndb_attach(iot, VRIP_SIU_ADDR, 9600, VRCOM_FREQ,
+	    (TTYDEF_CFLAG & ~(CSIZE | PARENB)) | CS8, 1)) {
 		printf("%s(%d): can't init kgdb's serial port",
 		    __FILE__, __LINE__);
 	}
-#else
+#else /* KGDB */
 	if (bootinfo->bi_cnuse & BI_CNUSE_SERIAL) {
 		/* Serial console */
-		if (com_vrip_cndb_attach(system_bus_iot,
-		    VRIP_SIU_ADDR, CONSPEED, VRCOM_FREQ,
-		    (TTYDEF_CFLAG & ~(CSIZE | PARENB)) | CS8, 0)) {
+		if (com_vrip_cndb_attach(iot, VRIP_SIU_ADDR, CONSPEED,
+		    VRCOM_FREQ, (TTYDEF_CFLAG & ~(CSIZE | PARENB)) | CS8, 0)) {
 			printf("%s(%d): can't init serial console",
 			    __FILE__, __LINE__);
 		} else {
 			return;
 		}
 	}
-#endif
-#endif
+#endif /* KGDB */
+#endif /* NCOM > 0 */
 
 #if NHPCFB > 0
 	if (hpcfb_cnattach(NULL)) {
@@ -293,16 +274,16 @@ vr_cons_init()
 		goto find_keyboard;
 	}
  find_keyboard:
-#endif
+#endif /* NHPCFB > 0 */
 
 #if NVRKIU > 0 && VRIP_KIU_ADDR != VRIP_NO_ADDR
-	if (vrkiu_cnattach(system_bus_iot, VRIP_KIU_ADDR)) {
+	if (vrkiu_cnattach(iot, VRIP_KIU_ADDR)) {
 		printf("%s(%d): can't init vrkiu as console",
 		       __FILE__, __LINE__);
 	} else {
 		return;
 	}
-#endif
+#endif /* NVRKIU > 0 && VRIP_KIU_ADDR != VRIP_NO_ADDR */
 }
 
 void
@@ -355,18 +336,33 @@ vr_reboot(int howto, char *bootstr)
 #endif
 }
 
+/*
+ * Handle interrupts.
+ */
+int
+vr_intr(u_int32_t status, u_int32_t cause, u_int32_t pc, u_int32_t ipending)
+{
+	int hwintr;
+
+	hwintr = (ffs(ipending >> 10) -1) & 0x3;
+	(*intr_handler[hwintr])(intr_arg[hwintr], pc, status);
+	
+	return (MIPS_SR_INT_IE | (status & ~cause & MIPS_HARD_INT_MASK));
+}
+
 void *
-vr_intr_establish(int line, int (*ih_fun)(void*, u_int32_t, u_int32_t),
+vr_intr_establish(int line, int (*ih_fun)(void *, u_int32_t, u_int32_t),
     void *ih_arg)
 {
 
 	if (intr_handler[line] != null_handler) {
-		panic("vr_intr_establish: can't establish duplicated intr handler.");
+		panic("vr_intr_establish:"
+		    " can't establish duplicated intr handler.");
 	}
 	intr_handler[line] = ih_fun;
 	intr_arg[line] = ih_arg;
 
-	return (void*)line;
+	return ((void*)line);
 }
 
 
@@ -386,21 +382,6 @@ null_handler(void *arg, u_int32_t pc, u_int32_t statusReg)
 
 	return (0);
 }
-
-/*
- * Handle interrupts.
- */
-int
-vr_intr(u_int32_t status, u_int32_t cause, u_int32_t pc, u_int32_t ipending)
-{
-	int hwintr;
-
-	hwintr = (ffs(ipending >> 10) -1) & 0x3;
-	(*intr_handler[hwintr])(intr_arg[hwintr], pc, status);
-	
-	return (MIPS_SR_INT_IE | (status & ~cause & MIPS_HARD_INT_MASK));
-}
-
 
 /*
 int x4181 = VR4181;

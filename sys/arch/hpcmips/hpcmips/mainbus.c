@@ -1,4 +1,4 @@
-/*	$NetBSD: mainbus.c,v 1.13 2001/09/16 15:45:44 uch Exp $	*/
+/*	$NetBSD: mainbus.c,v 1.14 2001/09/17 17:03:45 uch Exp $	*/
 
 /*-
  * Copyright (c) 1999
@@ -34,116 +34,91 @@
  *
  */
 
-#include "opt_vr41xx.h"
-#include "opt_tx39xx.h"
-
 #include <sys/param.h>
 #include <sys/systm.h>
 
 #include <machine/bus.h>
 #include <machine/autoconf.h>
 #include <machine/platid.h>
-#include <machine/platid_mask.h>
 
-/* Definition of the mainbus driver. */
-static int	mbmatch(struct device *, struct cfdata *, void *);
-static void	mbattach(struct device *, struct device *, void *);
-static int	mbprint(void *, const char *);
+#include "locators.h"
 
-bus_space_tag_t	mb_bus_space_init(void);
+#ifdef DEBUG
+#define STATIC
+#else
+#define STATIC	static
+#endif
+
+STATIC int mainbus_match(struct device *, struct cfdata *, void *);
+STATIC void mainbus_attach(struct device *, struct device *, void *);
+STATIC int mainbus_search(struct device *, struct cfdata *, void *);
+STATIC int mainbus_print(void *, const char *);
 
 struct cfattach mainbus_ca = {
-	sizeof(struct device), mbmatch, mbattach
+	sizeof(struct device), mainbus_match, mainbus_attach
 };
 
-bus_space_tag_t system_bus_iot; /* Serial console requires this */
-static int mainbus_found;	/* There can be only one. */
+STATIC int __mainbus_attached;
 
-static int
-mbmatch(struct device *parent, struct cfdata *cf, void *aux)
+int
+mainbus_match(struct device *parent, struct cfdata *cf, void *aux)
 {
 
-	if (mainbus_found)
-		return (0);
-
-	return (1);
+	return (__mainbus_attached ? 0 : 1);	/* don't attach twice */
 }
 
-bus_space_tag_t
-mb_bus_space_init()
+void
+mainbus_attach(struct device *parent, struct device *self, void *aux)
 {
-	bus_space_tag_t iot;
-
-	iot = hpcmips_alloc_bus_space_tag();
-	strcpy(iot->t_name, "System internal");
-	iot->t_base = 0x0;
-	iot->t_size = 0xffffffff;
-	iot->t_extent = 0; /* No extent for bootstraping */
-	system_bus_iot = iot;
-
-	return (iot);
-}
-
-static void
-mbattach(struct device *parent, struct device *self, void *aux)
-{
-	int i;
-	register struct device *mb = self;
-	struct mainbus_attach_args ma;
-	char *devnames[] = {
-		"txsim", "vrip", "bivideo", "btnmgr", "hpcapm",
+	static const char *devnames[] = {	/* ATTACH ORDER */
+		"cpu",				/* 1. CPU */
+		"vrip", "txsim",		/* 2. System BUS */
+		"bivideo", "btnmgr", "hpcapm",	/* 3. misc */
 	};
+	struct mainbus_attach_args ma;
+	int i;
 
-	mainbus_found = 1;
-
+	__mainbus_attached = 1;
+	
 	printf("\n");
 
-	/* Attach CPU */
-	ma.ma_name = "cpu";
-	config_found(mb, &ma, mbprint);
+	/* default dumb bus_space */
+	ma.ma_iot = hpcmips_system_bus_space();
+	hpcmips_init_bus_space_extent(ma.ma_iot);
 
-#if defined TX39XX && defined VR41XX
-/* XXX: currently, the case defined TX39XX && defined VR41XX don't work */
-#error misconfiguration
-#endif /* defined TX39XX && defined VR41XX */
-
-	/* Platform Specific Function Hooks */
-#ifdef VR41XX
-#ifdef TX39XX
-	if (platid_match(&platid, &platid_mask_CPU_MIPS_VR_41XX))
-#endif /* TX39XX */
-	{
-		if (!system_bus_iot) 
-			mb_bus_space_init();
-		/* Now prepare extent */
-		hpcmips_init_bus_space_extent(system_bus_iot);
-		ma.ma_iot = system_bus_iot;
-	}
-#endif /* VR41XX */
-#ifdef TX39XX
-#ifdef VR41XX
-	if (platid_match(&platid, &platid_mask_CPU_MIPS_TX_3900)
-	    || platid_match(&platid, &platid_mask_CPU_MIPS_TX_3920))
-#endif /* VR41XX */
-	{
-		; /* do nothing.. */
-	}
-#endif /* TX39XX */
-
-	/* Attach devices */
-	for (i = 0; i < sizeof(devnames)/sizeof(*devnames); i++) {
+	/* search and attach devices in order */
+	for (i = 0; i < sizeof(devnames) / sizeof(devnames[0]); i++) {
 		ma.ma_name = devnames[i];
-		config_found(mb, &ma, mbprint);
+		config_search(mainbus_search, self, &ma);
 	}
 }
 
+int
+mainbus_search(struct device *parent, struct cfdata *cf, void *aux)
+{
+	struct mainbus_attach_args *ma = (void *)aux;
+	int locator = cf->cf_loc[MAINBUSCF_ID];
 
-static int
-mbprint(void *aux, const char *pnp)
+	/* check device name */
+	if (strcmp(ma->ma_name, cf->cf_driver->cd_name) != 0)
+		return (0);
+
+	/* check platform ID in config file */
+	if (locator != MAINBUSCF_ID_DEFAULT &&
+	    !platid_match(&platid, PLATID_DEREFP(locator)))
+		return (0);
+
+	/* attach device */
+	if ((*cf->cf_attach->ca_match)(parent, cf, ma))
+		config_attach(parent, cf, ma, mainbus_print);
+
+	return (0);
+}
+
+int
+mainbus_print(void *aux, const char *pnp)
 {
 
-	if (pnp)
-		return (QUIET);
-
-	return (UNCONF);
+	return (pnp ? QUIET : UNCONF);
 }
+

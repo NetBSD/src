@@ -1,4 +1,4 @@
-/*     $NetBSD: bus.h,v 1.12 2001/09/15 15:04:45 uch Exp $   */
+/*     $NetBSD: bus.h,v 1.13 2001/09/17 17:03:45 uch Exp $   */
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2001 The NetBSD Foundation, Inc.
@@ -89,6 +89,7 @@ typedef u_int32_t bus_space_handle_t;
 /*
  * Initialize extent.
  */
+bus_space_tag_t hpcmips_system_bus_space(void);
 void hpcmips_init_bus_space_extent(bus_space_tag_t);
 bus_space_tag_t hpcmips_alloc_bus_space_tag(void);
 

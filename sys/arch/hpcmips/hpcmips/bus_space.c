@@ -1,4 +1,4 @@
-/*	$NetBSD: bus_space.c,v 1.12 2001/09/16 05:32:19 uch Exp $	*/
+/*	$NetBSD: bus_space.c,v 1.13 2001/09/17 17:03:45 uch Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -55,20 +55,39 @@
 
 #define MAX_BUSSPACE_TAG 10
 
-static  struct hpcmips_bus_space sys_bus_space[MAX_BUSSPACE_TAG];
-static int bus_space_index = 0;
-bus_space_handle_t __hpcmips_cacheable(bus_space_tag_t, bus_addr_t,
-    bus_size_t, int);
+static  struct hpcmips_bus_space __bus_space[MAX_BUSSPACE_TAG];
+static int __bus_space_index;
+static struct hpcmips_bus_space __sys_bus_space;
+static bus_space_tag_t __sys_bus_space_tag;
+
+bus_space_handle_t __hpcmips_cacheable(bus_space_tag_t, bus_addr_t, bus_size_t,
+    int);
+
+bus_space_tag_t
+hpcmips_system_bus_space()
+{
+
+	if (__sys_bus_space_tag != 0)
+		return (__sys_bus_space_tag);
+
+	strcpy(__sys_bus_space.t_name, "whole bus space");
+	__sys_bus_space.t_base = 0x0;
+	__sys_bus_space.t_size = 0xffffffff;
+	__sys_bus_space.t_extent = 0; /* No extent for bootstraping */
+	__sys_bus_space_tag = &__sys_bus_space;
+
+	return (__sys_bus_space_tag);
+}
 
 bus_space_tag_t
 hpcmips_alloc_bus_space_tag()
 {
 	bus_space_tag_t	t;
 
-	if (bus_space_index >= MAX_BUSSPACE_TAG) {
+	if (__bus_space_index >= MAX_BUSSPACE_TAG) {
 		panic("hpcmips_internal_alloc_bus_space_tag: tag full.");
 	}
-	t = &sys_bus_space[bus_space_index++];
+	t = &__bus_space[__bus_space_index++];
 
 	return (t);
 }
