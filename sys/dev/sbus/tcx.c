@@ -1,4 +1,4 @@
-/*	$NetBSD: tcx.c,v 1.2 2000/08/22 21:18:57 pk Exp $ */
+/*	$NetBSD: tcx.c,v 1.3 2001/09/24 23:49:34 eeh Exp $ */
 
 /*
  *  Copyright (c) 1996,1998 The NetBSD Foundation, Inc.
@@ -432,7 +432,6 @@ tcxmmap(dev, off, prot)
 	int prot;
 {
 	struct tcx_softc *sc = tcx_cd.cd_devs[minor(dev)];
-	bus_space_handle_t bh;
 	struct sbus_reg *rr = sc->sc_physadr;
 	struct mmo *mo;
 	u_int u, sz;
@@ -472,16 +471,14 @@ tcxmmap(dev, off, prot)
 		sz = mo->mo_size ? mo->mo_size : sc->sc_fb.fb_type.fb_size;
 		if (u < sz) {
 			bus_type_t t = (bus_type_t)rr[mo->mo_bank].sbr_slot;
-			bus_addr_t a = (bus_addr_t)rr[mo->mo_bank].sbr_offset;
+			bus_addr_t a = BUS_ADDR(t, rr[mo->mo_bank].sbr_offset);
 
-			if (bus_space_mmap(sc->sc_bustag,
-					   t,
-					   a + u,
-					   BUS_SPACE_MAP_LINEAR, &bh))
-				return (-1);
-
-			return ((paddr_t)bh);
+			return (bus_space_mmap(sc->sc_bustag,
+				a,
+				u,
+				prot,
+				BUS_SPACE_MAP_LINEAR));
 		}
 	}
-	return (-1);	/* not a user-map offset */
+	return (-1);
 }

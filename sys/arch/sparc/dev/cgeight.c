@@ -1,4 +1,4 @@
-/*	$NetBSD: cgeight.c,v 1.24 2000/08/22 21:28:29 pk Exp $	*/
+/*	$NetBSD: cgeight.c,v 1.25 2001/09/24 23:49:31 eeh Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -422,7 +422,6 @@ cgeightmmap(dev, off, prot)
 	int prot;
 {
 	struct cgeight_softc *sc = cgeight_cd.cd_devs[minor(dev)];
-	bus_space_handle_t bh;
 	off_t poff;
 
 #define START_ENABLE	(128*1024)
@@ -490,13 +489,9 @@ cgeightmmap(dev, off, prot)
 	} else
 		return (-1);
 
-	if (bus_space_mmap(sc->sc_bustag,
-			   sc->sc_btype,
-			   sc->sc_paddr + poff,
-			   BUS_SPACE_MAP_LINEAR, &bh))
-		return (-1);
-
-	return ((paddr_t)bh);
+	return (bus_space_mmap(sc->sc_bustag,
+		sc->sc_paddr, poff,
+		prot, BUS_SPACE_MAP_LINEAR));
 }
 
 #if defined(SUN4)
