@@ -1,4 +1,4 @@
-/*	$NetBSD: bitstring_test.c,v 1.6 2002/02/21 07:38:14 itojun Exp $	*/
+/*	$NetBSD: bitstring_test.c,v 1.7 2003/01/04 23:43:03 wiz Exp $	*/
 
 /*-
  * Copyright (c) 1993 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
 
 /*
  * this is a simple program to test bitstring.h
- * inspect the ouput, you should notice problems
+ * inspect the output, you should notice problems
  * choose the ATT or BSD flavor
  */
 #if 0
