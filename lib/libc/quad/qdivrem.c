@@ -1,4 +1,4 @@
-/*	$NetBSD: qdivrem.c,v 1.6 1998/02/03 18:31:40 perry Exp $	*/
+/*	$NetBSD: qdivrem.c,v 1.7 1999/05/03 15:38:41 christos Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -42,7 +42,7 @@
 #if 0
 static char sccsid[] = "@(#)qdivrem.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: qdivrem.c,v 1.6 1998/02/03 18:31:40 perry Exp $");
+__RCSID("$NetBSD: qdivrem.c,v 1.7 1999/05/03 15:38:41 christos Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -122,15 +122,15 @@ __qdivrem(uq, vq, arq)
 	 */
 	tmp.uq = uq;
 	u[0] = 0;
-	u[1] = HHALF(tmp.ul[H]);
-	u[2] = LHALF(tmp.ul[H]);
-	u[3] = HHALF(tmp.ul[L]);
-	u[4] = LHALF(tmp.ul[L]);
+	u[1] = (digit)HHALF(tmp.ul[H]);
+	u[2] = (digit)LHALF(tmp.ul[H]);
+	u[3] = (digit)HHALF(tmp.ul[L]);
+	u[4] = (digit)LHALF(tmp.ul[L]);
 	tmp.uq = vq;
-	v[1] = HHALF(tmp.ul[H]);
-	v[2] = LHALF(tmp.ul[H]);
-	v[3] = HHALF(tmp.ul[L]);
-	v[4] = LHALF(tmp.ul[L]);
+	v[1] = (digit)HHALF(tmp.ul[H]);
+	v[2] = (digit)LHALF(tmp.ul[H]);
+	v[3] = (digit)HHALF(tmp.ul[L]);
+	v[4] = (digit)LHALF(tmp.ul[L]);
 	for (n = 4; v[1] == 0; v++) {
 		if (--n == 1) {
 			u_long rbj;	/* r*B+u[j] (not root boy jim) */
@@ -145,13 +145,13 @@ __qdivrem(uq, vq, arq)
 			 * We unroll this completely here.
 			 */
 			t = v[2];	/* nonzero, by definition */
-			q1 = u[1] / t;
+			q1 = (digit)(u[1] / t);
 			rbj = COMBINE(u[1] % t, u[2]);
-			q2 = rbj / t;
+			q2 = (digit)(rbj / t);
 			rbj = COMBINE(rbj % t, u[3]);
-			q3 = rbj / t;
+			q3 = (digit)(rbj / t);
 			rbj = COMBINE(rbj % t, u[4]);
-			q4 = rbj / t;
+			q4 = (digit)(rbj / t);
 			if (arq)
 				*arq = rbj % t;
 			tmp.ul[H] = COMBINE(q1, q2);
@@ -209,9 +209,9 @@ __qdivrem(uq, vq, arq)
 			rhat = uj1;
 			goto qhat_too_big;
 		} else {
-			u_long n = COMBINE(uj0, uj1);
-			qhat = n / v1;
-			rhat = n % v1;
+			u_long nn = COMBINE(uj0, uj1);
+			qhat = nn / v1;
+			rhat = nn % v1;
 		}
 		while (v2 * qhat > COMBINE(rhat, uj2)) {
 	qhat_too_big:
@@ -227,11 +227,11 @@ __qdivrem(uq, vq, arq)
 		 */
 		for (t = 0, i = n; i > 0; i--) {
 			t = u[i + j] - v[i] * qhat - t;
-			u[i + j] = LHALF(t);
+			u[i + j] = (digit)LHALF(t);
 			t = (B - HHALF(t)) & (B - 1);
 		}
 		t = u[j] - t;
-		u[j] = LHALF(t);
+		u[j] = (digit)LHALF(t);
 		/*
 		 * D5: test remainder.
 		 * There is a borrow if and only if HHALF(t) is nonzero;
@@ -242,12 +242,12 @@ __qdivrem(uq, vq, arq)
 			qhat--;
 			for (t = 0, i = n; i > 0; i--) { /* D6: add back. */
 				t += u[i + j] + v[i];
-				u[i + j] = LHALF(t);
+				u[i + j] = (digit)LHALF(t);
 				t = HHALF(t);
 			}
-			u[j] = LHALF(u[j] + t);
+			u[j] = (digit)LHALF(u[j] + t);
 		}
-		q[j] = qhat;
+		q[j] = (digit)qhat;
 	} while (++j <= m);		/* D7: loop on j. */
 
 	/*
@@ -258,8 +258,8 @@ __qdivrem(uq, vq, arq)
 	if (arq) {
 		if (d) {
 			for (i = m + n; i > m; --i)
-				u[i] = (u[i] >> d) |
-				    LHALF(u[i - 1] << (HALF_BITS - d));
+				u[i] = ((u_long)u[i] >> d) |
+				    LHALF((u_long)u[i - 1] << (HALF_BITS - d));
 			u[i] = 0;
 		}
 		tmp.ul[H] = COMBINE(uspace[1], uspace[2]);
@@ -283,6 +283,7 @@ shl(digit *p, int len, int sh)
 	int i;
 
 	for (i = 0; i < len; i++)
-		p[i] = LHALF(p[i] << sh) | (p[i + 1] >> (HALF_BITS - sh));
-	p[i] = LHALF(p[i] << sh);
+		p[i] = LHALF((u_long)p[i] << sh) |
+		    (p[i + 1] >> (HALF_BITS - sh));
+	p[i] = (digit)LHALF(p[i] << sh);
 }
