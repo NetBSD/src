@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.148 2004/02/08 22:52:41 lukem Exp $
+#	$NetBSD: Makefile.inc,v 1.149 2004/03/14 09:18:45 yamt Exp $
 #	@(#)Makefile.inc	8.3 (Berkeley) 10/24/94
 
 # sys sources
@@ -152,7 +152,9 @@ MAN+=	accept.2 access.2 acct.2 adjtime.2 bind.2 brk.2 chdir.2 \
 	munmap.2 nanosleep.2 nfssvc.2 ntp_adjtime.2 open.2 pathconf.2 pipe.2 \
 	pmc_control.2 poll.2 profil.2 ptrace.2 quotactl.2 rasctl.2 \
 	read.2 readlink.2 \
-	reboot.2 recv.2 rename.2 revoke.2 rmdir.2 select.2 semctl.2 \
+	reboot.2 recv.2 rename.2 revoke.2 rmdir.2 \
+	sa_register.2 sa_stacks.2 sa_enable.2 sa_setconcurrency.2 sa_yield.2 \
+	select.2 semctl.2 \
 	semget.2 semop.2 send.2 setgroups.2 setpgid.2 setregid.2 \
 	setreuid.2 setsid.2 setuid.2 shmat.2 shmctl.2 shmget.2 \
 	shutdown.2 sigaction.2 sigaltstack.2 sigpending.2 \
