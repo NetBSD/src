@@ -1,4 +1,4 @@
-/*	$NetBSD: ofwgencfg_clock.c,v 1.7 2000/01/22 05:21:26 tsutsui Exp $	*/
+/*	$NetBSD: ofwgencfg_clock.c,v 1.8 2000/12/12 06:06:06 mycroft Exp $	*/
 
 /*
  * Copyright 1997
@@ -176,13 +176,6 @@ microtime(tvp)
 
 	oldtv = *tvp;
 	(void)splx(s);		
-}
-
-
-void
-need_proftick(p)
-	struct proc *p;
-{
 }
 
 /*

@@ -1,4 +1,4 @@
-/*	$NetBSD: iomd_clock.c,v 1.21 2000/02/13 04:59:58 mark Exp $	*/
+/*	$NetBSD: iomd_clock.c,v 1.22 2000/12/12 06:06:06 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1994-1997 Mark Brinicombe.
@@ -308,13 +308,6 @@ microtime(tvp)
 	    
 	oldtv = *tvp;
 	(void)splx(s);		
-}
-
-
-void
-need_proftick(p)
-	struct proc *p;
-{
 }
 
 /*
