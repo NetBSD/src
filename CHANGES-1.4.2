@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-1.4.2,v 1.1.2.31 1999/09/22 03:00:05 cgd Exp $
+#	$NetBSD: CHANGES-1.4.2,v 1.1.2.32 1999/09/22 03:26:17 cgd Exp $
 
 A complete list of changes from NetBSD 1.4.1 to NetBSD 1.4.2:
 
@@ -443,3 +443,27 @@ usr.sbin/amd/wire-test/wire-test.c		1.5
 
   Upgrade amd(8) and related software to fix expoitable stack overflows
   in amq(8), as reported in BUGTRAQ and elsewhere.
+
+usr.sbin/config/sem.c				1.23
+
+  Fix the (English) grammar in a couple of places.
+
+distrib/sets/lists/base/mi			1.122
+usr.bin/Makefile				1.107
+usr.bin/mktemp/Makefile				1.1-1.2 (new)
+usr.bin/mktemp/mktemp.1				1.1-1.3 (new)
+usr.bin/mktemp/mktemp.c				1.1-1.2 (new)
+
+  Add mktemp(1), a utility to make temporary files for shell scripts.
+
+sys/kern/uipc_socket2.c				1.31-1.33
+
+  Compact mbuf clusters, to help prevent mbuf cluster exhaustion when
+  receiving lots of small packets.  This costs some performance (the
+  compaction copies data), but adds a lot of stability to many systems.
+
+sys/dev/pci/if_vr.c				1.26
+
+  Fix packet reception in promiscuous mode: compare the Ethernet
+  destination address against our station address if it's not a
+  multicast packet.  Fixes a redirect storm problem.
