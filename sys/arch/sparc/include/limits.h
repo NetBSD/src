@@ -1,4 +1,4 @@
-/*	$NetBSD: limits.h,v 1.8 1998/01/09 22:24:03 perry Exp $ */
+/*	$NetBSD: limits.h,v 1.9 1998/08/06 11:25:05 kleink Exp $ */
 
 /*
  * Copyright (c) 1988 The Regents of the University of California.
@@ -63,7 +63,7 @@
 #if !defined(_ANSI_SOURCE)
 #define	SSIZE_MAX	INT_MAX		/* max value for a ssize_t */
 
-#if !defined(_POSIX_SOURCE) && !defined(_XOPEN_SOURCE)
+#if !defined(_POSIX_C_SOURCE) && !defined(_XOPEN_SOURCE)
 #define	SIZE_T_MAX	UINT_MAX	/* max value for a size_t */
 
 /* GCC requires that quad constants be written as expressions. */
@@ -72,10 +72,11 @@
 #define	QUAD_MAX	((quad_t)(UQUAD_MAX >> 1))
 #define	QUAD_MIN	(-QUAD_MAX-1)	/* min value for a quad_t */
 
-#endif /* !_POSIX_SOURCE && !_XOPEN_SOURCE */
+#endif /* !_POSIX_C_SOURCE && !_XOPEN_SOURCE */
 #endif /* !_ANSI_SOURCE */
 
-#if (!defined(_ANSI_SOURCE)&&!defined(_POSIX_SOURCE)) || defined(_XOPEN_SOURCE)
+#if !defined(_ANSI_SOURCE) && !defined(_POSIX_C_SOURCE) || \
+    defined(_XOPEN_SOURCE)
 #define LONG_BIT	32
 #define WORD_BIT	32
 
