@@ -1,4 +1,4 @@
-/*	$NetBSD: */
+/*	$NetBSD: wsksymvar.h,v 1.3 1998/04/07 13:59:38 hannken Exp $ */
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
