@@ -1,4 +1,4 @@
-/*	$NetBSD: parse.c,v 1.72 2001/08/20 12:00:55 wiz Exp $	*/
+/*	$NetBSD: parse.c,v 1.73 2001/09/24 13:22:35 wiz Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -39,14 +39,14 @@
  */
 
 #ifdef MAKE_BOOTSTRAP
-static char rcsid[] = "$NetBSD: parse.c,v 1.72 2001/08/20 12:00:55 wiz Exp $";
+static char rcsid[] = "$NetBSD: parse.c,v 1.73 2001/09/24 13:22:35 wiz Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)parse.c	8.3 (Berkeley) 3/19/94";
 #else
-__RCSID("$NetBSD: parse.c,v 1.72 2001/08/20 12:00:55 wiz Exp $");
+__RCSID("$NetBSD: parse.c,v 1.73 2001/09/24 13:22:35 wiz Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -367,7 +367,6 @@ ParseVErrorInternal(va_alist)
 	if (type == PARSE_WARNING)
 		(void)fprintf(stderr, "warning: ");
 	(void)vfprintf(stderr, fmt, ap);
-	va_end(ap);
 	(void)fprintf(stderr, "\n");
 	(void)fflush(stderr);
 	if (type == PARSE_FATAL || parseWarnFatal)

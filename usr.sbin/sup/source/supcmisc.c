@@ -1,4 +1,4 @@
-/*	$NetBSD: supcmisc.c,v 1.9 1999/04/12 20:48:07 pk Exp $	*/
+/*	$NetBSD: supcmisc.c,v 1.10 2001/09/24 13:22:39 wiz Exp $	*/
 
 /*
  * Copyright (c) 1992 Carnegie Mellon University
@@ -282,6 +282,7 @@ va_dcl
 		if (noteF && noteF != stdout)
 			(void) pclose (noteF);
 		noteF = NULL;
+		va_end(ap);
 		return;
 	}
 	if ((thisC->Cflags&CFURELSUF) && thisC->Crelease) 

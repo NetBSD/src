@@ -1,4 +1,4 @@
-/*	$NetBSD: irp.c,v 1.2 2001/01/27 07:22:03 itojun Exp $	*/
+/*	$NetBSD: irp.c,v 1.3 2001/09/24 13:22:28 wiz Exp $	*/
 
 /*
  * Copyright (c) 1996, 1998 by Internet Software Consortium.
@@ -539,6 +539,7 @@ irs_irp_send_command(struct irp_p *pvt, const char *fmt, ...) {
 
 	va_start(ap, fmt);
 	todo = vsprintf(buffer, fmt, ap);
+	va_end(ap);
 	if (todo > sizeof buffer - 2) {
 		syslog(LOG_CRIT, "memory overrun in irs_irp_send_command()");
 		exit(1);
@@ -561,7 +562,6 @@ irs_irp_send_command(struct irp_p *pvt, const char *fmt, ...) {
 		}
 		todo -= i;
 	}
-	va_end(ap);
 
 	return (0);
 }

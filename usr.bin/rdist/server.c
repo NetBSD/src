@@ -1,4 +1,4 @@
-/*	$NetBSD: server.c,v 1.21 2001/08/24 10:24:48 wiz Exp $	*/
+/*	$NetBSD: server.c,v 1.22 2001/09/24 13:22:35 wiz Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)server.c	8.1 (Berkeley) 6/9/93";
 #else
-__RCSID("$NetBSD: server.c,v 1.21 2001/08/24 10:24:48 wiz Exp $");
+__RCSID("$NetBSD: server.c,v 1.22 2001/09/24 13:22:35 wiz Exp $");
 #endif
 #endif /* not lint */
 
@@ -1447,19 +1447,28 @@ log(fp, fmt, va_alist)
 #endif
 {
 	va_list ap;
-#if __STDC__
-	va_start(ap, fmt);
-#else
-	va_start(ap);
-#endif
+
 	/* Print changes locally if not quiet mode */
-	if (!qflag)
+	if (!qflag) {
+#if __STDC__
+		va_start(ap, fmt);
+#else
+		va_start(ap);
+#endif
 		(void)vprintf(fmt, ap);
+		va_end(ap);
+	}
 
 	/* Save changes (for mailing) if really updating files */
-	if (!(options & VERIFY) && fp != NULL)
+	if (!(options & VERIFY) && fp != NULL) {
+#if __STDC__
+		va_start(ap, fmt);
+#else
+		va_start(ap);
+#endif
 		(void)vfprintf(fp, fmt, ap);
-	va_end(ap);
+		va_end(ap);
+	}
 }
 
 void
@@ -1473,15 +1482,15 @@ error(fmt, va_alist)
 {
 	static FILE *fp;
 	va_list ap;
+
+	++nerrs;
+	if (!fp && !(fp = fdopen(rem, "w")))
+		return;
 #if __STDC__
 	va_start(ap, fmt);
 #else
 	va_start(ap);
 #endif
-
-	++nerrs;
-	if (!fp && !(fp = fdopen(rem, "w")))
-		return;
 	if (iamremote) {
 		(void)fprintf(fp, "%crdist: ", 0x01);
 		(void)vfprintf(fp, fmt, ap);
@@ -1493,12 +1502,18 @@ error(fmt, va_alist)
 		(void)vfprintf(stderr, fmt, ap);
 		fflush(stderr);
 	}
+	va_end(ap);
 	if (lfp != NULL) {
 		(void)fprintf(lfp, "rdist: ");
+#if __STDC__
+		va_start(ap, fmt);
+#else
+		va_start(ap);
+#endif
 		(void)vfprintf(lfp, fmt, ap);
+		va_end(ap);
 		fflush(lfp);
 	}
-	va_end(ap);
 }
 
 void
@@ -1512,15 +1527,15 @@ fatal(fmt, va_alist)
 {
 	static FILE *fp;
 	va_list ap;
+
+	++nerrs;
+	if (!fp && !(fp = fdopen(rem, "w")))
+		return;
 #if __STDC__
 	va_start(ap, fmt);
 #else
 	va_start(ap);
 #endif
-
-	++nerrs;
-	if (!fp && !(fp = fdopen(rem, "w")))
-		return;
 	if (iamremote) {
 		(void)fprintf(fp, "%crdist: ", 0x02);
 		(void)vfprintf(fp, fmt, ap);
@@ -1532,9 +1547,16 @@ fatal(fmt, va_alist)
 		(void)vfprintf(stderr, fmt, ap);
 		fflush(stderr);
 	}
+	va_end(ap);
 	if (lfp != NULL) {
 		(void)fprintf(lfp, "rdist: ");
+#if __STDC__
+		va_start(ap, fmt);
+#else
+		va_start(ap);
+#endif
 		(void)vfprintf(lfp, fmt, ap);
+		va_end(ap);
 		fflush(lfp);
 	}
 	cleanup(0);

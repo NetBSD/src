@@ -1,4 +1,4 @@
-/*	$NetBSD: supmsg.c,v 1.7 1999/04/12 20:48:08 pk Exp $	*/
+/*	$NetBSD: supmsg.c,v 1.8 2001/09/24 13:22:39 wiz Exp $	*/
 
 /*
  * Copyright (c) 1992 Carnegie Mellon University
@@ -472,12 +472,14 @@ va_dcl
 		if (t == NULL) {
 			if (x == SCMOK)  x = writestring ((char *)NULL);
 			if (x == SCMOK)  x = writemend ();
+			va_end(args);
 			return (x);
 		}
 		if (x == SCMOK)  x = writestring (t->Tname);
 		if (x == SCMOK)  x = writeint (t->Tmode);
 		if (t->Tmode == 0) {
 			if (x == SCMOK)  x = writemend ();
+			va_end(args);
 			return (x);
 		}
 		if (x == SCMOK)  x = writeint (t->Tflags);
@@ -492,18 +494,23 @@ va_dcl
 		if (x == SCMOK)  x = writemend ();
 	} else {
 		char *linkname,*execcmd;
-		if (t == NULL)  return (SCMERR);
+		if (t == NULL) {
+			va_end(args);
+			return (SCMERR);
+		}
 		x = readmsg (MSGRECV);
 		if (x == SCMOK)  x = readstring (&t->Tname);
 		if (x == SCMOK && t->Tname == NULL) {
 			x = readmend ();
 			if (x == SCMOK)  x = (*xferfile) (NULL,args);
+			va_end(args);
 			return (x);
 		}
 		if (x == SCMOK)  x = readint (&t->Tmode);
 		if (t->Tmode == 0) {
 			x = readmend ();
 			if (x == SCMOK)  x = (*xferfile) (t,args);
+			va_end(args);
 			return (x);
 		}
 		if (x == SCMOK)  x = readint (&t->Tflags);
