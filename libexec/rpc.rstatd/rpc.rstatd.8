@@ -1,4 +1,4 @@
-.\"	$NetBSD: rpc.rstatd.8,v 1.9 1999/03/22 18:25:47 garbled Exp $
+.\"	$NetBSD: rpc.rstatd.8,v 1.10 1999/03/25 01:56:13 bgrayson Exp $
 .\"
 .\" Copyright (c) 1985, 1991 The Regents of the University of California.
 .\" All rights reserved.
@@ -40,6 +40,7 @@
 .Nd kernel statistics server
 .Sh SYNOPSIS
 .Nm /usr/libexec/rpc.rstatd
+.Op Ar interval
 .Sh DESCRIPTION
 .Nm
 is a server which returns performance statistics obtained from the kernel.
@@ -50,6 +51,27 @@ The
 .Nm
 daemon is normally invoked by
 .Xr inetd 8 .
+.Pp
+The
+.Ar interval
+argument specifies the number of seconds that
+.Nm
+should stay active, updating its internal statistics every
+second.  If no value is specified, 20 seconds will be used.  After 
+.Ar interval
+seconds with no new RPC requests, 
+if
+.Nm
+was invoked from 
+.Xr inetd 8 ,
+.Nm
+exits.  Otherwise, 
+.Nm
+loops, becoming dormant until it receives a new RPC
+request, and staying active until
+.Ar interval
+seconds pass with no new requests.
+
 .Pp
 .Nm
 uses an RPC protocol defined in 
