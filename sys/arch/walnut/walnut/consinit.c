@@ -1,4 +1,4 @@
-/*	$NetBSD: consinit.c,v 1.1 2001/06/13 06:02:01 simonb Exp $	*/
+/*	$NetBSD: consinit.c,v 1.2 2001/06/24 01:15:41 simonb Exp $	*/
 
 /*
  * Copyright (c) 1998
@@ -31,7 +31,7 @@
 #include <sys/device.h>
 #include <machine/bus.h>
 
-#include <machine/walnut.h>
+#include <powerpc/ibm4xx/ibm405gp.h>
 
 #include "com.h"
 #if (NCOM > 0)

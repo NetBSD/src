@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.S,v 1.1 2001/06/13 06:02:01 simonb Exp $	*/
+/*	$NetBSD: locore.S,v 1.2 2001/06/24 01:15:41 simonb Exp $	*/
 /*	$OpenBSD: locore.S,v 1.4 1997/01/26 09:06:38 rahnds Exp $	*/
 
 /*
@@ -83,10 +83,8 @@
 #include <machine/psl.h>
 #include <machine/trap.h>
 #include <machine/asm.h>
-#include <machine/walnut.h>
 
 #include <powerpc/spr.h>
-
 #include <powerpc/ibm4xx/dcr.h>
 #include <powerpc/ibm4xx/pmap.h>
 
