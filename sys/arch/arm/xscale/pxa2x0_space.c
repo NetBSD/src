@@ -1,4 +1,4 @@
-/*	$NetBSD: pxa2x0_space.c,v 1.5 2004/06/07 19:45:22 nathanw Exp $ */
+/*	$NetBSD: pxa2x0_space.c,v 1.6 2005/03/17 16:22:56 bsh Exp $ */
 
 /*
  * Copyright (c) 2001, 2002 Wasabi Systems, Inc.
@@ -76,7 +76,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pxa2x0_space.c,v 1.5 2004/06/07 19:45:22 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pxa2x0_space.c,v 1.6 2005/03/17 16:22:56 bsh Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -175,13 +175,12 @@ pxa2x0_bs_map(void *t, bus_addr_t bpa, bus_size_t size,
 	u_long startpa, endpa, pa;
 	vaddr_t va;
 	pt_entry_t *pte;
+	const struct pmap_devmap	*pd;
 
-	if ((u_long)bpa > (u_long)KERNEL_BASE) {
-		/* Some IO registers (ex. UART ports for console)
-		   are mapped to fixed address by board specific
-		   routine. */
-		*bshp = bpa;
-		return(0);
+	if ((pd = pmap_devmap_find_pa(bpa, size)) != NULL) {
+		/* Device was statically mapped. */
+		*bshp = pd->pd_va + (bpa - pd->pd_pa);
+		return 0;
 	}
 
 	startpa = trunc_page(bpa);
@@ -214,11 +213,18 @@ pxa2x0_bs_map(void *t, bus_addr_t bpa, bus_size_t size,
 void
 pxa2x0_bs_unmap(void *t, bus_space_handle_t bsh, bus_size_t size)
 {
+	vaddr_t	va;
+	vaddr_t	endva;
 
-	if (bsh > (u_long)KERNEL_BASE) 
+	if (pmap_devmap_find_va(bsh, size) != NULL) {
+		/* Device was statically mapped; nothing to do. */
 		return;
+	}
 
-	uvm_km_free(kernel_map, bsh, size);
+	endva = round_page(bsh + size);
+	va = trunc_page(bsh);
+
+	uvm_km_free(kernel_map, va, endva - va);
 }
 
 
