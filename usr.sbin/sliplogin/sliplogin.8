@@ -1,5 +1,5 @@
-.\" Copyright (c) 1990, 1991 The Regents of the University of California.
-.\" All rights reserved.
+.\" Copyright (c) 1990, 1991, 1993
+.\"	The Regents of the University of California.  All rights reserved.
 .\"
 .\" Redistribution and use in source and binary forms, with or without
 .\" modification, are permitted provided that the following conditions
@@ -29,9 +29,9 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.\"     @(#)sliplogin.8	5.4 (Berkeley) 8/5/91
+.\"     @(#)sliplogin.8	8.2 (Berkeley) 1/5/94
 .\"
-.Dd August 5, 1991
+.Dd January 5, 1994
 .Dt SLIPLOGIN 8
 .Os
 .Sh NAME
@@ -47,7 +47,7 @@ a Serial Line IP
 .Pq Tn SLIP
 link to a remote host.  To do this, the program
 searches the file
-.Pa /etc/slip.hosts
+.Pa /etc/sliphome/slip.hosts
 for an entry matching
 .Ar loginname
 (which defaults to the current login name if omitted).
@@ -62,9 +62,9 @@ address,
 netmask, etc.
 .Pp
 The usual initialization script is
-.Pa /etc/slip.login
+.Pa /etc/sliphome/slip.login
 but, if particular hosts need special initialization, the file
-.Pa /etc/slip.login. Ns Ar loginname
+.Pa /etc/sliphome/slip.login. Ns Ar loginname
 will be executed instead if it exists.
 The script is invoked with the parameters
 .Bl -tag -width slipunit
@@ -77,7 +77,7 @@ for
 The speed of the line.
 .It Em args
 The arguments from the
-.Pa /etc/slip.hosts
+.Pa /etc/sliphome/slip.hosts
 entry, in order starting with
 .Ar loginname .
 .El
@@ -89,11 +89,11 @@ process dies.  If the kernel slip
 module has been configured for it, all routes through that interface will
 also disappear at the same time.  If there is other processing a site
 would like done on hangup, the file
-.Pa /etc/slip.logout
+.Pa /etc/sliphome/slip.logout
 or
-.Pa /etc/slip.logout. Ns Ar loginname
+.Pa /etc/sliphome/slip.logout. Ns Ar loginname
 is executed if it exists.  It is given the same arguments as the login script.
-.Ss Format of /etc/slip.hosts
+.Ss Format of /etc/sliphome/slip.hosts
 Comments (lines starting with a `#') and blank lines are ignored.
 Other lines must start with a
 .Ar loginname
@@ -131,7 +131,7 @@ entry for each legal, remote slip site with
 .Nm sliplogin
 as the shell for that entry.  E.g.,
 .Bd -literal
-Sfoo:ikhuy6:2010:1:slip line to foo:/tmp:/etc/sliplogin
+Sfoo:ikhuy6:2010:1:slip line to foo:/tmp:/usr/sbin/sliplogin
 .Ed
 .Pp
 (Our convention is to name the account used by remote host
@@ -162,7 +162,7 @@ access to legitimate users of a remote slip line.  To prevent this,
 a site can create a group, say
 .Em slip ,
 that only the slip login accounts are put in then make sure that
-.Pa /etc/sliplogin
+.Pa /usr/sbin/sliplogin
 is in group
 .Em slip
 and mode 4550 (setuid root, only group
@@ -190,16 +190,16 @@ A
 .Fn ioctl
 to set the line parameters failed.
 .Pp
-.It Sy /etc/slip.hosts: Em reason
+.It Sy /etc/sliphome/slip.hosts: Em reason
 The
-.Pa /etc/slip.hosts
+.Pa /etc/sliphome/slip.hosts
 file could not be opened.
 .Pp
 .It Sy access denied for Em user
 No entry for
 .Em user
 was found in
-.Pa /etc/slip.hosts .
+.Pa /etc/sliphome/slip.hosts .
 .El
 .Pp
 .Sy Notice Severity
