@@ -137,6 +137,6 @@ LOCAL_LABEL(endofstart):
 	COMM	environ,4
 	COMM	_countbase,4
 
-	IDENT ("$Id: mot3300Mcrt0.S,v 1.1.1.2 1998/08/16 17:43:12 tv Exp $")
+	IDENT ("$Id: mot3300Mcrt0.S,v 1.1.1.3 1998/09/13 16:10:38 tv Exp $")
 	IDENT ("Contributed by Manfred Hollstein (manfred@lts.sel.alcatel.de)")
 	IDENT ("Corrections by Philippe De Muyter (phdm@macqel.be)")
