@@ -1,4 +1,4 @@
-/*	$NetBSD: process_machdep.c,v 1.1 2001/06/19 00:21:18 fvdl Exp $	*/
+/*	$NetBSD: process_machdep.c,v 1.2 2002/05/26 12:19:38 fvdl Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
@@ -234,8 +234,6 @@ process_write_regs(p, regs)
 
 	simple_unlock(&pmap->pm_lock);
 
-	pcb->pcb_gs = regs->r_gs;
-	pcb->pcb_fs = regs->r_fs;
 	tf->tf_eflags = regs->r_eflags;
 	tf->tf_r15 = regs->r_r15;
 	tf->tf_r14 = regs->r_r14;
