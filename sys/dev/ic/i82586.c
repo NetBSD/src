@@ -1,4 +1,4 @@
-/*	$NetBSD: i82586.c,v 1.10 1998/01/15 16:07:34 pk Exp $	*/
+/*	$NetBSD: i82586.c,v 1.11 1998/02/01 19:25:44 kleink Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -258,9 +258,9 @@ int spurious_intrs = 0;
  *	intrhook		- board dependent interrupt processing
  *	memcopyin		- shared memory copy: board to KVA
  *	memcopyout		- shared memory copy: KVA to board
- *	ie_bus_read16		- read a sixzteen-bit i82586 pointer
+ *	ie_bus_read16		- read a sixteen-bit i82586 pointer
  *	ie_bus_write16		- write a sixteen-bit i82586 pointer
- *	ie_bus_write24		- write a twenyfour-bit i82586 pointer
+ *	ie_bus_write24		- write a twenty-four-bit i82586 pointer
  *
  */
 void
