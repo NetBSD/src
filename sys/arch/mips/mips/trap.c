@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.80 1998/02/05 21:48:23 wrstuden Exp $	*/
+/*	$NetBSD: trap.c,v 1.81 1998/02/19 23:10:18 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.80 1998/02/05 21:48:23 wrstuden Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.81 1998/02/19 23:10:18 thorpej Exp $");
 
 #if !defined(MIPS1) && !defined(MIPS3)
 #error  Neither  "MIPS1" (r2000 family), "MIPS3" (r4000 family) was configured.
@@ -393,7 +393,6 @@ extern void MachUTLBMiss __P((void));
 extern void setsoftclock __P((void));
 extern int main __P((void*));
 extern void am7990_meminit __P((void*)); /* XXX */
-extern void savectx __P((struct user *));
 #endif	/* DEBUG || DDB */
 
 
