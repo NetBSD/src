@@ -1,4 +1,5 @@
-#	@(#)bsd.doc.mk	5.3 (Berkeley) 1/2/91
+#	from: @(#)bsd.doc.mk	5.3 (Berkeley) 1/2/91
+#	$Id: bsd.doc.mk,v 1.13 1993/08/15 19:37:05 mycroft Exp $
 
 PRINTER?=	ps
 
