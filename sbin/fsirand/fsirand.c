@@ -1,4 +1,4 @@
-/*	$NetBSD: fsirand.c,v 1.12 2001/02/19 22:56:20 cgd Exp $	*/
+/*	$NetBSD: fsirand.c,v 1.13 2001/07/29 11:15:29 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: fsirand.c,v 1.12 2001/02/19 22:56:20 cgd Exp $");
+__RCSID("$NetBSD: fsirand.c,v 1.13 2001/07/29 11:15:29 lukem Exp $");
 #endif /* lint */
 
 #include <stdio.h>
@@ -64,16 +64,16 @@ __RCSID("$NetBSD: fsirand.c,v 1.12 2001/02/19 22:56:20 cgd Exp $");
 #include <ufs/ffs/fs.h>
 #include <ufs/ffs/ffs_extern.h>
 
-static void usage __P((void));
-static void getsblock __P((int, const char *, struct disklabel *, struct fs *));
-static void fixinodes __P((int, struct fs *, struct disklabel *, int, long));
+static void usage(void);
+static void getsblock(int, const char *, struct disklabel *, struct fs *);
+static void fixinodes(int, struct fs *, struct disklabel *, int, long);
 
-int main __P((int, char *[]));
+int main(int, char *[]);
 
 int needswap = 0;
 
 static void
-usage()
+usage(void)
 {
 
 	(void) fprintf(stderr, "Usage: %s [-x <constant>] [-p] <special>\n",
@@ -82,19 +82,18 @@ usage()
 }
 
 
-/* getsblock():
+/*
+ * getsblock():
  *	Return the superblock 
  */
 static void
-getsblock(fd, name, lab, fs)
-	int fd;
-	const char *name;
-	struct disklabel *lab;
-	struct fs *fs;
+getsblock(int fd, const char *name, struct disklabel *lab, struct fs *fs)
 {
-	struct partition *pp = NULL;
-	char p = name[strlen(name) - 1];
+	struct partition *pp;
+	char p;
 
+	pp = NULL;
+	p = name[strlen(name) - 1];
 	if (p >= 'a' && p <= 'h')
 		pp = &lab->d_partitions[p - 'a'];
 	else if (isdigit((unsigned char) p))
@@ -133,16 +132,12 @@ getsblock(fd, name, lab, fs)
 		errx(1, "Superblock too large");
 }
 
-/* fixinodes():
+/*
+ * fixinodes():
  *	Randomize the inode generation numbers
  */
 static void
-fixinodes(fd, fs, lab, pflag, xorval)
-	int fd;
-	struct fs *fs;
-	struct disklabel *lab;
-	int pflag;
-	long xorval;
+fixinodes(int fd, struct fs *fs, struct disklabel *lab, int pflag, long xorval)
 {
 	int inopb = INOPB(fs);
 	int size = inopb * DINODE_SIZE;
@@ -155,9 +150,6 @@ fixinodes(fd, fs, lab, pflag, xorval)
 
 	for (ino = 0, imax = fs->fs_ipg * fs->fs_ncg; ino < imax;) {
 		off_t sp;
-#if __GNUC__	/* XXX work around lame compiler problem (gcc 2.7.2) */
-		(void)&sp;
-#endif
 		sp = (off_t) fsbtodb(fs, ino_to_fsba(fs, ino)) *
 		     (off_t) lab->d_secsize;
 
@@ -173,7 +165,8 @@ fixinodes(fd, fs, lab, pflag, xorval)
 				printf("ino %d gen 0x%x\n", ino,
 					ufs_rw32(dip->di_gen, needswap));
 			else
-				dip->di_gen = ufs_rw32(random() ^ xorval, needswap);
+				dip->di_gen = ufs_rw32(random() ^ xorval,
+				    needswap);
 			if (++ino > imax)
 				errx(1, "Exceeded number of inodes");
 		}
@@ -191,9 +184,7 @@ fixinodes(fd, fs, lab, pflag, xorval)
 }
 
 int
-main(argc, argv)
-	int	argc;
-	char	*argv[];
+main(int argc, char *argv[])
 {
 	char buf[SBSIZE];
 	struct fs *fs = (struct fs *) buf;
