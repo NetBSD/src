@@ -1,4 +1,4 @@
-/*	$NetBSD: pss.c,v 1.22 1997/03/25 07:57:14 mikel Exp $	*/
+/*	$NetBSD: pss.c,v 1.23 1997/04/05 23:50:25 augustss Exp $	*/
 
 /*
  * Copyright (c) 1994 John Brezak
@@ -1090,11 +1090,6 @@ spattach(parent, self, aux)
 
     sc->sc_ih = isa_intr_establish(ic, cf->cf_irq, IST_EDGE, IPL_AUDIO,
 	ad1848_intr, sc);
-
-    /* XXX might use pssprint func ?? */
-    printf(" port 0x%x-0x%x irq %d drq %d",
-	   sc->sc_iobase, sc->sc_iobase+AD1848_NPORT,
-	   cf->cf_irq, cf->cf_drq);
 
     ad1848_attach(sc);
 

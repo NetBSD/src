@@ -1,4 +1,4 @@
-/*	$NetBSD: ad1848var.h,v 1.11 1997/03/20 06:48:52 mycroft Exp $	*/
+/*	$NetBSD: ad1848var.h,v 1.12 1997/04/05 23:50:24 augustss Exp $	*/
 
 /*
  * Copyright (c) 1994 John Brezak
@@ -35,7 +35,7 @@
  *
  */
 
-#define AD1848_NPORT	8
+#define AD1848_NPORT	4
 
 struct ad1848_volume {
 	u_char	left;
@@ -46,6 +46,8 @@ struct ad1848_softc {
 	struct	device sc_dev;		/* base device */
 	struct	isadev sc_id;		/* ISA device */
 	void	*sc_ih;			/* interrupt vectoring */
+	bus_space_tag_t sc_iot;		/* tag */
+	bus_space_handle_t sc_ioh;	/* handle */
 
 	void	*parent;
 	

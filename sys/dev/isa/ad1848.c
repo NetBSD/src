@@ -1,4 +1,4 @@
-/*	$NetBSD: ad1848.c,v 1.22 1997/03/20 20:18:40 mycroft Exp $	*/
+/*	$NetBSD: ad1848.c,v 1.23 1997/04/05 23:50:23 augustss Exp $	*/
 
 /*
  * Copyright (c) 1994 John Brezak
@@ -164,8 +164,9 @@ ad_read(sc, reg)
 {
     int x;
 
-    outb(sc->sc_iobase+AD1848_IADDR, (u_char) (reg & 0xff) | sc->MCE_bit);
-    x = inb(sc->sc_iobase+AD1848_IDATA);
+    bus_space_write_1(sc->sc_iot, sc->sc_ioh, AD1848_IADDR, 
+		      (u_char) (reg & 0xff) | sc->MCE_bit);
+    x = bus_space_read_1(sc->sc_iot, sc->sc_ioh, AD1848_IDATA);
     /*  printf("(%02x<-%02x) ", reg|sc->MCE_bit, x); */
 
     return x;
@@ -177,8 +178,10 @@ ad_write(sc, reg, data)
     int reg;
     int data;
 {
-    outb(sc->sc_iobase+AD1848_IADDR, (u_char) (reg & 0xff) | sc->MCE_bit);
-    outb(sc->sc_iobase+AD1848_IDATA, (u_char) (data & 0xff));
+    bus_space_write_1(sc->sc_iot, sc->sc_ioh, AD1848_IADDR, 
+		      (u_char) (reg & 0xff) | sc->MCE_bit);
+    bus_space_write_1(sc->sc_iot, sc->sc_ioh, AD1848_IDATA, 
+		      (u_char) (data & 0xff));
     /* printf("(%02x->%02x) ", reg|sc->MCE_bit, data); */
 }
 
@@ -192,7 +195,7 @@ ad_set_MCE(sc, state)
     else
 	sc->MCE_bit = 0;
 
-    outb(sc->sc_iobase+AD1848_IADDR, sc->MCE_bit);
+    bus_space_write_1(sc->sc_iot, sc->sc_ioh, AD1848_IADDR, sc->MCE_bit);
 }
 
 static void
@@ -208,18 +211,20 @@ wait_for_calibration(sc)
      * 1) Wait until the chip becomes ready (reads don't return 0x80).
      * 2) Wait until the ACI bit of I11 gets on and then off.
      */
-    while (timeout > 0 && inb(sc->sc_iobase+AD1848_IADDR) == SP_IN_INIT)
+    while (timeout > 0 && 
+	   bus_space_read_1(sc->sc_iot, sc->sc_ioh, AD1848_IADDR) == SP_IN_INIT)
 	timeout--;
 
-    if (inb(sc->sc_iobase+AD1848_IADDR) == SP_IN_INIT)
+    if (bus_space_read_1(sc->sc_iot, sc->sc_ioh, AD1848_IADDR) == SP_IN_INIT)
 	DPRINTF(("ad1848: Auto calibration timed out(1).\n"));
 
-    outb(sc->sc_iobase+AD1848_IADDR, SP_TEST_AND_INIT);
+    bus_space_write_1(sc->sc_iot, sc->sc_ioh, AD1848_IADDR, SP_TEST_AND_INIT);
     timeout = 100000;
-    while (timeout > 0 && inb(sc->sc_iobase+AD1848_IADDR) != SP_TEST_AND_INIT)
+    while (timeout > 0 && 
+	   bus_space_read_1(sc->sc_iot, sc->sc_ioh, AD1848_IADDR) != SP_TEST_AND_INIT)
 	timeout--;
 
-    if (inb(sc->sc_iobase+AD1848_IADDR) == SP_TEST_AND_INIT)
+    if (bus_space_read_1(sc->sc_iot, sc->sc_ioh, AD1848_IADDR) == SP_TEST_AND_INIT)
 	DPRINTF(("ad1848: Auto calibration timed out(1.5).\n"));
 
     if (!(ad_read(sc, SP_TEST_AND_INIT) & AUTO_CAL_IN_PROG)) {
@@ -248,7 +253,7 @@ ad1848_dump_regs(sc)
     int i;
     u_char r;
     
-    printf("ad1848 status=%02x", inb(sc->sc_iobase+AD1848_STATUS));
+    printf("ad1848 status=%02x", bus_space_read_1(sc->sc_iot, sc->sc_ioh, AD1848_STATUS));
     printf(" regs: ");
     for (i = 0; i < 16; i++) {
 	r = ad_read(sc, i);
@@ -297,18 +302,19 @@ int
 ad1848_probe(sc)
     struct ad1848_softc *sc;
 {
-    register int iobase = sc->sc_iobase;
     u_char tmp, tmp1 = 0xff, tmp2 = 0xff;
     int i;
     
-    if (!AD1848_BASE_VALID(iobase)) {
+    if (!AD1848_BASE_VALID(sc->sc_iobase)) {
 #ifdef AUDIO_DEBUG
 	printf("ad1848: configured iobase %04x invalid\n", iobase);
 #endif
 	return 0;
     }
 
-    sc->sc_iobase = iobase;
+    /* map the ports upto the AD1488 port */
+    if (bus_space_map(sc->sc_iot, sc->sc_iobase, AD1848_NPORT, 0, &sc->sc_ioh))
+	return 0;
 
     /* Is there an ad1848 chip ? */
     sc->MCE_bit = MODE_CHANGE_ENABLE;
@@ -323,9 +329,10 @@ ad1848_probe(sc)
      *
      * If the I/O address is unused, inb() typically returns 0xff.
      */
-    if (((tmp = inb(iobase+AD1848_IADDR)) & SP_IN_INIT) != 0x00) { /* Not a AD1848 */
+    if (((tmp = bus_space_read_1(sc->sc_iot, sc->sc_ioh, AD1848_IADDR))
+	  & SP_IN_INIT) != 0x00) { /* Not a AD1848 */
 	DPRINTF(("ad_detect_A %x\n", tmp));
-	return 0;
+	goto bad;
     }
 
     /*
@@ -339,7 +346,7 @@ ad1848_probe(sc)
     if ((tmp1 = ad_read(sc, 0)) != 0xaa ||
 	(tmp2 = ad_read(sc, 1)) != 0x45) {
 	DPRINTF(("ad_detect_B (%x/%x)\n", tmp1, tmp2));
-	return 0;
+	goto bad;
     }
 
     ad_write(sc, 0, 0x45);
@@ -348,7 +355,7 @@ ad1848_probe(sc)
     if ((tmp1 = ad_read(sc, 0)) != 0x45 ||
 	(tmp2 = ad_read(sc, 1)) != 0xaa) {
 	DPRINTF(("ad_detect_C (%x/%x)\n", tmp1, tmp2));
-	return 0;
+	goto bad;
     }
 
     /*
@@ -360,7 +367,7 @@ ad1848_probe(sc)
 
     if ((tmp & 0x0f) != ((tmp1 = ad_read(sc, SP_MISC_INFO)) & 0x0f)) {
 	DPRINTF(("ad_detect_D (%x)\n", tmp1));
-	return 0;
+	goto bad;
     }
 
     /*
@@ -409,7 +416,7 @@ ad1848_probe(sc)
     for (i = 0; i < 16; i++)
 	if ((tmp1 = ad_read(sc, i)) != (tmp2 = ad_read(sc, i + 16))) {
 	    DPRINTF(("ad_detect_F(%d/%x/%x)\n", i, tmp1, tmp2));
-	    return 0;
+	    goto bad;
 	}
 
     /*
@@ -432,7 +439,7 @@ ad1848_probe(sc)
 	    ad_write(sc, 2, 0xaa);
 	    if ((tmp2 = ad_read(sc, 18)) == 0xaa) {     /* Rotten bits? */
 		DPRINTF(("ad_detect_H(%x)\n", tmp2));
-		return 0;
+		goto bad;
 	    }
 
 	    /*
@@ -459,13 +466,18 @@ ad1848_probe(sc)
     }
 
     /* Wait for 1848 to init */
-    while(inb(sc->sc_iobase+AD1848_IADDR) & SP_IN_INIT);
+    while(bus_space_read_1(sc->sc_iot, sc->sc_ioh, AD1848_IADDR) & SP_IN_INIT)
+        ;
 	
     /* Wait for 1848 to autocal */
-    outb(sc->sc_iobase+AD1848_IADDR, SP_TEST_AND_INIT);
-    while(inb(sc->sc_iobase+AD1848_IDATA) & AUTO_CAL_IN_PROG);
+    bus_space_write_1(sc->sc_iot, sc->sc_ioh, AD1848_IADDR, SP_TEST_AND_INIT);
+    while(bus_space_read_1(sc->sc_iot, sc->sc_ioh, AD1848_IDATA) & AUTO_CAL_IN_PROG)
+        ;
 
     return 1;
+bad:
+    bus_space_unmap(sc->sc_iot, sc->sc_ioh, AD1848_NPORT);
+    return 0;
 }
 
 /*
@@ -1208,31 +1220,33 @@ ad1848_commit_settings(addr)
 	/* Gravis Ultrasound MAX SDK sources says something about errata
 	 * sheets, with the implication that these inb()s are necessary.
 	 */
-	(void) inb(sc->sc_iobase+AD1848_IDATA);
-	(void) inb(sc->sc_iobase+AD1848_IDATA);
+	(void)bus_space_read_1(sc->sc_iot, sc->sc_ioh, AD1848_IDATA);
+	(void)bus_space_read_1(sc->sc_iot, sc->sc_ioh, AD1848_IDATA);
 	/*
 	 * Write to I8 starts resyncronization. Wait until it completes.
 	 */
 	timeout = 100000;
-	while (timeout > 0 && inb(sc->sc_iobase+AD1848_IADDR) == SP_IN_INIT)
+	while (timeout > 0 && 
+	       bus_space_read_1(sc->sc_iot, sc->sc_ioh, AD1848_IADDR) == SP_IN_INIT)
 	    timeout--;
 
 	ad_write(sc, CS_REC_FORMAT, fs);
 	/* Gravis Ultrasound MAX SDK sources says something about errata
 	 * sheets, with the implication that these inb()s are necessary.
 	 */
-	(void) inb(sc->sc_iobase+AD1848_IDATA);
-	(void) inb(sc->sc_iobase+AD1848_IDATA);
+	(void)bus_space_read_1(sc->sc_iot, sc->sc_ioh, AD1848_IDATA);
+	(void)bus_space_read_1(sc->sc_iot, sc->sc_ioh, AD1848_IDATA);
 	/* Now wait for resync for capture side of the house */
     }
     /*
      * Write to I8 starts resyncronization. Wait until it completes.
      */
     timeout = 100000;
-    while (timeout > 0 && inb(sc->sc_iobase+AD1848_IADDR) == SP_IN_INIT)
+    while (timeout > 0 && 
+	   bus_space_read_1(sc->sc_iot, sc->sc_ioh, AD1848_IADDR) == SP_IN_INIT)
 	timeout--;
 
-    if (inb(sc->sc_iobase+AD1848_IADDR) == SP_IN_INIT)
+    if (bus_space_read_1(sc->sc_iot, sc->sc_ioh, AD1848_IADDR) == SP_IN_INIT)
 	printf("ad1848_commit: Auto calibration timed out\n");
 
     /*
@@ -1266,11 +1280,11 @@ ad1848_reset(sc)
     ad_write(sc, SP_INTERFACE_CONFIG, r);
 
     if (sc->mode == 2) {
-	    outb(sc->sc_iobase+AD1848_IADDR, CS_IRQ_STATUS);
-	    outb(sc->sc_iobase+AD1848_IDATA, 0);
+	    bus_space_write_1(sc->sc_iot, sc->sc_ioh, AD1848_IADDR, CS_IRQ_STATUS);
+	    bus_space_write_1(sc->sc_iot, sc->sc_ioh, AD1848_IDATA, 0);
     }
     /* Clear interrupt status */
-    outb(sc->sc_iobase+AD1848_STATUS, 0);
+    bus_space_write_1(sc->sc_iot, sc->sc_ioh, AD1848_STATUS, 0);
 #ifdef AUDIO_DEBUG
     if (ad1848debug)
 	ad1848_dump_regs(sc);
@@ -1527,7 +1541,7 @@ ad1848_intr(arg)
     u_char status;
     
     /* Get intr status */
-    status = inb(sc->sc_iobase+AD1848_STATUS);
+    status = bus_space_read_1(sc->sc_iot, sc->sc_ioh, AD1848_STATUS);
     
 #ifdef AUDIO_DEBUG
     if (ad1848debug > 1)
@@ -1548,7 +1562,7 @@ ad1848_intr(arg)
 
     /* clear interrupt */
     if (status & INTERRUPT_STATUS)
-	outb(sc->sc_iobase+AD1848_STATUS, 0);
+	bus_space_write_1(sc->sc_iot, sc->sc_ioh, AD1848_STATUS, 0);
 
     return(retval);
 }

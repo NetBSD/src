@@ -1,4 +1,4 @@
-/*	$NetBSD: wss.c,v 1.19 1997/03/20 06:49:00 mycroft Exp $	*/
+/*	$NetBSD: wss.c,v 1.20 1997/04/05 23:50:26 augustss Exp $	*/
 
 /*
  * Copyright (c) 1994 John Brezak
@@ -88,6 +88,8 @@ struct wss_softc {
 	struct	device sc_dev;		/* base device */
 	struct	isadev sc_id;		/* ISA device */
 	void	*sc_ih;			/* interrupt vectoring */
+	bus_space_tag_t sc_iot;		/* tag */
+	bus_space_handle_t sc_ioh;	/* handle */
 
 	struct  ad1848_softc sc_ad1848;
 #define wss_irq    sc_ad1848.sc_irq
@@ -179,7 +181,6 @@ wssprobe(parent, match, aux)
 {
     register struct wss_softc *sc = match;
     register struct isa_attach_args *ia = aux;
-    register int iobase = ia->ia_iobase;
     static u_char interrupt_bits[12] = {
 	-1, -1, -1, -1, -1, -1, -1, 0x08, -1, 0x10, 0x18, 0x20
     };
@@ -190,18 +191,22 @@ wssprobe(parent, match, aux)
 	return 0;
     }
 
-    sc->sc_ad1848.sc_iobase = iobase + WSS_CODEC;
+    /* map the ports upto the AD1488 port */
+    if (bus_space_map(sc->sc_iot, ia->ia_iobase, WSS_CODEC, 0, &sc->sc_ioh))
+	return 0;
+
+    sc->sc_ad1848.sc_iobase = ia->ia_iobase + WSS_CODEC;
 
     /* Is there an ad1848 chip at (WSS iobase + WSS_CODEC)? */
     if (ad1848_probe(&sc->sc_ad1848) == 0)
-	return 0;
+	goto bad;
 	
     ia->ia_iosize = WSS_NPORT;
 
     /* Setup WSS interrupt and DMA */
     if (!WSS_DRQ_VALID(ia->ia_drq)) {
 	DPRINTF(("wss: configured dma chan %d invalid\n", ia->ia_drq));
-	return 0;
+	goto bad;
     }
     sc->wss_drq = ia->ia_drq;
 
@@ -213,22 +218,26 @@ wssprobe(parent, match, aux)
 	ia->ia_irq = isa_discoverintr(ad1848_forceintr, &sc->sc_ad1848);
 	if (!WSS_IRQ_VALID(ia->ia_irq)) {
 	    printf("wss: couldn't auto-detect interrupt\n");
-	    return 0;
+	    goto bad;
 	}
     }
     else
 #endif
     if (!WSS_IRQ_VALID(ia->ia_irq)) {
 	DPRINTF(("wss: configured interrupt %d invalid\n", ia->ia_irq));
-	return 0;
+	goto bad;
     }
 
     sc->wss_irq = ia->ia_irq;
 
-    outb(iobase+WSS_CONFIG,
-	 (interrupt_bits[ia->ia_irq] | dma_bits[ia->ia_drq]));
+    bus_space_write_1(sc->sc_iot, sc->sc_ioh, WSS_CONFIG,
+		      (interrupt_bits[ia->ia_irq] | dma_bits[ia->ia_drq]));
 
     return 1;
+
+bad:
+    bus_space_unmap(sc->sc_iot, sc->sc_ioh, WSS_CODEC);
+    return 0;
 }
 
 /*
@@ -242,7 +251,7 @@ wssattach(parent, self, aux)
 {
     register struct wss_softc *sc = (struct wss_softc *)self;
     struct isa_attach_args *ia = (struct isa_attach_args *)aux;
-    register int iobase = ia->ia_iobase;
+    int version;
     int err;
     
     sc->sc_ad1848.sc_recdrq = ia->ia_drq;
@@ -255,7 +264,8 @@ wssattach(parent, self, aux)
 
     ad1848_attach(&sc->sc_ad1848);
     
-    printf(" (vers %d)", inb(iobase+WSS_STATUS) & WSS_VERSMASK);
+    version = bus_space_read_1(sc->sc_iot, sc->sc_ioh, WSS_STATUS) & WSS_VERSMASK;
+    printf(" (vers %d)", version);
     printf("\n");
 
     sc->sc_ad1848.parent = sc;
