@@ -1,4 +1,4 @@
-/*	$NetBSD: romcall.h,v 1.1 1999/12/09 14:53:13 tsutsui Exp $	*/
+/*	$NetBSD: romcall.h,v 1.1.6.1 2000/12/24 07:48:27 jhawk Exp $	*/
 
 /*-
  * Copyright (C) 1999 Tsubai Masanari.  All rights reserved.
@@ -54,6 +54,7 @@
 #define BOOTDEV_ST	6	/* SCSI TAPE */
 
 #ifndef _LOCORE
+void rom_halt(void);
 int rom_open(const char * ,int);
 int rom_close(int);
 int rom_read(int, void *, int);
