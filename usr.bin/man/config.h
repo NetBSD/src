@@ -1,4 +1,4 @@
-/*	$NetBSD: config.h,v 1.4 2000/05/27 21:33:26 jdolecek Exp $	*/
+/*	$NetBSD: config.h,v 1.5 2000/05/28 16:23:55 he Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -60,3 +60,5 @@ void	 config __P((const char *));
 void	 debug __P((const char *));
 #endif
 TAG	*getlist __P((const char *));
+void	removelist __P((const char *));
+TAG	*renamelist __P((const char *, const char *));
