@@ -1,6 +1,6 @@
-.\"	$NetBSD: upgrade,v 1.11 2000/10/29 14:08:09 lukem Exp $
+.\"	$NetBSD: upgrade,v 1.12 2002/06/30 12:15:13 lukem Exp $
 .\"
-.\" Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
+.\" Copyright (c) 1999-2002 The NetBSD Foundation, Inc.
 .\" All rights reserved.
 .\"
 .\" Redistribution and use in source and binary forms, with or without
@@ -39,23 +39,24 @@ to advance to a later version by recompiling from source due primarily
 to interdependencies in the various components.
 .Pp
 To do the upgrade, you must have at least base.tgz on disk and
-a copy of the proper netbsd.default.  It will require quite a bit
-of disk space to do the upgrade.
+a copy of the proper netbsd.default.
+It will require quite a bit of disk space to do the upgrade.
 .Pp
 Since upgrading involves replacing the kernel, and most of the system
-binaries, it has the potential to cause data loss.  You are strongly
-advised to BACK UP ANY IMPORTANT DATA ON YOUR DISK, whether on the
+binaries, it has the potential to cause data loss.
+You are strongly advised to
+BACK UP ANY IMPORTANT DATA ON YOUR DISK,
+whether on the
 .Nx
 partition or on another operating system's partition, before
 beginning the upgrade process.
 .Pp
 To upgrade your system, follow the following instructions:
 .(bullet
-Assuming you have space, load the .tgz files onto disk
-some place.  Then boot the floppy-144.fs image via the
-method you use.  Under the install system, extract the
-\&.tgz files as mentioned below or read the i386 INSTALL
-notes for how to use sysinst.
+Assuming you have space, load the .tgz files onto disk some place.
+Then boot the floppy-144.fs image via the method you use.
+Under the install system, extract the \&.tgz files as mentioned below
+or read the i386 INSTALL notes for how to use sysinst.
 .It
 Extract the .tgz files.
 For example, to extract
@@ -64,8 +65,8 @@ For example, to extract
 .Dl # Ic "cd /"
 .Dl # Ic "pax -zrvpe -f /gz.files/base.tgz"
 .It
-Extract all the .tgz files you want.  You should carefully
-work at upgrading
+Extract all the .tgz files you want.
+You should carefully work at upgrading
 .Pa /etc .
 There may be changes to file formats depending on what version of
 .Nx*M
@@ -88,9 +89,11 @@ in
 as the file
 .Pa netbsd .
 .It
-Reboot.  (Remember,
+Reboot.
+(Remember,
 .Pa netbsd.default
-is a 9600 console line kernel.  Read the last part of the new installation
+is a 9600 console line kernel.
+Read the last part of the new installation
 part of these notes to find out how to change your default speed.)
 .It
 After reboot, you should make sure you check your new file systems.
