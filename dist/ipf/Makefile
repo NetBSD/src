@@ -1,11 +1,9 @@
 #
-# Copyright (C) 1993-2000 by Darren Reed.
+# Copyright (C) 1993-2001 by Darren Reed.
 #
-# Redistribution and use in source and binary forms are permitted
-# provided that this notice is preserved and due credit is given
-# to the original author and the contributors.
+# See the IPFILTER.LICENCE file for details on licencing.
 #
-# Id: Makefile,v 2.11.2.1 2000/04/26 12:14:58 darrenr Exp
+# Id: Makefile,v 2.11.2.10 2001/09/22 13:11:15 darrenr Exp
 #
 BINDEST=/usr/local/bin
 SBINDEST=/sbin
@@ -15,9 +13,11 @@ CC=gcc -Wstrict-prototypes -Wmissing-prototypes
 #CC=gcc
 #CC=cc -Dconst=
 DEBUG=-g
-CFLAGS=-I$$(TOP) -g
+TOP=../..
+CFLAGS=-I$$(TOP)
 CPU=`uname -m`
 CPUDIR=`uname -s|sed -e 's@/@@g'`-`uname -r`-`uname -m`
+IPFILKERN=`/bin/ls -1tr /usr/src/sys/compile | grep -v .bak | tail -1`
 #
 # To enable this to work as a Loadable Kernel Module...
 #
@@ -34,7 +34,7 @@ LOGFAC=-DLOGFAC=LOG_LOCAL0
 #
 # Uncomment the next 3 lines if you want to view the state table a la top(1)
 # (requires that you have installed ncurses).
-#STATETOP_CFLAGS=-DSTATETOP
+STATETOP_CFLAGS=-DSTATETOP
 #
 # Where to find the ncurses include files (if not in default path), 
 #
@@ -43,7 +43,7 @@ LOGFAC=-DLOGFAC=LOG_LOCAL0
 #
 # How to link the ncurses library
 #
-#STATETOP_LIB=-lncurses
+STATETOP_LIB=-lcurses
 #STATETOP_LIB=-L/usr/local/lib -lncurses
 
 #
@@ -63,7 +63,8 @@ MFLAGS1='CFLAGS=$(CFLAGS) $(ARCHINC) $(SOLARIS2) $(INET6)' \
 	"IPFLOG=$(IPFLOG)" "LOGFAC=$(LOGFAC)" "POLICY=$(POLICY)" \
 	"SOLARIS2=$(SOLARIS2)" "DEBUG=$(DEBUG)" "DCPU=$(CPU)" \
 	"CPUDIR=$(CPUDIR)" 'STATETOP_CFLAGS=$(STATETOP_CFLAGS)' \
-        'STATETOP_INC=$(STATETOP_INC)' 'STATETOP_LIB=$(STATETOP_LIB)'
+        'STATETOP_INC=$(STATETOP_INC)' 'STATETOP_LIB=$(STATETOP_LIB)' \
+	"BITS=$(BITS)" "OBJ=$(OBJ)"
 DEST="BINDEST=$(BINDEST)" "SBINDEST=$(SBINDEST)" "MANDIR=$(MANDIR)"
 MFLAGS=$(MFLAGS1) "IPFLKM=$(IPFLKM)"
 #
@@ -99,13 +100,13 @@ tests:
 
 include:
 	if [ ! -f netinet/done ] ; then \
-		(cd netinet; ln -s ../*.h .; ln -s ../ip_ftp_pxy.c .; ln -s ../ip_rcmd_pxy.c .; ln -s ../ip_raudio_pxy.c .); \
+		(cd netinet; ln -s ../*.h .; ln -s ../ip_*_pxy.c .; ); \
 		(cd netinet; ln -s ../ipsend/tcpip.h tcpip.h); \
 		touch netinet/done; \
 	fi
 
 sunos solaris: include
-	./buildsunos
+	CC="$(CC)" ./buildsunos
 
 freebsd22: include
 	make setup "TARGOS=BSD" "CPUDIR=$(CPUDIR)"
@@ -126,8 +127,13 @@ freebsd22: include
 	make freebsd
 
 freebsd4: include
+	if [ x$INET6 = x ] ; then \
+		echo "#undef INET6" > opt_inet6.h; \
+	else \
+		echo "#define INET6" > opt_inet6.h; \
+	fi
 	make setup "TARGOS=BSD" "CPUDIR=$(CPUDIR)"
-	(cd BSD/$(CPUDIR); make build TOP=../.. $(MFLAGS) "ML=mlfk_ipl.c" "MLD=mlfk_ipl.c" "LKM=ipf.ko" "DLKM=-DKLD_MODULE"; cd ..)
+	(cd BSD/$(CPUDIR); make build TOP=../.. $(MFLAGS) "ML=mlfk_ipl.c" "MLD=mlfk_ipl.c" "LKM=ipf.ko" "DLKM=-DKLD_MODULE -I/sys"; cd ..)
 	(cd BSD/$(CPUDIR); make -f Makefile.ipsend TOP=../.. $(MFLAGS1); cd ..)
 
 freebsd3 freebsd30: include
@@ -162,8 +168,8 @@ bsdi bsdos: include
 
 irix IRIX: include
 	make setup "TARGOS=IRIX" "CPUDIR=$(CPUDIR)"
-	(cd IRIX/$(CPUDIR); smake build TOP=../.. $(DEST) $(MFLAGS); cd ..)
-	(cd IRIX/$(CPUDIR); make -f Makefile.ipsend TOP=../.. $(DEST) $(MFLAGS); cd ..)
+	-(cd IRIX/$(CPUDIR); if [ $(MAKE) = make ] ; then make -f Makefile.std build TOP=../.. $(DEST) $(MFLAGS); else smake build TOP=../.. $(DEST) $(MFLAGS); fi;)
+	-(cd IRIX/$(CPUDIR); if [ $(MAKE) = make ] ; then make -f Makefile.ipsend.std TOP=../.. $(DEST) $(MFLAGS); else smake -f Makefile.ipsend TOP=../.. $(DEST) $(MFLAGS); fi)
 
 linux: include
 	make setup "TARGOS=Linux" "CPUDIR=$(CPUDIR)"
@@ -177,11 +183,20 @@ setup:
 	-if [ ! -d $(TARGOS)/$(CPUDIR) ] ; then mkdir $(TARGOS)/$(CPUDIR); fi
 	-rm -f $(TARGOS)/$(CPUDIR)/Makefile $(TARGOS)/$(CPUDIR)/Makefile.ipsend
 	-ln -s ../Makefile $(TARGOS)/$(CPUDIR)/Makefile
+	-if [ ! -f $(TARGOS)/$(CPUDIR)/Makefile.std -a \
+		-f $(TARGOS)/Makefile.std ] ; then \
+	    ln -s ../Makefile.std $(TARGOS)/$(CPUDIR)/Makefile.std; \
+	 fi
+	-if [ ! -f $(TARGOS)/$(CPUDIR)/Makefile.ipsend.std -a \
+		-f $(TARGOS)/Makefile.ipsend.std ] ; then \
+	    ln -s ../Makefile.ipsend.std $(TARGOS)/$(CPUDIR)/Makefile.ipsend.std; \
+	 fi
 	-ln -s ../Makefile.ipsend $(TARGOS)/$(CPUDIR)/Makefile.ipsend
 
 clean: clean-include
 	${RM} -f core *.o ipt fils ipf ipfstat ipftest ipmon if_ipl \
 	vnode_if.h $(LKM) *~
+	${RM} -rf sparcv7 sparcv9
 	(cd SunOS4; make clean)
 	(cd SunOS5; make clean)
 	(cd BSD; make clean)
@@ -246,7 +261,7 @@ install-sunos4: solaris
 	(cd SunOS4; $(MAKE) "CPU=$(CPU) TOP=.." install)
 
 install-sunos5: solaris
-	(cd SunOS5; $(MAKE) "CPU=$(CPU) TOP=.." install)
+	(cd SunOS5; $(MAKE) "CPUDIR=`uname -p`-`uname -r`" "CPU=$(CPU) TOP=.." install)
 
 install-irix: irix
 	(cd IRIX; smake install "CPU=$(CPU) TOP=.." $(DEST) $(MFLAGS))
