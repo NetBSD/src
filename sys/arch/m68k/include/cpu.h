@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.3 1997/02/02 06:56:57 thorpej Exp $	*/
+/*	$NetBSD: cpu.h,v 1.4 1997/04/09 19:21:06 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -190,11 +190,15 @@ extern	int mmutype;		/* MMU on this host */
 #ifdef _KERNEL
 void	copypage __P((void *fromaddr, void *toaddr));
 void	zeropage __P((void *addr));
+
 #ifdef MAPPEDCOPY
 int	mappedcopyin __P((void *fromp, void *top, size_t count));
 int	mappedcopyout __P((void *fromp, void *top, size_t count));
 extern	u_int mappedcopysize;
 #endif /* MAPPEDCOPY */
+
+struct trapframe;
+void	regdump __P((struct trapframe *, int));
 #endif /* _KERNEL */
 
 #endif /* _M68K_CPU_H_ */
