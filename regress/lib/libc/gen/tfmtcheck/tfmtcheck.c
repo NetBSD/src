@@ -1,4 +1,4 @@
-/*	$NetBSD: tfmtcheck.c,v 1.2 2000/11/02 18:06:30 jdolecek Exp $	*/
+/*	$NetBSD: tfmtcheck.c,v 1.1 2002/03/23 17:42:21 christos Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
