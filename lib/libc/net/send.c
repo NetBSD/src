@@ -33,7 +33,7 @@
 
 #if defined(LIBC_SCCS) && !defined(lint)
 /*static char *sccsid = "from: @(#)send.c	5.3 (Berkeley) 2/24/91";*/
-static char *rcsid = "$Id: send.c,v 1.3 1993/08/26 00:46:22 jtc Exp $";
+static char *rcsid = "$Id: send.c,v 1.4 1994/05/13 22:23:06 deraadt Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 #include <sys/types.h>
@@ -41,8 +41,10 @@ static char *rcsid = "$Id: send.c,v 1.3 1993/08/26 00:46:22 jtc Exp $";
 #include <stdio.h>
 
 send(s, msg, len, flags)
-	int s, len, flags;
+	int s;
 	const void *msg;
+	size_t len;
+	int flags;
 {
 	return(sendto(s, msg, len, flags, (struct sockaddr *)NULL, 0));
 }
