@@ -1,4 +1,4 @@
-/*	$NetBSD: wdc_isapnp.c,v 1.1 1998/01/23 20:40:59 mycroft Exp $	*/
+/*	$NetBSD: wdc_isapnp.c,v 1.2 1998/01/31 21:31:35 christos Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles M. Hannum.  All rights reserved.
@@ -128,7 +128,7 @@ wdc_isapnp_attach(parent, self, aux)
 	sc->sc_ad.auxioh = ipa->ipa_io[1].h;
 
 	sc->sc_ih = isa_intr_establish(ipa->ipa_ic, ipa->ipa_irq[0].num,
-	    IST_EDGE, IPL_BIO, wdcintr, sc);
+	    ipa->ipa_irq[0].type, IPL_BIO, wdcintr, sc);
 
 #ifdef notyet
 	if (ipa->ipa_ndrq > 0) {
