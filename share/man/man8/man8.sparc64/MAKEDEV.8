@@ -6,7 +6,7 @@
 .\" *** DO NOT EDIT - any changes will be lost!!!
 .\" *** ------------------------------------------------------------------
 .\"
-.\" $NetBSD: MAKEDEV.8,v 1.11 2001/09/15 18:34:42 wiz Exp $
+.\" $NetBSD: MAKEDEV.8,v 1.12 2002/01/12 22:06:07 enami Exp $
 .\"
 .\" Copyright (c) 2001 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -111,7 +111,7 @@ IDE disks, see
 SCSI cdrom drives, see
 .Xr \&cd 4
 . It Ar ch#
-SCSI changer, see
+SCSI media changer, see
 .Xr \&ch 4
 . It Ar fd#
 Floppies
@@ -137,13 +137,13 @@ Set of 16 master and slave pseudo terminals, see
 .It ISDN devices :
 . Bl -tag -width 0123456789 -compact
 . It Ar i4b
-Comunication between userland isdnd and kernel
+Communication between userland isdnd and kernel
 . It Ar i4bctl
 Control device
 . It Ar i4brbch#
 Raw b-channel access
 . It Ar i4btel#
-Telephonie device
+Telephony device
 . It Ar i4btrc#
 Trace device
 . El
@@ -183,8 +183,8 @@ IP filter
 Random number generator
 . It Ar scsibus#
 SCSI busses, see
-.Xr \&scsictl 8 ,
-.Xr \&scsi 4
+.Xr \&scsi 4 ,
+.Xr \&scsictl 8
 . It Ar ses#
 SES/SAF-TE SCSI Devices, see
 .Xr \&ses 4
@@ -194,9 +194,6 @@ SCSI scanner, see
 . It Ar uk#
 Unknown SCSI device, see
 .Xr \&uk 4
-. It Ar ch#
-SCSI changer, see
-.Xr \&ch 4
 . It Ar pci#
 PCI bus access devices, see
 .Xr \&pci 4

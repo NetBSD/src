@@ -6,7 +6,7 @@
 .\" *** DO NOT EDIT - any changes will be lost!!!
 .\" *** ------------------------------------------------------------------
 .\"
-.\" $NetBSD: MAKEDEV.8,v 1.15 2001/12/11 04:49:32 uwe Exp $
+.\" $NetBSD: MAKEDEV.8,v 1.16 2002/01/12 22:06:07 enami Exp $
 .\"
 .\" Copyright (c) 2001 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -108,7 +108,7 @@ SCSI disks, see
 SCSI cdrom drives, see
 .Xr \&cd 4
 . It Ar ch#
-SCSI changer, see
+SCSI media changer, see
 .Xr \&ch 4
 . It Ar xy#
 Xylogic 450/451 disks
@@ -138,13 +138,13 @@ Set of 16 master and slave pseudo terminals, see
 .It ISDN devices :
 . Bl -tag -width 0123456789 -compact
 . It Ar i4b
-Comunication between userland isdnd and kernel
+Communication between userland isdnd and kernel
 . It Ar i4bctl
 Control device
 . It Ar i4brbch#
 Raw b-channel access
 . It Ar i4btel#
-Telephonie device
+Telephony device
 . It Ar i4btrc#
 Trace device
 . El
@@ -197,9 +197,20 @@ SCSI busses, see
 . It Ar ses#
 SES/SAF-TE SCSI Devices, see
 .Xr \&ses 4
+. It Ar ss#
+SCSI scanner, see
+.Xr \&ss 4
+. It Ar uk#
+Unknown SCSI device, see
+.Xr \&uk 4
 . It Ar pci#
 PCI bus access devices, see
 .Xr \&pci 4
+. It Ar magma#
+Magma multiport serial/parallel cards, see
+.Xr \&magma 4
+. It Ar clcd#
+CL18xx-based multiport serial cards
 . El
 .El
 .Sh FILES

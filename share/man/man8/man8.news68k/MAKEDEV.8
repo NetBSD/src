@@ -6,7 +6,7 @@
 .\" *** DO NOT EDIT - any changes will be lost!!!
 .\" *** ------------------------------------------------------------------
 .\"
-.\" $NetBSD: MAKEDEV.8,v 1.4 2001/09/08 01:32:47 wiz Exp $
+.\" $NetBSD: MAKEDEV.8,v 1.5 2002/01/12 22:06:05 enami Exp $
 .\"
 .\" Copyright (c) 2001 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -109,7 +109,7 @@ SCSI cdrom drives, see
 SCSI tape, see
 .Xr \&st 4
 . It Ar ch#
-SCSI changer, see
+SCSI media changer, see
 .Xr \&ch 4
 . It Ar vnd#
 ``file'' pseudo-disks, see
@@ -133,7 +133,8 @@ Set of 16 master and slave pseudo terminals, see
 .It Special purpose devices :
 . Bl -tag -width 0123456789 -compact
 . It Ar fd
-File descriptors
+File descriptors, see
+.Xr \&fd 4
 . It Ar bpf#
 Packet filter, see
 .Xr \&bpf 4
@@ -148,7 +149,15 @@ Ip filter
 . It Ar random
 Random number generator
 . It Ar scsibus#
-SCSI busses
+SCSI busses, see
+.Xr \&scsi 4 ,
+.Xr \&scsictl 8
+. It Ar ss#
+SCSI scanner, see
+.Xr \&ss 4
+. It Ar uk#
+Unknown SCSI device, see
+.Xr \&uk 4
 . El
 .El
 .Sh FILES
