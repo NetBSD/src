@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.209 2004/05/02 11:22:06 pk Exp $	*/
+/*	$NetBSD: locore.s,v 1.210 2004/05/04 15:48:45 pk Exp $	*/
 
 /*
  * Copyright (c) 1996 Paul Kranenburg
@@ -4863,8 +4863,6 @@ ENTRY(cpu_exit)
 	 *	%o0 = tmp 1
 	 *	%o1 = tmp 2
 	 */
-
-	INCR(_C_LABEL(uvmexp)+V_SWTCH)	! cnt.v_switch++;
 
 	mov	PSR_S|PSR_ET, %l1	! oldpsr = PSR_S | PSR_ET;
 	sethi	%hi(_C_LABEL(sched_whichqs)), %l2
