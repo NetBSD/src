@@ -1,4 +1,4 @@
-/*	$NetBSD: audio.c,v 1.59 1997/08/01 17:04:00 augustss Exp $	*/
+/*	$NetBSD: audio.c,v 1.60 1997/08/04 09:29:51 augustss Exp $	*/
 
 /*
  * Copyright (c) 1991-1993 Regents of the University of California.
@@ -756,7 +756,7 @@ audio_drain(sc)
 	 */
 	drops = cb->drops;
 	while (cb->drops == drops) {
-		DPRINTF(("audio_drain: used=%d\n", sc->sc_pr.used));
+		DPRINTF(("audio_drain: used=%d, drops=%ld\n", sc->sc_pr.used, cb->drops));
 		/*
 		 * When the process is exiting, it ignores all signals and
 		 * we can't interrupt this sleep, so we set a timeout just in case.
@@ -956,7 +956,8 @@ audio_calc_blksize(sc, mode)
 	}
 	
 	bs = parm->sample_rate * audio_blk_ms / 1000 *
-		parm->channels * parm->precision / NBBY;
+	     parm->channels * parm->precision / NBBY *
+	     parm->factor;
 	ROUNDSIZE(bs);
 	if (hw->round_blocksize)
 		bs = hw->round_blocksize(sc->hw_hdl, bs);
@@ -1100,13 +1101,27 @@ audio_write(dev, uio, ioflag)
 		splx(s);
 		cc = cb->usedhigh - used; 	/* maximum to write */
 		n = cb->end - inp;
+		if (sc->sc_pparams.factor != 1) {
+			/* Compensate for software coding expansion factor. */
+			n /= sc->sc_pparams.factor;
+			cc /= sc->sc_pparams.factor;
+		}
 		if (n < cc)
 			cc = n;			/* don't write beyond end of buffer */
 		if (uio->uio_resid < cc)
 			cc = uio->uio_resid; 	/* and no more than we have */
 
-		/* Compensate for software coding expansion factor. */
-		cc = (cc + sc->sc_pparams.factor - 1) / sc->sc_pparams.factor;
+#ifdef DIAGNOSTIC
+		/* 
+		 * This should never happen since the block size and and
+		 * block pointers are always nicely aligned. 
+		 */
+		if (cc == 0) {
+			printf("audio_write: cc == 0, factor=%d\n",
+			       sc->sc_pparams.factor);
+			return EINVAL;
+		}
+#endif
 #ifdef AUDIO_DEBUG
 		if (audiodebug > 1)
 		    printf("audio_write: uiomove cc=%d inp=%p, left=%d\n", cc, inp, uio->uio_resid);
@@ -1119,12 +1134,20 @@ audio_write(dev, uio, ioflag)
 		        printf("audio_write:(1) uiomove failed %d; cc=%d inp=%p\n",
 			       error, cc, inp);
 #endif
-		/* Continue even if uiomove() failed because we may have
-		 * gotten a partial block. */
-		if (sc->sc_pparams.sw_code)
+		/* 
+		 * Continue even if uiomove() failed because we may have
+		 * gotten a partial block.
+		 */
+
+		if (sc->sc_pparams.sw_code) {
 			sc->sc_pparams.sw_code(sc->hw_hdl, inp, cc);
-		/* And adjust count after the expansion. */
-		cc *= sc->sc_pparams.factor;
+			/* Adjust count after the expansion. */
+			cc *= sc->sc_pparams.factor;
+#ifdef AUDIO_DEBUG
+			if (audiodebug > 1)
+				printf("audio_write: expanded cc=%d\n", cc);
+#endif
+		}
 
 		einp = cb->inp + cc;
 		if (einp >= cb->end)
