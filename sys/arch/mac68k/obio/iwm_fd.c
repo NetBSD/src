@@ -1,4 +1,4 @@
-/*	$NetBSD: iwm_fd.c,v 1.23.2.7 2005/01/17 19:29:49 skrll Exp $	*/
+/*	$NetBSD: iwm_fd.c,v 1.23.2.8 2005/01/25 09:29:04 skrll Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998 Hauke Fath.  All rights reserved.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: iwm_fd.c,v 1.23.2.7 2005/01/17 19:29:49 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: iwm_fd.c,v 1.23.2.8 2005/01/25 09:29:04 skrll Exp $");
 
 #ifdef _LKM
 #define IWMCF_DRIVE 0
@@ -635,7 +635,7 @@ probe_fd(void)
  * Open a floppy disk device.
  */
 int
-fdopen(dev_t dev, int flags, int devType, struct proc *proc)
+fdopen(dev_t dev, int flags, int devType, struct lwp *l)
 {
 	fd_softc_t *fd;
 	fdInfo_t *info;
@@ -772,7 +772,7 @@ fdopen(dev_t dev, int flags, int devType, struct proc *proc)
  * fdclose
  */
 int
-fdclose(dev_t dev, int flags, int devType, struct proc *proc)
+fdclose(dev_t dev, int flags, int devType, struct lwp *l)
 {
 	fd_softc_t *fd;
 	int partitionMask, fdUnit, fdType;
@@ -816,7 +816,7 @@ fdclose(dev_t dev, int flags, int devType, struct proc *proc)
  * we do not support them.
  */
 int
-fdioctl(dev_t dev, u_long cmd, caddr_t data, int flags, struct proc *proc)
+fdioctl(dev_t dev, u_long cmd, caddr_t data, int flags, struct lwp *l)
 {
 	int result, fdUnit, fdType;
 	fd_softc_t *fd;
