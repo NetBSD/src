@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.270 2000/11/04 18:35:49 thorpej Exp $
+#	$NetBSD: mi,v 1.271 2000/11/08 11:11:28 wiz Exp $
 ./sys			comp-sysutil-root
 ./usr/bin/addr2line	comp-miscutil-bin
 ./usr/bin/ar		comp-util-bin
@@ -370,7 +370,6 @@
 ./usr/include/frame.h		comp-c-include
 ./usr/include/fstab.h		comp-c-include
 ./usr/include/fts.h		comp-c-include
-./usr/include/g++		comp-cxx-include
 ./usr/include/g++/FlexLexer.h		comp-cxx-include
 ./usr/include/g++/PlotFile.h		comp-cxx-include
 ./usr/include/g++/SFile.h		comp-cxx-include
@@ -590,7 +589,6 @@
 ./usr/include/link_elf.h		comp-c-include
 ./usr/include/locale.h		comp-c-include
 ./usr/include/login_cap.h		comp-c-include
-./usr/include/machine		comp-c-include
 ./usr/include/malloc.h		comp-c-include
 ./usr/include/math.h		comp-c-include
 ./usr/include/md4.h		comp-c-include
@@ -1838,7 +1836,6 @@
 ./usr/share/man/cat3/cgetfirst.0	comp-c-catman
 ./usr/share/man/cat3/cgetmatch.0	comp-c-catman
 ./usr/share/man/cat3/cgetnext.0		comp-c-catman
-./usr/share/man/cat3/cgetnext.0	comp-c-catman
 ./usr/share/man/cat3/cgetnum.0	comp-c-catman
 ./usr/share/man/cat3/cgetset.0	comp-c-catman
 ./usr/share/man/cat3/cgetstr.0	comp-c-catman
