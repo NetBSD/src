@@ -1,4 +1,4 @@
-/*	$NetBSD: ums.c,v 1.34 1999/11/12 00:34:58 augustss Exp $	*/
+/*	$NetBSD: ums.c,v 1.35 1999/11/15 22:04:14 augustss Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -40,6 +40,8 @@
 /*
  * HID spec: http://www.usb.org/developers/data/usbhid10.pdf
  */
+
+/* XXX complete SPUR_UP change */
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -100,10 +102,11 @@ struct ums_softc {
 
 	int flags;		/* device configuration */
 #define UMS_Z		0x01	/* z direction available */
+#define UMS_SPUR_BUT_UP	0x02	/* spurious button up events */
+#define UMS_REVZ	0x04	/* Z-axis is reversed */
+
 	int nbuttons;
 #define MAX_BUTTONS	31	/* chosen because sc_buttons is u_int32_t */
-
-	char revz;		/* Z-axis is reversed */
 
 	u_int32_t sc_buttons;	/* mouse button status */
 	struct device *sc_wsmousedev;
@@ -168,7 +171,7 @@ USB_ATTACH(ums)
 	void *desc;
 	usbd_status err;
 	char devinfo[1024];
-	u_int32_t flags;
+	u_int32_t flags, quirks;
 	int i;
 	struct hid_location loc_btn;
 	
@@ -201,7 +204,11 @@ USB_ATTACH(ums)
 		USB_ATTACH_ERROR_RETURN;
 	}
 
-	sc->revz = (usbd_get_quirks(uaa->device)->uq_flags & UQ_MS_REVZ) != 0;
+	quirks = usbd_get_quirks(uaa->device)->uq_flags;
+	if (quirks & UQ_MS_REVZ)
+		sc->flags |= UMS_REVZ;
+	if (quirks & UQ_SPUR_BUT_UP)
+		sc->flags |= UMS_SPUR_BUT_UP;
 
 	err = usbd_alloc_report_desc(uaa->iface, &desc, &size, M_TEMP);
 	if (err)
@@ -369,17 +376,17 @@ ums_intr(xfer, addr, status)
 	dx =  hid_get_data(ibuf, &sc->sc_loc_x);
 	dy = -hid_get_data(ibuf, &sc->sc_loc_y);
 	dz =  hid_get_data(ibuf, &sc->sc_loc_z);
-	if (sc->revz)
+	if (sc->flags & UMS_REVZ)
 		dz = -dz;
 	for (i = 0; i < sc->nbuttons; i++)
 		if (hid_get_data(ibuf, &sc->sc_loc_btn[i]))
 			buttons |= (1 << UMS_BUT(i));
 
-	if (dx || dy || dz || buttons != sc->sc_buttons) {
+	if (dx != 0 || dy != 0 || dz != 0 || buttons != sc->sc_buttons) {
 		DPRINTFN(10, ("ums_intr: x:%d y:%d z:%d buttons:0x%x\n",
 			dx, dy, dz, buttons));
 		sc->sc_buttons = buttons;
-		if (sc->sc_wsmousedev) {
+		if (sc->sc_wsmousedev != NULL) {
 			s = spltty();
 			wsmouse_input(sc->sc_wsmousedev, buttons, dx, dy, dz);
 			splx(s);
