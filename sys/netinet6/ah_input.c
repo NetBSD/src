@@ -1,4 +1,4 @@
-/*	$NetBSD: ah_input.c,v 1.15.2.4 2000/10/02 23:41:31 itojun Exp $	*/
+/*	$NetBSD: ah_input.c,v 1.15.2.5 2001/03/11 21:10:53 he Exp $	*/
 /*	$KAME: ah_input.c,v 1.34 2000/10/01 12:37:18 itojun Exp $	*/
 
 /*
@@ -537,9 +537,14 @@ ah4_input(m, va_alist)
 
 		key_sa_recordxfer(sav, m);
 
-		if (nxt != IPPROTO_DONE)
+		if (nxt != IPPROTO_DONE) {
+			if ((inetsw[ip_protox[nxt]].pr_flags & PR_LASTHDR) != 0 &&
+			    ipsec4_in_reject(m, NULL)) {
+				ipsecstat.in_polvio++;
+				goto fail;
+			}
 			(*inetsw[ip_protox[nxt]].pr_input)(m, off, nxt);
-		else
+		} else
 			m_freem(m);
 		m = NULL;
 	}
