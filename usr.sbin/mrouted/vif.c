@@ -1,4 +1,4 @@
-/*	$NetBSD: vif.c,v 1.7 1999/01/23 22:44:44 hwr Exp $	*/
+/*	$NetBSD: vif.c,v 1.8 2000/10/12 06:07:04 augustss Exp $	*/
 
 /*
  * The mrouted program is covered by the license in the accompanying file
@@ -642,7 +642,7 @@ accept_leave_message(src, dst, group)
     for (g = v->uv_groups; g != NULL; g = g->al_next) {
 	if (group == g->al_addr) {
 	    log(LOG_DEBUG, 0,
-		"[vif.c, _accept_leave_message] %d %d \n",
+		"[vif.c, _accept_leave_message] %d %ld\n",
 		g->al_old, g->al_query);
 
 	    /* Ignore the leave message if there are old hosts present */
