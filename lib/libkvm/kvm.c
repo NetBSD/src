@@ -1,4 +1,4 @@
-/*	$NetBSD: kvm.c,v 1.70.2.2 2002/04/23 20:10:19 nathanw Exp $	*/
+/*	$NetBSD: kvm.c,v 1.70.2.3 2002/12/19 02:26:14 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1989, 1992, 1993
@@ -42,7 +42,7 @@
 #if 0
 static char sccsid[] = "@(#)kvm.c	8.2 (Berkeley) 2/13/94";
 #else
-__RCSID("$NetBSD: kvm.c,v 1.70.2.2 2002/04/23 20:10:19 nathanw Exp $");
+__RCSID("$NetBSD: kvm.c,v 1.70.2.3 2002/12/19 02:26:14 thorpej Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -60,12 +60,15 @@ __RCSID("$NetBSD: kvm.c,v 1.70.2.2 2002/04/23 20:10:19 nathanw Exp $");
 
 #include <uvm/uvm_extern.h>
 
+#include <machine/cpu.h>
+
 #include <ctype.h>
 #include <db.h>
 #include <fcntl.h>
 #include <limits.h>
 #include <nlist.h>
 #include <paths.h>
+#include <stdarg.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -79,6 +82,7 @@ static int	_kvm_get_header __P((kvm_t *));
 static kvm_t	*_kvm_open __P((kvm_t *, const char *, const char *,
 		    const char *, int, char *));
 static int	clear_gap __P((kvm_t *, FILE *, int));
+static int	open_cloexec  __P((const char *, int, int));
 static off_t	Lseek __P((kvm_t *, int, off_t, int));
 static ssize_t	Pread __P((kvm_t *, int, void *, size_t, off_t));
 
@@ -89,12 +93,6 @@ kvm_geterr(kd)
 	return (kd->errbuf);
 }
 
-#if __STDC__
-#include <stdarg.h>
-#else
-#include <varargs.h>
-#endif
-
 /*
  * Report an error using printf style arguments.  "program" is kd->program
  * on hard errors, and 0 on soft errors, so that under sun error emulation,
@@ -102,22 +100,11 @@ kvm_geterr(kd)
  * generate tons of error messages when trying to access bogus pointers).
  */
 void
-#if __STDC__
 _kvm_err(kvm_t *kd, const char *program, const char *fmt, ...)
-#else
-_kvm_err(kd, program, fmt, va_alist)
-	kvm_t *kd;
-	char *program, *fmt;
-	va_dcl
-#endif
 {
 	va_list ap;
 
-#ifdef __STDC__
 	va_start(ap, fmt);
-#else
-	va_start(ap);
-#endif
 	if (program != NULL) {
 		(void)fprintf(stderr, "%s: ", program);
 		(void)vfprintf(stderr, fmt, ap);
@@ -130,23 +117,12 @@ _kvm_err(kd, program, fmt, va_alist)
 }
 
 void
-#if __STDC__
 _kvm_syserr(kvm_t *kd, const char *program, const char *fmt, ...)
-#else
-_kvm_syserr(kd, program, fmt, va_alist)
-	kvm_t *kd;
-	char *program, *fmt;
-	va_dcl
-#endif
 {
 	va_list ap;
 	size_t n;
 
-#if __STDC__
 	va_start(ap, fmt);
-#else
-	va_start(ap);
-#endif
 	if (program != NULL) {
 		(void)fprintf(stderr, "%s: ", program);
 		(void)vfprintf(stderr, fmt, ap);
@@ -172,6 +148,29 @@ _kvm_malloc(kd, n)
 	if ((p = malloc(n)) == NULL)
 		_kvm_err(kd, kd->program, "%s", strerror(errno));
 	return (p);
+}
+
+/*
+ * Open a file setting the close on exec bit.
+ */
+static int
+open_cloexec(fname, flags, mode)
+	const char *fname;
+	int flags, mode;
+{
+	int fd;
+
+	if ((fd = open(fname, flags, mode)) == -1)
+		return fd;
+	if (fcntl(fd, F_SETFD, FD_CLOEXEC) == -1)
+		goto error;
+
+	return fd;
+error:
+	flags = errno;
+	(void)close(fd);
+	errno = flags;
+	return -1;
 }
 
 /*
@@ -267,8 +266,30 @@ _kvm_open(kd, uf, mf, sf, flag, errout)
 	}
 
 	ufgiven = (uf != NULL);
-	if (!ufgiven)
-		uf = _PATH_UNIX;
+	if (!ufgiven) {
+#ifdef CPU_BOOTED_KERNEL
+		/* 130 is 128 + '/' + '\0' */
+		static char booted_kernel[130];
+		int mib[2], rc;
+		size_t len;
+
+		mib[0] = CTL_MACHDEP;
+		mib[1] = CPU_BOOTED_KERNEL;
+		booted_kernel[0] = '/';
+		booted_kernel[1] = '\0';
+		len = sizeof(booted_kernel) - 2;
+		rc = sysctl(&mib[0], 2, &booted_kernel[1], &len, NULL, 0);
+		booted_kernel[sizeof(booted_kernel) - 1] = '\0';
+		uf = (booted_kernel[1] == '/') ?
+		    &booted_kernel[1] : &booted_kernel[0];
+		if (rc != -1)
+			rc = stat(uf, &st);
+		if (rc != -1 && !S_ISREG(st.st_mode))
+			rc = -1;
+		if (rc == -1)
+#endif /* CPU_BOOTED_KERNEL */
+			uf = _PATH_UNIX;
+	}
 	else if (strlen(uf) >= MAXPATHLEN) {
 		_kvm_err(kd, kd->program, "exec file name too long");
 		goto failed;
@@ -282,7 +303,7 @@ _kvm_open(kd, uf, mf, sf, flag, errout)
 	if (sf == 0)
 		sf = _PATH_DRUM;
 
-	if ((kd->pmfd = open(mf, flag, 0)) < 0) {
+	if ((kd->pmfd = open_cloexec(mf, flag, 0)) < 0) {
 		_kvm_syserr(kd, kd->program, "%s", mf);
 		goto failed;
 	}
@@ -302,12 +323,12 @@ _kvm_open(kd, uf, mf, sf, flag, errout)
 				 "%s: not physical memory device", mf);
 			goto failed;
 		}
-		if ((kd->vmfd = open(_PATH_KMEM, flag)) < 0) {
+		if ((kd->vmfd = open_cloexec(_PATH_KMEM, flag, 0)) < 0) {
 			_kvm_syserr(kd, kd->program, "%s", _PATH_KMEM);
 			goto failed;
 		}
 		kd->alive = KVM_ALIVE_FILES;
-		if ((kd->swfd = open(sf, flag, 0)) < 0) {
+		if ((kd->swfd = open_cloexec(sf, flag, 0)) < 0) {
 			_kvm_syserr(kd, kd->program, "%s", sf);
 			goto failed;
 		}
@@ -319,7 +340,7 @@ _kvm_open(kd, uf, mf, sf, flag, errout)
 		 * revert to slow nlist() calls.
 		 */
 		if ((ufgiven || kvm_dbopen(kd) < 0) &&
-		    (kd->nlfd = open(uf, O_RDONLY, 0)) < 0) {
+		    (kd->nlfd = open_cloexec(uf, O_RDONLY, 0)) < 0) {
 			_kvm_syserr(kd, kd->program, "%s", uf);
 			goto failed;
 		}
@@ -329,7 +350,7 @@ _kvm_open(kd, uf, mf, sf, flag, errout)
 		 * Initialize the virtual address translation machinery,
 		 * but first setup the namelist fd.
 		 */
-		if ((kd->nlfd = open(uf, O_RDONLY, 0)) < 0) {
+		if ((kd->nlfd = open_cloexec(uf, O_RDONLY, 0)) < 0) {
 			_kvm_syserr(kd, kd->program, "%s", uf);
 			goto failed;
 		}
@@ -351,7 +372,7 @@ failed:
 	 * Copy out the error if doing sane error semantics.
 	 */
 	if (errout != 0)
-		(void)strncpy(errout, kd->errbuf, _POSIX2_LINE_MAX - 1);
+		(void)strlcpy(errout, kd->errbuf, _POSIX2_LINE_MAX);
 	(void)kvm_close(kd);
 	return (0);
 }
@@ -648,7 +669,7 @@ kvm_openfiles(uf, mf, sf, flag, errout)
 	kvm_t *kd;
 
 	if ((kd = malloc(sizeof(*kd))) == NULL) {
-		(void)strncpy(errout, strerror(errno), _POSIX2_LINE_MAX - 1);
+		(void)strlcpy(errout, strerror(errno), _POSIX2_LINE_MAX);
 		return (0);
 	}
 	kd->program = 0;
@@ -730,10 +751,17 @@ kvm_dbopen(kd)
 	struct nlist nitem;
 	char dbversion[_POSIX2_LINE_MAX];
 	char kversion[_POSIX2_LINE_MAX];
+	int fd;
 
 	kd->db = dbopen(_PATH_KVMDB, O_RDONLY, 0, DB_HASH, NULL);
 	if (kd->db == 0)
 		return (-1);
+	if ((fd = (*kd->db->fd)(kd->db)) >= 0) {
+		if (fcntl(fd, F_SETFD, FD_CLOEXEC) == -1) {
+		       (*kd->db->close)(kd->db);
+		       return (-1);
+		}
+	}
 	/*
 	 * read version out of database
 	 */
@@ -856,7 +884,7 @@ kvm_t	*kd;
 
 	errno = 0;
 	val = 0;
-	if (pwrite(kd->pmfd, (void *) &val, sizeof(val),
+	if (pwrite(kd->pmfd, (void *)&val, sizeof(val),
 	    _kvm_pa2off(kd, pa)) == -1) {
 		_kvm_syserr(kd, 0, "cannot invalidate dump - pwrite");
 		return (-1);
