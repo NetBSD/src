@@ -1,4 +1,4 @@
-/*	$NetBSD: mips_machdep.c,v 1.18 1997/07/19 09:54:37 jonathan Exp $	*/
+/*	$NetBSD: mips_machdep.c,v 1.19 1997/08/09 19:06:45 jonathan Exp $	*/
 
 /*
  * Copyright 1996 The Board of Trustees of The Leland Stanford
@@ -36,6 +36,10 @@ mips_locore_jumpvec_t mips_locore_jumpvec = {
   NULL, NULL, NULL, NULL,
   NULL, NULL
 };
+
+
+int cpu_mhz;
+
 
 /*
  * Forward declarations
@@ -387,7 +391,9 @@ cpu_identify()
 		printf(" L2 cache: %dkb mixed.\n", mips_L2CacheSize / 1024);
 	else
 		printf("\n");
-/* XXX cache sizes for MIPS1? */
+
+	/* XXX cache sizes for MIPS1? */
+	/* XXX hardware mcclock CPU-speed computation */
 }
 
 
