@@ -592,6 +592,9 @@ case "${target}" in
     # newlib is not 64 bit ready
     noconfigdirs="$noconfigdirs target-newlib target-libgloss"
     ;;
+  sh*-*-netbsd*)
+    noconfigdirs="$noconfigdirs gdb"
+    ;;
   sh*-*-pe|mips*-*-pe|*arm-wince-pe)
     noconfigdirs="$noconfigdirs target-libjava target-libffi target-zlib"
     noconfigdirs="$noconfigdirs target-boehm-gc target-qthreads target-examples"

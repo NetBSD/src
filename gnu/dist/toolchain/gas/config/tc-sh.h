@@ -162,8 +162,8 @@ extern int tc_coff_sizemachdep PARAMS ((fragS *));
 extern int target_big_endian;
 
 #ifdef TE_NetBSD
-#define TARGET_FORMAT (shl ? "elf32-shl-unx" : "elf32-sh-unx")
-#elifdef TE_LINUX
+#define TARGET_FORMAT (shl ? "elf32-shl-nbsd" : "elf32-sh-nbsd")
+#elif defined(TE_LINUX)
 #define TARGET_FORMAT (shl ? "elf32-sh-linux" : "elf32-shbig-linux")
 #else
 #define TARGET_FORMAT (shl ? "elf32-shl" : "elf32-sh")

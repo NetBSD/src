@@ -2258,6 +2258,8 @@ for this_target in $target $canon_targets ; do
       powerpcle*)	cpu_type=ppc endian=little ;;
       powerpc*)		cpu_type=ppc endian=big ;;
       rs6000*)		cpu_type=ppc ;;
+      sh*le)            cpu_type=sh endian=little ;;
+      sh*)              cpu_type=sh endian=big ;;
       sparclite*)	cpu_type=sparc arch=sparclite ;;
       sparclet*)	cpu_type=sparc arch=sparclet ;;
       sparc64*)		cpu_type=sparc arch=v9-64 ;;
@@ -2519,6 +2521,8 @@ EOF
       sh-*-elf*)	    fmt=elf ;;
       sh-*-coff*)           fmt=coff ;;
       sh-*-pe*)             fmt=coff em=pe bfd_gas=yes;;
+      sh-*-netbsdelf*)      fmt=elf em=nbsd ;;
+      shle-*-netbsdelf*)    fmt=elf em=nbsd ;;
       sh-*-rtemself*)       fmt=elf ;;
       sh-*-rtems*)	    fmt=coff ;;
 
