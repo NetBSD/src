@@ -1,4 +1,4 @@
-.\"	$NetBSD: inetd.8,v 1.29 2000/06/14 16:06:43 itojun Exp $
+.\"	$NetBSD: inetd.8,v 1.30 2000/07/04 13:25:39 itojun Exp $
 .\"
 .\" Copyright (c) 1998 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -228,6 +228,14 @@ If you need to specify IPv4 or IPv6 explicitly, use something like
 .Dq tcp4
 or
 .Dq udp6 .
+If you would like to enable special support for
+.Xr faithd 8 ,
+prepend a keyword
+.Dq faith
+into
+.Em protocol ,
+like
+.Dq faith/tcp6 .
 .Pp
 In addition to the protocol, the configuration file may specify the
 send and receive socket buffer sizes for the listening socket.  This
@@ -409,6 +417,9 @@ for
 .Dq tcp4
 and
 .Dq tcp6 .
+.Dq tcp
+means TCP on top of currently-default IP version,
+which is, at this moment, IPv4.
 .Pp
 Under various combination of IPv4/v6 daemon settings,
 .Nm
