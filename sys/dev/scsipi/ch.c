@@ -26,7 +26,7 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
- *      $Id: ch.c,v 1.6 1994/03/29 04:29:25 mycroft Exp $
+ *      $Id: ch.c,v 1.7 1994/04/11 03:54:02 mycroft Exp $
  */
 
 /* 
@@ -57,10 +57,8 @@
 struct ch_data {
 	struct device sc_dev;
 
-	u_int32 flags;
-#define	CHINIT		0x01
-#define CHOPEN		0x02
-#define CHKNOWN		0x04
+	int flags;
+#define CHOPEN		0x01
 	struct scsi_link *sc_link;	/* all the inter level info */
 	u_int16 chmo;			/* Offset of first CHM */
 	u_int16 chms;			/* No. of CHM */
@@ -121,16 +119,11 @@ chattach(parent, self, aux)
 	 * the drive. We cannot use interrupts yet, so the
 	 * request must specify this.
 	 */
-	if ((ch_mode_sense(ch, SCSI_NOSLEEP | SCSI_NOMASK))) {
+	if ((ch_mode_sense(ch, SCSI_NOSLEEP | SCSI_NOMASK)))
 		printf(": offline\n");
-		/*stat = CHOPEN;*/
-	} else {
+	else
 		printf(": %d slot(s), %d drive(s), %d arm(s), %d i/e-slot(s)\n",
 		    ch->slots, ch->drives, ch->chms, ch->imexs);
-		/*stat = CHKNOWN;*/
-	}
-
-	ch->flags |= CHINIT;
 }
 
 /*
@@ -151,7 +144,7 @@ chopen(dev)
 	if (unit >= chcd.cd_ndevs)
 		return ENXIO;
 	ch = chcd.cd_devs[unit];
-	if (!ch || !(ch->flags & CHINIT))
+	if (!ch)
 		return ENXIO;
 
 	sc_link = ch->sc_link;
@@ -226,7 +219,7 @@ chioctl(dev, cmd, arg, mode)
 	struct ch_data *ch = chcd.cd_devs[CHUNIT(dev)];
 	struct scsi_link *sc_link = ch->sc_link;
 	int number;
-	u_int flags;
+	int flags;
 
 	/*
 	 * Find the device that the user is talking about

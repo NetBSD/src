@@ -26,7 +26,7 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
- *	$Id: st.c,v 1.26 1994/04/10 00:07:02 mycroft Exp $
+ *	$Id: st.c,v 1.27 1994/04/11 03:54:12 mycroft Exp $
  */
 
 /*
@@ -191,7 +191,7 @@ static struct rogues gallery[] =	/* ends with an all-null entry */
 struct st_data {
 	struct device sc_dev;
 /*--------------------present operating parameters, flags etc.----------------*/
-	u_int flags;		/* see below                          */
+	int flags;		/* see below                          */
 	u_int blksiz;		/* blksiz we are using                */
 	u_int density;		/* present density                    */
 	u_int quirks;		/* quirks for the open mode           */
@@ -231,15 +231,15 @@ struct cfdriver stcd = {
 	NULL, "st", scsi_targmatch, stattach, DV_TAPE, sizeof(struct st_data)
 };
 
-int	st_space __P((struct st_data *, int number, u_int what, u_int flags));
-int	st_rewind __P((struct st_data *, boolean immed, u_int flags));
-int	st_mode_sense __P((struct st_data *, u_int flags));
+int	st_space __P((struct st_data *, int number, u_int what, int flags));
+int	st_rewind __P((struct st_data *, boolean immed, int flags));
+int	st_mode_sense __P((struct st_data *, int flags));
 int	st_decide_mode __P((struct st_data *, boolean first_read));
-int	st_rd_blk_lim __P((struct st_data *, u_int flags));
+int	st_rd_blk_lim __P((struct st_data *, int flags));
 int	st_touch_tape __P((struct st_data *));
-int	st_write_filemarks __P((struct st_data *, int number, u_int flags));
-int	st_load __P((struct st_data *, u_int type, u_int flags));
-int	st_mode_select __P((struct st_data *, u_int flags));
+int	st_write_filemarks __P((struct st_data *, int number, int flags));
+int	st_load __P((struct st_data *, u_int type, int flags));
+int	st_mode_select __P((struct st_data *, int flags));
 void    ststrategy();
 void    stminphys();
 int	st_chkeod();
@@ -259,7 +259,6 @@ struct scsi_device st_switch = {
 	0
 };
 
-#define ST_INITIALIZED	0x01
 #define	ST_INFO_VALID	0x02
 #define ST_OPEN		0x04
 #define	ST_BLOCK_SET	0x08	/* block size, mode set by ioctl      */
@@ -338,7 +337,6 @@ stattach(parent, self, aux)
 	st->buf_queue.b_active = 0;
 	st->buf_queue.b_actf = 0;
 	st->buf_queue.b_actb = &st->buf_queue.b_actf;
-	st->flags |= ST_INITIALIZED;
 }
 
 /*
@@ -460,7 +458,7 @@ st_loadquirks(st)
 int 
 stopen(dev, flags)
 	dev_t dev;
-	u_int flags;
+	int flags;
 {
 	int unit;
 	u_int mode, dsty;
@@ -475,7 +473,7 @@ stopen(dev, flags)
 	if (unit >= stcd.cd_ndevs)
 		return ENXIO;
 	st = stcd.cd_devs[unit];
-	if (!st || !(st->flags & ST_INITIALIZED))
+	if (!st)
 		return ENXIO;
 
 	sc_link = st->sc_link;
@@ -589,7 +587,7 @@ stclose(dev)
 int
 st_mount_tape(dev, flags)
 	dev_t dev;
-	u_int flags;
+	int flags;
 {
 	int unit;
 	u_int mode, dsty;
@@ -955,7 +953,7 @@ ststart(unit)
 	struct scsi_link *sc_link = st->sc_link;
 	register struct buf *bp, *dp;
 	struct scsi_rw_tape cmd;
-	u_int flags;
+	int flags;
 
 	SC_DEBUG(sc_link, SDEV_DB2, ("ststart "));
 	/*
@@ -1081,7 +1079,7 @@ stioctl(dev, cmd, arg, flag)
 	int error = 0;
 	int unit;
 	int number, nmarks, dsty;
-	u_int flags;
+	int flags;
 	struct st_data *st;
 	u_int hold_blksiz;
 	u_int hold_density;
@@ -1256,7 +1254,7 @@ int
 st_read(st, buf, size, flags)
 	struct st_data *st;
 	u_int size;
-	u_int flags;
+	int flags;
 	char *buf;
 {
 	struct scsi_rw_tape scsi_cmd;
@@ -1291,7 +1289,7 @@ st_read(st, buf, size, flags)
 int 
 st_rd_blk_lim(st, flags)
 	struct st_data *st;
-	u_int flags;
+	int flags;
 {
 	struct scsi_blk_limits scsi_cmd;
 	struct scsi_blk_limits_data scsi_blkl;
@@ -1339,7 +1337,7 @@ st_rd_blk_lim(st, flags)
 int 
 st_mode_sense(st, flags)
 	struct st_data *st;
-	u_int flags;
+	int flags;
 {
 	u_int scsi_sense_len;
 	int error;
@@ -1421,7 +1419,7 @@ st_mode_sense(st, flags)
 int 
 st_mode_select(st, flags)
 	struct st_data *st;
-	u_int flags;
+	int flags;
 {
 	u_int dat_len;
 	char   *dat_ptr;
@@ -1480,7 +1478,7 @@ int
 st_space(st, number, what, flags)
 	struct st_data *st;
 	u_int what;
-	u_int flags;
+	int flags;
 	int number;
 {
 	int error;
@@ -1559,7 +1557,7 @@ st_space(st, number, what, flags)
 int 
 st_write_filemarks(st, number, flags)
 	struct st_data *st;
-	u_int flags;
+	int flags;
 	int number;
 {
 	struct scsi_write_filemarks scsi_cmd;
@@ -1603,7 +1601,7 @@ st_chkeod(st, position, nmarks, flags)
 	struct st_data *st;
 	boolean position;
 	int *nmarks;
-	u_int flags;
+	int flags;
 {
 	int error;
 
@@ -1631,7 +1629,7 @@ int
 st_load(st, type, flags)
 	struct st_data *st;
 	u_int type;
-	u_int flags;
+	int flags;
 {
 	struct scsi_load scsi_cmd;
 	struct scsi_link *sc_link = st->sc_link;
@@ -1659,7 +1657,7 @@ st_load(st, type, flags)
 int 
 st_rewind(st, immed, flags)
 	struct st_data *st;
-	u_int flags;
+	int flags;
 	boolean immed;
 {
 	struct scsi_rewind scsi_cmd;

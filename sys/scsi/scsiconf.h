@@ -26,7 +26,7 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
- *	$Id: scsiconf.h,v 1.7 1994/04/11 02:23:45 mycroft Exp $
+ *	$Id: scsiconf.h,v 1.8 1994/04/11 03:54:07 mycroft Exp $
  */
 
 /*
@@ -94,8 +94,7 @@ typedef	unsigned char 		u_int8;
  * whatever low-end drivers they are attached to each adapter type has one of
  * these statically allocated.
  */
-struct scsi_adapter
-{
+struct scsi_adapter {
 /* 4*/	int		(*scsi_cmd)();
 /* 8*/	void		(*scsi_minphys)();
 /*12*/	int32		(*open_target_lu)();
@@ -126,14 +125,13 @@ struct scsi_adapter
  * whatever high-end drivers they are attached to.  Each device type has one
  * of these statically allocated.
  */
-struct scsi_device
-{
+struct scsi_device {
 /*  4*/	int	(*err_handler)(); /* returns -1 to say err processing complete */
 /*  8*/	void	(*start)();
 /* 12*/	int32	(*async)();
 /* 16*/	int32	(*done)();	/* returns -1 to say done processing complete */
 /* 20*/	char	*name;		/* name of device type */
-/* 24*/	u_int32 flags;		/* device type dependent flags */
+/* 24*/	int	flags;		/* device type dependent flags */
 /* 32*/	int32	spare[2];
 };
 
@@ -143,8 +141,7 @@ struct scsi_device
  * the other, and to allow generic scsi glue code to call these services
  * as well.
  */
-struct scsi_link
-{
+struct scsi_link {
 /*  1*/	u_int8	scsibus;		/* the Nth scsibus */
 /*  2*/	u_int8	target;			/* targ of this dev */
 /*  3*/	u_int8	lun;			/* lun of this dev */
@@ -153,7 +150,7 @@ struct scsi_link
 /*  6*/	u_int8	opennings;		/* available operations */
 /*  7*/	u_int8	active;			/* operations in progress */
 /*  8*/ u_int8	sparea[1];
-/* 10*/	u_int16	flags;			/* flags that all devices have */
+/* 10*/	int	flags;			/* flags that all devices have */
 /* 12*/	u_int8	spareb[2];
 /* 16*/	struct	scsi_adapter *adapter;	/* adapter entry points etc. */
 /* 20*/	struct	scsi_device *device;	/* device entry points etc. */
@@ -186,20 +183,18 @@ struct scsibus_data {
  * device and adapter for which the command is destined.
  * (via the scsi_link structure)
  */
-struct scsi_xfer
-{
+struct scsi_xfer {
 /* 4*/	struct	scsi_xfer *next;	/* when free */
-/* 8*/	u_int32	flags;
+/* 8*/	int	flags;
 /*12*/	struct	scsi_link *sc_link;	/* all about our device and adapter */
-/*13*/	u_int8	retries;		/* the number of times to retry */
-/*16*/	u_int8	spare[3];
-/*20*/	int32	timeout;		/* in milliseconds */
+/*16*/	int	retries;		/* the number of times to retry */
+/*20*/	int	timeout;		/* in milliseconds */
 /*24*/	struct	scsi_generic *cmd;	/* The scsi command to execute */
 /*28*/	int32	cmdlen;			/* how long it is */
 /*32*/	u_char	*data;			/* dma address OR a uio address */
 /*36*/	int32	datalen;		/* data len (blank if uio)    */
 /*40*/	int32	resid;			/* how much buffer was not touched */
-/*44*/	int32	error;			/* an error value	*/
+/*44*/	int	error;			/* an error value	*/
 /*48*/	struct	buf *bp;		/* If we need to associate with a buf */
 /*80*/	struct	scsi_sense_data	sense; /* 32 bytes*/
 	/*
@@ -254,20 +249,20 @@ int scsi_targmatch __P((struct device *, struct cfdata *, void *));
 int scsi_targmatch();
 #endif
 
-struct scsi_xfer *get_xs __P((struct scsi_link *, u_int32));
-void free_xs __P((struct scsi_xfer *, struct scsi_link *, u_int32));
-u_int32 scsi_size __P((struct scsi_link *, u_int32));
-int scsi_test_unit_ready __P((struct scsi_link *, u_int32));
-int scsi_change_def __P((struct scsi_link *, u_int32));
-int scsi_inquire __P((struct scsi_link *, struct scsi_inquiry_data *, u_int32));
-int scsi_prevent __P((struct scsi_link *, u_int32, u_int32));
-int scsi_start __P((struct scsi_link *, u_int32, u_int32));
+struct scsi_xfer *get_xs __P((struct scsi_link *, int));
+void free_xs __P((struct scsi_xfer *, struct scsi_link *, int));
+u_int32 scsi_size __P((struct scsi_link *, int));
+int scsi_test_unit_ready __P((struct scsi_link *, int));
+int scsi_change_def __P((struct scsi_link *, int));
+int scsi_inquire __P((struct scsi_link *, struct scsi_inquiry_data *, int));
+int scsi_prevent __P((struct scsi_link *, int, int));
+int scsi_start __P((struct scsi_link *, int, int));
 void scsi_done __P((struct scsi_xfer *));
 int scsi_scsi_cmd __P((struct scsi_link *, struct scsi_generic *,
 			u_int32 cmdlen, u_char *data_addr,
-			u_int32 datalen, u_int32 retries,
-			u_int32 timeout, struct buf *bp,
-			u_int32 flags));
+			u_int32 datalen, int retries,
+			int timeout, struct buf *bp,
+			int flags));
 int scsi_do_ioctl __P((struct scsi_link *, int, caddr_t, int));
 
 void show_scsi_xs __P((struct scsi_xfer *));

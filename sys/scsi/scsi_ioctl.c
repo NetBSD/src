@@ -26,7 +26,7 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
- *	$Id: scsi_ioctl.c,v 1.4 1994/03/29 04:29:35 mycroft Exp $
+ *	$Id: scsi_ioctl.c,v 1.5 1994/04/11 03:54:04 mycroft Exp $
  */
 
 /* 
@@ -211,7 +211,7 @@ scsistrategy(bp)
 	struct scsi_ioctl *si;
 	scsireq_t *screq;
 	struct scsi_link *sc_link;
-	u_int32	flags = 0;
+	int flags = 0;
 	int s;
 
 	si = si_find(bp);
