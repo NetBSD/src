@@ -1,4 +1,4 @@
-/* $NetBSD: login_cap.h,v 1.1 2000/01/12 05:02:11 mjl Exp $ */
+/* $NetBSD: login_cap.h,v 1.2 2000/02/04 02:17:16 mjl Exp $ */
 
 /*-
  * Copyright (c) 1995,1997 Berkeley Software Design, Inc. All rights reserved.
@@ -49,7 +49,8 @@
 #define	LOGIN_SETRESOURCES	0x0010	/* Set resource limits */
 #define	LOGIN_SETUMASK		0x0020	/* Set umask */
 #define	LOGIN_SETUSER		0x0040	/* Set user */
-#define	LOGIN_SETALL 		0x007f	/* Set all. */
+#define	LOGIN_SETENV		0x0080	/* Set user environment */
+#define	LOGIN_SETALL 		0x00ff	/* Set all. */
 
 typedef struct {
 	char	*lc_class;
@@ -62,6 +63,7 @@ __BEGIN_DECLS
 struct passwd;
 
 login_cap_t *login_getclass __P((char *));
+login_cap_t *login_getpwclass __P((const struct passwd *));
 void	 login_close __P((login_cap_t *));
 int	 login_getcapbool __P((login_cap_t *, char *, u_int));
 quad_t	 login_getcapnum __P((login_cap_t *, char *, quad_t, quad_t));
