@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-2.0,v 1.1.2.189 2004/05/06 05:54:02 jmc Exp $
+#	$NetBSD: CHANGES-2.0,v 1.1.2.190 2004/05/08 15:50:15 grant Exp $
 
 A complete list of changes from the initial NetBSD 2.0 branch on 28 March 2004
 until 2.0 release:
@@ -1903,3 +1903,11 @@ lib/libc/gen/endutxent.3			1.4
 
 	Thats "endutxent", not "entutxent".
 	[atatat, ticket #260]
+
+sbin/mount_nfs/mount_nfs.8			1.25
+
+	Add nfsstat(1) reference in SEE ALSO.
+	Correct spelling of "Kerberos." Add RFC references.
+	Reword some awkward english.  Sprinkle mandoc macros throughout.
+	Add white space to aid readability. Change date.
+	[fair, ticket #264]
