@@ -1,4 +1,4 @@
-/*	$NetBSD: ofnet.c,v 1.29 2002/10/02 16:34:34 thorpej Exp $	*/
+/*	$NetBSD: ofnet.c,v 1.30 2002/10/22 06:28:50 chs Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ofnet.c,v 1.29 2002/10/02 16:34:34 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ofnet.c,v 1.30 2002/10/22 06:28:50 chs Exp $");
 
 #include "ofnet.h"
 #include "opt_inet.h"
@@ -181,12 +181,9 @@ ofnet_read(struct ofnet_softc *of)
 	ipkdbrint(kifp, ifp);
 #endif	
 	for (;;) {
-		if ((len = OF_read(of->sc_ihandle, buf, sizeof buf)) < 0) {
-			if (len == -2 || len == 0)
-				break;
-			ifp->if_ierrors++;
-			continue;
-		}
+		len = OF_read(of->sc_ihandle, buf, sizeof buf);
+		if (len == -2 || len == 0)
+			break;
 		if (len < sizeof(struct ether_header)) {
 			ifp->if_ierrors++;
 			continue;
