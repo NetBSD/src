@@ -1,4 +1,4 @@
-/*	$NetBSD: bus_dma.c,v 1.19 2004/08/17 08:35:43 scw Exp $	*/
+/*	$NetBSD: bus_dma.c,v 1.20 2004/11/28 17:34:46 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bus_dma.c,v 1.19 2004/08/17 08:35:43 scw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bus_dma.c,v 1.20 2004/11/28 17:34:46 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -315,6 +315,8 @@ _bus_dmamap_load_mbuf(t, map, m0, flags)
 	seg = 0;
 	error = 0;
 	for (m = m0; m != NULL && error == 0; m = m->m_next, first = 0) {
+		if (m->m_len == 0)
+			continue;
 #ifdef POOL_VTOPHYS
 		/* XXX Could be better about coalescing. */
 		/* XXX Doesn't check boundaries. */
