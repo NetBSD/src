@@ -1,4 +1,4 @@
-/*	$NetBSD: auxiovar.h,v 1.2 2000/04/08 03:07:07 mrg Exp $	*/
+/*	$NetBSD: auxiovar.h,v 1.3 2000/04/13 09:53:49 mrg Exp $	*/
 
 /*
  * Copyright (c) 2000 Matthew R. Green
@@ -28,15 +28,20 @@
  * SUCH DAMAGE.
  */
 
+struct auxio_phys {
+	u_int32_t hi;
+	u_int32_t lo;
+};
+
 struct auxio_registers {
-	void	*auxio_fd;
-	void	*auxio_audio;
-	void	*auxio_power;
-	void	*auxio_led;
-	void	*auxio_pci;
-	void	*auxio_freq;
-	void	*auxio_scsi;
-	void	*auxio_temp;
+	struct auxio_phys	auxio_fd;
+	struct auxio_phys	auxio_audio;
+	struct auxio_phys	auxio_power;
+	struct auxio_phys	auxio_led;
+	struct auxio_phys	auxio_pci;
+	struct auxio_phys	auxio_freq;
+	struct auxio_phys	auxio_scsi;
+	struct auxio_phys	auxio_temp;
 };
 
 extern struct auxio_registers auxio_registers;
