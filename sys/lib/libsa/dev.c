@@ -1,3 +1,5 @@
+/*	$NetBSD: dev.c,v 1.3 1994/10/26 05:44:41 cgd Exp $	*/
+
 /*-
  * Copyright (c) 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -30,8 +32,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	from: @(#)dev.c	8.1 (Berkeley) 6/11/93
- *	      $Id: dev.c,v 1.2 1994/08/22 21:56:01 brezak Exp $
+ *	@(#)dev.c	8.1 (Berkeley) 6/11/93
  */
 
 #include <sys/param.h>

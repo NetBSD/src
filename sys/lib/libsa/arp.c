@@ -1,3 +1,5 @@
+/*	$NetBSD: arp.c,v 1.3 1994/10/26 05:44:36 cgd Exp $	*/
+
 /*
  * Copyright (c) 1992 Regents of the University of California.
  * All rights reserved.
@@ -34,8 +36,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * from @(#) Header: arp.c,v 1.5 93/07/15 05:52:26 leres Exp  (LBL)
- *     $Id: arp.c,v 1.2 1994/08/04 19:39:34 brezak Exp $
+ * @(#) Header: arp.c,v 1.5 93/07/15 05:52:26 leres Exp  (LBL)
  */
 
 #include <sys/types.h>

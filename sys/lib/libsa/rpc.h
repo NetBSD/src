@@ -1,3 +1,5 @@
+/*	$NetBSD: rpc.h,v 1.2 1994/10/26 05:45:03 cgd Exp $	*/
+
 /*
  * Copyright (c) 1992 Regents of the University of California.
  * All rights reserved.
@@ -33,8 +35,6 @@
  * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
- *
- *   $Id: rpc.h,v 1.1 1994/05/08 16:11:36 brezak Exp $
  */
 
 /* XXX defines we can't easily get from system includes */
