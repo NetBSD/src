@@ -1,4 +1,4 @@
-.\"	$NetBSD: install,v 1.19 1999/05/04 03:39:32 simonb Exp $	
+.\"	$NetBSD: install,v 1.20 1999/06/25 02:37:22 simonb Exp $	
 .\"
 .\" Copyright (c) 1999 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -232,10 +232,10 @@ if you do not already have it.
 On MS-DOS, use an unzip utlility, then use rawrite.
 .Pp
 Then boot using:
-.D1 >> Ic "boot -f rz(0,X,0)install
-.D1 >> Ic "boot 5/rzX/install
+.D1 >> Ic "boot -f rz(0,X,0)netbsd
+.D1 >> Ic "boot 5/rzX/netbsd
 or
-.D1 >> Ic "boot 3/rzX/install
+.D1 >> Ic "boot 3/rzX/netbsd
 where X is your boot disk SCSI ID, and continue to the
 .Sx Once you've booted the diskimage
 section.
