@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.prog.mk,v 1.184 2003/09/12 07:44:11 lukem Exp $
+#	$NetBSD: bsd.prog.mk,v 1.185 2003/09/13 02:52:05 erh Exp $
 #	@(#)bsd.prog.mk	8.2 (Berkeley) 4/2/94
 
 .ifndef HOSTPROG
@@ -7,10 +7,20 @@
 .include <bsd.shlib.mk>
 .include <bsd.gcc.mk>
 
+.if defined(PROG_CXX)
+PROG=	${PROG_CXX}
+.endif
+
 ##### Basic targets
 .PHONY:		cleanextra cleanobjs cleanprog proginstall scriptsinstall
 realinstall:	proginstall scriptsinstall
 clean:		cleanprog
+
+##### PROG specific flags.
+COPTS+=    ${COPTS.${PROG}}
+CPPFLAGS+=  ${CPPFLAGS.${PROG}}
+CXXFLAGS+=  ${CXXFLAGS.${PROG}}
+LDADD+=     ${LDADD.${PROG}}
 
 ##### Default values
 CPPFLAGS+=	${DESTDIR:D-nostdinc ${CPPFLAG_ISYSTEM} ${DESTDIR}/usr/include}
@@ -95,10 +105,6 @@ CLEANFILES+=strings
 	@mv -f x.c x.cc
 	@${CXX} ${CXXFLAGS} -c x.cc -o ${.TARGET}
 	@rm -f x.cc
-.endif
-
-.if defined(PROG_CXX)
-PROG=	${PROG_CXX}
 .endif
 
 .if defined(PROG)
