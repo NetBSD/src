@@ -1,4 +1,4 @@
-/*	$NetBSD: conf.c,v 1.1 2002/02/16 03:37:40 thorpej Exp $	*/
+/*	$NetBSD: conf.c,v 1.2 2003/03/12 17:33:55 drochner Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -80,10 +80,3 @@ struct devsw devsw[] = {
 	{ "net", net_strategy, net_open, net_close, net_ioctl },
 };
 int ndevs = sizeof(devsw) / sizeof(devsw[0]);
-
-extern struct netif_driver pxe_netif_driver;
-
-struct netif_driver *netif_drivers[] = {
-	&pxe_netif_driver,
-};
-int n_netif_drivers = sizeof(netif_drivers) / sizeof(netif_drivers[0]);
