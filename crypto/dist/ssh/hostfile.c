@@ -1,3 +1,4 @@
+/*	$NetBSD: hostfile.c,v 1.1.1.1.2.3 2001/12/10 23:53:02 he Exp $	*/
 /*
  * Author: Tatu Ylonen <ylo@cs.hut.fi>
  * Copyright (c) 1995 Tatu Ylonen <ylo@cs.hut.fi>, Espoo, Finland
@@ -11,7 +12,7 @@
  * called by a name other than "ssh" or "Secure Shell".
  *
  *
- * Copyright (c) 1999,2000 Markus Friedl.  All rights reserved.
+ * Copyright (c) 1999, 2000 Markus Friedl.  All rights reserved.
  * Copyright (c) 1999 Niels Provos.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -36,7 +37,7 @@
  */
 
 #include "includes.h"
-RCSID("$OpenBSD: hostfile.c,v 1.24 2001/01/21 19:05:49 markus Exp $");
+RCSID("$OpenBSD: hostfile.c,v 1.28 2001/06/25 08:25:37 markus Exp $");
 
 #include "packet.h"
 #include "match.h"
@@ -111,19 +112,17 @@ check_host_in_hostfile(const char *filename, const char *host, Key *key,
 	FILE *f;
 	char line[8192];
 	int linenum = 0;
-	u_int kbits, hostlen;
+	u_int kbits;
 	char *cp, *cp2;
 	HostStatus end_return;
 
+	debug3("check_host_in_hostfile: filename %s", filename);
 	if (key == NULL)
 		fatal("no key to look up");
 	/* Open the file containing the list of known hosts. */
 	f = fopen(filename, "r");
 	if (!f)
 		return HOST_NEW;
-
-	/* Cache the length of the host name. */
-	hostlen = strlen(host);
 
 	/*
 	 * Return value when the loop terminates.  This is set to
@@ -132,7 +131,7 @@ check_host_in_hostfile(const char *filename, const char *host, Key *key,
 	 */
 	end_return = HOST_NEW;
 
-	/* Go trough the file. */
+	/* Go through the file. */
 	while (fgets(line, sizeof(line), f)) {
 		cp = line;
 		linenum++;
@@ -169,6 +168,7 @@ check_host_in_hostfile(const char *filename, const char *host, Key *key,
 		/* Check if the current key is the same as the given key. */
 		if (key_equal(key, found)) {
 			/* Ok, they match. */
+			debug3("check_host_in_hostfile: match line %d", linenum);
 			fclose(f);
 			return HOST_OK;
 		}
