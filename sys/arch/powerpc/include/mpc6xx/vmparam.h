@@ -150,7 +150,7 @@
  * Well, USER_SR should die too.  Say 0xbffff000.
  */
 #define	VM_MIN_ADDRESS		((vaddr_t) 0)
-#define	VM_MAXUSER_ADDRESS	((vaddr_t) 0x7ffff000)
+#define	VM_MAXUSER_ADDRESS	((vaddr_t) 0xfffff000)
 #define	VM_MAX_ADDRESS		VM_MAXUSER_ADDRESS
 #define	VM_MIN_KERNEL_ADDRESS	((vaddr_t) (KERNEL_SR << ADDR_SR_SHFT))
 #ifndef OLDPMAP
