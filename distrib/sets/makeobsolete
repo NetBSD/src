@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# $NetBSD: makeobsolete,v 1.3 2000/08/03 10:41:02 ad Exp $
+# $NetBSD: makeobsolete,v 1.4 2000/10/01 22:49:05 thorpej Exp $
 #
 # Print out the obsolete files for a set
 # Usage: makeobsolete [-b] [-x] [-a arch] [-m machine] [-s setsdir] \
@@ -13,7 +13,7 @@ machine=${MACHINE:-`printf 'xxx:\n\techo ${MACHINE}' | $MAKE -s -f-`}
 arch=${MACHINE_ARCH:-`printf 'xxx:\n\techo ${MACHINE_ARCH}' | $MAKE -s -f-`}
 setd=`pwd`
 nlists="base comp etc games man misc secr text"
-xlists="xbase xcomp xcontrib xfont xserver"
+xlists="xbase xcomp xcontrib xfont xserver xmisc"
 lists=$nlists
 target=./dist
 
