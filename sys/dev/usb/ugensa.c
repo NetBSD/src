@@ -1,4 +1,4 @@
-/*	$NetBSD: ugensa.c,v 1.1 2005/01/23 01:25:04 elric Exp $	*/
+/*	$NetBSD: ugensa.c,v 1.2 2005/01/23 01:25:57 elric Exp $	*/
 
 /*
  * Copyright (c) 2004, 2005 The NetBSD Foundation, Inc.
@@ -150,7 +150,7 @@ USB_ATTACH(ugensa)
 	sc->sc_udev = dev;
 	sc->sc_iface = iface;
 
-	uca.info = "Unknown Serial Device";
+	uca.info = "Generic Serial Device";
 	uca.ibufsize = UGENSA_BUFSIZE;
 	uca.obufsize = UGENSA_BUFSIZE;
 	uca.ibufsizepad = UGENSA_BUFSIZE;
