@@ -1,4 +1,4 @@
-.\"	$NetBSD: hosts_access.3,v 1.5 2002/01/15 02:54:31 wiz Exp $
+.\"	$NetBSD: hosts_access.3,v 1.6 2002/06/22 11:52:40 itojun Exp $
 .\"
 .TH HOSTS_ACCESS 3
 .SH NAME
@@ -81,9 +81,6 @@ hosts_access(5), format of the access control tables.
 hosts_options(5), optional extensions to the base language.
 .SH FILES
 /etc/hosts.allow, /etc/hosts.deny, access control tables.
-.SH BUGS
-hosts_access() uses the strtok() library function. This may interfere
-with other code that relies on strtok().
 .SH AUTHOR
 .na
 .nf
