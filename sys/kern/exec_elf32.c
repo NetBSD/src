@@ -1,4 +1,4 @@
-/*	$NetBSD: exec_elf32.c,v 1.58 2000/11/21 00:37:56 jdolecek Exp $	*/
+/*	$NetBSD: exec_elf32.c,v 1.59 2000/11/28 13:10:41 mrg Exp $	*/
 
 /*-
  * Copyright (c) 1994 The NetBSD Foundation, Inc.
@@ -93,7 +93,7 @@ int	ELFNAME(load_file)(struct proc *, struct exec_package *, char *,
 void	ELFNAME(load_psection)(struct exec_vmcmd_set *, struct vnode *,
 	    const Elf_Phdr *, Elf_Addr *, u_long *, int *, int);
 
-static int ELFNAME2(netbsd,signature)(struct proc *, struct exec_package *,
+int ELFNAME2(netbsd,signature)(struct proc *, struct exec_package *,
     Elf_Ehdr *);
 int ELFNAME2(netbsd,probe)(struct proc *, struct exec_package *,
     void *, char *, vaddr_t *);
@@ -641,7 +641,7 @@ bad:
 	return ENOEXEC;
 }
 
-static int
+int
 ELFNAME2(netbsd,signature)(struct proc *p, struct exec_package *epp,
     Elf_Ehdr *eh)
 {
