@@ -1,4 +1,4 @@
-/*	$NetBSD: vrpiu.c,v 1.29 2003/07/15 02:29:36 lukem Exp $	*/
+/*	$NetBSD: vrpiu.c,v 1.30 2003/10/23 20:25:40 he Exp $	*/
 
 /*
  * Copyright (c) 1999-2003 TAKEMURA Shin All rights reserved.
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vrpiu.c,v 1.29 2003/07/15 02:29:36 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vrpiu.c,v 1.30 2003/10/23 20:25:40 he Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -208,7 +208,7 @@ vrpiu_init(struct vrpiu_softc *sc, void *aux)
 	bus_space_tag_t iot = va->va_iot;
 	struct platid_data *p;
 
-	if (va->va_parent_ioh != NULL)
+	if (va->va_parent_ioh != 0)
 		res = bus_space_subregion(iot, va->va_parent_ioh, va->va_addr,
 		    va->va_size, &sc->sc_ioh);
 	else
@@ -218,7 +218,7 @@ vrpiu_init(struct vrpiu_softc *sc, void *aux)
 		printf(": can't map bus space\n");
 		return;
 	}
-	if (va->va_parent_ioh != NULL)
+	if (va->va_parent_ioh != 0)
 		res = bus_space_subregion(iot, va->va_parent_ioh, va->va_addr2,
 		    va->va_size2, &sc->sc_buf_ioh);
 	else

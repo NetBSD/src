@@ -1,4 +1,4 @@
-/*	$NetBSD: vrc4172gpio.c,v 1.7 2003/09/26 15:29:22 simonb Exp $	*/
+/*	$NetBSD: vrc4172gpio.c,v 1.8 2003/10/23 20:25:40 he Exp $	*/
 /*-
  * Copyright (c) 2001 TAKEMRUA Shin. All rights reserved.
  *
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vrc4172gpio.c,v 1.7 2003/09/26 15:29:22 simonb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vrc4172gpio.c,v 1.8 2003/10/23 20:25:40 he Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -208,7 +208,7 @@ vrc4172gpio_attach(struct device *parent, struct device *self, void *aux)
 	sc->sc_args = *args; /* structure copy */
 	bus_space_map(sc->sc_iot, loc[HPCIOIFCF_ADDR], loc[HPCIOIFCF_SIZE],
 		      0 /* no cache */, &sc->sc_ioh);
-	if (sc->sc_ioh == NULL) {
+	if (sc->sc_ioh == 0) {
 		printf("%s: can't map bus space\n", sc->sc_dev.dv_xname);
 		return;
 	}

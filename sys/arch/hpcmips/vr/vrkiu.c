@@ -1,4 +1,4 @@
-/*	$NetBSD: vrkiu.c,v 1.34 2003/07/15 02:29:36 lukem Exp $	*/
+/*	$NetBSD: vrkiu.c,v 1.35 2003/10/23 20:25:40 he Exp $	*/
 
 /*-
  * Copyright (c) 1999 SASAKI Takesi All rights reserved.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vrkiu.c,v 1.34 2003/07/15 02:29:36 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vrkiu.c,v 1.35 2003/10/23 20:25:40 he Exp $");
 
 #include <sys/param.h>
 #include <sys/tty.h>
@@ -144,7 +144,7 @@ vrkiuattach(struct device *parent, struct device *self, void *aux)
 	bus_space_tag_t iot = va->va_iot;
 	bus_space_handle_t ioh;
 
-	if (va->va_parent_ioh != NULL)
+	if (va->va_parent_ioh != 0)
 		res = bus_space_subregion(iot, va->va_parent_ioh, va->va_addr,
 		    va->va_size, &ioh);
 	else
