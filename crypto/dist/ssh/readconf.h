@@ -1,4 +1,4 @@
-/*	$NetBSD: readconf.h,v 1.4 2001/04/10 08:07:59 itojun Exp $	*/
+/*	$NetBSD: readconf.h,v 1.5 2001/05/15 15:26:08 itojun Exp $	*/
 /*
  * Author: Tatu Ylonen <ylo@cs.hut.fi>
  * Copyright (c) 1995 Tatu Ylonen <ylo@cs.hut.fi>, Espoo, Finland
@@ -12,7 +12,7 @@
  * called by a name other than "ssh" or "Secure Shell".
  */
 
-/* RCSID("$OpenBSD: readconf.h,v 1.28 2001/03/10 17:51:04 markus Exp $"); */
+/* RCSID("$OpenBSD: readconf.h,v 1.31 2001/04/30 11:18:52 markus Exp $"); */
 
 #ifndef READCONF_H
 #define READCONF_H
@@ -39,6 +39,7 @@ typedef struct {
 						 * authentication. */
 	int     rsa_authentication;	/* Try RSA authentication. */
 	int     pubkey_authentication;	/* Try ssh2 pubkey authentication. */
+	int     hostbased_authentication;	/* ssh2's rhosts_rsa */
 	int     challenge_reponse_authentication;
 					/* Try S/Key or TIS, authentication. */
 #if defined(KRB4) || defined(KRB5)
@@ -75,6 +76,7 @@ typedef struct {
 	int     cipher;		/* Cipher to use. */
 	char   *ciphers;	/* SSH2 ciphers in order of preference. */
 	char   *macs;		/* SSH2 macs in order of preference. */
+	char   *hostkeyalgorithms;	/* SSH2 server key types in order of preference. */
 	int	protocol;	/* Protocol in order of preference. */
 	char   *hostname;	/* Real host to connect. */
 	char   *host_key_alias;	/* hostname alias for .ssh/known_hosts */
@@ -87,6 +89,7 @@ typedef struct {
 	char   *system_hostfile2;
 	char   *user_hostfile2;
 	char   *preferred_authentications;
+	char   *bind_address;	/* local socket address for connection to sshd */
 
 	int     num_identity_files;	/* Number of files for RSA/DSA identities. */
 	char   *identity_files[SSH_MAX_IDENTITY_FILES];

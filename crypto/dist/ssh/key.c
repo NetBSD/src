@@ -1,4 +1,4 @@
-/*	$NetBSD: key.c,v 1.5 2001/05/15 14:50:51 itojun Exp $	*/
+/*	$NetBSD: key.c,v 1.6 2001/05/15 15:26:08 itojun Exp $	*/
 /*
  * read_bignum():
  * Copyright (c) 1995 Tatu Ylonen <ylo@cs.hut.fi>, Espoo, Finland
@@ -33,7 +33,7 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 #include "includes.h"
-RCSID("$OpenBSD: key.c,v 1.23 2001/04/05 10:42:50 markus Exp $");
+RCSID("$OpenBSD: key.c,v 1.25 2001/04/17 10:53:24 markus Exp $");
 
 #include <openssl/evp.h>
 
@@ -226,7 +226,7 @@ key_fingerprint_hex(u_char* dgst_raw, size_t dgst_raw_len)
 	char *retval;
 	int i;
 
-	retval = xmalloc(dgst_raw_len * 3);
+	retval = xmalloc(dgst_raw_len * 3 + 1);
 	retval[0] = '\0';
 	for(i = 0; i < dgst_raw_len; i++) {
 		char hex[4];
@@ -637,6 +637,28 @@ key_type_from_name(char *name)
 	}
 	debug2("key_type_from_name: unknown key type '%s'", name);
 	return KEY_UNSPEC;
+}
+
+int
+key_names_valid2(const char *names)
+{
+	char *s, *cp, *p;
+
+	if (names == NULL || strcmp(names, "") == 0)
+		return 0;
+	s = cp = xstrdup(names);
+	for ((p = strsep(&cp, ",")); p && *p != '\0';
+	     (p = strsep(&cp, ","))) {
+		switch (key_type_from_name(p)) {
+		case KEY_RSA1:
+		case KEY_UNSPEC:
+			xfree(s);
+			return 0;
+		}
+	}
+	debug3("key names ok: [%s]", names);
+	xfree(s);
+	return 1;
 }
 
 Key *

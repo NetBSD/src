@@ -1,4 +1,4 @@
-/*	$NetBSD: ssh.c,v 1.12 2001/05/15 14:50:54 itojun Exp $	*/
+/*	$NetBSD: ssh.c,v 1.13 2001/05/15 15:26:10 itojun Exp $	*/
 /*
  * Author: Tatu Ylonen <ylo@cs.hut.fi>
  * Copyright (c) 1995 Tatu Ylonen <ylo@cs.hut.fi>, Espoo, Finland
@@ -40,7 +40,7 @@
  */
 
 #include "includes.h"
-RCSID("$OpenBSD: ssh.c,v 1.108 2001/04/07 08:55:18 markus Exp $");
+RCSID("$OpenBSD: ssh.c,v 1.118 2001/05/04 23:47:34 markus Exp $");
 
 #include <openssl/evp.h>
 #include <openssl/err.h>
@@ -68,6 +68,7 @@ RCSID("$OpenBSD: ssh.c,v 1.108 2001/04/07 08:55:18 markus Exp $");
 #include "misc.h"
 #include "kex.h"
 #include "mac.h"
+#include "sshtty.h"
 
 extern char *__progname;
 
@@ -123,8 +124,11 @@ struct sockaddr_storage hostaddr;
  */
 volatile int received_window_change_signal = 0;
 
-/* Host private key. */
-Key *host_private_key = NULL;
+/* Private host keys. */
+struct {
+	Key     **keys;
+	int	nkeys;
+} sensitive_data;
 
 /* Original real UID. */
 uid_t original_real_uid;
@@ -181,9 +185,6 @@ usage(void)
 	fprintf(stderr, "  -R listen-port:host:port   Forward remote port to local address\n");
 	fprintf(stderr, "              These cause %s to listen for connections on a port, and\n", __progname);
 	fprintf(stderr, "              forward them to the other side by connecting to host:port.\n");
-	fprintf(stderr, "  -D port     Dynamically forward local port to multiple remote addresses.\n");
-	fprintf(stderr, "              Allows SSH to act as an application-layer proxy.\n");
-	fprintf(stderr, "              Protocols Supported: SOCKS4\n");
 	fprintf(stderr, "  -C          Enable compression.\n");
 	fprintf(stderr, "  -N          Do not execute a shell or command.\n");
 	fprintf(stderr, "  -g          Allow remote hosts to connect to forwarded ports.\n");
@@ -193,6 +194,7 @@ usage(void)
 	fprintf(stderr, "  -6          Use IPv6 only.\n");
 	fprintf(stderr, "  -o 'option' Process the option as if it was read from a configuration file.\n");
 	fprintf(stderr, "  -s          Invoke command (mandatory) as SSH2 subsystem.\n");
+	fprintf(stderr, "  -b          Local IP address.\n");
 	exit(1);
 }
 
@@ -315,7 +317,7 @@ main(int ac, char **av)
 		opt = av[optind][1];
 		if (!opt)
 			usage();
-		if (strchr("eilcmpLRDo", opt)) {   /* options with arguments */
+		if (strchr("eilcmpbLRDo", opt)) {   /* options with arguments */
 			optarg = av[optind] + 2;
 			if (strcmp(optarg, "") == 0) {
 				if (optind >= ac - 1)
@@ -454,7 +456,11 @@ main(int ac, char **av)
 			}
 			break;
 		case 'p':
-			options.port = atoi(optarg);
+			options.port = a2port(optarg);
+			if (options.port == 0) {
+				fprintf(stderr, "Bad port '%s'\n", optarg);
+				exit(1);
+			}
 			break;
 		case 'l':
 			options.user = optarg;
@@ -483,7 +489,11 @@ main(int ac, char **av)
 			break;
 
 		case 'D':
-			fwd_port = atoi(optarg);
+			fwd_port = a2port(optarg);
+			if (fwd_port == 0) {
+				fprintf(stderr, "Bad dynamic port '%s'\n", optarg);
+				exit(1);
+			}
 			add_local_forward(&options, fwd_port, "socks4", 0);
 			break;
 
@@ -505,6 +515,9 @@ main(int ac, char **av)
 			break;
 		case 's':
 			subsystem_flag = 1;
+			break;
+		case 'b':
+			options.bind_address = optarg;
 			break;
 		default:
 			usage();
@@ -530,7 +543,7 @@ main(int ac, char **av)
 		/* No command specified - execute shell on a tty. */
 		tty_flag = 1;
 		if (subsystem_flag) {
-			fprintf(stderr, "You must specify a subsystem to invoke.");
+			fprintf(stderr, "You must specify a subsystem to invoke.\n");
 			usage();
 		}
 	} else {
@@ -565,7 +578,7 @@ main(int ac, char **av)
 	 * Initialize "log" output.  Since we are the client all output
 	 * actually goes to stderr.
 	 */
-	log_init(av[0], debug_flag ? options.log_level : SYSLOG_LEVEL_INFO,
+	log_init(av[0], options.log_level == -1 ? SYSLOG_LEVEL_INFO : options.log_level,
 	    SYSLOG_FACILITY_USER, 1);
 
 	/* Read per-user configuration file. */
@@ -627,9 +640,18 @@ main(int ac, char **av)
 	 * authentication. This must be done before releasing extra
 	 * privileges, because the file is only readable by root.
 	 */
-	if (ok && (options.protocol & SSH_PROTO_1)) {
-		host_private_key = key_load_private_type(KEY_RSA1,
+	sensitive_data.nkeys = 0;
+	sensitive_data.keys = NULL;
+	if (ok && (options.rhosts_rsa_authentication ||
+	    options.hostbased_authentication)) {
+		sensitive_data.nkeys = 3;
+		sensitive_data.keys = xmalloc(sensitive_data.nkeys*sizeof(Key));
+		sensitive_data.keys[0] = key_load_private_type(KEY_RSA1,
 		    _PATH_HOST_KEY_FILE, "", NULL);
+		sensitive_data.keys[1] = key_load_private_type(KEY_DSA,
+		    _PATH_HOST_DSA_KEY_FILE, "", NULL);
+		sensitive_data.keys[2] = key_load_private_type(KEY_RSA,
+		    _PATH_HOST_RSA_KEY_FILE, "", NULL);
 	}
 	/*
 	 * Get rid of any extra privileges that we may have.  We will no
@@ -688,11 +710,21 @@ main(int ac, char **av)
 	    tilde_expand_filename(options.user_hostfile2, original_real_uid);
 
 	/* Log into the remote system.  This never returns if the login fails. */
-	ssh_login(host_private_key, host, (struct sockaddr *)&hostaddr, pw);
+	ssh_login(sensitive_data.keys, sensitive_data.nkeys,
+	    host, (struct sockaddr *)&hostaddr, pw);
 
-	/* We no longer need the host private key.  Clear it now. */
-	if (host_private_key != NULL)
-		key_free(host_private_key);	/* Destroys contents safely */
+	/* We no longer need the private host keys.  Clear them now. */
+	if (sensitive_data.nkeys != 0) {
+		for (i = 0; i < sensitive_data.nkeys; i++) {
+			if (sensitive_data.keys[i] != NULL) {
+				/* Destroys contents safely */
+				debug3("clear hostkey %d", i);
+				key_free(sensitive_data.keys[i]);
+				sensitive_data.keys[i] = NULL;
+			}
+		}
+		xfree(sensitive_data.keys);
+	}
 
 	exit_status = compat20 ? ssh_session2() : ssh_session();
 	packet_close();
@@ -838,7 +870,7 @@ ssh_session(void)
 		packet_put_int(ws.ws_ypixel);
 
 		/* Store tty modes in the packet. */
-		tty_make_modes(fileno(stdin));
+		tty_make_modes(fileno(stdin), NULL);
 
 		/* Send the packet, and wait for it to leave. */
 		packet_send();
@@ -942,6 +974,7 @@ ssh_session2_callback(int id, void *arg)
 {
 	int len;
 	int interactive = 0;
+	struct termios tio;
 
 	debug("client_init id %d arg %ld", id, (long)arg);
 
@@ -961,7 +994,8 @@ ssh_session2_callback(int id, void *arg)
 		packet_put_int(ws.ws_row);
 		packet_put_int(ws.ws_xpixel);
 		packet_put_int(ws.ws_ypixel);
-		packet_put_cstring("");		/* XXX: encode terminal modes */
+		tio = get_saved_tio();
+		tty_make_modes(/*ignored*/ 0, &tio);
 		packet_send();
 		interactive = 1;
 		/* XXX wait for reply */
@@ -1014,8 +1048,8 @@ ssh_session2_callback(int id, void *arg)
 int
 ssh_session2_command(void)
 {
-	int id, window, packetmax;
-	int in, out, err;
+	Channel *c;
+	int window, packetmax, in, out, err;
 
 	if (stdin_null_flag) {
 		in = open(_PATH_DEVNULL, O_RDONLY);
@@ -1042,18 +1076,20 @@ ssh_session2_command(void)
 		window *= 2;
 		packetmax *=2;
 	}
-	id = channel_new(
+	c = channel_new(
 	    "session", SSH_CHANNEL_OPENING, in, out, err,
 	    window, packetmax, CHAN_EXTENDED_WRITE,
 	    xstrdup("client-session"), /*nonblock*/0);
+	if (c == NULL)
+		fatal("ssh_session2_command: channel_new failed");
 
-debug("channel_new: %d", id);
+	debug3("ssh_session2_command: channel_new: %d", c->self);
 
-	channel_open(id);
-	channel_register_callback(id, SSH2_MSG_CHANNEL_OPEN_CONFIRMATION,
+	channel_open(c->self);
+	channel_register_callback(c->self, SSH2_MSG_CHANNEL_OPEN_CONFIRMATION,
 	     ssh_session2_callback, (void *)0);
 
-	return id;
+	return c->self;
 }
 
 int

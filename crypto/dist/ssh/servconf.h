@@ -1,4 +1,4 @@
-/*	$NetBSD: servconf.h,v 1.7 2001/04/10 08:08:00 itojun Exp $	*/
+/*	$NetBSD: servconf.h,v 1.8 2001/05/15 15:26:09 itojun Exp $	*/
 /*
  * Author: Tatu Ylonen <ylo@cs.hut.fi>
  * Copyright (c) 1995 Tatu Ylonen <ylo@cs.hut.fi>, Espoo, Finland
@@ -12,7 +12,7 @@
  * called by a name other than "ssh" or "Secure Shell".
  */
 
-/* RCSID("$OpenBSD: servconf.h,v 1.39 2001/03/25 13:16:10 stevesk Exp $"); */
+/* RCSID("$OpenBSD: servconf.h,v 1.41 2001/04/13 22:46:53 beck Exp $"); */
 
 #ifndef SERVCONF_H
 #define SERVCONF_H
@@ -73,6 +73,8 @@ typedef struct {
 					 * authentication. */
 	int     rhosts_rsa_authentication;	/* If true, permit rhosts RSA
 						 * authentication. */
+	int     hostbased_authentication;	/* If true, permit ssh2 hostbased auth */
+	int     hostbased_uses_name_from_packet_only; /* experimental */
 	int     rsa_authentication;	/* If true, permit RSA authentication. */
 	int     pubkey_authentication;	/* If true, permit ssh2 pubkey authentication. */
 #if defined(KRB4) || defined(KRB5)
@@ -123,6 +125,15 @@ typedef struct {
 	int	max_startups;
 	char   *banner;			/* SSH-2 banner message */
 	int	reverse_mapping_check;	/* cross-check ip and dns */
+	int	client_alive_interval;	/*
+					 * poke the client this often to 
+					 * see if it's still there 
+					 */
+	int	client_alive_count_max;	/*
+					 *If the client is unresponsive
+					 * for this many intervals, above
+					 * diconnect the session 
+					 */
 
 }       ServerOptions;
 /*

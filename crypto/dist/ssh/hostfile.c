@@ -1,4 +1,4 @@
-/*	$NetBSD: hostfile.c,v 1.4 2001/05/15 14:50:51 itojun Exp $	*/
+/*	$NetBSD: hostfile.c,v 1.5 2001/05/15 15:26:08 itojun Exp $	*/
 /*
  * Author: Tatu Ylonen <ylo@cs.hut.fi>
  * Copyright (c) 1995 Tatu Ylonen <ylo@cs.hut.fi>, Espoo, Finland
@@ -37,7 +37,7 @@
  */
 
 #include "includes.h"
-RCSID("$OpenBSD: hostfile.c,v 1.25 2001/04/06 22:12:47 stevesk Exp $");
+RCSID("$OpenBSD: hostfile.c,v 1.26 2001/04/12 19:15:24 markus Exp $");
 
 #include "packet.h"
 #include "match.h"
@@ -120,6 +120,7 @@ check_host_in_hostfile(const char *filename, const char *host, Key *key,
 	char *cp, *cp2;
 	HostStatus end_return;
 
+	debug3("check_host_in_hostfile: filename %s", filename);
 	if (key == NULL)
 		fatal("no key to look up");
 	/* Open the file containing the list of known hosts. */
@@ -171,6 +172,7 @@ check_host_in_hostfile(const char *filename, const char *host, Key *key,
 		/* Check if the current key is the same as the given key. */
 		if (key_equal(key, found)) {
 			/* Ok, they match. */
+			debug3("check_host_in_hostfile: match line %d", linenum);
 			fclose(f);
 			return HOST_OK;
 		}
