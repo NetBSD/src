@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_param.h,v 1.1 2000/06/26 14:59:04 mrg Exp $	*/
+/*	$NetBSD: uvm_param.h,v 1.2 2000/11/29 09:52:19 simonb Exp $	*/
 
 /* 
  * Copyright (c) 1991, 1993
@@ -106,9 +106,10 @@ typedef int	boolean_t;
  */
 #define	VM_METER	1		/* struct vmmeter */
 #define	VM_LOADAVG	2		/* struct loadavg */
-#define VM_UVMEXP	3		/* struct uvmexp */
+#define	VM_UVMEXP	3		/* struct uvmexp */
 #define	VM_NKMEMPAGES	4		/* kmem_map pages */
-#define	VM_MAXID	5		/* number of valid vm ids */
+#define	VM_UVMEXP2	5		/* struct uvmexp_sysctl */
+#define	VM_MAXID	6		/* number of valid vm ids */
 
 #define	CTL_VM_NAMES { \
 	{ 0, 0 }, \
@@ -116,6 +117,7 @@ typedef int	boolean_t;
 	{ "loadavg", CTLTYPE_STRUCT }, \
 	{ "uvmexp", CTLTYPE_STRUCT }, \
 	{ "nkmempages", CTLTYPE_INT }, \
+	{ "uvmexp2", CTLTYPE_STRUCT }, \
 }
 
 
