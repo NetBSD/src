@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.10 2003/01/24 11:51:42 augustss Exp $	*/
+/*	$NetBSD: machdep.c,v 1.11 2003/01/24 11:55:19 augustss Exp $	*/
 
 /*
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -150,20 +150,6 @@ void initppc(u_int, u_int, u_int, void *); /* Called from locore */
 void strayintr(int);
 
 void pmppc_setup(void);
-
-void print_intr_regs(void);
-void
-print_intr_regs(void)
-{
-	printf("CSR=%08x\n", in32(CPC_UIC_BASE + CPC_UIC_SR));
-	printf("CER=%08x\n", in32(CPC_UIC_BASE + CPC_UIC_ER));
-	printf("CCR=%08x\n", in32(CPC_UIC_BASE + CPC_UIC_CR));
-	printf("CPR=%08x\n", in32(CPC_UIC_BASE + CPC_UIC_PR));
-	printf("CTR=%08x\n", in32(CPC_UIC_BASE + CPC_UIC_TR));
-	printf("CMSR=%08x\n", in32(CPC_UIC_BASE + CPC_UIC_MSR));
-	printf("CVR=%08x\n", in32(CPC_UIC_BASE + CPC_UIC_VR));
-	printf("CVCR=%08x\n", in32(CPC_UIC_BASE + CPC_UIC_VCR));
-}
 
 void
 initppc(u_int startkernel, u_int endkernel, u_int args, void *btinfo)
