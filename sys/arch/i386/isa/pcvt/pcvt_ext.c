@@ -515,6 +515,7 @@ vga_chipset(void)
 				return VGA_CL_GD5428;
 
 			case 0x28:
+			case 0x2a:      /* GD5434 */
 				can_do_132col = 1;
 				return VGA_CL_GD5430;
 
