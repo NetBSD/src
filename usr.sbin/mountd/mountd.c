@@ -1,4 +1,4 @@
-/* 	$NetBSD: mountd.c,v 1.70.2.3 2000/06/27 21:35:32 thorpej Exp $	 */
+/* 	$NetBSD: mountd.c,v 1.70.2.4 2000/07/17 00:47:13 itojun Exp $	 */
 
 /*
  * Copyright (c) 1989, 1993
@@ -51,7 +51,7 @@ __COPYRIGHT("@(#) Copyright (c) 1989, 1993\n\
 #if 0
 static char     sccsid[] = "@(#)mountd.c  8.15 (Berkeley) 5/1/95";
 #else
-__RCSID("$NetBSD: mountd.c,v 1.70.2.3 2000/06/27 21:35:32 thorpej Exp $");
+__RCSID("$NetBSD: mountd.c,v 1.70.2.4 2000/07/17 00:47:13 itojun Exp $");
 #endif
 #endif				/* not lint */
 
@@ -410,7 +410,7 @@ main(argc, argv)
 
 	if (tcp6sock != -1 && tcp6conf != NULL) {
 		bindresvport(tcp6sock, NULL);
-		listen(tcpsock, SOMAXCONN);
+		listen(tcp6sock, SOMAXCONN);
 		tcp6transp = svc_vc_create(tcp6sock, 0, 0);
 		if (tcp6transp != NULL) {
 			if (!svc_reg(tcp6transp, RPCPROG_MNT, RPCMNT_VER1,
