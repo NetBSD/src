@@ -1,4 +1,4 @@
-#	$NetBSD: EV64260,v 1.4 2003/03/24 17:07:15 matt Exp $
+#	$NetBSD: EV64260,v 1.5 2003/04/08 19:35:24 matt Exp $
 #
 #	MVP -- Motorola's Multiprocessing Verification Platform
 #
@@ -21,14 +21,14 @@ options 	CLOCKBASE=133000000	# EVB64260A
 # Marvell options
 options 	GT_MPP_INTERRUPTS=0x2c600000
 options 	GT_MPP_WATCHDOG=0x03000000
-#options 	MPSC_CONSOLE=0
+options 	MPSC_CONSOLE=0
 options 	GT_MPSC_DEFAULT_BAUD_RATE=9600
 #options 	GT_BASE=0x14000000	# PMON low
 options 	GT_BASE=0xF8000000	# PPCBoot
 options 	GT_MPSC_FREQUENCY="(cpu_timebase*4)"
 options 	GT_MPSC_CLOCK_SOURCE="BRG_BCR_CLKS_TCLK"
 options 	PCI0_GPPINTS=0xffffff1b,PCI1_GPPINTS=0xffffff1d
-options 	PCI0_SKIPMASK="(~0xc0)",PCI1_SKIPMASK="(~0xc0)"
+options 	PCI0_SKIPMASK="(~0x180)",PCI1_SKIPMASK="(~0x180)"
 options 	OBIO0_STRIDE=0,OBIO1_STRIDE=2,OBIO2_STRIDE=2,OBIO3_STRIDE=2
 
 # Options for necessary to use MD
@@ -53,7 +53,7 @@ options 	SYSVSHM		# System V shared memory
 #options 	PIPE_SOCKETPAIR	# smaller, but slower pipe(2)
 
 # Diagnostic/debugging support options
-#options 	DIAGNOSTIC	# cheap kernel consistency checks
+options 	DIAGNOSTIC	# cheap kernel consistency checks
 #options 	DEBUG		# expensive debugging checks/support
 options 	DDB		# in-kernel debugger
 options 	DDB_HISTORY_SIZE=512	# enable history editing in DDB
