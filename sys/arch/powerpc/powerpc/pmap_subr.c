@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap_subr.c,v 1.1 2002/07/17 03:11:09 matt Exp $	*/
+/*	$NetBSD: pmap_subr.c,v 1.2 2002/07/18 22:51:58 matt Exp $	*/
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -35,6 +35,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
+#include "opt_altivec.h"
 #include <sys/param.h>
 #include <sys/malloc.h>
 #include <sys/proc.h>
@@ -44,12 +45,14 @@
 #include <uvm/uvm_extern.h>
 #ifdef PPC_MPC6XX
 #include <powerpc/mpc6xx/vmparam.h>
+#ifdef ALTIVEC
+#include <powerpc/altivec.h>
+#endif
 #endif
 #include <powerpc/psl.h>
 
-#define	ISYNC()		__asm __volatile("isync")
 #define	MFMSR()		mfmsr()
-#define	MTMSR(psl)	__asm __volatile("mtmsr %0" :: "r"(psl))
+#define	MTMSR(psl)	__asm __volatile("sync; mtmsr %0; isync" :: "r"(psl))
 
 static __inline u_int32_t
 mfmsr(void)
@@ -74,6 +77,11 @@ mfmsr(void)
  * addresses without having to map any pages via a BAT or into a page table.
  *
  * It's also safe to do regardless of IPL.
+ *
+ * However while relocation is off, we MUST not access the kernel stack in
+ * any manner since it will probably no longer be mapped.  This mean no
+ * calls while relocation is off.  The AltiVEC routines need to handle the
+ * MSR fiddling themselves so they save things on the stack.
  */
 
 /*
@@ -82,11 +90,12 @@ mfmsr(void)
 void
 pmap_zero_page(paddr_t pa)
 {
+	size_t linewidth;
 	u_int32_t msr;
 
-#ifdef PPC_MPC6XX
-	if (pa < SEGMENT_LENGTH) {
-		memset((caddr_t) pa, 0, NBPG);
+#ifdef ALTIVEC
+	if (pmap_use_altivec) {
+		vzeropage(pa);
 		return;
 	}
 #endif
@@ -94,20 +103,42 @@ pmap_zero_page(paddr_t pa)
 	/*
 	 * Turn off data relocation (DMMU off).
 	 */
-	msr = MFMSR();
-	MTMSR(msr & ~PSL_DR);
-	ISYNC();
+#ifdef PPC_MPC6XX
+	if (pa >= SEGMENT_LENGTH) {
+#endif
+		msr = MFMSR();
+		MTMSR(msr & ~PSL_DR);
+#ifdef PPC_MPC6XX
+	}
+#endif
 
 	/*
-	 * Zero the page
+	 * Zero the page.  Since DR is off, the address is assumed to
+	 * valid but we know that UVM will never pass a uncacheable page.
+	 * Don't use dcbz if we don't know the cache width.
 	 */
-	memset((caddr_t) pa, 0, NBPG);
+	if ((linewidth = curcpu()->ci_ci.dcache_line_size) == 0) {
+		long *dp = (long *)pa;
+		long * const ep = dp + NBPG/sizeof(dp[0]);
+		do {
+			dp[0] = 0; dp[1] = 0; dp[2] = 0; dp[3] = 0;
+			dp[4] = 0; dp[5] = 0; dp[6] = 0; dp[7] = 0;
+		} while ((dp += 8) < ep);
+	} else {
+		size_t i = 0;
+		do {
+			__asm ("dcbz %0,%1" :: "r"(pa), "r"(i)); i += linewidth;
+			__asm ("dcbz %0,%1" :: "r"(pa), "r"(i)); i += linewidth;
+		} while (i < NBPG);
+	}
 
 	/*
 	 * Restore data relocation (DMMU on).
 	 */
-	MTMSR(msr);
-	ISYNC();
+#ifdef PPC_MPC6XX
+	if (pa >= SEGMENT_LENGTH)
+#endif
+		MTMSR(msr);
 }
 
 /*
@@ -116,12 +147,22 @@ pmap_zero_page(paddr_t pa)
 void
 pmap_copy_page(paddr_t src, paddr_t dst)
 {
+	const long *sp;
+	long *dp;
+	size_t i;
 	u_int32_t msr;
 
-#ifdef PPC_MPC6xx
+#ifdef ALTIVEC
+	if (pmap_use_altivec) {
+		vcopypage(dst, src);
+		return;
+	}
+#endif
+
+#ifdef PPC_MPC6XX
 	if (src < SEGMENT_LENGTH && dst < SEGMENT_LENGTH) {
 		/*
-		 * Copy the page
+		 * Copy the page (memcpy is optimized, right? :)
 		 */
 		memcpy((void *) dst, (void *) src, NBPG);
 		return;
@@ -133,24 +174,30 @@ pmap_copy_page(paddr_t src, paddr_t dst)
 	 */
 	msr = MFMSR();
 	MTMSR(msr & ~PSL_DR);
-	ISYNC();
 
 	/*
-	 * Copy the page
+	 * Copy the page.  Don't use memcpy as we can't refer to the
+	 * kernel stack at this point.
 	 */
-	memcpy((void *) dst, (void *) src, NBPG);
+	sp = (long *) src;
+	dp = (long *) dst;
+	for (i = 0; i < NBPG/sizeof(dp[0]); i += 8, dp += 8, sp += 8) {
+		dp[0] = sp[0]; dp[1] = sp[1]; dp[2] = sp[2]; dp[3] = sp[3];
+		dp[4] = sp[4]; dp[5] = sp[5]; dp[6] = sp[6]; dp[7] = sp[7];
+	}
 
 	/*
 	 * Restore data relocation (DMMU on).
 	 */
 	MTMSR(msr);
-	ISYNC();
 }
 
 void
 pmap_syncicache(paddr_t pa, psize_t len)
 {
+	const size_t linewidth = curcpu()->ci_ci.icache_line_size;
 	u_int32_t msr;
+	size_t i;
 
 #ifdef PPC_MPC6XX
 	if (pa + len <= SEGMENT_LENGTH) {
@@ -164,18 +211,39 @@ pmap_syncicache(paddr_t pa, psize_t len)
 	 */
 	msr = MFMSR();
 	MTMSR(msr & ~(PSL_IR|PSL_DR));
-	ISYNC();
 
 	/*
-	 * Sync the instruction cache
+	 * Make sure to start on a cache boundary.
 	 */
-	__syncicache((void *)pa, len);
+	len += pa - (pa & ~linewidth);
+	pa &= ~linewidth;
 
 	/*
-	 * Restore relocation (MMU on).
+	 * Write out the data cache
+	 */
+	i = 0;
+	do {
+		__asm ("dcbst %0,%1" :: "r"(pa), "r"(i)); i += linewidth;
+	} while (i < len);
+
+	/*
+	 * Wait for it to finish
+	 */
+	__asm __volatile("sync");
+
+	/*
+	 * Now invalidate the instruction cache.
+	 */
+	i = 0;
+	do {
+		__asm ("icbi %0,%1" :: "r"(pa), "r"(i)); i += linewidth;
+	} while (i < len);
+
+	/*
+	 * Restore relocation (MMU on).  (this will do the required
+	 * sync and isync).
 	 */
 	MTMSR(msr);
-	ISYNC();
 }
 
 boolean_t
@@ -202,7 +270,6 @@ pmap_pageidlezero(paddr_t pa)
 	 */
 	msr = MFMSR();
 	MTMSR(msr & ~(PSL_IR|PSL_DR));
-	ISYNC();
 
 	/*
 	 * Zero the page until a process becomes runnable.
@@ -219,6 +286,5 @@ pmap_pageidlezero(paddr_t pa)
 	 * Restore relocation (MMU on).
 	 */
 	MTMSR(msr);
-	ISYNC();
 	return rv;
 }

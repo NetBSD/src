@@ -1,4 +1,4 @@
-/*	$NetBSD: altivec.h,v 1.2 2002/07/05 18:45:21 matt Exp $	*/
+/*	$NetBSD: altivec.h,v 1.3 2002/07/18 22:51:57 matt Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -46,6 +46,8 @@
 void save_vec(struct proc *p);
 void enable_vec(struct proc *p);
 void init_vec(void);
+void vzeropage(paddr_t);
+void vcopypage(paddr_t, paddr_t);	/* dst, src */
 extern struct pool vecpool;
 #endif
 
