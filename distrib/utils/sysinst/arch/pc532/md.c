@@ -1,4 +1,4 @@
-/*	$NetBSD: md.c,v 1.5 1997/12/10 04:36:20 phil Exp $	*/
+/*	$NetBSD: md.c,v 1.6 1997/12/25 09:10:48 matthias Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -105,6 +105,10 @@ void	md_pre_disklabel (void)
 
 void	md_post_disklabel (void)
 {
+	/* boot blocks ... */
+	printf (msg_string(MSG_dobootblks), diskdev);
+	run_prog ("echo y | bim -c init -c 'add /usr/mdec/boot boot' -c 'default 0' -c 'exit' /dev/%sc",
+		diskdev);
 }
 
 void	md_post_newfs (void)
@@ -150,22 +154,19 @@ int md_make_bsd_partitions (void)
 	bsdlabel[A][D_FSTYPE] = T_42BSD;
 	bsdlabel[B][D_FSTYPE] = T_SWAP;
 	bsdlabel[D][D_FSTYPE] = T_UNUSED;
+	bsdlabel[D][D_FSTYPE] = T_BOOT;
+	bsdlabel[D][D_OFFSET] = dlsize - BOOT_SIZE;
+	bsdlabel[D][D_SIZE]   = BOOT_SIZE;
 	bsdlabel[E][D_FSTYPE] = T_UNUSED;
 	bsdlabel[F][D_FSTYPE] = T_UNUSED;
 	bsdlabel[G][D_FSTYPE] = T_UNUSED;
 	bsdlabel[H][D_FSTYPE] = T_UNUSED;
+	fsdsize -= BOOT_SIZE;
+	partstart = 0;
 
 	switch (layoutkind) {
 	case 1: /* standard: a root, b swap, c/d "unused", e /usr */
 	case 2: /* standard X: a root, b swap (big), c/d "unused", e /usr */
-
-		bsdlabel[D][D_FSTYPE] = T_BOOT;
-		bsdlabel[D][D_OFFSET] = 2;
-		bsdlabel[D][D_SIZE] = BOOT_SIZE;
-	
-		partstart = BOOT_SIZE + 2;
-		swapadj = partstart;
-
 		/* Root */
 		i = NUMSEC(20+2*rammb, MEG/sectorsize, dlcylsize) + partstart;
 		partsize = NUMSEC (i/(MEG/sectorsize)+1, MEG/sectorsize,
@@ -181,7 +182,7 @@ int md_make_bsd_partitions (void)
 		i = NUMSEC(layoutkind * 2 * (rammb < 16 ? 16 : rammb),
 			   MEG/sectorsize, dlcylsize) + partstart;
 		partsize = NUMSEC (i/(MEG/sectorsize)+1, MEG/sectorsize,
-			   dlcylsize) - partstart - swapadj;
+			   dlcylsize) - partstart;
 		bsdlabel[B][D_OFFSET] = partstart;
 		bsdlabel[B][D_SIZE] = partsize;
 		partstart += partsize;
@@ -199,21 +200,8 @@ int md_make_bsd_partitions (void)
 
 	case 3: /* custom: ask user for all sizes */
 		ask_sizemult();
-		/* boot */
-		partstart = 2;
-		remain = fsdsize - partstart;
-		snprintf (isize, SSTRSIZE, "%d", BOOT_SIZE);
-		msg_prompt (MSG_askboot, isize, isize, SSTRSIZE);
-		partsize = atoi(isize);
-		if (partsize > 0) {
-			partsize = MAX(partsize, BOOT_SIZE);
-			bsdlabel[D][D_FSTYPE] = T_BOOT;
-			bsdlabel[D][D_OFFSET] = 2;
-			bsdlabel[D][D_SIZE] = partsize;
-			partstart = partsize + 2;
-			swapadj = partstart;
-		}
-		
+		remain = fsdsize;
+
 		/* root */
 		i = NUMSEC(20+2*rammb, MEG/sectorsize, dlcylsize) + partstart;
 		partsize = NUMSEC (i/(MEG/sectorsize)+1, MEG/sectorsize,
@@ -234,11 +222,11 @@ int md_make_bsd_partitions (void)
 		i = NUMSEC( 2 * (rammb < 16 ? 16 : rammb),
 			   MEG/sectorsize, dlcylsize) + partstart;
 		partsize = NUMSEC (i/(MEG/sectorsize)+1, MEG/sectorsize,
-			   dlcylsize) - partstart - swapadj;
+			   dlcylsize) - partstart;
 		snprintf (isize, SSTRSIZE, "%d", partsize/sizemult);
 		msg_prompt_add (MSG_askfsswap, isize, isize, SSTRSIZE,
 			    remain/sizemult, multname);
-		partsize = NUMSEC(atoi(isize),sizemult, dlcylsize) - swapadj;
+		partsize = NUMSEC(atoi(isize),sizemult, dlcylsize);
 		bsdlabel[B][D_OFFSET] = partstart;
 		bsdlabel[B][D_SIZE] = partsize;
 		partstart += partsize;
