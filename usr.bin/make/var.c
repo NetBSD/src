@@ -1,4 +1,4 @@
-/*	$NetBSD: var.c,v 1.85 2004/01/08 23:55:05 sjg Exp $	*/
+/*	$NetBSD: var.c,v 1.86 2004/01/24 19:58:54 dsl Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -69,14 +69,14 @@
  */
 
 #ifdef MAKE_BOOTSTRAP
-static char rcsid[] = "$NetBSD: var.c,v 1.85 2004/01/08 23:55:05 sjg Exp $";
+static char rcsid[] = "$NetBSD: var.c,v 1.86 2004/01/24 19:58:54 dsl Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)var.c	8.3 (Berkeley) 3/19/94";
 #else
-__RCSID("$NetBSD: var.c,v 1.85 2004/01/08 23:55:05 sjg Exp $");
+__RCSID("$NetBSD: var.c,v 1.86 2004/01/24 19:58:54 dsl Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -2242,6 +2242,7 @@ Var_Parse(const char *str, GNode *ctxt, Boolean err, int *lengthPtr,
 		     */
 		    GNode *v_ctxt;		/* context where v belongs */
 		    const char *emsg;
+		    char *sv_name;
 		    VarPattern	pattern;
 		    int	how;
 
@@ -2251,6 +2252,7 @@ Var_Parse(const char *str, GNode *ctxt, Boolean err, int *lengthPtr,
 			 * We need to strdup() it incase
 			 * VarGetPattern() recurses.
 			 */
+			sv_name = v->name;
 			v->name = strdup(v->name);
 			v_ctxt = ctxt;
 		    } else if (ctxt != VAR_GLOBAL) {
@@ -2274,16 +2276,18 @@ Var_Parse(const char *str, GNode *ctxt, Boolean err, int *lengthPtr,
 		    delim = '}';
 		    pattern.flags = 0;
 
-		    if ((pattern.rhs = VarGetPattern(ctxt, &parsestate, err,
+		    pattern.rhs = VarGetPattern(ctxt, &parsestate, err,
 						     &cp, delim, NULL,
 						     &pattern.rightLen,
-						     NULL)) == NULL) {
-			if (v->flags & VAR_JUNK) {
-			    free(v->name);
-			    v->name = nstr;
-			}
-			goto cleanup;
+						     NULL);
+		    if (v->flags & VAR_JUNK) {
+			/* restore original name */
+			free(v->name);
+			v->name = sv_name;
 		    }
+		    if (pattern.rhs == NULL)
+			goto cleanup;
+
 		    termc = *--cp;
 		    delim = '\0';
 
@@ -2307,10 +2311,6 @@ Var_Parse(const char *str, GNode *ctxt, Boolean err, int *lengthPtr,
 		    default:
 			Var_Set(v->name, pattern.rhs, v_ctxt, 0);
 			break;
-		    }
-		    if (v->flags & VAR_JUNK) {
-			free(v->name);
-			v->name = nstr;
 		    }
 		    free(UNCONST(pattern.rhs));
 		    newStr = var_Error;
