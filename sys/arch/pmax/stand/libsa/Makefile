@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.12 1999/02/22 11:31:46 simonb Exp $
+#	$NetBSD: Makefile,v 1.13 1999/03/01 04:05:18 simonb Exp $
 #	@(#)Makefile	8.2 (Berkeley) 2/16/94
 
 S=	${.CURDIR}/../../../..
@@ -8,7 +8,8 @@ LIB=	sa
 # from sys/arch/pmax/stand/libsa:
 SRCS=	alloc.c callvec.c devopen.c memcpy.c memset.c ufs.c
 # PROM callbacks
-SRCS+=	bootinit.S bootread.S printf.S strcat.S strcmp.S strcpy.S strlen.S
+SRCS+=	bootinit.S bootread.S clear_cache.S printf.S strcat.S strcmp.S \
+	strcpy.S strlen.S
 # from sys/lib/libsa:
 SRCS+=	disklabel.c dkcksum.c open.c read.c twiddle.c
 
