@@ -1,10 +1,10 @@
-.\"	$NetBSD: lptctl.8,v 1.1.1.1 2004/01/19 23:22:27 jdolecek Exp $
+.\"	$NetBSD: lptctl.8,v 1.2 2004/01/19 23:32:42 jdolecek Exp $
 .\"
 .\" Copyright notice
 .\"
 .\" The uncommented requests are required for all man pages.
 .\" The commented requests should be uncommented and used where appropriate.
-.Dd December 25, 2003 
+.Dd January 20, 2004
 .Dt LPTCTL 8
 .Os 
 .Sh NAME
@@ -51,12 +51,9 @@ capabilities port mode (ecp), or enhanced parallel port mode (epp).
 Enables or disables the use of IEEE 1284 negotiations during mode changes and 
 channel direction changes.
 .El
-.\" This next request is for sections 1 and 8 exit statuses only.
 .Sh EXIT STATUS
 .Nm 
 returns 0 on success, >0  on failure.
-.\" This next request is for sections 1, 6, 7 & 8 only.
-.\" .Sh ENVIRONMENT
 .Sh FILES
 .Bl -item
 .It
@@ -66,32 +63,30 @@ returns 0 on success, >0  on failure.
 .Pa /dev/lpa?
 - polled printer ports
 .El
-.\" .Sh EXAMPLES
-.\" This next request is for sections 1, 6, 7 & 8 only
-.\"     (command return values (to shell) and fprintf/stderr type diagnostics).
-.\" .Sh DIAGNOSTICS
 .Sh SEE ALSO
 .Xr ioctl 2 ,
 .Xr lpt 4 ,
 .Xr ppbus 4
-.\" Cross-references should be ordered by section (low to high), then in
-.\"     alphabetical order.
-.\" .Sh STANDARDS
 .Sh HISTORY
 A similar utility called 
 .Nm lptcontrol
 exists in FreeBSD to control the lpt device. While similar in concept, 
 the implementations are independent.
+.Nm
+was added in
+.Nx 2.0 .
 .Sh AUTHORS
 This man page and the 
 .Nm
 utility were written by Gary Thorpe.
 .Sh BUGS
 .Nm
-opens the printer device and causes device initialization if /dev/lpa? 
-or /dev/lpt? are used. Therefore, a printer must be connected and functioning 
+opens the printer device and causes device initialization if
+.Pa /dev/lpa? 
+or
+.Pa /dev/lpt?
+are used. Therefore, a printer must be connected and functioning 
 to use this utility or you will have to create a lpt device with an 
 appropriate minor number (see 
 .Xr lpt 4 
 for more details).
-.\" .Sh SECURITY CONSIDERATIONS
