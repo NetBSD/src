@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_core.c,v 1.2 2001/12/09 23:08:34 thorpej Exp $	*/
+/*	$NetBSD: netbsd32_core.c,v 1.3 2001/12/10 01:56:46 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -46,12 +46,11 @@
  */
 
 /*
- * netbsd32_core.c: Support for the historic NetBSD core file format,
- * 32-bit version.
+ * core_netbsd.c: Support for the historic NetBSD core file format.
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netbsd32_core.c,v 1.2 2001/12/09 23:08:34 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netbsd32_core.c,v 1.3 2001/12/10 01:56:46 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -59,32 +58,35 @@ __KERNEL_RCSID(0, "$NetBSD: netbsd32_core.c,v 1.2 2001/12/09 23:08:34 thorpej Ex
 #include <sys/vnode.h>
 #include <sys/core.h>
 
-#include <uvm/uvm.h>
+#include <uvm/uvm_extern.h>
 
-#include "netbsd32.h"
+#include <compat/netbsd32/netbsd32.h>
+
+struct coredump_state {
+	struct core32 core;
+	off_t offset;
+};
+
+int	coredump_writesegs_netbsd(struct proc *, struct vnode *,
+	    struct ucred *, struct uvm_coredump_state *);
 
 int
-coredump_netbsd32(struct proc *p, struct vnode *vp, struct ucred *cred)
+coredump_netbsd(struct proc *p, struct vnode *vp, struct ucred *cred)
 {
-	struct core32 core;
-	struct coreseg32 cseg;
+	struct coredump_state cs;
 	struct vmspace *vm = p->p_vmspace;
-	struct vm_map *map = &vm->vm_map;
-	struct vm_map_entry *entry;
-	vaddr_t start, end, maxstack;
-	off_t offset;
-	int flag, error;
+	int error;
 
-	core.c_midmag = 0;
-	strncpy(core.c_name, p->p_comm, MAXCOMLEN);
-	core.c_nseg = 0;
-	core.c_signo = p->p_sigctx.ps_sig;
-	core.c_ucode = p->p_sigctx.ps_code;
-	core.c_cpusize = 0;
-	core.c_tsize = (u_long)ctob(vm->vm_tsize);
-	core.c_dsize = (u_long)ctob(vm->vm_dsize);
-	core.c_ssize = (u_long)round_page(ctob(vm->vm_ssize));
-	error = cpu_coredump32(p, vp, cred, &core);
+	cs.core.c_midmag = 0;
+	strncpy(cs.core.c_name, p->p_comm, MAXCOMLEN);
+	cs.core.c_nseg = 0;
+	cs.core.c_signo = p->p_sigctx.ps_sig;
+	cs.core.c_ucode = p->p_sigctx.ps_code;
+	cs.core.c_cpusize = 0;
+	cs.core.c_tsize = (u_long)ctob(vm->vm_tsize);
+	cs.core.c_dsize = (u_long)ctob(vm->vm_dsize);
+	cs.core.c_ssize = (u_long)round_page(ctob(vm->vm_ssize));
+	error = cpu_coredump32(p, vp, cred, &cs.core);
 	if (error)
 		return (error);
 
@@ -96,68 +98,65 @@ coredump_netbsd32(struct proc *p, struct vnode *vp, struct ucred *cred)
 	 * hasn't actually had any effect for a long time, since we don't dump
 	 * the user area.  For now, it's dead.
 	 */
+	memcpy(&p->p_addr->u_kproc.kp_proc, p, sizeof(struct proc));
+	fill_eproc(p, &p->p_addr->u_kproc.kp_eproc);
 #endif
 
-	offset = core.c_hdrsize + core.c_seghdrsize + core.c_cpusize;
-	maxstack = trunc_page(USRSTACK - ctob(vm->vm_ssize));
-
-	for (entry = map->header.next; entry != &map->header;
-	     entry = entry->next) {
-		/* Should never happen for a user process. */
-		if (UVM_ET_ISSUBMAP(entry))
-			panic("coredump_netbsd: user process with submap?");
-
-		if ((entry->protection & VM_PROT_WRITE) == 0)
-			continue;
-
-		start = entry->start;
-		end = entry->end;
-
-		if (start >= VM_MAXUSER_ADDRESS)
-			continue;
-
-		if (end > VM_MAXUSER_ADDRESS)
-			end = VM_MAXUSER_ADDRESS;
-
-		if (start >= (vaddr_t)vm->vm_maxsaddr) {
-			if (end <= maxstack)
-				continue;
-			if (start < maxstack)
-				start = maxstack;
-			flag = CORE_STACK;
-		} else
-			flag = CORE_DATA;
-
-		/*
-		 * Set up a new core file segment.
-		 */
-		CORE_SETMAGIC(cseg, CORESEGMAGIC, CORE_GETMID(core), flag);
-		cseg.c_addr = start;
-		cseg.c_size = end - start;
-
-		error = vn_rdwr(UIO_WRITE, vp,
-		    (caddr_t)&cseg, core.c_seghdrsize,
-		    offset, UIO_SYSSPACE,
-		    IO_NODELOCKED|IO_UNIT, cred, NULL, p);
-		if (error)
-			return (error);
-
-		offset += core.c_seghdrsize;
-		error = vn_rdwr(UIO_WRITE, vp,
-		    (caddr_t)(long)cseg.c_addr, (int)cseg.c_size,
-		    offset, UIO_USERSPACE,
-		    IO_NODELOCKED|IO_UNIT, cred, NULL, p);
-		if (error)
-			return (error);
-
-		offset += cseg.c_size;
-		core.c_nseg++;
-	}
+	cs.offset = cs.core.c_hdrsize + cs.core.c_seghdrsize +
+	    cs.core.c_cpusize;
+	error = uvm_coredump_walkmap(p, vp, cred, coredump_writesegs_netbsd,
+	    &cs);
+	if (error)
+		return (error);
 
 	/* Now write out the core header. */
-	error = vn_rdwr(UIO_WRITE, vp, (caddr_t)&core,
-	    (int)core.c_hdrsize, (off_t)0,
+	error = vn_rdwr(UIO_WRITE, vp, (caddr_t)&cs.core,
+	    (int)cs.core.c_hdrsize, (off_t)0,
 	    UIO_SYSSPACE, IO_NODELOCKED|IO_UNIT, cred, NULL, p);
 
 	return (error);
+}
+
+int
+coredump_writesegs_netbsd(struct proc *p, struct vnode *vp, struct ucred *cred,
+    struct uvm_coredump_state *us)
+{
+	struct coredump_state *cs = us->cookie;
+	struct coreseg32 cseg;
+	int flag, error;
+
+	if (us->flags & UVM_COREDUMP_NODUMP)
+		return (0);
+
+	if (us->flags & UVM_COREDUMP_STACK)
+		flag = CORE_STACK;
+	else
+		flag = CORE_DATA;
+
+	/*
+	 * Set up a new core file segment.
+	 */
+	CORE_SETMAGIC(cseg, CORESEGMAGIC, CORE_GETMID(cs->core), flag);
+	cseg.c_addr = us->start;
+	cseg.c_size = us->end - us->start;
+
+	error = vn_rdwr(UIO_WRITE, vp,
+	    (caddr_t)&cseg, cs->core.c_seghdrsize,
+	    cs->offset, UIO_SYSSPACE,
+	    IO_NODELOCKED|IO_UNIT, cred, NULL, p);
+	if (error)
+		return (error);
+
+	cs->offset += cs->core.c_seghdrsize;
+	error = vn_rdwr(UIO_WRITE, vp,
+	    (caddr_t) us->start, (int) cseg.c_size,
+	    cs->offset, UIO_USERSPACE,
+	    IO_NODELOCKED|IO_UNIT, cred, NULL, p);
+	if (error)
+		return (error);
+
+	cs->offset += cseg.c_size;
+	cs->core.c_nseg++;
+
+	return (0);
 }

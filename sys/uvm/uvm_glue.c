@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_glue.c,v 1.55 2001/11/10 07:36:59 lukem Exp $	*/
+/*	$NetBSD: uvm_glue.c,v 1.56 2001/12/10 01:52:27 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_glue.c,v 1.55 2001/11/10 07:36:59 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_glue.c,v 1.56 2001/12/10 01:52:27 thorpej Exp $");
 
 #include "opt_kgdb.h"
 #include "opt_sysv.h"
@@ -621,3 +621,63 @@ uvm_swapout(p)
 	pmap_collect(vm_map_pmap(&p->p_vmspace->vm_map));
 }
 
+/*
+ * uvm_coredump_walkmap: walk a process's map for the purpose of dumping
+ * a core file.
+ */
+
+int
+uvm_coredump_walkmap(p, vp, cred, func, cookie)
+	struct proc *p;
+	struct vnode *vp;
+	struct ucred *cred;
+	int (*func)(struct proc *, struct vnode *, struct ucred *,
+	    struct uvm_coredump_state *);
+	void *cookie;
+{
+	struct uvm_coredump_state state;
+	struct vmspace *vm = p->p_vmspace;
+	struct vm_map *map = &vm->vm_map;
+	struct vm_map_entry *entry;
+	vaddr_t maxstack;
+	int error;
+
+	maxstack = trunc_page(USRSTACK - ctob(vm->vm_ssize));
+
+	for (entry = map->header.next; entry != &map->header;
+	     entry = entry->next) {  
+		/* Should never happen for a user process. */
+		if (UVM_ET_ISSUBMAP(entry))
+			panic("uvm_coredump_walkmap: user process with "
+			    "submap?");
+
+		state.cookie = cookie;
+		state.start = entry->start;
+		state.end = entry->end;
+		state.prot = entry->protection;
+		state.flags = 0;
+
+		if (state.start >= VM_MAXUSER_ADDRESS)  
+			continue;
+
+		if (state.end > VM_MAXUSER_ADDRESS)
+			state.end = VM_MAXUSER_ADDRESS;
+
+		if (state.start >= (vaddr_t)vm->vm_maxsaddr) {
+			if (state.end <= maxstack)
+				continue;
+			if (state.start < maxstack)
+				state.start = maxstack;
+			state.flags |= UVM_COREDUMP_STACK;
+		}
+
+		if ((entry->protection & VM_PROT_WRITE) == 0)
+			state.flags |= UVM_COREDUMP_NODUMP;
+
+		error = (*func)(p, vp, cred, &state);
+		if (error)
+			return (error);
+	}
+
+	return (0);
+}
