@@ -1,4 +1,4 @@
-/* $NetBSD: podulebus.c,v 1.2 2002/03/24 23:37:45 bjh21 Exp $ */
+/* $NetBSD: podulebus.c,v 1.3 2002/05/22 22:13:13 bjh21 Exp $ */
 
 /*-
  * Copyright (c) 2000 Ben Harris
@@ -29,7 +29,7 @@
 
 #include <sys/param.h>
 
-__RCSID("$NetBSD: podulebus.c,v 1.2 2002/03/24 23:37:45 bjh21 Exp $");
+__RCSID("$NetBSD: podulebus.c,v 1.3 2002/05/22 22:13:13 bjh21 Exp $");
 
 #include <sys/device.h>
 #include <sys/malloc.h>
@@ -38,6 +38,7 @@ __RCSID("$NetBSD: podulebus.c,v 1.2 2002/03/24 23:37:45 bjh21 Exp $");
 #include <machine/bus.h>
 #include <machine/intr.h>
 #include <machine/irq.h>
+#include <machine/machdep.h>
 #include <machine/memcreg.h>
 
 #include <arch/acorn26/iobus/iocreg.h>
@@ -366,4 +367,14 @@ podulebus_irq_establish(podulebus_intr_handle_t slot, int ipl,
 		    ev);
 #endif
 	return irq_establish(IRQ_PIRQ, ipl, func, arg, ev);
+}
+
+void
+podulebus_readcmos(struct podulebus_attach_args *pa, u_int8_t *c)
+{
+	int i;
+
+	for (i = 0; i < 4; i++)
+		c[i] = cmos_read(PODULE_CMOS_BASE +
+		    pa->pa_slotnum * PODULE_CMOS_PERSLOT + i);
 }
