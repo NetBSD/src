@@ -1,4 +1,4 @@
-/*	$NetBSD: i82365_isasubr.c,v 1.2 1999/02/18 23:41:40 mycroft Exp $	*/
+/*	$NetBSD: i82365_isasubr.c,v 1.3 1999/02/19 03:14:01 mycroft Exp $	*/
 
 #define	PCICISADEBUG
 
@@ -237,8 +237,8 @@ pcic_isa_chip_intr_establish(pch, pf, ipl, fct, arg)
 		return (NULL);
 
 	reg = pcic_read(h, PCIC_INTR);
-	reg &= ~PCIC_INTR_IRQ_MASK;
-	reg |= irq | PCIC_INTR_ENABLE;
+	reg &= ~(PCIC_INTR_IRQ_MASK | PCIC_INTR_ENABLE);
+	reg |= irq;
 	pcic_write(h, PCIC_INTR, reg);
 
 	h->ih_irq = irq;
