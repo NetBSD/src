@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_machdep.c,v 1.32 1997/02/28 04:44:08 mycroft Exp $	*/
+/*	$NetBSD: sys_machdep.c,v 1.33 1997/04/26 20:32:15 tls Exp $	*/
 
 /*-
  * Copyright (c) 1995 Charles M. Hannum.  All rights reserved.
@@ -346,7 +346,7 @@ i386_iopl(p, args, retval)
 	struct trapframe *tf = p->p_md.md_regs;
 	struct i386_iopl_args ua;
 
-	if ((error = suser(p->p_ucred, &p->p_acflag)) != 0)
+	if ((error = suser(p->p_ucred, &p->p_acflag)) != 0 || securelevel > 1)
 		return error;
 
 	if ((error = copyin(args, &ua, sizeof(ua))) != 0)
