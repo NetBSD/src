@@ -1,4 +1,4 @@
-/*	$NetBSD: boot.c,v 1.10 1999/11/27 02:52:07 simonb Exp $	*/
+/*	$NetBSD: boot.c,v 1.11 1999/11/27 07:00:35 simonb Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -74,31 +74,33 @@
  *	@(#)boot.c	8.1 (Berkeley) 6/10/93
  */
 
-#define PMAX_BOOT_AOUT
-#define PMAX_BOOT_ECOFF
-#define PMAX_BOOT_ELF
+#include <lib/libsa/stand.h>
+#include <lib/libsa/loadfile.h>
+#include <lib/libkern/libkern.h>
 
-#include <stand.h>
 #include <sys/param.h>
 #include <sys/exec.h>
 #include <sys/exec_elf.h>
+
 #include <machine/dec_prom.h>
-#include <lib/libkern/libkern.h>
 
 #include "common.h"
 #include "bootinfo.h"
-#include "loadfile.h"
 
-extern	char bootprog_name[], bootprog_rev[], bootprog_date[], bootprog_maker[];
-
+/*
+ * We won't go overboard with gzip'd kernel names.  After all we can
+ * still boot a gzip'd kernel called "netbsd.pmax" - it doesn't need
+ * the .gz suffix.
+ */
 char *kernelnames[] = {
+	"netbsd.pmax",
 	"netbsd",	"netbsd.gz",
-	"netbsd.bak",	"netbsd.bak.gz",
-	"netbsd.old",	"netbsd.old.gz",
-	"onetbsd",	"onetbsd.gz",
-	"gennetbsd",	"gennetbsd.gz",
+	"netbsd.bak",
+	"netbsd.old",
+	"onetbsd",
+	"gennetbsd",
 #ifdef notyet
-	"netbsd.el",	"netbsd.el.gz",
+	"netbsd.el",
 #endif /*notyet*/
 	NULL
 };
@@ -128,8 +130,12 @@ main(argc, argv)
 	struct btinfo_symtab bi_syms;
 	struct btinfo_bootpath bi_bpath;
 
-	printf(">> %s, Revision %s\n", bootprog_name, bootprog_rev);
-	printf(">> (%s, %s)\n", bootprog_maker, bootprog_date);
+	/* print a banner */
+	printf("\n");
+	printf("NetBSD/pmax " NETBSD_VERS " " BOOT_TYPE_NAME " Bootstrap, Revision %s\n",
+	    bootprog_rev);
+	printf("(%s, %s)\n", bootprog_maker, bootprog_date);
+	printf("\n");
 
 	/* initialise bootinfo structure early */
 	bi_init(BOOTINFO_ADDR);
@@ -149,9 +155,9 @@ main(argc, argv)
 		name = NULL;
 	}
 
-	marks[MARK_START] = 0;
+	memset(marks, 0, sizeof marks);
 	if (name != NULL)
-		win = (loadfile(name, marks, LOAD_KERNEL) != -1);
+		win = (loadfile(name, marks, LOAD_KERNEL) == 0);
 	else {
 		win = 0;
 		for (namep = kernelnames, win = 0; *namep != NULL && !win;
@@ -217,7 +223,7 @@ devonly(fname)
 				break;
 		/*
 		 * Make "N/rzY" with no trailing '/' valid by adding
-		 * the extra '/' before appending 'boot' to the path.
+		 * the extra '/' before appending 'boot.pmax' to the path.
 		 */
 		if (c != '/') {
 			fname--;
