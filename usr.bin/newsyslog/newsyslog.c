@@ -1,4 +1,4 @@
-/*	$NetBSD: newsyslog.c,v 1.33 2000/07/19 07:22:53 enami Exp $	*/
+/*	$NetBSD: newsyslog.c,v 1.34 2000/07/19 10:52:35 ad Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000 Andrew Doran <ad@NetBSD.org>
@@ -55,7 +55,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: newsyslog.c,v 1.33 2000/07/19 07:22:53 enami Exp $");
+__RCSID("$NetBSD: newsyslog.c,v 1.34 2000/07/19 10:52:35 ad Exp $");
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -394,7 +394,8 @@ log_examine(struct conf_entry *log, int force)
 	struct stat sb;
 	size_t size;
 	int age, trim;
-	char tmp[MAXPATHLEN], *reason;
+	char tmp[MAXPATHLEN];
+	const char *reason;
 	time_t now;
 
 	now = time(NULL);
