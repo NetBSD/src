@@ -1,4 +1,4 @@
-/*	$NetBSD: search.c,v 1.11 2002/09/23 23:56:49 mycroft Exp $	 */
+/*	$NetBSD: search.c,v 1.12 2002/09/24 00:02:46 mycroft Exp $	 */
 
 /*
  * Copyright 1996 Matt Thomas <matt@3am-software.com>
@@ -119,11 +119,11 @@ _rtld_load_library(name, refobj, mode)
 			(void)strcpy(pathname, LIBDIR);
 			(void)strcpy(pathname + LIBDIRLEN, name +
 			    SVR4_LIBDIRLEN);
-			goto found2;
+			goto found;
 		}
 #endif /* SVR4_LIBDIR */
 		pathname = xstrdup(name);
-		goto found2;
+		goto found;
 	}
 	dbg((" Searching for \"%s\" (%p)", name, refobj));
 
@@ -132,26 +132,25 @@ _rtld_load_library(name, refobj, mode)
 	for (sp = _rtld_paths; sp != NULL; sp = sp->sp_next)
 		if ((obj = _rtld_search_library_path(name, namelen,
 		    sp->sp_path, sp->sp_pathlen, mode)) != NULL)
-			goto found;
+			return obj;
 
 	if (refobj != NULL)
 		for (sp = refobj->rpaths; sp != NULL; sp = sp->sp_next)
 			if ((obj = _rtld_search_library_path(name,
 			    namelen, sp->sp_path, sp->sp_pathlen, mode)) != NULL)
-				goto found;
+				return obj;
 
 	for (sp = _rtld_default_paths; sp != NULL; sp = sp->sp_next)
 		if ((obj = _rtld_search_library_path(name, namelen,
 		    sp->sp_path, sp->sp_pathlen, mode)) != NULL)
-			goto found;
+			return obj;
 
 	_rtld_error("Shared object \"%s\" not found", name);
 	return NULL;
 
-found2:
+found:
 	obj = _rtld_load_object(pathname, mode);
 	if (obj == NULL)
 		free(pathname);
-found:
 	return obj;
 }
