@@ -1,4 +1,4 @@
-.\"     $NetBSD: autoconf.9,v 1.9 2002/02/13 08:18:35 ross Exp $
+.\"     $NetBSD: autoconf.9,v 1.10 2002/04/02 14:14:45 heinz Exp $
 .\"
 .\" Copyright (c) 2001 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -90,7 +90,7 @@ The autoconfiguration framework supports
 where the bus driver can determine the devices present.  The
 autoconfiguration framework also supports
 .Em indirect configuration
-where the drivers must probe the bus looking the presence of a device.
+where the drivers must probe the bus looking for the presence of a device.
 Direct configuration is preferred since it can find hardware
 regardless of the presence of proper drivers.
 .Pp
@@ -171,7 +171,7 @@ appropriate driver attach function will be called.  If the device is
 matched, the system prints the name of the child and parent devices,
 and then calls the
 .Fa print
-function to produce addition information if desired.  If no driver
+function to produce additional information if desired.  If no driver
 takes a match, the same
 .Fa print
 function is called to complain.  The print function is called with the
@@ -233,7 +233,7 @@ Called by the parent to activate the child device
 It is called to activate resources and initialise other kernel
 subsystems (such as the network subsystem).
 .Fn config_activate
-is called from interrupt contect after the device has been attached.
+is called from interrupt context after the device has been attached.
 .It Fn config_deactivate "dev"
 Called by the parent to deactivate the child device
 .Fa dev .
