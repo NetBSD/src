@@ -34,7 +34,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)autoconf.c	7.1 (Berkeley) 5/9/91
- *	$Id: autoconf.c,v 1.8 1993/12/15 09:31:29 mycroft Exp $
+ *	$Id: autoconf.c,v 1.8.2.1 1994/07/27 06:30:35 cgd Exp $
  */
 
 /*
@@ -45,15 +45,16 @@
  * devices are determined (from possibilities mentioned in ioconf.c),
  * and the drivers are initialized.
  */
-#include "param.h"
-#include "systm.h"
-#include "buf.h"
-#include "dkstat.h"
-#include "conf.h"
-#include "dmap.h"
-#include "reboot.h"
+#include <sys/param.h>
+#include <sys/systm.h>
+#include <sys/buf.h>
+#include <sys/dkstat.h>
+#include <sys/disklabel.h>
+#include <sys/conf.h>
+#include <sys/dmap.h>
+#include <sys/reboot.h>
 
-#include "machine/pte.h"
+#include <machine/pte.h>
 
 /*
  * The following several variables are related to
@@ -97,27 +98,26 @@ swapconf()
 	register struct swdevt *swp;
 	register int nblks;
 
-	for (swp = swdevt; swp->sw_dev > 0; swp++)
-	{
-		unsigned d = major(swp->sw_dev);
+	for (swp = swdevt; swp->sw_dev != NODEV; swp++) {
+		int maj = major(swp->sw_dev);
 
-		if (d > nblkdev) break;
-		if (bdevsw[d].d_psize) {
-			nblks = (*bdevsw[d].d_psize)(swp->sw_dev);
-			if (nblks > 0 &&
+		if (maj > nblkdev)
+			break;
+		if (bdevsw[maj].d_psize) {
+			nblks = (*bdevsw[maj].d_psize)(swp->sw_dev);
+			if (nblks != -1 &&
 			    (swp->sw_nblks == 0 || swp->sw_nblks > nblks))
 				swp->sw_nblks = nblks;
-			else
-				swp->sw_nblks = 0;
+			swp->sw_nblks = ctod(dtoc(swp->sw_nblks));
 		}
-		swp->sw_nblks = ctod(dtoc(swp->sw_nblks));
 	}
+	/* XXXX needs more work */
 	if (dumplo == 0 && bdevsw[major(dumpdev)].d_psize)
 	/*dumplo = (*bdevsw[major(dumpdev)].d_psize)(dumpdev) - physmem;*/
 		dumplo = (*bdevsw[major(dumpdev)].d_psize)(dumpdev) -
 			ctob(physmem)/DEV_BSIZE;
-	if (dumplo < 0)
-		dumplo = 0;
+	if (dumplo < btodb(CLBYTES))
+		dumplo = btodb(CLBYTES);
 }
 
 #define	DOSWAP			/* change swdevt and dumpdev */
@@ -130,9 +130,6 @@ static	char devname[][2] = {
 	'w','t',	/* 3 = wt */
 	's','d',	/* 4 = sd -- new SCSI system */
 };
-
-#define	PARTITIONMASK	0x7
-#define	PARTITIONSHIFT	3
 
 /*
  * Attempt to find the device from which we were booted.
@@ -155,7 +152,7 @@ setroot()
 	adaptor = (bootdev >> B_ADAPTORSHIFT) & B_ADAPTORMASK;
 	part = (bootdev >> B_PARTITIONSHIFT) & B_PARTITIONMASK;
 	unit = (bootdev >> B_UNITSHIFT) & B_UNITMASK;
-	mindev = (unit << PARTITIONSHIFT) + part;
+	mindev = (unit * MAXPARTITIONS) + part;
 	orootdev = rootdev;
 	rootdev = makedev(majdev, mindev);
 	/*
@@ -166,24 +163,25 @@ setroot()
 		return;
 	printf("changing root device to %c%c%d%c\n",
 		devname[majdev][0], devname[majdev][1],
-		mindev >> PARTITIONSHIFT, part + 'a');
-#ifdef DOSWAP
-	mindev &= ~PARTITIONMASK;
-	for (swp = swdevt; swp->sw_dev; swp++) {
-		if (majdev == major(swp->sw_dev) &&
-		    mindev == (minor(swp->sw_dev) & ~PARTITIONMASK)) {
+		unit, part + 'a');
 
+#ifdef DOSWAP
+	for (swp = swdevt; swp->sw_dev != NODEV; swp++) {
+		if (majdev == major(swp->sw_dev) &&
+		    (mindev / MAXPARTITIONS)
+		    == (minor(swp->sw_dev) / MAXPARTITIONS)) {
 			temp = swdevt[0].sw_dev;
 			swdevt[0].sw_dev = swp->sw_dev;
 			swp->sw_dev = temp;
 			break;
 		}
 	}
-	if (swp->sw_dev == 0)
+	if (swp->sw_dev == NODEV)
 		return;
+
 	/*
-	 * If dumpdev was the same as the old primary swap
-	 * device, move it to the new primary swap device.
+	 * If dumpdev was the same as the old primary swap device, move
+	 * it to the new primary swap device.
 	 */
 	if (temp == dumpdev)
 		dumpdev = swdevt[0].sw_dev;
