@@ -1,4 +1,4 @@
-	$NetBSD: syscalls.master,v 1.29 2002/03/26 10:52:52 manu Exp $
+	$NetBSD: syscalls.master,v 1.30 2002/03/28 10:36:15 manu Exp $
 
 ;	@(#)syscalls.master	8.1 (Berkeley) 7/19/93
 
@@ -287,9 +287,9 @@
 			    struct svr4_sigaction *osa); }
 163	NOARGS		{ int svr4_sys_sigpending(int what, \
 			    svr4_sigset_t *set); }
-164	NOARGS		{ int svr4_sys_sigprocmask(int how, \
-			    const svr4_sigset_t *set, \
-			    svr4_sigset_t *oset); }
+164	STD		{ int irix_sys_sigprocmask(int how, \
+			    const irix_sigset_t *set, \
+			    irix_sigset_t *oset); }
 165	NOARGS		{ int svr4_sys_sigsuspend( \
 			    const svr4_sigset_t *set); }
 166	UNIMPL		sigpoll_sys
