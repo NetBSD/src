@@ -1,4 +1,4 @@
-/*	$NetBSD: uhci.c,v 1.3 1998/07/23 00:27:36 augustss Exp $	*/
+/*	$NetBSD: uhci.c,v 1.4 1998/07/23 01:46:27 augustss Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -1086,7 +1086,7 @@ printf("uhci_alloc_std_chain: len=0\n");
 		return (USBD_NORMAL_COMPLETION);
 	}
 	ls = upipe->pipe.device->lowspeed ? UHCI_TD_LS : 0;
-	maxp = upipe->pipe.device->ddesc.bMaxPacketSize;
+	maxp = UGETW(upipe->pipe.endpoint->edesc->wMaxPacketSize);
 	if (maxp == 0) {
 		printf("uhci_alloc_std_chain: maxp=0\n");
 		return (USBD_INVAL);
@@ -1095,6 +1095,7 @@ printf("uhci_alloc_std_chain: len=0\n");
 	tog = upipe->pipe.endpoint->toggle;
 	if (ntd % 2 == 0)
 		tog ^= 1;
+	upipe->newtoggle = tog ^ 1;
 	lastp = 0;
 	lastlink = UHCI_PTR_T;
 	ntd--;
@@ -1124,7 +1125,8 @@ printf("uhci_alloc_std_chain: len=0\n");
 	}
 	*sp = lastp;
 	/*upipe->pipe.endpoint->toggle = tog;*/
-	upipe->newtoggle = tog;
+	DPRINTFN(10, ("uhci_alloc_std_chain: oldtog=%d newtog=%d\n", 
+		      upipe->pipe.endpoint->toggle, upipe->newtoggle));
 	return (USBD_NORMAL_COMPLETION);
 }
 
@@ -1630,6 +1632,7 @@ uhci_bulk_done(ii)
 		uhci_freemem(sc, dma);
 	}
 	DPRINTFN(4, ("uhci_bulk_done: length=%d\n", reqh->actlen));
+	/* XXX compute new toggle */
 }
 
 /* Add interrupt QH, called with vflock. */
