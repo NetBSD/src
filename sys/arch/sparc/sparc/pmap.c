@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.59 1996/05/18 12:27:47 mrg Exp $ */
+/*	$NetBSD: pmap.c,v 1.60 1996/05/19 00:32:15 pk Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -528,6 +528,10 @@ VA2PA(addr)
 	if ((pte & SRMMU_TETYPE) == SRMMU_TEPTE)
 	    return (((pte & SRMMU_PPNMASK) << SRMMU_PPNPASHIFT) |
 		    ((u_int)addr & 0xfff));
+
+	/* A `TLB Flush Entire' is required before any L0, L1 or L2 probe */
+	tlb_flush_all();
+
 	pte = lda(((u_int)addr & ~0xfff) | ASI_SRMMUFP_L2, ASI_SRMMUFP);
 	if ((pte & SRMMU_TETYPE) == SRMMU_TEPTE)
 	    return (((pte & SRMMU_PPNMASK) << SRMMU_PPNPASHIFT) |
@@ -651,10 +655,6 @@ setpte4m(va, pte)
 #endif /* 4m only */
 
 /*----------------------------------------------------------------*/
-
-/* XXX - these macros should go away */
-#define	HWTOSW(pg) (pg)
-#define	SWTOHW(pg) (pg)
 
 #if defined(MMU_3L)
 #define CTX_USABLE(pm,rp)	(CPU_ISSUN4M \
@@ -1391,7 +1391,7 @@ me_alloc(mh, newpm, newvreg, newvseg)
 	do {
 		tpte = getpte4(va);
 		if ((tpte & (PG_V | PG_TYPE)) == (PG_V | PG_OBMEM)) {
-			pa = ptoa(HWTOSW(tpte & PG_PFNUM));
+			pa = ptoa(tpte & PG_PFNUM);
 			if (managed(pa))
 				pvhead(pa)->pv_flags |= MR4_4C(tpte);
 		}
@@ -1474,7 +1474,7 @@ if (getcontext() != 0) panic("me_free: ctx != 0");
 	do {
 		tpte = getpte4(va);
 		if ((tpte & (PG_V | PG_TYPE)) == (PG_V | PG_OBMEM)) {
-			pa = ptoa(HWTOSW(tpte & PG_PFNUM));
+			pa = ptoa(tpte & PG_PFNUM);
 			if (managed(pa))
 				pvhead(pa)->pv_flags |= MR4_4C(tpte);
 		}
@@ -1747,6 +1747,11 @@ mmu_pagein4m(pm, va, prot)
 /*	if (getcontext() == 0)
 		bits |= PPROT_S;
 */
+#if 0
+if (bits && (pte & bits) == bits)
+printf("pagein4m(%s[%d]): OOPS: prot=%x, va=%x, pte=%x, bits=%x\n",
+curproc->p_comm, curproc->p_pid, prot, va, pte, bits);
+#endif
 	return (bits && (pte & bits) == bits ? -1 : 0);
 }
 #endif
@@ -2335,28 +2340,28 @@ pv_changepte4m(pv0, bis, bic)
 			 */
 			if ((bic & PPROT_WRITE) &&
 			    va >= pager_sva && va < pager_eva)
-			    continue;
+				continue;
 			if ((bis & SRMMU_PG_C) &&
 			    va >= DVMA_BASE && va < DVMA_END)
-			    continue;
+				continue;
 			setcontext(pm->pm_ctxnum);
 			/* %%%: Do we need to always flush? */
 			tpte = getpte4m(va);
 			if (vactype != VAC_NONE && (tpte & SRMMU_PG_M))
-			    cache_flush_page(va);
+				cache_flush_page(va);
 		} else {
 			/* PTE that we want has no context. Use sw getpte*/
 			tpte = getptesw4m(pm, va);
 		}
 		if ((tpte & SRMMU_TETYPE) == SRMMU_TEPTE) /* i.e. if valid pte */
-		    flags |= (tpte >> PG_M_SHIFT4M) & (PV_MOD4M|PV_REF4M|PV_C4M);
+			flags |= (tpte >> PG_M_SHIFT4M) & (PV_MOD4M|PV_REF4M|PV_C4M);
 
 		tpte = (tpte | bis) & ~bic;
 
 		if (CTX_USABLE(pm,rp))
-		    setpte4m(va, tpte);
+			setpte4m(va, tpte);
 		else
-		    setptesw4m(pm, va, tpte);
+			setptesw4m(pm, va, tpte);
 	}
 	pv0->pv_flags = flags;
 	setcontext(ctx);
@@ -2400,24 +2405,24 @@ pv_syncflags4m(pv0)
 		sp = &rp->rg_segmap[vs];
 
 		if (sp->sg_pte == NULL)	/* invalid */
-		    continue;
+			continue;
 
 		tpte = getptesw4m(pm, va);
 		if (CTX_USABLE(pm,rp)) {
 			setcontext(pm->pm_ctxnum);
 			if (vactype != VAC_NONE && (tpte & SRMMU_PG_M))
-			    cache_flush_page(va); /* XXX: do we need this? */
+				cache_flush_page(va); /* XXX: do we need this?*/
 			tlb_flush_page(va);
 		}
 		if ((tpte & SRMMU_TETYPE) == SRMMU_TEPTE && /* if valid pte */
 		    (tpte & (SRMMU_PG_M|SRMMU_PG_R))) {	  /* and mod/refd */
 			flags |= (tpte >> PG_M_SHIFT4M) &
-			    (PV_MOD4M|PV_REF4M|PV_C4M);
+				 (PV_MOD4M|PV_REF4M|PV_C4M);
 			tpte &= ~(SRMMU_PG_M | SRMMU_PG_R);
 			if (CTX_USABLE(pm,rp))
-			    setpte4m(va, tpte); /* flushes cache too */
+				setpte4m(va, tpte); /* flushes cache too */
 			else
-			    setptesw4m(pm, va, tpte);
+				setptesw4m(pm, va, tpte);
 		}
 	}
 	pv0->pv_flags = flags;
@@ -3965,7 +3970,7 @@ pmap_rmk4_4c(pm, va, endva, vr, vs)
 			/* if cacheable, flush page as needed */
 			if (perpage && (tpte & PG_NC) == 0)
 				cache_flush_page(va);
-			i = ptoa(HWTOSW(tpte & PG_PFNUM));
+			i = ptoa(tpte & PG_PFNUM);
 			if (managed(i)) {
 				pv = pvhead(i);
 				pv->pv_flags |= MR4_4C(tpte);
@@ -4067,7 +4072,7 @@ pmap_rmk4m(pm, va, endva, vr, vs)
 			/* if cacheable, flush page as needed */
 			if (perpage && (tpte & SRMMU_PG_C))
 			    cache_flush_page(va);
-			i = ptoa(HWTOSW((tpte & SRMMU_PPNMASK) >> SRMMU_PPNSHIFT));
+			i = ptoa((tpte & SRMMU_PPNMASK) >> SRMMU_PPNSHIFT);
 			if (managed(i)) {
 				pv = pvhead(i);
 				pv->pv_flags |= MR4M(tpte);
@@ -4161,7 +4166,7 @@ pmap_rmu4_4c(pm, va, endva, vr, vs)
 				continue;
 			}
 			if ((tpte & PG_TYPE) == PG_OBMEM) {
-				i = ptoa(HWTOSW(tpte & PG_PFNUM));
+				i = ptoa(tpte & PG_PFNUM);
 				if (managed(i))
 					pv_unlink4_4c(pvhead(i), pm, va);
 			}
@@ -4224,7 +4229,7 @@ pmap_rmu4_4c(pm, va, endva, vr, vs)
 			/* if cacheable, flush page as needed */
 			if (perpage && (tpte & PG_NC) == 0)
 				cache_flush_page(va);
-			i = ptoa(HWTOSW(tpte & PG_PFNUM));
+			i = ptoa(tpte & PG_PFNUM);
 			if (managed(i)) {
 				pv = pvhead(i);
 				pv->pv_flags |= MR4_4C(tpte);
@@ -4336,14 +4341,14 @@ pmap_rmu4m(pm, va, endva, vr, vs)
 			tpte = getpte4m(va); /* should we just flush seg? */
 			tlb_flush_page(va);
 		} else
-		    tpte = getptesw4m(pm, va);
+			tpte = getptesw4m(pm, va);
 		if ((tpte & SRMMU_TETYPE) != SRMMU_TEPTE)
 			continue;
 		if ((tpte & SRMMU_PGTYPE) == PG_SUN4M_OBMEM) {
 			/* if cacheable, flush page as needed */
 			if (perpage && (tpte & SRMMU_PG_C))
-			    cache_flush_page(va);
-			i = ptoa(HWTOSW((tpte & SRMMU_PPNMASK) >> SRMMU_PPNSHIFT));
+				cache_flush_page(va);
+			i = ptoa((tpte & SRMMU_PPNMASK) >> SRMMU_PPNSHIFT);
 			if (managed(i)) {
 				pv = pvhead(i);
 				pv->pv_flags |= MR4M(tpte);
@@ -4856,7 +4861,7 @@ pmap_page_protect4m(pa, prot)
 				cache_flush_page(va);
 			tlb_flush_page(va);
 		} else
-		    tpte = getptesw4m(pm, va);
+			tpte = getptesw4m(pm, va);
 
 		if ((tpte & SRMMU_TETYPE) != SRMMU_TEPTE)
 			panic("pmap_page_protect !PG_V");
@@ -4981,7 +4986,7 @@ pmap_protect4m(pm, sva, eva, prot)
 				    (PPROT_WRITE|PG_SUN4M_OBMEM)) {
 					pmap_stats.ps_npg_prot_actual++;
 					if (vactype != VAC_NONE)
-					    cache_flush_page(va);
+						cache_flush_page(va);
 					setpte4m(va, tpte & ~PPROT_WRITE);
 				}
 			}
@@ -5040,8 +5045,8 @@ pmap_changeprot4m(pm, va, prot, wired)
 		setcontext(pm->pm_ctxnum);
 		tpte = getpte4m(va);
 		if (vactype == VAC_WRITEBACK &&
-		    (tpte & SRMMU_PGTYPE)==PG_SUN4M_OBMEM)
-		    cache_flush_page(va); /* XXX: paranoia? */
+		    (tpte & SRMMU_PGTYPE) == PG_SUN4M_OBMEM)
+			cache_flush_page(va); /* XXX: paranoia? */
 	} else {
 		tpte = getptesw4m(pm, va);
 	}
@@ -5050,9 +5055,9 @@ pmap_changeprot4m(pm, va, prot, wired)
 		goto useless;
 	}
 	if (pm->pm_ctx)
-	    setpte4m(va, (tpte & ~SRMMU_PROT_MASK) | newprot);
+		setpte4m(va, (tpte & ~SRMMU_PROT_MASK) | newprot);
 	else
-	    setptesw4m(pm, va, (tpte & ~SRMMU_PROT_MASK) | newprot);
+		setptesw4m(pm, va, (tpte & ~SRMMU_PROT_MASK) | newprot);
 	setcontext(ctx);
 	splx(s);
 	return;
@@ -5118,12 +5123,11 @@ pmap_enter4_4c(pm, va, pa, prot, wired)
 		if (!pmap_pa_exists(pa))
 			panic("pmap_enter: no such address: %lx", pa);
 #endif
-		pteproto |= SWTOHW(atop(pa));
 		pv = pvhead(pa);
 	} else {
-		pteproto |= atop(pa) & PG_PFNUM;
 		pv = NULL;
 	}
+	pteproto |= atop(pa) & PG_PFNUM;
 	if (prot & VM_PROT_WRITE)
 		pteproto |= PG_W;
 
@@ -5195,7 +5199,7 @@ printf("pmap_enk: changing existing va=>pa entry: va %lx, pteproto %x\n",
 			 * If old pa was managed, remove from pvlist.
 			 * If old page was cached, flush cache.
 			 */
-			addr = ptoa(HWTOSW(tpte & PG_PFNUM));
+			addr = ptoa(tpte & PG_PFNUM);
 			if (managed(addr))
 				pv_unlink4_4c(pvhead(addr), pm, va);
 			if ((tpte & PG_NC) == 0) {
@@ -5371,7 +5375,7 @@ printf("pmap_enter: pte filled during sleep\n");	/* can this happen? */
 				/* just changing prot and/or wiring */
 				splx(s);
 				/* caller should call this directly: */
-				pmap_changeprot(pm, va, prot, wired);
+				pmap_changeprot4_4c(pm, va, prot, wired);
 				if (wired)
 					pm->pm_stats.wired_count++;
 				else
@@ -5386,7 +5390,7 @@ printf("pmap_enter: pte filled during sleep\n");	/* can this happen? */
 /*printf("%s[%d]: pmap_enu: changing existing va(%x)=>pa entry\n",
 curproc->p_comm, curproc->p_pid, va);*/
 			if ((tpte & PG_TYPE) == PG_OBMEM) {
-				addr = ptoa(HWTOSW(tpte & PG_PFNUM));
+				addr = ptoa(tpte & PG_PFNUM);
 				if (managed(addr))
 					pv_unlink4_4c(pvhead(addr), pm, va);
 				if (vactype != VAC_NONE &&
@@ -5475,10 +5479,9 @@ pmap_enter4m(pm, va, pa, prot, wired)
 		printf("pmap_enter(%p, %lx, %lx, %x, %x)\n",
 		    pm, va, pa, prot, wired);
 #endif
-	if (!(pa & PMAP_NC))		/* Check & set cache bit */
-		pteproto = SRMMU_PG_C;
-	else
-		pteproto = 0;
+
+	/* Initialise pteproto with cache bit */
+	pteproto = (pa & PMAP_NC) == 0 ? SRMMU_PG_C : 0;
 
 	if (pa & PMAP_TYPE4M) {		/* this page goes in an iospace */
 		if (cpumod == SUN4M_MS)
@@ -5501,12 +5504,11 @@ pmap_enter4m(pm, va, pa, prot, wired)
 		if (!pmap_pa_exists(pa))
 			panic("pmap_enter: no such address: %lx", pa);
 #endif
-		pteproto |= SWTOHW(atop(pa)) << SRMMU_PPNSHIFT;
 		pv = pvhead(pa);
 	} else {
-		pteproto |= atop(pa) << SRMMU_PPNSHIFT;
 		pv = NULL;
 	}
+	pteproto |= (atop(pa) << SRMMU_PPNSHIFT);
 
 	if (prot & VM_PROT_WRITE)
 		pteproto |= PPROT_WRITE;
@@ -5571,14 +5573,13 @@ printf("pmap_enk4m: changing existing va=>pa entry: va %lx, pteproto %x, "
 			 * If old pa was managed, remove from pvlist.
 			 * If old page was cached, flush cache.
 			 */
-			addr = ptoa(HWTOSW((tpte & SRMMU_PPNMASK) >>
-					   SRMMU_PPNSHIFT));
+			addr = ptoa((tpte & SRMMU_PPNMASK) >> SRMMU_PPNSHIFT);
 			if (managed(addr))
 				pv_unlink4m(pvhead(addr), pm, va);
 			if (tpte & SRMMU_PG_C) {
 				setcontext(0);	/* ??? */
 				if (vactype != VAC_NONE)
-				    cache_flush_page((int)va);
+					cache_flush_page((int)va);
 			}
 		}
 	} else {
@@ -5595,7 +5596,7 @@ printf("pmap_enk4m: changing existing va=>pa entry: va %lx, pteproto %x, "
 	        pteproto &= ~(pv_link4m(pv, pm, va));
 
 	if (sp->sg_pte == NULL) /* If no existing pagetable */
-	    panic("pmap_enk4m: missing segment table for va 0x%lx",va);
+		panic("pmap_enk4m: missing segment table for va 0x%lx",va);
 
 	/* ptes kept in hardware only */
 	setpte4m(va, pteproto);
@@ -5668,8 +5669,8 @@ printf("pmap_enu4m: bizarre segment table fill during sleep\n");
 
 		rp->rg_seg_ptps = (int *)tblp;
 		qzero(tblp, size);
-		pm->pm_reg_ptps[vr] = (VA2PA(tblp) >> SRMMU_PPNPASHIFT) |
-		    SRMMU_TEPTD;
+		pm->pm_reg_ptps[vr] =
+			(VA2PA(tblp) >> SRMMU_PPNPASHIFT) | SRMMU_TEPTD;
 	}
 
 	sp = &rp->rg_segmap[vs];
@@ -5714,7 +5715,7 @@ printf("pmap_enter: pte filled during sleep\n");	/* can this happen? */
 				/* just changing prot and/or wiring */
 				splx(s);
 				/* caller should call this directly: */
-				pmap_changeprot(pm, va, prot, wired);
+				pmap_changeprot4m(pm, va, prot, wired);
 				if (wired)
 					pm->pm_stats.wired_count++;
 				else
@@ -5726,11 +5727,14 @@ printf("pmap_enter: pte filled during sleep\n");	/* can this happen? */
 			 * If old pa was managed, remove from pvlist.
 			 * If old page was cached, flush cache.
 			 */
-/*printf("%s[%d]: pmap_enu: changing existing va(%x)=>pa entry\n",
-curproc->p_comm, curproc->p_pid, va);*/
+#ifdef DEBUG
+if (pmapdebug & PDB_ENTER)
+printf("%s[%d]: pmap_enu: changing existing va(%x)=>pa(pte=%x) entry\n",
+curproc->p_comm, curproc->p_pid, (int)va, (int)pte);
+#endif
 			if ((tpte & SRMMU_PGTYPE) == PG_SUN4M_OBMEM) {
-				addr = ptoa(HWTOSW((tpte & SRMMU_PPNMASK) >>
-                                           SRMMU_PPNSHIFT));
+				addr = ptoa( (tpte & SRMMU_PPNMASK) >>
+					     SRMMU_PPNSHIFT);
 				if (managed(addr))
 					pv_unlink4m(pvhead(addr), pm, va);
 				if (vactype != VAC_NONE &&
@@ -5839,7 +5843,7 @@ pmap_extract4_4c(pm, va)
 		return (0);
 	}
 	tpte &= PG_PFNUM;
-	tpte = HWTOSW(tpte);
+	tpte = tpte;
 	return ((tpte << PGSHIFT) | (va & PGOFSET));
 }
 #endif /*4,4c*/
@@ -5878,8 +5882,7 @@ pmap_extract4m(pm, va)
 
 	setcontext(ctx);
 
-	return (ptoa(HWTOSW((tpte & SRMMU_PPNMASK) >> SRMMU_PPNSHIFT)) |
-		VA_OFF(va));
+	return (ptoa((tpte & SRMMU_PPNMASK) >> SRMMU_PPNSHIFT) | VA_OFF(va));
 }
 #endif /* sun4m */
 
@@ -5904,11 +5907,12 @@ pmap_copy(dst_pmap, src_pmap, dst_addr, len, src_addr)
 		for (i = 0; i < len/NBPG; i++) {
 			pte = getptesw4m(src_pmap, src_addr);
 			pmap_enter(dst_pmap, dst_addr,
-				   (ptoa(HWTOSW((pte & SRMMU_PPNMASK) >>
-						SRMMU_PPNSHIFT)) |
-				    VA_OFF(src_addr)),
-				   ((pte & PPROT_WRITE) ? VM_PROT_WRITE|
-				    VM_PROT_READ : VM_PROT_READ),
+				   ptoa((pte & SRMMU_PPNMASK) >>
+					SRMMU_PPNSHIFT) |
+				    VA_OFF(src_addr),
+				   (pte & PPROT_WRITE)
+					? VM_PROT_WRITE| VM_PROT_READ
+					: VM_PROT_READ,
 				   0);
 			src_addr += NBPG;
 			dst_addr += NBPG;
@@ -6136,9 +6140,8 @@ pmap_zero_page4_4c(pa)
 		 */
 		if (vactype != VAC_NONE)
 			pv_flushcache(pvhead(pa));
-		pte = PG_V | PG_S | PG_W | PG_NC | SWTOHW(atop(pa));
-	} else
-		pte = PG_V | PG_S | PG_W | PG_NC | (atop(pa) & PG_PFNUM);
+	}
+	pte = PG_V | PG_S | PG_W | PG_NC | (atop(pa) & PG_PFNUM);
 
 	va = vpage[0];
 	setpte4(va, pte);
@@ -6165,17 +6168,15 @@ pmap_copy_page4_4c(src, dst)
 	if (managed(src)) {
 		if (vactype == VAC_WRITEBACK)
 			pv_flushcache(pvhead(src));
-		spte = PG_V | PG_S | SWTOHW(atop(src));
-	} else
-		spte = PG_V | PG_S | (atop(src) & PG_PFNUM);
+	}
+	spte = PG_V | PG_S | (atop(src) & PG_PFNUM);
 
 	if (managed(dst)) {
 		/* similar `might not be necessary' comment applies */
 		if (vactype != VAC_NONE)
 			pv_flushcache(pvhead(dst));
-		dpte = PG_V | PG_S | PG_W | PG_NC | SWTOHW(atop(dst));
-	} else
-		dpte = PG_V | PG_S | PG_W | PG_NC | (atop(dst) & PG_PFNUM);
+	}
+	dpte = PG_V | PG_S | PG_W | PG_NC | (atop(dst) & PG_PFNUM);
 
 	sva = vpage[0];
 	dva = vpage[1];
@@ -6211,11 +6212,9 @@ pmap_zero_page4m(pa)
 		 */
 		if (vactype != VAC_NONE)
 			pv_flushcache(pvhead(pa));
-		pte = ~SRMMU_PG_C & (SRMMU_TEPTE | PPROT_S | PPROT_WRITE |
-				     (SWTOHW(atop(pa)) << SRMMU_PPNSHIFT));
-	} else
-	        pte = ~SRMMU_PG_C & (SRMMU_TEPTE | PPROT_S | PPROT_WRITE |
-				     (atop(pa) << SRMMU_PPNSHIFT));
+	}
+	pte = ~SRMMU_PG_C & (SRMMU_TEPTE | PPROT_S | PPROT_WRITE |
+	      (atop(pa) << SRMMU_PPNSHIFT));
 	va = vpage[0];
 	setpte4m((vm_offset_t) va, pte);
 	qzero(va, NBPG);
@@ -6241,21 +6240,18 @@ pmap_copy_page4m(src, dst)
 	if (managed(src)) {
 		if (vactype == VAC_WRITEBACK)
 			pv_flushcache(pvhead(src));
-		spte = SRMMU_TEPTE | SRMMU_PG_C | PPROT_S |
-		    (SWTOHW(atop(src)) << SRMMU_PPNSHIFT);
-	} else
-		spte = SRMMU_TEPTE | SRMMU_PG_C | PPROT_S |
-		    (atop(src) << SRMMU_PPNSHIFT);
+	}
+	spte = SRMMU_TEPTE | SRMMU_PG_C | PPROT_S |
+		(atop(src) << SRMMU_PPNSHIFT);
 
 	if (managed(dst)) {
 		/* similar `might not be necessary' comment applies */
 		if (vactype != VAC_NONE)
 			pv_flushcache(pvhead(dst));
-		dpte = ~SRMMU_PG_C & (SRMMU_TEPTE | PPROT_S | PPROT_WRITE |
-				     (SWTOHW(atop(dst)) << SRMMU_PPNSHIFT));
-	} else
-	        dpte = ~SRMMU_PG_C & (SRMMU_TEPTE | PPROT_S | PPROT_WRITE |
-				     (atop(dst) << SRMMU_PPNSHIFT));
+	}
+	dpte = ~SRMMU_PG_C & (SRMMU_TEPTE | PPROT_S | PPROT_WRITE |
+		(atop(dst) << SRMMU_PPNSHIFT));
+
 	sva = vpage[0];
 	dva = vpage[1];
 	setpte4m((vm_offset_t) sva, spte);
