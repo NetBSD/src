@@ -1,4 +1,4 @@
-/*	$NetBSD: bad144.c,v 1.16 2002/06/13 11:01:08 wiz Exp $	*/
+/*	$NetBSD: bad144.c,v 1.17 2002/06/13 13:32:47 wiz Exp $	*/
 
 /*
  * Copyright (c) 1980, 1986, 1988, 1993
@@ -43,7 +43,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1986, 1988, 1993\n\
 #if 0
 static char sccsid[] = "@(#)bad144.c	8.2 (Berkeley) 4/27/95";
 #else
-__RCSID("$NetBSD: bad144.c,v 1.16 2002/06/13 11:01:08 wiz Exp $");
+__RCSID("$NetBSD: bad144.c,v 1.17 2002/06/13 13:32:47 wiz Exp $");
 #endif
 #endif /* not lint */
 
@@ -181,7 +181,7 @@ usage:
 	if (dp->d_secsize > MAXSECSIZE || dp->d_secsize <= 0)
 		errx(7, "Disk sector size too large/small (%d)",
 		    dp->d_secsize);
-#ifdef i386
+#ifdef __i386__
 	if (dp->d_type == DTYPE_SCSI)
 		errx(1, "SCSI disks don't use bad144!");
 	/* are we inside a DOS partition? */
@@ -189,7 +189,7 @@ usage:
 		/* yes, rules change. assume bad tables at end of partition C,
 		   which maps all of DOS partition we are within -wfj */
 		size = dp->d_partitions[2].p_offset + dp->d_partitions[2].p_size;
-	} else
+	}
 #endif
 	size = dp->d_nsectors * dp->d_ntracks * dp->d_ncylinders; 
 	argc--;
@@ -256,7 +256,7 @@ usage:
 	errs = 0;
 	new = argc;
 	while (argc > 0) {
-		daddr_t sn = atoi(*argv++);
+		sn = atoi(*argv++);
 		argc--;
 		if (sn < 0 || sn >= size) {
 			printf("%d: out of range [0,%d) for disk %s\n",
