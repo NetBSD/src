@@ -1,4 +1,4 @@
-/*	$NetBSD: sigcode.s,v 1.6.6.1 1999/04/30 15:51:42 perry Exp $	*/
+/*	$NetBSD: sigcode.s,v 1.6.6.2 1999/04/30 16:12:05 perry Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -92,23 +92,4 @@ GLOBAL(sunos_sigcode)
 	.align	2
 GLOBAL(sunos_esigcode)
 #endif /* COMPAT_SUNOS */
-
-#ifdef COMPAT_SVR4
-	.data
-	.align	2
-GLOBAL(svr4_sigcode)
-	movl	sp@(SVR4_SIGF_HANDLER),a0	| signal handler addr
-	jsr	a0@				| call signal handler
-	lea	sp@(SVR4_SIGF_UC),a0		| ucontext to resume addr
-	movl	a0,sp@-				| push pointer to ucontext
-	movl	#SVR4_SETCONTEXT,sp@-		| push context() subcode
-	subql	#4,sp				| padding for call frame layout
-	movql	#SVR4_SYS_context,d0		| setcontext(&sf.sf_uc)
-	trap	#0				|  shouldn't return
-	movl	d0,sp@(4)			|  so save `errno'
-	moveq	#SVR4_SYS_exit,d0		|  and exit hard
-	trap	#0				| _exit(errno)
-	.align	2
-GLOBAL(svr4_esigcode)
-#endif /* COMPAT_SVR4 */
 
