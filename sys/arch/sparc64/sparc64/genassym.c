@@ -1,4 +1,4 @@
-/*	$NetBSD: genassym.c,v 1.13 2000/06/19 23:30:35 eeh Exp $ */
+/*	$NetBSD: genassym.c,v 1.13.2.1 2000/07/18 16:23:26 mrg Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -153,9 +153,6 @@ main()
 	off("CI_SPINUP", struct cpu_info, ci_spinup);
 	off("CI_INITSTACK", struct cpu_info, ci_initstack);
 	off("CI_PADDR", struct cpu_info, ci_paddr);
-	def("CURPROC", (CPUINFO_VA+CI_CURPROC));
-	def("CPCB", (CPUINFO_VA+CI_CPCB));
-	def("FPPROC", (CPUINFO_VA+CI_FPPROC));
 
 	/* FPU state */
 	off("FS_REGS", struct fpstate64, fs_regs);
@@ -226,10 +223,14 @@ main()
 	off("IH_ARG", struct intrhand, ih_arg);
 	off("IH_NUMBER", struct intrhand, ih_number);
 	off("IH_PIL", struct intrhand, ih_pil);
+	off("IH_PEND", struct intrhand, ih_pending);
 	off("IH_NEXT", struct intrhand, ih_next);
 	off("IH_MAP", struct intrhand, ih_map);
 	off("IH_CLR", struct intrhand, ih_clr);
 	siz("IH_SIZE", struct intrhand);
+
+	off("NO_NEXTNODE", struct nodeops, no_nextnode);
+	off("NO_GETPROP", struct nodeops, no_getprop);
 
 	/* floppy trap handler fields */
 	off("FDC_REG_MSR", struct fdcio, fdcio_reg_msr);

@@ -1,4 +1,4 @@
-/*	$NetBSD: psl.h,v 1.11 1999/08/05 18:28:01 thorpej Exp $ */
+/*	$NetBSD: psl.h,v 1.11.12.1 2000/07/18 16:23:23 mrg Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -136,20 +136,31 @@
 
 #define	PSTATE_BITS "\20\14IG\13MG\12CLE\11TLE\10\7MM\6RED\5PEF\4AM\3PRIV\2IE\1AG"
 
+
+/*
+ * 32-bit code requires TSO or at best PSO since that's what's supported on
+ * SPARC V8 and earlier machines.
+ *
+ * 64-bit code sets the memory model in the ELF header.
+ *
+ * We're running kernel code in TSO for the moment so we don't need to worry
+ * about possible memory barrier bugs.
+ */
+
 #ifdef __arch64__
 #define PSTATE_PROM	(PSTATE_MM_TSO|PSTATE_PRIV)
 #define PSTATE_NUCLEUS	(PSTATE_MM_TSO|PSTATE_PRIV|PSTATE_AG)
 #define PSTATE_KERN	(PSTATE_MM_TSO|PSTATE_PRIV)
 #define PSTATE_INTR	(PSTATE_KERN|PSTATE_IE)
-#define PSTATE_USER32	(PSTATE_MM_TSO|PSTATE_AM|PSTATE_IE)	/* It's easier to debug */
+#define PSTATE_USER32	(PSTATE_MM_TSO|PSTATE_AM|PSTATE_IE)
 #define PSTATE_USER	(PSTATE_MM_RMO|PSTATE_AM|PSTATE_IE)
 #else
 #define PSTATE_PROM	(PSTATE_MM_TSO|PSTATE_PRIV)
 #define PSTATE_NUCLEUS	(PSTATE_MM_TSO|PSTATE_AM|PSTATE_PRIV|PSTATE_AG)
 #define PSTATE_KERN	(PSTATE_MM_TSO|PSTATE_AM|PSTATE_PRIV)
 #define PSTATE_INTR	(PSTATE_KERN|PSTATE_IE)
-#define PSTATE_USER32	(PSTATE_MM_TSO|PSTATE_AM|PSTATE_IE)	/* It's easier to debug */
-#define PSTATE_USER	(PSTATE_MM_RMO|PSTATE_AM|PSTATE_IE)
+#define PSTATE_USER32	(PSTATE_MM_TSO|PSTATE_AM|PSTATE_IE)
+#define PSTATE_USER	(PSTATE_MM_TSO|PSTATE_AM|PSTATE_IE)
 #endif
 
 /*
@@ -159,8 +170,7 @@
  *  +-----+-----+-----+--------+---+-----+
  *  | CCR | ASI |  -  | PSTATE | - | CWP |
  *  +-----+-----+-----+--------+---+-----+
- *
- */
+ * */
 
 #define TSTATE_CWP		0x01f
 #define TSTATE_PSTATE		0x6ff00

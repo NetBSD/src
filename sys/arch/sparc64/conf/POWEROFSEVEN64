@@ -1,8 +1,6 @@
-# 	$NetBSD: GENERIC64,v 1.13 2000/04/15 03:08:12 mrg Exp $
+# 	$NetBSD: POWEROFSEVEN64,v 1.1.2.2 2000/07/18 16:23:17 mrg Exp $
 
-include "arch/sparc64/conf/GENERIC"
-
-#ident 		"GENERIC64-$Revision: 1.13 $"
+include "arch/sparc64/conf/POWEROFSEVEN"
 
 options 	_LP64		# we're using a 64-bit compiler
 options 	COMPAT_NETBSD32	# NetBSD/sparc binary compatibility

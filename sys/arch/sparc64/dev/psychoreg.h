@@ -1,4 +1,4 @@
-/*	$NetBSD: psychoreg.h,v 1.4 2000/05/24 20:27:52 eeh Exp $ */
+/*	$NetBSD: psychoreg.h,v 1.4.4.1 2000/07/18 16:23:20 mrg Exp $ */
 
 /*
  * Copyright (c) 1998, 1999 Eduardo E. Horvath
@@ -49,6 +49,22 @@ struct psychoreg {
 	} sys_upa;
 
 	u_int64_t	psy_csr;		/* PSYCHO control/status register */	/* 1fe.0000.0010 */
+	/* 
+	 * 63     59     55     50     45     4        3       2     1      0
+	 * +------+------+------+------+--//---+--------+-------+-----+------+
+	 * | IMPL | VERS | MID  | IGN  |  xxx  | APCKEN | APERR | IAP | MODE |
+	 * +------+------+------+------+--//---+--------+-------+-----+------+
+	 *
+	 */
+#define PSYCHO_GCSR_IMPL(csr)	((u_int)(((csr) >> 60) & 0xf))
+#define PSYCHO_GCSR_VERS(csr)	((u_int)(((csr) >> 56) & 0xf))
+#define PSYCHO_GCSR_MID(csr)	((u_int)(((csr) >> 51) & 0x1f))
+#define PSYCHO_GCSR_IGN(csr)	((u_int)(((csr) >> 46) & 0x1f))
+#define PSYCHO_CSR_APCKEN	8	/* UPA addr parity check enable */
+#define PSYCHO_CSR_APERR	4	/* UPA addr parity error */
+#define PSYCHO_CSR_IAP		2	/* invert UPA address parity */
+#define PSYCHO_CSR_MODE		1	/* UPA/PCI handshake */
+
 	u_int64_t	pad0;
 	u_int64_t	psy_ecccr;		/* ECC control register */		/* 1fe.0000.0020 */
 	u_int64_t	reserved;							/* 1fe.0000.0028 */
@@ -157,9 +173,9 @@ struct psychoreg {
 		u_int64_t	pci_afsr;	/* PCI a/b AFSR register */		/* 1fe.0000.2010,4010 */
 		u_int64_t	pci_afar;	/* PCI a/b AFAR register */		/* 1fe.0000.2018,4018 */
 		u_int64_t	pci_diag;	/* PCI a/b diagnostic register */	/* 1fe.0000.2020,4020 */
-		u_int64_t	pci_tasr;	/* PCI target address space reg (IIi)*/	/* 1fe.0000.2020,4028 */
+		u_int64_t	pci_tasr;	/* PCI target address space reg (IIi)*/	/* 1fe.0000.2028,4028 */
 
-		u_int64_t	pad12[250];
+		u_int64_t	pad12[251];
 
 		/* This is really the IOMMU's, not the PCI bus's */
 		struct iommu_strbuf pci_strbuf;						/* 1fe.0000.2800-210 */

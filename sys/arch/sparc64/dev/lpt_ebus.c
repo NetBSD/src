@@ -1,4 +1,4 @@
-/*	$NetBSD: lpt_ebus.c,v 1.5 2000/04/15 03:08:13 mrg Exp $	*/
+/*	$NetBSD: lpt_ebus.c,v 1.5.4.1 2000/07/18 16:23:19 mrg Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000 Matthew R. Green
@@ -101,8 +101,8 @@ lpt_ebus_attach(parent, self, aux)
 	}
 
 	for (i = 0; i < ea->ea_nintrs; i++)
-		bus_intr_establish(ea->ea_bustag, ea->ea_intrs[i], 0,
-		    lptintr, sc);
+		bus_intr_establish(ea->ea_bustag, ea->ea_intrs[i],
+				   IPL_SERIAL, 0, lptintr, sc);
 	printf("\n");
 
 	lpt_attach_subr(sc);

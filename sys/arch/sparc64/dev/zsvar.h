@@ -1,4 +1,4 @@
-/*	$NetBSD: zsvar.h,v 1.1.1.1 1998/06/20 04:58:51 eeh Exp $ */
+/*	$NetBSD: zsvar.h,v 1.1.1.1.24.1 2000/07/18 16:23:21 mrg Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -97,8 +97,8 @@ struct zs_chanstate {
 	struct	zs_chanstate *cs_next;	/* linked list for zshard() */
 	struct	zs_softc *cs_sc;	/* pointer to softc */
 	volatile struct zschan *cs_zc;	/* points to hardware regs */
-	int	cs_unit;		/* unit number */
 	struct	tty *cs_ttyp;		/* ### */
+	int	cs_unit;		/* unit number */
 
 	/*
 	 * We must keep a copy of the write registers as they are
@@ -134,8 +134,8 @@ struct zs_chanstate {
 	 * also be stopped for ^S; this sets TS_TTSTOP in tp->t_state.
 	 */
 	int	cs_tbc;			/* transmit byte count */
-	caddr_t	cs_tba;			/* transmit buffer address */
 	int	cs_heldtbc;		/* held tbc while xmission stopped */
+	caddr_t	cs_tba;			/* transmit buffer address */
 
 	/*
 	 * Printing an overrun error message often takes long enough to

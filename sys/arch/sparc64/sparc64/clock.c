@@ -1,4 +1,4 @@
-/*	$NetBSD: clock.c,v 1.19 2000/06/09 05:27:40 mrg Exp $ */
+/*	$NetBSD: clock.c,v 1.19.2.1 2000/07/18 16:23:25 mrg Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -79,9 +79,7 @@
 #include <machine/autoconf.h>
 #include <machine/eeprom.h>
 #include <machine/cpu.h>
-#include <machine/ctlreg.h>
 
-#include <sparc64/sparc64/vaddrs.h>
 #include <sparc64/sparc64/clockreg.h>
 #include <sparc64/sparc64/intreg.h>
 #include <sparc64/sparc64/timerreg.h>
@@ -107,20 +105,6 @@ int timerok;
 #include <dev/ic/intersil7170.h>
 
 extern struct idprom idprom;
-
-#define intersil_command(run, interrupt) \
-    (run | interrupt | INTERSIL_CMD_FREQ_32K | INTERSIL_CMD_24HR_MODE | \
-     INTERSIL_CMD_NORMAL_MODE)
-
-#define intersil_disable(CLOCK) \
-    CLOCK->clk_cmd_reg = \
-    intersil_command(INTERSIL_CMD_RUN, INTERSIL_CMD_IDISABLE)
-
-#define intersil_enable(CLOCK) \
-    CLOCK->clk_cmd_reg = \
-    intersil_command(INTERSIL_CMD_RUN, INTERSIL_CMD_IENABLE)
-
-#define intersil_clear(CLOCK) CLOCK->clk_intr_reg
 
 static long tick_increment;
 
@@ -352,10 +336,11 @@ timerattach(parent, self, aux)
 
 	/* Install the appropriate interrupt vector here */
 	level10.ih_number = ma->ma_interrupts[0];
-/*	level10.ih_clr = (void*)timerreg_4u.t_clrintr[0]; */
+	level10.ih_clr = (void*)&timerreg_4u.t_clrintr[0];
 	intr_establish(10, &level10);
 	level14.ih_number = ma->ma_interrupts[1];
-/*	level14.ih_clr = (void*)timerreg_4u.t_clrintr[1]; */
+	level14.ih_clr = (void*)&timerreg_4u.t_clrintr[1];
+
 	intr_establish(14, &level14);
 	printf(" irq vectors %lx and %lx", 
 	       (u_long)level10.ih_number, 
@@ -486,6 +471,7 @@ cpu_initclocks()
 	/* Set a 1s clock */
 	if (intrdebug) {
 		hz = 1;
+		tick = 1000000 / hz;
 		printf("intrdebug set: 1Hz clock\n");
 	}
 #endif
@@ -572,24 +558,23 @@ cpu_initclocks()
 	 * Also need to map the interrupts cause we're not a child of the sbus.
 	 * N.B. By default timer[0] is disabled and timer[1] is enabled.
 	 */
-#if 0
-	timerreg_4u.t_timer[0].t_limit = tmr_ustolim(tick)|TMR_LIM_IEN|TMR_LIM_PERIODIC|TMR_LIM_RELOAD;
-	timerreg_4u.t_mapintr[0] |= INTMAP_V; 
-	timerreg_4u.t_timer[1].t_limit = tmr_ustolim(statint)|TMR_LIM_IEN|TMR_LIM_RELOAD;
-	timerreg_4u.t_mapintr[1] |= INTMAP_V; 
-#else
-	stxa(&timerreg_4u.t_timer[0].t_limit, ASI_NUCLEUS, tmr_ustolim(tick)|TMR_LIM_IEN|TMR_LIM_PERIODIC|TMR_LIM_RELOAD); 
-	stxa(&timerreg_4u.t_mapintr[0], ASI_NUCLEUS, timerreg_4u.t_mapintr[0]|INTMAP_V); 
+	stxa((vaddr_t)&timerreg_4u.t_timer[0].t_limit, ASI_NUCLEUS,
+	     tmr_ustolim(tick)|TMR_LIM_IEN|TMR_LIM_PERIODIC|TMR_LIM_RELOAD); 
+	stxa((vaddr_t)&timerreg_4u.t_mapintr[0], ASI_NUCLEUS, 
+	     timerreg_4u.t_mapintr[0]|INTMAP_V); 
 
 #ifdef DEBUG
 	if (intrdebug)
 		/* Neglect to enable timer */
-		stxa(&timerreg_4u.t_timer[1].t_limit, ASI_NUCLEUS, tmr_ustolim(statint)|TMR_LIM_RELOAD); 
+		stxa((vaddr_t)&timerreg_4u.t_timer[1].t_limit, ASI_NUCLEUS, 
+		     tmr_ustolim(statint)|TMR_LIM_RELOAD); 
 	else
 #endif
-		stxa(&timerreg_4u.t_timer[1].t_limit, ASI_NUCLEUS, tmr_ustolim(statint)|TMR_LIM_IEN|TMR_LIM_RELOAD); 
-	stxa(&timerreg_4u.t_mapintr[1], ASI_NUCLEUS, timerreg_4u.t_mapintr[1]|INTMAP_V); 
-#endif
+		stxa((vaddr_t)&timerreg_4u.t_timer[1].t_limit, ASI_NUCLEUS, 
+		     tmr_ustolim(statint)|TMR_LIM_IEN|TMR_LIM_RELOAD); 
+	stxa((vaddr_t)&timerreg_4u.t_mapintr[1], ASI_NUCLEUS, 
+	     timerreg_4u.t_mapintr[1]|INTMAP_V); 
+
 	statmin = statint - (statvar >> 1);
 	
 	/* Also zero out %tick which should be valid for at least 10 years */
@@ -616,27 +601,7 @@ int
 clockintr(cap)
 	void *cap;
 {
-	int s;
-
-#if 1
 	/* Let locore.s clear the interrupt for us. */
-	/*
-	 * Protect the clearing of the clock interrupt.  If we don't
-	 * do this, and we're interrupted (by the zs, for example),
-	 * the clock stops!
-	 * XXX WHY DOES THIS HAPPEN?
-	 */
-	s = splhigh();
-
-	/* read the register to clear the interrupt */
-#if 0
-	timerreg_4u.t_clrintr[0] = 0;
-#else
-	stxa(&timerreg_4u.t_clrintr[0], ASI_NUCLEUS, 0LL);
-#endif
-	splx(s);
-#endif
-
 	hardclock((struct clockframe *)cap);
 	return (1);
 }
@@ -690,15 +655,6 @@ statintr(cap)
 #ifdef NOT_DEBUG
 	prom_printf("!");
 #endif
-#if 1
-	/* Let locore.s clear the interrupt for us. */
-	/* read the limit register to clear the interrupt */
-#if 0
-	timerreg_4u.t_clrintr[1]=0;
-#else
-	stxa(&timerreg_4u.t_clrintr[1], ASI_NUCLEUS, 0LL);
-#endif
-#endif
 	statclock((struct clockframe *)cap);
 #ifdef NOTDEF_DEBUG
 	/* Don't re-schedule the IRQ */
@@ -715,17 +671,8 @@ statintr(cap)
 	} while (r == 0);
 	newint = statmin + r;
 
-#if 0
-	timerreg_4u.t_timer[1].t_limit = tmr_ustolim(newint)|TMR_LIM_IEN|TMR_LIM_RELOAD;
-#else
-	stxa(&timerreg_4u.t_timer[1].t_limit, ASI_NUCLEUS, tmr_ustolim(newint)|TMR_LIM_IEN|TMR_LIM_RELOAD);
-
-#ifdef NOT_DEBUG
-	/* Use normal clock instead */
-	stathz = 0;
-	stxa(&timerreg_4u.t_timer[1].t_limit, ASI_NUCLEUS, tmr_ustolim(newint)|TMR_LIM_RELOAD);
-#endif
-#endif
+	stxa((vaddr_t)&timerreg_4u.t_timer[1].t_limit, ASI_NUCLEUS, 
+	     tmr_ustolim(newint)|TMR_LIM_IEN|TMR_LIM_RELOAD);
 	return (1);
 }
 

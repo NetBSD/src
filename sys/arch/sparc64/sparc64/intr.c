@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.c,v 1.25 2000/06/08 23:01:22 eeh Exp $ */
+/*	$NetBSD: intr.c,v 1.25.2.1 2000/07/18 16:23:26 mrg Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -111,7 +111,7 @@ void	strayintr __P((const struct trapframe64 *, int));
 int	softintr __P((void *));
 int	softnet __P((void *));
 int	send_softclock __P((void *));
-int	intr_list_handler __P((void *));
+int	intr_list_handler __P((void *, void *));
 
 /*
  * Stray interrupt handler.  Clear it if possible.
@@ -127,6 +127,7 @@ strayintr(fp, vectored)
 {
 	static int straytime, nstray;
 	int timesince;
+	char buf[256];
 #if 0
 	extern int swallow_zsintrs;
 #endif
@@ -140,9 +141,11 @@ strayintr(fp, vectored)
 	/* If we're in polled mode ignore spurious interrupts */
 	if ((fp->tf_pil == PIL_SER) /* && swallow_zsintrs */) return;
 
-	printf("stray interrupt ipl %u pc=%lx npc=%lx pstate=%lb vecttored=%d\n",
-		fp->tf_pil, fp->tf_pc, fp->tf_npc, 
-	       (unsigned long)(fp->tf_tstate>>TSTATE_PSTATE_SHIFT), PSTATE_BITS, vectored);
+	printf("stray interrupt ipl %u pc=%lx npc=%lx pstate=%s vecttored=%d\n",
+	    fp->tf_pil, fp->tf_pc, fp->tf_npc, 
+	    bitmask_snprintf((fp->tf_tstate>>TSTATE_PSTATE_SHIFT),
+	      PSTATE_BITS, buf, sizeof(buf)), vectored);
+
 	timesince = time.tv_sec - straytime;
 	if (timesince <= 10) {
 		if (++nstray > 500)
@@ -151,6 +154,9 @@ strayintr(fp, vectored)
 		straytime = time.tv_sec;
 		nstray = 1;
 	}
+#ifdef DDB
+	Debugger();
+#endif
 }
 
 #include "arp.h"
@@ -248,8 +254,9 @@ int fastvec = 0;
  * a handler to hand out interrupts.
  */
 int
-intr_list_handler(arg)
+intr_list_handler(arg, vec)
 	void * arg;
+	void * vec;
 {
 	int claimed = 0;
 	struct intrhand *ih = (struct intrhand *)arg;
@@ -260,9 +267,9 @@ intr_list_handler(arg)
 #ifdef DEBUG
 		{
 			extern int intrdebug;
-			if (intrdebug)
-				printf("intr %p %x arg %p %s\n",
-					ih, ih->ih_number, ih->ih_arg,
+			if (intrdebug & 1)
+				printf("intr %p %x arg %p vec %p %s\n",
+					ih, ih->ih_number, ih->ih_arg, vec,
 					claimed ? "claimed" : "");
 		}
 #endif
@@ -290,6 +297,7 @@ intr_establish(level, ih)
 	 * and we do want to preserve order.
 	 */
 	ih->ih_pil = level; /* XXXX caller should have done this before */
+	ih->ih_pending = 0; /* XXXX caller should have done this before */
 	ih->ih_next = NULL;
 	for (p = &intrhand[level]; (q = *p) != NULL; p = &q->ih_next)
 		;
@@ -352,6 +360,8 @@ softintr_establish(level, fun, arg)
 	ih->ih_fun = fun;
 	ih->ih_arg = arg;
 	ih->ih_pil = level;
+	ih->ih_pending = 0;
+	ih->ih_clr = NULL;
 	return (void *)ih;
 }
 

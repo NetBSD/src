@@ -1,4 +1,4 @@
-#	$NetBSD: genassym.cf,v 1.15 2000/06/19 23:30:35 eeh Exp $
+#	$NetBSD: genassym.cf,v 1.15.2.1 2000/07/18 16:23:26 mrg Exp $
 
 #
 # Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -155,9 +155,6 @@ define	CI_UPAID	offsetof(struct cpu_info, ci_upaid)
 define	CI_SPINUP	offsetof(struct cpu_info, ci_spinup)
 define	CI_INITSTACK	offsetof(struct cpu_info, ci_initstack)
 define	CI_PADDR	offsetof(struct cpu_info, ci_paddr)
-define	CURPROC		(CPUINFO_VA+CI_CURPROC)
-define	CPCB		(CPUINFO_VA+CI_CPCB)
-define	FPPROC		(CPUINFO_VA+CI_FPPROC)
 
 # FPU state
 define	FS_REGS		offsetof(struct fpstate64, fs_regs)
@@ -229,6 +226,7 @@ define	IH_FUN		offsetof(struct intrhand, ih_fun)
 define	IH_ARG		offsetof(struct intrhand, ih_arg)
 define	IH_NUMBER	offsetof(struct intrhand, ih_number)
 define	IH_PIL		offsetof(struct intrhand, ih_pil)
+define	IH_PEND		offsetof(struct intrhand, ih_pending)
 define	IH_NEXT		offsetof(struct intrhand, ih_next)
 define	IH_MAP		offsetof(struct intrhand, ih_map)
 define	IH_CLR		offsetof(struct intrhand, ih_clr)
@@ -242,3 +240,22 @@ define	FDC_NSTAT	offsetof(struct fdcio, fdcio_nstat)
 define	FDC_DATA	offsetof(struct fdcio, fdcio_data)
 define	FDC_TC		offsetof(struct fdcio, fdcio_tc)
 define	FDC_EVCNT	offsetof(struct fdcio, fdcio_intrcnt.ev_count)
+
+ifdef notyet
+# db_regs structure so we can save all registers
+define	DBR_TRAPS	offsetof(struct db_regs, dbr_traps)
+define	DBR_Y		offsetof(struct db_regs, dbr_y)
+define	DBR_TL		offsetof(struct db_regs, dbr_tl)
+define	DBR_CANRESTORE	offsetof(struct db_regs, dbr_canrestore)
+define	DBR_CANSAVE	offsetof(struct db_regs, dbr_cansave)
+define	DBR_CLEANWIN	offsetof(struct db_regs, dbr_cleanwin)
+define	DBR_CWP		offsetof(struct db_regs, dbr_cwp)
+define	DBR_WSTATE	offsetof(struct db_regs, dbr_wstate)
+define	DBR_G		offsetof(struct db_regs, dbr_g)
+define	DBR_AG		offsetof(struct db_regs, dbr_ag)
+define	DBR_IG		offsetof(struct db_regs, dbr_ig)
+define	DBR_MG		offsetof(struct db_regs, dbr_mg)
+define	DBR_OUT		offsetof(struct db_regs, dbr_out)
+define	DBR_LOCAL	offsetof(struct db_regs, dbr_local)
+define	DBR_IN		offsetof(struct db_regs, dbr_in)
+endif
