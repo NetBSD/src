@@ -1,4 +1,4 @@
-/*	$NetBSD: uipc_socket.c,v 1.94 2004/03/17 10:21:59 yamt Exp $	*/
+/*	$NetBSD: uipc_socket.c,v 1.95 2004/03/17 10:30:18 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -68,7 +68,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uipc_socket.c,v 1.94 2004/03/17 10:21:59 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uipc_socket.c,v 1.95 2004/03/17 10:30:18 yamt Exp $");
 
 #include "opt_sock_counters.h"
 #include "opt_sosend_loan.h"
@@ -162,20 +162,13 @@ int sokvawaiters;
 
 static size_t sodopendfree(struct socket *);
 static size_t sodopendfreel(struct socket *);
+static __inline void sokvareserve(struct socket *, vsize_t);
+static __inline void sokvaunreserve(vsize_t);
 
-/*
- * sokvaalloc: allocate kva for loan.
- */
-
-vaddr_t
-sokvaalloc(vsize_t len, struct socket *so)
+static __inline void
+sokvareserve(struct socket *so, vsize_t len)
 {
-	vaddr_t lva;
 	int s;
-
-	/*
-	 * reserve kva.
-	 */
 
 	s = splvm();
 	simple_lock(&so_pendfree_slock);
@@ -203,14 +196,46 @@ sokvaalloc(vsize_t len, struct socket *so)
 	socurkva += len;
 	simple_unlock(&so_pendfree_slock);
 	splx(s);
+}
+
+static __inline void
+sokvaunreserve(vsize_t len)
+{
+	int s;
+
+	s = splvm();
+	simple_lock(&so_pendfree_slock);
+	socurkva -= len;
+	if (sokvawaiters)
+		wakeup(&socurkva);
+	simple_unlock(&so_pendfree_slock);
+	splx(s);
+}
+
+/*
+ * sokvaalloc: allocate kva for loan.
+ */
+
+vaddr_t
+sokvaalloc(vsize_t len, struct socket *so)
+{
+	vaddr_t lva;
+
+	/*
+	 * reserve kva.
+	 */
+
+	sokvareserve(so, len);
 
 	/*
 	 * allocate kva.
 	 */
 
 	lva = uvm_km_valloc_wait(kernel_map, len);
-	if (lva == 0)
+	if (lva == 0) {
+		sokvaunreserve(len);
 		return (0);
+	}
 
 	return lva;
 }
@@ -222,7 +247,6 @@ sokvaalloc(vsize_t len, struct socket *so)
 void
 sokvafree(vaddr_t sva, vsize_t len)
 {
-	int s;
 
 	/*
 	 * free kva.
@@ -234,13 +258,7 @@ sokvafree(vaddr_t sva, vsize_t len)
 	 * unreserve kva.
 	 */
 
-	s = splvm();
-	simple_lock(&so_pendfree_slock);
-	socurkva -= len;
-	if (sokvawaiters)
-		wakeup(&socurkva);
-	simple_unlock(&so_pendfree_slock);
-	splx(s);
+	sokvaunreserve(len);
 }
 
 static void
