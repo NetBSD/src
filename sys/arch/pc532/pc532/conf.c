@@ -31,7 +31,7 @@
  * SUCH DAMAGE.
  *
  *      from: @(#)conf.c	7.9 (Berkeley) 5/28/91
- *	$Id: conf.c,v 1.10 1994/06/26 15:00:40 phil Exp $
+ *	$Id: conf.c,v 1.11 1994/07/13 07:08:18 phil Exp $
  */
 
 #include <sys/param.h>
@@ -288,7 +288,7 @@ int	mem_no = 2; 	/* major device number of memory special file */
  * confuse, e.g. the hashing routines. Instead, /dev/drum is
  * provided as a character (raw) device.
  */
-dev_t	swapdev = makedev(3, 0);
+dev_t	swapdev = makedev(1, 0);
 
 /*
  * Returns true if dev is /dev/mem or /dev/kmem.
