@@ -1,4 +1,4 @@
-/*	$NetBSD: print-ospf6.c,v 1.3 1999/07/06 13:05:14 itojun Exp $	*/
+/*	$NetBSD: print-ospf6.c,v 1.4 1999/09/04 03:36:42 itojun Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993, 1994, 1995, 1996, 1997
@@ -24,8 +24,8 @@
  */
 
 #ifndef lint
-static const char rcsid[] =
-    "@(#) $Header: /cvsroot/src/usr.sbin/tcpdump/Attic/print-ospf6.c,v 1.3 1999/07/06 13:05:14 itojun Exp $ (LBL)";
+#include <sys/cdefs.h>
+__RCSID("$NetBSD: print-ospf6.c,v 1.4 1999/09/04 03:36:42 itojun Exp $");
 #endif
 
 #include <sys/param.h>
