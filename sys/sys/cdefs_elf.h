@@ -1,4 +1,4 @@
-/*	$NetBSD: cdefs_elf.h,v 1.16 2003/10/06 04:55:37 matt Exp $	*/
+/*	$NetBSD: cdefs_elf.h,v 1.17 2003/10/29 21:56:02 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1995, 1996 Carnegie-Mellon University.
@@ -69,10 +69,10 @@
 #ifdef __LEADING_UNDERSCORE
 #define __weak_alias(alias,sym) ___weak_alias(_/**/alias,_/**/sym)
 #define	___weak_alias(alias,sym)					\
-    __asm__(".weak alias ; alias = sym");
+    __asm__(".weak alias\nalias = sym");
 #else
 #define	__weak_alias(alias,sym)						\
-    __asm__(".weak alias ; alias = sym");
+    __asm__(".weak alias\nalias = sym");
 #endif
 #ifdef __LEADING_UNDERSCORE
 #define __weak_extern(sym) ___weak_extern(_/**/sym)
@@ -83,16 +83,16 @@
     __asm__(".weak sym");
 #endif
 #define	__warn_references(sym,msg)					\
-    __asm__(".section .gnu.warning.sym ; .ascii msg ; .text");
+    __asm__(".section .gnu.warning.sym\n\t.ascii msg ; .text");
 
 #endif /* !__STDC__ */
 
 #if __STDC__
 #define	__SECTIONSTRING(_sec, _str)					\
-	__asm__(".section " #_sec " ; .asciz \"" _str "\" ; .previous")
+	__asm__(".section " #_sec "\n\t.asciz \"" _str "\"\n\t.previous")
 #else
 #define	__SECTIONSTRING(_sec, _str)					\
-	__asm__(".section _sec ; .asciz _str ; .previous")
+	__asm__(".section _sec\n\t.asciz _str\n\t.previous")
 #endif
 
 #define	__IDSTRING(_n,_s)		__SECTIONSTRING(.ident,_s)
