@@ -1,4 +1,4 @@
-.\"	$NetBSD: prep.OPENFIRMWARE,v 1.3 2003/09/07 00:06:05 mbw Exp $
+.\"	$NetBSD: prep.OPENFIRMWARE,v 1.4 2003/10/11 00:04:06 mbw Exp $
 .if \*[OF_VERSION_3] \{\
 .
 .Ss2 Updating your BootROM
@@ -1210,19 +1210,24 @@ correct device for your system (for i386 it would be
 .Em "From a MacOS machine (using Toast)"
 .Pp
 .(enum
-Open the
-.Sq Format
-menu and pick
+Click the
+.Sq Other
+button in the main window.
+.Pp
+.It
+Open the contextual menu on the
+.Sq Other
+button and select
 .Sq "Disk Image"
 .Pp
 .It
 Click the
-.Dq Data...
+.Sq Select
 button and select the disk image you downloaded.
 .Pp
 .It
 Click the
-.Dq "Write CD..."
+.Sq "Record"
 button
 .enum)
 .bullet)
@@ -1368,7 +1373,7 @@ distribution sets on the
 .(bullet
 .Em From an UNIX-like machine
 .Pp
-Get and install mkhybrid.
+Get and install mkisofs.
 This is now part of the cdrecord package.
 .Nx
 users should install it from the package collection.
@@ -1382,10 +1387,10 @@ systems should get it from the official website:
 .Pp
 .(disp
 .if \*[OF_VERSION_12] \{\
-.No # Ic "mkhybrid -o output.iso -a -l -J -r -L /cdsources"
+.No # Ic "mkisofs -o output.iso -l -J -r -L -N /cdsources"
 .\}
 .if \*[OF_VERSION_3] \{\
-.No # Ic "mkhybrid -o output.iso -hfs -part -a -l -J -r -L /cdsources"
+.No # Ic "mkisofs -o output.iso -hfs -part -l -J -r -L -N /cdsources"
 .\}
 .No # Ic "cdrecord -v speed=4 dev=/dev/cd1c output.iso"
 .disp)
@@ -1403,73 +1408,64 @@ Bootable CD-ROM HOW-TO for more detail:
 .Em "From a MacOS machine (using Toast)"
 .Pp
 .(enum
-Open the
-.Sq Format
-menu and pick
+Click the
 .if \*[OF_VERSION_12] \{\
+.Sq Other
+button in the main window
+.Pp
+.It
+Open the contextual menu on the
+.Sq Other
+button and select
 .Sq "ISO 9660"
 .Pp
 .It
 Click the
-.Dq Data...
-button and drag
+.Sq Select
+button.
+.Pp
+.It
+Click the 
+.Sq Settings
+tab, open the 
+.Sq Naming
+popup menu, and pick 
+.Sq "Allow Macintosh Names"
+.Pp
+.It
+Click on the
+.Sq Files
+tab
+.\}
+.if \*[OF_VERSION_3] \{\
+.Sq Data
+button in the main window
+.Pp
+.It
+Pick
+.Sq "Mac OS and PC (Hybrid) CD"
+from the popup menu between the four buttons and the file and folder area.
+.\}
+.Pp
+.It
+Drag
 .Pa installation/ofwboot.xcf
 and
 .Pa binary/kernel/netbsd-GENERIC_MD.gz
-into the window
-.\}
-.if \*[OF_VERSION_3] \{\
-.Sq "Mac/ISO Hybrid"
-.Pp
-.It
-Open the
-.Sq Utilities
-menu and pick
-.Sq "Create Temporary Partition..."
-.Pp
-.It
-Make this temporary partition large enough for all of the files you will
-be placing on the HFS portion of the CD (only
-.Pa ofwboot.xcf
-is necessary).
-.Pp
-.It
-Copy
-.Pa installation/ofwboot.xcf
-to the temporary partition
-.Pp
-.It
-Click the
-.Dq Data...
-button and select the temporary partition you just created
-.Pp
-.It
-Click the
-.Dq ISO...
-button and drag
-.Pa binary/kernel/netbsd-GENERIC_MD.gz
-into the window.
-You may also want to drag the
+into the window.  You may also want to drag the
 .Nx \*V
 distribution sets to this window as well.
+.if \*[OF_VERSION_12] \{\
+.Pp
+.It
+Click the
+.Sq Done
+button
 .\}
 .Pp
 .It
 Click the
-.Dq Settings
-tab, open the
-.Dq Naming
-popup menu, and pick
-.Dq "Macintosh Names"
-.Pp
-.It
-Click the
-.Dq Done
-button
-.Pp
-.It
-Click the
-.Dq "Write CD..."
+.Sq Record
 button
 .enum)
 .bullet)
