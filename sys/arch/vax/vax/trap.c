@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.77 2003/01/20 04:45:57 matt Exp $     */
+/*	$NetBSD: trap.c,v 1.78 2003/03/01 21:52:00 matt Exp $     */
 
 /*
  * Copyright (c) 1994 Ludd, University of Lule}, Sweden.
@@ -73,12 +73,14 @@
 volatile int startsysc = 0, faultdebug = 0;
 #endif
 
+int	cpu_printfataltraps = 0;
+
 static __inline void userret (struct lwp *, struct trapframe *, u_quad_t);
 
 void	trap (struct trapframe *);
 void	syscall (struct trapframe *);
 
-char *traptypes[]={
+const char * const traptypes[]={
 	"reserved addressing",
 	"privileged instruction",
 	"reserved operand",
@@ -339,12 +341,10 @@ if(faultdebug)printf("trap accflt type %lx, code %lx, pc %lx, psl %lx\n",
 #endif
 	}
 	if (trapsig) {
-#ifdef DEBUG
-		if (sig == SIGSEGV || sig == SIGILL)
-			printf("pid %d (%s): sig %d: type %lx, code %lx, pc %lx, psl %lx\n",
-			       p->p_pid, p->p_comm, sig, frame->trap,
+		if ((sig == SIGSEGV || sig == SIGILL) && cpu_printfataltraps)
+			printf("pid %d.%d (%s): sig %d: type %lx, code %lx, pc %lx, psl %lx\n",
+			       p->p_pid, l->l_lid, p->p_comm, sig, frame->trap,
 			       frame->code, frame->pc, frame->psl);
-#endif
 		KERNEL_PROC_LOCK(l);
 		trapsignal(l, sig, frame->code);
 		KERNEL_PROC_UNLOCK(l);
