@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.378 2001/10/04 00:02:09 hubertf Exp $
+#	$NetBSD: mi,v 1.379 2001/10/04 16:18:45 oster Exp $
 ./sys				comp-sysutil-root
 ./usr/bin/addr2line		comp-debug-bin
 ./usr/bin/ar			comp-util-bin
@@ -160,6 +160,9 @@
 ./usr/include/dev/pcmcia		comp-c-include
 ./usr/include/dev/pcmcia/if_cnwioctl.h	comp-c-include
 ./usr/include/dev/pcmcia/if_rayreg.h	comp-c-include
+./usr/include/dev/raidframe		comp-c-include
+./usr/include/dev/raidframe/raidframeio.h	comp-c-include
+./usr/include/dev/raidframe/raidframevar.h	comp-c-include
 ./usr/include/dev/sbus			comp-c-include
 ./usr/include/dev/sbus/mbppio.h		comp-c-include
 ./usr/include/dev/scsipi		comp-c-include
