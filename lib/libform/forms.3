@@ -1,4 +1,4 @@
-.\"	$NetBSD: forms.3,v 1.10 2002/10/01 19:15:17 wiz Exp $
+.\"	$NetBSD: forms.3,v 1.11 2003/03/31 18:41:51 perry Exp $
 .\"
 .\" Copyright (c) 2001
 .\"	Brett Lymn - blymn@baea.com.au, brett_lymn@yahoo.com.au
@@ -171,11 +171,11 @@ E_BAD_ARGUMENT		One or more of the arguments passed to the function
 			was incorrect.
 E_POSTED		The form is already posted.
 E_CONNECTED		An field was already connected to a form.
-E_BAD_STATE		The function was called from within an initialisation
+E_BAD_STATE		The function was called from within an initialization
 			or termination routine.
 E_NO_ROOM		The form does not fit within the subwindow.
 E_NOT_POSTED		The form is not posted
-E_UNKNOWN_COMMAND	The form driver does not recognise the request
+E_UNKNOWN_COMMAND	The form driver does not recognize the request
 			passed to it.
 E_NOT_SELECTABLE	The field could not be selected.
 E_NOT_CONNECTED		The field is not connected to a form.
@@ -190,13 +190,13 @@ E_CURRENT		The field is the active one on the form.
 .Xr curses 3 ,
 .Xr menus 3
 .Sh NOTES
-This implementation of the forms library does depart in behaviour
+This implementation of the forms library does depart in behavior
 subtly from the original AT \*[Am] T implementation.
 Some of the more notable departures are:
 .Pp
 .Bl -tag -width "circular fields" -compact
 .It field wrapping
-For multiline fields the data will be wrapped as it is entered, this
+For multi-line fields the data will be wrapped as it is entered, this
 does not happen in the AT\*[Am]T implementation.
 .It buffer 0
 In this implementation, the contents of buffer 0 are always current
@@ -204,7 +204,7 @@ regardless of whether the field has been validated or not.
 .It circular fields
 In the AT\*[Am]T implementation fields are circular on a page, that is, a
 next field from the last field will go to the first field on the
-curent page.
+current page.
 In this implementation a next field request on the last
 field of a page will result in the forms library positioning the
 cursor on the first field of the next page.
