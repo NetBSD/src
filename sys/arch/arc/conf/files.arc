@@ -1,4 +1,4 @@
-#	$NetBSD: files.arc,v 1.48 2003/10/29 18:17:49 tsutsui Exp $
+#	$NetBSD: files.arc,v 1.49 2003/11/17 12:53:47 tsutsui Exp $
 #	$OpenBSD: files.arc,v 1.21 1999/09/11 10:20:20 niklas Exp $
 #
 # maxpartitions must be first item in files.${ARCH}
@@ -252,15 +252,6 @@ file	arch/arc/jazz/com_jazzio.c	com & com_jazzio
 
 # Game adapter (joystick)
 file	arch/arc/isa/joy_timer.c	joy
-
-# National Semiconductor DS8390/WD83C690-based boards
-# (WD/SMC 80x3 family, SMC Ultra [8216], 3Com 3C503, NE[12]000, and clones)
-# XXX conflicts with other ports; can't be in files.isa
-## XXX: should fix conflict with files.isa
-#device	ed: ether, ifnet
-#attach	ed at isa with ed_isa
-#attach	ed at pcmcia with ed_pcmcia
-#file	dev/isa/if_ed.c			ed & (ed_isa | ed_pcmcia) needs-flag
 
 #	Parallel printer port driver
 attach	lpt at jazzio with lpt_jazzio
