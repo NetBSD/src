@@ -37,7 +37,7 @@
  *
  *	from: Utah Hdr: vm_mmap.c 1.3 90/01/21
  *	from: @(#)vm_mmap.c	7.5 (Berkeley) 6/28/91
- *	$Id: vm_mmap.c,v 1.15 1993/12/20 12:40:13 cgd Exp $
+ *	$Id: vm_mmap.c,v 1.16 1994/01/07 23:36:27 mycroft Exp $
  */
 
 /*
@@ -66,7 +66,11 @@ int mmapdebug = 0;
 #define MDB_MAPIT	0x04
 #endif
 
+static boolean_t vm_map_is_allocated
+		    __P((vm_map_t, vm_offset_t, vm_offset_t, boolean_t));
+
 /* ARGSUSED */
+int
 getpagesize(p, uap, retval)
 	struct proc *p;
 	void *uap;
@@ -82,6 +86,7 @@ struct sbrk_args {
 };
 
 /* ARGSUSED */
+int
 sbrk(p, uap, retval)
 	struct proc *p;
 	struct sbrk_args *uap;
@@ -97,6 +102,7 @@ struct sstk_args {
 };
 
 /* ARGSUSED */
+int
 sstk(p, uap, retval)
 	struct proc *p;
 	struct sstk_args *uap;
@@ -116,6 +122,7 @@ struct smmap_args {
 	off_t	pos;
 };
 
+int
 smmap(p, uap, retval)
 	struct proc *p;
 	register struct smmap_args *uap;
@@ -241,6 +248,7 @@ struct msync_args {
 	int	len;
 };
 
+int
 msync(p, uap, retval)
 	struct proc *p;
 	struct msync_args *uap;
@@ -315,6 +323,7 @@ struct munmap_args {
 	int	len;
 };
 
+int
 munmap(p, uap, retval)
 	register struct proc *p;
 	register struct munmap_args *uap;
@@ -345,6 +354,7 @@ munmap(p, uap, retval)
 	return(0);
 }
 
+void
 munmapfd(p, fd)
 	register struct proc *p;
 {
@@ -365,6 +375,7 @@ struct mprotect_args {
 	int	prot;
 };
 
+int
 mprotect(p, uap, retval)
 	struct proc *p;
 	struct mprotect_args *uap;
@@ -412,6 +423,7 @@ struct madvise_args {
 };
 
 /* ARGSUSED */
+int
 madvise(p, uap, retval)
 	struct proc *p;
 	struct madvise_args *uap;
@@ -429,6 +441,7 @@ struct mincore_args {
 };
 
 /* ARGSUSED */
+int
 mincore(p, uap, retval)
 	struct proc *p;
 	struct mincore_args *uap;
@@ -446,6 +459,7 @@ mincore(p, uap, retval)
  *	MAP_FILE: a vnode pointer
  *	MAP_ANON: NULL or a file pointer
  */
+int
 vm_mmap(map, addr, size, prot, maxprot, flags, handle, foff)
 	register vm_map_t map;
 	register vm_offset_t *addr;
@@ -719,6 +733,7 @@ out:
  * Given address and size it returns map attributes as well
  * as the (locked) object mapped at that location. 
  */
+int
 vm_region(map, addr, size, prot, max_prot, inheritance, shared, object, objoff)
 	vm_map_t	map;
 	vm_offset_t	*addr;		/* IN/OUT */
@@ -794,6 +809,7 @@ vm_region(map, addr, size, prot, max_prot, inheritance, shared, object, objoff)
 /*
  * Yet another bastard routine.
  */
+int
 vm_allocate_with_pager(map, addr, size, fitit, pager, poffset, internal)
 	register vm_map_t	map;
 	register vm_offset_t	*addr;
@@ -846,7 +862,7 @@ vm_allocate_with_pager(map, addr, size, fitit, pager, poffset, internal)
  *
  * start and end should be page aligned.
  */
-boolean_t
+static boolean_t
 vm_map_is_allocated(map, start, end, single_entry)
 	vm_map_t map;
 	vm_offset_t start, end;
