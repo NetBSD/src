@@ -462,6 +462,9 @@ BUILDING
      release       Build a full release as per ``make release''.  This option
                    implies the distribution operation.
 
+     makewrapper   Create the nbmake-MACHINE wrapper.  This operation is auto-
+                   matically performed for any of the other operations.
+
      obj           Perform ``make obj''.
 
      tools         Build and install the host tools from src/tools.
@@ -494,8 +497,13 @@ BUILDING
 
      -D dest   Set the value of DESTDIR to dest.
 
-     -E        Set `expert' mode; DESTDIR does not have to be set to a non-
-               root path for builds when this is set.
+     -E        Set `expert' mode.  This overrides various sanity checks, and
+               allows: DESTDIR does not have to be set to a non-root path for
+               builds, and UNPRIVED does not have to be set when building as a
+               non-root user.
+
+               Note: It is highly recommended that you know what you are doing
+               when you use this option.
 
      -j njob   Passed through to make(1).  Makefiles should use .WAIT or have
                explicit dependancies as necessary to enforce build ordering.
@@ -536,9 +544,7 @@ BUILDING
      -u        Set the UPDATE variable.
 
      -V var=[value]
-               Set the variable var to value (which is optional).  This is
-               useful for setting RELEASEDIR without actually building a re-
-               lease.
+               Set the variable var to value (which is optional).
 
      -w wrapper
                Create the nbmake wrapper script (see below) in a custom loca-
@@ -558,35 +564,25 @@ BUILDING
      with an absolute path.
 
 EXAMPLES
-     ./build.sh tools
-               Build a new toolchain.
-
-     cd ${KERNCONFDIR} ; ${TOOLDIR}/bin/nbconfig GENERIC
-               Use the new version of config(8) to prepare to build a new
-               GENERIC kernel.
-
-     cd ${KERNOBJDIR}/GENERIC ; ${TOOLDIR}/bin/nbmake-${MACHINE} dependall
-               Use the new toolchain to build a new GENERIC kernel.
-
      ./build.sh tools kernel=GENERIC
                Build a new toolchain, and use the new toolchain to configure
                and build a new GENERIC kernel.  This is a simpler way to
                achieve what the first three examples do.
 
-     ./build.sh -U distribution
+     ./build.sh -U -D /some/DESTDIR distribution
                Using unprivileged mode, build a complete distribution in
-               DESTDIR.
+               /some/DESTDIR.
 
-     # ./build.sh -U installworld=/
+     # ./build.sh -U -D /some/DESTDIR installworld=/
                As root, install the distribution that was built with unprivi-
-               leged mode from DESTDIR to /.  (Even though this is run as
-               root, -U is required so that the permissions stored in
-               DESTDIR/METALOG are correctly applied to the files as they're
-               copied to /).
+               leged mode from /some/DESTDIR to /.  (Even though this is run
+               as root, -U is required so that the permissions stored in
+               /some/DESTDIR/METALOG are correctly applied to the files as
+               they're copied to /).
 
-     ./build.sh -U -R /some/dir/RELEASE release
-               Using unprivileged mode, build a complete release in the speci-
-               fied release directory.
+     ./build.sh -U -D /some/dir/DESTDIR -R /some/dir/RELEASE release
+               Using unprivileged mode, build a complete release in
+               /some/dir/RELEASE.
 
 OBSOLETE VARIABLES
      NBUILDJOBS  Use the make(1) option -j, instead.
@@ -605,4 +601,4 @@ HISTORY
 BUGS
      A few platforms are not yet using this build system.
 
-NetBSD                         January 24, 2003                             10
+NetBSD                         January 26, 2003                             10
