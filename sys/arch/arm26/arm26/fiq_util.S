@@ -1,4 +1,4 @@
-/*	$NetBSD: fiq_util.S,v 1.1 2001/08/20 23:08:10 bjh21 Exp $	*/
+/*	$NetBSD: fiq_util.S,v 1.2 2001/08/21 22:47:17 bjh21 Exp $	*/
 
 /*-
  * Copyright (c) 2001 Ben Harris
@@ -29,7 +29,7 @@
 
 #include <machine/asm.h>
 
-RCSID("$NetBSD: fiq_util.S,v 1.1 2001/08/20 23:08:10 bjh21 Exp $")
+RCSID("$NetBSD: fiq_util.S,v 1.2 2001/08/21 22:47:17 bjh21 Exp $")
 
 #include <machine/memcreg.h>
 #include <arch/arm26/iobus/iocreg.h>
@@ -45,6 +45,11 @@ ENTRY(fiq_downgrade)
 	strb	r13, [r12, #(IOC_IRQMSKA << 2)]
 	mov	r13, #0
 	strb	r13, [r12, #(IOC_FIQMSK << 2)]
+	ldr	r12, Lfiq_want_downgrade
+	mov	r13, #1
+	str	r13, [r12]	
 	subs	pc, r14, #4
 Lioc_base:
 	.word	0x03200000
+Lfiq_want_downgrade:
+	.word	_C_LABEL(fiq_want_downgrade)

@@ -1,4 +1,4 @@
-/* $NetBSD: intr.h,v 1.9 2001/05/13 13:47:23 bjh21 Exp $ */
+/* $NetBSD: intr.h,v 1.10 2001/08/21 22:47:18 bjh21 Exp $ */
 /*-
  * Copyright (c) 1998, 2000 Ben Harris
  * All rights reserved.
@@ -74,7 +74,6 @@
 #define splserial()	raisespl(IPL_SERIAL)
 #define splclock()	raisespl(IPL_CLOCK)
 #define splstatclock()	raisespl(IPL_STATCLOCK)
-#define splhigh()	raisespl(IPL_HIGH)
 
 #define	splsched()	splhigh()
 #define spllock()	splhigh()
@@ -85,6 +84,7 @@
 
 extern int current_spl_level; /* XXX tautological name */
 
+extern int splhigh(void);
 extern int raisespl(int);
 extern void lowerspl(int);
 extern int hardsplx(int);
