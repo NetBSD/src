@@ -1,4 +1,4 @@
-/*	$NetBSD: in_proto.c,v 1.24 1998/07/15 17:39:20 thorpej Exp $	*/
+/*	$NetBSD: in_proto.c,v 1.25 1998/09/13 20:27:48 hwr Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1993
@@ -88,6 +88,11 @@
 #include <netinet/ip_mroute.h>
 #endif /* MROUTING */
 
+#include "gre.h"
+#if NGRE >0
+#include "ip_gre.h"
+#endif
+
 extern	struct domain inetdomain;
 
 struct protosw inetsw[] = {
@@ -123,6 +128,20 @@ struct protosw inetsw[] = {
   0,		0,		0,		0,
 },
 #endif /* MROUTING */
+#if NGRE > 0
+{ SOCK_RAW,	&inetdomain,	IPPROTO_GRE,	PR_ATOMIC|PR_ADDR,
+  gre_input,	rip_output,	0,		rip_ctloutput,
+  rip_usrreq,	/* XXX */
+  0,		0,		0,		0,
+},
+#ifndef MROUTING
+{ SOCK_RAW,	&inetdomain,	IPPROTO_IPIP,	PR_ATOMIC|PR_ADDR,
+  gre_ipip_input,	rip_output,	0,		rip_ctloutput,
+  rip_usrreq,	/* XXX */
+  0,		0,		0,		0,
+},
+#endif
+#endif
 { SOCK_RAW,	&inetdomain,	IPPROTO_IGMP,	PR_ATOMIC|PR_ADDR,
   igmp_input,	rip_output,	0,		rip_ctloutput,
   rip_usrreq,
