@@ -1,4 +1,4 @@
-/*	$NetBSD: wdc.c,v 1.65 1999/03/31 11:18:31 bouyer Exp $ */
+/*	$NetBSD: wdc.c,v 1.66 1999/04/01 21:46:29 bouyer Exp $ */
 
 
 /*
@@ -117,7 +117,7 @@ static void  __wdcerror	  __P((struct channel_softc*, char *));
 static int   __wdcwait_reset  __P((struct channel_softc *, int));
 void  __wdccommand_done __P((struct channel_softc *, struct wdc_xfer *));
 void  __wdccommand_start __P((struct channel_softc *, struct wdc_xfer *));	
-int   __wdccommand_intr __P((struct channel_softc *, struct wdc_xfer *));	
+int   __wdccommand_intr __P((struct channel_softc *, struct wdc_xfer *, int));
 int   wdprint __P((void *, const char *));
 
 
@@ -518,35 +518,7 @@ wdcintr(arg)
 	struct wdc_xfer *xfer;
 
 	if ((chp->ch_flags & WDCF_IRQ_WAIT) == 0) {
-#if 0
-		/* Clear the pending interrupt and abort. */
-		u_int8_t s =
-		    bus_space_read_1(chp->cmd_iot, chp->cmd_ioh, wd_status);
-#ifdef WDCDEBUG
-		u_int8_t e =
-		    bus_space_read_1(chp->cmd_iot, chp->cmd_ioh, wd_error); 
-		u_int8_t i =
-		    bus_space_read_1(chp->cmd_iot, chp->cmd_ioh, wd_seccnt);
-#else
-		bus_space_read_1(chp->cmd_iot, chp->cmd_ioh, wd_error); 
-		bus_space_read_1(chp->cmd_iot, chp->cmd_ioh, wd_seccnt);
-#endif
-
-		WDCDEBUG_PRINT(("wdcintr: inactive controller, "
-		    "punting st=%02x er=%02x irr=%02x\n", s, e, i), DEBUG_INTR);
-
-		if (s & WDCS_DRQ) {
-			int len;
-			len = bus_space_read_1(chp->cmd_iot, chp->cmd_ioh,
-			    wd_cyl_lo) + 256 * bus_space_read_1(chp->cmd_iot,
-			    chp->cmd_ioh, wd_cyl_hi);
-			WDCDEBUG_PRINT(("wdcintr: clearing up %d bytes\n",
-			    len), DEBUG_INTR);
-			wdcbit_bucket (chp, len);
-		}
-#else
 		WDCDEBUG_PRINT(("wdcintr: inactive controller\n"), DEBUG_INTR);
-#endif
 		return 0;
 	}
 
@@ -554,7 +526,7 @@ wdcintr(arg)
 	untimeout(wdctimeout, chp);
 	chp->ch_flags &= ~WDCF_IRQ_WAIT;
 	xfer = chp->ch_queue->sc_xfer.tqh_first;
-	return xfer->c_intr(chp, xfer);
+	return xfer->c_intr(chp, xfer, 1);
 }
 
 /* Put all disk in RESET state */
@@ -738,7 +710,7 @@ wdctimeout(arg)
 		 */
 		xfer->c_flags |= C_TIMEOU;
 		chp->ch_flags &= ~WDCF_IRQ_WAIT;
-		xfer->c_intr(chp, xfer);
+		xfer->c_intr(chp, xfer, 1);
 	} else
 		__wdcerror(chp, "missing untimeout");
 	splx(s);
@@ -1079,13 +1051,14 @@ __wdccommand_start(chp, xfer)
 	 * Wait for at last 400ns for status bit to be valid.
 	 */
 	delay(10);
-	__wdccommand_intr(chp, xfer);
+	__wdccommand_intr(chp, xfer, 0);
 }
 
 int
-__wdccommand_intr(chp, xfer)
+__wdccommand_intr(chp, xfer, irq)
 	struct channel_softc *chp;
 	struct wdc_xfer *xfer;
+	int irq;
 {
 	struct wdc_command *wdc_c = xfer->cmd;
 	int bcount = wdc_c->bcount;
@@ -1094,9 +1067,8 @@ __wdccommand_intr(chp, xfer)
 	WDCDEBUG_PRINT(("__wdccommand_intr %s:%d:%d\n",
 	    chp->wdc->sc_dev.dv_xname, chp->channel, xfer->drive), DEBUG_INTR);
 	if (wdcwait(chp, wdc_c->r_st_pmask, wdc_c->r_st_pmask,
-	    (wdc_c->flags & AT_POLL) ? wdc_c->timeout : 0)) {
-		if ((xfer->c_flags & C_TIMEOU) == 0 && 
-		    (wdc_c->flags & AT_POLL) == 0)
+	     (irq == 0)  ? wdc_c->timeout : 0)) {
+		if (irq && (xfer->c_flags & C_TIMEOU) == 0) 
 			return 0; /* IRQ was not for us */
 		wdc_c->flags |= AT_TIMEOU;
 		__wdccommand_done(chp, xfer);

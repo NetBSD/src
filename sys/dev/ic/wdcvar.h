@@ -1,4 +1,4 @@
-/*	$NetBSD: wdcvar.h,v 1.15 1999/02/08 15:22:29 bouyer Exp $	*/
+/*	$NetBSD: wdcvar.h,v 1.16 1999/04/01 21:46:30 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -145,7 +145,7 @@ struct wdc_xfer {
 	TAILQ_ENTRY(wdc_xfer) c_xferchain;
 	LIST_ENTRY(wdc_xfer) free_list;
 	void (*c_start) __P((struct channel_softc *, struct wdc_xfer *));
-	int  (*c_intr)  __P((struct channel_softc *, struct wdc_xfer *));
+	int  (*c_intr)  __P((struct channel_softc *, struct wdc_xfer *, int));
 };
 
 /*
