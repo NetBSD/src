@@ -1,11 +1,8 @@
-/*	$NetBSD: local.h,v 1.8 1998/07/27 13:42:27 mycroft Exp $	*/
+/*	$NetBSD: mkstemp.c,v 1.1 1998/07/27 13:42:39 mycroft Exp $	*/
 
-/*-
- * Copyright (c) 1990, 1993
+/*
+ * Copyright (c) 1987, 1993
  *	The Regents of the University of California.  All rights reserved.
- *
- * This code is derived from software contributed to Berkeley by
- * Chris Torek.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -34,59 +31,27 @@
  * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
- *
- *	@(#)local.h	8.3 (Berkeley) 7/3/94
  */
 
-/*
- * Information local to this implementation of stdio,
- * in particular, macros and private variables.
- */
+#include <sys/cdefs.h>
+#if defined(LIBC_SCCS) && !defined(lint)
+#if 0
+static char sccsid[] = "@(#)mktemp.c	8.1 (Berkeley) 6/4/93";
+#else
+__RCSID("$NetBSD: mkstemp.c,v 1.1 1998/07/27 13:42:39 mycroft Exp $");
+#endif
+#endif /* LIBC_SCCS and not lint */
 
-extern int	__sflush __P((FILE *));
-extern FILE	*__sfp __P((void));
-extern int	__srefill __P((FILE *));
-extern int	__sread __P((void *, char *, int));
-extern int	__swrite __P((void *, char const *, int));
-extern fpos_t	__sseek __P((void *, fpos_t, int));
-extern int	__sclose __P((void *));
-extern void	__sinit __P((void));
-extern void	_cleanup __P((void));
-extern void	(*__cleanup) __P((void));
-extern void	__smakebuf __P((FILE *));
-extern int	__swhatbuf __P((FILE *, size_t *, int *));
-extern int	_fwalk __P((int (*)(FILE *)));
-extern char	*_mktemp __P((char *));
-extern int	__swsetup __P((FILE *));
-extern int	__sflags __P((const char *, int *));
+#include <stdio.h>
+#include <stdlib.h>
+#include <unistd.h>
+#include "local.h"
 
-extern int	__sdidinit;
+int
+mkstemp(path)
+	char *path;
+{
+	int fd;
 
-extern int	__gettemp __P((char *, int *));
-
-/*
- * Return true iff the given FILE cannot be written now.
- */
-#define	cantwrite(fp) \
-	((((fp)->_flags & __SWR) == 0 || (fp)->_bf._base == NULL) && \
-	 __swsetup(fp))
-
-/*
- * Test whether the given stdio file has an active ungetc buffer;
- * release such a buffer, without restoring ordinary unread data.
- */
-#define	HASUB(fp) ((fp)->_ub._base != NULL)
-#define	FREEUB(fp) { \
-	if ((fp)->_ub._base != (fp)->_ubuf) \
-		free((char *)(fp)->_ub._base); \
-	(fp)->_ub._base = NULL; \
-}
-
-/*
- * test for an fgetln() buffer.
- */
-#define	HASLB(fp) ((fp)->_lb._base != NULL)
-#define	FREELB(fp) { \
-	free((char *)(fp)->_lb._base); \
-	(fp)->_lb._base = NULL; \
+	return (__gettemp(path, &fd) ? fd : -1);
 }
