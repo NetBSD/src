@@ -1,4 +1,4 @@
-	$NetBSD: syscalls.master,v 1.15 1995/12/19 07:13:27 christos Exp $
+	$NetBSD: syscalls.master,v 1.16 1996/02/02 01:17:28 christos Exp $
 
 ;	@(#)syscalls.master	8.1 (Berkeley) 7/19/93
 
@@ -209,7 +209,8 @@
 			    struct svr4_xstat *ub); }
 125	STD		{ int svr4_sys_fxstat(int two, int fd, \
 			    struct svr4_xstat *sb); }
-126	UNIMPL		xmknod
+126	STD		{ int svr4_sys_xmknod(int two, char *path, \
+			    svr4_dev_t dev, svr4_mode_t mode); }
 127	UNIMPL		clocal
 128	STD		{ int svr4_sys_setrlimit(int which, \
 			    struct ogetrlimit *rlp); }
