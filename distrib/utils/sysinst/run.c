@@ -1,4 +1,4 @@
-/*	$NetBSD: run.c,v 1.50 2003/08/06 13:56:59 itojun Exp $	*/
+/*	$NetBSD: run.c,v 1.51 2003/08/09 19:26:38 dsl Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -324,7 +324,7 @@ launch_subwin(WINDOW *actionwin, char **args, struct winsize *win, int flags,
 	pid_t child, pid;
 	char ibuf[MAXBUF];
 	char pktdata;
-	char *cp;
+	char *cp, *ncp;
 	struct termios rtt;
 	struct termios tt;
 	struct timeval tmo;
@@ -422,41 +422,54 @@ launch_subwin(WINDOW *actionwin, char **args, struct winsize *win, int flags,
 				    "select failure: %s\n", strerror(errno));
 			++selectfailed;
 		} else for (i = 0; i < FD_SETSIZE; ++i) {
-			if (FD_ISSET(i, &read_fd_set)) {
-				n = read(i, ibuf, sizeof ibuf - 1);
-				if (n <= 0) {
-					if (n < 0)
-						warn("read");
-					continue;
+			if (!FD_ISSET(i, &read_fd_set))
+				continue;
+			n = read(i, ibuf, sizeof ibuf - 1);
+			if (n <= 0) {
+				if (n < 0)
+					warn("read");
+				continue;
+			}
+			ibuf[n] = 0;
+			cp = ibuf;
+			if (i == STDIN_FILENO) {
+				(void)write(master, ibuf, (size_t)n);
+				if (!(rtt.c_lflag & ECHO))
+					cp += n;
+			} else {
+				pktdata = ibuf[0];
+				if (pktdata != 0) {
+					if (pktdata & TIOCPKT_IOCTL)
+						memcpy(&rtt, ibuf,
+							sizeof(rtt));
+					cp += n;
+				} else
+					cp += 1;
+			}
+			if ((flags & RUN_DISPLAY) != 0 && *cp != 0) {
+				if (logging) {
+					fprintf(logfp, "%s", cp);
+					fflush(logfp);
 				}
-				ibuf[n] = 0;
-				cp = ibuf;
-				if (i == STDIN_FILENO) {
-					(void)write(master, ibuf, (size_t)n);
-					if (!(rtt.c_lflag & ECHO))
-						cp += n;
-				} else {
-					pktdata = ibuf[0];
-					if (pktdata != 0) {
-						if (pktdata & TIOCPKT_IOCTL)
-							memcpy(&rtt, ibuf,
-								sizeof(rtt));
-						cp += n;
-					} else
-						cp += 1;
-				}
-				if ((flags & RUN_DISPLAY) != 0 && *cp != 0) {
-					if (logging) {
-						fprintf(logfp, "%s", cp);
-						fflush(logfp);
+				/* posix curses is braindead wrt \r\n so... */
+				ncp = cp;
+				do  {
+					ncp = strchr(ncp, '\r');
+					if (ncp != NULL) {
+						switch (*++ncp) {
+						case 0:
+							break;
+						case '\n':
+							ncp[-1] = 0;
+							break;
+						default:
+							continue;
+						}
 					}
-					/* curses is braindead wrt \r\n so... */
-					do 
-						waddstr(actionwin,
-						    strsep(&cp, "\r"));
-					while (cp != NULL);
-					wrefresh(actionwin);
-				}
+					waddstr(actionwin, cp);
+					cp = ncp;
+				} while (cp != NULL);
+				wrefresh(actionwin);
 			}
 		}
 loop:
