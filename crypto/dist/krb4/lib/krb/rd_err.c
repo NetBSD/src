@@ -34,7 +34,7 @@
 #include "krb_locl.h"
 
 __RCSID("$KTH-KRB: rd_err.c,v 1.9 1999/12/02 16:58:43 joda Exp $"
-      "$NetBSD: rd_err.c,v 1.1.1.3 2002/09/12 12:22:10 joda Exp $");
+      "$NetBSD: rd_err.c,v 1.2 2002/12/06 01:27:10 thorpej Exp $");
 
 /*
  * Given an AUTH_MSG_APPL_ERR message, "in" and its length "in_length",
@@ -70,7 +70,7 @@ krb_rd_err(u_char *in, u_int32_t in_length, int32_t *code, MSG_DAT *m_data)
     if(type != AUTH_MSG_APPL_ERR)
 	return RD_AP_MSG_TYPE;
     
-    p += krb_get_int(p, (u_int32_t *)&code, 4, little_endian);
+    p += krb_get_int(p, (void *)&code, 4, little_endian);
     
     m_data->app_data = p;
     m_data->app_length = in_length; /* XXX is this correct? */
