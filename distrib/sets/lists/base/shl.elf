@@ -1,4 +1,4 @@
-# $NetBSD: shl.elf,v 1.22 2000/06/21 06:27:57 thorpej Exp $
+# $NetBSD: shl.elf,v 1.23 2000/07/06 22:33:50 mjl Exp $
 ./usr/lib/libamu.so.1
 ./usr/lib/libasn1.so.2
 ./usr/lib/libbz2.so.0
@@ -31,7 +31,7 @@
 ./usr/lib/libposix.so.0
 ./usr/lib/libresolv.so.1
 ./usr/lib/libroken.so.8
-./usr/lib/libskey.so.0
+./usr/lib/libskey.so.1
 ./usr/lib/libsl.so.1
 ./usr/lib/libss.so.3
 ./usr/lib/libssl.so.0
