@@ -1,4 +1,4 @@
-#	$Id: files.oldconf,v 1.17 1993/07/19 15:48:36 cgd Exp $
+#	$Id: files.oldconf,v 1.18 1993/07/19 16:38:52 cgd Exp $
 #
 ddb/db_access.c		optional ddb
 ddb/db_aout.c		optional ddb
@@ -71,7 +71,7 @@ kern/uipc_socket.c	standard
 kern/uipc_socket2.c	standard
 kern/uipc_syscalls.c	standard
 kern/uipc_usrreq.c	standard
-kern/vfs__bio.c		standard
+kern/vfs_bio.c		standard
 kern/vfs_cache.c	standard
 kern/vfs_conf.c		standard
 kern/vfs_lookup.c	standard
