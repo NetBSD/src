@@ -1,4 +1,4 @@
-/* $NetBSD: autoconf.h,v 1.11 1997/08/11 23:43:38 cgd Exp $ */
+/* $NetBSD: autoconf.h,v 1.12 1998/02/12 01:53:22 cgd Exp $ */
 
 /*
  * Copyright (c) 1994, 1995, 1996 Carnegie-Mellon University.
@@ -87,11 +87,15 @@ struct bootdev_data {
  *
  *	a0 contains first free page frame number
  *	a1 contains page number of current level 1 page table
- *	if a2 contains BOOTINFO_MAGIC:
+ *	if a2 contains BOOTINFO_MAGIC and a4 is nonzero:
  *		a3 contains pointer (BEVA) to bootinfo
+ *		a4 contains bootinfo version number
+ *	if a2 contains BOOTINFO_MAGIC and a4 contains 0 (backward compat):
+ *		a3 contains pointer (BEVA) to bootinfo version
+ *		    (u_long), then the bootinfo
  */
 
-#define	BOOTINFO_MAGIC		0xdeadbeeffeedface
+#define	BOOTINFO_MAGIC			0xdeadbeeffeedface
 
 struct bootinfo_v1 {
 	u_long	ssym;			/* 0: start of kernel sym table	*/
@@ -103,18 +107,28 @@ struct bootinfo_v1 {
 	int	(*cngetc) __P((void));	/* 160: console getc pointer	*/
 	void	(*cnputc) __P((int));	/* 168: console putc pointer	*/
 	void	(*cnpollc) __P((int));	/* 176: console pollc pointer	*/
-					/* 184: total size		*/
+	u_long	pad[9];			/* 184: rsvd for future use	*/
+					/* 256: total size		*/
 };
 
-struct bootinfo {
-	u_long	version;		/* 0: version number		*/
-	union {				/* 8: union:			*/
-		struct bootinfo_v1 v1;	/*    version 1 boot info	*/
-		char pad[256];		/*    space rsvd for future use	*/
-	} un;				/*				*/
-					/* 264: total size		*/
+/*
+ * Kernel-internal structure used to hold important bits of boot
+ * information.  NOT to be used by boot blocks.
+ *
+ * Note that not all of the fields from the bootinfo struct(s)
+ * passed by the boot blocks aren't here (because they're not currently
+ * used by the kernel!).  Fields here which aren't supplied by the
+ * bootinfo structure passed by the boot blocks are supposed to be
+ * filled in at startup with sane contents.
+ */
+struct bootinfo_kernel {
+	u_long	ssym;			/* start of syms */
+	u_long	esym;			/* end of syms */
+	char	boot_flags[64];		/* boot flags */
+	char	booted_kernel[64];	/* name of booted kernel */
+	char	booted_dev[64];		/* name of booted device */
 };
-
+	
 #ifdef EVCNT_COUNTERS
 extern struct evcnt clock_intr_evcnt;
 #endif
@@ -122,3 +136,4 @@ extern struct evcnt clock_intr_evcnt;
 extern struct device *booted_device;
 extern int booted_partition;
 extern struct bootdev_data *bootdev_data;
+extern struct bootinfo_kernel bootinfo;
