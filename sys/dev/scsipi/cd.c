@@ -1,4 +1,4 @@
-/*	$NetBSD: cd.c,v 1.209 2004/09/18 00:08:16 mycroft Exp $	*/
+/*	$NetBSD: cd.c,v 1.210 2004/09/26 09:00:37 dogcow Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2001, 2003, 2004 The NetBSD Foundation, Inc.
@@ -54,7 +54,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cd.c,v 1.209 2004/09/18 00:08:16 mycroft Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cd.c,v 1.210 2004/09/26 09:00:37 dogcow Exp $");
 
 #include "rnd.h"
 
@@ -557,7 +557,7 @@ cdstrategy(struct buf *bp)
 
 	SC_DEBUG(cd->sc_periph, SCSIPI_DB2, ("cdstrategy "));
 	SC_DEBUG(cd->sc_periph, SCSIPI_DB1,
-	    ("%ld bytes @ blk %" PRId64 "\n", bp->b_bcount, bp->b_blkno));
+	    ("%d bytes @ blk %" PRId64 "\n", bp->b_bcount, bp->b_blkno));
 	/*
 	 * If the device has been made invalid, error out
 	 * maybe the media changed
