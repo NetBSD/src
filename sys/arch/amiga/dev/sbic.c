@@ -1,4 +1,4 @@
-/*	$NetBSD: sbic.c,v 1.34 1998/11/05 14:13:59 frueauf Exp $	*/
+/*	$NetBSD: sbic.c,v 1.34.6.1 1999/10/05 21:45:10 he Exp $	*/
 
 /*
  * Copyright (c) 1994 Christian E. Hopps
@@ -2860,8 +2860,8 @@ sbic_dump(dev)
 		GET_SBIC_csr(regs, csr);
 	else
 		csr = 0;
-	printf("%s@%p regs %p asr %x csr %x\n", dev->sc_dev.dv_xname,
-	    dev, regs, asr, csr);
+	printf("%s@%p regs %p/%p asr %x csr %x\n", dev->sc_dev.dv_xname,
+	    dev, regs.sbic_asr_p, regs.sbic_value_p, asr, csr);
 	if ((acb = dev->free_list.tqh_first)) {
 		printf("Free list:\n");
 		while (acb) {
