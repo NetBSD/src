@@ -1,4 +1,4 @@
-.\"	$NetBSD: 3.t,v 1.2 1998/01/09 06:55:22 perry Exp $
+.\"	$NetBSD: 3.t,v 1.3 1998/01/10 00:11:35 perry Exp $
 .\"
 .\" Copyright (c) 1980, 1986, 1988, 1993
 .\"	 The Regents of the University of California.  All rights reserved.
@@ -909,14 +909,14 @@ cd $SRC; tar cf - msgs preserve | (cd /var && tar xpf -)
 # copy $SRC/spool to /var
 cd $SRC/spool
 tar cf - at mail rwho | (cd /var && tar xpf -)
-tar cf - ftp mqueue news secretmail uucp uucppublic | \e
+tar cf - ftp mqueue news uucp uucppublic | \e
 	(cd /var/spool && tar xpf -)
 .DE
 .DS
 .ft CW
 # everything else in spool is probably a printer area
 mkdir .save
-mv at ftp mail mqueue rwho secretmail uucp uucppublic .save
+mv at ftp mail mqueue rwho uucp uucppublic .save
 tar cf - * | (cd /var/spool/output && tar xpf -)
 mv .save/* .
 rmdir .save
