@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.26 2004/05/03 08:59:38 toshii Exp $	*/
+/*	$NetBSD: machdep.c,v 1.27 2004/06/15 11:35:27 fvdl Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2000 The NetBSD Foundation, Inc.
@@ -72,7 +72,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.26 2004/05/03 08:59:38 toshii Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.27 2004/06/15 11:35:27 fvdl Exp $");
 
 #include "opt_user_ldt.h"
 #include "opt_ddb.h"
@@ -224,6 +224,8 @@ struct mtrr_funcs *mtrr_funcs;
 phys_ram_seg_t mem_clusters[VM_PHYSSEG_MAX];
 int	mem_cluster_cnt;
 
+char	x86_64_doubleflt_stack[4096];
+
 int	cpu_dump __P((void));
 int	cpu_dumpsize __P((void));
 u_long	cpu_dump_mempagecnt __P((void));
@@ -318,6 +320,7 @@ x86_64_proc0_tss_ldt_init(void)
 	pcb->pcb_cr0 = rcr0();
 	pcb->pcb_tss.tss_rsp0 = (u_int64_t)lwp0.l_addr + USPACE - 16;
 	pcb->pcb_tss.tss_ist[0] = (u_int64_t)lwp0.l_addr + PAGE_SIZE;
+	pcb->pcb_tss.tss_ist[1] = (uint64_t) x86_64_doubleflt_stack;
 	lwp0.l_md.md_regs = (struct trapframe *)pcb->pcb_tss.tss_rsp0 - 1;
 	lwp0.l_md.md_tss_sel = tss_alloc(pcb);
 
@@ -938,6 +941,8 @@ setgate(gd, func, ist, type, dpl, sel)
 	void *func;
 	int ist, type, dpl, sel;
 {
+	pmap_changeprot_local(idt_vaddr, VM_PROT_READ|VM_PROT_WRITE);
+
 	gd->gd_looffset = (u_int64_t)func & 0xffff;
 	gd->gd_selector = sel;
 	gd->gd_ist = ist;
@@ -949,6 +954,8 @@ setgate(gd, func, ist, type, dpl, sel)
 	gd->gd_xx1 = 0;
 	gd->gd_xx2 = 0;
 	gd->gd_xx3 = 0;
+
+	pmap_changeprot_local(idt_vaddr, VM_PROT_READ);
 }
 
 void
@@ -1408,6 +1415,9 @@ init_x86_64(first_avail)
 	pmap_growkernel(VM_MIN_KERNEL_ADDRESS + 32 * 1024 * 1024);
 
 	pmap_kenter_pa(idt_vaddr, idt_paddr, VM_PROT_READ|VM_PROT_WRITE);
+	memset((void *)idt_vaddr, 0, PAGE_SIZE);
+	pmap_changeprot_local(idt_vaddr, VM_PROT_READ);
+
 	pmap_kenter_pa(idt_vaddr + PAGE_SIZE, idt_paddr + PAGE_SIZE,
 	    VM_PROT_READ|VM_PROT_WRITE);
 
@@ -1476,7 +1486,7 @@ init_x86_64(first_avail)
 
 	/* exceptions */
 	for (x = 0; x < 32; x++) {
-		ist = (x == 8) ? 1 : 0;
+		ist = (x == 8) ? 2 : 0;
 		setgate(&idt[x], IDTVEC(exceptions)[x], ist, SDT_SYS386IGT,
 		    (x == 3 || x == 4) ? SEL_UPL : SEL_KPL,
 		    GSEL(GCODE_SEL, SEL_KPL));
@@ -1574,6 +1584,10 @@ cpu_reset()
 	 * Try to cause a triple fault and watchdog reset by making the IDT
 	 * invalid and causing a fault.
 	 */
+	pmap_changeprot_local(idt_vaddr, VM_PROT_READ|VM_PROT_WRITE);           
+	pmap_changeprot_local(idt_vaddr + PAGE_SIZE,
+	    VM_PROT_READ|VM_PROT_WRITE);
+
 	memset((caddr_t)idt, 0, NIDT * sizeof(idt[0]));
 	__asm __volatile("divl %0,%1" : : "q" (0), "a" (0)); 
 
