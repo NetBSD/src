@@ -1,4 +1,4 @@
-/*	$NetBSD: mkmakefile.c,v 1.50 2001/11/27 14:04:05 atatat Exp $	*/
+/*	$NetBSD: mkmakefile.c,v 1.51 2001/12/04 17:53:40 atatat Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -461,6 +461,8 @@ emitload(FILE *fp)
 		nm = cf->cf_name;
 		swname =
 		    cf->cf_root != NULL ? cf->cf_name : "generic";
+		if (fprintf(fp, "KERNELS+=%s\n", nm) < 0)
+			return (1);
 		if (fprintf(fp, "SWAP_OBJ%s=swap%s.o\n", nm, swname) < 0)
 			return (1);
 		if (fprintf(fp, "%s: ${SYSTEM_DEP} swap%s.o newvers", nm,
