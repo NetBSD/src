@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.712 2004/07/05 11:08:37 sketch Exp $
+#	$NetBSD: mi,v 1.713 2004/07/10 13:49:09 junyoung Exp $
 ./etc/mtree/set.comp				comp-sys-root
 ./usr/bin/addr2line				comp-debug-bin		bfd
 ./usr/bin/ar					comp-util-bin		bfd
@@ -4008,6 +4008,8 @@
 ./usr/share/man/cat3/ripemd.0			comp-obsolete		obsolete
 ./usr/share/man/cat3/rmd160.0			comp-c-catman		.cat
 ./usr/share/man/cat3/rmtops.0			comp-c-catman		.cat
+./usr/share/man/cat3/round.0			comp-c-catman		.cat
+./usr/share/man/cat3/roundf.0			comp-c-catman		.cat
 ./usr/share/man/cat3/rpc.0			comp-c-catman		.cat
 ./usr/share/man/cat3/rpc_broadcast.0		comp-c-catman		.cat
 ./usr/share/man/cat3/rpc_broadcast_exp.0	comp-c-catman		.cat
@@ -7738,6 +7740,8 @@
 ./usr/share/man/man3/ripemd.3			comp-obsolete		obsolete
 ./usr/share/man/man3/rmd160.3			comp-c-man		.man
 ./usr/share/man/man3/rmtops.3			comp-c-man		.man
+./usr/share/man/man3/round.3			comp-c-man		.man
+./usr/share/man/man3/roundf.3			comp-c-man		.man
 ./usr/share/man/man3/rpc.3			comp-c-man		.man
 ./usr/share/man/man3/rpc_broadcast.3		comp-c-man		.man
 ./usr/share/man/man3/rpc_broadcast_exp.3	comp-c-man		.man
