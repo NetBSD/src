@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_vnops.c,v 1.84 1997/10/17 00:00:41 christos Exp $	*/
+/*	$NetBSD: nfs_vnops.c,v 1.85 1997/10/19 01:46:47 fvdl Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -433,7 +433,7 @@ nfs_open(v)
 			(void) vnode_pager_uncache(vp);
 			np->n_attrstamp = 0;
 			if (vp->v_type == VDIR) {
-				nfs_invaldircache(vp);
+				nfs_invaldircache(vp, 0);
 				np->n_direofoffset = 0;
 			}
 			error = VOP_GETATTR(vp, &vattr, ap->a_cred, ap->a_p);
@@ -446,7 +446,7 @@ nfs_open(v)
 				return (error);
 			if (np->n_mtime != vattr.va_mtime.tv_sec) {
 				if (vp->v_type == VDIR) {
-					nfs_invaldircache(vp);
+					nfs_invaldircache(vp, 0);
 					np->n_direofoffset = 0;
 				}
 				if ((error = nfs_vinvalbuf(vp, V_SAVE,
@@ -642,7 +642,7 @@ nfs_setattr(v)
 				return (error);
 			}
  			tsize = np->n_size;
- 			np->n_size = np->n_vattr.va_size = vap->va_size;
+ 			np->n_size = np->n_vattr->va_size = vap->va_size;
   		}
   	} else if ((vap->va_mtime.tv_sec != VNOVAL ||
 		vap->va_atime.tv_sec != VNOVAL) &&
@@ -652,7 +652,7 @@ nfs_setattr(v)
 		return (error);
 	error = nfs_setattrrpc(vp, vap, ap->a_cred, ap->a_p);
 	if (error && vap->va_size != VNOVAL) {
-		np->n_size = np->n_vattr.va_size = tsize;
+		np->n_size = np->n_vattr->va_size = tsize;
 		vnode_pager_setsize(vp, np->n_size);
 	}
 	return (error);
@@ -918,7 +918,7 @@ dorpc:
 		cnp->cn_flags |= SAVENAME;
 	if ((cnp->cn_flags & MAKEENTRY) &&
 	    (cnp->cn_nameiop != DELETE || !(flags & ISLASTCN))) {
-		np->n_ctime = np->n_vattr.va_ctime.tv_sec;
+		np->n_ctime = np->n_vattr->va_ctime.tv_sec;
 		cache_enter(dvp, newvp, cnp);
 	}
 	*vpp = newvp;
@@ -928,7 +928,7 @@ dorpc:
 		    cnp->cn_nameiop != CREATE) {
 			if (VTONFS(dvp)->n_nctime == 0)
 				VTONFS(dvp)->n_nctime =
-				    VTONFS(dvp)->n_vattr.va_mtime.tv_sec;
+				    VTONFS(dvp)->n_vattr->va_mtime.tv_sec;
 			cache_enter(dvp, NULL, cnp);
 		}
 		if (newvp != NULLVP)
@@ -1182,7 +1182,7 @@ nfs_writerpc(vp, uiop, cred, iomode, must_commit)
 		} else
 		    nfsm_loadattr(vp, (struct vattr *)0);
 		if (wccflag)
-		    VTONFS(vp)->n_mtime = VTONFS(vp)->n_vattr.va_mtime.tv_sec;
+		    VTONFS(vp)->n_mtime = VTONFS(vp)->n_vattr->va_mtime.tv_sec;
 		m_freem(mrep);
 		if (error)
 			break;
@@ -1959,11 +1959,10 @@ nfs_readdir(v)
 		int a_ncookies;
 	} */ *ap = v;
 	register struct vnode *vp = ap->a_vp;
-	register struct nfsnode *np = VTONFS(vp);
 	register struct uio *uio = ap->a_uio;
+	struct nfsmount *nmp = VFSTONFS(vp->v_mount);
 	char *base = uio->uio_iov->iov_base;
 	int tresid, error;
-	struct vattr vattr;
 	size_t count, lost;
 
 	if (vp->v_type != VDIR)
@@ -1973,25 +1972,6 @@ nfs_readdir(v)
 	count = uio->uio_resid - lost;
 	if (count <= 0)
 		return (EINVAL);
-
-	/*
-	 * First, check for hit on the EOF offset cache
-	 */
-	if (np->n_direofoffset != 0 && uio->uio_offset == np->n_direofoffset &&
-	    (np->n_flag & NMODIFIED) == 0) {
-		if (VFSTONFS(vp->v_mount)->nm_flag & NFSMNT_NQNFS) {
-			if (NQNFS_CKCACHABLE(vp, ND_READ)) {
-				nfsstats.direofcache_hits++;
-				*ap->a_eofflag = 1;
-				return (0);
-			}
-		} else if (VOP_GETATTR(vp, &vattr, ap->a_cred, uio->uio_procp) == 0 &&
-			np->n_mtime == vattr.va_mtime.tv_sec) {
-			nfsstats.direofcache_hits++;
-			*ap->a_eofflag = 1;
-			return (0);
-		}
-	}
 
 	/*
 	 * Call nfs_bioread() to do the real work.
@@ -2009,7 +1989,7 @@ nfs_readdir(v)
 
 	if (!error && ap->a_cookies) {
 		struct dirent *dp;
-		off_t *cookies = ap->a_cookies, *offp;
+		off_t *cookies = ap->a_cookies;
 		int ncookies = ap->a_ncookies;
 
 		/*
@@ -2023,9 +2003,10 @@ nfs_readdir(v)
 			dp = (struct dirent *) base;
 			if (dp->d_reclen == 0)
 				break;
-			offp = (off_t *)((caddr_t)dp + dp->d_reclen -
-					  sizeof (off_t));
-			*(cookies++) = NFS_GETCOOKIE(dp);
+			if (nmp->nm_flag & NFSMNT_XLATECOOKIE)
+				*(cookies++) = (off_t)NFS_GETCOOKIE32(dp);
+			else
+				*(cookies++) = NFS_GETCOOKIE(dp);
 			base += dp->d_reclen;
 		}
 		uio->uio_resid += (uio->uio_iov->iov_base - base);
@@ -2059,7 +2040,7 @@ nfs_readdirrpc(vp, uiop, cred)
 	struct nfsnode *dnp = VTONFS(vp);
 	u_quad_t fileno;
 	int error = 0, tlen, more_dirs = 1, blksiz = 0, bigenough = 1;
-	int attrflag;
+	int attrflag, nrpcs = 0;
 	int v3 = NFS_ISV3(vp);
 	nfsquad_t cookie;
 
@@ -2078,6 +2059,16 @@ nfs_readdirrpc(vp, uiop, cred)
 	 * The stopping criteria is EOF or buffer full.
 	 */
 	while (more_dirs && bigenough) {
+		/*
+		 * Heuristic: don't bother to do another RPC to further
+		 * fill up this block if there is not much room left. (< 50%
+		 * of the readdir RPC size). This wastes some buffer space
+		 * but can save up to 50% in RPC calls.
+		 */
+		if (nrpcs > 0 && uiop->uio_resid < (nmp->nm_readdirsize / 2)) {
+			bigenough = 0;
+			break;
+		}
 		nfsstats.rpccnt[NFSPROC_READDIR]++;
 		nfsm_reqhead(vp, NFSPROC_READDIR, NFSX_FH(v3) +
 			NFSX_READDIR(v3));
@@ -2099,6 +2090,7 @@ nfs_readdirrpc(vp, uiop, cred)
 		}
 		*tl = txdr_unsigned(nmp->nm_readdirsize);
 		nfsm_request(vp, NFSPROC_READDIR, uiop->uio_procp, cred);
+		nrpcs++;
 		if (v3) {
 			nfsm_postop_attr(vp, attrflag);
 			if (!error) {
@@ -2254,7 +2246,7 @@ nfs_readdirplusrpc(vp, uiop, cred)
 	nfsfh_t *fhp;
 	u_quad_t fileno;
 	int error = 0, tlen, more_dirs = 1, blksiz = 0, doit, bigenough = 1, i;
-	int attrflag, fhsize;
+	int attrflag, fhsize, nrpcs = 0;
 	struct nfs_fattr fattr, *fp;
 
 #ifdef DIAGNOSTIC
@@ -2270,6 +2262,10 @@ nfs_readdirplusrpc(vp, uiop, cred)
 	 * The stopping criteria is EOF or buffer full.
 	 */
 	while (more_dirs && bigenough) {
+		if (nrpcs > 0 && uiop->uio_resid < (nmp->nm_readdirsize / 2)) {
+			bigenough = 0;
+			break;
+		}
 		nfsstats.rpccnt[NFSPROC_READDIRPLUS]++;
 		nfsm_reqhead(vp, NFSPROC_READDIRPLUS,
 			NFSX_FH(1) + 6 * NFSX_UNSIGNED);
@@ -2291,6 +2287,7 @@ nfs_readdirplusrpc(vp, uiop, cred)
 			m_freem(mrep);
 			goto nfsmout;
 		}
+		nrpcs++;
 		nfsm_dissect(tl, u_int32_t *, 3 * NFSX_UNSIGNED);
 		dnp->n_cookieverf.nfsuquad[0] = *tl++;
 		dnp->n_cookieverf.nfsuquad[1] = *tl++;
@@ -2383,7 +2380,7 @@ nfs_readdirplusrpc(vp, uiop, cred)
 				if (!error) {
 				    nfs_loadattrcache(&newvp, &fattr, 0);
 				    dp->d_type =
-				        IFTODT(VTTOIF(np->n_vattr.va_type));
+				        IFTODT(VTTOIF(np->n_vattr->va_type));
 				    ndp->ni_vp = newvp;
 				    cnp->cn_hash = 0;
 				    for (hcp = cnp->cn_nameptr, i = 1; i <= len;
@@ -2983,7 +2980,7 @@ nfs_print(v)
 	register struct nfsnode *np = VTONFS(vp);
 
 	printf("tag VT_NFS, fileid %ld fsid 0x%lx",
-	    np->n_vattr.va_fileid, np->n_vattr.va_fsid);
+	    np->n_vattr->va_fileid, np->n_vattr->va_fsid);
 #ifdef FIFO
 	if (vp->v_type == VFIFO)
 		fifo_printinfo(vp);

@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_vfsops.c,v 1.65 1997/10/10 01:53:29 fvdl Exp $	*/
+/*	$NetBSD: nfs_vfsops.c,v 1.66 1997/10/19 01:46:40 fvdl Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993, 1995
@@ -471,6 +471,13 @@ nfs_decode_args(nmp, argp)
 	if (argp->sotype == SOCK_STREAM)
 		argp->flags &= ~NFSMNT_NOCONN;
 
+	/*
+	 * Cookie translation is not needed for v2, silently ignore it.
+	 */
+	if ((argp->flags & (NFSMNT_XLATECOOKIE|NFSMNT_NFSV3)) ==
+	    NFSMNT_XLATECOOKIE)
+		argp->flags &= ~NFSMNT_XLATECOOKIE;
+
 	/* Re-bind if rsrvd port requested and wasn't on one */
 	adjsock = !(nmp->nm_flag & NFSMNT_RESVPORT)
 		  && (argp->flags & NFSMNT_RESVPORT);
@@ -614,10 +621,12 @@ nfs_mount(mp, path, data, ndp, p)
 			return (EIO);
 		/*
 		 * When doing an update, we can't change from or to
-		 * v3 and/or nqnfs.
+		 * v3 and/or nqnfs, or change cookie translation
 		 */
-		args.flags = (args.flags & ~(NFSMNT_NFSV3|NFSMNT_NQNFS)) |
-		    (nmp->nm_flag & (NFSMNT_NFSV3|NFSMNT_NQNFS));
+		args.flags = (args.flags &
+		    ~(NFSMNT_NFSV3|NFSMNT_NQNFS|NFSMNT_XLATECOOKIE)) |
+		    (nmp->nm_flag &
+			(NFSMNT_NFSV3|NFSMNT_NQNFS|NFSMNT_XLATECOOKIE));
 		nfs_decode_args(nmp, &args);
 		return (0);
 	}
