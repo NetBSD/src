@@ -1,4 +1,4 @@
-/*	$NetBSD: md.h,v 1.6 1998/10/19 03:09:32 matt Exp $  */
+/*	$NetBSD: md.h,v 1.7 1999/01/15 07:48:07 matthias Exp $  */
 
 /*
  *	- ns32k dependent definitions
@@ -59,6 +59,8 @@ _cachectl(addr, bytes)
 	void *addr;
 	unsigned int bytes;
 {
+	void cinv __P((vaddr_t));
+
 	vaddr_t start;
 	for(start = (vaddr_t) addr & 0xfffffff0;
 	    start < (vaddr_t) addr + bytes; start += 0x10)
