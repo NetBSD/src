@@ -1,0 +1,21 @@
+Kernel message buffer not inplemented. Needs to be done! (HIGH)
+/Ragge 
+
+Kernel crashes sometimes during an reference to an bad (HIGH)
+struct buf in ubasetup when using disks other than unit 0.
+950223/Ragge
+
+/bin/expr fails; loops internally on some expressions. (HIGH)
+No system calls are done during looping.
+950302/Ragge
+
+Programs may be hanging with the D flag set, even if they (HIGH)
+don't do I/O at all. (ps, ...) User PTE problem?
+950304/Ragge
+
+Uba & devices should be converted to use new style config (MEDIUM)
+instead of emulating it. MSCP routines should also be
+fixed so that they can support both uda and kdb disks
+as device ra?.
+/Ragge
+
