@@ -1,4 +1,4 @@
-/*	$NetBSD: si_sebuf.c,v 1.1 1997/10/17 03:39:46 gwr Exp $	*/
+/*	$NetBSD: si_sebuf.c,v 1.2 1997/10/17 21:50:27 gwr Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -183,9 +183,7 @@ se_match(parent, cf, args)
 	if (strcmp(aa->name, "se"))
 		return (0);
 
-	/* Force same unit number as parent. */
-	if (parent->dv_unit != cf->cf_unit)
-		return (0);
+	/* Anyting else to check? */
 
 	return (1);
 }
