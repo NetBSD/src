@@ -1,4 +1,4 @@
-/*	$NetBSD: dec_prom.h,v 1.12 1999/01/31 13:49:40 simonb Exp $	*/
+/*	$NetBSD: dec_prom.h,v 1.13 1999/02/01 02:18:46 simonb Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -190,6 +190,7 @@ extern const struct callback callvec;
 #define rex (*callv -> _rex)
 
 #define bzero(dst, len) memset(dst, 0, len)
+/* XXX make sure that no calls to bcopy overlap! */
 #define bcopy(src, dst, len) memcpy(dst, src, len)
 #endif
 
