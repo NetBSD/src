@@ -1,4 +1,1 @@
-/*	$NetBSD: memcpy.S,v 1.1 2000/04/20 13:52:36 msaitoh Exp $	*/
-
-#define MEMCOPY
-#include "bcopy.S"
+/* On sh3, memcpy, memmove and bcopy share a single routine. */
