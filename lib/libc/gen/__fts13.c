@@ -1,4 +1,4 @@
-/*	$NetBSD: __fts13.c,v 1.25 1999/08/27 21:10:46 mycroft Exp $	*/
+/*	$NetBSD: __fts13.c,v 1.26 1999/09/16 11:44:55 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993, 1994
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)fts.c	8.6 (Berkeley) 8/14/94";
 #else
-__RCSID("$NetBSD: __fts13.c,v 1.25 1999/08/27 21:10:46 mycroft Exp $");
+__RCSID("$NetBSD: __fts13.c,v 1.26 1999/09/16 11:44:55 lukem Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -46,6 +46,7 @@ __RCSID("$NetBSD: __fts13.c,v 1.25 1999/08/27 21:10:46 mycroft Exp $");
 #include <sys/param.h>
 #include <sys/stat.h>
 
+#include <assert.h>
 #include <dirent.h>
 #include <errno.h>
 #include <fcntl.h>
@@ -123,6 +124,15 @@ fts_open(argv, options, compar)
 	size_t nitems;
 	FTSENT *parent, *tmp = NULL;	/* pacify gcc */
 	size_t len;
+
+	_DIAGASSERT(argv != NULL);
+#ifdef _DIAGNOSTIC
+	/* compar may be NULL */
+	if (argv == NULL) {
+		errno = ENOENT;
+		return (NULL);
+	}
+#endif
 
 	/* Options check. */
 	if (options & ~FTS_OPTIONMASK) {
@@ -228,6 +238,9 @@ fts_load(sp, p)
 	size_t len;
 	char *cp;
 
+	_DIAGASSERT(sp != NULL);
+	_DIAGASSERT(p != NULL);
+
 	/*
 	 * Load the stream structure for the next traversal.  Since we don't
 	 * actually enter the directory until after the preorder visit, set
@@ -252,6 +265,14 @@ fts_close(sp)
 {
 	FTSENT *freep, *p;
 	int saved_errno = 0;
+
+	_DIAGASSERT(sp != NULL);
+#ifdef _DIAGNOSTIC
+	if (sp == NULL) {
+		errno = EBADF;
+		return (-1);
+	}
+#endif
 
 	/*
 	 * This still works if we haven't read anything -- the dummy structure
@@ -309,6 +330,14 @@ fts_read(sp)
 	int instr;
 	char *t;
 	int saved_errno;
+
+	_DIAGASSERT(sp != NULL);
+#ifdef _DIAGNOSTIC
+	if (sp == NULL) {
+		errno = EBADF;
+		return (NULL);
+	}
+#endif
 
 	/* If finished or unrecoverable error, return NULL. */
 	if (sp->fts_cur == NULL || ISSET(FTS_STOP))
@@ -501,6 +530,20 @@ fts_set(sp, p, instr)
 	FTSENT *p;
 	int instr;
 {
+
+	_DIAGASSERT(sp != NULL);
+	_DIAGASSERT(p != NULL);
+#ifdef _DIAGNOSTIC
+	if (sp == NULL) {
+		errno = EBADF;
+		return (-1);
+	}
+	if (p == NULL) {
+		errno = EFAULT;
+		return (-1);
+	}
+#endif
+
 	if (instr && instr != FTS_AGAIN && instr != FTS_FOLLOW &&
 	    instr != FTS_NOINSTR && instr != FTS_SKIP) {
 		errno = EINVAL;
@@ -517,6 +560,14 @@ fts_children(sp, instr)
 {
 	FTSENT *p;
 	int fd;
+
+	_DIAGASSERT(sp != NULL);
+#ifdef _DIAGNOSTIC
+	if (sp == NULL) {
+		errno = EBADF;
+		return (NULL);
+	}
+#endif
 
 	if (instr && instr != FTS_NAMEONLY) {
 		errno = EINVAL;
@@ -608,6 +659,8 @@ fts_build(sp, type)
 	int oflag;
 #endif
 	char *cp = NULL;	/* pacify gcc */
+
+	_DIAGASSERT(sp != NULL);
 
 	/* Set current node pointer. */
 	cur = sp->fts_cur;
@@ -850,6 +903,9 @@ fts_stat(sp, p, follow)
 	struct STAT *sbp, sb;
 	int saved_errno;
 
+	_DIAGASSERT(sp != NULL);
+	_DIAGASSERT(p != NULL);
+
 	/* If user needs stat info, stat buffer already allocated. */
 	sbp = ISSET(FTS_NOSTAT) ? &sb : p->fts_statp;
 
@@ -929,6 +985,9 @@ fts_sort(sp, head, nitems)
 {
 	FTSENT **ap, *p;
 
+	_DIAGASSERT(sp != NULL);
+	_DIAGASSERT(head != NULL);
+
 	/*
 	 * Construct an array of pointers to the structures and call qsort(3).
 	 * Reassemble the array in the order returned by qsort.  If unable to
@@ -964,6 +1023,9 @@ fts_alloc(sp, name, namelen)
 	FTSENT *p;
 	size_t len;
 
+	_DIAGASSERT(sp != NULL);
+	_DIAGASSERT(name != NULL);
+
 	/*
 	 * The file name is a variable length array and no stat structure is
 	 * necessary if the user has set the nostat bit.  Allocate the FTSENT
@@ -998,6 +1060,8 @@ fts_lfree(head)
 	FTSENT *head;
 {
 	FTSENT *p;
+
+	/* XXX: head may be NULL ? */
 
 	/* Free a linked list of structures. */
 	while ((p = head) != NULL) {
@@ -1040,6 +1104,8 @@ fts_palloc(sp, size)
 {
 	char *new;
 
+	_DIAGASSERT(sp != NULL);
+
 #if 1
 	/* Protect against fts_pathlen overflow. */
 	if (size > USHRT_MAX + 1) {
@@ -1068,6 +1134,8 @@ fts_padjust(sp, head)
 	FTSENT *p;
 	char *addr;
 
+	_DIAGASSERT(sp != NULL);
+
 #define	ADJUST(p) {							\
 	if ((p)->fts_accpath != (p)->fts_name)				\
 		(p)->fts_accpath =					\
@@ -1093,6 +1161,8 @@ fts_maxarglen(argv)
 	char * const *argv;
 {
 	size_t len, max;
+
+	_DIAGASSERT(argv != NULL);
 
 	for (max = 0; *argv; ++argv)
 		if ((len = strlen(*argv)) > max)

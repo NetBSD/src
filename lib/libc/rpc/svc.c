@@ -1,4 +1,4 @@
-/*	$NetBSD: svc.c,v 1.16 1999/01/20 11:37:38 lukem Exp $	*/
+/*	$NetBSD: svc.c,v 1.17 1999/09/16 11:45:24 lukem Exp $	*/
 
 /*
  * Sun RPC is a product of Sun Microsystems, Inc. and is provided for
@@ -35,7 +35,7 @@
 static char *sccsid = "@(#)svc.c 1.44 88/02/08 Copyr 1984 Sun Micro";
 static char *sccsid = "@(#)svc.c	2.4 88/08/11 4.0 RPCSRC";
 #else
-__RCSID("$NetBSD: svc.c,v 1.16 1999/01/20 11:37:38 lukem Exp $");
+__RCSID("$NetBSD: svc.c,v 1.17 1999/09/16 11:45:24 lukem Exp $");
 #endif
 #endif
 
@@ -51,6 +51,7 @@ __RCSID("$NetBSD: svc.c,v 1.16 1999/01/20 11:37:38 lukem Exp $");
 
 #include "namespace.h"
 
+#include <assert.h>
 #include <errno.h>
 #include <stdlib.h>
 #include <string.h>
@@ -107,7 +108,15 @@ void
 xprt_register(xprt)
 	SVCXPRT *xprt;
 {
-	int sock = xprt->xp_sock;
+	int sock;
+
+	_DIAGASSERT(xprt != NULL);
+#ifdef _DIAGNOSTIC
+	if (xprt == NULL)
+		return;
+#endif
+
+	sock = xprt->xp_sock;
 
 	if (xports == NULL) {
 		xports = (SVCXPRT **)
@@ -130,7 +139,15 @@ void
 xprt_unregister(xprt) 
 	SVCXPRT *xprt;
 { 
-	int sock = xprt->xp_sock;
+	int sock;
+
+	_DIAGASSERT(xprt != NULL);
+#ifdef _DIAGNOSTIC
+	if (xprt == NULL)
+		return;
+#endif
+
+	sock = xprt->xp_sock;
 
 	if ((sock < FD_SETSIZE) && (xports[sock] == xprt)) {
 		xports[sock] = (SVCXPRT *)0;
@@ -161,6 +178,13 @@ svc_register(xprt, prog, vers, dispatch, protocol)
 {
 	struct svc_callout *prev;
 	struct svc_callout *s;
+
+	_DIAGASSERT(xprt != NULL);
+	_DIAGASSERT(dispatch != NULL);
+#ifdef _DIAGNOSTIC
+	if (xprt == NULL || dispatch == NULL)
+		return (FALSE);
+#endif
 
 	if ((s = svc_find(prog, vers, &prev)) != NULL_SVC) {
 		if (s->sc_dispatch == dispatch)
@@ -220,6 +244,8 @@ svc_find(prog, vers, prev)
 {
 	struct svc_callout *s, *p;
 
+	_DIAGASSERT(prev != NULL);
+
 	p = NULL_SVC;
 	for (s = svc_head; s != NULL_SVC; s = s->sc_next) {
 		if ((s->sc_prog == prog) && (s->sc_vers == vers))
@@ -244,6 +270,12 @@ svc_sendreply(xprt, xdr_results, xdr_location)
 {
 	struct rpc_msg rply; 
 
+	_DIAGASSERT(xprt != NULL);
+#ifdef _DIAGNOSTIC
+	if (xprt == NULL)
+		return (FALSE);
+#endif
+
 	rply.rm_direction = REPLY;  
 	rply.rm_reply.rp_stat = MSG_ACCEPTED; 
 	rply.acpted_rply.ar_verf = xprt->xp_verf; 
@@ -262,6 +294,12 @@ svcerr_noproc(xprt)
 {
 	struct rpc_msg rply;
 
+	_DIAGASSERT(xprt != NULL);
+#ifdef _DIAGNOSTIC
+	if (xprt == NULL)
+		return;
+#endif
+
 	rply.rm_direction = REPLY;
 	rply.rm_reply.rp_stat = MSG_ACCEPTED;
 	rply.acpted_rply.ar_verf = xprt->xp_verf;
@@ -278,6 +316,12 @@ svcerr_decode(xprt)
 {
 	struct rpc_msg rply; 
 
+	_DIAGASSERT(xprt != NULL);
+#ifdef _DIAGNOSTIC
+	if (xprt == NULL)
+		return;
+#endif
+
 	rply.rm_direction = REPLY; 
 	rply.rm_reply.rp_stat = MSG_ACCEPTED; 
 	rply.acpted_rply.ar_verf = xprt->xp_verf;
@@ -293,6 +337,12 @@ svcerr_systemerr(xprt)
 	SVCXPRT *xprt;
 {
 	struct rpc_msg rply; 
+
+	_DIAGASSERT(xprt != NULL);
+#ifdef _DIAGNOSTIC
+	if (xprt == NULL)
+		return;
+#endif
 
 	rply.rm_direction = REPLY; 
 	rply.rm_reply.rp_stat = MSG_ACCEPTED; 
@@ -311,6 +361,12 @@ svcerr_auth(xprt, why)
 {
 	struct rpc_msg rply;
 
+	_DIAGASSERT(xprt != NULL);
+#ifdef _DIAGNOSTIC
+	if (xprt == NULL)
+		return;
+#endif
+
 	rply.rm_direction = REPLY;
 	rply.rm_reply.rp_stat = MSG_DENIED;
 	rply.rjcted_rply.rj_stat = AUTH_ERROR;
@@ -326,6 +382,12 @@ svcerr_weakauth(xprt)
 	SVCXPRT *xprt;
 {
 
+	_DIAGASSERT(xprt != NULL);
+#ifdef _DIAGNOSTIC
+	if (xprt == NULL)
+		return;
+#endif
+
 	svcerr_auth(xprt, AUTH_TOOWEAK);
 }
 
@@ -337,6 +399,12 @@ svcerr_noprog(xprt)
 	SVCXPRT *xprt;
 {
 	struct rpc_msg rply;  
+
+	_DIAGASSERT(xprt != NULL);
+#ifdef _DIAGNOSTIC
+	if (xprt == NULL)
+		return;
+#endif
 
 	rply.rm_direction = REPLY;   
 	rply.rm_reply.rp_stat = MSG_ACCEPTED;  
@@ -355,6 +423,12 @@ svcerr_progvers(xprt, low_vers, high_vers)
 	u_long high_vers;
 {
 	struct rpc_msg rply;
+
+	_DIAGASSERT(xprt != NULL);
+#ifdef _DIAGNOSTIC
+	if (xprt == NULL)
+		return;
+#endif
 
 	rply.rm_direction = REPLY;
 	rply.rm_reply.rp_stat = MSG_ACCEPTED;
@@ -413,6 +487,11 @@ svc_getreqset(readfds)
 	msg.rm_call.cb_verf.oa_base = &(cred_area[MAX_AUTH_BYTES]);
 	r.rq_clntcred = &(cred_area[2*MAX_AUTH_BYTES]);
 
+	_DIAGASSERT(readfds != NULL);
+#ifdef _DIAGNOSTIC
+	if (readfds == NULL)
+		return;
+#endif
 
 	maskp = readfds->fds_bits;
 	for (sock = 0; sock < FD_SETSIZE; sock += NFDBITS) {

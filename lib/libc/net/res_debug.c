@@ -1,4 +1,4 @@
-/*	$NetBSD: res_debug.c,v 1.23 1998/11/15 17:40:36 christos Exp $	*/
+/*	$NetBSD: res_debug.c,v 1.24 1999/09/16 11:45:17 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1985, 1990, 1993
@@ -81,7 +81,7 @@
 static char sccsid[] = "@(#)res_debug.c	8.1 (Berkeley) 6/4/93";
 static char rcsid[] = "Id: res_debug.c,v 8.20 1997/06/01 20:34:37 vixie Exp ";
 #else
-__RCSID("$NetBSD: res_debug.c,v 1.23 1998/11/15 17:40:36 christos Exp $");
+__RCSID("$NetBSD: res_debug.c,v 1.24 1999/09/16 11:45:17 lukem Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -92,6 +92,7 @@ __RCSID("$NetBSD: res_debug.c,v 1.23 1998/11/15 17:40:36 christos Exp $");
 #include <arpa/inet.h>
 #include <arpa/nameser.h>
 
+#include <assert.h>
 #include <ctype.h>
 #include <netdb.h>
 #include <resolv.h>
@@ -228,6 +229,10 @@ do_rrset(msg, len, cp, cnt, pflag, file, hs)
 	int n;
 	int sflag;
 
+	_DIAGASSERT(cp != NULL);
+	_DIAGASSERT(msg != NULL);
+	_DIAGASSERT(hs != NULL);
+
 	/*
 	 * Print answer records.
 	 */
@@ -261,6 +266,13 @@ void
 __p_query(msg)
 	const u_char *msg;
 {
+
+	_DIAGASSERT(msg != NULL);
+#ifdef _DIAGNOSTIC
+	if (msg == NULL)
+		return;
+#endif
+
 	__fp_query(msg, stdout);
 }
 
@@ -274,6 +286,13 @@ __fp_resstat(statp, file)
 	FILE *file;
 {
 	register u_long mask;
+
+	_DIAGASSERT(file != NULL);
+	/* statp may be NULL */
+#ifdef _DIAGNOSTIC
+	if (file == NULL)
+		return;
+#endif
 
 	fprintf(file, ";; res options:");
 	if (!statp)
@@ -297,6 +316,13 @@ __fp_nquery(msg, len, file)
 	register const u_char *cp, *endMark;
 	register const HEADER *hp;
 	register int n;
+
+	_DIAGASSERT(msg != NULL);
+	_DIAGASSERT(file != NULL);
+#ifdef _DIAGNOSTIC
+	if (msg == NULL || file == NULL)
+		return;
+#endif
 
 	if ((_res.options & RES_INIT) == 0 && res_init() == -1)
 		return;
@@ -421,6 +447,14 @@ __fp_query(msg, file)
 	const u_char *msg;
 	FILE *file;
 {
+
+	_DIAGASSERT(msg != NULL);
+	_DIAGASSERT(file != NULL);
+#ifdef _DIAGNOSTIC
+	if (msg == NULL || file == NULL)
+		return;
+#endif
+
 	fp_nquery(msg, PACKETSZ, file);
 }
 
@@ -432,6 +466,13 @@ __p_cdnname(cp, msg, len, file)
 {
 	char name[MAXDNAME];
 	int n;
+
+	_DIAGASSERT(msg != NULL);
+	_DIAGASSERT(file != NULL);
+#ifdef _DIAGNOSTIC
+	if (msg == NULL || file == NULL)
+		return (NULL);
+#endif
 
 	if ((n = dn_expand(msg, msg + len, cp, name, sizeof name)) < 0)
 		return (NULL);
@@ -447,6 +488,15 @@ __p_cdname(cp, msg, file)
 	const u_char *cp, *msg;
 	FILE *file;
 {
+
+	_DIAGASSERT(cp != NULL);
+	_DIAGASSERT(msg != NULL);
+	_DIAGASSERT(file != NULL);
+#ifdef _DIAGNOSTIC
+	if (cp == NULL || msg == NULL || file == NULL)
+		return (NULL);
+#endif
+
 	return (p_cdnname(cp, msg, PACKETSZ, file));
 }
 
@@ -462,6 +512,14 @@ __p_fqnname(cp, msg, msglen, name, namelen)
 	int namelen;
 {
 	int n, newlen;
+
+	_DIAGASSERT(cp != NULL);
+	_DIAGASSERT(msg != NULL);
+	_DIAGASSERT(name != NULL);
+#ifdef _DIAGNOSTIC
+	if (cp == NULL || msg == NULL || name == NULL)
+		return (NULL);
+#endif
 
 	if ((n = dn_expand(msg, cp + msglen, cp, name, namelen)) < 0)
 		return (NULL);
@@ -486,6 +544,14 @@ __p_fqname(cp, msg, file)
 	char name[MAXDNAME];
 	const u_char *n;
 
+	_DIAGASSERT(cp != NULL);
+	_DIAGASSERT(msg != NULL);
+	_DIAGASSERT(file != NULL);
+#ifdef _DIAGNOSTIC
+	if (cp == NULL || msg == NULL || file == NULL)
+		return (NULL);
+#endif
+
 	n = __p_fqnname(cp, msg, MAXCDNAME, name, sizeof name);
 	if (n == NULL)
 		return (NULL);
@@ -509,6 +575,14 @@ __p_rr(cp, msg, file)
 	u_int16_t keyflags;
 	char rrname[MAXDNAME];		/* The fqdn of this RR */
 	char base64_key[MAX_KEY_BASE64];
+
+	_DIAGASSERT(cp != NULL);
+	_DIAGASSERT(msg != NULL);
+	_DIAGASSERT(file != NULL);
+#ifdef _DIAGNOSTIC
+	if (cp == NULL || msg == NULL || file == NULL)
+		return (NULL);
+#endif
 
 	if ((_res.options & RES_INIT) == 0 && res_init() == -1) {
 		h_errno = NETDB_INTERNAL;
@@ -959,6 +1033,15 @@ __sym_ston(syms, name, success)
 	char *name;
 	int *success;
 {
+
+	_DIAGASSERT(syms != NULL);
+	_DIAGASSERT(name != NULL);
+	/* success may be NULL */
+#ifdef _DIAGNOSTIC
+	if (syms == NULL || name == NULL)
+		return (NULL);
+#endif
+
 	for (; syms->name != 0; syms++) {
 		if (strcasecmp (name, syms->name) == 0) {
 			if (success)
@@ -978,6 +1061,13 @@ __sym_ntos(syms, number, success)
 	int *success;
 {
 	static char unname[20];
+
+	_DIAGASSERT(syms != NULL);
+	/* success may be NULL */
+#ifdef _DIAGNOSTIC
+	if (syms == NULL)
+		return (NULL);
+#endif
 
 	for (; syms->name != 0; syms++) {
 		if (number == syms->number) {
@@ -1001,6 +1091,13 @@ __sym_ntop(syms, number, success)
 	int *success;
 {
 	static char unname[20];
+
+	_DIAGASSERT(syms != NULL);
+	/* success may be NULL */
+#ifdef _DIAGNOSTIC
+	if (syms == NULL)
+		return (NULL);
+#endif
 
 	for (; syms->name != 0; syms++) {
 		if (number == syms->number) {
@@ -1163,6 +1260,8 @@ precsize_aton(strptr)
 	int exponent = 0;
 	int mantissa = 0;
 
+	_DIAGASSERT(strptr != NULL);
+
 	cp = (const char *)*strptr;
 	while (isdigit(*cp)) {
 		if (mantissa == 0)
@@ -1211,6 +1310,9 @@ latlon2ul(latlonstrptr,which)
 	register const char *cp;
 	u_int32_t retval = 0;
 	int deg = 0, min = 0, secs = 0, secsfrac = 0;
+
+	_DIAGASSERT(latlonstrptr != NULL);
+	_DIAGASSERT(which != NULL);
 
 	cp = *latlonstrptr;
 
@@ -1317,6 +1419,13 @@ loc_aton(ascii, binary)
 	u_int8_t vp = 0x13;	/* default = 1e3 cm = 10.00m */
 	u_int8_t siz = 0x12;	/* default = 1e2 cm = 1.00m */
 	int which1 = 0, which2 = 0;
+
+	_DIAGASSERT(ascii != NULL);
+	_DIAGASSERT(binary != NULL);
+#ifdef _DIAGNOSTIC
+	if (ascii == NULL || binary == NULL)
+		return (0);
+#endif
 
 	cp = ascii;
 	maxcp = cp + strlen(ascii);
@@ -1434,6 +1543,13 @@ loc_ntoa(binary, ascii)
     
 	char *sizestr, *hpstr, *vpstr;
 
+	_DIAGASSERT(ascii != NULL);
+	_DIAGASSERT(binary != NULL);
+#ifdef _DIAGNOSTIC
+	if (ascii == NULL || binary == NULL)
+		return (NULL);
+#endif
+
 	versionval = *cp++;
 
 	if (versionval) {
@@ -1522,6 +1638,12 @@ __dn_count_labels(name)
 	char *name;
 {
 	int i, len, count;
+
+	_DIAGASSERT(name != NULL);
+#ifdef _DIAGNOSTIC
+	if (name == NULL)
+		return (0);
+#endif
 
 	len = strlen(name);
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: getprotoname.c,v 1.6 1997/07/21 14:07:59 jtc Exp $	*/
+/*	$NetBSD: getprotoname.c,v 1.7 1999/09/16 11:45:12 lukem Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -38,11 +38,13 @@
 #if 0
 static char sccsid[] = "@(#)getprotoname.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: getprotoname.c,v 1.6 1997/07/21 14:07:59 jtc Exp $");
+__RCSID("$NetBSD: getprotoname.c,v 1.7 1999/09/16 11:45:12 lukem Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
 #include "namespace.h"
+
+#include <assert.h>
 #include <netdb.h>
 #include <string.h>
 
@@ -58,6 +60,12 @@ getprotobyname(name)
 {
 	register struct protoent *p;
 	register char **cp;
+
+	_DIAGASSERT(name != NULL);
+#ifdef _DIAGNOSTIC
+	if (name == NULL)
+		return (NULL);
+#endif
 
 	setprotoent(_proto_stayopen);
 	while ((p = getprotoent()) != NULL) {

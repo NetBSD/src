@@ -1,4 +1,4 @@
-/*	$NetBSD: radixsort.c,v 1.11 1998/02/03 18:44:19 perry Exp $	*/
+/*	$NetBSD: radixsort.c,v 1.12 1999/09/16 11:45:35 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)radixsort.c	8.2 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: radixsort.c,v 1.11 1998/02/03 18:44:19 perry Exp $");
+__RCSID("$NetBSD: radixsort.c,v 1.12 1999/09/16 11:45:35 lukem Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -60,8 +60,10 @@ __RCSID("$NetBSD: radixsort.c,v 1.11 1998/02/03 18:44:19 perry Exp $");
 
 #include "namespace.h"
 #include <sys/types.h>
-#include <stdlib.h>
+
+#include <assert.h>
 #include <errno.h>
+#include <stdlib.h>
 
 #ifdef __weak_alias
 __weak_alias(radixsort,_radixsort);
@@ -111,6 +113,15 @@ radixsort(a, n, tab, endch)
 	int c;
 	u_char tr0[256];
 
+	_DIAGASSERT(a != NULL);
+	_DIAGASSERT(tab != NULL);
+#ifdef _DIAGNOSTIC
+	if (a == NULL || tab == NULL) {
+		errno = EFAULT;
+		return (-1);
+	}
+#endif
+
 	SETUP;
 	r_sort_a(a, n, 0, tr, endch);
 	return (0);
@@ -125,6 +136,13 @@ sradixsort(a, n, tab, endch)
 	const u_char *tr, **ta;
 	int c;
 	u_char tr0[256];
+
+	_DIAGASSERT(a != NULL);
+	_DIAGASSERT(tab != NULL);
+	if (a == NULL || tab == NULL) {
+		errno = EFAULT;
+		return (-1);
+	}
 
 	SETUP;
 	if (n < THRESHOLD)
@@ -157,6 +175,9 @@ r_sort_a(a, n, i, tr, endch)
 	stack s[SIZE], *sp, *sp0, *sp1, temp;
 	int *cp, bigc;
 	const u_char **an, *t, **aj, **top[256];
+
+	_DIAGASSERT(a != NULL);
+	_DIAGASSERT(tr != NULL);
 
 	/* Set up stack. */
 	sp = s;
@@ -249,6 +270,10 @@ r_sort_b(a, ta, n, i, tr, endch)
 	const u_char **top[256];
 	int *cp, bigc;
 
+	_DIAGASSERT(a != NULL);
+	_DIAGASSERT(ta != NULL);
+	_DIAGASSERT(tr != NULL);
+
 	sp = s;
 	push(a, n, i);
 	while (!empty(s)) {
@@ -316,6 +341,9 @@ simplesort(a, n, b, tr, endch)	/* insertion sort */
 {
 	u_char ch;
 	const u_char  **ak, **ai, *s, *t;
+
+	_DIAGASSERT(a != NULL);
+	_DIAGASSERT(tr != NULL);
 
 	for (ak = a+1; --n >= 1; ak++)
 		for (ai = ak; ai > a; ai--) {

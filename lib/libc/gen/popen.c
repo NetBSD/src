@@ -1,4 +1,4 @@
-/*	$NetBSD: popen.c,v 1.22 1998/07/18 05:04:35 lukem Exp $	*/
+/*	$NetBSD: popen.c,v 1.23 1999/09/16 11:45:02 lukem Exp $	*/
 
 /*
  * Copyright (c) 1988, 1993
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)popen.c	8.3 (Berkeley) 5/3/95";
 #else
-__RCSID("$NetBSD: popen.c,v 1.22 1998/07/18 05:04:35 lukem Exp $");
+__RCSID("$NetBSD: popen.c,v 1.23 1999/09/16 11:45:02 lukem Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -50,13 +50,14 @@ __RCSID("$NetBSD: popen.c,v 1.22 1998/07/18 05:04:35 lukem Exp $");
 #include <sys/wait.h>
 #include <sys/socket.h>
 
-#include <signal.h>
+#include <assert.h>
 #include <errno.h>
-#include <unistd.h>
+#include <paths.h>
+#include <signal.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <paths.h>
+#include <unistd.h>
 
 #ifdef __weak_alias
 __weak_alias(popen,_popen);
@@ -75,7 +76,16 @@ popen(command, type)
 {
 	struct pid *cur, *old;
 	FILE *iop;
-	int pdes[2], pid, twoway;
+	int pdes[2], pid, twoway, serrno;
+
+	_DIAGASSERT(command != NULL);
+	_DIAGASSERT(type != NULL);
+#ifdef _DIAGNOSTIC
+	if (command == NULL || type == NULL) {
+		errno = EFAULT;
+		return (NULL);
+	}
+#endif
 
 #ifdef __GNUC__
 	/* This outrageous construct just to shut up a GCC warning. */
@@ -99,14 +109,17 @@ popen(command, type)
 	if ((cur = malloc(sizeof(struct pid))) == NULL) {
 		(void)close(pdes[0]);
 		(void)close(pdes[1]);
+		errno = ENOMEM;
 		return (NULL);
 	}
 
 	switch (pid = vfork()) {
 	case -1:			/* Error. */
+		serrno = errno;
 		free(cur);
 		(void)close(pdes[0]);
 		(void)close(pdes[1]);
+		errno = serrno;
 		return (NULL);
 		/* NOTREACHED */
 	case 0:				/* Child. */
@@ -167,6 +180,14 @@ pclose(iop)
 	struct pid *cur, *last;
 	int pstat;
 	pid_t pid;
+
+	_DIAGASSERT(iop != NULL);
+#ifdef _DIAGNOSTIC
+	if (iop == NULL) {
+		errno = EBADF;
+		return (-1);
+	}
+#endif
 
 	/* Find the appropriate file pointer. */
 	for (last = NULL, cur = pidlist; cur; last = cur, cur = cur->next)

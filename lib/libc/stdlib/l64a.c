@@ -1,4 +1,4 @@
-/*	$NetBSD: l64a.c,v 1.9 1999/02/06 15:04:05 kleink Exp $	*/
+/*	$NetBSD: l64a.c,v 1.10 1999/09/16 11:45:34 lukem Exp $	*/
 
 /*
  * Written by J.T. Conklin <jtc@netbsd.org>.
@@ -7,10 +7,13 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: l64a.c,v 1.9 1999/02/06 15:04:05 kleink Exp $");
+__RCSID("$NetBSD: l64a.c,v 1.10 1999/09/16 11:45:34 lukem Exp $");
 #endif
 
 #include "namespace.h"
+
+#include <assert.h>
+#include <errno.h>
 #include <stdlib.h>
 
 #ifdef __weak_alias
@@ -37,6 +40,14 @@ l64a_r (value, buffer, buflen)
 	char *s = buffer;
 	int digit;
 	unsigned long v = value;
+
+	_DIAGASSERT(buffer != NULL);
+#ifdef _DIAGNOSTIC
+	if (buffer == NULL) {
+		errno = EFAULT;
+		return (-1);
+	}
+#endif
 
 	if (value == 0UL) 
 		goto out;

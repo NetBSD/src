@@ -1,4 +1,4 @@
-/*	$NetBSD: strxfrm.c,v 1.7 1998/02/03 18:49:26 perry Exp $	*/
+/*	$NetBSD: strxfrm.c,v 1.8 1999/09/16 11:45:43 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -41,10 +41,11 @@
 #if 0
 static char sccsid[] = "@(#)strxfrm.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: strxfrm.c,v 1.7 1998/02/03 18:49:26 perry Exp $");
+__RCSID("$NetBSD: strxfrm.c,v 1.8 1999/09/16 11:45:43 lukem Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
+#include <assert.h>
 #include <string.h>
 
 /*
@@ -59,6 +60,13 @@ strxfrm(dst, src, n)
 	size_t n;
 {
 	size_t srclen, copysize;
+
+	_DIAGASSERT(src != NULL);
+	_DIAGASSERT(dst != NULL);
+#ifdef _DIAGNOSTIC
+	if (src == NULL || dst == NULL)
+		return (0);
+#endif
 
 	/*
 	 * Since locales are unimplemented, this is just a copy.

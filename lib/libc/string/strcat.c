@@ -1,4 +1,4 @@
-/*	$NetBSD: strcat.c,v 1.10 1998/03/26 23:53:37 cgd Exp $	*/
+/*	$NetBSD: strcat.c,v 1.11 1999/09/16 11:45:41 lukem Exp $	*/
 
 /*
  * Copyright (c) 1988, 1993
@@ -38,14 +38,17 @@
 #if 0
 static char sccsid[] = "@(#)strcat.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: strcat.c,v 1.10 1998/03/26 23:53:37 cgd Exp $");
+__RCSID("$NetBSD: strcat.c,v 1.11 1999/09/16 11:45:41 lukem Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
 #if !defined(_KERNEL) && !defined(_STANDALONE)
+#include <assert.h>
 #include <string.h>
 #else
 #include <lib/libkern/libkern.h>
+#define _DIAGASSERT(x)	(void)0
+#define	NULL		((char *)0)
 #endif
 
 char *
@@ -54,6 +57,13 @@ strcat(s, append)
 	const char *append;
 {
 	char	*t = s;
+
+	_DIAGASSERT(t != NULL);
+	_DIAGASSERT(append != NULL);
+#ifdef _DIAGNOSTIC
+	if (t == NULL || append == NULL)
+		return (NULL);
+#endif
 
 	for (; *t; ++t)
 		;

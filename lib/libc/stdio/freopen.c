@@ -1,4 +1,4 @@
-/*	$NetBSD: freopen.c,v 1.8 1999/01/06 13:57:14 kleink Exp $	*/
+/*	$NetBSD: freopen.c,v 1.9 1999/09/16 11:45:27 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -41,14 +41,16 @@
 #if 0
 static char sccsid[] = "@(#)freopen.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: freopen.c,v 1.8 1999/01/06 13:57:14 kleink Exp $");
+__RCSID("$NetBSD: freopen.c,v 1.9 1999/09/16 11:45:27 lukem Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
 #include <sys/types.h>
 #include <sys/stat.h>
-#include <fcntl.h>
+
+#include <assert.h>
 #include <errno.h>
+#include <fcntl.h>
 #include <unistd.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -66,6 +68,24 @@ freopen(file, mode, fp)
 {
 	int f;
 	int flags, isopen, oflags, sverrno, wantfd;
+
+	_DIAGASSERT(file != NULL);
+	_DIAGASSERT(mode != NULL);
+	_DIAGASSERT(fp != NULL);
+#ifdef _DIAGNOSTIC
+	if (file == NULL || *file == '\0') {
+		errno = ENOENT;
+		return (NULL);
+	}
+	if (mode == NULL) {
+		errno = EFAULT;
+		return (NULL);
+	}
+	if (fp == NULL) {
+		errno = EBADF;
+		return (NULL);
+	}
+#endif
 
 	if ((flags = __sflags(mode, &oflags)) == 0) {
 		(void) fclose(fp);

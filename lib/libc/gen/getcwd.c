@@ -1,4 +1,4 @@
-/*	$NetBSD: getcwd.c,v 1.21 1999/08/10 13:03:11 fvdl Exp $	*/
+/*	$NetBSD: getcwd.c,v 1.22 1999/09/16 11:44:58 lukem Exp $	*/
 
 /*
  * Copyright (c) 1989, 1991, 1993, 1995
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)getcwd.c	8.5 (Berkeley) 2/7/95";
 #else
-__RCSID("$NetBSD: getcwd.c,v 1.21 1999/08/10 13:03:11 fvdl Exp $");
+__RCSID("$NetBSD: getcwd.c,v 1.22 1999/09/16 11:44:58 lukem Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -49,6 +49,7 @@ __RCSID("$NetBSD: getcwd.c,v 1.21 1999/08/10 13:03:11 fvdl Exp $");
 #include <sys/param.h>
 #include <sys/stat.h>
 
+#include <assert.h>
 #include <dirent.h>
 #include <errno.h>
 #include <fcntl.h>
@@ -88,6 +89,19 @@ realpath(path, resolved)
 	struct stat sb;
 	int fd, n, rootd, serrno, nlnk = 0;
 	char *p, *q, wbuf[MAXPATHLEN];
+
+	_DIAGASSERT(path != NULL);
+	_DIAGASSERT(resolved != NULL);
+#ifdef _DIAGNOSTIC
+	if (path == NULL || *path == '\0') {
+		errno = ENOENT;
+		return (NULL);
+	}
+	if (resolved == NULL) {
+		errno = EINVAL;
+		return (NULL);
+	}
+#endif
 
 	/* Save the starting point. */
 	if ((fd = open(".", O_RDONLY)) < 0) {

@@ -1,4 +1,4 @@
-/*	$NetBSD: strsep.c,v 1.8 1998/10/13 20:32:09 kleink Exp $	*/
+/*	$NetBSD: strsep.c,v 1.9 1999/09/16 11:45:42 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -38,11 +38,13 @@
 #if 0
 static char sccsid[] = "@(#)strsep.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: strsep.c,v 1.8 1998/10/13 20:32:09 kleink Exp $");
+__RCSID("$NetBSD: strsep.c,v 1.9 1999/09/16 11:45:42 lukem Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
 #include "namespace.h"
+
+#include <assert.h>
 #include <string.h>
 
 #ifdef __weak_alias
@@ -69,6 +71,13 @@ strsep(stringp, delim)
 	const char *spanp;
 	int c, sc;
 	char *tok;
+
+	_DIAGASSERT(stringp != NULL);
+	_DIAGASSERT(delim != NULL);
+#ifdef _DIAGNOSTIC
+	if (stringp == NULL || delim == NULL)
+		return (NULL);
+#endif
 
 	if ((s = *stringp) == NULL)
 		return (NULL);

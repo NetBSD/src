@@ -1,4 +1,4 @@
-/*	$NetBSD: rindex.c,v 1.9 1998/03/26 23:53:37 cgd Exp $	*/
+/*	$NetBSD: rindex.c,v 1.10 1999/09/16 11:45:40 lukem Exp $	*/
 
 /*
  * Copyright (c) 1988, 1993
@@ -38,15 +38,17 @@
 #if 0
 static char sccsid[] = "@(#)rindex.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: rindex.c,v 1.9 1998/03/26 23:53:37 cgd Exp $");
+__RCSID("$NetBSD: rindex.c,v 1.10 1999/09/16 11:45:40 lukem Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
 #if !defined(_KERNEL) && !defined(_STANDALONE)
+#include <assert.h>
 #include <string.h>
 #else
 #include <lib/libkern/libkern.h>
-#define	NULL	((char *)0)
+#define _DIAGASSERT(x)	(void)0
+#define	NULL		((char *)0)
 #endif
 
 char *
@@ -59,6 +61,12 @@ rindex(p, ch)
 	int ch;
 {
 	char *save;
+
+	_DIAGASSERT(p != NULL);
+#ifdef _DIAGNOSTIC
+	if (p == NULL)
+		return (NULL);
+#endif
 
 	for (save = NULL;; ++p) {
 		if (*p == ch)

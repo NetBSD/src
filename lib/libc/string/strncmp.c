@@ -1,4 +1,4 @@
-/*	$NetBSD: strncmp.c,v 1.10 1998/03/26 23:53:37 cgd Exp $	*/
+/*	$NetBSD: strncmp.c,v 1.11 1999/09/16 11:45:42 lukem Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -38,14 +38,17 @@
 #if 0
 static char sccsid[] = "@(#)strncmp.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: strncmp.c,v 1.10 1998/03/26 23:53:37 cgd Exp $");
+__RCSID("$NetBSD: strncmp.c,v 1.11 1999/09/16 11:45:42 lukem Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
 #if !defined(_KERNEL) && !defined(_STANDALONE)
+#include <assert.h>
 #include <string.h>
 #else
 #include <lib/libkern/libkern.h>
+#define _DIAGASSERT(x)	(void)0
+#define	NULL		((char *)0)
 #endif
 
 int
@@ -53,6 +56,13 @@ strncmp(s1, s2, n)
 	const char *s1, *s2;
 	size_t n;
 {
+
+	_DIAGASSERT(s1 != NULL);
+	_DIAGASSERT(s2 != NULL);
+#ifdef _DIAGNOSTIC
+	if (s1 == NULL || s2 == NULL)
+		return (0);
+#endif
 
 	if (n == 0)
 		return (0);

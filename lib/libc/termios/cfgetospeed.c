@@ -1,4 +1,4 @@
-/*	$NetBSD: cfgetospeed.c,v 1.3 1997/07/21 14:09:10 jtc Exp $	*/
+/*	$NetBSD: cfgetospeed.c,v 1.4 1999/09/16 11:45:44 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1989, 1993
@@ -38,11 +38,14 @@
 #if 0
 static char sccsid[] = "@(#)termios.c	8.2 (Berkeley) 2/21/94";
 #else
-__RCSID("$NetBSD: cfgetospeed.c,v 1.3 1997/07/21 14:09:10 jtc Exp $");
+__RCSID("$NetBSD: cfgetospeed.c,v 1.4 1999/09/16 11:45:44 lukem Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
 #include "namespace.h"
+
+#include <assert.h>
+#include <stdio.h>
 #include <termios.h>
 
 #ifdef __weak_alias
@@ -53,5 +56,12 @@ speed_t
 cfgetospeed(t)
 	const struct termios *t;
 {
+
+	_DIAGASSERT(t != NULL);
+#ifdef _DIAGNOSTIC
+	if (t == NULL)
+		return (0);
+#endif
+
 	return (t->c_ospeed);
 }

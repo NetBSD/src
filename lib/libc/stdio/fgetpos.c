@@ -1,4 +1,4 @@
-/*	$NetBSD: fgetpos.c,v 1.7 1997/07/13 20:14:55 christos Exp $	*/
+/*	$NetBSD: fgetpos.c,v 1.8 1999/09/16 11:45:26 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -41,10 +41,12 @@
 #if 0
 static char sccsid[] = "@(#)fgetpos.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: fgetpos.c,v 1.7 1997/07/13 20:14:55 christos Exp $");
+__RCSID("$NetBSD: fgetpos.c,v 1.8 1999/09/16 11:45:26 lukem Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
+#include <assert.h>
+#include <errno.h>
 #include <stdio.h>
 
 int
@@ -52,5 +54,14 @@ fgetpos(fp, pos)
 	FILE *fp;
 	fpos_t *pos;
 {
+	_DIAGASSERT(fp != NULL);
+	_DIAGASSERT(pos != NULL);
+#ifdef _DIAGNOSTIC
+	if (fp == NULL || pos == NULL) {
+		errno = EBADF;
+		return (1);
+	}
+#endif
+
 	return((*pos = ftell(fp)) == (fpos_t)-1);
 }

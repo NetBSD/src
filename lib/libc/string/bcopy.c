@@ -1,4 +1,4 @@
-/*	$NetBSD: bcopy.c,v 1.10 1998/03/26 23:53:36 cgd Exp $	*/
+/*	$NetBSD: bcopy.c,v 1.11 1999/09/16 11:45:38 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -41,14 +41,16 @@
 #if 0
 static char sccsid[] = "@(#)bcopy.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: bcopy.c,v 1.10 1998/03/26 23:53:36 cgd Exp $");
+__RCSID("$NetBSD: bcopy.c,v 1.11 1999/09/16 11:45:38 lukem Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
 #if !defined(_KERNEL) && !defined(_STANDALONE)
+#include <assert.h>
 #include <string.h>
 #else
 #include <lib/libkern/libkern.h>
+#define _DIAGASSERT(x)	(void)0
 #endif
 
 /*
@@ -84,6 +86,15 @@ bcopy(src0, dst0, length)
 	char *dst = dst0;
 	const char *src = src0;
 	size_t t;
+
+	_DIAGASSERT(dst0 != 0);
+	_DIAGASSERT(src0 != 0);
+#ifdef _DIAGNOSTIC
+	if (dst0 == 0 || src0 == 0) {
+		dst0 = 0;
+		goto done;
+	}
+#endif
 
 	if (length == 0 || dst == src)		/* nothing to do */
 		goto done;

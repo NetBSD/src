@@ -1,4 +1,4 @@
-/*	$NetBSD: setbuffer.c,v 1.7 1998/11/15 17:19:53 christos Exp $	*/
+/*	$NetBSD: setbuffer.c,v 1.8 1999/09/16 11:45:30 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -41,10 +41,12 @@
 #if 0
 static char sccsid[] = "@(#)setbuffer.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: setbuffer.c,v 1.7 1998/11/15 17:19:53 christos Exp $");
+__RCSID("$NetBSD: setbuffer.c,v 1.8 1999/09/16 11:45:30 lukem Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
+#include <assert.h>
+#include <errno.h>
 #include <stdio.h>
 
 void
@@ -53,6 +55,15 @@ setbuffer(fp, buf, size)
 	char *buf;
 	int size;
 {
+
+	_DIAGASSERT(fp != NULL);
+	/* buf may be NULL */
+#ifdef _DIAGNOSTIC
+	if (fp == NULL) {
+		errno = EBADF;
+		return;
+	}
+#endif
 
 	(void)setvbuf(fp, buf, buf ? _IOFBF : _IONBF, (size_t)size);
 }
@@ -64,6 +75,14 @@ int
 setlinebuf(fp)
 	FILE *fp;
 {
+
+	_DIAGASSERT(fp != NULL);
+#ifdef _DIAGNOSTIC
+	if (fp == NULL) {
+		errno = EBADF;
+		return (EOF);
+	}
+#endif
 
 	return (setvbuf(fp, (char *)NULL, _IOLBF, (size_t)0));
 }

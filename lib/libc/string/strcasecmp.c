@@ -1,4 +1,4 @@
-/*	$NetBSD: strcasecmp.c,v 1.9 1998/02/03 18:49:17 perry Exp $	*/
+/*	$NetBSD: strcasecmp.c,v 1.10 1999/09/16 11:45:41 lukem Exp $	*/
 
 /*
  * Copyright (c) 1987, 1993
@@ -38,11 +38,12 @@
 #if 0
 static char sccsid[] = "@(#)strcasecmp.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: strcasecmp.c,v 1.9 1998/02/03 18:49:17 perry Exp $");
+__RCSID("$NetBSD: strcasecmp.c,v 1.10 1999/09/16 11:45:41 lukem Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
 #include "namespace.h"
+#include <assert.h>
 #include <ctype.h>
 #include <string.h>
 
@@ -60,6 +61,13 @@ strcasecmp(s1, s2)
 	const u_char *us1 = (const u_char *)s1,
 			*us2 = (const u_char *)s2;
 
+	_DIAGASSERT(s1 != NULL);
+	_DIAGASSERT(s2 != NULL);
+#ifdef _DIAGNOSTIC
+	if (s1 == NULL || s2 == NULL)
+		return (0);
+#endif
+
 	while (tolower(*us1) == tolower(*us2++))
 		if (*us1++ == '\0')
 			return (0);
@@ -71,6 +79,12 @@ strncasecmp(s1, s2, n)
 	const char *s1, *s2;
 	size_t n;
 {
+
+	_DIAGASSERT(s1 != NULL);
+	_DIAGASSERT(s2 != NULL);
+	if (s1 == NULL || s2 == NULL)
+		return (0);
+
 	if (n != 0) {
 		const u_char *us1 = (const u_char *)s1,
 				*us2 = (const u_char *)s2;

@@ -1,4 +1,4 @@
-/*	$NetBSD: tcsendbreak.c,v 1.5 1998/11/15 17:11:48 christos Exp $	*/
+/*	$NetBSD: tcsendbreak.c,v 1.6 1999/09/16 11:45:45 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1989, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)termios.c	8.2 (Berkeley) 2/21/94";
 #else
-__RCSID("$NetBSD: tcsendbreak.c,v 1.5 1998/11/15 17:11:48 christos Exp $");
+__RCSID("$NetBSD: tcsendbreak.c,v 1.6 1999/09/16 11:45:45 lukem Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -47,6 +47,8 @@ __RCSID("$NetBSD: tcsendbreak.c,v 1.5 1998/11/15 17:11:48 christos Exp $");
 #include <sys/ioctl.h>
 #include <sys/time.h>
 
+#include <assert.h>
+#include <errno.h>
 #include <termios.h>
 #include <unistd.h>
 
@@ -60,6 +62,14 @@ tcsendbreak(fd, len)
 	int fd, len;
 {
 	static const struct timespec sleepytime = { 0, 400000000 };
+
+	_DIAGASSERT(fd != -1);
+#ifdef _DIAGNOSTIC
+	if (fd == -1) {
+		errno = EBADF;
+		return (-1);
+	}
+#endif
 
 	if (ioctl(fd, TIOCSBRK, 0) == -1)
 		return (-1);

@@ -1,4 +1,4 @@
-/*	$NetBSD: svc_simple.c,v 1.15 1999/04/19 21:56:01 kleink Exp $	*/
+/*	$NetBSD: svc_simple.c,v 1.16 1999/09/16 11:45:25 lukem Exp $	*/
 
 /*
  * Sun RPC is a product of Sun Microsystems, Inc. and is provided for
@@ -35,7 +35,7 @@
 static char *sccsid = "@(#)svc_simple.c 1.18 87/08/11 Copyr 1984 Sun Micro";
 static char *sccsid = "@(#)svc_simple.c	2.2 88/08/01 4.0 RPCSRC";
 #else
-__RCSID("$NetBSD: svc_simple.c,v 1.15 1999/04/19 21:56:01 kleink Exp $");
+__RCSID("$NetBSD: svc_simple.c,v 1.16 1999/09/16 11:45:25 lukem Exp $");
 #endif
 #endif
 
@@ -51,6 +51,7 @@ __RCSID("$NetBSD: svc_simple.c,v 1.15 1999/04/19 21:56:01 kleink Exp $");
 #include <sys/types.h>
 #include <sys/socket.h>
 
+#include <assert.h>
 #include <err.h>
 #include <netdb.h>
 #include <stdio.h>
@@ -125,6 +126,9 @@ universal(rqstp, transp)
 	char *outdata;
 	char xdrbuf[UDPMSGSIZE];
 	struct proglst *plist;
+
+	_DIAGASSERT(rqstp != NULL);
+	_DIAGASSERT(transp != NULL);
 
 	/* 
 	 * enforce "procnum 0 is echo" convention

@@ -1,4 +1,4 @@
-/*	$NetBSD: fopen.c,v 1.6 1998/02/03 18:41:11 perry Exp $	*/
+/*	$NetBSD: fopen.c,v 1.7 1999/09/16 11:45:27 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -41,12 +41,13 @@
 #if 0
 static char sccsid[] = "@(#)fopen.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: fopen.c,v 1.6 1998/02/03 18:41:11 perry Exp $");
+__RCSID("$NetBSD: fopen.c,v 1.7 1999/09/16 11:45:27 lukem Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
 #include <sys/types.h>
 #include <sys/stat.h>
+#include <assert.h>
 #include <fcntl.h>
 #include <stdio.h>
 #include <errno.h>
@@ -61,6 +62,11 @@ fopen(file, mode)
 	int f;
 	int flags, oflags;
 
+	_DIAGASSERT(file != NULL);
+#ifdef _DIAGNOSTIC
+	if (file == NULL)
+		return (NULL);
+#endif
 	if ((flags = __sflags(mode, &oflags)) == 0)
 		return (NULL);
 	if ((fp = __sfp()) == NULL)

@@ -1,4 +1,4 @@
-/*	$NetBSD: passwd.c,v 1.15 1998/12/09 14:35:03 christos Exp $	*/
+/*	$NetBSD: passwd.c,v 1.16 1999/09/16 11:45:51 lukem Exp $	*/
 
 /*
  * Copyright (c) 1987, 1993, 1994, 1995
@@ -35,7 +35,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: passwd.c,v 1.15 1998/12/09 14:35:03 christos Exp $");
+__RCSID("$NetBSD: passwd.c,v 1.16 1999/09/16 11:45:51 lukem Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include <sys/types.h>
@@ -44,6 +44,7 @@ __RCSID("$NetBSD: passwd.c,v 1.15 1998/12/09 14:35:03 christos Exp $");
 #include <sys/resource.h>
 #include <sys/wait.h>
 
+#include <assert.h>
 #include <ctype.h>
 #include <err.h>
 #include <errno.h>
@@ -249,7 +250,12 @@ pw_equal (buf, pw)
 	struct passwd *pw;
 {
 	struct passwd buf_pw;
-	int len = strlen (buf);
+	int len;
+
+	_DIAGASSERT(buf != NULL);
+	_DIAGASSERT(pw != NULL);
+
+	len = strlen (buf);
 	if (buf[len-1] == '\n')
 		buf[len-1] = '\0';
 	if (!pw_scan(buf, &buf_pw, NULL))
@@ -273,6 +279,13 @@ pw_copy(ffd, tfd, pw, old_pw)
 	FILE *from, *to;
 	int done;
 	char *p, buf[8192];
+
+	_DIAGASSERT(pw != NULL);
+	/* old_pw may be NULL */
+#ifdef _DIAGNOSTIC
+	if (pw == NULL)
+		return;
+#endif
 
 	if (!(from = fdopen(ffd, "r")))
 		pw_error(_PATH_MASTERPASSWD, 1, 1);
@@ -339,6 +352,13 @@ pw_error(name, err, eval)
 	const char *name;
 	int err, eval;
 {
+
+	_DIAGASSERT(name != NULL);
+#ifdef _DIAGNOSTIC
+	if (name == NULL)
+		name = "ERROR: pw_error() called with name == NULL";
+#endif
+
 	if (err)
 		warn(name);
 

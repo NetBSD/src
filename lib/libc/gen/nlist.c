@@ -1,4 +1,4 @@
-/*	$NetBSD: nlist.c,v 1.13 1998/07/26 14:18:18 mycroft Exp $	*/
+/*	$NetBSD: nlist.c,v 1.14 1999/09/16 11:45:01 lukem Exp $	*/
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All rights reserved.
@@ -39,7 +39,7 @@
 #if 0
 static char sccsid[] = "@(#)nlist.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: nlist.c,v 1.13 1998/07/26 14:18:18 mycroft Exp $");
+__RCSID("$NetBSD: nlist.c,v 1.14 1999/09/16 11:45:01 lukem Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -49,6 +49,7 @@ __RCSID("$NetBSD: nlist.c,v 1.13 1998/07/26 14:18:18 mycroft Exp $");
 #include <sys/stat.h>
 #include <sys/file.h>
 
+#include <assert.h>
 #include <errno.h>
 #include <stdio.h>
 #include <string.h>
@@ -85,6 +86,15 @@ nlist(name, list)
 {
 	int fd, n;
 
+	_DIAGASSERT(name != NULL);
+	_DIAGASSERT(list != NULL);
+#ifdef _DIAGNOSTIC
+	if (name == NULL || list == NULL) {
+		errno = EFAULT;
+		return (-1);
+	}
+#endif
+
 	fd = open(name, O_RDONLY, 0);
 	if (fd < 0)
 		return (-1);
@@ -100,8 +110,21 @@ __fdnlist(fd, list)
 {
 	int i, rv;
 
+	_DIAGASSERT(fd != -1);
+	_DIAGASSERT(list != NULL);
+#ifdef _DIAGNOSTIC
+	if (fd == -1) {
+		errno = EBADF;
+		return (-1);
+	}
+	if (list == NULL) {
+		errno = EFAULT;
+		return (-1);
+	}
+#endif
+
 	for (i = 0; i < sizeof(fdnlist_fmts) / sizeof(fdnlist_fmts[0]); i++)
 		if ((rv = (*fdnlist_fmts[i].fdnlist)(fd, list)) != -1)
-			return rv;
-	return -1;
+			return (rv);
+	return (-1);
 }

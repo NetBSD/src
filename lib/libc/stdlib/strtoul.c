@@ -1,4 +1,4 @@
-/*	$NetBSD: strtoul.c,v 1.13 1998/11/15 17:13:52 christos Exp $	*/
+/*	$NetBSD: strtoul.c,v 1.14 1999/09/16 11:45:36 lukem Exp $	*/
 
 /*
  * Copyright (c) 1990, 1993
@@ -38,10 +38,11 @@
 #if 0
 static char sccsid[] = "@(#)strtoul.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: strtoul.c,v 1.13 1998/11/15 17:13:52 christos Exp $");
+__RCSID("$NetBSD: strtoul.c,v 1.14 1999/09/16 11:45:36 lukem Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
+#include <assert.h>
 #include <ctype.h>
 #include <errno.h>
 #include <limits.h>
@@ -63,6 +64,15 @@ strtoul(nptr, endptr, base)
 	unsigned long acc, cutoff;
 	int c;
 	int neg, any, cutlim;
+
+	_DIAGASSERT(nptr != NULL);
+	/* endptr may be NULL */
+#ifdef _DIAGNOSTIC
+	if (nptr == NULL) {
+		errno = EFAULT;
+		return ((unsigned long)0);
+	}
+#endif
 
 	/*
 	 * See strtol for comments as to the logic used.
