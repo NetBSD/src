@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_subr.c,v 1.39 1998/01/12 03:00:42 scottr Exp $	*/
+/*	$NetBSD: tcp_subr.c,v 1.40 1998/01/30 08:42:11 mellon Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1988, 1990, 1993, 1995
@@ -360,6 +360,7 @@ tcp_close(tp)
 #endif /* RTV_RTT */
 	/* free the reassembly queue, if any */
 	(void) tcp_freeq(tp);
+	TCP_CLEAR_DELACK(tp);
 
 	if (tp->t_template)
 		FREE(tp->t_template, M_MBUF);
