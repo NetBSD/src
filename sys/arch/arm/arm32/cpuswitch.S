@@ -1,4 +1,4 @@
-/*	$NetBSD: cpuswitch.S,v 1.3.2.20 2002/08/19 21:39:00 thorpej Exp $	*/
+/*	$NetBSD: cpuswitch.S,v 1.3.2.21 2002/08/20 15:21:29 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1994-1998 Mark Brinicombe.
@@ -514,6 +514,19 @@ ENTRY(cpu_switch)
 	stmia	r7, {r8-r13}
 
 	/*
+	 * NOTE: We can now use r8-r13 until it is time to restore
+	 * them for the new process.
+	 */
+
+	/* Remember the old PCB. */
+	mov	r8, r1
+
+	/* r1 now free! */
+
+	/* Get the user structure for the new process in r9 */
+	ldr	r9, [r6, #(L_ADDR)]
+
+	/*
 	 * This can be optimised... We know we want to go from SVC32
 	 * mode to UND32 mode
 	 */
@@ -522,26 +535,45 @@ ENTRY(cpu_switch)
 	orr	r2, r2, #(PSR_UND32_MODE | I32_bit)
         msr	cpsr_c, r2
 
-	str	sp, [r1, #(PCB_UND_SP)]
+	str	sp, [r8, #(PCB_UND_SP)]
 
         msr	cpsr_c, r3		/* Restore the old mode */
 
 	/* rem: r0 = old lwp */
-	/* rem: r1 = old pcb */
 	/* rem: r4 = return value */
 	/* rem: r6 = new process */
+	/* rem: r8 = old PCB */
+	/* rem: r9 = new PCB */
 	/* rem: interrupts are enabled */
 
 	/* What else needs to be saved  Only FPA stuff when that is supported */
-
-	/* r1 now free! */
 
 	/* Third phase : restore saved context */
 
 	/* rem: r0 = old lwp */
 	/* rem: r4 = return value */
 	/* rem: r6 = new lwp */
+	/* rem: r8 = old PCB */
+	/* rem: r9 = new PCB */
 	/* rem: interrupts are enabled */
+
+	/*
+	 * Get the new L1 table pointer into r11.  If we're switching to
+	 * an LWP with the same address space as the outgoing one, we can
+	 * skip the cache purge and the TTB load.
+	 *
+	 * To avoid data dep stalls that would happen anyway, we try
+	 * and get some useful work done in the mean time.
+	 */
+	ldr	r10, [r8, #(PCB_PAGEDIR)]	/* r10 = old L1 */
+	ldr	r11, [r9, #(PCB_PAGEDIR)]	/* r11 = new L1 */
+
+	ldr	r3, .Lblock_userspace_access
+	mov	r1, #0x00000001
+	mov	r2, #0x00000000
+
+	teq	r10, r11			/* r10 == r11? */
+	beq	.Lcs_context_switched		/* yes! */
 
 	/*
 	 * Don't allow user space access between the purge and the switch.
@@ -563,6 +595,13 @@ ENTRY(cpu_switch)
 	/* At this point we need to kill IRQ's again. */
 	IRQdisable
 
+	/* rem: r2 = 0 */
+	/* rem: r3 = &block_userspace_access */
+	/* rem: r4 = return value */
+	/* rem: r6 = new lwp */
+	/* rem: r9 = new PCB */
+	/* rem: r11 == new L1 */
+
 	/*
 	 * Interrupts are disabled so we can allow user space accesses again
 	 * as none will occur until interrupts are re-enabled after the
@@ -570,18 +609,17 @@ ENTRY(cpu_switch)
 	 */
 	str	r2, [r3]
 
-	/* Get the user structure for the new process in r1 */
-	ldr	r1, [r6, #(L_ADDR)]
-
-	/* Get the pagedir physical address for the process. */
-	ldr	r0, [r1, #(PCB_PAGEDIR)]
-
 	/* Switch the memory to the new process */
 	ldr	r3, .Lcpufuncs
+	mov	r0, r11
 	add	lr, pc, #.Lcs_context_switched - . - 8
 	ldr	pc, [r3, #CF_CONTEXT_SWITCH]
-       
+
 .Lcs_context_switched:
+	/* rem: r4 = return value */
+	/* rem: r6 = new lwp */
+	/* rem: r9 = new PCB */
+
 	/*
 	 * This can be optimised... We know we want to go from SVC32
 	 * mode to UND32 mode
@@ -591,19 +629,26 @@ ENTRY(cpu_switch)
 	orr	r2, r2, #(PSR_UND32_MODE)
         msr	cpsr_c, r2
 
-	ldr	sp, [r1, #(PCB_UND_SP)]
+	ldr	sp, [r9, #(PCB_UND_SP)]
 
         msr	cpsr_c, r3		/* Restore the old mode */
 
-	/* Restore all the save registers */
-	add	r7, r1, #PCB_R8
-	ldmia	r7, {r8-r13}
-
 #ifdef ARMFPE
-	add	r0, r1, #(USER_SIZE) & 0x00ff
+	add	r0, r9, #(USER_SIZE) & 0x00ff
 	add	r0, r0, #(USER_SIZE) & 0xff00 
 	bl	_C_LABEL(arm_fpe_core_changecontext)
 #endif
+
+	/* Restore all the save registers */
+	add	r7, r9, #PCB_R8
+	ldmia	r7, {r8-r13}
+
+	/*
+	 * NOTE: We can now no longer use r8-r13.
+	 */
+
+	/* rem: r4 = return value */
+	/* rem: r6 = new lwp */
 
 	/* We can enable interrupts again */
 	IRQenable
@@ -630,8 +675,10 @@ ENTRY(cpu_switch)
 	 * expects.  Userpsace access already blocked by switch_exit()/
 	 * switch_lwp_exit().
 	 */
+	ldr	r9, [r6, #(L_ADDR)]		/* r9 = new PCB */
 	ldr	r3, .Lblock_userspace_access
 	mov	r2, #0x00000000
+	ldr	r11, [r9, #(PCB_PAGEDIR)]	/* r11 = new L1 */
 	b	.Lcs_cache_purge_skipped
 
 /*
