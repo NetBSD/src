@@ -1,4 +1,4 @@
-/*	$NetBSD: if_wi.c,v 1.14 2000/03/23 07:01:42 thorpej Exp $	*/
+/*	$NetBSD: if_wi.c,v 1.15 2000/03/27 06:48:05 enami Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -31,7 +31,7 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF
  * THE POSSIBILITY OF SUCH DAMAGE.
  *
- *	$Id: if_wi.c,v 1.14 2000/03/23 07:01:42 thorpej Exp $
+ *	$Id: if_wi.c,v 1.15 2000/03/27 06:48:05 enami Exp $
  */
 
 /*
@@ -117,7 +117,7 @@
 
 #if !defined(lint)
 static const char rcsid[] =
-	"$Id: if_wi.c,v 1.14 2000/03/23 07:01:42 thorpej Exp $";
+	"$Id: if_wi.c,v 1.15 2000/03/27 06:48:05 enami Exp $";
 #endif
 
 #ifdef foo
@@ -1193,8 +1193,11 @@ static int wi_ioctl(ifp, command, data)
 		error = (command == SIOCADDMULTI) ?
 		    ether_addmulti(ifr, &sc->sc_ethercom) :
 		    ether_delmulti(ifr, &sc->sc_ethercom);
-		if (error == ENETRESET || error == 0) {
-			/* Configure list onto the chip. */
+		if (error == ENETRESET) {
+			/*
+			 * Multicast list has changed; set the hardware filter
+			 * accordingly.
+			 */
 			wi_setmulti(sc);
 			error = 0;
 		}
