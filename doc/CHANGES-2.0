@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-2.0,v 1.1.2.523 2004/11/12 06:21:10 jmc Exp $
+#	$NetBSD: CHANGES-2.0,v 1.1.2.524 2004/11/12 06:29:28 jmc Exp $
 
 A complete list of changes from the initial NetBSD 2.0 branch on 28 March 2004
 until 2.0 release:
@@ -7993,3 +7993,13 @@ sys/arch/macppc/conf/GENERIC_MD			1.8
 	Now that we have ofwboot load at 0xe00000, it doesnt make sense
 	for this kernel to load at 0x800000.
 	[wrstuden, ticket #951]
+
+distrib/notes/i386/hardware			patch
+share/man/man4/amr.4				patch
+sys/dev/pci/amr.c				1.24
+sys/dev/pci/pcidevs				1.660-1.661
+sys/dev/pci/pcidevs.h				regen
+sys/dev/pci/pcidevs_data.h			regen
+
+	Added Dell PERC 4/SC
+	[martti, ticket #953]
