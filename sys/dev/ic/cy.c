@@ -1,4 +1,4 @@
-/*	$NetBSD: cy.c,v 1.1 1996/09/24 18:02:34 christos Exp $	*/
+/*	$NetBSD: cy.c,v 1.2 1996/09/26 19:16:02 thorpej Exp $	*/
 
 /*
  * cy.c
@@ -793,7 +793,8 @@ cy_modem_control(sc, cy, bits, howto)
 	s = spltty();
 
 	/* select channel */
-	cd_write_reg(sc, cy->cy_chip, CD1400_CAR, cy->cy_port & CD1400_CAR_CHAN);
+	cd_write_reg(sc, cy->cy_chip, CD1400_CAR,
+	    cy->cy_port_num & CD1400_CAR_CHAN);
 
 	/* does not manipulate RTS if it is used for flow control */
 	switch (howto) {
@@ -1111,7 +1112,7 @@ cy_intr(arg)
 
 #ifdef CY_DEBUG
 				printf("cy%d port %d recv exception, line_stat 0x%x, char 0x%x\n",
-				card, cy->cy_port, line_stat, recv_data);
+				card, cy->cy_port_num, line_stat, recv_data);
 #endif
 				if (ISSET(line_stat, CD1400_RDSR_OE))
 					cy->cy_fifo_overruns++;
@@ -1133,7 +1134,7 @@ cy_intr(arg)
 				    CD1400_RDCR);
 #ifdef CY_DEBUG
 				printf("cy%d port %d receive ok %d chars\n",
-				    card, cy->cy_port, n_chars);
+				    card, cy->cy_port_num, n_chars);
 #endif
 				while (n_chars--) {
 					*buf_p++ = 0;	/* status: OK */
@@ -1194,7 +1195,7 @@ cy_intr(arg)
 
 #ifdef CY_DEBUG
 			printf("cy%d port %d modem line change, new stat 0x%x\n",
-			       card, cy->cy_port, modem_stat);
+			       card, cy->cy_port_num, modem_stat);
 #endif
 			if (ISSET((cy->cy_carrier_stat ^ modem_stat), CD1400_MSVR2_CD)) {
 				SET(cy->cy_flags, CY_F_CARRIER_CHANGED);
@@ -1225,7 +1226,7 @@ cy_intr(arg)
 #endif
 #ifdef CY_DEBUG
 			printf("cy%d port %d tx service\n", card, 
-			    cy->cy_port);
+			    cy->cy_port_num);
 #endif
 
 			/* stop transmitting if no tty or CY_F_STOP set */
@@ -1327,7 +1328,7 @@ cy_enable_transmitter(sc, cy)
 {
 	int s = spltty();
 	cd_write_reg(sc, cy->cy_chip, CD1400_CAR,
-	    cy->cy_port & CD1400_CAR_CHAN);
+	    cy->cy_port_num & CD1400_CAR_CHAN);
 	cd_write_reg(sc, cy->cy_chip, CD1400_SRER,
 	    cd_read_reg(sc, cy->cy_chip, CD1400_SRER) | CD1400_SRER_TXRDY);
 	splx(s);
