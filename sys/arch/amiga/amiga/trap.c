@@ -38,7 +38,7 @@
  * from: Utah $Hdr: trap.c 1.32 91/04/06$
  *
  *	@(#)trap.c	7.15 (Berkeley) 8/2/91
- *	$Id: trap.c,v 1.13 1994/04/05 18:09:04 chopps Exp $
+ *	$Id: trap.c,v 1.14 1994/05/04 07:35:33 chopps Exp $
  */
 
 #include <sys/param.h>
@@ -593,9 +593,9 @@ trap(type, code, v, frame)
 		}
 		spl0();
 #ifndef PROFTIMER
-		if ((p->p_flag&SOWEUPC) && p->p_stats->p_prof.pr_scale) {
+		if ((p->p_flag&P_OWEUPC) && p->p_stats->p_prof.pr_scale) {
 			addupc(frame.f_pc, &p->p_stats->p_prof, 1);
-			p->p_flag &= ~SOWEUPC;
+			p->p_flag &= ~P_OWEUPC;
 		}
 #endif
 		userret(p, frame.f_pc, &syst); 
