@@ -1,4 +1,4 @@
-/*	$NetBSD: pmax_trap.c,v 1.40 1997/03/15 18:10:30 is Exp $	*/
+/*	$NetBSD: pmax_trap.c,v 1.41 1997/03/25 19:06:02 jonathan Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -83,6 +83,7 @@
 #include <netinet/in.h>
 #include <net/if.h>
 #include <net/if_ether.h>
+#include <net/if_media.h>
 #include <netinet/if_inarp.h>
 
 struct ifnet; struct ethercom;
