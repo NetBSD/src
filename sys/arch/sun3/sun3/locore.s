@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.53 1997/05/13 16:31:26 gwr Exp $	*/
+/*	$NetBSD: locore.s,v 1.54 1997/05/13 17:17:12 gwr Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Gordon W. Ross
@@ -47,7 +47,7 @@
 #include <machine/asm.h>
 #include <machine/trap.h>
 
-| Remember this is a fun project.  (Thanks, Adam.  I try! 8^)
+| Remember this is a fun project!
 
 | This is for kvm_mkdb, and should be the address of the beginning
 | of the kernel text segment (not necessarily the same as kernbase).
@@ -102,7 +102,7 @@ L_high_code:
 | Our boot loader leaves a copy of the kernel's exec header
 | just before the start of the kernel text segment, so the
 | kernel can sanity-check the DDB symbols at [end...esym].
-| Pass the struct exec at tmpstk-32 to __bootstrap().
+| Pass the struct exec at tmpstk-32 to _bootstrap().
 | Also, make sure the initial frame pointer is zero so that
 | the backtrace algorithm used by KGDB terminates nicely.
 	lea	_ASM_LABEL(tmpstk)-32, sp
@@ -121,7 +121,7 @@ L_high_code:
 	movl	#USRSTACK-4,a2
 	movl	a2,usp			| init user SP
 
-| Note curpcb was already set in __bootstrap().
+| Note curpcb was already set in _bootstrap().
 | Will do fpu initialization during autoconfig (see fpu.c)
 | The interrupt vector table and stack are now ready.
 | Interrupts will be enabled later, AFTER  autoconfiguration
@@ -787,7 +787,7 @@ Lswnofpsave:
 	 * Just call pmap_activate() for now.  Later on,
 	 * use the in-line version below (for speed).
 	 */
-	lea	a2@(VM_PMAP),a2 	| pmap = &vmspace.vm_pmap
+	movl	a2@(VM_PMAP),a2 	| pmap = vm->vm_map.pmap
 	pea	a2@			| push pmap
 	jbsr	_C_LABEL(pmap_activate)	| pmap_activate(pmap)
 	addql	#4,sp

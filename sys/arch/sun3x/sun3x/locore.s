@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.19 1997/05/02 23:07:35 jeremy Exp $	*/
+/*	$NetBSD: locore.s,v 1.20 1997/05/13 17:25:54 gwr Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -59,6 +59,7 @@ GLOBAL(kernel_text)
 | This is the entry point, as well as the end of the temporary stack
 | used during process switch (one 8K page ending at start)
 ASGLOBAL(tmpstk)
+ASGLOBAL(start)
 
 | The first step, after disabling interrupts, is to map enough of the kernel
 | into high virtual address space so that we can use position dependent code.
@@ -71,7 +72,6 @@ ASGLOBAL(tmpstk)
 | All code must be position independent until otherwise noted, as the
 | boot loader has loaded us into low memory but all the symbols in this
 | code have been linked high.
-ASGLOBAL(start)
 	movw	#PSL_HIGHIPL, sr	| no interrupts
 	movl	#KERNBASE, a5		| for vtop conversion
 	lea	_C_LABEL(mon_crp), a0	| where to store the CRP
@@ -101,13 +101,13 @@ L_high_code:
 | We are now running in the correctly relocated kernel, so
 | we are no longer restricted to position-independent code.
 | It is handy to leave transparent translation enabled while
-| for the low 1GB while __bootstrap() is doing its thing.
+| for the low 1GB while _bootstrap() is doing its thing.
 
 | Do bootstrap stuff needed before main() gets called.
 | Our boot loader leaves a copy of the kernel's exec header
 | just before the start of the kernel text segment, so the
 | kernel can sanity-check the DDB symbols at [end...esym].
-| Pass the struct exec at tmpstk-32 to __bootstrap().
+| Pass the struct exec at tmpstk-32 to _bootstrap().
 | Also, make sure the initial frame pointer is zero so that
 | the backtrace algorithm used by KGDB terminates nicely.
 	lea	_ASM_LABEL(tmpstk)-32, sp
@@ -120,7 +120,7 @@ L_high_code:
 	.long	0xf0170800		| pmove	sp@,tt0
 	addql	#4,sp
 
-| Now that __bootstrap() is done using the PROM functions,
+| Now that _bootstrap() is done using the PROM functions,
 | we can safely set the sfc/dfc to something != FC_CONTROL
 	moveq	#FC_USERD, d0		| make movs access "user data"
 	movc	d0, sfc			| space for copyin/copyout
@@ -132,7 +132,7 @@ L_high_code:
 	movl	#USRSTACK-4,a2
 	movl	a2,usp			| init user SP
 
-| Note curpcb was already set in __bootstrap().
+| Note curpcb was already set in _bootstrap().
 | Will do fpu initialization during autoconfig (see fpu.c)
 | The interrupt vector table and stack are now ready.
 | Interrupts will be enabled later, AFTER  autoconfiguration
@@ -798,7 +798,7 @@ Lswnofpsave:
 	 */
 	movl	a0@(P_VMSPACE),a2	| vm = p->p_vmspace
 #ifdef DIAGNOSTIC
-	tstl	a2			| map == VM_MAP_NULL?
+	tstl	a2			| vm == VM_MAP_NULL?
 	jeq	Lbadsw			| panic
 #endif
 #ifdef PMAP_DEBUG
@@ -806,7 +806,7 @@ Lswnofpsave:
 	 * Just call pmap_activate() for now.  Later on,
 	 * use the in-line version below (for speed).
 	 */
-	lea	a2@(VM_PMAP),a2 	| pmap = &vmspace.vm_pmap
+	movl	a2@(VM_PMAP),a2 	| pmap = vm->vm_map.pmap
 	pea	a2@			| push pmap
 	jbsr	_C_LABEL(pmap_activate)	| pmap_activate(pmap)
 	addql	#4,sp
@@ -814,8 +814,8 @@ Lswnofpsave:
 #else
 	/* XXX - Later, use this inline version. */
 	/* Just load the new CPU Root Pointer (MMU) */
-	lea	_C_LABEL(kernel_crp), a3	| our CPU Root Ptr. (CRP)
-	lea	a2@(VM_PMAP),a2 	| pmap = &vmspace.vm_pmap
+	lea	_C_LABEL(kernel_crp), a3 | our CPU Root Ptr. (CRP)
+	movl	a2@(VM_PMAP),a2 	| pmap = vm->vm_map.pmap
 	movl	a2@(PM_A_PHYS),d0	| phys = pmap->pm_a_phys
 	cmpl	a3@(4),d0		|  == kernel_crp.rp_addr ?
 	jeq	Lsame_mmuctx		| skip loadcrp/flush
@@ -878,7 +878,7 @@ Lsavedone:
 	moveq	#0,d0			| return 0
 	rts
 
-/* suline() `040 only */
+/* suline() */
 
 #ifdef DEBUG
 	.data
@@ -988,7 +988,7 @@ ENTRY(ecacheoff)
  * Note that simply taking the address of a local variable in a C function
  * doesn't work because callee saved registers may be outside the stack frame
  * defined by A6 (e.g. GCC generated code).
- * 
+ *
  * [I don't think the ENTRY() macro will do the right thing with this -- glass]
  */
 GLOBAL(getsp)
