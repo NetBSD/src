@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.12 1997/10/13 02:18:06 lukem Exp $
+#	$NetBSD: Makefile,v 1.13 1997/11/20 00:12:37 mrg Exp $
 #	@(#)Makefile	8.1 (Berkeley) 5/31/93
 
 PROG=	phantasia
@@ -7,6 +7,7 @@ SRCS=	fight.c gamesupport.c interplayer.c io.c main.c misc.c phantglobs.c
 DPADD=	${LIBM} ${LIBCURSES} ${LIBTERM} ${LIBCOMPAT}
 LDADD=	-lm -lcurses -ltermlib -lcompat
 HIDEGAME=hidegame
+SETGIDGAME=yes
 USETBL=
 MAN=	phantasia.6
 CLEANFILES+=map setup setup.o host_phantglobs.o

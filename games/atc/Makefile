@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.13 1997/10/22 02:01:17 lukem Exp $
+#	$NetBSD: Makefile,v 1.14 1997/11/20 00:12:31 mrg Exp $
 #	@(#)Makefile	8.1 (Berkeley) 5/31/93
 
 PROG=	atc
@@ -13,6 +13,7 @@ GAMES=	ATC_scores Game_List Killer crossover default easy game_2 \
 	game_4 novice two-corners
 CLEANFILES=grammar.c y.tab.h lex.c
 HIDEGAME=hidegame
+SETGIDGAME=yes
 FILES=${GAMES:S@^@${.CURDIR}/games/@g}
 FILESDIR=/usr/share/games/atc
 FILESMODE=400

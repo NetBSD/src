@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.25 1997/10/22 05:24:11 lukem Exp $
+#	$NetBSD: Makefile,v 1.26 1997/11/20 00:12:35 mrg Exp $
 #	@(#)Makefile	8.2 (Berkeley) 4/27/95
 
 PROG=	hack
@@ -19,6 +19,7 @@ MAN=	hack.6
 DPADD+=	${LIBTERM} ${LIBCOMPAT}
 LDADD+=	-ltermcap
 HIDEGAME=hidegame
+SETGIDGAME=yes
 CLEANFILES+=hack.onames.h makedefs
 FILES=help hh data
 FILESDIR=/var/games/hackdir
