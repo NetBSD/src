@@ -1,4 +1,4 @@
-/*	$NetBSD: snake.h,v 1.4 1995/04/24 12:25:38 cgd Exp $	*/
+/*	$NetBSD: snake.h,v 1.5 1995/04/29 00:06:43 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -39,8 +39,8 @@
 # include <string.h>
 # include <assert.h>
 # include <sys/types.h>
-# include <sgtty.h>
 # include <signal.h>
+# include <termios.h>
 # include <math.h>
 
 #define ESC	'\033'
@@ -62,6 +62,7 @@ char	tbuf[1024], tcapbuf[128];
 char	*tgetstr(), *tgoto();
 int	Klength;	/* length of KX strings */
 int	chunk;		/* amount of money given at a time */
+short	ospeed;
 #ifdef	debug
 #define	cashvalue	(loot-penalty)/25
 #else
@@ -72,10 +73,7 @@ struct point {
 	int col, line;
 };
 struct point cursor;
-struct sgttyb orig, new;
-#ifdef TIOCLGET
-struct ltchars olttyc, nlttyc;
-#endif
+struct termios orig, new;
 struct point *point();
 #if __STDC__
 void	apr(struct point *, const char *, ...);
