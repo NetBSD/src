@@ -1,4 +1,4 @@
-/*	$NetBSD: pdqreg.h,v 1.5 1996/08/27 00:51:29 cgd Exp $	*/
+/*	$NetBSD: pdqreg.h,v 1.6 1996/08/28 16:01:29 cgd Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1996 Matt Thomas <matt@3am-software.com>
@@ -48,11 +48,22 @@
  * Including user-land headers in kernel code is not allowed in NetBSD.
  */
 #define	offsetof(type, member)	((size_t)(&((type *)0)->member))
+
+/*
+ * Can't directly use "assert", because apparenltly cpp won't expand it
+ * unless it has an argument, which loses.
+ */
 #ifdef PDQ_NDEBUG
-#undef NDEBUG
-#define NDEBUG
+#define	PDQ_ASSERT(e)	((void)0)
+#else
+#ifdef __STDC__
+#define	PDQ_ASSERT(e)	((e) ? (void)0 :				\
+			    __assert("PDQ ", __FILE__, __LINE__, #e))
+#else
+#define	PDQ_ASSERT(e)	((e) ? (void)0 :				\
+			    __assert("PDQ ", __FILE__, __LINE__, "e"))
 #endif
-#define	PDQ_ASSERT	assert
+#endif
 #endif /* __NetBSD__ */
 
 #define	PDQ_RING_SIZE(array)	((sizeof(array) / sizeof(array[0])))
