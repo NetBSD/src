@@ -1,4 +1,4 @@
-/*	$NetBSD: traceroute.c,v 1.60 2004/01/05 23:23:39 jmmv Exp $	*/
+/*	$NetBSD: traceroute.c,v 1.61 2004/04/22 01:41:22 itojun Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1991, 1994, 1995, 1996, 1997
@@ -29,7 +29,7 @@ static const char rcsid[] =
 #else
 __COPYRIGHT("@(#) Copyright (c) 1988, 1989, 1991, 1994, 1995, 1996, 1997\n\
 The Regents of the University of California.  All rights reserved.\n");
-__RCSID("$NetBSD: traceroute.c,v 1.60 2004/01/05 23:23:39 jmmv Exp $");
+__RCSID("$NetBSD: traceroute.c,v 1.61 2004/04/22 01:41:22 itojun Exp $");
 #endif
 #endif
 
@@ -614,7 +614,7 @@ main(int argc, char **argv)
 		outip->ip_dst = to->sin_addr;
 
 	outip->ip_hl = (outp - (u_char *)outip) >> 2;
-	ident = (getpid() & 0xffff) | 0x8000;
+	ident = htons(arc4random() & 0xffff) | 0x8000;
 	if (useicmp) {
 		outip->ip_p = IPPROTO_ICMP;
 
