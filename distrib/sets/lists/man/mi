@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.594 2003/07/09 09:38:05 wiz Exp $
+# $NetBSD: mi,v 1.595 2003/07/16 11:21:33 dsl Exp $
 ./usr/share/info/am-utils.info			man-amd-info
 ./usr/share/info/as.info			man-computil-info
 ./usr/share/info/awk.info			man-util-info
@@ -1347,7 +1347,6 @@
 ./usr/share/man/cat8/bootpef.0			man-bootserver-catman
 ./usr/share/man/cat8/bootpgw.0			man-bootserver-catman
 ./usr/share/man/cat8/bootptest.0		man-bootserver-catman
-./usr/share/man/cat8/bootselect.0		man-sys-catman
 ./usr/share/man/cat8/bounce.0			man-postfix-catman
 ./usr/share/man/cat8/brconfig.0			man-netutil-catman
 ./usr/share/man/cat8/catman.0			man-man-catman
@@ -1464,9 +1463,11 @@
 ./usr/share/man/cat8/hpropd.0			man-krb5-catman
 ./usr/share/man/cat8/i386/MAKEDEV.0		man-sysutil-catman
 ./usr/share/man/cat8/i386/boot.0		man-sys-catman
+./usr/share/man/cat8/i386/bootselect.0		man-sys-catman
 ./usr/share/man/cat8/i386/boot_console.0	man-sys-catman
 ./usr/share/man/cat8/i386/dosboot.0		man-sys-catman
 ./usr/share/man/cat8/i386/makedev.0		man-sysutil-catman
+./usr/share/man/cat8/i386/mbr.0			man-sys-catman
 ./usr/share/man/cat8/i386/pxeboot.0		man-sys-catman
 ./usr/share/man/cat8/i386/w95boot.0		man-sys-catman
 ./usr/share/man/cat8/identd.0			man-netutil-catman
@@ -1530,7 +1531,6 @@
 ./usr/share/man/cat8/makewhatis.0		man-man-catman
 ./usr/share/man/cat8/map-mbone.0		man-netutil-catman
 ./usr/share/man/cat8/master.0			man-postfix-catman
-./usr/share/man/cat8/mbr.0			man-sys-catman
 ./usr/share/man/cat8/mbrlabel.0			man-sysutil-catman
 ./usr/share/man/cat8/mdconfig.0			man-sysutil-catman
 ./usr/share/man/cat8/mdsetimage.0		man-sysutil-catman
@@ -3161,7 +3161,6 @@
 ./usr/share/man/man8/bootpef.8			man-bootserver-man
 ./usr/share/man/man8/bootpgw.8			man-bootserver-man
 ./usr/share/man/man8/bootptest.8		man-bootserver-man
-./usr/share/man/man8/bootselect.8		man-sys-man
 ./usr/share/man/man8/bounce.8			man-postfix-man
 ./usr/share/man/man8/brconfig.8			man-netutil-man
 ./usr/share/man/man8/catman.8			man-man-man
@@ -3278,9 +3277,11 @@
 ./usr/share/man/man8/hpropd.8			man-krb5-man
 ./usr/share/man/man8/i386/MAKEDEV.8		man-sysutil-man
 ./usr/share/man/man8/i386/boot.8		man-sys-man
+./usr/share/man/man8/i386/bootselect.8		man-sys-man
 ./usr/share/man/man8/i386/boot_console.8	man-sys-man
 ./usr/share/man/man8/i386/dosboot.8		man-sys-man
 ./usr/share/man/man8/i386/makedev.8		man-sysutil-man
+./usr/share/man/man8/i386/mbr.8			man-sys-man
 ./usr/share/man/man8/i386/pxeboot.8		man-sys-man
 ./usr/share/man/man8/i386/w95boot.8		man-sys-man
 ./usr/share/man/man8/identd.8			man-netutil-man
@@ -3344,7 +3345,6 @@
 ./usr/share/man/man8/makewhatis.8		man-man-man
 ./usr/share/man/man8/map-mbone.8		man-netutil-man
 ./usr/share/man/man8/master.8			man-postfix-man
-./usr/share/man/man8/mbr.8			man-sys-man
 ./usr/share/man/man8/mbrlabel.8			man-sysutil-man
 ./usr/share/man/man8/mdconfig.8			man-sysutil-man
 ./usr/share/man/man8/mdsetimage.8		man-sysutil-man
