@@ -14,7 +14,7 @@
  */
 
 #if defined(LIBM_SCCS) && !defined(lint)
-static char rcsid[] = "$Id: e_jnf.c,v 1.3 1994/09/22 16:39:47 jtc Exp $";
+static char rcsid[] = "$Id: e_jnf.c,v 1.4 1995/01/16 20:05:45 jtc Exp $";
 #endif
 
 #include "math.h"
@@ -192,7 +192,7 @@ static float zero  =  0.0000000000e+00;
 	sign = 1;
 	if(n<0){
 		n = -n;
-		sign = 1 - ((n&1)<<2);
+		sign = 1 - ((n&1)<<1);
 	}
 	if(n==0) return(__ieee754_y0f(x));
 	if(n==1) return(sign*__ieee754_y1f(x));
