@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_map.c,v 1.110 2001/10/30 15:32:04 thorpej Exp $	*/
+/*	$NetBSD: uvm_map.c,v 1.111 2001/10/30 18:52:17 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -1832,7 +1832,7 @@ uvm_map_protect(map, start, end, new_prot, set_max)
 			/*
 			 * If this entry points at a vnode, and the
 			 * protection includes VM_PROT_EXECUTE, mark
-			 * the vnode as VTEXT.
+			 * the vnode as VEXECMAP.
 			 */
 			if (UVM_ET_ISOBJ(current)) {
 				struct uvm_object *uobj =
