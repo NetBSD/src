@@ -1,4 +1,4 @@
-/*	$NetBSD: stime.h,v 1.2 2003/08/07 11:13:08 agc Exp $	*/
+/*	$NetBSD: stime.h,v 1.3 2005/02/17 16:56:10 xtraeme Exp $	*/
 
 /*
  * Copyright (c) 1993
@@ -29,4 +29,4 @@
  * SUCH DAMAGE.
  */
 
-time_t	stime __P((char *));
+time_t	stime(char *);

@@ -1,4 +1,4 @@
-/*	$NetBSD: stime.c,v 1.3 2003/08/07 11:13:08 agc Exp $	*/
+/*	$NetBSD: stime.c,v 1.4 2005/02/17 16:56:10 xtraeme Exp $	*/
 
 /*
  * Copyright (c) 1993
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1993\n\
 #if 0
 static char sccsid[] = "from: @(#)touch.c	8.2 (Berkeley) 4/28/95";
 #endif
-__RCSID("$NetBSD: stime.c,v 1.3 2003/08/07 11:13:08 agc Exp $");
+__RCSID("$NetBSD: stime.c,v 1.4 2005/02/17 16:56:10 xtraeme Exp $");
 #endif /* not lint */
 
 
@@ -53,8 +53,7 @@ __RCSID("$NetBSD: stime.c,v 1.3 2003/08/07 11:13:08 agc Exp $");
 #define	ATOI2(s)	((s) += 2, ((s)[-2] - '0') * 10 + ((s)[-1] - '0'))
 
 time_t
-stime(arg)
-	char *arg;
+stime(char *arg)
 {
 	struct tm *t;
 	time_t tmptime;

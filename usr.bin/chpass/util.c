@@ -1,4 +1,4 @@
-/*	$NetBSD: util.c,v 1.11 2003/08/07 11:13:19 agc Exp $	*/
+/*	$NetBSD: util.c,v 1.12 2005/02/17 17:09:48 xtraeme Exp $	*/
 
 /*-
  * Copyright (c) 1988, 1993, 1994
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)util.c	8.4 (Berkeley) 4/2/94";
 #else
-__RCSID("$NetBSD: util.c,v 1.11 2003/08/07 11:13:19 agc Exp $");
+__RCSID("$NetBSD: util.c,v 1.12 2005/02/17 17:09:48 xtraeme Exp $");
 #endif
 #endif /* not lint */
 
@@ -53,10 +53,7 @@ __RCSID("$NetBSD: util.c,v 1.11 2003/08/07 11:13:19 agc Exp $");
 #include "pathnames.h"
 
 char *
-ttoa(buf, len, tval)
-	char *buf;
-	size_t len;
-	time_t tval;
+ttoa(char *buf, size_t len, time_t tval)
 {
 
 	if (tval) {
@@ -71,9 +68,7 @@ ttoa(buf, len, tval)
 } 
 
 int
-atot(p, store)
-	const char *p;
-	time_t *store;
+atot(const char *p, time_t *store)
 {
 	static struct tm *lt;
 	struct tm tm;
@@ -101,8 +96,7 @@ atot(p, store)
 }
 
 const char *
-ok_shell(name)
-	const char *name;
+ok_shell(const char *name)
 {
 	char *p;
 	const char *sh;

@@ -1,4 +1,4 @@
-/*	$NetBSD: chflags.c,v 1.12 2005/01/20 15:44:59 xtraeme Exp $	*/
+/*	$NetBSD: chflags.c,v 1.13 2005/02/17 17:09:48 xtraeme Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993, 1994
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1992, 1993, 1994\n\
 #if 0
 static char sccsid[] = "from: @(#)chflags.c	8.5 (Berkeley) 4/1/94";
 #else
-__RCSID("$NetBSD: chflags.c,v 1.12 2005/01/20 15:44:59 xtraeme Exp $");
+__RCSID("$NetBSD: chflags.c,v 1.13 2005/02/17 17:09:48 xtraeme Exp $");
 #endif
 #endif /* not lint */
 
@@ -67,7 +67,7 @@ main(int argc, char *argv[])
 	long val;
 	int Hflag, Lflag, Rflag, ch, fts_options, hflag, oct, rval;
 	char *flags, *ep;
-	int (*change_flags) __P((const char *, u_long));
+	int (*change_flags)(const char *, u_long);
 
 	Hflag = Lflag = Rflag = hflag = 0;
 	while ((ch = getopt(argc, argv, "HLPRh")) != -1)

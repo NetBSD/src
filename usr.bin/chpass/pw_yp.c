@@ -1,4 +1,4 @@
-/*	$NetBSD: pw_yp.c,v 1.20 2003/08/07 11:13:19 agc Exp $	*/
+/*	$NetBSD: pw_yp.c,v 1.21 2005/02/17 17:09:48 xtraeme Exp $	*/
 
 /*
  * Copyright (c) 1988 The Regents of the University of California.
@@ -33,7 +33,7 @@
 #if 0
 static char sccsid[] = "@(#)pw_yp.c	1.0 2/2/93";
 #else
-__RCSID("$NetBSD: pw_yp.c,v 1.20 2003/08/07 11:13:19 agc Exp $");
+__RCSID("$NetBSD: pw_yp.c,v 1.21 2005/02/17 17:09:48 xtraeme Exp $");
 #endif
 #endif /* not lint */
 
@@ -67,7 +67,7 @@ static char *domain;
  * than the alternative.
  */
 int
-check_yppasswdd()
+check_yppasswdd(void)
 {
 	char *master;
 	int rpcport;
@@ -103,9 +103,7 @@ check_yppasswdd()
 }
 
 int
-pw_yp(pw, uid)
-	struct passwd *pw;
-	uid_t uid;
+pw_yp(struct passwd *pw, uid_t uid)
 {
 	char *master;
 	int r, rpcport, status;
@@ -213,9 +211,7 @@ pw_yp(pw, uid)
 }
 
 void
-yppw_error(name, err, eval)
-	const char *name;
-	int err, eval;
+yppw_error(const char *name, int err, int eval)
 {
 
 	if (err) {
@@ -229,7 +225,7 @@ yppw_error(name, err, eval)
 }
 
 void
-yppw_prompt()
+yppw_prompt(void)
 {
 	int c;
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: apropos.c,v 1.24 2004/10/30 16:10:46 dsl Exp $	*/
+/*	$NetBSD: apropos.c,v 1.25 2005/02/17 16:53:45 xtraeme Exp $	*/
 
 /*
  * Copyright (c) 1987, 1993, 1994
@@ -40,7 +40,7 @@ __COPYRIGHT("@(#) Copyright (c) 1987, 1993, 1994\n\
 #if 0
 static char sccsid[] = "@(#)apropos.c	8.8 (Berkeley) 5/4/95";
 #else
-__RCSID("$NetBSD: apropos.c,v 1.24 2004/10/30 16:10:46 dsl Exp $");
+__RCSID("$NetBSD: apropos.c,v 1.25 2005/02/17 16:53:45 xtraeme Exp $");
 #endif
 #endif /* not lint */
 
@@ -63,16 +63,13 @@ static int *found, foundman;
 
 #define	MAXLINELEN	8192		/* max line handled */
 
-int main __P((int, char **));
-void apropos __P((char **, char *, int));
-void lowstr __P((char *, char *));
-int match __P((char *, char *));
-void usage __P((void));
+void apropos(char **, char *, int);
+void lowstr(char *, char *);
+int match(char *, char *);
+void usage(void);
 
 int
-main(argc, argv)
-	int argc;
-	char *argv[];
+main(int argc, char *argv[])
 {
 	ENTRY *ep;
 	TAG *tp;
@@ -146,9 +143,7 @@ main(argc, argv)
 }
 
 void
-apropos(argv, path, buildpath)
-	char **argv, *path;
-	int buildpath;
+apropos(char **argv, char *path, int buildpath)
 {
 	char *end, *name, **p;
 	char buf[MAXLINELEN + 1], wbuf[MAXLINELEN + 1];
@@ -195,8 +190,7 @@ apropos(argv, path, buildpath)
  *	match anywhere the string appears
  */
 int
-match(bp, str)
-	char *bp, *str;
+match(char *bp, char *str)
 {
 	int len;
 	char test;
@@ -217,8 +211,7 @@ match(bp, str)
  *	convert a string to lower case
  */
 void
-lowstr(from, to)
-	char *from, *to;
+lowstr(char *from, char *to)
 {
 	char ch;
 
@@ -232,7 +225,7 @@ lowstr(from, to)
  *	print usage message and die
  */
 void
-usage()
+usage(void)
 {
 
 	(void)fprintf(stderr,

@@ -1,4 +1,4 @@
-/*	$NetBSD: edit.c,v 1.17 2004/10/30 17:11:24 dsl Exp $	*/
+/*	$NetBSD: edit.c,v 1.18 2005/02/17 17:09:48 xtraeme Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993, 1994
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)edit.c	8.3 (Berkeley) 4/2/94";
 #else
-__RCSID("$NetBSD: edit.c,v 1.17 2004/10/30 17:11:24 dsl Exp $");
+__RCSID("$NetBSD: edit.c,v 1.18 2005/02/17 17:09:48 xtraeme Exp $");
 #endif
 #endif /* not lint */
 
@@ -56,9 +56,7 @@ __RCSID("$NetBSD: edit.c,v 1.17 2004/10/30 17:11:24 dsl Exp $");
 #include "chpass.h"
 
 void
-edit(tempname, pw)
-	char *tempname;
-	struct passwd *pw;
+edit(char *tempname, struct passwd *pw)
 {
 	struct stat begin, end;
 
@@ -89,10 +87,7 @@ edit(tempname, pw)
  *	set conditional flag if the user gets to edit the shell.
  */
 void
-display(tempname, fd, pw)
-	char *tempname;
-	int fd;
-	struct passwd *pw;
+display(char *tempname, int fd, struct passwd *pw)
 {
 	FILE *fp;
 	char *bp, *p;
@@ -147,9 +142,7 @@ display(tempname, fd, pw)
 }
 
 int
-verify(tempname, pw)
-	char *tempname;
-	struct passwd *pw;
+verify(char *tempname, struct passwd *pw)
 {
 	ENTRY *ep;
 	char *p;
