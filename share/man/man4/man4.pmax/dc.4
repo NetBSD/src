@@ -27,7 +27,7 @@
 .\" (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.\"	$NetBSD: dc.4,v 1.9 2001/07/08 17:22:54 wiz Exp $
+.\"	$NetBSD: dc.4,v 1.10 2001/09/21 09:11:46 gmcgarry Exp $
 .\"
 .Dd February 20, 1998
 .Dt DC 4 pmax
@@ -37,10 +37,7 @@
 .Nd
 dc659, dc7085 DZ11-on-a-chip serial communications interface
 .Sh SYNOPSIS
-.Cd "dc0 at ioasic?"
-.Cd "dc0 at mainbus0"
-.Cd "dc1 at mainbus0"
-.Cd "dc2 at mainbus0"
+.Cd "dc* at ibus0 addr ?"
 .Sh DESCRIPTION
 The
 .Nm
@@ -48,18 +45,9 @@ driver provides support for Digital's dc7085 four-port serial
 communications chip.
 The
 .Nm dc
-driver supports dc7085 hardware on attached to the following
-parent devices:
-.Pp
-.Bl -tag -width speaker -offset indent -compact
-.It mainbus
-baseboard device on DECstation 2100, 3100, and 5100,
-and optional expansion devices on the 5100.
-.It ioasic
-baseboard device on DECstation 5000/200.
-.It vsbus
-baseboard devices on the VAXstation 2000 and 3100.
-.El
+driver supports dc7085 hardware found on the DECstation 2100, 3100,
+5100, the optional expansion devices on the 5100, and the DECstation
+5000/200.
 .Pp
 The
 .Nm
@@ -74,6 +62,9 @@ Only two ports on a baseboard
 .Nm dc
 device have any modem control signals;
 the other two ports are wired for a keyboard and mouse.
+.Sh SEE ALSO
+.Xr ibus 4 ,
+.Xr intro 4
 .Sh BUGS
 On some implementations (e.g. DECstation 3100), the hardware does not
 bring out modem flow-control signals (RTS/CTS) to the bulkhead;
@@ -113,6 +104,6 @@ The
 .Nm
 driver
 first appeared in
-.Bx 4.4 /pmax .
+.Bx 4.4 .
 This manual page first appeared in
 .Nx 1.2 .
