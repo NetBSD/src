@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.440.2.4 2002/11/09 10:22:06 tron Exp $
+#	$NetBSD: mi,v 1.440.2.5 2003/01/06 04:55:18 jmc Exp $
 ./sys				comp-sysutil-root
 ./usr/bin/addr2line		comp-debug-bin
 ./usr/bin/ar			comp-util-bin
@@ -618,6 +618,7 @@
 ./usr/include/rpc/pmap_rmt.h		comp-c-include
 ./usr/include/rpc/raw.h			comp-c-include
 ./usr/include/rpc/rpc.h			comp-c-include
+./usr/include/rpc/rpc_com.h		comp-c-include
 ./usr/include/rpc/rpc_msg.h		comp-c-include
 ./usr/include/rpc/rpcb_clnt.h		comp-c-include
 ./usr/include/rpc/rpcb_prot.h		comp-c-include
