@@ -564,13 +564,14 @@ getpmem(k)
 	if ((p->p_flag & P_INMEM) == 0)
 		return (0.0);
 #ifndef NEWVM
-	szptudot = UPAGES + clrnd(ctopt(p->p_dsize + p->p_ssize + e->e_xsize));
+	szptudot = USPACE/getpagesize() +
+	    clrnd(ctopt(p->p_dsize + p->p_ssize + e->e_xsize));
 	fracmem = ((float)p->p_rssize + szptudot)/CLSIZE/mempages;
 	if (p->p_textp && e->e_xccount)
 		fracmem += ((float)e->e_xrssize)/CLSIZE/e->e_xccount/mempages;
 #else
 	/* XXX want pmap ptpages, segtab, etc. (per architecture) */
-	szptudot = UPAGES;
+	szptudot = USPACE/getpagesize();
 	/* XXX don't have info about shared */
 	fracmem = ((float)e->e_vm.vm_rssize + szptudot)/CLSIZE/mempages;
 #endif
