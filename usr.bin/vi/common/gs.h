@@ -1,4 +1,4 @@
-/*	$NetBSD: gs.h,v 1.2 1998/01/09 08:06:39 perry Exp $	*/
+/*	$NetBSD: gs.h,v 1.3 2000/05/31 19:49:25 jdc Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994
@@ -44,7 +44,7 @@ struct _fref {
 typedef enum { EX_TERM_CE, EX_TERM_SCROLL } exadj_t;
 
 /* Screen attribute argument to scr_attr(). */
-typedef enum { SA_INVERSE } scr_attr_t;
+typedef enum { SA_ALTERNATE, SA_INVERSE } scr_attr_t;
 
 /* Key type argument to scr_keyval(). */
 typedef enum { KEY_VEOF, KEY_VERASE, KEY_VKILL, KEY_VWERASE } scr_keyval_t;
