@@ -1,4 +1,4 @@
-/*	$NetBSD: pickmove.c,v 1.10 2003/08/07 09:37:17 agc Exp $	*/
+/*	$NetBSD: pickmove.c,v 1.11 2004/01/27 20:26:20 jsm Exp $	*/
 
 /*
  * Copyright (c) 1994
@@ -37,14 +37,14 @@
 #if 0
 static char sccsid[] = "@(#)pickmove.c	8.2 (Berkeley) 5/3/95";
 #else
-__RCSID("$NetBSD: pickmove.c,v 1.10 2003/08/07 09:37:17 agc Exp $");
+__RCSID("$NetBSD: pickmove.c,v 1.11 2004/01/27 20:26:20 jsm Exp $");
 #endif
 #endif /* not lint */
 
 #include <stdlib.h>
 #include <string.h>
 #include <curses.h>
-#include <machine/limits.h>
+#include <limits.h>
 
 #include "gomoku.h"
 
