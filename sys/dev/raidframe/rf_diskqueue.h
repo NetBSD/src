@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_diskqueue.h,v 1.13 2003/12/29 02:38:17 oster Exp $	*/
+/*	$NetBSD: rf_diskqueue.h,v 1.14 2004/01/01 19:27:36 oster Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -118,8 +118,6 @@ struct RF_DiskQueue_s {
 						 * arrived at the head of the
 						 * queue & is waiting for
 						 * drainage */
-	int     numWaiting;	/* number of threads waiting on this variable.
-				 * user-level only */
 	RF_DiskQueueFlags_t flags;	/* terminate, locked */
 	RF_Raid_t *raidPtr;	/* associated array */
 	dev_t   dev;		/* device number for kernel version */
@@ -151,8 +149,6 @@ struct RF_DiskQueue_s {
     (!RF_QUEUE_FULL(_q_) && ((_r_)->priority >= (_q_)->curPriority)))
 
 int     rf_ConfigureDiskQueueSystem(RF_ShutdownList_t ** listp);
-
-void    rf_TerminateDiskQueues(RF_Raid_t * raidPtr);
 
 int 
 rf_ConfigureDiskQueues(RF_ShutdownList_t ** listp, RF_Raid_t * raidPtr,
