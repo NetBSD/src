@@ -1,6 +1,6 @@
 /*-
- * Copyright (c) 1991 The Regents of the University of California.
- * All rights reserved.
+ * Copyright (c) 1991, 1993
+ *	The Regents of the University of California.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -32,8 +32,8 @@
  */
 
 #ifndef lint
-/*static char sccsid[] = "from: @(#)auth.c	5.2 (Berkeley) 3/22/91";*/
-static char rcsid[] = "$Id: auth.c,v 1.2 1993/08/01 18:32:46 mycroft Exp $";
+/* from: static char sccsid[] = "@(#)auth.c	8.1 (Berkeley) 6/4/93"; */
+static char *rcsid = "$Id: auth.c,v 1.3 1994/02/25 02:52:51 cgd Exp $";
 #endif /* not lint */
 
 /*
@@ -57,7 +57,7 @@ static char rcsid[] = "$Id: auth.c,v 1.2 1993/08/01 18:32:46 mycroft Exp $";
  */
 
 
-#if	defined(AUTHENTICATE)
+#if	defined(AUTHENTICATION)
 #include <stdio.h>
 #include <sys/types.h>
 #include <signal.h>
@@ -79,6 +79,24 @@ static char rcsid[] = "$Id: auth.c,v 1.2 1993/08/01 18:32:46 mycroft Exp $";
 
 #define	typemask(x)		(1<<((x)-1))
 
+#ifdef	KRB4_ENCPWD
+extern krb4encpwd_init();
+extern krb4encpwd_send();
+extern krb4encpwd_is();
+extern krb4encpwd_reply();
+extern krb4encpwd_status();
+extern krb4encpwd_printsub();
+#endif
+
+#ifdef	RSA_ENCPWD
+extern rsaencpwd_init();
+extern rsaencpwd_send();
+extern rsaencpwd_is();
+extern rsaencpwd_reply();
+extern rsaencpwd_status();
+extern rsaencpwd_printsub();
+#endif
+
 int auth_debug_mode = 0;
 static 	char	*Name = "Noname";
 static	int	Server = 0;
@@ -94,14 +112,23 @@ static	int	auth_send_cnt = 0;
  * in priority order, i.e. try the first one first.
  */
 Authenticator authenticators[] = {
+#ifdef	SPX
+	{ AUTHTYPE_SPX, AUTH_WHO_CLIENT|AUTH_HOW_MUTUAL,
+				spx_init,
+				spx_send,
+				spx_is,
+				spx_reply,
+				spx_status,
+				spx_printsub },
+	{ AUTHTYPE_SPX, AUTH_WHO_CLIENT|AUTH_HOW_ONE_WAY,
+				spx_init,
+				spx_send,
+				spx_is,
+				spx_reply,
+				spx_status,
+				spx_printsub },
+#endif
 #ifdef	KRB5
-	{ AUTHTYPE_KERBEROS_V5, AUTH_WHO_CLIENT|AUTH_HOW_MUTUAL,
-				kerberos5_init,
-				kerberos5_send,
-				kerberos5_is,
-				kerberos5_reply,
-				kerberos5_status,
-				kerberos5_printsub },
 	{ AUTHTYPE_KERBEROS_V5, AUTH_WHO_CLIENT|AUTH_HOW_ONE_WAY,
 				kerberos5_init,
 				kerberos5_send,
@@ -111,13 +138,6 @@ Authenticator authenticators[] = {
 				kerberos5_printsub },
 #endif
 #ifdef	KRB4
-	{ AUTHTYPE_KERBEROS_V4, AUTH_WHO_CLIENT|AUTH_HOW_MUTUAL,
-				kerberos4_init,
-				kerberos4_send,
-				kerberos4_is,
-				kerberos4_reply,
-				kerberos4_status,
-				kerberos4_printsub },
 	{ AUTHTYPE_KERBEROS_V4, AUTH_WHO_CLIENT|AUTH_HOW_ONE_WAY,
 				kerberos4_init,
 				kerberos4_send,
@@ -125,6 +145,24 @@ Authenticator authenticators[] = {
 				kerberos4_reply,
 				kerberos4_status,
 				kerberos4_printsub },
+#endif
+#ifdef	KRB4_ENCPWD
+	{ AUTHTYPE_KRB4_ENCPWD, AUTH_WHO_CLIENT|AUTH_HOW_MUTUAL,
+				krb4encpwd_init,
+				krb4encpwd_send,
+				krb4encpwd_is,
+				krb4encpwd_reply,
+				krb4encpwd_status,
+				krb4encpwd_printsub },
+#endif
+#ifdef	RSA_ENCPWD
+	{ AUTHTYPE_RSA_ENCPWD, AUTH_WHO_CLIENT|AUTH_HOW_ONE_WAY,
+				rsaencpwd_init,
+				rsaencpwd_send,
+				rsaencpwd_is,
+				rsaencpwd_reply,
+				rsaencpwd_status,
+				rsaencpwd_printsub },
 #endif
 	{ 0, },
 };
@@ -367,9 +405,7 @@ auth_send(data, cnt)
 		if ((i_support & ~i_wont_support) & typemask(*auth_send_data)) {
 			ap = findauthenticator(auth_send_data[0],
 					       auth_send_data[1]);
-			if (!ap) {
-				printf("Internal state error: cannot find authentication type %d a second time\r\n", *auth_send_data);
-			} else if (ap->send) {
+			if (ap && ap->send) {
 				if (auth_debug_mode)
 					printf(">>>%s: Trying %d %d\r\n",
 						Name, auth_send_data[0],
@@ -399,6 +435,14 @@ auth_send(data, cnt)
 	if (auth_debug_mode)
 		printf(">>>%s: Sent failure message\r\n", Name);
 	auth_finished(0, AUTH_REJECT);
+#ifdef KANNAN
+	/*
+	 *  We requested strong authentication, however no mechanisms worked.
+	 *  Therefore, exit on client end.
+	 */
+	printf("Unable to securely authenticate user ... exit\n"); 
+	exit(0);
+#endif /* KANNAN */
 }
 
 	void
