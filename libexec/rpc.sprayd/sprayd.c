@@ -1,4 +1,4 @@
-/*	$NetBSD: sprayd.c,v 1.8 1996/08/30 20:13:42 thorpej Exp $	*/
+/*	$NetBSD: sprayd.c,v 1.9 1997/09/17 20:16:08 christos Exp $	*/
 
 /*
  * Copyright (c) 1994 Christos Zoulas
@@ -30,32 +30,42 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
+#include <sys/cdefs.h>
 #ifndef lint
-static char rcsid[] = "$NetBSD: sprayd.c,v 1.8 1996/08/30 20:13:42 thorpej Exp $";
+__RCSID("$NetBSD: sprayd.c,v 1.9 1997/09/17 20:16:08 christos Exp $");
 #endif /* not lint */
 
 #include <stdio.h>
 #include <signal.h>
-#include <rpc/rpc.h>
-#include <sys/time.h>
+#include <stdlib.h>
+#include <unistd.h>
 #include <syslog.h>
+#include <sys/socket.h>
+#include <sys/time.h>
+#include <rpc/rpc.h>
 #include <rpcsvc/spray.h>
 
+static void cleanup __P((int));
+static void die __P((int));
 static void spray_service __P((struct svc_req *, SVCXPRT *));
+
+int main __P((int, char *[]));
 
 static int from_inetd = 1;
 
 #define TIMEOUT 120
 
-void
-cleanup()
+static void
+cleanup(n)
+	int n;
 {
 	(void) pmap_unset(SPRAYPROG, SPRAYVERS);
 	exit(0);
 }
 
-void
-die()
+static void
+die(n)
+	int n;
 {
 	exit(0);
 }
