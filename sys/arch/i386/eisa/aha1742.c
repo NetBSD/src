@@ -26,7 +26,7 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
- *      $Id: aha1742.c,v 1.23 1994/03/29 04:30:18 mycroft Exp $
+ *      $Id: aha1742.c,v 1.24 1994/03/30 04:07:48 mycroft Exp $
  */
 
 /*
@@ -91,6 +91,8 @@ typedef u_long physaddr;
 #define HID0		0xC80	/* 0,1: msb of ID2, 3-7: ID1      */
 #define HID1		0xC81	/* 0-4: ID3, 4-7: LSB ID2         */
 #define HID2		0xC82	/* product, 0=174[20] 1 = 1744    */
+#define	 PRODUCT_1742	0x00
+#define	 PRODUCT_1744	0x01
 #define HID3		0xC83	/* firmware revision              */
 
 #define CHAR1(B1,B2) (((B1>>2) & 0x1F) | '@')
@@ -469,7 +471,7 @@ ahbprobe(parent, self, aux)
 		if (CHAR1(byte1, byte2) != 'A' ||
 		    CHAR2(byte1, byte2) != 'D' ||
 		    CHAR3(byte1, byte2) != 'P' ||
-		    (byte3 != 0 && byte3 != 1)) {
+		    (byte3 != PRODUCT_1742 && byte3 != PRODUCT_1744)) {
 			continue;
 		}
 		ia->ia_iobase = port;
@@ -546,7 +548,15 @@ ahbattach(parent, self, aux)
 	ahb->sc_link.adapter = &ahb_switch;
 	ahb->sc_link.device = &ahb_dev;
 
-	printf("\n");
+	printf(": ");
+	switch (inb(ahb->baseport + HID2)) {
+	case PRODUCT_1742:
+		printf("model 1740 or 1742");
+		break;
+	case PRODUCT_1744:
+		printf("model 1744");
+	}
+	printf(", revision %d\n", inb(ahb->baseport + HID3));
 
 #ifdef NEWCONFIG
 	isa_establish(&ahb->sc_id, &ahb->sc_dev);
