@@ -35,7 +35,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)machdep.c	7.4 (Berkeley) 6/3/91
- *	$Id: machdep.c,v 1.20 1993/05/28 09:10:33 deraadt Exp $
+ *	$Id: machdep.c,v 1.21 1993/05/30 18:52:47 cgd Exp $
  */
 
 #include "param.h"
@@ -671,15 +671,16 @@ initcpu()
 /*
  * Clear registers on exec
  */
-setregs(p, entry)
+setregs(p, entry, stack)
 	struct proc *p;
 	u_long entry;
+	u_long stack;
 {
-
 	p->p_regs[sEBP] = 0;	/* bottom of the fp chain */
 	p->p_regs[sEIP] = entry;
+	p->p_regs[sESP] = stack;
 
-	p->p_addr->u_pcb.pcb_flags = 0;	/* no fp at all */
+	p->p_addr->u_pcb.pcb_flags &= 0 /* FM_SYSCTRC */; /* no fp at all */
 	load_cr0(rcr0() | CR0_TS);	/* start emulating */
 #ifdef	NPX
 	npxinit(__INITIAL_NPXCW__);
