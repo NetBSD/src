@@ -1,4 +1,4 @@
-.\"	$NetBSD: prep,v 1.22 2001/08/17 07:04:42 mbw Exp $
+.\"	$NetBSD: prep,v 1.23 2002/01/02 21:12:17 he Exp $
 .
 .Ss2 Prepare yourself
 .
@@ -181,12 +181,12 @@ Welcome to Open Firmware.
 To continue booting, type "mac-boot" and press return.
 To shut down, type "shut-down" and press return.
  ok
-0 >
+0 \*>
 .disp)
 .Pp
 Now, set your system to always stop at the Open Firmware prompt.
 .Pp
-.Dl 0 > Ic "setenv auto-boot? false
+.Dl 0 \*> Ic "setenv auto-boot? false
 .Pp
 Skip down to the section on
 .Sx Setting up Open Firmware 3 to boot NetBSD
@@ -221,13 +221,13 @@ key may look like a two-way switch with four straight line segments).
 You should now see some introductory text and the Open Firmware command
 prompt on your terminal:
 .Pp
-.Dl 0 >
+.Dl 0 \*>
 .Pp
 Your screen will remain black.
 .Pp
 Now, set your system to always stop at the Open Firmware prompt.
 .Pp
-.Dl 0 > Ic "setenv auto-boot? false
+.Dl 0 \*> Ic "setenv auto-boot? false
 .Pp
 Skip down to the section on
 .Sx Setting up pre-Open Firmware 3 to boot NetBSD
@@ -374,11 +374,11 @@ You should now see the Open Firmware command prompt on your screen:
 .(disp
 Open Firmware, 1.0.5
 To continue booting the MacOS type:
-BYE<return>
+BYE\*<return\*>
 To continue booting from the default boot device type:
-BOOT<return>
+BOOT\*<return\*>
  ok
-0 >
+0 \*>
 .disp)
 .Pp
 If your screen is black, then your model does not support using the 
@@ -392,14 +392,14 @@ The
 .Dq "Stop Boot at Open Firmware prompt"
 setting is persistent.  It is equivalent to the Open Firmware command
 .Pp
-.Dl 0 > Ic "setenv auto-boot? false
+.Dl 0 \*> Ic "setenv auto-boot? false
 .Note)
 .(Note
 Unfortunately, there are a few models that are better off without the System
 Disk patches.  If you find that your machine doesn't boot, then try:
 .Pp
-.Dl 0 > Ic "setenv use-nvramrc? false"
-.Dl 0 > Ic "reset-all"
+.Dl 0 \*> Ic "setenv use-nvramrc? false"
+.Dl 0 \*> Ic "reset-all"
 .Note)
 .
 .Ss2 Getting to the Open Firmware Prompt (Harder method using MacOS)
@@ -470,11 +470,11 @@ You should now see the Open Firmware command prompt on your screen:
 .(disp
 Open Firmware, 1.0.5
 To continue booting the MacOS type:
-BYE<return>
+BYE\*<return\*>
 To continue booting from the default boot device type:
-BOOT<return>
+BOOT\*<return\*>
  ok
-0 >
+0 \*>
 .disp)
 .Pp
 If your screen is black, then your model has defaulted to using a serial 
@@ -487,7 +487,7 @@ The
 setting is persistent.  Your system will always stop at the Open Firmware
 prompt.  It is equivalent to the Open Firmware command
 .Pp
-.Dl 0 > Ic "setenv auto-boot? false
+.Dl 0 \*> Ic "setenv auto-boot? false
 .Note)
 .
 .Ss2 Getting to the Open Firmware Prompt (Without using MacOS)
@@ -521,11 +521,11 @@ You should now see the Open Firmware command prompt on your screen:
 .(disp
 Open Firmware, 1.0.5
 To continue booting the MacOS type:
-BYE<return>
+BYE\*<return\*>
 To continue booting from the default boot device type:
-BOOT<return>
+BOOT\*<return\*>
  ok
-0 >
+0 \*>
 .disp)
 .Pp
 If your screen is black, then your system has defaulted to using a serial
@@ -536,7 +536,7 @@ Disk tool to set up Open Firmware. You must hook up a serial console
 .Pp
 Now, set your system to always stop at the Open Firmware prompt.
 .Pp
-.Dl 0 > Ic "setenv auto-boot? false
+.Dl 0 \*> Ic "setenv auto-boot? false
 .Pp
 To use your on-board video and keyboard, look up the proper
 .Sq output-device
@@ -552,9 +552,9 @@ with the correct
 .Sq output-device
 for your model):
 .Pp
-.Dl 0 > Ic "setenv output-device screen"
-.Dl 0 > Ic "setenv input-device kbd"
-.Dl 0 > Ic "reset-all"
+.Dl 0 \*> Ic "setenv output-device screen"
+.Dl 0 \*> Ic "setenv input-device kbd"
+.Dl 0 \*> Ic "reset-all"
 .Pp
 Now you should see the Open Firmware prompt on your screen.
 .Pp
@@ -574,7 +574,7 @@ Open Firmware 2.4)
 Double-check your Open Firmware version:
 .Pp
 .(disp
-.No 0 > Ic "dev /openprom .properties"
+.No 0 \*> Ic "dev /openprom .properties"
 name                    openprom
 model                   Open Firmware, 1.0.5
 relative-addressing
@@ -589,9 +589,9 @@ can boot.  Do
 run these commands on Open Firmware 3 machines, as you may overwrite your
 firmware requiring a trip to Apple for repairs.
 .Pp
-.Dl 0 > Ic "setenv load-base 600000"
-.Dl 0 > Ic "setenv real-base F00000"
-.Dl 0 > Ic "reset-all"
+.Dl 0 \*> Ic "setenv load-base 600000"
+.Dl 0 \*> Ic "setenv real-base F00000"
+.Dl 0 \*> Ic "reset-all"
 .Pp
 The last command reboots your machine so that the
 .Li real-base
@@ -600,7 +600,7 @@ setting takes effect.
 If you will be netbooting your system, you can look up your MAC address.
 .Pp
 .(disp
-.No 0 > Ic "dev enet .properties"
+.No 0 \*> Ic "dev enet .properties"
 [...]
 local-mac-address   CCCCCCCC CCCC
 [...]
@@ -619,7 +619,7 @@ You can check your Open Firmware settings with the
 .Pa printenv
 command:
 .(disp
-.No 0 > Ic "printenv"
+.No 0 \*> Ic "printenv"
 little-endian?      false               false
 real-mode?          false               false
 auto-boot?          false               true
@@ -657,7 +657,7 @@ environment variable to its default value (which prevents
 Double-check your Open Firmware version:
 .Pp
 .(disp
-.No 0 > Ic "dev /openprom .properties"
+.No 0 \*> Ic "dev /openprom .properties"
 name                    openprom
 device_type             BootROM
 model                   OpenFirmware 3
@@ -669,7 +669,7 @@ supports-bootinfo
 If you will be netbooting your system, you can look up your MAC address.
 .Pp
 .(disp
-.No 0 > Ic "dev enet .properties"
+.No 0 \*> Ic "dev enet .properties"
 [...]
 local-mac-address   CCCCCCCC CCCC
 [...]
@@ -688,7 +688,7 @@ You can check your Open Firmware settings with the
 .Pa printenv
 command:
 .(disp
-.No 0 > Ic "printenv"
+.No 0 \*> Ic "printenv"
 -------------- Partition: common -------- Signature: 0x70 ---------------
 little-endian?      false               false
 real-mode?          false               false

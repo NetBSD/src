@@ -1,4 +1,4 @@
-.\"	$NetBSD: prep,v 1.1 2001/11/30 23:48:52 thorpej Exp $
+.\"	$NetBSD: prep,v 1.2 2002/01/02 21:12:17 he Exp $
 .\"
 .\" Copyright (c) 2001 The NetBSD Foundation, Inc.     
 .\" All rights reserved.
@@ -69,5 +69,5 @@ Copyright (C) 2000, Red Hat, Inc.
 RAM: 0xa0000000-0xa2000000
 FLASH: 0x00000000 - 0x00800000, 64 blocks of 0x00020000 bytes each.
 IP: 192.168.0.10, Default server: 192.168.0.1
-RedBoot> 
+RedBoot\*>
 .Ed

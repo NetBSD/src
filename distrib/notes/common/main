@@ -1,4 +1,4 @@
-.\"	$NetBSD: main,v 1.147 2001/12/13 08:53:54 junyoung Exp $
+.\"	$NetBSD: main,v 1.148 2002/01/02 21:12:16 he Exp $
 .\"
 .\" Copyright (c) 1999-2001 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -252,7 +252,7 @@ installation -- you may want to read the section below on
 .Sx Older Open Firmware System Preparation
 .Pp
 You should have the Open Firmware
-.Dq Pa "0 >"
+.Dq Pa "0 \*>"
 prompt on your screen before attempting to boot
 .Nx*M .
 .\}
@@ -961,7 +961,7 @@ unpacked into
 .Pa /usr/src
 with the command:
 .Pp
-.Dl # Ic "( cd / ; tar -zxpf - ) < set_name.tgz"
+.Dl # Ic "( cd / ; tar -zxpf - ) \*< set_name.tgz"
 .Pp
 The
 .Pa sets/Split/

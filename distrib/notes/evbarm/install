@@ -1,4 +1,4 @@
-.\"	$NetBSD: install,v 1.1 2001/11/30 23:48:51 thorpej Exp $
+.\"	$NetBSD: install,v 1.2 2002/01/02 21:12:17 he Exp $
 .\"
 .\" Copyright (c) 2001 The NetBSD Foundation, Inc.     
 .\" All rights reserved.
@@ -56,9 +56,9 @@ Unpack the distribution sets into the target's root directory.
 Load the kernel from the TFTP server.
 .Pp
 .Bd -literal
-RedBoot> load netbsd-iq80310-fxp0
+RedBoot\*> load netbsd-iq80310-fxp0
 Entry point: 0xa0200000, address range: 0xa0200000-0xa035e07c
-RedBoot>    
+RedBoot\*>
 .Ed
 .It
 Start the kernel running.  The kernel will display boot message,
@@ -71,12 +71,12 @@ Since the system's run-time environment has not yet been configured,
 the system should boot into single-user mode.
 .Pp
 .Bd -literal
-RedBoot> go
+RedBoot\*> go
 
 NetBSD/evbarm (IQ80310) booting ...
 Resetting secondary PCI bus...
 initarm: Configuring system ...
-physmemory: 8192 pages at 0xa0000000 -> 0xa1ffffff
+physmemory: 8192 pages at 0xa0000000 -\*> 0xa1ffffff
 init subsystems: stacks vectors undefined pmap irq done.
  [ no symbols available ]
 Copyright (c) 1996, 1997, 1998, 1999, 2000, 2001
@@ -110,7 +110,7 @@ fxp0: Ethernet address 00:80:4d:46:0b:b9
 inphy0 at fxp0 phy 1: i82555 10/100 media interface, rev. 4
 inphy0: 10baseT, 10baseT-FDX, 100baseTX, 100baseTX-FDX, auto
 clock: hz=100 stathz=0 profhz=0
-boot device: <unknown>
+boot device: \*<unknown\*>
 root on fxp0
 nfs_boot: trying DHCP/BOOTP
 nfs_boot: DHCP next-server: 192.168.0.1
