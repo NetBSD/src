@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.47 1998/08/30 23:17:44 mark Exp $	*/
+/*	$NetBSD: machdep.c,v 1.48 1998/09/02 00:03:05 cgd Exp $	*/
 
 /*
  * Copyright (c) 1994-1996 Mark Brinicombe.
@@ -550,7 +550,7 @@ cpu_startup()
 		callout[loop - 1].c_next = &callout[loop];
 
 #if defined(UVM)
-	printf("avail mem = %ld\n", ptoa(uvmexp.free - bufpages));
+	printf("avail mem = %ld\n", ptoa(uvmexp.free));
 #else
 	printf("avail mem = %ld\n", ptoa(cnt.v_free_count));
 #endif
