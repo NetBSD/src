@@ -1,4 +1,4 @@
-/*	$KAME: cftoken.l,v 1.71 2003/06/27 07:32:38 sakane Exp $	*/
+/*	$KAME: cftoken.l,v 1.72 2003/07/12 09:34:48 itojun Exp $	*/
 
 %{
 /*
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: cftoken.l,v 1.11 2003/07/30 00:34:16 itojun Exp $");
+__RCSID("$NetBSD: cftoken.l,v 1.12 2003/08/26 03:31:51 itojun Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
