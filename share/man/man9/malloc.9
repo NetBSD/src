@@ -1,4 +1,4 @@
-.\"	$NetBSD: malloc.9,v 1.8 1998/07/29 22:07:14 pk Exp $
+.\"	$NetBSD: malloc.9,v 1.9 1999/03/06 22:09:29 mycroft Exp $
 .\"
 .\" Copyright (c) 1996 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -108,7 +108,8 @@ The
 .Fa type
 argument broadly identifies the kernel subsystem for which the allocated
 memory was needed, and is commonly used to maintain statistics about
-kernel memory usage. The following types are currently defined:
+kernel memory usage.
+The following types are currently defined:
 .Pp
 .Bl -tag -offset indent -width XXXXXXXXXXXXXX -compact
 .It Dv M_FREE
@@ -317,8 +318,8 @@ such things as writing outside the allocated area and imbalanced calls to the
 .Fn malloc
 and
 .Fn free
-functions. Failing consistency checks will cause a panic or a system console
-message:
+functions.
+Failing consistency checks will cause a panic or a system console message:
 .Bl -bullet -offset indent -compact
 .Pp
 .It

@@ -1,4 +1,4 @@
-.\"	$NetBSD: disklabel.9,v 1.6 1998/09/03 08:12:57 msaitoh Exp $
+.\"	$NetBSD: disklabel.9,v 1.7 1999/03/06 22:09:29 mycroft Exp $
 .\"
 .\" Copyright (c) 1996 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -55,11 +55,11 @@
 .Fn bounds_check_with_label "struct buf *bp" "struct disklabel *lp" "int wlabel"
 .Sh DESCRIPTION
 This collection of routines provides a disklabel management interface to
-kernel device drivers. These routines are classified as machine- or
-architecture-dependent because of restrictions imposed by the machine
-architecture and boot-strapping code on the location of the label, or because
-co-operation with other operating systems requires specialized conversion
-code.
+kernel device drivers.
+These routines are classified as machine- or architecture-dependent because
+of restrictions imposed by the machine architecture and boot-strapping code
+on the location of the label, or because cooperation with other operating
+systems requires specialized conversion code.
 .Pp
 .Fn readdisklabel
 attempts to read a disklabel from the device identified by
@@ -73,7 +73,8 @@ Some fields in the in the disklabel passed in
 .Fa lp
 may be pre-initialized by the caller in order to meet device driver
 requirements for the I/O operation initiated to get to the disklabel data
-on the medium. In particular, the field
+on the medium.
+In particular, the field
 .Dq d_secsize ,
 if non-zero, is used by
 .Fn readdisklabel
@@ -123,7 +124,8 @@ field is returned.
 .Fn setdisklabel
 checks a proposed new disk label passed in
 .Fa nlp
-for some amount of basic sanity. This includes a check on attempts to
+for some amount of basic sanity.
+This includes a check on attempts to
 change the location, or reduce the size, of an existing disk partition
 that is currently in use by the system.
 The current disposition of the disk partitions is made available through
@@ -138,7 +140,8 @@ results in a
 .Dv EINVAL
 return value, while a vetoed update of the partition layout is signaled by a
 .Dv EBUSY
-return value. Otherwise, 0 is returned.
+return value.
+Otherwise, 0 is returned.
 .Pp
 .Fn bounds_check_with_label
 is used to check whether a device transfer described by
@@ -157,12 +160,14 @@ sets the
 .Dv B_ERROR
 flag in
 .Dq Va b_flags ,
-and returns -1. If the argument
+and returns -1.
+If the argument
 .Fa wlabel
 is zero, and the transfer is a write operation, a check is done if the transfer
 would overwrite
 .Pq a portion of
-the disklabel area on the medium. If that is the case,
+the disklabel area on the medium.
+If that is the case,
 .Dv EROFS
 is set in
 .Dq Va b_error ,
@@ -174,8 +179,9 @@ and -1 is returned.
 Note that
 .Fa wlabel
 should be set to a non-zero value if the intended operation is expected to
-install or update the disk label. Programs that intend to do so using the
-raw device interface should notify the driver by using a
+install or update the disk label.
+Programs that intend to do so using the raw device interface should notify
+the driver by using a
 .Dv DIOCWLABEL
 ioctl function.
 .Pp
