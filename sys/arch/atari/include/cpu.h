@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.13 1996/09/10 08:45:16 leo Exp $	*/
+/*	$NetBSD: cpu.h,v 1.14 1996/09/11 00:15:48 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -48,6 +48,12 @@
 /*
  * Exported definitions unique to atari/68k cpu support.
  */
+
+/*
+ * Get common m68k CPU definitions.
+ */
+#include <m68k/cpu.h>
+#define	M68K_MMU_MOTOROLA
 
 /*
  * definitions of cpu-dependent requirements
@@ -133,64 +139,9 @@ extern int	want_resched;	/* resched() was called */
 
 #define	ATARI_ANYMACH	(ATARI_TT|ATARI_FALCON|ATARI_HADES)
 
-/*
- * Values for mmutype (assigned for quick testing)
- */
-#define	MMU_68030	-1	/* 68030 on-chip subset of 68851	*/
-#define	MMU_68851	 1	/* Motorola 68851			*/
-#define MMU_68040	-2	/* 68040 on-chip subsubset		*/
-
 #ifdef _KERNEL
-extern int machineid, mmutype, cpu040, fputype;
+extern int machineid, cpu040;
 #endif
-
-/*
- * 68851 and 68030 MMU
- */
-#define	PMMU_LVLMASK	0x0007
-#define	PMMU_INV	0x0400
-#define	PMMU_WP		0x0800
-#define	PMMU_ALV	0x1000
-#define	PMMU_SO		0x2000
-#define	PMMU_LV		0x4000
-#define	PMMU_BE		0x8000
-#define	PMMU_FAULT	(PMMU_WP|PMMU_INV)
-
-/* 680X0 function codes */
-#define	FC_USERD	1	/* user data space */
-#define	FC_USERP	2	/* user program space */
-#define	FC_SUPERD	5	/* supervisor data space */
-#define	FC_SUPERP	6	/* supervisor program space */
-#define	FC_CPU		7	/* CPU space */
-
-/* fields in the 68020 cache control register */
-#define	IC_ENABLE	0x0001	/* enable instruction cache */
-#define	IC_FREEZE	0x0002	/* freeze instruction cache */
-#define	IC_CE		0x0004	/* clear instruction cache entry */
-#define	IC_CLR		0x0008	/* clear entire instruction cache */
-
-/* additional fields in the 68030 cache control register */
-#define	IC_BE		0x0010	/* instruction burst enable */
-#define	DC_ENABLE	0x0100	/* data cache enable */
-#define	DC_FREEZE	0x0200	/* data cache freeze */
-#define	DC_CE		0x0400	/* clear data cache entry */
-#define	DC_CLR		0x0800	/* clear entire data cache */
-#define	DC_BE		0x1000	/* data burst enable */
-#define	DC_WA		0x2000	/* write allocate */
-
-/* fields in the 68040 cache control register */
-#define	IC40_ENABLE	0x00008000	/* enable instruction cache */
-#define DC40_ENABLE	0x80000000	/* enable data cache */
-
-#define	CACHE_ON	(DC_WA|DC_BE|DC_CLR|DC_ENABLE|IC_BE|IC_CLR|IC_ENABLE)
-#define	CACHE_OFF	(DC_CLR|IC_CLR)
-#define	CACHE_CLR	(CACHE_ON)
-#define	IC_CLEAR	(DC_WA|DC_BE|DC_ENABLE|IC_BE|IC_CLR|IC_ENABLE)
-#define	DC_CLEAR	(DC_WA|DC_BE|DC_CLR|DC_ENABLE|IC_BE|IC_ENABLE)
-
-/* 68040 cache control */
-#define	CACHE40_ON	(IC40_ENABLE|DC40_ENABLE)
-#define	CACHE40_OFF	0x00000000
 
 /*
  * CTL_MACHDEP definitions.
