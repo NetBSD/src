@@ -1,4 +1,4 @@
-/*	$NetBSD: rz.c,v 1.34 1998/02/19 23:04:41 thorpej Exp $	*/
+/*	$NetBSD: rz.c,v 1.35 1998/02/21 20:20:55 jonathan Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
-__KERNEL_RCSID(0, "$NetBSD: rz.c,v 1.34 1998/02/19 23:04:41 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rz.c,v 1.35 1998/02/21 20:20:55 jonathan Exp $");
 
 /*
  * SCSI CCS (Command Command Set) disk driver.
@@ -1636,6 +1636,7 @@ rzdump(dev, blkno, va, size)
 	size_t size;
 {
 	static int rzdoingadump;/* mutex */
+	static dev_t rzreadydev = NODEV;	/* hint: device already rzready()ed */
 	int sectorsize;		/* size of a disk sector */
 	int nsects;		/* number of sectors in partition */
 	int sectoff;		/* sector offset of partition */
@@ -1661,9 +1662,23 @@ rzdump(dev, blkno, va, size)
 	if ((sc->sc_flags & RZF_ALIVE) == 0)
 		return (ENXIO);
 
-	if (rzready(sc) == 0) {
-		/* Drive didn't reset. */
-		return (ENXIO);
+	/*
+	 * XXX Prevent the tsleep() calls in biowait() in rzready() 
+	 * XXX or later here from performing a switch.
+	 */
+	cold = 1;
+
+	/*
+	 * Ready drive. rzready() does geometry-sense. Cache dev_t of
+	 * last rzready()ed device to avoid seeks to modepage.
+	 */
+	 if (rzreadydev != dev) {
+		if (rzready(sc) == 0) {
+			/* Drive didn't reset. */
+			rzreadydev = NODEV;
+			return (ENXIO);
+		}
+		rzreadydev = dev;
 	}
 
 	/*
@@ -1685,12 +1700,6 @@ rzdump(dev, blkno, va, size)
 
 	/* Offset block number to start of partition. */
 	blkno += sectoff;
-
-	/*
-	 * XXX Prevent the tsleep() done in biowait() below
-	 * XXX from performing a switch.
-	 */
-	cold = 1;
 
 	while (totwrt > 0) {
 		nwrt = totwrt;		/* XXX */
