@@ -1,4 +1,4 @@
-/*	$NetBSD: dtop.c,v 1.24 1997/06/22 07:42:29 jonathan Exp $	*/
+/*	$NetBSD: dtop.c,v 1.25 1997/07/19 12:00:10 jonathan Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -626,8 +626,10 @@ dtopKBDGetc(dev)
 {
 	register int c;
 	dtop_softc_t dtop;
+	int s;
 
 	dtop = dtop_cd.cd_devs[0];
+	s = spltty();
 again:
 	c = -1;
 
@@ -648,7 +650,11 @@ again:
 					&ds->status, &msg,
 					DTOP_EVENT_RECEIVE_PACKET, -1);
 
-			if (c > 0) return c;
+
+			if (c > 0) {
+				splx(s);
+				return c;
+			}
 
 			c = -1;
 		    }
@@ -660,6 +666,7 @@ again:
 		goto again;
 	}
 
+	splx(s);
 	return c;
 }
 
