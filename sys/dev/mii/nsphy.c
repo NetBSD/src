@@ -1,4 +1,4 @@
-/*	$NetBSD: nsphy.c,v 1.6 1998/08/12 20:46:47 thorpej Exp $	*/
+/*	$NetBSD: nsphy.c,v 1.7 1998/08/12 20:56:35 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -319,7 +319,8 @@ nsphy_status(sc)
 		 * has completed (or it's disabled).
 		 */
 		if ((bmsr & BMSR_ACOMP) == 0) {
-			mii->mii_media_active |= IFM_AUTO;
+			/* Erg, still trying, I guess... */
+			mii->mii_media_active |= IFM_NONE;
 			return;
 		}
 		par = NSPHY_READ(sc, MII_NSPHY_PAR);
