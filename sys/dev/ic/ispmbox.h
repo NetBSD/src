@@ -1,11 +1,13 @@
-/*	$NetBSD: ispmbox.h,v 1.5 1997/09/29 01:41:30 mjacob Exp $	*/
-
+/* $NetBSD: */
+/* $Id: ispmbox.h,v 1.6 1998/07/15 19:50:16 mjacob Exp $ */
 /*
  * Mailbox and Command Definitions for for Qlogic ISP SCSI adapters.
  *
- * Copyright (c) 1997 by Matthew Jacob
+ *---------------------------------------
+ * Copyright (c) 1997, 1998 by Matthew Jacob
  * NASA/Ames Research Center
  * All rights reserved.
+ *---------------------------------------
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -30,8 +32,8 @@
  * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
+ *
  */
-
 #ifndef	_ISPMBOX_H
 #define	_ISPMBOX_H
 
