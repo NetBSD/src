@@ -1,4 +1,4 @@
-/*	$NetBSD: options.c,v 1.30 2000/07/04 17:24:47 thorpej Exp $	*/
+/*	$NetBSD: options.c,v 1.31 2000/07/04 17:28:47 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1992 Keith Muller.
@@ -42,7 +42,7 @@
 #if 0
 static char sccsid[] = "@(#)options.c	8.2 (Berkeley) 4/18/94";
 #else
-__RCSID("$NetBSD: options.c,v 1.30 2000/07/04 17:24:47 thorpej Exp $");
+__RCSID("$NetBSD: options.c,v 1.31 2000/07/04 17:28:47 thorpej Exp $");
 #endif
 #endif /* not lint */
 
@@ -663,6 +663,8 @@ struct option tar_longopts[] = {
 	{ "exclude-from",	required_argument,	0,	'X' },
 	{ "compress",		no_argument,		0,	'Z' },
 	{ "uncompress",		no_argument,		0,	'Z' },
+	{ "atime-preserve",	no_argument,		0,
+						OPT_ATIME_PRESERVE },
 	{ "unlink",		no_argument,		0,
 						OPT_UNLINK },
 	{ "use-compress-program", required_argument,	0,
@@ -674,10 +676,8 @@ struct option tar_longopts[] = {
 	{ "compare",		no_argument,		0,	'd' },	/* F */
 	{ "checkpoint",		no_argument,		0,
 						OPT_CHECKPOINT },
-	{ "help",		no_argument,
+	{ "help",		no_argument,		0,
 						OPT_HELP },
-	{ "atime-preserve",	no_argument,
-						OPT_ATIME_PRESERVE },
 	{ "info-script",	required_argument,	0,	'F' },
 	{ "new-volume-script",	required_argument,	0,	'F' },
 	{ "fast-read",		no_argument,		0,
@@ -912,6 +912,9 @@ tar_options(argc, argv)
 			break;
 		case '8':
 			arcname = DEV_8;
+			break;
+		case OPT_ATIME_PRESERVE:
+			patime = 1;
 			break;
 		case OPT_UNLINK:
 			/* Just ignore -- we always unlink first. */
