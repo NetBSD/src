@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs.h,v 1.36 2003/04/24 21:21:04 drochner Exp $	*/
+/*	$NetBSD: nfs.h,v 1.37 2003/06/25 14:37:50 yamt Exp $	*/
 /*
  * Copyright (c) 1989, 1993, 1995
  *	The Regents of the University of California.  All rights reserved.
@@ -410,6 +410,7 @@ struct nfsuid {
 
 struct nfssvc_sock {
 	TAILQ_ENTRY(nfssvc_sock) ns_chain;	/* List of all nfssvc_sock's */
+	TAILQ_ENTRY(nfssvc_sock) ns_pending;	/* List of pending sockets */
 	TAILQ_HEAD(, nfsuid) ns_uidlruhead;
 	struct file	*ns_fp;
 	struct socket	*ns_so;
@@ -440,6 +441,7 @@ struct nfssvc_sock {
 #define SLP_ALLFLAGS	0xff
 
 extern TAILQ_HEAD(nfssvc_sockhead, nfssvc_sock) nfssvc_sockhead;
+extern struct nfssvc_sockhead nfssvc_sockpending;
 extern int nfssvc_sockhead_flag;
 #define	SLP_INIT	0x01
 #define	SLP_WANTINIT	0x02
@@ -449,6 +451,7 @@ extern int nfssvc_sockhead_flag;
  */
 struct nfsd {
 	TAILQ_ENTRY(nfsd) nfsd_chain;	/* List of all nfsd's */
+	SLIST_ENTRY(nfsd) nfsd_idle;	/* List of idle nfsd's */
 	int		nfsd_flag;	/* NFSD_ flags */
 	struct nfssvc_sock *nfsd_slp;	/* Current socket */
 	int		nfsd_authlen;	/* Authenticator len */
@@ -505,7 +508,9 @@ struct nfsrv_descript {
 #define ND_KERBFULL	0x40
 #define ND_KERBAUTH	(ND_KERBNICK | ND_KERBFULL)
 
+extern struct simplelock nfsd_slock;
 extern TAILQ_HEAD(nfsdhead, nfsd) nfsd_head;
+extern SLIST_HEAD(nfsdidlehead, nfsd) nfsd_idle_head;
 extern int nfsd_head_flag;
 #define	NFSD_CHECKSLP	0x01
 
