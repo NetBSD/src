@@ -1,4 +1,4 @@
-/*	$NetBSD: isapnpdebug.c,v 1.2 1997/02/09 18:36:11 christos Exp $	*/
+/*	$NetBSD: isapnpdebug.c,v 1.3 1997/04/10 07:02:53 mikel Exp $	*/
 
 /*
  * Copyright (c) 1996 Christos Zoulas.  All rights reserved.
@@ -50,7 +50,7 @@ isapnp_print_mem(str, mem)
 	const char *str;
 	const struct isapnp_region *mem;
 {
-	printf("%s, Memory: %s,%sshadowable,decode-%s,%scacheable,%s", str,
+	printf("%sMemory: %s,%sshadowable,decode-%s,%scacheable,%s", str,
 	    (mem->flags & ISAPNP_MEMATTR_ROM) ? "ROM," : "RAM,",
 	    (mem->flags & ISAPNP_MEMATTR_SHADOWABLE) ? "" : "non-",
 	    (mem->flags & ISAPNP_MEMATTR_HIGH_ADDR) ?
@@ -87,7 +87,7 @@ isapnp_print_io(str, io)
 	const char *str;
 	const struct isapnp_region *io;
 {
-	printf("%d %s IO Ports: %d address bits, alignment %d ",
+	printf("%d %sIO Ports: %d address bits, alignment %d ",
 	    io->length, str, (io->flags & ISAPNP_IOFLAGS_16) ? 16 : 10,
 	    io->align);
 
