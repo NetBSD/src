@@ -1,4 +1,4 @@
-/* $NetBSD: mcclock_tlsb.c,v 1.5 1997/07/22 18:51:03 jonathan Exp $ */
+/* $NetBSD: mcclock_tlsb.c,v 1.5.2.1 1997/09/04 00:54:28 thorpej Exp $ */
 
 /*
  * Copyright (c) 1997 by Matthew Jacob
@@ -30,10 +30,9 @@
  * SUCH DAMAGE.
  */
 
-#include <machine/options.h>		/* Config options headers */
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: mcclock_tlsb.c,v 1.5 1997/07/22 18:51:03 jonathan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mcclock_tlsb.c,v 1.5.2.1 1997/09/04 00:54:28 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>

@@ -1,4 +1,4 @@
-/* $NetBSD: lca_dma.c,v 1.2 1997/06/06 23:59:26 thorpej Exp $ */
+/* $NetBSD: lca_dma.c,v 1.2.6.1 1997/09/04 00:53:41 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -37,10 +37,9 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include <machine/options.h>		/* Config options headers */
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: lca_dma.c,v 1.2 1997/06/06 23:59:26 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lca_dma.c,v 1.2.6.1 1997/09/04 00:53:41 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

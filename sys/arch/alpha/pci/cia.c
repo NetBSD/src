@@ -1,4 +1,4 @@
-/* $NetBSD: cia.c,v 1.21.6.1 1997/09/01 20:00:32 thorpej Exp $ */
+/* $NetBSD: cia.c,v 1.21.6.2 1997/09/04 00:53:26 thorpej Exp $ */
 
 /*
  * Copyright (c) 1995, 1996 Carnegie-Mellon University.
@@ -27,10 +27,12 @@
  * rights to redistribute these changes.
  */
 
-#include <machine/options.h>		/* Config options headers */
+#include "opt_dec_eb164.h"
+#include "opt_dec_kn20aa.h"
+
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: cia.c,v 1.21.6.1 1997/09/01 20:00:32 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cia.c,v 1.21.6.2 1997/09/04 00:53:26 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -105,8 +107,8 @@ cia_init(ccp, mallocsafe)
 
 	if (!ccp->cc_initted) {
 		/* don't do these twice since they set up extents */
-		ccp->cc_iot = cia_bus_io_init(ccp);
-		ccp->cc_memt = cia_bus_mem_init(ccp);
+		cia_swiz_bus_io_init(&ccp->cc_iot, ccp);
+		cia_swiz_bus_mem_init(&ccp->cc_memt, ccp);
 	}
 	ccp->cc_mallocsafe = mallocsafe;
 
@@ -164,8 +166,8 @@ ciaattach(parent, self, aux)
 	}
 
 	pba.pba_busname = "pci";
-	pba.pba_iot = ccp->cc_iot;
-	pba.pba_memt = ccp->cc_memt;
+	pba.pba_iot = &ccp->cc_iot;
+	pba.pba_memt = &ccp->cc_memt;
 	pba.pba_dmat = &ccp->cc_dmat_direct;
 	pba.pba_pc = &ccp->cc_pc;
 	pba.pba_bus = 0;

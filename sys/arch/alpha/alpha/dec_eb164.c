@@ -1,4 +1,4 @@
-/* $NetBSD: dec_eb164.c,v 1.14.4.1 1997/08/27 21:40:28 thorpej Exp $ */
+/* $NetBSD: dec_eb164.c,v 1.14.4.2 1997/09/04 00:52:28 thorpej Exp $ */
 
 /*
  * Copyright (c) 1995, 1996, 1997 Carnegie-Mellon University.
@@ -27,10 +27,9 @@
  * rights to redistribute these changes.
  */
 
-#include <machine/options.h>		/* Config options headers */
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: dec_eb164.c,v 1.14.4.1 1997/08/27 21:40:28 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dec_eb164.c,v 1.14.4.2 1997/09/04 00:52:28 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -96,7 +95,7 @@ dec_eb164_cons_init()
 			 */
 			DELAY(160000000 / comcnrate);
 
-			if(comcnattach(ccp->cc_iot, 0x3f8, comcnrate,
+			if(comcnattach(&ccp->cc_iot, 0x3f8, comcnrate,
 				    (TTYDEF_CFLAG & ~(CSIZE | PARENB)) | CS8))
 				panic("can't init serial console");
 
@@ -107,9 +106,9 @@ dec_eb164_cons_init()
 		/* display console ... */
 		/* XXX */
 		if ((ctb->ctb_turboslot & 0xffff) == 0)
-			isa_display_console(ccp->cc_iot, ccp->cc_memt);
+			isa_display_console(&ccp->cc_iot, &ccp->cc_memt);
 		else
-			pci_display_console(ccp->cc_iot, ccp->cc_memt,
+			pci_display_console(&ccp->cc_iot, &ccp->cc_memt,
 			    &ccp->cc_pc, (ctb->ctb_turboslot >> 8) & 0xff,
 			    ctb->ctb_turboslot & 0xff, 0);
 		break;

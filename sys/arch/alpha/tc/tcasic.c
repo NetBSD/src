@@ -1,4 +1,4 @@
-/* $NetBSD: tcasic.c,v 1.18 1997/06/06 23:55:36 thorpej Exp $ */
+/* $NetBSD: tcasic.c,v 1.18.4.1 1997/09/04 00:54:22 thorpej Exp $ */
 
 /*
  * Copyright (c) 1994, 1995, 1996 Carnegie-Mellon University.
@@ -27,10 +27,12 @@
  * rights to redistribute these changes.
  */
 
-#include <machine/options.h>		/* Config options headers */
+#include "opt_dec_3000_300.h"
+#include "opt_dec_3000_500.h"
+
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: tcasic.c,v 1.18 1997/06/06 23:55:36 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tcasic.c,v 1.18.4.1 1997/09/04 00:54:22 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

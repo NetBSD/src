@@ -1,4 +1,4 @@
-/* $NetBSD: cia_swiz_bus_io.c,v 1.11.4.2 1997/08/23 07:07:04 thorpej Exp $ */
+/* $NetBSD: cia_swiz_bus_io.c,v 1.11.4.3 1997/09/04 00:53:30 thorpej Exp $ */
 
 /*
  * Copyright (c) 1996 Carnegie-Mellon University.
@@ -27,10 +27,9 @@
  * rights to redistribute these changes.
  */
 
-#include <machine/options.h>		/* Config options headers */
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(1, "$NetBSD: cia_swiz_bus_io.c,v 1.11.4.2 1997/08/23 07:07:04 thorpej Exp $");
+__KERNEL_RCSID(1, "$NetBSD: cia_swiz_bus_io.c,v 1.11.4.3 1997/09/04 00:53:30 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -69,4 +68,4 @@ __KERNEL_RCSID(1, "$NetBSD: cia_swiz_bus_io.c,v 1.11.4.2 1997/08/23 07:07:04 tho
 #define CHIP_IO_W2_SYS_END(v)						\
 	    (CIA_PCI_SIO2 + ((HAE_IO_REG2_MASK + 1) << 5) - 1)
 
-#include "pci_swiz_io_chipdep.c"
+#include <alpha/pci/pci_swiz_bus_io_chipdep.c>

@@ -1,4 +1,4 @@
-/* $NetBSD: dwlpx_pci.c,v 1.6.6.1 1997/08/23 07:07:14 thorpej Exp $ */
+/* $NetBSD: dwlpx_pci.c,v 1.6.6.2 1997/09/04 00:53:36 thorpej Exp $ */
 
 /*
  * Copyright (c) 1997 by Matthew Jacob
@@ -30,10 +30,9 @@
  * SUCH DAMAGE.
  */
 
-#include <machine/options.h>		/* Config options headers */
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: dwlpx_pci.c,v 1.6.6.1 1997/08/23 07:07:14 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dwlpx_pci.c,v 1.6.6.2 1997/09/04 00:53:36 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

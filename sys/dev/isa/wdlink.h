@@ -1,4 +1,4 @@
-/*	$NetBSD: wdlink.h,v 1.2.2.2 1997/08/27 23:32:14 thorpej Exp $	*/
+/*	$NetBSD: wdlink.h,v 1.2.2.3 1997/09/04 01:05:47 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Charles M. Hannum.  All rights reserved.
@@ -57,6 +57,7 @@ struct wdc_softc {
 	int sc_errors;			/* errors during current transfer */
 	u_char sc_status;		/* copy of status register */
 	u_char sc_error;		/* copy of error register */
+	u_char sc_drives_mask;	/* bitmask for drives present/absent */
 };
 
 struct wd_link {

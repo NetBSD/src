@@ -1,4 +1,4 @@
-/* $NetBSD: pci_machdep.c,v 1.10 1997/04/07 23:40:45 cgd Exp $ */
+/* $NetBSD: pci_machdep.c,v 1.10.4.1 1997/09/04 00:53:50 thorpej Exp $ */
 
 /*
  * Copyright (c) 1995, 1996 Carnegie-Mellon University.
@@ -31,10 +31,9 @@
  * Machine-specific functions for PCI autoconfiguration.
  */
 
-#include <machine/options.h>		/* Config options headers */
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: pci_machdep.c,v 1.10 1997/04/07 23:40:45 cgd Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pci_machdep.c,v 1.10.4.1 1997/09/04 00:53:50 thorpej Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>

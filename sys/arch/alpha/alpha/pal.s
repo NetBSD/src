@@ -1,4 +1,4 @@
-/* $NetBSD: pal.s,v 1.7.2.1 1997/09/01 20:00:14 thorpej Exp $ */
+/* $NetBSD: pal.s,v 1.7.2.2 1997/09/04 00:52:48 thorpej Exp $ */
 
 /*
  * Copyright (c) 1994, 1995 Carnegie-Mellon University.
@@ -30,12 +30,16 @@
 /*
  * The various OSF PALcode routines.
  *
- * The following code is derived from pages: (I) 6-5 - (I) 6-7 and
- * (III) 2-1 - (III) 2-25 of "Alpha Architecture Reference Manual" by
+ * The following code is originally derived from pages: (I) 6-5 - (I) 6-7
+ * and (III) 2-1 - (III) 2-25 of "Alpha Architecture Reference Manual" by
  * Richard L. Sites.
+ *
+ * Updates taken from pages: (II-B) 2-1 - (II-B) 2-33 of "Alpha AXP
+ * Architecture Reference Manual, Second Edition" by Richard L. Sites
+ * and Richard T. Witek.
  */
 
-__KERNEL_RCSID(1, "$NetBSD: pal.s,v 1.7.2.1 1997/09/01 20:00:14 thorpej Exp $");
+__KERNEL_RCSID(1, "$NetBSD: pal.s,v 1.7.2.2 1997/09/04 00:52:48 thorpej Exp $");
 
 /*
  * alpha_rpcc: read process cycle counter (XXX INSTRUCTION, NOT PALcode OP)
@@ -76,6 +80,21 @@ LEAF(alpha_pal_imb,0)
 	END(alpha_pal_imb)
 
 /*
+ * alpha_pal_cflush: Cache flush [PRIVILEGED]
+ *
+ * Flush the entire physical page specified by the PFN specified in
+ * a0 from any data caches associated with the current processor.
+ *
+ * Arguments:
+ *	a0	page frame number of page to flush
+ */
+	.text
+LEAF(alpha_pal_cflush,1)
+	call_pal PAL_cflush
+	RET
+	END(alpha_pal_cflush)
+
+/*
  * alpha_pal_draina: Drain aborts. [PRIVILEGED]
  */
 	.text
@@ -107,6 +126,18 @@ LEAF(alpha_pal_rdmces,1)
 	END(alpha_pal_rdmces)
 
 /*
+ * alpha_pal_rdps: Read processor status. [PRIVILEGED]
+ *
+ * Return:
+ *	v0	current PS value
+ */
+	.text
+LEAF(alpha_pal_rdps,0)
+	call_pal PAL_OSF1_rdps
+	RET
+	END(alpha_pal_rdps)
+
+/*
  * alpha_pal_rdusp: Read user stack pointer. [PRIVILEGED]
  *
  * Return:
@@ -117,6 +148,21 @@ LEAF(alpha_pal_rdusp,0)
 	call_pal PAL_OSF1_rdusp
 	RET
 	END(alpha_pal_rdusp)
+
+/*
+ * alpha_pal_rdval: Read system value. [PRIVILEGED]
+ *
+ * Returns the sysvalue in v0, allowing access to a 64-bit
+ * per-processor value for use by the operating system.
+ *
+ * Return:
+ *	v0	sysvalue
+ */
+	.text
+LEAF(alpha_pal_rdval,0)
+	call_pal PAL_OSF1_rdval
+	RET
+	END(alpha_pal_rdval)
 
 /*
  * alpha_pal_swpipl: Swap Interrupt priority level. [PRIVILEGED]
@@ -190,6 +236,21 @@ LEAF(alpha_pal_wrfen,1)
 	END(alpha_pal_wrfen)
 
 /*
+ * alpha_pal_wripir: Write interprocessor interrupt request. [PRIVILEGED]
+ *
+ * Generate an interprocessor interrupt on the processor specified by
+ * processor number in a0.
+ *
+ * Arguments:
+ *	a0	processor to interrupt
+ */
+	.text
+LEAF(alpha_pal_wripir,1)
+	call_pal PAL_ipir
+	RET
+	END(alpha_pal_wripir)
+
+/*
  * alpha_pal_wrusp: Write user stack pointer. [PRIVILEGED]
  *
  * Arguments:
@@ -224,3 +285,16 @@ LEAF(alpha_pal_wrmces,1)
 	call_pal PAL_OSF1_wrmces
 	RET
 	END(alpha_pal_wrmces)
+
+/*
+ * alpha_pal_wrval: Write system value. [PRIVILEGED]
+ *
+ * Write the value passed in a0 to this processor's sysvalue.
+ *
+ * Arguments:
+ *	a0	value to write to sysvalue
+ */
+LEAF(alpha_pal_wrval,1)
+	call_pal PAL_OSF1_wrval
+	RET
+	END(alpha_pal_wrval)

@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.155.2.1 1997/08/23 07:10:48 thorpej Exp $	*/
+/*	$NetBSD: machdep.c,v 1.155.2.2 1997/09/04 00:59:41 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1996 Jason R. Thorpe.  All rights reserved.
@@ -2026,7 +2026,8 @@ mach_cputype()
 static void
 identifycpu()
 {
-	char   *mpu;
+	extern u_int delay_factor;
+	char *mpu;
 
 	switch (cputype) {
 	case CPU_68020:
@@ -2047,6 +2048,7 @@ identifycpu()
 	    cpu_models[mac68k_machine.cpu_model_index].model_minor,
 	    mpu);
 	printf("%s\n", cpu_model);
+	printf("cpu: delay factor %d\n", delay_factor);
 }
 
 static void	get_machine_info __P((void));

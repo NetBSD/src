@@ -1,4 +1,4 @@
-/* $NetBSD: gbus.c,v 1.4 1997/04/07 23:41:05 cgd Exp $ */
+/* $NetBSD: gbus.c,v 1.4.6.1 1997/09/04 00:54:26 thorpej Exp $ */
 
 /*
  * Copyright (c) 1997 by Matthew Jacob
@@ -35,10 +35,9 @@
  * bus on AlphaServer CPU modules.
  */
 
-#include <machine/options.h>		/* Config options headers */
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: gbus.c,v 1.4 1997/04/07 23:41:05 cgd Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gbus.c,v 1.4.6.1 1997/09/04 00:54:26 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

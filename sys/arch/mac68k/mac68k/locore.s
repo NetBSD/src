@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.84.2.2 1997/09/01 20:12:00 thorpej Exp $	*/
+/*	$NetBSD: locore.s,v 1.84.2.3 1997/09/04 00:59:38 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -170,6 +170,35 @@ Lis68020:
 
 Lstart1:
 	/*
+	 * Now that we know what CPU we have, initialize the address error
+	 * and bus error handlers in the vector table:
+	 *
+	 *	vectab+8	bus error
+	 *	vectab+12	address error
+	 */
+	lea	_C_LABEL(cputype),a0
+	lea	_C_LABEL(vectab),a2
+#if defined(M68040)
+	cmpl	#CPU_68040,a0@		| 68040?
+	jne	1f			| no, skip
+	movl	#_C_LABEL(buserr40),a2@(8)
+	movl	#_C_LABEL(addrerr4060),a2@(12)
+	jra	Lstart2
+1:
+#endif
+#if defined(M68020) || defined(M68030)
+	cmpl	#CPU_68040,a0@		| 68040?
+	jeq	1f			| yes, skip
+	movl	#_C_LABEL(busaddrerr2030),a2@(8)
+	movl	#_C_LABEL(busaddrerr2030),a2@(12)
+	jra	Lstart2
+1:
+#endif
+	/* Config botch; no hope. */
+	jra	Ldoboot1
+
+Lstart2:
+	/*
 	 * Some parameters provided by MacOS
 	 *
 	 * LAK: This section is the new way to pass information from the booter
@@ -193,7 +222,7 @@ Lstart1:
 	jeq	Lget040TC
 
 	pmove	tc,a0@
-	jra	Lstart2
+	jra	Lstart3
 
 Lget040TC:
 	movl	_C_LABEL(current_mac_model),a1	 | if an AV Mac, save current
@@ -207,17 +236,20 @@ LnotAV:
 LsaveTC:	
 	movl	d0,a0@
 
-Lstart2:
+Lstart3:
 	movl	a0@,sp@-		| get Mac OS mapping, relocate video,
 	jbsr	_C_LABEL(bootstrap_mac68k) |   bootstrap pmap, et al.
 	addql	#4,sp
+
+	/*
+	 * Set up the vector table, and race to get the MMU
+	 * enabled.
+	 */
+	movl	#_C_LABEL(vectab),d0	| set Vector Base Register
+	movc	d0,vbr
 	
-/*
- * Prepare to enable MMU.
- */
 	movl	_C_LABEL(Sysseg),a1	| system segment table addr
 	addl	_C_LABEL(load_addr),a1	| Make it physical addr
-
 	cmpl	#MMU_68040,_C_LABEL(mmutype)
 	jne	Lenablepre040MMU	| if not 040, skip
 
@@ -414,8 +446,7 @@ Lberr40:
 	/* NOTREACHED */
 #endif
 
-ENTRY_NOPROFILE(buserr)
-ENTRY_NOPROFILE(addrerr)
+ENTRY_NOPROFILE(busaddrerr2030)
 #if !(defined(M68020) || defined(M68030))
 	jra	_badtrap
 #else
@@ -1460,8 +1491,7 @@ Ldobootnot040:
 #endif
 
 Ldoboot1:
-	movl	_C_LABEL(MacOSROMBase), _C_LABEL(ROMBase) | Load MacOS ROMBase
-
+	movl	_C_LABEL(MacOSROMBase),_C_LABEL(ROMBase) | Load MacOS ROMBase
 	movl	#0x90,a1		| offset of ROM reset routine
 	addl	_C_LABEL(ROMBase),a1	| add to ROM base
 	jra	a1@			| and jump to ROM to reset machine

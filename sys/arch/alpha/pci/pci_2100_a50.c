@@ -1,4 +1,4 @@
-/* $NetBSD: pci_2100_a50.c,v 1.16 1997/07/19 09:49:52 cgd Exp $ */
+/* $NetBSD: pci_2100_a50.c,v 1.16.2.1 1997/09/04 00:53:44 thorpej Exp $ */
 
 /*
  * Copyright (c) 1995, 1996 Carnegie-Mellon University.
@@ -27,10 +27,9 @@
  * rights to redistribute these changes.
  */
 
-#include <machine/options.h>		/* Config options headers */
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: pci_2100_a50.c,v 1.16 1997/07/19 09:49:52 cgd Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pci_2100_a50.c,v 1.16.2.1 1997/09/04 00:53:44 thorpej Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -69,7 +68,7 @@ void
 pci_2100_a50_pickintr(acp)
 	struct apecs_config *acp;
 {
-	bus_space_tag_t iot = acp->ac_iot;
+	bus_space_tag_t iot = &acp->ac_iot;
 	pci_chipset_tag_t pc = &acp->ac_pc;
 	pcireg_t sioclass;
 	int sioII;

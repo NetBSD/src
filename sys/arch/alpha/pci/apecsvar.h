@@ -1,4 +1,4 @@
-/* $NetBSD: apecsvar.h,v 1.7 1997/06/06 23:54:25 thorpej Exp $ */
+/* $NetBSD: apecsvar.h,v 1.7.4.1 1997/09/04 00:53:26 thorpej Exp $ */
 
 /*
  * Copyright (c) 1995, 1996 Carnegie-Mellon University.
@@ -44,7 +44,7 @@ struct apecs_config {
 	int	ac_epic_pass2;
 	int	ac_memwidth;
 
-	bus_space_tag_t ac_iot, ac_memt;
+	struct alpha_bus_space ac_iot, ac_memt;
 	struct alpha_pci_chipset ac_pc;
 
 	struct alpha_bus_dma_tag ac_dmat_direct;
@@ -68,5 +68,5 @@ void	apecs_init __P((struct apecs_config *, int));
 void	apecs_pci_init __P((pci_chipset_tag_t, void *));
 void	apecs_dma_init __P((struct apecs_config *));
 
-bus_space_tag_t apecs_bus_io_init __P((void *));
-bus_space_tag_t apecs_bus_mem_init __P((void *));
+void	apecs_bus_io_init __P((bus_space_tag_t, void *));
+void	apecs_bus_mem_init __P((bus_space_tag_t, void *));

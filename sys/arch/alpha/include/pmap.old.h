@@ -1,4 +1,4 @@
-/* $NetBSD: pmap.old.h,v 1.7.2.1 1997/09/01 20:00:25 thorpej Exp $ */
+/* $NetBSD: pmap.old.h,v 1.7.2.2 1997/09/04 00:53:11 thorpej Exp $ */
 
 /* 
  * Copyright (c) 1987 Carnegie-Mellon University
@@ -59,7 +59,6 @@ extern vm_offset_t       vtophys(vm_offset_t);
 struct pmap {
 	pt_entry_t		*pm_ptab;	/* KVA of page table */
 	pt_entry_t		*pm_stab;	/* KVA of segment table */
-	int			pm_stchanged;	/* ST changed */
 	pt_entry_t		pm_stpte;	/* PTE mapping STE */
 	short			pm_sref;	/* segment table ref count */
 	short			pm_count;	/* pmap reference count */
@@ -75,17 +74,9 @@ extern struct pmap	kernel_pmap_store;
 #define pmap_kernel()	(&kernel_pmap_store)
 #define	active_pmap(pm) \
 	((pm) == pmap_kernel() || (pm) == curproc->p_vmspace->vm_map.pmap)
-
-/*
- * Macros for speed
- */
-#define PMAP_ACTIVATE(pmapp, iscurproc)					\
-	if ((pmapp) != NULL && (pmapp)->pm_stchanged) {			\
-		if (iscurproc)						\
-			loadustp((pmapp)->pm_stpte);			\
-		(pmapp)->pm_stchanged = FALSE;				\
-	}
-#define PMAP_DEACTIVATE(pmapp, pcbp)
+#define	active_user_pmap(pm) \
+	(curproc && \
+	 (pm) != pmap_kernel() && (pm) == curproc->p_vmspace->vm_map.pmap)
 
 /*
  * For each vm_page_t, there is a list of all currently valid virtual
@@ -101,6 +92,21 @@ typedef struct pv_entry {
 } *pv_entry_t;
 
 #define PV_PTPAGE	0x01	/* header: entry maps a page table page */
+
+struct pv_page;
+
+struct pv_page_info {
+	TAILQ_ENTRY(pv_page) pgi_list;
+	struct pv_entry *pgi_freelist;
+	int pgi_nfree;
+};
+
+#define	NPVPPG ((NBPG - sizeof(struct pv_page_info)) / sizeof(struct pv_entry))
+
+struct pv_page {
+	struct pv_page_info pvp_pgi;
+	struct pv_entry pvp_pv[NPVPPG];
+};
 
 /*
  * bits of pmap_attributes[]
@@ -121,7 +127,9 @@ extern	pt_entry_t *Sysmap;
 extern	char *vmmap;			/* map for mem, dumps, etc. */
 
 /* Machine-specific functions. */
-void	pmap_activate __P((pmap_t));
+struct proc;
+void	pmap_activate __P((struct proc *));
+void	pmap_deactivate __P((struct proc *));
 void	pmap_bootstrap __P((vm_offset_t firstaddr, vm_offset_t ptaddr));
 void	pmap_emulate_reference __P((struct proc *p, vm_offset_t v,
 		int user, int write));

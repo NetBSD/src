@@ -1,4 +1,4 @@
-/* $NetBSD: alpha_cpu.h,v 1.9.2.1 1997/09/01 20:00:18 thorpej Exp $ */
+/* $NetBSD: alpha_cpu.h,v 1.9.2.2 1997/09/04 00:53:07 thorpej Exp $ */
 
 /*
  * Copyright (c) 1996 Carnegie-Mellon University.
@@ -200,7 +200,7 @@ struct alpha_logout_area {
 #define	ALPHA_PTE_KW			0x1000
 #define	ALPHA_PTE_UW			0x2000
 
-#define	ALPHA_PTE_WRITE			(ALPHA_PTE_KW | ALPHA_PTE_KW)
+#define	ALPHA_PTE_WRITE			(ALPHA_PTE_KW | ALPHA_PTE_UW)
 
 #define	ALPHA_PTE_SOFTWARE		0xffff0000
 
@@ -263,18 +263,23 @@ void		alpha_wmb __P((void));
  * Stubs for OSF/1 PALcode operations.
  */
 void		alpha_pal_imb __P((void));
+void		alpha_pal_cflush __P((unsigned long));
 void		alpha_pal_draina __P((void));
 void		alpha_pal_halt __P((void)) __attribute__((__noreturn__));
 unsigned long	alpha_pal_rdmces __P((void));
+unsigned long	alpha_pal_rdps __P((void));
 unsigned long	alpha_pal_rdusp __P((void));
+unsigned long	alpha_pal_rdval __P((void));
 unsigned long	alpha_pal_swpipl __P((unsigned long));
 unsigned long	_alpha_pal_swpipl __P((unsigned long));	/* for profiling */
 void		alpha_pal_tbi __P((unsigned long, vm_offset_t));
 unsigned long	alpha_pal_whami __P((void));
 void		alpha_pal_wrent __P((void *, unsigned long));
 void		alpha_pal_wrfen __P((unsigned long));
+void		alpha_pal_wripir __P((unsigned long));
 void		alpha_pal_wrusp __P((unsigned long));
 void		alpha_pal_wrvptptr __P((unsigned long));
 void		alpha_pal_wrmces __P((unsigned long));
+void		alpha_pal_wrval __P((unsigned long));
 
 #endif /* __ALPHA_ALPHA_CPU_H__ */

@@ -1,4 +1,4 @@
-/* $NetBSD: genassym.c,v 1.13 1997/07/23 06:23:14 cgd Exp $ */
+/* $NetBSD: genassym.c,v 1.13.2.1 1997/09/04 00:52:34 thorpej Exp $ */
 
 /*
  * Copyright (c) 1994, 1995 Gordon W. Ross
@@ -60,10 +60,9 @@
  * the gcc asm() statement (inline assembly).
  */
 
-#include <machine/options.h>		/* Config options headers */
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__RCSID("$NetBSD: genassym.c,v 1.13 1997/07/23 06:23:14 cgd Exp $");
+__RCSID("$NetBSD: genassym.c,v 1.13.2.1 1997/09/04 00:52:34 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/buf.h>
@@ -175,13 +174,8 @@ struct nv assyms[] = {
 	off(PH_LINK, struct prochd, ph_link),
 	off(PH_RLINK, struct prochd, ph_rlink),
 
-#ifndef NEW_PMAP
-	/* offsets needed by cpu_switch(), et al., to switch mappings. */
-	off(VM_PMAP_STPTE, struct vmspace, vm_pmap.pm_stpte),
-	def(USTP_OFFSET, kvtol1pte(VM_MIN_ADDRESS) * sizeof(pt_entry_t)),
-#else /* NEW_PMAP */
-	off(VM_PMAP, struct vmspace, vm_pmap),
-#endif /* NEW_PMAP */
+	/* offsets needed by cpu_switch() to switch mappings. */
+	off(VM_MAP_PMAP, struct vmspace, vm_map.pmap),
 
 	/* Important offsets into the user struct & associated constants */
 	def1(UPAGES),

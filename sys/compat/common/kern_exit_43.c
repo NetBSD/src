@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_exit_43.c,v 1.3 1995/10/07 06:26:20 mycroft Exp $	*/
+/*	$NetBSD: kern_exit_43.c,v 1.3.14.1 1997/09/04 01:00:33 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1991, 1993
@@ -65,12 +65,12 @@
 
 #include <machine/cpu.h>
 #include <machine/reg.h>
-#include <machine/psl.h>
 #include <compat/common/compat_util.h>
 
 #include <vm/vm.h>
 #include <vm/vm_kern.h>
 #ifdef m68k
+#include <machine/psl.h>		/* only m68k ports use PSL_ALLCC */
 #include <machine/frame.h>
 #define GETPS(rp)	((struct frame *)(rp))->f_sr
 #else
