@@ -1,4 +1,4 @@
-/* $NetBSD: pci_550.c,v 1.9 1998/07/07 21:44:58 thorpej Exp $ */
+/* $NetBSD: pci_550.c,v 1.10 1998/07/07 21:47:49 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -66,7 +66,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: pci_550.c,v 1.9 1998/07/07 21:44:58 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pci_550.c,v 1.10 1998/07/07 21:47:49 thorpej Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -113,7 +113,12 @@ void	*dec_550_pciide_compat_intr_establish __P((void *, struct device *,
 
 #define	DEC_550_PCI_IRQ_BEGIN	8
 #define	DEC_550_MAX_IRQ		48
-#define	PCI_STRAY_MAX		5
+
+/*
+ * The Miata has a Pyxis, which seems to have problems with stray
+ * interrupts.  Work around this by just ignoring strays.
+ */
+#define	PCI_STRAY_MAX		0
 
 struct alpha_shared_intr *dec_550_pci_intr;
 #ifdef EVCNT_COUNTERS
