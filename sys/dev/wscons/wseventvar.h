@@ -1,4 +1,4 @@
-/* $NetBSD: wseventvar.h,v 1.2 2001/10/13 15:56:16 augustss Exp $ */
+/* $NetBSD: wseventvar.h,v 1.3 2001/10/24 14:07:33 augustss Exp $ */
 
 /*
  * Copyright (c) 1996, 1997 Christopher G. Demetriou.  All rights reserved.
@@ -99,14 +99,16 @@ struct wseventvar {
 	selwakeup(&(ev)->sel); \
 	if ((ev)->wanted) { \
 		(ev)->wanted = 0; \
-		wakeup((caddr_t)(ev)); \
+		wakeup((ev)); \
 	} \
 	if ((ev)->async) \
 		psignal((ev)->io, SIGIO); \
 }
 
 void	wsevent_init(struct wseventvar *);
+struct	wseventvar *wsevent_alloc(void);
 void	wsevent_fini(struct wseventvar *);
+void	wsevent_free(struct wseventvar *);
 int	wsevent_read(struct wseventvar *, struct uio *, int);
 int	wsevent_poll(struct wseventvar *, int, struct proc *);
 
