@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_raidframe.h,v 1.8 2000/01/05 02:57:29 oster Exp $	*/
+/*	$NetBSD: rf_raidframe.h,v 1.9 2000/02/13 04:53:58 oster Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -130,4 +130,6 @@ typedef struct RF_DeviceConfig_s {
 #define RAIDFRAME_CHECK_PARITY      _IOWR ('r', 25, int)
 #define RAIDFRAME_CHECK_PARITYREWRITE_STATUS _IOWR ('r', 26, int)
 #define RAIDFRAME_CHECK_COPYBACK_STATUS _IOWR ('r', 27, int)
+#define RAIDFRAME_SET_AUTOCONFIG _IOWR ('r', 28, int)
+#define RAIDFRAME_SET_ROOT _IOWR ('r', 29, int)
 #endif				/* !_RF__RF_RAIDFRAME_H_ */

@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_driver.c,v 1.27 2000/01/09 03:44:33 oster Exp $	*/
+/*	$NetBSD: rf_driver.c,v 1.28 2000/02/13 04:53:57 oster Exp $	*/
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -370,14 +370,18 @@ rf_UnconfigureVnodes( raidPtr )
 }
 
 int 
-rf_Configure(raidPtr, cfgPtr)
+rf_Configure(raidPtr, cfgPtr, ac)
 	RF_Raid_t *raidPtr;
 	RF_Config_t *cfgPtr;
+	RF_AutoConfig_t *ac;
 {
 	RF_RowCol_t row, col;
 	int     i, rc;
-	int     unit;
 
+	/* XXX This check can probably be removed now, since 
+	   RAIDFRAME_CONFIGURRE now checks to make sure that the
+	   RAID set is not already valid
+	*/
 	if (raidPtr->valid) {
 		RF_ERRORMSG("RAIDframe configuration not shut down.  Aborting configure.\n");
 		return (EINVAL);
@@ -393,15 +397,17 @@ rf_Configure(raidPtr, cfgPtr)
 			return (rc);
 		}
 		/* initialize globals */
-		printf("RAIDFRAME: protectedSectors is %ld\n", rf_protectedSectors);
+		printf("RAIDFRAME: protectedSectors is %ld\n", 
+		       rf_protectedSectors);
 
 		rf_clear_debug_print_buffer();
 
 		DO_INIT_CONFIGURE(rf_ConfigureAllocList);
+
 		/*
-	         * Yes, this does make debugging general to the whole system instead
-	         * of being array specific. Bummer, drag.
-	         */
+	         * Yes, this does make debugging general to the whole
+	         * system instead of being array specific. Bummer, drag.  
+		 */
 		rf_ConfigureDebug(cfgPtr);
 		DO_INIT_CONFIGURE(rf_ConfigureDebugMem);
 		DO_INIT_CONFIGURE(rf_ConfigureAccessTrace);
@@ -423,15 +429,6 @@ rf_Configure(raidPtr, cfgPtr)
 	}
 	RF_UNLOCK_MUTEX(configureMutex);
 
-	/*
-         * Null out the entire raid descriptor to avoid problems when we reconfig.
-         * This also clears the valid bit.
-         */
-	/* XXX this clearing should be moved UP to outside of here.... that,
-	 * or rf_Configure() needs to take more arguments... XXX */
-	unit = raidPtr->raidid;
-	bzero((char *) raidPtr, sizeof(RF_Raid_t));
-	raidPtr->raidid = unit;
 	DO_RAID_MUTEX(&raidPtr->mutex);
 	/* set up the cleanup list.  Do this after ConfigureDebug so that
 	 * value of memDebug will be set */
@@ -492,8 +489,16 @@ rf_Configure(raidPtr, cfgPtr)
 	DO_RAID_COND(&raidPtr->waitForReconCond);
 
 	DO_RAID_MUTEX(&raidPtr->recon_done_proc_mutex);
-	DO_RAID_INIT_CONFIGURE(rf_ConfigureDisks);
-	DO_RAID_INIT_CONFIGURE(rf_ConfigureSpareDisks);
+
+	if (ac!=NULL) {
+		/* We have an AutoConfig structure..  Don't do the
+		   normal disk configuration... call the auto config
+		   stuff */
+		rf_AutoConfigureDisks(raidPtr, cfgPtr, ac);
+	} else {
+		DO_RAID_INIT_CONFIGURE(rf_ConfigureDisks);
+		DO_RAID_INIT_CONFIGURE(rf_ConfigureSpareDisks);
+	}
 	/* do this after ConfigureDisks & ConfigureSpareDisks to be sure dev
 	 * no. is set */
 	DO_RAID_INIT_CONFIGURE(rf_ConfigureDiskQueues);
@@ -510,6 +515,10 @@ rf_Configure(raidPtr, cfgPtr)
 			raidPtr->hist_diskreq[row][col] = 0;
 		}
 	}
+
+	raidPtr->copyback_in_progress = 0;
+	raidPtr->parity_rewrite_in_progress = 0;
+	raidPtr->recon_in_progress = 0;
 
 	if (rf_keepAccTotals) {
 		raidPtr->keep_acc_totals = 1;
