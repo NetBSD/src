@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.15 2002/05/09 17:06:01 mason Exp $
+#	$NetBSD: Makefile.inc,v 1.15.2.1 2002/06/10 17:40:48 tv Exp $
 #
 #	etc.sparc64/Makefile.inc -- sparc64-specific etc Makefile targets
 #
@@ -83,7 +83,7 @@ snap_md_post:
 	(cd $(TOP)/distrib; ${MAKE})
 
 	# transfer images to release hierarchy
-.for dir in notes sparc64/xminiroot sparc64/instfs
+.for dir in notes sparc64/xminiroot sparc64/instfs sparc64/bootfs
 	(cd $(TOP)/distrib/$(dir); ${MAKE} release)
 .endfor
 
