@@ -31,7 +31,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)mount.h	7.22 (Berkeley) 6/3/91
- *	$Id: mount.h,v 1.20 1994/03/27 09:09:48 cgd Exp $
+ *	$Id: mount.h,v 1.21 1994/04/07 02:27:35 cgd Exp $
  */
 
 #ifndef _SYS_MOUNT_H_
@@ -292,6 +292,9 @@ struct iso_args {
  */
 struct msdosfs_args {
 	char *fspec;		/* blocks special holding the fs to mount */
+	uid_t msd_uid;		/* uid that owns msdosfs files */
+	gid_t msd_gid;		/* gid that owns msdosfs files */
+	modt_t msd_umask;	/* umask to be applied for msdosfs perms */
 };
 
 #ifdef KERNEL
