@@ -1,4 +1,4 @@
-/*	$NetBSD: globals.c,v 1.9 1999/09/14 19:54:47 jsm Exp $	*/
+/*	$NetBSD: globals.c,v 1.10 2000/09/08 17:25:32 jsm Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)globals.c	8.2 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: globals.c,v 1.9 1999/09/14 19:54:47 jsm Exp $");
+__RCSID("$NetBSD: globals.c,v 1.10 2000/09/08 17:25:32 jsm Exp $");
 #endif
 #endif				/* not lint */
 
@@ -48,8 +48,8 @@ int     WEIGHT = MAXWEIGHT;
 int     CUMBER = MAXCUMBER;
 
 const char   *const objdes[NUMOFOBJECTS] = {
-	"There is a knife here",
-	"There is an exquisitely crafted sword and scabbard here.",
+	"There is a knife here.",
+	"There are an exquisitely crafted sword and scabbard here.",
 	0,			/* can land from here */
 	"There is a fierce woodsman here brandishing a heavy mallet.",
 	"There is an unwieldy two-handed sword here.",
@@ -73,14 +73,14 @@ const char   *const objdes[NUMOFOBJECTS] = {
 	"There is a laser pistol here.",
 	"A flower-like young goddess is bathing in the hot mineral pools. She is \nwatching you, but continues to steep and sing softly.",
 	"The goddess is reclining on a bed of ferns and studying you intently.",
-	"There is a grenade here",
+	"There is a grenade here.",
 	"There is a length of heavy chain here.",
 	"There is a stout rope here.",
 	"There is a pair of Levi's here.",
 	"A bloody mace is lying on the ground here.",
 	"There is a shovel here.",
 	"A long, sharp halberd is propped up here.",
-	"There is a compass here",
+	"There is a compass here.",
 	"Wreckage and smoldering debris from a crash litter the ground here.",
 	"A woodland Elf armed with a shield and deadly halberd lunges toward you!",
 	"I think I hear footsteps behind us.",
@@ -98,13 +98,13 @@ const char   *const objdes[NUMOFOBJECTS] = {
 	"A swarthy woman with stern features pulls you aside from the crowd,\n'I must talk to you -- but not here.  Meet me at midnight in the gardens.'",
 	"The swarthy woman has been awaiting you anxiously. 'I must warn you that the\nIsland has anticipated your Quest.  You will not be welcomed. The Darkness is\nstrong where you must search.  Seek not the shadows save only at night, for\nthen are they the weakest.  In the mountains far from here a canyon winds\nwith ferns and streams and forgotten vines.  There you must go. Take this\nrope.'",
 	"Out from the shadows a figure leaps!  His black cape swirls around, and he\nholds a laser sword at your chest.  'So, you have come to fulfill the Quest.\nHa! Your weapons are no match for me!'",
-	"An old timer with one eye missing and no money for a drink sits at the bar.",
+	"An old-timer with one eye missing and no money for a drink sits at the bar.",
 	"You are flying through an asteroid field!",
 	"A planet is nearby.",
 	"The ground is charred here.",
 	"There is a thermonuclear warhead here.",
 	"The fragile, beautiful young goddess lies here.  You murdered her horribly.",
-	"The old timer is lying here.  He is dead.",
+	"The old-timer is lying here.  He is dead.",
 	"The native girl's body is lying here.",
 	"A native girl is sitting here.",
 	"A gorgeous white stallion is standing here.",
@@ -172,7 +172,7 @@ const char   *const objsht[NUMOFOBJECTS] = {
 	0,
 	"warhead",
 	"goddess's body",
-	"old timer's body",
+	"old-timer's body",
 	"girl's body",
 	0,
 	"stallion",
