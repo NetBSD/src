@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_segment.c,v 1.68.2.1 2001/06/27 03:49:40 perseant Exp $	*/
+/*	$NetBSD: lfs_segment.c,v 1.68.2.2 2001/06/29 03:56:41 perseant Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
@@ -102,7 +102,7 @@
 #include <ufs/lfs/lfs.h>
 #include <ufs/lfs/lfs_extern.h>
 
-extern int count_lock_queue __P((void));
+extern int count_lock_queue(void);
 extern struct simplelock vnode_free_list_slock;		/* XXX */
 
 /*
@@ -113,28 +113,28 @@ extern struct simplelock vnode_free_list_slock;		/* XXX */
 	((fs)->lfs_dbpseg - ((fs)->lfs_offset - (fs)->lfs_curseg) > \
 	1 << (fs)->lfs_fsbtodb)
 
-void	 lfs_callback __P((struct buf *));
-int	 lfs_gather __P((struct lfs *, struct segment *,
-	     struct vnode *, int (*) __P((struct lfs *, struct buf *))));
-int	 lfs_gatherblock __P((struct segment *, struct buf *, int *));
-void	 lfs_iset __P((struct inode *, ufs_daddr_t, time_t));
-int	 lfs_match_fake __P((struct lfs *, struct buf *));
-int	 lfs_match_data __P((struct lfs *, struct buf *));
-int	 lfs_match_dindir __P((struct lfs *, struct buf *));
-int	 lfs_match_indir __P((struct lfs *, struct buf *));
-int	 lfs_match_tindir __P((struct lfs *, struct buf *));
-void	 lfs_newseg __P((struct lfs *));
-void	 lfs_shellsort __P((struct buf **, ufs_daddr_t *, int));
-void	 lfs_supercallback __P((struct buf *));
-void	 lfs_updatemeta __P((struct segment *));
-int	 lfs_vref __P((struct vnode *));
-void	 lfs_vunref __P((struct vnode *));
-void	 lfs_writefile __P((struct lfs *, struct segment *, struct vnode *));
-int	 lfs_writeinode __P((struct lfs *, struct segment *, struct inode *));
-int	 lfs_writeseg __P((struct lfs *, struct segment *));
-void	 lfs_writesuper __P((struct lfs *, daddr_t));
-int	 lfs_writevnodes __P((struct lfs *fs, struct mount *mp,
-	    struct segment *sp, int dirops));
+void	 lfs_callback(struct buf *);
+int	 lfs_gather(struct lfs *, struct segment *,
+	     struct vnode *, int (*)(struct lfs *, struct buf *));
+int	 lfs_gatherblock(struct segment *, struct buf *, int *);
+void	 lfs_iset(struct inode *, ufs_daddr_t, time_t);
+int	 lfs_match_fake(struct lfs *, struct buf *);
+int	 lfs_match_data(struct lfs *, struct buf *);
+int	 lfs_match_dindir(struct lfs *, struct buf *);
+int	 lfs_match_indir(struct lfs *, struct buf *);
+int	 lfs_match_tindir(struct lfs *, struct buf *);
+void	 lfs_newseg(struct lfs *);
+void	 lfs_shellsort(struct buf **, ufs_daddr_t *, int);
+void	 lfs_supercallback(struct buf *);
+void	 lfs_updatemeta(struct segment *);
+int	 lfs_vref(struct vnode *);
+void	 lfs_vunref(struct vnode *);
+void	 lfs_writefile(struct lfs *, struct segment *, struct vnode *);
+int	 lfs_writeinode(struct lfs *, struct segment *, struct inode *);
+int	 lfs_writeseg(struct lfs *, struct segment *);
+void	 lfs_writesuper(struct lfs *, daddr_t);
+int	 lfs_writevnodes(struct lfs *fs, struct mount *mp,
+	    struct segment *sp, int dirops);
 
 int	lfs_allclean_wakeup;		/* Cleaner wakeup address. */
 int	lfs_writeindir = 1;             /* whether to flush indir on non-ckp */
@@ -163,8 +163,7 @@ extern long locked_queue_bytes;
  * case that wouldn't happen to the Ifile until we checkpoint).
  */
 void
-lfs_imtime(fs)
-	struct lfs *fs;
+lfs_imtime(struct lfs *fs)
 {
 	struct timespec ts;
 	struct inode *ip;
@@ -187,8 +186,7 @@ lfs_imtime(fs)
 #define CLR_FLUSHING(fs,vp) (fs)->lfs_flushvp = NULL
 
 int
-lfs_vflush(vp)
-	struct vnode *vp;
+lfs_vflush(struct vnode *vp)
 {
 	struct inode *ip;
 	struct lfs *fs;
@@ -347,11 +345,7 @@ lfs_vflush(vp)
 #endif
 
 int
-lfs_writevnodes(fs, mp, sp, op)
-	struct lfs *fs;
-	struct mount *mp;
-	struct segment *sp;
-	int op;
+lfs_writevnodes(struct lfs *fs, struct mount *mp, struct segment *sp, int op)
 {
 	struct inode *ip;
 	struct vnode *vp;
@@ -471,10 +465,11 @@ lfs_writevnodes(fs, mp, sp, op)
 	return inodes_written;
 }
 
+/*
+ * Do a checkpoint.
+ */
 int
-lfs_segwrite(mp, flags)
-	struct mount *mp;
-	int flags;			/* Do a checkpoint. */
+lfs_segwrite(struct mount *mp, int flags)
 {
 	struct buf *bp;
 	struct inode *ip;
@@ -667,10 +662,7 @@ lfs_segwrite(mp, flags)
  * Write the dirty blocks associated with a vnode.
  */
 void
-lfs_writefile(fs, sp, vp)
-	struct lfs *fs;
-	struct segment *sp;
-	struct vnode *vp;
+lfs_writefile(struct lfs *fs, struct segment *sp, struct vnode *vp)
 {
 	struct buf *bp;
 	struct finfo *fip;
@@ -738,10 +730,7 @@ lfs_writefile(fs, sp, vp)
 }
 
 int
-lfs_writeinode(fs, sp, ip)
-	struct lfs *fs;
-	struct segment *sp;
-	struct inode *ip;
+lfs_writeinode(struct lfs *fs, struct segment *sp, struct inode *ip)
 {
 	struct buf *bp, *ibp;
 	struct dinode *cdp;
@@ -922,10 +911,7 @@ lfs_writeinode(fs, sp, ip)
 }
 
 int
-lfs_gatherblock(sp, bp, sptr)
-	struct segment *sp;
-	struct buf *bp;
-	int *sptr;
+lfs_gatherblock(struct segment *sp, struct buf *bp, int *sptr)
 {
 	struct lfs *fs;
 	int version;
@@ -978,11 +964,7 @@ lfs_gatherblock(sp, bp, sptr)
 }
 
 int
-lfs_gather(fs, sp, vp, match)
-	struct lfs *fs;
-	struct segment *sp;
-	struct vnode *vp;
-	int (*match) __P((struct lfs *, struct buf *));
+lfs_gather(struct lfs *fs, struct segment *sp, struct vnode *vp, int (*match)(struct lfs *, struct buf *))
 {
 	struct buf *bp;
 	int s, count=0;
@@ -1054,8 +1036,7 @@ loop:	for (bp = vp->v_dirtyblkhd.lh_first; bp && bp->b_vnbufs.le_next != NULL;
  * array.
  */
 void
-lfs_updatemeta(sp)
-	struct segment *sp;
+lfs_updatemeta(struct segment *sp)
 {
 	SEGUSE *sup;
 	struct buf *bp;
@@ -1198,8 +1179,7 @@ lfs_updatemeta(sp)
  * Start a new segment.
  */
 int
-lfs_initseg(fs)
-	struct lfs *fs;
+lfs_initseg(struct lfs *fs)
 {
 	struct segment *sp;
 	SEGUSE *sup;
@@ -1282,8 +1262,7 @@ lfs_initseg(fs)
  * Return the next segment to write.
  */
 void
-lfs_newseg(fs)
-	struct lfs *fs;
+lfs_newseg(struct lfs *fs)
 {
 	CLEANERINFO *cip;
 	SEGUSE *sup;
@@ -1324,9 +1303,7 @@ lfs_newseg(fs)
 }
 
 int
-lfs_writeseg(fs, sp)
-	struct lfs *fs;
-	struct segment *sp;
+lfs_writeseg(struct lfs *fs, struct segment *sp)
 {
 	struct buf **bpp, *bp, *cbp, *newbp;
 	SEGUSE *sup;
@@ -1337,7 +1314,7 @@ lfs_writeseg(fs, sp)
 #ifdef LFS_TRACK_IOS
 	int j;
 #endif
-	int (*strategy)__P((void *));
+	int (*strategy)(void *);
 	struct vop_strategy_args vop_strategy_a;
 	u_short ninos;
 	struct vnode *devvp;
@@ -1687,13 +1664,11 @@ lfs_writeseg(fs, sp)
 }
 
 void
-lfs_writesuper(fs, daddr)
-	struct lfs *fs;
-	daddr_t daddr;
+lfs_writesuper(struct lfs *fs, daddr_t daddr)
 {
 	struct buf *bp;
 	dev_t i_dev;
-	int (*strategy) __P((void *));
+	int (*strategy)(void *);
 	int s;
 	struct vop_strategy_args vop_strategy_a;
 
@@ -1742,25 +1717,19 @@ lfs_writesuper(fs, daddr)
  * chain.
  */
 int
-lfs_match_fake(fs, bp)
-	struct lfs *fs;
-	struct buf *bp;
+lfs_match_fake(struct lfs *fs, struct buf *bp)
 {
 	return (bp->b_flags & B_CALL);
 }
 
 int
-lfs_match_data(fs, bp)
-	struct lfs *fs;
-	struct buf *bp;
+lfs_match_data(struct lfs *fs, struct buf *bp)
 {
 	return (bp->b_lblkno >= 0);
 }
 
 int
-lfs_match_indir(fs, bp)
-	struct lfs *fs;
-	struct buf *bp;
+lfs_match_indir(struct lfs *fs, struct buf *bp)
 {
 	int lbn;
 
@@ -1769,9 +1738,7 @@ lfs_match_indir(fs, bp)
 }
 
 int
-lfs_match_dindir(fs, bp)
-	struct lfs *fs;
-	struct buf *bp;
+lfs_match_dindir(struct lfs *fs, struct buf *bp)
 {
 	int lbn;
 
@@ -1780,9 +1747,7 @@ lfs_match_dindir(fs, bp)
 }
 
 int
-lfs_match_tindir(fs, bp)
-	struct lfs *fs;
-	struct buf *bp;
+lfs_match_tindir(struct lfs *fs, struct buf *bp)
 {
 	int lbn;
 
@@ -1798,8 +1763,7 @@ lfs_match_tindir(fs, bp)
  * released via brelse.
  */
 void
-lfs_callback(bp)
-	struct buf *bp;
+lfs_callback(struct buf *bp)
 {
 	struct lfs *fs;
 #ifdef LFS_TRACK_IOS
@@ -1827,8 +1791,7 @@ lfs_callback(bp)
 }
 
 void
-lfs_supercallback(bp)
-	struct buf *bp;
+lfs_supercallback(struct buf *bp)
 {
 	struct lfs *fs;
 
@@ -1855,10 +1818,7 @@ lfs_supercallback(bp)
  */
 
 void
-lfs_shellsort(bp_array, lb_array, nmemb)
-	struct buf **bp_array;
-	ufs_daddr_t *lb_array;
-	int nmemb;
+lfs_shellsort(struct buf **bp_array, ufs_daddr_t *lb_array, int nmemb)
 {
 	static int __rsshell_increments[] = { 4, 1, 0 };
 	int incr, *incrp, t1, t2;
@@ -1884,8 +1844,7 @@ lfs_shellsort(bp_array, lb_array, nmemb)
  * Check VXLOCK.  Return 1 if the vnode is locked.  Otherwise, vget it.
  */
 int
-lfs_vref(vp)
-	struct vnode *vp;
+lfs_vref(struct vnode *vp)
 {
 	/*
 	 * If we return 1 here during a flush, we risk vinvalbuf() not
@@ -1906,8 +1865,7 @@ lfs_vref(vp)
  * inline vrele here to avoid the vn_lock and VOP_INACTIVE call at the end.
  */
 void
-lfs_vunref(vp)
-	struct vnode *vp;
+lfs_vunref(struct vnode *vp)
 {
 	/*
 	 * Analogous to lfs_vref, if the node is flushing, fake it.
@@ -1951,8 +1909,7 @@ lfs_vunref(vp)
  * cleaning at the head of the list, instead.
  */
 void
-lfs_vunref_head(vp)
-	struct vnode *vp;
+lfs_vunref_head(struct vnode *vp)
 {
 	simple_lock(&vp->v_interlock);
 #ifdef DIAGNOSTIC

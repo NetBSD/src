@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_bio.c,v 1.35.4.1 2001/06/27 03:49:39 perseant Exp $	*/
+/*	$NetBSD: lfs_bio.c,v 1.35.4.2 2001/06/29 03:56:40 perseant Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
@@ -115,10 +115,7 @@ extern int lfs_dostats;
  * Called with vp locked.  (Note nowever that if nb < 0, vp is ignored.)
  */
 int
-lfs_reserve(fs, vp, nb)
-	struct lfs *fs;
-	struct vnode *vp;
-	int nb;
+lfs_reserve(struct lfs *fs, struct vnode *vp, int nb)
 {
 	CLEANERINFO *cip;
 	struct buf *bp;
@@ -169,8 +166,7 @@ lfs_reserve(fs, vp, nb)
 #define CANT_WAIT(BP,F) (IS_IFILE((BP)) || (BP)->b_lblkno<0 || ((F) & BW_CLEAN))
 
 int
-lfs_bwrite(v)
-	void *v;
+lfs_bwrite(void *v)
 {
 	struct vop_bwrite_args /* {
 		struct buf *a_bp;
@@ -215,9 +211,7 @@ lfs_fits(struct lfs *fs, int db)
 }
 
 int
-lfs_availwait(fs, db)
-	struct lfs *fs;
-	int db;
+lfs_availwait(struct lfs *fs, int db)
 {
 	int error;
 	CLEANERINFO *cip;
@@ -250,9 +244,7 @@ lfs_availwait(fs, db)
 }
 
 int
-lfs_bwrite_ext(bp, flags)
-	struct buf *bp;
-	int flags;
+lfs_bwrite_ext(struct buf *bp, int flags)
 {
 	struct lfs *fs;
 	struct inode *ip;
@@ -322,9 +314,7 @@ lfs_bwrite_ext(bp, flags)
 }
 
 void
-lfs_flush_fs(fs, flags)
-	struct lfs *fs;
-	int flags;
+lfs_flush_fs(struct lfs *fs, int flags)
 {
 	if(fs->lfs_ronly == 0 && fs->lfs_dirops == 0)
 	{
@@ -359,9 +349,7 @@ lfs_flush_fs(fs, flags)
  * work for multiple file systems, put the count into the mount structure.
  */
 void
-lfs_flush(fs, flags)
-	struct lfs *fs;
-	int flags;
+lfs_flush(struct lfs *fs, int flags)
 {
 	int s;
 	struct mount *mp, *nmp;
@@ -401,10 +389,7 @@ lfs_flush(fs, flags)
 }
 
 int
-lfs_check(vp, blkno, flags)
-	struct vnode *vp;
-	ufs_daddr_t blkno;
-	int flags;
+lfs_check(struct vnode *vp, ufs_daddr_t blkno, int flags)
 {
 	int error;
 	struct lfs *fs;
@@ -485,21 +470,11 @@ lfs_check(vp, blkno, flags)
 #ifdef MALLOCLOG
 # define DOMALLOC(S, T, F) _malloc((S), (T), (F), file, line)
 struct buf *
-lfs_newbuf_malloclog(fs, vp, daddr, size, file, line)
-	struct lfs *fs;
-	struct vnode *vp;
-	ufs_daddr_t daddr;
-	size_t size;
-	char *file;
-	int line;
+lfs_newbuf_malloclog(struct lfs *fs, struct vnode *vp, ufs_daddr_t daddr, size_t size, char *file, int line)
 #else
 # define DOMALLOC(S, T, F) malloc((S), (T), (F))
 struct buf *
-lfs_newbuf(fs, vp, daddr, size)
-	struct lfs *fs;
-	struct vnode *vp;
-	ufs_daddr_t daddr;
-	size_t size;
+lfs_newbuf(struct lfs *fs, struct vnode *vp, ufs_daddr_t daddr, size_t size)
 #endif
 {
 	struct buf *bp;
@@ -540,15 +515,11 @@ lfs_newbuf(fs, vp, daddr, size)
 #ifdef MALLOCLOG
 # define DOFREE(A, T) _free((A), (T), file, line)
 void
-lfs_freebuf_malloclog(bp, file, line)
-	struct buf *bp;
-	char *file;
-	int line;
+lfs_freebuf_malloclog(struct buf *bp, char *file, int line)
 #else
 # define DOFREE(A, T) free((A), (T))
 void
-lfs_freebuf(bp)
-	struct buf *bp;
+lfs_freebuf(struct buf *bp)
 #endif
 {
 	int s;
@@ -581,9 +552,7 @@ extern TAILQ_HEAD(bqueues, buf) bufqueues[BQUEUES];
  * Don't count malloced buffers, since they don't detract from the total.
  */
 void
-lfs_countlocked(count, bytes)
-	int *count;
-	long *bytes;
+lfs_countlocked(int *count, long *bytes)
 {
 	struct buf *bp;
 	int n = 0;

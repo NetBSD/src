@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_balloc.c,v 1.28 2001/05/30 11:57:18 mrg Exp $	*/
+/*	$NetBSD: lfs_balloc.c,v 1.28.2.1 2001/06/29 03:56:39 perseant Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
@@ -93,7 +93,7 @@
 #include <ufs/lfs/lfs.h>
 #include <ufs/lfs/lfs_extern.h>
 
-int lfs_fragextend __P((struct vnode *, int, int, ufs_daddr_t, struct buf **));
+int lfs_fragextend(struct vnode *, int, int, ufs_daddr_t, struct buf **);
 
 /*
  * Allocate a block, and to inode and filesystem block accounting for it
@@ -110,8 +110,7 @@ int lfs_fragextend __P((struct vnode *, int, int, ufs_daddr_t, struct buf **));
  */
 /* VOP_BWRITE NIADDR+2 times */
 int
-lfs_balloc(v)
-	void *v;
+lfs_balloc(void *v)
 {
 	struct vop_balloc_args /* {
 		struct vnode *a_vp;
@@ -331,12 +330,7 @@ lfs_balloc(v)
 
 /* VOP_BWRITE 1 time */
 int
-lfs_fragextend(vp, osize, nsize, lbn, bpp)
-	struct vnode *vp;
-	int osize;
-	int nsize;
-	ufs_daddr_t lbn;
-	struct buf **bpp;
+lfs_fragextend(struct vnode *vp, int osize, int nsize, ufs_daddr_t lbn, struct buf **bpp)
 {
 	struct inode *ip;
 	struct lfs *fs;

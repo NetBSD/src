@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_vfsops.c,v 1.65.2.1 2001/06/27 03:49:40 perseant Exp $	*/
+/*	$NetBSD: lfs_vfsops.c,v 1.65.2.2 2001/06/29 03:56:42 perseant Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
@@ -104,7 +104,7 @@
 #include <ufs/lfs/lfs.h>
 #include <ufs/lfs/lfs_extern.h>
 
-int lfs_mountfs __P((struct vnode *, struct mount *, struct proc *));
+int lfs_mountfs(struct vnode *, struct mount *, struct proc *);
 
 extern const struct vnodeopv_desc lfs_vnodeop_opv_desc;
 extern const struct vnodeopv_desc lfs_specop_opv_desc;
@@ -214,12 +214,7 @@ lfs_mountroot()
  * mount system call
  */
 int
-lfs_mount(mp, path, data, ndp, p)
-	struct mount *mp;
-	const char *path;
-	void *data;
-	struct nameidata *ndp;
-	struct proc *p;
+lfs_mount(struct mount *mp, const char *path, void *data, struct nameidata *ndp, struct proc *p)
 {
 	struct vnode *devvp;
 	struct ufs_args args;
@@ -753,10 +748,7 @@ check_segsum(struct lfs *fs, daddr_t offset,
  * LFS specific
  */
 int
-lfs_mountfs(devvp, mp, p)
-	struct vnode *devvp;
-	struct mount *mp;
-	struct proc *p;
+lfs_mountfs(struct vnode *devvp, struct mount *mp, struct proc *p)
 {
 	extern struct vnode *rootvp;
 	struct dlfs *tdfs, *dfs, *adfs;
@@ -1121,10 +1113,7 @@ out:
  * unmount system call
  */
 int
-lfs_unmount(mp, mntflags, p)
-	struct mount *mp;
-	int mntflags;
-	struct proc *p;
+lfs_unmount(struct mount *mp, int mntflags, struct proc *p)
 {
 	struct ufsmount *ump;
 	struct lfs *fs;
@@ -1199,10 +1188,7 @@ lfs_unmount(mp, mntflags, p)
  * Get file system statistics.
  */
 int
-lfs_statfs(mp, sbp, p)
-	struct mount *mp;
-	struct statfs *sbp;
-	struct proc *p;
+lfs_statfs(struct mount *mp, struct statfs *sbp, struct proc *p)
 {
 	struct lfs *fs;
 	struct ufsmount *ump;
@@ -1237,11 +1223,7 @@ lfs_statfs(mp, sbp, p)
  * Note: we are always called with the filesystem marked `MPBUSY'.
  */
 int
-lfs_sync(mp, waitfor, cred, p)
-	struct mount *mp;
-	int waitfor;
-	struct ucred *cred;
-	struct proc *p;
+lfs_sync(struct mount *mp, int waitfor, struct ucred *cred, struct proc *p)
 {
 	int error;
 	struct lfs *fs;
@@ -1271,10 +1253,7 @@ extern struct lock ufs_hashlock;
  * Detection and handling of mount points must be done by the calling routine.
  */
 int
-lfs_vget(mp, ino, vpp)
-	struct mount *mp;
-	ino_t ino;
-	struct vnode **vpp;
+lfs_vget(struct mount *mp, ino_t ino, struct vnode **vpp)
 {
 	struct lfs *fs;
 	struct inode *ip;
@@ -1423,10 +1402,7 @@ lfs_vget(mp, ino, vpp)
  * generational number.
  */
 int
-lfs_fhtovp(mp, fhp, vpp)
-	struct mount *mp;
-	struct fid *fhp;
-	struct vnode **vpp;
+lfs_fhtovp(struct mount *mp, struct fid *fhp, struct vnode **vpp)
 {
 	struct ufid *ufhp;
 
@@ -1441,9 +1417,7 @@ lfs_fhtovp(mp, fhp, vpp)
  */
 /* ARGSUSED */
 int
-lfs_vptofh(vp, fhp)
-	struct vnode *vp;
-	struct fid *fhp;
+lfs_vptofh(struct vnode *vp, struct fid *fhp)
 {
 	struct inode *ip;
 	struct ufid *ufhp;
@@ -1457,14 +1431,7 @@ lfs_vptofh(vp, fhp)
 }
 
 int
-lfs_sysctl(name, namelen, oldp, oldlenp, newp, newlen, p)
-	int *name;
-	u_int namelen;
-	void *oldp;
-	size_t *oldlenp;
-	void *newp;
-	size_t newlen;
-	struct proc *p;
+lfs_sysctl(int *name, u_int namelen, void *oldp, size_t *oldlenp, void *newp, size_t newlen, struct proc *p)
 {
 	extern int lfs_writeindir, lfs_dostats, lfs_clean_vnhead;
 	extern struct lfs_stats lfs_stats;

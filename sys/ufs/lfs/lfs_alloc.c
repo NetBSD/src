@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_alloc.c,v 1.47.2.1 2001/06/27 03:49:39 perseant Exp $	*/
+/*	$NetBSD: lfs_alloc.c,v 1.47.2.2 2001/06/29 03:56:39 perseant Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
@@ -274,8 +274,7 @@ extend_ifile(struct lfs *fs, struct ucred *cred)
 /* ARGSUSED */
 /* VOP_BWRITE 2i times */
 int
-lfs_valloc(v)
-	void *v;
+lfs_valloc(void *v)
 {
 	struct vop_valloc_args /* {
 				  struct vnode *a_pvp;
@@ -434,10 +433,7 @@ lfs_ialloc(struct lfs *fs, struct vnode *pvp, ino_t new_ino, int new_gen,
 
 /* Create a new vnode/inode pair and initialize what fields we can. */
 void
-lfs_vcreate(mp, ino, vp)
-	struct mount *mp;
-	ino_t ino;
-	struct vnode *vp;
+lfs_vcreate(struct mount *mp, ino_t ino, struct vnode *vp)
 {
 	struct inode *ip;
 	struct ufsmount *ump;
@@ -474,8 +470,7 @@ lfs_vcreate(mp, ino, vp)
 /* ARGUSED */
 /* VOP_BWRITE 2i times */
 int
-lfs_vfree(v)
-	void *v;
+lfs_vfree(void *v)
 {
 	struct vop_vfree_args /* {
 				 struct vnode *a_pvp;

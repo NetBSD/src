@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs.c,v 1.21.2.1 2001/06/27 03:49:42 perseant Exp $	*/
+/*	$NetBSD: lfs.c,v 1.21.2.2 2001/06/29 03:56:44 perseant Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)lfs.c	8.5 (Berkeley) 5/24/95";
 #else
-__RCSID("$NetBSD: lfs.c,v 1.21.2.1 2001/06/27 03:49:42 perseant Exp $");
+__RCSID("$NetBSD: lfs.c,v 1.21.2.2 2001/06/29 03:56:44 perseant Exp $");
 #endif
 #endif /* not lint */
 
@@ -192,27 +192,15 @@ struct direct lfs_lf_dir[] = {
         { ROOTINO, sizeof(struct direct), DT_DIR, 2, ".." },
 };
 
-static daddr_t make_dinode 
-	__P((ino_t, struct dinode *, int, daddr_t, struct lfs *));
-static void make_dir __P(( void *, struct direct *, int));
-static void put __P((int, off_t, void *, size_t));
+static daddr_t make_dinode(ino_t, struct dinode *, int, daddr_t, struct lfs *);
+static void make_dir( void *, struct direct *, int);
+static void put(int, off_t, void *, size_t);
 
 int
-make_lfs(fd, lp, partp, minfree, block_size, frag_size, seg_size, minfreeseg,
-	 version, start, ibsize, interleave, roll_id)
-	int fd;
-	struct disklabel *lp;
-	struct partition *partp;
-	int minfree;
-	int block_size;
-	int frag_size;
-	int seg_size;
-	int minfreeseg;
-	int version;
-	daddr_t start;
-	int ibsize;
-	int interleave;
-	u_int32_t roll_id;
+make_lfs(int fd, struct disklabel *lp, struct partition *partp, int minfree,
+	 int block_size, int frag_size, int seg_size, int minfreeseg,
+	 int version, daddr_t start, int ibsize, int interleave,
+	 u_int32_t roll_id)
 {
 	struct dinode *dip;	/* Pointer to a disk inode */
 	struct dinode *dpagep;	/* Pointer to page of disk inodes */
@@ -875,11 +863,7 @@ make_lfs(fd, lp, partp, minfree, block_size, frag_size, seg_size, minfreeseg,
 }
 
 static void
-put(fd, off, p, len)
-	int fd;
-	off_t off;
-	void *p;
-	size_t len;
+put(int fd, off_t off, void *p, size_t len)
 {
 	int wbytes;
 
@@ -902,12 +886,7 @@ put(fd, off, p, len)
  */
 
 static daddr_t
-make_dinode(ino, dip, nfrags, saddr, lfsp)
-	ino_t ino;				/* inode we're creating */
-	struct dinode *dip;			/* disk inode */
-	int nfrags;				/* number of frags in file */
-	daddr_t saddr;				/* starting block address */
-	struct lfs *lfsp;			/* superblock */
+make_dinode(ino_t ino, struct dinode *dip, int nfrags, daddr_t saddr, struct lfs *lfsp)
 {
 	int db_per_fb, i;
 	int nblocks, bb, ibi, base, factor, lvl;
@@ -994,10 +973,7 @@ make_dinode(ino, dip, nfrags, saddr, lfsp)
  * entries in protodir fir in the first DIRBLKSIZ.  
  */
 static void
-make_dir(bufp, protodir, entries)
-	void *bufp;
-	struct direct *protodir;
-	int entries;
+make_dir(void *bufp, struct direct *protodir, int entries)
 {
 	char *cp;
 	int i, spcleft;

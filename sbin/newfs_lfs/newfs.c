@@ -1,4 +1,4 @@
-/*	$NetBSD: newfs.c,v 1.6.2.1 2001/06/27 03:49:42 perseant Exp $	*/
+/*	$NetBSD: newfs.c,v 1.6.2.2 2001/06/29 03:56:44 perseant Exp $	*/
 
 /*-
  * Copyright (c) 1989, 1992, 1993
@@ -43,7 +43,7 @@ __COPYRIGHT("@(#) Copyright (c) 1989, 1992, 1993\n\
 #if 0
 static char sccsid[] = "@(#)newfs.c	8.5 (Berkeley) 5/24/95";
 #else
-__RCSID("$NetBSD: newfs.c,v 1.6.2.1 2001/06/27 03:49:42 perseant Exp $");
+__RCSID("$NetBSD: newfs.c,v 1.6.2.2 2001/06/29 03:56:44 perseant Exp $");
 #endif
 #endif /* not lint */
 
@@ -99,13 +99,12 @@ int	unlabeled;
 char	device[MAXPATHLEN];
 char	*progname, *special;
 
-int main __P((int, char **));
-static struct disklabel *getdisklabel __P((char *, int));
-static struct disklabel *debug_readlabel __P((int));
+static struct disklabel *getdisklabel(char *, int);
+static struct disklabel *debug_readlabel(int);
 #ifdef notdef
-static void rewritelabel __P((char *, int, struct disklabel *));
+static void rewritelabel(char *, int, struct disklabel *);
 #endif
-static void usage __P((void));
+static void usage(void);
 
 /* CHUNKSIZE should be larger than MAXPHYS */
 #define CHUNKSIZE (1024 * 1024)
@@ -161,9 +160,7 @@ auto_segsize(int fd, off_t len, int version)
 }
 
 int
-main(argc, argv)
-	int argc;
-	char *argv[];
+main(int argc, char **argv)
 {
 	int ch;
 	struct partition *pp;
@@ -338,9 +335,7 @@ char lmsg[] = "%s: can't read disk label";
 #endif
 
 static struct disklabel *
-getdisklabel(s, fd)
-	char *s;
-	int fd;
+getdisklabel(char *s, int fd)
 {
 	static struct disklabel lab;
 
@@ -365,8 +360,7 @@ getdisklabel(s, fd)
 
 
 static struct disklabel *
-debug_readlabel(fd)
-	int fd;
+debug_readlabel(int fd)
 {
 	static struct disklabel lab;
 	int n;
@@ -381,10 +375,7 @@ debug_readlabel(fd)
 
 #ifdef notdef
 static void
-rewritelabel(s, fd, lp)
-	char *s;
-	int fd;
-	struct disklabel *lp;
+rewritelabel(char *s, int fd, struct disklabel *lp)
 {
 #ifdef COMPAT
 	if (unlabeled)
