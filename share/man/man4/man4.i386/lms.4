@@ -1,3 +1,4 @@
+.\"	$NetBSD: lms.4,v 1.7 1997/03/12 06:18:56 mikel Exp $
 .\"
 .\" Copyright (c) 1993 Christopher G. Demetriou
 .\" All rights reserved.
@@ -27,21 +28,20 @@
 .\" (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.\"	$Id: lms.4,v 1.6 1996/11/12 19:27:29 explorer Exp $
-.\"
-.Dd August 6, 1993
+.Dd March 12, 1997
 .Dt LMS 4 i386
 .Os NetBSD 0.8a
 .Sh NAME
 .Nm lms
-.Nd
-Logitech-style bus mouse driver
+.Nd Logitech-style bus mouse driver
 .Sh SYNOPSIS
-.\" XXX this is awful hackery to get it to work right... -- cgd
-.Cd "lms0 at isa? port" \&"IO_BMS1\&" irq 5
-.Cd "lms0 at isa? port" \&"IO_BMS2\&" irq 5
+.Cd lms0 at isa? port 0x23c irq 5
+.Cd lms1 at isa? port 0x238 irq 5
 .Sh DESCRIPTION
 This driver provides an interface to a Logitech-style bus mouse.
+It uses the
+.Xr busmouse 4
+protocol.
 .Sh FILES
 .Bl -tag -width Pa -compact
 .It Pa /dev/lms0
@@ -50,4 +50,4 @@ first Logitech-style bus mouse
 .Sh SEE ALSO
 .Xr busmouse 4 ,
 .Xr mms 4 ,
-.Xr pms 4
+.Xr pms 4 .
