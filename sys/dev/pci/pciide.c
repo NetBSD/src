@@ -1,4 +1,4 @@
-/*	$NetBSD: pciide.c,v 1.6.2.3 1998/06/05 17:31:37 bouyer Exp $	*/
+/*	$NetBSD: pciide.c,v 1.6.2.4 1998/06/06 12:50:47 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1996, 1998 Christopher G. Demetriou.  All rights reserved.
@@ -73,7 +73,7 @@ int wdcdebug_pciide_mask = DEBUG_PROBE;
 #include <dev/pci/pcidevs.h>
 #include <dev/pci/pciidereg.h>
 #include <dev/pci/pciidevar.h>
-#include <dev/pci/pciide_pIIx_reg.h>
+#include <dev/pci/pciide_piix_reg.h>
 #include <dev/ata/atavar.h>
 #include <dev/ic/wdcreg.h>
 #include <dev/ic/wdcvar.h>
