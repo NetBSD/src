@@ -1,4 +1,4 @@
-/*	$NetBSD: elf_machdep.h,v 1.2 2001/01/18 23:50:50 bjh21 Exp $	*/
+/*	$NetBSD: elf_machdep.h,v 1.3 2001/12/09 23:05:57 thorpej Exp $	*/
 
 #define ELF32_MACHDEP_ENDIANNESS	ELFDATA2LSB
 
@@ -21,6 +21,8 @@
 #define	ELF32_MACHDEP_ID_CASES						\
 		case EM_ARM:						\
 			break;
+
+#define	ELF32_MACHDEP_ID	EM_ARM
 
 #define ARCH_ELFSIZE		32	/* MD native binary size */
 

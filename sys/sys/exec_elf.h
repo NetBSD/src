@@ -1,4 +1,4 @@
-/*	$NetBSD: exec_elf.h,v 1.58 2001/10/31 18:05:35 thorpej Exp $	*/
+/*	$NetBSD: exec_elf.h,v 1.59 2001/12/09 23:06:00 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1994 The NetBSD Foundation, Inc.
@@ -650,6 +650,60 @@ typedef struct {
 /* NetBSD-specific note name */
 #define	ELF_NOTE_NETBSD_NAME		"NetBSD\0\0"
 
+/*
+ * NetBSD-specific core file information.
+ *
+ * NetBSD ELF core files use notes to provide information about
+ * the process's state.  The note name is "NetBSD-CORE" for
+ * information that is global to the process, and "NetBSD-CORE@nn",
+ * where "nn" is the lwpid of the LWP that the information belongs
+ * to (such as register state).
+ *
+ * We use the following note identifiers:
+ *
+ *	ELF_NOTE_NETBSD_CORE_PROCINFO
+ *		Note is a "netbsd_elfcore_procinfo" structure.
+ *
+ * We also use ptrace(2) request numbers (the ones that exist in
+ * machine-dependent space) to identify register info notes.  The
+ * info in such notes is in the same format that ptrace(2) would
+ * export that information.
+ *
+ * Please try to keep the members of this structure nicely aligned,
+ * and if you add elements, add them to the end and bump the version.
+ */
+
+#define	ELF_NOTE_NETBSD_CORE_NAME	"NetBSD-CORE"
+
+#define	ELF_NOTE_NETBSD_CORE_PROCINFO	1
+
+#define	NETBSD_ELFCORE_PROCINFO_VERSION	1
+
+struct netbsd_elfcore_procinfo {
+	/* Version 1 fields start here. */
+	uint32_t	cpi_version;	/* netbsd_elfcore_procinfo version */
+	uint32_t	cpi_cpisize;	/* sizeof(netbsd_elfcore_procinfo) */
+	uint32_t	cpi_signo;	/* killing signal */
+	uint32_t	cpi_sigcode;	/* signal code */
+	uint32_t	cpi_sigpend[4];	/* pending signals */
+	uint32_t	cpi_sigmask[4];	/* blocked signals */
+	uint32_t	cpi_sigignore[4];/* blocked signals */
+	uint32_t	cpi_sigcatch[4];/* blocked signals */
+	int32_t		cpi_pid;	/* process ID */
+	int32_t		cpi_ppid;	/* parent process ID */
+	int32_t		cpi_pgrp;	/* process group ID */
+	int32_t		cpi_sid;	/* session ID */
+	uint32_t	cpi_ruid;	/* real user ID */
+	uint32_t	cpi_euid;	/* effective user ID */
+	uint32_t	cpi_svuid;	/* saved user ID */
+	uint32_t	cpi_rgid;	/* real group ID */
+	uint32_t	cpi_egid;	/* effective group ID */
+	uint32_t	cpi_svgid;	/* saved group ID */
+	uint32_t	cpi_nlwps;	/* number of LWPs */
+	int8_t		cpi_name[32];	/* copy of p->p_comm */
+	/* Add version 2 fields below here. */
+};
+
 #if defined(ELFSIZE)
 #define	CONCAT(x,y)	__CONCAT(x,y)
 #define	ELFNAME(x)	CONCAT(elf,CONCAT(ELFSIZE,CONCAT(_,x)))
@@ -736,6 +790,10 @@ struct elf_args {
 int	exec_elf32_makecmds __P((struct proc *, struct exec_package *));
 int	elf32_copyargs __P((struct exec_package *, struct ps_strings *,
     char **, void *));
+
+int	coredump_elf32 __P((struct proc *, struct vnode *, struct ucred *));
+int	coredump_writenote_elf32 __P((struct proc *, struct vnode *,
+	    struct ucred *, off_t, Elf32_Nhdr *, const char *, void *));
 #endif
 
 #ifdef EXEC_ELF64
@@ -744,6 +802,10 @@ int	elf64_read_from __P((struct proc *, struct vnode *, u_long,
     caddr_t, int));
 int	elf64_copyargs __P((struct exec_package *, struct ps_strings *,
     char **, void *));
+
+int	coredump_elf64 __P((struct proc *, struct vnode *, struct ucred *));
+int	coredump_writenote_elf64 __P((struct proc *, struct vnode *,
+	    struct ucred *, off_t, Elf64_Nhdr *, const char *, void *));
 #endif
 
 /* common */
