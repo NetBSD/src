@@ -35,7 +35,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)fd.c	7.4 (Berkeley) 5/25/91
- *	$Id: fd.c,v 1.48 1994/06/16 01:08:18 mycroft Exp $
+ *	$Id: fd.c,v 1.48.2.1 1994/07/26 19:54:22 cgd Exp $
  */
 
 #include <sys/param.h>
@@ -70,8 +70,8 @@
 #include <i386/isa/rtc.h>
 #endif
 
-#define	FDUNIT(s)	(minor(s)>>3)
-#define	FDTYPE(s)	(minor(s)&7)
+#define FDUNIT(dev)	(minor(dev) / 8)
+#define FDTYPE(dev)	(minor(dev) % 8)
 
 #define b_cylin b_resid
 

@@ -35,7 +35,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)wd.c	7.2 (Berkeley) 5/9/91
- *	$Id: wd.c,v 1.84.2.1 1994/07/22 01:26:12 cgd Exp $
+ *	$Id: wd.c,v 1.84.2.2 1994/07/26 19:54:28 cgd Exp $
  */
 
 #define	INSTRUMENT	/* instrumentation stuff by Brad Parker */
@@ -82,10 +82,14 @@
 
 #define	WDIORETRIES	5	/* number of retries before giving up */
 
-#define WDUNIT(dev)	((minor(dev) & 0xf8) >> 3)
-#define WDPART(dev)	((minor(dev) & 0x07)     )
-#define makewddev(maj, unit, part)	(makedev(maj, ((unit << 3) + part)))
-#define WDRAW	3		/* 'd' partition isn't a partition! */
+#define WDUNIT(dev)	(minor(dev) / MAXPARTITIONS)
+#define WDPART(dev)	(minor(dev) % MAXPARTITIONS)
+#define makewddev(maj, unit, part) \
+    (makedev((maj), ((unit) * MAXPARTITIONS) + (part)))
+#ifndef RAW_PART
+#define RAW_PART	3		/* XXX should be 2 */
+#endif
+#define	WDLABELDEV(dev)	(makewddev(major(dev), WDUNIT(dev), RAW_PART))
 
 #define b_cylin	b_resid		/* cylinder number for doing IO to */
 				/* shares an entry in the buf struct */
@@ -359,7 +363,8 @@ wdstrategy(bp)
 	}
     
 	/* Have partitions and want to use them? */
-	if ((wd->sc_flags & WDF_BSDLABEL) != 0 && WDPART(bp->b_dev) != WDRAW) {
+	if ((wd->sc_flags & WDF_BSDLABEL) != 0 &&
+	    WDPART(bp->b_dev) != RAW_PART) {
 		/*
 		 * Do bounds checking, adjust transfer. if error, process.
 		 * If end of partition, just return.
@@ -572,7 +577,8 @@ loop:
 	lp = &wd->sc_label;
 	secpertrk = lp->d_nsectors;
 	secpercyl = lp->d_secpercyl;
-	if ((wd->sc_flags & WDF_BSDLABEL) != 0 && WDPART(bp->b_dev) != WDRAW)
+	if ((wd->sc_flags & WDF_BSDLABEL) != 0 &&
+	    WDPART(bp->b_dev) != RAW_PART)
 		blknum += lp->d_partitions[WDPART(bp->b_dev)].p_offset;
 	cylin = blknum / secpercyl;
 	head = (blknum % secpercyl) / secpertrk;
@@ -843,8 +849,8 @@ wdopen(dev, flag, fmt, p)
 		wd->sc_state = RECAL;
 
 		/* Read label using "raw" partition. */
-		msg = readdisklabel(makewddev(major(dev), WDUNIT(dev), WDRAW),
-		    wdstrategy, &wd->sc_label, &wd->sc_cpulabel);
+		msg = readdisklabel(WDLABELDEV(dev), wdstrategy, &wd->sc_label,
+		    &wd->sc_cpulabel);
 		if (msg) {
 			/*
 			 * This probably happened because the drive's default
@@ -854,14 +860,13 @@ wdopen(dev, flag, fmt, p)
 			 */
 			if (wd->sc_state > GEOMETRY)
 				wd->sc_state = GEOMETRY;
-			msg = readdisklabel(makewddev(major(dev), WDUNIT(dev),
-			    WDRAW), wdstrategy, &wd->sc_label,
-			    &wd->sc_cpulabel);
+			msg = readdisklabel(WDLABELDEV(dev), wdstrategy,
+			    &wd->sc_label, &wd->sc_cpulabel);
 		}
 		if (msg) {
 			log(LOG_WARNING, "%s: cannot find label (%s)\n",
 			    wd->sc_dev.dv_xname, msg);
-			if (part != WDRAW)
+			if (part != RAW_PART)
 				return EINVAL;	/* XXX needs translation */
 		} else {
 			if (wd->sc_state > GEOMETRY)
@@ -880,7 +885,7 @@ wdopen(dev, flag, fmt, p)
 	 * Warn if a partition is opened that overlaps another partition which
 	 * is open unless one is the "raw" partition (whole disk).
 	 */
-	if ((wd->sc_openpart & mask) == 0 && part != WDRAW) {
+	if ((wd->sc_openpart & mask) == 0 && part != RAW_PART) {
 		int start, end;
 	
 		pp = &wd->sc_label.d_partitions[part];
@@ -892,7 +897,7 @@ wdopen(dev, flag, fmt, p)
 			if (pp->p_offset + pp->p_size <= start ||
 			    pp->p_offset >= end)
 				continue;
-			if (pp - wd->sc_label.d_partitions == WDRAW)
+			if (pp - wd->sc_label.d_partitions == RAW_PART)
 				continue;
 			if (wd->sc_openpart & (1 << (pp - wd->sc_label.d_partitions)))
 				log(LOG_WARNING,
@@ -901,7 +906,7 @@ wdopen(dev, flag, fmt, p)
 				    pp - wd->sc_label.d_partitions + 'a');
 		}
 	}
-	if (part >= wd->sc_label.d_npartitions && part != WDRAW)
+	if (part >= wd->sc_label.d_npartitions && part != RAW_PART)
 		return ENXIO;
     
 	/* Insure only one open at a time. */
@@ -1207,8 +1212,8 @@ wdioctl(dev, cmd, addr, flag, p)
 			wd->sc_openpart |= (1 << 0);	    /* XXX */
 			wlab = wd->sc_wlabel;
 			wd->sc_wlabel = 1;
-			error = writedisklabel(dev, wdstrategy, &wd->sc_label,
-			    &wd->sc_cpulabel);
+			error = writedisklabel(WDLABELDEV(dev), wdstrategy,
+			    &wd->sc_label, &wd->sc_cpulabel);
 			wd->sc_openpart = wd->sc_copenpart | wd->sc_bopenpart;
 			wd->sc_wlabel = wlab;
 		}
@@ -1280,7 +1285,7 @@ wdsize(dev)
     
 	if (wd->sc_state < OPEN || (wd->sc_flags & WDF_BSDLABEL) == 0) {
 		int val;
-		val = wdopen(makewddev(major(dev), lunit, WDRAW), FREAD,
+		val = wdopen(makewddev(major(dev), lunit, RAW_PART), FREAD,
 		    S_IFBLK, 0);
 		/* XXX Clear the open flag? */
 		if (val != 0)

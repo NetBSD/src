@@ -31,7 +31,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)ufs_disksubr.c	7.16 (Berkeley) 5/4/91
- *	$Id: disksubr.c,v 1.7 1994/06/16 01:07:30 mycroft Exp $
+ *	$Id: disksubr.c,v 1.7.2.1 1994/07/26 19:54:16 cgd Exp $
  */
 
 #include "param.h"
@@ -95,7 +95,7 @@ readdisklabel(dev, strat, lp, osdep)
 	bp = geteblk((int)lp->d_secsize);
 	
 	/* request no partition relocation by driver on I/O operations */
-	bp->b_dev = makedev(major(dev), dkminor((dkunit(dev)), 3));
+	bp->b_dev = dev;
 
 	/* do dos partitions in the process of getting disklabel? */
 	dospartoff = 0;
@@ -300,7 +300,7 @@ writedisklabel(dev, strat, lp, osdep)
 
 	bp = geteblk((int)lp->d_secsize);
 	/* request no partition relocation by driver on I/O operations */
-	bp->b_dev = makedev(major(dev), dkminor((dkunit(dev)), 3));
+	bp->b_dev = dev;
 
 	/* do dos partitions in the process of getting disklabel? */
 	dospartoff = 0;
