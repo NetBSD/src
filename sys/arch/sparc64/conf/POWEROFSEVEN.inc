@@ -1,4 +1,4 @@
-# 	$NetBSD: POWEROFSEVEN.inc,v 1.17 2003/04/10 22:07:04 christos Exp $
+# 	$NetBSD: POWEROFSEVEN.inc,v 1.18 2003/05/26 21:12:08 martin Exp $
 #
 # from: NetBSD: GENERIC32,v 1.13 2001/02/28 00:08:18 mjacob Exp
 #
@@ -74,15 +74,6 @@ options 	NFS_BOOT_BOOTPARAM
 options 	DDB			# kernel dynamic debugger
 options 	DDB_HISTORY_SIZE=100	# enable history editing in DDB
 #options 	DDB_ONPANIC		# see also sysctl(8): `ddb.onpanic'
-
-## You may also use gdb, on another computer connected to this machine over
-## a serial port.  Both KGDB_DEV and KGDB_DEVRATE should be specified;
-## KGDB_DEV is a dev_t encoded device number of the serial port to use.
-## (0xc01 = ttya, 0xc02 = ttyb.)
-#options 	KGDB			# support for kernel gdb
-#options 	KGDB_DEV=0xc01		# kgdb device number (this is `ttyb')
-#options 	KGDB_DEVRATE=38400	# baud rate
-
 
 ## Compile the kernel with debugging symbols (`netbsd.gdb' is the debug file),
 ## such that gdb(1) can be used on a kernel coredump.
