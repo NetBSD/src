@@ -1,4 +1,4 @@
-/*	$NetBSD: db_command.c,v 1.72 2003/09/20 03:02:03 thorpej Exp $	*/
+/*	$NetBSD: db_command.c,v 1.73 2003/10/10 15:21:24 chs Exp $	*/
 
 /*
  * Mach Operating System
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: db_command.c,v 1.72 2003/09/20 03:02:03 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_command.c,v 1.73 2003/10/10 15:21:24 chs Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -152,6 +152,7 @@ static const struct db_command db_show_cmds[] = {
 };
 
 static const struct db_command db_command_table[] = {
+	{ "b",		db_breakpoint_cmd,	0,		NULL },
 	{ "break",	db_breakpoint_cmd,	0,		NULL },
 	{ "bt",		db_stack_trace_cmd,	0,		NULL },
 	{ "c",		db_continue_cmd,	0,		NULL },
