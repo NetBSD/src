@@ -1,4 +1,4 @@
-/*	$NetBSD: sysctl.h,v 1.31 1998/08/03 14:38:21 kleink Exp $	*/
+/*	$NetBSD: sysctl.h,v 1.32 1998/10/29 21:22:33 jonathan Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -322,7 +322,8 @@ struct kinfo_proc {
 #define	DDBCTL_LINES		4	/* int: number of display lines */
 #define	DDBCTL_TABSTOPS		5	/* int: tab width */
 #define	DDBCTL_ONPANIC		6	/* int: DDB on panic if non-zero */
-#define	DDBCTL_MAXID		7	/* number of valid DDB ids */
+#define	DDBCTL_FROMCONSOLE	7	/* int: DDB via console if non-zero */
+#define	DDBCTL_MAXID		8	/* number of valid DDB ids */
 
 #define	CTL_DDB_NAMES { \
 	{ 0, 0 }, \
@@ -332,6 +333,7 @@ struct kinfo_proc {
 	{ "lines", CTLTYPE_INT }, \
 	{ "tabstops", CTLTYPE_INT }, \
 	{ "onpanic", CTLTYPE_INT }, \
+	{ "fromconsole", CTLTYPE_INT }, \
 }
 
 /*
