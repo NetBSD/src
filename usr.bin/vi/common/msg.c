@@ -1,4 +1,4 @@
-/*	$NetBSD: msg.c,v 1.3 1998/07/26 23:14:40 mycroft Exp $	*/
+/*	$NetBSD: msg.c,v 1.3.2.1 2000/10/19 16:33:01 he Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993, 1994
@@ -474,7 +474,8 @@ msgq_rpt(sp)
 				*p++ = ' ';
 				tlen += 2;
 			}
-			len = snprintf(p, MAXNUM, "%lu ", sp->rptlines[cnt]);
+			len = snprintf(p, MAXNUM, "%lu ", 
+				       (long)sp->rptlines[cnt]);
 			p += len;
 			tlen += len;
 			t = msg_cat(sp,
