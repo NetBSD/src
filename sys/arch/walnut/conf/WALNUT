@@ -1,4 +1,4 @@
-#	$NetBSD: WALNUT,v 1.13 2002/03/27 05:25:28 simonb Exp $
+#	$NetBSD: WALNUT,v 1.14 2002/04/02 05:30:50 lukem Exp $
 #
 #	GENERIC -- everything that's currently supported
 #
@@ -16,8 +16,7 @@ maxusers	32
 #options 	MEMORY_DISK_HOOKS
 #options 	MEMORY_DISK_IS_ROOT	# force root on memory disk
 #options 	MEMORY_DISK_SERVER=0	# no userspace memory disk support
-#options 	MEMORY_DISK_SIZE=16384	# size of memory disk, in blocks
-#options 	MEMORY_DISK_SIZE=1		# size of memory disk, in blocks
+#options 	MEMORY_DISK_ROOT_SIZE=16384	# size of memory disk, in blocks
 
 
 #options 	UCONSOLE	# users can use TIOCCONS (for xconsole)

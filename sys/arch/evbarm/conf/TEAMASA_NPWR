@@ -1,4 +1,4 @@
-#	$NetBSD: TEAMASA_NPWR,v 1.5 2002/03/26 19:29:46 thorpej Exp $
+#	$NetBSD: TEAMASA_NPWR,v 1.6 2002/04/02 05:30:40 lukem Exp $
 #
 #	TEAMASA_NPWR -- Team ASA, Inc. Npwr -- XScale/IOP310-based
 #	server appliance.
@@ -100,7 +100,7 @@ options 	SHMMAXPGS=1024	# 1024 pages is the default
 # Device options
 
 #options 	MEMORY_DISK_HOOKS	# boottime setup of ramdisk
-#options 	MEMORY_DISK_SIZE=3400	# Size in blocks
+#options 	MEMORY_DISK_ROOT_SIZE=3400	# Size in blocks
 #options 	MEMORY_DISK_IS_ROOT	# use memory disk as root
 
 # Console options.  The default console is oriented towards the IQ80310

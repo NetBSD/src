@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.1 2002/03/24 15:46:50 bjh21 Exp $
+# $NetBSD: GENERIC,v 1.2 2002/04/02 05:30:36 lukem Exp $
 #
 # GENERIC machine description file
 # 
@@ -208,7 +208,7 @@ options 	RAID_AUTOCONFIG		# auto-configuration of RAID components
 pseudo-device	loop		1
 pseudo-device	md		1
 #options 	MEMORY_DISK_HOOKS
-#options 	MEMORY_DISK_SIZE=
+#options 	MEMORY_DISK_ROOT_SIZE=
 pseudo-device	ppp		4
 pseudo-device	pppoe			# PPP over Ethernet (RFC 2516)
 pseudo-device	pty			# pseudo-terminals

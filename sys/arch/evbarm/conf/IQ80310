@@ -1,4 +1,4 @@
-#	$NetBSD: IQ80310,v 1.11 2002/03/26 19:29:46 thorpej Exp $
+#	$NetBSD: IQ80310,v 1.12 2002/04/02 05:30:40 lukem Exp $
 #
 #	IQ80310 -- Intel IQ80310 Evaluation Board Kernel
 #
@@ -98,7 +98,7 @@ options 	SHMMAXPGS=1024	# 1024 pages is the default
 # Device options
 
 #options 	MEMORY_DISK_HOOKS	# boottime setup of ramdisk
-#options 	MEMORY_DISK_SIZE=3400	# Size in blocks
+#options 	MEMORY_DISK_ROOT_SIZE=3400	# Size in blocks
 #options 	MEMORY_DISK_IS_ROOT	# use memory disk as root
 
 # Console options.  The default console is on connector J9 ("com0") at

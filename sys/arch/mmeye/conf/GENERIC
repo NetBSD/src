@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.36 2002/03/24 18:21:21 uch Exp $
+# $NetBSD: GENERIC,v 1.37 2002/04/02 05:30:44 lukem Exp $
 #
 # GENERIC machine description file
 # 
@@ -20,7 +20,7 @@
 
 include 	"arch/mmeye/conf/std.mmeye"
 
-#ident 		"GENERIC-$Revision: 1.36 $"
+#ident 		"GENERIC-$Revision: 1.37 $"
 
 maxusers	16		# estimated number of users
 
@@ -196,4 +196,4 @@ pseudo-device	vcoda		4	# coda minicache <-> venus comm.
 #options 	MEMORY_DISK_HOOKS
 #options 	MEMORY_DISK_IS_ROOT	# force root on memory disk
 #options 	MEMORY_DISK_SERVER=0	# no userspace memory disk support
-#options 	MEMORY_DISK_SIZE=3074	# size of memory disk, in blocks
+#options 	MEMORY_DISK_ROOT_SIZE=3074	# size of memory disk, in blocks

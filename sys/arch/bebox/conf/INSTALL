@@ -1,4 +1,4 @@
-#	$NetBSD: INSTALL,v 1.17 2002/03/10 19:56:39 lukem Exp $
+#	$NetBSD: INSTALL,v 1.18 2002/04/02 05:30:39 lukem Exp $
 #
 # First try for BEBOX config file
 #
@@ -13,7 +13,7 @@ makeoptions	COPTS="-Os"		# Optimise for space. Implies -O2
 options 		MEMORY_DISK_HOOKS
 options 		MEMORY_DISK_IS_ROOT	# force root on memory disk
 options 		MEMORY_DISK_SERVER=0	# no userspace memory disk support
-options 		MEMORY_DISK_SIZE=3074	# size of memory disk, in blocks
+options 		MEMORY_DISK_ROOT_SIZE=3074	# size of memory disk, in blocks
 
 #options 	IPKDBUSERHACK	# Allow access to mapped memory via kgdb
 #options 	DEBUG_BY_TOOLS	# Allow debugging from toolsnet

@@ -1,4 +1,4 @@
-#	$NetBSD: RPC_WSCONS,v 1.10 2002/03/10 19:56:38 lukem Exp $
+#	$NetBSD: RPC_WSCONS,v 1.11 2002/04/02 05:30:37 lukem Exp $
 #
 #	RPC_WSCONS -- Full RiscPC config with wscons
 #
@@ -20,7 +20,7 @@
 
 include		"arch/acorn32/conf/std.acorn32"
 
-#ident		"GENERIC-$Revision: 1.10 $"
+#ident		"GENERIC-$Revision: 1.11 $"
 
 # estimated number of users
 maxusers	32
@@ -119,7 +119,7 @@ options 	SHMMAXPGS=1024	# 1024 pages is the default
 # Device options
 
 options 	MEMORY_DISK_HOOKS	# boottime setup of ramdisk
-#options 	MEMORY_DISK_SIZE=3800	# Size in blocks
+#options 	MEMORY_DISK_ROOT_SIZE=3800	# Size in blocks
 #options 	MEMORY_DISK_IS_ROOT	# use memory disk as root
 
 # Miscellaneous kernel options

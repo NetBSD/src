@@ -1,4 +1,4 @@
-#	$NetBSD: COMPUTEXEVB,v 1.16 2002/03/24 18:21:15 uch Exp $
+#	$NetBSD: COMPUTEXEVB,v 1.17 2002/04/02 05:30:41 lukem Exp $
 #
 #	GENERIC -- everything that's currently supported
 #
@@ -12,7 +12,7 @@ include "arch/evbsh3/conf/std.evbsh3.eb"
 options 	MEMORY_DISK_HOOKS
 options 	MEMORY_DISK_IS_ROOT	# force root on memory disk
 options 	MEMORY_DISK_SERVER=0	# no userspace memory disk support
-options 	MEMORY_DISK_SIZE=3074	# size of memory disk, in blocks
+options 	MEMORY_DISK_ROOT_SIZE=3074	# size of memory disk, in blocks
 
 maxusers	32		# estimated number of users
 
