@@ -31,6 +31,7 @@
  * SUCH DAMAGE.
  *
  *	@(#)dkbad.c	7.2 (Berkeley) 12/16/90
+ *	$Id: dkbad.c,v 1.4 1994/02/11 06:59:36 chopps Exp $
  */
 
 #ifndef NOBADSECT

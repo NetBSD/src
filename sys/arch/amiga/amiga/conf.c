@@ -31,6 +31,7 @@
  * SUCH DAMAGE.
  *
  *      @(#)conf.c	7.9 (Berkeley) 5/28/91
+ *	$Id: conf.c,v 1.8 1994/02/11 06:59:30 chopps Exp $
  */
 
 #include <sys/param.h>

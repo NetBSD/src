@@ -31,6 +31,7 @@
  * SUCH DAMAGE.
  *
  *	@(#)isr.h	7.1 (Berkeley) 5/8/90
+ *	$Id: isr.h,v 1.4 1994/02/11 06:59:39 chopps Exp $
  */
 
 struct isr {

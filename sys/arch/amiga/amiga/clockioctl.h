@@ -38,6 +38,7 @@
  * from: Utah $Hdr: clockioctl.h 1.1 90/07/09$
  *
  *	@(#)clockioctl.h	7.2 (Berkeley) 11/2/90
+ *	$Id: clockioctl.h,v 1.4 1994/02/11 06:59:27 chopps Exp $
  */
 
 #define	CLOCKMAP	_IOWR('C', 1, int)

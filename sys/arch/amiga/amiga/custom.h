@@ -24,8 +24,11 @@
  * the rights to redistribute these changes.
  */
 /* This is a rewrite (retype) of the Amiga's custom chip register map, based
-   on the Hardware Reference Manual.  It is NOT based on the Amiga's
-   hardware/custom.h.  */
+ * on the Hardware Reference Manual.  It is NOT based on the Amiga's
+ * hardware/custom.h.
+ *
+ *	$Id: custom.h,v 1.5 1994/02/11 06:59:34 chopps Exp $
+ */
 
 #ifndef _amiga_custom_
 #define _amiga_custom_

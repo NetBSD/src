@@ -31,6 +31,7 @@
 | SUCH DAMAGE.
 |
 |	@(#)vectors.s	7.2 (Berkeley) 5/7/91
+|	$Id: vectors.s,v 1.4 1994/02/11 07:00:08 chopps Exp $
 |
 #define	_fpbsun		_fpfault
 #define	_fpinex		_fpfault

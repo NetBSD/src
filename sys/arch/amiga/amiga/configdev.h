@@ -1,5 +1,8 @@
 /* this is the information needed by BSD that is passed into the
-   kernel by loadbsd. */
+ * kernel by loadbsd. 
+ *
+ *	$Id: configdev.h,v 1.2 1994/02/11 06:59:31 chopps Exp $
+ */
 
 struct ExpansionRom {
   u_char	er_Type;

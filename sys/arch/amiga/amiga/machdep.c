@@ -38,6 +38,7 @@
  * from: Utah $Hdr: machdep.c 1.63 91/04/24$
  *
  *	@(#)machdep.c	7.16 (Berkeley) 6/3/91
+ *	$Id: machdep.c,v 1.8 1994/02/11 06:59:45 chopps Exp $
  */
 
 #include "param.h"

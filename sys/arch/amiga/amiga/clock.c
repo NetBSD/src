@@ -38,6 +38,7 @@
  * from: Utah $Hdr: clock.c 1.18 91/01/21$
  *
  *	@(#)clock.c	7.6 (Berkeley) 5/7/91
+ *	$Id: clock.c,v 1.5 1994/02/11 06:59:26 chopps Exp $
  */
 
 #include "param.h"

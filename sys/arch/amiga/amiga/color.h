@@ -1,4 +1,7 @@
-/* some colors, handy for debugging */
+/* some colors, handy for debugging 
+ *
+ *	$Id: color.h,v 1.4 1994/02/11 06:59:28 chopps Exp $
+ */
 
 #define COL_BLACK	0x000
 #define COL_DARK_GRAY	0x444

@@ -38,6 +38,7 @@
  * from: Utah $Hdr: cons.c 1.1 90/07/09$
  *
  *	@(#)cons.c	7.6 (Berkeley) 5/4/91
+ *	$Id: cons.c,v 1.5 1994/02/11 06:59:32 chopps Exp $
  */
 
 #include "sys/param.h"

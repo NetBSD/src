@@ -31,6 +31,7 @@
  * SUCH DAMAGE.
  *
  *	@(#)genassym.c	7.8 (Berkeley) 5/7/91
+ *	$Id: genassym.c,v 1.6 1994/02/11 06:59:38 chopps Exp $
  */
 
 #define KERNEL
