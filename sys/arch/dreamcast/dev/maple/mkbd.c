@@ -1,4 +1,4 @@
-/*	$NetBSD: mkbd.c,v 1.19 2003/07/15 01:31:40 lukem Exp $	*/
+/*	$NetBSD: mkbd.c,v 1.20 2005/02/19 15:37:35 tsutsui Exp $	*/
 
 /*-
  * Copyright (c) 2001 Marcus Comstedt
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mkbd.c,v 1.19 2003/07/15 01:31:40 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mkbd.c,v 1.20 2005/02/19 15:37:35 tsutsui Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -105,7 +105,7 @@ mkbdmatch(struct device *parent, struct cfdata *cf, void *aux)
 {
 	struct maple_attach_args *ma = aux;
 
-	return (ma->ma_function == MAPLE_FN_KEYBOARD ? MAPLE_MATCH_FUNC : 0);
+	return ma->ma_function == MAPLE_FN_KEYBOARD ? MAPLE_MATCH_FUNC : 0;
 }
 
 static void
@@ -116,7 +116,7 @@ mkbdattach(struct device *parent, struct device *self, void *aux)
 #if NWSKBD > 0
 	struct wskbddev_attach_args a;
 #endif
-	u_int32_t kbdtype;
+	uint32_t kbdtype;
 
 	sc->sc_parent = parent;
 	sc->sc_unit = ma->ma_unit;
@@ -186,7 +186,7 @@ int
 mkbd_enable(void *v, int on)
 {
 
-	return (0);
+	return 0;
 }
 
 void
@@ -201,29 +201,29 @@ mkbd_ioctl(void *v, u_long cmd, caddr_t data, int flag, struct proc *p)
 	switch (cmd) {
 	case WSKBDIO_GTYPE:
 		*(int *) data = WSKBD_TYPE_MAPLE;
-		return (0);
+		return 0;
 	case WSKBDIO_SETLEDS:
-		return (0);
+		return 0;
 	case WSKBDIO_GETLEDS:
 		*(int *) data = 0;
-		return (0);
+		return 0;
 	case WSKBDIO_BELL:
 	case WSKBDIO_COMPLEXBELL:
-		return (0);
+		return 0;
 	}
 
-	return (EPASSTHROUGH);
+	return EPASSTHROUGH;
 }
 
 int
-mkbd_cnattach()
+mkbd_cnattach(void)
 {
 
 	wskbd_cnattach(&mkbd_consops, NULL, &mkbd_keymapdata);
 	mkbd_console_initted = 1;
 	mkbd_is_console = 1;
 
-	return (0);
+	return 0;
 }
 
 static int polledkey;
