@@ -1,4 +1,4 @@
-/*	$NetBSD: libkern.h,v 1.39 2001/12/28 07:37:06 thorpej Exp $	*/
+/*	$NetBSD: libkern.h,v 1.40 2002/05/28 10:09:24 itojun Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -298,6 +298,7 @@ char	*intoa __P((u_int32_t));
 void	*memchr __P((const void *, int, size_t));
 void	*memmove __P((void *, const void *, size_t));
 int	 pmatch __P((const char *, const char *, const char **));
+u_int32_t arc4random __P((void));
 u_long	 random __P((void));
 int	 scanc __P((u_int, const u_char *, const u_char *, int));
 int	 skpc __P((int, size_t, u_char *));
