@@ -1,4 +1,4 @@
-/*	$NetBSD: uhci.c,v 1.104 2000/03/28 10:53:59 augustss Exp $	*/
+/*	$NetBSD: uhci.c,v 1.105 2000/03/28 17:07:04 augustss Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/uhci.c,v 1.33 1999/11/17 22:33:41 n_hibma Exp $	*/
 
 /*
@@ -588,7 +588,7 @@ uhci_allocx(bus)
 		SIMPLEQ_REMOVE_HEAD(&sc->sc_free_xfers, xfer, next);
 #ifdef DIAGNOSTIC
 		if (xfer->busy_free != XFER_FREE) {
-			printf("uhci_freex: xfer=%p not free, 0x%08x\n", xfer,
+			printf("uhci_allocx: xfer=%p not free, 0x%08x\n", xfer,
 			       xfer->busy_free);
 		}
 #endif
@@ -622,8 +622,10 @@ uhci_freex(bus, xfer)
 		return;
 	}
 	xfer->busy_free = XFER_FREE;
-	if (!UXFER(xfer)->iinfo.isdone)
+	if (!UXFER(xfer)->iinfo.isdone) {
 		printf("uhci_freex: !isdone\n");
+		return;
+	}
 #endif
 	SIMPLEQ_INSERT_HEAD(&sc->sc_free_xfers, xfer, next);
 }
