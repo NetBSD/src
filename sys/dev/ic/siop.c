@@ -1,4 +1,4 @@
-/*	$NetBSD: siop.c,v 1.70 2003/11/02 11:07:45 wiz Exp $	*/
+/*	$NetBSD: siop.c,v 1.71 2004/03/15 22:43:43 bouyer Exp $	*/
 
 /*
  * Copyright (c) 2000 Manuel Bouyer.
@@ -33,7 +33,7 @@
 /* SYM53c7/8xx PCI-SCSI I/O Processors driver */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: siop.c,v 1.70 2003/11/02 11:07:45 wiz Exp $");
+__KERNEL_RCSID(0, "$NetBSD: siop.c,v 1.71 2004/03/15 22:43:43 bouyer Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1519,7 +1519,9 @@ siop_timeout(v)
 	int s;
 
 	scsipi_printaddr(siop_cmd->cmd_c.xs->xs_periph);
-	printf("command timeout\n");
+	printf("command timeout, CBD: ");
+	scsipi_print_cbd(siop_cmd->cmd_c.xs->cmd);
+	printf("\n");
 
 	s = splbio();
 	/* reset the scsi bus */

@@ -1,4 +1,4 @@
-/*	$NetBSD: scsipi_verbose.c,v 1.18 2003/12/03 23:20:53 bjh21 Exp $	*/
+/*	$NetBSD: scsipi_verbose.c,v 1.19 2004/03/15 22:43:43 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: scsipi_verbose.c,v 1.18 2003/12/03 23:20:53 bjh21 Exp $");
+__KERNEL_RCSID(0, "$NetBSD: scsipi_verbose.c,v 1.19 2004/03/15 22:43:43 bouyer Exp $");
 
 #include <sys/param.h>
 #include <sys/time.h>
@@ -815,43 +815,9 @@ scsipi_print_sense(xs, verbosity)
 	struct scsipi_xfer *xs;
 	int verbosity;
 {
-	int i, j;
-
 	scsipi_printaddr(xs->xs_periph);
- 	printf(" Check Condition on CDB: 0x%02x", xs->cmd->opcode);
-
- 	switch (CDB_GROUPID(xs->cmd->opcode)) {
- 	case CDB_GROUPID_0:
- 		j = CDB_GROUP0;
- 		break;
- 	case CDB_GROUPID_1:
- 		j = CDB_GROUP1;
- 		break;
- 	case CDB_GROUPID_2:
- 		j = CDB_GROUP2;
- 		break;
- 	case CDB_GROUPID_3:
- 		j = CDB_GROUP3;
- 		break;
- 	case CDB_GROUPID_4:
- 		j = CDB_GROUP4;
- 		break;
- 	case CDB_GROUPID_5:
- 		j = CDB_GROUP5;
- 		break;
- 	case CDB_GROUPID_6:
- 		j = CDB_GROUP6;
- 		break;
- 	case CDB_GROUPID_7:
- 		j = CDB_GROUP7;
- 		break;
- 	default:
- 		j = 0;
- 	}
- 	if (j == 0)
- 		j = sizeof (xs->cmd->bytes);
- 	for (i = 0; i < j-1; i++) /* already done the opcode */
- 		printf(" %02x", xs->cmd->bytes[i]);
+ 	printf(" Check Condition on CDB: ");
+	scsipi_print_cbd(xs->cmd);
  	printf("\n");
 	scsipi_print_sense_data(&xs->sense.scsi_sense, verbosity);
 }
