@@ -1,4 +1,4 @@
-.\"	$NetBSD: passwd.5,v 1.11 1998/09/05 19:21:24 kleink Exp $
+.\"	$NetBSD: passwd.5,v 1.12 1999/01/16 14:16:43 lukem Exp $
 .\"
 .\" Copyright (c) 1988, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -34,7 +34,7 @@
 .\"
 .\"     @(#)passwd.5	8.1 (Berkeley) 6/5/93
 .\"
-.Dd August 16, 1997
+.Dd January 16, 1999
 .Dt PASSWD 5
 .Os
 .Sh NAME
@@ -44,7 +44,23 @@
 .Sh DESCRIPTION
 The
 .Nm passwd
-files are files consisting of newline separated records, one per user,
+files are the local source of password information.
+They can be used in conjunction with the Hesiod domain
+.Sq passwd
+and the
+.Tn NIS
+maps
+.Sq passwd.byname ,
+.Sq passwd.byuid ,
+.Sq master.passwd.byname ,
+and 
+.Sq master.passwd.byuid ,
+as controlled by
+.Xr nsswitch.conf 5 .
+.Pp
+The
+.Nm
+files consisting of newline separated records, one per user,
 containing ten colon (``:'') separated fields.  These fields are as
 follows:
 .Pp
@@ -171,11 +187,53 @@ If there is nothing in the
 field, the Bourne shell
 .Pq Pa /bin/sh
 is assumed.
-.Sh YP SUPPORT
-If YP is active, the
+.Sh HESIOD SUPPORT
+If
+.Sq dns
+is specified for the
+.Sq passwd
+database in
+.Xr nsswitch.conf 5 ,
+then
 .Nm
-file also supports standard YP exclusions and inclusions, based on user
-names and netgroups.
+lookups occur from the
+.Sq passwd
+Hesiod domain.
+.Sh NIS SUPPORT
+If
+.Sq nis
+is specified for the
+.Sq passwd
+database in
+.Xr nsswitch.conf 5 ,
+then
+.Nm
+lookups occur from the
+.Sq passwd.byname ,
+.Sq passwd.byuid ,
+.Sq master.passwd.byname ,
+and 
+.Sq master.passwd.byuid
+.Tn NIS
+maps.
+.Sh COMPAT SUPPORT
+If
+.Sq compat
+is specified for the
+.Sq passwd
+database, and either
+.Sq dns
+or
+.Sq nis
+is specified for the
+.Sq passwd_compat
+database in
+.Xr nsswitch.conf 5 ,
+then the
+.Nm
+file also supports standard
+.Sq +/-
+exclusions and inclusions, based on user names and netgroups.
 .Pp
 Lines beginning with a ``-'' (minus sign) are entries marked as being excluded
 from any following inclusions, which are marked with a ``+'' (plus sign).
@@ -191,23 +249,34 @@ field is assumed to be a specific user name.
 .Pp
 The ``+'' token may also be alone in the
 .Ar name
-field, which causes all users from the
-.Pa passwd.byname
+field, which causes all users from either the Hesiod domain
+.Nm
+(with
+.Sq passwd_compat: dns )
+or
+.Sq passwd.byname
 and
-.Pa passwd.byuid
-YP maps to be included.
+.Sq passwd.byuid
+.Tn NIS
+maps (with
+.Sq passwd_compat: nis )
+to be included.
 .Pp
 If the entry contains non-empty
 .Ar uid
 or
 .Ar gid
 fields, the specified numbers will override the information retrieved
-from the YP maps. As well, if the
+from the Hesiod domain or the
+.Tn NIS
+maps. As well, if the
 .Ar gecos,
 .Ar dir
 or
 .Ar shell
-entries contain text, it will override the information included via YP.
+entries contain text, it will override the information included via
+Hesiod or
+.Tn NIS .
 On some systems, the
 .Ar passwd
 field may also be overridden.
@@ -227,7 +296,9 @@ field may also be overridden.
 .Sh BUGS
 User information should (and eventually will) be stored elsewhere.
 .Pp
-Placing YP exclusions in the file after any inclusions will have
+Placing
+Sq compat
+exclusions in the file after any inclusions will have
 unexpected results.
 .Sh COMPATIBILITY
 The password file format has changed since
@@ -253,6 +324,10 @@ A
 file format appeared in
 .At v6 .
 .Pp
-YP
+The
+.Tn NIS
 .Nm
 file format first appeared in SunOS.
+.Pp
+The Hesiod support first appeared in
+.Nx 1.4 .

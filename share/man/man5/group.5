@@ -1,4 +1,4 @@
-.\"	$NetBSD: group.5,v 1.6 1997/07/02 06:19:54 lukem Exp $
+.\"	$NetBSD: group.5,v 1.7 1999/01/16 14:16:41 lukem Exp $
 .\"
 .\" Copyright (c) 1980, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -34,16 +34,32 @@
 .\"
 .\"     @(#)group.5	8.3 (Berkeley) 4/19/94
 .\"
-.Dd July 18, 1995
+.Dd January 16, 1999
 .Dt GROUP 5
 .Os
 .Sh NAME
 .Nm group
 .Nd format of the group permissions file
 .Sh DESCRIPTION
-The file
-.Aq Pa /etc/group
-consists of newline separated
+The
+.Nm
+file
+.Pa /etc/group
+is the local source of group information.
+It can be used in conjunction with the Hesiod domain
+.Sq group ,
+and the
+.Tn NIS
+maps
+.Sq group.byname
+and 
+.Sq group.bygid ,
+as controlled by
+.Xr nsswitch.conf 5 .
+.Pp
+The
+.Nm
+file consists of newline separated
 .Tn ASCII
 records, one per group, containing four colon
 .Ql \&:
@@ -88,21 +104,6 @@ in their
 .Pa /etc/passwd
 entry and does not need to be added to that group in the
 .Pa /etc/group file.
-.\" .Pp
-.\" When the system reads the file
-.\" .Pa /etc/group
-.\" the fields are read into the structure
-.\" .Fa group
-.\" declared in
-.\" .Aq Pa grp.h :
-.\" .Bd -literal -offset indent
-.\" struct group {
-.\"	char    *gr_name;        /* group name */
-.\"	char    *gr_passwd;      /* group password */
-.\"	int     gr_gid;          /* group id */
-.\"	char    **gr_mem;        /* group members */
-.\" };
-.\" .Ed
 .Pp
 The group with the name
 .Dq wheel
@@ -113,8 +114,47 @@ are allowed to
 .Nm su
 to
 .Dq root .
-.Sh YP SUPPORT
-If YP is active, the
+.Sh HESIOD SUPPORT
+If
+.Sq dns
+is specified for the
+.Sq group
+database in
+.Xr nsswitch.conf 5 ,
+then
+.Nm
+lookups occur from the
+.Sq group
+Hesiod domain.
+.Sh NIS SUPPORT
+If
+.Sq nis
+is specified for the
+.Sq group
+database in
+.Xr nsswitch.conf 5 ,
+then
+.Nm
+lookups occur from the
+.Sq group.byname
+and
+.Sq group.bygid
+.Tn NIS
+map.
+.Sh COMPAT SUPPORT
+If
+.Sq compat
+is specified for the
+.Sq group
+database, and either
+.Sq dns
+or
+.Sq nis
+is specified for the
+.Sq group_compat
+database in
+.Xr nsswitch.conf 5 ,
+then the
 .Nm
 file may also contain lines of the format
 .Pp
@@ -122,27 +162,39 @@ file may also contain lines of the format
 +name:*::
 .Pp
 which causes the specified group to be included from the
-.Pa group.byname
-YP map.
+.Sq group
+Hesiod domain
+or the
+.Sq group.byname
+.Tn NIS
+map (respectively).
 .Pp
 If no group name is specified, or the ``+'' (plus sign) appears alone
-on line, all groups are included from the YP map.
+on line, all groups are included from the
+Hesiod domain or the
+.Tn NIS
+map.
 .Pp
-YP references may appear anywhere in the file, but the single ``+'' form
+Hesiod or
+.Tn NIS
+compat references may appear anywhere in the file, but the single ``+'' form
 should be on the last line, for historical reasons.
 Only the first group with a specific name encountered, whether in the
 .Nm
-file itself, or included via YP, will be used.
+file itself, or included via Hesiod or
+.Tn NIS ,
+will be used.
 .Sh FILES
 .Bl -tag -width /etc/group -compact
 .It Pa /etc/group
 .El
 .Sh SEE ALSO
+.Xr passwd 1 ,
 .Xr su 1 ,
 .Xr setgroups 2 ,
 .Xr initgroups 3 ,
 .Xr crypt 3 ,
-.Xr passwd 1 ,
+.Xr nsswitch.conf 5 ,
 .Xr passwd 5 ,
 .Xr yp 8
 .Sh BUGS
@@ -157,4 +209,9 @@ A
 file format appeared in
 .At v6 .
 .Pp
-YP file format first appeared in SunOS.
+The
+.Tn NIS
+file format first appeared in SunOS.
+.Pp
+The Hesiod support first appeared in
+.Nx 1.4 .

@@ -1,4 +1,4 @@
-.\"	$NetBSD: networks.5,v 1.7 1998/07/16 08:43:25 fair Exp $
+.\"	$NetBSD: networks.5,v 1.8 1999/01/16 14:16:42 lukem Exp $
 .\"
 .\" Copyright (c) 1983, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -33,7 +33,7 @@
 .\"
 .\"     @(#)networks.5	8.1 (Berkeley) 6/5/93
 .\"
-.Dd July 4, 1998
+.Dd January 16, 1999
 .Dt NETWORKS 5
 .Os BSD 4.2
 .Sh NAME
@@ -42,11 +42,18 @@
 .Sh DESCRIPTION
 The
 .Nm
-file is used to translate between Internet Protocol
+file is used as a local source to translate between Internet Protocol
 .Pq Tn IP
-network addresses and network names (and vice versa) when
-.Xr named 8
-is either not running (e.g. at boot time), or not configured.
+network addresses and network names (and vice versa).
+It can be used in conjunction with the DNS,
+.\"and the
+.\".Tn NIS
+.\"maps
+.\".Sq networks.byaddr ,
+.\"and
+.\".Sq networks.byname ,
+as controlled by
+.Xr nsswitch.conf 5 .
 .Pp
 While the
 .Nm
@@ -122,6 +129,7 @@ file resides in
 .Sh SEE ALSO
 .Xr getnetent 3 ,
 .Xr resolv.conf 5 ,
+.Xr nsswitch.conf 5 ,
 .Xr hostname 7 ,
 .Xr dhclient 8 ,
 .Xr dhcpd 8 ,
