@@ -1,4 +1,4 @@
-/*	$NetBSD: vnode_if.h,v 1.26 2000/11/27 09:04:59 chs Exp $	*/
+/*	$NetBSD: vnode_if.h,v 1.27 2000/12/22 14:58:39 mrg Exp $	*/
 
 /*
  * Warning: This file is generated automatically.
@@ -47,7 +47,7 @@
 #define _SYS_VNODE_IF_H_
 
 #ifdef _KERNEL
-#ifdef _LKM
+#if defined(LKM) && !defined(VNODE_OP_NOINLINE)
 /* LKMs always use non-inlined vnode ops. */
 #define	VNODE_OP_NOINLINE
 #else
