@@ -1,4 +1,4 @@
-/*	$NetBSD: parties.c,v 1.5 1997/10/13 19:44:47 christos Exp $	*/
+/*	$NetBSD: parties.c,v 1.6 1999/02/10 00:45:46 hubertf Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)parties.c	8.2 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: parties.c,v 1.5 1997/10/13 19:44:47 christos Exp $");
+__RCSID("$NetBSD: parties.c,v 1.6 1999/02/10 00:45:46 hubertf Exp $");
 #endif
 #endif /* not lint */
 
@@ -82,5 +82,5 @@ char isdefense;
 
 	for (n = 0; n < NBP; p++, n++)
 		if (p->turnsent && (p->toship == to || isdefense || ship == to))
-			Write(isdefense ? W_DBP : W_OBP, ship, 0, n, 0, 0, 0);
+			Write(isdefense ? W_DBP : W_OBP, ship, n, 0, 0, 0);
 }

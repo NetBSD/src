@@ -1,4 +1,4 @@
-/*	$NetBSD: dr_5.c,v 1.5 1997/10/13 19:43:47 christos Exp $	*/
+/*	$NetBSD: dr_5.c,v 1.6 1999/02/10 00:45:45 hubertf Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)dr_5.c	8.2 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: dr_5.c,v 1.5 1997/10/13 19:43:47 christos Exp $");
+__RCSID("$NetBSD: dr_5.c,v 1.6 1999/02/10 00:45:45 hubertf Exp $");
 #endif
 #endif /* not lint */
 
@@ -62,11 +62,11 @@ int  totalfrom, crewfrom[3];
 				totalfrom = 0;
 			}
 		}
-		Write(W_CREW, from, 0, crewfrom[0], crewfrom[1], crewfrom[2], 0);
+		Write(W_CREW, from, crewfrom[0], crewfrom[1], crewfrom[2], 0);
 	} else if (totalfrom) {
 		pcfrom -= totalfrom;
 		pcfrom = pcfrom < 0 ? 0 : pcfrom;
-		Write(W_PCREW, from, 0, pcfrom, 0, 0, 0);
+		Write(W_PCREW, from, pcfrom, 0, 0, 0);
 	}
 }
 

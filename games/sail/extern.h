@@ -1,4 +1,4 @@
-/*	$NetBSD: extern.h,v 1.8 1998/09/13 15:27:30 hubertf Exp $ */
+/*	$NetBSD: extern.h,v 1.9 1999/02/10 00:45:45 hubertf Exp $ */
 
 /*
  * Copyright (c) 1983, 1993
@@ -435,6 +435,7 @@ void makemsg __P((struct ship *, const char *, ...))
 int sync_exists __P((int));
 int sync_open __P((void));
 void sync_close __P((int));
-void Write __P((int, struct ship *, int, long, long, long, long));
+void Write __P((int, struct ship *, long, long, long, long));
+void Writestr __P((int, struct ship *, const char *));
 int Sync __P((void));
-int sync_update __P((int, struct ship *, long, long, long, long));
+int sync_update __P((int, struct ship *, const char *, long, long, long, long));
