@@ -1,4 +1,4 @@
-/*	$NetBSD: in_gif.c,v 1.18 2001/02/20 08:49:15 itojun Exp $	*/
+/*	$NetBSD: in_gif.c,v 1.19 2001/02/20 10:41:47 itojun Exp $	*/
 /*	$KAME: in_gif.c,v 1.51 2001/02/20 08:31:07 itojun Exp $	*/
 
 /*
@@ -133,6 +133,12 @@ in_gif_output(ifp, family, m, rt)
 		break;
 	    }
 #endif /*INET6*/
+#ifdef ISO
+	case AF_ISO:
+		proto = IPPROTO_EON;
+		tos = 0;
+		break;
+#endif
 	default:
 #ifdef DEBUG
 		printf("in_gif_output: warning: unknown family %d passed\n",

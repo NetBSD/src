@@ -1,4 +1,4 @@
-/*	$NetBSD: in6_gif.c,v 1.17 2001/02/20 08:49:16 itojun Exp $	*/
+/*	$NetBSD: in6_gif.c,v 1.18 2001/02/20 10:41:48 itojun Exp $	*/
 /*	$KAME: in6_gif.c,v 1.45 2001/02/20 08:37:00 itojun Exp $	*/
 
 /*
@@ -117,6 +117,12 @@ in6_gif_output(ifp, family, m, rt)
 		itos = (ntohl(ip6->ip6_flow) >> 20) & 0xff;
 		break;
 	    }
+#endif
+#ifdef ISO
+	case AF_ISO:
+		proto = IPPROTO_EON;
+		itos = 0;
+		break;
 #endif
 	default:
 #ifdef DEBUG
