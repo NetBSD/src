@@ -1,4 +1,4 @@
-/*	$NetBSD: uipc_socket2.c,v 1.58 2003/10/21 22:55:47 thorpej Exp $	*/
+/*	$NetBSD: uipc_socket2.c,v 1.58.2.1 2004/05/30 07:02:16 tron Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1988, 1990, 1993
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uipc_socket2.c,v 1.58 2003/10/21 22:55:47 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uipc_socket2.c,v 1.58.2.1 2004/05/30 07:02:16 tron Exp $");
 
 #include "opt_mbuftrace.h"
 #include "opt_sb_max.h"
@@ -495,14 +495,21 @@ sblastmbufchk(struct sockbuf *sb, const char *where)
 }
 #endif /* SOCKBUF_DEBUG */
 
-#define	SBLINKRECORD(sb, m0)						\
+/*
+ * Link a chain of records onto a socket buffer
+ */
+#define	SBLINKRECORDCHAIN(sb, m0, mlast)				\
 do {									\
 	if ((sb)->sb_lastrecord != NULL)				\
 		(sb)->sb_lastrecord->m_nextpkt = (m0);			\
 	else								\
 		(sb)->sb_mb = (m0);					\
-	(sb)->sb_lastrecord = (m0);					\
+	(sb)->sb_lastrecord = (mlast);					\
 } while (/*CONSTCOND*/0)
+
+
+#define	SBLINKRECORD(sb, m0)						\
+    SBLINKRECORDCHAIN(sb, m0, m0)
 
 /*
  * Append mbuf chain m to the last record in the
@@ -747,6 +754,105 @@ sbappendaddr(struct sockbuf *sb, struct sockaddr *asa, struct mbuf *m0,
 
 	return (1);
 }
+
+/*
+ * Helper for sbappendchainaddr: prepend a struct sockaddr* to
+ * an mbuf chain.
+ */
+static __inline struct mbuf *
+m_prepend_sockaddr(struct mbuf *m0, const struct sockaddr *asa)
+{
+	struct mbuf *m;
+	const int mlen = asa->sa_len;
+
+	/* only the first in each chain need be a pkthdr */
+	MGETHDR(m, M_DONTWAIT, MT_SONAME);
+	if (m == 0)
+		return (0);
+	MCLAIM(m, sb->sb_mowner);
+	KASSERT(mlen <= MLEN);
+
+	m->m_len = mlen;
+	bcopy((caddr_t)asa, mtod(m, caddr_t), mlen);
+	m->m_next = m0;
+	m->m_pkthdr.len = mlen + m0->m_pkthdr.len;
+
+	return m;
+}
+
+int
+sbappendaddrchain(struct sockbuf *sb, const struct sockaddr *asa,
+		  struct mbuf *m0, int sbprio)
+{
+	int space;
+	struct mbuf *m, *n, *n0, *nlast;
+	int error;
+
+	/*
+	 * XXX sbprio reserved for encoding priority of this* request:
+	 *  SB_PRIO_NONE --> honour normal sb limits
+	 *  SB_PRIO_ONESHOT_OVERFLOW --> if socket has any space,
+	 *	take whole chain. Intended for large requests
+	 *      that should be delivered atomically (all, or none).
+	 * SB_PRIO_OVERDRAFT -- allow a small (2*MLEN) overflow
+	 *       over normal socket limits, for messages indicating
+	 *       buffer overflow in earlier normal/lower-priority messages
+	 * SB_PRIO_BESTEFFORT -->  ignore limits entirely.
+	 *       Intended for  kernel-generated messages only.
+	 *        Up to generator to avoid total mbuf resource exhaustion.
+	 */
+	(void)sbprio;
+
+	if (m0 && (m0->m_flags & M_PKTHDR) == 0)
+		panic("sbappendaddrchain");
+
+	space = sbspace(sb);
+	
+#ifdef notyet
+	/* 
+	 * Enforce SB_PRIO_* limits as described above.
+	 */
+#endif
+
+	n0 = NULL;
+	nlast = NULL;
+	for (m = m0; m; m = m->m_nextpkt) {
+		struct mbuf *np;
+
+		/* Prepend sockaddr to this record (m) of input chain m0 */
+	  	n = m_prepend_sockaddr(m, asa);
+		if (n == NULL) {
+			error = ENOBUFS;
+			goto bad;
+		}
+
+		/* Append record (asa+m) to end of new chain n0 */
+		if (n0 == NULL) {
+			n0 = n;
+		} else {
+			nlast->m_nextpkt = n;
+		}
+		/* Keep track of last record on new chain */
+		nlast = n;
+
+		for (np = n; np; np = np->m_next)
+			sballoc(sb, np);
+	}
+
+	/* Drop the entire chain of (asa+m) records onto the socket */
+	SBLINKRECORDCHAIN(sb, n0, nlast);
+	for (m = nlast; m->m_next; m = m->m_next)
+		;
+	sb->sb_mbtail = m;
+	
+	return (1);
+
+bad:
+	if (n)
+		m_freem(n);
+	return 0;	
+}
+
 
 int
 sbappendcontrol(struct sockbuf *sb, struct mbuf *m0, struct mbuf *control)
