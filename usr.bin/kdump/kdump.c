@@ -1,4 +1,4 @@
-/*	$NetBSD: kdump.c,v 1.48 2003/05/15 12:57:54 dsl Exp $	*/
+/*	$NetBSD: kdump.c,v 1.49 2003/06/28 17:15:07 darrenr Exp $	*/
 
 /*-
  * Copyright (c) 1988, 1993
@@ -43,7 +43,7 @@ __COPYRIGHT("@(#) Copyright (c) 1988, 1993\n\
 #if 0
 static char sccsid[] = "@(#)kdump.c	8.4 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: kdump.c,v 1.48 2003/05/15 12:57:54 dsl Exp $");
+__RCSID("$NetBSD: kdump.c,v 1.49 2003/06/28 17:15:07 darrenr Exp $");
 #endif
 #endif /* not lint */
 
@@ -77,6 +77,7 @@ pid_t do_pid = -1;
 const char *tracefile = NULL;
 struct ktr_header ktr_header;
 int emul_changed = 0;
+int show_lwp = 0;
 
 #define eqs(s1, s2)	(strcmp((s1), (s2)) == 0)
 
@@ -126,7 +127,7 @@ main(argc, argv)
 	int trpoints = ALL_POINTS;
 	const char *emul_name = "netbsd";
 
-	while ((ch = getopt(argc, argv, "e:f:dlm:Nnp:RTt:")) != -1)
+	while ((ch = getopt(argc, argv, "e:f:dlLm:Nnp:RTt:")) != -1)
 		switch (ch) {
 		case 'e':
 			emul_name = strdup(optarg); /* it's safer to copy it */
@@ -139,6 +140,9 @@ main(argc, argv)
 			break;
 		case 'l':
 			tail = 1;
+			break;
+		case 'L':
+			show_lwp = 1;
 			break;
 		case 'p':
 			do_pid = atoi(optarg);
@@ -302,7 +306,10 @@ dumpheader(kth)
 		type = unknown;
 	}
 
-	(void)printf("%6d %-8.*s ", kth->ktr_pid, MAXCOMLEN, kth->ktr_comm);
+	(void)printf("%6d", kth->ktr_pid);
+	if (show_lwp)
+		(void)printf("/%d", (int)kth->ktr_buf);
+	(void)printf(" %-8.*s ", MAXCOMLEN, kth->ktr_comm);
 	if (timestamp) {
 		if (timestamp == 2) {
 			timersub(&kth->ktr_time, &prevtime, &temp);
