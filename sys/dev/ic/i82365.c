@@ -1,4 +1,4 @@
-/*	$NetBSD: i82365.c,v 1.47 2000/02/10 09:00:19 chopps Exp $	*/
+/*	$NetBSD: i82365.c,v 1.48 2000/02/21 20:16:22 dbj Exp $	*/
 
 #define	PCICDEBUG
 
@@ -1324,7 +1324,8 @@ pcic_delay(h, timo, wmesg)
 		panic("pcic_delay");
 	}
 #endif
-	DPRINTF(("pcic_delay: %p, sleep %d ms\n", h->event_thread, timo));
+	DPRINTF(("pcic_delay: \"%s\" %p, sleep %d ms\n",
+		 wmesg, h->event_thread, timo));
 	tsleep(pcic_delay, PWAIT, wmesg, roundup(timo * hz, 1000) / 1000);
 }
 
