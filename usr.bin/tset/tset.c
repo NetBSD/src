@@ -1,4 +1,4 @@
-/*	$NetBSD: tset.c,v 1.8.2.2 2000/10/19 16:28:47 he Exp $	*/
+/*	$NetBSD: tset.c,v 1.8.2.3 2000/10/19 18:08:01 he Exp $	*/
 
 /*-
  * Copyright (c) 1980, 1991, 1993
@@ -43,7 +43,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1991, 1993\n\
 #if 0
 static char sccsid[] = "@(#)tset.c	8.1 (Berkeley) 6/9/93";
 #endif
-__RCSID("$NetBSD: tset.c,v 1.8.2.2 2000/10/19 16:28:47 he Exp $");
+__RCSID("$NetBSD: tset.c,v 1.8.2.3 2000/10/19 18:08:01 he Exp $");
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -238,7 +238,7 @@ main(argc, argv)
 			q = ";\nTERMCAP='";
 			t = "';\nexport TERMCAP TERM;\n";
 		}
-		(void)printf("%s%s%s, p, ttype, q);
+		(void)printf("%s%s%s", p, ttype, q);
 		wrtermcap(tcapbuf);
 		(void)printf("%s", t);
 	}
