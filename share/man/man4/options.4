@@ -1,4 +1,4 @@
-.\"	$NetBSD: options.4,v 1.116 2000/08/30 19:05:47 jhawk Exp $
+.\"	$NetBSD: options.4,v 1.117 2000/09/14 16:02:24 hubertf Exp $
 .\"
 .\" Copyright (c) 1996
 .\" 	Perry E. Metzger.  All rights reserved.
@@ -700,6 +700,10 @@ Forces the
 disk to be the root device.
 This can only be overridden when
 the kernel is booted in the 'ask-for-root' mode.
+.It Cd options VNODE_OP_NOINLINE
+Do not inline the VOP_*() calls in the kernel. 
+On i386 GENERIC, this saves 36k of kernel text.  Useful
+for install media kernels, small memory systems and embedded systems.
 .It Cd options NTP
 Turns on in-kernel precision timekeeping support used by software
 implementing
