@@ -1,4 +1,4 @@
-/*	$NetBSD: if_sn_obio.c,v 1.15 1998/05/02 16:45:31 scottr Exp $	*/
+/*	$NetBSD: if_sn_obio.c,v 1.16 1998/06/09 03:39:50 scottr Exp $	*/
 
 /*
  * Copyright (C) 1997 Allen Briggs
@@ -125,6 +125,7 @@ sn_obio_attach(parent, self, aux)
 		break;
 
 	case MACH_MACLC575:
+	case MACH_MACP580:
 	case MACH_MACQ630:
 		break;
 
@@ -159,6 +160,7 @@ sn_obio_attach(parent, self, aux)
 	 */
 	switch (current_mac_model->machineid) {
 	case MACH_MACLC575:
+	case MACH_MACP580:
 	case MACH_MACQ630:
 		NIC_PUT(sc, SNR_CR, CR_RST);	wbflush();
 		i = NIC_GET(sc, SNR_DCR);
