@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.44 1996/02/02 18:07:53 mycroft Exp $	*/
+/*	$NetBSD: machdep.c,v 1.45 1996/02/06 01:59:46 jonathan Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -410,7 +410,7 @@ mach_init(argc, argv, code, cv)
 		strcpy(cpu_model, "3100");
 		break;
 
-	case DS_MIPSFAIR:	/* DS5100 mipsfair */
+	case DS_MIPSMATE:	/* DS5100 mipsmate */
 		/* XXX just a guess */
 		/*
 		 * Set up interrupt handling and I/O addresses.
@@ -1310,7 +1310,7 @@ initcpu()
 		MachEmptyWriteBuffer();
 		break;
 	default:
-		printf("Unknown system type in initcpu()\n");
+		printf("initcpu(): unknown system type 0x%x\n", pmax_boardtype);
 		break;
 	}
 
