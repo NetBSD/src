@@ -1,4 +1,4 @@
-/*	$NetBSD: rpc_machdep.c,v 1.3 1998/01/18 04:55:20 mark Exp $	*/
+/*	$NetBSD: rpc_machdep.c,v 1.4 1998/02/21 23:04:54 mark Exp $	*/
 
 /*
  * Copyright (c) 1994-1997 Mark Brinicombe.
@@ -188,7 +188,8 @@ void physconputchar		__P((char));
 void physcon_display_base	__P((u_int addr));
 extern void consinit			__P((void));
 
-void map_section	__P((vm_offset_t pt, vm_offset_t va, vm_offset_t pa));
+void map_section	__P((vm_offset_t pt, vm_offset_t va, vm_offset_t pa,
+			     int cacheable));
 void map_pagetable	__P((vm_offset_t pt, vm_offset_t va, vm_offset_t pa));
 void map_entry		__P((vm_offset_t pt, vm_offset_t va, vm_offset_t pa));
 void map_entry_nc	__P((vm_offset_t pt, vm_offset_t va, vm_offset_t pa));
@@ -203,7 +204,6 @@ void prefetch_abort_handler	__P((trapframe_t *frame));
 void undefinedinstruction_bounce	__P((trapframe_t *frame));
 void zero_page_readonly		__P((void));
 void zero_page_readwrite	__P((void));
-extern int	savectx		__P((struct pcb *pcb));
 extern void dump_spl_masks	__P((void));
 extern pt_entry_t *pmap_pte	__P((pmap_t pmap, vm_offset_t va));
 extern void db_machine_init	__P((void));
@@ -663,8 +663,8 @@ initarm(bootconf)
 	 * keep us going until we can contruct the proper kernel L1 page table.
 	 */
 
-	map_section(l1pagetable, VIDC_BASE,  VIDC_HW_BASE);
-	map_section(l1pagetable, IOMD_BASE,  IOMD_HW_BASE);
+	map_section(l1pagetable, VIDC_BASE,  VIDC_HW_BASE, 0);
+	map_section(l1pagetable, IOMD_BASE,  IOMD_HW_BASE, 0);
 
 	map_pagetable(l1pagetable, 0x00000000,
 	    bootconfig.scratchphysicalbase + 0x2000);
@@ -1044,15 +1044,15 @@ initarm(bootconf)
 
 	/* Map the VIDC20 */
 
-	map_section(l1pagetable, VIDC_BASE, VIDC_HW_BASE);
+	map_section(l1pagetable, VIDC_BASE, VIDC_HW_BASE, 0);
 
 	/* Map the IOMD (and SLOW and MEDIUM simple podules) */
 
-	map_section(l1pagetable, IOMD_BASE, IOMD_HW_BASE);
+	map_section(l1pagetable, IOMD_BASE, IOMD_HW_BASE, 0);
 
 	/* Map the COMBO (and module space) */
 
-	map_section(l1pagetable, IO_BASE, IO_HW_BASE);
+	map_section(l1pagetable, IO_BASE, IO_HW_BASE, 0);
 
 	/* Map the L2 pages tables in the L1 page table */
 
