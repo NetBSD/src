@@ -1,4 +1,4 @@
-/*	$NetBSD: ru_SU.KOI8-R.src,v 1.1 2000/12/30 02:33:17 itojun Exp $	*/
+/*	$NetBSD: ru_RU.KOI8-R.src,v 1.1 2001/01/22 17:48:21 itojun Exp $	*/
 
 /*
  * LOCALE_CTYPE for Russian koi8-r character set (RFC1489)

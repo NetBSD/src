@@ -1,4 +1,4 @@
-/*	$NetBSD: ru_SU.ISO_8859-5.src,v 1.1 2000/12/30 02:33:16 itojun Exp $	*/
+/*	$NetBSD: ru_RU.ISO_8859-5.src,v 1.1 2001/01/22 17:48:20 itojun Exp $	*/
 
 /*
  * LOCALE_CTYPE for Russian part of ISO8859-5 set
