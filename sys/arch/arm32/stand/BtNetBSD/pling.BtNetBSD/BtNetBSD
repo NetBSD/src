@@ -1,5 +1,5 @@
 REM > BtNetBSD
-REM $NetBSD: BtNetBSD,v 1.5 2001/04/01 16:50:24 reinoud Exp $
+REM $NetBSD: BtNetBSD,v 1.6 2001/04/04 17:13:28 reinoud Exp $
 REM
 REM Copyright (c) 2000, 2001 Reinoud Zandijk
 REM Copyright (c) 1998, 1999, 2000 Ben Harris
@@ -862,7 +862,7 @@ DEF FNblock_paddr(pagenr%)
 
 
 DEF PROCget_memory_map
-  DIM memoryblock% totalpages%*4*3
+  DIM memoryblock% totalpages%*4*4
   PRINT '"Getting actual memory mapping ";
   FOR pg%=0 TO totalpages%-1
     pos% = memoryblock% + 12*pg%
