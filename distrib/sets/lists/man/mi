@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.236 2000/05/03 11:45:28 veego Exp $
+# $NetBSD: mi,v 1.237 2000/05/03 22:58:39 augustss Exp $
 ./usr/share/info/am-utils.info
 ./usr/share/info/awk.info
 ./usr/share/info/bfd.info
@@ -357,6 +357,7 @@
 ./usr/share/man/cat4/aue.0
 ./usr/share/man/cat4/auvia.0
 ./usr/share/man/cat4/awi.0
+./usr/share/man/cat4/bba.0
 ./usr/share/man/cat4/bha.0
 ./usr/share/man/cat4/bicc.0
 ./usr/share/man/cat4/boca.0
@@ -1329,6 +1330,7 @@
 ./usr/share/man/man4/aue.4
 ./usr/share/man/man4/auvia.4
 ./usr/share/man/man4/awi.4
+./usr/share/man/man4/bba.4
 ./usr/share/man/man4/bha.4
 ./usr/share/man/man4/bicc.4
 ./usr/share/man/man4/boca.4
