@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs_data.h,v 1.329 2001/05/31 01:13:33 nisimura Exp $	*/
+/*	$NetBSD: pcidevs_data.h,v 1.330 2001/06/11 06:36:51 tron Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.325 2001/05/31 01:10:34 nisimura Exp 
+ *	NetBSD: pcidevs,v 1.326 2001/06/11 06:36:23 tron Exp 
  */
 
 /*
@@ -2096,6 +2096,12 @@ const struct pci_knowndev pci_knowndevs[] = {
 	    0,
 	    "D-Link Systems",
 	    "DFE-550TX 10/100 Ethernet",
+	},
+	{
+	    PCI_VENDOR_DLINK, PCI_PRODUCT_DLINK_DFE530TXPLUS,
+	    0,
+	    "D-Link Systems",
+	    "DFE-530TXPLUS 10/100 Ethernet",
 	},
 	{
 	    PCI_VENDOR_DPT, PCI_PRODUCT_DPT_SC_RAID,
