@@ -1,4 +1,4 @@
-/*	$NetBSD: syslogd.c,v 1.47 2001/07/16 05:04:47 manu Exp $	*/
+/*	$NetBSD: syslogd.c,v 1.48 2001/07/19 00:15:32 taca Exp $	*/
 
 /*
  * Copyright (c) 1983, 1988, 1993, 1994
@@ -43,7 +43,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1988, 1993, 1994\n\
 #if 0
 static char sccsid[] = "@(#)syslogd.c	8.3 (Berkeley) 4/4/94";
 #else
-__RCSID("$NetBSD: syslogd.c,v 1.47 2001/07/16 05:04:47 manu Exp $");
+__RCSID("$NetBSD: syslogd.c,v 1.48 2001/07/19 00:15:32 taca Exp $");
 #endif
 #endif /* not lint */
 
@@ -400,10 +400,6 @@ getgroup:
 		dprintf("Listening on kernel log `%s'\n", _PATH_KLOG);
 	}
 
-	/* tuck my process id away, if i'm not in debug mode */
-	if (Debug == 0)
-		pidfile(NULL);
-
 	dprintf("Off & running....\n");
 
 	(void)signal(SIGHUP, init);
@@ -463,6 +459,9 @@ getgroup:
 	if (!Debug) {
 		(void)daemon(0, 0);
 		daemonized = 1;
+
+		/* tuck my process id away, if i'm not in debug mode */
+		pidfile(NULL);
 	}
 
 	for (;;) {
