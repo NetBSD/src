@@ -1,4 +1,4 @@
-.\"	$NetBSD: pfil.9,v 1.12 1999/06/18 06:03:39 mrg Exp $
+.\"	$NetBSD: pfil.9,v 1.13 2000/02/20 01:03:13 darrenr Exp $
 .\"
 .\" Copyright (c) 1996 Matthew R. Green
 .\" All rights reserved.
@@ -41,11 +41,11 @@
 .Fd #include <net/if.h>
 .Fd #include <net/pfil.h>
 .Ft struct packet_filter_hook *
-.Fn pfil_hook_get int
+.Fn pfil_hook_get "int" "struct pfil_head *"
 .Ft void
-.Fn pfil_add_hook "int (*func)()" "int flags"
+.Fn pfil_add_hook "int (*func)()" "int flags" "struct pfil_head *"
 .Ft void
-.Fn pfil_remove_hook "int (*func)()" "int flags"
+.Fn pfil_remove_hook "int (*func)()" "int flags" "struct pfil_head *"
 .\"(void *, int, struct ifnet *, int, struct mbuf **)
 .Sh DESCRIPTION
 The
@@ -117,6 +117,15 @@ to
 structures.  This change was to allow the input and output filters to be
 processed in reverse order, to allow the same path to be taken, in or out
 of the kernel.
+.Pp
+The
+.Nm
+interface was changed in 1.4T to accept a 3rd parameter to both
+.Fn pfil_add_hook
+and
+.Fn pfil_remove_hook
+, introducing the capability of per-protocol filtering.  This was done
+primarily in order to support filtering of IPv6.
 .Sh BUGS
 The current
 .Nm
