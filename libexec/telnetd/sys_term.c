@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_term.c,v 1.30 2001/08/30 23:25:15 wiz Exp $	*/
+/*	$NetBSD: sys_term.c,v 1.31 2001/09/02 18:32:35 wiz Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)sys_term.c	8.4+1 (Berkeley) 5/30/95";
 #else
-__RCSID("$NetBSD: sys_term.c,v 1.30 2001/08/30 23:25:15 wiz Exp $");
+__RCSID("$NetBSD: sys_term.c,v 1.31 2001/09/02 18:32:35 wiz Exp $");
 #endif
 #endif /* not lint */
 
@@ -54,26 +54,26 @@ __RCSID("$NetBSD: sys_term.c,v 1.30 2001/08/30 23:25:15 wiz Exp $");
 # define PARENT_DOES_UTMP
 #endif
 
-# ifdef	UTMPX
-# include <utmpx.h>
+#ifdef	UTMPX
+#include <utmpx.h>
 struct	utmpx wtmp;
-# else
-# include <utmp.h>
+#else
+#include <utmp.h>
 struct	utmp wtmp;
-# endif /* UTMPX */
+#endif /* UTMPX */
 
 int	utmp_len = sizeof(wtmp.ut_host);
-# ifndef PARENT_DOES_UTMP
+#ifndef PARENT_DOES_UTMP
 char	wtmpf[]	= "/usr/adm/wtmp";
 char	utmpf[] = "/etc/utmp";
-# else /* PARENT_DOES_UTMP */
+#else /* PARENT_DOES_UTMP */
 char	wtmpf[]	= "/etc/wtmp";
-# endif /* PARENT_DOES_UTMP */
+#endif /* PARENT_DOES_UTMP */
 
-# ifdef CRAY
+#ifdef CRAY
 #include <tmpdir.h>
 #include <sys/wait.h>
-# endif	/* CRAY */
+#endif	/* CRAY */
 
 #ifdef	STREAMSPTY
 #include <sac.h>
@@ -1059,21 +1059,21 @@ extern void utmp_sig_notify P((int));
  * for the slave side.
  */
 extern int def_tspeed, def_rspeed;
-# ifdef	TIOCGWINSZ
+#ifdef	TIOCGWINSZ
 	extern int def_row, def_col;
-# endif
+#endif
 
     void
 getptyslave()
 {
 	register int t = -1;
 
-# ifdef	LINEMODE
+#ifdef	LINEMODE
 	int waslm;
-# endif
-# ifdef	TIOCGWINSZ
+#endif
+#ifdef	TIOCGWINSZ
 	struct winsize ws;
-# endif
+#endif
 	/*
 	 * Opening the slave side may cause initilization of the
 	 * kernel tty structure.  We need remember the state of
@@ -1082,29 +1082,29 @@ getptyslave()
 	 *	terminal speed
 	 * so that we can re-set them if we need to.
 	 */
-# ifdef	LINEMODE
+#ifdef	LINEMODE
 	waslm = tty_linemode();
-# endif
+#endif
 
 	/*
 	 * Make sure that we don't have a controlling tty, and
 	 * that we are the session (process group) leader.
 	 */
-# ifdef	TIOCNOTTY
+#ifdef	TIOCNOTTY
 	t = open(_PATH_TTY, O_RDWR);
 	if (t >= 0) {
 		(void) ioctl(t, TIOCNOTTY, (char *)0);
 		(void) close(t);
 	}
-# endif
+#endif
 
 
-# ifdef PARENT_DOES_UTMP
+#ifdef PARENT_DOES_UTMP
 	/*
 	 * Wait for our parent to get the utmp stuff to get done.
 	 */
 	utmp_sig_wait();
-# endif
+#endif
 
 	t = cleanopen(line);
 	if (t < 0)
@@ -1128,52 +1128,52 @@ getptyslave()
 	 * set up the tty modes as we like them to be.
 	 */
 	init_termbuf();
-# ifdef	TIOCGWINSZ
+#ifdef	TIOCGWINSZ
 	if (def_row || def_col) {
 		memset((char *)&ws, 0, sizeof(ws));
 		ws.ws_col = def_col;
 		ws.ws_row = def_row;
 		(void)ioctl(t, TIOCSWINSZ, (char *)&ws);
 	}
-# endif
+#endif
 
 	/*
 	 * Settings for sgtty based systems
 	 */
-# ifndef	USE_TERMIO
+#ifndef	USE_TERMIO
 	termbuf.sg.sg_flags |= CRMOD|ANYP|ECHO|XTABS;
-# endif	/* USE_TERMIO */
+#endif	/* USE_TERMIO */
 
 	/*
 	 * Settings for UNICOS (and HPUX)
 	 */
-# if defined(CRAY) || defined(__hpux)
+#if defined(CRAY) || defined(__hpux)
 	termbuf.c_oflag = OPOST|ONLCR|TAB3;
 	termbuf.c_iflag = IGNPAR|ISTRIP|ICRNL|IXON;
 	termbuf.c_lflag = ISIG|ICANON|ECHO|ECHOE|ECHOK;
 	termbuf.c_cflag = EXTB|HUPCL|CS8;
-# endif
+#endif
 
 	/*
 	 * Settings for all other termios/termio based
 	 * systems, other than 4.4BSD.  In 4.4BSD the
 	 * kernel does the initial terminal setup.
 	 */
-# if defined(USE_TERMIO) && !(defined(CRAY) || defined(__hpux)) && (BSD <= 43)
-#  ifndef	OXTABS
-#   define OXTABS	0
-#  endif
+#if defined(USE_TERMIO) && !(defined(CRAY) || defined(__hpux)) && (BSD <= 43)
+# ifndef	OXTABS
+#  define OXTABS	0
+# endif
 	termbuf.c_lflag |= ECHO;
 	termbuf.c_oflag |= ONLCR|OXTABS;
 	termbuf.c_iflag |= ICRNL;
 	termbuf.c_iflag &= ~IXOFF;
-# endif /* defined(USE_TERMIO) && !defined(CRAY) && (BSD <= 43) */
+#endif /* defined(USE_TERMIO) && !defined(CRAY) && (BSD <= 43) */
 	tty_rspeed((def_rspeed > 0) ? def_rspeed : 9600);
 	tty_tspeed((def_tspeed > 0) ? def_tspeed : 9600);
-# ifdef	LINEMODE
+#ifdef	LINEMODE
 	if (waslm)
 		tty_setlinemode(1);
-# endif	/* LINEMODE */
+#endif	/* LINEMODE */
 
 	/*
 	 * Set the tty modes, and make this our controlling tty.
@@ -2102,7 +2102,7 @@ cleantmpdir(jid, tpath, user)
 	}
 }
 # endif /* CRAY */
-#endif	/* defined(PARENT_DOES_UTMP) && !defined(NEWINIT) */
+#endif	/* defined(PARENT_DOES_UTMP) */
 
 /*
  * rmut()
