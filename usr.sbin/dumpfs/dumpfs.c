@@ -1,4 +1,4 @@
-/*	$NetBSD: dumpfs.c,v 1.46 2004/03/27 11:31:22 dsl Exp $	*/
+/*	$NetBSD: dumpfs.c,v 1.47 2004/06/14 07:22:04 dbj Exp $	*/
 
 /*
  * Copyright (c) 1983, 1992, 1993
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1992, 1993\n\
 #if 0
 static char sccsid[] = "@(#)dumpfs.c	8.5 (Berkeley) 4/29/95";
 #else
-__RCSID("$NetBSD: dumpfs.c,v 1.46 2004/03/27 11:31:22 dsl Exp $");
+__RCSID("$NetBSD: dumpfs.c,v 1.47 2004/06/14 07:22:04 dbj Exp $");
 #endif
 #endif /* not lint */
 
@@ -487,7 +487,7 @@ print_alt_super(const char *name, int fd)
 	int save_printold;
 
 	for (i = 0; i < afs.fs_ncg; i++) {
-		loc = fsbtodb(&afs, cgsblock(&afs, i)) * dev_bsize;
+		loc = (off_t)(fsbtodb(&afs, cgsblock(&afs, i))) * dev_bsize;
 		printf("\nalternate %d\n", i);
 		if (pread(fd, &alt, sizeof alt, loc) != sizeof alt) {
 			warnx("%s: error reading alt %d", name, i);
