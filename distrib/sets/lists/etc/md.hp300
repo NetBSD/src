@@ -1,2 +1,3 @@
 ./etc/fstab.rd
 ./etc/fstab.sd
+./etc/ld.so.conf
