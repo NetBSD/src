@@ -1,3 +1,5 @@
+/*	$NetBSD: nlist_aout.c,v 1.2 1996/09/30 18:27:03 thorpej Exp $	*/
+
 /*-
  * Copyright (c) 1996 Christopher G. Demetriou.  All rights reserved.
  * Copyright (c) 1990, 1993
@@ -33,8 +35,11 @@
  */
 
 #ifndef lint
-/*static char sccsid[] = "from: @(#)nlist.c	8.1 (Berkeley) 6/6/93";*/
-static char *rcsid = "$Id: nlist_aout.c,v 1.1 1996/09/29 02:19:57 cgd Exp $";
+#if 0
+static char sccsid[] = "from: @(#)nlist.c	8.1 (Berkeley) 6/6/93";
+#else
+static char *rcsid = "$NetBSD: nlist_aout.c,v 1.2 1996/09/30 18:27:03 thorpej Exp $";
+#endif
 #endif /* not lint */
 
 #include <sys/param.h>
