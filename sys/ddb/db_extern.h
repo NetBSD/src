@@ -1,4 +1,4 @@
-/*	$NetBSD: db_extern.h,v 1.5 1998/09/05 14:42:43 christos Exp $	*/
+/*	$NetBSD: db_extern.h,v 1.6 1998/12/04 20:18:05 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1995 The NetBSD Foundation, Inc.
@@ -39,25 +39,8 @@
 #ifndef _DDB_DB_EXTERN_H_
 #define _DDB_DB_EXTERN_H_
 
-/* db_aout.c and db_elf.c */
-#ifdef DB_ELF_SYMBOLS	/* XXX */
-void X_db_sym_init __P((void *, void *, char *));
-#else
-void X_db_sym_init __P((int, void *, void *, char *));
-#endif
-db_sym_t X_db_lookup __P((db_symtab_t *, char *));
-db_sym_t X_db_search_symbol __P((db_symtab_t *, db_addr_t, db_strategy_t,
-				 db_expr_t *));
-void X_db_symbol_values __P((db_symtab_t *, db_sym_t, char **, db_expr_t *));
-void db_printsym __P((db_expr_t, db_strategy_t));
-boolean_t X_db_line_at_pc __P((db_symtab_t *, db_sym_t, char **,
-			       int *, db_expr_t));
-int X_db_sym_numargs __P((db_symtab_t *, db_sym_t, int *, char **));
-#ifdef DB_ELF_SYMBOLS	/* XXX */
-void ddb_init __P((void *, void *));
-#else
+/* db_sym.c */
 void ddb_init __P((int, void *, void *));
-#endif
 
 /* db_examine.c */
 void db_examine_cmd __P((db_expr_t, int, db_expr_t, char *));
