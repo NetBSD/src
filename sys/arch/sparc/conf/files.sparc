@@ -1,4 +1,4 @@
-#	$NetBSD: files.sparc,v 1.9 1995/09/05 21:43:09 pk Exp $
+#	$NetBSD: files.sparc,v 1.10 1995/09/17 21:03:36 pk Exp $
 
 # @(#)files.sparc	8.1 (Berkeley) 7/19/93
 # sparc-specific configuration info
@@ -64,6 +64,9 @@ file	arch/sparc/dev/esp.c		esp needs-flag
 device bwtwo at sbus, obio, vmes, vmel
 file	arch/sparc/dev/bwtwo.c		bwtwo needs-flag
 
+device cgtwo at sbus, obio, vmes
+file	arch/sparc/dev/cgtwo.c		cgtwo needs-flag
+
 device cgthree at sbus
 file	arch/sparc/dev/cgthree.c	cgthree needs-flag
 
@@ -104,12 +107,6 @@ file	arch/sparc/fpu/fpu_implode.c
 file	arch/sparc/fpu/fpu_mul.c
 file	arch/sparc/fpu/fpu_sqrt.c
 file	arch/sparc/fpu/fpu_subr.c
-
-file	arch/sparc/rcons/raster_op.c	rconsole
-file	arch/sparc/rcons/raster_text.c	rconsole
-file	arch/sparc/rcons/rcons_font.c	rconsole
-file	arch/sparc/rcons/rcons_kern.c	rconsole
-file	arch/sparc/rcons/rcons_subr.c	rconsole
 
 # N.B.: optimizer breaks pmap.c and/or cache.c somehow -- have not
 # identified the exact problem yet.  NOOPT_C suffices for now.
