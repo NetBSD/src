@@ -1,4 +1,4 @@
-/*	$NetBSD: ss_scanjet.c,v 1.16 1998/04/22 19:44:19 pk Exp $	*/
+/*	$NetBSD: ss_scanjet.c,v 1.17 1999/04/05 19:19:34 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1995 Kenneth Stailey.  All rights reserved.
@@ -61,8 +61,8 @@ int scanjet_trigger_scanner __P((struct ss_softc *));
 int scanjet_read __P((struct ss_softc *, struct buf *));
 
 /* only used internally */
-int scanjet_ctl_write __P((struct ss_softc *, char *, u_int, int));
-int scanjet_ctl_read __P((struct ss_softc *, char *, u_int, int));
+int scanjet_ctl_write __P((struct ss_softc *, char *, u_int));
+int scanjet_ctl_read __P((struct ss_softc *, char *, u_int));
 int scanjet_set_window __P((struct ss_softc *));
 int scanjet_compute_sizes __P((struct ss_softc *));
 /* Maybe move to libkern? */
@@ -252,7 +252,7 @@ scanjet_trigger_scanner(ss)
 
 	/* send "trigger" operation */
 	strcpy(escape_codes, "\033*f0S");
-	error = scanjet_ctl_write(ss, escape_codes, strlen(escape_codes), 0);
+	error = scanjet_ctl_write(ss, escape_codes, strlen(escape_codes));
 	if (error) {
 		uprintf("%s: trigger_scanner failed\n", ss->sc_dev.dv_xname);
 		return (error);
@@ -268,6 +268,7 @@ scanjet_read(ss, bp)
 {
 	struct scsi_rw_scanner cmd;
 	struct scsipi_link *sc_link = ss->sc_link;
+	int error;
 
 	/*
 	 *  Fill out the scsi command
@@ -284,12 +285,14 @@ scanjet_read(ss, bp)
 	/*
 	 * go ask the adapter to do all this for us
 	 */
-	if (scsipi_command(sc_link,
+	error = scsipi_command(sc_link,
 	    (struct scsipi_generic *) &cmd, sizeof(cmd),
 	    (u_char *) bp->b_data, bp->b_bcount, SCANJET_RETRIES, 100000, bp,
-	    SCSI_NOSLEEP | SCSI_DATA_IN) != SUCCESSFULLY_QUEUED)
-		printf("%s: not queued\n", ss->sc_dev.dv_xname);
-	else {
+	    SCSI_NOSLEEP | SCSI_DATA_IN);
+	if (error) {
+		printf("%s: not queued, error %d\n", ss->sc_dev.dv_xname,
+		    error);
+	} else {
 		ss->sio.scan_window_size -= bp->b_bcount;
 		if (ss->sio.scan_window_size < 0)
 			ss->sio.scan_window_size = 0;
@@ -303,14 +306,15 @@ scanjet_read(ss, bp)
  * Do a synchronous write.  Used to send control messages.
  */
 int 
-scanjet_ctl_write(ss, buf, size, flags)
+scanjet_ctl_write(ss, buf, size)
 	struct ss_softc *ss;
 	char *buf;
 	u_int size;
-	int flags;
 {
 	struct scsi_rw_scanner cmd;
+	int flags;
 
+	flags = 0;
 	if ((ss->flags & SSF_AUTOCONF) != 0)
 		flags |= SCSI_AUTOCONF;
 
@@ -328,14 +332,15 @@ scanjet_ctl_write(ss, buf, size, flags)
  * Do a synchronous read.  Used to read responses to control messages.
  */
 int
-scanjet_ctl_read(ss, buf, size, flags)
+scanjet_ctl_read(ss, buf, size)
 	struct ss_softc *ss;
 	char *buf;
 	u_int size;
-	int flags;
 {
 	struct scsi_rw_scanner cmd;
+	int flags;
 
+	flags = 0;
 	if ((ss->flags & SSF_AUTOCONF) != 0)
 		flags |= SCSI_AUTOCONF;
 
@@ -428,7 +433,7 @@ scanjet_set_window(ss)
 	p += sprintf(p, "\033*a%dL", (int)(ss->sio.scan_brightness) - 128);
 	p += sprintf(p, "\033*a%dK", (int)(ss->sio.scan_contrast) - 128);
 
-	return (scanjet_ctl_write(ss, escape_codes, p - escape_codes, 0));
+	return (scanjet_ctl_write(ss, escape_codes, p - escape_codes));
 }
 
 /* atoi() is from /sys/arch/amiga/dev/ite.c
@@ -476,12 +481,12 @@ scanjet_compute_sizes(ss)
 		strcpy(escape_codes, "\033*s1024E"); /* pixels wide */
 		break;
 	}
-	error = scanjet_ctl_write(ss, escape_codes, strlen(escape_codes), 0);
+	error = scanjet_ctl_write(ss, escape_codes, strlen(escape_codes));
 	if (error) {
 		uprintf(wfail, ss->sc_dev.dv_xname);
 		return (error);
 	}
-	error = scanjet_ctl_read(ss, response, 20, 0);
+	error = scanjet_ctl_read(ss, response, 20);
 	if (error) {
 		uprintf(rfail, ss->sc_dev.dv_xname);
 		return (error);
@@ -496,12 +501,12 @@ scanjet_compute_sizes(ss)
 		ss->sio.scan_pixels_per_line *= 8;
 
 	strcpy(escape_codes, "\033*s1026E"); /* pixels high */
-	error = scanjet_ctl_write(ss, escape_codes, strlen(escape_codes), 0);
+	error = scanjet_ctl_write(ss, escape_codes, strlen(escape_codes));
 	if (error) {
 		uprintf(wfail, ss->sc_dev.dv_xname);
 		return (error);
 	}
-	error = scanjet_ctl_read(ss, response, 20, 0);
+	error = scanjet_ctl_read(ss, response, 20);
 	if (error) {
 		uprintf(rfail, ss->sc_dev.dv_xname);
 		return (error);
