@@ -1,4 +1,4 @@
-/*	$NetBSD: tc_subr.c,v 1.10 1997/05/24 09:17:24 jonathan Exp $	*/
+/*	$NetBSD: tc_subr.c,v 1.11 1997/06/15 16:53:40 mhitch Exp $	*/
 
 /*
  * Copyright 1996 The Board of Trustees of The Leland Stanford
@@ -150,7 +150,7 @@ int tc_kn03_nslots =
 struct tcbus_attach_args kn03_tc_desc =
 {
 	"tc",				/* XXX common substructure */
-	1,
+	TC_SPEED_25_MHZ,
 	KN03_TC_NSLOTS, tc_kn03_slots,
 	1, tc_kn03_builtins,
 	tc_ds_ioasic_intr_establish,
@@ -174,7 +174,7 @@ int tc_kmin_nslots =
 struct tcbus_attach_args kmin_tc_desc =
 {
 	"tc",				/* XXX common substructure */
-	0,
+	TC_SPEED_12_5_MHZ,
 	KMIN_TC_NSLOTS, tc_kmin_slots,
 	1, tc_kn03_builtins, /*XXX*/
 	tc_ds_ioasic_intr_establish,
@@ -208,7 +208,7 @@ int tc_xine_nslots =
 struct tcbus_attach_args xine_tc_desc =
 {
 	"tc",				/* XXX common substructure */
-  	0,				/* number of slots */
+  	TC_SPEED_12_5_MHZ,		/* TC bus speed */
 	XINE_TC_NSLOTS, tc_xine_slots,
 	2, tc_xine_builtins,
 	tc_ds_ioasic_intr_establish,
@@ -250,7 +250,7 @@ const struct tc_builtin tc_kn02_builtins[] = {
 struct tcbus_attach_args kn02_tc_desc =
 {
 	"tc",				/* XXX common substructure */
-  	1,
+  	TC_SPEED_25_MHZ,
 	8, tc_kn02_slots,
 	3, tc_kn02_builtins,	/*XXX*/
 	tc_ds_ioasic_intr_establish,
