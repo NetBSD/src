@@ -1,4 +1,4 @@
-/*	$NetBSD: machines.c,v 1.8 2002/05/06 16:24:46 pk Exp $	*/
+/*	$NetBSD: machines.c,v 1.9 2002/05/15 09:44:55 lukem Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -42,6 +42,7 @@
 struct ib_mach machines[] = {
 	{ "alpha",	alpha_parseopt,	alpha_setboot,	alpha_clearboot },
 	{ "i386",	no_parseopt,	no_setboot,	no_clearboot },
+	{ "macppc",	no_parseopt,	macppc_setboot,	macppc_clearboot },
 	{ "pmax",	pmax_parseopt,	pmax_setboot,	pmax_clearboot },
 	{ "shark",	no_parseopt,	no_setboot,	no_clearboot },
 	{ "sparc",	no_parseopt,	sparc_setboot,	sparc_clearboot },
