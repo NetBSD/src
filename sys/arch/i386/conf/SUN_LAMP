@@ -15,7 +15,7 @@ options		FDESC,KERNFS
 options		KTRACE
 options		SCSI
 
-config		bsd	root on sd0 swap on sd0
+config		netbsd	root on sd0 swap on sd0
 
 controller	isa0
 controller	fdc0	at isa? port "IO_FD1" bio irq 6 drq 2 vector fdintr

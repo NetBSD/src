@@ -16,7 +16,7 @@ options		PCFS,KERNFS
 options		SCSI
 options		DDB
 
-config		bsd	root on sd0 swap on sd0
+config		netbsd	root on sd0 swap on sd0
 
 controller	isa0
 controller	aha0	at isa? port "IO_AHA0" bio irq 11 drq 5 vector ahaintr

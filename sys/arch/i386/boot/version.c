@@ -29,7 +29,10 @@
 /*
  * HISTORY
  * $Log: version.c,v $
- * Revision 1.2  1993/04/28 05:32:55  cgd
+ * Revision 1.3  1993/04/28 06:37:58  cgd
+ * bsd->netbsd
+ *
+ * Revision 1.2  1993/04/28  05:32:55  cgd
  * new kernel name is "bsd"  also, add "o*" to list of kernels to boot.
  *
  * Revision 1.1  1993/03/21  18:08:26  cgd
@@ -79,7 +82,7 @@ struct exec head;
 int argv[10], esym;
 char *name;
 char *names[] = {
-	"/bsd", "/obsd", "/bsd.old",
+	"/netbsd", "/onetbsd", "/netbsd.old",
 	"/386bsd", "/o386bsd", "/386bsd.old",
 	"/vmunix", "/ovmunix", "/vmunix.old"
 };
@@ -90,7 +93,7 @@ boot(drive)
 int drive;
 {
 	int loadflags, currname = 0;
-	printf("\n>> 386bsd BOOT @ 0x%x: %d/%d k of memory  [20/9/92]\n",
+	printf("\n>> NetBSD BOOT @ 0x%x: %d/%d k of memory  [27/4/93]\n",
 		ouraddr,
 		argv[7] = memsize(0),
 		argv[8] = memsize(1));
