@@ -42,6 +42,7 @@ noinst_LIBRARIES = libcvs.a
 # matching?)
 libcvs_a_SOURCES = \
 	argmatch.c \
+	ftruncate.c \
 	getdate.y \
 	getline.c \
 	getopt.c \
@@ -56,7 +57,7 @@ libcvs_a_SOURCES = \
 	yesno.c \
 	getline.h \
 	getopt.h \
-	getpagesize.h \
+	fnmatch.h \
 	md5.h \
 	regex.h \
 	savecwd.h \
@@ -68,9 +69,7 @@ libcvs_a_SOURCES = \
 ##     dup2.c
 ##     fncase.c
 ##     fnmatch.c
-##     fnmatch.h
-##     ftruncate.c
-##     gethostname.c
+##     hostname.c
 ##     memmove.c
 ##     mkdir.c
 ##     rename.c
