@@ -1,4 +1,4 @@
-/*	$NetBSD: idrp_usrreq.c,v 1.14 2004/04/19 05:16:45 matt Exp $	*/
+/*	$NetBSD: idrp_usrreq.c,v 1.15 2004/04/25 21:13:13 matt Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: idrp_usrreq.c,v 1.14 2004/04/19 05:16:45 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: idrp_usrreq.c,v 1.15 2004/04/25 21:13:13 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -117,13 +117,7 @@ bad:		m_freem(m);
 }
 
 int
-#if __STDC__
 idrp_output(struct mbuf *m, ...)
-#else
-idrp_output(m, va_alist)
-	struct mbuf    *m;
-	va_dcl
-#endif
 {
 	struct sockaddr_iso *siso;
 	int             s = splsoftnet(), i;
