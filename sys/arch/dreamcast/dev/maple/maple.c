@@ -1,4 +1,4 @@
-/*	$NetBSD: maple.c,v 1.18 2002/10/01 03:03:34 thorpej Exp $	*/
+/*	$NetBSD: maple.c,v 1.19 2002/10/02 15:45:16 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2001 Marcus Comstedt
@@ -93,7 +93,7 @@ int	maple_internal_ioctl(struct maple_softc *,  int, int, u_long, caddr_t,
 int	maple_polling = 0;	/* Are we polling?  (Debugger mode) */
 
 CFATTACH_DECL(maple, sizeof(struct maple_softc),
-    maplematch, mapleattach, NULL, NULL)
+    maplematch, mapleattach, NULL, NULL);
 
 extern struct cfdriver maple_cd;
 

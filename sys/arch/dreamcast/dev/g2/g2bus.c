@@ -1,4 +1,4 @@
-/*	$NetBSD: g2bus.c,v 1.6 2002/10/01 03:04:43 thorpej Exp $	*/
+/*	$NetBSD: g2bus.c,v 1.7 2002/10/02 15:45:15 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2001 Marcus Comstedt
@@ -47,7 +47,7 @@ void	g2busattach(struct device *, struct device *, void *);
 int	g2busprint(void *, const char *);
 
 CFATTACH_DECL(g2bus, sizeof(struct g2bus_softc),
-    g2busmatch, g2busattach, NULL, NULL)
+    g2busmatch, g2busattach, NULL, NULL);
 
 int	g2bussearch(struct device *, struct cfdata *, void *);
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: lmcaudio.c,v 1.9 2002/10/01 03:10:14 thorpej Exp $	*/
+/*	$NetBSD: lmcaudio.c,v 1.10 2002/10/02 15:45:12 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1996, Danny C Tsen.
@@ -109,7 +109,7 @@ void lmcaudio_shutdown	__P((void));
 
 
 CFATTACH_DECL(lmcaudio, sizeof(struct lmcaudio_softc),
-    lmcaudio_probe, lmcaudio_attach, NULL, NULL)
+    lmcaudio_probe, lmcaudio_attach, NULL, NULL);
 
 int curr_rate = 11;
 

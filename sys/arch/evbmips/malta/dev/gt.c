@@ -1,4 +1,4 @@
-/*	$NetBSD: gt.c,v 1.4 2002/10/01 04:23:55 thorpej Exp $	*/
+/*	$NetBSD: gt.c,v 1.5 2002/10/02 15:45:17 thorpej Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -89,7 +89,7 @@ static void	gt_attach(struct device *, struct device *, void *);
 static int	gt_print(void *aux, const char *pnp);
 
 CFATTACH_DECL(gt, sizeof(struct device),
-    gt_match, gt_attach, NULL, NULL)
+    gt_match, gt_attach, NULL, NULL);
 
 static int
 gt_match(parent, match, aux)

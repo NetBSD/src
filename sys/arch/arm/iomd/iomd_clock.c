@@ -1,4 +1,4 @@
-/*	$NetBSD: iomd_clock.c,v 1.9 2002/10/01 03:10:13 thorpej Exp $	*/
+/*	$NetBSD: iomd_clock.c,v 1.10 2002/10/02 15:45:12 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1994-1997 Mark Brinicombe.
@@ -85,7 +85,7 @@ int clockhandler	__P((void *));
 int statclockhandler	__P((void *));
 
 CFATTACH_DECL(clock, sizeof(struct clock_softc),
-    clockmatch, clockattach, NULL, NULL)
+    clockmatch, clockattach, NULL, NULL);
 
 /*
  * int clockmatch(struct device *parent, void *match, void *aux)

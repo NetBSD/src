@@ -1,4 +1,4 @@
-/*	$NetBSD: vidcconsole.c,v 1.6 2002/10/01 04:25:30 thorpej Exp $	*/
+/*	$NetBSD: vidcconsole.c,v 1.7 2002/10/02 15:45:14 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1996 Mark Brinicombe
@@ -107,7 +107,7 @@ vidcconsole_attach(parent, self, aux)
 }
 
 CFATTACH_DECL(vidcconsole, sizeof (struct vidcconsole_softc),
-    vidcconsole_probe, vidcconsole_attach, NULL, NULL)
+    vidcconsole_probe, vidcconsole_attach, NULL, NULL);
 
 extern struct cfdriver vidcconsole_cd;
 
