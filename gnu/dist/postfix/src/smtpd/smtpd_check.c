@@ -1021,17 +1021,17 @@ static int permit_auth_destination(SMTPD_STATE *state, char *recipient)
     domain += 1;
 
     /*
+     * Skip source-routed non-local or virtual mail (uncertain destination).
+     */
+    if (var_allow_untrust_route == 0 && (reply->flags & RESOLVE_FLAG_ROUTED))
+	return (SMTPD_CHECK_DUNNO);
+
+    /*
      * Permit final delivery: the destination matches mydestination, 
      * virtual_maps, or virtual_mailbox_maps.
      */
     if (resolve_final(state, recipient, domain))
 	return (SMTPD_CHECK_OK);
-
-    /*
-     * Skip source-routed mail (uncertain destination).
-     */
-    if (var_allow_untrust_route == 0 && (reply->flags & RESOLVE_FLAG_ROUTED))
-	return (SMTPD_CHECK_DUNNO);
 
     /*
      * Permit if the destination matches the relay_domains list.
@@ -1281,17 +1281,21 @@ static int permit_mx_backup(SMTPD_STATE *state, const char *recipient)
     if ((domain = strrchr(CONST_STR(reply->recipient), '@')) == 0)
 	return (SMTPD_CHECK_OK);
     domain += 1;
+
+    /*
+     * Skip source-routed non-local or virtual mail (uncertain destination).
+     */
+    if (var_allow_untrust_route == 0 && (reply->flags & RESOLVE_FLAG_ROUTED))
+	return (SMTPD_CHECK_DUNNO);
+
+    /*
+     * The destination is local, or it is a local virtual destination.
+     */
     if (resolve_final(state, recipient, domain))
 	return (SMTPD_CHECK_OK);
 
     if (msg_verbose)
 	msg_info("%s: not local: %s", myname, recipient);
-
-    /*
-     * Skip source-routed mail (uncertain destination).
-     */
-    if (var_allow_untrust_route == 0 && (reply->flags & RESOLVE_FLAG_ROUTED))
-	return (SMTPD_CHECK_DUNNO);
 
     /*
      * Skip numerical forms that didn't match the local system.
@@ -1594,12 +1598,16 @@ static int check_domain_access(SMTPD_STATE *state, const char *table,
 
     /*
      * Try the name and its parent domains. Including top-level domains.
+     * 
+     * Helo names can end in ".". The test below avoids lookups of the empty
+     * key, because Berkeley DB cannot deal with it. [Victor Duchovni, Morgan
+     * Stanley].
      */
 #define CHK_DOMAIN_RETURN(x,y) { *found = y; myfree(low_domain); return(x); }
 
     if ((dict = dict_handle(table)) == 0)
 	msg_panic("%s: dictionary not found: %s", myname, table);
-    for (name = low_domain; /* void */ ; name = next) {
+    for (name = low_domain; *name != 0; name = next) {
 	if (flags == 0 || (flags & dict->flags) != 0) {
 	    if ((value = dict_get(dict, name)) != 0)
 		CHK_DOMAIN_RETURN(check_table_result(state, table, value,
@@ -1756,16 +1764,15 @@ static int check_mail_access(SMTPD_STATE *state, const char *table,
 	{ if (bare_addr) myfree(bare_addr); return(x); }
 
     /*
-     * Source-routed, non-local, recipient addresses are too suspicious for
-     * returning an "OK" result. The complicated expression below was brought
-     * to you by the keyboard of Victor Duchovni, Morgan Stanley and hacked
-     * up a bit by Wietse.
+     * Source-routed (non-local or virtual) recipient addresses are too
+     * suspicious for returning an "OK" result. The complicated expression
+     * below was brought to you by the keyboard of Victor Duchovni, Morgan
+     * Stanley and hacked up a bit by Wietse.
      */
-#define SUSPICIOUS(domain, reply, state, reply_name, reply_class) \
+#define SUSPICIOUS(reply, reply_class) \
 	(var_allow_untrust_route == 0 \
 	&& (reply->flags & RESOLVE_FLAG_ROUTED) \
-	&& strcmp(reply_class, SMTPD_NAME_RECIPIENT) == 0 \
-	&& !resolve_final(state, reply_name, domain))
+	&& strcmp(reply_class, SMTPD_NAME_RECIPIENT) == 0)
 
     /*
      * Look up user+foo@domain if the address has an extension, user@domain
@@ -1775,7 +1782,7 @@ static int check_mail_access(SMTPD_STATE *state, const char *table,
 			       found, reply_name, reply_class, def_acl)) != 0
 	|| *found)
 	CHECK_MAIL_ACCESS_RETURN(status == SMTPD_CHECK_OK
-	      && SUSPICIOUS(domain, reply, state, reply_name, reply_class) ?
+				 && SUSPICIOUS(reply, reply_class) ?
 				 SMTPD_CHECK_DUNNO : status);
 
     /*
@@ -1786,7 +1793,7 @@ static int check_mail_access(SMTPD_STATE *state, const char *table,
 			      found, reply_name, reply_class, def_acl)) != 0
 	    || *found)
 	    CHECK_MAIL_ACCESS_RETURN(status == SMTPD_CHECK_OK
-	      && SUSPICIOUS(domain, reply, state, reply_name, reply_class) ?
+				     && SUSPICIOUS(reply, reply_class) ?
 				     SMTPD_CHECK_DUNNO : status);
 
     /*
@@ -1796,7 +1803,7 @@ static int check_mail_access(SMTPD_STATE *state, const char *table,
 			      found, reply_name, reply_class, def_acl)) != 0
 	|| *found)
 	CHECK_MAIL_ACCESS_RETURN(status == SMTPD_CHECK_OK
-	      && SUSPICIOUS(domain, reply, state, reply_name, reply_class) ?
+				 && SUSPICIOUS(reply, reply_class) ?
 				 SMTPD_CHECK_DUNNO : status);
 
     /*
@@ -1810,7 +1817,7 @@ static int check_mail_access(SMTPD_STATE *state, const char *table,
     myfree(local_at);
     if (status != 0 || *found)
 	CHECK_MAIL_ACCESS_RETURN(status == SMTPD_CHECK_OK
-	      && SUSPICIOUS(domain, reply, state, reply_name, reply_class) ?
+				 && SUSPICIOUS(reply, reply_class) ?
 				 SMTPD_CHECK_DUNNO : status);
 
     /*
@@ -1824,7 +1831,7 @@ static int check_mail_access(SMTPD_STATE *state, const char *table,
 	myfree(local_at);
 	if (status != 0 || *found)
 	    CHECK_MAIL_ACCESS_RETURN(status == SMTPD_CHECK_OK
-	      && SUSPICIOUS(domain, reply, state, reply_name, reply_class) ?
+				     && SUSPICIOUS(reply, reply_class) ?
 				     SMTPD_CHECK_DUNNO : status);
     }
 

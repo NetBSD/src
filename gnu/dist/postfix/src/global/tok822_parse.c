@@ -107,6 +107,7 @@
 
 /* Global library. */
 
+#include "quote_822_local.h"
 #include "tok822.h"
 
  /*
@@ -221,6 +222,7 @@ VSTRING *tok822_internalize(VSTRING *vp, TOK822 *tree, int flags)
 
 VSTRING *tok822_externalize(VSTRING *vp, TOK822 *tree, int flags)
 {
+    VSTRING *tmp;
     TOK822 *tp;
 
     if (flags & TOK822_STR_WIPE)
@@ -235,8 +237,20 @@ VSTRING *tok822_externalize(VSTRING *vp, TOK822 *tree, int flags)
 		continue;
 	    }
 	    break;
+
+	    /*
+	     * XXX In order to correctly externalize an address, it is not
+	     * sufficient to quote individual atoms. There are higher-level
+	     * rules that say when an address localpart needs to be quoted.
+	     * We wing it with the quote_822_local() routine, which ignores
+	     * the issue of atoms in the domain part that would need quoting.
+	     */
 	case TOK822_ADDR:
-	    tok822_externalize(vp, tp->head, TOK822_STR_NONE);
+	    tmp = vstring_alloc(100);
+	    tok822_internalize(tmp, tp->head, TOK822_STR_TERM);
+	    quote_822_local_flags(vp, vstring_str(tmp),
+				  QUOTE_FLAG_8BITCLEAN | QUOTE_FLAG_APPEND);
+	    vstring_free(tmp);
 	    break;
 	case TOK822_ATOM:
 	case TOK822_COMMENT:

@@ -1,3 +1,5 @@
+#	$NetBSD: main.cf,v 1.4 2002/06/08 22:49:51 itojun Exp $
+#
 # Global Postfix configuration file. This file lists only a subset
 # of all 100+ parameters. See the sample-xxx.cf files for a full list.
 # 
@@ -65,15 +67,15 @@ mail_owner = postfix
 # from gethostname(). $myhostname is used as a default value for many
 # other configuration parameters.
 #
-#myhostname = host.domain.name
-#myhostname = virtual.domain.name
+#myhostname = host.domain.tld
+#myhostname = virtual.domain.tld
 
 # The mydomain parameter specifies the local internet domain name.
 # The default is to use $myhostname minus the first component.
 # $mydomain is used as a default value for many other configuration
 # parameters.
 #
-#mydomain = domain.name
+#mydomain = domain.tld
 
 # SENDING MAIL
 # 
@@ -225,9 +227,10 @@ mail_owner = postfix
 # REJECTING UNKNOWN LOCAL USERS
 #
 # The local_recipient_maps parameter specifies optional lookup tables
-# with all users that are local with respect to $mydestination and
-# $inet_interfaces.  If this parameter is defined, then the SMTP server
-# will reject mail for unknown local users.
+# with all names (not addresses) of users that are local with respect
+# to $mydestination and $inet_interfaces.  If this parameter is
+# defined, then the SMTP server will reject mail for unknown local
+# users.
 #
 # If you use the default Postfix local delivery agent for local
 # delivery, uncomment the definition below.
@@ -416,6 +419,7 @@ mail_owner = postfix
 # REJECT text.... The text is sent to the originator.
 # IGNORE the header line is silently discarded.
 # WARN   the header is logged (not rejected) with a warning message.
+# WARN text... as above, and the text is logged, too.
 #
 # These patterns do not apply to MIME headers in the message body.
 #
@@ -427,14 +431,14 @@ mail_owner = postfix
 #
 # Postfix maintains per-destination logfiles with information about
 # deferred mail, so that mail can be flushed quickly with the SMTP
-# "ETRN domain.name" command, or by executing "sendmail -qRdomain.name".
+# "ETRN domain.tld" command, or by executing "sendmail -qRdomain.tld".
 # 
 # By default, Postfix maintains deferred mail logfile information
 # only for destinations that Postfix is willing to relay to (as
 # specified in the relay_domains parameter). For other destinations,
 # Postfix attempts to deliver ALL queued mail after receiving the
-# SMTP "ETRN domain.name" command, or after execution of "sendmail
-# -qRdomain.name". This can be slow when a lot of mail is queued.
+# SMTP "ETRN domain.tld" command, or after execution of "sendmail
+# -qRdomain.tld". This can be slow when a lot of mail is queued.
 # 
 # The fast_flush_domains parameter controls what destinations are
 # eligible for this "fast ETRN/sendmail -qR" service.

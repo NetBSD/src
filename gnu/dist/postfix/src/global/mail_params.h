@@ -742,9 +742,9 @@ extern char *var_smtp_bind_addr;
 #define DEF_SMTP_RAND_ADDR	1
 extern bool var_smtp_rand_addr;
 
-#define VAR_SMTP_BREAK_LINES	"smtp_break_lines"
-#define DEF_SMTP_BREAK_LINES	1
-extern bool var_smtp_break_lines;
+#define VAR_SMTP_LINE_LIMIT	"smtp_line_length_limit"
+#define DEF_SMTP_LINE_LIMIT	990
+extern int var_smtp_line_limit;
 
 #define VAR_SMTP_PIX_THRESH	"smtp_pix_workaround_threshold_time"
 #define DEF_SMTP_PIX_THRESH	"500s"
@@ -1275,7 +1275,7 @@ extern int var_fflush_refresh;
 extern char *var_import_environ;
 
 #define VAR_EXPORT_ENVIRON		"export_environment"
-#define DEF_EXPORT_ENVIRON		"TZ"
+#define DEF_EXPORT_ENVIRON		"TZ MAIL_CONFIG"
 extern char *var_export_environ;
 
  /*
@@ -1418,6 +1418,17 @@ extern int var_fault_inj_code;
 #ifndef DEF_README_DIR
 #define DEF_README_DIR			"no"
 #endif
+
+ /*
+  * Safety: resolve the unquoted address (technically incorrect), instead of
+  * resolving the quoted address (technically incorrect). This prevents mail
+  * relay loopholes with "user@domain"@domain when you're relaying mail for a
+  * Sendmail system or when receiving mail for a local virtual domain with an
+  * @domain catch-all rule.
+  */
+#define VAR_RESOLVE_DEQUOTED		"resolve_dequoted_address"
+#define DEF_RESOLVE_DEQUOTED		1
+extern bool var_resolve_dequoted;
 
 /* LICENSE
 /* .ad
