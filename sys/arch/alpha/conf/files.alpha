@@ -1,4 +1,4 @@
-#	$NetBSD: files.alpha,v 1.15 1996/05/01 20:26:39 cgd Exp $
+#	$NetBSD: files.alpha,v 1.16 1996/05/01 23:22:24 cgd Exp $
 #
 # alpha-specific configuration info
 
@@ -71,7 +71,12 @@ device	ioasic { offset = -1 }
 attach	ioasic at tc
 file	arch/alpha/tc/ioasic.c		ioasic
 
-# Smart Frame buffer (XXX NOT YET SUPPORTED)
+# Color Frame buffer
+device	cfb: raster, wsconsdev
+attach	cfb at tc
+file	arch/alpha/tc/cfb.c		cfb
+
+# Smart Frame buffer
 device	sfb: raster, wsconsdev
 attach	sfb at tc
 file	arch/alpha/tc/sfb.c		sfb
