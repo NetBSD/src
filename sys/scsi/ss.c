@@ -1,4 +1,4 @@
-/*	$NetBSD: ss.c,v 1.5 1996/02/18 23:21:48 mycroft Exp $	*/
+/*	$NetBSD: ss.c,v 1.6 1996/02/19 00:06:07 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1995 Kenneth Stailey.  All rights reserved.
@@ -260,9 +260,6 @@ ssminphys(bp)
 
 	(ss->sc_link->adapter->scsi_minphys)(bp);
 
-	if (bp->b_bcount > ss->sio.scan_window_size)
-		bp->b_bcount = ss->sio.scan_window_size;
-
 	/*
 	 * trim the transfer further for special devices this is
 	 * because some scanners only read multiples of a line at a
@@ -315,6 +312,9 @@ ssstrategy(bp)
 
 	SC_DEBUG(ss->sc_link, SDEV_DB1,
 	    ("ssstrategy %d bytes @ blk %d\n", bp->b_bcount, bp->b_blkno));
+
+	if (bp->b_bcount > ss->sio.scan_window_size)
+		bp->b_bcount = ss->sio.scan_window_size;
 
 	/*
 	 * If it's a null transfer, return immediatly
