@@ -1,4 +1,4 @@
-/*	$NetBSD: db_interface.c,v 1.5 2003/07/14 22:48:20 lukem Exp $	*/
+/*	$NetBSD: db_interface.c,v 1.6 2004/08/07 11:45:41 rearnsha Exp $	*/
 
 /* 
  * Copyright (c) 1996 Scott K. Stevens
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: db_interface.c,v 1.5 2003/07/14 22:48:20 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_interface.c,v 1.6 2004/08/07 11:45:41 rearnsha Exp $");
 
 #include "opt_ddb.h"
 
@@ -287,7 +287,7 @@ db_machine_init()
 	 * struct undefined_handler.
 	 */
 	db_uh.uh_handler = db_trapper;
-	install_coproc_handler_static(0, &db_uh);
+	install_coproc_handler_static(CORE_UNKNOWN_HANDLER, &db_uh);
 }
 
 u_int

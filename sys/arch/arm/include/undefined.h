@@ -1,4 +1,4 @@
-/*	$NetBSD: undefined.h,v 1.4 2001/12/20 01:20:23 thorpej Exp $	*/
+/*	$NetBSD: undefined.h,v 1.5 2004/08/07 11:45:41 rearnsha Exp $	*/
 
 /*
  * Copyright (c) 1995-1996 Mark Brinicombe.
@@ -55,6 +55,12 @@ typedef int (*undef_handler_t) __P((unsigned int, unsigned int, trapframe_t *, i
 #define FP_COPROC	1
 #define FP_COPROC2	2
 #define MAX_COPROCS	16
+
+/* 
+ * Not really a co-processor, but used by the undefined instruction handler
+ * to catch undefined instructions in the core instruction set.
+ */
+#define CORE_UNKOWN_HANDLER	MAX_COPROCS
 
 /* Prototypes for undefined.c */
 
