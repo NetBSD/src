@@ -1,4 +1,4 @@
-/*	$NetBSD: cmds.c,v 1.26 2003/08/07 11:15:57 agc Exp $	*/
+/*	$NetBSD: cmds.c,v 1.27 2004/07/03 18:54:47 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1980, 1992, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)cmds.c	8.2 (Berkeley) 4/29/95";
 #endif
-__RCSID("$NetBSD: cmds.c,v 1.26 2003/08/07 11:15:57 agc Exp $");
+__RCSID("$NetBSD: cmds.c,v 1.27 2004/07/03 18:54:47 mycroft Exp $");
 #endif /* not lint */
 
 #include <ctype.h>
@@ -53,14 +53,9 @@ command(char *cmd)
 	struct command *c;
 	struct mode *p;
 	char *args;
-	sigset_t set;
 
 	if (cmd[0] == '\0')
 		return;
-
-	sigemptyset(&set);
-	sigaddset(&set, SIGALRM);
-	sigprocmask(SIG_BLOCK, &set, NULL);
 
 	args = cmd;
 	cmd = strsep(&args, " \t");
@@ -95,7 +90,7 @@ command(char *cmd)
 
 	error("%s: Unknown command.", cmd);
 done:
-	sigprocmask(SIG_UNBLOCK, &set, NULL);
+	;
 }
 
 void
