@@ -1,4 +1,4 @@
-/*	$NetBSD: audio.c,v 1.4 1999/03/27 17:46:00 mrg Exp $	*/
+/*	$NetBSD: audio.c,v 1.5 1999/03/29 04:49:49 mrg Exp $	*/
 
 /*
  * Copyright (c) 1999 Matthew R. Green
@@ -220,7 +220,7 @@ printf("fmt header is:\n\t%d\ttag\n\t%d\tchannels\n\t%d\tsample rate\n\t%d\tavg_
 		default:
 			return (AUDIO_EWAVBADPCM);
 		}
-		newenc = AUDIO_ENCODING_ULINEAR;;
+		newenc = AUDIO_ENCODING_ULINEAR_LE;
 		break;
 	case WAVE_FORMAT_ALAW:
 		newenc = AUDIO_ENCODING_ALAW;
