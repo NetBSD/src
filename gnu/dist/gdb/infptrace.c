@@ -165,10 +165,14 @@ child_resume (pid, step, signal)
      continue request (by setting breakpoints on all possible successor
      instructions), so we don't have to worry about that here.  */
 
-  if (step)
+  if (step) {
+#ifdef NO_SINGLE_STEP
+    abort();	/* Make sure this doesn't happen. */
+#else	/* NO_SINGLE_STEP */
     ptrace (PT_STEP,     pid, (PTRACE_ARG3_TYPE) 1,
 	    target_signal_to_host (signal));
-  else
+#endif	/* NO_SINGLE_STEP */
+  } else
     ptrace (PT_CONTINUE, pid, (PTRACE_ARG3_TYPE) 1,
 	    target_signal_to_host (signal));
 
