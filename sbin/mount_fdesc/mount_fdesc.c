@@ -1,5 +1,4 @@
 /*
- * Copyright (c) 1993 Christoher G. Demetriou
  * Copyright (c) 1990, 1992 Jan-Simon Pendry
  * All rights reserved.
  *
@@ -34,7 +33,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * $Id: mount_fdesc.c,v 1.1 1993/03/28 03:19:41 cgd Exp $
+ *	$Id: mount_fdesc.c,v 1.2 1993/07/30 01:00:28 mycroft Exp $
  */
 
 #include <stdio.h>
@@ -51,7 +50,7 @@ char *v[];
 	extern int optind;
 	int ch;
 	int usage = 0;
-	int mounttype, mntflags;
+	int mntflags;
 	char *dummy;
 	char *mountpt;
 	int rc;
@@ -62,23 +61,6 @@ char *v[];
 		pname = v[0];
 	else
 		pname++;
-
-#ifdef MOUNT_DEVFS
-	if (!strcmp(pname, "devfs"))
-		mounttype = MOUNT_DEVFS;
-	else
-#endif
-#ifdef MOUNT_FDESC
-	if (!strcmp(pname, "fdesc"))
-		mounttype = MOUNT_FDESC;
-        else
-#endif
-#ifdef MOUNT_KERNFS
-	if (!strcmp(pname, "kernfs"))
-		mounttype = MOUNT_KERNFS;
-        else
-#endif
-		usage++;
 
 	/*
 	 * Crack -F option
@@ -101,20 +83,7 @@ char *v[];
 		usage++;
 
 	if (usage) {
-		fputs("usage:\n", stderr);
-#if defined(MOUNT_DEVFS) || defined(MOUNT_FDESC) || defined(MOUNT_KERNFS)
-#ifdef MOUNT_DEVFS
-		fputs("   mount_devfs [ fsoptions ] devfs mount-point\n", stderr);
-#endif
-#ifdef MOUNT_FDESC
-		fputs("   mount_fdesc [ fsoptions ] fdesc mount-point\n", stderr);
-#endif
-#ifdef MOUNT_KERNFS
-		fputs("   mount_kernfs [ fsoptions ] kernfs mount-point\n", stderr);
-#endif
-#else /* none of the filesystem types defined */
-		fputs("   no valid uses!!!\n", stderr);
-#endif
+		fputs("usage: mount_fdesc [ fsoptions ] fdesc mount-point\n", stderr);
 		exit(1);
 	}
 
@@ -124,7 +93,7 @@ char *v[];
 	dummy = v[optind];
 	mountpt = v[optind+1];
 
-	rc = mount(mounttype, mountpt, mntflags, (caddr_t) 0);
+	rc = mount(MOUNT_FDESC, mountpt, mntflags, (caddr_t) 0);
 	if (rc < 0) {
 		perror(pname);
 		exit(1);
