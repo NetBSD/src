@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_icmp.c,v 1.53 2000/07/27 11:36:14 itojun Exp $	*/
+/*	$NetBSD: ip_icmp.c,v 1.54 2000/07/28 04:06:53 itojun Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -154,7 +154,6 @@ static int	ip_next_mtu __P((int, int));
 /*static*/ int	ip_next_mtu __P((int, int));
 #endif
 
-extern	struct timeval icmperrratelim;
 extern int icmperrppslim;
 static int icmperrpps_count = 0;
 static struct timeval icmperrppslim_last;
@@ -834,7 +833,7 @@ icmp_sysctl(name, namelen, oldp, oldlenp, newp, newlen)
 	void *newp;
 	size_t newlen;
 {
-	int arg, error, s;
+	int arg, error;
 
 	/* All sysctl names at this level are terminal. */
 	if (namelen != 1)
@@ -844,24 +843,6 @@ icmp_sysctl(name, namelen, oldp, oldlenp, newp, newlen)
 	{
 	case ICMPCTL_MASKREPL:
 		error = sysctl_int(oldp, oldlenp, newp, newlen, &icmpmaskrepl);
-		break;
-	case ICMPCTL_ERRRATELIMIT:
-		/*
-		 * The sysctl specifies the rate in usec-between-icmp,
-		 * so we must convert from/to a timeval.
-		 */
-		arg = (icmperrratelim.tv_sec * 1000000) +
-		    icmperrratelim.tv_usec;
-		error = sysctl_int(oldp, oldlenp, newp, newlen, &arg);
-		if (error)
-			break;
-		if (arg >= 0) {
-			s = splsoftnet();
-			icmperrratelim.tv_sec = arg / 1000000;
-			icmperrratelim.tv_usec = arg % 1000000;
-			splx(s);
-		} else
-			error = EINVAL;
 		break;
 	case ICMPCTL_RETURNDATABYTES:
 		arg = icmpreturndatabytes;
@@ -1041,20 +1022,10 @@ icmp_ratelimit(dst, type, code)
 	const int type;			/* not used at this moment */
 	const int code;			/* not used at this moment */
 {
-	static struct timeval icmperrratelim_last;
 
 	/* PPS limit */
 	if (!ppsratecheck(&icmperrppslim_last, &icmperrpps_count,
 	    icmperrppslim)) {
-		/* The packet is subject to rate limit */
-		return 1;
-	}
-
-	/*
-	 * ratecheck() returns true if it is okay to send.  We return
-	 * true if it is not okay to send.
-	 */
-	if (!ratecheck(&icmperrratelim_last, &icmperrratelim)) {
 		/* The packet is subject to rate limit */
 		return 1;
 	}
