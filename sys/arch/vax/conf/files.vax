@@ -1,4 +1,4 @@
-#       $NetBSD: files.vax,v 1.41 1998/10/06 04:04:31 matt Exp $
+#       $NetBSD: files.vax,v 1.42 1998/10/18 18:49:04 ragge Exp $
 #
 # new style config file for vax architecture
 #
@@ -67,7 +67,6 @@ device	uba { csr }
 attach	uba at mainbus with uba_mainbus
 attach	uba at sbi with uba_sbi
 attach	uba at cmi with uba_cmi
-attach	uba at bi with uba_bi
 file	arch/vax/uba/uba.c		uba
 
 device	mtc: mscp
@@ -89,6 +88,10 @@ file	arch/vax/if/if_qe.c		qe needs-flag
 device	ni: ifnet, ether, arp
 attach	ni at bi
 file	arch/vax/bi/ni.c		ni needs-flag
+
+# DWBUA BI-Unibus adapter
+attach	uba at bi with uba_bi
+file	arch/vax/bi/uba_bi.c		uba_bi
 
 # TS11 at UBA
 device	ts: tape

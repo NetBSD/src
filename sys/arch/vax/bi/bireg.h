@@ -1,4 +1,4 @@
-/*	$NetBSD: bireg.h,v 1.3 1998/08/31 18:43:29 ragge Exp $	*/
+/*	$NetBSD: bireg.h,v 1.4 1998/10/18 18:47:18 ragge Exp $	*/
 /*
  * Copyright (c) 1988 Regents of the University of California.
  * All rights reserved.
@@ -44,7 +44,8 @@
 /*
  * BI node addresses
  */
-#define	BI_BASE(bi)	(0x20000000 + (bi) * 0x2000000)
+#define	BI_NODE(node)	(0x2000 * (node))
+#define	BI_BASE(bi,nod)	((0x20000000 + (bi) * 0x2000000) + BI_NODE(nod))
 #define	MAXNBI		16	/* Spec says there can be 16 anyway */
 #define	NNODEBI		16	/* 16 nodes per BI */
 

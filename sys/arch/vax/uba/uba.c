@@ -1,4 +1,4 @@
-/*	$NetBSD: uba.c,v 1.35 1998/10/06 04:04:31 matt Exp $	   */
+/*	$NetBSD: uba.c,v 1.36 1998/10/18 18:51:29 ragge Exp $	   */
 /*
  * Copyright (c) 1996 Jonathan Stone.
  * Copyright (c) 1994, 1996 Ludd, University of Lule}, Sweden.
@@ -72,8 +72,6 @@ static	int ubasearch __P((struct device *, struct cfdata *, void *));
 static	int ubaprint __P((void *, const char *));
 static	void ubastray __P((int));
 static	void ubainitmaps __P((struct uba_softc *));
-static	void uba_attach __P((struct uba_softc *, unsigned long));
-int ubasetup __P((struct uba_softc *, struct buf *, int));
 
 extern struct cfdriver uba_cd;
 
@@ -168,20 +166,17 @@ dw780_beforescan(sc)
 {
 	volatile int *hej = &sc->uh_uba->uba_sr;
 
-	if (sc->uh_type == DW780) {
-		*hej = *hej;
-		sc->uh_uba->uba_cr = UBACR_IFS|UBACR_BRIE;
-	}
+	*hej = *hej;
+	sc->uh_uba->uba_cr = UBACR_IFS|UBACR_BRIE;
 }
 
 void
 dw780_afterscan(sc)
 	struct uba_softc *sc;
 {
-	if (sc->uh_type == DW780)
-		sc->uh_uba->uba_cr = UBACR_IFS | UBACR_BRIE |
-		    UBACR_USEFIE | UBACR_SUEFIE |
-		    (sc->uh_uba->uba_cr & 0x7c000000);
+	sc->uh_uba->uba_cr = UBACR_IFS | UBACR_BRIE |
+	    UBACR_USEFIE | UBACR_SUEFIE |
+	    (sc->uh_uba->uba_cr & 0x7c000000);
 }
 
 /*
@@ -194,7 +189,7 @@ dw780_errchk(sc)
 {
 	volatile int *hej = &sc->uh_uba->uba_sr;
 
-	if (sc->uh_type == DW780 && *hej) {
+	if (*hej) {
 		*hej = *hej;
 		return 1;
 	}
@@ -466,31 +461,6 @@ qba_init(sc)
 	mtpr(0, PR_IUR);
 	DELAY(500000);
 	qba_beforescan(sc);
-}
-#endif
-#ifdef DWBUA
-int	bua_match __P((struct device *, void *, void *));
-void	bua_attach __P((struct device *, struct device *, void *));
-
-struct	cfattach uba_bi_ca = {
-	sizeof(struct uba_softc), bua_match, bua_attach
-};
-
-bua_beforescan(sc)
-	struct uba_softc *sc;
-{
-	if (sc->uh_type == DWBUA)
-		BUA(ubar)->bua_offset = (int)sc->uh_vec - (int)&scb[0];
-}
-
-void
-bua_init(sc)
-	struct uba_softc *sc;
-{
-	BUA(uba)->bua_csr |= BUACSR_UPI;
-	/* give devices time to recover from power fail */
-	DELAY(500000);
-	break;
 }
 #endif
 #ifdef DW730

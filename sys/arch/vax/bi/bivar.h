@@ -1,4 +1,4 @@
-/*	$NetBSD: bivar.h,v 1.1 1996/07/19 14:26:54 ragge Exp $ */
+/*	$NetBSD: bivar.h,v 1.2 1998/10/18 18:47:18 ragge Exp $ */
 /*
  * Copyright (c) 1996 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -45,6 +45,7 @@ struct bi_softc {
  */
 struct bi_attach_args {
         struct bi_node *ba_node;
+        int ba_busnr;
         int ba_nodenr;
 	int ba_intcpu;	/* Mask of which cpus to interrupt */
 };
