@@ -1,4 +1,4 @@
-.\"	$NetBSD: fdc.4,v 1.2 1999/03/16 01:19:20 garbled Exp $
+.\"	$NetBSD: fdc.4,v 1.3 2002/01/15 01:24:46 wiz Exp $
 .\"
 .\" Copyright (c) 1998 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -69,6 +69,9 @@ either a double-density or a high-density medium.
 The driver found the controller, but was unable to allocate the
 amount of chip memory required for its DMA buffers.
 .El
+.Sh SEE ALSO
+.Xr fdformat 1 ,
+.Xr autoconf 4
 .Sh BUGS
 In order to detect a floppy disk drive's capability of using high-density
 media, a high-density diskette has to be inserted for the duration of the
@@ -81,6 +84,3 @@ driver supports neither the
 facility nor the
 .Pa Aq sys/fdio.h
 interface.
-.Sh SEE ALSO
-.Xr fdformat 1 ,
-.Xr autoconf 4
