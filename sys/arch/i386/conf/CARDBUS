@@ -1,4 +1,4 @@
-#	$NetBSD: CARDBUS,v 1.22 2000/08/21 07:39:42 itohy Exp $
+#	$NetBSD: CARDBUS,v 1.23 2000/09/20 18:27:04 thorpej Exp $
 #
 #	CARDBUS -- GENERIC + CardBus support
 #	from: GENERIC,v 1.358 2000/07/05 04:07:25 sommerfeld Exp
@@ -16,7 +16,7 @@ options 	I686_CPU
 
 # CPU-related options.
 options 	MATH_EMULATE	# floating point emulation
-#options 	VM86		# virtual 8086 emulation
+options 	VM86		# virtual 8086 emulation
 options 	USER_LDT	# user-settable LDT; used by WINE
 # eliminate delay no-ops in I/O; recommended on all but very old machines
 #options 	DUMMY_NOPS
