@@ -1,4 +1,4 @@
-/*	$NetBSD: dma.c,v 1.9 2003/02/10 11:43:28 tsutsui Exp $	*/
+/*	$NetBSD: dma.c,v 1.10 2003/02/10 15:19:44 tsutsui Exp $	*/
 /*	$OpenBSD: dma.c,v 1.5 1998/03/01 16:49:57 niklas Exp $	*/
 
 /*
@@ -123,7 +123,7 @@ picaDmaStart(sc, addr, size, datain)
 	/* Load new transfer parameters */
 	regs->dma_addr = sc->dma_va + va;
 	regs->dma_count = size;
-	regs->dma_mode = sc->mode & R4030_DMA_MODE;
+	regs->dma_mode = sc->mode & R4030_DMA_MODE_MASK;
 
 	sc->sc_active = 1;
 	if (datain == DMA_FROM_DEV) {
@@ -231,25 +231,5 @@ asc_dma_init(sc)
 	sc->dma_reg = (pDmaReg)R4030_SYS_DMA0_REGS;
 	sc->pte_size = (MAXPHYS / JAZZ_DMA_PAGE_SIZE) + 1;
 	sc->mode = R4030_DMA_MODE_160NS | R4030_DMA_MODE_16;
-	picaDmaTLBAlloc(sc);
-}
-/*
- *  dma_init..
- *	Called from fdc to set up dma
- */
-void
-fdc_dma_init(dma_softc_t *sc)
-{
-	sc->reset = picaDmaReset;
-	sc->enintr = picaDmaNull;
-	sc->start = picaDmaStart;
-	sc->map = picaDmaMap;
-	sc->isintr = (int(*)(struct dma_softc *))picaDmaNull;
-	sc->intr = (int(*)(struct dma_softc *))picaDmaNull;
-	sc->end = picaDmaEnd;
-
-	sc->dma_reg = (pDmaReg)jazzio_conf->jc_fdcdmareg;
-	sc->pte_size = (MAXPHYS / JAZZ_DMA_PAGE_SIZE) + 1;
-	sc->mode = R4030_DMA_MODE_160NS | R4030_DMA_MODE_8;
 	picaDmaTLBAlloc(sc);
 }
