@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_machdep.c,v 1.24 2000/12/20 16:53:50 scw Exp $	*/
+/*	$NetBSD: sys_machdep.c,v 1.24.8.1 2001/11/17 13:07:56 scw Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1993
@@ -42,6 +42,7 @@
 #include <sys/ioctl.h>
 #include <sys/file.h>
 #include <sys/time.h>
+#include <sys/lwp.h>
 #include <sys/proc.h>
 #include <sys/uio.h>
 #include <sys/kernel.h>
@@ -128,7 +129,8 @@ cachectl1(req, addr, len, p)
 			 */
 			if (!doall &&
 			    (pa == 0 || ((int)addr & PGOFSET) == 0)) {
-				if (pmap_extract(p->p_vmspace->vm_map.pmap,
+				if (pmap_extract(
+				    p->p_vmspace->vm_map.pmap,
 				    addr, &pa) == FALSE)
 					doall = 1;
 			}
@@ -249,8 +251,8 @@ dma_cachectl(addr, len)
 }
 
 int
-sys_sysarch(p, v, retval)
-	struct proc *p;
+sys_sysarch(l, v, retval)
+	struct lwp *l;
 	void *v;
 	int *retval;
 {

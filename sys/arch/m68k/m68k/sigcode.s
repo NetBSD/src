@@ -1,4 +1,4 @@
-/*	$NetBSD: sigcode.s,v 1.10 2000/11/26 11:47:25 jdolecek Exp $	*/
+/*	$NetBSD: sigcode.s,v 1.10.8.1 2001/11/17 13:07:53 scw Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -76,4 +76,16 @@ GLOBAL(sigcode)
 	moveq	#SYS_exit,%d0	| syscall == exit		(2 bytes)
 	trap	#0		| exit(errno)			(2 bytes)
 	.align	2
+
+/*
+ * Scheduler activations upcall trampoline
+ */
+GLOBAL(upcallcode)
+	movl	%sp@(SAF_UPCALL),%a0
+	jsr	%a0@
+	movl	#101,%sp@-	| Upcalls should not return
+	moveq	#SYS_exit,%d0
+	trap	#0
+	.align	2
+
 GLOBAL(esigcode)
