@@ -1,4 +1,4 @@
-/*	$NetBSD: atw.c,v 1.8 2003/11/02 01:55:40 dyoung Exp $	*/
+/*	$NetBSD: atw.c,v 1.9 2003/11/02 01:58:22 dyoung Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2000, 2002, 2003, 2004 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: atw.c,v 1.8 2003/11/02 01:55:40 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: atw.c,v 1.9 2003/11/02 01:58:22 dyoung Exp $");
 
 #include "bpfilter.h"
 
@@ -2162,7 +2162,7 @@ atw_recv_beacon(struct ieee80211com *ic, struct mbuf *m0,
 		printf("%s: atw_recv_beacon: bssid mismatch %s\n",
 		    sc->sc_dev.dv_xname, ether_sprintf(ni->ni_bssid));
 
-	if (sc->sc_opmode != IEEE80211_M_IBSS)
+	if (ic->ic_opmode != IEEE80211_M_IBSS)
 		return;
 
 	/* If we read TSFTL right before rollover, we read a TSF timer
