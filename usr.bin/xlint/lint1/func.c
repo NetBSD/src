@@ -1,4 +1,4 @@
-/*	$NetBSD: func.c,v 1.3 1995/10/02 17:08:38 jpo Exp $	*/
+/*	$NetBSD: func.c,v 1.4 1995/10/02 17:14:26 jpo Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -32,7 +32,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$NetBSD: func.c,v 1.3 1995/10/02 17:08:38 jpo Exp $";
+static char rcsid[] = "$NetBSD: func.c,v 1.4 1995/10/02 17:14:26 jpo Exp $";
 #endif
 
 #include <stdlib.h>
@@ -235,13 +235,16 @@ funcdef(fsym)
 		error(67);
 	}
 
-	fsym->s_def = fsym->s_def = DEF;
+	fsym->s_def = DEF;
 
 	if (fsym->s_scl == TYPEDEF) {
 		fsym->s_scl = EXTERN;
 		/* illegal storage class */
 		error(8);
 	}
+
+	if (dcs->d_inline)
+		fsym->s_inline = 1;
 
 	/*
 	 * Arguments in new style function declarations need a name.
@@ -305,6 +308,10 @@ funcdef(fsym)
 			/* complete the type */
 			compltyp(fsym, rdsym);
 
+			/* once a function is inline it remains inline */
+			if (rdsym->s_inline)
+				fsym->s_inline = 1;
+
 		}
 
 		/* remove the old symbol from the symbol table */
@@ -363,11 +370,17 @@ funcend()
 	nargusg = -1;
 
 	/*
-	 * Write the information about the function definition to the
+	 * write the information about the function definition to the
 	 * output file
+	 * inline functions explicitely declared extern are written as
+	 * declarations only.
 	 */
-	outfdef(funcsym, dcs->d_ftype, &dcs->d_fdpos, cstk->c_retval,
-		funcsym->s_osdef, dcs->d_fargs);
+	if (dcs->d_scl == EXTERN && funcsym->s_inline) {
+		outsym(funcsym, funcsym->s_scl, DECL);
+	} else {
+		outfdef(funcsym, dcs->d_ftype, &dcs->d_fdpos, cstk->c_retval,
+			funcsym->s_osdef, dcs->d_fargs);
+	}
 
 	if (funcsym->s_type->t_proto) {
 		/* from now the prototype is valid */

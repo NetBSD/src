@@ -1,4 +1,4 @@
-/*	$NetBSD: lint1.h,v 1.3 1995/10/02 17:08:40 jpo Exp $	*/
+/*	$NetBSD: lint1.h,v 1.4 1995/10/02 17:14:35 jpo Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -177,8 +177,9 @@ typedef enum {
 	ENUMCON,	/* enumerator */
 	ABSTRACT,	/* abstract symbol (sizeof, casts, unnamed argument) */
 	ARG,		/* argument */
-	PARG		/* used in declaration stack during prototype
+	PARG,		/* used in declaration stack during prototype
 			   declaration */
+	INLINE		/* only used by the parser */
 } scl_t;
 
 /*
@@ -203,6 +204,7 @@ typedef	struct sym {
 				   definition */
 	u_int	s_rimpl : 1;	/* return value of function implizit decl. */
 	u_int	s_osdef : 1;	/* symbol stems from old style function def. */
+	u_int	s_inline : 1;	/* true if this is a inline function */
 	struct	sym *s_xsym;	/* for local declared external symbols pointer
 				   to external symbol with same name */
 	def_t	s_def;		/* declared, tentative defined, defined */
@@ -300,6 +302,7 @@ typedef	struct dinfo {
 	scl_t	d_ctx;		/* context of declaration */
 	u_int	d_const : 1;	/* const in declaration specifiers */
 	u_int	d_volatile : 1;	/* volatile in declaration specifiers */
+	u_int	d_inline : 1;	/* inline in declaration specifiers */
 	u_int	d_mscl : 1;	/* multiple storage classes */
 	u_int	d_terr : 1;	/* invalid type combination */
 	u_int	d_nedecl : 1;	/* 1 if at least a tag is declared */
