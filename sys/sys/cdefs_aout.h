@@ -1,4 +1,4 @@
-/*	$NetBSD: cdefs_aout.h,v 1.7 2001/12/04 16:44:55 christos Exp $	*/
+/*	$NetBSD: cdefs_aout.h,v 1.8 2001/12/05 21:06:51 atatat Exp $	*/
 
 /*
  * Written by J.T. Conklin <jtc@wimsey.com> 01/17/95.
@@ -49,7 +49,6 @@
 	__asm__(".data ; .asciz \"" _s "\" ; .text")
 
 #undef __KERNEL_RCSID
-#define	__KERNEL_RCSID(_n,_s) __IDSTRING(__CONCAT(rcsid,_n),_s)
 
 #define __RCSID(_s)	__IDSTRING(rcsid,_s)
 #define __SCCSID(_s)
