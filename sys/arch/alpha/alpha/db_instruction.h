@@ -1,4 +1,4 @@
-/* $NetBSD: db_instruction.h,v 1.7 2001/04/26 03:10:44 ross Exp $ */
+/* $NetBSD: db_instruction.h,v 1.8 2001/08/31 04:44:54 simonb Exp $ */
 
 /*
  * Copyright (c) 1999 Christopher G. Demetriou.  All rights reserved.
@@ -206,7 +206,7 @@ typedef union {
 
 } alpha_instruction;
 
-#endif	!defined(ASSEMBLER)
+#endif /* !defined(ASSEMBLER) */
 
 /*
  *
