@@ -1,4 +1,4 @@
-/* $NetBSD: cpu.c,v 1.17 2004/02/13 11:36:13 wiz Exp $ */
+/* $NetBSD: cpu.c,v 1.18 2004/02/20 17:35:01 yamt Exp $ */
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.17 2004/02/13 11:36:13 wiz Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.18 2004/02/20 17:35:01 yamt Exp $");
 
 #include "opt_ddb.h"
 #include "opt_multiprocessor.h"
@@ -314,10 +314,12 @@ cpu_attach(parent, self, aux)
 	    kstack + USPACE - 16 - sizeof (struct trapframe);
 	pcb->pcb_tss.tss_esp =
 	    kstack + USPACE - 16 - sizeof (struct trapframe);
-	pcb->pcb_pmap = pmap_kernel();
 	pcb->pcb_cr0 = rcr0();
-	pcb->pcb_cr3 = pcb->pcb_pmap->pm_pdirpa;
+	pcb->pcb_cr3 = pmap_kernel()->pm_pdirpa;
 #endif
+	pmap_reference(pmap_kernel());
+	ci->ci_pmap = pmap_kernel();
+	ci->ci_tlbstate = TLBSTATE_STALE;
 
 	/* further PCB init done later. */
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.195 2004/02/19 17:02:44 drochner Exp $	*/
+/*	$NetBSD: trap.c,v 1.196 2004/02/20 17:35:01 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
@@ -75,7 +75,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.195 2004/02/19 17:02:44 drochner Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.196 2004/02/20 17:35:01 yamt Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -216,7 +216,7 @@ trap(frame)
 	struct proc *p = l ? l->l_proc : 0;
 	int type = frame->tf_trapno;
 	struct pcb *pcb;
-	extern char fusubail[],
+	extern char fusubail[], kcopy_fault[],
 		    resume_iret[], resume_pop_ds[], resume_pop_es[],
 		    resume_pop_fs[], resume_pop_gs[],
 		    IDTVEC(osyscall)[];
@@ -616,6 +616,18 @@ copyfault:
 
 			if (type == T_PAGEFLT) {
 				KERNEL_UNLOCK();
+
+				/*
+				 * we need to switch pmap now if we're in
+				 * the middle of copyin/out.
+				 *
+				 * but we don't need to do so for kcopy as
+				 * it never touch userspace.
+				 */
+
+				if (onfault != kcopy_fault &&
+				    curcpu()->ci_want_pmapload)
+					pmap_load();
 				return;
 			}
 			l->l_flag &= ~L_SA_PAGEFAULT;

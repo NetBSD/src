@@ -1,4 +1,4 @@
-/*	$NetBSD: svr4_sigcode.S,v 1.6 2003/08/20 21:48:42 fvdl Exp $	*/
+/*	$NetBSD: svr4_sigcode.S,v 1.7 2004/02/20 17:35:01 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -119,4 +119,10 @@ IDTVEC(svr4_fasttrap)
 	call	_C_LABEL(trap)
 	addl	$4,%esp
 	jmp	2b
-1:	INTRFASTEXIT
+1:	CHECK_DEFERRED_SWITCH(%eax)
+	jnz	9f
+	INTRFASTEXIT
+9:	sti
+	call	_C_LABEL(pmap_load)
+	cli
+	jmp	2b

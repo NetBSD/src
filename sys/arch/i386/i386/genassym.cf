@@ -1,4 +1,4 @@
-#	$NetBSD: genassym.cf,v 1.39 2003/11/04 10:33:15 dsl Exp $
+#	$NetBSD: genassym.cf,v 1.40 2004/02/20 17:35:01 yamt Exp $
 
 #
 # Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -258,6 +258,9 @@ endif
 
 define	CPU_INFO_SELF		offsetof(struct cpu_info, ci_self)
 define	CPU_INFO_RESCHED	offsetof(struct cpu_info, ci_want_resched)
+define	CPU_INFO_WANT_PMAPLOAD	offsetof(struct cpu_info, ci_want_pmapload)
+define	CPU_INFO_TLBSTATE	offsetof(struct cpu_info, ci_tlbstate)
+define	TLBSTATE_VALID		TLBSTATE_VALID
 define	CPU_INFO_CURLWP		offsetof(struct cpu_info, ci_curlwp)
 define	CPU_INFO_CURPCB		offsetof(struct cpu_info, ci_curpcb)
 define	CPU_INFO_IDLE_PCB	offsetof(struct cpu_info, ci_idle_pcb)
