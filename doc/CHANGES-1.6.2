@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-1.6.2,v 1.1.2.131 2003/09/01 09:32:44 tron Exp $
+#	$NetBSD: CHANGES-1.6.2,v 1.1.2.132 2003/09/05 13:53:00 tron Exp $
 
 A complete list of changes from NetBSD 1.6.1 to NetBSD 1.6.2:
 
@@ -1437,4 +1437,18 @@ sys/netinet6/ip6_mroute.h			1.9
 
 	On interface detach, clear multicast forwarding table.  from kame
 	[itojun, ticket #1375]
+
+sys/netinet/tcp_output.c			1.80
+sys/netinet/tcp_subr.c				1.128
+sys/netinet/tcp_timer.c				1.58
+sys/netinet/tcp_var.h				1.91
+usr.bin/netstat/inet.c				1.52
+
+	Path MTU discovery blackhole detection. PR 12790
+	[tls, ticket #1445]
+
+crypto/dist/kame/racoon/missing/crypto/sha2/sha2.c 1.5
+
+	bzero() 2nd arg mistake.  found by openbsd guys.  from kame
+	[itojun, ticket #1446]
 
