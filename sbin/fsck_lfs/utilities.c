@@ -1,4 +1,4 @@
-/* $NetBSD: utilities.c,v 1.5 2000/06/14 18:44:00 perseant Exp $	 */
+/* $NetBSD: utilities.c,v 1.6 2000/10/10 20:24:51 is Exp $	 */
 
 /*
  * Copyright (c) 1980, 1986, 1993
@@ -538,7 +538,7 @@ dofix(struct inodesc * idesc, char *msg)
 		if (idesc->id_type == DATA)
 			direrror(idesc->id_number, msg);
 		else
-			pwarn(msg);
+			pwarn("%s", msg);
 		if (preen) {
 			printf(" (SALVAGED)\n");
 			idesc->id_fix = FIX;
