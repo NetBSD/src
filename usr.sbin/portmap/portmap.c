@@ -1,4 +1,4 @@
-/*	$NetBSD: portmap.c,v 1.14 1999/01/11 20:51:09 jwise Exp $	*/
+/*	$NetBSD: portmap.c,v 1.15 1999/01/13 01:01:26 mjacob Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -44,7 +44,7 @@ __COPYRIGHT(
 #if 0
 static char sccsid[] = "@(#)portmap.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: portmap.c,v 1.14 1999/01/11 20:51:09 jwise Exp $");
+__RCSID("$NetBSD: portmap.c,v 1.15 1999/01/13 01:01:26 mjacob Exp $");
 #endif
 #endif /* not lint */
 
@@ -92,7 +92,7 @@ static char sccsid[] = "@(#)portmap.c 1.32 87/08/06 Copyr 1984 Sun Micro";
 
 #include <sys/types.h>
 #include <sys/time.h>
-#include <sys/errno.h>
+#include <errno.h>
 #include <sys/ioctl.h>
 #include <sys/resource.h>
 #include <sys/socket.h>
