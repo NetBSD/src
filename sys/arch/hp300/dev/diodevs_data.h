@@ -1,3 +1,5 @@
+/*	$NetBSD: diodevs_data.h,v 1.7 1998/01/09 06:59:28 thorpej Exp $	*/
+
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
