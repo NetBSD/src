@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.evbsh3.el,v 1.3 2000/01/24 20:36:12 tron Exp $
+#	$NetBSD: Makefile.evbsh3.el,v 1.4 2000/02/01 05:25:30 tsutsui Exp $
 
 # Makefile for NetBSD
 #
@@ -31,7 +31,7 @@ MKDEP?=	mkdep
 NM?=	nm
 RANLIB?=ranlib
 SIZE?=	size
-STRIPPROG?=strip
+STRIP?=	strip
 TSORT?=	tsort -q
 
 COPTS?=	-O2
@@ -104,7 +104,7 @@ SYSTEM_LD=	@echo ${LD} ${LINKFLAGS} -o $@.out '$${SYSTEM_OBJ}' vers.o; \
 SYSTEM_LD_TAIL=	@echo ${LD} ${LINKFLAGS2} -o $@2.out '$${SYSTEM_OBJ}' vers.o; \
 		${LD} ${LINKFLAGS2} -o $@2.out ${SYSTEM_OBJ} vers.o swapnetbsd.o ; \
 		${LD} ${LINKFLAGS3} -o $@3.out ${SYSTEM_OBJ} vers.o swapnetbsd.o ; \
-		cp $@.out $@; ${STRIPPROG} $@ ; \
+		cp $@.out $@; ${STRIP} $@ ; \
 		${SIZE} $@; chmod 755 $@ ; \
 		echo ${OBJCOPY} -O srec $@.out $@.s; ${OBJCOPY} -O srec $@.out $@.s
 
@@ -115,8 +115,8 @@ DEBUG?=
 LINKFLAGS+=	-X
 SYSTEM_LD_TAIL+=; \
 		echo mv -f $@ $@.gdb; mv -f $@ $@.gdb; \
-		echo ${STRIPPROG} ${STRIPFLAGS} -o $@ $@.gdb; \
-		${STRIPPROG} ${STRIPFLAGS} -o $@ $@.gdb
+		echo ${STRIP} ${STRIPFLAGS} -o $@ $@.gdb; \
+		${STRIP} ${STRIPFLAGS} -o $@ $@.gdb
 .else
 LINKFLAGS+=	
 .endif

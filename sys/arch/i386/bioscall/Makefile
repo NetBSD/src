@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.9 2000/01/19 16:29:57 tsutsui Exp $
+#	$NetBSD: Makefile,v 1.10 2000/02/01 05:25:31 tsutsui Exp $
 
 CPPFLAGS=	${APMCPPFLAGS}
 KSRC=${.CURDIR}/../../..
@@ -9,7 +9,7 @@ CFLAGS+= -I${ARCHSRC} -I${KSRC} -D_LKM
 SRCS=	biostramp.S
 OBJS=	biostramp.o
 DEPS=	${APMDEPS}
-STRIPPROG?= strip
+STRIP?=	strip
 
 all: biostramp.inc
 
@@ -25,7 +25,7 @@ biostramp.bin: biostramp.obj
 .else
 biostramp.bin: biostramp.obj
 	cp $? $@
-	@${STRIPPROG} $@
+	@${STRIP} $@
 	@sh ${.CURDIR}/rmaouthdr $@ $@.tmp
 	@if [ `ls -l $@.tmp |awk '{print $$5}'` -gt 4096 ]; then \
 		echo "$@ too big"; \

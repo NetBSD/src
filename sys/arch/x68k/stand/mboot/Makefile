@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.4 2000/01/23 17:04:12 mycroft Exp $
+#	$NetBSD: Makefile,v 1.5 2000/02/01 05:25:50 tsutsui Exp $
 
 BOOT=		mboot
 VERSION=	0.1
@@ -13,7 +13,7 @@ BINMODE=	444
 MKMAN=		no
 STRIPFLAG=
 
-STRIPPROG?=	/usr/bin/strip
+STRIP?=		/usr/bin/strip
 OBJCOPY?=	/usr/bin/objcopy
 
 SRCS=		srt0.S mboot.c
@@ -40,7 +40,7 @@ CLEANFILES+=	machine ${MACHINE_ARCH}
 realall: machine-links ${PROG}
 ${BOOT}:	${OBJS}
 	${LD} ${LDFLAGS} -o ${BOOT}.x ${OBJS} ${LDLIBS}
-#	${STRIPPROG} ${BOOT}.x
+#	${STRIP} ${BOOT}.x
 #	dd bs=32 skip=1 count=32 if=${BOOT}.x of=${BOOT}
 	${OBJCOPY} -O binary ${BOOT}.x ${BOOT}
 	@rm ${BOOT}.x
