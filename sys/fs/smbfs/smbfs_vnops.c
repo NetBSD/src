@@ -1,4 +1,4 @@
-/*	$NetBSD: smbfs_vnops.c,v 1.22 2003/04/08 17:09:22 jdolecek Exp $	*/
+/*	$NetBSD: smbfs_vnops.c,v 1.23 2003/04/08 19:01:00 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: smbfs_vnops.c,v 1.22 2003/04/08 17:09:22 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: smbfs_vnops.c,v 1.23 2003/04/08 19:01:00 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -629,7 +629,7 @@ smbfs_remove(v)
 	struct smb_cred scred;
 	int error;
 
-	if (vp->v_type != VDIR && np->n_opencount == 0 && vp->v_usecount == 1)
+	if (vp->v_type == VDIR || np->n_opencount || vp->v_usecount != 1)
 		error = EPERM;
 	else {
 		smb_makescred(&scred, cnp->cn_proc, cnp->cn_cred);
