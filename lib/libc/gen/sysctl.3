@@ -1,4 +1,4 @@
-.\"	$NetBSD: sysctl.3,v 1.131 2004/01/08 09:21:35 wiz Exp $
+.\"	$NetBSD: sysctl.3,v 1.132 2004/03/24 18:22:30 atatat Exp $
 .\"
 .\" Copyright (c) 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -1720,6 +1720,7 @@ tree.
 .It CTL\_CREATE	Create a new node
 .It CTL\_CREATESYM	Create a new node by its kernel symbol
 .It CTL\_DESTROY	Destroy a node
+.It CTL\_DESCRIBE	Retrieve node descriptions
 .El
 .Pp
 The core interface to all of these meta-functions is the structure
@@ -1729,33 +1730,39 @@ as:
 .Pp
 .Bd -literal
 struct sysctlnode {
-        uint sysctl_flags;              /* flags and type */
-        int sysctl_num;                 /* mib number */
-        size_t sysctl_size;             /* size of instrumented data */
+        uint32_t sysctl_flags;          /* flags and type */
+        int32_t sysctl_num;             /* mib number */
         char sysctl_name[SYSCTL_NAMELEN]; /* node name */
+        uint32_t sysctl_ver;        /* node's version vs. rest of tree */
+        uint32_t __rsvd;
         union {
                 struct {
-                        uint scn_csize; /* size of child node array */
-                        uint scn_clen;  /* number of valid children */
-                        struct sysctlnode *scn_child; /* children */
-                } scu_node;
-                int scu_alias;          /* node this node refers to */
-                int scu_idata;          /* immediate "int" data */
+                        uint32_t suc_csize; /* size of child node array */
+                        uint32_t suc_clen; /* number of valid children */
+                        struct sysctlnode* suc_child; /* array of child nodes */
+                } scu_child;
+                struct {
+                        void *sud_data; /* pointer to external data */
+                        size_t sud_offset; /* offset to data */
+                } scu_data;
+                int32_t scu_alias;      /* node this node refers to */
+                int32_t scu_idata;      /* immediate "int" data */
                 u_quad_t scu_qdata;     /* immediate "u_quad_t" data */
-                void *scu_data;         /* pointer to external data */
         } sysctl_un;
-        sysctlfn sysctl_func;           /* access helper function */
+        size_t _sysctl_size;            /* size of instrumented data */
+        sysctlfn _sysctl_func;          /* access helper function */
         struct sysctlnode *sysctl_parent; /* parent of this node */
-        uint sysctl_ver;                /* individual node version */
+        const char *sysctl_desc;        /* description of node */
 };
 
-#define sysctl_csize	sysctl_un.scu_node.scn_csize
-#define sysctl_clen	sysctl_un.scu_node.scn_clen
-#define sysctl_child	sysctl_un.scu_node.scn_child
-#define sysctl_alias	sysctl_un.scu_alias
-#define sysctl_data	sysctl_un.scu_data
-#define sysctl_idata	sysctl_un.scu_idata
-#define sysctl_qdata	sysctl_un.scu_qdata
+#define sysctl_csize    sysctl_un.scu_child.suc_csize
+#define sysctl_clen     sysctl_un.scu_child.suc_clen
+#define sysctl_child    sysctl_un.scu_child.suc_child
+#define sysctl_data     sysctl_un.scu_data.sud_data
+#define sysctl_offset   sysctl_un.scu_data.sud_offset
+#define sysctl_alias    sysctl_un.scu_alias
+#define sysctl_idata    sysctl_un.scu_idata
+#define sysctl_qdata    sysctl_un.scu_qdata
 .Ed
 .Pp
 Querying the tree to discover the name to number mapping permits
@@ -1765,15 +1772,26 @@ For example, to discover all the nodes below the
 CTL_VFS node:
 .Pp
 .Bd -literal -offset indent -compact
-struct sysctlnode vfs[128];
+struct sysctlnode query, vfs[128];
 int mib[2];
 size_t len;
 .sp
 mib[0] = CTL_VFS;
 mib[1] = CTL_QUERY;
+memset(&query, 0, sizeof(query));
+query.sysctl_flags = SYSCTL_VERSION;
 len = sizeof(vfs);
-sysctl(mib, 2, \*[Am]vfs[0], \*[Am]len, NULL, 0);
+sysctl(mib, 2, \*[Am]vfs[0], \*[Am]len, \*[Am]query, sizeof(query));
 .Ed
+.Pp
+Note that a reference to an empty node with
+.Fa sysctl_flags
+set to
+.Dv SYSCTL_VERSION
+is passed to sysctl in order to indicate the version that the program
+is using.
+All dynamic operations passing nodes into sysctl require that the
+version be explicitly specified.
 .Pp
 Creation and destruction of nodes works by constructing part of a new
 node description (or a description of the existing node) and invoking
@@ -1868,7 +1886,7 @@ size_t len;
 mib[0] = CTL_CREATE;		/* create at top-level */
 len = sizeof(node);
 memset(\*[Am]node, 0, len);
-node.sysctl_flags = SYSCTL_READWRITE|CTLTYPE_NODE;
+node.sysctl_flags = SYSCTL_VERSION|CTLFLAG_READWRITE|CTLTYPE_NODE;
 snprintf(node.sysctl_name, sizeof(node.sysctl_name), "local");
 node.sysctl_num = CTL_CREATE;	/* request dynamic MIB number */
 sysctl(\*[Am]mib[0], 1, \*[Am]node, \*[Am]len, \*[Am]node, len);
@@ -1877,7 +1895,7 @@ mib[0] = node.sysctl_num;	/* use new MIB number */
 mib[1] = CTL_CREATESYM;		/* create at second level */
 len = sizeof(node);
 memset(\*[Am]node, 0, len);
-node.sysctl_flags = SYSCTL_READWRITE|CTLTYPE_INT;
+node.sysctl_flags = SYSCTL_VERSION|CTLFLAG_READWRITE|CTLTYPE_INT;
 snprintf(node.sysctl_name, sizeof(node.sysctl_name), "audiodebug");
 node.sysctl_num = CTL_CREATE;
 node.sysctl_data = "audiodebug"; /* kernel symbol to be used */
@@ -1912,6 +1930,7 @@ int mib[2];
 .sp
 len = sizeof(node);
 memset(\*[Am]node, 0, len);
+node.sysctl_flags = SYSCTL_VERSION;
 .sp
 mib[0] = 3214;			/* assumed number for "local" */
 mib[1] = CTL_DESTROY;
@@ -1923,39 +1942,138 @@ node.sysctl_num = 3214;		/* now deleting "local" */
 sysctl(\*[Am]mib[0], 1, NULL, NULL, \*[Am]node, len);
 .Ed
 .Pp
+Descriptions of each of the nodes can also be retrieved, if they are
+available.
+Descriptions can be retrieved in bulk at each level or on a per-node
+basis.
+The layout of the buffer into which the descriptions are returned is a
+series of variable length structures, each of which describes its own
+size.
+The length indicated includes the terminating
+.Sq nul
+character.
+Nodes that have no description or where the description is not
+available are indicated by an empty string.
+The
+.Fa descr_ver
+will match the
+.Fa sysctl_ver
+value for a given node, so that descriptions for nodes whose number
+have been recycled can be detected and ignored or discarded.
+.Pp
+.Bd -literal
+struct sysctldesc {
+        int32_t         descr_num;      /* mib number of node */
+        uint32_t        descr_ver;      /* version of node */
+        uint32_t        descr_len;      /* length of description string */
+        char            descr_str[1];   /* not really 1...see above */
+};
+.Ed
+.Pp
+The
+.Fn NEXT_DESCR
+macro can be used to skip to the next description in the retrieved
+list.
+.Pp
+.Bd -literal -offset indent -compact
+struct sysctlnode desc;
+struct sysctldesc *d;
+char buf[1024];
+int mib[2];
+size_t len;
+.sp
+/* retrieve kern-level descriptions */
+mib[0] = CTL_KERN;
+mib[1] = CTL_DESCRIBE;
+d = (struct sysctldesc *)\*[Am]buf[0];
+len = sizeof(buf);
+sysctl(mib, 2, d, \*[Am]len, NULL, 0);
+while ((caddr_t)d < (caddr_t)&buf[len]) {
+	printf("node %d: %.*s\\n", d->descr_num, d->descr_len,
+	    d->descr_str);
+	d = NEXT_DESCR(d);
+}
+.sp
+/* retrieve description for kern.securelevel */
+memset(\*[Am]desc, 0, sizeof(desc));
+desc.sysctl_flags = SYSCTL_VERSION;
+desc.sysctl_num = KERN_SECURELEVEL;
+d = (struct sysctldesc *)\*[Am]buf[0];
+len = sizeof(buf);
+sysctl(mib, 2, d, \*[Am]len, \*[Am]desc, sizeof(desc));
+printf("kern.securelevel: %.*s\\n", d->descr_len, d->descr_str);
+.Ed
+.Pp
+Descriptions can also be set as follows, subject to the following rules:
+.Pp
+.Bl -bullet -compact
+.It
+The kernel securelevel is at zero or lower
+.It
+The caller has super-user privileges
+.It
+The node does not currently have a description
+.It
+The node is not marked as
+.Dq permanent
+.El
+.Pp
+.Bd -literal -offset indent -compact
+struct sysctlnode desc;
+int mib[2];
+.sp
+/* presuming the given top-level node was just added... */
+mib[0] = 3214; /* mib numbers taken from previous examples */
+mib[1] = CTL_DESCRIBE;
+memset(\*[Am]desc, 0, sizeof(desc));
+desc.sysctl_flags = SYSCTL_VERSION;
+desc.sysctl_num = 3215;
+desc.sysctl_desc = "audio debug control knob";
+sysctl(mib, 2, NULL, NULL, \*[Am]desc, sizeof(desc));
+.Ed
+.Pp
+Upon successully setting a description, the new description will be
+returned in the space indicated by the
+.Fa oldp
+and 
+.Fa oldlenp
+arguments.
+.Pp 
 The
 .Fa sysctl_flags
-field in the struct sysctlnode contains the node type information as
-well as a number of flags.
+field in the struct sysctlnode contains the sysctl version, node type
+information, and a number of flags.
 The macros
-.Fn SYSCTL_TYPE
+.Fn SYSCTL_VERS ,
+.Fn SYSCTL_TYPE ,
 and
 .Fn SYSCTL_FLAGS
 can be used to access the different fields.
 Valid flags are:
-.Bl -column SYSCTLXPERMANENTXXX
+.Bl -column CTLFLAGXPERMANENTXXX
 .It Sy Name	Description
-.It SYSCTL\_READONLY	Node is read-only
-.It SYSCTL\_READONLY1	Node becomes read-only at securelevel 1
-.It SYSCTL\_READONLY2	Node becomes read-only at securelevel 2
-.It SYSCTL\_READWRITE	Node is writable by the superuser
-.It SYSCTL\_ANYWRITE	Node is writable by anyone
-.It SYSCTL\_PRIVATE	Node is readable only by the superuser
-.It SYSCTL\_PERMANENT	Node cannot be removed (cannot be set by
+.It CTLFLAG\_READONLY	Node is read-only
+.It CTLFLAG\_READONLY1	Node becomes read-only at securelevel 1
+.It CTLFLAG\_READONLY2	Node becomes read-only at securelevel 2
+.It CTLFLAG\_READWRITE	Node is writable by the superuser
+.It CTLFLAG\_ANYWRITE	Node is writable by anyone
+.It CTLFLAG\_PRIVATE	Node is readable only by the superuser
+.It CTLFLAG\_PERMANENT	Node cannot be removed (cannot be set by
 processes)
-.It SYSCTL\_OWNDATA	Node owns data and does not instrument
+.It CTLFLAG\_OWNDATA	Node owns data and does not instrument
 existing data
-.It SYSCTL\_IMMEDIATE	Node contains instrumented data and does not
+.It CTLFLAG\_IMMEDIATE	Node contains instrumented data and does not
 instrument existing data
-.It SYSCTL\_HEX	Node's contents should be displayed in a hexadecimal
+.It CTLFLAG\_HEX	Node's contents should be displayed in a hexadecimal
 form
-.It SYSCTL\_ROOT	Node is the root of a tree (cannot be set at
+.It CTLFLAG\_ROOT	Node is the root of a tree (cannot be set at
 any time)
-.It SYSCTL\_ANYNUMBER	Node matches any MIB number (cannot be set by
+.It CTLFLAG\_ANYNUMBER	Node matches any MIB number (cannot be set by
 processes)
-.It SYSCTL\_HIDDEN	Node not displayed by default
-.It SYSCTL\_ALIAS	Node refers to a sibling node (cannot be set
+.It CTLFLAG\_HIDDEN	Node not displayed by default
+.It CTLFLAG\_ALIAS	Node refers to a sibling node (cannot be set
 by processes)
+.It CTLFLAG\_OWNDESC	Node owns its own description string space
 .El
 .Sh RETURN VALUES
 If the call to
