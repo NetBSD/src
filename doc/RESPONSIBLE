@@ -1,4 +1,4 @@
-#	$NetBSD: RESPONSIBLE,v 1.36 2004/03/30 05:28:54 martti Exp $
+#	$NetBSD: RESPONSIBLE,v 1.37 2004/04/03 04:57:27 jdolecek Exp $
 
 List of sections of the system, and who is responsible for them (or at
 least considered an expert on them).
@@ -12,6 +12,7 @@ necessarily incomplete!
 Userland Programs:
 
 amd		christos
+awk		jdolecek
 bc		phil, simonb
 csh		christos
 cvs		christos, wiz, mycroft
@@ -27,6 +28,7 @@ make		christos, sjg
 named(bind)	itojun
 ntp		simonb, jonathan
 openssh		itojun, lukem
+sort		jdolecek
 pax/tar		christos
 ping		christos
 ping6		itojun
