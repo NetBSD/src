@@ -1,4 +1,4 @@
-/*	$NetBSD: fault.c,v 1.8 2001/06/29 02:40:28 toshii Exp $	*/
+/*	$NetBSD: fault.c,v 1.9 2001/06/29 02:43:56 toshii Exp $	*/
 
 /*
  * Copyright (c) 1994-1997 Mark Brinicombe.
@@ -627,6 +627,9 @@ cowfault(va)
 
 	if (va >= VM_MAXUSER_ADDRESS)
 		return (EFAULT);
+
+	/* uvm_fault can't be called from within an interrupt */
+	KASSERT(current_intr_depth == 0);
 
 	vm = curproc->p_vmspace;
 	error = uvm_fault(&vm->vm_map, va, 0, VM_PROT_READ | VM_PROT_WRITE);
