@@ -1,4 +1,4 @@
-/*	$NetBSD: elinkxl.c,v 1.9 1999/04/26 23:28:31 thorpej Exp $	*/
+/*	$NetBSD: elinkxl.c,v 1.10 1999/04/28 17:34:01 dean Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -1418,6 +1418,7 @@ ex_reset(sc)
 	struct ex_softc *sc;
 {
 	bus_space_write_2(sc->sc_iot, sc->sc_ioh, ELINK_COMMAND, GLOBAL_RESET);
+	delay(400);
 	ex_waitcmd(sc);
 }
 
