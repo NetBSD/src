@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.499 2002/07/09 05:57:35 dbj Exp $
+# $NetBSD: mi,v 1.500 2002/07/09 22:18:38 jdolecek Exp $
 ./usr/share/info/am-utils.info			man-amd-info
 ./usr/share/info/as.info			man-computil-info
 ./usr/share/info/awk.info			man-util-info
@@ -1253,6 +1253,7 @@
 ./usr/share/man/cat8/amiga/MAKEDEV.0		man-sysutil-catman
 ./usr/share/man/cat8/amiga/binpatch.0		man-sysutil-catman
 ./usr/share/man/cat8/amiga/boot.0		man-sys-catman
+./usr/share/man/cat8/amiga/grfconfig.0		man-sysutil-catman
 ./usr/share/man/cat8/amiga/installboot.0	man-sysutil-catman
 ./usr/share/man/cat8/amiga/makedev.0		man-sysutil-catman
 ./usr/share/man/cat8/amq.0			man-amd-catman
@@ -1363,7 +1364,6 @@
 ./usr/share/man/cat8/getNAME.0			man-man-catman
 ./usr/share/man/cat8/getencstat.0		man-sysutil-catman
 ./usr/share/man/cat8/getty.0			man-sysutil-catman
-./usr/share/man/cat8/grfconfig.0		man-sysutil-catman
 ./usr/share/man/cat8/group.0			man-sysutil-catman
 ./usr/share/man/cat8/groupadd.0			man-sysutil-catman
 ./usr/share/man/cat8/groupdel.0			man-sysutil-catman
@@ -2988,6 +2988,7 @@
 ./usr/share/man/man8/amiga/MAKEDEV.8		man-sysutil-man
 ./usr/share/man/man8/amiga/binpatch.8		man-sysutil-man
 ./usr/share/man/man8/amiga/boot.8		man-sys-man
+./usr/share/man/man8/amiga/grfconfig.8		man-sysutil-man
 ./usr/share/man/man8/amiga/installboot.8	man-sysutil-man
 ./usr/share/man/man8/amiga/makedev.8		man-sysutil-man
 ./usr/share/man/man8/amq.8			man-amd-man
@@ -3098,7 +3099,6 @@
 ./usr/share/man/man8/getNAME.8			man-man-man
 ./usr/share/man/man8/getencstat.8		man-sysutil-man
 ./usr/share/man/man8/getty.8			man-sysutil-man
-./usr/share/man/man8/grfconfig.8		man-sysutil-man
 ./usr/share/man/man8/group.8			man-sysutil-man
 ./usr/share/man/man8/groupadd.8			man-sysutil-man
 ./usr/share/man/man8/groupdel.8			man-sysutil-man
