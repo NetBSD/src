@@ -21,7 +21,7 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
- *	$Id: if_epreg.h,v 1.6 1994/07/21 02:51:58 deraadt Exp $
+ *	$Id: if_epreg.h,v 1.7 1994/07/21 03:30:22 mycroft Exp $
  */
 
 /*
@@ -270,8 +270,8 @@
 #define TAG_ADAPTER_0 			0xd0
 #define ACTIVATE_ADAPTER_TO_CONFIG 	0xff
 #define ENABLE_DRQ_IRQ			0x0001
-#define MFG_ID 				0x6d50
-#define PROD_ID 			0x9150
+#define MFG_ID				0x506d	/* `TCM' */
+#define PROD_ID				0x0590
 #define BASE 				sc->ep_iobase
 #define GO_WINDOW(x) 			outw(BASE+EP_COMMAND, WINDOW_SELECT|x)
 #define AUI 				0x1
@@ -287,6 +287,10 @@
 #define DISABLE_UTP			0x0
 #define RX_BYTES_MASK			(u_short) (0x07ff)
 
-#define CHAR1(b1,b2)	(((b1>>2) & 0x1f) | '@')
-#define CHAR2(b1,b2)	(((b1<<3) & 0x18) | ((b2>>5) & 0x07) | '@')
-#define CHAR3(b1,b2)	((b2 & 0x1f) | '@')
+/*
+ * EISA registers (offset from slot base)
+ */
+#define	EISA_VENDOR		0x0c80	/* vendor ID (2 ports) */
+#define	EISA_MODEL		0x0c82	/* model number (2 ports) */
+#define	EISA_CONTROL		0x0c84
+#define	 EISA_DISABLE		0x01
