@@ -38,7 +38,7 @@
 #if defined(LIBC_SCCS) && !defined(lint)
 	.text
 	/*.asciz "from: @(#)cerror.s	5.1 (Berkeley) 5/12/90"*/
-	.asciz "$Id: cerror.S,v 1.1 1993/11/25 23:39:25 paulus Exp $"
+	.asciz "$Id: cerror.S,v 1.2 1994/04/02 05:37:04 cgd Exp $"
 #endif /* LIBC_SCCS and not lint */
 
 #include "SYS.h"
@@ -56,4 +56,5 @@ cerror:
 	movl	d0,_errno
 #endif
 	movl	#-1,d0
+	movl	#-1,d1
 	rts
