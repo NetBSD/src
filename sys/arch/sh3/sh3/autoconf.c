@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.4 1999/09/17 20:04:51 thorpej Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.5 2000/06/01 00:49:57 matt Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -64,6 +64,9 @@
 
 static int match_harddisk __P((struct device *, struct btinfo_bootdisk *));
 
+struct device *booted_device;
+int booted_partition;
+
 void findroot __P((struct device **, int *));
 
 /*
@@ -87,9 +90,6 @@ cpu_configure()
 void
 cpu_rootconf()
 {
-	struct device *booted_device;
-	int booted_partition;
-
 	findroot(&booted_device, &booted_partition);
 
 	printf("boot device: %s\n",
