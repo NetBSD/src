@@ -37,7 +37,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)machdep.c	8.3 (Berkeley) 1/12/94
- *      $Id: machdep.c,v 1.11 1994/07/05 04:24:14 glass Exp $
+ *      $Id: machdep.c,v 1.12 1994/07/05 21:25:07 glass Exp $
  */
 
 /* from: Utah Hdr: machdep.c 1.63 91/04/24 */
@@ -130,7 +130,7 @@ static u_int tc_slot_phys_base [TC_MAX_SLOTS] = {
 };
 
 /* the following is used externally (sysctl_hw) */
-char	machine[] = "DEC";	/* cpu "architecture" */
+char	machine[] = "pmax";	/* cpu "architecture" */
 char	cpu_model[30];
 
 vm_map_t buffer_map;
