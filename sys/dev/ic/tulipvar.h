@@ -1,4 +1,4 @@
-/*	$NetBSD: tulipvar.h,v 1.16 1999/09/29 18:52:19 thorpej Exp $	*/
+/*	$NetBSD: tulipvar.h,v 1.17 1999/09/29 23:11:37 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.
@@ -244,6 +244,16 @@ struct tulip_srom_to_ifmedia {
 };
 
 /*
+ * Some misc. statics, useful for debugging.
+ */
+struct tulip_stats {
+	u_long		ts_tx_uf;	/* transmit underflow errors */
+	u_long		ts_tx_to;	/* transmit jabber timeouts */
+	u_long		ts_tx_ec;	/* excessve collision count */
+	u_long		ts_tx_lc;	/* late collision count */
+};
+
+/*
  * Software state per device.
  */
 struct tulip_softc {
@@ -253,6 +263,8 @@ struct tulip_softc {
 	bus_dma_tag_t sc_dmat;		/* bus DMA tag */
 	struct ethercom sc_ethercom;	/* ethernet common data */
 	void *sc_sdhook;		/* shutdown hook */
+
+	struct tulip_stats sc_stats;	/* debugging stats */
 
 	/*
 	 * Contents of the SROM.
