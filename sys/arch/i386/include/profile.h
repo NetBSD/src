@@ -1,4 +1,4 @@
-/*	$NetBSD: profile.h,v 1.10 1997/11/05 03:53:20 thorpej Exp $	*/
+/*	$NetBSD: profile.h,v 1.11 1998/11/13 13:50:52 christos Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -54,7 +54,7 @@ mcount()								\
 	 * frompcindex = pc pushed by call into self.			\
 	 */								\
 	__asm__("movl (%%ebp),%0;movl 4(%0),%0" : "=r" (frompcindex));	\
-	_mcount(frompcindex, selfpc);					\
+	_mcount((u_long)frompcindex, (u_long)selfpc);			\
 }
 
 #ifdef _KERNEL
