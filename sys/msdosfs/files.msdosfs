@@ -1,4 +1,4 @@
-#	$NetBSD
+#	$NetBSD: files.msdosfs,v 1.2 2002/12/25 17:23:22 jdolecek Exp $
 
 deffs	MSDOSFS
 
