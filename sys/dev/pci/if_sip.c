@@ -1,4 +1,4 @@
-/*	$NetBSD: if_sip.c,v 1.1 1999/06/01 18:19:13 thorpej Exp $	*/
+/*	$NetBSD: if_sip.c,v 1.2 1999/08/03 17:25:52 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1999 Network Computer, Inc.
@@ -265,8 +265,9 @@ int	sip_ioctl __P((struct ifnet *, u_long, caddr_t));
 void	sip_shutdown __P((void *));
 
 void	sip_reset __P((struct sip_softc *));
-void	sip_init __P((struct sip_softc *));
-void	sip_stop __P((struct sip_softc *));
+int	sip_init __P((struct sip_softc *));
+void	sip_stop __P((struct sip_softc *, int));
+void	sip_rxdrain __P((struct sip_softc *));
 int	sip_add_rxbuf __P((struct sip_softc *, int));
 void	sip_read_eeprom __P((struct sip_softc *, int, int, u_int16_t *));
 void	sip_set_filter __P((struct sip_softc *));
@@ -285,6 +286,8 @@ void	sip_mediastatus __P((struct ifnet *, struct ifmediareq *));
 
 int	sip_match __P((struct device *, struct cfdata *, void *));
 void	sip_attach __P((struct device *, struct device *, void *));
+
+int	sip_copy_small = 0;
 
 struct cfattach sip_ca = {
 	sizeof(struct sip_softc), sip_match, sip_attach,
@@ -478,17 +481,7 @@ sip_attach(parent, self, aux)
 			    "error = %d\n", sc->sc_dev.dv_xname, i, error);
 			goto fail_5;
 		}
-	}
-
-	/*
-	 * Pre-allocate the receive buffers.
-	 */
-	for (i = 0; i < SIP_NRXDESC; i++) {
-		if ((error = sip_add_rxbuf(sc, i)) != 0) {
-			printf("%s: unable to allocate or map rx buffer %d\n,"
-			    " error = %d\n", sc->sc_dev.dv_xname, i, error);
-			goto fail_6;
-		}
+		sc->sc_rxsoft[i].rxs_mbuf = NULL;
 	}
 
 	/*
@@ -552,14 +545,6 @@ sip_attach(parent, self, aux)
 	 * Free any resources we've allocated during the failed attach
 	 * attempt.  Do this in reverse order and fall through.
 	 */
- fail_6:
-	for (i = 0; i < SIP_NRXDESC; i++) {
-		if (sc->sc_rxsoft[i].rxs_mbuf != NULL) {
-			bus_dmamap_unload(sc->sc_dmat,
-			    sc->sc_rxsoft[i].rxs_dmamap);
-			m_freem(sc->sc_rxsoft[i].rxs_mbuf);
-		}
-	}
  fail_5:
 	for (i = 0; i < SIP_NRXDESC; i++) {
 		if (sc->sc_rxsoft[i].rxs_dmamap != NULL)
@@ -595,7 +580,7 @@ sip_shutdown(arg)
 {
 	struct sip_softc *sc = arg;
 
-	sip_stop(sc);
+	sip_stop(sc, 1);
 }
 
 /*
@@ -824,7 +809,7 @@ sip_watchdog(ifp)
 		ifp->if_oerrors++;
 
 		/* Reset the interface. */
-		sip_init(sc);
+		(void) sip_init(sc);
 	} else if (ifp->if_flags & IFF_DEBUG)
 		printf("%s: recovered from device timeout\n",
 		    sc->sc_dev.dv_xname);
@@ -858,7 +843,8 @@ sip_ioctl(ifp, cmd, data)
 		switch (ifa->ifa_addr->sa_family) {
 #ifdef INET
 		case AF_INET:
-			sip_init(sc);
+			if ((error = sip_init(sc)) != 0)
+				break;
 			arp_ifinit(ifp, ifa);
 			break;
 #endif /* INET */
@@ -873,12 +859,12 @@ sip_ioctl(ifp, cmd, data)
 			else
 				memcpy(LLADDR(ifp->if_sadl),
 				    ina->x_host.c_host, ifp->if_addrlen);
-			sip_init(sc);
+			error = sip_init(sc);
 			break;
 		    }
 #endif /* NS */
 		default:
-			sip_init(sc);
+			error = sip_init(sc);
 			break;
 		}
 		break;
@@ -897,20 +883,20 @@ sip_ioctl(ifp, cmd, data)
 			 * If interface is marked down and it is running, then
 			 * stop it.
 			 */
-			sip_stop(sc);
+			sip_stop(sc, 1);
 		} else if ((ifp->if_flags & IFF_UP) != 0 &&
 			   (ifp->if_flags & IFF_RUNNING) == 0) {
 			/*
 			 * If interfase it marked up and it is stopped, then
 			 * start it.
 			 */
-			sip_init(sc);
+			error = sip_init(sc);
 		} else if ((ifp->if_flags & IFF_UP) != 0) {
 			/*
 			 * Reset the interface to pick up changes in any other
 			 * flags that affect the hardware state.
 			 */
-			sip_init(sc);
+			error = sip_init(sc);
 		}
 		break;
 	
@@ -1010,9 +996,9 @@ sip_intr(arg)
 					    "threshold to %u bytes\n",
 					    thresh * 32);
 					sc->sc_tx_drain_thresh = thresh;
-					sip_init(sc);
+					(void) sip_init(sc);
 				} else {
-					sip_init(sc);
+					(void) sip_init(sc);
 					printf("\n");
 				}
 			}
@@ -1038,7 +1024,7 @@ sip_intr(arg)
 			PRINTERR(ISR_RMABT, "master abort");
 			PRINTERR(ISR_RTABT, "target abort");
 			PRINTERR(ISR_RXSOVR, "receive status FIFO overrun");
-			sip_init(sc);
+			(void) sip_init(sc);
 #undef PRINTERR
 		}
 	}
@@ -1198,17 +1184,38 @@ sip_rxintr(sc)
 
 #ifdef __NO_STRICT_ALIGNMENT
 		/*
-		 * Allocate a new mbuf cluster.  If that fails, we are
-		 * out of memory, and must drop the packet and recycle
-		 * the buffer that's already attached to this descriptor.
+		 * If the packet is small enough to fit in a
+		 * single header mbuf, allocate one and copy
+		 * the data into it.  This greatly reduces
+		 * memory consumption when we receive lots
+		 * of small packets.
+		 *
+		 * Otherwise, we add a new buffer to the receive
+		 * chain.  If this fails, we drop the packet and
+		 * recycle the old buffer.
 		 */
-		m = rxs->rxs_mbuf;
-		if (sip_add_rxbuf(sc, i) != 0) {
-			ifp->if_ierrors++;
+		if (sip_copy_small != 0 && len <= MHLEN) {
+			MGETHDR(m, M_DONTWAIT, MT_DATA);
+			if (m == NULL)
+				goto dropit;
+			memcpy(mtod(m, caddr_t),
+			    mtod(rxs->rxs_mbuf, caddr_t), len);
 			SIP_INIT_RXDESC(sc, i);
 			bus_dmamap_sync(sc->sc_dmat, rxs->rxs_dmamap, 0,
-			    rxs->rxs_dmamap->dm_mapsize, BUS_DMASYNC_PREREAD);
-			continue;
+			    rxs->rxs_dmamap->dm_mapsize,
+			    BUS_DMASYNC_PREREAD);
+		} else {
+			m = rxs->rxs_mbuf;
+			if (sip_add_rxbuf(sc, i) != 0) {
+ dropit:
+				ifp->if_ierrors++;
+				SIP_INIT_RXDESC(sc, i);
+				bus_dmamap_sync(sc->sc_dmat,
+				    rxs->rxs_dmamap, 0,
+				    rxs->rxs_dmamap->dm_mapsize,
+				    BUS_DMASYNC_PREREAD);
+				continue;
+			}
 		}
 #else
 		/*
@@ -1324,7 +1331,7 @@ sip_reset(sc)
  *
  *	Initialize the interface.  Must be called at splnet().
  */
-void
+int
 sip_init(sc)
 	struct sip_softc *sc;
 {
@@ -1332,14 +1339,15 @@ sip_init(sc)
 	bus_space_handle_t sh = sc->sc_sh;
 	struct ifnet *ifp = &sc->sc_ethercom.ec_if;
 	struct sip_txsoft *txs;
+	struct sip_rxsoft *rxs;
 	struct sip_desc *sipd;
 	u_int32_t cfg;
-	int i;
+	int i, error = 0;
 
 	/*
 	 * Cancel any pending I/O.
 	 */
-	sip_stop(sc);
+	sip_stop(sc, 0);
 
 	/*
 	 * Reset the chip to a known state.
@@ -1372,10 +1380,24 @@ sip_init(sc)
 
 	/*
 	 * Initialize the receive descriptor and receive job
-	 * descriptor rings.  The buffers are already allocated.
+	 * descriptor rings.
 	 */
-	for (i = 0; i < SIP_NRXDESC; i++)
-		SIP_INIT_RXDESC(sc, i);
+	for (i = 0; i < SIP_NRXDESC; i++) {
+		rxs = &sc->sc_rxsoft[i];
+		if (rxs->rxs_mbuf == NULL) {
+			if ((error = sip_add_rxbuf(sc, i)) != 0) {
+				printf("%s: unable to allocate or map rx "
+				    "buffer %d, error = %d\n",
+				    sc->sc_dev.dv_xname, i, error);
+				/*
+				 * XXX Should attempt to run with fewer receive
+				 * XXX buffers instead of just failing.
+				 */
+				sip_rxdrain(sc);
+				goto out;
+			}
+		}
+	}
 	sc->sc_rxptr = 0;
 
 	/*
@@ -1491,6 +1513,33 @@ sip_init(sc)
 	 */
 	ifp->if_flags |= IFF_RUNNING;
 	ifp->if_flags &= ~IFF_OACTIVE;
+
+ out:
+	if (error)
+		printf("%s: interface not running\n", sc->sc_dev.dv_xname);
+	return (error);
+}
+
+/*
+ * sip_drain:
+ *
+ *	Drain the receive queue.
+ */
+void
+sip_rxdrain(sc)
+	struct sip_softc *sc;
+{
+	struct sip_rxsoft *rxs;
+	int i;
+
+	for (i = 0; i < SIP_NRXDESC; i++) {
+		rxs = &sc->sc_rxsoft[i];
+		if (rxs->rxs_mbuf != NULL) {
+			bus_dmamap_unload(sc->sc_dmat, rxs->rxs_dmamap);
+			m_freem(rxs->rxs_mbuf);
+			rxs->rxs_mbuf = NULL;
+		}
+	}
 }
 
 /*
@@ -1499,7 +1548,7 @@ sip_init(sc)
  *	Stop transmission on the interface.
  */
 void
-sip_stop(sc)
+sip_stop(sc, drain)
 	struct sip_softc *sc;
 {
 	bus_space_tag_t st = sc->sc_st;
@@ -1547,6 +1596,13 @@ sip_stop(sc)
 		m_freem(txs->txs_mbuf);
 		txs->txs_mbuf = NULL;
 		SIMPLEQ_INSERT_TAIL(&sc->sc_txfreeq, txs, txs_q);
+	}
+
+	if (drain) {
+		/*
+		 * Release the receive buffers.
+		 */
+		sip_rxdrain(sc);
 	}
 
 	/*
