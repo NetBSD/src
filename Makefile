@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.196 2003/01/03 15:34:30 lukem Exp $
+#	$NetBSD: Makefile,v 1.197 2003/01/04 15:50:32 lukem Exp $
 
 #
 # This is the top-level makefile for building NetBSD. For an outline of
@@ -322,30 +322,22 @@ install-${dir}:
 dependall-distrib depend-distrib all-distrib:
 	@true
 
-#
-# we don't want the obj target in etc invoked as part of the normal
-# course of events because that makes it too early.  therefore, define
-# a neutral version of the target that bsd.subdir.mk would create.
-#
-obj-etc:
-	@true
-
 .include <bsd.obj.mk>
+.include <bsd.kernobj.mk>
 .include <bsd.subdir.mk>
 
 #
-# now, make a "real" target that will recurse into etc to enact the
-# obj target, and .USE it onto the end of the obj handling for the
-# current directory.  note that this is only done if we already have
-# commands for the obj target (we won't if we're not making objdirs),
-# and only if etc is a target subdirectory.
+# Create ${KERNOBJDIR}.
+# Done here to ensure that it's "last", for BSDOBJDIR uses.
 #
-.if commands(obj) && (${SUBDIR:Metc} == "etc")
-real-obj-etc: .USE
-	@(echo "obj ===> etc"; \
-		cd ${.CURDIR}/etc && ${MAKE} obj)
-obj: real-obj-etc
+.if commands(obj)
+obj-kernobjdir: .USE
+	@echo "obj ===> sys/arch/${MACHINE}/compile"
+	@mkdir -p ${KERNOBJDIR}
+obj: obj-kernobjdir
+
 .endif
+
 
 build-docs: ${.CURDIR}/BUILDING
 ${.CURDIR}/BUILDING: doc/BUILDING.mdoc
