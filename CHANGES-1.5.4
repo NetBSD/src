@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-1.5.4,v 1.1.2.110 2003/08/27 05:41:43 msaitoh Exp $
+#	$NetBSD: CHANGES-1.5.4,v 1.1.2.111 2003/09/08 07:18:25 msaitoh Exp $
 
 A complete list of changes from NetBSD 1.5.3 to NetBSD 1.5.4:
 
@@ -2173,3 +2173,14 @@ sys/kern/kern_sysctl.c			1.143 via patch
 	home-grown routine.  Remove defcorenamelen, since it's not used
 	anywhere.
 	[atatat, #75]
+
+sys/dev/pci/if_sip.c			1.79 via patch
+sys/dev/pci/if_sipreg.h			1.12 via patch
+
+	Accept 1518-byte frames (needed for vlan).  Valtteri Vuorikoski
+	[itojun, ticket #69]
+
+sys/kern/kern_sysctl.c			1.141
+
+	Avoid oldlenp mixup (in-kernel pointer and userland pointer).
+	[itojun, ticket #76]
