@@ -1,4 +1,4 @@
-/*	$NetBSD: rpc_svcout.c,v 1.18 2003/01/20 05:30:12 simonb Exp $	*/
+/*	$NetBSD: rpc_svcout.c,v 1.19 2003/06/25 19:31:08 christos Exp $	*/
 /*
  * Sun RPC is a product of Sun Microsystems, Inc. and is provided for
  * unrestricted use provided that this legend is included on all tape
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)rpc_svcout.c 1.29 89/03/30 (C) 1987 SMI";
 #else
-__RCSID("$NetBSD: rpc_svcout.c,v 1.18 2003/01/20 05:30:12 simonb Exp $");
+__RCSID("$NetBSD: rpc_svcout.c,v 1.19 2003/06/25 19:31:08 christos Exp $");
 #endif
 #endif
 
@@ -106,13 +106,13 @@ write_most(infile, netflag, nomain)
 {
 	if (inetdflag || pmflag) {
 		char   *var_type;
-		var_type = (nomain ? "extern" : "static");
-		f_print(fout, "%s int _rpcpmstart;", var_type);
+		var_type = (nomain ? "" : "static ");
+		f_print(fout, "%sint _rpcpmstart;", var_type);
 		f_print(fout, "\t\t/* Started by a port monitor ? */\n");
-		f_print(fout, "%s int _rpcfdtype;", var_type);
+		f_print(fout, "%sint _rpcfdtype;", var_type);
 		f_print(fout, "\t\t/* Whether Stream or Datagram ? */\n");
 		if (timerflag) {
-			f_print(fout, "%s int _rpcsvcdirty;", var_type);
+			f_print(fout, "%sint _rpcsvcdirty;", var_type);
 			f_print(fout, "\t/* Still serving ? */\n");
 		}
 		write_svc_aux(nomain);
