@@ -1,4 +1,4 @@
-/*	$NetBSD: smc91cxx.c,v 1.13 1998/11/18 18:34:52 thorpej Exp $	*/
+/*	$NetBSD: smc91cxx.c,v 1.14 1999/02/17 03:41:01 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -1056,7 +1056,7 @@ smc91cxx_ioctl(ifp, cmd, data)
 			if ((error = smc91cxx_enable(sc)) != 0)
 				break;
 			smc91cxx_init(sc);
-		} else if (sc->sc_enabled) {
+		} else if ((ifp->if_flags & IFF_UP) != 0) {
 			/*
 			 * Reset the interface to pick up changes in any
 			 * other flags that affect hardware registers.
