@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.ramdisk,v 1.5 2002/02/25 23:00:59 lukem Exp $
+#	$NetBSD: Makefile.ramdisk,v 1.6 2002/03/04 04:49:26 lukem Exp $
 
 TOP=	${.CURDIR}/..
 
@@ -15,7 +15,7 @@ MTREECONF=	${DISTRIBDIR}/common/mtree.common ${TOP}/common/mtree.conf
 IMAGEENDIAN=	le
 IMAGEDEPENDS+= 	${CRUNCHBIN} dot.profile termcap.mini \
 		${_SRC_TOP_}/etc/group ${_SRC_TOP_}/etc/master.passwd \
-		${_SRC_TOP_}/etc/protocols ${_SRC_TOP_}/etc/netconfig \
+		${_SRC_TOP_}/etc/netconfig ${_SRC_TOP_}/etc/protocols \
 		${_SRC_TOP_}/etc/services ${DESTDIR}/usr/mdec/biosboot.sym \
 		${DESTDIR}/usr/mdec/mbr ${DESTDIR}/usr/mdec/mbr_bootsel
 POPULATEENV+=	BOOTMODEL=${BOOTMODEL:Q}
