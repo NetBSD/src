@@ -33,7 +33,7 @@
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)send.c	5.23 (Berkeley) 2/9/91";*/
-static char rcsid[] = "$Id: send.c,v 1.2 1993/08/01 18:12:57 mycroft Exp $";
+static char rcsid[] = "$Id: send.c,v 1.3 1993/08/27 20:31:52 jtc Exp $";
 #endif /* not lint */
 
 #include "rcv.h"
@@ -302,9 +302,12 @@ mail1(hp, printheaders)
 	if ((mtf = collect(hp, printheaders)) == NULL)
 		return;
 	if (value("interactive") != NOSTR)
-		if (value("askcc") != NOSTR)
-			grabh(hp, GCC);
-		else {
+		if (value("askcc") != NOSTR || value("askbcc") != NOSTR) {
+			if (value("askcc") != NOSTR)
+				grabh(hp, GCC);
+			if (value("askbcc") != NOSTR)
+				grabh(hp, GBCC);
+		} else {
 			printf("EOT\n");
 			(void) fflush(stdout);
 		}
