@@ -1,4 +1,4 @@
-/*	$NetBSD: ecoff_machdep.h,v 1.8 1997/07/07 19:37:33 jonathan Exp $	*/
+/*	$NetBSD: ecoff_machdep.h,v 1.9 1997/07/20 02:38:02 jonathan Exp $	*/
 
 /*
  * Copyright (c) 1997 Jonathan Stone
@@ -89,6 +89,8 @@ struct ecoff_symhdr {
 
 
 struct ecoff_extsym {
+	u_int16_t	es_flags;
+	u_int16_t	es_ifd;
 	int32_t		es_strindex;
 	int32_t		es_value;
 	unsigned	es_type:6;
