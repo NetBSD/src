@@ -1,4 +1,4 @@
-/*	$NetBSD: bootparamd.c,v 1.33.2.1 2000/07/03 22:30:56 thorpej Exp $	*/
+/*	$NetBSD: bootparamd.c,v 1.33.2.2 2000/07/05 01:15:25 enami Exp $	*/
 
 /*
  * This code is not copyright, and is placed in the public domain.
@@ -11,7 +11,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: bootparamd.c,v 1.33.2.1 2000/07/03 22:30:56 thorpej Exp $");
+__RCSID("$NetBSD: bootparamd.c,v 1.33.2.2 2000/07/05 01:15:25 enami Exp $");
 #endif
 
 #include <sys/types.h>
@@ -390,13 +390,14 @@ lookup_bootparam(client, client_canonical, id, server, path)
 					continue;
 				}
 				if (fnmatch(word, hp->h_name,
-					    FNM_CASEFOLD) == 0) {
+				    FNM_CASEFOLD) == 0) {
 					/* See above. */
 					if (HASGLOB(word))
 						canon = hp->h_name;
 					else
 						canon = word;
-				}
+				} else
+					continue;
 			}
 
 #undef HASGLOB
