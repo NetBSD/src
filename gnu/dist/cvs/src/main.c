@@ -41,6 +41,7 @@ int really_quiet = 0;
 int quiet = 0;
 int trace = 0;
 int noexec = 0;
+int nolock = 0;
 int logoff = 0;
 
 /* Set if we should be writing CVSADM directories at top level.  At
@@ -229,6 +230,7 @@ static const char *const opt_usage[] =
     "    -w           Make checked-out files read-write (default).\n",
     "    -l           Turn history logging off.\n",
     "    -n           Do not execute anything that will change the disk.\n",
+    "    -u           Don't create locks (implies -l).\n",
     "    -t           Show trace of program execution -- try with -n.\n",
     "    -v           CVS version and copyright.\n",
     "    -T tmpdir    Use 'tmpdir' for temporary files.\n",
@@ -509,7 +511,7 @@ main (argc, argv)
     opterr = 1;
 
     while ((c = getopt_long
-            (argc, argv, "+Qqrwtnlvb:T:e:d:Hfz:s:xa", long_options, &option_index))
+            (argc, argv, "+Qqrwtnulvb:T:e:d:Hfz:s:xa", long_options, &option_index))
            != EOF)
     {
 	switch (c)
@@ -547,6 +549,8 @@ main (argc, argv)
 		break;
 	    case 'n':
 		noexec = 1;
+	    case 'u':			/* Fall through */
+		nolock = 1;
 	    case 'l':			/* Fall through */
 		logoff = 1;
 		break;
@@ -926,7 +930,7 @@ Copyright (c) 1989-1998 Brian Berliner, david d `zoo' zuhn, \n\
 		 * BUT, only if the history file exists.
 		 */
 
-		if (!client_active)
+		if (!client_active && !nolock)
 		{
 		    char *path;
 		    int save_errno;

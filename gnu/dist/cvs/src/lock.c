@@ -395,7 +395,7 @@ Reader_Lock (xrepository)
     FILE *fp;
     char *tmp;
 
-    if (noexec)
+    if (nolock)
 	return (0);
 
     /* we only do one directory at a time for read locks! */
@@ -467,7 +467,7 @@ Writer_Lock (list)
 {
     char *wait_repos;
 
-    if (noexec)
+    if (nolock)
 	return (0);
 
     /* We only know how to do one list at a time */

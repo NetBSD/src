@@ -589,6 +589,15 @@ title_proc (p, closure)
 				  strlen (str_list) + strlen (p->key) + 5);
 		    (void) strcat (str_list, p->key);
 		    break;
+		case 't':
+		    str_list =
+			xrealloc (str_list,
+				  (strlen (str_list)
+				   + (li->tag ? strlen (li->tag) : 0)
+				   + 10)
+				  );
+		    (void) strcat (str_list, (li->tag ? li->tag : ""));
+		    break;
 		case 'V':
 		    str_list =
 			xrealloc (str_list,

@@ -794,6 +794,8 @@ E Protocol error: Root says \"%s\" but pserver says \"%s\"",
        nothing.  But for rsh, we need to do it now.  */
     parse_config (CVSroot_directory);
 
+    if (!nolock)
+    {
     path = malloc (strlen (CVSroot_directory)
 		   + sizeof (CVSROOTADM)
 		   + sizeof (CVSROOTADM_HISTORY)
@@ -824,6 +826,7 @@ Sorry, you don't have read/write access to the history file %s", path);
 	pending_error = save_errno;
     }
     free (path);
+    }
 
 #ifdef HAVE_PUTENV
     env = malloc (strlen (CVSROOT_ENV) + strlen (CVSroot_directory) + 1 + 1);
@@ -2154,6 +2157,8 @@ serve_global_option (arg)
     {
 	case 'n':
 	    noexec = 1;
+	case 'u':
+	    nolock = 1;
 	    break;
 	case 'q':
 	    quiet = 1;

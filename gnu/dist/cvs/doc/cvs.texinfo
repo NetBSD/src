@@ -40,20 +40,16 @@
 @setfilename cvs.info
 @include CVSvn.texi
 @settitle CVS---Concurrent Versions System
+@dircategory Programming & development tools
+@direntry
+* CVS: (cvs)			CVS Reference Manual.
+@end direntry
 @setchapternewpage odd
 
 @c -- TODO list:
 @c -- Fix all lines that match "^@c -- "
 @c -- Also places marked with FIXME should be manual
 @c problems (as opposed to FIXCVS for CVS problems).
-
-@ifinfo
-@format
-START-INFO-DIR-ENTRY
-* CVS: (cvs).          Concurrent Versions System
-END-INFO-DIR-ENTRY
-@end format
-@end ifinfo
 
 @ifinfo
 Copyright @copyright{} 1992, 1993 Signum Support AB
