@@ -1,4 +1,4 @@
-/*	$NetBSD: mkfs.c,v 1.80 2003/09/10 17:25:14 dsl Exp $	*/
+/*	$NetBSD: mkfs.c,v 1.81 2003/09/11 12:19:44 dsl Exp $	*/
 
 /*
  * Copyright (c) 1980, 1989, 1993
@@ -73,7 +73,7 @@
 #if 0
 static char sccsid[] = "@(#)mkfs.c	8.11 (Berkeley) 5/3/95";
 #else
-__RCSID("$NetBSD: mkfs.c,v 1.80 2003/09/10 17:25:14 dsl Exp $");
+__RCSID("$NetBSD: mkfs.c,v 1.81 2003/09/11 12:19:44 dsl Exp $");
 #endif
 #endif /* not lint */
 
@@ -356,15 +356,23 @@ mkfs(struct partition *pp, const char *fsys, int fi, int fo,
 		    (long long)sblock.fs_size, sblock.fs_iblkno + 3 * sblock.fs_frag);
 		exit(23);
 	}
-	/*
-	 * Calculate 'per inode block' so we can allocate less than 1 fragment
-	 * per inode - useful for /dev.
-	 */
-	fragsperinodeblk = MAX(numfrags(&sblock, density * INOPB(&sblock)), 1);
-	inodeblks = (sblock.fs_size - sblock.fs_iblkno - 2 * sblock.fs_frag) /	
-		(sblock.fs_frag + fragsperinodeblk);
+	if (num_inodes != 0)
+		inodeblks = howmany(num_inodes, INOPB(&sblock));
+	else {
+		/*
+		 * Calculate 'per inode block' so we can allocate less than
+		 * 1 fragment per inode - useful for /dev.
+		 */
+		fragsperinodeblk = MAX(numfrags(&sblock,
+					density * INOPB(&sblock)), 1);
+		inodeblks = (sblock.fs_size - sblock.fs_iblkno) /	
+			(sblock.fs_frag + fragsperinodeblk);
+	}
 	if (inodeblks == 0)
 		inodeblks = 1;
+	/* Ensure that there are at least 2 data blocks (or we fail below) */
+	if (inodeblks > (sblock.fs_size - sblock.fs_iblkno)/sblock.fs_frag - 2)
+		inodeblks = (sblock.fs_size-sblock.fs_iblkno)/sblock.fs_frag-2;
 	/* Even UFS2 limits number of inodes to 2^31 (fs_ipg is int32_t) */
 	if (inodeblks * INOPB(&sblock) >= 1ull << 31)
 		inodeblks = ((1ull << 31) - NBBY) / INOPB(&sblock);
@@ -1368,6 +1376,9 @@ zap_old_sblock(int sblkoff)
 		{~0u},
 	};
 	const struct fsm *fsm;
+
+	if (Nflag)
+		return;
 
 	if (cg0_data == 0)
 		/* For FFSv1 this could include all the inodes. */
