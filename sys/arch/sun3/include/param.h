@@ -1,4 +1,4 @@
-/*	$NetBSD: param.h,v 1.26 1995/03/28 18:21:03 jtc Exp $	*/
+/*	$NetBSD: param.h,v 1.27 1995/06/13 22:14:24 gwr Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Gordon W. Ross
@@ -155,6 +155,13 @@
 #ifdef _KERNEL
 #ifndef LOCORE
 #define	DELAY(n)	delay(n)
+extern int cpuspeed;
+static inline void delay2us()
+{
+	register int n = cpuspeed;
+
+	__asm __volatile ("0: subql #4,%0; jgt 0b" : "=d" (n) : "0" (n));
+}
 #endif
 #else	/* _KERNEL */
 #define	DELAY(n)	{ register int N = (n); while (--N > 0); }
