@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs.h,v 1.29 2000/07/05 22:25:43 perseant Exp $	*/
+/*	$NetBSD: lfs.h,v 1.30 2000/09/09 04:18:28 perseant Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -262,7 +262,7 @@ struct dlfs {
 	u_char	  dlfs_fsmnt[MNAMELEN];	 /* 232: name mounted on */
 	/* XXX this is 2 bytes only to pad to a quad boundary */
 	u_int16_t dlfs_clean;     /* 322: file system is clean flag */
-	u_int32_t dlfs_dmeta;     /* 324: total number of dirty summaries */
+	int32_t dlfs_dmeta;       /* 324: total number of dirty summaries */
 	u_int32_t dlfs_minfreeseg; /* 328: segs reserved for cleaner */
         int8_t    dlfs_pad[176];  /* 332: round to 512 bytes */
 /* Checksum -- last valid disk field. */
@@ -397,7 +397,7 @@ typedef struct _cleanerinfo {
 	u_int32_t clean;		/* number of clean segments */
 	u_int32_t dirty;		/* number of dirty segments */
 	u_int32_t bfree;		/* disk blocks free */
-	u_int32_t avail;		/* disk blocks available */
+	int32_t avail;			/* disk blocks available */
 } CLEANERINFO;
 
 #define	CLEANSIZE_SU(fs)						\
