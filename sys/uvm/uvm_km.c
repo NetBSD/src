@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_km.c,v 1.78 2005/04/01 11:59:38 yamt Exp $	*/
+/*	$NetBSD: uvm_km.c,v 1.79 2005/04/01 12:37:27 yamt Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -130,7 +130,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_km.c,v 1.78 2005/04/01 11:59:38 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_km.c,v 1.79 2005/04/01 12:37:27 yamt Exp $");
 
 #include "opt_uvmhist.h"
 
@@ -711,8 +711,7 @@ again:
 			return 0;
 		}
 	}
-	pmap_kenter_pa(va, VM_PAGE_TO_PHYS(pg),
-	    VM_PROT_READ|VM_PROT_WRITE);
+	pmap_kenter_pa(va, VM_PAGE_TO_PHYS(pg), VM_PROT_READ|VM_PROT_WRITE);
 	pmap_update(pmap_kernel());
 
 	return va;
