@@ -1,4 +1,4 @@
-/*	$NetBSD: telnetd.c,v 1.43 2003/08/07 09:46:52 agc Exp $	*/
+/*	$NetBSD: telnetd.c,v 1.44 2004/11/14 18:07:56 christos Exp $	*/
 
 /*
  * Copyright (C) 1997 and 1998 WIDE Project.
@@ -65,7 +65,7 @@ __COPYRIGHT("@(#) Copyright (c) 1989, 1993\n\
 #if 0
 static char sccsid[] = "@(#)telnetd.c	8.4 (Berkeley) 5/30/95";
 #else
-__RCSID("$NetBSD: telnetd.c,v 1.43 2003/08/07 09:46:52 agc Exp $");
+__RCSID("$NetBSD: telnetd.c,v 1.44 2004/11/14 18:07:56 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -160,13 +160,13 @@ char valid_opts[] = {
 };
 
 int family = AF_INET;
+struct sockaddr_storage from;
 
 int
 main(argc, argv)
 	int argc;
 	char *argv[];
 {
-	struct sockaddr_storage from;
 	int on = 1, fromlen;
 	register int ch;
 #if	defined(IPPROTO_IP) && defined(IP_TOS)

@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_term.c,v 1.40 2003/09/19 05:54:46 itojun Exp $	*/
+/*	$NetBSD: sys_term.c,v 1.41 2004/11/14 18:07:56 christos Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)sys_term.c	8.4+1 (Berkeley) 5/30/95";
 #else
-__RCSID("$NetBSD: sys_term.c,v 1.40 2003/09/19 05:54:46 itojun Exp $");
+__RCSID("$NetBSD: sys_term.c,v 1.41 2004/11/14 18:07:56 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -42,6 +42,7 @@ __RCSID("$NetBSD: sys_term.c,v 1.40 2003/09/19 05:54:46 itojun Exp $");
 #include "pathnames.h"
 
 #include <util.h>
+#include <vis.h>
 
 #include <sys/cdefs.h>
 
@@ -611,24 +612,30 @@ start_login(host, autologin, name)
 	char	defstrs[TABBUFSIZ];
 #undef	TABBUFSIZ
 	const char *loginprog = NULL;
-
+	extern struct sockaddr_storage from;
+	char buf[sizeof(from) * 4 + 1];
 
 	scrub_env();
 
 	/*
+	 * -a : pass on the address of the host.
 	 * -h : pass on name of host.
-	 *		WARNING:  -h is accepted by login if and only if
-	 *			getuid() == 0.
+	 *	WARNING:  -h and -a are accepted by login
+	 *	if and only if getuid() == 0.
 	 * -p : don't clobber the environment (so terminal type stays set).
 	 *
 	 * -f : force this login, he has already been authenticated
 	 */
 	argv = addarg(0, "login");
 
-	{
-		argv = addarg(argv, "-h");
-		argv = addarg(argv, host);
-	}
+	argv = addarg(argv, "-a");
+	(void)strvisx(buf, (const char *)(const void *)&from, sizeof(from),
+	    VIS_WHITE);
+	argv = addarg(argv, buf);
+
+	argv = addarg(argv, "-h");
+	argv = addarg(argv, host);
+
 	argv = addarg(argv, "-p");
 #ifdef	LINEMODE
 	/*
