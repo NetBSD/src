@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_vfsops.c,v 1.28.2.3 1999/12/17 23:23:19 he Exp $	*/
+/*	$NetBSD: lfs_vfsops.c,v 1.28.2.4 1999/12/17 23:55:06 he Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -393,7 +393,6 @@ lfs_mountfs(devvp, mp, p)
 
 	/* Set up the I/O information */
 	fs->lfs_iocount = 0;
-	fs->lfs_dirvcount = 0;
 	fs->lfs_diropwait = 0;
 	fs->lfs_activesb = 0;
 #ifdef LFS_CANNOT_ROLLFW
@@ -617,9 +616,7 @@ lfs_sync(mp, waitfor, cred, p)
 	return (error);
 }
 
-#ifdef USE_UFS_HASHLOCK
 extern struct lock ufs_hashlock;
-#endif
 
 /*
  * Look up an LFS dinode number to find its incore vnode.  If not already
@@ -648,14 +645,10 @@ lfs_vget(mp, ino, vpp)
 	ump = VFSTOUFS(mp);
 	dev = ump->um_dev;
 
-#ifdef USE_UFS_HASHLOCK
 	do {
-#endif
 		if ((*vpp = ufs_ihashget(dev, ino)) != NULL)
 			return (0);
-#ifdef USE_UFS_HASHLOCK
 	} while (lockmgr(&ufs_hashlock, LK_EXCLUSIVE|LK_SLEEPFAIL, 0));
-#endif
 
 	/* Translate the inode number to a disk address. */
 	fs = ump->um_lfs;
@@ -669,9 +662,7 @@ lfs_vget(mp, ino, vpp)
 #endif
 		brelse(bp);
 		if (daddr == LFS_UNUSED_DADDR) {
-#ifdef USE_UFS_HASHLOCK
 			lockmgr(&ufs_hashlock, LK_RELEASE, 0);
-#endif
 			return (ENOENT);
 		}
 	}
@@ -679,9 +670,7 @@ lfs_vget(mp, ino, vpp)
 	/* Allocate new vnode/inode. */
 	if ((error = lfs_vcreate(mp, ino, &vp)) != 0) {
 		*vpp = NULL;
-#ifdef USE_UFS_HASHLOCK
 		lockmgr(&ufs_hashlock, LK_RELEASE, 0);
-#endif
 		return (error);
 	}
 
@@ -693,9 +682,7 @@ lfs_vget(mp, ino, vpp)
 	 */
 	ip = VTOI(vp);
 	ufs_ihashins(ip);
-#ifdef USE_UFS_HASHLOCK
 	lockmgr(&ufs_hashlock, LK_RELEASE, 0);
-#endif
 
 	/*
 	 * XXX
