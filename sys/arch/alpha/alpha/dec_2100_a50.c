@@ -1,4 +1,4 @@
-/* $NetBSD: dec_2100_a50.c,v 1.33 1997/09/16 20:34:41 is Exp $ */
+/* $NetBSD: dec_2100_a50.c,v 1.34 1997/09/23 23:15:44 mjacob Exp $ */
 
 /*
  * Copyright (c) 1995, 1996, 1997 Carnegie-Mellon University.
@@ -26,10 +26,12 @@
  * any improvements or extensions that they make and grant Carnegie the
  * rights to redistribute these changes.
  */
-
+/*
+ * Additional Copyright (c) 1997 by Matthew Jacob for NASA/Ames Research Center
+ */
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: dec_2100_a50.c,v 1.33 1997/09/16 20:34:41 is Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dec_2100_a50.c,v 1.34 1997/09/23 23:15:44 mjacob Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -59,39 +61,56 @@ __KERNEL_RCSID(0, "$NetBSD: dec_2100_a50.c,v 1.33 1997/09/16 20:34:41 is Exp $")
 #endif
 static int comcnrate = CONSPEED;
 
-const char *
-dec_2100_a50_model_name()
-{
-	static char s[80];
+void dec_2100_a50_init __P((void));
+static void dec_2100_a50_cons_init __P((void));
+static void dec_2100_a50_device_register __P((struct device *, void *));
 
+void
+dec_2100_a50_init()
+{
+	platform.family = "AlphaStation 200/400 (\"Avanti\")";
 	switch (hwrpb->rpb_variation & SV_ST_MASK) {
 	case SV_ST_AVANTI:
 	case SV_ST_AVANTI_XXX:		/* XXX apparently the same? */
-		return "AlphaStation 400 4/233 (\"Avanti\")";
+		platform.model = "AlphaStation 400 4/233 (\"Avanti\")";
+		break;
 
 	case SV_ST_MUSTANG2_4_166:
-		return "AlphaStation 200 4/166 (\"Mustang II\")";
+		platform.model = "AlphaStation 200 4/166 (\"Mustang II\")";
+		break;
 
 	case SV_ST_MUSTANG2_4_233:
-		return "AlphaStation 200 4/233 (\"Mustang II\")";
+		platform.model = "AlphaStation 200 4/233 (\"Mustang II\")";
+		break;
 
-	case 0x2000:
-		return "AlphaStation 250 4/266";
+	case SV_ST_AVANTI_4_266:
+		platform.model = "AlphaStation 250 4/266";
+		break;
 
 	case SV_ST_MUSTANG2_4_100:
-		return "AlphaStation 200 4/100 (\"Mustang II\")";
+		platform.model = "AlphaStation 200 4/100 (\"Mustang II\")";
+		break;
 
-	case 0xa800:
-		return "AlphaStation 255/233";
+	case SV_ST_AVANTI_4_233:
+		platform.model = "AlphaStation 255/233";
+		break;
 
 	default:
-		sprintf(s, "DEC 2100/A50 (\"Avanti\") family, variation %lx",
+	{
+		/* string is 24 bytes plus 64 bit hex number (16 byte) */
+		static char s[42];
+		sprintf(s, "unknown model variation %lx",
 		    hwrpb->rpb_variation & SV_ST_MASK);
-		return s;
+		platform.model = (const char *) s;
+		break;
 	}
+	}
+	platform.iobus = "apecs";
+	platform.cons_init = dec_2100_a50_cons_init;
+	platform.device_register = dec_2100_a50_device_register;
 }
 
-void
+static void
 dec_2100_a50_cons_init()
 {
 	struct ctb *ctb;
@@ -143,14 +162,7 @@ dec_2100_a50_cons_init()
 	}
 }
 
-const char *
-dec_2100_a50_iobus_name()
-{
-
-	return ("apecs");
-}
-
-void
+static void
 dec_2100_a50_device_register(dev, aux)
 	struct device *dev;
 	void *aux;
