@@ -1,4 +1,4 @@
-/*	$NetBSD: stub.c,v 1.13 1996/11/20 18:57:37 gwr Exp $	*/
+/*	$NetBSD: stub.c,v 1.14 1996/12/30 21:12:01 gwr Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -40,6 +40,10 @@
  * Stubs to supply things needed when some options are OFF.
  */
 
+#include <sys/cdefs.h>
+
+void swapgeneric __P((void));
+void Debugger __P((void));
 
 /* Called by autoconf.c */
 #ifndef	GENERIC
