@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-#	$NetBSD: install.tmpl,v 1.6 1999/03/24 15:54:46 minoura Exp $
+#	$NetBSD: install.tmpl,v 1.7 1999/04/02 15:46:34 minoura Exp $
 #
 # Copyright (c) 1994 Christopher G. Demetriou
 # Copyright (c) 1997 Perry E. Metzger
@@ -417,10 +417,8 @@ if [ `cat /kern/physmem` -lt 1536 ]; then # less than 6megs
 	esac
 	echo	""
 	echo	"Note that you have to use the SMALL kernel named"
-	echo	"netbsd.SMALL which is included in the kern.tgz"
-	echo	"distribution set instead of the standard kernel."
-	echo	"After you have extracted the kern.tgz distribution set,"
-	echo	"type \`mv /mnt/netbsd.SMALL /mnt/netbsd'."
+	echo	"netbsd.SMALL in x68k/binary/kernel/ directory instead of"
+	echo	"the standard kernel which is included the kern.tgz."
 fi
 
 if [ "$sect_fwd" = "sf:" ]; then
