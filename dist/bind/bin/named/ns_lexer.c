@@ -1,11 +1,11 @@
-/*	$NetBSD: ns_lexer.c,v 1.1.1.1.8.2 2000/11/13 22:00:08 tv Exp $	*/
+/*	$NetBSD: ns_lexer.c,v 1.1.1.1.8.3 2001/01/28 15:52:38 he Exp $	*/
 
 #if !defined(lint) && !defined(SABER)
-static const char rcsid[] = "Id: ns_lexer.c,v 8.19 1999/10/13 16:39:08 vixie Exp";
+static const char rcsid[] = "Id: ns_lexer.c,v 8.22 2000/11/29 06:55:58 marka Exp";
 #endif /* not lint */
 
 /*
- * Copyright (c) 1996-1999 by Internet Software Consortium.
+ * Copyright (c) 1996-2000 by Internet Software Consortium.
  *
  * Permission to use, copy, modify, and distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -267,7 +267,11 @@ static struct keyword keywords[] = {
 	{"has-old-clients", T_HAS_OLD_CLIENTS},
 	{"heartbeat-interval", T_HEARTBEAT},
 	{"hint", T_HINT},
+#ifdef HITCOUNTS
+	{"hit-count", T_HITCOUNT},
+#endif /* HITCOUNTS */
 	{"host-statistics", T_HOSTSTATS},
+	{"host-statistics-max", T_HOSTSTATSMAX},
 	{"if-no-answer", T_IF_NO_ANSWER},
 	{"if-no-domain", T_IF_NO_DOMAIN},
 	{"ignore", T_IGNORE},

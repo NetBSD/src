@@ -1,4 +1,4 @@
-/*	$NetBSD: ev_timers.c,v 1.1.1.1.8.2 2000/11/13 22:00:11 tv Exp $	*/
+/*	$NetBSD: ev_timers.c,v 1.1.1.1.8.3 2001/01/28 15:52:41 he Exp $	*/
 
 /*
  * Copyright (c) 1995-1999 by Internet Software Consortium
@@ -22,7 +22,7 @@
  */
 
 #if !defined(LINT) && !defined(CODECENTER)
-static const char rcsid[] = "Id: ev_timers.c,v 1.25 1999/10/07 20:44:04 vixie Exp";
+static const char rcsid[] = "Id: ev_timers.c,v 1.26 2000/07/17 07:36:54 vixie Exp";
 #endif
 
 /* Import. */
@@ -32,6 +32,7 @@ static const char rcsid[] = "Id: ev_timers.c,v 1.25 1999/10/07 20:44:04 vixie Ex
 
 #include <errno.h>
 
+#include <isc/assertions.h>
 #include <isc/eventlib.h>
 #include "eventlib_p.h"
 
@@ -112,6 +113,7 @@ evNowTime() {
 
 	if (gettimeofday(&now, NULL) < 0)
 		return (evConsTime(0, 0));
+	INSIST(now.tv_usec >= 0 && now.tv_usec < 1000000);
 	return (evTimeSpec(now));
 }
 
