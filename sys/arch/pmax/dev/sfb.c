@@ -1,4 +1,4 @@
-/*	$NetBSD: sfb.c,v 1.14 1996/09/08 19:28:04 jonathan Exp $	*/
+/*	$NetBSD: sfb.c,v 1.15 1996/09/21 03:25:15 jonathan Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -90,11 +90,12 @@
 #include <sys/device.h>
 #include <sys/fcntl.h>
 #include <sys/malloc.h>
+#include <dev/tc/tcvar.h>
 
 #include <machine/autoconf.h>
-#include <dev/tc/tcvar.h>
 #include <machine/fbio.h>
 #include <machine/fbvar.h>
+#include <pmax/dev/sfbvar.h>		/* XXX dev/tc ? */
 
 
 #include <pmax/dev/bt459.h>
