@@ -11,7 +11,7 @@
  *   of this software, nor does the author assume any responsibility
  *   for damages incurred with its use.
  *
- *	$Id: if_is.c,v 1.21 1994/02/15 19:53:20 mycroft Exp $
+ *	$Id: if_is.c,v 1.22 1994/02/16 20:15:22 mycroft Exp $
  */
 
 /* TODO
@@ -1149,7 +1149,8 @@ is_setladrf(ac, af)
 	 * the word.
 	 */
 
-	if (ifp->if_flags & (IFF_ALLMULTI | IFF_PROMISC)) {
+	if (ifp->if_flags & IFF_PROMISC)) {
+		ifp->if_flags |= IFF_ALLMULTI;
 		af[0] = af[1] = 0xffffffff;
 		return;
 	}
@@ -1167,6 +1168,7 @@ is_setladrf(ac, af)
 			 * ranges is for IP multicast routing, for which the
 			 * range is big enough to require all bits set.)
 			 */
+			ifp->if_flags |= IFF_ALLMULTI;
 			af[0] = af[1] = 0xffffffff;
 			return;
 		}
@@ -1192,5 +1194,6 @@ is_setladrf(ac, af)
 
 		ETHER_NEXT_MULTI(step, enm);
 	}
+	ifp->if_flags &= ~IFF_ALLMULTI;
 }
 
