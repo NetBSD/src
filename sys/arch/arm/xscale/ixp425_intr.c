@@ -1,4 +1,4 @@
-/*	$NetBSD: ixp425_intr.c,v 1.9 2004/02/13 15:49:02 scw Exp $ */
+/*	$NetBSD: ixp425_intr.c,v 1.10 2004/02/27 18:55:19 scw Exp $ */
 
 /*
  * Copyright (c) 2003
@@ -68,7 +68,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ixp425_intr.c,v 1.9 2004/02/13 15:49:02 scw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ixp425_intr.c,v 1.10 2004/02/27 18:55:19 scw Exp $");
 
 #ifndef EVBARM_SPL_NOINLINE
 #define	EVBARM_SPL_NOINLINE
@@ -122,7 +122,6 @@ uint32_t intr_steer;
  *  Bit#30: SW Interrupt 0
  *  Bit#14: Timestamp Timer
  *  Bit#11: General-purpose Timer 1
- */
  */
 static const uint32_t si_to_irqbit[SI_NQUEUES] = {
 	IXP425_INT_bit31,		/* SI_SOFT */
