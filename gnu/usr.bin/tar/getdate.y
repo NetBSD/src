@@ -1,5 +1,5 @@
 %{
-/* $Revision: 1.1.1.1 $
+/* $Revision: 1.2 $
 **
 **  Originally written by Steven M. Bellovin <smb@research.att.com> while
 **  at the University of North Carolina at Chapel Hill.  Later tweaked by
@@ -14,14 +14,18 @@
 /* SUPPRESS 287 on yaccpar_sccsid *//* Unusd static variable */
 /* SUPPRESS 288 on yyerrlab *//* Label unused */
 
+#ifdef HAVE_CONFIG_H
+#include "config.h"
+#endif
+
 #ifdef __GNUC__
 #define alloca __builtin_alloca
 #else
-#ifdef sparc
+#ifdef HAVE_ALLOCA_H
 #include <alloca.h>
 #else
 #ifdef _AIX /* for Bison */
-#pragma alloca
+ #pragma alloca
 #else
 char *alloca ();
 #endif
@@ -31,35 +35,59 @@ char *alloca ();
 #include <stdio.h>
 #include <ctype.h>
 
+/* The code at the top of get_date which figures out the offset of the
+   current time zone checks various CPP symbols to see if special
+   tricks are need, but defaults to using the gettimeofday system call.
+   Include <sys/time.h> if that will be used.  */
+
+#if !defined (USG) && !defined (sgi) && !defined (__386BSD__)
+#include <sys/time.h>
+#endif
+
 #if	defined(vms)
+
 #include <types.h>
 #include <time.h>
+
 #else
+
 #include <sys/types.h>
-#if	defined(USG)
+
+#if	defined(USG) || !defined(HAVE_FTIME)
 /*
-**  Uncomment the next line if you need to do a tzset() call to set the
-**  timezone, and don't have ftime().  Some SystemV releases, I think.
+**  If you need to do a tzset() call to set the
+**  timezone, and don't have ftime().
 */
-/*#define NEED_TZSET */
 struct timeb {
     time_t		time;		/* Seconds since the epoch	*/
     unsigned short	millitm;	/* Field not used		*/
     short		timezone;
     short		dstflag;	/* Field not used		*/
 };
+
 #else
+
 #include <sys/timeb.h>
-#endif	/* defined(USG) */
-#if	defined(BSD4_2) || defined(BSD4_1C)
+
+#endif	/* defined(USG) && !defined(HAVE_FTIME) */
+
+#if	defined(BSD4_2) || defined(BSD4_1C) || (defined (hp9000) && !defined (hpux))
 #include <sys/time.h>
 #else
+#if defined(_AIX)
+#include <sys/time.h>
+#endif
 #include <time.h>
 #endif	/* defined(BSD4_2) */
+
 #endif	/* defined(vms) */
 
 #if defined (STDC_HEADERS) || defined (USG)
 #include <string.h>
+#endif
+
+#if sgi
+#undef timezone
 #endif
 
 extern struct tm	*localtime();
@@ -70,12 +98,12 @@ extern struct tm	*localtime();
 
 #if	!defined(lint) && !defined(SABER)
 static char RCS[] =
-	"$Header: /cvsroot/src/gnu/usr.bin/tar/Attic/getdate.y,v 1.1.1.1 1993/03/21 09:45:37 cgd Exp $";
+	"$Header: /cvsroot/src/gnu/usr.bin/tar/Attic/getdate.y,v 1.2 1993/07/18 11:47:13 cgd Exp $";
 #endif	/* !defined(lint) && !defined(SABER) */
 
 
 #define EPOCH		1970
-#define HOUR(x)		(x * 60)
+#define HOUR(x)		((time_t)(x) * 60)
 #define SECSPERDAY	(24L * 60L * 60L)
 
 
@@ -138,7 +166,7 @@ static time_t	yyRelSeconds;
 }
 
 %token	tAGO tDAY tDAYZONE tID tMERIDIAN tMINUTE_UNIT tMONTH tMONTH_UNIT
-%token	tSEC_UNIT tSNUMBER tUNUMBER tZONE
+%token	tSEC_UNIT tSNUMBER tUNUMBER tZONE tDST
 
 %type	<Number>	tDAY tDAYZONE tMINUTE_UNIT tMONTH tMONTH_UNIT
 %type	<Number>	tSEC_UNIT tSNUMBER tUNUMBER tZONE
@@ -211,6 +239,11 @@ zone	: tZONE {
 	    yyTimezone = $1;
 	    yyDSTmode = DSTon;
 	}
+	|
+	  tZONE tDST {
+	    yyTimezone = $1;
+	    yyDSTmode = DSTon;
+	}
 	;
 
 day	: tDAY {
@@ -235,6 +268,12 @@ date	: tUNUMBER '/' tUNUMBER {
 	    yyMonth = $1;
 	    yyDay = $3;
 	    yyYear = $5;
+	}
+	| tUNUMBER tSNUMBER tSNUMBER {
+	    /* ISO 8601 format.  yyyy-mm-dd.  */
+	    yyYear = $1;
+	    yyMonth = -$2;
+	    yyDay = -$3;
 	}
 	| tMONTH tUNUMBER {
 	    yyMonth = $1;
@@ -331,7 +370,7 @@ o_merid	: /* NULL */ {
 %%
 
 /* Month and day table. */
-static TABLE	MonthDayTable[] = {
+static TABLE const MonthDayTable[] = {
     { "january",	tMONTH,  1 },
     { "february",	tMONTH,  2 },
     { "march",		tMONTH,  3 },
@@ -360,7 +399,7 @@ static TABLE	MonthDayTable[] = {
 };
 
 /* Time units table. */
-static TABLE	UnitsTable[] = {
+static TABLE const UnitsTable[] = {
     { "year",		tMONTH_UNIT,	12 },
     { "month",		tMONTH_UNIT,	1 },
     { "fortnight",	tMINUTE_UNIT,	14 * 24 * 60 },
@@ -375,7 +414,7 @@ static TABLE	UnitsTable[] = {
 };
 
 /* Assorted relative-time words. */
-static TABLE	OtherTable[] = {
+static TABLE const OtherTable[] = {
     { "tomorrow",	tMINUTE_UNIT,	1 * 24 * 60 },
     { "yesterday",	tMINUTE_UNIT,	-1 * 24 * 60 },
     { "today",		tMINUTE_UNIT,	0 },
@@ -400,7 +439,8 @@ static TABLE	OtherTable[] = {
 };
 
 /* The timezone table. */
-static TABLE	TimezoneTable[] = {
+/* Some of these are commented out because a time_t can't store a float. */
+static TABLE const TimezoneTable[] = {
     { "gmt",	tZONE,     HOUR( 0) },	/* Greenwich Mean */
     { "ut",	tZONE,     HOUR( 0) },	/* Universal (Coordinated) */
     { "utc",	tZONE,     HOUR( 0) },
@@ -414,9 +454,11 @@ static TABLE	TimezoneTable[] = {
     { "bst",	tZONE,     HOUR( 3) },	/* Brazil Standard */
     { "gst",	tZONE,     HOUR( 3) },	/* Greenland Standard */
 #endif
+#if 0
     { "nft",	tZONE,     HOUR(3.5) },	/* Newfoundland */
     { "nst",	tZONE,     HOUR(3.5) },	/* Newfoundland Standard */
     { "ndt",	tDAYZONE,  HOUR(3.5) },	/* Newfoundland Daylight */
+#endif
     { "ast",	tZONE,     HOUR( 4) },	/* Atlantic Standard */
     { "adt",	tDAYZONE,  HOUR( 4) },	/* Atlantic Daylight */
     { "est",	tZONE,     HOUR( 5) },	/* Eastern Standard */
@@ -445,24 +487,32 @@ static TABLE	TimezoneTable[] = {
     { "fst",	tDAYZONE,  -HOUR(1) },	/* French Summer */
     { "eet",	tZONE,     -HOUR(2) },	/* Eastern Europe, USSR Zone 1 */
     { "bt",	tZONE,     -HOUR(3) },	/* Baghdad, USSR Zone 2 */
+#if 0
     { "it",	tZONE,     -HOUR(3.5) },/* Iran */
+#endif
     { "zp4",	tZONE,     -HOUR(4) },	/* USSR Zone 3 */
     { "zp5",	tZONE,     -HOUR(5) },	/* USSR Zone 4 */
+#if 0
     { "ist",	tZONE,     -HOUR(5.5) },/* Indian Standard */
+#endif
     { "zp6",	tZONE,     -HOUR(6) },	/* USSR Zone 5 */
 #if	0
-    /* For completeness.  NST is also Newfoundland Stanard, nad SST is
+    /* For completeness.  NST is also Newfoundland Stanard, and SST is
      * also Swedish Summer. */
     { "nst",	tZONE,     -HOUR(6.5) },/* North Sumatra */
     { "sst",	tZONE,     -HOUR(7) },	/* South Sumatra, USSR Zone 6 */
 #endif	/* 0 */
     { "wast",	tZONE,     -HOUR(7) },	/* West Australian Standard */
     { "wadt",	tDAYZONE,  -HOUR(7) },	/* West Australian Daylight */
+#if 0
     { "jt",	tZONE,     -HOUR(7.5) },/* Java (3pm in Cronusland!) */
+#endif
     { "cct",	tZONE,     -HOUR(8) },	/* China Coast, USSR Zone 7 */
     { "jst",	tZONE,     -HOUR(9) },	/* Japan Standard, USSR Zone 8 */
+#if 0
     { "cast",	tZONE,     -HOUR(9.5) },/* Central Australian Standard */
     { "cadt",	tDAYZONE,  -HOUR(9.5) },/* Central Australian Daylight */
+#endif
     { "east",	tZONE,     -HOUR(10) },	/* Eastern Australian Standard */
     { "eadt",	tDAYZONE,  -HOUR(10) },	/* Eastern Australian Daylight */
     { "gst",	tZONE,     -HOUR(10) },	/* Guam Standard, USSR Zone 9 */
@@ -474,7 +524,7 @@ static TABLE	TimezoneTable[] = {
 };
 
 /* Military timezone table. */
-static TABLE	MilitaryTable[] = {
+static TABLE const MilitaryTable[] = {
     { "a",	tZONE,	HOUR(  1) },
     { "b",	tZONE,	HOUR(  2) },
     { "c",	tZONE,	HOUR(  3) },
@@ -507,7 +557,7 @@ static TABLE	MilitaryTable[] = {
 
 
 /* ARGSUSED */
-int
+static int
 yyerror(s)
     char	*s;
 {
@@ -553,7 +603,7 @@ Convert(Month, Day, Year, Hours, Minutes, Seconds, Meridian, DSTmode)
     MERIDIAN	Meridian;
     DSTMODE	DSTmode;
 {
-    static int	DaysInMonth[12] = {
+    static int DaysInMonth[12] = {
 	31, 0, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31
     };
     time_t	tod;
@@ -647,7 +697,7 @@ LookupWord(buff)
 {
     register char	*p;
     register char	*q;
-    register TABLE	*tp;
+    register const TABLE	*tp;
     int			i;
     int			abbrev;
 
@@ -693,6 +743,9 @@ LookupWord(buff)
 	    yylval.Number = tp->value;
 	    return tp->type;
 	}
+
+    if (strcmp(buff, "dst") == 0) 
+	return tDST;
 
     for (tp = UnitsTable; tp->name; tp++)
 	if (strcmp(buff, tp->name) == 0) {
@@ -745,7 +798,7 @@ LookupWord(buff)
 }
 
 
-int
+static int
 yylex()
 {
     register char	c;
@@ -810,15 +863,35 @@ get_date(p, now)
 
     yyInput = p;
     if (now == NULL) {
-	now = &ftz;
-#if	defined(NEED_TZSET)
+        now = &ftz;
+#if	!defined(HAVE_FTIME)
 	(void)time(&ftz.time);
 	/* Set the timezone global. */
 	tzset();
-	ftz.timezone = (int) timezone / 60;
-#else
+	{
+#if sgi
+	    ftz.timezone = (int) _timezone / 60;
+#else /* not sgi */
+#ifdef __386BSD__
+	    ftz.timezone = 0;
+#else /* neither sgi nor 386BSD */
+#if defined (USG)
+	    extern time_t timezone;
+
+	    ftz.timezone = (int) timezone / 60;
+#else /* neither sgi nor 386BSD nor USG */
+	    struct timeval tv;
+	    struct timezone tz;
+
+	    gettimeofday (&tv, &tz);
+	    ftz.timezone = (int) tz.tz_minuteswest;
+#endif /* neither sgi nor 386BSD nor USG */
+#endif /* neither sgi nor 386BSD */
+#endif /* not sgi */
+	}
+#else /* HAVE_FTIME */
 	(void)ftime(&ftz);
-#endif	/* defined(NEED_TZSET) */
+#endif /* HAVE_FTIME */
     }
 
     tm = localtime(&now->time);
