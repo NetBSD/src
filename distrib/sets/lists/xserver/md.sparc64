@@ -1,0 +1,9 @@
+# $NetBSD: md.sparc64,v 1.1 2001/08/19 14:18:02 mrg Exp $
+./usr/X11R6/bin/X
+./usr/X11R6/bin/Xsun
+./usr/X11R6/bin/Xsun24
+./usr/X11R6/bin/XsunMono
+./usr/X11R6/lib/X11/rgb.db
+./usr/X11R6/man/cat1/Xsun.0
+./usr/X11R6/man/cat1/Xsun24.0
+./usr/X11R6/man/cat1/XsunMono.0
