@@ -1,4 +1,4 @@
-/*	$NetBSD: ldvar.h,v 1.3 2001/01/03 21:01:28 ad Exp $	*/
+/*	$NetBSD: ldvar.h,v 1.4 2001/02/04 17:15:37 ad Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -58,7 +58,7 @@ struct ld_softc {
 	int	sc_nsectors;			/* # sectors per track */
 	int	sc_secsize;			/* sector size in bytes */
 	int	sc_maxxfer;			/* max xfer size in bytes */
-	int	sc_maxqueuecnt;			/* maximum h/w queue count */
+	int	sc_maxqueuecnt;		/* maximum h/w queue count */
 
 	int	(*sc_dump)(struct ld_softc *, void *, int, int);
 	int	(*sc_flush)(struct ld_softc *);
@@ -70,11 +70,13 @@ struct ld_softc {
 #define	LDF_LKWANTED	0x04		/* lock wanted */
 #define	LDF_WLABEL	0x08		/* label is writable */
 #define	LDF_LABELLING	0x10		/* writing label */
-#define	LDF_DRAIN	0x20		/* detach pending */
+#define	LDF_DRAIN	0x20		/* maxqueuecnt has changed; drain */
+#define	LDF_DETACH	0x40		/* detach pending */
 
+int	ldadjqparam(struct ld_softc *, int);
 void	ldattach(struct ld_softc *);
-void	lddetach(struct ld_softc *);
+int	ldbegindetach(struct ld_softc *, int);
+void	ldenddetach(struct ld_softc *);
 void	lddone(struct ld_softc *, struct buf *);
-int	lddrain(struct ld_softc *, int);
 
 #endif	/* !_DEV_LDVAR_H_ */
