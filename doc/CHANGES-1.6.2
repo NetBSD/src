@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-1.6.2,v 1.1.2.28 2003/06/16 14:04:07 grant Exp $
+#	$NetBSD: CHANGES-1.6.2,v 1.1.2.29 2003/06/16 14:12:16 grant Exp $
 
 A complete list of changes from NetBSD 1.6.1 to NetBSD 1.6.2:
 
@@ -417,3 +417,13 @@ sbin/dump/rcache.c				1.20
 	interpreted as an unsigned int.  This change lets dump work on 32-bit
 	systems that have more than 2GB of RAM.
 	[rafal, ticket #1272]
+
+sys/dev/wscons/wsemul_vt100.c			1.13 and 1.24 (via patch)
+sys/dev/wscons/wsemul_vt100var.h		1.7
+
+	fix crash due to wrong argument in the (almost useless)
+	DECRQUPSS escape sequence
+
+	PR/17738: Matthias Drochner, PR/21230: Onno van der Linden: vt100
+	wscons crashes restoring cursor. Fixed by adding a flag as suggested.
+	[drochner, ticket #1277]
