@@ -1,5 +1,7 @@
 #!/bin/sh
-
+#
+# $NetBSD: zgrep,v 1.2 2003/12/28 17:26:48 wiz Exp $
+#
 # Copyright (c) 2003 Thomas Klausner.
 #
 # Redistribution and use in source and binary forms, with or without
