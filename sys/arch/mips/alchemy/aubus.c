@@ -1,4 +1,4 @@
-/* $NetBSD: aubus.c,v 1.7 2003/04/01 17:29:11 hpeyerl Exp $ */
+/* $NetBSD: aubus.c,v 1.8 2003/04/02 02:18:52 hpeyerl Exp $ */
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -257,20 +257,20 @@ aubus_alloc_dma_tag(sc, pdt)
 
 	t = pdt;
 	t->_cookie = sc;
-	t->_wbase=0;	/* XXX */
-	t->_physbase=0;	/* XXX */
-	t->_wsize=MIPS_KSEG1_START - MIPS_KSEG0_START;
-	t->_dmamap_create=_bus_dmamap_create;
-	t->_dmamap_destroy=_bus_dmamap_destroy;
-	t->_dmamap_load=_bus_dmamap_load;
-	t->_dmamap_load_mbuf=_bus_dmamap_load_mbuf;
-	t->_dmamap_load_uio=_bus_dmamap_load_uio;
-	t->_dmamap_load_raw=_bus_dmamap_load_raw;
-	t->_dmamap_unload=_bus_dmamap_unload;
-	t->_dmamap_sync=_bus_dmamap_sync;
-	t->_dmamem_alloc=_bus_dmamem_alloc;
-	t->_dmamem_free=_bus_dmamem_free;
-	t->_dmamem_map=_bus_dmamem_map;
-	t->_dmamem_unmap=_bus_dmamem_unmap;
-	t->_dmamem_mmap=_bus_dmamem_mmap;
+	t->_wbase = 0;	/* XXX */
+	t->_physbase = 0;	/* XXX */
+	t->_wsize = MIPS_KSEG1_START - MIPS_KSEG0_START;
+	t->_dmamap_create = _bus_dmamap_create;
+	t->_dmamap_destroy = _bus_dmamap_destroy;
+	t->_dmamap_load = _bus_dmamap_load;
+	t->_dmamap_load_mbuf = _bus_dmamap_load_mbuf;
+	t->_dmamap_load_uio = _bus_dmamap_load_uio;
+	t->_dmamap_load_raw = _bus_dmamap_load_raw;
+	t->_dmamap_unload = _bus_dmamap_unload;
+	t->_dmamap_sync = _bus_dmamap_sync;
+	t->_dmamem_alloc = _bus_dmamem_alloc;
+	t->_dmamem_free = _bus_dmamem_free;
+	t->_dmamem_map = _bus_dmamem_map;
+	t->_dmamem_unmap = _bus_dmamem_unmap;
+	t->_dmamem_mmap = _bus_dmamem_mmap;
 }
