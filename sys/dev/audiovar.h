@@ -1,4 +1,4 @@
-/*	$NetBSD: audiovar.h,v 1.31.2.6 2004/12/29 17:37:47 kent Exp $	*/
+/*	$NetBSD: audiovar.h,v 1.31.2.7 2004/12/29 19:55:16 kent Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -160,11 +160,11 @@ struct audio_softc {
 	 *	|  write(2) & uiomove(9)
 	 *  sc_pstreams[0]	<sc_pparams>
 	 *      |  sc_pfilters[0]
-	 *  sc_pstreams[1]
+	 *  sc_pstreams[1]	<list_t::filters[0].param>
 	 *      :
-	 *  sc_pstreams[n]
-	 *      |  sc_pfilters[n]
-	 *    sc_pr
+	 *  sc_pstreams[n-1]	<list_t::filters[n-2].param>
+	 *      |  sc_pfilters[n-1]
+	 *    sc_pr		<list_t::filters[n-1].param>
 	 *      |
 	 *  hardware
 	 */
@@ -177,13 +177,14 @@ struct audio_softc {
 	/**
 	 *  hardware
 	 *	|
-	 *    sc_rr
+	 *    sc_rr		<list_t::filters[0].param>
 	 *	|  sc_rfilters[0]
-	 *  sc_rstreams[0]
+	 *  sc_rstreams[0]	<list_t::filters[1].param>
 	 *      |  sc_rfilters[1]
-	 *  sc_rstreams[1]
+	 *  sc_rstreams[1]	<list_t::filters[2].param>
 	 *      :
-	 *  sc_rstreams[n]	<sc_rparams>
+	 *	|  sc_rfilters[n-1]
+	 *  sc_rstreams[n-1]	<sc_rparams>
 	 *      |  uiomove(9) & read(2)
 	 *  userland
 	 */
