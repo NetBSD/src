@@ -1,4 +1,4 @@
-/*	$NetBSD: mfs_vfsops.c,v 1.29 2000/10/13 16:53:53 simonb Exp $	*/
+/*	$NetBSD: mfs_vfsops.c,v 1.30 2000/10/13 17:59:11 simonb Exp $	*/
 
 /*
  * Copyright (c) 1989, 1990, 1993, 1994
@@ -302,6 +302,11 @@ mfs_start(mp, flags, p)
 
 	base = mfsp->mfs_baseoff;
 	while (BUFQ_FIRST(&mfsp->mfs_buflist) != (struct buf *) -1) {
+		while ((bp = BUFQ_FIRST(&mfsp->mfs_buflist)) != NULL) {
+			BUFQ_REMOVE(&mfsp->mfs_buflist, bp);
+			mfs_doio(bp, base);
+			wakeup((caddr_t)bp);
+		}
 		/*
 		 * If a non-ignored signal is received, try to unmount.
 		 * If that fails, or the filesystem is already in the
@@ -309,11 +314,6 @@ mfs_start(mp, flags, p)
 		 * "processed"), otherwise we will loop here, as tsleep
 		 * will always return EINTR/ERESTART.
 		 */
-		while ((bp = BUFQ_FIRST(&mfsp->mfs_buflist)) != NULL) {
-			BUFQ_REMOVE(&mfsp->mfs_buflist, bp);
-			mfs_doio(bp, base);
-			wakeup((caddr_t)bp);
-		}
 		if (sleepreturn != 0) {
 			if (vfs_busy(mp, LK_NOWAIT, 0) ||
 			    dounmount(mp, 0, p) != 0)
