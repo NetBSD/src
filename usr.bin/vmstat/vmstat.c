@@ -1,4 +1,4 @@
-/* $NetBSD: vmstat.c,v 1.91 2001/11/26 21:04:49 jmc Exp $ */
+/* $NetBSD: vmstat.c,v 1.92 2001/11/29 21:22:25 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1998, 2000, 2001 The NetBSD Foundation, Inc.
@@ -81,7 +81,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1986, 1991, 1993\n\
 #if 0
 static char sccsid[] = "@(#)vmstat.c	8.2 (Berkeley) 3/1/95";
 #else
-__RCSID("$NetBSD: vmstat.c,v 1.91 2001/11/26 21:04:49 jmc Exp $");
+__RCSID("$NetBSD: vmstat.c,v 1.92 2001/11/29 21:22:25 thorpej Exp $");
 #endif
 #endif /* not lint */
 
@@ -1310,11 +1310,6 @@ dohashstat(int verbose, int todo, const char *hashname)
 			used++;
 			chain = 0;
 			do {
-				if ((unsigned long)nextaddr < KERNBASE) {
-					printf("%5d: ---> oops at %p\n",
-					    i, nextaddr);
-					break;
-				}
 				chain++;
 				deref_kptr((char *)nextaddr + curhash->offset,
 				    &nextaddr, sizeof(void *),
