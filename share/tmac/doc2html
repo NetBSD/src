@@ -1,4 +1,4 @@
-.\" $NetBSD: doc2html,v 1.25 2001/07/03 22:05:11 lukem Exp $
+.\" $NetBSD: doc2html,v 1.26 2001/07/04 17:12:33 kleink Exp $
 .\"
 .\" Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -564,6 +564,7 @@ Unknown .Bl list type \\$1 (#\\n(.c)
 .if !\\n(.$==1 .tm Usage: .Lb [library name]
 .if "\\$1"libarm32" \&ARM32 Architecture Library (libarm32, -larm32)
 .if "\\$1"libi386" \&i386 Architecture Library (libi386, -li386)
+.if "\\$1"libm68k" \&m68k Architecture Library (libm68k, -lm68k)
 .if "\\$1"libc" \&Standard C Library (libc, -lc)
 .if "\\$1"libcdk" \&Curses Development Kit Library (libcdk, -lcdk)
 .if "\\$1"libcompat" \&Compatibility Library (libcompat, -lcompat)
