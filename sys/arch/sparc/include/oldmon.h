@@ -1,4 +1,4 @@
-/*	$NetBSD: oldmon.h,v 1.4 1994/11/20 20:53:16 deraadt Exp $ */
+/*	$NetBSD: oldmon.h,v 1.5 1995/09/03 21:36:06 pk Exp $ */
 
 /*
  * Copyright (C) 1985 Regents of the University of California
@@ -48,6 +48,31 @@
  */
 #define PROM_BASE       0xffe81000
 
+enum maptypes { /* Page map entry types. */
+	MAP_MAINMEM,
+	MAP_OBIO,
+	MAP_MBMEM,
+	MAP_MBIO,
+	MAP_VME16A16D,
+	MAP_VME16A32D,
+	MAP_VME24A16D,
+	MAP_VME24A32D,
+	MAP_VME32A16D,
+	MAP_VME32A32D
+};
+/*
+ * This table gives information about the resources needed by a device.
+ */
+struct devinfo {
+	unsigned int	d_devbytes;  /* Bytes occupied by device in IO space.*/
+	unsigned int	d_dmabytes;  /* Bytes needed by device in DMA memory.*/
+	unsigned int	d_localbytes;/* Bytes needed by device for local info.*/
+	unsigned int	d_stdcount;  /* How many standard addresses. */
+	unsigned long	*d_stdaddrs; /* The vector of standard addresses. */
+	enum maptypes	d_devtype;   /* What map space device is in. */
+	unsigned int	d_maxiobytes;/* Size to break big I/O's into. */
+};
+
 /*
  * The table entry that describes a device.  It exists in the PROM; a
  * pointer to it is passed in MachMonBootParam.  It can be used to locate
@@ -60,14 +85,15 @@
  * should figure this out eventually if we need it.
  */
 struct om_boottable {
-	char	devName[2];		/* The name of the device */
-	int	(*probe)();		/* probe() --> -1 or found controller 
+	char	b_devname[2];		/* The name of the device */
+	int	(*b_probe)();		/* probe() --> -1 or found controller 
 					   number */
-	int	(*boot)();		/* boot(bp) --> -1 or start address */
-	int	(*open)();		/* open(iobp) --> -1 or 0 */
-	int	(*close)();		/* close(iobp) --> -1 or 0 */
-	int	(*strategy)();		/* strategy(iobp,rw) --> -1 or 0 */
-	char	*desc;			/* Printable string describing dev */
+	int	(*b_boot)();		/* boot(bp) --> -1 or start address */
+	int	(*b_open)();		/* open(iobp) --> -1 or 0 */
+	int	(*b_close)();		/* close(iobp) --> -1 or 0 */
+	int	(*b_strategy)();	/* strategy(iobp,rw) --> -1 or 0 */
+	char	*b_desc;		/* Printable string describing dev */
+	struct devinfo *b_devinfo;      /* info to configure device. */
 };
 
 /*
@@ -222,4 +248,51 @@ struct om_vector {
 #define MONSHORTPAGE	0x0FFFE000
 #define MONSHORTSEG	0x0FFE0000
 
+/*
+ * A "stand alone I/O request".
+ * This is passed as the main argument to the PROM I/O routines
+ * in the `om_boottable' structure.
+ */
+struct saioreq {
+	char	si_flgs;
+	struct om_boottable *si_boottab;/* Points to boottab entry if any */
+	char	*si_devdata;		/* Device-specific data pointer */
+	int	si_ctlr;		/* Controller number or address */
+	int	si_unit;		/* Unit number within controller */
+	long	si_boff;		/* Partition number within unit */
+	long	si_cyloff;
+	long	si_offset;
+	long	si_bn;			/* Block number to R/W */
+	char	*si_ma;			/* Memory address to R/W */
+	int	si_cc;			/* Character count to R/W */
+	struct	saif *si_sif;		/* net if. pointer (set by b_open) */
+	char 	*si_devaddr;		/* Points to mapped in device */
+	char	*si_dmaaddr;		/* Points to allocated DMA space */
+};
+#define SAIO_F_READ	0x01
+#define SAIO_F_WRITE	0x02
+#define SAIO_F_ALLOC	0x04
+#define SAIO_F_FILE	0x08
+#define	SAIO_F_EOF	0x10	/* EOF on device */
+#define SAIO_F_AJAR	0x20	/* Descriptor "ajar" (stopped but not closed) */
+
+
+/*
+ * Ethernet interface descriptor
+ * First, set: saiop->si_devaddr, saiop->si_dmaaddr, etc.
+ * Then:  saiop->si_boottab->b_open()  will set:
+ *   saiop->si_sif;
+ *   saiop->si_devdata;
+ * The latter is the first arg to the following functions.
+ * Note that the buffer must be in DVMA space...
+ */
+struct saif {
+	/* transmit packet, returns zero on success. */
+	int	(*sif_xmit)(void *devdata, char *buf, int len);
+	/* wait for packet, zero if none arrived */
+	int	(*sif_poll)(void *devdata, char *buf);
+	/* reset interface, set addresses, etc. */
+	int	(*sif_reset)(void *devdata, struct saioreq *sip);
+	/* Later (sun4 only) proms have more stuff here. */
+};
 #endif /* MACHINE_OLDMON_H */
