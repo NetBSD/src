@@ -1,4 +1,4 @@
-/*	$NetBSD: faithd.c,v 1.2 1999/12/09 15:20:02 itojun Exp $	*/
+/*	$NetBSD: faithd.c,v 1.3 1999/12/20 05:41:35 itojun Exp $	*/
 
 /*
  * Copyright (C) 1997 and 1998 WIDE Project.
@@ -219,7 +219,7 @@ main(int argc, char *argv[])
 	hints.ai_protocol = 0;
 	error = getaddrinfo(NULL, service, &hints, &res);
 	if (error) 
-		exit_error("gaddrinfo: %s", gai_strerror(error));
+		exit_error("getaddrinfo: %s", gai_strerror(error));
 
 	s_wld = socket(res->ai_family, res->ai_socktype, res->ai_protocol);
 	if (s_wld == -1)
@@ -509,28 +509,42 @@ faith_prefix(struct sockaddr *dst)
 	struct myaddrs *p;
 	struct sockaddr_in6 *sin6;
 	struct sockaddr_in *sin4;
+	struct sockaddr_in6 *dst6;
+	struct sockaddr_in *dst4;
+	struct sockaddr_in dstmap;
+
+	if (dst->sa_family == AF_INET6
+	 && IN6_IS_ADDR_V4MAPPED(&dst6->sin6_addr)) {
+		/* ugly... */
+		memset(&dstmap, 0, sizeof(dstmap));
+		dstmap.sin_family = AF_INET;
+		dstmap.sin_len = sizeof(dstmap);
+		memcpy(&dstmap.sin_addr, &dst6->sin6_addr.s6_addr[12],
+			sizeof(dstmap.sin_addr));
+		dst = (struct sockaddr *)&dstmap;
+	}
+
+	dst6 = (struct sockaddr_in6 *)dst;
+	dst4 = (struct sockaddr_in *)dst;
 
 	for (p = myaddrs; p; p = p->next) {
 		sin6 = (struct sockaddr_in6 *)p->addr;
 		sin4 = (struct sockaddr_in *)p->addr;
 
-		/* ugly! */
-		if (p->addr->sa_len == dst->sa_len
-		 && p->addr->sa_family == dst->sa_family) {
-			struct sockaddr_in6 *dst6 = (struct sockaddr_in6 *)dst;
-			struct sockaddr_in *dst4 = (struct sockaddr_in *)dst;
+		if (p->addr->sa_len != dst->sa_len
+		 || p->addr->sa_family != dst->sa_family)
+			continue;
 
-			switch (dst->sa_family) {
-			case AF_INET6:
-				if (sin6->sin6_scope_id == dst6->sin6_scope_id
-				 && memcmp(&sin6->sin6_addr, &dst6->sin6_addr, 16) == 0)
-					return 0;
-				break;
-			case AF_INET:
-				if (sin4->sin_addr.s_addr == dst4->sin_addr.s_addr)
+		switch (dst->sa_family) {
+		case AF_INET6:
+			if (sin6->sin6_scope_id == dst6->sin6_scope_id
+			 && IN6_ARE_ADDR_EQUAL(&sin6->sin6_addr, &dst6->sin6_addr) == 0)
 				return 0;
-				break;
-			}
+			break;
+		case AF_INET:
+			if (sin4->sin_addr.s_addr == dst4->sin_addr.s_addr)
+			return 0;
+			break;
 		}
 	}
 	return 1;
