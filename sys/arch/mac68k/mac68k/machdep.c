@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.152 1997/06/29 19:54:57 scottr Exp $	*/
+/*	$NetBSD: machdep.c,v 1.153 1997/07/11 06:02:26 scottr Exp $	*/
 
 /*
  * Copyright (c) 1996 Jason R. Thorpe.  All rights reserved.
@@ -1984,16 +1984,16 @@ struct {
 	caddr_t	fbbase;
 	u_long	fblen;
 } intvid_info[] =  {
-	{MACH_MACPB140,		(caddr_t) 0xfee00000,	32 * 1024},
-	{MACH_MACPB145,		(caddr_t) 0xfee00000,	32 * 1024},
-	{MACH_MACPB170,		(caddr_t) 0xfee00000,	32 * 1024},
-	{MACH_MACPB160,		(caddr_t) 0x60000000,	128 * 1024},
-	{MACH_MACPB165,		(caddr_t) 0x60000000,	128 * 1024},
-	{MACH_MACPB180,		(caddr_t) 0x60000000,	128 * 1024},
-	{MACH_MACPB165C,	(caddr_t) 0xfc040000,	512 * 1024},
-	{MACH_MACPB180C,	(caddr_t) 0xfc040000,	512 * 1024},
-	{MACH_MACPB500,		(caddr_t) 0x60000000,	512 * 1024},
-	{0,			(caddr_t) 0x0,		0},
+	{ MACH_MACPB140,	(caddr_t)0xfee00000,	32 * 1024 },
+	{ MACH_MACPB145,	(caddr_t)0xfee00000,	32 * 1024 },
+	{ MACH_MACPB170,	(caddr_t)0xfee00000,	32 * 1024 },
+	{ MACH_MACPB160,	(caddr_t)0x60000000,	128 * 1024 },
+	{ MACH_MACPB165,	(caddr_t)0x60000000,	128 * 1024 },
+	{ MACH_MACPB180,	(caddr_t)0x60000000,	128 * 1024 },
+	{ MACH_MACPB165C,	(caddr_t)0xfc040000,	512 * 1024 },
+	{ MACH_MACPB180C,	(caddr_t)0xfc040000,	512 * 1024 },
+	{ MACH_MACPB500,	(caddr_t)0x60000000,	512 * 1024 },
+	{ 0,			(caddr_t)0x0,		0 },
 };				/* End of intvid_info[] initialization. */
 
 /*
