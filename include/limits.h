@@ -1,4 +1,4 @@
-/*	$NetBSD: limits.h,v 1.16 2002/08/04 18:06:54 soren Exp $	*/
+/*	$NetBSD: limits.h,v 1.17 2002/11/18 13:39:33 kleink Exp $	*/
 
 /*
  * Copyright (c) 1988, 1993
@@ -46,28 +46,40 @@
 #define	_POSIX_MAX_CANON	255
 #define	_POSIX_MAX_INPUT	255
 #define	_POSIX_NAME_MAX		14
-#define	_POSIX_NGROUPS_MAX	0
-#define	_POSIX_OPEN_MAX		16
+#define	_POSIX_NGROUPS_MAX	8
+#define	_POSIX_OPEN_MAX		20
 #define	_POSIX_PATH_MAX		256
 #define	_POSIX_PIPE_BUF		512
+#define	_POSIX_RE_DUP_MAX	255
 #define	_POSIX_SSIZE_MAX	32767
 #define	_POSIX_STREAM_MAX	8
+#define	_POSIX_SYMLINK_MAX	256
+#define	_POSIX_TTY_NAME_MAX	9
 #define	_POSIX_TZNAME_MAX	3
 
 #define	_POSIX2_BC_BASE_MAX	99
 #define	_POSIX2_BC_DIM_MAX	2048
 #define	_POSIX2_BC_SCALE_MAX	99
 #define	_POSIX2_BC_STRING_MAX	1000
+#define	_POSIX2_CHARCLASS_NAME_MAX	14
 #define	_POSIX2_COLL_WEIGHTS_MAX	2
 #define	_POSIX2_EXPR_NEST_MAX	32
 #define	_POSIX2_LINE_MAX	2048
 #define	_POSIX2_RE_DUP_MAX	255
 
-#if !defined(_POSIX_C_SOURCE) || defined(_XOPEN_SOURCE)
+/*
+ * X/Open CAE Specifications,
+ * adopted in IEEE Std 1003.1-2001 XSI.
+ */
+#if !defined(_POSIX_C_SOURCE) || (_POSIX_C_SOURCE - 0) >= 200112L || \
+    defined(_XOPEN_SOURCE)
 #define	_XOPEN_IOV_MAX		16
+#define	_XOPEN_NAME_MAX		256
+#define	_XOPEN_PATH_MAX		1024
 
-#define PASS_MAX		128
+#define PASS_MAX		128		/* Legacy */
 
+#define CHARCLASS_NAME_MAX	14
 #define NL_ARGMAX		9
 #define NL_LANGMAX		14
 #define NL_MSGMAX		32767
@@ -75,8 +87,8 @@
 #define NL_SETMAX		255
 #define NL_TEXTMAX		2048
 
-#define TMP_MAX			308915776
-#endif /* !_POSIX_C_SOURCE || _XOPEN_SOURCE */
+#define TMP_MAX			308915776	/* Legacy */
+#endif /* !_POSIX_C_SOURCE || >= 200112L || _XOPEN_SOURCE */
 
 #endif /* !_ANSI_SOURCE */
 
