@@ -1,4 +1,4 @@
-/*	$NetBSD: hpckbdkeymap.h,v 1.5 2001/03/04 03:40:39 takemura Exp $ */
+/*	$NetBSD: hpckbdkeymap.h,v 1.6 2001/03/22 18:37:32 uch Exp $ */
 
 /*-
  * Copyright (c) 1999-2001 The NetBSD Foundation, Inc.
@@ -461,7 +461,8 @@ static u_int8_t pocketpostpet_keytrans[] = {
 #endif /* hpcmips */
 
 #ifdef hpcsh
-/* HP Jornada 680/690 (Japanese) */
+/* HP Jornada 680/690 */
+/* Japanese */
 const u_int8_t jornada6x0_jp_keytrans[] = {
 /*      0    1    2    3    4    5    6    7 */       
 /* 0 */ 59 , 45 , 31 , 17 , 3  , UNK, 29 , UNK, /* ctrl 29 */
@@ -482,7 +483,28 @@ const u_int8_t jornada6x0_jp_keytrans[] = {
 /*15 */ UNK, UNK, UNK, UNK, UNK, UNK, UNK, UNK,
 };
 
-const int jornada6x0_jp_special_keymap[] = {
+/* Hungarian */
+const u_int8_t jornada6x0_hu_keytrans[] = {
+/*      0    1    2    3    4    5    6    7 */       
+/* 0 */ 59 ,  45,  31,  17,   3, UNK,  29, UNK,
+/* 1 */ 60 ,  46,  32,  18,   4,  42, UNK, UNK,
+/* 2 */ 61 ,  47,  33,  19,   5, UNK,  57, UNK,
+/* 3 */ 66 ,  52,  38,  24,  10, UNK,  14, 203,
+/* 4 */ 65 ,  51,  37,  23,   9, UNK, 184, UNK,
+/* 5 */ 64 ,  50,  36,  22,   8, UNK, UNK, UNK,
+/* 6 */ 62 ,  48,  34,  20,   6, UNK, UNK,  56,
+/* 7 */ 63 ,  49,  35,  21,   7, UNK, UNK,  41,
+/* 8 */ 67 ,  53,  39,  25,  11, 200, UNK, 208,
+/* 9 */ 68 ,  40,  27,  26,  12, UNK, UNK, 205,
+/*10 */ 87 ,  28,  43,  14,  13,  54, UNK, UNK,
+/*11 */ UNK, UNK, UNK, UNK, UNK, UNK, UNK, UNK,
+/*12 */   1,  44,  30,  16,   2,  15, UNK, UNK,
+/*13 */ UNK, UNK, UNK, UNK, UNK, UNK, UNK, UNK,
+/*14 */ UNK, UNK, UNK, UNK, UNK, UNK, UNK, UNK,
+/*15 */ UNK, UNK, UNK, UNK, UNK, UNK, UNK, UNK
+};
+
+const int jornada6x0_special_keymap[] = {
 	[KEY_SPECIAL_OFF]	= 88,
 	[KEY_SPECIAL_LIGHT]	= -1
 };
@@ -592,16 +614,39 @@ const struct hpckbd_keymap_table {
 		KB_JP },
 #endif /* hpcmips */
 #ifdef hpcsh
-	{	&platid_mask_MACH_HP_JORNADA_690JP,
-		jornada6x0_jp_keytrans,
-		jornada6x0_jp_special_keymap,
-		NULLCMDMAP,
-		KB_JP },
+	/* Japanese */
 	{	&platid_mask_MACH_HP_JORNADA_680JP,
 		jornada6x0_jp_keytrans,
-		jornada6x0_jp_special_keymap,
+		jornada6x0_special_keymap,
 		NULLCMDMAP,
 		KB_JP },
+	{	&platid_mask_MACH_HP_JORNADA_690JP,
+		jornada6x0_jp_keytrans,
+		jornada6x0_special_keymap,
+		NULLCMDMAP,
+		KB_JP },
+	/* Hungarian */
+	{	&platid_mask_MACH_HP_JORNADA_680HU,
+		jornada6x0_hu_keytrans,
+		jornada6x0_special_keymap,
+		NULLCMDMAP,
+		KB_US }, /* XXX should be KB_HU */
+	{	&platid_mask_MACH_HP_JORNADA_690HU,
+		jornada6x0_hu_keytrans,
+		jornada6x0_special_keymap,
+		NULLCMDMAP,
+		KB_US }, /* XXX should be KB_HU */
+	/* German */
+	{	&platid_mask_MACH_HP_JORNADA_680DE,
+		jornada6x0_hu_keytrans, /* XXX may be */
+		jornada6x0_special_keymap,
+		NULLCMDMAP,
+		KB_DE },
+	{	&platid_mask_MACH_HP_JORNADA_690DE,
+		jornada6x0_hu_keytrans, /* XXX may be */
+		jornada6x0_special_keymap,
+		NULLCMDMAP,
+		KB_DE },
 #endif /* hpcsh */
 	{ NULL } /* end mark */
 };
