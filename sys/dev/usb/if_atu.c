@@ -1,4 +1,4 @@
-/*	$NetBSD: if_atu.c,v 1.5 2005/02/27 00:27:51 perry Exp $ */
+/*	$NetBSD: if_atu.c,v 1.6 2005/02/27 23:49:05 joff Exp $ */
 /*	$OpenBSD: if_atu.c,v 1.48 2004/12/30 01:53:21 dlg Exp $ */
 /*
  * Copyright (c) 2003, 2004
@@ -48,7 +48,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_atu.c,v 1.5 2005/02/27 00:27:51 perry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_atu.c,v 1.6 2005/02/27 23:49:05 joff Exp $");
 
 #include "bpfilter.h"
 
@@ -78,8 +78,8 @@ __KERNEL_RCSID(0, "$NetBSD: if_atu.c,v 1.5 2005/02/27 00:27:51 perry Exp $");
 #include <dev/microcode/atmel/atmel_rfmd_fw.h>
 
 #if NBPFILTER > 0
-#define BPF_MTAP(ifp, m) bpf_mtap((ifp)->if_bpf, (m))
 #include <net/bpf.h>
+#include <net/bpfdesc.h>
 #endif
 
 #include <net/if.h>
@@ -202,7 +202,6 @@ int	atu_tx_list_init(struct atu_softc *);
 int	atu_rx_list_init(struct atu_softc *);
 void	atu_xfer_list_free(struct atu_softc *sc, struct atu_chain *ch,
 	    int listlen);
-int	atu_set_wepkey(struct atu_softc *sc, int nr, u_int8_t *key, int len);
 
 #ifdef ATU_DEBUG
 void	atu_debug_print(struct atu_softc *sc);
@@ -550,6 +549,7 @@ int
 atu_initial_config(struct atu_softc *sc)
 {
 	struct ieee80211com		*ic = &sc->sc_ic;
+	u_int32_t			i;
 	usbd_status			err;
 /*	u_int8_t			rates[4] = {0x82, 0x84, 0x8B, 0x96};*/
 	u_int8_t			rates[4] = {0x82, 0x04, 0x0B, 0x16};
@@ -595,24 +595,37 @@ atu_initial_config(struct atu_softc *sc)
 	cmd.PromiscuousMode = 1;
 
 	/* this goes into the beacon we transmit */
-	if (sc->atu_encrypt == ATU_WEP_OFF)
-		cmd.PrivacyInvoked = 0;
-	else
+	if (ic->ic_flags & IEEE80211_F_PRIVACY)
 		cmd.PrivacyInvoked = 1;
+	else
+		cmd.PrivacyInvoked = 0;
 
 	cmd.ExcludeUnencrypted = 0;
-	cmd.EncryptionType = sc->atu_wepkeylen;
+
+	switch (ic->ic_nw_keys[ic->ic_wep_txkey].wk_len) {
+	case 5:
+		cmd.EncryptionType = ATU_WEP_40BITS;
+		break;
+	case 13:
+		cmd.EncryptionType = ATU_WEP_104BITS;
+		break;
+	default:
+		cmd.EncryptionType = ATU_WEP_OFF;
+		break;
+	}
+
+
+	cmd.WEP_DefaultKeyID = ic->ic_wep_txkey;
+	for (i = 0; i < IEEE80211_WEP_NKID; i++) {
+		memcpy(cmd.WEP_DefaultKey[i], ic->ic_nw_keys[i].wk_key, 
+		    ic->ic_nw_keys[i].wk_len); 
+	}
 
 	/* Setting the SSID here doesn't seem to do anything */
 	memset(cmd.SSID, 0, sizeof(cmd.SSID));
 	memcpy(cmd.SSID, sc->atu_ssid, sc->atu_ssidlen);
 	cmd.SSID_Len = sc->atu_ssidlen;
 
-	cmd.WEP_DefaultKeyID = sc->atu_wepkey;
-	memcpy(cmd.WEP_DefaultKey, sc->atu_wepkeys,
-	    sizeof(cmd.WEP_DefaultKey));
-
-	cmd.ShortPreamble = 1;
 	cmd.ShortPreamble = 0;
 	USETW(cmd.BeaconPeriod, 100);
 	/* cmd.BeaconPeriod = 65535; */
@@ -1015,18 +1028,22 @@ USB_MATCH(atu)
 int
 atu_media_change(struct ifnet *ifp)
 {
-#ifdef ATU_DEBUG
 	struct atu_softc	*sc = ifp->if_softc;
-#endif /* ATU_DEBUG */
-	int			err;
+	struct ieee80211com	*ic = &sc->sc_ic;
+	int			err, s;
 
 	DPRINTFN(10, ("%s: atu_media_change\n", USBDEVNAME(sc->atu_dev)));
 
 	err = ieee80211_media_change(ifp);
 	if (err == ENETRESET) {
 		if ((ifp->if_flags & (IFF_RUNNING|IFF_UP)) ==
-		    (IFF_RUNNING|IFF_UP))
-			atu_init(ifp);
+		    (IFF_RUNNING|IFF_UP)) {
+			s = splnet();
+			ieee80211_new_state(ic, IEEE80211_S_INIT, -1);
+			atu_initial_config(sc);
+			ieee80211_new_state(ic, IEEE80211_S_SCAN, -1);
+			splx(s);
+		}
 		err = 0;
 	}
 
@@ -1063,14 +1080,14 @@ atu_task(void *arg)
 
 		err = atu_start_scan(sc);
 		if (err) {
-			DPRINTFN(1, ("%s: atu_init: couldn't start scan!\n",
+			DPRINTFN(1, ("%s: atu_task: couldn't start scan!\n",
 			    USBDEVNAME(sc->atu_dev)));
 			return;
 		}
 
 		err = atu_wait_completion(sc, CMD_START_SCAN, NULL);
 		if (err) {
-			DPRINTF(("%s: atu_init: error waiting for scan\n",
+			DPRINTF(("%s: atu_task: error waiting for scan\n",
 			    USBDEVNAME(sc->atu_dev)));
 			return;
 		}
@@ -1319,7 +1336,6 @@ atu_complete_attach(struct atu_softc *sc)
 	sc->atu_channel = ATU_DEFAULT_CHANNEL;
 	sc->atu_desired_channel = IEEE80211_CHAN_ANY;
 	sc->atu_mode = INFRASTRUCTURE_MODE;
-	sc->atu_encrypt = ATU_WEP_OFF;
 
 	ic->ic_softc = sc;
 	ic->ic_phytype = IEEE80211_T_DS;
@@ -1386,13 +1402,6 @@ USB_DETACH(atu)
 
 		ieee80211_ifdetach(ifp);
 		if_detach(ifp);
-
-		if (sc->atu_ep[ATU_ENDPT_TX] != NULL)
-			usbd_abort_pipe(sc->atu_ep[ATU_ENDPT_TX]);
-		if (sc->atu_ep[ATU_ENDPT_RX] != NULL)
-			usbd_abort_pipe(sc->atu_ep[ATU_ENDPT_RX]);
-
-		usb_rem_task(sc->atu_udev, &sc->sc_task);
 	}
 
 	return(0);
@@ -1621,10 +1630,13 @@ atu_rxeof(usbd_xfer_handle xfer, usbd_private_handle priv, usbd_status status)
 		goto done1; /* XXX if we can't allocate, why restart it? */
 	}
 
-#if NBPFILTER > 0
-	if (ifp->if_bpf)
-		bpf_mtap(ifp->if_bpf, m);
-#endif
+	if (wh->i_fc[1] & IEEE80211_FC1_WEP) {
+		/*
+		 * WEP is decrypted by hardware. Clear WEP bit
+		 * header for ieee80211_input().
+		 */
+		wh->i_fc[1] &= ~IEEE80211_FC1_WEP;
+	}
 
 	ieee80211_input(ifp, m, ni, h->rssi, UGETDW(h->rx_time));
 
@@ -1655,6 +1667,11 @@ atu_txeof(usbd_xfer_handle xfer, usbd_private_handle priv, usbd_status status)
 	DPRINTFN(25, ("%s: atu_txeof status=%d\n", USBDEVNAME(sc->atu_dev),
 	    status));
 
+	if (c->atu_mbuf) {
+		m_freem(c->atu_mbuf);
+		c->atu_mbuf = NULL;
+	}
+
 	if (status != USBD_NORMAL_COMPLETION) {
 		if (status == USBD_NOT_STARTED || status == USBD_CANCELLED)
 			return;
@@ -1672,9 +1689,6 @@ atu_txeof(usbd_xfer_handle xfer, usbd_private_handle priv, usbd_status status)
 		ifp->if_oerrors++;
 	else
 		ifp->if_opackets++;
-
-	m_freem(c->atu_mbuf);
-	c->atu_mbuf = NULL;
 
 	s = splnet();
 	SLIST_INSERT_HEAD(&sc->atu_cdata.atu_tx_free, c, atu_list);
@@ -1703,7 +1717,6 @@ int
 atu_tx_start(struct atu_softc *sc, struct ieee80211_node *ni,
     struct atu_chain *c, struct mbuf *m)
 {
-	struct ifnet		*ifp = &sc->sc_ic.ic_if;
 	int			len;
 	struct atu_tx_hdr	*h;
 	usbd_status		err;
@@ -1712,8 +1725,10 @@ atu_tx_start(struct atu_softc *sc, struct ieee80211_node *ni,
 	DPRINTFN(25, ("%s: atu_tx_start\n", USBDEVNAME(sc->atu_dev)));
 
 	/* Don't try to send when we're shutting down the driver */
-	if (sc->sc_state != ATU_S_OK)
+	if (sc->sc_state != ATU_S_OK) {
+		m_freem(m);
 		return(EIO);
+	}
 
 	/*
 	 * Copy the mbuf data into a contiguous buffer, leaving
@@ -1744,7 +1759,10 @@ atu_tx_start(struct atu_softc *sc, struct ieee80211_node *ni,
 	c->atu_in_xfer = 1;
 	err = usbd_transfer(c->atu_xfer);
 	if (err != USBD_IN_PROGRESS) {
-		atu_stop(ifp, 0);
+		DPRINTFN(25, ("%s: atu_tx_start, err=%d",
+		    USBDEVNAME(sc->atu_dev), err));
+		c->atu_mbuf = NULL;
+		m_freem(m);
 		return(EIO);
 	}
 
@@ -1765,15 +1783,12 @@ atu_start(struct ifnet *ifp)
 
 	DPRINTFN(25, ("%s: atu_start: enter\n", USBDEVNAME(sc->atu_dev)));
 
-	s = splnet();
 	if ((ifp->if_flags & IFF_RUNNING) == 0) {
-		splx(s);
 		return;
 	}
 	if (ifp->if_flags & IFF_OACTIVE) {
 		DPRINTFN(30, ("%s: atu_start: IFF_OACTIVE\n",
 		    USBDEVNAME(sc->atu_dev)));
-		splx(s);
 		return;
 	}
 
@@ -1826,8 +1841,10 @@ atu_start(struct ifnet *ifp)
 				splx(s);
 				break;
 			}
-
-			/* XXX bpf listener goes here */
+#if NBPFILTER > 0
+			if (ifp->if_bpf)
+				bpf_mtap(ifp->if_bpf, m);
+#endif
 
 			m = ieee80211_encap(ifp, m, &ni);
 			if (m == NULL)
@@ -1852,6 +1869,11 @@ atu_start(struct ifnet *ifp)
 			wh = mtod(m, struct ieee80211_frame *);
 			/* sc->sc_stats.ast_tx_mgmt++; */
 		}
+
+#if NBPFILTER > 0
+		if (ic->ic_rawbpf)
+			bpf_mtap(ic->ic_rawbpf, m);
+#endif
 
 		if (atu_tx_start(sc, ni, c, m)) {
 bad:
@@ -2047,24 +2069,6 @@ atu_debug_print(struct atu_softc *sc)
 	    tmp));
 }
 #endif /* ATU_DEBUG */
-int
-atu_set_wepkey(struct atu_softc *sc, int nr, u_int8_t *key, int len)
-{
-	if ((len != 5) && (len != 13))
-		return EINVAL;
-
-	DPRINTFN(10, ("%s: changed wepkey %d (len=%d)\n",
-	    USBDEVNAME(sc->atu_dev), nr, len));
-
-	memcpy(sc->atu_wepkeys[nr], key, len);
-	if (len == 13)
-		sc->atu_wepkeylen = ATU_WEP_104BITS;
-	else
-		sc->atu_wepkeylen = ATU_WEP_40BITS;
-
-	atu_send_mib(sc, MIB_MAC_WEP__ENCR_LEVEL, NR(sc->atu_wepkeylen));
-	return atu_send_mib(sc, MIB_MAC_WEP__KEYS(nr), key);
-}
 
 int
 atu_ioctl(struct ifnet *ifp, u_long command, caddr_t data)
@@ -2091,9 +2095,11 @@ atu_ioctl(struct ifnet *ifp, u_long command, caddr_t data)
 	if (err == ENETRESET) {
 		if ((ifp->if_flags & (IFF_RUNNING|IFF_UP)) ==
 		    (IFF_RUNNING|IFF_UP)) {
-			DPRINTF(("%s: atu_ioctl(): netreset\n",
-			    USBDEVNAME(sc->atu_dev)));
-			atu_init(ifp);
+			DPRINTF(("%s: atu_ioctl(): netreset %lu\n",
+			    USBDEVNAME(sc->atu_dev), command));
+			ieee80211_new_state(ic, IEEE80211_S_INIT, -1);
+			atu_initial_config(sc);
+			ieee80211_new_state(ic, IEEE80211_S_SCAN, -1);
 		}
 		err = 0;
 	}
@@ -2135,7 +2141,7 @@ atu_watchdog(struct ifnet *ifp)
 		}
 	}
 
-	if (ifp->if_snd.ifq_head != NULL)
+	if (!IFQ_IS_EMPTY(&ifp->if_snd))
 		atu_start(ifp);
 	splx(s);
 
@@ -2150,6 +2156,7 @@ void
 atu_stop(struct ifnet *ifp, int disable)
 {
 	struct atu_softc	*sc = ifp->if_softc;
+	struct ieee80211com	*ic = &sc->sc_ic;
 	struct atu_cdata	*cd;
 	usbd_status		err;
 	int s;
@@ -2157,6 +2164,9 @@ atu_stop(struct ifnet *ifp, int disable)
 	s = splnet();
 	ifp->if_flags &= ~(IFF_RUNNING | IFF_OACTIVE);
 	ifp->if_timer = 0;
+
+	usb_rem_task(sc->atu_udev, &sc->sc_task);
+	ieee80211_new_state(ic, IEEE80211_S_INIT, -1);
 
 	/* Stop transfers. */
 	if (sc->atu_ep[ATU_ENDPT_RX] != NULL) {
