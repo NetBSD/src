@@ -1,4 +1,4 @@
-/*	$NetBSD: iswctype.c,v 1.2 2000/12/21 05:40:57 itojun Exp $	*/
+/*	$NetBSD: iswctype.c,v 1.3 2000/12/21 06:46:07 itojun Exp $	*/
 
 /*
  * Copyright (c) 1989 The Regents of the University of California.
@@ -40,7 +40,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: iswctype.c,v 1.2 2000/12/21 05:40:57 itojun Exp $");
+__RCSID("$NetBSD: iswctype.c,v 1.3 2000/12/21 06:46:07 itojun Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include <wctype.h>
@@ -143,7 +143,7 @@ iswxdigit(c)
 }
 
 #undef towupper
-int
+wint_t
 towupper(c)
 	wint_t c;
 {
@@ -151,7 +151,7 @@ towupper(c)
 }
 
 #undef towlower
-int
+wint_t
 towlower(c)
 	wint_t c;
 {
