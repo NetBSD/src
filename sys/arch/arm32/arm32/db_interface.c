@@ -1,4 +1,4 @@
-/*	$NetBSD: db_interface.c,v 1.21 1998/08/04 16:19:54 mark Exp $	*/
+/*	$NetBSD: db_interface.c,v 1.22 1998/08/09 00:00:57 mycroft Exp $	*/
 
 /* 
  * Copyright (c) 1996 Scott K. Stevens
@@ -140,6 +140,8 @@ kdb_trap(type, tf)
 	int	type;
 	register struct trapframe *tf;
 {
+	int s;
+
 	switch (type) {
 	case T_BREAKPOINT:	/* breakpoint */
 	case -1:		/* keyboard interrupt */
@@ -157,11 +159,13 @@ kdb_trap(type, tf)
 	ddb_regs.ddb_tf = *tf;
 	ddb_regs.ddb_tf.tf_pc -= INSN_SIZE;
 
+	s = splhigh();
 	db_active++;
 	cnpollc(TRUE);
 	db_trap(type, 0/*code*/);
 	cnpollc(FALSE);
 	db_active--;
+	splx(s);
 
 	*tf = ddb_regs.ddb_tf;
 
