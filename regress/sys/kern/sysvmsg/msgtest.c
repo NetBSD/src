@@ -1,4 +1,4 @@
-/*	$NetBSD: msgtest.c,v 1.2 1999/08/24 22:26:49 thorpej Exp $	*/
+/*	$NetBSD: msgtest.c,v 1.3 1999/08/24 22:36:33 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -99,7 +99,7 @@ main(argc, argv)
 
 	/*
 	 * Install a SIGSYS handler so that we can exit gracefully if
-	 * System V Semaphore support isn't in the kernel.
+	 * System V Message Queue support isn't in the kernel.
 	 */
 	sa.sa_handler = sigsys_handler;
 	sigemptyset(&sa.sa_mask);
