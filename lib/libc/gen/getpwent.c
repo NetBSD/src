@@ -1,4 +1,4 @@
-/*	$NetBSD: getpwent.c,v 1.46 2000/01/22 22:19:11 mycroft Exp $	*/
+/*	$NetBSD: getpwent.c,v 1.47 2000/10/02 19:25:32 simonb Exp $	*/
 
 /*
  * Copyright (c) 1988, 1993
@@ -39,7 +39,7 @@
 #if 0
 static char sccsid[] = "@(#)getpwent.c	8.2 (Berkeley) 4/27/95";
 #else
-__RCSID("$NetBSD: getpwent.c,v 1.46 2000/01/22 22:19:11 mycroft Exp $");
+__RCSID("$NetBSD: getpwent.c,v 1.47 2000/10/02 19:25:32 simonb Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -1166,7 +1166,7 @@ static int
 __hashpw(key)
 	DBT *key;
 {
-	char *p, *t;
+	char *p, *t, *oldbuf;
 	static u_int max;
 	static char *buf;
 	DBT data;
@@ -1185,8 +1185,15 @@ __hashpw(key)
 	}
 
 	p = (char *)data.data;
-	if (data.size > max && !(buf = realloc(buf, (max += 1024))))
-		return NS_UNAVAIL;
+	if (data.size > max) {
+		max = roundup(data.size, 1024);
+		oldbuf = buf;
+		if ((buf = realloc(buf, max)) == NULL) {
+			if (oldbuf != NULL)
+				free(oldbuf);
+			return NS_UNAVAIL;
+		}
+	}
 
 	/* THIS CODE MUST MATCH THAT IN pwd_mkdb. */
 	t = buf;
