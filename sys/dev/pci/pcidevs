@@ -1,4 +1,4 @@
-$NetBSD: pcidevs,v 1.181 2000/01/05 11:32:06 drochner Exp $
+$NetBSD: pcidevs,v 1.182 2000/01/09 09:19:26 soren Exp $
 
 /*
  * Copyright (c) 1995, 1996 Christopher G. Demetriou
@@ -936,7 +936,7 @@ product EFFICIENTNETS SS3000	0x0005	SpeedStream 3000
 /* Galileo Technology products */
 product GALILEO GT64010A	0x0146	GT-64010A System Controller
 product GALILEO	GT64115		0x4111	GT-64115 System Controller
-product GALILEO	GT64011		0x4146	GT-64011/GT-64111 System Controller
+product GALILEO	GT64011		0x4146	GT-64111 System Controller
 product GALILEO	GT64120		0x4620	GT-64120 System Controller
 product GALILEO	GT64130		0x6320	GT-64130 System Controller
 
@@ -1074,7 +1074,8 @@ product MATROX G100_PCI		0x1000	MGA G100 PCI
 product MATROX G100_AGP		0x1001	MGA G100 AGP
 
 /* Motorola products */
-product MOT MPC106	0x0002	MPC106 Host-PCI Bridge (grackle)
+product MOT MPC105	0x0001	MPC105 \"Eagle\" Host Bridge
+product MOT MPC106	0x0002	MPC106 \"Grackle\" Host Bridge
 
 /* Mylex products */
 product MYLEX 960P	0x0001	DAC960P RAID controller
