@@ -12,6 +12,14 @@ SUBDIR=	04.csh 07.Mail \
 	33.rogue 34.trek
 
 beforeinstall:
+	@if [ ! -d ${DESTDIR}${BINDIR} ]; then \
+                /bin/rm -f ${DESTDIR}${BINDIR} ; \
+                mkdir -p ${DESTDIR}${BINDIR} ; \
+                chown root.wheel ${DESTDIR}${BINDIR} ; \
+                chmod 755 ${DESTDIR}${BINDIR} ; \
+        else \
+                true ; \
+        fi
 	install -c -o ${BINOWN} -g ${BINGRP} -m 444 ${FILES} \
 	    ${DESTDIR}${BINDIR}
 

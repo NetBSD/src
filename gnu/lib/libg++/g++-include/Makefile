@@ -26,6 +26,14 @@ NOOBJ=		noobj
 INCDIR=		/usr/include/g++
 
 install:
+	@if [ ! -d ${DESTDIR}${INCDIR} ]; then \
+                /bin/rm -f ${DESTDIR}${INCDIR} ; \
+                mkdir -p ${DESTDIR}${INCDIR} ; \
+                chown root.wheel ${DESTDIR}${INCDIR} ; \
+                chmod 755 ${DESTDIR}${INCDIR} ; \
+        else \
+                true ; \
+        fi
 	@echo installing ${FILES}
 	@-for i in ${FILES}; do \
 		cmp -s $$i ${DESTDIR}${INCDIR}/$$i || \
