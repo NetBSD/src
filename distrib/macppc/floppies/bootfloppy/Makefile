@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.14 2001/11/14 00:58:48 tv Exp $
+#	$NetBSD: Makefile,v 1.15 2001/11/20 05:44:47 jmc Exp $
 
 TOP=		${.CURDIR}/..
 
@@ -21,7 +21,7 @@ KERNDIR!=	cd ${.CURDIR}/../md-kernel && ${PRINTOBJDIR}
 
 DISKTYPE=	floppy
 
-dependall all:
+realall:
 	dd if=/dev/zero of=${IMAGE} bs=1440k count=1
 	vnconfig -t ${DISKTYPE} -v -c ${VND} ${IMAGE}
 	disklabel -f ${DESTDIR}/etc/disktab -rw ${VND} ${DISKTYPE}
