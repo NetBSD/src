@@ -1,11 +1,11 @@
-/*	$NetBSD: perform.c,v 1.50 2003/09/23 09:36:06 wiz Exp $	*/
+/*	$NetBSD: perform.c,v 1.51 2003/12/20 03:31:56 grant Exp $	*/
 
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static const char *rcsid = "from FreeBSD Id: perform.c,v 1.23 1997/10/13 15:03:53 jkh Exp";
 #else
-__RCSID("$NetBSD: perform.c,v 1.50 2003/09/23 09:36:06 wiz Exp $");
+__RCSID("$NetBSD: perform.c,v 1.51 2003/12/20 03:31:56 grant Exp $");
 #endif
 #endif
 
@@ -106,7 +106,7 @@ pkg_do(char *pkg)
 					goto bail;
 				}
 				Home = make_playpen(PlayPen, PlayPenSize, sb.st_size / 2);
-				if (unpack(fname, "+*", NULL)) {
+				if (unpack(fname, ALL_FNAMES)) {
 					warnx("error during unpacking, no info for '%s' available", pkg);
 					code = 1;
 					goto bail;
