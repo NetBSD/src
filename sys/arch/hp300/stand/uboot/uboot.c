@@ -1,4 +1,4 @@
-/*	$NetBSD: uboot.c,v 1.7 2001/07/01 02:58:38 gmcgarry Exp $	*/
+/*	$NetBSD: uboot.c,v 1.8 2001/10/09 16:03:11 tsutsui Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1990, 1993
@@ -42,6 +42,8 @@
 
 #include <lib/libsa/stand.h>
 #include <lib/libsa/loadfile.h>
+
+#include <machine/bootinfo.h>
 
 #include <hp300/stand/common/samachdep.h>
 
