@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_machdep.c,v 1.17 1995/05/01 13:13:20 mycroft Exp $	*/
+/*	$NetBSD: sys_machdep.c,v 1.18 1995/05/06 19:22:39 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1995 Charles M. Hannum.  All rights reserved.
@@ -133,12 +133,6 @@ set_user_ldt(pcb)
 	lldt(currentldt = GSEL(GUSERLDT_SEL, SEL_KPL));
 }
 
-struct i386_get_ldt_args {
-	int start;
-	union descriptor *desc;
-	int num;
-};
-
 int
 i386_get_ldt(p, args, retval)
 	struct proc *p;
@@ -185,12 +179,6 @@ i386_get_ldt(p, args, retval)
 	*retval = num;
 	return (0);
 }
-
-struct i386_set_ldt_args {
-	int start;
-	union descriptor *desc;
-	int num;
-};
 
 int
 i386_set_ldt(p, args, retval)
