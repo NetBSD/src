@@ -1,4 +1,4 @@
-#	$NetBSD: termcap.src,v 1.88.2.1 2004/04/07 04:59:57 jmc Exp $
+#	$NetBSD: termcap.src,v 1.88.2.2 2004/04/07 05:03:46 jmc Exp $
 #
 ######## TERMINAL TYPE DESCRIPTIONS SOURCE FILE
 #
@@ -9049,6 +9049,46 @@ pt210|TRS-80 PT-210 printing terminal:\
 	:hc:os:\
 	:co#80:\
 	:bl=^G:cr=^M:do=^J:sf=^J:
+# From
+# http://www.ordersomewherechaos.com/rosso/fetish/m102/web100/docs/termcap.html
+# via Christian Biere <christianbiere@gmx.de>
+# Termcap for the radio shack model 100 computer running its built-in
+# terminal emulator. The termcap entry was prepared at Microsoft as was
+# the model 100's standard software.
+# escape A cursor up
+# escape B cursor down
+# escape C cursor right
+# escape D cursor left
+# escape E clear screen and home cursor
+# e      H home cursor
+# e      J erase to end of screen
+# e      K erase to end of line
+# e      L insert line
+# e      M delete line
+# e      P turn off cursor
+# e      Q turn on cursor
+# e      T set system line?
+# e      U reset system line?
+# e      V turn off LCD ?
+# e      W turn on LCD ?
+# e      Y row/col cursor motion
+# e      j clear screen don't move cursor
+# e      l erase line   don't move cursor
+# e      p begin rev video
+# e      q end rev video
+# e      del change char under cursor to space
+m10|m100|trs100|TRS100|radio shack model 100:\
+	:am:bs:le=^H:li#8:co#40:\
+	:ku=^^:kd=^_:kl=^]:kr=^\:up=\EA:nd=\EC:ho=\EH:ce=\EK:\
+	:cd=\EJ:cl=\EE:xt:cm=\EY%+ %+ :\
+	:so=\Ep:se=\Eq:al=\EL:dl=\EM:
+m100v|radio shack model 100 with video:\
+	:co#80:do=^_:is=\ED:le=^]:li#24:nd:^\:sr=\EI:up=^^:tc=m100:
+m200|trs200|TRS200|radio shack model 200:\
+	:am:bs:le=^H:li#16:co#40:\
+	:ku=^^:kd=^_:kl=^]:kr=^\:up=\EA:nd=\EC:ho=\EH:ce=\EK:\
+	:cd=\EJ:cl=\EE:xt:cm=\EY%+ %+ :\
+	:so=\Ep:se=\Eq:al=\EL:dl=\EM:
 
 #### Tektronix (tek)
 #
