@@ -1,4 +1,4 @@
-/*	$NetBSD: shutdown.c,v 1.42 2004/11/05 22:46:31 dsl Exp $	*/
+/*	$NetBSD: shutdown.c,v 1.43 2005/02/05 13:15:12 xtraeme Exp $	*/
 
 /*
  * Copyright (c) 1988, 1990, 1993
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1988, 1990, 1993\n\
 #if 0
 static char sccsid[] = "@(#)shutdown.c	8.4 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: shutdown.c,v 1.42 2004/11/05 22:46:31 dsl Exp $");
+__RCSID("$NetBSD: shutdown.c,v 1.43 2005/02/05 13:15:12 xtraeme Exp $");
 #endif
 #endif /* not lint */
 
@@ -93,23 +93,20 @@ static const char *whom;
 static char mbuf[BUFSIZ];
 char *bootstr;
 
-void badtime __P((void));
-void die_you_gravy_sucking_pig_dog __P((void));
-void doitfast __P((void));
-void dorcshutdown __P((void));
-void finish __P((int));
-void getoffset __P((char *));
-void loop __P((void));
-int main __P((int, char *[]));
-void nolog __P((void));
-void timeout __P((int));
-void timewarn __P((int));
-void usage __P((void));
+void badtime(void);
+void die_you_gravy_sucking_pig_dog(void);
+void doitfast(void);
+void dorcshutdown(void);
+void finish(int);
+void getoffset(char *);
+void loop(void);
+void nolog(void);
+void timeout(int);
+void timewarn(int);
+void usage(void);
 
 int
-main(argc, argv)
-	int argc;
-	char *argv[];
+main(int argc, char *argv[])
 {
 	char *p, *endp;
 	struct passwd *pw;
@@ -239,7 +236,7 @@ main(argc, argv)
 }
 
 void
-loop()
+loop(void)
 {
 	struct interval *tp;
 	u_int sltime;
@@ -283,8 +280,7 @@ loop()
 static jmp_buf alarmbuf;
 
 void
-timewarn(timeleft)
-	int timeleft;
+timewarn(int timeleft)
 {
 	static int first;
 	static char hostname[MAXHOSTNAMELEN + 1];
@@ -335,8 +331,7 @@ timewarn(timeleft)
 }
 
 void
-timeout(signo)
-	int signo;
+timeout(int signo)
 {
 	longjmp(alarmbuf, 1);
 }
@@ -401,8 +396,7 @@ die_you_gravy_sucking_pig_dog()
 #define	ATOI2(s)	((s) += 2, ((s)[-2] - '0') * 10 + ((s)[-1] - '0'))
 
 void
-getoffset(timearg)
-	char *timearg;
+getoffset(char *timearg)
 {
 	struct tm *lt;
 	char *p;
@@ -482,7 +476,7 @@ getoffset(timearg)
 }
 
 void
-dorcshutdown()
+dorcshutdown(void)
 {
 	(void)printf("\r\nAbout to run shutdown hooks...\r\n");
 	(void)system(". " _PATH_RCSHUTDOWN);
@@ -492,7 +486,7 @@ dorcshutdown()
 
 #define	FSMSG	"fastboot file for fsck\n"
 void
-doitfast()
+doitfast(void)
 {
 	int fastfd;
 
@@ -505,7 +499,7 @@ doitfast()
 
 #define	NOMSG	"\n\nNO LOGINS: System going down at "
 void
-nolog()
+nolog(void)
 {
 	int logfd;
 	char *ct;
@@ -527,8 +521,7 @@ nolog()
 }
 
 void
-finish(signo)
-	int signo;
+finish(int signo)
 {
 
 	if (!killflg)
@@ -537,7 +530,7 @@ finish(signo)
 }
 
 void
-badtime()
+badtime(void)
 {
 
 	warnx("illegal time format");
@@ -545,7 +538,7 @@ badtime()
 }
 
 void
-usage()
+usage(void)
 {
 
 	(void)fprintf(stderr,
