@@ -1,4 +1,4 @@
-/*	$NetBSD: menus.md.pl,v 1.1 2002/04/13 01:47:55 thorpej Exp $	*/
+/*	$NetBSD: menus.md.pl,v 1.2 2002/04/13 02:34:18 thorpej Exp $	*/
 /* Based on english version: */
 /*	NetBSD: menus.md.en,v 1.2 2002/03/31 02:14:06 thorpej Exp */
 
@@ -59,17 +59,20 @@ menu editfsparts, y=12, exit;
  
 menu md_distcustom, x=26, y=5, exit, title "Wybierz";
 	display action { show_cur_distsets (); };
-	option	"Kernel (GENERIC)",		 action { toggle_getit (0); };
-	option	"Base",						 action { toggle_getit (1); };
-	option	"System (/etc)",			 action { toggle_getit (2); };
-	option	"Compiler Tools",			 action { toggle_getit (3); };
-	option	"Games",						 action { toggle_getit (4); };
-	option	"Online Manual Pages",	 action { toggle_getit (5); };
-	option	"Miscellaneous",			 action { toggle_getit (6); };
-	option	"Text Processing Tools", action { toggle_getit (7); };
-	option	"X11 base and clients",	 action { toggle_getit (8); };
-	option	"X11 fonts",				 action { toggle_getit (9); };
-	option	"X11 servers",				 action { toggle_getit (10); };
-	option	"X contrib clients",		 action { toggle_getit (11); };
-	option	"X11 programming",		 action { toggle_getit (12); };
-	option	"X11 Misc.",				 action { toggle_getit (13); };
+	option	"Kernel (INTEGRATOR)",	 action { toggle_getit (0); };
+	option	"Kernel (IQ80310)",	 action { toggle_getit (1); };
+	option	"Kernel (IQ80321)",	 action { toggle_getit (2); };
+	option	"Kernel (TEAMASA_NPWR)", action { toggle_getit (3); };
+	option	"Base",			 action { toggle_getit (4); };
+	option	"System (/etc)",	 action { toggle_getit (5); };
+	option	"Compiler Tools",	 action { toggle_getit (6); };
+	option	"Games",		 action { toggle_getit (7); };
+	option	"Online Manual Pages",	 action { toggle_getit (8); };
+	option	"Miscellaneous",	 action { toggle_getit (9); };
+	option	"Text Processing Tools", action { toggle_getit (10); };
+	option	"X11 base and clients",	 action { toggle_getit (11); };
+	option	"X11 fonts",		 action { toggle_getit (12); };
+	option	"X11 servers",		 action { toggle_getit (13); };
+	option	"X contrib clients",	 action { toggle_getit (14); };
+	option	"X11 programming",	 action { toggle_getit (15); };
+	option	"X11 Misc.",		 action { toggle_getit (16); };
