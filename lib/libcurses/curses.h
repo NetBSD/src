@@ -1,4 +1,4 @@
-/*	$NetBSD: curses.h,v 1.61 2001/10/14 12:36:09 blymn Exp $	*/
+/*	$NetBSD: curses.h,v 1.62 2001/12/02 09:14:21 blymn Exp $	*/
 
 /*
  * Copyright (c) 1981, 1993, 1994
@@ -339,6 +339,7 @@ extern char	 __unctrllen[256];	/* Control strings length. */
 typedef struct __ldata __LDATA;
 typedef struct __line  __LINE;
 typedef struct __window  WINDOW;
+typedef struct __screen SCREEN;
 
 /*
  * Attribute definitions
@@ -620,9 +621,10 @@ int	 clearok(WINDOW *, bool);
 int	 color_content(short, short *, short *, short *);
 int	 copywin(const WINDOW *, WINDOW *, int, int, int, int, int, int, int);
 int	 curs_set(int);
-int	 delay_output(int);
 int	 def_prog_mode(void);
 int	 def_shell_mode(void);
+int	 delay_output(int);
+void     delscreen(SCREEN *);
 int	 delwin(WINDOW *);
 WINDOW	*derwin(WINDOW *, int, int, int, int);
 WINDOW	*dupwin(WINDOW *);
@@ -683,6 +685,7 @@ int	 mvwprintw(WINDOW *, int, int, const char *, ...)
 int	 mvwscanw(WINDOW *, int, int, const char *, ...)
 		__attribute__((__format__(__scanf__, 4, 5)));
 int	 napms(int);
+SCREEN  *newterm(char *, FILE *, FILE *);
 WINDOW	*newwin(int, int, int, int);
 int	 nl(void);
 int	 nocbreak(void);
@@ -707,6 +710,7 @@ int	 scanw(const char *, ...)
 int	 scroll(WINDOW *);
 int	 scrollok(WINDOW *, bool);
 int	 setterm(char *);
+SCREEN  *set_term(SCREEN *);
 int	 start_color(void);
 WINDOW	*subwin(WINDOW *, int, int, int, int);
 int	 touchline(WINDOW *, int, int);

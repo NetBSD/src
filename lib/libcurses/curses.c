@@ -1,4 +1,4 @@
-/*	$NetBSD: curses.c,v 1.18 2000/12/22 17:07:12 jdc Exp $	*/
+/*	$NetBSD: curses.c,v 1.19 2001/12/02 09:14:20 blymn Exp $	*/
 
 /*
  * Copyright (c) 1981, 1993, 1994
@@ -38,21 +38,22 @@
 #if 0
 static char sccsid[] = "@(#)curses.c	8.3 (Berkeley) 5/4/94";
 #else
-__RCSID("$NetBSD: curses.c,v 1.18 2000/12/22 17:07:12 jdc Exp $");
+__RCSID("$NetBSD: curses.c,v 1.19 2001/12/02 09:14:20 blymn Exp $");
 #endif
 #endif				/* not lint */
 
 #include "curses.h"
 
 /* Private. */
-int	__echoit = 1;			/* If stty indicates ECHO. */
+int	__echoit = 1;			 /* If stty indicates ECHO. */
 int	__pfast;
-int	__rawmode = 0;			/* If stty indicates RAW mode. */
-int	__noqch = 0;			/*
-					 * If terminal doesn't have
+int	__rawmode = 0;			 /* If stty indicates RAW mode. */
+int	__noqch = 0;			 
+					 /* If terminal doesn't have
 					 * insert/delete line capabilities
 					 * for quick change on refresh.
 					 */
+
 char	PC;
 char	__tc_am, __tc_bs, __tc_cc, __tc_da, __tc_eo,
 	__tc_hc, __tc_hl, __tc_in, __tc_mi, __tc_ms,
@@ -78,6 +79,7 @@ char	*__tc_ac, *__tc_AB, *__tc_ae, *__tc_AF, *__tc_AL,
 	*__tc_SR, *__tc_sr, *__tc_ta, *__tc_te, *__tc_ti,
 	*__tc_uc, *__tc_ue, *__tc_UP, *__tc_up, *__tc_us,
 	*__tc_vb, *__tc_ve, *__tc_vi, *__tc_vs;
+
 /*
  * Public.
  *
@@ -88,6 +90,7 @@ char	*__tc_ac, *__tc_AB, *__tc_ae, *__tc_AF, *__tc_AL,
 WINDOW	*curscr;			/* Current screen. */
 WINDOW	*stdscr;			/* Standard screen. */
 WINDOW	*__virtscr;			/* Virtual screen (for doupdate()). */
+SCREEN  *_cursesi_screen;               /* the current screen we are using */
 int	 COLS;				/* Columns on the screen. */
 int	 LINES;				/* Lines on the screen. */
 int	 COLORS;			/* Maximum colors on the screen */

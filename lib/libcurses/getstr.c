@@ -1,4 +1,4 @@
-/*	$NetBSD: getstr.c,v 1.14 2001/04/20 13:14:42 jdc Exp $	*/
+/*	$NetBSD: getstr.c,v 1.15 2001/12/02 09:14:21 blymn Exp $	*/
 
 /*
  * Copyright (c) 1981, 1993, 1994
@@ -39,7 +39,7 @@
 #if 0
 static char sccsid[] = "@(#)getstr.c	8.2 (Berkeley) 5/4/94";
 #else
-__RCSID("$NetBSD: getstr.c,v 1.14 2001/04/20 13:14:42 jdc Exp $");
+__RCSID("$NetBSD: getstr.c,v 1.15 2001/12/02 09:14:21 blymn Exp $");
 #endif
 #endif				/* not lint */
 
@@ -165,12 +165,12 @@ int
 __wgetnstr(WINDOW *win, char *str, int n)
 {
 	char *ostr, ec, kc;
-	int c, oldx, prevx, remain;
+	int c, oldx, remain;
 
 	ostr = str;
 	ec = erasechar();
 	kc = killchar();
-	prevx = oldx = win->curx;
+	oldx = win->curx;
 	_DIAGASSERT(n == -1 || n > 1);
 	remain = n - 1;
 	
@@ -230,7 +230,6 @@ __wgetnstr(WINDOW *win, char *str, int n)
 				/* getch() displays the kill character */
 				mvwaddch(win, win->cury, oldx, ' ');
 			wmove(win, win->cury, oldx);
-			prevx = oldx;
 		} else if (c >= KEY_MIN && c <= KEY_MAX) {
 			/* getch() displays these characters */
 			mvwaddch(win, win->cury, win->curx - 1, ' ');
@@ -244,7 +243,6 @@ __wgetnstr(WINDOW *win, char *str, int n)
 				wmove(win, win->cury, win->curx - 1);
 			}
 		}
-		prevx = win->curx;
 	}
 	
 	if (c == ERR) {

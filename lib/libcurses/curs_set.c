@@ -1,4 +1,4 @@
-/*	$NetBSD: curs_set.c,v 1.5 2001/06/13 10:45:57 wiz Exp $	*/
+/*	$NetBSD: curs_set.c,v 1.6 2001/12/02 09:14:20 blymn Exp $	*/
 
 /*-
  * Copyright (c) 1998-2000 Brett Lymn
@@ -31,13 +31,13 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: curs_set.c,v 1.5 2001/06/13 10:45:57 wiz Exp $");
+__RCSID("$NetBSD: curs_set.c,v 1.6 2001/12/02 09:14:20 blymn Exp $");
 #endif				/* not lint */
 
 #include "curses.h"
 #include "curses_private.h"
 
-static int old_mode = 2; /* cursor is set to high vis on start */
+/*static int old_mode = 2;*/ /* cursor is set to high vis on start */
 
 /*
  * curs_set --
@@ -51,14 +51,14 @@ curs_set(int visibility)
 {
 	int old_one;
 
-	old_one = old_mode;
+	old_one = _cursesi_screen->old_mode;
 	switch (visibility) {
 		case 0: /* invisible */
 			if (__tc_vi != NULL) {
 #ifdef DEBUG
 				__CTRACE("curs_set: invisible\n");
 #endif
-				old_mode = 0;
+				_cursesi_screen->old_mode = 0;
 				tputs(__tc_vi, 0, __cputchar);
 				return old_one;
 			}
@@ -69,7 +69,7 @@ curs_set(int visibility)
 #ifdef DEBUG
 				__CTRACE("curs_set: normal\n");
 #endif
-				old_mode = 1;
+				_cursesi_screen->old_mode = 1;
 				tputs(__tc_ve, 0, __cputchar);
 				return old_one;
 			}
@@ -80,7 +80,7 @@ curs_set(int visibility)
 #ifdef DEBUG
 				__CTRACE("curs_set: high vis\n");
 #endif
-				old_mode = 2;
+				_cursesi_screen->old_mode = 2;
 				tputs(__tc_vs, 0, __cputchar);
 				return old_one;
 			}
@@ -100,6 +100,6 @@ curs_set(int visibility)
 void
 __restore_cursor_vis(void)
 {
-	curs_set(old_mode);
+	curs_set(_cursesi_screen->old_mode);
 }
 

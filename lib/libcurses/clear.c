@@ -1,4 +1,4 @@
-/*	$NetBSD: clear.c,v 1.11 2000/04/15 13:17:03 blymn Exp $	*/
+/*	$NetBSD: clear.c,v 1.12 2001/12/02 09:14:20 blymn Exp $	*/
 
 /*
  * Copyright (c) 1981, 1993, 1994
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)clear.c	8.2 (Berkeley) 5/4/94";
 #else
-__RCSID("$NetBSD: clear.c,v 1.11 2000/04/15 13:17:03 blymn Exp $");
+__RCSID("$NetBSD: clear.c,v 1.12 2001/12/02 09:14:20 blymn Exp $");
 #endif
 #endif				/* not lint */
 
@@ -54,7 +54,7 @@ __RCSID("$NetBSD: clear.c,v 1.11 2000/04/15 13:17:03 blymn Exp $");
 int
 clear(void)
 {
-	return wclear(stdscr);
+	return wclear(_cursesi_screen->stdscr);
 }
 
 #endif

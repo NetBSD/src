@@ -1,4 +1,4 @@
-/*	$NetBSD: putchar.c,v 1.13 2000/04/20 09:36:11 blymn Exp $	*/
+/*	$NetBSD: putchar.c,v 1.14 2001/12/02 09:14:22 blymn Exp $	*/
 
 /*
  * Copyright (c) 1981, 1993, 1994
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)putchar.c	8.2 (Berkeley) 5/4/94";
 #else
-__RCSID("$NetBSD: putchar.c,v 1.13 2000/04/20 09:36:11 blymn Exp $");
+__RCSID("$NetBSD: putchar.c,v 1.14 2001/12/02 09:14:22 blymn Exp $");
 #endif
 #endif				/* not lint */
 
@@ -52,5 +52,5 @@ __cputchar(int ch)
 #ifdef DEBUG
 	__CTRACE("__cputchar: %s\n", unctrl(ch));
 #endif
-	return (putchar(ch));
+	return (putc(ch, _cursesi_screen->outfd));
 }

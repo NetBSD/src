@@ -1,4 +1,4 @@
-/*	$NetBSD: initscr.c,v 1.21 2001/01/05 22:57:56 christos Exp $	*/
+/*	$NetBSD: initscr.c,v 1.22 2001/12/02 09:14:21 blymn Exp $	*/
 
 /*
  * Copyright (c) 1981, 1993, 1994
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)initscr.c	8.2 (Berkeley) 5/4/94";
 #else
-__RCSID("$NetBSD: initscr.c,v 1.21 2001/01/05 22:57:56 christos Exp $");
+__RCSID("$NetBSD: initscr.c,v 1.22 2001/12/02 09:14:21 blymn Exp $");
 #endif
 #endif	/* not lint */
 
@@ -51,6 +51,7 @@ __RCSID("$NetBSD: initscr.c,v 1.21 2001/01/05 22:57:56 christos Exp $");
 /* Window list */
 struct __winlist	*__winlistp;
 
+	
 /*
  * initscr --
  *	Initialize the current and standard screen.
@@ -63,60 +64,33 @@ initscr(void)
 #ifdef DEBUG
 	__CTRACE("initscr\n");
 #endif
-	__echoit = 1;
-        __pfast = __rawmode = __noqch = 0;
-	__nca = A_NORMAL;
-
-	if (gettmode() == ERR)
-		return (NULL);
-
+	
 	/*
 	 * If My_term is set, or can't find a terminal in the environment,
 	 * use Def_term.
 	 */
 	if (My_term || (sp = getenv("TERM")) == NULL)
 		sp = Def_term;
-	/* LINTED const castaway; setterm does not modify sp! */
-	if (setterm((char *)sp) == ERR)
-		return (NULL);
 
-	/* Need either homing or cursor motion for refreshes */
-	if (!__tc_ho && !__tc_cm)
-		return (NULL);
+	/* LINTED const castaway; newterm does not modify sp! */
+	if ((_cursesi_screen = newterm((char *) sp, stdout, stdin)) == NULL)
+		return NULL;
+
+	__echoit = _cursesi_screen->echoit;
+        __pfast = _cursesi_screen->pfast;
+	__rawmode = _cursesi_screen->rawmode;
+	__noqch = _cursesi_screen->noqch;
+	__nca = _cursesi_screen->nca;
+	COLS = _cursesi_screen->COLS;
+	LINES = _cursesi_screen->LINES;
+	COLORS = _cursesi_screen->COLORS;
+	COLOR_PAIRS = _cursesi_screen->COLOR_PAIRS;
+	__GT = _cursesi_screen->GT;
+	__NONL = _cursesi_screen->NONL;
+	__UPPERCASE = _cursesi_screen->UPPERCASE;
+
+	set_term(_cursesi_screen);
+	wrefresh(curscr);
 	
-	__winlistp = NULL;
-
-	if (curscr != NULL)
-		delwin(curscr);
-	if ((curscr = newwin(LINES, COLS, 0, 0)) == ERR)
-		return (NULL);
-	clearok(curscr, 1);
-
-	if (stdscr != NULL)
-		delwin(stdscr);
-	if ((stdscr = newwin(LINES, COLS, 0, 0)) == ERR) {
-		delwin(curscr);
-		return (NULL);
-	}
-
-	if (__virtscr != NULL)
-		delwin(__virtscr);
-	if ((__virtscr = newwin(LINES, COLS, 0, 0)) == ERR) {
-		delwin(curscr);
-		delwin(stdscr);
-		return (NULL);
-	}
-
-	__init_getch();
-
-	__init_acs();
-
-	__set_stophandler();
-
-#ifdef DEBUG
-	__CTRACE("initscr: LINES = %d, COLS = %d\n", LINES, COLS);
-#endif
-	__startwin();
-
 	return (stdscr);
 }

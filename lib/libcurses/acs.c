@@ -1,4 +1,4 @@
-/*	$NetBSD: acs.c,v 1.8 2000/12/19 21:34:24 jdc Exp $	*/
+/*	$NetBSD: acs.c,v 1.9 2001/12/02 09:14:20 blymn Exp $	*/
 
 /*
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: acs.c,v 1.8 2000/12/19 21:34:24 jdc Exp $");
+__RCSID("$NetBSD: acs.c,v 1.9 2001/12/02 09:14:20 blymn Exp $");
 #endif				/* not lint */
 
 #include "curses.h"
@@ -52,7 +52,7 @@ chtype _acs_char[NUM_ACS];
  *	character pairs - ACS definition then terminal representation.
  */
 void
-__init_acs(void)
+__init_acs(SCREEN *screen)
 {
 	int		count;
 	char		*aofac;	/* Address of 'ac' */
@@ -110,6 +110,18 @@ __init_acs(void)
 #endif
 	}
 
+	for (count=0; count < NUM_ACS; count++)
+		screen->acs_char[count]= _acs_char[count];
+
 	if (__tc_eA != NULL)
 		tputs(__tc_eA, 0, __cputchar);
+}
+
+void
+_cursesi_reset_acs(SCREEN *screen)
+{
+	int count;
+
+	for (count=0; count < NUM_ACS; count++)
+		_acs_char[count]= screen->acs_char[count];
 }
