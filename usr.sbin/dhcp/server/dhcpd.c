@@ -43,7 +43,7 @@
 
 #ifndef lint
 static char ocopyright[] =
-"$Id: dhcpd.c,v 1.16 2000/06/10 18:17:22 mellon Exp $ Copyright 1995-2000 Internet Software Consortium.";
+"$Id: dhcpd.c,v 1.17 2000/06/10 18:31:11 mellon Exp $ Copyright 1995-2000 Internet Software Consortium.";
 #endif
 
   static char copyright[] =
@@ -610,8 +610,10 @@ void lease_pinged (from, packet, length)
 	}
 
 	if (!lp -> state) {
+#if defined (FAILOVER_PROTOCOL)
 		if (!lp -> pool ||
 		    !lp -> pool -> failover_peer)
+#endif
 			log_debug ("ICMP Echo Reply for %s late or spurious.",
 				   piaddr (from));
 		goto out;
