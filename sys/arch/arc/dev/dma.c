@@ -1,4 +1,4 @@
-/*	$NetBSD: dma.c,v 1.12 2000/02/22 11:26:00 soda Exp $	*/
+/*	$NetBSD: dma.c,v 1.13 2000/03/03 12:50:20 soda Exp $	*/
 /*	$OpenBSD: dma.c,v 1.5 1998/03/01 16:49:57 niklas Exp $	*/
 
 /*
@@ -65,6 +65,8 @@
 #include <dev/scsipi/scsiconf.h>
 
 #include <arc/pica/pica.h>
+#include <arc/pica/rd94.h>
+#include <arc/arc/arctype.h>
 #include <arc/dev/dma.h>
 
 void picaDmaReset __P((dma_softc_t *sc));
@@ -77,6 +79,8 @@ extern vm_map_t phys_map;
 
 dma_pte_t *free_dma_pte;	/* Pointer to free dma pte list */
 dma_pte_t *first_dma_pte;	/* Pointer to first dma pte */
+
+static vaddr_t ivalid_reg;
 
 /*
  *  Initialize the dma mapping register area and pool.
@@ -94,9 +98,21 @@ picaDmaInit()
 	free_dma_pte->queue.next = NULL;
 	free_dma_pte->queue.size = PICA_TL_SIZE / sizeof(dma_pte_t);
 
-	out32(R4030_SYS_TL_BASE, MIPS_KSEG1_TO_PHYS(map));
-	out32(R4030_SYS_TL_LIMIT, PICA_TL_SIZE);
-	out32(R4030_SYS_TL_IVALID, 0);
+	switch (cputype) {
+	case ACER_PICA_61:
+	case MAGNUM:
+		out32(R4030_SYS_TL_BASE, MIPS_KSEG1_TO_PHYS(map));
+		out32(R4030_SYS_TL_LIMIT, PICA_TL_SIZE);
+		out32(R4030_SYS_TL_IVALID, 0);
+		ivalid_reg = R4030_SYS_TL_IVALID;
+		break;
+	case NEC_RD94:
+		out32(RD94_SYS_TL_BASE, MIPS_KSEG1_TO_PHYS(map));
+		out32(RD94_SYS_TL_LIMIT, PICA_TL_SIZE);
+		out32(RD94_SYS_TL_IVALID, 0);
+		ivalid_reg = RD94_SYS_TL_IVALID;
+		break;
+	}
 }
 
 /*
@@ -244,7 +260,7 @@ picaDmaStart(sc, addr, size, datain)
 
 	/* Map up the request viritual dma space */
 	picaDmaTLBMap(sc);
-	out32(R4030_SYS_TL_IVALID, 0);	/* Flush dma map cache */
+	out32(ivalid_reg, 0);	/* Flush dma map cache */
 
 	/* Load new transfer parameters */
 	regs->dma_addr = sc->next_va;
@@ -294,7 +310,7 @@ picaDmaFlush(sc, addr, size, datain)
 	size_t  size;
 	int     datain;
 {
-	out32(R4030_SYS_TL_IVALID, 0);	/* Flush dma map cache */
+	out32(ivalid_reg, 0);	/* Flush dma map cache */
 }
 
 /*
@@ -373,7 +389,14 @@ fdc_dma_init(dma_softc_t *sc)
 	sc->intr = (int(*)(struct dma_softc *))picaDmaNull;
 	sc->end = picaDmaEnd;
 
-	sc->dma_reg = (pDmaReg)R4030_SYS_DMA1_REGS;
+	switch (cputype) {
+	case NEC_RD94:
+		sc->dma_reg = (pDmaReg)RD94_SYS_DMA0_REGS;
+		break;
+	default:
+		sc->dma_reg = (pDmaReg)R4030_SYS_DMA1_REGS;
+		break;
+	}
 	sc->pte_size = 32;
 	sc->mode = R4030_DMA_MODE_160NS | R4030_DMA_MODE_8;
 	picaDmaTLBAlloc(sc);
