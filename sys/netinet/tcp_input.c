@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_input.c,v 1.108 2000/05/05 15:05:29 matt Exp $	*/
+/*	$NetBSD: tcp_input.c,v 1.109 2000/06/30 16:44:33 itojun Exp $	*/
 
 /*
 %%% portions-copyright-nrl-95
@@ -1026,14 +1026,31 @@ findpcb:
 
 		if (so->so_options & SO_DEBUG) {
 			ostate = tp->t_state;
-			tcp_saveti = m_copym(m, 0, iphlen, M_DONTWAIT);
+
+			tcp_saveti = NULL;
+			if (iphlen + sizeof(struct tcphdr) > MHLEN)
+				goto nosave;
+
+			if (m->m_len > iphlen && (m->m_flags & M_EXT) == 0) {
+				tcp_saveti = m_copym(m, 0, iphlen, M_DONTWAIT);
+				if (!tcp_saveti)
+					goto nosave;
+			} else {
+				MGETHDR(tcp_saveti, M_DONTWAIT, MT_HEADER);
+				if (!tcp_saveti)
+					goto nosave;
+				tcp_saveti->m_len = iphlen;
+				m_copydata(m, 0, iphlen,
+				    mtod(tcp_saveti, caddr_t));
+			}
+
 			if (M_TRAILINGSPACE(tcp_saveti) < sizeof(struct tcphdr)) {
 				m_freem(tcp_saveti);
 				tcp_saveti = NULL;
 			} else {
 				tcp_saveti->m_len += sizeof(struct tcphdr);
 				bcopy(th, mtod(tcp_saveti, caddr_t) + iphlen,
-					sizeof(struct tcphdr));
+				    sizeof(struct tcphdr));
 			}
 			if (tcp_saveti) {
 				/*
@@ -1053,6 +1070,7 @@ findpcb:
 #endif
 				}
 			}
+	nosave:;
 		}
 		if (so->so_options & SO_ACCEPTCONN) {
   			if ((tiflags & (TH_RST|TH_ACK|TH_SYN)) != TH_SYN) {
@@ -3346,18 +3364,20 @@ syn_cache_respond(sc, m)
 	tlen = hlen + sizeof(struct tcphdr) + optlen;
 
 	/*
-	 * Create the IP+TCP header from scratch.  Reuse the received mbuf
-	 * if possible.
+	 * Create the IP+TCP header from scratch.
 	 */
-	if (m != NULL) {
-		m_freem(m->m_next);
-		m->m_next = NULL;
-		MRESETDATA(m);
-	} else {
-		MGETHDR(m, M_DONTWAIT, MT_DATA);
-		if (m == NULL)
-			return (ENOBUFS);
+	if (m)
+		m_freem(m);
+	MGETHDR(m, M_DONTWAIT, MT_DATA);
+	if (m && tlen > MHLEN) {
+		MCLGET(m, M_DONTWAIT);
+		if ((m->m_flags & M_EXT) == NULL) {
+			m_freem(m);
+			m = NULL;
+		}
 	}
+	if (m == NULL)
+		return (ENOBUFS);
 
 	/* Fixup the mbuf. */
 	m->m_data += max_linkhdr;
@@ -3380,6 +3400,7 @@ syn_cache_respond(sc, m)
 		ipsec_setsocket(m, so);
 	}
 #endif
+	m->m_pkthdr.rcvif = NULL;
 	memset(mtod(m, u_char *), 0, tlen);
 
 	switch (sc->sc_src.sa.sa_family) {
