@@ -1,4 +1,4 @@
-/*	$NetBSD: xdryp.c,v 1.12 1996/05/29 20:05:50 thorpej Exp $	*/
+/*	$NetBSD: xdryp.c,v 1.13 1996/06/18 20:05:59 christos Exp $	*/
 
 /*
  * Copyright (c) 1996 Jason R. Thorpe <thorpej@NetBSD.ORG>.
@@ -37,7 +37,7 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static char *rcsid = "$NetBSD: xdryp.c,v 1.12 1996/05/29 20:05:50 thorpej Exp $";
+static char *rcsid = "$NetBSD: xdryp.c,v 1.13 1996/06/18 20:05:59 christos Exp $";
 #endif
 
 /*
@@ -138,13 +138,16 @@ xdr_ypreq_key(xdrs, objp)
 	XDR *xdrs;
 	struct ypreq_key *objp;
 {
-	if (xdr_ypdomain_wrap_string(xdrs, (char **)&objp->domain) == FALSE)
+	if (!xdr_ypdomain_wrap_string(xdrs, (char **)&objp->domain))
 		return FALSE;
 
-	if (xdr_ypmap_wrap_string(xdrs, (char **)&objp->map) == FALSE)
+	if (!xdr_ypmap_wrap_string(xdrs, (char **)&objp->map))
 		return FALSE;
 
-	return xdr_datum(xdrs, &objp->keydat);
+	if (!xdr_datum(xdrs, &objp->keydat))
+		return FALSE;
+
+	return TRUE;
 }
 
 bool_t
@@ -152,10 +155,13 @@ xdr_ypreq_nokey(xdrs, objp)
 	XDR *xdrs;
 	struct ypreq_nokey *objp;
 {
-	if (xdr_ypdomain_wrap_string(xdrs, (char **)&objp->domain) == FALSE)
+	if (!xdr_ypdomain_wrap_string(xdrs, (char **)&objp->domain))
 		return FALSE;
 
-	return xdr_ypmap_wrap_string(xdrs, (char **)&objp->map);
+	if (!xdr_ypmap_wrap_string(xdrs, (char **)&objp->map))
+		return FALSE;
+
+	return TRUE;
 }
 
 bool_t
@@ -174,8 +180,11 @@ xdr_ypbind_binding(xdrs, objp)
 	if (!xdr_yp_inaddr(xdrs, &objp->ypbind_binding_addr))
 		return FALSE;
 
-	return xdr_opaque(xdrs, (void *)&objp->ypbind_binding_port,
-	    sizeof objp->ypbind_binding_port);
+	if (!xdr_opaque(xdrs, (void *)&objp->ypbind_binding_port,
+	    sizeof objp->ypbind_binding_port))
+		return FALSE;
+
+	return TRUE;
 }
 
 static bool_t
@@ -225,7 +234,10 @@ xdr_ypresp_val(xdrs, objp)
 	if (!xdr_ypstat(xdrs, (enum ypbind_resptype *)&objp->status))
 		return FALSE;
 
-	return xdr_datum(xdrs, &objp->valdat);
+	if (!xdr_datum(xdrs, &objp->valdat))
+		return FALSE;
+
+	return TRUE;
 }
 
 bool_t
@@ -235,13 +247,16 @@ xdr_ypbind_setdom(xdrs, objp)
 {
 	char *cp = objp->ypsetdom_domain;
 
-	if (xdr_ypdomain_wrap_string(xdrs, &cp))
+	if (!xdr_ypdomain_wrap_string(xdrs, &cp))
 		return FALSE;
 
 	if (!xdr_ypbind_binding(xdrs, &objp->ypsetdom_binding))
 		return FALSE;
 
-	return xdr_u_short(xdrs, &objp->ypsetdom_vers);
+	if (!xdr_u_short(xdrs, &objp->ypsetdom_vers))
+		return FALSE;
+
+	return TRUE;
 }
 
 bool_t
@@ -255,7 +270,10 @@ xdr_ypresp_key_val(xdrs, objp)
 	if (!xdr_datum(xdrs, &objp->valdat))
 		return FALSE;
 
-	return xdr_datum(xdrs, &objp->keydat);
+	if (!xdr_datum(xdrs, &objp->keydat))
+		return FALSE;
+
+	return TRUE;
 }
 
 bool_t
@@ -282,7 +300,7 @@ xdr_ypall(xdrs, incallback)
 		/* Values pending? */
 		if (!xdr_bool(xdrs, &more))
 			return FALSE;		/* can't tell! */
-		if (more == FALSE)
+		if (!more)
 			return TRUE;		/* no more */
 
 		/* Transfer key/value pair. */
@@ -294,7 +312,7 @@ xdr_ypall(xdrs, incallback)
 		 * no more values.  If we fail, indicate the
 		 * error.
 		 */
-		if (status == TRUE) {
+		if (status) {
 			if ((*incallback->foreach)(out.status,
 			    (char *)out.keydat.dptr, out.keydat.dsize,
 			    (char *)out.valdat.dptr, out.valdat.dsize,
@@ -313,7 +331,10 @@ xdr_ypresp_master(xdrs, objp)
 	if (!xdr_ypstat(xdrs, (enum ypbind_resptype *)&objp->status))
 		return FALSE;
 
-	return xdr_string(xdrs, &objp->master, YPMAXPEER);
+	if (!xdr_string(xdrs, &objp->master, YPMAXPEER))
+		return FALSE;
+
+	return TRUE;
 }
 
 static bool_t
@@ -332,8 +353,11 @@ xdr_ypmaplist(xdrs, objp)
 	if (!xdr_ypmaplist_str(xdrs, objp->ypml_name))
 		return FALSE;
 
-	return xdr_pointer(xdrs, (caddr_t *)&objp->ypml_next,
-	    sizeof(struct ypmaplist), xdr_ypmaplist);
+	if (!xdr_pointer(xdrs, (caddr_t *)&objp->ypml_next,
+	    sizeof(struct ypmaplist), xdr_ypmaplist))
+		return FALSE;
+
+	return TRUE;
 }
 
 bool_t
@@ -344,8 +368,11 @@ xdr_ypresp_maplist(xdrs, objp)
 	if (!xdr_ypstat(xdrs, (enum ypbind_resptype *)&objp->status))
 		return FALSE;
 
-	return xdr_pointer(xdrs, (caddr_t *)&objp->list,
-	    sizeof(struct ypmaplist), xdr_ypmaplist);
+	if (!xdr_pointer(xdrs, (caddr_t *)&objp->list,
+	    sizeof(struct ypmaplist), xdr_ypmaplist))
+		return FALSE;
+
+	return TRUE;
 }
 
 bool_t
@@ -356,7 +383,10 @@ xdr_ypresp_order(xdrs, objp)
 	if (!xdr_ypstat(xdrs, (enum ypbind_resptype *)&objp->status))
 		return FALSE;
 
-	return xdr_u_long(xdrs, &objp->ordernum);
+	if (!xdr_u_long(xdrs, &objp->ordernum))
+		return FALSE;
+
+	return TRUE;
 }
 
 bool_t
@@ -364,16 +394,16 @@ xdr_ypreq_xfr(xdrs, objp)
 	XDR *xdrs;
 	struct ypreq_xfr *objp;
 {
-	if (xdr_ypmap_parms(xdrs, &objp->map_parms) == FALSE)
+	if (!xdr_ypmap_parms(xdrs, &objp->map_parms))
 		return FALSE;
 
-	if (xdr_u_long(xdrs, &objp->transid) == FALSE)
+	if (!xdr_u_long(xdrs, &objp->transid))
 		return FALSE;
 
-	if (xdr_u_long(xdrs, &objp->proto) == FALSE)
+	if (!xdr_u_long(xdrs, &objp->proto))
 		return FALSE;
 
-	if (xdr_u_short(xdrs, &objp->port) == FALSE)
+	if (!xdr_u_short(xdrs, &objp->port))
 		return FALSE;
 
 	return TRUE;
@@ -384,16 +414,16 @@ xdr_ypmap_parms(xdrs, objp)
 	XDR *xdrs;
 	struct ypmap_parms *objp;
 {
-	if (xdr_ypdomain_wrap_string(xdrs, (char **)objp->domain) == FALSE)
+	if (!xdr_ypdomain_wrap_string(xdrs, (char **)objp->domain))
 		return FALSE;
 
-	if (xdr_ypmap_wrap_string(xdrs, (char **)objp->map) == FALSE)
+	if (!xdr_ypmap_wrap_string(xdrs, (char **)objp->map))
 		return FALSE;
 
-	if (xdr_u_long(xdrs, &objp->ordernum) == FALSE)
+	if (!xdr_u_long(xdrs, &objp->ordernum))
 		return FALSE;
 
-	if (xdr_ypowner_wrap_string(xdrs, &objp->owner) == FALSE)
+	if (!xdr_ypowner_wrap_string(xdrs, &objp->owner))
 		return FALSE;
 
 	return TRUE;
@@ -404,10 +434,10 @@ xdr_yppushresp_xfr(xdrs, objp)
 	XDR *xdrs;
 	struct yppushresp_xfr *objp;
 {
-	if (xdr_u_long(xdrs, &objp->transid) == FALSE)
+	if (!xdr_u_long(xdrs, &objp->transid))
 		return FALSE;
 
-	if (xdr_u_long(xdrs, &objp->status) == FALSE)
+	if (!xdr_u_long(xdrs, &objp->status))
 		return FALSE;
 
 	return TRUE;
