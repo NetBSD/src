@@ -173,7 +173,7 @@ char *ultrix_syscallnames[] = {
 	"statfs",			/* 160 = statfs */
 	"fstatfs",			/* 161 = fstatfs */
 	"#162 (unimplemented umount)",		/* 162 = unimplemented umount */
-#ifdef NFSCLIENT
+#ifdef NFS
 	"async_daemon",			/* 163 = async_daemon */
 	"getfh",			/* 164 = getfh */
 #else
