@@ -1,4 +1,4 @@
-/*	$NetBSD: util.c,v 1.70 2002/06/05 10:00:43 enami Exp $	*/
+/*	$NetBSD: util.c,v 1.71 2002/06/06 09:53:22 lukem Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -251,14 +251,6 @@ int
 get_via_cdrom()
 {
 	char tmpdir[STRSIZE];
-
-	/*
-	 * Fill in final default path, similar to ftp path
-	 * because we expect the CDROM structure to be the
-	 * same as the ftp site.
-	 */
-	strncat(cdrom_dir, machine, STRSIZE - strlen(cdrom_dir));
-	strncat(cdrom_dir, ftp_prefix, STRSIZE - strlen(cdrom_dir));
 
 	/* Get CD-rom device name and path within CD-rom */
 	process_menu(MENU_cdromsource);
