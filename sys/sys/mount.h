@@ -1,4 +1,4 @@
-/*	$NetBSD: mount.h,v 1.45 1996/01/19 14:29:25 leo Exp $	*/
+/*	$NetBSD: mount.h,v 1.46 1996/02/08 18:30:10 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1989, 1991, 1993
@@ -421,7 +421,7 @@ int	fstatfs __P((int, struct statfs *));
 int	getfh __P((const char *, fhandle_t *));
 int	getfsstat __P((struct statfs *, long, int));
 int	getmntinfo __P((struct statfs **, int));
-int	mount __P((char *, const char *, int, void *));
+int	mount __P((const char *, const char *, int, void *));
 int	statfs __P((const char *, struct statfs *));
 int	unmount __P((const char *, int));
 __END_DECLS
