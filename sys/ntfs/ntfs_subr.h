@@ -1,4 +1,4 @@
-/*	$NetBSD: ntfs_subr.h,v 1.3 1999/07/26 14:02:32 jdolecek Exp $	*/
+/*	$NetBSD: ntfs_subr.h,v 1.4 1999/08/16 08:11:34 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999 Semen Ustimenko
@@ -92,7 +92,6 @@ int ntfs_filesize __P(( struct ntfsmount *, struct fnode *, u_int64_t *, u_int64
 int ntfs_times __P(( struct ntfsmount *, struct ntnode *, ntfs_times_t *));
 struct timespec	ntfs_nttimetounix __P(( u_int64_t ));
 int ntfs_ntreaddir __P(( struct ntfsmount *, struct fnode *, u_int32_t, struct attr_indexentry **));
-wchar ntfs_toupper __P(( struct ntfsmount *, wchar ));
 int ntfs_uustricmp __P(( struct ntfsmount *, wchar *, int, wchar *, int ));
 int ntfs_uastricmp __P(( struct ntfsmount *, const wchar *, int, const char *,
     int ));
@@ -112,6 +111,9 @@ int ntfs_ntget __P((struct ntnode *));
 void ntfs_ntrele __P((struct ntnode *));
 void ntfs_ntput __P((struct ntnode *));
 int ntfs_loadntnode __P(( struct ntfsmount *, struct ntnode * ));
-int ntfs_ntlookupattr(struct ntfsmount *, const char *, int, int *, char **);
-int ntfs_writentvattr_plain(struct ntfsmount *, struct ntnode *, struct ntvattr *, off_t, size_t, void *, size_t *);
-int ntfs_writeattr_plain(struct ntfsmount *, struct ntnode *, u_int32_t, char *, off_t, size_t, void *, size_t *);
+int ntfs_ntlookupattr __P((struct ntfsmount *, const char *, int, int *, char **));
+int ntfs_writentvattr_plain __P((struct ntfsmount *, struct ntnode *, struct ntvattr *, off_t, size_t, void *, size_t *));
+int ntfs_writeattr_plain __P((struct ntfsmount *, struct ntnode *, u_int32_t, char *, off_t, size_t, void *, size_t *));
+void ntfs_toupper_init __P((void));
+int ntfs_toupper_use __P((struct mount *, struct ntfsmount *));
+void ntfs_toupper_unuse __P((void));

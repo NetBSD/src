@@ -1,4 +1,4 @@
-/*	$NetBSD: ntfs.h,v 1.5 1999/08/04 18:56:36 jdolecek Exp $	*/
+/*	$NetBSD: ntfs.h,v 1.6 1999/08/16 08:11:34 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999 Semen Ustimenko
@@ -247,7 +247,6 @@ struct ntfsmount {
 	dev_t           ntm_dev;
 	struct vnode   *ntm_devvp;
 	struct vnode   *ntm_sysvn[NTFS_SYSNODESNUM];
-	wchar          *ntm_upcase;
 	u_int32_t       ntm_bpmftrec;
 	uid_t           ntm_uid;
 	gid_t           ntm_gid;

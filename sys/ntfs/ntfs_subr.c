@@ -1,4 +1,4 @@
-/*	$NetBSD: ntfs_subr.c,v 1.6 1999/08/08 00:40:06 ross Exp $	*/
+/*	$NetBSD: ntfs_subr.c,v 1.7 1999/08/16 08:11:34 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999 Semen Ustimenko (semenu@FreeBSD.org)
@@ -39,6 +39,7 @@
 #include <sys/buf.h>
 #include <sys/file.h>
 #include <sys/malloc.h>
+#include <sys/lock.h>
 #if defined(__FreeBSD__)
 #include <machine/clock.h>
 #endif
@@ -61,6 +62,13 @@ MALLOC_DEFINE(M_NTFSRDATA, "NTFS res data", "NTFS resident data");
 MALLOC_DEFINE(M_NTFSRUN, "NTFS vrun", "NTFS vrun storage");
 MALLOC_DEFINE(M_NTFSDECOMP, "NTFS decomp", "NTFS decompression temporary");
 #endif
+
+/* table for mapping Unicode chars into uppercase; it's filled upon first
+ * ntfs mount, freed upon last ntfs umount */
+static wchar *ntfs_toupper_tab;
+#define NTFS_TOUPPER(ch)	(ntfs_toupper_tab[ch & 0xFF])
+static struct lock ntfs_toupper_lock;
+signed int ntfs_toupper_used;
 
 /*
  * 
@@ -650,17 +658,6 @@ ntfs_runtovrun(
 }
 
 /*
- * Convert wchar to uppercase wchar, should be macros?
- */
-wchar
-ntfs_toupper(
-	     struct ntfsmount * ntmp,
-	     wchar wc)
-{
-	return (ntmp->ntm_upcase[wc & 0xFF]);
-}
-
-/*
  * Compare to unicode strings case insensible.
  */
 int
@@ -675,8 +672,8 @@ ntfs_uustricmp(
 	int             res;
 
 	for (i = 0; i < str1len && i < str2len; i++) {
-		res = (int) ntfs_toupper(ntmp, str1[i]) -
-			(int) ntfs_toupper(ntmp, str2[i]);
+		res = (int) NTFS_TOUPPER(str1[i]) -
+			(int) NTFS_TOUPPER(str2[i]);
 		if (res)
 			return res;
 	}
@@ -698,8 +695,8 @@ ntfs_uastricmp(
 	int             res;
 
 	for (i = 0; i < str1len && i < str2len; i++) {
-		res = (int) ntfs_toupper(ntmp, str1[i]) -
-			(int) ntfs_toupper(ntmp, (wchar) str2[i]);
+		res = (int) NTFS_TOUPPER(str1[i]) -
+			(int) NTFS_TOUPPER((wchar) str2[i]);
 		if (res)
 			return res;
 	}
@@ -1914,3 +1911,79 @@ ntfs_runtocn(
 	return (0);
 }
 #endif
+
+/*
+ * this initializes toupper table & dependant variables to be ready for
+ * later work
+ */
+void
+ntfs_toupper_init()
+{
+	ntfs_toupper_tab = (wchar *) NULL;
+	lockinit(&ntfs_toupper_lock, PVFS, "ntfs_toupper", 0, 0);
+	ntfs_toupper_used = 0;
+}
+
+/*
+ * if the ntfs_toupper_tab[] is filled already, just raise use count;
+ * otherwise read the data from the filesystem we are currently mounting
+ */
+int
+ntfs_toupper_use(mp, ntmp)
+	struct mount *mp;
+	struct ntfsmount *ntmp;
+{
+	int error = 0;
+	struct vnode *vp;
+
+	/* get exclusive access */
+	lockmgr(&ntfs_toupper_lock, LK_EXCLUSIVE, NULL);
+	
+	/* only read the translation data from a file if it hasn't been
+	 * read already */
+	if (ntfs_toupper_tab)
+		goto out;
+
+	/*
+	 * Read in Unicode lowercase -> uppercase translation file.
+	 * XXX for now, just the first 256 entries are used anyway,
+	 * so don't bother reading more
+	 */
+	MALLOC(ntfs_toupper_tab, wchar *, 256 * sizeof(wchar),
+		M_NTFSRDATA, M_WAITOK);
+
+	if ((error = VFS_VGET(mp, NTFS_UPCASEINO, &vp)))
+		goto out;
+	error = ntfs_readattr(ntmp, VTONT(vp), NTFS_A_DATA, NULL,
+			0, 256*sizeof(wchar), (char *) ntfs_toupper_tab);
+	vput(vp);
+
+    out:
+	ntfs_toupper_used++;
+	lockmgr(&ntfs_toupper_lock, LK_RELEASE, NULL);
+	return (error);
+}
+
+/*
+ * lower the use count and if it reaches zero, free the memory
+ * tied by toupper table
+ */
+void
+ntfs_toupper_unuse()
+{
+	/* get exclusive access */
+	lockmgr(&ntfs_toupper_lock, LK_EXCLUSIVE, NULL);
+
+	ntfs_toupper_used--;
+	if (ntfs_toupper_used < 0) {
+		panic("ntfs_toupper_unuse(): ntfs_toupper_used negative: %d\n",
+			ntfs_toupper_used);
+	}
+	else if (ntfs_toupper_used == 0) {
+		FREE(ntfs_toupper_tab, M_NTFSRDATA);
+		ntfs_toupper_tab = NULL;
+	}
+	
+	/* release the lock */
+	lockmgr(&ntfs_toupper_lock, LK_RELEASE, NULL);
+} 
