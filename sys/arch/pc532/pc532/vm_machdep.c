@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_machdep.c,v 1.16 1996/05/03 23:22:56 phil Exp $	*/
+/*	$NetBSD: vm_machdep.c,v 1.17 1996/10/09 07:45:28 matthias Exp $	*/
 
 /*-
  * Copyright (c) 1996 Matthias Pfaller.
@@ -61,6 +61,8 @@
 
 extern struct proc *fpu_proc;
 
+void	setredzone __P((u_short *, caddr_t));
+
 /*
  * Finish a fork operation, with process p2 nearly set up.
  * Copy the pcb and setup the kernel stack for the child.
@@ -74,7 +76,6 @@ cpu_fork(p1, p2)
 	register struct pcb *pcb = &p2->p_addr->u_pcb;
 	register struct syscframe *tf;
 	register struct switchframe *sf;
-	extern void proc_trampoline(), child_return();
 
 	/* Copy curpcb (which is presumably p1's PCB) to p2. */
 	*pcb = p1->p_addr->u_pcb;
@@ -192,6 +193,7 @@ struct md_core {
 	struct reg intreg;
 	struct fpreg freg;
 };
+
 int
 cpu_coredump(p, vp, cred, chdr)
 	struct proc *p;
@@ -238,7 +240,7 @@ cpu_coredump(p, vp, cred, chdr)
 	return 0;
 }
 
-
+#if 0
 /*
  * Set a red zone in the kernel stack after the u. area.
  */
@@ -255,6 +257,7 @@ setredzone(pte, vaddr)
    used by sched (that has physical memory mapped 1:1 at bottom)
    and take the dump while still in mapped mode */
 }
+#endif
 
 /*
  * Move pages from one kernel virtual address to another.
@@ -285,6 +288,7 @@ pagemove(from, to, size)
 /*
  * Convert kernel VA to physical address
  */
+int
 kvtop(addr)
 	register caddr_t addr;
 {
