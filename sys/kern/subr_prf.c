@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_prf.c,v 1.33 1996/10/25 22:01:44 cgd Exp $	*/
+/*	$NetBSD: subr_prf.c,v 1.34 1996/10/27 20:30:52 gwr Exp $	*/
 
 /*-
  * Copyright (c) 1986, 1988, 1991, 1993
@@ -62,6 +62,11 @@
  * ANSI and traditional C compilers.
  */
 #include <machine/stdarg.h>
+/* XXX - This is a total hack! */
+#ifndef	va_alist
+#define	va_alist	__builtin_va_alist
+#define	va_dcl		long va_alist; ...
+#endif
 
 #include "ipkdb.h"
 
@@ -536,12 +541,12 @@ int
 sprintf(char *buf, const char *cfmt, ...)
 #else
 sprintf(buf, cfmt, va_alist)
-	char *buf, 
-	const char *cfmt;
+	char *buf;
+	char *cfmt;
 	va_dcl
 #endif
 {
-	register const char *fmt = cfmt;
+	register __const char *fmt = cfmt;
 	register char *p, *bp;
 	register int ch, base;
 	u_long ul;
