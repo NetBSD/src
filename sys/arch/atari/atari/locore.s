@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.44 1997/07/05 20:51:14 leo Exp $	*/
+/*	$NetBSD: locore.s,v 1.45 1997/07/09 14:32:09 leo Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -755,9 +755,10 @@ _esym:	.long	0
 	.globl	_etext,_end
 	.globl	start
 
-	.word	0x0002			|  XXX: loadbsd version required
-					|  2: needs a4 = esym
-					|  XXX should be a symbol?
+_bootversion:
+	.globl	_bootversion
+	.word	0x0002			|  Glues kernel/installboot/loadbsd
+					|    and other bootcode together.
 start:
 	movw	#PSL_HIGHIPL,sr		| No interrupts
 

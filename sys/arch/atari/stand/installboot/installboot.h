@@ -1,4 +1,4 @@
-/*	$NetBSD: installboot.h,v 1.4 1996/10/25 20:05:04 leo Exp $	*/
+/*	$NetBSD: installboot.h,v 1.5 1997/07/09 14:31:14 leo Exp $	*/
 
 /*
  * Copyright (c) 1995 Waldi Ravens
@@ -39,25 +39,9 @@
 #define	BOOTPREF_TOS	0x80
 
 /*
- * OS_LIST contains all possible combinations of OS-type,
- * OS-release and OS-revision that are supported by this
- * version of installboot.
- *
- * Syntax of OS_LIST: (ostype(osrelease(osrevision)..)..)..
- *
- * Where the parentheses indicate grouping and the double
- * dots indicate repetition (each group must appear at
- * least once).
- *
- * Ostype, osrelease and osrevision are strings surrounded
- * resp. by braces, square brackets and angle brackets. It
- * should be obvious that those delimeters can not be part
- * of the strings, nor can the EOS marker ('\0').
+ * Should match 'bootversion' in locore.s to make installboot work.
  */
-#define	OS_LIST		"{NetBSD}[1.2]<199306>[1.2A]<199306>"
-#define	BRA_TYPE	"{}"
-#define	BRA_RELEASE	"[]"
-#define	BRA_REVISION	"<>"
+#define	BOOTVERSION	0x02
 
 u_int	dkcksum __P((struct disklabel *));
 daddr_t	readdisklabel __P((char *, struct disklabel *));
