@@ -1,4 +1,4 @@
-/*	$NetBSD: dkstats.h,v 1.4 2002/01/28 02:15:16 simonb Exp $	*/
+/*	$NetBSD: dkstats.h,v 1.5 2002/06/30 00:10:34 sommerfeld Exp $	*/
 
 /*
  * Copyright (c) 1996 John M. Vinopal
@@ -47,6 +47,8 @@ struct _disk {
 	u_int64_t	  tk_nin;	/* TTY Chars in. */
 	u_int64_t	  tk_nout;	/* TTY Chars out. */
 	u_int64_t	  cp_time[CPUSTATES];	/* System timer ticks. */
+	int	 	  cp_ncpu;		/* Number of cpu's */
+	double		  cp_etime;		/* Elapsed time */
 };
 
 extern struct _disk	cur;
