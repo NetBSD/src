@@ -1,4 +1,4 @@
-/*	$NetBSD: grf_gv.c,v 1.2 1996/05/20 14:53:07 oki Exp $	*/
+/*	$NetBSD: grf_gv.c,v 1.3 1997/10/12 12:13:48 oki Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -54,6 +54,9 @@
 #include <x68k/x68k/iodevice.h>
 
 #include <machine/cpu.h>
+
+int gv_init __P((struct grf_softc *, caddr_t));
+int gv_mode __P((struct grf_softc *, u_long, caddr_t));
 
 /* Initialize hardware.
  * Must fill in the grfinfo structure in g_softc.
