@@ -1,4 +1,4 @@
-/*	$NetBSD: utility.c,v 1.26 2005/02/06 05:58:21 perry Exp $	*/
+/*	$NetBSD: utility.c,v 1.27 2005/02/06 17:30:33 agc Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)utility.c	8.4 (Berkeley) 5/30/95";
 #else
-__RCSID("$NetBSD: utility.c,v 1.26 2005/02/06 05:58:21 perry Exp $");
+__RCSID("$NetBSD: utility.c,v 1.27 2005/02/06 17:30:33 agc Exp $");
 #endif
 #endif /* not lint */
 
@@ -510,7 +510,7 @@ printoption(const char *fmt, int option)
 
 void
 printsub(
-    char	   direction,	/* '<' or '>' */
+    int	   direction,	/* '<' or '>' */
     unsigned char *pointer,	/* where suboption data sits */
     int		   length)	/* length of suboption data */
 {
