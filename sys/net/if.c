@@ -1,4 +1,4 @@
-/*	$NetBSD: if.c,v 1.55 2000/02/05 07:58:54 itojun Exp $	*/
+/*	$NetBSD: if.c,v 1.56 2000/02/06 16:43:33 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
@@ -113,6 +113,7 @@
 #include <sys/proc.h>
 #include <sys/socket.h>
 #include <sys/socketvar.h>
+#include <sys/domain.h>
 #include <sys/protosw.h>
 #include <sys/kernel.h>
 #include <sys/ioctl.h>
@@ -369,27 +370,21 @@ void
 if_detach(ifp)
 	struct ifnet *ifp;
 {
+	struct socket so;
 	struct ifaddr *ifa;
 #ifdef IFAREF_DEBUG
 	struct ifaddr *last_ifa = NULL;
 #endif
+	struct domain *dp;
 	struct protosw *pr;
-	struct socket so;
 	struct radix_node_head *rnh;
-	int s, i;
+	int s, i, family, purged;
 
-	/* XXX Rethink this part. */
-	so.so_type = SOCK_DGRAM;
-	so.so_options = 0;
-	so.so_linger = 0;
-	so.so_state = SS_NOFDREF | SS_CANTSENDMORE | SS_CANTRCVMORE;
-	so.so_pcb = 0;
-	so.so_head = 0;
-	TAILQ_INIT(&so.so_q0);
-	TAILQ_INIT(&so.so_q);
-
-	so.so_q0len = so.so_qlen = so.so_qlimit = 0;
-	so.so_timeo = so.so_oobmark = 0;
+	/*
+	 * XXX It's kind of lame that we have to have the
+	 * XXX socket structure...
+	 */
+	memset(&so, 0, sizeof(so));
 
 	s = splimp();
 
@@ -403,28 +398,43 @@ if_detach(ifp)
 	 * all of the routes go away.
 	 */
 	while ((ifa = TAILQ_FIRST(&ifp->if_addrlist)) != NULL) {
+		family = ifa->ifa_addr->sa_family;
 #ifdef IFAREF_DEBUG
 		printf("if_detach: ifaddr %p, family %d, refcnt %d\n",
-		    ifa, ifa->ifa_addr->sa_family, ifa->ifa_refcnt);
+		    ifa, family, ifa->ifa_refcnt);
 		if (last_ifa != NULL && ifa == last_ifa)
-			panic("loop detected");
+			panic("if_detach: loop detected");
 		last_ifa = ifa;
 #endif
-		if (ifa->ifa_addr->sa_family == AF_LINK) {
+		if (family == AF_LINK) {
 			rtinit(ifa, RTM_DELETE, 0);
 			TAILQ_REMOVE(&ifp->if_addrlist, ifa, ifa_list);
 			IFAFREE(ifa);
 		} else {
-			pr = pffindtype(ifa->ifa_addr->sa_family, SOCK_DGRAM);
-			so.so_proto = pr;
-			if (pr->pr_usrreq) {
-				(void) (*pr->pr_usrreq)(&so, PRU_PURGEIF,
-				    NULL, NULL,
-				    (struct mbuf *) ifp, curproc);
-			} else {
-				rtinit(ifa, RTM_DELETE, 0);
-				TAILQ_REMOVE(&ifp->if_addrlist, ifa, ifa_list);
-				IFAFREE(ifa);
+			dp = pffinddomain(family);
+#ifdef DIAGNOSTIC
+			if (dp == NULL)
+				panic("if_detach: no domain for AF %d\n",
+				    family);
+#endif
+			purged = 0;
+			for (pr = dp->dom_protosw;
+			     pr < dp->dom_protoswNPROTOSW; pr++) {
+				so.so_proto = pr;
+				if (pr->pr_usrreq != NULL) {
+					(void) (*pr->pr_usrreq)(&so,
+					    PRU_PURGEIF, NULL, NULL,
+					    (struct mbuf *) ifp, curproc);
+					purged = 1;
+				}
+			}
+			if (purged == 0) {
+				/*
+				 * XXX What's really the best thing to do
+				 * XXX here?  --thorpej@netbsd.org
+				 */
+				printf("if_detach: WARNING: AF %d not purged\n",
+				    family);
 			}
 		}
 	}
