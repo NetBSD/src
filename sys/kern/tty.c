@@ -1,4 +1,4 @@
-/*	$NetBSD: tty.c,v 1.86 1997/04/05 21:40:34 kleink Exp $	*/
+/*	$NetBSD: tty.c,v 1.87 1997/04/06 08:15:17 cgd Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1990, 1991, 1993
@@ -222,7 +222,7 @@ ttyclose(tp)
 
 /* Is 'c' a line delimiter ("break" character)? */
 #define	TTBREAKC(c, lflg)						\
-	((c) == '\n' || ((c) == cc[VEOF] || (c) == cc[VEOL] ||		\
+	((c) == '\n' || (((c) == cc[VEOF] || (c) == cc[VEOL] ||		\
 	((c) == cc[VEOL2] && ISSET(lflg, IEXTEN))) && (c) != _POSIX_VDISABLE))
 
 
