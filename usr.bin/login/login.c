@@ -1,5 +1,7 @@
+/*	$NetBSD: login.c,v 1.12 1994/12/23 06:53:01 jtc Exp $	*/
+
 /*-
- * Copyright (c) 1980, 1987, 1988, 1991, 1993
+ * Copyright (c) 1980, 1987, 1988, 1991, 1993, 1994
  *	The Regents of the University of California.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -33,12 +35,15 @@
 
 #ifndef lint
 static char copyright[] =
-"@(#) Copyright (c) 1980, 1987, 1988, 1991, 1993\n\
+"@(#) Copyright (c) 1980, 1987, 1988, 1991, 1993, 1994\n\
 	The Regents of the University of California.  All rights reserved.\n";
 #endif /* not lint */
 
 #ifndef lint
-static char sccsid[] = "@(#)login.c	8.1 (Berkeley) 6/9/93";
+#if 0
+static char sccsid[] = "@(#)login.c	8.4 (Berkeley) 4/2/94";
+#endif
+static char rcsid[] = "$NetBSD: login.c,v 1.12 1994/12/23 06:53:01 jtc Exp $";
 #endif /* not lint */
 
 /*
@@ -53,19 +58,21 @@ static char sccsid[] = "@(#)login.c	8.1 (Berkeley) 6/9/93";
 #include <sys/resource.h>
 #include <sys/file.h>
 
-#include <signal.h>
-#include <ttyent.h>
-#include <syslog.h>
-#include <setjmp.h>
-#include <tzfile.h>
-#include <utmp.h>
+#include <err.h>
 #include <errno.h>
 #include <grp.h>
 #include <pwd.h>
-#include <unistd.h>
+#include <setjmp.h>
+#include <signal.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <syslog.h>
+#include <ttyent.h>
+#include <tzfile.h>
+#include <unistd.h>
+#include <utmp.h>
+
 #include "pathnames.h"
 
 void	 badlogin __P((char *));
@@ -81,9 +88,11 @@ void	 timedout __P((int));
 int	 pwcheck __P((char *, char *, char *, char *));
 #if defined(KERBEROS) || defined(KERBEROS5)
 int	 klogin __P((struct passwd *, char *, char *, char *));
-void     kdestroy __P((void));
-void     dofork __P((void));
+void	 kdestroy __P((void));
+void	 dofork __P((void));
 #endif
+
+extern void login __P((struct utmp *));
 
 #define	TTYGRPNAME	"tty"		/* name of group to own ttys */
 
@@ -91,12 +100,12 @@ void     dofork __P((void));
  * This bounds the time given to login.  Not a define so it can
  * be patched on machines where it's too small.
  */
-int	timeout = 300;
+u_int	timeout = 300;
 
 #if defined(KERBEROS) || defined(KERBEROS5)
 int	notickets = 1;
 char	*instance;
-char	*krbtkfile_env = NULL;
+char	*krbtkfile_env;
 int	authok;
 #endif
 
@@ -110,19 +119,18 @@ main(argc, argv)
 	char *argv[];
 {
 	extern char **environ;
-	register int ch;
-	register char *p;
 	struct group *gr;
 	struct stat st;
 	struct timeval tp;
 	struct utmp utmp;
-	int ask, cnt, fflag, hflag, pflag, quietlog, rootlogin, rval, uid;
-	char *domain, *salt, *ttyn;
+	int ask, ch, cnt, fflag, hflag, pflag, quietlog, rootlogin, rval;
+	uid_t uid;
+	char *domain, *p, *salt, *ttyn;
 	char tbuf[MAXPATHLEN + 2], tname[sizeof(_PATH_TTY) + 10];
 	char localhost[MAXHOSTNAMELEN];
 
 	(void)signal(SIGALRM, timedout);
-	(void)alarm((u_int)timeout);
+	(void)alarm(timeout);
 	(void)signal(SIGQUIT, SIG_IGN);
 	(void)signal(SIGINT, SIG_IGN);
 	(void)setpriority(PRIO_PROCESS, 0, 0);
@@ -139,7 +147,7 @@ main(argc, argv)
 	if (gethostname(localhost, sizeof(localhost)) < 0)
 		syslog(LOG_ERR, "couldn't get local hostname: %m");
 	else
-		domain = index(localhost, '.');
+		domain = strchr(localhost, '.');
 
 	fflag = hflag = pflag = 0;
 	uid = getuid();
@@ -149,13 +157,10 @@ main(argc, argv)
 			fflag = 1;
 			break;
 		case 'h':
-			if (uid) {
-				(void)fprintf(stderr,
-				    "login: -h option: %s\n", strerror(EPERM));
-				exit(1);
-			}
+			if (uid)
+				errx(1, "-h option: %s", strerror(EPERM));
 			hflag = 1;
-			if (domain && (p = index(optarg, '.')) &&
+			if (domain && (p = strchr(optarg, '.')) &&
 			    strcasecmp(p, domain) == 0)
 				*p = 0;
 			hostname = optarg;
@@ -188,7 +193,7 @@ main(argc, argv)
 		(void)snprintf(tname, sizeof(tname), "%s??", _PATH_TTY);
 		ttyn = tname;
 	}
-	if (tty = rindex(ttyn, '/'))
+	if (tty = strrchr(ttyn, '/'))
 		++tty;
 	else
 		tty = ttyn;
@@ -203,7 +208,7 @@ main(argc, argv)
 		}
 		rootlogin = 0;
 #ifdef	KERBEROS
-		if ((instance = index(username, '.')) != NULL) {
+		if ((instance = strchr(username, '.')) != NULL) {
 			if (strncmp(instance, ".root", 5) == 0)
 				rootlogin = 1;
 			*instance++ = '\0';
@@ -211,7 +216,7 @@ main(argc, argv)
 			instance = "";
 #endif
 #ifdef KERBEROS5
-		if ((instance = index(username, '/')) != NULL) {
+		if ((instance = strchr(username, '/')) != NULL) {
 			if (strncmp(instance, "/root", 5) == 0)
 				rootlogin = 1;
 			*instance++ = '\0';
@@ -267,6 +272,8 @@ main(argc, argv)
 		if (pwd) {
 #if defined(KERBEROS) || defined(KERBEROS5)
 			rval = klogin(pwd, instance, localhost, p);
+			if (rval != 0 && rootlogin && pwd->pw_uid != 0)
+				rootlogin = 0;
 			if (rval == 0)
 				authok = 1;
 			else if (rval == 1) {
@@ -278,7 +285,7 @@ main(argc, argv)
 			rval = pwcheck(username, p, salt, pwd->pw_passwd);
 #endif
 		}
-		bzero(p, strlen(p));
+		memset(p, 0, strlen(p));
 
 		(void)setpriority(PRIO_PROCESS, 0, 0);
 
@@ -359,7 +366,7 @@ main(argc, argv)
 			    ctime(&pwd->pw_expire));
 
 	/* Nothing else left to fail -- really log in. */
-	bzero((void *)&utmp, sizeof(utmp));
+	memset((void *)&utmp, 0, sizeof(utmp));
 	(void)time(&utmp.ut_time);
 	(void)strncpy(utmp.ut_name, username, sizeof(utmp.ut_name));
 	if (hostname)
@@ -403,6 +410,9 @@ main(argc, argv)
 		(void)setenv("KRB5CCNAME", krbtkfile_env, 1);
 #endif
 
+	if (tty[sizeof("tty")-1] == 'd')
+		syslog(LOG_INFO, "DIALUP %s, %s", tty, pwd->pw_name);
+
 	/* If fflag is on, assume caller/authenticator has logged root login. */
 	if (rootlogin && fflag == 0)
 		if (hostname)
@@ -418,7 +428,7 @@ main(argc, argv)
 
 	if (!quietlog) {
 		(void)printf("%s\n\t%s  %s\n\n",
-		    "Copyright (c) 1980, 1983, 1986, 1988, 1990, 1991, 1993",
+	    "Copyright (c) 1980, 1983, 1986, 1988, 1990, 1991, 1993, 1994",
 		    "The Regents of the University of California. ",
 		    "All rights reserved.");
 		motd();
@@ -435,7 +445,7 @@ main(argc, argv)
 	(void)signal(SIGTSTP, SIG_IGN);
 
 	tbuf[0] = '-';
-	(void)strcpy(tbuf + 1, (p = rindex(pwd->pw_shell, '/')) ?
+	(void)strcpy(tbuf + 1, (p = strrchr(pwd->pw_shell, '/')) ?
 	    p + 1 : pwd->pw_shell);
 
 	if (setlogin(pwd->pw_name) < 0)
@@ -448,8 +458,7 @@ main(argc, argv)
 		(void) setuid(pwd->pw_uid);
 
 	execlp(pwd->pw_shell, tbuf, 0);
-	(void)fprintf(stderr, "%s: %s\n", pwd->pw_shell, strerror(errno));
-	exit(1);
+	err(1, "%s", pwd->pw_shell);
 }
 
 int
@@ -508,8 +517,8 @@ dofork()
 void
 getloginname()
 {
-	register int ch;
-	register char *p;
+	int ch;
+	char *p;
 	static char nbuf[NBUFSIZ];
 
 	for (;;) {
@@ -540,7 +549,7 @@ rootterm(ttyn)
 {
 	struct ttyent *t;
 
-	return((t = getttynam(ttyn)) && t->ty_status & TTY_SECURE);
+	return ((t = getttynam(ttyn)) && t->ty_status & TTY_SECURE);
 }
 
 jmp_buf motdinterrupt;
@@ -548,7 +557,7 @@ jmp_buf motdinterrupt;
 void
 motd()
 {
-	register int fd, nchars;
+	int fd, nchars;
 	sig_t oldint;
 	char tbuf[8192];
 
@@ -582,7 +591,7 @@ timedout(signo)
 void
 checknologin()
 {
-	register int fd, nchars;
+	int fd, nchars;
 	char tbuf[8192];
 
 	if ((fd = open(_PATH_NOLOGIN, O_RDONLY, 0)) >= 0) {
@@ -617,7 +626,7 @@ dolastlog(quiet)
 			}
 			(void)lseek(fd, (off_t)pwd->pw_uid * sizeof(ll), L_SET);
 		}
-		bzero((void *)&ll, sizeof(ll));
+		memset((void *)&ll, 0, sizeof(ll));
 		(void)time(&ll.ll_time);
 		(void)strncpy(ll.ll_line, tty, sizeof(ll.ll_line));
 		if (hostname)
@@ -657,13 +666,13 @@ stypeof(ttyid)
 {
 	struct ttyent *t;
 
-	return(ttyid && (t = getttynam(ttyid)) ? t->ty_type : UNKNOWN);
+	return (ttyid && (t = getttynam(ttyid)) ? t->ty_type : UNKNOWN);
 }
 
 void
 sleepexit(eval)
 	int eval;
 {
-	(void)sleep((u_int)5);
+	(void)sleep(5);
 	exit(eval);
 }
