@@ -1,4 +1,4 @@
-/*	$NetBSD: boot.c,v 1.6 2003/10/06 06:41:45 he Exp $	*/
+/*	$NetBSD: boot.c,v 1.7 2004/01/05 15:31:03 nonaka Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -75,10 +75,13 @@ boot(resp, loadaddr)
 	void *resp;
 	u_long loadaddr;
 {
+	extern char _end[], _edata[];
 	int n = 0;
 	int addr, speed;
 	char *name, *cnname, *p;
-	ladr = loadaddr;
+
+	/* Clear all of BSS */
+	memset(_edata, 0, _end - _edata);
 
 	/*
 	 * console init
@@ -126,6 +129,7 @@ boot(resp, loadaddr)
 	/*
 	 * attached kernel check
 	 */
+	ladr = loadaddr;
 	init_in();
 
 	printf("\n");
