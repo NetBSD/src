@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.4 1999/12/05 11:56:35 ragge Exp $	*/
+/*	$NetBSD: trap.c,v 1.5 2000/01/03 02:55:25 msaitoh Exp $	*/
 
 /*-
  * Copyright (c) 1995 Charles M. Hannum.  All rights reserved.
@@ -603,12 +603,16 @@ tlb_handler(p1, p2, p3, p4, frame)
 	struct vmspace *vm;
 	vm_map_t map;
 	int rv;
+	u_quad_t sticks = 0;
+	int type = 0;
 	vm_prot_t ftype;
 	extern vm_map_t kernel_map;
 	unsigned nss;
 	vaddr_t	va_save;
 	unsigned long pteh_save;
 	int exptype;
+
+	uvmexp.traps++;
 
 	va = (vaddr_t)SHREG_TEA;
 	va = trunc_page(va);
@@ -646,7 +650,20 @@ tlb_handler(p1, p2, p3, p4, frame)
 	if (p == NULL) {
 		rv = KERN_FAILURE;
 		goto nogo;
+	} else {
+#if 1
+		if (!KERNELMODE(frame.tf_r15)) {
+#else
+		if (!KERNELMODE(frame.tf_spc, frame.tf_ssr)) {
+#endif
+			type = T_USER;
+			sticks = p->p_sticks;
+			p->p_md.md_regs = &frame;
+		}
+		else
+			sticks = 0;
 	}
+
 	vm = p->p_vmspace;
 	/*
 	 * It is only a kernel address space fault iff:
@@ -727,4 +744,10 @@ tlb_handler(p1, p2, p3, p4, frame)
 		trapsignal(p, SIGKILL, T_TLBINVALIDR);
 	} else
 		trapsignal(p, SIGSEGV, T_TLBINVALIDR);
+
+	if ((type & T_USER) == 0)
+		return;
+
+	if (p != NULL)
+		userret(p, frame.tf_spc, sticks);
 }
