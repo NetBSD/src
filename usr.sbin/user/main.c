@@ -1,4 +1,4 @@
-/* $NetBSD: main.c,v 1.2 2001/02/19 23:22:49 cgd Exp $ */
+/* $NetBSD: main.c,v 1.3 2002/07/09 10:34:16 tron Exp $ */
 
 /*
  * Copyright (c) 1999 Alistair G. Crooks.  All rights reserved.
@@ -44,9 +44,9 @@ enum {
 
 /* this struct describes a command */
 typedef struct cmd_t {
-	int	c_wc;					/* word count */
-	char	*c_word[MaxCmdWords];			/* command words */
-	int	(*c_func)(int argc, char **argv);	/* called function */
+	int		c_wc;				/* word count */
+	const char	*c_word[MaxCmdWords];		/* command words */
+	int		(*c_func)(int, char **);	/* called function */
 } cmd_t;
 
 /* despatch table for commands */
