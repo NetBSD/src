@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.8 1999/02/06 21:19:24 thorpej Exp $
+#	$NetBSD: Makefile.inc,v 1.9 2000/05/31 14:31:23 he Exp $
 
 BINDIR=			/usr/mdec
 
@@ -37,3 +37,5 @@ MKBOOT_PROG=		${MKBOOTOBJDIR}/mkboot
 # Make sure ${MKBOOT_PROG} is always available
 ${MKBOOT_PROG}:
 	@cd ${MKBOOTDIR} && make depend && make
+
+release:
