@@ -31,7 +31,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)socketvar.h	8.1 (Berkeley) 6/2/93
- *	$Id: socketvar.h,v 1.8 1994/05/13 06:12:12 mycroft Exp $
+ *	$Id: socketvar.h,v 1.9 1994/05/19 06:28:36 cgd Exp $
  */
 
 #include <sys/select.h>			/* for struct selinfo */
@@ -207,6 +207,7 @@ int	soo_select __P((struct file *fp, int which, struct proc *p));
 int 	soo_close __P((struct file *fp, struct proc *p));
 
 struct mbuf;
+struct sockaddr;
 
 void	sbappend __P((struct sockbuf *sb, struct mbuf *m));
 int	sbappendaddr __P((struct sockbuf *sb, struct sockaddr *asa,
