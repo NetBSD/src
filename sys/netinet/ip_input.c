@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_input.c,v 1.52 1997/10/17 21:20:57 thorpej Exp $	*/
+/*	$NetBSD: ip_input.c,v 1.53 1997/10/18 21:18:31 kml Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1988, 1993
@@ -83,6 +83,10 @@
 #ifndef IPALLOWSRCRT
 #define	IPALLOWSRCRT	1	/* allow source-routed packets */
 #endif
+#ifndef IPMTUDISC
+#define IPMTUDISC	0
+#endif
+
 /*
  * Note: DIRECTED_BROADCAST is handled this way so that previous
  * configuration using this option will Just Work.
@@ -100,6 +104,7 @@ int	ip_defttl = IPDEFTTL;
 int	ip_forwsrcrt = IPFORWSRCRT;
 int	ip_directedbcast = IPDIRECTEDBCAST;
 int	ip_allowsrcrt = IPALLOWSRCRT;
+int	ip_mtudisc = IPMTUDISC;
 #ifdef DIAGNOSTIC
 int	ipprintfs = 0;
 #endif
@@ -1277,6 +1282,9 @@ ip_sysctl(name, namelen, oldp, oldlenp, newp, newlen)
 	case IPCTL_SUBNETSARELOCAL:
 		return (sysctl_int(oldp, oldlenp, newp, newlen,
 		    &subnetsarelocal));
+	case IPCTL_MTUDISC:
+		return (sysctl_int(oldp, oldlenp, newp, newlen, 
+		    &ip_mtudisc));
 	default:
 		return (EOPNOTSUPP);
 	}

@@ -1,4 +1,4 @@
-/*	$NetBSD: in.h,v 1.27 1997/10/17 21:20:49 thorpej Exp $	*/
+/*	$NetBSD: in.h,v 1.28 1997/10/18 21:18:29 kml Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1990, 1993
@@ -251,7 +251,8 @@ struct ip_mreq {
 #define	IPCTL_DIRECTEDBCAST	6	/* default broadcast behavior */
 #define	IPCTL_ALLOWSRCRT	7	/* allow/drop all source-routed pkts */
 #define	IPCTL_SUBNETSARELOCAL	8	/* treat subnets as local addresses */
-#define	IPCTL_MAXID		9
+#define	IPCTL_MTUDISC		9	/* allow path MTU discovery */
+#define	IPCTL_MAXID	       10
 
 #define	IPCTL_NAMES { \
 	{ 0, 0 }, \
@@ -263,6 +264,7 @@ struct ip_mreq {
 	{ "directed-broadcast", CTLTYPE_INT }, \
 	{ "allowsrcrt", CTLTYPE_INT }, \
 	{ "subnetsarelocal", CTLTYPE_INT }, \
+	{ "mtudisc", CTLTYPE_INT }, \
 }
 
 

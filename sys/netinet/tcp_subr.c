@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_subr.c,v 1.31 1997/10/17 22:12:38 kml Exp $	*/
+/*	$NetBSD: tcp_subr.c,v 1.32 1997/10/18 21:18:33 kml Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1988, 1990, 1993
@@ -60,7 +60,6 @@
 #include <netinet/in_pcb.h>
 #include <netinet/ip_var.h>
 #include <netinet/ip_icmp.h>
-#include <netinet/icmp_var.h>
 #include <netinet/tcp.h>
 #include <netinet/tcp_fsm.h>
 #include <netinet/tcp_seq.h>
@@ -430,7 +429,7 @@ tcp_ctlinput(cmd, sa, v)
 		notify = tcp_quench;
 	else if (PRC_IS_REDIRECT(cmd))
 		notify = in_rtchange, ip = 0;
-	else if (cmd == PRC_MSGSIZE && icmp_do_mtudisc)
+	else if (cmd == PRC_MSGSIZE && ip_mtudisc)
 		notify = tcp_mtudisc, ip = 0;
 	else if (cmd == PRC_HOSTDEAD)
 		ip = 0;
