@@ -3882,6 +3882,9 @@ char ***vecP;
 			
 		} else if (!strcmp(*argP, "68040")) { 
 			current_architecture |= m68040 | MAYBE_FLOAT_TOO;
+
+		} else if (!strcmp(*argP, "68060")) { 
+			current_architecture |= m68040 | MAYBE_FLOAT_TOO;
 			
 #ifndef NO_68881
 		} else if (!strcmp(*argP, "68881")) {
