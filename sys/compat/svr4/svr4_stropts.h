@@ -1,4 +1,4 @@
-/*	$NetBSD: svr4_stropts.h,v 1.3 1995/01/10 00:04:08 christos Exp $	 */
+/*	$NetBSD: svr4_stropts.h,v 1.4 1995/03/31 03:06:42 christos Exp $	 */
 
 /*
  * Copyright (c) 1994 Christos Zoulas
@@ -123,4 +123,4 @@ struct svr4_netaddr {
 
 #define SVR4_ADDROF(sc) (struct svr4_netaddr *) (((char *) (sc)) + (sc)->offs)
 
-#endif /* !_SVR4_STROPTS
+#endif /* !_SVR4_STROPTS */

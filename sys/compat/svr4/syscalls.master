@@ -1,4 +1,4 @@
-	$NetBSD: syscalls.master,v 1.9 1995/02/01 01:37:38 christos Exp $
+	$NetBSD: syscalls.master,v 1.10 1995/03/31 03:06:51 christos Exp $
 
 ;	@(#)syscalls.master	8.1 (Berkeley) 7/19/93
 ; System call name/number master file (or rather, slave, from SVR4).
@@ -107,7 +107,8 @@
 54	STD		{ int svr4_ioctl(int fd, int com, caddr_t data); }
 55	UNIMPL		svr4_uadmin
 56	UNIMPL		svr4_exch
-57	STD		{ int svr4_utssys(int sel); }
+57	STD		{ int svr4_utssys(void *a1, void *a2, int sel, \
+					  void *a3); }
 58	NOARGS		{ int fsync(int fd); }
 59	STD		{ int svr4_execve(char *path, \
 					  char * * argp, \
@@ -131,17 +132,17 @@
 76	OBSOL		svr4_rdebug
 77	OBSOL		svr4_rfstop
 78	UNIMPL		svr4_rfsys
-79	NOARGS		{ int mkdir(char *path, int mode); }
-80	NOARGS		{ int rmdir(char *path); }
+79	NOARGS		{ int rmdir(char *path); }
+80	NOARGS		{ int mkdir(char *path, int mode); }
 81	STD		{ int svr4_getdents(int fd, char *buf, int nbytes); }
 82	OBSOL		svr4_libattach
 83	OBSOL		svr4_libdetach
 84	UNIMPL		svr4_sysfs
-85	STD		{ int svr4_getmsg(int fd, struct svr4_stropts *ctl, \
-					  struct svr4_stropts *dat, \
+85	STD		{ int svr4_getmsg(int fd, struct svr4_strbuf *ctl, \
+					  struct svr4_strbuf *dat, \
 					  int *flags); }
-86	STD		{ int svr4_putmsg(int fd, struct svr4_stropts *ctl, \
-					  struct svr4_stropts *dat, \
+86	STD		{ int svr4_putmsg(int fd, struct svr4_strbuf *ctl, \
+					  struct svr4_strbuf *dat, \
 					  int flags); }
 87	STD		{ int svr4_poll(struct svr4_pollfd *fds, long nfds, \
 					int timeout); }
@@ -238,8 +239,7 @@
 153	STD		{ int svr4_fchroot(int fd); }
 154	UNIMPL		svr4_utimes
 155	STD		{ int svr4_vhangup(void); }
-156	NOARGS		{ int gettimeofday(struct timeval *tp, \
-			    struct timezone *tzp); }
+156	STD		{ int svr4_gettimeofday(struct timeval *tp); }
 157	NOARGS		{ int getitimer(u_int which, struct itimerval *itv); }
 158	NOARGS		{ int setitimer(u_int which, struct itimerval *itv, \
 					struct itimerval *oitv); }

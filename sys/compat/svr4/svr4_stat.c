@@ -1,4 +1,4 @@
-/*	$NetBSD: svr4_stat.c,v 1.7 1995/01/10 00:04:05 christos Exp $	 */
+/*	$NetBSD: svr4_stat.c,v 1.8 1995/03/31 03:06:35 christos Exp $	 */
 
 /*
  * Copyright (c) 1994 Christos Zoulas
@@ -287,6 +287,7 @@ svr4_fxstat(p, uap, retval)
 }
 
 struct svr4_ustat_args {
+	syscallarg(svr4_dev_t)		dev;
 	syscallarg(struct svr4_ustat *) name;
 };
 
@@ -420,18 +421,6 @@ svr4_systeminfo(p, uap, retval)
 	return copyout(str, SCARG(uap, buf), len);
 }
 
-#ifdef notyet
-struct svr4_utssys_args {
-	union {
-		struct svr4_ustat_args ustat_args;
-		struct svr4_uname_args uname_args;
-		struct svr4_fuser_args fuser_args;
-	} u;
-	int sel;
-	struct svr4_f_user *fuser;
-};
-#endif
-
 
 int
 svr4_utssys(p, uap, retval)
@@ -439,16 +428,27 @@ svr4_utssys(p, uap, retval)
 	register struct svr4_utssys_args	*uap;
 	register_t 				*retval;
 {
-#ifdef notyet
 	switch (SCARG(uap, sel)) {
-	case 0:		/* uname(2) */
-		return svr4_uname(p, &SCARG(uap, u).uname_args, retval);
-	case 2:		/* ustat(2) */
-		return svr4_ustat(p, &SCARG(uap, u).ustat_args, retval);
+	case 0:		/* uname(2)  */
+		{
+			struct svr4_uname_args ua;
+			SCARG(&ua, name) = SCARG(uap, a1);
+			return svr4_uname(p, &ua, retval);
+		}
+
+	case 2:		/* ustat(2)  */
+		{
+			struct svr4_ustat_args ua;
+			SCARG(&ua, dev) = (svr4_dev_t) SCARG(uap, a2);
+			SCARG(&ua, name) = SCARG(uap, a1);
+			return svr4_ustat(p, &ua, retval);
+		}
+
+	case 3:		/* fusers(2) */
+		return ENOSYS;
 
 	default:
 		return ENOSYS;
 	}
-#endif
 	return ENOSYS;
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: svr4_ucontext.h,v 1.1 1995/01/08 21:31:47 christos Exp $	 */
+/*	$NetBSD: svr4_ucontext.h,v 1.2 1995/03/31 03:06:49 christos Exp $	 */
 
 /*
  * Copyright (c) 1994 Christos Zoulas
@@ -38,11 +38,6 @@
  * Machine context
  */
 
-typedef struct {
-	svr4_gregset_t	greg;
-	svr4_fregset_t	freg;
-} svr4_mcontext_t;
-
 #define SVR4_UC_SIGMASK		0x01
 #define	SVR4_UC_STACK		0x02
 
@@ -71,10 +66,11 @@ typedef struct svr4_ucontext {
  */
 struct svr4_sigframe {
 	int	sf_signum;
-	int	sf_code;
+	union	svr4_siginfo  *sf_sip;
 	struct	svr4_ucontext *sf_ucp;
 	sig_t	sf_handler;
 	struct	svr4_ucontext sf_uc;
+	union	svr4_siginfo  sf_si;
 };
 
 #endif /* !_SVR4_UCONTEXT_H_ */

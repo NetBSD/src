@@ -1,4 +1,4 @@
-/*	$NetBSD: svr4_signal.c,v 1.8 1995/02/01 01:37:34 christos Exp $	 */
+/*	$NetBSD: svr4_signal.c,v 1.9 1995/03/31 03:06:26 christos Exp $	 */
 
 /*
  * Copyright (c) 1994 Christos Zoulas
@@ -416,9 +416,12 @@ svr4_signal(p, uap, retval)
 				return error;
 
 			*retval = (int) sa.sa_handler;
+#ifdef i386
+			/* XXX: Fix the rest? */
 			if (SVR4_SIGCALL(SCARG(uap, signum)) ==
 			    SVR4_SIGNAL_MASK)
 				p->p_md.ibcs_sigflags |= sigmask(nsig);
+#endif
 			return 0;
 		}
 
@@ -612,26 +615,36 @@ svr4_sigaction(p, uap, retval)
 
 	if (SCARG(uap, nsa) != NULL) {
 		bnsa = stackgap_alloc(&sg, sizeof(struct sigaction));
-		if ((error = copyin(SCARG(uap, nsa), &sa, sizeof(sa))) != 0)
+		if ((error = copyin(SCARG(uap, nsa), &sa, sizeof(sa))) != 0) {
+			printf("copyin 1 %d\n", error);
 			return error;
+		}
 		svr4_to_bsd_sigaction(&sa, &bsa);
-		if ((error = copyout(&bsa, bnsa, sizeof(bsa))) != 0)
+		if ((error = copyout(&bsa, bnsa, sizeof(bsa))) != 0) {
+			printf("copyout 1 %d\n", error);
 			return error;
+		}
 	}
 
 	SCARG(&sa_args, signum) = nsig;
 	SCARG(&sa_args, nsa) = bnsa;
 	SCARG(&sa_args, osa) = bosa;
 
-	if ((error = sigaction(p, &sa_args, retval)) != 0)
+	if ((error = sigaction(p, &sa_args, retval)) != 0) {
+		printf("sigaction %d\n", error);
 		return error;
+	}
 
 	if (SCARG(uap, osa) != NULL) {
-		if ((error = copyin(bosa, &bsa, sizeof(bsa))) != 0)
+		if ((error = copyin(bosa, &bsa, sizeof(bsa))) != 0) {
+			printf("copyout 2 %d\n", error);
 			return error;
+		}
 		bsd_to_svr4_sigaction(&bsa, &sa);
-		if ((error = copyout(&sa, SCARG(uap, osa), sizeof(sa))) != 0)
+		if ((error = copyout(&sa, SCARG(uap, osa), sizeof(sa))) != 0) {
+			printf("copyout 3 %d\n", error);
 			return error;
+		}
 	}
 
 	return 0;
