@@ -1,4 +1,4 @@
-/*	$NetBSD: vrkiu.c,v 1.14 2000/02/06 06:29:22 dbj Exp $	*/
+/*	$NetBSD: vrkiu.c,v 1.15 2000/02/18 06:54:47 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1999 SASAKI Takesi All rights reserved.
@@ -200,7 +200,7 @@ static char z50_keytrans[] = {
 /*38*/  34,  20,   6,   5,  19,  33,  47,  48,	/* g t 5 4 r f v b */
 /*40*/ IGN, IGN, IGN,   4,  18,  32,  46,  77,	/* - - - 3 e d c right */
 /*48*/ IGN, IGN, IGN,   3,  17,  31,  45,  80,	/* - - - 2 w s x down */
-/*50*/   1,  29,  41,   2,  16,  30,  44, IGN,	/* esc tab ~ 1 q a z - */
+/*50*/   1,  15,  41,   2,  16,  30,  44, IGN,	/* esc tab ~ 1 q a z - */
 /*58*/ 221,  42,  29,  29,  56,  56,  54, IGN,	/* menu Ls Lc Rc La Ra Rs - */
 };
 
