@@ -1,11 +1,11 @@
-/*	$NetBSD: perform.c,v 1.6 1997/10/18 11:05:45 lukem Exp $	*/
+/*	$NetBSD: perform.c,v 1.7 1998/06/05 11:22:20 frueauf Exp $	*/
 
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static const char *rcsid = "from FreeBSD Id: perform.c,v 1.38 1997/10/13 15:03:51 jkh Exp";
 #else
-__RCSID("$NetBSD: perform.c,v 1.6 1997/10/18 11:05:45 lukem Exp $");
+__RCSID("$NetBSD: perform.c,v 1.7 1998/06/05 11:22:20 frueauf Exp $");
 #endif
 #endif
 
@@ -87,6 +87,22 @@ pkg_perform(char **pkgs)
 		if (Verbose && !PlistOnly)
 		    printf(" %s", cp);
 	    }
+	}
+	if (Verbose && !PlistOnly)
+	    printf(".\n");
+    }
+
+    /* Put the conflicts directly after the dependencies, if any */
+    if (Pkgcfl) {
+	if (Verbose && !PlistOnly)
+	    printf("Registering conflicts:");
+	while (Pkgcfl) {
+	   cp = strsep(&Pkgcfl, " \t\n");
+	   if (*cp) {
+		add_plist(&plist, PLIST_PKGCFL, cp);
+		if (Verbose && !PlistOnly)
+		    printf(" %s", cp);
+	   }
 	}
 	if (Verbose && !PlistOnly)
 	    printf(".\n");

@@ -1,11 +1,11 @@
-/*	$NetBSD: plist.c,v 1.7 1998/03/27 12:16:26 agc Exp $	*/
+/*	$NetBSD: plist.c,v 1.8 1998/06/05 11:22:20 frueauf Exp $	*/
 
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static const char *rcsid = "from FreeBSD Id: plist.c,v 1.24 1997/10/08 07:48:15 charnier Exp";
 #else
-__RCSID("$NetBSD: plist.c,v 1.7 1998/03/27 12:16:26 agc Exp $");
+__RCSID("$NetBSD: plist.c,v 1.8 1998/06/05 11:22:20 frueauf Exp $");
 #endif
 #endif
 
@@ -229,6 +229,8 @@ plist_cmd(char *s, char **arg)
 	return PLIST_DISPLAY;
     else if (!strcmp(cmd, "pkgdep"))
 	return PLIST_PKGDEP;
+    else if (!strcmp(cmd, "pkgcfl"))
+	return PLIST_PKGCFL;
     else if (!strcmp(cmd, "mtree"))
 	return PLIST_MTREE;
     else if (!strcmp(cmd, "dirrm"))
@@ -328,6 +330,10 @@ write_plist(Package *pkg, FILE *fp)
 
 	case PLIST_PKGDEP:
 	    fprintf(fp, "%cpkgdep %s\n", CMD_CHAR, plist->name);
+	    break;
+
+	case PLIST_PKGCFL:
+	    fprintf(fp, "%cpkgcfl %s\n", CMD_CHAR, plist->name);
 	    break;
 
 	case PLIST_MTREE:

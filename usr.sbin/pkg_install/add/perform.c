@@ -1,11 +1,11 @@
-/*	$NetBSD: perform.c,v 1.10 1998/05/06 15:05:29 agc Exp $	*/
+/*	$NetBSD: perform.c,v 1.11 1998/06/05 11:22:19 frueauf Exp $	*/
 
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static const char *rcsid = "from FreeBSD Id: perform.c,v 1.44 1997/10/13 15:03:46 jkh Exp";
 #else
-__RCSID("$NetBSD: perform.c,v 1.10 1998/05/06 15:05:29 agc Exp $");
+__RCSID("$NetBSD: perform.c,v 1.11 1998/06/05 11:22:19 frueauf Exp $");
 #endif
 #endif
 
@@ -232,6 +232,18 @@ pkg_do(char *pkg)
 	warnx("package `%s' already recorded as installed", PkgName);
 	code = 1;
 	goto success;	/* close enough for government work */
+    }
+
+    /* See if there are conflicting packages installed */
+    for (p = Plist.head; p ; p = p->next) {
+	if (p->type != PLIST_PKGCFL)
+	    continue;
+	if (Verbose)
+	    printf("Package `%s' conflicts with `%s'.\n", PkgName, p->name);
+	if (!vsystem("/usr/sbin/pkg_info -e %s", p->name)) {
+	    warnx("Conflicting package `%s' installed, please use pkg_delete(1)\n\t first to remove it!\n",  p->name);
+	    ++code;
+	}
     }
 
     /* Now check the packing list for dependencies */

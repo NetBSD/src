@@ -1,4 +1,4 @@
-.\" $NetBSD: pkg_add.1,v 1.7 1998/05/28 02:30:39 jeremy Exp $
+.\" $NetBSD: pkg_add.1,v 1.8 1998/06/05 11:22:20 frueauf Exp $
 .\"
 .\" FreeBSD install - a package for the installation and maintainance
 .\" of non-core utilities.
@@ -206,6 +206,13 @@ of the package:
 .It
 A check is made to determine if the package is already recorded as installed.
 If it is,
+installation is terminated.
+.It
+A check is made to determine if the package conflicts (from
+.Cm @pkgcfl
+directives, see
+.Xr pkg_create 1 )
+with an already recorded as installed package. If it is,
 installation is terminated.
 .It
 All package dependencies (from

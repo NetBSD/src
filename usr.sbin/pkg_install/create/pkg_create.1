@@ -1,4 +1,4 @@
-.\" $NetBSD: pkg_create.1,v 1.7 1998/02/06 06:22:09 perry Exp $
+.\" $NetBSD: pkg_create.1,v 1.8 1998/06/05 11:22:20 frueauf Exp $
 .\"
 .\" FreeBSD install - a package for the installation and maintainance
 .\" of non-core utilities.
@@ -33,7 +33,8 @@
 .Sh SYNOPSIS
 .Nm
 .Op Fl YNOhv
-.Op Fl P Ar pkgs
+.Op Fl P Ar dpkgs
+.Op Fl C Ar cpkgs
 .Op Fl p Ar prefix
 .Op Fl f Ar contents
 .Op Fl i Ar iscript
@@ -105,12 +106,19 @@ Set
 to be the install procedure for the package.  This can be any
 executable program (or shell script).  It will be invoked automatically
 when the package is later installed.
-.It Fl P Ar pkgs
+.It Fl P Ar dpkgs
 Set the initial package dependency list to
-.Ar pkgs .
+.Ar dpkgs .
 This is assumed to be a whitespace separated list of package names
 and is meant as a convenient shorthand for specifying multiple
 .Cm @pkgdep
+directives in the packing list (see PACKING LIST DETAILS section below).
+.It Fl C Ar cpkgs
+Set the initial package conflict list to
+.Ar cpkgs .
+This is assumed to be a whitespace separated list of package names
+and is meant as a convenient shorthand for specifying multiple
+.Cm @pkgcfl
 directives in the packing list (see PACKING LIST DETAILS section below).
 .It Fl p Ar prefix
 Set
@@ -353,6 +361,16 @@ installed, and this package must be deinstalled before the
 package is deinstalled.  Multiple
 .Cm @pkgdep
 directives may be used if the package depends on multiple other packages.
+.It Cm @pkgcfl Ar pkgcflname
+Declare a conflict to the
+.Ar pkgcflname
+package.  The
+.Ar pkgcflname
+package must
+.Cm not
+be installed if
+.Ar pkgname
+package gets installed cause they install the same files and thus conflict.
 .El
 .Sh SEE ALSO
 .Xr pkg_add 1 ,
