@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_glue.c,v 1.40 2000/08/21 02:29:32 thorpej Exp $	*/
+/*	$NetBSD: uvm_glue.c,v 1.41 2000/09/23 00:43:10 enami Exp $	*/
 
 /* 
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -390,11 +390,11 @@ uvm_swapin(p)
 	 * moved to new physical page(s) (e.g.  see mips/mips/vm_machdep.c).
 	 */
 	cpu_swapin(p);
-	s = splstatclock();
+	SCHED_LOCK(s);
 	if (p->p_stat == SRUN)
 		setrunqueue(p);
 	p->p_flag |= P_INMEM;
-	splx(s);
+	SCHED_UNLOCK(s);
 	p->p_swtime = 0;
 	++uvmexp.swapins;
 }
@@ -609,11 +609,11 @@ uvm_swapout(p)
 	/*
 	 * Mark it as (potentially) swapped out.
 	 */
-	s = splstatclock();
+	SCHED_LOCK(s);
 	p->p_flag &= ~P_INMEM;
 	if (p->p_stat == SRUN)
 		remrunqueue(p);
-	splx(s);
+	SCHED_UNLOCK(s);
 	p->p_swtime = 0;
 	++uvmexp.swapouts;
 }
