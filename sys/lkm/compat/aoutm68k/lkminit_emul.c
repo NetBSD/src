@@ -1,4 +1,4 @@
-/* $NetBSD: lkminit_emul.c,v 1.2 2000/12/13 11:18:38 enami Exp $ */
+/* $NetBSD: lkminit_emul.c,v 1.3 2001/09/18 19:36:35 jdolecek Exp $ */
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -63,7 +63,7 @@ static struct execsw exec_netbsd_aoutm68k =
 	{ sizeof(struct exec), exec_aout_makecmds, { NULL },
 	  &emul_netbsd_aoutm68k,
 	  EXECSW_PRIO_FIRST,	/* Note: this differs from exec_conf.c entry */
-	  0, copyargs, setregs };	/* a.out binaries */
+	  0, copyargs };	/* a.out binaries */
 
 /*
  * declare the executable format

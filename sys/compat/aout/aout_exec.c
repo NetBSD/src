@@ -1,4 +1,4 @@
-/*	$NetBSD: aout_exec.c,v 1.11 2001/06/18 02:00:52 christos Exp $	*/
+/*	$NetBSD: aout_exec.c,v 1.12 2001/09/18 19:36:38 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
@@ -78,6 +78,7 @@ struct emul emul_netbsd_aout = {
 	trapsignal,
 	sigcode,
 	esigcode,
+	setregs,
 	NULL,
 	NULL,
 	NULL,

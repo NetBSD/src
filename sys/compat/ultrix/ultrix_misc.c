@@ -1,4 +1,4 @@
-/*	$NetBSD: ultrix_misc.c,v 1.72 2001/09/17 17:47:47 jdolecek Exp $	*/
+/*	$NetBSD: ultrix_misc.c,v 1.73 2001/09/18 19:36:41 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1995, 1997 Jonathan Stone (hereinafter referred to as the author)
@@ -172,6 +172,7 @@ const struct emul emul_ultrix = {
 	trapsignal,
 	ultrix_sigcode,
 	ultrix_esigcode,
+	setregs,
 	NULL,
 	NULL,
 	NULL,
