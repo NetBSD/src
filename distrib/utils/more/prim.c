@@ -1,4 +1,4 @@
-/*	$NetBSD: prim.c,v 1.4 1998/02/04 11:09:07 christos Exp $	*/
+/*	$NetBSD: prim.c,v 1.5 1998/02/09 07:40:18 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 Mark Nudleman
@@ -39,7 +39,7 @@
 #if 0
 static char sccsid[] = "@(#)prim.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: prim.c,v 1.4 1998/02/04 11:09:07 christos Exp $");
+__RCSID("$NetBSD: prim.c,v 1.5 1998/02/09 07:40:18 thorpej Exp $");
 #endif
 #endif /* not lint */
 
@@ -50,6 +50,7 @@ __RCSID("$NetBSD: prim.c,v 1.4 1998/02/04 11:09:07 christos Exp $");
 #include <sys/types.h>
 #include <stdio.h>
 #include <ctype.h>
+#include <string.h>
 
 #include "less.h"
 #include "extern.h"
