@@ -1,4 +1,4 @@
-/*	$NetBSD: spc.c,v 1.24 2002/10/02 16:02:43 thorpej Exp $	*/
+/*	$NetBSD: spc.c,v 1.25 2003/07/05 19:00:17 tsutsui Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -113,8 +113,8 @@ spc_intio_attach(parent, self, aux)
 	sc->sc_ioh = ioh;
 	sc->sc_initiator = IODEVbase->io_sram[0x70] & 0x7; /* XXX */
 
-	if (intio_intr_establish(ia->ia_intr, "spc", spcintr, sc))
+	if (intio_intr_establish(ia->ia_intr, "spc", spc_intr, sc))
 		panic ("spcattach: interrupt vector busy");
 
-	spcattach(sc);
+	spc_attach(sc);
 }

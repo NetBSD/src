@@ -1,4 +1,4 @@
-/*	$NetBSD: mb89352.c,v 1.16 2003/07/05 18:56:55 tsutsui Exp $	*/
+/*	$NetBSD: mb89352.c,v 1.17 2003/07/05 19:00:16 tsutsui Exp $	*/
 /*	NecBSD: mb89352.c,v 1.4 1998/03/14 07:31:20 kmatsuda Exp	*/
 
 /*-
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mb89352.c,v 1.16 2003/07/05 18:56:55 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mb89352.c,v 1.17 2003/07/05 19:00:16 tsutsui Exp $");
 
 #ifdef DDB
 #define	integrate
@@ -233,11 +233,11 @@ spc_find(iot, ioh, bdid)
 }
 
 void
-spcattach(sc)
+spc_attach(sc)
 	struct spc_softc *sc;
 {
 
-	SPC_TRACE(("spcattach  "));
+	SPC_TRACE(("spc_attach  "));
 	sc->sc_state = SPC_INIT;
 
 	sc->sc_freq = 20;	/* XXXX Assume 20 MHz. */
@@ -573,7 +573,7 @@ spc_poll(sc, xs, count)
 		 * have got an interrupt?
 		 */
 		if (bus_space_read_1(iot, ioh, INTS) != 0)
-			spcintr(sc);
+			spc_intr(sc);
 		if ((xs->xs_status & XS_STS_DONE) != 0)
 			return 0;
 		delay(1000);
@@ -1619,7 +1619,7 @@ phasechange:
  * 1) always uses programmed I/O
  */
 int
-spcintr(arg)
+spc_intr(arg)
 	void *arg;
 {
 	struct spc_softc *sc = arg;
@@ -1637,7 +1637,7 @@ spcintr(arg)
 	bus_space_write_1(iot, ioh, SCTL,
 	    bus_space_read_1(iot, ioh, SCTL) & ~SCTL_INTR_ENAB);
 
-	SPC_TRACE(("spcintr  "));
+	SPC_TRACE(("spc_intr  "));
 
 loop:
 	/*
