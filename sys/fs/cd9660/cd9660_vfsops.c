@@ -1,4 +1,4 @@
-/*	$NetBSD: cd9660_vfsops.c,v 1.6 2003/06/28 14:21:49 darrenr Exp $	*/
+/*	$NetBSD: cd9660_vfsops.c,v 1.7 2003/06/29 18:43:23 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1994
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cd9660_vfsops.c,v 1.6 2003/06/28 14:21:49 darrenr Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cd9660_vfsops.c,v 1.7 2003/06/29 18:43:23 thorpej Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_compat_netbsd.h"
@@ -582,10 +582,9 @@ cd9660_unmount(mp, mntflags, l)
  * Return root of a filesystem
  */
 int
-cd9660_root(mp, vpp, l)
+cd9660_root(mp, vpp)
 	struct mount *mp;
 	struct vnode **vpp;
-	struct lwp *l;
 {
 	struct iso_mnt *imp = VFSTOISOFS(mp);
 	struct iso_directory_record *dp =
@@ -597,7 +596,7 @@ cd9660_root(mp, vpp, l)
 	 * Simply tell vget, that it's a relocated directory.
 	 */
 	return (cd9660_vget_internal(mp, ino, vpp,
-				     imp->iso_ftype == ISO_FTYPE_RRIP, dp, l));
+				     imp->iso_ftype == ISO_FTYPE_RRIP, dp));
 }
 
 /*
@@ -677,11 +676,10 @@ struct ifid {
 
 /* ARGSUSED */
 int
-cd9660_fhtovp(mp, fhp, vpp, l)
+cd9660_fhtovp(mp, fhp, vpp)
 	struct mount *mp;
 	struct fid *fhp;
 	struct vnode **vpp;
-	struct lwp *l;
 {
 	struct ifid *ifhp = (struct ifid *)fhp;
 	struct iso_node *ip;
@@ -693,7 +691,7 @@ cd9660_fhtovp(mp, fhp, vpp, l)
 	    ifhp->ifid_ino, ifhp->ifid_start);
 #endif
 	
-	if ((error = VFS_VGET(mp, ifhp->ifid_ino, &nvp, l)) != 0) {
+	if ((error = VFS_VGET(mp, ifhp->ifid_ino, &nvp)) != 0) {
 		*vpp = NULLVP;
 		return (error);
 	}
@@ -736,11 +734,10 @@ cd9660_check_export(mp, nam, exflagsp, credanonp)
 }
 
 int
-cd9660_vget(mp, ino, vpp, l)
+cd9660_vget(mp, ino, vpp)
 	struct mount *mp;
 	ino_t ino;
 	struct vnode **vpp;
-	struct lwp *l;
 {
 
 	/*
@@ -755,17 +752,16 @@ cd9660_vget(mp, ino, vpp, l)
 #else
 				     0,
 #endif
-				     NULL, l));
+				     NULL));
 }
 
 int
-cd9660_vget_internal(mp, ino, vpp, relocated, isodir, l)
+cd9660_vget_internal(mp, ino, vpp, relocated, isodir)
 	struct mount *mp;
 	ino_t ino;
 	struct vnode **vpp;
 	int relocated;
 	struct iso_directory_record *isodir;
-	struct lwp *l;
 {
 	struct iso_mnt *imp;
 	struct iso_node *ip;
@@ -779,7 +775,7 @@ cd9660_vget_internal(mp, ino, vpp, relocated, isodir, l)
 
 	imp = VFSTOISOFS(mp);
 	dev = imp->im_dev;
-	if ((*vpp = cd9660_ihashget(dev, ino, l)) != NULLVP)
+	if ((*vpp = cd9660_ihashget(dev, ino)) != NULLVP)
 		return (0);
 
 	/* Allocate a new vnode/iso_node. */
