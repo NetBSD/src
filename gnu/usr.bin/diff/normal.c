@@ -1,5 +1,5 @@
 /* Normal-format output routines for GNU DIFF.
-   Copyright (C) 1988, 1989 Free Software Foundation, Inc.
+   Copyright (C) 1988, 1989, 1993 Free Software Foundation, Inc.
 
 This file is part of GNU DIFF.
 
@@ -18,15 +18,12 @@ along with GNU DIFF; see the file COPYING.  If not, write to
 the Free Software Foundation, 675 Mass Ave, Cambridge, MA 02139, USA.  */
 
 #ifndef lint
-static char rcsid[] = "$Id: normal.c,v 1.3 1993/08/02 17:26:20 mycroft Exp $";
-#endif /* not lint */
+static char *rcsid = "$Id: normal.c,v 1.4 1993/09/16 17:39:18 jtc Exp $";
+#endif
 
 #include "diff.h"
 
-int change_letter ();
-void print_normal_hunk ();
-void print_number_range ();
-struct change *find_change ();
+static void print_normal_hunk PARAMS((struct change *));
 
 /* Print the edit-script SCRIPT as a normal diff.
    INF points to an array of descriptions of the two files.  */
@@ -42,7 +39,7 @@ print_normal_script (script)
    This is a contiguous portion of a complete edit script,
    describing changes in consecutive lines.  */
 
-void
+static void
 print_normal_hunk (hunk)
      struct change *hunk;
 {
