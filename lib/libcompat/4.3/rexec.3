@@ -30,7 +30,7 @@
 .\" SUCH DAMAGE.
 .\"
 .\"     from: @(#)rexec.3	8.1 (Berkeley) 6/4/93
-.\"	$NetBSD: rexec.3,v 1.5 1998/04/28 06:00:53 fair Exp $
+.\"	$NetBSD: rexec.3,v 1.6 1998/04/28 23:03:57 fair Exp $
 .\"
 .Dd June 4, 1993
 .Dt REXEC 3
@@ -45,7 +45,8 @@
 .Fn rexec ahost "int inport" "char *user" "char *passwd" "char *cmd" "int *fd2p"
 .Sh DESCRIPTION
 .Bf -symbolic
-This interface is obsoleted by 
+This interface is obsoleted by the
+.Tn Kerberos
 .Xr krcmd 3 .
 It is available from the compatibility library, libcompat.
 .Ef

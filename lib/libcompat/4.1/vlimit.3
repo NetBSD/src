@@ -30,7 +30,7 @@
 .\" SUCH DAMAGE.
 .\"
 .\"     from: @(#)vlimit.3	8.1 (Berkeley) 6/4/93
-.\"	$NetBSD: vlimit.3,v 1.4 1998/02/05 18:51:21 perry Exp $
+.\"	$NetBSD: vlimit.3,v 1.5 1998/04/28 23:03:56 fair Exp $
 .\"
 .Dd June 4, 1993
 .Dt VLIMIT 3
@@ -51,7 +51,7 @@ It is available from the compatibility library, libcompat.
 .Ef
 .Pp
 Limits the consumption by the current process and each process
-it creates to not individually exceed 
+it creates to not individually exceed
 .Fa value
 on the specified
 .Fa resource .
@@ -82,7 +82,8 @@ size of the automatically-extended stack region
 the size of the largest core dump that will be created.
 .It Dv LIM_MAXRSS
 a soft limit for the amount of physical memory (in bytes) to be given
-to the program.  If memory is tight, the system will prefer to take memory
+to the program.
+If memory is tight, the system will prefer to take memory
 from processes which are exceeding their declared
 .Dv LIM_MAXRSS.
 .El
@@ -90,13 +91,13 @@ from processes which are exceeding their declared
 Because this information is stored in the per-process information
 this system call must be executed directly by the shell if it
 is to affect all future processes created by the shell;
-.Xr limit
+.Xr limit 1
 is thus a built-in command to
 .Xr csh 1 .
 .Pp
 The system refuses to extend the data or stack space when the limits
 would be exceeded in the normal way; a
-.Xr break 2
+.Xr brk 2
 call fails if the data space limit is reached, or the process is
 killed when the stack limit is reached (since the stack cannot be
 extended, there is no way to send a signal!).
@@ -120,7 +121,7 @@ time limit.
 .Sh HISTORY
 The
 .Fn vlimit
-function appeared in 
+function appeared in
 .Bx 4.2 .
 .Sh BUGS
 .Dv LIM_NORAISE
