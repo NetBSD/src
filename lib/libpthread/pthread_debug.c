@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread_debug.c,v 1.5 2003/04/16 17:37:47 nathanw Exp $	*/
+/*	$NetBSD: pthread_debug.c,v 1.6 2003/06/16 21:24:48 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: pthread_debug.c,v 1.5 2003/04/16 17:37:47 nathanw Exp $");
+__RCSID("$NetBSD: pthread_debug.c,v 1.6 2003/06/16 21:24:48 nathanw Exp $");
 
 #include <err.h>
 #include <errno.h>
@@ -137,7 +137,7 @@ void
 pthread__debuglog_printf(const char *fmt, ...)
 {
 	char tmpbuf[200];
-	size_t len, cplen;
+	size_t len, cplen, r, w, s;
 	long diff1, diff2;
 	va_list ap;
 
@@ -147,27 +147,38 @@ pthread__debuglog_printf(const char *fmt, ...)
 	va_start(ap, fmt);
 	len = vsnprintf(tmpbuf, 200, fmt, ap);
 	va_end(ap);
+	
+	r = debugbuf->msg_bufr;
+	w = debugbuf->msg_bufw;
+	s = debugbuf->msg_bufs;
+	diff1 = (long)w - (long)r;
 
-	diff1 = (long)debugbuf->msg_bufw - (long)debugbuf->msg_bufr;
-
-	if (debugbuf->msg_bufw + len >= debugbuf->msg_bufs) {
-		cplen = debugbuf->msg_bufs - debugbuf->msg_bufw;
-		(void)memcpy(&debugbuf->msg_bufc[debugbuf->msg_bufw],
+	if (w + len >= s) {
+		cplen = s - w;
+		debugbuf->msg_bufw = len - cplen;
+		(void)memcpy(&debugbuf->msg_bufc[w],
 		    tmpbuf, cplen);
 		(void)memcpy(&debugbuf->msg_bufc[0], tmpbuf + cplen,
 		    len - cplen);
-		debugbuf->msg_bufw = len - cplen;
+		w = len - cplen;
+
+		/* Check for lapping the read pointer. */
+		diff2 = (long)w - (long)r;
+		if (((diff1 < 0) && (diff2 <= 0)) ||
+		    ((diff1 > 0) && (diff2 >= 0)))
+			debugbuf->msg_bufr = (w + 1) % s;
 	} else {
-		(void)memcpy(&debugbuf->msg_bufc[debugbuf->msg_bufw],
+		debugbuf->msg_bufw = w + len;
+		(void)memcpy(&debugbuf->msg_bufc[w],
 		    tmpbuf, len);
-		debugbuf->msg_bufw += len;
+		w += len;
+
+		/* Check for lapping the read pointer. */
+		diff2 = (long)w - (long)r;
+		if ((diff1 < 0) && (diff2 >= 0))
+			debugbuf->msg_bufr = (w + 1) % s;
 	}
 
-	diff2 = (long)debugbuf->msg_bufw - (long)debugbuf->msg_bufr;
-	
-	/* Check if we've lapped the read pointer and if so advance it. */
-	if (((diff1 < 0) && (diff2 >= 0)) || ((diff1 >= 0) && (diff2 < 0)))
-		debugbuf->msg_bufr = debugbuf->msg_bufw;
 
 }
 #endif
