@@ -1,4 +1,4 @@
-/*	$NetBSD: pfkey.c,v 1.13 2002/05/14 11:24:21 itojun Exp $	*/
+/*	$NetBSD: pfkey.c,v 1.14 2003/03/04 18:30:58 christos Exp $	*/
 /*	$KAME: pfkey.c,v 1.41 2002/05/14 10:59:09 itojun Exp $	*/
 
 /*
@@ -700,14 +700,17 @@ pfkey_recv_register(so)
 {
 	pid_t pid = getpid();
 	struct sadb_msg *newmsg;
-	int error = -1;
+	int error;
 
 	/* receive message */
-	do {
+	for (;;) {
 		if ((newmsg = pfkey_recv(so)) == NULL)
 			return -1;
-	} while (newmsg->sadb_msg_type != SADB_REGISTER
-	    || newmsg->sadb_msg_pid != pid);
+		if (newmsg->sadb_msg_type == SADB_REGISTER
+		    && newmsg->sadb_msg_pid == pid)
+			break;
+		free(newmsg);
+	}
 
 	/* check and fix */
 	newmsg->sadb_msg_len = PFKEY_UNUNIT64(newmsg->sadb_msg_len);
