@@ -1,4 +1,4 @@
-/*	$NetBSD: policy_parse.y,v 1.12 2003/10/03 21:53:08 itojun Exp $	*/
+/*	$NetBSD: policy_parse.y,v 1.13 2003/11/23 08:23:02 itojun Exp $	*/
 /*	$KAME: policy_parse.y,v 1.15 2003/10/02 19:37:49 itojun Exp $	*/
 
 /*
@@ -294,7 +294,7 @@ init_x_policy()
 {
 	struct sadb_x_policy *p;
 
-	pbuf = malloc(tlen);
+	pbuf = malloc(sizeof(struct sadb_x_policy));
 	if (pbuf == NULL) {
 		__ipsec_errcode = EIPSEC_NO_BUFS;
 		return -1;
