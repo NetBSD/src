@@ -1,4 +1,4 @@
-/*	$NetBSD: dpme.h,v 1.4 1994/10/26 08:47:00 cgd Exp $	*/
+/* $NetBSD: dpme.h,v 1.5 1994/10/26 18:05:48 briggs Exp $	 */
 
 /*-
  * Copyright (C) 1993	Allen K. Briggs, Chris P. Caputo,
@@ -34,60 +34,54 @@
  *
  */
 
-/* parts Copyright (c) 1988 Apple Computer */
+#include <sys/types.h>
 
 /*
-	ALICE 5/19/92 BG
-
-	Handy dandy header info.
-	This is just disk partitioning info from Inside Mac V
-*/
-
-
-struct partmapentry{
-	unsigned short pmSig;
-	unsigned short pmSigPad;
-	unsigned long pmMapBlkCnt;
-	unsigned long pmPyPartStart;
-	unsigned long pmPartBlkCnt;
-	unsigned char pmPartName[32];
-	unsigned char pmPartType[32];
-	unsigned long pmLgDataStart;
-	unsigned long pmDataCnt;
-	unsigned long pmPartStatus;
-	unsigned long pmLgBootStart;
-	unsigned long pmBootSize;
-	unsigned long pmBootLoad;
-	unsigned long pmBootLoad2;
-	unsigned long pmBootEntry;
-	unsigned long pmBootEntry2;
-	unsigned long pmBootCksum;
-	char pmProcessor[16];
-	unsigned char pmBootArgs[128];
-	unsigned char blockpadding[248];
+ * Partition map structure from Inside Macintosh V-579.
+ */
+struct partmapentry {
+	u_int16_t       pmSig;
+	u_int16_t       pmSigPad;
+	u_int32_t       pmMapBlkCnt;
+	u_int32_t       pmPyPartStart;
+	u_int32_t       pmPartBlkCnt;
+	u_int8_t        pmPartName[32];
+	u_int8_t        pmPartType[32];
+	u_int32_t       pmLgDataStart;
+	u_int32_t       pmDataCnt;
+	u_int32_t       pmPartStatus;
+	u_int32_t       pmLgBootStart;
+	u_int32_t       pmBootSize;
+	u_int32_t       pmBootLoad;
+	u_int32_t       pmBootLoad2;
+	u_int32_t       pmBootEntry;
+	u_int32_t       pmBootEntry2;
+	u_int32_t       pmBootCksum;
+	int8_t          pmProcessor[16];
+	u_int8_t        pmBootArgs[128];
+	u_int8_t        blockpadding[248];
 };
 
+/*
+ * Disk Partition Map Entry Magic number.  Valid entries have this
+ * in the pmSig field.
+ */
 #define DPME_MAGIC	0x504d
 
-
-struct altblkmap{
-	int	abmSize;
-	int	abmEntries;
-	unsigned long	abmOffset;
-};
-
-
-struct blockzeroblock{
-	unsigned long bzbMagic;
-	unsigned char bzbCluster;
-	unsigned char bzbType;
-	unsigned short bzbBadBlockInode;
-	unsigned short bzbFlags;
-	unsigned short bzbReserved;
-	unsigned long bzbCreationTime;
-	unsigned long bzbMountTime;
-	unsigned long bzbUMountTime;
-	struct altblkmap bzbABM;
+/*
+ * "pmBootArgs" for APPLE_UNIX_SVR2 partition.
+ * NetBSD/Mac68k only uses Magic, Cluster, Type, and Flags.
+ */
+struct blockzeroblock {
+	u_int32_t       bzbMagic;
+	u_int8_t        bzbCluster;
+	u_int8_t        bzbType;
+	u_int16_t       bzbBadBlockInode;
+	u_int16_t       bzbFlags;
+	u_int16_t       bzbReserved;
+	u_int32_t       bzbCreationTime;
+	u_int32_t       bzbMountTime;
+	u_int32_t       bzbUMountTime;
 };
 
 #define BZB_MAGIC	0xABADBABE
