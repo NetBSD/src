@@ -1,6 +1,8 @@
+/*	$NetBSD: saerrno.h,v 1.2 1994/07/24 01:22:01 mycroft Exp $	*/
+
 /*
- * Copyright (c) 1988 Regents of the University of California.
- * All rights reserved.
+ * Copyright (c) 1988, 1993
+ *	The Regents of the University of California.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -30,22 +32,25 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	from: @(#)saerrno.h	7.3 (Berkeley) 6/28/90
- *	     $Id: saerrno.h,v 1.1 1994/01/26 02:03:56 brezak Exp $
+ *	@(#)saerrno.h	8.1 (Berkeley) 6/11/93
  */
 
 extern	int errno;	/* just like unix */
 
 /* error codes */
-#define	EADAPT	101	/* bad adaptor */
-#define	ECTLR	102	/* bad controller */
-#define	EUNIT	103	/* bad drive */
-#define	EPART	104	/* bad partition */
-#define	ERDLAB	105	/* can't read disk label */
-#define	EUNLAB	106	/* unlabeled disk */
-#define	EOFFSET	107	/* relative seek not supported */
-#define	ECMD	108	/* undefined driver command */
-#define	EBSE	109	/* bad sector error */
-#define	EWCK	110	/* write check error */
-#define	EECC	111	/* uncorrectable ecc error */
-#define	EHER	112	/* hard error */
+#define	EADAPT	1	/* bad adaptor */
+#define	ECTLR	2	/* bad controller */
+#define	EUNIT	3	/* bad drive */
+#define	EPART	4	/* bad partition */
+#define	ERDLAB	5	/* can't read disk label */
+#define	EUNLAB	6	/* unlabeled disk */
+#define	ENXIO	7	/* bad device specification */
+#define	EBADF	8	/* bad file descriptor */
+#define	EOFFSET	9	/* relative seek not supported */
+#define	ESRCH	10	/* directory search for file failed */
+#define	EIO	11	/* generic error */
+#define	ECMD	12	/* undefined driver command */
+#define	EBSE	13	/* bad sector error */
+#define	EWCK	14	/* write check error */
+#define	EECC	15	/* uncorrectable ecc error */
+#define	EHER	16	/* hard error */
