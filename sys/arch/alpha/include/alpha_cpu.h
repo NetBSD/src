@@ -1,4 +1,4 @@
-/* $NetBSD: alpha_cpu.h,v 1.31 1999/11/28 19:47:14 thorpej Exp $ */
+/* $NetBSD: alpha_cpu.h,v 1.32 1999/11/30 00:42:47 thorpej Exp $ */
 
 /*
  * Copyright (c) 1996 Carnegie-Mellon University.
@@ -313,9 +313,21 @@ const char	*alpha_dsr_sysname __P((void));
  */
 unsigned long	alpha_amask __P((unsigned long));
 unsigned long	alpha_implver __P((void));
-unsigned long	alpha_rpcc __P((void));
-void		alpha_mb __P((void));
-void		alpha_wmb __P((void));
+
+static __inline unsigned long alpha_rpcc __P((void))
+	__attribute__((__unused__));
+
+static __inline unsigned long
+alpha_rpcc()
+{
+	unsigned long v0;
+
+	__asm __volatile("rpcc %0" : "=r" (v0));
+	return (v0);
+}
+
+#define	alpha_mb()	__asm __volatile("mb")
+#define	alpha_wmb()	__asm __volatile("mb")	/* XXX */
 
 u_int8_t	alpha_ldbu __P((volatile u_int8_t *));
 u_int16_t	alpha_ldwu __P((volatile u_int16_t *));
@@ -338,19 +350,14 @@ void		alpha_atomic_sub_q __P((unsigned long *, unsigned long));
 /*
  * Stubs for OSF/1 PALcode operations.
  */
-void		alpha_pal_imb __P((void));
 void		alpha_pal_cflush __P((unsigned long));
 void		alpha_pal_draina __P((void));
 void		alpha_pal_halt __P((void)) __attribute__((__noreturn__));
 unsigned long	alpha_pal_rdmces __P((void));
-unsigned long	alpha_pal_rdps __P((void));
 unsigned long	alpha_pal_rdusp __P((void));
 unsigned long	alpha_pal_rdval __P((void));
 unsigned long	alpha_pal_swpctx __P((unsigned long));
-unsigned long	alpha_pal_swpipl __P((unsigned long));
 unsigned long	_alpha_pal_swpipl __P((unsigned long));	/* for profiling */
-void		alpha_pal_tbi __P((unsigned long, vaddr_t));
-unsigned long	alpha_pal_whami __P((void));
 void		alpha_pal_wrent __P((void *, unsigned long));
 void		alpha_pal_wrfen __P((unsigned long));
 void		alpha_pal_wripir __P((unsigned long));
@@ -358,5 +365,75 @@ void		alpha_pal_wrusp __P((unsigned long));
 void		alpha_pal_wrvptptr __P((unsigned long));
 void		alpha_pal_wrmces __P((unsigned long));
 void		alpha_pal_wrval __P((unsigned long));
+
+static __inline unsigned long alpha_pal_rdps __P((void))
+	__attribute__((__unused__));
+static __inline unsigned long alpha_pal_swpipl __P((unsigned long))
+	__attribute__((__unused__));
+static __inline void alpha_pal_tbi __P((unsigned long, vaddr_t))
+	__attribute__((__unused__));
+static __inline unsigned long alpha_pal_whami __P((void))
+	__attribute__((__unused__));
+
+#define	alpha_pal_imb()	__asm __volatile("call_pal 0x0086")
+
+static __inline unsigned long
+alpha_pal_rdps()
+{
+	register unsigned long v0 __asm("$0");
+
+	__asm __volatile("call_pal 0x0036"	/* PAL_OSF1_rdps */
+		: "=r" (v0)
+		:
+		/* clobbers t0, t8..t11 */
+		: "$1", "$22", "$23", "$24", "$25");
+
+	return (v0);
+}
+
+static __inline unsigned long
+alpha_pal_swpipl(ipl)
+	unsigned long ipl;
+{
+	register unsigned long a0 __asm("$16") = ipl;
+	register unsigned long v0 __asm("$0");
+
+	__asm __volatile("call_pal 0x0035"	/* PAL_OSF1_swpipl */
+		: "=r" (v0)
+		: "r" (a0)
+		/* clobbers t0, t8..t11, a0 */
+		: "$1", "$22", "$23", "$24", "$25", "$16");
+
+	return (v0);
+}
+
+static __inline void
+alpha_pal_tbi(op, va)
+	unsigned long op;
+	vaddr_t va;
+{
+	register unsigned long a0 __asm("$16") = op;
+	register unsigned long a1 __asm("$17") = va;
+
+	__asm __volatile("call_pal 0x0033"	/* PAL_OSF1_tbi */
+		:
+		: "r" (a0), "r" (a1)
+		/* clobbers t0, t8..t11, a0, a1 */
+		: "$1", "$22", "$23", "$24", "$25", "$16", "$17");
+}
+
+static __inline unsigned long
+alpha_pal_whami()
+{
+	register unsigned long v0 __asm("$0");
+
+	__asm __volatile("call_pal 0x003c"	/* PAL_OSF1_whami */
+		: "=r" (v0)
+		:
+		/* clobbers t0, t8..t11 */
+		: "$1", "$22", "$23", "$24", "$25");
+
+	return (v0);
+}
 
 #endif /* __ALPHA_ALPHA_CPU_H__ */
