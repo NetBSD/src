@@ -1,4 +1,4 @@
-/*	$NetBSD: lp.h,v 1.17 2003/08/07 11:25:25 agc Exp $	*/
+/*	$NetBSD: lp.h,v 1.18 2004/04/24 02:59:19 christos Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -85,7 +85,7 @@ extern char	*printer;	/* printer name */
 extern char	host[MAXHOSTNAMELEN + 1];
 extern char	*from;		/* client's machine name */
 extern int	remote;		/* true if sending files to a remote host */
-extern char	*printcapdb[];  /* printcap database array */
+extern const char *printcapdb[];/* printcap database array */
 extern int	wait_time;	/* time to wait for remote responses */
 /*
  * Structure used for building a sorted list of control files.
