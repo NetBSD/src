@@ -1,4 +1,4 @@
-/*	$NetBSD: syscall.c,v 1.5.4.6 2002/06/20 03:39:52 nathanw Exp $	*/
+/*	$NetBSD: syscall.c,v 1.5.4.7 2002/06/21 06:21:37 gmcgarry Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -80,7 +80,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: syscall.c,v 1.5.4.6 2002/06/20 03:39:52 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: syscall.c,v 1.5.4.7 2002/06/21 06:21:37 gmcgarry Exp $");
 
 #include "opt_ktrace.h"
 #include "opt_systrace.h"
@@ -98,6 +98,7 @@ __KERNEL_RCSID(0, "$NetBSD: syscall.c,v 1.5.4.6 2002/06/20 03:39:52 nathanw Exp 
 #include <sys/systrace.h>
 #endif
 #include <sys/syscall.h>
+#include <sys/sa.h>
 #include <sys/savar.h>
 
 #include <uvm/uvm_extern.h>
