@@ -1,4 +1,4 @@
-/*	$NetBSD: join.c,v 1.21 2002/07/24 17:03:00 jonb Exp $	*/
+/*	$NetBSD: join.c,v 1.22 2003/04/24 08:22:05 wiz Exp $	*/
 
 /*-
  * Copyright (c) 1991 The Regents of the University of California.
@@ -48,7 +48,7 @@ __COPYRIGHT(
 #if 0
 static char sccsid[] = "from: @(#)join.c	5.1 (Berkeley) 11/18/91";
 #else
-__RCSID("$NetBSD: join.c,v 1.21 2002/07/24 17:03:00 jonb Exp $");
+__RCSID("$NetBSD: join.c,v 1.22 2003/04/24 08:22:05 wiz Exp $");
 #endif
 #endif /* not lint */
 
@@ -58,7 +58,6 @@ __RCSID("$NetBSD: join.c,v 1.21 2002/07/24 17:03:00 jonb Exp $");
 #include <errno.h>
 #include <stdio.h>
 #include <stdlib.h>
-#include <unistd.h>
 #include <string.h>
 #include <unistd.h>
 
