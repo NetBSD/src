@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_driver.c,v 1.94 2004/03/13 02:00:15 oster Exp $	*/
+/*	$NetBSD: rf_driver.c,v 1.95 2004/03/13 02:20:40 oster Exp $	*/
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -73,7 +73,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_driver.c,v 1.94 2004/03/13 02:00:15 oster Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_driver.c,v 1.95 2004/03/13 02:20:40 oster Exp $");
 
 #include "opt_raid_diagnostic.h"
 
@@ -464,8 +464,6 @@ rf_AllocRaidAccDesc(RF_Raid_t *raidPtr, RF_IoType_t type,
 	desc->numBlocks = numBlocks;
 	desc->bufPtr = bufPtr;
 	desc->bp = bp;
-	desc->paramDAG = NULL;
-	desc->paramASM = NULL;
 	desc->flags = flags;
 	desc->states = states;
 	desc->state = 0;
