@@ -1,4 +1,4 @@
-/*	$NetBSD: if_le.c,v 1.11 2000/05/09 22:51:34 pk Exp $	*/
+/*	$NetBSD: if_le.c,v 1.12 2000/05/10 11:15:32 pk Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -244,24 +244,24 @@ leattach_sbus(parent, self, aux)
 			return;
 		}
 
-		/* Map DMA buffer into kernel space */
-		if ((error = bus_dmamem_map(dmatag, &seg, rseg, MEMSIZE,
-				       (caddr_t *)&sc->sc_mem,
-				       BUS_DMA_NOWAIT|BUS_DMA_COHERENT)) != 0) {
-			printf("%s: DMA buffer map error %d\n",
-				self->dv_xname, error);
-			bus_dmamem_free(lesc->sc_dmatag, &seg, rseg);
-			return;
-		}
-
 		/* Load DMA buffer */
 		if ((error = bus_dmamap_load_raw(dmatag, lesc->sc_dmamap,
 					&seg, rseg,
 					MEMSIZE, BUS_DMA_NOWAIT)) != 0) {
 			printf("%s: DMA buffer map load error %d\n",
 				self->dv_xname, error);
-			bus_dmamem_unmap(dmatag, (caddr_t)sc->sc_mem, MEMSIZE);
 			bus_dmamem_free(dmatag, &seg, rseg);
+			return;
+		}
+
+		/* Map DMA buffer into kernel space */
+		if ((error = bus_dmamem_map(dmatag, &seg, rseg, MEMSIZE,
+				       (caddr_t *)&sc->sc_mem,
+				       BUS_DMA_NOWAIT|BUS_DMA_COHERENT)) != 0) {
+			printf("%s: DMA buffer map error %d\n",
+				self->dv_xname, error);
+			bus_dmamap_unload(dmatag, lesc->sc_dmamap);
+			bus_dmamem_free(lesc->sc_dmatag, &seg, rseg);
 			return;
 		}
 
