@@ -236,12 +236,6 @@ vm_fork(p1, p2, isvfork)
 	/* ream out old pagetables and kernel stack */
 	(void)vm_deallocate(vp, addr, UPT_MAX_ADDRESS - addr);
 	(void)vm_allocate(vp, &addr, UPT_MAX_ADDRESS - addr, FALSE);
-
-	/* protect from the user area from user accesses. :-)
-	   addr -> addr + UPAGES*NBPG don't seem to be protected without
-	   this; the rest seems to be OK, and doesn't like being protected
-	   - andrew@werple.apana.org.au */
-	vm_protect(vp, addr, UPAGES*NBPG, FALSE, VM_PROT_NONE);
 	}
 #endif
 	/*
