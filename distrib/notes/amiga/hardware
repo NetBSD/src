@@ -55,6 +55,8 @@ Supported devices include:
 	Scanners:
 		SCSI-2 scanners behaving as SCSI-2 scanner devices,
 		HP Scanjet II, Mustek SCSI scanner.
+		Note that this is machine independend code, so it SHOULD
+		work, but hasn't been explicitly tested yet.
 	CD-ROM drives:
 		Most SCSI CD-ROM drives
 	Serial cards:
