@@ -11,9 +11,9 @@ __weak_reference(_catgets,catgets);
 
 #include <nl_types.h>
 
-extern __const char * _catgets __P((nl_catd, int, int, __const char *));
+extern char * _catgets __P((nl_catd, int, int, __const char *));
 
-__const char *
+char *
 catgets(catd, set_id, msg_id, s)
 	nl_catd catd;
 	int set_id;

@@ -31,7 +31,7 @@ up-to-date.  Many thanks.
 ******************************************************************/
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static char *rcsid = "$Id: msgcat.c,v 1.8 1994/12/20 16:18:19 cgd Exp $";
+static char *rcsid = "$Id: msgcat.c,v 1.9 1994/12/23 12:56:31 cgd Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 /* Edit History
@@ -236,7 +236,7 @@ int msgId;
     return(msg);
 }
 
-__const char	*_catgets( catd, setId, msgId, dflt)
+char	*_catgets( catd, setId, msgId, dflt)
 nl_catd catd;
 int setId;
 int msgId;
