@@ -1,4 +1,4 @@
-#	$NetBSD: printcap,v 1.7 2000/07/03 06:11:23 enami Exp $
+#	$NetBSD: printcap,v 1.8 2001/01/15 15:24:14 is Exp $
 #	from: @(#)printcap	8.1 (Berkeley) 6/9/93
 
 #lp|local line printer:\
@@ -15,7 +15,8 @@
 
 # Typical remote printer entry.
 #remote|Line Printer:\
-#	:lp=:rm=remote_machine:sd=/var/spool/lpd/remote:\
+#	:lp=:rm=remote_machine:rp=remote_printer_name:\
+#	:sd=/var/spool/lpd/remote:\
 #	:lf=/var/log/lpd-errs:
 
 #varian|Benson Varian:\
