@@ -1,4 +1,4 @@
-/*	$NetBSD: db_machdep.c,v 1.34 2003/01/18 07:10:34 thorpej Exp $	*/
+/*	$NetBSD: db_machdep.c,v 1.35 2003/01/20 04:45:56 matt Exp $	*/
 
 /* 
  * :set tabs=4
@@ -645,8 +645,10 @@ db_mach_cpu(db_expr_t addr, int have_addr, db_expr_t count, char *modif)
 	bcopy(stopcpu->ci_ddb_regs, &ddb_regs, sizeof(struct trapframe));
 	db_printf("using cpu %ld", addr);
 	if (ci->ci_curlwp)
-		db_printf(" in proc %d (%s)\n", ci->ci_curlwp->p_pid,
-		    ci->ci_curlwp->p_comm);
+		db_printf(" in proc %d.%d (%s)\n",
+		    ci->ci_curlwp->l_proc->p_pid,
+		    ci->ci_curlwp->l_lid,
+		    ci->ci_curlwp->l_proc->p_comm);
 }
 #endif
 
