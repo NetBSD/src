@@ -1,4 +1,4 @@
-/*	$NetBSD: atari_init.c,v 1.25 1997/01/12 15:40:14 leo Exp $	*/
+/*	$NetBSD: atari_init.c,v 1.26 1997/01/21 20:37:03 leo Exp $	*/
 
 /*
  * Copyright (c) 1995 Leo Weppelman
@@ -525,17 +525,17 @@ static void
 set_machtype()
 {
 	stio_addr = 0xff8000;	/* XXX: For TT & Falcon only */
-	if(badbaddr((caddr_t)&MFP2->mf_gpip)) {
+	if(badbaddr((caddr_t)&MFP2->mf_gpip, sizeof(char))) {
 		/*
 		 * Watch out! We can also have a Hades with < 16Mb
 		 * RAM here...
 		 */
-		if(!badbaddr((caddr_t)&MFP->mf_gpip)) {
+		if(!badbaddr((caddr_t)&MFP->mf_gpip, sizeof(char))) {
 			machineid |= ATARI_FALCON;
 			return;
 		}
 	}
-	if(!badbaddr((caddr_t)(PCI_CONFB_PHYS + PCI_CONFM_PHYS)))
+	if(!badbaddr((caddr_t)(PCI_CONFB_PHYS + PCI_CONFM_PHYS), sizeof(char)))
 		machineid |= ATARI_HADES;
 	else machineid |= ATARI_TT;
 }
