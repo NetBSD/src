@@ -1,6 +1,9 @@
 /*
- * Copyright (c) 1991 The Regents of the University of California.
- * All rights reserved.
+ * Copyright (c) 1991, 1993
+ *	The Regents of the University of California.  All rights reserved.
+ *
+ * This code is derived from software contributed to Berkeley by
+ * Berkeley Software Design, Inc.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -30,12 +33,12 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	from: @(#)cdefs.h	7.6 (Berkeley) 5/4/91
- *	$Id: cdefs.h,v 1.7 1993/12/12 07:47:04 cgd Exp $
+ *	from: @(#)cdefs.h	8.7 (Berkeley) 1/21/94
+ *	$Id: cdefs.h,v 1.8 1994/05/24 00:52:57 cgd Exp $
  */
 
-#ifndef	_SYS_CDEFS_H_
-#define	_SYS_CDEFS_H_
+#ifndef	_CDEFS_H_
+#define	_CDEFS_H_
 
 #if defined(__cplusplus)
 #define	__BEGIN_DECLS	extern "C" {
@@ -52,59 +55,69 @@
  * in between its arguments.  __CONCAT can also concatenate double-quoted
  * strings produced by the __STRING macro, but this only works with ANSI C.
  */
-
-#ifdef __P		/* get rid of previous definition of __P */
-#undef __P
-#endif
-
 #if defined(__STDC__) || defined(__cplusplus)
 #define	__P(protos)	protos		/* full-blown ANSI C */
 #define	__CONCAT(x,y)	x ## y
 #define	__STRING(x)	#x
+
+#define	__const		const		/* define reserved names to standard */
+#define	__signed	signed
+#define	__volatile	volatile
+#if defined(__cplusplus)
+#define	__inline	inline		/* convert to C++ keyword */
+#else
+#ifndef __GNUC__
+#define	__inline			/* delete GCC keyword */
+#endif /* !__GNUC__ */
+#endif /* !__cplusplus */
 
 #else	/* !(__STDC__ || __cplusplus) */
 #define	__P(protos)	()		/* traditional C preprocessor */
 #define	__CONCAT(x,y)	x/**/y
 #define	__STRING(x)	"x"
 
-#ifdef __GNUC__
-#define	const		__const		/* GCC: ANSI C with -traditional */
+#ifndef __GNUC__
+#define	__const				/* delete pseudo-ANSI C keywords */
+#define	__inline
+#define	__signed
+#define	__volatile
+#endif	/* !__GNUC__ */
+
+/*
+ * In non-ANSI C environments, new programs will want ANSI-only C keywords
+ * deleted from the program and old programs will want them left alone.
+ * Programs using the ANSI C keywords const, inline etc. as normal
+ * identifiers should define -DNO_ANSI_KEYWORDS.
+ */
+#ifndef	NO_ANSI_KEYWORDS
+#define	const		__const		/* convert ANSI C keywords */
 #define	inline		__inline
 #define	signed		__signed
 #define	volatile	__volatile
-
-#else	/* !__GNUC__ */
-#define	const				/* delete ANSI C keywords */
-#define	inline
-#define	signed
-#define	volatile
-#endif	/* !__GNUC__ */
+#endif /* !NO_ANSI_KEYWORDS */
 #endif	/* !(__STDC__ || __cplusplus) */
 
-
 /*
- * Disable GCC's __atrribute__ extension when we're not using GCC, or
- * when using gcc -traditional.
+ * GCC1 and some versions of GCC2 declare dead (non-returning) and
+ * pure (no side effects) functions using "volatile" and "const";
+ * unfortunately, these then cause warnings under "-ansi -pedantic".
+ * GCC2 uses a new, peculiar __attribute__((attrs)) style.  All of
+ * these work for GNU C++ (modulo a slight glitch in the C++ grammar
+ * in the distribution version of 2.5.5).
  */
-#if !defined(__GNUC__) || !defined(__STDC__)
-#define __attribute__(x)
-#endif
-
-
-/*
- * GCC has extensions for declaring functions as `pure' (always returns
- * the same value given the same inputs, i.e., has no external state and
- * no side effects) and `dead' (nonreturning).  These mainly affect
- * optimization and warnings.  Unfortunately, GCC complains if these are
- * used under strict ANSI mode (`gcc -ansi -pedantic'), hence we need to
- * define them only if compiling without this.
- */
+#if !defined(__GNUC__) || __GNUC__ < 2 || \
+	(__GNUC__ == 2 && __GNUC_MINOR__ < 5)
+#define	__attribute__(x)	/* delete __attribute__ if non-gcc or gcc1 */
 #if defined(__GNUC__) && !defined(__STRICT_ANSI__)
-#define __dead __volatile
-#define __pure __const
-#else
-#define __dead
-#define __pure
+#define	__dead		__volatile
+#define	__pure		__const
+#endif
 #endif
 
-#endif /* !_SYS_CDEFS_H_ */
+/* Delete pseudo-keywords wherever they are not available or needed. */
+#ifndef __dead
+#define	__dead
+#define	__pure
+#endif
+
+#endif /* !_CDEFS_H_ */
