@@ -1,4 +1,4 @@
-/*	$NetBSD: misc.c,v 1.4 1998/03/01 02:26:12 fvdl Exp $	*/
+/*	$NetBSD: misc.c,v 1.5 1998/03/03 07:35:50 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -39,7 +39,7 @@
 #if 0
 static char sccsid[] = "@(#)misc.c	8.2 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: misc.c,v 1.4 1998/03/01 02:26:12 fvdl Exp $");
+__RCSID("$NetBSD: misc.c,v 1.5 1998/03/03 07:35:50 thorpej Exp $");
 #endif
 #endif /* not lint */
 
@@ -67,5 +67,6 @@ get(fd, off, p, len)
 	if ((rbytes = read(fd, p, len)) < 0)
 		err(1, "%s", special);
 	if (rbytes != len)
-		errx(1, "%s: short read (%d, not %d)", special, rbytes, len);
+		errx(1, "%s: short read (%d, not %lu)", special, rbytes,
+		    (u_long)len);
 }

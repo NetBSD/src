@@ -1,4 +1,4 @@
-/*	$NetBSD: dumplfs.c,v 1.8 1998/03/01 02:26:12 fvdl Exp $	*/
+/*	$NetBSD: dumplfs.c,v 1.9 1998/03/03 07:35:50 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -45,7 +45,7 @@ __COPYRIGHT(
 #if 0
 static char sccsid[] = "@(#)dumplfs.c	8.5 (Berkeley) 5/24/95";
 #else
-__RCSID("$NetBSD: dumplfs.c,v 1.8 1998/03/01 02:26:12 fvdl Exp $");
+__RCSID("$NetBSD: dumplfs.c,v 1.9 1998/03/03 07:35:50 thorpej Exp $");
 #endif
 #endif /* not lint */
 
@@ -373,7 +373,7 @@ dump_dinode(dip)
 		"nlink ", dip->di_nlink,
 		"uid   ", dip->di_uid,
 		"gid   ", dip->di_gid,
-		"size  ", dip->di_size);
+		"size  ", (long long)dip->di_size);
 	(void)printf("%s%s%s%s%s%s",
 		"atime ", ctime(&at),
 		"mtime ", ctime(&mt),
@@ -549,20 +549,20 @@ dump_super(lfsp)
 	(void)printf("%s0x%X\t%s%d\t%s0x%qX\t%s%d\n",
 		"segmask  ", lfsp->lfs_segmask,
 		"segshift ", lfsp->lfs_segshift,
-		"bmask    ", lfsp->lfs_bmask,
+		"bmask    ", (long long)lfsp->lfs_bmask,
 		"bshift   ", lfsp->lfs_bshift);
 
 	(void)printf("%s0x%qX\t\t%s%d\t%s0x%qX\t%s%u\n",
-		"ffmask   ", lfsp->lfs_ffmask,
+		"ffmask   ", (long long)lfsp->lfs_ffmask,
 		"ffshift  ", lfsp->lfs_ffshift,
-		"fbmask   ", lfsp->lfs_fbmask,
+		"fbmask   ", (long long)lfsp->lfs_fbmask,
 		"fbshift  ", lfsp->lfs_fbshift);
 
 	(void)printf("%s%d\t%s%d\t%s0x%X\t%s0x%qx\n",
 		"sushift  ", lfsp->lfs_sushift,
 		"fsbtodb  ", lfsp->lfs_fsbtodb,
 		"cksum    ", lfsp->lfs_cksum,
-		"maxfilesize  ", lfsp->lfs_maxfilesize);
+		"maxfilesize  ", (long long)lfsp->lfs_maxfilesize);
 
 	(void)printf("Superblock disk addresses:\t");
 	for (i = 0; i < LFS_MAXNUMSB; i++) {
