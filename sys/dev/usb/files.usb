@@ -1,4 +1,4 @@
-#	$NetBSD: files.usb,v 1.53 2004/05/24 23:48:36 tsarna Exp $
+#	$NetBSD: files.usb,v 1.54 2004/06/12 17:52:41 tsarna Exp $
 #
 # Config file and device description for machine-independent USB code.
 # Included by ports that need it.  Ports that use it must provide
@@ -83,7 +83,7 @@ attach	ums at uhidbus
 file	dev/usb/ums.c			ums
 
 # eGalax USB Touch Panel
-device	uep: wsmousedev
+device	uep: wsmousedev, tpcalib
 attach	uep at uhub
 file	dev/usb/uep.c			uep			needs-flag
 
