@@ -1,4 +1,4 @@
-/*	$NetBSD: ispvar.h,v 1.2 1997/03/12 21:07:07 cgd Exp $	*/
+/*	$NetBSD: ispvar.h,v 1.3 1997/03/13 03:33:05 mycroft Exp $	*/
 
 /*
  * Soft Definitions for for Qlogic ISP SCSI adapters.
@@ -52,7 +52,7 @@ struct ispmdvec {
 		__P((struct ispsoftc *, struct scsi_xfer *, u_int32_t));
 	void		(*dv_reset0) __P((struct ispsoftc *));
 	void		(*dv_reset1) __P((struct ispsoftc *));
-	u_int16_t *	dv_ispfw;	/* ptr to f/w */
+	const u_int16_t *dv_ispfw;	/* ptr to f/w */
 	u_int16_t 	dv_fwlen;	/* length of f/w */
 	u_int16_t	dv_codeorg;	/* code ORG for f/w */
 	/*
