@@ -1,4 +1,4 @@
-/*	$NetBSD: cgsix_obio.c,v 1.7 2000/07/09 20:38:34 pk Exp $ */
+/*	$NetBSD: cgsix_obio.c,v 1.8 2000/08/22 21:28:31 pk Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -44,7 +44,6 @@
 #include <sys/systm.h>
 #include <sys/buf.h>
 #include <sys/device.h>
-#include <machine/fbio.h>
 #include <sys/ioctl.h>
 #include <sys/malloc.h>
 #include <sys/mman.h>
@@ -58,15 +57,16 @@
 
 #include <machine/bus.h>
 #include <machine/autoconf.h>
-#include <machine/fbvar.h>
 #include <machine/eeprom.h>
 #include <machine/conf.h>
 
-#include <sparc/dev/btreg.h>
-#include <sparc/dev/btvar.h>
-#include <sparc/dev/cgsixreg.h>
-#include <sparc/dev/cgsixvar.h>
-#include <sparc/dev/pfourreg.h>
+#include <dev/sun/fbio.h>
+#include <dev/sun/fbvar.h>
+#include <dev/sun/btreg.h>
+#include <dev/sun/btvar.h>
+#include <dev/sun/cgsixreg.h>
+#include <dev/sun/cgsixvar.h>
+#include <dev/sun/pfourreg.h>
 
 /* autoconfiguration driver */
 static int	cgsixmatch __P((struct device *, struct cfdata *, void *));

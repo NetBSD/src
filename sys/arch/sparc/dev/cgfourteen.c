@@ -1,4 +1,4 @@
-/*	$NetBSD: cgfourteen.c,v 1.19 2000/07/09 20:38:35 pk Exp $ */
+/*	$NetBSD: cgfourteen.c,v 1.20 2000/08/22 21:28:30 pk Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -95,8 +95,8 @@
 
 #include <dev/sbus/sbusvar.h>
 
-#include <machine/fbio.h>
-#include <machine/fbvar.h>
+#include <dev/sun/fbio.h>
+#include <dev/sun/fbvar.h>
 
 #include <sparc/dev/cgfourteenreg.h>
 #include <sparc/dev/cgfourteenvar.h>
