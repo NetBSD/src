@@ -1,5 +1,5 @@
 #	from: @(#)Makefile	8.1 (Berkeley) 6/6/93
-#	$NetBSD: Makefile,v 1.18 2001/09/13 13:02:20 itojun Exp $
+#	$NetBSD: Makefile,v 1.19 2001/11/19 03:18:28 itojun Exp $
 
 PROG=	inetd
 SRCS=	inetd.c
@@ -11,9 +11,6 @@ CPPFLAGS+=-DLIBWRAP -DINET6
 #CPPFLAGS+=-DLIBWRAP_INTERNAL
 LDADD+= -lwrap -lutil
 DPADD+= ${LIBWRAP} ${LIBUTIL}
-
-# This is necessary due to be friendly with past RFC2553 API changes...
-CPPFLAGS+=-Dss_family=__ss_family -Dss_len=__ss_len
 
 CPPFLAGS+=-DIPSEC
 SRCS+=	ipsec.c
