@@ -27,7 +27,7 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
- *	$Id: pathnames.h,v 1.1 1994/03/24 18:41:53 cgd Exp $
+ *	$NetBSD: pathnames.h,v 1.2 1997/10/18 04:38:10 lukem Exp $
  */
 
 #define	_PATH_ACCT	"/var/account/acct"

@@ -1,6 +1,7 @@
 # bootpef/Makefile
-# $Id: Makefile,v 1.5 1997/05/08 21:12:10 gwr Exp $
+# $NetBSD: Makefile,v 1.6 1997/10/18 04:37:09 lukem Exp $
 
+WARNS?=	0
 PROG=	bootpef
 SRCDIR= ${.CURDIR}/../bootpd
 CFLAGS+= -DETC_ETHERS -DDEBUG -I${SRCDIR}

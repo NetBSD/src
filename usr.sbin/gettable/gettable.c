@@ -42,7 +42,7 @@ __COPYRIGHT(
 #if 0
 static char sccsid[] = "from: @(#)gettable.c	5.6 (Berkeley) 3/2/91";
 #else
-__RCSID("$Id: gettable.c,v 1.6 1997/10/17 04:24:21 lukem Exp $");
+__RCSID("$NetBSD: gettable.c,v 1.7 1997/10/18 04:37:29 lukem Exp $");
 #endif
 #endif /* not lint */
 

@@ -1,5 +1,5 @@
 #	from: @(#)Makefile	8.1 (Berkeley) 6/6/93
-#	$Id: Makefile,v 1.10 1997/07/25 06:54:00 mrg Exp $
+#	$NetBSD: Makefile,v 1.11 1997/10/18 04:37:49 lukem Exp $
 
 PROG=	pwd_mkdb
 SRCS=	pwd_mkdb.c getpwent.c

@@ -30,7 +30,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$Id: catman.c,v 1.7 1997/10/18 04:11:02 lukem Exp $");
+__RCSID("$NetBSD: catman.c,v 1.8 1997/10/18 04:37:20 lukem Exp $");
 #endif /* not lint */
 
 #include <sys/types.h>

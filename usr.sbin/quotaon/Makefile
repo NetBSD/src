@@ -1,5 +1,5 @@
 #	from: @(#)Makefile	8.1 (Berkeley) 6/6/93
-#	$Id: Makefile,v 1.4 1994/12/22 11:39:18 cgd Exp $
+#	$NetBSD: Makefile,v 1.5 1997/10/18 04:37:55 lukem Exp $
 
 PROG=	quotaon
 MAN=	quotaon.8

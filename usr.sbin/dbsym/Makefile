@@ -1,4 +1,4 @@
-#	$Id: Makefile,v 1.6 1997/09/24 07:22:37 jeremy Exp $
+#	$NetBSD: Makefile,v 1.7 1997/10/18 04:37:24 lukem Exp $
 
 .if ${MACHINE} == "sun3" || ${MACHINE} == "sun3x"
 PROG=dbsym
