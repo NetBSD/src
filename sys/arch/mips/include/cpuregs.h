@@ -1,4 +1,4 @@
-/*	$NetBSD: cpuregs.h,v 1.34 2000/06/09 06:06:59 soda Exp $	*/
+/*	$NetBSD: cpuregs.h,v 1.35 2000/07/17 23:35:13 jeffs Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -197,6 +197,8 @@
 #define MIPS3_SR_FR_32		0x04000000
 #define MIPS3_SR_RE		0x02000000
 
+#define MIPS3_SR_DIAG_DL	0x01000000		/* QED 52xx */
+#define MIPS3_SR_DIAG_IL	0x00800000		/* QED 52xx */
 #define MIPS3_SR_DIAG_BEV	0x00400000
 #define MIPS3_SR_SOFT_RESET	0x00100000
 #define MIPS3_SR_DIAG_CH	0x00040000
@@ -244,11 +246,16 @@
 #define MIPS_SOFT_INT_MASK_0	0x0100
 
 /*
- * mips3 CPUs have on-chip timer at INT_MASK_5. We don't support it yet.
+ * mips3 CPUs have on-chip timer at INT_MASK_5.  Each platform can
+ * choose to enable this interrupt.
  */
+#if defined(MIPS3_ENABLE_CLOCK_INTR)
+#define MIPS3_INT_MASK			MIPS_INT_MASK
+#define MIPS3_HARD_INT_MASK		MIPS_HARD_INT_MASK
+#else
 #define MIPS3_INT_MASK			(MIPS_INT_MASK &  ~MIPS_INT_MASK_5)
 #define MIPS3_HARD_INT_MASK		(MIPS_HARD_INT_MASK & ~MIPS_INT_MASK_5)
-
+#endif
 
 /*
  * The bits in the context register.
