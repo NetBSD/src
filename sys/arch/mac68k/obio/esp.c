@@ -1,4 +1,4 @@
-/*	$NetBSD: esp.c,v 1.23.2.4 2001/02/11 19:11:01 bouyer Exp $	*/
+/*	$NetBSD: esp.c,v 1.23.2.5 2001/03/29 10:13:25 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1997 Jason R. Thorpe.
@@ -316,7 +316,9 @@ espattach(parent, self, aux)
 	/*
 	 * Now try to attach all the sub-devices
 	 */
-	ncr53c9x_attach(sc, NULL, NULL);
+	sc->sc_adapter.adapt_minphys = minphys;
+	sc->sc_adapter.adapt_request = ncr53c9x_scsipi_request;
+	ncr53c9x_attach(sc);
 }
 
 /*
