@@ -1,4 +1,4 @@
-/*	$NetBSD: rm.c,v 1.26 1999/11/09 15:06:32 drochner Exp $	*/
+/*	$NetBSD: rm.c,v 1.26.4.1 2002/03/06 22:28:00 he Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993, 1994
@@ -43,7 +43,7 @@ __COPYRIGHT("@(#) Copyright (c) 1990, 1993, 1994\n\
 #if 0
 static char sccsid[] = "@(#)rm.c	8.8 (Berkeley) 4/27/95";
 #else
-__RCSID("$NetBSD: rm.c,v 1.26 1999/11/09 15:06:32 drochner Exp $");
+__RCSID("$NetBSD: rm.c,v 1.26.4.1 2002/03/06 22:28:00 he Exp $");
 #endif
 #endif /* not lint */
 
@@ -191,14 +191,15 @@ rm_tree(argv)
 			 * FTS_NS: assume that if can't stat the file, it
 			 * can't be unlinked.
 			 */
-			if (!needstat)
-				break;
-			if (!fflag || !NONEXISTENT(p->fts_errno)) {
+			if (fflag && NONEXISTENT(p->fts_errno))
+				continue;
+			if (needstat) {
 				warnx("%s: %s",
 				    p->fts_path, strerror(p->fts_errno));
 				eval = 1;
+				continue;
 			}
-			continue;
+			break;
 		case FTS_D:
 			/* Pre-order: give user chance to skip. */
 			if (!fflag && !check(p->fts_path, p->fts_accpath,
