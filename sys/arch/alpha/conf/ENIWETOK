@@ -1,4 +1,4 @@
-# $NetBSD: ENIWETOK,v 1.7 1999/03/06 06:12:49 mycroft Exp $
+# $NetBSD: ENIWETOK,v 1.8 1999/03/22 07:55:14 mycroft Exp $
 # From: GENERIC,v 1.108 1999/01/06 23:42:27 thorpej Exp
 #
 # Mycroft's AS200.
@@ -191,7 +191,7 @@ audio*	at	sv?
 #isa*	at	pceb?
 #eisa*	at	pceb?
 isa*	at	sio?
-#isapnp*	at	isa?
+isapnp*	at	isa?
 
 # ISA devices
 mcclock* at	isa? port 0x70
@@ -201,6 +201,7 @@ pms*	at	pckbc?				# PS/2-style mouse (aux port)
 pcppi*	at	isa?				# PC prog. periph. interface
 spkr0	at	pcppi?				# IBM BASIC emulation
 isabeep0 at	pcppi?				# "keyboard" beep
+midi*	at	pcppi?
 com*	at	isa? port 0x3f8 irq 4		# standard serial ports
 com*	at	isa? port 0x2f8 irq 3
 #cs*	at	isa? port 0x300 iomem ? irq ? drq ? # CS8900 Ethernet
@@ -214,13 +215,18 @@ lpt*	at	isa? port 0x3bc irq 7		# standard parallel port
 #vga*	at	isa?				# ISA (EISA: XXX) VGA
 #wdc0	at	isa? port 0x1f0 irq 14		# ST506/ESDI/IDE controllers
 #wdc1	at	isa? port 0x170 irq 15
+wdc*	at	isapnp?
 fdc0	at	isa? port 0x3f0 irq 6 drq 2	# floppy controller
 wss*	at	isa? port 0x530 irq 9 drq 0	# Windows Sound System
+wss*	at	isapnp?
 audio*	at	wss?
 #midi*	at	wss?
-sb*	at	isa? port 0x220 irq 5 drq 1	# SoundBlaster
-#sb*	at	isapnp?				# SoundBlaster-compatible audio
+#sb*	at	isa? port 0x220 irq 5 drq 1	# SoundBlaster
+sb*	at	isapnp?				# SoundBlaster-compatible audio
 audio*	at	sb?
+midi*	at	sb?
+opl*	at	sb?
+midi*	at	opl?
 #aha*	at	isa? port 0x330 irq ? drq ?	# Adaptec 154[02] SCSI
 #aha*	at	isa? port 0x334 irq ? drq ?	# Adaptec 154[02] SCSI
 #bha*	at	isa? port 0x330 irq ? drq ?	# BusLogic [57]4X SCSI (unt.)
@@ -272,15 +278,15 @@ st*	at	scsibus? target ? lun ?		# SCSI tape drives
 
 # ST506/ESDI/IDE devices
 #wd*	at	pciide? channel ?
-#wd*	at	wdc? drive ?
+wd*	at	wdc? drive ?
 
 # ATAPI bus support
 #atapibus* at	pciide? channel ?
-#atapibus* at	wdc?
+atapibus* at	wdc?
 
 # ATAPI devices
-#sd*	at	atapibus? drive ?		# ATAPI disk devices
-#cd*	at	atapibus? drive ?		# ATAPI CD-ROM devices
+sd*	at	atapibus? drive ?		# ATAPI disk devices
+cd*	at	atapibus? drive ?		# ATAPI CD-ROM devices
 
 # Floppy drives
 fd*	at	fdc? drive ?
@@ -326,6 +332,7 @@ pseudo-device	pty		64
 #pseudo-device	sl		4
 pseudo-device	vnd		4
 #pseudo-device	gre		2	# generic L3 over IP tunnel
+pseudo-device	sequencer	1	# MIDI sequencer
 
 # rnd is EXPERIMENTAL
 #pseudo-device	rnd			# /dev/random and in-kernel generator
