@@ -1,4 +1,4 @@
-/*	$NetBSD: db_interface.c,v 1.13 1999/01/31 09:21:18 mrg Exp $ */
+/*	$NetBSD: db_interface.c,v 1.14 1999/02/12 05:58:27 mrg Exp $ */
 
 /*
  * Mach Operating System
@@ -337,7 +337,6 @@ db_pload_cmd(addr, have_addr, count, modif)
 	db_expr_t count;
 	char *modif;
 {
-	extern void print_dtlb __P((void));
 	static paddr_t oldaddr = -1;
 
 	if (!have_addr) {
