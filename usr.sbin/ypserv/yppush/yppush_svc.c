@@ -1,4 +1,4 @@
-/*	$NetBSD: yppush_svc.c,v 1.3 1997/10/07 14:59:37 lukem Exp $	*/
+/*	$NetBSD: yppush_svc.c,v 1.4 1997/10/13 07:38:12 lukem Exp $	*/
 
 /*
  * Copyright (c) 1996 Mats O Jansson <moj@stacken.kth.se>
@@ -30,6 +30,11 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  */
+
+#include <sys/cdefs.h>
+#ifndef lint
+__RCSID("$NetBSD: yppush_svc.c,v 1.4 1997/10/13 07:38:12 lukem Exp $");
+#endif
 
 /*
  * Originally from an rpcgen-generated file, then cleaned up
