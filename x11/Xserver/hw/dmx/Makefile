@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.1 2005/03/21 00:19:19 rtr Exp $
+#	$NetBSD: Makefile,v 1.2 2005/03/22 04:18:48 rtr Exp $
 
 .include "../../Makefile.serverlib"
 
@@ -43,5 +43,5 @@ CPPFLAGS.miinitext.c=	-UDPMSExtension
 .include <bsd.x11.mk>
 XVERSION!=	${PRINTX11VERSION}
 .include <bsd.lib.mk>
-SUBDIR=	dmxinput dmxconfig
+SUBDIR=	dmxinput dmxconfig bin
 .include <bsd.subdir.mk>
