@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.283 2004/04/10 19:58:45 pk Exp $ */
+/*	$NetBSD: pmap.c,v 1.284 2004/04/10 20:43:02 pk Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -56,7 +56,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.283 2004/04/10 19:58:45 pk Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.284 2004/04/10 20:43:02 pk Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -2714,11 +2714,6 @@ pv_changepte4m(pg, bis, bic)
 			 * bits and when disabling caching.
 			 */
 			cache_flush_page(va, pm->pm_ctxnum);
-
-#if !defined(MULTIPROCESSOR)	/* XXX? done in updatepte4m() */
-			/* Flush TLB so memory copy is up-to-date */
-			tlb_flush_page(va, pm->pm_ctxnum, 0);
-#endif
 		}
 
 		tpte = sp->sg_pte[VA_SUN4M_VPG(va)];
@@ -2774,9 +2769,6 @@ pv_syncflags4m(pg)
 		 * We need the PTE from memory as the TLB version will
 		 * always have the SRMMU_PG_R bit on.
 		 */
-		if (pm->pm_ctx)
-			tlb_flush_page(va, pm->pm_ctxnum, PMAP_CPUSET(pm));
-
 		tpte = sp->sg_pte[VA_SUN4M_VPG(va)];
 		if ((tpte & SRMMU_TETYPE) == SRMMU_TEPTE && /* if valid pte */
 		    (tpte & (SRMMU_PG_M|SRMMU_PG_R))) {	  /* and mod/refd */
@@ -3074,8 +3066,6 @@ pv_flushcache4m(struct vm_page *pg)
 		for (;;) {
 			if (pm->pm_ctx) {
 				cache_flush_page(pv->pv_va, pm->pm_ctxnum);
-				tlb_flush_page(pv->pv_va, pm->pm_ctxnum,
-				    PMAP_CPUSET(pm));
 			}
 			pv = pv->pv_next;
 			if (pv == NULL)
@@ -5533,11 +5523,6 @@ pmap_protect4m(pm, sva, eva, prot)
 			pmap_stats.ps_npg_prot_actual++;
 			if (pm->pm_ctx) {
 				cache_flush_page(va, pm->pm_ctxnum);
-#if !defined(MULTIPROCESSOR)
-				/* Flush TLB entry */
-				tlb_flush_page(va, pm->pm_ctxnum,
-				   PMAP_CPUSET(pm));
-#endif
 			}
 			updatepte4m(va, &sp->sg_pte[VA_SUN4M_VPG(va)],
 			    SRMMU_PROT_MASK, newprot, pm->pm_ctxnum,
@@ -6503,8 +6488,6 @@ pmap_enu4m(pm, va, prot, flags, pg, pteproto)
 		/*
 		 * Might be a change: fetch old pte
 		 */
-		if (pm->pm_ctx)
-			tlb_flush_page(va, pm->pm_ctxnum, PMAP_CPUSET(pm));
 		tpte = pte[VA_SUN4M_VPG(va)];
 
 		if ((tpte & SRMMU_TETYPE) == SRMMU_TEPTE) {
@@ -6914,7 +6897,6 @@ pmap_copy(dst_pmap, src_pmap, dst_addr, len, src_addr)
 
 		npg = len >> PGSHIFT;
 		for (i = 0; i < npg; i++) {
-			tlb_flush_page(src_addr, getcontext4m(), PMAP_CPUSET(src_map));
 			if ((rp = src_pmap->pm_regmap) == NULL)
 				continue;
 			rp += VA_VREG(src_addr);
@@ -6932,6 +6914,7 @@ pmap_copy(dst_pmap, src_pmap, dst_addr, len, src_addr)
 			pa = ptoa((pte & SRMMU_PPNMASK) >> SRMMU_PPNSHIFT);
 			pmap_enter(dst_pmap, dst_addr,
 				   pa,
+				   /* XXX - need to copy VM_PROT_EXEC too */
 				   (pte & PPROT_WRITE)
 					? (VM_PROT_WRITE | VM_PROT_READ)
 					: VM_PROT_READ,
