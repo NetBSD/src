@@ -1,4 +1,4 @@
-#	$NetBSD: std.sun3x,v 1.3 1997/05/07 02:20:28 lukem Exp $
+#	$NetBSD: std.sun3x,v 1.4 1997/10/16 17:20:38 gwr Exp $
 
 # Standard information for sun3's.
 machine	sun3x m68k
@@ -10,10 +10,13 @@ mainbus0 at root
 obio0  at mainbus?
 # main memory
 obmem0 at mainbus?
-# VME D16 space
-vmes0 at mainbus?
-# VME D32 space
-vmel0 at mainbus?
+
+# VME (one unit for each address space)
+vme0 at mainbus? # A32/D32
+vme1 at mainbus? # A24/D32
+vme2 at mainbus? # A24/D16
+vme3 at mainbus? # A16/D32
+vme4 at mainbus? # A16/D16
 
 # Devices that should be present in any Sun3x kernel.
 
@@ -21,7 +24,7 @@ vmel0 at mainbus?
 #enab0	at obio0 addr 0x61000000
 #berr0	at obio0 addr 0x61000400
 #leds0	at obio0 addr 0x61000800
-idprom0	at obio0 addr 0x61000C00	# Sun3/470
+#idprom at obio0 addr 0x61000C00	# Sun3/470
 memerr0	at obio0 addr 0x61001000
 intreg0	at obio0 addr 0x61001400
 
@@ -29,7 +32,7 @@ zsc0	at obio0 addr 0x62000000
 zsc1	at obio0 addr 0x62002000
 
 eeprom0	at obio0 addr 0x64000000
-idprom0	at obio0 addr 0x640007D8	# Sun3/80
+#idprom	at obio0 addr 0x640007D8	# Sun3/80
 
 # The clock can be either the old Intersil...
 oclock0	at obio0 addr 0x64002000 ipl 5
