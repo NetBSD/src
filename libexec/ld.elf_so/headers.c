@@ -1,4 +1,4 @@
-/*	$NetBSD: headers.c,v 1.14 2002/09/25 06:43:46 mycroft Exp $	 */
+/*	$NetBSD: headers.c,v 1.15 2002/09/26 20:27:50 mycroft Exp $	 */
 
 /*
  * Copyright 1996 John D. Polstra.
@@ -63,7 +63,7 @@ _rtld_digest_dynamic(obj)
 	Elf_Dyn        *dynp;
 	Needed_Entry  **needed_tail = &obj->needed;
 	const Elf_Dyn  *dyn_rpath = NULL;
-	Elf_Sword	plttype = DT_REL;
+	Elf_Sword	plttype = DT_NULL;
 	Elf_Addr        relsz = 0, relasz = 0;
 	Elf_Addr	pltrel = 0, pltrelsz = 0;
 	Elf_Addr	init = 0, fini = 0;
@@ -141,7 +141,6 @@ _rtld_digest_dynamic(obj)
 			break;
 
 		case DT_NEEDED:
-			assert(!obj->rtld);
 			{
 				Needed_Entry *nep = NEW(Needed_Entry);
 
@@ -229,7 +228,7 @@ _rtld_digest_dynamic(obj)
 		    obj->rellim > obj->pltrel &&
 		    obj->rellim <= obj->pltrellim)
 			obj->rellim = obj->pltrel;
-	} else {
+	} else if (plttype == DT_RELA) {
 		obj->pltrela = (const Elf_Rela *)(obj->relocbase + pltrel);
 		obj->pltrellim = 0;
 		obj->pltrelalim = (const Elf_Rela *)(obj->relocbase + pltrel + pltrelsz);
