@@ -1,4 +1,4 @@
-	$NetBSD: syscalls.master,v 1.123 2003/01/23 23:29:46 thorpej Exp $
+	$NetBSD: syscalls.master,v 1.124 2003/01/24 01:17:53 thorpej Exp $
 
 ;	@(#)syscalls.master	8.2 (Berkeley) 1/13/94
 
@@ -528,6 +528,7 @@
 254	STD		{ int sys__ksem_getvalue(semid_t id, \
 			    unsigned int *value); }
 255	STD		{ int sys__ksem_destroy(semid_t id); }
+256	UNIMPL		sys__ksem_timedwait
 #else
 247	EXCL		sys__ksem_init
 248	EXCL		sys__ksem_open
@@ -538,8 +539,8 @@
 253	EXCL		sys__ksem_trywait
 254	EXCL		sys__ksem_getvalue
 255	EXCL		sys__ksem_destroy
+256	UNIMPL		sys__ksem_timedwait
 #endif
-256	UNIMPL
 257	UNIMPL
 258	UNIMPL
 259	UNIMPL
