@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.73 1996/09/27 22:23:03 cgd Exp $
+#	$NetBSD: Makefile.inc,v 1.74 1996/10/16 17:53:44 perry Exp $
 #	@(#)Makefile.inc	8.3 (Berkeley) 4/16/94
 
 # gen sources
@@ -31,18 +31,6 @@ SRCS+=	_err.c _errx.c _sys_errlist.c _sys_nerr.c _sys_siglist.c \
 #	setjmp() sigsetjmp()
 
 .include "${.CURDIR}/arch/${MACHINE_ARCH}/gen/Makefile.inc"
-
-.ifdef _NOTDEF_XXX_
-
-.if (${MACHINE} == "tahoe" )
-errlst.o errlst.po:
-	${CC} -S ${CFLAGS} ${.IMPSRC}
-	ed - < ${.CURDIR}/${MACHINE}/:errfix errlst.s
-	${AS} -o ${.TARGET} errlst.s
-	rm -f errlst.s
-.endif
-
-.endif	# _NOTDEF_XXX_
 
 MAN+=	alarm.3 clock.3 confstr.3 ctermid.3 ctype.3 daemon.3 \
 	devname.3 directory.3 err.3 exec.3 fnmatch.3 frexp.3 ftok.3 fts.3 \
