@@ -1,4 +1,4 @@
-/*	$NetBSD: ucb1200.c,v 1.3 2000/02/27 16:37:50 uch Exp $ */
+/*	$NetBSD: ucb1200.c,v 1.4 2000/03/12 15:36:11 uch Exp $ */
 
 /*
  * Copyright (c) 2000, by UCHIYAMA Yasushi
@@ -61,9 +61,9 @@ struct ucbchild_state {
 };
 
 struct ucb1200_softc {
-	struct device		sc_dev;
-	struct device		*sc_parent; /* parent (TX39 SIB module) */
-	tx_chipset_tag_t	sc_tc;
+	struct device	sc_dev;
+	struct device	*sc_parent; /* parent (TX39 SIB module) */
+	tx_chipset_tag_t sc_tc;
 	
 	int		sc_snd_rate; /* passed down from SIB module */
 	int		sc_tel_rate;
@@ -76,6 +76,7 @@ int	ucb1200_match	__P((struct device*, struct cfdata*, void*));
 void	ucb1200_attach	__P((struct device*, struct device*, void*));
 int	ucb1200_print	__P((void*, const char*));
 int	ucb1200_search	__P((struct device*, struct cfdata*, void*));
+int	ucb1200_check_id __P((u_int16_t, int));
 
 #ifdef UCB1200DEBUG
 void	ucb1200_dump	__P((struct ucb1200_softc*));
@@ -83,6 +84,17 @@ void	ucb1200_dump	__P((struct ucb1200_softc*));
 
 struct cfattach ucb_ca = {
 	sizeof(struct ucb1200_softc), ucb1200_match, ucb1200_attach
+};
+
+const struct ucb_id {
+	u_int16_t	id;
+	const char	*product;
+} ucb_id[] = {
+	{ UCB1100_ID,	"PHILIPS UCB1100" },
+	{ UCB1200_ID,	"PHILIPS UCB1200" },
+	{ UCB1300_ID,	"PHILIPS UCB1300" },
+	{ TC35413F_ID,	"TOSHIBA TC35413F" },
+	{ 0, 0 }
 };
 
 int
@@ -98,10 +110,7 @@ ucb1200_match(parent, cf, aux)
 		return 0;
 	reg = txsibsf0_reg_read(sa->sa_tc, UCB1200_ID_REG);
 	
-	if (reg == UCB1200_ID || reg == TC35413F_ID)
-		return 1;
-	else 
-		return 0;
+	return (ucb1200_check_id(reg, 0));
 }
 
 void
@@ -112,7 +121,9 @@ ucb1200_attach(parent, self, aux)
 {
 	struct txsib_attach_args *sa = aux;
 	struct ucb1200_softc *sc = (void*)self;
+	u_int16_t reg;
 
+	printf(": ");
 	sc->sc_tc = sa->sa_tc;
 	sc->sc_parent = parent;
 	sc->sc_snd_rate = sa->sa_snd_rate;
@@ -125,6 +136,8 @@ ucb1200_attach(parent, self, aux)
 	if (ucb1200debug)
 		ucb1200_dump(sc);
 #endif
+	reg = txsibsf0_reg_read(sa->sa_tc, UCB1200_ID_REG);
+	(void)ucb1200_check_id(reg, 1);
 	printf("\n");
 
 	config_search(ucb1200_search, self, ucb1200_print);
@@ -157,6 +170,26 @@ ucb1200_print(aux, pnp)
 	const char *pnp;
 {
 	return pnp ? QUIET : UNCONF;
+}
+
+int
+ucb1200_check_id(idreg, print)
+	u_int16_t idreg;
+	int print;
+{
+	int i;
+
+	for (i = 0; ucb_id[i].product; i++) {
+		if (ucb_id[i].id == idreg) {
+			if (print) {
+				printf("%s", ucb_id[i].product);
+			}
+			
+			return (1);
+		}
+	}
+	
+	return 0;
 }
 
 void
