@@ -77,7 +77,7 @@
 #define	ULTRIX_SYS_getpgrp	81
 #define	ULTRIX_SYS_sun_setpgid	82
 #define	ULTRIX_SYS_setitimer	83
-				/* 84 is old wait */
+#define	ULTRIX_SYS_sun_wait3	84
 #define	ULTRIX_SYS_swapon	85
 #define	ULTRIX_SYS_getitimer	86
 #define	ULTRIX_SYS_ogethostname	87
@@ -94,6 +94,7 @@
 #define	ULTRIX_SYS_getpriority	100
 #define	ULTRIX_SYS_osend	101
 #define	ULTRIX_SYS_orecv	102
+#define	ULTRIX_SYS_sigreturn	103
 #define	ULTRIX_SYS_bind	104
 #define	ULTRIX_SYS_sun_setsockopt	105
 #define	ULTRIX_SYS_listen	106

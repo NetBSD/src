@@ -42,7 +42,7 @@
  *	@(#)sun_misc.c	8.1 (Berkeley) 6/18/93
  *
  * from: Header: sun_misc.c,v 1.16 93/04/07 02:46:27 torek Exp 
- * $Id: ultrix_misc.c,v 1.1 1994/06/02 06:25:40 glass Exp $
+ * $Id: ultrix_misc.c,v 1.2 1994/06/15 05:18:10 glass Exp $
  */
 
 /*
@@ -104,6 +104,7 @@ struct sun_wait4_args {
 	int	*status;
 	int	options;
 	struct	rusage *rusage;
+	int compat;
 };
 sun_wait4(p, uap, retval)
 	struct proc *p;
@@ -114,6 +115,29 @@ sun_wait4(p, uap, retval)
 	if (uap->pid == 0)
 		uap->pid = WAIT_ANY;
 	return (wait4(p, uap, retval));
+}
+
+struct sun_wait3_args {
+	int	*status;
+	int	options;
+	struct	rusage *rusage;
+};
+
+sun_wait3(p, uap, retval)
+	struct proc *p;
+	struct sun_wait3_args *uap;
+	int *retval;
+{
+	struct sun_wait4_args ua;
+
+	if (uap == NULL)
+		panic("uap == NULL");
+	ua.pid = -1;
+	ua.status = uap->status;
+	ua.options = uap->options;
+	ua.rusage = uap->rusage;
+
+	return (wait4(p, &ua, retval));
 }
 
 struct sun_creat_args {
