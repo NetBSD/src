@@ -1,4 +1,4 @@
-/* $NetBSD: asm.h,v 1.2 1996/03/14 23:11:03 mark Exp $ */
+/* $NetBSD: asm.h,v 1.3 1996/11/30 02:48:58 jtc Exp $ */
 
 /*
  * Copyright (c) 1990 The Regents of the University of California.
@@ -41,7 +41,7 @@
 #ifndef _ARM32_ASM_H_
 #define _ARM32_ASM_H_
 
-#ifdef PROF
+#ifdef GPROF
 /*
  * XXX assumes that arguments are not passed in %eax
  */
