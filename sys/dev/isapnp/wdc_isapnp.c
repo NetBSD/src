@@ -1,4 +1,4 @@
-/*	$NetBSD: wdc_isapnp.c,v 1.29 2004/08/19 23:32:39 thorpej Exp $	*/
+/*	$NetBSD: wdc_isapnp.c,v 1.30 2004/08/20 06:39:38 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2003 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wdc_isapnp.c,v 1.29 2004/08/19 23:32:39 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wdc_isapnp.c,v 1.30 2004/08/20 06:39:38 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -152,19 +152,19 @@ wdc_isapnp_attach(struct device *parent, struct device *self, void *aux)
 	if (ipa->ipa_ndrq > 0) {
 		sc->sc_drq = ipa->ipa_drq[0].num;
 
-		sc->sc_ad.cap |= WDC_CAPABILITY_DMA;
-		sc->sc_ad.dma_start = &wdc_isapnp_dma_start;
-		sc->sc_ad.dma_finish = &wdc_isapnp_dma_finish;
+		sc->sc_wdcdev.sc_atac.atac_cap |= ATAC_CAP_DMA;
+		sc->sc_wdcdev.dma_start = &wdc_isapnp_dma_start;
+		sc->sc_wdcdev.dma_finish = &wdc_isapnp_dma_finish;
 		wdc_isapnp_dma_setup(sc);
 	}
 #endif
-	sc->sc_wdcdev.cap |= WDC_CAPABILITY_DATA16 | WDC_CAPABILITY_DATA32;
-	sc->sc_wdcdev.PIO_cap = 0;
+	sc->sc_wdcdev.sc_atac.atac_cap |= ATAC_CAP_DATA16 | ATAC_CAP_DATA32;
+	sc->sc_wdcdev.sc_atac.atac_pio_cap = 0;
 	sc->wdc_chanlist[0] = &sc->ata_channel;
-	sc->sc_wdcdev.channels = sc->wdc_chanlist;
-	sc->sc_wdcdev.nchannels = 1;
+	sc->sc_wdcdev.sc_atac.atac_channels = sc->wdc_chanlist;
+	sc->sc_wdcdev.sc_atac.atac_nchannels = 1;
 	sc->ata_channel.ch_channel = 0;
-	sc->ata_channel.ch_wdc = &sc->sc_wdcdev;
+	sc->ata_channel.ch_atac = &sc->sc_wdcdev.sc_atac;
 	sc->ata_channel.ch_queue = &sc->wdc_chqueue;
 
 	wdcattach(&sc->ata_channel);
@@ -179,7 +179,7 @@ wdc_isapnp_dma_setup(struct wdc_isapnp_softc *sc)
 	    MAXPHYS, BUS_DMA_NOWAIT|BUS_DMA_ALLOCNOW)) {
 		printf("%s: can't create map for drq %d\n",
 		    sc->sc_wdcdev.sc_dev.dv_xname, sc->sc_drq);
-		sc->sc_wdcdev.cap &= ~WDC_CAPABILITY_DMA;
+		sc->sc_wdcdev.sc_atac.atac_cap &= ~ATAC_CAP_DMA;
 	}
 }
 

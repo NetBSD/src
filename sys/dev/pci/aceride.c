@@ -1,4 +1,4 @@
-/*	$NetBSD: aceride.c,v 1.11 2004/08/19 23:25:35 thorpej Exp $	*/
+/*	$NetBSD: aceride.c,v 1.12 2004/08/20 06:39:38 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000, 2001 Manuel Bouyer.
@@ -99,29 +99,29 @@ acer_chip_map(struct pciide_softc *sc, struct pci_attach_args *pa)
 		return;
 
 	aprint_normal("%s: bus-master DMA support present",
-	    sc->sc_wdcdev.sc_dev.dv_xname);
+	    sc->sc_wdcdev.sc_atac.atac_dev.dv_xname);
 	pciide_mapreg_dma(sc, pa);
 	aprint_normal("\n");
-	sc->sc_wdcdev.cap = WDC_CAPABILITY_DATA16 | WDC_CAPABILITY_DATA32;
+	sc->sc_wdcdev.sc_atac.atac_cap = ATAC_CAP_DATA16 | ATAC_CAP_DATA32;
 	if (sc->sc_dma_ok) {
-		sc->sc_wdcdev.cap |= WDC_CAPABILITY_DMA;
+		sc->sc_wdcdev.sc_atac.atac_cap |= ATAC_CAP_DMA;
 		if (rev >= 0x20) {
-			sc->sc_wdcdev.cap |= WDC_CAPABILITY_UDMA;
+			sc->sc_wdcdev.sc_atac.atac_cap |= ATAC_CAP_UDMA;
 			if (rev >= 0xC4)
-				sc->sc_wdcdev.UDMA_cap = 5;
+				sc->sc_wdcdev.sc_atac.atac_udma_cap = 5;
 			else if (rev >= 0xC2)
-				sc->sc_wdcdev.UDMA_cap = 4;
+				sc->sc_wdcdev.sc_atac.atac_udma_cap = 4;
 			else
-				sc->sc_wdcdev.UDMA_cap = 2;
+				sc->sc_wdcdev.sc_atac.atac_udma_cap = 2;
 		}
 		sc->sc_wdcdev.irqack = pciide_irqack;
 	}
 	    
-	sc->sc_wdcdev.PIO_cap = 4;
-	sc->sc_wdcdev.DMA_cap = 2;
-	sc->sc_wdcdev.set_modes = acer_setup_channel;
-	sc->sc_wdcdev.channels = sc->wdc_chanarray;
-	sc->sc_wdcdev.nchannels = PCIIDE_NUM_CHANNELS;
+	sc->sc_wdcdev.sc_atac.atac_pio_cap = 4;
+	sc->sc_wdcdev.sc_atac.atac_dma_cap = 2;
+	sc->sc_wdcdev.sc_atac.atac_set_modes = acer_setup_channel;
+	sc->sc_wdcdev.sc_atac.atac_channels = sc->wdc_chanarray;
+	sc->sc_wdcdev.sc_atac.atac_nchannels = PCIIDE_NUM_CHANNELS;
 
 	pciide_pci_write(sc->sc_pc, sc->sc_tag, ACER_CDRC,
 	    (pciide_pci_read(sc->sc_pc, sc->sc_tag, ACER_CDRC) |
@@ -152,13 +152,14 @@ acer_chip_map(struct pciide_softc *sc, struct pci_attach_args *pa)
 
 	wdc_allocate_regs(&sc->sc_wdcdev);
 
-	for (channel = 0; channel < sc->sc_wdcdev.nchannels; channel++) {
+	for (channel = 0; channel < sc->sc_wdcdev.sc_atac.atac_nchannels;
+	     channel++) {
 		cp = &sc->pciide_channels[channel];
 		if (pciide_chansetup(sc, channel, interface) == 0)
 			continue;
 		if ((interface & PCIIDE_CHAN_EN(channel)) == 0) {
 			aprint_normal("%s: %s channel ignored (disabled)\n",
-			    sc->sc_wdcdev.sc_dev.dv_xname, cp->name);
+			    sc->sc_wdcdev.sc_atac.atac_dev.dv_xname, cp->name);
 			cp->ata_channel.ch_flags |= ATACH_DISABLED;
 			continue;
 		}
@@ -273,7 +274,7 @@ acer_pci_intr(void *arg)
 
 	rv = 0;
 	chids = pciide_pci_read(sc->sc_pc, sc->sc_tag, ACER_CHIDS);
-	for (i = 0; i < sc->sc_wdcdev.nchannels; i++) {
+	for (i = 0; i < sc->sc_wdcdev.sc_atac.atac_nchannels; i++) {
 		cp = &sc->pciide_channels[i];
 		wdc_cp = &cp->ata_channel;
 		/* If a compat channel skip. */
@@ -283,7 +284,7 @@ acer_pci_intr(void *arg)
 			crv = wdcintr(wdc_cp);
 			if (crv == 0) {
 				printf("%s:%d: bogus intr\n",
-				    sc->sc_wdcdev.sc_dev.dv_xname, i);
+				    sc->sc_wdcdev.sc_atac.atac_dev.dv_xname, i);
 				pciide_irqack(wdc_cp);
 			} else
 				rv = 1;

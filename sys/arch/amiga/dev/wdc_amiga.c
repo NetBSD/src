@@ -1,4 +1,4 @@
-/*	$NetBSD: wdc_amiga.c,v 1.22 2004/08/14 15:08:04 thorpej Exp $ */
+/*	$NetBSD: wdc_amiga.c,v 1.23 2004/08/20 06:39:38 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2000, 2003 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wdc_amiga.c,v 1.22 2004/08/14 15:08:04 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wdc_amiga.c,v 1.23 2004/08/20 06:39:38 thorpej Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -116,7 +116,7 @@ wdc_amiga_attach(struct device *parent, struct device *self, void *aux)
 	if (bus_space_map(wdr->cmd_iot, 0, 0x40, 0,
 			  &wdr->cmd_baseioh)) {
 		printf("%s: couldn't map registers\n",
-		    sc->sc_wdcdev.sc_dev.dv_xname);
+		    sc->sc_wdcdev.sc_atac.atac_dev.dv_xname);
 		return;
 	}
 
@@ -128,7 +128,7 @@ wdc_amiga_attach(struct device *parent, struct device *self, void *aux)
 			bus_space_unmap(wdr->cmd_iot,
 			    wdr->cmd_baseioh, 0x40);
 			printf("%s: couldn't map registers\n",
-			    sc->sc_wdcdev.sc_dev.dv_xname);
+			    sc->sc_wdcdev.sc_atac.atac_dev.dv_xname);
 			return;
 		}
 	}
@@ -140,13 +140,13 @@ wdc_amiga_attach(struct device *parent, struct device *self, void *aux)
 	    wdr->cmd_baseioh, 0x406, 1, &wdr->ctl_ioh))
 		return;
 
-	sc->sc_wdcdev.cap = WDC_CAPABILITY_DATA16;
-	sc->sc_wdcdev.PIO_cap = 0;
+	sc->sc_wdcdev.sc_atac.atac_cap = ATAC_CAP_DATA16;
+	sc->sc_wdcdev.sc_atac.atac_pio_cap = 0;
 	sc->sc_chanlist[0] = &sc->sc_channel;
-	sc->sc_wdcdev.channels = sc->sc_chanlist;
-	sc->sc_wdcdev.nchannels = 1;
+	sc->sc_wdcdev.sc_atac.atac_channels = sc->sc_chanlist;
+	sc->sc_wdcdev.sc_atac.atac_nchannels = 1;
 	sc->sc_channel.ch_channel = 0;
-	sc->sc_channel.ch_wdc = &sc->sc_wdcdev;
+	sc->sc_channel.ch_atac = &sc->sc_wdcdev.sc_atac;
 	sc->sc_channel.ch_queue = &sc->sc_chqueue;
 	sc->sc_isr.isr_intr = wdc_amiga_intr;
 	sc->sc_isr.isr_arg = sc;
