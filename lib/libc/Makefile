@@ -1,5 +1,5 @@
 #	from: @(#)Makefile	5.2 (Berkeley) 3/5/91
-#	$Id: Makefile,v 1.13 1993/10/07 00:17:24 cgd Exp $
+#	$Id: Makefile,v 1.14 1993/10/15 01:06:47 jtc Exp $
 #
 # All library objects contain sccsid strings by default; they may be
 # excluded as a space-saving measure.  To produce a library that does
@@ -32,4 +32,15 @@ AINC=	-I${.CURDIR}/arch/${MACHINE}
 .include "${.CURDIR}/rpc/Makefile.inc"
 .include "${.CURDIR}/quad/Makefile.inc"
 
+LIBKERN=	/sys/lib/libkern
+
+KSRCS=	bcmp.c bzero.c ffs.c strcat.c strcmp.c strcpy.c strlen.c strncpy.c \
+	htonl.c htons.c ntohl.c ntohl.c
+
+copy-to-libkern:	${KSRCS}
+	cp -p ${.ALLSRC} ${LIBKERN}
+
+rm-from-libkern:
+	for i in ${KSRCS}; do rm -f ${LIBKERN}/$$i; done
+	
 .include <bsd.lib.mk>
