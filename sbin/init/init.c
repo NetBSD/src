@@ -1,4 +1,4 @@
-/*	$NetBSD: init.c,v 1.49 2002/04/16 01:59:37 mycroft Exp $	*/
+/*	$NetBSD: init.c,v 1.50 2002/07/27 23:49:47 christos Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -46,7 +46,7 @@ __COPYRIGHT("@(#) Copyright (c) 1991, 1993\n"
 #if 0
 static char sccsid[] = "@(#)init.c	8.2 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: init.c,v 1.49 2002/04/16 01:59:37 mycroft Exp $");
+__RCSID("$NetBSD: init.c,v 1.50 2002/07/27 23:49:47 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -156,7 +156,7 @@ session_t *sessions;
 
 char **construct_argv(char *);
 void start_window_system(session_t *);
-void collect_child(pid_t);
+void collect_child(pid_t, int);
 pid_t start_getty(session_t *);
 void transition_handler(int);
 void alrm_handler(int);
@@ -165,7 +165,7 @@ int getsecuritylevel(void);
 int setupargv(session_t *, struct ttyent *);
 int clang;
 
-void clear_session_logs(session_t *);
+void clear_session_logs(session_t *, int);
 
 int start_session_db(void);
 void add_session(session_t *);
@@ -471,12 +471,17 @@ transition(state_t s)
  * NB: should send a message to the session logger to avoid blocking.
  */
 void
-clear_session_logs(session_t *sp)
+clear_session_logs(session_t *sp, int status)
 {
 	char *line = sp->se_device + sizeof(_PATH_DEV) - 1;
-
+#ifdef SUPPORT_UTMPX
+	if (logoutx(line, status))
+		logwtmpx(line, "", "", status, DEAD_PROCESS);
+#endif
+#ifdef SUPPORT_UTMP
 	if (logout(line))
 		logwtmp(line, "", "");
+#endif
 }
 
 /*
@@ -621,7 +626,7 @@ single_user(void)
 	requested_transition = 0;
 	do {
 		if ((wpid = waitpid(-1, &status, WUNTRACED)) != -1)
-			collect_child(wpid);
+			collect_child(wpid, status);
 		if (wpid == -1) {
 			if (errno == EINTR)
 				continue;
@@ -710,7 +715,7 @@ runcom(void)
 	 */
 	do {
 		if ((wpid = waitpid(-1, &status, WUNTRACED)) != -1)
-			collect_child(wpid);
+			collect_child(wpid, status);
 		if (wpid == -1) {
 			if (errno == EINTR)
 				continue;
@@ -747,7 +752,12 @@ runcom(void)
 
 	runcom_mode = AUTOBOOT;		/* the default */
 	/* NB: should send a message to the session logger to avoid blocking. */
+#ifdef SUPPORT_WTMPX
+	logwtmpx("~", "reboot", "", 0, INIT_PROCESS);
+#endif
+#ifdef SUPPORT_WTMP
 	logwtmp("~", "reboot", "");
+#endif
 	return (state_func_t) read_ttys;
 }
 
@@ -947,7 +957,7 @@ read_ttys(void)
 	 */
 	for (sp = sessions; sp; sp = snext) {
 		if (sp->se_process)
-			clear_session_logs(sp);
+			clear_session_logs(sp, 0);
 		snext = sp->se_next;
 		free_session(sp);
 	}
@@ -1048,7 +1058,7 @@ start_getty(session_t *sp)
  * If an exiting login, start a new login running.
  */
 void
-collect_child(pid_t pid)
+collect_child(pid_t pid, int status)
 {
 #ifndef LETS_GET_SMALL
 	session_t *sp, *sprev, *snext;
@@ -1059,7 +1069,7 @@ collect_child(pid_t pid)
 	if ((sp = find_session(pid)) == NULL)
 		return;
 
-	clear_session_logs(sp);
+	clear_session_logs(sp, status);
 	del_session(sp);
 	sp->se_process = 0;
 
@@ -1119,6 +1129,7 @@ state_func_t
 multi_user(void)
 {
 	pid_t pid;
+	int status;
 	session_t *sp;
 
 	requested_transition = 0;
@@ -1146,8 +1157,8 @@ multi_user(void)
 	}
 
 	while (!requested_transition)
-		if ((pid = waitpid(-1, NULL, 0)) != -1)
-			collect_child(pid);
+		if ((pid = waitpid(-1, &status, 0)) != -1)
+			collect_child(pid, status);
 
 	return (state_func_t)requested_transition;
 }
@@ -1246,7 +1257,7 @@ state_func_t
 death(void)
 {
 	session_t *sp;
-	int i;
+	int i, status;
 	pid_t pid;
 	static const int death_sigs[3] = { SIGHUP, SIGTERM, SIGKILL };
 
@@ -1254,7 +1265,12 @@ death(void)
 		sp->se_flags |= SE_SHUTDOWN;
 
 	/* NB: should send a message to the session logger to avoid blocking. */
+#ifdef SUPPORT_UTMPX
+	logwtmpx("~", "shutdown", "", 0, INIT_PROCESS);
+#endif
+#ifdef SUPPORT_UTMP
 	logwtmp("~", "shutdown", "");
+#endif
 
 	for (i = 0; i < 3; ++i) {
 		if (kill(-1, death_sigs[i]) == -1 && errno == ESRCH)
@@ -1263,8 +1279,8 @@ death(void)
 		clang = 0;
 		alarm(DEATH_WATCH);
 		do
-			if ((pid = waitpid(-1, NULL, 0)) != -1)
-				collect_child(pid);
+			if ((pid = waitpid(-1, &status, 0)) != -1)
+				collect_child(pid, status);
 		while (clang == 0 && errno != ECHILD);
 
 		if (errno == ECHILD)
