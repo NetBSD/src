@@ -1,4 +1,4 @@
-/*	$NetBSD: bootparamd.c,v 1.11 1996/12/08 13:53:25 mycroft Exp $	*/
+/*	$NetBSD: bootparamd.c,v 1.12 1997/07/28 06:03:54 thorpej Exp $	*/
 
 /*
  * This code is not copyright, and is placed in the public domain.
@@ -9,6 +9,11 @@
  * Parser rewritten (adding YP support) by Roland McGrath <roland@frob.com>
  */
 
+#include <sys/cdefs.h>
+#ifndef lint
+__RCSID("$NetBSD: bootparamd.c,v 1.12 1997/07/28 06:03:54 thorpej Exp $");
+#endif
+
 #include <sys/types.h>
 #include <sys/ioctl.h>
 #include <sys/stat.h>
@@ -17,15 +22,19 @@
 #include <ctype.h>
 #include <err.h>
 #include <netdb.h>
+#include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
 #include <syslog.h>
+#include <unistd.h>
 
 #include <netinet/in.h>
 #include <arpa/inet.h>
 
 #include <rpc/rpc.h>
+#include <rpc/pmap_clnt.h>
 #include <rpcsvc/bootparam_prot.h>
+#include <rpcsvc/ypclnt.h>
 
 #include "pathnames.h"
 
@@ -41,21 +50,14 @@ int	_rpcsvcdirty = 0;
 int	_rpcpmstart = 0;
 int     debug = 0;
 int     dolog = 0;
-unsigned long route_addr, inet_addr();
+struct in_addr route_addr;
 struct sockaddr_in my_addr;
 extern char *__progname;
 char   *bootpfile = _PATH_BOOTPARAMS;
 
-extern char *optarg;
-extern int optind;
-
-void
-usage()
-{
-	fprintf(stderr,
-	    "usage: rpc.bootparamd [-d] [-s] [-r router] [-f bootparmsfile]\n");
-	exit(1);
-}
+int	main __P((int, char *[]));
+int	lookup_bootparam __P((char *, char *, char *, char **, char **));
+void	usage __P((void));
 
 
 /*
@@ -64,7 +66,7 @@ usage()
 int
 main(argc, argv)
 	int     argc;
-	char  **argv;
+	char  *argv[];
 {
 	SVCXPRT *transp;
 	struct hostent *he;
@@ -78,15 +80,15 @@ main(argc, argv)
 			break;
 		case 'r':
 			if (isdigit(*optarg)) {
-				route_addr = inet_addr(optarg);
-				break;
+				if (inet_aton(optarg, &route_addr) != 0)
+					break;
 			}
 			he = gethostbyname(optarg);
-			if (!he) {
+			if (he == 0) {
 				warnx("no such host: %s\n", optarg);
 				usage();
 			}
-			bcopy(he->h_addr, (char *) &route_addr, sizeof(route_addr));
+			bcopy(he->h_addr, &route_addr.s_addr, he->h_length);
 			break;
 		case 'f':
 			bootpfile = optarg;
@@ -107,9 +109,9 @@ main(argc, argv)
 	if (stat(bootpfile, &buf))
 		err(1, "%s", bootpfile);
 
-	if (!route_addr) {
+	if (route_addr.s_addr == 0) {
 		get_myaddress(&my_addr);
-		bcopy(&my_addr.sin_addr.s_addr, &route_addr, sizeof(route_addr));
+		route_addr.s_addr = my_addr.sin_addr.s_addr;
 	}
 	if (!debug) {
 		if (daemon(0, 0))
@@ -124,7 +126,7 @@ main(argc, argv)
 
 	if (!svc_register(transp, BOOTPARAMPROG, BOOTPARAMVERS, bootparamprog_1,
 	    IPPROTO_UDP))
-		errx(1, "unable to register BOOTPARAMPROG version %d, udp",
+		errx(1, "unable to register BOOTPARAMPROG version %ld, udp",
 		    BOOTPARAMVERS);
 
 	svc_run();
@@ -176,7 +178,8 @@ bootparamproc_whoami_1_svc(whoami, rqstp)
 
 		if (res.router_address.address_type != IP_ADDR_TYPE) {
 			res.router_address.address_type = IP_ADDR_TYPE;
-			bcopy(&route_addr, &res.router_address.bp_address_u.ip_addr, 4);
+			bcopy(&route_addr.s_addr,
+			    &res.router_address.bp_address_u.ip_addr, 4);
 		}
 		if (debug)
 			warnx("Returning %s   %s    %d.%d.%d.%d\n",
@@ -284,7 +287,7 @@ lookup_bootparam(client, client_canonical, id, server, path)
 	static int ypbuflen = 0;
 #endif
 	static char buf[BUFSIZ];
-	char   *bp, *word;
+	char   *bp, *word = NULL;
 	size_t  idlen = id == NULL ? 0 : strlen(id);
 	int     contin = 0;
 	int     found = 0;
@@ -374,4 +377,12 @@ lookup_bootparam(client, client_canonical, id, server, path)
 
 	(void) fclose(f);
 	return found ? ENOENT : EPERM;
+}
+
+void
+usage()
+{
+	fprintf(stderr,
+	    "usage: %s [-d] [-s] [-r router] [-f bootparmsfile]\n", __progname);
+	exit(1);
 }
