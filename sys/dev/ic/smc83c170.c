@@ -1,4 +1,4 @@
-/*	$NetBSD: smc83c170.c,v 1.5 1998/07/20 21:39:05 thorpej Exp $	*/
+/*	$NetBSD: smc83c170.c,v 1.6 1998/07/23 17:37:38 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -93,6 +93,7 @@ void	epic_stop __P((struct epic_softc *));
 int	epic_add_rxbuf __P((struct epic_softc *, int));
 void	epic_read_eeprom __P((struct epic_softc *, int, int, u_int16_t *));
 void	epic_set_mchash __P((struct epic_softc *));
+void	epic_fixup_clock_source __P((struct epic_softc *));
 
 /*
  * Fudge the incoming packets by this much, to ensure the data after
@@ -834,6 +835,28 @@ epic_intr(arg)
 }
 
 /*
+ * Fixup the clock source on the EPIC.
+ */
+void
+epic_fixup_clock_source(sc)
+	struct epic_softc *sc;
+{
+	int i;
+
+	/*
+	 * According to SMC Application Note 7-15, the EPIC's clock
+	 * source is incorrect following a reset.  This manifests itself
+	 * as failure to recognize when host software has written to
+	 * a register on the EPIC.  The appnote recommends issuing at
+	 * least 16 consecutive writes to the CLOCK TEST bit to correctly
+	 * configure the clock source.
+	 */
+	for (i = 0; i < 16; i++)
+		bus_space_write_4(sc->sc_st, sc->sc_sh, EPIC_TEST,
+		    TEST_CLOCKTEST);
+}
+
+/*
  * Perform a soft reset on the EPIC.
  */
 void
@@ -841,10 +864,14 @@ epic_reset(sc)
 	struct epic_softc *sc;
 {
 
+	epic_fixup_clock_source(sc);
+
 	bus_space_write_4(sc->sc_st, sc->sc_sh, EPIC_GENCTL, 0);
 	delay(100);
 	bus_space_write_4(sc->sc_st, sc->sc_sh, EPIC_GENCTL, GENCTL_SOFTRESET);
 	delay(100);
+
+	epic_fixup_clock_source(sc);
 }
 
 /*
@@ -872,17 +899,6 @@ epic_init(sc)
 	 * Reset the EPIC to a known state.
 	 */
 	epic_reset(sc);
-
-	/*
-	 * According to SMC Application Note 7-15, the EPIC's clock
-	 * source is incorrect following a reset.  This manifests itself
-	 * as failure to recognize when host software has written to
-	 * a register on the EPIC.  The appnote recommends issuing at
-	 * least 16 consecutive writes to the CLOCK TEST bit to correctly
-	 * configure the clock source.
-	 */
-	for (i = 0; i < 16; i++)
-		bus_space_write_4(st, sh, EPIC_TEST, TEST_CLOCKTEST);
 
 	/*
 	 * Magical mystery initialization.
@@ -1015,6 +1031,9 @@ epic_stop(sc)
 	struct epic_descsoft *ds;
 	u_int32_t reg;
 	int i;
+
+	/* Paranoia... */
+	epic_fixup_clock_source(sc);
 
 	/*
 	 * Disable interrupts.
