@@ -1,4 +1,5 @@
 dnl Process this file with autoconf to produce a configure script.
+dnl	$NetBSD: configure.in,v 1.2 1994/12/02 00:43:27 phil Exp $
 AC_INIT(bc.1)
 AC_CONFIG_HEADER(config.h)
 AC_PROG_CC

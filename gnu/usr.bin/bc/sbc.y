@@ -1,4 +1,6 @@
 %{
+/* 	$NetBSD: sbc.y,v 1.2 1994/12/02 00:43:40 phil Exp $  */
+
 /* sbc.y: A POSIX bc processor written for minix with no extensions.  */
  
 /*  This file is part of bc written for MINIX.

@@ -1,4 +1,6 @@
 %{
+/*	$NetBSD: bc.y,v 1.2 1994/12/02 00:43:23 phil Exp $ */
+
 /* bc.y: The grammar for a POSIX compatable bc processor with some
          extensions to the language. */
 

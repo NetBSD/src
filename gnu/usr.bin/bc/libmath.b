@@ -1,3 +1,5 @@
+/* 	$NetBSD: libmath.b,v 1.2 1994/12/02 00:43:33 phil Exp $  */
+
 /* libmath.b for bc for minix.  */
 
 /*  This file is part of bc written for MINIX.

@@ -1,7 +1,9 @@
+/* 	$NetBSD: main.c,v 1.3 1994/12/02 00:43:36 phil Exp $  */
+
 /* main.c: The main program for bc.  */
 
 /*  This file is part of bc written for MINIX.
-    Copyright (C) 1991, 1992 Free Software Foundation, Inc.
+    Copyright (C) 1991, 1992, 1993, 1994 Free Software Foundation, Inc.
 
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -25,10 +27,6 @@
                 Bellingham, WA 98226-9062
        
 *************************************************************************/
-
-#ifndef lint
-static char rcsid[] = "$Id: main.c,v 1.2 1993/08/02 17:25:40 mycroft Exp $";
-#endif /* not lint */
 
 #include "bcdefs.h"
 #include <signal.h>
