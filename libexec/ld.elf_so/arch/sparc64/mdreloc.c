@@ -1,4 +1,4 @@
-/*	$NetBSD: mdreloc.c,v 1.12 2002/09/06 02:01:40 mycroft Exp $	*/
+/*	$NetBSD: mdreloc.c,v 1.13 2002/09/06 03:05:37 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 2000 Eduardo Horvath.
@@ -206,20 +206,16 @@ static long reloc_target_bitmask[] = {
 #define LOVAL(v)	((v) & 0x000003ff)
 
 int
-_rtld_relocate_plt_object(obj, rela, addrp, bind_now, dodebug)
+_rtld_relocate_plt_object(obj, rela, addrp, dodebug)
 	Obj_Entry *obj;
 	const Elf_Rela *rela;
 	caddr_t *addrp;
-	bool bind_now;
 	bool dodebug;
 {
 	const Elf_Sym *def;
 	const Obj_Entry *defobj;
 	Elf_Word *where = (Elf_Word *)((Elf_Addr)obj->relocbase + rela->r_offset);
 	Elf_Addr value, offset;
-
-	if (bind_now == 0 && obj->pltgot != NULL)
-		return (0);
 
 	/* Fully resolve procedure addresses now */
 
@@ -230,8 +226,8 @@ _rtld_relocate_plt_object(obj, rela, addrp, bind_now, dodebug)
 		return (-1);
 
 	value = (Elf_Addr) (defobj->relocbase + def->st_value);
-	rdbg(dodebug, ("bind now %d/fixup in %s --> old=%lx new=%lx", 
-	    (int)bind_now, defobj->strtab + def->st_name,
+	rdbg(dodebug, ("bind now/fixup in %s --> old=%lx new=%lx", 
+	    defobj->strtab + def->st_name,
 	    (u_long)*where, (u_long)value));
 
 	/*
@@ -434,9 +430,7 @@ _rtld_relocate_plt_object(obj, rela, addrp, bind_now, dodebug)
 
 	}
 
-	if (addrp != NULL)
-		*addrp = (caddr_t)value;
-
+	*addrp = (caddr_t)value;
 	return (0);
 }
 
@@ -661,5 +655,13 @@ _rtld_relocate_nonplt_objects(obj, dodebug)
 		}
 #endif
 	}
+	return (0);
+}
+
+int
+_rtld_relocate_plt_lazy(obj, dodebug)
+	Obj_Entry *obj;
+	bool dodebug;
+{
 	return (0);
 }
