@@ -1,10 +1,10 @@
-/*	$NetBSD: cardbusdevs_data.h,v 1.6 2000/04/10 07:46:51 haya Exp $	*/
+/*	$NetBSD: cardbusdevs_data.h,v 1.7 2000/04/13 10:13:12 joda Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: cardbusdevs,v 1.8 2000/04/10 07:42:57 haya Exp 
+ *	NetBSD: cardbusdevs,v 1.9 2000/04/13 10:12:46 joda Exp 
  */
 
 /*
@@ -85,7 +85,7 @@ struct cardbus_knowndev cardbus_knowndevs[] = {
 	    CARDBUS_VENDOR_INTEL, CARDBUS_PRODUCT_INTEL_MODEM56,
 	    0,
 	    "Intel",
-	    "Modem",
+	    "56k Modem",
 	},
 	{
 	    CARDBUS_VENDOR_OPTI, CARDBUS_PRODUCT_OPTI_82C861,
@@ -104,6 +104,12 @@ struct cardbus_knowndev cardbus_knowndevs[] = {
 	    0,
 	    "Xircom",
 	    "X3201-3 Fast Ethernet Controller (21143)",
+	},
+	{
+	    CARDBUS_VENDOR_XIRCOM, CARDBUS_PRODUCT_XIRCOM_MODEM56,
+	    0,
+	    "Xircom",
+	    "56k Modem",
 	},
 	{
 	    CARDBUS_VENDOR_REALTEK, CARDBUS_PRODUCT_REALTEK_RT8138,
