@@ -1,4 +1,4 @@
-.\" $NetBSD: umass.4,v 1.3 2000/04/03 01:14:18 augustss Exp $
+.\" $NetBSD: umass.4,v 1.4 2000/04/09 18:25:53 augustss Exp $
 .\"
 .\" Copyright (c) 1999 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -49,12 +49,15 @@
 The
 .Nm
 driver provides support for USB mass storage class devices.
+The driver supports subclasses SCSI, 8020i (ATAPI), 8070i (ATAPI), QIC157 (ATAPI), and UFI.
+The driver handles the protocols Bulk-Only, CBI, and CBI-with-CCI.
 .Sh HARDWARE
 Devices known to work with this driver includes:
 .Pp
 .Bl -tag -width -offset indent -compact
 .It Tn IOmega Zip 100
 .It Tn Imation SuperDisk
+.It Tn Y-E Data FlashBuster
 .El
 .Sh SEE ALSO
 .Xr atapi 4 ,
