@@ -37,7 +37,7 @@
  *
  *	from: Utah Hdr: machdep.c 1.63 91/04/24
  *	from: @(#)machdep.c	7.16 (Berkeley) 6/3/91
- *	$Id: machdep.c,v 1.9 1993/08/19 14:35:46 mycroft Exp $
+ *	$Id: machdep.c,v 1.10 1993/09/05 01:31:14 cgd Exp $
  */
 
 #include "param.h"
@@ -1468,7 +1468,20 @@ hexstr(val, len)
 	return(nbuf);
 }
 
-cpu_exec_makecmds(p, epp)
+/*
+ * cpu_exec_aout_makecmds():
+ *	cpu-dependent a.out format hook for execve().
+ * 
+ * Determine of the given exec package refers to something which we
+ * understand and, if so, set up the vmcmds for it.
+ *
+ * XXX what are the special cases for the hp300?
+ * XXX why is this COMPAT_NOMID?  was something generating
+ *	hp300 binaries with an a_mid of 0?  i thought that was only
+ *	done on little-endian machines...  -- cgd
+ */
+
+cpu_exec_aout_makecmds(p, epp)
 struct proc *p;
 struct exec_package *epp;
 {
@@ -1483,7 +1496,7 @@ struct exec_package *epp;
 
   switch (mid << 16 | magic) {
   case (MID_ZERO << 16) | ZMAGIC:
-    error = cpu_exec_prep_oldzmagic(p, epp);
+    error = cpu_exec_aout_prep_oldzmagic(p, epp);
     break;
   default:
     error = ENOEXEC;
@@ -1495,9 +1508,19 @@ struct exec_package *epp;
 #endif
 }
 
+
 #ifdef COMPAT_NOMID
+/*
+ * cpu_exec_aout_prep_oldzmagic():
+ *	Prepare the vmcmds to build a vmspace for an old
+ *	(i.e. USRTEXT == 0) binary.
+ *
+ * Cloned from exec_aout_prep_zmagic() in kern/exec_aout.c; a more verbose
+ * description of operation is there.
+ */
+
 int
-cpu_exec_prep_oldzmagic(p, epp)
+cpu_exec_aout_prep_oldzmagic(p, epp)
      struct proc *p;
      struct exec_package *epp;
 {
