@@ -1,4 +1,4 @@
-/* $NetBSD: podulebus.c,v 1.12 2001/04/19 13:47:07 bjh21 Exp $ */
+/* $NetBSD: podulebus.c,v 1.13 2001/06/12 20:16:24 bjh21 Exp $ */
 
 /*-
  * Copyright (c) 2000 Ben Harris
@@ -30,7 +30,7 @@
 
 #include <sys/param.h>
 
-__RCSID("$NetBSD: podulebus.c,v 1.12 2001/04/19 13:47:07 bjh21 Exp $");
+__RCSID("$NetBSD: podulebus.c,v 1.13 2001/06/12 20:16:24 bjh21 Exp $");
 
 #include <sys/device.h>
 #include <sys/malloc.h>
@@ -139,17 +139,17 @@ podulebus_probe_podule(struct device *self, int slotnum)
 				    &pa.pa_sync_h);
 		/* XXX This is a hack! */
 		pa.pa_mod_t = 2;
-		bus_space_subregion(pa.pa_mod_t,
-		    (bus_space_handle_t)MEMC_IO_BASE, slotnum * PODULE_GAP,
-		    PODULE_GAP, &pa.pa_mod_h);
+		bus_space_map(pa.pa_mod_t,
+		    (bus_addr_t)MEMC_IO_BASE + slotnum * (PODULE_GAP << 2),
+		    (PODULE_GAP << 2), 0, &pa.pa_mod_h);
 		bus_space_read_region_1(id_bst, id_bsh, 0,
 					extecid, EXTECID_SIZE);
 		/* XXX If you thought that was a hack... */
-		pa.pa_mod_base = pa.pa_mod_h;
-		pa.pa_fast_base = pa.pa_fast_h;
-		pa.pa_medium_base = pa.pa_medium_h;
-		pa.pa_slow_base = pa.pa_slow_h;
-		pa.pa_sync_base = pa.pa_sync_h;
+		pa.pa_mod_base = pa.pa_mod_h.a1;
+		pa.pa_fast_base = pa.pa_fast_h.a1;
+		pa.pa_medium_base = pa.pa_medium_h.a1;
+		pa.pa_slow_base = pa.pa_slow_h.a1;
+		pa.pa_sync_base = pa.pa_sync_h.a1;
 		pa.pa_ecid = ecid;
 		pa.pa_flags1 = extecid[EXTECID_F1];
 		pa.pa_manufacturer = (extecid[EXTECID_MLO] |
