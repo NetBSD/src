@@ -1,4 +1,4 @@
-# $NetBSD: obsolete.mi,v 1.16 2000/06/05 03:17:24 simonb Exp $
+# $NetBSD: obsolete.mi,v 1.17 2000/06/08 01:24:38 itojun Exp $
 /usr/bin/genclass
 /usr/include/bfd/ansidecl.h
 /usr/include/bfd/bfd.h
@@ -276,7 +276,10 @@
 /usr/include/g++/typemacros.h
 /usr/include/g++/values.h
 /usr/include/netinet/if_arc.h
+/usr/include/netinet6/icmp6.h
+/usr/include/netinet6/ip6.h
 /usr/include/netiso/tuba_table.h
+/usr/include/netkey/keyv2.h
 /usr/include/nfs/nfsv2.h
 /usr/include/null.h
 /usr/include/objc/list.h
