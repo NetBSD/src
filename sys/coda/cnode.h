@@ -1,4 +1,4 @@
-/*	$NetBSD: cnode.h,v 1.5 1998/11/11 19:22:08 rvb Exp $	*/
+/*	$NetBSD: cnode.h,v 1.6 1999/07/08 01:26:23 wrstuden Exp $	*/
 
 /*
  * 
@@ -47,6 +47,17 @@
 /* 
  * HISTORY
  * $Log: cnode.h,v $
+ * Revision 1.6  1999/07/08 01:26:23  wrstuden
+ * Bump osrelease to 1.4E. Add layerfs files, remove null_subr.c.
+ *
+ * Update coda to new struct lock in struct vnode.
+ *
+ * make fdescfs, kernfs, portalfs, and procfs actually lock their vnodes.
+ * It's not that hard.
+ *
+ * Make unionfs set v_vnlock = NULL so any overlayed fs will call its
+ * VOP_LOCK.
+ *
  * Revision 1.5  1998/11/11 19:22:08  rvb
  * Lookup now passes up an extra flag.  But old veni will
  * be ok; new veni will check /dev/cfs0 to make sure that a new
@@ -216,7 +227,6 @@ struct cnode {
     struct vnode	*c_vnode;
     u_short		 c_flags;	/* flags (see below) */
     ViceFid		 c_fid;		/* file handle */
-    struct lock		 c_lock;	/* new lock protocol */
     struct vnode	*c_ovp;		/* open vnode pointer */
     u_short		 c_ocount;	/* count of openers */
     u_short		 c_owrite;	/* count of open for write */

@@ -1,4 +1,4 @@
-/*	$NetBSD: fdesc_vfsops.c,v 1.27 1999/02/26 23:44:45 wrstuden Exp $	*/
+/*	$NetBSD: fdesc_vfsops.c,v 1.28 1999/07/08 01:26:26 wrstuden Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993, 1995
@@ -117,6 +117,7 @@ fdesc_mount(mp, path, data, ndp, p)
 	memset(mp->mnt_stat.f_mntonname + size, 0, MNAMELEN - size);
 	memset(mp->mnt_stat.f_mntfromname, 0, MNAMELEN);
 	memcpy(mp->mnt_stat.f_mntfromname, "fdesc", sizeof("fdesc"));
+	VOP_UNLOCK(rvp, 0);
 	return (0);
 }
 
