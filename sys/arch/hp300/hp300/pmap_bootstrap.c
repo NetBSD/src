@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap_bootstrap.c,v 1.5 1995/04/12 08:30:49 mycroft Exp $	*/
+/*	$NetBSD: pmap_bootstrap.c,v 1.6 1995/05/12 12:54:56 mycroft Exp $	*/
 
 /* 
  * Copyright (c) 1991, 1993
@@ -55,7 +55,7 @@ extern int Sysptsize;
 extern char *extiobase, *proc0paddr;
 extern st_entry_t *Sysseg;
 extern pt_entry_t *Sysptmap, *Sysmap;
-extern vm_offset_t Umap, CLKbase, MMUbase;
+extern vm_offset_t CLKbase, MMUbase;
 
 extern int maxmem, physmem;
 extern vm_offset_t avail_start, avail_end, virtual_avail, virtual_end;
@@ -357,13 +357,6 @@ pmap_bootstrap(nextpa, firstpa)
 	RELOC(Sysmap, pt_entry_t *) =
 		(pt_entry_t *)hp300_ptob(nptpages * NPTEPG);
 	/*
-	 * Umap: first of UPAGES PTEs (in Sysmap) for fixed-address u-area.
-	 * HIGHPAGES PTEs from the end of Sysmap.
-	 */
-	RELOC(Umap, vm_offset_t) =
-		(vm_offset_t)RELOC(Sysmap, pt_entry_t *) +
-			(HP_MAX_PTSIZE - HIGHPAGES * sizeof(pt_entry_t));
-	/*
 	 * intiobase, intiolimit: base and end of internal (DIO) IO space.
 	 * IIOMAPSIZE pages prior to external IO space at end of static
 	 * kernel page table.
@@ -390,18 +383,6 @@ pmap_bootstrap(nextpa, firstpa)
 	/*
 	 * Setup u-area for process 0.
 	 */
-	/*
-	 * Validate PTEs in Sysmap corresponding to the u-area (Umap)
-	 * which are HIGHPAGES from the end of the last kernel PT page
-	 * allocated earlier.
-	 */
-	pte = &((u_int *)lkptpa)[NPTEPG - HIGHPAGES];
-	epte = &pte[UPAGES];
-	protopte = p0upa | PG_RW | PG_V;
-	while (pte < epte) {
-		*pte++ = protopte;
-		protopte += NBPG;
-	}
 	/*
 	 * Zero the u-area.
 	 * NOTE: `pte' and `epte' aren't PTEs here.
