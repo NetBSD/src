@@ -1,4 +1,4 @@
-/*	$NetBSD: pucvar.h,v 1.3 2000/07/25 23:18:43 jeffs Exp $	*/
+/*	$NetBSD: pucvar.h,v 1.4 2001/01/03 15:13:15 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1998, 1999 Christopher G. Demetriou.  All rights reserved.
@@ -47,6 +47,7 @@ struct puc_device_description {
 		int	type;
 		int	bar;
 		int	offset;
+		int	flags;
 	}			ports[PUC_MAX_PORTS];
 };
 
@@ -63,9 +64,17 @@ struct puc_device_description {
   ((port) < PUC_MAX_PORTS && (desc)->ports[(port)].type != PUC_PORT_TYPE_NONE)
 #define PUC_PORT_BAR_INDEX(bar)	(((bar) - PCI_MAPREG_START) / 4)
 
+/* Flags for PUC_PORT_TYPE_COM */
+/* * assume all clock rates have 8 lower bits to 0 - this leaves us 8 flags */
+#define PUC_COM_CLOCKMASK 0xffffff00
+
+/* Flags for PUC_PORT_TYPE_LPT */
+/* none currently */
+
 struct puc_attach_args {
 	int			port;
 	int			type;
+	int			flags;
 
 	pci_chipset_tag_t	pc;
 	pci_intr_handle_t	intrhandle;
