@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.4 1999/01/29 05:51:15 simonb Exp $
+#	$NetBSD: Makefile.inc,v 1.5 1999/01/30 12:57:58 simonb Exp $
 #
 #	NOTE: $S must correspond to the top of the 'sys' tree
 
@@ -15,7 +15,7 @@ machine:
 # Tailor C compilation for standalone environment.
 COPTS=	-O2		# -O2 gives smaller code
 
-C_MACHDEP=-mno-abicalls -G 64	# may give smaller code
+C_MACHDEP=-mmemcpy -mno-abicalls -G 128	# may give smaller code
 
 # We are so tight for space, ifdef away symlnks and spinning propellers.
 DEFS?=	-D_STANDALONE -DSMALL -DNO_TWIDDLE
