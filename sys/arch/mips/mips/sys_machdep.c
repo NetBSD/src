@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_machdep.c,v 1.7 1995/09/19 23:03:45 thorpej Exp $	*/
+/*	$NetBSD: sys_machdep.c,v 1.8 1995/09/20 23:33:25 jonathan Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -49,7 +49,7 @@
 #include <sys/mtio.h>
 #include <sys/buf.h>
 #include <sys/trace.h>
-
+#include <sys/mount.h>
 #include <sys/syscallargs.h>
 
 #ifdef TRACE
