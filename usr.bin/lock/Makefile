@@ -1,16 +1,17 @@
-#	$NetBSD: Makefile,v 1.8 1997/10/11 19:16:28 christos Exp $
+#	$NetBSD: Makefile,v 1.9 1997/10/12 12:56:51 mycroft Exp $
 #	@(#)Makefile	8.1 (Berkeley) 6/6/93
 
 PROG=	lock
+DPADD+= ${LIBCRYPT}
+LDADD+= -lcrypt
 BINOWN= root
 BINMODE=4555
-LDADD+= -lcrypt
-DPADD+= ${LIBCRYPT}
-
-.if defined(SKEY)
-CPPFLAGS+=-DSKEY
-LDADD+= -lcrypt -lskey
-DPADD+= ${LIBCRYPT} ${LIBSKEY}
-.endif
+INSTALLFLAGS=-fschg
 
 .include <bsd.prog.mk>
+
+.ifdef SKEY
+CPPFLAGS+=-DSKEY
+DPADD+= ${LIBSKEY}
+LDADD+= -lskey
+.endif
