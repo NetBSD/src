@@ -1,4 +1,4 @@
-/*	$NetBSD: tc_3000_300.c,v 1.1 1995/03/08 00:39:06 cgd Exp $	*/
+/*	$NetBSD: tc_3000_300.c,v 1.2 1995/03/24 14:59:37 cgd Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Carnegie-Mellon University.
@@ -88,11 +88,11 @@ tc_3000_300_intr_setup()
 {
 	int i;
 
-        /* Set up interrupt handlers. */
-        for (i = 0; i < TC_3000_300_MAXDEVS; i++) {
-                tc_3000_300_intrhand[i] = tc_intrnull;
-                tc_3000_300_intrval[i] = (void *)(long)i;
-        }
+	/* Set up interrupt handlers. */
+	for (i = 0; i < TC_3000_300_MAXDEVS; i++) {
+		tc_3000_300_intrhand[i] = tc_intrnull;
+		tc_3000_300_intrval[i] = (void *)(long)i;
+	}
 }
 
 void
@@ -140,10 +140,10 @@ tc_3000_300_intr_disestablish(ca)
 
 void
 tc_3000_300_iointr(framep, vec)
-        void *framep;
-        int vec;
+	void *framep;
+	int vec;
 {
-        u_int32_t ir;
+	u_int32_t ir;
 	int ifound;
 
 #ifdef DIAGNOSTIC
@@ -157,8 +157,15 @@ tc_3000_300_iointr(framep, vec)
 #endif
 
 	do {
-		MB();
 		MAGIC_READ;
+		MB();
+
+		/* find out what interrupts/errors occurred */
+		ir = *(volatile u_int32_t *)TC_3000_300_IR;
+		MB();
+
+		/* clear the interrupts/errors we found. */
+		*(volatile u_int32_t *)TC_3000_300_IR = ir;
 		MB();
 
 		ifound = 0;
@@ -177,6 +184,7 @@ tc_3000_300_iointr(framep, vec)
 		CHECKINTR(TC_3000_300_DEV_OPT0, TC_3000_300_IR_OPT0);
 #else
 		/* XXX XXX XXX CHECK OPTION SLOT INTERRUPTS!!! */
+		/* XXX XXX XXX THEIR BITS LIVE IN ANOTHER REG. */
 #endif
 #undef CHECKINTR
 
