@@ -1,8 +1,14 @@
-/*	$NetBSD: authparity.c,v 1.1.1.1 2000/03/29 12:38:49 simonb Exp $	*/
+/*	$NetBSD: authparity.c,v 1.2 2000/04/17 05:47:22 simonb Exp $	*/
 
 /*
  * auth_parity - set parity on a key/check for odd parity
  */
+
+#ifdef HAVE_CONFIG_H
+#include <config.h>
+#endif
+
+#ifdef DES
 #include "ntp_stdlib.h"
 
 int
@@ -57,3 +63,4 @@ DESauth_parity(
 	 */
 	return (parity_err == 0);
 }
+#endif /* DES */
