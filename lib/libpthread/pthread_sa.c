@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread_sa.c,v 1.1.2.5 2001/07/19 17:32:32 nathanw Exp $	*/
+/*	$NetBSD: pthread_sa.c,v 1.1.2.6 2001/07/24 21:25:18 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -150,6 +150,7 @@ pthread__upcall(int type, struct sa_t *sas[], int ev, int intr)
 	next = pthread__next(self);
 	pthread__upcall_switch(self, next);
 	/* NOTREACHED */
+	assert(0);
 }
 
 /* Build a chain of the threads that were interrupted by the upcall. 
