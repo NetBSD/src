@@ -1,4 +1,4 @@
-/*	$NetBSD: ping.c,v 1.47 1999/03/08 01:16:20 sommerfe Exp $	*/
+/*	$NetBSD: ping.c,v 1.48 1999/04/17 01:17:15 mjl Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -62,7 +62,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: ping.c,v 1.47 1999/03/08 01:16:20 sommerfe Exp $");
+__RCSID("$NetBSD: ping.c,v 1.48 1999/04/17 01:17:15 mjl Exp $");
 #endif
 
 #include <stdio.h>
@@ -241,13 +241,6 @@ main(int argc, char *argv[])
 #endif
   
 
-#if defined(SIGINFO) && defined(NOKERNINFO)
-	if (tcgetattr (0, &ts) != -1) {
-		reset_kerninfo = !(ts.c_lflag & NOKERNINFO);
-		ts.c_lflag |= NOKERNINFO;
-		tcsetattr (0, TCSANOW, &ts);
-	}
-#endif
 #ifdef sgi
 	__progname = argv[0];
 #endif
@@ -499,6 +492,15 @@ main(int argc, char *argv[])
 			 (char*)&bufspace, sizeof(bufspace));
 
 	(void)signal(SIGINT, prefinish);
+
+#if defined(SIGINFO) && defined(NOKERNINFO)
+	if (tcgetattr (0, &ts) != -1) {
+		reset_kerninfo = !(ts.c_lflag & NOKERNINFO);
+		ts.c_lflag |= NOKERNINFO;
+		tcsetattr (0, TCSANOW, &ts);
+	}
+#endif
+
 #ifdef SIGINFO
 	(void)signal(SIGINFO, prtsig);
 #else
