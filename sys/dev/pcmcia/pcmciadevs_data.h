@@ -1,10 +1,10 @@
-/*	$NetBSD: pcmciadevs_data.h,v 1.67 2000/01/18 17:20:32 jlam Exp $	*/
+/*	$NetBSD: pcmciadevs_data.h,v 1.68 2000/01/23 23:56:58 chopps Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcmciadevs,v 1.66 2000/01/18 17:19:33 jlam Exp 
+ *	NetBSD: pcmciadevs,v 1.67 2000/01/23 23:55:45 chopps Exp 
  */
 
 /*-
@@ -479,10 +479,10 @@ struct pcmcia_knowndev pcmcia_knowndevs[] = {
 	    "BayStack 650 Wireless LAN"	},
 	},
 	{
-	    PCMCIA_VENDOR_WEBGEAR, PCMCIA_PRODUCT_WEBGEAR_WLAN,
-	    PCMCIA_CIS_WEBGEAR_WLAN,
+	    PCMCIA_VENDOR_RAYTHEON, PCMCIA_PRODUCT_RAYTHEON_WLAN,
+	    PCMCIA_CIS_RAYTHEON_WLAN,
 	    0,
-	    "WebGear",
+	    "Raytheon",
 	    "WLAN Adapter"	},
 	},
 	{
@@ -787,10 +787,10 @@ struct pcmcia_knowndev pcmcia_knowndevs[] = {
 	    NULL,
 	},
 	{
-	    PCMCIA_VENDOR_WEBGEAR, 0,
+	    PCMCIA_VENDOR_RAYTHEON, 0,
 	    PCMCIA_KNOWNDEV_NOPROD,
 	    PCMCIA_CIS_INVALID,
-	    "WebGear",
+	    "Raytheon",
 	    NULL,
 	},
 	{
