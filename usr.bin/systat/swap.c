@@ -1,4 +1,4 @@
-/*	$NetBSD: swap.c,v 1.14 2000/12/01 02:19:44 simonb Exp $	*/
+/*	$NetBSD: swap.c,v 1.15 2003/02/24 10:10:00 dsl Exp $	*/
 
 /*-
  * Copyright (c) 1997 Matthew R. Green.  All rights reserved.
@@ -39,7 +39,7 @@
 #if 0
 static char sccsid[] = "@(#)swap.c	8.3 (Berkeley) 4/29/95";
 #endif
-__RCSID("$NetBSD: swap.c,v 1.14 2000/12/01 02:19:44 simonb Exp $");
+__RCSID("$NetBSD: swap.c,v 1.15 2003/02/24 10:10:00 dsl Exp $");
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -65,7 +65,7 @@ WINDOW *
 openswap(void)
 {
 
-	return (subwin(stdscr, LINES-5-1, 0, 5, 0));
+	return (subwin(stdscr, -1, 0, 5, 0));
 }
 
 void

@@ -1,4 +1,4 @@
-/*	$NetBSD: netstat.c,v 1.20 2000/12/01 02:19:44 simonb Exp $	*/
+/*	$NetBSD: netstat.c,v 1.21 2003/02/24 10:10:00 dsl Exp $	*/
 
 /*-
  * Copyright (c) 1980, 1992, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)netstat.c	8.1 (Berkeley) 6/6/93";
 #endif
-__RCSID("$NetBSD: netstat.c,v 1.20 2000/12/01 02:19:44 simonb Exp $");
+__RCSID("$NetBSD: netstat.c,v 1.21 2003/02/24 10:10:00 dsl Exp $");
 #endif /* not lint */
 
 /*
@@ -133,7 +133,7 @@ opennetstat(void)
 
 	sethostent(1);
 	setnetent(1);
-	return (subwin(stdscr, LINES-5-1, 0, 5, 0));
+	return (subwin(stdscr, -1, 0, 5, 0));
 }
 
 void

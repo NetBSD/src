@@ -1,4 +1,4 @@
-/*	$NetBSD: iostat.c,v 1.26 2003/02/01 19:12:30 dsl Exp $	*/
+/*	$NetBSD: iostat.c,v 1.27 2003/02/24 10:10:00 dsl Exp $	*/
 
 /*
  * Copyright (c) 1980, 1992, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)iostat.c	8.1 (Berkeley) 6/6/93";
 #endif
-__RCSID("$NetBSD: iostat.c,v 1.26 2003/02/01 19:12:30 dsl Exp $");
+__RCSID("$NetBSD: iostat.c,v 1.27 2003/02/24 10:10:00 dsl Exp $");
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -66,7 +66,7 @@ WINDOW *
 openiostat(void)
 {
 
-	return (subwin(stdscr, LINES-1-5, 0, 5, 0));
+	return (subwin(stdscr, -1, 0, 5, 0));
 }
 
 void

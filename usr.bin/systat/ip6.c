@@ -1,4 +1,4 @@
-/*	$NetBSD: ip6.c,v 1.9 2000/12/20 01:16:42 cgd Exp $	*/
+/*	$NetBSD: ip6.c,v 1.10 2003/02/24 10:10:00 dsl Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000 Andrew Doran <ad@NetBSD.org>
@@ -29,7 +29,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: ip6.c,v 1.9 2000/12/20 01:16:42 cgd Exp $");
+__RCSID("$NetBSD: ip6.c,v 1.10 2003/02/24 10:10:00 dsl Exp $");
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -71,7 +71,7 @@ WINDOW *
 openip6(void)
 {
 
-	return (subwin(stdscr, LINES-5-1, 0, 5, 0));
+	return (subwin(stdscr, -1, 0, 5, 0));
 }
 
 void
