@@ -1,0 +1,13 @@
+# $NetBSD: MRCOFFEE_OFW,v 1.1 2003/12/15 19:33:01 martin Exp $
+#
+# Mr.Coffee (JavaStation 1) machine description file
+#
+# This configuration is for machines using OpenFirmware only!
+# The OBP-variants of JavaStation 1 should use the MRCOFFEE kernel.
+#
+
+include 	"arch/sparc/conf/MRCOFFEE"
+
+options 	PROM_AT_F0
+makeoptions	TEXTADDR=E8004000
+
