@@ -1,6 +1,6 @@
 /*
- * Copyright (c) 1983, 1988 Regents of the University of California.
- * All rights reserved.
+ * Copyright (c) 1983, 1988, 1993
+ *	Regents of the University of California.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -33,27 +33,34 @@
 
 #ifndef lint
 char copyright[] =
-"@(#) Copyright (c) 1983, 1988 Regents of the University of California.\n\
- All rights reserved.\n";
+"@(#) Copyright (c) 1983, 1988, 1993\n\
+	Regents of the University of California.  All rights reserved.\n";
 #endif /* not lint */
 
 #ifndef lint
-/*static char sccsid[] = "from: @(#)main.c	5.23 (Berkeley) 7/1/91";*/
-static char rcsid[] = "$Id: main.c,v 1.5 1994/04/01 09:18:12 cgd Exp $";
+/*static char sccsid[] = "from: @(#)main.c	8.4 (Berkeley) 3/1/94";*/
+static char *rcsid = "$Id: main.c,v 1.6 1994/05/13 08:08:14 mycroft Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
-#include <sys/socket.h>
 #include <sys/file.h>
+#include <sys/protosw.h>
+#include <sys/socket.h>
+
+#include <netinet/in.h>
+
+#include <ctype.h>
 #include <errno.h>
+#include <kvm.h>
+#include <limits.h>
 #include <netdb.h>
 #include <nlist.h>
-#include <kvm.h>
+#include <paths.h>
 #include <stdio.h>
-#include <ctype.h>
 #include <stdlib.h>
 #include <string.h>
-#include <paths.h>
+#include <unistd.h>
+#include "netstat.h"
 
 struct nlist nl[] = {
 #define	N_MBSTAT	0
@@ -72,92 +79,67 @@ struct nlist nl[] = {
 	{ "_ifnet" },
 #define	N_IMP		7
 	{ "_imp_softc" },
-#define	N_RTHOST	8
-	{ "_rthost" },
-#define	N_RTNET		9
-	{ "_rtnet" },
-#define	N_ICMPSTAT	10
+#define	N_ICMPSTAT	8
 	{ "_icmpstat" },
-#define	N_RTSTAT	11
+#define	N_RTSTAT	9
 	{ "_rtstat" },
-#define	N_FILEHEAD	12
-	{ "_filehead" },
-#define	N_FILES		13
-	{ "_nfiles" },
-#define	N_UNIXSW	14
+#define	N_UNIXSW	10
 	{ "_unixsw" },
-#define N_RTHASHSIZE	15
-	{ "_rthashsize" },
-#define N_IDP		16
+#define N_IDP		11
 	{ "_nspcb"},
-#define N_IDPSTAT	17
+#define N_IDPSTAT	12
 	{ "_idpstat"},
-#define N_SPPSTAT	18
+#define N_SPPSTAT	13
 	{ "_spp_istat"},
-#define N_NSERR		19
+#define N_NSERR		14
 	{ "_ns_errstat"},
-#define	N_CLNPSTAT	20
+#define	N_CLNPSTAT	15
 	{ "_clnp_stat"},
-#define	IN_TP		21
+#define	IN_NOTUSED	16
 	{ "_tp_inpcb" },
-#define	ISO_TP		22
-	{ "_tp_isopcb" },
-#define	N_TPSTAT	23
+#define	ISO_TP		17
+	{ "_tp_refinfo" },
+#define	N_TPSTAT	18
 	{ "_tp_stat" },
-#define	N_ESISSTAT	24
+#define	N_ESISSTAT	19
 	{ "_esis_stat"},
-#define N_NIMP		25
+#define N_NIMP		20
 	{ "_nimp"},
-#define N_RTREE		26
-	{ "_radix_node_head"},
-#define N_CLTP		27
+#define N_RTREE		21
+	{ "_rt_tables"},
+#define N_CLTP		22
 	{ "_cltb"},
-#define N_CLTPSTAT	28
+#define N_CLTPSTAT	23
 	{ "_cltpstat"},
-#define N_IGMPSTAT	29
+#define	N_NFILE		24
+	{ "_nfile" },
+#define	N_FILE		25
+	{ "_file" },
+#define N_IGMPSTAT	26
 	{ "_igmpstat" },
-#define N_MRTPROTO	30
+#define N_MRTPROTO	27
 	{ "_ip_mrtproto" },
-#define N_MRTSTAT	31
+#define N_MRTSTAT	28
 	{ "_mrtstat" },
-#define N_MRTTABLE	32
+#define N_MRTTABLE	29
 	{ "_mrttable" },
-#define N_VIFTABLE	33
+#define N_VIFTABLE	30
 	{ "_viftable" },
 	"",
 };
-
-/* internet protocols */
-extern	int protopr();
-extern	int tcp_stats(), udp_stats(), ip_stats(), icmp_stats();
-extern	int igmp_stats();
-#ifdef NS
-/* ns protocols */
-extern	int nsprotopr();
-extern	int spp_stats(), idp_stats(), nserr_stats();
-#endif
-#ifdef ISO
-/* iso protocols */
-extern	int iso_protopr();
-extern	int tp_stats(), esis_stats(), clnp_stats(), cltp_stats();
-#endif
 
 struct protox {
 	u_char	pr_index;		/* index into nlist of cb head */
 	u_char	pr_sindex;		/* index into nlist of stat block */
 	u_char	pr_wanted;		/* 1 if wanted, 0 otherwise */
-	int	(*pr_cblocks)();	/* control blocks printing routine */
-	int	(*pr_stats)();		/* statistics printing routine */
+	void	(*pr_cblocks)();	/* control blocks printing routine */
+	void	(*pr_stats)();		/* statistics printing routine */
 	char	*pr_name;		/* well-known name */
 } protox[] = {
 	{ N_TCB,	N_TCPSTAT,	1,	protopr,
 	  tcp_stats,	"tcp" },
 	{ N_UDB,	N_UDPSTAT,	1,	protopr,
 	  udp_stats,	"udp" },
-#ifdef ISO
-	{ IN_TP,	N_TPSTAT,	1,	protopr,
-	  tp_stats,	"tpip" },
-#endif
 	{ -1,		N_IPSTAT,	1,	0,
 	  ip_stats,	"ip" },
 	{ -1,		N_ICMPSTAT,	1,	0,
@@ -168,7 +150,6 @@ struct protox {
 	  0,		0 }
 };
 
-#ifdef NS
 struct protox nsprotox[] = {
 	{ N_IDP,	N_IDPSTAT,	1,	nsprotopr,
 	  idp_stats,	"idp" },
@@ -179,9 +160,7 @@ struct protox nsprotox[] = {
 	{ -1,		-1,		0,	0,
 	  0,		0 }
 };
-#endif
 
-#ifdef ISO
 struct protox isoprotox[] = {
 	{ ISO_TP,	N_TPSTAT,	1,	iso_protopr,
 	  tp_stats,	"tp" },
@@ -194,65 +173,43 @@ struct protox isoprotox[] = {
 	{ -1,		-1,		0,	0,
 	  0,		0 }
 };
-#endif
 
-struct protox *protoprotox[] = { protox, 
+struct protox *protoprotox[] = { protox, nsprotox, isoprotox, NULL };
 
-#ifdef NS
-nsprotox,
-#endif
+static void printproto __P((struct protox *, char *));
+static void usage __P((void));
+static struct protox *name2protox __P((char *));
+static struct protox *knownname __P((char *));
 
-#ifdef ISO
-isoprotox, 
-#endif
+kvm_t *kvmd;
 
-NULL };
-
-char	*vmunix = _PATH_UNIX;
-char	*kmemf;
-int	kmem;
-int	kflag;
-int	Aflag;
-int	aflag;
-int	hflag;
-int	iflag;
-int	Mflag;
-int	mflag;
-int	nflag;
-int	pflag;
-int	rflag;
-int	sflag;
-int	tflag;
-int	dflag;
-int	interval;
-char	*interface;
-int	unit;
-
-int	af = AF_UNSPEC;
-
+int
 main(argc, argv)
 	int argc;
-	char **argv;
+	char *argv[];
 {
 	extern char *optarg;
 	extern int optind;
 	register struct protoent *p;
 	register struct protox *tp;	/* for printing cblocks & stats */
-	struct protox *name2protox();	/* for -p */
+	register char *cp;
 	int ch;
-	void usage(); 
+	char *nlistf = NULL, *memf = NULL;
+	char buf[_POSIX2_LINE_MAX];
 
-	while ((ch = getopt(argc, argv, "Aac:df:hI:iMmN:np:rstuw:")) != EOF)
-		switch((char)ch) {
+	if (cp = rindex(argv[0], '/'))
+		prog = cp + 1;
+	else
+		prog = argv[0];
+	af = AF_UNSPEC;
+
+	while ((ch = getopt(argc, argv, "Aadf:ghI:iM:mN:np:rstuw:")) != EOF)
+		switch(ch) {
 		case 'A':
 			Aflag = 1;
 			break;
 		case 'a':
 			aflag = 1;
-			break;
-		case 'c':
-			kmemf = optarg;
-			kflag = 1;
 			break;
 		case 'd':
 			dflag = 1;
@@ -268,18 +225,20 @@ main(argc, argv)
 				af = AF_ISO;
 			else {
 				(void)fprintf(stderr,
-				    "%s: unknown address family\n", optarg);
+				    "%s: %s: unknown address family\n",
+				    prog, optarg);
 				exit(1);
 			}
 			break;
-		case 'h':
-			hflag = 1;
+		case 'g':
+			gflag = 1;
 			break;
 		case 'I': {
 			char *cp;
 
 			iflag = 1;
-			for (cp = interface = optarg; isalpha(*cp); cp++);
+			for (cp = interface = optarg; isalpha(*cp); cp++)
+				continue;
 			unit = atoi(cp);
 			*cp = '\0';
 			break;
@@ -288,13 +247,13 @@ main(argc, argv)
 			iflag = 1;
 			break;
 		case 'M':
-			Mflag++;
+			memf = optarg;
 			break;
 		case 'm':
 			mflag = 1;
 			break;
 		case 'N':
-			vmunix = optarg;
+			nlistf = optarg;
 			break;
 		case 'n':
 			nflag = 1;
@@ -302,8 +261,8 @@ main(argc, argv)
 		case 'p':
 			if ((tp = name2protox(optarg)) == NULL) {
 				(void)fprintf(stderr,
-				    "%s: unknown or uninstrumented protocol\n",
-				    optarg);
+				    "%s: %s: unknown or uninstrumented protocol\n",
+				    prog, optarg);
 				exit(1);
 			}
 			pflag = 1;
@@ -312,7 +271,7 @@ main(argc, argv)
 			rflag = 1;
 			break;
 		case 's':
-			sflag = 1;
+			++sflag;
 			break;
 		case 't':
 			tflag = 1;
@@ -322,6 +281,7 @@ main(argc, argv)
 			break;
 		case 'w':
 			interval = atoi(optarg);
+			iflag = 1;
 			break;
 		case '?':
 		default:
@@ -341,20 +301,29 @@ main(argc, argv)
 			iflag = 1;
 		}
 		if (*argv) {
-			vmunix = *argv;
-			if (*++argv) {
-				kmemf = *argv;
-				kflag = 1;
-			}
+			nlistf = *argv;
+			if (*++argv)
+				memf = *argv;
 		}
 	}
 #endif
-	if (kvm_openfiles(vmunix, kmemf, NULL) == -1) {
-		fprintf(stderr, "netstat: kvm_openfiles: %s\n", kvm_geterr());
+
+	/*
+	 * Discard setgid privileges if not the running kernel so that bad
+	 * guys can't print interesting stuff from kernel memory.
+	 */
+	if (nlistf != NULL || memf != NULL)
+		setgid(getgid());
+
+	if ((kvmd = kvm_open(nlistf, memf, NULL, O_RDONLY, prog)) == NULL) {
+		fprintf(stderr, "%s: kvm_open: %s\n", prog, buf);
 		exit(1);
 	}
-	if (kvm_nlist(nl) < 0 || nl[0].n_type == 0) {
-		fprintf(stderr, "%s: no namelist\n", vmunix);
+	if (kvm_nlist(kvmd, nl) < 0 || nl[0].n_type == 0) {
+		if (nlistf)
+			fprintf(stderr, "%s: %s: no namelist\n", prog, nlistf);
+		else
+			fprintf(stderr, "%s: no namelist\n", prog);
 		exit(1);
 	}
 	if (mflag) {
@@ -367,14 +336,6 @@ main(argc, argv)
 				tp->pr_name);
 		else
 			printf("%s: no stats routine\n", tp->pr_name);
-		exit(0);
-	}
-	if (hflag) {
-#ifdef IMP
-		hostpr(nl[N_IMP].n_value, nl[N_NIMP].n_value);
-#else
-		(void)fprintf(stderr, "netstat: IMP code not compiled in\n");
-#endif
 		exit(0);
 	}
 	/*
@@ -391,80 +352,85 @@ main(argc, argv)
 		if (sflag)
 			rt_stats(nl[N_RTSTAT].n_value);
 		else
-			routepr(nl[N_RTHOST].n_value, 
-				nl[N_RTNET].n_value,
-				nl[N_RTHASHSIZE].n_value,
-				nl[N_RTREE].n_value);
+			routepr(nl[N_RTREE].n_value);
 		exit(0);
 	}
-	if (Mflag) {
+	if (gflag) {
 		if (sflag)
 			mrt_stats(nl[N_MRTPROTO].n_value,
-				  nl[N_MRTSTAT].n_value);
+			    nl[N_MRTSTAT].n_value);
 		else
 			mroutepr(nl[N_MRTPROTO].n_value,
-				 nl[N_MRTTABLE].n_value,
-				 nl[N_VIFTABLE].n_value);
+			    nl[N_MRTTABLE].n_value,
+			    nl[N_VIFTABLE].n_value);
 		exit(0);
 	}
+	if (af == AF_INET || af == AF_UNSPEC) {
+		setprotoent(1);
+		setservent(1);
+		/* ugh, this is O(MN) ... why do we do this? */
+		while (p = getprotoent()) {
+			for (tp = protox; tp->pr_name; tp++)
+				if (strcmp(tp->pr_name, p->p_name) == 0)
+					break;
+			if (tp->pr_name == 0 || tp->pr_wanted == 0)
+				continue;
+			printproto(tp, p->p_name);
+		}
+		endprotoent();
+	}
+	if (af == AF_NS || af == AF_UNSPEC)
+		for (tp = nsprotox; tp->pr_name; tp++)
+			printproto(tp, tp->pr_name);
+	if (af == AF_ISO || af == AF_UNSPEC)
+		for (tp = isoprotox; tp->pr_name; tp++)
+			printproto(tp, tp->pr_name);
+	if ((af == AF_UNIX || af == AF_UNSPEC) && !sflag)
+		unixpr(nl[N_UNIXSW].n_value);
+	exit(0);
+}
 
-    if (af == AF_INET || af == AF_UNSPEC) {
-	setprotoent(1);
-	setservent(1);
-	while (p = getprotoent()) {
+/*
+ * Print out protocol statistics or control blocks (per sflag).
+ * If the interface was not specifically requested, and the symbol
+ * is not in the namelist, ignore this one.
+ */
+static void
+printproto(tp, name)
+	register struct protox *tp;
+	char *name;
+{
+	void (*pr)();
+	u_long off;
 
-		for (tp = protox; tp->pr_name; tp++)
-			if (strcmp(tp->pr_name, p->p_name) == 0)
-				break;
-		if (tp->pr_name == 0 || tp->pr_wanted == 0)
-			continue;
-		if (sflag) {
-			if (tp->pr_stats)
-				(*tp->pr_stats)(nl[tp->pr_sindex].n_value,
-					p->p_name);
-		} else
-			if (tp->pr_cblocks)
-				(*tp->pr_cblocks)(nl[tp->pr_index].n_value,
-					p->p_name);
+	if (sflag) {
+		pr = tp->pr_stats;
+		off = nl[tp->pr_sindex].n_value;
+	} else {
+		pr = tp->pr_cblocks;
+		off = nl[tp->pr_index].n_value;
 	}
-	endprotoent();
-    }
-    if (af == AF_NS || af == AF_UNSPEC) {
-#ifdef NS
-	for (tp = nsprotox; tp->pr_name; tp++) {
-		if (sflag) {
-			if (tp->pr_stats)
-				(*tp->pr_stats)(nl[tp->pr_sindex].n_value,
-					tp->pr_name);
-		} else
-			if (tp->pr_cblocks)
-				(*tp->pr_cblocks)(nl[tp->pr_index].n_value,
-					tp->pr_name);
+	if (pr != NULL && (off || af != AF_UNSPEC))
+		(*pr)(off, name);
+}
+
+/*
+ * Read kernel memory, return 0 on success.
+ */
+int
+kread(addr, buf, size)
+	u_long addr;
+	char *buf;
+	int size;
+{
+
+	if (kvm_read(kvmd, addr, buf, size) != size) {
+		/* XXX this duplicates kvm_read's error printout */
+		(void)fprintf(stderr, "%s: kvm_read %s\n", prog,
+		    kvm_geterr(kvmd));
+		return (-1);
 	}
-#endif
-    }
-    if (af == AF_ISO || af == AF_UNSPEC) {
-#ifdef ISO
-	for (tp = isoprotox; tp->pr_name; tp++) {
-		if (sflag) {
-			if (tp->pr_stats)
-				(*tp->pr_stats)(nl[tp->pr_sindex].n_value,
-					tp->pr_name);
-		} else
-			if (tp->pr_cblocks)
-				(*tp->pr_cblocks)(nl[tp->pr_index].n_value,
-					tp->pr_name);
-	}
-#endif
-    }
-    if ((af == AF_UNIX || af == AF_UNSPEC) && !sflag)
-	    unixpr(nl[N_FILEHEAD].n_value, nl[N_FILES].n_value,
-		(struct protosw *)nl[N_UNIXSW].n_value);
-    if (af == AF_UNSPEC && sflag)
-#ifdef IMP
-	impstats(nl[N_IMP].n_value, nl[N_NIMP].n_value);
-#endif
-    exit(0);
+	return (0);
 }
 
 char *
@@ -474,26 +440,33 @@ plural(n)
 	return (n != 1 ? "s" : "");
 }
 
+char *
+plurales(n)
+	int n;
+{
+	return (n != 1 ? "es" : "");
+}
+
 /*
  * Find the protox for the given "well-known" name.
  */
-struct protox *
+static struct protox *
 knownname(name)
 	char *name;
 {
 	struct protox **tpp, *tp;
 
 	for (tpp = protoprotox; *tpp; tpp++)
-	    for (tp = *tpp; tp->pr_name; tp++)
-		if (strcmp(tp->pr_name, name) == 0)
-			return(tp);
-	return(NULL);
+		for (tp = *tpp; tp->pr_name; tp++)
+			if (strcmp(tp->pr_name, name) == 0)
+				return (tp);
+	return (NULL);
 }
 
 /*
  * Find the protox corresponding to name.
  */
-struct protox *
+static struct protox *
 name2protox(name)
 	char *name;
 {
@@ -506,7 +479,7 @@ name2protox(name)
 	 * fails, check if name is an alias for an Internet protocol.
 	 */
 	if (tp = knownname(name))
-		return(tp);
+		return (tp);
 
 	setprotoent(1);			/* make protocol lookup cheaper */
 	while (p = getprotoent()) {
@@ -514,23 +487,23 @@ name2protox(name)
 		for (alias = p->p_aliases; *alias; alias++)
 			if (strcmp(name, *alias) == 0) {
 				endprotoent();
-				return(knownname(p->p_name));
+				return (knownname(p->p_name));
 			}
 	}
 	endprotoent();
-	return(NULL);
+	return (NULL);
 }
 
-void
+static void
 usage()
 {
 	(void)fprintf(stderr,
-"usage: netstat [-Aan] [-f address_family] [-c core] [-N system]\n");
+"usage: %s [-Aan] [-f address_family] [-M core] [-N system]\n", prog);
 	(void)fprintf(stderr,
-"               [-himnrs] [-f address_family] [-c core] [-N system]\n");
+"       %s [-ghimnrs] [-f address_family] [-M core] [-N system]\n", prog);
 	(void)fprintf(stderr,
-"               [-n] [-I interface] [-c core] [-N system] [-w wait]\n");
+"       %s [-n] [-I interface] [-M core] [-N system] [-w wait]\n", prog);
 	(void)fprintf(stderr,
-"               [-c core] [-N system] [-p protocol]\n");
+"       %s [-M core] [-N system] [-p protocol]\n", prog);
 	exit(1);
 }

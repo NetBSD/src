@@ -1,6 +1,6 @@
 /*
- * Copyright (c) 1983, 1988 Regents of the University of California.
- * All rights reserved.
+ * Copyright (c) 1983, 1988, 1993
+ *	The Regents of the University of California.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -32,8 +32,8 @@
  */
 
 #ifndef lint
-/* from: static char sccsid[] = "@(#)inet.c	5.15 (Berkeley) 6/18/90"; */
-static char rcsid[] = "inet.c,v 1.4 1993/05/20 12:03:49 cgd Exp";
+/*static char sccsid[] = "from: @(#)inet.c	8.4 (Berkeley) 4/20/94";*/
+static char *rcsid = "$Id: inet.c,v 1.9 1994/05/13 08:08:11 mycroft Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -62,22 +62,19 @@ static char rcsid[] = "inet.c,v 1.4 1993/05/20 12:03:49 cgd Exp";
 #include <netinet/udp.h>
 #include <netinet/udp_var.h>
 
+#include <arpa/inet.h>
 #include <netdb.h>
-
 #include <stdio.h>
 #include <string.h>
-#include <nlist.h>
-#include <kvm.h>
+#include <unistd.h>
+#include "netstat.h"
 
 struct	inpcb inpcb;
 struct	tcpcb tcpcb;
 struct	socket sockb;
-extern	int Aflag;
-extern	int aflag;
-extern	int nflag;
-extern	char *plural();
 
-char	*inetname();
+char	*inetname __P((struct in_addr *));
+void	inetprint __P((struct in_addr *, int, char *));
 
 /*
  * Print a summary of connections related to an Internet
@@ -85,6 +82,7 @@ char	*inetname();
  * Listening processes (aflag) are suppressed unless the
  * -a (all) flag is specified.
  */
+void
 protopr(off, name)
 	u_long off;
 	char *name;
@@ -97,15 +95,14 @@ protopr(off, name)
 	if (off == 0)
 		return;
 	istcp = strcmp(name, "tcp") == 0;
-	kvm_read((void *)(long)off, (char *)&cb, sizeof (struct inpcb));
+	kread(off, (char *)&cb, sizeof (struct inpcb));
 	inpcb = cb;
-	prev = (struct inpcb *)(long)off;
-	if (inpcb.inp_next == (struct inpcb *)(long)off)
+	prev = (struct inpcb *)off;
+	if (inpcb.inp_next == (struct inpcb *)off)
 		return;
-	while (inpcb.inp_next != (struct inpcb *)(long)off) {
-
+	while (inpcb.inp_next != (struct inpcb *)off) {
 		next = inpcb.inp_next;
-		kvm_read(next, (char *)&inpcb, sizeof (inpcb));
+		kread((u_long)next, (char *)&inpcb, sizeof (inpcb));
 		if (inpcb.inp_prev != prev) {
 			printf("???\n");
 			break;
@@ -115,10 +112,10 @@ protopr(off, name)
 			prev = next;
 			continue;
 		}
-		kvm_read(inpcb.inp_socket, (char *)&sockb, sizeof (sockb));
+		kread((u_long)inpcb.inp_socket, (char *)&sockb, sizeof (sockb));
 		if (istcp) {
-			kvm_read(inpcb.inp_ppcb, (char *)&tcpcb,
-			    sizeof (tcpcb));
+			kread((u_long)inpcb.inp_ppcb,
+			    (char *)&tcpcb, sizeof (tcpcb));
 		}
 		if (first) {
 			printf("Active Internet connections");
@@ -141,8 +138,8 @@ protopr(off, name)
 				printf("%8x ", next);
 		printf("%-5.5s %6d %6d ", name, sockb.so_rcv.sb_cc,
 			sockb.so_snd.sb_cc);
-		inetprint(&inpcb.inp_laddr, inpcb.inp_lport, name);
-		inetprint(&inpcb.inp_faddr, inpcb.inp_fport, name);
+		inetprint(&inpcb.inp_laddr, (int)inpcb.inp_lport, name);
+		inetprint(&inpcb.inp_faddr, (int)inpcb.inp_fport, name);
 		if (istcp) {
 			if (tcpcb.t_state < 0 || tcpcb.t_state >= TCP_NSTATES)
 				printf(" %d", tcpcb.t_state);
@@ -157,6 +154,7 @@ protopr(off, name)
 /*
  * Dump TCP statistics structure.
  */
+void
 tcp_stats(off, name)
 	u_long off;
 	char *name;
@@ -166,11 +164,15 @@ tcp_stats(off, name)
 	if (off == 0)
 		return;
 	printf ("%s:\n", name);
-	kvm_read((void *)(long)off, (char *)&tcpstat, sizeof (tcpstat));
+	kread(off, (char *)&tcpstat, sizeof (tcpstat));
 
-#define	p(f, m)		printf(m, tcpstat.f, plural(tcpstat.f))
-#define	p2(f1, f2, m)	printf(m, tcpstat.f1, plural(tcpstat.f1), tcpstat.f2, plural(tcpstat.f2))
-  
+#define	p(f, m) if (tcpstat.f || sflag <= 1) \
+    printf(m, tcpstat.f, plural(tcpstat.f))
+#define	p2(f1, f2, m) if (tcpstat.f1 || tcpstat.f2 || sflag <= 1) \
+    printf(m, tcpstat.f1, plural(tcpstat.f1), tcpstat.f2, plural(tcpstat.f2))
+#define	p3(f, m) if (tcpstat.f || sflag <= 1) \
+    printf(m, tcpstat.f, plurales(tcpstat.f))
+
 	p(tcps_sndtotal, "\t%d packet%s sent\n");
 	p2(tcps_sndpack,tcps_sndbyte,
 		"\t\t%d data packet%s (%d byte%s)\n");
@@ -190,6 +192,7 @@ tcp_stats(off, name)
 		"\t\t%d packet%s (%d byte%s) received in-sequence\n");
 	p2(tcps_rcvduppack, tcps_rcvdupbyte,
 		"\t\t%d completely duplicate packet%s (%d byte%s)\n");
+	p(tcps_pawsdrop, "\t\t%d old duplicate packet%s\n");
 	p2(tcps_rcvpartduppack, tcps_rcvpartdupbyte,
 		"\t\t%d packet%s with some dup. data (%d byte%s duped)\n");
 	p2(tcps_rcvoopack, tcps_rcvoobyte,
@@ -216,45 +219,55 @@ tcp_stats(off, name)
 	p(tcps_keeptimeo, "\t%d keepalive timeout%s\n");
 	p(tcps_keepprobe, "\t\t%d keepalive probe%s sent\n");
 	p(tcps_keepdrops, "\t\t%d connection%s dropped by keepalive\n");
+	p(tcps_predack, "\t%d correct ACK header prediction%s\n");
+	p(tcps_preddat, "\t%d correct data packet header prediction%s\n");
+	p3(tcps_pcbcachemiss, "\t%d PCB cache miss%s\n");
 #undef p
 #undef p2
+#undef p3
 }
 
 /*
  * Dump UDP statistics structure.
  */
+void
 udp_stats(off, name)
 	u_long off;
 	char *name;
 {
 	struct udpstat udpstat;
+	u_long delivered;
 
 	if (off == 0)
 		return;
-	kvm_read((void *)(long)off, (char *)&udpstat, sizeof (udpstat));
-	printf("%s:\n\t%u packet%s sent\n", name,
-		udpstat.udps_opackets, plural(udpstat.udps_opackets));
-	printf("\t%u packet%s received\n",
-		udpstat.udps_ipackets, plural(udpstat.udps_ipackets));
-	printf("\t%u incomplete header%s\n",
-		udpstat.udps_hdrops, plural(udpstat.udps_hdrops));
-	printf("\t%u bad data length field%s\n",
-		udpstat.udps_badlen, plural(udpstat.udps_badlen));
-	printf("\t%u bad checksum%s\n",
-		udpstat.udps_badsum, plural(udpstat.udps_badsum));
-	printf("\t%u packet%s received on unbound ports\n",
-		udpstat.udps_noport, plural(udpstat.udps_noport));
-	printf("\t%u packet%s received (arrived as bcast) on unbound ports\n",
-		udpstat.udps_noportbcast, plural(udpstat.udps_noportbcast));
-	printf("\t%u packet%s dropped, socket full\n",
-	       udpstat.udps_fullsock, plural(udpstat.udps_fullsock));
-	printf("\t%u packet%s missed pcb cache\n",
-	       udpstat.udpps_pcbcachemiss, plural(udpstat.udpps_pcbcachemiss));
+	kread(off, (char *)&udpstat, sizeof (udpstat));
+	printf("%s:\n", name);
+#define	p(f, m) if (udpstat.f || sflag <= 1) \
+    printf(m, udpstat.f, plural(udpstat.f))
+	p(udps_ipackets, "\t%u datagram%s received\n");
+	p(udps_hdrops, "\t%u with incomplete header\n");
+	p(udps_badlen, "\t%u with bad data length field\n");
+	p(udps_badsum, "\t%u with bad checksum\n");
+	p(udps_noport, "\t%u dropped due to no socket\n");
+	p(udps_noportbcast, "\t%u broadcast/multicast datagram%s dropped due to no socket\n");
+	p(udps_fullsock, "\t%u dropped due to full socket buffers\n");
+	delivered = udpstat.udps_ipackets -
+		    udpstat.udps_hdrops -
+		    udpstat.udps_badlen -
+		    udpstat.udps_badsum -
+		    udpstat.udps_noport -
+		    udpstat.udps_noportbcast -
+		    udpstat.udps_fullsock;
+	if (delivered || sflag <= 1)
+		printf("\t%u delivered\n", delivered);
+	p(udps_opackets, "\t%u datagram%s output\n");
+#undef p
 }
 
 /*
  * Dump IP statistics structure.
  */
+void
 ip_stats(off, name)
 	u_long off;
 	char *name;
@@ -263,27 +276,37 @@ ip_stats(off, name)
 
 	if (off == 0)
 		return;
-	kvm_read((void *)(long)off, (char *)&ipstat, sizeof (ipstat));
-	printf("%s:\n\t%u total packets received\n", name,
-		ipstat.ips_total);
-	printf("\t%u bad header checksum%s\n",
-		ipstat.ips_badsum, plural(ipstat.ips_badsum));
-	printf("\t%u with size smaller than minimum\n", ipstat.ips_tooshort);
-	printf("\t%u with data size < data length\n", ipstat.ips_toosmall);
-	printf("\t%u with header length < data size\n", ipstat.ips_badhlen);
-	printf("\t%u with data length < header length\n", ipstat.ips_badlen);
-	printf("\t%u fragment%s received\n",
-		ipstat.ips_fragments, plural(ipstat.ips_fragments));
-	printf("\t%u fragment%s dropped (dup or out of space)\n",
-		ipstat.ips_fragdropped, plural(ipstat.ips_fragdropped));
-	printf("\t%u fragment%s dropped after timeout\n",
-		ipstat.ips_fragtimeout, plural(ipstat.ips_fragtimeout));
-	printf("\t%u packet%s forwarded\n",
-		ipstat.ips_forward, plural(ipstat.ips_forward));
-	printf("\t%u packet%s not forwardable\n",
-		ipstat.ips_cantforward, plural(ipstat.ips_cantforward));
-	printf("\t%u redirect%s sent\n",
-		ipstat.ips_redirectsent, plural(ipstat.ips_redirectsent));
+	kread(off, (char *)&ipstat, sizeof (ipstat));
+	printf("%s:\n", name);
+
+#define	p(f, m) if (ipstat.f || sflag <= 1) \
+    printf(m, ipstat.f, plural(ipstat.f))
+
+	p(ips_total, "\t%u total packet%s received\n");
+	p(ips_badsum, "\t%u bad header checksum%s\n");
+	p(ips_toosmall, "\t%u with size smaller than minimum\n");
+	p(ips_tooshort, "\t%u with data size < data length\n");
+	p(ips_badhlen, "\t%u with header length < data size\n");
+	p(ips_badlen, "\t%u with data length < header length\n");
+	p(ips_badoptions, "\t%u with bad options\n");
+	p(ips_badvers, "\t%u with incorrect version number\n");
+	p(ips_fragments, "\t%u fragment%s received\n");
+	p(ips_fragdropped, "\t%u fragment%s dropped (dup or out of space)\n");
+	p(ips_fragtimeout, "\t%u fragment%s dropped after timeout\n");
+	p(ips_reassembled, "\t%u packet%s reassembled ok\n");
+	p(ips_delivered, "\t%u packet%s for this host\n");
+	p(ips_noproto, "\t%u packet%s for unknown/unsupported protocol\n");
+	p(ips_forward, "\t%u packet%s forwarded\n");
+	p(ips_cantforward, "\t%u packet%s not forwardable\n");
+	p(ips_redirectsent, "\t%u redirect%s sent\n");
+	p(ips_localout, "\t%u packet%s sent from this host\n");
+	p(ips_rawout, "\t%u packet%s sent with fabricated ip header\n");
+	p(ips_odropped, "\t%u output packet%s dropped due to no bufs, etc.\n");
+	p(ips_noroute, "\t%u output packet%s discarded due to no route\n");
+	p(ips_fragmented, "\t%u output datagram%s fragmented\n");
+	p(ips_ofragments, "\t%u fragment%s created\n");
+	p(ips_cantfrag, "\t%u datagram%s that can't be fragmented\n");
+#undef p
 }
 
 static	char *icmpnames[] = {
@@ -311,6 +334,7 @@ static	char *icmpnames[] = {
 /*
  * Dump ICMP statistics.
  */
+void
 icmp_stats(off, name)
 	u_long off;
 	char *name;
@@ -320,11 +344,15 @@ icmp_stats(off, name)
 
 	if (off == 0)
 		return;
-	kvm_read((void *)(long)off, (char *)&icmpstat, sizeof (icmpstat));
-	printf("%s:\n\t%u call%s to icmp_error\n", name,
-		icmpstat.icps_error, plural(icmpstat.icps_error));
-	printf("\t%u error%s not generated 'cuz old message was icmp\n",
-		icmpstat.icps_oldicmp, plural(icmpstat.icps_oldicmp));
+	kread(off, (char *)&icmpstat, sizeof (icmpstat));
+	printf("%s:\n", name);
+
+#define	p(f, m) if (icmpstat.f || sflag <= 1) \
+    printf(m, icmpstat.f, plural(icmpstat.f))
+
+	p(icps_error, "\t%u call%s to icmp_error\n");
+	p(icps_oldicmp,
+	    "\t%u error%s not generated 'cuz old message was icmp\n");
 	for (first = 1, i = 0; i < ICMP_MAXTYPE + 1; i++)
 		if (icmpstat.icps_outhist[i] != 0) {
 			if (first) {
@@ -334,14 +362,10 @@ icmp_stats(off, name)
 			printf("\t\t%s: %u\n", icmpnames[i],
 				icmpstat.icps_outhist[i]);
 		}
-	printf("\t%u message%s with bad code fields\n",
-		icmpstat.icps_badcode, plural(icmpstat.icps_badcode));
-	printf("\t%u message%s < minimum length\n",
-		icmpstat.icps_tooshort, plural(icmpstat.icps_tooshort));
-	printf("\t%u bad checksum%s\n",
-		icmpstat.icps_checksum, plural(icmpstat.icps_checksum));
-	printf("\t%u message%s with bad length\n",
-		icmpstat.icps_badlen, plural(icmpstat.icps_badlen));
+	p(icps_badcode, "\t%u message%s with bad code fields\n");
+	p(icps_tooshort, "\t%u message%s < minimum length\n");
+	p(icps_checksum, "\t%u bad checksum%s\n");
+	p(icps_badlen, "\t%u message%s with bad length\n");
 	for (first = 1, i = 0; i < ICMP_MAXTYPE + 1; i++)
 		if (icmpstat.icps_inhist[i] != 0) {
 			if (first) {
@@ -351,18 +375,12 @@ icmp_stats(off, name)
 			printf("\t\t%s: %u\n", icmpnames[i],
 				icmpstat.icps_inhist[i]);
 		}
-	printf("\t%u message response%s generated\n",
-		icmpstat.icps_reflect, plural(icmpstat.icps_reflect));
-}
-  
-char*
-pluraly(n)
-{
-	return (n == 1? "y" : "ies");
+	p(icps_reflect, "\t%u message response%s generated\n");
+#undef p
 }
 
 /*
- * Dump IGMP statistics.
+ * Dump IGMP statistics structure.
  */
 void
 igmp_stats(off, name)
@@ -370,46 +388,44 @@ igmp_stats(off, name)
 	char *name;
 {
 	struct igmpstat igmpstat;
-	register int i, first;
 
 	if (off == 0)
 		return;
-	kvm_read((void *)(long)off, (char *)&igmpstat, sizeof (igmpstat));
-	printf("%s:\n", name );
-	printf("\t%u message%s received\n",
-	  igmpstat.igps_rcv_total, plural(igmpstat.igps_rcv_total));
-	printf("\t%u message%s received with too few bytes\n",
-	  igmpstat.igps_rcv_tooshort, plural(igmpstat.igps_rcv_tooshort));
-	printf("\t%u message%s received with bad checksum\n",
- 	  igmpstat.igps_rcv_badsum, plural(igmpstat.igps_rcv_badsum));
-	printf("\t%u membership quer%s received\n",
-	  igmpstat.igps_rcv_queries, pluraly(igmpstat.igps_rcv_queries));
-	printf("\t%u membership quer%s received with invalid field(s)\n",
-	  igmpstat.igps_rcv_badqueries, pluraly(igmpstat.igps_rcv_badqueries));
-	printf("\t%u membership report%s received\n",
-	  igmpstat.igps_rcv_reports, plural(igmpstat.igps_rcv_reports));
-	printf("\t%u membership report%s received with invalid field(s)\n",
-	  igmpstat.igps_rcv_badreports, plural(igmpstat.igps_rcv_badreports));
-	printf("\t%u membership report%s received for groups to which we belong\n",
-	  igmpstat.igps_rcv_ourreports, plural(igmpstat.igps_rcv_ourreports));
-	printf("\t%u membership report%s sent\n",
-	  igmpstat.igps_snd_reports, plural(igmpstat.igps_snd_reports));
+	kread(off, (char *)&igmpstat, sizeof (igmpstat));
+	printf("%s:\n", name);
+
+#define	p(f, m) if (igmpstat.f || sflag <= 1) \
+    printf(m, igmpstat.f, plural(igmpstat.f))
+#define	py(f, m) if (igmpstat.f || sflag <= 1) \
+    printf(m, igmpstat.f, igmpstat.f != 1 ? "ies" : "y")
+	p(igps_rcv_total, "\t%u message%s received\n");
+        p(igps_rcv_tooshort, "\t%u message%s received with too few bytes\n");
+        p(igps_rcv_badsum, "\t%u message%s received with bad checksum\n");
+        py(igps_rcv_queries, "\t%u membership quer%s received\n");
+        py(igps_rcv_badqueries, "\t%u membership quer%s received with invalid field(s)\n");
+        p(igps_rcv_reports, "\t%u membership report%s received\n");
+        p(igps_rcv_badreports, "\t%u membership report%s received with invalid field(s)\n");
+        p(igps_rcv_ourreports, "\t%u membership report%s received for groups to which we belong\n");
+        p(igps_snd_reports, "\t%u membership report%s sent\n");
+#undef p
+#undef py
 }
 
 /*
  * Pretty print an Internet address (net address + port).
  * If the nflag was specified, use numbers instead of names.
  */
+void
 inetprint(in, port, proto)
 	register struct in_addr *in;
-	u_short port; 
+	int port;
 	char *proto;
 {
 	struct servent *sp = 0;
-	char line[80], *cp, *index();
+	char line[80], *cp;
 	int width;
 
-	sprintf(line, "%.*s.", (Aflag && !nflag) ? 12 : 16, inetname(*in));
+	sprintf(line, "%.*s.", (Aflag && !nflag) ? 12 : 16, inetname(in));
 	cp = index(line, '\0');
 	if (!nflag && port)
 		sp = getservbyport((int)port, proto);
@@ -423,12 +439,12 @@ inetprint(in, port, proto)
 
 /*
  * Construct an Internet address representation.
- * If the nflag has been supplied, give 
+ * If the nflag has been supplied, give
  * numeric value, otherwise try for symbolic name.
  */
 char *
-inetname(in)
-	struct in_addr in;
+inetname(inp)
+	struct in_addr *inp;
 {
 	register char *cp;
 	static char line[50];
@@ -446,9 +462,9 @@ inetname(in)
 			domain[0] = 0;
 	}
 	cp = 0;
-	if (!nflag && in.s_addr != INADDR_ANY) {
-		int net = inet_netof(in);
-		int lna = inet_lnaof(in);
+	if (!nflag && inp->s_addr != INADDR_ANY) {
+		int net = inet_netof(*inp);
+		int lna = inet_lnaof(*inp);
 
 		if (lna == INADDR_ANY) {
 			np = getnetbyaddr(net, AF_INET);
@@ -456,7 +472,7 @@ inetname(in)
 				cp = np->n_name;
 		}
 		if (cp == 0) {
-			hp = gethostbyaddr((char *)&in, sizeof (in), AF_INET);
+			hp = gethostbyaddr((char *)inp, sizeof (*inp), AF_INET);
 			if (hp) {
 				if ((cp = index(hp->h_name, '.')) &&
 				    !strcmp(cp + 1, domain))
@@ -465,15 +481,15 @@ inetname(in)
 			}
 		}
 	}
-	if (in.s_addr == INADDR_ANY)
+	if (inp->s_addr == INADDR_ANY)
 		strcpy(line, "*");
 	else if (cp)
 		strcpy(line, cp);
 	else {
-		in.s_addr = ntohl(in.s_addr);
+		inp->s_addr = ntohl(inp->s_addr);
 #define C(x)	((x) & 0xff)
-		sprintf(line, "%u.%u.%u.%u", C(in.s_addr >> 24),
-			C(in.s_addr >> 16), C(in.s_addr >> 8), C(in.s_addr));
+		sprintf(line, "%u.%u.%u.%u", C(inp->s_addr >> 24),
+		    C(inp->s_addr >> 16), C(inp->s_addr >> 8), C(inp->s_addr));
 	}
 	return (line);
 }

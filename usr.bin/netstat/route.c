@@ -1,6 +1,6 @@
 /*
- * Copyright (c) 1983, 1988 Regents of the University of California.
- * All rights reserved.
+ * Copyright (c) 1983, 1988, 1993
+ *	The Regents of the University of California.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -32,47 +32,35 @@
  */
 
 #ifndef lint
-/*static char sccsid[] = "from: @(#)route.c	5.20 (Berkeley) 11/29/90";*/
-static char rcsid[] = "$Id: route.c,v 1.9 1994/04/01 09:18:16 cgd Exp $";
+/*static char sccsid[] = "from: @(#)route.c	8.3 (Berkeley) 3/9/94";*/
+static char *rcsid = "$Id: route.c,v 1.10 1994/05/13 08:08:22 mycroft Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
+#include <sys/protosw.h>
 #include <sys/socket.h>
 #include <sys/mbuf.h>
 
 #include <net/if.h>
+#include <net/if_dl.h>
+#include <net/if_types.h>
 #define  KERNEL
 #include <net/route.h>
 #undef KERNEL
 #include <netinet/in.h>
 
-#ifdef NS
 #include <netns/ns.h>
-#endif
 
-#ifdef ISO
-#include <netiso/iso.h>
-#include <net/if_dl.h>
-#include <netiso/iso_snpac.h>
-#endif
+#include <sys/sysctl.h>
 
 #include <netdb.h>
-#include <sys/kinfo.h>
-
 #include <stdio.h>
-#include <nlist.h>
-#include <kvm.h>
+#include <stdlib.h>
 #include <string.h>
+#include <unistd.h>
+#include "netstat.h"
 
-extern	int nflag, aflag, Aflag, af;
-int do_rtent;
-extern	char *routename(), *netname(), *plural();
-#ifdef NS
-extern	char *ns_print();
-#endif
-extern	char *malloc();
-#define kget(p, d) \
-	(kvm_read((p), (char *)&(d), sizeof (d)))
+#define kget(p, d) (kread((u_long)(p), (char *)&(d), sizeof (d)))
 
 /*
  * Definitions for showing gateway flags.
@@ -84,180 +72,146 @@ struct bits {
 	{ RTF_UP,	'U' },
 	{ RTF_GATEWAY,	'G' },
 	{ RTF_HOST,	'H' },
+	{ RTF_REJECT,	'R' },
 	{ RTF_DYNAMIC,	'D' },
 	{ RTF_MODIFIED,	'M' },
+	{ RTF_DONE,	'd' }, /* Completed -- for routing messages only */
+	{ RTF_MASK,	'm' }, /* Mask Present -- for routing messages only */
 	{ RTF_CLONING,	'C' },
 	{ RTF_XRESOLVE,	'X' },
 	{ RTF_LLINFO,	'L' },
-	{ RTF_REJECT,	'R' },
+	{ RTF_STATIC,	'S' },
+	{ RTF_PROTO1,	'1' },
+	{ RTF_PROTO2,	'2' },
 	{ 0 }
 };
-
-#ifdef ISO
-struct bits2 {
-	short	b_mask;
-	char	b_val;
-} bits2[] = {
-	{ SNPA_ES,	'E' },
-	{ SNPA_IS,	'I' },
-	{ SNPA_PERM,	'P' },
-	{ 0 }
-};
-#endif
-
-/*
- * Print routing tables.
- */
-routepr(hostaddr, netaddr, hashsizeaddr, treeaddr)
-	u_long hostaddr, netaddr, hashsizeaddr, treeaddr;
-{
-	struct mbuf mb;
-	register struct ortentry *rt;
-	register struct mbuf *m;
-	char name[16], *flags;
-	struct mbuf **routehash;
-	int hashsize;
-	int i, doinghost = 1;
-
-	printf("Routing tables\n");
-	if (treeaddr)
-		return treestuff(treeaddr);
-	if (hostaddr == 0) {
-		printf("rthost: symbol not in namelist\n");
-		return;
-	}
-	if (netaddr == 0) {
-		printf("rtnet: symbol not in namelist\n");
-		return;
-	}
-	if (hashsizeaddr == 0) {
-		printf("rthashsize: symbol not in namelist\n");
-		return;
-	}
-	kget((void *)(long)hashsizeaddr, hashsize);
-	routehash = (struct mbuf **)malloc( hashsize*sizeof (struct mbuf *) );
-	kvm_read((void *)(long)hostaddr, (char *)routehash,
-	    hashsize*sizeof (struct mbuf *));
-again:
-	for (i = 0; i < hashsize; i++) {
-		if (routehash[i] == 0)
-			continue;
-		m = routehash[i];
-		while (m) {
-			kget(m, mb);
-			if (Aflag)
-				printf("%8.8x ", m);
-			p_ortentry((struct ortentry *)(mb.m_dat));
-			m = mb.m_next;
-		}
-	}
-	if (doinghost) {
-		kvm_read((void *)(long)netaddr, (char *)routehash,
-			hashsize*sizeof (struct mbuf *));
-		doinghost = 0;
-		goto again;
-	}
-	free((char *)routehash);
-	return;
-}
-
-
-char *
-af_name(af)
-{
-	static char buf[10];
-
-	switch(af) {
-	case AF_INET:
-		return "inet";
-	case AF_UNIX:
-		return "unix";
-	case AF_NS:
-		return "ns";
-	case AF_ISO:
-		return "iso";
-	default:
-		sprintf(buf, "%d", af);
-	}
-	return buf;
-}
-
-void
-p_heading(af)
-{
-	if (Aflag)
-		printf("%-8.8s ","Address");
-	switch(af) {
-	case AF_INET:
-		printf("%-16.16s %-18.18s %-6.6s %6.6s %8.8s  %s\n",
-			"Destination", "Gateway",
-			"Flags", "Refs", "Use", "Interface");
-		break;
-	case AF_ISO:
-		if (nflag) {
-			printf("%-50.50s %-17.17s %-5.5s %s\n",
-				"Destination", "Media addr", "Flags", "Intf");
-		} else {
-			printf("%-12.12s %-19.19s %-17.17s %-6.6s %6s %8s %s\n",
-				"NSAP-prefix", "Area/Id", "Media addr", 
-				"Flags", "Refs", "Use", "Intf");
-		}
-		break;
-	default:
-		printf("%-16.16s %-18.18s %-6.6s  %6.6s%8.8s  %s\n",
-			"Destination", "Gateway",
-			"Flags", "Refs", "Use", "Interface");
-	}
-}
-
 
 static union {
 	struct	sockaddr u_sa;
 	u_short	u_data[128];
 } pt_u;
-int do_rtent = 0;
-struct rtentry rtentry;
-struct radix_node rnode;
-struct radix_mask rmask;
 
-int NewTree = 0;
-treestuff(rtree)
-u_long rtree;
+int	do_rtent = 0;
+struct	rtentry rtentry;
+struct	radix_node rnode;
+struct	radix_mask rmask;
+
+int	NewTree = 0;
+
+static struct sockaddr *kgetsa __P((struct sockaddr *));
+static void p_tree __P((struct radix_node *));
+static void p_rtnode __P(());
+static void ntreestuff __P(());
+static void np_rtentry __P((struct rt_msghdr *));
+static void p_sockaddr __P((struct sockaddr *, int, int));
+static void p_flags __P((int, char *));
+static void p_rtentry __P((struct rtentry *));
+
+/*
+ * Print routing tables.
+ */
+void
+routepr(rtree)
+	u_long rtree;
 {
 	struct radix_node_head *rnh, head;
+	int i;
+
+	printf("Routing tables\n");
 
 	if (Aflag == 0 && NewTree)
-		return(ntreestuff());
-	for (kget((void *)(long)rtree, rnh); rnh; rnh = head.rnh_next) {
-		kget(rnh, head);
-		if (head.rnh_af == 0) {
-			if (Aflag || af == AF_UNSPEC) { 
-				printf("Netmasks:\n");
+		ntreestuff();
+	else {
+		if (rtree == 0) {
+			printf("rt_tables: symbol not in namelist\n");
+			return;
+		}
+
+		kget(rtree, rt_tables);
+		for (i = 0; i <= AF_MAX; i++) {
+			if ((rnh = rt_tables[i]) == 0)
+				continue;
+			kget(rnh, head);
+			if (i == AF_UNSPEC) {
+				if (Aflag && af == 0) {
+					printf("Netmasks:\n");
+					p_tree(head.rnh_treetop);
+				}
+			} else if (af == AF_UNSPEC || af == i) {
+				pr_family(i);
+				do_rtent = 1;
+				pr_rthdr();
 				p_tree(head.rnh_treetop);
 			}
-		} else if (af == AF_UNSPEC || af == head.rnh_af) {
-			printf("\nRoute Tree for Protocol Family %s:\n",
-					af_name(head.rnh_af));
-			p_heading(head.rnh_af);
-			do_rtent = 1;
-			p_tree(head.rnh_treetop);
 		}
 	}
 }
 
-struct sockaddr *
-kgetsa(dst)
-register struct sockaddr *dst;
+/*
+ * Print address family header before a section of the routing table.
+ */
+void
+pr_family(af)
+	int af;
 {
-	kget(dst, pt_u.u_sa);
-	if (pt_u.u_sa.sa_len > sizeof (pt_u.u_sa)) {
-		kvm_read(dst, pt_u.u_data, pt_u.u_sa.sa_len);
+	char *afname;
+
+	switch (af) {
+	case AF_INET:
+		afname = "Internet";
+		break;
+	case AF_NS:
+		afname = "XNS";
+		break;
+	case AF_ISO:
+		afname = "ISO";
+		break;
+	case AF_CCITT:
+		afname = "X.25";
+		break;
+	default:
+		afname = NULL;
+		break;
 	}
+	if (afname)
+		printf("\n%s:\n", afname);
+	else
+		printf("\nProtocol Family %d:\n", af);
+}
+
+/* column widths; each followed by one space */
+#define	WID_DST		16	/* width of destination column */
+#define	WID_GW		18	/* width of gateway column */
+
+/*
+ * Print header for routing table columns.
+ */
+void
+pr_rthdr()
+{
+
+	if (Aflag)
+		printf("%-8.8s ","Address");
+	printf("%-*.*s %-*.*s %-6.6s  %6.6s%8.8s  %s\n",
+		WID_DST, WID_DST, "Destination",
+		WID_GW, WID_GW, "Gateway",
+		"Flags", "Refs", "Use", "Interface");
+}
+
+static struct sockaddr *
+kgetsa(dst)
+	register struct sockaddr *dst;
+{
+
+	kget(dst, pt_u.u_sa);
+	if (pt_u.u_sa.sa_len > sizeof (pt_u.u_sa))
+		kread((u_long)dst, (char *)pt_u.u_data, pt_u.u_sa.sa_len);
 	return (&pt_u.u_sa);
 }
 
+static void
 p_tree(rn)
-struct radix_node *rn;
+	struct radix_node *rn;
 {
 
 again:
@@ -265,17 +219,18 @@ again:
 	if (rnode.rn_b < 0) {
 		if (Aflag)
 			printf("%-8.8x ", rn);
-		if (rnode.rn_flags & RNF_ROOT)
-			printf("(root node)%s",
+		if (rnode.rn_flags & RNF_ROOT) {
+			if (Aflag)
+				printf("(root node)%s",
 				    rnode.rn_dupedkey ? " =>\n" : "\n");
-		else if (do_rtent) {
+		} else if (do_rtent) {
 			kget(rn, rtentry);
 			p_rtentry(&rtentry);
 			if (Aflag)
 				p_rtnode();
 		} else {
 			p_sockaddr(kgetsa((struct sockaddr *)rnode.rn_key),
-				    0, 44);
+			    0, 44);
 			putchar('\n');
 		}
 		if (rn = rnode.rn_dupedkey)
@@ -290,12 +245,14 @@ again:
 		p_tree(rn);
 	}
 }
-char nbuf[20];
 
+char	nbuf[20];
+
+static void
 p_rtnode()
 {
-
 	struct radix_mask *rm = rnode.rn_mklist;
+
 	if (rnode.rn_b < 0) {
 		if (rnode.rn_mask) {
 			printf("\t  mask ");
@@ -320,18 +277,26 @@ p_rtnode()
 	putchar('\n');
 }
 
+static void
 ntreestuff()
 {
-	int needed;
+	size_t needed;
+	int mib[6];
 	char *buf, *next, *lim;
 	register struct rt_msghdr *rtm;
 
-	if ((needed = getkerninfo(KINFO_RT_DUMP, 0, 0, 0)) < 0)
-		{ perror("route-getkerninfo-estimate"); exit(1);}
+        mib[0] = CTL_NET;
+        mib[1] = PF_ROUTE;
+        mib[2] = 0;
+        mib[3] = 0;
+        mib[4] = NET_RT_DUMP;
+        mib[5] = 0;
+        if (sysctl(mib, 6, NULL, &needed, NULL, 0) < 0)
+		{ perror("route-sysctl-estimate"); exit(1);}
 	if ((buf = malloc(needed)) == 0)
 		{ printf("out of space\n"); exit(1);}
-	if (getkerninfo(KINFO_RT_DUMP, buf, &needed, 0) < 0)
-		{ perror("actual retrieval of routing table"); exit(1);}
+        if (sysctl(mib, 6, buf, &needed, NULL, 0) < 0)
+		{ perror("sysctl of routing table"); exit(1);}
 	lim  = buf + needed;
 	for (next = buf; next < lim; next += rtm->rtm_msglen) {
 		rtm = (struct rt_msghdr *)next;
@@ -339,11 +304,15 @@ ntreestuff()
 	}
 }
 
+static void
 np_rtentry(rtm)
-register struct rt_msghdr *rtm;
+	register struct rt_msghdr *rtm;
 {
 	register struct sockaddr *sa = (struct sockaddr *)(rtm + 1);
-	static int masks_done, old_af, banner_printed;
+#ifdef notdef
+	static int masks_done, banner_printed;
+#endif
+	static int old_af;
 	int af = 0, interesting = RTF_UP | RTF_GATEWAY | RTF_HOST;
 
 #ifdef notdef
@@ -361,7 +330,7 @@ register struct rt_msghdr *rtm;
 #endif
 		af = sa->sa_family;
 	if (af != old_af) {
-		printf("\nRoute Tree for Protocol Family %d:\n", af);
+		pr_family(af);
 		old_af = af;
 	}
 	if (rtm->rtm_addrs == RTA_DST)
@@ -377,16 +346,13 @@ register struct rt_msghdr *rtm;
 	putchar('\n');
 }
 
-#ifdef ISO
-extern char* dl_print();
-#endif
-
+static void
 p_sockaddr(sa, flags, width)
-struct sockaddr *sa;
-int flags, width;
+	struct sockaddr *sa;
+	int flags, width;
 {
-	char format[20], workbuf[128], *cp, *cplim;
-	register char *cpout;
+	char workbuf[128], *cplim;
+	register char *cp = workbuf;
 
 	switch(sa->sa_family) {
 	case AF_INET:
@@ -395,37 +361,55 @@ int flags, width;
 
 		cp = (sin->sin_addr.s_addr == 0) ? "default" :
 		      ((flags & RTF_HOST) ?
-			routename(sin->sin_addr) : netname(sin->sin_addr, 0L));
+			routename(sin->sin_addr.s_addr) :
+			netname(sin->sin_addr.s_addr, 0L));
+		break;
 	    }
-		break;
 
-#ifdef NS
 	case AF_NS:
-		cp = ns_print((struct sockaddr_ns *)sa);
-		break;
-#endif
-#ifdef ISO
-	case AF_ISO:
-		cp = iso_ntoa(&((struct sockaddr_iso *)sa)->siso_addr);
+		cp = ns_print(sa);
 		break;
 
 	case AF_LINK:
-		cp = dl_print((struct sockaddr_dl *)sa);
+	    {
+		register struct sockaddr_dl *sdl = (struct sockaddr_dl *)sa;
+
+		if (sdl->sdl_nlen == 0 && sdl->sdl_alen == 0 &&
+		    sdl->sdl_slen == 0)
+			(void) sprintf(workbuf, "link#%d", sdl->sdl_index);
+		else switch (sdl->sdl_type) {
+		case IFT_ETHER:
+		    {
+			register int i;
+			register u_char *lla = (u_char *)sdl->sdl_data +
+			    sdl->sdl_nlen;
+
+			cplim = "";
+			for (i = 0; i < sdl->sdl_alen; i++, lla++) {
+				cp += sprintf(cp, "%s%x", cplim, *lla);
+				cplim = ":";
+			}
+			cp = workbuf;
+			break;
+		    }
+		default:
+			cp = link_ntoa(sdl);
+			break;
+		}
 		break;
-#endif
+	    }
 
 	default:
 	    {
-		register u_char *s = ((u_char *)sa->sa_data), *slim;
+		register u_char *s = (u_char *)sa->sa_data, *slim;
 
-		slim = (u_char *) sa + sa->sa_len;
-		cp = workbuf;
+		slim =  sa->sa_len + (u_char *) sa;
 		cplim = cp + sizeof(workbuf) - 6;
 		cp += sprintf(cp, "(%d)", sa->sa_family);
 		while (s < slim && cp < cplim) {
 			cp += sprintf(cp, " %02x", *s++);
 			if (s < slim)
-				cp += sprintf(cp, "%02x", *s++);
+			    cp += sprintf(cp, "%02x", *s++);
 		}
 		cp = workbuf;
 	    }
@@ -440,185 +424,53 @@ int flags, width;
 	}
 }
 
+static void
 p_flags(f, format)
-register int f;
-char *format;
-{
-	char name[33], *flags;
-	register struct bits *p = bits;
-	for (flags = name; p->b_mask; p++)
-		if (p->b_mask & f)
-			*flags++ = p->b_val;
-	*flags = '\0';
-	printf(format, name);
-}
-
-
-#ifdef ISO
-
-p_iso_flags(f, lli, format)
 	register int f;
 	char *format;
-	caddr_t lli;
 {
-	struct llinfo_llc ls;
 	char name[33], *flags;
 	register struct bits *p = bits;
-	register struct bits2 *p2 = bits2;
 
 	for (flags = name; p->b_mask; p++)
 		if (p->b_mask & f)
 			*flags++ = p->b_val;
-	if (lli) {
-		kget(lli, ls);
-		for (; p2->b_mask; p2++)
-			if (p2->b_mask & ls.lc_flags)
-				*flags++ = p2->b_val;
-	}
 	*flags = '\0';
 	printf(format, name);
 }
 
-static char *hexlist = "0123456789abcdef";
-
-char *
-iso_areatoa(isoa)
-        const struct iso_addr *isoa;
-{
-	static char obuf[16];
-	register char *out = obuf; 
-	register int i;
-	/* Assumption: ISO address always with 2 byte area, 1 byte NSEL */
-	/* and 6 bytes ID */
-	register u_char *in = (u_char*)isoa->isoa_genaddr + isoa->isoa_len - 9;
-	u_char *inlim = in + 2;
-
-	if (isoa->isoa_len < 10) return "";
-	while (in < inlim) {
-		i = *in++;
-		out[1] = hexlist[i & 0xf];
-		i >>= 4;
-		out[0] = hexlist[i];
-		out += 2;
-	}
-	*out = 0;
-	return(obuf);
-}
-
-char *
-iso_idtoa(isoa)
-        const struct iso_addr *isoa;
-{
-	static char obuf[16];
-	register char *out = obuf; 
-	register int i;
-	/* Assumption: ISO address always with 1 byte NSEL and 6 bytes ID */
-	register u_char *in = (u_char*)isoa->isoa_genaddr + isoa->isoa_len - 7;
-	u_char *inlim = in + 6;
-
-	if (isoa->isoa_len < 10) return "";
-	out[1] = 0;
-	while (in < inlim) {
-		i = *in++;
-		if ((inlim - in) % 2 || out == obuf)
-			*out++ = '.';
-		out[1] = hexlist[i & 0xf];
-		i >>= 4;
-		out[0] = hexlist[i];
-		out += 2;
-	}
-	*out = 0;
-	return(obuf + 1);
-}
-
-p_iso_route(rt, sa)
-	struct rtentry *rt;
-	struct sockaddr *sa;
-{
-	struct sockaddr_iso *siso = (struct sockaddr_iso *)sa;
-
-	if (nflag) {
-		p_sockaddr(sa, rt->rt_flags, 50);
-		p_sockaddr(kgetsa(rt->rt_gateway), 0, 17);
-		p_iso_flags(rt->rt_flags, rt->rt_llinfo, "%-6.6s");
-		p_interface_nl(rt);
-	} else {
-		p_sockaddr(sa, rt->rt_flags, 12);
-		printf("%4.4s/%14.14s ",
-			iso_areatoa(&siso->siso_addr),
-			iso_idtoa(&siso->siso_addr));
-		p_sockaddr(kgetsa(rt->rt_gateway), 0, 17);
-		p_iso_flags(rt->rt_flags, rt->rt_llinfo, "%-6.6s ");
-		printf("%6d %8d", rt->rt_refcnt, rt->rt_use);
-		p_interface_nl(rt);
-	}
-}
-#endif /* ISO */
-
-p_interface_nl(rt)
-	struct rtentry *rt;
-{
-	struct ifnet ifnet;
-	char name[16];
-
-	if (rt->rt_ifp == 0) {
-		putchar('\n');
-		return;
-	}
-	kget(rt->rt_ifp, ifnet);
-	kvm_read(ifnet.if_name, name, 16);
-	printf(" %.15s%d%s", name, ifnet.if_unit,
-		rt->rt_nodes[0].rn_dupedkey ? " =>\n" : "\n");
-}
-
+static void
 p_rtentry(rt)
-register struct rtentry *rt;
+	register struct rtentry *rt;
 {
-	struct sockaddr *sa;
+	static struct ifnet ifnet, *lastif;
+	static char name[16];
 
-	sa = kgetsa(rt_key(rt));
-	if (sa->sa_family == AF_ISO) {
-		p_iso_route(rt, sa);
-		return;
-	}
-	p_sockaddr(sa, rt->rt_flags, 16);
-	p_sockaddr(kgetsa(rt->rt_gateway), RTF_HOST, 18);
+	p_sockaddr(kgetsa(rt_key(rt)), rt->rt_flags, WID_DST);
+	p_sockaddr(kgetsa(rt->rt_gateway), RTF_HOST, WID_GW);
 	p_flags(rt->rt_flags, "%-6.6s ");
 	printf("%6d %8d ", rt->rt_refcnt, rt->rt_use);
-	p_interface_nl(rt);
-}
-
-p_ortentry(rt)
-register struct ortentry *rt;
-{
-	char name[16], *flags;
-	register struct bits *p;
-	register struct sockaddr_in *sin;
-	struct ifnet ifnet;
-
-	p_sockaddr(&rt->rt_dst, rt->rt_flags, 16);
-	p_sockaddr(&rt->rt_gateway, 0, 18);
-	p_flags(rt->rt_flags, "%-6.6s ");
-	printf("%6d %8d ", rt->rt_refcnt, rt->rt_use);
-	if (rt->rt_ifp == 0) {
-		putchar('\n');
-		return;
+	if (rt->rt_ifp) {
+		if (rt->rt_ifp != lastif) {
+			kget(rt->rt_ifp, ifnet);
+			kread((u_long)ifnet.if_name, name, 16);
+			lastif = rt->rt_ifp;
+		}
+		printf(" %.15s%d%s", name, ifnet.if_unit,
+			rt->rt_nodes[0].rn_dupedkey ? " =>" : "");
 	}
-	kget(rt->rt_ifp, ifnet);
-	kvm_read(ifnet.if_name, name, 16);
-	printf(" %.15s%d\n", name, ifnet.if_unit);
+	putchar('\n');
 }
 
 char *
 routename(in)
-	struct in_addr in;
+	u_long in;
 {
 	register char *cp;
 	static char line[MAXHOSTNAMELEN + 1];
 	struct hostent *hp;
 	static char domain[MAXHOSTNAMELEN + 1];
 	static int first = 1;
-	char *index();
 
 	if (first) {
 		first = 0;
@@ -643,9 +495,9 @@ routename(in)
 		strncpy(line, cp, sizeof(line) - 1);
 	else {
 #define C(x)	((x) & 0xff)
-		in.s_addr = ntohl(in.s_addr);
-		sprintf(line, "%u.%u.%u.%u", C(in.s_addr >> 24),
-			C(in.s_addr >> 16), C(in.s_addr >> 8), C(in.s_addr));
+		in = ntohl(in);
+		sprintf(line, "%u.%u.%u.%u",
+		    C(in >> 24), C(in >> 16), C(in >> 8), C(in));
 	}
 	return (line);
 }
@@ -656,17 +508,16 @@ routename(in)
  */
 char *
 netname(in, mask)
-	struct in_addr in;
-	u_long mask;
+	u_long in, mask;
 {
 	char *cp = 0;
 	static char line[MAXHOSTNAMELEN + 1];
 	struct netent *np = 0;
 	u_long net;
-	register i;
+	register int i;
 	int subnetshift;
 
-	i = ntohl(in.s_addr);
+	i = ntohl(in);
 	if (!nflag && i) {
 		if (mask == 0) {
 			if (IN_CLASSA(i)) {
@@ -694,7 +545,7 @@ netname(in, mask)
 		np = getnetbyaddr(net, AF_INET);
 		if (np)
 			cp = np->n_name;
-	}	
+	}
 	if (cp)
 		strncpy(line, cp, sizeof(line) - 1);
 	else if ((i & 0xffffff) == 0)
@@ -712,6 +563,7 @@ netname(in, mask)
 /*
  * Print routing statistics
  */
+void
 rt_stats(off)
 	u_long off;
 {
@@ -721,7 +573,7 @@ rt_stats(off)
 		printf("rtstat: symbol not in namelist\n");
 		return;
 	}
-	kvm_read((void *)(long)off, (char *)&rtstat, sizeof (rtstat));
+	kread(off, (char *)&rtstat, sizeof (rtstat));
 	printf("routing:\n");
 	printf("\t%u bad routing redirect%s\n",
 		rtstat.rts_badredirect, plural(rtstat.rts_badredirect));
@@ -734,14 +586,14 @@ rt_stats(off)
 	printf("\t%u use%s of a wildcard route\n",
 		rtstat.rts_wildcard, plural(rtstat.rts_wildcard));
 }
-#ifdef NS
 short ns_nullh[] = {0,0,0};
 short ns_bh[] = {-1,-1,-1};
 
 char *
-ns_print(sns)
-struct sockaddr_ns *sns;
+ns_print(sa)
+	register struct sockaddr *sa;
 {
+	register struct sockaddr_ns *sns = (struct sockaddr_ns*)sa;
 	struct ns_addr work;
 	union { union ns_net net_e; u_long long_e; } net;
 	u_short port;
@@ -770,7 +622,8 @@ struct sockaddr_ns *sns;
 		q = work.x_host.c_host;
 		sprintf(chost, "%02x%02x%02x%02x%02x%02xH",
 			q[0], q[1], q[2], q[3], q[4], q[5]);
-		for (p = chost; *p == '0' && p < chost + 12; p++);
+		for (p = chost; *p == '0' && p < chost + 12; p++)
+			continue;
 		host = p;
 	}
 	if (port)
@@ -784,23 +637,26 @@ struct sockaddr_ns *sns;
 }
 
 char *
-ns_phost(sns)
-struct sockaddr_ns *sns;
+ns_phost(sa)
+	struct sockaddr *sa;
 {
+	register struct sockaddr_ns *sns = (struct sockaddr_ns *)sa;
 	struct sockaddr_ns work;
 	static union ns_net ns_zeronet;
 	char *p;
-	
+
 	work = *sns;
 	work.sns_addr.x_port = 0;
 	work.sns_addr.x_net = ns_zeronet;
 
-	p = ns_print(&work);
+	p = ns_print((struct sockaddr *)&work);
 	if (strncmp("0H.", p, 3) == 0) p += 3;
 	return(p);
 }
+
+void
 upHex(p0)
-char *p0;
+	char *p0;
 {
 	register char *p = p0;
 	for (; *p; p++) switch (*p) {
@@ -809,26 +665,3 @@ char *p0;
 		*p += ('A' - 'a');
 	}
 }
-#endif /* NS */
-#ifdef ISO
-
-char *
-dl_print(sdl)
-	struct sockaddr_dl *sdl;
-{
-	static char buf[20];
-	char *cp = buf, *dp;
-	int i;
-
-	dp = sdl->sdl_data;
-	for (i = 0; i < sdl->sdl_nlen; i++)
-		*cp++ = *dp++;
-	if (sdl->sdl_nlen != 0 && sdl->sdl_alen != 0)
-		*cp++ = ':';
-	for (; i < sdl->sdl_nlen + sdl->sdl_alen; i++)
-		cp += sprintf(cp, "%x%c", *dp++ & 0xff,
-			i + 1 == sdl->sdl_nlen + sdl->sdl_alen ? ' ' : '.');
-	*cp = 0;
-	return buf;
-}
-#endif /* ISO */
