@@ -13,6 +13,7 @@
 ./usr/include/arm32/cpufunc.h
 ./usr/include/arm32/cpus.h
 ./usr/include/arm32/db_machdep.h
+./usr/include/arm32/devmap.h
 ./usr/include/arm32/disklabel.h
 ./usr/include/arm32/disklabel_acorn.h
 ./usr/include/arm32/endian.h
