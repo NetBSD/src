@@ -641,8 +641,8 @@ rem2:
 
 /* Switch to another process from kernel code...  */
 
-ENTRY(swtch)
-	ints_off	/* to make sure swtch runs to completion. */
+ENTRY(cpu_switch)
+	ints_off	/* to make sure cpu_switch runs to completion. */
 	enter	[r0,r1,r2,r3,r4,r5,r6,r7],0
 /*	addqd	1, _cnt+V_SWTCH(pc) 		*/
 
@@ -728,7 +728,7 @@ Idle:
 	wait			/* Wait for interrupt. */
 	br	sw1
 
-m_setrq: .asciz "Setrq problem!"
+m_setrq: .asciz "Setrunqueue problem!"
 m_remrq: .asciz "Remrq problem!"
 
 /* As part of the fork operation, we need to prepare a user are for 
