@@ -1,4 +1,4 @@
-.\"	$NetBSD: readlink.2,v 1.18 2003/08/07 16:44:04 agc Exp $
+.\"	$NetBSD: readlink.2,v 1.19 2004/05/10 22:28:24 kleink Exp $
 .\"
 .\" Copyright (c) 1983, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -29,7 +29,7 @@
 .\"
 .\"     @(#)readlink.2	8.1 (Berkeley) 6/4/93
 .\"
-.Dd June 4, 1993
+.Dd May 10, 2004
 .Dt READLINK 2
 .Os
 .Sh NAME
@@ -39,7 +39,7 @@
 .Lb libc
 .Sh SYNOPSIS
 .In unistd.h
-.Ft int
+.Ft ssize_t
 .Fn readlink "const char *path" "char *buf" "size_t bufsiz"
 .Sh DESCRIPTION
 .Fn readlink
@@ -90,8 +90,19 @@ extends outside the process's allocated address space.
 .Xr stat 2 ,
 .Xr symlink 2 ,
 .Xr symlink 7
+.Sh STANDARDS
+The
+.Fn readlink
+function conforms to
+.St -p1003.1-2001 .
 .Sh HISTORY
 The
 .Fn readlink
-function call appeared in
+function appeared in
 .Bx 4.2 .
+The type returned was changed from
+.Ft int
+to
+.Ft ssize_t
+in
+.Nx 2.1
