@@ -1,4 +1,4 @@
-/*	$NetBSD: adb_direct.c,v 1.8 1998/11/24 08:26:50 tsubai Exp $	*/
+/*	$NetBSD: adb_direct.c,v 1.9 1999/01/12 10:38:00 tsubai Exp $	*/
 
 /* From: adb_direct.c 2.02 4/18/97 jpw */
 
@@ -1937,6 +1937,8 @@ adb_poweroff(void)
 	if (!adbSoftPower)
 		return -1;
 
+	adb_polling = 1;
+
 	switch (adbHardware) {
 	case ADB_HW_IISI:
 		output[0] = 0x02;	/* 2 byte message */
@@ -2108,11 +2110,13 @@ adb_cuda_autopoll()
 }
 
 void
-powermac_restart()
+adb_restart()
 {
 	volatile int flag = 0;
 	int result;
 	u_char output[16];
+
+	adb_polling = 1;
 
 	switch (adbHardware) {
 	case ADB_HW_CUDA:
@@ -2129,6 +2133,12 @@ powermac_restart()
 		pm_adb_restart();
 		return;
 	}
+}
+
+void
+powermac_restart()
+{
+	adb_restart();
 }
 
 void
