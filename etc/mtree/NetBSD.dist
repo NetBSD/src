@@ -1,4 +1,4 @@
-#	$NetBSD: NetBSD.dist,v 1.114 2000/08/21 22:57:24 lukem Exp $
+#	$NetBSD: NetBSD.dist,v 1.115 2000/09/11 03:00:29 augustss Exp $
 #	@(#)4.4BSD.dist	8.1 (Berkeley) 6/13/93
 
 /set type=dir uname=root gname=wheel mode=0755
@@ -917,6 +917,11 @@ ftpd
 # ./usr/share/examples/ipf
 ipf
 # ./usr/share/examples/ipf
+..
+
+# ./usr/share/examples/kerberos
+kerberos
+# ./usr/share/examples/kerberos
 ..
 
 # ./usr/share/examples/mount_portal
