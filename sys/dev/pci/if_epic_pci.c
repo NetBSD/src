@@ -1,4 +1,4 @@
-/*	$NetBSD: if_epic_pci.c,v 1.19 2001/11/13 07:48:43 lukem Exp $	*/
+/*	$NetBSD: if_epic_pci.c,v 1.20 2002/07/15 17:23:06 drochner Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_epic_pci.c,v 1.19 2001/11/13 07:48:43 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_epic_pci.c,v 1.20 2002/07/15 17:23:06 drochner Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h> 
@@ -123,6 +123,8 @@ const struct epic_pci_subsys_info {
 	pcireg_t subsysid;
 	int flags;
 } epic_pci_subsys_info[] = {
+	{ PCI_ID_CODE(PCI_VENDOR_SMC, 0xa015), /* SMC9432BTX */
+	  EPIC_HAS_BNC },
 	{ PCI_ID_CODE(PCI_VENDOR_SMC, 0xa024), /* SMC9432BTX1 */
 	  EPIC_HAS_BNC },
 	{ PCI_ID_CODE(PCI_VENDOR_SMC, 0xa016), /* SMC9432FTX */
