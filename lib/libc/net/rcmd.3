@@ -1,4 +1,4 @@
-.\"	$NetBSD: rcmd.3,v 1.25 2003/08/07 16:43:12 agc Exp $
+.\"	$NetBSD: rcmd.3,v 1.26 2005/03/31 15:45:53 christos Exp $
 .\"
 .\" Copyright (c) 1983, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -29,7 +29,7 @@
 .\"
 .\"     @(#)rcmd.3	8.1 (Berkeley) 6/4/93
 .\"
-.Dd June 4, 1993
+.Dd March 30, 2005
 .Dt RCMD 3
 .Os
 .Sh NAME
@@ -309,27 +309,3 @@ function appeared in
 and
 .Fn rresvport_af
 were defined in RFC2292.
-.Sh BUGS
-As the
-.Nm
-function uses
-.Xr getpwent 3
-functions,
-passing in a previous value from one of this family of functions
-can result in unpredictable results.  Do not write code like the
-following:
-.Bd -literal -offset indent
-struct passwd *pw;
-
-pw = getpwuid(getuid());
-...
-if (rcmd(host, port, pw-\*[Gt]pw_name, pw-\*[Gt]pw_name, cmd, fd2p) \*[Lt] 0)
-	err(1, "rcmd");
-
-.Ed
-.Pp
-When a reentrant version of
-.Xr getpwent 3
-is available,
-.Nm
-should be changed to use this instead.
