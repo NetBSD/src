@@ -70,6 +70,7 @@
 ./usr/lib/libstdc++_pic.a
 ./usr/lib/libtelnet_pic.a
 ./usr/lib/libtermcap_pic.a
+./usr/lib/libtermlib_pic.a
 ./usr/lib/libutil_pic.a
 ./usr/lib/libwrap_pic.a
 ./usr/lib/libz_pic.a
