@@ -1,4 +1,4 @@
-/* $NetBSD: locore.s,v 1.40 1998/02/24 07:38:01 thorpej Exp $ */
+/* $NetBSD: locore.s,v 1.41 1998/02/27 03:53:49 thorpej Exp $ */
 
 /*
  * Copyright (c) 1994, 1995, 1996 Carnegie-Mellon University.
@@ -33,7 +33,7 @@
 
 #include <machine/asm.h>
 
-__KERNEL_RCSID(0, "$NetBSD: locore.s,v 1.40 1998/02/24 07:38:01 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: locore.s,v 1.41 1998/02/27 03:53:49 thorpej Exp $");
 
 #ifndef EVCNT_COUNTERS
 #include <machine/intrcnt.h>
@@ -43,14 +43,25 @@ __KERNEL_RCSID(0, "$NetBSD: locore.s,v 1.40 1998/02/24 07:38:01 thorpej Exp $");
 .stabs	__FILE__,132,0,0,kernel_text
 
 /*
+ * The physical address of the current HWPCB.
+ */
+BSS(curpcb, 8)
+
+/*
  * Perform actions necessary to switch to a new context.  The
  * hwpcb should be in a0.
  */
 #define	SWITCH_CONTEXT							\
+	/* Make a note of the context we're running on. */		\
+	stq	a0, curpcb					;	\
+									\
 	/* Swap in the new context. */					\
 	call_pal PAL_OSF1_swpctx				;	\
 									\
-	/* Flush out the entire TLB.  (XXX only user side?) */		\
+	/*								\
+	 * Invalidate the TLB.						\
+	 * XXX Should use ASNs, and not have to invalidate.		\
+	 */								\
 	ldiq	a0, -2						;	\
 	call_pal PAL_OSF1_tbi					;	\
 	call_pal PAL_imb
@@ -589,8 +600,6 @@ Lsavectx1: LDGP(pv)
 
 /**************************************************************************/
 
-BSS(curpcb, 8)
-
 IMPORT(whichqs, 4)
 IMPORT(want_resched, 8)
 IMPORT(Lev1map, 8)
@@ -618,7 +627,6 @@ Lidle2:
 /*
  * cpu_switch()
  * Find the highest priority process and resume it.
- * XXX should optimiize, and not do the switch if switching to curproc
  */
 LEAF(cpu_switch, 0)
 	LDGP(pv)
@@ -684,23 +692,26 @@ Lcs4:
 	stl	t3, whichqs
 
 Lcs5:
-	/*
-	 * Switch to the new context
-	 */
-
-	/* mark the new curproc, and other globals */
-	stq	zero, want_resched		/* we've rescheduled */
-	stq	t4, curproc			/* curproc = p */
-	ldq	t5, P_MD_PCBPADDR(t4)		/* t5 = p->p_md.md_pcbpaddr */
-	stq	t5, curpcb			/* and store it in curpcb */
+	mov	t4, s2				/* save new proc */
+	ldq	s3, P_MD_PCBPADDR(s2)		/* save new pcbpaddr */
 
 	/*
-	 * Do the context swap, and invalidate old TLB entries.
-	 * XXX should do the ASN thing, and therefore not have to invalidate.
+	 * Check to see if we're switching to ourself.  If we are,
+	 * don't bother loading the new context.
+	 *
+	 * Note that even if we re-enter cpu_switch() from idle(),
+	 * s0 will still contain the old curproc value because any
+	 * users of that register between then and now must have
+	 * saved it.  Also note that switch_exit() ensures that
+	 * s0 is clear before jumping here to find a new process.
 	 */
+	cmpeq	s0, t4, t0			/* oldproc == newproc? */
+	bne	t0, Lcs6			/* Yes!  Skip! */
 
-	mov	t4, s2				/* save new curproc */
-	mov	t5, s3				/* save new pcbpaddr */
+	/*
+	 * Activate the new process's address space and perform
+	 * the actual context swap.
+	 */
 
 	mov	s2, a0				/* pmap_activate(p) */
 	CALL(pmap_activate)
@@ -708,15 +719,18 @@ Lcs5:
 	mov	s3, a0				/* swap the context */
 	SWITCH_CONTEXT
 
-#ifdef NEW_PMAP
 	mov	s0, a0				/* pmap_deactivate(oldproc) */
 	CALL(pmap_deactivate)
-#else
+
+Lcs6:
 	/*
-	 * Utah-derived pmap_deactivate() is a noop, so don't bother with
-	 * the call.
+	 * Now that the switch is done, update curproc and other
+	 * globals.  We must do this even if switching to ourselves
+	 * because we might have re-entered cpu_switch() from idle(),
+	 * in which case curproc would be NULL.
 	 */
-#endif
+	stq	s2, curproc			/* curproc = p */
+	stq	zero, want_resched		/* we've rescheduled */
 
 	/*
 	 * Now running on the new u struct.
@@ -773,22 +787,10 @@ LEAF(switch_exit, 1)
 	/* Switch to proc0. */
 	lda	t4, proc0			/* t4 = &proc0 */
 	ldq	t5, P_MD_PCBPADDR(t4)		/* t5 = p->p_md.md_pcbpaddr */
-	stq	t5, curpcb			/* and store it in curpcb */
-
-#ifndef NEW_PMAP
-	mov	t4, s0
-	ldq	s1, P_ADDR(t4)
-#endif
 
 	/*
-	 * Do the context swap, and invalidate old TLB entries.
-	 * XXX should do the ASN thing, and therefore not have to invalidate.
+	 * Do the actual context swap.
 	 */
-#ifndef NEW_PMAP
-	ldq	t2, P_VMSPACE(t4)		/* t2 = p->p_vmspace */
-	ldq	a0, VM_MAP_PMAP(t2)		/* a0 = ... ->vm_map.pmap */
-	CALL(_pmap_activate)
-#endif
 	mov	t5, a0
 	SWITCH_CONTEXT
 
@@ -807,10 +809,13 @@ LEAF(switch_exit, 1)
 	CALL(kmem_free)
 #endif
 
-	/* and jump into the middle of cpu_switch. */
-#ifdef NEW_PMAP
-	/* XXX XXX LOSE */
-#endif
+	/*
+	 * Now jump back into the middle of cpu_switch().  Note that
+	 * we must clear s0 to guarantee that the check for switching
+	 * to ourselves in cpu_switch() will fail.  This is safe since
+	 * s0 will be restored when a new process is resumed.
+	 */
+	mov	zero, s0
 	jmp	zero, sw1
 	END(switch_exit)
 
