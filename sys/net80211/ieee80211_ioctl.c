@@ -1,4 +1,4 @@
-/*	$NetBSD: ieee80211_ioctl.c,v 1.7 2003/12/14 09:56:53 dyoung Exp $	*/
+/*	$NetBSD: ieee80211_ioctl.c,v 1.8 2004/01/16 14:07:32 onoe Exp $	*/
 /*-
  * Copyright (c) 2001 Atsushi Onoe
  * Copyright (c) 2002, 2003 Sam Leffler, Errno Consulting
@@ -35,7 +35,7 @@
 #ifdef __FreeBSD__
 __FBSDID("$FreeBSD: src/sys/net80211/ieee80211_ioctl.c,v 1.9 2003/11/13 05:23:58 sam Exp $");
 #else
-__KERNEL_RCSID(0, "$NetBSD: ieee80211_ioctl.c,v 1.7 2003/12/14 09:56:53 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ieee80211_ioctl.c,v 1.8 2004/01/16 14:07:32 onoe Exp $");
 #endif
 
 /*
@@ -99,6 +99,7 @@ ieee80211_cfgget(struct ifnet *ifp, u_long cmd, caddr_t data)
 	wreq.wi_len = 0;
 	switch (wreq.wi_type) {
 	case WI_RID_SERIALNO:
+	case WI_RID_STA_IDENTITY:
 		/* nothing appropriate */
 		break;
 	case WI_RID_NODENAME:
@@ -266,6 +267,9 @@ ieee80211_cfgget(struct ifnet *ifp, u_long cmd, caddr_t data)
 	case WI_RID_MAX_DATALEN:
 		wreq.wi_val[0] = htole16(IEEE80211_MAX_LEN);	/* TODO: frag */
 		wreq.wi_len = 1;
+		break;
+	case WI_RID_DBM_ADJUST:
+		/* not supported, we just pass rssi value from driver. */
 		break;
 	case WI_RID_IFACE_STATS:
 		/* XXX: should be implemented in lower drivers */
