@@ -1,4 +1,4 @@
-/*	$NetBSD: gaitest.c,v 1.3 2002/07/05 15:47:43 itojun Exp $	*/
+/*	$NetBSD: gaitest.c,v 1.4 2002/07/08 18:55:51 agc Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, 1998, 1999, 2000, 2001, and 2002 WIDE Project.
@@ -36,6 +36,7 @@
 #include <netdb.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 #include <unistd.h>
 
 struct addrinfo ai;
