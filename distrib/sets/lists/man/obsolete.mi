@@ -1,4 +1,4 @@
-# $NetBSD: obsolete.mi,v 1.4 1999/12/15 20:38:41 garbled Exp $
+# $NetBSD: obsolete.mi,v 1.5 2000/01/23 14:29:16 drochner Exp $
 /usr/share/man/cat1/amq.0
 /usr/share/man/cat1/ld.so.0
 /usr/share/man/cat1/pstat.0
@@ -13,6 +13,7 @@
 /usr/share/man/cat3/dlsym.0
 /usr/share/man/cat4/imp.0
 /usr/share/man/cat4/i386/pms.0
+/usr/share/man/cat4/i386/speaker.0
 /usr/share/man/cat5/inetd.0
 /usr/share/man/cat5/pcfs.0
 /usr/share/man/cat5/securenet.0
@@ -39,6 +40,7 @@
 /usr/share/man/man3/dlopen.3
 /usr/share/man/man3/dlsym.3
 /usr/share/man/man4/i386/pms.4
+/usr/share/man/man4/i386/speaker.4
 /usr/share/man/man5/securenet.5
 /usr/share/man/man5/ypserv.acl.5
 /usr/share/man/man8/gettable.8
