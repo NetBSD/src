@@ -1,4 +1,4 @@
-/*	$NetBSD: types.h,v 1.33 2002/09/22 08:30:59 simonb Exp $	*/
+/*	$NetBSD: types.h,v 1.34 2002/11/02 02:45:22 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -64,12 +64,6 @@ typedef unsigned long	mips_ureg_t;
 typedef	long		mips_fpreg_t;
 #endif
 
-#if defined(_KERNEL)
-typedef struct label_t {
-	mips_reg_t val[12];
-} label_t;
-#endif
-
 /* NB: This should probably be if defined(_KERNEL) */
 #if !defined(_POSIX_C_SOURCE) && !defined(_XOPEN_SOURCE)
 #ifdef _MIPS_PADDR_T_64BIT
@@ -83,7 +77,18 @@ typedef unsigned long	vaddr_t;
 typedef unsigned long	vsize_t;
 #endif
 
-typedef int		register_t;
+/* Make sure this is signed; we need pointers to be sign-extended. */
+#if defined(__mips_n32)
+typedef long long	register_t;
+#else
+typedef long		register_t;
+#endif /* __mips_n32 */
+
+#if defined(_KERNEL)
+typedef struct label_t {
+	register_t val[12];
+} label_t;
+#endif
 
 #define	__SWAP_BROKEN
 
