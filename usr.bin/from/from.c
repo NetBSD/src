@@ -39,7 +39,7 @@ char copyright[] =
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)from.c	5.7 (Berkeley) 3/1/91";*/
-static char rcsid[] = "$Id: from.c,v 1.4 1994/09/15 02:02:00 deraadt Exp $";
+static char rcsid[] = "$Id: from.c,v 1.5 1994/11/24 14:53:10 deraadt Exp $";
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -99,8 +99,13 @@ main(argc, argv)
 				"from: no password file entry for you.\n");
 					exit(1);
 				}
-				(void)sprintf(file = buf, "%s/%s",
-				    _PATH_MAILDIR, pwd->pw_name);
+				if (file = getenv("USER")) {
+					(void)sprintf(buf, "%s/%s",
+					    _PATH_MAILDIR, file);
+					file = buf;
+				} else
+					(void)sprintf(file = buf, "%s/%s",
+					    _PATH_MAILDIR, pwd->pw_name);
 			}
 		} else {
 			(void)sprintf(buf, "%s/%s", _PATH_MAILDIR, file);
