@@ -1,4 +1,4 @@
-/*	$NetBSD: ne2000.c,v 1.26 2000/02/09 14:42:35 enami Exp $	*/
+/*	$NetBSD: ne2000.c,v 1.27 2000/02/09 15:40:24 enami Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -128,6 +128,11 @@ ne2000_attach(nsc, myea, media, nmedia, defmedia)
 	useword = NE2000_USE_WORD(nsc);
 
 	dsc->cr_proto = ED_CR_RD2;
+	if (nsc->sc_type == NE2000_TYPE_AX88190) {
+		dsc->rcr_proto = ED_RCR_INTT;
+		dsc->sc_flags |= DP8390_DO_AX88190_WORKAROUND;
+	} else
+		dsc->rcr_proto = 0;
 
 	/*
 	 * DCR gets:
@@ -157,6 +162,7 @@ ne2000_attach(nsc, myea, media, nmedia, defmedia)
 		memsize = 8192;
 		break;
 	case NE2000_TYPE_NE2000:
+	case NE2000_TYPE_AX88190:		/* XXX really? */
 		memsize = 8192 * 2;
 		break;
 	case NE2000_TYPE_DL10019:
@@ -243,10 +249,22 @@ ne2000_attach(nsc, myea, media, nmedia, defmedia)
 
 	if (myea == NULL) {
 		/* Read the station address. */
-		ne2000_readmem(nict, nich, asict, asich, 0, romdata,
-		    sizeof(romdata), useword);
-		for (i = 0; i < ETHER_ADDR_LEN; i++)
-			dsc->sc_enaddr[i] = romdata[i * (useword ? 2 : 1)];
+		if (nsc->sc_type == NE2000_TYPE_AX88190) {
+			/* Select page 0 registers. */
+			bus_space_write_1(nict, nich, ED_P0_CR,
+			    ED_CR_RD2 | ED_CR_PAGE_0 | ED_CR_STA);
+			/* Select word transfer. */
+			bus_space_write_1(nict, nich, ED_P0_DCR, ED_DCR_WTS);
+			ne2000_readmem(nict, nich, asict, asich,
+			    NE2000_AX88190_NODEID_OFFSET, dsc->sc_enaddr,
+			    ETHER_ADDR_LEN, useword);
+		} else {
+			ne2000_readmem(nict, nich, asict, asich, 0, romdata,
+			    sizeof(romdata), useword);
+			for (i = 0; i < ETHER_ADDR_LEN; i++)
+				dsc->sc_enaddr[i] =
+				    romdata[i * (useword ? 2 : 1)];
+		}
 	} else
 		bcopy(myea, dsc->sc_enaddr, sizeof(dsc->sc_enaddr));
 
@@ -264,6 +282,7 @@ ne2000_attach(nsc, myea, media, nmedia, defmedia)
 	 */
 	dsc->mem_ring =
 	    dsc->mem_start + ((dsc->txb_cnt * ED_TXBUF_SIZE) << ED_PAGE_SHIFT);
+
 	return (0);
 }
 
