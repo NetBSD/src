@@ -1,4 +1,4 @@
-/*	$NetBSD: attributes.c,v 1.10 2003/01/27 21:04:10 jdc Exp $	*/
+/*	$NetBSD: attributes.c,v 1.11 2003/02/17 11:07:19 dsl Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: attributes.c,v 1.10 2003/01/27 21:04:10 jdc Exp $");
+__RCSID("$NetBSD: attributes.c,v 1.11 2003/02/17 11:07:19 dsl Exp $");
 #endif				/* not lint */
 
 #include "curses.h"
@@ -91,7 +91,7 @@ int
 wattron(WINDOW *win, int attr)
 {
 #ifdef DEBUG
-	__CTRACE ("wattron: win %0.2o, attr %08x\n", win, attr);
+	__CTRACE ("wattron: win %p, attr %08x\n", win, attr);
 #endif
 	/* If can enter modes, set the relevent attribute bits. */
 	if (__tc_me != NULL) {
@@ -133,7 +133,7 @@ int
 wattroff(WINDOW *win, int attr)
 {
 #ifdef DEBUG
-	__CTRACE ("wattroff: win %0.2o, attr %08x\n", win, attr);
+	__CTRACE ("wattroff: win %p, attr %08x\n", win, attr);
 #endif
 	/* If can do exit modes, unset the relevent attribute bits. */
 	if (__tc_me != NULL) {
@@ -170,7 +170,7 @@ int
 wattrset(WINDOW *win, int attr)
 {
 #ifdef DEBUG
-	__CTRACE ("wattrset: win %0.2o, attr %08x\n", win, attr);
+	__CTRACE ("wattrset: win %p, attr %08x\n", win, attr);
 #endif
 	wattron(win, attr);
 	wattroff(win, (~attr & ~__COLOR) | ((attr & __COLOR) ? 0 : __COLOR));
@@ -185,7 +185,7 @@ chtype
 getattrs(WINDOW *win)
 {
 #ifdef DEBUG
-	__CTRACE ("getattrs: win %0.2o\n", win);
+	__CTRACE ("getattrs: win %p\n", win);
 #endif
 	return((chtype) win->wattr);
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: resize.c,v 1.6 2003/02/10 23:24:27 dsl Exp $	*/
+/*	$NetBSD: resize.c,v 1.7 2003/02/17 11:07:21 dsl Exp $	*/
 
 /*
  * Copyright (c) 2001
@@ -40,7 +40,7 @@
 #if 0
 static char sccsid[] = "@(#)resize.c   blymn 2001/08/26";
 #else
-__RCSID("$NetBSD: resize.c,v 1.6 2003/02/10 23:24:27 dsl Exp $");
+__RCSID("$NetBSD: resize.c,v 1.7 2003/02/17 11:07:21 dsl Exp $");
 #endif
 #endif				/* not lint */
 
@@ -58,54 +58,43 @@ static int __resizewin(WINDOW *win, int nlines, int ncols);
  *	Resize the given window to the new size.
  */
 int
-wresize(WINDOW *win, int nlines, int ncols)
+wresize(WINDOW *win, int req_nlines, int req_ncols)
 {
-	__LINE *lp;
-	int     i, j;
-	__LDATA *sp;
+	int	nlines = req_nlines;
+	int	ncols = req_ncols;
 
-	if ((win == NULL) || (nlines < 0) || (ncols < 0))
+	if (win == NULL)
 		return ERR;
 
+	nlines = req_nlines;
+	ncols = req_ncols;
 	if (win->orig == NULL) {
-		if (nlines == 0)
-			nlines = LINES - win->begy;
-		if (ncols == 0)
-			ncols = COLS - win->begx;
+		/* bound window to screen */
+		if (win->begy + nlines > LINES)
+			nlines = 0;
+		if (nlines <= 0)
+			nlines += LINES - win->begy;
+		if (win->begx + ncols > COLS)
+			ncols = 0;
+		if (ncols <= 0)
+			ncols += COLS - win->begx;
 	} else {
-		  /* subwins must fit inside the parent - check this */
-		if ((nlines == 0)
-		    || (nlines > (win->orig->maxy + win->orig->begy
-				  - win->begy)))
-			nlines = win->orig->maxy + win->orig->begy - win->begy;
-
-		if ((ncols == 0)
-		    || (ncols > (win->orig->maxx + win->orig->begx
-				 - win->begx)))
-			ncols = win->orig->maxx + win->orig->begx - win->begx;
+		/* subwins must fit inside the parent - check this */
+		if (win->begy + nlines > win->orig->begy + win->orig->maxy)
+			nlines = 0;
+		if (nlines <= 0)
+			nlines += win->orig->begy + win->orig->maxy - win->begy;
+		if (win->begx + ncols > win->orig->begx + win->orig->maxx)
+			ncols = 0;
+		if (ncols <= 0)
+			ncols += win->orig->begx + win->orig->maxx - win->begx;
 	}
 
 	if ((__resizewin(win, nlines, ncols)) == ERR)
 		return ERR;
 
-	  /*
-	   * we must zot the window contents otherwise lines may pick
-	   * up attributes from the previous line when the window is
-	   * made smaller.  The client will redraw the window anyway
-	   * so this is no big deal.
-	   */
-	for (i = 0; i < win->maxy; i++) {
-		lp = win->lines[i];
-		for (sp = lp->line, j = 0; j < win->maxx;
-		     j++, sp++) {
-			sp->ch = ' ';
-			sp->bch = ' ';
-			sp->attr = 0;
-			sp->battr = 0;
-		}
-		lp->hash = __hash((char *)(void *)lp->line,
-				  (size_t) (ncols * __LDATASIZE));
-	}
+	win->reqy = req_nlines;
+	win->reqx = req_ncols;
 
 	return OK;
 }
@@ -119,7 +108,7 @@ resizeterm(int nlines, int ncols)
 {
 	WINDOW *win;
 	struct __winlist *list;
-	int newlines, newcols, ldelta, cdelta;
+	int newlines, newcols;
 
 	  /* don't worry if things have not changed... we would like to
 	     do this but some bastard programs update LINES and COLS before
@@ -131,40 +120,23 @@ resizeterm(int nlines, int ncols)
 	__CTRACE("resizeterm: (%d, %d)\n", nlines, ncols);
 #endif
 
-	ldelta = nlines - __virtscr->maxy;
-	cdelta = ncols - __virtscr->maxx;
 
 	for (list = __winlistp; list != NULL; list = list->nextp) {
 		win = list->winp;
-		newlines = win->maxy;
-		newcols = win->maxx;
-		
-		if (win->begy >= (nlines - 1)) {
-			win->begy = nlines - win->maxx - 1;
-			if (win->begy < 0)
-				win->begy = 0;
-		}
 
-		
-		if ((newlines + win->begy + ldelta) == nlines)
-				newlines = nlines;
-
-		if (newlines > nlines) {
+		newlines = win->reqy;
+		if (win->begy + newlines >= nlines)
+			newlines = 0;
+		if (newlines == 0)
 			newlines = nlines - win->begy;
-			if (newlines < 0)
-				newlines = 1;
-		}
-		
-		if ((newcols + win->begx + cdelta) == ncols)
-			newcols = ncols;
 
-		if (newcols > ncols) {
+		newcols = win->reqx;
+		if (win->begx + newcols >= ncols)
+			newcols = 0;
+		if (newcols == 0)
 			newcols = ncols - win->begx;
-			if (newcols < 0)
-				newcols = 1;
-		}
-		
-		if (wresize(win, newlines, newcols) != OK)
+
+		if (__resizewin(win, newlines, newcols) != OK)
 			return ERR;
 	}
 
@@ -180,7 +152,7 @@ resizeterm(int nlines, int ncols)
 	wrefresh(curscr);
 	return OK;
 }
-		
+
 /*
  * __resizewin --
  *	Resize the given window.
@@ -189,14 +161,16 @@ static int
 __resizewin(WINDOW *win, int nlines, int ncols)
 {
 	__LINE			*lp, *olp, **newlines, *newlspace;
+	__LDATA			*sp;
 	__LDATA                 *newwspace;
-	int			 i;
+	int			 i, j;
+	int			 y, x;
 	WINDOW			*swin;
 
 #ifdef	DEBUG
-	__CTRACE("resize: (%d, %d)\n", nlines, ncols);
-	__CTRACE("resize: win->wattr = %0.2o\n", win->wattr);
-	__CTRACE("resize: win->flags = %0.2o\n", win->flags);
+	__CTRACE("resize: (%p, %d, %d)\n", win, nlines, ncols);
+	__CTRACE("resize: win->wattr = %08x\n", win->wattr);
+	__CTRACE("resize: win->flags = %#.4x\n", win->flags);
 	__CTRACE("resize: win->maxy = %d\n", win->maxy);
 	__CTRACE("resize: win->maxx = %d\n", win->maxx);
 	__CTRACE("resize: win->begy = %d\n", win->begy);
@@ -205,32 +179,34 @@ __resizewin(WINDOW *win, int nlines, int ncols)
 	__CTRACE("resize: win->scr_b = %d\n", win->scr_b);
 #endif
 
-	/* Reallocate line pointer array and line space. */
-	if ((newlines = realloc(win->lines,
-				nlines * sizeof(__LINE *))) == NULL) {
-		return ERR;
-	}
-	win->lines = newlines;
+	if (nlines <= 0 || ncols <= 0)
+		nlines = ncols = 0;
+	else {
+		/* Reallocate line pointer array and line space. */
+		newlines = realloc(win->lines, nlines * sizeof(__LINE *));
+		if (newlines == NULL)
+			return ERR;
+		win->lines = newlines;
 
-	if ((newlspace = realloc(win->lspace,
-				 nlines * sizeof(__LINE))) == NULL) {
-		return ERR;
+		newlspace = realloc(win->lspace, nlines * sizeof(__LINE));
+		if (newlspace == NULL)
+			return ERR;
+		win->lspace = newlspace;
 	}
-	win->lspace = newlspace;
 
 	/* Don't allocate window and line space if it's a subwindow */
 	if (win->orig == NULL) {
 		/*
 		 * Allocate window space in one chunk.
 		 */
-		if ((newwspace =
-			realloc(win->wspace,
-				ncols * nlines * sizeof(__LDATA))) == NULL) {
-			return ERR;
+		if (ncols != 0) {
+			newwspace = realloc(win->wspace,
+					    ncols * nlines * sizeof(__LDATA));
+			if (newwspace == NULL)
+				return ERR;
+			win->wspace = newwspace;
 		}
 
-		win->wspace = newwspace;
-		
 		/*
 		 * Point line pointers to line space, and lines themselves into
 		 * window space.
@@ -248,7 +224,7 @@ __resizewin(WINDOW *win, int nlines, int ncols)
 			lp->flags = __ISDIRTY;
 		}
 	} else {
-		
+
 		win->ch_off = win->begx - win->orig->begx;
 		  /* Point line pointers to line space. */
 		for (lp = win->lspace, i = 0; i < nlines; i++, lp++) {
@@ -261,8 +237,6 @@ __resizewin(WINDOW *win, int nlines, int ncols)
 #endif
 			lp->firstchp = &olp->firstch;
 			lp->lastchp = &olp->lastch;
-			lp->hash = __hash((char *)(void *)lp->line,
-					  (size_t) (win->maxx * __LDATASIZE));
 			lp->flags = __ISDIRTY;
 		}
 	}
@@ -274,9 +248,27 @@ __resizewin(WINDOW *win, int nlines, int ncols)
 	win->scr_b = win->maxy - 1;
 	__swflags(win);
 
+	  /*
+	   * we must zot the window contents otherwise lines may pick
+	   * up attributes from the previous line when the window is
+	   * made smaller.  The client will redraw the window anyway
+	   * so this is no big deal.
+	   */
+	for (i = 0; i < win->maxy; i++) {
+		lp = win->lines[i];
+		for (sp = lp->line, j = 0; j < win->maxx; j++, sp++) {
+			sp->ch = ' ';
+			sp->bch = ' ';
+			sp->attr = 0;
+			sp->battr = 0;
+		}
+		lp->hash = __hash((char *)(void *)lp->line,
+				  (size_t) (ncols * __LDATASIZE));
+	}
+
 #ifdef DEBUG
-	__CTRACE("resize: win->wattr = %0.2o\n", win->wattr);
-	__CTRACE("resize: win->flags = %0.2o\n", win->flags);
+	__CTRACE("resize: win->wattr = %08x\n", win->wattr);
+	__CTRACE("resize: win->flags = %#.4x\n", win->flags);
 	__CTRACE("resize: win->maxy = %d\n", win->maxy);
 	__CTRACE("resize: win->maxx = %d\n", win->maxx);
 	__CTRACE("resize: win->begy = %d\n", win->begy);
@@ -284,10 +276,24 @@ __resizewin(WINDOW *win, int nlines, int ncols)
 	__CTRACE("resize: win->scr_t = %d\n", win->scr_t);
 	__CTRACE("resize: win->scr_b = %d\n", win->scr_b);
 #endif
+
 	if (win->orig == NULL) {
-		for (swin = win->nextp; swin != win; swin = swin->nextp)
-			wresize(swin, nlines - swin->begy, ncols - swin->begx);
+		/* bound subwindows to new size and fixup their pointers */
+		for (swin = win->nextp; swin != win; swin = swin->nextp) {
+			y = swin->reqy;
+			if (swin->begy + y > win->begy + win->maxy)
+				y = 0;
+			if (y <= 0)
+				y += win->begy + win->maxy - swin->begy;
+			x = swin->reqx;
+			if (swin->begx + x > win->begx + win->maxx)
+				x = 0;
+			if (x <= 0)
+				x += win->begy + win->maxx - swin->begx;
+			__resizewin(swin, y, x);
+		}
 	}
+
 	return OK;
 }
 
