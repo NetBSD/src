@@ -1,4 +1,4 @@
-/*	$NetBSD: crontab.c,v 1.5 1997/04/03 06:14:38 mikel Exp $	*/
+/*	$NetBSD: crontab.c,v 1.6 1997/10/17 00:10:49 lukem Exp $	*/
 
 /* Copyright 1988,1990,1993,1994 by Paul Vixie
  * All rights reserved
@@ -19,7 +19,7 @@
 
 #if !defined(lint) && !defined(LINT)
 /*static char rcsid[] = "Id: crontab.c,v 2.13 1994/01/17 03:20:37 vixie Exp";*/
-static char rcsid[] = "$NetBSD: crontab.c,v 1.5 1997/04/03 06:14:38 mikel Exp $";
+static char rcsid[] = "$NetBSD: crontab.c,v 1.6 1997/10/17 00:10:49 lukem Exp $";
 #endif
 
 /* crontab - install and manage per-user crontab files
@@ -152,7 +152,7 @@ parse_args(argc, argv)
 	RealUser[sizeof(RealUser) - 1] = '\0';
 	Filename[0] = '\0';
 	Option = opt_unknown;
-	while (EOF != (argch = getopt(argc, argv, "u:lerx:"))) {
+	while (-1 != (argch = getopt(argc, argv, "u:lerx:"))) {
 		switch (argch) {
 		case 'x':
 			if (!set_debug_flags(optarg))
