@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.9 2002/09/02 14:03:22 scw Exp $	*/
+/*	$NetBSD: trap.c,v 1.10 2002/09/04 14:34:01 scw Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -94,13 +94,20 @@
 #include <machine/db_machdep.h>
 #endif
 
-
+#ifdef DIAGNOSTIC
 static void dump_trapframe(struct trapframe *);
 static void print_a_reg(const char *, register_t, int);
+#endif
 
 
 /* Used to trap faults while probing */
 label_t *onfault;
+
+
+#ifdef DEBUG
+int sh5_syscall_debug;
+int sh5_trap_debug;
+#endif
 
 void
 userret(struct proc *p)
@@ -132,6 +139,11 @@ trap(struct proc *p, struct trapframe *tf)
 	int sig = 0;
 	u_long ucode = 0;
 
+#ifdef DEBUG
+	static register_t last_tea, last_expevt;
+	static int last_count;
+#endif
+
 	uvmexp.traps++;
 
 	traptype = tf->tf_state.sf_expevt;
@@ -144,6 +156,29 @@ trap(struct proc *p, struct trapframe *tf)
 		p = &proc0;
 
 	vaddr = (vaddr_t) tf->tf_state.sf_tea;
+
+#ifdef DEBUG
+	if (last_tea == tf->tf_state.sf_tea &&
+	    last_expevt == tf->tf_state.sf_expevt) {
+		if (last_count++ == 10) {
+			printf("Repetitive fault. curvsid = 0x%x\n",
+			    curcpu()->ci_curvsid);
+			printf("\ntrap: %s in %s mode\n", trap_type(traptype),
+			    USERMODE(tf) ? "user" : "kernel");
+			printf("SSR=0x%x, SPC=0x%lx, TEA=0x%lx, TRA=0x%x\n",
+				(u_int)tf->tf_state.sf_ssr,
+				(uintptr_t)tf->tf_state.sf_spc,
+				(uintptr_t)tf->tf_state.sf_tea,
+				(u_int)tf->tf_state.sf_tra);
+			kdb_trap(traptype, tf);
+			last_count = 0;
+		}
+	} else
+		last_count = 0;
+
+	last_tea = tf->tf_state.sf_tea;
+	last_expevt = tf->tf_state.sf_expevt;
+#endif
 
 	switch (traptype) {
 	default:
@@ -165,7 +200,9 @@ trap(struct proc *p, struct trapframe *tf)
 #if defined(DDB)
 		kdb_trap(traptype, tf);
 #else
+#ifdef DIAGNOSTIC
 		dump_trapframe(tf);
+#endif
 #endif
 		panic("trap");
 		/* NOTREACHED */
@@ -256,7 +293,7 @@ trap(struct proc *p, struct trapframe *tf)
 		}
 
 		if (rv == 0) {
-			if (traptype && T_USER)
+			if (traptype & T_USER)
 				userret(p);
 			return;
 		}
@@ -341,9 +378,30 @@ trapa(struct proc *p, struct trapframe *tf)
 #endif
 
 #ifdef DDB
+	/*
+	 * Kernel breakpoints use "trapa r63".
+	 *
+	 * XXX: May want to change this to "illegal" in order to avoid
+	 * polluting the syscall() path.
+	 */
 	if (!USERMODE(tf) && tf->tf_state.sf_tra == 0) {
 		if (kdb_trap(T_BREAK, tf))
 			return;
+	}
+#endif
+
+#ifdef DEBUG
+	if (sh5_syscall_debug) {
+		printf("trapa: TRAPA in %s mode ",
+		    USERMODE(tf) ? "user" : "kernel");
+		if (p != NULL)
+			printf("pid=%d cmd=%s, usp=0x%lx\n",
+			    p->p_pid, p->p_comm, (uintptr_t)tf->tf_caller.r15);
+		else
+			printf("curproc == NULL ");
+		printf("trapa: SPC=0x%lx, SSR=0x%x, TRA=0x%x, R0=%d\n",
+		    (uintptr_t)tf->tf_state.sf_spc, (u_int)tf->tf_state.sf_ssr,
+		    (u_int)tf->tf_state.sf_tra, (u_int)tf->tf_caller.r0);
 	}
 #endif
 
@@ -377,8 +435,8 @@ trapa_panic:
 
 	switch (trapcode) {
 	case TRAPA_SYSCALL:
-		(p->p_md.md_syscall)(p, tf);
 		tf->tf_state.sf_spc += 4;	/* Skip over the trapa */
+		(p->p_md.md_syscall)(p, tf);
 		break;
 
 	default:
@@ -406,6 +464,10 @@ panic_trap(struct cpu_info *ci, struct trapframe *tf,
 	panic("panic_trap");
 }
 
+/*
+ * Called from exception.S when we get an exception inside the critical
+ * section of another exception.
+ */
 void panic_critical_fault(struct trapframe *, struct exc_scratch_frame *);
 void
 panic_critical_fault(struct trapframe *tf, struct exc_scratch_frame *es)
@@ -424,8 +486,10 @@ panic_critical_fault(struct trapframe *tf, struct exc_scratch_frame *es)
 
 	printf("Pre Fault State: ");
 
-	vector = (uintptr_t)tf->tf_state.sf_tea - (uintptr_t)&sh5_vector_table;
+	vector = (uintptr_t)tf->tf_state.sf_spc - (uintptr_t)&sh5_vector_table;
 	vector &= ~0xff;
+
+	printf("vector: 0x%lx ", vector);
 
 	switch (vector) {
 	case 0x0:	printf("panic handler\n");	/* Can't happen */
@@ -458,6 +522,7 @@ panic_critical_fault(struct trapframe *tf, struct exc_scratch_frame *es)
 	    (u_int)(tf->tf_caller.r1 >> 32), (u_int)tf->tf_caller.r1,
 	    (u_int)(tf->tf_caller.r2 >> 32), (u_int)tf->tf_caller.r2);
 
+#ifdef DIAGNOSTIC
 	printf("\nPre-exception Context:\n");
 	tf->tf_caller.r0 = es->es_r[0];
 	tf->tf_caller.r1 = es->es_r[1];
@@ -466,6 +531,7 @@ panic_critical_fault(struct trapframe *tf, struct exc_scratch_frame *es)
 	tf->tf_caller.tr0 = es->es_tr0;
 
 	dump_trapframe(tf);
+#endif
 
 	panic("panic_critical_fault");
 }
@@ -550,6 +616,7 @@ trap_type(int traptype)
 	return (t);
 }
 
+#ifdef DIAGNOSTIC
 static void
 dump_trapframe(struct trapframe *tf)
 {
@@ -655,3 +722,78 @@ print_a_reg(const char *reg, register_t v, int nl)
 	printf("%s=0x%08x%08x%s", reg,
 	    (u_int)(v >> 32), (u_int)v, nl ? "\n" : ", ");
 }
+
+/*
+ * Called from Ltrapexit in exception.S just before we restore the
+ * trapframe in order to verify that the trapframe is valid enough
+ * not to cause untold bogosity when we restore context from it.
+ */
+void validate_trapframe(struct trapframe *tf);
+void
+validate_trapframe(struct trapframe *tf)
+{
+	extern char etext[];
+
+	if ((tf->tf_state.sf_ssr & SH5_CONREG_SR_FD) != 0) {
+		printf("oops: trapframe with FPU off!\n");
+		goto boom;
+	}
+
+	if ((tf->tf_state.sf_ssr & SH5_CONREG_SR_MMU) == 0) {
+		printf("oops: trapframe with MMU off!\n");
+		goto boom;
+	}
+
+	if ((tf->tf_state.sf_ssr & SH5_CONREG_SR_BL) != 0) {
+		printf("oops: trapframe with Exceptions Blocked!\n");
+		goto boom;
+	}
+
+	if ((tf->tf_state.sf_ssr & SH5_CONREG_SR_WATCH) != 0) {
+		printf("oops: trapframe with watchpoint set!\n");
+		goto boom;
+	}
+
+	if ((tf->tf_state.sf_ssr & SH5_CONREG_SR_STEP) != 0) {
+		printf("oops: trapframe with single-step set!\n");
+		goto boom;
+	}
+
+	if ((tf->tf_state.sf_spc & 3) != 1) {
+		printf("oops: trapframe with non-SHmedia SPC!\n");
+		goto boom;
+	}
+
+	if (USERMODE(tf)) {
+		if ((tf->tf_state.sf_ssr & SH5_CONREG_SR_IMASK_ALL) != 0) {
+			printf("oops: return to usermode with non-zero ipl\n");
+			goto boom;
+		}
+
+		if (tf->tf_state.sf_spc >= SH5_KSEG0_BASE) {
+			printf("oops: usermode PC is in kernel space!\n");
+			goto boom;
+		}
+	} else {
+		if (tf->tf_state.sf_spc < SH5_KSEG0_BASE) {
+			printf("oops: kernelmode PC is in user space!\n");
+			goto boom;
+		}
+
+		if ((u_long)tf->tf_state.sf_spc > (u_long)etext) {
+			printf("oops: kernelmode PC outside text segment!\n");
+			goto boom;
+		}
+	}
+
+	return;
+
+boom:
+	printf("oops: current trapframe address: %p\n", tf);
+	dump_trapframe(tf);
+#ifdef DDB
+	kdb_trap(0, tf);
+#endif
+	panic("validate_trapframe");
+}
+#endif
