@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.66 2001/09/27 09:55:10 minoura Exp $	*/
+/*	$NetBSD: locore.s,v 1.67 2001/12/05 18:04:35 atatat Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -252,7 +252,7 @@ Lisberr:
 /*
  * FP exceptions.
  */
-#include "opt_fpuemulate.h"
+#include "opt_fpu_emulate.h"
 ENTRY_NOPROFILE(fpfline)
 #if defined(M68040)
 	cmpl	#FPU_68040,_C_LABEL(fputype) | 64040 FPU?
