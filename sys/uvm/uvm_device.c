@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_device.c,v 1.22 2000/05/28 10:21:55 drochner Exp $	*/
+/*	$NetBSD: uvm_device.c,v 1.23 2000/06/24 21:26:16 pk Exp $	*/
 
 /*
  *
@@ -362,8 +362,10 @@ udv_detach(uobj)
 		 */
 
 		LIST_REMOVE(udv, u_list);
+		simple_unlock(&udv_lock);
 		if (udv->u_flags & UVM_DEVICE_WANTED)
 			wakeup(udv);
+		simple_unlock(&uobj->vmobjlock);
 		FREE(udv, M_TEMP);
 		break;	/* DONE! */
 
