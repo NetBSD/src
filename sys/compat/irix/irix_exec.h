@@ -1,4 +1,4 @@
-/*	$NetBSD: irix_exec.h,v 1.6 2002/04/14 21:50:50 manu Exp $ */
+/*	$NetBSD: irix_exec.h,v 1.7 2002/04/20 16:19:22 manu Exp $ */
 
 /*-
  * Copyright (c) 2001-2002 The NetBSD Foundation, Inc.
@@ -42,6 +42,12 @@
 #include <sys/types.h> 
 #include <sys/exec.h>
 #include <sys/exec_elf.h>
+
+#include <machine/vmparam.h>
+
+/* Address and size of shared arena used by usinit(3) on IRIX */
+#define IRIX_SH_ARENA_ADDR	0x200000
+#define IRIX_SH_ARENA_SZ	PAGE_SIZE
 
 /* IRIX specific per-process data */
 struct irix_emuldata {
