@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ie.c,v 1.56.4.2 1997/02/27 19:17:36 is Exp $	*/
+/*	$NetBSD: if_ie.c,v 1.56.4.3 1997/02/28 16:02:13 is Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994, 1995 Charles Hannum.
@@ -2055,6 +2055,7 @@ ieinit(sc)
 	struct ie_softc *sc;
 {
 	volatile struct ie_sys_ctl_block *scb = sc->scb;
+	struct ifnet *ifp = &sc->sc_ethercom.ec_if;
 	void *ptr;
 
 	ptr = (void *)ALIGN(scb + 1);
@@ -2092,7 +2093,7 @@ ieinit(sc)
 		cmd->com.ie_cmd_cmd = IE_CMD_IASETUP | IE_CMD_LAST;
 		cmd->com.ie_cmd_link = 0xffff;
 
-		bcopy(sc->sc_enaddr, (caddr_t)&cmd->ie_address,
+		bcopy(LLADDR(ifp->if_sadl), (caddr_t)&cmd->ie_address,
 		    sizeof cmd->ie_address);
 
 		if (command_and_wait(sc, IE_CU_START, cmd, IE_STAT_COMPL) ||
@@ -2183,10 +2184,8 @@ ieioctl(ifp, cmd, data)
 
 			if (ns_nullhost(*ina))
 				ina->x_host =
-				    *(union ns_host *)(sc->sc_enaddr);
+				    *(union ns_host *)LLADDR(ifp->if_sadl);
 			else {
-				bcopy(ina->x_host.c_host, sc->sc_enaddr,
-				    ETHER_ADDR_LEN);
 				bcopy(ina->x_host.c_host, LLADDR(ifp->if_sadl),
 				    ETHER_ADDR_LEN);
 			}
