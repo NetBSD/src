@@ -1,4 +1,4 @@
-	$NetBSD: syscalls.master,v 1.39 1996/11/15 22:44:28 jtc Exp $
+	$NetBSD: syscalls.master,v 1.40 1996/12/03 00:28:31 thorpej Exp $
 
 ;	@(#)syscalls.master	8.2 (Berkeley) 1/13/94
 
@@ -270,7 +270,7 @@
 158	STD		{ int sys_fstatfs(int fd, struct statfs *buf); }
 159	UNIMPL
 160	UNIMPL
-#ifdef NFSCLIENT
+#if defined(NFSCLIENT) || defined(NFSSERVER)
 161	STD		{ int sys_getfh(char *fname, fhandle_t *fhp); }
 #else
 161	UNIMPL		getfh
