@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_psstatus.c,v 1.26 2004/03/07 22:15:19 oster Exp $	*/
+/*	$NetBSD: rf_psstatus.c,v 1.27 2004/03/08 02:25:27 oster Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -37,7 +37,7 @@
  *****************************************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_psstatus.c,v 1.26 2004/03/07 22:15:19 oster Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_psstatus.c,v 1.27 2004/03/08 02:25:27 oster Exp $");
 
 #include <dev/raidframe/raidframevar.h>
 
@@ -69,10 +69,8 @@ static void rf_ShutdownPSStatus(void *);
 static void 
 rf_ShutdownPSStatus(void *arg)
 {
-	RF_Raid_t *raidPtr = (RF_Raid_t *) arg;
 
-	pool_destroy(&raidPtr->pss_pool);
-	pool_destroy(&raidPtr->pss_issued_pool);
+	pool_destroy(&rf_pools.pss);
 }
 
 int 
@@ -81,10 +79,8 @@ rf_ConfigurePSStatus(RF_ShutdownList_t **listp, RF_Raid_t *raidPtr,
 {
 
 	raidPtr->pssTableSize = RF_PSS_DEFAULT_TABLESIZE;
-	rf_pool_init(&raidPtr->pss_pool, sizeof(RF_ReconParityStripeStatus_t),
+	rf_pool_init(&rf_pools.pss, sizeof(RF_ReconParityStripeStatus_t),
 		     "raidpsspl", RF_MIN_FREE_PSS, RF_MAX_FREE_PSS);
-	rf_pool_init(&raidPtr->pss_issued_pool, raidPtr->numCol * sizeof(char),
-		     "raidpssissuedpl", RF_MIN_FREE_PSS, RF_MAX_FREE_PSS);
 	rf_ShutdownCreate(listp, rf_ShutdownPSStatus, raidPtr);
 
 	return (0);
@@ -257,10 +253,8 @@ rf_AllocPSStatus(RF_Raid_t *raidPtr)
 {
 	RF_ReconParityStripeStatus_t *p;
 
-	p = pool_get(&raidPtr->pss_pool, PR_WAITOK);
+	p = pool_get(&rf_pools.pss, PR_WAITOK);
 	memset(p, 0, sizeof(RF_ReconParityStripeStatus_t));
-	p->issued = pool_get(&raidPtr->pss_issued_pool, PR_WAITOK);
-	memset(p->issued, 0, raidPtr->numCol);
 	return (p);
 }
 
@@ -271,8 +265,7 @@ rf_FreePSStatus(RF_Raid_t *raidPtr, RF_ReconParityStripeStatus_t *p)
 	RF_ASSERT(p->blockWaitList == NULL);
 	RF_ASSERT(p->bufWaitList == NULL);
 
-	pool_put(&raidPtr->pss_issued_pool, p->issued);
-	pool_put(&raidPtr->pss_pool, p);
+	pool_put(&rf_pools.pss, p);
 }
 
 static void 
