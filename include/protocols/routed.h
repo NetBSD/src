@@ -1,4 +1,4 @@
-/*	$NetBSD: routed.h,v 1.8 1996/10/20 21:53:20 thorpej Exp $	*/
+/*	$NetBSD: routed.h,v 1.9 1996/11/04 21:29:46 christos Exp $	*/
 
 /*-
  * Copyright (c) 1983, 1989, 1993
@@ -62,10 +62,13 @@ extern "C" {
 #define RIP_PORT	520
 
 #if RIPVERSION == 1
+/* We include the V2 fields to get the right size */
 struct netinfo {
 	u_int16_t   rip_family;
 	u_int16_t   rip_tag;
 	u_int32_t   rip_dst;		/* destination net/host */
+	u_int32_t   rip_dst_mask;	/* destination mask (V2 only) */
+	u_int32_t   rip_router;		/* next host (V2 only) */
 	u_int32_t   rip_metric;		/* cost of route */
 };
 #else
