@@ -1,4 +1,4 @@
-/*	$NetBSD: mach_message.c,v 1.37 2003/12/09 11:29:01 manu Exp $ */
+/*	$NetBSD: mach_message.c,v 1.38 2003/12/18 01:10:20 grant Exp $ */
 
 /*-
  * Copyright (c) 2002-2003 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mach_message.c,v 1.37 2003/12/09 11:29:01 manu Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mach_message.c,v 1.38 2003/12/18 01:10:20 grant Exp $");
 
 #include "opt_ktrace.h"
 #include "opt_compat_mach.h" /* For COMPAT_MACH in <sys/ktrace.h> */
@@ -132,7 +132,7 @@ mach_sys_msg_overwrite_trap(l, v, retval)
 
 	if ((opt & MACH_RCV_MSG) && (*retval == MACH_MSG_SUCCESS)) {
 		/* 
-		 * Find a buffer for the reply
+		 * Find a buffer for the reply.
 		 */
 		if (SCARG(uap, rcv_msg) != NULL)
 			msg = SCARG(uap, rcv_msg);
@@ -210,7 +210,7 @@ mach_msg_send(l, msg, option, send_size)
 	}
 
 	/* 
-	 * Check that the process has send a send right on 
+	 * Check that the process has a send right on 
 	 * the remote port. 
 	 */
 	rights = (MACH_PORT_TYPE_SEND | MACH_PORT_TYPE_SEND_ONCE);
@@ -302,7 +302,7 @@ skip_null_lr:
 		/*
 		 * 2) Overwrite kernel memory after the end of the
 		 *    reply message buffer. This check is the
-		 *    responsability of the server.
+		 *    responsibility of the server.
 		 */
 
 
@@ -350,7 +350,7 @@ skip_null_lr:
 #endif
 
 		/*
-		 * Queue the reply
+		 * Queue the reply.
 		 */
 		mp = lr->mr_port;
 		(void)mach_message_get(rm, reply_size, mp, NULL);
@@ -393,7 +393,7 @@ out1:
 	    mp->mp_recv->mr_sethead);
 #endif
 	/*
-	 * Drop any right carried by the message
+	 * Drop any right carried by the message.
 	 */
 	if (lr != NULL) {
 		bits = MACH_MSGH_LOCAL_BITS(sm->msgh_bits);
@@ -406,7 +406,7 @@ out1:
 	}
 
 	/*
-	 * Wakeup any process awaiting for this message
+	 * Wakeup any process awaiting for this message.
 	 */
 	wakeup(mp->mp_recv->mr_sethead);
 
@@ -442,7 +442,7 @@ mach_msg_recv(l, urm, option, recv_size, timeout, mn)
 		timeout = 0;
 
 	/* 
-	 * Check for receive right on the port 
+	 * Check for receive right on the port.
 	 */
 	mr = mach_right_check(mn, l, MACH_PORT_TYPE_RECEIVE);
 	if (mr == NULL) {
@@ -540,7 +540,7 @@ mach_msg_recv(l, urm, option, recv_size, timeout, mn)
 				return MACH_RCV_INTERRUPTED;
 
 			/* 
-			 * Check we did not loose the receive right
+			 * Check we did not lose the receive right
 			 * while we were sleeping.
 			 */
 			if ((mach_right_check(mn, l, 
@@ -610,8 +610,8 @@ mach_msg_recv(l, urm, option, recv_size, timeout, mn)
 		printf("mach_msg: non kernel-reply message\n");
 #endif
 		/* 
-		 * Turn local and remote port names into. 
-		 * names in the local process namespace
+		 * Turn local and remote port names into
+		 * names in the local process namespace.
 		 */
 		bits = MACH_MSGH_LOCAL_BITS(mm->mm_msg->msgh_bits);
 		mnp = &mm->mm_msg->msgh_local_port;
@@ -643,7 +643,7 @@ mach_msg_recv(l, urm, option, recv_size, timeout, mn)
 	}
 
 	/*
-	 * Copy the message to userland
+	 * Copy the message to userland.
 	 */
 	if ((error = copyout(mm->mm_msg, urm, mm->mm_size)) != 0) {
 		ret = MACH_RCV_INVALID_DATA;
@@ -707,7 +707,7 @@ mach_get_target_task(l, mp)
 
 	/* 
 	 * We need per thread kernel ports to avoid 
-	 * seeing always the same thread here
+	 * always seeing the same thread here.
 	 */
 	tp = (struct proc *)mp->mp_data;
 	tl = proc_representative_lwp(tp);
@@ -746,7 +746,7 @@ mach_drop_rights(mr, bits)
 }
 
 /* 
- * When a messages is transmitted from one process to another one, 
+ * When a messages is transmitted from one process to another, 
  * we need to make sure the port names are in the receiver process
  * namespace. 
  */
@@ -916,8 +916,8 @@ mach_trade_rights_complex(l, mm)
 			ludata = NULL;
 
 			/* 
-			 * XXX This is unefficient for large chunk of OOL
-			 * memory. Think about remapping COW when possible
+			 * XXX This is inefficient for large chunk of OOL
+			 * memory. Think about remapping COW when possible.
 			 */ 
 
 			/* This allocates kdata */
@@ -959,7 +959,7 @@ mach_ool_copyin(p, uaddr, kaddr, size, flags)
 	/* 
 	 * Sanity check OOL size to avoid DoS on malloc: useless once
 	 * we remap data instead of copying it. In the meantime, 
-	 * disabled since it makes some OOL transfer fail 
+	 * disabled since it makes some OOL transfer fail.
 	 */
 #if 0
 	if (size > MACH_MAX_OOL_LEN)
@@ -1002,7 +1002,7 @@ mach_ool_copyout(p, kaddr, uaddr, size, flags)
 	/* 
 	 * Sanity check OOL size to avoid DoS on malloc: useless once
 	 * we remap data instead of copying it. In the meantime, 
-	 * disabled since it makes some OOL transfer fail 
+	 * disabled since it makes some OOL transfer fail.
 	 */
 #if 0
 	if (size > MACH_MAX_OOL_LEN) {

@@ -1,4 +1,4 @@
-/*	$NetBSD: mach_thread.h,v 1.13 2003/11/13 13:40:39 manu Exp $ */
+/*	$NetBSD: mach_thread.h,v 1.14 2003/12/18 01:10:20 grant Exp $ */
 
 /*-
  * Copyright (c) 2002-2003 The NetBSD Foundation, Inc.
@@ -188,7 +188,7 @@ typedef struct {
 	mach_msg_trailer_t rep_trailer;
 } mach_thread_set_state_reply_t;
 
-/* Theses are machine dependent functions */
+/* These are machine dependent functions */
 int mach_thread_get_state_machdep(struct lwp *, int, void *, int *);
 int mach_thread_set_state_machdep(struct lwp *, int, void *);
 void mach_create_thread_child(void *);
