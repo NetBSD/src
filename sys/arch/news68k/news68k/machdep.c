@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.22 2001/07/07 05:09:44 tsutsui Exp $	*/
+/*	$NetBSD: machdep.c,v 1.23 2001/07/07 06:24:00 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -508,7 +508,7 @@ cpu_init_kcore_hdr()
 	cpu_kcore_hdr_t *h = &cpu_kcore_hdr;
 	struct m68k_kcore_hdr *m = &h->un._m68k;
 
-	bzero(&cpu_kcore_hdr, sizeof(cpu_kcore_hdr));
+	memset(&cpu_kcore_hdr, 0, sizeof(cpu_kcore_hdr));
 
 	/*
 	 * Initialize the `dispatcher' portion of the header.
