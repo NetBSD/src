@@ -1,4 +1,4 @@
-/*	$NetBSD: ns_pcb.h,v 1.7 1996/02/13 22:14:05 christos Exp $	*/
+/*	$NetBSD: ns_pcb.h,v 1.8 1997/07/18 19:30:42 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1984, 1985, 1986, 1987, 1993
@@ -50,8 +50,8 @@ struct nspcb {
 	struct	ns_addr nsp_lastdst;	/* validate cached route for dg socks*/
 	long	nsp_notify_param;	/* extra info passed via ns_pcbnotify*/
 	short	nsp_flags;
-	u_char	nsp_dpt;		/* default packet type for idp_output*/
-	u_char	nsp_rpt;		/* last received packet type by
+	u_int8_t nsp_dpt;		/* default packet type for idp_output*/
+	u_int8_t nsp_rpt;		/* last received packet type by
 								idp_input() */
 };
 

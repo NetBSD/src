@@ -1,4 +1,4 @@
-/*	$NetBSD: ns.h,v 1.9 1996/09/08 14:50:31 mycroft Exp $	*/
+/*	$NetBSD: ns.h,v 1.10 1997/07/18 19:30:35 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1984, 1985, 1986, 1987, 1993
@@ -89,24 +89,24 @@
  * NS addressing
  */
 union ns_host {
-	u_char	c_host[6];
-	u_short	s_host[3];
+	u_int8_t	c_host[6];
+	u_int16_t	s_host[3];
 };
 
 union ns_net {
-	u_char	c_net[4];
-	u_short	s_net[2];
+	u_int8_t	c_net[4];
+	u_int16_t	s_net[2];
 };
 
 union ns_net_u {
 	union ns_net	net_e;
-	u_long		long_e;
+	u_int32_t	long_e;
 };
 
 struct ns_addr {
 	union ns_net	x_net;
 	union ns_host	x_host;
-	u_short	x_port;
+	u_int16_t	x_port;
 };
 
 /*
@@ -121,7 +121,7 @@ struct sockaddr_ns {
 #define sns_port sns_addr.x_port
 
 #ifdef vax
-#define ns_netof(a) (*(long *) & ((a).x_net)) /* XXX - not needed */
+#define ns_netof(a) (*(int32_t *) & ((a).x_net)) /* XXX - not needed */
 #endif
 #define ns_neteqnn(a,b) (((a).s_net[0]==(b).s_net[0]) && \
 					((a).s_net[1]==(b).s_net[1]))

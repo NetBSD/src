@@ -1,4 +1,4 @@
-/*	$NetBSD: ns_cksum.c,v 1.4 1996/03/14 18:44:41 christos Exp $	*/
+/*	$NetBSD: ns_cksum.c,v 1.5 1997/07/18 19:30:36 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1982, 1992, 1993
@@ -49,7 +49,7 @@
 #define ADDCARRY(x)  { if ((x) > 65535) (x) -= 65535; }
 #define FOLD(x) {l_util.l = (x); (x) = l_util.s[0] + l_util.s[1]; ADDCARRY(x);}
 
-u_short
+u_int16_t
 ns_cksum(m, len)
 	register struct mbuf *m;
 	register int len;
@@ -78,9 +78,9 @@ ns_cksum(m, len)
 			 * ones-complement add it into the checksum.
 			 */
 #if BYTE_ORDER == BIG_ENDIAN
-			sum  += *(u_char *)w;
+			sum  += *(u_int8_t *)w;
 #else
-			sum  += *(u_char *)w << 8;
+			sum  += *(u_int8_t *)w << 8;
 #endif
 			sum += sum;
 			w = (u_int16_t *)(1 + (char *)w);
@@ -131,12 +131,12 @@ ns_cksum(m, len)
 		goto commoncase;
 uuuuglyy:
 #if BYTE_ORDER == BIG_ENDIAN
-#define ww(n) (((u_char *)w)[n + n + 1])
-#define vv(n) (((u_char *)w)[n + n])
+#define ww(n) (((u_int8_t *)w)[n + n + 1])
+#define vv(n) (((u_int8_t *)w)[n + n])
 #else
 #if BYTE_ORDER == LITTLE_ENDIAN
-#define vv(n) (((u_char *)w)[n + n + 1])
-#define ww(n) (((u_char *)w)[n + n])
+#define vv(n) (((u_int8_t *)w)[n + n + 1])
+#define ww(n) (((u_int8_t *)w)[n + n])
 #endif
 #endif
 		sum2 = 0;
@@ -185,9 +185,9 @@ uuuuglyy:
 commoncase:
 		if (mlen == -1) {
 #if BYTE_ORDER == BIG_ENDIAN
-			sum += *(u_char *)w << 8;
+			sum += *(u_int8_t *)w << 8;
 #else
-			sum += *(u_char *)w;
+			sum += *(u_int8_t *)w;
 #endif
 		}
 		FOLD(sum);
