@@ -24,7 +24,7 @@
 .\" ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.\"   $NetBSD: apm.4,v 1.12 2001/07/08 17:22:53 wiz Exp $
+.\"   $NetBSD: apm.4,v 1.13 2001/09/10 06:07:56 perry Exp $
 .\"
 .Dd May 18, 1996
 .Dt APM 4 i386
@@ -124,14 +124,22 @@ Fetch the current power status into an
 structure.
 .Bd -literal
 struct apm_power_info {
-      u_char battery_state;
-      u_char ac_state;
-      u_char battery_life;
-      u_char spare1;
-      u_int minutes_left;             /* estimate */
-      u_int spare2[6];
+	u_char battery_state;
+	u_char ac_state;
+	u_char battery_life;
+	u_char spare1;
+	u_int minutes_left;		/* estimate */
+	u_int nbattery;		
+	u_int batteryid;
+	u_int spare2[4];
 };
 .Ed
+.Pp
+The structure should be zeroed (except for
+.Va batteryid )
+before
+being passed.
+.Pp
 .Va battery_state
 is one of
 .Dv APM_BATT_HIGH ,
@@ -140,6 +148,7 @@ is one of
 .Dv APM_BATT_CHARGING ,
 or
 .Dv APM_BATT_UNKNOWN .
+.Pp
 .Va ac_state
 is one of
 .Dv APM_AC_OFF ,
@@ -147,12 +156,38 @@ is one of
 .Dv APM_AC_BACKUP ,
 or
 .Dv APM_AC_UNKNOWN .
+.Pp
 .Va battery_life
 is the percentage estimated remaining normal battery life (or 0 if the
 BIOS cannot provide an estimate).
+.Pp
 .Va minutes_left
 is an estimated remaining lifetime (or 0 if the BIOS cannot provide an
 estimate).
+.Pp
+.Va nbattery
+is the number of batteries in the system. If the system is using APM
+v1.1 or earlier, nbattery will always return 0.
+.Pp
+Batteries are numbered from a base of 1.
+If the passed value of
+.Va batteryid
+is 0, the returned values will reflect the percentage remaining, minutes
+left, etc. of all of the system's batteries taken together.
+If the passed value of
+.Va batteryid
+is nonzero, the return values will reflect the indicated
+battery's percentage remaining, minutes left, etc.
+It is an error to set
+.Va batteryid
+to a value greater than that returned by 
+.Va nbattery .
+If the system is using APM v1.1 or earlier, individual batteries
+cannot be queried, and 
+.Va nbattery
+will always return 0.
+.Va batteryid
+is always set to the passed value upon return.
 .It Dv APM_IOC_NEXTEVENT
 Fetch the next event from the APM BIOS into an
 .Va apm_event_info
