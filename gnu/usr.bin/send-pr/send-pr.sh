@@ -24,6 +24,7 @@
 VERSION=xVERSIONx
 
 # The submitter-id for your site.
+[ -z "$SUBMITTER" ] &&
 SUBMITTER=xSUBMITTERx
 
 # Where the GNATS directory lives, if at all.
