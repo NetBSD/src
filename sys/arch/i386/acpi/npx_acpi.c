@@ -1,4 +1,4 @@
-/* $NetBSD: npx_acpi.c,v 1.3 2003/11/03 06:03:47 kochi Exp $ */
+/* $NetBSD: npx_acpi.c,v 1.4 2003/11/03 17:54:39 mycroft Exp $ */
 
 /*
  * Copyright (c) 2002 Jared D. McNeill <jmcneill@invisible.ca>
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: npx_acpi.c,v 1.3 2003/11/03 06:03:47 kochi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: npx_acpi.c,v 1.4 2003/11/03 17:54:39 mycroft Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -93,10 +93,8 @@ npx_acpi_attach(struct device *parent, struct device *self, void *aux)
 	/* parse resources */
 	rv = acpi_resource_parse(&sc->sc_dev, aa->aa_node, &res,
 	    &acpi_resource_parse_ops_default);
-	if (rv != AE_OK) {
-		printf("%s: unable to parse resources\n", sc->sc_dev.dv_xname);
+	if (rv != AE_OK)
 		return;
-	}
 
 	/* find our i/o registers */
 	io = acpi_res_io(&res, 0);
