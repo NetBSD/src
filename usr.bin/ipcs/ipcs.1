@@ -1,0 +1,126 @@
+.\"
+.\" Copyright (c) 1994 SigmaSoft, Th. Lockert
+.\" All rights reserved.
+.\"
+.\" Redistribution and use in source and binary forms, with or without
+.\" modification, are permitted provided that the following conditions
+.\" are met:
+.\" 1. Redistributions of source code must retain the above copyright
+.\"    notice, this list of conditions and the following disclaimer.
+.\" 2. Redistributions in binary form must reproduce the above copyright
+.\"    notice, this list of conditions and the following disclaimer in the
+.\"    documentation and/or other materials provided with the distribution.
+.\" 3. All advertising materials mentioning features or use of this software
+.\"    must display the following acknowledgement:
+.\"      This product includes software developed by SigmaSoft, Th. Lockert.
+.\" 3. The name of the author may not be used to endorse or promote products
+.\"    derived from this software without specific prior written permission
+.\"
+.\" THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR
+.\" IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
+.\" OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
+.\" IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY DIRECT, INDIRECT,
+.\" INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT
+.\" NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
+.\" DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
+.\" THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+.\" (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
+.\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+.\"
+.\"	$Id: ipcs.1,v 1.1 1994/06/18 21:09:42 cgd Exp $
+.\"
+.Dd June 4, 1994
+.Dt "IPCS" 1
+.Os NetBSD 0.9b
+.Sh NAME
+.Nm ipcs
+.Nd report interprocess communications facilities status
+.\"
+.Sh SYNOPSIS
+.Nm ipcs
+.Op Fl MmQqSsabcoptT
+.Op Fl C Ar namelist
+.Op Fl N Ar memory
+.Sh DESCRIPTION
+The
+.Nm ipcs
+program provides information on active SVID interprocess communication
+facilities on the system.
+.Sh OPTIONS
+The information is displayed in columns and is controlled by the following
+options:
+.Bl -tag -width "-C namelist"
+.It Nm -M
+Displays system information about shared memory
+.It Nm -m
+Displays information about active shared memory
+.It Nm -Q
+Displays system information about messages queues
+.It Nm -q
+Displays information about active message queues
+.It Nm -S
+Displays system information about semaphores
+.It Nm -s
+Displays information about active semaphores
+.It Nm -T
+Displays system information on both shared memory, message queues
+and semaphores.
+.El
+.Pp
+If any of the options -M, -m, -Q, -q, -S or -s are specified, only
+information about that item is listed.  If none of those are
+specified, information about all active interprocess facilities are
+listed, and if the -T option is given all system information about
+the interprocess facilities are listed.
+.Pp
+For the active status listings extra information can be listed with
+the following options:
+.Bl -tag -width "-C namelist"
+.It Nm -a
+Select all the options (short for -b, -c, -o, -p and -t)
+.It Nm -b
+Show the maximum allowed size (number of bytes in a message queue,
+size of shared memory segment or number of semaphores in each set)
+.It Nm -c
+Show the creator's name and group
+.It Nm -o
+Show outstanding usage (number of messages or number of processes
+attached to a shared memory segment)
+.It Nm -p
+Show the process ID information (last process to send and receive
+a message, process that created semaphore or last process to attach
+or detach shared memory)
+.It Nm -t
+Show access times (last control operation, last send or receive,
+last attach or detach of shared memory, last operation on a
+semaphore)
+.El
+There are also options to control the name list and memory image
+to be used as follows:
+.Bl -tag -width "-C namelist"
+.It Nm "-C namelist"
+Use specified namelist in place of /netbsd
+.It Nm "-N memory"
+Use specified file for memory in place of /dev/kmem
+.El
+.Sh RESTRICTIONS
+The system may well change things around while
+.Nm ipcs
+is running.
+.Sh FILES
+.Bl -tag -width /etc/passwd -compact
+.It Pa /netbsd
+System namelist
+.It Pa /dev/kmem
+Memory
+.It Pa /etc/passwd
+Username lookup
+.It Pa /etc/group
+Group name lookup
+.El
+.Sh SEE ALSO
+.Xr ipcrm 1
+.Sh AUTHOR
+.Bl -tag
+Thorsten Lockert <tholo@sigmasoft.com>
+.El
