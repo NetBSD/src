@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs.h,v 1.287 2000/12/30 04:39:03 eeh Exp $	*/
+/*	$NetBSD: pcidevs.h,v 1.288 2000/12/31 14:04:26 ad Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.281 2000/12/30 04:38:02 eeh Exp 
+ *	NetBSD: pcidevs,v 1.282 2000/12/31 14:03:24 ad Exp 
  */
 
 /*
@@ -1294,7 +1294,10 @@
 #define	PCI_PRODUCT_MOT_MPC106	0x0002		/* MPC106 \"Grackle\" Host Bridge */
 
 /* Mylex products */
-#define	PCI_PRODUCT_MYLEX_960P	0x0001		/* DAC960P RAID controller */
+#define	PCI_PRODUCT_MYLEX_RAID_V2	0x0001		/* DAC960 RAID (v2 interface) */
+#define	PCI_PRODUCT_MYLEX_RAID_V3	0x0002		/* DAC960 RAID (v3 interface) */
+#define	PCI_PRODUCT_MYLEX_RAID_V4	0x0010		/* DAC960 RAID (v4 interface) */
+#define	PCI_PRODUCT_MYLEX_RAID_V5	0x0020		/* DAC960 RAID (v5 interface) */
 
 /* Mutech products */
 #define	PCI_PRODUCT_MUTECH_MV1000	0x0001		/* MV1000 */
