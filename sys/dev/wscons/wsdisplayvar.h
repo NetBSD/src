@@ -1,4 +1,4 @@
-/* $NetBSD: wsdisplayvar.h,v 1.22 2002/07/04 14:37:14 junyoung Exp $ */
+/* $NetBSD: wsdisplayvar.h,v 1.23 2002/10/15 17:38:08 junyoung Exp $ */
 
 /*
  * Copyright (c) 1996, 1997 Christopher G. Demetriou.  All rights reserved.
@@ -86,6 +86,7 @@ struct wsscreen_descr {
 #define WSSCREEN_HILIT		4	/* can highlight (however) */
 #define WSSCREEN_BLINK		8	/* can blink */
 #define WSSCREEN_UNDERLINE	16	/* can underline */
+	void *modecookie;
 };
 
 struct wsdisplay_font;
