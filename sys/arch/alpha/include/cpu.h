@@ -1,4 +1,4 @@
-/* $NetBSD: cpu.h,v 1.46 2000/08/25 01:04:06 thorpej Exp $ */
+/* $NetBSD: cpu.h,v 1.47 2000/11/20 19:25:43 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1998, 1999, 2000 The NetBSD Foundation, Inc.
@@ -131,7 +131,7 @@ struct cpu_info {
 	u_long ci_intrdepth;		/* interrupt trap depth */
 #if defined(MULTIPROCESSOR)
 	u_long ci_flags;		/* flags; see below */
-	u_long ci_ipis;			/* interprocessor interrupts pending */
+	__volatile u_long ci_ipis;	/* interprocessor interrupts pending */
 #endif
 };
 
