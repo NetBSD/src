@@ -1,4 +1,4 @@
-/*	$NetBSD: sun3_startup.c,v 1.31 1995/01/18 17:22:42 gwr Exp $	*/
+/*	$NetBSD: sun3_startup.c,v 1.32 1995/02/07 04:39:42 gwr Exp $	*/
 
 /*
  * Copyright (c) 1994 Gordon W. Ross
@@ -142,7 +142,7 @@ static void sun3_mode_normal()
  * also put our hardware state back into place after
  * the PROM "c" (continue) command is given.
  */
-void sun3_rom_abort()
+void sun3_mon_abort()
 {
 	int s = splhigh();
 
@@ -158,7 +158,7 @@ void sun3_rom_abort()
 	 * and then do a trap.  Needs PROM vector table in RAM.
 	 */
 	old_vector_table[32] = (int)romp->abortEntry;
-	asm(" trap #0 ; _sun3_rom_continued: nop");
+	asm(" trap #0 ; _sun3_mon_continued: nop");
 
 	/* We have continued from a PROM abort! */
 
@@ -166,7 +166,7 @@ void sun3_rom_abort()
 	splx(s);
 }
 
-void sun3_rom_halt()
+void sun3_mon_halt()
 {
 	(void) splhigh();
 	sun3_mode_monitor();
@@ -174,7 +174,7 @@ void sun3_rom_halt()
 	/*NOTREACHED*/
 }
 
-void sun3_rom_reboot(bootstring)
+void sun3_mon_reboot(bootstring)
 	char *bootstring;
 {
 	(void) splhigh();
