@@ -1,4 +1,4 @@
-/*	$NetBSD: exec_conf.c,v 1.44 2000/11/21 00:37:55 jdolecek Exp $	*/
+/*	$NetBSD: exec_conf.c,v 1.45 2000/11/22 03:48:34 itojun Exp $	*/
 
 /*
  * Copyright (c) 1993, 1994 Christopher G. Demetriou
@@ -124,6 +124,7 @@ int ELF64NAME2(netbsd,probe)(struct proc *, struct exec_package *,
 #endif
 
 #ifdef COMPAT_OSF1
+#include <compat/osf1/osf1.h>
 #include <compat/osf1/osf1_exec.h>
 #endif
 
@@ -132,8 +133,11 @@ int ELF64NAME2(netbsd,probe)(struct proc *, struct exec_package *,
 #endif
 
 extern const struct emul emul_netbsd;
-# ifdef COMPAT_AOUT
+#ifdef COMPAT_AOUT
 extern const struct emul emul_netbsd_aout;
+#endif
+#ifdef COMPAT_OSF1
+extern const struct emul emul_osf1;
 #endif
 
 const struct execsw execsw[] = {
@@ -167,7 +171,7 @@ const struct execsw execsw[] = {
 	  &emul_osf1, 0,
   	  howmany(OSF1_MAX_AUX_ENTRIES * sizeof (struct osf1_auxv) +
 	    2 * (MAXPATHLEN + 1), sizeof (char *)), /* exec & loader names */
-	  0, osf1_copyargs, cpu_exec_ecoff_setregs }, /* OSF1 ecoff binaries */
+	  osf1_copyargs, cpu_exec_ecoff_setregs }, /* OSF1 ecoff binaries */
 #endif /* COMPAT_OSF1 */
 	{ ECOFF_HDR_SIZE, exec_ecoff_makecmds,
 	  { ecoff_probe_func: cpu_exec_ecoff_probe },
