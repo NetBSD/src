@@ -1,4 +1,4 @@
-/*	$NetBSD: scsipiconf.h,v 1.34 1999/12/23 21:23:29 leo Exp $	*/
+/*	$NetBSD: scsipiconf.h,v 1.35 2000/01/11 15:32:37 pk Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.
@@ -60,7 +60,6 @@
 typedef	int	boolean;
 
 #include <sys/queue.h>
-#include <machine/cpu.h>
 #include <dev/scsipi/scsipi_debug.h>
 
 /*
