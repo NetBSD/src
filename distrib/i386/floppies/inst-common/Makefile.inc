@@ -1,4 +1,4 @@
-#	$Id: Makefile.inc,v 1.4 1995/05/06 06:51:12 jtc Exp $
+#	$Id: Makefile.inc,v 1.5 1995/05/12 21:16:03 cgd Exp $
 
 # TOP is assumed to be defined by Makefile including this one.
 
@@ -37,7 +37,7 @@ unconfig:
 	-/bin/rm -f ${IMAGE}
 
 ${CBIN}.mk ${CBIN}.cache ${CBIN}.c: ${CRUNCHCONF}
-	crunchgen ${CRUNCHCONF}
+	crunchgen -D ${TOP}/../../.. -L ${DESTDIR}/usr/lib ${CRUNCHCONF}
 
 ${CBIN}: ${CBIN}.mk ${CBIN}.cache ${CBIN}.c
 	make -f ${CBIN}.mk all
