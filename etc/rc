@@ -1,4 +1,4 @@
-#	$NetBSD: rc,v 1.85 1997/07/31 03:35:39 perry Exp $
+#	$NetBSD: rc,v 1.86 1997/08/03 22:24:20 perry Exp $
 #	originally from: @(#)rc	8.2 (Berkeley) 3/17/94
 
 # System startup script run by init on autoboot
@@ -408,6 +408,13 @@ if [ "$mopd_flags" != NO ]; then
 		mopd_flags="-a"
 	fi
 	echo -n ' mopd';		mopd $mopd_flags
+fi
+
+if [ "$apmd_flags" != NO ]; then
+	if [ "$apmd_flags" = DEFAULT ]; then
+		apmd_flags=""
+	fi
+	echo -n ' apmd';		apmd $apmd_flags
 fi
 
 if [ "$inetd_flags" != NO ] && [ -r /etc/inetd.conf ]; then
