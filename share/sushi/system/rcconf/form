@@ -1,4 +1,4 @@
-# $NetBSD: form,v 1.4 2001/10/30 08:44:57 augustss Exp $
+# $NetBSD: form,v 1.5 2002/02/21 20:00:13 garbled Exp $
 script:script1,do_rcshutdown	Run /etc/rc.shutdown?
 iscript:3,1,999,script2,rcshutdown_timeout	Number of seconds before terminating shutdown
 escript:15,script2,hostname	Hostname, if blank use /etc/myname
@@ -20,6 +20,8 @@ escript:15,script2,newsyslog_flags	Flags to pass newsyslog
 escript:1,script2,securelevel	If non-blank, set securelevel early in boot
 script:script1,ipfilter		Start ipfiltering?
 script:script1,ipnat		Start ipnat NAT daemon?
+script:script1,ipfs		Save and load ipf/ipnat state at boot?
+escript:15,script2,ipfs_flags	Flags to pass ipfs
 script:script1,ipsec		Start ipsec security daemon?
 script:script1,racoon		Start IKE daemon?
 script:script1,ipmon		Write ipfilter messages to syslog?
