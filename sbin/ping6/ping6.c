@@ -1,5 +1,5 @@
-/*	$NetBSD: ping6.c,v 1.25 2000/12/02 02:54:21 itojun Exp $	*/
-/*	$KAME: ping6.c,v 1.105 2000/12/02 02:48:41 itojun Exp $	*/
+/*	$NetBSD: ping6.c,v 1.26 2000/12/22 00:34:46 itojun Exp $	*/
+/*	$KAME: ping6.c,v 1.107 2000/12/22 00:32:44 itojun Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -81,7 +81,7 @@ static char sccsid[] = "@(#)ping.c	8.1 (Berkeley) 6/5/93";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: ping6.c,v 1.25 2000/12/02 02:54:21 itojun Exp $");
+__RCSID("$NetBSD: ping6.c,v 1.26 2000/12/22 00:34:46 itojun Exp $");
 #endif
 #endif
 
@@ -568,6 +568,44 @@ main(argc, argv)
 
 	(void)memcpy(&dst, res->ai_addr, res->ai_addrlen);
 
+	if ((s = socket(res->ai_family, res->ai_socktype, res->ai_protocol)) < 0)
+		err(1, "socket");
+
+	/*
+	 * let the kerel pass extension headers of incoming packets,
+	 * for privileged socket options
+	 */
+	if ((options & F_VERBOSE) != 0) {
+		int opton = 1;
+
+#ifdef IPV6_RECVHOPOPTS
+		if (setsockopt(s, IPPROTO_IPV6, IPV6_RECVHOPOPTS, &opton,
+			       sizeof(opton)))
+			err(1, "setsockopt(IPV6_RECVHOPOPTS)");
+#else  /* old adv. API */
+		if (setsockopt(s, IPPROTO_IPV6, IPV6_HOPOPTS, &opton,
+			       sizeof(opton)))
+			err(1, "setsockopt(IPV6_HOPOPTS)");
+#endif
+#ifdef IPV6_RECVDSTOPTS
+		if (setsockopt(s, IPPROTO_IPV6, IPV6_RECVDSTOPTS, &opton,
+			       sizeof(opton)))
+			err(1, "setsockopt(IPV6_RECVDSTOPTS)");
+#else  /* old adv. API */
+		if (setsockopt(s, IPPROTO_IPV6, IPV6_DSTOPTS, &opton,
+			       sizeof(opton)))
+			err(1, "setsockopt(IPV6_DSTOPTS)");
+#endif
+#ifdef IPV6_RECVRTHDRDSTOPTS
+		if (setsockopt(s, IPPROTO_IPV6, IPV6_RECVRTHDRDSTOPTS, &opton,
+			       sizeof(opton)))
+			err(1, "setsockopt(IPV6_RECVRTHDRDSTOPTS)");
+#endif
+	}
+
+	/* revoke root privilege */
+	setuid(getuid());
+
 	if (options & F_FLOOD && options & F_INTERVAL)
 		errx(1, "-f and -i incompatible options");
 
@@ -601,9 +639,6 @@ main(argc, argv)
 	for (i = 0; i < sizeof(nonce); i += sizeof(u_int32_t))
 		*((u_int32_t *)&nonce[i]) = arc4random();
 #endif
-
-	if ((s = socket(res->ai_family, res->ai_socktype, res->ai_protocol)) < 0)
-		err(1, "socket");
 
 	hold = 1;
 
@@ -666,7 +701,6 @@ main(argc, argv)
 #endif /*ICMP6_FILTER*/
 
 	/* let the kerel pass extension headers of incoming packets */
-	/* TODO: implement parsing routine */
 	if ((options & F_VERBOSE) != 0) {
 		int opton = 1;
 
@@ -678,29 +712,6 @@ main(argc, argv)
 		if (setsockopt(s, IPPROTO_IPV6, IPV6_RTHDR, &opton,
 			       sizeof(opton)))
 			err(1, "setsockopt(IPV6_RTHDR)");
-#endif
-#ifdef IPV6_RECVHOPOPTS
-		if (setsockopt(s, IPPROTO_IPV6, IPV6_RECVHOPOPTS, &opton,
-			       sizeof(opton)))
-			err(1, "setsockopt(IPV6_RECVHOPOPTS)");
-#else  /* old adv. API */
-		if (setsockopt(s, IPPROTO_IPV6, IPV6_HOPOPTS, &opton,
-			       sizeof(opton)))
-			err(1, "setsockopt(IPV6_HOPOPTS)");
-#endif
-#ifdef IPV6_RECVDSTOPTS
-		if (setsockopt(s, IPPROTO_IPV6, IPV6_RECVDSTOPTS, &opton,
-			       sizeof(opton)))
-			err(1, "setsockopt(IPV6_RECVDSTOPTS)");
-#else  /* old adv. API */
-		if (setsockopt(s, IPPROTO_IPV6, IPV6_DSTOPTS, &opton,
-			       sizeof(opton)))
-			err(1, "setsockopt(IPV6_DSTOPTS)");
-#endif
-#ifdef IPV6_RECVRTHDRDSTOPTS
-		if (setsockopt(s, IPPROTO_IPV6, IPV6_RECVRTHDRDSTOPTS, &opton,
-			       sizeof(opton)))
-			err(1, "setsockopt(IPV6_RECVRTHDRDSTOPTS)");
 #endif
 	}
 
