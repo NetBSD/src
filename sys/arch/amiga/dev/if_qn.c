@@ -1,4 +1,4 @@
-/*	$NetBSD: if_qn.c,v 1.6 1996/05/07 00:46:47 thorpej Exp $	*/
+/*	$NetBSD: if_qn.c,v 1.7 1996/06/18 20:50:00 is Exp $	*/
 
 /*
  * Copyright (c) 1995 Mika Kortelainen
@@ -70,6 +70,7 @@
 
 #define QN_DEBUG
 #define QN_DEBUG1_no /* hides some old tests */
+#define QN_CHECKS_no /* adds some checks (not needed in normal situations) */
 
 #include "bpfilter.h"
 
@@ -168,7 +169,7 @@ static	u_short qn_put __P((u_short volatile *, struct mbuf *));
 static	void qn_rint __P((struct qn_softc *, u_short));
 static	void qn_flush __P((struct qn_softc *));
 static	void inline word_copy_from_card __P((u_short volatile *, u_short *, u_short));
-static	void inline word_copy_to_card __P((u_short *, u_short volatile *, u_short));
+static	void inline word_copy_to_card __P((u_short *, u_short volatile *, register u_short));
 static	void qn_get_packet __P((struct qn_softc *, u_short)); 
 #ifdef QN_DEBUG1
 static	void qn_dump __P((struct qn_softc *));
@@ -430,7 +431,6 @@ qnstart(ifp)
 	 * that RAM is not visible to the host but is read from FIFO)
 	 *
 	 */
-	log(LOG_INFO, "NBPFILTER... no-one has tested this with qn.\n");
 	if (sc->sc_bpf)
 		bpf_mtap(sc->sc_bpf, m);
 #endif
@@ -481,19 +481,16 @@ static void inline
 word_copy_to_card(a, card, len)
 	u_short *a;
 	u_short volatile *card;
-	u_short len;
+	register u_short len;
 {
-	register u_short l = len/2;
+	/*register u_short l = len/2;*/
 
-	while (l--)
+	while (len--)
 		*card = *a++;
 }
 
 /*
  * Copy packet from mbuf to the board memory
- *
- * Uses an extra buffer/extra memory copy,
- * unless the whole packet fits in one mbuf.
  *
  */
 static u_short
@@ -501,8 +498,9 @@ qn_put(addr, m)
 	u_short volatile *addr;
 	struct mbuf *m;
 {
-	u_short *data, savebyte[2];
-	int len, wantbyte;
+	u_short *data;
+	u_char savebyte[2];
+	int len, len1, wantbyte;
 	u_short totlen;
 
 	totlen = wantbyte = 0;
@@ -510,25 +508,27 @@ qn_put(addr, m)
 	for (; m != NULL; m = m->m_next) {
 		data = mtod(m, u_short *);
 		len = m->m_len;
-		totlen += len;
 		if (len > 0) {
+			totlen += len;
+
 			/* Finish the last word. */
 			if (wantbyte) {
-				savebyte[1] = *data;
+				savebyte[1] = *((u_char *)data);
 				*addr = *((u_short *)savebyte);
-				data++;
+				((u_char *)data)++;
 				len--;
 				wantbyte = 0;
 			}
 			/* Output contiguous words. */
 			if (len > 1) {
-				word_copy_to_card(data, addr, len);
-				data += len & ~1;
+				len1 = len/2;
+				word_copy_to_card(data, addr, len1);
+				data += len1;
 				len &= 1;
 			}
 			/* Save last byte, if necessary. */
 			if (len == 1) {
-				savebyte[0] = *data;
+				savebyte[0] = *((u_char *)data);
 				wantbyte = 1;
 			}
 		}
@@ -625,7 +625,6 @@ qn_get_packet(sc, len)
 	}
 
 #if NBPFILTER > 0
-	log(LOG_INFO, "qn: Beware, an untested code section\n");
 	if (sc->sc_bpf) {
 		bpf_mtap(sc->sc_bpf, head);
 
@@ -675,25 +674,25 @@ qn_rint(sc, rstat)
 	 * Some of them are senseless because they are masked off.
 	 * XXX
 	 */
-	if (rstat & 0x0101) {
+	if (rstat & R_INT_OVR_FLO) {
 #ifdef QN_DEBUG
 		log(LOG_INFO, "Overflow\n");
 #endif
 		++sc->sc_arpcom.ac_if.if_ierrors;
 	}
-	if (rstat & 0x0202) {
+	if (rstat & R_INT_CRC_ERR) {
 #ifdef QN_DEBUG
 		log(LOG_INFO, "CRC Error\n");
 #endif
 		++sc->sc_arpcom.ac_if.if_ierrors;
 	}
-	if (rstat & 0x0404) {
+	if (rstat & R_INT_ALG_ERR) {
 #ifdef QN_DEBUG
 		log(LOG_INFO, "Alignment error\n");
 #endif
 		++sc->sc_arpcom.ac_if.if_ierrors;
 	}
-	if (rstat & 0x0808) {
+	if (rstat & R_INT_SRT_PKT) {
 		/* Short packet (these may occur and are
 		 * no reason to worry about - or maybe
 		 * they are?).
@@ -736,7 +735,7 @@ qn_rint(sc, rstat)
 		len = *sc->nic_fifo;
 		len = ((len << 8) & 0xff00) | ((len >> 8) & 0x00ff);
 
-#ifdef QN_DEBUG
+#ifdef QN_CHECKS
 		if (len > ETHER_MAX_LEN || len < ETHER_HDR_SIZE) {
 			log(LOG_WARNING,
 			    "%s: received a %s packet? (%u bytes)\n",
@@ -746,7 +745,7 @@ qn_rint(sc, rstat)
 			continue;
 		}
 #endif
-#ifdef QN_DEBUG
+#ifdef QN_CHECKS
 		if (len < ETHER_MIN_LEN)
 			log(LOG_WARNING,
 			    "%s: received a short packet? (%u bytes)\n",
