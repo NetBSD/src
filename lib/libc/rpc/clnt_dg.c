@@ -1,4 +1,4 @@
-/*	$NetBSD: clnt_dg.c,v 1.13 2003/10/22 15:38:31 drochner Exp $	*/
+/*	$NetBSD: clnt_dg.c,v 1.14 2004/12/30 05:06:33 christos Exp $	*/
 
 /*
  * Sun RPC is a product of Sun Microsystems, Inc. and is provided for
@@ -39,7 +39,7 @@
 #if 0
 static char sccsid[] = "@(#)clnt_dg.c 1.19 89/03/16 Copyr 1988 Sun Micro";
 #else
-__RCSID("$NetBSD: clnt_dg.c,v 1.13 2003/10/22 15:38:31 drochner Exp $");
+__RCSID("$NetBSD: clnt_dg.c,v 1.14 2004/12/30 05:06:33 christos Exp $");
 #endif
 #endif
 
@@ -495,7 +495,7 @@ send_again:
 				errno = 0;
 			}
 			recvlen = recvfrom(cu->cu_fd, cu->cu_inbuf,
-			    cu->cu_recvsz, 0, NULL, NULL);
+			    (socklen_t)cu->cu_recvsz, 0, NULL, NULL);
 		} while (recvlen < 0 && errno == EINTR);
 		if (recvlen < 0) {
 			if (errno == EWOULDBLOCK)
@@ -693,7 +693,7 @@ clnt_dg_control(cl, request, info)
 			release_fd_lock(cu->cu_fd, mask);
 			return (FALSE);
 		}
-		(void) memcpy(&cu->cu_raddr, addr->buf, addr->len);
+		(void) memcpy(&cu->cu_raddr, addr->buf, (size_t)addr->len);
 		cu->cu_rlen = addr->len;
 		break;
 	case CLGET_XID:
