@@ -1,4 +1,4 @@
-/* $NetBSD: cpu.h,v 1.48 2000/11/22 08:39:53 thorpej Exp $ */
+/* $NetBSD: cpu.h,v 1.49 2000/12/13 00:46:31 mycroft Exp $ */
 
 /*-
  * Copyright (c) 1998, 1999, 2000 The NetBSD Foundation, Inc.
@@ -6,7 +6,7 @@
  *
  * This code is derived from software contributed to The NetBSD Foundation
  * by Jason R. Thorpe of the Numerical Aerospace Simulation Facility,
- * NASA Ames Research Center.
+ * NASA Ames Research Center, and by Charles M. Hannum.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -193,6 +193,12 @@ struct clockframe {
  * like this stastic has to be extremely accurate.
  */
 #define	CLKF_INTR(framep)	(curcpu()->ci_intrdepth)
+
+/*
+ * This is used during profiling to integrate system time.  It can safely
+ * assume that the process is resident.
+ */
+#define	PROC_PC(p)		((p)->p_md.md_tf->tf_regs[FRAME_PC])
 
 /*
  * Preempt the current process if in interrupt from user mode,
