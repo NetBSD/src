@@ -1,4 +1,4 @@
-/*	$NetBSD: screg_1185.h,v 1.3 2002/05/31 21:45:01 thorpej Exp $	*/
+/*	$NetBSD: screg_1185.h,v 1.4 2003/04/19 14:56:06 tsutsui Exp $	*/
 /*
  * Copyright (c) 1992, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -44,7 +44,7 @@
  */
 
 /*
- *	screg_1185.h	ver 0.0		
+ *	screg_1185.h	ver 0.0
  *		for SCSI I/F Chip CXD1185Q
  */
 
