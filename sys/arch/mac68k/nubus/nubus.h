@@ -1,4 +1,4 @@
-/*	$NetBSD: nubus.h,v 1.57 2002/04/13 17:49:41 briggs Exp $	*/
+/*	$NetBSD: nubus.h,v 1.58 2004/04/25 14:22:32 rjs Exp $	*/
 
 /*
  * Copyright (c) 1995 Allen Briggs.  All rights reserved.
@@ -137,6 +137,7 @@
 #define  NUBUS_TYPE_68020	0x0003
 #define  NUBUS_TYPE_68030	0x0004
 #define  NUBUS_TYPE_68040	0x0005
+#define  NUBUS_TYPE_MX		0x0009	/* TI microExplorer */
 
 #define NUBUS_CATEGORY_INTBUS		0x000C
 #define  NUBUS_TYPE_SCSI		0x0008
