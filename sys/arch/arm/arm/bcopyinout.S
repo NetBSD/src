@@ -1,4 +1,4 @@
-/*	$NetBSD: bcopyinout.S,v 1.2 2002/08/12 20:34:47 bjh21 Exp $	*/
+/*	$NetBSD: bcopyinout.S,v 1.3 2002/08/12 20:38:06 bjh21 Exp $	*/
 
 /*
  * Copyright (c) 2002 Wasabi Systems, Inc.
@@ -38,7 +38,8 @@
 #include "assym.h"
 
 #include <machine/asm.h>
-#include <sys/errno.h>
+
+RCSID("$NetBSD: bcopyinout.S,v 1.3 2002/08/12 20:38:06 bjh21 Exp $")	
 
 	.text
 	.align	0
