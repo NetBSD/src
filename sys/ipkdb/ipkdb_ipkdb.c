@@ -1,8 +1,8 @@
-/*	$NetBSD: ipkdb_ipkdb.c,v 1.8 1999/05/04 23:30:21 thorpej Exp $	*/
+/*	$NetBSD: ipkdb_ipkdb.c,v 1.9 2000/03/22 20:58:29 ws Exp $	*/
 
 /*
- * Copyright (C) 1993-1996 Wolfgang Solfrank.
- * Copyright (C) 1993-1996 TooLs GmbH.
+ * Copyright (C) 1993-2000 Wolfgang Solfrank.
+ * Copyright (C) 1993-2000 TooLs GmbH.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -30,6 +30,8 @@
  * OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF
  * ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
+#include "opt_ipkdb.h"
+
 #include <sys/param.h>
 #include <sys/socket.h>
 #include <sys/mbuf.h>
@@ -48,21 +50,17 @@
 #include <netinet/ip_var.h>
 #include <netinet/udp.h>
 
-#include <machine/stdarg.h>
 #include <machine/cpu.h>
 #include <machine/reg.h>
 
 #include <ipkdb/ipkdb.h>
-#include "debuggers.h"
 #include <machine/ipkdb.h>
 
 int ipkdbpanic = 0;
 
+static char *ipkdbkey = IPKDBKEY;
+
 static struct ipkdb_if ipkdb_if;
-#ifdef	IPKDBTEST
-static struct ipkdb_if new_if;
-static int ipkdb_test = 0;
-#endif
 
 static u_char *ipkdbaddr __P((u_char *, int *, void **));
 static void peekmem __P((struct ipkdb_if *, u_char *, void *, long));
@@ -79,30 +77,21 @@ static void init __P((struct ipkdb_if *));
 static void *chksum __P((void *, int));
 static void getpkt __P((struct ipkdb_if *, char *, int *));
 static void putpkt __P((struct ipkdb_if *, char *, int));
-static int maskcmp __P((void *, void *, void *));
-static int check_ipkdb __P((struct ipkdb_if *, struct in_addr *, u_short, u_short, char *, int));
+static int check_ipkdb __P((struct ipkdb_if *, struct in_addr *, char *, int));
 static int connectipkdb __P((struct ipkdb_if *, char *, int));
-
-#ifdef	IPKDBKEY
 static int hmac_init __P((void));
-#endif
 
 void
 ipkdb_init()
 {
-	ipkdb_if.connect = IPKDB_DEF;
 	ipkdbinit();
-	if (   ipkdbifinit(&ipkdb_if, 0) < 0
-	    || !(ipkdb_if.flags&IPKDB_MYHW)) {
+	if (   ipkdbifinit(&ipkdb_if) < 0
+	    || !(ipkdb_if.flags&IPKDB_MYHW)
+	    || !hmac_init()) {
 		/* Interface not found, drop IPKDB */
 		printf("IPKDB: No interface found!\n");
-		ipkdb_if.connect = IPKDB_NOIF;
 		boothowto &= ~RB_KDB;
 	}
-#ifdef	IPKDBKEY
-	if (!hmac_init())
-		ipkdb_if.connect = IPKDB_NO;
-#endif
 }
 
 void
@@ -113,34 +102,51 @@ ipkdb_connect(when)
 	if (when == 0)
 		printf("waiting for remote debugger\n");
 	ipkdb_trap();
-#ifdef	IPKDBTEST
-	new_if.connect = IPKDB_ALL;
-	if (   ipkdbifinit(&new_if, 1) < 0
-	    || !(new_if.flags&IPKDB_MYHW)) {
-		/* Interface not found, no test */
-		return;
-	}
-	init(&new_if);
-	putpkt(&new_if, "s", 1);
-	for (ipkdb_test = 1; ipkdb_test;) {
-		static char buf[512];
-		int plen;
-
-		getpkt(&new_if, buf, &plen);
-		if (!plen)
-			continue;
-		putpkt(&new_if, "eunknown command", 16);
-	}
-#endif
 }
 
 void
 ipkdb_panic()
 {
-	if (ipkdb_if.connect == IPKDB_NOIF)
-		return;
 	ipkdbpanic = 1;
 	ipkdb_trap();
+}
+
+/*
+ * Doesn't handle overlapping regions!
+ */
+void
+ipkdbcopy(s, d, n)
+	void *s, *d;
+	int n;
+{
+	char *sp = s, *dp = d;
+
+	while (--n >= 0)
+		*dp++ = *sp++;
+}
+
+void
+ipkdbzero(d, n)
+	void *d;
+	int n;
+{
+	char *dp = d;
+
+	while (--n >= 0)
+		*dp++ = 0;
+}
+
+int
+ipkdbcmp(s, d, n)
+	void *s, *d;
+	int n;
+{
+	char *sp = s, *dp = d;
+
+	while (--n >= 0)
+		if (*sp++ != *dp++)
+			return *--dp - *--sp;
+	return 0;
 }
 
 int
@@ -151,11 +157,11 @@ ipkdbcmds()
 	int plen;
 
 	if (!(ipkdb_if.flags&IPKDB_MYHW))	/* no interface */
-		return 2;
+		return IPKDB_CMD_EXIT;
 	init(&ipkdb_if);
 	if (ipkdbpanic > 1) {
 		ipkdb_if.leave(&ipkdb_if);
-		return 0;
+		return IPKDB_CMD_RUN;
 	}
 	putpkt(&ipkdb_if, "s", 1);
 	while (1) {
@@ -163,7 +169,7 @@ ipkdbcmds()
 		if (!plen) {
 			if (ipkdbpanic && ipkdb_poll()) {
 				ipkdb_if.leave(&ipkdb_if);
-				return 0;
+				return IPKDB_CMD_RUN;
 			} else
 				continue;
 		} else
@@ -215,15 +221,14 @@ ipkdbcmds()
 			}
 		case 'S':
 			ipkdb_if.leave(&ipkdb_if);
-			return 1;
+			return IPKDB_CMD_STEP;
 		case 'X':
 			putpkt(&ipkdb_if, "ok",2);
-			ipkdb_if.connect = IPKDB_DEF; /* ??? */
 			ipkdb_if.leave(&ipkdb_if);
-			return 2;
+			return IPKDB_CMD_EXIT;
 		case 'C':
 			ipkdb_if.leave(&ipkdb_if);
-			return 0;
+			return IPKDB_CMD_RUN;
 		}
 	}
 }
@@ -272,7 +277,6 @@ pokemem(ifp, cp, addr, len)
 	void *addr;
 	long len;
 {
-	int c;
 	u_char *p = addr;
 
 	while (--len >= 0)
@@ -364,9 +368,10 @@ assemble(ifp, buf)
 			 * decide whether to keep the old
 			 * or start a new one
 			 */
-			i = getns(&ip->ip_id)^getns(&((struct ip *)ifp->ass)->ip_id);
-			i ^= (i >> 2)^(i >> 4)^(i >> 8)^(i >> 12);
-			if (i&1)
+			i = (getns(&ip->ip_id)
+			     ^ getns(&((struct ip *)ifp->ass)->ip_id));
+			i ^= ((i >> 2) ^ (i >> 4) ^ (i >> 8) ^ (i >> 12));
+			if (i & 1)
 				/* keep the old */
 				return 0;
 			ifp->asslen = 0;
@@ -377,7 +382,7 @@ assemble(ifp, buf)
 		ipkdbcopy(&iph, ifp->ass, sizeof iph);
 	}
 	off = getns(&ip->ip_off);
-	len = ((off&IP_OFFMASK) << 3) + getns(&ip->ip_len) - ip->ip_hl * 4;
+	len = ((off & IP_OFFMASK) << 3) + getns(&ip->ip_len) - ip->ip_hl * 4;
 	if (ifp->asslen < len)
 		ifp->asslen = len;
 	if (ifp->asslen + sizeof *ip > sizeof ifp->ass) {
@@ -385,24 +390,25 @@ assemble(ifp, buf)
 		ifp->asslen = 0;
 		return 0;
 	}
-	if (!(off&IP_MF)) {
+	if (!(off & IP_MF)) {
 		off &= IP_OFFMASK;
 		cp = ifp->assbit + (off >> 3);
-		for (i = off & 7; i < 8; *cp |= 1 << i++);
+		for (i = (off & 7); i < 8; *cp |= 1 << i++);
 		for (; cp < ifp->assbit + sizeof ifp->assbit; *cp++ = -1);
 	} else {
 		off &= IP_OFFMASK;
 		cp = ifp->assbit + (off >> 3);
 		ecp = ifp->assbit + (len >> 6);
 		if (cp == ecp)
-			for (i = off & 7; i <= (len >> 3)&7; *cp |= 1 << i++);
+			for (i = (off & 7); i <= ((len >> 3) & 7);
+			     *cp |= 1 << i++);
 		else {
-			for (i = off & 7; i < 8; *cp |= 1 << i++);
+			for (i = (off & 7); i < 8; *cp |= 1 << i++);
 			for (; ++cp < ecp; *cp = -1);
-			for (i = 0; i < ((len >> 3)&7); *cp |= 1 << i++);
+			for (i = 0; i < ((len >> 3) & 7); *cp |= 1 << i++);
 		}
 	}
-	ipkdbcopy((caddr_t)buf + ip->ip_hl * 4,
+	ipkdbcopy((char *)buf + ip->ip_hl * 4,
 		  ifp->ass + sizeof *ip + (off << 3),
 		  len - (off << 3));
 	for (cp = ifp->assbit; cp < ifp->assbit + sizeof ifp->assbit;)
@@ -471,7 +477,7 @@ inpkt(ifp, ibuf, poll)
 						  ar_sha(ah),
 						  ah->ar_hln);
 					ipkdbcopy(ifp->myinetaddr,
-						  ar_sha(ah),
+						  ar_spa(ah),
 						  ah->ar_pln);
 					ifp->send(ifp, ibuf, 74);
 					continue;
@@ -482,11 +488,6 @@ inpkt(ifp, ibuf, poll)
 			}
 			break;
 		case ETHERTYPE_IP:
-			if (ipkdbcmp(eh->ether_dhost,
-				     ifp->myenetaddr,
-				     sizeof ifp->myenetaddr))
-				/* not only for us */
-				break;
 			ip = (struct ip *)(ibuf + 14);
 			if (   ip->ip_v != IPVERSION
 			    || ip->ip_hl < 5
@@ -498,7 +499,7 @@ inpkt(ifp, ibuf, poll)
 				break;
 			if (ip->ip_p != IPPROTO_UDP)
 				break;
-			if (getns(&ip->ip_off)&~IP_DF) {
+			if (getns(&ip->ip_off) & ~IP_DF) {
 				if (!assemble(ifp, ip))
 					break;
 				ip = (struct ip *)ifp->ass;
@@ -516,13 +517,14 @@ inpkt(ifp, ibuf, poll)
 			    && cksum(cksum(0, &ipo, sizeof ipo), udp, ul))
 				/* wrong checksum */
 				break;
-			if (!(ifp->flags&IPKDB_MYIP)) {
+			if (!(ifp->flags & IPKDB_MYIP)) {
 				if (   getns(&udp->uh_sport) == 67
 				    && getns(&udp->uh_dport) == 68
 				    && *(char *)(udp + 1) == 2) {
 					/* this is a BOOTP reply to our ethernet address */
 					/* should check a bit more?		XXX */
-					ipkdbcopy(&ip->ip_dst,
+					char *bootp = (char *)(udp + 1);
+					ipkdbcopy(bootp + 16,
 						  ifp->myinetaddr,
 						  sizeof ifp->myinetaddr);
 					ifp->flags |= IPKDB_MYIP;
@@ -531,7 +533,6 @@ inpkt(ifp, ibuf, poll)
 				return 0;
 			}
 			if (   ipkdbcmp(&ip->ip_dst, ifp->myinetaddr, sizeof ifp->myinetaddr)
-			    || getns(&udp->uh_sport) != IPKDBPORT
 			    || getns(&udp->uh_dport) != IPKDBPORT)
 				break;
 			/* so now it's a UDP packet for the debugger */
@@ -543,14 +544,15 @@ inpkt(ifp, ibuf, poll)
 				if (!getnl(p) && p[6] == 'O') {
 					l = getns(p + 4);
 					if (   l <= ul - sizeof *udp - 6
-					    && check_ipkdb(ifp, &ip->ip_src, udp->uh_sport,
-							   udp->uh_dport, p, l + 6)) {
+					    && check_ipkdb(ifp, &ip->ip_src,
+							   p, l + 6)) {
 						ipkdbcopy(&ip->ip_src,
 							  ifp->hisinetaddr,
 							  sizeof ifp->hisinetaddr);
 						ipkdbcopy(eh->ether_shost,
 							  ifp->hisenetaddr,
 							  sizeof ifp->hisenetaddr);
+						ifp->hisport = getns(&udp->uh_sport);
 						ifp->flags |= IPKDB_HISHW|IPKDB_HISIP;
 						return p;
 					}
@@ -576,8 +578,6 @@ inpkt(ifp, ibuf, poll)
 			/* unknown type */
 			break;
 		}
-		if (l)
-			ipkdbgotpkt(ifp, ibuf, l);
 	}
 	return 0;
 }
@@ -591,20 +591,26 @@ outpkt(ifp, in, l, srcport, dstport)
 	int l;
 	int srcport, dstport;
 {
-	u_char *sp;
 	struct ether_header *eh;
 	struct ip *ip;
 	struct udphdr *udp;
 	u_char *cp;
-	char obuf[ETHERMTU+14];
+	char _obuf[ETHERMTU + 16];
+#define	obuf	(_obuf + 2)		/* align ip data in packet */
 	struct ipovly ipo;
 	int i, off;
 
-	ipkdbzero(obuf, sizeof obuf);
+	ipkdbzero(_obuf, sizeof _obuf);
 	eh = (struct ether_header *)obuf;
-	if (!(ifp->flags&IPKDB_HISHW))
-		for (cp = eh->ether_dhost; cp < eh->ether_dhost + sizeof eh->ether_dhost;)
-			*cp++ = -1;
+	/*
+	 * If we don't have his ethernet address, or this is a bootp request,
+	 * broadcast the packet.
+	 */
+	if (!(ifp->flags & IPKDB_HISHW)
+	    || dstport == 67)
+		for (cp = eh->ether_dhost;
+		     cp < eh->ether_dhost + sizeof eh->ether_dhost;
+		     *cp++ = -1);
 	else
 		ipkdbcopy(ifp->hisenetaddr, eh->ether_dhost, sizeof eh->ether_dhost);
 	ipkdbcopy(ifp->myenetaddr, eh->ether_shost, sizeof eh->ether_shost);
@@ -616,7 +622,15 @@ outpkt(ifp, in, l, srcport, dstport)
 	ip->ip_ttl = 255;
 	ip->ip_p = IPPROTO_UDP;
 	ipkdbcopy(ifp->myinetaddr, &ip->ip_src, sizeof ip->ip_src);
-	ipkdbcopy(ifp->hisinetaddr, &ip->ip_dst, sizeof ip->ip_dst);
+	/*
+	 * If this is a bootp request, broadcast it.
+	 */
+	if (dstport == 67)
+		for (cp = (u_char *)&ip->ip_dst;
+		     cp < (u_char *)&ip->ip_dst + sizeof ip->ip_dst;
+		     *cp++ = -1);
+	else
+		ipkdbcopy(ifp->hisinetaddr, &ip->ip_dst, sizeof ip->ip_dst);
 	udp = (struct udphdr *)(ip + 1);
 	setns(&udp->uh_sport, srcport);
 	setns(&udp->uh_dport, dstport);
@@ -631,16 +645,17 @@ outpkt(ifp, in, l, srcport, dstport)
 	for (cp = (u_char *)(udp + 1), l += sizeof *udp, off = 0;
 	     l > 0;
 	     l -= i, in += i, off += i, cp = (u_char *)udp) {
-		i = l > ifp->mtu - sizeof *ip ? ((ifp->mtu - sizeof *ip)&~7) : l;
+		i = l > ifp->mtu - sizeof *ip ? ((ifp->mtu - sizeof *ip) & ~7) : l;
 		ipkdbcopy(in, cp, i);
 		setns(&ip->ip_len, i + sizeof *ip);
-		setns(&ip->ip_off, (l > i ? IP_MF : 0)|(off >> 3));
+		setns(&ip->ip_off, (l > i ? IP_MF : 0) | (off >> 3));
 		ip->ip_sum = 0;
 		setns(&ip->ip_sum, ~cksum(0, ip, sizeof *ip));
 		if (i + sizeof *ip < ETHERMIN)
 			i = ETHERMIN - sizeof *ip;
 		ifp->send(ifp, obuf, i + sizeof *ip + 14);
 	}
+#undef	obuf
 }
 
 static void
@@ -648,32 +663,25 @@ init(ifp)
 	struct ipkdb_if *ifp;
 {
 	u_char *cp;
-	struct ether_header *eh;
-	struct ip *ip;
-	struct udphdr *udp;
-	u_char buf[ETHERMTU+14];
-	struct ipovly ipo;
+	u_char _ibuf[ETHERMTU + 16];
+#define	ibuf	(_ibuf + 2)		/* align ip data in packet */
 	int secs = 0;
 
 	ifp->start(ifp);
-#ifdef	__notyet__
-	if (!(ifp->flags&IPKDB_MYIP))
-		ipkdbinet(ifp);
-#endif
-	if (ifp->flags&IPKDB_MYIP)
+	if (ifp->flags & IPKDB_MYIP)
 		return;
 
-	while (!(ifp->flags&IPKDB_MYIP)) {
-		ipkdbzero(buf, sizeof buf);
-		cp = buf;
+	while (!(ifp->flags & IPKDB_MYIP)) {
+		ipkdbzero(_ibuf, sizeof _ibuf);
+		cp = _ibuf;
 		*cp++ = 1;		/* BOOTP_REQUEST */
 		*cp++ = 1;		/* Ethernet hardware */
 		*cp++ = 6;		/* length of address */
 		setnl(++cp, 0x12345678); /* some random number? */
 		setns(cp + 4, secs++);
 		ipkdbcopy(ifp->myenetaddr, cp + 24, sizeof ifp->myenetaddr);
-		outpkt(ifp, buf, 300, 68, 67);
-		inpkt(ifp, buf, 2);
+		outpkt(ifp, _ibuf, 300, 68, 67);
+		inpkt(ifp, ibuf, 2);
 		if (ipkdbpanic && ipkdb_poll()) {
 			ipkdbpanic++;
 			return;
@@ -682,9 +690,9 @@ init(ifp)
 	cp = ifp->myinetaddr;
 	printf("My IP address is %d.%d.%d.%d\n",
 	       cp[0], cp[1], cp[2], cp[3]);
+#undef	ibuf
 }
 
-#ifdef	IPKDBKEY
 /* HMAC Checksumming routines, see draft-ietf-ipsec-hmac-md5-00.txt */
 #define	LENCHK	16	/* Length of checksum in bytes */
 
@@ -713,13 +721,20 @@ static struct ipkdb_MD5Context {
 	u_char in[64];
 } icontext, ocontext;
 
+static u_int32_t getNl __P((void *));
+static void setNl __P((void *, u_int32_t));
+static void ipkdb_MD5Transform __P((struct ipkdb_MD5Context *));
+static void ipkdb_MD5Init __P((struct ipkdb_MD5Context *));
+static void ipkdb_MD5Update __P((struct ipkdb_MD5Context *, u_char *, u_int));
+static u_char *ipkdb_MD5Final __P((struct ipkdb_MD5Context *));
+
 __inline static u_int32_t
 getNl(vs)
 	void *vs;
 {
 	u_char *s = vs;
 
-	return *s|(s[1] << 8)|(s[2] << 16)|(s[3] << 24);
+	return *s | (s[1] << 8) | (s[2] << 16) | (s[3] << 24);
 }
 
 __inline static void
@@ -736,22 +751,24 @@ setNl(vs, l)
 }
 
 /* The four core functions - F1 is optimized somewhat */
-/* #define F1(x, y, z)	(x & y | ~x & z) */
-#define	F1(x, y, z)	(z ^ (x & (y ^ z)))
+/* #define F1(x, y, z)	(((x) & (y)) | (~(x) & (z))) */
+#define	F1(x, y, z)	((z) ^ ((x) & ((y) ^ (z))))
 #define	F2(x, y, z)	F1(z, x, y)
-#define	F3(x, y, z)	(x ^ z ^ z)
-#define	F4(x, y, z)	(y ^ (x | ~z))
+#define	F3(x, y, z)	((x) ^ (y) ^ (z))
+#define	F4(x, y, z)	((y) ^ ((x) | ~(z)))
 
 /* This is the central step in the MD5 algorithm. */
 #define	ipkdb_MD5STEP(f, w, x, y, z, data, s) \
-	(w += f(x, y, z) + data, w = w << s | (w>>(32-2))&0xffffffff, w += x)
+	((w) += f(x, y, z) + (data), \
+	 (w) = ((w) << (s)) | (((w) >> (32 - 2)) & 0xffffffff), \
+	 (w) += (x))
 
 /*
  * The core of the MD5 algorithm, this alters an existing MD5 hash to
  * reflect the addition of 16 longwords of new data.  MD5Update blocks
  * the data for this routine.
  */
-void
+static void
 ipkdb_MD5Transform(ctx)
 	struct ipkdb_MD5Context *ctx;
 {
@@ -1057,23 +1074,6 @@ chksum(buf, len)
 	ipkdb_MD5Update(&context, digest, 16);
 	return ipkdb_MD5Final(&context);
 }
-#else
-#define	LENCHK	1	/* Length of checksum in bytes */
-
-static void *
-chksum(buf, l)
-	void *buf;
-	int l;
-{
-	static char csum[1];
-	int sum;
-	char *cp = buf;
-	
-	for (sum = 0; --l >= 0; sum += *cp++);
-	csum[0] = sum;
-	return csum;
-}
-#endif
 
 static void
 getpkt(ifp, buf, lp)
@@ -1083,7 +1083,8 @@ getpkt(ifp, buf, lp)
 {
 	char *got;
 	int l;
-	char ibuf[ETHERMTU+14];
+	char _ibuf[ETHERMTU + 16];
+#define	ibuf	(_ibuf + 2)		/* align ip data in packet */
 
 	*lp = 0;
 	while (1) {
@@ -1100,10 +1101,11 @@ getpkt(ifp, buf, lp)
 			return;
 		}
 		if (   ifp->pktlen
-		    && ((ifp->flags&(IPKDB_MYIP|IPKDB_HISIP|IPKDB_CONNECTED))
-			== (IPKDB_MYIP|IPKDB_HISIP|IPKDB_CONNECTED)))
-			outpkt(ifp, ifp->pkt, ifp->pktlen, IPKDBPORT, IPKDBPORT);
+		    && ((ifp->flags & (IPKDB_MYIP | IPKDB_HISIP | IPKDB_CONNECTED))
+			== (IPKDB_MYIP | IPKDB_HISIP | IPKDB_CONNECTED)))
+			outpkt(ifp, ifp->pkt, ifp->pktlen, IPKDBPORT, ifp->hisport);
 	}
+#undef	ibuf
 }
 
 static void
@@ -1117,37 +1119,23 @@ putpkt(ifp, buf, l)
 	ipkdbcopy(buf, ifp->pkt + 6, l);
 	ipkdbcopy(chksum(ifp->pkt, l + 6), ifp->pkt + 6 + l, LENCHK);
 	ifp->pktlen = l + 6 + LENCHK;
-	if (   (ifp->flags&(IPKDB_MYIP|IPKDB_HISIP|IPKDB_CONNECTED))
-	    != (IPKDB_MYIP|IPKDB_HISIP|IPKDB_CONNECTED))
+	if (   (ifp->flags & (IPKDB_MYIP | IPKDB_HISIP | IPKDB_CONNECTED))
+	    != (IPKDB_MYIP | IPKDB_HISIP | IPKDB_CONNECTED))
 		return;
-	outpkt(ifp, ifp->pkt, ifp->pktlen, IPKDBPORT, IPKDBPORT);
-}
-
-static __inline int
-maskcmp(vin, vmask, vmatch)
-	void *vin, *vmask, *vmatch;
-{
-	int i;
-	u_char *in = vin, *mask = vmask, *match = vmatch;
-
-	for (i = 4; --i >= 0;)
-		if ((*in++&*mask++) != *match++)
-			return 0;
-	return 1;
+	outpkt(ifp, ifp->pkt, ifp->pktlen, IPKDBPORT, ifp->hisport);
 }
 
 static int
-check_ipkdb(ifp, shost, sport, dport, p, l)
+check_ipkdb(ifp, shost, p, l)
 	struct ipkdb_if *ifp;
 	struct in_addr *shost;
-	u_short sport, dport;
 	char *p;
 	int l;
 {
 	u_char hisenet[6];
 	u_char hisinet[4];
+	u_int16_t hisport;
 	char save;
-	struct ipkdb_allow *kap;
 
 #ifndef	IPKDBSECURE
 	if (securelevel > 0)
@@ -1155,64 +1143,49 @@ check_ipkdb(ifp, shost, sport, dport, p, l)
 #endif
 	if (ipkdbcmp(chksum(p, l), p + l, LENCHK))
 		return 0;
-	switch (ifp->connect) {
-	default:
-		return 0;
-	case IPKDB_SAME:
-		if (ipkdbcmp(shost, ifp->hisinetaddr, sizeof ifp->hisinetaddr))
-			return 0;
-		if (getns(&sport) != IPKDBPORT || getns(&dport) != IPKDBPORT)
-			return 0;
-		bzero(&hisinet, sizeof hisinet);
-		break;
-	case IPKDB_ALL:
-		for (kap = ipkdballow; kap < ipkdballow + ipkdbcount; kap++) {
-			if (maskcmp(shost, kap->mask, kap->match))
-				break;
-		}
-		if (kap >= ipkdballow + ipkdbcount)
-			return 0;
-		if (getns(&sport) != IPKDBPORT || getns(&dport) != IPKDBPORT)
-			return 0;
-		ipkdbcopy(ifp->hisenetaddr, hisenet, sizeof hisenet);
-		ipkdbcopy(ifp->hisinetaddr, hisinet, sizeof hisinet);
-		save = ifp->flags;
-		ipkdbcopy(shost, ifp->hisinetaddr, sizeof ifp->hisinetaddr);
-		ifp->flags &= ~IPKDB_HISHW;
-		ifp->flags |= IPKDB_HISIP;
-		break;
-	}
+	ipkdbcopy(ifp->hisenetaddr, hisenet, sizeof hisenet);
+	ipkdbcopy(ifp->hisinetaddr, hisinet, sizeof hisinet);
+	hisport = ifp->hisport;
+	save = ifp->flags;
+	ipkdbcopy(shost, ifp->hisinetaddr, sizeof ifp->hisinetaddr);
+	ifp->flags &= ~IPKDB_HISHW;
+	ifp->flags |= IPKDB_HISIP;
 	if (connectipkdb(ifp, p + 6, l - 6) < 0) {
-		if (ifp->connect == IPKDB_ALL) {
-			ipkdbcopy(hisenet, ifp->hisenetaddr, sizeof ifp->hisenetaddr);
-			ipkdbcopy(hisinet, ifp->hisinetaddr, sizeof ifp->hisinetaddr);
-			ipkdb_if.flags = save;
-		}
+		ipkdbcopy(hisenet, ifp->hisenetaddr, sizeof ifp->hisenetaddr);
+		ipkdbcopy(hisinet, ifp->hisinetaddr, sizeof ifp->hisinetaddr);
+		ifp->hisport = hisport;
+		ifp->flags = save;
 		return 0;
 	}
 	return 1;
 }
 
 /*
- * Should check whether packet came across the correct interface
+ * Should check whether packet came across the correct interface.	XXX
  */
 int
 checkipkdb(shost, sport, dport, m, off, len)
 	struct in_addr *shost;
 	u_short sport, dport;
 	struct mbuf *m;
+	int off, len;
 {
 	char *p;
 	int l;
 	char ibuf[ETHERMTU+50];
 
+	if (dport != IPKDBPORT)
+		return 0;
+	if (len > sizeof ibuf)
+		return 0;
 	m_copydata(m, off, len, ibuf);
 	p = ibuf;
 	if (getnl(p) || p[6] != 'O')
 		return 0;
 	l = getns(p + 4);
-	if (l > len - 6 || !check_ipkdb(&ipkdb_if, shost, sport, dport, p, l + 6))
+	if (l > len - 6 || !check_ipkdb(&ipkdb_if, shost, p, l + 6))
 		return 0;
+	ipkdb_if.hisport = sport;
 	ipkdb_connect(1);
 	return 1;
 }
@@ -1236,7 +1209,6 @@ connectipkdb(ifp, buf, l)
 	l -= 1 + sizeof(u_int32_t);
 	for (cp = buf + 1 + sizeof(u_int32_t); --l >= 0; printf("%c", *cp++));
 	printf(" (%d.%d.%d.%d)\n", ip[0], ip[1], ip[2], ip[3]);
-	ifp->connect = IPKDB_SAME; /* if someone once connected, he may do so again */
 	ifp->flags |= IPKDB_CONNECTED;
 	ifp->seq = 0;
 	ifp->pktlen = 0;
