@@ -1,4 +1,4 @@
-/* $NetBSD: if_ei.c,v 1.7 2001/02/17 19:04:36 bjh21 Exp $ */
+/* $NetBSD: if_ei.c,v 1.8 2001/03/10 22:32:17 bjh21 Exp $ */
 
 /*-
  * Copyright (c) 2000 Ben Harris
@@ -38,7 +38,7 @@
 
 #include <sys/param.h>
 
-__RCSID("$NetBSD: if_ei.c,v 1.7 2001/02/17 19:04:36 bjh21 Exp $");
+__RCSID("$NetBSD: if_ei.c,v 1.8 2001/03/10 22:32:17 bjh21 Exp $");
 
 #include <sys/device.h>
 #include <sys/malloc.h>
@@ -60,7 +60,7 @@ __RCSID("$NetBSD: if_ei.c,v 1.7 2001/02/17 19:04:36 bjh21 Exp $");
 /* Callbacks from the MI 82586 driver */
 static void ei_hwreset(struct ie_softc *, int);
 /* static void ei_hwinit(struct ie_softc *); */
-static void ei_attn(struct ie_softc *);
+static void ei_attn(struct ie_softc *, int);
 static int ei_intrhook(struct ie_softc *, int);
 
 static void ei_copyin(struct ie_softc *, void *, int, size_t);
@@ -232,7 +232,7 @@ ei_intrhook(struct ie_softc *sc_ie, int why)
 }
 
 static void
-ei_attn(struct ie_softc *sc_ie)
+ei_attn(struct ie_softc *sc_ie, int why)
 {
 	struct ei_softc *sc = (void *)sc_ie;
 
