@@ -1,4 +1,4 @@
-/*	$NetBSD: pucdata.c,v 1.5 1999/07/03 05:38:05 cgd Exp $	*/
+/*	$NetBSD: pucdata.c,v 1.6 1999/07/03 05:55:23 cgd Exp $	*/
 
 /*
  * Copyright (c) 1998, 1999 Christopher G. Demetriou.  All rights reserved.
@@ -46,16 +46,16 @@
 const struct puc_device_description puc_devices[] = {
 	/*
 	 * XXX no entry because I have no data:
-	 * XXX Dolphin 4006 (single parallel)
+	 * XXX Dolphin Peripherals 4006 (single parallel)
 	 */
 
 	/*
-	 * Dolphin 4014 (dual parallel port) card.  PLX 9050, with
+	 * Dolphin Peripherals 4014 (dual parallel port) card.  PLX 9050, with
 	 * a seemingly-lame EEPROM setup that puts the Dolphin IDs
 	 * into the subsystem fields, and claims that it's a
 	 * network/misc (0x02/0x80) device.
 	 */
-	{   "Dolphin 4014",
+	{   "Dolphin Peripherals 4014",
 	    {	0x10b5,	0x9050,	0xd84d,	0x6810	},
 	    {	0xffff,	0xffff,	0xffff,	0xffff	},
 	    {
@@ -66,16 +66,16 @@ const struct puc_device_description puc_devices[] = {
 
 	/*
 	 * XXX no entry because I have no data:
-	 * XXX Dolphin 4025 (single serial)
+	 * XXX Dolphin Peripherals 4025 (single serial)
 	 */
 
 	/*
-	 * Dolphin 4035 (dual serial port) card.  PLX 9050, with
+	 * Dolphin Peripherals 4035 (dual serial port) card.  PLX 9050, with
 	 * a seemingly-lame EEPROM setup that puts the Dolphin IDs
 	 * into the subsystem fields, and claims that it's a
 	 * network/misc (0x02/0x80) device.
 	 */
-	{   "Dolphin 4035",
+	{   "Dolphin Peripherals 4035",
 	    {	0x10b5,	0x9050,	0xd84d,	0x6808	},
 	    {	0xffff,	0xffff,	0xffff,	0xffff	},
 	    {
@@ -86,7 +86,7 @@ const struct puc_device_description puc_devices[] = {
 
 	/*
 	 * XXX no entry because I have no data:
-	 * XXX Dolphin 4078 (dual serial and single parallel)
+	 * XXX Dolphin Peripherals 4078 (dual serial and single parallel)
 	 */
 
 
