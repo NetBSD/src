@@ -1,4 +1,4 @@
-/*	$NetBSD: res_mkquery.c,v 1.20 2000/08/09 14:41:04 itojun Exp $	*/
+/*	$NetBSD: res_mkquery.c,v 1.21 2000/12/20 18:47:37 christos Exp $	*/
 
 /*-
  * Copyright (c) 1985, 1993
@@ -59,7 +59,7 @@
 static char sccsid[] = "@(#)res_mkquery.c	8.1 (Berkeley) 6/4/93";
 static char rcsid[] = "Id: res_mkquery.c,v 8.5 1996/08/27 08:33:28 vixie Exp ";
 #else
-__RCSID("$NetBSD: res_mkquery.c,v 1.20 2000/08/09 14:41:04 itojun Exp $");
+__RCSID("$NetBSD: res_mkquery.c,v 1.21 2000/12/20 18:47:37 christos Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -219,7 +219,7 @@ res_opt(n0, buf, buflen, anslen)
 	register HEADER *hp;
 	register u_char *cp;
 
-	hp = (HEADER *) buf;
+	hp = (HEADER *)(void *)buf;
 	cp = buf + n0;
 	buflen -= n0;
 
