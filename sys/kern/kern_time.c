@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_time.c,v 1.68 2003/04/16 21:34:15 dsl Exp $	*/
+/*	$NetBSD: kern_time.c,v 1.69 2003/05/19 03:23:37 dyoung Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -72,7 +72,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_time.c,v 1.68 2003/04/16 21:34:15 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_time.c,v 1.69 2003/05/19 03:23:37 dyoung Exp $");
 
 #include "fs_nfs.h"
 #include "opt_nfs.h"
@@ -1295,8 +1295,8 @@ ppsratecheck(struct timeval *lasttime, int *curpps, int maxpps)
 	    delta.tv_sec >= 1) {
 		*lasttime = tv;
 		*curpps = 0;
-		rv = 1;
-	} else if (maxpps < 0)
+	}
+	if (maxpps < 0)
 		rv = 1;
 	else if (*curpps < maxpps)
 		rv = 1;
