@@ -1,4 +1,4 @@
-/*      $NetBSD: ukbd.c,v 1.16 1998/12/26 12:53:02 augustss Exp $        */
+/*      $NetBSD: ukbd.c,v 1.17 1998/12/28 12:52:38 augustss Exp $        */
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -35,6 +35,10 @@
  * CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
+ */
+
+/*
+ * Information about USB keyboard can be found in the USB HID spec.
  */
 
 #include <sys/param.h>
@@ -345,7 +349,7 @@ ukbd_detach(device_t self)
 		free(devinfo, M_USB);
 	}
 
-	return 0;
+	return (0);
 }
 #endif
 
@@ -371,7 +375,7 @@ ukbd_enable(v, on)
 	if (on) {
 		/* Set up interrupt pipe. */
 		if (sc->sc_enabled)
-			return EBUSY;
+			return (EBUSY);
 		
 		sc->sc_enabled = 1;
 		r = usbd_open_pipe_intr(sc->sc_iface, sc->sc_ep_addr, 
@@ -478,8 +482,9 @@ ukbd_intr(reqh, addr, status)
 		    c & RELEASE ? WSCONS_EVENT_KEY_UP : WSCONS_EVENT_KEY_DOWN,
 		    c & 0xff);
 #elif defined(__FreeBSD__)
-		printf("%c (%d) %s\n", ((c&0xff) < 32 || (c&0xff) > 126? '.':(c&0xff)), c,
-			(c&RELEASE? "released":"pressed"));
+		printf("%c (%d) %s\n", 
+		       ((c&0xff) < 32 || (c&0xff) > 126? '.':(c&0xff)), c,
+		       (c&RELEASE? "released":"pressed"));
 		if (ud->modifiers)
 			printf("0x%04x\n", ud->modifiers);
                 for (i = 0; i < NKEYCODE; i++)
@@ -529,10 +534,10 @@ ukbd_ioctl(v, cmd, data, flag, p)
 	switch (cmd) {
 	case WSKBDIO_GTYPE:
 		*(int *)data = WSKBD_TYPE_PC_XT;
-		return 0;
+		return (0);
 	case WSKBDIO_SETLEDS:
 		ukbd_set_leds(v, *(int *)data);
-		return 0;
+		return (0);
 	case WSKBDIO_GETLEDS:
 		*(int *)data = sc->sc_leds;
 		return (0);
@@ -542,7 +547,7 @@ ukbd_ioctl(v, cmd, data, flag, p)
 		return (0);
 #endif
 	}
-	return -1;
+	return (-1);
 }
 
 /* Console interface. */
