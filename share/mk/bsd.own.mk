@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.own.mk,v 1.282 2002/04/03 05:32:58 lukem Exp $
+#	$NetBSD: bsd.own.mk,v 1.283 2002/04/08 12:25:22 wiz Exp $
 
 .if !defined(_BSD_OWN_MK_)
 _BSD_OWN_MK_=1
@@ -13,8 +13,7 @@ NEED_OWN_INSTALL_TARGET?=	yes
 
 # Temporary; this will become default when all platforms have migrated.
 # List all the platforms that have NOT switched, since the majority have.
-.if !(${MACHINE_ARCH} == "arm32" || \
-      ${MACHINE_ARCH} == "ns32k" || \
+.if !(${MACHINE_ARCH} == "ns32k" || \
       ${MACHINE_ARCH} == "sh3eb" || ${MACHINE_ARCH} == "sh3el")
 USE_NEW_TOOLCHAIN=nowarn
 .endif
@@ -299,7 +298,6 @@ NOPROFILE=	# defined
 SHLIB_VERSION_FILE?= ${.CURDIR}/shlib_version
 
 # GNU sources and packages sometimes see architecture names differently.
-GNU_ARCH.arm32=arm
 GNU_ARCH.m68000=m68010
 GNU_ARCH.sh3eb=sh
 GNU_ARCH.sh3el=shle
@@ -322,7 +320,7 @@ MACHINE_GNU_PLATFORM=${MACHINE_GNU_ARCH}--netbsd
 .endif
 
 # CPU model, derived from MACHINE_ARCH
-MACHINE_CPU=	${MACHINE_ARCH:C/mipse[bl]/mips/:S/arm32/arm/:C/sh3e[bl]/sh3/:S/m68000/m68k/}
+MACHINE_CPU=	${MACHINE_ARCH:C/mipse[bl]/mips/:C/sh3e[bl]/sh3/:S/m68000/m68k/}
 
 TARGETS+=	all clean cleandir depend dependall includes \
 		install lint obj regress tags html installhtml cleanhtml
