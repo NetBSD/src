@@ -59,7 +59,9 @@ struct ne2000dev {
     { "DEC DEPCM-BA", 
       0x0000, 0x0000, "DIGITAL", "DEPCM-XX", 0,
       0x0ff0, { 0x00, 0x00, 0xe8 } },
-    { "EthernetCard",
+    /* this card might need pcic_alloc_iobase < 0x400, and/or
+       CIRRUS_PD672X on TI TravelMate 5000 needs it: */
+    { "Linksys EthernetCard",
       0x0149, 0x0265, "LINKSYS", "E-CARD",
       0, -1, { 0x00, 0x80, 0xc8 } },
 #if 0
