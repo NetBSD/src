@@ -1,4 +1,4 @@
-.\" $NetBSD: pppd.8,v 1.31 2001/04/05 11:52:18 wiz Exp $
+.\" $NetBSD: pppd.8,v 1.32 2001/04/09 17:38:10 wiz Exp $
 .\"
 .\" manual page [] for pppd 2.4
 .\" Id: pppd.8,v 1.53 2000/08/01 01:47:04 paulus Exp
@@ -853,8 +853,7 @@ using the user's user-ID and permissions.  This option is implemented
 using a pseudo-tty and a process to transfer characters between the
 pseudo-tty and the real serial device, so it will increase the latency
 and CPU overhead of transferring data over the ppp interface.  The
-characters are stored in a tagged format with timestamps, which can be
-displayed in readable form using the pppdump(8) program.
+characters are stored in a tagged format with timestamps.
 .TP
 .B remotename \fIname
 Set the assumed name of the remote system for authentication purposes
