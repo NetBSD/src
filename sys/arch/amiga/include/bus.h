@@ -1,4 +1,4 @@
-/*	$NetBSD: bus.h,v 1.1 1997/08/27 18:52:57 is Exp $	*/
+/*	$NetBSD: bus.h,v 1.2 1998/03/22 17:58:01 is Exp $	*/
 
 /*
  * Copyright (c) 1996 Leo Weppelman.  All rights reserved.
@@ -75,6 +75,9 @@ void	bus_space_unmap __P((bus_space_tag_t, bus_space_handle_t,
 
 #define bus_space_map(tag,off,size,cache,handle) 			\
 	(*(handle) = (tag)->base + ((off)<<(tag)->stride), 0)
+
+#define bus_space_subregion(tag, handle, offset, size, nhandlep) \
+	(*(nhandlep) = (handle) + ((offset)<<(tag)->stride), 0)
 
 #define bus_space_unmap(tag,handle,size)	(void)0
 
