@@ -1,9 +1,10 @@
-# 	$NetBSD: Makefile,v 1.3 2003/03/03 20:26:18 fvdl Exp $
+# 	$NetBSD: Makefile,v 1.4 2003/04/26 10:49:54 fvdl Exp $
 
 INCSDIR=/usr/include/x86
 
 INCS=	aout_machdep.h \
 	bootinfo.h bus.h \
+	cacheinfo.h \
 	cpuvar.h \
 	float.h \
 	ieee.h ieeefp.h \
