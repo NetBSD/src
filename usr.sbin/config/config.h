@@ -1,4 +1,4 @@
-/*	$NetBSD: config.h,v 1.42 1999/04/02 06:36:30 gwr Exp $	*/
+/*	$NetBSD: config.h,v 1.43 1999/07/07 00:02:09 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -409,7 +409,7 @@ void	pack __P((void));
 /* scan.l */
 int	currentline __P((void));
 int	firstfile __P((const char *));
-int	include __P((const char *, int));
+int	include __P((const char *, int, int));
 
 /* sem.c, other than for yacc actions */
 void	initsem __P((void));
