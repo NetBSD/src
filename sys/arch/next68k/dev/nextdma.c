@@ -1,4 +1,4 @@
-/*	$NetBSD: nextdma.c,v 1.36 2003/12/04 13:05:17 keihan Exp $	*/
+/*	$NetBSD: nextdma.c,v 1.37 2005/01/19 01:58:21 chs Exp $	*/
 /*
  * Copyright (c) 1998 Darrin B. Jewell
  * All rights reserved.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nextdma.c,v 1.36 2003/12/04 13:05:17 keihan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nextdma.c,v 1.37 2005/01/19 01:58:21 chs Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -96,26 +96,27 @@ void nextdma_debug_enetr_dumpstate(void);
 #endif
 
 
-int	nextdma_match		__P((struct device *, struct cfdata *, void *));
-void	nextdma_attach		__P((struct device *, struct device *, void *));
+int	nextdma_match(struct device *, struct cfdata *, void *);
+void	nextdma_attach(struct device *, struct device *, void *);
 
-void nextdmamap_sync		__P((bus_dma_tag_t, bus_dmamap_t, bus_addr_t,
-				     bus_size_t, int));
-int nextdma_continue		__P((struct nextdma_softc *));
-void nextdma_rotate		__P((struct nextdma_softc *));
+void nextdmamap_sync(bus_dma_tag_t, bus_dmamap_t, bus_addr_t, bus_size_t, int);
+int nextdma_continue(struct nextdma_softc *);
+void nextdma_rotate(struct nextdma_softc *);
 
-void nextdma_setup_cont_regs	__P((struct nextdma_softc *));
-void nextdma_setup_curr_regs	__P((struct nextdma_softc *));
+void nextdma_setup_cont_regs(struct nextdma_softc *);
+void nextdma_setup_curr_regs(struct nextdma_softc *);
 
 #if NESP > 0
-static int nextdma_esp_intr	__P((void *));
+static int nextdma_esp_intr(void *);
 #endif
 #if NXE > 0
-static int nextdma_enet_intr	__P((void *));
+static int nextdma_enet_intr(void *);
 #endif
 
-#define nd_bsr4(reg) bus_space_read_4(nsc->sc_bst, nsc->sc_bsh, (reg))
-#define nd_bsw4(reg,val) bus_space_write_4(nsc->sc_bst, nsc->sc_bsh, (reg), (val))
+#define nd_bsr4(reg) \
+	bus_space_read_4(nsc->sc_bst, nsc->sc_bsh, (reg))
+#define nd_bsw4(reg,val) \
+	bus_space_write_4(nsc->sc_bst, nsc->sc_bsh, (reg), (val))
 
 CFATTACH_DECL(nextdma, sizeof(struct nextdma_softc),
     nextdma_match, nextdma_attach, NULL, NULL);
@@ -134,10 +135,9 @@ static int nnextdma_channels = (sizeof(nextdma_channel)/sizeof(nextdma_channel[0
 static int attached = 0;
 
 struct nextdma_softc *
-nextdma_findchannel(name)
-	char *name;
+nextdma_findchannel(char *name)
 {
-	struct device *dev = alldevs.tqh_first;
+	struct device *dev = TAILQ_FIRST(&alldevs);
 
 	while (dev != NULL) {
 		if (!strncmp(dev->dv_xname, "nextdma", 7)) {
@@ -145,16 +145,13 @@ nextdma_findchannel(name)
 			if (!strcmp (nsc->sc_chan->nd_name, name))
 				return (nsc);
 		}
-		dev = dev->dv_list.tqe_next;
+		dev = TAILQ_NEXT(dev, dv_list);
 	}
 	return (NULL);
 }
 
 int
-nextdma_match(parent, match, aux)
-	struct device *parent;
-	struct cfdata *match;
-	void *aux;
+nextdma_match(struct device *parent, struct cfdata *match, void *aux)
 {
 	struct intio_attach_args *ia = (struct intio_attach_args *)aux;
 
@@ -167,9 +164,7 @@ nextdma_match(parent, match, aux)
 }
 
 void
-nextdma_attach(parent, self, aux)
-	struct device *parent, *self;
-	void *aux;
+nextdma_attach(struct device *parent, struct device *self, void *aux)
 {
 	struct nextdma_softc *nsc = (struct nextdma_softc *)self;
 	struct intio_attach_args *ia = (struct intio_attach_args *)aux;
@@ -202,8 +197,7 @@ nextdma_attach(parent, self, aux)
 }
 
 void
-nextdma_init(nsc)
-	struct nextdma_softc *nsc;
+nextdma_init(struct nextdma_softc *nsc)
 {
 #ifdef ND_DEBUG
 	if (NEXTDMA_DEBUG) {
@@ -254,8 +248,7 @@ nextdma_init(nsc)
 }
 
 void
-nextdma_reset(nsc)
-	struct nextdma_softc *nsc;
+nextdma_reset(struct nextdma_softc *nsc)
 {
 	int s;
 	struct nextdma_status *stat = &nsc->sc_stat;
@@ -295,8 +288,7 @@ nextdma_reset(nsc)
  * in the dma continue buffers.
  */
 void
-nextdma_rotate(nsc)
-	struct nextdma_softc *nsc;
+nextdma_rotate(struct nextdma_softc *nsc)
 {
 	struct nextdma_status *stat = &nsc->sc_stat;
 
@@ -338,8 +330,7 @@ nextdma_rotate(nsc)
 }
 
 void
-nextdma_setup_curr_regs(nsc)
-	struct nextdma_softc *nsc;
+nextdma_setup_curr_regs(struct nextdma_softc *nsc)
 {
 	bus_addr_t dd_next;
 	bus_addr_t dd_limit;
@@ -395,8 +386,7 @@ nextdma_setup_curr_regs(nsc)
 }
 
 void
-nextdma_setup_cont_regs(nsc)
-	struct nextdma_softc *nsc;
+nextdma_setup_cont_regs(struct nextdma_softc *nsc)
 {
 	bus_addr_t dd_start;
 	bus_addr_t dd_stop;
@@ -452,8 +442,7 @@ nextdma_setup_cont_regs(nsc)
 
 #if NESP > 0
 static int
-nextdma_esp_intr(arg)
-	void *arg;
+nextdma_esp_intr(void *arg)
 {
 	/* @@@ This is bogus, we can't be certain of arg's type
 	 * unless the interrupt is for us.  For now we successfully
@@ -461,7 +450,7 @@ nextdma_esp_intr(arg)
 	 * at this interrupt level.
 	 */
 	struct nextdma_softc *nsc = arg;
-	int esp_dma_int __P((void *)); /* XXX */
+	int esp_dma_int(void *); /* XXX */
 		
 	if (!INTR_OCCURRED(nsc->sc_chan->nd_intr))
 		return 0;
@@ -474,8 +463,7 @@ nextdma_esp_intr(arg)
 
 #if NXE > 0
 static int
-nextdma_enet_intr(arg)
-	void *arg;
+nextdma_enet_intr(void *arg)
 {
 	/* @@@ This is bogus, we can't be certain of arg's type
 	 * unless the interrupt is for us.  For now we successfully
@@ -708,8 +696,7 @@ nextdma_enet_intr(arg)
 /*
  * Check to see if dma has finished for a channel */
 int
-nextdma_finished(nsc)
-	struct nextdma_softc *nsc;
+nextdma_finished(struct nextdma_softc *nsc)
 {
 	int r;
 	int s;
@@ -723,9 +710,7 @@ nextdma_finished(nsc)
 }
 
 void
-nextdma_start(nsc, dmadir)
-	struct nextdma_softc *nsc;
-	u_long dmadir;		/* DMACSR_SETREAD or DMACSR_SETWRITE */
+nextdma_start(struct nextdma_softc *nsc, u_long dmadir)
 {
 	struct nextdma_status *stat = &nsc->sc_stat;
 
@@ -814,8 +799,7 @@ nextdma_start(nsc, dmadir)
 
 /* This routine is used for debugging */
 void
-nextdma_print(nsc)
-	struct nextdma_softc *nsc;
+nextdma_print(struct nextdma_softc *nsc)
 {
 	u_long dd_csr;
 	u_long dd_next;
