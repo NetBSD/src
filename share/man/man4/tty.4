@@ -1,4 +1,4 @@
-.\"	$NetBSD: tty.4,v 1.15 2002/05/20 13:50:26 yamt Exp $
+.\"	$NetBSD: tty.4,v 1.16 2002/08/23 12:04:39 wiz Exp $
 .\"
 .\" Copyright (c) 1991, 1992, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -46,17 +46,25 @@ This section describes the interface to the terminal drivers
 in the system.
 .Ss Terminal Special Files
 Each hardware terminal port on the system usually has two terminal special
-device files associated with it in the directory ``/dev/'' (for
-example, ``/dev/tty03'' and ``/dev/dty03'').
+device files associated with it in the directory
+.Pa /dev/
+(for example,
+.Pa /dev/tty03
+and
+.Pa /dev/dty03 ) .
 .Pp
-The ``/dev/ttyXX'' special file is used for dialin modems and terminals.
+The
+.Pa /dev/ttyXX
+special file is used for dialin modems and terminals.
 When a user logs into
 the system on one of these hardware terminal ports, the system has already
 opened the associated device and prepared the line for normal interactive
 use (see
-.Xr getty 8 . )
+.Xr getty 8 ) .
 .Pp
-The ``/dev/dtyXX'' special file is a SunOS-compatible dialout device.  Unlike
+The
+.Pa /dev/dtyXX
+special file is a SunOS-compatible dialout device.  Unlike
 the dialin device, opening the dialout device never blocks.  If the
 corresponding dialin device is already opened (not blocked in the open waiting
 for carrier), then the dialout open will fail immediately; otherwise it will
@@ -85,7 +93,7 @@ these terminal special files (see
 .Pp
 When an interactive user logs in, the system prepares the line to
 behave in a certain way (called a
-.Em "line discipline" ) ,
+.Em line discipline ) ,
 the particular details of which is described in
 .Xr stty 1
 at the command level, and in
@@ -102,9 +110,9 @@ A terminal file is used like any other file in the system in that
 it can be opened, read, and written to using standard system
 calls.  For each existing terminal file, there is a software processing module
 called a
-.Em "line discipline"
-is associated with it.  The
-.Em "line discipline"
+.Em line discipline
+associated with it.  The
+.Em line discipline
 essentially glues the low level device driver code with the high
 level generic interface routines (such as
 .Xr read 2
@@ -113,7 +121,7 @@ and
 and is responsible for implementing the semantics associated
 with the device.  When a terminal file is first opened by a program,
 the default
-.Em "line discipline"
+.Em line discipline
 called the
 .Dv termios
 line discipline is associated with the file.  This is the primary
@@ -128,7 +136,7 @@ semantics.
 The operations described here
 generally represent features common
 across all
-.Em "line disciplines" ,
+.Em line disciplines ,
 however some of these calls may not
 make sense in conjunction with a line discipline other than
 .Dv termios ,
@@ -158,7 +166,7 @@ name of the request, a description of its purpose, and the typed
 parameter (if any)
 are listed.  For example, the first entry says
 .Pp
-.D1 Em "TIOCSLINED char name[32]"
+.D1 Em TIOCSLINED char name[32]
 .Pp
 and would be called on the terminal associated with
 file descriptor zero by the following code fragment:
