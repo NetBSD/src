@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_exec.h,v 1.18 2002/01/14 23:14:42 bjh21 Exp $	*/
+/*	$NetBSD: linux_exec.h,v 1.19 2002/03/20 00:27:58 christos Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1998 The NetBSD Foundation, Inc.
@@ -82,19 +82,44 @@
 
 /* 
  * From Linux's include/linux/elf.h
-  */
-  #define LINUX_AT_UID    11 /* real uid */
-  #define LINUX_AT_EUID   12 /* effective uid */
-  #define LINUX_AT_GID    13 /* real gid */
-  #define LINUX_AT_EGID   14 /* effective gid */ 
-  #define LINUX_AT_PLATFORM 15  /* string identifying CPU for optimizations */
-  #define LINUX_AT_HWCAP  16    /* arch dependent hints at CPU capabilities */
-  #define LINUX_AT_CLKTCK 17 /* frequency at which times() increments */
+ */
+#define LINUX_AT_UID		11	/* real uid */
+#define LINUX_AT_EUID		12	/* effective uid */
+#define LINUX_AT_GID		13	/* real gid */
+#define LINUX_AT_EGID		14	/* effective gid */ 
+#define LINUX_AT_PLATFORM	15	/* CPU string for optimizations */
+#define LINUX_AT_HWCAP		16	/* arch dependent CPU capabilities */
+#define LINUX_AT_CLKTCK		17	/* frequency times() increments */
+
+/*
+ * Emulation specific sysctls.
+ */
+#define EMUL_LINUX_KERN			1
+#define EMUL_LINUX_MAXID		2
+
+#define EMUL_LINUX_NAMES { \
+	{ 0, 0 }, \
+	{ "kern", CTLTYPE_NODE }, \
+}
+
+#define EMUL_LINUX_KERN_OSTYPE		1
+#define EMUL_LINUX_KERN_OSRELEASE	2
+#define EMUL_LINUX_KERN_VERSION		3
+#define EMUL_LINUX_KERN_MAXID		4
+
+#define EMUL_LINUX_KERN_NAMES { \
+	{ 0, 0 }, \
+	{ "ostype", CTLTYPE_STRING }, \
+	{ "osrelease", CTLTYPE_STRING }, \
+	{ "osversion", CTLTYPE_STRING }, \
+}
 
 #ifdef _KERNEL
 __BEGIN_DECLS
 extern const struct emul emul_linux;
 
+int sysctl_linux __P((int *, u_int, void *, size_t *, void *, size_t,
+    struct proc *));
 void linux_setregs __P((struct proc *, struct exec_package *, u_long));
 int exec_linux_aout_makecmds __P((struct proc *, struct exec_package *));
 int linux_aout_copyargs __P((struct exec_package *, struct ps_strings *,
