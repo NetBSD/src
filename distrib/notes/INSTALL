@@ -20,18 +20,21 @@ about.
 NetBSD 1.2 improves upon the successful 1.1 release, and adds ...
 Significant changes include:
 
+	The integration of the DEC Alpha port has been completed.
+	Addition new ARM and x68k ports.
+
+	Sparc port supports 4m machines, Amiga port supports DraCo.
+
 	Standard C Prototypes have been added to the Kernel.
 
 	Kernel support for the NTP phased lock loop.
 
-	Kernel support for the PINT (PINT is not TWAIN) SCSI scanner
+	The PINT (PINT is not TWAIN) SCSI scanner driver interface has
+	been integrated.  See http://www.dol-esa.gov/~kstailey/pint 
+	for more details.
 
-	ALPHA port has been integrated into main source repository.
-
-	Addition new ARM and x68k ports.
-
-	GCC updated to version 2.7.3, Libg++ updated to 2.7.1.
-
+	GCC, Libg++, and many other third party programs have been 
+	upgraded to more recent versions.
 
 Continuing the multi-platform tradition, NetBSD has added ports to
 atari and mvme68k based machines.  Kernel interfaces have continued to
