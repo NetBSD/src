@@ -1,4 +1,4 @@
-/*	$NetBSD: bus_dma.c,v 1.36 2003/10/26 23:11:15 chris Exp $	*/
+/*	$NetBSD: bus_dma.c,v 1.37 2003/10/29 05:03:41 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -40,7 +40,7 @@
 #define _ARM32_BUS_DMA_PRIVATE
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bus_dma.c,v 1.36 2003/10/26 23:11:15 chris Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bus_dma.c,v 1.37 2003/10/29 05:03:41 mycroft Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -673,7 +673,7 @@ _bus_dmamem_alloc(bus_dma_tag_t t, bus_size_t size, bus_size_t alignment,
     int flags)
 {
 	struct arm32_dma_range *dr;
-	int error = 0, i;
+	int error, i;
 
 #ifdef DEBUG_DMA
 	printf("dmamem_alloc t=%p size=%lx align=%lx boundary=%lx "
@@ -682,11 +682,10 @@ _bus_dmamem_alloc(bus_dma_tag_t t, bus_size_t size, bus_size_t alignment,
 #endif
 
 	if ((dr = t->_ranges) != NULL) {
+		error = ENOMEM;
 		for (i = 0; i < t->_nranges; i++, dr++) {
-			if (dr->dr_len == 0) {
-				error = ENOMEM;
+			if (dr->dr_len == 0)
 				continue;
-			}
 			error = _bus_dmamem_alloc_range(t, size, alignment,
 			    boundary, segs, nsegs, rsegs, flags,
 			    trunc_page(dr->dr_sysbase),
