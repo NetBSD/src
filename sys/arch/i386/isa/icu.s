@@ -35,7 +35,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)icu.s	7.2 (Berkeley) 5/21/91
- *	$Id: icu.s,v 1.15 1993/07/03 09:43:14 cgd Exp $
+ *	$Id: icu.s,v 1.16 1993/07/03 13:13:34 cgd Exp $
  */
 
 /*
@@ -268,7 +268,7 @@ in_spl0:
 	movl	_cpl,%eax
 	pushl   %eax	# save old priority
 	testl   $~((1 << NETISR_SCLK) | (1 << NETISR_AST)),_netisr
-	jz	over_net_stuff_for_spl0
+	jz	INTRLOCAL(over_net_stuff_for_spl0)
 	movl	_netmask,%eax	# mask off those network devices
 	movl	%eax,_cpl	# set new priority
 	SHOW_CPL
@@ -285,7 +285,7 @@ in_spl0:
 #ifdef ISO
 	DONET(NETISR_ISO, _clnlintr, 28)
 #endif
-over_net_stuff_for_spl0:
+INTRLOCAL(over_net_stuff_for_spl0):
 	movl	$0,_cpl	# set new priority
 	SHOW_CPL
 	movl	_ipending,%eax
