@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_time.c,v 1.54.2.14 2002/07/12 01:40:20 nathanw Exp $	*/
+/*	$NetBSD: kern_time.c,v 1.54.2.15 2002/07/12 03:05:34 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -72,7 +72,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_time.c,v 1.54.2.14 2002/07/12 01:40:20 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_time.c,v 1.54.2.15 2002/07/12 03:05:34 nathanw Exp $");
 
 #include "fs_nfs.h"
 #include "opt_nfs.h"
@@ -985,22 +985,38 @@ timers_alloc(struct proc *p)
 	p->p_timers = pts;
 }
 
+/*
+ * Clean up the per-process timers. If "which" is set to TIMERS_ALL,
+ * then clean up all timers and free all the data structures. If
+ * "which" is set to TIMERS_POSIX, only clean up the timers allocated
+ * by timer_create(), not the BSD setitimer() timers, and only free the
+ * structure if none of those remain.
+ */
 void
-timers_free(struct proc *p)
+timers_free(struct proc *p, int which)
 {
 	int i;
 	struct ptimer *pt, **pts;
 
 	if (p->p_timers) {
 		pts = p->p_timers;
-		p->p_timers = NULL;
-		for (i = 0; i < TIMER_MAX; i++)
+		if (which == TIMERS_ALL)
+			i = 0;
+		else
+			i = 3;
+		for ( ; i < TIMER_MAX; i++)
 			if ((pt = pts[i]) != NULL) {
 				if (pt->pt_type == CLOCK_REALTIME) 
 					callout_stop(&pt->pt_ch);
+				pts[i] = NULL;
 				pool_put(&ptimer_pool, pt);
 			}
-		free(pts, M_SUBPROC);
+		if ((pts[0] == NULL) && 
+		    (pts[1] == NULL) && 
+		    (pts[2] == NULL)) {
+			p->p_timers = NULL;
+			free(pts, M_SUBPROC);
+		}
 	}
 }
 
