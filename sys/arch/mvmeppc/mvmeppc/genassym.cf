@@ -1,4 +1,4 @@
-#	$NetBSD: genassym.cf,v 1.1 2002/02/27 21:02:24 scw Exp $
+#	$NetBSD: genassym.cf,v 1.2 2002/03/09 23:02:57 scw Exp $
 
 #
 # Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -37,6 +37,7 @@ include <sys/proc.h>
 
 include <uvm/uvm.h>
 
+include <machine/cpu.h>
 include <machine/pcb.h>
 include <machine/pmap.h>
 
@@ -72,3 +73,5 @@ define	P_ADDR		offsetof(struct proc, p_addr)
 define	P_STAT		offsetof(struct proc, p_stat)
 
 define	SONPROC		SONPROC
+
+define	CACHELINESIZE	CACHELINESIZE
