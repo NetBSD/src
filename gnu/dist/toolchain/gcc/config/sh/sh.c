@@ -2770,7 +2770,6 @@ barrier_align (barrier_or_label)
       if (prev
 	  && GET_CODE (prev) == JUMP_INSN
 	  && JUMP_LABEL (prev)
-	  && next_real_insn (JUMP_LABEL (prev)) == next_real_insn (barrier_or_label)
 	  && (jump_to_next || next_real_insn (JUMP_LABEL (prev)) == next))
 	{
   	  rtx pat = PATTERN (prev);
