@@ -1,4 +1,4 @@
-/*	$NetBSD: msg.md.fr,v 1.15 2000/12/03 01:54:48 minoura Exp $	*/
+/*	$NetBSD: msg.md.fr,v 1.16 2001/01/27 07:34:40 jmc Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -164,6 +164,10 @@ message dofdisk
 
 message dobad144
 {Installation de la table des block défectueux ...
+}
+
+message getboottype
+{Aimez-vous installer l'ensemble normal de bootblocks ou de bootblocks serial?
 }
 
 message dobootblks
