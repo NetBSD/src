@@ -1,4 +1,4 @@
-/* $NetBSD: podulebus.c,v 1.18 1997/01/03 23:30:30 mark Exp $ */
+/* $NetBSD: podulebus.c,v 1.19 1997/01/17 01:07:58 mark Exp $ */
 
 /*
  * Copyright (c) 1994-1996 Mark Brinicombe.
@@ -62,6 +62,8 @@ podule_t podules[MAX_PODULES + MAX_NETSLOTS];
 irqhandler_t poduleirq;
 extern u_int actual_mask;
 extern irqhandler_t *irqhandlers[NIRQS];
+
+extern struct bus_space podulebus_bs_tag;
 
 /* Declare prototypes */
 
@@ -550,6 +552,7 @@ podulebusattach(parent, self, aux)
 		if (podules[loop].slottype != SLOT_NONE) {
 			pa.pa_podule_number = loop;
 			pa.pa_podule = &podules[loop];
+			pa.pa_iot = &podulebus_bs_tag;
 			config_found_sm(self, &pa, podulebusprint, podulebussubmatch);
 		}
 }
