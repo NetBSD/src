@@ -1,4 +1,4 @@
-/*	$NetBSD: ubt.c,v 1.5 2003/01/05 05:20:20 dsainty Exp $	*/
+/*	$NetBSD: ubt.c,v 1.6 2003/01/11 06:16:05 dsainty Exp $	*/
 
 /*
  * Copyright (c) 2002, 2003 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ubt.c,v 1.5 2003/01/05 05:20:20 dsainty Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ubt.c,v 1.6 2003/01/11 06:16:05 dsainty Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -116,9 +116,14 @@ struct ubt_softc {
 static int ubt_open(void *h, int flag, int mode, usb_proc_ptr p);
 static int ubt_close(void *h, int flag, int mode, usb_proc_ptr p);
 
-static int ubt_control(void *h, u_int8_t *data, size_t len);
-static int ubt_sendacldata(void *h, u_int8_t *data, size_t len);
-static int ubt_sendscodata(void *h, u_int8_t *data, size_t len);
+static u_int8_t* ubt_alloc_control(void*, size_t, struct btframe_buffer**);
+static int ubt_send_control(void*, struct btframe_buffer*, size_t);
+
+static u_int8_t* ubt_alloc_acldata(void*, size_t, struct btframe_buffer**);
+static int ubt_send_acldata(void*, struct btframe_buffer*, size_t);
+
+static u_int8_t* ubt_alloc_scodata(void*, size_t, struct btframe_buffer**);
+static int ubt_send_scodata(void*, struct btframe_buffer*, size_t);
 
 static int ubt_splraise(void);
 static unsigned int ubt_blockcb(void *h, unsigned int cbblocks);
@@ -129,7 +134,10 @@ static void ubt_aclrd_cb(usbd_xfer_handle, usbd_private_handle, usbd_status);
 static void ubt_aclrd_request(struct ubt_softc *);
 
 static struct btframe_methods const ubt_methods = {
-	ubt_open, ubt_close, ubt_control, ubt_sendacldata, ubt_sendscodata,
+	ubt_open, ubt_close,
+	{ubt_alloc_control, ubt_send_control},
+	{ubt_alloc_acldata, ubt_send_acldata},
+	{ubt_alloc_scodata, ubt_send_scodata},
 	ubt_splraise, ubt_blockcb, ubt_unblockcb
 };
 
@@ -454,14 +462,35 @@ ubt_close(void *h, int flag, int mode, usb_proc_ptr p)
 	return 0;
 }
 
+static u_int8_t*
+ubt_alloc_control(void *h, size_t len, struct btframe_buffer **buf)
+{
+	struct ubt_softc *sc = h;
+
+	/*
+	 * We should be catching this earlier, but at the moment a
+	 * user request can generate oversized allocations.
+	 */
+	if (len > BTHCI_COMMAND_MAX_LEN)
+		return NULL;
+
+	*buf = (struct btframe_buffer*)sc->sc_ctl_buf;
+	return sc->sc_ctl_buf;
+}
+
 static int
-ubt_control(void *h, u_int8_t *data, size_t len)
+ubt_send_control(void *h, struct btframe_buffer *buf, size_t len)
 {
 	struct ubt_softc *sc = h;
 	usb_device_request_t req;
 	usbd_status status;
 
 	DPRINTFN(1,("%s: sc=%p\n", __func__, sc));
+
+#ifdef DIAGNOSTIC
+	if ((u_int8_t*)buf != sc->sc_ctl_buf)
+		panic("ubt_control() called with wrong buffer");
+#endif
 
 	if (sc->sc_dying)
 		return EIO;
@@ -474,8 +503,6 @@ ubt_control(void *h, u_int8_t *data, size_t len)
 	memset(&req, 0, sizeof(req));
 	req.bmRequestType = UT_WRITE_CLASS_DEVICE;
 	USETW(req.wLength, len);
-
-	memcpy(sc->sc_ctl_buf, data, len);
 
 	usbd_setup_default_xfer(sc->sc_ctl_xfer,
 				sc->sc_udev,
@@ -495,13 +522,34 @@ ubt_control(void *h, u_int8_t *data, size_t len)
 	return 0;
 }
 
+static u_int8_t*
+ubt_alloc_acldata(void *h, size_t len, struct btframe_buffer **buf)
+{
+	struct ubt_softc *sc = h;
+
+	/*
+	 * We should be catching this earlier, but at the moment a
+	 * user request can generate oversized allocations.
+	 */
+	if (len > BTHCI_ACL_DATA_MAX_LEN)
+		return NULL;
+
+	*buf = (struct btframe_buffer*)sc->sc_aclwr_buf;
+	return sc->sc_aclwr_buf;
+}
+
 static int
-ubt_sendacldata(void *h, u_int8_t *data, size_t len)
+ubt_send_acldata(void *h, struct btframe_buffer *buf, size_t len)
 {
 	struct ubt_softc *sc = h;
 	usbd_status status;
 
 	DPRINTFN(1,("%s: sc=%p\n", __func__, sc));
+
+#ifdef DIAGNOSTIC
+	if ((u_int8_t*)buf != sc->sc_aclwr_buf)
+		panic("ubt_sendacldata() called with wrong buffer");
+#endif
 
 	if (sc->sc_dying)
 		return EIO;
@@ -510,8 +558,6 @@ ubt_sendacldata(void *h, u_int8_t *data, size_t len)
 		return EINVAL;
 
 	sc->sc_refcnt++;
-
-	memcpy(sc->sc_aclwr_buf, data, len);
 
 	usbd_setup_xfer(sc->sc_aclwr_xfer,
 			sc->sc_aclwr_pipe,
@@ -532,8 +578,14 @@ ubt_sendacldata(void *h, u_int8_t *data, size_t len)
 	return 0;
 }
 
+static u_int8_t*
+ubt_alloc_scodata(void *h, size_t len, struct btframe_buffer **buf)
+{
+	return NULL;
+}
+
 static int
-ubt_sendscodata(void *h, u_int8_t *data, size_t len)
+ubt_send_scodata(void *h, struct btframe_buffer *buf, size_t len)
 {
 	struct ubt_softc *sc = h;
 
@@ -582,7 +634,7 @@ ubt_aclrd_request(struct ubt_softc *sc)
 	}
 	sc->sc_aclrd_running = 1;
 	splx(s);
-	
+
 	usbd_setup_xfer(sc->sc_aclrd_xfer, sc->sc_aclrd_pipe,
 			sc, sc->sc_aclrd_buf, BTHCI_ACL_DATA_MAX_LEN,
 			USBD_SHORT_XFER_OK | USBD_NO_COPY,
