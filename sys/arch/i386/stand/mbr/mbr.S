@@ -1,4 +1,4 @@
-/*	$NetBSD: mbr.S,v 1.11 2004/09/05 21:42:43 dsl Exp $	*/
+/*	$NetBSD: mbr.S,v 1.12 2004/09/12 08:41:47 dsl Exp $	*/
 
 /*
  * Copyright (c) 1999-2004 The NetBSD Foundation, Inc. 
@@ -228,7 +228,7 @@ next_ptn:
  */
 
 #ifndef BOOTSEL
-	mov	$SCAN_ENTER - SCAN_F1, %ax
+	mov	$(SCAN_ENTER - SCAN_F1) & 0xff, %ax
 #else
 /*
  * Get the initial time value for the timeout comparison. It is returned
