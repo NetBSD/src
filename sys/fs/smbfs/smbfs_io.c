@@ -1,4 +1,4 @@
-/*	$NetBSD: smbfs_io.c,v 1.8 2003/02/24 09:30:42 jdolecek Exp $	*/
+/*	$NetBSD: smbfs_io.c,v 1.9 2003/02/24 21:29:48 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 2000-2001, Boris Popov
@@ -271,6 +271,7 @@ smbfs_writevnode(struct vnode *vp, struct uio *uiop,
 		psignal(p, SIGXFSZ);
 		return EFBIG;
 	}
+	/* XXX need to DTRT with holes (lseek() + write) */
 	smb_makescred(&scred, p, cred);
 	error = smb_write(smp->sm_share, np->n_fid, uiop, &scred);
 	SMBVDEBUG("after: ofs=%d,resid=%d\n",(int)uiop->uio_offset, uiop->uio_resid);
