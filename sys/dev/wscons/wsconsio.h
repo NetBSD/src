@@ -1,4 +1,4 @@
-/* $NetBSD: wsconsio.h,v 1.61.2.1 2004/06/07 09:37:38 tron Exp $ */
+/* $NetBSD: wsconsio.h,v 1.61.2.2 2004/06/07 09:53:11 tron Exp $ */
 
 /*
  * Copyright (c) 1996, 1997 Christopher G. Demetriou.  All rights reserved.
@@ -104,20 +104,6 @@ struct wskbd_bell_data {
 	u_int	period;				/* period, in milliseconds */
 	u_int	volume;				/* percentage of max volume */
 };
-/* Manipulate the scrolling modifiers and mode */
-struct wskbd_scroll_data {
-	u_int		which;
-	u_int		mode;
-	u_int		modifier;
-};
-
-/* Manipulate the scrolling values (how many lines to scroll) */
-
-struct wsdisplay_scroll_data {
-	u_int		which;
-	u_int		fastlines;
-	u_int		slowlines;
-};
 
 #define		WSKBD_BELL_DOPITCH	0x1		/* get/set pitch */
 #define		WSKBD_BELL_DOPERIOD	0x2		/* get/set period */
@@ -175,14 +161,22 @@ struct wskbd_map_data {
 #define	WSKBDIO_SETKEYCLICK	_IOW('W', 21, int)
 #define	WSKBDIO_GETKEYCLICK	_IOR('W', 22, int)
 
-#define WSKBDIO_GETSCROLL		_IOR('W', 23, struct wskbd_scroll_data)
-#define WSKBDIO_SETSCROLL		_IOW('W', 24, struct wskbd_scroll_data)
+/* Manipulate the scrolling modifiers and mode */
+struct wskbd_scroll_data {
+	u_int		which;
+	u_int		mode;
+	u_int		modifier;
+};
+
+#define		WSKBD_SCROLL_DOMODIFIER		0x01
+#define		WSKBD_SCROLL_DOMODE		0x02
+#define		WSKBD_SCROLL_DOALL		0x03
 
 #define		WSKBD_SCROLL_MODE_NORMAL	0x00
 #define		WSKBD_SCROLL_MODE_HOLD		0x01
-#define		WSKBD_SCROLL_DOMODIFIER		0x01
-#define		WSKBD_SCROLL_DOMODE			0x02
-#define		WSKBD_SCROLL_DOALL			0x03
+
+#define	WSKBDIO_GETSCROLL	_IOR('W', 23, struct wskbd_scroll_data)
+#define	WSKBDIO_SETSCROLL	_IOW('W', 24, struct wskbd_scroll_data)
 
 /*
  * Mouse ioctls (32 - 63)
@@ -339,11 +333,6 @@ struct wsdisplay_cursor {
 #define		WSDISPLAY_CURSOR_DOSHAPE	0x10	/* get/set img/mask */
 #define		WSDISPLAY_CURSOR_DOALL		0x1f	/* all of the above */
 
-#define		WSDISPLAY_SCROLL_DOFASTLINES	0x01
-#define		WSDISPLAY_SCROLL_DOSLOWLINES	0x02
-#define		WSDISPLAY_SCROLL_DOALL			0x03
-
-
 /* Cursor control: get and set position */
 #define	WSDISPLAYIO_GCURPOS	_IOR('W', 70, struct wsdisplay_curpos)
 #define	WSDISPLAYIO_SCURPOS	_IOW('W', 71, struct wsdisplay_curpos)
@@ -426,9 +415,6 @@ struct wsdisplay_param {
 #define	WSDISPLAYIO_GETPARAM	_IOWR('W', 82, struct wsdisplay_param)
 #define	WSDISPLAYIO_SETPARAM	_IOWR('W', 83, struct wsdisplay_param)
 
-#define WSDISPLAYIO_DGSCROLL		_IOR('W', 84, struct wsdisplay_scroll_data)
-#define WSDISPLAYIO_DSSCROLL		_IOW('W', 85, struct wsdisplay_scroll_data)
-
 #define	WSDISPLAYIO_GETACTIVESCREEN	_IOR('W', 84, int)
 
 /* Character functions */
@@ -442,6 +428,21 @@ struct wsdisplay_char {
 #define WSDISPLAY_CHAR_BLINK  2
 #define WSDISPLAYIO_GETWSCHAR	_IOWR('W', 85, struct wsdisplay_char)
 #define WSDISPLAYIO_PUTWSCHAR	_IOWR('W', 86, struct wsdisplay_char)
+
+/* Manipulate the scrolling values (how many lines to scroll) */
+
+struct wsdisplay_scroll_data {
+	uint32_t	which;
+	uint16_t	fastlines;
+	uint16_t	slowlines;
+};
+
+#define		WSDISPLAY_SCROLL_DOFASTLINES	0x01
+#define		WSDISPLAY_SCROLL_DOSLOWLINES	0x02
+#define		WSDISPLAY_SCROLL_DOALL		0x03
+
+#define	WSDISPLAYIO_DGSCROLL	_IOR('W', 87, struct wsdisplay_scroll_data)
+#define	WSDISPLAYIO_DSSCROLL	_IOW('W', 88, struct wsdisplay_scroll_data)
 
 /* XXX NOT YET DEFINED */
 /* Mapping information retrieval. */
