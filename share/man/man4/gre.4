@@ -1,4 +1,4 @@
-.\" $NetBSD: gre.4,v 1.3 1998/09/30 06:13:27 hwr Exp $
+.\" $NetBSD: gre.4,v 1.4 1998/10/31 12:37:59 hwr Exp $
 .\"
 .\" Copyright 1998 (c) The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -55,7 +55,7 @@ This driver currently supports the following modes of operation:
 .It IPIP encapsulation (IP protocol number 4). 
 Complete IP packets (IP header and IP payload) are 
 directly encapsulated into IP packets
-and sent to the tunnel destionation. This mode allows only for IP in IP
+and sent to the tunnel destination. This mode allows only for IP in IP
 tunneling.
 .It GRE encapsulation (IP protocol number 47). 
 Encapsulated datagrams are
@@ -114,7 +114,7 @@ link0 -link1 -link2
 Query operation mode.
 .El
 .Pp
-Note that the IP adresses of the tunnel endpoints may be the same as the
+Note that the IP addresses of the tunnel endpoints may be the same as the
 ones defined with 
 .Xr ifconfig
 for the interface (as if IP is encapsulated), but need not be, as e.g. when 
@@ -202,7 +202,7 @@ the best solution.
 .Pp
 GRE RFC not yet fully implemented (no GRE options), no other protocols
 yet than IP over IP.
-RFC 2003 also not yet fully supportet wrt. options etc.
+RFC 2003 also not yet fully supported wrt. options etc.
 .Pp
 Traceroute does not work yet over the tunnel :(
 .Pp
