@@ -1,4 +1,4 @@
-.\"	$NetBSD: slattach.8,v 1.18 1997/12/04 22:33:52 msaitoh Exp $
+.\"	$NetBSD: slattach.8,v 1.19 1998/03/23 04:41:16 fair Exp $
 .\"
 .\" Copyright (c) 1986, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -57,6 +57,9 @@ The following operands are supported by
 Turn on RTS/CTS flow control.  By default, no flow control is done.
 .It Fl H
 Turn on DTR/CTS flow control.  By default, no flow control is done.
+.It Fl l
+Turn on the CLOCAL flag, making it possible to run SLIP on a cable
+without modem control signals (e.g. DTR, DSR, DCD).
 .It Fl m
 Maintain modem control signals after closing the line.  Specifically,
 this disables HUPCL.
