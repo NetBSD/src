@@ -1,4 +1,4 @@
-#	$NetBSD: files,v 1.444 2001/06/02 16:17:07 thorpej Exp $
+#	$NetBSD: files,v 1.445 2001/06/03 13:43:45 tsutsui Exp $
 
 #	@(#)files.newconf	7.5 (Berkeley) 5/10/93
 
@@ -277,6 +277,10 @@ file	dev/ic/bha.c			bha
 # (must be after bha, see above)
 device	aha: scsi
 file	dev/ic/aha.c			aha
+
+# Initio INIC-940/950 SCSI controllers
+device	iha: scsi
+file	dev/ic/iha.c			iha
 
 # Qlogic ISP 10x0 SCSI Controllers
 defopt	opt_isp.h	ISP_DISABLE_1020_SUPPORT ISP_DISABLE_1080_SUPPORT
