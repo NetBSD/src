@@ -1,5 +1,5 @@
-$NetBSD: nslookup.help,v 1.2.8.1 2001/01/28 15:52:40 he Exp $
-Id: nslookup.help,v 8.4 1996/10/25 18:09:41 vixie Exp
+$NetBSD: nslookup.help,v 1.2.8.2 2002/07/01 17:15:15 he Exp $
+Id: nslookup.help,v 8.5 2000/03/30 23:25:35 vixie Exp
 
 Commands: 	(identifiers are shown in uppercase, [] means optional)
 NAME		- print info about the host/domain NAME using default server
