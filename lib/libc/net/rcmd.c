@@ -1,4 +1,4 @@
-/*	$NetBSD: rcmd.c,v 1.16 1996/12/18 04:53:11 thorpej Exp $	*/
+/*	$NetBSD: rcmd.c,v 1.17 1996/12/28 18:48:31 veego Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993, 1994
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)rcmd.c	8.3 (Berkeley) 3/26/94";
 #else
-static char *rcsid = "$NetBSD: rcmd.c,v 1.16 1996/12/18 04:53:11 thorpej Exp $";
+static char *rcsid = "$NetBSD: rcmd.c,v 1.17 1996/12/28 18:48:31 veego Exp $";
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -48,6 +48,7 @@ static char *rcsid = "$NetBSD: rcmd.c,v 1.16 1996/12/18 04:53:11 thorpej Exp $";
 
 #include <netinet/in.h>
 #include <arpa/inet.h>
+#include <netgroup.h>
 
 #include <signal.h>
 #include <fcntl.h>
@@ -291,6 +292,7 @@ iruserok(raddr, superuser, ruser, luser)
 	struct passwd *pwd;
 	FILE *hostf;
 	uid_t uid;
+	gid_t gid;
 	int first;
 	char pbuf[MAXPATHLEN];
 
@@ -317,9 +319,13 @@ again:
 		 * are protected read/write owner only.
 		 */
 		uid = geteuid();
+		gid = getegid();
+		(void)setegid(pwd->pw_gid);
+		initgroups(pwd->pw_name, pwd->pw_gid);
 		(void)seteuid(pwd->pw_uid);
 		hostf = fopen(pbuf, "r");
 		(void)seteuid(uid);
+		(void)setegid(gid);
 
 		if (hostf == NULL)
 			return (-1);
