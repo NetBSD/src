@@ -35,34 +35,37 @@
 .\"
 .\"	from: Header: le.4,v 1.2 92/10/13 05:31:33 leres Exp
 .\"	from: @(#)le.4	8.1 (Berkeley) 6/9/93
-.\"	$NetBSD: ie.4,v 1.1.1.1 1995/08/08 20:18:53 gwr Exp $
+.\"	$NetBSD: ie.4,v 1.2 1998/06/11 09:03:46 fair Exp $
 .\"
 .Dd June 9, 1993
 .Dt IE 4 sun3
 .Os
 .Sh NAME
 .Nm ie
-.Nd Intel 82586 Ethernet interface
+.Nd Intel 82586 Ethernet interface driver
 .Sh SYNOPSIS
-.Cd "ie0 at obio0 addr ? level ?"
-.Cd "ie1 at vmes0 addr 0xffe88000 level 3 vect 0x75"
+.Cd "ie0 at obio0 addr 0x0C0000 ipl 3"
+.Cd "ie1 at vme2  addr 0xe88000 ipl 3 vect 0x75"
+.Cd "ie* at sebuf?"
 .Sh DESCRIPTION
-The 
+The
 .Nm
-interface provides access to the 10 Mb/s Ethernet network via the
+interface provides access to the 10 Mb/s
+.Tn Ethernet
+network via the
 .Tn Intel
 82586 Ethernet chip set.
 .Pp
-Each of the host's network addresses
-is specified at boot time with an
+Each of the host's network addresses is specified at boot time with an
 .Dv SIOCSIFADDR
 .Xr ioctl .
 The
 .Nm
-interface employs the address resolution protocol described in
+interface employs the Address Resolution Protocol described in
 .Xr arp 4
-to dynamically map between Internet and Ethernet addresses on the local
-network.
+to dynamically map between Internet and
+.Tn Ethernet
+addresses on the local network.
 .Sh SEE ALSO
 .Xr le 4 ,
 .Xr intro 4 ,
