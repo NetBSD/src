@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_pager.c,v 1.21 1999/07/08 01:02:44 thorpej Exp $	*/
+/*	$NetBSD: uvm_pager.c,v 1.22 1999/07/22 22:58:39 thorpej Exp $	*/
 
 /*
  *
@@ -647,7 +647,7 @@ uvm_pager_dropcluster(uobj, pg, ppsp, npages, flags, swblk)
 		/* did someone want the page while we had it busy-locked? */
 		if (ppsp[lcv]->flags & PG_WANTED)
 			/* still holding obj lock */
-			thread_wakeup(ppsp[lcv]);
+			wakeup(ppsp[lcv]);
 
 		/* if page was released, release it.  otherwise un-busy it */
 		if (ppsp[lcv]->flags & PG_RELEASED) {
