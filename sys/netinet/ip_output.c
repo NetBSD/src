@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_output.c,v 1.40.2.1 1998/05/09 03:33:00 mycroft Exp $	*/
+/*	$NetBSD: ip_output.c,v 1.40.2.2 1998/07/22 23:54:37 mellon Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1988, 1990, 1993
@@ -310,14 +310,17 @@ ip_output(m0, va_alist)
 	 * Run through list of hooks for output packets.
 	 */
 	m1 = m;
-	for (pfh = pfil_hook_get(PFIL_OUT); pfh; pfh = pfh->pfil_link.le_next)
+	for (pfh = pfil_hook_get(PFIL_OUT); pfh; pfh = pfh->pfil_link.tqe_next)
 		if (pfh->pfil_func) {
 		    	rv = pfh->pfil_func(ip, hlen, ifp, 1, &m1);
 			if (rv) {
 				error = EHOSTUNREACH;
 				goto done;
 			}
-			ip = mtod(m = m1, struct ip *);
+			m = m1;
+			if (m == NULL)
+				goto done;
+			ip = mtod(m, struct ip *);
 		}
 #endif /* PFIL_HOOKS */
 sendit:
