@@ -1,10 +1,7 @@
-#	$NetBSD: Makefile,v 1.21 2003/03/25 11:51:29 tron Exp $
+#	$NetBSD: Makefile,v 1.22 2003/03/31 20:57:30 atatat Exp $
 #	install these sources in /usr/share/sendmail/cf
 
 .include <bsd.own.mk>
-
-DIST=		${NETBSDSRCDIR}/gnu/dist
-.PATH: ${DIST}/sendmail/cf/cf
 
 FILESDIR=	/usr/share/sendmail/cf
 FILES=		boat-anchor.mc chimera.mc ihack.net.mc minbar.mc \
@@ -14,6 +11,8 @@ FILES=		boat-anchor.mc chimera.mc ihack.net.mc minbar.mc \
 .if (${.CURDIR} == ${FILESDIR})
 CFDIR=		${.CURDIR}/..
 .else
+DIST=		${NETBSDSRCDIR}/gnu/dist
+.PATH: ${DIST}/sendmail/cf/cf
 CFDIR?=		${DIST}/sendmail/cf
 .endif
 CHMOD=		chmod
