@@ -35,7 +35,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)locore.s	7.3 (Berkeley) 5/13/91
- *	$Id: locore.s,v 1.28.2.29 1993/11/13 06:25:46 mycroft Exp $
+ *	$Id: locore.s,v 1.28.2.30 1994/01/11 13:36:28 mycroft Exp $
  */
 
 
@@ -1610,18 +1610,18 @@ ENTRY(savectx)
  */ 
 #define	IDTVEC(name)	ALIGN_TEXT; .globl _X/**/name; _X/**/name:
 #define	INTRENTRY \
+	pushal			; \
 	pushl	%ds		; \
 	pushl	%es		; /* now the stack frame is a trap frame */ \
-	pushal			; \
 	movl	$(KDSEL),%eax	; \
 	movl	%ax,%ds		; \
 	movl	%ax,%es
 #define	INTREXIT \
 	jmp	doreti
 #define	INTRFASTEXIT \
-	popal			; \
 	popl	%es		; \
 	popl	%ds		; \
+	popal			; \
 	addl	$8,%esp		; \
 	iret
 

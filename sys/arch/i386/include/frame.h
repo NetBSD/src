@@ -47,6 +47,8 @@
  * Exception/Trap Stack Frame
  */
 struct trapframe {
+	int	tf_es;
+	int	tf_ds;
 	int	tf_edi;
 	int	tf_esi;
 	int	tf_ebp;
@@ -55,8 +57,6 @@ struct trapframe {
 	int	tf_edx;
 	int	tf_ecx;
 	int	tf_eax;
-	int	tf_es;
-	int	tf_ds;
 	int	tf_trapno;
 	/* below portion defined in 386 hardware */
 	int	tf_err;
@@ -71,6 +71,8 @@ struct trapframe {
 /* Interrupt stack frame */
 struct intrframe {
 	int	if_ppl;
+	int	if_es;
+	int	if_ds;
 	int	if_edi;
 	int	if_esi;
 	int	if_ebp;
@@ -79,8 +81,6 @@ struct intrframe {
 	int	if_edx;
 	int	if_ecx;
 	int	if_eax;
-	int	if_es;
-	int	if_ds;
 	int	:32;		/* for compat with trap frame - trapno */
 	int	:32;		/* for compat with trap frame - err */
 	/* below portion defined in 386 hardware */
