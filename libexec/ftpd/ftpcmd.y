@@ -1,4 +1,4 @@
-/*	$NetBSD: ftpcmd.y,v 1.14 1997/06/24 08:49:27 hannken Exp $	*/
+/*	$NetBSD: ftpcmd.y,v 1.15 1997/11/11 05:48:07 mrg Exp $	*/
 
 /*
  * Copyright (c) 1985, 1988, 1993, 1994
@@ -47,7 +47,7 @@
 #if 0
 static char sccsid[] = "@(#)ftpcmd.y	8.3 (Berkeley) 4/6/94";
 #else
-__RCSID("$NetBSD: ftpcmd.y,v 1.14 1997/06/24 08:49:27 hannken Exp $");
+__RCSID("$NetBSD: ftpcmd.y,v 1.15 1997/11/11 05:48:07 mrg Exp $");
 #endif
 #endif /* not lint */
 
@@ -57,6 +57,7 @@ __RCSID("$NetBSD: ftpcmd.y,v 1.14 1997/06/24 08:49:27 hannken Exp $");
 
 #include <netinet/in.h>
 #include <arpa/ftp.h>
+#include <arpa/inet.h>
 
 #include <ctype.h>
 #include <errno.h>
@@ -88,6 +89,7 @@ extern	int usedefault;
 extern  int transflag;
 extern  char tmpline[];
 extern	struct ftpclass curclass;
+extern	struct sockaddr_in his_addr;
 
 off_t	restart_point;
 
@@ -154,8 +156,16 @@ cmd
 			pass($3);
 			free($3);
 		}
-	| PORT SP host_port CRLF
+	| PORT check_login SP host_port CRLF
 		{
+			/* be paranoid, if told so */
+			if (checkportcmd &&
+			    ((ntohs(data_dest.sin_port) < IPPORT_RESERVED) ||
+			    memcmp(&data_dest.sin_addr, &his_addr.sin_addr,
+			    sizeof(data_dest.sin_addr)) != 0)) {
+				reply(500, "Illegal PORT command rejected");
+				return (NULL);
+			}
 			usedefault = 0;
 			if (pdata >= 0) {
 				(void) close(pdata);
