@@ -1,4 +1,4 @@
-/*	$NetBSD: rpc_scan.h,v 1.3 1995/06/11 21:50:04 pk Exp $	*/
+/*	$NetBSD: rpc_scan.h,v 1.4 1997/10/11 21:01:50 christos Exp $	*/
 /*
  * Sun RPC is a product of Sun Microsystems, Inc. and is provided for
  * unrestricted use provided that this legend is included on all tape
@@ -100,7 +100,3 @@ void scan_num __P((token *));
 void peek __P((token *));
 int peekscan __P((tok_kind, token *));
 void get_token __P((token *));
-
-void expected1 __P((tok_kind));
-void expected2 __P((tok_kind, tok_kind));
-void expected3 __P((tok_kind, tok_kind, tok_kind));
