@@ -1,4 +1,4 @@
-/*	$NetBSD: bus_dma.c,v 1.4 2001/11/23 19:21:47 thorpej Exp $	*/
+/*	$NetBSD: bus_dma.c,v 1.5 2001/11/26 20:49:04 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -57,7 +57,6 @@
 #include <machine/bus.h>
 
 #include <machine/cpu.h>
-#include <machine/psl.h>
 
 #include <arm/cpufunc.h>
 
