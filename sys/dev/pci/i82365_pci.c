@@ -1,4 +1,4 @@
-/*	$NetBSD: i82365_pci.c,v 1.1.2.1 1997/08/28 23:01:58 marc Exp $	*/
+/*	$NetBSD: i82365_pci.c,v 1.1.2.2 1997/09/27 02:33:18 marc Exp $	*/
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -112,6 +112,11 @@ pcic_pci_attach(parent, self, aux)
 
 	sc->membase = 0xd0000;
 	sc->subregionmask = (1<<(0x4000/PCIC_MEM_PAGESIZE))-1;
+
+	/* same deal for io allocation */
+
+	sc->iobase = 0x400;
+	sc->iosize = 0xbff;
 
 	/* end XXX */
 
