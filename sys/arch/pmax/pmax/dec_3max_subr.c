@@ -1,4 +1,4 @@
-/*	$NetBSD: dec_3max_subr.c,v 1.5 1999/03/25 01:17:52 simonb Exp $	*/
+/*	$NetBSD: dec_3max_subr.c,v 1.6 1999/03/27 03:27:09 mhitch Exp $	*/
 
 /*
  * Copyright (c) 1998 Jonathan Stone.  All rights reserved.
@@ -32,7 +32,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: dec_3max_subr.c,v 1.5 1999/03/25 01:17:52 simonb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dec_3max_subr.c,v 1.6 1999/03/27 03:27:09 mhitch Exp $");
 
 #include <sys/types.h>
 #include <sys/systm.h>
@@ -67,19 +67,20 @@ dec_mtasic_err(erradr, errsyn)
 		(erradr & KN02_ERR_ECCERR) ? "ECC" : "timeout",
 		physadr);
 	if (erradr & KN02_ERR_ECCERR) {
+		u_int errsyn_value = *(u_int *)errsyn;
 		*(u_int *)errsyn = 0;
 		wbflush();
-		printf("   ECC 0x%08x\n", errsyn);
+		printf("   ECC 0x%08x\n", errsyn_value);
 
 		/* check for a corrected, single bit, read error */
 		if (!(erradr & KN02_ERR_WRITE)) {
 			if (physadr & 0x4) {
 				/* check high word */
-				if (errsyn & KN02_ECC_SNGHI)
+				if (errsyn_value & KN02_ECC_SNGHI)
 					return;
 			} else {
 				/* check low word */
-				if (errsyn & KN02_ECC_SNGLO)
+				if (errsyn_value & KN02_ECC_SNGLO)
 					return;
 			}
 		}
