@@ -1,4 +1,4 @@
-/*	$NetBSD: stat_flags.c,v 1.7 1999/01/03 01:30:10 lukem Exp $	*/
+/*	$NetBSD: stat_flags.c,v 1.8 2000/07/29 03:46:15 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)stat_flags.c	8.2 (Berkeley) 7/28/94";
 #else
-__RCSID("$NetBSD: stat_flags.c,v 1.7 1999/01/03 01:30:10 lukem Exp $");
+__RCSID("$NetBSD: stat_flags.c,v 1.8 2000/07/29 03:46:15 lukem Exp $");
 #endif
 #endif /* not lint */
 
@@ -64,9 +64,7 @@ __RCSID("$NetBSD: stat_flags.c,v 1.7 1999/01/03 01:30:10 lukem Exp $");
  *	are set, return the default string.
  */
 char *
-flags_to_string(flags, def)
-	u_long flags;
-	char *def;
+flags_to_string(u_long flags, char *def)
 {
 	static char string[128];
 	char *prefix;
@@ -108,9 +106,7 @@ flags_to_string(flags, def)
  *	to the offending token.
  */
 int
-string_to_flags(stringp, setp, clrp)
-	char **stringp;
-	u_long *setp, *clrp;
+string_to_flags(char **stringp, u_long *setp, u_long *clrp)
 {
 	int clear;
 	char *string, *p;
