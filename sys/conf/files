@@ -1,4 +1,4 @@
-#	$NetBSD: files,v 1.700 2004/11/30 04:28:43 christos Exp $
+#	$NetBSD: files,v 1.701 2004/12/04 16:10:25 peter Exp $
 
 #	@(#)files.newconf	7.5 (Berkeley) 5/10/93
 
@@ -1296,7 +1296,7 @@ file	net/if_gif.c			gif			needs-flag
 file	net/if_gre.c			gre			needs-flag
 file	net/if_hippisubr.c		hippi			needs-flag
 file	net/if_ieee1394subr.c		ieee1394
-file	net/if_loop.c			loop			needs-count
+file	net/if_loop.c			loop			needs-flag
 file	net/if_media.c
 file	net/if_ppp.c			ppp			needs-count
 file	net/if_stf.c			stf & inet & inet6	needs-flag

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_arp.c,v 1.99 2004/09/29 21:26:52 christos Exp $	*/
+/*	$NetBSD: if_arp.c,v 1.100 2004/12/04 16:10:25 peter Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
@@ -75,7 +75,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_arp.c,v 1.99 2004/09/29 21:26:52 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_arp.c,v 1.100 2004/12/04 16:10:25 peter Exp $");
 
 #include "opt_ddb.h"
 #include "opt_inet.h"
@@ -113,7 +113,6 @@ __KERNEL_RCSID(0, "$NetBSD: if_arp.c,v 1.99 2004/09/29 21:26:52 christos Exp $")
 #include <netinet/ip.h>
 #include <netinet/if_inarp.h>
 
-#include "loop.h"
 #include "arc.h"
 #if NARC > 0
 #include <net/if_arc.h>
@@ -152,9 +151,6 @@ static	struct llinfo_arp *arplookup __P((struct mbuf *, struct in_addr *,
 					  int, int));
 static	void in_arpinput __P((struct mbuf *));
 
-#if NLOOP > 0
-extern	struct ifnet loif[NLOOP];
-#endif
 LIST_HEAD(, llinfo_arp) llinfo_arp;
 struct	ifqueue arpintrq = {0, 0, 0, 50};
 int	arp_inuse, arp_allocated, arp_intimer;
@@ -552,7 +548,7 @@ arp_rtrequest(req, rt, info)
 		if (ia) {
 			/*
 			 * This test used to be
-			 *	if (loif.if_flags & IFF_UP)
+			 *	if (lo0ifp->if_flags & IFF_UP)
 			 * It allowed local traffic to be forced through
 			 * the hardware by configuring the loopback down.
 			 * However, it causes problems during network
@@ -571,10 +567,8 @@ arp_rtrequest(req, rt, info)
 			Bcopy(LLADDR(rt->rt_ifp->if_sadl),
 			    LLADDR(SDL(gate)),
 			    SDL(gate)->sdl_alen = rt->rt_ifp->if_addrlen);
-#if NLOOP > 0
 			if (useloopback)
-				rt->rt_ifp = &loif[0];
-#endif
+				rt->rt_ifp = lo0ifp;
 			/*
 			 * make sure to set rt->rt_ifa to the interface
 			 * address we are using, otherwise we will have trouble
