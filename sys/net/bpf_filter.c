@@ -1,10 +1,10 @@
-/*-
- * Copyright (c) 1990-1991 The Regents of the University of California.
- * All rights reserved.
+/*
+ * Copyright (c) 1990, 1991, 1993
+ *	The Regents of the University of California.  All rights reserved.
  *
  * This code is derived from the Stanford/CMU enet packet filter,
  * (net/enet.c) distributed as part of 4.3BSD, and code contributed
- * to Berkeley by Steven McCanne and Van Jacobson both of Lawrence 
+ * to Berkeley by Steven McCanne and Van Jacobson both of Lawrence
  * Berkeley Laboratory.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -35,15 +35,13 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *      from: @(#)bpf_filter.c	7.2 (Berkeley) 5/14/91
- *	$Id: bpf_filter.c,v 1.4 1993/12/18 00:40:51 mycroft Exp $
+ *	from: @(#)bpf_filter.c	8.1 (Berkeley) 6/10/93
+ *	$Id: bpf_filter.c,v 1.5 1994/05/13 06:02:22 mycroft Exp $
  */
 
 #include <sys/param.h>
 #include <sys/types.h>
 #include <sys/time.h>
-
-#include <net/bpf.h>
 
 #ifdef sun
 #include <netinet/in.h>
@@ -161,6 +159,7 @@ m_xhalf(m, k, err)
 }
 #endif
 
+#include <net/bpf.h>
 /*
  * Execute the filter program starting at pc on the packet p
  * wirelen is the length of the original packet

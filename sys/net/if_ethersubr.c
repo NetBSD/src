@@ -1,6 +1,6 @@
 /*
- * Copyright (c) 1982, 1989 Regents of the University of California.
- * All rights reserved.
+ * Copyright (c) 1982, 1989, 1993
+ *	The Regents of the University of California.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -30,8 +30,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	from: @(#)if_ethersubr.c	7.13 (Berkeley) 4/20/91
- *	$Id: if_ethersubr.c,v 1.7 1994/04/18 06:18:10 glass Exp $
+ *	@(#)if_ethersubr.c	8.1 (Berkeley) 6/10/93
  */
 
 #include <sys/param.h>
@@ -45,11 +44,14 @@
 #include <sys/errno.h>
 #include <sys/syslog.h>
 
+#include <machine/cpu.h>
+
 #include <net/if.h>
 #include <net/netisr.h>
 #include <net/route.h>
 #include <net/if_llc.h>
 #include <net/if_dl.h>
+#include <net/if_types.h>
 
 #ifdef INET
 #include <netinet/in.h>
@@ -69,10 +71,18 @@
 #include <netiso/iso_snpac.h>
 #endif
 
-#include <machine/cpu.h>
+#ifdef LLC
+#include <netccitt/dll.h>
+#include <netccitt/llc_var.h>
+#endif
+
+#if defined(LLC) && defined(CCITT)
+extern struct ifqueue pkintrq;
+#endif
 
 u_char	etherbroadcastaddr[6] = { 0xff, 0xff, 0xff, 0xff, 0xff, 0xff };
 extern	struct ifnet loif;
+#define senderr(e) { error = (e); goto bad;}
 
 /*
  * Ethernet output routine.
@@ -81,55 +91,64 @@ extern	struct ifnet loif;
  * packet leaves a multiple of 512 bytes of data in remainder.
  * Assumes that ifp is actually pointer to arpcom structure.
  */
-ether_output(ifp, m0, dst, rt)
+int
+ether_output(ifp, m0, dst, rt0)
 	register struct ifnet *ifp;
 	struct mbuf *m0;
 	struct sockaddr *dst;
-	struct rtentry *rt;
+	struct rtentry *rt0;
 {
-	u_short type;
+	u_short etype;
 	int s, error = 0;
  	u_char edst[6];
-	struct in_addr idst;
 	register struct mbuf *m = m0;
+	register struct rtentry *rt;
 	struct mbuf *mcopy = (struct mbuf *)0;
 	register struct ether_header *eh;
-	int usetrailers, off, len = m->m_pkthdr.len;
-#define	ac ((struct arpcom *)ifp)
+	int off, len = m->m_pkthdr.len;
+	struct arpcom *ac = (struct arpcom *)ifp;
 
-	if ((ifp->if_flags & (IFF_UP|IFF_RUNNING)) != (IFF_UP|IFF_RUNNING)) {
-		error = ENETDOWN;
-		goto bad;
-	}
+	if ((ifp->if_flags & (IFF_UP|IFF_RUNNING)) != (IFF_UP|IFF_RUNNING))
+		senderr(ENETDOWN);
 	ifp->if_lastchange = time;
+	if (rt = rt0) {
+		if ((rt->rt_flags & RTF_UP) == 0) {
+			if (rt0 = rt = rtalloc1(dst, 1))
+				rt->rt_refcnt--;
+			else 
+				senderr(EHOSTUNREACH);
+		}
+		if (rt->rt_flags & RTF_GATEWAY) {
+			if (rt->rt_gwroute == 0)
+				goto lookup;
+			if (((rt = rt->rt_gwroute)->rt_flags & RTF_UP) == 0) {
+				rtfree(rt); rt = rt0;
+			lookup: rt->rt_gwroute = rtalloc1(rt->rt_gateway, 1);
+				if ((rt = rt->rt_gwroute) == 0)
+					senderr(EHOSTUNREACH);
+			}
+		}
+		if (rt->rt_flags & RTF_REJECT)
+			if (rt->rt_rmx.rmx_expire == 0 ||
+			    time.tv_sec < rt->rt_rmx.rmx_expire)
+				senderr(rt == rt0 ? EHOSTDOWN : EHOSTUNREACH);
+	}
 	switch (dst->sa_family) {
 
 #ifdef INET
 	case AF_INET:
-		idst = ((struct sockaddr_in *)dst)->sin_addr;
- 		if (!arpresolve(ac, m, &idst, edst, &usetrailers))
+		if (!arpresolve(ac, rt, m, dst, edst))
 			return (0);	/* if not yet resolved */
 		/* If broadcasting on a simplex interface, loopback a copy */
 		if ((m->m_flags & M_BCAST) && (ifp->if_flags & IFF_SIMPLEX))
 			mcopy = m_copy(m, 0, (int)M_COPYALL);
 		off = m->m_pkthdr.len - m->m_len;
-		if (usetrailers && off > 0 && (off & 0x1ff) == 0 &&
-		    (m->m_flags & M_EXT) == 0 &&
-		    m->m_data >= m->m_pktdat + 2 * sizeof (u_short)) {
-			type = ETHERTYPE_TRAIL + (off>>9);
-			m->m_data -= 2 * sizeof (u_short);
-			m->m_len += 2 * sizeof (u_short);
-			len += 2 * sizeof (u_short);
-			*mtod(m, u_short *) = htons((u_short)ETHERTYPE_IP);
-			*(mtod(m, u_short *) + 1) = htons((u_short)m->m_len);
-			goto gottrailertype;
-		}
-		type = ETHERTYPE_IP;
-		goto gottype;
+		etype = ETHERTYPE_IP;
+		break;
 #endif
 #ifdef NS
 	case AF_NS:
-		type = ETHERTYPE_NS;
+		etype = ETHERTYPE_NS;
  		bcopy((caddr_t)&(((struct sockaddr_ns *)dst)->sns_addr.x_host),
 		    (caddr_t)edst, sizeof (edst));
 		if (!bcmp((caddr_t)edst, (caddr_t)&ns_thishost, sizeof(edst)))
@@ -137,36 +156,24 @@ ether_output(ifp, m0, dst, rt)
 		/* If broadcasting on a simplex interface, loopback a copy */
 		if ((m->m_flags & M_BCAST) && (ifp->if_flags & IFF_SIMPLEX))
 			mcopy = m_copy(m, 0, (int)M_COPYALL);
-		goto gottype;
+		break;
 #endif
 #ifdef	ISO
 	case AF_ISO: {
 		int	snpalen;
 		struct	llc *l;
+		register struct sockaddr_dl *sdl;
 
-	iso_again:
-		if (rt && rt->rt_gateway && (rt->rt_flags & RTF_UP)) {
-			if (rt->rt_flags & RTF_GATEWAY) {
-				if (rt->rt_llinfo) {
-					rt = (struct rtentry *)rt->rt_llinfo;
-					goto iso_again;
-				}
-			} else {
-				register struct sockaddr_dl *sdl = 
-					(struct sockaddr_dl *)rt->rt_gateway;
-				if (sdl && sdl->sdl_family == AF_LINK
-				    && sdl->sdl_alen > 0) {
-					bcopy(LLADDR(sdl), (char *)edst,
-								sizeof(edst));
-					goto iso_resolved;
-				}
-			}
-		}
-		if ((error = iso_snparesolve(ifp, (struct sockaddr_iso *)dst,
-					(char *)edst, &snpalen)) > 0)
+		if (rt && (sdl = (struct sockaddr_dl *)rt->rt_gateway) &&
+		    sdl->sdl_family == AF_LINK && sdl->sdl_alen > 0) {
+			bcopy(LLADDR(sdl), (caddr_t)edst, sizeof(edst));
+		} else if (error =
+			    iso_snparesolve(ifp, (struct sockaddr_iso *)dst,
+					    (char *)edst, &snpalen))
 			goto bad; /* Not Resolved */
-	iso_resolved:
 		/* If broadcasting on a simplex interface, loopback a copy */
+		if (*edst & 1)
+			m->m_flags |= (M_BCAST|M_MCAST);
 		if ((m->m_flags & M_BCAST) && (ifp->if_flags & IFF_SIMPLEX) &&
 		    (mcopy = m_copy(m, 0, (int)M_COPYALL))) {
 			M_PREPEND(mcopy, sizeof (*eh), M_DONTWAIT);
@@ -181,7 +188,7 @@ ether_output(ifp, m0, dst, rt)
 		M_PREPEND(m, 3, M_DONTWAIT);
 		if (m == NULL)
 			return (0);
-		type = m->m_pkthdr.len;
+		etype = m->m_pkthdr.len;
 		l = mtod(m, struct llc *);
 		l->llc_dsap = l->llc_ssap = LLC_ISO_LSAP;
 		l->llc_control = LLC_UI;
@@ -193,46 +200,62 @@ ether_output(ifp, m0, dst, rt)
 				printf("%x ", edst[i] & 0xff);
 			printf("\n");
 		ENDDEBUG
+		} break;
+#endif /* ISO */
+#ifdef	LLC
+/*	case AF_NSAP: */
+	case AF_CCITT: {
+		register struct sockaddr_dl *sdl = 
+			(struct sockaddr_dl *) rt -> rt_gateway;
+
+		if (sdl && sdl->sdl_family == AF_LINK
+		    && sdl->sdl_alen > 0) {
+			bcopy(LLADDR(sdl), (char *)edst,
+				sizeof(edst));
+		} else goto bad; /* Not a link interface ? Funny ... */
+		if ((ifp->if_flags & IFF_SIMPLEX) && (*edst & 1) &&
+		    (mcopy = m_copy(m, 0, (int)M_COPYALL))) {
+			M_PREPEND(mcopy, sizeof (*eh), M_DONTWAIT);
+			if (mcopy) {
+				eh = mtod(mcopy, struct ether_header *);
+				bcopy((caddr_t)edst,
+				      (caddr_t)eh->ether_dhost, sizeof (edst));
+				bcopy((caddr_t)ac->ac_enaddr,
+				      (caddr_t)eh->ether_shost, sizeof (edst));
+			}
 		}
-		goto gottype;
-#endif	ISO
-#ifdef RMP
-	case AF_RMP:
-		/*
-		 *  This is IEEE 802.3 -- the Ethernet `type' field is
-		 *  really a `length' field.
-		 */
-		type = m->m_len;
- 		bcopy((caddr_t)dst->sa_data, (caddr_t)edst, sizeof(edst));
-		break;
-#endif
+		etype = m->m_pkthdr.len;
+#ifdef LLC_DEBUG
+		{
+			int i;
+			register struct llc *l = mtod(m, struct llc *);
+
+			printf("ether_output: sending LLC2 pkt to: ");
+			for (i=0; i<6; i++)
+				printf("%x ", edst[i] & 0xff);
+			printf(" len 0x%x dsap 0x%x ssap 0x%x control 0x%x\n", 
+			       etype & 0xff, l->llc_dsap & 0xff, l->llc_ssap &0xff,
+			       l->llc_control & 0xff);
+
+		}
+#endif /* LLC_DEBUG */
+		} break;
+#endif /* LLC */	
 
 	case AF_UNSPEC:
 		eh = (struct ether_header *)dst->sa_data;
  		bcopy((caddr_t)eh->ether_dhost, (caddr_t)edst, sizeof (edst));
-		/* AF_UNSPEC doesn't swap the byte order of the ether_type */
-		type = ntohs(eh->ether_type);
-		goto gottype;
+		/* AF_UNSPEC doesn't swap the byte order of the ether_type. */
+		etype = ntohs(eh->ether_type);
+		break;
 
 	default:
 		printf("%s%d: can't handle af%d\n", ifp->if_name, ifp->if_unit,
 			dst->sa_family);
-		error = EAFNOSUPPORT;
-		goto bad;
+		senderr(EAFNOSUPPORT);
 	}
 
-gottrailertype:
-	/*
-	 * Packet to be sent as trailer: move first packet
-	 * (control information) to end of chain.
-	 */
-	while (m->m_next)
-		m = m->m_next;
-	m->m_next = m0;
-	m = m0->m_next;
-	m0->m_next = 0;
 
-gottype:
 	if (mcopy)
 		(void) looutput(ifp, mcopy, dst, rt);
 	/*
@@ -240,13 +263,11 @@ gottype:
 	 * allocate another.
 	 */
 	M_PREPEND(m, sizeof (struct ether_header), M_DONTWAIT);
-	if (m == 0) {
-		error = ENOBUFS;
-		goto bad;
-	}
+	if (m == 0)
+		senderr(ENOBUFS);
 	eh = mtod(m, struct ether_header *);
-	type = htons((u_short)type);
-	bcopy((caddr_t)&type,(caddr_t)&eh->ether_type,
+	etype = htons(etype);
+	bcopy((caddr_t)&etype,(caddr_t)&eh->ether_type,
 		sizeof(eh->ether_type));
  	bcopy((caddr_t)edst, (caddr_t)eh->ether_dhost, sizeof (edst));
  	bcopy((caddr_t)ac->ac_enaddr, (caddr_t)eh->ether_shost,
@@ -259,8 +280,7 @@ gottype:
 	if (IF_QFULL(&ifp->if_snd)) {
 		IF_DROP(&ifp->if_snd);
 		splx(s);
-		error = ENOBUFS;
-		goto bad;
+		senderr(ENOBUFS);
 	}
 	IF_ENQUEUE(&ifp->if_snd, m);
 	if ((ifp->if_flags & IFF_OACTIVE) == 0)
@@ -282,6 +302,7 @@ bad:
  * the packet is in the mbuf chain m without
  * the ether header, which is provided separately.
  */
+void
 ether_input(ifp, eh, m)
 	struct ifnet *ifp;
 	register struct ether_header *eh;
@@ -290,17 +311,22 @@ ether_input(ifp, eh, m)
 	register struct ifqueue *inq;
 	register struct llc *l;
 	u_short etype;
+	struct arpcom *ac = (struct arpcom *)ifp;
 	int s;
 
+	if ((ifp->if_flags & IFF_UP) == 0) {
+		m_freem(m);
+		return;
+	}
 	ifp->if_lastchange = time;
 	ifp->if_ibytes += m->m_pkthdr.len + sizeof (*eh);
- 	if (eh->ether_dhost[0] & 1) {
- 		if (bcmp((caddr_t)etherbroadcastaddr, (caddr_t)eh->ether_dhost,
- 			 sizeof(etherbroadcastaddr)) == 0)
- 			m->m_flags |= M_BCAST;
- 		else
- 			m->m_flags |= M_MCAST;
- 	}
+	if (eh->ether_dhost[0] & 1) {
+		if (bcmp((caddr_t)etherbroadcastaddr, (caddr_t)eh->ether_dhost,
+		    sizeof(etherbroadcastaddr)) == 0)
+			m->m_flags |= M_BCAST;
+		else
+			m->m_flags |= M_MCAST;
+	}
 	if (m->m_flags & (M_BCAST|M_MCAST))
 		ifp->if_imcasts++;
 
@@ -313,11 +339,12 @@ ether_input(ifp, eh, m)
 		break;
 
 	case ETHERTYPE_ARP:
-		arpinput((struct arpcom *)ifp, m);
-		return;
+		schednetisr(NETISR_ARP);
+		inq = &arpintrq;
+		break;
 
 	case ETHERTYPE_REVARP:
-		revarpinput((struct arpcom *) ifp, m);
+		revarpinput(m);	/* XXX queue? */
 		return;
 #endif
 #ifdef NS
@@ -328,76 +355,107 @@ ether_input(ifp, eh, m)
 
 #endif
 	default:
-#ifdef	ISO
-		if (etype > ETHERMTU)
+#if defined (ISO) || defined (LLC)
+		if (eh->ether_type > ETHERMTU)
 			goto dropanyway;
 		l = mtod(m, struct llc *);
-		switch (l->llc_control) {
-		case LLC_UI:
-		/* LLC_UI_P forbidden in class 1 service */
-		    if ((l->llc_dsap == LLC_ISO_LSAP) &&
-			(l->llc_ssap == LLC_ISO_LSAP)) {
-				/* LSAP for ISO */
-			if (m->m_pkthdr.len > etype)
-				m_adj(m, etype - m->m_pkthdr.len);
-			m->m_data += 3;		/* XXX */
-			m->m_len -= 3;		/* XXX */
-			m->m_pkthdr.len -= 3;	/* XXX */
-			M_PREPEND(m, sizeof *eh, M_DONTWAIT);
+		switch (l->llc_dsap) {
+#ifdef	ISO
+		case LLC_ISO_LSAP: 
+			switch (l->llc_control) {
+			case LLC_UI:
+				/* LLC_UI_P forbidden in class 1 service */
+				if ((l->llc_dsap == LLC_ISO_LSAP) &&
+				    (l->llc_ssap == LLC_ISO_LSAP)) {
+					/* LSAP for ISO */
+					if (m->m_pkthdr.len > eh->ether_type)
+						m_adj(m, eh->ether_type - m->m_pkthdr.len);
+					m->m_data += 3;		/* XXX */
+					m->m_len -= 3;		/* XXX */
+					m->m_pkthdr.len -= 3;	/* XXX */
+					M_PREPEND(m, sizeof *eh, M_DONTWAIT);
+					if (m == 0)
+						return;
+					*mtod(m, struct ether_header *) = *eh;
+					IFDEBUG(D_ETHER)
+						printf("clnp packet");
+					ENDDEBUG
+					schednetisr(NETISR_ISO);
+					inq = &clnlintrq;
+					break;
+				}
+				goto dropanyway;
+				
+			case LLC_XID:
+			case LLC_XID_P:
+				if(m->m_len < 6)
+					goto dropanyway;
+				l->llc_window = 0;
+				l->llc_fid = 9;
+				l->llc_class = 1;
+				l->llc_dsap = l->llc_ssap = 0;
+				/* Fall through to */
+			case LLC_TEST:
+			case LLC_TEST_P:
+			{
+				struct sockaddr sa;
+				register struct ether_header *eh2;
+				int i;
+				u_char c = l->llc_dsap;
+
+				l->llc_dsap = l->llc_ssap;
+				l->llc_ssap = c;
+				if (m->m_flags & (M_BCAST | M_MCAST))
+					bcopy((caddr_t)ac->ac_enaddr,
+					      (caddr_t)eh->ether_dhost, 6);
+				sa.sa_family = AF_UNSPEC;
+				sa.sa_len = sizeof(sa);
+				eh2 = (struct ether_header *)sa.sa_data;
+				for (i = 0; i < 6; i++) {
+					eh2->ether_shost[i] = c = eh->ether_dhost[i];
+					eh2->ether_dhost[i] = 
+						eh->ether_dhost[i] = eh->ether_shost[i];
+					eh->ether_shost[i] = c;
+				}
+				ifp->if_output(ifp, m, &sa, NULL);
+				return;
+			}
+			default:
+				m_freem(m);
+				return;
+			}
+			break;
+#endif /* ISO */
+#ifdef LLC
+		case LLC_X25_LSAP:
+		{
+			if (m->m_pkthdr.len > eh->ether_type)
+				m_adj(m, eh->ether_type - m->m_pkthdr.len);
+			M_PREPEND(m, sizeof(struct sdl_hdr) , M_DONTWAIT);
 			if (m == 0)
 				return;
-			*mtod(m, struct ether_header *) = *eh;
-			IFDEBUG(D_ETHER)
-			    printf("clnp packet");
-			ENDDEBUG
-			schednetisr(NETISR_ISO);
-			inq = &clnlintrq;
+			if ( !sdl_sethdrif(ifp, eh->ether_shost, LLC_X25_LSAP,
+					    eh->ether_dhost, LLC_X25_LSAP, 6, 
+					    mtod(m, struct sdl_hdr *)))
+				panic("ETHER cons addr failure");
+			mtod(m, struct sdl_hdr *)->sdlhdr_len = eh->ether_type;
+#ifdef LLC_DEBUG
+				printf("llc packet\n");
+#endif /* LLC_DEBUG */
+			schednetisr(NETISR_CCITT);
+			inq = &llcintrq;
 			break;
-		    }
-		    goto dropanyway;
-
-		case LLC_XID:
-		case LLC_XID_P:
-		    if(m->m_len < 6)
-			goto dropanyway;
-		    l->llc_window = 0;
-		    l->llc_fid = 9;
-		    l->llc_class = 1;
-		    l->llc_dsap = l->llc_ssap = 0;
-		    /* Fall through to */
-		case LLC_TEST:
-		case LLC_TEST_P:
-		{
-		    struct sockaddr sa;
-		    register struct ether_header *eh2;
-		    int i;
-		    u_char c = l->llc_dsap;
-		    l->llc_dsap = l->llc_ssap;
-		    l->llc_ssap = c;
-		    if (m->m_flags & (M_BCAST | M_MCAST))
-			bcopy((caddr_t)ac->ac_enaddr,
-			      (caddr_t)eh->ether_dhost, 6);
-		    sa.sa_family = AF_UNSPEC;
-		    sa.sa_len = sizeof(sa);
-		    eh2 = (struct ether_header *)sa.sa_data;
-		    for (i = 0; i < 6; i++) {
-			eh2->ether_shost[i] = c = eh->ether_dhost[i];
-			eh2->ether_dhost[i] = 
-				eh->ether_dhost[i] = eh->ether_shost[i];
-			eh->ether_shost[i] = c;
-		    }
-		    ifp->if_output(ifp, m, &sa);
-		    return;
 		}
+#endif /* LLC */
 		dropanyway:
 		default:
-		    m_freem(m);
-		    return;
-	    }
-#else
+			m_freem(m);
+			return;
+		}
+#else /* ISO || LLC */
 	    m_freem(m);
 	    return;
-#endif	ISO
+#endif /* ISO || LLC */
 	}
 
 	s = splimp();
@@ -429,12 +487,34 @@ ether_sprintf(ap)
 	*--cp = 0;
 	return (etherbuf);
 }
- 
+
+/*
+ * Perform common duties while attaching to interface list
+ */
+void
+ether_ifattach(ifp)
+	register struct ifnet *ifp;
+{
+	register struct ifaddr *ifa;
+	register struct sockaddr_dl *sdl;
+
+	ifp->if_type = IFT_ETHER;
+	ifp->if_addrlen = 6;
+	ifp->if_hdrlen = 14;
+	ifp->if_mtu = ETHERMTU;
+	for (ifa = ifp->if_addrlist; ifa; ifa = ifa->ifa_next)
+		if ((sdl = (struct sockaddr_dl *)ifa->ifa_addr) &&
+		    sdl->sdl_family == AF_LINK) {
+			sdl->sdl_type = IFT_ETHER;
+			sdl->sdl_alen = ifp->if_addrlen;
+			bcopy((caddr_t)((struct arpcom *)ifp)->ac_enaddr,
+			      LLADDR(sdl), ifp->if_addrlen);
+			break;
+		}
+}
+
 u_char	ether_ipmulticast_min[6] = { 0x01, 0x00, 0x5e, 0x00, 0x00, 0x00 };
 u_char	ether_ipmulticast_max[6] = { 0x01, 0x00, 0x5e, 0x7f, 0xff, 0xff };
-
-/* XXX */
-#undef ac
 /*
  * Add an Ethernet multicast address or range of addresses to the list for a
  * given interface.

@@ -31,7 +31,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)sys_socket.c	8.1 (Berkeley) 6/10/93
- *	$Id: sys_socket.c,v 1.9 1994/05/11 10:27:22 mycroft Exp $
+ *	$Id: sys_socket.c,v 1.10 1994/05/13 06:01:27 mycroft Exp $
  */
 
 #include <sys/param.h>
@@ -43,7 +43,6 @@
 #include <sys/socketvar.h>
 #include <sys/ioctl.h>
 #include <sys/stat.h>
-#include <sys/select.h>
 
 #include <net/if.h>
 #include <net/route.h>

@@ -1,10 +1,10 @@
-/*-
- * Copyright (c) 1990-1991 The Regents of the University of California.
- * All rights reserved.
+/*
+ * Copyright (c) 1990, 1991, 1993
+ *	The Regents of the University of California.  All rights reserved.
  *
  * This code is derived from the Stanford/CMU enet packet filter,
  * (net/enet.c) distributed as part of 4.3BSD, and code contributed
- * to Berkeley by Steven McCanne and Van Jacobson both of Lawrence 
+ * to Berkeley by Steven McCanne and Van Jacobson both of Lawrence
  * Berkeley Laboratory.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -17,8 +17,8 @@
  *    documentation and/or other materials provided with the distribution.
  * 3. All advertising materials mentioning features or use of this software
  *    must display the following acknowledgement:
- *      This product includes software developed by the University of
- *      California, Berkeley and its contributors.
+ *	This product includes software developed by the University of
+ *	California, Berkeley and its contributors.
  * 4. Neither the name of the University nor the names of its contributors
  *    may be used to endorse or promote products derived from this software
  *    without specific prior written permission.
@@ -35,12 +35,9 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *      from: @(#)bpf.h	7.1 (Berkeley) 5/7/91
- *	$Id: bpf.h,v 1.4 1993/05/20 03:05:50 cgd Exp $
+ *	from: @(#)bpf.h	8.1 (Berkeley) 6/10/93
+ *	$Id: bpf.h,v 1.5 1994/05/13 06:02:19 mycroft Exp $
  */
-
-#ifndef _NET_BPF_H_
-#define _NET_BPF_H_
 
 /*
  * Alignment macros.  BPF_WORDALIGN rounds up to the next 
@@ -233,10 +230,18 @@ struct bpf_insn {
 #define BPF_JUMP(code, k, jt, jf) { (u_short)(code), jt, jf, k }
 
 #ifdef KERNEL
-extern u_int bpf_filter();
-extern void bpfattach();
-extern void bpf_tap();
-extern void bpf_mtap();
+int	 bpf_validate __P((struct bpf_insn *, int));
+int	 bpfopen __P((dev_t, int));
+int	 bpfclose __P((dev_t, int));
+int	 bpfread __P((dev_t, struct uio *));
+int	 bpfwrite __P((dev_t, struct uio *));
+int	 bpfioctl __P((dev_t, int, caddr_t, int));
+int	 bpf_select __P((dev_t, int, struct proc *));
+void	 bpf_tap __P((caddr_t, u_char *, u_int));
+void	 bpf_mtap __P((caddr_t, struct mbuf *));
+void	 bpfattach __P((caddr_t *, struct ifnet *, u_int, u_int));
+void	 bpfilterattach __P((int));
+u_int	 bpf_filter __P((struct bpf_insn *, u_char *, u_int, u_int));
 #endif
 
 /*
@@ -244,4 +249,3 @@ extern void bpf_mtap();
  */
 #define BPF_MEMWORDS 16
 
-#endif /* !_NET_BPF_H_ */
