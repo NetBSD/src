@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.33 1996/04/25 00:47:25 jtc Exp $
+#	$NetBSD: Makefile,v 1.34 1996/04/25 01:02:27 jtc Exp $
 
 .include <bsd.own.mk>			# for configuration variables.
 
@@ -38,7 +38,6 @@ afterinstall:
 build:
 	(cd ${.CURDIR}/share/mk && ${MAKE} install)
 	${MAKE} includes
-	(cd ${.CURDIR}/include && ${MAKE} install)
 .if exists(domestic) && !defined(EXPORTABLE_SYSTEM)
 	(cd ${.CURDIR}/domestic/include && ${MAKE} install)
 .endif
