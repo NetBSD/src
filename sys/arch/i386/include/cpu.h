@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.99 2003/03/18 22:29:58 fvdl Exp $	*/
+/*	$NetBSD: cpu.h,v 1.100 2003/04/25 21:54:29 fvdl Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -52,29 +52,11 @@
 #include <machine/segments.h>
 #include <machine/tss.h>
 #include <machine/intrdefs.h>
+#include <x86/cacheinfo.h>
 
 #include <sys/device.h>
 #include <sys/lock.h>			/* will also get LOCKDEBUG */
 #include <sys/sched.h>
-
-struct i386_cache_info {
-	uint8_t		cai_index;
-	uint8_t		cai_desc;
-	uint8_t		cai_associativity;
-	u_int		cai_totalsize; /* #entries for TLB, bytes for cache */
-	u_int		cai_linesize;	/* or page size for TLB */
-	const char	*cai_string;
-};
-
-#define	CAI_ITLB	0		/* Instruction TLB (4K pages) */
-#define	CAI_ITLB2	1		/* Instruction TLB (2/4M pages) */
-#define	CAI_DTLB	2		/* Data TLB (4K pages) */
-#define	CAI_DTLB2	3		/* Data TLB (2/4M pages) */
-#define	CAI_ICACHE	4		/* Instruction cache */
-#define	CAI_DCACHE	5		/* Data cache */
-#define	CAI_L2CACHE	6		/* Level 2 cache */
-
-#define	CAI_COUNT	7
 
 struct intrsource;
 
@@ -143,7 +125,7 @@ struct cpu_info {
 	struct trapframe *ci_ddb_regs;
 
 	u_int ci_cflush_lsize;	/* CFLUSH insn line size */
-	struct i386_cache_info ci_cinfo[CAI_COUNT];
+	struct x86_cache_info ci_cinfo[CAI_COUNT];
 
 	/*
 	 * Variables used by cc_microtime().
