@@ -1,4 +1,4 @@
-/*	$NetBSD: cat.c,v 1.15 1997/07/20 04:34:33 thorpej Exp $	*/
+/*	$NetBSD: cat.c,v 1.15.2.1 1998/02/08 21:45:36 mellon Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -47,7 +47,7 @@ __COPYRIGHT(
 #if 0
 static char sccsid[] = "@(#)cat.c	8.2 (Berkeley) 4/27/95";
 #else
-__RCSID("$NetBSD: cat.c,v 1.15 1997/07/20 04:34:33 thorpej Exp $");
+__RCSID("$NetBSD: cat.c,v 1.15.2.1 1998/02/08 21:45:36 mellon Exp $");
 #endif
 #endif /* not lint */
 
@@ -82,7 +82,7 @@ main(argc, argv)
 	extern int optind;
 	int ch;
 
-	setlocale(LC_ALL, "");
+	(void)setlocale(LC_ALL, "");
 
 	while ((ch = getopt(argc, argv, "benstuv")) != -1)
 		switch (ch) {
@@ -122,6 +122,7 @@ main(argc, argv)
 	if (fclose(stdout))
 		err(1, "stdout");
 	exit(rval);
+	/* NOTREACHED */
 }
 
 void
@@ -166,10 +167,18 @@ cook_buf(fp)
 					gobble = 1;
 					continue;
 				}
-				if (nflag && !bflag) {
-					(void)fprintf(stdout, "%6d\t", ++line);
-					if (ferror(stdout))
-						break;
+				if (nflag) {
+					if (!bflag) {
+						(void)fprintf(stdout,
+						    "%6d\t", ++line);
+						if (ferror(stdout))
+							break;
+					} else if (eflag) {
+						(void)fprintf(stdout,
+						    "%6s\t", "");
+						if (ferror(stdout))
+							break;
+					}
 				}
 			} else if (nflag) {
 				(void)fprintf(stdout, "%6d\t", ++line);
@@ -257,9 +266,9 @@ raw_cat(rfd)
 		if ((buf = malloc((u_int)bsize)) == NULL)
 			err(1, "cannot allocate buffer");
 	}
-	while ((nr = read(rfd, buf, bsize)) > 0)
+	while ((nr = read(rfd, buf, (u_int)bsize)) > 0)
 		for (off = 0; nr; nr -= nw, off += nw)
-			if ((nw = write(wfd, buf + off, nr)) < 0)
+			if ((nw = write(wfd, buf + off, (u_int)nr)) < 0)
 				err(1, "stdout");
 	if (nr < 0) {
 		warn("%s", filename);
