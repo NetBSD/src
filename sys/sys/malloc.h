@@ -1,4 +1,4 @@
-/*	$NetBSD: malloc.h,v 1.82 2003/01/17 08:11:59 itojun Exp $	*/
+/*	$NetBSD: malloc.h,v 1.83 2003/01/20 20:05:27 christos Exp $	*/
 
 /*
  * Copyright (c) 1987, 1993
@@ -192,7 +192,8 @@
 #define	M_SA		133	/* Scheduler activations */
 #define	M_KEVENT	134	/* kevents/knotes */
 #define	M_PACKET_TAGS	135	/* Packet-attached information */
-#define	M_LAST		136	/* Must be last type + 1 */
+#define	M_SEM		136	/* p1003_1b semaphores */
+#define	M_LAST		137	/* Must be last type + 1 */
 
 /* added something?  don't forget to update malloc.9 */
 
@@ -333,7 +334,8 @@
 	"sa",		/* 133 M_SA */ \
 	"kevent",	/* 134 M_KEVENT */ \
 	"packet tags",	/* 135 M_PACKET_TAGS */ \
-	NULL,		/* 136 */ \
+	"p1003_1b_sem",	/* 136 M_SEM */ \
+	NULL,		/* 137 */ \
 }
 
 struct kmemstats {
