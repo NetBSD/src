@@ -1,4 +1,4 @@
-/* $NetBSD: osf1_exec.c,v 1.15 2000/12/01 12:28:34 jdolecek Exp $ */
+/* $NetBSD: osf1_exec.c,v 1.16 2000/12/01 19:20:22 jdolecek Exp $ */
 
 /*
  * Copyright (c) 1999 Christopher G. Demetriou.  All rights reserved.
@@ -75,6 +75,10 @@ const struct emul emul_osf1 = {
 	osf1_syscallnames,
 	osf1_sigcode,
 	osf1_esigcode,
+	NULL,
+	NULL,
+	NULL,
+	EMUL_GETPID_PASS_PPID|EMUL_GETID_PASS_EID,
 };
 
 int
