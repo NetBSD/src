@@ -34,7 +34,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)nfs_vfsops.c	7.31 (Berkeley) 5/6/91
- *	$Id: nfs_vfsops.c,v 1.5 1993/11/19 02:32:34 cgd Exp $
+ *	$Id: nfs_vfsops.c,v 1.6 1993/12/06 23:38:14 pk Exp $
  */
 
 #include "param.h"
@@ -271,6 +271,54 @@ nfs_mountroot()
 	return (0);
 }
 
+static void
+nfs_decode_flags(argp, nmp)
+struct nfs_args	*argp;
+struct nfsmount	*nmp;
+{
+
+	if ((argp->flags & NFSMNT_TIMEO) && argp->timeo > 0) {
+		nmp->nm_rto = argp->timeo;
+		/* NFS timeouts are specified in 1/10 sec. */
+		nmp->nm_rto = (nmp->nm_rto * 10) / NFS_HZ;
+		if (nmp->nm_rto < NFS_MINTIMEO)
+			nmp->nm_rto = NFS_MINTIMEO;
+		else if (nmp->nm_rto > NFS_MAXTIMEO)
+			nmp->nm_rto = NFS_MAXTIMEO;
+		nmp->nm_rttvar = nmp->nm_rto << 1;
+	}
+
+	if ((argp->flags & NFSMNT_RETRANS) && argp->retrans > 1) {
+		nmp->nm_retry = argp->retrans;
+		if (nmp->nm_retry > NFS_MAXREXMIT)
+			nmp->nm_retry = NFS_MAXREXMIT;
+	}
+
+	if ((argp->flags & NFSMNT_WSIZE) && argp->wsize > 0) {
+		nmp->nm_wsize = argp->wsize;
+		/* Round down to multiple of blocksize */
+		nmp->nm_wsize &= ~0x1ff;
+		if (nmp->nm_wsize <= 0)
+			nmp->nm_wsize = 512;
+		else if (nmp->nm_wsize > NFS_MAXDATA)
+			nmp->nm_wsize = NFS_MAXDATA;
+	}
+	if (nmp->nm_wsize > MAXBSIZE)
+		nmp->nm_wsize = MAXBSIZE;
+
+	if ((argp->flags & NFSMNT_RSIZE) && argp->rsize > 0) {
+		nmp->nm_rsize = argp->rsize;
+		/* Round down to multiple of blocksize */
+		nmp->nm_rsize &= ~0x1ff;
+		if (nmp->nm_rsize <= 0)
+			nmp->nm_rsize = 512;
+		else if (nmp->nm_rsize > NFS_MAXDATA)
+			nmp->nm_rsize = NFS_MAXDATA;
+	}
+	if (nmp->nm_rsize > MAXBSIZE)
+		nmp->nm_rsize = MAXBSIZE;
+}
+
 /*
  * VFS Operations.
  *
@@ -296,10 +344,16 @@ nfs_mount(mp, path, data, ndp, p)
 	u_int len;
 	nfsv2fh_t nfh;
 
-	if (mp->mnt_flag & MNT_UPDATE)
-		return (0);
 	if (error = copyin(data, (caddr_t)&args, sizeof (struct nfs_args)))
 		return (error);
+	if (mp->mnt_flag & MNT_UPDATE) {
+		register struct nfsmount *nmp = VFSTONFS(mp);
+
+		if (nmp == NULL)
+			return EIO;
+		nfs_decode_flags(&args, nmp);
+		return (0);
+	}
 	if (error = copyin((caddr_t)args.fh, (caddr_t)&nfh, sizeof (nfsv2fh_t)))
 		return (error);
 	if (error = copyinstr(path, pth, MNAMELEN-1, &len))
@@ -351,46 +405,8 @@ mountnfs(argp, mp, nam, pth, hst, vpp)
 	bcopy(pth, mp->mnt_stat.f_mntonname, MNAMELEN);
 	nmp->nm_nam = nam;
 
-	if ((argp->flags & NFSMNT_TIMEO) && argp->timeo > 0) {
-		nmp->nm_rto = argp->timeo;
-		/* NFS timeouts are specified in 1/10 sec. */
-		nmp->nm_rto = (nmp->nm_rto * 10) / NFS_HZ;
-		if (nmp->nm_rto < NFS_MINTIMEO)
-			nmp->nm_rto = NFS_MINTIMEO;
-		else if (nmp->nm_rto > NFS_MAXTIMEO)
-			nmp->nm_rto = NFS_MAXTIMEO;
-		nmp->nm_rttvar = nmp->nm_rto << 1;
-	}
+	nfs_decode_flags(argp, nmp);
 
-	if ((argp->flags & NFSMNT_RETRANS) && argp->retrans > 1) {
-		nmp->nm_retry = argp->retrans;
-		if (nmp->nm_retry > NFS_MAXREXMIT)
-			nmp->nm_retry = NFS_MAXREXMIT;
-	}
-
-	if ((argp->flags & NFSMNT_WSIZE) && argp->wsize > 0) {
-		nmp->nm_wsize = argp->wsize;
-		/* Round down to multiple of blocksize */
-		nmp->nm_wsize &= ~0x1ff;
-		if (nmp->nm_wsize <= 0)
-			nmp->nm_wsize = 512;
-		else if (nmp->nm_wsize > NFS_MAXDATA)
-			nmp->nm_wsize = NFS_MAXDATA;
-	}
-	if (nmp->nm_wsize > MAXBSIZE)
-		nmp->nm_wsize = MAXBSIZE;
-
-	if ((argp->flags & NFSMNT_RSIZE) && argp->rsize > 0) {
-		nmp->nm_rsize = argp->rsize;
-		/* Round down to multiple of blocksize */
-		nmp->nm_rsize &= ~0x1ff;
-		if (nmp->nm_rsize <= 0)
-			nmp->nm_rsize = 512;
-		else if (nmp->nm_rsize > NFS_MAXDATA)
-			nmp->nm_rsize = NFS_MAXDATA;
-	}
-	if (nmp->nm_rsize > MAXBSIZE)
-		nmp->nm_rsize = MAXBSIZE;
 	/* Set up the sockets and per-host congestion */
 	nmp->nm_sotype = argp->sotype;
 	nmp->nm_soproto = argp->proto;
