@@ -1,4 +1,4 @@
-.\" $NetBSD: doc2html,v 1.36 2002/02/07 01:59:14 ross Exp $
+.\" $NetBSD: doc2html,v 1.37 2002/05/15 10:11:15 bjh21 Exp $
 .\"
 .\" Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -1077,6 +1077,11 @@ AT&T UNIX\\$*
 .	\}
 .	el \{\
 .		ds std-tmp1 ERROR
+.	       if "\\$1"-p1003.1-2001" \{\
+.			ds std-tmp1 \&IEEE Std1003.1-2001
+.			as std-tmp1 " \"exactly one space
+.			as std-tmp1 (``\\*(Px'')
+.	       \}
 .	       if "\\$1"-p1003.1-96" \{\
 .			ds std-tmp1 \&ISO/IEC 9945-1:1996
 .			as std-tmp1 " \"exactly one space
