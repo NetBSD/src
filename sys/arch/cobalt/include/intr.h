@@ -1,16 +1,17 @@
-/*	$NetBSD: intr.h,v 1.2 2000/03/21 02:27:50 soren Exp $	*/
+/*	$NetBSD: intr.h,v 1.3 2000/03/31 14:51:52 soren Exp $	*/
 
 #include <mips/cpuregs.h>
+#include <mips/intr.h>
 
 #define	IPL_NONE	0	/* Disable only this interrupt. */
 #define	IPL_BIO		1	/* Disable block I/O interrupts. */
 #define	IPL_NET		2	/* Disable network interrupts. */
 #define	IPL_TTY		3	/* Disable terminal interrupts. */
-#define	IPL_IMP		4	/* memory allocation */
-#define	IPL_CLOCK	4	/* Disable clock interrupts. */
-#define	IPL_STATCLOCK	5	/* Disable profiling interrupts. */
-#define	IPL_HIGH	6	/* Disable all interrupts. */
-#define NIPL		7
+#define	IPL_IMP		4	/* Memory allocation */
+#define	IPL_CLOCK	5	/* Disable clock interrupts. */
+#define	IPL_STATCLOCK	6	/* Disable profiling interrupts. */
+#define	IPL_HIGH	7	/* Disable all interrupts. */
+#define NIPL		8
 
 /* Interrupt sharing types. */
 #define IST_NONE	0	/* none */
@@ -18,15 +19,8 @@
 #define IST_EDGE	2	/* edge-triggered */
 #define IST_LEVEL	3	/* level-triggered */
 
-#define SIR_CLOCK	31
-#define SIR_NET		30
-#define SIR_CLOCKMASK	((1 << SIR_CLOCK))
-#define SIR_NETMASK	((1 << SIR_NET) | SIR_CLOCKMASK)
-#define SIR_ALLMASK	(SIR_CLOCKMASK | SIR_NETMASK)
-
+#ifdef _KERNEL
 #ifndef _LOCORE
-
-int			imask[NIPL];
 
 extern int		_splraise(int);
 extern int		_spllower(int);      
@@ -52,24 +46,19 @@ extern void		_clrsoftintr(int);
 #define splbio()        _splraise(SPLBIO)
 #define splnet()        _splraise(SPLNET)
 #define spltty()        _splraise(SPLTTY)
-#define splimp()	_splraise(SPLTTY)
 #define splclock()      _splraise(SPLCLOCK)
+#define splimp()	splclock()
 #define splstatclock()  splclock()
-#define spllowersoftclock() _spllower(MIPS_SOFT_INT_MASK_0)
 #define splsoftclock()	_splraise(MIPS_SOFT_INT_MASK_0)
 #define splsoftnet()	_splraise(MIPS_SOFT_INT_MASK_1)
+#define spllowersoftclock() _spllower(MIPS_SOFT_INT_MASK_0)
 
 extern unsigned int	intrcnt[];
 #define SOFTCLOCK_INTR	0
 #define SOFTNET_INTR	1  
-#define CLOCK_INTR	2  
-#define FPU_INTR	3
 
-/* Handle device interrupts. */
-extern int		(*mips_hardware_intr)(unsigned int, unsigned int,
-						unsigned int, unsigned int);
+extern void *	cpu_intr_establish(int, int, int (*)(void *), void *);
+extern void *	icu_intr_establish(int, int, int, int (*)(void *), void *);
 
-/* Handle software interrupts. */
-extern void		(*mips_software_intr)(int);
-
+#endif /* !_LOCORE */
 #endif /* _LOCORE */

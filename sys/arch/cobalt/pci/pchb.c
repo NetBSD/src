@@ -1,4 +1,4 @@
-/*	$NetBSD: pchb.c,v 1.1 2000/03/19 23:07:48 soren Exp $	*/
+/*	$NetBSD: pchb.c,v 1.2 2000/03/31 14:51:55 soren Exp $	*/
 
 /*
  * Copyright (c) 2000 Soren S. Jorvang.  All rights reserved.
@@ -66,23 +66,8 @@ pchb_attach(parent, self, aux)
 {
 	struct pci_attach_args *pa = aux;
 	char devinfo[256];
-	pcireg_t bhlc;
 
 	pci_devinfo(pa->pa_id, pa->pa_class, 0, devinfo);
 	printf("\n%s: %s, rev %d\n", self->dv_xname, devinfo,
 					PCI_REVISION(pa->pa_class));
-
-	/*
-	 * XXX Still isn't quite right or enough.
-	 */
-
-	bhlc = pci_conf_read(pa->pa_pc, pa->pa_tag, PCI_BHLC_REG);
-
-	bhlc &= ~(PCI_LATTIMER_MASK << PCI_LATTIMER_SHIFT);
-	bhlc |= (0x40 << PCI_LATTIMER_SHIFT);
-
-	bhlc &= ~(PCI_CACHELINE_MASK << PCI_CACHELINE_SHIFT);
-	bhlc |= (7 << PCI_CACHELINE_SHIFT);
-
-	pci_conf_write(pa->pa_pc, pa->pa_tag, PCI_BHLC_REG, bhlc);
 }

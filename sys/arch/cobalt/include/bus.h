@@ -1,4 +1,4 @@
-/*	$NetBSD: bus.h,v 1.1 2000/03/19 23:07:45 soren Exp $	*/
+/*	$NetBSD: bus.h,v 1.2 2000/03/31 14:51:52 soren Exp $	*/
 
 /*
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -71,12 +71,12 @@ typedef u_long	bus_space_handle_t;
 #define	BUS_SPACE_MAP_LINEAR		0x02
 #define BUS_SPACE_MAP_PREFETCHABLE	0x04
 
-int	bus_space_map (bus_space_tag_t, bus_addr_t, bus_size_t,
+int	bus_space_map(bus_space_tag_t, bus_addr_t, bus_size_t,
 	    int, bus_space_handle_t *);
 
 /*
- *	void bus_space_unmap (bus_space_tag_t t,
- *	    bus_space_handle_t bsh, bus_size_t size);
+ *	void bus_space_unmap(bus_space_tag_t t,
+ *	     bus_space_handle_t bsh, bus_size_t size);
  *
  * Unmap a region of bus space.
  */
@@ -84,18 +84,18 @@ int	bus_space_map (bus_space_tag_t, bus_addr_t, bus_size_t,
 void	bus_space_unmap (bus_space_tag_t, bus_space_handle_t, bus_size_t);
 
 /*
- *	int bus_space_subregion (bus_space_tag_t t,
+ *	int bus_space_subregion(bus_space_tag_t t,
  *	    bus_space_handle_t bsh, bus_size_t offset, bus_size_t size,
  *	    bus_space_handle_t *nbshp);
  *
  * Get a new handle for a subregion of an already-mapped area of bus space.
  */
 
-int	bus_space_subregion (bus_space_tag_t t, bus_space_handle_t bsh,
+int	bus_space_subregion(bus_space_tag_t t, bus_space_handle_t bsh,
 	    bus_size_t offset, bus_size_t size, bus_space_handle_t *nbshp);
 
 /*
- *	int bus_space_alloc (bus_space_tag_t t, bus_addr_t, rstart,
+ *	int bus_space_alloc(bus_space_tag_t t, bus_addr_t, rstart,
  *	    bus_addr_t rend, bus_size_t size, bus_size_t align,
  *	    bus_size_t boundary, int flags, bus_addr_t *addrp,
  *	    bus_space_handle_t *bshp);
@@ -115,11 +115,11 @@ int	bus_space_alloc (bus_space_tag_t t, bus_addr_t rstart,
  * Free a region of bus space.
  */
 
-void	bus_space_free (bus_space_tag_t t, bus_space_handle_t bsh,
+void	bus_space_free(bus_space_tag_t t, bus_space_handle_t bsh,
 	    bus_size_t size);
 
 /*
- *	u_intN_t bus_space_read_N (bus_space_tag_t tag,
+ *	u_intN_t bus_space_read_N(bus_space_tag_t tag,
  *	    bus_space_handle_t bsh, bus_size_t offset);
  *
  * Read a 1, 2, 4, or 8 byte quantity from bus space
@@ -140,7 +140,7 @@ void	bus_space_free (bus_space_tag_t t, bus_space_handle_t bsh,
 #endif
 
 /*
- *	void bus_space_read_multi_N (bus_space_tag_t tag,
+ *	void bus_space_read_multi_N(bus_space_tag_t tag,
  *	    bus_space_handle_t bsh, bus_size_t offset,
  *	    u_intN_t *addr, size_t count);
  *
@@ -177,7 +177,7 @@ __COBALT_bus_space_read_multi(4,32)
 #undef __COBALT_bus_space_read_multi
 
 /*
- *	void bus_space_read_region_N (bus_space_tag_t tag,
+ *	void bus_space_read_region_N(bus_space_tag_t tag,
  *	    bus_space_handle_t bsh, bus_size_t offset,
  *	    u_intN_t *addr, size_t count);
  *
@@ -217,7 +217,7 @@ __COBALT_bus_space_read_region(4,32)
 #undef __COBALT_bus_space_read_region
 
 /*
- *	void bus_space_write_N (bus_space_tag_t tag,
+ *	void bus_space_write_N(bus_space_tag_t tag,
  *	    bus_space_handle_t bsh, bus_size_t offset,
  *	    u_intN_t value);
  *
@@ -248,7 +248,7 @@ do {									\
 #endif
 
 /*
- *	void bus_space_write_multi_N (bus_space_tag_t tag,
+ *	void bus_space_write_multi_N(bus_space_tag_t tag,
  *	    bus_space_handle_t bsh, bus_size_t offset,
  *	    const u_intN_t *addr, size_t count);
  *
