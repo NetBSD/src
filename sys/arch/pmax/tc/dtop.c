@@ -1,4 +1,4 @@
-/* $NetBSD: dtop.c,v 1.1.2.9 2000/02/03 09:34:47 nisimura Exp $ */
+/* $NetBSD: dtop.c,v 1.1.2.10 2000/02/03 09:46:50 nisimura Exp $ */
 
 /*
  * Copyright (c) 1998, 1999 Tohru Nishimura.  All rights reserved.
@@ -381,7 +381,7 @@ dtims_input(sc, pkt)
 	x = pkt->body[2] << 8 | pkt->body[3];
 	y = pkt->body[4] << 8 | pkt->body[5];
 
-	wsmouse_input(sc->sc_wsmousedev, buttons, x, y, 0);
+	wsmouse_input(sc->sc_wsmousedev, buttons, x, y, 0, WSMOUSE_INPUT_DELTA);
 }
 
 /* ------------------------------------------------------- */
