@@ -1,4 +1,4 @@
-/*	$NetBSD: ifconfig.c,v 1.84 2000/07/06 08:20:51 onoe Exp $	*/
+/*	$NetBSD: ifconfig.c,v 1.85 2000/07/19 04:43:34 onoe Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 2000 The NetBSD Foundation, Inc.
@@ -80,7 +80,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1993\n\
 #if 0
 static char sccsid[] = "@(#)ifconfig.c	8.2 (Berkeley) 2/16/94";
 #else
-__RCSID("$NetBSD: ifconfig.c,v 1.84 2000/07/06 08:20:51 onoe Exp $");
+__RCSID("$NetBSD: ifconfig.c,v 1.85 2000/07/19 04:43:34 onoe Exp $");
 #endif
 #endif /* not lint */
 
@@ -1095,6 +1095,7 @@ setifnwid(val, d)
 	int d;
 {
 	struct ieee80211_nwid nwid;
+	int len;
 	u_int8_t *p;
 
 	memset(&nwid, 0, sizeof(nwid));
@@ -1102,6 +1103,10 @@ setifnwid(val, d)
 		val += 2;
 		p = nwid.i_nwid;
 		while (isxdigit((u_char)val[0]) && isxdigit((u_char)val[1])) {
+			if (p > nwid.i_nwid + sizeof(nwid.i_nwid)) {
+				warnx("SIOCS80211NWID: Too long nwid.");
+				return;
+			}
 #define	tohex(x)	(isdigit(x) ? (x) - '0' : tolower(x) - 'a' + 10)
 			*p++ = (tohex((u_char)val[0]) << 4) |
 			    tohex((u_char)val[1]);
@@ -1109,13 +1114,18 @@ setifnwid(val, d)
 			val += 2;
 		}
 		if (*val != '\0') {
-			warnx("SIOCS80211NWID: Bad hexdecimal digits.");
+			warnx("SIOCS80211NWID: Bad hexadecimal digits.");
 			return;
 		}
 		nwid.i_len = p - nwid.i_nwid;
 	} else {
-		nwid.i_len = strlen(val);
-		memcpy(nwid.i_nwid, val, nwid.i_len);
+		len = strlen(val);
+		if (len > sizeof(nwid.i_nwid)) {
+			warnx("SIOCS80211NWID: Too long nwid.");
+			return;
+		}
+		nwid.i_len = len;
+		memcpy(nwid.i_nwid, val, len);
 	}
 	(void)strncpy(ifr.ifr_name, name, sizeof(ifr.ifr_name));
 	ifr.ifr_data = (caddr_t)&nwid;
