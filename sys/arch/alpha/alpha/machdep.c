@@ -1,4 +1,4 @@
-/* $NetBSD: machdep.c,v 1.208 2000/05/31 05:14:29 thorpej Exp $ */
+/* $NetBSD: machdep.c,v 1.209 2000/06/01 03:41:23 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.
@@ -79,7 +79,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.208 2000/05/31 05:14:29 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.209 2000/06/01 03:41:23 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -275,7 +275,8 @@ alpha_init(pfn, ptb, bim, bip, biv)
 	vsize_t size;
 	char *p;
 	caddr_t v;
-	char *bootinfo_msg;
+	const char *bootinfo_msg;
+	const struct cpuinit *c;
 
 	/* NO OUTPUT ALLOWED UNTIL FURTHER NOTICE */
 
@@ -407,11 +408,12 @@ nobootinfo:
 		 */
 		cputype = -cputype;
 	}
-	if (cputype >= ncpuinit) {
+	c = platform_lookup(cputype);
+	if (c == NULL) {
 		platform_not_supported();
 		/* NOTREACHED */
 	}
-	(*cpuinit[cputype].init)();
+	(*c->init)();
 	strcpy(cpu_model, platform.model);
 
 	/*

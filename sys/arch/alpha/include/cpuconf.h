@@ -1,4 +1,4 @@
-/*	$NetBSD: cpuconf.h,v 1.9 2000/03/29 02:59:18 simonb Exp $	*/
+/*	$NetBSD: cpuconf.h,v 1.10 2000/06/01 03:41:24 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All rights reserved.
@@ -88,16 +88,17 @@ struct platform {
 
 struct cpuinit {
 	void	(*init) __P((void));
+	u_int64_t systype;
 	const char *option;
 };
 
 #ifdef _KERNEL
-#define	cpu_notsupp(st)		{ platform_not_supported, st }
-#define	cpu_init(fn, opt)	{ fn, opt }
+#define	cpu_notsupp(st, str)	{ platform_not_supported, st, str }
+
+#define	cpu_init(st, fn, opt)	{ fn, st, opt }
 
 extern struct platform platform;
-extern struct cpuinit cpuinit[];
-extern int ncpuinit;
+extern const struct cpuinit *platform_lookup __P((int));
 extern void platform_not_configured __P((void));
 extern void platform_not_supported __P((void));
 #endif /* _KERNEL */
