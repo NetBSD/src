@@ -1,4 +1,4 @@
-/*	$NetBSD: ka630.c,v 1.7 1997/07/26 10:12:46 ragge Exp $	*/
+/*	$NetBSD: ka630.c,v 1.8 1997/11/02 14:07:15 ragge Exp $	*/
 /*-
  * Copyright (c) 1982, 1988, 1990, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -62,6 +62,7 @@ static int ka630_mchk __P((caddr_t));
 static void ka630_steal_pages __P((void));
 static void ka630_halt __P((void));
 static void ka630_reboot __P((int));
+static void ka630_clrf __P((void));
 
 extern	short *clk_page;
 
@@ -80,6 +81,7 @@ struct	cpu_dep ka630_calls = {
 	0,
 	ka630_halt,
 	ka630_reboot,
+	ka630_clrf,
 };
 
 /*
@@ -90,10 +92,8 @@ ka630_conf(parent, self, aux)
 	struct	device *parent, *self;
 	void	*aux;
 {
-	extern char cpu_model[];
 
-	strcpy(cpu_model,"MicroVAX II");
-	printf(": %s\n", cpu_model);
+	printf(": %s\n", "KA630");
 }
 
 /* log crd errors */
@@ -171,12 +171,6 @@ ka630_steal_pages()
 	    (vm_offset_t)KA630CLK + NBPG, VM_PROT_READ|VM_PROT_WRITE);
 
 	/*
-	 * Clear restart and boot in progress flags in the CPMBX.
-	 * Note: We are not running virtual yet.
-	 */
-	KA630CLK->cpmbx = (KA630CLK->cpmbx & KA630CLK_LANG);
-
-	/*
 	 * Enable memory parity error detection and clear error bits.
 	 */
 	UVAXIICPU->uvaxII_mser = (UVAXIIMSER_PEN | UVAXIIMSER_MERR |
@@ -196,6 +190,15 @@ ka630_reboot(arg)
 {
 	((struct ka630clock *)clk_page)->cpmbx =
 	    KA630CLK_DOTHIS | KA630CLK_REBOOT;
-	mtpr(GC_BOOT, PR_TXDB);
-	asm("movl %0,r5;halt"::"g"(arg));
+}
+
+/*
+ * Clear restart and boot in progress flags in the CPMBX.
+ */
+static void
+ka630_clrf()
+{
+	short i = ((struct ka630clock *)clk_page)->cpmbx;
+
+	((struct ka630clock *)clk_page)->cpmbx = i & KA630CLK_LANG;
 }

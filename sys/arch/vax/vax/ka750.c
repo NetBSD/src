@@ -1,4 +1,4 @@
-/*	$NetBSD: ka750.c,v 1.19 1997/07/17 02:22:30 jtk Exp $ */
+/*	$NetBSD: ka750.c,v 1.20 1997/11/02 14:07:20 ragge Exp $ */
 /*
  * Copyright (c) 1982, 1986, 1988 The Regents of the University of California.
  * Copyright (c) 1994 Ludd, University of Lule}, Sweden.
@@ -51,6 +51,7 @@
 #include <machine/sid.h>
 #include <machine/mtpr.h>
 #include <machine/scb.h>
+#include <vax/vax/gencons.h>
 
 #include <vax/uba/ubavar.h>
 #include <vax/uba/ubareg.h>
@@ -58,6 +59,8 @@
 #include "locators.h"
 
 void	ctuattach __P((void));
+
+void	ka750_clrf __P((void));
 
 struct	cpu_dep	ka750_calls = {
 	ka750_steal_pages,
@@ -71,8 +74,13 @@ struct	cpu_dep	ka750_calls = {
 	0,      /* Used by vaxstation */
 	0,      /* Used by vaxstation */
 	0,      /* Used by vaxstation */
-
+	0,	/* Used by vaxstation */
+	0,	/* halt call */
+	0,	/* Reboot call */
+	ka750_clrf,
 };
+
+static	caddr_t	mcraddr[4];	/* XXX */
 
 /*
  * ka750_conf() is called by cpu_attach to do the cpu_specific setup.
@@ -82,10 +90,8 @@ ka750_conf(parent, self, aux)
 	struct device *parent, *self;
 	void *aux;
 {
-	extern	char cpu_model[];
 
-	strcpy(cpu_model,"VAX 11/750");
-	printf(": 11/750, hardware rev %d, ucode rev %d\n",
+	printf(": KA750, hardware rev %d, ucode rev %d\n",
 	    V750HARDW(vax_cpudata), V750UCODE(vax_cpudata));
 	printf("%s: ", self->dv_xname);
 	if (mfpr(PR_ACCS) & 255) {
@@ -121,8 +127,6 @@ ka750_memmatch(parent, gcf, aux)
 
 	return 1;
 }
-
-extern volatile caddr_t mcraddr[];
 
 struct	mcr750 {
 	int	mc_err;			/* error bits */
@@ -359,4 +363,22 @@ cmi_attach(parent, self, aux)
 	if (badaddr((caddr_t)&nexus[++sa.nexnum], 4) == 0)
 		config_found(self, (void*)&sa, cmi_print);
 
+}
+
+void
+ka750_clrf()
+{
+	int s = splhigh();
+
+#define WAIT    while ((mfpr(PR_TXCS) & GC_RDY) == 0) ;
+
+	WAIT;
+
+	mtpr(GC_CWFL|GC_CONS, PR_TXDB);
+
+	WAIT;
+	mtpr(GC_CCFL|GC_CONS, PR_TXDB);
+
+	WAIT;
+	splx(s);
 }
