@@ -1,3 +1,5 @@
+/*	$NetBSD: csh.h,v 1.9 1995/03/21 09:02:40 cgd Exp $	*/
+
 /*-
  * Copyright (c) 1980, 1991, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -30,8 +32,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	from: @(#)csh.h	8.1 (Berkeley) 5/31/93
- *	$Id: csh.h,v 1.8 1995/01/30 19:37:25 mycroft Exp $
+ *	@(#)csh.h	8.1 (Berkeley) 5/31/93
  */
 
 /*

@@ -53,6 +53,8 @@ expr:	ARITH_LPAREN expr ARITH_RPAREN = { $$ = $2; }
 	| ARITH_NUM
 	;
 %%
+/*	$NetBSD: arith.y,v 1.5 1995/03/21 09:08:43 cgd Exp $	*/
+
 /*-
  * Copyright (c) 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -90,8 +92,11 @@ expr:	ARITH_LPAREN expr ARITH_RPAREN = { $$ = $2; }
  */
 
 #ifndef lint
-/*static char sccsid[] = "from: @(#)arith.y	8.1 (Berkeley) 5/31/93";*/
-static char *rcsid = "$Id: arith.y,v 1.4 1994/12/23 13:20:10 cgd Exp $";
+#if 0
+static char sccsid[] = "@(#)arith.y	8.1 (Berkeley) 5/31/93";
+#else
+static char rcsid[] = "$NetBSD: arith.y,v 1.5 1995/03/21 09:08:43 cgd Exp $";
+#endif
 #endif /* not lint */
 
 #include "shell.h"

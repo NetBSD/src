@@ -1,5 +1,5 @@
-#	from: @(#)Makefile	8.1 (Berkeley) 6/8/93
-#	$Id: Makefile,v 1.18 1994/11/04 17:13:27 jtc Exp $
+#	$NetBSD: Makefile,v 1.19 1995/03/21 09:08:36 cgd Exp $
+#	@(#)Makefile	8.1 (Berkeley) 6/8/93
 
 PROG=	sh
 SRCS=	alias.c builtins.c cd.c echo.c error.c eval.c exec.c expand.c \

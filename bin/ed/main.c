@@ -1,3 +1,5 @@
+/*	$NetBSD: main.c,v 1.3 1995/03/21 09:04:44 cgd Exp $	*/
+
 /* main.c: This file contains the main control and user-interface routines
    for the ed line editor. */
 /*-
@@ -33,7 +35,11 @@ char *copyright =
 #endif /* not lint */
 
 #ifndef lint
+#if 0
 static char *rcsid = "@(#)main.c,v 1.1 1994/02/01 00:34:42 alm Exp";
+#else
+static char rcsid[] = "$NetBSD: main.c,v 1.3 1995/03/21 09:04:44 cgd Exp $";
+#endif
 #endif /* not lint */
 
 /*

@@ -1,3 +1,5 @@
+/*	$NetBSD: buf.c,v 1.14 1995/03/21 09:04:35 cgd Exp $	*/
+
 /* buf.c: This file contains the scratch-file buffer rountines for the
    ed line editor. */
 /*-
@@ -26,7 +28,11 @@
  * SUCH DAMAGE.
  */
 #ifndef lint
+#if 0
 static char *rcsid = "@(#)buf.c,v 1.4 1994/02/01 00:34:35 alm Exp";
+#else
+static char rcsid[] = "$NetBSD: buf.c,v 1.14 1995/03/21 09:04:35 cgd Exp $";
+#endif
 #endif /* not lint */
 
 #include <sys/file.h>
