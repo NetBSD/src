@@ -1,4 +1,4 @@
-/*	$NetBSD: mcd.c,v 1.30 1995/03/27 16:48:45 mycroft Exp $	*/
+/*	$NetBSD: mcd.c,v 1.31 1995/03/27 18:08:34 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1993, 1994, 1995 Charles M. Hannum.  All rights reserved.
@@ -209,11 +209,7 @@ mcdattach(parent, self, aux)
 
 	printf(": model %s\n", sc->type != 0 ? sc->type : "unknown");
 
-	mbx.cmd.opcode = MCD_CMDSETLOCK;
-	mbx.cmd.length = sizeof(mbx.cmd.data.lockmode);
-	mbx.cmd.data.lockmode.mode = MCD_LK_UNLOCK;
-	mbx.res.length = 0;
-	(void) mcd_send(sc, &mbx, 0);
+	(void) mcd_setlock(sc, MCD_LK_UNLOCK);
 
 	mbx.cmd.opcode = MCD_CMDCONFIGDRIVE;
 	mbx.cmd.length = sizeof(mbx.cmd.data.config) - 1;
