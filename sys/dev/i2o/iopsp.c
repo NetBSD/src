@@ -1,4 +1,4 @@
-/*	$NetBSD: iopsp.c,v 1.2.2.7 2001/03/27 15:31:52 bouyer Exp $	*/
+/*	$NetBSD: iopsp.c,v 1.2.2.8 2001/03/27 15:58:41 ad Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2001 The NetBSD Foundation, Inc.
@@ -79,7 +79,7 @@ static int	iopsp_rescan(struct iopsp_softc *);
 static int	iopsp_reconfig(struct device *);
 static int	iopsp_scsi_abort(struct iopsp_softc *, int, struct iop_msg *);
 static void	iopsp_scsipi_request(struct scsipi_channel *,
-			    scsipi_adapter_req_t, void *);
+				     scsipi_adapter_req_t, void *);
 
 struct cfattach iopsp_ca = {
 	sizeof(struct iopsp_softc), iopsp_match, iopsp_attach
@@ -193,7 +193,7 @@ iopsp_attach(struct device *parent, struct device *self, void *aux)
 	sc->sc_channel.chan_bustype = &scsi_bustype;
 	sc->sc_channel.chan_channel = 0;
 	sc->sc_channel.chan_ntargets = fcal ?
-			IOPSP_MAX_FCAL_TARGET : param.p.sci.maxdatawidth;
+	    IOPSP_MAX_FCAL_TARGET : param.p.sci.maxdatawidth;
 	sc->sc_channel.chan_nluns = IOPSP_MAX_LUN;
 	sc->sc_channel.chan_id = le32toh(param.p.sci.initiatorid);
 
@@ -412,16 +412,19 @@ iopsp_rescan(struct iopsp_softc *sc)
  */
 static void
 iopsp_scsipi_request(struct scsipi_channel *chan, scsipi_adapter_req_t req,
-	void *arg)
+		     void *arg)
 {
 	struct scsipi_xfer *xs;
 	struct scsipi_periph *periph;
-	struct iopsp_softc *sc = (void *)chan->chan_adapter->adapt_dev;
+	struct iopsp_softc *sc;
 	struct iop_msg *im;
-	struct iop_softc *iop = (struct iop_softc *)sc->sc_dv.dv_parent;
+	struct iop_softc *iop;
 	struct i2o_scsi_scb_exec *mf;
 	int error, flags, tid, imf;
 	u_int32_t mb[IOP_MAX_MSG_SIZE / sizeof(u_int32_t)];
+
+	sc = (void *)chan->chan_adapter->adapt_dev;
+	iop = (struct iop_softc *)sc->sc_dv.dv_parent;
 
 	switch (req) {
 	case ADAPTER_REQ_RUN_XFER:
@@ -430,7 +433,7 @@ iopsp_scsipi_request(struct scsipi_channel *chan, scsipi_adapter_req_t req,
 		flags = xs->xs_control;
 
 		tid = IOPSP_TIDMAP(sc->sc_tidmap, periph->periph_target,
-		     periph->periph_lun);
+		    periph->periph_lun);
 		if (tid == IOPSP_TID_ABSENT || tid == IOPSP_TID_INUSE) {
 			xs->error = XS_SELTIMEOUT;
 			scsipi_done(xs);
@@ -442,7 +445,7 @@ iopsp_scsipi_request(struct scsipi_channel *chan, scsipi_adapter_req_t req,
 		/* Need to reset the target? */
 		if ((flags & XS_CTL_RESET) != 0) {
 			if (iop_simple_cmd(iop, tid, I2O_SCSI_DEVICE_RESET,
-		    	sc->sc_ii.ii_ictx, 1, 10*1000) != 0) {
+			    sc->sc_ii.ii_ictx, 1, 10*1000) != 0) {
 #ifdef I2ODEBUG
 				printf("%s: reset failed\n",
 				    sc->sc_dv.dv_xname);
@@ -460,8 +463,8 @@ iopsp_scsipi_request(struct scsipi_channel *chan, scsipi_adapter_req_t req,
 			panic("%s: CDB too large\n", sc->sc_dv.dv_xname);
 #endif
 
-		imf = (flags & (XS_CTL_POLL | XS_CTL_NOSLEEP)) != 0 ?
-								IM_POLL : 0;			im = iop_msg_alloc(iop, &sc->sc_ii, imf);
+		imf = (flags & (XS_CTL_POLL|XS_CTL_NOSLEEP)) != 0 ? IM_POLL : 0;
+		im = iop_msg_alloc(iop, &sc->sc_ii, imf);
 		im->im_dvcontext = xs;
 
 		mf = (struct i2o_scsi_scb_exec *)mb;
@@ -487,6 +490,7 @@ iopsp_scsipi_request(struct scsipi_channel *chan, scsipi_adapter_req_t req,
 		default:
 			break;
 		}
+
 		if (xs->datalen != 0) {
 			error = iop_msg_map_bio(iop, im, mb, xs->data,
 			    xs->datalen, (flags & XS_CTL_DATA_OUT) == 0);
@@ -518,7 +522,7 @@ iopsp_scsipi_request(struct scsipi_channel *chan, scsipi_adapter_req_t req,
 				xs->error = XS_DRIVER_STUFFUP;
 				scsipi_done(xs);
 			}
-			return;
+			break;
 		}
 
 		if (iop_msg_post(iop, im, mb, xs->timeout)) {
@@ -531,13 +535,15 @@ iopsp_scsipi_request(struct scsipi_channel *chan, scsipi_adapter_req_t req,
 			xs->error = XS_TIMEOUT;
 		}
 		scsipi_done(xs);
-		return;
+		break;
+
 	case ADAPTER_REQ_GROW_RESOURCES:
 		/* XXX Not supported. */
-		return;
+		break;
+
 	case ADAPTER_REQ_SET_XFER_MODE:
 		/* XXX Not supported. */
-		return;
+		break;
 	}
 }
 
@@ -657,8 +663,6 @@ iopsp_ioctl(struct scsipi_channel *chan, u_long cmd, caddr_t data, int flag,
 
 	switch (cmd) {
 	case SCBUSIOLLSCAN:
-		rv = iopsp_rescan(
-		    (struct iopsp_softc *)chan->chan_adapter->adapt_dev);
 		/*
 		 * If it's boot time, the bus will have been scanned and the
 		 * maps built.  Locking would stop re-configuration, but we
@@ -675,7 +679,7 @@ iopsp_ioctl(struct scsipi_channel *chan, u_long cmd, caddr_t data, int flag,
 		rv = ENOTTY;
 		break;
 	}
-	
+
 	return (rv);
 }
 
