@@ -1,4 +1,4 @@
-/*	$NetBSD: paths.c,v 1.20 2002/10/05 12:23:39 mycroft Exp $	 */
+/*	$NetBSD: paths.c,v 1.21 2002/10/05 15:04:49 junyoung Exp $	 */
 
 /*
  * Copyright 1996 Matt Thomas <matt@3am-software.com>
@@ -364,7 +364,8 @@ _rtld_process_hints(path_p, lib_p, fname)
 		else {
 			char tmp = b[len];
 			b[len] = '\0';
-			_rtld_process_mapping(lib_p, b, len);
+			if (len != 0)
+				_rtld_process_mapping(lib_p, b, len);
 			b[len] = tmp;
 		}
 			
