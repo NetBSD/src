@@ -1,6 +1,6 @@
 # GENERIC
 #
-#     $Id: GENERIC,v 1.10 1994/02/27 16:48:34 briggs Exp $
+#     $Id: GENERIC,v 1.11 1994/03/01 15:20:37 briggs Exp $
 
 include	"std.mac68k"
 
@@ -54,6 +54,7 @@ options		SYSVSHM,SYSVSEM,SYSVMSG
 # Mac-specific options
 options		FPCOPROC
 options		COMPAT_NOMID
+options		COMPAT_SUNOS
 
 config		netbsd	swap generic
 
