@@ -1,4 +1,4 @@
-# $NetBSD: files.ppbus,v 1.3 2004/01/21 00:33:37 bjh21 Exp $
+# $NetBSD: files.ppbus,v 1.4 2004/01/28 17:27:06 drochner Exp $
 #
 # Config file and device description for machine-independent parallel port bus 
 # code.
@@ -33,6 +33,11 @@ defflag	opt_plip.h		PLIP_DEBUG
 device	plip # : arp, ether, ifnet
 attach	plip at ppbus
 file	dev/ppbus/if_plip.c	plip		needs-flag
+
+# pps interface
+device pps
+attach pps at ppbus
+file dev/ppbus/pps_ppbus.c	pps
 
 # AT-compatible parallel port chipset
 defflag	opt_atppc.h		ATPPC_DEBUG ATPPC_VERBOSE
