@@ -28,6 +28,11 @@
  **********************************************************************
  * HISTORY
  * $Log: vprintf.c,v $
+ * Revision 1.3  1996/09/30 04:19:55  christos
+ * Use a better fix for vsnprintf on svr4. Apparently, svr4 stdio does not
+ * have _IOSTRG, but it uses _IOREAD to indicate that _doprnt() should print
+ * to the buffer and not to the file stream.
+ *
  * Revision 1.2  1996/09/05 16:50:13  christos
  * - for portability make sure that we never use "" as a pathname, always convert
  *   it to "."
@@ -75,6 +80,12 @@
 #include <stdio.h>
 #include <varargs.h>
 
+#ifdef _IOSTRG
+#define STRFLAG	(_IOSTRG|_IOWRT)	/* no _IOWRT: avoid stdio bug */
+#else
+#define STRFLAG	(_IOREAD)		/* XXX: Assume svr4 stdio */
+#endif
+
 #ifdef DOPRINT_VA
 /* 
  *  system provides _doprnt_va routine
@@ -115,7 +126,7 @@ vsprintf(s, fmt, args)
 {
 	FILE fakebuf;
 
-	fakebuf._flag = _IOSTRG+_IOWRT;	/* no _IOWRT: avoid stdio bug */
+	fakebuf._flag = STRFLAG;
 	fakebuf._ptr = s;
 	fakebuf._cnt = 32767;
 	_doprnt(fmt, args, &fakebuf);
@@ -130,10 +141,9 @@ vsnprintf(s, n, fmt, args)
 	char *s, *fmt;
 	va_list args;
 {
-#ifdef _IOSTRG
 	FILE fakebuf;
 
-	fakebuf._flag = _IOSTRG+_IOWRT;	/* no _IOWRT: avoid stdio bug */
+	fakebuf._flag = STRFLAG;
 	fakebuf._ptr = s;
 	fakebuf._cnt = n-1;
 	_doprnt(fmt, args, &fakebuf);
@@ -142,9 +152,5 @@ vsnprintf(s, n, fmt, args)
 	if (fakebuf._cnt<0)
 	    fakebuf._cnt = 0;
 	return (n-fakebuf._cnt-1);
-#else
-	/* Will blow up. */
-	vsprintf(s, fmt, args);
-#endif
 }
 #endif	/* NEED_VPRINTF || NEED_VSNPRINTF */
