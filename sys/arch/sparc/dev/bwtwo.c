@@ -1,4 +1,4 @@
-/*	$NetBSD: bwtwo.c,v 1.19 1996/02/19 00:15:46 thorpej Exp $ */
+/*	$NetBSD: bwtwo.c,v 1.20 1996/02/25 21:46:01 pk Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -63,11 +63,9 @@
 #include <machine/autoconf.h>
 #include <machine/pmap.h>
 #include <machine/fbvar.h>
-#if defined(SUN4)
 #include <machine/eeprom.h>
 #include <machine/ctlreg.h>
 #include <sparc/sparc/asm.h>
-#endif
 
 #include <sparc/dev/bwtworeg.h>
 #include <sparc/dev/sbusvar.h>
@@ -123,13 +121,12 @@ bwtwomatch(parent, vcf, aux)
 	struct confargs *ca = aux;
 	struct romaux *ra = &ca->ca_ra;
 
-#if defined(SUN4)
-	if (cputyp == CPU_SUN4 && cf->cf_unit != 0)
+	if (CPU_ISSUN4 && cf->cf_unit != 0)
 		return (0);
-#endif
 
 	if (strcmp(cf->cf_driver->cd_name, ra->ra_name))
 		return (0);
+
 	if (ca->ca_bustype == BUS_SBUS)
 		return(1);
 
@@ -158,13 +155,11 @@ bwtwoattach(parent, self, args)
 
 	switch (ca->ca_bustype) {
 	case BUS_OBIO:
-#if defined(SUN4M)
-		if (cputyp == CPU_SUN4M) {   /* 4m has framebuffer on obio */
+		if (CPU_ISSUN4M) {   /* 4m has framebuffer on obio */
 			node = ca->ca_ra.ra_node;
 			nam = getpropstring(node, "model");
 			break;
 		}
-#endif
 	case BUS_VME32:
 	case BUS_VME16:
 		sbus = node = 0;
@@ -191,7 +186,7 @@ bwtwoattach(parent, self, args)
 	    sc->sc_fb.fb_type.fb_width, sc->sc_fb.fb_type.fb_height);
 
 #if defined(SUN4)
-	if (cputyp == CPU_SUN4) {
+	if (CPU_ISSUN4) {
 		struct eeprom *eep = (struct eeprom *)eeprom_va;
 		/*
 		 * Assume this is the console if there's no eeprom info
@@ -203,10 +198,10 @@ bwtwoattach(parent, self, args)
 			isconsole = 0;
 	}
 #endif
-#if defined(SUN4C) || defined(SUN4M)
-	if (cputyp == CPU_SUN4C || cputyp == CPU_SUN4M)
+
+	if (CPU_ISSUN4COR4M)
 		isconsole = node == fbnode && fbconstty != NULL;
-#endif
+
 	/*
 	 * When the ROM has mapped in a bwtwo display, the address
 	 * maps only the video RAM, so in any case we have to map the
@@ -232,11 +227,13 @@ bwtwoattach(parent, self, args)
 #endif
 	} else
 		printf("\n");
+
 #if defined(SUN4C) || defined(SUN4M)
 	if (sbus)
 		sbus_establish(&sc->sc_sd, &sc->sc_dev);
 #endif
-	if (node == fbnode || cputyp == CPU_SUN4)
+
+	if (CPU_ISSUN4 || node == fbnode)
 		fb_attach(&sc->sc_fb, isconsole);
 }
 
@@ -330,7 +327,7 @@ bwtwo_get_video(sc)
 {
 
 #if defined(SUN4)
-	if ((cputyp == CPU_SUN4) && (sc->sc_bustype == BUS_OBIO))
+	if (CPU_ISSUN4 && (sc->sc_bustype == BUS_OBIO))
 		return ((lduba(AC_SYSENABLE, ASI_CONTROL) & SYSEN_VIDEO) != 0);
 #endif
 
@@ -344,7 +341,7 @@ bwtwo_set_video(sc, enable)
 {
 
 #if defined(SUN4)
-	if ((cputyp == CPU_SUN4) && (sc->sc_bustype == BUS_OBIO)) {
+	if (CPU_ISSUN4 && (sc->sc_bustype == BUS_OBIO)) {
 		if (enable)
 			stba(AC_SYSENABLE, ASI_CONTROL,
 			    lduba(AC_SYSENABLE, ASI_CONTROL) | SYSEN_VIDEO);

@@ -1,4 +1,4 @@
-/*	$NetBSD: fd.c,v 1.22 1996/02/10 18:37:36 thorpej Exp $	*/
+/*	$NetBSD: fd.c,v 1.23 1996/02/25 21:45:56 pk Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994, 1995 Charles Hannum.
@@ -234,7 +234,7 @@ void	fd_mountroot_hook __P((struct device *));
 #error 4
 #endif
 
-#define OBP_FDNAME	(cputyp == CPU_SUN4M ? "SUNW,fdtwo" : "fd")
+#define OBP_FDNAME	(CPU_ISSUN4M ? "SUNW,fdtwo" : "fd")
 
 int
 fdcmatch(parent, match, aux)
@@ -245,18 +245,34 @@ fdcmatch(parent, match, aux)
 	register struct confargs *ca = aux;
 	register struct romaux *ra = &ca->ca_ra;
 
+	/*
+	 * Floppy doesn't exist on sun4.
+	 */
+	if (CPU_ISSUN4)
+		return (0);
+
+	/*
+	 * Floppy controller is on mainbus on sun4c.
+	 */
+	if ((CPU_ISSUN4C) && (ca->ca_bustype != BUS_MAIN))
+		return (0);
+
+	/*
+	 * Floppy controller is on obio on sun4m.
+	 */
+	if ((CPU_ISSUN4M) && (ca->ca_bustype != BUS_OBIO))
+		return (0);
+
 	/* Sun PROMs call the controller an "fd" or "SUNW,fdtwo" */
 	if (strcmp(OBP_FDNAME, ra->ra_name))
 		return (0);
-	if (ca->ca_bustype == BUS_MAIN) {
-		if (ca->ca_ra.ra_vaddr &&
-		    probeget(ca->ca_ra.ra_vaddr, 1) == -1) {
-			return (0);
-		}
-		return (1);
+
+	if (ca->ca_ra.ra_vaddr &&
+	    probeget(ca->ca_ra.ra_vaddr, 1) == -1) {
+		return (0);
 	}
 
-	return (0);
+	return (1);
 }
 
 /*
@@ -319,6 +335,7 @@ fdcattach(parent, self, aux)
 	register struct confargs *ca = aux;
 	struct fdc_softc *fdc = (void *)self;
 	struct fdc_attach_args fa;
+	struct bootpath *bp;
 	int n, pri;
 	char code;
 
@@ -402,23 +419,35 @@ fdcattach(parent, self, aux)
 	 * Controller and drives are represented by one and the same
 	 * Openprom node, so we can as well check for the floppy boots here.
 	 */
-	if (ca->ca_ra.ra_bp &&
-	    strcmp(ca->ca_ra.ra_bp->name, OBP_FDNAME) == 0) {
+	fa.fa_bootdev = 0;
+	if ((bp = ca->ca_ra.ra_bp) && strcmp(bp->name, OBP_FDNAME) == 0) {
 		/*
 		 * WOAH THERE!  It looks like we can get the bootpath
-		 * in a couple of different formats!!  The faked
+		 * in several different formats!!  The faked
 		 * bootpath (and some v2?) looks like /fd@0,0
 		 * but the real bootpath on some v2 OpenPROM
-		 * systems looks like /fd0.  We deal with that
-		 * bere by looking for either case.  --thorpej
+		 * systems looks like /fd0.  In the case of
+		 * a floppy controller on obio (such as on the sun4m),
+		 * we use "slot, offset" to determine if this is the
+		 * right one.  --thorpej
 		 */
-		if (((ca->ca_ra.ra_bp->val[0] == 0) &&	/* /fd@0,0 */
-		     (ca->ca_ra.ra_bp->val[1] == 0)) ||
-		    ((ca->ca_ra.ra_bp->val[0] == -1) &&	/* /fd0 */
-		     (ca->ca_ra.ra_bp->val[1] == 0)))
-			fa.fa_bootdev = 1;  
-		else
-			fa.fa_bootdev = 0;
+		switch (ca->ca_bustype) {
+		case BUS_MAIN:
+			if (((bp->val[0] == 0) &&	/* /fd@0,0 */
+			     (bp->val[1] == 0)) ||
+			    ((bp->val[0] == -1) &&	/* /fd0 */
+			     (bp->val[1] == 0)))
+				fa.fa_bootdev = 1;
+			break;
+
+		case BUS_OBIO:
+			/* /obio0/SUNW,fdtwo@0,700000 */
+			if ((bp->val[0] == ca->ca_slot) &&
+			    (bp->val[1] == ca->ca_offset))
+				fa.fa_bootdev = 1;
+			break;
+		}
+			
 	}
 
 	/* physical limit: four drives per controller. */

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ie.c,v 1.18 1996/01/12 23:08:59 chuck Exp $	*/
+/*	$NetBSD: if_ie.c,v 1.19 1996/02/25 21:45:59 pk Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994, 1995 Charles Hannum.
@@ -393,7 +393,7 @@ iematch(parent, cf, aux)
 	if (ca->ca_bustype == BUS_SBUS)
 		return (0);
 
-	if (cputyp == CPU_SUN4) {
+	if (CPU_ISSUN4) {
 		/*
 		 * XXX need better probe here so we can figure out what we've got
 		 */
