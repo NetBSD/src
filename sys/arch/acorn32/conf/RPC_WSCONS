@@ -1,4 +1,4 @@
-#	$NetBSD: RPC_WSCONS,v 1.25 2004/02/13 11:36:09 wiz Exp $
+#	$NetBSD: RPC_WSCONS,v 1.26 2004/03/13 17:59:00 bjh21 Exp $
 #
 #	RPC_WSCONS -- Full RiscPC config with wscons
 #
@@ -22,7 +22,7 @@ include		"arch/acorn32/conf/std.acorn32"
 
 #options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident		"GENERIC-$Revision: 1.25 $"
+#ident		"GENERIC-$Revision: 1.26 $"
 
 # estimated number of users
 maxusers	32
@@ -192,8 +192,16 @@ options 	FONT_SONY8x16		# not tested
 vidcvideo0	at vidc?		# wscons driver for VIDC
 wsdisplay*	at vidcvideo? console ?	# display itself
 
-rpckbd*		at iomd?		# based on old `kbd' driver
-wskbd*		at rpckbd?		# wskbd on RiscPC keyboard
+iomdkbc*	at iomd?
+#pckbd*		at iomdkbc? slot ?
+#options 	PCKBD_LAYOUT=KB_UK
+#pms*		at iomdkbc? slot ?
+
+#wskbd*		at pckbd?
+#wsmouse*	at pms?
+
+rpckbd* 	at iomd?
+wskbd*		at rpckbd?
 
 wsqms*		at iomd?		# ws quadmouse driver
 wsmouse*	at wsqms?		# wsmouse on ws quadmouse
