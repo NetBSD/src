@@ -45,13 +45,13 @@ divert(-1)
 #
 
 include(`../m4/cf.m4')
-VERSIONID(`$NetBSD: babylon.mc,v 1.2 1998/05/12 00:43:08 thorpej Exp $')
+VERSIONID(`$NetBSD: babylon.mc,v 1.3 1998/05/12 01:23:50 thorpej Exp $')
 OSTYPE(bsd4.4)dnl
 MAILER(local)dnl
 MAILER(smtp)dnl
 
-define(confAUTO_REBUILD, True)dnl
-define(confMIME_FORMAT_ERRORS, False)dnl
+define(`confAUTO_REBUILD', True)dnl
+define(`confMIME_FORMAT_ERRORS', False)dnl
 
 FEATURE(redirect)dnl
 
