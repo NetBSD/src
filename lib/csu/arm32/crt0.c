@@ -1,4 +1,4 @@
-/*	$NetBSD: crt0.c,v 1.4 1998/02/03 20:01:35 perry Exp $	*/
+/*	$NetBSD: crt0.c,v 1.5 1998/03/10 22:32:08 mark Exp $	*/
 
 /*
  * Copyright (C) 1997 Mark Brinicombe
@@ -69,7 +69,7 @@ start(void)
 	__asm("mov %0, ip" : "=r" (kfp) );
 
 	for (argv = targv = &kfp->kargv[0]; *targv++; /* void */)
-
+		/* void */ ;
 	if (targv >= (char **)(*argv))
 		--targv;
 	environ = targv;
