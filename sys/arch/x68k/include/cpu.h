@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.4 1997/01/08 04:00:47 oki Exp $	*/
+/*	$NetBSD: cpu.h,v 1.5 1997/02/03 22:20:32 oki Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -200,11 +200,6 @@ int	dma_cachectl __P((caddr_t, int));
 
 /* vm_machdep.c */
 int	kvtop __P((caddr_t));
-
-#ifdef GENERIC
-/* swapgeneric.c */
-void	setconf __P((void));
-#endif /* GENERIC */
 
 #endif
 
