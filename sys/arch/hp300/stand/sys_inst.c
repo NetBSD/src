@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_inst.c,v 1.3 1995/10/04 07:24:33 thorpej Exp $	*/
+/*	$NetBSD: sys_inst.c,v 1.3.6.1 1996/09/11 18:00:32 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1995 Jason R. Thorpe.
@@ -101,7 +101,7 @@ main()
 
 	printf("\n>> NetBSD INSTALLATION HP9000/%s CPU\n",
 	       getmachineid());
-	printf(">> $NetBSD: sys_inst.c,v 1.3 1995/10/04 07:24:33 thorpej Exp $\n");
+	printf(">> $NetBSD: sys_inst.c,v 1.3.6.1 1996/09/11 18:00:32 thorpej Exp $\n");
 	gethelp();
 
 	for (;;) {
@@ -395,7 +395,7 @@ opendisk(question, diskname, len, partition, fdp)
 	int *fdp;
 {
 	char fulldiskname[64], *filename;
-	int i, error = 0;
+	int i;
 
  getdiskname:
 	printf("%s ", question);
@@ -422,10 +422,12 @@ opendisk(question, diskname, len, partition, fdp)
 	/*
 	 * We always open for writing.
 	 */
-	if ((*fdp = open(fulldiskname, 1)) < 0)
+	if ((*fdp = open(fulldiskname, 1)) < 0) {
 		printf("cannot open %s\n", diskname);
+		return (1);
+	}
 
-	return (errno);
+	return (0);
 }
 
 /*
