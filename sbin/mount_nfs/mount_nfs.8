@@ -1,4 +1,4 @@
-.\"	$NetBSD: mount_nfs.8,v 1.19 2002/10/01 13:40:41 wiz Exp $
+.\"	$NetBSD: mount_nfs.8,v 1.20 2003/01/01 21:22:50 jschauma Exp $
 .\"
 .\" Copyright (c) 1992, 1993, 1994, 1995
 .\"	The Regents of the University of California.  All rights reserved.
@@ -200,7 +200,7 @@ Make the mount interruptible, which implies that file system calls that
 are delayed due to an unresponsive server will fail with EINTR when a
 termination signal is posted for the process.
 .It Fl l
-Used with NQNFS and NFSV3 to specify that the ReaddirPlus RPC should
+Used with NQNFS and NFSv3 to specify that the ReaddirPlus RPC should
 be used.
 This option reduces RPC traffic for cases such as
 .Dq "ls -l" ,
@@ -295,7 +295,7 @@ is with a command like:
 or:
 .Dl "mount -t nfs remotehost:/filesystem /localmountpoint
 .Pp
-It is also possible to automaticly mount filesystems at boot from your
+It is also possible to automatically mount filesystems at boot from your
 .Pa /etc/fstab
 by using a line like:
 .Pp
