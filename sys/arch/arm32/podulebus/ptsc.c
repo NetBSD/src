@@ -1,4 +1,4 @@
-/* $NetBSD: ptsc.c,v 1.11 1996/10/14 23:42:19 mark Exp $ */
+/* $NetBSD: ptsc.c,v 1.12 1996/10/29 23:53:02 mark Exp $ */
 
 /*
  * Copyright (c) 1995 Scott Stevens
@@ -37,8 +37,12 @@
  *
  *	@(#)ptsc.c
  */
+
 /*
  * Power-tec SCSI-2 driver uses SFAS216 generic driver
+ *
+ * Thanks to Alsystems for loaning a development card and providing
+ * programming information.
  */
 
 #include <sys/param.h>
