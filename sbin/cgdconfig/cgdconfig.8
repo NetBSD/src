@@ -1,0 +1,249 @@
+.\" $NetBSD: cgdconfig.8,v 1.1 2002/10/04 18:37:19 elric Exp $
+.\"
+.\" Copyright (c) 2002, The NetBSD Foundation, Inc.
+.\" All rights reserved.
+.\"
+.\" This code is derived from software contributed to The NetBSD Foundation
+.\" by Roland C. Dowdeswell.
+.\"
+.\" Redistribution and use in source and binary forms, with or without
+.\" modification, are permitted provided that the following conditions
+.\" are met:
+.\" 1. Redistributions of source code must retain the above copyright
+.\"    notice, this list of conditions and the following disclaimer.
+.\" 2. Redistributions in binary form must reproduce the above copyright
+.\"    notice, this list of conditions and the following disclaimer in the
+.\"    documentation and/or other materials provided with the distribution.
+.\" 3. All advertising materials mentioning features or use of this software
+.\"    must display the following acknowledgement:
+.\"        This product includes software developed by the NetBSD
+.\"        Foundation, Inc. and its contributors.
+.\" 4. Neither the name of The NetBSD Foundation nor the names of its
+.\"    contributors may be used to endorse or promote products derived
+.\"    from this software without specific prior written permission.
+.\"
+.\" THIS SOFTWARE IS PROVIDED BY THE NETBSD FOUNDATION, INC. AND CONTRIBUTORS
+.\" ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
+.\" TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
+.\" PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL THE FOUNDATION OR CONTRIBUTORS
+.\" BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+.\" CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
+.\" SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+.\" INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
+.\" CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+.\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+.\" POSSIBILITY OF SUCH DAMAGE.
+.\"
+.Dd September 23, 2002
+.Dt CGDCONFIG 8
+.Os
+.Sh NAME
+.Nm cgdconfig
+.Nd configuration utility for the cryptographic disk driver
+.Sh SYNOPSIS
+.Nm ""
+.Op Fl nv
+.Ar cgd dev
+.Op Ar paramsfile
+.Nm ""
+.Fl C
+.Op Fl nv
+.Op Fl f Ar configfile
+.Nm ""
+.Fl U
+.Op Fl nv
+.Op Fl f Ar configfile
+.Nm ""
+.Fl g
+.Op Fl nrv
+.Op Fl i Ar ivmeth
+.Op Fl k Ar kgmeth
+.Op Fl o Ar outfile
+.Ar alg
+.Op Ar keylen
+.Nm ""
+.Fl s
+.Op Fl nv
+.Op Fl i Ar ivmeth
+.Ar cgd
+.Ar dev
+.Ar alg
+.Op Ar keylen
+.Nm ""
+.Fl u
+.Op Fl nv
+.Ar cgd
+.Sh DESCRIPTION
+.Nm
+is used to configure and unconfigure cryptographic disk devices (cgds)
+and to maintain the configuration files that are associated with them.
+For more information about cgd see
+.Xr cgd 4 .
+.Pp
+The options are as follows:
+.Bl -tag -width configfilexxxx
+.It Fl C
+Configure all the devices listed in the cgd configuration file.
+.It Fl f Ar configfile
+Specify the configuration file explicitly, rather than defaulting to
+.Pa /etc/cgd/cgd.conf .
+.It Fl g
+Generate a paramsfile, stored as
+.Pa paramsfile .
+.It Fl i Ar ivmeth
+Specify the IV method.
+.It Fl k Ar kgmeth
+Specify the key generation method.
+.It Fl o Ar outfile
+When generating a
+.Ar paramsfile ,
+store it in
+.Ar outfile .
+.It Fl s
+Read the key from stdin.
+.It Fl U
+Unconfigure all the devices listed in the cgd configuration file.
+.It Fl u
+Unconfigure a cgd.
+.It Fl v
+Be verbose.  May be specified multiple times.
+.El
+.Pp
+For more information about the cryptographic algorithms and IV methods
+supported, please refer to
+.Xr cgd 4 .
+.Ss Key Generation Methods
+The Key Generation Method refers to how the key should be generated.
+The methods and descriptions are as follows:
+.Bl -tag -width indentxxxxxx
+.It pkcs5_pbkdf2
+This method requires a passphrase which is entered at configuration
+time.  It is a salted hmac-based scheme detailed in ``PKCS#5 v2.0:
+Password-Based Cryptography Standard'', RSA Laboratories, March
+25, 1999, pages 8-10.  PKCS #5 was also republished as RFC 2898.
+.It randomkey
+The method simply reads
+.Pa /dev/random
+and uses the resulting bits as the key.  It does not require a
+passphrase to be entered.  This method is typically used to present
+disk devices that do not need to survive a reboot, such as the swap
+partition.
+.El
+.Ss /etc/cgd/cgd.conf
+The file
+.Pa /etc/cgd/cgd.conf
+is used to configure
+.Nm
+if either of
+.Fl C
+or
+.Fl U
+are specified.  Each line of the file is composed of either two or three
+tokens: cgd, target, and optional paramsfile.
+.Pp
+A
+.Sq \&#
+character is interpreted as a comment and indicated that the
+rest of the line should be ignored.  A
+.Sq \e
+at the end of a line indicates that the next line is a continuation of
+the current line.
+.Pp
+See
+.Sx EXAMPLES
+for an example of
+.Pa /etc/cgd/cgd.conf .
+.Ss Parameters File
+The Parameters File contains the required information to generate the
+key and configure a device.  These files are typically generated by with
+the
+.Fl g
+flag and not edited by hand.  When a device is configured the default
+parameters file is constructed by taking the basename of the target disk
+and prepending
+.Pa /etc/cgd/
+to it.  E.g.: if the target is
+.Pa /dev/sd0h ,
+then the default parameters file will be
+.Pa /etc/cgd/sd0h .
+.Pp
+The parameters file contains a list of key-value pairs which are
+specified one per line.  Comments and line continuation work in the
+same way as for
+.Pa /etc/cgd/cgd.conf .
+.Pp
+The keys are as follows:
+.Bl -tag -width indentxxxxxxx
+.It algorithm
+The cryptographic algorithm.
+.It iv-method
+The IV generation method.
+.It keylength
+The length of the key.
+.It keygen_method
+The method used to generate the key.
+.It keygen_salt
+If the keygen_method requires a salt, then this is the salt.  It is
+base64 encoded.
+.It xor_key
+If this is present, then it will be XOR'ed with the generated key before
+the device is configured.  This can be used if the parameters file is
+stored on separate removable media, e.g. USB mass storage, to ensure that
+the generated key is immune to passphrase-guessing attacks.  It is not
+valuable unless the parameters file is stored on removable media.  It is
+base64 encoded.
+.El
+.Sh FILES
+.Bl -tag -width indentxxxxxxxxxxxxxxxxxx -compact
+.It Pa /etc/cgd/
+configuration directory, used to store paramsfiles.
+.It Pa /etc/cgd/cgd.conf
+cgd configuration file.
+.El
+.Sh EXAMPLES
+To set up and configure a cgd that uses AES with a 192 bit key
+in CBC mode with the IV Method "encblkno" (encrypted block number):
+.Bd -literal
+	# cgdconfig -g /etc/cgd/wd0e aes-cbc 192
+	# cgdconfig cgd0 /dev/wd0e
+	/dev/wd0e's passphrase:
+.Ed
+.Pp
+To configure a cgd that uses Blowfish with a 200 bit key that it
+reads from stdin:
+.Bd -literal
+	# cgdconfig -s cgd0 /dev/sd0h blowfish-cbc 200
+.Ed
+.Pp
+An example
+.Pa /etc/cgd/cgd.conf :
+.Bd -literal
+	#
+	# /etc/cgd/cgd.conf
+	# Configuration file for cryptographic disk devices
+	#
+
+	# cgd		target		[paramsfile]
+	cgd0		/dev/wd0e
+	cgd1		/dev/sd0h	/usr/local/etc/cgd/sd0h
+.Ed
+.Pp
+Note that this will store the parameters file as
+.Pa /etc/cgd/wd0e .
+And use the entered passphrase to generate the key.
+.Sh SEE ALSO
+.Xr cgd 4
+.Pp
+``PKCS #5 v2.0: Password-Based Cryptography Standard'', RSA Laboratories,
+March 25, 1999.
+.Sh HISTORY
+A
+.Nm
+utility appeared in
+.Nx 1.6.1 .
+.Sh BUGS
+Since
+.Nm
+uses
+.Xr getpass 3
+to read in the passphrase, it is limited to 128 characters.
