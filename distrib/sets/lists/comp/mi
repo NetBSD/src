@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.492 2002/10/14 02:11:09 takemura Exp $
+#	$NetBSD: mi,v 1.493 2002/10/14 05:00:01 gmcgarry Exp $
 ./sys				comp-sysutil-root
 ./usr/bin/addr2line		comp-debug-bin
 ./usr/bin/ar			comp-util-bin
@@ -3704,14 +3704,17 @@
 ./usr/share/man/cat9/vn_isunder.0		comp-sys-catman
 ./usr/share/man/cat9/vn_lock.0		comp-sys-catman
 ./usr/share/man/cat9/vn_markexec.0		comp-sys-catman
+./usr/share/man/cat9/vn_marktext.0		comp-sys-catman
 ./usr/share/man/cat9/vn_open.0		comp-sys-catman
 ./usr/share/man/cat9/vn_poll.0		comp-sys-catman
 ./usr/share/man/cat9/vn_read.0		comp-sys-catman
 ./usr/share/man/cat9/vn_restorerecurse.0		comp-sys-catman
 ./usr/share/man/cat9/vn_setrecurse.0		comp-sys-catman
 ./usr/share/man/cat9/vn_stat.0		comp-sys-catman
+./usr/share/man/cat9/vn_statfile.0		comp-sys-catman
 ./usr/share/man/cat9/vn_write.0		comp-sys-catman
 ./usr/share/man/cat9/vn_writechk.0		comp-sys-catman
+./usr/share/man/cat9/vnfileops.0		comp-sys-catman
 ./usr/share/man/cat9/vnode.0		comp-sys-catman
 ./usr/share/man/cat9/vnodeops.0		comp-sys-catman
 ./usr/share/man/cat9/vnsubr.0		comp-sys-catman
@@ -6440,14 +6443,17 @@
 ./usr/share/man/man9/vn_isunder.9		comp-sys-man
 ./usr/share/man/man9/vn_lock.9		comp-sys-man
 ./usr/share/man/man9/vn_markexec.9		comp-sys-man
+./usr/share/man/man9/vn_marktext.9		comp-sys-man
 ./usr/share/man/man9/vn_open.9		comp-sys-man
 ./usr/share/man/man9/vn_poll.9		comp-sys-man
 ./usr/share/man/man9/vn_read.9		comp-sys-man
 ./usr/share/man/man9/vn_restorerecurse.9		comp-sys-man
 ./usr/share/man/man9/vn_setrecurse.9		comp-sys-man
 ./usr/share/man/man9/vn_stat.9		comp-sys-man
+./usr/share/man/man9/vn_statfile.9		comp-sys-man
 ./usr/share/man/man9/vn_write.9		comp-sys-man
 ./usr/share/man/man9/vn_writechk.9		comp-sys-man
+./usr/share/man/man9/vnfileops.0		comp-sys-catman
 ./usr/share/man/man9/vnode.9		comp-sys-man
 ./usr/share/man/man9/vnodeops.9		comp-sys-man
 ./usr/share/man/man9/vnsubr.9		comp-sys-man
