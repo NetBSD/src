@@ -1,4 +1,4 @@
-# $NetBSD: ad.mips,v 1.20 2000/06/26 15:49:43 kleink Exp $
+# $NetBSD: ad.mips,v 1.21 2001/04/14 12:40:10 kleink Exp $
 ./usr/bin/elf2aout	comp-sysutil-bin
 ./usr/bin/elf2ecoff	comp-sysutil-bin
 ./usr/include/mips			comp-c-include
@@ -19,6 +19,7 @@
 ./usr/include/mips/float.h		comp-c-include
 ./usr/include/mips/ieee.h		comp-c-include
 ./usr/include/mips/ieeefp.h		comp-c-include
+./usr/include/mips/int_mwgwtypes.h		comp-c-include
 ./usr/include/mips/int_types.h		comp-c-include
 ./usr/include/mips/kcore.h		comp-c-include
 ./usr/include/mips/kdbparam.h		comp-c-include
