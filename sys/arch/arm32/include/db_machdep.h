@@ -1,4 +1,4 @@
-/*	$NetBSD: db_machdep.h,v 1.11 1998/11/25 13:58:49 mycroft Exp $	*/
+/*	$NetBSD: db_machdep.h,v 1.12 1999/01/20 13:56:35 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1996 Scott K Stevens
@@ -45,21 +45,18 @@
 typedef	vm_offset_t	db_addr_t;	/* address - unsigned */
 typedef	long		db_expr_t;	/* expression - signed */
 
-typedef struct {
-	trapframe_t	ddb_tf;
-} db_regs_t;
+typedef trapframe_t db_regs_t;
 
 db_regs_t		ddb_regs;	/* register state */
 #define	DDB_REGS	(&ddb_regs)
-#define	DDB_TF		(&ddb_regs.ddb_tf)
 
-#define	PC_REGS(regs)	((db_addr_t)(regs)->ddb_tf.tf_pc)
+#define	PC_REGS(regs)	((db_addr_t)(regs)->tf_pc)
 
 #define	BKPT_INST	(KERNEL_BREAKPOINT)	/* breakpoint instruction */
 #define	BKPT_SIZE	(INSN_SIZE)		/* size of breakpoint inst */
 #define	BKPT_SET(inst)	(BKPT_INST)
 
-/*#define FIXUP_PC_AFTER_BREAK(regs)	((regs)->ddb_tf.tf_pc -= BKPT_SIZE)*/
+/*#define FIXUP_PC_AFTER_BREAK(regs)	((regs)->tf_pc -= BKPT_SIZE)*/
 
 #define T_BREAKPOINT			(1)
 
@@ -98,6 +95,7 @@ db_regs_t		ddb_regs;	/* register state */
 #define SOFTWARE_SSTEP
 
 u_int branch_taken __P((u_int insn, u_int pc, db_regs_t *db_regs));
+int kdb_trap __P((int, db_regs_t *));
 
 /*
  * We use a.out symbols in DDB.

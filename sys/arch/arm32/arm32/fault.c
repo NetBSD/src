@@ -1,4 +1,4 @@
-/*	$NetBSD: fault.c,v 1.33 1998/09/22 01:40:28 mark Exp $	*/
+/*	$NetBSD: fault.c,v 1.34 1999/01/20 13:56:35 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1994-1997 Mark Brinicombe.
@@ -66,6 +66,9 @@
 #include <machine/cpu.h>
 #include <machine/pte.h>
 #include <machine/irqhandler.h>
+#ifdef DDB
+#include <machine/db_machdep.h>
+#endif
 
 #include <arm32/arm32/disassem.h>
 
@@ -174,11 +177,10 @@ data_abort_handler(frame)
 #ifdef DDB
 		printf("Fault with intr_depth > 0\n");
 		report_abort(NULL, fault_status, fault_address, fault_pc);
-		printf("Instruction @V%08x = %08x\n",
-		    fault_pc, fault_instruction);
-		Debugger();
+		kdb_trap(-1, frame);
+		return;
 #else
-		panic("Fault with intr_depth > 0\n");
+		panic("Fault with intr_depth > 0");
 #endif	/* DDB */
 	}
 #endif	/* DIAGNOSTIC */
@@ -329,8 +331,14 @@ copyfault:
 		 * Were are dead, try and provide some debug
 		 * infomation before dying
 		 */
-		panic("Halting (frame = %p)\n", frame);
-		break;
+#ifdef DDB
+		printf("Unhandled trap (frame = %p)\n", frame);
+		report_abort(NULL, fault_status, fault_address, fault_pc);
+		kdb_trap(-1, frame);
+		return;
+#else
+		panic("Unhandled trap (frame = %p)", frame);
+#endif	/* DDB */
           
 	case FAULT_PERM_S:		 /* Section Permission Fault */
 		/*
@@ -338,10 +346,9 @@ copyfault:
 		 * Only from user processes mis-behaving.
 		 * If this happens from SVC mode then we are in trouble.
 		 */
-		if (user == 0) {
-			report_abort(NULL, fault_status, fault_address, fault_pc);
-			panic("Halting (frame = %p)\n", frame);
-		}
+		if (user == 0)
+			goto we_re_toast;
+
 		report_abort("", fault_status, fault_address, fault_pc);
 		trapsignal(p, SIGSEGV, TRAP_CODE);
 		break;
@@ -403,9 +410,7 @@ copyfault:
 				return;
 			}
 
-			report_abort(NULL, fault_status, fault_address,
-			    fault_pc);
-			panic("permission fault in kernel by kernel\n");
+			goto we_re_toast;
 		} else
 			map = &vm->vm_map;
 
