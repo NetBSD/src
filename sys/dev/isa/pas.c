@@ -1,4 +1,4 @@
-/*	$NetBSD: pas.c,v 1.5 1995/04/17 12:07:23 cgd Exp $	*/
+/*	$NetBSD: pas.c,v 1.6 1995/04/17 15:48:24 cgd Exp $	*/
 
 /*
  * Copyright (c) 1991-1993 Regents of the University of California.
@@ -32,7 +32,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	$Id: pas.c,v 1.5 1995/04/17 12:07:23 cgd Exp $
+ *	$Id: pas.c,v 1.6 1995/04/17 15:48:24 cgd Exp $
  */
 /*
  * Todo:
@@ -56,13 +56,13 @@
 
 #include <dev/isa/isavar.h>
 #include <dev/isa/isadmavar.h>
-#include <i386/isa/icu.h>
+#include <i386/isa/icu.h>			/* XXX BROKEN; WHY? */
 
-#include <i386/isa/sbdspvar.h>
-#include <i386/isa/sbreg.h>
+#include <dev/isa/sbdspvar.h>
+#include <dev/isa/sbreg.h>
 
 #define DEFINE_TRANSLATIONS
-#include <i386/isa/pasreg.h>
+#include <dev/isa/pasreg.h>
 
 #define DEBUG	/*XXX*/
 #ifdef DEBUG
