@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.c,v 1.23 1998/01/18 22:07:51 ragge Exp $	*/
+/*	$NetBSD: locore.c,v 1.24 1998/05/03 12:59:57 ragge Exp $	*/
 /*
  * Copyright (c) 1994 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -40,13 +40,12 @@
 
 #include <vm/vm.h>
 
-#include <dev/cons.h>
-
 #include <machine/cpu.h>
 #include <machine/sid.h>
 #include <machine/param.h>
 #include <machine/vmparam.h>
 #include <machine/pcb.h>
+#include <machine/pte.h>
 #include <machine/pmap.h>
 #include <machine/nexus.h>
 
@@ -54,7 +53,6 @@ void	start __P((void));
 void	main __P((void));
 
 u_int	proc0paddr, esym;
-int	*Sysmap, bootdev;
 
 /* 
  * We set up some information about the machine we're
@@ -92,61 +90,12 @@ extern struct cpu_dep ka650_calls;
 void
 start()
 {
-	register __boothowto asm ("r11");
-	register __bootdev asm ("r10");
-	register __esym asm ("r9");
-	register __physmem asm ("r8");
 	extern vm_offset_t avail_end;
-	extern	u_int *end;
-	extern	char cpu_model[];
-	extern	void *scratch;
-	register tmpptr;
+	extern char cpu_model[];
+	extern void *scratch;
+	int tmpptr;
 
-	/*
-	 * We get parameters passed in registers from boot, put
-	 * them in memory to save.
-	 */
-	boothowto = __boothowto;
-	bootdev = __bootdev;
-	esym = __esym | 0x80000000;
-	avail_end = __physmem; /* Better to take from RPB, if available */
-
-	asm("pushl $0x001f0000;pushl $to;rei;to:movw $0xfff, _panic");
-
-	/*
-	 * FIRST we must set up kernel stack, directly after end.
-	 * This is the only thing we have to setup here, rest in pmap.
-	 */
-#ifdef DDB
-	if ((boothowto & RB_KDB) != 0)
-		proc0paddr = ROUND_PAGE(esym);
-	else
-#endif
-		proc0paddr = ROUND_PAGE(&end);
-
-	tmpptr = proc0paddr & 0x7fffffff;
-	mtpr(tmpptr, PR_PCBB); /* must be set before ksp for some cpus */
-	mtpr(proc0paddr + UPAGES * NBPG, PR_KSP); /* new kernel stack */
-
-	/*
-	 * Set logical page size and put Sysmap on its place.
-	 */
-	Sysmap = (u_int *)ROUND_PAGE(mfpr(PR_KSP));
-
-	/* Be sure some important internal registers have safe values */
-	((struct pcb *)proc0paddr)->P0LR = 0;
-	((struct pcb *)proc0paddr)->P0BR = (void *)0x80000000;
-	((struct pcb *)proc0paddr)->P1LR = 0;
-	((struct pcb *)proc0paddr)->P1BR = (void *)0x80000000;
-	((struct pcb *)proc0paddr)->iftrap = NULL;
-	mtpr(0, PR_P0LR);
-	mtpr(0x80000000, PR_P0BR);
-	mtpr(0, PR_P1LR);
-	mtpr(0x80000000, PR_P1BR);
-
-	mtpr(0, PR_SCBB); /* SCB at physical addr  */
-	mtpr(0, PR_ESP); /* Must be zero, used in page fault routine */
-	mtpr(AST_NO, PR_ASTLVL);
+	mtpr(AST_NO, PR_ASTLVL); /* Turn off ASTs */
 
 	/* Count up memory etc... early machine dependent routines */
 	vax_cputype = ((vax_cpudata = mfpr(PR_SID)) >> 24);
@@ -242,6 +191,8 @@ start()
 		/* CPU not supported, just give up */
 		asm("halt");
 	}
+
+	proc0.p_addr = (void *)proc0paddr; /* XXX */
 
 	pmap_bootstrap();
 

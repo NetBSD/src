@@ -1,4 +1,4 @@
-/*	$NetBSD: subr.s,v 1.23 1998/03/02 17:00:01 ragge Exp $	   */
+/*	$NetBSD: subr.s,v 1.24 1998/05/03 12:59:57 ragge Exp $	   */
 
 /*
  * Copyright (c) 1994 Ludd, University of Lule}, Sweden.
@@ -38,6 +38,51 @@
 #define JSBENTRY(x)	.globl x ; .align 2 ; x :
 
 		.text
+
+/*
+ * First entry routine from boot. This should be in a file called locore.
+ */
+ASENTRY(start, 0)
+	movl	r11,_boothowto			# Howto boot (single etc...)
+	movl	r10,_bootdev			# From where? (see rpb.h)
+	bisl3	$0x80000000,r9,_esym		# End of symbols (if loaded)
+	movl	r8,_avail_end			# Usable memory (from VMB)
+	pushl	$0x1f0000			# Push a nice PSL
+	pushl	$to				# Address to jump to
+	rei					# change to kernel stack
+to:	movw	$0xfff,_panic			# Save all regs in panic
+	bbc	$6,_boothowto,2f		# Check debugger bit
+	addl3	_esym,$0x3ff,r0			# Round symbol table end
+	bicl3	$0x3ff,r0,_proc0paddr		# save proc0 uarea pointer
+	brb	3f
+2:	bicl3	$0x3ff,$_end+0x3ff,_proc0paddr	# end of bss
+3:	bicl3	$0x80000000,_proc0paddr,r0	# get phys proc0 uarea addr
+	mtpr	r0,$PR_PCBB			# Save in IPR PCBB
+	addl3	$USPACE,_proc0paddr,r0		# Get kernel stack top
+	mtpr	r0,$PR_KSP			# put in IPR KSP
+	movl	r0,_Sysmap			# SPT start addr after KSP
+
+# Set some registers in known state
+	movl	_proc0paddr,r0
+	clrl	P0LR(r0)
+	clrl	P1LR(r0)
+	mtpr	$0,$PR_P0LR
+	mtpr	$0,$PR_P1LR
+	movl	$0x80000000,r1
+	movl	r1,P0BR(r0)
+	movl	r1,P1BR(r0)
+	mtpr	r1,$PR_P0BR
+	mtpr	r1,$PR_P1BR
+	clrl	IFTRAP(r0)
+	mtpr	$0,$PR_SCBB
+
+	calls	$0,_start			# Jump away.
+	/* NOTREACHED */
+
+
+/*
+ * Signal handler code.
+ */
 
 		.globl	_sigcode,_esigcode
 _sigcode:	pushr	$0x3f
@@ -365,7 +410,7 @@ ENTRY(fuswintr,0)
 
 _memtest:	.long 0 ; .globl _memtest	# Memory test in progress.
 pcbtrap:	.long 0x800001fc; .globl pcbtrap	# Safe place
-
+_bootdev:	.long 0; .globl _bootdev
 
 /*
  * Copy/zero more than 64k of memory (as opposite of bcopy/bzero).

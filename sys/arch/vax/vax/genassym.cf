@@ -1,4 +1,4 @@
-#	$NetBSD: genassym.cf,v 1.4 1998/01/31 12:17:37 ragge Exp $
+#	$NetBSD: genassym.cf,v 1.5 1998/05/03 12:59:57 ragge Exp $
 #
 # Copyright (c) 1997 Ludd, University of Lule}, Sweden.
 # All rights reserved.
@@ -48,12 +48,17 @@ define	P_PRIORITY	offsetof(struct proc, p_priority)
 define	P_ADDR		offsetof(struct proc, p_addr)
 define	P_VMSPACE	offsetof(struct proc, p_vmspace)
 
+define	P0BR		offsetof(struct pcb, P0BR)
+define	P0LR		offsetof(struct pcb, P0LR)
+define	P1BR		offsetof(struct pcb, P1BR)
+define	P1LR		offsetof(struct pcb, P1LR)
 define	IFTRAP		offsetof(struct pcb, iftrap)
 
 define	MCHK		offsetof(struct cpu_dep, cpu_mchk)
 define	MEMERR		offsetof(struct cpu_dep, cpu_memerr)
 
 # mtpr register numbers
+define	PR_KSP		PR_KSP
 define	PR_USP		PR_USP
 define	PR_ICCS		PR_ICCS
 define	PR_PCBB		PR_PCBB
@@ -63,6 +68,9 @@ define	PR_EHSR		PR_EHSR
 define	PR_MCESR	PR_MCESR
 define	PR_P0BR		PR_P0BR
 define	PR_P1BR		PR_P1BR
+define	PR_P0LR		PR_P0LR
+define	PR_P1LR		PR_P1LR
+define	PR_SCBB		PR_SCBB
 
 # trap numbering
 define	T_KSPNOTVAL	T_KSPNOTVAL
