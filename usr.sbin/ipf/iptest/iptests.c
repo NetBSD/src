@@ -1,3 +1,5 @@
+/*	$NetBSD: iptests.c,v 1.3 1997/05/27 23:13:17 thorpej Exp $	*/
+
 /*
  * (C)opyright 1993, 1994, 1995 by Darren Reed.
  *
@@ -27,6 +29,9 @@ static	char	sccsid[] = "%W% %G% (C)1995 Darren Reed";
 #endif
 #include <kvm.h>
 #include <sys/socket.h>
+#if defined(solaris)
+# include <sys/stream.h>
+#endif
 #include <sys/socketvar.h>
 #ifdef sun
 #include <sys/systm.h>
@@ -56,23 +61,15 @@ static	char	sccsid[] = "%W% %G% (C)1995 Darren Reed";
 #include <netinet/in_pcb.h>
 #include <netinet/tcp_timer.h>
 #include <netinet/tcp_var.h>
-#include "ip_compat.h"
-#ifdef linux
-#include "tcpip.h"
-#else
-#include <netinet/tcpip.h>
 # if defined(__SVR4) || defined(__svr4__)
 #include <sys/sysmacros.h>
 # endif
-#endif
+#include "ipsend.h"
+
 
 #define	PAUSE()	tv.tv_sec = 0; tv.tv_usec = 10000; \
 		  (void) select(0, NULL, NULL, NULL, &tv)
 
-extern	int	send_ip(), send_tcp(), send_udp(), send_icmp(), send_ether();
-extern	int	initdevice(), kmemcpy();
-extern	u_short	chksum();
-extern	struct	tcpcb	*find_tcp();
 
 void	ip_test1(dev, mtu, ip, gwip, ptest)
 char	*dev;
@@ -182,8 +179,8 @@ int	ptest;
 		for (; i < (ntohs(ip->ip_len) * 2); i++) {
 			ip->ip_id = htons(id++);
 			ip->ip_sum = 0;
-			ip->ip_sum = chksum(ip, ip->ip_hl << 2);
-			(void) send_ether(nfd, ip, i, gwip);
+			ip->ip_sum = chksum((u_short *)ip, ip->ip_hl << 2);
+			(void) send_ether(nfd, (char *)ip, i, gwip);
 			printf("%d\r", i);
 			fflush(stdout);
 			PAUSE();
@@ -194,8 +191,8 @@ int	ptest;
 			ip->ip_id = htons(id++);
 			ip->ip_len = htons(i);
 			ip->ip_sum = 0;
-			ip->ip_sum = chksum(ip, ip->ip_hl << 2);
-			(void) send_ether(nfd, ip, len, gwip);
+			ip->ip_sum = chksum((u_short *)ip, ip->ip_hl << 2);
+			(void) send_ether(nfd, (char *)ip, len, gwip);
 			printf("%d\r", i);
 			fflush(stdout);
 			PAUSE();
@@ -213,8 +210,8 @@ int	ptest;
 			ip->ip_id = htons(id++);
 			ip->ip_len = htons(i);
 			ip->ip_sum = 0;
-			ip->ip_sum = chksum(ip, ip->ip_hl << 2);
-			(void) send_ether(nfd, ip, len, gwip);
+			ip->ip_sum = chksum((u_short *)ip, ip->ip_hl << 2);
+			(void) send_ether(nfd, (char *)ip, len, gwip);
 			printf("%d\r", i);
 			fflush(stdout);
 			PAUSE();
@@ -225,8 +222,8 @@ int	ptest;
 		for (i = len; i > 0; i--) {
 			ip->ip_id = htons(id++);
 			ip->ip_sum = 0;
-			ip->ip_sum = chksum(ip, ip->ip_hl << 2);
-			(void) send_ether(nfd, ip, i, gwip);
+			ip->ip_sum = chksum((u_short *)ip, ip->ip_hl << 2);
+			(void) send_ether(nfd, (char *)ip, i, gwip);
 			printf("%d\r", i);
 			fflush(stdout);
 			PAUSE();
@@ -1047,7 +1044,7 @@ int	ptest;
 		printf("Can't find PCB\n");
 		goto skip_five_and_six;
 	}
-	kmemcpy((char*)&tcb, (void *)t, sizeof(tcb));
+	KMCPY(&tcb, t, sizeof(tcb));
 	ti.ti_win = tcb.rcv_adv;
 	ti.ti_seq = tcb.snd_nxt - 1;
 	ti.ti_ack = tcb.rcv_nxt;

@@ -1,4 +1,4 @@
-/*	$NetBSD: ipmon.c,v 1.4 1997/05/25 12:05:16 darrenr Exp $	*/
+/*	$NetBSD: ipmon.c,v 1.5 1997/05/27 22:53:48 thorpej Exp $	*/
 
 /*
  * (C)opyright 1993-1996 by Darren Reed.
@@ -51,13 +51,13 @@
 
 #include <netinet/ip_compat.h>
 #include <netinet/ip_fil.h>
-#include "ip_proxy.h"
+#include <netinet/ip_proxy.h>
 #include <netinet/ip_nat.h>
 #include <netinet/ip_state.h>
 
 #if !defined(lint) && defined(LIBC_SCCS)
 static	char	sccsid[] = "@(#)ipmon.c	1.21 6/5/96 (C)1993-1996 Darren Reed";
-static	char	rcsid[] = "$Id: ipmon.c,v 1.4 1997/05/25 12:05:16 darrenr Exp $";
+static	char	rcsid[] = "Id: ipmon.c,v 2.0.2.9 1997/04/30 13:54:10 darrenr Exp ";
 #endif
 
 
