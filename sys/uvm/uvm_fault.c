@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_fault.c,v 1.76.4.2 2002/11/30 14:09:06 he Exp $	*/
+/*	$NetBSD: uvm_fault.c,v 1.76.4.3 2002/12/10 07:14:41 jmc Exp $	*/
 
 /*
  *
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_fault.c,v 1.76.4.2 2002/11/30 14:09:06 he Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_fault.c,v 1.76.4.3 2002/12/10 07:14:41 jmc Exp $");
 
 #include "opt_uvmhist.h"
 
@@ -535,7 +535,8 @@ uvm_fault(orig_map, vaddr, fault_type, access_type)
 	vm_prot_t enter_prot, check_prot;
 	boolean_t wired, narrow, promote, locked, shadowed, wire_fault, cow_now;
 	int npages, nback, nforw, centeridx, error, lcv, gotpages;
-	vaddr_t startva, objaddr, currva, offset, uoff;
+	vaddr_t startva, objaddr, currva, offset;
+	voff_t uoff;
 	paddr_t pa;
 	struct vm_amap *amap;
 	struct uvm_object *uobj;
