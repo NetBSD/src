@@ -1,4 +1,4 @@
-.\"	$NetBSD: options.4,v 1.182 2002/10/16 19:33:45 jdc Exp $
+.\"	$NetBSD: options.4,v 1.183 2002/10/16 19:48:33 jdc Exp $
 .\"
 .\" Copyright (c) 1996
 .\" 	Perry E. Metzger.  All rights reserved.
@@ -198,9 +198,9 @@ compatibility with Linux ELF and
 .Xr a.out 5
 applications built for the same architecture.
 This currently includes the alpha, i386, powerpc, and m68k
-ports. There is also a minimal support for running Linux
-binaries on Mips ports, but it is experimental at
-the moment.
+ports.
+There is also a minimal support for running Linux binaries on Mips
+ports, but it is experimental at the moment.
 .It Cd options COMPAT_SUNOS
 On those architectures that support it, this enables binary
 compatibility with
@@ -400,7 +400,8 @@ which may decrease system performance.
 .It Cd options DIAGNOSTIC
 Adds code to the kernel that does internal consistency checks.
 This code will cause the kernel to panic if corruption of internal data
-structures is detected. These checks can decrease performance up to 15%.
+structures is detected.
+These checks can decrease performance up to 15%.
 .It Cd options KSTACK_CHECK_MAGIC
 Check kernel stack usage and panic if stack overflow is detected.
 This check is performance sensitive because it scans stack on each context
@@ -445,7 +446,8 @@ See
 for details.
 .It Cd options UVMHIST
 Enables the UVM history logs, which create in-memory traces of
-various UVM activities. These logs can be displayed be calling
+various UVM activities.
+These logs can be displayed be calling
 .Fn uvmhist_dump
 or
 .Fn uvm_hist
@@ -471,8 +473,9 @@ Includes code implementing the Second Extended File System
 .Em filetype
 and
 .Em sparse_super
-options.  This is the most commonly used file system on the Linux operating
-system, and is provided here for compatibility.
+options.
+This is the most commonly used file system on the Linux operating system,
+and is provided here for compatibility.
 Some of the specific features of
 .Em EXT2FS
 like the "behavior on errors" are not implemented.
@@ -588,9 +591,10 @@ for details.
 .It Cd file-system OVERLAY
 Includes code for a file system filter.
 This permits the overlay file system to intercept all access to an underlying
-file system. This file system is intended to serve as an example of
-a stacking file system which has a need to interpose itself between an
-underlying file system and all other access.
+file system.
+This file system is intended to serve as an example of a stacking file
+system which has a need to interpose itself between an underlying file
+system and all other access.
 See
 .Xr mount_overlay 8
 for details.
@@ -639,16 +643,17 @@ for details.
 .It Cd file-system CODA
 .Em [EXPERIMENTAL]
 Includes code for the Coda file system.
-Coda is a distributed file system like NFS and AFS.  It is
-freely available, like NFS, but it functions much like AFS in being a
+Coda is a distributed file system like NFS and AFS.
+It is freely available, like NFS, but it functions much like AFS in being a
 .Dq stateful
-file system.  Both Coda and AFS cache files on your local
-machine to improve performance.  Then Coda goes a step further than AFS
-by letting you access the cached files when there is no available
-network, viz. disconnected laptops and network outages.  In Coda, both
-the client and server are outside the kernel which makes them easier
-to experiment with.  Coda is available for several UNIX and non-UNIX
-platforms.
+file system.
+Both Coda and AFS cache files on your local machine to improve performance.
+Then Coda goes a step further than AFS by letting you access the cached
+files when there is no available network, viz. disconnected laptops and
+network outages.
+In Coda, both the client and server are outside the kernel which makes
+them easier to experiment with.
+Coda is available for several UNIX and non-UNIX platforms.
 See http://www.coda.cs.cmu.edu for more details.
 NOTE: You also need to enable the pseudo-device, vcoda, for the Coda
 filesystem to work.
@@ -711,12 +716,14 @@ your system does not benefit substantially from an increase in the size of
 the namei cache.
 .It Cd options NAMECACHE_ENTER_REVERSE
 Causes the namei cache to always enter a reverse mapping (vnode -\*[Gt] name)
-as well as a normal one. Normally, this is already done for directory
-vnodes, to speed up the getcwd operation. This option will cause
-longer hash chains in the reverse cache, and thus slow down
-getcwd somewhat. However, it does make vnode -\*[Gt] path translations
-possible in some cases. For now, only useful if strict /proc/#/maps
-emulation for Linux binaries is required.
+as well as a normal one.
+Normally, this is already done for directory vnodes, to speed up the getcwd
+operation.
+This option will cause longer hash chains in the reverse cache, and thus
+slow down getcwd somewhat.
+However, it does make vnode -\*[Gt] path translations possible in some cases.
+For now, only useful if strict /proc/#/maps emulation for Linux binaries is
+required.
 .It Cd options EXT2FS_SYSTEM_FLAGS
 This option changes the behavior of the APPEND and IMMUTABLE flags
 for a file on an
@@ -751,10 +758,12 @@ See
 for details.
 .It Cd options NFS_BOOT_RWSIZE=value
 Set the initial NFS read and write sizes for diskless-boot requests.
-The normal default is 8Kbytes.  This option provides a way to lower
-the value (e.g., to 1024 bytes) as a workaround for buggy network
-interface cards or boot proms. Once booted, the read and write request
-sizes can be increased by remounting the filesystem. See
+The normal default is 8Kbytes.
+This option provides a way to lower the value (e.g., to 1024 bytes)
+as a workaround for buggy network interface cards or boot proms.
+Once booted, the read and write request sizes can be increased by
+remounting the filesystem.
+See
 .Xr mount_nfs 8
 for details.
 .It Cd options NFS_V2_ONLY
@@ -830,8 +839,8 @@ disk, to be populated with
 Do not inline the
 .Fn VOP_*
 calls in the kernel.
-On i386 GENERIC, this saves 36k of kernel text.  Useful
-for install media kernels, small memory systems and embedded systems.
+On i386 GENERIC, this saves 36k of kernel text.
+Useful for install media kernels, small memory systems and embedded systems.
 .It Cd options MALLOC_NOINLINE
 Time critical fixed size memory allocation is performed with
 .Fn MALLOC
@@ -848,7 +857,8 @@ Useful for install media kernels, small memory systems and embedded systems.
 .It Cd options HZ=integer
 On ports that support it, set the system clock frequency (see
 .Xr hz 9 )
-to the supplied value. Handle with care.
+to the supplied value.
+Handle with care.
 .It Cd options NTP
 Turns on in-kernel precision timekeeping support used by software
 implementing
@@ -935,8 +945,8 @@ is run by the interpreter, as it is passed as an already open file.
 .It Cd options PUCCN
 Enables treating serial ports found on PCI boards
 .Xr puc 4
-as potential console devices.  The method for choosing such a console
-device is port dependent.
+as potential console devices.
+The method for choosing such a console device is port dependent.
 .It Cd options RTC_OFFSET=integer
 The kernel (and typically the hardware battery backed-up clock on
 those machines that have one) keeps time in
@@ -990,7 +1000,8 @@ to let
 coexist with such an operating system, like Windows,
 would necessitate changing
 .Em RTC_OFFSET
-twice a year. As such, this solution is imperfect.
+twice a year.
+As such, this solution is imperfect.
 .It Cd options KMEMSTATS
 The kernel memory allocator,
 .Xr malloc 9 ,
@@ -1055,8 +1066,9 @@ only available on architectures that use
 for console output.
 .It Cd options INCLUDE_CONFIG_FILE
 Embeds the kernel config file used to define the kernel in the kernel
-binary itself.  The embedded data also includes any files directly
-included by the config file itself, e.g.
+binary itself.
+The embedded data also includes any files directly included by the config
+file itself, e.g.
 .Pa GENERIC.local
 or
 .Pa std.$MACHINE .
@@ -1070,10 +1082,11 @@ Similar to the above option, but includes just the actual config file,
 not any included files.
 .It Cd options PIPE_SOCKETPAIR
 Use slower, but smaller socketpair(2)-based pipe implementation instead
-of default faster, but bigger one. Primarily useful for installation
-kernels.
+of default faster, but bigger one.
+Primarily useful for installation kernels.
 .It Cd options USERCONF
-Compiles in the in-kernel device configuration manager.  See
+Compiles in the in-kernel device configuration manager.
+See
 .Xr userconf 4
 for details.
 .It Cd options PERFCTRS
@@ -1111,9 +1124,11 @@ option also compiles IPv4 fast forwarding code into the kernel.
 .It Cd options IPFORWARDING=value
 If
 .Em value
-is 1 this enables IP routing behavior. If
+is 1 this enables IP routing behavior.
+If
 .Em value
-is 0 (the default), it disables it. The
+is 0 (the default), it disables it.
+The
 .Em GATEWAY
 option sets this to 1 automatically.
 With this option enabled, the machine will forward IP datagrams destined
@@ -1258,14 +1273,16 @@ This option assumes
 Sets default value for net.inet.ip.subnetsarelocal variable, which
 controls whether non-directly-connected subnets of connected networks
 are considered "local" for purposes of choosing the MSS for a TCP
-connection.  This is mostly present for historic reasons and
-completely irrelevant if you enable Path MTU discovery.
+connection.
+This is mostly present for historic reasons and completely irrelevant if
+you enable Path MTU discovery.
 .It Cd options HOSTZEROBROADCAST
 Sets default value for net.inet.ip.hostzerobroadcast variable, which
 controls whether the zeroth host address of each connected subnet is
-also considered a broadcast address.  Default value is "1", for
-compatibility with old systems; if this is set to zero on all hosts on
-a subnet, you should be able to fit an extra host per subnet on the
+also considered a broadcast address.
+Default value is "1", for compatibility with old systems; if this is
+set to zero on all hosts on a subnet, you should be able to fit an extra
+host per subnet on the
 ".0" address.
 .It Cd options MCLSHIFT=value
 This option is the base-2 logarithm of the size of mbuf clusters.
@@ -1414,23 +1431,23 @@ See
 .It Cd options SEMMNI=value
 Sets the number of
 .At V
-style semaphore identifiers.  The GENERIC config file for your port
-will have the default.
+style semaphore identifiers.
+The GENERIC config file for your port will have the default.
 .It Cd options SEMMNS=value
 Sets the number of
 .At V
-style semaphores in the system.  The GENERIC config file for your port
-will have the default.
+style semaphores in the system.
+The GENERIC config file for your port will have the default.
 .It Cd options SEMUME=value
 Sets the maximum number of undo entries per process for
 .At V
-style semaphores.  The GENERIC config file for your port
-will have the default.
+style semaphores.
+The GENERIC config file for your port will have the default.
 .It Cd options SEMMNU=value
 Sets the number of undo structures in the system for
 .At V
-style semaphores.  The GENERIC config file for your port
-will have the default.
+style semaphores.
+The GENERIC config file for your port will have the default.
 .It Cd options SYSVSHM
 Includes support for
 .At V
@@ -1454,9 +1471,9 @@ for the default.
 .Ss VM Related Options
 .Bl -ohang
 .It Cd options NMBCLUSTERS=value
-The number of mbuf clusters the kernel supports.  Mbuf clusters are
-MCLBYTES in size (usually 2k).  This is used to compute the size of
-the kernel VM map
+The number of mbuf clusters the kernel supports.
+Mbuf clusters are MCLBYTES in size (usually 2k).
+This is used to compute the size of the kernel VM map
 .Em mb_map ,
 which maps mbuf clusters.
 Default on most ports is 1024 (2048 with
@@ -1481,8 +1498,9 @@ variable
 ).
 This VM map is used to map the kernel malloc arena.
 The kernel attempts to auto-size this map based on the amount of
-physical memory in the system.  Platform-specific code may place
-bounds on this computed size, which may be viewed with the
+physical memory in the system.
+Platform-specific code may place bounds on this computed size,
+which may be viewed with the
 .Xr sysctl 8
 variable
 .Em vm.nkmempages .
@@ -1509,7 +1527,8 @@ Their default value is a machine dependent value, often calculated as
 between 5% and 10% of total available
 .Tn RAM .
 .It Cd options MAXTSIZ=bytes
-Sets the maximum size limit of a process' text segment. See
+Sets the maximum size limit of a process' text segment.
+See
 .Pa /usr/include/machine/vmparam.h
 for the port-specific default.
 .It Cd options DFLDSIZ=bytes
@@ -1567,7 +1586,8 @@ up to (at least) V40.xxx (OS3.1),
 when you boot via the bootblocks and don't have a DraCo.
 .It Cd options IOBZCLOCK=frequency
 The IOBlix boards come with two different serial master clocks: older ones
-use 24 MHz, newer ones use 22.1184 MHz. The driver normally assumes the latter.
+use 24 MHz, newer ones use 22.1184 MHz.
+The driver normally assumes the latter.
 If your board uses 24 MHz, you can recompile your kernel with
 options IOBZCLOCK=24000000
 or patch the kernel variable
@@ -1609,8 +1629,8 @@ When you get "can't get KPT page" panics, you should increase
 .Dv NKPTADDSHIFT
 by one.
 .It Cd options P5PPC68KBOARD
-Add special support for Phase5 mixed 68k+PPC boards. Currently, this only
-affects rebooting from
+Add special support for Phase5 mixed 68k+PPC boards.
+Currently, this only affects rebooting from
 .Nx
 and is only needed on 68040+PPC, not on
 68060+PPC; without this, affected machines will hang after
@@ -1686,9 +1706,11 @@ class will result in the best performance.
 At least one of these options must be present.
 .It Cd options CPURESET_DELAY=value
 specifies the time (in millisecond) to wait before doing a hardware reset
-in the last phase of a reboot. This gives the user a chance to see error
-messages from the shutdown operations (like NFS unmounts, buffer cache flush,
-etc ...). Setting this to 0 will disable the delay. Default is 2 seconds.
+in the last phase of a reboot.
+This gives the user a chance to see error messages from the shutdown
+operations (like NFS unmounts, buffer cache flush, etc ...).
+Setting this to 0 will disable the delay.
+Default is 2 seconds.
 .It Cd options MATH_EMULATE
 Include the floating point emulator.
 This is useful only for
@@ -1719,21 +1741,24 @@ This is correct behavior, and you should not use the
 option to access this memory).
 .It Cd options REALEXTMEM=integer
 Overrides the extended memory size passed in from the boot block.
-(Value given in kilobytes. Extended memory does not include the first megabyte.)
+(Value given in kilobytes.
+Extended memory does not include the first megabyte.)
 Use this option only if the boot block reports the size incorrectly.
 .It Cd options FRENCH_KBD,FINNISH_KBD,GERMAN_KBD,NORWEGIAN_KBD
 Select a non-US keyboard layout for the
 .Em pccons
 console driver.
 .It Cd options CYRIX_CACHE_WORKS
-Relevant only to the Cyrix 486DLC cpu. This option is used to turn on
-the cache in hold-flush mode. It is not turned on by default because it
-is known to have problems in certain motherboard implementations.
+Relevant only to the Cyrix 486DLC cpu.
+This option is used to turn on the cache in hold-flush mode.
+It is not turned on by default because it is known to have problems in
+certain motherboard implementations.
 .It Cd options CYRIX_CACHE_REALLY_WORKS
-Relevant only to the Cyrix 486DLC cpu. This option is used to turn on
-the cache in write-back mode. It is not turned on by default because it
-is known to have problems in certain motherboard implementations. In order
-for this option to take effect, option
+Relevant only to the Cyrix 486DLC cpu.
+This option is used to turn on the cache in write-back mode.
+It is not turned on by default because it is known to have problems in
+certain motherboard implementations.
+In order for this option to take effect, option
 .Em CYRIX_CACHE_WORKS
 must also be specified.
 .It Cd options PCIBIOS
@@ -1745,9 +1770,9 @@ See
 .Xr pcibios 4
 for details.
 .It Cd options KSTACK_CHECK_DR0
-Detect kernel stack overflow using DR0 register. This option uses DR0
-register exclusively so you can't use DR0 register for other purpose (e.g.
-hardware breakpoint) if you turn this on.
+Detect kernel stack overflow using DR0 register.
+This option uses DR0 register exclusively so you can't use DR0 register for
+other purpose (e.g.  hardware breakpoint) if you turn this on.
 .El
 .Ss isa-specific Options
 Options specific to
@@ -1757,14 +1782,15 @@ busses.
 .It Cd options PCIC_ISA_ALLOC_IOBASE=address, PCIC_ISA_ALLOC_IOSIZE=size
 Control the section of IO bus space used for PCMCIA bus space mapping.
 Ideally the probed defaults are satisfactory, however in practice
-that is not always the case. See
+that is not always the case.
+See
 .Xr pcmcia 4
 for details.
 .It Cd options PCIC_ISA_INTR_ALLOC_MASK=mask
 Controls the allowable interrupts that may be used for
 .Tn PCMCIA
-devices. This mask is a logical-or of power-of-2s of allowable
-interrupts:
+devices.
+This mask is a logical-or of power-of-2s of allowable interrupts:
 .Bd -literal -offset 04n
 .Em "IRQ Val      IRQ Val      IRQ Val       IRQ Val"
  0  0x0001    4  0x0010    8  0x0100    12  0x1000
@@ -1796,8 +1822,10 @@ Enable simple event debugging of the logging of the
 .Xr audio 4
 device.
 .It Cd options BLINK
-Enable blinking of LED.  Blink rate is full cycle every N seconds for
-N \*[Lt] then current load average.  See
+Enable blinking of LED.
+Blink rate is full cycle every N seconds for
+N \*[Lt] then current load average.
+See
 .Xr getloadavg 3 .
 .\" .It Cd options COLORFONT_CACHE
 .\" this is totally fucked up.. what does this do?
@@ -1816,11 +1844,13 @@ Adds debugging messages calls for emulated floating point and
 alignment fixing operations.
 .It Cd options DEBUG_SVR4
 Prints registers messages calls for emulated SVR4 getcontext and
-setcontext operations.  See
+setcontext operations.
+See
 .Em options COMPAT_SVR4 .
 .It Cd options EXTREME_DEBUG
 Adds debugging functions callable from
-.Xr ddb 4 .  The debug_pagetables, test_region and print_fe_map
+.Xr ddb 4 .
+The debug_pagetables, test_region and print_fe_map
 functions print information about page tables for the SUN4M
 platforms only.
 .It Cd options EXTREME_EXTREME_DEBUG
@@ -1858,8 +1888,10 @@ Enable simple event debugging of the logging of the
 .Xr audio 4
 device.
 .It Cd options BLINK
-Enable blinking of LED.  Blink rate is full cycle every N seconds for
-N \*[Lt] then current load average.  See
+Enable blinking of LED.
+Blink rate is full cycle every N seconds for
+N \*[Lt] then current load average.
+See
 .Xr getloadavg 3 .
 .El
 .Ss sun-specific Options
