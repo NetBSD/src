@@ -315,11 +315,13 @@
 ./usr/share/man/cat4/ipl.0
 ./usr/share/man/cat4/ipnat.0
 ./usr/share/man/cat4/isa.0
+./usr/share/man/cat4/isapnp.0
 ./usr/share/man/cat4/iso.0
 ./usr/share/man/cat4/iy.0
 ./usr/share/man/cat4/lkm.0
 ./usr/share/man/cat4/lo.0
 ./usr/share/man/cat4/mcd.0
+./usr/share/man/cat4/md.0
 ./usr/share/man/cat4/ncr.0
 ./usr/share/man/cat4/netintro.0
 ./usr/share/man/cat4/networking.0
@@ -550,6 +552,7 @@
 ./usr/share/man/cat8/named.0
 ./usr/share/man/cat8/named.reload.0
 ./usr/share/man/cat8/named.restart.0
+./usr/share/man/cat2/nanosleep.0
 ./usr/share/man/cat8/ndc.0
 ./usr/share/man/cat8/netgroup_mkdb.0
 ./usr/share/man/cat8/newfs.0
@@ -560,6 +563,9 @@
 ./usr/share/man/cat8/nfsiod.0
 ./usr/share/man/cat8/nologin.0
 ./usr/share/man/cat8/nslookup.0
+./usr/share/man/cat8/ntpdate.0
+./usr/share/man/cat8/ntpq.0
+./usr/share/man/cat8/ntptrace.0
 ./usr/share/man/cat8/pac.0
 ./usr/share/man/cat8/pcnfsd.0
 ./usr/share/man/cat8/ping.0
@@ -648,6 +654,8 @@
 ./usr/share/man/cat8/vipw.0
 ./usr/share/man/cat8/vmstat.0
 ./usr/share/man/cat8/vnconfig.0
+./usr/share/man/cat8/xntpd.0
+./usr/share/man/cat8/xntpdc.0
 ./usr/share/man/cat8/yp.0
 ./usr/share/man/cat8/ypbind.0
 ./usr/share/man/cat8/ypinit.0

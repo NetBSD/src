@@ -73,6 +73,7 @@
 ./var/cron/log
 ./var/cron/tabs/root
 ./var/db/locate.database
+./var/log/authlog
 ./var/log/lastlog
 ./var/log/lpd-errs
 ./var/log/maillog
@@ -80,6 +81,7 @@
 ./var/log/secure
 ./var/log/sendmail.st
 ./var/log/wtmp
+./var/log/xferlog
 ./var/msgs/bounds
 ./var/run/utmp
 ./var/yp/Makefile.main
