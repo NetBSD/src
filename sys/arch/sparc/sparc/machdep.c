@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.158 1999/12/04 21:21:29 ragge Exp $ */
+/*	$NetBSD: machdep.c,v 1.159 1999/12/15 08:03:43 garbled Exp $ */
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -137,6 +137,7 @@
 #include <sparc/dev/power.h>
 #endif
 #if NTCTRL > 0
+#include <machine/tctrl.h>
 #include <sparc/dev/tctrlvar.h>
 #endif
 
