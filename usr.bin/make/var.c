@@ -1,4 +1,4 @@
-/*	$NetBSD: var.c,v 1.21 1997/07/10 00:54:44 christos Exp $	*/
+/*	$NetBSD: var.c,v 1.22 1997/09/22 17:11:12 christos Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -43,7 +43,7 @@
 #if 0
 static char sccsid[] = "@(#)var.c	8.3 (Berkeley) 3/19/94";
 #else
-__RCSID("$NetBSD: var.c,v 1.21 1997/07/10 00:54:44 christos Exp $");
+__RCSID("$NetBSD: var.c,v 1.22 1997/09/22 17:11:12 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -1442,6 +1442,7 @@ Var_Parse (str, ctxt, err, lengthPtr, freePtr)
 				 * or braces */
     int             cnt;	/* Used to count brace pairs when variable in
 				 * in parens or braces */
+    int		    vlen;	/* Length of variable name */
     char    	    *start;
     char	     delim;
     Boolean 	    dynamic;	/* TRUE if the variable is local and we're
@@ -1499,8 +1500,11 @@ Var_Parse (str, ctxt, err, lengthPtr, freePtr)
 	    endc = str[1];
 	}
     } else {
+	Buffer buf;	/* Holds the variable name */
+
 	startc = str[1];
 	endc = startc == '(' ? ')' : '}';
+	buf = Buf_Init (MAKE_BSIZE);
 
 	/*
 	 * Skip to the end character or a colon, whichever comes first.
@@ -1509,7 +1513,22 @@ Var_Parse (str, ctxt, err, lengthPtr, freePtr)
 	     *tstr != '\0' && *tstr != endc && *tstr != ':';
 	     tstr++)
 	{
-	    continue;
+	    /*
+	     * A variable inside a variable, expand
+	     */
+	    if (*tstr == '$') {
+		int rlen;
+		Boolean rfree;
+		char *rval = Var_Parse(tstr, ctxt, err, &rlen, &rfree);
+		if (rval != NULL) {
+		    Buf_AddBytes(buf, strlen(rval), (Byte *) rval);
+		    if (rfree)
+			free(rval);
+		}
+		tstr += rlen - 1;
+	    }
+	    else
+		Buf_AddByte(buf, (Byte) *tstr);
 	}
 	if (*tstr == ':') {
 	    haveModifier = TRUE;
@@ -1525,16 +1544,19 @@ Var_Parse (str, ctxt, err, lengthPtr, freePtr)
 	    return (var_Error);
 	}
 	*tstr = '\0';
+	Buf_AddByte(buf, (Byte) '\0');
+	str = Buf_GetAll(buf, (int *) NULL);
+	vlen = strlen(str);
 
-	v = VarFind (str + 2, ctxt, FIND_ENV | FIND_GLOBAL | FIND_CMD);
+	v = VarFind (str, ctxt, FIND_ENV | FIND_GLOBAL | FIND_CMD);
 	if ((v == (Var *)NIL) && (ctxt != VAR_CMD) && (ctxt != VAR_GLOBAL) &&
-	    ((tstr-str) == 4) && (str[3] == 'F' || str[3] == 'D'))
+	    (vlen == 2) && (str[1] == 'F' || str[1] == 'D'))
 	{
 	    /*
 	     * Check for bogus D and F forms of local variables since we're
 	     * in a local context and the name is the right length.
 	     */
-	    switch(str[2]) {
+	    switch(*str) {
 		case '@':
 		case '%':
 		case '*':
@@ -1548,7 +1570,7 @@ Var_Parse (str, ctxt, err, lengthPtr, freePtr)
 		    /*
 		     * Well, it's local -- go look for it.
 		     */
-		    vname[0] = str[2];
+		    vname[0] = *str;
 		    vname[1] = '\0';
 		    v = VarFind(vname, ctxt, 0);
 
@@ -1560,7 +1582,7 @@ Var_Parse (str, ctxt, err, lengthPtr, freePtr)
 			 */
 			val = (char *)Buf_GetAll(v->val, (int *)NULL);
 
-			if (str[3] == 'D') {
+			if (str[1] == 'D') {
 			    val = VarModify(val, VarHead, (ClientData)0);
 			} else {
 			    val = VarModify(val, VarTail, (ClientData)0);
@@ -1572,6 +1594,7 @@ Var_Parse (str, ctxt, err, lengthPtr, freePtr)
 			*freePtr = TRUE;
 			*lengthPtr = tstr-start+1;
 			*tstr = endc;
+			Buf_Destroy (buf, TRUE);
 			return(val);
 		    }
 		    break;
@@ -1580,9 +1603,9 @@ Var_Parse (str, ctxt, err, lengthPtr, freePtr)
 	}
 
 	if (v == (Var *)NIL) {
-	    if ((((tstr-str) == 3) ||
-		 ((((tstr-str) == 4) && (str[3] == 'F' ||
-					 str[3] == 'D')))) &&
+	    if (((vlen == 1) ||
+		 (((vlen == 2) && (str[1] == 'F' ||
+					 str[1] == 'D')))) &&
 		((ctxt == VAR_CMD) || (ctxt == VAR_GLOBAL)))
 	    {
 		/*
@@ -1594,7 +1617,7 @@ Var_Parse (str, ctxt, err, lengthPtr, freePtr)
 		 * specially as they are the only four that will be set
 		 * when dynamic sources are expanded.
 		 */
-		switch (str[2]) {
+		switch (*str) {
 		    case '@':
 		    case '%':
 		    case '*':
@@ -1602,17 +1625,17 @@ Var_Parse (str, ctxt, err, lengthPtr, freePtr)
 			dynamic = TRUE;
 			break;
 		}
-	    } else if (((tstr-str) > 4) && (str[2] == '.') &&
-		       isupper((unsigned char) str[3]) &&
+	    } else if ((vlen > 2) && (*str == '.') &&
+		       isupper((unsigned char) str[1]) &&
 		       ((ctxt == VAR_CMD) || (ctxt == VAR_GLOBAL)))
 	    {
 		int	len;
 
-		len = (tstr-str) - 3;
-		if ((strncmp(str+2, ".TARGET", len) == 0) ||
-		    (strncmp(str+2, ".ARCHIVE", len) == 0) ||
-		    (strncmp(str+2, ".PREFIX", len) == 0) ||
-		    (strncmp(str+2, ".MEMBER", len) == 0))
+		len = vlen - 1;
+		if ((strncmp(str, ".TARGET", len) == 0) ||
+		    (strncmp(str, ".ARCHIVE", len) == 0) ||
+		    (strncmp(str, ".PREFIX", len) == 0) ||
+		    (strncmp(str, ".MEMBER", len) == 0))
 		{
 		    dynamic = TRUE;
 		}
@@ -1630,8 +1653,10 @@ Var_Parse (str, ctxt, err, lengthPtr, freePtr)
 		    strncpy(str, start, *lengthPtr);
 		    str[*lengthPtr] = '\0';
 		    *freePtr = TRUE;
+		    Buf_Destroy (buf, TRUE);
 		    return(str);
 		} else {
+		    Buf_Destroy (buf, TRUE);
 		    return (err ? var_Error : varNoError);
 		}
 	    } else {
@@ -1645,7 +1670,9 @@ Var_Parse (str, ctxt, err, lengthPtr, freePtr)
 		v->flags = VAR_JUNK;
 	    }
 	}
+	Buf_Destroy (buf, TRUE);
     }
+
 
     if (v->flags & VAR_IN_USE) {
 	Fatal("Variable %s is recursive.", v->name);
