@@ -1,3 +1,5 @@
-# $NetBSD: mi,v 1.5 1999/04/19 03:11:37 simonb Exp $
+# $NetBSD: mi,v 1.6 2001/03/19 11:18:43 tsutsui Exp $
 ./usr/X11R6/bin/Xprt
+./usr/X11R6/lib/X11/xserver
+./usr/X11R6/lib/X11/xserver/SecurityPolicy
 ./usr/X11R6/man/cat1/Xserver.0
