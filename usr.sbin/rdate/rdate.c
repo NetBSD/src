@@ -1,4 +1,4 @@
-/*	$NetBSD: rdate.c,v 1.6 1997/03/26 21:12:59 cgd Exp $	*/
+/*	$NetBSD: rdate.c,v 1.7 1997/06/17 06:10:47 cgd Exp $	*/
 
 /*
  * Copyright (c) 1994 Christos Zoulas
@@ -38,7 +38,7 @@
  *	midnight January 1st 1900.
  */
 #ifndef lint
-static char rcsid[] = "$NetBSD: rdate.c,v 1.6 1997/03/26 21:12:59 cgd Exp $";
+static char rcsid[] = "$NetBSD: rdate.c,v 1.7 1997/06/17 06:10:47 cgd Exp $";
 #endif/* lint */
 
 #include <sys/types.h>
@@ -113,7 +113,7 @@ main(argc, argv)
 	hname = argv[optind];
 
 	if ((hp = gethostbyname(hname)) == NULL) {
-		warnx("%s: %s\n", hname, hstrerror(h_errno));
+		warnx("%s: %s", hname, hstrerror(h_errno));
 		return 1;
 	}
 
