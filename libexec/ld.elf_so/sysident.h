@@ -1,4 +1,4 @@
-/* $NetBSD: sysident.h,v 1.5 2000/06/14 17:25:17 cgd Exp $ */
+/* $NetBSD: sysident.h,v 1.5.2.1 2001/12/09 17:22:34 he Exp $ */
 
 /*
  * Copyright (c) 1997 Christopher G. Demetriou
@@ -35,8 +35,8 @@
  */
 
 /*
- * Here we define the NetBSD OS Version and emulation name in two
- * NetBSD ELF .note sections, which are structured like:
+ * Here we define the NetBSD OS Version in an ELF .note section, structured
+ * like:
  *
  * [NOTE HEADER]
  *	long		name size
@@ -49,30 +49,28 @@
  * OSVERSION notes also have:
  *	long		OS version (NetBSD constant from param.h)
  *
- * EMULNAME notes also have:
- *	string		OS emulation name (netbsd == native)
- *
  * The DATUM fields should be padded out such that their actual (not
  * declared) sizes % 4 == 0.
  *
- * These are (not yet!) used by the kernel to determine if this binary
- * is really a NetBSD binary, or some other OS's.
+ * These are used by the kernel to determine if this binary is really a
+ * NetBSD binary, or some other OS's.
  */
 
+/* XXX: NetBSD 1.5 compatibility only! */
+#if __NetBSD_Version__ < 105010000
+#define	ELF_NOTE_TYPE_NETBSD_TAG	1
+#endif
+
 #define	__S(x)	__STRING(x)
-__asm("
-	.section \".note.netbsd.ident\", \"a\"
-	.p2align 2
+__asm(
+	".section \".note.netbsd.ident\", \"a\"\n"
+	"\t.p2align 2\n\n"
 
-	.long	7
-	.long	4
-	.long	" __S(ELF_NOTE_NETBSD_TYPE_OSVERSION) "
-	.ascii \"NetBSD\\0\\0\"	
-	.long	" __S(NetBSD) "
+	"\t.long   7\n"
+	"\t.long   4\n"
+	"\t.long   " __S(ELF_NOTE_TYPE_NETBSD_TAG) "\n"
+	"\t.ascii \"NetBSD\\0\\0\"\n"
+	"\t.long   " __S(NetBSD) "\n\n"
 
-	.long	7
-	.long	7
-	.long	" __S(ELF_NOTE_NETBSD_TYPE_EMULNAME) "
-	.ascii	\"NetBSD\\0\\0\"
-	.ascii	\"netbsd\\0\\0\"
-");
+	"\t.p2align 2\n"
+);
