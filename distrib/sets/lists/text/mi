@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.12 2003/06/30 19:09:06 wiz Exp $
+# $NetBSD: mi,v 1.13 2003/11/03 17:05:36 wiz Exp $
 ./usr/bin/addftinfo		text-groff-bin
 ./usr/bin/checknr		text-groff-bin
 ./usr/bin/eqn			text-groff-bin
@@ -324,6 +324,7 @@
 ./usr/share/man/cat1/grodvi.0		text-groff-catman
 ./usr/share/man/cat1/groff.0		text-groff-catman
 ./usr/share/man/cat1/grog.0		text-groff-catman
+./usr/share/man/cat1/grohtml.0		text-groff-catman
 ./usr/share/man/cat1/grolbp.0		text-groff-catman
 ./usr/share/man/cat1/grolj4.0		text-groff-catman
 ./usr/share/man/cat1/grops.0		text-groff-catman
@@ -372,6 +373,7 @@
 ./usr/share/man/man1/grodvi.1		text-groff-man
 ./usr/share/man/man1/groff.1		text-groff-man
 ./usr/share/man/man1/grog.1		text-groff-man
+./usr/share/man/man1/grohtml.1		text-groff-man
 ./usr/share/man/man1/grolbp.1		text-groff-man
 ./usr/share/man/man1/grolj4.1		text-groff-man
 ./usr/share/man/man1/grops.1		text-groff-man
