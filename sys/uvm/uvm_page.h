@@ -1,9 +1,5 @@
-/*	$NetBSD: uvm_page.h,v 1.10 1998/08/13 02:11:02 eeh Exp $	*/
+/*	$NetBSD: uvm_page.h,v 1.11 1999/03/25 18:48:53 mrg Exp $	*/
 
-/*
- * XXXCDC: "ROUGH DRAFT" QUALITY UVM PRE-RELEASE FILE!
- *         >>>USE AT YOUR OWN RISK, WORK IS NOT FINISHED<<<
- */
 /* 
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
  * Copyright (c) 1991, 1993, The Regents of the University of California.  

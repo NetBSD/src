@@ -1,9 +1,5 @@
-/*	$NetBSD: uvm_extern.h,v 1.21 1998/09/08 23:44:21 thorpej Exp $	*/
+/*	$NetBSD: uvm_extern.h,v 1.22 1999/03/25 18:48:50 mrg Exp $	*/
 
-/*
- * XXXCDC: "ROUGH DRAFT" QUALITY UVM PRE-RELEASE FILE!   
- *	   >>>USE AT YOUR OWN RISK, WORK IS NOT FINISHED<<<
- */
 /*
  *
  * Copyright (c) 1997 Charles D. Cranor and Washington University.

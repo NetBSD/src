@@ -1,9 +1,5 @@
-/*	$NetBSD: uvm_pdaemon.c,v 1.12 1998/11/04 07:06:05 chs Exp $	*/
+/*	$NetBSD: uvm_pdaemon.c,v 1.13 1999/03/25 18:48:55 mrg Exp $	*/
 
-/*
- * XXXCDC: "ROUGH DRAFT" QUALITY UVM PRE-RELEASE FILE!
- *         >>>USE AT YOUR OWN RISK, WORK IS NOT FINISHED<<<
- */
 /* 
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
  * Copyright (c) 1991, 1993, The Regents of the University of California.  

@@ -1,9 +1,5 @@
-/*	$NetBSD: uvm_aobj.h,v 1.6 1998/02/12 07:36:45 chs Exp $	*/
+/*	$NetBSD: uvm_aobj.h,v 1.7 1999/03/25 18:48:50 mrg Exp $	*/
 
-/*
- * XXXCDC: "ROUGH DRAFT" QUALITY UVM PRE-RELEASE FILE!   
- *	   >>>USE AT YOUR OWN RISK, WORK IS NOT FINISHED<<<
- */
 /*
  * Copyright (c) 1998 Chuck Silvers, Charles D. Cranor and
  *                    Washington University.
