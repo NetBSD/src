@@ -1,4 +1,4 @@
-/*	$NetBSD: identcpu.c,v 1.1 2003/04/26 18:39:28 fvdl Exp $	*/
+/*	$NetBSD: identcpu.c,v 1.2 2003/07/14 23:32:30 lukem Exp $	*/
 
 /*
  * Copyright (c) 2003 Wasabi Systems, Inc.
@@ -34,6 +34,9 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: identcpu.c,v 1.2 2003/07/14 23:32:30 lukem Exp $");
 
 #include <sys/types.h>
 #include <sys/systm.h>

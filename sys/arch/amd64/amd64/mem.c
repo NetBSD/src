@@ -1,4 +1,4 @@
-/*	$NetBSD: mem.c,v 1.1 2003/04/26 18:39:29 fvdl Exp $	*/
+/*	$NetBSD: mem.c,v 1.2 2003/07/14 23:32:31 lukem Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -39,6 +39,9 @@
  *
  *	@(#)mem.c	8.3 (Berkeley) 1/12/94
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: mem.c,v 1.2 2003/07/14 23:32:31 lukem Exp $");
 
 #include "opt_compat_netbsd.h"
 

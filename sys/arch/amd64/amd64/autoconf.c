@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.3 2003/06/23 11:01:02 martin Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.4 2003/07/14 23:32:29 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -46,6 +46,9 @@
  * devices are determined (from possibilities mentioned in ioconf.c),
  * and the drivers are initialized.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.4 2003/07/14 23:32:29 lukem Exp $");
 
 #include "opt_multiprocessor.h"
 

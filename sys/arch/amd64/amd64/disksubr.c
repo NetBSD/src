@@ -1,4 +1,4 @@
-/*	$NetBSD: disksubr.c,v 1.5 2003/05/10 23:12:29 thorpej Exp $	*/
+/*	$NetBSD: disksubr.c,v 1.6 2003/07/14 23:32:30 lukem Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1988 Regents of the University of California.
@@ -39,6 +39,9 @@
  * XXXfvdl copy of i386 code. May change later if a different partitioning
  * scheme is used. If not, it can be shared.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: disksubr.c,v 1.6 2003/07/14 23:32:30 lukem Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

@@ -1,4 +1,4 @@
-/*	$NetBSD: gdt.c,v 1.2 2003/06/23 11:01:02 martin Exp $	*/
+/*	$NetBSD: gdt.c,v 1.3 2003/07/14 23:32:30 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -42,6 +42,9 @@
  * XXX this file should be shared with the i386 code, the difference
  * can be hidden in macros.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: gdt.c,v 1.3 2003/07/14 23:32:30 lukem Exp $");
 
 #include "opt_multiprocessor.h"
 
