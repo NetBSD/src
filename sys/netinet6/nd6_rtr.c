@@ -1,4 +1,4 @@
-/*	$NetBSD: nd6_rtr.c,v 1.43 2003/06/24 07:39:27 itojun Exp $	*/
+/*	$NetBSD: nd6_rtr.c,v 1.44 2003/06/24 07:54:48 itojun Exp $	*/
 /*	$KAME: nd6_rtr.c,v 1.95 2001/02/07 08:09:47 itojun Exp $	*/
 
 /*
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nd6_rtr.c,v 1.43 2003/06/24 07:39:27 itojun Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nd6_rtr.c,v 1.44 2003/06/24 07:54:48 itojun Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -117,7 +117,7 @@ nd6_rs_input(m, off, icmp6len)
 	union nd_opts ndopts;
 
 	/* If I'm not a router, ignore it. */
-	if (ip6_accept_rtadv != 0 || ip6_forwarding != 1)
+	if (ip6_accept_rtadv != 0 || !ip6_forwarding)
 		goto freeit;
 
 	/* Sanity checks */
