@@ -1,4 +1,4 @@
-/*	$NetBSD: if_elmc_mca.c,v 1.11 2002/10/02 16:34:10 thorpej Exp $	*/
+/*	$NetBSD: if_elmc_mca.c,v 1.12 2003/02/23 04:14:16 simonb Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -46,7 +46,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_elmc_mca.c,v 1.11 2002/10/02 16:34:10 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_elmc_mca.c,v 1.12 2003/02/23 04:14:16 simonb Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -400,16 +400,6 @@ elmc_mca_hwreset(sc, why)
 	int why;
 {
     struct elmc_mca_softc* asc = (struct elmc_mca_softc *) sc;
-    int intr = 0;
-
-    switch (why) {
-    case CHIP_PROBE:
-	intr = 0;
-	break;
-    case CARD_RESET:
-	intr = ELMC_CTRL_INT;
-	break;
-    }
 
     /* toggle the RST bit low then high */
     bus_space_write_1(asc->sc_regt, asc->sc_regh, ELMC_CTRL,
