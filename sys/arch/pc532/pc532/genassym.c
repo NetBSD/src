@@ -35,21 +35,21 @@
  *
  *	@(#)genassym.c	5.11 (Berkeley) 5/10/91
  *
- *	$Id: genassym.c,v 1.4 1994/05/17 17:31:34 phil Exp $
+ *	$Id: genassym.c,v 1.5 1994/05/25 00:03:09 phil Exp $
  */
 
-#include "sys/param.h"
-#include "sys/buf.h"
-#include "sys/vmmeter.h"
-#include "sys/time.h"
-#include "sys/proc.h"
-#include "sys/user.h"
-#include "sys/mbuf.h"
-#include "sys/msgbuf.h"
-#include "sys/resourcevar.h"
-#include "machine/cpu.h"
-#include "machine/trap.h"
-#include "sys/syscall.h"
+#include <sys/param.h>
+#include <sys/buf.h>
+#include <sys/time.h>
+#include <sys/proc.h>
+#include <sys/user.h>
+#include <sys/mbuf.h>
+#include <sys/msgbuf.h>
+#include <sys/resourcevar.h>
+#include <sys/syscall.h>
+
+#include <machine/cpu.h>
+#include <machine/trap.h>
 
 #include <stdio.h>
 
