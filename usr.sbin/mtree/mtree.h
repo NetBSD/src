@@ -1,4 +1,4 @@
-/*	$NetBSD: mtree.h,v 1.12 2001/10/03 14:33:49 lukem Exp $	*/
+/*	$NetBSD: mtree.h,v 1.13 2001/10/04 04:51:27 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -61,6 +61,7 @@ typedef struct _node {
 	u_long	st_flags;			/* flags */
 	nlink_t	st_nlink;			/* link count */
 	char	*md5sum;			/* md5 checksum */
+	char	*tags;				/* tags, comma delimited */
 
 #define	F_CKSUM	0x00000001			/* check sum */
 #define	F_DONE	0x00000002			/* directory done */
@@ -80,6 +81,7 @@ typedef struct _node {
 #define	F_VISIT	0x00008000			/* file visited */
 #define	F_FLAGS	0x00010000			/* file flags */
 #define F_MD5	0x00020000			/* md5 check sum */
+#define F_TAGS	0x00040000			/* tags */
 	int	flags;				/* items set */
 
 #define	F_BLOCK	0x001				/* block special */
