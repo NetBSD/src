@@ -1,4 +1,4 @@
-/*	$NetBSD: ctl.c,v 1.22 1999/03/26 14:02:41 mrg Exp $	*/
+/*	$NetBSD: ctl.c,v 1.23 1999/03/26 14:05:41 mrg Exp $	*/
 
 /*
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -51,12 +51,6 @@
 #include <paths.h>
 
 #include "libaudio.h"
-
-/* yeah, for now ... */
-#if 1
-#define _PATH_OAUDIO	"/dev/audio"
-#define _PATH_OAUDIOCTL	"/dev/audioctl"
-#endif
 
 struct field *findfield __P((char *name));
 void prfield __P((struct field *p, char *sep));
