@@ -1,4 +1,4 @@
-/*	$NetBSD: mutex.h,v 1.1.2.4 2002/03/12 00:07:30 thorpej Exp $	*/
+/*	$NetBSD: mutex.h,v 1.1.2.5 2002/03/12 16:52:00 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -122,6 +122,9 @@ typedef int kmutex_type_t;
 
 typedef struct mutex kmutex_t;
 
+#include <machine/mutex_impl.h>
+
+#ifdef _KERNEL
 void	mutex_init(kmutex_t *, kmutex_type_t, int);
 void	mutex_destroy(kmutex_t *);
 
@@ -135,7 +138,6 @@ void	mutex_vector_exit(kmutex_t *);
 
 struct proc *mutex_owner(kmutex_t *);
 int	mutex_owned(kmutex_t *);
-
-#include <machine/mutex_impl.h>
+#endif /* _KERNEL */
 
 #endif /* _SYS_MUTEX_H_ */
