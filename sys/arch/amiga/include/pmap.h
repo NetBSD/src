@@ -35,8 +35,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	from: @(#)pmap.h	7.6 (Berkeley) 5/10/91
- *	$Id: pmap.h,v 1.2 1993/08/01 19:23:38 mycroft Exp $
+ *	@(#)pmap.h	7.6 (Berkeley) 5/10/91
  */
 
 #ifndef	_PMAP_MACHINE_
@@ -46,11 +45,13 @@
 #define AMIGA_SEG_SIZE	NBSEG
 
 /*
- * Pmap stuff
+ * Pmap stuff (in anticipation of '40 support)
  */
+
 struct pmap {
 	struct pte		*pm_ptab;	/* KVA of page table */
 	struct ste		*pm_stab;	/* KVA of segment table */
+	struct ste		*pm_rtab;	/* KVA of 68040 root table */
 	int			pm_stchanged;	/* ST changed */
 	short			pm_sref;	/* segment table ref count */
 	short			pm_count;	/* pmap reference count */

@@ -30,8 +30,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	from: @(#)endian.h	7.7 (Berkeley) 4/3/91
- *	$Id: endian.h,v 1.2 1993/08/01 19:23:32 mycroft Exp $
+ *	@(#)endian.h	7.7 (Berkeley) 4/3/91
  */
 
 /*
@@ -44,9 +43,7 @@
 
 #define	BYTE_ORDER	BIG_ENDIAN
 
-#ifndef KERNEL
 #include <sys/cdefs.h>
-#endif
 
 __BEGIN_DECLS
 unsigned long	htonl __P((unsigned long));

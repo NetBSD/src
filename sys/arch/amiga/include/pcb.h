@@ -35,9 +35,9 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	from: Utah Hdr: pcb.h 1.13 89/04/23
- *	from: @(#)pcb.h	7.4 (Berkeley) 5/4/91
- *	$Id: pcb.h,v 1.2 1993/08/01 19:23:37 mycroft Exp $
+ * from: Utah $Hdr: pcb.h 1.13 89/04/23$
+ *
+ *	@(#)pcb.h	7.4 (Berkeley) 5/4/91
  */
 
 #include <machine/frame.h>
