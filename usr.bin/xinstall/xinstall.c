@@ -1,4 +1,4 @@
-/*	$NetBSD: xinstall.c,v 1.39 2000/01/15 01:10:12 christos Exp $	*/
+/*	$NetBSD: xinstall.c,v 1.40 2000/07/27 03:45:02 cgd Exp $	*/
 
 /*
  * Copyright (c) 1987, 1993
@@ -43,7 +43,7 @@ __COPYRIGHT("@(#) Copyright (c) 1987, 1993\n\
 #if 0
 static char sccsid[] = "@(#)xinstall.c	8.1 (Berkeley) 7/21/93";
 #else
-__RCSID("$NetBSD: xinstall.c,v 1.39 2000/01/15 01:10:12 christos Exp $");
+__RCSID("$NetBSD: xinstall.c,v 1.40 2000/07/27 03:45:02 cgd Exp $");
 #endif
 #endif /* not lint */
 
@@ -590,7 +590,7 @@ strip(to_name)
 
 			execl(_PATH_BSHELL, "sh", "-c", cmd, NULL);
 		} else
-			execl(stripprog, "strip", to_name, NULL);
+			execlp(stripprog, "strip", to_name, NULL);
 
 		warn("%s", stripprog);
 		_exit(1);
