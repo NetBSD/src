@@ -1,4 +1,4 @@
-/*	$NetBSD: if_cnw.c,v 1.10 2000/03/30 12:45:35 augustss Exp $	*/
+/*	$NetBSD: if_cnw.c,v 1.11 2000/06/05 23:06:31 gmcgarry Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -450,11 +450,11 @@ cnw_match(parent, match, aux)
 {
 	struct pcmcia_attach_args *pa = aux;
 
-	if (pa->manufacturer == PCMCIA_VENDOR_TDK &&
-	    pa->product == PCMCIA_PRODUCT_TDK_XIR_CNW_801)
+	if (pa->manufacturer == PCMCIA_VENDOR_XIRCOM &&
+	    pa->product == PCMCIA_PRODUCT_XIRCOM_CNW_801)
 		return 1;
-	if (pa->manufacturer == PCMCIA_VENDOR_TDK &&
-	    pa->product == PCMCIA_PRODUCT_TDK_XIR_CNW_802)
+	if (pa->manufacturer == PCMCIA_VENDOR_XIRCOM &&
+	    pa->product == PCMCIA_PRODUCT_XIRCOM_CNW_802)
 		return 1;
 	return 0;
 }
@@ -515,11 +515,11 @@ cnw_attach(parent, self, aux)
 	sc->sc_memh = sc->sc_pcmemh.memh;
 	sc->sc_resource |= CNW_RES_MEM;
 	switch (pa->product) {
-	case PCMCIA_PRODUCT_TDK_XIR_CNW_801:
-		printf(": %s\n", PCMCIA_STR_TDK_XIR_CNW_801);
+	case PCMCIA_PRODUCT_XIRCOM_CNW_801:
+		printf(": %s\n", PCMCIA_STR_XIRCOM_CNW_801);
 		break;
-	case PCMCIA_PRODUCT_TDK_XIR_CNW_802:
-		printf(": %s\n", PCMCIA_STR_TDK_XIR_CNW_802);
+	case PCMCIA_PRODUCT_XIRCOM_CNW_802:
+		printf(": %s\n", PCMCIA_STR_XIRCOM_CNW_802);
 		break;
 	}
 
