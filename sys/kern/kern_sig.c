@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_sig.c,v 1.187 2004/03/14 01:08:47 cl Exp $	*/
+/*	$NetBSD: kern_sig.c,v 1.188 2004/03/21 18:41:38 cl Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1991, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_sig.c,v 1.187 2004/03/14 01:08:47 cl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_sig.c,v 1.188 2004/03/21 18:41:38 cl Exp $");
 
 #include "opt_ktrace.h"
 #include "opt_compat_sunos.h"
@@ -1792,6 +1792,18 @@ postsig(int signum)
 
 	KERNEL_PROC_LOCK(l);
 
+#ifdef MULTIPROCESSOR
+	/*
+	 * On MP, issignal() can return the same signal to multiple
+	 * LWPs.  The LWPs will block above waiting for the kernel
+	 * lock and the first LWP which gets through will then remove
+	 * the signal from ps_siglist.  All other LWPs exit here.
+	 */
+	if (!sigismember(&p->p_sigctx.ps_siglist, signum)) {
+		KERNEL_PROC_UNLOCK(l);
+		return;
+	}
+#endif
 	sigdelset(&p->p_sigctx.ps_siglist, signum);
 	action = SIGACTION_PS(ps, signum).sa_handler;
 	if (action == SIG_DFL) {
