@@ -31,7 +31,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)esis.h	7.4 (Berkeley) 5/6/91
- *	$Id: esis.h,v 1.3 1993/05/20 05:27:08 cgd Exp $
+ *	$Id: esis.h,v 1.4 1994/05/05 07:56:35 cgd Exp $
  */
 
 #ifndef _NETISO_ESIS_H_
@@ -63,22 +63,6 @@ SOFTWARE.
 /*
  * ARGO Project, Computer Sciences Dept., University of Wisconsin - Madison
  */
-
-#ifndef BYTE_ORDER
-/*
- * Definitions for byte order,
- * according to byte significance from low address to high.
- */
-#define	LITTLE_ENDIAN	1234	/* least-significant byte first (vax) */
-#define	BIG_ENDIAN	4321	/* most-significant byte first (IBM, net) */
-#define	PDP_ENDIAN	3412	/* LSB first in word, MSW first in long (pdp) */
-
-#ifdef vax
-#define	BYTE_ORDER	LITTLE_ENDIAN
-#else
-#define	BYTE_ORDER	BIG_ENDIAN	/* mc68000, tahoe, most others */
-#endif
-#endif BYTE_ORDER
 
 #define	SNPAC_AGE		60			/* seconds */
 #define	ESIS_CONFIG		60			/* seconds */
