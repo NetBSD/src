@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-1.6.1,v 1.1.2.48 2002/11/24 15:45:33 tron Exp $
+#	$NetBSD: CHANGES-1.6.1,v 1.1.2.49 2002/11/24 16:08:58 tron Exp $
 
 A complete list of changes from NetBSD 1.6 to NetBSD 1.6.1:
 
@@ -1538,4 +1538,38 @@ share/man/man5/rc.conf.5			1.65
 	Add a note to rc.conf that third party packages may test for additional
 	variables.
 	[abs, ticket #732]
+
+etc/Makefile					1.228
+
+	create /etc/mail/local-host-names, required by sendmail(8).
+	[grant, ticket #904]
+
+gnu/usr.sbin/sendmail/cf/cf/netbsd-proto.mc	1.10
+
+	Include DOMAIN(generic) so that various standard configuration items
+	are included, notably enabling the use of /etc/mail/local-host-names.
+	[grant, ticket #881]
+
+sys/arch/i386/i386/mtrr_k6.c			1.3
+
+	Follow AMD's recommendations for programming the
+	uncachable/write-combine bits of the K6 cache-control-register:
+	disable the cache; flush the cache; set the bits; re-enable the cache
+	(all much like programming the pentium mtrr's). See reference posted
+	to tech-kern; also review there by thorpej.
+	[fredb, ticket #734]
+
+crypto/dist/kame/racoon/isakmp.c		1.10
+
+	tighten isakmp header length validation.  from kame
+	[itojun, ticket #740]
+
+usr.sbin/rpc.yppasswdd/yppasswdd_mkpw.c		1.10
+
+	As discussed on tech-userlevel on Jun, 10 2002, make changes to not use
+	getpwnam() to get the user's passwd entry but read it from the passwd
+	file yppasswdd will later update. This allows a NetBSD machine to be
+	master NIS server without requiring the NIS accounts to exist (via
+	/etc/master.passwd, nis or other ways) on the local machine.
+	[martti, ticket #741]
 
