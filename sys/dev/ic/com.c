@@ -1,4 +1,4 @@
-/*	$NetBSD: com.c,v 1.68 1996/02/18 09:10:15 mycroft Exp $	*/
+/*	$NetBSD: com.c,v 1.69 1996/02/19 14:53:03 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994, 1995 Charles M. Hannum.  All rights reserved.
@@ -94,7 +94,7 @@ struct com_softc {
 #define	COM_SW_CLOCAL	0x02
 #define	COM_SW_CRTSCTS	0x04
 #define	COM_SW_MDMBUF	0x08
-	u_char sc_msr, sc_mcr, sc_lcr;
+	u_char sc_msr, sc_mcr, sc_lcr, sc_ier;
 	u_char sc_dtr;
 
 	u_char *sc_ibuf, *sc_ibufp, *sc_ibufhigh, *sc_ibufend;
@@ -449,8 +449,8 @@ comopen(dev, flag, mode, p)
 		if (!ISSET(sc->sc_hwflags, COM_HW_NOIEN))
 			SET(sc->sc_mcr, MCR_IENABLE);
 		outb(iobase + com_mcr, sc->sc_mcr);
-		outb(iobase + com_ier,
-		    IER_ERXRDY | IER_ETXRDY | IER_ERLS | IER_EMSC);
+		sc->sc_ier = IER_ERXRDY | IER_ERLS | IER_EMSC;
+		outb(iobase + com_ier, sc->sc_ier);
 
 		sc->sc_msr = inb(iobase + com_msr);
 		if (ISSET(sc->sc_swflags, COM_SW_SOFTCAR) ||
@@ -832,19 +832,20 @@ comstart(tp)
 	int s;
 
 	s = spltty();
-	if (ISSET(tp->t_state, TS_TIMEOUT | TS_TTSTOP | TS_BUSY))
-		goto out;
-	if (sc->sc_halt > 0)
-		goto out;
+	if (ISSET(tp->t_state, TS_BUSY))
+		goto busy;
+	if (ISSET(tp->t_state, TS_TIMEOUT | TS_TTSTOP) ||
+	    sc->sc_halt > 0)
+		goto stopped;
 	if (ISSET(tp->t_cflag, CRTSCTS) && !ISSET(sc->sc_msr, MSR_CTS))
-		goto out;
+		goto stopped;
 	if (tp->t_outq.c_cc <= tp->t_lowat) {
 		if (ISSET(tp->t_state, TS_ASLEEP)) {
 			CLR(tp->t_state, TS_ASLEEP);
 			wakeup(&tp->t_outq);
 		}
 		if (tp->t_outq.c_cc == 0)
-			goto out;
+			goto stopped;
 		selwakeup(&tp->t_wsel);
 	}
 	SET(tp->t_state, TS_BUSY);
@@ -867,7 +868,18 @@ comstart(tp)
 		} while (--n);
 	} else
 		outb(iobase + com_data, getc(&tp->t_outq));
-out:
+busy:
+	if (!ISSET(sc->sc_ier, IER_ETXRDY)) {
+		SET(sc->sc_ier, IER_ETXRDY);
+		outb(iobase + com_ier, sc->sc_ier);
+	}
+	splx(s);
+	return;
+stopped:
+	if (ISSET(sc->sc_ier, IER_ETXRDY)) {
+		CLR(sc->sc_ier, IER_ETXRDY);
+		outb(iobase + com_ier, sc->sc_ier);
+	}
 	splx(s);
 }
 
@@ -996,6 +1008,12 @@ comintr(arg)
 	int iobase = sc->sc_iobase;
 	struct tty *tp;
 	u_char lsr, data, msr, delta;
+#ifdef COM_DEBUG
+	int n = 0;
+	struct {
+		u_char lsr, msr;
+	} iter[32];
+#endif
 
 	if (ISSET(inb(iobase + com_iir), IIR_NOPEND))
 		return (0);
@@ -1003,23 +1021,29 @@ comintr(arg)
 	tp = sc->sc_tty;
 
 	for (;;) {
+#ifdef COM_DEBUG
+		iter[n].lsr =
+#endif
 		lsr = inb(iobase + com_lsr);
 
-		if (ISSET(lsr, LSR_RCV_MASK)) {
+		if (ISSET(lsr, LSR_RXRDY)) {
 			register u_char *p = sc->sc_ibufp;
 
 			comevents = 1;
 			do {
-				data = ISSET(lsr, LSR_RXRDY) ?
-				    inb(iobase + com_data) : 0;
+				data = inb(iobase + com_data);
 				if (ISSET(lsr, LSR_BI)) {
+#ifdef COM_DEBUG
+					printf("break %02x %02x %02x %02x\n",
+					    sc->sc_msr, sc->sc_mcr, sc->sc_lcr,
+					    sc->sc_dtr);
+#endif
 #ifdef DDB
 					if (sc->sc_dev.dv_unit == comconsole) {
 						Debugger();
 						goto next;
 					}
 #endif
-					data = '\0';
 				}
 				if (p >= sc->sc_ibufend) {
 					sc->sc_floods++;
@@ -1037,16 +1061,24 @@ comintr(arg)
 					}
 				}
 			next:
+#ifdef COM_DEBUG
+				if (++n >= 32)
+					goto ohfudge;
+				iter[n].lsr =
+#endif
 				lsr = inb(iobase + com_lsr);
-			} while (ISSET(lsr, LSR_RCV_MASK));
+			} while (ISSET(lsr, LSR_RXRDY));
 
 			sc->sc_ibufp = p;
 		}
-#if 0
+#ifdef COM_DEBUG
 		else if (ISSET(lsr, LSR_BI|LSR_FE|LSR_PE|LSR_OE))
 			printf("weird lsr %02x\n", lsr);
 #endif
 
+#ifdef COM_DEBUG
+		iter[n].msr =
+#endif
 		msr = inb(iobase + com_msr);
 
 		if (msr != sc->sc_msr) {
@@ -1069,13 +1101,26 @@ comintr(arg)
 			CLR(tp->t_state, TS_BUSY | TS_FLUSH);
 			if (sc->sc_halt > 0)
 				wakeup(&tp->t_outq);
-			else
-				(*linesw[tp->t_line].l_start)(tp);
+			(*linesw[tp->t_line].l_start)(tp);
 		}
 
 		if (ISSET(inb(iobase + com_iir), IIR_NOPEND))
 			return (1);
+#ifdef COM_DEBUG
+		if (++n >= 32)
+			goto ohfudge;
+#endif
 	}
+#ifdef COM_DEBUG
+ohfudge:
+	printf("comintr: too many iterations");
+	for (n = 0; n < 32; n++) {
+		if ((n % 4) == 0)
+			printf("\ncomintr: iter[%02d]:", n);
+		printf(" %02x %02x ", iter[n].lsr, iter[n].msr);
+	}
+	printf("\n");
+#endif
 }
 
 /*
