@@ -1,13 +1,13 @@
 #!/bin/sh
 #
-# $NetBSD: powerd,v 1.1 2003/04/18 05:19:35 thorpej Exp $
+# $NetBSD: powerd,v 1.2 2004/08/13 18:08:03 mycroft Exp $
 #
 
 # PROVIDE: powerd
 # REQUIRE: DAEMON
 # BEFORE:  LOGIN
 
-. /etc/rc.subr
+$_rc_subr_loaded . /etc/rc.subr
 
 name="powerd"
 rcvar=$name
