@@ -1,4 +1,4 @@
-#	$NetBSD: ZHADUM,v 1.11 1998/08/31 17:58:57 thorpej Exp $
+#	$NetBSD: ZHADUM,v 1.12 1998/11/12 01:04:06 thorpej Exp $
 #
 #	ZHADUM -- zhadum.netbsd.org, the new CVS server
 #
@@ -136,6 +136,10 @@ options 	SCSIVERBOSE	# human readable SCSI error messages
 
 #options 	NFS_BOOT_BOOTP,NFS_BOOT_BOOTPARAM
 
+# WSCONS console driver options
+#options 	WSEMUL_SUN		# sun terminal emulation
+options 	WSEMUL_VT100		# VT100/ VT220 emulation
+
 # Kernel root file system and dump configuration.
 config		netbsd	root on ? type ?
 
@@ -152,15 +156,14 @@ mainbus0 at root
 
 # PCI bus support
 pci0	at mainbus0 bus 0
-pci1	at pchb2 bus 1
+pci1	at pchb1 bus 1
 
 pci*	at pchb? bus ?
 pci*	at ppb? bus ?
 
 # PCI bridges
-pchb0	at pci0 dev 20 function 0	# PCI-Host bridges
-pchb1	at pci0 dev 25 function 0	# PCI-Host bridges
-pchb2	at pci0 dev 26 function 0	# PCI-Host bridges
+pchb0	at pci0 dev 25 function 0	# PCI-Host bridges
+pchb1	at pci0 dev 26 function 0	# PCI-Host bridges
 pceb*	at pci? dev ? function ?	# PCI-EISA bridges
 pcib*	at pci? dev ? function ?	# PCI-ISA bridges
 ppb*	at pci? dev ? function ?	# PCI-PCI bridges
@@ -191,14 +194,25 @@ isapnp0	at isa?
 npx0	at isa? port 0xf0 irq 13	# x86 math coprocessor
 
 
-# Console Devices
+# WSCONS console devices
 
-# ISA console.  You can only configure one of these!
-#pc0	at isa? port 0x60 irq 1		# pccons generic PC console driver
-vt0	at isa? port 0x60 irq 1		# PCVT console driver
+pckbc0	at isa?				# PC keyboard controller
+pckbd*	at pckbc?			# PC keyboard
+wskbd*	at pckbd? console ?
 
-#pcppi0	at isa?
-#sysbeep0	at pcppi?
+psm*	at pckbc?			# PS/2 mouse for wsmouse
+wsmouse* at psm?
+
+#psmi*	at pckbc?			# PS/2 "Intelli" mouse for wscons
+#wsmouse* at psmi?
+
+vga0	at isa?
+vga*	at pci? dev ? function ?
+wsdisplay* at vga? console ?
+
+pcppi0	at isa?
+sysbeep* at pcppi?
+spkr*	at pcppi?
 
 
 # Serial Devices
@@ -303,6 +317,12 @@ uk*	at scsibus? target ? lun ?	# SCSI unknown
 
 
 # IDE and Related Devices
+# PCI IDE controllers (CMD tech's PCI0640, Intel's PIIx).
+# The 0x0001 flag force the driver to use DMA, even if the driver doesn't know
+# how to set up DMA modes for this chip. This may work, or may cause
+# a machine hang with some controllers.
+pciide0	at pci0 dev 3 function 0 flags 0x0000
+pciide* at pci? dev ? function ? flags 0x0000
 
 # ISA Plug-and-Play IDE controllers
 #wdc*	at isapnp?
@@ -311,19 +331,22 @@ uk*	at scsibus? target ? lun ?	# SCSI unknown
 #wdc*	at pcmcia? function ?
 
 # ISA IDE controllers
-wdc0	at isa? port 0x1f0 irq 14	# ST506, ESDI, and IDE controllers
+#wdc0	at isa? port 0x1f0 irq 14	# ST506, ESDI, and IDE controllers
 #wdc1	at isa? port 0x170 irq 15
 
 # IDE drives
-wd0	at wdc0 drive 0			# the drives themselves
-wd*	at wdc? drive ?			# the drives themselves
+#wd*	at wdc? channel ? device ?
+wd0	at pciide0 channel 0 drive 0
+wd*	at pciide? channel ? drive ?
 
 # ATAPI bus support
-#atapibus* at wdc?
+#atapibus* at wdc? channel ?
+#atapibus* at pciide? channel ?
 
 # ATAPI devices
 #cd*	at atapibus? drive ?		# ATAPI CD-ROM drives
 #sd*	at atapibus? drive ?		# ATAPI disk drives
+#uk*	at atapibus? drive ?		# ATAPI unknown
 
 
 # Miscellaneous mass storage devices
@@ -424,9 +447,6 @@ de*	at pci? dev ? function ?	# DEC 21x4x-based Ethernet
 #audio*	at sp?
 #audio*	at wss?
 
-# The spkr driver provides a simple tone interface to the built in speaker.
-#spkr0	at pcppi?		# PC speaker
-
 
 # Mice
 
@@ -435,7 +455,7 @@ de*	at pci? dev ? function ?	# DEC 21x4x-based Ethernet
 #lms1	at isa? port 0x238 irq 5
 #mms0	at isa? port 0x23c irq 5	# Microsoft InPort mouse
 #mms1	at isa? port 0x238 irq 5
-pms0	at vt? irq 12		# PS/2 auxiliary port mouse
+#pms0	at vt? irq 12			# PS/2 auxiliary port mouse
 
 
 # Joysticks
