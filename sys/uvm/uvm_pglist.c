@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_pglist.c,v 1.26 2003/03/10 19:52:24 thorpej Exp $	*/
+/*	$NetBSD: uvm_pglist.c,v 1.27 2003/08/02 14:12:51 drochner Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_pglist.c,v 1.26 2003/03/10 19:52:24 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_pglist.c,v 1.27 2003/08/02 14:12:51 drochner Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -68,11 +68,11 @@ u_long	uvm_pglistalloc_npages;
 /*
  * uvm_pglistalloc: allocate a list of pages
  *
- * => allocated pages are placed at the tail of rlist.  rlist is
- *    assumed to be properly initialized by caller.
+ * => allocated pages are placed onto an rlist.  rlist is
+ *    initialized by uvm_pglistalloc.
  * => returns 0 on success or errno on failure
- * => XXX: implementation allocates only a single segment, also
- *	might be able to better advantage of vm_physeg[].
+ * => implementation allocates a single segment if any constraints are
+ *	imposed by call arguments.
  * => doesn't take into account clean non-busy pages on inactive list
  *	that could be used(?)
  * => params:
