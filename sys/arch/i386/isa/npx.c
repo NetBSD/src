@@ -1,4 +1,4 @@
-/*	$NetBSD: npx.c,v 1.24 1994/11/03 23:21:24 mycroft Exp $	*/
+/*	$NetBSD: npx.c,v 1.25 1994/11/04 18:35:16 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1994 Charles Hannum.
@@ -120,13 +120,13 @@ struct cfdriver npxcd = {
 	NULL, "npx", npxprobe, npxattach, DV_DULL, sizeof(struct device)
 };
 
-u_int	npx0mask;
 struct proc	*npxproc;
 
 static	bool_t			npx_ex16;
 static	bool_t			npx_exists;
 static	struct gate_descriptor	npx_idt_probeintr;
 static	int			npx_intrno;
+static	unsigned		npx_intrmask;
 static	volatile u_int		npx_intrs_while_probing;
 static	bool_t			npx_irq13;
 static	volatile u_int		npx_traps_while_probing;
@@ -177,8 +177,7 @@ npxprobe(parent, match, aux)
 	struct	isa_attach_args *ia = aux;
 	int	result;
 	u_long	save_eflags;
-	u_char	save_icu1_mask;
-	u_char	save_icu2_mask;
+	unsigned save_imen;
 	struct	gate_descriptor save_idt_npxintr;
 	struct	gate_descriptor save_idt_npxtrap;
 	/*
@@ -188,23 +187,23 @@ npxprobe(parent, match, aux)
 	 * install suitable handlers and run with interrupts enabled so we
 	 * won't need to do so much here.
 	 */
-	npx_intrno = NRSVIDT + ffs(ia->ia_irq) - 1;
+	npx_intrno = NRSVIDT + ia->ia_irq;
 	save_eflags = read_eflags();
 	disable_intr();
-	save_icu1_mask = inb(IO_ICU1 + 1);
-	save_icu2_mask = inb(IO_ICU2 + 1);
+	save_imen = imen;
 	save_idt_npxintr = idt[npx_intrno];
 	save_idt_npxtrap = idt[16];
-	outb(IO_ICU1 + 1, ~(IRQ_SLAVE | ia->ia_irq));
-	outb(IO_ICU2 + 1, ~(ia->ia_irq >> 8));
-	setgate(&idt[16], probetrap, 0, SDT_SYS386TGT, SEL_KPL);
 	setgate(&idt[npx_intrno], probeintr, 0, SDT_SYS386IGT, SEL_KPL);
+	setgate(&idt[16], probetrap, 0, SDT_SYS386TGT, SEL_KPL);
 	npx_idt_probeintr = idt[npx_intrno];
+	npx_intrmask = IRQ_SLAVE | (1 << ia->ia_irq);
+	imen = ~npx_intrmask;
+	SET_ICUS();
 	enable_intr();
 	result = npxprobe1(ia);
 	disable_intr();
-	outb(IO_ICU1 + 1, save_icu1_mask);
-	outb(IO_ICU2 + 1, save_icu2_mask);
+	imen = save_imen;
+	SET_ICUS();
 	idt[npx_intrno] = save_idt_npxintr;
 	idt[16] = save_idt_npxtrap;
 	write_eflags(save_eflags);
@@ -293,7 +292,8 @@ npxprobe1(ia)
 				 * Good, exception 16 works.
 				 */
 				npx_ex16 = 1;
-				ia->ia_irq = 0;		/* zap the interrupt */
+				ia->ia_irq = IRQUNK;	/* zap the interrupt */
+				npx_intrmask = 0;
 				return 1;
 			}
 			if (npx_intrs_while_probing != 0) {
@@ -301,7 +301,6 @@ npxprobe1(ia)
 				 * Bad, we are stuck with IRQ13.
 				 */
 				npx_irq13 = 1;
-				npx0mask = ia->ia_irq;	/* npxattach too late */
 				return 1;
 			}
 			/*
@@ -314,7 +313,8 @@ npxprobe1(ia)
 	 * emulator and say that it has been installed.  XXX handle devices
 	 * that aren't really devices better.
 	 */
-	ia->ia_irq = 0;
+	ia->ia_irq = IRQUNK;
+	npx_intrmask = 0;
 	return 1;
 }
 
@@ -539,19 +539,15 @@ void
 npxsave(addr)
 	struct save87 *addr;
 {
-	u_char	icu1_mask;
-	u_char	icu2_mask;
-	u_char	old_icu1_mask;
-	u_char	old_icu2_mask;
+	unsigned save_imen;
 	struct gate_descriptor	save_idt_npxintr;
 
 	disable_intr();
-	old_icu1_mask = inb(IO_ICU1 + 1);
-	old_icu2_mask = inb(IO_ICU2 + 1);
+	save_imen = imen;
 	save_idt_npxintr = idt[npx_intrno];
-	outb(IO_ICU1 + 1, old_icu1_mask & ~(IRQ_SLAVE | npx0mask));
-	outb(IO_ICU2 + 1, old_icu2_mask & ~(npx0mask >> 8));
 	idt[npx_intrno] = npx_idt_probeintr;
+	imen &= ~npx_intrmask;
+	SET_ICUS();
 	enable_intr();
 	stop_emulating();
 	fnsave(addr);
@@ -559,13 +555,8 @@ npxsave(addr)
 	start_emulating();
 	npxproc = NULL;
 	disable_intr();
-	icu1_mask = inb(IO_ICU1 + 1);	/* masks may have changed */
-	icu2_mask = inb(IO_ICU2 + 1);
-	outb(IO_ICU1 + 1,
-	     (icu1_mask & ~npx0mask) | (old_icu1_mask & npx0mask));
-	outb(IO_ICU2 + 1,
-	     (icu2_mask & ~(npx0mask >> 8))
-	     | (old_icu2_mask & (npx0mask >> 8)));
+	imen = save_imen;
+	SET_ICUS();
 	idt[npx_intrno] = save_idt_npxintr;
 	enable_intr();		/* back to usual state */
 }

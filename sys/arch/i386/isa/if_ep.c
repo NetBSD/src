@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ep.c,v 1.59 1994/11/03 23:14:56 mycroft Exp $	*/
+/*	$NetBSD: if_ep.c,v 1.60 1994/11/04 18:35:07 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1994 Herb Peyerl <hpeyerl@novatel.ca>
@@ -137,7 +137,7 @@ epaddcard(iobase, irq, bus32bit)
 	if (nepcards >= MAXEPCARDS)
 		return;
 	epcards[nepcards].iobase = iobase;
-	epcards[nepcards].irq = 1 << ((irq == 2) ? 9 : irq);
+	epcards[nepcards].irq = (irq == 2) ? 9 : irq;
 	epcards[nepcards].available = 1;
 	epcards[nepcards].bus32bit = bus32bit;
 	nepcards++;

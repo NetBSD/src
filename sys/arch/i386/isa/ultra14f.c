@@ -1,4 +1,4 @@
-/*	$NetBSD: ultra14f.c,v 1.40 1994/11/03 23:08:38 mycroft Exp $	*/
+/*	$NetBSD: ultra14f.c,v 1.41 1994/11/04 18:35:22 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1994 Charles Hannum.  All rights reserved.
@@ -589,8 +589,7 @@ uhaprobe(parent, match, aux)
 	if (ia->ia_irq != IRQUNK) {
 		if (ia->ia_irq != uha->uha_int) {
 			printf("uha%d: irq mismatch; kernel configured %d != board configured %d\n",
-				uha->sc_dev.dv_unit, ffs(ia->ia_irq) - 1,
-				ffs(uha->uha_int) - 1);
+			    uha->sc_dev.dv_unit, ia->ia_irq, uha->uha_int);
 			return 0;
 		}
 	} else
@@ -599,7 +598,7 @@ uhaprobe(parent, match, aux)
 	if (ia->ia_drq != DRQUNK) {
 		if (ia->ia_drq != uha->uha_dma) {
 			printf("uha%d: drq mismatch; kernel configured %d != board configured %d\n",
-				uha->sc_dev.dv_unit, ia->ia_drq, uha->uha_dma);
+			    uha->sc_dev.dv_unit, ia->ia_drq, uha->uha_dma);
 			return 0;
 		}
 	} else
@@ -986,16 +985,16 @@ u14_find(uha, ia)
 
 	switch (config & U14_IRQ_MASK) {
 	case U14_IRQ10:
-		uha->uha_int = IRQ10;
+		uha->uha_int = 10;
 		break;
 	case U14_IRQ11:
-		uha->uha_int = IRQ11;
+		uha->uha_int = 11;
 		break;
 	case U14_IRQ14:
-		uha->uha_int = IRQ14;
+		uha->uha_int = 14;
 		break;
 	case U14_IRQ15:
-		uha->uha_int = IRQ15;
+		uha->uha_int = 15;
 		break;
 	default:
 		printf("illegal int setting %x\n", config & U14_IRQ_MASK);
@@ -1081,16 +1080,16 @@ u24_find(uha, ia)
 
 		switch (irq_ch) {
 		case U24_IRQ10:
-			uha->uha_int = IRQ10;
+			uha->uha_int = 10;
 			break;
 		case U24_IRQ11:
-			uha->uha_int = IRQ11;
+			uha->uha_int = 11;
 			break;
 		case U24_IRQ14:
-			uha->uha_int = IRQ14;
+			uha->uha_int = 14;
 			break;
 		case U24_IRQ15:
-			uha->uha_int = IRQ15;
+			uha->uha_int = 15;
 			break;
 		default:
 			printf("illegal int setting %x\n", irq_ch);

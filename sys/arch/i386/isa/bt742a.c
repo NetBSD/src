@@ -1,4 +1,4 @@
-/*	$NetBSD: bt742a.c,v 1.32 1994/11/03 23:08:33 mycroft Exp $	*/
+/*	$NetBSD: bt742a.c,v 1.33 1994/11/04 18:34:56 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1994 Charles Hannum.  All rights reserved.
@@ -573,8 +573,7 @@ btprobe(parent, match, aux)
 	if (ia->ia_irq != IRQUNK) {
 		if (ia->ia_irq != bt->bt_int) {
 			printf("bt%d: irq mismatch; kernel configured %d != board configured %d\n",
-				bt->sc_dev.dv_unit, ffs(ia->ia_irq) - 1,
-				ffs(bt->bt_int) - 1);
+			    bt->sc_dev.dv_unit, ia->ia_irq, bt->bt_int);
                 	return 0;
 		}
 	} else
@@ -583,7 +582,7 @@ btprobe(parent, match, aux)
 	if (ia->ia_drq != DRQUNK) {
 		if (ia->ia_drq != bt->bt_dma) {
 			printf("bt%d: drq mismatch; kernel configured %d != board configured %d\n",
-				bt->sc_dev.dv_unit, ia->ia_drq, bt->bt_dma);
+			    bt->sc_dev.dv_unit, ia->ia_drq, bt->bt_dma);
                 	return 0;
 		}
 	} else
@@ -1096,22 +1095,22 @@ bt_find(bt)
 
 	switch (conf.intr) {
 	case INT9:
-		bt->bt_int = IRQ9;
+		bt->bt_int = 9;
 		break;
 	case INT10:
-		bt->bt_int = IRQ10;
+		bt->bt_int = 10;
 		break;
 	case INT11:
-		bt->bt_int = IRQ11;
+		bt->bt_int = 11;
 		break;
 	case INT12:
-		bt->bt_int = IRQ12;
+		bt->bt_int = 12;
 		break;
 	case INT14:
-		bt->bt_int = IRQ14;
+		bt->bt_int = 14;
 		break;
 	case INT15:
-		bt->bt_int = IRQ15;
+		bt->bt_int = 15;
 		break;
 	default:
 		printf("%s: illegal int setting %x\n", bt->sc_dev.dv_xname,
