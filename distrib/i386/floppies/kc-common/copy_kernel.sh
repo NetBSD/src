@@ -1,10 +1,10 @@
 #! /bin/sh
 #
-#	$NetBSD: copy_kernel.sh,v 1.3 1996/10/09 00:13:36 jtc Exp $
+#	$NetBSD: copy_kernel.sh,v 1.4 1997/05/30 01:34:42 lukem Exp $
 #
 #	Kernel copy script
 
-DEFAULT_PARTITON=sd0a
+DEFAULT_PARTITION=sd0a
 MOUNT_POINT=/mnt
 KERNEL_NAME=/netbsd
 #TEST=testfn
@@ -50,10 +50,10 @@ echo	""
 echo	"What disk partition should the kernel be installed on?"
 echo	"(For example, \"sd0a\", \"wd0a\", etc.)"
 echo	""
-echo -n	"Partition? [${DEFAULT_PARTITON}] "
+echo -n	"Partition? [${DEFAULT_PARTITION}] "
 read diskpart
 if [ "X${diskpart}" = "X" ]; then
-	diskpart=${DEFAULT_PARTITON}
+	diskpart=${DEFAULT_PARTITION}
 fi
 rawdiskpart="r${diskpart}"
 
