@@ -1,4 +1,4 @@
-/*	$NetBSD: init_main.c,v 1.68 1994/10/20 04:22:35 cgd Exp $	*/
+/*	$NetBSD: init_main.c,v 1.69 1994/10/28 23:17:22 cgd Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1991, 1992, 1993
@@ -339,8 +339,8 @@ start_init(p, framep)
 	vm_offset_t addr;
 	struct execve_args /* {
 		syscallarg(char *) path;
-		syscallarg(char * *) argp;
-		syscallarg(char * *) envp;
+		syscallarg(char **) argp;
+		syscallarg(char **) envp;
 	} */ args;
 	int options, i, error;
 	register_t retval[2];
