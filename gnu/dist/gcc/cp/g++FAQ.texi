@@ -6,6 +6,13 @@
 @c version: %W% %G%
 @c %**end of header
 
+@ifinfo
+@dircategory Programming
+@direntry
+* G++: (g++FAQ).               The GNU C++ compiler FAQ.
+@end direntry
+@end ifinfo
+
 @iftex
 @finalout
 @end iftex
