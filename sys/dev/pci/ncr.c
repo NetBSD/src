@@ -1,4 +1,4 @@
-/*	$NetBSD: ncr.c,v 1.78 1998/12/12 00:19:13 thorpej Exp $	*/
+/*	$NetBSD: ncr.c,v 1.79 1998/12/12 23:41:56 thorpej Exp $	*/
 
 /**************************************************************************
 **
@@ -983,6 +983,9 @@ struct ccb {
 	*/
 
 	struct scsipi_xfer	*xfer;
+#ifdef __NetBSD__
+	bus_dmamap_t		xfer_dmamap;
+#endif
 
 	/*
 	**	We prepare a message to be sent after selection,
@@ -1399,6 +1402,7 @@ struct scripth {
 */
 
 #ifdef KERNEL
+static	int	ncr_ccb_dma_init(ncb_p np, ccb_p cp);
 static	void	ncr_alloc_ccb	(ncb_p np, u_long target, u_long lun);
 static	void	ncr_complete	(ncb_p np, ccb_p cp);
 static	int	ncr_delta	(struct timeval * from, struct timeval * to);
@@ -1429,7 +1433,7 @@ static	void	ncb_profile	(ncb_p np, ccb_p cp);
 static	void	ncr_script_copy_and_bind
 				(ncb_p np, ncrcmd *src, ncrcmd *dst, int len);
 static  void    ncr_script_fill (struct script * scr, struct scripth *scrh);
-static	int	ncr_scatter	(struct dsb* phys, vaddr_t vaddr,
+static	int	ncr_scatter	(ncb_p np, ccb_p, vaddr_t vaddr,
 				 vsize_t datalen);
 static	void	ncr_setmaxtags	(tcb_p tp, u_long usrtags);
 static	void	ncr_getsync	(ncb_p np, u_char sfac, u_char *fakp,
@@ -1466,7 +1470,7 @@ static	void	ncr_attach	(pcici_t tag, int unit);
 
 #if 0
 static char ident[] =
-	"\n$NetBSD: ncr.c,v 1.78 1998/12/12 00:19:13 thorpej Exp $\n";
+	"\n$NetBSD: ncr.c,v 1.79 1998/12/12 23:41:56 thorpej Exp $\n";
 #endif
 
 static const u_long	ncr_version = NCR_VERSION	* 11
@@ -3665,9 +3669,14 @@ static void ncr_attach (pcici_t config_id, int unit)
 	printf(": %s\n", ncr_chip_table[i].name);
 
 	np->sc_pc = pc;
+	np->sc_dmat = pa->pa_dmat;
+
 	np->ccb = (ccb_p) malloc (sizeof (struct ccb), M_DEVBUF, M_WAITOK);
 	if (!np->ccb) return;
 	bzero (np->ccb, sizeof (*np->ccb));
+
+	if (ncr_ccb_dma_init(np, np->ccb) != 0)
+		return;
 
 	/*
 	**	Try to map the controller chip to
@@ -3710,8 +3719,6 @@ static void ncr_attach (pcici_t config_id, int unit)
 		printf("%s: unable to map device registers\n", self->dv_xname);
 		return;
 	}
-
-	np->sc_dmat = pa->pa_dmat;
 
 	/*
 	 * Allocate DMA-safe memory for the script-accessible parts of
@@ -4369,6 +4376,21 @@ static void ncr_attach (pcici_t config_id, int unit)
 	return;
 }
 
+int
+ncr_ccb_dma_init(ncb_p np, ccb_p cp)
+{
+	int error;
+
+	if ((error = bus_dmamap_create(np->sc_dmat, MAX_SIZE, MAX_SCATTER,
+	    MAX_SIZE, 0, BUS_DMA_NOWAIT, &cp->xfer_dmamap)) != 0) {
+		printf("%s: unable to create CCB xfer DMA map, error = %d\n",
+		    ncr_name(np), error);
+		return (error);
+	}
+
+	return (0);
+}
+
 /*==========================================================
 **
 **
@@ -4757,7 +4779,7 @@ static INT32 ncr_start (struct scsipi_xfer * xp)
 	**----------------------------------------------------
 	*/
 
-	segments = ncr_scatter (&cp->phys, (vaddr_t) xp->data,
+	segments = ncr_scatter (np, cp, (vaddr_t) xp->data,
 					(vsize_t) xp->datalen);
 
 	if (segments < 0) {
@@ -5008,6 +5030,14 @@ void ncr_complete (ncb_p np, ccb_p cp)
 
 	xp = cp->xfer;
 	cp->xfer = NULL;
+
+#ifdef __NetBSD__
+	/*
+	**	Unload the DMA maps.
+	*/
+	if (xp->datalen != 0)
+		bus_dmamap_unload(np->sc_dmat, cp->xfer_dmamap);
+#endif
 	tp = &np->target[xp->sc_link->scsipi_scsi.target];
 	lp = tp->lp[xp->sc_link->scsipi_scsi.lun];
 
@@ -7404,6 +7434,11 @@ static	void ncr_alloc_ccb (ncb_p np, u_long target, u_long lun)
 
 	cp->p_ccb	     = vtophys (cp);
 
+#ifdef __NetBSD__
+	if (ncr_ccb_dma_init(np, cp) != 0)
+		return;
+#endif
+
 	/*
 	**	Chain into reselect list
 	*/
@@ -7504,10 +7539,31 @@ static void ncr_opennings (ncb_p np, lcb_p lp, struct scsipi_xfer * xp)
 */
 
 static	int	ncr_scatter
-	(struct dsb* phys, vaddr_t vaddr, vsize_t datalen)
+	(ncb_p np, ccb_p cp, vaddr_t vaddr, vsize_t datalen)
 {
-	u_long	paddr, pnext;
+	struct dsb *phys = &cp->phys;
+#ifdef __NetBSD__
+	int error, segment;
 
+	bzero (&phys->data, sizeof (phys->data));
+	if (!datalen) return (0);
+
+	if ((error = bus_dmamap_load(np->sc_dmat, cp->xfer_dmamap,
+	    (void *)vaddr, datalen, NULL, BUS_DMA_NOWAIT)) != 0) {
+		printf("%s: unable to load xfer DMA map, error = %d\n",
+		    ncr_name(np), error);
+		return (-1);
+	}
+
+	for (segment = 0; segment < cp->xfer_dmamap->dm_nsegs; segment++) {
+		phys->data[segment].addr =
+		    cp->xfer_dmamap->dm_segs[segment].ds_addr;
+		phys->data[segment].size =
+		    cp->xfer_dmamap->dm_segs[segment].ds_len;
+	}
+	return (segment);
+#else
+	u_long	paddr, pnext;
 	u_short	segment  = 0;
 	u_long	segsize, segaddr;
 	u_long	size, csize    = 0;
@@ -7605,6 +7661,7 @@ static	int	ncr_scatter
 	};
 
 	return (segment);
+#endif /* __NetBSD__ */
 }
 
 /*==========================================================
