@@ -1,4 +1,4 @@
-#	$NetBSD: genassym.cf,v 1.4 1997/09/28 11:29:48 scw Exp $
+#	$NetBSD: genassym.cf,v 1.4.2.1 1997/10/22 01:24:01 mellon Exp $
 
 #
 # Copyright (c) 1982, 1990, 1993
@@ -106,7 +106,7 @@ define	UPAGES			UPAGES
 define	USPACE			USPACE
 define	NBPG			NBPG
 define	PGSHIFT			PGSHIFT
-define	USRSTACK		USRSTACK
+#define	USRSTACK		USRSTACK
 
 # boot stuff
 define	RB_SBOOT		RB_SBOOT
