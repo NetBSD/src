@@ -1,4 +1,4 @@
-/*	$NetBSD: mach_machdep.c,v 1.3 2001/11/15 07:03:30 lukem Exp $	 */
+/*	$NetBSD: mach_machdep.c,v 1.4 2002/11/14 19:45:25 christos Exp $	 */
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mach_machdep.c,v 1.3 2001/11/15 07:03:30 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mach_machdep.c,v 1.4 2002/11/14 19:45:25 christos Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_vm86.h"
@@ -59,8 +59,13 @@ __KERNEL_RCSID(0, "$NetBSD: mach_machdep.c,v 1.3 2001/11/15 07:03:30 lukem Exp $
 #include <sys/mount.h>
 #include <sys/syscallargs.h>
 #include <sys/exec_elf.h>
+#include <sys/exec_macho.h>
+
+#include <uvm/uvm_extern.h>
+#include <uvm/uvm_param.h>
 
 #include <compat/mach/mach_types.h>
+#include <compat/mach/mach_host.h>
 
 #include <machine/cpu.h>
 #include <machine/cpufunc.h>
@@ -102,4 +107,17 @@ mach_trap(frame)
 		uprintf("unknown mach trap %d\n", frame.tf_eax);
 		break;
 	}
+}
+
+void
+mach_host_basic_info(info)
+    struct mach_host_basic_info *info;
+{
+	/* XXX fill this  accurately */
+	info->max_cpus = 1;
+	info->avail_cpus = 1;
+	info->memory_size = uvmexp.active + uvmexp.inactive;
+#undef cpu_type
+	info->cpu_type = MACHO_CPU_TYPE_I386;
+	info->cpu_subtype = MACHO_CPU_SUBTYPE_I386_ALL;
 }
