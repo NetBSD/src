@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread_md.h,v 1.2 2003/01/18 10:34:21 thorpej Exp $	*/
+/*	$NetBSD: pthread_md.h,v 1.3 2003/11/10 07:52:52 martin Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -61,23 +61,35 @@ pthread__sp(void)
  */
 
 #define PTHREAD_UCONTEXT_TO_REG(reg, uc) do {				\
-	memcpy(&(reg)->r_global, &(uc)->uc_mcontext.__gregs, sizeof(__gregset_t));\
+	memcpy((reg), &(uc)->uc_mcontext.__gregs, 			\
+	    (_REG_Y+1)*sizeof(__greg_t));				\
+	(reg)->r_global[0] = 0;						\
+	memcpy(&(reg)->r_global[1], &(uc)->uc_mcontext.__gregs[_REG_G1],\
+	     (_REG_O7-_REG_G1+1)*sizeof(__greg_t));			\
 	} while (/*CONSTCOND*/0)
 
 #define PTHREAD_REG_TO_UCONTEXT(uc, reg) do {				\
-	memcpy(&(uc)->uc_mcontext.__gregs, &(reg)->r_global, sizeof(__gregset_t));\
+	memcpy(&(uc)->uc_mcontext.__gregs, (reg), 			\
+	    (_REG_Y+1)*sizeof(__greg_t)); 				\
+	(uc)->uc_mcontext.__gregs[_REG_Y] = (reg)->r_y;			\
+	memcpy(&(uc)->uc_mcontext.__gregs[_REG_G1], &(reg)->r_global[1],\
+	    (_REG_O7-_REG_G1+1)*sizeof(__greg_t));			\
 	(uc)->uc_flags = ((uc)->uc_flags | _UC_CPU) & ~_UC_USER;       	\
 	} while (/*CONSTCOND*/0)
 
-#define PTHREAD_UCONTEXT_TO_FPREG(freg, uc)       			\
-	memcpy((freg), &(uc)->uc_mcontext.__fpregs,			\
-	    sizeof(struct fpreg))					\
+#define PTHREAD_UCONTEXT_TO_FPREG(freg, uc) do {			\
+	memcpy((freg)->fr_regs,						\
+	    &(uc)->uc_mcontext.__fpregs.__fpu_fr.__fpu_regs,		\
+	    32*sizeof(u_int));						\
+	(freg)->fr_fsr = (uc)->uc_mcontext.__fpregs.__fpu_fsr;		\
+	} while (/*CONSTCOND*/0)
 
 #define PTHREAD_FPREG_TO_UCONTEXT(uc, freg) do {       	       		\
-	memcpy(&(uc)->uc_mcontext.__fpregs, (freg),			\
-	    sizeof(struct fpreg));					\
+	memcpy(&(uc)->uc_mcontext.__fpregs.__fpu_fr.__fpu_regs,		\
+	    (freg)->fr_regs,						\
+	    32*sizeof(u_int));						\
+	(uc)->uc_mcontext.__fpregs.__fpu_fsr = (freg)->fr_fsr;		\
 	(uc)->uc_flags = ((uc)->uc_flags | _UC_FPU) & ~_UC_USER;       	\
 	} while (/*CONSTCOND*/0)
 
 #endif /* _LIB_PTHREAD_SPARC_MD_H */
-
