@@ -1,4 +1,4 @@
-/*	$NetBSD: cmd3.c,v 1.19 2002/08/12 02:42:52 itojun Exp $	*/
+/*	$NetBSD: cmd3.c,v 1.20 2003/03/29 21:41:04 christos Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)cmd3.c	8.2 (Berkeley) 4/20/95";
 #else
-__RCSID("$NetBSD: cmd3.c,v 1.19 2002/08/12 02:42:52 itojun Exp $");
+__RCSID("$NetBSD: cmd3.c,v 1.20 2003/03/29 21:41:04 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -87,7 +87,7 @@ dosh(void *v)
 
 	if ((shellcmd = value("SHELL")) == NULL)
 		shellcmd = _PATH_CSHELL;
-	(void)run_command(shellcmd, 0, -1, -1, NULL, NULL, NULL);
+	(void)run_command(shellcmd, 0, -1, -1, NULL);
 	(void)signal(SIGINT, sigint);
 	putchar('\n');
 	return 0;
