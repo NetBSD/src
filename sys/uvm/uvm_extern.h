@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_extern.h,v 1.33 1999/07/17 21:35:49 thorpej Exp $	*/
+/*	$NetBSD: uvm_extern.h,v 1.34 1999/07/22 22:58:38 thorpej Exp $	*/
 
 /*
  *
@@ -155,6 +155,7 @@ struct vm_anon;
 struct vmspace;
 struct pmap;
 struct vnode;
+struct simplelock;
 
 /*
  * uvmexp: global data structures that are exported to parts of the kernel
@@ -287,6 +288,8 @@ int			uvm_fault __P((vm_map_t, vaddr_t,
 #if defined(KGDB)
 void			uvm_chgkprot __P((caddr_t, size_t, int));
 #endif
+void			uvm_sleep __P((void *, struct simplelock *, boolean_t,
+			    const char *, int));
 void			uvm_fork __P((struct proc *, struct proc *, boolean_t,
 			    void *, size_t));
 void			uvm_exit __P((struct proc *));
