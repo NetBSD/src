@@ -1,4 +1,4 @@
-/*	$NetBSD: mpbios.c,v 1.1 2003/02/26 21:26:12 fvdl Exp $	*/
+/*	$NetBSD: mpbios.c,v 1.2 2003/03/04 22:19:04 fvdl Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -113,7 +113,6 @@
 #include <uvm/uvm_extern.h>
 
 #include <machine/specialreg.h>
-#include <machine/cputypes.h>
 #include <machine/cpuvar.h>
 #include <machine/bus.h>
 #include <machine/mpbiosvar.h>
@@ -125,7 +124,9 @@
 
 #include <dev/isa/isareg.h>
 
+#ifdef X86_MPBIOS_SUPPORT_EISA
 #include <dev/eisa/eisavar.h>	/* for ELCR* def'ns */
+#endif
 
 
 static struct mpbios_ioapic default_ioapic = {
@@ -162,12 +163,17 @@ static const void *mpbios_search __P((struct device *, paddr_t, int,
 static inline int mpbios_cksum __P((const void *,int));
 
 static void mp_cfg_special_intr __P((const struct mpbios_int *, u_int32_t *));
-static void mp_cfg_pci_intr __P((const struct mpbios_int *, u_int32_t *));
-static void mp_cfg_eisa_intr __P((const struct mpbios_int *, u_int32_t *));
-static void mp_cfg_isa_intr __P((const struct mpbios_int *, u_int32_t *));
 static void mp_print_special_intr (int intr);
+
+static void mp_cfg_pci_intr __P((const struct mpbios_int *, u_int32_t *));
 static void mp_print_pci_intr (int intr);
+
+#ifdef X86_MPBIOS_SUPPORT_EISA
 static void mp_print_eisa_intr (int intr);
+static void mp_cfg_eisa_intr __P((const struct mpbios_int *, u_int32_t *));
+#endif
+
+static void mp_cfg_isa_intr __P((const struct mpbios_int *, u_int32_t *));
 static void mp_print_isa_intr (int intr);
 
 static void mpbios_cpu __P((const u_int8_t *, struct device *));
@@ -768,6 +774,7 @@ static void mp_cfg_pci_intr (entry, redir)
 	}
 }
 
+#ifdef X86_MPBIOS_SUPPORT_EISA
 static void mp_cfg_eisa_intr (entry, redir)
 	const struct mpbios_int *entry;
 	u_int32_t *redir;
@@ -817,6 +824,7 @@ static void mp_cfg_eisa_intr (entry, redir)
 		panic("unknown MPS interrupt trigger %d", mpstrig);
 	}
 }
+#endif
 
 
 static void mp_cfg_isa_intr (entry, redir)
@@ -876,11 +884,13 @@ static void mp_print_isa_intr (intr)
 	printf(" irq %d", intr);
 }
 
+#ifdef X86_MPBIOS_SUPPORT_EISA
 static void mp_print_eisa_intr (intr)
 	int intr;
 {
 	printf(" EISA irq %d", intr);
 }
+#endif
 
 
 
@@ -918,6 +928,7 @@ mpbios_bus(ent, self)
 		mp_busses[bus_id].mb_idx = bus_id;
 		mp_busses[bus_id].mb_intr_print = mp_print_pci_intr;
 		mp_busses[bus_id].mb_intr_cfg = mp_cfg_pci_intr;
+#ifdef X86_MPBIOS_SUPPORT_EISA
 	} else if (memcmp(entry->bus_type, "EISA  ", 6) == 0) {
 		mp_busses[bus_id].mb_name = "eisa";
 		mp_busses[bus_id].mb_idx = bus_id;
@@ -931,6 +942,7 @@ mpbios_bus(ent, self)
 			printf("oops: multiple isa busses?\n");
 		else
 			mp_eisa_bus = bus_id;
+#endif
 
 	} else if (memcmp(entry->bus_type, "ISA   ", 6) == 0) {
 		mp_busses[bus_id].mb_name = "isa";
