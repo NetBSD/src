@@ -1,9 +1,10 @@
-/*	$NetBSD: ipsec.h,v 1.12 2000/03/01 12:49:48 itojun Exp $	*/
+/*	$NetBSD: ipsec.h,v 1.13 2000/06/03 16:14:03 itojun Exp $	*/
+/*	$KAME: ipsec.h,v 1.31 2000/05/18 12:32:32 sumikawa Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
  * All rights reserved.
- * 
+ *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
  * are met:
@@ -15,7 +16,7 @@
  * 3. Neither the name of the project nor the names of its contributors
  *    may be used to endorse or promote products derived from this software
  *    without specific prior written permission.
- * 
+ *
  * THIS SOFTWARE IS PROVIDED BY THE PROJECT AND CONTRIBUTORS ``AS IS'' AND
  * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
  * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
@@ -73,6 +74,7 @@ struct secpolicy {
 
 	int refcnt;			/* reference count */
 	struct secpolicyindex spidx;	/* selector */
+	u_int32_t id;			/* It's unique number on the system. */
 	u_int state;			/* 0: dead, others: alive */
 #define IPSEC_SPSTATE_DEAD	0
 #define IPSEC_SPSTATE_ALIVE	1
@@ -101,6 +103,17 @@ struct inpcbpolicy {
 	struct secpolicy *sp_in;
 	struct secpolicy *sp_out;
 	int priv;			/* privileged socket ? */
+};
+
+/* SP acquiring list table. */
+struct secspacq {
+	LIST_ENTRY(secspacq) chain;
+
+	struct secpolicyindex spidx;
+
+	u_int32_t tick;		/* for lifetime */
+	int count;		/* for lifetime */
+	/* XXX: here is mbuf place holder to be sent ? */
 };
 #endif /*_KERNEL*/
 
@@ -176,7 +189,7 @@ struct ipsecstat {
 	u_quad_t in_ahhist[256];
 	u_quad_t in_comphist[256];
 	u_quad_t out_success; /* succeeded outbound process */
-	u_quad_t out_polvio; 
+	u_quad_t out_polvio;
 			/* security policy violation for outbound process */
 	u_quad_t out_nosa;    /* outbound SA is unavailable */
 	u_quad_t out_inval;   /* outbound process failed due to EINVAL */
