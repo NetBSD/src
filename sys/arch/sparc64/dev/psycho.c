@@ -1,4 +1,4 @@
-/*	$NetBSD: psycho.c,v 1.24 2000/07/18 11:35:03 pk Exp $	*/
+/*	$NetBSD: psycho.c,v 1.25 2000/10/19 05:38:35 mrg Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000 Matthew R. Green
@@ -271,8 +271,8 @@ sabre_init(sc, ma, pba)
 		 PCICTL_CPU_PRIO |
 		 PCICTL_ARB_PRIO |
 		 PCICTL_RTRYWAIT);
-	bus_space_write_8(sc->sc_bustag, &sc->sc_regs->psy_pcictl[0].pci_csr, 
-		0, csr);
+	bus_space_write_8(sc->sc_bustag,
+	    (bus_space_handle_t)&sc->sc_regs->psy_pcictl[0].pci_csr, 0, csr);
 
 	/* allocate a pair of psycho_pbm's for our simba's */
 	sc->sc_sabre = malloc(sizeof *pp, M_DEVBUF, M_NOWAIT);
