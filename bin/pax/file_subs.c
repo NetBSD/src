@@ -1,4 +1,4 @@
-/*	$NetBSD: file_subs.c,v 1.32 2003/02/10 07:49:57 grant Exp $	*/
+/*	$NetBSD: file_subs.c,v 1.33 2003/06/23 13:33:15 grant Exp $	*/
 
 /*-
  * Copyright (c) 1992 Keith Muller.
@@ -42,7 +42,7 @@
 #if 0
 static char sccsid[] = "@(#)file_subs.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: file_subs.c,v 1.32 2003/02/10 07:49:57 grant Exp $");
+__RCSID("$NetBSD: file_subs.c,v 1.33 2003/06/23 13:33:15 grant Exp $");
 #endif
 #endif /* not lint */
 
@@ -463,11 +463,7 @@ badlink:
 	/*
 	 * we were able to create the node. set uid/gid, modes and times
 	 */
-#if HAVE_LCHOWN
 	if (pids)
-#else
-	if (pids && arcn->type != PAX_SLK)
-#endif
 		res = set_ids(nm, arcn->sb.st_uid, arcn->sb.st_gid);
 	else
 		res = 0;
@@ -479,11 +475,7 @@ badlink:
 	 */
 	if (!pmode || res)
 		arcn->sb.st_mode &= ~(SETBITS);
-#if HAVE_LCHMOD
 	if (pmode)
-#else
-	if (pmode && arcn->type != PAX_SLK)
-#endif
 		set_pmode(arcn->name, arcn->sb.st_mode);
 
 	if (arcn->type == PAX_DIR && strcmp(NM_CPIO, argv0) != 0) {
@@ -741,12 +733,7 @@ int
 set_ids(char *fnm, uid_t uid, gid_t gid)
 {
 	if (geteuid() == 0)
-#if HAVE_LCHOWN
-		if (lchown(fnm, uid, gid))
-#else
-		if (chown(fnm, uid, gid))
-#endif
-		{
+		if (lchown(fnm, uid, gid)) {
 			(void)fflush(listf);
 			syswarn(1, errno, "Cannot set file uid/gid of %s",
 			    fnm);
@@ -764,12 +751,7 @@ void
 set_pmode(char *fnm, mode_t mode)
 {
 	mode &= ABITS;
-#if HAVE_LCHMOD
-	if (lchmod(fnm, mode))
-#else
-	if (chmod(fnm, mode))
-#endif
-	{
+	if (lchmod(fnm, mode)) {
 		(void)fflush(listf);
 		syswarn(1, errno, "Cannot set permissions on %s", fnm);
 	}
