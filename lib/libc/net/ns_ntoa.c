@@ -1,4 +1,4 @@
-/*	$NetBSD: ns_ntoa.c,v 1.9 1999/09/16 11:45:16 lukem Exp $	*/
+/*	$NetBSD: ns_ntoa.c,v 1.10 2002/08/27 23:47:07 itojun Exp $	*/
 
 /*
  * Copyright (c) 1986, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)ns_ntoa.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: ns_ntoa.c,v 1.9 1999/09/16 11:45:16 lukem Exp $");
+__RCSID("$NetBSD: ns_ntoa.c,v 1.10 2002/08/27 23:47:07 itojun Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -57,9 +57,9 @@ ns_ntoa(addr)
 	static char obuf[40];
 	union { union ns_net net_e; u_int32_t long_e; } net;
 	u_int16_t port = htons(addr.x_port);
-	register char *cp;
+	char *cp;
 	char *cp2;
-	register u_int8_t *up = addr.x_host.c_host;
+	u_int8_t *up = addr.x_host.c_host;
 	u_int8_t *uplim = up + 6;
 
 	net.net_e = addr.x_net;
@@ -93,7 +93,7 @@ spectHex(p0)
 {
 	int ok = 0;
 	int nonzero = 0;
-	register char *p = p0;
+	char *p = p0;
 
 	_DIAGASSERT(p0 != NULL);
 
