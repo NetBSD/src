@@ -1,4 +1,4 @@
-/*	$NetBSD: uhci.c,v 1.28 1999/05/21 10:15:24 augustss Exp $	*/
+/*	$NetBSD: uhci.c,v 1.29 1999/06/09 17:04:45 augustss Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -1919,7 +1919,7 @@ uhci_bulk_done(ii)
 
 	if (len != 0) {
 		dma = &upipe->u.bulk.datadma;
-		if (upipe->u.bulk.isread && len != 0)
+		if (upipe->u.bulk.isread)
 			memcpy(reqh->buffer, KERNADDR(dma), len);
 		uhci_free_std_chain(sc, htd->link.std, 0);
 		usb_freemem(sc->sc_dmatag, dma);
