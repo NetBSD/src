@@ -1,4 +1,4 @@
-/*	$NetBSD: psl.h,v 1.8 2003/07/31 01:25:38 matt Exp $	*/
+/*	$NetBSD: psl.h,v 1.9 2004/04/04 16:49:12 matt Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -80,6 +80,9 @@
 
 #define	PSL_USERSET	(PSL_EE | PSL_PR | PSL_ME | PSL_IR | PSL_DR | PSL_RI)
 
-#define	PSL_USERSTATIC	(PSL_USERSET | PSL_IP | 0x87c0008c)
+/*
+ * A user is not allowed to change any MSR bits except the following:
+ */
+#define	PSL_USERSTATIC	(~(PSL_VEC|PSL_FP|PSL_FE0|PSL_FE1|PSL_LE|PSL_SE|PSL_BE))
 
 #endif	/* _POWERPC_PSL_H_ */
