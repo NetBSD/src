@@ -1,4 +1,4 @@
-#	$NetBSD: files.isa,v 1.83 1999/03/22 22:33:36 bad Exp $
+#	$NetBSD: files.isa,v 1.83.2.1 1999/09/10 22:42:56 he Exp $
 #
 # Config file and device description for machine-independent ISA code.
 # Included by ports that need it.  Requires that the SCSI files be
@@ -107,11 +107,6 @@ device	wds: scsi, isadma
 attach	wds at isa
 file	dev/isa/wds.c			wds
 
-# NCR 5380-based boards
-device	nca: scsi, ncr5380sbc
-attach	nca at isa
-file	dev/isa/nca.c			nca
-
 #
 # Other ISA disk controllers
 #
@@ -200,6 +195,12 @@ file	dev/isa/if_fmv.c		fmv
 device  iy: ether, ifnet, arp
 attach	iy at isa
 file    dev/isa/if_iy.c			iy
+
+# the probe routine of this "recognizes" the iy. Probe after it.
+# NCR 5380-based boards
+device	nca: scsi, ncr5380sbc
+attach	nca at isa
+file	dev/isa/nca.c			nca
 
 # AMD am7990 (Lance) -based boards
 # (BICC Isolan, NE2100, DEPCA)
