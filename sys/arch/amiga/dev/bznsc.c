@@ -1,4 +1,4 @@
-/*	$NetBSD: bznsc.c,v 1.2 1996/10/19 16:54:14 is Exp $	*/
+/*	$NetBSD: bznsc.c,v 1.3 1996/11/11 15:33:57 is Exp $	*/
 
 /*
  * Copyright (c) 1996 Ignatios Souvatzis
@@ -118,7 +118,7 @@ bznscmatch(pdp, match, auxp)
 		return 0;
 
 	/* check product id. olds have Fastlane product id */
-	if (zap->prodid != 23 && zap->prodid != 11)
+	if (zap->prodid != 17 && zap->prodid != 11)
 		return(0);
 
 found:
