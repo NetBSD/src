@@ -1,4 +1,4 @@
-/*	$NetBSD: disklabel.c,v 1.84 2000/05/31 14:13:48 fvdl Exp $	*/
+/*	$NetBSD: disklabel.c,v 1.85 2000/07/07 12:29:10 itojun Exp $	*/
 
 /*
  * Copyright (c) 1987, 1993
@@ -47,7 +47,7 @@ __COPYRIGHT("@(#) Copyright (c) 1987, 1993\n\
 static char sccsid[] = "@(#)disklabel.c	8.4 (Berkeley) 5/4/95";
 /* from static char sccsid[] = "@(#)disklabel.c	1.2 (Symmetric) 11/28/85"; */
 #else
-__RCSID("$NetBSD: disklabel.c,v 1.84 2000/05/31 14:13:48 fvdl Exp $");
+__RCSID("$NetBSD: disklabel.c,v 1.85 2000/07/07 12:29:10 itojun Exp $");
 #endif
 #endif /* not lint */
 
@@ -861,7 +861,7 @@ readlabel(f)
 			}
 		}
 		if (msg != NULL)
-			errx(1, msg);
+			errx(1, "%s", msg);
 		/*
 		 * There was no label on the disk. Get the fictious one
 		 * as a basis for initialisation.

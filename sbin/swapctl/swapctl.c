@@ -1,4 +1,4 @@
-/*	$NetBSD: swapctl.c,v 1.14 2000/04/13 08:29:56 mrg Exp $	*/
+/*	$NetBSD: swapctl.c,v 1.15 2000/07/07 12:29:10 itojun Exp $	*/
 
 /*
  * Copyright (c) 1996, 1997, 1999 Matthew R. Green
@@ -470,7 +470,7 @@ do_fstab(add)
 			 * Determine blk-ness.
 			 */
 			if (stat(spec, &st) < 0) {
-				warn(spec);
+				warn("%s", spec);
 				continue;
 			}
 			if (S_ISBLK(st.st_mode))
