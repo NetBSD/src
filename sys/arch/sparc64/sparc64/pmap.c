@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.65 2000/07/14 09:58:52 pk Exp $	*/
+/*	$NetBSD: pmap.c,v 1.66 2000/07/15 14:26:39 eeh Exp $	*/
 #undef	NO_VCACHE /* Don't forget the locked TLB in dostart */
 #define HWREF 1 
 #undef	BOOT_DEBUG
@@ -314,9 +314,13 @@ struct {
 #define	PDB_CACHESTUFF	0x4000
 #define	PDB_ALIAS	0x8000
 #define PDB_EXTRACT	0x10000
+#define	PDB_BOOT	0x20000
+#define	PDB_BOOT1	0x20000
 int	pmapdebug = 0/*PDB_ALIAS|PDB_CTX_ALLOC|PDB_CTX_STEAL|PDB_EXTRACT|PDB_CREATE|PDB_DESTROY|PDB_CHANGEPROT|PDB_ENTER|PDB_REMOVE|PDB_DEMAP|*/;
 /* Number of H/W pages stolen for page tables */
 int	pmap_pages_stolen = 0;
+
+#define	BDPRINTF(n, f)	if (pmapdebug & (n)) prom_printf f
 #endif
 
 #ifdef NOTDEF_DEBUG
@@ -383,12 +387,11 @@ pmap_enter_kpage(va, data)
 #ifdef DEBUG
 		enter_stats.ptpneeded ++;
 #endif
-#ifdef BOOT1_DEBUG
-		prom_printf(
-			"pseg_set: pm=%p va=%p data=%lx newp %lx\r\n",
-			pmap_kernel(), va, (long)data, (long)newp);
+		BDPRINTF(PDB_BOOT1, 
+			 ("pseg_set: pm=%p va=%p data=%lx newp %lx\r\n",
+			  pmap_kernel(), va, (long)data, (long)newp));
+		if (pmapdebug & PDB_BOOT1)
 		{int i; for (i=0; i<140000000; i++) ;}
-#endif
 	}
 }
 
@@ -435,9 +438,7 @@ pmap_bootstrap(kernelstart, kernelend, maxctx)
 	pmapdebug = 0;
 #endif
 
-#ifdef BOOT_DEBUG
-	prom_printf("Entered pmap_bootstrap.\r\n");
-#endif
+	BDPRINTF(PDB_BOOT, ("Entered pmap_bootstrap.\r\n"));
 	/*
 	 * set machine page size
 	 */
@@ -457,14 +458,17 @@ pmap_bootstrap(kernelstart, kernelend, maxctx)
 		OF_exit();
 	}
 
-#ifdef BOOT_DEBUG
-	/* print out mem list */
-	prom_printf("Available virutal memory:\r\n");
-	for (mp = memlist; mp->size; mp++) {
-		prom_printf("memlist start %p size %lx\r\n", (void *)(u_long)mp->start,
-		    (u_long)mp->size);
+#ifdef DEBUG
+	if (pmapdebug & PDB_BOOT) {
+		/* print out mem list */
+		prom_printf("Available virutal memory:\r\n");
+		for (mp = memlist; mp->size; mp++) {
+			prom_printf("memlist start %p size %lx\r\n", 
+				    (void *)(u_long)mp->start,
+				    (u_long)mp->size);
+		}
+		prom_printf("End of available virutal memory\r\n");
 	}
-	prom_printf("End of available virutal memory\r\n");
 #endif
 	/* 
 	 * Get hold or the message buffer.
@@ -472,27 +476,21 @@ pmap_bootstrap(kernelstart, kernelend, maxctx)
 	msgbufp = (struct kern_msgbuf *)MSGBUF_VA;
 /* XXXXX -- increase msgbufsiz for uvmhist printing */
 	msgbufsiz = 4*NBPG /* round_page(sizeof(struct msgbuf)) */;
-#ifdef BOOT_DEBUG
-	prom_printf("Trying to allocate msgbuf at %lx, size %lx\r\n", 
-		    (long)msgbufp, (long)msgbufsiz);
-#endif
+	BDPRINTF(PDB_BOOT, ("Trying to allocate msgbuf at %lx, size %lx\r\n", 
+			    (long)msgbufp, (long)msgbufsiz));
 	if ((long)msgbufp !=
 	    (long)(phys_msgbuf = prom_claim_virt((vaddr_t)msgbufp, msgbufsiz)))
 		prom_printf(
 		    "cannot get msgbuf VA, msgbufp=%p, phys_msgbuf=%lx\r\n", 
 		    (void *)msgbufp, (long)phys_msgbuf);
 	phys_msgbuf = prom_get_msgbuf(msgbufsiz, MMU_PAGE_ALIGN);
-#ifdef BOOT_DEBUG
-	prom_printf("We should have the memory at %lx, let's map it in\r\n", 
-		    phys_msgbuf);
-#endif
+	BDPRINTF(PDB_BOOT, ("We should have the memory at %lx, let's map it in\r\n", 
+		    phys_msgbuf));
 	if (prom_map_phys(phys_msgbuf, msgbufsiz, (vaddr_t)msgbufp, 
 			  -1/* sunos does this */) == -1)
 		prom_printf("Failed to map msgbuf\r\n");
-#ifdef BOOT_DEBUG
 	else
-		prom_printf("msgbuf mapped at %p\r\n", (void *)msgbufp);
-#endif
+		BDPRINTF(PDB_BOOT, ("msgbuf mapped at %p\r\n", (void *)msgbufp));
 	msgbufmapped = 1;	/* enable message buffer */
 	initmsgbuf((caddr_t)msgbufp, msgbufsiz);
 
@@ -500,9 +498,7 @@ pmap_bootstrap(kernelstart, kernelend, maxctx)
 	 * Record kernel mapping -- we will map these with a permanent 4MB
 	 * TLB entry when we initialize the CPU later.
 	 */
-#ifdef BOOT_DEBUG
-	prom_printf("translating kernelstart %p\r\n", (void *)kernelstart);
-#endif
+	BDPRINTF(PDB_BOOT, ("translating kernelstart %p\r\n", (void *)kernelstart));
 	ktext = kernelstart;
 	ktextp = prom_vtop(kernelstart);
 
@@ -525,10 +521,9 @@ pmap_bootstrap(kernelstart, kernelend, maxctx)
 	if (mp1->start < kdata)
 		prom_printf("Kernel at end of vmem???\r\n");
 
-#ifdef BOOT1_DEBUG
-	prom_printf("The kernel data is mapped at %lx, next free seg: %lx, %lx\r\n",
-		    (long)kdata, (u_long)mp1->start, (u_long)mp1->size);
-#endif	
+	BDPRINTF(PDB_BOOT1, 
+		 ("The kernel data is mapped at %lx, next free seg: %lx, %lx\r\n",
+		  (long)kdata, (u_long)mp1->start, (u_long)mp1->size));
 	/* 
 	 * This it bogus and will be changed when the kernel is rounded to 4MB.
 	 */
@@ -582,41 +577,30 @@ remap_data:
 		 * of the 4MB extension.  We need to move the data segment.
 		 */
 
-#ifdef BOOT1_DEBUG
-		prom_printf("Allocating new %lx kernel data at 4MB boundary\r\n",
-		    (u_long)kdsize);
-#endif
+		BDPRINTF(PDB_BOOT1, 
+			 ("Allocating new %lx kernel data at 4MB boundary\r\n",
+			  (u_long)kdsize));
 		if ((newkp = prom_alloc_phys(4*MEG, 4*MEG)) == 0 ) {
 			prom_printf("Cannot allocate new kernel\r\n");
 			OF_exit();
 		}
-#ifdef BOOT1_DEBUG
-		prom_printf("Allocating new va for buffer at %p\r\n",
-		    (void *)newkp);
-#endif
+		BDPRINTF(PDB_BOOT1, ("Allocating new va for buffer at %p\r\n",
+				     (void *)newkp));
 		if ((newkv = (vaddr_t)prom_alloc_virt(4*MEG, 8)) ==
 		    (vaddr_t)-1) {
 			prom_printf("Cannot allocate new kernel va\r\n");
 			OF_exit();
 		}
-#ifdef BOOT1_DEBUG
-		prom_printf("Mapping in buffer %lx at %lx\r\n",
-		    (u_long)newkp, (u_long)newkv);
-#endif
+		BDPRINTF(PDB_BOOT1, ("Mapping in buffer %lx at %lx\r\n",
+		    (u_long)newkp, (u_long)newkv));
 		prom_map_phys(newkp, 4*MEG, (vaddr_t)newkv, -1); 
-#ifdef BOOT1_DEBUG
-		prom_printf("Copying %ld bytes kernel data...", kdsize);
-#endif
+		BDPRINTF(PDB_BOOT1, ("Copying %ld bytes kernel data...", kdsize));
 		bzero((void *)newkv, 4*MEG);
 		bcopy((void *)kdata, (void *)newkv,
 		    kdsize);
-#ifdef BOOT1_DEBUG
-		prom_printf("done.  Swapping maps..unmap new\r\n");
-#endif
+		BDPRINTF(PDB_BOOT1, ("done.  Swapping maps..unmap new\r\n"));
 		prom_unmap_virt((vaddr_t)newkv, 4*MEG);
-#ifdef BOOT_DEBUG
-		prom_printf("remap old ");
-#endif
+		BDPRINTF(PDB_BOOT, ("remap old "));
 #if 0
 		/*
 		 * calling the prom will probably require reading part of the
@@ -628,25 +612,19 @@ remap_data:
 		 * we will map in 4MB, more than we allocated, to allow
 		 * further allocation
 		 */
-#ifdef BOOT1_DEBUG
-		prom_printf("free old\r\n");
-#endif
+		BDPRINTF(PDB_BOOT1, ("free old\r\n"));
 		prom_free_phys(kdatap, kdsize);
 		kdatap = newkp;
-		
-#ifdef BOOT1_DEBUG
-		prom_printf("pmap_bootstrap: firstaddr is %lx virt (%lx phys)"
-		    "avail for kernel\r\n", (u_long)firstaddr,
-		    (u_long)prom_vtop(firstaddr));
-#endif
+		BDPRINTF(PDB_BOOT1,
+			 ("pmap_bootstrap: firstaddr is %lx virt (%lx phys)"
+			  "avail for kernel\r\n", (u_long)firstaddr,
+			  (u_long)prom_vtop(firstaddr)));
 	}
 
 	/*
 	 * Find out how much RAM we have installed.
 	 */
-#ifdef BOOT_DEBUG
-	prom_printf("pmap_bootstrap: getting phys installed\r\n");
-#endif
+	BDPRINTF(PDB_BOOT, ("pmap_bootstrap: getting phys installed\r\n"));
 	if ((memh = OF_finddevice("/memory")) == -1) {
 		prom_printf("no memory?");
 		OF_exit();
@@ -659,23 +637,22 @@ remap_data:
 		OF_exit();
 	}
 
-#ifdef BOOT1_DEBUG
-	/* print out mem list */
-	prom_printf("Installed physical memory:\r\n");
-	for (mp = mem; mp->size; mp++) {
-		prom_printf("memlist start %lx size %lx\r\n",
-		    (u_long)mp->start, (u_long)mp->size);
+#ifdef DEBUG
+	if (pmapdebug & PDB_BOOT1) {
+		/* print out mem list */
+		prom_printf("Installed physical memory:\r\n");
+		for (mp = mem; mp->size; mp++) {
+			prom_printf("memlist start %lx size %lx\r\n",
+				    (u_long)mp->start, (u_long)mp->size);
+		}
 	}
-
-	prom_printf("Calculating physmem:");
 #endif
+	BDPRINTF(PDB_BOOT1, ("Calculating physmem:"));
 
 	for (mp = mem; mp->size; mp++)
 		physmem += btoc(mp->size);
-
-#ifdef BOOT1_DEBUG
-	prom_printf(" result %x or %d pages\r\n", (int)physmem, (int)physmem);
-#endif
+	BDPRINTF(PDB_BOOT1, (" result %x or %d pages\r\n", 
+			     (int)physmem, (int)physmem));
 	/* 
 	 * Calculate approx TSB size.  This probably needs tweaking.
 	 */
@@ -696,15 +673,18 @@ remap_data:
 		OF_exit();
 	}
 	prom_map_size = sz / sizeof(struct prom_map);
-#ifdef BOOT_DEBUG
-	/* print out mem list */
-	prom_printf("Prom xlations:\r\n");
-	for (i = 0; i < prom_map_size; i++) {
-		prom_printf("start %016lx size %016lx tte %016lx\r\n", 
-		    (u_long)prom_map[i].vstart, (u_long)prom_map[i].vsize,
-		    (u_long)prom_map[i].tte);
+#ifdef DEBUG
+	if (pmapdebug & PDB_BOOT) {
+		/* print out mem list */
+		prom_printf("Prom xlations:\r\n");
+		for (i = 0; i < prom_map_size; i++) {
+			prom_printf("start %016lx size %016lx tte %016lx\r\n", 
+				    (u_long)prom_map[i].vstart, 
+				    (u_long)prom_map[i].vsize,
+				    (u_long)prom_map[i].tte);
+		}
+		prom_printf("End of prom xlations\r\n");
 	}
-	prom_printf("End of prom xlations\r\n");
 #endif
 	/*
 	 * Hunt for the kernel text segment and figure out it size and
@@ -719,40 +699,29 @@ remap_data:
 	ektext = ktext + ktsize;
 
 	if (ktextp & (4*MEG-1)) {
-#ifdef BOOT1_DEBUG
-		prom_printf("Allocating new %lx kernel text at 4MB boundary\r\n",
-		    (u_long)ktsize);
-#endif
+		BDPRINTF(PDB_BOOT1, 
+			 ("Allocating new %lx kernel text at 4MB boundary\r\n",
+			  (u_long)ktsize));
 		if ((newkp = prom_alloc_phys(ktsize, 4*MEG)) == 0 ) {
 			prom_printf("Cannot allocate new kernel text\r\n");
 			OF_exit();
 		}
-#ifdef BOOT1_DEBUG
-		prom_printf("Allocating new va for buffer at %p\r\n",
-		    (void *)newkp);
-#endif
+		BDPRINTF(PDB_BOOT1, ("Allocating new va for buffer at %p\r\n",
+				     (void *)newkp));
 		if ((newkv = (vaddr_t)prom_alloc_virt(ktsize, 8)) ==
 		    (vaddr_t)-1) {
 			prom_printf("Cannot allocate new kernel text va\r\n");
 			OF_exit();
 		}
-#ifdef BOOT1_DEBUG
-		prom_printf("Mapping in buffer %lx at %lx\r\n",
-		    (u_long)newkp, (u_long)newkv);
-#endif
+		BDPRINTF(PDB_BOOT1, ("Mapping in buffer %lx at %lx\r\n",
+				     (u_long)newkp, (u_long)newkv));
 		prom_map_phys(newkp, ktsize, (vaddr_t)newkv, -1); 
-#ifdef BOOT1_DEBUG
-		prom_printf("Copying %ld bytes kernel text...", ktsize);
-#endif
+		BDPRINTF(PDB_BOOT1, ("Copying %ld bytes kernel text...", ktsize));
 		bcopy((void *)ktext, (void *)newkv,
 		    ktsize);
-#ifdef BOOT1_DEBUG
-		prom_printf("done.  Swapping maps..unmap new\r\n");
-#endif
+		BDPRINTF(PDB_BOOT1, ("done.  Swapping maps..unmap new\r\n"));
 		prom_unmap_virt((vaddr_t)newkv, 4*MEG);
-#ifdef BOOT_DEBUG
-		prom_printf("remap old ");
-#endif
+		BDPRINTF(PDB_BOOT, ("remap old "));
 #if 0
 		/*
 		 * calling the prom will probably require reading part of the
@@ -765,17 +734,14 @@ remap_data:
 		 * we will map in 4MB, more than we allocated, to allow
 		 * further allocation
 		 */
-#ifdef BOOT1_DEBUG
-		prom_printf("free old\r\n");
-#endif
+		BDPRINTF(PDB_BOOT1, ("free old\r\n"));
 		prom_free_phys(ktextp, ktsize);
 		ktextp = newkp;
 		
-#ifdef BOOT1_DEBUG
-		prom_printf("pmap_bootstrap: firstaddr is %lx virt (%lx phys)"
-		    "avail for kernel\r\n", (u_long)firstaddr,
-		    (u_long)prom_vtop(firstaddr));
-#endif
+		BDPRINTF(PDB_BOOT1, 
+			 ("pmap_bootstrap: firstaddr is %lx virt (%lx phys)"
+			  "avail for kernel\r\n", (u_long)firstaddr,
+			  (u_long)prom_vtop(firstaddr)));
 
 		/*
 		 * Re-fetch translations -- they've certainly changed.
@@ -785,16 +751,18 @@ remap_data:
 			prom_printf("no translations installed?");
 			OF_exit();
 		}
-#ifdef BOOT_DEBUG
-		/* print out mem list */
-		prom_printf("New prom xlations:\r\n");
-		for (i = 0; i < prom_map_size; i++) {
-			prom_printf("start %016lx size %016lx tte %016lx\r\n",
-				(u_long)prom_map[i].vstart, 
-				(u_long)prom_map[i].vsize,
-				(u_long)prom_map[i].tte);
+#ifdef DEBUG
+		if (pmapdebug & PDB_BOOT) {
+			/* print out mem list */
+			prom_printf("New prom xlations:\r\n");
+			for (i = 0; i < prom_map_size; i++) {
+				prom_printf("start %016lx size %016lx tte %016lx\r\n",
+					    (u_long)prom_map[i].vstart, 
+					    (u_long)prom_map[i].vsize,
+					    (u_long)prom_map[i].tte);
+			}
+			prom_printf("End of prom xlations\r\n");
 		}
-		prom_printf("End of prom xlations\r\n");
 #endif
 	} 
 	ektextp = ktextp + ktsize;
@@ -829,15 +797,18 @@ remap_data:
 			}
 		}
 	}
-#ifdef BOOT_DEBUG
-	/* print out mem list */
-	prom_printf("Prom xlations:\r\n");
-	for (i = 0; i < prom_map_size; i++) {
-		prom_printf("start %016lx size %016lx tte %016lx\r\n", 
-		    (u_long)prom_map[i].vstart, (u_long)prom_map[i].vsize,
-		    (u_long)prom_map[i].tte);
+#ifdef DEBUG
+	if (pmapdebug & PDB_BOOT) {
+		/* print out mem list */
+		prom_printf("Prom xlations:\r\n");
+		for (i = 0; i < prom_map_size; i++) {
+			prom_printf("start %016lx size %016lx tte %016lx\r\n", 
+				    (u_long)prom_map[i].vstart, 
+				    (u_long)prom_map[i].vsize,
+				    (u_long)prom_map[i].tte);
+		}
+		prom_printf("End of prom xlations\r\n");
 	}
-	prom_printf("End of prom xlations\r\n");
 #endif
 
 	/*
@@ -860,14 +831,16 @@ remap_data:
 		prom_printf("no available RAM?");
 		OF_exit();
 	}
-#ifdef BOOT1_DEBUG
-	/* print out mem list */
-	prom_printf("Available physical memory:\r\n");
-	for (mp = orig; mp->size; mp++) {
-		prom_printf("memlist start %lx size %lx\r\n",
-		    (u_long)mp->start, (u_long)mp->size);
+#ifdef DEBUG
+	if (pmapdebug & PDB_BOOT1) {
+		/* print out mem list */
+		prom_printf("Available physical memory:\r\n");
+		for (mp = orig; mp->size; mp++) {
+			prom_printf("memlist start %lx size %lx\r\n",
+				    (u_long)mp->start, (u_long)mp->size);
+		}
+		prom_printf("End of available physical memory\r\n");
 	}
-	prom_printf("End of available physical memory\r\n");
 #endif
 	valloc(avail, struct mem_region, sz);
 	bzero((caddr_t)avail, sz);
@@ -889,11 +862,9 @@ remap_data:
 	 *
 	 * We will use the left over space to flesh out the kernel pmap.
 	 */
-#ifdef BOOT1_DEBUG
-	prom_printf("firstaddr before TSB=%lx\r\n", (u_long)firstaddr);
-#endif
+	BDPRINTF(PDB_BOOT1, ("firstaddr before TSB=%lx\r\n", (u_long)firstaddr));
 	firstaddr = ((firstaddr + TSBSIZE - 1) & ~(TSBSIZE-1)); 
-#ifdef BOOT_DEBUG
+#ifdef DEBUG
 	i = (firstaddr + (NBPG-1)) & ~(NBPG-1);	/* First, page align */
 	if ((int)firstaddr < i) {
 		prom_printf("TSB alloc fixup failed\r\n");
@@ -902,32 +873,18 @@ remap_data:
 		panic("TSB alloc\n");
 		OF_exit();
 	}
-	prom_printf("frobbed i, firstaddr before TSB=%x, %lx\r\n", (int)i,
-	    (u_long)firstaddr);
 #endif
+	BDPRINTF(PDB_BOOT, ("frobbed i, firstaddr before TSB=%x, %lx\r\n", 
+			    (int)i, (u_long)firstaddr));
 	valloc(tsb, pte_t, TSBSIZE);
 	bzero(tsb, TSBSIZE);
 
-#ifdef BOOT1_DEBUG
-	prom_printf("firstaddr after TSB=%lx\r\n", (u_long)firstaddr);
-	prom_printf("TSB allocated at %p size %08x\r\n", (void*)tsb,
-	    (int)TSBSIZE);
-#endif
+	BDPRINTF(PDB_BOOT1, ("firstaddr after TSB=%lx\r\n", (u_long)firstaddr));
+	BDPRINTF(PDB_BOOT1, ("TSB allocated at %p size %08x\r\n", (void*)tsb,
+	    (int)TSBSIZE));
 
-	/* initialize pv_list stuff */
 	first_phys_addr = mem->start;
-#if 0
-	valloc(pv_table, struct pv_entry, sizeof(struct pv_entry)*physmem);
-	bzero((caddr_t)pv_table, sizeof(struct pv_entry)*physmem);
-#ifdef BOOT1_DEBUG
-	prom_printf("Allocating pv_table at %lx,%lx\r\n", (u_long)pv_table, 
-		    (u_long)sizeof(struct pv_entry)*physmem);
-#endif
-#endif
-
-#ifdef BOOT1_DEBUG
-	prom_printf("firstaddr after pmap=%08lx\r\n", (u_long)firstaddr);
-#endif
+	BDPRINTF(PDB_BOOT1, ("firstaddr after pmap=%08lx\r\n", (u_long)firstaddr));
 
 	/*
 	 * Page align all regions.  
@@ -937,17 +894,13 @@ remap_data:
 	 * And convert from virtual to physical addresses.
 	 */
 	
-#ifdef BOOT_DEBUG
-	prom_printf("kernel virtual size %08lx - %08lx\r\n",
-	    (u_long)kernelstart, (u_long)firstaddr);
-#endif
+	BDPRINTF(PDB_BOOT, ("kernel virtual size %08lx - %08lx\r\n",
+			    (u_long)kernelstart, (u_long)firstaddr));
 	kdata = kdata & ~PGOFSET;
 	ekdata = firstaddr;
 	ekdata = (ekdata + PGOFSET) & ~PGOFSET;
-#ifdef BOOT1_DEBUG
-	prom_printf("kernel virtual size %08lx - %08lx\r\n",
-	    (u_long)kernelstart, (u_long)kernelend);
-#endif
+	BDPRINTF(PDB_BOOT1, ("kernel virtual size %08lx - %08lx\r\n",
+			     (u_long)kernelstart, (u_long)kernelend));
 	ekdatap = ekdata - kdata + kdatap;
 	/* Switch from vaddrs to paddrs */
 	if(ekdatap > (kdatap + 4*MEG)) {
@@ -956,20 +909,22 @@ remap_data:
 		OF_exit();
 	}
 
-#ifdef BOOT1_DEBUG
-	/* print out mem list */
-	prom_printf("Available %lx physical memory before cleanup:\r\n",
-	    (u_long)avail);
-	for (mp = avail; mp->size; mp++) {
-		prom_printf("memlist start %lx size %lx\r\n", 
-			    (u_long)mp->start, 
-			    (u_long)mp->size);
+#ifdef DEBUG
+	if (pmapdebug & PDB_BOOT1) {
+		/* print out mem list */
+		prom_printf("Available %lx physical memory before cleanup:\r\n",
+			    (u_long)avail);
+		for (mp = avail; mp->size; mp++) {
+			prom_printf("memlist start %lx size %lx\r\n", 
+				    (u_long)mp->start, 
+				    (u_long)mp->size);
+		}
+		prom_printf("End of available physical memory before cleanup\r\n");
+		prom_printf("kernel physical text size %08lx - %08lx\r\n",
+			    (u_long)ktextp, (u_long)ektextp);
+		prom_printf("kernel physical data size %08lx - %08lx\r\n",
+			    (u_long)kdatap, (u_long)ekdatap);
 	}
-	prom_printf("End of available physical memory before cleanup\r\n");
-	prom_printf("kernel physical text size %08lx - %08lx\r\n",
-	    (u_long)ktextp, (u_long)ektextp);
-	prom_printf("kernel physical data size %08lx - %08lx\r\n",
-	    (u_long)kdatap, (u_long)ekdatap);
 #endif
 	/*
 	 * Here's a another quick in-lined bubble sort.
@@ -1077,14 +1032,16 @@ remap_data:
 	}
 #endif
 
-#ifdef BOOT_DEBUG
-	/* print out mem list */
-	prom_printf("Available physical memory after cleanup:\r\n");
-	for (mp = avail; mp->size; mp++) {
-		prom_printf("avail start %lx size %lx\r\n", 
-			    (long)mp->start, (long)mp->size);
+#ifdef DEBUG
+	if (pmapdebug & PDB_BOOT) {
+		/* print out mem list */
+		prom_printf("Available physical memory after cleanup:\r\n");
+		for (mp = avail; mp->size; mp++) {
+			prom_printf("avail start %lx size %lx\r\n", 
+				    (long)mp->start, (long)mp->size);
+		}
+		prom_printf("End of available physical memory after cleanup\r\n");
 	}
-	prom_printf("End of available physical memory after cleanup\r\n");
 #endif
 	/*
 	 * Allocate and clear out pmap_kernel()->pm_segs[]
@@ -1105,17 +1062,15 @@ remap_data:
 	 * finish filling out kernel pmap.
 	 */
 
-#ifdef BOOT_DEBUG
-	prom_printf("pmap_kernel()->pm_physaddr = %lx\r\n",
-	    (long)pmap_kernel()->pm_physaddr);
-#endif
+	BDPRINTF(PDB_BOOT, ("pmap_kernel()->pm_physaddr = %lx\r\n",
+	    (long)pmap_kernel()->pm_physaddr));
 	/*
 	 * Tell pmap about our mesgbuf -- Hope this works already
 	 */
-#ifdef BOOT_DEBUG
-	prom_printf("Calling consinit()\r\n");
-	consinit();
-	prom_printf("Inserting mesgbuf into pmap_kernel()\r\n");
+#ifdef DEBUG
+	BDPRINTF(PDB_BOOT1, ("Calling consinit()\r\n"));
+	if (pmapdebug & PDB_BOOT1) consinit();
+	BDPRINTF(PDB_BOOT1, ("Inserting mesgbuf into pmap_kernel()\r\n"));
 #endif
 	/* it's not safe to call pmap_enter so we need to do this ourselves */
 	va = (vaddr_t)msgbufp;
@@ -1152,14 +1107,9 @@ remap_data:
 		0 /* IE */);
 	data |= TLB_NFO;
 	pmap_enter_kpage(NULL, data);
-#ifdef BOOT1_DEBUG
-	prom_printf("Done inserting mesgbuf into pmap_kernel()\r\n");
-#endif
+	BDPRINTF(PDB_BOOT1, ("Done inserting mesgbuf into pmap_kernel()\r\n"));
 	
-#ifdef BOOT1_DEBUG
-	prom_printf("Inserting PROM mappings into pmap_kernel()\r\n");
-#endif
-	
+	BDPRINTF(PDB_BOOT1, ("Inserting PROM mappings into pmap_kernel()\r\n"));
 	for (i = 0; i < prom_map_size; i++)
 		if (prom_map[i].vstart && ((prom_map[i].vstart>>32) == 0))
 			for (j = 0; j < prom_map[i].vsize; j += NBPG) {
@@ -1181,9 +1131,7 @@ remap_data:
 					(prom_map[i].tte + j)|
 					page_size_map[k].code);
 			}
-#ifdef BOOT1_DEBUG
-	prom_printf("Done inserting PROM mappings into pmap_kernel()\r\n");
-#endif
+	BDPRINTF(PDB_BOOT1, ("Done inserting PROM mappings into pmap_kernel()\r\n"));
 
 	/*
 	 * Fix up start of kernel heap.
@@ -1204,9 +1152,8 @@ remap_data:
 		/* Allocate some VAs for u0 */
 		u0[1] = vmmap + 2*USPACE;
 
-#ifdef BOOT1_DEBUG
-	prom_printf("Inserting stack 0 into pmap_kernel() at %p\r\n", vmmap);
-#endif
+		BDPRINTF(PDB_BOOT1, 
+			 ("Inserting stack 0 into pmap_kernel() at %p\r\n", vmmap));
 
 		while (vmmap < u0[1]) {
 			int64_t data;
@@ -1225,9 +1172,8 @@ remap_data:
 			pmap_enter_kpage(vmmap, data);
 			vmmap += NBPG;
 		}
-#ifdef BOOT1_DEBUG
-	prom_printf("Done inserting stack 0 into pmap_kernel()\r\n");
-#endif
+		BDPRINTF(PDB_BOOT1, 
+			 ("Done inserting stack 0 into pmap_kernel()\r\n"));
 
 		/* Now map in and initialize our cpu_info structure */
 #ifdef DIAGNOSTIC
@@ -1238,9 +1184,8 @@ remap_data:
 		intstk = vmmap;
 		cpus = (struct cpu_info *)(intstk+EINTSTACK-INTSTACK);
 
-#ifdef BOOT1_DEBUG
-	prom_printf("Inserting cpu_info into pmap_kernel() at %p\r\n", cpus);
-#endif
+		BDPRINTF(PDB_BOOT1, 
+			 ("Inserting cpu_info into pmap_kernel() at %p\r\n", cpus));
 		/* Now map in all 8 pages of cpu_info */
 		pa = cpu0paddr;
 		for (i=0; i<8; i++) {
@@ -1260,9 +1205,7 @@ remap_data:
 			vmmap += NBPG;
 			pa += NBPG;
 		}
-#ifdef BOOT1_DEBUG
-	prom_printf("Initializing cpu_info\r\n");
-#endif
+		BDPRINTF(PDB_BOOT1, ("Initializing cpu_info\r\n"));
 
 		/* Initialize our cpu_info structure */
 		bzero((void *)intstk, 8*NBPG);
@@ -1276,9 +1219,8 @@ remap_data:
 		cpus->ci_initstack = (void *)u0[1];
 		cpus->ci_paddr = cpu0paddr;
 		/* The rest will be done at CPU attach time. */
-#ifdef BOOT1_DEBUG
-	prom_printf("Done inserting cpu_info into pmap_kernel()\r\n");
-#endif
+		BDPRINTF(PDB_BOOT1, 
+			 ("Done inserting cpu_info into pmap_kernel()\r\n"));
 	}
 
 	vmmap = reserve_dumppages(vmmap);
@@ -1292,9 +1234,7 @@ remap_data:
 #ifdef DEBUG
 	pmapdebug = opmapdebug;
 #endif
-#ifdef BOOT1_DEBUG
-	prom_printf("Finished pmap_bootstrap()\r\n");
-#endif
+	BDPRINTF(PDB_BOOT1, ("Finished pmap_bootstrap()\r\n"));
 
 }
 
@@ -1311,9 +1251,7 @@ pmap_init()
 	vaddr_t va;
 	struct pglist mlist;
 
-#ifdef NOTDEF_DEBUG
-	prom_printf("pmap_init()\r\n");
-#endif
+	BDPRINTF(PDB_BOOT1, ("pmap_init()\r\n"));
 	if (PAGE_SIZE != NBPG)
 		panic("pmap_init: CLSIZE!=1");
 
@@ -1371,9 +1309,7 @@ pmap_virtual_space(start, end)
 	/* Reserve two pages for pmap_copy_page && /dev/mem */
 	*start = (vaddr_t)(vmmap + 2*NBPG);
 	*end = VM_MAX_KERNEL_ADDRESS;
-#ifdef NOTDEF_DEBUG
-	prom_printf("pmap_virtual_space: %x-%x\r\n", *start, *end);
-#endif
+	BDPRINTF(PDB_BOOT1, ("pmap_virtual_space: %x-%x\r\n", *start, *end));
 }
 
 /*
