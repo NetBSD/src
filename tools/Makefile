@@ -1,6 +1,11 @@
-#	$NetBSD: Makefile,v 1.23 2001/12/29 15:45:52 wiz Exp $
+#	$NetBSD: Makefile,v 1.24 2001/12/31 22:35:41 thorpej Exp $
 
 .include <bsd.own.mk>
+
+# XXX We can't currently build the toolchain for x86-64.
+.if ${MACHINE_ARCH} != "x86_64"
+TOOLCHAIN_BITS= toolchain .WAIT dbsym mdsetimage
+.endif
 
 # Dependencies in SUBDIR below ordered to maximize parallel ability.
 .if !defined(NOSUBDIR)
@@ -8,8 +13,7 @@ SUBDIR=	mkdep .WAIT compat .WAIT \
 	binstall .WAIT \
 		crunchgen gencat lint lint2 lorder mtree rpcgen \
 		texinfo tsort makewhatis \
-	toolchain .WAIT \
-		dbsym mdsetimage \
+	${TOOLCHAIN_BITS} \
 	yacc .WAIT \
 		groff \
 	lex .WAIT \
