@@ -1,4 +1,4 @@
-# $NetBSD: obsolete.mi,v 1.46 2002/06/06 23:05:36 thorpej Exp $
+# $NetBSD: obsolete.mi,v 1.47 2002/06/09 19:31:44 itojun Exp $
 /bin/rcorder
 /dev/i4b
 /dev/i4bctl
@@ -200,3 +200,4 @@
 /var/named/var
 /var/named/var/run
 /var/named/var/tmp
+/usr/sbin/greconfig
