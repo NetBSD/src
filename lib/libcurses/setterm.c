@@ -1,4 +1,4 @@
-/*	$NetBSD: setterm.c,v 1.22 2000/04/29 00:50:05 mycroft Exp $	*/
+/*	$NetBSD: setterm.c,v 1.23 2000/05/19 01:05:44 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1981, 1993, 1994
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)setterm.c	8.8 (Berkeley) 10/25/94";
 #else
-__RCSID("$NetBSD: setterm.c,v 1.22 2000/04/29 00:50:05 mycroft Exp $");
+__RCSID("$NetBSD: setterm.c,v 1.23 2000/05/19 01:05:44 mycroft Exp $");
 #endif
 #endif /* not lint */
 
@@ -169,7 +169,7 @@ setterm(char *type)
 	 * Test for cursor motion capability.
 	 *
 	 */
-	if (t_goto(_cursesi_genbuf, CM, 0, 0, cm_buff, 1023) < 0) {
+	if (t_goto(NULL, CM, 0, 0, cm_buff, 1023) < 0) {
 		CA = 0;
 		CM = 0;
 	} else
