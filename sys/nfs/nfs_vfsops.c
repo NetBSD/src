@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_vfsops.c,v 1.88 2000/03/30 12:51:17 augustss Exp $	*/
+/*	$NetBSD: nfs_vfsops.c,v 1.89 2000/04/15 21:14:53 tsarna Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993, 1995
@@ -55,6 +55,8 @@
 #include <sys/mbuf.h>
 #include <sys/socket.h>
 #include <sys/socketvar.h>
+#include <vm/vm.h>
+#include <sys/sysctl.h>
 #include <sys/systm.h>
 
 #include <net/if.h>
@@ -922,6 +924,17 @@ nfs_sysctl(name, namelen, oldp, oldlenp, newp, newlen, p)
 		}
 		return 0;
 
+	case NFS_IOTHREADS:
+		nfs_getset_niothreads(0);
+
+		rv = (sysctl_int(oldp, oldlenp, newp, newlen,
+		    &nfs_niothreads));
+
+		if (newp)
+			nfs_getset_niothreads(1);
+
+		return rv;
+                
 	default:
 		return EOPNOTSUPP;
 	}
