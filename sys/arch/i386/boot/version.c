@@ -1,11 +1,14 @@
 /*
- *	$Id: version.c,v 1.21.2.1 1994/07/22 01:16:24 cgd Exp $
+ *	$Id: version.c,v 1.21.2.2 1994/07/27 06:29:13 cgd Exp $
  */
 
 /*
  *	NOTE ANY CHANGES YOU MAKE TO THE BOOTBLOCKS HERE.
  *
- *	1.21 -> 1.22
+ *	1.22 -> 1.23, 1.21.2.2
+ *		fix problem with empty symbol tables. (mycroft)
+ *
+ *	1.21 -> 1.22, 1.21.2.1
  *		fix compatibility with pre-4.4 file systems. (mycroft)
  *
  *	1.20 -> 1.21
@@ -35,4 +38,4 @@
  *		look in boot.c revision logs
  */
 
-char *version = "$Revision: 1.21.2.1 $";
+char *version = "$Revision: 1.21.2.2 $";

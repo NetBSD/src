@@ -25,7 +25,7 @@
  * any improvements or extensions that they make and grant Carnegie Mellon
  * the rights to redistribute these changes.
  *
- *	$Id: boot.c,v 1.21 1994/07/01 03:02:30 deraadt Exp $
+ *	$Id: boot.c,v 1.21.2.1 1994/07/27 06:29:10 cgd Exp $
  */
 
 /*
@@ -177,10 +177,13 @@ loadprog(howto)
 	argv[3] = (addr += head.a_bss);
 
 	/********************************************************/
-	/*copy in the symbol header				*/
+	/* copy in the symbol header				*/
 	/********************************************************/
 	pcpy(&head.a_syms, addr, sizeof(head.a_syms));
 	addr += sizeof(head.a_syms);
+
+	if (head.a_syms == 0)
+		goto nosyms;
 	
 	/********************************************************/
 	/* READ in the symbol table				*/
@@ -211,10 +214,12 @@ loadprog(howto)
 		addr += i;
 	}
 
+	printf("]");
+
 	/********************************************************/
 	/* and that many bytes of (debug symbols?)		*/
 	/********************************************************/
-	printf("]");
+nosyms:
 	argv[4] = ((addr+sizeof(int)-1))&~(sizeof(int)-1);
 
 	/********************************************************/
