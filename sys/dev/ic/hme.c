@@ -1,4 +1,4 @@
-/*	$NetBSD: hme.c,v 1.22 2001/10/05 17:49:45 thorpej Exp $	*/
+/*	$NetBSD: hme.c,v 1.23 2001/10/22 16:45:20 mrg Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -183,7 +183,7 @@ hme_config(sc)
 	 * Also, apparently, the buffers must extend to a DMA burst
 	 * boundary beyond the maximum packet size.
 	 */
-#define _HME_NDESC	32
+#define _HME_NDESC	132
 #define _HME_BUFSZ	1600
 
 	/* Note: the # of descriptors must be a multiple of 16 */
