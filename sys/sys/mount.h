@@ -31,7 +31,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)mount.h	7.22 (Berkeley) 6/3/91
- *	$Id: mount.h,v 1.17 1993/09/07 15:41:55 ws Exp $
+ *	$Id: mount.h,v 1.18 1993/12/21 05:48:50 cgd Exp $
  */
 
 #ifndef _SYS_MOUNT_H_
@@ -82,13 +82,15 @@ struct statfs {
 #define	MOUNT_NFS	2		/* Network Filesystem */
 #define	MOUNT_MFS	3		/* Memory Filesystem */
 #define	MOUNT_MSDOS	4		/* MSDOS Filesystem */
-#define MOUNT_ISOFS	5		/* iso9660 cdrom */
-#define MOUNT_FDESC	6		/* /dev/fd filesystem */
-#define MOUNT_KERNFS	7		/* kernel variable filesystem */
-#define MOUNT_DEVFS	8		/* device node filesystem */
-#define MOUNT_AFS	9		/* AFS 3.x */
-#define MOUNT_PROCFS	10		/* proc filesystem */
-#define	MOUNT_MAXTYPE	MOUNT_PROCFS
+#define	MOUNT_ISOFS	5		/* iso9660 cdrom */
+#define	MOUNT_FDESC	6		/* /dev/fd filesystem */
+#define	MOUNT_KERNFS	7		/* kernel variable filesystem */
+#define	MOUNT_DEVFS	8		/* device node filesystem */
+#define	MOUNT_AFS	9		/* AFS 3.x */
+#define	MOUNT_PROCFS	10		/* proc filesystem */
+#define	MOUNT_LOFS	11		/* loopback filesystem */
+#define	MOUNT_PORTAL	12		/* portal filesystem */
+#define	MOUNT_MAXTYPE	MOUNT_PORTAL
 
 /*
  * Structure per mounted file system.
@@ -116,7 +118,7 @@ struct mount {
 #define	MNT_NOEXEC	0x00000004	/* can't exec from filesystem */
 #define	MNT_NOSUID	0x00000008	/* don't honor setuid bits on fs */
 #define	MNT_NODEV	0x00000010	/* don't interpret special files */
-#define	MNT_UNION	0x00000020	/* union with underlying filesysem */
+#define	MNT_UNION	0x00000020	/* union with underlying filesystem */
 
 /*
  * exported mount flags.
