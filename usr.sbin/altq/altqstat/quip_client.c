@@ -1,4 +1,4 @@
-/*	$KAME: quip_client.c,v 1.2 2000/10/18 09:15:17 kjc Exp $	*/
+/*	$KAME: quip_client.c,v 1.3 2001/08/15 12:51:59 kjc Exp $	*/
 /*
  * Copyright (C) 1999-2000
  *	Sony Computer Science Laboratories, Inc.  All rights reserved.
@@ -103,7 +103,7 @@ enum nametype { INTERFACE, CLASS, FILTER, CONDITIONER };
 static FILE *server = NULL;
 int quip_echo = 0;
 
-static char *extract_ifname(const char *name);
+static char *extract_ifname(const char *);
 
 int
 quip_openserver(void)
@@ -116,7 +116,7 @@ quip_openserver(void)
 
 	bzero(&addr, sizeof(addr));
 	addr.sun_family = AF_LOCAL;
-	strcpy(addr.sun_path, QUIP_PATH);
+	strlcpy(addr.sun_path, QUIP_PATH,sizeof(addr.sun_path));
 
 	if (connect(fd, (struct sockaddr *)&addr, sizeof(addr)) < 0) {
 		fprintf(stderr, "can't talk to altqd!\n"
@@ -142,18 +142,20 @@ quip_closeserver(void)
 void
 quip_sendrequest(FILE *fp, const char *request)
 {
-	char buf[1024], *cp;
+	char buf[QUIPMSG_MAXSIZE], *cp;
 	int n;
 
 	if ((cp = strstr(request, "QUIP")) == NULL) {
 		cp = strchr(request, '\n');
 		n = cp - request;
+		if (cp == NULL || n > REQ_MAXSIZE - 10)
+			return;
 		strncpy(buf, request, n);
-		n += sprintf(buf + n, " QUIP/1.0");
-		strcpy(buf + n, cp);
+		n += snprintf(buf + n, REQ_MAXSIZE - n, " QUIP/1.0");
+		strlcpy(buf + n, cp, REQ_MAXSIZE - n);
 	}
 	else
-		strcpy(buf, request);
+		strlcpy(buf, request, REQ_MAXSIZE);
 
 	if (fputs(buf, fp) != 0)
 		err(1, "fputs");
@@ -172,7 +174,7 @@ quip_sendrequest(FILE *fp, const char *request)
 int
 quip_recvresponse(FILE *fp, char *header, char *body, int *blen)
 {
-	char buf[1024], version[64];
+	char buf[QUIPMSG_MAXSIZE], version[64];
 	int code, resid;
 	int end_of_header = 0;
 
@@ -180,7 +182,7 @@ quip_recvresponse(FILE *fp, char *header, char *body, int *blen)
 		*blen = 0;
 	code = 0;
 	resid = 0;
-	while (fgets(buf, 1024, fp) != 0) {
+	while (fgets(buf, sizeof(buf), fp) != 0) {
 		if (quip_echo) {
 			fputs(">  ", stdout);
 			fputs(buf, stdout);
@@ -189,7 +191,7 @@ quip_recvresponse(FILE *fp, char *header, char *body, int *blen)
 		if (!end_of_header) {
 			/* process message header */
 			if (header != NULL)
-				header += sprintf(header, "%s", buf);
+				header += snprintf(header, RES_MAXSIZE, "%s", buf);
 
 			if (code == 0) {
 				/* status line expected */
@@ -218,7 +220,10 @@ quip_recvresponse(FILE *fp, char *header, char *body, int *blen)
 				cp = buf;
 				field = strsep(&cp, ":");
 				if (strcmp(field, "Content-Length") == 0) {
-					sscanf(cp, "%d", &resid);
+					if (sscanf(cp, "%d", &resid) != 1) {
+						fpurge(fp);
+						return (-1);
+					}
 					if (blen != NULL)
 						*blen = resid;
 				}
@@ -229,7 +234,7 @@ quip_recvresponse(FILE *fp, char *header, char *body, int *blen)
 			int len;
 			
 			if (body != NULL) {
-				len = sprintf(body, "%s", buf);
+				len = snprintf(body, BODY_MAXSIZE, "%s", buf);
 				body += len;
 			}
 			else
@@ -318,7 +323,7 @@ quip_selectinterface(char *ifname)
 char *
 quip_selectqdisc(char *ifname, char *qdisc_name)
 {
-	char buf[8192], req[256];
+	char buf[BODY_MAXSIZE], req[REQ_MAXSIZE];
 	int result_code, len;
 	static char qdisc[64];
 
@@ -330,7 +335,7 @@ quip_selectqdisc(char *ifname, char *qdisc_name)
 	}
 
 	/* get qdisc info from the server */
-	sprintf(req, "GET qdisc?%s\n", ifname);
+	snprintf(req, sizeof(req), "GET qdisc?%s\n", ifname);
 	quip_sendrequest(server, req);
 
 	result_code = quip_recvresponse(server, NULL, buf, &len);
@@ -348,9 +353,9 @@ quip_selectqdisc(char *ifname, char *qdisc_name)
 }
 
 void
-quip_chandle2name(const char *ifname, u_long handle, char *name)
+quip_chandle2name(const char *ifname, u_long handle, char *name, size_t size)
 {
-	char buf[8192], req[256], *cp;
+	char buf[BODY_MAXSIZE], req[REQ_MAXSIZE], *cp;
 	int result_code, len;
 
 	name[0] = '\0';
@@ -358,7 +363,7 @@ quip_chandle2name(const char *ifname, u_long handle, char *name)
 		return;
 		
 	/* get class name from the server */
-	sprintf(req, "GET handle-to-name?%s:%#lx\n", ifname, handle);
+	snprintf(req, sizeof(req), "GET handle-to-name?%s:%#lx\n", ifname, handle);
 	quip_sendrequest(server, req);
 
 	result_code = quip_recvresponse(server, NULL, buf, &len);
@@ -368,13 +373,13 @@ quip_chandle2name(const char *ifname, u_long handle, char *name)
 	if ((cp = strchr(buf, '\n')) != NULL)
 		*cp = '\0';
 	if ((cp = strrchr(buf, '/')) != NULL)
-		strcpy(name, cp+1);
+		strlcpy(name, cp+1, size);
 }
 
 void
 quip_printqdisc(const char *ifname)
 {
-	char buf[8192], req[256], *cp;
+	char buf[BODY_MAXSIZE], req[REQ_MAXSIZE], *cp;
 	int result_code, len;
 
 	if (server == NULL) {
@@ -383,7 +388,7 @@ quip_printqdisc(const char *ifname)
 	}
 
 	/* get qdisc info from the server */
-	sprintf(req, "GET qdisc?%s\n", ifname);
+	snprintf(req, sizeof(req), "GET qdisc?%s\n", ifname);
 	quip_sendrequest(server, req);
 
 	result_code = quip_recvresponse(server, NULL, buf, &len);
@@ -401,11 +406,11 @@ quip_printqdisc(const char *ifname)
 void
 quip_printfilter(const char *ifname, const u_long handle)
 {
-	char buf[8192], req[256], *cp;
+	char buf[BODY_MAXSIZE], req[REQ_MAXSIZE], *cp;
 	int result_code, len;
 
 	/* get qdisc info from the server */
-	sprintf(req, "GET filter?%s::%#lx\n", ifname, handle);
+	snprintf(req, sizeof(req), "GET filter?%s::%#lx\n", ifname, handle);
 	quip_sendrequest(server, req);
 
 	result_code = quip_recvresponse(server, NULL, buf, &len);
