@@ -1,4 +1,4 @@
-.\"	$NetBSD: BUILDING.mdoc,v 1.14 2003/01/30 02:52:40 lukem Exp $
+.\"	$NetBSD: BUILDING.mdoc,v 1.15 2003/02/02 12:37:42 lukem Exp $
 .\"
 .\" Copyright (c) 2001-2003 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -40,7 +40,7 @@
 .\" Toolchain prefix for commands
 .ds toolprefix nb
 .
-.Dd January 30, 2003
+.Dd February 2, 2003
 .Dt BUILDING 8
 .Os NetBSD
 .
@@ -591,7 +591,10 @@ layout will be written at the end of a
 .It Sy UPDATE
 If set, then in addition to the effects described for UPDATE above, this
 implies the effects of
-.Sy NOCLEANDIR .
+.Sy NOCLEANDIR
+(i.e., 
+.Dq make cleandir
+is avoided).
 .
 .El
 .
@@ -1128,33 +1131,48 @@ or called with an absolute path.
 .
 .Sh EXAMPLES
 .
-.Bl -tag -width "build.sh"
+.Bl -enum
 .
-.It Li "./build.sh tools kernel=GENERIC"
+.It
+.Li "./build.sh tools kernel=GENERIC"
+.Pp
 Build a new toolchain, and use the new toolchain to
 configure and build a new GENERIC kernel.
 .
-.It Li "./build.sh -U -D /path/to/destdir distribution"
+.It
+.Li "./build.sh -U -D /path/to/destdir distribution"
+.Pp
 Using unprivileged mode,
 build a complete distribution in
 .Pa /path/to/destdir .
 .
-.It Li "# ./build.sh -U -D /path/to/destdir installworld=/"
-As root, install the distribution that was built with unprivileged mode from
+.It
+.Li "# ./build.sh -U -D /path/to/destdir installworld=/"
+.Pp
+As root, install the distribution that was built
+by example 2 into
 .Pa /path/to/destdir
 to
 .Pa / .
-(Even though this is run as root,
+Even though this is run as root,
 .Fl U
 is required so that the permissions stored in
 .Pa /path/to/destdir/METALOG
 are correctly applied to the files as they're copied to
-.Pa / ) .
+.Pa / .
 .
-.It Li "./build.sh -U -D /path/to/destdir -R /path/to/releasedir release"
+.It
+.Li "./build.sh -U -u -D /path/to/destdir -R /path/to/releasedir release"
+.Pp
 Using unprivileged mode,
 build a complete release in
 .Pa /path/to/dir/releasedir .
+.Sy UPDATE
+.Pq Fl u
+is set to prevent the
+.Dq make cleandir ,
+so that if this is run after example 2, it doesn't need to redo that
+portion of the release build.
 .El
 .
 .Sh OBSOLETE VARIABLES
