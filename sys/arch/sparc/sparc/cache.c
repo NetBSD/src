@@ -1,4 +1,4 @@
-/*	$NetBSD: cache.c,v 1.52 2000/06/06 20:08:29 pk Exp $ */
+/*	$NetBSD: cache.c,v 1.53 2000/06/08 14:45:18 pk Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -859,6 +859,7 @@ viking_pcache_flush_page(pa, invalidate_only)
 #define VIKING_DCACHETAG_S	0x0000010000000000UL	/* line valid bit */
 #define VIKING_DCACHETAG_D	0x0001000000000000UL	/* line dirty bit */
 #define VIKING_DCACHETAG_V	0x0100000000000000UL	/* line shared bit */
+#define VIKING_DCACHETAG_PAMASK	0x0000000000ffffffUL	/* PA tag field */
 
 		for (set = 0; set < 128; set++) {
 			/* Set set number and access type */
@@ -871,7 +872,7 @@ viking_pcache_flush_page(pa, invalidate_only)
 				 * If this is a valid tag and the PA field
 				 * matches clear the tag.
 				 */
-				if ((tag & 0x000fffff) == pa_tag &&
+				if ((tag & VIKING_DCACHETAG_PAMASK) == pa_tag &&
 				    (tag & VIKING_DCACHETAG_V) != 0)
 					stda(tagaddr | (i << 26),
 					     ASI_DCACHETAG, 0);
