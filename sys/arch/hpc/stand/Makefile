@@ -1,11 +1,11 @@
-#	$NetBSD: Makefile,v 1.8 2001/06/19 16:50:06 uch Exp $
+#	$NetBSD: Makefile,v 1.9 2002/01/31 19:15:23 tv Exp $
 #
 
-PROJECT_DIRS	= hpcboot libz libsa
-MAKE	= make
+PROJECT_DIRS=	hpcboot libz libsa
+UUDECODE?=	uudecode
 
 all:
-	find binary -name "hpcboot*.exe.uu" -exec uudecode {} \;
+	find binary -name "hpcboot*.exe.uu" -exec ${UUDECODE} {} \;
 
 #
 # generates project/work files for Embeded Visual C++ 3.0
