@@ -1,4 +1,4 @@
-/* $NetBSD: xlint.c,v 1.18 2000/06/14 06:49:24 cgd Exp $ */
+/* $NetBSD: xlint.c,v 1.19 2000/06/29 02:56:47 wrstuden Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -34,7 +34,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: xlint.c,v 1.18 2000/06/14 06:49:24 cgd Exp $");
+__RCSID("$NetBSD: xlint.c,v 1.19 2000/06/29 02:56:47 wrstuden Exp $");
 #endif
 
 #include <sys/param.h>
@@ -686,7 +686,7 @@ runchild(path, args, crfn, fdout)
 			dup2(fdout, STDOUT_FILENO);
 			close(fdout);
 		}
-		(void)execv(path, args);
+		(void)execvp(path, args);
 		warn("cannot exec %s", path);
 		_exit(1);
 		/* NOTREACHED */
