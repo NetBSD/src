@@ -1,4 +1,5 @@
-/*	$NetBSD: in6_proto.c,v 1.15 2000/02/26 09:01:59 itojun Exp $	*/
+/*	$NetBSD: in6_proto.c,v 1.16 2000/02/26 09:09:17 itojun Exp $	*/
+/*	$KAME: in6_proto.c,v 1.40 2000/02/24 16:34:49 itojun Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -176,7 +177,7 @@ struct ip6protosw inet6sw[] = {
 },
 #endif /*TCP6*/
 { SOCK_RAW,	&inet6domain,	IPPROTO_RAW,	PR_ATOMIC | PR_ADDR,
-  rip6_input,	rip6_output,	0,		rip6_ctloutput,
+  rip6_input,	rip6_output,	rip6_ctlinput,	rip6_ctloutput,
   rip6_usrreq,
   0,		0,		0,		0,
 },
