@@ -1,4 +1,4 @@
-/*	$NetBSD: tty.c,v 1.113 1999/04/25 02:56:30 simonb Exp $	*/
+/*	$NetBSD: tty.c,v 1.114 1999/07/22 18:13:37 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1990, 1991, 1993
@@ -1992,7 +1992,7 @@ ttyinfo(tp)
 		ttyprintf(tp, "%d%% ", tmp / 100);
 
 		/* Print resident set size. */
-		if (pick->p_stat == SIDL || pick->p_stat == SZOMB)
+		if (pick->p_stat == SIDL || P_ZOMBIE(p))
 			tmp = 0;
 		else {
 			register struct vmspace *vm = pick->p_vmspace;
@@ -2050,7 +2050,7 @@ proc_compare(p1, p2)
 	/*
  	 * weed out zombies
 	 */
-	switch (TESTAB(p1->p_stat == SZOMB, p2->p_stat == SZOMB)) {
+	switch (TESTAB(P_ZOMBIE(p1), P_ZOMBIE(p2))) {
 	case ONLYA:
 		return (1);
 	case ONLYB:
