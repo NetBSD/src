@@ -219,12 +219,12 @@ file nfs/nfs_subs.c		nfsserver nfsclient
 file nfs/nfs_syscalls.c	 	nfsserver nfsclient
 file nfs/nfs_vfsops.c	 	nfsclient
 file nfs/nfs_vnops.c		nfsclient
-file pcfs/pcfs_conv.c	 	pcfs
-file pcfs/pcfs_denode.c	 	pcfs
-file pcfs/pcfs_fat.c		pcfs
-file pcfs/pcfs_lookup.c	 	pcfs
-file pcfs/pcfs_vfsops.c	 	pcfs
-file pcfs/pcfs_vnops.c	 	pcfs
+file msdosfs/msdosfs_conv.c 	msdosfs
+file msdosfs/msdosfs_denode.c 	msdosfs
+file msdosfs/msdosfs_fat.c	msdosfs
+file msdosfs/msdosfs_lookup.c 	msdosfs
+file msdosfs/msdosfs_vfsops.c 	msdosfs
+file msdosfs/msdosfs_vnops.c 	msdosfs
 file ufs/mfs_vfsops.c	 	mfs
 file ufs/mfs_vnops.c		mfs
 file ufs/ufs_alloc.c		ffs
