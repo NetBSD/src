@@ -44,7 +44,7 @@ char copyright[] =
 
 #ifndef lint
 /* from: static char sccsid[] = "@(#)main.c	5.25 (Berkeley) 4/1/91"; */
-static char *rcsid = "$Id: main.c,v 1.16 1994/09/23 09:33:21 mycroft Exp $";
+static char *rcsid = "$Id: main.c,v 1.17 1994/09/30 03:14:21 gwr Exp $";
 #endif /* not lint */
 
 /*-
@@ -80,6 +80,7 @@ static char *rcsid = "$Id: main.c,v 1.16 1994/09/23 09:33:21 mycroft Exp $";
 #include <sys/resource.h>
 #include <sys/signal.h>
 #include <sys/stat.h>
+#include <sys/utsname.h>
 #include <errno.h>
 #include <fcntl.h>
 #include <stdio.h>
@@ -375,6 +376,7 @@ main(argc, argv)
 	char mdpath[MAXPATHLEN + 1];
 	char obpath[MAXPATHLEN + 1];
 	char cdpath[MAXPATHLEN + 1];
+	struct utsname utsname;
 
 	/*
 	 * Find where we are and take care of PWD for the automounter...
@@ -399,6 +401,18 @@ main(argc, argv)
 		(void) strcpy(curdir, pwd);
 	}
 
+	/*
+	 * Get the name of this type of MACHINE from utsname
+	 * so we can share an executable for similar machines.
+	 * (i.e. m68k: amiga hp300, mac68k, sun3, ...)
+	 *
+	 * Note that while MACHINE is decided at run-time,
+	 * MACHINE_ARCH is always known at compile time.
+	 */
+	if (uname(&utsname)) {
+		perror("make: uname");
+		exit(2);
+	}
 
 	/*
 	 * if the MAKEOBJDIR (or by default, the _PATH_OBJDIR) directory
@@ -409,7 +423,7 @@ main(argc, argv)
 	 */
 	if (!(path = getenv("MAKEOBJDIR"))) {
 		path = _PATH_OBJDIR;
-		(void) sprintf(mdpath, "%s.%s", path, MACHINE);
+		(void) sprintf(mdpath, "%s.%s", path, utsname.machine);
 	}
 	else
 		(void) strncpy(mdpath, path, MAXPATHLEN + 1);
@@ -503,9 +517,7 @@ main(argc, argv)
 	Var_Set("MAKE", argv[0], VAR_GLOBAL);
 	Var_Set(MAKEFLAGS, "", VAR_GLOBAL);
 	Var_Set("MFLAGS", "", VAR_GLOBAL);
-#ifdef MACHINE
-	Var_Set("MACHINE", MACHINE, VAR_GLOBAL);
-#endif
+	Var_Set("MACHINE", utsname.machine, VAR_GLOBAL);
 #ifdef MACHINE_ARCH
 	Var_Set("MACHINE_ARCH", MACHINE_ARCH, VAR_GLOBAL);
 #endif
