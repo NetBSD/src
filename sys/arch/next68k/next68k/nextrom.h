@@ -1,4 +1,4 @@
-/*	$NetBSD: nextrom.h,v 1.1.1.1 1998/06/09 07:53:06 dbj Exp $	*/
+/*	$NetBSD: nextrom.h,v 1.2 1998/07/04 05:36:06 dbj Exp $	*/
 /*
  * Copyright (c) 1998 Darrin B. Jewell
  * All rights reserved.
@@ -104,6 +104,8 @@
  * I made up these:
  */
 #define MG_clientetheraddr 788
+#define MG_machine_type    936
+#define MG_board_rev       937
 
 #if 0
 

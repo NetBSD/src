@@ -1,4 +1,4 @@
-/*	$NetBSD: seglist.h,v 1.1.1.1 1998/06/09 07:53:06 dbj Exp $	*/
+/*	$NetBSD: seglist.h,v 1.2 1998/07/04 05:36:06 dbj Exp $	*/
 
 /*
  * Copyright (c) 1997 The Steve Woodford
@@ -61,6 +61,12 @@ struct phys_seg_list_t {
 /* Space for onboard RAM
  */
 #define	MAX_PHYS_SEGS	N_SIMM+1
+
+/* Machine types, used in both assembler and C sources. */
+#define	NeXT_CUBE	0
+#define	NeXT_WARP9	1
+#define	NeXT_X15	2
+#define	NeXT_WARP9C	3
 
 /* Instantiated in pmap.c */
 /* size +1 is for list termination */

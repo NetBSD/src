@@ -1,4 +1,4 @@
-/*	$NetBSD: nextrom.c,v 1.2 1998/07/01 22:23:40 dbj Exp $	*/
+/*	$NetBSD: nextrom.c,v 1.3 1998/07/04 05:36:05 dbj Exp $	*/
 /*
  * Copyright (c) 1998 Darrin B. Jewell
  * All rights reserved.
@@ -37,152 +37,46 @@
 #include <next68k/next68k/nextrom.h>
 
 
+void    next68k_bootargs __P((unsigned char *args[]));
+void    dbj_message __P((char * s));
+
 int mon_getc(void);
 int mon_putc(int c);
 
-
-#if 0
 struct mon_global *mg;
-#else
-char *mg;
-#endif
-
-#if 0
 
 
 #define	MON(type, off) (*(type *)((u_int) (mg) + off))
 
-#define RELOC(v, t)	*((t *)((u_int)&(v) + NEXT_RAMBASE))
+#define RELOC(v, t)	(*((t *)((u_int)&(v) + NEXT_RAMBASE)))
 
-#define	MONRELOC(type, off) (*(type *)((u_int) RELOC(mg,char *) + off))
+#define	MONRELOC(type, off) \
+     (*(type *)((u_int) RELOC(mg,struct mon_global *) + off))
+
 
 typedef int (*getcptr)(void);
 typedef int (*putcptr)(int);
 
-void
-dbj_message(char *s)
-{
-  MONRELOC(putcptr,MG_putc)('D');
-  MONRELOC(putcptr,MG_putc)('B');
-  MONRELOC(putcptr,MG_putc)('J');
-  MONRELOC(putcptr,MG_putc)(':');
-  while (s && *s) {
-    MONRELOC(putcptr,MG_putc)(*s++);
-  }
-  MONRELOC(putcptr,MG_putc)('\r');
-  MONRELOC(putcptr,MG_putc)('\n');
-};
-
-void
-dbj_message(char *s)
-{
-	char *vector = (u_int)&mg + NEXT_RAMBASE;
-	putcptr func = (putcptr)(*(int *)(vector + MG_putc));
-
-	(*func)('D');
-	(*func)('B');
-	(*func)('J');
-	(*func)(':');
-  while (s && *s) {
-		(*func)(*s++);
-	}
-	(*func)('\r');
-	(*func)('\n');
-}
-
-void
-dbj_check()
-{
-  MONRELOC(putcptr,MG_putc)('*');
-  MONRELOC(putcptr,MG_putc)('\r');
-  MONRELOC(putcptr,MG_putc)('\n');
-}
-
-struct dbj_trapframe {
-    int dregs[8];
-    int aregs[8];
-    short sr;
-    int pc;
-    short frame;
-    char info[0];
-};
-
-void
-dbj_hex(v)
-     unsigned long v;
-{
-  int i;
-  MONRELOC(putcptr,MG_putc)('0');
-  MONRELOC(putcptr,MG_putc)('x');
-  for(i=0;i<8;i++) {
-    if ((v&0xf0000000) == 0x00000000) MONRELOC(putcptr,MG_putc)('0');
-    if ((v&0xf0000000) == 0x10000000) MONRELOC(putcptr,MG_putc)('1');
-    if ((v&0xf0000000) == 0x20000000) MONRELOC(putcptr,MG_putc)('2');
-    if ((v&0xf0000000) == 0x30000000) MONRELOC(putcptr,MG_putc)('3');
-    if ((v&0xf0000000) == 0x40000000) MONRELOC(putcptr,MG_putc)('4');
-    if ((v&0xf0000000) == 0x50000000) MONRELOC(putcptr,MG_putc)('5');
-    if ((v&0xf0000000) == 0x60000000) MONRELOC(putcptr,MG_putc)('6');
-    if ((v&0xf0000000) == 0x70000000) MONRELOC(putcptr,MG_putc)('7');
-    if ((v&0xf0000000) == 0x80000000) MONRELOC(putcptr,MG_putc)('8');
-    if ((v&0xf0000000) == 0x90000000) MONRELOC(putcptr,MG_putc)('9');
-    if ((v&0xf0000000) == 0xa0000000) MONRELOC(putcptr,MG_putc)('a');
-    if ((v&0xf0000000) == 0xb0000000) MONRELOC(putcptr,MG_putc)('b');
-    if ((v&0xf0000000) == 0xc0000000) MONRELOC(putcptr,MG_putc)('c');
-    if ((v&0xf0000000) == 0xd0000000) MONRELOC(putcptr,MG_putc)('d');
-    if ((v&0xf0000000) == 0xe0000000) MONRELOC(putcptr,MG_putc)('e');
-    if ((v&0xf0000000) == 0xf0000000) MONRELOC(putcptr,MG_putc)('f');
-    v=v<<4;
-  }
-  MONRELOC(putcptr,MG_putc)('\r');
-  MONRELOC(putcptr,MG_putc)('\n');
-}
-
-void
-dbj_print(char *s)
-{
-  mon_putc('D');
-  mon_putc('B');
-  mon_putc('J');
-  mon_putc(':');
-  if (s) while(*s) {
-    mon_putc(*s++);
-  }
-  mon_putc('\r');
-  mon_putc('\n');
-}
-
-int
-mon_getc()
-{
-  return(MON(getcptr,MG_getc)());
-}
-
-
-int
-mon_putc(c)
-     int c;
-{
-  return(MON(putcptr,MG_putc)(c));
-}
-
-#endif
-
-void    next68k_bootargs __P((unsigned char *args[]));
-
 /*
- * Very early initialization, before we do much.
- * Memory isn't even mapped here.
+ * Print a string on the rom console before the MMU is turned on
  */
-#include <next68k/next68k/nextrom.h>
-extern char *mg;
-#define	MON(type, off) (*(type *)((u_int) (mg) + off))
-#define RELOC(v, t)	*((t *)((u_int)&(v) + NEXT_RAMBASE))
-#define	MONRELOC(type, off) (*(type *)((u_int) RELOC(mg,char *) + off))
 
-extern void dbj_message(char * s);
-#define DBJ_DEBUG(xs)  \
-  ((*((void (*)(char *))(((void *)&dbj_message)+NEXT_RAMBASE))) \
-			((xs)+NEXT_RAMBASE))
+#define ROM_PUTS(xs) \
+  do { char *_s = xs + NEXT_RAMBASE; \
+		while(_s && *_s) (*MONRELOC(putcptr,MG_putc))(*_s++); \
+	} while(0)
+
+/* Print a hex byte on the rom console */
+
+char romprint_hextable[] = "0123456789abcdef";
+
+#define ROM_PUTX(v) \
+  do { \
+    (*MONRELOC(putcptr,MG_putc)) \
+			 ((romprint_hextable+NEXT_RAMBASE)[((v)>>4)&0xf]); \
+    (*MONRELOC(putcptr,MG_putc)) \
+			 ((romprint_hextable+NEXT_RAMBASE)[(v)&0xf]); \
+	} while(0);
 
 u_char rom_enetaddr[6];
 
@@ -192,40 +86,70 @@ next68k_bootargs(args)
 {
   RELOC(mg,char *) = args[1];
 
-#if 0
-  DBJ_DEBUG("Check serial port A for console");
+	ROM_PUTS("Welcome to NetBSD/next68k\r\n");
 
-  /* If we continue, we will die because the compiler
-   * generates global symbols
-   */
-#endif
+	ROM_PUTS("Constructing the segment list...\r\n");
+
+	ROM_PUTS("machine type = 0x");
+	ROM_PUTX(MONRELOC(char,MG_machine_type));
+	ROM_PUTS("\r\nboard rev = 0x");
+	ROM_PUTX(MONRELOC(char,MG_board_rev));
+	ROM_PUTS("\r\n");
+
 
   /* Construct the segment list */
-  {
+  {        
+		u_int msize16;
+		u_int msize4;
+		u_int msize1;
     int i;
     int j = 0;
+
+		if (MONRELOC(char,MG_machine_type) == NeXT_X15) {
+			msize16 = 0x1000000;
+			msize4  = 0x400000;
+			msize1  = 0x100000;
+			ROM_PUTS("Looks like a NeXT_X15\r\n");
+		} else if (MONRELOC(char,MG_machine_type) == NeXT_WARP9C) {
+			msize16 = 0x800000;
+			msize4  = 0x200000;
+			msize1  = 0x80000;			/* ? */
+			ROM_PUTS("Looks like a NeXT_WARP9C\r\n");
+		} else {
+			msize16 = 0x100000;
+			msize4  = 0x100000;
+			msize1  = 0x100000;
+			ROM_PUTS("Unrecognized machine_type\r\n");
+		}
+
     for (i=0;i<N_SIMM;i++) {
-      if ((MONRELOC(char,MG_simm+i) & SIMM_SIZE) == SIMM_SIZE_EMPTY) {
-      } else {
+			
+			ROM_PUTS("Memory bank 0x");
+			ROM_PUTX(i);
+			ROM_PUTS(" has value 0x");
+			ROM_PUTX(MONRELOC(char,MG_simm+i))
+			ROM_PUTS("\r\n");
+			
+      if ((MONRELOC(char,MG_simm+i) & SIMM_SIZE) != SIMM_SIZE_EMPTY) {
         RELOC(phys_seg_list[j].ps_start, vm_offset_t) 
-          = NEXT_RAMBASE+(i*NEXT_BANKSIZE);
+          = NEXT_RAMBASE+(i*msize16);
       }
       if ((MONRELOC(char,MG_simm+i) & SIMM_SIZE) == SIMM_SIZE_16MB) {
         RELOC(phys_seg_list[j].ps_end, vm_offset_t) = 
           RELOC(phys_seg_list[j].ps_start, vm_offset_t) +
-          (0x1000000);
+						msize16;
         j++;
       } 
       if ((MONRELOC(char,MG_simm+i) & SIMM_SIZE) == SIMM_SIZE_4MB) {
         RELOC(phys_seg_list[j].ps_end, vm_offset_t) = 
           RELOC(phys_seg_list[j].ps_start, vm_offset_t) +
-          (0x400000);
+						msize4;
         j++;
       }
       if ((MONRELOC(char,MG_simm+i) & SIMM_SIZE) == SIMM_SIZE_1MB) {
         RELOC(phys_seg_list[j].ps_end, vm_offset_t) = 
           RELOC(phys_seg_list[j].ps_start, vm_offset_t) +
-          (0x100000);
+						msize1;
         j++;
       }
     }
@@ -236,13 +160,39 @@ next68k_bootargs(args)
     }
   }
 
+
+	{
+		int i;
+		ROM_PUTS("Memory segments found:\r\n");
+		for (i=0;RELOC(phys_seg_list[i].ps_start, vm_offset_t);i++) {
+			ROM_PUTS("\t0x");
+			ROM_PUTX((RELOC(phys_seg_list[i].ps_start, vm_offset_t)>>24)&0xff);
+			ROM_PUTX((RELOC(phys_seg_list[i].ps_start, vm_offset_t)>>16)&0xff);
+			ROM_PUTX((RELOC(phys_seg_list[i].ps_start, vm_offset_t)>>8)&0xff);
+			ROM_PUTX((RELOC(phys_seg_list[i].ps_start, vm_offset_t)>>0)&0xff);
+			ROM_PUTS(" - 0x");
+			ROM_PUTX((RELOC(phys_seg_list[i].ps_end, vm_offset_t)>>24)&0xff);
+			ROM_PUTX((RELOC(phys_seg_list[i].ps_end, vm_offset_t)>>16)&0xff);
+			ROM_PUTX((RELOC(phys_seg_list[i].ps_end, vm_offset_t)>>8)&0xff);
+			ROM_PUTX((RELOC(phys_seg_list[i].ps_end, vm_offset_t)>>0)&0xff);
+			ROM_PUTS("\r\n");
+		}
+	}
+
   /* Read the ethernet address from rom, this should be done later
    * in device driver somehow.
    */
   {
     int i;
+		ROM_PUTS("Ethernet address: ");
     for(i=0;i<6;i++) {
       RELOC(rom_enetaddr[i], u_char) = MONRELOC(u_char *, MG_clientetheraddr)[i];
+			ROM_PUTX(RELOC(rom_enetaddr[i],u_char));
+			if (i < 5) ROM_PUTS(":");
     }
+		ROM_PUTS("\r\n");
   }
+
+	ROM_PUTS("Check serial port A for console.\r\n");
+
 }
