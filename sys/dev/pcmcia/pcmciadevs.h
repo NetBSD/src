@@ -1,10 +1,10 @@
-/*	$NetBSD: pcmciadevs.h,v 1.155 2001/12/29 08:32:06 ichiro Exp $	*/
+/*	$NetBSD: pcmciadevs.h,v 1.156 2001/12/29 15:01:23 pooka Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcmciadevs,v 1.155 2001/12/29 08:31:01 ichiro Exp 
+ *	NetBSD: pcmciadevs,v 1.156 2001/12/29 15:00:45 pooka Exp 
  */
 /* $FreeBSD: src/sys/dev/pccard/pccarddevs,v 1.20 2001/11/19 05:02:55 imp Exp $*/
 
@@ -529,6 +529,9 @@
 #define	PCMCIA_CIS_SOCKET_EA_ETHER	{ NULL, NULL, NULL, NULL }
 #define	PCMCIA_PRODUCT_SOCKET_EA_ETHER	0x0000
 #define	PCMCIA_STR_SOCKET_EA_ETHER	"Socket Communications EA"
+#define	PCMCIA_CIS_SOCKET_LP_WLAN_CF	{ NULL, NULL, NULL, NULL }
+#define	PCMCIA_PRODUCT_SOCKET_LP_WLAN_CF	0x0001
+#define	PCMCIA_STR_SOCKET_LP_WLAN_CF	"Socket Communications Low Power WLAN Card"
 #define	PCMCIA_CIS_SOCKET_PAGECARD	{ NULL, NULL, NULL, NULL }
 #define	PCMCIA_PRODUCT_SOCKET_PAGECARD	0x0003
 #define	PCMCIA_STR_SOCKET_PAGECARD	"Socket Communications PageCard"
