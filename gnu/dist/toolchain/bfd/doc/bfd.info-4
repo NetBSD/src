@@ -6,21 +6,14 @@ END-INFO-DIR-ENTRY
 
    This file documents the BFD library.
 
-   Copyright (C) 1991 Free Software Foundation, Inc.
+   Copyright (C) 1991, 2000 Free Software Foundation, Inc.
 
-   Permission is granted to make and distribute verbatim copies of this
-manual provided the copyright notice and this permission notice are
-preserved on all copies.
-
-   Permission is granted to copy and distribute modified versions of
-this manual under the conditions for verbatim copying, subject to the
-terms of the GNU General Public License, which includes the provision
-that the entire resulting derived work is distributed under the terms
-of a permission notice identical to this one.
-
-   Permission is granted to copy and distribute translations of this
-manual into another language, under the above conditions for modified
-versions.
+   Permission is granted to copy, distribute and/or modify this document
+     under the terms of the GNU Free Documentation License, Version 1.1
+     or any later version published by the Free Software Foundation;
+   with no Invariant Sections, with no Front-Cover Texts, and with no
+    Back-Cover Texts.  A copy of the license is included in the
+section entitled "GNU Free Documentation License".
 
 
 File: bfd.info,  Node: bfd_target,  Prev: Targets,  Up: Targets
@@ -55,13 +48,13 @@ wants to fix this and not break the above, please do.
      #endif
    For operations which index on the BFD format:
      #define BFD_SEND_FMT(bfd, message, arglist) \
-                 (((bfd)->xvec->message[(int)((bfd)->format)]) arglist)
+                 (((bfd)->xvec->message[(int) ((bfd)->format)]) arglist)
      
      #ifdef DEBUG_BFD_SEND
      #undef BFD_SEND_FMT
      #define BFD_SEND_FMT(bfd, message, arglist) \
        (((bfd) && (bfd)->xvec && (bfd)->xvec->message) ? \
-        (((bfd)->xvec->message[(int)((bfd)->format)]) arglist) : \
+        (((bfd)->xvec->message[(int) ((bfd)->format)]) arglist) : \
         (bfd_assert (__FILE__,__LINE__), NULL))
      #endif
    This is the structure which defines the type of BFD this is.  The
@@ -76,6 +69,7 @@ them both!
        bfd_target_aout_flavour,
        bfd_target_coff_flavour,
        bfd_target_ecoff_flavour,
+       bfd_target_xcoff_flavour,
        bfd_target_elf_flavour,
        bfd_target_ieee_flavour,
        bfd_target_nlm_flavour,
@@ -93,7 +87,7 @@ them both!
      
      enum bfd_endian { BFD_ENDIAN_BIG, BFD_ENDIAN_LITTLE, BFD_ENDIAN_UNKNOWN };
      
-      /* Forward declaration.  */
+     /* Forward declaration.  */
      typedef struct bfd_link_info _bfd_link_info;
      
      typedef struct bfd_target
@@ -155,7 +149,7 @@ zero.
    The general target vector.  These vectors are initialized using the
 BFD_JUMP_TABLE macros.
 
-        /* Generic entry points.  */
+       /* Generic entry points.  */
      #define BFD_JUMP_TABLE_GENERIC(NAME)\
      CAT(NAME,_close_and_cleanup),\
      CAT(NAME,_bfd_free_cached_info),\
@@ -163,20 +157,20 @@ BFD_JUMP_TABLE macros.
      CAT(NAME,_get_section_contents),\
      CAT(NAME,_get_section_contents_in_window)
      
-        /* Called when the BFD is being closed to do any necessary cleanup.  */
+       /* Called when the BFD is being closed to do any necessary cleanup.  */
        boolean       (*_close_and_cleanup) PARAMS ((bfd *));
-        /* Ask the BFD to free all cached information.  */
+       /* Ask the BFD to free all cached information.  */
        boolean (*_bfd_free_cached_info) PARAMS ((bfd *));
-        /* Called when a new section is created.  */
+       /* Called when a new section is created.  */
        boolean       (*_new_section_hook) PARAMS ((bfd *, sec_ptr));
-        /* Read the contents of a section.  */
+       /* Read the contents of a section.  */
        boolean       (*_bfd_get_section_contents) PARAMS ((bfd *, sec_ptr, PTR,
                                                  file_ptr, bfd_size_type));
        boolean       (*_bfd_get_section_contents_in_window)
                                PARAMS ((bfd *, sec_ptr, bfd_window *,
                                         file_ptr, bfd_size_type));
      
-        /* Entry points to copy private data.  */
+       /* Entry points to copy private data.  */
      #define BFD_JUMP_TABLE_COPY(NAME)\
      CAT(NAME,_bfd_copy_private_bfd_data),\
      CAT(NAME,_bfd_merge_private_bfd_data),\
@@ -184,27 +178,27 @@ BFD_JUMP_TABLE macros.
      CAT(NAME,_bfd_copy_private_symbol_data),\
      CAT(NAME,_bfd_set_private_flags),\
      CAT(NAME,_bfd_print_private_bfd_data)\
-        /* Called to copy BFD general private data from one object file
+       /* Called to copy BFD general private data from one object file
           to another.  */
        boolean       (*_bfd_copy_private_bfd_data) PARAMS ((bfd *, bfd *));
-        /* Called to merge BFD general private data from one object file
+       /* Called to merge BFD general private data from one object file
           to a common output file when linking.  */
        boolean       (*_bfd_merge_private_bfd_data) PARAMS ((bfd *, bfd *));
-        /* Called to copy BFD private section data from one object file
+       /* Called to copy BFD private section data from one object file
           to another.  */
        boolean       (*_bfd_copy_private_section_data) PARAMS ((bfd *, sec_ptr,
                                                             bfd *, sec_ptr));
-        /* Called to copy BFD private symbol data from one symbol
+       /* Called to copy BFD private symbol data from one symbol
           to another.  */
        boolean       (*_bfd_copy_private_symbol_data) PARAMS ((bfd *, asymbol *,
                                                                bfd *, asymbol *));
-        /* Called to set private backend flags */
+       /* Called to set private backend flags */
        boolean       (*_bfd_set_private_flags) PARAMS ((bfd *, flagword));
      
-        /* Called to print private BFD data */
+       /* Called to print private BFD data */
        boolean       (*_bfd_print_private_bfd_data) PARAMS ((bfd *, PTR));
      
-        /* Core file entry points.  */
+       /* Core file entry points.  */
      #define BFD_JUMP_TABLE_CORE(NAME)\
      CAT(NAME,_core_file_failing_command),\
      CAT(NAME,_core_file_failing_signal),\
@@ -213,7 +207,7 @@ BFD_JUMP_TABLE macros.
        int      (*_core_file_failing_signal) PARAMS ((bfd *));
        boolean  (*_core_file_matches_executable_p) PARAMS ((bfd *, bfd *));
      
-        /* Archive entry points.  */
+       /* Archive entry points.  */
      #define BFD_JUMP_TABLE_ARCHIVE(NAME)\
      CAT(NAME,_slurp_armap),\
      CAT(NAME,_slurp_extended_name_table),\
@@ -242,7 +236,7 @@ BFD_JUMP_TABLE macros.
        int      (*_bfd_stat_arch_elt) PARAMS ((bfd *, struct stat *));
        boolean  (*_bfd_update_armap_timestamp) PARAMS ((bfd *));
      
-        /* Entry points used for symbols.  */
+       /* Entry points used for symbols.  */
      #define BFD_JUMP_TABLE_SYMBOLS(NAME)\
      CAT(NAME,_get_symtab_upper_bound),\
      CAT(NAME,_get_symtab),\
@@ -275,7 +269,7 @@ BFD_JUMP_TABLE macros.
                          struct sec *section, struct symbol_cache_entry **symbols,
                          bfd_vma offset, CONST char **file, CONST char **func,
                          unsigned int *line));
-       /* Back-door to allow format-aware applications to create debug symbols
+      /* Back-door to allow format-aware applications to create debug symbols
          while using BFD for everything else.  Currently used by the assembler
          when creating COFF files.  */
        asymbol *  (*_bfd_make_debug_symbol) PARAMS ((
@@ -291,7 +285,7 @@ BFD_JUMP_TABLE macros.
        asymbol *(*_minisymbol_to_symbol) PARAMS ((bfd *, boolean, const PTR,
                                                   asymbol *));
      
-        /* Routines for relocs.  */
+       /* Routines for relocs.  */
      #define BFD_JUMP_TABLE_RELOCS(NAME)\
      CAT(NAME,_get_reloc_upper_bound),\
      CAT(NAME,_canonicalize_reloc),\
@@ -299,12 +293,12 @@ BFD_JUMP_TABLE macros.
        long  (*_get_reloc_upper_bound) PARAMS ((bfd *, sec_ptr));
        long  (*_bfd_canonicalize_reloc) PARAMS ((bfd *, sec_ptr, arelent **,
                                                  struct symbol_cache_entry **));
-        /* See documentation on reloc types.  */
+       /* See documentation on reloc types.  */
        reloc_howto_type *
             (*reloc_type_lookup) PARAMS ((bfd *abfd,
                                           bfd_reloc_code_real_type code));
      
-        /* Routines used when writing an object file.  */
+       /* Routines used when writing an object file.  */
      #define BFD_JUMP_TABLE_WRITE(NAME)\
      CAT(NAME,_set_arch_mach),\
      CAT(NAME,_set_section_contents)
@@ -313,7 +307,7 @@ BFD_JUMP_TABLE macros.
        boolean       (*_bfd_set_section_contents) PARAMS ((bfd *, sec_ptr, PTR,
                                                  file_ptr, bfd_size_type));
      
-        /* Routines used by the linker.  */
+       /* Routines used by the linker.  */
      #define BFD_JUMP_TABLE_LINK(NAME)\
      CAT(NAME,_sizeof_headers),\
      CAT(NAME,_bfd_get_relocated_section_contents),\
@@ -332,37 +326,37 @@ BFD_JUMP_TABLE macros.
        boolean    (*_bfd_relax_section) PARAMS ((bfd *, struct sec *,
                          struct bfd_link_info *, boolean *again));
      
-        /* Create a hash table for the linker.  Different backends store
+       /* Create a hash table for the linker.  Different backends store
           different information in this table.  */
        struct bfd_link_hash_table *(*_bfd_link_hash_table_create) PARAMS ((bfd *));
      
-        /* Add symbols from this object file into the hash table.  */
+       /* Add symbols from this object file into the hash table.  */
        boolean (*_bfd_link_add_symbols) PARAMS ((bfd *, struct bfd_link_info *));
      
-        /* Do a link based on the link_order structures attached to each
+       /* Do a link based on the link_order structures attached to each
           section of the BFD.  */
        boolean (*_bfd_final_link) PARAMS ((bfd *, struct bfd_link_info *));
      
-        /* Should this section be split up into smaller pieces during linking.  */
+       /* Should this section be split up into smaller pieces during linking.  */
        boolean (*_bfd_link_split_section) PARAMS ((bfd *, struct sec *));
      
-        /* Remove sections that are not referenced from the output.  */
+       /* Remove sections that are not referenced from the output.  */
        boolean (*_bfd_gc_sections) PARAMS ((bfd *, struct bfd_link_info *));
      
-        /* Routines to handle dynamic symbols and relocs.  */
+       /* Routines to handle dynamic symbols and relocs.  */
      #define BFD_JUMP_TABLE_DYNAMIC(NAME)\
      CAT(NAME,_get_dynamic_symtab_upper_bound),\
      CAT(NAME,_canonicalize_dynamic_symtab),\
      CAT(NAME,_get_dynamic_reloc_upper_bound),\
      CAT(NAME,_canonicalize_dynamic_reloc)
-        /* Get the amount of memory required to hold the dynamic symbols. */
+       /* Get the amount of memory required to hold the dynamic symbols. */
        long  (*_bfd_get_dynamic_symtab_upper_bound) PARAMS ((bfd *));
-        /* Read in the dynamic symbols.  */
+       /* Read in the dynamic symbols.  */
        long  (*_bfd_canonicalize_dynamic_symtab)
          PARAMS ((bfd *, struct symbol_cache_entry **));
-        /* Get the amount of memory required to hold the dynamic relocs.  */
+       /* Get the amount of memory required to hold the dynamic relocs.  */
        long  (*_bfd_get_dynamic_reloc_upper_bound) PARAMS ((bfd *));
-        /* Read in the dynamic relocs.  */
+       /* Read in the dynamic relocs.  */
        long  (*_bfd_canonicalize_dynamic_reloc)
          PARAMS ((bfd *, arelent **, struct symbol_cache_entry **));
    A pointer to an alternative bfd_target in case the current one is not
@@ -370,7 +364,7 @@ satisfactory.  This can happen when the target cpu supports both big
 and little endian code, and target chosen by the linker has the wrong
 endianness.  The function open_output() in ld/ldlang.c uses this field
 to find an alternative output format that is suitable.
-       /* Opposite endian version of this target.  */
+      /* Opposite endian version of this target.  */
       const struct bfd_target * alternative_target;
    Data for use by back-end routines, which isn't generic enough to
 belong in this structure.
@@ -417,7 +411,7 @@ the valid BFD targets. Do not modify the names.
 ......................
 
    *Synopsis*
-     const bfd_target * bfd_search_for_target (int (* search_func)(const bfd_target *, void *), void *);
+     const bfd_target * bfd_search_for_target (int (* search_func) (const bfd_target *, void *), void *);
    *Description*
 Return a pointer to the first transfer vector in the list of transfer
 vectors maintained by BFD that produces a non-zero result when passed
@@ -463,9 +457,9 @@ architecture, containing, for example, 2 and 3 for Intel i960 KA and
 i960 KB, and 68020 and 68030 for Motorola 68020 and 68030.
      enum bfd_architecture
      {
-       bfd_arch_unknown,    /* File arch not known */
-       bfd_arch_obscure,    /* Arch known, not one of these */
-       bfd_arch_m68k,       /* Motorola 68xxx */
+       bfd_arch_unknown,   /* File arch not known */
+       bfd_arch_obscure,   /* Arch known, not one of these */
+       bfd_arch_m68k,      /* Motorola 68xxx */
      #define bfd_mach_m68000 1
      #define bfd_mach_m68008 2
      #define bfd_mach_m68010 3
@@ -474,9 +468,9 @@ i960 KB, and 68020 and 68030 for Motorola 68020 and 68030.
      #define bfd_mach_m68040 6
      #define bfd_mach_m68060 7
      #define bfd_mach_cpu32  8
-       bfd_arch_vax,        /* DEC Vax */
-       bfd_arch_i960,       /* Intel 960 */
-          /* The order of the following is important.
+       bfd_arch_vax,       /* DEC Vax */
+       bfd_arch_i960,      /* Intel 960 */
+         /* The order of the following is important.
             lower number indicates a machine type that
             only accepts a subset of the instructions
             available to machines with higher numbers.
@@ -493,21 +487,24 @@ i960 KB, and 68020 and 68030 for Motorola 68020 and 68030.
      #define bfd_mach_i960_jx        7
      #define bfd_mach_i960_hx        8
      
-       bfd_arch_a29k,       /* AMD 29000 */
-       bfd_arch_sparc,      /* SPARC */
+       bfd_arch_a29k,      /* AMD 29000 */
+       bfd_arch_sparc,     /* SPARC */
      #define bfd_mach_sparc                 1
-      /* The difference between v8plus and v9 is that v9 is a true 64 bit env.  */
+     /* The difference between v8plus and v9 is that v9 is a true 64 bit env.  */
      #define bfd_mach_sparc_sparclet        2
      #define bfd_mach_sparc_sparclite       3
      #define bfd_mach_sparc_v8plus          4
-     #define bfd_mach_sparc_v8plusa         5  /* with ultrasparc add'ns */
+     #define bfd_mach_sparc_v8plusa         5 /* with ultrasparc add'ns */
      #define bfd_mach_sparc_sparclite_le    6
      #define bfd_mach_sparc_v9              7
-     #define bfd_mach_sparc_v9a             8  /* with ultrasparc add'ns */
-      /* Nonzero if MACH has the v9 instruction set.  */
+     #define bfd_mach_sparc_v9a             8 /* with ultrasparc add'ns */
+     #define bfd_mach_sparc_v8plusb         9 /* with cheetah add'ns */
+     #define bfd_mach_sparc_v9b             10 /* with cheetah add'ns */
+     /* Nonzero if MACH has the v9 instruction set.  */
      #define bfd_mach_sparc_v9_p(mach) \
-       ((mach) >= bfd_mach_sparc_v8plus && (mach) <= bfd_mach_sparc_v9a)
-       bfd_arch_mips,       /* MIPS Rxxxx */
+       ((mach) >= bfd_mach_sparc_v8plus && (mach) <= bfd_mach_sparc_v9b \
+        && (mach) != bfd_mach_sparc_sparclite_le)
+       bfd_arch_mips,      /* MIPS Rxxxx */
      #define bfd_mach_mips3000              3000
      #define bfd_mach_mips3900              3900
      #define bfd_mach_mips4000              4000
@@ -523,36 +520,66 @@ i960 KB, and 68020 and 68030 for Motorola 68020 and 68030.
      #define bfd_mach_mips8000              8000
      #define bfd_mach_mips10000             10000
      #define bfd_mach_mips16                16
-       bfd_arch_i386,       /* Intel 386 */
+     #define bfd_mach_mips32                32
+     #define bfd_mach_mips32_4k             3204113 /* 32, 04, octal 'K' */
+     #define bfd_mach_mips5                 5
+     #define bfd_mach_mips64                64
+     #define bfd_mach_mips_sb1              12310201 /* octal 'SB', 01 */
+       bfd_arch_i386,      /* Intel 386 */
      #define bfd_mach_i386_i386 0
      #define bfd_mach_i386_i8086 1
      #define bfd_mach_i386_i386_intel_syntax 2
-       bfd_arch_we32k,      /* AT&T WE32xxx */
-       bfd_arch_tahoe,      /* CCI/Harris Tahoe */
-       bfd_arch_i860,       /* Intel 860 */
-       bfd_arch_i370,       /* IBM 360/370 Mainframes */
-       bfd_arch_romp,       /* IBM ROMP PC/RT */
-       bfd_arch_alliant,    /* Alliant */
-       bfd_arch_convex,     /* Convex */
-       bfd_arch_m88k,       /* Motorola 88xxx */
-       bfd_arch_pyramid,    /* Pyramid Technology */
-       bfd_arch_h8300,      /* Hitachi H8/300 */
+     #define bfd_mach_x86_64 3
+     #define bfd_mach_x86_64_intel_syntax 4
+       bfd_arch_we32k,     /* AT&T WE32xxx */
+       bfd_arch_tahoe,     /* CCI/Harris Tahoe */
+       bfd_arch_i860,      /* Intel 860 */
+       bfd_arch_i370,      /* IBM 360/370 Mainframes */
+       bfd_arch_romp,      /* IBM ROMP PC/RT */
+       bfd_arch_alliant,   /* Alliant */
+       bfd_arch_convex,    /* Convex */
+       bfd_arch_m88k,      /* Motorola 88xxx */
+       bfd_arch_pyramid,   /* Pyramid Technology */
+       bfd_arch_h8300,     /* Hitachi H8/300 */
      #define bfd_mach_h8300   1
      #define bfd_mach_h8300h  2
      #define bfd_mach_h8300s  3
-       bfd_arch_powerpc,    /* PowerPC */
-       bfd_arch_rs6000,     /* IBM RS/6000 */
-       bfd_arch_hppa,       /* HP PA RISC */
-       bfd_arch_d10v,       /* Mitsubishi D10V */
+       bfd_arch_powerpc,   /* PowerPC */
+     #define bfd_mach_ppc           0
+     #define bfd_mach_ppc_403       403
+     #define bfd_mach_ppc_403gc     4030
+     #define bfd_mach_ppc_505       505
+     #define bfd_mach_ppc_601       601
+     #define bfd_mach_ppc_602       602
+     #define bfd_mach_ppc_603       603
+     #define bfd_mach_ppc_ec603e    6031
+     #define bfd_mach_ppc_604       604
+     #define bfd_mach_ppc_620       620
+     #define bfd_mach_ppc_630       630
+     #define bfd_mach_ppc_750       750
+     #define bfd_mach_ppc_860       860
+     #define bfd_mach_ppc_a35       35
+     #define bfd_mach_ppc_rs64ii    642
+     #define bfd_mach_ppc_rs64iii   643
+     #define bfd_mach_ppc_7400      7400
+       bfd_arch_rs6000,    /* IBM RS/6000 */
+     #define bfd_mach_rs6k          0
+     #define bfd_mach_rs6k_rs1      6001
+     #define bfd_mach_rs6k_rsc      6003
+     #define bfd_mach_rs6k_rs2      6002
+       bfd_arch_hppa,      /* HP PA RISC */
+       bfd_arch_d10v,      /* Mitsubishi D10V */
      #define bfd_mach_d10v          0
      #define bfd_mach_d10v_ts2      2
      #define bfd_mach_d10v_ts3      3
-       bfd_arch_d30v,       /* Mitsubishi D30V */
-       bfd_arch_z8k,        /* Zilog Z8000 */
+       bfd_arch_d30v,      /* Mitsubishi D30V */
+       bfd_arch_m68hc11,   /* Motorola 68HC11 */
+       bfd_arch_m68hc12,   /* Motorola 68HC12 */
+       bfd_arch_z8k,       /* Zilog Z8000 */
      #define bfd_mach_z8001         1
      #define bfd_mach_z8002         2
-       bfd_arch_h8500,      /* Hitachi H8/500 */
-       bfd_arch_sh,         /* Hitachi SH */
+       bfd_arch_h8500,     /* Hitachi H8/500 */
+       bfd_arch_sh,        /* Hitachi SH */
      #define bfd_mach_sh            0
      #define bfd_mach_sh2        0x20
      #define bfd_mach_sh_dsp     0x2d
@@ -560,11 +587,11 @@ i960 KB, and 68020 and 68030 for Motorola 68020 and 68030.
      #define bfd_mach_sh3_dsp    0x3d
      #define bfd_mach_sh3e       0x3e
      #define bfd_mach_sh4        0x40
-       bfd_arch_alpha,      /* Dec Alpha */
+       bfd_arch_alpha,     /* Dec Alpha */
      #define bfd_mach_alpha_ev4  0x10
      #define bfd_mach_alpha_ev5  0x20
      #define bfd_mach_alpha_ev6  0x30
-       bfd_arch_arm,        /* Advanced Risc Machines ARM */
+       bfd_arch_arm,       /* Advanced Risc Machines ARM */
      #define bfd_mach_arm_2         1
      #define bfd_mach_arm_2a        2
      #define bfd_mach_arm_3         3
@@ -573,32 +600,43 @@ i960 KB, and 68020 and 68030 for Motorola 68020 and 68030.
      #define bfd_mach_arm_4T        6
      #define bfd_mach_arm_5         7
      #define bfd_mach_arm_5T        8
-       bfd_arch_ns32k,      /* National Semiconductors ns32000 */
-       bfd_arch_w65,        /* WDC 65816 */
-       bfd_arch_tic30,      /* Texas Instruments TMS320C30 */
-       bfd_arch_tic80,      /* TI TMS320c80 (MVP) */
-       bfd_arch_v850,       /* NEC V850 */
+     #define bfd_mach_arm_5TE       9
+     #define bfd_mach_arm_XScale    10
+       bfd_arch_ns32k,     /* National Semiconductors ns32000 */
+       bfd_arch_w65,       /* WDC 65816 */
+       bfd_arch_tic30,     /* Texas Instruments TMS320C30 */
+       bfd_arch_tic54x,    /* Texas Instruments TMS320C54X */
+       bfd_arch_tic80,     /* TI TMS320c80 (MVP) */
+       bfd_arch_v850,      /* NEC V850 */
      #define bfd_mach_v850          0
      #define bfd_mach_v850e         'E'
      #define bfd_mach_v850ea        'A'
-       bfd_arch_arc,        /* Argonaut RISC Core */
-     #define bfd_mach_arc_base 0
-       bfd_arch_m32r,       /* Mitsubishi M32R/D */
-     #define bfd_mach_m32r          0  /* backwards compatibility */
+       bfd_arch_arc,       /* ARC Cores */
+     #define bfd_mach_arc_5         0
+     #define bfd_mach_arc_6         1
+     #define bfd_mach_arc_7         2
+     #define bfd_mach_arc_8         3
+       bfd_arch_m32r,      /* Mitsubishi M32R/D */
+     #define bfd_mach_m32r          0 /* backwards compatibility */
      #define bfd_mach_m32rx         'x'
-       bfd_arch_mn10200,    /* Matsushita MN10200 */
-       bfd_arch_mn10300,    /* Matsushita MN10300 */
+       bfd_arch_mn10200,   /* Matsushita MN10200 */
+       bfd_arch_mn10300,   /* Matsushita MN10300 */
      #define bfd_mach_mn10300               300
      #define bfd_mach_am33          330
        bfd_arch_fr30,
      #define bfd_mach_fr30          0x46523330
        bfd_arch_mcore,
+       bfd_arch_ia64,      /* HP/Intel ia64 */
+     #define bfd_mach_ia64_elf64    0
+     #define bfd_mach_ia64_elf32    1
        bfd_arch_pj,
-       bfd_arch_avr,        /* Atmel AVR microcontrollers */
+       bfd_arch_avr,       /* Atmel AVR microcontrollers */
      #define bfd_mach_avr1          1
      #define bfd_mach_avr2          2
      #define bfd_mach_avr3          3
      #define bfd_mach_avr4          4
+     #define bfd_mach_avr5          5
+       bfd_arch_cris,      /* Axis CRIS */
        bfd_arch_last
        };
 
@@ -618,7 +656,7 @@ This structure contains information on architectures for use within BFD.
        const char *arch_name;
        const char *printable_name;
        unsigned int section_align_power;
-       /* true if this is the default machine for the architecture */
+       /* True if this is the default machine for the architecture.  */
        boolean the_default;
        const struct bfd_arch_info * (*compatible)
             PARAMS ((const struct bfd_arch_info *a,
@@ -802,8 +840,10 @@ targets have 16, 32, or even 48 bits per byte.
      unsigned int bfd_arch_mach_octets_per_byte(enum bfd_architecture arch,
          unsigned long machine);
    *Description*
-See bfd_octets_per_byte.  This routine is provided for those cases
-where a bfd * is not available
+See bfd_octets_per_byte.
+
+   This routine is provided for those cases where a bfd * is not
+available
 
 
 File: bfd.info,  Node: Opening and Closing,  Next: Internal,  Prev: Architectures,  Up: BFD front end
@@ -997,16 +1037,16 @@ detecting sins such as passing a pointer.  To detect calling these with
 less than a `bfd_vma', use `gcc -Wconversion' on a host with 64 bit
 `bfd_vma''s.
 
-      /* Byte swapping macros for user section data.  */
+     /* Byte swapping macros for user section data.  */
      
      #define bfd_put_8(abfd, val, ptr) \
-                     ((void) (*((unsigned char *)(ptr)) = (unsigned char)(val)))
+                     ((void) (*((unsigned char *) (ptr)) = (unsigned char) (val)))
      #define bfd_put_signed_8 \
                     bfd_put_8
      #define bfd_get_8(abfd, ptr) \
-                     (*(unsigned char *)(ptr))
+                     (*(unsigned char *) (ptr))
      #define bfd_get_signed_8(abfd, ptr) \
-                    ((*(unsigned char *)(ptr) ^ 0x80) - 0x80)
+                    ((*(unsigned char *) (ptr) ^ 0x80) - 0x80)
      
      #define bfd_put_16(abfd, val, ptr) \
                      BFD_SEND(abfd, bfd_putx16, ((val),(ptr)))
@@ -1059,7 +1099,7 @@ records of object files. Believe it or not, some object files keep
 their header records in big endian order and their data in little
 endian order.
 
-      /* Byte swapping macros for file header data.  */
+     /* Byte swapping macros for file header data.  */
      
      #define bfd_h_put_8(abfd, val, ptr) \
                     bfd_put_8 (abfd, val, ptr)
@@ -1148,7 +1188,7 @@ can't have changed since the last lookup; otherwise, it has to perform
 the complicated lookup function.
      #define bfd_cache_lookup(x) \
          ((x)==bfd_last_cache? \
-           (FILE*)(bfd_last_cache->iostream): \
+           (FILE*) (bfd_last_cache->iostream): \
             bfd_cache_lookup_worker(x))
 
 `bfd_cache_init'
@@ -1233,60 +1273,4 @@ throughout this section.
 * Creating a Linker Hash Table::
 * Adding Symbols to the Hash Table::
 * Performing the Final Link::
-
-
-File: bfd.info,  Node: Creating a Linker Hash Table,  Next: Adding Symbols to the Hash Table,  Prev: Linker Functions,  Up: Linker Functions
-
-Creating a linker hash table
-----------------------------
-
-   The linker routines must create a hash table, which must be derived
-from `struct bfd_link_hash_table' described in `bfdlink.c'.  *Note Hash
-Tables::, for information on how to create a derived hash table.  This
-entry point is called using the target vector of the linker output file.
-
-   The `_bfd_link_hash_table_create' entry point must allocate and
-initialize an instance of the desired hash table.  If the back end does
-not require any additional information to be stored with the entries in
-the hash table, the entry point may simply create a `struct
-bfd_link_hash_table'.  Most likely, however, some additional
-information will be needed.
-
-   For example, with each entry in the hash table the a.out linker
-keeps the index the symbol has in the final output file (this index
-number is used so that when doing a relocateable link the symbol index
-used in the output file can be quickly filled in when copying over a
-reloc).  The a.out linker code defines the required structures and
-functions for a hash table derived from `struct bfd_link_hash_table'.
-The a.out linker hash table is created by the function
-`NAME(aout,link_hash_table_create)'; it simply allocates space for the
-hash table, initializes it, and returns a pointer to it.
-
-   When writing the linker routines for a new back end, you will
-generally not know exactly which fields will be required until you have
-finished.  You should simply create a new hash table which defines no
-additional fields, and then simply add fields as they become necessary.
-
-
-File: bfd.info,  Node: Adding Symbols to the Hash Table,  Next: Performing the Final Link,  Prev: Creating a Linker Hash Table,  Up: Linker Functions
-
-Adding symbols to the hash table
---------------------------------
-
-   The linker proper will call the `_bfd_link_add_symbols' entry point
-for each object file or archive which is to be linked (typically these
-are the files named on the command line, but some may also come from
-the linker script).  The entry point is responsible for examining the
-file.  For an object file, BFD must add any relevant symbol information
-to the hash table.  For an archive, BFD must determine which elements
-of the archive should be used and adding them to the link.
-
-   The a.out version of this entry point is
-`NAME(aout,link_add_symbols)'.
-
-* Menu:
-
-* Differing file formats::
-* Adding symbols from an object file::
-* Adding symbols from an archive::
 
