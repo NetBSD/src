@@ -38,7 +38,7 @@
  * from: Utah $Hdr: sd.c 1.9 92/12/21$
  * from: @(#)sd.c	8.1 (Berkeley) 6/10/93
  *
- * $Id: sd.c,v 1.4 1994/01/26 02:39:00 brezak Exp $
+ * $Id: sd.c,v 1.5 1994/03/09 20:17:38 brezak Exp $
  */
 
 /*
@@ -169,7 +169,8 @@ sdopen(f, ctlr, unit, part)
 {
 	register struct sd_softc *ss;
 
-#ifdef DEBUG
+#ifdef SD_DEBUG
+	if (debug)
 	printf("sdopen: ctlr=%d unit=%d part=%d\n",
 	    ctlr, unit, part);
 #endif
@@ -179,6 +180,9 @@ sdopen(f, ctlr, unit, part)
 	if (unit >= NSD)
 		return (ECTLR);
 	ss = &sd_softc[ctlr][unit];
+	ss->sc_part = part;
+	ss->sc_unit = unit;
+	ss->sc_ctlr = ctlr;
 	if (ss->sc_alive == 0) {
 		if (sdinit(ctlr, unit) == 0)
 			return (ENXIO);
@@ -188,9 +192,6 @@ sdopen(f, ctlr, unit, part)
 	if (part >= ss->sc_pinfo.npart || ss->sc_pinfo.offset[part] == -1)
 		return (EPART);
 
-	ss->sc_part = part;
-	ss->sc_unit = unit;
-	ss->sc_ctlr = ctlr;
 	f->f_devdata = (void *)ss;
 	return (0);
 }
@@ -214,7 +215,8 @@ sdstrategy(ss, func, dblk, size, buf, rsize)
 
 	ss->sc_retry = 0;
 
-#ifdef DEBUG
+#ifdef SD_DEBUG
+	if (debug)
 	printf("sdstrategy(%d,%d): size=%d blk=%d nblk=%d\n",
 	    ctlr, unit, size, blk, nblk);
 #endif
