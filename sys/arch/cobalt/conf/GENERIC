@@ -1,8 +1,8 @@
-#	$NetBSD: GENERIC,v 1.9 2000/06/22 20:27:51 fvdl Exp $
+#	$NetBSD: GENERIC,v 1.10 2000/06/27 08:34:02 soren Exp $
 
 include 	"arch/cobalt/conf/std.cobalt"
 
-#ident 		"GENERIC-$Revision: 1.9 $"
+#ident 		"GENERIC-$Revision: 1.10 $"
 
 maxusers	32
 
@@ -77,9 +77,9 @@ options 	INET		# Internet protocols
 #options 	NETATALK	# AppleTalk (over Ethernet) protocol
 #options 	PPP_BSDCOMP	# BSD-Compress compression support for PPP
 #options 	PPP_DEFLATE	# Deflate compression support for PPP
-options 	PPP_FILTER	# Active filter support for PPP (requires bpf)
-options 	PFIL_HOOKS	# pfil(9) packet filter hooks
-options 	IPFILTER_LOG	# ipmon(8) log support
+#options 	PPP_FILTER	# Active filter support for PPP (requires bpf)
+#options 	PFIL_HOOKS	# pfil(9) packet filter hooks
+#options 	IPFILTER_LOG	# ipmon(8) log support
 
 # Compatibility with 4.2BSD implementation of TCP/IP.  Not recommended.
 #options 	TCP_COMPAT_42
@@ -109,8 +109,8 @@ pchb* 		at pci? dev ? function ?
 pcib* 		at pci? dev ? function ?
 
 # PCI serial/parallel interfaces
-puc* 		at pci? dev ? function ? 	# PCI "universal" comm. cards
-com* 		at puc? port ?
+#puc* 		at pci? dev ? function ? 	# PCI "universal" comm. cards
+#com* 		at puc? port ?
 #lpt* 		at puc? port ?
 #cy* 		at pci? dev ? function ?	# Cyclades Cyclom-Y serial cards
 
@@ -140,7 +140,7 @@ st*		at scsibus? target ? lun ?	# SCSI tape drives
 #cd*		at scsibus? target ? lun ?	# SCSI CD-ROM drives
 #ch*		at scsibus? target ? lun ?	# SCSI autochangers
 #ss*		at scsibus? target ? lun ?	# SCSI scanners
-uk*		at scsibus? target ? lun ?	# SCSI unknown
+#uk*		at scsibus? target ? lun ?	# SCSI unknown
 
 # RAID controllers and devices
 #cac*		at pci? dev ? function ?	# Compaq array controller
@@ -222,7 +222,7 @@ lxtphy*		at mii? phy ?			# Level One LXT-970 PHYs
 
 # Network pseudo-devices
 pseudo-device	bpfilter	8		# Berkeley packet filter
-pseudo-device	ipfilter			# IP filter (firewall) and NAT
+#pseudo-device	ipfilter			# IP filter (firewall) and NAT
 pseudo-device	loop				# network loopback
 #pseudo-device	ppp		2		# Point-to-Point Protocol
 #pseudo-device	sl		2		# Serial Line IP
