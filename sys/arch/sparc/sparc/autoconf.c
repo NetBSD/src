@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.124 1999/09/30 23:01:53 thorpej Exp $ */
+/*	$NetBSD: autoconf.c,v 1.125 1999/10/04 19:27:04 pk Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -145,7 +145,7 @@ find_cpus()
 
 	/* We only consider sun4m class multi-processor machines */
 	if (!CPU_ISSUN4M)
-		return (0);
+		return (1);
 
 	n = 0;
 	node = findroot();
@@ -201,6 +201,9 @@ bootstrap()
 	struct btinfo_symtab *bi_sym;
 #endif
 	prom_init();
+
+	/* Find the number of CPUs as early as possible */
+	ncpu = find_cpus();
 
 	/* Attach user structure to proc0 */
 	proc0.p_addr = proc0paddr;
@@ -799,8 +802,6 @@ cpu_configure()
 			panic("PROM root device type = %s (need CPU)\n", cp);
 	}
 #endif
-
-	ncpu = find_cpus();
 
 	prom_setcallback(sync_crash);
 
