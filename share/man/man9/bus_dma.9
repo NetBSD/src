@@ -1,4 +1,4 @@
-.\" $NetBSD: bus_dma.9,v 1.23 2002/06/12 15:23:34 fvdl Exp $
+.\" $NetBSD: bus_dma.9,v 1.24 2002/06/12 15:27:55 wiz Exp $
 .\"
 .\" Copyright (c) 1996, 1997, 1998, 2001 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -442,8 +442,8 @@ a consistent view of a range of DMA memory, before and after
 a DMA operation.
 .Pp
 An example of using
-.Fn bus_dmamamp_sync
-, involving multiple read-write use of a single mapping
+.Fn bus_dmamamp_sync ,
+involving multiple read-write use of a single mapping
 might look like this:
 .Bd -literal
 bus_dmamap_load(...);
