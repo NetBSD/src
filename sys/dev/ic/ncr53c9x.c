@@ -1,4 +1,4 @@
-/*	$NetBSD: ncr53c9x.c,v 1.40 2000/01/25 09:30:00 pk Exp $	*/
+/*	$NetBSD: ncr53c9x.c,v 1.41 2000/03/09 23:19:26 matt Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -1202,7 +1202,7 @@ gotit:
 					ti->period = ncr53c9x_cpb2stp(sc, p);
 #ifdef NCR53C9X_DEBUG
 					scsi_print_addr(ecb->xs->sc_link);
-					printf("max sync rate %d.%02dMb/s\n",
+					printf("max sync rate %d.%02dMB/s\n",
 						r, s);
 #endif
 					if ((sc->sc_flags&NCR_SYNCHNEGO) == 0) {
