@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.15 2004/03/28 09:01:28 martti Exp $
+#	$NetBSD: Makefile,v 1.16 2004/03/28 09:35:26 mrg Exp $
 
 PROG=		ipmon
 SRCS=		ipmon.c ipmon_y.c ipmon_l.c
@@ -19,7 +19,7 @@ ipmon_y.c ipmon_y.h: ipmon_y.y ipmon_l.h
 	sed -e 's/yy/ipmon_yy/g' \
 		y.tab.h > ipmon_y.h
 
-ipmon_l.c: lexer.c ipmon_l.h
+ipmon_l.c: lexer.c ipmon_l.h ipmon_y.h
 	sed -e 's/yy/ipmon_yy/g' \
 	     -e 's/y.tab.h/ipmon_y.h/' \
 	     -e 's/lexer.h/ipmon_l.h/' \
