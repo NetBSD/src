@@ -1,8 +1,8 @@
-.\" $NetBSD: evcnt.9,v 1.2 2000/06/13 22:36:17 cgd Exp $
+.\" $NetBSD: evcnt.9,v 1.3 2001/05/06 23:48:33 wiz Exp $
 .\"
 .\" Copyright (c) 2000 Christopher G. Demetriou
 .\" All rights reserved.
-.\" 
+.\"
 .\" Redistribution and use in source and binary forms, with or without
 .\" modification, are permitted provided that the following conditions
 .\" are met:
@@ -18,7 +18,7 @@
 .\"          information about NetBSD.
 .\" 4. The name of the author may not be used to endorse or promote products
 .\"    derived from this software without specific prior written permission.
-.\" 
+.\"
 .\" THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR
 .\" IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
 .\" OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
@@ -29,7 +29,7 @@
 .\" THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
 .\" (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-.\" 
+.\"
 .\" --(license Id: LICENSE.proto,v 1.1 2000/06/13 21:40:26 cgd Exp )--
 .\"
 .Dd June 1, 2000
@@ -104,7 +104,7 @@ name is meant to distinguish the counter from others in its group
 (and need not be unique across groups).
 Both names should be understandable by users, since they are printed
 by commands like
-.Xr vmstat 8 .
+.Xr vmstat 1 .
 The constant
 .Dv EVCNT_STRING_MAX
 is defined to be the maximum group or event name length in
@@ -182,7 +182,7 @@ for that device will often be safe without additional protection
 (because interrupt handler entries for a given device have to be
 serialized).
 However, for other uses of event counters, additional locking
-or use of machine-dependent atomic operation may be appropriate. 
+or use of machine-dependent atomic operation may be appropriate.
 (The overhead of using a mechanism that is guaranteed to
 be safe to increment every counter, regardless of actual need
 for such a mechanism where the counter is being incremented,
@@ -213,7 +213,7 @@ Device drivers that wish to use the generic event counter
 framework should place event counter structures in their
 .Dq softc
 structures.  For example, to keep track of the number of interrupts
-for a given device (broken down further into 
+for a given device (broken down further into
 .Dq device readable
 and
 .Dq device writable
@@ -289,7 +289,7 @@ Data structures and function prototypes for the framework are located in
 Event counters are used throughout the system.
 .Pp
 The
-.Xr vmstat 8
+.Xr vmstat 1
 source file
 .Pa usr.bin/vmstat/vmstat.c
 shows an example of how to access event counters from user programs.
@@ -299,7 +299,7 @@ The
 generic event counter framework was designed and implemented by
 Chris Demetriou <cgd@NetBSD.ORG>.
 .Sh SEE ALSO
-.Xr vmstat 8
+.Xr vmstat 1
 .Sh HISTORY
 A set of interrupt counter interfaces with similar names to the interfaces
 in the
