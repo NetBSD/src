@@ -1,4 +1,4 @@
-/* $NetBSD: user.c,v 1.27 2000/10/17 05:31:50 simonb Exp $ */
+/* $NetBSD: user.c,v 1.28 2000/10/17 05:43:10 simonb Exp $ */
 
 /*
  * Copyright (c) 1999 Alistair G. Crooks.  All rights reserved.
@@ -35,7 +35,7 @@
 #ifndef lint
 __COPYRIGHT("@(#) Copyright (c) 1999 \
 	        The NetBSD Foundation, Inc.  All rights reserved.");
-__RCSID("$NetBSD: user.c,v 1.27 2000/10/17 05:31:50 simonb Exp $");
+__RCSID("$NetBSD: user.c,v 1.28 2000/10/17 05:43:10 simonb Exp $");
 #endif
 
 #include <sys/types.h>
@@ -1725,12 +1725,12 @@ userinfo(int argc, char **argv)
 	} else {
 		(void) printf("groups\t%s %s\n", grp->gr_name, buf);
 	}
-	(void) printf("change\t%s", ctime(&pwp->pw_change));
+	(void) printf("change\t%s", pwp->pw_change ? ctime(&pwp->pw_change) : "NEVER\n");
 	(void) printf("class\t%s\n", pwp->pw_class);
 	(void) printf("gecos\t%s\n", pwp->pw_gecos);
 	(void) printf("dir\t%s\n", pwp->pw_dir);
 	(void) printf("shell\t%s\n", pwp->pw_shell);
-	(void) printf("expire\t%s", ctime(&pwp->pw_expire));
+	(void) printf("expire\t%s", pwp->pw_expire ? ctime(&pwp->pw_expire) : "NEVER\n");
 	return EXIT_SUCCESS;
 }
 #endif
