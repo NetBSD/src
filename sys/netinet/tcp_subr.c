@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_subr.c,v 1.127.4.1 2002/07/02 06:55:16 lukem Exp $	*/
+/*	$NetBSD: tcp_subr.c,v 1.127.4.2 2003/09/05 13:42:31 tron Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -102,7 +102,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tcp_subr.c,v 1.127.4.1 2002/07/02 06:55:16 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tcp_subr.c,v 1.127.4.2 2003/09/05 13:42:31 tron Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -844,7 +844,7 @@ tcp_respond(tp, template, m, th0, ack, seq, flags)
 #ifdef INET
 	case AF_INET:
 		error = ip_output(m, NULL, ro,
-		    (ip_mtudisc ? IP_MTUDISC : 0),
+		    (tp && tp->t_mtudisc ? IP_MTUDISC : 0),
 		    NULL);
 		break;
 #endif
@@ -915,10 +915,13 @@ tcp_newtcpcb(family, aux)
 	switch (family) {
 	case PF_INET:
 		tp->t_inpcb = (struct inpcb *)aux;
+		tp->t_mtudisc = ip_mtudisc;
 		break;
 #ifdef INET6
 	case PF_INET6:
 		tp->t_in6pcb = (struct in6pcb *)aux;
+		/* for IPv6, always try to run path MTU discovery */
+		tp->t_mtudisc = 1;
 		break;
 #endif
 	}
@@ -1420,7 +1423,7 @@ tcp_ctlinput(cmd, sa, v)
 		notify = tcp_quench;
 	else if (PRC_IS_REDIRECT(cmd))
 		notify = in_rtchange, ip = 0;
-	else if (cmd == PRC_MSGSIZE && ip_mtudisc && ip && ip->ip_v == 4) {
+	else if (cmd == PRC_MSGSIZE && ip && ip->ip_v == 4) {
 		/*
 		 * Check to see if we have a valid TCP connection
 		 * corresponding to the address in the ICMP message
