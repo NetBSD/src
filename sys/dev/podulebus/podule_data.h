@@ -1,10 +1,10 @@
-/*	$NetBSD: podule_data.h,v 1.1 2001/03/17 20:32:00 bjh21 Exp $	*/
+/*	$NetBSD: podule_data.h,v 1.2 2001/05/26 21:47:30 bjh21 Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: podules,v 1.1 2001/03/17 19:05:19 bjh21 Exp 
+ *	NetBSD: podules,v 1.4 2001/05/26 21:47:09 bjh21 Exp 
  */
 
 /*
@@ -46,6 +46,7 @@ static struct podule_description podules_acorn[] = {
 	{ PODULE_ACORN_BBCIO,	"BBC IO interface" },
 	{ PODULE_ACORN_ST506,	"ST506 HD interface" },
 	{ PODULE_ACORN_MIDI,	"MIDI interface" },
+	{ PODULE_ACORN_USERMIDI,	"User Port/MIDI interface" },
 	{ PODULE_ACORN_ETHER2,	"ether 2 interface" },
 	{ PODULE_ACORN_ETHERI,	"EtherI interface" },
 	{ 0x0000, NULL }
@@ -82,7 +83,8 @@ static struct podule_description podules_wildvision[] = {
 };
 
 static struct podule_description podules_hccs[] = {
-	{ PODULE_HCCS_IDE,	"IDE interface" },
+	{ PODULE_HCCS_IDESCSI,	"IDE or SCSI interface" },
+	{ PODULE_HCCS_ULTIMATE,	"Ultimate micropodule carrier" },
 	{ 0x0000, NULL }
 };
 
@@ -106,12 +108,19 @@ static struct podule_description podules_lingenuity[] = {
 
 static struct podule_description podules_irlam[] = {
 	{ PODULE_IRLAM_24I16,	"24i16 digitiser" },
+	{ PODULE_IRLAM_MMETHERV,	"Multi-media/EtherV" },
 	{ PODULE_IRLAM_ETHERN,	"EtherN interface" },
 	{ 0x0000, NULL }
 };
 
 static struct podule_description podules_oak[] = {
 	{ PODULE_OAK_SCSI,	"16 bit SCSI interface" },
+	{ 0x0000, NULL }
+};
+
+static struct podule_description podules_sj[] = {
+	{ PODULE_SJ_NEXUS,	"Nexus interface (Podule)" },
+	{ PODULE_SJ_NEXUSNS,	"Nexus interface (A3020 netslot)" },
 	{ 0x0000, NULL }
 };
 
@@ -183,7 +192,7 @@ static struct podule_description podules_ant[] = {
 static struct podule_description podules_castle[] = {
 	{ PODULE_CASTLE_SCSI16,	"8 or 16 bit SCSI2 interface" },
 	{ PODULE_CASTLE_SCSI16SHARE,	"8 or 16 bit SCSI2Share interface" },
-	{ PODULE_CASTLE_ETHERSCSI,	"8 or 16 bit SCSI2 interface, possibly with Ethernet" },
+	{ PODULE_CASTLE_ETHERSCSI,	"EtherSCSI" },
 	{ PODULE_CASTLE_ETHERSCSISHARE,	"8 or 16 bit SCSI2Share interface, possibly with Ethernet" },
 	{ PODULE_CASTLE_SCSI32,	"32 bit SCSI2 + DMA interface" },
 	{ 0x0000, NULL }
@@ -235,6 +244,7 @@ struct podule_list known_podules[] = {
 	{ MANUFACTURER_LINGENUITY, 	"Lingenuity", 	podules_lingenuity },
 	{ MANUFACTURER_IRLAM, 		"Irlam Instruments", 	podules_irlam },
 	{ MANUFACTURER_OAK, 		"Oak Solutions", 	podules_oak },
+	{ MANUFACTURER_SJ, 		"SJ Research", 	podules_sj },
 	{ MANUFACTURER_MORLEY, 		"Morley", 	podules_morley },
 	{ MANUFACTURER_VTI, 		"Vertical Twist", 	podules_vti },
 	{ MANUFACTURER_CUMANA, 		"Cumana", 	podules_cumana },
