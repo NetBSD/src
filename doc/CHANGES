@@ -1,4 +1,4 @@
-LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.436 $>
+LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.437 $>
 
 
 [Note: This file does not mention every change made to the NetBSD source tree.
@@ -187,6 +187,8 @@ Changes from NetBSD 2.0 to NetBSD 3.0:
 		feature makes it easy for hadware drivers to add encoding
 		support or sample rates support, and does not lead user-
 		visible changes at this moment.  [kent 20050111]
+	iwi(4): Driver for Intel PRO/Wireless 2200AG/2915ABG driver written
+		by Damien Bergamini.  [skrll 20050111]
 	auixp(4): Add driver for the audio part of the ATI IXP series of
 		chipsets. [reinoud 20050112]
 	viaide(4): Add support for nForce2 Ultra 400 PATA and SATA.
