@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ae.c,v 1.18 1995/03/23 13:00:05 briggs Exp $	*/
+/*	$NetBSD: if_ae.c,v 1.19 1995/04/08 13:17:55 briggs Exp $	*/
 
 /*
  * Device driver for National Semiconductor DS8390 based ethernet adapters.
@@ -22,7 +22,7 @@
  */
 
 /*
- * $Id: if_ae.c,v 1.18 1995/03/23 13:00:05 briggs Exp $
+ * $Id: if_ae.c,v 1.19 1995/04/08 13:17:55 briggs Exp $
  */
  
 #include "ae.h"
@@ -546,8 +546,10 @@ ae_watchdog(unit)
 
 	(*via2itab[1])(1);
 
-	if (i != aeintr_ctr)
+	if (i != aeintr_ctr) {
+		log(LOG_ERR, "ae%d: device timeout, recovered\n", unit);
 		return;
+	}
 #endif
 
 	log(LOG_ERR, "ae%d: device timeout\n", unit);
