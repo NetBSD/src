@@ -1,11 +1,8 @@
-#	$NetBSD: Makefile,v 1.4 2001/10/21 23:23:21 jmc Exp $
+#	$NetBSD: Makefile,v 1.5 2002/03/17 21:34:38 lukem Exp $
 
-TOP=		${.CURDIR}/..
-
-.include "${TOP}/Makefile.inc"
-.include <bsd.kernobj.mk>
+.include "${.CURDIR}/../../../Makefile.inc"
 .include <bsd.own.mk>
-.include <bsd.subdir.mk>
+.include <bsd.kernobj.mk>
 
 KERN=		${KERNOBJDIR}/INSTALL/netbsd
 RAMDISKDIR!=	cd ${.CURDIR}/../ramdisk && ${PRINTOBJDIR}
@@ -13,9 +10,8 @@ RAMDISK=	${RAMDISKDIR}/ramdisk.fs
 KERNEL=		netbsd.INSTALL.gz
 
 CLEANFILES+=	${KERNEL} netbsd.tmp netbsd.tmp.gz
-MDSETIMAGE?=	mdsetimage
 
-all:	${KERNEL}
+all: ${KERNEL}
 
 ${KERNEL}: ${KERN} ${RAMDISK}
 	cp ${KERN} netbsd.tmp
@@ -23,17 +19,8 @@ ${KERNEL}: ${KERN} ${RAMDISK}
 	gzip -9 netbsd.tmp
 	mv netbsd.tmp.gz ${.TARGET}
 
-.ifndef RELEASEDIR
-release:
-	@echo set RELEASEDIR first!
-	@false
-.else
-release:
+release: check_RELEASEDIR
 	-mkdir -p ${RELEASEDIR}/binary/kernel
 	cp -p ${KERNEL} ${RELEASEDIR}/binary/kernel
-.endif
 
-clean cleandir distclean:
-	rm -f *.core ${CLEANFILES}
-
-.include <bsd.obj.mk>
+.include <bsd.prog.mk>
