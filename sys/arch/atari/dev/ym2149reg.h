@@ -1,4 +1,4 @@
-/*	$NetBSD: ym2149reg.h,v 1.1 1996/03/27 10:08:34 leo Exp $	*/
+/*	$NetBSD: ym2149reg.h,v 1.2 1996/11/17 13:47:21 leo Exp $	*/
 
 /*
  * Copyright (c) 1996 Leo Weppelman.
@@ -114,30 +114,52 @@ extern u_char	ym2149_ioa;	/* Soft-copy of port-A			*/
 	splx(s);							\
 }
 
+#define ym2149_write_ioport2(port, value) {				\
+	YM2149->sd_selr = port;						\
+	YM2149->sd_wdat = value;					\
+}
+
 #define ym2149_fd_select(select) {					\
+	int s = splhigh();						\
+									\
 	ym2149_ioa = (ym2149_ioa & ~PA_FDSEL) | (select & PA_FDSEL);	\
 	ym2149_write_ioport(YM_IOA, ym2149_ioa);			\
+	splx(s);							\
 	}
 
 #define ym2149_rts(set) {						\
+	int s = splhigh();						\
+									\
 	ym2149_ioa = set ? ym2149_ioa | PA_SRTS : ym2149_ioa & ~PA_SRTS;\
 	ym2149_write_ioport(YM_IOA, ym2149_ioa);			\
+	splx(s);							\
 	}
 
 #define ym2149_dtr(set) {						\
+	int s = splhigh();						\
+									\
 	ym2149_ioa = set ? ym2149_ioa | PA_SDTR : ym2149_ioa & ~PA_SDTR;\
 	ym2149_write_ioport(YM_IOA, ym2149_ioa);			\
+	splx(s);							\
 	}
 
 #define ym2149_strobe(set) {						\
+	int s = splhigh();						\
+									\
 	ym2149_ioa = set ? ym2149_ioa | PA_PSTROBE : ym2149_ioa & ~PA_PSTROBE;\
 	ym2149_write_ioport(YM_IOA, ym2149_ioa);			\
+	splx(s);							\
 	}
 
 #define ym2149_ser2_select() {						\
+	int s = splhigh();						\
+									\
 	ym2149_ioa |= PA_SER2;						\
 	ym2149_write_ioport(YM_IOA, ym2149_ioa);			\
+	splx(s);							\
 	}
+
+#undef ym2149_write_ioport2
 
 #ifdef _KERNEL
 /*
