@@ -1,4 +1,4 @@
-/*	$NetBSD: interactive.c,v 1.13 1997/09/16 13:44:13 lukem Exp $	*/
+/*	$NetBSD: interactive.c,v 1.14 1998/01/10 08:27:54 enami Exp $	*/
 
 /*
  * Copyright (c) 1985, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)interactive.c	8.5 (Berkeley) 5/1/95";
 #else
-__RCSID("$NetBSD: interactive.c,v 1.13 1997/09/16 13:44:13 lukem Exp $");
+__RCSID("$NetBSD: interactive.c,v 1.14 1998/01/10 08:27:54 enami Exp $");
 #endif
 #endif /* not lint */
 
@@ -191,7 +191,7 @@ loop:
 		if (strncmp(cmd, "help", strlen(cmd)) != 0)
 			goto bad;
 	case '?':
-		fprintf(stderr, "%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s",
+		fprintf(stderr, "%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s",
 			"Available commands are:\n",
 			"\tls [arg] - list directory\n",
 			"\tcd arg - change directory\n",
@@ -202,11 +202,12 @@ loop:
 			" list of files to be extracted\n",
 			"\textract - extract requested files\n",
 			"\tsetmodes - set modes of requested directories\n",
-			"\tquit - immediately exit program\n",
+			"\tquit or xit - immediately exit program\n",
 			"\twhat - list dump header information\n",
 			"\tverbose - toggle verbose flag",
 			" (useful with ``ls'')\n",
 			"\thelp or `?' - print this list\n",
+			"\tDebug - turn on debugging\n",
 			"If no `arg' is supplied, the current",
 			" directory is used\n");
 		break;
