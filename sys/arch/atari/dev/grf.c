@@ -1,4 +1,4 @@
-/*	$NetBSD: grf.c,v 1.5 1995/06/09 19:55:13 leo Exp $	*/
+/*	$NetBSD: grf.c,v 1.6 1995/06/26 19:55:45 leo Exp $	*/
 
 /*
  * Copyright (c) 1995 Leo Weppelman
@@ -314,6 +314,7 @@ grfopen(dev, flags, devtype, p)
 
 	if ((gp->g_flags & (GF_OPEN|GF_EXCLUDE)) == (GF_OPEN|GF_EXCLUDE))
 		return(EBUSY);
+	grf_viewsync(gp);
 
 	return(0);
 }
