@@ -1,4 +1,4 @@
-/*	$NetBSD: scsiconf.c,v 1.184 2002/05/15 11:43:22 bouyer Exp $	*/
+/*	$NetBSD: scsiconf.c,v 1.184.2.1 2002/05/16 11:38:53 gehenna Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.
@@ -55,7 +55,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: scsiconf.c,v 1.184 2002/05/15 11:43:22 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: scsiconf.c,v 1.184.2.1 2002/05/16 11:38:53 gehenna Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -97,10 +97,17 @@ struct cfattach scsibus_ca = {
 
 extern struct cfdriver scsibus_cd;
 
+dev_type_open(scsibusopen);
+dev_type_close(scsibusclose);
+dev_type_ioctl(scsibusioctl);
+
+const struct cdevsw scsibus_cdevsw = {
+	scsibusopen, scsibusclose, noread, nowrite, scsibusioctl,
+	nostop, notty, nopoll, nommap,
+};
+
 int	scsibusprint __P((void *, const char *));
 void	scsibus_config_interrupts __P((struct device *));
-
-cdev_decl(scsibus);
 
 const struct scsipi_bustype scsi_bustype = {
 	SCSIPI_BUSTYPE_SCSI,

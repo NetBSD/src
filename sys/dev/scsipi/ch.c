@@ -1,4 +1,4 @@
-/*	$NetBSD: ch.c,v 1.49 2002/05/06 13:43:57 bouyer Exp $	*/
+/*	$NetBSD: ch.c,v 1.49.2.1 2002/05/16 11:38:52 gehenna Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 1999 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ch.c,v 1.49 2002/05/06 13:43:57 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ch.c,v 1.49.2.1 2002/05/16 11:38:52 gehenna Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -118,6 +118,17 @@ extern struct cfdriver ch_cd;
 struct scsipi_inquiry_pattern ch_patterns[] = {
 	{T_CHANGER, T_REMOV,
 	 "",		"",		""},
+};
+
+dev_type_open(chopen);
+dev_type_close(chclose);
+dev_type_read(chread);
+dev_type_ioctl(chioctl);
+dev_type_poll(chpoll);
+
+const struct cdevsw ch_cdevsw = {
+	chopen, chclose, chread, nowrite, chioctl,
+	nostop, notty, chpoll, nommap,
 };
 
 /* SCSI glue */
