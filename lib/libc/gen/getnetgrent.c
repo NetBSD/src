@@ -1,4 +1,4 @@
-/*	$NetBSD: getnetgrent.c,v 1.22 1999/01/22 03:25:31 lukem Exp $	*/
+/*	$NetBSD: getnetgrent.c,v 1.23 1999/04/18 02:04:04 lukem Exp $	*/
 
 /*
  * Copyright (c) 1994 Christos Zoulas
@@ -33,7 +33,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: getnetgrent.c,v 1.22 1999/01/22 03:25:31 lukem Exp $");
+__RCSID("$NetBSD: getnetgrent.c,v 1.23 1999/04/18 02:04:04 lukem Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include "namespace.h"
@@ -53,6 +53,12 @@ __RCSID("$NetBSD: getnetgrent.c,v 1.22 1999/01/22 03:25:31 lukem Exp $");
 #include <rpc/rpc.h>
 #include <rpcsvc/ypclnt.h>
 #include <rpcsvc/yp_prot.h>
+#endif
+
+#ifdef __STDC__
+#include <stdarg.h>
+#else
+#include <varargs.h>
 #endif
  
 #ifdef __weak_alias
