@@ -1,4 +1,4 @@
-/*	$NetBSD: video_subr.c,v 1.2 2001/06/04 18:59:32 uch Exp $	*/
+/*	$NetBSD: video_subr.c,v 1.3 2001/06/05 15:02:12 uch Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -161,14 +161,26 @@ int
 cmap_work_alloc(u_int8_t **r, u_int8_t **g, u_int8_t **b, u_int32_t **rgb,
     int cnt)
 {
-	KASSERT(r && g && b && rgb && LEGAL_CLUT_INDEX(cnt - 1));
+	KASSERT(LEGAL_CLUT_INDEX(cnt - 1));
 
-	*r = malloc(cnt * sizeof(u_int8_t), M_DEVBUF, M_WAITOK);
-	*g = malloc(cnt * sizeof(u_int8_t), M_DEVBUF, M_WAITOK);
-	*b = malloc(cnt * sizeof(u_int8_t), M_DEVBUF, M_WAITOK);
-	*rgb = malloc(cnt * sizeof(u_int32_t), M_DEVBUF, M_WAITOK);	
+#define	ALLOC_BUF(x, bit)						\
+	if (x) {							\
+		*x = malloc(cnt * sizeof(u_int ## bit ## _t),		\
+		    M_DEVBUF, M_WAITOK);				\
+		if (*x == 0)						\
+			goto errout;					\
+	}
+	ALLOC_BUF(r, 8);
+	ALLOC_BUF(g, 8);
+	ALLOC_BUF(b, 8);
+	ALLOC_BUF(rgb, 32);
+#undef	ALLOCBUF
 
-	return (!(*r && *g && *b && *rgb));
+	return (0);
+errout:
+	cmap_work_free(*r, *g, *b, *rgb);
+
+	return (1);
 }
 
 void
