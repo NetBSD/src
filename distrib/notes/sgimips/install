@@ -1,4 +1,4 @@
-.\"	$NetBSD: install,v 1.6 2004/01/04 15:06:44 sekiya Exp $
+.\"	$NetBSD: install,v 1.7 2004/01/04 15:12:03 sekiya Exp $
 .\"
 .\" Copyright (c) 1999-2002 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -146,7 +146,7 @@ with the SCSI-ID of the CD-ROM:
 .tag)
 (for O2 (IP32) machines)
 .(tag 12n -offset indent -compact
-.It Ic ">> boot -f scsi(0)cdrom(X)rdisk(0)partition(8)ip3xboot"
+.It Ic ">> boot -f pci(0)scsi(0)cdrom(X)rdisk(0)partition(8)ip3xboot"
 .tag)
 .Pp
 .Ss2 Installation for diskless configurations
