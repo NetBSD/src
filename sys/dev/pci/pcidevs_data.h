@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs_data.h,v 1.142 1999/07/15 18:06:40 ross Exp $	*/
+/*	$NetBSD: pcidevs_data.h,v 1.143 1999/07/20 20:59:04 drochner Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.137 1999/07/15 18:02:08 ross Exp 
+ *	NetBSD: pcidevs,v 1.138 1999/07/20 20:58:20 drochner Exp 
  */
 
 /*
@@ -2564,6 +2564,12 @@ struct pci_knowndev pci_knowndevs[] = {
 	    0,
 	    "Texas Instruments",
 	    "TLAN",
+	},
+	{
+	    PCI_VENDOR_TI, PCI_PRODUCT_TI_TVP4020,
+	    0,
+	    "Texas Instruments",
+	    "TVP4020 Permedia 2",
 	},
 	{
 	    PCI_VENDOR_TI, PCI_PRODUCT_TI_PCILYNX,
