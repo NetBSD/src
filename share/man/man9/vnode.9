@@ -1,4 +1,4 @@
-.\"     $NetBSD: vnode.9,v 1.16 2003/04/06 07:07:41 gmcgarry Exp $
+.\"     $NetBSD: vnode.9,v 1.17 2003/04/07 07:08:48 wiz Exp $
 .\"
 .\" Copyright (c) 2001 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -522,7 +522,7 @@ Increment
 .Em v_usecount
 of the vnode
 .Em vp .
-Any kernel thread system which uses a vnode (e.g. during the operation
+Any kernel thread system which uses a vnode (e.g., during the operation
 of some algorithm or to store in a data structure) should call
 .Fn vref .
 .It Fn VREF "vp"
@@ -793,7 +793,7 @@ the lock before they exit.
 The locking protocol is used in some places to attempt to make a
 series of operations atomic (e.g., access check then operation).
 This does not work for non-local file systems that do not support locking
-(e.g. NFS).
+(e.g., NFS).
 The
 .Nm
 interface would benefit from a simpler locking protocol.
