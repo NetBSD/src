@@ -1,4 +1,4 @@
-/*	$NetBSD: __fts13.c,v 1.4 1998/02/03 18:23:37 perry Exp $	*/
+/*	$NetBSD: __fts13.c,v 1.5 1998/02/27 18:05:09 perry Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993, 1994
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)fts.c	8.6 (Berkeley) 8/14/94";
 #else
-__RCSID("$NetBSD: __fts13.c,v 1.4 1998/02/03 18:23:37 perry Exp $");
+__RCSID("$NetBSD: __fts13.c,v 1.5 1998/02/27 18:05:09 perry Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -77,14 +77,14 @@ __weak_alias(__fts_set13,____fts_set13);
 #define	STAT	stat
 #endif
 
-static FTSENT	*fts_alloc __P((FTS *, char *, int));
+static FTSENT	*fts_alloc __P((FTS *, char *, size_t));
 static FTSENT	*fts_build __P((FTS *, int));
 static void	 fts_lfree __P((FTSENT *));
 static void	 fts_load __P((FTS *, FTSENT *));
 static size_t	 fts_maxarglen __P((char * const *));
 static void	 fts_padjust __P((FTS *, void *));
 static int	 fts_palloc __P((FTS *, size_t));
-static FTSENT	*fts_sort __P((FTS *, FTSENT *, int));
+static FTSENT	*fts_sort __P((FTS *, FTSENT *, size_t));
 static u_short	 fts_stat __P((FTS *, FTSENT *, int));
 
 #define	ISDOT(a)	(a[0] == '.' && (!a[1] || (a[1] == '.' && !a[2])))
@@ -109,9 +109,9 @@ fts_open(argv, options, compar)
 {
 	FTS *sp;
 	FTSENT *p, *root;
-	int nitems;
+	size_t nitems;
 	FTSENT *parent, *tmp = NULL;	/* pacify gcc */
-	int len;
+	size_t len;
 
 	/* Options check. */
 	if (options & ~FTS_OPTIONMASK) {
@@ -214,7 +214,7 @@ fts_load(sp, p)
 	FTS *sp;
 	FTSENT *p;
 {
-	int len;
+	size_t len;
 	char *cp;
 
 	/*
@@ -423,7 +423,7 @@ next:	tmp = p;
 
 name:		t = sp->fts_path + NAPPEND(p->fts_parent);
 		*t++ = '/';
-		memmove(t, p->fts_name, p->fts_namelen + 1);
+		memmove(t, p->fts_name, (size_t)(p->fts_namelen + 1));
 		return (sp->fts_cur = p);
 	}
 
@@ -584,7 +584,7 @@ fts_build(sp, type)
 {
 	struct dirent *dp;
 	FTSENT *p, *head;
-	int nitems;
+	size_t nitems;
 	FTSENT *cur, *tail;
 	DIR *dirp;
 	void *adjaddr;
@@ -684,7 +684,8 @@ fts_build(sp, type)
 		if (!ISSET(FTS_SEEDOT) && ISDOT(dp->d_name))
 			continue;
 
-		if ((p = fts_alloc(sp, dp->d_name, (int)dp->d_namlen)) == NULL)
+		if ((p = fts_alloc(sp, dp->d_name, (size_t)dp->d_namlen))
+		    == NULL)
 			goto mem1;
 		if (dp->d_namlen > maxlen) {
 			if (fts_palloc(sp, (size_t)dp->d_namlen)) {
@@ -736,7 +737,8 @@ mem1:				saved_errno = errno;
 			/* Build a file name for fts_stat to stat. */
 			if (ISSET(FTS_NOCHDIR)) {
 				p->fts_accpath = p->fts_path;
-				memmove(cp, p->fts_name, p->fts_namelen + 1);
+				memmove(cp, p->fts_name,
+				        (size_t)(p->fts_namelen + 1));
 			} else
 				p->fts_accpath = p->fts_name;
 			/* Stat it. */
@@ -892,7 +894,7 @@ static FTSENT *
 fts_sort(sp, head, nitems)
 	FTS *sp;
 	FTSENT *head;
-	int nitems;
+	size_t nitems;
 {
 	FTSENT **ap, *p;
 
@@ -924,7 +926,7 @@ static FTSENT *
 fts_alloc(sp, name, namelen)
 	FTS *sp;
 	char *name;
-	int namelen;
+	size_t namelen;
 {
 	FTSENT *p;
 	size_t len;
