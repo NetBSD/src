@@ -1,3 +1,91 @@
+Changes from 2.15.4 to 2.15.5
+-----------------------------
+
+FUTURES file updated and re-arranged some with more rational schedule.
+
+Many prototypes handled better for ANSI C in protos.h.
+
+getopt.c updated somewhat.
+
+test/Makefile now removes junk directory, `bardargtest' renamed `badargs.'
+
+Bug fix in iop.c for RS = "". Eat trailing newlines off of record separator.
+
+Bug fix in Makefile.bsd44, use leading tab in actions.
+
+Fix in field.c:set_FS for FS == "\\" and IGNORECASE != 0.
+
+Config files updated or added:
+	cray60, DEC OSF/1 2.0, Utek, sgi405, next21, next30, atari/config.h,
+	sco.
+
+Fix in io.c for ENFILE as well as EMFILE, update decl of groupset to
+include OSF/1.
+
+Rationalized printing as integers if numbers are outside the range of a long.
+Changes to node.c:force_string and builtin.c.
+
+Made internal NF, NR, and FNR variables longs instead of ints.
+
+Add LIMITS_H_MISSING stuff to config.in and awk.h, and default defs for
+INT_MAX and LONG_MAX, if no limits.h file. Add a standard decl of
+the time() function for __STDC__. From ghazi@noc.rutgers.edu.
+
+Fix tree_eval in awk.h and r_tree_eval in eval.c to deal better with
+function parameters, particularly ones that are arrays.
+
+Fix eval.c to print out array names of arrays used in scalar contexts.
+
+Fix eval.c in interpret to zero out source and sourceline initially. This
+does a better job of providing source file and line number information.
+
+Fix to re_parse_field in field.c to not use isspace when RS = "", but rather
+to explicitly look for blank and tab.
+
+Fix to sc_parse_field in field.c to catch the case of the FS character at the
+end of a record.
+
+Lots of miscellanious bug fixes for memory leaks, courtesy Mark Moraes,
+also fixes for arrays.
+
+io.c fixed to warn about lack of explicit closes if --lint.
+
+Updated missing/strftime.c to match posted strftime 6.2.
+
+Bug fix in builtin.c, in case of non-match in sub_common.
+
+Updated constant used for division in builtin.c:do_rand for DEC Alpha
+and CRAY Y-MP.
+
+POSIXLY_CORRECT in the environment turns on --posix (fixed in main.c).
+
+Updated srandom prototype and calls in builtin.c.
+
+Fix awk.y to enforce posix semantics of unary +: result is numeric.
+
+Fix array.c to not rearrange the hash chain upon finding an index in
+the array.  This messed things up in cases like:
+	for (index1 in array) {
+		blah
+		if (index2 in array)	# blew away the for
+			stuff
+	}
+
+Fixed spelling errors in the man page.
+
+Fixes in awk.y so that
+	gawk '' /path/to/file
+will work without core dumping or finding parse errors.
+
+Fix main.c so that --lint will fuss about an empty program.
+Yet another fix for argument parsing in the case of unrecognized options.
+
+Bug fix in dfa.c to not attempt to free null pointers.
+
+Bug fix in builtin.c to only use DEFAULT_G_PRECISION for %g or %G.
+
+Bug fix in field.c to achieve call by value semantics for split.
+
 Changes from 2.15.3 to 2.15.4
 -----------------------------
 
@@ -26,7 +114,7 @@ New bionic (faster, better, stronger than before) hashing function.
 Bug fix in argument handling. `gawk -X' now notices there was no program.
   Additional bug fixes to make --compat and --lint work again.
 
-Many changes for 16-bit cleanliness.
+Many changes for systems where sizeof(int) != sizeof(void *).
 
 Add explicit alloca(0) in io.c to recover space from C alloca.
 
@@ -64,7 +152,7 @@ More getpgrp() defines.
 
 Changes for BSD44:  <sys/param.h> in io.c and Makefile.bsd44.
 
-All directories in the distribution are now writeable.
+All directories in the distribution are now writable.
 
 Separated LDFLAGS and CFLAGS in Makefile.  CFLAGS can now be overridden by
   user.
@@ -258,7 +346,7 @@ Added code to do better diagnoses of weird or null file names.
 Allow continue outside of a loop, unless in strict posix mode.  Lint option
   will issue warning.
 
-New missing/strftime.c.  There has been one chage that affects gawk.  Posix
+New missing/strftime.c.  There has been one change that affects gawk.  Posix
   now defines a %V conversion so the vms conversion has been changed to %v.
   If this version is used with gawk -Wlint and they use %V in a call to
   strftime, they'll get a warning.
@@ -286,7 +374,7 @@ Fixed a couple of bugs for reference to $0 when $0 is "" -- particularly in
 Fixed premature freeing in construct "$0 = $0".
 
 Removed the call to wait_any() in gawk_popen(), since on at least some systems,
-  if gawk's input was from a pipe, the predecssor process in the pipe was a
+  if gawk's input was from a pipe, the predecessor process in the pipe was a
   child of gawk and this caused a deadlock.
 
 Regexp can (once again) match a newline, if given explicitly.
@@ -312,7 +400,7 @@ Fixed bug when NF is set by user -- fields_arr must be expanded if necessary
 
 Fixed several bugs in [g]sub() for no match found or the match is 0-length.
 
-Fixed bug where in gsub() a pattern anchorred at the beginning would still
+Fixed bug where in gsub() a pattern anchored at the beginning would still
   substitute throughout the string.
 
 make test does not assume the . is in PATH.
@@ -332,7 +420,7 @@ Fixed hanging of pipe redirection to getline
 Fixed coredump on access to $0 inside BEGIN block.
 
 Fixed treatment of RS = "".  It now parses the fields correctly and strips
-  leading whitspace from a record if FS is a space.
+  leading whitespace from a record if FS is a space.
 
 Fixed faking of /dev/stdin.
 
@@ -376,7 +464,7 @@ Update to config/bsd43.
 
 Added config/apollo, config/msc60, config/cray2-50, config/interactive2.2
 
-sgi33.cc added for compilation using cc ratther than gcc.
+sgi33.cc added for compilation using cc rather than gcc.
 
 Ultrix41 now propagates to config.h properly -- as part of a general
   mechanism in configure for kludges -- #define anything from a config file
@@ -697,7 +785,7 @@ Fixed bug in output flushing introduced a few patches back.  This caused
 Changes from 2.12.22 to 2.12.23
 -------------------------------
 
-Accidently left config/cray2-60 out of last patch.
+Accidentally left config/cray2-60 out of last patch.
 
 Added some missing dependencies to Makefile.
 
@@ -847,7 +935,7 @@ Changes from 2.12.14 to 2.12.15
 -------------------------------
 
 Changed config/* to a condensed form that can be used with mkconf to generate
-  a config.h from config.h-dist -- much easier to maintain.  Please chaeck
+  a config.h from config.h-dist -- much easier to maintain.  Please check
   carefully against what you had before for a particular system and report
   any problems.  vms.h remains separate since the stuff at the bottom
   didn't quite fit the mkconf model -- hopefully cleared up later.
@@ -1199,7 +1287,7 @@ Changes from 2.11beta to 2.11.1 (production)
 Went from "beta" to production status!!!
 
 Now flushes stdout before closing pipes or redirected files to
-synchonize output.
+synchronize output.
 
 MS-DOS changes added in.
 
@@ -1314,7 +1402,7 @@ Cleaned up and fixed close_redir().
 Fixed an obscure bug to do with redirection.  Intermingled ">" and ">>"
 redirects did not output in a predictable order.
 
-Improved handling of output bufferring:  now all print[f]s redirected to a tty
+Improved handling of output buffering:  now all print[f]s redirected to a tty
 or pipe are flushed immediately and non-redirected output to a tty is flushed
 before the next input record is read.
 

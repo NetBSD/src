@@ -21,13 +21,15 @@
  * You should have received a copy of the GNU General Public License
  * along with GAWK; see the file COPYING.  If not, write to
  * the Free Software Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
- *
- *	$Id: awk.h,v 1.4 1994/02/17 01:22:01 jtc Exp $
  */
 
 /* ------------------------------ Includes ------------------------------ */
+#include "config.h"
+
 #include <stdio.h>
+#ifndef LIMITS_H_MISSING
 #include <limits.h>
+#endif
 #include <ctype.h>
 #include <setjmp.h>
 #include <varargs.h>
@@ -54,8 +56,6 @@ extern int errno;
 #endif
 
 #include <signal.h>
-
-#include "config.h"
 
 #ifdef __STDC__
 #define	P(s)	s
@@ -156,7 +156,7 @@ extern FILE *popen P((const char *,const char *));
 extern int   pclose P((FILE *));
 extern void vms_arg_fixup P((int *,char ***));
 /* some things not in STDC_HEADERS */
-extern int gnu_strftime P((char *,size_t,const char *,const struct tm *));
+extern size_t gnu_strftime P((char *,size_t,const char *,const struct tm *));
 extern int unlink P((const char *));
 extern int getopt P((int,char **,char *));
 extern int isatty P((int));
@@ -198,21 +198,7 @@ extern int _text_read (int, char *, int);
 #define ENVSEP	':'
 #endif
 
-#define DEFAULT_G_PRECISION 6
-
-/* semi-temporary hack, mostly to gracefully handle VMS */
-#ifdef GFMT_WORKAROUND
-extern void sgfmt P((char *, const char *, int, int, int, double)); /* builtin.c */
-
-/* Partial fix, to handle the most common case.  */
-#define NUMTOSTR(str, format, num)					   \
-	if (strcmp((format), "%.6g") == 0 || strcmp((format), "%g") == 0)  \
-		sgfmt(str, "%*.*g", 0, 1, DEFAULT_G_PRECISION, num);	   \
-	else								   \
-		(void) sprintf(str, format, num) /* NOTE: no semi-colon! */
-#else
-#define NUMTOSTR(str, format, num) (void) sprintf(str, format, num)
-#endif /* GFMT_WORKAROUND */
+extern double double_to_int P((double d));
 
 /* ------------------ Constants, Structures, Typedefs  ------------------ */
 #define AWKNUM	double
@@ -462,8 +448,8 @@ typedef struct for_loop_header {
 
 /* for "for(iggy in foo) {" */
 struct search {
-	NODE **arr_ptr;
-	NODE **arr_end;
+	NODE *sym;
+	size_t idx;
 	NODE *bucket;
 	NODE *retval;
 };
@@ -521,13 +507,25 @@ struct src {
 /* Return means return from a function call; leave value in ret_node */
 #define	TAG_RETURN 3
 
+#ifndef INT_MAX
+#define INT_MAX (~(1 << (sizeof (int) * 8 - 1)))
+#endif
+#ifndef LONG_MAX
+#define LONG_MAX (~(1 << (sizeof (long) * 8 - 1)))
+#endif
+#ifndef ULONG_MAX
+#define ULONG_MAX (~(unsigned long)0)
+#endif
+#ifndef LONG_MIN
+#define LONG_MIN (-LONG_MAX - 1)
+#endif
 #define HUGE    INT_MAX 
 
 /* -------------------------- External variables -------------------------- */
 /* gawk builtin variables */
-extern int NF;
-extern int NR;
-extern int FNR;
+extern long NF;
+extern long NR;
+extern long FNR;
 extern int IGNORECASE;
 extern char *RS;
 extern char *OFS;
@@ -585,12 +583,11 @@ extern int in_end_rule;
 #else
 #define	get_lhs(p, a)	((p)->type == Node_var ? (&(p)->var_value) : \
 			r_get_lhs((p), (a)))
-#define	tree_eval(t)	(_t = (t),(_t) == NULL ? Nnull_string : \
-			((_t)->type == Node_val ? (_t) : \
-			((_t)->type == Node_var ? (_t)->var_value : \
-			((_t)->type == Node_param_list ? \
-			(stack_ptr[(_t)->param_cnt])->var_value : \
-			r_tree_eval((_t))))))
+#define	tree_eval(t)	(_t = (t),_t == NULL ? Nnull_string : \
+			(_t->type == Node_param_list ? r_tree_eval(_t) : \
+			(_t->type == Node_val ? _t : \
+			(_t->type == Node_var ? _t->var_value : \
+			r_tree_eval(_t)))))
 #endif
 
 #define	make_number(x)	mk_number((x), (unsigned int)(MALLOC|NUM|NUMBER))

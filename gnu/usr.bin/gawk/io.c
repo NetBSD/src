@@ -23,10 +23,6 @@
  * the Free Software Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
 
-#ifndef lint
-static char rcsid[] = "$Id: io.c,v 1.6 1994/04/01 01:29:28 jtc Exp $";
-#endif
-
 #if !defined(VMS) && !defined(VMS_POSIX) && !defined(_MSC_VER)
 #include <sys/param.h>
 #endif
@@ -38,6 +34,10 @@ static char rcsid[] = "$Id: io.c,v 1.6 1994/04/01 01:29:28 jtc Exp $";
 
 #if !defined(S_ISDIR) && defined(S_IFDIR)
 #define	S_ISDIR(m) (((m) & S_IFMT) == S_IFDIR)
+#endif
+
+#ifndef ENFILE
+#define ENFILE EMFILE
 #endif
 
 #ifndef atarist
@@ -55,7 +55,7 @@ static int inrec P((IOBUF *iop));
 static int iop_close P((IOBUF *iop));
 struct redirect *redirect P((NODE *tree, int *errflg));
 static void close_one P((void));
-static int close_redir P((struct redirect *rp));
+static int close_redir P((struct redirect *rp, int exitwarn));
 #ifndef PIPES_SIMULATED
 static int wait_any P((int interesting));
 #endif
@@ -163,13 +163,13 @@ int skipping;
 void
 set_FNR()
 {
-	FNR = (int) FNR_node->var_value->numbr;
+	FNR = (long) FNR_node->var_value->numbr;
 }
 
 void
 set_NR()
 {
-	NR = (int) NR_node->var_value->numbr;
+	NR = (long) NR_node->var_value->numbr;
 }
 
 /*
@@ -260,12 +260,12 @@ do_input()
 	IOBUF *iop;
 	extern int exiting;
 
-	if (setjmp(filebuf) != 0) {
-	}
+	(void) setjmp(filebuf);
+
 	while ((iop = nextfile(0)) != NULL) {
 		if (inrec(iop) == 0)
 			while (interpret(expression_value) && inrec(iop) == 0)
-				;
+				continue;
 		/* recover any space from C based alloca */
 		(void) alloca(0);
 
@@ -413,7 +413,7 @@ int *errflg;
 		}
 		if (rp->fp == NULL && rp->iop == NULL) {
 			/* too many files open -- close one and try again */
-			if (errno == EMFILE)
+			if (errno == EMFILE || errno == ENFILE)
 				close_one();
 			else {
 				/*
@@ -483,16 +483,18 @@ NODE *tree;
 	if (rp == NULL) /* no match */
 		return tmp_number((AWKNUM) 0.0);
 	fflush(stdout);	/* synchronize regular output */
-	tmp = tmp_number((AWKNUM)close_redir(rp));
+	tmp = tmp_number((AWKNUM)close_redir(rp, 0));
 	rp = NULL;
 	return tmp;
 }
 
 static int
-close_redir(rp)
+close_redir(rp, exitwarn)
 register struct redirect *rp;
+int exitwarn;
 {
 	int status = 0;
+	char *what;
 
 	if (rp == NULL)
 		return 0;
@@ -511,14 +513,19 @@ register struct redirect *rp;
 			rp->iop = NULL;
 		}
 	}
+
+	what = (rp->flag & RED_PIPE) ? "pipe" : "file";
+
+	if (exitwarn) 
+		warning("no explicit close of %s \"%s\" provided",
+			what, rp->value);
+
 	/* SVR4 awk checks and warns about status of close */
 	if (status) {
 		char *s = strerror(errno);
 
-		warning("failure status (%d) on %s close of \"%s\" (%s).",
-			status,
-			(rp->flag & RED_PIPE) ? "pipe" :
-			"file", rp->value, s);
+		warning("failure status (%d) on %s close of \"%s\" (%s)",
+			status, what, rp->value, s);
 
 		if (! do_unix) {
 			/* set ERRNO too so that program can get at it */
@@ -576,7 +583,8 @@ close_io ()
 	for (rp = red_head; rp != NULL; rp = next) {
 		next = rp->next;
 		/* close_redir() will print a message if needed */
-		if (close_redir(rp))
+		/* if do_lint, warn about lack of explicit close */
+		if (close_redir(rp, do_lint))
 			status++;
 		rp = NULL;
 	}
@@ -798,7 +806,7 @@ const char *name, *mode;
 	char tbuf[BUFSIZ], *cp;
 	int i;
 #if defined(NGROUPS_MAX) && NGROUPS_MAX > 0
-#if defined(atarist) || defined(__svr4__) || defined(__NetBSD__)
+#if defined(atarist) || defined(__svr4__) || defined(__osf__)
 	gid_t groupset[NGROUPS_MAX];
 #else
 	int groupset[NGROUPS_MAX];
