@@ -1,4 +1,4 @@
-/*	$NetBSD: wdc.c,v 1.142 2003/10/15 20:26:33 bouyer Exp $ */
+/*	$NetBSD: wdc.c,v 1.143 2003/10/15 20:29:26 bouyer Exp $ */
 
 /*
  * Copyright (c) 1998, 2001, 2003 Manuel Bouyer.  All rights reserved.
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wdc.c,v 1.142 2003/10/15 20:26:33 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wdc.c,v 1.143 2003/10/15 20:29:26 bouyer Exp $");
 
 #ifndef WDCDEBUG
 #define WDCDEBUG
@@ -772,7 +772,7 @@ wdcattach(chp)
 	TAILQ_INIT(&chp->ch_queue->sc_xfer);
 	chp->ch_queue->queue_freese = 0;
 
-	config_found(&chp->wdc->sc_dev, chp, atabusprint);
+	chp->atabus = config_found(&chp->wdc->sc_dev, chp, atabusprint);
 }
 
 /*
@@ -874,7 +874,7 @@ atabusdetach(self, flags)
 
 	/* shutdown channel */
 	chp->ch_flags |= WDCF_SHUTDOWN;
-	wakeup(&chp);
+	wakeup(&chp->thread);
 	while (chp->thread != NULL)
 		tsleep(&chp->ch_flags, PRIBIO, "atadown", 0);
 
