@@ -1,4 +1,4 @@
-/*	$NetBSD: vmparam.h,v 1.11 1999/12/04 21:21:48 ragge Exp $	*/
+/*	$NetBSD: vmparam.h,v 1.12 2000/01/15 14:47:25 minoura Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -240,7 +240,8 @@
  * Constants which control the way the VM system deals with memory segments.
  */
 #define	VM_PHYSSEG_MAX		3
-#define VM_PHYSSEG_STRAT	VM_PSTRAT_RANDOM	/* ??? */
+#define VM_PHYSSEG_STRAT	VM_PSTRAT_BIGFIRST
+				/* Actually VM_PSTRAT_UPPERFIRST is needed */
 #define	VM_PHYSSEG_NOADD
 
 #define	VM_NFREELIST		1
