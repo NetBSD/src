@@ -1,4 +1,4 @@
-/*	$NetBSD: getopt_long.c,v 1.9 2000/11/26 23:39:11 wiz Exp $	*/
+/*	$NetBSD: getopt_long.c,v 1.10 2001/01/04 03:35:29 lukem Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: getopt_long.c,v 1.9 2000/11/26 23:39:11 wiz Exp $");
+__RCSID("$NetBSD: getopt_long.c,v 1.10 2001/01/04 03:35:29 lukem Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include "namespace.h"
@@ -137,6 +137,8 @@ permute_args(nonopt_start, nonopt_end, opt_end, nargv)
 {
 	int cstart, cyclelen, i, j, ncycle, nnonopts, nopts, pos;
 	char *swap;
+
+	_DIAGASSERT(nargv != NULL);
 
 	/*
 	 * compute lengths of blocks and number and size of cycles
@@ -320,6 +322,9 @@ getopt(nargc, nargv, options)
 	const char *options;
 {
 	int retval;
+
+	_DIAGASSERT(nargv != NULL);
+	_DIAGASSERT(options != NULL);
 
 	if ((retval = getopt_internal(nargc, nargv, options)) == -2) {
 		++optind;
