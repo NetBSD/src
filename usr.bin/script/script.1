@@ -1,4 +1,4 @@
-.\"	$NetBSD: script.1,v 1.6 2001/12/01 16:43:24 wiz Exp $
+.\"	$NetBSD: script.1,v 1.7 2002/06/21 18:46:31 atatat Exp $
 .\"
 .\" Copyright (c) 1980, 1990, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -41,7 +41,7 @@
 .Nd make typescript of terminal session
 .Sh SYNOPSIS
 .Nm
-.Op Fl a
+.Op Fl adpr
 .Op Ar file
 .Sh DESCRIPTION
 .Nm
@@ -68,6 +68,12 @@ Append the output to
 or
 .Pa typescript ,
 retaining the prior contents.
+.It Fl d
+Don't sleep between records when playing back a timestamped session.
+.It Fl p
+Play back a recorded session in real time.
+.It Fl r
+Record a session with input, output, and timestamping.
 .El
 .Pp
 The script ends when the forked shell exits (a
