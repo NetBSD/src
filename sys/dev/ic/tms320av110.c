@@ -1,4 +1,4 @@
-/*	$NetBSD: tms320av110.c,v 1.13 2004/04/22 00:17:11 itojun Exp $	*/
+/*	$NetBSD: tms320av110.c,v 1.14 2004/07/09 02:10:16 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -44,7 +44,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tms320av110.c,v 1.13 2004/04/22 00:17:11 itojun Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tms320av110.c,v 1.14 2004/07/09 02:10:16 mycroft Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -185,10 +185,6 @@ tav_open(hdl, flags)
 	void *hdl;
 	int flags;
 {
-        struct tav_softc *sc;
-
-	sc = hdl;
-
 	/* dummy */
 	return 0;
 }
