@@ -1,4 +1,4 @@
-/*	$NetBSD: rdisc.c,v 1.13 2001/11/02 05:30:57 lukem Exp $	*/
+/*	$NetBSD: rdisc.c,v 1.13.2.1 2004/04/01 03:05:53 jmc Exp $	*/
 
 /*
  * Copyright (c) 1995
@@ -39,7 +39,7 @@
 #include <netinet/ip_icmp.h>
 
 #ifdef __NetBSD__
-__RCSID("$NetBSD: rdisc.c,v 1.13 2001/11/02 05:30:57 lukem Exp $");
+__RCSID("$NetBSD: rdisc.c,v 1.13.2.1 2004/04/01 03:05:53 jmc Exp $");
 #elif defined(__FreeBSD__)
 __RCSID("$FreeBSD$");
 #else
@@ -99,7 +99,8 @@ struct dr {				/* accumulated advertisements */
 #define UNSIGN_PREF(p) SIGN_PREF(p)
 /* adjust unsigned preference by interface metric,
  * without driving it to infinity */
-#define PREF(p, ifp) ((int)(p) <= (ifp)->int_metric ? ((p) != 0 ? 1 : 0) \
+#define PREF(p, ifp) ((n_long)(p) <= (n_long)(ifp)->int_metric        \
+		    ? ((p) != 0 ? 1 : 0)                      \
 		      : (p) - ((ifp)->int_metric))
 
 static void rdisc_sort(void);
