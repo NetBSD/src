@@ -1,4 +1,4 @@
-#	$NetBSD: files,v 1.130 1997/07/28 22:48:59 jonathan Exp $
+#	$NetBSD: files,v 1.131 1997/07/31 21:56:33 matt Exp $
 
 #	@(#)files.newconf	7.5 (Berkeley) 5/10/93
 
@@ -78,6 +78,10 @@ file	dev/ic/uha.c		uha
 # 3Com Etherlink-III Ethernet controller
 device	ep: arp, ether, ifnet
 file	dev/ic/elink3.c		ep
+
+# DEC EtherWORKS III (LEMAC) Ethernet controllers
+device	lc: arp, ether, ifnet
+file	dev/ic/lemac.c		lc
 
 # LANCE and PCnet Ethernet controllers
 device	le: arp, ether, ifnet
