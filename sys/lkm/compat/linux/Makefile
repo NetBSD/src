@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.15 2001/06/19 18:18:42 jdolecek Exp $
+#	$NetBSD: Makefile,v 1.16 2001/07/04 10:29:16 jdolecek Exp $
 
 .include "../Makefile.inc"
 
@@ -7,7 +7,7 @@
 .PATH:	$S/arch/${MACHINE_ARCH}/${MACHINE_ARCH}
 
 CPPFLAGS+=	-DNWSDISPLAY=1 -DSYSVSEM -DSYSVMSG -DSYSVSHM -DCOMPAT_LINUX
-CPPFLAGS+=	-nostdinc -DKTRACE -DNSEQUENCER=1
+CPPFLAGS+=	-nostdinc -DKTRACE -DNSEQUENCER=1 -DINET6
 # compat_util.c symbol redifinitions
 CPPFLAGS+=	-Demul_find=linux_emul_find -Dstackgap_init=linux_stackgap_init\
 		-Demul_flags_translate=linux_emul_flags_translate \
@@ -35,8 +35,7 @@ SRCS+=	compat_util.c
 
 # XXXX - temporary, not applicable for kernel with COMPAT_43, OSSAUDIO
 #.PATH: $S/compat/common $S/compat/ossaudio
-#SRCS+=	uipc_syscalls_43.c vfs_syscalls_43.c kern_resource_43.c \
-#	kern_info_43.c ossaudio.c
+#SRCS+=	vfs_syscalls_43.c kern_resource_43.c kern_info_43.c ossaudio.c
 
 # architecture or machine dependant files
 .if ${MACHINE} == "i386"
