@@ -1,4 +1,4 @@
-/*	$NetBSD: usbdi.c,v 1.60 2000/01/19 00:23:58 augustss Exp $	*/
+/*	$NetBSD: usbdi.c,v 1.61 2000/01/31 20:13:07 augustss Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/usbdi.c,v 1.28 1999/11/17 22:33:49 n_hibma Exp $	*/
 
 /*
@@ -607,6 +607,14 @@ usbd_clear_endpoint_stall_async(pipe)
 	return (err);
 }
 
+void usbd_clear_endpoint_toggle(usbd_pipe_handle pipe); /* XXXXX */
+void
+usbd_clear_endpoint_toggle(pipe)
+	usbd_pipe_handle pipe;
+{
+	pipe->methods->cleartoggle(pipe);
+}
+
 usbd_status 
 usbd_endpoint_count(iface, count)
 	usbd_interface_handle iface;
@@ -802,9 +810,6 @@ usb_transfer_complete(xfer)
 		}
 	}
 
-	if (pipe->methods->done != NULL)
-		pipe->methods->done(xfer);
-
 	if (!repeat) {
 		/* Remove request from queue. */
 #ifdef DIAGNOSTIC
@@ -814,6 +819,8 @@ usb_transfer_complete(xfer)
 #endif
 		SIMPLEQ_REMOVE_HEAD(&pipe->queue, xfer, next);
 	}
+	DPRINTFN(5,("usb_transfer_complete: repeat=%d new head=%p\n", 
+		    repeat, SIMPLEQ_FIRST(&pipe->queue)));
 
 	/* Count completed transfers. */
 	++pipe->device->bus->stats.requests
@@ -829,6 +836,15 @@ usb_transfer_complete(xfer)
 
 	if (xfer->callback)
 		xfer->callback(xfer, xfer->priv, xfer->status);
+
+#ifdef DIAGNOSTIC
+	if (pipe->methods->done != NULL)
+		pipe->methods->done(xfer);
+	else
+		printf("usb_transfer_complete: pipe->methods->done == NULL\n");
+#else
+	pipe->methods->done(xfer);
+#endif
 
 	if ((xfer->flags & USBD_SYNCHRONOUS) && !polling)
 		wakeup(xfer);
