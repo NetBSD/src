@@ -1,4 +1,4 @@
-/*	$NetBSD: cpuvar.h,v 1.36 2001/07/07 20:09:15 mrg Exp $ */
+/*	$NetBSD: cpuvar.h,v 1.37 2001/07/10 15:02:50 mrg Exp $ */
 
 /*
  *  Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -407,6 +407,12 @@ struct cpu_info {
 
 #define CPU_INFO_ITERATOR		int
 #define CPU_INFO_FOREACH(cii, ci)	cii = 0; ci = cpus[cii], cii < ncpu; cii++
+
+/*
+ * Useful macros.
+ */
+#define CPU_READY(cpi)	((cpi) == NULL || cpuinfo.mid == (cpi)->mid || \
+			    ((cpi)->flags & CPUFLG_READY) == 0)
 
 /*
  * Related function prototypes
