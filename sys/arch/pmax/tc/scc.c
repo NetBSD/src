@@ -1,4 +1,4 @@
-/*	$NetBSD: scc.c,v 1.31 1998/01/12 20:12:43 thorpej Exp $	*/
+/*	$NetBSD: scc.c,v 1.32 1998/02/05 01:57:35 jonathan Exp $	*/
 
 /* 
  * Copyright (c) 1991,1990,1989,1994,1995,1996 Carnegie Mellon University
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
-__KERNEL_RCSID(0, "$NetBSD: scc.c,v 1.31 1998/01/12 20:12:43 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: scc.c,v 1.32 1998/02/05 01:57:35 jonathan Exp $");
 
 /*
  * Intel 82530 dual usart chip driver. Supports the serial port(s) on the
@@ -405,6 +405,7 @@ sccmatch(parent, cf, aux)
 	struct cfdata *cf;
 	void *aux;
 {
+	extern struct cfdriver ioasic_cd;		/* XXX */
 	struct ioasicdev_attach_args *d = aux;
 	void *sccaddr;
 
