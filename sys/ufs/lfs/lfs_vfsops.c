@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_vfsops.c,v 1.75 2002/05/16 02:23:55 thorpej Exp $	*/
+/*	$NetBSD: lfs_vfsops.c,v 1.76 2002/05/17 21:42:38 perseant Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_vfsops.c,v 1.75 2002/05/16 02:23:55 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_vfsops.c,v 1.76 2002/05/17 21:42:38 perseant Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_quota.h"
@@ -1203,7 +1203,7 @@ lfs_unmount(struct mount *mp, int mntflags, struct proc *p)
 		return (error);
 	if ((error = VFS_SYNC(mp, 1, p->p_ucred, p)) != 0)
 		return (error);
-	if (fs->lfs_ivnode->v_dirtyblkhd.lh_first)
+	if (LIST_FIRST(&fs->lfs_ivnode->v_dirtyblkhd))
 		panic("lfs_unmount: still dirty blocks on ifile vnode\n");
 
 	/* Explicitly write the superblock, to update serial and pflags */
