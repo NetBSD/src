@@ -1,7 +1,7 @@
-/*	$NetBSD: ibcs2_exec.h,v 1.4 1995/03/14 15:12:24 scottb Exp $	*/
+/*	$NetBSD: ibcs2_exec.h,v 1.4.18.1 1998/05/05 09:38:41 mycroft Exp $	*/
 
 /*
- * Copyright (c) 1994, 1995 Scott Bartram
+ * Copyright (c) 1994, 1995, 1998 Scott Bartram
  * All rights reserved.
  *
  * adapted from sys/sys/exec_ecoff.h
@@ -153,8 +153,8 @@ struct coff_slhdr {
 
 #define COFF_BADMAG(ex) (ex->f_magic != COFF_MAGIC_I386)
 
-#define IBCS2_HIGH_SYSCALL(n)		(((n) & 0x7f) == 0x28)
-#define IBCS2_CVT_HIGH_SYSCALL(n)	(((n) >> 8) + 128)
+#define IBCS2_HIGH_SYSCALL(n)		(((n) & 0x7f) == 0x28 && ((n) >> 8) > 0)
+#define IBCS2_CVT_HIGH_SYSCALL(n)	(((n) >> 8) + 200)
 
 struct exec_package;
 int     exec_ibcs2_coff_makecmds __P((struct proc *, struct exec_package *));
@@ -281,5 +281,8 @@ struct xiter {
 #define XOUT_HDR_SIZE		(sizeof(struct xexec) + sizeof(struct xext))
 
 int     exec_ibcs2_xout_makecmds __P((struct proc *, struct exec_package *));
+
+int	ibcs2_elf32_probe __P((struct proc *, struct exec_package *,
+			       Elf32_Ehdr *, char *, Elf32_Addr *));
 
 #endif /* !_IBCS2_EXEC_H_ */
