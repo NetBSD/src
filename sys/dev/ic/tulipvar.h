@@ -1,4 +1,4 @@
-/*	$NetBSD: tulipvar.h,v 1.12 1999/09/25 00:27:00 thorpej Exp $	*/
+/*	$NetBSD: tulipvar.h,v 1.13 1999/09/26 03:39:01 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.
@@ -420,7 +420,7 @@ extern const struct tulip_mediasw tlp_pnic_mediasw;
 
 void	tlp_attach __P((struct tulip_softc *, const u_int8_t *));
 int	tlp_intr __P((void *));
-void	tlp_read_srom __P((struct tulip_softc *, int, int, u_int16_t *));
+void	tlp_read_srom __P((struct tulip_softc *, int, int, u_int8_t *));
 int	tlp_srom_crcok __P((const u_int8_t *));
 int	tlp_isv_srom __P((const u_int8_t *));
 int	tlp_isv_srom_enaddr __P((struct tulip_softc *, u_int8_t *));
