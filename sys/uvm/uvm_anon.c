@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_anon.c,v 1.28.2.1 2004/05/10 14:26:51 tron Exp $	*/
+/*	$NetBSD: uvm_anon.c,v 1.28.2.2 2004/09/11 11:00:10 he Exp $	*/
 
 /*
  *
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_anon.c,v 1.28.2.1 2004/05/10 14:26:51 tron Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_anon.c,v 1.28.2.2 2004/09/11 11:00:10 he Exp $");
 
 #include "opt_uvmhist.h"
 
@@ -236,8 +236,6 @@ uvm_anfree(anon)
 
 			/*
 			 * page has no uobject, so we must be the owner of it.
-			 * if page is busy then we wait until it is not busy,
-			 * and then free it.
 			 */
 
 			KASSERT((pg->flags & PG_RELEASED) == 0);
@@ -280,6 +278,9 @@ uvm_anfree(anon)
 	 * now that we've stripped the data areas from the anon,
 	 * free the anon itself.
 	 */
+
+	KASSERT(anon->u.an_page == NULL);
+	KASSERT(anon->an_swslot == 0);
 
 	simple_lock(&uvm.afreelock);
 	anon->u.an_nxt = uvm.afree;
