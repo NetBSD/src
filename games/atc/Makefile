@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.14 1997/11/20 00:12:31 mrg Exp $
+#	$NetBSD: Makefile,v 1.15 1997/11/29 19:31:51 veego Exp $
 #	@(#)Makefile	8.1 (Berkeley) 5/31/93
 
 PROG=	atc
@@ -16,7 +16,7 @@ HIDEGAME=hidegame
 SETGIDGAME=yes
 FILES=${GAMES:S@^@${.CURDIR}/games/@g}
 FILESDIR=/usr/share/games/atc
-FILESMODE=400
+FILESMODE=440
 
 y.tab.h:	grammar.c
 
