@@ -1,4 +1,4 @@
-#	$NetBSD: GENERIC,v 1.191 1998/10/13 11:43:50 bouyer Exp $
+#	$NetBSD: GENERIC,v 1.192 1998/10/19 12:06:55 bouyer Exp $
 #
 #	GENERIC -- everything that's currently supported
 #
@@ -316,7 +316,7 @@ uk*	at scsibus? target ? lun ?	# SCSI unknown
 #pciide* at pci ? dev ? function ?
 
 # ISA Plug-and-Play IDE controllers
-wdc*	at isapnp? flags 0x0000
+wdc*	at isapnp? 
 
 # PCMCIA IDE controllers
 wdc*	at pcmcia? function ?
