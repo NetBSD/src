@@ -1,4 +1,4 @@
-/*	$NetBSD: info_union.c,v 1.1.1.6 2003/03/09 01:13:15 christos Exp $	*/
+/*	$NetBSD: info_union.c,v 1.2 2003/07/15 09:01:16 itojun Exp $	*/
 
 /*
  * Copyright (c) 1997-2003 Erez Zadok
@@ -85,7 +85,7 @@ union_search(mnt_map *m, char *map, char *key, char **pval, time_t *tp)
 
   for (p = v; p[1]; p++) ;
   *pval = xmalloc(strlen(*p) + 5);
-  sprintf(*pval, "fs:=%s", *p);
+  snprintf(*pval, strlen(*p) + 5, "fs:=%s", *p);
   XFREE(mapd);
   XFREE(v);
   return 0;
@@ -125,7 +125,7 @@ union_reload(mnt_map *m, char *map, void (*fn) (mnt_map *, char *, char *))
 
       dlog("... gives %s", dp->d_name);
       val = xmalloc(dlen + 5);
-      sprintf(val, "fs:=%s", *dir);
+      snprintf(val, dlen + 5, "fs:=%s", *dir);
       (*fn) (m, strdup(dp->d_name), val);
     }
     closedir(dirp);
@@ -137,7 +137,7 @@ union_reload(mnt_map *m, char *map, void (*fn) (mnt_map *, char *, char *))
   {
     char *val = xmalloc(strlen(dir[-1]) + 5);
 
-    sprintf(val, "fs:=%s", dir[-1]);
+    snprintf(val, strlen(dir[-1]) + 5, "fs:=%s", dir[-1]);
     (*fn) (m, strdup("*"), val);
   }
   XFREE(mapd);

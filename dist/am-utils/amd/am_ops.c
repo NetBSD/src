@@ -1,4 +1,4 @@
-/*	$NetBSD: am_ops.c,v 1.2 2003/07/14 17:20:13 itojun Exp $	*/
+/*	$NetBSD: am_ops.c,v 1.3 2003/07/15 09:01:15 itojun Exp $	*/
 
 /*
  * Copyright (c) 1997-2003 Erez Zadok
@@ -294,11 +294,11 @@ reverse_option(const char *opt)
 
   /* check if string starts with 'no' and chop it */
   if (NSTREQ(opt, "no", 2)) {
-    strcpy(buf, &opt[2]);
+    strlcpy(buf, &opt[2], sizeof(buf));
   } else {
     /* finally return a string prepended with 'no' */
-    strcpy(buf, "no");
-    strcat(buf, opt);
+    strlcpy(buf, "no", sizeof(buf));
+    strlcat(buf, opt, sizeof(buf));
   }
   return buf;
 }
@@ -343,19 +343,19 @@ merge_opts(const char *opts1, const char *opts2)
       continue;
     /* add option to returned string */
     if (newstr && newstr[0]) {
-      strcat(newstr, ",");
-      strcat(newstr, tmpstr);
+      strlcat(newstr, ",", len);
+      strlcat(newstr, tmpstr, len);
     } else {
-      strcpy(newstr, tmpstr);
+      strlcpy(newstr, tmpstr, len);
     }
   }
 
   /* finally, append opts2 itself */
   if (newstr && newstr[0]) {
-    strcat(newstr, ",");
-    strcat(newstr, opts2);
+    strlcat(newstr, ",", len);
+    strlcat(newstr, opts2, len);
   } else {
-    strcpy(newstr, opts2);
+    strlcpy(newstr, opts2, len);
   }
 
   XFREE(s1);
