@@ -1,4 +1,4 @@
-/*	$NetBSD: ultrix_misc.c,v 1.42 1998/08/13 02:10:49 eeh Exp $	*/
+/*	$NetBSD: ultrix_misc.c,v 1.43 1998/09/26 15:32:26 drochner Exp $	*/
 
 /*
  * Copyright (c) 1995, 1997 Jonathan Stone (hereinafter referred to as the author)
@@ -83,7 +83,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: ultrix_misc.c,v 1.42 1998/08/13 02:10:49 eeh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ultrix_misc.c,v 1.43 1998/09/26 15:32:26 drochner Exp $");
 
 /*
  * SunOS compatibility module.
@@ -630,7 +630,11 @@ ultrix_sys_sigpending(p, v, retval)
 	register_t *retval;
 {
 	struct ultrix_sys_sigpending_args *uap = v;
-	int mask = p->p_siglist & p->p_sigmask;
+	sigset_t ss;
+	int mask;
+
+	sigpending1(p, &ss);
+	mask = ss.__bits[0];
 
 	return (copyout((caddr_t)&mask, (caddr_t)SCARG(uap, mask), sizeof(int)));
 }
@@ -643,7 +647,11 @@ ultrix_sys_sigcleanup(p, v, retval)
 {
 	struct ultrix_sys_sigcleanup_args *uap = v;
 
-	return sys_sigreturn(p, (struct sys_sigreturn_args *)uap, retval);
+	/*
+	 * XXX That's broken; the Ultrix sigcontext differs
+	 * XXX from NetBSD's.
+	 */
+	return (sys___sigreturn14(p, uap, retval));
 }
 
 
