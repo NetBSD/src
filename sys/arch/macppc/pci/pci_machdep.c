@@ -1,4 +1,4 @@
-/*	$NetBSD: pci_machdep.c,v 1.16 2001/06/06 17:50:17 matt Exp $	*/
+/*	$NetBSD: pci_machdep.c,v 1.17 2001/06/19 12:02:57 simonb Exp $	*/
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All rights reserved.
@@ -253,9 +253,6 @@ pci_intr_evcnt(pc, ih)
 	/* XXX for now, no evcnt parent reported */
 	return NULL;
 }
-
-extern void * intr_establish();
-extern void intr_disestablish();
 
 void *
 pci_intr_establish(pc, ih, level, func, arg)

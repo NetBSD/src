@@ -1,4 +1,4 @@
-/*	$NetBSD: awacs.c,v 1.10 2001/06/08 00:32:02 matt Exp $	*/
+/*	$NetBSD: awacs.c,v 1.11 2001/06/19 12:02:55 simonb Exp $	*/
 
 /*-
  * Copyright (c) 2000 Tsubai Masanari.  All rights reserved.
@@ -110,6 +110,9 @@ void awacs_write_codec(struct awacs_softc *, int);
 void awacs_set_speaker_volume(struct awacs_softc *, int, int);
 void awacs_set_ext_volume(struct awacs_softc *, int, int);
 int awacs_set_rate(struct awacs_softc *, int);
+
+static void mono16_to_stereo16(void *, u_char *, int);
+static void swap_bytes_mono16_to_stereo16(void *, u_char *, int);
 
 struct cfattach awacs_ca = {
 	sizeof(struct awacs_softc), awacs_match, awacs_attach
@@ -300,7 +303,7 @@ awacs_attach(parent, self, aux)
 	audio_attach_mi(&awacs_hw_if, sc, &sc->sc_dev);
 }
 
-u_int
+static inline u_int
 awacs_read_reg(sc, reg)
 	struct awacs_softc *sc;
 	int reg;
@@ -310,7 +313,7 @@ awacs_read_reg(sc, reg)
 	return in32rb(addr + reg);
 }
 
-void
+static inline void
 awacs_write_reg(sc, reg, val)
 	struct awacs_softc *sc;
 	int reg, val;

@@ -1,4 +1,4 @@
-/*	$NetBSD: dbdma.h,v 1.2 1998/08/21 16:13:28 tsubai Exp $	*/
+/*	$NetBSD: dbdma.h,v 1.3 2001/06/19 12:02:56 simonb Exp $	*/
 
 /*
  * Copyright 1991-1998 by Open Software Foundation, Inc. 
@@ -129,6 +129,11 @@ typedef struct dbdma_command dbdma_command_t;
 				((branch) << 2) | (wait));		\
 	}
 
+static __inline__ void dbdma_st32(volatile u_int32_t *, u_int32_t);
+static __inline__ void dbdma_st16(volatile u_int16_t *, u_int16_t);
+static __inline__ u_int32_t dbdma_ld32(volatile u_int32_t *);
+static __inline__ u_int16_t dbdma_ld16(volatile u_int16_t *);
+
 static __inline__ void
 dbdma_st32(a, x)
 	volatile u_int32_t *a;
@@ -181,19 +186,19 @@ dbdma_ld16(a)
  */
 
 struct dbdma_regmap {
-	unsigned long	d_control;	/* Control Register */
-	unsigned long	d_status;	/* DBDMA Status Register */
-	unsigned long	d_cmdptrhi;	/* MSB of command pointer (not used yet) */
-	unsigned long	d_cmdptrlo;	/* LSB of command pointer */
-	unsigned long	d_intselect;	/* Interrupt Select */
-	unsigned long	d_branch;	/* Branch selection */
-	unsigned long	d_wait;		/* Wait selection */
-	unsigned long	d_transmode;	/* Transfer modes */
-	unsigned long	d_dataptrhi;	/* MSB of Data Pointer */
-	unsigned long	d_dataptrlo;	/* LSB of Data Pointer */
-	unsigned long	d_reserved;	/* Reserved for the moment */
-	unsigned long	d_branchptrhi;	/* MSB of Branch Pointer */
-	unsigned long	d_branchptrlo;	/* LSB of Branch Pointer */
+	u_int32_t	d_control;	/* Control Register */
+	u_int32_t	d_status;	/* DBDMA Status Register */
+	u_int32_t	d_cmdptrhi;	/* MSB of command pointer (not used yet) */
+	u_int32_t	d_cmdptrlo;	/* LSB of command pointer */
+	u_int32_t	d_intselect;	/* Interrupt Select */
+	u_int32_t	d_branch;	/* Branch selection */
+	u_int32_t	d_wait;		/* Wait selection */
+	u_int32_t	d_transmode;	/* Transfer modes */
+	u_int32_t	d_dataptrhi;	/* MSB of Data Pointer */
+	u_int32_t	d_dataptrlo;	/* LSB of Data Pointer */
+	u_int32_t	d_reserved;	/* Reserved for the moment */
+	u_int32_t	d_branchptrhi;	/* MSB of Branch Pointer */
+	u_int32_t	d_branchptrlo;	/* LSB of Branch Pointer */
 	/* The remaining fields are undefinied and unimplemented */
 };
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: pci_machdep.h,v 1.14 2001/06/08 00:32:03 matt Exp $	*/
+/*	$NetBSD: pci_machdep.h,v 1.15 2001/06/19 12:02:57 simonb Exp $	*/
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All rights reserved.
@@ -63,8 +63,8 @@ struct pci_bridge {
 	int bus;
 	bus_space_tag_t memt;
 	bus_space_tag_t iot;
-	pcireg_t (*conf_read)();
-	void (*conf_write)();
+	pcireg_t (*conf_read)(pci_chipset_tag_t, pcitag_t, int);
+	void (*conf_write)(pci_chipset_tag_t, pcitag_t, int, pcireg_t);
 };
 
 extern struct macppc_bus_dma_tag pci_bus_dma_tag;
@@ -92,4 +92,4 @@ void		pci_intr_disestablish(pci_chipset_tag_t, void *);
  * Internal functions.
  */
 void		pci_init(int);
-int		pcidev_to_ofdev (pci_chipset_tag_t, pcitag_t);
+int		pcidev_to_ofdev(pci_chipset_tag_t, pcitag_t);
