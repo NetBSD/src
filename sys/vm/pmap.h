@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.h,v 1.36 1999/11/13 00:24:39 thorpej Exp $	*/
+/*	$NetBSD: pmap.h,v 1.37 2000/03/21 09:33:45 soda Exp $	*/
 
 /* 
  * Copyright (c) 1991, 1993
@@ -149,8 +149,7 @@ void		 pmap_update __P((void));
 void		 pmap_zero_page __P((paddr_t));
 
 #if defined(PMAP_STEAL_MEMORY)
-vaddr_t		 pmap_steal_memory __P((vsize_t, paddr_t *,
-		    paddr_t *));
+vaddr_t		 pmap_steal_memory __P((vsize_t, vaddr_t *, vaddr_t *));
 #else
 void		 pmap_virtual_space __P((vaddr_t *, vaddr_t *));
 #endif
