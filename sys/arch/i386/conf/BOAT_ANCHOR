@@ -1,13 +1,14 @@
 #
 #	BOAT_ANCHOR -- kernel for the 386-20 the gang uses for testing
 #
-#	$Id: BOAT_ANCHOR,v 1.22 1993/08/07 08:03:34 cgd Exp $
+#	$Id: BOAT_ANCHOR,v 1.23 1993/08/30 07:07:55 deraadt Exp $
 #
 machine		"i386"
 cpu		"I386_CPU"
 ident		BOAT_ANCHOR
 timezone	8 dst
 maxusers	10
+options		SWAPPAGER,VNODEPAGER,DEVPAGER
 options		INET,NFSSERVER,NFSCLIENT,MFS
 options		"COMPAT_43"
 options		"TCP_COMPAT_42"
@@ -51,7 +52,3 @@ pseudo-device	pty	32
 
 
 pseudo-device	bpfilter	4
-
-pseudo-device	swappager
-pseudo-device	vnodepager
-pseudo-device	devpager
