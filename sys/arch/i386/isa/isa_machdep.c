@@ -1,4 +1,4 @@
-/*	$NetBSD: isa_machdep.c,v 1.19.2.2 1997/05/17 00:28:59 thorpej Exp $	*/
+/*	$NetBSD: isa_machdep.c,v 1.19.2.3 1997/05/18 23:39:55 thorpej Exp $	*/
 
 #define ISA_DMA_STATS
 
@@ -463,9 +463,6 @@ isa_attach_hook(parent, self, iba)
 	struct isabus_attach_args *iba;
 {
 	extern int isa_has_been_seen;
-
-	/* Give the MI code the bus DMA tag. */
-	iba->iba_dmat = &isa_bus_dma_tag;
 
 	/*
 	 * Notify others that might need to know that the ISA bus
