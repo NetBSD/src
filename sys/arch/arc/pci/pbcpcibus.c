@@ -1,4 +1,4 @@
-/*	$NetBSD: pbcpcibus.c,v 1.4 2000/06/09 05:38:15 soda Exp $	*/
+/*	$NetBSD: pbcpcibus.c,v 1.5 2000/06/29 08:34:12 mrg Exp $	*/
 /*	$OpenBSD: pbcpcibus.c,v 1.7 1998/03/25 11:52:48 pefo Exp $ */
 
 /*
@@ -43,7 +43,8 @@
 #include <sys/malloc.h>
 #include <sys/device.h>
 #include <sys/proc.h>
-#include <vm/vm.h>
+
+#include <uvm/uvm_extern.h>
 
 #include <machine/autoconf.h>
 #include <machine/cpu.h>

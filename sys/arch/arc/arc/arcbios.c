@@ -1,4 +1,4 @@
-/*	$NetBSD: arcbios.c,v 1.6 2000/06/09 05:41:56 soda Exp $	*/
+/*	$NetBSD: arcbios.c,v 1.7 2000/06/29 08:34:09 mrg Exp $	*/
 /*	$OpenBSD: arcbios.c,v 1.3 1998/06/06 06:33:33 mickey Exp $	*/
 
 /*-
@@ -35,7 +35,7 @@
 #include <sys/proc.h>
 #include <sys/user.h>
 #include <sys/kcore.h>
-#include <vm/vm.h>
+#include <uvm/uvm_extern.h>
 #include <dev/cons.h>
 #include <machine/cpu.h>
 #include <arc/arc/arcbios.h>

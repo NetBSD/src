@@ -1,4 +1,4 @@
-/* $NetBSD: machdep.c,v 1.3 2000/06/26 14:20:33 mrg Exp $ */
+/* $NetBSD: machdep.c,v 1.4 2000/06/29 08:32:35 mrg Exp $ */
 
 /*-
  * Copyright (c) 1998 Ben Harris
@@ -33,14 +33,12 @@
 
 #include <sys/param.h>
 
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.3 2000/06/26 14:20:33 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.4 2000/06/29 08:32:35 mrg Exp $");
 
 #include <sys/buf.h>
 #include <sys/mbuf.h>
 #include <sys/reboot.h>
 #include <sys/systm.h>
-
-#include <vm/vm.h>
 
 #include <uvm/uvm_extern.h>
 

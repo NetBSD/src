@@ -1,4 +1,4 @@
-/*	$NetBSD: bus_dma_jazz.c,v 1.2 2000/06/26 14:20:32 mrg Exp $	*/
+/*	$NetBSD: bus_dma_jazz.c,v 1.3 2000/06/29 08:34:12 mrg Exp $	*/
 
 /*-
  * Copyright (C) 2000 Shuichiro URATA.  All rights reserved.
@@ -30,8 +30,6 @@
 #include <sys/systm.h>
 #include <sys/mbuf.h>
 #include <sys/device.h>
-
-#include <vm/vm.h>
 
 #include <uvm/uvm_extern.h>
 
