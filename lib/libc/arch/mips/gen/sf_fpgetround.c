@@ -1,4 +1,4 @@
-/*	$NetBSD: sf_fpgetround.c,v 1.3 2000/02/22 03:14:20 mycroft Exp $	*/
+/*	$NetBSD: sf_fpgetround.c,v 1.4 2000/02/25 17:40:30 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1996 Mark Brinicombe
@@ -58,9 +58,5 @@ int _mips_sfp_getround __P((void));
 fp_rnd
 fpgetround()
 {
-#ifdef SOFT_FLOAT
-	return(_mips_sfp_getround());
-#else
-	return(FP_RN);
-#endif
+	return _mips_sfp_getround();
 }
