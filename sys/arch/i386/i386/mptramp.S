@@ -1,4 +1,4 @@
-/*	$NetBSD: mptramp.S,v 1.1 2002/11/22 15:01:18 fvdl Exp $	*/
+/*	$NetBSD: mptramp.S,v 1.2 2003/03/01 16:36:37 fvdl Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -140,16 +140,18 @@ _C_LABEL(cpu_spinup_trampoline):
 	movl    %cr0, %eax       # get cr0
 	orl     $0x1, %eax      # enable protected mode
 	movl    %eax, %cr0      # doit
+	ljmpl    $0x8, $mp_startup
+
+_TRMP_LABEL(mp_startup)
+	.code32
+
 	movl    $0x10, %eax     # data segment
 	movw    %ax, %ds
 	movw    %ax, %ss
 	movw    %ax, %es
 	movw    %ax, %fs
 	movw    %ax, %gs
-	ljmpl    $0x8, $mp_startup
-	.code32
 	
-_TRMP_LABEL(mp_startup)
 	movl    $ (MP_TRAMPOLINE+NBPG-16),%esp       # bootstrap stack end,
 						     # with scratch space..
 	
