@@ -1,4 +1,4 @@
-/*	$NetBSD: ddbvar.h,v 1.6 2003/12/04 19:38:23 atatat Exp $	*/
+/*	$NetBSD: ddbvar.h,v 1.7 2004/09/29 23:54:11 reinoud Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -45,6 +45,7 @@
 
 extern	int db_onpanic;
 extern	int db_fromconsole;
+extern	int db_tee_msgbuf;
 
 int read_symtab_from_file(struct proc *,struct vnode *,const char *);
 #endif	/* !_DDBVAR_H_ */
