@@ -1,4 +1,4 @@
-#	$NetBSD: files.xen,v 1.14.4.3 2005/01/18 15:09:04 bouyer Exp $
+#	$NetBSD: files.xen,v 1.14.4.4 2005/01/19 10:24:22 bouyer Exp $
 #	NetBSD: files.x86,v 1.10 2003/10/08 17:30:00 bouyer Exp 
 #	NetBSD: files.i386,v 1.254 2004/03/25 23:32:10 jmc Exp 
 
@@ -223,9 +223,9 @@ device	xbd: disk
 attach	xbd at hypervisor
 file	arch/xen/xen/xbd.c		xbd | wd_xen | sd_xen | cd_xen needs-flag
 
-attach	wd at hypervisor with wd_xen
-attach	sd at hypervisor with sd_xen
-attach	cd at hypervisor with cd_xen
+#attach	wd at hypervisor with wd_xen
+#attach	sd at hypervisor with sd_xen
+#attach	cd at hypervisor with cd_xen
 
 # Keyboard
 device	xenkbc: pckbport
