@@ -1,4 +1,4 @@
-/*	$NetBSD: sunos_misc.c,v 1.84 1997/10/19 12:52:19 carrel Exp $	*/
+/*	$NetBSD: sunos_misc.c,v 1.85 1997/10/19 18:48:00 christos Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -552,6 +552,7 @@ sunos_sys_mmap(p, v, retval)
 	register struct filedesc *fdp;
 	register struct file *fp;
 	register struct vnode *vp;
+	void *rp;
 
 	/*
 	 * Verify the arguments.
@@ -565,10 +566,10 @@ sunos_sys_mmap(p, v, retval)
 	SCARG(&ouap, flags) = SCARG(uap, flags) & ~SUNOS__MAP_NEW;
 	SCARG(&ouap, addr) = SCARG(uap, addr);
 
+	rp = (void *) round_page(p->p_vmspace->vm_daddr+MAXDSIZ);
 	if ((SCARG(&ouap, flags) & MAP_FIXED) == 0 &&
-	    SCARG(&ouap, addr) != 0 &&
-	    SCARG(&ouap, addr) < (void *)round_page(p->p_vmspace->vm_daddr+MAXDSIZ))
-		SCARG(&ouap, addr) = (caddr_t)round_page(p->p_vmspace->vm_daddr+MAXDSIZ);
+	    SCARG(&ouap, addr) != 0 && SCARG(&ouap, addr) < rp)
+		SCARG(&ouap, addr) = rp;
 
 	SCARG(&ouap, len) = SCARG(uap, len);
 	SCARG(&ouap, prot) = SCARG(uap, prot);
