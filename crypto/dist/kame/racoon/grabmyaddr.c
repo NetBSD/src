@@ -1,4 +1,4 @@
-/*	$KAME: grabmyaddr.c,v 1.27 2001/08/16 14:37:28 itojun Exp $	*/
+/*	$KAME: grabmyaddr.c,v 1.29 2002/03/11 07:20:53 sakane Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -416,12 +416,12 @@ update_myaddrs()
 			strerror(errno));
 		return 0;
 	}
-	if (len < sizeof(*rtm)) {
+	rtm = (struct rt_msghdr *)msg;
+	if (len < rtm->rtm_msglen) {
 		plog(LLV_ERROR, LOCATION, NULL,
 			"read(PF_ROUTE) short read\n");
 		return 0;
 	}
-	rtm = (struct rt_msghdr *)msg;
 	if (rtm->rtm_version != RTM_VERSION) {
 		plog(LLV_ERROR, LOCATION, NULL,
 			"routing socket version mismatch\n");
