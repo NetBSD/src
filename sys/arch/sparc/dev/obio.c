@@ -1,4 +1,4 @@
-/*	$NetBSD: obio.c,v 1.52 2002/04/11 11:11:23 pk Exp $	*/
+/*	$NetBSD: obio.c,v 1.53 2002/08/25 17:54:58 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1997,1998 The NetBSD Foundation, Inc.
@@ -102,6 +102,8 @@ static	int _obio_bus_map __P((bus_space_tag_t, bus_addr_t,
 static struct sparc_bus_space_tag obio_space_tag = {
 	NULL,				/* cookie */
 	NULL,				/* parent bus tag */
+	NULL,				/* ranges */
+	0,				/* nranges */
 	_obio_bus_map,			/* bus_space_map */ 
 	NULL,				/* bus_space_unmap */
 	NULL,				/* bus_space_subregion */
