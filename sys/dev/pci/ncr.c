@@ -1,4 +1,4 @@
-/*	$NetBSD: ncr.c,v 1.87.2.2 1999/10/20 20:43:20 thorpej Exp $	*/
+/*	$NetBSD: ncr.c,v 1.87.2.3 1999/10/26 23:10:17 thorpej Exp $	*/
 
 /**************************************************************************
 **
@@ -1516,7 +1516,7 @@ static	int	read_tekram_eeprom
 
 #if 0
 static char ident[] =
-	"\n$NetBSD: ncr.c,v 1.87.2.2 1999/10/20 20:43:20 thorpej Exp $\n";
+	"\n$NetBSD: ncr.c,v 1.87.2.3 1999/10/26 23:10:17 thorpej Exp $\n";
 #endif
 
 static const u_long	ncr_version = NCR_VERSION	* 11
@@ -4359,9 +4359,6 @@ static void ncr_scsipi_request(struct scsipi_channel *chan,
 	case ADAPTER_REQ_SET_XFER_MODE:
 		/* XXX XXX XXX */
 		return;
-
-	case ADAPTER_REQ_GET_XFER_MODE:
-		/* XXX XXX XXX */
 	}
 }
 

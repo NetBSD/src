@@ -1,4 +1,4 @@
-/*	$NetBSD: seagate.c,v 1.34.2.1 1999/10/19 17:49:04 thorpej Exp $	*/
+/*	$NetBSD: seagate.c,v 1.34.2.2 1999/10/26 23:10:17 thorpej Exp $	*/
 
 /*
  * ST01/02, Future Domain TMC-885, TMC-950 SCSI driver
@@ -636,19 +636,19 @@ sea_scsipi_request(chan, req, arg)
 		return;
 
 	case ADAPTER_REQ_SET_XFER_MODE:
+	    {
+		struct scsipi_xfer_mode *xm = arg;
+
 		/*
 		 * We don't support sync or wide or tagged queueing,
-		 * so nothing to do.
+		 * so announce that now.
 		 */
+		xm->xm_mode = 0;
+		xm->xm_period = 0;
+		xm->xm_offset = 0;
+		scsipi_async_event(chan, ASYNC_EVENT_XFER_MODE, xm);
 		return;
-
-	case ADAPTER_REQ_GET_XFER_MODE:
-		periph = arg;
-		periph->periph_mode = 0;
-		periph->periph_period = 0;
-		periph->periph_offset = 0;
-		periph->periph_flags |= PERIPH_MODE_VALID;
-		return;
+	    }
 	}
 }
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: ncr5380sbc.c,v 1.31.2.1 1999/10/19 17:47:38 thorpej Exp $	*/
+/*	$NetBSD: ncr5380sbc.c,v 1.31.2.2 1999/10/26 23:10:16 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1995 David Jones, Gordon W. Ross
@@ -712,18 +712,19 @@ new:
 		return;
 
 	case ADAPTER_REQ_SET_XFER_MODE:
+	    {
 		/*
 		 * We don't support Sync, Wide, or Tagged Queueing.
+		 * Just callback now, to report this.
 		 */
-		return;
+		struct scsipi_xfer_mode *xm = arg;
 
-	case ADAPTER_REQ_GET_XFER_MODE:
-		periph = arg;
-		periph->periph_mode = 0;
-		periph->periph_period = 0;
-		periph->periph_offset = 0;
-		periph->periph_flags |= PERIPH_MODE_VALID;
+		xm->xm_mode = 0;
+		xm->xm_period = 0;
+		xm->xm_offset = 0;
+		scsipi_async_event(chan, ASYNC_EVENT_XFER_MODE, xm);
 		return;
+	    }
 	}
 }
 

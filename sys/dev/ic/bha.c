@@ -1,4 +1,4 @@
-/*	$NetBSD: bha.c,v 1.33.2.4 1999/10/20 20:40:52 thorpej Exp $	*/
+/*	$NetBSD: bha.c,v 1.33.2.5 1999/10/26 23:10:15 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 1999 The NetBSD Foundation, Inc.
@@ -95,7 +95,7 @@ void	bha_scsipi_request __P((struct scsipi_channel *,
 	    scsipi_adapter_req_t, void *));
 void	bha_minphys __P((struct buf *));
 
-void	bha_get_xfer_mode __P((struct bha_softc *, struct scsipi_periph *));
+void	bha_get_xfer_mode __P((struct bha_softc *, struct scsipi_xfer_mode *));
 
 void	bha_done __P((struct bha_softc *, struct bha_ccb *));
 int	bha_poll __P((struct bha_softc *, struct scsipi_xfer *, int));
@@ -453,12 +453,10 @@ bha_scsipi_request(chan, req, arg)
 	case ADAPTER_REQ_SET_XFER_MODE:
 		/*
 		 * Can't really do this on the Buslogic.  It has its
-		 * own setup info.
+		 * own setup info.  But we do know how to query what
+		 * the settings are.
 		 */
-		return;
-
-	case ADAPTER_REQ_GET_XFER_MODE:
-		bha_get_xfer_mode(sc, (struct scsipi_periph *)arg);
+		bha_get_xfer_mode(sc, (struct scsipi_xfer_mode *)arg);
 		return;
 	}
 }
@@ -491,14 +489,14 @@ bha_minphys(bp)
  *	NOTE: we must be called at splbio().
  */
 void
-bha_get_xfer_mode(sc, periph)
+bha_get_xfer_mode(sc, xm)
 	struct bha_softc *sc;
-	struct scsipi_periph *periph;
+	struct scsipi_xfer_mode *xm;
 {
 	struct bha_setup hwsetup;
 	struct bha_period hwperiod;
 	struct bha_sync *bs;
-	int toff = periph->periph_target & 7, tmask = (1 << toff);
+	int toff = xm->xm_target & 7, tmask = (1 << toff);
 	int wide, period, offset, rlen;
 
 	/*
@@ -513,9 +511,9 @@ bha_get_xfer_mode(sc, periph)
 	    sizeof(hwsetup.cmd), (u_char *)&hwsetup.cmd,
 	    rlen, (u_char *)&hwsetup.reply);
 
-	periph->periph_mode = 0;
-	periph->periph_period = 0;
-	periph->periph_offset = 0;
+	xm->xm_mode = 0;
+	xm->xm_period = 0;
+	xm->xm_offset = 0;
 
 	/*
 	 * First check for wide.  On later boards, we can check
@@ -525,7 +523,7 @@ bha_get_xfer_mode(sc, periph)
 	 */
 	if (sc->sc_flags & BHAF_WIDE) {
 		if (strcmp(sc->sc_firmware, "5.06L") >= 0) {
-			if (periph->periph_target > 7) {
+			if (xm->xm_target > 7) {
 				wide =
 				    hwsetup.reply_w.high_wide_active & tmask;
 			} else {
@@ -533,23 +531,22 @@ bha_get_xfer_mode(sc, periph)
 				    hwsetup.reply_w.low_wide_active & tmask;
 			}
 			if (wide)
-				periph->periph_mode |= PERIPH_CAP_WIDE16;
+				xm->xm_mode |= PERIPH_CAP_WIDE16;
 		} else {
 			/* XXX Check `wide permitted' in the config info. */
-			periph->periph_mode |=
-			    (periph->periph_cap & PERIPH_CAP_WIDE16);
+			xm->xm_mode |= PERIPH_CAP_WIDE16;
 		}
 	}
 
 	/*
 	 * Now get basic sync info.
 	 */
-	bs = (periph->periph_target > 7) ?
+	bs = (xm->xm_target > 7) ?
 	     &hwsetup.reply_w.sync_high[toff] :
 	     &hwsetup.reply.sync_low[toff];
 
 	if (bs->valid) {
-		periph->periph_mode |= PERIPH_CAP_SYNC;
+		xm->xm_mode |= PERIPH_CAP_SYNC;
 		period = (bs->period * 50) + 20;
 		offset = bs->offset;
 
@@ -567,7 +564,7 @@ bha_get_xfer_mode(sc, periph)
 			    sizeof(hwperiod.cmd), (u_char *)&hwperiod.cmd,
 			    rlen, (u_char *)&hwperiod.reply);
 
-			if (periph->periph_target > 7)
+			if (xm->xm_target > 7)
 				period = hwperiod.reply_w.period[toff];
 			else
 				period = hwperiod.reply.period[toff];
@@ -575,9 +572,9 @@ bha_get_xfer_mode(sc, periph)
 			period *= 10;
 		}
 
-		periph->periph_period =
+		xm->xm_period =
 		    scsipi_sync_period_to_factor(period * 10);
-		periph->periph_offset = offset;
+		xm->xm_offset = offset;
 	}
 
 	/*
@@ -586,9 +583,9 @@ bha_get_xfer_mode(sc, periph)
 	 * XXX Check `tags permitted' in the config info.
 	 */
 	if (sc->sc_flags & BHAF_TAGGED_QUEUEING)
-		periph->periph_mode |= (periph->periph_cap & PERIPH_CAP_TQING);
+		xm->xm_mode |= PERIPH_CAP_TQING;
 
-	periph->periph_flags |= PERIPH_MODE_VALID;
+	scsipi_async_event(&sc->sc_channel, ASYNC_EVENT_XFER_MODE, xm);
 }
 
 /*

@@ -1,4 +1,4 @@
-/* $NetBSD: adw.c,v 1.12.2.3 1999/10/20 20:40:51 thorpej Exp $	 */
+/* $NetBSD: adw.c,v 1.12.2.4 1999/10/26 23:10:14 thorpej Exp $	 */
 
 /*
  * Generic driver for the Advanced Systems Inc. SCSI controllers
@@ -522,10 +522,6 @@ adw_scsipi_request(chan, req, arg)
 		return;
 
 	case ADAPTER_REQ_SET_XFER_MODE:
-		/* XXX XXX XXX */
-		return;
-
-	case ADAPTER_REQ_GET_XFER_MODE:
 		/* XXX XXX XXX */
 		return;
 	}

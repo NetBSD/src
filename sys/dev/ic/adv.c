@@ -1,4 +1,4 @@
-/*	$NetBSD: adv.c,v 1.14.2.3 1999/10/20 20:40:51 thorpej Exp $	*/
+/*	$NetBSD: adv.c,v 1.14.2.4 1999/10/26 23:10:14 thorpej Exp $	*/
 
 /*
  * Generic driver for the Advanced Systems Inc. Narrow SCSI controllers
@@ -679,34 +679,34 @@ adv_scsipi_request(chan, req, arg)
 		return;
 
 	case ADAPTER_REQ_SET_XFER_MODE:
-		/* XXX XXX XXX */
-		return;
-
-	case ADAPTER_REQ_GET_XFER_MODE:
 	    {
+		/*
+		 * We can't really set the mode, but we know how to
+		 * query what the firmware negotiated.
+		 */
+		struct scsipi_xfer_mode *xm = arg;
 		u_int8_t sdtr_data;
 		ASC_SCSI_BIT_ID_TYPE tid_bit;
 
-		periph = arg;
-		tid_bit = ASC_TIX_TO_TARGET_ID(periph->periph_target);
+		tid_bit = ASC_TIX_TO_TARGET_ID(xm->xm_target);
 
-		periph->periph_mode = 0;
-		periph->periph_period = 0;
-		periph->periph_offset = 0;
+		xm->xm_mode = 0;
+		xm->xm_period = 0;
+		xm->xm_offset = 0;
 
 		if (sc->init_sdtr & tid_bit) {
-			periph->periph_mode |= PERIPH_CAP_SYNC;
-			sdtr_data = sc->sdtr_data[periph->periph_target];
-			periph->periph_period =
+			xm->xm_mode |= PERIPH_CAP_SYNC;
+			sdtr_data = sc->sdtr_data[xm->xm_target];
+			xm->xm_period =
 			    sc->sdtr_period_tbl[(sdtr_data >> 4) &
 			    (sc->max_sdtr_index - 1)];
-			periph->periph_offset = sdtr_data & ASC_SYN_MAX_OFFSET;
+			xm->xm_offset = sdtr_data & ASC_SYN_MAX_OFFSET;
 		}
 
 		if (sc->use_tagged_qng & tid_bit)
-			periph->periph_mode |= PERIPH_CAP_TQING;
+			xm->xm_mode |= PERIPH_CAP_TQING;
 
-		periph->periph_flags |= PERIPH_MODE_VALID;
+		scsipi_async_event(chan, ASYNC_EVENT_XFER_MODE, xm);
 		return;
 	    }
 	}
