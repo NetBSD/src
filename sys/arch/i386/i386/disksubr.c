@@ -1,4 +1,4 @@
-/*	$NetBSD: disksubr.c,v 1.24 1998/02/19 14:07:33 drochner Exp $	*/
+/*	$NetBSD: disksubr.c,v 1.25 1998/02/22 14:48:27 drochner Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1988 Regents of the University of California.
@@ -43,8 +43,13 @@
 
 #define	b_cylin	b_resid
 
+#define MBRSIGOFS 0x1fe
+static char mbrsig[2] = {0x55, 0xaa};
+
 int fat_types[] = { DOSPTYP_FAT12, DOSPTYP_FAT16S,
-		    DOSPTYP_FAT16B, DOSPTYP_FAT16C, -1 };
+		    DOSPTYP_FAT16B, DOSPTYP_FAT32,
+		    DOSPTYP_FAT32L, DOSPTYP_FAT16L,
+		    -1 };
 
 /*
  * Attempt to read a disk label from a device
@@ -97,76 +102,83 @@ readdisklabel(dev, strat, lp, osdep)
 	/* do dos partitions in the process of getting disklabel? */
 	dospartoff = 0;
 	cyl = LABELSECTOR / lp->d_secpercyl;
-	if (osdep && (dp = osdep->dosparts) != NULL) {
-		/* read master boot record */
-		bp->b_blkno = DOSBBSECTOR;
-		bp->b_bcount = lp->d_secsize;
-		bp->b_flags = B_BUSY | B_READ;
-		bp->b_cylin = DOSBBSECTOR / lp->d_secpercyl;
-		(*strat)(bp);
+	if (!osdep || (dp = osdep->dosparts) == NULL)
+		goto nombrpart;
 
-		/* if successful, wander through dos partition table */
-		if (biowait(bp)) {
-			msg = "dos partition I/O error";
-			goto done;
-		} else {
-			struct dos_partition *ourdp = NULL;
+	/* read master boot record */
+	bp->b_blkno = DOSBBSECTOR;
+	bp->b_bcount = lp->d_secsize;
+	bp->b_flags = B_BUSY | B_READ;
+	bp->b_cylin = DOSBBSECTOR / lp->d_secpercyl;
+	(*strat)(bp);
 
-			/* XXX how do we check veracity/bounds of this? */
-			bcopy(bp->b_data + DOSPARTOFF, dp,
-			    NDOSPART * sizeof(*dp));
+	/* if successful, wander through dos partition table */
+	if (biowait(bp)) {
+		msg = "dos partition I/O error";
+		goto done;
+	} else {
+		struct dos_partition *ourdp = NULL;
 
-			/* look for NetBSD partition */
+		if (bcmp(bp->b_data + MBRSIGOFS, mbrsig, sizeof(mbrsig)))
+			goto nombrpart;
+
+		/* XXX how do we check veracity/bounds of this? */
+		bcopy(bp->b_data + DOSPARTOFF, dp,
+		      NDOSPART * sizeof(*dp));
+
+		/* look for NetBSD partition */
+		for (i = 0; i < NDOSPART; i++) {
+			if (dp[i].dp_typ == DOSPTYP_NETBSD) {
+				ourdp = &dp[i];
+				break;
+			}
+		}
+#ifdef COMPAT_386BSD_MBRPART
+		/* didn't find it -- look for 386BSD partition */
+		if (!ourdp) {
 			for (i = 0; i < NDOSPART; i++) {
-				if (dp[i].dp_typ == DOSPTYP_NETBSD) {
+				if (dp[i].dp_typ == DOSPTYP_386BSD) {
+					printf("old BSD partition ID!\n");
 					ourdp = &dp[i];
 					break;
 				}
 			}
-#ifdef COMPAT_386BSD_MBRPART
-			/* didn't find it -- look for 386BSD partition */
-			if (!ourdp) {
-				for (i = 0; i < NDOSPART; i++) {
-					if (dp[i].dp_typ == DOSPTYP_386BSD) {
-						printf("old BSD partition ID!\n");
-						ourdp = &dp[i];
-						break;
-					}
-				}
-			}
-#endif
-			for (i = 0; i < NDOSPART; i++, dp++) {
-				/* Install in partition e, f, g, or h. */
-				pp = &lp->d_partitions[RAW_PART + 1 + i];
-				pp->p_offset = dp->dp_start;
-				pp->p_size = dp->dp_size;
-				for (ip = fat_types; *ip != -1; ip++) {
-				    if (dp->dp_typ == *ip)
-					pp->p_fstype = FS_MSDOS;
-				}
-
-				/* is this ours? */
-				if (dp == ourdp) {
-					/* need sector address for SCSI/IDE,
-					   cylinder for ESDI/ST506/RLL */
-					dospartoff = dp->dp_start;
-					cyl = DPCYL(dp->dp_scyl, dp->dp_ssect);
-
-					/* update disklabel with details */
-					lp->d_partitions[2].p_size =
-					    dp->dp_size;
-					lp->d_partitions[2].p_offset = 
-					    dp->dp_start;
-					lp->d_ntracks = dp->dp_ehd + 1;
-					lp->d_nsectors = DPSECT(dp->dp_esect);
-					lp->d_secpercyl =
-					    lp->d_ntracks * lp->d_nsectors;
-				}
-			}
-			lp->d_npartitions = RAW_PART + 1 + i;
 		}
+#endif
+		for (i = 0; i < NDOSPART; i++, dp++) {
+			/* Install in partition e, f, g, or h. */
+			pp = &lp->d_partitions[RAW_PART + 1 + i];
+			pp->p_offset = dp->dp_start;
+			pp->p_size = dp->dp_size;
+			for (ip = fat_types; *ip != -1; ip++) {
+				if (dp->dp_typ == *ip)
+					pp->p_fstype = FS_MSDOS;
+			}
+			if (dp->dp_typ == DOSPTYP_LNXEXT2)
+				pp->p_fstype = FS_EX2FS;
+
+			/* is this ours? */
+			if (dp == ourdp) {
+				/* need sector address for SCSI/IDE,
+				 cylinder for ESDI/ST506/RLL */
+				dospartoff = dp->dp_start;
+				cyl = DPCYL(dp->dp_scyl, dp->dp_ssect);
+
+				/* update disklabel with details */
+				lp->d_partitions[2].p_size =
+				    dp->dp_size;
+				lp->d_partitions[2].p_offset = 
+				    dp->dp_start;
+				lp->d_ntracks = dp->dp_ehd + 1;
+				lp->d_nsectors = DPSECT(dp->dp_esect);
+				lp->d_secpercyl =
+				    lp->d_ntracks * lp->d_nsectors;
+			}
+		}
+		lp->d_npartitions = RAW_PART + 1 + i;
 	}
-	
+
+nombrpart:
 	/* next, dig out disk label */
 	bp->b_blkno = dospartoff + LABELSECTOR;
 	bp->b_cylin = cyl;
@@ -318,49 +330,54 @@ writedisklabel(dev, strat, lp, osdep)
 	/* do dos partitions in the process of getting disklabel? */
 	dospartoff = 0;
 	cyl = LABELSECTOR / lp->d_secpercyl;
-	if (osdep && (dp = osdep->dosparts) != NULL) {
-		/* read master boot record */
-		bp->b_blkno = DOSBBSECTOR;
-		bp->b_bcount = lp->d_secsize;
-		bp->b_flags = B_BUSY | B_READ;
-		bp->b_cylin = DOSBBSECTOR / lp->d_secpercyl;
-		(*strat)(bp);
+	if (!osdep || (dp = osdep->dosparts) == NULL)
+		goto nombrpart;
 
-		if ((error = biowait(bp)) == 0) {
-			struct dos_partition *ourdp = NULL;
+	/* read master boot record */
+	bp->b_blkno = DOSBBSECTOR;
+	bp->b_bcount = lp->d_secsize;
+	bp->b_flags = B_BUSY | B_READ;
+	bp->b_cylin = DOSBBSECTOR / lp->d_secpercyl;
+	(*strat)(bp);
 
-			/* XXX how do we check veracity/bounds of this? */
-			bcopy(bp->b_data + DOSPARTOFF, dp,
-			    NDOSPART * sizeof(*dp));
+	if ((error = biowait(bp)) == 0) {
+		struct dos_partition *ourdp = NULL;
 
-			/* look for NetBSD partition */
+		if (bcmp(bp->b_data + MBRSIGOFS, mbrsig, sizeof(mbrsig)))
+			goto nombrpart;
+
+		/* XXX how do we check veracity/bounds of this? */
+		bcopy(bp->b_data + DOSPARTOFF, dp,
+		      NDOSPART * sizeof(*dp));
+
+		/* look for NetBSD partition */
+		for (i = 0; i < NDOSPART; i++) {
+			if (dp[i].dp_typ == DOSPTYP_NETBSD) {
+				ourdp = &dp[i];
+				break;
+			}
+		}
+#ifdef COMPAT_386BSD_MBRPART
+		/* didn't find it -- look for 386BSD partition */
+		if (!ourdp) {
 			for (i = 0; i < NDOSPART; i++) {
-				if (dp[i].dp_typ == DOSPTYP_NETBSD) {
+				if (dp[i].dp_typ == DOSPTYP_386BSD) {
+					printf("old BSD partition ID!\n");
 					ourdp = &dp[i];
 					break;
 				}
 			}
-#ifdef COMPAT_386BSD_MBRPART
-			/* didn't find it -- look for 386BSD partition */
-			if (!ourdp) {
-				for (i = 0; i < NDOSPART; i++) {
-					if (dp[i].dp_typ == DOSPTYP_386BSD) {
-						printf("old BSD partition ID!\n");
-						ourdp = &dp[i];
-						break;
-					}
-				}
-			}
+		}
 #endif
-			if (ourdp) {
-				/* need sector address for SCSI/IDE,
-				 cylinder for ESDI/ST506/RLL */
-				dospartoff = dp->dp_start;
-				cyl = DPCYL(dp->dp_scyl, dp->dp_ssect);
-			}
+		if (ourdp) {
+			/* need sector address for SCSI/IDE,
+			 cylinder for ESDI/ST506/RLL */
+			dospartoff = dp->dp_start;
+			cyl = DPCYL(dp->dp_scyl, dp->dp_ssect);
 		}
 	}
 
+nombrpart:
 #ifdef maybe
 	/* disklabel in appropriate location? */
 	if (lp->d_partitions[2].p_offset != 0
