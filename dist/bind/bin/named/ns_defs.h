@@ -1,4 +1,4 @@
-/*	$NetBSD: ns_defs.h,v 1.1.1.2 2000/11/10 09:34:13 itojun Exp $	*/
+/*	$NetBSD: ns_defs.h,v 1.2 2000/11/10 09:56:57 itojun Exp $	*/
 
 /*
  *	from ns.h	4.33 (Berkeley) 8/23/90

@@ -1,4 +1,4 @@
-/*	$NetBSD: ns_req.c,v 1.1.1.2 2000/11/10 09:34:22 itojun Exp $	*/
+/*	$NetBSD: ns_req.c,v 1.2 2000/11/10 09:56:57 itojun Exp $	*/
 
 #if !defined(lint) && !defined(SABER)
 static const char sccsid[] = "@(#)ns_req.c	4.47 (Berkeley) 7/1/91";
@@ -1875,7 +1875,7 @@ make_rr(const char *name, struct databuf *dp, u_char *buf,
 
 cleanup:
 	/* Rollback RR. */
-	ns_name_rollback(buf, comp_ptrs, edp);
+	ns_name_rollback(buf, (const u_char **)comp_ptrs, (const u_char **)edp);
 	return (-1);
 }
 
@@ -2001,7 +2001,9 @@ loop:
 			  "addinfo: not enough room, remaining msglen = %d",
 					 save_msglen);
 				/* Rollback RRset. */
-				ns_name_rollback(save_cp, dnptrs, dnptrs_end);
+				ns_name_rollback(save_cp,
+				    (const u_char **)dnptrs,
+				    (const u_char **)dnptrs_end);
 				cp = save_cp;
 				msglen = save_msglen;
 				count = save_count;
