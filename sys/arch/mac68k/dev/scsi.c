@@ -1,4 +1,4 @@
-/*-
+/*
  * Copyright (C) 1993	Allen K. Briggs, Chris P. Caputo,
  *			Michael L. Finch, Bradley A. Grantham, and
  *			Lawrence A. Kesteloot
@@ -30,7 +30,7 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
- * $Id: scsi.c,v 1.4 1994/01/15 03:26:20 briggs Exp $
+ * $Id: scsi.c,v 1.5 1994/01/30 01:08:50 briggs Exp $
  *
  */
 
@@ -38,22 +38,22 @@
 
 static int pdebug=0;
 
-#include "sys/types.h"
-#include "sys/malloc.h"
-#include "sys/param.h"
-#include "sys/systm.h"
-#include "sys/errno.h"
-#include "sys/buf.h"
-#include "sys/proc.h"
-#include "sys/user.h"
-#include "sys/device.h"
+#include <sys/types.h>
+#include <sys/malloc.h>
+#include <sys/param.h>
+#include <sys/systm.h>
+#include <sys/errno.h>
+#include <sys/buf.h>
+#include <sys/proc.h>
+#include <sys/user.h>
+#include <sys/device.h>
 #include "../scsi/scsi_all.h"
 #include "../scsi/scsi_debug.h"
 #include "../scsi/scsiconf.h"
 
 #include "scsi_defs.h"
 #define PAD(n)	u_char	n[15]
-#include "machine/scsi_5380.h"
+#include <machine/scsi_5380.h>
 #undef PAD
 #define SCI_PHASE_DISC		0	/* sort of ... */
 #define SCI_CLR_INTR(regs)	{register int temp = regs->sci_iack;}
@@ -102,14 +102,24 @@ int Debugger();
 typedef unsigned long int	physaddr;
 typedef sci_regmap_t		sci_padded_regmap_t;
 
+#define NNCR5380	1
+
+struct ncr5380_data {
+	struct device		sc_dev;
+
+	void			*reg_base;
+	int			adapter_target;
+	struct scsi_link	sc_link;
+} *ncr5380data[NNCR5380];
+
 /* From Guide to Mac II family hardware, p. 137 */
 static volatile sci_padded_regmap_t	*ncr  =   (sci_regmap_t *) 0x50F10000;
 static volatile long			*sci_4byte_addr=  (long *) 0x50F06000;
 static volatile u_char			*sci_1byte_addr=(u_char *) 0x50F12000;
 
-static unsigned long	ncr5380_adapter_info(int adapter_number);
+static unsigned int	ncr5380_adapter_info(struct ncr5380_data *ncr5380);
 static void		ncr5380_minphys(struct buf *bp);
-static int32		ncr5380_scsi_cmd(struct scsi_xfer *xs);
+static int		ncr5380_scsi_cmd(struct scsi_xfer *xs);
 
 static int		ncr5380_show_scsi_cmd(struct scsi_xfer *xs);
 static int		ncr5380_reset_target(int adapter, int target);
@@ -127,14 +137,6 @@ static int	scsi_gen(int adapter, int id, int lun,
 static int	scsi_group0(int adapter, int id, int lun,
 			    int opcode, int addr, int len,
 			    int flags, caddr_t databuf, int datalen);
-
-#define NNCR5380	1
-
-struct ncr5380_data {
-	void			*reg_base;
-	int			adapter_target;
-	struct scsi_link	sc_link;
-} *ncr5380data[NNCR5380];
 
 static char scsi_name[] = "ncr5380";
 
@@ -160,13 +162,51 @@ struct scsi_device ncr_dev = {
 	0, 0
 };
 
+extern int	matchbyname();
+static int	ncrprobe();
+static void	ncrattach();
+
+struct cfdriver ncrcd =
+      {	NULL, "ncr", ncrprobe, ncrattach,
+	DV_DULL, sizeof(struct ncr5380_data), NULL, 0 };
+
 static int
 ncr_print(aux, name)
 	void *aux;
 	char *name;
 {
-	printf("%s: (sc_link = 0x%x)", name, (int) aux);
-	return UNCONF;
+	/* printf("%s: (sc_link = 0x%x)", name, (int) aux); 
+	return UNCONF;*/
+}
+
+static int
+ncrprobe(parent, cf, aux)
+	struct device	*parent;
+	struct cfdata	*cf;
+	void		*aux;
+{
+	int			unit = cf->cf_unit;
+	struct ncr5380_data	*ncr5380;
+
+	if (strcmp(*((char **) aux), ncrcd.cd_name)) {
+		return 0;
+	}
+
+ 	if (unit >= NNCR5380) {
+		printf("ncr5380attach: unit %d more than %d configured.\n",
+			unit+1, NNCR5380);
+		return 0;
+	}
+	ncr5380 = malloc(sizeof(struct ncr5380_data), M_TEMP, M_NOWAIT);
+	if (!ncr5380) {
+		printf("ncr5380attach: Can't malloc.\n");
+		return 0;
+	}
+
+	bzero(ncr5380, sizeof(*ncr5380));
+	ncr5380data[unit] = ncr5380;
+
+	return 1;
 }
 
 static void
@@ -174,57 +214,30 @@ ncrattach(parent, dev, aux)
 	struct device	*parent, *dev;
 	void		*aux;
 {
-	register volatile sci_padded_regmap_t *regs = ncr;
-	struct ncr5380_data	*ncr5380;
-	int	r, unit=0;
+register volatile sci_padded_regmap_t	*regs = ncr;
+	int				unit = dev->dv_unit;
+	struct ncr5380_data		*ncr5380 = ncr5380data[unit];
+	int				r;
 
-	printf("\n");
-#if 0
-	printf("ncr5380(%d): Resetting bus.\n", md->unit);
-	regs->sci_icmd    = 0x80;
-	delay(25);
-	regs->sci_icmd    = 0x00;
-	regs->sci_mode    = 0x00;
-	regs->sci_tcmd    = 0x00;
-	regs->sci_sel_enb = 0x00;
-	SCI_CLR_INTR(regs);
-	SCI_CLR_INTR(regs);
-	spinwait(1);
-#endif
+	bcopy((char *) ncr5380 + sizeof(struct device),
+	      (char *) dev + sizeof(struct device),
+	      sizeof(struct ncr5380_data) - sizeof(struct device));
+	free(ncr5380, M_TEMP);
 
- 	if (unit > NNCR5380) {
-		printf("ncr5380attach: unit %d more than %d configured.\n",
-			unit, NNCR5380);
-		return;
-	}
-	ncr5380data[unit] = malloc(sizeof(struct ncr5380_data), M_TEMP, M_NOWAIT);
-	if (!ncr5380data[unit]) {
-		printf("ncr5380attach: Can't malloc.\n");
-		return;
-	}
-	bzero(ncr5380data[unit], sizeof(struct ncr5380_data));
-	ncr5380 = ncr5380data[unit];
-/*	printf("ncr5380(%d): Probing for scsi devices.\n", unit); */
+	ncr5380data[unit] = ncr5380 = (struct ncr5380_data *) dev;
 
-	ncr5380->sc_link.adapter_unit = unit;
+	ncr5380->sc_link.scsibus = unit;
 	ncr5380->sc_link.adapter_targ = 7;
 	ncr5380->sc_link.adapter = &ncr5380_switch;
 	ncr5380->sc_link.device = &ncr_dev;
 
-	scsi_attachdevs(&(ncr5380->sc_link));
-/*	config_found(dev, &(ncr5380->sc_link), ncr_print); */
+	printf("\n");
 
-/*	printf("ncr5380(%d): Probe finished.\n", unit); */
+	config_found(dev, &(ncr5380->sc_link), ncr_print);
 }
 
-extern int	matchbyname();
-
-struct cfdriver ncrcd =
-      {	NULL, "ncr", matchbyname, ncrattach,
-	DV_DULL, sizeof(struct device), NULL, 0 };
-
-static unsigned long
-ncr5380_adapter_info(int adapter_number)
+static unsigned int
+ncr5380_adapter_info(struct ncr5380_data *ncr5380)
 {
 	return 1;
 }
@@ -240,7 +253,7 @@ ncr5380_minphys(struct buf *bp)
 }
 #undef MIN_PHYS
 
-static int32
+static int
 ncr5380_scsi_cmd(struct scsi_xfer *xs)
 {
 	int flags, s, r;
@@ -260,12 +273,12 @@ ncr5380_scsi_cmd(struct scsi_xfer *xs)
 		printf("flags & SCSIRESET.\n");
 		if ( ! ( flags & SCSI_NOSLEEP ) ) {
 			s = splbio();
-			ncr5380_reset_target(xs->sc_link->adapter_unit, xs->sc_link->target);
+			ncr5380_reset_target(xs->sc_link->scsibus, xs->sc_link->target);
 			splx(s);
 			return(SUCCESSFULLY_QUEUED);
 		} else {
-			ncr5380_reset_target(xs->sc_link->adapter_unit, xs->sc_link->target);
-			if (ncr5380_poll(xs->sc_link->adapter_unit, xs->timeout)) {
+			ncr5380_reset_target(xs->sc_link->scsibus, xs->sc_link->target);
+			if (ncr5380_poll(xs->sc_link->scsibus, xs->timeout)) {
 				return (HAD_ERROR);
 			}
 			return (COMPLETE);
@@ -299,7 +312,7 @@ ncr5380_scsi_cmd(struct scsi_xfer *xs)
 	return r;
 /*
 	do {
-		if (ncr5380_poll(xs->sc_link->adapter_unit, xs->timeout)) {
+		if (ncr5380_poll(xs->sc_link->scsibus, xs->timeout)) {
 			if ( ! ( xs->flags & SCSI_SILENT ) )
 				printf("cmd fail.\n");
 			cmd_cleanup
@@ -318,7 +331,7 @@ ncr5380_show_scsi_cmd(struct scsi_xfer *xs)
 
 	if ( ! ( xs->flags & SCSI_RESET ) ) {
 		printf("ncr5380(%d:%d:%d)-",
-			xs->sc_link->adapter_unit, xs->sc_link->target, xs->sc_link->lun);
+			xs->sc_link->scsibus, xs->sc_link->target, xs->sc_link->lun);
 		while (i < xs->cmdlen) {
 			if (i) printf(",");
 			printf("%x",b[i++]);
@@ -326,7 +339,7 @@ ncr5380_show_scsi_cmd(struct scsi_xfer *xs)
 		printf("-\n");
 	} else {
 		printf("ncr5380(%d:%d:%d)-RESET-\n",
-			xs->sc_link->adapter_unit, xs->sc_link->target, xs->sc_link->lun);
+			xs->sc_link->scsibus, xs->sc_link->target, xs->sc_link->lun);
 	}
 }
 
@@ -410,7 +423,7 @@ ncr5380_send_cmd(struct scsi_xfer *xs)
 
 /*	ncr5380_show_scsi_cmd(xs); */
 	s = splbio();
-	sense = scsi_gen( xs->sc_link->adapter_unit, xs->sc_link->target,
+	sense = scsi_gen( xs->sc_link->scsibus, xs->sc_link->target,
 			  xs->sc_link->lun, xs->cmd, xs->cmdlen,
 			  xs->data, xs->datalen );
 	splx(s);
@@ -419,7 +432,7 @@ ncr5380_send_cmd(struct scsi_xfer *xs)
 			case 0x02:	/* Check condition */
 /*				printf("check cond. target %d.\n", xs->targ);*/
 				s = splbio();
-				scsi_group0(xs->sc_link->adapter_unit,
+				scsi_group0(xs->sc_link->scsibus,
 					    xs->sc_link->target,
 					    xs->sc_link->lun,
 					    0x3, 0x0,
