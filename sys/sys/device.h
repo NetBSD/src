@@ -1,4 +1,4 @@
-/*	$NetBSD: device.h,v 1.33 1999/09/15 18:10:33 thorpej Exp $	*/
+/*	$NetBSD: device.h,v 1.34 1999/09/15 19:37:08 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -183,6 +183,7 @@ int config_detach __P((struct device *, int));
 int config_activate __P((struct device *));
 int config_deactivate __P((struct device *));
 void config_defer __P((struct device *, void (*)(struct device *)));
+void config_interrupts __P((struct device *, void (*)(struct device *)));
 #if defined(__alpha__) || defined(hp300) || defined(__i386__) || \
 	defined(__sparc__) || defined(__vax__)
 void device_register __P((struct device *, void *));

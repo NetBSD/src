@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_autoconf.c,v 1.41 1999/09/15 18:10:34 thorpej Exp $	*/
+/*	$NetBSD: subr_autoconf.c,v 1.42 1999/09/15 19:37:08 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -83,12 +83,23 @@ struct deferred_config {
 	void (*dc_func) __P((struct device *));
 };
 
-TAILQ_HEAD(, deferred_config) deferred_config_queue;
+TAILQ_HEAD(deferred_config_head, deferred_config);
 
-static void config_process_deferred_children __P((struct device *));
+struct deferred_config_head deferred_config_queue;
+struct deferred_config_head interrupt_config_queue;
+
+static void config_process_deferred __P((struct deferred_config_head *,
+	struct device *));
 
 struct devicelist alldevs;		/* list of all devices */
 struct evcntlist allevents;		/* list of all event counters */
+
+/*
+ * This variable indicates, from the configuration machinery's point of
+ * view, if interrupts are enabled.  They start disabled, and are
+ * considered enabled once cpu_configure() returns.
+ */
+int	config_interrupts_enabled;
 
 /*
  * Configure the system's hardware.
@@ -98,6 +109,7 @@ configure()
 {
 
 	TAILQ_INIT(&deferred_config_queue);
+	TAILQ_INIT(&interrupt_config_queue);
 	TAILQ_INIT(&alldevs); 
 	TAILQ_INIT(&allevents);
 
@@ -108,6 +120,13 @@ configure()
 	 * to be enabled.
 	 */
 	cpu_configure();
+	config_interrupts_enabled = 1;
+
+	/*
+	 * Now callback to finish configuration for devices which want
+	 * to do this once interrupts are enabled.
+	 */
+	config_process_deferred(&interrupt_config_queue, NULL);
 }
 
 /*
@@ -372,7 +391,7 @@ config_attach(parent, cf, aux, print)
 	device_register(dev, aux);
 #endif
 	(*ca->ca_attach)(parent, dev, aux);
-	config_process_deferred_children(dev);
+	config_process_deferred(&deferred_config_queue, dev);
 	return (dev);
 }
 
@@ -559,8 +578,7 @@ config_defer(dev, func)
 	}
 #endif
 
-	if ((dc = malloc(sizeof(*dc), M_DEVBUF, M_NOWAIT)) == NULL)
-		panic("config_defer: can't allocate defer structure");
+	dc = malloc(sizeof(*dc), M_DEVBUF, M_WAITOK);
 
 	dc->dc_dev = dev;
 	dc->dc_func = func;
@@ -568,19 +586,53 @@ config_defer(dev, func)
 }
 
 /*
- * Process the deferred configuration queue for a device.
+ * Defer some autoconfiguration for a device until after interrupts
+ * are enabled.
+ */
+void
+config_interrupts(dev, func)
+	struct device *dev;
+	void (*func) __P((struct device *));
+{
+	struct deferred_config *dc;
+
+	/*
+	 * If interrupts are enabled, callback now.
+	 */
+	if (config_interrupts_enabled) {
+		(*func)(dev);
+		return;
+	}
+
+#ifdef DIAGNOSTIC
+	for (dc = TAILQ_FIRST(&interrupt_config_queue); dc != NULL;
+	     dc = TAILQ_NEXT(dc, dc_queue)) {
+		if (dc->dc_dev == dev)
+			panic("config_interrupts: deferred twice");
+	}
+#endif
+
+	dc = malloc(sizeof(*dc), M_DEVBUF, M_WAITOK);
+
+	dc->dc_dev = dev;
+	dc->dc_func = func;
+	TAILQ_INSERT_TAIL(&interrupt_config_queue, dc, dc_queue);
+}
+
+/*
+ * Process a deferred configuration queue.
  */
 static void
-config_process_deferred_children(parent)
+config_process_deferred(queue, parent)
+	struct deferred_config_head *queue;
 	struct device *parent;
 {
 	struct deferred_config *dc, *ndc;
 
-	for (dc = TAILQ_FIRST(&deferred_config_queue);
-	     dc != NULL; dc = ndc) {
+	for (dc = TAILQ_FIRST(queue); dc != NULL; dc = ndc) {
 		ndc = TAILQ_NEXT(dc, dc_queue);
-		if (dc->dc_dev->dv_parent == parent) {
-			TAILQ_REMOVE(&deferred_config_queue, dc, dc_queue);
+		if (parent == NULL || dc->dc_dev->dv_parent == parent) {
+			TAILQ_REMOVE(queue, dc, dc_queue);
 			(*dc->dc_func)(dc->dc_dev);
 			free(dc, M_DEVBUF);
 		}
