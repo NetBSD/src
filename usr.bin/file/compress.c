@@ -1,4 +1,4 @@
-/*	$NetBSD: compress.c,v 1.11 2002/05/18 07:00:44 pooka Exp $	*/
+/*	$NetBSD: compress.c,v 1.12 2002/06/14 19:05:18 wiz Exp $	*/
 
 /*
  * compress routines:
@@ -8,6 +8,7 @@
  *					    using method, return sizeof new
  */
 #include "file.h"
+#include <fcntl.h>
 #include <stdio.h>
 #include <stdlib.h>
 #ifdef HAVE_UNISTD_H
@@ -28,7 +29,7 @@
 #if 0
 FILE_RCSID("@(#)Id: compress.c,v 1.23 2002/05/16 18:57:10 christos Exp ")
 #else
-__RCSID("$NetBSD: compress.c,v 1.11 2002/05/18 07:00:44 pooka Exp $");
+__RCSID("$NetBSD: compress.c,v 1.12 2002/06/14 19:05:18 wiz Exp $");
 #endif
 #endif
 
@@ -54,20 +55,15 @@ static struct {
 static int ncompr = sizeof(compr) / sizeof(compr[0]);
 
 
-static int swrite		__P((int, const void *, size_t));
-static int sread		__P((int, void *, size_t));
-static int uncompressbuf __P((int, const unsigned char *, unsigned char **,
-    int));
+static int swrite(int, const void *, size_t);
+static int sread(int, void *, size_t);
+static int uncompressbuf(int, const unsigned char *, unsigned char **, int);
 #ifdef HAVE_LIBZ
-static int uncompressgzipped __P((const unsigned char *, unsigned char **,
-    int));
+static int uncompressgzipped(const unsigned char *, unsigned char **, int);
 #endif
 
 int
-zmagic(fname, buf, nbytes)
-	const char *fname;
-	unsigned char *buf;
-	int nbytes;
+zmagic(const char *fname, unsigned char *buf, int nbytes)
 {
 	unsigned char *newbuf;
 	int newsize;
@@ -97,10 +93,7 @@ zmagic(fname, buf, nbytes)
  * `safe' write for sockets and pipes.
  */
 static int
-swrite(fd, buf, n)
-	int fd;
-	const void *buf;
-	size_t n;
+swrite(int fd, const void *buf, size_t n)
 {
 	int rv;
 	size_t rn = n;
@@ -125,10 +118,7 @@ swrite(fd, buf, n)
  * `safe' read for sockets and pipes.
  */
 static int
-sread(fd, buf, n)
-	int fd;
-	void *buf;
-	size_t n;
+sread(int fd, void *buf, size_t n)
 {
 	int rv;
 	size_t rn = n;
@@ -151,10 +141,7 @@ sread(fd, buf, n)
 }
 
 int
-pipe2file(fd, startbuf, nbytes)
-	int fd;
-	void *startbuf;
-	size_t nbytes;
+pipe2file(int fd, void *startbuf, size_t nbytes)
 {
 	char buf[4096];
 	int r, tfd;
@@ -227,10 +214,7 @@ pipe2file(fd, startbuf, nbytes)
 #define FCOMMENT	(1 << 4)
 
 static int
-uncompressgzipped(old, newch, n)
-	const unsigned char *old;
-	unsigned char **newch;
-	int n;
+uncompressgzipped(const unsigned char *old, unsigned char **newch, int n)
 {
 	unsigned char flg = old[3];
 	int data_start = 10;
@@ -287,11 +271,8 @@ uncompressgzipped(old, newch, n)
 #endif
 
 static int
-uncompressbuf(method, old, newch, n)
-	int method;
-	const unsigned char *old;
-	unsigned char **newch;
-	int n;
+uncompressbuf(int method, const unsigned char *old, unsigned char **newch,
+	      int n)
 {
 	int fdin[2], fdout[2];
 

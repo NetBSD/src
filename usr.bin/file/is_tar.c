@@ -1,4 +1,4 @@
-/*	$NetBSD: is_tar.c,v 1.13 2002/05/18 07:00:45 pooka Exp $	*/
+/*	$NetBSD: is_tar.c,v 1.14 2002/06/14 19:05:19 wiz Exp $	*/
 
 /*
  * is_tar() -- figure out whether file is a tar archive.
@@ -28,13 +28,13 @@
 #if 0
 FILE_RCSID("@(#)Id: is_tar.c,v 1.14 2002/05/16 18:45:56 christos Exp ")
 #else
-__RCSID("$NetBSD: is_tar.c,v 1.13 2002/05/18 07:00:45 pooka Exp $");
+__RCSID("$NetBSD: is_tar.c,v 1.14 2002/06/14 19:05:19 wiz Exp $");
 #endif
 #endif
 
 #define	isodigit(c)	( ((c) >= '0') && ((c) <= '7') )
 
-static int from_oct __P((int, char *));	/* Decode octal number */
+static int from_oct(int, char *);	/* Decode octal number */
 
 /*
  * Return 
@@ -43,9 +43,7 @@ static int from_oct __P((int, char *));	/* Decode octal number */
  *	2 for Unix Std (POSIX) tar file.
  */
 int
-is_tar(buf, nbytes)
-	unsigned char *buf;
-	int nbytes;
+is_tar(unsigned char *buf, int nbytes)
 {
 	union record *header = (union record *)buf;
 	int	i;
@@ -88,9 +86,7 @@ is_tar(buf, nbytes)
  * Result is -1 if the field is invalid (all blank, or nonoctal).
  */
 static int
-from_oct(digs, where)
-	int	digs;
-	char	*where;
+from_oct(int digs, char *where)
 {
 	int	value;
 

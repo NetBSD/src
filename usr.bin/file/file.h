@@ -1,4 +1,4 @@
-/*	$NetBSD: file.h,v 1.26 2002/06/05 12:52:57 itojun Exp $	*/
+/*	$NetBSD: file.h,v 1.27 2002/06/14 19:05:19 wiz Exp $	*/
 
 /*
  * file.h - definitions for file(1) program
@@ -119,38 +119,29 @@ struct mlist {
 	struct mlist *next, *prev;
 };
 
-#include <stdio.h>	/* Include that here, to make sure __P gets defined */
 #include <errno.h>
+#include <stdio.h>
 
-#ifndef __P
-# if defined(__STDC__) || defined(__cplusplus)
-#  define __P(a) a
-# else
-#  define __P(a) ()
-#  define const
-# endif
-#endif
-
-extern int   apprentice		__P((const char *, int));
-extern int   ascmagic		__P((unsigned char *, int));
-extern void  error		__P((const char *, ...));
-extern void  ckfputs		__P((const char *, FILE *));
+extern int   apprentice(const char *, int);
+extern int   ascmagic(unsigned char *, int);
+extern void  error(const char *, ...);
+extern void  ckfputs(const char *, FILE *);
 struct stat;
-extern int   fsmagic		__P((const char *, struct stat *));
-extern char *fmttime		__P((long, int));
-extern int   is_compress	__P((const unsigned char *, int *));
-extern int   is_tar		__P((unsigned char *, int));
-extern void  magwarn		__P((const char *, ...));
-extern void  mdump		__P((struct magic *));
-extern void  process		__P((const char *, int));
-extern void  showstr		__P((FILE *, const char *, int));
-extern int   softmagic		__P((unsigned char *, int));
-extern int   tryit		__P((const char *, unsigned char *, int, int));
-extern int   zmagic		__P((const char *, unsigned char *, int));
-extern void  ckfprintf		__P((FILE *, const char *, ...));
-extern uint32_t signextend	__P((struct magic *, unsigned int32));
-extern void tryelf		__P((int, unsigned char *, int));
-extern int pipe2file		__P((int, void *, size_t));
+extern int   fsmagic(const char *, struct stat *);
+extern char *fmttime(long, int);
+extern int   is_compress(const unsigned char *, int *);
+extern int   is_tar(unsigned char *, int);
+extern void  magwarn(const char *, ...);
+extern void  mdump(struct magic *);
+extern void  process(const char *, int);
+extern void  showstr(FILE *, const char *, int);
+extern int   softmagic(unsigned char *, int);
+extern int   tryit(const char *, unsigned char *, int, int);
+extern int   zmagic(const char *, unsigned char *, int);
+extern void  ckfprintf(FILE *, const char *, ...);
+extern uint32_t signextend(struct magic *, unsigned int32);
+extern void tryelf(int, unsigned char *, int);
+extern int pipe2file(int, void *, size_t);
 
 
 extern char *progname;		/* the program name 			*/
@@ -185,13 +176,9 @@ extern char *sys_errlist[];
 #define QUICK
 #endif
 
-#ifdef __STDC__
 #define FILE_RCSID(id) \
 static const char *rcsid(const char *p) { \
 	return rcsid(p = id); \
 }
-#else
-#define FILE_RCSID(id) static char rcsid[] = id;
-#endif
 
 #endif /* __file_h__ */

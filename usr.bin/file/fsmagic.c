@@ -1,4 +1,4 @@
-/*	$NetBSD: fsmagic.c,v 1.15 2000/09/22 16:35:00 pooka Exp $	*/
+/*	$NetBSD: fsmagic.c,v 1.16 2002/06/14 19:05:19 wiz Exp $	*/
 
 /*
  * fsmagic - magic based on filesystem info - directory, special files, etc.
@@ -60,14 +60,12 @@
 #if 0
 FILE_RCSID("@(#)Id: fsmagic.c,v 1.31 2000/04/11 02:32:35 christos Exp ")
 #else
-__RCSID("$NetBSD: fsmagic.c,v 1.15 2000/09/22 16:35:00 pooka Exp $");
+__RCSID("$NetBSD: fsmagic.c,v 1.16 2002/06/14 19:05:19 wiz Exp $");
 #endif
 #endif	/* lint */
 
 int
-fsmagic(fn, sb)
-	const char *fn;
-	struct stat *sb;
+fsmagic(const char *fn, struct stat *sb)
 {
 	int ret = 0;
 

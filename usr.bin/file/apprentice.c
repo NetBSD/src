@@ -1,4 +1,4 @@
-/*	$NetBSD: apprentice.c,v 1.30 2002/06/05 12:52:57 itojun Exp $	*/
+/*	$NetBSD: apprentice.c,v 1.31 2002/06/14 19:05:18 wiz Exp $	*/
 
 /*
  * apprentice - make one pass through /etc/magic, learning its secrets.
@@ -49,7 +49,7 @@
 #if 0
 FILE_RCSID("@(#)Id: apprentice.c,v 1.46 2002/05/16 18:45:56 christos Exp ")
 #else
-__RCSID("$NetBSD: apprentice.c,v 1.30 2002/06/05 12:52:57 itojun Exp $");
+__RCSID("$NetBSD: apprentice.c,v 1.31 2002/06/14 19:05:18 wiz Exp $");
 #endif
 #endif	/* lint */
 
@@ -82,23 +82,20 @@ __RCSID("$NetBSD: apprentice.c,v 1.30 2002/06/05 12:52:57 itojun Exp $");
 #endif
 
 
-static int getvalue	__P((struct magic *, char **));
-static int hextoint	__P((int));
-static char *getstr	__P((char *, char *, int, int *));
-static int parse	__P((struct magic **, uint32_t *, char *, int));
-static void eatsize	__P((char **));
-static int apprentice_1	__P((const char *, int));
-static int apprentice_file	__P((struct magic **, uint32_t *,
-    const char *, int));
-static void byteswap	__P((struct magic *, uint32_t));
-static void bs1		__P((struct magic *));
-static uint16_t swap2	__P((uint16_t));
-static uint32_t swap4	__P((uint32_t));
-static char *mkdbname	__P((const char *));
-static int apprentice_map	__P((struct magic **, uint32_t *,
-    const char *, int));
-static int apprentice_compile	__P((struct magic **, uint32_t *,
-    const char *, int));
+static int getvalue(struct magic *, char **);
+static int hextoint(int);
+static char *getstr(char *, char *, int, int *);
+static int parse(struct magic **, uint32_t *, char *, int);
+static void eatsize(char **);
+static int apprentice_1(const char *, int);
+static int apprentice_file(struct magic **, uint32_t *, const char *, int);
+static void byteswap(struct magic *, uint32_t);
+static void bs1(struct magic *);
+static uint16_t swap2(uint16_t);
+static uint32_t swap4(uint32_t);
+static char *mkdbname(const char *);
+static int apprentice_map(struct magic **, uint32_t *, const char *, int);
+static int apprentice_compile(struct magic **, uint32_t *, const char *, int);
 
 static int maxmagic = 0;
 
@@ -109,12 +106,10 @@ const char *magicfile;
 char *progname;
 int lineno;
 
-int main __P((int, char *[]));
+int main(int, char *[]);
 
 int
-main(argc, argv)
-	int argc;
-	char *argv[];
+main(int argc, char *argv[])
 {
 	int ret;
 
@@ -138,9 +133,7 @@ main(argc, argv)
  * Handle one file.
  */
 static int
-apprentice_1(fn, action)
-	const char *fn;
-	int action;
+apprentice_1(const char *fn, int action)
 {
 	struct magic *magic = NULL;
 	uint32_t nmagic = 0;
@@ -188,10 +181,9 @@ apprentice_1(fn, action)
 }
 
 
+/* const char *fn: list of magic files */
 int
-apprentice(fn, action)
-	const char *fn;			/* list of magic files */
-	int action;
+apprentice(const char *fn, int action)
 {
 	char *p, *mfn;
 	int file_err, errs = -1;
@@ -229,13 +221,11 @@ apprentice(fn, action)
 
 /*
  * parse from a file
+ * const char *fn: name of magic file
  */
 static int
-apprentice_file(magicp, nmagicp, fn, action)
-	struct magic **magicp;
-	uint32_t *nmagicp;
-	const char *fn;			/* name of magic file */
-	int action;
+apprentice_file(struct magic **magicp, uint32_t *nmagicp, const char *fn,
+		int action)
 {
 	static const char hdr[] =
 		"cont\toffset\ttype\topcode\tmask\tvalue\tdesc";
@@ -288,9 +278,7 @@ apprentice_file(magicp, nmagicp, fn, action)
  * extend the sign bit if the comparison is to be signed
  */
 uint32_t
-signextend(m, v)
-	struct magic *m;
-	uint32_t v;
+signextend(struct magic *m, uint32_t v)
 {
 	if (!(m->flag & UNSIGNED))
 		switch(m->type) {
@@ -335,11 +323,7 @@ signextend(m, v)
  * parse one line from magic file, put into magic[index++] if valid
  */
 static int
-parse(magicp, nmagicp, l, action)
-	struct magic **magicp;
-	uint32_t *nmagicp;
-	char *l;
-	int action;
+parse(struct magic **magicp, uint32_t *nmagicp, char *l, int action)
 {
 	int i = 0;
 	struct magic *m;
@@ -708,9 +692,7 @@ GetDesc:
  * just after the number read.  Return 0 for success, non-zero for failure.
  */
 static int
-getvalue(m, p)
-	struct magic *m;
-	char **p;
+getvalue(struct magic *m, char **p)
 {
 	int slen;
 
@@ -732,10 +714,7 @@ getvalue(m, p)
  * Return updated scan pointer as function result.
  */
 static char *
-getstr(s, p, plen, slen)
-	char	*s;
-	char	*p;
-	int	plen, *slen;
+getstr(char *s, char *p, int plen, int *slen)
 {
 	char	*origs = s, *origp = p;
 	char	*pmax = p + plen - 1;
@@ -835,8 +814,7 @@ out:
 
 /* Single hex char to int; -1 if not a hex char. */
 static int
-hextoint(c)
-	int c;
+hextoint(int c)
 {
 	if (!isascii((unsigned char) c))
 		return -1;
@@ -854,10 +832,7 @@ hextoint(c)
  * Print a string containing C character escapes.
  */
 void
-showstr(fp, s, len)
-	FILE *fp;
-	const char *s;
-	int len;
+showstr(FILE *fp, const char *s, int len)
 {
 	char	c;
 
@@ -913,8 +888,7 @@ showstr(fp, s, len)
  * eatsize(): Eat the size spec from a number [eg. 10UL]
  */
 static void
-eatsize(p)
-	char **p;
+eatsize(char **p)
 {
 	char *l = *p;
 
@@ -940,11 +914,8 @@ eatsize(p)
  * handle a compiled file.
  */
 static int
-apprentice_map(magicp, nmagicp, fn, action)
-	struct magic **magicp;
-	uint32_t *nmagicp;
-	const char *fn;
-	int action;
+apprentice_map(struct magic **magicp, uint32_t *nmagicp, const char *fn,
+	       int action)
 {
 	int fd;
 	struct stat st;
@@ -1032,11 +1003,8 @@ error:
  * handle an mmaped file.
  */
 static int
-apprentice_compile(magicp, nmagicp, fn, action)
-	struct magic **magicp;
-	uint32_t *nmagicp;
-	const char *fn;
-	int action;
+apprentice_compile(struct magic **magicp, uint32_t *nmagicp,
+		   const char *fn, int action)
 {
 	int fd;
 	char *dbname = mkdbname(fn);
@@ -1080,8 +1048,7 @@ apprentice_compile(magicp, nmagicp, fn, action)
  * make a dbname
  */
 char *
-mkdbname(fn)
-	const char *fn;
+mkdbname(const char *fn)
 {
 	static const char ext[] = ".mgc";
 	static char *buf = NULL;
@@ -1104,9 +1071,7 @@ mkdbname(fn)
  * Byteswap an mmap'ed file if needed
  */
 static void
-byteswap(magic, nmagic)
-	struct magic *magic;
-	uint32_t nmagic;
+byteswap(struct magic *magic, uint32_t nmagic)
 {
 	uint32_t i;
 	for (i = 0; i < nmagic; i++)
@@ -1117,8 +1082,7 @@ byteswap(magic, nmagic)
  * swap a short
  */
 static uint16_t
-swap2(sv) 
-	uint16_t sv;
+swap2(uint16_t sv)
 {
 	uint16_t rv;
 	uint8_t *s = (uint8_t *) &sv; 
@@ -1132,8 +1096,7 @@ swap2(sv)
  * swap an int
  */
 static uint32_t
-swap4(sv) 
-	uint32_t sv;
+swap4(uint32_t sv)
 {
 	uint32_t rv;
 	uint8_t *s = (uint8_t *) &sv; 
@@ -1149,8 +1112,7 @@ swap4(sv)
  * byteswap a single magic entry
  */
 static
-void bs1(m)
-	struct magic *m;
+void bs1(struct magic *m)
 {
 	m->cont_level = swap2(m->cont_level);
 	m->offset = swap4(m->offset);
