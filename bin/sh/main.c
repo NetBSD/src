@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.28 1998/07/28 11:41:56 mycroft Exp $	*/
+/*	$NetBSD: main.c,v 1.29 1999/02/02 15:49:52 itohy Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -46,7 +46,7 @@ __COPYRIGHT("@(#) Copyright (c) 1991, 1993\n\
 #if 0
 static char sccsid[] = "@(#)main.c	8.7 (Berkeley) 7/19/95";
 #else
-__RCSID("$NetBSD: main.c,v 1.28 1998/07/28 11:41:56 mycroft Exp $");
+__RCSID("$NetBSD: main.c,v 1.29 1999/02/02 15:49:52 itohy Exp $");
 #endif
 #endif /* not lint */
 
@@ -315,22 +315,28 @@ STATIC char *
 find_dot_file(basename)
 	char *basename;
 {
-	static char localname[FILENAME_MAX+1];
 	char *fullname;
 	char *path = pathval();
 	struct stat statb;
 
 	/* don't try this for absolute or relative paths */
-	if( strchr(basename, '/'))
+	if (strchr(basename, '/'))
 		return basename;
 
 	while ((fullname = padvance(&path, basename)) != NULL) {
-		strcpy(localname, fullname);
+		if ((stat(fullname, &statb) == 0) && S_ISREG(statb.st_mode)) {
+			/*
+			 * Don't bother freeing here, since it will
+			 * be freed by the caller.
+			 */
+			return fullname;
+		}
 		stunalloc(fullname);
-		if ((stat(fullname, &statb) == 0) && S_ISREG(statb.st_mode))
-			return localname;
 	}
-	return basename;
+
+	/* not found in the PATH */
+	error("%s: not found", basename);
+	/* NOTREACHED */
 }
 
 int
@@ -345,12 +351,16 @@ dotcmd(argc, argv)
 		setvareq(savestr(sp->text), VSTRFIXED|VTEXTFIXED);
 
 	if (argc >= 2) {		/* That's what SVR2 does */
-		char *fullname = find_dot_file(argv[1]);
+		char *fullname;
+		struct stackmark smark;
 
+		setstackmark(&smark);
+		fullname = find_dot_file(argv[1]);
 		setinputfile(fullname, 1);
 		commandname = fullname;
 		cmdloop(0);
 		popfile();
+		popstackmark(&smark);
 	}
 	return exitstatus;
 }
