@@ -1,4 +1,4 @@
-/*	$NetBSD: if_aue.c,v 1.74 2002/03/17 18:02:52 augustss Exp $	*/
+/*	$NetBSD: if_aue.c,v 1.75 2002/03/18 14:01:05 christos Exp $	*/
 /*
  * Copyright (c) 1997, 1998, 1999, 2000
  *	Bill Paul <wpaul@ee.columbia.edu>.  All rights reserved.
@@ -77,7 +77,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_aue.c,v 1.74 2002/03/17 18:02:52 augustss Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_aue.c,v 1.75 2002/03/18 14:01:05 christos Exp $");
 
 #if defined(__NetBSD__)
 #include "opt_inet.h"
@@ -215,6 +215,7 @@ Static const struct aue_type aue_devs[] = {
  {{ USB_VENDOR_MELCO, 		USB_PRODUCT_MELCO_LUATX1}, 	  0 },
  {{ USB_VENDOR_MELCO, 		USB_PRODUCT_MELCO_LUATX5}, 	  0 },
  {{ USB_VENDOR_MELCO, 		USB_PRODUCT_MELCO_LUA2TX5}, 	  PII },
+ {{ USB_VENDOR_SIEMENS,		USB_PRODUCT_SIEMENS_SPEEDSTREAM}, PII },
  {{ USB_VENDOR_SMARTBRIDGES,	USB_PRODUCT_SMARTBRIDGES_SMARTNIC},PII },
  {{ USB_VENDOR_SMC,		USB_PRODUCT_SMC_2202USB},	  0 },
  {{ USB_VENDOR_SOHOWARE,	USB_PRODUCT_SOHOWARE_NUB100},	  0 },
