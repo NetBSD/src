@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.52 1997/05/18 17:31:54 mhitch Exp $	*/
+/*	$NetBSD: trap.c,v 1.53 1997/05/24 08:49:22 jonathan Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -86,6 +86,13 @@
 #include <netinet/ip_var.h>
 
 #include "ppp.h"
+
+#if NPPP > 0
+#include <net/ppp_defs.h>		/* decls of struct pppstat for..  */
+#include <net/if_pppvar.h>		/* decl of enum for... */
+#include <net/if_ppp.h>			/* pppintr() prototype */
+#endif
+
 
 struct	proc *machFPCurProcPtr;		/* pointer to last proc to use FP */
 
@@ -346,6 +353,8 @@ extern void MachSwitchFPState __P((struct proc *from, struct user *to));
 /* only called by locore */
 extern u_int trap __P((u_int status, u_int cause, u_int vaddr,  u_int pc,
 			 int args));
+extern void interrupt __P((u_int status, u_int cause, u_int pc));
+extern void softintr __P((unsigned statusReg, unsigned pc));
 
 
 #ifdef DEBUG /* stack trace code, also useful to DDB one day */
