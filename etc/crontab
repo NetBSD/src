@@ -1,10 +1,11 @@
-#	$NetBSD: crontab,v 1.14 1998/09/15 05:06:30 lukem Exp $
+#	$NetBSD: crontab,v 1.15 2002/11/27 15:09:17 perry Exp $
 #
 # /var/cron/tabs/root - root's crontab for NetBSD
 #
 SHELL=/bin/sh
 PATH=/bin:/sbin:/usr/bin:/usr/sbin
 HOME=/var/log
+CRON_WITHIN=7200
 #
 #minute	hour	mday	month	wday	command
 #
