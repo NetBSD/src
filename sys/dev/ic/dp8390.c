@@ -1,4 +1,4 @@
-/*	$NetBSD: dp8390.c,v 1.3.4.1 1997/08/27 23:30:42 thorpej Exp $	*/
+/*	$NetBSD: dp8390.c,v 1.3.4.2 1997/10/14 00:59:07 thorpej Exp $	*/
 
 /*
  * Device driver for National Semiconductor DS8390/WD83C690 based ethernet
@@ -95,7 +95,7 @@ dp8390_config(sc)
 	else
 		sc->txb_cnt = 2;
 
-	sc->tx_page_start = 0;
+	sc->tx_page_start = sc->mem_start >> ED_PAGE_SHIFT;
 	sc->rec_page_start = sc->tx_page_start + sc->txb_cnt * ED_TXBUF_SIZE;
 	sc->rec_page_stop = sc->tx_page_start + (sc->mem_size >> ED_PAGE_SHIFT);
 	sc->mem_ring = sc->mem_start + (sc->rec_page_start << ED_PAGE_SHIFT);
@@ -126,12 +126,8 @@ dp8390_config(sc)
 #endif
 
 	/* Print additional info when attached. */
-	printf(": address %s, ", ether_sprintf(sc->sc_enaddr));
-
-	if (sc->type_str)
-		printf("type %s ", sc->type_str);
-	else
-		printf("type unknown (0x%x) ", sc->type);
+	printf("%s: Ethernet address %s\n", sc->sc_dev.dv_xname,
+	    ether_sprintf(sc->sc_enaddr));
 
 	rv = 0;
 out:
@@ -550,10 +546,9 @@ loop:
 }
 
 /* Ethernet interface interrupt processor. */
-void
-dp8390_intr(arg, slot)
+int
+dp8390_intr(arg)
 	void *arg;
-	int slot;
 {
 	struct dp8390_softc *sc = (struct dp8390_softc *)arg;
 	bus_space_tag_t regt = sc->sc_regt;
@@ -567,7 +562,7 @@ dp8390_intr(arg, slot)
 
 	isr = NIC_GET(regt, regh, ED_P0_ISR);
 	if (!isr)
-		return;
+		return (0);
 
 	/* Loop until there are no more new interrupts. */
 	for (;;) {
@@ -725,7 +720,7 @@ dp8390_intr(arg, slot)
 
 		isr = NIC_GET(regt, regh, ED_P0_ISR);
 		if (!isr)
-			return;
+			return (1);
 	}
 }
 
