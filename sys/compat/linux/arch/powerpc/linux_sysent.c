@@ -1,4 +1,4 @@
-/* $NetBSD: linux_sysent.c,v 1.7 2001/03/30 18:33:23 jdolecek Exp $ */
+/* $NetBSD: linux_sysent.c,v 1.8 2001/05/13 20:54:45 manu Exp $ */
 
 /*
  * System call switch table.
@@ -183,10 +183,10 @@ struct sysent linux_sysent[] = {
 	    compat_43_sys_getrlimit },		/* 76 = getrlimit */
 	{ 2, s(struct sys_getrusage_args), 0,
 	    sys_getrusage },			/* 77 = getrusage */
-	{ 2, s(struct sys_gettimeofday_args), 0,
-	    sys_gettimeofday },			/* 78 = gettimeofday */
-	{ 2, s(struct sys_settimeofday_args), 0,
-	    sys_settimeofday },			/* 79 = settimeofday */
+	{ 2, s(struct linux_sys_gettimeofday_args), 0,
+	    linux_sys_gettimeofday },		/* 78 = gettimeofday */
+	{ 2, s(struct linux_sys_settimeofday_args), 0,
+	    linux_sys_settimeofday },		/* 79 = settimeofday */
 	{ 2, s(struct sys_getgroups_args), 0,
 	    sys_getgroups },			/* 80 = getgroups */
 	{ 2, s(struct sys_setgroups_args), 0,
