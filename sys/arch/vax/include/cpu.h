@@ -1,4 +1,4 @@
-/*      $NetBSD: cpu.h,v 1.29 1998/08/10 14:33:33 ragge Exp $      */
+/*      $NetBSD: cpu.h,v 1.30 1998/10/05 22:12:40 thorpej Exp $      */
 
 /*
  * Copyright (c) 1994 Ludd, University of Lule}, Sweden
@@ -108,7 +108,6 @@ struct device;
 
 /* Some low-level prototypes */
 int	badaddr __P((caddr_t, int));
-void	cpu_set_kpc __P((struct proc *, void (*)(struct proc *)));
 void	cpu_swapin __P((struct proc *));
 int	hp_getdev __P((int, int, struct device **));
 int	ra_getdev __P((int, int, int, struct device **));

@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.28 1998/09/26 20:12:06 pk Exp $ */
+/*	$NetBSD: cpu.h,v 1.29 1998/10/05 22:12:13 thorpej Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -226,8 +226,6 @@ void kgdb_attach __P((int (*)(void *), void (*)(void *, int), void *));
 void kgdb_connect __P((int));
 void kgdb_panic __P((void));
 #endif
-/* vm_machdep.c */
-void cpu_set_kpc __P((struct proc *, void (*)(struct proc *)));
 /* emul.c */
 struct trapframe;
 int fixalign __P((struct proc *, struct trapframe *));
