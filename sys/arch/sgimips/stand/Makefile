@@ -1,6 +1,5 @@
-#       $NetBSD: Makefile,v 1.1 2001/11/20 18:36:31 soren Exp $
+#       $NetBSD: Makefile,v 1.2 2001/11/21 19:09:06 thorpej Exp $
 
-#SUBDIR+=        boot
-SUBDIR=         sgivol
+SUBDIR=         boot sgivol
 
 .include <bsd.subdir.mk>
