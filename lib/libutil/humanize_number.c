@@ -1,3 +1,5 @@
+/*	$NetBSD: humanize_number.c,v 1.3 2002/08/15 04:47:13 enami Exp $	*/
+
 /*
  * Copyright (c) 1997, 1998, 1999, 2002 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -39,7 +41,7 @@
 #ifndef __lint
 __COPYRIGHT("@(#) Copyright (c) 2002\n\
 	The NetBSD Foundation, inc. All rights reserved.\n");
-__RCSID("$NetBSD: humanize_number.c,v 1.2 2002/08/12 09:06:59 martin Exp $");
+__RCSID("$NetBSD: humanize_number.c,v 1.3 2002/08/15 04:47:13 enami Exp $");
 #endif /* !__lint */
 
 #include <assert.h>
@@ -51,10 +53,10 @@ __RCSID("$NetBSD: humanize_number.c,v 1.2 2002/08/12 09:06:59 martin Exp $");
 
 int
 humanize_number(char *buf, size_t len, int64_t bytes,
-        const char *suffix, int scale, int flags) {
-
+    const char *suffix, int scale, int flags)
+{
 	static const char prefixes[] = " KMGTPE";
-	
+
 	int	i, r;
 	int64_t	divisor, max, s1, s2, sign;
 	size_t	baselen, suffixlen;
@@ -64,10 +66,10 @@ humanize_number(char *buf, size_t len, int64_t bytes,
 
 	if (scale >= sizeof(prefixes) && scale != HN_AUTOSCALE &&
 	    scale != HN_GETSCALE)
-		return -1;
+		return (-1);
 
 	if (buf == NULL || suffix == NULL)
-		return -1;
+		return (-1);
 
 	if (len > 0)
 		buf[0] = '\0';
@@ -94,10 +96,10 @@ humanize_number(char *buf, size_t len, int64_t bytes,
 
 	max = 100;
 	for (i = 0; i < len - suffixlen - baselen + ((flags & HN_NOSPACE) ?
-             1 : 0) ; i++)
+	    1 : 0); i++)
 		max *= 10;
 
-	if ((scale & HN_AUTOSCALE) || (scale & HN_GETSCALE) ) {
+	if ((scale & HN_AUTOSCALE) || (scale & HN_GETSCALE)) {
 		for (i = 0; bytes >= max && i < sizeof(prefixes); i++)
 			bytes /= divisor;
 	} else {
@@ -106,27 +108,29 @@ humanize_number(char *buf, size_t len, int64_t bytes,
 	}
 
 	if (scale & HN_GETSCALE)
-		return i;
+		return (i);
 
 	if (bytes < 1000 && flags & HN_DECIMAL) {
-		if (len < (baselen + 2  + ( (flags & HN_NOSPACE) || (i == 0 &&
+		if (len < (baselen + 2 + ((flags & HN_NOSPACE) || (i == 0 &&
 		    !(flags & HN_B)) ? 0 : 1)))
 			return (-1);
 		s1 = bytes / 100;
-		if ((s2 = (( (bytes % 100 ) + 5 ) /  10 ) ) == 10 ) {
+		if ((s2 = (((bytes % 100) + 5) / 10)) == 10) {
 			s1++;
 			s2 = 0;
 		}
-		r = snprintf(buf, len, "%lld%s%lld%s%c%s", (long long)(sign * s1), 
+		r = snprintf(buf, len, "%lld%s%lld%s%c%s",
+		    (long long)(sign * s1),
 		    localeconv()->decimal_point, (long long)s2,
-		    (i == 0 && !(flags & HN_B) ) || flags & HN_NOSPACE ?
+		    (i == 0 && !(flags & HN_B)) || flags & HN_NOSPACE ?
 		    "" : " ", (i == 0 && (flags & HN_B)) ? 'B' :
 		    prefixes[i], suffix);
-		
-	} else
-	r = snprintf(buf, len, "%lld%s%c%s", (long long)(sign * ((bytes + 50) / 100)), 
-	    i == 0 || flags & HN_NOSPACE ? "" : " ", (i == 0 &&
-	    (flags & HN_B)) ? 'B' : prefixes[i], suffix);
 
-	return r;
+	} else
+		r = snprintf(buf, len, "%lld%s%c%s",
+		    (long long)(sign * ((bytes + 50) / 100)),
+		    i == 0 || flags & HN_NOSPACE ? "" : " ", (i == 0 &&
+		    (flags & HN_B)) ? 'B' : prefixes[i], suffix);
+
+	return (r);
 }
