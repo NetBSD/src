@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.104 2004/11/18 21:09:37 matt Exp $	*/
+/*	$NetBSD: trap.c,v 1.105 2004/11/18 22:56:32 matt Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.104 2004/11/18 21:09:37 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.105 2004/11/18 22:56:32 matt Exp $");
 
 #include "opt_altivec.h"
 #include "opt_ddb.h"
@@ -570,8 +570,10 @@ copyin(const void *udaddr, void *kaddr, size_t len)
 	struct faultbuf env;
 	int rv;
 
-	if ((rv = setfault(&env)) != 0)
+	if ((rv = setfault(&env)) != 0) {
+		unsetusr();
 		goto out;
+	}
 
 	while (len > 0) {
 		size_t seglen;
@@ -598,8 +600,10 @@ copyout(const void *kaddr, void *udaddr, size_t len)
 	struct faultbuf env;
 	int rv;
 
-	if ((rv = setfault(&env)) != 0)
+	if ((rv = setfault(&env)) != 0) {
+		unsetusr();
 		goto out;
+	}
 
 	while (len > 0) {
 		size_t seglen;
@@ -844,8 +848,10 @@ copyinstr(const void *udaddr, void *kaddr, size_t len, size_t *done)
 	struct faultbuf env;
 	int rv;
 
-	if ((rv = setfault(&env)) != 0)
+	if ((rv = setfault(&env)) != 0) {
+		unsetusr();
 		goto out2;
+	}
 
 	while (len > 0) {
 		size_t seglen;
@@ -881,8 +887,10 @@ copyoutstr(const void *kaddr, void *udaddr, size_t len, size_t *done)
 	struct faultbuf env;
 	int rv;
 
-	if ((rv = setfault(&env)) != 0)
+	if ((rv = setfault(&env)) != 0) {
+		unsetusr();
 		goto out2;
+	}
 
 	while (len > 0) {
 		size_t seglen;
