@@ -1,4 +1,4 @@
-/*	$NetBSD: start.S,v 1.9 1994/10/27 04:14:40 cgd Exp $	*/
+/*	$NetBSD: start.S,v 1.10 1995/01/16 02:50:35 mycroft Exp $	*/
 
 /*
  * Ported to boot 386BSD by Julian Elischer (julian@tfs.com) Sept 1992
@@ -89,6 +89,18 @@ start1:
 	/*** set up %es, (where we will load boot2 to) ***/
 	movl	%ax, %es
 
+#ifdef SERIAL
+	# Initialize the serial port to 9600 baud, 8N1.
+	data32
+	pushl	%edx
+	data32
+	movl	$0x00e3, %eax
+	xorl	%edx, %edx
+	int	$0x14
+	data32
+	popl	%edx
+#endif
+
 #ifdef	DEBUG
 	data32
 	movl	$one, %esi
@@ -109,17 +121,19 @@ fd:
 	data32
 	call	message
 #endif
-	movb	$0x0, %ah
+	movb	$0x00, %ah
 	int	$0x13
-	data32
-	movl	$0x0001, %ecx	# cyl 0, sector 1
-	movb	$0, %dh		# head
 #ifdef	DEBUG
 	data32
 	movl	$three, %esi
 	data32
 	call	message
 #endif
+	data32
+	movl	$0x0001, %ecx	# cyl 0, sector 1
+	movb	$0x00, %dh	# head
+	# XXX Override the drive number.
+	movb	$0x00, %dl
 	data32
 	jmp	load
 
@@ -206,6 +220,7 @@ load:
 	data32
 	call	message
 #endif
+
 	data32
 	ljmp	$BOOTSEG, $ EXT(boot2)
 
@@ -228,29 +243,50 @@ err_stop:
 
 message:
 /*
-	# Use BIOS "int 10H Function 0Eh" to write character in teletype mode
-	#	%ah = 0xe	%al = character
-	#	%bh = page	%bl = foreground color (graphics modes)
+#ifndef SERIAL
+# BIOS call "INT 10H Function 0Eh" to write character to console
+#	Call with	%ah = 0x0e
+#			%al = character
+#			%bh = page
+#			%bl = foreground color
+#else
+# BIOS call "INT 14H Function 01h" to write character to console
+#	Call with	%ah = 0x01
+#			%al = character
+#			%dx = port number
+#endif
 */
-
 	data32
 	pushl	%eax
 	data32
 	pushl	%ebx
 	data32
-	movl	$0x0001, %ebx
-	cld
+	pushl	%edx
 
 nextb:
+	cld
 	lodsb			# load a byte into %al
-	cmpb	$0x0, %al
+	testb	%al, %al
 	data32
-	je	done
-	movb	$0xe, %ah
-	int	$0x10		# display a byte
+	jz	done
+
+#ifndef SERIAL
+	movb	$0x0e, %ah
+	data32
+	movl	$0x0001, %ebx
+	int	$0x10
+#else
+	movb	$0x01, %ah
+	xorl	%edx, %edx
+	int	$0x14
+#endif
+
 	data32
 	jmp	nextb
+
 done:
+	data32
+	popl	%edx
 	data32
 	popl	%ebx
 	data32
