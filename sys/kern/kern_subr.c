@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_subr.c,v 1.21 1997/02/12 19:27:08 ragge Exp $	*/
+/*	$NetBSD: kern_subr.c,v 1.22 1997/02/24 12:20:47 leo Exp $	*/
 
 /*
  * Copyright (c) 1997 Jason R. Thorpe.  All rights reserved.
@@ -393,7 +393,7 @@ setroot(bootdv, bootpartition, nam2blk)
 	}
 	last_nam2blk = nam2blk;
 
-#ifdef MEMORY_DISK_HOOKS
+#ifdef MEMORY_DISK_IS_ROOT
 	bootdv = &fakemdrootdev;
 	bootpartition = 0;
 #endif
