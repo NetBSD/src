@@ -1,4 +1,4 @@
-/*	$NetBSD: bt_put.c,v 1.10 1997/07/21 14:06:35 jtc Exp $	*/
+/*	$NetBSD: bt_put.c,v 1.11 1998/08/18 23:50:08 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993, 1994
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)bt_put.c	8.8 (Berkeley) 7/26/94";
 #else
-__RCSID("$NetBSD: bt_put.c,v 1.10 1997/07/21 14:06:35 jtc Exp $");
+__RCSID("$NetBSD: bt_put.c,v 1.11 1998/08/18 23:50:08 thorpej Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -231,7 +231,7 @@ delete:		if (__bt_dleaf(t, key, h, index) == RET_ERROR) {
 	    t->bt_cursor.pg.pgno == h->pgno && t->bt_cursor.pg.index >= index)
 		++t->bt_cursor.pg.index;
 
-	if (t->bt_order == NOT)
+	if (t->bt_order == NOT) {
 		if (h->nextpg == P_INVALID) {
 			if (index == NEXTINDEX(h) - 1) {
 				t->bt_order = FORWARD;
@@ -245,6 +245,7 @@ delete:		if (__bt_dleaf(t, key, h, index) == RET_ERROR) {
 				t->bt_last.pgno = h->pgno;
 			}
 		}
+	}
 
 	mpool_put(t->bt_mp, h, MPOOL_DIRTY);
 

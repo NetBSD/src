@@ -1,4 +1,4 @@
-/*	$NetBSD: syslog.c,v 1.16 1998/07/27 14:16:35 mycroft Exp $	*/
+/*	$NetBSD: syslog.c,v 1.17 1998/08/18 23:52:31 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1983, 1988, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)syslog.c	8.5 (Berkeley) 4/29/95";
 #else
-__RCSID("$NetBSD: syslog.c,v 1.16 1998/07/27 14:16:35 mycroft Exp $");
+__RCSID("$NetBSD: syslog.c,v 1.17 1998/08/18 23:52:31 thorpej Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -275,12 +275,13 @@ openlog(ident, logstat, logfac)
 			(void)fcntl(LogFile, F_SETFD, 1);
 		}
 	}
-	if (LogFile != -1 && !connected)
+	if (LogFile != -1 && !connected) {
 		if (connect(LogFile, &SyslogAddr, sizeof(SyslogAddr)) == -1) {
 			(void)close(LogFile);
 			LogFile = -1;
 		} else
 			connected = 1;
+	}
 }
 
 void

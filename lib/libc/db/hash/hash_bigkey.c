@@ -1,4 +1,4 @@
-/*	$NetBSD: hash_bigkey.c,v 1.7 1997/07/13 18:52:03 christos Exp $	*/
+/*	$NetBSD: hash_bigkey.c,v 1.8 1998/08/18 23:50:08 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993, 1994
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)hash_bigkey.c	8.3 (Berkeley) 5/31/94";
 #else
-__RCSID("$NetBSD: hash_bigkey.c,v 1.7 1997/07/13 18:52:03 christos Exp $");
+__RCSID("$NetBSD: hash_bigkey.c,v 1.8 1998/08/18 23:50:08 thorpej Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -128,7 +128,7 @@ __big_insert(hashp, bufp, key, val)
 		if (!bufp)
 			return (-1);
 		n = p[0];
-		if (!key_size)
+		if (!key_size) {
 			if (FREESPACE(p)) {
 				move_bytes = MIN(FREESPACE(p), val_size);
 				off = OFFSET(p) - move_bytes;
@@ -141,6 +141,7 @@ __big_insert(hashp, bufp, key, val)
 				OFFSET(p) = off;
 			} else
 				p[n - 2] = FULL_KEY;
+		}
 		p = (u_int16_t *)bufp->page;
 		cp = bufp->page;
 		bufp->flags |= BUF_MOD;
