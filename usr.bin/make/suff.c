@@ -1,6 +1,6 @@
 /*
- * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
- * Copyright (c) 1988, 1989 by Adam de Boor
+ * Copyright (c) 1988, 1989, 1990, 1993
+ *	The Regents of the University of California.  All rights reserved.
  * Copyright (c) 1989 by Berkeley Softworks
  * All rights reserved.
  *
@@ -37,7 +37,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)suff.c	5.6 (Berkeley) 6/1/90";
+static char sccsid[] = "@(#)suff.c	8.5 (Berkeley) 4/28/95";
 #endif /* not lint */
 
 /*-
@@ -47,6 +47,8 @@ static char sccsid[] = "@(#)suff.c	5.6 (Berkeley) 6/1/90";
  *
  * Interface:
  *	Suff_Init 	    	Initialize all things to do with suffixes.
+ *
+ *	Suff_End 	    	Cleanup the module
  *
  *	Suff_DoPaths	    	This function is used to make life easier
  *	    	  	    	when searching for a file according to its
@@ -91,9 +93,13 @@ static char sccsid[] = "@(#)suff.c	5.6 (Berkeley) 6/1/90";
 
 #include    	  <stdio.h>
 #include	  "make.h"
+#include	  "hash.h"
+#include	  "dir.h"
 #include    	  "bit.h"
 
 static Lst       sufflist;	/* Lst of suffixes */
+static Lst	 suffClean;	/* Lst of suffixes to be cleaned */
+static Lst	 srclist;	/* Lst of sources */
 static Lst       transforms;	/* Lst of transformation rules */
 
 static int        sNum = 0;	/* Counter for assigning suffix numbers */
@@ -111,8 +117,10 @@ typedef struct _Suff {
     Lst    	 searchPath;	/* The path along which files of this suffix
 				 * may be found */
     int          sNum;	      	/* The suffix number */
+    int		 refCount;	/* Reference count of list membership */
     Lst          parents;	/* Suffixes we have a transformation to */
     Lst          children;	/* Suffixes we have a transformation from */
+    Lst		 ref;		/* List of lists this suffix is referenced */
 } Suff;
 
 /*
@@ -126,11 +134,49 @@ typedef struct _Src {
     GNode           *node;	/* The node describing the file */
     int	    	    children;	/* Count of existing children (so we don't free
 				 * this thing too early or never nuke it) */
+#ifdef DEBUG_SRC
+    Lst		    cp;		/* Debug; children list */
+#endif
 } Src;
+
+/*
+ * A structure for passing more than one argument to the Lst-library-invoked
+ * function...
+ */
+typedef struct {
+    Lst            l;
+    Src            *s;
+} LstSrc;
 
 static Suff 	    *suffNull;	/* The NULL suffix for this run */
 static Suff 	    *emptySuff;	/* The empty suffix required for POSIX
 				 * single-suffix transformation rules */
+
+
+static char *SuffStrIsPrefix __P((char *, char *));
+static char *SuffSuffIsSuffix __P((Suff *, char *));
+static int SuffSuffIsSuffixP __P((ClientData, ClientData));
+static int SuffSuffHasNameP __P((ClientData, ClientData));
+static int SuffSuffIsPrefix __P((ClientData, ClientData));
+static int SuffGNHasNameP __P((ClientData, ClientData));
+static void SuffFree __P((ClientData));
+static void SuffInsert __P((Lst, Suff *));
+static void SuffRemove __P((Lst, Suff *));
+static Boolean SuffParseTransform __P((char *, Suff **, Suff **));
+static int SuffRebuildGraph __P((ClientData, ClientData));
+static int SuffAddSrc __P((ClientData, ClientData));
+static int SuffRemoveSrc __P((Lst));
+static void SuffAddLevel __P((Lst, Src *));
+static Src *SuffFindThem __P((Lst, Lst));
+static Src *SuffFindCmds __P((Src *, Lst));
+static int SuffExpandChildren __P((ClientData, ClientData));
+static Boolean SuffApplyTransform __P((GNode *, GNode *, Suff *, Suff *));
+static void SuffFindDeps __P((GNode *, Lst));
+static void SuffFindArchiveDeps __P((GNode *, Lst));
+static void SuffFindNormalDeps __P((GNode *, Lst));
+static int SuffPrintName __P((ClientData, ClientData));
+static int SuffPrintSuff __P((ClientData, ClientData));
+static int SuffPrintTrans __P((ClientData, ClientData));
 
 	/*************** Lst Predicates ****************/
 /*-
@@ -205,11 +251,12 @@ SuffSuffIsSuffix (s, str)
  *
  *-----------------------------------------------------------------------
  */
+static int
 SuffSuffIsSuffixP(s, str)
-    Suff    	*s;
-    char    	*str;
+    ClientData   s;
+    ClientData   str;
 {
-    return(!SuffSuffIsSuffix(s, str));
+    return(!SuffSuffIsSuffix((Suff *) s, (char *) str));
 }
 
 /*-
@@ -227,10 +274,10 @@ SuffSuffIsSuffixP(s, str)
  */
 static int
 SuffSuffHasNameP (s, sname)
-    Suff    *s;	    	    /* Suffix to check */
-    char    *sname; 	    /* Desired name */
+    ClientData    s;	    	    /* Suffix to check */
+    ClientData    sname; 	    /* Desired name */
 {
-    return (strcmp (sname, s->name));
+    return (strcmp ((char *) sname, ((Suff *) s)->name));
 }
 
 /*-
@@ -250,10 +297,10 @@ SuffSuffHasNameP (s, sname)
  */
 static int
 SuffSuffIsPrefix (s, str)
-    Suff           *s;		/* suffix to compare */
-    char           *str;	/* string to examine */
+    ClientData   s;		/* suffix to compare */
+    ClientData   str;	/* string to examine */
 {
-    return (SuffStrIsPrefix (s->name, str) == NULL ? 1 : 0);
+    return (SuffStrIsPrefix (((Suff *) s)->name, (char *) str) == NULL ? 1 : 0);
 }
 
 /*-
@@ -270,13 +317,28 @@ SuffSuffIsPrefix (s, str)
  */
 static int
 SuffGNHasNameP (gn, name)
-    GNode          *gn;		/* current node we're looking at */
-    char           *name;	/* name we're looking for */
+    ClientData      gn;		/* current node we're looking at */
+    ClientData      name;	/* name we're looking for */
 {
-    return (strcmp (name, gn->name));
+    return (strcmp ((char *) name, ((GNode *) gn)->name));
 }
 
  	    /*********** Maintenance Functions ************/
+
+static void
+SuffUnRef(lp, sp)
+    ClientData lp;
+    ClientData sp;
+{
+    Lst l = (Lst) lp;
+
+    LstNode ln = Lst_Member(l, sp);
+    if (ln != NILLNODE) {
+	Lst_Remove(l, ln);
+	((Suff *) sp)->refCount--;
+    }
+}
+
 /*-
  *-----------------------------------------------------------------------
  * SuffFree  --
@@ -290,16 +352,49 @@ SuffGNHasNameP (gn, name)
  *-----------------------------------------------------------------------
  */
 static void
-SuffFree (s)
-    Suff           *s;
+SuffFree (sp)
+    ClientData sp;
 {
+    Suff           *s = (Suff *) sp;
+
+    if (s == suffNull)
+	suffNull = NULL;
+
+    if (s == emptySuff)
+	emptySuff = NULL;
+
+    Lst_Destroy (s->ref, NOFREE);
     Lst_Destroy (s->children, NOFREE);
     Lst_Destroy (s->parents, NOFREE);
     Lst_Destroy (s->searchPath, Dir_Destroy);
+
     free ((Address)s->name);
     free ((Address)s);
 }
 
+/*-
+ *-----------------------------------------------------------------------
+ * SuffRemove  --
+ *	Remove the suffix into the list
+ *
+ * Results:
+ *	None
+ *
+ * Side Effects:
+ *	The reference count for the suffix is decremented and the
+ *	suffix is possibly freed
+ *-----------------------------------------------------------------------
+ */
+static void
+SuffRemove(l, s)
+    Lst l;
+    Suff *s;
+{
+    SuffUnRef((ClientData) l, (ClientData) s);
+    if (s->refCount == 0)
+	SuffFree((ClientData) s);
+}
+
 /*-
  *-----------------------------------------------------------------------
  * SuffInsert  --
@@ -310,7 +405,7 @@ SuffFree (s)
  *	None
  *
  * Side Effects:
- *	Not really
+ *	The reference count of the suffix is incremented
  *-----------------------------------------------------------------------
  */
 static void
@@ -319,7 +414,7 @@ SuffInsert (l, s)
     Suff          *s;		/* the suffix to insert */
 {
     LstNode 	  ln;		/* current element in l we're examining */
-    Suff          *s2;		/* the suffix descriptor in this element */
+    Suff          *s2 = NULL;	/* the suffix descriptor in this element */
 
     if (Lst_Open (l) == FAILURE) {
 	return;
@@ -340,11 +435,15 @@ SuffInsert (l, s)
 	    printf("at end of list\n");
 	}
 	(void)Lst_AtEnd (l, (ClientData)s);
+	s->refCount++;
+	(void)Lst_AtEnd(s->ref, (ClientData) l);
     } else if (s2->sNum != s->sNum) {
 	if (DEBUG(SUFF)) {
 	    printf("before %s(%d)\n", s2->name, s2->sNum);
 	}
 	(void)Lst_Insert (l, ln, (ClientData)s);
+	s->refCount++;
+	(void)Lst_AtEnd(s->ref, (ClientData) l);
     } else if (DEBUG(SUFF)) {
 	printf("already there\n");
     }
@@ -370,8 +469,7 @@ SuffInsert (l, s)
 void
 Suff_ClearSuffixes ()
 {
-    Lst_Destroy (sufflist, SuffFree);
-
+    Lst_Concat (suffClean, sufflist, LST_CONCLINK);
     sufflist = Lst_Init(FALSE);
     sNum = 0;
     suffNull = emptySuff;
@@ -402,7 +500,7 @@ SuffParseTransform(str, srcPtr, targPtr)
     register char    	*str2;	    /* Extra pointer (maybe target suffix) */
     LstNode 	    	singleLn;   /* element in suffix list of any suffix
 				     * that exactly matches str */
-    Suff    	    	*single;    /* Source of possible transformation to
+    Suff    	    	*single = NULL;/* Source of possible transformation to
 				     * null suffix */
 
     srcLn = NILLNODE;
@@ -414,7 +512,7 @@ SuffParseTransform(str, srcPtr, targPtr)
      * we can find two that meet these criteria, we've successfully
      * parsed the string.
      */
-    while (1) {
+    for (;;) {
 	if (srcLn == NILLNODE) {
 	    srcLn = Lst_Find(sufflist, (ClientData)str, SuffSuffIsPrefix);
 	} else {
@@ -560,14 +658,16 @@ Suff_AddTransform (line)
  *-----------------------------------------------------------------------
  */
 int
-Suff_EndTransform(gn)
-    GNode   *gn;    	/* Node for transformation */
+Suff_EndTransform(gnp, dummy)
+    ClientData   gnp;    	/* Node for transformation */
+    ClientData   dummy;    	/* Node for transformation */
 {
+    GNode *gn = (GNode *) gnp;
+ 
     if ((gn->type & OP_TRANSFORM) && Lst_IsEmpty(gn->commands) &&
 	Lst_IsEmpty(gn->children))
     {
 	Suff	*s, *t;
-	LstNode	ln;
 
 	(void)SuffParseTransform(gn->name, &s, &t);
 
@@ -584,23 +684,17 @@ Suff_EndTransform(gn)
 	 * We'll be called twice when the next target is seen, but .c and .o
 	 * are only linked once...
 	 */
-	ln = Lst_Member(t->children, (ClientData)s);
-	if (ln != NILLNODE) {
-	    (void)Lst_Remove(t->children, ln);
-	}
+	SuffRemove(t->children, s);
 
 	/*
 	 * Remove the target from the source's parents list
 	 */
-	ln = Lst_Member(s->parents, (ClientData)t);
-	if (ln != NILLNODE) {
-	    (void)Lst_Remove(s->parents, ln);
-	}
+	SuffRemove(s->parents, t);
     } else if ((gn->type & OP_TRANSFORM) && DEBUG(SUFF)) {
 	printf("transformation %s complete\n", gn->name);
     }
 
-    return(0);
+    return(dummy ? 0 : 0);
 }
 
 /*-
@@ -623,13 +717,15 @@ Suff_EndTransform(gn)
  *-----------------------------------------------------------------------
  */
 static int
-SuffRebuildGraph(transform, s)
-    GNode   	  	*transform; /* Transformation to test */
-    Suff    	  	*s;	    /* Suffix to rebuild */
+SuffRebuildGraph(transformp, sp)
+    ClientData  transformp; /* Transformation to test */
+    ClientData  sp;	    /* Suffix to rebuild */
 {
-    register char 	*cp;
-    register LstNode	ln;
-    register Suff  	*s2;
+    GNode   	*transform = (GNode *) transformp;
+    Suff    	*s = (Suff *) sp;
+    char 	*cp;
+    LstNode	ln;
+    Suff  	*s2;
 
     /*
      * First see if it is a transformation from this suffix.
@@ -705,8 +801,10 @@ Suff_AddSuffix (str)
 	s->searchPath = Lst_Init (FALSE);
 	s->children = 	Lst_Init (FALSE);
 	s->parents = 	Lst_Init (FALSE);
+	s->ref = 	Lst_Init (FALSE);
 	s->sNum =   	sNum++;
 	s->flags =  	0;
+	s->refCount =	0;
 
 	(void)Lst_AtEnd (sufflist, (ClientData)s);
 	/*
@@ -769,6 +867,7 @@ Suff_DoPaths()
 {
     register Suff   	*s;
     register LstNode  	ln;
+    char		*ptr;
     Lst	    	    	inIncludes; /* Cumulative .INCLUDES path */
     Lst	    	    	inLibs;	    /* Cumulative .LIBS path */
 
@@ -799,8 +898,10 @@ Suff_DoPaths()
 	}
     }
 
-    Var_Set(".INCLUDES", Dir_MakeFlags("-I", inIncludes), VAR_GLOBAL);
-    Var_Set(".LIBS", Dir_MakeFlags("-L", inLibs), VAR_GLOBAL);
+    Var_Set(".INCLUDES", ptr = Dir_MakeFlags("-I", inIncludes), VAR_GLOBAL);
+    free(ptr);
+    Var_Set(".LIBS", ptr = Dir_MakeFlags("-L", inLibs), VAR_GLOBAL);
+    free(ptr);
 
     Lst_Destroy(inIncludes, Dir_Destroy);
     Lst_Destroy(inLibs, Dir_Destroy);
@@ -868,14 +969,6 @@ Suff_AddLib (sname)
 }
 
  	  /********** Implicit Source Search Functions *********/
-/*
- * A structure for passing more than one argument to the Lst-library-invoked
- * function...
- */
-typedef struct {
-    Lst            l;
-    Src            *s;
-} LstSrc;
 
 /*-
  *-----------------------------------------------------------------------
@@ -892,10 +985,12 @@ typedef struct {
  *-----------------------------------------------------------------------
  */
 static int
-SuffAddSrc (s, ls)
-    Suff	*s;	    /* suffix for which to create a Src structure */
-    LstSrc      *ls;	    /* list and parent for the new Src */
+SuffAddSrc (sp, lsp)
+    ClientData	sp;	    /* suffix for which to create a Src structure */
+    ClientData  lsp;	    /* list and parent for the new Src */
 {
+    Suff	*s = (Suff *) sp;
+    LstSrc      *ls = (LstSrc *) lsp;
     Src         *s2;	    /* new Src structure */
     Src    	*targ; 	    /* Target structure */
 
@@ -913,9 +1008,17 @@ SuffAddSrc (s, ls)
 	s2->parent = 	targ;
 	s2->node =  	NILGNODE;
 	s2->suff =  	s;
+	s->refCount++;
 	s2->children =	0;
 	targ->children += 1;
 	(void)Lst_AtEnd (ls->l, (ClientData)s2);
+#ifdef DEBUG_SRC
+	s2->cp = Lst_Init(FALSE);
+	Lst_AtEnd(targ->cp, (ClientData) s2);
+	printf("1 add %x %x to %x:", targ, s2, ls->l);
+	Lst_ForEach(ls->l, PrintAddr, (ClientData) 0);
+	printf("\n");
+#endif
     }
     s2 = (Src *) emalloc (sizeof (Src));
     s2->file = 	    str_concat (targ->pref, s->name, 0);
@@ -923,9 +1026,17 @@ SuffAddSrc (s, ls)
     s2->parent =    targ;
     s2->node = 	    NILGNODE;
     s2->suff = 	    s;
+    s->refCount++;
     s2->children =  0;
     targ->children += 1;
     (void)Lst_AtEnd (ls->l, (ClientData)s2);
+#ifdef DEBUG_SRC
+    s2->cp = Lst_Init(FALSE);
+    Lst_AtEnd(targ->cp, (ClientData) s2);
+    printf("2 add %x %x to %x:", targ, s2, ls->l);
+    Lst_ForEach(ls->l, PrintAddr, (ClientData) 0);
+    printf("\n");
+#endif
 
     return(0);
 }
@@ -957,31 +1068,70 @@ SuffAddLevel (l, targ)
 
 /*-
  *----------------------------------------------------------------------
- * SuffFreeSrc --
- *	Free all memory associated with a Src structure
+ * SuffRemoveSrc --
+ *	Free all src structures in list that don't have a reference count
  *
  * Results:
- *	None
+ *	Ture if an src was removed
  *
  * Side Effects:
  *	The memory is free'd.
  *----------------------------------------------------------------------
  */
-static void
-SuffFreeSrc (s)
-    Src            *s;
+static int
+SuffRemoveSrc (l)
+    Lst l;
 {
-    free ((Address)s->file);
-    if (!s->parent) {
-	free((Address)s->pref);
-    } else if (--s->parent->children == 0 && s->parent->parent) {
-	/*
-	 * Parent has no more children, now we're gone, and it's not
-	 * at the top of the tree, so blow it away too.
-	 */
-	SuffFreeSrc(s->parent);
+    LstNode ln;
+    Src *s;
+    int t = 0;
+
+    if (Lst_Open (l) == FAILURE) {
+	return 0;
     }
-    free ((Address)s);
+#ifdef DEBUG_SRC
+    printf("cleaning %lx: ", (unsigned long) l);
+    Lst_ForEach(l, PrintAddr, (ClientData) 0);
+    printf("\n");
+#endif
+
+
+    while ((ln = Lst_Next (l)) != NILLNODE) {
+	s = (Src *) Lst_Datum (ln);
+	if (s->children == 0) {
+	    free ((Address)s->file);
+	    if (!s->parent)
+		free((Address)s->pref);
+	    else {
+#ifdef DEBUG_SRC
+		LstNode ln = Lst_Member(s->parent->cp, (ClientData)s);
+		if (ln != NILLNODE)
+		    Lst_Remove(s->parent->cp, ln);
+#endif
+		--s->parent->children;
+	    }
+#ifdef DEBUG_SRC
+	    printf("free: [l=%x] p=%x %d\n", l, s, s->children);
+	    Lst_Destroy(s->cp, NOFREE);
+#endif
+	    Lst_Remove(l, ln);
+	    free ((Address)s);
+	    t |= 1;
+	    Lst_Close(l);
+	    return TRUE;
+	}
+#ifdef DEBUG_SRC
+	else {
+	    printf("keep: [l=%x] p=%x %d: ", l, s, s->children);
+	    Lst_ForEach(s->cp, PrintAddr, (ClientData) 0);
+	    printf("\n");
+	}
+#endif
+    }
+
+    Lst_Close(l);
+
+    return t;
 }
 
 /*-
@@ -997,11 +1147,13 @@ SuffFreeSrc (s)
  *-----------------------------------------------------------------------
  */
 static Src *
-SuffFindThem (srcs)
+SuffFindThem (srcs, slst)
     Lst            srcs;	/* list of Src structures to search through */
+    Lst		   slst;
 {
     Src            *s;		/* current Src */
     Src		   *rs;		/* returned Src */
+    char	   *ptr;
 
     rs = (Src *) NULL;
 
@@ -1011,24 +1163,38 @@ SuffFindThem (srcs)
 	if (DEBUG(SUFF)) {
 	    printf ("\ttrying %s...", s->file);
 	}
+
 	/*
 	 * A file is considered to exist if either a node exists in the
 	 * graph for it or the file actually exists.
 	 */
-	if ((Targ_FindNode(s->file, TARG_NOCREATE) != NILGNODE) ||
-	    (Dir_FindFile (s->file, s->suff->searchPath) != (char *) NULL))
-	{
-	    if (DEBUG(SUFF)) {
-		printf ("got it\n");
-	    }
+	if (Targ_FindNode(s->file, TARG_NOCREATE) != NILGNODE) {
+#ifdef DEBUG_SRC
+	    printf("remove %x from %x\n", s, srcs);
+#endif
 	    rs = s;
 	    break;
-	} else {
-	    if (DEBUG(SUFF)) {
-		printf ("not there\n");
-	    }
-	    SuffAddLevel (srcs, s);
 	}
+
+	if ((ptr = Dir_FindFile (s->file, s->suff->searchPath)) != NULL) {
+	    rs = s;
+#ifdef DEBUG_SRC
+	    printf("remove %x from %x\n", s, srcs);
+#endif
+	    free(ptr);
+	    break;
+	}
+
+	if (DEBUG(SUFF)) {
+	    printf ("not there\n");
+	}
+
+	SuffAddLevel (srcs, s);
+	Lst_AtEnd(slst, (ClientData) s);
+    }
+
+    if (DEBUG(SUFF) && rs) {
+	printf ("got it\n");
     }
     return (rs);
 }
@@ -1049,8 +1215,9 @@ SuffFindThem (srcs)
  *-----------------------------------------------------------------------
  */
 static Src *
-SuffFindCmds (targ)
-    Src	    	  	*targ;	/* Src structure to play with */
+SuffFindCmds (targ, slst)
+    Src	    	*targ;	/* Src structure to play with */
+    Lst		slst;
 {
     LstNode 	  	ln; 	/* General-purpose list node */
     register GNode	*t, 	/* Target GNode */
@@ -1067,7 +1234,7 @@ SuffFindCmds (targ)
     while ((ln = Lst_Next (t->children)) != NILLNODE) {
 	s = (GNode *)Lst_Datum (ln);
 
-	cp = rindex (s->name, '/');
+	cp = strrchr (s->name, '/');
 	if (cp == (char *)NULL) {
 	    cp = s->name;
 	} else {
@@ -1098,14 +1265,21 @@ SuffFindCmds (targ)
 		     * source node's name so Suff_FindDeps can free it
 		     * again (ick)), and return the new structure.
 		     */
-		    ret = (Src *)emalloc (sizeof(Src));
+		    ret = (Src *)emalloc (sizeof (Src));
 		    ret->file = strdup(s->name);
 		    ret->pref = targ->pref;
 		    ret->suff = suff;
+		    suff->refCount++;
 		    ret->parent = targ;
 		    ret->node = s;
 		    ret->children = 0;
 		    targ->children += 1;
+#ifdef DEBUG_SRC
+		    ret->cp = Lst_Init(FALSE);
+		    printf("3 add %x %x\n", targ, ret);
+		    Lst_AtEnd(targ->cp, (ClientData) ret);
+#endif
+		    Lst_AtEnd(slst, (ClientData) ret);
 		    if (DEBUG(SUFF)) {
 			printf ("\tusing existing source %s\n", s->name);
 		    }
@@ -1135,10 +1309,12 @@ SuffFindCmds (targ)
  *-----------------------------------------------------------------------
  */
 static int
-SuffExpandChildren(cgn, pgn)
-    GNode   	*cgn;	    /* Child to examine */
-    GNode   	*pgn;	    /* Parent node being processed */
+SuffExpandChildren(cgnp, pgnp)
+    ClientData  cgnp;	    /* Child to examine */
+    ClientData  pgnp;	    /* Parent node being processed */
 {
+    GNode   	*cgn = (GNode *) cgnp;
+    GNode   	*pgn = (GNode *) pgnp;
     GNode	*gn;	    /* New source 8) */
     LstNode   	prevLN;    /* Node after which new source should be put */
     LstNode	ln; 	    /* List element for old source */
@@ -1156,11 +1332,11 @@ SuffExpandChildren(cgn, pgn)
      * to later since the resulting words are tacked on to the end of
      * the children list.
      */
-    if (index(cgn->name, '$') != (char *)NULL) {
+    if (strchr(cgn->name, '$') != (char *)NULL) {
 	if (DEBUG(SUFF)) {
 	    printf("Expanding \"%s\"...", cgn->name);
 	}
-	cp = Var_Subst(cgn->name, pgn, TRUE);
+	cp = Var_Subst(NULL, cgn->name, pgn, TRUE);
 
 	if (cp != (char *)NULL) {
 	    Lst	    members = Lst_Init(FALSE);
@@ -1185,9 +1361,8 @@ SuffExpandChildren(cgn, pgn)
 		char	    *start;
 		char	    *initcp = cp;   /* For freeing... */
 
-		for (start = cp; *start == ' ' || *start == '\t'; start++) {
-		    ;
-		}
+		for (start = cp; *start == ' ' || *start == '\t'; start++) 
+		    continue;
 		for (cp = start; *cp != '\0'; cp++) {
 		    if (*cp == ' ' || *cp == '\t') {
 			/*
@@ -1482,8 +1657,9 @@ SuffApplyTransform(tGn, sGn, t, s)
  *-----------------------------------------------------------------------
  */
 static void
-SuffFindArchiveDeps(gn)
+SuffFindArchiveDeps(gn, slst)
     GNode   	*gn;	    /* Node for which to locate dependencies */
+    Lst		slst;
 {
     char    	*eoarch;    /* End of archive portion */
     char    	*eoname;    /* End of member portion */
@@ -1492,9 +1668,7 @@ SuffFindArchiveDeps(gn)
 	TARGET,	    	    /* Must be first */
 	PREFIX,	    	    /* Must be second */
     };
-    char  	*vals[sizeof(copy)/sizeof(copy[0])];
     int	    	i;  	    /* Index into copy and vals */
-    char    	*cp;	    /* Suffix for member */
     Suff    	*ms;	    /* Suffix descriptor for member */
     char    	*name;	    /* Start of member's name */
     
@@ -1502,8 +1676,8 @@ SuffFindArchiveDeps(gn)
      * The node is an archive(member) pair. so we must find a
      * suffix for both of them.
      */
-    eoarch = index (gn->name, '(');
-    eoname = index (eoarch, ')');
+    eoarch = strchr (gn->name, '(');
+    eoname = strchr (eoarch, ')');
 
     *eoname = '\0';	  /* Nuke parentheses during suffix search */
     *eoarch = '\0';	  /* So a suffix can be found */
@@ -1518,7 +1692,7 @@ SuffFindArchiveDeps(gn)
      * suffix list, backtracking for each one...
      */
     mem = Targ_FindNode(name, TARG_CREATE);
-    Suff_FindDeps(mem);
+    SuffFindDeps(mem, slst);
 
     /*
      * Create the link between the two nodes right off
@@ -1533,8 +1707,11 @@ SuffFindArchiveDeps(gn)
      * Copy in the variables from the member node to this one.
      */
     for (i = (sizeof(copy)/sizeof(copy[0]))-1; i >= 0; i--) {
-	vals[i] = Var_Value(copy[i], mem);
-	Var_Set(copy[i], vals[i], gn);
+	char *p1;
+	Var_Set(copy[i], Var_Value(copy[i], mem, &p1), gn);
+	if (p1)
+	    free(p1);
+
     }
 
     ms = mem->suffix;
@@ -1618,12 +1795,12 @@ SuffFindArchiveDeps(gn)
  *-----------------------------------------------------------------------
  */
 static void
-SuffFindNormalDeps(gn)
+SuffFindNormalDeps(gn, slst)
     GNode   	*gn;	    /* Node for which to find sources */
+    Lst		slst;
 {
     char    	*eoname;    /* End of name */
     char    	*sopref;    /* Start of prefix */
-    Suff    	*s; 	    /* Current suffix */
     LstNode 	ln; 	    /* Next suffix node to check */
     Lst	    	srcs;	    /* List of sources at which to look */
     Lst	    	targs;	    /* List of targets to which things can be
@@ -1677,11 +1854,16 @@ SuffFindNormalDeps(gn)
 	    /*
 	     * Allocate a Src structure to which things can be transformed
 	     */
-	    targ = (Src *)emalloc(sizeof(Src));
+	    targ = (Src *)emalloc(sizeof (Src));
 	    targ->file = strdup(gn->name);
 	    targ->suff = (Suff *)Lst_Datum(ln);
+	    targ->suff->refCount++;
 	    targ->node = gn;
 	    targ->parent = (Src *)NULL;
+	    targ->children = 0;
+#ifdef DEBUG_SRC
+	    targ->cp = Lst_Init(FALSE);
+#endif
 	    
 	    /*
 	     * Allocate room for the prefix, whose end is found by subtracting
@@ -1689,7 +1871,7 @@ SuffFindNormalDeps(gn)
 	     */
 	    prefLen = (eoname - targ->suff->nameLen) - sopref;
 	    targ->pref = emalloc(prefLen + 1);
-	    bcopy(sopref, targ->pref, prefLen);
+	    memcpy(targ->pref, sopref, prefLen);
 	    targ->pref[prefLen] = '\0';
 
 	    /*
@@ -1714,17 +1896,35 @@ SuffFindNormalDeps(gn)
      */
     if (Lst_IsEmpty(targs) && suffNull != NULL) {
 	if (DEBUG(SUFF)) {
-	    printf("\tNo known suffix on %s. Using .NULL suffix\n", gn->name);
+	    printf("\tNo known suffix on %s. Using .NULL suffix: ", gn->name);
 	}
 	
-	targ = (Src *)emalloc(sizeof(Src));
+	targ = (Src *)emalloc(sizeof (Src));
 	targ->file = strdup(gn->name);
 	targ->suff = suffNull;
+	targ->suff->refCount++;
 	targ->node = gn;
 	targ->parent = (Src *)NULL;
+	targ->children = 0;
 	targ->pref = strdup(sopref);
+#ifdef DEBUG_SRC
+	targ->cp = Lst_Init(FALSE);
+#endif
 
-	SuffAddLevel(srcs, targ);
+	/*
+	 * Only use the default suffix rules if we don't have commands
+	 * or dependencies defined for this gnode
+	 */
+	if (Lst_IsEmpty(gn->commands) && Lst_IsEmpty(gn->children))
+	    SuffAddLevel(srcs, targ);
+	else {
+	    if (DEBUG(SUFF)) 
+		printf("not ");
+	}
+
+	if (DEBUG(SUFF)) 
+	    printf("adding suffix rules\n");
+
 	(void)Lst_AtEnd(targs, (ClientData)targ);
     }
     
@@ -1732,7 +1932,7 @@ SuffFindNormalDeps(gn)
      * Using the list of possible sources built up from the target suffix(es),
      * try and find an existing file/target that matches.
      */
-    bottom = SuffFindThem(srcs);
+    bottom = SuffFindThem(srcs, slst);
 
     if (bottom == (Src *)NULL) {
 	/*
@@ -1749,9 +1949,8 @@ SuffFindNormalDeps(gn)
 	 * Work up the transformation path to find the suffix of the
 	 * target to which the transformation was made.
 	 */
-	for (targ = bottom; targ->parent != NULL; targ = targ->parent) {
-	    ;
-	}
+	for (targ = bottom; targ->parent != NULL; targ = targ->parent)
+	    continue;
     }
 
     /*
@@ -1799,7 +1998,10 @@ sfnd_abort:
 		    int		len = strlen(gn->path);
 		    char	savec;
 
+		    if (gn->suffix)
+			gn->suffix->refCount--;
 		    gn->suffix = targ->suff;
+		    gn->suffix->refCount++;
 
 		    savec = gn->path[len-targ->suff->nameLen];
 		    gn->path[len-targ->suff->nameLen] = '\0';
@@ -1812,6 +2014,8 @@ sfnd_abort:
 		     * The .PREFIX gets the full path if the target has
 		     * no known suffix.
 		     */
+		    if (gn->suffix)
+			gn->suffix->refCount--;
 		    gn->suffix = NULL;
 
 		    Var_Set(PREFIX, gn->path, gn);
@@ -1823,8 +2027,14 @@ sfnd_abort:
 	     * path to be the name so Dir_MTime won't go grovelling for
 	     * it.
 	     */
+	    if (gn->suffix)
+		gn->suffix->refCount--;
 	    gn->suffix = (targ == NULL) ? NULL : targ->suff;
-	    gn->path = gn->name;
+	    if (gn->suffix)
+		gn->suffix->refCount++;
+	    if (gn->path != NULL)
+		free(gn->path);
+	    gn->path = strdup(gn->name);
 	}
 	
 	goto sfnd_return;
@@ -1842,7 +2052,7 @@ sfnd_abort:
      * Check for overriding transformation rule implied by sources
      */
     if (!Lst_IsEmpty(gn->children)) {
-	src = SuffFindCmds(targ);
+	src = SuffFindCmds(targ, slst);
 
 	if (src != (Src *)NULL) {
 	    /*
@@ -1850,10 +2060,10 @@ sfnd_abort:
 	     * up to, but not including, the parent node.
 	     */
 	    while (bottom && bottom->parent != NULL) {
-		Src *p = bottom->parent;
-
-		SuffFreeSrc(bottom);
-		bottom = p;
+		if (Lst_Member(slst, (ClientData) bottom) == NILLNODE) {
+		    Lst_AtEnd(slst, (ClientData) bottom);
+		}
+		bottom = bottom->parent;
 	    }
 	    bottom = src;
 	}
@@ -1885,7 +2095,10 @@ sfnd_abort:
     for (src = bottom; src->parent != (Src *)NULL; src = src->parent) {
 	targ = src->parent;
 
+	if (src->node->suffix)
+	    src->node->suffix->refCount--;
 	src->node->suffix = src->suff;
+	src->node->suffix->refCount++;
 
 	if (targ->node == NILGNODE) {
 	    targ->node = Targ_FindNode(targ->file, TARG_CREATE);
@@ -1912,28 +2125,35 @@ sfnd_abort:
 	}
     }
 
+    if (gn->suffix)
+	gn->suffix->refCount--;
     gn->suffix = src->suff;
+    gn->suffix->refCount++;
 
     /*
      * So Dir_MTime doesn't go questing for it...
      */
-    gn->path = gn->name;
+    if (gn->path)
+	free(gn->path);
+    gn->path = strdup(gn->name);
 
     /*
      * Nuke the transformation path and the Src structures left over in the
      * two lists.
      */
-    SuffFreeSrc(bottom);
-
 sfnd_return:
-    Lst_Destroy(srcs, SuffFreeSrc);
-    Lst_Destroy(targs, SuffFreeSrc);
+    if (bottom)
+	if (Lst_Member(slst, (ClientData) bottom) == NILLNODE)
+	    Lst_AtEnd(slst, (ClientData) bottom);
 
+    while (SuffRemoveSrc(srcs) || SuffRemoveSrc(targs))
+	continue;
+
+    Lst_Concat(slst, srcs, LST_CONCLINK);
+    Lst_Concat(slst, targs, LST_CONCLINK);
 }
 	
     
-
-
 /*-
  *-----------------------------------------------------------------------
  * Suff_FindDeps  --
@@ -1961,9 +2181,22 @@ sfnd_return:
  *
  *-----------------------------------------------------------------------
  */
+
 void
-Suff_FindDeps (gn)
+Suff_FindDeps(gn)
+    GNode *gn;
+{
+   
+    SuffFindDeps(gn, srclist);
+    while (SuffRemoveSrc(srclist))
+	continue;
+}
+
+
+static void
+SuffFindDeps (gn, slst)
     GNode         *gn;	      	/* node we're dealing with */
+    Lst		  slst;
 {
     if (gn->type & OP_DEPS_FOUND) {
 	/*
@@ -1975,11 +2208,11 @@ Suff_FindDeps (gn)
     }
     
     if (DEBUG(SUFF)) {
-	printf ("Suff_FindDeps (%s)\n", gn->name);
+	printf ("SuffFindDeps (%s)\n", gn->name);
     }
     
     if (gn->type & OP_ARCHV) {
-	SuffFindArchiveDeps(gn);
+	SuffFindArchiveDeps(gn, slst);
     } else if (gn->type & OP_LIB) {
 	/*
 	 * If the node is a library, it is the arch module's job to find it
@@ -1993,8 +2226,11 @@ Suff_FindDeps (gn)
 	Suff	*s;
 	
 	ln = Lst_Find (sufflist, (ClientData)LIBSUFF, SuffSuffHasNameP);
+	if (gn->suffix)
+	    gn->suffix->refCount--;
 	if (ln != NILLNODE) {
 	    gn->suffix = s = (Suff *) Lst_Datum (ln);
+	    gn->suffix->refCount++;
 	    Arch_FindLib (gn, s->searchPath);
 	} else {
 	    gn->suffix = NULL;
@@ -2007,7 +2243,7 @@ Suff_FindDeps (gn)
 	 */
 	Var_Set(PREFIX, "", gn);
     } else {
-	SuffFindNormalDeps(gn);
+	SuffFindNormalDeps(gn, slst);
     }
 }
 
@@ -2068,6 +2304,8 @@ void
 Suff_Init ()
 {
     sufflist = Lst_Init (FALSE);
+    suffClean = Lst_Init(FALSE);
+    srclist = Lst_Init (FALSE);
     transforms = Lst_Init (FALSE);
 
     sNum = 0;
@@ -2081,25 +2319,62 @@ Suff_Init ()
     suffNull->name =   	    strdup ("");
     suffNull->nameLen =     0;
     suffNull->searchPath =  Lst_Init (FALSE);
+    Dir_Concat(suffNull->searchPath, dirSearchPath);
     suffNull->children =    Lst_Init (FALSE);
     suffNull->parents =	    Lst_Init (FALSE);
+    suffNull->ref =	    Lst_Init (FALSE);
     suffNull->sNum =   	    sNum++;
     suffNull->flags =  	    SUFF_NULL;
+    suffNull->refCount =    1;
 
 }
 
+
+/*-
+ *----------------------------------------------------------------------
+ * Suff_End --
+ *	Cleanup the this module
+ *
+ * Results:
+ *	None
+ *
+ * Side Effects:
+ *	The memory is free'd.
+ *----------------------------------------------------------------------
+ */
+
+void
+Suff_End()
+{
+    Lst_Destroy(sufflist, SuffFree);
+    Lst_Destroy(suffClean, SuffFree);
+    if (suffNull)
+	SuffFree(suffNull);
+    Lst_Destroy(srclist, NOFREE);
+    Lst_Destroy(transforms, NOFREE);
+}
+
+
 /********************* DEBUGGING FUNCTIONS **********************/
 
-static int SuffPrintName(s) Suff *s; {printf ("%s ", s->name); return (0);}
+static int SuffPrintName(s, dummy)
+    ClientData s;
+    ClientData dummy;
+{
+    printf ("%s ", ((Suff *) s)->name);
+    return (dummy ? 0 : 0);
+}
 
 static int
-SuffPrintSuff (s)
-    Suff    *s;
+SuffPrintSuff (sp, dummy)
+    ClientData sp;
+    ClientData dummy;
 {
+    Suff    *s = (Suff *) sp;
     int	    flags;
     int	    flag;
 
-    printf ("# `%s'", s->name);
+    printf ("# `%s' [%d] ", s->name, s->refCount);
     
     flags = s->flags;
     if (flags) {
@@ -2118,36 +2393,38 @@ SuffPrintSuff (s)
 		    printf ("LIBRARY");
 		    break;
 	    }
-	    putc(flags ? '|' : ')', stdout);
+	    fputc(flags ? '|' : ')', stdout);
 	}
     }
-    putc ('\n', stdout);
+    fputc ('\n', stdout);
     printf ("#\tTo: ");
     Lst_ForEach (s->parents, SuffPrintName, (ClientData)0);
-    putc ('\n', stdout);
+    fputc ('\n', stdout);
     printf ("#\tFrom: ");
     Lst_ForEach (s->children, SuffPrintName, (ClientData)0);
-    putc ('\n', stdout);
+    fputc ('\n', stdout);
     printf ("#\tSearch Path: ");
     Dir_PrintPath (s->searchPath);
-    putc ('\n', stdout);
-    return (0);
+    fputc ('\n', stdout);
+    return (dummy ? 0 : 0);
 }
 
 static int
-SuffPrintTrans (t)
-    GNode   *t;
+SuffPrintTrans (tp, dummy)
+    ClientData tp;
+    ClientData dummy;
 {
-    extern int Targ_PrintCmd();
+    GNode   *t = (GNode *) tp;
 
     printf ("%-16s: ", t->name);
     Targ_PrintType (t->type);
-    putc ('\n', stdout);
+    fputc ('\n', stdout);
     Lst_ForEach (t->commands, Targ_PrintCmd, (ClientData)0);
-    putc ('\n', stdout);
-    return(0);
+    fputc ('\n', stdout);
+    return(dummy ? 0 : 0);
 }
 
+void
 Suff_PrintAll()
 {
     printf ("#*** Suffixes:\n");
@@ -2156,4 +2433,3 @@ Suff_PrintAll()
     printf ("#*** Transformations:\n");
     Lst_ForEach (transforms, SuffPrintTrans, (ClientData)0);
 }
-

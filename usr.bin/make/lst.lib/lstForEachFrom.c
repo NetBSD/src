@@ -1,6 +1,6 @@
 /*
- * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
- * All rights reserved.
+ * Copyright (c) 1988, 1989, 1990, 1993
+ *	The Regents of the University of California.  All rights reserved.
  *
  * This code is derived from software contributed to Berkeley by
  * Adam de Boor.
@@ -35,7 +35,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)lstForEachFrom.c	5.3 (Berkeley) 6/1/90";
+static char sccsid[] = "@(#)lstForEachFrom.c	8.2 (Berkeley) 4/28/95";
 #endif /* not lint */
 
 /*-
@@ -87,9 +87,9 @@ Lst_ForEachFrom (l, ln, proc, d)
 	
 	next = tln->nextPtr;
 	
-	tln->useCount++;
+	(void) tln->useCount++;
 	result = (*proc) (tln->datum, d);
-	tln->useCount--;
+	(void) tln->useCount--;
 
 	/*
 	 * We're done with the traversal if
@@ -109,4 +109,3 @@ Lst_ForEachFrom (l, ln, proc, d)
     } while (!result && !LstIsEmpty(list) && !done);
     
 }
-

@@ -1,8 +1,9 @@
-#	@(#)Makefile	5.2 (Berkeley) 12/28/90
+#	from: @(#)Makefile	5.2 (Berkeley) 12/28/90
+#	$Id: Makefile,v 1.1.1.2 1996/12/28 04:40:51 tls Exp $
 
 PROG=	make
-CFLAGS+=-I${.CURDIR}
-SRCS=	arch.c buf.c compat.c cond.c dir.c hash.c job.c main.c \
+CFLAGS+= -I${.CURDIR} -DPOSIX
+SRCS=	arch.c buf.c compat.c cond.c dir.c for.c hash.c job.c main.c \
 	make.c parse.c str.c suff.c targ.c var.c
 SRCS+=	lstAppend.c lstAtEnd.c lstAtFront.c lstClose.c lstConcat.c \
 	lstDatum.c lstDeQueue.c lstDestroy.c lstDupl.c lstEnQueue.c \
@@ -10,5 +11,9 @@ SRCS+=	lstAppend.c lstAtEnd.c lstAtFront.c lstClose.c lstConcat.c \
 	lstInit.c lstInsert.c lstIsAtEnd.c lstIsEmpty.c lstLast.c \
 	lstMember.c lstNext.c lstOpen.c lstRemove.c lstReplace.c lstSucc.c
 .PATH:	${.CURDIR}/lst.lib
+
+.if make(install)
+SUBDIR+= PSD.doc
+.endif
 
 .include <bsd.prog.mk>

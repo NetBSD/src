@@ -1,6 +1,6 @@
 /*
- * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
- * Copyright (c) 1988, 1989 by Adam de Boor
+ * Copyright (c) 1988, 1989, 1990, 1993
+ *	The Regents of the University of California.  All rights reserved.
  * Copyright (c) 1989 by Berkeley Softworks
  * All rights reserved.
  *
@@ -35,7 +35,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	@(#)sprite.h	5.3 (Berkeley) 6/1/90
+ *	@(#)sprite.h	8.2 (Berkeley) 4/28/95
  */
 
 /*
@@ -86,7 +86,7 @@ typedef int  ReturnStatus;
  * by user processes.
  */
 
-#define NIL 		0xFFFFFFFF
+#define NIL 		~0
 #define USER_NIL 	0
 #ifndef NULL
 #define NULL	 	0
@@ -103,12 +103,9 @@ typedef char *Address;
  * ClientData is an uninterpreted word.  It is defined as an int so that
  * kdbx will not interpret client data as a string.  Unlike an "Address",
  * client data will generally not be used in arithmetic.
+ * But we don't have kdbx anymore so we define it as void (christos)
  */
 
-typedef int *ClientData;
+typedef void *ClientData;
 
-#ifdef notdef
-#include "status.h"
-#endif
-
-#endif _SPRITE
+#endif /* _SPRITE */
