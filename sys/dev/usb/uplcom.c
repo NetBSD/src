@@ -1,4 +1,4 @@
-/*	$NetBSD: uplcom.c,v 1.40 2004/10/22 09:34:55 augustss Exp $	*/
+/*	$NetBSD: uplcom.c,v 1.41 2004/10/23 14:20:50 augustss Exp $	*/
 /*
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uplcom.c,v 1.40 2004/10/22 09:34:55 augustss Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uplcom.c,v 1.41 2004/10/23 14:20:50 augustss Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -183,6 +183,8 @@ static const struct usb_devno uplcom_devs[] = {
 	{ USB_VENDOR_HAL, USB_PRODUCT_HAL_IMR001 },
 	/* Sitecom USB to serial cable */
 	{ USB_VENDOR_SITECOM, USB_PRODUCT_SITECOM_CN104 },
+	/* Pharos USB GPS - Microsoft version */
+	{ USB_VENDOR_PROLIFIC, USB_PRODUCT_PROLIFIC_PL2303X },
 };
 #define uplcom_lookup(v, p) usb_lookup(uplcom_devs, v, p)
 
