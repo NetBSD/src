@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.42 2000/06/06 18:52:45 soren Exp $ */
+/*	$NetBSD: trap.c,v 1.43 2000/06/18 08:13:45 mrg Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -90,7 +90,7 @@
 #include <machine/svr4_machdep.h>
 #endif
 
-#include <sparc64/fpu/fpu_extern.h>
+#include <sparc/fpu/fpu_extern.h>
 #include <sparc64/sparc64/memreg.h>
 #include <sparc64/sparc64/cache.h>
 
