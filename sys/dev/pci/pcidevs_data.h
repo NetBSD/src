@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.29 1997/06/24 05:04:10 kml Exp 
+ *	NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp 
  */
 
 /*
@@ -884,16 +884,16 @@ struct pci_knowndev pci_knowndevs[] = {
 	    "82438 (Triton) IDE controller",
 	},
 	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82371MX,
+	    0,
+	    "Intel",
+	    "82371 (Triton MX) PCI-ISA Bridge and IDE Controller",
+	},
+	{
 	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82437MX,
 	    0,
 	    "Intel",
-	    "82437 (Triton MX) PCI-ISA Bridge",
-	},
-	{
-	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82471MX,
-	    0,
-	    "Intel",
-	    "82471 (Triton MX) IDE Controller",
+	    "82437 (Triton MX) PCI, Cache, and DRAM Controller",
 	},
 	{
 	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82440FX,
