@@ -1,4 +1,4 @@
-/* 	$NetBSD: compat_util.c,v 1.14 1999/04/27 15:42:37 christos Exp $	*/
+/* 	$NetBSD: compat_util.c,v 1.14.12.1 2000/08/30 03:59:18 sommerfeld Exp $	*/
 
 /*-
  * Copyright (c) 1994 The NetBSD Foundation, Inc.
@@ -187,9 +187,13 @@ good:
 	else {
 		sz = &ptr[len] - buf;
 		*pbuf = stackgap_alloc(sgp, sz + 1);
+		if (*pbuf == NULL) {
+			error = ENAMETOOLONG;
+			goto bad;
+		}
 		if ((error = copyout(buf, (void *)*pbuf, sz)) != 0) {
 			*pbuf = path;
-			return error;
+			goto bad;
 		}
 		free(buf, M_TEMP);
 	}
@@ -243,8 +247,15 @@ stackgap_alloc(sgp, sz)
 	size_t sz;
 {
 	void *p = (void *) *sgp;
-
-	*sgp += ALIGN(sz);
+	caddr_t nsgp;
+	struct emul *e = curproc->p_emul;	 /* XXX */
+	int sigsize = e->e_esigcode - e->e_sigcode;
+	
+	sz = ALIGN(sz);
+	nsgp = *sgp + sz;
+	if (nsgp > (((caddr_t)PS_STRINGS) - sigsize))
+		return NULL;
+	*sgp = nsgp;
 	return p;
 }
 
