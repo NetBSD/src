@@ -1,4 +1,4 @@
-/*	$NetBSD: scsipi_base.c,v 1.84 2003/02/03 23:51:00 thorpej Exp $	*/
+/*	$NetBSD: scsipi_base.c,v 1.85 2003/04/03 22:18:25 fvdl Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2000, 2002 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: scsipi_base.c,v 1.84 2003/02/03 23:51:00 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: scsipi_base.c,v 1.85 2003/04/03 22:18:25 fvdl Exp $");
 
 #include "opt_scsi.h"
 
@@ -1003,7 +1003,7 @@ scsipi_interpret_sense(xs)
  *
  *	Find out from the device what its capacity is.
  */
-u_long
+u_int64_t
 scsipi_size(periph, flags)
 	struct scsipi_periph *periph;
 	int flags;

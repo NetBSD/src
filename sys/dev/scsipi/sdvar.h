@@ -1,4 +1,4 @@
-/*	$NetBSD: sdvar.h,v 1.18 2003/01/06 21:02:18 matt Exp $	*/
+/*	$NetBSD: sdvar.h,v 1.19 2003/04/03 22:18:26 fvdl Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -92,8 +92,9 @@ struct sd_softc {
 		u_long	cyls;		/* number of cylinders */
 		u_long	sectors;	/* number of sectors/track */
 		u_long	blksize;	/* number of bytes/sector */
-		u_long	disksize;	/* total number sectors */
 		u_long	rot_rate;	/* rotational rate, in RPM */
+		u_int64_t disksize;	/* total number sectors */
+		u_int64_t disksize512;	/* total number sectors */
 	} params;
 
 	struct bufq_state buf_queue;

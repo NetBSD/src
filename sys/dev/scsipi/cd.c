@@ -1,4 +1,4 @@
-/*	$NetBSD: cd.c,v 1.180 2003/03/20 05:49:21 dbj Exp $	*/
+/*	$NetBSD: cd.c,v 1.181 2003/04/03 22:18:24 fvdl Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2001 The NetBSD Foundation, Inc.
@@ -54,7 +54,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cd.c,v 1.180 2003/03/20 05:49:21 dbj Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cd.c,v 1.181 2003/04/03 22:18:24 fvdl Exp $");
 
 #include "rnd.h"
 
@@ -584,9 +584,15 @@ cdstrategy(bp)
 	 * Do bounds checking, adjust transfer. if error, process.
 	 * If end of partition, just return.
 	 */
-	if (bounds_check_with_label(bp, lp,
-	    (cd->flags & (CDF_WLABEL|CDF_LABELLING)) != 0) <= 0)
-		goto done;
+	if (CDPART(bp->b_dev) == RAW_PART) {
+		if (bounds_check_with_mediasize(bp, DEV_BSIZE,
+		    cd->params.disksize512) <= 0)
+			goto done;
+	} else {
+		if (bounds_check_with_label(bp, lp,
+		    (cd->flags & (CDF_WLABEL|CDF_LABELLING)) != 0) <= 0)
+			goto done;
+	}
 
 	/*
 	 * Now convert the block number to absolute and put it in
@@ -1561,6 +1567,7 @@ cd_size(cd, flags)
 		 */
 		cd->params.blksize = 2048;
 		cd->params.disksize = 400000;
+		cd->params.disksize512 = 1600000;
 		return (400000);
 	}
 
@@ -1590,6 +1597,7 @@ cd_size(cd, flags)
 	if (size < 100)
 		size = 400000;	/* ditto */
 	cd->params.disksize = size;
+	cd->params.disksize512 = (cd->params.disksize * blksize) / DEV_BSIZE;
 
 	SC_DEBUG(cd->sc_periph, SCSIPI_DB2,
 	    ("cd_size: %d %ld\n", blksize, size));

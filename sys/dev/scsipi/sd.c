@@ -1,4 +1,4 @@
-/*	$NetBSD: sd.c,v 1.196 2003/03/20 05:49:21 dbj Exp $	*/
+/*	$NetBSD: sd.c,v 1.197 2003/04/03 22:18:25 fvdl Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -54,7 +54,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sd.c,v 1.196 2003/03/20 05:49:21 dbj Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sd.c,v 1.197 2003/04/03 22:18:25 fvdl Exp $");
 
 #include "opt_scsi.h"
 #include "opt_bufq.h"
@@ -204,9 +204,9 @@ sdattach(parent, sd, periph, ops)
 		format_bytes(pbuf, sizeof(pbuf),
 		    (u_int64_t)dp->disksize * dp->blksize);
 	        printf(
-		"%s, %ld cyl, %ld head, %ld sec, %ld bytes/sect x %lu sectors",
+		"%s, %ld cyl, %ld head, %ld sec, %ld bytes/sect x %llu sectors",
 		    pbuf, dp->cyls, dp->heads, dp->sectors, dp->blksize,
-		    dp->disksize);
+		    (unsigned long long)dp->disksize);
 		break;
 
 	case SDGP_RESULT_OFFLINE:
@@ -631,9 +631,15 @@ sdstrategy(bp)
 	 * Do bounds checking, adjust transfer. if error, process.
 	 * If end of partition, just return.
 	 */
-	if (bounds_check_with_label(bp, lp,
-	    (sd->flags & (SDF_WLABEL|SDF_LABELLING)) != 0) <= 0)
-		goto done;
+	if (SDPART(bp->b_dev) == RAW_PART) {
+		if (bounds_check_with_mediasize(bp, DEV_BSIZE,
+		    sd->params.disksize512) <= 0)
+			goto done;
+	} else {
+		if (bounds_check_with_label(bp, lp,
+		    (sd->flags & (SDF_WLABEL|SDF_LABELLING)) != 0) <= 0)
+			goto done;
+	}
 
 	/*
 	 * Now convert the block number to absolute and put it in
