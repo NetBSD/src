@@ -1,4 +1,4 @@
-/*	$NetBSD: sort.c,v 1.17 2001/01/13 20:20:47 soren Exp $	*/
+/*	$NetBSD: sort.c,v 1.18 2001/01/13 20:21:56 soren Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -51,7 +51,7 @@ __COPYRIGHT("@(#) Copyright (c) 1993\n\
 #endif /* not lint */
 
 #ifndef lint
-__RCSID("$NetBSD: sort.c,v 1.17 2001/01/13 20:20:47 soren Exp $");
+__RCSID("$NetBSD: sort.c,v 1.18 2001/01/13 20:21:56 soren Exp $");
 __SCCSID("@(#)sort.c	8.1 (Berkeley) 6/6/93");
 #endif /* not lint */
 
@@ -294,7 +294,7 @@ static void
 usage(msg)
 	const char *msg;
 {
-	if (msg)
+	if (msg != NULL)
 		(void)fprintf(stderr, "sort: %s\n", msg);
 	(void)fprintf(stderr, "usage: [-o output] [-cmubdfinrsS] [-t char] ");
 	(void)fprintf(stderr, "[-T char] [-k keydef] ... [files]\n");
