@@ -1,4 +1,4 @@
-#	$NetBSD: NWSCONS,v 1.15 1998/11/12 00:57:29 tron Exp $
+#	$NetBSD: NWSCONS,v 1.16 1998/11/20 11:50:29 tron Exp $
 #
 #	GENERIC -- everything that's currently supported
 #
@@ -573,6 +573,7 @@ include	"arch/i386/conf/GENERIC.local"
 
 # disk/mass storage pseudo-devices
 pseudo-device	ccd		4	# concatenated/striped disk devices
+#pseudo-device	raid		4	# RAIDframe disk driver
 pseudo-device	md		1	# memory disk device (ramdisk)
 pseudo-device	vnd		4	# disk-like interface to files
 
