@@ -1,4 +1,4 @@
-/*	$NetBSD: grf_tv.c,v 1.4 1998/06/25 23:59:16 thorpej Exp $	*/
+/*	$NetBSD: grf_tv.c,v 1.5 1998/08/06 14:08:54 minoura Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -52,7 +52,8 @@
 #include <sys/device.h>
 #include <sys/errno.h>
 
-#include <x68k/dev/grfioctl.h>
+#include <machine/grfioctl.h>
+
 #include <x68k/dev/grfvar.h>
 #include <x68k/x68k/iodevice.h>
 

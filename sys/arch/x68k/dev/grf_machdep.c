@@ -1,4 +1,4 @@
-/*	$NetBSD: grf_machdep.c,v 1.10 1998/08/04 16:51:52 minoura Exp $	*/
+/*	$NetBSD: grf_machdep.c,v 1.11 1998/08/06 14:08:54 minoura Exp $	*/
 
 /*
  * Copyright (c) 1991 University of Utah.
@@ -51,7 +51,7 @@
 #include <sys/systm.h>
 #include <sys/device.h>
 
-#include <x68k/dev/grfioctl.h>
+#include <machine/grfioctl.h>
 #include <x68k/dev/grfvar.h>
 #include <x68k/x68k/iodevice.h>
 

@@ -1,9 +1,9 @@
-/*	$NetBSD: tvctrl.c,v 1.2 1998/01/05 20:52:34 perry Exp $	*/
+/*	$NetBSD: tvctrl.c,v 1.3 1998/08/06 14:08:55 minoura Exp $	*/
 
 #include <sys/types.h>
 #include <sys/errno.h>
 #include <sys/ioctl.h>
-#include "../../dev/iteioctl.h" /* XXX */
+#include <machine/iteioctl.h>
 
 main(argc, argv)
      int argc;
