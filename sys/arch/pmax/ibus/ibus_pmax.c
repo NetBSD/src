@@ -1,4 +1,4 @@
-/* $NetBSD: ibus_pmax.c,v 1.7 1999/11/24 00:04:06 thorpej Exp $ */
+/* $NetBSD: ibus_pmax.c,v 1.8 1999/11/24 00:18:37 simonb Exp $ */
 
 /*
  * Copyright (c) 1998 Jonathan Stone.  All rights reserved.
@@ -32,7 +32,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: ibus_pmax.c,v 1.7 1999/11/24 00:04:06 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ibus_pmax.c,v 1.8 1999/11/24 00:18:37 simonb Exp $");
 
 #include "opt_dec_3100.h"
 #include "opt_dec_5100.h"
@@ -80,7 +80,7 @@ struct ibus_attach_args ibus_mipsmate_devs[] = {
 #if 0
 	/*
 	 * Ultrix configures it at 0x86400400.  The first 0x400 bytes
-	 * used for VMRAM state??
+	 * used for NVRAM state??
 	 */
 	{ "nvram",	7,	KV(0x86400000),			0	},
 #endif
