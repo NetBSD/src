@@ -1,4 +1,4 @@
-.\"	$NetBSD: uvm.9,v 1.55 2004/11/23 11:20:18 yamt Exp $
+.\"	$NetBSD: uvm.9,v 1.56 2004/12/06 17:34:08 yamt Exp $
 .\"
 .\" Copyright (c) 1998 Matthew R. Green
 .\" All rights reserved.
@@ -113,6 +113,10 @@ initialises the swap sub-system.
 .Ft int
 .br
 .Fn uvm_map "struct vm_map *map" "vaddr_t *startp" "vsize_t size" "struct uvm_object *uobj" "voff_t uoffset" "vsize_t align" "uvm_flag_t flags" ;
+.Pp
+.Ft int
+.br
+.Fn uvm_unmap "struct vm_map *map" "vaddr_t start" "vaddr_t end" ;
 .Pp
 .Ft int
 .br
@@ -294,6 +298,16 @@ macros return the protection, inheritance, maximum protection and advice,
 respectively.
 .Fn uvm_map
 returns a standard UVM return value.
+.Pp
+.Fn uvm_unmap
+removes a valid mapping,
+from
+.Fa start
+to
+.Fa end ,
+in map
+.Fa map ,
+which must be unlocked.
 .Pp
 .Fn uvm_map_pageable
 changes the pageability of the pages in the range from

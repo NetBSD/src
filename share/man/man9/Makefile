@@ -1,4 +1,4 @@
-#       $NetBSD: Makefile,v 1.167 2004/12/03 03:33:00 atatat Exp $
+#       $NetBSD: Makefile,v 1.168 2004/12/06 17:34:07 yamt Exp $
 
 #	Makefile for section 9 (kernel function and variable) manual pages.
 
@@ -505,7 +505,8 @@ MLINKS+=todr.9 todr_gettime.9 todr.9 todr_settime.9 \
 	todr.9 todr_getcal.9 todr.9 todr_setcal.9 \
 	todr.9 clock_ymdhms_to_secs.9 todr.9 clock_secs_to_ymdhms.9
 MLINKS+=uvm.9 uvm_init.9 uvm.9 uvm_init_limits.9 uvm.9 uvm_setpagesize.9 \
-	uvm.9 uvm_swap_init.9 uvm.9 uvm_map.9 uvm.9 uvm_map_pageable.9 \
+	uvm.9 uvm_swap_init.9 uvm.9 uvm_map.9 uvm.9 uvm_unmap.9 \
+	uvm.9 uvm_map_pageable.9 \
 	uvm.9 uvm_map_checkprot.9 uvm.9 uvm_map_protect.9 \
 	uvm.9 uvm_deallocate.9 uvm.9 uvmspace_alloc.9 uvm.9 uvmspace_exec.9 \
 	uvm.9 uvmspace_fork.9 uvm.9 uvmspace_free.9 uvm.9 uvmspace_share.9 \
