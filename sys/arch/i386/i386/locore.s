@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.222.2.3 2001/06/11 20:40:34 he Exp $	*/
+/*	$NetBSD: locore.s,v 1.222.2.4 2001/06/17 22:28:32 he Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -173,8 +173,15 @@
 	pushl	%es		; \
 	movl	$GSEL(GDATA_SEL, SEL_KPL),%eax	; \
 	movl	%ax,%ds		; \
-	movl	%ax,%es
+	movl	%ax,%es		; \
+	pushl	%fs		; \
+	pushl	%gs		; \
+	movl	%ax,%fs		; \
+	movl	%ax,%gs		; \
+
 #define	INTRFASTEXIT \
+	popl	%gs		; \
+	popl	%fs		; \
 	popl	%es		; \
 	popl	%ds		; \
 	popl	%edi		; \
@@ -331,6 +338,10 @@ start:	movw	$0x1234,0x472			# warm boot
 	pushl	$PSL_MBO
 	popfl
 
+	/* Clear segment registers; always null in proc0. */
+	xorl	%eax,%eax
+	movl	%ax,%fs
+	movl	%ax,%gs
 	/* Find out our CPU type. */
 
 try386:	/* Try to toggle alignment check flag; does not exist on 386. */
@@ -687,11 +698,6 @@ begin:
 	call	_C_LABEL(init386)	# wire 386 chip for unix operation
 	addl	$4,%esp
 
-	/* Clear segment registers; always null in proc0. */
-	xorl	%ecx,%ecx
-	movl	%cx,%fs
-	movl	%cx,%gs
-
 #ifdef SAFARI_FIFO_HACK
 	movb	$5,%al
 	movw	$0x37b,%dx
@@ -728,15 +734,7 @@ NENTRY(sigcode)
 	call	SIGF_HANDLER(%esp)
 	leal	SIGF_SC(%esp),%eax	# scp (the call may have clobbered the
 					# copy at SIGF_SCP(%esp))
-#ifdef VM86
-	testl	$PSL_VM,SC_EFLAGS(%eax)
-	jnz	1f
-#endif
-	movl	SC_FS(%eax),%ecx
-	movl	SC_GS(%eax),%edx
-	movl	%cx,%fs
-	movl	%dx,%gs
-1:	pushl	%eax
+	pushl	%eax
 	pushl	%eax			# junk to fake return address
 	movl	$SYS___sigreturn14,%eax
 	int	$0x80	 		# enter kernel with args on stack
@@ -752,15 +750,7 @@ NENTRY(svr4_sigcode)
 	call	SVR4_SIGF_HANDLER(%esp)
 	leal	SVR4_SIGF_UC(%esp),%eax	# ucp (the call may have clobbered the
 					# copy at SIGF_UCP(%esp))
-#ifdef VM86
-	testl	$PSL_VM,SVR4_UC_EFLAGS(%eax)
-	jnz	1f
-#endif
-	movl	SVR4_UC_FS(%eax),%ecx
-	movl	SVR4_UC_GS(%eax),%edx
-	movl	%cx,%fs
-	movl	%dx,%gs
-1:	pushl	%eax
+	pushl	%eax
 	pushl	$1			# setcontext(p) == syscontext(1, p) 
 	pushl	%eax			# junk to fake return address
 	movl	$SVR4_SYS_context,%eax
@@ -781,15 +771,7 @@ NENTRY(linux_sigcode)
 	call	LINUX_SIGF_HANDLER(%esp)
 	leal	LINUX_SIGF_SC(%esp),%ebx # scp (the call may have clobbered the
 					# copy at SIGF_SCP(%esp))
-#ifdef VM86
-	testl	$PSL_VM,LINUX_SC_EFLAGS(%ebx)
-	jnz	1f
-#endif
-	movl	LINUX_SC_FS(%ebx),%ecx
-	movl	LINUX_SC_GS(%ebx),%edx
-	movl	%cx,%fs
-	movl	%dx,%gs
-1:	pushl	%eax			# junk to fake return address
+	pushl	%eax			# junk to fake return address
 	movl	$LINUX_SYS_sigreturn,%eax
 	int	$0x80	 		# enter kernel with args on stack
 	movl	$LINUX_SYS_exit,%eax
@@ -801,15 +783,7 @@ NENTRY(linux_rt_sigcode)
 	call	LINUX_SIGF_HANDLER(%esp)
 	leal	LINUX_SIGF_SC(%esp),%ebx # scp (the call may have clobbered the
 					# copy at SIGF_SCP(%esp))
-#ifdef VM86
-	testl	$PSL_VM,LINUX_SC_EFLAGS(%ebx)
-	jnz	1f
-#endif
-	movl	LINUX_SC_FS(%ebx),%ecx
-	movl	LINUX_SC_GS(%ebx),%edx
-	movl	%cx,%fs
-	movl	%dx,%gs
-1:	pushl	%eax			# junk to fake return address
+	pushl	%eax			# junk to fake return address
 	movl	$LINUX_SYS_rt_sigreturn,%eax
 	int	$0x80	 		# enter kernel with args on stack
 	movl	$LINUX_SYS_exit,%eax
@@ -845,10 +819,6 @@ NENTRY(ibcs2_sigcode)
 	call    SIGF_HANDLER(%esp)
 	leal    SIGF_SC(%esp),%eax      # scp (the call may have clobbered the
 					# copy at SIGF_SCP(%esp))
-	movl    SC_FS(%eax),%ecx
-	movl    SC_GS(%eax),%edx
-	movl    %cx,%fs
-	movl    %dx,%gs
 	pushl   %eax
 	pushl   %eax                    # junk to fake return address
 	movl    $IBCS2_SYS_sigreturn,%eax
@@ -1981,12 +1951,6 @@ sw1:	bsfl	%ecx,%ebx		# find a full q
 
 	movl	P_ADDR(%esi),%esi
 
-	/* Save segment registers. */
-	movl	%fs,%ax
-	movl	%gs,%cx
-	movl	%eax,PCB_FS(%esi)
-	movl	%ecx,PCB_GS(%esi)
-
 	/* Save stack pointers. */
 	movl	%esp,PCB_ESP(%esi)
 	movl	%ebp,PCB_EBP(%esi)
@@ -2046,11 +2010,6 @@ switch_exited:
 #endif /* USER_LDT */
 
 	/* Restore segment registers. */
-	movl	PCB_FS(%esi),%eax
-	movl	PCB_GS(%esi),%ecx
-	movl	%ax,%fs
-	movl	%cx,%gs
-
 switch_restored:
 	/* Restore cr0 (including FPU state). */
 	movl	PCB_CR0(%esi),%ecx
@@ -2145,12 +2104,6 @@ ENTRY(switch_exit)
 ENTRY(savectx)
 	movl	4(%esp),%edx		# edx = p->p_addr
   
-	/* Save segment registers. */
-	movl	%fs,%ax
-	movl	%gs,%cx
-	movl	%eax,PCB_FS(%edx)
-	movl	%ecx,PCB_GS(%edx)
-
 	/* Save stack pointers. */
 	movl	%esp,PCB_ESP(%edx)
 	movl	%ebp,PCB_EBP(%edx)
@@ -2323,6 +2276,16 @@ NENTRY(resume_pop_ds)
 	movl	$GSEL(GDATA_SEL, SEL_KPL),%eax
 	movl	%ax,%es
 NENTRY(resume_pop_es)
+	pushl	%fs
+	movl	$GSEL(GDATA_SEL, SEL_KPL),%eax
+	movl	%ax,%fs
+/* LINTSTUB: Var: char resume_pop_fs[1]; */
+NENTRY(resume_pop_fs)
+	pushl	%gs	
+	movl	$GSEL(GDATA_SEL, SEL_KPL),%eax
+	movl	%ax,%gs
+/* LINTSTUB: Var: char resume_pop_gs[1]; */
+NENTRY(resume_pop_gs)
 	movl	$T_PROTFLT,TF_TRAPNO(%esp)
 	jmp	calltrap
 
