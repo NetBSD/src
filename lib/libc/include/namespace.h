@@ -1,4 +1,4 @@
-/*	$NetBSD: namespace.h,v 1.26 1998/10/16 12:47:45 kleink Exp $	*/
+/*	$NetBSD: namespace.h,v 1.27 1998/10/16 12:56:44 kleink Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -358,6 +358,7 @@
 #define timezone		_timezone
 #define ttyname			_ttyname
 #define ttyslot			_ttyslot
+#define tzname			_tzname
 #define tzset			_tzset
 #define tzsetwall		_tzsetwall
 #define ualarm			_ualarm
