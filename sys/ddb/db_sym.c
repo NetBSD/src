@@ -1,4 +1,4 @@
-/*	$NetBSD: db_sym.c,v 1.22 2000/06/06 05:06:25 jhawk Exp $	*/
+/*	$NetBSD: db_sym.c,v 1.23 2000/08/09 19:51:47 tv Exp $	*/
 
 /* 
  * Mach Operating System
@@ -516,8 +516,12 @@ db_printsym(off, strategy, pr)
 		db_symbol_values(cursym, &name, &value);
 		if (name && (d < db_maxoff) && value) {
 			(*pr)("%s", name);
-			if (d)
-				(*pr)("+%#lr", d);
+			if (d) {
+				char tbuf[24];
+
+				db_format_radix(tbuf, 24, d, TRUE);
+				(*pr)("+%s", d);
+			}
 			if (strategy == DB_STGY_PROC) {
 				if (db_line_at_pc(cursym, &filename, &linenum, off))
 					(*pr)(" [%s:%d]", filename, linenum);

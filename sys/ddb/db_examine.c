@@ -1,4 +1,4 @@
-/*	$NetBSD: db_examine.c,v 1.18 2000/05/25 19:57:36 jhawk Exp $	*/
+/*	$NetBSD: db_examine.c,v 1.19 2000/08/09 19:51:44 tv Exp $	*/
 
 /*
  * Mach Operating System
@@ -80,6 +80,7 @@ db_examine(addr, fmt, count)
 	int		size;
 	int		width;
 	char *		fp;
+	char		tbuf[24];
 
 	while (--count >= 0) {
 		fp = fmt;
@@ -115,7 +116,8 @@ db_examine(addr, fmt, count)
 			case 'r':	/* signed, current radix */
 				value = db_get_value(addr, size, TRUE);
 				addr += size;
-				db_printf("%-*lr", width, value);
+				db_format_radix(tbuf, 24, value, FALSE);
+				db_printf("%-*s", width, tbuf);
 				break;
 			case 'x':	/* unsigned hex */
 				value = db_get_value(addr, size, FALSE);
@@ -125,7 +127,8 @@ db_examine(addr, fmt, count)
 			case 'z':	/* signed hex */
 				value = db_get_value(addr, size, TRUE);
 				addr += size;
-				db_printf("%-*lz", width, value);
+				db_format_hex(tbuf, 24, value, FALSE);
+				db_printf("%-*s", width, tbuf);
 				break;
 			case 'd':	/* signed decimal */
 				value = db_get_value(addr, size, TRUE);
@@ -201,14 +204,24 @@ db_print_cmd(addr, have_addr, count, modif)
 		db_printsym((db_addr_t)addr, DB_STGY_ANY, db_printf);
 		break;
 	case 'r':
-		db_printf("%11lr", addr);
-		break;
+		{
+			char tbuf[24];
+
+			db_format_radix(tbuf, 24, addr, FALSE);
+			db_printf("%11s", tbuf);
+			break;
+		}
 	case 'x':
 		db_printf("%8lx", addr);
 		break;
 	case 'z':
-		db_printf("%8lz", addr);
-		break;
+		{
+			char tbuf[24];
+
+			db_format_hex(tbuf, 24, addr, FALSE);
+			db_printf("%8s", tbuf);
+			break;
+		}
 	case 'd':
 		db_printf("%11ld", addr);
 		break;

@@ -1,4 +1,4 @@
-/*	$NetBSD: db_output.c,v 1.22 2000/03/30 11:31:27 augustss Exp $	*/
+/*	$NetBSD: db_output.c,v 1.23 2000/08/09 19:51:45 tv Exp $	*/
 
 /* 
  * Mach Operating System
@@ -198,4 +198,55 @@ db_end_line()
 {
 	if (db_output_position >= db_max_width)
 	    db_printf("\n");
+}
+
+/*
+ * Replacement for old '%r' kprintf format.
+ */
+void
+db_format_radix(buf, bufsiz, val, altflag)
+	char *buf;
+	size_t bufsiz;
+	quad_t val;
+	int altflag;
+{
+	const char *fmt;
+
+	if (db_radix == 16) {
+		db_format_hex(buf, bufsiz, val, altflag);
+		return;
+	}
+
+	if (db_radix == 8)
+		fmt = altflag ? "-%#qo" : "-%qo";
+	else
+		fmt = altflag ? "-%#qu" : "-%qu";
+
+	if (val < 0)
+		val = -val;
+	else
+		++fmt;
+
+	snprintf(buf, bufsiz, fmt, val);
+}
+
+/*
+ * Replacement for old '%z' kprintf format.
+ */
+void
+db_format_hex(buf, bufsiz, val, altflag)
+	char *buf;
+	size_t bufsiz;
+	quad_t val;
+	int altflag;
+{
+	/* Only use alternate form if val is nonzero. */
+	const char *fmt = (altflag && val) ? "-%#qx" : "-%qx";
+
+	if (val < 0)
+		val = -val;
+	else
+		++fmt;
+
+	snprintf(buf, bufsiz, fmt, val);
 }
