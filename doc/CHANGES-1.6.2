@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-1.6.2,v 1.1.2.228 2003/10/28 16:03:15 jmc Exp $
+#	$NetBSD: CHANGES-1.6.2,v 1.1.2.229 2003/11/07 05:56:24 msaitoh Exp $
 
 A complete list of changes from NetBSD 1.6.1 to NetBSD 1.6.2:
 
@@ -2978,3 +2978,12 @@ Moved tag netbsd-1-6-PATCH002-RC1 on:
 
 	dist/dhcp/common/parse.c
 	doc/CHANGES-1.6.2
+
+crypto/dist/openssl/crypto/asn1/a_bytes.c	patched by hand
+crypto/dist/openssl/ssl/ssl_ciph.c		patched by hand
+
+	Changes between 0.9.6k and 0.9.6l  [04 Nov 2003]
+	*) Fix additional bug revealed by the NISCC test suite:
+	    Stop bug triggering large recursion when presented with
+            certain ASN.1 tags (CAN-2003-0851). from Steve Henson
+	[itojun, ticket #1557]
