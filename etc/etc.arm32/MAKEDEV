@@ -1,6 +1,6 @@
 #!/bin/sh -
 #
-#	$NetBSD: MAKEDEV,v 1.27 1998/11/13 04:49:01 oster Exp $
+#	$NetBSD: MAKEDEV,v 1.28 1998/12/09 01:47:15 augustss Exp $
 #
 # Copyright (c) 1990 The Regents of the University of California.
 # All rights reserved.
@@ -75,6 +75,7 @@
 #	usb*	Bus control devices used by usbd for attach/detach
 #	uhid*	Generic HID devices
 #	ulpt*	Printer devices
+#	ugen*	Generic device
 #
 # Call units:
 #
@@ -481,6 +482,20 @@ ulpt*)
 	mknod $ulpt c $major $unit
 	chown root.wheel $ulpt
 	chmod 600 $ulpt
+	;;
+
+ugen*)
+	unit=${i#ugen}
+	ugen=ugen$unit
+	major=72
+	for j in 00 01 02 03 04 05 06 07 08 09 10 11 12 13 14 15
+	do
+		ugenj=$ugen.$j
+		rm -f $ugenj
+		mknod $ugenj c $major $(($unit * 16 + $j))
+		chown root.wheel $ugenj
+		chmod 600 $ugenj
+	done
 	;;
 
 
