@@ -1,4 +1,4 @@
-/* $NetBSD: dec_5100.c,v 1.26 2000/06/06 00:08:25 nisimura Exp $ */
+/* $NetBSD: dec_5100.c,v 1.27 2001/02/11 17:49:08 tsutsui Exp $ */
 
 /*
  * Copyright (c) 1998 Jonathan Stone.  All rights reserved.
@@ -31,7 +31,7 @@
  */
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: dec_5100.c,v 1.26 2000/06/06 00:08:25 nisimura Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dec_5100.c,v 1.27 2001/02/11 17:49:08 tsutsui Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -76,7 +76,7 @@ dec_5100_init()
 
 	splvec.splbio = MIPS_SPL1;
 	splvec.splnet = MIPS_SPL1;
-	splvec.spltty = MIPS_SPL_0_1; 
+	splvec.spltty = MIPS_SPL_0_1;
 	splvec.splimp = MIPS_SPL_0_1_2;
 	splvec.splclock = MIPS_SPL_0_1_2;
 	splvec.splstatclock = MIPS_SPL_0_1_2;
@@ -215,7 +215,7 @@ dec_5100_memintr()
 	kn230_wbflush();
 
 #ifdef DIAGNOSTIC
-		printf("\nMemory interrupt\n");
+	printf("\nMemory interrupt\n");
 #endif
 
 	/* ignore errors during probes */
