@@ -1,4 +1,4 @@
-/*	$NetBSD: config.h.in,v 1.11 2002/03/07 18:28:46 tv Exp $	*/
+/*	$NetBSD: config.h.in,v 1.12 2002/03/31 12:58:54 bjh21 Exp $	*/
 
 #ifndef	__NETBSD_COMPAT_CONFIG_H__
 #define	__NETBSD_COMPAT_CONFIG_H__
@@ -11,10 +11,15 @@
 #undef HAVE_FTS_H
 #undef HAVE_INTTYPES_H
 #undef HAVE_LIBGEN_H
+#undef HAVE_MD2_H
+#undef HAVE_MD4_H
+#undef HAVE_MD5_H
 #undef HAVE_NDIR_H
 #undef HAVE_NETDB_H
 #undef HAVE_MACHINE_BSWAP_H
 #undef HAVE_MALLOC_H
+#undef HAVE_RMD160_H
+#undef HAVE_SHA1_H
 #undef HAVE_STDDEF_H
 #undef HAVE_STRING_H
 #undef HAVE_SYS_DIR_H

@@ -1,12 +1,14 @@
-#	$NetBSD: Makefile,v 1.8 2002/02/26 22:29:38 tv Exp $
+#	$NetBSD: Makefile,v 1.9 2002/03/31 12:58:54 bjh21 Exp $
 
 HOSTLIB=	nbcompat
 
 SRCS=		basename.c dirname.c fgetln.c flock.c fparseln.c \
-		getmode.c getopt_long.c libyywrap.c pread.c \
-		pwcache.c pwrite.c pw_scan.c setenv.c \
-		setgroupent.c setpassent.c setprogname.c snprintf.c \
-		strlcat.c strlcpy.c strmode.c strsep.c unvis.c vis.c \
+		getmode.c getopt_long.c libyywrap.c \
+		md2c.c md2hl.c md4c.c md4hl.c md5c.c md5hl.c pread.c \
+		pwcache.c pwrite.c pw_scan.c rmd160.c rmd160hl.c setenv.c \
+		setgroupent.c setpassent.c setprogname.c sha1.c sha1hl.c \
+		snprintf.c strlcat.c strlcpy.c strmode.c strsep.c \
+		unvis.c vis.c \
 		_err.c _errx.c _verr.c _verrx.c _vwarn.c _vwarnx.c \
 		_warn.c _warnx.c __fts13.c
 
@@ -17,6 +19,8 @@ CPPFLAGS+=	-I. -I./include -I${.CURDIR} -DHAVE_CONFIG_H \
 		-D_FILE_OFFSET_BITS=64
 
 .PATH:		${.CURDIR}/../../lib/libc/gen \
+		${.CURDIR}/../../lib/libc/hash \
+		${.CURDIR}/../../lib/libc/md \
 		${.CURDIR}/../../lib/libc/stdlib \
 		${.CURDIR}/../../lib/libc/string \
 		${.CURDIR}/../../lib/libutil \

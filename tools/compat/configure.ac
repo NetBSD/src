@@ -1,4 +1,4 @@
-#	$NetBSD: configure.ac,v 1.11 2002/03/07 22:48:07 tv Exp $
+#	$NetBSD: configure.ac,v 1.12 2002/03/31 12:58:54 bjh21 Exp $
 #
 # Autoconf definition file for libnbcompat.
 #
@@ -34,7 +34,8 @@ AC_CHECK_HEADERS(sys/sysmacros.h sys/syslimits.h features.h malloc.h stddef.h st
 AC_CHECK_HEADERS(machine/bswap.h sys/cdefs.h sys/featuretest.h \
 	err.h inttypes.h libgen.h paths.h util.h,,
 	[test -f include/$ac_header || touch include/$ac_header])
-AC_CHECK_HEADERS(rpc/types.h fts.h getopt.h netconfig.h vis.h,,
+AC_CHECK_HEADERS(rpc/types.h fts.h getopt.h md2.h md4.h md5.h netconfig.h \
+	rmd160.h sha1.h vis.h,,
 	[echo '#include "config.h"' >include/$ac_header.new
 	echo '#include "'$srcdir/../../include/$ac_header'"' >>include/$ac_header.new
 	if cmp include/$ac_header.new include/$ac_header >/dev/null 2>&1; then
