@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.122 2001/05/08 02:04:08 sommerfeld Exp $
+#	$NetBSD: Makefile,v 1.123 2001/06/10 13:02:54 mrg Exp $
 
 # This is the top-level makefile for building NetBSD. For an outline of
 # how to build a snapshot or release, as well as other release engineering
@@ -38,6 +38,23 @@
 #	into RELEASEDIR, in release(7) format. (See etc/Makefile for
 #	more information on this.)
 #   snapshot: a synonym for release.
+#
+# Sub targets of `make build,' in order:
+#   buildstartmsg: displays the start time of the build.
+#   beforeinstall: creates the distribution directories.
+#   do-force-domestic: check's that FORCE_DOMESTIC isn't set (deprecated.)
+#   do-share-mk: installs /usr/share/mk files.
+#   do-cleandir: clean's the tree.
+#   do-make-obj: create's object directories if required.
+#   do-check-egcs: check's that we have a modern enough compiler (deprecated.)
+#   do-make-includes: install include files.
+#   do-lib-csu: build & install startup object files.
+#   do-lib: build & install system libraries.
+#   do-gnu-lib: build & install gnu system libraries.
+#   do-dependall: builds & install the entire system.
+#   do-domestic: build & install the domestic tree (deprecated.)
+#   do-whatisdb: build & install the `whatis.db' man database.
+#   buildendmsg: displays the end time of the build.
 
 .include <bsd.own.mk>
 
@@ -82,8 +99,12 @@ regression-tests:
 	@(cd ${.CURDIR}/regress && ${MAKE} ${_M} regress)
 .endif
 
-buildmsg:
+buildstartmsg:
 	@echo -n "Build started at: "
+	@date
+
+buildendmsg:
+	@echo -n "Build finished at: "
 	@date
 
 # If sharesrc is around, use its share/mk files to bootstrap until the
@@ -118,22 +139,33 @@ whatis.db:
 build:
 	@echo "Build installed into ${DESTDIR}"
 .else
-build: buildmsg beforeinstall
+build: buildstartmsg beforeinstall do-force-domestic do-share-mk do-cleandir do-make-obj do-check-egcs do-make-includes do-lib-csu do-lib do-gnu-lib do-dependall do-domestic do-whatisdb buildendmsg
+.endif
+
+do-force-domestic:
 .if defined(FORCE_DOMESTIC)
 	@echo '*** CAPUTE!'
 	@echo '    The FORCE_DOMESTIC flag is not compatible with "make build".'
 	@echo '    Please correct the problem and try again.'
 	@false
 .endif
+
+do-share-mk:
 .if ${MKSHARE} != "no"
 	(cd ${.CURDIR}/share/mk && ${MAKE} install)
 .endif
+
+do-cleandir:
 .if !defined(UPDATE) && !defined(NOCLEANDIR)
 	${MAKE} ${_J} ${_M} cleandir
 .endif
+
+do-make-obj:
 .if ${MKOBJDIRS} != "no"
 	${MAKE} ${_J} ${_M} obj
 .endif
+
+do-check-egcs:
 .if empty(HAVE_EGCS)
 .if defined(DESTDIR)
 	@echo "*** CAPUTE!"
@@ -146,26 +178,37 @@ build: buildmsg beforeinstall
 	    ${MAKE} ${_M} MKMAN=no install && ${MAKE} ${_M} cleandir)
 .endif
 .endif
+
+do-make-includes:
 .if !defined(NOINCLUDES)
 	${MAKE} ${_M} includes
 .endif
+
+do-lib-csu:
 	(cd ${.CURDIR}/lib/csu && \
 	    ${MAKE} ${_M} ${_J} MKSHARE=no dependall && \
 	    ${MAKE} ${_M} MKSHARE=no install)
+
+do-lib:
 	(cd ${.CURDIR}/lib && \
 	    ${MAKE} ${_M} ${_J} MKSHARE=no dependall && \
 	    ${MAKE} ${_M} MKSHARE=no install)
+
+do-gnu-lib:
 	(cd ${.CURDIR}/gnu/lib && \
 	    ${MAKE} ${_M} ${_J} MKSHARE=no dependall && \
 	    ${MAKE} ${_M} MKSHARE=no install)
+
+do-dependall:
 	${MAKE} ${_M} ${_J} dependall && ${MAKE} ${_M} _BUILD= install
+
+do-domestic:
 .if defined(DOMESTIC) && !defined(EXPORTABLE_SYSTEM)
 	(cd ${.CURDIR}/${DOMESTIC} && ${MAKE} ${_M} ${_J} _SLAVE_BUILD= build)
 .endif
+
+do-whatisdb:
 	${MAKE} ${_M} whatis.db
-	@echo -n "Build finished at: "
-	@date
-.endif
 
 release snapshot: build
 	(cd ${.CURDIR}/etc && ${MAKE} ${_M} INSTALL_DONE=1 release)
