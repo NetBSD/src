@@ -1,4 +1,4 @@
-.\"     $NetBSD: config.9,v 1.6 2002/03/23 22:36:45 heinz Exp $
+.\"     $NetBSD: config.9,v 1.7 2002/09/06 14:13:48 gehenna Exp $
 .\"
 .\" Copyright (c) 2001 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -252,13 +252,16 @@ exact,
 .Em needs-flag
 does not prevent autoconfiguration cloning.
 .El
-.It major major-list
-The devices listed in
-.Em major-list
-are associated with major device numbers, allowing them to be used for
-file system roots, swapping and crash dumps.  Since major numbers are
-machine dependent, they should not appear in the machine-independent
-device definition files.
+.It device-major name char [block] [attributes]
+The character device switch
+.Em name
+associated with a character major device number is added to the list of
+device switches used to build the kernel. If
+.Em block
+is specified, the block device switch associated with a block major device
+number is also added. If all of attributes are specified by devices in the
+machine description files, then device switches are added into the device
+switches' table of the kernel in compilation, otherwise they are omitted.
 .El
 .Pp
 To allow locators to be wildcarded in the machine description file,
