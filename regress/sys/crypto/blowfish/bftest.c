@@ -1,5 +1,5 @@
-/*	$NetBSD: bftest.c,v 1.2 2000/11/05 03:15:57 itojun Exp $	*/
-/*	$KAME: bftest.c,v 1.2 2000/11/05 02:54:35 itojun Exp $	*/
+/*	$NetBSD: bftest.c,v 1.3 2000/11/08 06:02:01 itojun Exp $	*/
+/*	$KAME: bftest.c,v 1.3 2000/11/08 05:58:24 itojun Exp $	*/
 
 /*
  * Copyright (C) 2000 WIDE Project.
@@ -93,6 +93,7 @@
 #include <stdio.h>
 #include <string.h>
 #include <stdlib.h>
+#include <unistd.h>
 
 #include <crypto/blowfish/blowfish.h>
 
@@ -154,8 +155,15 @@ main(argc, argv)
 	int n, error = 0;
 	BF_KEY key;
 	BF_LONG data[2], plain[2], cipher[2]; 
+	int rounds;
+
+	if (argc > 1)
+		rounds = atoi(argv[1]);
+	else
+		rounds = 1;
 
 	printf("testing blowfish in raw ecb mode\n");
+again:
 	for (n = 0; n < 2; n++) {
 		BF_set_key(&key, strlen(bf_key[n]), (unsigned char *)bf_key[n]);
 
@@ -192,6 +200,9 @@ main(argc, argv)
 			error = 1;
 		}
 	}
+
+	if (--rounds > 0)
+		goto again;
 
 	exit(error);
 }

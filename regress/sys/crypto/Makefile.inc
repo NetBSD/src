@@ -1,5 +1,13 @@
-#	$NetBSD: Makefile.inc,v 1.2 2000/11/08 05:08:55 itojun Exp $
-#	$KAME: Makefile.inc,v 1.1 2000/11/01 14:03:37 itojun Exp $
+#	$NetBSD: Makefile.inc,v 1.3 2000/11/08 06:02:01 itojun Exp $
+#	$KAME: Makefile.inc,v 1.3 2000/11/08 05:58:24 itojun Exp $
 
 SYSDIR=	${.CURDIR}/../../../../sys
-WARNS?=1
+WARNS?=	1
+
+regress:
+	@${.OBJDIR}/${PROG}
+
+BENCHROUNDS?=	10000
+
+benchmark:
+	@time ${.OBJDIR}/${PROG} ${BENCHROUNDS}

@@ -1,5 +1,5 @@
-/*	$NetBSD: casttest.c,v 1.1.1.1 2000/11/01 15:33:25 itojun Exp $	*/
-/*	$KAME: casttest.c,v 1.1 2000/11/01 14:03:37 itojun Exp $	*/
+/*	$NetBSD: casttest.c,v 1.2 2000/11/08 06:02:01 itojun Exp $	*/
+/*	$KAME: casttest.c,v 1.2 2000/11/08 05:58:25 itojun Exp $	*/
 
 /*
  * Copyright (C) 2000 WIDE Project.
@@ -128,7 +128,7 @@ static unsigned char c_b[16]={
 #endif
 
 int main __P((int, char **));
-int test1 __P((void));
+int test1 __P((int));
 
 int
 main(argc, argv)
@@ -136,18 +136,26 @@ main(argc, argv)
 	char **argv;
 {
 	int error;
+	int rounds;
 
-	error = test1();
-	if (error)
-		exit(error);
-	exit(0);
+	if (argc > 1)
+		rounds = atoi(argv[1]);
+	else
+		rounds = 1;
+	error = test1(rounds);
+	if (!error)
+		printf("ecb cast5 ok\n");
+	exit(error);
 }
 
 int
-test1()
+test1(rounds)
+	int rounds;
 {
 	u_int32_t subkey[32];
 	int i, z, error = 0;
+
+again:
 
 	for (z = 0; z < 3; z++) {
 		if (k_len[z] != 16)
@@ -187,7 +195,8 @@ test1()
 		}
 	}
 
-	if (error == 0)
-		printf("ecb cast5 ok\n");
+	if (--rounds > 0)
+		goto again;
+
 	return error;
 }
