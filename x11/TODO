@@ -1,6 +1,14 @@
-$NetBSD: TODO,v 1.9 2004/02/08 21:30:47 lukem Exp $
+$NetBSD: TODO,v 1.9.2.1 2004/04/29 05:45:58 jmc Exp $
 
 clean up XTODO issues
 
 consider symlinking various dirs in lib/X11 -> /etc/X11, and only
 install the files on "distribution" ?
+
+lib/expat: check into -DX_BYTE_ORDER=$(X_BYTE_ORDER)
+
+check all Imakefile & config diffs between  -rv4-3-0 -rv4-4-0  , including:
+	all instances of XFREE86_FT2
+	programs/Xserver
+
+add getconfig
