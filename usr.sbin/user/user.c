@@ -1,4 +1,4 @@
-/* $NetBSD: user.c,v 1.7 1999/12/08 21:45:54 lukem Exp $ */
+/* $NetBSD: user.c,v 1.8 1999/12/13 00:26:26 hubertf Exp $ */
 
 /*
  * Copyright (c) 1999 Alistair G. Crooks.  All rights reserved.
@@ -91,23 +91,6 @@ asystem(char *fmt, ...)
 	}
 	return ret;
 }
-
-#if (__NetBSD_Version__ < 104110000)
-/*
- * strlcpy() can only be used in 1.4K and later, use this for
- * systems older than that.
- */
-/* bounds checking strncpy */
-static char *
-strnncpy(char *to, size_t tosize, char *from, size_t fromsize)
-{
-	size_t	n = MIN(tosize - 1, fromsize);
-
-	(void) memcpy(to, from, n);
-	to[n] = 0;
-	return to;
-}
-#endif /* __NetBSD_Version__ < 105000000 */
 
 /* copy any dot files into the user's home directory */
 static int
@@ -241,11 +224,7 @@ modify_gid(char *group, char *newent)
 				continue;
 			} else {
 				cc = strlen(newent);
-#if (__NetBSD_Version__ < 104110000)
-				(void) strnncpy(buf, sizeof(buf), newent, (unsigned) cc);
-#else
 				(void) strlcpy(buf, newent, sizeof(buf));
-#endif /* __NetBSD_Version__ < 104110000 */
 			}
 		}
 		if (fwrite(buf, sizeof(char), (unsigned) cc, to) != cc) {
@@ -978,11 +957,7 @@ usermod(int argc, char **argv)
 			break;
 		case 'l':
 			have_new_user = 1;
-#if (__NetBSD_Version__ < 104110000)
-			(void) strnncpy(newuser, sizeof(newuser), optarg, strlen(optarg));
-#else
 			(void) strlcpy(newuser, optarg, sizeof(newuser));
-#endif /* __NetBSD_Version__ < 104110000 */
 			break;
 		case 'm':
 			u.u_mkdir = 1;
