@@ -1,4 +1,4 @@
-.\"	$NetBSD: ipl.4,v 1.2 1997/01/05 14:53:55 mrg Exp $
+.\"	$NetBSD: ipl.4,v 1.3 1997/01/07 11:32:24 mrg Exp $
 .\"
 .\" Copyright (c) 1997 Matthew R. Green
 .\" All rights reserved.
@@ -51,10 +51,10 @@
 .Nm ipl
 .Nd IP filter software
 .Sh SYNOPSIS
-.Cd pseudo-device ipl
+.Cd pseudo-device ipfilter
 .Sh DESCRIPTION
 The
-.Nm ipl
+.Nm
 pseudo device's purpose is to provide an easy way to gather
 packet headers of packets you wish to log.  If a packet header is to be
 logged, the entire header is logged (including any IP options \- TCP/UDP
