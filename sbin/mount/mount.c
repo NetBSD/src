@@ -1,4 +1,4 @@
-/*	$NetBSD: mount.c,v 1.75 2005/01/31 14:18:08 he Exp $	*/
+/*	$NetBSD: mount.c,v 1.76 2005/02/05 14:44:46 xtraeme Exp $	*/
 
 /*
  * Copyright (c) 1980, 1989, 1993, 1994
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1989, 1993, 1994\n\
 #if 0
 static char sccsid[] = "@(#)mount.c	8.25 (Berkeley) 5/8/95";
 #else
-__RCSID("$NetBSD: mount.c,v 1.75 2005/01/31 14:18:08 he Exp $");
+__RCSID("$NetBSD: mount.c,v 1.76 2005/02/05 14:44:46 xtraeme Exp $");
 #endif
 #endif /* not lint */
 
@@ -68,20 +68,19 @@ __RCSID("$NetBSD: mount.c,v 1.75 2005/01/31 14:18:08 he Exp $");
 
 static int	debug, verbose;
 
-static void	catopt __P((char **, const char *));
+static void	catopt(char **, const char *);
 static const char *
-		getfslab __P((const char *str));
+		getfslab(const char *str);
 static struct statvfs *
-		getmntpt __P((const char *));
-static int 	getmntargs __P((struct statvfs *, char *, size_t));
-static int	hasopt __P((const char *, const char *));
-static void	mangle __P((char *, int *, const char ***, int *));
-static int	mountfs __P((const char *, const char *, const char *,
-		    int, const char *, const char *, int, char *, size_t));
-static void	prmount __P((struct statvfs *));
-static void	usage __P((void));
+		getmntpt(const char *);
+static int 	getmntargs(struct statvfs *, char *, size_t);
+static int	hasopt(const char *, const char *);
+static void	mangle(char *, int *, const char ***, int *);
+static int	mountfs(const char *, const char *, const char *,
+		    int, const char *, const char *, int, char *, size_t);
+static void	prmount(struct statvfs *);
+static void	usage(void);
 
-int	main __P((int, char *[]));
 
 /* Map from mount otions to printable formats. */
 static const struct opt {
@@ -95,9 +94,7 @@ static const struct opt {
 static char ffs_fstype[] = "ffs";
 
 int
-main(argc, argv)
-	int argc;
-	char *argv[];
+main(int argc, char *argv[])
 {
 	const char *mntfromname, *mntonname, **vfslist, *vfstype;
 	struct fstab *fs;
@@ -317,8 +314,7 @@ main(argc, argv)
 }
 
 int
-hasopt(mntopts, option)
-	const char *mntopts, *option;
+hasopt(const char *mntopts, const char *option)
 {
 	int negative, found;
 	char *opt, *optbuf;
@@ -342,11 +338,9 @@ hasopt(mntopts, option)
 }
 
 static int
-mountfs(vfstype, spec, name, flags, options, mntopts, skipmounted, buf, buflen)
-	const char *vfstype, *spec, *name, *options, *mntopts;
-	int flags, skipmounted;
-	char *buf;
-	size_t buflen;
+mountfs(const char *vfstype, const char *spec, const char *name, 
+	int flags, const char *options, const char *mntopts,
+	int skipmounted, char *buf, size_t buflen)
 {
 	/* List of directories containing mount_xxx subcommands. */
 	static const char *edirs[] = {
@@ -542,8 +536,7 @@ mountfs(vfstype, spec, name, flags, options, mntopts, skipmounted, buf, buflen)
 }
 
 static void
-prmount(sfp)
-	struct statvfs *sfp;
+prmount(struct statvfs *sfp)
 {
 	int flags;
 	const struct opt *o;
@@ -595,10 +588,7 @@ prmount(sfp)
 }
 
 static int
-getmntargs(sfs, buf, buflen)
-	struct statvfs *sfs;
-	char *buf;
-	size_t buflen;
+getmntargs(struct statvfs *sfs, char *buf, size_t buflen)
 {
 
 	if (mountfs(sfs->f_fstypename, sfs->f_mntfromname, sfs->f_mntonname, 0,
@@ -614,8 +604,7 @@ getmntargs(sfs, buf, buflen)
 }
 
 static struct statvfs *
-getmntpt(name)
-	const char *name;
+getmntpt(const char *name)
 {
 	struct statvfs *mntbuf;
 	int i, mntsize;
@@ -629,9 +618,7 @@ getmntpt(name)
 }
 
 static void
-catopt(sp, o)
-	char **sp;
-	const char *o;
+catopt(char **sp, const char *o)
 {
 	char *s, *n;
 
@@ -647,10 +634,7 @@ catopt(sp, o)
 }
 
 static void
-mangle(options, argcp, argvp, maxargcp)
-	char *options;
-	int *argcp, *maxargcp;
-	const char ***argvp;
+mangle(char *options, int *argcp, const char ***argvp, int *maxargcp)
 {
 	char *p, *s;
 	int argc, maxargc;
@@ -691,8 +675,7 @@ mangle(options, argcp, argvp, maxargcp)
 
 /* Deduce the filesystem type from the disk label. */
 static const char *
-getfslab(str)
-	const char *str;
+getfslab(const char *str)
 {
 	static struct dkwedge_info dkw;
 	struct disklabel dl;
@@ -753,7 +736,7 @@ getfslab(str)
 }
 
 static void
-usage()
+usage(void)
 {
 
 	(void)fprintf(stderr,
