@@ -1,3 +1,5 @@
+/*	$NetBSD: print-token.c,v 1.3 1999/09/04 03:36:42 itojun Exp $	*/
+
 /*
  * Copyright (c) 1991, 1992, 1993, 1994, 1995, 1996
  *	The Regents of the University of California.  All rights reserved.
@@ -19,9 +21,14 @@
  * MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE.
  */
 
+#ifndef lint
 #if 0
 static  char rcsid[] =
-	"@(#)$Header: /cvsroot/src/usr.sbin/tcpdump/Attic/print-token.c,v 1.2 1999/03/25 05:07:34 itohy Exp $ (LBL)";
+	"@(#)$Header: /cvsroot/src/usr.sbin/tcpdump/Attic/print-token.c,v 1.3 1999/09/04 03:36:42 itojun Exp $ (LBL)";
+#else
+#include <sys/cdefs.h>
+__RCSID("$NetBSD: print-token.c,v 1.3 1999/09/04 03:36:42 itojun Exp $");
+#endif
 #endif
 
 #ifdef HAVE_TOKEN

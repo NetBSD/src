@@ -1,3 +1,5 @@
+/*	$NetBSD: print-isakmp.c,v 1.2 1999/09/04 03:36:41 itojun Exp $	*/
+
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
  * All rights reserved.
@@ -29,8 +31,13 @@
  */
 
 #ifndef lint
+#if 0
 static const char rcsid[] =
-    "@(#) $Header: /cvsroot/src/usr.sbin/tcpdump/Attic/print-isakmp.c,v 1.1 1999/07/02 11:31:34 itojun Exp $ (LBL)";
+    "@(#) $Header: /cvsroot/src/usr.sbin/tcpdump/Attic/print-isakmp.c,v 1.2 1999/09/04 03:36:41 itojun Exp $ (LBL)";
+#else
+#include <sys/cdefs.h>
+__RCSID("$NetBSD: print-isakmp.c,v 1.2 1999/09/04 03:36:41 itojun Exp $");
+#endif
 #endif
 
 #include <string.h>
