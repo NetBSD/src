@@ -1,4 +1,4 @@
-/* $NetBSD: machdep.c,v 1.120.4.14 2002/12/11 06:12:42 thorpej Exp $	 */
+/* $NetBSD: machdep.c,v 1.120.4.15 2003/01/05 22:01:14 thorpej Exp $	 */
 
 /*
  * Copyright (c) 2002, Hugh Graham.
@@ -943,22 +943,47 @@ krnunlock()
 }
 #endif
 
+/*
+ * This is an argument list pushed onto the stack, and given to
+ * a CALLG instruction in the trampoline.
+ */
+struct saframe {
+	int	sa_type;
+	void	*sa_sas;
+	int	sa_events;
+	int	sa_interrupted;
+	void	*sa_ap;
+
+	int	sa_argc;
+};
+
 void
 cpu_upcall(struct lwp *l, int type, int nevents, int ninterrupted,
     void *sas, void *ap, void *sp, sa_upcall_t upcall)
 {
 	struct proc *p = l->l_proc;
 	struct trapframe *tf = l->l_addr->u_pcb.framep;
+	struct saframe *sf, frame;
+	extern char sigcode[], upcallcode[];
 
-	/* XXX - separate frame later */
-	tf->r2 = (long)type;
-	tf->r3 = (long)sas;
-	tf->r4 = (long)nevents;
-	tf->r5 = (long)ninterrupted;
-	tf->r6 = (long)ap;
-	tf->r7 = (long)upcall;
-	tf->sp = (long)sp;
-	tf->pc = (long)p->p_sigctx.ps_sigcode;
+	frame.sa_type = type;
+	frame.sa_sas = sas;
+	frame.sa_events = nevents;
+	frame.sa_interrupted = ninterrupted;
+	frame.sa_ap = ap;
+	frame.sa_argc = 5;
+
+	sf = ((struct saframe *)sp) - 1;
+	if (copyout(&frame, sf, sizeof(frame)) != 0) {
+		/* Copying onto the stack didn't work, die. */
+		sigexit(l, SIGILL);
+		/* NOTREACHED */
+	}
+
+	tf->r0 = (long) upcall;
+	tf->sp = (long) sf;
+	tf->pc = (long) ((caddr_t)p->p_sigctx.ps_sigcode +
+			 ((caddr_t)upcallcode - (caddr_t)sigcode));
 	tf->psl = (long)PSL_U | PSL_PREVU;
 }
 
