@@ -1,4 +1,4 @@
-/*	$NetBSD: ext2fs_vnops.c,v 1.22 2000/01/26 16:21:34 bouyer Exp $	*/
+/*	$NetBSD: ext2fs_vnops.c,v 1.23 2000/01/28 16:00:23 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1997 Manuel Bouyer.
@@ -1045,7 +1045,7 @@ ext2fs_mkdir(v)
 	dirtemplate.dot_namlen = 1;
 	if (ip->i_e2fs->e2fs.e2fs_rev > E2FS_REV0 &&
 	    (ip->i_e2fs->e2fs.e2fs_features_incompat & EXT2F_INCOMPAT_FTYPE)) {
-		dirtemplate.dot_type = IFTODT(EXT2_IFDIR);
+		dirtemplate.dot_type = EXT2_FT_DIR;
 	}
 	dirtemplate.dot_name[0] = '.';
 	dirtemplate.dotdot_ino = h2fs32(dp->i_number);
@@ -1053,7 +1053,7 @@ ext2fs_mkdir(v)
 	dirtemplate.dotdot_namlen = 2;
 	if (ip->i_e2fs->e2fs.e2fs_rev > E2FS_REV0 &&
 	    (ip->i_e2fs->e2fs.e2fs_features_incompat & EXT2F_INCOMPAT_FTYPE)) {
-		dirtemplate.dotdot_type = IFTODT(EXT2_IFDIR);
+		dirtemplate.dotdot_type = EXT2_FT_DIR;
 	}
 	dirtemplate.dotdot_name[0] = dirtemplate.dotdot_name[1] = '.';
 	error = vn_rdwr(UIO_WRITE, tvp, (caddr_t)&dirtemplate,
