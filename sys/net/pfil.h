@@ -1,4 +1,4 @@
-/*	$NetBSD: pfil.h,v 1.6 1997/02/22 17:52:44 scottr Exp $	*/
+/*	$NetBSD: pfil.h,v 1.7 1997/03/29 19:52:41 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1996 Matthew R. Green
@@ -64,7 +64,7 @@ void	pfil_remove_hook __P((int (*func) __P((void *, int,
 #endif /* _KERNEL */
 
 /* XXX */
-#ifndef _LKM
+#if defined(_KERNEL) && !defined(_LKM)
 #include "ipfilter.h"
 #endif
 
