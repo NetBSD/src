@@ -1,4 +1,4 @@
-/*	$NetBSD: irix_syssgi.c,v 1.8 2001/12/22 09:35:11 manu Exp $ */
+/*	$NetBSD: irix_syssgi.c,v 1.9 2001/12/25 19:04:19 manu Exp $ */
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: irix_syssgi.c,v 1.8 2001/12/22 09:35:11 manu Exp $");
+__KERNEL_RCSID(0, "$NetBSD: irix_syssgi.c,v 1.9 2001/12/25 19:04:19 manu Exp $");
 
 #include "opt_ddb.h"
 
@@ -67,6 +67,7 @@ __KERNEL_RCSID(0, "$NetBSD: irix_syssgi.c,v 1.8 2001/12/22 09:35:11 manu Exp $")
 #include <compat/svr4/svr4_types.h>
 
 #include <compat/irix/irix_types.h>
+#include <compat/irix/irix_signal.h>
 #include <compat/irix/irix_syscall.h>
 #include <compat/irix/irix_syscallargs.h>
 #include <compat/irix/irix_syssgi.h>

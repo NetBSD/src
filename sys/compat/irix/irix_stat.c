@@ -1,4 +1,4 @@
-/*	$NetBSD: irix_stat.c,v 1.2 2001/12/22 12:09:20 manu Exp $ */
+/*	$NetBSD: irix_stat.c,v 1.3 2001/12/25 19:04:18 manu Exp $ */
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: irix_stat.c,v 1.2 2001/12/22 12:09:20 manu Exp $");
+__KERNEL_RCSID(0, "$NetBSD: irix_stat.c,v 1.3 2001/12/25 19:04:18 manu Exp $");
 
 #include <sys/errno.h>
 #include <sys/types.h>
@@ -55,6 +55,7 @@ __KERNEL_RCSID(0, "$NetBSD: irix_stat.c,v 1.2 2001/12/22 12:09:20 manu Exp $");
 #include <compat/svr4/svr4_types.h>
 
 #include <compat/irix/irix_types.h>
+#include <compat/irix/irix_signal.h>
 #include <compat/irix/irix_syscall.h>
 #include <compat/irix/irix_syscallargs.h>
 

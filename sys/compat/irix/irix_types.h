@@ -1,4 +1,4 @@
-/*	$NetBSD: irix_types.h,v 1.7 2001/12/23 20:15:04 manu Exp $ */
+/*	$NetBSD: irix_types.h,v 1.8 2001/12/25 19:04:19 manu Exp $ */
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -65,6 +65,7 @@ typedef long irix_gid_t;
 typedef unsigned long irix_nlink_t;
 typedef long irix_pid_t;
 typedef long irix_time_t;
+typedef unsigned int irix_size_t;
 #endif
 #if 0 /* _MIPS_SZLONG == 64 */
 typedef __uint32_t irix_dev_t;
@@ -74,6 +75,7 @@ typedef __int32_t irix_gid_t;
 typedef __uint32_t irix_nlink_t;
 typedef __int32_t irix_pid_t;
 typedef int irix_time_t;
+typedef unsigned long irix_size_t;
 #endif
 typedef __int64_t irix_blkcnt_t;
 typedef __uint64_t irix_ino64_t;
