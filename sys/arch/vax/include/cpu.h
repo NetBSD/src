@@ -1,4 +1,4 @@
-/*      $NetBSD: cpu.h,v 1.27 1998/05/22 09:49:07 ragge Exp $      */
+/*      $NetBSD: cpu.h,v 1.28 1998/06/09 14:03:24 ragge Exp $      */
 
 /*
  * Copyright (c) 1994 Ludd, University of Lule}, Sweden
@@ -29,6 +29,8 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
+
+#ifdef _KERNEL
 
 #include <sys/cdefs.h>
 #include <sys/device.h>
@@ -118,3 +120,4 @@ void	disk_reallymapin __P((struct buf *, struct pte *, int, int));
 #ifdef DDB
 int	kdbrint __P((int));
 #endif
+#endif /* _KERNEL */
