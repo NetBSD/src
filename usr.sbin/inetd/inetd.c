@@ -1,4 +1,4 @@
-/*	$NetBSD: inetd.c,v 1.18 1997/01/12 06:55:43 mikel Exp $	*/
+/*	$NetBSD: inetd.c,v 1.19 1997/03/04 06:12:44 mikel Exp $	*/
 /*
  * Copyright (c) 1983,1991 The Regents of the University of California.
  * All rights reserved.
@@ -40,7 +40,7 @@ char copyright[] =
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)inetd.c	5.30 (Berkeley) 6/3/91";*/
-static char rcsid[] = "$NetBSD: inetd.c,v 1.18 1997/01/12 06:55:43 mikel Exp $";
+static char rcsid[] = "$NetBSD: inetd.c,v 1.19 1997/03/04 06:12:44 mikel Exp $";
 #endif /* not lint */
 
 /*
@@ -693,10 +693,12 @@ config()
 			n = strlen(sep->se_service);
 			if (n > sizeof sep->se_ctrladdr_un.sun_path - 1)
 				n = sizeof sep->se_ctrladdr_un.sun_path - 1;
-			strncpy(sep->se_ctrladdr_un.sun_path, sep->se_service, n);
+			strncpy(sep->se_ctrladdr_un.sun_path,
+			    sep->se_service, n);
 			sep->se_ctrladdr_un.sun_family = AF_UNIX;
 			sep->se_ctrladdr_size = n +
-					sizeof sep->se_ctrladdr_un.sun_family;
+			    sizeof sep->se_ctrladdr_un -
+			    sizeof sep->se_ctrladdr_un.sun_path;
 			setup(sep);
 			break;
 		case AF_INET:
