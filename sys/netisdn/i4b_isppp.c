@@ -34,7 +34,7 @@
  *	the "cx" driver for Cronyx's HDLC-in-hardware device).  This driver
  *	is only the glue between sppp and i4b.
  *
- *	$Id: i4b_isppp.c,v 1.9 2002/01/06 13:26:46 martin Exp $
+ *	$Id: i4b_isppp.c,v 1.10 2002/01/06 20:18:19 martin Exp $
  *
  * $FreeBSD$
  *
@@ -43,7 +43,7 @@
  *---------------------------------------------------------------------------*/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: i4b_isppp.c,v 1.9 2002/01/06 13:26:46 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: i4b_isppp.c,v 1.10 2002/01/06 20:18:19 martin Exp $");
 
 #ifndef __NetBSD__
 #define USE_ISPPP
@@ -727,12 +727,12 @@ i4bisppp_tx_queue_empty(int unit)
 time_t
 i4bisppp_idletime(int unit)
 {
-#ifdef __NetBSD__
-       return(i4bisppp_softc[unit].sc_cdp->last_active_time);
-#else
 	struct sppp *sp;
 	sp = (struct sppp *) &i4bisppp_softc[unit];
 
+#ifdef __NetBSD__
+       return sp->pp_last_activity;
+#else
 	return((sp->pp_last_recv < sp->pp_last_sent) ?
 			sp->pp_last_sent : sp->pp_last_recv);
 #endif
