@@ -1,4 +1,4 @@
-/*	$NetBSD: sbicvar.h,v 1.1 2001/08/19 03:16:22 wdk Exp $	*/
+/*	$NetBSD: sbicvar.h,v 1.2 2001/11/10 07:32:43 wdk Exp $	*/
 
 /*
  * Copyright (c) 1990 The Regents of the University of California.
@@ -42,37 +42,43 @@
 #include <sys/callout.h>
 #include <sys/malloc.h>
 
-/*
- * DMA chains are used for Scatter-Gather DMA.
- */
-struct  dma_chain {
-    int     dc_count;
-    char    *dc_addr;
-};
+#define SBIC_NTARG	8
+#define SBIC_NLUN	8
+#define SBIC_NTAGS	256
+
+#define SBIC_MAX_MSGLEN 8
+
+#define	SBIC_ABORT_TIMEOUT	2000	/* time to wait for abort */
+#define	SBIC_SENSE_TIMEOUT	1000	/* time to wait for sense */
 
 /*
  * ACB. Holds additional information for each SCSI command Comments: We
  * need a separate scsi command block because we may need to overwrite it
- * with a request sense command.  Basicly, we refrain from fiddling with
+ * with a request sense command.  Basically, we refrain from fiddling with
  * the scsi_xfer struct (except do the expected updating of return values).
  * We'll generally update: xs->{flags,resid,error,sense,status} and
  * occasionally xs->retries.
  */
 struct sbic_acb {
-    TAILQ_ENTRY(sbic_acb)   chain;
-    struct scsipi_xfer        *xs;        /* SCSI xfer ctrl block from above */
-    int                     flags;      /* Status */
-#define ACB_FREE        0x00
-#define ACB_ACTIVE      0x01
-#define ACB_DONE        0x04
-#define ACB_BBUF        0x10    /* DMA input needs to be copied from bounce */
-#define ACB_DATAIN      0x20    /* DMA direction flag */
+	TAILQ_ENTRY(sbic_acb) chain;
+	struct scsipi_xfer *xs;		/* SCSI xfer ctrl block from above */
+	int	flags;			/* Status */
+#define ACB_FREE	0x00
+#define ACB_ACTIVE	0x01
+#define ACB_READY	0x02		/* ACB is on ready list */
+#define ACB_DONE	0x04
+#define ACB_SENSE	0x08		/* ACB Requesting sense */
+#define ACB_COMPLETE	0x10		/* Disconnected at end of xfer */
+#define ACB_RESET	0x20		/* Require Reset */
+#define ACB_ABORT	0x40		/* Require Abort */
 
-    struct  scsi_generic    cmd;        /* SCSI command block */
-    int                     clen;
-    struct  dma_chain       sc_kv;      /* Virtual address of whole DMA */
-    u_long                  sc_tcnt;    /* number of bytes for this DMA */
-    u_short                 sc_usedma;  /* Internal data for this DMA */
+	int	timeout;
+	struct scsi_generic cmd;	/* SCSI command block */
+	int	clen;
+	char	*daddr;			/* kva for data */
+	size_t	dleft;			/* bytes remaining */
+	u_char	tag_type;		/* TAG Type (0x20-0x22, 0=No Tags) */
+	u_char	tag_id;			/* TAG id number */
 };
 
 /*
@@ -80,127 +86,173 @@ struct sbic_acb {
  * probably have been a "per target+lunit" structure, but we'll leave it at
  * this for now.  Is there a way to reliably hook it up to sc->fordriver??
  */
-struct sbic_tinfo {
-    int                     cmds;       /* #commands processed */
-    int                     dconns;     /* #disconnects */
-    int                     lubusy;     /* What local units/subr. are busy? */
-} tinfo_t;
 
-struct  sbic_softc {
-    struct  device          sc_dev;
-    struct  target_sync {
-        u_char  state;
-        u_char  period;
-        u_char  offset;
-    } sc_sync[8];
-    u_char                  target;     /* Currently active target */
-    u_char                  lun;
-    struct  scsipi_channel  sc_channel;    /* proto for sub devices */
-    struct  scsipi_adapter  sc_adapter;
-
-    /* HPC registers */
-    bus_space_tag_t	    sc_hpct;
-    bus_space_handle_t 	    sc_hpch;
-	
-    /* HPC external ethernet registers: aka Seeq 8003 registers */
-    bus_space_tag_t 	    sc_regt;
-    bus_space_handle_t 	    sc_regh;
-
-    bus_dma_tag_t 	    sc_dmat;
-    bus_dmamap_t	    sc_dmamap;	/* DMA Map for this transfer */
-    
-    void                   *sc_driver;  /* driver specific field */
-
-    struct callout	    sc_timo_ch;
-
-    /* Lists of command blocks */
-    TAILQ_HEAD(acb_list, sbic_acb)  free_list,
-                                    ready_list,
-                                    nexus_list;
-
-    struct sbic_acb         *sc_nexus;  /* current command */
-    struct sbic_acb         sc_acb[8];  /* the real command blocks */
-    struct sbic_tinfo       sc_tinfo[8];
-
-    struct  scsipi_xfer       *sc_xs;     /* transfer from high level code */
-    u_int32_t               sc_flags;
-    u_char                  sc_stat[2];
-    u_char                  sc_msg[7];
-    u_long                  sc_clkfreq;
-    u_long                  sc_tcnt;    /* number of bytes transfered */
-    u_short                 sc_usedma;  /* used by dma drivers */
-#ifdef DEBUG
-    u_short                 sc_dmatimo; /* dma timeout */
-#endif
-    int  (*sc_dmasetup)	    __P((struct sbic_softc *, bus_dmamap_t, int));
-    int  (*sc_dmago)        __P((struct sbic_softc *));
-    void (*sc_enintr)       __P((struct sbic_softc *));
-    void (*sc_dmastop)      __P((struct sbic_softc *));
+struct sbic_linfo {
+	LIST_ENTRY(sbic_linfo)	link;
+	time_t	last_used;
+	int	lun;
+	int	used;			/* # slots in use */
+	int	avail;			/* where to start scanning */
+	u_char	state;
+#define L_STATE_IDLE	0
+#define L_STATE_BUSY	1
+#define L_STATE_ESTAT	2
+	struct sbic_acb	*untagged;
+	struct sbic_acb	*queued[SBIC_NTAGS];
 };
 
-/*
- * sc_flags
- */
-#define SBICF_ALIVE         0x01    /* controller initialized */
-#define SBICF_DCFLUSH       0x02    /* need flush for overlap after dma finishes */
-#define SBICF_SELECTED      0x04    /* bus is in selected state. */
-#define SBICF_ICMD          0x08    /* Immediate command in execution */
-#define SBICF_BADDMA        0x10    /* controller can only DMA */
-#define SBICF_DMALOADED     0x20    /* bus_dmamap loaded */
-#define SBICF_INTR          0x40    /* SBICF interrupt expected */
-#define SBICF_INDMA         0x80    /* not used yet, DMA I/O in progress */
+struct sbic_tinfo {
+	int	cmds;			/* # of commands processed */
+	int	dconns;			/* # of disconnects */
 
-/*
- * sync states
- */
-#define SYNC_START          0   /* no sync handshake started */
-#define SYNC_SENT           1   /* we sent sync request, no answer yet */
-#define SYNC_DONE           2   /* target accepted our (or inferior) settings,
-                                   or it rejected the request and we stay async */
+	u_char  flags;
+#define T_NEED_RESET	0x01		/* Should send a BUS_DEV_RESET */
+#define T_NEGOTIATE	0x02		/* (Re)Negotiate synchronous options */
+#define T_BUSY		0x04		/* Target is busy */
+#define T_SYNCMODE	0x08		/* SYNC mode has been negotiated */
+#define T_NOSYNC	0x10		/* Force ASYNC mode */
+#define T_NODISC	0x20		/* Don't allow disconnect */
+#define T_TAG		0x40		/* Turn on TAG QUEUEs */
+	u_char  period;			/* Period suggestion */
+	u_char  offset;			/* Offset suggestion */
+	u_char	nextag;			/* Next available tag */
+	struct sbic_linfo *lun[SBIC_NLUN]; /* LUN list for this target */
+} tinfo_t;
 
-#define PHASE               0x07    /* mask for psns/pctl phase */
-#define DATA_OUT_PHASE      0x00
-#define DATA_IN_PHASE       0x01
-#define CMD_PHASE           0x02
-#define STATUS_PHASE        0x03
-#define BUS_FREE_PHASE      0x04
-#define ARB_SEL_PHASE       0x05    /* Fuji chip combines arbitration with sel. */
-#define MESG_OUT_PHASE      0x06
-#define MESG_IN_PHASE       0x07
+/* Look up a lun in a tinfo */
+#define TINFO_LUN(t, l) 	((t)->lun[(l)])
 
-#define MSG_CMD_COMPLETE    0x00
-#define MSG_EXT_MESSAGE     0x01
-#define MSG_SAVE_DATA_PTR   0x02
-#define MSG_RESTORE_PTR     0x03
-#define MSG_DISCONNECT      0x04
-#define MSG_INIT_DETECT_ERROR   0x05
-#define MSG_ABORT           0x06
-#define MSG_REJECT          0x07
-#define MSG_NOOP            0x08
-#define MSG_PARITY_ERROR    0x09
-#define MSG_BUS_DEVICE_RESET    0x0C
-#define MSG_IDENTIFY        0x80
-#define MSG_IDENTIFY_DR     0xc0    /* (disconnect/reconnect allowed) */
-#define MSG_SYNC_REQ        0x01
+struct  sbic_softc {
+	struct device	sc_dev;
 
-#define MSG_ISIDENTIFY(x)   ((x) & MSG_IDENTIFY)
+	struct scsipi_channel sc_channel; /* proto for sub devices */
+	struct scsipi_adapter sc_adapter;
+	struct device *sc_child;	/* attached scsibus, if any */
+	struct callout sc_watchdog;
+	void	*sc_driver;		/* driver specific field */
+
+	int	target;			/* Currently active target */
+	int	lun;			/* Currently active LUN */
+
+	/* WD33c93 registers */
+	bus_space_tag_t 	sc_regt;
+	bus_space_handle_t 	sc_regh;
 
 
-#define STS_CHECKCOND       0x02    /* Check Condition (ie., read sense) */
-#define STS_CONDMET         0x04    /* Condition Met (ie., search worked) */
-#define STS_BUSY            0x08
-#define STS_INTERMED        0x10    /* Intermediate status sent */
-#define STS_EXT             0x80    /* Extended status valid */
+	/* Data about the current nexus (updated for every cmd switch) */
+	caddr_t	sc_daddr;		/* Current data pointer */
+	size_t	sc_dleft;		/* Data left to transfer */
+	ssize_t	sc_tcnt;		/* number of bytes transfered */
 
+	/* Lists of command blocks */
+	TAILQ_HEAD(acb_list, sbic_acb) ready_list;
+
+	struct sbic_acb	 *sc_nexus;	/* current command */
+	struct sbic_tinfo sc_tinfo[8];
+
+	u_short	sc_state;
+	u_short	sc_status;
+	int	sc_disc;		/* current # of active nexus's */
+	int	sc_flags;
+
+	/* Message stuff */
+	u_short	sc_msgify;		/* Last IDENTIFY message */
+	u_short	sc_msgout;		/* Current message out */
+	u_short	sc_msgpriq;		/* mesg_out queue (bitmap) */
+	u_short	sc_msgoutq;		/* mesg_out queue */
+
+	u_char	sc_imsg[SBIC_MAX_MSGLEN];
+	u_char	sc_omsg[SBIC_MAX_MSGLEN];
+	u_char	sc_imsglen;
+	u_char	sc_omsglen;
+
+	/* Static hardware attributes */
+	int	sc_id;			/* SCSI ID for controller */
+	int	sc_clkfreq;		/* wd33c93 clk freq * 10Mhz */
+	int	sc_chip;		/* Chip variation */
+	int	sc_rev;			/* Chip revision */
+	int	sc_cfflags;		/* Copy of config flags */
+	int	sc_maxxfer;		/* Maximum transfer size */
+	int	sc_minsync;		/* Minimum sync period (4ns units) */
+	int	sc_maxoffset;		/* Maximum sync ofset (bytes) */
+
+	int  (*sc_dmasetup) __P((struct sbic_softc *,caddr_t *,
+					    size_t *,int,size_t *));
+	int  (*sc_dmago) __P((struct sbic_softc *));
+	void (*sc_dmastop) __P((struct sbic_softc *));
+};
+
+/* values for sc_flags */
+#define SBICF_SELECTED		0x01	/* bus is in selected state. */
+#define SBICF_NODMA		0x02	/* Polled transfer */
+#define SBICF_INDMA		0x04	/* DMA I/O in progress */
+#define SBICF_SYNCNEGO		0x08	/* Sync negotiation in progress */
+#define SBICF_ABORTING		0x10	/* Aborting */
+
+/* values for sc_state */
+#define SBIC_UNINITIALIZED     	0	/* Driver not initialized */
+#define SBIC_IDLE		1	/* waiting for something to do */
+#define SBIC_SELECTING		2	/* SCSI command is arbiting  */
+#define SBIC_RESELECTED		3	/* Has been reselected */
+#define SBIC_IDENTIFIED		4	/* Has gotten IFY but not TAG */
+#define SBIC_CONNECTED		5	/* Actively using the SCSI bus */
+#define	SBIC_DISCONNECT		6	/* MSG_DISCONNECT received */
+#define	SBIC_CMDCOMPLETE 	7	/* MSG_CMDCOMPLETE received */
+#define	SBIC_ERROR		8	/* Error has occured */
+#define SBIC_SELTIMEOUT		9	/* Select Timeout */
+#define	SBIC_CLEANING		10	/* Scrubbing ACB's */
+#define SBIC_BUSRESET		11	/* SCSI RST has been issued */
+
+/* values for sc_msgout */
+#define SEND_DEV_RESET		0x0001
+#define SEND_PARITY_ERROR	0x0002
+#define SEND_INIT_DET_ERR	0x0004
+#define SEND_REJECT		0x0008
+#define SEND_IDENTIFY  		0x0010
+#define SEND_ABORT		0x0020
+#define SEND_WDTR		0x0040
+#define SEND_SDTR		0x0080
+#define SEND_TAG		0x0100
+
+/* WD33c93 chipset revisions - values for sc_rev */
+#define	SBIC_CHIP_UNKNOWN	0
+#define	SBIC_CHIP_WD33C93	1
+#define	SBIC_CHIP_WD33C93A	2
+#define	SBIC_CHIP_WD33C93B	3
+
+#define SBIC_CHIP_LIST		{"UNKNOWN", "WD33C93", "WD33C93A", "WD33C93B"}
 
 /*
  * States returned by our state machine
  */
+#define SBIC_STATE_ERROR	-1
+#define SBIC_STATE_DONE		0
+#define SBIC_STATE_RUNNING	1
+#define SBIC_STATE_DISCONNECT	2
 
-#define SBIC_STATE_ERROR    -1
-#define SBIC_STATE_DONE     0
-#define SBIC_STATE_RUNNING  1
-#define SBIC_STATE_DISCONNECT   2
+#define DEBUG_ACBS	0x01
+#define DEBUG_INTS	0x02
+#define DEBUG_CMDS	0x04
+#define DEBUG_MISC	0x08
+#define DEBUG_TRAC	0x10
+#define DEBUG_RSEL	0x20
+#define DEBUG_PHASE	0x40
+#define DEBUG_DMA	0x80
+#define DEBUG_CCMDS	0x100
+#define DEBUG_MSGS	0x200
+#define DEBUG_TAGS	0x400
+#define DEBUG_SYNC	0x800
+
+#ifdef DEBUG
+extern int sbic_debug_flags;
+#define SBIC_DEBUG(level, str)						\
+	do {								\
+		if (sbic_debug & __CONCAT(DEBUG_,level))		\
+			 printf str;					\
+	} while (0)
+#else
+#define SBIC_DEBUG(level, str)
+#endif
 
 struct buf;
 struct scsipi_xfer;
@@ -208,7 +260,7 @@ struct scsipi_xfer;
 void sbic_minphys __P((struct buf *bp));
 void sbic_scsi_request __P((struct scsipi_channel *,
 				scsipi_adapter_req_t, void *));
-void sbicinit __P((struct sbic_softc *));
-int  sbicintr __P((struct sbic_softc *));
+void sbic_attach __P((struct sbic_softc *));
+int  sbic_intr __P((struct sbic_softc *));
 
 #endif /* _SBICVAR_H_ */
