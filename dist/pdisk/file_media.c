@@ -60,6 +60,10 @@
 #ifdef __linux__
 #define LOFF_MAX 9223372036854775807LL
 extern __loff_t llseek __P ((int __fd, __loff_t __offset, int __whence));
+#elif defined(__NetBSD__)
+#define loff_t off_t
+#define llseek lseek
+#define LOFF_MAX LLONG_MAX
 #else
 #define loff_t long
 #define llseek lseek
@@ -256,22 +260,22 @@ read_file_media(MEDIA m, long long offset, unsigned long count, void *address)
     rtn_value = 0;
     if (a == 0) {
 	/* no media */
-	//printf("no media\n");
+	fprintf(stderr,"no media\n");
     } else if (a->m.kind != file_info.kind) {
 	/* wrong kind - XXX need to error here - this is an internal problem */
-	//printf("wrong kind\n");
+	fprintf(stderr,"wrong kind\n");
     } else if (count <= 0 || count % a->m.grain != 0) {
 	/* can't handle size */
-	//printf("bad size\n");
+	fprintf(stderr,"bad size\n");
     } else if (offset < 0 || offset % a->m.grain != 0) {
 	/* can't handle offset */
-	//printf("bad offset\n");
+	fprintf(stderr,"bad offset\n");
     } else if (offset + count > a->m.size_in_bytes && a->m.size_in_bytes != (long long) 0) {
 	/* check for offset (and offset+count) too large */
-	//printf("offset+count too large\n");
+	fprintf(stderr,"offset+count too large\n");
     } else if (offset + count > (long long) LOFF_MAX) {
 	/* check for offset (and offset+count) too large */
-	//printf("offset+count too large 2\n");
+	fprintf(stderr,"offset+count too large 2\n");
     } else {
 	/* do the read */
 	off = offset;
@@ -279,10 +283,10 @@ read_file_media(MEDIA m, long long offset, unsigned long count, void *address)
 	    if ((t = read(a->fd, address, count)) == count) {
 		rtn_value = 1;
 	    } else {
-		//printf("read failed\n");
+		fprintf(stderr,"read failed\n");
 	    }
 	} else {
-	    //printf("lseek failed\n");
+	    fprintf(stderr,"lseek failed\n");
 	}
     }
     return rtn_value;
