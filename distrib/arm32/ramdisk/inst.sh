@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-#	$NetBSD: inst.sh,v 1.2 1997/11/08 02:28:17 mark Exp $
+#	$NetBSD: inst.sh,v 1.3 1999/01/25 23:34:21 garbled Exp $
 #
 # Copyright (c) 1995-1997 Mark Brinicombe
 # All rights reserved.
@@ -50,7 +50,7 @@ Load_tape()
 	echo -n "continue..."
 	read foo
 	echo	"Extracting files from the tape..."
-	$TAR xvpf --unlink /dev/$which
+	pax -rvpe -f /dev/$which
 	echo	"Done."
 }
 
@@ -139,7 +139,7 @@ Load_Tar_Fd()
 	       	echo -n "Insert floppy (type s to stop, enter to load): "
 		read foo
 		if [ "X$foo" = "X" ]; then
-			tar xf /dev/rfd${which}a
+			pax -rf /dev/rfd${which}a
 		fi
 	done	
 }
@@ -164,7 +164,7 @@ Load_Tar_Fd1()
 	       	echo -n "Insert floppy (type s to stop, enter to load): "
 		read foo
 		if [ "X$foo" = "X" ]; then
-			tar xfM /dev/rfd${which}a
+			pax -rf /dev/rfd${which}a
 		fi
 	done	
 }
@@ -606,14 +606,14 @@ List_Sets()
 		fi
 		echo "$set:"
 		if [ -f $set.tar.gz ]; then
-			$TAR -ztvf $set.tar.gz
+			pax -zvf $set.tar.gz
 		elif [ -f $set.00 ]; then
-			cat "$set".[0-9][0-9] | $GUNZIP | $TAR -tpvf -
+			cat "$set".[0-9][0-9] | $GUNZIP | pax -v
 		else
 			if [ $setname = "set" ]; then
-				cat "$set".[a-z][a-z] | $GUNZIP | $TAR -tpvf -
+				cat "$set".[a-z][a-z] | $GUNZIP | pax -v
 			else
-				cat "$set".[A-Z][A-Z] | $GUNZIP | $TAR -tpvf -
+				cat "$set".[A-Z][A-Z] | $GUNZIP | pax -v
 			fi
 		fi
 	done
@@ -771,27 +771,27 @@ Install_Sets()
 			case $verbose in
 			y*|Y*)
 				if [ -f $set.tar.gz ]; then
-					cat "$set".tar.gz | $GUNZIP | (cd $dest_dir ; $TAR  --unlink -xpvf - | tee $filelist)
+					cat "$set".tar.gz | $GUNZIP | (cd $dest_dir ; pax -rvpe | tee $filelist)
 				elif [ -f $set.00 ]; then
-					cat "$set".[0-9][0-9] | $GUNZIP | (cd $dest_dir ; $TAR  --unlink -xpvf - | tee $filelist)
+					cat "$set".[0-9][0-9] | $GUNZIP | (cd $dest_dir ; pax -rvpe - | tee $filelist)
 				else
 					if [ $setname = "set" ]; then
-						cat "$set".[a-z][a-z] | $GUNZIP | (cd $dest_dir ; $TAR  --unlink -xpvf - | tee $filelist)
+						cat "$set".[a-z][a-z] | $GUNZIP | (cd $dest_dir ; pax -rvpe | tee $filelist)
 					else
-						cat "$set".[A-Z][A-Z] | $GUNZIP | (cd $dest_dir ; $TAR  --unlink -xpvf - | tee $filelist)
+						cat "$set".[A-Z][A-Z] | $GUNZIP | (cd $dest_dir ; pax -rvpe | tee $filelist)
 					fi
 				fi
 				;;
 			*)
 				if [ -f $set.tar.gz ]; then
-					cat "$set".tar.gz | $GUNZIP | (cd $dest_dir ; $TAR  --unlink -xpvf - > $filelist)
+					cat "$set".tar.gz | $GUNZIP | (cd $dest_dir ; pax -rvpe > $filelist)
 				elif [ -f $set.00 ]; then
-					cat "$set".[0-9][0-9] | $GUNZIP | (cd $dest_dir ; $TAR  --unlink -xpvf - > $filelist)
+					cat "$set".[0-9][0-9] | $GUNZIP | (cd $dest_dir ; pax -rvpe > $filelist)
 				else
 					if [ $setname = "set" ]; then
-						cat "$set".[a-z][a-z] | $GUNZIP | (cd $dest_dir ; $TAR  --unlink -xpvf - > $filelist)
+						cat "$set".[a-z][a-z] | $GUNZIP | (cd $dest_dir ; pax -rvpe > $filelist)
 					else
-						cat "$set".[A-Z][A-Z] | $GUNZIP | (cd $dest_dir ; $TAR  --unlink -xpvf - > $filelist)
+						cat "$set".[A-Z][A-Z] | $GUNZIP | (cd $dest_dir ; pax -rvpe > $filelist)
 					fi
 				fi
 				;;

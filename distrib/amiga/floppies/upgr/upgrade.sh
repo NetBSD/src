@@ -28,7 +28,7 @@
 # (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 # THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #
-#	$NetBSD: upgrade.sh,v 1.4 1998/01/06 04:45:11 perry Exp $
+#	$NetBSD: upgrade.sh,v 1.5 1999/01/25 23:34:20 garbled Exp $
 
 #	NetBSD upgrade script.
 #	In a perfect world, this would be a nice C program, with a reasonable
@@ -266,7 +266,7 @@ fi
 
 echo	""
 echo	"Copying bootstrapping binaries and config files to the hard drive..."
-$DONTDOIT tar -cf - sbin/mount_ffs | (cd /mnt ; tar --unlink -xpf - )
+$DONTDOIT pax -rwpe sbin/mount_ffs /mnt
 
 echo	""
 echo	"Mounting remaining partitions..."

@@ -1,4 +1,4 @@
-	$NetBSD: contents,v 1.11 1998/01/28 10:38:10 is Exp $	
+	$NetBSD: contents,v 1.12 1999/01/25 23:34:22 garbled Exp $	
 
 The Amiga-specific portion of the NetBSD _VER release is found in the
 "amiga" subdirectory of the distribution.  That subdirectory is laid
@@ -146,8 +146,4 @@ well for the binary sets, but it is worth noting that if you use that
 method, the files are extracted "below" the current directory.  That
 is, if you want to extract the binaries "into" your system, i.e.
 replace the system binaries with them, you have to run the "tar xfp"
-from /.  Also note that if you upgrade or install this way, those
-programs that you are using at the time will NOT be replaced unless
-you run "tar" with the "--unlink" option.  If you follow the normal
-installation or upgrade procedures, this will be taken care of for
-you.
+from /.

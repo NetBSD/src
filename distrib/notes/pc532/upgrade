@@ -1,4 +1,4 @@
-.\"	$NetBSD: upgrade,v 1.8 1999/01/13 07:30:08 ross Exp $
+.\"	$NetBSD: upgrade,v 1.9 1999/01/25 23:34:23 garbled Exp $
 .\"
 .\" Copyright (c) 1999 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -55,12 +55,10 @@ method you use.  Under the install system, extract the
 \&.tgz files as mentioned below or read the i386 INSTALL
 notes for how to use sysinst.
 .It
-Extract the .tgz files.  Remember to use the
-.Ic --unlink
-option with tar so it can replace binaries currently in use.
+Extract the .tgz files.
 For example, to extract base.tgz:
 .Dl Ic cd / 
-.Dl Ic tar -xpzf /gz.files/base.tgz --unlink
+.Dl Ic pax -zrvpe -f /gz.files/base.tgz
 .It
 Extract all the .tgz files you want.  You should carefully
 work at upgrading /etc.  There may be changes to file formats
