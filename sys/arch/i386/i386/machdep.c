@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.216 1996/12/03 23:59:27 fvdl Exp $	*/
+/*	$NetBSD: machdep.c,v 1.217 1996/12/06 22:27:40 fvdl Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994, 1995, 1996 Charles M. Hannum.  All rights reserved.
@@ -428,7 +428,7 @@ struct cpu_nocpuid_nameclass i386_nocpuid_cpus[] = {
 	{ CPUVENDOR_INTEL, "Intel", "486SX",	CPUCLASS_486 },	/* CPU_486SX */
 	{ CPUVENDOR_INTEL, "Intel", "486DX",	CPUCLASS_486 },	/* CPU_486   */
 	{ CPUVENDOR_CYRIX, "Cyrix", "486DLC",	CPUCLASS_486 },	/* CPU_486DLC */
-	{ CPUVENDOR_NEXGEN,"NexGen","586",      CPUCLASS_586 }, /* CPU_NX586 */
+	{ CPUVENDOR_NEXGEN,"NexGen","586",      CPUCLASS_386 }, /* CPU_NX586 */
 };
 
 const char *classnames[] = {
