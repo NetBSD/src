@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# $NetBSD: named,v 1.7 2001/03/12 16:08:38 lukem Exp $
+# $NetBSD: named,v 1.8 2001/10/11 07:10:08 lukem Exp $
 #
 
 # PROVIDE: named
@@ -46,15 +46,8 @@ named_precmd()
 		cmp -s /etc/localtime "${named_chrootdir}/etc/localtime" || \
 		    cp -p /etc/localtime "${named_chrootdir}/etc/localtime"
 	fi
-	if [ ! -h /var/run/named.pid ]; then
-		rm -f /var/run/named.pid
-		ln -s '../../'"${named_chrootdir}/var/run/named.pid" \
-		    /var/run/named.pid
-	fi
-	if [ ! -h /var/run/ndc ]; then
-		rm -f /var/run/ndc
-		ln -s '../../'"${named_chrootdir}/var/run/ndc" /var/run/ndc
-	fi
+	ln -fs "${named_chrootdir}/var/run/named.pid" /var/run/named.pid
+	ln -fs "${named_chrootdir}/var/run/ndc" /var/run/ndc
 
 	#	Change run_rc_commands()'s internal copy of $named_flags
 	#
