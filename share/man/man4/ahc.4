@@ -1,4 +1,4 @@
-.\"	$NetBSD: ahc.4,v 1.21 2002/08/30 21:54:12 abs Exp $
+.\"	$NetBSD: ahc.4,v 1.22 2003/02/04 22:38:15 perry Exp $
 .\"
 .\" Copyright (c) 1995, 1996, 1997, 1998, 2000
 .\" 	Justin T. Gibbs.  All rights reserved.
@@ -413,7 +413,7 @@ Very few Adaptec controller configurations have external SRAM.
 If external SRAM is not available, SCBs are a limited resource.
 Using the SCBs in a straight forward manner would only allow the driver to
 handle as many concurrent transactions as there are physical SCBs.
-To fully utilize the SCSI bus and the devices on it,
+To fully use the SCSI bus and the devices on it,
 requires much more concurrency.
 The solution to this problem is
 .Em SCB Paging ,

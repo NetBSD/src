@@ -1,4 +1,4 @@
-.\"	$NetBSD: disk.9,v 1.19 2002/11/06 03:55:01 enami Exp $
+.\"	$NetBSD: disk.9,v 1.20 2003/02/04 22:38:18 perry Exp $
 .\"
 .\" Copyright (c) 1995, 1996 Jason R. Thorpe.
 .\" All rights reserved.
@@ -174,7 +174,7 @@ is provided as a utility function.
 .Sh USING THE FRAMEWORK
 This section includes a description on basic use of the framework
 and example usage of its functions.
-Actual implementation of a device driver which utilizes the framework
+Actual implementation of a device driver which uses the framework
 may vary.
 .Pp
 A special routine,
@@ -360,7 +360,7 @@ routine is provided.
 This section describes places within the
 .Nx
 source tree where actual
-code implementing or utilizing the disk framework can be found.
+code implementing or using the disk framework can be found.
 All pathnames are relative to
 .Pa /usr/src .
 .Pp
@@ -371,7 +371,7 @@ Data structures and function prototypes for the framework are located in
 .Pp
 The
 .Nx
-machine-independent SCSI disk and CD-ROM drivers utilize the
+machine-independent SCSI disk and CD-ROM drivers use the
 disk framework.
 They are located in
 .Pa sys/scsi/sd.c
@@ -383,7 +383,7 @@ The
 .Nm ccd
 and
 .Nm vnd
-drivers utilize the detachment capability of the framework.
+drivers use the detachment capability of the framework.
 They are located in
 .Pa sys/dev/ccd.c
 and

@@ -1,4 +1,4 @@
-.\"     $NetBSD: pcmcia.9,v 1.9 2002/10/14 13:43:28 wiz Exp $
+.\"     $NetBSD: pcmcia.9,v 1.10 2003/02/04 22:38:19 perry Exp $
 .\"
 .\" Copyright (c) 2001 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -137,7 +137,7 @@ which contains configuration information.
 The tuples in the CIS are used by the controller to uniquely identify
 the device.
 Additional information may be present in the CIS, such as the ethernet
-MAC address, that can be accessed and utilised within a device driver.
+MAC address, that can be accessed and used within a device driver.
 .Pp
 Devices on the PCMCIA bus are uniquely identified by a 32-bit
 manufacturer ID and a 32-bit product ID.
@@ -418,7 +418,7 @@ PCMCIA devices do not support DMA.
 .Sh CODE REFERENCES
 This section describes places within the
 .Nx
-source tree where actual code implementing or utilising the
+source tree where actual code implementing or using the
 machine-independent PCMCIA subsystem can be found.
 All pathnames are relative to
 .Pa /usr/src .
