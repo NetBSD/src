@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.2 2004/08/26 19:01:20 thorpej Exp $
+#	$NetBSD: Makefile,v 1.3 2004/08/26 19:08:10 thorpej Exp $
 
 REQUIRETOOLS=	yes
 NOLINT=		# defined
@@ -7,7 +7,7 @@ NOLINT=		# defined
 
 # If using an external toolchain, we expect crtbegin/crtend to be
 # supplied by that toolchain's run-time support.
-.if !defined(EXTERNAL_TOOLCHAIN) && ${MKGCC} != "no"
+.if !defined(EXTERNAL_TOOLCHAIN) && ${MKGCC} != "no" && ${OBJECT_FMT} == "ELF"
 
 DIST=		${NETBSDSRCDIR}/gnu/dist/gcc
 GNUHOSTDIST=	${DIST}
@@ -59,4 +59,4 @@ tconfig.h:
 
 .include <bsd.prog.mk>			# do nothing
 
-.endif	# ! EXTERNAL_TOOLCHAIN && MKGCC != no
+.endif	# ! EXTERNAL_TOOLCHAIN && MKGCC != no && OBJECT_FMT == ELF
