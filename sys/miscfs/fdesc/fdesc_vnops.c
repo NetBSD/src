@@ -33,7 +33,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	$Id: fdesc_vnops.c,v 1.6 1993/09/07 15:41:18 ws Exp $
+ *	$Id: fdesc_vnops.c,v 1.7 1993/12/23 17:37:33 cgd Exp $
  */
 
 /*
@@ -437,11 +437,12 @@ fdesc_inactive(vp, p)
  * Print out the contents of a /dev/fd vnode.
  */
 /* ARGSUSED */
-void
+int
 fdesc_print(vp)
 	struct vnode *vp;
 {
 	printf("tag VT_FDESC, fdesc vnode\n");
+	return (0);
 }
 
 /*
