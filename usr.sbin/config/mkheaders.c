@@ -1,4 +1,4 @@
-/*	$NetBSD: mkheaders.c,v 1.11 1996/08/31 20:58:22 mycroft Exp $	*/
+/*	$NetBSD: mkheaders.c,v 1.12 1997/02/02 21:12:34 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -53,6 +53,7 @@
 #include "config.h"
 
 static int emitcnt __P((struct nvlist *));
+static int emitopt __P((struct nvlist *));
 static int err __P((const char *, char *, FILE *));
 static char *cntname __P((const char *));
 
@@ -63,6 +64,7 @@ int
 mkheaders()
 {
 	register struct files *fi;
+	register struct nvlist *nv;
 
 	for (fi = allfiles; fi != NULL; fi = fi->fi_next) {
 		if (fi->fi_flags & FI_HIDDEN)
@@ -71,6 +73,11 @@ mkheaders()
 		    emitcnt(fi->fi_optf))
 			return (1);
 	}
+
+	for (nv = defoptions; nv != NULL; nv = nv->nv_next)
+		if (emitopt(nv))
+			return (1);
+
 	return (0);
 }
 
@@ -119,6 +126,64 @@ writeit:
 }
 
 static int
+emitopt(nv)
+	struct nvlist *nv;
+{
+	struct nvlist *option;
+	char new_contents[BUFSIZ], buf[BUFSIZ];
+	char fname[BUFSIZ], *p, c;
+	const char *n;
+	int nlines;
+	FILE *fp;
+
+	/*
+	 * Generate the new contents of the file.
+	 */
+	p = new_contents;
+	if ((option = ht_lookup(opttab, nv->nv_str)) == NULL)
+		p += sprintf(p, "/* option `%s' not defined */\n",
+		    nv->nv_str);
+	else {
+		p += sprintf(p, "#define\t%s", option->nv_name);
+		if (option->nv_str != NULL)
+			p += sprintf(p, "\t%s", option->nv_str);
+		p += sprintf(p, "\n");
+	}
+
+	/*
+	 * Compare the new file to the old.
+	 */
+	sprintf(fname, "opt_%s.h", nv->nv_name);
+	if ((fp = fopen(fname, "r")) == NULL)
+		goto writeit;
+	nlines = 0;
+	while (fgets(buf, sizeof(buf), fp) != NULL) {
+		if (++nlines != 1 ||
+		    strcmp(buf, new_contents) != 0)
+			goto writeit;
+	}
+	if (ferror(fp))
+		return (err("read", fname, fp));
+	(void)fclose(fp);
+	if (nlines == 1)
+		return (0);
+writeit:
+	/*
+	 * They're different, or the file doesn't exist.
+	 */
+	if ((fp = fopen(fname, "w")) == NULL) {
+		(void)fprintf(stderr, "config: cannot write %s: %s\n",
+		    fname, strerror(errno));
+		return (1);
+	}
+	if (fprintf(fp, "%s", new_contents) < 0)
+		return (err("writ", fname, fp));
+	if (fclose(fp))
+		return (err("writ", fname, fp));
+	return (0);
+}
+
+static int
 err(what, fname, fp)
 	const char *what;
 	char *fname;
@@ -129,7 +194,6 @@ err(what, fname, fp)
 	    what, fname, strerror(errno));
 	if (fp)
 		(void)fclose(fp);
-	free(fname);
 	return (1);
 }
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.21 1997/01/31 03:12:32 thorpej Exp $	*/
+/*	$NetBSD: main.c,v 1.22 1997/02/02 21:12:33 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -67,9 +67,9 @@ int	yyparse __P((void));
 extern char *optarg;
 extern int optind;
 
-static struct hashtab *opttab;
 static struct hashtab *mkopttab;
 static struct nvlist **nextopt;
+static struct nvlist **nextdefopt;
 static struct nvlist **nextmkopt;
 static struct nvlist **nextfsopt;
 
@@ -164,9 +164,11 @@ usage:
 	opttab = ht_new();
 	mkopttab = ht_new();
 	fsopttab = ht_new();
+	defopttab = ht_new();
 	nextopt = &options;
 	nextmkopt = &mkoptions;
 	nextfsopt = &fsoptions;
+	nextdefopt = &defoptions;
 
 	/*
 	 * Handle profiling (must do this before we try to create any
@@ -279,6 +281,38 @@ stop()
 {
 	(void)fprintf(stderr, "*** Stop.\n");
 	exit(1);
+}
+
+/*
+ * Define a standard option, for which a header file will be generated.
+ */
+void
+defoption(name)
+	const char *name;
+{
+	register const char *n;
+	register char *p, c;
+	char low[500];
+
+	/*
+	 * Convert to lower case.  The header file name will be
+	 * in lower case, so we store the lower case version in
+	 * the hash table to detect option name collisions.  The
+	 * original string will be stored in the nvlist for use
+	 * in the header file.
+	 */
+	for (n = name, p = low; (c = *n) != '\0'; n++)
+		*p++ = isupper(c) ? tolower(c) : c;
+	*p = 0;
+
+	n = intern(low);
+	(void)do_option(defopttab, &nextdefopt, n, name, "defopt");
+
+	/*
+	 * Insert a verbatum copy of the option name, as well,
+	 * to speed lookups when creating the Makefile.
+	 */
+	(void)ht_insert(defopttab, name, (void *)name);
 }
 
 /*
