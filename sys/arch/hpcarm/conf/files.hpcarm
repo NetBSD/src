@@ -1,4 +1,4 @@
-#	$NetBSD: files.hpcarm,v 1.11 2001/03/10 19:05:40 toshii Exp $
+#	$NetBSD: files.hpcarm,v 1.12 2001/03/14 14:47:40 toshii Exp $
 #
 # First try for arm-specific configuration info
 #
@@ -51,7 +51,7 @@ file	arch/hpcarm/hpcarm/vm_machdep.c
 # H/PC Platform common files.
 #
 include	"arch/hpc/conf/files.hpc"
-#file	arch/hpc/hpc/disksubr.c			disk
+file	arch/hpc/hpc/disksubr.c			disk
 include	"dev/hpc/files.bicons"
 include	"dev/hpc/files.hpcfb"
 include	"dev/hpc/files.hpckbd"
