@@ -1,4 +1,4 @@
-/*	$NetBSD: uhub.c,v 1.39 2000/02/12 23:44:16 augustss Exp $	*/
+/*	$NetBSD: uhub.c,v 1.40 2000/02/29 21:37:01 augustss Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/uhub.c,v 1.18 1999/11/17 22:33:43 n_hibma Exp $	*/
 
 /*
@@ -134,7 +134,7 @@ USB_MATCH(uhub)
 	 * The subclass for hubs seems to be 0 for some and 1 for others,
 	 * so we just ignore the subclass.
 	 */
-	if (uaa->iface == NULL && dd->bDeviceClass == UCLASS_HUB)
+	if (uaa->iface == NULL && dd->bDeviceClass == UDCLASS_HUB)
 		return (UMATCH_DEVCLASS_DEVSUBCLASS);
 	return (UMATCH_NONE);
 }

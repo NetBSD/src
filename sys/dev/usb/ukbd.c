@@ -1,4 +1,4 @@
-/*      $NetBSD: ukbd.c,v 1.55 2000/02/02 13:18:46 augustss Exp $        */
+/*      $NetBSD: ukbd.c,v 1.56 2000/02/29 21:37:01 augustss Exp $        */
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -78,8 +78,6 @@ int	ukbddebug = 0;
 #define DPRINTF(x)
 #define DPRINTFN(n,x)
 #endif
-
-#define UPROTO_BOOT_KEYBOARD 1
 
 #define NKEYCODE 6
 
@@ -253,9 +251,9 @@ USB_MATCH(ukbd)
 		return (UMATCH_NONE);
 	id = usbd_get_interface_descriptor(uaa->iface);
 	if (id == NULL ||
-	    id->bInterfaceClass != UCLASS_HID || 
-	    id->bInterfaceSubClass != USUBCLASS_BOOT ||
-	    id->bInterfaceProtocol != UPROTO_BOOT_KEYBOARD)
+	    id->bInterfaceClass != UICLASS_HID || 
+	    id->bInterfaceSubClass != UISUBCLASS_BOOT ||
+	    id->bInterfaceProtocol != UIPROTO_BOOT_KEYBOARD)
 		return (UMATCH_NONE);
 	return (UMATCH_IFACECLASS_IFACESUBCLASS_IFACEPROTO);
 }
