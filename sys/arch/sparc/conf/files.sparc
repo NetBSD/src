@@ -1,4 +1,4 @@
-#	$NetBSD: files.sparc,v 1.112 2002/04/22 09:41:21 augustss Exp $
+#	$NetBSD: files.sparc,v 1.113 2002/07/17 02:23:15 thorpej Exp $
 
 # @(#)files.sparc	8.1 (Berkeley) 7/19/93
 # sparc-specific configuration info
@@ -7,6 +7,7 @@ defflag	opt_sparc_arch.h	SUN4
 defflag	opt_sparc_arch.h	SUN4_MMU3L
 defflag	opt_sparc_arch.h	SUN4C
 defflag	opt_sparc_arch.h	SUN4M
+defflag	opt_sparc_arch.h	SUN4D
 defflag	opt_sparc_arch.h	SUN4U
 defflag	opt_sparc_arch.h	MSIIEP
 
