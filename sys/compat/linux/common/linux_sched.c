@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_sched.c,v 1.17 2004/09/09 10:45:52 tron Exp $	*/
+/*	$NetBSD: linux_sched.c,v 1.18 2004/09/10 22:22:20 wiz Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_sched.c,v 1.17 2004/09/09 10:45:52 tron Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_sched.c,v 1.18 2004/09/10 22:22:20 wiz Exp $");
 
 #include <sys/param.h>
 #include <sys/mount.h>
@@ -359,7 +359,7 @@ linux_sys_exit_group(l, v, retval)
 	 * in the same thread group (i.e. all threads created
 	 * via clone(2) with CLONE_THREAD flag set). This appears
 	 * to not be used yet, so the thread group handling
-	 * is currenly not implemented.
+	 * is currently not implemented.
 	 */
 
 	exit1(l, W_EXITCODE(SCARG(uap, error_code), 0));
