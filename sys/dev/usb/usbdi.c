@@ -1,4 +1,4 @@
-/*	$NetBSD: usbdi.c,v 1.69 2000/03/27 12:33:58 augustss Exp $	*/
+/*	$NetBSD: usbdi.c,v 1.70 2000/03/28 09:48:25 augustss Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/usbdi.c,v 1.28 1999/11/17 22:33:49 n_hibma Exp $	*/
 
 /*
@@ -321,6 +321,7 @@ usbd_transfer(xfer)
 				if (xfer->done)
 					break;
 			}
+			/* XXX Is this right, what about the HC timeout? */
 			if (!xfer->done) {
 				pipe->methods->abort(xfer);
 				xfer->status = USBD_TIMEOUT;
