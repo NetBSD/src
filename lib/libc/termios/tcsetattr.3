@@ -1,7 +1,7 @@
-.\"	$NetBSD: tcsetattr.3,v 1.3 1997/10/01 16:39:56 kleink Exp $
+.\"	$NetBSD: tcsetattr.3,v 1.4 1998/02/02 05:49:53 perry Exp $
 .\"
-.\" Copyright (c) 1991 The Regents of the University of California.
-.\" All rights reserved.
+.\" Copyright (c) 1991, 1993
+.\"	The Regents of the University of California.  All rights reserved.
 .\"
 .\" Redistribution and use in source and binary forms, with or without
 .\" modification, are permitted provided that the following conditions
@@ -31,9 +31,9 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.\"	@(#)tcsetattr.3	5.2 (Berkeley) 3/4/92
+.\"	@(#)tcsetattr.3	8.3 (Berkeley) 1/2/94
 .\"
-.Dd March 4, 1992
+.Dd January 2, 1994
 .Dt TCSETATTR 3
 .Os
 .Sh NAME
@@ -231,7 +231,7 @@ should be used when changing parameters that affect output.
 .It Fa TCSAFLUSH
 The change occurs after all output written to
 .Fa fd
-has been transmitted to the terminal
+has been transmitted to the terminal.
 Additionally, any input that has been received but not read is discarded.
 .It Fa TCSASOFT
 If this value is
@@ -259,9 +259,8 @@ the output baud rate.
 .Pp
 If
 .Nm tcsetattr
-is unable able to make any of the requested changes, it returns -1 and
-sets 
-.Va errno .
+is unable to make any of the requested changes, it returns -1 and
+sets errno.
 Otherwise, it makes all of the requested changes it can.
 If the specified input and output baud rates differ and are a combination
 that is not supported, neither baud rate is changed.
