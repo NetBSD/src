@@ -1,4 +1,4 @@
-/* $NetBSD: pcdisplay_subr.c,v 1.22 2002/07/01 13:17:48 christos Exp $ */
+/* $NetBSD: pcdisplay_subr.c,v 1.23 2002/07/07 06:36:32 junyoung Exp $ */
 
 /*
  * Copyright (c) 1995, 1996 Carnegie-Mellon University.
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pcdisplay_subr.c,v 1.22 2002/07/01 13:17:48 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pcdisplay_subr.c,v 1.23 2002/07/07 06:36:32 junyoung Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -64,8 +64,8 @@ pcdisplay_cursor_init(scr, existing)
 		 */
 		memt = scr->hdl->ph_memt;
 		memh = scr->hdl->ph_memh;
-		off = (scr->vc_crow * scr->type->ncols + scr->vc_ccol) * 2 +
-		    scr->dispoffset;
+		off = (scr->cursorrow * scr->type->ncols + scr->cursorcol) * 2
+		    + scr->dispoffset;
 
 		scr->cursortmp = bus_space_read_2(memt, memh, off);
 		bus_space_write_2(memt, memh, off, scr->cursortmp ^ 0x7700);
@@ -100,7 +100,7 @@ pcdisplay_cursor(id, on, row, col)
 
 	/* Remove old cursor image */
 	if (scr->cursoron) {
-		off = scr->vc_crow * scr->type->ncols + scr->vc_ccol;
+		off = scr->cursorrow * scr->type->ncols + scr->cursorcol;
 		if (scr->active)
 			bus_space_write_2(memt, memh, scr->dispoffset + off * 2,
 			    scr->cursortmp);
@@ -108,13 +108,13 @@ pcdisplay_cursor(id, on, row, col)
 			scr->mem[off] = scr->cursortmp;
 	}
 		
-	scr->vc_crow = row;
-	scr->vc_ccol = col;
+	scr->cursorrow = row;
+	scr->cursorcol = col;
 
 	if ((scr->cursoron = on) == 0)
 		return;
 
-	off = (scr->vc_crow * scr->type->ncols + scr->vc_ccol);
+	off = (scr->cursorrow * scr->type->ncols + scr->cursorcol);
 	if (scr->active) {
 		off = off * 2 + scr->dispoffset;
 		scr->cursortmp = bus_space_read_2(memt, memh, off);
@@ -127,8 +127,8 @@ pcdisplay_cursor(id, on, row, col)
 	struct pcdisplayscreen *scr = id;
 	int pos;
 
-	scr->vc_crow = row;
-	scr->vc_ccol = col;
+	scr->cursorrow = row;
+	scr->cusrorcol = col;
 	scr->cursoron = on;
 
 	if (scr->active) {

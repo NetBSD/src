@@ -1,4 +1,4 @@
-/* $NetBSD: vga.c,v 1.59 2002/07/04 14:37:11 junyoung Exp $ */
+/* $NetBSD: vga.c,v 1.60 2002/07/07 06:36:33 junyoung Exp $ */
 
 /*
  * Copyright (c) 1995, 1996 Carnegie-Mellon University.
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vga.c,v 1.59 2002/07/04 14:37:11 junyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vga.c,v 1.60 2002/07/07 06:36:33 junyoung Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -516,8 +516,8 @@ vga_init_screen(struct vga_config *vc, struct vgascreen *scr,
 		scr->pcs.dispoffset = scr->mindispoffset;
 	}
 
-	scr->pcs.vc_crow = cpos / type->ncols;
-	scr->pcs.vc_ccol = cpos % type->ncols;
+	scr->pcs.cursorrow = cpos / type->ncols;
+	scr->pcs.cursorcol = cpos % type->ncols;
 	pcdisplay_cursor_init(&scr->pcs, existing);
 
 #ifdef __alpha__
@@ -708,8 +708,8 @@ vga_cnattach(bus_space_tag_t iot, bus_space_tag_t memt, int type, int check)
 	vga_init_screen(&vga_console_vc, &vga_console_screen, scr, 1, &defattr);
 
 	wsdisplay_cnattach(scr, &vga_console_screen,
-			   vga_console_screen.pcs.vc_ccol,
-			   vga_console_screen.pcs.vc_crow,
+			   vga_console_screen.pcs.cursorcol,
+			   vga_console_screen.pcs.cursorrow,
 			   defattr);
 
 	vgaconsole = 1;
@@ -848,8 +848,8 @@ vga_alloc_screen(void *v, const struct wsscreen_descr *type, void **cookiep,
 	}
 
 	*cookiep = scr;
-	*curxp = scr->pcs.vc_ccol;
-	*curyp = scr->pcs.vc_crow;
+	*curxp = scr->pcs.cursorcol;
+	*curyp = scr->pcs.cursorrow;
 
 	return (0);
 }
@@ -1021,7 +1021,7 @@ vga_doswitch(struct vga_config *vc)
 	vc->active = scr;
 
 	pcdisplay_cursor(&scr->pcs, scr->pcs.cursoron,
-			 scr->pcs.vc_crow, scr->pcs.vc_ccol);
+			 scr->pcs.cursorrow, scr->pcs.cursorcol);
 
 	vc->wantedscreen = 0;
 	if (vc->switchcb)
@@ -1103,7 +1103,7 @@ vga_copyrows(void *id, int srcrow, int dstrow, int nrows)
 
 			if (cursoron)
 				pcdisplay_cursor(&scr->pcs, 0,
-				    scr->pcs.vc_crow, scr->pcs.vc_ccol);
+				    scr->pcs.cursorrow, scr->pcs.cursorcol);
 #endif
 			/* scroll up whole screen */
 			if ((scr->pcs.dispoffset + srcrow * ncols * 2)
@@ -1123,7 +1123,7 @@ vga_copyrows(void *id, int srcrow, int dstrow, int nrows)
 #ifdef PCDISPLAY_SOFTCURSOR
 			if (cursoron)
 				pcdisplay_cursor(&scr->pcs, 1,
-				    scr->pcs.vc_crow, scr->pcs.vc_ccol);
+				    scr->pcs.cursorrow, scr->pcs.cursorcol);
 #endif
 		} else {
 			bus_space_copy_region_2(memt, memh,

@@ -1,4 +1,4 @@
-/* $NetBSD: ega.c,v 1.10 2002/07/04 14:37:11 junyoung Exp $ */
+/* $NetBSD: ega.c,v 1.11 2002/07/07 06:36:34 junyoung Exp $ */
 
 /*
  * Copyright (c) 1999
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ega.c,v 1.10 2002/07/04 14:37:11 junyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ega.c,v 1.11 2002/07/07 06:36:34 junyoung Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -384,8 +384,8 @@ ega_init_screen(vc, scr, type, existing, attrp)
 		scr->pcs.dispoffset = scr->mindispoffset;
 	}
 
-	scr->pcs.vc_crow = cpos / type->ncols;
-	scr->pcs.vc_ccol = cpos % type->ncols;
+	scr->pcs.cursorrow = cpos / type->ncols;
+	scr->pcs.cursorcol = cpos % type->ncols;
 	pcdisplay_cursor_init(&scr->pcs, existing);
 
 	res = ega_allocattr(scr, 0, 0, 0, attrp);
@@ -574,8 +574,8 @@ ega_cnattach(iot, memt)
 	ega_console_dc.active = &ega_console_screen;
 
 	wsdisplay_cnattach(scr, &ega_console_screen,
-			   ega_console_screen.pcs.vc_ccol,
-			   ega_console_screen.pcs.vc_crow,
+			   ega_console_screen.pcs.cursorcol,
+			   ega_console_screen.pcs.cursorrow,
 			   defattr);
 
 	egaconsole = 1;
@@ -651,8 +651,8 @@ ega_alloc_screen(v, type, cookiep, curxp, curyp, defattrp)
 	}
 
 	*cookiep = scr;
-	*curxp = scr->pcs.vc_ccol;
-	*curyp = scr->pcs.vc_crow;
+	*curxp = scr->pcs.cursorcol;
+	*curyp = scr->pcs.cursorrow;
 	return (0);
 }
 
@@ -783,7 +783,7 @@ ega_doswitch(vc)
 	vc->active = scr;
 
 	pcdisplay_cursor(&scr->pcs, scr->pcs.cursoron,
-			 scr->pcs.vc_crow, scr->pcs.vc_ccol);
+			 scr->pcs.cursorrow, scr->pcs.cursorcol);
 
 	vc->wantedscreen = 0;
 	if (vc->switchcb)
@@ -905,7 +905,7 @@ ega_copyrows(id, srcrow, dstrow, nrows)
 
 			if (cursoron)
 				pcdisplay_cursor(&scr->pcs, 0,
-				    scr->pcs.vc_crow, scr->pcs.vc_ccol);
+				    scr->pcs.cursorrow, scr->pcs.cursorcol);
 #endif
 			/* scroll up whole screen */
 			if ((scr->pcs.dispoffset + srcrow * ncols * 2)
@@ -925,7 +925,7 @@ ega_copyrows(id, srcrow, dstrow, nrows)
 #ifdef PCDISPLAY_SOFTCURSOR
 			if (cursoron)
 				pcdisplay_cursor(&scr->pcs, 1,
-				    scr->pcs.vc_crow, scr->pcs.vc_ccol);
+				    scr->pcs.cursorrow, scr->pcs.cursorcol);
 #endif
 		} else {
 			bus_space_copy_region_2(memt, memh,

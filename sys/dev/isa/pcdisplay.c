@@ -1,4 +1,4 @@
-/* $NetBSD: pcdisplay.c,v 1.18 2002/07/04 14:37:11 junyoung Exp $ */
+/* $NetBSD: pcdisplay.c,v 1.19 2002/07/07 06:36:34 junyoung Exp $ */
 
 /*
  * Copyright (c) 1998
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pcdisplay.c,v 1.18 2002/07/04 14:37:11 junyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pcdisplay.c,v 1.19 2002/07/07 06:36:34 junyoung Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -221,8 +221,8 @@ pcdisplay_init(dc, iot, memt, mono)
 
 	dc->pcs.dispoffset = 0;
 
-	dc->pcs.vc_crow = cpos / pcdisplay_scr.ncols;
-	dc->pcs.vc_ccol = cpos % pcdisplay_scr.ncols;
+	dc->pcs.cursorrow = cpos / pcdisplay_scr.ncols;
+	dc->pcs.cursorcol = cpos % pcdisplay_scr.ncols;
 	pcdisplay_cursor_init(&dc->pcs, 1);
 }
 
@@ -362,8 +362,8 @@ pcdisplay_cnattach(iot, memt)
 	pcdisplay_init(&pcdisplay_console_dc, iot, memt, mono);
 
 	wsdisplay_cnattach(&pcdisplay_scr, &pcdisplay_console_dc,
-			   pcdisplay_console_dc.pcs.vc_ccol,
-			   pcdisplay_console_dc.pcs.vc_crow,
+			   pcdisplay_console_dc.pcs.cursorcol,
+			   pcdisplay_console_dc.pcs.cursorrow,
 			   FG_LIGHTGREY | BG_BLACK);
 
 	pcdisplayconsole = 1;
