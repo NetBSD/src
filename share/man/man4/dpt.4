@@ -1,4 +1,4 @@
-.\"	$NetBSD: dpt.4,v 1.13 2000/07/31 11:45:48 ad Exp $
+.\"	$NetBSD: dpt.4,v 1.14 2001/03/20 13:09:40 ad Exp $
 .\"
 .\" Copyright (c) 1999, 2000 Andy Doran <ad@NetBSD.org>
 .\" All rights reserved.
@@ -52,9 +52,10 @@ remaining transparent to the host operating system.
 .Sh HARDWARE
 The
 .Nm
-driver provides support for the following
-.Tn SCSI
-adapters:
+driver provides support for the adapters listed below.  Later models are
+supported by the
+.Nm iop
+driver.
 .Pp
 .Bl -tag -width -offset indent -compact
 .It Tn DPT SmartCache III
@@ -83,6 +84,7 @@ A corrupt or incomplete status packet was recieved from the HBA.
 .El
 .Sh SEE ALSO
 .Xr intro 4 ,
+.Xr iop 4 ,
 .Xr cd 4 ,
 .Xr ch 4 ,
 .Xr scsi 4 ,
@@ -94,7 +96,7 @@ protocol.
 .Sh AUTHOR
 The
 .Nm
-driver was written by Andy Doran
+driver was written by Andrew Doran
 .Aq ad@netbsd.org , 
 based upon the 
 .Nm uha
