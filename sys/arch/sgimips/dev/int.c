@@ -1,4 +1,4 @@
-/*	$NetBSD: int.c,v 1.4 2004/03/25 15:06:37 pooka Exp $	*/
+/*	$NetBSD: int.c,v 1.5 2004/03/25 15:08:57 pooka Exp $	*/
 
 /*
  * Copyright (c) 2004 Christopher SEKIYA
@@ -28,11 +28,11 @@
  */
 
 /*
- * INT/INT2/INT3 interrupt controller (used in ip1x and ip2x-class machines)
+ * INT/INT2/INT3 interrupt controller (used in Indy's, Indigo's, etc..)
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: int.c,v 1.4 2004/03/25 15:06:37 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: int.c,v 1.5 2004/03/25 15:08:57 pooka Exp $");
 
 #include "opt_cputype.h"
 
