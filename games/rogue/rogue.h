@@ -1,4 +1,4 @@
-/*	$NetBSD: rogue.h,v 1.10 1999/09/12 09:02:23 jsm Exp $	*/
+/*	$NetBSD: rogue.h,v 1.11 1999/09/13 17:14:08 jsm Exp $	*/
 
 /*
  * Copyright (c) 1988, 1993
@@ -436,21 +436,7 @@ struct rogue_time {
 	short second;	/* 0 - 59 */
 };
 
-#ifdef CURSES
-struct _win_st {
-	short _cury, _curx;
-	short _maxy, _maxx;
-};
-
-typedef struct _win_st WINDOW;
-
-extern int LINES, COLS;
-extern WINDOW *curscr;
-extern char *CL;
-
-#else
 #include <curses.h>
-#endif
 
 /*
  * external routine declarations.
@@ -601,11 +587,9 @@ void	make_room __P((short, short, short, short));
 void	make_scroll_titles __P((void));
 boolean	mask_pack __P((const object *, unsigned short));
 boolean	mask_room __P((short, short *, short *, unsigned short));
-void	md_cbreak_no_echo_nonl __P((boolean));
 boolean	md_df __P((const char *));
 void	md_exit __P((int)) __attribute__((__noreturn__));
 void	md_gct __P((struct rogue_time *));
-char   *md_gdtcf __P((void));
 int	md_get_file_id __P((const char *));
 void	md_gfmt __P((const char *, struct rogue_time *));
 int	md_gseed __P((void));
@@ -616,7 +600,6 @@ void	md_lock __P((boolean));
 void	md_shell __P((const char *));
 void	md_sleep __P((int));
 void	md_slurp __P((void));
-void	md_tstp __P((void));
 void	message __P((const char *, boolean));
 void	mix_colors __P((void));
 void	mix_colors __P((void));
