@@ -1,4 +1,4 @@
-/*	$NetBSD: ncr53c9x.c,v 1.14 1997/07/22 18:55:20 pk Exp $	*/
+/*	$NetBSD: ncr53c9x.c,v 1.15 1997/07/29 22:26:01 pk Exp $	*/
 
 /*
  * Copyright (c) 1996 Charles M. Hannum.  All rights reserved.
@@ -337,6 +337,7 @@ ncr53c9x_init(sc, doreset)
 		NCRCMD(sc, NCRCMD_RSTSCSI);
 	} else {
 		sc->sc_state = NCR_IDLE;
+		ncr53c9x_sched(sc);
 	}
 }
 
@@ -771,8 +772,10 @@ ncr53c9x_done(sc, ecb)
 		ti->lubusy &= ~(1 << sc_link->lun);
 	if (ecb == sc->sc_nexus) {
 		sc->sc_nexus = NULL;
-		sc->sc_state = NCR_IDLE;
-		ncr53c9x_sched(sc);
+		if (sc->sc_state != NCR_CLEANING) {
+			sc->sc_state = NCR_IDLE;
+			ncr53c9x_sched(sc);
+		}
 	} else
 		ncr53c9x_dequeue(sc, ecb);
 		
