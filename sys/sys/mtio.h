@@ -31,7 +31,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)mtio.h	7.6 (Berkeley) 2/5/91
- *	$Id: mtio.h,v 1.6 1994/02/01 20:43:17 mycroft Exp $
+ *	$Id: mtio.h,v 1.7 1994/04/05 21:07:19 mycroft Exp $
  */
 
 #ifndef _SYS_MTIO_H_
@@ -56,10 +56,14 @@ struct mtop {
 #define MTREW		5	/* rewind */
 #define MTOFFL		6	/* rewind and put the drive offline */
 #define MTNOP		7	/* no operation, sets status only */
-#define MTCACHE		8	/* enable controller cache */
-#define MTNOCACHE	9	/* disable controller cache */
-#define	MTSETBSIZ	10	/* set block size; 0 for variable */
-#define	MTSETDNSTY	11	/* set density code for current mode */
+#define	MTRETEN		8	/* retension */
+#define	MTERASE		9	/* erase entire tape */
+#define	MTEOM		10	/* forward to end of media */
+#define	MTNBSF		11	/* backward space to beginning of file */
+#define MTCACHE		12	/* enable controller cache */
+#define MTNOCACHE	13	/* disable controller cache */
+#define	MTSETBSIZ	14	/* set block size; 0 for variable */
+#define	MTSETDNSTY	15	/* set density code for current mode */
 
 /* structure for MTIOCGET - mag tape get status command */
 
@@ -70,14 +74,14 @@ struct mtget {
 	short	mt_erreg;	/* ``error'' register */
 /* end device-dependent registers */
 	short	mt_resid;	/* residual count */
-	daddr_t	mt_blksiz;	/* current block size */
-	daddr_t	mt_density;	/* current density code */
-	daddr_t	mt_mblksiz[4];	/* block size for different modes */
-	daddr_t mt_mdensity[4];	/* density codes for different modes */
 /* the following two are not yet implemented */
 	daddr_t	mt_fileno;	/* file number of current position */
 	daddr_t	mt_blkno;	/* block number of current position */
 /* end not yet implemented */
+	daddr_t	mt_blksiz;	/* current block size */
+	daddr_t	mt_density;	/* current density code */
+	daddr_t	mt_mblksiz[4];	/* block size for different modes */
+	daddr_t mt_mdensity[4];	/* density codes for different modes */
 };
 
 /*
