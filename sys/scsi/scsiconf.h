@@ -14,7 +14,7 @@
  *
  * Ported to run under 386BSD by Julian Elischer (julian@tfs.com) Sept 1992
  *
- *	$Id: scsiconf.h,v 1.4.3.3 1993/11/24 19:19:47 mycroft Exp $
+ *	$Id: scsiconf.h,v 1.4.3.4 1993/11/28 11:54:33 mycroft Exp $
  */
 #ifndef	SCSI_SCSICONF_H
 #define SCSI_SCSICONF_H 1
@@ -70,11 +70,11 @@ typedef	unsigned char 		u_int8;
  */
 struct scsi_adapter
 {
-/* 4*/	int32		(*scsi_cmd)();
+/* 4*/	int		(*scsi_cmd)();
 /* 8*/	void		(*scsi_minphys)();
 /*12*/	int32		(*open_target_lu)();
 /*16*/	int32		(*close_target_lu)();
-/*20*/	u_int32		(*adapter_info)(); /* see definitions below */
+/*20*/	u_int		(*adapter_info)(); /* see definitions below */
 /*24*/	char		*name; /* name of scsi bus controller */
 /*32*/	u_long	spare[2];
 };
