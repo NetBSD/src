@@ -1,5 +1,5 @@
 #	from: @(#)Makefile	8.26 (Berkeley) 1/12/94
-#	$Id: Makefile,v 1.2 1994/01/24 06:38:43 cgd Exp $
+#	$Id: Makefile,v 1.3 1994/01/24 07:09:12 cgd Exp $
 
 PROG=	nvi
 MAN1=	vi.0
@@ -9,7 +9,7 @@ CFLAGS+=-I. -I${.CURDIR} -I${.CURDIR}/ex -I${.CURDIR}/vi
 #STRIP=
 .PATH:	${.CURDIR}/ex ${.CURDIR}/sex ${.CURDIR}/vi ${.CURDIR}/svi \
 	${.CURDIR}/xaw
-CLEANFILES+=nex
+#CLEANFILES+=nex						# cgd
 
 # General sources.
 SRCS=	ascii.c cut.c delete.c exf.c line.c log.c main.c mark.c \
@@ -47,15 +47,21 @@ SRCS+=	svi_confirm.c svi_ex.c svi_get.c svi_line.c svi_refresh.c \
 SRCS+=	xaw_screen.c
 
 #LDADD+=-pg
-DPADD+= ${LIBCURSES} ${LIBTERM}
+#DPADD+= ${LIBCURSES} ${LIBTERM}				# cgd
+DPADD+= ${LIBCURSES} ${LIBTERM} ${LIBUTIL}
 LDADD+=	-lcurses -ltermlib -lutil
 SPECHDR=excmd.h options.h
 CLEANFILES+=${SPECHDR}
-LINKS=	${BINDIR}/nvi ${BINDIR}/nex
+#LINKS=	${BINDIR}/nvi ${BINDIR}/nex				# cgd
+LINKS=	${BINDIR}/vi ${BINDIR}/ex
+LINKS+=	${BINDIR}/vi ${BINDIR}/view
+MLINKS=	vi.1 ex.1 vi.1 view.1
 
-all: nvi vi.0
-	rm -f nex
-	ln nvi nex
+#all: nvi vi.0							# cgd
+#	rm -f nex
+#	ln nvi nex
+
+all: ${SPECHDR}							# cgd
 
 warn:: ${SRCS}
 	-(cd ${.CURDIR} && \
@@ -93,6 +99,10 @@ excmd.h: excmd.h.stub excmd.c # Makefile
 	 echo '}') > /tmp/__vi.excmd.h
 	 awk -f /tmp/__vi.excmd.h ${.CURDIR}/ex/excmd.c >> excmd.h
 	 rm -f /tmp/__vi.excmd.h
+
+realinstall:							# cgd
+	install ${COPY} ${STRIP} -o ${BINOWN} -g ${BINGRP} -m ${BINMODE} \
+	    ${PROG} ${DESTDIR}${BINDIR}/vi
 
 .include <bsd.prog.mk>
 
