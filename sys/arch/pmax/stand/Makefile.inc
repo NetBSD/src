@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.6 1999/02/22 11:57:18 simonb Exp $
+#	$NetBSD: Makefile.inc,v 1.7 1999/02/23 01:23:26 simonb Exp $
 #
 #	NOTE: $S must correspond to the top of the 'sys' tree
 
@@ -13,7 +13,7 @@ machine:
 	ln -s $S/arch/pmax/include ${.TARGET}
 
 # Tailor C compilation for standalone environment.
-COPTS=	-O2		# -O2 gives smaller code
+COPTS=	-Os				# -Os gives smaller code
 
 C_MACHDEP=-mmemcpy -mno-abicalls -G 128	# even smaller code
 
