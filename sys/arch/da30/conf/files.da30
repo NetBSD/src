@@ -1,6 +1,9 @@
-#	$NetBSD: files.da30,v 1.5 1995/01/25 04:58:12 cgd Exp $
+#	$NetBSD: files.da30,v 1.6 1995/01/25 20:45:45 cgd Exp $
 
 # config file for da30
+
+# maxpartitions must be first item in files.${ARCH}.newconf
+maxpartitions 8
 
 device iio at root { slot = -1, ipl = 0 }
 
