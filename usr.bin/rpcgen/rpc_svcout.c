@@ -1,4 +1,4 @@
-/*	$NetBSD: rpc_svcout.c,v 1.12 2001/03/21 00:30:39 mycroft Exp $	*/
+/*	$NetBSD: rpc_svcout.c,v 1.13 2001/03/21 19:20:18 mycroft Exp $	*/
 /*
  * Sun RPC is a product of Sun Microsystems, Inc. and is provided for
  * unrestricted use provided that this legend is included on all tape
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)rpc_svcout.c 1.29 89/03/30 (C) 1987 SMI";
 #else
-__RCSID("$NetBSD: rpc_svcout.c,v 1.12 2001/03/21 00:30:39 mycroft Exp $");
+__RCSID("$NetBSD: rpc_svcout.c,v 1.13 2001/03/21 19:20:18 mycroft Exp $");
 #endif
 #endif
 
@@ -499,10 +499,9 @@ write_program(def, storage)
 					f_print(fout, "\t\t%s = (char *(*)())", ROUTINE);
 			}
 
-			if (newstyle) {	/* new style: calls internal routine */
+			if (newstyle)	/* new style: calls internal routine */
 				f_print(fout, "_");
-			}
-			if (!newstyle)
+			if (Cflag)
 				pvname_svc(proc->proc_name, vp->vers_num);
 			else
 				pvname(proc->proc_name, vp->vers_num);
@@ -552,15 +551,17 @@ write_program(def, storage)
 		f_print(fout, "\t\texit(1);\n");
 		f_print(fout, "\t}\n");
 
-		f_print(fout, "\tif (!");
-		pvname(def->def_name, vp->vers_num);
-		f_print(fout, "_freeresult");
-		f_print(fout, "(%s, xdr_%s, (caddr_t)&%s)) {\n", TRANSP, RESULT,
-		    RESULT);
-		(void) sprintf(_errbuf, "unable to free results");
-		print_err_message("\t\t");
-		f_print(fout, "\t\texit(1);\n");
-		f_print(fout, "\t}\n");
+		if (Mflag) {
+			f_print(fout, "\tif (!");
+			pvname(def->def_name, vp->vers_num);
+			f_print(fout, "_freeresult");
+			f_print(fout, "(%s, xdr_%s, (caddr_t)&%s)) {\n",
+			    TRANSP, RESULT, RESULT);
+			(void) sprintf(_errbuf, "unable to free results");
+			print_err_message("\t\t");
+			f_print(fout, "\t\texit(1);\n");
+			f_print(fout, "\t}\n");
+		}
 
 		print_return("\t");
 		f_print(fout, "}\n");
