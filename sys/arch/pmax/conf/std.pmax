@@ -1,0 +1,13 @@
+#	$NetBSD: std.pmax,v 1.8.4.2 1998/10/15 05:16:41 nisimura Exp $
+# standard, required pmax info
+
+machine pmax mips
+
+# Non-optional options
+options 	SWAPPAGER	# paging
+options 	VNODEPAGER	# mmap() of files
+options 	DEVPAGER	# mmap() of devices
+
+# Standard exec-package options
+options 	EXEC_ELF32	# 32-bit ELF support (native format)
+options 	EXEC_SCRIPT	# exec of #! scripts
