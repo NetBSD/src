@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.44 2001/06/10 07:49:13 matt Exp $	*/
+/*	$NetBSD: trap.c,v 1.45 2001/06/10 15:54:05 tsubai Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -163,7 +163,7 @@ trap(frame)
 		break;
 	case EXC_ISI:
 		printf("trap: kernel ISI by %#x (SRR1 %#x)\n",
-		    frame->dar, frame->srr0, frame->srr1);
+		    frame->srr0, frame->srr1);
 		goto brain_damage2;
 	case EXC_ISI|EXC_USER:
 		KERNEL_PROC_LOCK(p);
