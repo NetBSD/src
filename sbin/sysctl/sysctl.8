@@ -1,4 +1,4 @@
-.\"	$NetBSD: sysctl.8,v 1.40 2000/02/09 09:14:52 jdolecek Exp $
+.\"	$NetBSD: sysctl.8,v 1.41 2000/02/15 19:59:02 thorpej Exp $
 .\"
 .\" Copyright (c) 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -169,6 +169,7 @@ privilege can change the value.
 .It kern.vdisable	integer	no
 .It kern.version	string	no
 .It machdep.console_device	dev_t	no
+.It net.inet.icmp.errratelimit	integer	yes
 .It net.inet.icmp.maskrepl	integer	yes
 .It net.inet.ip.allowsrcrt	integer	yes
 .It net.inet.ip.anonportmax	integer	yes
@@ -205,6 +206,7 @@ privilege can change the value.
 .It net.inet.tcp.mssdflt	integer	yes
 .It net.inet.tcp.recvspace	integer	yes
 .It net.inet.tcp.rfc1323	integer	yes
+.It net.inet.tcp.rstratelimit	integer	yes
 .It net.inet.tcp.sack	integer	yes
 .It net.inet.tcp.sendspace	integer	yes
 .It net.inet.tcp.slowhz	integer	no
