@@ -1,3 +1,7 @@
+#if defined(LIBC_SCCS) && !defined(lint)
+static char *rcsid = "$Id: shmget.c,v 1.2 1993/08/26 15:26:21 brezak Exp $";
+#endif /* LIBC_SCCS and not lint */
+
 #include <sys/types.h>
 #include <sys/ipc.h>
 #include <sys/shm.h>
