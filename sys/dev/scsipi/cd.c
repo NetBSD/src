@@ -1,4 +1,4 @@
-/*	$NetBSD: cd.c,v 1.83 1996/03/17 00:59:41 thorpej Exp $	*/
+/*	$NetBSD: cd.c,v 1.84 1996/03/19 03:05:15 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Charles M. Hannum.  All rights reserved.
@@ -553,9 +553,7 @@ cdstart(v)
 			bzero(&cmd_small, sizeof(cmd_small));
 			cmd_small.opcode = (bp->b_flags & B_READ) ?
 			    READ_COMMAND : WRITE_COMMAND;
-			cmd_small.addr_2 = (blkno >> 16) & 0x1f;
-			cmd_small.addr_1 = (blkno >> 8) & 0xff;
-			cmd_small.addr_0 = blkno & 0xff;
+			_lto3b(blkno, cmd_small.addr);
 			cmd_small.length = nblks & 0xff;
 			cmdlen = sizeof(cmd_small);
 			cmdp = (struct scsi_generic *)&cmd_small;
@@ -566,12 +564,8 @@ cdstart(v)
 			bzero(&cmd_big, sizeof(cmd_big));
 			cmd_big.opcode = (bp->b_flags & B_READ) ?
 			    READ_BIG : WRITE_BIG;
-			cmd_big.addr_3 = (blkno >> 24) & 0xff;
-			cmd_big.addr_2 = (blkno >> 16) & 0xff;
-			cmd_big.addr_1 = (blkno >> 8) & 0xff;
-			cmd_big.addr_0 = blkno & 0xff;
-			cmd_big.length2 = (nblks >> 8) & 0xff;
-			cmd_big.length1 = nblks & 0xff;
+			_lto4b(blkno, cmd_big.addr);
+			_lto2b(nblks, cmd_big.length);
 			cmdlen = sizeof(cmd_big);
 			cmdp = (struct scsi_generic *)&cmd_big;
 		}
@@ -734,9 +728,8 @@ cdioctl(dev, cmd, addr, flag, p)
 					   &data, len);
 		if (error)
 			return error;
-		len = min(len, ((data.header.data_len[0] << 8) +
-		    data.header.data_len[1] +
-		    sizeof(struct cd_sub_channel_header)));
+		len = min(len, _2btol(data.header.data_len) +
+		    sizeof(struct cd_sub_channel_header));
 		return copyout(&data, args->data, len);
 	}
 	case CDIOREADTOCHEADER: {
@@ -972,14 +965,12 @@ cd_size(cd, flags)
 	    2000, NULL, flags | SCSI_DATA_IN) != 0)
 		return 0;
 
-	blksize = (rdcap.length_3 << 24) + (rdcap.length_2 << 16) +
-	    (rdcap.length_1 << 8) + rdcap.length_0;
+	blksize = _4btol(rdcap.length);
 	if (blksize < 512)
 		blksize = 2048;	/* some drives lie ! */
 	cd->params.blksize = blksize;
 
-	size = (rdcap.addr_3 << 24) + (rdcap.addr_2 << 16) +
-	    (rdcap.addr_1 << 8) + rdcap.addr_0 + 1;
+	size = _4btol(rdcap.addr) + 1;
 	if (size < 100)
 		size = 400000;	/* ditto */
 	cd->params.disksize = size;
@@ -1040,12 +1031,8 @@ cd_play(cd, blkno, nblks)
 
 	bzero(&scsi_cmd, sizeof(scsi_cmd));
 	scsi_cmd.opcode = PLAY;
-	scsi_cmd.blk_addr[0] = (blkno >> 24) & 0xff;
-	scsi_cmd.blk_addr[1] = (blkno >> 16) & 0xff;
-	scsi_cmd.blk_addr[2] = (blkno >> 8) & 0xff;
-	scsi_cmd.blk_addr[3] = blkno & 0xff;
-	scsi_cmd.xfer_len[0] = (nblks >> 8) & 0xff;
-	scsi_cmd.xfer_len[1] = nblks & 0xff;
+	_lto4b(blkno, scsi_cmd.blk_addr);
+	_lto2b(nblks, scsi_cmd.xfer_len);
 	return scsi_scsi_cmd(cd->sc_link, (struct scsi_generic *)&scsi_cmd,
 	    sizeof(scsi_cmd), 0, 0, CDRETRIES, 200000, NULL, 0);
 }
@@ -1062,14 +1049,8 @@ cd_play_big(cd, blkno, nblks)
 
 	bzero(&scsi_cmd, sizeof(scsi_cmd));
 	scsi_cmd.opcode = PLAY_BIG;
-	scsi_cmd.blk_addr[0] = (blkno >> 24) & 0xff;
-	scsi_cmd.blk_addr[1] = (blkno >> 16) & 0xff;
-	scsi_cmd.blk_addr[2] = (blkno >> 8) & 0xff;
-	scsi_cmd.blk_addr[3] = blkno & 0xff;
-	scsi_cmd.xfer_len[0] = (nblks >> 24) & 0xff;
-	scsi_cmd.xfer_len[1] = (nblks >> 16) & 0xff;
-	scsi_cmd.xfer_len[2] = (nblks >> 8) & 0xff;
-	scsi_cmd.xfer_len[3] = nblks & 0xff;
+	_lto4b(blkno, scsi_cmd.blk_addr);
+	_lto4b(nblks, scsi_cmd.xfer_len);
 	return scsi_scsi_cmd(cd->sc_link, (struct scsi_generic *)&scsi_cmd,
 	    sizeof(scsi_cmd), 0, 0, CDRETRIES, 20000, NULL, 0);
 }
@@ -1163,8 +1144,7 @@ cd_read_subchannel(cd, mode, format, track, data, len)
 	scsi_cmd.byte3 = SRS_SUBQ;
 	scsi_cmd.subchan_format = format;
 	scsi_cmd.track = track;
-	scsi_cmd.data_len[0] = (len >> 8) & 0xff;
-	scsi_cmd.data_len[1] = len & 0xff;
+	_lto2b(len, scsi_cmd.data_len);
 	return scsi_scsi_cmd(cd->sc_link, (struct scsi_generic *)&scsi_cmd,
 	    sizeof(struct scsi_read_subchannel), (u_char *)data, len,
 	    CDRETRIES, 5000, NULL, SCSI_DATA_IN);
@@ -1191,8 +1171,7 @@ cd_read_toc(cd, mode, start, data, len)
 	if (mode == CD_MSF_FORMAT)
 		scsi_cmd.byte2 |= CD_MSF;
 	scsi_cmd.from_track = start;
-	scsi_cmd.data_len[0] = (ntoc >> 8) & 0xff;
-	scsi_cmd.data_len[1] = ntoc & 0xff;
+	_lto2b(ntoc, scsi_cmd.data_len);
 	return scsi_scsi_cmd(cd->sc_link, (struct scsi_generic *)&scsi_cmd,
 	    sizeof(struct scsi_read_toc), (u_char *)data, len, CDRETRIES,
 	    5000, NULL, SCSI_DATA_IN);

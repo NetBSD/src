@@ -1,4 +1,4 @@
-/*	$NetBSD: ss_mustek.c,v 1.1 1996/02/18 20:32:47 mycroft Exp $	*/
+/*	$NetBSD: ss_mustek.c,v 1.2 1996/03/19 03:05:15 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1995 Joachim Koenig-Baltes.  All rights reserved.
@@ -277,9 +277,7 @@ mustek_trigger_scanner(ss)
 	struct mustek_set_window_data window_data;
 	struct mustek_start_scan_cmd start_scan_cmd;
 	struct scsi_link *sc_link = ss->sc_link;
-#ifndef MUSTEK_INCH_SPEC
 	int pixel_tlx, pixel_tly, pixel_brx, pixel_bry, paperlength;
-#endif
 	int error;
 
 	mustek_compute_sizes(ss);
@@ -294,46 +292,29 @@ mustek_trigger_scanner(ss)
 	window_cmd.length = sizeof(window_data);
 
 	bzero(&window_data, sizeof(window_data));
-	window_data.frame_header = MUSTEK_LINEART_BACKGROUND | MUSTEK_UNIT_SPEC;
+	window_data.frame.header = MUSTEK_LINEART_BACKGROUND | MUSTEK_UNIT_SPEC;
 #ifdef MUSTEK_INCH_SPEC
 	/* the positional values are all 1 byte because 256 / 8 = 32" */
-	window_data.frame_tl_x_0 = ss->sio.scan_x_origin / 150;
-	window_data.frame_tl_x_1 = 0;
-	window_data.frame_tl_y_0 = ss->sio.scan_y_origin / 150;
-	window_data.frame_tl_y_1 = 0;
-	window_data.frame_br_x_0 = (ss->sio.scan_x_origin +
-				    ss->sio.scan_width) / 150;
-	window_data.frame_br_x_1 = 0;
-	window_data.frame_br_y_0 = (ss->sio.scan_y_origin +
-				    ss->sio.scan_height) / 150;
-	window_data.frame_br_y_1 = 0;
+	pixel_tlx = ss->sio.scan_x_origin / 150;
+	pixel_tly = ss->sio.scan_y_origin / 150;
+	pixel_brx = pixel_tlx + ss->sio.scan_width / 150;
+	pixel_bry = pixel_tly + ss->sio.scan_height / 150;
 #else
 	pixel_tlx = (ss->sio.scan_x_origin * ss->sio.scan_x_resolution) / 1200;
-	window_data.frame_tl_x_0 = pixel_tlx & 0xff;
-	window_data.frame_tl_x_1 = (pixel_tlx >> 8) & 0xff;
 	pixel_tly = (ss->sio.scan_y_origin * ss->sio.scan_y_resolution) / 1200;
-	window_data.frame_tl_y_0 = pixel_tly & 0xff;
-	window_data.frame_tl_y_1 = (pixel_tly >> 8) & 0xff;
 	pixel_brx = pixel_tlx +
 	    (ss->sio.scan_width * ss->sio.scan_x_resolution) / 1200;
-	window_data.frame_br_x_0 = pixel_brx & 0xff;
-	window_data.frame_br_x_1 = (pixel_brx >> 8) & 0xff;
 	pixel_bry = pixel_tly +
 	    (ss->sio.scan_height * ss->sio.scan_y_resolution) / 1200;
-	window_data.frame_br_y_0 = pixel_bry & 0xff;
-	window_data.frame_br_y_1 = (pixel_bry >> 8) & 0xff;
 #endif
+	_lto2l(pixel_tlx, window_data.frame.tl_x);
+	_lto2l(pixel_tly, window_data.frame.tl_y);
+	_lto2l(pixel_brx, window_data.frame.br_x);
+	_lto2l(pixel_bry, window_data.frame.br_y);
 
 #if MUSTEK_WINDOWS >= 1
-	window_data.window1_header = MUSTEK_WINDOW_MASK | MUSTEK_UNIT_SPEC;
-	window_data.window1_tl_x_0 = window_data.frame_tl_x_0;
-	window_data.window1_tl_x_1 = window_data.frame_tl_x_1;
-	window_data.window1_tl_y_0 = window_data.frame_tl_y_0;
-	window_data.window1_tl_y_1 = window_data.frame_tl_y_1;
-	window_data.window1_br_x_0 = window_data.frame_br_x_0;
-	window_data.window1_br_x_1 = window_data.frame_br_x_1;
-	window_data.window1_br_y_0 = window_data.frame_br_y_0;
-	window_data.window1_br_y_1 = window_data.frame_br_y_1;
+	window_data.window1 = window_data.frame;
+	window_data.window1.header = MUSTEK_WINDOW_MASK | MUSTEK_UNIT_SPEC;
 #endif
 
 	/* send the set window command to the scanner */
@@ -349,7 +330,7 @@ mustek_trigger_scanner(ss)
 	 */
 	bzero(&mode_cmd, sizeof(mode_cmd));
 	mode_cmd.opcode = MUSTEK_MODE_SELECT;
-	mode_cmd.length_0 = sizeof(mode_data);
+	_lto2b(sizeof(mode_data), mode_cmd.length);
 
 	bzero(&mode_data, sizeof(mode_data));
 	mode_data.mode =
@@ -369,13 +350,11 @@ mustek_trigger_scanner(ss)
 	mode_data.grain = 0;
 	mode_data.velocity = ss->sio.scan_quality / 20 - 1;
 #ifdef MUSTEK_INCH_SPEC
-	mode_data.paperlength_0 = 14 * 8;	/* 14" */
-	mode_data.paperlength_1 = 0;
+	paperlength = 14 * 8;	/* 14" */
 #else
-	paperlength = 14 * ss->sio.scan_y_resolution; /* 14" */
-	mode_data.paperlength_0 = paperlength & 0xff;
-	mode_data.paperlength_1 = (paperlength >> 8) & 0xff;
+	paperlength = 14 * ss->sio.scan_y_resolution;	/* 14" */
 #endif
+	_lto2l(paperlength, mode_data.paperlength);
 
 	SC_DEBUG(sc_link, SDEV_DB1, ("mustek_trigger_scanner: mode_select\n"));
 	/* send the command to the scanner */
@@ -492,9 +471,7 @@ mustek_read(ss, bp)
 	    ((ss->sio.scan_pixels_per_line * ss->sio.scan_bits_per_pixel) / 8);
 	SC_DEBUG(sc_link, SDEV_DB1, ("mustek_read: read %d lines\n",
 	    lines_to_read));
-	cmd.length_0 = lines_to_read & 0xff;
-	cmd.length_1 = (lines_to_read >> 8) & 0xff;
-	cmd.length_2 = (lines_to_read >> 16) & 0xff;
+	_lto3b(lines_to_read, cmd.length);
 
 	/*
 	 * go ask the adapter to do all this for us
@@ -547,13 +524,8 @@ mustek_get_status(ss, timeout, update)
 	}
 
 	if (update) {
-		bytes_per_line =
-		    (data.bytes_per_line_1 << 8) |
-		    data.bytes_per_line_0;
-		lines =
-		    (data.lines_2 << 16) |
-		    (data.lines_1 << 8) |
-		    data.lines_0;
+		bytes_per_line = _2ltol(data.bytes_per_line);
+		lines = _3ltol(data.lines);
 		if (lines != ss->sio.scan_lines) {
 			printf("mustek: lines actual(%d) != computed(%d)\n",
 			    lines, ss->sio.scan_lines);
