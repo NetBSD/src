@@ -1,3 +1,0 @@
-$NetBSD: version,v 1.1 2001/11/01 22:50:19 thorpej Exp $
-
-1.1:		Boot program for OpenFirmware; initial revision
