@@ -1,4 +1,4 @@
-#	$Id: Makefile,v 1.11 1994/05/21 03:22:42 cgd Exp $
+#	$Id: Makefile,v 1.12 1994/06/30 04:26:07 deraadt Exp $
 
 LIB=	kern
 NOPIC=
@@ -13,9 +13,9 @@ machine-links:
 
 all:	machine-links
 
-.if exists (${.CURDIR}/${MACHINE_ARCH}/Makefile.inc)
-.PATH:	${.CURDIR}/${MACHINE_ARCH}
-.include "${.CURDIR}/${MACHINE_ARCH}/Makefile.inc"
+.if exists (${.CURDIR}/arch/${MACHINE_ARCH}/Makefile.inc)
+.PATH:	${.CURDIR}/arch/${MACHINE_ARCH}
+.include "${.CURDIR}/arch/${MACHINE_ARCH}/Makefile.inc"
 .endif
 
 LIBC=	${.CURDIR}/../../../lib/libc
