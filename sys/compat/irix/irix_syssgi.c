@@ -1,4 +1,4 @@
-/*	$NetBSD: irix_syssgi.c,v 1.19 2002/03/10 22:36:28 manu Exp $ */
+/*	$NetBSD: irix_syssgi.c,v 1.20 2002/03/13 07:54:18 manu Exp $ */
 
 /*-
  * Copyright (c) 2001-2002 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: irix_syssgi.c,v 1.19 2002/03/10 22:36:28 manu Exp $");
+__KERNEL_RCSID(0, "$NetBSD: irix_syssgi.c,v 1.20 2002/03/13 07:54:18 manu Exp $");
 
 #include "opt_ddb.h"
 
@@ -202,6 +202,16 @@ irix_sys_syssgi(p, v, retval)
 
 	case IRIX_SGI_RXEV_GET:		/* Trusted IRIX call */
 		/* Undocumented (?) and unimplemented */
+		return 0;
+		break;
+
+	case IRIX_SGI_FDHI:	/* Undocumented: get higher open fd + 1? */
+#ifdef DEBUG_IRIX
+		printf("IRIX_SGI_FDHI: arg1 = 0x%x, arg2 = 0x%x, arg3 = 0x%x\n",
+		    (int)SCARG(uap, arg1), (int)SCARG(uap, arg2), 
+		    (int)SCARG(uap, arg3));
+#endif
+		*retval = (register_t)(p->p_fd->fd_lastfile + 1);
 		return 0;
 		break;
 
