@@ -1,4 +1,4 @@
-/* $NetBSD: ast.c,v 1.1 1996/01/31 23:15:05 mark Exp $ */
+/* $NetBSD: ast.c,v 1.2 1996/03/08 18:54:55 mark Exp $ */
 
 /*
  * Copyright (c) 1994,1995 Mark Brinicombe
@@ -38,9 +38,6 @@
  * Code to handle ast's and returns to user mode
  *
  * Created      : 11/10/94
- * Last updated : 28/08/95
- *
- *    $Id: ast.c,v 1.1 1996/01/31 23:15:05 mark Exp $
  */
 
 #include <sys/param.h>
@@ -53,11 +50,9 @@
 #include <machine/cpu.h>
 #include <machine/frame.h>
 #include <machine/katelib.h>
+#include <machine/psl.h>
 
 int want_resched = 0;
-#ifdef DIAGNOSTIC
-extern u_int spl_mask;
-#endif
 
 void
 userret(p, pc, oticks)
@@ -76,8 +71,8 @@ userret(p, pc, oticks)
 		panic("userret called in non SVC mode !");
 	}
 
-	if (spl_mask != 0xffffffff)
-		printf("WARNING: spl_mask=%08x\n", spl_mask);
+	if (current_spl_level != SPL_0)
+		printf("WARNING: (1) current spl level=%d\n", current_spl_level);
 #endif
 
 /* take pending signals */
@@ -89,8 +84,7 @@ userret(p, pc, oticks)
 	p->p_priority = p->p_usrpri;
 
 /*
- * Check for reschedule request, at the moment there is only
- * 1 ast so this code should always be run
+ * Check for reschedule request
  */
 
 	if (want_resched) {
@@ -103,40 +97,32 @@ userret(p, pc, oticks)
          * indicated by our priority
          */
 
-/*
-		s = splhigh();
-        	printf("userret: want_resched proc=%08x pid=%d pc=%08x\n", p, p->p_pid, pc);
-        	splx(s);
-*/
 	        s = splstatclock();
 		setrunqueue(p);
 		p->p_stats->p_ru.ru_nivcsw++;
 
 		mi_switch();
 
-		splx(s);
+		(void)splx(s);
 		while ((sig = (CURSIG(p))) != 0) {
 			postsig(sig);
 		}
 	}
 
 /*
- * The profiling bit is commented out at the moment. This can be reinstated
- * later on. Currently addupc_task is not written.
+ * Not sure if this profiling bit is working yet ... Not been tested
  */
 
 	if (p->p_flag & P_PROFIL) {
-/*#ifdef notyet*/
 		extern int psratio;
-		addupc_task(p, pc, (int)(p->p_sticks - oticks) * psratio );
-/*#endif*/
+		addupc_task(p, pc, (int)(p->p_sticks - oticks) * psratio);
 	}
 
 	curpriority = p->p_priority;
 
 #ifdef DIAGNOSTIC
-	if (spl_mask != 0xffffffff)
-		printf("WARNING:(1) spl_mask=%08x\n", spl_mask);
+	if (current_spl_level != SPL_0)
+		printf("WARNING: (2) current spl level=%d\n", current_spl_level);
 #endif
 }
 
