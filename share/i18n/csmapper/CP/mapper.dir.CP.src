@@ -1,4 +1,4 @@
-# $NetBSD: mapper.dir.CP.src,v 1.1 2003/06/27 08:40:25 tshiozak Exp $
+# $NetBSD: mapper.dir.CP.src,v 1.2 2003/07/19 20:20:40 tshiozak Exp $
 
-CP932KANJI/UCS			mapper_parallel	JISX0208:1990/UCS,CP932EXT/UCS
-UCS/CP932KANJI			mapper_parallel	UCS/JISX0208:1990,UCS/CP932EXT
+CP932KANJI/UCS			mapper_parallel	JISX0208:MS/UCS,CP932EXT/UCS
+UCS/CP932KANJI			mapper_parallel	UCS/JISX0208:MS,UCS/CP932EXT
