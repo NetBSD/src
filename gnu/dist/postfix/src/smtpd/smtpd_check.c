@@ -920,7 +920,7 @@ static int reject_non_fqdn_hostname(SMTPD_STATE *state, char *name,
     return (stat);
 }
 
-/* reject_unknown_hostname - fail if name has no A or MX record */
+/* reject_unknown_hostname - fail if name has no A, AAAA or MX record */
 
 static int reject_unknown_hostname(SMTPD_STATE *state, char *name,
 				        char *reply_name, char *reply_class)
@@ -932,7 +932,7 @@ static int reject_unknown_hostname(SMTPD_STATE *state, char *name,
 	msg_info("%s: %s", myname, name);
 
     dns_status = dns_lookup_types(name, 0, (DNS_RR **) 0, (VSTRING *) 0,
-				  (VSTRING *) 0, T_A, T_MX, 0);
+				  (VSTRING *) 0, T_A, T_AAAA, T_MX, 0);
     if (dns_status != DNS_OK)
 	return (smtpd_check_reject(state, MAIL_ERROR_POLICY,
 				   "%d <%s>: %s rejected: Host not found",
@@ -942,7 +942,7 @@ static int reject_unknown_hostname(SMTPD_STATE *state, char *name,
     return (SMTPD_CHECK_DUNNO);
 }
 
-/* reject_unknown_mailhost - fail if name has no A or MX record */
+/* reject_unknown_mailhost - fail if name has no A, AAAA or MX record */
 
 static int reject_unknown_mailhost(SMTPD_STATE *state, const char *name,
 		            const char *reply_name, const char *reply_class)
@@ -954,7 +954,7 @@ static int reject_unknown_mailhost(SMTPD_STATE *state, const char *name,
 	msg_info("%s: %s", myname, name);
 
     dns_status = dns_lookup_types(name, 0, (DNS_RR **) 0, (VSTRING *) 0,
-				  (VSTRING *) 0, T_A, T_MX, 0);
+				  (VSTRING *) 0, T_A, T_AAAA, T_MX, 0);
     if (dns_status != DNS_OK)
 	return (smtpd_check_reject(state, MAIL_ERROR_POLICY,
 				   "%d <%s>: %s rejected: Domain not found",
