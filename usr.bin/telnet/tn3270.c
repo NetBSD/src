@@ -1,4 +1,4 @@
-/*	$NetBSD: tn3270.c,v 1.19 2003/07/14 16:06:49 itojun Exp $	*/
+/*	$NetBSD: tn3270.c,v 1.20 2003/07/16 15:14:19 itojun Exp $	*/
 
 /*
  * Copyright (c) 1988, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)tn3270.c	8.2 (Berkeley) 5/30/95";
 #else
-__RCSID("$NetBSD: tn3270.c,v 1.19 2003/07/14 16:06:49 itojun Exp $");
+__RCSID("$NetBSD: tn3270.c,v 1.20 2003/07/16 15:14:19 itojun Exp $");
 #endif
 #endif /* not lint */
 
@@ -289,9 +289,6 @@ int
 _putchar(int cc)
 {
     char c = (char)cc;
-#if	defined(sun)		/* SunOS 4.0 bug */
-    c &= 0x7f;
-#endif	/* defined(sun) */
     if (cursesdata) {
 	Dump('>', &c, 1);
     }
