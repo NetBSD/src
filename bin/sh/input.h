@@ -33,7 +33,8 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	@(#)input.h	8.1 (Berkeley) 5/31/93
+ *	from: @(#)input.h	8.1 (Berkeley) 5/31/93
+ *	$Id: input.h,v 1.6 1994/06/11 16:12:00 mycroft Exp $
  */
 
 /* PEOF (the end of file marker) is defined in syntax.h */

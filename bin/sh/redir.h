@@ -33,7 +33,8 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	@(#)redir.h	8.1 (Berkeley) 5/31/93
+ *	from: @(#)redir.h	8.1 (Berkeley) 5/31/93
+ *	$Id: redir.h,v 1.7 1994/06/11 16:12:31 mycroft Exp $
  */
 
 /* flags passed to redirect */
