@@ -1,8 +1,8 @@
 .\"
 .\" Copyright (c) 1990 Jan-Simon Pendry
 .\" Copyright (c) 1990 Imperial College of Science, Technology & Medicine
-.\" Copyright (c) 1990, 1991, 1993
-.\"	The Regents of the University of California.  All rights reserved.
+.\" Copyright (c) 1990 The Regents of the University of California.
+.\" All rights reserved.
 .\"
 .\" This code is derived from software contributed to Berkeley by
 .\" Jan-Simon Pendry at Imperial College, London.
@@ -17,8 +17,8 @@
 .\"    documentation and/or other materials provided with the distribution.
 .\" 3. All advertising materials mentioning features or use of this software
 .\"    must display the following acknowledgement:
-.\"	This product includes software developed by the University of
-.\"	California, Berkeley and its contributors.
+.\"      This product includes software developed by the University of
+.\"      California, Berkeley and its contributors.
 .\" 4. Neither the name of the University nor the names of its contributors
 .\"    may be used to endorse or promote products derived from this software
 .\"    without specific prior written permission.
@@ -35,95 +35,105 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.\"     from: @(#)amq.8	8.3 (Berkeley) 4/18/94
-.\"	$Id: amq.8,v 1.7 1997/03/08 14:28:15 mouse Exp $
+.\"	%W% (Berkeley) %G%
 .\"
-.Dd March 16, 1991
-.Dt AMQ 8
-.Os
-.Sh NAME
-.Nm amq
-.Nd automounter query tool
-.Sh SYNOPSIS
-.Nm amq
-.Op Fl f
-.Op Fl h Ar hostname
-.Op Fl M Ar mountmap_entry
-.Op Fl m
-.Op Fl s
-.Op Fl u
-.Op Fl v
-.Op Ar directory
-.Ar ...
-.Sh DESCRIPTION
-.Nm Amq
-provides a simple way of determining the current state of the
-.Xr amd 8
+.\" $Id: amq.8,v 1.8 1997/07/24 23:17:27 christos Exp $
+.\"
+.TH AMQ 8 "25 April 1989"
+.SH NAME
+amq \- automounter query tool
+.SH SYNOPSIS
+.B amq
+[
+.BI \-h " hostname"
+] [
+.BI \-M " mountmap entry"
+] [
+.B \-f
+] [
+.B \-m
+] [
+.B \-s
+] [
+.B \-u
+] [
+.B \-v
+]
+[
+.I directory
+] .\|.\|.
+.SH DESCRIPTION
+.B Amq
+provides a simple way of determining the current state of
+.B amd
 program.
 Communication is by
-.Tn RPC .
+.SM RPC.
 Three modes of operation are supported by the current protocol.
 By default a list of mount points and auto-mounted filesystems
 is output.
 An alternative host can be specified using the
-.Fl h
+.I \-h
 option.
-.Pp
+.LP
 If directory names are given, as output by default,
 then per-filesystem information is displayed.
-.Sh OPTIONS
-.Bl -tag -width Ds
-.It Fl f
-Request automounter to flush the internal caches.
-.It Fl h Ar hostname
-Query alternative host
-.Ar hostname .
+.SH OPTIONS
+The
+.I \-h
+option specifies an alternate host to query.
 By default the local host is used.  In an
-.Tn HP-UX
+.SM HP-UX
 cluster, the root server is queried by default, since
 that is the system on which the automounter is normally run.
-.It Fl m
-Request the automounter to provide a list of mounted filesystems,
+.LP
+The
+.I \-f
+option asks the automounter to flush the internal caches.
+The
+.I \-m
+option asks the automounter to provide a list of mounted filesystems,
 including the number of references to each filesystem and any error
-which occurred while mounting.
-.It Fl s
-Request the automounter to provide system-wide mount statistics.
-.It Fl u
-Request the automounter to unmount the named filesystems
+which occured while mounting.
+The
+.I \-s
+option asks the automounter to provide system-wide mount statistics.
+.LP
+The
+.I \-u
+option asks the automounter to unmount the named filesystems
 instead of providing information about them.  Unmounts are requested,
 not forced.  They merely cause the mounted filesystem to timeout,
 which will be picked up by
-.Xr amd Ns \'s
+.BR amd 's
 main scheduler thus causing the normal timeout action to be taken.
-.It Fl v
-Request the automounter to provide version information.  This is a subset
-of the information provided by
-.Xr amd Ns \'s Fl v
+.LP
+The
+.I \-v
+option asks the automounter for its version information.  This is a
+subset of the information output by
+.BR amd 's
+.I -v
 option.
-.It Fl M
-Request automounter to add the given map entry to the root map and then
-trigger a mount request for it.
-.El
-.Sh FILES
-.Bl -tag -width amq.xxxxx -compact
-.Bl -tag -width Ds
-.It Pa amq.x
-.Tn RPC
+.LP
+The
+.I \-M
+option passes a mount map entry to
+.B amd
+and waits for it to be evaluated, possible causing a mount.
+.SH FILES
+.PD 0
+.TP 20
+.B amq.x
+.SM RPC
 protocol description.
-.El
-.Sh CAVEATS
-.Nm Amq
+.SH CAVEATS
+.B Amq
 uses a Sun registered
-.Tn RPC
+.SM RPC
 program number (300019 decimal) which may not
-be in the
-.Pa /etc/rpc
-database.
-.Sh SEE ALSO
-.Xr amd 8
-.Sh AUTHOR
-.An Jan-Simon Pendry
-<jsp@doc.ic.ac.uk>, Department of Computing, Imperial College, London, UK.
-.\" .Sh HISTORY
-.\" .Nm Amq
-.\" .At
+be in the /etc/rpc database.
+.SH "SEE ALSO"
+.BR amd (8)
+.SH AUTHOR
+Jan-Simon Pendry <jsp@doc.ic.ac.uk>, Department of Computing, Imperial College, London, UK.

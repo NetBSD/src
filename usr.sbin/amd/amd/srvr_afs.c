@@ -1,8 +1,9 @@
 /*
+ * Copyright (c) 1997 Erez Zadok
  * Copyright (c) 1989 Jan-Simon Pendry
  * Copyright (c) 1989 Imperial College of Science, Technology & Medicine
- * Copyright (c) 1989, 1993
- *	The Regents of the University of California.  All rights reserved.
+ * Copyright (c) 1989 The Regents of the University of California.
+ * All rights reserved.
  *
  * This code is derived from software contributed to Berkeley by
  * Jan-Simon Pendry at Imperial College, London.
@@ -17,8 +18,8 @@
  *    documentation and/or other materials provided with the distribution.
  * 3. All advertising materials mentioning features or use of this software
  *    must display the following acknowledgement:
- *	This product includes software developed by the University of
- *	California, Berkeley and its contributors.
+ *      This product includes software developed by the University of
+ *      California, Berkeley and its contributors.
  * 4. Neither the name of the University nor the names of its contributors
  *    may be used to endorse or promote products derived from this software
  *    without specific prior written permission.
@@ -35,169 +36,177 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	from: @(#)srvr_afs.c	8.1 (Berkeley) 6/6/93
- *	$Id: srvr_afs.c,v 1.3 1994/06/13 20:48:03 mycroft Exp $
+ *      %W% (Berkeley) %G%
+ *
+ * $Id: srvr_afs.c,v 1.4 1997/07/24 23:17:18 christos Exp $
+ *
  */
 
 /*
  * Automount FS server ("localhost") modeling
  */
 
-#include "am.h"
+#ifdef HAVE_CONFIG_H
+# include <config.h>
+#endif /* HAVE_CONFIG_H */
+#include <am_defs.h>
+#include <amd.h>
 
-extern qelem afs_srvr_list;
-qelem afs_srvr_list = { &afs_srvr_list, &afs_srvr_list };
+/* globals */
+qelem afs_srvr_list = {&afs_srvr_list, &afs_srvr_list};
 
+/* statics */
 static fserver *localhost;
+
 
 /*
  * Find an nfs server for the local host
  */
-fserver *find_afs_srvr P((mntfs *));
-fserver *find_afs_srvr(mf)
-mntfs *mf;
+fserver *
+find_afs_srvr(mntfs *mf)
 {
-	fserver *fs = localhost;
+  fserver *fs = localhost;
 
-	if (!fs) {
-		fs = ALLOC(fserver);
-		fs->fs_refc = 0;
-		fs->fs_host = strdup("localhost");
-		fs->fs_ip = 0;
-		fs->fs_cid = 0;
-		fs->fs_pinger = 0;
-		fs->fs_flags = FSF_VALID;
-		fs->fs_type = "local";
-		fs->fs_private = 0;
-		fs->fs_prfree = 0;
+  if (!fs) {
+    fs = ALLOC(struct fserver);
+    fs->fs_refc = 0;
+    fs->fs_host = strdup("localhost");
+    fs->fs_ip = 0;
+    fs->fs_cid = 0;
+    fs->fs_pinger = 0;
+    fs->fs_flags = FSF_VALID;
+    fs->fs_type = "local";
+    fs->fs_private = 0;
+    fs->fs_prfree = 0;
 
-		ins_que(&fs->fs_q, &afs_srvr_list);
+    ins_que(&fs->fs_q, &afs_srvr_list);
 
-		srvrlog(fs, "starts up");
+    srvrlog(fs, "starts up");
 
-		localhost = fs;
-	}
+    localhost = fs;
+  }
+  fs->fs_refc++;
 
-	fs->fs_refc++;
-
-	return fs;
+  return fs;
 }
 
-/*------------------------------------------------------------------*/
-		/* Generic routines follow */
+
+/*****************************************************************************
+ *** GENERIC ROUTINES FOLLOW
+ *****************************************************************************/
 
 /*
  * Wakeup anything waiting for this server
  */
-void wakeup_srvr P((fserver *fs));
-void wakeup_srvr(fs)
-fserver *fs;
+void
+wakeup_srvr(fserver *fs)
 {
-	fs->fs_flags &= ~FSF_WANT;
-	wakeup((voidp) fs);
+  fs->fs_flags &= ~FSF_WANT;
+  wakeup((voidp) fs);
 }
+
 
 /*
  * Called when final ttl of server has expired
  */
-static void timeout_srvr P((fserver *fs));
-static void timeout_srvr(fs)
-fserver *fs;
+static void
+timeout_srvr(fserver *fs)
 {
-	/*
-	 * If the reference count is still zero then
-	 * we are free to remove this node
-	 */
-	if (fs->fs_refc == 0) {
+  /*
+   * If the reference count is still zero then
+   * we are free to remove this node
+   */
+  if (fs->fs_refc == 0) {
 #ifdef DEBUG
-		dlog("Deleting file server %s", fs->fs_host);
+    dlog("Deleting file server %s", fs->fs_host);
 #endif /* DEBUG */
-		if (fs->fs_flags & FSF_WANT)
-			wakeup_srvr(fs);
+    if (fs->fs_flags & FSF_WANT)
+      wakeup_srvr(fs);
 
-		/*
-		 * Remove from queue.
-		 */
-		rem_que(&fs->fs_q);
-		/*
-		 * (Possibly) call the private free routine.
-		 */
-		if (fs->fs_private && fs->fs_prfree)
-			(*fs->fs_prfree)(fs->fs_private);
+    /*
+     * Remove from queue.
+     */
+    rem_que(&fs->fs_q);
+    /*
+     * (Possibly) call the private free routine.
+     */
+    if (fs->fs_private && fs->fs_prfree)
+      (*fs->fs_prfree) (fs->fs_private);
 
-		/*
-		 * Free the net address
-		 */
-		if (fs->fs_ip)
-			free((voidp) fs->fs_ip);
+    /*
+     * Free the net address
+     */
+    if (fs->fs_ip)
+      free((voidp) fs->fs_ip);
 
-		/*
-		 * Free the host name.
-		 */
-		free((voidp) fs->fs_host);
+    /*
+     * Free the host name.
+     */
+    free((voidp) fs->fs_host);
 
-		/*
-		 * Discard the fserver object.
-		 */
-		free((voidp) fs);
-	}
+    /*
+     * Discard the fserver object.
+     */
+    free((voidp) fs);
+  }
 }
+
 
 /*
  * Free a file server
  */
-void free_srvr P((fserver *fs));
-void free_srvr(fs)
-fserver *fs;
+void
+free_srvr(fserver *fs)
 {
-	if (--fs->fs_refc == 0) {
-		/*
-		 * The reference count is now zero,
-		 * so arrange for this node to be
-		 * removed in AM_TTL seconds if no
-		 * other mntfs is referencing it.
-		 */
-		int ttl = (fs->fs_flags & (FSF_DOWN|FSF_ERROR)) ? 19 : AM_TTL;
+  if (--fs->fs_refc == 0) {
+    /*
+     * The reference count is now zero,
+     * so arrange for this node to be
+     * removed in AM_TTL seconds if no
+     * other mntfs is referencing it.
+     */
+    int ttl = (fs->fs_flags & (FSF_DOWN | FSF_ERROR)) ? 19 : AM_TTL;
+
 #ifdef DEBUG
-		dlog("Last hard reference to file server %s - will timeout in %ds", fs->fs_host, ttl);
+    dlog("Last hard reference to file server %s - will timeout in %ds", fs->fs_host, ttl);
 #endif /* DEBUG */
-		if (fs->fs_cid) {
-			untimeout(fs->fs_cid);
-			/*
-			 * Turn off pinging - XXX
-			 */
-			fs->fs_flags &= ~FSF_PINGING;
-		}
-		/*
-		 * Keep structure lying around for a while
-		 */
-		fs->fs_cid = timeout(ttl, timeout_srvr, (voidp) fs);
-		/*
-		 * Mark the fileserver down and invalid again
-		 */
-		fs->fs_flags &= ~FSF_VALID;
-		fs->fs_flags |= FSF_DOWN;
-	}
+    if (fs->fs_cid) {
+      untimeout(fs->fs_cid);
+      /*
+       * Turn off pinging - XXX
+       */
+      fs->fs_flags &= ~FSF_PINGING;
+    }
+
+    /*
+     * Keep structure lying around for a while
+     */
+    fs->fs_cid = timeout(ttl, timeout_srvr, (voidp) fs);
+
+    /*
+     * Mark the fileserver down and invalid again
+     */
+    fs->fs_flags &= ~FSF_VALID;
+    fs->fs_flags |= FSF_DOWN;
+  }
 }
+
 
 /*
  * Make a duplicate fserver reference
  */
-fserver *dup_srvr P((fserver *fs));
-fserver *dup_srvr(fs)
-fserver *fs;
+fserver *
+dup_srvr(fserver *fs)
 {
-	fs->fs_refc++;
-	return fs;
+  fs->fs_refc++;
+  return fs;
 }
+
 
 /*
  * Log state change
  */
-void srvrlog P((fserver *fs, char *state));
-void srvrlog(fs, state)
-fserver *fs;
-char *state;
+void srvrlog(fserver *fs, char *state)
 {
-	plog(XLOG_INFO, "file server %s type %s %s", fs->fs_host, fs->fs_type, state);
+  plog(XLOG_INFO, "file server %s type %s %s", fs->fs_host, fs->fs_type, state);
 }
