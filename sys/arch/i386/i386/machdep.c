@@ -36,7 +36,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)machdep.c	7.4 (Berkeley) 6/3/91
- *	$Id: machdep.c,v 1.84 1994/01/27 07:17:30 cgd Exp $
+ *	$Id: machdep.c,v 1.85 1994/02/01 05:37:17 mycroft Exp $
  */
 
 #include <stddef.h>
@@ -314,11 +314,7 @@ identifycpu()
 	printf("CPU: ");
 #ifdef DIAGNOSTIC
 	if (cpu < 0 || cpu >= (sizeof i386_cpus/sizeof(struct cpu_nameclass)))
-#ifdef notyet /* XXX */
 		panic("unknown cpu type %d\n", cpu);
-#else
-		panic("unknown cpu type\n");
-#endif
 #endif
 	printf("%s", i386_cpus[cpu].cpu_name);
 	cpu_class = i386_cpus[cpu].cpu_class;
