@@ -1,4 +1,4 @@
-/*	$NetBSD: fd.c,v 1.1 1997/04/09 04:49:09 jeremy Exp $	*/
+/*	$NetBSD: fd.c,v 1.2 1997/04/25 18:55:05 gwr Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994, 1995 Charles Hannum.
@@ -237,8 +237,8 @@ void	fdcstatus __P((struct device *dv, int n, char *s));
 void	fdc_reset __P((struct fdc_softc *fdc));
 void	fdctimeout __P((void *arg));
 void	fdcpseudointr __P((void *arg));
-int	fdchwintr __P((struct fdc_softc *));
-int	fdcswintr __P((struct fdc_softc *));
+int	fdchwintr __P((void *));
+int	fdcswintr __P((void *));
 int	fdcstate __P((struct fdc_softc *));
 void	fdcretry __P((struct fdc_softc *fdc));
 void	fdfinish __P((struct fd_softc *fd, struct buf *bp));
@@ -276,23 +276,10 @@ fdcmatch(parent, match, aux)
 	struct cfdata *match;
 	void *aux;
 {
-	register struct confargs *ca = aux;
+	struct confargs *ca = aux;
 
-	/*
-	 * Floppy controller is on obio on sun3x.
-	 */
-	if (ca->ca_bustype != BUS_OBIO)
+	if (bus_peek(ca->ca_bustype, ca->ca_paddr, 1) == -1)
 		return (0);
-
-	if (ca->ca_intpri == -1)
-		ca->ca_intpri = 6; /* XXX */
-
-	if (ca->ca_intvec == -1)
-		ca->ca_intvec = 0x40; /* XXX */
-
-	if (bus_peek(ca->ca_bustype, ca->ca_paddr, sizeof(u_char)) == -1) {
-		return (0);
-	}
 
 	return (1);
 }
@@ -384,11 +371,20 @@ fdcattach(parent, self, aux)
 			+ FDC_FVR_OFFSET;
 	}
 
+	isr_add_autovect(fdcswintr, fdc, FDC_SOFTPRI);
 	pri = ca->ca_intpri;
 	vec = ca->ca_intvec;
+	if (vec == -1) {
+		/* Tell the FDC to fake an autovector. */
+		vec = 0x18 + pri; /* XXX */
+		isr_add_autovect(fdchwintr, fdc, pri);
+	} else {
+		/* An OBIO bus with vectors?  Weird exception. */
+		isr_add_vectored(fdchwintr, fdc, pri, vec);
+	}
 	*fdc->sc_reg_fvr = vec;	/* Program controller w/ interrupt vector */
-	isr_add_vectored((isr_func_t) fdchwintr, (void *) fdc, pri, vec);
-	isr_add_autovect((isr_func_t) fdcswintr, (void *) fdc, FDC_SOFTPRI);
+
+	printf(": (softpri %d) chip 8207%c\n", FDC_SOFTPRI, code);
 
 #ifdef FD_DEBUG
 	if (out_fdc(fdc, NE7CMD_VERSION) == 0 &&
@@ -407,8 +403,6 @@ fdcattach(parent, self, aux)
 	fdconf(fdc);
 
 	evcnt_attach(&fdc->sc_dev, "intr", &fdc->sc_intrcnt);
-
-	printf(": (softpri %d) chip 8207%c\n", FDC_SOFTPRI, code);
 
 	/* physical limit: four drives per controller. */
 	for (fa.fa_drive = 0; fa.fa_drive < 4; fa.fa_drive++) {
@@ -998,27 +992,31 @@ fdcpseudointr(arg)
  * (in-window) handler.
  */
 int
-fdchwintr(fdc)
-	struct fdc_softc *fdc;
+fdchwintr(arg)
+	void *arg;
 {
+	struct fdc_softc *fdc = arg;
 
 	/*
 	 * This code was reverse engineered from the SPARC bsd_fdintr.s.
 	 */
 	switch (fdc->sc_istate) {
-		case ISTATE_SENSEI:
-			out_fdc(fdc, NE7CMD_SENSEI);
-			fdcresult(fdc);
-			fdc->sc_istate = ISTATE_DONE;
-			FD_SET_SWINTR();
-			return (1);
-		case ISTATE_DMA:
-			break;
-		default:
-			fdc->sc_istate = ISTATE_SPURIOUS;
-			fdc->sc_fcr &= ~(FCR_DSEL(0));	/* Does this help? */
-			FD_SET_SWINTR();
-			return (1);
+	case ISTATE_IDLE:
+		return (0);
+	case ISTATE_SENSEI:
+		out_fdc(fdc, NE7CMD_SENSEI);
+		fdcresult(fdc);
+		fdc->sc_istate = ISTATE_DONE;
+		FD_SET_SWINTR();
+		return (1);
+	case ISTATE_DMA:
+		break;
+	default:
+		log(LOG_ERR, "fdc: stray hard interrupt.\n");
+		fdc->sc_fcr &= ~(FCR_DSEL(0));	/* Does this help? */
+		fdc->sc_istate = ISTATE_SPURIOUS;
+		FD_SET_SWINTR();
+		return (1);
 	}
 
 	for (;;) {
@@ -1033,7 +1031,7 @@ fdchwintr(fdc)
 			fdcresult(fdc);
 			fdc->sc_istate = ISTATE_DONE;
 			FD_SET_SWINTR();
-			printf("fdc: overrun: tc = %d\n", fdc->sc_tc);
+			log(LOG_ERR, "fdc: overrun: tc = %d\n", fdc->sc_tc);
 			break;
 		}
 
@@ -1058,20 +1056,20 @@ fdchwintr(fdc)
 }
 
 int
-fdcswintr(fdc)
-	struct fdc_softc *fdc;
+fdcswintr(arg)
+	void *arg;
 {
+	struct fdc_softc *fdc = arg;
 	int s;
 
-	if (fdc_softpend) {
-		isr_soft_clear(FDC_SOFTPRI);
-		fdc_softpend = 0;
-	} else {
-		return 0;
-	}
+	if (fdc_softpend == 0)
+		return (0);
+
+	isr_soft_clear(FDC_SOFTPRI);
+	fdc_softpend = 0;
 
 	if (fdc->sc_istate != ISTATE_DONE)
-		return (1);
+		return (0);
 
 	fdc->sc_istate = ISTATE_IDLE;
 	s = splbio();
@@ -1162,7 +1160,7 @@ loop:
 		/* Make sure the right drive is selected. */
 		fd_set_motor(fdc);
 
-		/* fall through */
+		/*FALLTHROUGH*/
 	case DOSEEK:
 	doseek:
 		if ((fdc->sc_flags & FDC_EIS) &&
@@ -1284,7 +1282,7 @@ loop:
 			timeout(fdcpseudointr, fdc, hz / 50);
 			return (1);		/* will return later */
 		}
-
+		/*FALLTHROUGH*/
 	case SEEKCOMPLETE:
 		disk_unbusy(&fd->sc_dk, 0);	/* no data on seek */
 
@@ -1308,6 +1306,7 @@ loop:
 		fdc->sc_fcr &= ~FCR_TC;
 		FCR_REG_SYNC();
 		(void)fdcresult(fdc);
+		/*FALLTHROUGH*/
 	case SEEKTIMEDOUT:
 	case RECALTIMEDOUT:
 	case RESETTIMEDOUT:
@@ -1653,7 +1652,7 @@ fdioctl(dev, cmd, addr, flag, p)
 		fd->sc_type->step = form_parms->stepspercyl;
 		fd->sc_type->fillbyte = form_parms->fillbyte;
 		fd->sc_type->interleave = form_parms->interleave;
-		return 0;
+		return (0);
 
 	case FDIOCFORMAT_TRACK:
 		if((flag & FWRITE) == 0)
@@ -1677,11 +1676,11 @@ fdioctl(dev, cmd, addr, flag, p)
 		fd_formb.fd_formb_gaplen = fd->sc_type->gap2;
 		fd_formb.fd_formb_fillbyte = fd->sc_type->fillbyte;
 
-		bzero(il,sizeof il);
+		bzero(il, sizeof(il));
 		for (j = 0, i = 1; i <= fd_formb.fd_formb_nsecs; i++) {
-			while (il[(j%fd_formb.fd_formb_nsecs)+1])
+			while (il[(j%fd_formb.fd_formb_nsecs) + 1])
 				j++;
-			il[(j%fd_formb.fd_formb_nsecs)+1] = i;
+			il[(j%fd_formb.fd_formb_nsecs) + 1] = i;
 			j += fd->sc_type->interleave;
 		}
 		for (i = 0; i < fd_formb.fd_formb_nsecs; i++) {
@@ -1770,8 +1769,8 @@ fdformat(dev, finfo, p)
 	bp->b_dev = dev;
 
 	/*
-	 * calculate a fake blkno, so fdstrategy() would initiate a
-	 * seek to the requested cylinder
+	 * Calculate a fake blkno, so fdstrategy() would initiate a
+	 * seek to the requested cylinder.
 	 */
 	bp->b_blkno = (finfo->cyl * (type->sectrac * type->heads)
 		       + finfo->head * type->sectrac) * FDC_BSIZE / DEV_BSIZE;
@@ -1781,7 +1780,7 @@ fdformat(dev, finfo, p)
 
 #ifdef FD_DEBUG
 	if (fdc_debug)
-		printf("fdformat: blkno %x count %lx\n",
+		printf("fdformat: blkno %x count %ld\n",
 			bp->b_blkno, bp->b_bcount);
 #endif
 
