@@ -1,8 +1,8 @@
-#	$Id: Makefile,v 1.7 1994/01/05 21:57:48 jtc Exp $
+#	$Id: Makefile,v 1.8 1994/01/12 19:29:31 cgd Exp $
 
 PROG=	crontab
 SRCS=	crontab.c misc.c entry.c env.c compat.c
-CFLAGS+=-I${.CURDIR} -I${.CURDIR}/../../libexec/cron -DDEBUGGING=1 
+CFLAGS+=-I${.CURDIR} -I${.CURDIR}/../../usr.sbin/cron -DDEBUGGING=1 
 BINOWN =root
 BINMODE=4111
 MAN1=
@@ -26,4 +26,4 @@ maninstall:
 .endif
 
 .include <bsd.prog.mk>
-.PATH: ${.CURDIR}/../../libexec/cron
+.PATH: ${.CURDIR}/../../usr.sbin/cron
