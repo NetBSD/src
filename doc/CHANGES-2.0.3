@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-2.0.3,v 1.1.2.4 2005/04/06 16:53:38 tron Exp $
+#	$NetBSD: CHANGES-2.0.3,v 1.1.2.5 2005/04/06 17:22:39 he Exp $
 
 A complete list of changes from the NetBSD 2.0.2 release to the NetBSD 2.0.3
 release.
@@ -29,3 +29,15 @@ share/man/man4/ahd.4				1.1-1.2
 	Add manual page for the ahd driver.
 	[he, ticket #1057, #1058, #1059]
 
+sys/arch/sgimips/hpc/if_sq.c			1.21
+
+	When adding or deleting multicast addresses, only change
+	the address filter if the interface is marked RUNNING.
+	Fixes PR#27678.
+	[thorpej, ticket #939]
+
+sys/arch/sgimips/hpc/if_sq.c			1.22-1.23
+sys/arch/sgimips/hpc/sqvar.h			1.6-1.7
+
+	Fix the HPC1 transmit logic, which was previously very broken.
+	[rumble, ticket #1054]
