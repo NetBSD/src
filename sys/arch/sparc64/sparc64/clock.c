@@ -1,4 +1,4 @@
-/*	$NetBSD: clock.c,v 1.29 2000/09/01 19:04:50 eeh Exp $ */
+/*	$NetBSD: clock.c,v 1.30 2000/09/09 23:29:06 eeh Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -218,7 +218,6 @@ clockattach_sbus(parent, self, aux)
 {
 	struct sbus_attach_args *sa = aux;
 	bus_space_tag_t bt = sa->sa_bustag;
-	bus_space_handle_t bh;
 	int sz;
 	static struct sbus_info sbi;
 
@@ -231,11 +230,11 @@ clockattach_sbus(parent, self, aux)
 			 sz,
 			 BUS_SPACE_MAP_LINEAR|BUS_SPACE_MAP_READONLY,
 			 0,
-			 &bh) != 0) {
+			 &sbi.si_bh) != 0) {
 		printf("%s: can't map register\n", self->dv_xname);
 		return;
 	}
-	clockattach(sa->sa_node, bt, bh);
+	clockattach(sa->sa_node, bt, sbi.si_bh);
 
 	/* Save info for the clock wenable call. */
 	sbi.si_bt = bt;
@@ -266,10 +265,15 @@ sbus_wenable(handle, onoff)
 	splx(s);
 	if (prot) {
 		struct sbus_info *sbi = (struct sbus_info *)handle->bus_cookie;
+		bus_space_handle_t newaddr;
 
 		err = sbus_bus_map(sbi->si_bt, sbi->si_reg.sbr_slot,
 			(sbi->si_reg.sbr_offset & ~NBPG),
-			8192, prot, 0, &sbi->si_bh);
+			8192, prot, (vaddr_t)sbi->si_bh, &newaddr);
+		/* We can panic now or take a datafault later... */
+		if (sbi->si_bh != newaddr)
+			panic("sbus_wenable: address %p changed to %p\n",
+			      (vaddr_t)sbi->si_bh, (vaddr_t)newaddr);
 	}
 	return (err);
 }
@@ -289,7 +293,6 @@ clockattach_ebus(parent, self, aux)
 {
 	struct ebus_attach_args *ea = aux;
 	bus_space_tag_t bt = ea->ea_bustag;
-	bus_space_handle_t bh;
 	int sz;
 	static struct ebus_info ebi;
 
@@ -302,11 +305,11 @@ clockattach_ebus(parent, self, aux)
 			 sz,
 			 BUS_SPACE_MAP_LINEAR,
 			 0,
-			 &bh) != 0) {
+			 &ebi.ei_bh) != 0) {
 		printf("%s: can't map register\n", self->dv_xname);
 		return;
 	}
-	clockattach(ea->ea_node, bt, bh);
+	clockattach(ea->ea_node, bt, ebi.ei_bh);
 
 	/* Save info for the clock wenable call. */
 	ebi.ei_bt = bt;
@@ -337,10 +340,15 @@ ebus_wenable(handle, onoff)
 	splx(s);
 	if (prot) {
 		struct ebus_info *ebi = (struct ebus_info *)handle->bus_cookie;
+		bus_space_handle_t newaddr;
 
 		err = sbus_bus_map(ebi->ei_bt, 0,
 			EBUS_PADDR_FROM_REG(&ebi->ei_reg), 8192, prot,
-			0, &ebi->ei_bh);
+			(vaddr_t)ebi->ei_bh, &newaddr);
+		/* We can panic now or take a datafault later... */
+		if (ebi->ei_bh != newaddr)
+			panic("ebus_wenable: address %p changed to %p\n",
+			      (vaddr_t)ebi->ei_bh, (vaddr_t)newaddr);
 	}
 	return (err);
 }
