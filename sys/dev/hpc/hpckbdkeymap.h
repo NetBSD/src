@@ -1,4 +1,4 @@
-/*	$NetBSD: hpckbdkeymap.h,v 1.29 2004/07/03 12:47:53 uch Exp $	*/
+/*	$NetBSD: hpckbdkeymap.h,v 1.30 2005/01/11 01:54:20 uwe Exp $	*/
 
 /*-
  * Copyright (c) 1999-2002 The NetBSD Foundation, Inc.
@@ -734,6 +734,32 @@ static const keysym_t jornada6x0_scnv_keydesc[] = {
     KC(208), KS_Cmd_BrightnessDown, KS_Down,
 };
 
+/* Spanish (ABE) */
+static const keysym_t jornada6x0_es_keydesc[] = {
+/*  pos      normal          shifted        altgr            */
+    KC(2),   KS_1,           KS_exclam,     KS_ordfeminine,
+    KC(3),   KS_2,           KS_quotedbl,   KS_masculine,
+    KC(4),   KS_3,           KS_numbersign,
+    KC(12),  KS_apostrophe,  KS_question,   KS_backslash,
+    KC(13),  KS_questiondown,KS_exclamdown,
+    KC(16),  KS_q,           KS_Q,          KS_at,
+#ifdef KS_euro
+    KC(18),  KS_e,           KS_E,          KS_euro,
+#endif
+    KC(26),  KS_dead_acute,  KS_dead_diaeresis,
+    KC(27),  KS_plus,        KS_asterisk,   KS_dead_tilde,
+    KC(40),  KS_braceleft,   KS_bracketleft,KS_dead_circumflex,
+    KC(41),  KS_bar,         KS_degree,     KS_notsign,
+    KC(43),  KS_braceright,  KS_bracketright,KS_dead_grave,
+    KC(44),  KS_z,           KS_Z,          KS_less,
+    KC(45),  KS_x,           KS_X,          KS_greater,
+    KC(46),  KS_c,           KS_C,          KS_Ccedilla,
+
+    KC(200), KS_Cmd_BrightnessUp,   KS_Up,
+    KC(203), KS_Cmd_ContrastDown,   KS_Left,
+    KC(205), KS_Cmd_ContrastUp,     KS_Right,
+    KC(208), KS_Cmd_BrightnessDown, KS_Down,
+};
 
 const int jornada6x0_special_keymap[] = {
 	[KEY_SPECIAL_OFF]	= -1,
@@ -1013,6 +1039,17 @@ const struct hpckbd_keymap_table {
 		jornada6x0_special_keymap,
  		CMDMAP(jornada6x0_scnv_keydesc),
 		KB_US },
+	/* Spanish (ABE) */
+	{	&platid_mask_MACH_HP_JORNADA_680ES,
+		jornada6x0_intl_keytrans,
+		jornada6x0_special_keymap,
+		CMDMAP(jornada6x0_es_keydesc),
+		KB_ES },
+	{	&platid_mask_MACH_HP_JORNADA_690ES,
+		jornada6x0_intl_keytrans,
+		jornada6x0_special_keymap,
+ 		CMDMAP(jornada6x0_es_keydesc),
+		KB_ES },
 	/*
 	 * HP 620LX
 	 */
