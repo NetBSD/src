@@ -6,8 +6,6 @@ CFLAGS+=-I${.CURDIR}/../src -DNEWDB -DNOT_SENDMAIL
 
 SRCS=	makemap.c safefile.c
 
-safefile.c: ${.CURDIR}/../src/safefile.c
-	ln -s ${.CURDIR}/../src/safefile.c
-
+.PATH: ${.CURDIR}/../src
 .include "../../Makefile.inc"
 .include <bsd.prog.mk>
