@@ -1,4 +1,4 @@
-/*	$NetBSD: agp_i810.c,v 1.11 2002/01/14 01:38:25 augustss Exp $	*/
+/*	$NetBSD: agp_i810.c,v 1.12 2002/01/22 17:29:36 augustss Exp $	*/
 
 /*-
  * Copyright (c) 2000 Doug Rabson
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: agp_i810.c,v 1.11 2002/01/14 01:38:25 augustss Exp $");
+__KERNEL_RCSID(0, "$NetBSD: agp_i810.c,v 1.12 2002/01/22 17:29:36 augustss Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -104,7 +104,7 @@ agp_i810_vgamatch(struct pci_attach_args *pa)
 	case PCI_PRODUCT_INTEL_82810_DC100_GC:
 	case PCI_PRODUCT_INTEL_82810E_GC:
 	case PCI_PRODUCT_INTEL_82815_FULL_GRAPH:
-	case PCI_PRODUCT_INTEL_82830MP_IV:
+	/*case PCI_PRODUCT_INTEL_82830MP_IV: XXX needs somewhat different driver */
 		return (1);
 	}
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: agp.c,v 1.13 2002/01/14 01:38:25 augustss Exp $	*/
+/*	$NetBSD: agp.c,v 1.14 2002/01/22 17:29:36 augustss Exp $	*/
 
 /*-
  * Copyright (c) 2000 Doug Rabson
@@ -65,7 +65,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: agp.c,v 1.13 2002/01/14 01:38:25 augustss Exp $");
+__KERNEL_RCSID(0, "$NetBSD: agp.c,v 1.14 2002/01/22 17:29:36 augustss Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -143,8 +143,11 @@ const struct agp_product {
 	  NULL,			agp_i810_attach },
 	{ PCI_VENDOR_INTEL,	PCI_PRODUCT_INTEL_82840_HB,
 	  NULL,			agp_i810_attach },
+#if 0
+/* XXX needs somewhat different driver */
 	{ PCI_VENDOR_INTEL,	PCI_PRODUCT_INTEL_82830MP_IO_1,
 	  NULL,			agp_i810_attach },
+#endif
 #endif
 
 #if NAGP_INTEL > 0
