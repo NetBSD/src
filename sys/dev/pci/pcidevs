@@ -1,4 +1,4 @@
-$NetBSD: pcidevs,v 1.537 2003/06/13 07:14:18 kent Exp $
+$NetBSD: pcidevs,v 1.538 2003/06/14 09:58:55 ichiro Exp $
 
 /*
  * Copyright (c) 1995, 1996 Christopher G. Demetriou
@@ -1556,7 +1556,6 @@ product INTEL 82801ER_SATA	0x24DF	82801ER Serial ATA Controller
 product INTEL 82820_MCH		0x2501	82820 MCH (Camino)
 product INTEL 82820_AGP		0x250f	82820 AGP
 product INTEL 82850_HB		0x2530	82850 Host
-product INTEL 82850_AGP		0x2532	82850/82860 AGP
 product INTEL 82860_HB		0x2531	82860 Host
 product INTEL 82850_AGP		0x2532	82850/82860 AGP
 product INTEL 82860_PCI1	0x2533	82860 PCI-PCI
