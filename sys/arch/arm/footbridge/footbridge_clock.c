@@ -1,4 +1,4 @@
-/*	$NetBSD: footbridge_clock.c,v 1.5 2002/05/02 22:01:46 mycroft Exp $	*/
+/*	$NetBSD: footbridge_clock.c,v 1.6 2002/05/04 10:04:42 chris Exp $	*/
 
 /*
  * Copyright (c) 1997 Mark Brinicombe.
@@ -49,6 +49,7 @@
 
 #include <arm/footbridge/dc21285reg.h>
 #include <arm/footbridge/footbridgevar.h>
+#include <arm/footbridge/footbridge.h>
 
 extern struct footbridge_softc *clock_sc;
 extern u_int dc21285_fclk;
@@ -291,27 +292,69 @@ microtime(tvp)
 }
 
 /*
- * Estimated loop for n microseconds
+ * Use a timer to track microseconds, if the footbridge hasn't been setup we
+ * rely on an estimated loop, however footbridge is attached very early on.
  */
 
-/* Need to re-write this to use the timers */
+static int delay_clock_count = 0;
+static int delay_count_per_usec = 0;
 
-/* One day soon I will actually do this */
+void
+calibrate_delay(void)
+{
+     delay_clock_count = load_timer(TIMER_3_BASE, 100);
+     delay_count_per_usec = delay_clock_count/10000;
+}
 
-int delaycount = 50;
+int delaycount = 500;
 
 void
 delay(n)
 	u_int n;
 {
-	u_int i;
+	volatile u_int i;
+	uint32_t cur, last, delta, usecs;
 
 	if (n == 0) return;
-	while (n-- > 0) {
-		if (cputype == CPU_ID_SA110)	/* XXX - Seriously gross hack */
-			for (i = delaycount; --i;);
-		else
-			for (i = 8; --i;);
+
+
+	// not calibrated the timer yet, so try to live with this horrible
+	// loop!
+	if (delay_clock_count == 0)
+	{
+	    while (n-- > 0) {
+		for (i = delaycount; --i;);
+	    }
+	    return;	
+	}
+	last = bus_space_read_4(clock_sc->sc_iot, clock_sc->sc_ioh,
+		TIMER_3_VALUE);
+
+	delta = usecs = 0;
+
+	while (n > usecs)
+	{
+	    cur = bus_space_read_4(clock_sc->sc_iot, clock_sc->sc_ioh,
+		    TIMER_3_VALUE);
+	    if (last < cur)
+		/* timer has wrapped */
+		delta += ((delay_clock_count - cur) + last);
+	    else
+		delta += (last - cur);
+	    
+	    if (last == 0 && cur == 0)
+	    {
+		/* reset the timer, not sure this is really needed */
+		bus_space_write_4(clock_sc->sc_iot, clock_sc->sc_ioh,
+			TIMER_3_CLEAR, 0);
+	    }
+	    last = cur;
+	    
+	    if (delta >= delay_count_per_usec)
+	    {
+		usecs += delta / delay_count_per_usec;
+		delta %= delay_count_per_usec;
+	    }
 	}
 }
 
