@@ -1,4 +1,4 @@
-/*	$NetBSD: namespace.h,v 1.82 2003/09/18 09:25:20 jdolecek Exp $	*/
+/*	$NetBSD: namespace.h,v 1.83 2004/02/19 19:22:51 christos Exp $	*/
 
 /*-
  * Copyright (c) 1997-2002 The NetBSD Foundation, Inc.
@@ -175,9 +175,11 @@
 #define endnetent		_endnetent
 #define endnetgrent		_endnetgrent
 #define endprotoent		_endprotoent
+#define endprotoent_r		_endprotoent_r
 #define endpwent		_endpwent
 #define endrpcent		_endrpcent
 #define endservent		_endservent
+#define endservent_r		_endservent_r
 #define endttyent		_endttyent
 #define endusershell		_endusershell
 #define erand48			_erand48
@@ -250,8 +252,11 @@
 #define getpass			_getpass
 #define getprogname		_getprogname
 #define getprotobyname		_getprotobyname
+#define getprotobyname_r	_getprotobyname_r
 #define getprotobynumber	_getprotobynumber
+#define getprotobynumber_r	_getprotobynumber_r
 #define getprotoent		_getprotoent
+#define getprotoent_r		_getprotoent_r
 #define getpwent		_getpwent
 #define getpwnam		_getpwnam
 #define getpwuid		_getpwuid
@@ -260,8 +265,11 @@
 #define getrpcent		_getrpcent
 #define getrpcport		_getrpcport
 #define getservbyname		_getservbyname
+#define getservbyname_r		_getservbyname_r
 #define getservbyport		_getservbyport
+#define getservbyport_r		_getservbyport_r
 #define getservent		_getservent
+#define getservent_r		_getservent_r
 #define getsubopt		_getsubopt
 #define getttyent		_getttyent
 #define getttynam		_getttynam
@@ -306,6 +314,8 @@
 #define inet6_rthdr_lasthop	_inet6_rthdr_lasthop
 #define inet6_rthdr_segments	_inet6_rthdr_segments
 #define inet6_rthdr_space	_inet6_rthdr_space
+#define inet_cidr_ntop		_inet_cidr_ntop
+#define inet_cidr_pton		_inet_cidr_pton
 #define inet_lnaof		_inet_lnaof
 #define inet_makeaddr		_inet_makeaddr
 #define inet_net_ntop		_inet_net_ntop
@@ -427,9 +437,11 @@
 #define setnetpath		_setnetpath
 #define setproctitle		_setproctitle
 #define setprotoent		_setprotoent
+#define setprotoent_r		_setprotoent_r
 #define setpwent		_setpwent
 #define setrpcent		_setrpcent
 #define setservent		_setservent
+#define setservent_r		_setservent_r
 #define setstate		_setstate
 #define setttyent		_setttyent
 #define settimeofday		_settimeofday
