@@ -1,4 +1,4 @@
-/*	$NetBSD: atapiconf.c,v 1.64 2004/08/21 17:40:25 thorpej Exp $	*/
+/*	$NetBSD: atapiconf.c,v 1.65 2004/08/21 21:30:29 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1996, 2001 Manuel Bouyer.  All rights reserved.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: atapiconf.c,v 1.64 2004/08/21 17:40:25 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: atapiconf.c,v 1.65 2004/08/21 21:30:29 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -296,7 +296,7 @@ atapibusprint(void *aux, const char *pnp)
 {
 	struct scsipibus_attach_args *sa = aux;
 	struct scsipi_inquiry_pattern *inqbuf;
-	char *dtype;
+	const char *dtype;
 
 	if (pnp != NULL)
 		aprint_normal("%s", pnp);
