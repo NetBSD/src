@@ -1,4 +1,4 @@
-/*	$NetBSD: st.c,v 1.132 2000/11/03 12:08:41 pk Exp $ */
+/*	$NetBSD: st.c,v 1.133 2000/11/22 00:32:24 soren Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -485,9 +485,7 @@ stattach(parent, self, aux)
 	 */
 	st_identify_drive(st, &sa->sa_inqbuf);
 	/*
-	 * Use the subdriver to request information regarding
-	 * the drive. We cannot use interrupts yet, so the
-	 * request must specify this.
+	 * Use the subdriver to request information regarding the drive.
 	 */
 	printf("\n");
 	printf("%s: %s", st->sc_dev.dv_xname, st->quirkdata ? "rogue, " : "");
