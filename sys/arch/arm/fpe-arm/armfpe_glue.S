@@ -1,4 +1,4 @@
-/*	$NetBSD: armfpe_glue.S,v 1.1 2001/11/24 01:26:24 thorpej Exp $	*/
+/*	$NetBSD: armfpe_glue.S,v 1.2 2001/11/24 03:39:18 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1996 Mark Brinicombe
@@ -51,18 +51,18 @@
 
 ENTRY_NP(arm_fpe_core_disable)
 	stmfd	sp!, {r0-r7, lr}
-	bl	_fpe_arm_core_disable
+	bl	_C_LABEL(fpe_arm_core_disable)
 	ldmfd	sp!, {r0-r7, pc}
 
 ENTRY_NP(arm_fpe_core_enable)
 	stmfd	sp!, {r0-r7, lr}
-	bl	_fpe_arm_core_enable
+	bl	_C_LABEL(fpe_arm_core_enable)
 	ldmfd	sp!, {r0-r7, pc}
 
 ENTRY_NP(arm_fpe_core_initws)
 	stmfd	sp!, {r10, lr}
 	mov	r10, r0
-	bl	_fpe_arm_core_initws
+	bl	_C_LABEL(fpe_arm_core_initws)
 	ldmfd	sp!, {r10, pc}
 
 ENTRY_NP(arm_fpe_core_abort)
@@ -70,7 +70,7 @@ ENTRY_NP(arm_fpe_core_abort)
 	mov	r10, r0
 	mov	r0, r1
 	mov	r1, r2
-	bl	_fpe_arm_core_abort
+	bl	_C_LABEL(fpe_arm_core_abort)
 	ldmfd	sp!, {r1-r7, r10, pc}
 
 /* Only needs to preserve r10 */
@@ -78,7 +78,7 @@ ENTRY_NP(arm_fpe_core_abort)
 ENTRY_NP(arm_fpe_core_initcontext)
 	stmfd	sp!, {r0-r7, r10, lr}
 	mov	r10, r0
-	bl	_fpe_arm_core_initcontext
+	bl	_C_LABEL(fpe_arm_core_initcontext)
 	ldmfd	sp!, {r0-r7, r10, pc}
 
 /* Only needs to preserve r10 */
@@ -86,14 +86,14 @@ ENTRY_NP(arm_fpe_core_initcontext)
 ENTRY_NP(arm_fpe_core_changecontext)
 	stmfd	sp!, {r1-r7, r10, lr}
 	mov	r10, r0
-	bl	_fpe_arm_core_changecontext
+	bl	_C_LABEL(fpe_arm_core_changecontext)
 	ldmfd	sp!, {r1-r7, r10, pc}
 
 /* All regs preserved */
 
 ENTRY_NP(arm_fpe_core_shutdown)
 	stmfd	sp!, {r0-r7, r10, lr}
-	bl	_fpe_arm_core_shutdown
+	bl	_C_LABEL(fpe_arm_core_shutdown)
 	ldmfd	sp!, {r0-r7, r10, pc}
 
 /* Preserve r10 */
@@ -103,7 +103,7 @@ ENTRY_NP(arm_fpe_core_savecontext)
 	mov	r10, r0
 	mov	r0, r1
 	mov	r1, r2
-	bl	_fpe_arm_core_savecontext
+	bl	_C_LABEL(fpe_arm_core_savecontext)
 	ldmfd	sp!, {r1-r7, r10, pc}
 
 /* Preserve r10 */
@@ -112,7 +112,7 @@ ENTRY_NP(arm_fpe_core_loadcontext)
 	stmfd	sp!, {r0-r7, r10, lr}
 	mov	r10, r0
 	mov	r0, r1
-	bl	_fpe_arm_core_loadcontext
+	bl	_C_LABEL(fpe_arm_core_loadcontext)
 	ldmfd	sp!, {r0-r7, r10, pc}
 
 
@@ -121,14 +121,14 @@ ENTRY_NP(arm_fpe_core_loadcontext)
 ENTRY_NP(arm_fpe_core_activatecontext)
 	stmfd	sp!, {r0-r7, r10, lr}
 	mov	r10, r0
-	bl	_fpe_arm_core_activatecontext
+	bl	_C_LABEL(fpe_arm_core_activatecontext)
 	ldmfd	sp!, {r0-r7, r10, pc}
 
 /* Only needs to preserve r10 */
 
 ENTRY_NP(arm_fpe_core_deactivatecontext)
 	stmfd	sp!, {r1-r7, r10, lr}
-	bl	_fpe_arm_core_deactivatecontext
+	bl	_C_LABEL(fpe_arm_core_deactivatecontext)
 	ldmfd	sp!, {r1-r7, r10, pc}
 
 /*
@@ -142,7 +142,7 @@ ENTRY_NP(arm_fpe_newhandler)
 	ldmfd	sp!, {r0, pc}
 
 Llocal_handler_addr:
-	.word	_undefined_handler_address
+	.word	_C_LABEL(undefined_handler_address)
 
 ENTRY_NP(arm_fpe_restorehandler)
 	stmfd	sp!, {r0-r1, lr}
@@ -153,10 +153,10 @@ ENTRY_NP(arm_fpe_restorehandler)
 	ldmfd	sp!, {r0-r1, pc}
 
 Lold_handler_addr:
-	.word	_arm_fpe_old_handler_address
+	.word	_C_LABEL(arm_fpe_old_handler_address)
 
 ENTRY_NP(arm_fpe_handle_exception)
-	b	_arm_fpe_exception_glue
+	b	_C_LABEL(arm_fpe_exception_glue)
 
 ENTRY_NP(arm_fpe_get_ws)
 	sub	sp, sp, #8
@@ -168,10 +168,10 @@ ENTRY_NP(arm_fpe_get_ws)
 	mov	pc, lr
 
 Larm_fpe_core_workspace:
-	.word	_arm_fpe_core_workspace
+	.word	_C_LABEL(arm_fpe_core_workspace)
 
 ENTRY_NP(arm_fpe_post_proc)
-	b	_arm_fpe_post_proc_glue
+	b	_C_LABEL(arm_fpe_post_proc_glue)
 
 
 /* Simple call back function that panics */
@@ -190,29 +190,29 @@ Lfpe_panic_text:
 
 #ifdef CHECK_BEFORE_USERRET
 
-	.global	_userret_count0
-	.global	_userret_count1
+	.global	_C_LABEL(userret_count0)
+	.global	_C_LABEL(userret_count1)
 	.data
-_userret_count0:
+_C_LABEL(userret_count0):
 	.word	0
-_userret_count1:
+_C_LABEL(userret_count1):
 	.word	0
 
 	.text
 
 Luserret_count0:
-	.word	_userret_count0
+	.word	_C_LABEL(userret_count0)
 Luserret_count1:
-	.word	_userret_count1
+	.word	_C_LABEL(userret_count1)
 
 Lwant_resched:
-	.word	_want_resched
+	.word	_C_LABEL(want_resched)
 
 Lcurproc:
-	.word	_curproc
+	.word	_C_LABEL(curproc)
 
 Lcurpriority:
-	.word	_cpu_info_store
+	.word	_C_LABEL(cpu_info_store)
 
 #endif
 
@@ -330,7 +330,7 @@ Lwe_need_userret:
 
 /* More optimisation ... Need to code an assembly version of userret() */
 
-	bl	_arm_fpe_postproc
+	bl	_C_LABEL(arm_fpe_postproc)
 
 /* Release the trapframe on the SVC stack */
 	mov	r14, r5
@@ -417,7 +417,7 @@ ENTRY_NP(arm_fpe_exception_glue)
 
 /* More optimisation ... Need to code an assembly version of userret() */
 
-	bl	_arm_fpe_exception
+	bl	_C_LABEL(arm_fpe_exception)
 
 /* Release the trapframe on the SVC stack */
 	mov	r14, r5
@@ -470,6 +470,6 @@ ENTRY_NP(arm_fpe_set_exception_mask)
 	mov	pc, lr			/* return */ 
 
 
-	.global _fpe_nexthandler
-_fpe_nexthandler:
-	.word	_undefinedinstruction_bounce
+	.global _C_LABEL(fpe_nexthandler)
+_C_LABEL(fpe_nexthandler):
+	.word	_C_LABEL(undefinedinstruction_bounce)
