@@ -20,7 +20,7 @@
  */
 
 /*
- * $Id: if_ed.c,v 1.8.2.6 1993/11/03 21:36:19 mycroft Exp $
+ * $Id: if_ed.c,v 1.8.2.7 1993/12/02 08:27:54 mycroft Exp $
  */
 
 /*
@@ -195,12 +195,15 @@ void ed_reset __P((struct ed_softc *));
 void ed_init __P((struct ed_softc *));
 void ed_stop __P((struct ed_softc *));
 
+#define inline
+
+void ed_get_packet __P((struct ed_softc *, caddr_t, u_short));
 static inline void ed_rint __P((struct ed_softc *));
 static inline void ed_xmit __P((struct ifnet *));
-static inline char *ed_ring_copy __P((struct ed_softc *, char *, char *, u_short));
+static inline caddr_t ed_ring_copy __P((struct ed_softc *, caddr_t, caddr_t, u_short));
 
-void ed_pio_readmem __P((struct ed_softc *, u_short, u_char *, u_short));
-void ed_pio_writemem __P((struct ed_softc *, u_char *, u_short, u_short));
+void ed_pio_readmem __P((struct ed_softc *, u_short, caddr_t, u_short));
+void ed_pio_writemem __P((struct ed_softc *, caddr_t, u_short, u_short));
 u_short ed_pio_write_mbufs __P((struct ed_softc *, struct mbuf *, u_short));
 
 struct trailer_header {
@@ -212,7 +215,7 @@ struct trailer_header {
  * Interrupt conversion table for WD/SMC ASIC
  * (IRQ* are defined in icu.h)
  */
-static unsigned short ed_intr_mask[] = {
+static u_short ed_intr_mask[] = {
 	IRQ9,
 	IRQ3,
 	IRQ5,
@@ -281,11 +284,11 @@ ed_probe_generic8390(sc)
 	if ((inb(sc->nic_addr + ED_P0_CR) &
 		(ED_CR_RD2|ED_CR_TXP|ED_CR_STA|ED_CR_STP)) !=
 		(ED_CR_RD2|ED_CR_STP))
-			return (0);
+			return 0;
 	if ((inb(sc->nic_addr + ED_P0_ISR) & ED_ISR_RST) != ED_ISR_RST)
-		return (0);
+		return 0;
 
-	return(1);
+	return 1;
 }
 	
 /*
@@ -321,7 +324,7 @@ ed_probe_WD80x3(cf, ia)
 		 */
 		if (inb(sc->asic_addr + ED_WD_CARD_ID) != ED_TYPE_WD8003E ||
 			inb(sc->asic_addr + ED_WD_PROM + 7) != 0)
-				return(0);
+				return 0;
 	}
 
 	/* reset card to force it into a known state. */
@@ -436,7 +439,7 @@ ed_probe_WD80x3(cf, ia)
 		else if (ed_intr_mask[iptr] != ia->ia_irq) {
 			printf("ed%d: kernel configured irq %d doesn't match board configured irq %d\n",
 				cf->cf_unit, ffs(ia->ia_irq) - 1, ffs(ed_intr_mask[iptr]) - 1);
-			return(0);
+			return 0;
 		}
 		/*
 		 * Enable the interrupt.
@@ -474,19 +477,17 @@ ed_probe_WD80x3(cf, ia)
 	/*
 	 * allocate one xmit buffer if < 16k, two buffers otherwise
 	 */
-	if ((memsize < 16384) || (cf->cf_flags & ED_FLAGS_NO_MULTI_BUFFERING)) {
-		sc->mem_ring = sc->mem_start + (ED_PAGE_SIZE * ED_TXBUF_SIZE);
+	if ((memsize < 16384) || (cf->cf_flags & ED_FLAGS_NO_MULTI_BUFFERING))
 		sc->txb_cnt = 1;
-		sc->rec_page_start = ED_TXBUF_SIZE;
-	} else {
-		sc->mem_ring = sc->mem_start + (ED_PAGE_SIZE * ED_TXBUF_SIZE * 2);
+	else
 		sc->txb_cnt = 2;
-		sc->rec_page_start = ED_TXBUF_SIZE * 2;
-	}
+
+	sc->tx_page_start = ED_WD_PAGE_OFFSET;
+	sc->rec_page_start = sc->tx_page_start + sc->txb_cnt * ED_TXBUF_SIZE;
+	sc->rec_page_stop = sc->tx_page_start + memsize / ED_PAGE_SIZE;
+	sc->mem_ring = sc->mem_start + sc->rec_page_start * ED_PAGE_SIZE;
 	sc->mem_size = memsize;
 	sc->mem_end = sc->mem_start + memsize;
-	sc->rec_page_stop = memsize / ED_PAGE_SIZE;
-	sc->tx_page_start = ED_WD_PAGE_OFFSET;
 
 	/*
 	 * Get station address from on-board ROM
@@ -532,7 +533,7 @@ ed_probe_WD80x3(cf, ia)
 					outb(sc->asic_addr + ED_WD_LAAR, (sc->wd_laar_proto &=
 						~ED_WD_LAAR_M16EN));
 
-				return(0);
+				return 0;
 			}
 	
 		/*
@@ -581,38 +582,38 @@ ed_probe_3Com(cf, ia)
 	switch (inb(sc->asic_addr + ED_3COM_BCFR)) {
 	case ED_3COM_BCFR_300:
 		if (ia->ia_iobase != 0x300)
-			return(0);
+			return 0;
 		break;
 	case ED_3COM_BCFR_310:
 		if (ia->ia_iobase != 0x310)
-			return(0);
+			return 0;
 		break;
 	case ED_3COM_BCFR_330:
 		if (ia->ia_iobase != 0x330)
-			return(0);
+			return 0;
 		break;
 	case ED_3COM_BCFR_350:
 		if (ia->ia_iobase != 0x350)
-			return(0);
+			return 0;
 		break;
 	case ED_3COM_BCFR_250:
 		if (ia->ia_iobase != 0x250)
-			return(0);
+			return 0;
 		break;
 	case ED_3COM_BCFR_280:
 		if (ia->ia_iobase != 0x280)
-			return(0);
+			return 0;
 		break;
 	case ED_3COM_BCFR_2A0:
 		if (ia->ia_iobase != 0x2a0)
-			return(0);
+			return 0;
 		break;
 	case ED_3COM_BCFR_2E0:
 		if (ia->ia_iobase != 0x2e0)
-			return(0);
+			return 0;
 		break;
 	default:
-		return(0);
+		return 0;
 	}
 
 	/*
@@ -624,28 +625,28 @@ ed_probe_3Com(cf, ia)
 		if (ia->ia_maddr == MADDRUNK)
 			ia->ia_maddr = (caddr_t)0xdc000;
 		else if (ia->ia_maddr != (caddr_t)0xdc000)
-			return(0);
+			return 0;
 		break;
 	case ED_3COM_PCFR_D8000:
 		if (ia->ia_maddr == MADDRUNK)
 			ia->ia_maddr = (caddr_t)0xd8000;
 		else if (ia->ia_maddr != (caddr_t)0xd8000)
-			return(0);
+			return 0;
 		break;
 	case ED_3COM_PCFR_CC000:
 		if (ia->ia_maddr == MADDRUNK)
 			ia->ia_maddr = (caddr_t)0xcc000;
 		else if (ia->ia_maddr != (caddr_t)0xcc000)
-			return(0);
+			return 0;
 		break;
 	case ED_3COM_PCFR_C8000:
 		if (ia->ia_maddr == MADDRUNK)
 			ia->ia_maddr = (caddr_t)0xc8000;
 		else if (ia->ia_maddr != (caddr_t)0xc8000)
-			return(0);
+			return 0;
 		break;
 	default:
-		return(0);
+		return 0;
 	}
 
 	/*
@@ -800,7 +801,7 @@ ed_probe_3Com(cf, ia)
 	default:
 		printf("ed%d: invalid irq configuration (%d); must be 3-5 or 9 for 3c503\n",
 			cf->cf_unit, ffs(ia->ia_irq) - 1);
-		return(0);
+		return 0;
 	}
 
 	/*
@@ -828,7 +829,7 @@ ed_probe_3Com(cf, ia)
 		if (sc->mem_start[i]) {
 	        	printf("ed%d: failed to clear shared memory at %x - check configuration\n",
 				cf->cf_unit, kvtop(sc->mem_start + i));
-			return(0);
+			return 0;
 		}
 
 	ia->ia_msize = memsize;
@@ -848,8 +849,8 @@ ed_probe_Novell(cf, ia)
 	struct ed_softc *sc = &ed_softc[cf->cf_unit];
 	u_int memsize, n;
 	u_char romdata[16], isa16bit = 0, tmp;
-	static char test_pattern[32] = "THIS is A memory TEST pattern";
-	char test_buffer[32];
+	static u_char test_pattern[32] = "THIS is A memory TEST pattern";
+	u_char test_buffer[32];
 
 	sc->asic_addr = ia->ia_iobase + ED_NOVELL_ASIC_OFFSET;
 	sc->nic_addr = ia->ia_iobase + ED_NOVELL_NIC_OFFSET;
@@ -892,7 +893,7 @@ ed_probe_Novell(cf, ia)
 
 	/* Make sure that we really have an 8390 based board */
 	if (!ed_probe_generic8390(sc))
-		return(0);
+		return 0;
 
 	sc->vendor = ED_VENDOR_NOVELL;
 	sc->mem_shared = 0;
@@ -942,7 +943,7 @@ ed_probe_Novell(cf, ia)
 		ed_pio_readmem(sc, 16384, test_buffer, sizeof(test_pattern));
 
 		if (bcmp(test_pattern, test_buffer, sizeof(test_pattern)))
-			return(0); /* not an NE2000 either */
+			return 0; /* not an NE2000 either */
 
 		sc->type = ED_TYPE_NE2000;
 		sc->type_str = "NE2000";
@@ -964,7 +965,7 @@ ed_probe_Novell(cf, ia)
 
 	/* NIC memory doesn't start at zero on an NE board */
 	/* The start address is tied to the bus width */
-	sc->mem_start = (char *) 8192 + sc->isa16bit * 8192;
+	sc->mem_start = (caddr_t) 8192 + sc->isa16bit * 8192;
 	sc->mem_end = sc->mem_start + memsize;
 	sc->tx_page_start = memsize / ED_PAGE_SIZE;
 
@@ -1163,7 +1164,7 @@ ed_init(sc)
 {
 	struct ifnet *ifp = &sc->arpcom.ac_if;
 	int i, s;
-	u_char	command;
+	u_char command;
 
 	/* address not known */
 	if (ifp->if_addrlist == (struct ifaddr *)0)
@@ -1317,7 +1318,7 @@ static inline void ed_xmit(ifp)
 	struct ifnet *ifp;
 {
 	struct ed_softc *sc = &ed_softc[ifp->if_unit];
-	unsigned short len;
+	u_short len;
 
 	len = sc->txb_len[sc->txb_next_tx];
 
@@ -1500,8 +1501,7 @@ outloop:
 		int off, datasize, resid;
 		struct ether_header *eh;
 		struct trailer_header trailer_header;
-		char ether_packet[ETHER_MAX_LEN];
-		char *ep;
+		u_char ether_packet[ETHER_MAX_LEN], *ep;
 
 		ep = ether_packet;
 
@@ -1573,7 +1573,7 @@ ed_rint(sc)
 	u_char boundry, current;
 	u_short len;
 	struct ed_ring packet_hdr;
-	char *packet_ptr;
+	caddr_t packet_ptr;
 
 	/*
 	 * Set NIC to page 1 registers to get 'current' pointer
@@ -1601,7 +1601,7 @@ ed_rint(sc)
 		if (sc->mem_shared)
 			packet_hdr = *(struct ed_ring *)packet_ptr;
 		else
-			ed_pio_readmem(sc, (u_short)packet_ptr, (char *) &packet_hdr,
+			ed_pio_readmem(sc, (u_short)packet_ptr, (caddr_t) &packet_hdr,
 				sizeof(packet_hdr));
 		len = packet_hdr.count;
 		if ((len >= ETHER_MIN_LEN) && (len <= ETHER_MAX_LEN)) {
@@ -1983,7 +1983,7 @@ ed_ioctl(ifp, command, data)
 		error = EINVAL;
 	}
 	(void) splx(s);
-	return (error);
+	return error;
 }
  
 /*
@@ -2000,13 +2000,14 @@ ed_ioctl(ifp, command, data)
  * Retreive packet from shared memory and send to the next level up via
  *	ether_input(). If there is a BPF listener, give a copy to BPF, too.
  */
+void
 ed_get_packet(sc, buf, len)
 	struct ed_softc *sc;
-	char *buf;
+	caddr_t buf;
 	u_short len;
 {
 	struct ether_header *eh;
-    	struct mbuf *m, *head, *ed_ring_to_mbuf();
+    	struct mbuf *m, *head = 0, *ed_ring_to_mbuf();
 	u_short off;
 	int resid;
 	u_short etype;
@@ -2070,7 +2071,7 @@ ed_get_packet(sc, buf, len)
 			struct trailer_header trailer_header;
 			ed_pio_readmem(sc,
 				(u_short)ringoffset(sc, buf, off, caddr_t),
-				(char *) &trailer_header,
+				(caddr_t) &trailer_header,
 				sizeof(trailer_header));
 			eh->ether_type = trailer_header.ether_type;
 			resid = trailer_header.ether_residual;
@@ -2081,7 +2082,7 @@ ed_get_packet(sc, buf, len)
 		resid -= sizeof(struct trailer_header);
 		if (resid < 0) goto bad;	/* insanity */
 
-		m = ed_ring_to_mbuf(sc, ringoffset(sc, buf, off+4, char *), head, resid);
+		m = ed_ring_to_mbuf(sc, ringoffset(sc, buf, off+4, caddr_t), head, resid);
 		if (m == 0) goto bad;
 
 		len = off;
@@ -2155,10 +2156,10 @@ void
 ed_pio_readmem(sc,src,dst,amount)
 	struct	ed_softc *sc;
 	u_short src;
-	u_char *dst;
+	caddr_t dst;
 	u_short amount;
 {
-	unsigned short tmp_amount;
+	u_short tmp_amount;
 
 	/* select page 0 registers */
 	outb(sc->nic_addr + ED_P0_CR, ED_CR_RD2|ED_CR_STA);
@@ -2192,7 +2193,7 @@ ed_pio_readmem(sc,src,dst,amount)
 void
 ed_pio_writemem(sc,src,dst,len)
 	struct ed_softc *sc;
-	u_char *src;
+	caddr_t src;
 	u_short dst;
 	u_short len;
 {
@@ -2239,9 +2240,9 @@ ed_pio_write_mbufs(sc,m,dst)
 	struct mbuf *m;
 	u_short dst;
 {
-	unsigned short len, mb_offset;
+	u_short len, mb_offset;
 	struct mbuf *mp;
-	unsigned char residual[2];
+	u_char residual[2];
 	int maxwait=100; /* about 120us */
 
 	/* First, count up the total number of bytes to copy */
@@ -2305,7 +2306,7 @@ ed_pio_write_mbufs(sc,m,dst)
 					}
 
 					outw(sc->asic_addr + ED_NOVELL_DATA,
-						*((unsigned short *) residual));
+						*((u_short *) residual));
 				} else
 					mb_offset = 0;
 			} else
@@ -2330,7 +2331,7 @@ ed_pio_write_mbufs(sc,m,dst)
 		ed_reset(sc);
 	}
 
-	return(len);
+	return len;
 }
 	
 /*
@@ -2367,7 +2368,7 @@ ed_ring_copy(sc,src,dst,amount)
 	else
 		ed_pio_readmem(sc, (u_short)src, dst, amount);
 
-	return(src + amount);
+	return src + amount;
 }
 
 /*
@@ -2382,7 +2383,7 @@ ed_ring_copy(sc,src,dst,amount)
 struct mbuf *
 ed_ring_to_mbuf(sc,src,dst,total_len)
 	struct ed_softc *sc;
-	char *src;
+	caddr_t src;
 	struct mbuf *dst;
 	u_short total_len;
 {
@@ -2406,7 +2407,7 @@ ed_ring_to_mbuf(sc,src,dst,total_len)
 			dst = m;
 			MGET(m, M_DONTWAIT, MT_DATA);
 			if (m == 0)
-				return (0);
+				return 0;
 
 			if (total_len >= MINCLSIZE)
 				MCLGET(m, M_DONTWAIT);
@@ -2422,5 +2423,5 @@ ed_ring_to_mbuf(sc,src,dst,total_len)
 		total_len -= amount;
 
 	}
-	return (m);
+	return m;
 }
