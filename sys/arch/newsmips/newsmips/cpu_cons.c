@@ -1,3 +1,5 @@
+/*	$NetBSD: cpu_cons.c,v 1.2 1998/12/26 00:53:49 tsubai Exp $	*/
+
 /*
  * Copyright (c) 1988 University of Utah.
  * Copyright (c) 1992, 1993
@@ -85,7 +87,7 @@ consinit()
 	setup_fnt();
 	setup_fnt24();
 #else
-	dipsw &= SW_CONSOLE;
+	dipsw &= ~SW_CONSOLE;
 #endif /* NFB > 0 */
 
 	switch (dipsw & SW_CONSOLE) {

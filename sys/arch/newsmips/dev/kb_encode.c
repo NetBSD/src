@@ -1,4 +1,4 @@
-/*	$NetBSD: kb_encode.c,v 1.3 1998/06/01 19:31:04 tsubai Exp $	*/
+/*	$NetBSD: kb_encode.c,v 1.4 1998/12/26 00:53:49 tsubai Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -52,15 +52,15 @@
 #define KM_JIS 1
 #define KM_EUC 2
 
-extern int tmode;
-extern int country;
 extern Pfk_table pfk_table[];
 extern Pfk_table pfk_init[];
 extern Key_table *key_table_addr;
-
-int	kbd_status;
-int	shifttype;
+extern int country;
 extern int iscaps;
+
+int tmode;
+int kbd_status;
+int shifttype;
 
 extern int put_code();
 
