@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.3 1998/10/06 20:50:16 thorpej Exp $	*/
+/*	$NetBSD: cpu.h,v 1.4 1998/10/25 10:13:21 tsubai Exp $	*/
 
 /*
  * Copyright (C) 1995-1997 Wolfgang Solfrank.
@@ -65,18 +65,25 @@ syncicache(from, len)
 	void *from;
 	int len;
 {
-	int l = len;
-	char *p = from;
-	
+	int l, off;
+	char *p;
+
+	off = (int)from & (CACHELINESIZE - 1);
+	from -= off;
+	len += off;
+
+	p = from; l = len;
 	do {
 		__asm__ __volatile ("dcbst 0,%0" :: "r"(p));
 		p += CACHELINESIZE;
 	} while ((l -= CACHELINESIZE) > 0);
 	__asm__ __volatile ("sync");
+
+	p = from; l = len;
 	do {
-		__asm__ __volatile ("icbi 0,%0" :: "r"(from));
-		(char *)from += CACHELINESIZE;
-	} while ((len -= CACHELINESIZE) > 0);
+		__asm__ __volatile ("icbi 0,%0" :: "r"(p));
+		p += CACHELINESIZE;
+	} while ((l -= CACHELINESIZE) > 0);
 	__asm__ __volatile ("isync");
 }
 
@@ -85,18 +92,24 @@ flushcache(from, len)
 	void *from;
 	int len;
 {
-	int l = len;
-	char *p = from;
-	
+	int l, off;
+	char *p;
+
+	off = (int)from & (CACHELINESIZE - 1);
+	from -= off;
+	len += off;
+
+	l = len; p = from;
 	do {
 		__asm__ __volatile ("dcbf 0,%0" :: "r"(p));
 		p += CACHELINESIZE;
 	} while ((l -= CACHELINESIZE) > 0);
 	__asm__ __volatile ("sync");
+	l = len; p = from;
 	do {
-		__asm__ __volatile ("icbi 0,%0" :: "r"(from));
-		(char *)from += CACHELINESIZE;
-	} while ((len -= CACHELINESIZE) > 0);
+		__asm__ __volatile ("icbi 0,%0" :: "r"(p));
+		p += CACHELINESIZE;
+	} while ((l -= CACHELINESIZE) > 0);
 	__asm__ __volatile ("isync");
 }
 
