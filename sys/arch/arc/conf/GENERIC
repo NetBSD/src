@@ -1,4 +1,4 @@
-#	$NetBSD: GENERIC,v 1.41 2000/12/24 09:25:25 ur Exp $
+#	$NetBSD: GENERIC,v 1.42 2001/04/30 04:52:53 tsutsui Exp $
 #	$OpenBSD: GENERIC,v 1.29 1999/08/29 12:14:03 niklas Exp $
 #
 #	GENERIC -- everything that's currently supported
@@ -6,7 +6,7 @@
 
 include		"arch/arc/conf/std.arc"
 
-#ident		"GENERIC-$Revision: 1.41 $"
+#ident		"GENERIC-$Revision: 1.42 $"
 
 maxusers	32		# estimated number of users
 
@@ -137,11 +137,16 @@ sn0		at jazzio?
 fdc0		at jazzio?
 fd*		at fdc? drive ?
 
-asc0		at jazzio?
+asc0		at jazzio?			# NCR53C9x SCSI
 scsibus* 	at asc?
 
-#siop0		at jazzio?
-#scsibus* 	at siop?
+osiop0		at jazzio? flags 0x00000	# NCR53C710 SCSI
+osiop1		at jazzio? flags 0x00000
+scsibus* 	at osiop?
+
+#oosiop0 	at jazzio?			# NCR53C700 SCSI
+#oosiop1 	at jazzio?
+#scsibus* 	at oosiop?
 
 #### ISA bus devices
 
