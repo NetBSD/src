@@ -1,4 +1,4 @@
-/*	$NetBSD: msdosfs_vfsops.c,v 1.48 1997/10/18 02:54:57 briggs Exp $	*/
+/*	$NetBSD: msdosfs_vfsops.c,v 1.48.2.1 1997/11/19 00:01:21 mellon Exp $	*/
 
 /*-
  * Copyright (C) 1994, 1995, 1997 Wolfgang Solfrank.
@@ -33,17 +33,17 @@
  */
 /*
  * Written by Paul Popelka (paulp@uts.amdahl.com)
- * 
+ *
  * You can do anything you want with this software, just don't say you wrote
  * it, and don't remove this notice.
- * 
+ *
  * This software is provided "as is".
- * 
+ *
  * The author supplies this software to be publicly redistributed on the
  * understanding that the author is not responsible for the correct
  * functioning of this software in any circumstances and is not liable for
  * any damages caused by this software.
- * 
+ *
  * October 1992
  */
 
@@ -126,13 +126,13 @@ update_mp(mp, argp)
 	 */
 	if (pmp->pm_flags & MSDOSFSMNT_GEMDOSFS)
 		pmp->pm_flags |= MSDOSFSMNT_NOWIN95;
-	
+
 	if (pmp->pm_flags & MSDOSFSMNT_NOWIN95)
 		pmp->pm_flags |= MSDOSFSMNT_SHORTNAME;
 	else if (!(pmp->pm_flags &
 	    (MSDOSFSMNT_SHORTNAME | MSDOSFSMNT_LONGNAME))) {
 		struct vnode *rootvp;
-		
+
 		/*
 		 * Try to divine whether to support Win'95 long filenames
 		 */
@@ -211,9 +211,9 @@ msdosfs_mountroot()
 }
 
 /*
- * mp - path - addr in user space of mount point (ie /usr or whatever) 
+ * mp - path - addr in user space of mount point (ie /usr or whatever)
  * data - addr in user space of mount params including the name of the block
- * special file to treat as a filesystem. 
+ * special file to treat as a filesystem.
  */
 int
 msdosfs_mount(mp, path, data, ndp, p)
@@ -321,9 +321,12 @@ msdosfs_mount(mp, path, data, ndp, p)
 		}
 		VOP_UNLOCK(devvp);
 	}
-	if ((mp->mnt_flag & MNT_UPDATE) == 0)
+	if ((mp->mnt_flag & MNT_UPDATE) == 0) {
 		error = msdosfs_mountfs(devvp, mp, p, &args);
-	else {
+#ifdef MSDOSFS_DEBUG		/* only needed for the printf below */
+		pmp = VFSTOMSDOSFS(mp);
+#endif
+	} else {
 		if (devvp != pmp->pm_devvp)
 			error = EINVAL;	/* needs translation */
 		else
@@ -345,7 +348,7 @@ msdosfs_mount(mp, path, data, ndp, p)
 	    &size);
 	bzero(mp->mnt_stat.f_mntfromname + size, MNAMELEN - size);
 #ifdef MSDOSFS_DEBUG
-	printf("msdosfs_mount(): mp %x, pmp %x, inusemap %x\n", mp, pmp, pmp->pm_inusemap);
+	printf("msdosfs_mount(): mp %p, pmp %p, inusemap %p\n", mp, pmp, pmp->pm_inusemap);
 #endif
 	return (0);
 }
@@ -642,7 +645,7 @@ msdosfs_mountfs(devvp, mp, p, argp)
 		brelse(bp);
 		bp = NULL;
 	}
-	
+
 	/*
 	 * Check and validate (or perhaps invalidate?) the fsinfo structure?		XXX
 	 */
@@ -746,17 +749,26 @@ msdosfs_unmount(mp, mntflags, p)
 	pmp = VFSTOMSDOSFS(mp);
 	pmp->pm_devvp->v_specflags &= ~SI_MOUNTEDON;
 #ifdef MSDOSFS_DEBUG
-	printf("msdosfs_umount(): just before calling VOP_CLOSE()\n");
-	printf("flag %08x, usecount %d, writecount %d, holdcnt %d\n",
-	    vp->v_flag, vp->v_usecount, vp->v_writecount, vp->v_holdcnt);
-	printf("lastr %d, id %d, mount %08x, op %08x\n",
-	    vp->v_lastr, vp->v_id, vp->v_mount, vp->v_op);
-	printf("freef %08x, freeb %08x, mountf %08x, mountb %08x\n",
-	    vp->v_freef, vp->v_freeb, vp->v_mountf, vp->v_mountb);
-	printf("cleanblkhd %08x, dirtyblkhd %08x, numoutput %d, type %d\n",
-	    vp->v_cleanblkhd, vp->v_dirtyblkhd, vp->v_numoutput, vp->v_type);
-	printf("union %08x, tag %d, data[0] %08x, data[1] %08x\n",
-	    vp->v_socket, vp->v_tag, vp->v_data[0], vp->v_data[1]);
+	{
+		struct vnode *vp = pmp->pm_devvp;
+
+		printf("msdosfs_umount(): just before calling VOP_CLOSE()\n");
+		printf("flag %08lx, usecount %d, writecount %d, holdcnt %ld\n",
+		    vp->v_flag, vp->v_usecount, vp->v_writecount, vp->v_holdcnt);
+		printf("lastr %d, id %lu, mount %p, op %p\n",
+		    vp->v_lastr, vp->v_id, vp->v_mount, vp->v_op);
+		printf("freef %p, freeb %p, mount %p\n",
+		    vp->v_freelist.tqe_next, vp->v_freelist.tqe_prev,
+		    vp->v_mount);
+		printf("cleanblkhd %p, dirtyblkhd %p, numoutput %ld, type %d\n",
+		    vp->v_cleanblkhd.lh_first,
+		    vp->v_dirtyblkhd.lh_first,
+		    vp->v_numoutput, vp->v_type);
+		printf("union %p, tag %d, data[0] %08x, data[1] %08x\n",
+		    vp->v_socket, vp->v_tag,
+		    ((u_int *)vp->v_data)[0],
+		    ((u_int *)vp->v_data)[1]);
+	}
 #endif
 	error = VOP_CLOSE(pmp->pm_devvp,
 	    pmp->pm_flags & MSDOSFSMNT_RONLY ? FREAD : FREAD|FWRITE, NOCRED, p);
@@ -778,8 +790,7 @@ msdosfs_root(mp, vpp)
 	int error;
 
 #ifdef MSDOSFS_DEBUG
-	printf("msdosfs_root(); mp %08x, pmp %08x, ndep %08x, vp %08x\n",
-	    mp, pmp, ndep, DETOV(ndep));
+	printf("msdosfs_root(); mp %p, pmp %p\n", mp, pmp);
 #endif
 	if ((error = deget(pmp, MSDOSFSROOT, MSDOSFSROOT_OFS, &ndep)) != 0)
 		return (error);
