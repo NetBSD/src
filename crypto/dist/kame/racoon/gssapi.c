@@ -1,4 +1,4 @@
-/*	$KAME: gssapi.c,v 1.19 2001/04/03 15:51:55 thorpej Exp $	*/
+/*	$KAME: gssapi.c,v 1.20 2004/03/27 03:27:45 suz Exp $	*/
 
 /*
  * Copyright 2000 Wasabi Systems, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: gssapi.c,v 1.2 2003/07/12 09:37:09 itojun Exp $");
+__RCSID("$NetBSD: gssapi.c,v 1.3 2004/04/12 03:34:07 itojun Exp $");
 
 #ifdef HAVE_GSSAPI
 #include <sys/types.h>
@@ -71,7 +71,7 @@ __RCSID("$NetBSD: gssapi.c,v 1.2 2003/07/12 09:37:09 itojun Exp $");
 #include "vendorid.h"
 #include "gcmalloc.h"
 
-#include "gssapi.h"
+#include "auth_gssapi.h"
 
 static void
 gssapi_error(OM_uint32 status_code, const char *where,
