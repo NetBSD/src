@@ -1,7 +1,9 @@
+/*	$NetBSD: portability.h,v 1.2 1997/04/13 10:50:11 mrg Exp $	*/
+
 /* portability.h - include or define things that aren't present on all systems
  * vixie@decwrl 26dec92 [new]
  *
- * $Id: portability.h,v 1.1.1.1 1997/04/13 09:06:57 mrg Exp $
+ * from: Id: portability.h,v 8.20 1996/11/26 10:11:16 vixie Exp
  */
 
 /*

@@ -1,6 +1,8 @@
+/*	$NetBSD: db_func.h,v 1.2 1997/04/13 10:51:10 mrg Exp $	*/
+
 /* db_proc.h - prototypes for functions in db_*.c
  *
- * $Id: db_func.h,v 1.1.1.1 1997/04/13 09:06:53 mrg Exp $
+ * from: Id: db_func.h,v 8.12 1996/09/22 00:13:10 vixie Exp
  */
 
 /* ++from db_update.c++ */

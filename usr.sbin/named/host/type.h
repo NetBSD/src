@@ -1,3 +1,5 @@
+/*	$NetBSD: type.h,v 1.2 1997/04/13 10:50:39 mrg Exp $	*/
+
 /*
 ** Various new resource record type and class values.
 **
