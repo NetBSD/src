@@ -1,6 +1,6 @@
-/* $NetBSD: create.h,v 1.2 1997/06/05 12:59:30 agc Exp $ */
+/* $NetBSD: create.h,v 1.3 1997/10/16 00:31:49 hubertf Exp $ */
 
-/* from FreeBSD Id: create.h,v 1.11 1997/02/22 16:09:24 peter Exp */
+/* from FreeBSD Id: create.h,v 1.13 1997/10/08 07:46:19 charnier Exp */
 
 /*
  * FreeBSD install - a package for the installation and maintainance
@@ -41,7 +41,6 @@ extern int	Dereference;
 extern int	PlistOnly;
 
 void		check_list(char *, Package *);
-void		usage(const char *, const char *, ...);
 int		pkg_perform(char **);
 void		copy_plist(char *, Package *);
 

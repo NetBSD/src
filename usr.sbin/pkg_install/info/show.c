@@ -1,10 +1,10 @@
-/* $NetBSD: show.c,v 1.3 1997/10/11 20:26:22 hubertf Exp $ */
+/* $NetBSD: show.c,v 1.4 1997/10/16 00:32:12 hubertf Exp $ */
 
 #ifndef lint
 #if 0
-static const char *rcsid = "from FreeBSD Id: show.c,v 1.10 1997/02/22 16:09:43 peter Exp";
+static const char *rcsid = "from FreeBSD Id: show.c,v 1.11 1997/10/08 07:47:38 charnier Exp";
 #else
-static const char *rcsid = "$NetBSD: show.c,v 1.3 1997/10/11 20:26:22 hubertf Exp $";
+static const char *rcsid = "$NetBSD: show.c,v 1.4 1997/10/16 00:32:12 hubertf Exp $";
 #endif
 #endif
 
@@ -61,7 +61,7 @@ show_index(char *title, char *fname)
         printf("%s%s", InfoPrefix, title);
     fp = fopen(fname, "r");
     if (!fp) {
-        whinge("show_file: Can't open '%s' for reading.", fname);
+        warnx("show_file: can't open '%s' for reading", fname);
         return;
     }
     if(fgets(line, MAXINDEXSIZE+1, fp)) {
@@ -164,7 +164,8 @@ show_plist(char *title, Package *plist, plist_t type)
 	    break;
 
 	default:
-	    barf("Unknown command type %d (%s)\n", p->type, p->name);
+	    cleanup(0);
+	    errx(2, "unknown command type %d (%s)", p->type, p->name);
 	    break;
 	}
 	p = p->next;

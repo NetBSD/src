@@ -1,10 +1,10 @@
-/* $NetBSD: main.c,v 1.3 1997/06/13 16:10:15 agc Exp $ */
+/* $NetBSD: main.c,v 1.4 1997/10/16 00:32:02 hubertf Exp $ */
 
 #ifndef lint
 #if 0
-static char *rcsid = "from FreeBSD Id: main.c,v 1.9 1997/03/31 05:10:48 imp Exp";
+static char *rcsid = "from FreeBSD Id: main.c,v 1.11 1997/10/08 07:46:48 charnier Exp";
 #else
-static char *rcsid = "$NetBSD: main.c,v 1.3 1997/06/13 16:10:15 agc Exp $";
+static char *rcsid = "$NetBSD: main.c,v 1.4 1997/10/16 00:32:02 hubertf Exp $";
 #endif
 #endif
 
@@ -29,9 +29,9 @@ static char *rcsid = "$NetBSD: main.c,v 1.3 1997/06/13 16:10:15 agc Exp $";
  *
  */
 
+#include <err.h>
 #include "lib.h"
 #include "delete.h"
-#include <err.h>
 
 static char Options[] = "hvDdnfp:";
 
@@ -39,12 +39,13 @@ char	*Prefix		= NULL;
 Boolean	NoDeInstall	= FALSE;
 Boolean	CleanDirs	= FALSE;
 
+static void usage __P((void));
+
 int
 main(int argc, char **argv)
 {
     int ch, error;
     char **pkgs, **start;
-    char *prog_name = argv[0];
 
     pkgs = start = argv;
     while ((ch = getopt(argc, argv, Options)) != -1)
@@ -77,7 +78,7 @@ main(int argc, char **argv)
 	case 'h':
 	case '?':
 	default:
-	    usage(prog_name, NULL);
+	    usage();
 	    break;
 	}
 
@@ -91,39 +92,22 @@ main(int argc, char **argv)
 
     /* If no packages, yelp */
     if (pkgs == start)
-	usage(prog_name, "Missing package name(s)");
+	warnx("missing package name(s)"), usage();
     *pkgs = NULL;
     if (!Fake && getuid() != 0)
-	errx(1, "You must be root to delete packages.");
+	errx(1, "you must be root to delete packages");
     if ((error = pkg_perform(start)) != 0) {
 	if (Verbose)
-	    fprintf(stderr, "%d package deletion(s) failed.\n", error);
+	    warnx("%d package deletion(s) failed", error);
 	return error;
     }
     else
 	return 0;
 }
 
-void
-usage(const char *name, const char *fmt, ...)
+static void
+usage()
 {
-    va_list args;
-
-    va_start(args, fmt);
-    if (fmt) {
-	fprintf(stderr, "%s: ", name);
-	vfprintf(stderr, fmt, args);
-	fprintf(stderr, "\n\n");
-    }
-    va_end(args);
-    fprintf(stderr, "Usage: %s [args] pkg [ .. pkg ]\n", name);
-    fprintf(stderr, "Where args are one or more of:\n\n");
-    fprintf(stderr, "-v         verbose\n");
-    fprintf(stderr, "-p arg     override prefix with arg\n");
-    fprintf(stderr, "-d         delete empty directories when deinstalling\n");
-    fprintf(stderr, "-f         force delete even if dependencies exist\n");
-    fprintf(stderr, "           or deinstall/requirement checks fail\n");
-    fprintf(stderr, "-D         don't execute pkg de-install script, if any\n");
-    fprintf(stderr, "-n         don't actually de-install, just show steps\n");
+    fprintf(stderr, "usage: pkg_delete [-vDdnf] [-p prefix] pkg-name ...\n");
     exit(1);
 }

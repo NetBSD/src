@@ -1,10 +1,10 @@
-/* $NetBSD: pen.c,v 1.2 1997/06/05 12:59:52 agc Exp $ */
+/* $NetBSD: pen.c,v 1.3 1997/10/16 00:32:26 hubertf Exp $ */
 
 #ifndef lint
 #if 0
-static const char *rcsid = "from FreeBSD Id: pen.c,v 1.24 1997/02/22 16:09:50 peter Exp";
+static const char *rcsid = "from FreeBSD Id: pen.c,v 1.25 1997/10/08 07:48:12 charnier Exp";
 #else
-static const char *rcsid = "$NetBSD: pen.c,v 1.2 1997/06/05 12:59:52 agc Exp $";
+static const char *rcsid = "$NetBSD: pen.c,v 1.3 1997/10/16 00:32:26 hubertf Exp $";
 #endif
 #endif
 
@@ -28,6 +28,7 @@ static const char *rcsid = "$NetBSD: pen.c,v 1.2 1997/06/05 12:59:52 agc Exp $";
  *
  */
 
+#include <err.h>
 #include "lib.h"
 #include <sys/signal.h>
 #include <sys/param.h>
@@ -63,9 +64,11 @@ find_play_pen(char *pen, size_t sz)
     else if ((stat("/usr/tmp", &sb) == SUCCESS || mkdir("/usr/tmp", 01777) == SUCCESS) && min_free("/usr/tmp") >= sz)
 	strcpy(pen, "/usr/tmp/instmp.XXXXXX");
     else {
-	barf("Can't find enough temporary space to extract the files, please set\n"
-	     "your PKG_TMPDIR environment variable to a location with at least %d bytes\n"
-	     "free.", sz);
+	cleanup(0);
+	errx(2,
+"can't find enough temporary space to extract the files, please set your\n"
+"PKG_TMPDIR environment variable to a location with at least %d bytes\n"
+"free", sz);
 	return NULL;
     }
     return pen;
@@ -82,12 +85,12 @@ make_playpen(char *pen, size_t sz)
 	return NULL;
 
     if (!mktemp(pen)) {
-	barf("Can't mktemp '%s'.", pen);
-	return NULL;
+	cleanup(0);
+	errx(2, "can't mktemp '%s'", pen);
     }
     if (mkdir(pen, 0755) == FAIL) {
-	barf("Can't mkdir '%s'.", pen);
-	return NULL;
+	cleanup(0);
+	errx(2, "can't mkdir '%s'", pen);
     }
     if (Verbose) {
 	if (sz)
@@ -95,10 +98,10 @@ make_playpen(char *pen, size_t sz)
     }
     if (min_free(pen) < sz) {
 	rmdir(pen);
-	barf("Not enough free space to create: `%s'\n"
+	cleanup(0);
+	errx(2, "not enough free space to create '%s'.\n"
 	     "Please set your PKG_TMPDIR environment variable to a location\n"
-	     "with more space and\ntry the command again.", pen);
-        return NULL;
+	     "with more space and\ntry the command again", pen);
     }
     if (Current[0])
 	strcpy(Previous, Current);
@@ -107,7 +110,7 @@ make_playpen(char *pen, size_t sz)
 	return NULL;
     }
     if (chdir(pen) == FAIL)
-	barf("Can't chdir to '%s'.", pen);
+	cleanup(0), errx(2, "can't chdir to '%s'", pen);
     strcpy(Current, pen);
     return Previous;
 }
@@ -121,10 +124,10 @@ leave_playpen(char *save)
     /* Don't interrupt while we're cleaning up */
     oldsig = signal(SIGINT, SIG_IGN);
     if (Previous[0] && chdir(Previous) == FAIL)
-	barf("Can't chdir back to '%s'.", Previous);
+	cleanup(0), errx(2, "can't chdir back to '%s'", Previous);
     else if (Current[0] && strcmp(Current, Previous)) {
 	if (vsystem("rm -rf %s", Current))
-	    whinge("Couldn't remove temporary dir '%s'", Current);
+	    warnx("couldn't remove temporary dir '%s'", Current);
 	strcpy(Current, Previous);
     }
     if (save)
@@ -140,7 +143,7 @@ min_free(char *tmpdir)
     struct statfs buf;
 
     if (statfs(tmpdir, &buf) != 0) {
-	perror("Error in statfs");
+	warn("statfs");
 	return -1;
     }
     return (off_t)buf.f_bavail * (off_t)buf.f_bsize;
