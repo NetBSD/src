@@ -1946,19 +1946,20 @@
   ""
   "sett")
 
-;; t/r is first, so that it will be preferred over r/r when reloading a move
-;; of a pseudo-reg into the T reg
+;; t/r must come after r/r, lest reload will try to reload stuff like
+;; (set (subreg:SI (mem:QI (plus:SI (reg:SI 15 r15) (const_int 12)) 0) 0)
+;; (made from (set (subreg:SI (reg:QI 73) 0) ) into T.
 (define_insn "movsi_i"
-  [(set (match_operand:SI 0 "general_movdst_operand" "=t,r,r,r,r,r,m,<,<,xl,x,l,r")
-	(match_operand:SI 1 "general_movsrc_operand" "r,Q,rI,m,xl,t,r,x,l,r,>,>,i"))]
+  [(set (match_operand:SI 0 "general_movdst_operand" "=r,r,t,r,r,r,m,<,<,xl,x,l,r")
+	(match_operand:SI 1 "general_movsrc_operand" "Q,rI,r,mr,xl,t,r,x,l,r,>,>,i"))]
   "
    ! TARGET_SH3E
    && (register_operand (operands[0], SImode)
        || register_operand (operands[1], SImode))"
   "@
-	cmp/pl	%1
 	mov.l	%1,%0
 	mov	%1,%0
+	cmp/pl	%1
 	mov.l	%1,%0
 	sts	%1,%0
 	movt	%0
@@ -1969,7 +1970,7 @@
 	lds.l	%1,%0
 	lds.l	%1,%0
 	fake	%1,%0"
-  [(set_attr "type" "*,pcload_si,move,load_si,move,move,store,store,pstore,move,load,pload,pcload_si")
+  [(set_attr "type" "pcload_si,move,*,load_si,move,move,store,store,pstore,move,load,pload,pcload_si")
    (set_attr "length" "*,*,*,*,*,*,*,*,*,*,*,*,*")])
 
 ;; t/r must come after r/r, lest reload will try to reload stuff like
@@ -1977,8 +1978,8 @@
 ;; ??? This allows moves from macl to fpul to be recognized, but these moves
 ;; will require a reload.
 (define_insn "movsi_ie"
-  [(set (match_operand:SI 0 "general_movdst_operand" "=r,r,t,r,r,r,m,<,<,xl,x,l,r,y,r,y")
-	(match_operand:SI 1 "general_movsrc_operand" "Q,rI,r,m,xl,t,r,x,l,r,>,>,i,r,y,y"))]
+  [(set (match_operand:SI 0 "general_movdst_operand" "=r,r,t,r,r,r,m,<,<,xl,x,l,y,r,y,r,y")
+	(match_operand:SI 1 "general_movsrc_operand" "Q,rI,r,mr,xl,t,r,x,l,r,>,>,>,i,r,y,y"))]
   "TARGET_SH3E
    && (register_operand (operands[0], SImode)
        || register_operand (operands[1], SImode))"
@@ -1995,16 +1996,17 @@
 	lds	%1,%0
 	lds.l	%1,%0
 	lds.l	%1,%0
+	lds.l	%1,%0
 	fake	%1,%0
 	lds	%1,%0
 	sts	%1,%0
 	! move optimized away"
-  [(set_attr "type" "pcload_si,move,*,load_si,move,move,store,store,pstore,move,load,pload,pcload_si,gp_fpul,gp_fpul,nil")
-   (set_attr "length" "*,*,*,*,*,*,*,*,*,*,*,*,*,*,*,0")])
+  [(set_attr "type" "pcload_si,move,*,load_si,move,move,store,store,pstore,move,load,pload,load,pcload_si,gp_fpul,gp_fpul,nil")
+   (set_attr "length" "*,*,*,*,*,*,*,*,*,*,*,*,*,*,*,*,0")])
 
 (define_insn "movsi_i_lowpart"
   [(set (strict_low_part (match_operand:SI 0 "general_movdst_operand" "=r,r,r,r,r,m,r"))
-	(match_operand:SI 1 "general_movsrc_operand" "Q,rI,m,xl,t,r,i"))]
+	(match_operand:SI 1 "general_movsrc_operand" "Q,rI,mr,xl,t,r,i"))]
    "register_operand (operands[0], SImode)
     || register_operand (operands[1], SImode)"
   "@
