@@ -1,4 +1,4 @@
-/*	$NetBSD: mem2.c,v 1.5 2001/05/28 12:40:38 lukem Exp $	*/
+/*	$NetBSD: mem2.c,v 1.6 2002/01/21 19:49:52 tv Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -33,7 +33,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: mem2.c,v 1.5 2001/05/28 12:40:38 lukem Exp $");
+__RCSID("$NetBSD: mem2.c,v 1.6 2002/01/21 19:49:52 tv Exp $");
 #endif
 
 #include <sys/param.h>
@@ -41,7 +41,6 @@ __RCSID("$NetBSD: mem2.c,v 1.5 2001/05/28 12:40:38 lukem Exp $");
 #include <sys/mman.h>
 #include <unistd.h>
 #include <string.h>
-#include <err.h>
 
 #include "lint2.h"
 
@@ -76,7 +75,8 @@ xalloc(size_t sz)
 	void	*ptr;
 	int	prot, flags;
 
-	sz = ALIGN(sz);
+	/* Align to at least 8 bytes. */
+	sz = (sz + 7) & ~7L;
 	if (nxtfree + sz > mblklen) {
 		/* use mmap() instead of malloc() to avoid malloc overhead. */
 		prot = PROT_READ | PROT_WRITE;
@@ -84,8 +84,6 @@ xalloc(size_t sz)
 		mbuf = mmap(NULL, mblklen, prot, flags, -1, (off_t)0);
 		if (mbuf == (void *)-1)
 			err(1, "can't map memory");
-		if (ALIGN((u_long)mbuf) != (u_long)mbuf)
-			errx(1, "mapped address is not aligned");
 		(void)memset(mbuf, 0, mblklen);
 		nxtfree = 0;
 	}
