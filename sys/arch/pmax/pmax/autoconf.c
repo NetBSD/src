@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.22 1997/05/24 09:32:34 jonathan Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.23 1997/05/25 06:10:46 jonathan Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -77,10 +77,6 @@ void xconsinit __P((void));	/* XXX console-init continuation */
  */
 int spl0 __P((void));
 #endif
-
-void	configure __P((void));
-void	makebootdev __P((char *cp));
-
 
 
 /*
