@@ -11,7 +11,7 @@
 
 /*
  * from: @(#)fdlibm.h 5.1 93/09/24
- * $NetBSD: math_private.h,v 1.9 2000/05/09 21:55:53 bjh21 Exp $
+ * $NetBSD: math_private.h,v 1.10 2001/02/09 18:38:33 bjh21 Exp $
  */
 
 #ifndef _MATH_PRIVATE_H_
@@ -38,7 +38,7 @@
  * big endian.
  */
 
-#if (BYTE_ORDER == BIG_ENDIAN) || defined(__arm32__) || defined(__arm26__)
+#if (BYTE_ORDER == BIG_ENDIAN) || defined(__arm__)
 
 typedef union
 {
@@ -52,7 +52,7 @@ typedef union
 
 #endif
 
-#if (BYTE_ORDER == LITTLE_ENDIAN) && !defined(__arm32__) && !defined(__arm26__)
+#if (BYTE_ORDER == LITTLE_ENDIAN) && !defined(__arm__)
 
 typedef union
 {
