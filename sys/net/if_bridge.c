@@ -1,4 +1,4 @@
-/*	$NetBSD: if_bridge.c,v 1.18 2003/09/16 17:37:27 jdc Exp $	*/
+/*	$NetBSD: if_bridge.c,v 1.19 2003/10/25 18:29:12 christos Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -80,7 +80,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_bridge.c,v 1.18 2003/09/16 17:37:27 jdc Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_bridge.c,v 1.19 2003/10/25 18:29:12 christos Exp $");
 
 #include "opt_bridge_ipf.h"
 #include "opt_inet.h"
@@ -1919,6 +1919,7 @@ extern struct pfil_head inet6_pfil_hook;                /* XXX */
  */
 static int bridge_ipf(void *arg, struct mbuf **mp, struct ifnet *ifp, int dir)
 {
+/*###1922 [cc] warning: `split2' might be used uninitialized in this function%%%*/
 	int snap, error, split1, split2, pktlen;
 	struct ether_header *eh;
 	struct mbuf *m1, *m2;
@@ -1985,8 +1986,10 @@ static int bridge_ipf(void *arg, struct mbuf **mp, struct ifnet *ifp, int dir)
 				goto bad2;
 			split2 = 1;
 		}
-	} else
+	} else {
 		m2 = m1;
+		split2 = 0;
+	}
 
 	/*
 	 * Check basic packet sanity, if the packet is outbound, and

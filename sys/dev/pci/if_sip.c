@@ -1,4 +1,4 @@
-/*	$NetBSD: if_sip.c,v 1.81 2003/09/30 21:21:34 martin Exp $	*/
+/*	$NetBSD: if_sip.c,v 1.82 2003/10/25 18:31:11 christos Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002 The NetBSD Foundation, Inc.
@@ -80,7 +80,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_sip.c,v 1.81 2003/09/30 21:21:34 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_sip.c,v 1.82 2003/10/25 18:31:11 christos Exp $");
 
 #include "bpfilter.h"
 #include "rnd.h"
@@ -1117,7 +1117,7 @@ void
 SIP_DECL(start)(struct ifnet *ifp)
 {
 	struct sip_softc *sc = ifp->if_softc;
-	struct mbuf *m0, *m;
+	struct mbuf *m0, *m = NULL;
 	struct sip_txsoft *txs;
 	bus_dmamap_t dmamap;
 	int error, nexttx, lasttx, seg;

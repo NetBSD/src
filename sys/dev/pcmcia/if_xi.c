@@ -1,4 +1,4 @@
-/*	$NetBSD: if_xi.c,v 1.31 2003/06/23 11:01:59 martin Exp $ */
+/*	$NetBSD: if_xi.c,v 1.32 2003/10/25 18:29:40 christos Exp $ */
 /*	OpenBSD: if_xe.c,v 1.9 1999/09/16 11:28:42 niklas Exp 	*/
 
 /*
@@ -49,7 +49,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_xi.c,v 1.31 2003/06/23 11:01:59 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_xi.c,v 1.32 2003/10/25 18:29:40 christos Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipx.h"
@@ -791,7 +791,7 @@ xi_intr(arg)
 	struct xi_softc *sc = arg;
 	struct ifnet *ifp = &sc->sc_ethercom.ec_if;
 	u_int8_t esr, rsr, isr, rx_status, savedpage;
-	u_int16_t tx_status, recvcount = 0, tempint;
+	u_int16_t tx_status = 0, recvcount = 0, tempint;
 
 	DPRINTF(XID_CONFIG, ("xi_intr()\n"));
 

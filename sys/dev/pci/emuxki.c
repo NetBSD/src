@@ -1,4 +1,4 @@
-/*	$NetBSD: emuxki.c,v 1.26 2003/05/03 18:11:34 wiz Exp $	*/
+/*	$NetBSD: emuxki.c,v 1.27 2003/10/25 18:31:11 christos Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -56,7 +56,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: emuxki.c,v 1.26 2003/05/03 18:11:34 wiz Exp $");
+__KERNEL_RCSID(0, "$NetBSD: emuxki.c,v 1.27 2003/10/25 18:31:11 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -1356,7 +1356,7 @@ static int
 emuxki_voice_set_stereo(struct emuxki_voice *voice, u_int8_t stereo)
 {
 	int	error;
-	emuxki_recsrc_t source;
+	emuxki_recsrc_t source = NULL; /* XXX: gcc */
 	struct emuxki_chanparms_fxsend fxsend;
 
 	if (! (voice->use & EMU_VOICE_USE_PLAY))

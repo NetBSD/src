@@ -1,4 +1,4 @@
-/*	$NetBSD: pdcide.c,v 1.4 2003/10/24 00:24:15 mycroft Exp $	*/
+/*	$NetBSD: pdcide.c,v 1.5 2003/10/25 18:31:12 christos Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000, 2001 Manuel Bouyer.
@@ -190,7 +190,7 @@ pdc202xx_chip_map(struct pciide_softc *sc, struct pci_attach_args *pa)
 {
 	struct pciide_channel *cp;
 	int channel;
-	pcireg_t interface, st, mode;
+	pcireg_t interface, st = 0, mode; /* XXX: gcc */
 	bus_size_t cmdsize, ctlsize;
 
 	if (!PDC_IS_268(sc)) {

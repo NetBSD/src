@@ -1,4 +1,4 @@
-/*	$NetBSD: amr.c,v 1.15 2003/10/21 03:22:25 fvdl Exp $	*/
+/*	$NetBSD: amr.c,v 1.16 2003/10/25 18:31:11 christos Exp $	*/
 
 /*-
  * Copyright (c) 2002, 2003 The NetBSD Foundation, Inc.
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: amr.c,v 1.15 2003/10/21 03:22:25 fvdl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: amr.c,v 1.16 2003/10/25 18:31:11 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -255,7 +255,7 @@ amr_attach(struct device *parent, struct device *self, void *aux)
 	const char *intrstr;
 	pcireg_t reg;
 	int rseg, i, j, size, rv, memreg, ioreg;
-	bus_size_t memsize, iosize;
+	bus_size_t memsize = 0, iosize = 0;
         struct amr_ccb *ac;
 
 	aprint_naive(": RAID controller\n");
@@ -282,6 +282,7 @@ amr_attach(struct device *parent, struct device *self, void *aux)
 			if ((iosize = PCI_MAPREG_IO_SIZE(reg)) != 0)
 				ioreg = i;
 			break;
+
 		}
 	}
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: oboe.c,v 1.15 2003/10/21 03:24:25 fvdl Exp $	*/
+/*	$NetBSD: oboe.c,v 1.16 2003/10/25 18:31:11 christos Exp $	*/
 
 /*	XXXXFVDL THIS DRIVER IS BROKEN FOR NON-i386 -- vtophys() usage	*/
 
@@ -45,7 +45,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: oboe.c,v 1.15 2003/10/21 03:24:25 fvdl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: oboe.c,v 1.16 2003/10/25 18:31:11 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -251,7 +251,7 @@ int
 oboe_activate(struct device *self, enum devact act)
 {
 	struct oboe_softc *sc = (struct oboe_softc *)self;
-	int error;
+	int error = 0;
 
 	DPRINTF(("%s: sc=%p\n", __FUNCTION__, sc));
 
