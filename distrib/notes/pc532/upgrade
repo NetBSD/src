@@ -1,4 +1,4 @@
-.\"	$NetBSD: upgrade,v 1.12 2002/06/30 12:15:13 lukem Exp $
+.\"	$NetBSD: upgrade,v 1.13 2002/06/30 13:10:16 lukem Exp $
 .\"
 .\" Copyright (c) 1999-2002 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -56,7 +56,8 @@ To upgrade your system, follow the following instructions:
 Assuming you have space, load the .tgz files onto disk some place.
 Then boot the floppy-144.fs image via the method you use.
 Under the install system, extract the \&.tgz files as mentioned below
-or read the i386 INSTALL notes for how to use sysinst.
+or read the i386 INSTALL notes for how to use
+.Ic sysinst .
 .It
 Extract the .tgz files.
 For example, to extract

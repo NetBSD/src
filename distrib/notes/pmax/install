@@ -1,4 +1,4 @@
-.\"	$NetBSD: install,v 1.31 2002/06/30 12:22:25 lukem Exp $
+.\"	$NetBSD: install,v 1.32 2002/06/30 13:10:17 lukem Exp $
 .\"
 .\" Copyright (c) 1999-2002 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -495,7 +495,9 @@ netboot
 webpage at
 .Lk http://www.netbsd.org/Ports/\*M/netboot.html
 .Pp
-Since the system install utility, sysinst, requires a read/write root,
+Since the system install utility,
+.Ic sysinst ,
+requires a read/write root,
 installing via diskless boot is only feasible if your NFS server exports
 the diskless root read-write.
 If this is not possible, you should
