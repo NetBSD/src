@@ -1,4 +1,4 @@
-/*	$NetBSD: bmtphy.c,v 1.1 2001/06/02 21:42:10 thorpej Exp $	*/
+/*	$NetBSD: bmtphy.c,v 1.2 2001/06/08 07:09:40 enami Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2000, 2001 The NetBSD Foundation, Inc.
@@ -146,6 +146,7 @@ bmtphyattach(parent, self, aux)
 	sc->mii_funcs = &bmtphy_funcs;
 	sc->mii_pdata = mii;
 	sc->mii_flags = mii->mii_flags;
+	sc->mii_anegticks = 5;
 
 	PHY_RESET(sc);
 
