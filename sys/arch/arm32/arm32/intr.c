@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.c,v 1.2 1997/11/13 10:37:40 veego Exp $	*/
+/*	$NetBSD: intr.c,v 1.3 1998/01/22 00:04:10 mark Exp $	*/
 
 /*
  * Copyright (c) 1994-1996 Mark Brinicombe.
@@ -56,8 +56,9 @@
 extern int current_intr_depth;
 extern u_int spl_mask;
 extern u_int soft_interrupts;
+#ifdef IRQSTATS
 extern u_int intrcnt[];
-
+#endif	/* IRQSTATS */
 
 /* Prototypes */
 
@@ -156,7 +157,9 @@ dosoftints()
 
 	if (softints & IRQMASK_SOFTCLOCK) {
 		++cnt.v_soft;
+#ifdef IRQSTATS
 		++intrcnt[IRQ_SOFTCLOCK];
+#endif	/* IRQSTATS */
 		atomic_clear_bit(&soft_interrupts, IRQMASK_SOFTCLOCK);
 		softclock();
 	}
@@ -167,7 +170,9 @@ dosoftints()
 
 	if (softints & IRQMASK_SOFTNET) {
 		++cnt.v_soft;
+#ifdef IRQSTATS
 		++intrcnt[IRQ_SOFTNET];
+#endif	/* IRQSTATS */
 		atomic_clear_bit(&soft_interrupts, IRQMASK_SOFTNET);
 
 #ifdef INET
