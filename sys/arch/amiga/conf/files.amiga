@@ -1,4 +1,4 @@
-#	$NetBSD: files.amiga,v 1.14 1994/12/01 17:24:46 chopps Exp $
+#	$NetBSD: files.amiga,v 1.15 1994/12/28 09:13:42 chopps Exp $
 
 maxusers 2 8 64
 
@@ -7,8 +7,8 @@ device	mainbus at root {}
 device	cpu at mainbus
 
 # zorro II expansion bus.
-device	ztwobus at mainbus {}
-file	arch/amiga/dev/ztwobus.c	ztwobus
+device	zbus at mainbus {}
+file	arch/amiga/dev/zbus.c		zbus
 
 define	event {}
 file	arch/amiga/dev/event.c		event
@@ -63,28 +63,46 @@ file	arch/amiga/dev/grfabs_cc.c	grfcc view
 file	arch/amiga/dev/grfabs_ccglb.c	grfcc view
 
 # retina grf
-device	grfrt at ztwobus: grfbus
+device	grfrt at zbus: grfbus
 file	arch/amiga/dev/grf_rt.c		grfrt needs-flag
 file	arch/amiga/dev/ite_rt.c		grfrt ite
 
-# zorro III expansion bus.
-device	zthreebus at mainbus {}
-file	arch/amiga/dev/zthreebus.c	zthreebus
+# cirrus grf (A2000 or Picasso)
+device	grfcl at zbus: grfbus
+file	arch/amiga/dev/grf_cl.c		grfcl needs-flag
 
 # retina ZIII grf
-device	grfrh at zthreebus: grfbus
+device	grfrh at zbus: grfbus
 file	arch/amiga/dev/grf_rh.c		grfrh needs-flag
 file	arch/amiga/dev/ite_rh.c		grfrh ite
   
+# cirrus grf (Zorro III boards)
+#device	grfcl at zbus: grfbus
+#device	grfclx at zbus: grfbus
+#file	arch/amiga/dev/grf_cl.c		grfcl grfclx needs-flag
+
 # handle gvp's odd autoconf info..
-device	gvpbus at ztwobus {}
+device	gvpbus at zbus {}
 file	arch/amiga/dev/gvpbus.c		gvpbus
 
-device	le at ztwobus:	ifnet, ether
+device	le at zbus:	ifnet, ether
 file	arch/amiga/dev/if_le.c		le needs-count
 
-device	ed at ztwobus:	ifnet, ether
+device	ed at zbus:	ifnet, ether
 file	arch/amiga/dev/if_ed.c		ed needs-flag
+
+device	ex at zbus:	ifnet, ether
+file	arch/amiga/dev/if_ex.c		ex needs-count
+
+# Alf Data MultiFaceCard 3
+#device	mfch at zbus: tty
+#file	arch/amiga/dev/mfch.c		mfch needs-count
+# bsc/Alf Data MultiFaceCard
+device	mfc at zbus { unit = -1 }
+
+device	mfcs at mfc
+device	mfcp at mfc
+file	arch/amiga/dev/mfc.c		mfcs mfcp needs-count
 
 define	scsi {}
 
@@ -93,7 +111,7 @@ define	sbic
 file	arch/amiga/dev/sbic.c		sbic
 
 # C= A2091
-device atzsc at ztwobus: scsi, sbic
+device atzsc at zbus: scsi, sbic
 file	arch/amiga/dev/atzsc.c		atzsc needs-flag
 
 # GVP series II
@@ -109,19 +127,19 @@ define	siop
 file	arch/amiga/dev/siop.c		siop
 
 # PPI Zeus
-device	zssc at ztwobus: scsi, siop
+device	zssc at zbus: scsi, siop
 file	arch/amiga/dev/zssc.c		zssc needs-flag
 
 # CSA Magnum
-device	mgnsc at ztwobus: scsi, siop
+device	mgnsc at zbus: scsi, siop
 file	arch/amiga/dev/mgnsc.c		mgnsc needs-flag
 
 # MacroSystems Warp Engine
-device	wesc at zthreebus: scsi, siop
+device	wesc at zbus: scsi, siop
 file	arch/amiga/dev/wesc.c		wesc needs-flag
 
 # C= A4091
-device	afsc at zthreebus: scsi, siop
+device	afsc at zbus: scsi, siop
 file	arch/amiga/dev/afsc.c		afsc needs-flag
 
 # ncr 5380 controllers
@@ -129,20 +147,28 @@ define	sci
 file	arch/amiga/dev/sci.c		sci
 
 # Supra Wordsync II
-device	wstsc at ztwobus: scsi, sci
+device	wstsc at zbus: scsi, sci
 file	arch/amiga/dev/wstsc.c		wstsc needs-flag
 
 # IVS 
-device	ivsc at ztwobus: scsi, sci
+device	ivsc at zbus: scsi, sci
 file	arch/amiga/dev/ivsc.c		ivsc needs-flag
 
 # CSA twelve gauge.
-device	otgsc at ztwobus: scsi, sci
+device	otgsc at zbus: scsi, sci
 file	arch/amiga/dev/otgsc.c		otgsc needs-flag
 
 # MLH
-device	mlhsc at ztwobus: scsi, sci
+device	mlhsc at zbus: scsi, sci
 file	arch/amiga/dev/mlhsc.c		mlhsc needs-flag
+
+# Emulex ESP216 & FAS216 controllers
+define	fas
+file	arch/amiga/dev/fas.c		fas
+
+# FastlaneZ3
+device	flz3sc at zbus: scsi, fas
+file	arch/amiga/dev/flz3sc.c		flz3sc needs-flag
 
 # Amiga 4000/1200 IDE masquerading as SCSI
 device	idesc at mainbus: scsi
