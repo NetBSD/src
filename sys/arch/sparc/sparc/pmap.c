@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.167 2000/06/05 20:38:26 pk Exp $ */
+/*	$NetBSD: pmap.c,v 1.168 2000/06/06 09:20:31 pk Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -3176,7 +3176,7 @@ pmap_bootstrap4m(void)
 	 */
 	ctxtblsize = max(ncontext,1024) * sizeof(int);
 	cpuinfo.ctx_tbl = (int *)roundup((u_int)p, ctxtblsize);
-	cpuinfo.ctx_tbl_pa = (paddr_t)(cpuinfo.ctx_tbl - KERNBASE);
+	cpuinfo.ctx_tbl_pa = (paddr_t)((u_int)cpuinfo.ctx_tbl - KERNBASE);
 	p = (caddr_t)((u_int)cpuinfo.ctx_tbl + ctxtblsize);
 
 	/*
