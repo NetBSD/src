@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_machdep.c,v 1.87 2000/03/26 20:42:28 kleink Exp $	*/
+/*	$NetBSD: vm_machdep.c,v 1.88 2000/05/27 23:01:44 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1995 Charles M. Hannum.  All rights reserved.
@@ -167,6 +167,7 @@ cpu_fork(p1, p2, stack, stacksize)
 	sf->sf_ebx = (int)p2;
 	sf->sf_eip = (int)proc_trampoline;
 	pcb->pcb_esp = (int)sf;
+	pcb->pcb_ebp = 0;
 }
 
 void
