@@ -1,4 +1,4 @@
-#	$NetBSD: std.x68k,v 1.1.1.1 1996/05/05 12:17:03 oki Exp $
+#	$NetBSD: std.x68k,v 1.2 1996/10/27 09:14:59 oki Exp $
 #
 # standard x68k information
 #
@@ -6,6 +6,9 @@
 machine x68k m68k
 
 options		MACHINE_NONCONTIG	# Non-contiguous memory support
+
+options		EXEC_SCRIPT		# Support #!
+options		EXEC_AOUT		# a.out format executables
 
 mainbus0	at root
 
