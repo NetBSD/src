@@ -1,4 +1,4 @@
-#	$NetBSD: files.pci,v 1.182 2002/10/24 18:15:57 junyoung Exp $
+#	$NetBSD: files.pci,v 1.183 2002/10/25 21:03:49 leo Exp $
 #
 # Config file and device description for machine-independent PCI code.
 # Included by ports that need it.  Requires that the SCSI files be
@@ -553,9 +553,13 @@ file	dev/pci/isic_pci.c		isic_pci
 
 file	dev/pci/isic_pci_elsa_qs1p.c	isic_pci
 
-device	ifpci: isdndev, passive_isdn
+device	ifpci: isdndev, passive_isdn, nisac
 attach	ifpci at pci
 file	dev/pci/ifpci.c			ifpci
+
+device	ifritz: isdndev, passive_isdn, nisacsx
+attach	ifritz at pci
+file	dev/pci/ifpci2.c		ifritz
 
 # Winbond W6692
 device	iwic: isdndev, passive_isdn
