@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_fork.c,v 1.56 1999/04/30 21:23:49 thorpej Exp $	*/
+/*	$NetBSD: kern_fork.c,v 1.57 1999/04/30 21:39:51 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1991, 1993
@@ -276,8 +276,15 @@ again:
 	if (p2->p_textvp)
 		VREF(p2->p_textvp);
 
-	p2->p_fd = fdcopy(p1);
-	p2->p_cwdi = cwdinit(p1);
+	if (flags & FORK_SHAREFILES)
+		fdshare(p1, p2);
+	else
+		p2->p_fd = fdcopy(p1);
+
+	if (flags & FORK_SHARECWD)
+		cwdshare(p1, p2);
+	else
+		p2->p_cwdi = cwdinit(p1);
 
 	/*
 	 * If p_limit is still copy-on-write, bump refcnt,
@@ -317,7 +324,10 @@ again:
 	/*
 	 * Create signal actions for the child process.
 	 */
-	p2->p_sigacts = sigactsinit(p1);
+	if (flags & FORK_SHARESIGS)
+		sigactsshare(p1, p2);
+	else
+		p2->p_sigacts = sigactsinit(p1);
 
 	/*
 	 * This begins the section where we must prevent the parent
