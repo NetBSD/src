@@ -1,4 +1,4 @@
-/*	$NetBSD: nd6_rtr.c,v 1.18 2000/08/13 23:45:22 itojun Exp $	*/
+/*	$NetBSD: nd6_rtr.c,v 1.19 2001/01/17 11:26:53 itojun Exp $	*/
 /*	$KAME: nd6_rtr.c,v 1.40 2000/06/13 03:02:29 jinmei Exp $	*/
 
 /*
@@ -119,8 +119,10 @@ nd6_rs_input(m, off, icmp6len)
 
 	/* Sanity checks */
 	if (ip6->ip6_hlim != 255) {
+#ifdef ND6_DEBUG
 		log(LOG_ERR,
 		    "nd6_rs_input: invalid hlim %d\n", ip6->ip6_hlim);
+#endif
 		goto freeit;
 	}
 
@@ -197,8 +199,10 @@ nd6_ra_input(m, off, icmp6len)
 		goto freeit;
 
 	if (ip6->ip6_hlim != 255) {
+#ifdef ND6_DEBUG
 		log(LOG_ERR,
 		    "nd6_ra_input: invalid hlim %d\n", ip6->ip6_hlim);
+#endif
 		goto freeit;
 	}
 
