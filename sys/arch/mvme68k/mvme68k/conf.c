@@ -1,4 +1,4 @@
-/*	$NetBSD: conf.c,v 1.3 1996/03/14 21:29:41 christos Exp $	*/
+/*	$NetBSD: conf.c,v 1.4 1996/04/03 20:35:25 chuck Exp $	*/
 
 /*-
  * Copyright (c) 1991 The Regents of the University of California.
@@ -112,7 +112,7 @@ cdev_decl(st);
 cdev_decl(vnd);
 cdev_decl(ccd);
 
-dec_decl(filedesc,open);
+dev_decl(filedesc,open);
 
 #include "bpfilter.h"
 cdev_decl(bpf);
