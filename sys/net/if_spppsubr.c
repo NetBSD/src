@@ -1,4 +1,4 @@
-/*	$NetBSD: if_spppsubr.c,v 1.36 2002/01/04 12:21:25 martin Exp $	 */
+/*	$NetBSD: if_spppsubr.c,v 1.37 2002/01/05 19:26:44 thorpej Exp $	 */
 
 /*
  * Synchronous PPP/Cisco link level subroutines.
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_spppsubr.c,v 1.36 2002/01/04 12:21:25 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_spppsubr.c,v 1.37 2002/01/05 19:26:44 thorpej Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipx.h"
@@ -3864,9 +3864,9 @@ sppp_chap_input(struct sppp *sp, struct mbuf *m)
 			if (debug)
 				log(LOG_DEBUG,
 				    SPP_FMT "chap bad hash value length: "
-				    "%d bytes, should be %d\n",
+				    "%d bytes, should be %ld\n",
 				    SPP_ARGS(ifp), value_len,
-				    sizeof(sp->myauth.challenge));
+				    (long) sizeof(sp->myauth.challenge));
 			goto chap_failure;
 		}
 
