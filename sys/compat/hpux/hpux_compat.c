@@ -1,4 +1,4 @@
-/*	$NetBSD: hpux_compat.c,v 1.26 1996/10/02 18:04:56 ws Exp $	*/
+/*	$NetBSD: hpux_compat.c,v 1.27 1996/10/14 06:53:23 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -58,6 +58,7 @@
 #include <sys/proc.h>
 #include <sys/buf.h>
 #include <sys/wait.h>
+#include <sys/exec.h>
 #include <sys/file.h>
 #include <sys/namei.h>
 #include <sys/vnode.h>
