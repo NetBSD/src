@@ -1,4 +1,4 @@
-/*	$NetBSD: dl.c,v 1.6 1999/01/19 21:04:48 ragge Exp $	*/
+/*	$NetBSD: dl.c,v 1.7 1999/05/26 02:01:49 ragge Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -94,22 +94,21 @@
 #include <sys/syslog.h>
 #include <sys/device.h>
 
-#include <machine/pte.h>
-#include <machine/trap.h>
+#include <machine/bus.h>
 #include <machine/scb.h>
 
-#include <vax/uba/ubareg.h>
-#include <vax/uba/ubavar.h>
+#include <dev/dec/uba/ubareg.h>
+#include <dev/dec/uba/ubavar.h>
 
-#include <vax/uba/dlreg.h>
+#include <dev/dec/uba/dlreg.h>
 
-#define DL_I2C(i) (i)
-#define DL_C2I(c) (c)
+#include "ioconf.h"
 
 struct dl_softc {
 	struct device	sc_dev;
-	dlregs*		sc_addr;
-	struct tty*		sc_tty;
+	bus_space_tag_t	sc_iot;
+	bus_space_handle_t sc_ioh;
+	struct tty	*sc_tty;
 };
 
 static	int	dl_match __P((struct device *, struct cfdata *, void *));
@@ -131,7 +130,12 @@ struct cfattach dl_ca = {
 	sizeof(struct dl_softc), dl_match, dl_attach
 };
 
-extern struct cfdriver dl_cd;
+#define	DL_READ_WORD(reg) \
+	bus_space_read_2(sc->sc_iot, sc->sc_ioh, reg)
+#define	DL_WRITE_WORD(reg, val) \
+	bus_space_write_2(sc->sc_iot, sc->sc_ioh, reg, val)
+#define	DL_WRITE_BYTE(reg, val) \
+	bus_space_write_1(sc->sc_iot, sc->sc_ioh, reg, val)
 
 /* Autoconfig handles: setup the controller to interrupt, */
 /* then complete the housecleaning for full operation */
@@ -143,18 +147,18 @@ dl_match (parent, cf, aux)
 	void *aux;
 {
 	struct uba_attach_args *ua = aux;
-	register dlregs *dladdr;
 
-	dladdr = (dlregs*) ua->ua_addr;
 #ifdef DL_DEBUG
-        printf("Probing for dl at %lo ... ", (long)dladdr);
+	printf("Probing for dl at %lo ... ", (long)ua->ua_iaddr);
 #endif
 
-	dladdr->dl_xcsr = DL_XCSR_TXIE;
-	if (dladdr->dl_xcsr != (DL_XCSR_TXIE | DL_XCSR_TX_READY)) {
+	bus_space_write_2(ua->ua_iot, ua->ua_ioh, DL_UBA_XCSR, DL_XCSR_TXIE);
+	if (bus_space_read_2(ua->ua_iot, ua->ua_ioh, DL_UBA_XCSR) !=
+	    (DL_XCSR_TXIE | DL_XCSR_TX_READY)) {
 #ifdef DL_DEBUG
-	        printf("failed (step 1; XCSR = %.4b)\n", dladdr->dl_xcsr,
-		       DL_XCSR_BITS);
+	        printf("failed (step 1; XCSR = %.4b)\n", 
+		    bus_space_read_2(ua->ua_iot, ua->ua_ioh, DL_UBA_XCSR), 
+		    DL_XCSR_BITS);
 #endif
 		return 0;
 	}
@@ -167,7 +171,7 @@ dl_match (parent, cf, aux)
 	 * anything.
 	 */
 
-	dladdr->u_xbuf.bytes.byte_lo = '\0';
+	bus_space_write_1(ua->ua_iot, ua->ua_ioh, DL_UBA_XBUFL, '\0');
 #if 0 /* This test seems to fail 2/3 of the time :-( */
 	if (dladdr->dl_xcsr != (DL_XCSR_TXIE)) {
 #ifdef DL_DEBUG
@@ -178,10 +182,12 @@ dl_match (parent, cf, aux)
 	}
 #endif
 	DELAY(100000); /* delay 1/10 s for character to transmit */
-	if (dladdr->dl_xcsr != (DL_XCSR_TXIE | DL_XCSR_TX_READY)) {
+	if (bus_space_read_2(ua->ua_iot, ua->ua_ioh, DL_UBA_XCSR) !=
+	    (DL_XCSR_TXIE | DL_XCSR_TX_READY)) {
 #ifdef DL_DEBUG
-	        printf("failed (step 3; XCSR = %.4b)\n", dladdr->dl_xcsr,
-		       DL_XCSR_BITS);
+	        printf("failed (step 3; XCSR = %.4b)\n", 
+		    bus_space_read_2(ua->ua_iot, ua->ua_ioh, DL_UBA_XCSR),
+		    DL_XCSR_BITS);
 #endif
 		return 0;
 	}
@@ -202,15 +208,14 @@ dl_attach (parent, self, aux)
 {
 	struct dl_softc *sc = (void *)self;
 	register struct uba_attach_args *ua = aux;
-	register dlregs *dladdr;
 
-	dladdr = (dlregs *) ua->ua_addr;
-	sc->sc_addr = dladdr;
+	sc->sc_iot = ua->ua_iot;
+	sc->sc_ioh = ua->ua_ioh;
 	
 	/* Tidy up the device */
 
-	dladdr->dl_rcsr = DL_RCSR_RXIE;
-	dladdr->dl_xcsr = DL_XCSR_TXIE;
+	DL_WRITE_WORD(DL_UBA_RCSR, DL_RCSR_RXIE);
+	DL_WRITE_WORD(DL_UBA_XCSR, DL_XCSR_TXIE);
 
 	/* Initialize our softc structure. Should be done in open? */
 	
@@ -230,15 +235,12 @@ dlrint(cntlr)
 	int cntlr;
 {
 	struct	dl_softc *sc = dl_cd.cd_devs[cntlr];
-	volatile dlregs *dladdr;
 	register struct tty *tp;
 	register int cc;
 	register unsigned c;
 
-	dladdr =  sc->sc_addr;
-
-	if (dladdr->dl_rcsr & DL_RCSR_RX_DONE) {
-	        c = dladdr->dl_rbuf;
+	if (DL_READ_WORD(DL_UBA_RCSR) & DL_RCSR_RX_DONE) {
+	        c = DL_READ_WORD(DL_UBA_RBUF);
 		cc = c & 0xFF;
 		tp = sc->sc_tty;
 
@@ -273,10 +275,8 @@ dlxint(cntlr)
 	int cntlr;
 {
 	struct	dl_softc *sc = dl_cd.cd_devs[cntlr];
-	volatile dlregs *dladdr;
 	register struct tty *tp;
 	
-	dladdr = sc->sc_addr;
 	tp = sc->sc_tty;
 	tp->t_state &= ~(TS_BUSY | TS_FLUSH);
 	if (tp->t_line)
@@ -297,7 +297,7 @@ dlopen(dev, flag, mode, p)
 	register int unit;
 	struct dl_softc *sc;
 
-	unit = DL_I2C(minor(dev));
+	unit = minor(dev);
 
 	if (unit >= dl_cd.cd_ndevs || dl_cd.cd_devs[unit] == NULL)
 		return ENXIO;
@@ -339,7 +339,7 @@ dlclose(dev, flag, mode, p)
 	register struct tty *tp;
 	register int unit;
 
-	unit = DL_I2C(minor(dev));
+	unit = minor(dev);
 	sc = dl_cd.cd_devs[unit];
       	tp = sc->sc_tty;
 
@@ -361,7 +361,7 @@ dlread(dev, uio, flag)
 	struct dl_softc *sc;
 	register int unit;
 
-	unit = DL_I2C(minor(dev));
+	unit = minor(dev);
 	sc = dl_cd.cd_devs[unit];
 	tp = sc->sc_tty;
 	return ((*linesw[tp->t_line].l_read)(tp, uio, flag));
@@ -377,7 +377,7 @@ dlwrite(dev, uio, flag)
 	struct dl_softc *sc;
 	register int unit;
 
-	unit = DL_I2C(minor(dev));
+	unit = minor(dev);
 	sc = dl_cd.cd_devs[unit];
 	tp = sc->sc_tty;
 	return ((*linesw[tp->t_line].l_write)(tp, uio, flag));
@@ -396,7 +396,7 @@ dlioctl(dev, cmd, data, flag, p)
         register int unit;
         int error;
 
-	unit = DL_I2C(minor(dev));
+	unit = minor(dev);
 	sc = dl_cd.cd_devs[unit];
 	tp = sc->sc_tty;
 
@@ -434,7 +434,7 @@ dltty(dev)
 {
 	register struct dl_softc* sc;
 	
-	sc = dl_cd.cd_devs[DL_I2C(minor(dev))];
+	sc = dl_cd.cd_devs[minor(dev)];
 	return sc->sc_tty;
 }
 
@@ -446,7 +446,7 @@ dlstop(tp, flag)
 	register struct dl_softc *sc;
 	int unit, s;
 
-	unit = DL_I2C(minor(tp->t_dev));
+	unit = minor(tp->t_dev);
 	sc = dl_cd.cd_devs[unit];
 
 	s = spltty();
@@ -462,11 +462,10 @@ dlstart(tp)
 	register struct tty *tp;
 {
 	register struct dl_softc *sc;
-	register dlregs *dladdr;
 	register int unit;
 	int s;
 
-	unit = DL_I2C(minor(tp->t_dev));
+	unit = minor(tp->t_dev);
 	sc = dl_cd.cd_devs[unit];
 
 	s = spltty();
@@ -482,11 +481,10 @@ dlstart(tp)
         if (tp->t_outq.c_cc == 0)
                 goto out;
 
-	dladdr = sc->sc_addr;
 
-	if (dladdr->dl_xcsr & DL_XCSR_TX_READY) {
+	if (DL_READ_WORD(DL_UBA_XCSR) & DL_XCSR_TX_READY) {
 		tp->t_state |= TS_BUSY;
-		dladdr->u_xbuf.bytes.byte_lo = getc(&tp->t_outq);
+		DL_WRITE_BYTE(DL_UBA_XBUFL, getc(&tp->t_outq));
 	}
 out:
 	splx(s);
@@ -512,13 +510,14 @@ dlbrk(sc, state)
 	register struct dl_softc *sc;
 	int state;
 {
-	register dlregs *dladdr;
-	int s;
-	dladdr = sc->sc_addr;
-	s = spltty();
-	if (state)
-		dladdr->dl_xcsr |= DL_XCSR_TX_BREAK;
-	else
-		dladdr->dl_xcsr &= ~DL_XCSR_TX_BREAK;
+	int s = spltty();
+
+	if (state) {
+		DL_WRITE_WORD(DL_UBA_XCSR, DL_READ_WORD(DL_UBA_XCSR) |
+		    DL_XCSR_TX_BREAK);
+	} else {
+		DL_WRITE_WORD(DL_UBA_XCSR, DL_READ_WORD(DL_UBA_XCSR) &
+		    ~DL_XCSR_TX_BREAK);
+	}
 	splx(s);
 }
