@@ -1,4 +1,4 @@
-/*	$NetBSD: mfs_vfsops.c,v 1.4 1995/01/18 06:19:54 mycroft Exp $	*/
+/*	$NetBSD: mfs_vfsops.c,v 1.5 1995/01/18 09:44:37 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1989, 1990, 1993, 1994
@@ -136,8 +136,7 @@ mfs_mountroot()
 	fs = ump->um_fs;
 	bzero(fs->fs_fsmnt, sizeof(fs->fs_fsmnt));
 	fs->fs_fsmnt[0] = '/';
-	bcopy((caddr_t)fs->fs_fsmnt, (caddr_t)mp->mnt_stat.f_mntonname,
-	    MNAMELEN);
+	bcopy(fs->fs_fsmnt, mp->mnt_stat.f_mntonname, MNAMELEN);
 	(void) copystr(ROOTNAME, mp->mnt_stat.f_mntfromname, MNAMELEN - 1,
 	    &size);
 	bzero(mp->mnt_stat.f_mntfromname + size, MNAMELEN - size);
@@ -241,10 +240,9 @@ mfs_mount(mp, path, data, ndp, p)
 	fs = ump->um_fs;
 	(void) copyinstr(path, fs->fs_fsmnt, sizeof(fs->fs_fsmnt) - 1, &size);
 	bzero(fs->fs_fsmnt + size, sizeof(fs->fs_fsmnt) - size);
-	bcopy((caddr_t)fs->fs_fsmnt, (caddr_t)mp->mnt_stat.f_mntonname,
-		MNAMELEN);
+	bcopy(fs->fs_fsmnt, mp->mnt_stat.f_mntonname, MNAMELEN);
 	(void) copyinstr(args.fspec, mp->mnt_stat.f_mntfromname, MNAMELEN - 1,
-		&size);
+	    &size);
 	bzero(mp->mnt_stat.f_mntfromname + size, MNAMELEN - size);
 	return (0);
 }
