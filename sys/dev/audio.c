@@ -1,4 +1,4 @@
-/*	$NetBSD: audio.c,v 1.62 1997/08/06 23:08:26 augustss Exp $	*/
+/*	$NetBSD: audio.c,v 1.63 1997/08/08 00:03:26 augustss Exp $	*/
 
 /*
  * Copyright (c) 1991-1993 Regents of the University of California.
@@ -655,6 +655,8 @@ audio_open(dev, flags, ifmt, p)
 	}
 #endif
 
+	sc->sc_blkset = 0; /* Block sizes not set yet */
+
 	if (flags & FREAD) {
 		audio_calc_blksize(sc, AUMODE_RECORD);
 		sc->sc_mode = AUMODE_RECORD;
@@ -954,6 +956,9 @@ audio_calc_blksize(sc, mode)
 	struct audio_ringbuffer *rb;
     	int bs;
 
+	if (sc->sc_blkset)
+		return;
+
 	if (mode == AUMODE_PLAY) {
 		parm = &sc->sc_pparams;
 		rb = &sc->sc_pr;
@@ -1229,6 +1234,7 @@ audio_ioctl(dev, cmd, addr, flag, p)
 	case AUDIO_FLUSH:
 		DPRINTF(("AUDIO_FLUSH\n"));
 		audio_clear(sc);
+		sc->sc_blkset = 0;
 		s = splaudio();
 		audio_initbufs(sc);
 		if ((sc->sc_mode & AUMODE_PLAY) && !sc->sc_pbus)
@@ -1982,6 +1988,7 @@ audiosetinfo(sc, ai)
 		/* No need to check the blocksize, audio_initbufs() does that. */
 		sc->sc_pr.blksize = ai->blocksize;
 		sc->sc_rr.blksize = ai->blocksize;
+		sc->sc_blkset = 1;
 	}
 
 	if (ai->mode != ~0) {

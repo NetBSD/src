@@ -1,4 +1,4 @@
-/*	$NetBSD: audiovar.h,v 1.13 1997/07/31 22:33:20 augustss Exp $	*/
+/*	$NetBSD: audiovar.h,v 1.14 1997/08/08 00:03:28 augustss Exp $	*/
 
 /*
  * Copyright (c) 1991-1993 Regents of the University of California.
@@ -39,7 +39,7 @@
  * Initial/default block duration is both configurable and patchable.
  */
 #ifndef AUDIO_BLK_MS
-#define AUDIO_BLK_MS	20	/* 20 ms */
+#define AUDIO_BLK_MS	50	/* 50 ms */
 #endif
 
 #ifndef AU_RING_SIZE
@@ -93,6 +93,8 @@ struct audio_softc {
 	/* Ring buffers, separate for record and play. */
 	struct	audio_ringbuffer sc_rr; /* Record ring */
 	struct	audio_ringbuffer sc_pr; /* Play ring */
+
+	u_char	sc_blkset;	/* Blocksize has been set */
 
 	u_char	*sc_sil_start;	/* start of silence in buffer */
 	int	sc_sil_count;	/* # of silence bytes */
