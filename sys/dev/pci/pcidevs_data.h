@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs_data.h,v 1.63 1998/05/04 05:51:35 thorpej Exp $	*/
+/*	$NetBSD: pcidevs_data.h,v 1.64 1998/05/05 17:22:20 thorpej Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.58 1998/05/04 05:51:19 thorpej Exp 
+ *	NetBSD: pcidevs,v 1.59 1998/05/05 17:22:04 thorpej Exp 
  */
 
 /*
@@ -646,6 +646,12 @@ struct pci_knowndev pci_knowndevs[] = {
 	    "NetFlex 3/P",
 	},
 	{
+	    PCI_VENDOR_COMPEX, PCI_PRODUCT_COMPEX_NE2KETHER,
+	    0,
+	    "Compex",
+	    "Ethernet",
+	},
+	{
 	    PCI_VENDOR_CONTAQ, PCI_PRODUCT_CONTAQ_82C599,
 	    0,
 	    "Contaq Microsystems",
@@ -1150,6 +1156,12 @@ struct pci_knowndev pci_knowndevs[] = {
 	    "ITT3204 MPEG Decoder",
 	},
 	{
+	    PCI_VENDOR_KTI, PCI_PRODUCT_KTI_NE2KETHER,
+	    0,
+	    "KTI",
+	    "Ethernet",
+	},
+	{
 	    PCI_VENDOR_LEADTEK, PCI_PRODUCT_LEADTEK_S3_805,
 	    0,
 	    "LeadTek Research",
@@ -1220,6 +1232,12 @@ struct pci_knowndev pci_knowndevs[] = {
 	    0,
 	    "Mutech",
 	    "MV1000",
+	},
+	{
+	    PCI_VENDOR_NETVIN, PCI_PRODUCT_NETVIN_5000,
+	    0,
+	    "NetVin",
+	    "5000 Ethernet",
 	},
 	{
 	    PCI_VENDOR_NS, PCI_PRODUCT_NS_DP83810,
@@ -1340,6 +1358,12 @@ struct pci_knowndev pci_knowndevs[] = {
 	    0,
 	    "PC Technology",
 	    "RZ1000",
+	},
+	{
+	    PCI_VENDOR_PROLAN, PCI_PRODUCT_PROLAN_NE2KETHER,
+	    0,
+	    "ProLAN",
+	    "Ethernet",
 	},
 	{
 	    PCI_VENDOR_PROMISE, PCI_PRODUCT_PROMISE_DC5030,
@@ -1586,6 +1610,12 @@ struct pci_knowndev pci_knowndevs[] = {
 	    0,
 	    "STB Systems (2nd PCI Vendor ID)",
 	    "Velocity128 (AGP)",
+	},
+	{
+	    PCI_VENDOR_SURECOM, PCI_PRODUCT_SURECOM_NE34,
+	    0,
+	    "Surecom Technology",
+	    "NE-34 Ethernet",
 	},
 	{
 	    PCI_VENDOR_SYMPHONY, PCI_PRODUCT_SYMPHONY_82C101,
@@ -4684,6 +4714,12 @@ struct pci_knowndev pci_knowndevs[] = {
 	    NULL,
 	},
 	{
+	    PCI_VENDOR_COMPEX, 0,
+	    PCI_KNOWNDEV_NOPROD,
+	    "Compex",
+	    NULL,
+	},
+	{
 	    PCI_VENDOR_PMCSIERRA, 0,
 	    PCI_KNOWNDEV_NOPROD,
 	    "PMC-Sierra",
@@ -4798,6 +4834,12 @@ struct pci_knowndev pci_knowndevs[] = {
 	    NULL,
 	},
 	{
+	    PCI_VENDOR_NETVIN, 0,
+	    PCI_KNOWNDEV_NOPROD,
+	    "NetVin",
+	    NULL,
+	},
+	{
 	    PCI_VENDOR_BUSLOGIC2, 0,
 	    PCI_KNOWNDEV_NOPROD,
 	    "Buslogic (2nd PCI Vendor ID)",
@@ -4840,9 +4882,21 @@ struct pci_knowndev pci_knowndevs[] = {
 	    NULL,
 	},
 	{
+	    PCI_VENDOR_PROLAN, 0,
+	    PCI_KNOWNDEV_NOPROD,
+	    "ProLAN",
+	    NULL,
+	},
+	{
 	    PCI_VENDOR_COMPUTONE, 0,
 	    PCI_KNOWNDEV_NOPROD,
 	    "Computone Corperation",
+	    NULL,
+	},
+	{
+	    PCI_VENDOR_KTI, 0,
+	    PCI_KNOWNDEV_NOPROD,
+	    "KTI",
 	    NULL,
 	},
 	{
