@@ -1,4 +1,4 @@
-.\"	$NetBSD: netboot,v 1.18 2003/10/10 23:51:00 mbw Exp $
+.\"	$NetBSD: netboot,v 1.19 2003/12/13 17:55:02 martin Exp $
 .\"
 .\" Copyright (c) 1999-2002 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -107,8 +107,10 @@ the bootstrap and kernel download.
 All \*M systems use BOOTP for the discovery stage.
 .\}
 .if \n[sparc] \{\
-All \*M systems use a combination of RARP and BOOTP for the discovery stage.
-In the past, these systems used RARP and BOOTPARAMS.
+All \*M systems except JavaStations with OpenFirmware PROM
+use a combination of RARP and BOOTP for the discovery stage.
+In the past, these systems used RARP and BOOTPARAMS. JavaStations
+booting from OpenFirmware use DHCP.
 .\}
 .if !\n[hp300]:\n[hp700] \{\
 TFTP is used in the bootstrap phase to download
@@ -125,6 +127,9 @@ the bootstrap program,
 .Pa boot.net ,
 which has been linked to a file name appropriate to the client's
 architecture and IP address as described in the TFTP section below.
+JavaStations with OpenFirmware need a special bootstrap program,
+.Pa bootjs.elf ,
+which is in ELF format. It is not linked to the IP address.
 .\}
 .if \n[evbppc] \{\
 the kernel via the on-board Ethernet card by the firmware.
@@ -318,6 +323,14 @@ group {
  #clients on this network
 }
 .disp)
+.if \n[sparc] \{\
+Note that for JavaStations booting from OpenFirmware you do not need
+the 
+.(disp
+allow bootp;
+.disp)
+statement.
+.\}
 .Pp
 You will need to make sure that the
 .Pa dhcpd.leases
@@ -345,6 +358,12 @@ or later, you can achieve this with:
 .It
 .Xr rarpd 8
 .Pp
+.if \n[sparc] \{\
+Note: no
+.Nm rarpd
+is needed to boot OpenFirmware based JavaStations.
+.Pp
+.\}
 Create an
 .Pa /etc/ethers
 file with the following line:
@@ -479,6 +498,12 @@ A
 .disp)
 .Pp
 .\} \" \n[sparc]
+.if \n[sparc] \{\
+For OpenFirmware based JavaStations you use the file
+.Pa /usr/mdec/bootjs.elf
+and do not create a symlink for the IP address.
+.Pp
+.\}
 Just to be sure, let's make everything readable.
 .(disp
 .No # Ic "chmod -R a+rX /tftpboot"
