@@ -1,4 +1,4 @@
-/*	$NetBSD: init.c,v 1.55 2003/04/20 17:16:31 christos Exp $	*/
+/*	$NetBSD: init.c,v 1.56 2003/05/26 09:34:55 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -46,7 +46,7 @@ __COPYRIGHT("@(#) Copyright (c) 1991, 1993\n"
 #if 0
 static char sccsid[] = "@(#)init.c	8.2 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: init.c,v 1.55 2003/04/20 17:16:31 christos Exp $");
+__RCSID("$NetBSD: init.c,v 1.56 2003/05/26 09:34:55 lukem Exp $");
 #endif
 #endif /* not lint */
 
@@ -93,10 +93,15 @@ __RCSID("$NetBSD: init.c,v 1.55 2003/04/20 17:16:31 christos Exp $");
 #define	STALL_TIMEOUT		30	/* wait N secs after warning */
 #define	DEATH_WATCH		10	/* wait N secs for procs to die */
 
-#ifdef ALTSHELL
-#ifndef	_PATH_ALTSHELL
-#define	_PATH_ALTSHELL	_PATH_BSHELL
-#endif
+
+#if defined(RESCUEDIR)
+#define	INIT_BSHELL	RESCUEDIR "/sh"
+#define	INIT_MOUNT_MFS	RESCUEDIR "/mount_mfs"
+#define	INIT_PATH	RESCUEDIR ":" _PATH_STDPATH
+#else
+#define	INIT_BSHELL	_PATH_BSHELL
+#define	INIT_MOUNT_MFS	"/sbin/mount_mfs"
+#define	INIT_PATH	_PATH_STDPATH
 #endif
 
 int main(int, char *[]);
@@ -526,7 +531,7 @@ single_user(void)
 	sigset_t mask;
 	struct sigaction sa, satstp, sahup;
 #ifdef ALTSHELL
-	const char *shell = _PATH_ALTSHELL;
+	const char *shell = INIT_BSHELL;
 #endif
 	char *argv[2];
 #ifdef SECURE
@@ -614,7 +619,7 @@ single_user(void)
 		 */
 		argv[0] = "-sh";
 		argv[1] = 0;
-		setenv("PATH", _PATH_STDPATH, 1);
+		setenv("PATH", INIT_PATH, 1);
 #ifdef ALTSHELL
 		if (altshell[0])
 			argv[0] = altshell;
@@ -622,8 +627,8 @@ single_user(void)
 		emergency("can't exec %s for single user: %m", shell);
 		argv[0] = "-sh";
 #endif /* ALTSHELL */
-		(void)execv(_PATH_BSHELL, argv);
-		emergency("can't exec %s for single user: %m", _PATH_BSHELL);
+		(void)execv(INIT_BSHELL, argv);
+		emergency("can't exec %s for single user: %m", INIT_BSHELL);
 		(void)sleep(STALL_TIMEOUT);
 		_exit(1);
 	}
@@ -719,12 +724,12 @@ runcom(void)
 
 		(void)sigprocmask(SIG_SETMASK, &sa.sa_mask, NULL);
 
-		(void)execv(_PATH_BSHELL, argv);
-		stall("can't exec %s for %s: %m", _PATH_BSHELL, _PATH_RUNCOM);
+		(void)execv(INIT_BSHELL, argv);
+		stall("can't exec %s for %s: %m", INIT_BSHELL, _PATH_RUNCOM);
 		_exit(1);	/* force single user mode */
 		/*NOTREACHED*/
 	case -1:
-		emergency("can't fork for %s on %s: %m", _PATH_BSHELL,
+		emergency("can't fork for %s on %s: %m", INIT_BSHELL,
 		    _PATH_RUNCOM);
 		while (waitpid(-1, NULL, WNOHANG) > 0)
 			continue;
@@ -744,12 +749,12 @@ runcom(void)
 			if (errno == EINTR)
 				continue;
 			warning("wait for %s on %s failed: %m; going to "
-			    "single user mode", _PATH_BSHELL, _PATH_RUNCOM);
+			    "single user mode", INIT_BSHELL, _PATH_RUNCOM);
 			return (state_func_t)single_user;
 		}
 		if (wpid == pid && WIFSTOPPED(status)) {
 			warning("init: %s on %s stopped, restarting\n",
-			    _PATH_BSHELL, _PATH_RUNCOM);
+			    INIT_BSHELL, _PATH_RUNCOM);
 			(void)kill(pid, SIGCONT);
 			wpid = -1;
 		}
@@ -767,7 +772,7 @@ runcom(void)
 
 	if (!WIFEXITED(status)) {
 		warning("%s on %s terminated abnormally, going to "
-		    "single user mode", _PATH_BSHELL, _PATH_RUNCOM);
+		    "single user mode", INIT_BSHELL, _PATH_RUNCOM);
 		return (state_func_t)single_user;
 	}
 
@@ -1380,7 +1385,7 @@ mfs_dev(void)
 	/* Mount an mfs over /dev so we can create devices */
 	switch ((pid = fork())) {
 	case 0:
-		(void)execl("/sbin/mount_mfs", "mount_mfs", "-i", "192",
+		(void)execl(INIT_MOUNT_MFS, "mount_mfs", "-i", "192",
 		    "-s", "768", "-b", "4096", "-f", "512", "swap", "/dev",
 		    NULL);
 		_exit(1);
@@ -1433,7 +1438,7 @@ mfs_dev(void)
 	case 0:
 		if (chdir("/dev") == -1)
 			goto fail;
-		(void)execl("/bin/sh", "sh", "./MAKEDEV", "init", NULL); 
+		(void)execl(INIT_BSHELL, "sh", "./MAKEDEV", "init", NULL); 
 		goto fail;
 
 	case -1:
