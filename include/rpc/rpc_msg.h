@@ -1,4 +1,4 @@
-/*	$NetBSD: rpc_msg.h,v 1.7 1998/02/10 00:44:44 perry Exp $	*/
+/*	$NetBSD: rpc_msg.h,v 1.8 1998/02/10 03:52:18 lukem Exp $	*/
 
 /*
  * Sun RPC is a product of Sun Microsystems, Inc. and is provided for
@@ -34,7 +34,7 @@
 
 /*
  * rpc_msg.h
- * rpc message definition
+ * RPC message definition
  *
  * Copyright (C) 1984, Sun Microsystems, Inc.
  */
@@ -42,11 +42,11 @@
 #ifndef _RPC_RPC_MSG_H_
 #define _RPC_RPC_MSG_H_
 
-#define RPC_MSG_VERSION		((u_long) 2)
-#define RPC_SERVICE_PORT	((u_short) 2048)
+#define RPC_MSG_VERSION		((u_int32_t) 2)
+#define RPC_SERVICE_PORT	((in_port_t) 2048)
 
 /*
- * Bottom up definition of an rpc message.
+ * Bottom up definition of an RPC message.
  * NOTE: call and reply use the same overall stuct but
  * different parts of unions within it.
  */
@@ -76,11 +76,11 @@ enum reject_stat {
 };
 
 /*
- * Reply part of an rpc exchange
+ * Reply part of an RPC exchange
  */
 
 /*
- * Reply to an rpc request that was accepted by the server.
+ * Reply to an RPC request that was accepted by the server.
  * Note: there could be an error even though the request was
  * accepted.
  */
@@ -93,8 +93,8 @@ struct accepted_reply {
 			u_int32_t high;
 		} AR_versions;
 		struct {
-			caddr_t	where;
-			xdrproc_t proc;
+			caddr_t    where;
+			xdrproc_t  proc;
 		} AR_results;
 		/* and many other null cases */
 	} ru;
@@ -103,7 +103,7 @@ struct accepted_reply {
 };
 
 /*
- * Reply to an rpc request that was rejected by the server.
+ * Reply to an RPC request that was rejected by the server.
  */
 struct rejected_reply {
 	enum reject_stat rj_stat;
@@ -119,7 +119,7 @@ struct rejected_reply {
 };
 
 /*
- * Body of a reply to an rpc request.
+ * Body of a reply to an RPC request.
  */
 struct reply_body {
 	enum reply_stat rp_stat;
@@ -132,7 +132,7 @@ struct reply_body {
 };
 
 /*
- * Body of an rpc request call.
+ * Body of an RPC request call.
  */
 struct call_body {
 	u_int32_t cb_rpcvers;	/* must be equal to two */
@@ -144,7 +144,7 @@ struct call_body {
 };
 
 /*
- * The rpc message
+ * The RPC message
  */
 struct rpc_msg {
 	u_int32_t		rm_xid;
@@ -161,7 +161,7 @@ struct rpc_msg {
 
 __BEGIN_DECLS
 /*
- * XDR routine to handle a rpc message.
+ * XDR routine to handle an RPC message.
  * xdr_callmsg(xdrs, cmsg)
  * 	XDR *xdrs;
  * 	struct rpc_msg *cmsg;
@@ -169,7 +169,7 @@ __BEGIN_DECLS
 extern bool_t	xdr_callmsg	__P((XDR *, struct rpc_msg *));
 
 /*
- * XDR routine to pre-serialize the static part of a rpc message.
+ * XDR routine to pre-serialize the static part of an RPC message.
  * xdr_callhdr(xdrs, cmsg)
  * 	XDR *xdrs;
  * 	struct rpc_msg *cmsg;
@@ -177,7 +177,7 @@ extern bool_t	xdr_callmsg	__P((XDR *, struct rpc_msg *));
 extern bool_t	xdr_callhdr	__P((XDR *, struct rpc_msg *));
 
 /*
- * XDR routine to handle a rpc reply.
+ * XDR routine to handle an RPC reply.
  * xdr_replymsg(xdrs, rmsg)
  * 	XDR *xdrs;
  * 	struct rpc_msg *rmsg;
@@ -186,7 +186,7 @@ extern bool_t	xdr_replymsg	__P((XDR *, struct rpc_msg *));
 
 
 /*
- * XDR routine to handle a accepted rpc reply.
+ * XDR routine to handle a accepted RPC reply.
  * xdr_accepted_reply(xdrs, rej)
  * 	XDR *xdrs;
  * 	struct accepted_reply *rej;
@@ -194,7 +194,7 @@ extern bool_t	xdr_replymsg	__P((XDR *, struct rpc_msg *));
 extern bool_t	xdr_accepted_reply	__P((XDR *, struct accepted_reply *));
 
 /*
- * XDR routine to handle a rejected rpc reply.
+ * XDR routine to handle a rejected RPC reply.
  * xdr_rejected_reply(xdrs, rej)
  * 	XDR *xdrs;
  * 	struct rejected_reply *rej;

@@ -1,4 +1,4 @@
-/*	$NetBSD: svc.h,v 1.11 1998/02/10 00:44:47 perry Exp $	*/
+/*	$NetBSD: svc.h,v 1.12 1998/02/10 03:52:19 lukem Exp $	*/
 
 /*
  * Sun RPC is a product of Sun Microsystems, Inc. and is provided for
@@ -45,7 +45,7 @@
 /*
  * This interface must manage two items concerning remote procedure calling:
  *
- * 1) An arbitrary number of transport connections upon which rpc requests
+ * 1) An arbitrary number of transport connections upon which RPC requests
  * are received.  The two most notable transports are TCP and UDP;  they are
  * created and registered by routines in svc_tcp.c and svc_udp.c, respectively;
  * they in turn call xprt_register and xprt_unregister.
@@ -56,9 +56,9 @@
  * indicates whether or not the exported program should be registered with a
  * local binder service;  if true the program's number and version and the
  * port number from the transport handle are registered with the binder.
- * These data are registered with the rpc svc system via svc_register.
+ * These data are registered with the RPC svc system via svc_register.
  *
- * A service's dispatch function is called whenever an rpc request comes in
+ * A service's dispatch function is called whenever an RPC request comes in
  * on a transport.  The request's program and version numbers must match
  * those of the registered service.  The dispatch function is passed two
  * parameters, struct svc_req * and SVCXPRT *, defined below.
@@ -75,7 +75,7 @@ enum xprt_stat {
  */
 typedef struct __rpc_svcxprt {
 	int		xp_sock;
-	u_short		xp_port;	 /* associated port number */
+	in_port_t	xp_port;	 /* associated port number */
 	struct xp_ops {
 		/* receive incomming requests */
 		bool_t	(*xp_recv) __P((struct __rpc_svcxprt *,
@@ -94,11 +94,11 @@ typedef struct __rpc_svcxprt {
 		/* destroy this struct */
 		void	(*xp_destroy) __P((struct __rpc_svcxprt *));
 	} *xp_ops;
-	int		xp_addrlen;	 /* length of remote address */
-	struct sockaddr_in xp_raddr;	 /* remote address */
-	struct opaque_auth xp_verf;	 /* raw response verifier */
-	caddr_t		xp_p1;		 /* private */
-	caddr_t		xp_p2;		 /* private */
+	int			xp_addrlen;	 /* length of remote address */
+	struct sockaddr_in	xp_raddr;	 /* remote address */
+	struct opaque_auth	xp_verf;	 /* raw response verifier */
+	caddr_t			xp_p1;		 /* private */
+	caddr_t			xp_p2;		 /* private */
 } SVCXPRT;
 
 /*
@@ -149,12 +149,12 @@ typedef struct __rpc_svcxprt {
  * Service request
  */
 struct svc_req {
-	u_int32_t	rq_prog;	/* service program number */
-	u_int32_t	rq_vers;	/* service protocol version */
-	u_int32_t	rq_proc;	/* the desired procedure */
-	struct opaque_auth rq_cred;	/* raw creds from the wire */
-	caddr_t		rq_clntcred;	/* read only cooked cred */
-	SVCXPRT	*rq_xprt;		/* associated transport */
+	u_int32_t		 rq_prog;	/* service program number */
+	u_int32_t		 rq_vers;	/* service protocol version */
+	u_int32_t		 rq_proc;	/* the desired procedure */
+	struct opaque_auth	 rq_cred;	/* raw creds from the wire */
+	caddr_t			 rq_clntcred;	/* read only cooked cred */
+	SVCXPRT			*rq_xprt;	/* associated transport */
 };
 
 
@@ -162,26 +162,26 @@ struct svc_req {
  * Service registration
  *
  * svc_register(xprt, prog, vers, dispatch, protocol)
- *	SVCXPRT *xprt;
- *	u_long prog;
- *	u_long vers;
- *	void (*dispatch)();
- *	int protocol;    like TCP or UDP, zero means do not register 
+ *	SVCXPRT		*xprt;
+ *	u_int32_t	 prog;
+ *	u_int32_t	 vers;
+ *	void		 (*dispatch) __P((struct svc_req *, SVCXPRT *));
+ *	int		 protocol;  like TCP or UDP, zero means do not register 
  */
 __BEGIN_DECLS
-extern bool_t	svc_register __P((SVCXPRT *, u_long, u_long,
-		    void (*) __P((struct svc_req *, SVCXPRT *)), int));
+extern bool_t	svc_register __P((SVCXPRT *, u_int32_t, u_int32_t,
+			    void (*) __P((struct svc_req *, SVCXPRT *)), int));
 __END_DECLS
 
 /*
  * Service un-registration
  *
  * svc_unregister(prog, vers)
- *	u_long prog;
- *	u_long vers;
+ *	u_int32_t prog;
+ *	u_int32_t vers;
  */
 __BEGIN_DECLS
-extern void	svc_unregister __P((u_long, u_long));
+extern void	svc_unregister __P((u_int32_t, u_int32_t));
 __END_DECLS
 
 /*
@@ -220,12 +220,12 @@ __END_DECLS
  * weak authentication parameters, svcerr_weakauth should be called.
  * Note: do not confuse access-control failure with weak authentication!
  *
- * NB: In pure implementations of rpc, the caller always waits for a reply
+ * NB: In pure implementations of RPC, the caller always waits for a reply
  * msg.  This message is sent when svc_sendreply is called.  
  * Therefore pure service implementations should always call
  * svc_sendreply even if the function logically returns void;  use
- * xdr.h - xdr_void for the xdr routine.  HOWEVER, tcp based rpc allows
- * for the abuse of pure rpc via batched calling or pipelining.  In the
+ * xdr.h - xdr_void for the xdr routine.  HOWEVER, TCP based RPC allows
+ * for the abuse of pure RPC via batched calling or pipelining.  In the
  * case of a batched call, svc_sendreply should NOT be called since
  * this would send a return message, which is what batching tries to avoid.
  * It is the service/protocol writer's responsibility to know which calls are
@@ -238,7 +238,7 @@ extern bool_t	svc_sendreply	__P((SVCXPRT *, xdrproc_t, char *));
 extern void	svcerr_decode	__P((SVCXPRT *));
 extern void	svcerr_weakauth	__P((SVCXPRT *));
 extern void	svcerr_noproc	__P((SVCXPRT *));
-extern void	svcerr_progvers	__P((SVCXPRT *, u_long, u_long));
+extern void	svcerr_progvers	__P((SVCXPRT *, u_int32_t, u_int32_t));
 extern void	svcerr_auth	__P((SVCXPRT *, enum auth_stat));
 extern void	svcerr_noprog	__P((SVCXPRT *));
 extern void	svcerr_systemerr __P((SVCXPRT *));
@@ -250,22 +250,19 @@ __END_DECLS
  * service routine.  The routine svc_run does infinite waiting; i.e.,
  * svc_run never returns.
  * Since another (co-existant) package may wish to selectively wait for
- * incoming calls or other events outside of the rpc architecture, the
+ * incoming calls or other events outside of the RPC architecture, the
  * routine svc_getreq is provided.  It must be passed readfds, the
  * "in-place" results of a select system call (see select, section 2).
  */
 
 /*
- * Global keeper of rpc service descriptors in use
+ * Global keeper of RPC service descriptors in use
  * dynamic; must be inspected before each call to select 
  */
+/* XXX: add poll() support ... */
 extern int svc_maxfd;
-#ifdef FD_SETSIZE
 extern fd_set svc_fdset;
 #define svc_fds svc_fdset.fds_bits[0]	/* compatibility */
-#else
-extern int svc_fds;
-#endif /* def FD_SETSIZE */
 
 /*
  * a small program implemented by the svc_rpc implementation itself;
@@ -289,7 +286,7 @@ __END_DECLS
  */
 
 /*
- * Memory based rpc for testing and timing.
+ * Memory based RPC for testing and timing.
  */
 __BEGIN_DECLS
 extern SVCXPRT *svcraw_create __P((void));
@@ -297,27 +294,27 @@ __END_DECLS
 
 
 /*
- * Udp based rpc.
+ * UDP based RPC.
  */
 __BEGIN_DECLS
 extern SVCXPRT *svcudp_create __P((int));
-extern SVCXPRT *svcudp_bufcreate __P((int, u_int, u_int));
-extern int svcudp_enablecache __P((SVCXPRT *, u_long));
+extern SVCXPRT *svcudp_bufcreate __P((int, size_t, size_t));
+extern int svcudp_enablecache __P((SVCXPRT *, u_int32_t));
 __END_DECLS
 
 
 /*
- * Tcp based rpc.
+ * TCP based RPC.
  */
 __BEGIN_DECLS
-extern SVCXPRT *svctcp_create __P((int, u_int, u_int));
+extern SVCXPRT *svctcp_create __P((int, size_t, size_t));
 __END_DECLS
 
 /*
- * Fd based rpc.
+ * Fd based RPC.
  */
 __BEGIN_DECLS
-extern SVCXPRT *svcfd_create __P((int, u_int, u_int));
+extern SVCXPRT *svcfd_create __P((int, size_t, size_t));
 __END_DECLS
 
 #endif /* !_RPC_SVC_H_ */

@@ -1,4 +1,4 @@
-/*	$NetBSD: auth_unix.h,v 1.5 1998/02/10 00:44:27 perry Exp $	*/
+/*	$NetBSD: auth_unix.h,v 1.6 1998/02/10 03:52:14 lukem Exp $	*/
 
 /*
  * Sun RPC is a product of Sun Microsystems, Inc. and is provided for
@@ -41,7 +41,7 @@
 /*
  * The system is very weak.  The client uses no encryption for  it
  * credentials and only sends null verifiers.  The server sends backs
- * null verifiers or optionally a verifier that suggests a new short hand
+ * null verifiers or optionally a verifier that suggests a new short-hand
  * for the credentials.
  */
 
@@ -61,10 +61,10 @@
 struct authunix_parms {
 	u_long	 aup_time;
 	char	*aup_machname;
-	int	 aup_uid;
-	int	 aup_gid;
-	u_int	 aup_len;
-	int	*aup_gids;
+	uid_t	 aup_uid;
+	gid_t	 aup_gid;
+	size_t	 aup_len;
+	gid_t	*aup_gids;
 };
 
 __BEGIN_DECLS
