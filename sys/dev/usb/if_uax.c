@@ -1,4 +1,4 @@
-/*	$NetBSD: if_uax.c,v 1.1 2003/02/15 18:33:29 augustss Exp $	*/
+/*	$NetBSD: if_uax.c,v 1.2 2003/02/16 13:52:37 augustss Exp $	*/
 
 /*
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -38,13 +38,20 @@
  */
 
 /*
+ * TODO:
+ *   compute multicast filter
+ *   toggle link LED
+ *   find performance bug
+ */
+
+/*
  * Driver for the ASIX AX88172 Fast Ethernet USB 2.0 adapter.
  * Data sheet at
  * http://www.asix.com.tw/datasheet/mac/Ax88172.PDF
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_uax.c,v 1.1 2003/02/15 18:33:29 augustss Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_uax.c,v 1.2 2003/02/16 13:52:37 augustss Exp $");
 
 #include "opt_inet.h"
 #include "opt_ns.h"
@@ -115,12 +122,12 @@ int	uaxdebug = 0;
 #define UAX_MAX_PHYS		2
 
 #define UAX_TX_TIMEOUT		10000 /* ms */
-#define UAX_BUFSZ		1518
+#define UAX_BUFSZ		1518 /* XXX 1514 */
 
 /* Requests */
 #define UAX_READ_SRAM		0x02
 #define UAX_WRITE_RX_SRAM	0x03
-#define UAX_WRITE_T_SRAM	0x04
+#define UAX_WRITE_TX_SRAM	0x04
 #define UAX_SOFTWARE_MII	0x06
 #define UAX_READ_MII_REG	0x07
 #define UAX_WRITE_MII_REG	0x08
@@ -142,9 +149,9 @@ int	uaxdebug = 0;
 #define UAX_WRITE_IPG		0x12
 #define UAX_WRITE_IPG1		0x13
 #define UAX_WRITE_IPG2		0x14
-#define UAX_READ_MULTIFILTER	0x15
+#define UAX_READ_MULTI_FILTER	0x15
 #define  UAX_MULTI_FILTER_SIZE		8
-#define UAX_WRITE_MULTIFILTER	0x16
+#define UAX_WRITE_MULTI_FILTER	0x16
 #define UAX_READ_NODEID		0x17
 #define UAX_READ_PHYID		0x19
 #define  UAX_GET_PHY(r)			((r) & 0x1f)
@@ -169,27 +176,21 @@ struct uax_intrpkt {
 #define UAX_ENDPT_INTR 2
 #define UAX_ENDPT_MAX 3
 
+/* XXX Must be 1 for now */
 #define UAX_TX_LIST_CNT		1
 #define UAX_RX_LIST_CNT		1
 
 struct uax_softc;
 
 struct uax_chain {
-	struct uax_softc	*uax_sc;
-	usbd_xfer_handle	uax_xfer;
-	char			*uax_buf;
-	struct mbuf		*uax_mbuf;
-	int			uax_idx;
+	struct uax_softc	*uch_sc;
+	usbd_xfer_handle	uch_xfer;
+	char			*uch_buf;
+	struct mbuf		*uch_mbuf;
+	int			uch_idx;
 };
 
 struct uax_cdata {
-	struct uax_chain	uax_tx_chain[UAX_TX_LIST_CNT];
-	struct uax_chain	uax_rx_chain[UAX_RX_LIST_CNT];
-	struct uax_intrpkt	uax_ibuf;
-	int			uax_tx_prod;
-	int			uax_tx_cons;
-	int			uax_tx_cnt;
-	int			uax_rx_prod;
 };
 
 struct uax_phy_info {
@@ -204,7 +205,7 @@ struct uax_softc {
 	struct ethercom		sc_ec;
 	struct mii_data		sc_mii;
 #if NRND > 0
-	rndsource_element_t	rnd_source;
+	rndsource_element_t	sc_rnd_source;
 #endif
 #define GET_IFP(sc) (&(sc)->sc_ec.ec_if)
 #define GET_MII(sc) (&(sc)->sc_mii)
@@ -230,15 +231,24 @@ struct uax_softc {
 
 	int			sc_sw_mii;
 
-	struct uax_cdata	sc_cdata;
+	/* Tx info */
+	struct uax_chain	sc_tx_chain[UAX_TX_LIST_CNT];
+#if 0
+	int			sc_tx_prod;
+	int			sc_tx_cons;
+#endif
+	int			sc_tx_cnt;
+
+	/* Rx info */
+	struct uax_chain	sc_rx_chain[UAX_RX_LIST_CNT];
+#if 0
+	int			sc_rx_prod;
+#endif
 	u_int			sc_rx_errs;
 	struct timeval		sc_rx_notice;
-#if 0
-	int			sc_if_flags;
 
-	u_int16_t		sc_flags;
-
-#endif
+	/* Interrupt info */
+	struct uax_intrpkt	sc_ibuf;
 	u_int			sc_intr_errs;
 
 	struct usb_task		sc_tick_task;
@@ -458,7 +468,7 @@ USB_ATTACH(uax)
 	if_attach(ifp);
 	Ether_ifattach(ifp, eaddr);
 #if NRND > 0
-	rnd_attach_source(&sc->rnd_source, USBDEVNAME(sc->sc_dev),
+	rnd_attach_source(&sc->sc_rnd_source, USBDEVNAME(sc->sc_dev),
 	    RND_TYPE_NET, 0);
 #endif
 
@@ -491,10 +501,8 @@ USB_DETACH(uax)
 	 * Remove any pending tasks.  They cannot be executing because they run
 	 * in the same thread as detach.
 	 */
-#if 0
 	usb_rem_task(sc->sc_udev, &sc->sc_tick_task);
 	usb_rem_task(sc->sc_udev, &sc->sc_stop_task);
-#endif
 
 	s = splusb();
 
@@ -502,7 +510,7 @@ USB_DETACH(uax)
 		uax_stop(ifp, 1);
 
 #if NRND > 0
-	rnd_detach_source(&sc->rnd_source);
+	rnd_detach_source(&sc->sc_rnd_source);
 #endif
 	mii_detach(&sc->sc_mii, MII_PHY_ANY, MII_OFFSET_ANY);
 	ifmedia_delete_instance(&sc->sc_mii.mii_media, IFM_INST_ANY);
@@ -573,7 +581,7 @@ uax_setup(struct uax_softc *sc)
 	sc->sc_phys[1].phy_type = UAX_GET_PHY_TYPE(mii_data[0]);
 
 	/* Read multicast filter array */
-	(void)uax_request(sc, UT_READ_VENDOR_DEVICE, UAX_READ_MULTIFILTER,
+	(void)uax_request(sc, UT_READ_VENDOR_DEVICE, UAX_READ_MULTI_FILTER,
 			  0, 0, sizeof sc->sc_mcast, &sc->sc_mcast);
 
 	sc->sc_packet_filter = UAX_RX_BROADCAST | UAX_RX_DIRECTED;
@@ -694,6 +702,11 @@ uax_setup_phy(struct uax_softc *sc)
 	(void)uax_request(sc, UT_WRITE_VENDOR_DEVICE, UAX_WRITE_IPG2,
 			  sc->sc_pna ? 0x14 : 0x12, 0, 0, NULL);
 
+
+	(void)uax_request(sc, UT_WRITE_VENDOR_DEVICE, UAX_WRITE_MEDIUM_STATUS,
+			  0x06, 0, 0, NULL);
+
+	delay(50000);		/* XXX */
 }
 
 Static void
@@ -773,9 +786,9 @@ uax_watchdog(struct ifnet *ifp)
 	printf("%s: watchdog timeout\n", USBDEVNAME(sc->sc_dev));
 
 	s = splusb();
-	c = &sc->sc_cdata.uax_tx_chain[0];
-	usbd_get_xfer_status(c->uax_xfer, NULL, NULL, NULL, &stat);
-	uax_txeof(c->uax_xfer, c, stat);
+	c = &sc->sc_tx_chain[0];
+	usbd_get_xfer_status(c->uch_xfer, NULL, NULL, NULL, &stat);
+	uax_txeof(c->uch_xfer, c, stat);
 
 	if (IFQ_IS_EMPTY(&ifp->if_snd) == 0)
 		uax_start(ifp);
@@ -876,8 +889,8 @@ Static void
 uax_miibus_statchg(device_ptr_t dev)
 {
 	struct uax_softc *sc = USBGETSOFTC(dev);
-	struct mii_data	*mii = GET_MII(sc);
-	uint val;
+	/*struct mii_data	*mii = GET_MII(sc);
+	  uint val;*/
 	usbd_status err;
 
 	DPRINTFN(5,("%s: %s: enter\n", USBDEVNAME(sc->sc_dev), __func__));
@@ -891,12 +904,14 @@ uax_miibus_statchg(device_ptr_t dev)
 	}
 #endif
 
+#if 0
 	if ((mii->mii_media_active & IFM_GMASK) == IFM_FDX)
 		val = 0x02;
 	else
 		val = 0x00;
 	err = uax_request(sc, UT_WRITE_VENDOR_DEVICE, UAX_WRITE_MEDIUM_STATUS,
 			  val, 0, 0, NULL);
+#endif
 	if (err) {
 		DPRINTF(("%s: uax_miibus_statchg error=%s\n",
 			 USBDEVNAME(sc->sc_dev), usbd_errstr(err)));
@@ -911,18 +926,21 @@ uax_send(struct uax_softc *sc, struct mbuf *m, int idx)
 
 	DPRINTFN(10,("%s: %s: enter\n", USBDEVNAME(sc->sc_dev),__func__));
 
-	c = &sc->sc_cdata.uax_tx_chain[idx];
-	c->uax_mbuf = m;
+	c = &sc->sc_tx_chain[idx];
 
-	usbd_setup_xfer(c->uax_xfer, sc->sc_ep[UAX_ENDPT_TX],
-	    c, c->uax_buf, m->m_pkthdr.len,
+	/* Copy data to tx buffer. */
+	m_copydata(m, 0, m->m_pkthdr.len, c->uch_buf);
+	c->uch_mbuf = m;
+
+	usbd_setup_xfer(c->uch_xfer, sc->sc_ep[UAX_ENDPT_TX],
+	    c, c->uch_buf, m->m_pkthdr.len,
 	    USBD_FORCE_SHORT_XFER | USBD_NO_COPY,
 	    UAX_TX_TIMEOUT, uax_txeof);
 
 	DPRINTF(("%s: sending %d bytes\n", USBDEVNAME(sc->sc_dev),
 		 m->m_pkthdr.len));
 	/* Transmit */
-	err = usbd_transfer(c->uax_xfer);
+	err = usbd_transfer(c->uch_xfer);
 	if (err != USBD_IN_PROGRESS) {
 		printf("%s: uax_send error=%s\n", USBDEVNAME(sc->sc_dev),
 		       usbd_errstr(err));
@@ -933,7 +951,7 @@ uax_send(struct uax_softc *sc, struct mbuf *m, int idx)
 	DPRINTFN(5,("%s: %s: send %d bytes\n", USBDEVNAME(sc->sc_dev),
 		    __func__, m->m_pkthdr.len));
 
-	sc->sc_cdata.uax_tx_cnt++;
+	sc->sc_tx_cnt++;
 
 	return (0);
 }
@@ -947,7 +965,7 @@ Static void
 uax_txeof(usbd_xfer_handle xfer, usbd_private_handle priv, usbd_status status)
 {
 	struct uax_chain	*c = priv;
-	struct uax_softc	*sc = c->uax_sc;
+	struct uax_softc	*sc = c->uch_sc;
 	struct ifnet		*ifp = GET_IFP(sc);
 	int			s;
 
@@ -980,8 +998,8 @@ uax_txeof(usbd_xfer_handle xfer, usbd_private_handle priv, usbd_status status)
 
 	ifp->if_opackets++;
 
-	m_freem(c->uax_mbuf);
-	c->uax_mbuf = NULL;
+	m_freem(c->uch_mbuf);
+	c->uch_mbuf = NULL;
 
 	if (IFQ_IS_EMPTY(&ifp->if_snd) == 0)
 		uax_start(ifp);
@@ -1106,25 +1124,25 @@ uax_stop(struct ifnet *ifp, int disable)
 
 	/* Free RX resources. */
 	for (i = 0; i < UAX_RX_LIST_CNT; i++) {
-		if (sc->sc_cdata.uax_rx_chain[i].uax_mbuf != NULL) {
-			m_freem(sc->sc_cdata.uax_rx_chain[i].uax_mbuf);
-			sc->sc_cdata.uax_rx_chain[i].uax_mbuf = NULL;
+		if (sc->sc_rx_chain[i].uch_mbuf != NULL) {
+			m_freem(sc->sc_rx_chain[i].uch_mbuf);
+			sc->sc_rx_chain[i].uch_mbuf = NULL;
 		}
-		if (sc->sc_cdata.uax_rx_chain[i].uax_xfer != NULL) {
-			usbd_free_xfer(sc->sc_cdata.uax_rx_chain[i].uax_xfer);
-			sc->sc_cdata.uax_rx_chain[i].uax_xfer = NULL;
+		if (sc->sc_rx_chain[i].uch_xfer != NULL) {
+			usbd_free_xfer(sc->sc_rx_chain[i].uch_xfer);
+			sc->sc_rx_chain[i].uch_xfer = NULL;
 		}
 	}
 
 	/* Free TX resources. */
 	for (i = 0; i < UAX_TX_LIST_CNT; i++) {
-		if (sc->sc_cdata.uax_tx_chain[i].uax_mbuf != NULL) {
-			m_freem(sc->sc_cdata.uax_tx_chain[i].uax_mbuf);
-			sc->sc_cdata.uax_tx_chain[i].uax_mbuf = NULL;
+		if (sc->sc_tx_chain[i].uch_mbuf != NULL) {
+			m_freem(sc->sc_tx_chain[i].uch_mbuf);
+			sc->sc_tx_chain[i].uch_mbuf = NULL;
 		}
-		if (sc->sc_cdata.uax_tx_chain[i].uax_xfer != NULL) {
-			usbd_free_xfer(sc->sc_cdata.uax_tx_chain[i].uax_xfer);
-			sc->sc_cdata.uax_tx_chain[i].uax_xfer = NULL;
+		if (sc->sc_tx_chain[i].uch_xfer != NULL) {
+			usbd_free_xfer(sc->sc_tx_chain[i].uch_xfer);
+			sc->sc_tx_chain[i].uch_xfer = NULL;
 		}
 	}
 
@@ -1141,11 +1159,10 @@ Static void
 uax_rxeof(usbd_xfer_handle xfer, usbd_private_handle priv, usbd_status status)
 {
 	struct uax_chain	*c = priv;
-	struct uax_softc	*sc = c->uax_sc;
+	struct uax_softc	*sc = c->uch_sc;
 	struct ifnet		*ifp = GET_IFP(sc);
 	struct mbuf		*m;
 	u_int32_t		total_len;
-	/*struct uax_rxpkt	r;*/
 	int			s;
 
 	DPRINTFN(10,("%s: %s: enter\n", USBDEVNAME(sc->sc_dev), __func__));
@@ -1174,27 +1191,15 @@ uax_rxeof(usbd_xfer_handle xfer, usbd_private_handle priv, usbd_status status)
 	usbd_get_xfer_status(xfer, NULL, NULL, &total_len, NULL);
 
 	DPRINTF(("%s: got %d bytes\n", USBDEVNAME(sc->sc_dev), total_len));
-	memcpy(mtod(c->uax_mbuf, char *), c->uax_buf, total_len);
+	memcpy(mtod(c->uch_mbuf, char *), c->uch_buf, total_len);
 
-	if (total_len <= ETHER_CRC_LEN) {
+	if (total_len == 0) {
 		ifp->if_ierrors++;
 		goto done;
 	}
-
-
-#if 0
-	memcpy(&r, c->uax_buf + total_len, sizeof(r));
-	/* Turn off all the non-error bits in the rx status word. */
-	r.uax_rxstat &= UAX_RXSTAT_MASK;
-	if (r.uax_rxstat) {
-		ifp->if_ierrors++;
-		goto done;
-	}
-#endif
 
 	/* No errors; receive the packet. */
-	m = c->uax_mbuf;
-	total_len -= ETHER_CRC_LEN;
+	m = c->uch_mbuf;
 	m->m_pkthdr.len = m->m_len = total_len;
 	ifp->if_ipackets++;
 
@@ -1229,7 +1234,7 @@ uax_rxeof(usbd_xfer_handle xfer, usbd_private_handle priv, usbd_status status)
 
 	/* Setup new transfer. */
 	usbd_setup_xfer(xfer, sc->sc_ep[UAX_ENDPT_RX],
-	    c, c->uax_buf, UAX_BUFSZ,
+	    c, c->uch_buf, UAX_BUFSZ,
 	    USBD_SHORT_XFER_OK | USBD_NO_COPY,
 	    USBD_NO_TIMEOUT, uax_rxeof);
 	usbd_transfer(xfer);
@@ -1271,7 +1276,7 @@ uax_newbuf(struct uax_softc *sc, struct uax_chain *c, struct mbuf *m)
 	}
 
 	m_adj(m_new, ETHER_ALIGN);
-	c->uax_mbuf = m_new;
+	c->uch_mbuf = m_new;
 
 	return (0);
 }
@@ -1279,26 +1284,27 @@ uax_newbuf(struct uax_softc *sc, struct uax_chain *c, struct mbuf *m)
 Static int
 uax_rx_list_init(struct uax_softc *sc)
 {
-	struct uax_cdata	*cd;
 	struct uax_chain	*c;
 	int			i;
 
 	DPRINTFN(5,("%s: %s: enter\n", USBDEVNAME(sc->sc_dev), __func__));
 
-	cd = &sc->sc_cdata;
 	for (i = 0; i < UAX_RX_LIST_CNT; i++) {
-		c = &cd->uax_rx_chain[i];
-		c->uax_sc = sc;
-		c->uax_idx = i;
+		c = &sc->sc_rx_chain[i];
+		c->uch_sc = sc;
+		c->uch_idx = i;
 		if (uax_newbuf(sc, c, NULL) == ENOBUFS)
 			return (ENOBUFS);
-		if (c->uax_xfer == NULL) {
-			c->uax_xfer = usbd_alloc_xfer(sc->sc_udev);
-			if (c->uax_xfer == NULL)
+		if (c->uch_xfer == NULL) {
+			c->uch_xfer = usbd_alloc_xfer(sc->sc_udev);
+			if (c->uch_xfer == NULL)
 				return (ENOBUFS);
-			c->uax_buf = usbd_alloc_buffer(c->uax_xfer, UAX_BUFSZ);
-			if (c->uax_buf == NULL)
-				return (ENOBUFS); /* XXX free xfer */
+			c->uch_buf = usbd_alloc_buffer(c->uch_xfer, UAX_BUFSZ);
+			if (c->uch_buf == NULL) {
+				usbd_free_xfer(c->uch_xfer);
+				c->uch_xfer = NULL;
+				return (ENOBUFS);
+			}
 		}
 	}
 
@@ -1308,25 +1314,26 @@ uax_rx_list_init(struct uax_softc *sc)
 Static int
 uax_tx_list_init(struct uax_softc *sc)
 {
-	struct uax_cdata	*cd;
 	struct uax_chain	*c;
 	int			i;
 
 	DPRINTFN(5,("%s: %s: enter\n", USBDEVNAME(sc->sc_dev), __func__));
 
-	cd = &sc->sc_cdata;
 	for (i = 0; i < UAX_TX_LIST_CNT; i++) {
-		c = &cd->uax_tx_chain[i];
-		c->uax_sc = sc;
-		c->uax_idx = i;
-		c->uax_mbuf = NULL;
-		if (c->uax_xfer == NULL) {
-			c->uax_xfer = usbd_alloc_xfer(sc->sc_udev);
-			if (c->uax_xfer == NULL)
+		c = &sc->sc_tx_chain[i];
+		c->uch_sc = sc;
+		c->uch_idx = i;
+		c->uch_mbuf = NULL;
+		if (c->uch_xfer == NULL) {
+			c->uch_xfer = usbd_alloc_xfer(sc->sc_udev);
+			if (c->uch_xfer == NULL)
 				return (ENOBUFS);
-			c->uax_buf = usbd_alloc_buffer(c->uax_xfer, UAX_BUFSZ);
-			if (c->uax_buf == NULL)
+			c->uch_buf = usbd_alloc_buffer(c->uch_xfer, UAX_BUFSZ);
+			if (c->uch_buf == NULL) {
+				usbd_free_xfer(c->uch_xfer);
+				c->uch_xfer = NULL;
 				return (ENOBUFS);
+			}
 		}
 	}
 
@@ -1460,7 +1467,7 @@ uax_openpipes(struct uax_softc *sc)
 #if 1
 	err = usbd_open_pipe_intr(sc->sc_iface, sc->sc_ed[UAX_ENDPT_INTR],
 	    USBD_EXCLUSIVE_USE, &sc->sc_ep[UAX_ENDPT_INTR], sc,
-	    &sc->sc_cdata.uax_ibuf, UAX_INTR_PKTLEN, uax_intr,
+	    &sc->sc_ibuf, UAX_INTR_PKTLEN, uax_intr,
 	    UAX_INTR_INTERVAL);
 	if (err) {
 		printf("%s: open intr pipe failed: %s\n",
@@ -1471,12 +1478,12 @@ uax_openpipes(struct uax_softc *sc)
 
 	/* Start up the receive pipe. */
 	for (i = 0; i < UAX_RX_LIST_CNT; i++) {
-		c = &sc->sc_cdata.uax_rx_chain[i];
-		usbd_setup_xfer(c->uax_xfer, sc->sc_ep[UAX_ENDPT_RX],
-		    c, c->uax_buf, UAX_BUFSZ,
+		c = &sc->sc_rx_chain[i];
+		usbd_setup_xfer(c->uch_xfer, sc->sc_ep[UAX_ENDPT_RX],
+		    c, c->uch_buf, UAX_BUFSZ,
 		    USBD_SHORT_XFER_OK | USBD_NO_COPY, USBD_NO_TIMEOUT,
 		    uax_rxeof);
-		(void)usbd_transfer(c->uax_xfer); /* XXX */
+		(void)usbd_transfer(c->uch_xfer); /* XXX */
 		DPRINTFN(5,("%s: %s: start read\n", USBDEVNAME(sc->sc_dev),
 			    __func__));
 
@@ -1489,7 +1496,7 @@ uax_intr(usbd_xfer_handle xfer, usbd_private_handle priv, usbd_status status)
 {
 	struct uax_softc	*sc = priv;
 	struct ifnet		*ifp = GET_IFP(sc);
-	/*struct uax_intrpkt	*p = &sc->sc_cdata.uax_ibuf;*/
+	/*struct uax_intrpkt	*p = &sc->sc_ibuf;*/
 
 	DPRINTFN(15,("%s: %s: enter\n", USBDEVNAME(sc->sc_dev),__func__));
 
