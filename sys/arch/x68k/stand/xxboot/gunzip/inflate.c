@@ -100,7 +100,7 @@
  */
 
 #ifdef RCSID
-static char rcsid[] = "$NetBSD: inflate.c,v 1.2 1999/03/27 15:01:34 minoura Exp $";
+static char rcsid[] = "$NetBSD: inflate.c,v 1.3 1999/03/28 14:03:36 minoura Exp $";
 #endif
 
 #include <sys/types.h>
@@ -118,7 +118,7 @@ static char rcsid[] = "$NetBSD: inflate.c,v 1.2 1999/03/27 15:01:34 minoura Exp 
 #ifdef BOOT
 static voidp fake_malloc_for_inflate OF((unsigned));
 static void fake_free_for_inflate OF((void));
-#if !defined (__m68k__) || 1
+#ifndef __m68k__
 static
 #endif
 int get_byte OF((void));
@@ -297,16 +297,18 @@ const ush mask_bits[] = {
 #endif
 #endif
 
-#if defined(__GNUC__) && defined(__m68k__) && 0	/* XXX: minoura Mar. 99 */
+#if defined(__GNUC__) && defined(__m68k__)
 #ifdef BOOT
 /* optimize for size */
 #define NEEDBITS(n) {	\
-		register unsigned k_ asm("d3") = k;		\
+		register unsigned k_ asm("d5") = k;		\
 		register ulg b_ asm("d4") = b;			\
 		register const unsigned n_ asm("d1") = (n);	\
 		asm volatile("jbsr	needbits"		\
-			: "=d" (k), "=d" (b)			\
-			: "0" (k_), "1" (b_), "r"(n_) : "a0");	\
+			: "=d" (k_), "=d" (b_)			\
+			: "d" (k_), "d" (b_), "r"(n_) : "a0");	\
+		k = k_;						\
+		b = b_;						\
 	}
 asm("_get_byte:\n\
 	movel	_csrc,a0\n\
@@ -317,12 +319,12 @@ asm("_get_byte:\n\
 asm("Lneedlp:\n\
 	movel	d0,sp@-\n\
 	jbsr	_get_byte\n\
-	lsll	d3,d0\n\
+	lsll	d5,d0\n\
 	orl	d0,d4\n\
 	movel	sp@+,d0\n\
-	addql	#8,d3\n\
+	addql	#8,d5\n\
 needbits:\n\
-	cmpw	d1,d3\n\
+	cmpw	d1,d5\n\
 	jcs	Lneedlp\n\
 	rts");
 #else
