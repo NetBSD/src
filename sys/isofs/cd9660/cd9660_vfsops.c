@@ -1,4 +1,4 @@
-/*	$NetBSD: cd9660_vfsops.c,v 1.8 1994/07/19 15:07:39 mycroft Exp $	*/
+/*	$NetBSD: cd9660_vfsops.c,v 1.9 1994/07/19 15:27:42 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1994
@@ -730,7 +730,7 @@ cd9660_vget_internal(mp, ino, vpp, relocated, isodir)
 		int off;
 		if ((imp->im_flags & ISOFSMNT_EXTATT)
 		    && (off = isonum_711(isodir->ext_attr_length)))
-			VOP_BLKATOFF(vp, (off_t)(-off << imp->im_bshift), NULL,
+			VOP_BLKATOFF(vp, (off_t)-(off << imp->im_bshift), NULL,
 				     &bp2);
 		else
 			bp2 = NULL;
