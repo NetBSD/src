@@ -1,4 +1,4 @@
-/*	$NetBSD: dirs.c,v 1.23 1997/04/15 07:12:19 lukem Exp $	*/
+/*	$NetBSD: dirs.c,v 1.24 1997/05/17 19:38:12 pk Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -42,7 +42,7 @@
 #if 0
 static char sccsid[] = "@(#)dirs.c	8.5 (Berkeley) 8/31/94";
 #else
-static char rcsid[] = "$NetBSD: dirs.c,v 1.23 1997/04/15 07:12:19 lukem Exp $";
+static char rcsid[] = "$NetBSD: dirs.c,v 1.24 1997/05/17 19:38:12 pk Exp $";
 #endif
 #endif /* not lint */
 
@@ -224,7 +224,7 @@ skipdirs()
 }
 
 /*
- *	Recursively find names and inumbers of all files in subtree 
+ *	Recursively find names and inumbers of all files in subtree
  *	pname and pass them off to be processed.
  */
 void
@@ -306,7 +306,7 @@ pathsearch(pathname)
 	while (*path == '/')
 		path++;
 	dp = NULL;
-	while ((name = strsep(&path, "/")) != NULL && *name != NULL) {
+	while ((name = strsep(&path, "/")) != NULL && *name != '\0') {
 		if ((dp = searchdir(ino, name)) == NULL)
 			return (NULL);
 		ino = dp->d_ino;
@@ -492,7 +492,7 @@ rst_readdir(dirp)
 
 	for (;;) {
 		if (dirp->dd_loc == 0) {
-			dirp->dd_size = read(dirp->dd_fd, dirp->dd_buf, 
+			dirp->dd_size = read(dirp->dd_fd, dirp->dd_buf,
 			    DIRBLKSIZ);
 			if (dirp->dd_size <= 0) {
 				dprintf(stderr, "error reading directory\n");
@@ -598,7 +598,7 @@ setdirmodes(flags)
 	struct modeinfo node;
 	struct entry *ep;
 	char *cp;
-	
+
 	vprintf(stdout, "Set directory mode, owner, and times.\n");
 	if (command == 'r' || command == 'R')
 		(void) snprintf(modefile, sizeof(modefile), "%s/rstmode%d",
