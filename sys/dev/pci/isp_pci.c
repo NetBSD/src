@@ -1,4 +1,4 @@
-/* $NetBSD: isp_pci.c,v 1.56 2000/08/14 06:58:45 mjacob Exp $ */
+/* $NetBSD: isp_pci.c,v 1.57 2000/10/16 05:12:26 mjacob Exp $ */
 /*
  * This driver, which is contained in NetBSD in the files:
  *
@@ -482,6 +482,7 @@ isp_pci_attach(parent, self, aux)
 	isp->isp_dblev |= ISP_LOGINFO;
 #endif
 #endif
+
 #ifdef	DEBUG
 	if (oneshot) {
 		oneshot = 0;
@@ -543,6 +544,7 @@ isp_pci_attach(parent, self, aux)
 
 	if (IS_FC(isp)) {
 		DEFAULT_NODEWWN(isp) = 0x400000007F000002;
+		DEFAULT_PORTWWN(isp) = 0x400000007F000002;
 	}
 
 	isp->isp_confopts = self->dv_cfdata->cf_flags;
@@ -879,6 +881,10 @@ isp_pci_dmasetup(isp, xs, rq, iptrp, optr)
 
 	segcnt = dmap->dm_nsegs;
 
+	isp_prt(isp, ISP_LOGDEBUG2, "%d byte %s %p in %d segs",
+	    xs->datalen, (xs->xs_control & XS_CTL_DATA_IN)? "read to" :
+	    "write from", xs->data, segcnt);
+
 	for (seg = 0, rq->req_seg_count = 0;
 	    seglim && seg < segcnt && rq->req_seg_count < seglim;
 	    seg++, rq->req_seg_count++) {
@@ -894,6 +900,9 @@ isp_pci_dmasetup(isp, xs, rq, iptrp, optr)
 			rq->req_dataseg[rq->req_seg_count].ds_base =
 			    dmap->dm_segs[seg].ds_addr;
 		}
+		isp_prt(isp, ISP_LOGDEBUG2, "seg0.[%d]={0x%x,%d}",
+		    rq->req_seg_count, dmap->dm_segs[seg].ds_addr,
+		    dmap->dm_segs[seg].ds_len);
 	}
 
 	if (seg == segcnt)
@@ -919,6 +928,10 @@ isp_pci_dmasetup(isp, xs, rq, iptrp, optr)
 			    dmap->dm_segs[seg].ds_len;
 			crq->req_dataseg[ovseg].ds_base =
 			    dmap->dm_segs[seg].ds_addr;
+			isp_prt(isp, ISP_LOGDEBUG2, "seg%d.[%d]={0x%x,%d}",
+			    rq->req_header.rqs_entry_count - 1,
+			    rq->req_seg_count, dmap->dm_segs[seg].ds_addr,
+			    dmap->dm_segs[seg].ds_len);
 		}
 	} while (seg < segcnt);
 
