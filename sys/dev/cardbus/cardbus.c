@@ -1,4 +1,4 @@
-/*	$NetBSD: cardbus.c,v 1.27 2000/07/02 06:25:46 cgd Exp $	*/
+/*	$NetBSD: cardbus.c,v 1.28 2000/10/12 12:42:03 wiz Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999 and 2000
@@ -374,7 +374,7 @@ parse_tuple(u_int8_t *tuple, int len, void *data)
  * int cardbus_attach_card(struct cardbus_softc *sc)
  *
  *    This function attaches the card on the slot: turns on power,
- *    reads and analyses tuple, sets consifuration index.
+ *    reads and analyses tuple, sets configuration index.
  *
  *    This function returns the number of recognised device functions.
  *    If no functions are recognised, return 0.
