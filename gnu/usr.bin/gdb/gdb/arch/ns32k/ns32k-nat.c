@@ -17,7 +17,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-	$Id: ns32k-nat.c,v 1.4 1995/09/26 20:23:38 phil Exp $
+	$Id: ns32k-nat.c,v 1.5 1996/09/28 08:41:26 matthias Exp $
 */
 
 #include <sys/types.h>
@@ -30,8 +30,6 @@ Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
 #include "defs.h"
 #include "inferior.h"
-
-/* Incomplete -- PAN */
 
 #define RF(dst, src) \
 	memcpy(&registers[REGISTER_BYTE(dst)], &src, sizeof(src))
@@ -151,13 +149,48 @@ fetch_core_registers (core_reg_sect, core_reg_size, which, ignore)
   RF(FP0_REGNUM +2, core_reg->freg.r_freg[2]);
   RF(FP0_REGNUM +4, core_reg->freg.r_freg[4]);
   RF(FP0_REGNUM +6, core_reg->freg.r_freg[6]);
+  registers_fetched ();
 }
 
 void
 fetch_kcore_registers (pcb)
 struct pcb *pcb;
 {
-  return;
+  struct switchframe sf;
+  struct reg intreg;
+  int dummy;
+
+  /* Integer registers */
+  if (target_read_memory(pcb->pcb_ksp, &sf, sizeof sf))
+     error("Cannot read integer registers.");
+
+  /* We use the psr at kernel entry */
+  if (target_read_memory(pcb->pcb_onstack, &intreg, sizeof intreg))
+     error("Cannot read processor status register.");
+
+  dummy = 0;
+  RF(R0_REGNUM + 0, dummy);
+  RF(R0_REGNUM + 1, dummy);
+  RF(R0_REGNUM + 2, dummy);
+  RF(R0_REGNUM + 3, sf.sf_r3);
+  RF(R0_REGNUM + 4, sf.sf_r4);
+  RF(R0_REGNUM + 5, sf.sf_r5);
+  RF(R0_REGNUM + 6, sf.sf_r6);
+  RF(R0_REGNUM + 7, sf.sf_r7);
+
+  dummy = pcb->pcb_kfp + 8;
+  RF(SP_REGNUM	  , dummy);
+  RF(FP_REGNUM	  , sf.sf_fp);
+  RF(PC_REGNUM	  , sf.sf_pc);
+  RF(PS_REGNUM	  , intreg.r_psr);
+
+  /* Floating point registers */
+  RF(FPS_REGNUM   , pcb->pcb_fsr);
+  RF(FP0_REGNUM +0, pcb->pcb_freg[0]);
+  RF(FP0_REGNUM +2, pcb->pcb_freg[2]);
+  RF(FP0_REGNUM +4, pcb->pcb_freg[4]);
+  RF(FP0_REGNUM +6, pcb->pcb_freg[6]);
+  registers_fetched ();
 }
 
 void
@@ -190,3 +223,76 @@ clear_regs()
   return;
 }
 
+/* Return number of args passed to a frame.
+   Can return -1, meaning no way to tell. */
+
+int
+frame_num_args(fi)
+struct frame_info *fi;
+{
+	CORE_ADDR	enter_addr;
+	CORE_ADDR	argp;
+	int		inst;
+	int		args;
+	int		i;
+
+	enter_addr = ns32k_get_enter_addr((fi)->pc);
+	if (enter_addr = 0)
+		return(-1);
+	argp = enter_addr == 1 ? SAVED_PC_AFTER_CALL(fi) : FRAME_SAVED_PC(fi);
+	for (i = 0; i < 16; i++) {
+		/*
+		 * After a bsr gcc may emit the following instructions
+		 * to remove the arguments from the stack:
+		 *   cmpqd 0,tos 	- to remove 4 bytes from the stack
+		 *   cmpd tos,tos	- to remove 8 bytes from the stack
+		 *   adjsp[bwd] -n	- to remove n bytes from the stack
+		 * Gcc sometimes delays emitting these instructions and
+		 * may even throw a branch between our feet.
+		 */		 
+		inst = read_memory_integer(argp    , 4);
+		args = read_memory_integer(argp + 2, 4);
+		if ((inst & 0xff) == 0xea) {		/* br */
+			args = ((inst >> 8) & 0xffffff) | (args << 24);
+			if (args & 0x80) {
+				if (args & 0x40) {
+					args = ntohl(args);
+				} else {
+					args = ntohs(args & 0xffff);
+					if (args & 0x2000)
+						args |= 0xc000;
+				}
+			} else {
+				args = args & 0xff;
+				if (args & 0x40)
+					args |= 0x80;
+			}
+			argp += args;
+			continue;
+		}
+		if ((inst & 0xffff) == 0xb81f)		/* cmpqd 0,tos */
+			return(1);
+		else if ((inst & 0xffff) == 0xbdc7)	/* cmpd tos,tos */
+			return(2);
+		else if ((inst & 0xfffc) == 0xa57c) {	/* adjsp[bwd] */
+			switch (inst & 3) {
+			case 0:
+				args = ((args & 0xff) + 0x80);
+				break;
+			case 1:
+				args = ((ntohs(args) & 0xffff) + 0x8000);
+				break;
+			case 3:
+				args = -ntohl(args);
+				break;
+			default:
+				return(-1);
+			}
+			if (args / 4 > 10 || (args & 3) != 0)
+				continue;
+			return(args / 4);
+		}
+		argp += 1;
+	}
+	return(-1);
+}

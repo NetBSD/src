@@ -30,6 +30,178 @@ Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.  */
 
 #define NEXT_IS_ADDR	'|'
 
+
+struct option {
+  char *pattern;		/* the option itself */
+  unsigned long value;		/* binary value of the option */
+  unsigned long match;		/* these bits must match */
+};
+
+
+struct option opt1[]= /* restore, exit */
+{
+  { "r0",	0x80,	0x80	},
+  { "r1",	0x40,	0x40	},
+  { "r2",	0x20,	0x20	},
+  { "r3",	0x10,	0x10	},
+  { "r4",	0x08,	0x08	},
+  { "r5",	0x04,	0x04	},
+  { "r6",	0x02,	0x02	},
+  { "r7",	0x01,	0x01	},
+  {  0 ,	0x00,	0x00	}
+};
+
+struct option opt2[]= /* save, enter */
+{
+  { "r0",	0x01,	0x01	},
+  { "r1",	0x02,	0x02	},
+  { "r2",	0x04,	0x04	},
+  { "r3",	0x08,	0x08	},
+  { "r4",	0x10,	0x10	},
+  { "r5",	0x20,	0x20	},
+  { "r6",	0x40,	0x40	},
+  { "r7",	0x80,	0x80	},
+  {  0 ,	0x00,	0x00	}
+};
+
+struct option opt3[]= /* setcfg */
+{
+  { "c",	0x8,	0x8	},
+  { "m",	0x4,	0x4	},
+  { "f",	0x2,	0x2	},
+  { "i",	0x1,	0x1	},
+  {  0 ,	0x0,	0x0	}
+};
+
+struct option opt4[]= /* cinv */
+{
+  { "a",	0x4,	0x4	},
+  { "i",	0x2,	0x2	},
+  { "d",	0x1,	0x1	},
+  {  0 ,	0x0,	0x0	}
+};
+
+struct option opt5[]= /* string inst */
+{
+  { "b",	0x1,	0x1	},
+  { "u",	0x6,	0x6	},
+  { "w",	0x2,	0x2	},
+  {  0 ,	0x0,	0x0	}
+};
+
+#if !defined(NS32032) && !defined(NS32532)
+#define NS32032
+#endif
+
+#if defined(NS32532)
+struct option cpureg[]= /* lpr spr */
+{
+  { "us",	0x0,	0xf	},
+  { "dcr",	0x1,	0xf	},
+  { "bpc",	0x2,	0xf	},
+  { "dsr",	0x3,	0xf	},
+  { "car",	0x4,	0xf	},
+  { "fp",	0x8,	0xf	},
+  { "sp",	0x9,	0xf	},
+  { "sb",	0xa,	0xf	},
+  { "usp",	0xb,	0xf	},
+  { "cfg",	0xc,	0xf	},
+  { "psr",	0xd,	0xf	},
+  { "intbase",	0xe,	0xf	},
+  { "mod",	0xf,	0xf	},
+  {  0 ,	0x00,	0xf	}
+};
+#endif
+
+#if defined(NS32532) || defined(NS32382)
+struct option mmureg[]= /* lmr smr */
+{
+  { "mcr",	0x9,	0xf	},
+  { "msr",	0xa,	0xf	},
+  { "tear",	0xb,	0xf	},
+  { "ptb0",	0xc,	0xf	},
+  { "ptb1",	0xd,	0xf	},
+  { "ivar0",	0xe,	0xf	},
+  { "ivar1",	0xf,	0xf	},
+  {  0 ,	0x0,	0xf	}
+};
+#endif
+
+#if defined(NS32032)
+struct option cpureg[]= /* lpr spr */
+{
+  { "upsr",	0x0,	0xf	},
+  { "fp",	0x8,	0xf	},
+  { "sp",	0x9,	0xf	},
+  { "sb",	0xa,	0xf	},
+  { "psr",	0xb,	0xf	},
+  { "intbase",	0xe,	0xf	},
+  { "mod",	0xf,	0xf	},
+  {  0 ,	0x0,	0xf	}
+};
+#endif
+
+#if !defined(NS32532) && !defined(NS32382) /* should be defined(NS32082)... */
+struct option mmureg[]= /* lmr smr */
+{
+  { "bpr0",	0x0,	0xf	},
+  { "bpr1",	0x1,	0xf	},
+  { "pf0",	0x4,	0xf	},
+  { "pf1",	0x5,	0xf	},
+  { "sc",	0x8,	0xf	},
+  { "msr",	0xa,	0xf	},
+  { "bcnt",	0xb,	0xf	},
+  { "ptb0",	0xc,	0xf	},
+  { "ptb1",	0xd,	0xf	},
+  { "eia",	0xf,	0xf	},
+  {  0 ,	0x0,	0xf	}
+};
+#endif
+
+/*
+ * figure out which options are present
+ */
+void
+optlist(options, optionP, result)
+    int options;
+    struct option *optionP;
+    char *result;
+{
+    if (options == 0) {
+	sprintf(result, "[]");
+	return;
+    }
+    sprintf(result, "[");
+
+    for (; (options != 0) && optionP->pattern; optionP++) {
+	if ((options & optionP->match) == optionP->value) {
+	    /* we found a match, update result and options */
+	    strcat(result, optionP->pattern);
+	    options &= ~optionP->value;
+	    if (options != 0)	/* more options to come */
+		strcat(result, ",");
+	}
+      }
+      if (options != 0)
+	strcat(result, "undefined");
+
+      strcat(result, "]");
+}
+
+list_search(reg_value, optionP, result)
+    int reg_value;
+    struct option *optionP;
+    char *result;
+{
+    for (; optionP->pattern; optionP++) {
+	if ((reg_value & optionP->match) == optionP->value) {
+	    sprintf(result, "%s", optionP->pattern);
+	    return;
+	}
+    }
+    sprintf(result, "undefined");
+}
+
 /*
  * extract "count" bits starting "offset" bits
  * into buffer
@@ -162,11 +334,11 @@ print_insn (memaddr, stream)
   /* Handle undefined instructions.  */
   if (i == NOPCODES)
     {
-      fprintf (stream, "0%o", buffer[0]);
+      fprintf_filtered (stream, "0%o", buffer[0]);
       return 1;
     }
 
-  fprintf (stream, "%s", notstrs[i].name);
+  fprintf_filtered (stream, "%s", notstrs[i].name);
 
   ioffset = notstrs[i].detail.ibits;
   aoffset = notstrs[i].detail.ibits;
@@ -183,7 +355,7 @@ print_insn (memaddr, stream)
       /* 0 for operand A, 1 for operand B, greater for other args.  */
       int whicharg = 0;
       
-      fputc ('\t', stream);
+      fputs_filtered ("\t", stream);
 
       maxarg = 0;
 
@@ -227,7 +399,8 @@ print_insn (memaddr, stream)
       for (argnum = 0; argnum <= maxarg; argnum++)
 	{
 	  CORE_ADDR addr;
-	  char *ch, *index ();
+	  char *ch, *index (), b[2];
+	  b[1] = 0;
 	  for (ch = arg_bufs[argnum]; *ch;)
 	    {
 	      if (*ch == NEXT_IS_ADDR)
@@ -240,11 +413,13 @@ print_insn (memaddr, stream)
 		  if (*ch)
 		    ++ch;
 		}
-	      else
-		putc (*ch++, stream);
+	      else {
+		b[0] = *ch++;
+		fputs_filtered (b, stream);
+	      }
 	    }
 	  if (argnum < maxarg)
-	    fprintf (stream, ", ");
+	    fprintf_filtered (stream, ", ");
 	}
     }
   return aoffset / 8;
@@ -274,6 +449,7 @@ print_insn_arg (d, ioffset, aoffsetp, buffer, addr, result, index_offset)
   int Ivalue;
   int disp1, disp2;
   int index;
+  int size;
 
   switch (d)
     {
@@ -282,6 +458,7 @@ print_insn_arg (d, ioffset, aoffsetp, buffer, addr, result, index_offset)
     case 'B':
     case 'W':
     case 'D':
+    case 'Q':
     case 'A':
       addr_mode = bit_extract (buffer, ioffset-5, 5);
       ioffset -= 5;
@@ -417,6 +594,27 @@ print_insn_arg (d, ioffset, aoffsetp, buffer, addr, result, index_offset)
     case 'd':
       sprintf (result, "%d", get_displacement (buffer, aoffsetp));
       break;
+    case 'b':
+	Ivalue = get_displacement (buffer, aoffsetp);
+	/*
+	 * Warning!!  HACK ALERT!
+	 * Operand type 'b' is only used by the cmp{b,w,d} and
+	 * movm{b,w,d} instructions; we need to know whether
+	 * it's a `b' or `w' or `d' instruction; and for both
+	 * cmpm and movm it's stored at the same place so we
+	 * just grab two bits of the opcode and look at it...
+	 *
+	 */
+	size = bit_extract(buffer, ioffset-6, 2);
+	if (size == 0)		/* 00 => b */
+	size = 1;
+	else if (size == 1)	/* 01 => w */
+	size = 2;
+	else
+	size = 4;		/* 11 => d */
+
+	sprintf (result, "%d", (Ivalue / size) + 1);
+	break;
     case 'p':
       sprintf (result, "%c%d%c", NEXT_IS_ADDR,
 	       addr + get_displacement (buffer, aoffsetp),
@@ -426,6 +624,51 @@ print_insn_arg (d, ioffset, aoffsetp, buffer, addr, result, index_offset)
       Ivalue = bit_extract (buffer, *aoffsetp, 8);
       *aoffsetp += 8;
       sprintf (result, "0x%x", Ivalue);
+      break;
+    case 'u':
+      Ivalue = bit_extract (buffer, *aoffsetp, 8);
+      optlist(Ivalue, opt1, result);
+      *aoffsetp += 8;
+      break;
+    case 'U':
+      Ivalue = bit_extract(buffer, *aoffsetp, 8);
+      optlist(Ivalue, opt2, result);
+      *aoffsetp += 8;
+      break;
+    case 'O':
+      Ivalue = bit_extract(buffer, ioffset-4, 4);
+      optlist(Ivalue, opt3, result);
+      ioffset -= 4;
+      break;
+    case 'C':
+      Ivalue = bit_extract(buffer, ioffset-4, 4);
+      optlist(Ivalue, opt4, result);
+      ioffset -= 4;
+      break;
+    case 'S':
+      Ivalue = bit_extract(buffer, *aoffsetp, 8);
+      optlist(Ivalue, opt5, result);
+      *aoffsetp += 8;
+      break;
+    case 'M':
+      Ivalue = bit_extract(buffer, ioffset-4, 4);
+      list_search(Ivalue, mmureg, result);
+      ioffset -= 4;
+      break;
+    case 'P':
+      Ivalue = bit_extract(buffer, ioffset-4, 4);
+      list_search(Ivalue, cpureg, result);
+      ioffset -= 4;
+      break;
+    case 'g':
+      Ivalue = bit_extract(buffer, *aoffsetp, 3);
+      sprintf(result, "%d", Ivalue);
+      *aoffsetp += 3;
+      break;
+    case 'G':
+      Ivalue = bit_extract(buffer, *aoffsetp, 5);
+      sprintf(result, "%d", Ivalue + 1);
+      *aoffsetp += 5;
       break;
     }
   return ioffset;
