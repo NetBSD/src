@@ -1,4 +1,4 @@
-# $NetBSD: Makefile.bootxx,v 1.4 2003/05/12 14:34:55 dsl Exp $
+# $NetBSD: Makefile.bootxx,v 1.5 2003/07/01 13:36:59 simonb Exp $
 
 S=	${.CURDIR}/../../../../../
 
@@ -84,18 +84,22 @@ CPPFLAGS+= -DLIBSA_SINGLE_FILESYSTEM=xxfs \
 I386_STAND_DIR?= $S/arch/i386/stand
 
 .if !make(obj) && !make(clean) && !make(cleandir)
-.BEGIN: machine
-.NOPATH: machine
+.BEGIN: machine x86
+.NOPATH: machine x86
 .endif
 
-realdepend realall: machine
-CLEANFILES+= machine
+realdepend realall: machine x86
+CLEANFILES+= machine x86
 
 machine::
 	-rm -f $@
 	ln -s $S/arch/i386/include $@
 
-${OBJS}: machine
+x86::
+	-rm -f $@
+	ln -s $S/arch/x86/include $@
+
+${OBJS}: machine x86
 
 ### find out what to use for libi386
 I386DIR= ${I386_STAND_DIR}/lib
@@ -124,13 +128,12 @@ cleanlibdir:
 
 LIBLIST= ${LIBI386} ${LIBSA} ${LIBKERN} ${LIBI386} ${LIBSA}
 
-CLEANFILES+= ${PROG}.tmp ${PROG}.map
+CLEANFILES+= ${PROG}.sym ${PROG}.map
 
 ${PROG}: ${OBJS} ${LIBLIST}
-	${LD} -o ${PROG}.tmp ${LDFLAGS} -Ttext ${PRIMARY_LOAD_ADDRESS} \
+	${LD} -o ${PROG}.sym ${LDFLAGS} -Ttext ${PRIMARY_LOAD_ADDRESS} \
 		-Map ${PROG}.map -cref ${OBJS} ${LIBLIST}
-	${OBJCOPY} -O binary ${PROG}.tmp ${PROG}
-	rm -f ${PROG}.tmp
+	${OBJCOPY} -O binary ${PROG}.sym ${PROG}
 	@ sz=$$(ls -ln ${PROG}|tr -s ' '|cut -d' ' -f5); \
 	if [ "$$sz" -gt "${BOOTXX_MAXSIZE}" ]; then \
 		echo "### ${PROG} size $$sz is larger than ${BOOTXX_MAXSIZE}" >&2; \

@@ -1,9 +1,14 @@
-#	$NetBSD: Makefile.mbr,v 1.3 2003/05/05 13:38:23 hubertf Exp $
+#	$NetBSD: Makefile.mbr,v 1.4 2003/07/01 13:36:59 simonb Exp $
 
 S=	${.CURDIR}/../../../../../
 
-NOMAN=	# defined
-STRIPFLAG=
+NOMAN=		# defined
+STRIPFLAG=	# nothing
+
+LIBCRT0=	# nothing
+LIBCRTBEGIN=	# nothing
+LIBCRTEND=	# nothing
+LIBC=		# nothing
 
 .include <bsd.own.mk>
 
@@ -15,12 +20,30 @@ BINMODE=444
 .PATH:	${.CURDIR}/..
 
 LDFLAGS+= -e start
-CPPFLAGS+= -I ${.CURDIR}/../../lib
+CPPFLAGS+= -I. -I${.CURDIR}/../../lib -I${S}
 
 .if ${MACHINE} == "amd64"
 LDFLAGS+=  -m elf_i386
 AFLAGS+=   -m32
 .endif
+
+.if !make(obj) && !make(clean) && !make(cleandir)
+.BEGIN: machine x86
+.NOPATH: machine x86
+.endif
+
+realdepend realall: machine x86
+CLEANFILES+= machine x86
+
+machine::
+	-rm -f $@
+	ln -s $S/arch/i386/include $@
+
+x86::
+	-rm -f $@
+	ln -s $S/arch/x86/include $@
+
+${OBJS}: machine x86
 
 CLEANFILES+= ${PROG}.tmp
 
