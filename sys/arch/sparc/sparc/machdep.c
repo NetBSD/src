@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.95 1997/12/23 23:57:24 tv Exp $ */
+/*	$NetBSD: machdep.c,v 1.96 1998/01/08 11:39:32 mrg Exp $ */
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -215,7 +215,7 @@ cpu_startup()
 	 */
 	printf(version);
 	/*identifycpu();*/
-#ifndef MACHINE_NONCONTIG
+#if !defined(MACHINE_NEW_NONCONTIG) && !defined(MACHINE_NONCONTIG)
 	physmem = btoc(avail_end);
 #endif
 	printf("real mem = %d\n", ctob(physmem));
