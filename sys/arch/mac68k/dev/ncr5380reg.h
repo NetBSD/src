@@ -1,4 +1,4 @@
-/*	$NetBSD: ncr5380reg.h,v 1.6 1995/12/13 03:48:10 briggs Exp $	*/
+/*	$NetBSD: ncr5380reg.h,v 1.7 1996/02/03 23:18:00 briggs Exp $	*/
 
 /*
  * Copyright (c) 1995 Leo Weppelman.
@@ -253,7 +253,7 @@ static void ncr_tprint __P((SC_REQ *, char *, ...));
 static void ncr_aprint __P((struct ncr_softc *, char *, ...));
 
 static void show_request __P((SC_REQ *, char *));
-static void show_phase __P((SC_REQ *, int));
+/* static void show_phase __P((SC_REQ *, int)); */
 static void show_signals __P((u_char, u_char));
 
 #endif /* _NCR5380REG_H */

@@ -1,4 +1,4 @@
-/*	$NetBSD: ncr5380.c,v 1.18 1996/01/24 06:02:11 briggs Exp $	*/
+/*	$NetBSD: ncr5380.c,v 1.19 1996/02/03 23:17:56 briggs Exp $	*/
 
 /*
  * Copyright (c) 1995 Leo Weppelman.
@@ -30,37 +30,6 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-
-#ifdef DBG_NOSTATIC
-#	define	static
-#endif
-#ifdef DBG_SEL
-#	define	DBG_SELPRINT(a,b)	printf(a,b)
-#else
-#	define DBG_SELPRINT(a,b)
-#endif
-#ifdef DBG_PIO
-#	define DBG_PIOPRINT(a,b,c) 	printf(a,b,c)
-#else
-#	define DBG_PIOPRINT(a,b,c)
-#endif
-#ifdef DBG_INF
-#	define DBG_INFPRINT(a,b,c)	a(b,c)
-#else
-#	define DBG_INFPRINT(a,b,c)
-#endif
-#ifdef DBG_PID
-	/* static	char	*last_hit = NULL, *olast_hit = NULL; */
-	static char *last_hit[DBG_PID];
-#	define	PID(a)	\
-	{ int i; \
-	  for (i=0; i< DBG_PID-1; i++) \
-		last_hit[i] = last_hit[i+1]; \
-	  last_hit[DBG_PID-1] = a; } \
-		/* olast_hit = last_hit; last_hit = a; */
-#else
-#	define	PID(a)
-#endif
 
 /*
  * Bit mask of targets you want debugging to be shown
@@ -353,6 +322,7 @@ ncr5380_scsi_cmd(struct scsi_xfer *xs)
 	reqp->phase     = NR_PHASE;
 	reqp->msgout    = MSG_NOOP;
 	reqp->status    = SCSGOOD;
+	reqp->message   = 0xff;
 	reqp->link      = NULL;
 	reqp->xs        = xs;
 	reqp->targ_id   = xs->sc_link->target;
@@ -642,9 +612,8 @@ main_exit:
 			else dma_ready();
 #else
 			else {
-				if (pdma_ready())
-					goto connected;
-				panic("Got DMA interrupt without DMA");
+				if (!pdma_ready())
+					panic("Got DMA interrupt without DMA");
 			}
 #endif
 			scsi_clr_ipend();
@@ -711,9 +680,9 @@ struct ncr_softc *sc;
 				return;
 			    }
 #else
-			    if (pdma_ready())
-				return;
-			    panic("Got DMA interrupt without DMA\n");
+			    if (!pdma_ready())
+				panic("Got DMA interrupt without DMA\n");
+			    return;
 #endif
 			}
 			scsi_clr_ipend();
@@ -1981,6 +1950,8 @@ scsi_show()
 	u_char	idstat, dmstat;
 	int	i;
 
+	printf("scsi_show: main_running is%s running\n",
+		main_running?"":" not");
 	for (tmp = issue_q; tmp; tmp = tmp->next)
 		show_request(tmp, "ISSUED");
 	for (tmp = discon_q; tmp; tmp = tmp->next)
