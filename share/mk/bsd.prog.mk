@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.prog.mk,v 1.185 2003/09/13 02:52:05 erh Exp $
+#	$NetBSD: bsd.prog.mk,v 1.186 2003/09/13 03:44:21 erh Exp $
 #	@(#)bsd.prog.mk	8.2 (Berkeley) 4/2/94
 
 .ifndef HOSTPROG
@@ -17,10 +17,12 @@ realinstall:	proginstall scriptsinstall
 clean:		cleanprog
 
 ##### PROG specific flags.
-COPTS+=    ${COPTS.${PROG}}
+COPTS+=     ${COPTS.${PROG}}
 CPPFLAGS+=  ${CPPFLAGS.${PROG}}
 CXXFLAGS+=  ${CXXFLAGS.${PROG}}
 LDADD+=     ${LDADD.${PROG}}
+LDFLAGS+=   ${LDFLAGS.${PROG}}
+LDSTATIC+=  ${LDSTATIC.${PROG}}
 
 ##### Default values
 CPPFLAGS+=	${DESTDIR:D-nostdinc ${CPPFLAG_ISYSTEM} ${DESTDIR}/usr/include}
