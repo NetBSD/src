@@ -1,11 +1,8 @@
-# 	$NetBSD: NONPLUS64,v 1.18 2001/02/11 01:04:59 eeh Exp $
+# 	$NetBSD: NONPLUS64,v 1.19 2001/10/24 18:49:39 thorpej Exp $
 
 include "arch/sparc64/conf/NONPLUS"
 
-#ident 		"GENERIC64-$Revision: 1.18 $"
+#ident 		"GENERIC64-$Revision: 1.19 $"
 
-options 	_LP64		# we're using a 64-bit compiler
 options 	COMPAT_NETBSD32	# NetBSD/sparc binary compatibility
 options		COMPAT_SVR4_32	# 32-bit SVR4 binaries
-options 	EXEC_ELF64	# Exec module for sparc64 & SunOs 5.x binaries.
-makeoptions	_LP64=1
