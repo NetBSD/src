@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.11.2.1 1999/04/20 02:21:20 cjs Exp $
+#	$NetBSD: Makefile,v 1.11.2.2 1999/06/22 16:51:43 perry Exp $
 
 TOP=		${.CURDIR}/..
 WARNS=1
@@ -8,9 +8,7 @@ IMAGE=		ramdisk.fs
 
 AUXTARGETS=	install.sh upgrade.sh start.sh
 AUXDEPENDS= 	dot.profile dot.hdprofile disktab.preinstall \
-		termcap.mini termcap.pc3 dist/base_obsolete dist/comp_obsolete \
-		dist/games_obsolete dist/man_obsolete dist/misc_obsolete \
-		dist/secr_obsolete dist/xbase_obsolete dist/xserver_obsolete
+		termcap.mini termcap.pc3
 AUXCLEAN=	${AUXTARGETS}
 
 CBIN=		ramdiskbin
