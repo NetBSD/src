@@ -1,4 +1,4 @@
-.\"	$NetBSD: kbd.4,v 1.2 1997/10/08 22:00:11 jtc Exp $
+.\"	$NetBSD: kbd.4,v 1.3 1997/11/25 22:15:56 pk Exp $
 .\"
 .\" Copyright (c) 1996 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -137,7 +137,7 @@ type keyboards this will be the setting of a DIP switch bank
 Set LED state
 .Pq Do type 4 Dc only .
 The argument is of type
-.Fa "int *" ,
+.Fa "char *" ,
 and is the inclusive OR of the following flags:
 .Pp
 .Bl -tag -width LED_SCROLL_LOCK -compact
@@ -148,11 +148,11 @@ and is the inclusive OR of the following flags:
 .El
 .Pp
 Each of these flags turn on the LED in the obvious key.
-.It KIOCSLED
+.It KIOCGLED
 Get LED state
 .Pq Do type 4 Dc only .
 The argument is of type
-.Fa "int *" ,
+.Fa "char *" ,
 in which the current LED state is returned.
 .El
 .Sh SEE ALSO
