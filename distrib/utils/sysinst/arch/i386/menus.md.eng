@@ -1,0 +1,148 @@
+/*	$NetBSD: menus.md.eng,v 1.1.1.1 1997/09/26 23:02:55 phil Exp $	*/
+
+/*
+ * Copyright 1997 Piermont Information Systems Inc.
+ * All rights reserved.
+ *
+ * Written by Philip A. Nelson for Piermont Information Systems Inc.
+ *
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions
+ * are met:
+ * 1. Redistributions of source code must retain the above copyright
+ *    notice, this list of conditions and the following disclaimer.
+ * 2. Redistributions in binary form must reproduce the above copyright
+ *    notice, this list of conditions and the following disclaimer in the
+ *    documentation and/or other materials provided with the distribution.
+ * 3. All advertising materials mentioning features or use of this software
+ *    must display the following acknowledgement:
+ *      This product includes software develooped for the NetBSD Project by
+ *      Piermont Information Systems Inc.
+ * 4. The name of Piermont Information Systems Inc. may not be used to endorse
+ *    or promote products derived from this software without specific prior
+ *    written permission.
+ *
+ * THIS SOFTWARE IS PROVIDED BY PIERMONT INFORMATION SYSTEMS INC. ``AS IS''
+ * AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+ * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+ * ARE DISCLAIMED. IN NO EVENT SHALL PIERMONT INFORMATION SYSTEMS INC. BE 
+ * LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR 
+ * CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF 
+ * SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+ * INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
+ * CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+ * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF 
+ * THE POSSIBILITY OF SUCH DAMAGE.
+ *
+ */
+
+/* Menu definitions for sysinst. i386 version, machine dependent. */
+
+menu fullpart, title  "  Select your choice";
+	option "Use the entire disk", 	    exit, action  {usefull = 1;};
+	option "Use only part of the disk", exit, action  {usefull = 0;};
+
+menu wdtype, title  "  Select type";
+	display action { msg_display (MSG_wdtype, diskdev); };
+	option "IDE", 	exit;
+	option "ESDI", 	exit, action
+		{ msg_display (MSG_sectforward);
+		  process_menu (MENU_yesno);
+		  if (yesno)
+			doessf = "sf:";
+		};
+	option "ST506", exit, action
+		{ msg_display (MSG_sectforward);
+		  process_menu (MENU_yesno);
+		  if (yesno)
+			doessf = "sf:";
+		};
+
+
+menu dlgeom, title "  Choose an option";
+	display action { msg_display (MSG_dlgeom, diskdev, dlcyl, dlhead,
+				dlsec, diskgeom[0], diskgeom[1], diskgeom[2]);
+			};
+	option "Use real geometry", exit, action {
+			dlcyl  = diskgeom[0];
+			dlhead = diskgeom[1];
+			dlsec  = diskgeom[2];
+		};
+	option "Use disklabel geometry", exit, action {
+			diskgeom[0] = dlcyl;
+			diskgeom[1] = dlhead;
+			diskgeom[2] = dlsec;
+		};
+
+menu biosgeom, title  "  Choose an option", y=16;
+	display action { msg_display (MSG_biosgeom, diskdev);
+			 disp_cur_geom ();
+			};
+	option "Abort install, halt machine",
+		action (endwin)  { system ("/sbin/halt"); exit(1); };
+	option "Enter geometry",
+		action  { msg_clear(); set_fdisk_geom(); },
+		next menu confirmbios;
+
+menu confirmbios;
+	display action  {
+		msg_display (MSG_badgeom);
+		disp_cur_geom ();
+	};
+	option "Reenter geometry",
+		action  { msg_clear(); set_fdisk_geom(); };
+	option "Continue with install",
+		action  {
+			if (check_geom())
+				return TRUE;
+			msg_display (MSG_reentergeom);
+			set_fdisk_geom();
+		};
+
+menu editparttable, title  "  Choose your partition", exit;
+	display action  { msg_display (MSG_editparttable);
+			  disp_cur_part (activepart,-1);
+			};
+	option "Edit partition 0",  sub menu editpart,
+		action  { editpart = 0; };
+	option "Edit partition 1",  sub menu editpart,
+		action  { editpart = 1; };
+	option "Edit partition 2",  sub menu editpart,
+		action  { editpart = 2; };
+	option "Edit partition 3",  sub menu editpart,
+		action  { editpart = 3; };
+
+menu editpart, title  "  Select to change";
+	display action { msg_display (MSG_editpart, editpart);
+			   disp_cur_part (activepart,editpart);
+			   msg_printf_add ("\n");
+			};
+	option "Kind", sub menu chooseid;
+	option "Start and size", action 
+		{	char buf[40]; int start, size;
+			msg_prompt_add (MSG_start, NULL, buf, 40);
+			start = NUMSEC(atoi(buf),sizemult,dlcylsize);
+			if (sizemult > 1 && start < bsec)
+				start = bsec;
+			msg_prompt_add (MSG_size, NULL, buf, 40);
+			size = NUMSEC(atoi(buf),sizemult,dlcylsize);
+			if (sizemult > 1 && start == bsec)
+				size -= bsec;
+			if (start + size > bsize)
+				size = bsize - start;
+			if (size < 0) {
+				size = 0;
+				start = 0;
+			}
+			part[editpart][START] = start;
+			part[editpart][SIZE] = size;
+		};
+	option "Set active", action { activepart = editpart; };
+	option "Partition OK", exit;
+
+menu chooseid, title  "  Partition Kind? ";
+	option "NetBSD", 	exit,	action { part[editpart][ID] = 165; };
+	option "DOS < 32 Meg",	exit,	action { part[editpart][ID] = 4; };
+	option "DOS > 32 Meg",	exit,	action { part[editpart][ID] = 6; };
+	option "unused",	exit,	action { part[editpart][ID] = 0; };
+

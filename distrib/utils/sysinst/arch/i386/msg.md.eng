@@ -1,0 +1,160 @@
+/*	$NetBSD: msg.md.eng,v 1.1.1.1 1997/09/26 23:02:55 phil Exp $	*/
+
+/*
+ * Copyright 1997 Piermont Information Systems Inc.
+ * All rights reserved.
+ *
+ * Written by Philip A. Nelson for Piermont Information Systems Inc.
+ *
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions
+ * are met:
+ * 1. Redistributions of source code must retain the above copyright
+ *    notice, this list of conditions and the following disclaimer.
+ * 2. Redistributions in binary form must reproduce the above copyright
+ *    notice, this list of conditions and the following disclaimer in the
+ *    documentation and/or other materials provided with the distribution.
+ * 3. All advertising materials mentioning features or use of this software
+ *    must display the following acknowledgement:
+ *      This product includes software develooped for the NetBSD Project by
+ *      Piermont Information Systems Inc.
+ * 4. The name of Piermont Information Systems Inc. may not be used to endorse
+ *    or promote products derived from this software without specific prior
+ *    written permission.
+ *
+ * THIS SOFTWARE IS PROVIDED BY PIERMONT INFORMATION SYSTEMS INC. ``AS IS''
+ * AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+ * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+ * ARE DISCLAIMED. IN NO EVENT SHALL PIERMONT INFORMATION SYSTEMS INC. BE 
+ * LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR 
+ * CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF 
+ * SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+ * INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
+ * CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+ * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF 
+ * THE POSSIBILITY OF SUCH DAMAGE.
+ *
+ */
+
+/* MD Message catalog -- english, i386 version */
+
+message fullpart
+{We are now going to install NetBSD on the disk %s.  You may
+choose to install NetBSD on the entire disk or part of the disk.
+Which would you like to do?
+}
+
+message wdtype
+{What kind of disk is %s?}
+
+message sectforward
+{Does your disk to AUTOMATIC sector forwarding?}
+
+message dlgeom
+{It appears that your disk, %s, has already been labeled with a BSD 
+disklabel and the disklabel reports geometry that is different from
+the the real geometry.  The two geometries are:
+
+disklabel: %d cylinders, %d heads, %d sectors
+real geom: %d cylinders, %d heads, %d sectors
+}
+
+message biosgeom
+{It appears that your disk, %s, did not have a FDISK label on the disk.
+NetBSD is using the true geometry which is incompatible with the
+BIOS.  This install program gets the BIOS fake geometry of your disk
+by reading the FDISK label.  Your options are:
+    -- Abort the install, have DOS/Windows/? put on a FDISK label
+    -- Choose your own gemoetry and then tell the BIOS about it
+    -- Find out what the BIOS uses and set it
+
+Note: Entering new geometry will cause this program to initialize your
+master boot record.
+
+}
+
+message part_head
+{No   Start(%s)    Size(%s)  Kind\n}
+
+message setfdiskgeom
+{You will be prompted for the geometry.  Please enter the values you
+want.  Remember, cylinders should be <= 1023 and sectors should <= 63.
+
+}
+
+message badgeom
+{The current values for your disk geometry are:
+
+}
+
+message realgeom
+{real geom: %d cyl, %d heads, %d sec\n}
+
+message fdiskgeom
+{fdisk geom: %d cyl, %d heads, %d sec\n}
+
+message reentergeom
+{The values just entered for the geometry are not usable.  Please,
+reenter the geometry.
+}
+
+message ovrwrite
+{Your disk currently has a non-NetBSD partition.  Do you really want to
+overwrite that partition with NetBSD?
+}
+
+message parttable
+{The partition table on your disk currently looks like the following:
+}
+
+message editpart
+{Partition %d looks like:\n\n}
+
+message editparttable
+{Edit your DOS partition table.  The highlighted partition is the currently
+active partition.   The partition table currently looks like:
+
+}
+
+message reeditpart
+{You have specified overlaping DOS partitions or do not have exactly
+one NetBSD partition.  You will need to re-edit the DOS partition table.
+}
+
+message dofdisk
+{Setting up the DOS partition table ...
+}
+
+message dobad144
+{Installing the bad block table ...
+}
+
+message dobootblks
+{Installing boot blocks on %s....
+}
+
+message askfsroot
+{I will be asking for partition sizes and on some, mount points.
+
+First the root partition.  You have %d %s left on your disk.
+Root partition size? }
+
+message askfsswap
+{
+Next the swap partition.  You have %d %s left on your disk.
+Swap partition size? }
+
+message askfsusr
+{
+Next the /usr partition.  You have %d %s left on your disk.
+/usr partition size? }
+
+message otherparts
+{You still have some space remaining unallocated on your disk.  Please
+give sizes and mount points for the following partitions.
+
+}
+
+message askfspart
+{The next partition is /dev/%s%c.  You have %d %s left on your disk.
+Partition size? }

@@ -1,0 +1,348 @@
+/*	$NetBSD: msg.mi.eng,v 1.1.1.1 1997/09/26 23:02:54 phil Exp $	*/
+
+/*
+ * Copyright 1997 Piermont Information Systems Inc.
+ * All rights reserved.
+ *
+ * Written by Philip A. Nelson for Piermont Information Systems Inc.
+ *
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions
+ * are met:
+ * 1. Redistributions of source code must retain the above copyright
+ *    notice, this list of conditions and the following disclaimer.
+ * 2. Redistributions in binary form must reproduce the above copyright
+ *    notice, this list of conditions and the following disclaimer in the
+ *    documentation and/or other materials provided with the distribution.
+ * 3. All advertising materials mentioning features or use of this software
+ *    must display the following acknowledgement:
+ *      This product includes software develooped for the NetBSD Project by
+ *      Piermont Information Systems Inc.
+ * 4. The name of Piermont Information Systems Inc. may not be used to endorse
+ *    or promote products derived from this software without specific prior
+ *    written permission.
+ *
+ * THIS SOFTWARE IS PROVIDED BY PIERMONT INFORMATION SYSTEMS INC. ``AS IS''
+ * AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+ * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+ * ARE DISCLAIMED. IN NO EVENT SHALL PIERMONT INFORMATION SYSTEMS INC. BE 
+ * LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR 
+ * CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF 
+ * SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+ * INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
+ * CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+ * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF 
+ * THE POSSIBILITY OF SUCH DAMAGE.
+ *
+ */
+
+/* MI Message catalog -- english, machine independent */
+
+message install
+{install}
+
+message upgrade
+{upgrade}
+
+message hello
+{Welcome to the NetBSD-@@VERSION@@ installation process.  This system was designed
+to help you install NetBSD to your hard disk with a minimum of work for
+you.  In the following menus, you may change the current selection by
+either typing the reference letter (a, b, c, ...) or using your arrow keys.
+You activate the current selection from the menu by typing the enter key.
+
+If you booted from a floppy, you may now remove the disk.
+
+Thank you for using NetBSD!
+}
+
+message upgr
+{Sorry, the upgrade part of this is not working.
+}
+
+message lostinfo
+{It appears that your boot message buffer has lost information.  Your
+ram size information is not available.  It is possible that other information
+has also been lost.  Do you want to continue?
+}
+
+message installusure
+{Ok, lets get NetBSD installed on your hard disk.  As always, this will
+change information on your hard disk.  You should have made a full backup
+before this procedure!  Do you really want to install NetBSD?
+}
+
+message upgradeusure
+{Ok, lets get NetBSD upgraded your hard disk.  As always, this will
+change information on your hard disk.  You should have made a full backup
+before this procedure!  Do you really want to upgrade NetBSD?
+}
+
+message nodisk
+{I can not find any hard disks for use by NetBSD.  You will be
+returned to the original menu.
+}
+
+message onedisk
+{I found only one disk, %s.  Therefore I assume you want to %s
+NetBSD on it.
+}
+
+message askdisk
+{I have found the following disks: %s
+\nOn which disk do you want to install NetBSD? }
+
+message badname
+{You did not choose one of the listed disks.  Please try again.
+The following disks are available: %s
+\nOn which disk do you want to install NetBSD? }
+
+message scsigeom1
+{It appears that your disk, %s, has already been labeled with a BSD 
+disklabel and the disklabel reports geometry that is different from
+the the real geometry.  Also, the reporte geometry does not address all
+possible sectors on your disk.  Your disk has %d sectors.
+
+disklabel: %d cylinders, %d heads, %d sectors = %d total sectors
+reported geom: %d cylinders, %d heads, %d sectors = %d total sectors
+
+It may be possible to choose a fake geometry for your BSD disklabel that
+address most of your sectors.
+}
+
+message scsigeom2
+{Your disk, %s, reports a geometry that does not address all possible sectors
+on your disk.  Your disk has %d sectors.
+
+reported geom: %d cylinders, %d heads, %d sectors = %d total sectors
+
+It may be possible to choose a fake geometry for your BSD disklabel that
+address most of your sectors.
+}
+
+message scsi_fake
+{Your SCSI disk has %d total sectors.  The following are possible choices
+for fake geometries.  At least the last one is the reported geometry.
+
+1: %6d cylinders * %6d heads * %6d sectors = %8d total sectors
+2: %6d cylinders * %6d heads * %6d sectors = %8d total sectors
+3: %6d cylinders * %6d heads * %6d sectors = %8d total sectors
+4: %6d cylinders * %6d heads * %6d sectors = %8d total sectors
+5: %6d cylinders * %6d heads * %6d sectors = %8d total sectors
+
+}
+
+message cylinders
+{cylinders}
+
+message heads
+{heads}
+
+message sectors
+{sectors}
+
+message size
+{size}
+
+message start
+{start}
+
+message offset
+{offset}
+
+message bsize
+{block size}
+
+message fsize
+{frag size}
+
+message mountpoint
+{mount point}
+
+message cylname
+{cyl}
+
+message secname
+{sec}
+
+message megname
+{meg}
+
+message layout
+{You need to choose how the NetBSD part of your disk will be partitioned.
+You have several choices.  They are summarized below.
+-- Standard: the partitions are computed by this program.
+-- Standard with X: twice the swap space, space for X binaries.
+-- Custom: you specify the sizes of all the partitions.
+
+The NetBSD part of your disk is %.2f Megabytes.
+Standard requires at least %.2f Megabytes.
+Standard with X requires at least %.2f Megabytes.
+}
+
+message sizechoice
+{You have elected to choose your partition sizes.  You need to specify
+the units of size you will use for your choices.  Choosing megabytes
+will make partition sizes close to your choice, but keep partitions
+to an integral number of cylinders.   Choosing sectors will allow you
+to most acurately specify the sizes, but remember, it is most efficient
+to choose partition sizes that are exact multiples of your cylinder
+size, which is %d sectors.
+}
+
+message fspart
+{We now have your NetBSD partitions as follows (Size and Offset in %s):
+}
+
+message fspart_head
+{
+id:      Size    Offset FStype Bsize Fsize Mount point
+---      ----    ------ ------ ----- ----- -----------
+
+}
+
+
+message edfspart
+{You should set the file system (FS) kind first.  Then set the other values.
+
+The current values for partition %c are:
+
+}
+
+message not42bsd
+{Partition %c is not of type 4.2BSD and thus does not have a block and
+frag size to set.
+}
+
+message packname
+{Please enter a name for your NetBSD disk}
+
+message lastchance
+{Ok, we are now ready to install NetBSD on your hard disk.  Nothing has been
+written yet.  This is your last chance to quit this process before anything
+gets changed.  Shall we continue?
+}
+
+message nomount
+{Partition %c's type is not 4.2BSD or msdos and therefore does not have
+a mount point.}
+
+message dodisklabel
+{Writing the NetBSD disklabel ...\n}
+
+message donewfs
+{Creating the new file systems on all 4.2BSD partitions...\n}
+
+message dotar
+{Populating filesystems with bootstrapping binaries and config files...\n}
+
+message instcomplete
+{The installation of NetBSD-@@VERSION@@ is now complete.  You may
+reboot your machine and NetBSD should boot from your hard drive.
+}
+
+message distmedium
+{Your disk is now ready for installing the kernel and the distribution
+sets.  As noted in your INSTALL notes, you have several options.  For
+ftp or nfs, you must be connected to a network with access to the proper
+machines.  If you are not ready complete the installation at this time,
+you may select "none" and you will be returned to the main menu.  When
+you are ready at a later time, you may select "upgrade" from the main
+menu to complete the installation.
+}
+
+message ftpsource
+{The following is the ftp site, directory, user, and password currently
+ready to use.  If "user" is "ftp", then the password is not needed.
+
+host:      %s
+directory: %s
+user:      %s
+password:  }
+
+message host
+{host}
+
+message dir
+{directory}
+
+message user
+{user}
+
+message passwd
+{password}
+
+message email
+{e-mail address}
+
+message asknetdev
+{I have found the following network interfaces: %s
+\nWhich device shall I use? }
+
+message badnet
+{You did not choose one of the listed network devices.  Please try again.
+The following network devices are available: %s
+\nWhich device shall I use? }
+
+message netinfo
+{To be able to use the network, we need answers to the following:
+
+}
+
+message net_domain
+{Domain (e.g. netbsd.org) }
+
+message net_host
+{Host name (e.g. ftp) }
+
+message net_ip
+{IP number (e.g. 127.0.0.1) }
+
+message net_mask
+{Netmask }
+
+message net_namesrv
+{IP of your name server }
+
+message net_defroute
+{IP of your gateway }
+
+message netok
+{The following are the values you entered.  Are they OK?
+
+Domain:        %s
+Host Name:     %s
+Host IP:       %s
+Netmask:       %s
+Nameserver IP: %s
+Gateway IP:    %s
+}
+
+message netagain
+{Please reenter the information about your network.  Your last answers
+will be your default.
+
+}
+
+message resolv
+{Could not create /etc/resolv.conf.  Install aborted.
+}
+
+message realdir
+{Could not change to directory %s.  Install aborted.
+}
+
+message netdir
+{What directory shall I use for %s? }
+
+message verboseextract
+{During the extraction process, do you want to see the file names as
+each file is extracted?
+}
+
+message badls
+{Could not run /bin/ls.  This error should not have happened. Install aborted.
+}
+
+message endtar
+{All your files have now been extracted.  Please hit CR to continue.}
