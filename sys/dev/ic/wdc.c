@@ -1,4 +1,4 @@
-/*	$NetBSD: wdc.c,v 1.171 2004/01/07 22:03:56 thorpej Exp $ */
+/*	$NetBSD: wdc.c,v 1.172 2004/03/25 19:45:09 bouyer Exp $ */
 
 /*
  * Copyright (c) 1998, 2001, 2003 Manuel Bouyer.  All rights reserved.
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wdc.c,v 1.171 2004/01/07 22:03:56 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wdc.c,v 1.172 2004/03/25 19:45:09 bouyer Exp $");
 
 #ifndef WDCDEBUG
 #define WDCDEBUG
@@ -590,6 +590,9 @@ wdcprobe1(struct wdc_channel *chp, int poll)
 	delay(10);	/* 400ns delay */
 	bus_space_write_1(chp->ctl_iot, chp->ctl_ioh, wd_aux_ctlr,
 	    WDCTL_RST | WDCTL_IDS | WDCTL_4BIT); 
+	DELAY(1000);
+	bus_space_write_1(chp->ctl_iot, chp->ctl_ioh, wd_aux_ctlr,
+	    WDCTL_IDS | WDCTL_4BIT);
 	DELAY(2000);
 	(void) bus_space_read_1(chp->cmd_iot, chp->cmd_iohs[wd_error], 0);
 	bus_space_write_1(chp->ctl_iot, chp->ctl_ioh, wd_aux_ctlr, WDCTL_4BIT);
