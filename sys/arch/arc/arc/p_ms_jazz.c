@@ -1,4 +1,4 @@
-/*	$NetBSD: p_ms_jazz.c,v 1.2 2002/12/28 16:25:38 tsutsui Exp $	*/
+/*	$NetBSD: p_ms_jazz.c,v 1.3 2002/12/28 16:44:44 tsutsui Exp $	*/
 /*	$OpenBSD: picabus.c,v 1.11 1999/01/11 05:11:10 millert Exp $	*/
 
 /*
@@ -94,7 +94,7 @@ struct pica_dev mips_magnum_r4000_cpu[] = {
 	{{ "VXL",	3, 0, },	(void *)PICA_V_LOCAL_VIDEO, },
 	{{ "SONIC",	4, 0, },	(void *)PICA_SYS_SONIC, },
 	{{ "ESP216",	5, 0, },	(void *)PICA_SYS_SCSI, },
-	{{ "I8247",	6, 0, },	(void *)PICA_SYS_KBD, },
+	{{ "I8742",	6, 0, },	(void *)PICA_SYS_KBD, },
 	{{ "pms",	7, 0, },	(void *)PICA_SYS_KBD, }, /* XXX */
 	{{ "COM1",	8, 0, },	(void *)PICA_SYS_COM1, },
 	{{ "COM2",	9, 0, },	(void *)PICA_SYS_COM2, },

@@ -1,4 +1,4 @@
-/*	$NetBSD: c_nec_jazz.c,v 1.3 2002/12/28 16:25:38 tsutsui Exp $	*/
+/*	$NetBSD: c_nec_jazz.c,v 1.4 2002/12/28 16:44:43 tsutsui Exp $	*/
 
 /*-
  * Copyright (C) 2000 Shuichiro URATA.  All rights reserved.
@@ -102,7 +102,7 @@ struct pica_dev nec_rd94_cpu[] = {
 	{{ "SONIC",	3, 0, },	(void *)RD94_SYS_SONIC, },
 	{{ "NCRC700",	4, 0, },	(void *)RD94_SYS_SCSI0, },
 	{{ "NCRC700",	5, 0, },	(void *)RD94_SYS_SCSI1, },
-	{{ "I8247",	6, 0, },	(void *)RD94_SYS_KBD, },
+	{{ "I8742",	6, 0, },	(void *)RD94_SYS_KBD, },
 	{{ "pms",	7, 0, },	(void *)RD94_SYS_KBD, }, /* XXX */
 	{{ "COM1",	8, 0, },	(void *)RD94_SYS_COM1, },
 	{{ "COM2",	9, 0, },	(void *)RD94_SYS_COM2, },
