@@ -1,4 +1,4 @@
-/* $NetBSD: locore.s,v 1.34 1997/09/02 14:29:00 thorpej Exp $ */
+/* $NetBSD: locore.s,v 1.35 1997/09/02 18:53:26 thorpej Exp $ */
 
 /*
  * Copyright (c) 1994, 1995, 1996 Carnegie-Mellon University.
@@ -29,12 +29,25 @@
 
 #include <machine/asm.h>
 
-__KERNEL_RCSID(0, "$NetBSD: locore.s,v 1.34 1997/09/02 14:29:00 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: locore.s,v 1.35 1997/09/02 18:53:26 thorpej Exp $");
 
 #ifndef EVCNT_COUNTERS
 #include <machine/intrcnt.h>
 #endif
 #include "assym.h"
+
+/*
+ * Perform actions necessary to switch to a new context.  The
+ * hwpcb should be in a0.
+ */
+#define	SWITCH_CONTEXT							\
+	/* Swap in the new context. */					\
+	call_pal PAL_OSF1_swpctx				;	\
+									\
+	/* Flush out the entire TLB.  (XXX only user side?) */		\
+	ldiq	a0, -2						;	\
+	call_pal PAL_OSF1_tbi
+
 
 	/* don't reorder instructions; paranoia. */
 	.set noreorder
@@ -94,9 +107,7 @@ Lstart1: LDGP(pv)
 	 */
 	lda	t0,proc0			/* get phys addr of pcb */
 	ldq	a0,P_MD_PCBPADDR(t0)
-	call_pal PAL_OSF1_swpctx
-	ldiq	a0, -2
-	call_pal PAL_OSF1_tbi
+	SWITCH_CONTEXT
 
 	/*
 	 * Construct a fake trap frame, so execve() can work normally.
@@ -603,7 +614,7 @@ Lidle2:
 	beq	t0, Lidle2
 	ldiq	a0, ALPHA_PSL_IPL_HIGH		/* disable all interrupts */
 	call_pal PAL_OSF1_swpipl
-	jmp	zero, sw1				/* jump back into the fray */
+	jmp	zero, sw1			/* jump back into the fray */
 	END(idle)
 
 /*
@@ -681,59 +692,40 @@ Lcs5:
 
 	/* mark the new curproc, and other globals */
 	stq	zero, want_resched		/* we've rescheduled */
-	/* XXX should allocate an ASN, rather than just flushing */
 	stq	t4, curproc			/* curproc = p */
 	ldq	t5, P_MD_PCBPADDR(t4)		/* t5 = p->p_md.md_pcbpaddr */
 	stq	t5, curpcb			/* and store it in curpcb */
 
-#ifndef NEW_PMAP
 	/*
-	 * Do the context swap, and invalidate old TLB entries (XXX).
+	 * Do the context swap, and invalidate old TLB entries.
 	 * XXX should do the ASN thing, and therefore not have to invalidate.
 	 */
-	ldq	t2, P_VMSPACE(t4)		/* t2 = p->p_vmspace */
-	ldq	t2, VM_PMAP_STPTE(t2)		/* = p_vmspace.vm_pmap.pm_ste */
-	ldq	t3, Lev1map			/* and store pte into Lev1map */
-	stq	t2, USTP_OFFSET(t3)
-	mov	t5, a0				/* swap the context */
-	call_pal PAL_OSF1_swpctx
-	ldiq	a0, -1				/* & invalidate old TLB ents */
-	call_pal PAL_OSF1_tbi
 
-	/*
-	 * Now running on the new u struct.
-	 * Restore registers and return.
-	 */
-	ldq	t0, curproc
-	ldq	t0, P_ADDR(t0)
-#else /* NEW_PMAP */
 	mov	t4, s2				/* save new curproc */
 	mov	t5, s3				/* save new pcbpaddr */
-	ldq	s4, P_ADDR(t4)			/* load/save new U-AREA */
 
-	ldq	a0, P_VMSPACE(s2)		/* p->p_vmspace */
-	lda	a1, U_PCB_HWPCB(s4)		/* &hardware PCB */
-	mov	zero, a2
-	lda	a0, VM_PMAP(a0)			/* &p->p_vmspace->vm_pmap */
+	mov	s2, a0				/* pmap_activate(p) */
 	CALL(pmap_activate)
 
 	mov	s3, a0				/* swap the context */
-	call_pal PAL_OSF1_swpctx
-	ldiq	a0, -2				/* & invalidate old TLB ents */
-	call_pal PAL_OSF1_tbi
+	SWITCH_CONTEXT
 
-	ldq	a0, P_VMSPACE(s0)
-	lda	a1, U_PCB_HWPCB(s1)
-	mov	zero, a2
-	lda	a0, VM_PMAP(a0)
+#ifdef NEW_PMAP
+	mov	s0, a0				/* pmap_deactivate(oldproc) */
 	CALL(pmap_deactivate)
+#else
+	/*
+	 * Utah-derived pmap_deactivate() is a noop, so don't bother with
+	 * the call.
+	 */
+#endif
 
 	/*
 	 * Now running on the new u struct.
 	 * Restore registers and return.
 	 */
-	mov	s4, t0
-#endif /* NEW_PMAP */
+	ldq	t0, P_ADDR(s2)
+
 	/* NOTE: ksp is restored by the swpctx */
 	ldq	s0, U_PCB_CONTEXT+(0 * 8)(t0)		/* restore s0 - s6 */
 	ldq	s1, U_PCB_CONTEXT+(1 * 8)(t0)
@@ -791,21 +783,16 @@ LEAF(switch_exit, 1)
 #endif
 
 	/*
-	 * Do the context swap, and invalidate old TLB entries (XXX).
+	 * Do the context swap, and invalidate old TLB entries.
 	 * XXX should do the ASN thing, and therefore not have to invalidate.
 	 */
 #ifndef NEW_PMAP
 	ldq	t2, P_VMSPACE(t4)		/* t2 = p->p_vmspace */
-	ldq	t2, VM_PMAP_STPTE(t2)		/* = p_vmspace.vm_pmap.pm_ste */
-	ldq	t3, Lev1map			/* and store pte into Lev1map */
-	stq	t2, USTP_OFFSET(t3)
-#endif /* NEW_PMAP */
-	mov	t5, a0				/* swap the context */
-	call_pal PAL_OSF1_swpctx
-#ifndef NEW_PMAP
-	ldiq	a0, -1				/* & invalidate old TLB ents */
-	call_pal PAL_OSF1_tbi
-#endif /* NEW_PMAP */
+	ldq	a0, VM_MAP_PMAP(t2)		/* a0 = ... ->vm_map.pmap */
+	CALL(_pmap_activate)
+#endif
+	mov	t5, a0
+	SWITCH_CONTEXT
 
 	/*
 	 * Now running as proc0, except for the value of 'curproc' and
