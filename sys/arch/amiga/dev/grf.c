@@ -38,7 +38,7 @@
  * from: Utah $Hdr: grf.c 1.31 91/01/21$
  *
  *	@(#)grf.c	7.8 (Berkeley) 5/7/91
- *	$Id: grf.c,v 1.12 1994/05/11 19:06:42 chopps Exp $
+ *	$Id: grf.c,v 1.13 1994/06/05 07:45:10 chopps Exp $
  */
 
 /*
@@ -172,8 +172,7 @@ grfprint(auxp, pnp)
 	char *pnp;
 {
 	if (pnp)
-		printf("ite%d at %s", ((struct grf_softc *)auxp)->g_unit,
-		    pnp);
+		printf("ite at %s", pnp);
 	return(UNCONF);
 }
 

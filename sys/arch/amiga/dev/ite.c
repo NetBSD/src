@@ -37,7 +37,7 @@
  *
  *      from: Utah Hdr: ite.c 1.1 90/07/09
  *      from: @(#)ite.c 7.6 (Berkeley) 5/16/91
- *	$Id: ite.c,v 1.18 1994/05/31 03:11:42 chopps Exp $
+ *	$Id: ite.c,v 1.19 1994/06/05 07:45:15 chopps Exp $
  */
 
 /*
@@ -83,7 +83,7 @@ struct tty *ite_tty[NGRF];
 #define SUBR_SCROLL(ip,sy,sx,count,dir)	\
     (ip)->grf->g_itescroll(ip,sy,sx,count,dir)
 
-int	nunits;				/* number of units */
+u_int	ite_confunits;			/* configured units */
 
 int	start_repeat_timeo = 30;	/* first repeat after x s/100 */
 int	next_repeat_timeo = 10;		/* next repeat after x s/100 */
@@ -113,8 +113,26 @@ itematch(pdp, cdp, auxp)
 	struct cfdata *cdp;
 	void *auxp;
 {
-	if (((struct grf_softc *)auxp)->g_unit != cdp->cf_unit)
+	struct grf_softc *gp;
+	int maj;
+	
+	gp = auxp;
+	/*
+	 * all that our mask allows (more than enough no one 
+	 * has > 32 monitors for text consoles on one machine)
+	 */
+	if (cdp->cf_unit >= sizeof(ite_confunits) * NBBY)
 		return(0);
+	/*
+	 * XXX
+	 * normally this would be done in attach, however
+	 * during early init we do not have a device pointer
+	 * and thus no unit number.
+	 */
+	for(maj = 0; maj < nchrdev; maj++)
+		if (cdevsw[maj].d_open == iteopen)
+			break;
+	gp->g_itedev = makedev(maj, cdp->cf_unit);
 	return(1);
 }
 
@@ -126,25 +144,21 @@ iteattach(pdp, dp, auxp)
 	extern int hz;
 	struct grf_softc *gp;
 	struct ite_softc *ip;
-	int maj, s;
+	int s;
 
 	gp = (struct grf_softc *)auxp;
 
 	/*
-	 * find our major device number 
+	 * mark unit as attached (XXX see itematch)
 	 */
-	for(maj = 0; maj < nchrdev; maj++)
-		if (cdevsw[maj].d_open == iteopen)
-			break;
-	gp->g_itedev = makedev(maj, gp->g_unit);
+	ite_confunits |= 1 << ITEUNIT(gp->g_itedev);
+
 	if (dp) {
 		ip = (struct ite_softc *)dp;
 
 		s = spltty();
-		if (con_itesoftc.grf == NULL ||
-		    con_itesoftc.grf->g_unit != gp->g_unit) {
-			nunits++;
-		} else {
+		if (con_itesoftc.grf != NULL &&
+		    con_itesoftc.grf->g_unit == gp->g_unit) {
 			/*
 			 * console reinit copy params over.
 			 * and console always gets keyboard
@@ -171,10 +185,6 @@ iteattach(pdp, dp, auxp)
 		if (con_itesoftc.grf != NULL &&
 		    con_itesoftc.grf->g_conpri > gp->g_conpri)
 			return;
-		/*
-		 * always one until real attach time
-		 */
-		nunits = 1;
 		con_itesoftc.grf = gp;
 		con_itesoftc.tabs = cons_tabs;
 	}
@@ -329,7 +339,7 @@ iteopen(dev, mode, devtype, p)
 	unit = ITEUNIT(dev);
 	first = 0;
 	
-	if (unit >= nunits)
+	if (((1 << unit) & ite_confunits) == 0)
 		return (ENXIO);
 	
 	ip = getitesp(dev);
@@ -528,7 +538,7 @@ ite_on(dev, flag)
 	int unit;
 
 	unit = ITEUNIT(dev);
-	if (unit < 0 || unit >= nunits)
+	if (((1 << unit) & ite_confunits) == 0)
 		return (ENXIO);
 	
 	ip = getitesp(dev); 
