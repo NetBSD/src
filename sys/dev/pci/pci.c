@@ -1,4 +1,4 @@
-/*	$NetBSD: pci.c,v 1.62 2002/05/16 01:01:29 thorpej Exp $	*/
+/*	$NetBSD: pci.c,v 1.63 2002/05/16 01:03:05 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1995, 1996, 1997, 1998
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pci.c,v 1.62 2002/05/16 01:01:29 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pci.c,v 1.63 2002/05/16 01:03:05 thorpej Exp $");
 
 #include "opt_pci.h"
 
@@ -269,6 +269,7 @@ pci_probe_device(struct pci_softc *sc, pcitag_t tag,
 	pa.pa_memt = sc->sc_memt;
 	pa.pa_dmat = sc->sc_dmat;
 	pa.pa_pc = pc;
+	pa.pa_bus = bus;
 	pa.pa_device = device;
 	pa.pa_function = function;
 	pa.pa_tag = tag;
