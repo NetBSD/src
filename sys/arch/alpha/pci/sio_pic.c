@@ -1,4 +1,4 @@
-/* $NetBSD: sio_pic.c,v 1.24 1999/07/30 20:33:43 ross Exp $ */
+/* $NetBSD: sio_pic.c,v 1.25 2000/02/27 02:50:31 mycroft Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -66,7 +66,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: sio_pic.c,v 1.24 1999/07/30 20:33:43 ross Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sio_pic.c,v 1.25 2000/02/27 02:50:31 mycroft Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -117,15 +117,7 @@ struct evcnt sio_intr_evcnt;
 #endif
 
 #ifndef STRAY_MAX
-#ifdef BROKEN_PROM_CONSOLE
-/*
- * If prom console is broken, because initial interrupt settings
- * must be kept, there's no way to escape stray interrupts.
- */
-#define	STRAY_MAX	0
-#else
 #define	STRAY_MAX	5
-#endif
 #endif
 
 #ifdef BROKEN_PROM_CONSOLE
@@ -135,13 +127,6 @@ struct evcnt sio_intr_evcnt;
  */
 u_int8_t initial_ocw1[2];
 u_int8_t initial_elcr[2];
-#define	INITIALLY_ENABLED(irq) \
-	    ((initial_ocw1[(irq) / 8] & (1 << ((irq) % 8))) == 0)
-#define	INITIALLY_LEVEL_TRIGGERED(irq) \
-	    ((initial_elcr[(irq) / 8] & (1 << ((irq) % 8))) != 0)
-#else
-#define	INITIALLY_ENABLED(irq)		((irq) == 2 ? 1 : 0)
-#define	INITIALLY_LEVEL_TRIGGERED(irq)	0
 #endif
 
 void		sio_setirqstat __P((int, int, int));
@@ -149,6 +134,9 @@ void		sio_setirqstat __P((int, int, int));
 u_int8_t	(*sio_read_elcr) __P((int));
 void		(*sio_write_elcr) __P((int, u_int8_t));
 static void	specific_eoi __P((int));
+#ifdef BROKEN_PROM_CONSOLE
+void		sio_intr_shutdown __P((void *));
+#endif
 
 /******************** i82378 SIO ELCR functions ********************/
 
@@ -343,25 +331,6 @@ sio_setirqstat(irq, enabled, type)
 	elcr[1] &= ~0x21;		/* IRQ[13,8] must be edge-triggered */
 #endif
 
-#ifdef BROKEN_PROM_CONSOLE
-	/*
-	 * make sure that the initially clear bits (unmasked interrupts)
-	 * are never set, and that the initially-level-triggered
-	 * intrrupts always remain level-triggered, to keep the prom happy.
-	 */
-	if ((ocw1[0] & ~initial_ocw1[0]) != 0 ||
-	    (ocw1[1] & ~initial_ocw1[1]) != 0 ||
-	    (elcr[0] & initial_elcr[0]) != initial_elcr[0] ||
-	    (elcr[1] & initial_elcr[1]) != initial_elcr[1]) {
-		printf("sio_sis: initial: ocw = (%2x,%2x), elcr = (%2x,%2x)\n",
-		    initial_ocw1[0], initial_ocw1[1],
-		    initial_elcr[0], initial_elcr[1]);
-		printf("         current: ocw = (%2x,%2x), elcr = (%2x,%2x)\n",
-		    ocw1[0], ocw1[1], elcr[0], elcr[1]);
-		panic("sio_setirqstat: hosed");
-	}
-#endif
-
 	bus_space_write_1(sio_iot, sio_ioh_icu1, 1, ocw1[0]);
 	bus_space_write_1(sio_iot, sio_ioh_icu2, 1, ocw1[1]);
 	(*sio_write_elcr)(0, elcr[0]);				/* XXX */
@@ -390,18 +359,13 @@ sio_intr_setup(pc, iot)
 
 #ifdef BROKEN_PROM_CONSOLE
 	/*
-	 * Remember the initial values, because the prom is stupid.
+	 * Remember the initial values, so we can restore them later.
 	 */
 	initial_ocw1[0] = bus_space_read_1(sio_iot, sio_ioh_icu1, 1);
 	initial_ocw1[1] = bus_space_read_1(sio_iot, sio_ioh_icu2, 1);
 	initial_elcr[0] = (*sio_read_elcr)(0);			/* XXX */
 	initial_elcr[1] = (*sio_read_elcr)(1);			/* XXX */
-#if 0
-	printf("initial_ocw1[0] = 0x%x\n", initial_ocw1[0]);
-	printf("initial_ocw1[1] = 0x%x\n", initial_ocw1[1]);
-	printf("initial_elcr[0] = 0x%x\n", initial_elcr[0]);
-	printf("initial_elcr[1] = 0x%x\n", initial_elcr[1]);
-#endif
+	shutdownhook_establish(sio_intr_shutdown, 0);
 #endif
 
 	sio_intr = alpha_shared_intr_alloc(ICU_LEN);
@@ -421,12 +385,9 @@ sio_intr_setup(pc, iot)
 			 * IRQs 0, 1, 8, and 13 must always be
 			 * edge-triggered.
 			 */
-			if (INITIALLY_LEVEL_TRIGGERED(i))
-				printf("sio_intr_setup: %d LT!\n", i);
-			sio_setirqstat(i, INITIALLY_ENABLED(i), IST_EDGE);
+			sio_setirqstat(i, 0, IST_EDGE);
 			alpha_shared_intr_set_dfltsharetype(sio_intr, i,
 			    IST_EDGE);
-
 			specific_eoi(i);
 			break;
 
@@ -435,10 +396,6 @@ sio_intr_setup(pc, iot)
 			 * IRQ 2 must be edge-triggered, and should be
 			 * enabled (otherwise IRQs 8-15 are ignored).
 			 */
-			if (INITIALLY_LEVEL_TRIGGERED(i))
-				printf("sio_intr_setup: %d LT!\n", i);
-			if (!INITIALLY_ENABLED(i))
-				printf("sio_intr_setup: %d not enabled!\n", i);
 			sio_setirqstat(i, 1, IST_EDGE);
 			alpha_shared_intr_set_dfltsharetype(sio_intr, i,
 			    IST_UNUSABLE);
@@ -449,17 +406,29 @@ sio_intr_setup(pc, iot)
 			 * Otherwise, disable the IRQ and set its
 			 * type to (effectively) "unknown."
 			 */
-			sio_setirqstat(i, INITIALLY_ENABLED(i),
-			    INITIALLY_LEVEL_TRIGGERED(i) ? IST_LEVEL :
-				IST_NONE);
+			sio_setirqstat(i, 0, IST_NONE);
 			alpha_shared_intr_set_dfltsharetype(sio_intr, i,
-			    INITIALLY_LEVEL_TRIGGERED(i) ? IST_LEVEL :
-                                IST_NONE);
+			    IST_NONE);
 			specific_eoi(i);
 			break;
 		}
 	}
 }
+
+#ifdef BROKEN_PROM_CONSOLE
+void
+sio_intr_shutdown(arg)
+	void *arg;
+{
+	/*
+	 * Restore the initial values, to make the PROM happy.
+	 */
+	bus_space_write_1(sio_iot, sio_ioh_icu1, 1, initial_ocw1[0]);
+	bus_space_write_1(sio_iot, sio_ioh_icu2, 1, initial_ocw1[1]);
+	(*sio_write_elcr)(0, initial_elcr[0]);			/* XXX */
+	(*sio_write_elcr)(1, initial_elcr[1]);			/* XXX */
+}
+#endif
 
 const char *
 sio_intr_string(v, irq)
@@ -536,11 +505,10 @@ sio_intr_disestablish(v, cookie)
 			break;
 
 		default:
-			ist = INITIALLY_LEVEL_TRIGGERED(irq) ?
-			    IST_LEVEL : IST_NONE;
+			ist = IST_NONE;
 			break;
 		}
-		sio_setirqstat(irq, INITIALLY_ENABLED(irq), ist);
+		sio_setirqstat(irq, 0, ist);
 		alpha_shared_intr_set_dfltsharetype(sio_intr, irq, ist);
 	}
 
