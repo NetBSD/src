@@ -1,4 +1,4 @@
-/*	$NetBSD: ns_main.c,v 1.9 2001/05/17 22:59:40 itojun Exp $	*/
+/*	$NetBSD: ns_main.c,v 1.10 2001/08/24 08:37:33 mrg Exp $	*/
 
 #if !defined(lint) && !defined(SABER)
 static const char sccsid[] = "@(#)ns_main.c	4.55 (Berkeley) 7/1/91";
@@ -421,6 +421,24 @@ main(int argc, char *argv[], char *envp[]) {
 	 */
 	if (chroot_dir != NULL) {
 #ifdef HAVE_CHROOT
+		char *where;
+
+		/*
+		 * first, symlink our pidfile from outside the chroot to
+		 * inside, so that ndc still works properly, etc.
+		 */
+		if (asprintf(&where, "%s%s", chroot_dir, _PATH_PIDFILE) < 0) {
+			fprintf(stderr, "malloc failed: %s\n", strerror(errno));
+			exit(1);
+		}
+		(void)unlink(_PATH_PIDFILE);
+		if (symlink(where, _PATH_PIDFILE) < 0) {
+			fprintf(stderr, "symlink %s -> %s failed: %s\n",
+				_PATH_PIDFILE, where, strerror(errno));
+			exit(1);
+		}
+		free(where);
+
 		if (chroot(chroot_dir) < 0) {
 			fprintf(stderr, "chroot %s failed: %s\n", chroot_dir,
 				strerror(errno));
