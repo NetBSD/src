@@ -1,4 +1,4 @@
-/*	$NetBSD: boot32.c,v 1.2 2002/12/29 00:30:40 reinoud Exp $	*/
+/*	$NetBSD: boot32.c,v 1.3 2002/12/30 02:05:12 reinoud Exp $	*/
 
 /*-
  * Copyright (c) 2002 Reinoud Zandijk
@@ -358,7 +358,7 @@ void get_memory_configuration(void) {
 		videomem_pages   = (mapped_screen_memory / nbpp);
 		display_size	 = vdu_var(os_VDUVAR_TOTAL_SCREEN_SIZE) & (nbpp-1);
 		DRAM_addr[0]	+= videomem_pages * nbpp;
-		DRAM_pages[0]	-= videomem_pages * nbpp;
+		DRAM_pages[0]	-= videomem_pages;
 	} else {
 		/* use VRAM */
 		mapped_screen_memory = 0;
@@ -478,7 +478,7 @@ void create_initial_page_tables(void) {
 	/* video memory is mapped 1:1 in the DRAM section or in VRAM section	*/
 
 	/* map 1Mb from top of memory to bottom 1Mb of virtual memmap		*/
-	initial_page_tables[0] = ((top_physdram >> 20) << 20) | section;
+	initial_page_tables[0] = (((top_physdram - 1024*1024) >> 20) << 20) | section;
 
 	/* map 16 Mb of kernel space to KERNEL_BASE i.e. marks[KERNEL_START]	*/
 	for (page = 0; page < 16; page++) {
@@ -559,7 +559,7 @@ void create_configuration(int argc, char **argv, int start_args) {
 	};
 
 	bconfig->kernvirtualbase	= marks[MARK_START];
-	bconfig->kernphysicalbase	= marks[MARK_START] - pv_offset;
+	bconfig->kernphysicalbase	= kernel_physical_start;
 	bconfig->kernsize		= kernel_free_vm_start - marks[MARK_START];
 	bconfig->ksym_start		= marks[MARK_SYM];
 	bconfig->ksym_end		= marks[MARK_SYM] + marks[MARK_NSYM];
