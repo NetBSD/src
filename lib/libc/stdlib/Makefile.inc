@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.38 1998/06/14 17:49:21 kleink Exp $
+#	$NetBSD: Makefile.inc,v 1.39 1999/02/06 15:04:05 kleink Exp $
 #	from: @(#)Makefile.inc	8.3 (Berkeley) 2/4/95
 
 # stdlib sources
@@ -25,6 +25,7 @@ MAN+=	a64l.3 abort.3 abs.3 alloca.3 atexit.3 atof.3 atoi.3 atol.3 bsearch.3 \
 	strtol.3 strtoul.3 system.3
 
 MLINKS+=a64l.3 l64a.3
+MLINKS+=a64l.3 l64a_r.3
 MLINKS+=getenv.3 setenv.3 getenv.3 unsetenv.3 getenv.3 putenv.3
 MLINKS+=qsort.3 heapsort.3 qsort.3 mergesort.3
 MLINKS+=rand.3 rand_r.3

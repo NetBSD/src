@@ -1,4 +1,4 @@
-/*	$NetBSD: namespace.h,v 1.35 1999/02/04 05:09:26 explorer Exp $	*/
+/*	$NetBSD: namespace.h,v 1.36 1999/02/06 15:04:05 kleink Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -243,6 +243,7 @@
 #define isnan			_isnan
 #define jrand48			_jrand48
 #define l64a			_l64a
+#define l64a_r			_l64a_r
 #define lcong48			_lcong48
 #define localtime_r		_localtime_r
 #define lockf			_lockf

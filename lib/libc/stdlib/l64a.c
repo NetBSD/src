@@ -1,3 +1,5 @@
+/*	$NetBSD: l64a.c,v 1.9 1999/02/06 15:04:05 kleink Exp $	*/
+
 /*
  * Written by J.T. Conklin <jtc@netbsd.org>.
  * Public domain.
@@ -5,7 +7,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: l64a.c,v 1.8 1998/11/15 17:13:51 christos Exp $");
+__RCSID("$NetBSD: l64a.c,v 1.9 1999/02/06 15:04:05 kleink Exp $");
 #endif
 
 #include "namespace.h"
@@ -13,6 +15,7 @@ __RCSID("$NetBSD: l64a.c,v 1.8 1998/11/15 17:13:51 christos Exp $");
 
 #ifdef __weak_alias
 __weak_alias(l64a,_l64a);
+__weak_alias(l64a_r,_l64a_r);
 #endif
 
 char *
@@ -20,15 +23,25 @@ l64a (value)
 	long value;
 {
 	static char buf[8];
-	char *s = buf;
+
+	(void)l64a_r(value, buf, sizeof (buf));
+	return buf;
+}
+
+int
+l64a_r (value, buffer, buflen)
+	long value;
+	char *buffer;
+	int buflen;
+{
+	char *s = buffer;
 	int digit;
-	int i;
 	unsigned long v = value;
 
-	if (!value) 
+	if (value == 0UL) 
 		goto out;
 
-	for (i = 0; v != 0 && i < 6; i++) {
+	for (; v != 0 && buflen > 1; s++, buflen--) {
 		digit = (int)(v & 0x3f);
 
 		if (digit < 2) 
@@ -40,11 +53,10 @@ l64a (value)
 		else
 			*s = digit + 'a' - 38;
 		v >>= 6;
-		s++;
 	}
 
 out:
 	*s = '\0';
 
-	return buf;
+	return (v == 0UL ? 0 : -1);
 }
