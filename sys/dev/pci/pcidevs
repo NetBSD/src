@@ -1,4 +1,4 @@
-$NetBSD: pcidevs,v 1.180 1999/12/30 23:53:42 hubertf Exp $
+$NetBSD: pcidevs,v 1.181 2000/01/05 11:32:06 drochner Exp $
 
 /*
  * Copyright (c) 1995, 1996 Christopher G. Demetriou
@@ -517,6 +517,7 @@ vendor DOMEX		0x134a	Domex
 vendor LMC		0x1376	LAN Media Corporation
 vendor NETGEAR		0x1385	Netgear
 vendor SUNDANCETI	0x13f0	Sundance Technology
+vendor CMEDIA		0x13f6	C-Media Electronics Inc
 vendor DELTA		0x1500	Delta Electronics
 vendor TERRATEC		0x153b	TerraTec Electronic
 vendor SOLIDUM		0x1588	Solidum Systems Corp.
@@ -567,6 +568,7 @@ product 3COM 3C905BCOMBO 0x9058	3c905B-COMBO 10/100 Ethernet
 product 3COM 3C905BFX	0x905a	3c905B-FX 10/100 Ethernet
 product 3COM 3C905CTX	0x9200	3c905C-TX 10/100 Ethernet with mngmt
 product 3COM 3C980SRV	0x9800	3c980 Server Adapter 10/100 Ethernet
+product 3COM 3CR990TX97	0x9903	3CR990-TX-97 10/100 Ethernet
 
 /* 3Dfx Interactive producs */
 product 3DFX VOODOO	0x0001	Voodoo
@@ -791,7 +793,11 @@ product CMDTECH 647		0x0647	PCI0647
 product CMDTECH 650A		0x0650	PCI0650A
 product CMDTECH 670		0x0670	USB0670
 product CMDTECH 673		0x0673	USB0673
-	
+
+/* C-Media products */
+product CMEDIA CMI8738		0x0111	CMI8738/C3DX PCI Audio Device
+product CMEDIA HSP56		0x0211	HSP56 Audiomodem Riser
+
 /* Cogent Data Technologies products */
 product COGENT EM110TX		0x1400 EX110TX PCI Fast Ethernet Adapter
 
@@ -1232,13 +1238,16 @@ product SIS 86C201		0x0001	86C201
 product SIS 86C202		0x0002	86C202
 product SIS 86C205		0x0005	86C205
 product SIS 85C503		0x0008	85C503 or 5597/5598 ISA bridge
+product SIS 600PMC		0x0009	600 Power Mngmt Controller
 product SIS 5597_VGA		0x0200	5597/5598 integrated VGA
 product SIS 85C501		0x0406	85C501
 product SIS 85C496		0x0496	85C496
+product SIS 530HB		0x0530	530 Host to PCI Bridge
 product SIS 85C601		0x0601	85C601
 product SIS 900			0x0900	SiS900 10/100 Ethernet
 product SIS 5597_IDE		0x5513	5597/5598 IDE controller
 product SIS 5597_HB		0x5597	5597/5598 host bridge
+product SIS 530VGA		0x6306	530 GUI Accelerator+3D
 product SIS 6326		0x6326	6326 AGP VGA
 product SIS 5597_USB		0x7001	5597/5598 USB host controller
 
