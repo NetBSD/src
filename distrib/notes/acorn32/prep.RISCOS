@@ -1,18 +1,33 @@
-	$NetBSD: prep.RISCOS,v 1.4 2002/02/16 00:57:47 wiz Exp $
+	$NetBSD: prep.RISCOS,v 1.5 2002/02/16 01:39:10 reinoud Exp $
 
 These instructions are specific to NetBSD/acorn32 on Acorn RISCOS platforms
 (RiscPC/A7000/A7000+/NC's).
 
+Last updated for the BtNetBSD bootloader version 0.99 at 16 February 2002 by
+Reinoud Zandijk (mailto:reinoud@netbsd.org), portmaster of NetBSD/acorn32.
+
+For a more detailed acknowledgement and list of contributers see Apendix B at the
+bottom.
+
+
+
 0 Before you start
 
-Read this document and any other accompanying documentation
-completely before continuing.
+Read this document and one of the INSTALL documents accompanying this
+document completely before continuing. There might be some things mentioned
+double but this document ought to help with the RISCOS installation
+specifically.
+
+
 
 1 Requirements
 
+
 1.1 Hardware
 
-Refer to the NetBSD installation notes for a list of supported hardware.
+Refer to the NetBSD installation notes and/or the website
+http://www.netbsd.org/Ports/Acorn32/ for a list of supported hardware.
+
 
 1.2 Software
 
@@ -80,6 +95,8 @@ Additionally you will require the following :
 	A hardcopy of this document, along with a hardcopy of the
 	NetBSD installation instructions "INSTALL").
 
+
+
 2 Preparing your hard disk
 
 Terms:
@@ -115,7 +132,9 @@ data back and put off installing the rest until you have NetBSD up
 and running. This way you will save yourself a lot of work if
 something goes wrong and you have to start all over again.
 
+
 2.1 Sharing your device
+
 
 2.1.1 Acorn IDE
 
@@ -141,6 +160,7 @@ Use this procedure to set up your device:
 	whether you want to format or initialize, choose initialize.
 
 	Go to the section about running bb_riscbsd.
+
 
 2.1.2 Cumana SCSI-2 card
 
@@ -173,6 +193,7 @@ in the following way:
 	will create your partitions, and wipe your device.
 
 	Go to the section about running bb_riscbsd.
+
 
 2.1.3 Alsystems Power-tec SCSI-2 card
 
@@ -222,7 +243,9 @@ Here is the procedure you should use:
 		Click on configure. This will configure your computer
 		and give you access to the Discs.
 
-	You *Must Not* run bb_riscbsd.
+	You *Must Not* run bb_riscbsd
+
+
 
 2.1.4 Acorn SCSI card
 
@@ -262,7 +285,9 @@ Now you should enter the following commands:
 
 	quit
 
-	Go to the section on running bb_riscbsd.
+	Go to the section on running bb_riscbsd
+
+
 
 2.1.5 Other interfaces
 
@@ -271,6 +296,7 @@ you are using a different interface you have 2 options:
 	Try to work out how to partition devices on it
 
 	Use the entire device for NetBSD
+
 
 2.2 Using a whole device for NetBSD
 
@@ -289,6 +315,8 @@ To do this you need to:
 Ensure that this device is now not configured for RiscOS.
 
 You are now ready to boot NetBSD and continue the installation.
+
+
 
 3 Running bb_riscbsd
 
@@ -320,47 +348,61 @@ Make a note of this number.
 bb_riscbsd will make a backup of the original bootblock, but it
 can be non-trivial to put it back.
 
+
+
 4 Booting
 
 Now that your device is ready for the installation you need to
-unpack the bootloader archive (bootloader.arc, if you're installing
-from CD-ROM then this should be unpacked already), copy it to your
-hard disk and run the bootloader (!BtRiscBSD).
+unpack the bootloader archive. Pick either BtNetBSD.tgz or BtNetBSD.zip
+depending on wich type of archive you can extract easiest. (if you're
+installing from CD-ROM then this should be unpacked already), copy the
+directory to your harddisc. In the archive you'll find the tools
+mentioned in this document as well as the bootloader !BtNetBSD itself.
 
-4.1 Configuring !BtRiscBSD before installation
 
-!BtRiscBSD should come configured ready for installation.
+4.1 Configuring the !BtNetBSD bootloader before installation
 
-4.2 Running !BtRiscBSD
+Open the !BtNetBSD application and edit the `fastboot' file to specify
+the installation kernel location; an example is allready given. 
 
-Double click on the !BtRiscBSD icon and then on the iconbar icon to
-open the Configuration window.
 
-Drag the kernel for your platform to the kernel name box and hit boot.
+You can also set other details like tweaking with the amount of memory in
+the WimpSlot of the bootloader when this is too much. Remember however that
+this shouldn't be set too low for it can crash the bootloader.
+
+When you think you've filled in the proper details save the file again
+and proceed...
+
+
+4.2 Running !BtNetBSD
+
+Double click on the !BtNetBSD icon (or the !Run file in it) to start it
+up!
 
 NetBSD should now start to boot, install NetBSD as per the NetBSD
 installation notes.
 
-4.3 Configuring !BtRiscBSD after installation
+When you finish the installation you can restarted the computer as
+instructed....
 
-Run !BtRiscBSD as before and bring up the configuration window.
 
-Set the kernel as UnixFS:$.netbsd and set the native boot option (if
-the boot fails use a copy of the installed kernel (/netbsd) from
-RiscOS.
+4.3 Configuring !BtNetBSD after installation
 
-Set "Root device", "swap device" to the partitions you used for the
-installation.
+Open the !BtNetBSD application again and edit the `fastboot' file again
+to fill in the normal kernel name.
 
-Set multi user mode.
+Specify the device NetBSD should be looking for its kernel in. This is
+the `Run <BtNetBSD$Dir>.native.mountufs ADFS 4' line that is there
+by default. See this document for other names.
 
-Ensure the RAMDISK is set to 0.
+Set the kernel as UnixFS:$.netbsd.
 
-Click Save.
+Save the file and run !BtNetBSD again (see above).
 
-Click Boot.
+
 
 5 Advanced stuff
+
 
 5.1 Using UnixFS to copy the sets.
 
@@ -451,8 +493,9 @@ contains checksums to check if the files are OK.
 When you are finished with the transfer, run the file
 kill_unixfs to dismount the unixfs file system.
 
-Appendix A - Device naming
 
+
+Appendix A - Device naming
 
 The names of the devices in NetBSD are not at all like the ones
 in RISC OS. We will here try to explain the naming scheme used
@@ -512,15 +555,15 @@ Also, if you have different controllers, all devices on controller
    common allocations):
         - a     The root partition
         - b     The swap partition
-        - c     The whole disc
-        - d     Scratch (what are these?)
-        - e     The first additional partition.
+        - c     The complete and whole disc ; all OS's and partitions
+        - d     Part of the disc that is not used by NetBSD; normally RiscOS
+        - e     The first additonal partition.
                 i.e. if you have only /usr, then this will be /usr
                 if you have both /var and /usr this will be /var
-        - f     The section additional partition.
+        - f     The second additional partition.
                 i.e. if you have /var and /usr, this will be /usr
-        - g     ????
-        - h     Previously the /usr partition?
+        - g     The third ....
+        - h     The fourth ....
 
 If you only have one partition on the drive this can normally be
 accessed with either partition a (root partition) or c (whole
@@ -541,6 +584,7 @@ So, if you have one ADFS IDE drive, and want to install NetBSD
 at the after ADFS::5, you should still use wd0. If on the other
 hand, ADFS::5 is a second drive, then you will have to use wd1.
 
+
 Appendix B - Acknowledgments
 
 This document was based upon the document
@@ -553,10 +597,11 @@ This manual has been written from scratch based on version 1.2
 of the installation manual that Mark Brinicombe wrote.
 
 It was mainly written by Kjetil B. Thomassen
-(kjetil@thomassen.priv.no) with contributions from:
-Neil Hoggarth (neil.hoggarth@physiol.ox.ac.uk)
-Markus Baeurle (emw4maba@gp.fht-esslingen.de)
-Jasper Wallace (jasper@ivision.co.uk)
-Mark Brinicombe (amb@physig.ph.kcl.ac.uk)
-Scott Stevens (s.k.stevens@ic.ac.uk)
-and a lot more people posting to the RiscBSD mailing list.
+(mailto:kjetil@thomassen.priv.no) with contributions from:
+Neil Hoggarth (mailto:neil.hoggarth@physiol.ox.ac.uk)
+Markus Baeurle (mailto:emw4maba@gp.fht-esslingen.de)
+Jasper Wallace (mailto:jasper@ivision.co.uk)
+Mark Brinicombe (mailto:amb@physig.ph.kcl.ac.uk)
+Scott Stevens (mailto:s.k.stevens@ic.ac.uk)
+and a lot more people posting to the origional RiscBSD mailing list.
+
