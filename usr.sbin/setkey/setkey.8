@@ -25,8 +25,8 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.\"	$NetBSD: setkey.8,v 1.4 1999/08/08 13:27:30 itojun Exp $
-.\"     KAME Id: setkey.8,v 1.1.2.20.2.9.2.20 1999/07/02 07:52:24 sakane Exp
+.\"	$NetBSD: setkey.8,v 1.5 1999/09/07 06:49:37 itojun Exp $
+.\"	KAME Id: setkey.8,v 1.1.1.1 1999/08/08 23:31:51 itojun Exp
 .\"
 .Dd May 17, 1998
 .Dt SETKEY 8
@@ -327,17 +327,30 @@ must be decimal number in 32-bit word.  If
 .Ar replay
 is zero or not specified, repley check don't take place.
 .Fl R
-is used with
-.Li ipcomp ,
-the kernel will use well-known IPComp CPI
+is used only with
+.Li ipcomp .
+If
+.Fl R
+is specified with
+.Li ipcomp
+line, the kernel will use well-known IPComp CPI
 .Pq compression parameter index
-on outgoing packets.
-Therefore, compression protocol number will appear on IPComp CPI field.
+on IPComp CPI field on packets, and
+.Ar spi
+field will be ignored.
+.Ar spi
+field is only for kernel internal use in this case.
+.\"Therefore, compression protocol number will appear on IPComp CPI field.
 If
 .Fl R
 is not used,
+the value on
 .Ar spi
-will appear on IPComp CPI field on outgoing packets.
+field will appear on IPComp CPI field on outgoing packets.
+.Ar spi
+field needs to be smaller than
+.Li 0x10000
+in this case.
 .\"
 .It Ar protocol0
 This is a subset of
