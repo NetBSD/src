@@ -1,4 +1,4 @@
-.\"	$NetBSD: main,v 1.146 2001/12/01 22:44:37 jmcneill Exp $
+.\"	$NetBSD: main,v 1.147 2001/12/13 08:53:54 junyoung Exp $
 .\"
 .\" Copyright (c) 1999-2001 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -1490,6 +1490,7 @@ them, and would like to mentioned, tell us!)
 .It Ta Julian Assange Ta Mt proff@netbsd.org
 .It Ta Lennart Augustsson Ta Mt augustss@netbsd.org
 .It Ta Christoph Badura Ta Mt bad@netbsd.org
+.It Ta Bang Jun-Young Ta Mt junyoung@netbsd.org
 .It Ta Dieter Baron Ta Mt dillo@netbsd.org
 .It Ta Robert V. Baron Ta Mt rvb@netbsd.org
 .It Ta Jason Beegan Ta Mt jtb@netbsd.org
