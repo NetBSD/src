@@ -17,7 +17,7 @@
 # USA.
 
 PACKAGE = grep
-VERSION = 2.5g
+VERSION = 2.5.1
 
 SHELL = /bin/sh
 
@@ -26,7 +26,7 @@ top_srcdir = ..
 top_builddir = ..
 
 
-prefix = /usr
+prefix = /usr/local
 exec_prefix = ${prefix}
 transform = s,x,x,
 libdir = ${exec_prefix}/lib
