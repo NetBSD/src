@@ -1,11 +1,11 @@
-/*	$NetBSD: hostnum.c,v 1.4 2004/11/13 19:16:10 he Exp $	*/
+/*	$NetBSD: hostnum.c,v 1.5 2005/02/08 07:01:53 martti Exp $	*/
 
 /*
  * Copyright (C) 1993-2001 by Darren Reed.
  *
  * See the IPFILTER.LICENCE file for details on licencing.
  *
- * Id: hostnum.c,v 1.10 2003/08/14 14:26:54 darrenr Exp
+ * Id: hostnum.c,v 1.10.2.1 2004/12/09 19:41:20 darrenr Exp
  */
 
 #include <ctype.h>

@@ -1,4 +1,4 @@
-/*	$NetBSD: natparse.c,v 1.2 2004/11/13 19:16:10 he Exp $	*/
+/*	$NetBSD: natparse.c,v 1.3 2005/02/08 07:01:54 martti Exp $	*/
 
 /*
  * Copyright (C) 1993-2001 by Darren Reed.
@@ -7,7 +7,7 @@
  */
 #if !defined(lint)
 static const char sccsid[] ="@(#)ipnat.c	1.9 6/5/96 (C) 1993 Darren Reed";
-static const char rcsid[] = "@(#)Id: natparse.c,v 1.8 2003/12/01 02:03:32 darrenr Exp";
+static const char rcsid[] = "@(#)Id: natparse.c,v 1.8.2.1 2004/12/09 19:41:21 darrenr Exp";
 #endif
 
 #include <sys/ioctl.h>

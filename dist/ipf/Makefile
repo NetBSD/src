@@ -5,7 +5,7 @@
 # provided that this notice is preserved and due credit is given
 # to the original author and the contributors.
 #
-# Id: Makefile,v 2.76.2.9 2004/07/08 13:12:00 darrenr Exp
+# Id: Makefile,v 2.76.2.13 2004/11/08 18:42:40 darrenr Exp
 #
 SHELL=/bin/sh
 BINDEST=/usr/local/bin
@@ -65,6 +65,7 @@ LOGFAC=-DLOGFAC=LOG_LOCAL0
 # it to /usr/src/linux-2.4 or similar.
 #
 LINUXKERNEL=/usr/src/linux
+LINUX=`uname -r | awk -F. ' { printf"%d",$$1;for(i=1;i<NF&&i<3;i++){printf("%02d",$$(i+1));}}'`
 
 #
 # All of the compile-time options are here, used for compiling the userland
@@ -329,11 +330,12 @@ sunos5x86 solaris2x86: null
 	(cd SunOS5/$(CPUDIR); make -f Makefile.ipsend build TOP=../.. "CC=$(CC)" $(DEST) $(MFLAGS); cd ..)
 
 linux: include
-	(cd Linux; make build LINUX=`uname -r | awk -F. ' { for(i=0;i<3;i++){printf("%02d",$$(i+1));}}'` TOP=.. "DEBUG=-g" "CC=$(CC)" $(MFLAGS) OBJ=$(CPUDIR) LINUXKERNEL=$(LINUXKERNEL); cd ..)
-#	(cd Linux; make -f Makefile.ipsend build LINUX=`uname -r | awk -F. ' { for(i=0;i<NF;i++){printf("%02d",$$(i+1));}}'` TOP=.. "CC=$(CC)" $(MFLAGS); cd ..)
+	(cd Linux; make build LINUX=$(LINUX) TOP=.. "DEBUG=-g" "CC=$(CC)" $(MFLAGS) OBJ=$(CPUDIR) LINUXKERNEL=$(LINUXKERNEL); cd ..)
+	(cd Linux; make ipflkm LINUX=$(LINUX) TOP=.. "DEBUG=-g" "CC=$(CC)" $(MFLAGS) OBJ=$(CPUDIR) LINUXKERNEL=$(LINUXKERNEL) WORKDIR=`pwd`; cd ..)
+#	(cd Linux; make -f Makefile.ipsend build LINUX=$(LINUX) TOP=.. "CC=$(CC)" $(MFLAGS); cd ..)
 
 install-linux: linux
-	(cd Linux/$(CPUDIR); make LINUX=`uname -r | awk -F. ' { for(i=0;i<NF;i++){printf("%02d",$$(i+1));}}'` TOP=../.. "DEBUG=-g" "CC=$(CC)" $(MFLAGS) OBJ=$(CPUDIR) install ; cd ..)
+	(cd Linux/; make LINUX=$(LINUX) TOP=.. "DEBUG=-g" "CC=$(CC)" $(MFLAGS) OBJ=$(CPUDIR) install ; cd ..)
 
 install-bsd:
 	(cd BSD/$(CPUDIR); make install "TOP=../.." $(MFLAGS); cd ..)
