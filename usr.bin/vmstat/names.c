@@ -31,7 +31,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)names.c	5.2 (Berkeley) 6/4/91
- *	$Id: names.c,v 1.6 1994/03/27 12:26:33 cgd Exp $
+ *	$Id: names.c,v 1.7 1994/03/30 01:37:04 cgd Exp $
  */
 
 #if !defined(hp300) && !defined(tahoe) && !defined(vax) && !defined(i386)
@@ -43,10 +43,16 @@ void read_names()
 #endif
 
 #ifdef i386
-#include <arch/i386/isa/isa_device.h>
-
 char *defdrives[] = { "fd0", "fd1", "wd0", "wd1",
 		      "sd0", "sd1", "sd2", "sd3", 0 };
+
+void
+read_names()
+{
+}
+
+#ifdef notdef
+#include <arch/i386/isa/isa_device.h>
 
 void
 read_names()
@@ -76,8 +82,6 @@ read_names()
 		if (dev.id_parent == NULL)
 			continue;
 
-		continue;	/* XXX screw it */
-
 		(void)kvm_read(dev.id_driver, &drv, sizeof drv);
 		(void)kvm_read(drv.name, name, sizeof name);
 
@@ -91,6 +95,7 @@ read_names()
 		i++;
 	}
 }
+#endif
 #endif /* i386 */
 
 #ifdef hp300
