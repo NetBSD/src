@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.31 2004/01/16 13:05:39 minoura Exp $
+# $NetBSD: mi,v 1.32 2004/01/17 05:07:09 lukem Exp $
 ./etc/fonts/fonts.conf
 ./etc/fonts/fonts.dtd
 ./usr/X11R6/bin/Xmark
@@ -22,7 +22,9 @@
 ./usr/X11R6/bin/glxgears
 ./usr/X11R6/bin/glxinfo
 ./usr/X11R6/bin/iceauth
+./usr/X11R6/bin/ico
 ./usr/X11R6/bin/lbxproxy
+./usr/X11R6/bin/listres
 ./usr/X11R6/bin/luit
 ./usr/X11R6/bin/makepsres
 ./usr/X11R6/bin/mkcfm
@@ -37,6 +39,7 @@
 ./usr/X11R6/bin/rstartd
 ./usr/X11R6/bin/sessreg
 ./usr/X11R6/bin/setxkbmap
+./usr/X11R6/bin/showfont
 ./usr/X11R6/bin/showrgb
 ./usr/X11R6/bin/smproxy
 ./usr/X11R6/bin/startx
@@ -46,25 +49,34 @@
 ./usr/X11R6/bin/ucs2any
 ./usr/X11R6/bin/ucs2any.pl		xbase-obsolete	obsolete
 ./usr/X11R6/bin/uxterm
+./usr/X11R6/bin/viewres
 ./usr/X11R6/bin/x11perf
 ./usr/X11R6/bin/x11perfcomp
 ./usr/X11R6/bin/xauth
+./usr/X11R6/bin/xbiff
+./usr/X11R6/bin/xcalc
 ./usr/X11R6/bin/xclipboard
 ./usr/X11R6/bin/xclock
 ./usr/X11R6/bin/xcmsdb
 ./usr/X11R6/bin/xconsole
 ./usr/X11R6/bin/xcursor-config
 ./usr/X11R6/bin/xcutsel
+./usr/X11R6/bin/xditview
 ./usr/X11R6/bin/xdm
 ./usr/X11R6/bin/xdpyinfo
+./usr/X11R6/bin/xedit
+./usr/X11R6/bin/xev
+./usr/X11R6/bin/xeyes
 ./usr/X11R6/bin/xfd
 ./usr/X11R6/bin/xfindproxy
+./usr/X11R6/bin/xfontsel
 ./usr/X11R6/bin/xfs
 ./usr/X11R6/bin/xfsinfo
 ./usr/X11R6/bin/xft-config
 ./usr/X11R6/bin/xftcache		xbase-obsolete	obsolete
 ./usr/X11R6/bin/xfwp
 ./usr/X11R6/bin/xgamma
+./usr/X11R6/bin/xgc
 ./usr/X11R6/bin/xhost
 ./usr/X11R6/bin/xinit
 ./usr/X11R6/bin/xkbbell
@@ -74,11 +86,14 @@
 ./usr/X11R6/bin/xkbvleds
 ./usr/X11R6/bin/xkbwatch
 ./usr/X11R6/bin/xkill
+./usr/X11R6/bin/xload
 ./usr/X11R6/bin/xlogo
 ./usr/X11R6/bin/xlsatoms
 ./usr/X11R6/bin/xlsclients
 ./usr/X11R6/bin/xlsfonts
 ./usr/X11R6/bin/xmag
+./usr/X11R6/bin/xman
+./usr/X11R6/bin/xmessage
 ./usr/X11R6/bin/xmh
 ./usr/X11R6/bin/xmodmap
 ./usr/X11R6/bin/xon
@@ -148,6 +163,7 @@
 ./usr/X11R6/include/X11/bitmaps/hlines3
 ./usr/X11R6/include/X11/bitmaps/icon
 ./usr/X11R6/include/X11/bitmaps/keyboard16
+./usr/X11R6/include/X11/bitmaps/ldblarrow
 ./usr/X11R6/include/X11/bitmaps/left_ptr
 ./usr/X11R6/include/X11/bitmaps/left_ptrmsk
 ./usr/X11R6/include/X11/bitmaps/letters
@@ -166,6 +182,7 @@
 ./usr/X11R6/include/X11/bitmaps/opendot
 ./usr/X11R6/include/X11/bitmaps/opendotMask
 ./usr/X11R6/include/X11/bitmaps/plaid
+./usr/X11R6/include/X11/bitmaps/rdblarrow
 ./usr/X11R6/include/X11/bitmaps/right_ptr
 ./usr/X11R6/include/X11/bitmaps/right_ptrmsk
 ./usr/X11R6/include/X11/bitmaps/root_weave
@@ -207,17 +224,28 @@
 ./usr/X11R6/lib/X11/app-defaults/Editres
 ./usr/X11R6/lib/X11/app-defaults/Editres-color
 ./usr/X11R6/lib/X11/app-defaults/UXTerm
+./usr/X11R6/lib/X11/app-defaults/Viewres
+./usr/X11R6/lib/X11/app-defaults/XCalc
+./usr/X11R6/lib/X11/app-defaults/XCalc-color
 ./usr/X11R6/lib/X11/app-defaults/XClipboard
 ./usr/X11R6/lib/X11/app-defaults/XClock
 ./usr/X11R6/lib/X11/app-defaults/XConsole
+./usr/X11R6/lib/X11/app-defaults/XFontSel
+./usr/X11R6/lib/X11/app-defaults/XLoad
 ./usr/X11R6/lib/X11/app-defaults/XLogo
 ./usr/X11R6/lib/X11/app-defaults/XLogo-color
 ./usr/X11R6/lib/X11/app-defaults/XSm
 ./usr/X11R6/lib/X11/app-defaults/XTerm
 ./usr/X11R6/lib/X11/app-defaults/XTerm-color
+./usr/X11R6/lib/X11/app-defaults/Xditview
+./usr/X11R6/lib/X11/app-defaults/Xditview-chrtr
+./usr/X11R6/lib/X11/app-defaults/Xedit
 ./usr/X11R6/lib/X11/app-defaults/Xedit-color
 ./usr/X11R6/lib/X11/app-defaults/Xfd
+./usr/X11R6/lib/X11/app-defaults/Xgc
 ./usr/X11R6/lib/X11/app-defaults/Xmag
+./usr/X11R6/lib/X11/app-defaults/Xman
+./usr/X11R6/lib/X11/app-defaults/Xmessage
 ./usr/X11R6/lib/X11/app-defaults/Xmessage-color
 ./usr/X11R6/lib/X11/app-defaults/Xmh
 ./usr/X11R6/lib/X11/app-defaults/Xsystrace
@@ -763,6 +791,7 @@
 ./usr/X11R6/lib/X11/xkb/types/nocancel	xbase-obsolete	obsolete
 ./usr/X11R6/lib/X11/xkb/types/pc
 ./usr/X11R6/lib/X11/xkb/xkbcomp
+./usr/X11R6/lib/X11/xman.help
 ./usr/X11R6/lib/X11/xsm/system.xsm
 ./usr/X11R6/libexec/chooser
 ./usr/X11R6/libexec/rstartd.real
@@ -786,7 +815,9 @@
 ./usr/X11R6/man/cat1/glxgears.0			-unknown-		.cat
 ./usr/X11R6/man/cat1/glxinfo.0			-unknown-		.cat
 ./usr/X11R6/man/cat1/iceauth.0			-unknown-		.cat
+./usr/X11R6/man/cat1/ico.0			-unknown-		.cat
 ./usr/X11R6/man/cat1/lbxproxy.0			-unknown-		.cat
+./usr/X11R6/man/cat1/listres.0			-unknown-		.cat
 ./usr/X11R6/man/cat1/luit.0			-unknown-		.cat
 ./usr/X11R6/man/cat1/makepsres.0		-unknown-		.cat
 ./usr/X11R6/man/cat1/mkcfm.0			-unknown-		.cat
@@ -802,6 +833,7 @@
 ./usr/X11R6/man/cat1/rstartd.0			-unknown-		.cat
 ./usr/X11R6/man/cat1/sessreg.0			-unknown-		.cat
 ./usr/X11R6/man/cat1/setxkbmap.0		-unknown-		.cat
+./usr/X11R6/man/cat1/showfont.0			-unknown-		.cat
 ./usr/X11R6/man/cat1/showrgb.0			-unknown-		.cat
 ./usr/X11R6/man/cat1/smproxy.0			-unknown-		.cat
 ./usr/X11R6/man/cat1/startx.0			-unknown-		.cat
@@ -809,34 +841,46 @@
 ./usr/X11R6/man/cat1/texteroids.0		-unknown-		.cat
 ./usr/X11R6/man/cat1/twm.0			-unknown-		.cat
 ./usr/X11R6/man/cat1/ucs2any.0			-unknown-		.cat
+./usr/X11R6/man/cat1/viewres.0			-unknown-		.cat
 ./usr/X11R6/man/cat1/x11perf.0			-unknown-		.cat
 ./usr/X11R6/man/cat1/x11perfcomp.0		-unknown-		.cat
 ./usr/X11R6/man/cat1/xauth.0			-unknown-		.cat
+./usr/X11R6/man/cat1/xbiff.0			-unknown-		.cat
+./usr/X11R6/man/cat1/xcalc.0			-unknown-		.cat
 ./usr/X11R6/man/cat1/xclipboard.0		-unknown-		.cat
 ./usr/X11R6/man/cat1/xclock.0			-unknown-		.cat
 ./usr/X11R6/man/cat1/xcmsdb.0			-unknown-		.cat
 ./usr/X11R6/man/cat1/xconsole.0			-unknown-		.cat
 ./usr/X11R6/man/cat1/xcutsel.0			-unknown-		.cat
+./usr/X11R6/man/cat1/xditview.0			-unknown-		.cat
 ./usr/X11R6/man/cat1/xdm.0			-unknown-		.cat
 ./usr/X11R6/man/cat1/xdpyinfo.0			-unknown-		.cat
+./usr/X11R6/man/cat1/xedit.0			-unknown-		.cat
+./usr/X11R6/man/cat1/xev.0			-unknown-		.cat
+./usr/X11R6/man/cat1/xeyes.0			-unknown-		.cat
 ./usr/X11R6/man/cat1/xfd.0			-unknown-		.cat
 ./usr/X11R6/man/cat1/xfindproxy.0		-unknown-		.cat
+./usr/X11R6/man/cat1/xfontsel.0			-unknown-		.cat
 ./usr/X11R6/man/cat1/xfs.0			-unknown-		.cat
 ./usr/X11R6/man/cat1/xfsinfo.0			-unknown-		.cat
 ./usr/X11R6/man/cat1/xftcache.0			xbase-obsolete		obsolete
 ./usr/X11R6/man/cat1/xfwp.0			-unknown-		.cat
 ./usr/X11R6/man/cat1/xgamma.0			-unknown-		.cat
+./usr/X11R6/man/cat1/xgc.0			-unknown-		.cat
 ./usr/X11R6/man/cat1/xhost.0			-unknown-		.cat
 ./usr/X11R6/man/cat1/xinit.0			-unknown-		.cat
 ./usr/X11R6/man/cat1/xkbcomp.0			-unknown-		.cat
 ./usr/X11R6/man/cat1/xkbevd.0			-unknown-		.cat
 ./usr/X11R6/man/cat1/xkbprint.0			-unknown-		.cat
 ./usr/X11R6/man/cat1/xkill.0			-unknown-		.cat
+./usr/X11R6/man/cat1/xload.0			-unknown-		.cat
 ./usr/X11R6/man/cat1/xlogo.0			-unknown-		.cat
 ./usr/X11R6/man/cat1/xlsatoms.0			-unknown-		.cat
 ./usr/X11R6/man/cat1/xlsclients.0		-unknown-		.cat
 ./usr/X11R6/man/cat1/xlsfonts.0			-unknown-		.cat
 ./usr/X11R6/man/cat1/xmag.0			-unknown-		.cat
+./usr/X11R6/man/cat1/xman.0			-unknown-		.cat
+./usr/X11R6/man/cat1/xmessage.0			-unknown-		.cat
 ./usr/X11R6/man/cat1/xmh.0			-unknown-		.cat
 ./usr/X11R6/man/cat1/xmodmap.0			-unknown-		.cat
 ./usr/X11R6/man/cat1/xon.0			-unknown-		.cat
@@ -890,7 +934,9 @@
 ./usr/X11R6/man/man1/glxgears.1			-unknown-		.man
 ./usr/X11R6/man/man1/glxinfo.1			-unknown-		.man
 ./usr/X11R6/man/man1/iceauth.1			-unknown-		.man
+./usr/X11R6/man/man1/ico.1			-unknown-		.man
 ./usr/X11R6/man/man1/lbxproxy.1			-unknown-		.man
+./usr/X11R6/man/man1/listres.1			-unknown-		.man
 ./usr/X11R6/man/man1/luit.1			-unknown-		.man
 ./usr/X11R6/man/man1/makepsres.1		-unknown-		.man
 ./usr/X11R6/man/man1/mkcfm.1			-unknown-		.man
@@ -906,6 +952,7 @@
 ./usr/X11R6/man/man1/rstartd.1			-unknown-		.man
 ./usr/X11R6/man/man1/sessreg.1			-unknown-		.man
 ./usr/X11R6/man/man1/setxkbmap.1		-unknown-		.man
+./usr/X11R6/man/man1/showfont.1			-unknown-		.man
 ./usr/X11R6/man/man1/showrgb.1			-unknown-		.man
 ./usr/X11R6/man/man1/smproxy.1			-unknown-		.man
 ./usr/X11R6/man/man1/startx.1			-unknown-		.man
@@ -913,34 +960,46 @@
 ./usr/X11R6/man/man1/texteroids.1		-unknown-		.man
 ./usr/X11R6/man/man1/twm.1			-unknown-		.man
 ./usr/X11R6/man/man1/ucs2any.1			-unknown-		.man
+./usr/X11R6/man/man1/viewres.1			-unknown-		.man
 ./usr/X11R6/man/man1/x11perf.1			-unknown-		.man
 ./usr/X11R6/man/man1/x11perfcomp.1		-unknown-		.man
 ./usr/X11R6/man/man1/xauth.1			-unknown-		.man
+./usr/X11R6/man/man1/xbiff.1			-unknown-		.man
+./usr/X11R6/man/man1/xcalc.1			-unknown-		.man
 ./usr/X11R6/man/man1/xclipboard.1		-unknown-		.man
 ./usr/X11R6/man/man1/xclock.1			-unknown-		.man
 ./usr/X11R6/man/man1/xcmsdb.1			-unknown-		.man
 ./usr/X11R6/man/man1/xconsole.1			-unknown-		.man
 ./usr/X11R6/man/man1/xcutsel.1			-unknown-		.man
+./usr/X11R6/man/man1/xditview.1			-unknown-		.man
 ./usr/X11R6/man/man1/xdm.1			-unknown-		.man
 ./usr/X11R6/man/man1/xdpyinfo.1			-unknown-		.man
+./usr/X11R6/man/man1/xedit.1			-unknown-		.man
+./usr/X11R6/man/man1/xev.1			-unknown-		.man
+./usr/X11R6/man/man1/xeyes.1			-unknown-		.man
 ./usr/X11R6/man/man1/xfd.1			-unknown-		.man
 ./usr/X11R6/man/man1/xfindproxy.1		-unknown-		.man
+./usr/X11R6/man/man1/xfontsel.1			-unknown-		.man
 ./usr/X11R6/man/man1/xfs.1			-unknown-		.man
 ./usr/X11R6/man/man1/xfsinfo.1			-unknown-		.man
 ./usr/X11R6/man/man1/xftcache.1			xbase-obsolete		obsolete
 ./usr/X11R6/man/man1/xfwp.1			-unknown-		.man
 ./usr/X11R6/man/man1/xgamma.1			-unknown-		.man
+./usr/X11R6/man/man1/xgc.1			-unknown-		.man
 ./usr/X11R6/man/man1/xhost.1			-unknown-		.man
 ./usr/X11R6/man/man1/xinit.1			-unknown-		.man
 ./usr/X11R6/man/man1/xkbcomp.1			-unknown-		.man
 ./usr/X11R6/man/man1/xkbevd.1			-unknown-		.man
 ./usr/X11R6/man/man1/xkbprint.1			-unknown-		.man
 ./usr/X11R6/man/man1/xkill.1			-unknown-		.man
+./usr/X11R6/man/man1/xload.1			-unknown-		.man
 ./usr/X11R6/man/man1/xlogo.1			-unknown-		.man
 ./usr/X11R6/man/man1/xlsatoms.1			-unknown-		.man
 ./usr/X11R6/man/man1/xlsclients.1		-unknown-		.man
 ./usr/X11R6/man/man1/xlsfonts.1			-unknown-		.man
 ./usr/X11R6/man/man1/xmag.1			-unknown-		.man
+./usr/X11R6/man/man1/xman.1			-unknown-		.man
+./usr/X11R6/man/man1/xmessage.1			-unknown-		.man
 ./usr/X11R6/man/man1/xmh.1			-unknown-		.man
 ./usr/X11R6/man/man1/xmodmap.1			-unknown-		.man
 ./usr/X11R6/man/man1/xon.1			-unknown-		.man
