@@ -1,5 +1,5 @@
 #
-# $Id: Makefile,v 1.3 1994/06/13 20:49:58 mycroft Exp $
+# $Id: Makefile,v 1.4 1995/03/17 06:10:14 jtc Exp $
 #
 # Copyright (c) 1990 Jan-Simon Pendry
 # Copyright (c) 1990 Imperial College of Science, Technology & Medicine
@@ -38,8 +38,7 @@
 # SUCH DAMAGE.
 #
 #	from: @(#)Makefile	8.1 (Berkeley) 6/6/93
-#	$Id: Makefile,v 1.3 1994/06/13 20:49:58 mycroft Exp $
-#
+#	$Id: Makefile,v 1.4 1995/03/17 06:10:14 jtc Exp $
 
 PROG = amdref
 SRCS = amdref.texinfo
@@ -47,8 +46,9 @@ SRCS = amdref.texinfo
 ${PROG}: amdref.dvi
 
 amdref.dvi: ${SRCS}
-	-tex amdref; tex amdref
+	-tex amdref.texinfo; tex amdref.texinfo
 
 clean:
-	-rm -f amdref.aux amdref.cp amdref.dvi amdref.fn amdref.ky \
-		amdref.log amdref.pg amdref.toc amdref.tp amdref.vr
+	-rm -f amdref.aux amdref.cp amdref.cps amdref.dvi amdref.fn \
+	amdref.fns amdref.ky amdref.kys amdref.log amdref.pg amdref.pgs \
+	amdref.toc amdref.tp amdref.tps amdref.vr amdref.vrs
