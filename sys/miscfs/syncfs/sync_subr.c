@@ -1,4 +1,4 @@
-/*	$NetBSD: sync_subr.c,v 1.1.2.1 1999/10/19 12:50:15 fvdl Exp $	*/
+/*	$NetBSD: sync_subr.c,v 1.1.2.2 1999/10/26 19:15:18 fvdl Exp $	*/
 
 /*
  * Copyright 1997 Marshall Kirk McKusick. All Rights Reserved.
@@ -49,12 +49,20 @@
  * Defines and variables for the syncer process. 
  */
 int syncer_maxdelay = SYNCER_MAXDELAY;	/* maximum delay time */
-time_t syncdelay = 30;			/* time to delay syncing vnodes */ 
-int rushjob;				/* number of slots to run ASAP */ 
+time_t syncdelay = 30;			/* max time to delay syncing data */ 
+time_t filedelay = 30;			/* time to delay syncing files */
+time_t dirdelay  = 15;			/* time to dely syncing directories */
+time_t metadelay = 10;			/* time to delay syncing metadata */
+
+struct lock syncer_lock;		/* used to freeze syncer */
+
+static int rushjob;			/* number of slots to run ASAP */ 
+static int stat_rush_requests;		/* number of times I/O speeded up */
  
 static int syncer_delayno = 0;
 static long syncer_last;
 static struct synclist *syncer_workitem_pending;
+static struct proc *updateproc = NULL;
 
 void
 vn_initialize_syncerd()
@@ -68,6 +76,8 @@ vn_initialize_syncerd()
 
 	for (i = 0; i < syncer_last; i++)
 		LIST_INIT(&syncer_workitem_pending[i]);
+
+	lockinit(&syncer_lock, PVFS, "synclk", 0, 0);
 }
 
 /*
@@ -107,10 +117,17 @@ vn_syncer_add_to_worklist(vp, delay)
 	int s, slot;
 
 	s = splbio();
+
+	if (vp->v_flag & VONWORKLST) {
+		LIST_REMOVE(vp, v_synclist);
+	}
+
 	if (delay > syncer_maxdelay - 2)
 		delay = syncer_maxdelay - 2;
 	slot = (syncer_delayno + delay) % syncer_last;
+
 	LIST_INSERT_HEAD(&syncer_workitem_pending[slot], vp, v_synclist);
+	vp->v_flag |= VONWORKLST;
 	splx(s);
 }
 
@@ -126,11 +143,14 @@ sched_sync(v)
 	long starttime;
 	int s;
 
+	updateproc = curproc;
+	
 	for (;;) {
 		starttime = time.tv_sec;
 
 		/*
-		 * Push files whose dirty time has expired.
+		 * Push files whose dirty time has expired. Be careful
+		 * of interrupt race on slp queue.
 		 */
 		s = splbio();
 		slp = &syncer_workitem_pending[syncer_delayno];
@@ -138,21 +158,31 @@ sched_sync(v)
 		if (syncer_delayno >= syncer_last)
 			syncer_delayno = 0;
 		splx(s);
+
+		lockmgr(&syncer_lock, LK_EXCLUSIVE, NULL);
+
 		while ((vp = LIST_FIRST(slp)) != NULL) {
-			vn_lock(vp, LK_EXCLUSIVE | LK_RETRY);
-			(void) VOP_FSYNC(vp, curproc->p_ucred, FSYNC_LAZY,
-			    curproc);
-			VOP_UNLOCK(vp, 0);
+			if (VOP_ISLOCKED(vp) == 0) {
+				vn_lock(vp, LK_EXCLUSIVE | LK_RETRY);
+				(void) VOP_FSYNC(vp, curproc->p_ucred,
+				    FSYNC_LAZY, curproc);
+				VOP_UNLOCK(vp, 0);
+			}
+			s = splbio();
 			if (LIST_FIRST(slp) == vp) {
 				if (LIST_FIRST(&vp->v_dirtyblkhd) == NULL &&
 				    vp->v_type != VBLK)
-					panic("sched_sync: fsync failed");
+					panic("sched_sync: fsync failed vp %p tag %d",
+					      vp, vp->v_tag);
 				/*
-				 * Move ourselves to the back of the sync list.
+				 * Put us back on the worklist.  The worklist
+				 * routine will remove us from our current
+				 * position and then add us back in at a later
+				 * position.
 				 */
-				LIST_REMOVE(vp, v_synclist);
 				vn_syncer_add_to_worklist(vp, syncdelay);
 			}
+			splx(s);
 		}
 
 		/*
@@ -160,6 +190,8 @@ sched_sync(v)
 		 */
 		if (bioops.io_sync)
 			(*bioops.io_sync)(NULL);
+
+		lockmgr(&syncer_lock, LK_RELEASE, NULL);
 
 		/*
 		 * The variable rushjob allows the kernel to speed up the
@@ -187,4 +219,26 @@ sched_sync(v)
 		if (time.tv_sec == starttime)
 			tsleep(&lbolt, PPAUSE, "syncer", 0);
 	}
+}
+
+/*
+ * Request the syncer daemon to speed up its work.
+ * We never push it to speed up more than half of its
+ * normal turn time, otherwise it could take over the cpu.
+ */
+int
+speedup_syncer()
+{
+	int s;
+	
+	s = splhigh();
+	if (updateproc && updateproc->p_wchan == &lbolt)
+		setrunnable(updateproc);
+	splx(s);
+	if (rushjob < syncdelay / 2) {
+		rushjob += 1;
+		stat_rush_requests += 1;
+		return (1);
+	}
+	return(0);
 }
