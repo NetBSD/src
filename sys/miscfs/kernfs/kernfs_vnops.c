@@ -1,4 +1,4 @@
-/*	$NetBSD: kernfs_vnops.c,v 1.52 1997/09/19 19:14:20 leo Exp $	*/
+/*	$NetBSD: kernfs_vnops.c,v 1.53 1997/10/10 02:01:02 fvdl Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -579,7 +579,7 @@ kernfs_readdir(v)
 		struct uio *a_uio;
 		struct ucred *a_cred;
 		int *a_eofflag;
-		u_long *a_cookies;
+		off_t *a_cookies;
 		int a_ncookies;
 	} */ *ap = v;
 	struct uio *uio = ap->a_uio;
@@ -587,7 +587,7 @@ kernfs_readdir(v)
 	struct kern_target *kt;
 	int i;
 	int error;
-	u_long *cookies = ap->a_cookies;
+	off_t *cookies = ap->a_cookies;
 	int ncookies = ap->a_ncookies;
 
 	if (ap->a_vp->v_type != VDIR)
