@@ -31,7 +31,7 @@
  * SUCH DAMAGE.
  *
  *      from: @(#)conf.c	7.9 (Berkeley) 5/28/91
- *	$Id: conf.c,v 1.2 1993/05/22 07:57:16 cgd Exp $
+ *	$Id: conf.c,v 1.3 1994/01/11 16:40:19 mycroft Exp $
  */
 
 #include "sys/param.h"
@@ -43,12 +43,12 @@
 
 int	rawread		__P((dev_t, struct uio *, int));
 int	rawwrite	__P((dev_t, struct uio *, int));
-int	swstrategy	__P((struct buf *));
+void	swstrategy	__P((struct buf *));
 int	ttselect	__P((dev_t, int, struct proc *));
 
 #define	dev_type_open(n)	int n __P((dev_t, int, int, struct proc *))
 #define	dev_type_close(n)	int n __P((dev_t, int, int, struct proc *))
-#define	dev_type_strategy(n)	int n __P((struct buf *))
+#define	dev_type_strategy(n)	void n __P((struct buf *))
 #define	dev_type_ioctl(n) \
 	int n __P((dev_t, int, caddr_t, int, struct proc *))
 
