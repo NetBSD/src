@@ -1,4 +1,4 @@
-/*	$NetBSD: dec_eb164.c,v 1.4 1996/11/25 03:59:21 cgd Exp $	*/
+/*	$NetBSD: dec_eb164.c,v 1.5 1996/12/17 23:21:58 cgd Exp $	*/
 
 /*
  * Copyright (c) 1995, 1996 Carnegie-Mellon University.
@@ -80,7 +80,7 @@ dec_eb164_cons_init()
 		/* serial console ... */
 		/* XXX */
 		{
-			extern int comconsinit, comdefaultrate;		/*XXX*/
+			extern int comdefaultrate;			/*XXX*/
 			extern int comcngetc __P((dev_t));		/*XXX*/
 			extern void comcnputc __P((dev_t, int));	/*XXX*/
 			extern void comcnpollc __P((dev_t, int));	/*XXX*/
@@ -91,7 +91,6 @@ dec_eb164_cons_init()
 			DELAY(10000);
 
 			comconsaddr = 0x3f8;
-			comconsinit = 0;
 			comconstag = ccp->cc_iot;
 			if (bus_space_map(comconstag, comconsaddr, COM_NPORTS,
 			    0, &comconsbah))
