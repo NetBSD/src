@@ -31,7 +31,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)vfs_conf.c	7.3 (Berkeley) 6/28/90
- *	$Id: vfs_conf.c,v 1.11 1993/08/13 11:35:26 cgd Exp $
+ *	$Id: vfs_conf.c,v 1.12 1993/08/24 12:56:23 pk Exp $
  */
 
 #include "param.h"
@@ -77,6 +77,10 @@ extern	struct vfsops kernfs_vfsops;
 extern	struct vfsops devfs_vfsops;
 #endif
 
+#ifdef PROCFS
+extern	struct vfsops procfs_vfsops;
+#endif
+
 struct vfsops *vfssw[] = {
 	(struct vfsops *)0,	/* 0 = MOUNT_NONE */
 	&ufs_vfsops,		/* 1 = MOUNT_UFS */
@@ -116,4 +120,9 @@ struct vfsops *vfssw[] = {
 	(struct vfsops *)0,
 #endif
 	(struct vfsops *)0,	/* 9 = MOUNT_AFS */
+#ifdef PROCFS
+	&procfs_vfsops,		/* 10 = MOUNT_PROCFS */
+#else
+	(struct vfsops *)0,
+#endif
 };
