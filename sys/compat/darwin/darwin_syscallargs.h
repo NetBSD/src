@@ -1,4 +1,4 @@
-/* $NetBSD: darwin_syscallargs.h,v 1.4 2002/11/14 21:48:23 manu Exp $ */
+/* $NetBSD: darwin_syscallargs.h,v 1.5 2002/11/16 19:59:19 manu Exp $ */
 
 /*
  * System call argument lists.

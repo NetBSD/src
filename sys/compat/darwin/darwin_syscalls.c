@@ -1,4 +1,4 @@
-/* $NetBSD: darwin_syscalls.c,v 1.4 2002/11/14 21:48:23 manu Exp $ */
+/* $NetBSD: darwin_syscalls.c,v 1.5 2002/11/16 19:59:19 manu Exp $ */
 
 /*
  * System call names.
@@ -8,7 +8,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: darwin_syscalls.c,v 1.4 2002/11/14 21:48:23 manu Exp $");
+__KERNEL_RCSID(0, "$NetBSD: darwin_syscalls.c,v 1.5 2002/11/16 19:59:19 manu Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ktrace.h"
@@ -241,7 +241,7 @@ const char *const darwin_syscallnames[] = {
 	"#186 (unimplemented)",		/* 186 = unimplemented */
 	"#187 (unimplemented)",		/* 187 = unimplemented */
 	"stat12",			/* 188 = stat12 */
-	"fstat12",			/* 189 = fstat12 */
+	"fstat",			/* 189 = fstat */
 	"lstat12",			/* 190 = lstat12 */
 	"pathconf",			/* 191 = pathconf */
 	"fpathconf",			/* 192 = fpathconf */

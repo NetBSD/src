@@ -1,4 +1,4 @@
-/* $NetBSD: darwin_syscall.h,v 1.4 2002/11/14 21:48:23 manu Exp $ */
+/* $NetBSD: darwin_syscall.h,v 1.5 2002/11/16 19:59:19 manu Exp $ */
 
 /*
  * System call numbers.
@@ -453,8 +453,8 @@
 /* syscall: "stat12" ret: "int" args: "const char *" "struct stat12 *" */
 #define	DARWIN_SYS_stat12	188
 
-/* syscall: "fstat12" ret: "int" args: "int" "struct stat12 *" */
-#define	DARWIN_SYS_fstat12	189
+/* syscall: "fstat" ret: "int" args: "int" "struct stat12 *" */
+#define	DARWIN_SYS_fstat	189
 
 /* syscall: "lstat12" ret: "int" args: "const char *" "struct stat12 *" */
 #define	DARWIN_SYS_lstat12	190

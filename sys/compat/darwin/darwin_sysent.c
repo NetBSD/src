@@ -1,4 +1,4 @@
-/* $NetBSD: darwin_sysent.c,v 1.4 2002/11/14 21:48:23 manu Exp $ */
+/* $NetBSD: darwin_sysent.c,v 1.5 2002/11/16 19:59:20 manu Exp $ */
 
 /*
  * System call switch table.
@@ -8,7 +8,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: darwin_sysent.c,v 1.4 2002/11/14 21:48:23 manu Exp $");
+__KERNEL_RCSID(0, "$NetBSD: darwin_sysent.c,v 1.5 2002/11/16 19:59:20 manu Exp $");
 
 #include "opt_ktrace.h"
 #include "opt_nfsserver.h"
@@ -437,7 +437,7 @@ struct sysent darwin_sysent[] = {
 	{ 2, s(struct freebsd_sys_stat_args), 0,
 	    freebsd_sys_stat },			/* 188 = stat12 */
 	{ 2, s(struct compat_12_sys_fstat_args), 0,
-	    compat_12_sys_fstat },		/* 189 = fstat12 */
+	    compat_12_sys_fstat },		/* 189 = fstat */
 	{ 2, s(struct freebsd_sys_lstat_args), 0,
 	    freebsd_sys_lstat },		/* 190 = lstat12 */
 	{ 2, s(struct freebsd_sys_pathconf_args), 0,
