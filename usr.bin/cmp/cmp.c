@@ -1,4 +1,4 @@
-/*	$NetBSD: cmp.c,v 1.13 2003/08/07 11:13:22 agc Exp $	*/
+/*	$NetBSD: cmp.c,v 1.14 2005/02/06 20:50:34 dsl Exp $	*/
 
 /*
  * Copyright (c) 1987, 1990, 1993, 1994
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1987, 1990, 1993, 1994\n\
 #if 0
 static char sccsid[] = "@(#)cmp.c	8.3 (Berkeley) 4/2/94";
 #else
-__RCSID("$NetBSD: cmp.c,v 1.13 2003/08/07 11:13:22 agc Exp $");
+__RCSID("$NetBSD: cmp.c,v 1.14 2005/02/06 20:50:34 dsl Exp $");
 #endif
 #endif /* not lint */
 
@@ -58,13 +58,10 @@ __RCSID("$NetBSD: cmp.c,v 1.13 2003/08/07 11:13:22 agc Exp $");
 
 int	lflag, sflag;
 
-int	main __P((int, char **));
-static void usage __P((void));
+static void usage(void);
 
 int
-main(argc, argv)
-	int argc;
-	char *argv[];
+main(int argc, char *argv[])
 {
 	struct stat sb1, sb2;
 	off_t skip1, skip2;
@@ -145,7 +142,7 @@ main(argc, argv)
 }
 
 static void
-usage()
+usage(void)
 {
 
 	(void)fprintf(stderr,

@@ -1,4 +1,4 @@
-/*	$NetBSD: regular.c,v 1.12 2003/08/07 11:13:23 agc Exp $	*/
+/*	$NetBSD: regular.c,v 1.13 2005/02/06 20:50:34 dsl Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993, 1994
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)regular.c	8.3 (Berkeley) 4/2/94";
 #else
-__RCSID("$NetBSD: regular.c,v 1.12 2003/08/07 11:13:23 agc Exp $");
+__RCSID("$NetBSD: regular.c,v 1.13 2005/02/06 20:50:34 dsl Exp $");
 #endif
 #endif /* not lint */
 
@@ -51,10 +51,8 @@ __RCSID("$NetBSD: regular.c,v 1.12 2003/08/07 11:13:23 agc Exp $");
 #include "extern.h"
 
 void
-c_regular(fd1, file1, skip1, len1, fd2, file2, skip2, len2)
-	int fd1, fd2;
-	char *file1, *file2;
-	off_t skip1, len1, skip2, len2;
+c_regular(int fd1, char *file1, off_t skip1, off_t len1,
+	int fd2, char *file2, off_t skip2, off_t len2)
 {
 	u_char ch, *p1, *p2;
 	off_t byte, length, line;

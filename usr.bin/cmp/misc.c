@@ -1,4 +1,4 @@
-/*	$NetBSD: misc.c,v 1.7 2003/08/07 11:13:22 agc Exp $	*/
+/*	$NetBSD: misc.c,v 1.8 2005/02/06 20:50:34 dsl Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993, 1994
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)misc.c	8.3 (Berkeley) 4/2/94";
 #else
-__RCSID("$NetBSD: misc.c,v 1.7 2003/08/07 11:13:22 agc Exp $");
+__RCSID("$NetBSD: misc.c,v 1.8 2005/02/06 20:50:34 dsl Exp $");
 #endif
 #endif /* not lint */
 
@@ -47,8 +47,7 @@ __RCSID("$NetBSD: misc.c,v 1.7 2003/08/07 11:13:22 agc Exp $");
 #include "extern.h"
 
 void
-eofmsg(file)
-	char *file;
+eofmsg(char *file)
 {
 	if (!sflag)
 		warnx("EOF on %s", file);
@@ -56,9 +55,7 @@ eofmsg(file)
 }
 
 void
-diffmsg(file1, file2, byte, line)
-	char *file1, *file2;
-	off_t byte, line;
+diffmsg(char *file1, char *file2, off_t byte, off_t line)
 {
 	if (!sflag)
 		(void)printf("%s %s differ: char %lld, line %lld\n",
