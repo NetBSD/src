@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_sa.c,v 1.27 2003/10/20 07:15:26 wiz Exp $	*/
+/*	$NetBSD: kern_sa.c,v 1.28 2003/10/24 16:11:21 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_sa.c,v 1.27 2003/10/20 07:15:26 wiz Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_sa.c,v 1.28 2003/10/24 16:11:21 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -493,12 +493,17 @@ sys_sa_unblockyield(struct lwp *l, void *v, register_t *retval)
 	SCHED_LOCK(s);
 	LIST_FOREACH(l2, &p->p_lwps, l_sibling) {
 		if (l2->l_lid == SCARG(uap, sa_id)) {
-			KDASSERT(l2->l_upcallstack ==
-			    sa->sa_stacks[sa->sa_nstacks].ss_sp);
 			break;
 		}
 	}
-	KDASSERT(l2 != NULL);
+	if (l2 == NULL) {
+		SCHED_UNLOCK(s);
+		return (ESRCH);
+	}
+	if (l2->l_upcallstack != sa->sa_stacks[sa->sa_nstacks].ss_sp) {
+		SCHED_UNLOCK(s);
+		return (EINVAL);
+	}
 
 	/*
 	 * upcall not interrupted: (*up_preempted == NULL)
