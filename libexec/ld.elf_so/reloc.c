@@ -1,4 +1,4 @@
-/*	$NetBSD: reloc.c,v 1.66 2002/09/12 22:56:28 mycroft Exp $	 */
+/*	$NetBSD: reloc.c,v 1.67 2002/09/13 03:09:38 mycroft Exp $	 */
 
 /*
  * Copyright 1996 John D. Polstra.
@@ -142,6 +142,7 @@ _rtld_do_copy_relocations(dstobj)
 	return (0);
 }
 
+#if !defined(__mips__)
 caddr_t
 _rtld_bind(obj, reloff)
 	const Obj_Entry *obj;
@@ -191,6 +192,7 @@ _rtld_bind(obj, reloff)
 
 	return addr;
 }
+#endif
 
 /*
  * Relocate newly-loaded shared objects.  The argument is a pointer to
