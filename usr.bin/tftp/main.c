@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.17 2003/08/07 11:16:13 agc Exp $	*/
+/*	$NetBSD: main.c,v 1.18 2003/10/02 21:33:05 itojun Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -36,7 +36,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1993\n\
 #if 0
 static char sccsid[] = "@(#)main.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: main.c,v 1.17 2003/08/07 11:16:13 agc Exp $");
+__RCSID("$NetBSD: main.c,v 1.18 2003/10/02 21:33:05 itojun Exp $");
 #endif
 #endif /* not lint */
 
@@ -291,7 +291,7 @@ setpeer(argc, argv)
 	char *argv[];
 {
 
-	if (argc < 1) {
+	if (argc < 2) {
 		strcpy(line, "Connect ");
 		printf("(to) ");
 		fgets(&line[strlen(line)], LBUFLEN-strlen(line), stdin);
@@ -299,14 +299,14 @@ setpeer(argc, argv)
 		argc = margc;
 		argv = margv;
 	}
-	if ((argc < 1) || (argc > 2)) {
+	if ((argc < 2) || (argc > 3)) {
 		printf("usage: %s [-e] host-name [port]\n", getprogname());
 		return;
 	}
-	if (argc == 1)
-		setpeer0(argv[0], NULL);
+	if (argc == 2)
+		setpeer0(argv[1], NULL);
 	else
-		setpeer0(argv[0], argv[1]);
+		setpeer0(argv[1], argv[2]);
 }
 
 struct	modes {
