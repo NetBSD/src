@@ -1,4 +1,4 @@
-LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.210 $>
+LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.211 $>
 
 
 [Note: This file does not mention every change made to the NetBSD source tree.
@@ -503,3 +503,5 @@ Changes from NetBSD 1.6 to NetBSD 2.0:
 	syslogd(8): add -r, to prevent the compression of multiple similar
 		messages into "last message repeated N times".
 		[lukem 20031017]
+	ccdconfig(8): add CCDF_NOLABEL to ignore the on-disk (raw) disklabel
+		when creating a ccd.  [lukem 20031017].
