@@ -1,4 +1,4 @@
-/*	$NetBSD: ifconfig.c,v 1.139 2003/10/13 08:27:35 dyoung Exp $	*/
+/*	$NetBSD: ifconfig.c,v 1.140 2004/02/27 21:36:17 itojun Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 2000 The NetBSD Foundation, Inc.
@@ -76,7 +76,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1993\n\
 #if 0
 static char sccsid[] = "@(#)ifconfig.c	8.2 (Berkeley) 2/16/94";
 #else
-__RCSID("$NetBSD: ifconfig.c,v 1.139 2003/10/13 08:27:35 dyoung Exp $");
+__RCSID("$NetBSD: ifconfig.c,v 1.140 2004/02/27 21:36:17 itojun Exp $");
 #endif
 #endif /* not lint */
 
@@ -528,7 +528,8 @@ main(argc, argv)
 	/* Make sure there's an interface name. */
 	if (argc < 1)
 		usage();
-	(void) strlcpy(name, argv[0], sizeof(name));
+	if (strlcpy(name, argv[0], sizeof(name)) >= sizeof(name))
+		errx(1, "interface name '%s' too long", argv[0]);
 	argc--; argv++;
 
 	/*
@@ -780,7 +781,8 @@ printall(ifname)
 			sdl = (const struct sockaddr_dl *) ifa->ifa_addr;
 		if (p && strcmp(p, ifa->ifa_name) == 0)
 			continue;
-		(void) strlcpy(name, ifa->ifa_name, sizeof(name));
+		if (strlcpy(name, ifa->ifa_name, sizeof(name)) >= sizeof(name))
+			continue;
 		p = ifa->ifa_name;
 
 		if (getinfo(&paifr) < 0)
