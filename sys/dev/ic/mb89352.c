@@ -1,4 +1,4 @@
-/*	$NetBSD: mb89352.c,v 1.2 1999/02/19 16:19:53 minoura Exp $	*/
+/*	$NetBSD: mb89352.c,v 1.3 1999/03/14 16:14:54 minoura Exp $	*/
 /*	NecBSD: mb89352.c,v 1.4 1998/03/14 07:31:20 kmatsuda Exp	*/
 
 #ifdef DDB
@@ -7,8 +7,6 @@
 #define	integrate	__inline static
 #endif
 
-#ifndef	ORIGINAL_CODE
-#endif	/* PC-98 */
 /*-
  * Copyright (c) 1996,97,98,99 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -201,7 +199,8 @@ struct scsipi_device spc_dev = {
  * INITIALIZATION ROUTINES (probe, attach ++)
  */
 
-/* Do the real search-for-device.
+/*
+ * Do the real search-for-device.
  * Prerequisite: sc->sc_iobase should be set to the proper value
  */
 int
@@ -294,7 +293,8 @@ spcattach(sc)
 	config_found(&sc->sc_dev, &sc->sc_link, scsiprint);
 }
 
-/* Initialize MB89352 chip itself
+/*
+ * Initialize MB89352 chip itself
  * The following conditions should hold:
  * spc_isa_probe should have succeeded, i.e. the iobase address in spc_softc
  * must be valid.
@@ -763,7 +763,7 @@ abort:
  */
 void
 spc_sched(sc)
-	register struct spc_softc *sc;
+	struct spc_softc *sc;
 {
 	struct spc_acb *acb;
 	struct scsipi_link *sc_link;
@@ -940,7 +940,7 @@ spc_dequeue(sc, acb)
  */
 void
 spc_msgin(sc)
-	register struct spc_softc *sc;
+	struct spc_softc *sc;
 {
 	bus_space_tag_t iot = sc->sc_iot;
 	bus_space_handle_t ioh = sc->sc_ioh;
@@ -997,7 +997,11 @@ nextbyte:
 		bus_space_write_1(iot, ioh, TCL, 1);
 		bus_space_write_1(iot, ioh, PCTL,
 				  sc->sc_phase | PCTL_BFINT_ENAB);
+#ifdef x68k
+		bus_space_write_1(iot, ioh, SCMD, SCMD_XFR); /* | SCMD_PROG_XFR */
+#else
 		bus_space_write_1(iot, ioh, SCMD, SCMD_XFR | SCMD_PROG_XFR);	/* XXX */
+#endif
 		for (;;) {
 			/*if ((bus_space_read_1(iot, ioh, SSTS) & SSTS_BUSY) != 0
 				&& (bus_space_read_1(iot, ioh, SSTS) & SSTS_DREG_EMPTY) != 0)*/
@@ -1215,6 +1219,7 @@ nextbyte:
 
 	/* Ack the last message byte. */
 #if 0 /* XXX? */
+	(void) bus_space_read_1(iot, ioh, DREG);
 	while ((bus_space_read_1(iot, ioh, PSNS) & ACKI) != 0)
 		;
 #endif
@@ -1232,7 +1237,7 @@ out:
  */
 void
 spc_msgout(sc)
-	register struct spc_softc *sc;
+	struct spc_softc *sc;
 {
 	bus_space_tag_t iot = sc->sc_iot;
 	bus_space_handle_t ioh = sc->sc_ioh;
@@ -1358,7 +1363,11 @@ nextbyte:
 	bus_space_write_1(iot, ioh, TCM, n >> 8);
 	bus_space_write_1(iot, ioh, TCL, n);
 	bus_space_write_1(iot, ioh, PCTL, sc->sc_phase | PCTL_BFINT_ENAB);
-	bus_space_write_1(iot, ioh, SCMD, SCMD_XFR | SCMD_PROG_XFR | SCMD_ICPT_XFR);	/* XXX */
+#ifdef x68k
+	bus_space_write_1(iot, ioh, SCMD, SCMD_XFR);	/* XXX */
+#else
+	bus_space_write_1(iot, ioh, SCMD, SCMD_XFR | SCMD_PROG_XFR | SCMD_ICPT_XFR);
+#endif
 	for (;;) {
 		if ((bus_space_read_1(iot, ioh, SSTS) & SSTS_BUSY) != 0)
 			break;
@@ -1442,13 +1451,13 @@ out:
  */
 int
 spc_dataout_pio(sc, p, n)
-	register struct spc_softc *sc;
+	struct spc_softc *sc;
 	u_char *p;
 	int n;
 {
 	bus_space_tag_t iot = sc->sc_iot;
 	bus_space_handle_t ioh = sc->sc_ioh;
-	register u_char intstat = 0;
+	u_char intstat = 0;
 	int out = 0;
 #define DOUTAMOUNT 8		/* Full FIFO */
 
@@ -1458,7 +1467,11 @@ spc_dataout_pio(sc, p, n)
 	bus_space_write_1(iot, ioh, TCM, n >> 8);
 	bus_space_write_1(iot, ioh, TCL, n);
 	bus_space_write_1(iot, ioh, PCTL, sc->sc_phase | PCTL_BFINT_ENAB);
+#ifdef x68k
+	bus_space_write_1(iot, ioh, SCMD, SCMD_XFR);	/* XXX */
+#else
 	bus_space_write_1(iot, ioh, SCMD, SCMD_XFR | SCMD_PROG_XFR | SCMD_ICPT_XFR);	/* XXX */
+#endif
 	for (;;) {
 		if ((bus_space_read_1(iot, ioh, SSTS) & SSTS_BUSY) != 0)
 			break;
@@ -1547,13 +1560,13 @@ phasechange:
  */
 int
 spc_datain_pio(sc, p, n)
-	register struct spc_softc *sc;
+	struct spc_softc *sc;
 	u_char *p;
 	int n;
 {
 	bus_space_tag_t iot = sc->sc_iot;
 	bus_space_handle_t ioh = sc->sc_ioh;
-	register u_short intstat;
+	u_short intstat;
 	int in = 0;
 #define DINAMOUNT 8		/* Full FIFO */
 
@@ -1563,7 +1576,11 @@ spc_datain_pio(sc, p, n)
 	bus_space_write_1(iot, ioh, TCM, n >> 8);
 	bus_space_write_1(iot, ioh, TCL, n);
 	bus_space_write_1(iot, ioh, PCTL, sc->sc_phase | PCTL_BFINT_ENAB);
+#ifdef x68k
+	bus_space_write_1(iot, ioh, SCMD, SCMD_XFR);	/* XXX */
+#else
 	bus_space_write_1(iot, ioh, SCMD, SCMD_XFR | SCMD_PROG_XFR);	/* XXX */
+#endif
 	for (;;) {
 		if ((bus_space_read_1(iot, ioh, SSTS) & SSTS_BUSY) != 0)
 			break;
@@ -1571,7 +1588,8 @@ spc_datain_pio(sc, p, n)
 			goto phasechange;
 	}
 
-	/* We leave this loop if one or more of the following is true:
+	/*
+	 * We leave this loop if one or more of the following is true:
 	 * a) phase != PH_DATAIN && FIFOs are empty
 	 * b) reset has occurred or busfree is detected.
 	 */
@@ -1651,12 +1669,12 @@ int
 spcintr(arg)
 	void *arg;
 {
-	register struct spc_softc *sc = arg;
+	struct spc_softc *sc = arg;
 	bus_space_tag_t iot = sc->sc_iot;
 	bus_space_handle_t ioh = sc->sc_ioh;
 	u_char ints;
-	register struct spc_acb *acb;
-	register struct scsipi_link *sc_link;
+	struct spc_acb *acb;
+	struct scsipi_link *sc_link;
 	struct spc_tinfo *ti;
 	int n;
 
@@ -1926,6 +1944,7 @@ dophase:
 	sc->sc_phase = bus_space_read_1(iot, ioh, PSNS) & PH_MASK;
 /*	bus_space_write_1(iot, ioh, PCTL, sc->sc_phase);*/
 
+	SPC_MISC(("phase=%d\n", sc->sc_phase));
 	switch (sc->sc_phase) {
 	case PH_MSGOUT:
 		if (sc->sc_state != SPC_CONNECTED &&
@@ -2072,7 +2091,7 @@ spc_timeout(arg)
 	splx(s);
 }
 
-#if SPC_DEBUG
+#ifdef SPC_DEBUG
 /*
  * The following functions are mostly used for debugging purposes, either
  * directly called from the driver or from the kernel debugger.
@@ -2148,7 +2167,11 @@ spc_dump89352(sc)
 	    bus_space_read_1(iot, ioh, PCTL));
 	printf("         MBC=%x DREG=%x TEMP=%x TCH=%x TCM=%x\n",
 	    bus_space_read_1(iot, ioh, MBC),
+#if 0
 	    bus_space_read_1(iot, ioh, DREG),
+#else
+	    0,
+#endif
 	    bus_space_read_1(iot, ioh, TEMP),
 	    bus_space_read_1(iot, ioh, TCH),
 	    bus_space_read_1(iot, ioh, TCM));
