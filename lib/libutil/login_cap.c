@@ -1,4 +1,4 @@
-/* $NetBSD: login_cap.c,v 1.4 2000/02/04 02:17:16 mjl Exp $ */
+/* $NetBSD: login_cap.c,v 1.5 2000/02/10 20:52:54 mjl Exp $ */
 
 /*-
  * Copyright (c) 1995,1997 Berkeley Software Design, Inc. All rights reserved.
@@ -61,6 +61,7 @@ static	u_quad_t strtolimit __P((char *, char **, int));
 static	u_quad_t strtosize __P((char *, char **, int));
 static	int gsetrl __P((login_cap_t *, int, char *, int type));
 static	int setuserenv __P((login_cap_t *));
+static	int isinfinite __P((const char *));
 
 login_cap_t *
 login_getclass(class)
@@ -196,7 +197,7 @@ login_getcaptime(lc, cap, def, e)
 		return (e);
 	}
 
-	if (strcasecmp(res, "infinity") == 0)
+	if (isinfinite(res))
 		return (RLIM_INFINITY);
 
 	errno = 0;
@@ -276,7 +277,7 @@ login_getcapnum(lc, cap, def, e)
 		return (e);
 	}
 
-	if (strcasecmp(res, "infinity") == 0)
+	if (isinfinite(res))
 		return (RLIM_INFINITY);
 
 	errno = 0;
@@ -491,6 +492,7 @@ setuserenv(lc)
 		}
 	}
 	
+	free(res);
 	return 0;
 }
 
@@ -739,12 +741,31 @@ strtolimit(str, endptr, radix)
 	char **endptr;
 	int radix;
 {
-	if (strcasecmp(str, "infinity") == 0 || strcasecmp(str, "inf") == 0) {
+	if (isinfinite(str)) {
 		if (endptr)
 			*endptr = str + strlen(str);
 		return ((u_quad_t)RLIM_INFINITY);
 	}
 	return (strtosize(str, endptr, radix));
+}
+
+static int
+isinfinite(const char *s)
+{
+	static const char *infs[] = {
+		"infinity",
+		"inf",
+		"unlimited",
+		"unlimit",
+		NULL
+	};
+	const char **i;
+
+	for(i = infs; *i; i++) {
+		if (!strcasecmp(s, *i))
+			return 1;
+	}
+	return 0;
 }
 
 static u_quad_t
