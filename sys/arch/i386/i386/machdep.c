@@ -35,7 +35,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)machdep.c	7.4 (Berkeley) 6/3/91
- *	$Id: machdep.c,v 1.47.2.13 1993/10/27 05:39:55 mycroft Exp $
+ *	$Id: machdep.c,v 1.47.2.14 1993/10/27 16:40:17 mycroft Exp $
  */
 
 #include <stddef.h>
@@ -1310,7 +1310,7 @@ cpu_exec_aout_prep_oldzmagic(p, epp)
 	 * reasons
 	 */
 	if ((execp->a_text != 0 || execp->a_data != 0) &&
-	    (epp->ep_vp->v_flag & VTEXT) == 0 || epp->ep_vp->v_writecount != 0) {
+	    epp->ep_vp->v_writecount != 0) {
 #ifdef DIAGNOSTIC
 		if (epp->ep_vp->v_flag & VTEXT)
 			panic("exec: a VTEXT vnode has writecount != 0\n");

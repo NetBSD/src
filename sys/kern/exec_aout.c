@@ -27,7 +27,7 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
- *	$Id: exec_aout.c,v 1.1.2.6 1993/10/26 11:46:50 mycroft Exp $
+ *	$Id: exec_aout.c,v 1.1.2.7 1993/10/27 16:39:07 mycroft Exp $
  */
 
 #include "param.h"
@@ -142,7 +142,7 @@ exec_aout_prep_zmagic(p, epp)
 	 * reasons
 	 */
 	if ((execp->a_text != 0 || execp->a_data != 0) &&
-	    (epp->ep_vp->v_flag & VTEXT) == 0 || epp->ep_vp->v_writecount != 0) {
+	    epp->ep_vp->v_writecount != 0) {
 #ifdef DIAGNOSTIC
 		if (epp->ep_vp->v_flag & VTEXT)
 			panic("exec: a VTEXT vnode has writecount != 0\n");
