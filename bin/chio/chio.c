@@ -1,4 +1,4 @@
-/* $NetBSD: chio.c,v 1.20 2003/08/04 22:31:21 jschauma Exp $ */
+/* $NetBSD: chio.c,v 1.21 2003/08/21 04:30:25 jschauma Exp $ */
 
 /*-
  * Copyright (c) 1996, 1998, 1999 The NetBSD Foundation, Inc.
@@ -46,7 +46,7 @@
 __COPYRIGHT(
 "@(#) Copyright (c) 1996, 1998, 1999\
 	The NetBSD Foundation, Inc.  All rights reserved.");
-__RCSID("$NetBSD: chio.c,v 1.20 2003/08/04 22:31:21 jschauma Exp $");
+__RCSID("$NetBSD: chio.c,v 1.21 2003/08/21 04:30:25 jschauma Exp $");
 #endif
 
 #include <sys/param.h>
@@ -710,6 +710,7 @@ do_status(const char *cname, int argc, char **argv)
 		free(ces);
 	}
 
+	free(cn);
 	return (0);
 }
 
