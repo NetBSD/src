@@ -1,8 +1,8 @@
-/* $Id: hpccmapvar.h,v 1.1 2000/03/20 10:47:33 takemura Exp $ */
+/*	$NetBSD: bivideovar.h,v 1.1 2001/02/22 18:37:54 uch Exp $	*/
 
-/*-
- * Copyright (c) 1999
- *         Shin Takemura and PocketBSD Project. All rights reserved.
+/*
+ * Copyright (c) 2000 Takemura Shin
+ * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -12,13 +12,6 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *	This product includes software developed by the PocketBSD project
- *	and its contributors.
- * 4. Neither the name of the project nor the names of its contributors
- *    may be used to endorse or promote products derived from this software
- *    without specific prior written permission.
  *
  * THIS SOFTWARE IS PROVIDED BY THE REGENTS AND CONTRIBUTORS ``AS IS'' AND
  * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
@@ -34,6 +27,5 @@
  *
  */
 
-extern unsigned char bivideo_cmap_r[256];
-extern unsigned char bivideo_cmap_g[256];
-extern unsigned char bivideo_cmap_b[256];
+extern int bivideo_dont_attach;
+int bivideo_getcnfb __P((struct hpcfb_fbconf* fb));

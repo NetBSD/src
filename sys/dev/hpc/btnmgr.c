@@ -1,4 +1,4 @@
-/*	$NetBSD: btnmgr.c,v 1.11 2001/01/26 03:44:33 sato Exp $	*/
+/*	$NetBSD: btnmgr.c,v 1.1 2001/02/22 18:37:54 uch Exp $	*/
 
 /*-
  * Copyright (c) 1999
@@ -48,7 +48,7 @@
 #include <dev/wscons/wskbdvar.h>
 #include <dev/wscons/wsksymdef.h>
 #ifdef WSDISPLAY_COMPAT_RAWKBD
-#include <hpcmips/dev/pckbd_encode.h>
+#include <dev/hpc/pckbd_encode.h>
 #endif
 
 #include <machine/bus.h>

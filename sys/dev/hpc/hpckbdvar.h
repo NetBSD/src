@@ -1,7 +1,7 @@
-/*	$NetBSD: video_subr.h,v 1.4 2000/10/22 10:33:01 uch Exp $	*/
+/*	$NetBSD: hpckbdvar.h,v 1.1 2001/02/22 18:37:56 uch Exp $ */
 
 /*-
- * Copyright (c) 2000 The NetBSD Foundation, Inc.
+ * Copyright (c) 1999-2001 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -36,34 +36,38 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#define LEGAL_CLUT_INDEX(x)	((x) >= 0 && (x) <= 255)
-#define RGB24(r, g, b)		((((r) << 16) & 0x00ff0000) |		\
-				 (((g) << 8) & 0x0000ff00) |		\
-				 (((b)) & 0x000000ff))
-
-int cmap_work_alloc(u_int8_t **, u_int8_t **, u_int8_t **, u_int32_t **, int);
-void cmap_work_free(u_int8_t *, u_int8_t *, u_int8_t *, u_int32_t *);
-void rgb24_compose(u_int32_t *, u_int8_t *, u_int8_t *, u_int8_t *, int); 
-void rgb24_decompose(u_int32_t *, u_int8_t *, u_int8_t *, u_int8_t *, int);
-
-/* debug function for TX. VR will need `line bytes' */
-struct video_chip;
-struct video_chip {
-	void *vc_v; /* CPU/chipset dependent goo */
-
-	vaddr_t vc_fbvaddr;
-	paddr_t vc_fbpaddr;
-	size_t vc_fbsize;
-	int vc_fbdepth;
-	int vc_fbwidth;
-	int vc_fbheight;
-
-	void (*vc_drawline)(struct video_chip *, int, int, int, int);
-	void (*vc_drawdot)(struct video_chip *, int, int);
+/*
+ * chip interface
+ */
+struct hpckbd_if;
+struct hpckbd_ic_if {
+	void	*hii_ctx;
+	int	(*hii_establish)(void *, struct hpckbd_if *);
+	int	(*hii_poll)(void *);
 };
 
-void video_attach_drawfunc(struct video_chip *);
-void video_line(struct video_chip *, int, int, int, int);
-void video_dot(struct video_chip *, int, int);
-void video_calibration_pattern(struct video_chip *);
-int video_reverse_color(void);
+#define hpckbd_ic_establish(ic, kbdif)					\
+	(*(ic)->hii_establish)((ic)->hii_ctx, (kbdif))
+#define hpckbd_ic_poll(ic)						\
+	(*(ic)->hii_poll)((ic)->hii_ctx)
+
+/*
+ * hpckbd interface
+ */
+struct hpckbd_if {
+	void	*hi_ctx;
+	void	(*hi_input_hook)(void *);
+	int	(*hi_input)(void *, int, int);
+};
+
+#define hpckbd_input_hook(i)						\
+	(*(i)->hi_input_hook)((i)->hi_ctx)
+#define hpckbd_input(i, f, a)						\
+	(*(i)->hi_input)((i)->hi_ctx, (f), (a))
+
+struct hpckbd_attach_args {
+	struct hpckbd_ic_if *haa_ic;
+};
+
+int	hpckbd_print(void *, const char *);
+int	hpckbd_cnattach(struct hpckbd_ic_if *);

@@ -1,4 +1,4 @@
-/*	$NetBSD: ite8181.c,v 1.6 2001/02/15 09:17:18 sato Exp $	*/
+/*	$NetBSD: ite8181.c,v 1.7 2001/02/22 18:38:00 uch Exp $	*/
 
 /*-
  * Copyright (c) 2000 SATO Kazumi
@@ -49,10 +49,9 @@
 #include <hpcmips/dev/ite8181var.h>
 #include "bivideo.h"
 #if NBIVIDEO > 0
-#include <hpcmips/dev/bivideovar.h>
+#include <dev/hpc/bivideovar.h>
 #endif
-#include <hpcmips/dev/hpccmapvar.h>
-
+#include <dev/hpc/hpccmapvar.h>
 
 #define ITE8181DEBUG
 #ifdef ITE8181DEBUG

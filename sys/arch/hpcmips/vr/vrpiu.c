@@ -1,4 +1,4 @@
-/*	$NetBSD: vrpiu.c,v 1.10 2001/01/21 05:00:28 takemura Exp $	*/
+/*	$NetBSD: vrpiu.c,v 1.11 2001/02/22 18:38:05 uch Exp $	*/
 
 /*
  * Copyright (c) 1999 Shin Takemura All rights reserved.
@@ -47,9 +47,9 @@
 #include <machine/platid_mask.h>
 #include <machine/config_hook.h>
 
-#include <hpcmips/hpcmips/machdep.h>
-#include <hpcmips/dev/tpcalibvar.h>
+#include <dev/hpc/tpcalibvar.h>
 
+#include <hpcmips/hpcmips/machdep.h>
 #include <hpcmips/vr/vripvar.h>
 #include <hpcmips/vr/cmureg.h>
 #include <hpcmips/vr/vrpiuvar.h>

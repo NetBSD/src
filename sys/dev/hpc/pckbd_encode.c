@@ -1,10 +1,7 @@
-/*	$NetBSD: hpcfbvar.h,v 1.6 2000/12/25 10:09:31 sato Exp $	*/
+/*	$NetBSD: pckbd_encode.c,v 1.1 2001/02/22 18:37:56 uch Exp $	*/
 
 /*-
- * Copyright (c) 1999
- *         Shin Takemura and PocketBSD Project. All rights reserved.
- * Copyright (c) 2000
- *         SATO Kazumi. All rights reserved.
+ * Copyright (c) 2000 TAKEMRUA, Shin All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -36,37 +33,41 @@
  *
  */
 
-/*
- * video access functions (must be provided by all video).
- */
-struct hpcfb_accessops {
-	int	(*ioctl) __P((void *, u_long, caddr_t, int, struct proc *));
-	paddr_t	(*mmap) __P((void *, off_t, int));
-	void	(*cursor) __P((void *, int, int, int, int, int));
-	void	(*bitblit) __P((void *, int, int, int, int, int, int));
-	void	(*erase) __P((void *, int, int, int, int, int));
-	void	(*putchar) __P((void *, int, int, struct wsdisplay_font *,
-				int, int, u_int, int));
-	void	(*setclut) __P((void *, struct rasops_info *));
-	void	(*font) __P((void *, struct wsdisplay_font *));	/* load fonts */
-	void	(*iodone) __P((void *));	/* wait i/o done */
-};
+#include "opt_wsdisplay_compat.h"
+
+#ifdef WSDISPLAY_COMPAT_RAWKBD
+#include <sys/param.h>
+#include <dev/wscons/wsconsio.h>
+#include <dev/pckbc/pckbdreg.h>
+#include <dev/hpc/pckbd_encode.h>
 
 /*
- * hpcfb attach arguments
+ * pckbd_encode() is inverse function of pckbd_decode() in dev/pckbc/pckbd.c.
  */
-struct hpcfb_attach_args {
-	int ha_console;
-	const struct hpcfb_accessops *ha_accessops;	/* access ops */
-	void	*ha_accessctx;	  	       		/* access cookie */
+int
+pckbd_encode(u_int type, int datain, u_char *dataout)
+{
+	int res;
+	u_char updown;
 
-	int ha_curfbconf;
-	int ha_nfbconf;
-	struct hpcfb_fbconf *ha_fbconflist;
-	int ha_curdspconf;
-	int ha_ndspconf;
-	struct hpcfb_dspconf *ha_dspconflist;
-};
+	res = 0;
+	updown = (type == WSCONS_EVENT_KEY_UP) ? 0x80 : 0;
 
-int	hpcfb_cnattach __P((struct hpcfb_fbconf *));
-int	hpcfbprint __P((void *aux, const char *pnp));
+	/* 0x7f means BREAK key */
+	if (datain == 0x7f) {
+		dataout[res++] = KBR_EXTENDED1;
+		dataout[res++] = (0x1d | updown);
+		datain = 0x45;
+	}
+
+ 	/* extended keys */
+	if (datain & 0x80) {
+		dataout[res++] = KBR_EXTENDED0;
+		datain &= 0x7f;
+	}
+
+	dataout[res++] = (datain | updown);
+
+	return (res);
+}
+#endif /* WSDISPLAY_COMPAT_RAWKBD */

@@ -1,4 +1,4 @@
-/*	$NetBSD: mra.c,v 1.1 2000/01/10 14:07:58 takemura Exp $	*/
+/*	$NetBSD: mra.c,v 1.1 2001/02/22 18:37:56 uch Exp $	*/
 
 /*
  * Copyright (c) 1999 Shin Takemura All rights reserved.

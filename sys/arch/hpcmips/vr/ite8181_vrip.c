@@ -1,4 +1,4 @@
-/*	$NetBSD: ite8181_vrip.c,v 1.1 2000/10/02 04:14:59 sato Exp $	*/
+/*	$NetBSD: ite8181_vrip.c,v 1.2 2001/02/22 18:38:04 uch Exp $	*/
 
 /*-
  * Copyright (c) 2000 SATO Kazumi
@@ -41,7 +41,7 @@
 #include <hpcmips/dev/ite8181var.h>
 #include "bivideo.h"
 #if NBIVIDEO > 0
-#include <hpcmips/dev/bivideovar.h>     
+#include <dev/hpc/bivideovar.h>     
 #endif
 
 #include "locators.h"

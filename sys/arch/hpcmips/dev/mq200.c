@@ -1,4 +1,4 @@
-/*	$NetBSD: mq200.c,v 1.8 2001/02/15 09:17:18 sato Exp $	*/
+/*	$NetBSD: mq200.c,v 1.9 2001/02/22 18:38:00 uch Exp $	*/
 
 /*-
  * Copyright (c) 2000 Takemura Shin
@@ -50,7 +50,7 @@
 #include <hpcmips/dev/mq200var.h>
 #include "bivideo.h"
 #if NBIVIDEO > 0
-#include <hpcmips/dev/bivideovar.h>     
+#include <dev/hpc/bivideovar.h>     
 #endif
 
 #define MQ200DEBUG

@@ -1,4 +1,4 @@
-/*	$NetBSD: hpcfbio.h,v 1.2 2000/12/03 13:43:40 takemura Exp $	*/
+/*	$NetBSD: hpcfbio.h,v 1.1 2001/02/22 18:37:55 uch Exp $	*/
 
 /*-
  * Copyright (c) 1999

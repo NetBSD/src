@@ -1,4 +1,4 @@
-/*	$NetBSD: mq200var.h,v 1.1 2000/07/22 08:53:37 takemura Exp $	*/
+/*	$NetBSD: mq200var.h,v 1.2 2001/02/22 18:38:00 uch Exp $	*/
 
 /*-
  * Copyright (c) 2000 Takemura Shin
@@ -35,8 +35,8 @@
 #include <dev/wscons/wsdisplayvar.h>
 #include <dev/rasops/rasops.h>
 
-#include <arch/hpcmips/dev/hpcfbvar.h>
-#include <arch/hpcmips/dev/hpcfbio.h>
+#include <dev/hpc/hpcfbvar.h>
+#include <dev/hpc/hpcfbio.h>
 
 struct mq200_softc {
 	struct device		sc_dev;

@@ -1,8 +1,7 @@
-/*	$NetBSD: bivideovar.h,v 1.2 2000/07/22 08:53:35 takemura Exp $	*/
+/*	$NetBSD: pckbd_encode.h,v 1.1 2001/02/22 18:37:56 uch Exp $	*/
 
-/*
- * Copyright (c) 2000 Takemura Shin
- * All rights reserved.
+/*-
+ * Copyright (c) 2000 TAKEMRUA, Shin All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -12,6 +11,13 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
+ * 3. All advertising materials mentioning features or use of this software
+ *    must display the following acknowledgement:
+ *	This product includes software developed by the PocketBSD project
+ *	and its contributors.
+ * 4. Neither the name of the project nor the names of its contributors
+ *    may be used to endorse or promote products derived from this software
+ *    without specific prior written permission.
  *
  * THIS SOFTWARE IS PROVIDED BY THE REGENTS AND CONTRIBUTORS ``AS IS'' AND
  * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
@@ -27,5 +33,4 @@
  *
  */
 
-extern int bivideo_dont_attach;
-int bivideo_getcnfb __P((struct hpcfb_fbconf* fb));
+extern int pckbd_encode(u_int, int, u_char *);
