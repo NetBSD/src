@@ -1,5 +1,6 @@
+#	$NetBSD: Makefile,v 1.3 1997/10/18 05:47:57 lukem Exp $
+#
 # Makefile for uuchk
-# $Id: Makefile,v 1.2 1993/08/05 16:15:02 jtc Exp $
 
 BINDIR=		$(sbindir)
 BINOWN=		$(owner)
