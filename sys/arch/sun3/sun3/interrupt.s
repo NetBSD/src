@@ -28,7 +28,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * $Header: /cvsroot/src/sys/arch/sun3/sun3/Attic/interrupt.s,v 1.11 1994/07/11 03:41:28 gwr Exp $
+ * $Id: interrupt.s,v 1.12 1994/07/25 18:28:01 gwr Exp $
  */
 
 	.data
@@ -107,6 +107,7 @@ _level5intr_clock:
 	INTERRUPT_RESTORE		| temporarily restore regs
 	jra	Lbomb			| go die
 Lnobomb:
+	/* XXX - Needs to allow sp in tmpstack too. -gwr */
 	cmpl	#_kstack+NBPG,sp	| are we still in stack pages?
 	jcc	Lstackok		| yes, continue normally
 	tstl	_curproc		| if !curproc could have swtch_exit'ed,
@@ -163,3 +164,22 @@ _level7intr:
 #undef	INTERRUPT_BODY
 #undef	INTERRUPT_RESTORE
 #undef	INTERRUPT_HANDLE
+
+/* interrupt counters (needed by vmstat) */
+	.globl	_intrcnt,_eintrcnt,_intrnames,_eintrnames
+_intrnames:
+	.asciz	"spur"	| 0
+	.asciz	"lev1"	| 1
+	.asciz	"lev2"	| 2
+	.asciz	"lev3"	| 3
+	.asciz	"lev4"	| 4
+	.asciz	"clock"	| 5
+	.asciz	"lev6"	| 6
+	.asciz	"nmi"	| 7
+_eintrnames:
+
+	.data
+	.even
+_intrcnt:
+	.long	0,0,0,0,0,0,0,0,0,0
+_eintrcnt:
