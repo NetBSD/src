@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-1.6.1,v 1.1.2.4 2002/09/30 23:29:54 lukem Exp $
+#	$NetBSD: CHANGES-1.6.1,v 1.1.2.5 2002/10/01 23:46:58 lukem Exp $
 
 A complete list of changes from NetBSD 1.6 to NetBSD 1.6.1:
 
@@ -130,3 +130,11 @@ sys/arch/macppc/conf/INSTALL			patch
 
 	Add uninorth* bus, so that this kernel can boot on
 	various newer systems.
+
+games/rogue/inventory.c				1.8
+games/rogue/message.c				1.9
+games/rogue/rogue.h				1.13
+games/rogue/save.c				1.8
+
+	Fix buffer overflows.
+	[mrg, ticket #892]
