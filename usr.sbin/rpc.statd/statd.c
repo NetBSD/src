@@ -1,4 +1,4 @@
-/*	$NetBSD: statd.c,v 1.14 1999/06/10 05:53:51 scottr Exp $	*/
+/*	$NetBSD: statd.c,v 1.15 2000/06/06 18:17:07 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1997 Christos Zoulas. All rights reserved.
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: statd.c,v 1.14 1999/06/10 05:53:51 scottr Exp $");
+__RCSID("$NetBSD: statd.c,v 1.15 2000/06/06 18:17:07 bouyer Exp $");
 #endif
 
 /* main() function for status monitor daemon.  Some of the code in this	*/
@@ -362,11 +362,11 @@ walk_db(fun, ptr)
 		switch ((*db->seq)(db, &key, &data, R_NEXT)) {
 		case -1:
 			goto bad;
-		case 1:
+		case 0:
 			if (walk_one(fun, &key, &data, ptr) == -1)
 				return -1;
 			break;
-		case 0:
+		case 1:
 			return 0;
 		default:
 			abort();
