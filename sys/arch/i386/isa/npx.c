@@ -1,4 +1,4 @@
-/*	$NetBSD: npx.c,v 1.70.8.6 2000/08/18 03:24:52 sommerfeld Exp $	*/
+/*	$NetBSD: npx.c,v 1.70.8.7 2000/08/18 13:30:08 sommerfeld Exp $	*/
 
 #if 0
 #define IPRINTF(x)	printf x
@@ -532,8 +532,7 @@ npxsave_proc(struct proc *p, int save)
 		    save ? I386_IPI_SYNCH_FPU : I386_IPI_FLUSH_FPU);
 		
 		spincount = 0;
-		while ((p->p_addr->u_pcb.pcb_fpcpu != NULL)
-		    /* && (oci->ci_fpcurproc == p) */)
+		while (p->p_addr->u_pcb.pcb_fpcpu != NULL)
 		{
 			spincount++;
 			delay(1000); /* XXX */
@@ -541,9 +540,6 @@ npxsave_proc(struct proc *p, int save)
 				panic("fp_save ipi didn't");
 			}
 		}
-#if 0
-		KDASSERT (p->p_addr->u_pcb.pcb_fpcpu == NULL);
-#endif
 	}
 #else
 	KASSERT(fpcurproc == p);
