@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd.c,v 1.13 2003/02/01 17:59:47 tron Exp $	*/
+/*	$NetBSD: netbsd.c,v 1.14 2003/02/01 21:12:25 tron Exp $	*/
 
 /*
 ** netbsd.c		Low level kernel access functions for NetBSD
@@ -10,6 +10,11 @@
 **
 ** Please send bug fixes/bug reports to: Peter Eriksson <pen@lysator.liu.se>
 */
+
+#include <sys/types.h>
+#define _KERNEL
+#include <sys/mallocvar.h>
+#undef _KERNEL
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -23,14 +28,6 @@
 
 #include "kvm.h"
 
-#include <sys/types.h>
-
-#define _KERNEL
-
-#include <sys/file.h>
-
-#undef _KERNEL
-
 #include <sys/stat.h>
 #include <sys/param.h>
 #include <sys/ioctl.h>
@@ -38,6 +35,11 @@
 
 #include <sys/socketvar.h>
 
+#define _KERNEL
+
+#include <sys/file.h>
+
+#undef _KERNEL
 #include <sys/sysctl.h>
 
 #include <fcntl.h>
