@@ -1,4 +1,4 @@
-/*	$NetBSD: tcpdchk.c,v 1.8 1999/08/27 16:07:23 itojun Exp $	*/
+/*	$NetBSD: tcpdchk.c,v 1.9 1999/08/31 13:58:58 itojun Exp $	*/
 
  /*
   * tcpdchk - examine all tcpd access control rules and inetd.conf entries
@@ -21,7 +21,7 @@
 #if 0
 static char sccsid[] = "@(#) tcpdchk.c 1.8 97/02/12 02:13:25";
 #else
-__RCSID("$NetBSD: tcpdchk.c,v 1.8 1999/08/27 16:07:23 itojun Exp $");
+__RCSID("$NetBSD: tcpdchk.c,v 1.9 1999/08/31 13:58:58 itojun Exp $");
 #endif
 #endif
 
@@ -29,6 +29,9 @@ __RCSID("$NetBSD: tcpdchk.c,v 1.8 1999/08/27 16:07:23 itojun Exp $");
 
 #include <sys/types.h>
 #include <sys/stat.h>
+#ifdef INET6
+#include <sys/socket.h>
+#endif
 #include <netinet/in.h>
 #include <arpa/inet.h>
 #include <stdio.h>
@@ -341,10 +344,20 @@ char   *list;
     char   *cp;
     char   *host;
     int     clients = 0;
+#ifdef INET6
+    int l;
+#endif
 
     strcpy(buf, list);
 
     for (cp = strtok(buf, sep); cp != 0; cp = strtok((char *) 0, sep)) {
+#ifdef INET6
+	l = strlen(cp);
+	if (cp[0] == '[' && cp[l - 1] == ']') {
+	    cp[l - 1] = '\0';
+	    cp++;
+	}
+#endif
 	if (STR_EQ(cp, "EXCEPT")) {
 	    clients = 0;
 	} else {
@@ -441,8 +454,22 @@ char   *pat;
 #endif
 #endif
     } else if ((mask = split_at(pat, '/')) != NULL) {	/* network/netmask */
-	if (dot_quad_addr(pat, NULL) != 0
-	    || dot_quad_addr(mask, NULL) != 0)
+#ifdef INET6
+	struct in6_addr in6;
+#endif
+	if (dot_quad_addr(pat, NULL) != INADDR_NONE
+	    || dot_quad_addr(mask, NULL) != INADDR_NONE)
+	    ; /*okay*/
+#ifdef INET6
+	else if (inet_pton(AF_INET6, pat, &in6) == 1
+	      && inet_pton(AF_INET6, mask, &in6) == 1)
+	    ; /*okay*/
+	else if (inet_pton(AF_INET6, pat, &in6) == 1
+	      && strchr(mask, ':') == NULL
+	      && 0 <= atoi(mask) && atoi(mask) <= 128)
+	    ; /*okay*/
+#endif
+	else
 	    tcpd_warn("%s/%s: bad net/mask pattern", pat, mask);
     } else if (STR_EQ(pat, "FAIL")) {		/* obsolete */
 	tcpd_warn("FAIL is no longer recognized");
