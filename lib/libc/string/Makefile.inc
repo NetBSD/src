@@ -1,12 +1,8 @@
 #	from: @(#)Makefile.inc	8.1 (Berkeley) 6/4/93
-#	$NetBSD: Makefile.inc,v 1.45 1998/08/04 04:48:16 perry Exp $
+#	$NetBSD: Makefile.inc,v 1.46 1998/08/04 06:25:10 perry Exp $
 
 # string sources
 .PATH: ${.CURDIR}/arch/${MACHINE_ARCH}/string ${.CURDIR}/string
-
-# XXX Warning: the merge of this makefile to deal with the new
-# memset/bzero stuff isn't finished yet. In particular, bzero is still
-# being built on its own but *should* be built from memset.c
 
 SRCS+=	bm.c strcasecmp.c strcoll.c strdup.c strerror.c \
 	strmode.c strsignal.c strtok.c strtok_r.c strxfrm.c \
