@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-1.4.2,v 1.1.2.48 1999/09/29 07:17:57 he Exp $
+#	$NetBSD: CHANGES-1.4.2,v 1.1.2.49 1999/10/01 12:09:28 he Exp $
 
 A complete list of changes from NetBSD 1.4.1 to NetBSD 1.4.2:
 
@@ -607,3 +607,8 @@ usr.sbin/nfds/nfsd.8				1.10-1.11
 
   Serve UDP requests by default if neither UDP nor TCP is specified,
   as already documented in the man page.  Fixes PR#7358.
+
+libexec/ftpd/ftpd.c				1.70
+
+  Avoid segmentation fault if there is an empty line in /etc/ftpusers,
+  fixing PR#8504.
