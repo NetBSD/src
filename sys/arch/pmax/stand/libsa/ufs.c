@@ -61,7 +61,7 @@
  * any improvements or extensions that they make and grant Carnegie the
  * rights to redistribute these changes.
  * 
- *	$Id: ufs.c,v 1.1 1999/01/21 12:33:44 simonb Exp $
+ *	$Id: ufs.c,v 1.2 1999/01/22 14:05:05 simonb Exp $
  */
 
 /*
@@ -76,8 +76,8 @@
 #include <ufs/ffs/fs.h>
 #include <lib/libkern/libkern.h>
 
-#include <lib/libsa/stand.h>
-#include <arch/pmax/stand/dec_prom.h>
+#include <stand.h>
+#include <dec_prom.h>
 
 /*
  * In-core open file.
