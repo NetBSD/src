@@ -32,7 +32,7 @@
 # SUCH DAMAGE.
 #
 #	@(#)MAKEDEV	5.5 (Berkeley) 5/28/91
-#	$Id: MAKEDEV,v 1.1.1.1 1994/07/12 21:11:18 gwr Exp $
+#	$Id: MAKEDEV,v 1.2 1995/01/26 23:28:11 gwr Exp $
 #
 # Device "make" file.  Valid arguments:
 #	std	standard devices
@@ -139,14 +139,15 @@ pty*)
 	done
 	;;
 
-sd*|xy*)
+sd*|xy*|vnd*)
 	case $arg in
-	sd*) name=sd; blk=7; chr=17;;
-	xy*) name=xy; blk=3; chr=9 ;;
+	  sd*) name=sd; blk=7; chr=17;;
+	  xy*) name=xy; blk=3; chr=9 ;;
+	  vnd*) name=vnd; blk=5; chr=19;
 	esac
 	case $unit in
-	0|1|2|3|4) offset=`expr $unit \* 8`;;
-	*) echo bad unit for $name in: $arg;;
+	  0|1|2|3|4) offset=`expr $unit \* 8`;;
+	  *) echo bad unit for $name in: $arg;;
 	esac
 	for part in a.0 b.1 c.2 d.3 e.4 f.5 g.6 h.7
 	do
