@@ -1,4 +1,4 @@
-/*	$NetBSD: mach_task.c,v 1.38 2003/11/22 17:17:55 manu Exp $ */
+/*	$NetBSD: mach_task.c,v 1.39 2003/11/24 14:31:40 manu Exp $ */
 
 /*-
  * Copyright (c) 2002-2003 The NetBSD Foundation, Inc.
@@ -39,7 +39,7 @@
 #include "opt_compat_darwin.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mach_task.c,v 1.38 2003/11/22 17:17:55 manu Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mach_task.c,v 1.39 2003/11/24 14:31:40 manu Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -78,8 +78,16 @@ mach_task_get_special_port(args)
 	struct lwp *l = args->l;
 	struct mach_emuldata *med;
 	struct mach_right *mr;
+	struct proc *tp;
+	mach_port_t mn;
+	int error;
 
-	med = (struct mach_emuldata *)l->l_proc->p_emuldata;
+	/* Get the target process from the remote port. */
+	mn = req->req_msgh.msgh_remote_port;
+	if ((error = mach_get_target_task(l, mn, &tp, NULL)) != 0)
+		return mach_msg_error(args, error);
+
+	med = (struct mach_emuldata *)tp->p_emuldata;
 
 	switch (req->req_which_port) {
 	case MACH_TASK_KERNEL_PORT:
@@ -134,9 +142,17 @@ mach_ports_lookup(args)
 	struct lwp *l = args->l;
 	struct mach_emuldata *med;
 	struct mach_right *mr;
+	struct proc *tp;
+	mach_port_t mn;
+
 	mach_port_name_t mnp[7];
 	vaddr_t va;
 	int error;
+
+	/* Get the target process from the remote port. */
+	mn = req->req_msgh.msgh_remote_port;
+	if ((error = mach_get_target_task(l, mn, &tp, NULL)) != 0)
+		return mach_msg_error(args, error);
 
 	/* 
 	 * This is some out of band data sent with the reply. In the 
@@ -150,7 +166,7 @@ mach_ports_lookup(args)
 	    UVM_INH_COPY, UVM_ADV_NORMAL, UVM_FLAG_COPYONW))) != 0)
 		return mach_msg_error(args, error);
 
-	med = (struct mach_emuldata *)l->l_proc->p_emuldata;
+	med = (struct mach_emuldata *)tp->p_emuldata;
 	mnp[0] = (mach_port_name_t)MACH_PORT_DEAD;
 	mnp[3] = (mach_port_name_t)MACH_PORT_DEAD;
 	mnp[5] = (mach_port_name_t)MACH_PORT_DEAD;
@@ -206,6 +222,10 @@ mach_task_set_special_port(args)
 	struct mach_right *mr;
 	struct mach_port *mp;
 	struct mach_emuldata *med;
+
+	/* 
+	 * XXX is it possible to set the special ports of another process?
+	 */
 
 	mn = req->req_special_port.name;
 
@@ -298,10 +318,17 @@ mach_task_threads(args)
 	int i;
 	struct mach_right *mr;
 	mach_port_name_t *mnp;
+	mach_port_t mn;
+	struct proc *tp;
 
-	med = l->l_proc->p_emuldata;
+	/* Get the target lwp from the remote port. */
+	mn = req->req_msgh.msgh_remote_port;
+	if ((error = mach_get_target_task(l, mn, &tp, NULL)) != 0)
+		return mach_msg_error(args, error);
 
-	size = l->l_proc->p_nlwps * sizeof(*mnp);
+	med = tp->p_emuldata;
+
+	size = tp->p_nlwps * sizeof(*mnp);
 	va = vm_map_min(&l->l_proc->p_vmspace->vm_map);
 
 	if ((error = uvm_map(&l->l_proc->p_vmspace->vm_map, &va, 
@@ -330,11 +357,11 @@ mach_task_threads(args)
 	rep->rep_msgh.msgh_id = req->req_msgh.msgh_id + 100;
 	rep->rep_body.msgh_descriptor_count = 1;
 	rep->rep_list.address = (void *)va;
-	rep->rep_list.count = l->l_proc->p_nlwps;
+	rep->rep_list.count = tp->p_nlwps;
 	rep->rep_list.copy = 0x02;
 	rep->rep_list.disposition = 0x11;
 	rep->rep_list.type = 0x02;
-	rep->rep_count = l->l_proc->p_nlwps;
+	rep->rep_count = tp->p_nlwps;
 	rep->rep_trailer.msgh_trailer_size = 8;
 
 	*msglen = sizeof(*rep);
@@ -352,8 +379,16 @@ mach_task_get_exception_ports(args)
 	struct mach_emuldata *med;
 	struct mach_right *mr;
 	int i, j, count;
+	mach_port_t mn;
+	struct proc *tp;
+	int error;
 
-	med = l->l_proc->p_emuldata;
+	/* Get the target lwp from the remote port. */
+	mn = req->req_msgh.msgh_remote_port;
+	if ((error = mach_get_target_task(l, mn, &tp, NULL)) != 0)
+		return mach_msg_error(args, error);
+
+	med = tp->p_emuldata;
 
 	/* It always return an array of 32 ports even if only 9 can be used */
 	count = sizeof(rep->rep_old_handler) / sizeof(rep->rep_old_handler[0]);
@@ -403,6 +438,10 @@ mach_task_set_exception_ports(args)
 	mach_port_name_t mn;
 	struct mach_right *mr;
 	struct mach_port *mp;
+
+	/*
+	 * XXX Is it possible to set the exception port of a remote process?
+	 */
 
 	mn = req->req_new_port.name;
 	if ((mr = mach_right_check(mn, l, MACH_PORT_TYPE_SEND)) == 0)
@@ -466,6 +505,14 @@ mach_task_info(args)
 	struct lwp *l = args->l;
 	size_t *msglen = args->rsize;
 	int count;
+	mach_port_t mn;
+	struct proc *tp;
+	int error;
+
+	/* Get the target lwp from the remote port. */
+	mn = req->req_msgh.msgh_remote_port;
+	if ((error = mach_get_target_task(l, mn, &tp, NULL)) != 0)
+		return mach_msg_error(args, error);
 
 	switch(req->req_flavor) {
 	case MACH_TASK_BASIC_INFO: {	
@@ -476,7 +523,7 @@ mach_task_info(args)
 		if (req->req_count < count)
 			return mach_msg_error(args, ENOBUFS);
 
-		ru = &l->l_proc->p_stats->p_ru;
+		ru = &tp->p_stats->p_ru;
 		mtbi = (struct mach_task_basic_info *)&rep->rep_info[0];
 
 		mtbi->mtbi_suspend_count = ru->ru_nvcsw + ru->ru_nivcsw;
@@ -501,7 +548,7 @@ mach_task_info(args)
 		if (req->req_count < count)
 			return mach_msg_error(args, ENOBUFS);
 
-		ru = &l->l_proc->p_stats->p_ru;
+		ru = &tp->p_stats->p_ru;
 		mttti = (struct mach_task_thread_times_info *)&rep->rep_info[0];
 
 		mttti->mttti_user_time.seconds = ru->ru_utime.tv_sec;
@@ -523,7 +570,7 @@ mach_task_info(args)
 			return mach_msg_error(args, ENOBUFS);
 
 		mtei = (struct mach_task_events_info *)&rep->rep_info[0];
-		ru = &l->l_proc->p_stats->p_ru;
+		ru = &tp->p_stats->p_ru;
 
 		mtei->mtei_faults = ru->ru_majflt;
 		mtei->mtei_pageins = ru->ru_minflt;
@@ -565,24 +612,20 @@ mach_task_suspend(args)
 	struct lwp *l = args->l;
 	struct lwp *lp;
 	mach_port_t mn;
-	struct mach_right *mr;
-	struct proc *p;
 	struct mach_emuldata *med;
+	struct proc *tp;
+	struct lwp *tl;
+	int error;
 
-	/* XXX more permission checks nescessary here? */
+	/* Get the target lwp from the remote port. */
 	mn = req->req_msgh.msgh_remote_port;
-	if ((mr = mach_right_check(mn, l, MACH_PORT_TYPE_ALL_RIGHTS)) == 0)
-		return mach_msg_error(args, EINVAL);
-
-	if ((mr->mr_port == NULL) || 
-	    (mr->mr_port->mp_datatype != MACH_MP_PROC))
-		return mach_msg_error(args, EINVAL);
-
-	p = (struct proc *)mr->mr_port->mp_data;
-	med = p->p_emuldata;
+	if ((error = mach_get_target_task(l, mn, &tp, &tl)) != 0)
+		return mach_msg_error(args, error);
+	
+	med = tp->p_emuldata;
 	med->med_suspend++; /* XXX Mach also has a per thread semaphore */
 		
-	LIST_FOREACH(lp, &p->p_lwps, l_sibling) {
+	LIST_FOREACH(lp, &tp->p_lwps, l_sibling) {
 		switch(lp->l_stat) {
 		case LSONPROC:
 		case LSRUN:
@@ -596,7 +639,7 @@ mach_task_suspend(args)
 			break;
 		}
 	}
-	proc_stop(p);
+	proc_stop(tp);
 
 	rep->rep_msgh.msgh_bits =
 	    MACH_MSGH_REPLY_LOCAL_BITS(MACH_MSG_TYPE_MOVE_SEND_ONCE);
@@ -619,21 +662,17 @@ mach_task_resume(args)
 	size_t *msglen = args->rsize;
 	struct lwp *l = args->l;
 	mach_port_t mn;
-	struct mach_right *mr;
-	struct proc *p;
 	struct mach_emuldata *med;
+	struct proc *tp;
+	struct lwp *tl;
+	int error;
 
-	/* XXX more permission checks nescessary here? */
+	/* Get the target lwp from the remote port. */
 	mn = req->req_msgh.msgh_remote_port;
-	if ((mr = mach_right_check(mn, l, MACH_PORT_TYPE_ALL_RIGHTS)) == 0)
-		return mach_msg_error(args, EINVAL);
+	if ((error = mach_get_target_task(l, mn, &tp, &tl)) != 0)
+		return mach_msg_error(args, error);
 
-	if ((mr->mr_port == NULL) || 
-	    (mr->mr_port->mp_datatype != MACH_MP_PROC))
-		return mach_msg_error(args, EINVAL);
-
-	p = (struct proc *)mr->mr_port->mp_data;
-	med = p->p_emuldata;
+	med = tp->p_emuldata;
 	med->med_suspend--; /* XXX Mach also has a per thread semaphore */
 #if 0
 	if (med->med_suspend > 0)
@@ -641,8 +680,10 @@ mach_task_resume(args)
 #endif
 		
 	/* XXX We should also wake up the stopped thread... */
-	printf("resuming pid %d\n", p->p_pid);
-	(void)proc_unstop(p);
+#ifdef DEBUG_MACH
+	printf("resuming pid %d\n", tp->p_pid);
+#endif
+	(void)proc_unstop(tp);
 
 	rep->rep_msgh.msgh_bits =
 	    MACH_MSGH_REPLY_LOCAL_BITS(MACH_MSG_TYPE_MOVE_SEND_ONCE);
@@ -711,6 +752,39 @@ mach_sys_task_for_pid(l, v, retval)
 	if ((error = copyout(&mr->mr_name, SCARG(uap, t), 
 	    sizeof(mr->mr_name))) != 0)
 		return error;
+
+	return 0;
+}
+
+inline int
+mach_get_target_task(l, mn, tp, tl)
+	struct lwp *l;
+	mach_port_t mn;
+	struct proc **tp;
+	struct lwp **tl;
+{
+	struct mach_right *mr;
+	struct proc *p;
+
+	if ((mr = mach_right_check(mn, l, MACH_PORT_TYPE_ALL_RIGHTS)) == 0)
+		return EPERM;
+
+	if (mr->mr_port->mp_datatype != MACH_MP_PROC) {
+#ifdef DEBUG_MACH
+		printf("non proc data on task kernel port\n");
+#endif
+		return EINVAL;
+	}
+
+	/* 
+	 * XXX There should be per-thread kernel ports to 
+	 * avoid this: We always see the same thread.
+	 */
+	p = (struct proc *)mr->mr_port->mp_data;
+	if (tp != NULL)
+		*tp = p;
+	if (tl != NULL)
+		*tl = proc_representative_lwp(p);
 
 	return 0;
 }
