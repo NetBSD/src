@@ -33,7 +33,7 @@ copyright="\
  * SUCH DAMAGE.
  */
 "
-SCRIPT_ID='$NetBSD: vnode_if.sh,v 1.23 2000/12/22 15:09:46 mrg Exp $'
+SCRIPT_ID='$NetBSD: vnode_if.sh,v 1.24 2000/12/22 20:00:16 fvdl Exp $'
 
 # Script to produce VFS front-end sugar.
 #
@@ -162,7 +162,7 @@ echo '#ifndef _SYS_VNODE_IF_H_'
 echo '#define _SYS_VNODE_IF_H_'
 echo ''
 echo '#ifdef _KERNEL'
-echo '#ifdef LKM'
+echo '#ifdef _LKM'
 echo '/* LKMs always use non-inlined vnode ops. */'
 echo '#define	VNODE_OP_NOINLINE'
 echo '#else'
