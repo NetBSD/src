@@ -1,3 +1,5 @@
+/*	$NetBSD: code.c,v 1.3 1999/11/09 22:41:53 wennmach Exp $	*/
+
 /*-
  * Copyright (c) 1999 
  *	Contributed to NetBSD by Alexandre Wennmacher
