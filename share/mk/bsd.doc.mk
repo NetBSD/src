@@ -1,7 +1,7 @@
 #	from: @(#)bsd.doc.mk	5.3 (Berkeley) 1/2/91
-#	$Id: bsd.doc.mk,v 1.15 1993/08/23 16:44:18 mycroft Exp $
+#	$Id: bsd.doc.mk,v 1.16 1994/01/24 22:30:32 cgd Exp $
 
-PRINTER?=	ps
+PRINTER_TYPE?=	ps
 
 BIB?=		bib
 EQN?=		eqn
@@ -10,17 +10,17 @@ GRIND?=		vgrind -f
 INDXBIB?=	indxbib
 PIC?=		pic
 REFER?=		refer
-ROFF?=		groff -T${PRINTER} ${MACROS} ${PAGES}
+ROFF?=		groff -T${PRINTER_TYPE} ${MACROS} ${PAGES}
 SOELIM?=	soelim
 TBL?=		tbl
 
 .PATH: ${.CURDIR}
 
-all:	${DOC}.${PRINTER}
+all:	${DOC}.${PRINTER_TYPE}
 
 .if !target(print)
-print: ${DOC}.${PRINTER}
-	lpr -P${PRINTER} ${DOC}.${PRINTER}
+print: ${DOC}.${PRINTER_TYPE}
+	lpr ${DOC}.${PRINTER_TYPE}
 .endif
 
 clean:
