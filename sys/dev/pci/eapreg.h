@@ -1,4 +1,4 @@
-/*	$NetBSD: eapreg.h,v 1.7 2003/12/04 13:57:31 keihan Exp $	*/
+/*	$NetBSD: eapreg.h,v 1.8 2004/07/08 19:39:00 drochner Exp $	*/
 
 /*
  * Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.
@@ -65,6 +65,8 @@
 #define  EAP_SET_PCLKDIV(n)	(((n)&0x1fff)<<16)
 #define  EAP_GET_PCLKDIV(n)	(((n)>>16)&0x1fff)
 #define  EAP_PCLKBITS		0x1fff0000
+#define  E1371_JOY_ASEL(n)	(((n)&3)<<24)
+#define  E1371_JOY_ASELBITS	0x03000000
 #define  EAP_XTCL1		0x40000000
 #define  EAP_ADC_STOP		0x80000000
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: eap.c,v 1.68 2004/04/23 21:13:06 itojun Exp $	*/
+/*	$NetBSD: eap.c,v 1.69 2004/07/08 19:39:00 drochner Exp $	*/
 /*      $OpenBSD: eap.c,v 1.6 1999/10/05 19:24:42 csapuntz Exp $ */
 
 /*
@@ -57,9 +57,10 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: eap.c,v 1.68 2004/04/23 21:13:06 itojun Exp $");
+__KERNEL_RCSID(0, "$NetBSD: eap.c,v 1.69 2004/07/08 19:39:00 drochner Exp $");
 
 #include "midi.h"
+#include "joy_eap.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -84,6 +85,7 @@ __KERNEL_RCSID(0, "$NetBSD: eap.c,v 1.68 2004/04/23 21:13:06 itojun Exp $");
 #include <machine/bus.h>
 
 #include <dev/pci/eapreg.h>
+#include <dev/pci/eapvar.h>
 
 #define	PCI_CBIO		0x10
 
@@ -155,6 +157,9 @@ struct eap_softc {
 	void	(*sc_ointr)(void *);	/* midi output ready handler */
 	void	*sc_arg;
 	struct device *sc_mididev;
+#endif
+#if NJOY_EAP > 0
+	struct device *sc_gameport;
 #endif
 
 	u_short	sc_port[AK_NPORTS];	/* mirror of the hardware setting */
@@ -585,6 +590,9 @@ eap_attach(struct device *parent, struct device *self, void *aux)
 	int i;
 	int revision, ct5880;
 	const char *revstr = "";
+#if NJOY_EAP > 0
+	struct eap_gameport_args gpargs;
+#endif
 
 	aprint_naive(": Audio controller\n");
 
@@ -793,13 +801,29 @@ eap_attach(struct device *parent, struct device *self, void *aux)
 #if NMIDI > 0
 	sc->sc_mididev = midi_attach_mi(&eap_midi_hw_if, sc, &sc->sc_dev);
 #endif
+
+#if NJOY_EAP > 0
+	if (sc->sc_1371) {
+		gpargs.gpa_iot = sc->iot;
+		gpargs.gpa_ioh = sc->ioh;
+		sc->sc_gameport = eap_joy_attach(&sc->sc_dev, &gpargs);
+	}
+#endif
 }
 
 int
 eap_detach(struct device *self, int flags)
 {
 	struct eap_softc *sc = (struct eap_softc *) self;
+#if NJOY_EAP > 0
+	struct eap_gameport_args gpargs;
 
+	if (sc->sc_gameport) {
+		gpargs.gpa_iot = sc->iot;
+		gpargs.gpa_ioh = sc->ioh;
+		eap_joy_detach(sc->sc_gameport, &gpargs);
+	}
+#endif
 #if NMIDI > 0
 	if (sc->sc_mididev != NULL)
 		config_detach(sc->sc_mididev, 0);
