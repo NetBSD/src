@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.sys.mk,v 1.22 1998/08/16 23:55:04 tv Exp $
+#	$NetBSD: bsd.sys.mk,v 1.23 1998/08/17 00:03:32 tv Exp $
 #
 # Overrides used for NetBSD source tree builds.
 
@@ -35,7 +35,7 @@ HOST_LDFLAGS?=
 .SUFFIXES:	.m .o .ln .lo
 
 .c.lo:
-	${HOST_COMPILE.c} ${.IMPSRC}
+	${HOST_COMPILE.c} -o ${.TARGET} ${.IMPSRC}
 
 .m:
 	${LINK.m} -o ${.TARGET} ${.IMPSRC} ${LDLIBS}
