@@ -1,4 +1,4 @@
-/*	$NetBSD: unistd.h,v 1.85 2000/06/27 05:51:54 kleink Exp $	*/
+/*	$NetBSD: unistd.h,v 1.86 2000/12/18 21:22:00 christos Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.
@@ -103,7 +103,11 @@ int	chown __P((const char *, uid_t, gid_t));
 #endif /* defined(_POSIX_C_SOURCE) || defined(_XOPEN_SOURCE) */
 int	 close __P((int));
 size_t	 confstr __P((int, char *, size_t));
+#ifndef __CUSERID_DECLARED
+#define __CUSERID_DECLARED
+/* also declared in stdio.h */
 char	*cuserid __P((char *));	/* obsolete */
+#endif /* __CUSERID_DECLARED */
 int	 dup __P((int));
 int	 dup2 __P((int, int));
 int	 execl __P((const char *, const char *, ...));
@@ -126,7 +130,6 @@ pid_t	 getppid __P((void));
 uid_t	 getuid __P((void));
 int	 isatty __P((int));
 int	 link __P((const char *, const char *));
-off_t	 lseek __P((int, off_t, int));
 long	 pathconf __P((const char *, int));
 int	 pause __P((void));
 int	 pipe __P((int *));
@@ -160,6 +163,14 @@ extern	 int optopt;
 
 
 /*
+ * The following three syscalls are also defined in <sys/types.h>
+ * We protect them against double declarations.
+ */
+#ifndef __OFF_T_SYSCALLS_DECLARED
+#define __OFF_T_SYSCALLS_DECLARED
+off_t	 lseek __P((int, off_t, int));
+int	 truncate __P((const char *, off_t));
+/*
  * IEEE Std 1003.1b-93,
  * also found in X/Open Portability Guide >= Issue 4 Verion 2
  */
@@ -169,6 +180,7 @@ extern	 int optopt;
     (_XOPEN_SOURCE - 0) >= 500
 int	 ftruncate __P((int, off_t));
 #endif
+#endif /* __OFF_T_SYSCALLS_DECLARED */
 
 
 /*
@@ -254,7 +266,6 @@ int	 setreuid __P((uid_t, uid_t));
 void	 swab __P((const void *, void *, size_t));
 int	 symlink __P((const char *, const char *));
 void	 sync __P((void));
-int	 truncate __P((const char *, off_t));
 useconds_t ualarm __P((useconds_t, useconds_t));
 int	 usleep __P((useconds_t));
 #ifdef __LIBC12_SOURCE__
@@ -306,7 +317,11 @@ int	 iruserok __P((u_int32_t, int, const char *, const char *));
 int      issetugid __P((void));
 int	 nfssvc __P((int, void *));
 int	 profil __P((char *, size_t, u_long, u_int));
-void	 psignal __P((unsigned int, const char *));
+#ifndef __PSIGNAL_DECLARED
+#define __PSIGNAL_DECLARED
+/* also in signal.h */
+void	psignal __P((unsigned int, const char *));
+#endif /* __PSIGNAL_DECLARED */
 int	 rcmd __P((char **, int, const char *,
 	    const char *, const char *, int *));
 int	 reboot __P((int, char *));
@@ -339,7 +354,11 @@ int	 rresvport_af __P((int *, int));
 int	 iruserok_sa __P((const void *, int, int, const char *, const char *));
 #endif
 
+#ifndef __SYS_SIGLIST_DECLARED
+#define __SYS_SIGLIST_DECLARED
+/* also in signal.h */
 extern __const char *__const *sys_siglist __RENAME(__sys_siglist14);
+#endif /* __SYS_SIGLIST_DECLARED */
 extern	 int optreset;		/* getopt(3) external variable */
 extern	 char *suboptarg;	/* getsubopt(3) external variable */
 #endif

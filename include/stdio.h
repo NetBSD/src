@@ -1,4 +1,4 @@
-/*	$NetBSD: stdio.h,v 1.39 2000/11/15 15:44:05 briggs Exp $	*/
+/*	$NetBSD: stdio.h,v 1.40 2000/12/18 21:22:00 christos Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -272,7 +272,11 @@ __END_DECLS
 
 __BEGIN_DECLS
 char	*ctermid __P((char *));
+#ifndef __CUSERID_DECLARED
+#define __CUSERID_DECLARED
+/* also declared in unistd.h */
 char	*cuserid __P((char *));
+#endif /* __CUSERID_DECLARED */
 FILE	*fdopen __P((int, const char *));
 int	 fileno __P((FILE *));
 __END_DECLS
