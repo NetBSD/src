@@ -1,4 +1,4 @@
-/*	$NetBSD: syscall.c,v 1.23 2003/10/31 03:28:12 simonb Exp $	*/
+/*	$NetBSD: syscall.c,v 1.24 2003/11/14 19:03:17 scw Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2003 The NetBSD Foundation, Inc.
@@ -82,7 +82,7 @@
 
 #include <sys/param.h>
 
-__KERNEL_RCSID(0, "$NetBSD: syscall.c,v 1.23 2003/10/31 03:28:12 simonb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: syscall.c,v 1.24 2003/11/14 19:03:17 scw Exp $");
 
 #include <sys/device.h>
 #include <sys/errno.h>
@@ -133,6 +133,29 @@ swi_handler(trapframe_t *frame)
 #ifdef acorn26
 	frame->tf_pc += INSN_SIZE;
 #endif
+
+	/*
+	 * Make sure the program counter is correctly aligned so we
+	 * don't take an alignment fault trying to read the opcode.
+	 */
+	if (__predict_false(((frame->tf_pc - INSN_SIZE) & 3) != 0)) {
+		ksiginfo_t ksi;
+		/* Give the user an illegal instruction signal. */
+		KSI_INIT_TRAP(&ksi);
+		ksi.ksi_signo = SIGILL;
+		ksi.ksi_code = ILL_ILLOPC;
+		ksi.ksi_addr = (u_int32_t *)(intptr_t) (frame->tf_pc-INSN_SIZE);
+		KERNEL_PROC_LOCK(l->l_proc);
+#if 0
+		/* maybe one day we'll do emulations */
+		(*l->l_proc->p_emul->e_trapsignal)(l, &ksi);
+#else
+		trapsignal(l, &ksi);
+#endif
+		KERNEL_PROC_UNLOCK(l->l_proc);
+		userret(l);
+		return;
+	}
 
 	/* XXX fuword? */
 #ifdef __PROG32
