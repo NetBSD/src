@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-#	$NetBSD: veriexec,v 1.1 2004/01/14 06:53:50 blymn Exp $
+#	$NetBSD: veriexec,v 1.2 2004/01/15 11:20:19 uebayasi Exp $
 #
 
 # PROVIDE: veriexec
@@ -10,6 +10,7 @@
 . /etc/rc.subr
 
 name="veriexec"
+rcvar=$name
 start_cmd="veriexec_start"
 
 veriexec_start()
