@@ -1,4 +1,4 @@
-/*	$NetBSD: signal.h,v 1.22 2003/01/15 23:55:41 kleink Exp $	*/
+/*	$NetBSD: signal.h,v 1.23 2003/01/18 10:32:11 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -63,9 +63,13 @@ int	raise __P((int));
 #ifndef	_ANSI_SOURCE
 int	kill __P((pid_t, int));
 
+int	pthread_sigmask __P((int, const sigset_t *, sigset_t *));
+
 #ifdef __LIBC12_SOURCE__
 int	sigaction __P((int, const struct sigaction13 *, struct sigaction13 *));
 int	__sigaction14 __P((int, const struct sigaction *, struct sigaction *));
+int	__libc_sigaction14 __P((int, const struct sigaction *,
+	    struct sigaction *));
 int	sigaddset __P((sigset13_t *, int));
 int	__sigaddset14 __P((sigset_t *, int));
 int	sigdelset __P((sigset13_t *, int));
