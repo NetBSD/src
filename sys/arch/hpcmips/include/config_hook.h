@@ -1,4 +1,4 @@
-/*	$NetBSD: config_hook.h,v 1.3 2000/04/03 03:48:42 sato Exp $	*/
+/*	$NetBSD: config_hook.h,v 1.3.4.1 2000/08/06 04:21:30 takemura Exp $	*/
 
 /*-
  * Copyright (c) 1999
@@ -33,6 +33,9 @@
  * SUCH DAMAGE.
  *
  */
+
+#ifndef _CONFIG_HOOK_H_
+#define _CONFIG_HOOK_H_
 
 enum config_hook_mode {
 	CONFIG_HOOK_SHARE,
@@ -81,7 +84,12 @@ int	config_hook_call __P((int type, long id, void *msg));
 #define CONFIG_HOOK_BUTTONEVENT_LIGHT_UP	17
 #define CONFIG_HOOK_BUTTONEVENT_LIGHT_DOWN	18
 
-#define CONFIG_HOOK_NTYPES 		2
+#define CONFIG_HOOK_PMEVENT		2
+#define CONFIG_HOOK_PMEVENT_STANDBYREQ		0
+#define CONFIG_HOOK_PMEVENT_SUSPENDREQ		1
+#define CONFIG_HOOK_PMEVENT_HARDPOWER		2
+
+#define CONFIG_HOOK_NTYPES 		3
 
 /*
  * nicknames for including from configration file.
@@ -113,3 +121,5 @@ int	config_hook_call __P((int type, long id, void *msg));
 #define BTN_LIGHT_UP	CONFIG_HOOK_BUTTONEVENT_LIGHT_UP
 #define BTN_LIGHT_DN	CONFIG_HOOK_BUTTONEVENT_LIGHT_DOWN
 #endif /* CONFIG_HOOK_DEFINE_NICKNAME */
+
+#endif /* _CONFIG_HOOK_H_ */
