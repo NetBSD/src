@@ -1,4 +1,4 @@
-/*	$NetBSD: if_arp.c,v 1.85 2002/06/24 21:25:34 enami Exp $	*/
+/*	$NetBSD: if_arp.c,v 1.86 2002/06/25 02:53:27 enami Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
@@ -79,7 +79,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_arp.c,v 1.85 2002/06/24 21:25:34 enami Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_arp.c,v 1.86 2002/06/25 02:53:27 enami Exp $");
 
 #include "opt_ddb.h"
 #include "opt_inet.h"
@@ -558,8 +558,7 @@ arp_rtrequest(req, rt, info)
 			rt->rt_expire = 0;
 			Bcopy(LLADDR(rt->rt_ifp->if_sadl),
 			    LLADDR(SDL(gate)),
-			    SDL(gate)->sdl_alen =
-			    rt->rt_ifp->if_data.ifi_addrlen);
+			    SDL(gate)->sdl_alen = rt->rt_ifp->if_addrlen);
 #if NLOOP > 0
 			if (useloopback)
 				rt->rt_ifp = &loif[0];
@@ -620,11 +619,11 @@ arprequest(ifp, sip, tip, enaddr)
 	switch (ifp->if_type) {
 	case IFT_IEEE1394:
 		m->m_len = sizeof(*ah) + 2 * sizeof(struct in_addr) +
-		    ifp->if_data.ifi_addrlen;
+		    ifp->if_addrlen;
 		break;
 	default:
 		m->m_len = sizeof(*ah) + 2 * sizeof(struct in_addr) +
-		    2 * ifp->if_data.ifi_addrlen;
+		    2 * ifp->if_addrlen;
 		break;
 	}
 	m->m_pkthdr.len = m->m_len;
@@ -645,7 +644,7 @@ arprequest(ifp, sip, tip, enaddr)
 		break;
 	}
 	ah->ar_pro = htons(ETHERTYPE_IP);
-	ah->ar_hln = ifp->if_data.ifi_addrlen;	/* hardware address length */
+	ah->ar_hln = ifp->if_addrlen;		/* hardware address length */
 	ah->ar_pln = sizeof(struct in_addr);	/* protocol address length */
 	ah->ar_op = htons(ARPOP_REQUEST);
 	bcopy((caddr_t)enaddr, (caddr_t)ar_sha(ah), ah->ar_hln);
@@ -704,7 +703,7 @@ arpresolve(ifp, rt, m, dst, desten)
 	if ((rt->rt_expire == 0 || rt->rt_expire > time.tv_sec) &&
 	    sdl->sdl_family == AF_LINK && sdl->sdl_alen != 0) {
 		bcopy(LLADDR(sdl), desten,
-		    min(sdl->sdl_alen, ifp->if_data.ifi_addrlen));
+		    min(sdl->sdl_alen, ifp->if_addrlen));
 		return 1;
 	}
 	/*
@@ -938,14 +937,14 @@ in_arpinput(m)
 
 	/* XXX checks for bridge case? */
 	if (!bcmp((caddr_t)ar_sha(ah), LLADDR(ifp->if_sadl),
-	    ifp->if_data.ifi_addrlen)) {
+	    ifp->if_addrlen)) {
 		arpstat.as_rcvlocalsha++;
 		goto out;	/* it's from me, ignore it. */
 	}
 
 	/* XXX checks for bridge case? */
 	if (!bcmp((caddr_t)ar_sha(ah), (caddr_t)ifp->if_broadcastaddr,
-	    ifp->if_data.ifi_addrlen)) {
+	    ifp->if_addrlen)) {
 		arpstat.as_rcvbcastsha++;
 		log(LOG_ERR,
 		    "%s: arp: link address is broadcast for IP address %s!\n",
@@ -1002,12 +1001,12 @@ in_arpinput(m)
 			    "arp from %s: new addr len %d, was %d",
 			    in_fmtaddr(isaddr), ah->ar_hln, sdl->sdl_alen);
 		}
-		if (ifp->if_data.ifi_addrlen != ah->ar_hln) {
+		if (ifp->if_addrlen != ah->ar_hln) {
 			arpstat.as_rcvbadlen++;
 			log(LOG_WARNING,
 			    "arp from %s: addr len: new %d, i/f %d (ignored)",
 			    in_fmtaddr(isaddr), ah->ar_hln,
-			    ifp->if_data.ifi_addrlen);
+			    ifp->if_addrlen);
 			goto reply;
 		}
 #if NTOKEN > 0
@@ -1314,13 +1313,13 @@ revarprequest(ifp)
 	if ((m = m_gethdr(M_DONTWAIT, MT_DATA)) == NULL)
 		return;
 	m->m_len = sizeof(*ah) + 2*sizeof(struct in_addr) +
-	    2*ifp->if_data.ifi_addrlen;
+	    2*ifp->if_addrlen;
 	m->m_pkthdr.len = m->m_len;
 	MH_ALIGN(m, m->m_len);
 	ah = mtod(m, struct arphdr *);
 	bzero((caddr_t)ah, m->m_len);
 	ah->ar_pro = htons(ETHERTYPE_IP);
-	ah->ar_hln = ifp->if_data.ifi_addrlen;	/* hardware address length */
+	ah->ar_hln = ifp->if_addrlen;		/* hardware address length */
 	ah->ar_pln = sizeof(struct in_addr);	/* protocol address length */
 	ah->ar_op = htons(ARPOP_REVREQUEST);
 
