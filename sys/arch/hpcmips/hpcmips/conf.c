@@ -1,4 +1,4 @@
-/*	$NetBSD: conf.c,v 1.5 2000/03/12 13:46:29 takemura Exp $	*/
+/*	$NetBSD: conf.c,v 1.6 2000/03/25 19:05:45 uch Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -81,6 +81,12 @@ struct bdevsw	bdevsw[] =
 };
 int	nblkdev = sizeof(bdevsw) / sizeof(bdevsw[0]);
 
+/* open, close, write, ioctl */
+#define	cdev_lpt_init(c,n) { \
+	dev_init(c,n,open), dev_init(c,n,close), (dev_type_read((*))) enodev, \
+	dev_init(c,n,write), dev_init(c,n,ioctl), (dev_type_stop((*))) enodev, \
+	0, seltrue, (dev_type_mmap((*))) enodev }
+
 /*
  * Swapdev is a fake block device implemented  in sw.c and only used 
  * internally to get to swstrategy.  It cannot be provided to the
@@ -156,7 +162,6 @@ cdev_decl(wsmouse);
 #include "wsmux.h"
 cdev_decl(wsmux);
 
-#if notyet
 /* USB */
 #include "usb.h"
 cdev_decl(usb); 
@@ -168,7 +173,7 @@ cdev_decl(ugen);
 cdev_decl(ulpt);
 #include "ucom.h"
 cdev_decl(ucom);
-#endif
+
 #include "rnd.h"
 
 struct cdevsw	cdevsw[] =
@@ -200,17 +205,10 @@ struct cdevsw	cdevsw[] =
 	cdev_ch_init(NCH,ch),	 	/* 20: SCSI autochanger */
 	cdev_uk_init(NUK,uk),	 	/* 21: SCSI unknown */
 	cdev_scanner_init(NSS,ss),	/* 22: SCSI scanner */
-#if notyet
 	cdev_usb_init(NUSB,usb),	/* 23: USB controller */
 	cdev_usbdev_init(NUHID,uhid),	/* 24: USB generic HID */
 	cdev_lpt_init(NULPT,ulpt),	/* 25: USB printer */
 	cdev_ugen_init(NUGEN,ugen),	/* 26: USB generic driver */
-#else
-	cdev_notdef(),
-	cdev_notdef(),
-	cdev_notdef(),
-	cdev_notdef(),
-#endif
 	cdev_ipf_init(NIPFILTER,ipl),	/* 27: ip-filter device */
 	cdev_bpftun_init(NTUN,tun),	/* 28: network tunnel */
 	cdev_bpftun_init(NBPFILTER,bpf),/* 29: Berkeley packet filter */
@@ -235,11 +233,7 @@ struct cdevsw	cdevsw[] =
 #else
 	cdev_notdef(),
 #endif
-#if notyet
 	cdev_tty_init(NUCOM, ucom),	/* 37: USB tty */
-#else
-	cdev_notdef(),
-#endif
 #if NWSMUX > 0
 	cdev_mouse_init(NWSMUX,	wsmux), /* 38: ws multiplexor */
 #else
