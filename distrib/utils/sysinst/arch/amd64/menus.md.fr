@@ -1,4 +1,4 @@
-/*	$NetBSD: menus.md.en,v 1.1 2002/12/05 02:05:56 fvdl Exp $	*/
+/*	$NetBSD: menus.md.fr,v 1.1 2003/04/26 19:02:51 fvdl Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -38,15 +38,15 @@
 
 /* Menu definitions for sysinst. i386 version, machine dependent. */
 
-menu getboottype, title "Bootblocks selection";
-	option "Use normal bootblocks", exit, action  {boottype = "normal";};
-	option "Use serial bootblocks", exit, action  {boottype = "serial";};
+menu getboottype, title "Sélection de Bootblocks";
+	option "Utilisez normal le bootblocks", exit, action  {boottype = "normal";};
+	option "Utilisez serial le bootblocks", exit, action  {boottype = "serial";};
 
-menu fullpart, title  "Select your choice";
-	option "Use only part of the disk", exit, action  {usefull = 0;};
-	option "Use the entire disk", 	    exit, action  {usefull = 1;};
+menu fullpart, y=15, title  "Faite votre choix";
+	option "Utilisation d'une partie du disque", exit, action  {usefull = 0;};
+	option "Utilisation de tout le disque", 	    exit, action  {usefull = 1;};
 
-menu wdtype, title  "Select type";
+menu wdtype, title  "Choix du type de disque";
 	display action { msg_display (MSG_wdtype, diskdev); };
 	option "IDE", 	exit;
 	option "ESDI", 	exit, action
@@ -63,82 +63,54 @@ menu wdtype, title  "Select type";
 		};
 
 
-menu dlgeom, title "Choose an option";
+menu dlgeom, title "Choisissez une option";
 	display action { msg_display (MSG_dlgeom, diskdev, dlcyl, dlhead,
 				dlsec, disk->dd_cyl, disk->dd_head,
 				disk->dd_sec);
 			};
-	option "Use real geometry", exit, action {
+	option "Utilisation de la géométrie réelle", exit, action {
 			dlcyl  = disk->dd_cyl;
 			dlhead = disk->dd_head;
 			dlsec  = disk->dd_sec;
 		};
-	option "Use disklabel geometry", exit, action {
+	option "Utilisation de la géométrie du disklabel", exit, action {
 			disk->dd_cyl = dlcyl;
 			disk->dd_head = dlhead;
 			disk->dd_sec = dlsec;
 		};
 
-menu editparttable, title  "Choose your partition", exit;
+
+menu editparttable, title  "Choisissez votre partition", exit;
 	display action  { msg_display (MSG_editparttable);
 			  disp_cur_part((struct mbr_partition *)&mbr[MBR_PARTOFF
 ], activepart,-1);
 			};
-	option "Edit partition 0",  sub menu editpart,
+	option "Edition de la partition 0",  sub menu editpart,
 		action  { editpart = 0; };
-	option "Edit partition 1",  sub menu editpart,
+	option "Edition de la partition 1",  sub menu editpart,
 		action  { editpart = 1; };
-	option "Edit partition 2",  sub menu editpart,
+	option "Edition de la partition 2",  sub menu editpart,
 		action  { editpart = 2; };
-	option "Edit partition 3",  sub menu editpart,
+	option "Edition de la partition 3",  sub menu editpart,
 		action  { editpart = 3; };
-	option "Reselect size specification",
-		action  { reask_sizemult(bcylsize); }; 
+	option "Changer d'untité",
+		action  { reask_sizemult(bcylsize); };
 
-menu editpart, title  "Select to change";
+menu editpart, title  "Changement";
 	display action { msg_display (MSG_editpart, editpart);
 			   disp_cur_part((struct mbr_partition *)&mbr[MBR_PARTOFF
-], editpart,-1);
+], activepart,editpart);
 			   msg_display_add(MSG_newline);
 			};
-	option "Kind", sub menu chooseid;
-	option "Start and size", action 
-		{	char buf[40]; int start, size, inp, partn;
-
-			msg_table_add(MSG_mbrpart_start_special);
+	option "du type de FS", sub menu chooseid;
+	option "du Début et de la taille", action 
+		{	char buf[40]; int start, size;
 			msg_prompt_add (MSG_start, NULL, buf, 40);
-			inp = atoi(buf);
-			/*
-			 * -0, -1, -2, -3: start at end of part # given
-			 * 0: start of disk.
-			 */
-			if ((inp == 0 && buf[0] == '-') ||
-			    (inp < 0 && inp >= -3)) {
-				partn = -inp;
-				start = part[partn].mbrp_start +
-				    part[partn].mbrp_size;
-			} else if (inp == 0)
-				start = bsec;
-			else
-				start = NUMSEC(inp,sizemult,dlcylsize);
-
+			start = NUMSEC(atoi(buf),sizemult,dlcylsize);
 			if (sizemult > 1 && start < bsec)
 				start = bsec;
-			msg_table_add(MSG_mbrpart_size_special);
 			msg_prompt_add (MSG_size, NULL, buf, 40);
-			inp = atoi(buf);
-			/*
-			 * -0, -1, -2, -3: until start of part # given
-			 * 0: end of disk
-			 */
-			if ((inp == 0 && buf[0] == '-') ||
-			    (inp < 0 && inp >= -3)) {
-				partn = -inp;
-				size = part[partn].mbrp_start - start;
-			} else if (inp == 0)
-				size = dlsize - start;
-			else
-				size = NUMSEC(inp,sizemult,dlcylsize);
+			size = NUMSEC(atoi(buf),sizemult,dlcylsize);
 			if (sizemult > 1 && start == bsec)
 				size -= bsec;
 			if (start + size > bsize)
@@ -150,10 +122,10 @@ menu editpart, title  "Select to change";
 			part[editpart].mbrp_start = start;
 			part[editpart].mbrp_size = size;
 		};
-	option "Set active", action { activepart = editpart; };
+	option "Rendre la partition active", action { activepart = editpart; };
 	option "Partition OK", exit;
 
-menu chooseid, title  "Partition Kind?";
+menu chooseid, title  "Type de Partition?";
 	option "NetBSD", 	exit,	action
 	{
 		part[editpart].mbrp_typ = 169;
@@ -166,31 +138,31 @@ menu chooseid, title  "Partition Kind?";
 	{
 		part[editpart].mbrp_typ = 6;
 	};
-	option "unused",	exit,	action
+	option "inutilis'e",	exit,	action
 	{
 		part[editpart].mbrp_typ = 0;
 	};
-	option "don't change",	exit;
+	option "ne pas modifier",	exit;
 
 menu cyl1024;
-	display action {
+    display action {
 		msg_display(MSG_cyl1024);
 	};
-	option "Re-edit both MBR and label", exit, action
+	option "Rééditer le secteur de boot et le label", exit, action
 	{
 		/* XXX UGH */
 		extern int c1024_resp;
 
 		c1024_resp = 1;
 	};
-	option "Re-edit the label", exit, action
+    option "Rééditer le label", exit, action
 	{
 		extern int c1024_resp;
 
 		c1024_resp = 2;
 	};
-	option "Use it anyway",	exit, action
-	{	
+	option "L'utiliser tout de même", exit, action
+	{
 		extern int c1024_resp;
 
 		c1024_resp = 3;
@@ -202,26 +174,26 @@ menu editfsparts, y=13, exit;
 			msg_display(MSG_fspart, multname);
 			disp_cur_fspart(-1, 1);
 		};
-	option "Change a", action { editpart = A;}, sub menu edfspart;
-	option "Change b", action { editpart = B;}, sub menu edfspart;
-	option "NetBSD partition - can't change", action {};
-	option "Whole disk - can't change", action {};
-	option "Change e", action { editpart = E;}, sub menu edfspart;
-	option "Change f", action { editpart = F;}, sub menu edfspart;
-	option "Change g", action { editpart = G;}, sub menu edfspart;
-	option "Change h", action { editpart = H;}, sub menu edfspart;
-	option "Change i", action { editpart = I;}, sub menu edfspart;
-	option "Change j", action { editpart = J;}, sub menu edfspart;
-	option "Change k", action { editpart = K;}, sub menu edfspart;
-	option "Change l", action { editpart = L;}, sub menu edfspart;
-	option "Change m", action { editpart = M;}, sub menu edfspart;
-	option "Change n", action { editpart = N;}, sub menu edfspart;
-	option "Change o", action { editpart = O;}, sub menu edfspart;
-	option "Change p", action { editpart = P;}, sub menu edfspart;
-	option "Set new allocation size", action { reask_sizemult(dlcylsize); };
+	option "Changer a", action { editpart = A;}, sub menu edfspart;
+	option "Changer b", action { editpart = B;}, sub menu edfspart;
+	option "Partition de NetBSD - Changement impossible", action {};
+	option "Totalité du disque - Changement impossible", action {};
+	option "Changer e", action { editpart = E;}, sub menu edfspart;
+	option "Changer f", action { editpart = F;}, sub menu edfspart;
+	option "Changer g", action { editpart = G;}, sub menu edfspart;
+	option "Changer h", action { editpart = H;}, sub menu edfspart;
+	option "Changer i", action { editpart = I;}, sub menu edfspart;
+	option "Changer j", action { editpart = J;}, sub menu edfspart;
+	option "Changer k", action { editpart = K;}, sub menu edfspart;
+	option "Changer l", action { editpart = L;}, sub menu edfspart;
+	option "Changer m", action { editpart = M;}, sub menu edfspart;
+	option "Changer n", action { editpart = N;}, sub menu edfspart;
+	option "Changer o", action { editpart = O;}, sub menu edfspart;
+	option "Changer p", action { editpart = P;}, sub menu edfspart;
+	option "Changer d'unité", action { reask_sizemult(dlcylsize); };
  
 
-menu md_distcustom, x=26, y=5, exit, title "Selection toggles inclusion";
+menu md_distcustom, x=26, y=5, exit, title "Sélection des composants";
 	display action { show_cur_distsets (); };
 	option	"Kernel (GENERIC)",	 action { toggle_getit (0); };
 	option	"Kernel (GENERIC_TINY)", action { toggle_getit (1); };
@@ -230,20 +202,20 @@ menu md_distcustom, x=26, y=5, exit, title "Selection toggles inclusion";
 	option	"Kernel (GENERIC_PS2TINY)", action { toggle_getit (4); };
 	option	"Base",			 action { toggle_getit (5); };
 	option	"System (/etc)",	 action { toggle_getit (6); };
-	option  "Compiler Tools", 	 action { toggle_getit (7); };
-	option  "Games", 		 action { toggle_getit (8); };
-	option  "Online Manual Pages", 	 action { toggle_getit (9); };
-	option  "Miscellaneous", 	 action { toggle_getit (10); };
-	option  "Text Processing Tools", action { toggle_getit (11); };
-	option  "X11 base and clients",	 action { toggle_getit (12); };
-	option  "X11 fonts",		 action { toggle_getit (13); };
-	option  "X11 servers",		 action { toggle_getit (14); };
-	option  "X contrib clients",	 action { toggle_getit (15); };
-	option  "X11 programming",	 action { toggle_getit (16); };
+	option  "Outils de développement", 	 action { toggle_getit (7); };
+	option  "Jeux", 		 action { toggle_getit (8); };
+	option  "Pages de manuel", 	 action { toggle_getit (9); };
+	option  "Divers", 	 action { toggle_getit (10); };
+	option  "Outils de manipulation de textes", action { toggle_getit (11); };
+	option  "X11 base et clients",	 action { toggle_getit (12); };
+	option  "X11 polices",		 action { toggle_getit (13); };
+	option  "X11 serveurs",		 action { toggle_getit (14); };
+	option  "X11 clients contribués",	 action { toggle_getit (15); };
+	option  "X11 développement",	 action { toggle_getit (16); };
 	option  "X11 Misc.",		 action { toggle_getit (17); };
 
 menu biosonematch;
-	option "This is the correct geometry", exit, action {
+	option "C'est le bon géométrie", exit, action {
 		extern struct disklist *disklist;
 		extern struct nativedisk_info *nativedisk;
 		struct biosdisk_info *bip;
@@ -255,13 +227,13 @@ menu biosonematch;
 		bsec = bip->bi_sec;
 		biosdisk = bip;
 	};
-	option "Set the geometry by hand", exit, action {
+	option "Entrer la géométrie", exit, action {
 		set_bios_geom(dlcyl, dlhead, dlsec);
 		biosdisk = NULL;
 	};
 
 menu biosmultmatch;
-	option "Use one of these disks", exit, action {
+	option "Utiliser l'un de ces disques", exit, action {
 		extern struct disklist *disklist;
 		extern struct nativedisk_info *nativedisk;
 		struct biosdisk_info *bip;
@@ -280,12 +252,12 @@ menu biosmultmatch;
 		bsec = bip->bi_sec;
 		biosdisk = bip;
 	};
-	option "Set the geometry by hand", exit, action {
+	option "Entrer la géométrie", exit, action {
 		set_bios_geom(dlcyl, dlhead, dlsec);
 		biosdisk = NULL;
 	};
 
-menu configbootsel, y=16, title  "Change a bootmenu item", exit;
+menu configbootsel, title  "Changer une entree du menu", exit;
         display action  { msg_display(MSG_configbootsel);
                           disp_bootsel((struct mbr_partition *)&mbr[MBR_PARTOFF], mbs);
 			  msg_display_add(MSG_bootseltimeout, (1000 * mbs->timeo) / 18200);
@@ -299,31 +271,31 @@ menu configbootsel, y=16, title  "Change a bootmenu item", exit;
 				msg_display_add(MSG_defbootseloptdisk,
 				    defbootseldisk);
                         };
-        option "Edit menu entry 0",
+        option "Changer l'entrée 0 du menu",
 		action {
 			if (part[0].mbrp_typ != 0)
 				msg_prompt(MSG_bootselitemname, mbs->nametab[0],
 				    mbs->nametab[0], 8);
 		};
-        option "Edit menu entry 1",
+        option "Changer l'entrée 1 du menu",
 		action {
 			if (part[1].mbrp_typ != 0)
 				msg_prompt(MSG_bootselitemname, mbs->nametab[1],
 				    mbs->nametab[1], 8);
 		};
-        option "Edit menu entry 2",
+        option "Changer l'entrée 2 du menu",
 		action {
 			if (part[2].mbrp_typ != 0)
 				msg_prompt(MSG_bootselitemname, mbs->nametab[2],
 				    mbs->nametab[2], 8);
 		};
-        option "Edit menu entry 3",
+        option "Changer l'entrée 3 du menu",
 		action {
 			if (part[3].mbrp_typ != 0)
 				msg_prompt(MSG_bootselitemname, mbs->nametab[3],
 				    mbs->nametab[3], 8);
 		};
-	option "Set timeout value",
+	option "Changer le temps d'attente",
 		action {
 			char tstr[8];
 			unsigned timo;
@@ -337,9 +309,9 @@ menu configbootsel, y=16, title  "Change a bootmenu item", exit;
 			} while (timo > 3600);
 			mbs->timeo = (u_int16_t)((timo * 18200) / 1000);
 		};
-	option "Set default option", sub menu defaultbootsel;
+	option "Changer le choix par defaut", sub menu defaultbootsel;
 
-menu defaultbootsel, title "Pick a default partition/disk to boot";
+menu defaultbootsel, title "Choisissez un disque ou partition";
 	option "Partition 0", exit,
 		action {
 			if (mbs->nametab[0][0] != 0 && part[0].mbrp_typ != 0)
@@ -360,17 +332,17 @@ menu defaultbootsel, title "Pick a default partition/disk to boot";
 			if (mbs->nametab[3][0] != 0 && part[3].mbrp_typ != 0)
 				mbs->defkey = SCAN_F1 + 3; defbootselpart = 3;
 		};
-	option "Harddisk 0", exit,
+	option "Disque dur 0", exit,
 		action { mbs->defkey = SCAN_F1 + 4; defbootseldisk = 0; };
-	option "Harddisk 1", exit,
+	option "Disque dur 1", exit,
 		action { mbs->defkey = SCAN_F1 + 5; defbootseldisk = 1; };
-	option "Harddisk 2", exit,
+	option "Disque dur 2", exit,
 		action { mbs->defkey = SCAN_F1 + 6; defbootseldisk = 2; };
-	option "Harddisk 3", exit,
+	option "Disque dur 3", exit,
 		action { mbs->defkey = SCAN_F1 + 7; defbootseldisk = 3; };
-	option "Harddisk 4", exit,
+	option "Disque dur 4", exit,
 		action { mbs->defkey = SCAN_F1 + 8; defbootseldisk = 4; };
-	option "Harddisk 5", exit,
+	option "Disque dur 5", exit,
 		action { mbs->defkey = SCAN_F1 + 9; defbootseldisk = 5; };
-	option "First active partition", exit,
+	option "Première partition active", exit,
 		action { mbs->defkey = SCAN_ENTER; };

@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.4 2003/03/07 00:48:48 fvdl Exp $
+#	$NetBSD: Makefile.inc,v 1.1 2003/04/26 19:08:18 fvdl Exp $
 #
 #	etc.x86_64/Makefile.inc -- x86_64-specific etc Makefile targets
 #

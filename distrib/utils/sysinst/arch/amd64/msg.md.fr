@@ -1,4 +1,4 @@
-/*	$NetBSD: msg.md.fr,v 1.1 2002/12/05 02:05:57 fvdl Exp $	*/
+/*	$NetBSD: msg.md.fr,v 1.1 2003/04/26 19:02:52 fvdl Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
