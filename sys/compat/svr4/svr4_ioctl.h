@@ -1,4 +1,4 @@
-/*	$NetBSD: svr4_ioctl.h,v 1.1 1994/11/14 06:13:16 christos Exp $	 */
+/*	$NetBSD: svr4_ioctl.h,v 1.2 1994/11/18 02:53:48 christos Exp $	 */
 
 /*
  * Copyright (c) 1994 Christos Zoulas

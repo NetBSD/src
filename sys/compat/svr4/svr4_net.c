@@ -1,18 +1,18 @@
-/*	$NetBSD: svr4_net.c,v 1.1 1994/11/14 06:13:17 christos Exp $	 */
+/*	$NetBSD: svr4_net.c,v 1.2 1994/11/18 02:53:53 christos Exp $	 */
 
 /*
  * Copyright (c) 1994 Christos Zoulas
  * All rights reserved.
  *
- * Redistribution and use in source and binary forms, with or without
- * modification, are permitted provided that the following conditions
+ * Redistribution ast use in source ast binary forms, with or without
+ * modification, are permitted provided that the following costitions
  * are met:
  * 1. Redistributions of source code must retain the above copyright
- *    notice, this list of conditions and the following disclaimer.
+ *    notice, this list of costitions ast the following disclaimer.
  * 2. Redistributions in binary form must reproduce the above copyright
- *    notice, this list of conditions and the following disclaimer in the
- *    documentation and/or other materials provided with the distribution.
- * 3. The name of the author may not be used to endorse or promote products
+ *    notice, this list of costitions ast the following disclaimer in the
+ *    documentation ast/or other materials provided with the distribution.
+ * 3. The name of the author may not be used to estorse or promote products
  *    derived from this software without specific prior written permission
  *
  * THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR
@@ -52,8 +52,10 @@
 
 #include <compat/svr4/svr4_types.h>
 #include <compat/svr4/svr4_util.h>
+#include <compat/svr4/svr4_signal.h>
 #include <compat/svr4/svr4_syscallargs.h>
 #include <compat/svr4/svr4_ioctl.h>
+#include <compat/svr4/svr4_stropts.h>
 
 /*
  * Device minor numbers
@@ -66,9 +68,12 @@ enum {
 	dev_udp		= 36
 };
 
+static int svr4_netclose __P((struct file *fp, struct proc *p));
 
-static struct	fileops svr4_netops =
-    { soo_read, soo_write, soo_ioctl, soo_select, soo_close };
+static struct fileops svr4_netops = {
+	soo_read, soo_write, soo_ioctl, soo_select, svr4_netclose
+};
+
 
 /*
  * Used by new config, but we don't need it.
@@ -93,6 +98,7 @@ svr4_netopen(dev, flag, mode, p, fp)
 	int protocol;
 	struct socket *so;
 	int error;
+	struct svr4_strm *st;
 
 	DPRINTF(("netopen("));
 
@@ -138,8 +144,23 @@ svr4_netopen(dev, flag, mode, p, fp)
 	fp->f_flag = FREAD|FWRITE;
 	fp->f_type = DTYPE_SOCKET;
 	fp->f_ops = &svr4_netops;
+
+	st = malloc(sizeof(struct svr4_strm), M_NETADDR, M_WAITOK);
+	/* XXX: This is unused; ask for a field and make this legal */
+	so->so_tpcb = (caddr_t) st;
+	st->s_cmd = ~0;
 	fp->f_data = (caddr_t)so;
 	DPRINTF(("ok);\n"));
 
 	return 0;
+}
+
+static int
+svr4_netclose(fp, p)
+	struct file *fp;
+	struct proc *p;
+{
+	struct socket *so = (struct socket *) fp->f_data;
+	free((char *) so->so_tpcb, M_NETADDR);
+	return soo_close(fp, p);
 }

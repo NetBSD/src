@@ -1,4 +1,4 @@
-/*	$NetBSD: svr4_sockmod.h,v 1.1 1994/11/14 06:13:19 christos Exp $	 */
+/*	$NetBSD: svr4_sockmod.h,v 1.2 1994/11/18 02:54:00 christos Exp $	 */
 
 /*
  * Copyright (c) 1994 Christos Zoulas
@@ -51,37 +51,5 @@ struct svr4_si_udata {
 	int	so_state;
 	int	so_options;
 };
-
-/*
- * The following structure is determined empirically.
- */
-struct svr4_sockctl {
-	long	cmd;	/* command ? */
-	long	unk1;	
-	long	unk2;
-	long	unk3;
-	long	unk4;
-	u_short	family;
-	u_short	port;
-	u_long	addr;
-	long	unk5;
-	long	unk6;
-};
-
-struct svr4_sockctl1 {
-	long	cmd;	/* command ? */
-	long	unk1;	
-	long	unk2;
-	long	unk3;
-	long	unk4;
-	long	unk5;
-	u_short	family;
-	u_short	port;
-	u_long	addr;
-	long	unk6;
-	long	unk7;
-};
-#define SVR4_SC_CMD_CONNECT	0x0
-#define SVR4_SC_CMD_SENDTO	0x8
 
 #endif /* !_SVR4_SOCKMOD_H_ */
