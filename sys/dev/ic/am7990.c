@@ -1,4 +1,4 @@
-/*	$NetBSD: am7990.c,v 1.6 1995/12/11 02:21:56 mycroft Exp $	*/
+/*	$NetBSD: am7990.c,v 1.7 1995/12/11 02:30:44 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1995 Charles M. Hannum.  All rights reserved.
@@ -69,11 +69,12 @@ void recv_print __P((struct le_softc *, int));
 void xmit_print __P((struct le_softc *, int));
 #endif
 
+#define	ifp	(&sc->sc_arpcom.ac_if)
+
 void
 leconfig(sc)
 	struct le_softc *sc;
 {
-	struct ifnet *ifp = &sc->sc_arpcom.ac_if;
 	int mem;
 
 	/* Make sure the chip is stopped. */
@@ -158,7 +159,7 @@ lewatchdog(unit)
 	struct le_softc *sc = LE_SOFTC(unit);
 
 	log(LOG_ERR, "%s: device timeout\n", sc->sc_dev.dv_xname);
-	++sc->sc_arpcom.ac_if.if_oerrors;
+	++ifp->if_oerrors;
 
 	lereset(sc);
 }
@@ -170,7 +171,6 @@ void
 lememinit(sc)
 	register struct le_softc *sc;
 {
-	struct ifnet *ifp = &sc->sc_arpcom.ac_if;
 	u_long a;
 	int bix;
 	struct leinit init;
@@ -249,7 +249,6 @@ void
 leinit(sc)
 	register struct le_softc *sc;
 {
-	struct ifnet *ifp = &sc->sc_arpcom.ac_if;
 	register int timo;
 	u_long a;
 
@@ -336,7 +335,7 @@ leget(sc, boff, totlen)
 	MGETHDR(m, M_DONTWAIT, MT_DATA);
 	if (m == 0)
 		return (0);
-	m->m_pkthdr.rcvif = &sc->sc_arpcom.ac_if;
+	m->m_pkthdr.rcvif = ifp;
 	m->m_pkthdr.len = totlen;
 	pad = ALIGN(sizeof(struct ether_header)) - sizeof(struct ether_header);
 	m->m_data += pad;
@@ -377,7 +376,6 @@ leread(sc, boff, len)
 	register struct le_softc *sc;
 	int boff, len;
 {
-	struct ifnet *ifp = &sc->sc_arpcom.ac_if;
 	struct mbuf *m;
 	struct ether_header *eh;
 
@@ -481,12 +479,12 @@ lerint(sc)
 			if (rmd.rmd1_bits & LE_R1_BUFF)
 				printf("%s: receive buffer error\n",
 				    sc->sc_dev.dv_xname);
-			sc->sc_arpcom.ac_if.if_errors++;
+			ifp->if_ierrors++;
 		} else if (rmd.rmd1_bits & (LE_R1_STP | LE_R1_ENP) !=
 		    (LE_R1_STP | LE_R1_ENP)) {
 			printf("%s: dropping chained buffer\n",
 			    sc->sc_dev.dv_xname);
-			sc->sc_arpcom.ac_if.if_errors++;
+			ifp->if_ierrors++;
 		} else {
 #ifdef LEDEBUG
 			if (sc->sc_debug)
@@ -517,7 +515,6 @@ integrate void
 letint(sc)
 	register struct le_softc *sc;
 {
-	register struct ifnet *ifp = &sc->sc_arpcom.ac_if;
 	register int bix;
 	struct letmd tmd;
 
@@ -617,19 +614,19 @@ leintr(arg)
 #ifdef LEDEBUG
 			printf("%s: babble\n", sc->sc_dev.dv_xname);
 #endif
-			sc->sc_arpcom.ac_if.if_oerrors++;
+			ifp->if_oerrors++;
 		}
 #if 0
 		if (isr & LE_C0_CERR) {
 			printf("%s: collision error\n", sc->sc_dev.dv_xname);
-			sc->sc_arpcom.ac_if.if_collisions++;
+			ifp->if_collisions++;
 		}
 #endif
 		if (isr & LE_C0_MISS) {
 #ifdef LEDEBUG
 			printf("%s: missed packet\n", sc->sc_dev.dv_xname);
 #endif
-			sc->sc_arpcom.ac_if.if_ierrors++;
+			ifp->if_ierrors++;
 		}
 		if (isr & LE_C0_MERR) {
 			printf("%s: memory error\n", sc->sc_dev.dv_xname);
@@ -640,13 +637,13 @@ leintr(arg)
 
 	if ((isr & LE_C0_RXON) == 0) {
 		printf("%s: receiver disabled\n", sc->sc_dev.dv_xname);
-		sc->sc_arpcom.ac_if.if_ierrors++;
+		ifp->if_ierrors++;
 		lereset(sc);
 		return (1);
 	}
 	if ((isr & LE_C0_TXON) == 0) {
 		printf("%s: transmitter disabled\n", sc->sc_dev.dv_xname);
-		sc->sc_arpcom.ac_if.if_oerrors++;
+		ifp->if_oerrors++;
 		lereset(sc);
 		return (1);
 	}
@@ -658,6 +655,8 @@ leintr(arg)
 
 	return (1);
 }
+
+#undef	ifp
 
 /*
  * Setup output on interface.
