@@ -1,4 +1,4 @@
-/*	$NetBSD: isadma.c,v 1.18 1996/03/31 20:51:43 mycroft Exp $	*/
+/*	$NetBSD: isadma.c,v 1.19 1996/04/29 20:03:26 christos Exp $	*/
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -6,6 +6,7 @@
 #include <sys/buf.h>
 #include <sys/syslog.h>
 #include <sys/malloc.h>
+#include <sys/proc.h>
 #include <sys/uio.h>
 
 #include <vm/vm.h>
@@ -35,6 +36,10 @@ static u_int8_t dmamode[4] = {
 	DMA37MD_READ | DMA37MD_LOOP,
 	DMA37MD_WRITE | DMA37MD_LOOP
 };
+
+int	isa_dmarangecheck	__P((vm_offset_t, u_long, int));
+caddr_t	isa_allocphysmem	__P((caddr_t, unsigned, void (*)(void)));
+void	isa_freephysmem		__P((caddr_t, unsigned));
 
 /*
  * isa_dmacascade(): program 8237 DMA controller channel to accept
@@ -84,7 +89,7 @@ isa_dmastart(flags, addr, nbytes, chan)
 		panic("isa_dmastart: impossible request"); 
 #endif
 
-	if (isa_dmarangecheck(addr, nbytes, chan)) {
+	if (isa_dmarangecheck((vm_offset_t) addr, nbytes, chan)) {
 		if (dma_bounce[chan] == 0)
 			dma_bounce[chan] =
 			    /*(caddr_t)malloc(MAXDMASZ, M_TEMP, M_WAITOK);*/
@@ -259,7 +264,7 @@ struct buf isa_physmemq;
 /* blocked waiting for resource to become free for exclusive use */
 static isaphysmemflag;
 /* if waited for and call requested when free (B_CALL) */
-static void (*isaphysmemunblock)(); /* needs to be a list */
+static void (*isaphysmemunblock) __P((void)); /* needs to be a list */
 
 /*
  * Allocate contiguous physical memory for transfer, returning
@@ -267,7 +272,11 @@ static void (*isaphysmemunblock)(); /* needs to be a list */
  * (assumed to be called at splbio())
  */
 caddr_t
-isa_allocphysmem(caddr_t va, unsigned length, void (*func)()) {
+isa_allocphysmem(ca, length, func)
+	caddr_t ca;
+	unsigned length;
+	void (*func) __P((void));
+{
 	
 	isaphysmemunblock = func;
 	while (isaphysmemflag & B_BUSY) {
@@ -284,7 +293,10 @@ isa_allocphysmem(caddr_t va, unsigned length, void (*func)()) {
  * (assumed to be called at splbio())
  */
 void
-isa_freephysmem(caddr_t va, unsigned length) {
+isa_freephysmem(va, length)
+	caddr_t va;
+	unsigned length;
+{
 
 	isaphysmemflag &= ~B_BUSY;
 	if (isaphysmemflag & B_WANTED) {
