@@ -33,6 +33,7 @@
 ./usr/include/machine/vmparam.h
 ./usr/include/ns32k
 ./usr/lib/libc_pic.a
+./usr/lib/libamu_pic.a
 ./usr/lib/libcrypt_pic.a
 ./usr/lib/libcurses_pic.a
 ./usr/lib/libedit_pic.a

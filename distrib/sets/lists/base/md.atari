@@ -4,6 +4,7 @@
 ./usr/bin/fdformat
 ./usr/bin/msconfig
 ./usr/lib/libc.so.12.17
+./usr/lib/libamu.so.0.0
 ./usr/lib/libcrypt.so.0.0
 ./usr/lib/libcurses.so.2.1
 ./usr/lib/libedit.so.0.0
@@ -20,7 +21,7 @@
 ./usr/lib/libtelnet.so.1.0
 ./usr/lib/libtermcap.so.0.0
 ./usr/lib/libtermlib.so.0.0
-./usr/lib/libutil.so.3.3
+./usr/lib/libutil.so.4.0
 ./usr/lib/libwrap.so.0.0
 ./usr/lib/libz.so.0.0
 ./usr/libexec/ld.so

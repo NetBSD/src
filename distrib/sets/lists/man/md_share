@@ -104,10 +104,14 @@
 ./usr/share/man/cat4/i386/pms.0
 ./usr/share/man/cat4/i386/speaker.0
 ./usr/share/man/cat4/i386/wd.0
+./usr/share/man/cat4/mac68k/adb.0
 ./usr/share/man/cat4/mac68k/ae.0
+./usr/share/man/cat4/mac68k/autoconf.0
 ./usr/share/man/cat4/mac68k/intro.0
 ./usr/share/man/cat4/mac68k/kmem.0
+./usr/share/man/cat4/mac68k/mainbus.0
 ./usr/share/man/cat4/mac68k/mem.0
+./usr/share/man/cat4/mac68k/obio.0
 ./usr/share/man/cat4/mac68k/sn.0
 ./usr/share/man/cat4/pc532/lpt.0
 ./usr/share/man/cat4/pc532/mem.0
@@ -253,9 +257,11 @@
 ./usr/share/man/cat8/vax/format.0
 ./usr/share/man/cat8/vax/installboot.0
 ./usr/share/man/cat8/vax/makedev.0
+./usr/share/man/cat8/x68k/MAKEDEV.0
 ./usr/share/man/cat8/x68k/boot.0
 ./usr/share/man/cat8/x68k/poffd.0
 ./usr/share/man/cat8/x68k/rtcalarm.0
+./usr/share/man/cat8/x68k/makedev.0
 ./usr/share/man/cat9/sun3/isr_add.0
 ./usr/share/man/cat9/sun3/isr_add_autovect.0
 ./usr/share/man/cat9/sun3/isr_add_custom.0

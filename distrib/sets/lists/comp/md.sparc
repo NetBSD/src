@@ -52,6 +52,7 @@
 ./usr/include/machine/vuid_event.h
 ./usr/include/sparc
 ./usr/lib/libc_pic.a
+./usr/lib/libamu_pic.a
 ./usr/lib/libcrypt_pic.a
 ./usr/lib/libcurses_pic.a
 ./usr/lib/libedit_pic.a

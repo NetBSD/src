@@ -2,6 +2,9 @@
 ./usr/lib/libc.so
 ./usr/lib/libc.so.12
 ./usr/lib/libc.so.12.17
+./usr/lib/libamu.so
+./usr/lib/libamu.so.0
+./usr/lib/libamu.so.0.0
 ./usr/lib/libcrypt.so
 ./usr/lib/libcrypt.so.0
 ./usr/lib/libcrypt.so.0.0
@@ -49,8 +52,8 @@
 ./usr/lib/libtermlib.so.0
 ./usr/lib/libtermlib.so.0.0
 ./usr/lib/libutil.so
-./usr/lib/libutil.so.3
-./usr/lib/libutil.so.3.3
+./usr/lib/libutil.so.4
+./usr/lib/libutil.so.4.0
 ./usr/lib/libwrap.so
 ./usr/lib/libwrap.so.0
 ./usr/lib/libwrap.so.0.0

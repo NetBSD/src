@@ -41,6 +41,9 @@
 ./usr/include/dev/ccdvar.h
 ./usr/include/dev/clock_subr.h
 ./usr/include/dev/cons.h
+./usr/include/dev/dec
+./usr/include/dev/dec/clockvar.h
+./usr/include/dev/dec/mcclockvar.h
 ./usr/include/dev/eisa
 ./usr/include/dev/eisa/ahbreg.h
 ./usr/include/dev/eisa/eisadevs.h
@@ -73,6 +76,7 @@
 ./usr/include/dev/ic/i8237reg.h
 ./usr/include/dev/ic/i8253reg.h
 ./usr/include/dev/ic/i82586reg.h
+./usr/include/dev/ic/i82586var.h
 ./usr/include/dev/ic/i82595reg.h
 ./usr/include/dev/ic/ics2101reg.h
 ./usr/include/dev/ic/intersil7170.h
@@ -125,6 +129,8 @@
 ./usr/include/dev/isa/mcdreg.h
 ./usr/include/dev/isa/pasreg.h
 ./usr/include/dev/isa/pssreg.h
+./usr/include/dev/isa/satlinkio.h
+./usr/include/dev/isa/satlinkreg.h
 ./usr/include/dev/isa/sbdspvar.h
 ./usr/include/dev/isa/sbreg.h
 ./usr/include/dev/isa/sbvar.h
@@ -168,7 +174,6 @@
 ./usr/include/dev/tc/clockvar.h
 ./usr/include/dev/tc/if_levar.h
 ./usr/include/dev/tc/ioasicvar.h
-./usr/include/dev/tc/mcclockvar.h
 ./usr/include/dev/tc/tcdevs.h
 ./usr/include/dev/tc/tcdevs_data.h
 ./usr/include/dev/tc/tcreg.h
@@ -604,6 +609,7 @@
 ./usr/include/netgroup.h
 ./usr/include/netinet/icmp_var.h
 ./usr/include/netinet/if_atm.h
+./usr/include/netinet/if_ether.h
 ./usr/include/netinet/if_inarp.h
 ./usr/include/netinet/igmp.h
 ./usr/include/netinet/igmp_var.h
@@ -906,7 +912,6 @@
 ./usr/include/varargs.h
 ./usr/include/vis.h
 ./usr/include/vm/device_pager.h
-./usr/include/vm/lock.h
 ./usr/include/vm/pmap.h
 ./usr/include/vm/swap_pager.h
 ./usr/include/vm/vm.h
@@ -930,6 +935,8 @@
 ./usr/lib/gcrt0.o
 ./usr/lib/libc.a
 ./usr/lib/libc_p.a
+./usr/lib/libamu.a
+./usr/lib/libamu_p.a
 ./usr/lib/libcompat.a
 ./usr/lib/libcompat_p.a
 ./usr/lib/libcrypt.a
@@ -1553,6 +1560,7 @@
 ./usr/share/man/cat3/list_insert_before.0
 ./usr/share/man/cat3/list_insert_head.0
 ./usr/share/man/cat3/list_remove.0
+./usr/share/man/cat3/localeconv.0
 ./usr/share/man/cat3/localtime.0
 ./usr/share/man/cat3/log.0
 ./usr/share/man/cat3/log10.0
@@ -1635,6 +1643,7 @@
 ./usr/share/man/cat3/radixsort.0
 ./usr/share/man/cat3/raise.0
 ./usr/share/man/cat3/rand.0
+./usr/share/man/cat3/rand_r.0
 ./usr/share/man/cat3/rand48.0
 ./usr/share/man/cat3/random.0
 ./usr/share/man/cat3/rcmd.0

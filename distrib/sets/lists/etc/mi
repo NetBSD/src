@@ -71,6 +71,7 @@
 ./root/.klogin
 ./root/.login
 ./root/.profile
+./var/crash/minfree
 ./var/cron/log
 ./var/cron/tabs/root
 ./var/db/locate.database
