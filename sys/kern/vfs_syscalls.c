@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_syscalls.c,v 1.123 1998/08/04 04:03:20 perry Exp $	*/
+/*	$NetBSD: vfs_syscalls.c,v 1.124 1998/11/13 04:12:35 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -85,10 +85,12 @@ int dounmount __P((struct mount *, int, struct proc *));
  * Mount a file system.
  */
 
-#if defined(COMPAT_09) || defined(COMPAT_43) || defined(COMPAT_44)
 /*
  * This table is used to maintain compatibility with 4.3BSD
  * and NetBSD 0.9 mount syscalls.  Note, the order is important!
+ *
+ * Also note that not all of these had actual numbers in 4.3BSD
+ * or NetBSD 0.9!
  */
 const char *mountcompatnames[] = {
 	NULL,		/* 0 = MOUNT_NONE */
@@ -109,10 +111,11 @@ const char *mountcompatnames[] = {
 	MOUNT_UNION,	/* 15 */
 	MOUNT_ADOSFS,	/* 16 */
 	MOUNT_EXT2FS,	/* 17 */
+	MOUNT_CODA,	/* 18 */
+	MOUNT_FILECORE,	/* 19 */
 };
 const int nmountcompatnames = sizeof(mountcompatnames) /
     sizeof(mountcompatnames[0]);
-#endif /* COMPAT_09 || COMPAT_43 */
 
 /* ARGSUSED */
 int
