@@ -24,6 +24,7 @@
 
 #include "includes.h"
 #include "uuencode.h"
+#include "auth.h"
 
 RCSID("$OpenBSD: radix.c,v 1.15 2001/01/16 23:58:09 deraadt Exp $");
 

@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.5 2001/02/07 17:05:37 itojun Exp $
+#	$NetBSD: Makefile,v 1.6 2001/03/04 00:41:28 assar Exp $
 
 .include <bsd.own.mk>
 
@@ -14,10 +14,9 @@ LINKS=	${BINDIR}/ssh ${BINDIR}/slogin
 MLINKS=	ssh.1 slogin.1
 
 .if (${MKKERBEROS} != "no")
-# XXX Needs krb5
-#CPPFLAGS+=-DAFS
-#LDADD+=	-lkrb5 -lkafs -lasn1
-#DPADD+=	${LIBKAFS}
+CPPFLAGS+=-DKRB5 -DAFS -I${DESTDIR}/usr/include/krb5
+LDADD+=	-lkrb5 -lkafs -lasn1
+DPADD+=	${LIBKRB5} ${LIBKAFS} ${LIBASN1}
 
 CPPFLAGS+=-DKRB4 -I${DESTDIR}/usr/include/kerberosIV
 LDADD+=	-lkrb -lcom_err -lroken

@@ -32,6 +32,10 @@ RCSID("$OpenBSD: sshconnect.c,v 1.97 2001/02/15 23:19:59 markus Exp $");
 #include "atomicio.h"
 #include "misc.h"
 
+#ifdef KRB5
+#include <krb5.h>
+#endif
+
 char *client_version_string = NULL;
 char *server_version_string = NULL;
 
