@@ -1,5 +1,5 @@
 #	from: @(#)Makefile.inc	5.6 (Berkeley) 3/5/91
-#	$Id: Makefile.inc,v 1.34 1995/03/20 14:45:54 mycroft Exp $
+#	$Id: Makefile.inc,v 1.35 1995/03/20 14:47:39 mycroft Exp $
 
 # string sources
 .PATH: ${.CURDIR}/arch/${MACHINE_ARCH}/string ${.CURDIR}/string
@@ -14,6 +14,7 @@ SRCS+=	bm.c memccpy.c strcasecmp.c strcoll.c strdup.c strerror.c \
 #	rindex() strcat() strcmp() strcpy() strcspn() strlen()
 #	strncat() strncmp() strncpy() strpbrk() strsep()
 #	strspn() strstr() swav()
+# m-d Makefile.inc may include sources for:
 #	memcpy() memmove() strchr() strrchr()
 
 .include "${.CURDIR}/arch/${MACHINE_ARCH}/string/Makefile.inc"
