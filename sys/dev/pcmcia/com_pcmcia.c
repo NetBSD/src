@@ -1,4 +1,4 @@
-/*	$NetBSD: com_pcmcia.c,v 1.33 2003/08/07 16:31:12 agc Exp $	 */
+/*	$NetBSD: com_pcmcia.c,v 1.34 2003/10/23 00:22:55 uwe Exp $	 */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -68,7 +68,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: com_pcmcia.c,v 1.33 2003/08/07 16:31:12 agc Exp $");
+__KERNEL_RCSID(0, "$NetBSD: com_pcmcia.c,v 1.34 2003/10/23 00:22:55 uwe Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -304,7 +304,7 @@ com_pcmcia_detach(self, flags)
 
 	/* Unmap our i/o window. */
 	if (psc->sc_io_window == -1) {
-		printf("%s: I/O window not allocated.",
+		printf("%s: I/O window not allocated.\n",
 		    psc->sc_com.sc_dev.dv_xname);
 		return 0;
 	}
