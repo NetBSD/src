@@ -1,4 +1,4 @@
-/*	$NetBSD: netdate.c,v 1.13 1998/01/10 00:27:34 lukem Exp $	*/
+/*	$NetBSD: netdate.c,v 1.14 1998/01/20 21:16:40 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)netdate.c	8.2 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: netdate.c,v 1.13 1998/01/10 00:27:34 lukem Exp $");
+__RCSID("$NetBSD: netdate.c,v 1.14 1998/01/20 21:16:40 mycroft Exp $");
 #endif
 #endif /* not lint */
 
@@ -81,7 +81,10 @@ netsettime(tval)
 	struct sockaddr_in sin, dest, from;
 	fd_set ready;
 	long waittime;
-	int s, length, on, timed_ack, found, err;
+	int s, length, timed_ack, found, err;
+#ifdef IP_PORTRANGE
+	int on;
+#endif
 	char hostname[MAXHOSTNAMELEN];
 
 	if ((sp = getservbyname("timed", "udp")) == NULL) {
@@ -101,11 +104,13 @@ netsettime(tval)
 		return (retval = 2);
 	}
 
+#ifdef IP_PORTRANGE
 	on = IP_PORTRANGE_LOW;
 	if (setsockopt(s, IPPROTO_IP, IP_PORTRANGE, &on, sizeof(on)) < 0) {
 		warn("setsockopt");
 		goto bad;
 	}
+#endif
 
 	(void)memset(&sin, 0, sizeof(sin));
 	sin.sin_len = sizeof(struct sockaddr_in);

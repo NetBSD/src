@@ -1,4 +1,4 @@
-/*	$NetBSD: date.c,v 1.17 1998/01/20 20:54:56 mycroft Exp $	*/
+/*	$NetBSD: date.c,v 1.18 1998/01/20 21:16:39 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1985, 1987, 1988, 1993
@@ -44,7 +44,7 @@ __COPYRIGHT(
 #if 0
 static char sccsid[] = "@(#)date.c	8.2 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: date.c,v 1.17 1998/01/20 20:54:56 mycroft Exp $");
+__RCSID("$NetBSD: date.c,v 1.18 1998/01/20 21:16:39 mycroft Exp $");
 #endif
 #endif /* not lint */
 
@@ -59,6 +59,7 @@ __RCSID("$NetBSD: date.c,v 1.17 1998/01/20 20:54:56 mycroft Exp $");
 #include <string.h>
 #include <locale.h>
 #include <syslog.h>
+#include <tzfile.h>
 #include <unistd.h>
 #include <util.h>
 
@@ -136,6 +137,7 @@ setthetime(p)
 	struct tm *lt;
 	struct timeval tv;
 	char *dot, *t;
+	int yearset;
 
 	for (t = p, dot = NULL; *t; ++t) {
 		if (isdigit(*t))
@@ -159,13 +161,25 @@ setthetime(p)
 	} else
 		lt->tm_sec = 0;
 
+	yearset = 0;
 	switch (strlen(p)) {
-	case 10:				/* yy */
+	case 12:
 		lt->tm_year = ATOI2(p);
-		if (lt->tm_year < 69)		/* hack for 2000 ;-} */
-			lt->tm_year += 2000 - TM_YEAR_BASE;
-		else
-			lt->tm_year += 1900 - TM_YEAR_BASE;
+		lt->tm_year *= 100;
+		yearset = 1;
+		/* FALLTHROUGH */
+	case 10:				/* yy */
+		if (yearset) {
+			yearset = ATOI2(p);
+			lt->tm_year += yearset;
+		} else {
+			yearset = ATOI2(p);
+			if (yearset < 69)		/* hack for 2000 ;-} */
+				lt->tm_year = yearset + 2000;
+			else
+				lt->tm_year = yearset + 1900;
+		}
+		lt->tm_year -= TM_YEAR_BASE;
 		/* FALLTHROUGH */
 	case 8:					/* mm */
 		lt->tm_mon = ATOI2(p);
