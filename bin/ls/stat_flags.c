@@ -1,4 +1,4 @@
-/*	$NetBSD: stat_flags.c,v 1.5 1995/09/07 06:43:01 jtc Exp $	*/
+/*	$NetBSD: stat_flags.c,v 1.6 1997/07/20 18:53:12 christos Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -33,11 +33,12 @@
  * SUCH DAMAGE.
  */
 
+#include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)stat_flags.c	8.2 (Berkeley) 7/28/94";
 #else
-static char rcsid[] = "$NetBSD: stat_flags.c,v 1.5 1995/09/07 06:43:01 jtc Exp $";
+__RCSID("$NetBSD: stat_flags.c,v 1.6 1997/07/20 18:53:12 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -46,6 +47,10 @@ static char rcsid[] = "$NetBSD: stat_flags.c,v 1.5 1995/09/07 06:43:01 jtc Exp $
 
 #include <stddef.h>
 #include <string.h>
+#include <fts.h>
+
+#include "ls.h"
+#include "extern.h"
 
 #define	SAPPEND(s) {							\
 	if (prefix != NULL)						\
