@@ -1,4 +1,4 @@
-/* $NetBSD: memcreg.h,v 1.1 2000/05/09 21:56:00 bjh21 Exp $ */
+/* $NetBSD: memcreg.h,v 1.2 2000/08/21 14:37:51 bjh21 Exp $ */
 /*-
  * Copyright (c) 1997, 1998 Ben Harris
  * All rights reserved.
@@ -142,14 +142,15 @@
  * in use.  Here, ppn is the physical page number, lpn is the logical
  * page number and ppl is the page protection level.
  *
- * This is correct for one or two MEMCs.  Where the extra bits of ppn
- * go with >2 is anyone's guess.
- *
  * The list of transformations at the start of each macro is copied
- * verbatim from the MEMC datasheet (Figure 5).  They don't mention
- * the fact that, in all page sizes, A[7] selects whether to use the
- * master or slave MEMC in dual-MEMC configurations.  This would be
- * represented here as "PPN[7]->A[7]".
+ * verbatim from the MEMC datasheet (Figure 5) with the exception of
+ * the entries for PPN[7] and PPN[8].  In dual-MEMC situations, PPN[7]
+ * selects between master and slave MEMCs, and is mapped to A[7] whatever
+ * the page size (though Acorn machines always use 32k pages with dual
+ * MEMCs).  The Archimedes 540 can have up to 16Mb of RAM, and arranges
+ * this by having several address lines go through PALs on their way to the
+ * MEMCs.  The upshot of this is that for the purposes of setting the
+ * translation tables, PPN[7] maps to A[12].  The A540 always has 32kb pages.
  */
 
 /* Page protection levels (data sheet section 6.6) */
@@ -167,6 +168,7 @@
 
 /*-
  * 4k pages:
+ * PPN[7] -> A[7]	(MEMC1a)
  * PPN[6:0] -> A[6:0]
  * PPL[1:0] -> A[9:8]
  * LPN[12:11] -> A[11:10]
@@ -176,9 +178,11 @@
 	(MEMC_TRANS_BASE |					\
 	 ((ppn) & 0xff) | 					\
 	 ((ppl) & 0x3) << 8 | 					\
-	 ((lpn) & 0x7ff) << 12 | ((lpn) & 0x1800) >> 1)
+	 ((lpn) & 0x7ff) << 12 |				\
+	 ((lpn) & 0x1800) >> 1)
 /*-
  * 8k pages:
+ * PPN[7] -> A[7]	(MEMC1a)
  * PPN[6] -> A[0]
  * PPN[5:0] -> A[6:1]
  * PPL[1:0] -> A[9:8]
@@ -187,12 +191,15 @@
  */
 #define MEMC_TRANS_ENTRY_8K(ppn, lpn, ppl)			\
 	(MEMC_TRANS_BASE |					\
-	 ((ppn) & 0x3f) << 1 | ((ppn) & 0x40) >> 6 |		\
 	 ((ppn) & 0x80) |					\
+	 ((ppn) & 0x40) >> 6 |					\
+	 ((ppn) & 0x3f) << 1 |					\
 	 ((ppl) & 0x3) << 8 |					\
-	 ((lpn) & 0x3ff) << 13 | ((lpn) & 0xc00))
+	 ((lpn) & 0xc00)) |					\
+	 ((lpn) & 0x3ff) << 13)
 /*-
  * 16k pages:
+ * PPN[7] -> A[7]	(MEMC1a)
  * PPN[6:5] -> A[1:0]
  * PPN[4:0] -> A[6:2]
  * PPL[1:0] -> A[9:8]
@@ -201,12 +208,16 @@
  */
 #define MEMC_TRANS_ENTRY_16K(ppn, lpn, ppl)			\
 	(MEMC_TRANS_BASE |					\
-	 ((ppn) & 0x1f) << 2 | ((ppn) & 0x60) >> 5 |		\
 	 ((ppn) & 0x80) |					\
+	 ((ppn) & 0x60) >> 5 |					\
+	 ((ppn) & 0x1f) << 2 |					\
 	 ((ppl) & 0x3) << 8 |					\
-	 ((lpn) & 0x1ff) << 14 | ((lpn) & 0x600) << 1)
+	 ((lpn) & 0x600) << 1 |					\
+	 ((lpn) & 0x1ff) << 14)
 /*-
  * 32k pages (here, the MEMC descends into madness...):
+ * PPN[8] -> A[12]	(A540)
+ * PPN[7] -> A[7]	(MEMC1a)
  * PPN[6] -> A[1]
  * PPN[5] -> A[2]
  * PPN[4] -> A[0]
@@ -217,10 +228,14 @@
  */
 #define MEMC_TRANS_ENTRY_32K(ppn, lpn, ppl)			\
 	(MEMC_TRANS_BASE |					\
-	 ((ppn) & 0x0f) << 3 | ((ppn) & 0x10) >> 4 |		\
-	 ((ppn) & 0x20) >> 3 | ((ppn) & 0x40) >> 5 |		\
+	 ((ppn) & 0x100) << 4 |					\
 	 ((ppn) & 0x80) |					\
+	 ((ppn) & 0x40) >> 5 |					\
+	 ((ppn) & 0x20) >> 3 |					\
+	 ((ppn) & 0x10) >> 4 |					\
+	 ((ppn) & 0x0f) << 3 |					\
 	 ((ppl) & 0x3) << 8 |					\
-	 ((lpn) & 0x0ff) << 15 | ((lpn) & 0x300) << 2)
+	 ((lpn) & 0x300) << 2 |					\
+	 ((lpn) & 0x0ff) << 15)
 
 #endif
