@@ -43,8 +43,8 @@ divert(-1)
 #
 
 include(`../m4/cf.m4')
-VERSIONID(`@(#)netbsd-proto.mc	$Revision: 1.2 $')
+VERSIONID(`@(#)netbsd-proto.mc	$Revision: 1.3 $')
 OSTYPE(bsd4.4)dnl
 MAILER(local)dnl
 MAILER(smtp)dnl
-define(confAUTO_REBUILD, True)dnl
+define(`confAUTO_REBUILD', True)dnl
