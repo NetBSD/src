@@ -1,4 +1,4 @@
-/*	$NetBSD: midway.c,v 1.40 2000/04/12 10:36:45 itojun Exp $	*/
+/*	$NetBSD: midway.c,v 1.40.4.1 2000/10/17 20:32:33 tv Exp $	*/
 /*	(sync'd to midway.c 1.68)	*/
 
 /*
@@ -1769,7 +1769,7 @@ struct ifnet *ifp;
        *	[including AAL5 PDU, if AAL5]
        */
 
-      got = mlen - sizeof(struct atm_pseudohdr *);
+      got = mlen - sizeof(struct atm_pseudohdr);
       toadd = (aal == MID_TBD_AAL5) ? MID_PDU_SIZE : 0;	/* PDU */
       cellcnt = (got + toadd + (MID_ATMDATASZ - 1)) / MID_ATMDATASZ;
       need = cellcnt * MID_ATMDATASZ;
