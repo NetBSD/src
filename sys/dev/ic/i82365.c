@@ -1,4 +1,4 @@
-/*	$NetBSD: i82365.c,v 1.78 2004/06/20 18:09:46 thorpej Exp $	*/
+/*	$NetBSD: i82365.c,v 1.79 2004/08/07 20:11:39 mycroft Exp $	*/
 
 /*
  * Copyright (c) 2000 Christian E. Hopps.  All rights reserved.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: i82365.c,v 1.78 2004/06/20 18:09:46 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: i82365.c,v 1.79 2004/08/07 20:11:39 mycroft Exp $");
 
 #define	PCICDEBUG
 
@@ -1435,7 +1435,7 @@ pcic_chip_socket_enable(pch)
 
 	/* disable interrupts */
 	intr = pcic_read(h, PCIC_INTR);
-	intr &= ~PCIC_INTR_IRQ_MASK;
+	intr &= ~(PCIC_INTR_IRQ_MASK | PCIC_INTR_CARDTYPE_MASK);
 	pcic_write(h, PCIC_INTR, intr);
 
 	/* power down the socket to reset it, clear the card reset pin */
@@ -1547,7 +1547,7 @@ pcic_chip_socket_enable(pch)
 	h->flags |= PCIC_FLAG_ENABLED;
 
 	/* finally enable the interrupt */
-	intr |= h->ih_irq;
+	intr |= h->ih_irq << PCIC_INTR_IRQ_SHIFT;
 	pcic_write(h, PCIC_INTR, intr);
 }
 
