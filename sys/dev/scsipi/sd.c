@@ -13,7 +13,7 @@
  * on the understanding that TFS is not responsible for the correct
  * functioning of this software in any circumstances.
  *
- *	$Id: sd.c,v 1.23 1994/03/24 04:32:44 cgd Exp $
+ *	$Id: sd.c,v 1.24 1994/03/24 17:47:35 cgd Exp $
  */
 
 #include "sd.h"
@@ -1207,6 +1207,31 @@ sd_interpret_sense(int unit, struct scsi_xfer *xs)
 				    sense->ext.extended.info[3]);
 				printf("sd%d: extra len: %d\n", unit,
 				    sense->ext.extended.extra_len);
+				if (sense->ext.extended.extra_len == 10) {
+					struct scsi_sense_data_new *s;
+					s = (struct scsi_sense_data_new *)sense;
+					printf("sd%d: cmd_spec_info: 0x%x 0x%x 0x%x 0x%x\n",
+					    unit,
+					    s->ext.extended.cmd_spec_info[0],
+					    s->ext.extended.cmd_spec_info[1],
+					    s->ext.extended.cmd_spec_info[2],
+					    s->ext.extended.cmd_spec_info[3]);
+					printf("sd%d: add. sense code: 0x%x\n",
+					    unit,
+					    s->ext.extended.add_sense_code);
+					printf("sd%d: add. sense code qual: 0x%x\n",
+					    unit,
+					    s->ext.extended.add_sense_code_qual);
+					printf("sd%d: fru: 0x%x\n", unit,
+					    s->ext.extended.fru);
+					printf("sd%d: sense key spec: 0x%x 0x%x 0x%x %s\n",
+					    unit,
+					    s->ext.extended.sense_key_spec_1,
+					    s->ext.extended.sense_key_spec_2,
+					    s->ext.extended.sense_key_spec_3,
+					    (s->ext.extended.sksv ?
+						"(sksv)" : "" ));
+				}
 			}
 			return EIO;
 		case 0x5:
