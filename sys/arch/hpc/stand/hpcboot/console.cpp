@@ -1,4 +1,4 @@
-/* -*-C++-*-	$NetBSD: console.cpp,v 1.3 2001/03/25 17:13:16 uch Exp $ */
+/* -*-C++-*-	$NetBSD: console.cpp,v 1.4 2001/04/24 19:27:59 uch Exp $ */
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -41,6 +41,9 @@
 
 Console *Console::_instance = 0;
 
+//
+// Display console
+//
 Console *
 Console::Instance()
 {
@@ -60,17 +63,28 @@ Console::Destroy()
 void
 Console::print(const TCHAR *fmt, ...)
 {
-	TCHAR tmp[CONSOLE_BUFSIZE];
-
 	va_list ap;
 	va_start(ap, fmt);
-	wvsprintf(tmp, fmt, ap);
+	wvsprintf(_bufw, fmt, ap);
 	va_end(ap);
-	HpcMenuInterface::Instance().print(tmp);
+
+	// print to `Console Tab Window'
+	HPC_MENU.print(_bufw);
+}
+
+//
+// Serial console.
+//
+BOOL
+SerialConsole::init()
+{
+	// always open COM1 to supply clock and power for the
+	// sake of kernel serial driver 
+	return openCOM1();
 }
 
 BOOL
-SerialConsole::setupBuffer()
+SerialConsole::setupMultibyteBuffer()
 {
 	size_t len = WideCharToMultiByte(CP_ACP, 0, _bufw, wcslen(_bufw),
 					 0, 0, 0, 0);
@@ -83,11 +97,21 @@ SerialConsole::setupBuffer()
 	return TRUE;
 }
 
+void
+SerialConsole::print(const TCHAR *fmt, ...)
+{
+	SETUP_WIDECHAR_BUFFER();
+
+	if (!setupMultibyteBuffer())
+		return;
+
+	genericPrint(_bufm);
+}
+
 BOOL
 SerialConsole::openCOM1()
 {
-	HpcMenuInterface &menu = HpcMenuInterface::Instance();
-	int speed = menu._pref.serial_speed;
+	int speed = HPC_PREFERENCE.serial_speed;
 
 	if (_handle == INVALID_HANDLE_VALUE) {
 		_handle = CreateFile(TEXT("COM1:"),

@@ -1,4 +1,4 @@
-/* -*-C++-*-	$NetBSD: sh_boot.h,v 1.1 2001/02/09 18:35:18 uch Exp $	*/
+/* -*-C++-*-	$NetBSD: sh_boot.h,v 1.2 2001/04/24 19:28:01 uch Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -42,10 +42,13 @@
 #include <boot.h>
 
 class SHBoot : public Boot {
+private:
+	typedef Boot super;
+
 public:
 	SHBoot(void);
 	~SHBoot(void);
-	virtual BOOL setup(struct HpcMenuInterface::HpcMenuPreferences &);
+	virtual BOOL setup(void);
 	virtual BOOL create(void);
 };
 
