@@ -1,4 +1,4 @@
-/*	$NetBSD: mtpr.h,v 1.1 2000/05/25 22:12:00 is Exp $	*/
+/*	$NetBSD: mtpr.h,v 1.2 2001/12/03 21:17:05 aymeric Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -41,8 +41,8 @@
  *
  *	@(#)mtpr.h	7.2 (Berkeley) 11/3/90
  */
-#ifndef _MACHINE_MPTR_H_
-#define _MACHINE_MPTR_H_
+#ifndef _AMIGAPPC_MPTR_H_
+#define _AMIGAPPC_MPTR_H_
 
 #ifdef _KERNEL
 /*
@@ -93,4 +93,4 @@ void softintr_disestablish __P((void *));
 
 #endif /* _KERNEL */
 
-#endif /* !_MACHINE_MPTR_H_ */
+#endif /* !_AMIGAPPC_MPTR_H_ */
