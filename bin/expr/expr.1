@@ -1,4 +1,4 @@
-.\"	$NetBSD: expr.1,v 1.22 2003/02/14 16:17:30 grant Exp $
+.\"	$NetBSD: expr.1,v 1.23 2003/03/29 18:25:22 perry Exp $
 .\"
 .\" Written by J.T. Conklin <jtc@NetBSD.org>.
 .\" Public domain.
@@ -116,7 +116,7 @@ an error occurred (such as memory allocation failure).
 The following example adds one to the variable a.
 .Dl a=`expr $a + 1`
 .It
-The following example returns zero, due to deduction having higher precendence
+The following example returns zero, due to deduction having higher precedence
 than '\*[Am]' operator.
 .Dl expr 1 '\*[Am]' 1 - 1
 .It
@@ -144,7 +144,7 @@ by
 .Sh COMPATIBILITY
 This implementation of
 .Nm
-internally uses 64 bit represenation of integers and checks for
+internally uses 64 bit representation of integers and checks for
 over- and underflows.
 It also treats / (division mark) and
 option '--' correctly depending upon context.
@@ -170,7 +170,7 @@ expr / : '.*/\e(.*\e)'
 .Ed
 .Pp
 If this is the case, you might use // (double forward slash)
-to avoid abiquity with the division operator:
+to avoid confusion with the division operator:
 .Bd -literal -offset indent
 expr "//$a" : '.*/\e(.*\e)'
 .Ed
@@ -193,9 +193,9 @@ expr -- : .
 .It
 expr -- -- : .
 .El
-Althrough
+Although
 .Nx
 .Nm
-handles both cases correctly, you should not depend on this behaviour
+handles both cases correctly, you should not depend on this behavior
 for portability reasons and avoid passing bare '--' as first
 argument.
