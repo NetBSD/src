@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_var.h,v 1.37 2003/05/22 14:16:24 yamt Exp $	*/
+/*	$NetBSD: nfs_var.h,v 1.38 2003/06/09 13:10:32 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -269,7 +269,7 @@ void nfs_delayedtruncate __P((struct vnode *));
 int nfs_namei __P((struct nameidata *, fhandle_t *, uint32_t,
 		   struct nfssvc_sock *, struct mbuf *, struct mbuf **,
 		   caddr_t *, struct vnode **, struct proc *, int, int));
-void nfsm_adj __P((struct mbuf *, int, int));
+void nfs_zeropad __P((struct mbuf *, int, int));
 void nfsm_srvwcc __P((struct nfsrv_descript *, int, struct vattr *, int,
 		      struct vattr *, struct mbuf **, char **));
 void nfsm_srvpostopattr __P((struct nfsrv_descript *, int, struct vattr *,

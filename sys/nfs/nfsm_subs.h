@@ -1,4 +1,4 @@
-/*	$NetBSD: nfsm_subs.h,v 1.27 2003/05/06 13:52:36 yamt Exp $	*/
+/*	$NetBSD: nfsm_subs.h,v 1.28 2003/06/09 13:10:32 yamt Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -333,6 +333,7 @@
 		nfsmout: 
 
 #define nfsm_rndup(a)	(((a)+3)&(~0x3))
+#define nfsm_padlen(a)	(nfsm_rndup(a) - (a))
 
 #define	nfsm_request(v, t, p, c)	\
 		if ((error = nfs_request((v), mreq, (t), (p), \
