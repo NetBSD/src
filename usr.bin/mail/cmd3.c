@@ -1,4 +1,4 @@
-/*	$NetBSD: cmd3.c,v 1.12 2002/03/02 14:59:36 wiz Exp $	*/
+/*	$NetBSD: cmd3.c,v 1.13 2002/03/02 15:27:51 wiz Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)cmd3.c	8.2 (Berkeley) 4/20/95";
 #else
-__RCSID("$NetBSD: cmd3.c,v 1.12 2002/03/02 14:59:36 wiz Exp $");
+__RCSID("$NetBSD: cmd3.c,v 1.13 2002/03/02 15:27:51 wiz Exp $");
 #endif
 #endif /* not lint */
 
@@ -61,15 +61,15 @@ shell(void *v)
 {
 	char *str = v;
 	sig_t sigint = signal(SIGINT, SIG_IGN);
-	char *shell;
+	char *shellcmd;
 	char cmd[BUFSIZ];
 
 	(void) strcpy(cmd, str);
 	if (bangexp(cmd) < 0)
 		return 1;
-	if ((shell = value("SHELL")) == NOSTR)
-		shell = _PATH_CSHELL;
-	(void) run_command(shell, 0, -1, -1, "-c", cmd, NOSTR);
+	if ((shellcmd = value("SHELL")) == NOSTR)
+		shellcmd = _PATH_CSHELL;
+	(void) run_command(shellcmd, 0, -1, -1, "-c", cmd, NOSTR);
 	(void) signal(SIGINT, sigint);
 	printf("!\n");
 	return 0;
@@ -83,11 +83,11 @@ int
 dosh(void *v)
 {
 	sig_t sigint = signal(SIGINT, SIG_IGN);
-	char *shell;
+	char *shellcmd;
 
-	if ((shell = value("SHELL")) == NOSTR)
-		shell = _PATH_CSHELL;
-	(void) run_command(shell, 0, -1, -1, NOSTR, NOSTR, NOSTR);
+	if ((shellcmd = value("SHELL")) == NOSTR)
+		shellcmd = _PATH_CSHELL;
+	(void) run_command(shellcmd, 0, -1, -1, NOSTR, NOSTR, NOSTR);
 	(void) signal(SIGINT, sigint);
 	putchar('\n');
 	return 0;
