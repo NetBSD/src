@@ -1,4 +1,4 @@
-.\"	$NetBSD: packages.7,v 1.74 2003/01/10 17:25:38 jschauma Exp $
+.\"	$NetBSD: packages.7,v 1.75 2003/01/18 12:22:36 jmmv Exp $
 .\"
 .\" from: NetBSD: bsd.pkg.mk,v 1.89 1998/06/01 21:30:10 hubertf Exp
 .\"
@@ -739,8 +739,14 @@ flag.
 .It deinstall
 Remove the installation.
 .It update
-Update the installation of the current and all dependent packages that
+Update the installation of the current package and all dependent packages that
 are installed on the system.
+.It replace
+Update the installation of the current package.
+This differs from update in that it does not replace dependent packages.
+You will need to install
+.Pa pkgsrc/pkgtools/pkg_tarup
+for this target to work.
 .It package
 Create a binary package other people can use.
 .It clean
