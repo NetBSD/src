@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs.c,v 1.8 2003/04/02 10:39:48 fvdl Exp $	*/
+/*	$NetBSD: ffs.c,v 1.9 2003/04/02 22:02:56 he Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(__lint)
-__RCSID("$NetBSD: ffs.c,v 1.8 2003/04/02 10:39:48 fvdl Exp $");
+__RCSID("$NetBSD: ffs.c,v 1.9 2003/04/02 22:02:56 he Exp $");
 #endif	/* !__lint */
 
 #include <sys/param.h>
@@ -85,7 +85,7 @@ ffs_read_disk_block(ib_params *params, uint64_t blkno, int size, char *blk)
 	assert(blk != NULL);
 	assert(params->filesystem != NULL);
 	assert(params->fsfd != -1);
-	assert(blkno > 0);
+	assert(blkno >= 0);
 	assert(size > 0);
 	assert(blk != NULL);
 
