@@ -1,4 +1,4 @@
-/*	$NetBSD: alloc.c,v 1.5 1997/01/22 01:18:23 cgd Exp $	*/
+/*	$NetBSD: alloc.c,v 1.6 1997/02/04 18:36:33 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1997 Christopher G. Demetriou.  All rights reserved.
@@ -206,7 +206,18 @@ free(ptr, size)
         if (size > f->size)
 	        printf("free %u bytes @%lx, should be <=%u\n",
 		    size, ptr, f->size);
+#ifdef HEAP_START
+	if (ptr < (void *)HEAP_START)
+#else
+	if (ptr < (void *)end[])
 #endif
+		printf("free: %lx before start of heap.\n", (u_long)ptr);
+
+#ifdef HEAP_LIMIT
+	if (ptr > (void *)HEAP_LIMIT)
+		printf("free: %lx beyond end of heap.\n", (u_long)ptr);
+#endif
+#endif /* DEBUG */
 	/* put into freelist */
 	f->next = freelist;
 	freelist = f;
