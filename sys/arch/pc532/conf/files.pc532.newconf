@@ -1,7 +1,10 @@
-#	$NetBSD: files.pc532.newconf,v 1.7 1995/01/19 07:02:31 phil Exp $
+#	$NetBSD: files.pc532.newconf,v 1.8 1995/01/25 20:45:51 cgd Exp $
 #
 # new style config file for pc532 architecture
 #
+
+# maxpartitions must be first item in files.${ARCH}.newconf
+maxpartitions 8
 
 maxusers 2 16 64
 
