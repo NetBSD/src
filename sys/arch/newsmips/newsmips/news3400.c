@@ -1,4 +1,4 @@
-/*	$NetBSD: news3400.c,v 1.7 2003/04/26 18:50:19 tsutsui Exp $	*/
+/*	$NetBSD: news3400.c,v 1.8 2003/04/26 19:13:53 tsutsui Exp $	*/
 
 /*-
  * Copyright (C) 1999 Tsubai Masanari.  All rights reserved.
@@ -244,7 +244,7 @@ news3400_disable_intr(void)
 
 static void
 news3400_readidrom(rom)
-	register u_char *rom;
+	u_char *rom;
 {
 	u_char *p = (u_char *)IDROM;
 	int i;
