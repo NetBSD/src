@@ -1,8 +1,8 @@
-# $Id: Makefile,v 1.4 1994/06/27 04:53:04 jtc Exp $
+# $Id: Makefile,v 1.5 1994/12/22 12:30:55 cgd Exp $
 
 PROG= skey
 CFLAGS+= -I${.CURDIR}/../../lib/libskey
-MAN1= skey.0 skeyinfo.0 skeyaudit.0
+MAN= skey.1 skeyinfo.1 skeyaudit.1
 DPADD=	${LIBSKEY}
 LDADD=	-lskey
 

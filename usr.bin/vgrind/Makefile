@@ -1,10 +1,9 @@
-#	$NetBSD: Makefile,v 1.3 1994/11/17 08:27:58 jtc Exp $
+#	$NetBSD: Makefile,v 1.4 1994/12/22 12:31:23 cgd Exp $
 #	@(#)Makefile	8.1 (Berkeley) 6/9/93
 
 PROG=	vfontedpr
 SRCS=	regexp.c vfontedpr.c
-MAN1=	vgrind.0
-MAN5=	vgrindefs.0
+MAN=	vgrind.1 vgrindefs.5
 BINDIR=	/usr/libexec
 CLEANFILES+=vgrindefs.src.db
 
