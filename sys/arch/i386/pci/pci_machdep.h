@@ -1,4 +1,4 @@
-/*	$NetBSD: pci_machdep.h,v 1.8 1997/08/26 03:14:06 thorpej Exp $	*/
+/*	$NetBSD: pci_machdep.h,v 1.9 1998/05/04 18:49:08 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All rights reserved.
@@ -77,6 +77,7 @@ typedef int pci_intr_handle_t;
  */
 extern int pci_mode;
 int		pci_mode_detect __P((void));
+int		pci_bus_flags __P((void));
 
 /*
  * Functions provided to machine-independent PCI code.
