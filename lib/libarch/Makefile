@@ -1,4 +1,4 @@
-#	$Id: Makefile,v 1.6 1994/02/26 02:26:00 cgd Exp $
+#	$Id: Makefile,v 1.7 1994/07/02 22:32:15 cgd Exp $
 
 .if exists(${.CURDIR}/${MACHINE})
 .PATH:	${.CURDIR}/${MACHINE}
@@ -28,5 +28,6 @@ clean:
 cleandir:
 depend:
 install:
-.include <bsd.obj.mk>
+lint:
+obj:
 .endif
