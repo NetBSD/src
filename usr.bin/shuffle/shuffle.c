@@ -1,4 +1,4 @@
-/*	$NetBSD: shuffle.c,v 1.12 2003/04/18 03:21:02 lukem Exp $	*/
+/*	$NetBSD: shuffle.c,v 1.13 2003/08/20 23:37:51 christos Exp $	*/
 
 /*
  * Copyright (c) 1998
@@ -33,7 +33,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: shuffle.c,v 1.12 2003/04/18 03:21:02 lukem Exp $");
+__RCSID("$NetBSD: shuffle.c,v 1.13 2003/08/20 23:37:51 christos Exp $");
 #endif /* not lint */
 
 #include <sys/time.h>
@@ -132,7 +132,7 @@ usage(void)
 {
 
 	(void) fprintf(stderr,
-    "Usage: %s [-f <filename>] [-n <number>] [-p <number>] [<arg> ...]\n",
+    "Usage: %s [-0] [-f <filename>] [-n <number>] [-p <number>] [<arg> ...]\n",
 		getprogname());
 	exit(1);
 }
@@ -205,9 +205,13 @@ main(int argc, char *argv[])
 	struct timeval tv;
 	char **lines = NULL;
 	size_t nlines = 0, pick = 0;
+	char sep = '\n';
 	
 	while ((ch = getopt(argc, argv, "f:n:p:")) != -1) {
 		switch(ch) {
+		case '0':
+			sep = '\0';
+			break;
 		case 'f':
 			fname = optarg;
 			break;
@@ -250,9 +254,9 @@ main(int argc, char *argv[])
 
 	for (i = 0; i < nlines; i++) {
 		if (nflag)
-			printf("%ld\n", (long)shuffle[i]);
+			printf("%ld%c", (long)shuffle[i], sep);
 		else
-			printf("%s\n", lines[shuffle[i]]);
+			printf("%s%c", lines[shuffle[i]], sep);
 	}
 
 	return 0;
