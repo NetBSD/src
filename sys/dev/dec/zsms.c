@@ -1,4 +1,4 @@
-/*	$NetBSD: zsms.c,v 1.3 1999/02/03 20:22:28 mycroft Exp $	*/
+/*	$NetBSD: zsms.c,v 1.4 1999/09/19 14:45:47 drochner Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -165,10 +165,15 @@ zsms_attach(parent, self, aux)
 	s = splzs();
 	/* May need reset... */
 	zs_write_reg(cs, 9, ZSWR9_A_RESET);
-	/* These are OK as set by zscc: WR3, WR4, WR5 */
+	/* These are OK as set by zscc: WR3, WR5 */
 	/* We don't care about status or tx interrupts. */
 	cs->cs_preg[1] = ZSWR1_RIE;
 	(void) zs_set_speed(cs, ZSMS_BPS);
+
+	/* mouse wants odd parity */
+	cs->cs_preg[4] |= ZSWR4_PARENB;
+	/* cs->cs_preg[4] &= ~ZSWR4_EVENP; (no-op) */
+
 	zs_loadchannelregs(cs);
 	splx(s);
 
