@@ -1,5 +1,5 @@
 #	from: @(#)Makefile	5.9 (Berkeley) 2/28/91
-#	$Id: Makefile,v 1.7 1993/07/31 15:27:06 mycroft Exp $
+#	$Id: Makefile,v 1.8 1993/09/02 01:10:03 cgd Exp $
 
 # Change the line below for your time zone (after finding the zone you want in
 # the time zone files, or adding it to a time zone file).
@@ -36,7 +36,7 @@ TZDIR=	${DESTDIR}/usr/share/zoneinfo
 #	REDO=		right_posix
 # below.
 
-REDO=		right_only
+REDO=		posix_only
 
 # If you're running on a System V-style system and don't want lint grief,
 # add
@@ -122,7 +122,7 @@ right_only: leapseconds ${TDATA}
 	    ../obj/zic -d ${TZDIR} -L leapseconds ${TDATA})
 
 other_two: leapseconds ${TDATA}
-	(cd ${.CURDIR}/datfiles;
+	(cd ${.CURDIR}/datfiles; \
 	    ../obj/zic -d ${TZDIR}/posix -L /dev/null ${TDATA})
 	(cd ${.CURDIR}/datfiles; \
 	    ../obj/zic -d ${TZDIR}/right -L leapseconds ${TDATA})
