@@ -1,4 +1,4 @@
-/*	$NetBSD: npx_isa.c,v 1.1 2000/06/16 03:47:24 thorpej Exp $	*/
+/*	$NetBSD: npx_isa.c,v 1.2 2001/01/21 04:55:48 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1994, 1995, 1998 Charles M. Hannum.  All rights reserved.
@@ -77,6 +77,12 @@ npx_isa_probe(struct device *parent, struct cfdata *match, void *aux)
 
 	bus_space_unmap(ia->ia_iot, ioh, ia->ia_iosize);
 
+	/*
+	 * Remember our result -- we don't want to have to npxprobe1()
+	 * again (especially if we've zapped the IRQ).
+	 */
+	ia->ia_aux = (void *)(u_long)result;
+
 	return (result != NPX_NONE);
 }
 
@@ -93,7 +99,7 @@ npx_isa_attach(struct device *parent, struct device *self, void *aux)
 		panic("npxattach: unable to map I/O space");
 	}
 
-	sc->sc_type = npxprobe1(sc->sc_iot, sc->sc_ioh, ia->ia_irq);
+	sc->sc_type = (u_long) ia->ia_aux;
 
 	switch (sc->sc_type) {
 	case NPX_INTERRUPT:
