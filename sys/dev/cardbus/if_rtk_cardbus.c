@@ -1,4 +1,4 @@
-/*	$NetBSD: if_rtk_cardbus.c,v 1.3 2000/05/19 13:42:30 tsutsui Exp $	*/
+/*	$NetBSD: if_rtk_cardbus.c,v 1.3.4.1 2002/01/05 17:36:21 he Exp $	*/
 
 /*
  * Copyright (c) 2000 Masanori Kanaoka
@@ -103,8 +103,14 @@ static const struct rtk_type rtk_cardbus_devs[] = {
 	{ CARDBUS_VENDOR_ACCTON, CARDBUS_PRODUCT_ACCTON_MPX5030,
 		"Accton MPX 5030/5038 10/100BaseTX",
 		RTK_8139 },
+	{ CARDBUS_VENDOR_DLINK, CARDBUS_PRODUCT_DLINK_DFE_690TXD,
+		"D-Link DFE-690TXD 10/100BaseTX", RTK_8139 },
 	{ CARDBUS_VENDOR_REALTEK, CARDBUS_PRODUCT_REALTEK_RT8138,
 		"RealTek 8138 10/100BaseTX", RTK_8139 },
+	{ CARDBUS_VENDOR_REALTEK, CARDBUS_PRODUCT_REALTEK_RT8139,
+		"RealTek 8139 10/100BaseTX", RTK_8139 },
+	{ CARDBUS_VENDOR_COREGA, CARDBUS_PRODUCT_COREGA_CB_TXD,
+		"Corega FEther CB-TXD 10/100BaseTX", RTK_8139 },
 	{ 0, 0, NULL, 0 }
 };
 
