@@ -1,4 +1,4 @@
-/*	$NetBSD: cmds.c,v 1.107 2004/07/20 11:05:20 lukem Exp $	*/
+/*	$NetBSD: cmds.c,v 1.108 2004/10/30 17:36:31 dsl Exp $	*/
 
 /*-
  * Copyright (c) 1996-2004 The NetBSD Foundation, Inc.
@@ -103,7 +103,7 @@
 #if 0
 static char sccsid[] = "@(#)cmds.c	8.6 (Berkeley) 10/9/94";
 #else
-__RCSID("$NetBSD: cmds.c,v 1.107 2004/07/20 11:05:20 lukem Exp $");
+__RCSID("$NetBSD: cmds.c,v 1.108 2004/10/30 17:36:31 dsl Exp $");
 #endif
 #endif /* not lint */
 
@@ -166,7 +166,7 @@ confirm(const char *cmd, const char *file)
 			clearerr(stdin);
 			return (0);
 		}
-		switch (tolower(*line)) {
+		switch (tolower((unsigned char)*line)) {
 			case 'a':
 				confirmrest = 1;
 				fprintf(ttyout,
@@ -1890,7 +1890,7 @@ docase(char *name)
 	if (dochange) {
 		for (i = 0; new[i] != '\0'; i++)
 			if (isupper((unsigned char)new[i]))
-				new[i] = tolower(new[i]);
+				new[i] = tolower((unsigned char)new[i]);
 	}
 	return (new);
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: fstat.c,v 1.67 2004/04/21 01:05:47 christos Exp $	*/
+/*	$NetBSD: fstat.c,v 1.68 2004/10/30 17:29:47 dsl Exp $	*/
 
 /*-
  * Copyright (c) 1988, 1993
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1988, 1993\n\
 #if 0
 static char sccsid[] = "@(#)fstat.c	8.3 (Berkeley) 5/2/95";
 #else
-__RCSID("$NetBSD: fstat.c,v 1.67 2004/04/21 01:05:47 christos Exp $");
+__RCSID("$NetBSD: fstat.c,v 1.68 2004/10/30 17:29:47 dsl Exp $");
 #endif
 #endif /* not lint */
 
@@ -199,7 +199,7 @@ main(argc, argv)
 		case 'p':
 			if (pflg++)
 				usage();
-			if (!isdigit(*optarg)) {
+			if (!isdigit((unsigned char)*optarg)) {
 				warnx("-p requires a process id");
 				usage();
 			}

@@ -1,4 +1,4 @@
-/*	$NetBSD: fetch.c,v 1.152 2004/08/08 13:52:04 lukem Exp $	*/
+/*	$NetBSD: fetch.c,v 1.153 2004/10/30 17:36:31 dsl Exp $	*/
 
 /*-
  * Copyright (c) 1997-2004 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: fetch.c,v 1.152 2004/08/08 13:52:04 lukem Exp $");
+__RCSID("$NetBSD: fetch.c,v 1.153 2004/10/30 17:36:31 dsl Exp $");
 #endif /* not lint */
 
 /*
@@ -1046,10 +1046,9 @@ fetch_url(const char *url, const char *proxyenv, char *proxyauth, char *wwwauth)
 				    == NULL) {
 					clearerr(stdin);
 					goto cleanup_fetch_url;
-				} else {
-					if (tolower(reply[0]) != 'y')
-						goto cleanup_fetch_url;
 				}
+				if (tolower((unsigned char)reply[0]) != 'y')
+					goto cleanup_fetch_url;
 				auser = NULL;
 				apass = NULL;
 			}
