@@ -1,4 +1,4 @@
-/*	$NetBSD: pciide.c,v 1.109 2001/03/20 17:54:39 bouyer Exp $	*/
+/*	$NetBSD: pciide.c,v 1.110 2001/03/20 17:56:46 bouyer Exp $	*/
 
 
 /*
@@ -3243,11 +3243,7 @@ pdc202xx_chip_map(sc, pa)
 	}
 
 	mode = PDC2xx_SCR_DMA;
-	if (PDC_IS_265(sc)) {
-		/* the BIOS set it up this way */
-		mode = PDC2xx_SCR_SET_GEN(mode, 0x3);
-		mode |= 0x80000000;
-	} else if (PDC_IS_262(sc)) {
+	if (PDC_IS_262(sc)) {
 		mode = PDC2xx_SCR_SET_GEN(mode, PDC262_SCR_GEN_LAT);
 	} else {
 		/* the BIOS set it up this way */
