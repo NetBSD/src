@@ -1,9 +1,5 @@
-#	$NetBSD: Makefile,v 1.2 2001/12/12 01:24:01 tv Exp $
+#	$NetBSD: Makefile,v 1.3 2002/03/23 17:42:20 christos Exp $
 
-PROG=		tfmtcheck
-NOMAN=		# defined
+SUBDIR+= vis tfmtcheck
 
-regress: ${PROG}
-	./${PROG}
-
-.include <bsd.prog.mk>
+.include <bsd.subdir.mk>
