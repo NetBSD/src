@@ -1,4 +1,4 @@
-/* $NetBSD: arcvideo.c,v 1.3 2000/06/29 08:32:36 mrg Exp $ */
+/* $NetBSD: arcvideo.c,v 1.4 2000/08/25 10:37:58 bjh21 Exp $ */
 /*-
  * Copyright (c) 1998, 2000 Ben Harris
  * All rights reserved.
@@ -39,7 +39,7 @@
 
 #include <sys/param.h>
 
-__RCSID("$NetBSD: arcvideo.c,v 1.3 2000/06/29 08:32:36 mrg Exp $");
+__RCSID("$NetBSD: arcvideo.c,v 1.4 2000/08/25 10:37:58 bjh21 Exp $");
 
 #include <sys/device.h>
 #include <sys/errno.h>
@@ -55,9 +55,9 @@ __RCSID("$NetBSD: arcvideo.c,v 1.3 2000/06/29 08:32:36 mrg Exp $");
 
 #include <machine/boot.h>
 #include <machine/bus.h>
+#include <machine/intr.h>
 #include <machine/irq.h>
 #include <machine/memcreg.h>
-#include <machine/spl.h>
 
 #include <arch/arm26/iobus/iocreg.h>
 #include <arch/arm26/iobus/iocvar.h>
