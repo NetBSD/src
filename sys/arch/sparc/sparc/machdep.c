@@ -42,7 +42,7 @@
  *	@(#)machdep.c	8.1 (Berkeley) 6/11/93
  *
  * from: Header: machdep.c,v 1.41 93/05/27 04:39:05 torek Exp 
- * $Id: machdep.c,v 1.20 1994/05/05 09:58:39 deraadt Exp $
+ * $Id: machdep.c,v 1.21 1994/05/07 05:09:24 deraadt Exp $
  */
 
 #include <sys/param.h>
@@ -74,6 +74,7 @@
 #include <sys/shm.h>
 #endif
 #include <sys/exec.h>
+#include <sys/sysctl.h>
 
 #include <machine/autoconf.h>
 #include <machine/frame.h>
@@ -367,6 +368,30 @@ struct sigframe {
 };
 
 /*
+ * machine dependent system variables.
+ */
+cpu_sysctl(name, namelen, oldp, oldlenp, newp, newlen, p)
+	int *name;
+	u_int namelen;
+	void *oldp;
+	size_t *oldlenp;
+	void *newp;
+	size_t newlen;
+	struct proc *p;
+{
+
+	/* all sysctl names are this level are terminal */
+	if (namelen != 1)
+		return (ENOTDIR);	/* overloaded */
+
+	switch (name[0]) {
+	default:
+		return (EOPNOTSUPP);
+	}
+	/* NOTREACHED */
+}
+
+/*
  * Send an interrupt to process.
  */
 void
@@ -386,15 +411,16 @@ sendsig(catcher, sig, mask, code)
 
 	tf = p->p_md.md_tf;
 	oldsp = tf->tf_out[6];
-	oonstack = psp->ps_sigstk.ss_onstack;
+	oonstack = psp->ps_sigstk.ss_flags & SA_ONSTACK;
 	/*
 	 * Compute new user stack addresses, subtract off
 	 * one signal frame, and align.
 	 */
-	if (!psp->ps_sigstk.ss_onstack && (psp->ps_sigonstack & sigmask(sig))) {
-		fp = (struct sigframe *)(psp->ps_sigstk.ss_sp -
-			sizeof(struct sigframe));
-		psp->ps_sigstk.ss_onstack = 1;
+	if ((psp->ps_flags & SAS_ALTSTACK) && !oonstack &&
+	    (psp->ps_sigonstack & sigmask(sig))) {
+		fp = (struct sigframe *)(psp->ps_sigstk.ss_base +
+					 psp->ps_sigstk.ss_size);
+		psp->ps_sigstk.ss_flags |= SA_ONSTACK;
 	} else
 		fp = (struct sigframe *)oldsp;
 	fp = (struct sigframe *)((int)(fp - 1) & ~7);
@@ -527,7 +553,10 @@ sigreturn(p, uap, retval)
 	tf->tf_global[1] = scp->sc_g1;
 	tf->tf_out[0] = scp->sc_o0;
 	tf->tf_out[6] = scp->sc_sp;
-	p->p_sigacts->ps_sigstk.ss_onstack = scp->sc_onstack & 01;
+	if (scp->sc_onstack & 1)
+		p->p_sigacts->ps_sigstk.ss_flags |= SA_ONSTACK;
+	else
+		p->p_sigacts->ps_sigstk.ss_flags &= ~SA_ONSTACK;
 	p->p_sigmask = scp->sc_mask & ~sigcantmask;
 	return (EJUSTRETURN);
 }
