@@ -1,4 +1,4 @@
-/*	$NetBSD: edit.c,v 1.4 2001/07/26 13:43:44 mrg Exp $	*/
+/*	$NetBSD: edit.c,v 1.5 2002/03/05 12:28:32 mrg Exp $	*/
 
 /*
  * Copyright (C) 1984-2000  Mark Nudelman
@@ -61,7 +61,10 @@ init_textlist(tlist, str)
 {
 	char *s;
 #if SPACES_IN_FILENAMES
-	int quoted = 0;
+	int meta_quoted = 0;
+	int delim_quoted = 0;
+	char *esc = get_meta_escape();
+	int esclen = strlen(esc);
 #endif
 	
 	tlist->string = skipsp(str);
@@ -69,12 +72,25 @@ init_textlist(tlist, str)
 	for (s = str;  s < tlist->endstring;  s++)
 	{
 #if SPACES_IN_FILENAMES
-		if (*s == ' ' && !quoted)
-			*s = '\0';
-		if (!quoted && *s == openquote)
-			quoted = 1;
-		else if (quoted && *s == closequote)
-			quoted = 0;
+		if (meta_quoted)
+		{
+			meta_quoted = 0;
+		} else if (esclen > 0 && s + esclen < tlist->endstring &&
+		           strncmp(s, esc, esclen) == 0)
+		{
+			meta_quoted = 1;
+			s += esclen - 1;
+		} else if (delim_quoted)
+		{
+			if (*s == closequote)
+				delim_quoted = 0;
+		} else /* (!delim_quoted) */
+		{
+			if (*s == openquote)
+				delim_quoted = 1;
+			else if (*s == ' ')
+				*s = '\0';
+		}
 #else
 		if (*s == ' ')
 			*s = '\0';
@@ -139,7 +155,6 @@ back_textlist(tlist, prev)
 close_file()
 {
 	struct scrpos scrpos;
-	char *filename;
 	
 	if (curr_ifile == NULL_IFILE)
 		return;
@@ -164,9 +179,8 @@ close_file()
 	 */
 	if (curr_altfilename != NULL)
 	{
-		filename = unquote_file(get_filename(curr_ifile));
-		close_altfile(curr_altfilename, filename, curr_altpipe);
-		free(filename);
+		close_altfile(curr_altfilename, get_filename(curr_ifile),
+				curr_altpipe);
 		free(curr_altfilename);
 		curr_altfilename = NULL;
 	}
@@ -201,6 +215,7 @@ edit_ifile(ifile)
 	int chflags;
 	char *filename;
 	char *open_filename;
+	char *qopen_filename;
 	char *alt_filename;
 	void *alt_pipe;
 	IFILE was_curr_ifile;
@@ -251,13 +266,14 @@ edit_ifile(ifile)
 		return (0);
 	}
 
-	filename = unquote_file(get_filename(ifile));
+	filename = save(get_filename(ifile));
 	/*
 	 * See if LESSOPEN specifies an "alternate" file to open.
 	 */
 	alt_pipe = NULL;
 	alt_filename = open_altfile(filename, &f, &alt_pipe);
 	open_filename = (alt_filename != NULL) ? alt_filename : filename;
+	qopen_filename = shell_unquote(open_filename);
 
 	chflags = 0;
 	if (alt_pipe != NULL)
@@ -308,13 +324,14 @@ edit_ifile(ifile)
 			free(alt_filename);
 		}
 		del_ifile(ifile);
+		free(qopen_filename);
 		free(filename);
 		/*
 		 * Re-open the current file.
 		 */
 		reedit_ifile(was_curr_ifile);
 		return (1);
-	} else if ((f = open(open_filename, OPEN_READ)) < 0)
+	} else if ((f = open(qopen_filename, OPEN_READ)) < 0)
 	{
 		/*
 		 * Got an error trying to open it.
@@ -342,6 +359,7 @@ edit_ifile(ifile)
 			}
 		}
 	}
+	free(qopen_filename);
 
 	/*
 	 * Get the new ifile.
@@ -690,7 +708,7 @@ use_logfile(filename)
 	/*
 	 * {{ We could use access() here. }}
 	 */
-	filename = unquote_file(filename);
+	filename = shell_unquote(filename);
 	exists = open(filename, OPEN_READ);
 	close(exists);
 	exists = (exists >= 0);

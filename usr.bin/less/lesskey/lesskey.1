@@ -1,6 +1,6 @@
-.\"	$NetBSD: lesskey.1,v 1.6 2002/02/08 01:36:26 ross Exp $
+.\"	$NetBSD: lesskey.1,v 1.7 2002/03/05 12:28:37 mrg Exp $
 .\"
-.TH LESSKEY 1 "Version 358: 08 Jul 2000"
+.TH LESSKEY 1 "Version 374: 19 Feb 2002"
 .SH NAME
 lesskey \- specify key bindings for less
 .SH SYNOPSIS
@@ -169,11 +169,12 @@ default command keys used by less:
 	^R		repaint
 	^L		repaint
 	\eeu		undo-hilite
-	g		goto-line
-	\*[Lt]		goto-line
-	\ee\*[Lt]		goto-line
-	p		percent
-	%		percent
+	g		goto-line 
+	\ekh	goto-line
+	\*[Lt]		goto-line 
+	\ee\*[Lt]		goto-line 
+	p		percent 
+	%		percent 
 	\ee[		left-scroll
 	\ee]		right-scroll
 	\ee(		left-scroll
@@ -184,32 +185,36 @@ default command keys used by less:
 	)		back-bracket ()
 	[		forw-bracket []
 	]		back-bracket []
-	\ee^F		forw-bracket
-	\ee^B		back-bracket
-	G		goto-end
-	\ee\*[Gt]		goto-end
-	\*[Gt]		goto-end
-	=		status
-	^G		status
-	:f		status
-	/		forw-search
-	?		back-search
+	\ee^F		forw-bracket 
+	\ee^B		back-bracket 
+	G		goto-end 
+	\ee\*[Gt]		goto-end 
+	\*[Gt]		goto-end 
+	\eke	goto-end
+	=		status 
+	^G		status 
+	:f		status 
+	/		forw-search 
+	?		back-search 
 	\ee/		forw-search *
 	\ee?		back-search *
-	n		repeat-search
-	\een		repeat-search-all
-	N		reverse-search
-	\eeN		reverse-search-all
-	m		set-mark
-	'		goto-mark
-	^X^X		goto-mark
-	E		examine
-	:e		examine
-	^X^V		examine
-	:n		next-file
-	:p		prev-file
-	:x		index-file
-	-		toggle-option
+	n		repeat-search 
+	\een		repeat-search-all 
+	N		reverse-search 
+	\eeN		reverse-search-all 
+	m		set-mark 
+	'		goto-mark 
+	^X^X		goto-mark 
+	E		examine 
+	:e		examine 
+	^X^V		examine 
+	:n		next-file 
+	:p		prev-file 
+	t		next-tag
+	T		prev-tag
+	:x		index-file 
+	:d		remove-file
+	-		toggle-option 
 	:t		toggle-option t
 	s		toggle-option o
 	_		display-option
@@ -375,7 +380,7 @@ Suite 330, Boston, MA  02111-1307, USA.
 
 .SH AUTHOR
 .PP
-Mark Nudelman \*[Lt]marknu@flash.net\*[Gt]
+Mark Nudelman \*[Lt]markn@greenwoodsoftware.com\*[Gt]
 .br
 Send bug reports or comments to the above address or to bug-less@gnu.org.
 

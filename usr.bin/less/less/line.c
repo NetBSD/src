@@ -1,4 +1,4 @@
-/*	$NetBSD: line.c,v 1.5 2001/07/26 13:43:45 mrg Exp $	*/
+/*	$NetBSD: line.c,v 1.6 2002/03/05 12:28:34 mrg Exp $	*/
 
 /*
  * Copyright (C) 1984-2000  Mark Nudelman
@@ -22,20 +22,23 @@
 #define IS_CONT(c)  (((c) & 0xC0) == 0x80)
 #define LINENUM_WIDTH   8       /* Chars to use for line number */
 
-/* Buffer which holds the current output line */
-public char linebuf[LINEBUF_SIZE];
-public int size_linebuf = sizeof(linebuf);
+public char *linebuf = NULL;	/* Buffer which holds the current output line */
+static char *attr = NULL;	/* Extension of linebuf to hold attributes */
+public int size_linebuf = 0;	/* Size of line buffer (and attr buffer) */
 
 public int cshift;		/* Current left-shift of output line buffer */
 public int hshift;		/* Desired left-shift of output line buffer */
+public int tabstops[TABSTOP_MAX] = { 0 }; /* Custom tabstops */
+public int ntabstops = 1;	/* Number of tabstops */
+public int tabdefault = 8;	/* Default repeated tabstops */
 
-static char attr[LINEBUF_SIZE];	/* Extension of linebuf to hold attributes */
 static int curr;		/* Index into linebuf */
 static int column;		/* Printable length, accounting for
 				   backspaces, etc. */
 static int overstrike;		/* Next char should overstrike previous char */
 static int is_null_line;	/* There is no current line */
 static int lmargin;		/* Left margin */
+static int hilites;		/* Number of hilites in this line */
 static char pendc;
 static POSITION pendpos;
 static char *end_ansi_chars;
@@ -49,7 +52,6 @@ static int storec __P((int, int, POSITION));
 static int do_append __P((int, POSITION));
 
 extern int bs_mode;
-extern int tabstop;
 extern int linenums;
 extern int ctldisp;
 extern int twiddle;
@@ -74,6 +76,36 @@ init_line()
 	end_ansi_chars = lgetenv("LESSANSIENDCHARS");
 	if (end_ansi_chars == NULL || *end_ansi_chars == '\0')
 		end_ansi_chars = "m";
+	linebuf = (char *) ecalloc(LINEBUF_SIZE, sizeof(char));
+	attr = (char *) ecalloc(LINEBUF_SIZE, sizeof(char));
+	size_linebuf = LINEBUF_SIZE;
+}
+
+/*
+ * Expand the line buffer.
+ */
+ 	static int
+expand_linebuf()
+{
+	int new_size = size_linebuf + LINEBUF_SIZE;
+	char *new_buf = (char *) calloc(new_size, sizeof(char));
+	char *new_attr = (char *) calloc(new_size, sizeof(char));
+	if (new_buf == NULL || new_attr == NULL)
+	{
+		if (new_attr != NULL)
+			free(new_attr);
+		if (new_buf != NULL)
+			free(new_buf);
+		return 1;
+	}
+	memcpy(new_buf, linebuf, size_linebuf * sizeof(char));
+	memcpy(new_attr, attr, size_linebuf * sizeof(char));
+	free(attr);
+	free(linebuf);
+	linebuf = new_buf;
+	attr = new_attr;
+	size_linebuf = new_size;
+	return 0;
 }
 
 /*
@@ -88,6 +120,9 @@ prewind()
 	is_null_line = 0;
 	pendc = '\0';
 	lmargin = 0;
+#if HILITE_SEARCH
+	hilites = 0;
+#endif
 	if (status_col)
 		lmargin += 1;
 	if (linenums == OPT_ONPLUS)
@@ -154,10 +189,44 @@ plinenum(pos)
 }
 
 /*
- *
+ * Determine how many characters are required to shift N columns.
  */
 	static int
-utf_len(char *s, int len)
+shift_chars(s, len)
+	char *s;
+	int len;
+{
+	char *p = s;
+
+	/*
+	 * Each char counts for one column, except ANSI color escape
+	 * sequences use no columns since they don't move the cursor.
+	 */
+	while (*p != '\0' && len > 0)
+	{
+		if (*p++ != ESC)
+		{
+			len--;
+		} else
+		{
+			while (*p != '\0')
+			{
+				if (is_ansi_end(*p++))
+					break;
+			}
+		}
+	}
+	return (p - s);
+}
+
+/*
+ * Determine how many characters are required to shift N columns (UTF version).
+ * {{ FIXME: what about color escape sequences in UTF mode? }}
+ */
+	static int
+utf_shift_chars(s, len)
+	char *s;
+	int len;
 {
 	int ulen = 0;
 
@@ -185,28 +254,26 @@ pshift(shift)
 	int shift;
 {
 	int i;
-	int real_shift;
+	int nchars;
 
 	if (shift > column - lmargin)
 		shift = column - lmargin;
 	if (shift > curr - lmargin)
 		shift = curr - lmargin;
 
-	if (!utf_mode)
-		real_shift = shift;
+	if (utf_mode)
+		nchars = utf_shift_chars(linebuf + lmargin, shift);
 	else
+		nchars = shift_chars(linebuf + lmargin, shift);
+	if (nchars > curr)
+		nchars = curr;
+	for (i = 0;  i < curr - nchars;  i++)
 	{
-		real_shift = utf_len(linebuf + lmargin, shift);
-		if (real_shift > curr)
-			real_shift = curr;
+		linebuf[lmargin + i] = linebuf[lmargin + i + nchars];
+		attr[lmargin + i] = attr[lmargin + i + nchars];
 	}
-	for (i = 0;  i < curr - real_shift;  i++)
-	{
-		linebuf[lmargin + i] = linebuf[lmargin + i + real_shift];
-		attr[lmargin + i] = attr[lmargin + i + real_shift];
-	}
+	curr -= nchars;
 	column -= shift;
-	curr -= real_shift;
 	cshift += shift;
 }
 
@@ -314,17 +381,30 @@ in_ansi_esc_seq()
 	{
 		if (linebuf[i] == ESC)
 			return (1);
-		if (strchr(end_ansi_chars, linebuf[i]) != NULL)
+		if (is_ansi_end(linebuf[i]))
 			return (0);
 	}
 	return (0);
 }
 
 /*
+ * Is a character the end of an ANSI escape sequence?
+ */
+	public int
+is_ansi_end(c)
+	char c;
+{
+	return (strchr(end_ansi_chars, c) != NULL);
+}
+
+/*
  * Append a character and attribute to the line buffer.
  */
+#define	STORE_CHAR(c,a,pos) \
+	do { if (store_char((c),(a),(pos))) return (1); else curr++; } while (0)
+
 	static int
-storec(c, a, pos)
+store_char(c, a, pos)
 	int c;
 	int a;
 	POSITION pos;
@@ -333,11 +413,14 @@ storec(c, a, pos)
 
 #if HILITE_SEARCH
 	if (is_hilited(pos, pos+1, 0))
+	{
 		/*
 		 * This character should be highlighted.
 		 * Override the attribute passed in.
 		 */
 		a = AT_STANDOUT;
+		hilites++;
+	}
 #endif
 	if (ctldisp == OPT_ONPLUS && in_ansi_esc_seq())
 		w = 0;
@@ -349,11 +432,15 @@ storec(c, a, pos)
 		 */
 		return (1);
 
-	if (curr >= sizeof(linebuf)-2)
+	if (curr >= size_linebuf-2)
+	{
 		/*
 		 * Won't fit in line buffer.
+		 * Try to expand it.
 		 */
-		return (1);
+		if (expand_linebuf())
+			return (1);
+	}
 
 	/*
 	 * Special handling for "magic cookie" terminals.
@@ -392,6 +479,38 @@ storec(c, a, pos)
 	attr[curr] = a;
 	column += w;
 	return (0);
+}
+
+/*
+ * Append a tab to the line buffer.
+ * Store spaces to represent the tab.
+ */
+#define	STORE_TAB(a,pos) \
+	do { if (store_tab((a),(pos))) return (1); } while (0)
+
+	static int
+store_tab(attr, pos)
+	int attr;
+	POSITION pos;
+{
+	int to_tab = column + cshift - lmargin;
+	int i;
+
+	if (ntabstops < 2 || to_tab >= tabstops[ntabstops-1])
+		to_tab = tabdefault -
+		     ((to_tab - tabstops[ntabstops-1]) % tabdefault);
+	else
+	{
+		for (i = ntabstops - 2;  i >= 0;  i--)
+			if (to_tab >= tabstops[i])
+				break;
+		to_tab = tabstops[i+1] - to_tab;
+	}
+
+	do {
+		STORE_CHAR(' ', attr, pos);
+	} while (--to_tab > 0);
+	return 0;
 }
 
 /*
@@ -437,7 +556,10 @@ pappend(c, pos)
 	 * pappending.  (Bold & underline can get messed up otherwise.)
 	 */
 	if (cshift < hshift && column > sc_width / 2)
+	{
+		linebuf[curr] = '\0';
 		pshift(hshift - cshift);
+	}
 	return (r);
 }
 
@@ -449,15 +571,15 @@ do_append(c, pos)
 	register char *s;
 	register int a;
 
-#define	STOREC(c,a) \
-	if (storec((c),(a),pos)) return (1); else curr++
+#define STOREC(c,a) \
+	if ((c) == '\t') STORE_TAB((a),pos); else STORE_CHAR((c),(a),pos)
 
 	if (c == '\b')
 	{
 		switch (bs_mode)
 		{
 		case BS_NORMAL:
-			STOREC(c, AT_NORMAL);
+			STORE_CHAR(c, AT_NORMAL, pos);
 			break;
 		case BS_CONTROL:
 			goto do_control_char;
@@ -477,14 +599,40 @@ do_append(c, pos)
 		 * bold (if an identical character is overstruck),
 		 * or just deletion of the character in the buffer.
 		 */
-		overstrike = 0;
-		if ((char)c == linebuf[curr])
-			STOREC(linebuf[curr], AT_BOLD);
-		else if (c == '_')
+		overstrike--;
+		if (utf_mode && curr > 1 && (char)c == linebuf[curr-2])
+		{
+			backc();
+			backc();
+			overstrike = 2;
+		} else if (utf_mode && curr > 0 && (char)c == linebuf[curr-1])
+		{
+			backc();
+			STORE_CHAR(linebuf[curr], AT_BOLD, pos);
+			overstrike = 1;
+		} else if ((char)c == linebuf[curr])
+		{
+			STOREC(c, AT_BOLD);
+		} else if (c == '_')
+		{
+			if (utf_mode)
+			{
+				if (curr > 0 && IS_CONT(linebuf[curr]))
+					attr[curr-1] = AT_UNDERLINE;
+				if (curr > 1 && IS_CONT(linebuf[curr-1]))
+					attr[curr-2] = AT_UNDERLINE;
+				if (curr > 2 && IS_CONT(linebuf[curr-2]))
+					attr[curr-3] = AT_UNDERLINE;
+				if (curr > 3 && IS_CONT(linebuf[curr-3]))
+					attr[curr-4] = AT_UNDERLINE;
+				if (curr > 4 && IS_CONT(linebuf[curr-4]))
+					attr[curr-5] = AT_UNDERLINE;
+			}
 			STOREC(linebuf[curr], AT_UNDERLINE);
-		else if (linebuf[curr] == '_')
+		} else if (linebuf[curr] == '_')
+		{
 			STOREC(c, AT_UNDERLINE);
-		else if (control_char(c))
+		} else if (control_char(c))
 			goto do_control_char;
 		else
 			STOREC(c, AT_NORMAL);
@@ -493,18 +641,13 @@ do_append(c, pos)
 		/*
 		 * Expand a tab into spaces.
 		 */
-		if (tabstop == 0)
-			tabstop = 1;
 		switch (bs_mode)
 		{
 		case BS_CONTROL:
 			goto do_control_char;
 		case BS_NORMAL:
 		case BS_SPECIAL:
-			do
-			{
-				STOREC(' ', AT_NORMAL);
-			} while (((column + cshift - lmargin) % tabstop) != 0);
+			STORE_TAB(AT_NORMAL, pos);
 			break;
 		}
 	} else if (control_char(c))
@@ -515,7 +658,7 @@ do_append(c, pos)
 			/*
 			 * Output as a normal character.
 			 */
-			STOREC(c, AT_NORMAL);
+			STORE_CHAR(c, AT_NORMAL, pos);
 		} else 
 		{
 			/*
@@ -533,7 +676,7 @@ do_append(c, pos)
 				return (1);
 
 			for ( ;  *s != 0;  s++)
-				STOREC(*s, a);
+				STORE_CHAR(*s, a, pos);
 		}
 	} else
 	{
@@ -576,6 +719,14 @@ pdone(endline)
 	}
 	linebuf[curr] = '\0';
 	attr[curr] = AT_NORMAL;
+
+#if HILITE_SEARCH
+	if (status_col && hilites > 0)
+	{
+		linebuf[0] = '*';
+		attr[0] = AT_STANDOUT;
+	}
+#endif
 	/*
 	 * If we are done with this line, reset the current shift.
 	 */
@@ -630,7 +781,7 @@ forw_raw_line(curr_pos, linep)
 	POSITION curr_pos;
 	char **linep;
 {
-	register char *p;
+	register int n;
 	register int c;
 	POSITION new_pos;
 
@@ -638,8 +789,7 @@ forw_raw_line(curr_pos, linep)
 		(c = ch_forw_get()) == EOI)
 		return (NULL_POSITION);
 
-	p = linebuf;
-
+	n = 0;
 	for (;;)
 	{
 		if (c == '\n' || c == EOI)
@@ -647,21 +797,22 @@ forw_raw_line(curr_pos, linep)
 			new_pos = ch_tell();
 			break;
 		}
-		if (p >= &linebuf[sizeof(linebuf)-1])
+		if (n >= size_linebuf-1)
 		{
-			/*
-			 * Overflowed the input buffer.
-			 * Pretend the line ended here.
-			 * {{ The line buffer is supposed to be big
-			 *    enough that this never happens. }}
-			 */
-			new_pos = ch_tell() - 1;
-			break;
+			if (expand_linebuf())
+			{
+				/*
+				 * Overflowed the input buffer.
+				 * Pretend the line ended here.
+				 */
+				new_pos = ch_tell() - 1;
+				break;
+			}
 		}
-		*p++ = c;
+		linebuf[n++] = c;
 		c = ch_forw_get();
 	}
-	*p = '\0';
+	linebuf[n] = '\0';
 	if (linep != NULL)
 		*linep = linebuf;
 	return (new_pos);
@@ -676,7 +827,7 @@ back_raw_line(curr_pos, linep)
 	POSITION curr_pos;
 	char **linep;
 {
-	register char *p;
+	register int n;
 	register int c;
 	POSITION new_pos;
 
@@ -684,9 +835,8 @@ back_raw_line(curr_pos, linep)
 		ch_seek(curr_pos-1))
 		return (NULL_POSITION);
 
-	p = &linebuf[sizeof(linebuf)];
-	*--p = '\0';
-
+	n = size_linebuf;
+	linebuf[--n] = '\0';
 	for (;;)
 	{
 		c = ch_back_get();
@@ -709,18 +859,32 @@ back_raw_line(curr_pos, linep)
 			new_pos = ch_zero();
 			break;
 		}
-		if (p <= linebuf)
+		if (n <= 0)
 		{
+			int old_size_linebuf = size_linebuf;
+			char *fm;
+			char *to;
+			if (expand_linebuf())
+			{
+				/*
+				 * Overflowed the input buffer.
+				 * Pretend the line ended here.
+				 */
+				new_pos = ch_tell() + 1;
+				break;
+			}
 			/*
-			 * Overflowed the input buffer.
-			 * Pretend the line ended here.
+			 * Shift the data to the end of the new linebuf.
 			 */
-			new_pos = ch_tell() + 1;
-			break;
+			for (fm = linebuf + old_size_linebuf,
+			      to = linebuf + size_linebuf;
+			     fm >= linebuf;  fm--, to--)
+				*to = *fm;
+			n = size_linebuf - old_size_linebuf;
 		}
-		*--p = c;
+		linebuf[--n] = c;
 	}
 	if (linep != NULL)
-		*linep = p;
+		*linep = &linebuf[n];
 	return (new_pos);
 }
