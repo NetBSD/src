@@ -1,4 +1,4 @@
-/*	$NetBSD: login.c,v 1.18 1997/06/23 01:20:40 mikel Exp $	*/
+/*	$NetBSD: login.c,v 1.19 1997/06/23 11:19:10 veego Exp $	*/
 
 /*-
  * Copyright (c) 1980, 1987, 1988, 1991, 1993, 1994
@@ -43,7 +43,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)login.c	8.4 (Berkeley) 4/2/94";
 #endif
-static char rcsid[] = "$NetBSD: login.c,v 1.18 1997/06/23 01:20:40 mikel Exp $";
+static char rcsid[] = "$NetBSD: login.c,v 1.19 1997/06/23 11:19:10 veego Exp $";
 #endif /* not lint */
 
 /*
@@ -64,8 +64,8 @@ static char rcsid[] = "$NetBSD: login.c,v 1.18 1997/06/23 01:20:40 mikel Exp $";
 #include <pwd.h>
 #include <setjmp.h>
 #include <signal.h>
-#include <skey.h>
 #include <stdio.h>
+#include <skey.h>
 #include <stdlib.h>
 #include <string.h>
 #include <syslog.h>
