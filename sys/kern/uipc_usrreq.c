@@ -1,4 +1,4 @@
-/*	$NetBSD: uipc_usrreq.c,v 1.27 1997/06/26 06:06:40 thorpej Exp $	*/
+/*	$NetBSD: uipc_usrreq.c,v 1.28 1997/10/17 17:35:08 christos Exp $	*/
 
 /*
  * Copyright (c) 1997 Christopher G. Demetriou.  All rights reserved.
@@ -766,7 +766,7 @@ morespace:
 	fdp = ((int *)(cm + 1)) + nfds - 1;
 	rp = ((struct file **)ALIGN(cm + 1)) + nfds - 1;
 	for (i = 0; i < nfds; i++) {
-		fp = fdescp->fd_ofiles[*fdp];
+		fp = fdescp->fd_ofiles[*fdp--];
 		*rp-- = fp;
 		fp->f_count++;
 		fp->f_msgcount++;
