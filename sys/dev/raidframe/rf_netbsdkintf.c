@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_netbsdkintf.c,v 1.87 2000/05/29 02:57:35 oster Exp $	*/
+/*	$NetBSD: rf_netbsdkintf.c,v 1.88 2000/05/30 03:29:49 oster Exp $	*/
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -3008,12 +3008,16 @@ rf_have_enough_components(cset)
 	int num_missing;
 	int mod_counter;
 	int mod_counter_found;
+	int even_pair_failed;
+	char parity_type;
+	
 
 	/* check to see that we have enough 'live' components
 	   of this set.  If so, we can configure it if necessary */
 
 	num_rows = cset->ac->clabel->num_rows;
 	num_cols = cset->ac->clabel->num_columns;
+	parity_type = cset->ac->clabel->parityConfig;
 
 	/* XXX Check for duplicate components!?!?!? */
 
@@ -3037,13 +3041,10 @@ rf_have_enough_components(cset)
 	auto_config = cset->ac;
 
 	for(r=0; r<num_rows; r++) {
+		even_pair_failed = 0;
 		for(c=0; c<num_cols; c++) {
 			ac = auto_config;
 			while(ac!=NULL) {
-				if (ac->clabel==NULL) {
-					/* big-time bad news. */
-					goto fail;
-				}
 				if ((ac->clabel->row == r) &&
 				    (ac->clabel->column == c) && 
 				    (ac->clabel->mod_counter == mod_counter)) {
@@ -3058,7 +3059,32 @@ rf_have_enough_components(cset)
 			}
 			if (ac==NULL) {
 				/* Didn't find one here! */
-				num_missing++;
+				/* special case for RAID 1, especially
+				   where there are more than 2
+				   components (where RAIDframe treats
+				   things a little differently :( ) */
+				if (parity_type == '1') {
+					if (c%2 == 0) { /* even component */
+						even_pair_failed = 1;
+					} else { /* odd component.  If
+                                                    we're failed, and
+                                                    so is the even
+                                                    component, it's
+                                                    "Good Night, Charlie" */
+						if (even_pair_failed == 1) {
+							return(0);
+						}
+					}
+				} else {
+					/* normal accounting */
+					num_missing++;
+				}
+			}
+			if ((parity_type == '1') && (c%2 == 1)) {
+				/* Just did an even component, and we didn't
+				   bail.. reset the even_pair_failed flag, 
+				   and go on to the next component.... */
+				even_pair_failed = 0;
 			}
 		}
 	}
@@ -3066,7 +3092,6 @@ rf_have_enough_components(cset)
 	clabel = cset->ac->clabel;
 
 	if (((clabel->parityConfig == '0') && (num_missing > 0)) ||
-	    ((clabel->parityConfig == '1') && (num_missing > 1)) ||
 	    ((clabel->parityConfig == '4') && (num_missing > 1)) ||
 	    ((clabel->parityConfig == '5') && (num_missing > 1))) {
 		/* XXX this needs to be made *much* more general */
@@ -3076,9 +3101,6 @@ rf_have_enough_components(cset)
 	/* otherwise, all is well, and we've got enough to take a kick
 	   at autoconfiguring this set */
 	return(1);
-fail:
-	return(0);
-
 }
 
 void
