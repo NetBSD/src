@@ -36,7 +36,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)machdep.c	7.4 (Berkeley) 6/3/91
- *	$Id: machdep.c,v 1.110 1994/06/14 19:55:06 mycroft Exp $
+ *	$Id: machdep.c,v 1.111 1994/07/01 02:58:53 deraadt Exp $
  */
 
 #include <sys/param.h>
@@ -47,7 +47,6 @@
 #include <sys/proc.h>
 #include <sys/user.h>
 #include <sys/exec.h>
-#include <sys/exec_aout.h>
 #include <sys/buf.h>
 #include <sys/reboot.h>
 #include <sys/conf.h>
