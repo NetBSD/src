@@ -1,4 +1,4 @@
-/* $NetBSD: cpu.c,v 1.69 2003/01/17 22:11:17 thorpej Exp $ */
+/* $NetBSD: cpu.c,v 1.70 2003/02/05 12:16:41 nakayama Exp $ */
 
 /*-
  * Copyright (c) 1998, 1999, 2000, 2001 The NetBSD Foundation, Inc.
@@ -66,7 +66,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.69 2003/01/17 22:11:17 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.70 2003/02/05 12:16:41 nakayama Exp $");
 
 #include "opt_ddb.h"
 #include "opt_multiprocessor.h"
@@ -598,7 +598,7 @@ cpu_hatch(struct cpu_info *ci)
 	ALPHA_TBIA();
 	alpha_pal_imb();
 
-	microset(ci, NULL);
+	cc_microset(ci);
 
 	/* Initialize our base "runtime". */
 	microtime(&ci->ci_schedstate.spc_runtime);
