@@ -1,11 +1,11 @@
-/*	$NetBSD: pccvar.h,v 1.4 1999/02/14 17:54:29 scw Exp $	*/
+/*	$NetBSD: lptvar.h,v 1.2 1999/02/14 17:54:28 scw Exp $ */
 
 /*-
- * Copyright (c) 1996, 1999 The NetBSD Foundation, Inc.
+ * Copyright (c) 1999 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
- * by Jason R. Thorpe and Steve C. Woodford.
+ * by Steve C. Woodford.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -17,8 +17,8 @@
  *    documentation and/or other materials provided with the distribution.
  * 3. All advertising materials mentioning features or use of this software
  *    must display the following acknowledgement:
- *        This product includes software developed by the NetBSD
- *        Foundation, Inc. and its contributors.
+ *	This product includes software developed by the NetBSD
+ *	Foundation, Inc. and its contributors.
  * 4. Neither the name of The NetBSD Foundation nor the names of its
  *    contributors may be used to endorse or promote products derived
  *    from this software without specific prior written permission.
@@ -37,37 +37,54 @@
  */
 
 /*
- * Autoconfiguration definitions shared between the MVME-147 Peripheral
- * Channel Controller (PCC) and the MVME-167's PCCchip2.
+ * Common front-end for mvme68k parallel printer ports
  */
 
-/*
- * Structure used to describe a device for autoconfiguration purposes.
- */
-struct pcc_device {
-	char	*pcc_name;	/* name of device (e.g. "clock") */
-	u_long	pcc_offset;	/* offset from PCC base */
-	int	pcc_bytes;	/* size of badaddr check */
+#ifndef __mvme68k_lptvar_h
+#define __mvme68k_lptvar_h
+
+struct lpt_funcs;
+
+
+struct lpt_softc {
+	struct device		sc_dev;
+	struct lpt_funcs	*sc_funcs;
+	void			*sc_arg;
+	size_t			sc_count;
+	struct buf		*sc_inbuf;
+	u_char			*sc_cp;
+	int			sc_spinmax;
+	u_char			sc_state;
+#define	LPT_OPEN	0x01	/* device is open */
+#define	LPT_OBUSY	0x02	/* printer is busy doing output */
+#define	LPT_INIT	0x04	/* waiting to initialize for open */
+	u_char			sc_flags;
+#define	LPT_FAST_STROBE	0x10	/* Select 1.6uS strobe pulse */
+#define	LPT_AUTOLF	0x20	/* automatic LF on CR */
+#define	LPT_NOPRIME	0x40	/* don't prime on open */
+#define	LPT_NOINTR	0x80	/* do not use interrupt */
+
+	/* Back-end specific stuff */
+	void			*sc_regs;
+	int			sc_ipl;
+	u_char			sc_icr;
+	u_char			sc_laststatus;
 };
 
-/*
- * Structure used to attach PCC devices.
- */
-struct pcc_attach_args {
-	char	*pa_name;	/* name of device */
-	u_long	pa_offset;	/* offset from PCC base */
-	int	pa_ipl;		/* interrupt level */
+
+struct lpt_funcs {
+	void	(*lf_open) __P((struct lpt_softc *, int));
+	void	(*lf_close) __P((struct lpt_softc *));
+	void	(*lf_iprime) __P((struct lpt_softc *));
+	void	(*lf_speed) __P((struct lpt_softc *, int));
+	int	(*lf_notrdy) __P((struct lpt_softc *, int));
+	void	(*lf_wrdata) __P((struct lpt_softc *, u_char));
 };
 
-/* Shorthand for locators. */
-#include "locators.h"
-#define pcccf_ipl	cf_loc[PCCCF_IPL]
+#define	LPT_STROBE_FAST	0
+#define LPT_STROBE_SLOW	1
 
-#if NPCC
-void	pccintr_establish __P((int, int (*)(void *), int, void *));
-void	pccintr_disestablish __P((int));
-#endif
-#if NPCCTWO
-void	pcctwointr_establish __P((int, int (*)(void *), int, void *));
-void	pcctwointr_disestablish __P((int));
-#endif
+extern	void	lpt_attach_subr	__P((struct lpt_softc *));
+extern	int	lpt_intr	__P((struct lpt_softc *));
+
+#endif	/* __mvme68k_lptvar_h */

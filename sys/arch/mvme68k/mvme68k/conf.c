@@ -1,4 +1,4 @@
-/*	$NetBSD: conf.c,v 1.16 1998/11/21 20:37:06 scw Exp $	*/
+/*	$NetBSD: conf.c,v 1.17 1999/02/14 17:54:29 scw Exp $	*/
 
 /*-
  * Copyright (c) 1991 The Regents of the University of California.
@@ -103,6 +103,9 @@ cdev_decl(fd);
 #include "zstty.h"
 cdev_decl(zs);
 
+#include "clmpcc.h"
+cdev_decl(clmpcc);
+
 cdev_decl(cd);
 #include "ch.h"
 cdev_decl(ch);
@@ -155,7 +158,7 @@ struct cdevsw	cdevsw[] =
 	cdev_notdef(),			/* 10 */
 	cdev_lpt_init(NLPT,lpt),	/* 11: parallel interface */
 	cdev_tty_init(NZSTTY,zs),	/* 12: SCC serial ports */
-	cdev_notdef(),			/* 13 */
+	cdev_tty_init(NCLMPCC,clmpcc),	/* 13: CD2401 serial ports */
 	cdev_notdef(),			/* 14 */
 	cdev_notdef(),			/* 15 */
 	cdev_notdef(),			/* 16 */
@@ -292,9 +295,17 @@ chrtoblk(dev)
 #include "zsc_pcc.h"
 cons_decl(zsc_pcc);
 
+#define clmpcccnpollc		nullcnpollc
+#include "clmpcc_pcctwo.h"
+cons_decl(clmpcc);
+
+
 struct	consdev constab[] = {
 #if NZSC_PCC > 0
 	cons_init(zsc_pcc),
+#endif
+#if NCLMPCC_PCCTWO > 0
+	cons_init(clmpcc),
 #endif
 	{ 0 },
 };

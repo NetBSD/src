@@ -1,4 +1,4 @@
-/*	$NetBSD: if_le.c,v 1.19 1998/08/22 10:55:33 scw Exp $	*/
+/*	$NetBSD: if_le.c,v 1.20 1999/02/14 17:54:28 scw Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -110,6 +110,7 @@
 #include <mvme68k/dev/if_lereg.h>
 #include <mvme68k/dev/if_levar.h>
 
+
 int 	le_pcc_match __P((struct device *, struct cfdata  *, void *));
 void	le_pcc_attach __P((struct device *, struct device *, void *));
 
@@ -133,8 +134,6 @@ extern struct cfdriver le_cd;
 
 hide void le_pcc_wrcsr __P((struct lance_softc *, u_int16_t, u_int16_t));
 hide u_int16_t le_pcc_rdcsr __P((struct lance_softc *, u_int16_t));
-
-void *ledatabuf; /* XXXCDC hack from pmap bootstrap */
 
 hide void
 le_pcc_wrcsr(sc, port, val)
@@ -184,16 +183,13 @@ le_pcc_attach(parent, self, aux)
 	struct lance_softc *sc = &lesc->sc_am7990.lsc;
 	struct pcc_attach_args *pa = aux;
 
-	/* XXX the following declarations should be elsewhere */
-	extern void myetheraddr __P((u_char *));
-
 	/* Map control registers. */
 	lesc->sc_r1 = (struct lereg1 *)PCC_VADDR(pa->pa_offset);
 
-	sc->sc_mem = ledatabuf;		/* XXX */
+	sc->sc_mem = ether_data_buff;
 	sc->sc_conf3 = LE_C3_BSWP;
 	sc->sc_addr = (u_long)sc->sc_mem;
-	sc->sc_memsize = 4 * NBPG;	/* XXX */
+	sc->sc_memsize = ether_data_buff_size;
 
 	myetheraddr(sc->sc_enaddr);
 
