@@ -1,4 +1,4 @@
-/*	$NetBSD: pam_mod_misc.h,v 1.2 2004/12/12 08:18:43 christos Exp $	*/
+/*	$NetBSD: pam_mod_misc.h,v 1.3 2004/12/12 08:30:26 christos Exp $	*/
 
 /*-
  * Copyright 1998 Juniper Networks, Inc.
@@ -53,6 +53,6 @@ __END_DECLS
 	return (arg)
 
 #define PAM_VERBOSE_ERROR(...) \
-	_pam_verbose_error(pamh, flags, __FILE__, __function__, __VA_ARGS__)
+	_pam_verbose_error(pamh, flags, __FILE__, __func__, __VA_ARGS__)
 
 #endif
