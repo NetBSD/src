@@ -1,4 +1,4 @@
-/*	$NetBSD: vme_two_isr.c,v 1.2 2002/03/24 17:22:32 scw Exp $	*/
+/*	$NetBSD: vme_two_isr.c,v 1.3 2003/03/07 12:40:12 he Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002 The NetBSD Foundation, Inc.
@@ -49,6 +49,7 @@
 #include <sys/systm.h>
 #include <sys/device.h>
 #include <sys/malloc.h>
+#include <sys/lock.h>
 
 #include <machine/cpu.h>
 #include <machine/bus.h>
