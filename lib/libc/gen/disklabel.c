@@ -1,4 +1,4 @@
-/*	$NetBSD: disklabel.c,v 1.19 1998/02/28 12:54:39 enami Exp $	*/
+/*	$NetBSD: disklabel.c,v 1.20 1998/07/26 13:42:28 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1983, 1987, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)disklabel.c	8.2 (Berkeley) 5/3/95";
 #else
-__RCSID("$NetBSD: disklabel.c,v 1.19 1998/02/28 12:54:39 enami Exp $");
+__RCSID("$NetBSD: disklabel.c,v 1.20 1998/07/26 13:42:28 mycroft Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -64,7 +64,7 @@ __weak_alias(getdiskbyname,_getdiskbyname);
 #if 0
 static void	error __P((int));
 #endif
-static int	gettype __P((char *, char **));
+static int	gettype __P((char *, const char *const *));
 
 struct disklabel *
 getdiskbyname(name)
@@ -177,9 +177,9 @@ getdiskbyname(name)
 static int
 gettype(t, names)
 	char *t;
-	char **names;
+	const char *const *names;
 {
-	char **nm;
+	const char *const *nm;
 
 	for (nm = names; *nm; nm++)
 		if (strcasecmp(t, *nm) == 0)
