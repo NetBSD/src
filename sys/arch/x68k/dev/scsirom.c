@@ -1,9 +1,11 @@
-/*	$NetBSD: scsirom.c,v 1.3 1999/03/24 14:07:39 minoura Exp $	*/
+/*	$NetBSD: scsirom.c,v 1.4 1999/04/22 12:55:53 minoura Exp $	*/
 
-/*
- *
+/*-
  * Copyright (c) 1999 NetBSD Foundation, Inc.
  * All rights reserved.
+ *
+ * This code is derived from software contributed to The NetBSD Foundation
+ * by Minoura Makoto.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -93,7 +95,10 @@ scsirom_find (parent, ia)
 
 	if (bus_space_map (ia->ia_bst, ia->ia_addr, ia->ia_size, 0, &ioh) < 0)
 		return -1;
-	bus_space_read_region_1 (ia->ia_bst, ioh, SCSIROM_ID, buf, 6);
+	if (badaddr ((caddr_t)INTIO_ADDR(ia->ia_addr+SCSIROM_ID))) {
+		bus_space_unmap (ia->ia_bst, ioh, ia->ia_size);
+		return -1;
+	}
 	if (memcmp(buf, scsirom_descr[which].id, 6) == 0)
 		r = which;
 	bus_space_unmap (ia->ia_bst, ioh, ia->ia_size);
