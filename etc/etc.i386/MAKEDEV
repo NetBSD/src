@@ -334,7 +334,7 @@ lms*)
 pms*)
 	unit=`expr $i : 'pms\(.*\)'`
 	rm -f pms$unit
-	mknod pms$unit c 37 `expr $unit '*' 2 + 1`	# non-blocking for X11
+	mknod pms$unit c 37 $unit
 	chown root.wheel pms$unit
 	;;
 
