@@ -1,4 +1,4 @@
-/*	$NetBSD: hpux_types.h,v 1.1 1999/08/23 18:40:43 thorpej Exp $	*/
+/*	$NetBSD: hpux_types.h,v 1.2 1999/08/23 20:59:33 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -77,7 +77,7 @@ typedef	char		hpux_spu_t;
 typedef	long		hpux_fd_mask;
 
 #define	HPUX_FD_SETSIZE	2048		/* MAXFUPLIM from <sys/types.h> */
-#define	HPUX_NFDBITS(sizeof(hpux_fd_mask) * 8)
+#define	HPUX_NFDBITS	(sizeof(hpux_fd_mask) * 8)
 
 #ifdef howmany
 typedef	struct hpux_fd_set {
