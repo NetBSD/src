@@ -1,4 +1,4 @@
-/*	$NetBSD: conf.c,v 1.38 1996/03/14 21:09:00 christos Exp $ */
+/*	$NetBSD: conf.c,v 1.39 1996/03/30 21:13:53 christos Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -50,14 +50,31 @@
 #include <sys/ioctl.h>
 #include <sys/vnode.h>
 #include <sys/tty.h>
+#include <sys/conf.h>
 
-#include <scsi/scsi_conf.h>
-#include <kern/kern_conf.h>
-#include <dev/dev_conf.h>
-#include <net/net_conf.h>
-#include <sparc/dev/dev_conf.h>
-#include <sparc/sparc/sparc_conf.h>
-#include <compat/svr4/svr4_conf.h>
+#include <machine/conf.h>
+
+#include "pty.h"
+#include "bpfilter.h"
+#include "tun.h"
+#include "audio.h"
+#include "vnd.h"
+#include "ccd.h"
+#include "ch.h"
+#include "ss.h"
+#include "sd.h"
+#include "st.h"
+#include "cd.h"
+
+#include "zs.h"
+#include "fd.h"
+#include "bwtwo.h"
+#include "cgthree.h"
+#include "cgfour.h"
+#include "cgsix.h"
+#include "cgeight.h"
+#include "xd.h"
+#include "xy.h"
 
 struct bdevsw	bdevsw[] =
 {
