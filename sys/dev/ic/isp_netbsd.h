@@ -1,4 +1,4 @@
-/* $NetBSD: isp_netbsd.h,v 1.26 2000/07/05 22:25:06 mjacob Exp $ */
+/* $NetBSD: isp_netbsd.h,v 1.27 2000/08/01 23:55:11 mjacob Exp $ */
 /*
  * NetBSD Specific definitions for the Qlogic ISP Host Adapter
  * Matthew Jacob <mjacob@nas.nasa.gov>
@@ -53,130 +53,207 @@
 #include <dev/scsipi/scsipi_debug.h>
 
 #include "opt_isp.h"
-/*
- * We always support fabric now
- */
-#ifndef	ISP2100_FABRIC
-#define	ISP2100_FABRIC
-#endif
 
 
-#define	ISP_PLATFORM_VERSION_MAJOR	0
-#define	ISP_PLATFORM_VERSION_MINOR	998
+#define	ISP_PLATFORM_VERSION_MAJOR	1
+#define	ISP_PLATFORM_VERSION_MINOR	0
 
-#define	ISP_SCSI_XFER_T		struct scsipi_xfer
 struct isposinfo {
 	struct device		_dev;
 	struct scsipi_link	_link;
 	struct scsipi_link	_link_b;
 	struct scsipi_adapter   _adapter;
-	int			blocked;
+	int	splsaved;
+	int	mboxwaiting;
+	unsigned int
+				: 28,
+		onintstack	: 1,
+		no_mbox_ints	: 1,
+		blocked		: 1,
+		islocked	: 1;
 	union {
-		int		_seed;
+		u_int64_t	_wwn;
 		u_int16_t	_discovered[2];
-	} un;
-#define	seed		un._seed
+#define	wwn_seed	un._wwn
 #define	discovered	un._discovered
+	} un;
 	TAILQ_HEAD(, scsipi_xfer) waitq; 
 	struct callout _restart;
 };
 
-#define	MAXISPREQUEST	256
-#ifdef	ISP2100_FABRIC
+/*
+ * Required Macros/Defines
+ */
+
+#define	INLINE			inline
+
+#define	ISP2100_FABRIC		1
 #define	ISP2100_SCRLEN		0x400
+
+#define	MEMZERO			bzero
+#define	MEMCPY(dst, src, amt)	bcopy((src), (dst), (amt))
+#define	SNPRINTF		snprintf
+#define	STRNCAT			strncat
+#define	USEC_DELAY		DELAY
+
+#define	NANOTIME_T		struct timeval
+#define	GET_NANOTIME		microtime
+#define	GET_NANOSEC(x)		(((x)->tv_sec * 1000000 + (x)->tv_usec) * 1000)
+#define	NANOTIME_SUB		isp_microtime_sub
+
+#define	MAXISPREQUEST(isp)	256
+
+#ifdef	__alpha__
+#define	MEMORYBARRIER(isp, type, offset, size)	alpha_mb()
 #else
-#define	ISP2100_SCRLEN		0x100
+#define	MEMORYBARRIER(isp, type, offset, size)
 #endif
+
+#define	MBOX_ACQUIRE(isp)
+#define	MBOX_WAIT_COMPLETE	isp_wait_complete
+
+#define	MBOX_NOTIFY_COMPLETE(isp)					\
+	if (isp->isp_osinfo.mboxwaiting) {				\
+                isp->isp_osinfo.mboxwaiting = 0;			\
+                wakeup(&isp->isp_osinfo.mboxwaiting);			\
+        }								\
+	isp->isp_mboxbsy = 0
+
+#define	MBOX_RELEASE(isp)
+
+#ifndef	SCSI_GOOD
+#define	SCSI_GOOD	0x0
+#endif
+#ifndef	SCSI_CHECK
+#define	SCSI_CHECK	0x2
+#endif
+#ifndef	SCSI_BUSY
+#define	SCSI_BUSY	0x8
+#endif
+#ifndef	SCSI_QFULL
+#define	SCSI_QFULL	0x28
+#endif
+
+#define	XS_T			struct scsipi_xfer
+#define	XS_CHANNEL(xs)		\
+	(((int) (xs)->sc_link->scsipi_scsi.channel == SCSI_CHANNEL_ONLY_ONE) ? \
+	    0 : (xs)->sc_link->scsipi_scsi.channel)
+#define	XS_ISP(xs)		(xs)->sc_link->adapter_softc
+#define	XS_LUN(xs)		((int) (xs)->sc_link->scsipi_scsi.lun)
+#define	XS_TGT(xs)		((int) (xs)->sc_link->scsipi_scsi.target)
+#define	XS_CDBP(xs)		((caddr_t) (xs)->cmd)
+#define	XS_CDBLEN(xs)		(xs)->cmdlen
+#define	XS_XFRLEN(xs)		(xs)->datalen
+#define	XS_TIME(xs)		(xs)->timeout
+#define	XS_RESID(xs)		(xs)->resid
+#define	XS_STSP(xs)		(&(xs)->status)
+#define	XS_SNSP(xs)		(&(xs)->sense.scsi_sense)
+#define	XS_SNSLEN(xs)		(sizeof (xs)->sense)
+#define	XS_SNSKEY(xs)		((xs)->sense.scsi_sense.flags)
+#define	XS_TAG_P(ccb)		(((xs)->xs_control & XS_CTL_POLL) != 0)
+#define	XS_TAG_TYPE(xs)	\
+	(((xs)->xs_control & XS_CTL_URGENT) ? REQFLAG_HTAG : REQFLAG_OTAG)
+
+
+#define	XS_SETERR(xs, v)	(xs)->error = v
+
+#	define	HBA_NOERROR		XS_NOERROR
+#	define	HBA_BOTCH		XS_DRIVER_STUFFUP
+#	define	HBA_CMDTIMEOUT		XS_TIMEOUT
+#	define	HBA_SELTIMEOUT		XS_SELTIMEOUT
+#	define	HBA_TGTBSY		XS_BUSY
+#	define	HBA_BUSRESET		XS_RESET
+#	define	HBA_ABORTED		XS_DRIVER_STUFFUP
+#	define	HBA_DATAOVR		XS_DRIVER_STUFFUP
+#	define	HBA_ARQFAIL		XS_DRIVER_STUFFUP
+
+#define	XS_ERR(xs)		(xs)->error
+
+#define	XS_NOERR(xs)		(xs)->error == XS_NOERROR
+
+#define	XS_INITERR(xs)		(xs)->error = 0, XS_CMD_S_CLEAR(xs)
+
+#define	XS_SAVE_SENSE(xs, sp)				\
+	bcopy(sp->req_sense_data, &(xs)->sense,		\
+	    imin(XS_SNSLEN(xs), sp->req_sense_len))
+
+#define	XS_SET_STATE_STAT(a, b, c)
+
+#define	DEFAULT_IID(x)		7
+#define	DEFAULT_LOOPID(x)	108
+#define	DEFAULT_NODEWWN(isp)	(isp)->isp_osinfo.un._wwn
+#define	DEFAULT_PORTWWN(isp)	\
+	isp_port_from_node_wwn((isp), DEFAULT_NODEWWN(isp))
+#define	PORT_FROM_NODE_WWN	isp_port_from_node_wwn
+
+#define	ISP_UNSWIZZLE_AND_COPY_PDBP(isp, dest, src)	\
+	if((void *)src != (void *)dest) bcopy(src, dest, sizeof (isp_pdb_t))
+#define	ISP_SWIZZLE_ICB(a, b)
+#ifdef	__sparc__
+#define ISP_SWIZZLE_REQUEST(a, b)			\
+	ISP_SBUSIFY_ISPHDR(a, &(b)->req_header);	\
+        ISP_SBUSIFY_ISPREQ(a, b)
+#define ISP_UNSWIZZLE_RESPONSE(a, b, c)			\
+	ISP_SBUSIFY_ISPHDR(a, &(b)->req_header)
+#else
+#define	ISP_SWIZZLE_REQUEST(a, b)
+#define	ISP_UNSWIZZLE_RESPONSE(a, b, c)
+#endif
+#define	ISP_SWIZZLE_SNS_REQ(a, b)
+#define	ISP_UNSWIZZLE_SNS_RSP(a, b, c)
+#ifdef	__sparc__
+#define	ISP_SWIZZLE_NVRAM_WORD(isp, rp)	\
+	{								\
+		u_int16_t tmp = *rp >> 8;				\
+		tmp |= ((*rp & 0xff) << 8);				\
+		*rp = tmp;						\
+	}
+#else
+#define	ISP_SWIZZLE_NVRAM_WORD(isp, rp)
+#endif
+
+/*
+ * Includes of common header files
+ */
 
 #include <dev/ic/ispreg.h>
 #include <dev/ic/ispvar.h>
 #include <dev/ic/ispmbox.h>
 
-#define	IDPRINTF(lev, x)	if (isp->isp_dblev >= lev) printf x
-#define	PRINTF			printf
+/*
+ * isp_osinfo definitions, extensions and shorthand.
+ */
+#define	isp_name	isp_osinfo._dev.dv_xname
+#define	isp_unit	isp_osinfo._dev.dv_unit
 
-#define	MEMZERO			bzero
-#define	MEMCPY(dst, src, count)	bcopy((src), (dst), (count))
-#ifdef	__alpha__
-#define	MemoryBarrier	alpha_mb
-#else
-#define	MemoryBarrier()
-#endif
+/*
+ * Driver prototypes..
+ */
+void isp_attach __P((struct ispsoftc *));
+void isp_uninit __P((struct ispsoftc *));
 
-#define	DMA_MSW(x)	(((x) >> 16) & 0xffff)
-#define	DMA_LSW(x)	(((x) & 0xffff))
+static inline void isp_lock __P((struct ispsoftc *));
+static inline void isp_unlock __P((struct ispsoftc *));
+static inline char *strncat __P((char *, const char *, size_t));
+static inline u_int64_t
+isp_port_from_node_wwn __P((struct ispsoftc *, u_int64_t));
+static inline u_int64_t
+isp_microtime_sub __P((struct timeval *, struct timeval *));
+static void isp_wait_complete __P((struct ispsoftc *));
 
-#if	defined(SCSIDEBUG)
-#define	DFLT_DBLEVEL		3
-#define	CFGPRINTF		printf
-#elif	defined(DEBUG)
-#define	DFLT_DBLEVEL		2
-#define	CFGPRINTF		printf
-#elif	defined(DIAGNOSTIC)
-#define	DFLT_DBLEVEL		1
-#define	CFGPRINTF		printf
-#else
-#define	DFLT_DBLEVEL		0
-#define	CFGPRINTF		if (0) printf
-#endif
+/*
+ * Driver wide data...
+ */
 
-#define	ISP_LOCKVAL_DECL	int isp_spl_save
-#define	ISP_ILOCKVAL_DECL	ISP_LOCKVAL_DECL
-#define	ISP_LOCK(x)		isp_spl_save = splbio()
-#define	ISP_UNLOCK(x)		(void) splx(isp_spl_save)
-#define	ISP_ILOCK		ISP_LOCK
-#define	ISP_IUNLOCK		ISP_UNLOCK
+/*
+ * Locking macros...
+ */
+#define	ISP_LOCK		isp_lock
+#define	ISP_UNLOCK		isp_unlock
 
-#define	MBOX_WAIT_COMPLETE(isp)		\
-	{ \
-		int j; \
-		for (j = 0; j < 60 * 2000; j++) { \
-			if (isp_intr(isp) == 0) { \
-				SYS_DELAY(500); \
-			} \
-			if (isp->isp_mboxbsy == 0) \
-				break; \
-		} \
-		if (isp->isp_mboxbsy != 0) \
-			printf("%s: mailbox timeout\n", isp->isp_name); \
-	}
-
-#define	MBOX_NOTIFY_COMPLETE(isp)	isp->isp_mboxbsy = 0
-
-
-#define	XS_NULL(xs)		xs == NULL || xs->sc_link == NULL
-#define	XS_ISP(xs)		(xs)->sc_link->adapter_softc
-#define	XS_LUN(xs)		((int) (xs)->sc_link->scsipi_scsi.lun)
-#define	XS_TGT(xs)		((int) (xs)->sc_link->scsipi_scsi.target)
-#define	XS_CHANNEL(xs)		\
-	(((int) (xs)->sc_link->scsipi_scsi.channel == SCSI_CHANNEL_ONLY_ONE) ? \
-	    0 : (xs)->sc_link->scsipi_scsi.channel)
-#define	XS_RESID(xs)		(xs)->resid
-#define	XS_XFRLEN(xs)		(xs)->datalen
-#define	XS_CDBLEN(xs)		(xs)->cmdlen
-#define	XS_CDBP(xs)		((caddr_t) (xs)->cmd)
-#define	XS_STS(xs)		(xs)->status
-#define	XS_TIME(xs)		(xs)->timeout
-#define	XS_SNSP(xs)		(&(xs)->sense.scsi_sense)
-#define	XS_SNSLEN(xs)		(sizeof (xs)->sense.scsi_sense)
-#define	XS_SNSKEY(xs)		((xs)->sense.scsi_sense.flags)
-
-#define	HBA_NOERROR		XS_NOERROR
-#define	HBA_BOTCH		XS_DRIVER_STUFFUP
-#define	HBA_CMDTIMEOUT		XS_TIMEOUT
-#define	HBA_SELTIMEOUT		XS_SELTIMEOUT
-#define	HBA_TGTBSY		XS_BUSY
-#ifdef	XS_RESET
-#define	HBA_BUSRESET		XS_RESET
-#else
-#define	HBA_BUSRESET		XS_DRIVER_STUFFUP
-#endif
-#define	HBA_ABORTED		XS_DRIVER_STUFFUP
-#define	HBA_DATAOVR		XS_DRIVER_STUFFUP
-#define	HBA_ARQFAIL		XS_DRIVER_STUFFUP
-
-#define	XS_SNS_IS_VALID(xs)	(xs)->error = XS_SENSE
-#define	XS_IS_SNS_VALID(xs)	((xs)->error == XS_SENSE)
+/*              
+ * Platform private flags                                               
+ */
 
 #define	XS_PSTS_INWDOG		0x10000000
 #define	XS_PSTS_GRACE		0x20000000
@@ -196,72 +273,37 @@ struct isposinfo {
 
 #define	XS_CMD_S_CLEAR(xs)	(xs)->xs_status &= ~XS_PSTS_ALL
 
-#define	XS_INITERR(xs)		(xs)->error = 0, XS_CMD_S_CLEAR(xs)
-#define	XS_SETERR(xs, v)	(xs)->error = v
-#define	XS_ERR(xs)		(xs)->error
-#define	XS_NOERR(xs)		(xs)->error == XS_NOERROR
-
-#define	XS_CMD_DONE		isp_done
-
 /*
- * We use whether or not we're a polled command to decide about tagging.
+ * Platform specific 'inline' or support functions
  */
-#define	XS_CANTAG(xs)		(((xs)->xs_control & XS_CTL_POLL) != 0)
+static inline void
+isp_lock(isp)
+	struct ispsoftc *isp;
+{
+	int s = splbio();
+	if (isp->isp_osinfo.islocked == 0) {
+		isp->isp_osinfo.islocked = 1;
+		isp->isp_osinfo.splsaved = s;
+	} else {
+		splx(s);
+	}
+}
 
-/*
- * This is our default tag (simple).
- */
-#define	XS_KINDOF_TAG(xs)	\
-	(((xs)->xs_control & XS_CTL_URGENT) ? REQFLAG_HTAG : REQFLAG_OTAG)
+static inline void
+isp_unlock(isp)
+	struct ispsoftc *isp;
+{
+	if (isp->isp_osinfo.islocked) {
+		isp->isp_osinfo.islocked = 0;
+		splx(isp->isp_osinfo.splsaved);
+	}
+}
 
-/*
- * These get turned into NetBSD midlayer codes
- */
-#define	CMD_COMPLETE		100
-#define	CMD_EAGAIN		101
-#define	CMD_QUEUED		102
-#define	CMD_RQLATER		103
-
-
-#define	isp_name	isp_osinfo._dev.dv_xname
-#define	isp_unit	isp_osinfo._dev.dv_unit
-
-#define	SCSI_QFULL	0x28
-
-#define	SYS_DELAY(x)	delay(x)
-
-#define	WATCH_INTERVAL	30
-
-#define	FC_FW_READY_DELAY	(12 * 1000000)
-#define	DEFAULT_LOOPID(x)	108
-#define	DEFAULT_WWN(x)		(0x1000beed00000000LL + (x)->isp_osinfo.seed)
-
-extern void isp_attach __P((struct ispsoftc *));
-extern void isp_uninit __P((struct ispsoftc *));
-
-#define ISP_UNSWIZZLE_AND_COPY_PDBP(isp, dest, src)	\
-        bcopy(src, dest, sizeof (isp_pdb_t))
-#define ISP_SWIZZLE_ICB(a, b)
-#ifdef	__sparc__
-#define	ISP_SWIZZLE_CONTINUATION(a, b)	ISP_SBUSIFY_ISPHDR(a, &(b)->req_header)
-#define ISP_SWIZZLE_REQUEST(a, b)			\
-	ISP_SBUSIFY_ISPHDR(a, &(b)->req_header);	\
-        ISP_SBUSIFY_ISPREQ(a, b)
-#define ISP_UNSWIZZLE_RESPONSE(a, b)			\
-	ISP_SBUSIFY_ISPHDR(a, &(b)->req_header)
-#else
-#define	ISP_SWIZZLE_CONTINUATION(a, b)
-#define ISP_SWIZZLE_REQUEST(a, b)
-#define ISP_UNSWIZZLE_RESPONSE(a, b)
-#endif
-#define	ISP_SWIZZLE_SNS_REQ(a, b)
-#define	ISP_UNSWIZZLE_SNS_RSP(a, b, c)
-
-extern void isp_done	__P((ISP_SCSI_XFER_T *));
-#define	STRNCAT			strncat
-static inline char *strncat(char *, const char *, size_t);
 static inline char *
-strncat(char *d, const char *s, size_t c)
+strncat(d, s, c)
+	char *d;
+	const char *s;
+	size_t c;
 {
         char *t = d;
 
@@ -278,7 +320,74 @@ strncat(char *d, const char *s, size_t c)
         return (t);
 }
 
+static inline u_int64_t
+isp_microtime_sub(b, a)
+	struct timeval *b;
+	struct timeval *a;
+{
+	struct timeval x;
+	u_int64_t elapsed;
+	timersub(b, a, &x);
+	elapsed = GET_NANOSEC(&x);
+	if (elapsed == 0)
+		elapsed++;
+	return (elapsed);
+}
 
+static inline void
+isp_wait_complete(isp)
+	struct ispsoftc *isp;
+{
+	if (isp->isp_osinfo.onintstack || isp->isp_osinfo.no_mbox_ints) {
+		int usecs = 0;
+		while (usecs < 2 * 1000000) {
+			(void) isp_intr(isp);
+			if (isp->isp_mboxbsy == 0) {
+				break;
+			}
+			USEC_DELAY(500);
+			usecs += 500;
+		}
+		if (isp->isp_mboxbsy != 0) {
+			isp_prt(isp, ISP_LOGWARN, "Mailbox Cmd (poll) Timeout");
+		}
+	} else {
+		int rv = 0;
+                isp->isp_osinfo.mboxwaiting = 1;
+                while (isp->isp_osinfo.mboxwaiting && rv == 0) {
+			static struct timeval twosec = { 2, 0 };
+			int timo;
+			struct timeval tv;
+			microtime(&tv);
+			timeradd(&tv, &twosec, &tv);
+			if ((timo = hzto(&tv)) == 0) {
+				timo = 1;
+			}
+			rv = tsleep(&isp->isp_osinfo.mboxwaiting,
+			    PRIBIO, "isp_mboxcmd", timo);
+		}
+		if (rv == EWOULDBLOCK) {
+			isp->isp_mboxbsy = 0;
+			isp->isp_osinfo.mboxwaiting = 0;
+			isp_prt(isp, ISP_LOGWARN, "Mailbox Cmd (intr) Timeout");
+		}
+	}
+}
+
+static inline u_int64_t
+isp_port_from_node_wwn(struct ispsoftc *isp, u_int64_t node_wwn)
+{
+	u_int64_t rv = node_wwn;
+	if ((node_wwn >> 60) == 2) {
+		rv = node_wwn | 
+		    (((u_int64_t)(isp->isp_unit+1)) << 48);
+	}
+	return (rv);
+}
+
+/*
+ * Common inline functions
+ */
 #define	INLINE	inline
 #include <dev/ic/isp_inline.h>
 
