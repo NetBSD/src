@@ -1,4 +1,5 @@
-/*	$NetBSD: debug.c,v 1.8 2000/10/11 20:23:54 is Exp $	*/
+/*	$NetBSD: debug.c,v 1.9 2000/12/04 07:05:47 itojun Exp $	*/
+/*	$KAME: debug.c,v 1.11 2000/12/04 06:33:09 itojun Exp $	*/
 
 /*
  *  Copyright (c) 1998 by the University of Southern California.
@@ -35,8 +36,6 @@
 /*
  *  Questions concerning this software should be directed to 
  *  Pavlin Ivanov Radoslavov (pavlin@catarina.usc.edu)
- *
- *  KAME Id: debug.c,v 1.8 2000/05/18 12:47:59 itojun Exp
  */
 /*
  * Part of this program has been derived from mrouted.
@@ -69,7 +68,7 @@ static char dumpfilename[] = _PATH_PIM6D_DUMP;
 static char cachefilename[] = _PATH_PIM6D_CACHE; /* TODO: notused */
 
 static char *sec2str __P((time_t));
-	
+
 static char *
 sec2str(total)
 	time_t total;

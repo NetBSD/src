@@ -1,4 +1,5 @@
-/*	$NetBSD: mld6.h,v 1.2 2000/05/19 10:43:42 itojun Exp $	*/
+/*	$NetBSD: mld6.h,v 1.3 2000/12/04 07:05:48 itojun Exp $	*/
+/*	$KAME: mld6.h,v 1.3 2000/12/04 06:33:10 itojun Exp $	*/
 
 /*
  * Copyright (C) 1998 WIDE Project.

@@ -1,4 +1,5 @@
-/*	$NetBSD: routesock.c,v 1.3 1999/12/10 06:13:32 itojun Exp $	*/
+/*	$NetBSD: routesock.c,v 1.4 2000/12/04 07:05:49 itojun Exp $	*/
+/*	$KAME: routesock.c,v 1.5 2000/12/04 06:33:11 itojun Exp $	*/
 
 /*
  *  Copyright (c) 1998 by the University of Southern California.
@@ -35,8 +36,6 @@
 /*
  *  Questions concerning this software should be directed to 
  *  Pavlin Ivanov Radoslavov (pavlin@catarina.usc.edu)
- *
- *  KAME Id: routesock.c,v 1.4 1999/11/19 04:05:48 sumikawa Exp
  */
 /*
  * Part of this program has been derived from mrouted.
