@@ -1,7 +1,7 @@
 /*******************************************************************************
  *
  * Module Name: dsmthdat - control method arguments and local variables
- *              xRevision: 73 $
+ *              xRevision: 74 $
  *
  ******************************************************************************/
 
@@ -115,7 +115,7 @@
  *****************************************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dsmthdat.c,v 1.8 2003/11/09 11:51:00 kochi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dsmthdat.c,v 1.9 2003/12/13 18:11:00 kochi Exp $");
 
 #define __DSMTHDAT_C__
 
@@ -665,12 +665,12 @@ AcpiDsStoreObjectToLocal (
     ACPI_STATUS             Status;
     ACPI_NAMESPACE_NODE     *Node;
     ACPI_OPERAND_OBJECT     *CurrentObjDesc;
+    ACPI_OPERAND_OBJECT     *NewObjDesc;
 
 
     ACPI_FUNCTION_TRACE ("DsStoreObjectToLocal");
     ACPI_DEBUG_PRINT ((ACPI_DB_EXEC, "Opcode=%d Idx=%d Obj=%p\n",
         Opcode, Index, ObjDesc));
-
 
     /* Parameter validation */
 
@@ -693,6 +693,20 @@ AcpiDsStoreObjectToLocal (
         ACPI_DEBUG_PRINT ((ACPI_DB_EXEC, "Obj=%p already installed!\n",
             ObjDesc));
         return_ACPI_STATUS (Status);
+    }
+
+    /*
+     * If the reference count on the object is more than one, we must
+     * take a copy of the object before we store.
+     */
+    NewObjDesc = ObjDesc;
+    if (ObjDesc->Common.ReferenceCount > 1)
+    {
+        Status = AcpiUtCopyIobjectToIobject (ObjDesc, &NewObjDesc, WalkState);
+        if (ACPI_FAILURE (Status))
+        {
+            return_ACPI_STATUS (Status);
+        }
     }
 
     /*
@@ -742,14 +756,21 @@ AcpiDsStoreObjectToLocal (
             {
                 ACPI_DEBUG_PRINT ((ACPI_DB_EXEC,
                         "Arg (%p) is an ObjRef(Node), storing in node %p\n",
-                        ObjDesc, CurrentObjDesc));
+                        NewObjDesc, CurrentObjDesc));
 
                 /*
                  * Store this object to the Node
                  * (perform the indirect store)
                  */
-                Status = AcpiExStoreObjectToNode (ObjDesc,
+                Status = AcpiExStoreObjectToNode (NewObjDesc,
                             CurrentObjDesc->Reference.Object, WalkState);
+
+                /* Remove local reference if we copied the object above */
+
+                if (NewObjDesc != ObjDesc)
+                {
+                    AcpiUtRemoveReference (NewObjDesc);
+                }
                 return_ACPI_STATUS (Status);
             }
         }
@@ -762,12 +783,19 @@ AcpiDsStoreObjectToLocal (
     }
 
     /*
-     * Install the ObjStack descriptor (*ObjDesc) into
+     * Install the Obj descriptor (*NewObjDesc) into
      * the descriptor for the Arg or Local.
-     * Install the new object in the stack entry
      * (increments the object reference count by one)
      */
-    Status = AcpiDsMethodDataSetValue (Opcode, Index, ObjDesc, WalkState);
+    Status = AcpiDsMethodDataSetValue (Opcode, Index, NewObjDesc, WalkState);
+
+    /* Remove local reference if we copied the object above */
+
+    if (NewObjDesc != ObjDesc)
+    {
+        AcpiUtRemoveReference (NewObjDesc);
+    }
+
     return_ACPI_STATUS (Status);
 }
 

@@ -1,7 +1,7 @@
 /******************************************************************************
  *
  * Module Name: evgpeblk - GPE block creation and initialization.
- *              xRevision: 25 $
+ *              xRevision: 26 $
  *
  *****************************************************************************/
 
@@ -115,7 +115,7 @@
  *****************************************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: evgpeblk.c,v 1.5 2003/11/09 11:51:00 kochi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: evgpeblk.c,v 1.6 2003/12/13 18:11:00 kochi Exp $");
 
 #include "acpi.h"
 #include "acevents.h"
@@ -580,7 +580,7 @@ UnlockAndExit:
  *
  * RETURN:      Status
  *
- * DESCRIPTION: Install new GPE block with mutex support
+ * DESCRIPTION: Remove a GPE block
  *
  ******************************************************************************/
 

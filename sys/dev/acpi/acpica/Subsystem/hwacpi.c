@@ -2,7 +2,7 @@
 /******************************************************************************
  *
  * Module Name: hwacpi - ACPI Hardware Initialization/Mode Interface
- *              xRevision: 64 $
+ *              xRevision: 65 $
  *
  *****************************************************************************/
 
@@ -116,7 +116,7 @@
  *****************************************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hwacpi.c,v 1.8 2003/11/09 11:51:00 kochi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hwacpi.c,v 1.9 2003/12/13 18:11:01 kochi Exp $");
 
 #define __HWACPI_C__
 
@@ -199,7 +199,7 @@ AcpiHwSetMode (
      */
     if (!AcpiGbl_FADT->SmiCmd)
     {
-        ACPI_DEBUG_PRINT ((ACPI_DB_ERROR, "No SMI_CMD in FADT, mode transition failed.\n"));
+        ACPI_REPORT_ERROR (("No SMI_CMD in FADT, mode transition failed.\n"));
         return_ACPI_STATUS (AE_NO_HARDWARE_RESPONSE);
     }
 
@@ -212,7 +212,7 @@ AcpiHwSetMode (
      */
     if (!AcpiGbl_FADT->AcpiEnable && !AcpiGbl_FADT->AcpiDisable)
     {
-        ACPI_DEBUG_PRINT ((ACPI_DB_INFO, "No mode transition supported in this system.\n"));
+        ACPI_REPORT_ERROR (("No ACPI mode transition supported in this system (enable/disable both zero)\n"));
         return_ACPI_STATUS (AE_OK);
     }
 
@@ -245,6 +245,7 @@ AcpiHwSetMode (
 
     if (ACPI_FAILURE (Status))
     {
+        ACPI_REPORT_ERROR (("Could not write mode change, %s\n", AcpiFormatException (Status)));
         return_ACPI_STATUS (Status);
     }
 
@@ -255,19 +256,17 @@ AcpiHwSetMode (
     Retry = 3000;
     while (Retry)
     {
-        Status = AE_NO_HARDWARE_RESPONSE;
-
         if (AcpiHwGetMode() == Mode)
         {
             ACPI_DEBUG_PRINT ((ACPI_DB_INFO, "Mode %X successfully enabled\n", Mode));
-            Status = AE_OK;
-            break;
+            return_ACPI_STATUS (AE_OK);
         }
         AcpiOsStall(1000);
         Retry--;
     }
 
-    return_ACPI_STATUS (Status);
+    ACPI_REPORT_ERROR (("Hardware never changed modes\n"));
+    return_ACPI_STATUS (AE_NO_HARDWARE_RESPONSE);
 }
 
 

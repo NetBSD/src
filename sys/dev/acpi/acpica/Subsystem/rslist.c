@@ -115,7 +115,7 @@
  *****************************************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rslist.c,v 1.8 2003/11/09 11:51:01 kochi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rslist.c,v 1.9 2003/12/13 18:11:01 kochi Exp $");
 
 #define __RSLIST_C__
 

@@ -1,7 +1,7 @@
 /*******************************************************************************
  *
  * Module Name: dbstats - Generation and display of ACPI table statistics
- *              xRevision: 68 $
+ *              xRevision: 69 $
  *
  ******************************************************************************/
 
@@ -116,7 +116,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dbstats.c,v 1.11 2003/11/09 11:50:59 kochi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dbstats.c,v 1.12 2003/12/13 18:11:00 kochi Exp $");
 
 #include "acpi.h"
 #include "acdebug.h"
@@ -207,7 +207,7 @@ AcpiDbEnumerateObject (
 
         AcpiDbEnumerateObject (ObjDesc->Device.SystemNotify);
         AcpiDbEnumerateObject (ObjDesc->Device.DeviceNotify);
-        AcpiDbEnumerateObject (ObjDesc->Device.AddressSpace);
+        AcpiDbEnumerateObject (ObjDesc->Device.Handler);
         break;
 
     case ACPI_TYPE_BUFFER_FIELD:
@@ -221,7 +221,7 @@ AcpiDbEnumerateObject (
     case ACPI_TYPE_REGION:
 
         AcpiGbl_ObjTypeCount [ACPI_TYPE_LOCAL_REGION_FIELD ]++;
-        AcpiDbEnumerateObject (ObjDesc->Region.AddressSpace);
+        AcpiDbEnumerateObject (ObjDesc->Region.Handler);
         break;
 
     case ACPI_TYPE_POWER:
@@ -234,14 +234,14 @@ AcpiDbEnumerateObject (
 
         AcpiDbEnumerateObject (ObjDesc->Processor.SystemNotify);
         AcpiDbEnumerateObject (ObjDesc->Processor.DeviceNotify);
-        AcpiDbEnumerateObject (ObjDesc->Processor.AddressSpace);
+        AcpiDbEnumerateObject (ObjDesc->Processor.Handler);
         break;
 
     case ACPI_TYPE_THERMAL:
 
         AcpiDbEnumerateObject (ObjDesc->ThermalZone.SystemNotify);
         AcpiDbEnumerateObject (ObjDesc->ThermalZone.DeviceNotify);
-        AcpiDbEnumerateObject (ObjDesc->ThermalZone.AddressSpace);
+        AcpiDbEnumerateObject (ObjDesc->ThermalZone.Handler);
         break;
 
     default:

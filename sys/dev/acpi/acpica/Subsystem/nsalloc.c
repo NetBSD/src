@@ -116,7 +116,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nsalloc.c,v 1.11 2003/11/09 11:51:00 kochi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nsalloc.c,v 1.12 2003/12/13 18:11:01 kochi Exp $");
 
 #define __NSALLOC_C__
 

@@ -1,7 +1,7 @@
 /*******************************************************************************
  *
  * Module Name: utdelete - object deletion and reference count utilities
- *              xRevision: 97 $
+ *              xRevision: 98 $
  *
  ******************************************************************************/
 
@@ -115,7 +115,7 @@
  *****************************************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: utdelete.c,v 1.10 2003/11/20 16:15:59 kochi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: utdelete.c,v 1.11 2003/12/13 18:11:01 kochi Exp $");
 
 #define __UTDELETE_C__
 
@@ -222,7 +222,7 @@ AcpiUtDeleteInternalObj (
 
         /* Walk the handler list for this device */
 
-        HandlerDesc = Object->Device.AddressSpace;
+        HandlerDesc = Object->Device.Handler;
         while (HandlerDesc)
         {
             NextDesc = HandlerDesc->AddressSpace.Next;
@@ -278,7 +278,7 @@ AcpiUtDeleteInternalObj (
              * default handlers -- and therefore, we created the context object
              * locally, it was not created by an external caller.
              */
-            HandlerDesc = Object->Region.AddressSpace;
+            HandlerDesc = Object->Region.Handler;
             if (HandlerDesc)
             {
                 if (HandlerDesc->AddressSpace.Hflags & ACPI_ADDR_HANDLER_DEFAULT_INSTALLED)
@@ -513,7 +513,6 @@ AcpiUtUpdateObjectReference (
     UINT32                  i;
     ACPI_GENERIC_STATE       *StateList = NULL;
     ACPI_GENERIC_STATE       *State;
-    ACPI_OPERAND_OBJECT      *tmp;
 
 
     ACPI_FUNCTION_TRACE_PTR ("UtUpdateObjectReference", Object);
@@ -550,15 +549,8 @@ AcpiUtUpdateObjectReference (
         {
         case ACPI_TYPE_DEVICE:
 
-            tmp = Object->Device.SystemNotify;
-            if (tmp && (tmp->Common.ReferenceCount <= 1) && Action == REF_DECREMENT)
-                Object->Device.SystemNotify = NULL;
-            AcpiUtUpdateRefCount (tmp, Action);
-
-            tmp = Object->Device.DeviceNotify;
-            if (tmp && (tmp->Common.ReferenceCount <= 1) && Action == REF_DECREMENT)
-                Object->Device.DeviceNotify = NULL;
-            AcpiUtUpdateRefCount (tmp, Action);
+            AcpiUtUpdateRefCount (Object->Device.SystemNotify, Action);
+            AcpiUtUpdateRefCount (Object->Device.DeviceNotify, Action);
             break;
 
 
@@ -581,10 +573,6 @@ AcpiUtUpdateObjectReference (
                 {
                     goto ErrorExit;
                 }
-
-                tmp = Object->Package.Elements[i];
-                if (tmp && (tmp->Common.ReferenceCount <= 1) && Action == REF_DECREMENT)
-                    Object->Package.Elements[i] = NULL;
             }
             break;
 
@@ -597,10 +585,6 @@ AcpiUtUpdateObjectReference (
             {
                 goto ErrorExit;
             }
-
-            tmp = Object->BufferField.BufferObj;
-            if (tmp && (tmp->Common.ReferenceCount <= 1) && Action == REF_DECREMENT)
-                Object->BufferField.BufferObj = NULL;
             break;
 
 
@@ -612,10 +596,6 @@ AcpiUtUpdateObjectReference (
             {
                 goto ErrorExit;
             }
-
-            tmp = Object->Field.RegionObj;
-            if (tmp && (tmp->Common.ReferenceCount <= 1) && Action == REF_DECREMENT)
-                Object->Field.RegionObj = NULL;
            break;
 
 
@@ -628,20 +608,12 @@ AcpiUtUpdateObjectReference (
                 goto ErrorExit;
             }
 
-            tmp = Object->BankField.BankObj;
-            if (tmp && (tmp->Common.ReferenceCount <= 1) && Action == REF_DECREMENT)
-                Object->BankField.BankObj = NULL;
-
             Status = AcpiUtCreateUpdateStateAndPush (
                         Object->BankField.RegionObj, Action, &StateList);
             if (ACPI_FAILURE (Status))
             {
                 goto ErrorExit;
             }
-
-            tmp = Object->BankField.RegionObj;
-            if (tmp && (tmp->Common.ReferenceCount <= 1) && Action == REF_DECREMENT)
-                Object->BankField.RegionObj = NULL;
             break;
 
 
@@ -654,20 +626,12 @@ AcpiUtUpdateObjectReference (
                 goto ErrorExit;
             }
 
-            tmp = Object->IndexField.IndexObj;
-            if (tmp && (tmp->Common.ReferenceCount <= 1) && Action == REF_DECREMENT)
-                Object->IndexField.IndexObj = NULL;
-
             Status = AcpiUtCreateUpdateStateAndPush (
                         Object->IndexField.DataObj, Action, &StateList);
             if (ACPI_FAILURE (Status))
             {
                 goto ErrorExit;
             }
-
-            tmp = Object->IndexField.DataObj;
-            if (tmp && (tmp->Common.ReferenceCount <= 1) && Action == REF_DECREMENT)
-                Object->IndexField.DataObj = NULL;
             break;
 
 

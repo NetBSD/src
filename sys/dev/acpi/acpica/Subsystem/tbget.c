@@ -1,7 +1,7 @@
 /******************************************************************************
  *
  * Module Name: tbget - ACPI Table get* routines
- *              xRevision: 86 $
+ *              xRevision: 87 $
  *
  *****************************************************************************/
 
@@ -115,7 +115,7 @@
  *****************************************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tbget.c,v 1.9 2003/11/09 11:51:01 kochi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tbget.c,v 1.10 2003/12/13 18:11:01 kochi Exp $");
 
 #define __TBGET_C__
 
@@ -549,6 +549,7 @@ AcpiTbGetTablePtr (
     {
         /* Get the first */
 
+        *TablePtrLoc = NULL;
         if (AcpiGbl_TableLists[TableType].Next)
         {
             *TablePtrLoc = AcpiGbl_TableLists[TableType].Next->Pointer;
