@@ -38,39 +38,37 @@
  * from: Utah $Hdr: iteioctl.h 1.1 90/07/09$
  *
  *	@(#)iteioctl.h	7.2 (Berkeley) 11/4/90
- *	$Id: iteioctl.h,v 1.6 1994/02/11 07:01:52 chopps Exp $
+ *	$Id: iteioctl.h,v 1.7 1994/04/10 00:43:36 chopps Exp $
  */
+
+struct itewinsize {
+    int x;			/* leftedge offset to the right */
+    int y;			/* topedge offset down */
+    u_int width;		/* width of ite display */
+    u_int height;		/* height of ite display */
+    u_int depth;		/* depth of ite display */
+};
+
+struct itebell {
+    u_int volume;		/* volume of bell (0-64) */
+    u_int pitch;		/* pitch of bell (10-2000) */
+    u_int msec;			/* duration of bell */
+};
+
+#define MAXBVOLUME (63)
+#define MAXBPITCH (2000)
+#define MINBPITCH (10)
+#define MAXBTIME (5000)		/* 5 seconds */
+
+#define ITEIOCGWINSZ	_IOR('Z',0x72, struct itewinsize)
+#define ITEIOCSWINSZ	_IOW('Z',0x73, struct itewinsize)
+#define ITEIOCDSPWIN	_IO('Z', 0x74)
+#define ITEIOCREMWIN	_IO('Z', 0x75)
+#define ITEIOCGBELL	_IOR('Z', 0x76, struct itebell)
+#define ITEIOCSBELL	_IOW('Z', 0x77, struct itebell)
+
 
 #define ITESWITCH	_IOW('Z',0x69, int)	/* XXX */
 #define ITELOADKMAP	_IOW('Z',0x70, struct kbdmap)
 #define ITEGETKMAP	_IOR('Z',0x71, struct kbdmap)
-
-/* don't use these in new code, just included to get 
-   view code to compile!! There's got to be a more generic,
-   not so cc-concentrated approach! */
-
-struct ite_window_size {
-    int x;
-    int y;
-    int width;
-    int height;
-    int depth;
-};
-
-struct ite_bell_values {
-    int volume;
-    int period;
-    int time;
-};
-
-
-#define ITE_GET_WINDOW_SIZE	_IOR('Z',0x72, struct ite_window_size)
-#define ITE_SET_WINDOW_SIZE	_IOW('Z',0x73, struct ite_window_size)
-
-#define ITE_DISPLAY_WINDOW	_IO('Z', 0x74)
-#define ITE_REMOVE_WINDOW	_IO('Z', 0x75)
-
-#define ITE_GET_BELL_VALUES	_IOR('Z', 0x76, struct ite_bell_values)
-#define ITE_SET_BELL_VALUES	_IOW('Z', 0x77, struct ite_bell_values)
-
 

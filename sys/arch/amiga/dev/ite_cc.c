@@ -1,5 +1,5 @@
 /*
- *	$Id: ite_cc.c,v 1.12 1994/03/30 17:24:34 chopps Exp $
+ *	$Id: ite_cc.c,v 1.13 1994/04/10 00:43:34 chopps Exp $
  */
 
 #include "ite.h"
@@ -29,153 +29,177 @@
 
 #include <sys/termios.h>
 
-extern unsigned char kernel_font_width, kernel_font_height, kernel_font_baseline; 
-extern short         kernel_font_boldsmear;
-extern unsigned char kernel_font_lo, kernel_font_hi;
-extern unsigned char kernel_font[], kernel_cursor[];
+extern u_char kernel_font_width, kernel_font_height, kernel_font_baseline; 
+extern short  kernel_font_boldsmear;
+extern u_char kernel_font_lo, kernel_font_hi;
+extern u_char kernel_font[], kernel_cursor[];
 
 /*
  * This is what ip->priv points to;
  * it contains local variables for custom-chip ites.
  */
-typedef struct ite_priv {
-  view_t *view;					  /* the view for this ite. */
-  u_char **row_ptr;				  /* array of pointers into the bitmap  */
-  u_long row_bytes;
-  u_long cursor_opt;
-  
-  /* these are precalc'ed for the putc routine so it can be faster. */
-  u_int  *column_offset;			  /* array of offsets for columns */
-  u_int  row_offset;				  /* the row offset */
-  u_short width;					  /* the bitmap width */
-  u_short underline;				  /* where the underline goes */
-  u_short ft_x;					  /* the font width */
-  u_short ft_y;					  /* the font height */
-  u_char *font_cell[256];			  /* the font pointer */
-} ipriv_t;
+struct ite_priv {
+	view_t *view;		/* the view for this ite. */
+	u_char **row_ptr;	/* array of pointers into the bitmap  */
+	u_long row_bytes;
+	u_long cursor_opt;
+	u_int  *column_offset;	/* array of offsets for columns */
+	u_int  row_offset;	/* the row offset */
+	u_short width;		/* the bitmap width */
+	u_short underline;	/* where the underline goes */
+	u_short ft_x;		/* the font width */
+	u_short ft_y;		/* the font height */
+	u_char *font_cell[256];	/* the font pointer */
+};
+typedef struct ite_priv ipriv_t;
 
 extern struct itesw itesw[];
+extern struct ite_softc ite_softc[];
+#define IPUNIT(ip) (((u_long)ip-(u_long)ite_softc)/sizeof(struct ite_softc))
 
-/* (M<=8)-by-N routines */
-static void view_le32n_cursor(struct ite_softc *ip, int flag);
-static void view_le8n_putc(struct ite_softc *ip, int c, int dy, int dx, int mode);
-static void view_le8n_clear(struct ite_softc *ip, int sy, int sx, int h, int w);
-static void view_le8n_scroll(struct ite_softc *ip, int sy, int sx, int count, int dir);
-void scroll_bitmap (bmap_t *bm, u_short x, u_short y, u_short width, u_short height, short dx, short dy, u_char mask);
+static void putc8 __P((struct ite_softc *, int, int, int, int));
+static void clear8 __P((struct ite_softc *, int, int, int, int));
+static void scroll8 __P((struct ite_softc *, int, int, int, int));
+static void cursor32 __P((struct ite_softc *, int));
+static void scrollbmap __P((bmap_t *, u_short, u_short, u_short, u_short,
+    short, short, u_char));
 
-
-/* globals */
-
-int ite_default_x;
-int ite_default_y;
-int ite_default_width = 640;
-
+/* patchable */
+int ite_default_x = 0;		/* def leftedge offset */
+int ite_default_y = 0;		/* def topedge offset */
+int ite_default_width = 640;	/* def width */
+int ite_default_depth = 2;	/* def depth */
 #if defined (GRF_NTSC)
-int ite_default_height = 400;
-int ite_default_depth = 2;
+int ite_default_height = 400;	/* def NTSC height */
 #elif defined (GRF_PAL)
-int ite_default_height = 512;
-int ite_default_depth = 2;
+int ite_default_height = 512;	/* def PAL height */
 #else
-int ite_default_height = 400;
-int ite_default_depth = 2;
+int ite_default_height = 400;	/* def NON-PAL/NTSC height (?) */
 #endif
 
 /* audio bell stuff */
-static char *bell_data;
-static struct ite_bell_values bell_vals = { 10, 200, 10 };
+u_int bvolume = 10;
+u_int bpitch = 660;
+u_int bmsec = 75;
+	
+static char *bsamplep;
+static char sample[20] = {
+	0,39,75,103,121,127,121,103,75,39,0,
+	-39,-75,-103,-121,-127,-121,-103,-75,-39
+};
 
 cc_unblank ()
 {
 }
 
-init_bell ()
+void
+init_bell()
 {
-    short i;
-    static char sample[20] = {
-	0,39,75,103,121,127,121,103,75,39,0,
-	-39,-75,-103,-121,-127,-121,-103,-75,-39 };
+	short i;
 
-    if (!bell_data) {
-	bell_data = alloc_chipmem(20);
-	if (!bell_data)
-	   return (-1); 
+	if (bsamplep != NULL)
+		return;
+	bsamplep = alloc_chipmem(20);
+	if (bsamplep == NULL)
+		panic("no chipmem for ccbell"); 
 
-	for (i=0; i<20; i++) 
-	    bell_data[i] = sample[i];
-    }
-    return (0);
+	bcopy(sample, bsamplep, 20);
 }
 
-cc_bell ()
+void
+cc_bell()
 {
-    if (bell_data) {
-      play_sample (10, PREP_DMA_MEM(bell_data),
-                   bell_vals.period, bell_vals.volume, 0x3, bell_vals.time);
-    }
+	u_int clock;
+	u_int period;
+	u_int count;
+
+	clock = 3579545; 	/* PAL 3546895 */
+
+	/*
+	 * the number of clock ticks per sample byte must be > 124
+	 * ergo bpitch must be < clock / 124*20 
+	 * i.e. ~1443, 1300 to be safe (PAL etc.). also not zero obviously
+	 */
+	period = clock / (bpitch * 20);
+	count = bmsec * bpitch / 1000;
+
+	play_sample(10, PREP_DMA_MEM(bsamplep), period, bvolume, 0x3, count);
 }
 
-extern struct  ite_softc ite_softc[];
-#define IPUNIT(ip) (((u_long)ip-(u_long)ite_softc)/sizeof(struct ite_softc))
 
 int 
-ite_new_size (struct ite_softc *ip, struct ite_window_size *vs)
+ite_newsize(ip, winsz)
+	struct ite_softc *ip;
+	struct itewinsize *winsz;
 {
-    extern struct view_softc views[];
-    ipriv_t *cci = ip->priv;    
-    u_long fbp, i;
-    int error;
+	extern struct view_softc views[];
+	struct view_size vs;
+	ipriv_t *cci = ip->priv;    
+	u_long fbp, i;
+	int error;
 
-    error = viewioctl (IPUNIT (ip), VIEW_SETSIZE, (struct view_size *)vs, 0, -1);
-    cci->view = views[IPUNIT(ip)].view; 
+	vs.x = winsz->x;
+	vs.y = winsz->y;
+	vs.width = winsz->width;
+	vs.height = winsz->height;
+	vs.depth = winsz->depth;
+	error = viewioctl(IPUNIT(ip), VIOCSSIZE, &vs, 0, -1);
 
-    ip->rows = (cci->view->display.height) / ip->ftheight;
-    ip->cols = (cci->view->display.width-1)  / ip->ftwidth; /* -1 for bold. */
+	/*
+	 * Reinitialize our structs
+	 */
+	cci->view = views[IPUNIT(ip)].view; 
 
-    /* save new values so that future opens use them */
-    /* this may not be correct when we implement Virtual Consoles */
-    ite_default_height = cci->view->display.height;
-    ite_default_width = cci->view->display.width;
-    ite_default_x = cci->view->display.x;
-    ite_default_y = cci->view->display.y;
-    ite_default_depth = cci->view->bitmap->depth;
+	/* -1 for bold. */
+	ip->cols = (cci->view->display.width - 1) / ip->ftwidth; 
+	ip->rows = cci->view->display.height / ip->ftheight;
 
-    if (cci->row_ptr) 
-        free_chipmem (cci->row_ptr);
-    if (cci->column_offset)
-	free_chipmem (cci->column_offset);
+	/*
+	 * save new values so that future opens use them
+	 * this may not be correct when we implement Virtual Consoles
+	 */
+	ite_default_height = cci->view->display.height;
+	ite_default_width = cci->view->display.width;
+	ite_default_x = cci->view->display.x;
+	ite_default_y = cci->view->display.y;
+	ite_default_depth = cci->view->bitmap->depth;
 
-    cci->row_ptr = alloc_chipmem (sizeof (u_char *)*ip->rows);
-    cci->column_offset = alloc_chipmem (sizeof (u_int)*ip->cols);
+	if (cci->row_ptr) 
+		free_chipmem(cci->row_ptr);
+	if (cci->column_offset)
+		free_chipmem(cci->column_offset);
+
+	cci->row_ptr = alloc_chipmem(sizeof(u_char *) * ip->rows);
+	cci->column_offset = alloc_chipmem(sizeof(u_int) * ip->cols);
     
-    if (!cci->row_ptr || !cci->column_offset) {
-	panic ("no memory for console device.");
-    }
-
-    cci->width = cci->view->bitmap->bytes_per_row << 3;
-    cci->underline = ip->ftbaseline + 1;
-    cci->row_offset = (cci->view->bitmap->bytes_per_row + cci->view->bitmap->row_mod);
-    cci->ft_x = ip->ftwidth;
-    cci->ft_y = ip->ftheight;
+	if (cci->row_ptr == NULL || cci->column_offset == NULL)
+		panic("no chipmem for itecc data");
  
-    cci->row_bytes = cci->row_offset * ip->ftheight;
 
-    /* initialize the row pointers */
-    cci->row_ptr[0] = VDISPLAY_LINE (cci->view, 0, 0);
-    for (i = 1; i < ip->rows; i++) 
-	cci->row_ptr[i] = cci->row_ptr[i-1] + cci->row_bytes;
+	cci->width = cci->view->bitmap->bytes_per_row << 3;
+	cci->underline = ip->ftbaseline + 1;
+	cci->row_offset = cci->view->bitmap->bytes_per_row 
+	    + cci->view->bitmap->row_mod;
+	cci->ft_x = ip->ftwidth;
+	cci->ft_y = ip->ftheight;
+ 
+	cci->row_bytes = cci->row_offset * ip->ftheight;
 
-    /* initialize the column offsets */
-    cci->column_offset[0] = 0;
-    for (i = 1; i < ip->cols; i++) 
-	cci->column_offset[i] = cci->column_offset[i-1] + cci->ft_x;
+	cci->row_ptr[0] = VDISPLAY_LINE (cci->view, 0, 0);
+	for (i = 1; i < ip->rows; i++) 
+		cci->row_ptr[i] = cci->row_ptr[i-1] + cci->row_bytes;
 
-    /* initialize the font cell pointers */
-    cci->font_cell[ip->font_lo] = ip->font;
-    for (i=ip->font_lo+1; i<=ip->font_hi; i++)
-	cci->font_cell[i] = cci->font_cell[i-1] + ip->ftheight;
+	/* initialize the column offsets */
+	cci->column_offset[0] = 0;
+	for (i = 1; i < ip->cols; i++) 
+		cci->column_offset[i] = cci->column_offset[i - 1] + cci->ft_x;
+
+	/* initialize the font cell pointers */
+	cci->font_cell[ip->font_lo] = ip->font;
+	for (i=ip->font_lo+1; i<=ip->font_hi; i++)
+		cci->font_cell[i] = cci->font_cell[i-1] + ip->ftheight;
 	    
-    return (error);
+	return (error);
 }
 
 /*
@@ -197,13 +221,18 @@ void
 view_init(ip)
 	register struct ite_softc *ip;
 {
-    struct itesw *sp = itesw;
-    ipriv_t *cci = ip->priv;
-    struct ite_window_size vs;
+	struct itewinsize wsz;
+	struct itesw *sp;
+	ipriv_t *cci;
 
-    init_bell ();
+	sp = itesw;
+	cci = ip->priv;
 
-    if (!cci) {
+	if (cci)
+		return;
+	
+	init_bell();
+
 	ip->font     = kernel_font;
 	ip->font_lo  = kernel_font_lo;
 	ip->font_hi  = kernel_font_hi;
@@ -213,19 +242,18 @@ view_init(ip)
 	ip->ftboldsmear = kernel_font_boldsmear;
 
 	/* Find the correct set of rendering routines for this font.  */
-	if (ip->ftwidth <= 8) {
-		sp->ite_cursor = (void*)view_le32n_cursor;
-		sp->ite_putc = (void*)view_le8n_putc;
-		sp->ite_clear = (void*)view_le8n_clear;
-		sp->ite_scroll = (void*)view_le8n_scroll;
-	} else { 
+	if (ip->ftwidth > 8)
 		panic("kernel font size not supported");
+	else {
+		sp->ite_cursor = (void *)cursor32;
+		sp->ite_putc = (void *)putc8;
+		sp->ite_clear = (void *)clear8;
+		sp->ite_scroll = (void *)scroll8;
 	}
 
-	cci = alloc_chipmem (sizeof (*cci));
-	if (!cci) {
-		panic ("no memory for console device.");
-	}
+	cci = alloc_chipmem(sizeof (*cci));
+	if (cci == NULL)
+		panic("no memory for console device.");
 
 	ip->priv = cci;
 	cci->cursor_opt = 0;
@@ -235,20 +263,18 @@ view_init(ip)
 
 #if 0
 	/* currently the view is permanently open due to grf driver */
-	if (viewopen (IPUNIT(ip), 0)) {
-	    panic ("cannot get ahold of our view");
-	}
+	if (viewopen(IPUNIT(ip), 0))
+		panic("cannot get ahold of our view");
 #endif
-	vs.x = ite_default_x;
-	vs.y = ite_default_y;
-	vs.width = ite_default_width;
-	vs.height = ite_default_height;
-	vs.depth = ite_default_depth;
+	wsz.x = ite_default_x;
+	wsz.y = ite_default_y;
+	wsz.width = ite_default_width;
+	wsz.height = ite_default_height;
+	wsz.depth = ite_default_depth;
 
-	ite_new_size (ip, &vs);
-	XXX_grf_cc_on (IPUNIT (ip));
-	/* viewioctl (IPUNIT(ip), VIEW_DISPLAY, NULL, 0, -1); */
-    }
+	ite_newsize (ip, &wsz);
+	XXX_grf_cc_on(IPUNIT(ip));
+	/* viewioctl(IPUNIT(ip), VIOCDISPLAY, NULL, 0, -1); */
 }
 
 int
@@ -257,195 +283,187 @@ ite_grf_ioctl (ip, cmd, addr, flag, p)
 	caddr_t addr;
 	struct proc *p;
 {
-    int error = 0;
-    struct ite_window_size *is;
-    struct ite_bell_values *ib;
-    ipriv_t *cci = ip->priv;
+	struct winsize ws;
+	struct itewinsize *is;
+	struct itebell *ib;
+	ipriv_t *cci;
+	int error;
 
-    switch (cmd) {
-      case ITE_GET_WINDOW_SIZE:
-	is = (struct ite_window_size *)addr;
-        is->x = cci->view->display.x;
-	is->y = cci->view->display.y;
-	is->width = cci->view->display.width;
- 	is->height = cci->view->display.height;
- 	is->depth = cci->view->bitmap->depth;
-        break;
+	cci = ip->priv;
+	error = 0;
 
-      case ITE_SET_WINDOW_SIZE:
-        is = (struct ite_window_size *)addr;
+	switch (cmd) {
+	case ITEIOCGWINSZ:
+		is = (struct itewinsize *)addr;
+		is->x = cci->view->display.x;
+		is->y = cci->view->display.y;
+		is->width = cci->view->display.width;
+		is->height = cci->view->display.height;
+		is->depth = cci->view->bitmap->depth;
+		break;
+	case ITEIOCSWINSZ:
+		is = (struct itewinsize *)addr;
 
-        if (ite_new_size (ip, is)) {
-            error = ENOMEM;
-        } else {
-	    struct winsize ws;
-	    ws.ws_row = ip->rows;
-	    ws.ws_col = ip->cols;
-	    ws.ws_xpixel = cci->view->display.width;
-	    ws.ws_ypixel = cci->view->display.height;
-	    ite_reset (ip);
-	    /* XXX tell tty about the change *and* the process group should */
-	    /* XXX be signalled---this is messy, but works nice :^) */
-	    iteioctl (0, TIOCSWINSZ, (caddr_t)&ws, 0, p);
-        }
-        break;
-
-      case ITE_DISPLAY_WINDOW:
-	XXX_grf_cc_on (IPUNIT (ip));
-	/* viewioctl (IPUNIT(ip), VIEW_DISPLAY, NULL, 0, -1); */
-	break;
-
-      case ITE_REMOVE_WINDOW:
-	XXX_grf_cc_off (IPUNIT (ip));
-        /* viewioctl (IPUNIT(ip), VIEW_REMOVE, NULL, 0, -1); */
-        break;
-
-      case ITE_GET_BELL_VALUES:
-      	ib = (struct ite_bell_values *)addr;
-	bcopy (&bell_vals, ib, sizeof (struct ite_bell_values));	
-	break;
-
-      case ITE_SET_BELL_VALUES:
-      	ib = (struct ite_bell_values *)addr;
-	bcopy (ib, &bell_vals, sizeof (struct ite_bell_values));	
-	break;
-      case VIEW_USECOLORMAP:
-      case VIEW_GETCOLORMAP:
-	/* XXX needs to be fixed when multiple console implemented. */
-	/* XXX watchout for that -1 its not really the kernel talking. */
-	/* XXX these two commands don't use the proc pointer though. */
-	error = viewioctl (0, cmd, addr, flag, -1);
-	break;
-      default:
-        error = -1;
-        break;
-    }
-    return (error);
+		if (ite_newsize(ip, is))
+			error = ENOMEM;
+		else {
+			ws.ws_row = ip->rows;
+			ws.ws_col = ip->cols;
+			ws.ws_xpixel = cci->view->display.width;
+			ws.ws_ypixel = cci->view->display.height;
+			ite_reset (ip);
+			/*
+			 * XXX tell tty about the change 
+			 * XXX this is messy, but works 
+			 */
+			iteioctl(0, TIOCSWINSZ, (caddr_t)&ws, 0, p);
+		}
+		break;
+	case ITEIOCDSPWIN:
+		XXX_grf_cc_on(IPUNIT(ip));
+		break;
+	case ITEIOCREMWIN:
+		XXX_grf_cc_off(IPUNIT(ip));
+		break;
+	case ITEIOCGBELL:
+		ib = (struct itebell *)addr;
+		ib->volume = bvolume;
+		ib->pitch = bpitch;
+		ib->msec = bmsec;
+		break;
+	case ITEIOCSBELL:
+		ib = (struct itebell *)addr;
+		/* bounds check */
+		if (ib->pitch > MAXBPITCH || ib->pitch < MINBPITCH ||
+		    ib->volume > MAXBVOLUME || ib->msec > MAXBTIME)
+			error = EINVAL;
+		else {
+			bvolume = ib->volume;
+			bpitch = ib->pitch;
+			bmsec = ib->msec;
+		}
+		break;
+	case VIOCSCMAP:
+	case VIOCGCMAP:
+		/*
+		 * XXX needs to be fixed when multiple console implemented
+		 * XXX watchout for that -1 its not really the kernel talking
+		 * XXX these two commands don't use the proc pointer though
+		 */
+		error = viewioctl(0, cmd, addr, flag, -1);
+		break;
+	default:
+		error = -1;
+		break;
+	}
+	return (error);
 }
 
 void
 view_deinit(ip)
 	struct ite_softc *ip;
 {
-  ip->flags &= ~ITE_INITED;
-  /* FIX: free our stuff. */
-  if (ip->priv) {
-    ipriv_t *cci = ip->priv;
-
-#if 0
-    /* view stays open permanently */
-    if (cci->view) {
-        viewclose (IPUNIT(ip));
-    }
-#endif
-    
-    /* well at least turn it off. */
-    XXX_grf_cc_off (IPUNIT (ip));
-    /* viewioctl (IPUNIT(ip), VIEW_REMOVE, NULL, 0, -1); */
-    
-    if (cci->row_ptr) 
-   	free_chipmem (cci->row_ptr);
-    if (cci->column_offset)
-	free_chipmem (cci->column_offset);
-	
-    free_chipmem (cci);
-    ip->priv = NULL;
-  }
+	ip->flags &= ~ITE_INITED;
 }
 
 /*** (M<8)-by-N routines ***/
 
 static void
-view_le32n_cursor(struct ite_softc *ip, int flag)
+cursor32(struct ite_softc *ip, int flag)
 {
-    ipriv_t  *cci = (ipriv_t *) ip->priv;
-    view_t *v = cci->view;
-    bmap_t *bm = v->bitmap;
-    int dr_plane = (bm->depth > 1 ? bm->depth-1 : 0);
-    int cend, ofs, h, cstart;
-    unsigned char opclr, opset;
-    u_char *pl;
-    
-    if (flag == START_CURSOROPT) {
-	if (!cci->cursor_opt) {
-	    view_le32n_cursor (ip, ERASE_CURSOR);
-	}
-	cci->cursor_opt++;
-	return;				  /* if we are already opted. */
-    } else if (flag == END_CURSOROPT) {
-	cci->cursor_opt--;
-	
-    }
-    
-    if (cci->cursor_opt) 
-	return;					  /* if we are still nested. */
-						  /* else we draw the cursor. */
+	int cend, ofs, h, cstart, dr_plane;
+	u_char *pl, opclr, opset;
+	ipriv_t *cci;
+	bmap_t *bm;
+	view_t *v;
 
-    cstart = 0;
-    cend = ip->ftheight-1; 
-    pl = VDISPLAY_LINE (v, dr_plane, (ip->cursory*ip->ftheight+cstart));
-    ofs = (ip->cursorx * ip->ftwidth);
-    
-    /* erase cursor */
-    if (flag != DRAW_CURSOR && flag != END_CURSOROPT) {
-	/* erase the cursor */
-	int h;
-	if (dr_plane) {
-	    for (h = cend; h >= 0; h--) {
-		asm("bfclr %0@{%1:%2}"
-		    : : "a" (pl), "d" (ofs), "d" (ip->ftwidth));
-		pl += cci->row_offset;
-	    }
-	} else {
-	    for (h = cend; h >= 0; h--) {
-		asm("bfchg %0@{%1:%2}"
-		    : : "a" (pl), "d" (ofs), "d" (ip->ftwidth));
-		pl += cci->row_offset;
-	    }
+	cci = ip->priv;
+	v = cci->view;
+   	bm = v->bitmap;
+	dr_plane = (bm->depth > 1 ? bm->depth-1 : 0);
+
+	if (flag == END_CURSOROPT)
+		cci->cursor_opt--;
+	else if (flag == START_CURSOROPT) {
+		if (!cci->cursor_opt)
+			cursor32 (ip, ERASE_CURSOR);
+		cci->cursor_opt++;
+		return;		  /* if we are already opted. */
 	}
-    }
     
-    if ((flag == DRAW_CURSOR || flag == MOVE_CURSOR || flag == END_CURSOROPT)) {
+	if (cci->cursor_opt) 
+		return;		  /* if we are still nested. */
+				  /* else we draw the cursor. */
+	cstart = 0;
+	cend = ip->ftheight-1; 
+	pl = VDISPLAY_LINE(v, dr_plane, (ip->cursory * ip->ftheight + cstart));
+	ofs = (ip->cursorx * ip->ftwidth);
+    
+	if (flag != DRAW_CURSOR && flag != END_CURSOROPT) {
+		/*
+		 * erase the cursor
+		 */
+		int h;
+
+		if (dr_plane) {
+			for (h = cend; h >= 0; h--) {
+				asm("bfclr %0@{%1:%2}" : : "a" (pl),
+				    "d" (ofs), "d" (ip->ftwidth));
+				pl += cci->row_offset;
+			}
+		} else {
+			for (h = cend; h >= 0; h--) {
+				asm("bfchg %0@{%1:%2}" : : "a" (pl),
+				    "d" (ofs), "d" (ip->ftwidth));
+				pl += cci->row_offset;
+			}
+		}
+	}
+    
+	if (flag != DRAW_CURSOR && flag != MOVE_CURSOR && 
+	    flag != END_CURSOROPT)
+		return;
 	
+	/* 
+	 * draw the cursor
+	 */
+
 	ip->cursorx = MIN(ip->curx, ip->cols-1);
 	ip->cursory = ip->cury;
 	cstart = 0;
 	cend = ip->ftheight-1; 
-	pl = VDISPLAY_LINE (v, dr_plane, (ip->cursory*ip->ftheight+cstart));
-	ofs = (ip->cursorx * ip->ftwidth);
-	
-	/* draw the cursor */
+	pl = VDISPLAY_LINE(v, dr_plane, ip->cursory * ip->ftheight + cstart);
+	ofs = ip->cursorx * ip->ftwidth;
+
 	if (dr_plane) {
-	    for (h = cend; h >= 0; h--) {
-		asm("bfset %0@{%1:%2}"
-		    : : "a" (pl), "d" (ofs), "d" (ip->ftwidth));
-		pl += cci->row_offset;
-	    }
+		for (h = cend; h >= 0; h--) {
+			asm("bfset %0@{%1:%2}" : : "a" (pl),
+			    "d" (ofs), "d" (ip->ftwidth));
+			pl += cci->row_offset;
+		}
 	} else {
-	    for (h = cend; h >= 0; h--) {
-		asm("bfchg %0@{%1:%2}"
-		    : : "a" (pl), "d" (ofs), "d" (ip->ftwidth));
-		pl += cci->row_offset;
-	    }
+		for (h = cend; h >= 0; h--) {
+			asm("bfchg %0@{%1:%2}" : : "a" (pl),
+			    "d" (ofs), "d" (ip->ftwidth));
+			pl += cci->row_offset;
+		}
 	}
-    }
 }
 
 
 static inline
 int expbits (int data)
 {
-    int i, nd = 0;
-    if (data & 1) {
-    	nd |= 0x02;
-    }
-    for (i=1; i < 32; i++) {
-	if (data & (1 << i)) {
-	   nd |= 0x5 << (i-1);
+	int i, nd = 0;
+
+	if (data & 1)
+		nd |= 0x02;
+	for (i=1; i < 32; i++) {
+		if (data & (1 << i))
+			nd |= 0x5 << (i-1);
 	}
-    }
-    nd &= ~data;
-    return (~nd);
+	nd &= ~data;
+	return(~nd);
 }
 
 
@@ -698,7 +716,7 @@ cc_putc_func *put_func[ATTR_ALL+1] = {
         be output is not available in the font? -ch */
 
 static void
-view_le8n_putc(struct ite_softc *ip, int c, int dy, int dx, int mode)
+putc8(struct ite_softc *ip, int c, int dy, int dx, int mode)
 {
     register ipriv_t *cci = (ipriv_t *) ip->priv;
     if (c < ip->font_lo || c > ip->font_hi)
@@ -714,7 +732,7 @@ view_le8n_putc(struct ite_softc *ip, int c, int dy, int dx, int mode)
 }
 
 static void
-view_le8n_clear(struct ite_softc *ip, int sy, int sx, int h, int w)
+clear8(struct ite_softc *ip, int sy, int sx, int h, int w)
 {
   ipriv_t *cci = (ipriv_t *) ip->priv;
   view_t *v = cci->view;
@@ -763,7 +781,7 @@ view_le8n_clear(struct ite_softc *ip, int sy, int sx, int h, int w)
 
 /* Note: sx is only relevant for SCROLL_LEFT or SCROLL_RIGHT.  */
 static void
-view_le8n_scroll(ip, sy, sx, count, dir)
+scroll8(ip, sy, sx, count, dir)
         register struct ite_softc *ip;
         register int sy;
         int dir, sx, count;
@@ -778,8 +796,8 @@ view_le8n_scroll(ip, sy, sx, count, dir)
       int i;
 
       /*FIX: add scroll bitmap call */
-        view_le32n_cursor(ip, ERASE_CURSOR);
-	scroll_bitmap (bm, 0, dy*ip->ftheight,
+        cursor32(ip, ERASE_CURSOR);
+	scrollbmap (bm, 0, dy*ip->ftheight,
 		       bm->bytes_per_row >> 3, (ip->bottom_margin-dy+1)*ip->ftheight,
 		       0, -(count*ip->ftheight), 0x1);
 /*	if (ip->cursory <= bot || ip->cursory >= dy) {
@@ -793,8 +811,8 @@ view_le8n_scroll(ip, sy, sx, count, dir)
       int i;
 
       /* FIX: add scroll bitmap call */
-        view_le32n_cursor(ip, ERASE_CURSOR);
-	scroll_bitmap (bm, 0, sy*ip->ftheight,
+        cursor32(ip, ERASE_CURSOR);
+	scrollbmap (bm, 0, sy*ip->ftheight,
 		       bm->bytes_per_row >> 3, (ip->bottom_margin-sy+1)*ip->ftheight,
 		       0, count*ip->ftheight, 0x1);
 /*	if (ip->cursory <= bot || ip->cursory >= sy) {
@@ -807,7 +825,7 @@ view_le8n_scroll(ip, sy, sx, count, dir)
       int dofs = (ip->cols) * ip->ftwidth;
       int i, j;
 
-      view_le32n_cursor(ip, ERASE_CURSOR);
+      cursor32(ip, ERASE_CURSOR);
       for (j = ip->ftheight-1; j >= 0; j--)
 	{
 	  int sofs2 = sofs, dofs2 = dofs;
@@ -831,7 +849,7 @@ view_le8n_scroll(ip, sy, sx, count, dir)
       int dofs = (sx - count) * ip->ftwidth;
       int i, j;
 
-      view_le32n_cursor(ip, ERASE_CURSOR);
+      cursor32(ip, ERASE_CURSOR);
       for (j = ip->ftheight-1; j >= 0; j--)
 	{
 	  int sofs2 = sofs, dofs2 = dofs;
@@ -852,7 +870,7 @@ view_le8n_scroll(ip, sy, sx, count, dir)
 }
 
 void 
-scroll_bitmap (bmap_t *bm, u_short x, u_short y, u_short width, u_short height, short dx, short dy, u_char mask)
+scrollbmap (bmap_t *bm, u_short x, u_short y, u_short width, u_short height, short dx, short dy, u_char mask)
 {
     u_short depth = bm->depth; 
     u_short lwpr = bm->bytes_per_row >> 2;

@@ -27,29 +27,31 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
- *	$Id: viewioctl.h,v 1.3 1994/02/13 21:11:08 chopps Exp $
+ *	$Id: viewioctl.h,v 1.4 1994/04/10 00:43:39 chopps Exp $
  */
 
-/* The view major device is a placeholder device.  It serves
+/*
+ * The view major device is a placeholder device.  It serves
  * simply to map the semantics of a graphics dipslay to
  * the semantics of a character block device.  In other
  * words the graphics system as currently built does not like to be
  * refered to by open/close/ioctl.  This device serves as
- * a interface to graphics. */
+ * a interface to graphics.
+ */
 
 struct view_size {
     int x;
     int y;
-    int width;
-    int height;
-    int depth;
+    u_int width;
+    u_int height;
+    u_int depth;
 };
 
-#define VIEW_REMOVE     _IO ('V', 0x0)	/* if displaying remove. */
-#define VIEW_DISPLAY    _IO ('V', 0x1)	/* if not displaying, display */
-#define VIEW_SETSIZE	_IOW ('V', 0x2, struct view_size)	/* set size */
-#define VIEW_GETSIZE	_IOR ('V', 0x3, struct view_size)	/* get size */
-#define VIEW_GETBITMAP	_IOR ('V', 0x4, bmap_t)
-#define VIEW_USECOLORMAP _IOW ('V', 0x5, colormap_t)
-#define VIEW_GETCOLORMAP _IOWR ('V', 0x6, colormap_t)
+#define VIOCREMOVE     _IO('V', 0x0)	/* if displaying remove. */
+#define VIOCDISPLAY    _IO('V', 0x1)	/* if not displaying, display */
+#define VIOCSSIZE	_IOW('V', 0x2, struct view_size)
+#define VIOCGSIZE	_IOR('V', 0x3, struct view_size)
+#define VIOCGBMAP	_IOR('V', 0x4, bmap_t)
+#define VIOCSCMAP 	_IOW('V', 0x5, colormap_t)
+#define VIOCGCMAP 	_IOWR('V', 0x6, colormap_t)
 

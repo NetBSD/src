@@ -27,7 +27,7 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
- *	$Id: view.c,v 1.6 1994/03/30 17:24:37 chopps Exp $
+ *	$Id: view.c,v 1.7 1994/04/10 00:43:38 chopps Exp $
  */
 
 /* The view major device is a placeholder device.  It serves
@@ -62,6 +62,18 @@
 #include <amiga/dev/viewvar.h>
 #include "view.h"
 
+static void view_display __P((struct view_softc *));
+static void view_remove __P((struct view_softc *));
+static int view_setsize __P((struct view_softc *, struct view_size *));
+
+void viewclose __P((dev_t, int));
+int viewioctl __P((dev_t, int, caddr_t, int, struct proc *));
+int viewopen __P((dev_t, int));
+int viewmap __P((dev_t, int, int));
+
+int view_get_colormap __P((struct view_softc *, colormap_t *));
+int view_set_colormap __P((struct view_softc *, colormap_t *));
+
 int viewprobe ();
 
 /* not currently used as independant device */
@@ -83,21 +95,23 @@ int view_default_depth = 2;
 /* this function is called early to set up a display. */
 viewconfig ()
 {
-    viewprobe ();
+	viewprobe ();
 }
 
 viewprobe ()
 {
-    if (!view_inited) {
     	int i;
+	
+	if (view_inited)
+		return(1);
 
     	view_inited = 1;
+
     	for (i=0; i<NVIEW; i++) {
-    	    views[i].view = NULL;
-    	    views[i].flags = 0;
+		views[i].view = NULL;
+		views[i].flags = 0;
     	}
-    }
-    return (view_inited);
+	return(1);
 }
 
 
@@ -106,121 +120,116 @@ viewprobe ()
  */
 
 static void
-view_display (struct view_softc *vu)
+view_display (vu)
+	struct view_softc *vu;
 {
-    int s = spltty ();
-    int i;
+	int s, i;
 
-    if (vu == NULL) {
-    	return;
-    }
-    /* mark views that share this monitor as not displaying */
-    for (i=0; i<NVIEW; i++) {
-        if (views[i].flags&VUF_DISPLAY && views[i].monitor == vu->monitor) {
-            views[i].flags &= ~VUF_DISPLAY;
-        }
-    }
+	if (vu == NULL)
+		return;
+	
+	s = spltty ();
 
-    vu->flags |= VUF_ADDED;
-    if (vu->view) {
-	vu->view->display.x = vu->size.x;
-	vu->view->display.y = vu->size.y;
-	grf_display_view (vu->view);
-	vu->size.x = vu->view->display.x;
-	vu->size.y = vu->view->display.y;
-	vu->flags |= VUF_DISPLAY;
-    }
+	/*
+	 * mark views that share this monitor as not displaying 
+	 */
+	for (i=0; i<NVIEW; i++) {
+		if ((views[i].flags & VUF_DISPLAY) && 
+		    views[i].monitor == vu->monitor)
+			views[i].flags &= ~VUF_DISPLAY;
+	}
 
-    splx (s);
+	vu->flags |= VUF_ADDED;
+	if (vu->view) {
+		vu->view->display.x = vu->size.x;
+		vu->view->display.y = vu->size.y;
+
+		grf_display_view(vu->view);
+
+		vu->size.x = vu->view->display.x;
+		vu->size.y = vu->view->display.y;
+		vu->flags |= VUF_DISPLAY;
+	}
+	splx(s);
 }
 
-/* remove a view from our added list if it is marked as displaying */
-/* switch to a new display. */
+/* 
+ * remove a view from our added list if it is marked as displaying
+ * switch to a new display.
+ */
 static void
-view_remove (struct view_softc *vu)
+view_remove(vu)
+	struct view_softc *vu;
 {
-    int i;
+	int i;
 
-    if (!(vu->flags & VUF_ADDED)) {
-    	return;
-    }
+	if ((vu->flags & VUF_ADDED) == 0)
+		return;
 
-    vu->flags &= ~VUF_ADDED;
-    if (vu->flags & VUF_DISPLAY) {
-	for (i=0; i<NVIEW; i++) {
-	    if (views[i].flags & VUF_ADDED && &views[i] != vu && 
-	        views[i].monitor == vu->monitor) {
-		view_display (&views[i]);
-		break;
-	    }
-    	}
-    }
-    vu->flags &= ~VUF_DISPLAY;
-    grf_remove_view (vu->view);
+	vu->flags &= ~VUF_ADDED;
+	if (vu->flags & VUF_DISPLAY) {
+		for (i = 0; i < NVIEW; i++) {
+			if ((views[i].flags & VUF_ADDED) && &views[i] != vu && 
+			    views[i].monitor == vu->monitor) {
+				view_display(&views[i]);
+				break;
+			}
+		}
+	}
+	vu->flags &= ~VUF_DISPLAY;
+	grf_remove_view(vu->view);
 }
 
 static int
-view_setsize (struct view_softc *vu, struct view_size *vs)
+view_setsize(vu, vs)
+	struct view_softc *vu;
+	struct view_size *vs;
 {
-    view_t *new, *old;
-    dimen_t ns;
-    int co = 0, cs = 0;
+	view_t *new, *old;
+	dimen_t ns;
+	int co, cs;
+   
+	co = 0;
+	cs = 0;
+	if (vs->x != vu->size.x || vs->y != vu->size.y)
+		co = 1;
+
+	if (vs->width != vu->size.width || vs->height != vu->size.height ||
+	    vs->depth != vu->size.depth)
+		cs = 1;
+
+	if (cs == 0 && co == 0)
+		return(0);
     
-    if (vs->x != vu->size.x ||
-	vs->y != vu->size.y) {
-	co = 1;
-    }
+	ns.width = vs->width;
+	ns.height = vs->height;
 
-    if (vs->width != vu->size.width ||
-	vs->height != vu->size.height ||
-	vs->depth != vu->size.depth) {
-	cs = 1;
-    }
-
-    if (!cs && !co) {
-	/* no change. */
-	return (0);
-    }
-    
-    ns.width = vs->width;
-    ns.height = vs->height;
-
-    new = grf_alloc_view (NULL, &ns, vs->depth);
-    if (!new) {
-	return (ENOMEM);	/* check this error. */
-    }
+	new = grf_alloc_view(NULL, &ns, vs->depth);
+	if (new == NULL)
+		return(ENOMEM);
 	
-    old = vu->view;
-    vu->view = new;
+	old = vu->view;
+	vu->view = new;
+	vu->size.x = new->display.x;
+	vu->size.y = new->display.y;
+	vu->size.width = new->display.width;
+	vu->size.height = new->display.height;
+	vu->size.depth = new->bitmap->depth;
+	vu->mode = grf_get_display_mode(vu->view);
+	vu->monitor = grf_get_monitor(vu->mode);
+	vu->size.x = vs->x;
+	vu->size.y = vs->y;
 
-    vu->size.x = new->display.x;
-    vu->size.y = new->display.y;
-    vu->size.width = new->display.width;
-    vu->size.height = new->display.height;
-    vu->size.depth = new->bitmap->depth;
-    
-    vu->mode = grf_get_display_mode (vu->view);
-    vu->monitor = grf_get_monitor (vu->mode);
-
-    vu->size.x = vs->x;
-    vu->size.y = vs->y;
-    
-    /* we are all set to go everything is A-OK. */
-    /* we need a custom remove here to avoid letting another view display */
-    /* mark as not added or displayed */
-    if (vu->flags & VUF_DISPLAY) {
-	vu->flags &= ~(VUF_ADDED|VUF_DISPLAY);
-
-	/* change view pointers */
-
-	/* display new view first */ 
-	view_display (vu);
-    }
-
-    /* remove old view from monitor */
-    grf_free_view (old);
-    
-    return (0);
+	/* 
+	 * we need a custom remove here to avoid letting 
+	 * another view display mark as not added or displayed 
+	 */
+	if (vu->flags & VUF_DISPLAY) {
+		vu->flags &= ~(VUF_ADDED|VUF_DISPLAY);
+		view_display(vu);
+	}
+	grf_free_view(old);
+	return(0);
 }
 
 /*
@@ -228,178 +237,196 @@ view_setsize (struct view_softc *vu, struct view_size *vs)
  */
 
 /*ARGSUSED*/
-viewopen (dev, flags)
-  dev_t dev;
+int
+viewopen(dev, flags)
+	dev_t dev;
+	int flags;
 {
-    dimen_t size;
-    struct view_softc *vu = &views[minor(dev)];
+	dimen_t size;
+	struct view_softc *vu;
 
-    if (minor(dev) >= NVIEW)
-        return EXDEV;
+	vu = &views[minor(dev)];
 
-    if (vu->flags & VUF_OPEN) {
-        return (EBUSY);
-    }
+	if (minor(dev) >= NVIEW)
+		return(EXDEV);
 
-    vu->size.x = view_default_x;
-    vu->size.y = view_default_y;
-    size.width = vu->size.width = view_default_width;
-    size.height = vu->size.height = view_default_height;
-    vu->size.depth = view_default_depth;
+	if (vu->flags & VUF_OPEN)
+		return(EBUSY);
 
-    vu->view = grf_alloc_view (NULL, &size, vu->size.depth);
-    if (vu->view) {
+	vu->size.x = view_default_x;
+	vu->size.y = view_default_y;
+	size.width = vu->size.width = view_default_width;
+	size.height = vu->size.height = view_default_height;
+	vu->size.depth = view_default_depth;
+
+	vu->view = grf_alloc_view(NULL, &size, vu->size.depth);
+	if (vu->view == NULL)
+		return(ENOMEM);
+
 	vu->size.x = vu->view->display.x;
 	vu->size.y = vu->view->display.y;
 	vu->size.width = vu->view->display.width;
 	vu->size.height = vu->view->display.height;
 	vu->size.depth = vu->view->bitmap->depth;
        	vu->flags |= VUF_OPEN;
-    	vu->mode = grf_get_display_mode (vu->view);
-    	vu->monitor = grf_get_monitor (vu->mode);
-       	return (0);
-    }
-    return (ENOMEM);
+    	vu->mode = grf_get_display_mode(vu->view);
+    	vu->monitor = grf_get_monitor(vu->mode);
+       	return(0);
 }
 
 /*ARGSUSED*/
+void
 viewclose (dev, flags)
-  dev_t dev;
+	dev_t dev;
+	int flags;
 {
-    struct view_softc *vu = &views[minor(dev)];
+	struct view_softc *vu;
 
-    if (vu->flags & VUF_OPEN) {
+	vu = &views[minor(dev)];
+
+	if ((vu->flags & VUF_OPEN) == 0)
+		return;
 	view_remove (vu);
 	grf_free_view (vu->view);
 	vu->flags = 0;
 	vu->view = NULL;
 	vu->mode = NULL;
 	vu->monitor = NULL;	
-    }
 }
 
 
 /*ARGSUSED*/
+int
 viewioctl (dev, cmd, data, flag, p)
-  dev_t dev;
-  caddr_t data;
-  struct proc *p;
+	dev_t dev;
+	int cmd, flag;
+	caddr_t data;
+	struct proc *p;
 {
-    bmap_t *bm;
-    colormap_t *cm;
-    struct view_softc *vu = &views[minor(dev)];
-    int error = 0;
+	struct view_softc *vu;
+	colormap_t *cm;
+	bmap_t *bm;
+	int error;
 
-    switch (cmd) {
-      case VIEW_DISPLAY:
-      	view_display (vu);
-      	break;
+	vu = &views[minor(dev)];
+	error = 0;
 
-      case VIEW_REMOVE:
-      	view_remove (vu);
-      	break;
-
-      case VIEW_GETSIZE:
-        bcopy (&vu->size, data, sizeof (struct view_size)); 
-        break;
-
-      case VIEW_SETSIZE:
-        error = view_setsize (vu, (struct view_size *)data);
-        break;
-
-      case VIEW_GETBITMAP:
-        bm = (bmap_t *)data;
-        bcopy (vu->view->bitmap, bm, sizeof (bmap_t));
-	if ((int)p != -1) {
-	    bm->plane = 0;
-	    bm->blit_temp = 0;
-	    bm->hardware_address = 0;
+	switch (cmd) {
+	case VIOCDISPLAY:
+		view_display(vu);
+		break;
+	case VIOCREMOVE:
+		view_remove(vu);
+		break;
+	case VIOCGSIZE:
+		bcopy(&vu->size, data, sizeof (struct view_size)); 
+		break;
+	case VIOCSSIZE:
+		error = view_setsize(vu, (struct view_size *)data);
+		break;
+	case VIOCGBMAP:
+		bm = (bmap_t *)data;
+		bcopy(vu->view->bitmap, bm, sizeof(bmap_t));
+		if ((int)p != -1) {
+			bm->plane = 0;
+			bm->blit_temp = 0;
+			bm->hardware_address = 0;
+		}
+		break;
+	case VIOCGCMAP:
+		error = view_get_colormap(vu, (colormap_t *)data);
+		break;
+	case VIOCSCMAP:
+		error = view_set_colormap(vu, (colormap_t *)data);
+		break;
+	default:
+		error = EINVAL;
+		break;
 	}
-        break;
-      case VIEW_GETCOLORMAP:
-	error = view_get_colormap (vu, data);
-	break;
-      case VIEW_USECOLORMAP:
-	error = view_use_colormap (vu, data);
-	break;
-      default:
-	error = EINVAL;
-	break;
-    }
-    return (error);
+	return(error);
 }
 
-/*ARGSUSED*/
+int
 view_get_colormap (vu, ucm)
-    struct view_softc *vu;
-    colormap_t *ucm;
+	struct view_softc *vu;
+	colormap_t *ucm;
 {
-    int error = 0;
-    u_long *cme = malloc(sizeof (u_long)*(ucm->size + 1),
-			    M_IOCTLOPS, M_WAITOK); /* add one incase of zero, ick. */
-    if (cme) {
-	u_long *uep = ucm->entry;
+	int error;
+	u_long *cme;
+	u_long *uep;
 
-	ucm->entry = cme;			  /* set entry to out alloc. */
+	/* add one incase of zero, ick. */
+	cme = malloc(sizeof (u_long)*(ucm->size + 1), M_IOCTLOPS, M_WAITOK);
+	if (cme == NULL)
+		return(ENOMEM);
 
-	if (!vu->view || grf_get_colormap (vu->view, ucm))
-	    error = EINVAL;
-	else if (copyout (cme, uep, sizeof (u_long)*ucm->size)) 
-	    error = EINVAL;
-	
-	ucm->entry = uep;			  /* set entry back to users. */
-	free (cme, M_IOCTLOPS);
-    } else {
-	error = ENOMEM;
-    }
-    return (error);
+	uep = ucm->entry;
+	error = 0;	
+	ucm->entry = cme;	  /* set entry to out alloc. */
+	if (vu->view == NULL || grf_get_colormap(vu->view, ucm))
+		error = EINVAL;
+	else 
+		error = copyout(cme, uep, sizeof(u_long) * ucm->size);
+	ucm->entry = uep;	  /* set entry back to users. */
+	free(cme, M_IOCTLOPS);
+	return(error);
+}
+
+int
+view_set_colormap(vu, ucm)
+	struct view_softc *vu;
+	colormap_t *ucm;
+{
+	colormap_t *cm;
+	int error;
+
+	error = 0;
+	cm = malloc(sizeof(u_long) * ucm->size + sizeof (*cm), M_IOCTLOPS,
+	    M_WAITOK);
+	if (cm == NULL)
+		return(ENOMEM);
+
+	bcopy (ucm, cm, sizeof(colormap_t));
+	cm->entry = (u_long *)&cm[1];		 /* table directly after. */
+	if (((error = 
+	    copyin(ucm->entry, cm->entry, sizeof (u_long) * ucm->size)) == 0)
+	    && (vu->view == NULL || grf_use_colormap(vu->view, cm)))
+		error = EINVAL;
+	free(cm, M_IOCTLOPS);
+	return(error);
 }
 
 /*ARGSUSED*/
-view_use_colormap (vu, ucm)
-    struct view_softc *vu;
-    colormap_t *ucm;
-{
-    int error = 0;
-    colormap_t *cm = malloc(sizeof (u_long)*ucm->size + sizeof (*cm),
-			    M_IOCTLOPS, M_WAITOK);
-    if (cm) {
-	bcopy (ucm, cm, sizeof (colormap_t));
-	cm->entry = (u_long *) &cm[1];		 /* table directly after. */
-	if (copyin (ucm->entry, cm->entry, sizeof (u_long)*ucm->size)) 
-	    error = EINVAL;
-	else if (!vu->view || grf_use_colormap (vu->view, cm)) 
-	    error = EINVAL;
-	free (cm, M_IOCTLOPS);
-    } else {
-	error = ENOMEM;
-    }
-    return (error);
-}
-
-/*ARGSUSED*/
+int
 viewmap(dev, off, prot)
         dev_t dev;
+	int off, prot;
 {
-    struct view_softc *vu = &views[minor(dev)];
-    bmap_t *bm = vu->view->bitmap;
-    u_char *bmd_start = bm->hardware_address; 
-    u_long  bmd_size = bm->bytes_per_row*bm->rows*bm->depth;
+	struct view_softc *vu;
+	bmap_t *bm;
+	u_char *bmd_start;
+	u_long bmd_size; 
 
-    if (off >= 0 && off < bmd_size) {
-    	return(((u_int)bmd_start + off) >> PGSHIFT);
-    }
-    /* bogus */
-    return(-1);
+	vu = &views[minor(dev)];
+	bm = vu->view->bitmap;
+	bmd_start = bm->hardware_address; 
+	bmd_size = bm->bytes_per_row*bm->rows*bm->depth;
+
+	if (off >= 0 && off < bmd_size)
+		return(((u_int)bmd_start + off) >> PGSHIFT);
+
+	return(-1);
 }
 
 /*ARGSUSED*/
+int
 viewselect(dev, rw)
-  dev_t dev;
+	dev_t dev;
+	int rw;
 {
-    if (rw == FREAD)
-	return(0);
-    return(1);
+	if (rw == FREAD)
+		return(0);
+	return(1);
 }
 
 void
