@@ -1,4 +1,4 @@
-/*	$NetBSD: svr4_32_misc.c,v 1.4 2001/03/16 04:05:15 mrg Exp $	 */
+/*	$NetBSD: svr4_32_misc.c,v 1.5 2001/05/06 04:32:08 ross Exp $	 */
 
 /*-
  * Copyright (c) 1994 The NetBSD Foundation, Inc.
@@ -762,6 +762,8 @@ svr4_32_sys_sysconfig(p, v, retval)
 }
 
 
+diff
+
 /* ARGSUSED */
 int
 svr4_32_sys_break(p, v, retval)
@@ -772,26 +774,20 @@ svr4_32_sys_break(p, v, retval)
 	struct svr4_32_sys_break_args *uap = v;
 	struct vmspace *vm = p->p_vmspace;
 	vaddr_t new, old;
-	int error, diff;
+	int error;
 
 	old = (vaddr_t) vm->vm_daddr;
 	new = round_page((vaddr_t)SCARG(uap, nsize));
-	diff = new - old;
 
-	DPRINTF(("break(1): old %lx new %lx diff %x\n", old, new, diff));
-
-	if (diff > p->p_rlimit[RLIMIT_DATA].rlim_cur)
+	if (new - old > p->p_rlimit[RLIMIT_DATA].rlim_cur && new > old)
 		return ENOMEM;
 
 	old = round_page(old + ctob(vm->vm_dsize));
 	DPRINTF(("break(2): dsize = %x ctob %x\n",
 		 vm->vm_dsize, ctob(vm->vm_dsize)));
 
-	diff = new - old;
-	DPRINTF(("break(3): old %lx new %lx diff %x\n", old, new, diff));
-
-	if (diff > 0) {
-		error = uvm_map(&vm->vm_map, &old, diff, NULL,
+	if (new > old) {
+		error = uvm_map(&vm->vm_map, &old, new - old, NULL,
 			UVM_UNKNOWN_OFFSET, 0,
            		UVM_MAPFLAG(UVM_PROT_ALL, UVM_PROT_ALL, UVM_INH_COPY, 
 			UVM_ADV_NORMAL, 
@@ -801,11 +797,10 @@ svr4_32_sys_break(p, v, retval)
 			uprintf("sbrk: grow failed, return = %d\n", error);
 			return error;
 		}
-		vm->vm_dsize += btoc(diff);
-	} else if (diff < 0) {
-		diff = -diff;
-		uvm_deallocate(&vm->vm_map, new, diff);
-		vm->vm_dsize -= btoc(diff);
+		vm->vm_dsize += btoc(new - old);
+	} else if (new < old) {
+		uvm_deallocate(&vm->vm_map, new, old - new);
+		vm->vm_dsize -= btoc(old - new);
 	}
 	return 0;
 }
