@@ -1,4 +1,4 @@
-/*	$NetBSD: if_vlan.c,v 1.44 2005/02/26 22:45:09 perry Exp $	*/
+/*	$NetBSD: if_vlan.c,v 1.44.2.1 2005/03/30 10:02:45 tron Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2001 The NetBSD Foundation, Inc.
@@ -85,7 +85,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_vlan.c,v 1.44 2005/02/26 22:45:09 perry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_vlan.c,v 1.44.2.1 2005/03/30 10:02:45 tron Exp $");
 
 #include "opt_inet.h"
 #include "bpfilter.h"
@@ -848,7 +848,7 @@ vlan_input(struct ifnet *ifp, struct mbuf *m)
 	mtag = m_tag_find(m, PACKET_TAG_VLAN, NULL);
 	if (mtag != NULL) {
 		/* m contains a normal ethernet frame, the tag is in mtag */
-		tag = *(u_int *)(mtag + 1);
+		tag = EVL_VLANOFTAG(*(u_int *)(mtag + 1));
 		m_tag_delete(m, mtag);
 	} else {
 		switch (ifp->if_type) {
