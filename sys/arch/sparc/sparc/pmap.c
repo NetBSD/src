@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.181 2001/03/01 15:52:18 pk Exp $ */
+/*	$NetBSD: pmap.c,v 1.182 2001/03/04 21:12:24 pk Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -188,15 +188,16 @@ struct pvlist {
  * since they must line up with the bits in the hardware PTEs (see pte.h).
  * SUN4M bits are at a slightly different location in the PTE.
  * Note: the REF, MOD and ANC flag bits occur only in the head of a pvlist.
- * The cacheable bit (either PV_NC or PV_C4M) is meaningful in each
- * individual pv entry.
+ * The NC bit is meaningful in each individual pv entry and reflects the
+ * requested non-cacheability at the time the entry was made through
+ * pv_link() or when subsequently altered by kvm_uncache() (but the latter
+ * does not happen in kernels as of the time of this writing (March 2001)).
  */
 #define PV_MOD		1	/* page modified */
 #define PV_REF		2	/* page referenced */
 #define PV_NC		4	/* page cannot be cached */
 #define PV_REF4M	1	/* page referenced (SRMMU) */
 #define PV_MOD4M	2	/* page modified (SRMMU) */
-#define PV_C4M		4	/* page _can_ be cached (SRMMU) */
 #define PV_ANC		0x10	/* page has incongruent aliases */
 
 static struct pool pv_pool;
@@ -706,6 +707,7 @@ pgt_page_free(v, sz, mtype)
 
 static void get_phys_mem __P((void));
 void	pv_flushcache __P((struct pvlist *));
+void	pv_uncache __P((struct pvlist *));
 void	kvm_iocache __P((caddr_t, int));
 
 #ifdef DEBUG
@@ -1913,11 +1915,6 @@ ctx_free(pm)
  * as long as the process has a context; this is overly conservative.
  * It also copies ref and mod bits to the pvlist, on the theory that
  * this might save work later.  (XXX should test this theory)
- *
- * In addition, if the cacheable bit (PG_NC) is updated in the PTE
- * the corresponding PV_NC flag is also updated in each pv entry. This
- * is done so kvm_uncache() can use this routine and have the uncached
- * status stick.
  */
 
 #if defined(SUN4) || defined(SUN4C)
@@ -2002,12 +1999,6 @@ pv_changepte4_4c(pv0, bis, bic)
 			setpte4(va, tpte);
 			if (pte != NULL)	/* update software copy */
 				pte[VA_VPG(va)] = tpte;
-
-			/* Update PV_NC flag if required */
-			if (bis & PG_NC)
-				pv->pv_flags |= PV_NC;
-			if (bic & PG_NC)
-				pv->pv_flags &= ~PV_NC;
 		}
 	}
 	setcontext4(ctx);
@@ -2119,7 +2110,7 @@ pv_unlink4_4c(pv, pm, va)
 			pv->pv_pmap = npv->pv_pmap;
 			pv->pv_va = npv->pv_va;
 			pv->pv_flags &= ~PV_NC;
-			pv->pv_flags |= npv->pv_flags & PV_NC;
+			pv->pv_flags |= (npv->pv_flags & PV_NC);
 			pool_put(&pv_pool, npv);
 		} else {
 			/*
@@ -2144,13 +2135,14 @@ pv_unlink4_4c(pv, pm, va)
 		prev->pv_next = npv->pv_next;
 		pool_put(&pv_pool, npv);
 	}
-	if (pv->pv_flags & PV_ANC && (pv->pv_flags & PV_NC) == 0) {
+	if (pv->pv_flags & (PV_NC|PV_ANC) == PV_ANC) {
 		/*
 		 * Not cached: check to see if we can fix that now.
 		 */
 		va = pv->pv_va;
 		for (npv = pv->pv_next; npv != NULL; npv = npv->pv_next)
-			if (BADALIAS(va, npv->pv_va) || (npv->pv_flags & PV_NC))
+			if (BADALIAS(va, npv->pv_va) ||
+			    (npv->pv_flags & PV_NC) != 0)
 				return;
 		pv->pv_flags &= ~PV_ANC;
 		pv_changepte4_4c(pv, 0, PG_NC);
@@ -2189,23 +2181,28 @@ pv_link4_4c(pv, pm, va, nc)
 	 * and thus need to be `discached'.
 	 */
 	pmap_stats.ps_enter_secondpv++;
-	if (pv->pv_flags & (PV_NC|PV_ANC)) {
+	if (pv->pv_flags & PV_ANC) {
 		/* already uncached, just stay that way */
 		ret = PG_NC;
 	} else {
 		for (npv = pv; npv != NULL; npv = npv->pv_next) {
 			if (npv->pv_flags & PV_NC) {
 				ret = PG_NC;
-				break;
+#ifdef DEBUG
+				/* Check currently illegal condition */
+				if (nc == 0)
+					printf("pv_link: proc %s, va=0x%lx: "
+					unexpected uncached mapping at 0x%lx\n",
+					curproc ? curproc->p_comm : "--", va);
+#endif
 			}
 			if (BADALIAS(va, npv->pv_va)) {
 #ifdef DEBUG
 				if (pmapdebug & PDB_CACHESTUFF)
 					printf(
-			"pv_link: badalias: pid %d, 0x%lx<=>0x%lx, pa 0x%lx\n",
-					curproc ? curproc->p_pid : -1,
-					va, npv->pv_va,
-					(pv-pv_table)*PAGE_SIZE);
+			"pv_link: badalias: proc %s, 0x%lx<=>0x%lx, pv %p\n",
+					curproc ? curproc->p_comm : "--",
+					va, npv->pv_va, pv);
 #endif
 				/* Mark list head `uncached due to aliases' */
 				pv->pv_flags |= PV_ANC;
@@ -2240,11 +2237,6 @@ pv_link4_4c(pv, pm, va, nc)
  * as long as the process has a context; this is overly conservative.
  * It also copies ref and mod bits to the pvlist, on the theory that
  * this might save work later.  (XXX should test this theory)
- *
- * In addition, if the cacheable bit (SRMMU_PG_C) is updated in the PTE
- * the corresponding PV_C4M flag is also updated in each pv entry. This
- * is done so kvm_uncache() can use this routine and have the uncached
- * status stick.
  */
 void
 pv_changepte4m(pv0, bis, bic)
@@ -2313,13 +2305,6 @@ pv_changepte4m(pv0, bis, bic)
 		pv0->pv_flags |= MR4M(tpte);
 		tpte = (tpte | bis) & ~bic;
 		setpgt4m(&sp->sg_pte[VA_SUN4M_VPG(va)], tpte);
-
-		/* Update PV_C4M flag if required */
-		if (bis & SRMMU_PG_C)
-			pv->pv_flags |= PV_C4M;
-		if (bic & SRMMU_PG_C)
-			pv->pv_flags &= ~PV_C4M;
-
 	}
 	setcontext4m(ctx);
 	splx(s);
@@ -2427,8 +2412,8 @@ pv_unlink4m(pv, pm, va)
 			pv->pv_next = npv->pv_next;
 			pv->pv_pmap = npv->pv_pmap;
 			pv->pv_va = npv->pv_va;
-			pv->pv_flags &= ~PV_C4M;
-			pv->pv_flags |= (npv->pv_flags & PV_C4M);
+			pv->pv_flags &= ~PV_NC;
+			pv->pv_flags |= (npv->pv_flags & PV_NC);
 			pool_put(&pv_pool, npv);
 		} else {
 			/*
@@ -2437,7 +2422,7 @@ pv_unlink4m(pv, pm, va)
 			 * can still be called for this page.
 			 */
 			pv->pv_pmap = NULL;
-			pv->pv_flags &= ~(PV_C4M|PV_ANC);
+			pv->pv_flags &= ~(PV_NC|PV_ANC);
 			return;
 		}
 	} else {
@@ -2453,15 +2438,22 @@ pv_unlink4m(pv, pm, va)
 		prev->pv_next = npv->pv_next;
 		pool_put(&pv_pool, npv);
 	}
-	if ((pv->pv_flags & (PV_C4M|PV_ANC)) == (PV_C4M|PV_ANC)) {
+	if ((pv->pv_flags & (PV_NC|PV_ANC)) == PV_ANC) {
 		/*
 		 * Not cached: check to see if we can fix that now.
 		 */
 		va = pv->pv_va;
 		for (npv = pv->pv_next; npv != NULL; npv = npv->pv_next)
 			if (BADALIAS(va, npv->pv_va) ||
-			    (npv->pv_flags & PV_C4M) == 0)
+			    (npv->pv_flags & PV_NC) != 0)
 				return;
+#ifdef DEBUG
+		if (pmapdebug & PDB_CACHESTUFF)
+			printf(
+			"pv_unlink: alias ok: proc %s, va 0x%lx, pv %p\n",
+				curproc ? curproc->p_comm : "--",
+				va, pv);
+#endif
 		pv->pv_flags &= ~PV_ANC;
 		pv_changepte4m(pv, SRMMU_PG_C, 0);
 	}
@@ -2490,7 +2482,7 @@ pv_link4m(pv, pm, va, nc)
 		pv->pv_next = NULL;
 		pv->pv_pmap = pm;
 		pv->pv_va = va;
-		pv->pv_flags |= nc ? 0 : PV_C4M;
+		pv->pv_flags |= nc ? PV_NC : 0;
 		return (ret);
 	}
 	/*
@@ -2499,28 +2491,32 @@ pv_link4m(pv, pm, va, nc)
 	 * and thus need to be `discached'.
 	 */
 	pmap_stats.ps_enter_secondpv++;
-	if ((pv->pv_flags & PV_ANC) != 0 || (pv->pv_flags & PV_C4M) == 0) {
+	if ((pv->pv_flags & PV_ANC) != 0) {
 		/* already uncached, just stay that way */
 		ret = SRMMU_PG_C;
 	} else {
 		for (npv = pv; npv != NULL; npv = npv->pv_next) {
-			if ((npv->pv_flags & PV_C4M) == 0) {
+			if ((npv->pv_flags & PV_NC) != 0) {
 				ret = SRMMU_PG_C;
-				break;
+#ifdef DEBUG
+				/* Check currently illegal condition */
+				if (nc == 0)
+					printf("pv_link: proc %s, va=0x%lx: "
+					unexpected uncached mapping at 0x%lx\n",
+					curproc ? curproc->p_comm : "--", va);
+#endif
 			}
 			if (BADALIAS(va, npv->pv_va)) {
 #ifdef DEBUG
 				if (pmapdebug & PDB_CACHESTUFF)
 					printf(
-			"pv_link: badalias: pid %d, 0x%lx<=>0x%lx, pa 0x%lx\n",
-					curproc ? curproc->p_pid : -1,
-					va, npv->pv_va,
-					(pv-pv_table)*PAGE_SIZE);
+			"pv_link: badalias: proc %s, 0x%lx<=>0x%lx, pv %p\n",
+					curproc ? curproc->p_comm : "--",
+					va, npv->pv_va, pv);
 #endif
 				/* Mark list head `uncached due to aliases' */
 				pv->pv_flags |= PV_ANC;
 				pv_changepte4m(pv, 0, ret = SRMMU_PG_C);
-				/* cache_flush_page(va); XXX: needed? */
 				break;
 			}
 		}
@@ -2531,9 +2527,34 @@ pv_link4m(pv, pm, va, nc)
 	npv->pv_next = pv->pv_next;
 	npv->pv_pmap = pm;
 	npv->pv_va = va;
-	npv->pv_flags = nc ? 0 : PV_C4M;
+	npv->pv_flags = nc ? PV_NC : 0;
 	pv->pv_next = npv;
 	return (ret);
+}
+
+/*
+ * Uncache all entries on behalf of kvm_uncache(). In addition to
+ * removing the cache bit from the PTE, we are also setting PV_NC
+ * in each entry to stop pv_unlink() from re-caching (i.e. when a
+ * a bad alias is going away).
+ */
+void
+pv_uncache(pv0)
+	struct pvlist *pv0;
+{
+	struct pvlist *pv;
+
+	for (pv = pv0; pv != NULL; pv = pv->pv_next)
+		pv->pv_flags |= PV_NC;
+
+#if defined(SUN4M)
+	if (CPU_ISSUN4M)
+		pv_changepte4m(pv, 0, SRMMU_PG_C);
+#endif
+#if defined(SUN4) || defined(SUN4C)
+	if (CPU_ISSUN4OR4C) {
+		pv_changepte4_4c(pv, PG_NC, 0);
+#endif
 }
 #endif
 
@@ -4840,7 +4861,7 @@ pmap_page_protect4m(pg, prot)
 	pv0 = pv;
 
 	/* This pv head will become empty, so clear caching state flags */
-	flags = pv->pv_flags & ~(PV_C4M|PV_ANC);
+	flags = pv->pv_flags & ~(PV_NC|PV_ANC);
 
 	while (pv != NULL) {
 		pm = pv->pv_pmap;
@@ -6622,18 +6643,17 @@ kvm_uncache(va, npages)
 			if ((pte & SRMMU_TETYPE) != SRMMU_TEPTE)
 				panic("kvm_uncache: table entry not pte");
 
-			if ((pte & SRMMU_PGTYPE) == PG_SUN4M_OBMEM)
+			if ((pte & SRMMU_PGTYPE) == PG_SUN4M_OBMEM) {
+				pfn = (pte & SRMMU_PPNMASK) >> SRMMU_PPNSHIFT;
+				if ((pv = pvhead(pfn)) != NULL) {
+					pv_uncache(pv);
+					return;
+				}
 				cache_flush_page((int)va);
-
-			pfn = (pte & SRMMU_PPNMASK) >> SRMMU_PPNSHIFT;
-
-			if ((pte & SRMMU_PGTYPE) == PG_SUN4M_OBMEM &&
-			    (pv = pvhead(pfn)) != NULL) {
-				pv_changepte4m(pv, 0, SRMMU_PG_C);
 			}
+
 			pte &= ~SRMMU_PG_C;
-			setpte4m((vaddr_t) va, pte);
-		
+			setpte4m((vaddr_t)va, pte);
 		}
 		setcontext4m(ctx);
 #endif
@@ -6644,15 +6664,16 @@ kvm_uncache(va, npages)
 			if ((pte & PG_V) == 0)
 				panic("kvm_uncache !pg_v");
 
-			pfn = pte & PG_PFNUM;
-			if ((pte & PG_TYPE) == PG_OBMEM &&
-			    (pv = pvhead(pfn)) != NULL) {
-				pv_changepte4_4c(pv, PG_NC, 0);
+			if ((pte & PG_TYPE) == PG_OBMEM) {
+				pfn = pte & PG_PFNUM;
+				if ((pv = pvhead(pfn)) != NULL) {
+					pv_uncache(pv);
+					return;
+				}
+				cache_flush_page((int)va);
 			}
 			pte |= PG_NC;
 			setpte4(va, pte);
-			if ((pte & PG_TYPE) == PG_OBMEM)
-				cache_flush_page((int)va);
 		}
 #endif
 	}
