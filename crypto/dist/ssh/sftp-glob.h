@@ -1,5 +1,4 @@
-/*	$NetBSD: sftp-glob.h,v 1.1.1.4 2001/09/27 02:00:52 itojun Exp $	*/
-/* $OpenBSD: sftp-glob.h,v 1.5 2001/06/26 17:27:24 markus Exp $ */
+/* $OpenBSD: sftp-glob.h,v 1.1 2001/03/13 22:42:54 djm Exp $ */
 
 /*
  * Copyright (c) 2001 Damien Miller.  All rights reserved.
@@ -28,4 +27,6 @@
 /* Remote sftp filename globbing */
 
 int
-remote_glob(int, int, const char *, int, int (*)(const char *, int), glob_t *);
+remote_glob(int fd_in, int fd_out, const char *pattern, int flags, 
+    int (*errfunc)(const char *, int), glob_t *pglob);
+
