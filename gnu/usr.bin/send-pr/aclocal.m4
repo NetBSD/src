@@ -32,14 +32,18 @@ else
 fi])dnl
 dnl
 define([AC_LISPDIR],dnl
-[echo checking for Emacs Lisp files
+[AC_MSG_CHECKING(checking for Emacs Lisp files)
 if test -n "$with_lispdir"; then
   LISPDIR=${with_lispdir}
 else
   for f in ${prefix-/usr/local}/lib/emacs/site-lisp \
 	   ${prefix-/usr/local}/lib/emacs/lisp; do
     if test -d $f; then
-      LISPDIR=$f
+      if test -n "$prefix"; then
+	LISPDIR=`echo $f | sed "s,^$prefix,"'$(prefix),'`
+      else
+	LISPDIR=$f
+      fi
       break
     fi
   done
@@ -48,7 +52,7 @@ if test -z "$LISPDIR"; then
 dnl # Change this default when Emacs 19 has been around for a while
   LISPDIR='$(prefix)/lib/emacs/lisp'
 fi
-test -n "$verbose" && echo "	setting LISPDIR to ${LISPDIR}"
+AC_MSG_RESULT(${LISPDIR})
 AC_SUBST(LISPDIR)dnl
 ])dnl
 dnl
