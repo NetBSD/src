@@ -1,4 +1,4 @@
-/*	$NetBSD: lint1.h,v 1.7 1996/12/22 11:31:07 cgd Exp $	*/
+/*	$NetBSD: lint1.h,v 1.8 1996/12/27 20:46:23 pk Exp $	*/
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -143,11 +143,11 @@ typedef	struct type {
 		str_t	*_t_str;	/* struct/union tag */
 		enum_t	*_t_enum;	/* enum tag */
 		struct	sym *_t_args;	/* arguments (if t_proto) */
-		struct {
-			u_int	_t_flen : 8;	/* length of bit-field */
-			u_int	_t_foffs : 24;	/* offset of bit-field */
-		} _t_u;
 	} t_u;
+	struct {
+		u_int	_t_flen : 8;	/* length of bit-field */
+		u_int	_t_foffs : 24;	/* offset of bit-field */
+	} t_b;
 	struct	type *t_subt;	/* element type (arrays), return value
 				   (functions), or type pointer points to */
 } type_t;
@@ -157,8 +157,8 @@ typedef	struct type {
 #define	t_field	t_u._t_field
 #define	t_enum	t_u._t_enum
 #define	t_args	t_u._t_args
-#define	t_flen	t_u._t_u._t_flen
-#define	t_foffs	t_u._t_u._t_foffs
+#define	t_flen	t_b._t_flen
+#define	t_foffs	t_b._t_foffs
 
 /*
  * types of symbols
