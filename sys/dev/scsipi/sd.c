@@ -1,4 +1,4 @@
-/*	$NetBSD: sd.c,v 1.182 2002/05/05 15:16:30 bouyer Exp $	*/
+/*	$NetBSD: sd.c,v 1.183 2002/05/15 13:01:27 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -54,7 +54,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sd.c,v 1.182 2002/05/05 15:16:30 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sd.c,v 1.183 2002/05/15 13:01:27 bouyer Exp $");
 
 #include "opt_scsi.h"
 #include "rnd.h"
@@ -185,7 +185,7 @@ sdattach(parent, sd, periph, ops)
 		format_bytes(pbuf, sizeof(pbuf),
 		    (u_int64_t)dp->disksize * dp->blksize);
 	        printf(
-		"%s, %ld cyl, %ld head, %ld sec, %ld bytes/sect x %ld sectors",
+		"%s, %ld cyl, %ld head, %ld sec, %ld bytes/sect x %lu sectors",
 		    pbuf, dp->cyls, dp->heads, dp->sectors, dp->blksize,
 		    dp->disksize);
 		break;
