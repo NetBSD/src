@@ -1,4 +1,4 @@
-.\"	$NetBSD: curses_color.3,v 1.6 2003/06/26 10:00:24 wiz Exp $
+.\"	$NetBSD: curses_color.3,v 1.7 2004/03/16 07:54:32 jdc Exp $
 .\" Copyright (c) 2002 The NetBSD Foundation, Inc.
 .\" All rights reserved.
 .\"
@@ -28,7 +28,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd January 27, 2003
+.Dd March 9, 2004
 .Dt CURSES_COLOR 3
 .Os
 .Sh NAME
@@ -130,6 +130,32 @@ and background color
 .Fa back
 for color-pair number
 .Fa pair .
+The valid range for the color-pair
+.Fa pair
+is from 1 to
+.Va COLOR_PAIRS
+\&- 1 
+and the valid range for the colors is any number less than
+.Va COLORS
+\&- 1.
+Specifying a negative number will set that color to the default foreground
+or background color.
+The 8 initial colors are defined as:
+.Bl -tag -width "COLOR_MAGENTA" -compact -offset indent
+.It COLOR_BLACK
+.It COLOR_RED
+.It COLOR_GREEN
+.It COLOR_YELLOW
+.It COLOR_BLUE
+.It COLOR_MAGENTA
+.It COLOR_CYAN
+.It COLOR_WHITE
+.El
+Color-pair 0 is used as the default color pair, so changing this will
+have no effect.
+Use the function
+.Fn assume_default_colors
+to change the the default colors.
 .Pp
 The function
 .Fn pair_content pair *fore *back
@@ -203,9 +229,8 @@ Single Unix Specification.
 .Pp
 The function
 .Fn no_color_video
-is an extension to the X/Open Curses specification.
+and the use of negative color numbers
+are extensions to the X/Open Curses specification.
 .Sh HISTORY
 These functions first appeared in
 .Nx 1.5 .
-.Sh BUGS
-Changing the background or foreground color of color-pair 0 has no effect.
