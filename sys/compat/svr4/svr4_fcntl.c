@@ -1,4 +1,4 @@
-/*	$NetBSD: svr4_fcntl.c,v 1.30 1999/01/23 23:38:02 christos Exp $	 */
+/*	$NetBSD: svr4_fcntl.c,v 1.31 1999/02/09 20:46:40 christos Exp $	 */
 
 /*-
  * Copyright (c) 1994, 1997 The NetBSD Foundation, Inc.
@@ -368,10 +368,15 @@ svr4_sys_open(p, v, retval)
 	struct sys_open_args	cup;
 
 	caddr_t sg = stackgap_init(p->p_emul);
-	SVR4_CHECK_ALT_EXIST(p, &sg, SCARG(uap, path));
+
+	SCARG(&cup, flags) = svr4_to_bsd_flags(SCARG(uap, flags));
+
+	if (SCARG(&cup, flags) & O_CREAT)
+		SVR4_CHECK_ALT_CREAT(p, &sg, SCARG(uap, path));
+	else
+		SVR4_CHECK_ALT_EXIST(p, &sg, SCARG(uap, path));
 
 	SCARG(&cup, path) = SCARG(uap, path);
-	SCARG(&cup, flags) = svr4_to_bsd_flags(SCARG(uap, flags));
 	SCARG(&cup, mode) = SCARG(uap, mode);
 	error = sys_open(p, &cup, retval);
 
