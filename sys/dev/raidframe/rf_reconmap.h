@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_reconmap.h,v 1.8 2004/03/04 03:14:02 oster Exp $	*/
+/*	$NetBSD: rf_reconmap.h,v 1.9 2004/03/18 16:54:54 oster Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -54,6 +54,8 @@ struct RF_ReconMap_s {
 	RF_ReconMapListElem_t **status;	/* array of ptrs to list elements */
 	struct pool elem_pool;          /* pool of RF_ReconMapListElem_t's */
 	RF_DECLARE_MUTEX(mutex)
+	int lock;                       /* 1 if someone has the recon map
+					   locked, 0 otherwise */
 };
 /* a list element */
 struct RF_ReconMapListElem_s {

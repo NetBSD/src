@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_psstatus.c,v 1.27 2004/03/08 02:25:27 oster Exp $	*/
+/*	$NetBSD: rf_psstatus.c,v 1.28 2004/03/18 16:54:54 oster Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -37,7 +37,7 @@
  *****************************************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_psstatus.c,v 1.27 2004/03/08 02:25:27 oster Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_psstatus.c,v 1.28 2004/03/18 16:54:54 oster Exp $");
 
 #include <dev/raidframe/raidframevar.h>
 
@@ -214,6 +214,11 @@ rf_RemoveFromActiveReconTable(RF_Raid_t *raidPtr, RF_StripeNum_t psid,
 	RF_CallbackDesc_t *cb, *cb1;
 
 	RF_LOCK_MUTEX(hdr->mutex);
+	while(hdr->lock) {
+		ltsleep(&hdr->lock, PRIBIO, "rf_racrecon", 0, &hdr->mutex);
+	}
+	hdr->lock = 1;
+	RF_UNLOCK_MUTEX(hdr->mutex);	
 	for (pt = NULL, p = hdr->chain; p; pt = p, p = p->next) {
 		if ((p->parityStripeID == psid) && (p->which_ru == which_ru))
 			break;
@@ -231,7 +236,9 @@ rf_RemoveFromActiveReconTable(RF_Raid_t *raidPtr, RF_StripeNum_t psid,
 	else
 		hdr->chain = p->next;
 	p->next = NULL;
-
+	
+	RF_LOCK_MUTEX(hdr->mutex);
+	hdr->lock = 0;
 	RF_UNLOCK_MUTEX(hdr->mutex);
 
 	/* wakup anyone waiting on the parity stripe ID */
