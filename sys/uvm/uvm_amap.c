@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_amap.c,v 1.24 2000/06/27 17:29:17 mrg Exp $	*/
+/*	$NetBSD: uvm_amap.c,v 1.25 2000/08/02 19:24:29 thorpej Exp $	*/
 
 /*
  *
@@ -840,7 +840,7 @@ ReStart:
 
 	}	/* end of 'for' loop */
 
-	return;
+	amap_unlock(amap);
 }
 
 /*
