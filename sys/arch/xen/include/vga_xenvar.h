@@ -1,4 +1,4 @@
-/* $NetBSD: vga_xenvar.h,v 1.1 2004/04/24 20:58:59 cl Exp $ */
+/* $NetBSD: vga_xenvar.h,v 1.2 2004/04/24 21:01:37 cl Exp $ */
 
 /*
  *
@@ -44,6 +44,3 @@ struct xen_vga_attach_args {
 int vga_xen_cnattach(bus_space_tag_t, bus_space_tag_t);
 
 #endif /* _XEN_VGA_XENVAR_H_ */
-
-
-
