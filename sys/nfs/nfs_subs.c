@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_subs.c,v 1.103 2002/03/17 22:22:40 christos Exp $	*/
+/*	$NetBSD: nfs_subs.c,v 1.104 2002/08/23 05:38:51 enami Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -74,7 +74,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_subs.c,v 1.103 2002/03/17 22:22:40 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_subs.c,v 1.104 2002/08/23 05:38:51 enami Exp $");
 
 #include "fs_nfs.h"
 #include "opt_nfs.h"
@@ -1942,7 +1942,7 @@ nfs_namei(ndp, fhp, len, slp, nam, mdp, dposp, retdirp, p, kerbflag, pubflag)
 			 */
 			default:
 				error = EIO;
-				FREE(cp, M_NAMEI);
+				PNBUF_PUT(cp);
 				goto out;
 			}
 		}
@@ -1958,7 +1958,7 @@ nfs_namei(ndp, fhp, len, slp, nam, mdp, dposp, retdirp, p, kerbflag, pubflag)
 					continue;
 				} else {
 					error = ENOENT;
-					FREE(cp, M_NAMEI);
+					PNBUF_PUT(cp);
 					goto out;
 				}
 			} else
