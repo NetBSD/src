@@ -1,4 +1,4 @@
-/*	$NetBSD: hd64461video.c,v 1.28 2004/12/12 21:03:06 abs Exp $	*/
+/*	$NetBSD: hd64461video.c,v 1.29 2005/02/28 18:04:54 uwe Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002, 2004 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hd64461video.c,v 1.28 2004/12/12 21:03:06 abs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hd64461video.c,v 1.29 2005/02/28 18:04:54 uwe Exp $");
 
 #include "debug_hpcsh.h"
 // #define HD64461VIDEO_HWACCEL
@@ -445,6 +445,11 @@ hd64461video_ioctl(void *v, u_long cmd, caddr_t data, int flag, struct proc *p)
 		dispparam = (struct wsdisplay_param *)data;
 		dispparam->min = 0;
 		switch (dispparam->param) {
+		case WSDISPLAYIO_PARAM_BACKLIGHT:
+			id = CONFIG_HOOK_POWER_LCDLIGHT;
+			idmax = -1;
+			dispparam->max = ~0;
+			break;
 		case WSDISPLAYIO_PARAM_BRIGHTNESS:
 			id = CONFIG_HOOK_BRIGHTNESS;
 			idmax = CONFIG_HOOK_BRIGHTNESS_MAX;
@@ -456,16 +461,22 @@ hd64461video_ioctl(void *v, u_long cmd, caddr_t data, int flag, struct proc *p)
 		default:
 			return (EINVAL);
 		}
-		error = config_hook_call(CONFIG_HOOK_GET, idmax,
-					 &dispparam->max);
-		if (error)
-			return (error);
+
+		if (idmax >= 0) {
+			error = config_hook_call(CONFIG_HOOK_GET, idmax,
+						 &dispparam->max);
+			if (error)
+				return (error);
+		}
 		return config_hook_call(CONFIG_HOOK_GET, id,
 					&dispparam->curval);
 
 	case WSDISPLAYIO_SETPARAM:
 		dispparam = (struct wsdisplay_param *)data;
 		switch (dispparam->param) {
+		case WSDISPLAYIO_PARAM_BACKLIGHT:
+			id = CONFIG_HOOK_POWER_LCDLIGHT;
+			break;
 		case WSDISPLAYIO_PARAM_BRIGHTNESS:
 			id = CONFIG_HOOK_BRIGHTNESS;
 			break;
