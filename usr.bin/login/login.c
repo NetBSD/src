@@ -1,4 +1,4 @@
-/*     $NetBSD: login.c,v 1.48 2000/01/13 06:17:56 mjl Exp $       */
+/*     $NetBSD: login.c,v 1.49 2000/01/13 06:30:31 mjl Exp $       */
 
 /*-
  * Copyright (c) 1980, 1987, 1988, 1991, 1993, 1994
@@ -44,7 +44,7 @@ __COPYRIGHT(
 #if 0
 static char sccsid[] = "@(#)login.c	8.4 (Berkeley) 4/2/94";
 #endif
-__RCSID("$NetBSD: login.c,v 1.48 2000/01/13 06:17:56 mjl Exp $");
+__RCSID("$NetBSD: login.c,v 1.49 2000/01/13 06:30:31 mjl Exp $");
 #endif /* not lint */
 
 /*
@@ -165,11 +165,11 @@ main(argc, argv)
 	int login_retries = DEFAULT_RETRIES, 
 	    login_backoff = DEFAULT_BACKOFF;
 	time_t pw_warntime = _PASSWORD_WARNDAYS * SECSPERDAY;
-	char *shell = NULL;
 #ifdef KERBEROS5
 	krb5_error_code kerror;
 #endif
 #ifdef LOGIN_CAP
+	char *shell = NULL;
 	login_cap_t *lc = NULL;
 #endif
 
@@ -330,7 +330,6 @@ main(argc, argv)
 		if (pwd != NULL)
                 	lc = login_getclass(pwd->pw_class);
 #endif
-
 		/*
 		 * if we have a valid account name, and it doesn't have a
 		 * password, or the -f option was specified and the caller
