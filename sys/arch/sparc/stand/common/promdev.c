@@ -1,4 +1,4 @@
-/*	$NetBSD: promdev.c,v 1.9 2001/01/18 12:50:10 pk Exp $ */
+/*	$NetBSD: promdev.c,v 1.10 2001/04/04 15:41:46 pk Exp $ */
 
 /*
  * Copyright (c) 1993 Paul Kranenburg
@@ -496,7 +496,9 @@ static	struct idprom idprom;
 		(void)(*obpvec->pv_enaddr)(fd, (char *)ea);
 		break;
 
-	case PROM_OBP_V3: {
+	case PROM_OPENFIRM:
+	case PROM_OBP_V3:
+		{
 		char buf[64];
 		sprintf(buf, "%lx mac-address drop swap 6 cmove", (u_long)ea);
 		prom_interpret(buf);
@@ -544,7 +546,8 @@ getdevtype(fd, name)
 
 	case PROM_OBP_V2:
 	case PROM_OBP_V3:
-		node = (*obpvec->pv_v2devops.v2_fd_phandle)(fd);
+	case PROM_OPENFIRM:
+		node = prom_instance_to_package(fd);
 		cp = mygetpropstring(node, "device_type");
 		if (strcmp(cp, "block") == 0)
 			return (DT_BLOCK);
