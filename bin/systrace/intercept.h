@@ -1,4 +1,4 @@
-/*	$NetBSD: intercept.h,v 1.6 2002/10/11 21:54:57 provos Exp $	*/
+/*	$NetBSD: intercept.h,v 1.7 2002/11/02 19:57:02 provos Exp $	*/
 /*	$OpenBSD: intercept.h,v 1.11 2002/08/04 04:15:50 provos Exp $	*/
 /*
  * Copyright 2002 Niels Provos <provos@citi.umich.edu>
@@ -48,7 +48,7 @@ struct intercept_system {
 	int (*report)(int, pid_t);
 	int (*read)(int);
 	int (*getsyscallnumber)(const char *, const char *);
-	char *(*getcwd)(int, pid_t, char *, size_t);
+	int (*setcwd)(int, pid_t);
 	int (*restcwd)(int);
 	int (*io)(int, pid_t, int, void *, u_char *, size_t);
 	int (*getarg)(int, void *, int, void **);
