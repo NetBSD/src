@@ -1,4 +1,4 @@
-/*	$NetBSD: rcache.c,v 1.16 2003/02/04 08:24:20 enami Exp $	*/
+/*	$NetBSD: rcache.c,v 1.17 2003/02/04 08:43:16 enami Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -39,7 +39,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: rcache.c,v 1.16 2003/02/04 08:24:20 enami Exp $");
+__RCSID("$NetBSD: rcache.c,v 1.17 2003/02/04 08:43:16 enami Exp $");
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -322,10 +322,10 @@ retry:
 				}
 				if (CDATA(curr) +
 				    ((blkno - curr->cd_blkstart) <<
-				    dev_bsize) < CDATA(curr) ||
+				    dev_bshift) < CDATA(curr) ||
 			   	    CDATA(curr) +
 				    ((blkno - curr->cd_blkstart) <<
-			   	    dev_bsize) > CDATA(curr) + CSIZE) {
+			   	    dev_bshift) > CDATA(curr) + CSIZE) {
 					fprintf(stderr, "%p < %p !!!\n",
 				   	   CDATA(curr) + ((blkno -
 					   curr->cd_blkstart) << dev_bshift),
@@ -340,7 +340,8 @@ retry:
 				}
 #endif
 				memcpy(buf, CDATA(curr) +
-				    ((blkno - curr->cd_blkstart) << dev_bsize),
+				    ((blkno - curr->cd_blkstart) <<
+				    dev_bshift),
 			   	    toCopy);
 
 				buf 	+= toCopy;
