@@ -1,4 +1,4 @@
-/*	$NetBSD: comsat.c,v 1.26 2003/09/19 05:33:15 itojun Exp $	*/
+/*	$NetBSD: comsat.c,v 1.27 2004/06/25 17:34:38 christos Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -36,7 +36,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1993\n\
 #if 0
 static char sccsid[] = "from: @(#)comsat.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: comsat.c,v 1.26 2003/09/19 05:33:15 itojun Exp $");
+__RCSID("$NetBSD: comsat.c,v 1.27 2004/06/25 17:34:38 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -53,6 +53,7 @@ __RCSID("$NetBSD: comsat.c,v 1.26 2003/09/19 05:33:15 itojun Exp $");
 #include <netdb.h>
 #include <paths.h>
 #include <pwd.h>
+#include <err.h>
 #include <signal.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -62,41 +63,51 @@ __RCSID("$NetBSD: comsat.c,v 1.26 2003/09/19 05:33:15 itojun Exp $");
 #include <time.h>
 #include <vis.h>
 #include <unistd.h>
+#ifdef SUPPORT_UTMP
 #include <utmp.h>
+#endif
+#ifdef SUPPORT_UTMPX
+#include <utmpx.h>
+#endif
 
-int	logging;
-int	debug = 0;
+#include "utmpentry.h"
+
+#if !defined(SUPPORT_UTMP) && !defined(SUPPORT_UTMPX)
+	#error "SUPPORT_UTMP and/or SUPPORT_UTMPX must be defined"
+#endif
+
 #define	dsyslog	if (debug) syslog
 
 #define MAXIDLE	120
 
-char	hostname[MAXHOSTNAMELEN+1];
-struct	utmp *utmp = NULL;
-time_t	lastmsgtime;
-int	nutmp, uf;
+static int	logging;
+static int	debug = 0;
+static char	hostname[MAXHOSTNAMELEN+1];
+static time_t	utmpmtime;		/* last modification time for utmp/x */
+static int	nutmp;
+static struct	utmpentry *utmp = NULL;
+static time_t	lastmsgtime;
 
-void jkfprintf (FILE *, char[], off_t);
-void mailfor (char *);
-void notify (struct utmp *, off_t);
-void onalrm (int);
-void reapchildren (int);
+int main(int, char *[]);
+static void jkfprintf(FILE *, const char *, off_t, const char *);
+static void mailfor(const char *);
+static void notify(const struct utmpentry *, off_t);
+static void onalrm(int);
+static void reapchildren(int);
 
 int
 main(int argc, char *argv[])
 {
 	struct sockaddr_storage from;
 	int cc, ch;
-	int fromlen;
+	socklen_t fromlen;
 	char msgbuf[100];
-	sigset_t nsigset;
+	sigset_t nsigset, osigset;
 
 	/* verify proper invocation */
 	fromlen = sizeof(from);
-	if (getsockname(0, (struct sockaddr *)&from, &fromlen) < 0) {
-		(void)fprintf(stderr,
-		    "comsat: getsockname: %s.\n", strerror(errno));
-		exit(1);
-	}
+	if (getsockname(0, (struct sockaddr *)(void *)&from, &fromlen) == -1)
+		err(1, "getsockname (%s)", strerror(errno));
 
 	openlog("comsat", LOG_PID, LOG_DAEMON);
 	while ((ch = getopt(argc, argv, "l")) != -1)
@@ -108,13 +119,8 @@ main(int argc, char *argv[])
 			syslog(LOG_ERR, "Usage: %s [-l]", getprogname());
 			exit(1);
 		}
-	if (chdir(_PATH_MAILDIR)) {
+	if (chdir(_PATH_MAILDIR) == -1) {
 		syslog(LOG_ERR, "chdir: %s: %m", _PATH_MAILDIR);
-		(void)recv(0, msgbuf, sizeof(msgbuf) - 1, 0);
-		exit(1);
-	}
-	if ((uf = open(_PATH_UTMP, O_RDONLY, 0)) < 0) {
-		syslog(LOG_ERR, "open: %s: %m", _PATH_UTMP);
 		(void)recv(0, msgbuf, sizeof(msgbuf) - 1, 0);
 		exit(1);
 	}
@@ -125,6 +131,12 @@ main(int argc, char *argv[])
 	(void)signal(SIGALRM, onalrm);
 	(void)signal(SIGTTOU, SIG_IGN);
 	(void)signal(SIGCHLD, reapchildren);
+	(void)sigemptyset(&nsigset);
+	(void)sigaddset(&nsigset, SIGALRM);
+	if (sigprocmask(SIG_SETMASK, NULL, &osigset) == -1) {
+		syslog(LOG_ERR, "sigprocmask get failed (%m)");
+		exit(1);
+	}
 	for (;;) {
 		cc = recv(0, msgbuf, sizeof(msgbuf) - 1, 0);
 		if (cc <= 0) {
@@ -135,56 +147,60 @@ main(int argc, char *argv[])
 		}
 		if (!nutmp)		/* no one has logged in yet */
 			continue;
-		sigemptyset(&nsigset);
-		sigaddset(&nsigset, SIGALRM);
-		sigprocmask(SIG_SETMASK, &nsigset, NULL);
+		if (sigprocmask(SIG_SETMASK, &nsigset, NULL) == -1) {
+			syslog(LOG_ERR, "sigprocmask set failed (%m)");
+			exit(1);
+		}
 		msgbuf[cc] = '\0';
 		(void)time(&lastmsgtime);
 		mailfor(msgbuf);
-		sigemptyset(&nsigset);
-		sigprocmask(SIG_SETMASK, &nsigset, NULL);
+		if (sigprocmask(SIG_SETMASK, &osigset, NULL) == -1) {
+			syslog(LOG_ERR, "sigprocmask restore failed (%m)");
+			exit(1);
+		}
 	}
 }
 
-void
+static void
+/*ARGSUSED*/
 reapchildren(int signo)
 {
 
-	while (wait3(NULL, WNOHANG, NULL) > 0);
+	while (wait3(NULL, WNOHANG, NULL) != -1)
+		continue;
 }
 
-void
+static void
+/*ARGSUSED*/
 onalrm(int signo)
 {
-	static u_int utmpsize;		/* last malloced size for utmp */
-	static u_int utmpmtime;		/* last modification time for utmp */
 	struct stat statbf;
-	struct utmp *u;
+	time_t newtime = 0;
 
 	if (time(NULL) - lastmsgtime >= MAXIDLE)
 		exit(0);
 	(void)alarm((u_int)15);
-	(void)fstat(uf, &statbf);
-	if (statbf.st_mtime > utmpmtime) {
-		utmpmtime = statbf.st_mtime;
-		if (statbf.st_size > utmpsize) {
-			if ((u = realloc(utmp,
-			    statbf.st_size + 10 * sizeof(struct utmp))) == NULL) {
-				syslog(LOG_ERR, "%s", strerror(errno));
-				exit(1);
-			}
-			utmp = u;
-			utmpsize = statbf.st_size + 10 * sizeof(struct utmp);
-		}
-		(void)lseek(uf, (off_t)0, SEEK_SET);
-		nutmp = read(uf, utmp, (int)statbf.st_size)/sizeof(struct utmp);
+#ifdef SUPPORT_UTMP
+	if (stat(_PATH_UTMP, &statbf) != -1)
+		if (statbf.st_mtime > newtime)
+			newtime = statbf.st_mtime;
+#endif
+#ifdef SUPPORT_UTMPX
+	if (stat(_PATH_UTMP, &statbf) != -1)
+		if (statbf.st_mtime > newtime)
+			newtime = statbf.st_mtime;
+#endif
+	if (newtime > utmpmtime) {
+		freeutentries(utmp);
+		nutmp = getutentries(NULL, &utmp);
+		utmpmtime = newtime;
 	}
 }
 
-void
-mailfor(char *name)
+static void
+mailfor(const char *name)
 {
-	struct utmp *utp = &utmp[nutmp];
+	struct utmpentry *ep;
 	char *cp, *fn;
 	off_t offset;
 
@@ -193,7 +209,7 @@ mailfor(char *name)
 	*cp = '\0';
 	errno = 0;
 	offset = strtol(cp + 1, &fn, 10);
-	if (errno == ERANGE)
+	if (errno == ERANGE && (offset == LONG_MAX || offset == LONG_MIN))
 		return;
 	if (fn && *fn && *fn != '\n') {
 		/*
@@ -203,30 +219,28 @@ mailfor(char *name)
 		 * files, we need to ignore these.  With one exception:
 		 * if it mentions the user's system mailbox.
 		 */
-		char maildir[128];
+		char maildir[MAXPATHLEN];
 		int l = snprintf(maildir, sizeof(maildir), ":%s/%s",
 				 _PATH_MAILDIR, name);
 		if (l > sizeof(maildir) || strcmp(maildir, fn) != 0)
 			return;
 	}
-	while (--utp >= utmp)
-		if (!strncmp(utp->ut_name, name, sizeof(utmp[0].ut_name)))
-			notify(utp, offset);
+	for (ep = utmp; ep != NULL; ep = ep->next)
+		if (strcmp(ep->name, name) == 0)
+			notify(ep, offset);
 }
 
-static char *cr;
-
-void
-notify(struct utmp *utp, off_t offset)
+static void
+notify(const struct utmpentry *ep, off_t offset)
 {
 	FILE *tp;
 	struct passwd *p;
 	struct stat stb;
 	struct termios ttybuf;
-	char tty[20], name[sizeof(utmp[0].ut_name) + 1];
+	char tty[sizeof(_PATH_DEV) + sizeof(ep->line) + 1];
+	const char *cr;
 
-	(void)snprintf(tty, sizeof(tty), "%s%.*s",
-	    _PATH_DEV, (int)sizeof(utp->ut_line), utp->ut_line);
+	(void)snprintf(tty, sizeof(tty), "%s%s", _PATH_DEV, ep->line);
 	if (strchr(tty + sizeof(_PATH_DEV) - 1, '/')) {
 		/* A slash is an attempt to break security... */
 		/*
@@ -237,51 +251,52 @@ notify(struct utmp *utp, off_t offset)
 		return;
 	}
 	if (stat(tty, &stb) || !(stb.st_mode & S_IEXEC)) {
-		dsyslog(LOG_DEBUG, "%s: wrong mode on %s", utp->ut_name, tty);
+		dsyslog(LOG_DEBUG, "%s: wrong mode on %s", ep->name, tty);
 		return;
 	}
-	dsyslog(LOG_DEBUG, "notify %s on %s", utp->ut_name, tty);
+	dsyslog(LOG_DEBUG, "notify %s on %s", ep->name, tty);
 	if (fork())
 		return;
 	(void)signal(SIGALRM, SIG_DFL);
 	(void)alarm((u_int)30);
 	if ((tp = fopen(tty, "w")) == NULL) {
-		dsyslog(LOG_ERR, "%s: %s", tty, strerror(errno));
+		dsyslog(LOG_ERR, "open `%s' (%s)", tty, strerror(errno));
 		_exit(1);
 	}
-	(void)tcgetattr(fileno(tp), &ttybuf);
+	if (tcgetattr(fileno(tp), &ttybuf) == -1) {
+		dsyslog(LOG_ERR, "tcgetattr `%s' (%s)", tty, strerror(errno));
+		_exit(1);
+	}
 	cr = (ttybuf.c_oflag & ONLCR) && (ttybuf.c_oflag & OPOST) ?
 	    "\n" : "\n\r";
-	(void)strlcpy(name, utp->ut_name, sizeof(name));
-
 	/* Set uid/gid/groups to users in case mail drop is on nfs */
-	if ((p = getpwnam(name)) == NULL ||
-	    initgroups(p->pw_name, p->pw_gid) < 0 ||
-	    setgid(p->pw_gid) < 0 ||
-	    setuid(p->pw_uid) < 0)
+	if ((p = getpwnam(ep->name)) == NULL ||
+	    initgroups(p->pw_name, p->pw_gid) == -1 ||
+	    setgid(p->pw_gid) == -1 ||
+	    setuid(p->pw_uid) == -1)
 		_exit(1);
 
 	if (logging)
-		syslog(LOG_INFO, "biff message for %s", name);
+		syslog(LOG_INFO, "biff message for %s", ep->name);
 
 	(void)fprintf(tp, "%s\007New mail for %s@%.*s\007 has arrived:%s----%s",
-	    cr, name, (int)sizeof(hostname), hostname, cr, cr);
-	jkfprintf(tp, name, offset);
+	    cr, ep->name, (int)sizeof(hostname), hostname, cr, cr);
+	jkfprintf(tp, ep->name, offset, cr);
 	(void)fclose(tp);
 	_exit(0);
 }
 
-void
-jkfprintf(FILE *tp, char name[], off_t offset)
+static void
+jkfprintf(FILE *tp, const char *name, off_t offset, const char *cr)
 {
 	FILE *fi;
 	int linecnt, charcnt, inheader;
-	char line[BUFSIZ], visline[BUFSIZ*4], *nl;
+	char line[BUFSIZ], visline[BUFSIZ * 4 + 1], *nl;
 
 	if ((fi = fopen(name, "r")) == NULL)
 		return;
 
-	(void)fseek(fi, offset, SEEK_SET);
+	(void)fseeko(fi, offset, SEEK_SET);
 	/*
 	 * Print the first 7 lines or 560 characters of the new mail
 	 * (whichever comes first).  Skip header crap other than
