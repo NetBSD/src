@@ -1,4 +1,4 @@
-/*	$NetBSD: bpf.c,v 1.21 1995/08/12 23:59:17 mycroft Exp $	*/
+/*	$NetBSD: bpf.c,v 1.22 1995/08/13 04:15:38 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1990, 1991, 1993
@@ -578,7 +578,6 @@ reset_d(d)
 
 /*
  *  FIONREAD		Check for read packet available.
- *  SIOCGIFADDR		Get interface address - convenient hook to driver.
  *  BIOCGBLEN		Get buffer len [for read()].
  *  BIOCSETF		Set ethernet read filter.
  *  BIOCFLUSH		Flush read packet buffer.
@@ -623,19 +622,6 @@ bpfioctl(dev, cmd, addr, flag)
 			splx(s);
 
 			*(int *)addr = n;
-			break;
-		}
-
-	case SIOCGIFADDR:
-		{
-			struct ifnet *ifp;
-
-			if (d->bd_bif == 0)
-				error = EINVAL;
-			else {
-				ifp = d->bd_bif->bif_ifp;
-				error = (*ifp->if_ioctl)(ifp, cmd, addr);
-			}
 			break;
 		}
 
