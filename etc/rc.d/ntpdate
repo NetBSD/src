@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# $NetBSD: ntpdate,v 1.10 2003/06/27 07:22:36 lukem Exp $
+# $NetBSD: ntpdate,v 1.11 2003/10/19 13:23:57 fredb Exp $
 #
 
 # PROVIDE: ntpdate
@@ -26,7 +26,7 @@ ntpdate_start()
 	fi
 	if [ -n "$ntpdate_hosts"  ]; then
 		echo "Setting date via ntp."
-		ntpdate $rc_flags $ntpdate_hosts
+		$command $rc_flags $ntpdate_hosts
 	fi
 }
 
