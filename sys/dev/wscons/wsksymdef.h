@@ -1,4 +1,4 @@
-/*	$NetBSD: wsksymdef.h,v 1.18 1999/01/10 16:56:35 augustss Exp $ */
+/*	$NetBSD: wsksymdef.h,v 1.19 1999/01/14 11:44:54 drochner Exp $ */
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -412,6 +412,7 @@
 #define KS_Cmd_Screen8		0xf408
 #define KS_Cmd_Screen9		0xf409
 #define KS_Cmd_Debugger		0xf420
+#define KS_Cmd_ResetEmul	0xf421
 
 /*
  * Group 5 (internal)
