@@ -1,6 +1,6 @@
 #!/bin/sh -
 #
-#	$NetBSD: daily,v 1.53 2003/12/07 16:55:04 perry Exp $
+#	$NetBSD: daily,v 1.54 2003/12/07 22:22:15 perry Exp $
 #	@(#)daily	8.2 (Berkeley) 1/25/94
 #
 
@@ -201,7 +201,25 @@ rm -f $TMP
 if checkyesno check_network; then
 	echo ""
 	echo "network:"
-	netstat -inv
+	if checkyesno full_netstat; then
+		netstat -inv
+	else
+		netstat -in | awk 'BEGIN {
+			ifs[""] = 0;
+		}
+		/^[^\*]* / {
+			if (NR == 1) {
+				printf("%-8s %10s %6s %10s %6s %6s\n",
+				  $1, $(NF-4), $(NF-3), $(NF-2), $(NF-1), $NF);
+				next;
+			}
+			if (!($1 in ifs)) {
+				printf("%-8s %10d %6d %10d %6d %6d\n",
+				  $1, $(NF-4), $(NF-3), $(NF-2), $(NF-1), $NF);
+				ifs[$1] = 1;
+			}
+		}'
+	fi
 	echo ""
 	t=/var/rwho/*
 	if [ "$t" != '/var/rwho/*' ]; then
