@@ -1,4 +1,4 @@
-/*	$KAME: sockmisc.c,v 1.21 2000/12/16 14:19:18 sakane Exp $	*/
+/*	$KAME: sockmisc.c,v 1.22 2001/01/10 17:24:32 sakane Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -356,7 +356,9 @@ sendfromto(s, buf, buflen, src, dst)
 
 	plog(LLV_DEBUG, LOCATION, NULL,
 		"sockname %s\n", saddr2str((struct sockaddr *)&ss));
-	plog(LLV_DEBUG, LOCATION, src,
+	plog(LLV_DEBUG, LOCATION, NULL,
+		"send packet from %s\n", saddr2str(src));
+	plog(LLV_DEBUG, LOCATION, NULL,
 		"send packet to %s\n", saddr2str(dst));
 
 	if (src->sa_family != ss.ss_family) {

@@ -1,4 +1,4 @@
-/*	$KAME: policy.c,v 1.33 2000/12/15 13:43:57 sakane Exp $	*/
+/*	$KAME: policy.c,v 1.34 2001/01/24 06:23:23 sakane Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -55,6 +55,7 @@
 #include "isakmp.h"
 #include "oakley.h"
 #include "handler.h"
+#include "strnames.h"
 
 static TAILQ_HEAD(_sptree, secpolicy) sptree;
 
@@ -366,8 +367,8 @@ spidx2str(spidx)
 	p += i;
 	blen -= i;
 
-	snprintf(p, blen, "proto=%d dir=%d",
-		spidx->ul_proto, spidx->dir);
+	snprintf(p, blen, "proto=%s dir=%s",
+		s_proto(spidx->ul_proto), s_direction(spidx->dir));
 
 	return buf;
 }
