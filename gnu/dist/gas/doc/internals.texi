@@ -8,7 +8,7 @@
 This chapter describes the internals of the assembler.  It is incomplete, but
 it may help a bit.
 
-This chapter was last modified on $Date: 1999/02/02 19:53:08 $.  It is not updated regularly, and it
+This chapter was last modified on $Date: 1999/02/02 20:27:17 $.  It is not updated regularly, and it
 may be out of date.
 
 @menu

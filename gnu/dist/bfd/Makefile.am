@@ -100,11 +100,13 @@ ALL_MACHINES_CFILES = \
 BFD32_BACKENDS = \
 	aout-adobe.lo \
 	aout-arm.lo \
+	aout-arm32.lo \
 	aout-ns32k.lo \
 	aout-sparcle.lo \
 	aout-tic30.lo \
 	aout0.lo \
 	aout32.lo \
+	armnetbsd.lo \
 	bout.lo \
 	cf-i386lynx.lo \
 	cf-m68klynx.lo \
@@ -205,11 +207,13 @@ BFD32_BACKENDS = \
 BFD32_BACKENDS_CFILES = \
 	aout-adobe.c \
 	aout-arm.c \
+	aout-arm32.c \
 	aout-ns32k.c \
 	aout-sparcle.c \
 	aout-tic30.c \
 	aout0.c \
 	aout32.c \
+	armnetbsd.c \
 	bout.c \
 	cf-i386lynx.c \
 	cf-m68klynx.c \
@@ -658,6 +662,9 @@ aout0.lo: aout0.c aoutf1.h $(INCDIR)/aout/sun4.h libaout.h \
 aout32.lo: aout32.c aoutx.h $(INCDIR)/bfdlink.h libaout.h \
   $(INCDIR)/aout/aout64.h $(INCDIR)/aout/stab_gnu.h $(INCDIR)/aout/stab.def \
   $(INCDIR)/aout/ar.h
+armnetbsd.lo: armnetbsd.c netbsd.h libaout.h $(INCDIR)/bfdlink.h \
+  aout-target.h $(INCDIR)/aout/aout64.h $(INCDIR)/aout/stab_gnu.h \
+  $(INCDIR)/aout/stab.def $(INCDIR)/aout/ar.h
 bout.lo: bout.c $(INCDIR)/bfdlink.h genlink.h $(INCDIR)/bout.h \
   $(INCDIR)/aout/stab_gnu.h $(INCDIR)/aout/stab.def libaout.h
 cf-i386lynx.lo: cf-i386lynx.c coff-i386.c $(INCDIR)/coff/i386.h \

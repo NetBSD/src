@@ -1,5 +1,5 @@
 /* obj-aout.h, a.out object file format for gas, the assembler.
-   Copyright (C) 1989, 90, 91, 92, 93, 94, 95, 1996
+   Copyright (C) 1989, 90, 91, 92, 93, 94, 95, 96, 1998
    Free Software Foundation, Inc.
 
    This file is part of GAS, the GNU Assembler.
@@ -14,9 +14,10 @@
    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See
    the GNU General Public License for more details.
 
-   You should have received a copy of the GNU General Public
-   License along with GAS; see the file COPYING.  If not, write
-   to the Free Software Foundation, 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA. */
+   You should have received a copy of the GNU General Public License
+   along with GAS; see the file COPYING.  If not, write to the Free
+   Software Foundation, 59 Temple Place - Suite 330, Boston, MA
+   02111-1307, USA. */
 
 /* Tag to validate a.out object file format processing */
 #define OBJ_AOUT 1
@@ -102,11 +103,14 @@ extern void obj_aout_frob_file PARAMS ((void));
 #define S_IS_DEBUG(s)		((s)->sy_symbol.n_type & N_STAB)
 /* True if a symbol is local symbol name */
 #define S_IS_LOCAL(s) 					\
-  (S_GET_NAME (s) 					\
-   && !S_IS_DEBUG (s) 					\
-   && (strchr (S_GET_NAME (s), '\001') != NULL		\
-       || strchr (S_GET_NAME (s), '\002') != NULL	\
-       || (S_LOCAL_NAME(s) && !flag_keep_locals)))
+  ((S_GET_NAME (s) 					\
+    && !S_IS_DEBUG (s) 					\
+    && (strchr (S_GET_NAME (s), '\001') != NULL		\
+        || strchr (S_GET_NAME (s), '\002') != NULL	\
+        || (S_LOCAL_NAME(s) && !flag_keep_locals)))	\
+   || (flag_strip_local_absolute			\
+       && ! S_IS_EXTERNAL(s)				\
+       && S_GET_SEGMENT (s) == absolute_section))
 /* True if a symbol is not defined in this file */
 #define S_IS_EXTERN(s)		((s)->sy_symbol.n_type & N_EXT)
 /* True if the symbol has been generated because of a .stabd directive */
@@ -240,9 +244,11 @@ extern void obj_aout_nbsd_frob_file PARAMS ((void));
 #define obj_frob_file_before_adjust() obj_aout_nbsd_frob_file ()
 
 /* Hack around a bug in NetBSD's ld.so. */
+#ifndef obj_fix_adjustable
 #define obj_fix_adjustable(X) (!(aout_pic_flag \
 				 && (S_IS_EXTERNAL (sym)) \
 				 && (obj_datasec(abfd) == sec) ))
+#endif
 #endif /* TE_NetBSD */
 
 /* end of obj-aout.h */
