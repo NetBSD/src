@@ -1,4 +1,4 @@
-/*	$NetBSD: ns_parse.c,v 1.2 2001/01/27 07:22:05 itojun Exp $	*/
+/*	$NetBSD: ns_parse.c,v 1.3 2002/03/09 13:22:52 bjh21 Exp $	*/
 
 /*
  * Copyright (c) 1996,1999 by Internet Software Consortium.
@@ -134,9 +134,10 @@ ns_initparse(const u_char *msg, int msglen, ns_msg *handle) {
 int
 ns_parserr(ns_msg *handle, ns_sect section, int rrnum, ns_rr *rr) {
 	int b;
+	int tmp;
 
 	/* Make section right. */
-	if (section < 0 || section >= ns_s_max)
+	if ((tmp = section) < 0 || section >= ns_s_max)
 		RETERR(ENODEV);
 	if (section != handle->_sect)
 		setsection(handle, section);
