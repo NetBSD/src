@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_log.c,v 1.1.1.1 2004/12/31 11:30:44 martti Exp $	*/
+/*	$NetBSD: ip_log.c,v 1.1 2004/10/01 15:26:00 christos Exp $	*/
 
 /*
  * Copyright (C) 1997-2003 by Darren Reed.
@@ -7,6 +7,10 @@
  *
  * Id: ip_log.c,v 2.75.2.5 2004/07/13 14:25:36 darrenr Exp
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: ip_log.c,v 1.1 2004/10/01 15:26:00 christos Exp $");
+
 #include <sys/param.h>
 #if defined(KERNEL) || defined(_KERNEL)
 # undef KERNEL
