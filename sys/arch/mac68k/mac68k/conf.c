@@ -1,4 +1,4 @@
-/*	$NetBSD: conf.c,v 1.13 1994/11/14 05:57:06 christos Exp $	*/
+/*	$NetBSD: conf.c,v 1.14 1994/12/03 23:27:40 briggs Exp $	*/
 
 /*
  * Copyright (c) 1990 The Regents of the University of California.
@@ -100,7 +100,7 @@ int	ttselect	__P((dev_t, int, struct proc *));
 #define	dev_type_close(n)	int n __P((dev_t, int, int, struct proc *))
 #define	dev_type_strategy(n)	void n __P((struct buf *))
 #define	dev_type_ioctl(n) \
-	int n __P((dev_t, int, caddr_t, int, struct proc *))
+	int n __P((dev_t, u_long, caddr_t, int, struct proc *))
 
 /* bdevsw-specific types */
 #define	dev_type_dump(n)	int n ()
