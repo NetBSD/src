@@ -1,4 +1,4 @@
-/*	$NetBSD: pool.h,v 1.34 2002/03/09 18:06:54 thorpej Exp $	*/
+/*	$NetBSD: pool.h,v 1.35 2002/03/11 01:16:43 enami Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 1999, 2000 The NetBSD Foundation, Inc.
@@ -212,7 +212,7 @@ int		pool_reclaim(struct pool *);
  */
 void		*_pool_get(struct pool *, int, const char *, long);
 void		_pool_put(struct pool *, void *, const char *, long);
-void		_pool_reclaim(struct pool *, const char *, long);
+int		_pool_reclaim(struct pool *, const char *, long);
 #define		pool_get(h, f)	_pool_get((h), (f), __FILE__, __LINE__)
 #define		pool_put(h, v)	_pool_put((h), (v), __FILE__, __LINE__)
 #define		pool_reclaim(h)	_pool_reclaim((h), __FILE__, __LINE__)
