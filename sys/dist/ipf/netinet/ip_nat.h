@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_nat.h,v 1.1.2.3 2004/12/18 09:32:21 skrll Exp $	*/
+/*	$NetBSD: ip_nat.h,v 1.1.2.4 2005/02/09 08:26:14 skrll Exp $	*/
 
 /*
  * Copyright (C) 1995-2001, 2003 by Darren Reed.
@@ -6,7 +6,7 @@
  * See the IPFILTER.LICENCE file for details on licencing.
  *
  * @(#)ip_nat.h	1.5 2/4/96
- * Id: ip_nat.h,v 2.90.2.4 2004/06/20 10:25:28 darrenr Exp
+ * Id: ip_nat.h,v 2.90.2.5 2004/12/20 23:12:05 darrenr Exp
  */
 
 #ifndef	__IP_NAT_H__
