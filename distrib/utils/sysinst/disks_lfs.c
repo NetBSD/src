@@ -1,7 +1,7 @@
-/*	$NetBSD: geom.c,v 1.4 2001/01/14 02:38:14 mrg Exp $	*/
+/*	$NetBSD: disks_lfs.c,v 1.1 2001/01/14 02:38:14 mrg Exp $	*/
 
 /*
- * Copyright (c) 1995, 1997 Jason R. Thorpe.
+ * Copyright (c) 2001 Matthew R. Green
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -12,11 +12,7 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *	This product includes software developed for the NetBSD Project
- *	by Jason R. Thorpe.
- * 4. The name of the author may not be used to endorse or promote products
+ * 3. The name of the author may not be used to endorse or promote products
  *    derived from this software without specific prior written permission.
  *
  * THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR
@@ -32,55 +28,19 @@
  * SUCH DAMAGE.
  */
 
-/* Modified by Philip A. Nelson for use in sysinst. */
+/* this gets it's own file as LFS includes interfere with other ones */
 
 #include <sys/param.h>
-#include <sys/disklabel.h>
-#include <sys/ioctl.h>
-#include <fcntl.h>
-#include <unistd.h>
-#include <util.h>
+#include <sys/mount.h>
+#include <ufs/ufs/dinode.h>
+#include <ufs/lfs/lfs.h>
 
 #include "defs.h"
 
 int
-get_geom(disk, l)
-	char *disk;
-	struct disklabel *l;
+fs_is_lfs(void *fs)
 {
-	char diskpath[MAXPATHLEN];
-	int fd;
+	struct dlfs *dlfs = (struct dlfs *)fs;
 
-	/* Open the disk. */
-	fd = opendisk(disk, O_RDONLY, diskpath, sizeof(diskpath), 0);
-	if (fd < 0) 
-		return 0;
-
-	if (ioctl(fd, DIOCGDEFLABEL, (char *)l) < 0) {
-		(void)close(fd);
-		return 0;
-	}
-	(void)close(fd);
-	return 1;
-}
-
-int
-get_real_geom(disk, l)
-	char *disk;
-	struct disklabel *l;
-{
-	char diskpath[MAXPATHLEN];
-	int fd;
-
-	/* Open the disk. */
-	fd = opendisk(disk, O_RDONLY, diskpath, sizeof(diskpath), 0);
-	if (fd < 0) 
-		return 0;
-
-	if (ioctl(fd, DIOCGDINFO, (char *)l) < 0) {
-		(void)close(fd);
-		return 0;
-	}
-	(void)close(fd);
-	return 1;
+	return (dlfs->dlfs_magic == LFS_MAGIC);
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: md.c,v 1.29 2001/01/07 13:07:58 jdc Exp $	*/
+/*	$NetBSD: md.c,v 1.30 2001/01/14 02:38:17 mrg Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -505,10 +505,7 @@ md_cleanup_install(void)
 
 	sprintf(sedcmd, "sed 's/rc_configured=NO/rc_configured=YES/' < %s > %s",
 	    realfrom, realto);
-	if (logging)
-		(void)fprintf(log, "%s\n", sedcmd);
-	if (scripting)
-		(void)fprintf(script, "%s\n", sedcmd);
+	scripting_fprintf(log, "%s\n", sedcmd);
 	do_system(sedcmd);
 	run_prog(RUN_FATAL, NULL, "mv -f %s %s", realto, realfrom);
 	run_prog(0, NULL, "rm -f %s", target_expand("/sysinst"));
@@ -526,4 +523,23 @@ md_pre_update()
 void
 md_init()
 {
+}
+
+void
+md_set_sizemultname()
+{
+
+	set_sizemultname_meg();
+}
+
+void
+md_set_no_x()
+{
+
+	toggle_getit (8);
+	toggle_getit (9);
+	toggle_getit (10);
+	toggle_getit (11);
+	toggle_getit (12);
+	toggle_getit (13);
 }

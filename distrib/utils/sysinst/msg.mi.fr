@@ -1,4 +1,4 @@
-/*	$NetBSD: msg.mi.fr,v 1.39 2000/12/18 09:39:51 hubertf Exp $	*/
+/*	$NetBSD: msg.mi.fr,v 1.40 2001/01/14 02:38:15 mrg Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -179,6 +179,7 @@ message secname
 message megname
 {mo}
 
+/* XXX translate me */
 message layout
 {NetBSD utilise un disklabel BSD pour séparer la portion du disque réservée à
 NetBSD en de multiples partitions BSD. Vous devez maintenant paramétrer le
@@ -186,6 +187,7 @@ disklabel BSD. Vous avez différent choix:
 -- Standard : les partitions sont calculées par ce programme. 
 -- Standard avec X : le double de swap plus la taille des binaires X. 
 -- Personnalisée : vous choisissez la taille des partitions.
+-- Use existing: use current partitions. You must assign mount points.
 
 La taille allouée pour NetBSD sur votre disque est de %.2f Megaoctets. 
 L'installation standard requière au moins %.2f Megaoctets. 
@@ -224,18 +226,18 @@ message fspart
 }
 
 message fspart_header
-{   Size      Offset    End       FStype Bsize Fsize Mount point
-   --------- --------- --------- ------ ----- ----- -----------
+{   Size      Offset    End       FStype Bsize Fsize Preserve Mount point
+   --------- --------- --------- ------ ----- ----- -------- -----------
 }
 
 message fspart_row_start
 {%c: %-9d %-9d %-9d %-6s }
 
 message fspart_row_end_bsd
-{%-5d %-5d %s\n}
+{%-5d %-5d %-8s %s\n}
 
 message fspart_row_end_msdos
-{            %s\n}
+{                     %s\n}
 
 message fspart_row_end_other
 {\n}
@@ -523,7 +525,10 @@ Masque de réseau (Netmask):	 %s
 Adresse du serveur de noms:	 %s 
 Adresse de la paserelle:	 %s 
 Type de réseau (media):		 %s 
-Autoconfiguration IPv6:		 %s 
+}
+
+message netokv6
+{Autoconfiguration IPv6:		 %s 
 Adresse du serveur de noms IPv6: %s 
 }
 
@@ -781,3 +786,29 @@ dédié à NetBSD ?}
 
 message continue
 {Continuez?}
+
+/* XXX translate me all below here */
+message postuseexisting
+{
+Don't forget to fill in the file system mount points for each of the
+file systems that are to be mounted.  Press <return> to continue.
+}
+
+message cur_fs
+{Currently selected file-systems
+
+}
+
+message cur_fs_header
+{    Mount-point   Selected\n}
+
+message cur_fs_row
+{    %s         %s\n}
+
+message no_root_fs
+{
+There is no defined root file system.  You need to define at least
+one mount point with "/".
+
+Press <return> to continue.
+}
