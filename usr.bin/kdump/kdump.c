@@ -1,4 +1,4 @@
-/*	$NetBSD: kdump.c,v 1.71 2004/01/12 13:39:56 mrg Exp $	*/
+/*	$NetBSD: kdump.c,v 1.72 2004/01/15 14:42:09 mrg Exp $	*/
 
 /*-
  * Copyright (c) 1988, 1993
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1988, 1993\n\
 #if 0
 static char sccsid[] = "@(#)kdump.c	8.4 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: kdump.c,v 1.71 2004/01/12 13:39:56 mrg Exp $");
+__RCSID("$NetBSD: kdump.c,v 1.72 2004/01/15 14:42:09 mrg Exp $");
 #endif
 #endif /* not lint */
 
@@ -94,32 +94,34 @@ static const char *linux_ptrace_ops[] = {
 	"PTRACE_SYSCALL",
 };
 
-int	main __P((int, char **));
-int	fread_tail __P((char *, int, int));
-int	dumpheader __P((struct ktr_header *));
-void	ioctldecode __P((u_long));
-void	ktrsyscall __P((struct ktr_syscall *));
-void	ktrsysret __P((struct ktr_sysret *, int));
-void	ktrnamei __P((char *, int));
-void	ktremul __P((char *, int, int));
-void	ktrgenio __P((struct ktr_genio *, int));
-void	ktrpsig __P((void *, int));
-void	ktrcsw __P((struct ktr_csw *));
-void	ktruser __P((struct ktr_user *, int));
-void	ktrmmsg __P((struct ktr_mmsg *, int));
-void	ktrmool __P((struct ktr_mool *, int));
-void	usage __P((void));
-void	eprint __P((int));
-void	rprint __P((register_t));
-char	*ioctlname __P((long));
-static const char *signame __P((long, int));
+int	main(int, char **);
+int	fread_tail(char *, int, int);
+int	dumpheader(struct ktr_header *);
+void	output_long(u_long, int);
+void	ioctldecode(u_long);
+void	ktrsyscall(struct ktr_syscall *);
+void	ktrsyscall_size(struct ktr_syscall *);
+void	ktrsysret(struct ktr_sysret *, int);
+void	ktrnamei(char *, int);
+void	ktremul(char *, int, int);
+void	ktrgenio(struct ktr_genio *, int);
+void	ktrpsig(void *, int);
+void	ktrcsw(struct ktr_csw *);
+void	ktruser(struct ktr_user *, int);
+void	ktrmmsg(struct ktr_mmsg *, int);
+void	ktrmool(struct ktr_mool *, int);
+void	usage(void);
+void	eprint(int);
+void	rprint(register_t);
+char	*ioctlname(long);
+static const char *signame(long, int);
 static void hexdump_buf(const void *, int, int);
 static void visdump_buf(const void *, int, int);
 
 int
 main(argc, argv)
 	int argc;
-	char *argv[];
+	char **argv;
 {
 	int ch, ktrlen, size;
 	void *m;
@@ -271,7 +273,7 @@ main(argc, argv)
 			visdump_buf(m, ktrlen, col);
 			break;
 		default:
-			printf("\n");
+			putchar('\n');
 			hexdump_buf(m, ktrlen, word_size);
 		}
 		if (tail)
@@ -363,6 +365,17 @@ dumpheader(kth)
 }
 
 void
+output_long(it, as_x)
+	u_long it;
+	int as_x;
+{
+	if (cur_emul->flags & EMUL_FLAG_NETBSD32)
+		printf(as_x ? "%#x" : "%d", (u_int)it);
+	else
+		printf(as_x ? "%#lx" : "%ld", it);
+}
+
+void
 ioctldecode(cmd)
 	u_long cmd;
 {
@@ -374,12 +387,13 @@ ioctldecode(cmd)
 		*dir++ = 'R';
 	*dir = '\0';
 
-	printf(decimal ? ",_IO%s('%c',%ld" : ",_IO%s('%c',%#lx",
-	    dirbuf, (int) ((cmd >> 8) & 0xff), cmd & 0xff);
-	if ((cmd & IOC_VOID) == 0)
-		printf(decimal ? ",%ld)" : ",%#lx)", (cmd >> 16) & 0xff);
-	else
-		printf(")");
+	printf(",_IO%s('%c',", dirbuf, (int) ((cmd >> 8) & 0xff));
+	output_long(cmd & 0xff, decimal == 0);
+	if ((cmd & IOC_VOID) == 0) {
+		putchar(',');
+		output_long((cmd >> 16) & 0xff, decimal == 0);
+	}
+	putchar(')');
 }
 
 void
@@ -393,22 +407,29 @@ ktrsyscall(ktr)
 	char *cp;
 	const char *sys_name;
 
-	if (emul->flags & EMUL_FLAG_NETBSD32)
-		/* XXX: should use register32_t ? */
-		argcount = ktr->ktr_argsize / (sizeof (register_t) / 2);
-	else
-		argcount = ktr->ktr_argsize / sizeof (register_t);
+	argcount = ktr->ktr_argsize / sizeof (*ap);
+
 	emul_changed = 0;
 
-	if (((ktr->ktr_code >= emul->nsysnames || ktr->ktr_code < 0)
-	    && (mach_traps_dispatch(&ktr->ktr_code, &emul) == 0)) ||
-	    numeric) {
+	if (numeric ||
+	    ((ktr->ktr_code >= emul->nsysnames || ktr->ktr_code < 0)
+	     && mach_traps_dispatch(&ktr->ktr_code, &emul) == 0)) {
 		sys_name = "?";
 		(void)printf("[%d]", ktr->ktr_code);
 	} else {
 		sys_name = emul->sysnames[ktr->ktr_code];
 		(void)printf("%s", sys_name);
 	}
+#ifdef _LP64
+#define NETBSD32_	"netbsd32_"
+	if (cur_emul->flags & EMUL_FLAG_NETBSD32) {
+		size_t len = strlen(NETBSD32_);
+		if (strncmp(sys_name, NETBSD32_, len) == 0)
+			sys_name += len;
+	}
+#undef NETBSD32_
+#endif
+																     
 	ap = (register_t *)((char *)ktr + sizeof(struct ktr_syscall));
 	if (argcount) {
 		c = '(';
@@ -418,13 +439,9 @@ ktrsyscall(ktr)
 		} else if (strcmp(sys_name, "exit") == 0) {
 			ectx_delete();
 
-		} else if ((strcmp(sys_name, "ioctl") == 0 ||
-			    strcmp(sys_name, "netbsd32_ioctl") == 0) &&
-			   argcount >= 2) {
-			if (decimal || *ap <= 9)
-				(void)printf("(%ld", (long)*ap);
-			else
-				(void)printf("(%#lx", (long)*ap);
+		} else if (strcmp(sys_name, "ioctl") == 0 && argcount >= 2) {
+			(void)putchar('(');
+			output_long((long)*ap, (decimal || *ap <= 9));
 			ap++;
 			argcount--;
 			if ((cp = ioctlname(*ap)) != NULL)
@@ -436,31 +453,29 @@ ktrsyscall(ktr)
 			c = ',';
 
 		} else if (strcmp(sys_name, "kill") == 0 && argcount >= 2) {
-			if (decimal || *ap <= 9)
-				(void)printf("(%ld, SIG%s",
-				    (long)ap[0], signame(ap[1], 1));
-			else
-				(void)printf("(%#lx, SIG%s",
-				    (long)ap[0], signame(ap[1], 1));
+			putchar('(');
+			output_long((long)ap[0], (decimal || *ap <= 9));
+			(void)printf(", SIG%s", signame(ap[1], 1));
 			ap += 2;
 			argcount -= 2;
 			c = ',';
 
 		} else if (strcmp(sys_name, "ptrace") == 0 && argcount >= 1) {
+			putchar('(');
 			if (strcmp(emul->name, "linux") == 0) {
-				  if (*ap >= 0 && *ap <= 
-				      sizeof(linux_ptrace_ops) /
-				      sizeof(linux_ptrace_ops[0]))
-					(void)printf("(%s",
+				if (*ap >= 0 && *ap <= 
+				    sizeof(linux_ptrace_ops) /
+				    sizeof(linux_ptrace_ops[0]))
+					(void)printf("%s",
 					    linux_ptrace_ops[*ap]);
-				  else
-					(void)printf("(%ld", (long)*ap);
+				else
+					output_long((long)*ap, 1);
 			} else {
 				  if (*ap >= 0 && *ap <=
 				    sizeof(ptrace_ops) / sizeof(ptrace_ops[0]))
-					(void)printf("(%s", ptrace_ops[*ap]);
+					(void)printf("%s", ptrace_ops[*ap]);
 				  else
-					(void)printf("(%ld", (long)*ap);
+					output_long((long)*ap, 1);
 			}
 			ap++;
 			argcount--;
@@ -468,10 +483,8 @@ ktrsyscall(ktr)
 
 		}
 		while (argcount > 0) {
-			if (decimal || *ap <= 9)
-				(void)printf("%c%ld", c, (long)*ap);
-			else
-				(void)printf("%c%#lx", c, (long)*ap);
+			putchar(c);
+			output_long((long)*ap, (decimal || *ap <= 9));
 			ap++;
 			argcount--;
 			c = ',';
