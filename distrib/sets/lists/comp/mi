@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.336 2001/04/28 15:51:08 kleink Exp $
+#	$NetBSD: mi,v 1.337 2001/05/04 03:20:26 matt Exp $
 ./sys				comp-sysutil-root
 ./usr/bin/addr2line		comp-debug-bin
 ./usr/bin/ar			comp-util-bin
@@ -122,6 +122,7 @@
 ./usr/include/dev/ata/atareg.h		comp-c-include
 ./usr/include/dev/ccdvar.h		comp-c-include
 ./usr/include/dev/dec			comp-c-include
+./usr/include/dev/dec/dec_boot.h	comp-c-include
 ./usr/include/dev/dec/lk201.h		comp-c-include
 ./usr/include/dev/hpc			comp-c-include
 ./usr/include/dev/hpc/hpcfbio.h		comp-c-include
