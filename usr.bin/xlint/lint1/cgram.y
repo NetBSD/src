@@ -1,5 +1,5 @@
 %{
-/* $NetBSD: cgram.y,v 1.30 2002/10/23 13:01:16 christos Exp $ */
+/* $NetBSD: cgram.y,v 1.31 2003/05/18 23:30:00 kristerw Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -35,7 +35,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: cgram.y,v 1.30 2002/10/23 13:01:16 christos Exp $");
+__RCSID("$NetBSD: cgram.y,v 1.31 2003/05/18 23:30:00 kristerw Exp $");
 #endif
 
 #include <stdlib.h>
@@ -1568,7 +1568,7 @@ term:
 	| T_LPARN comp_stmnt_lbrace declaration_list expr_stmnt_list {
 		blklev--;
 		mblklev--;
-		initsym = mktempsym($4->tn_type);
+		initsym = mktempsym(duptyp($4->tn_type));
 		mblklev++;
 		blklev++;
 		gnuism(320);
