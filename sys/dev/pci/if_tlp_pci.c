@@ -1,4 +1,4 @@
-/*	$NetBSD: if_tlp_pci.c,v 1.12 1999/09/20 19:26:55 thorpej Exp $	*/
+/*	$NetBSD: if_tlp_pci.c,v 1.13 1999/09/25 00:27:00 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.
@@ -490,7 +490,7 @@ tlp_pci_attach(parent, self, aux)
 	    }
 
 	default:
-		tlp_read_srom(sc, 0, sizeof(sc->sc_srom) >> 2,
+		tlp_read_srom(sc, 0, sizeof(sc->sc_srom) >> 1,
 		    (u_int16_t *)sc->sc_srom);
 #if 0
 		printf("SROM CONTENTS:");
@@ -578,6 +578,32 @@ tlp_pci_attach(parent, self, aux)
 		/* XXX */
 		break;
 
+	case TULIP_CHIP_21140:
+	case TULIP_CHIP_21140A:
+		/* Check for new format SROM. */
+		if (tlp_isv_srom_enaddr(sc, enaddr) == 0) {
+			/*
+			 * Eek.  I don't know what else we
+			 * can do here.  Punt for now.
+			 */
+			printf("%s: SROM not in ISV format?\n",
+			    sc->sc_dev.dv_xname);
+			goto cant_cope;
+		} else {
+			/*
+			 * We start out with the 2114x ISV media switch.
+			 * When we search for quirks, we may change to
+			 * a different switch.
+			 */
+			sc->sc_mediasw = &tlp_2114x_isv_mediasw;
+		}
+
+		/*
+		 * Deal with any quirks this board might have.
+		 */
+		/* XXX */
+		break;
+
 	case TULIP_CHIP_82C168:
 	case TULIP_CHIP_82C169:
 		/*
@@ -607,6 +633,7 @@ tlp_pci_attach(parent, self, aux)
 		break;
 
 	default:
+ cant_cope:
 		printf("%s: sorry, unable to handle your board\n",
 		    sc->sc_dev.dv_xname);
 		return;
