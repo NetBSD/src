@@ -1,4 +1,4 @@
-/*	$NetBSD: svr4_machdep.c,v 1.8 1995/05/01 14:15:20 mycroft Exp $	 */
+/*	$NetBSD: svr4_machdep.c,v 1.9 1995/05/06 19:22:43 mycroft Exp $	 */
 
 /*
  * Copyright (c) 1994 Christos Zoulas
@@ -403,17 +403,11 @@ svr4_sysarch(p, uap, retval)
 	case SVR4_SYSARCH_DSCR:
 #ifdef USER_LDT
 		{
-			struct i386_set_ldt_args {
-				int start;
-				union descriptor *desc;
-				int num;
-			} sa, *sap;
-
+			struct i386_set_ldt_args sa, *sap;
 			struct sysarch_args ua;
 
 			struct svr4_ssd ssd;
 			union descriptor bsd;
-
 
 			if ((error = copyin(SCARG(uap, a1), &ssd,
 					    sizeof(ssd))) != 0) {
