@@ -1,9 +1,11 @@
-#	$NetBSD: Makefile,v 1.22 1999/02/13 02:54:51 lukem Exp $
+#	$NetBSD: Makefile,v 1.23 1999/05/07 14:28:51 drochner Exp $
 
 LIB=	compat
 MKPIC=	no
 
 CPPFLAGS=	${COMPATCPPFLAGS}
+
+.PATH.c: ${COMPATDIR}
 
 # Common compatibility code, used by all emulations
 SRCS=	compat_exec.c compat_util.c

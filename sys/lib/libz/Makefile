@@ -1,10 +1,12 @@
-#	$NetBSD: Makefile,v 1.9 1999/04/15 02:28:36 simonb Exp $
+#	$NetBSD: Makefile,v 1.10 1999/05/07 14:28:51 drochner Exp $
 
 LIB=	z
 MKPIC=	no
 MKPROFILE=no
 
-CPPFLAGS=	-I. ${ZCPPFLAGS} ${ZMISCCPPFLAGS} -D_ZLIB_PRIVATE
+CPPFLAGS=	-I${ZDIR} ${ZCPPFLAGS} ${ZMISCCPPFLAGS} -D_ZLIB_PRIVATE
+
+.PATH.c: ${ZDIR}
 
 # files to be copied down from libz.
 LIBZSRCS= adler32.c crc32.c infblock.c infcodes.c inffast.c \

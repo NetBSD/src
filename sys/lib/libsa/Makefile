@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.31 1999/04/28 09:08:50 christos Exp $
+#	$NetBSD: Makefile,v 1.32 1999/05/07 14:28:51 drochner Exp $
 
 LIB=	sa
 MKPIC=	no
@@ -9,10 +9,12 @@ SA_INCLUDE_NET?= yes
 SA_USE_LOADFILE?= no
 
 #DEBUGCPPFLAGS= -DBOOTP_DEBUG -DNETIF_DEBUG -DETHER_DEBUG -DNFS_DEBUG -DRPC_DEBUG -DRARP_DEBUG -DDEBUG -DPARANOID
-CPPFLAGS=	-I. ${SACPPFLAGS} ${SAMISCCPPFLAGS} \
+CPPFLAGS=	-I${SADIR} ${SACPPFLAGS} ${SAMISCCPPFLAGS} \
 		-DCOMPAT_UFS ${DEBUGCPPFLAGS}
 
 #COPTS+= -ansi -pedantic -Wall
+
+.PATH.c: ${SADIR}
 
 # stand routines
 SRCS+=	alloc.c bcmp.c bcopy.c bzero.c errno.c exit.c exec.c getfile.c gets.c \

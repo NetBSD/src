@@ -1,15 +1,17 @@
-#	$NetBSD: Makefile,v 1.51 1999/04/11 22:08:06 gwr Exp $
+#	$NetBSD: Makefile,v 1.52 1999/05/07 14:28:50 drochner Exp $
 
 LIB=	kern
 MKPIC=	no
 
 ARCHSUBDIR= ${MACHINE_ARCH:C/mipse[bl]/mips/}
-M= ${.CURDIR}/arch/${ARCHSUBDIR}
+M= ${KERNDIR}/arch/${ARCHSUBDIR}
 
 CPPFLAGS=	-I$M ${KERNCPPFLAGS} ${KERNMISCCPPFLAGS}
 
+.PATH.c: ${KERNDIR}
 .if exists ($M/Makefile.inc)
-.PATH:	$M
+.PATH.c: $M
+.PATH.S: $M
 .include "$M/Makefile.inc"
 .endif
 

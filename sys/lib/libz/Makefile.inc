@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.5 1998/09/05 15:15:19 lukem Exp $
+#	$NetBSD: Makefile.inc,v 1.6 1999/05/07 14:28:51 drochner Exp $
 #
 #	Configuration variables (default values are below):
 #
@@ -19,8 +19,9 @@
 # Default values:
 ZDST?=		${.OBJDIR}/lib/z
 Z_AS?=		library
+ZDOTDIR?= ../../.
 
-ZDIR=		$S/lib/libz
+ZDIR=		${S:S@^.@${ZDOTDIR}@:Q}/lib/libz
 .if (${Z_AS} == "obj")
 ZLIB=		${ZDST}/libz.o
 ZLIB_PROF=	${ZDST}/libz.po
@@ -30,7 +31,8 @@ ZLIB_PROF=	${ZDST}/libz_p.a
 .endif
 
 ZMAKE= \
-	cd ${ZDIR} && MAKEOBJDIR=${ZDST} ${MAKE} \
+	cd ${ZDST} && ${MAKE} -f ${ZDIR:Q}/Makefile \
+	    ZDIR=${ZDIR:Q} \
 	    CC=${CC:Q} CFLAGS=${CFLAGS:Q} \
 	    AS=${AS:Q} AFLAGS=${AFLAGS:Q} \
 	    LORDER=${LORDER:Q} \
@@ -39,7 +41,7 @@ ZMAKE= \
 	    AR=${AR:Q} NM=${NM:Q} \
 	    RANLIB=${RANLIB:Q} SIZE=${SIZE:Q} \
 	    MACHINE=${MACHINE} MACHINE_ARCH=${MACHINE_ARCH:Q} \
-	    ZCPPFLAGS=${CPPFLAGS:S@^-I.@-I../../.@g:Q} \
+	    ZCPPFLAGS=${CPPFLAGS:S@^-I.@-I${ZDOTDIR}@g:Q} \
 	    ZMISCCPPFLAGS=${ZMISCCPPFLAGS:Q} \
 	    ${ZMISCMAKEFLAGS}
 
@@ -76,3 +78,6 @@ dependzlib:		.NOTMAIN __always_make_zlib
 
 __always_make_zlib:	.NOTMAIN
 	@mkdir -p ${ZDST}
+
+.PHONY: __always_make_zlib
+.PHONY: cleanzlib cleandirzlib dependzlib

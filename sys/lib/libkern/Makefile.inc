@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.30 1998/10/15 18:46:37 drochner Exp $
+#	$NetBSD: Makefile.inc,v 1.31 1999/05/07 14:28:50 drochner Exp $
 #
 #	Configuration variables (default values are below):
 #
@@ -19,8 +19,9 @@
 # Default values:
 KERNDST?=	${.OBJDIR}/lib/kern
 KERN_AS?=	library
+KERNDOTDIR?= ../../.
 
-KERNDIR=	$S/lib/libkern
+KERNDIR=	${S:S@^.@${KERNDOTDIR}@:Q}/lib/libkern
 .if (${KERN_AS} == "obj")
 KERNLIB=	${KERNDST}/libkern.o
 KERNLIB_PROF=	${KERNDST}/libkern.po
@@ -30,7 +31,8 @@ KERNLIB_PROF=	${KERNDST}/libkern_p.a
 .endif
 
 KERNMAKE= \
-	cd ${KERNDIR} && MAKEOBJDIR=${KERNDST} ${MAKE} \
+	cd ${KERNDST} && ${MAKE} -f ${KERNDIR:Q}/Makefile \
+	    KERNDIR=${KERNDIR:Q} \
 	    CC=${CC:Q} CFLAGS=${CFLAGS:Q} \
 	    AS=${AS:Q} AFLAGS=${AFLAGS:Q} \
 	    LORDER=${LORDER:Q} \
@@ -39,7 +41,7 @@ KERNMAKE= \
 	    AR=${AR:Q} NM=${NM:Q} \
 	    RANLIB=${RANLIB:Q} SIZE=${SIZE:Q} \
 	    MACHINE=${MACHINE} MACHINE_ARCH=${MACHINE_ARCH:Q} \
-	    KERNCPPFLAGS=${CPPFLAGS:S@^-I.@-I../../.@g:Q} \
+	    KERNCPPFLAGS=${CPPFLAGS:S@^-I.@-I${KERNDOTDIR}@g:Q} \
 	    KERNMISCCPPFLAGS=${KERNMISCCPPFLAGS:Q} \
 	    ${KERNMISCMAKEFLAGS}
 
@@ -76,3 +78,6 @@ dependkernlib:		.NOTMAIN __always_make_kernlib
 
 __always_make_kernlib:	.NOTMAIN
 	@(mkdir -p ${KERNDST})
+
+.PHONY: __always_make_kernlib
+.PHONY: cleankernlib cleandirkernlib dependkernlib
