@@ -1,4 +1,4 @@
-/*	$NetBSD: disksubr.c,v 1.3 1994/10/26 21:10:20 cgd Exp $	*/
+/*	$NetBSD: disksubr.c,v 1.4 1994/11/28 18:42:22 dean Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1988 Regents of the University of California.
@@ -43,6 +43,11 @@
 
 #define	b_cylin	b_resid
 
+#ifdef COMPAT_ULTRIX
+#include "../../stand/dec_boot.h"
+#endif
+
+
 /*
  * Attempt to read a disk label from a device
  * using the indicated stategy routine.
@@ -60,6 +65,9 @@ readdisklabel(dev, strat, lp, osdep)
 {
 	register struct buf *bp;
 	struct disklabel *dlp;
+#ifdef COMPAT_ULTRIX
+	Dec_DiskLabel *Dec_dlp;
+#endif
 	char *msg = NULL;
 
 	if (lp->d_secperunit == 0)
@@ -93,6 +101,45 @@ readdisklabel(dev, strat, lp, osdep)
 			break;
 		}
 	}
+#ifdef COMPAT_ULTRIX	  /* look for ultrix disklabel 
+			     gallatin@isds.duke.edu , 8/21/94 */
+	if(msg){
+	     msg = NULL;
+	     bp->b_dev = dev;
+	     bp->b_blkno = DEC_LABEL_SECTOR;
+	     bp->b_bcount = lp->d_secsize;
+	     bp->b_flags = B_BUSY | B_READ;
+	     bp->b_cylin = DEC_LABEL_SECTOR / lp->d_secpercyl;
+	     (*strat)(bp);
+	     if (biowait(bp)) {
+                msg = "I/O error";
+	     }  else for (Dec_dlp = (Dec_DiskLabel *)bp->b_un.b_addr;
+			  Dec_dlp <= (Dec_DiskLabel *)(bp->b_un.b_addr+DEV_BSIZE-sizeof(*Dec_dlp));
+			  Dec_dlp = (Dec_DiskLabel *)((char *)Dec_dlp + sizeof(long))) {
+	       if (Dec_dlp->magic != DEC_LABEL_MAGIC) {
+		 printf("label: %x\n",Dec_dlp->magic);
+		 if (msg == NULL)
+		   msg = "no disk label";
+	       }
+	       else {
+		 int i;
+		 lp->d_magic=DEC_LABEL_MAGIC;
+		 for(i=0;i<((MAXPARTITIONS<DEC_NUM_DISK_PARTS) ?
+			    MAXPARTITIONS : DEC_NUM_DISK_PARTS); i++) {
+		   lp->d_partitions[i].p_size = Dec_dlp->map[i].numBlocks;
+		   lp->d_partitions[i].p_offset = Dec_dlp->map[i].startBlock;
+		   lp->d_partitions[i].p_fsize = 1024;
+		   if(i==1)
+		     lp->d_partitions[i].p_fstype=FS_SWAP;
+		   else
+		     lp->d_partitions[i].p_fstype=FS_BSDFFS;
+		 }
+		 msg = "using ULTRIX partition information";
+		 break;
+	       }
+	     }
+	}
+#endif /* COMPAT_ULTRIX */
 	bp->b_flags = B_INVAL | B_AGE;
 	brelse(bp);
 	return (msg);
