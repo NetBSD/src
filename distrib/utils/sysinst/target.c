@@ -1,10 +1,9 @@
-/*	$NetBSD: target.c,v 1.21 1999/04/13 20:17:48 bouyer Exp $	*/
+/*	$NetBSD: target.c,v 1.22 1999/06/20 06:08:15 cgd Exp $	*/
 
 /*
  * Copyright 1997 Jonathan Stone
  * All rights reserved.
  *
-
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
  * are met:
@@ -15,7 +14,7 @@
  *    documentation and/or other materials provided with the distribution.
  * 3. All advertising materials mentioning features or use of this software
  *    must display the following acknowledgement:
- *      This product includes software develooped for the NetBSD Project by
+ *      This product includes software developed for the NetBSD Project by
  *      Jonathan Stone.
  * 4. The name of Jonathan Stone may not be used to endorse
  *    or promote products derived from this software without specific prior
@@ -37,7 +36,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: target.c,v 1.21 1999/04/13 20:17:48 bouyer Exp $");
+__RCSID("$NetBSD: target.c,v 1.22 1999/06/20 06:08:15 cgd Exp $");
 #endif
 
 /*
