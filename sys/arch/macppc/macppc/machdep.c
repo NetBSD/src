@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.133 2004/07/03 16:24:57 manu Exp $	*/
+/*	$NetBSD: machdep.c,v 1.134 2005/01/23 19:10:23 chs Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.133 2004/07/03 16:24:57 manu Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.134 2005/01/23 19:10:23 chs Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "opt_ddb.h"
@@ -349,6 +349,12 @@ cpu_reboot(howto, what)
 	static int syncing;
 	static char str[256];
 	char *ap = str, *ap1 = ap;
+
+	/*
+	 * Enable external interrupts in case someone is rebooting
+	 * from a strange context via ddb.
+	 */
+	mtmsr(mfmsr() | PSL_EE);
 
 	boothowto = howto;
 	if (!cold && !(howto & RB_NOSYNC) && !syncing) {
