@@ -1,4 +1,4 @@
-#	$NetBSD: VME147,v 1.5 1996/05/29 05:06:21 chuck Exp $
+#	$NetBSD: VME147,v 1.6 1996/09/10 22:45:17 thorpej Exp $
 
 machine		mvme68k m68k
 
@@ -33,6 +33,7 @@ options		TCP_COMPAT_42   # compatibility with 4.2BSD TCP/IP
 #options        EON
 options		COMPAT_09, COMPAT_10
 options		COMPAT_SUNOS
+#options 	COMPAT_M68K4K	# compatibility with NetBSD/m68k4k binaries
 
 ## force NFS root and swap
 #config	netbsd		root on nfs swap on nfs
