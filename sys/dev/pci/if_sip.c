@@ -1,4 +1,4 @@
-/*	$NetBSD: if_sip.c,v 1.99 2005/02/06 08:52:08 cube Exp $	*/
+/*	$NetBSD: if_sip.c,v 1.100 2005/02/20 15:56:03 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002 The NetBSD Foundation, Inc.
@@ -80,7 +80,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_sip.c,v 1.99 2005/02/06 08:52:08 cube Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_sip.c,v 1.100 2005/02/20 15:56:03 jdolecek Exp $");
 
 #include "bpfilter.h"
 #include "rnd.h"
@@ -1354,11 +1354,10 @@ SIP_DECL(start)(struct ifnet *ifp)
 		 * This apparently has to be on the last descriptor of
 		 * the packet.
 		 */
-		if (sc->sc_ethercom.ec_nvlans != 0 &&
-		    (mtag = m_tag_find(m0, PACKET_TAG_VLAN, NULL)) != NULL) {
+		if ((mtag = VLAN_OUTPUT_TAG(&sc->sc_ethercom, m0)) != NULL) {
 			sc->sc_txdescs[lasttx].sipd_extsts |=
 			    htole32(EXTSTS_VPKT |
-				    (*(u_int *)(mtag + 1) & EXTSTS_VTCI));
+				    (VLAN_TAG_VALUE(mtag) & EXTSTS_VTCI));
 		}
 
 		/*
@@ -1970,21 +1969,9 @@ SIP_DECL(rxintr)(struct sip_softc *sc)
 		 * If VLANs are enabled, VLAN packets have been unwrapped
 		 * for us.  Associate the tag with the packet.
 		 */
-		if (sc->sc_ethercom.ec_nvlans != 0 &&
-		    (extsts & EXTSTS_VPKT) != 0) {
-			struct m_tag *vtag;
-
-			vtag = m_tag_get(PACKET_TAG_VLAN, sizeof(u_int),
-			    M_NOWAIT);
-			if (vtag == NULL) {
-				ifp->if_ierrors++;
-				printf("%s: unable to allocate VLAN tag\n",
-				    sc->sc_dev.dv_xname);
-				m_freem(m);
-				continue;
-			}
-
-			*(u_int *)(vtag + 1) = ntohs(extsts & EXTSTS_VTCI);
+		if ((extsts & EXTSTS_VPKT) != 0) {
+			VLAN_INPUT_TAG(ifp, m, ntohs(extsts & EXTSTS_VTCI),
+			    continue);
 		}
 
 		/*
@@ -2475,7 +2462,7 @@ SIP_DECL(init)(struct ifnet *ifp)
 	if (ifp->if_capenable &
 	    (IFCAP_CSUM_IPv4|IFCAP_CSUM_TCPv4|IFCAP_CSUM_UDPv4))
 		reg |= VRCR_IPEN;
-	if (sc->sc_ethercom.ec_nvlans != 0)
+	if (VLAN_ATTACHED(&sc->sc_ethercom))
 		reg |= VRCR_VTDEN|VRCR_VTREN;
 	bus_space_write_4(st, sh, SIP_VRCR, reg);
 
@@ -2488,7 +2475,7 @@ SIP_DECL(init)(struct ifnet *ifp)
 	if (ifp->if_capenable &
 	    (IFCAP_CSUM_IPv4|IFCAP_CSUM_TCPv4|IFCAP_CSUM_UDPv4))
 		reg |= VTCR_PPCHK;
-	if (sc->sc_ethercom.ec_nvlans != 0)
+	if (VLAN_ATTACHED(&sc->sc_ethercom))
 		reg |= VTCR_VPPTI;
 	bus_space_write_4(st, sh, SIP_VTCR, reg);
 
@@ -2497,7 +2484,7 @@ SIP_DECL(init)(struct ifnet *ifp)
 	 * To understand why we bswap the VLAN Ethertype, see section
 	 * 4.2.36 of the DP83820 manual.
 	 */
-	if (sc->sc_ethercom.ec_nvlans != 0)
+	if (VLAN_ATTACHED(&sc->sc_ethercom))
 		bus_space_write_4(st, sh, SIP_VDR, bswap16(ETHERTYPE_VLAN));
 #endif /* DP83820 */
 

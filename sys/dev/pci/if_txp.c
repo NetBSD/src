@@ -1,4 +1,4 @@
-/* $NetBSD: if_txp.c,v 1.8 2004/10/30 18:09:22 thorpej Exp $ */
+/* $NetBSD: if_txp.c,v 1.9 2005/02/20 15:56:03 jdolecek Exp $ */
 
 /*
  * Copyright (c) 2001
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_txp.c,v 1.8 2004/10/30 18:09:22 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_txp.c,v 1.9 2005/02/20 15:56:03 jdolecek Exp $");
 
 #include "bpfilter.h"
 #include "opt_inet.h"
@@ -764,18 +764,8 @@ txp_rx_reclaim(sc, r, dma)
 		m->m_pkthdr.csum_flags = sumflags;
 
 		if (rxd->rx_stat & htole32(RX_STAT_VLAN)) {
-			struct m_tag *mtag;
-
-			mtag = m_tag_get(PACKET_TAG_VLAN, sizeof(u_int),
-					 M_NOWAIT);
-			if (!m) {
-				printf("%s: no mbuf for tag\n",
-				       sc->sc_dev.dv_xname);
-				m_freem(m);
-				goto next;
-			}
-			*(u_int *)(mtag + 1) = htons(rxd->rx_vlan >> 16);
-			m_tag_prepend(m, mtag);
+			VLAN_INPUT_TAG(ifp, m, htons(rxd->rx_vlan >> 16),
+			    continue);
 		}
 
 		(*ifp->if_input)(ifp, m);
@@ -1477,10 +1467,9 @@ txp_start(ifp)
 		if (++cnt >= (TX_ENTRIES - 4))
 			goto oactive;
 
-		mtag = m_tag_find(m, PACKET_TAG_VLAN, NULL);
-		if (mtag)
+		if ((mtag = VLAN_OUTPUT_TAG(sc->sc_ethercom, m)))
 			txd->tx_pflags = TX_PFLAGS_VLAN |
-			  (htons(*(u_int *)(mtag + 1)) << TX_PFLAGS_VLANTAG_S);
+			  (htons(VLAN_TAG_VALUE(mtag)) << TX_PFLAGS_VLANTAG_S);
 
 		if (m->m_pkthdr.csum_flags & M_CSUM_IPv4)
 			txd->tx_pflags |= TX_PFLAGS_IPCKSUM;
