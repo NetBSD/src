@@ -1,4 +1,4 @@
-/*	$NetBSD: mach_namemap.c,v 1.3 2002/11/10 21:53:40 manu Exp $ */
+/*	$NetBSD: mach_vm.c,v 1.1 2002/11/10 21:53:41 manu Exp $ */
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -37,29 +37,84 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mach_namemap.c,v 1.3 2002/11/10 21:53:40 manu Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mach_vm.c,v 1.1 2002/11/10 21:53:41 manu Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
-
+#include <sys/systm.h>
+#include <sys/mount.h>
+#include <sys/proc.h>
+#include <sys/syscallargs.h>
+ 
 #include <compat/mach/mach_types.h>
 #include <compat/mach/mach_message.h>
-#include <compat/mach/mach_host.h>
-#include <compat/mach/mach_port.h>
-#include <compat/mach/mach_task.h>
-#include <compat/mach/mach_vm.h>
+#include <compat/mach/mach_vm.h> 
+#include <compat/mach/mach_syscallargs.h>
 
-struct mach_subsystem_namemap mach_namemap[] = {
-	{ 200, mach_host_info, "host_info" },
-	{ 202, mach_host_page_size,"host_page_size" },
-	{ 206, mach_host_get_clock_service, "host_get_clock_service" },
-	{ 3204, mach_port_allocate, "port_allocate" },
-	{ 3206, mach_port_deallocate, "port_deallocate" },
-	{ 3404, mach_ports_lookup, "ports_lookup" },
-	{ 3409, mach_task_get_special_port, "task_get_special_port" },
-	{ 3802, mach_vm_deallocate, "vm_deallocate" },
-	{ 3812, mach_vm_map, "vm_map" },
-	{ 0, NULL, NULL },
-};
+int
+mach_vm_map(p, msgh)
+	struct proc *p;
+	mach_msg_header_t *msgh;
+{
+	mach_vm_map_request_t req;
+	mach_vm_map_reply_t rep;
+	struct sys_mmap_args cup;
+	int error;
 
+	if ((error = copyin(msgh, &req, sizeof(req))) != 0)
+		return error;
 
+	bzero(&rep, sizeof(rep));
+
+	SCARG(&cup, addr) = (void *)req.req_address;
+	SCARG(&cup, len) = req.req_size;
+	SCARG(&cup, prot) = req.req_cur_protection; /* XXX */
+	SCARG(&cup, flags) = req.req_flags; /* XXX */
+	SCARG(&cup, fd) = 0; /* XXX */
+	SCARG(&cup, pos) = (off_t)req.req_offset;
+	
+	if ((error = sys_mmap(p, &cup, &rep.rep_retval)) != 0)
+		return error;
+	
+	rep.rep_msgh.msgh_bits = 0x1200; /* XXX why? */
+	rep.rep_msgh.msgh_size = sizeof(rep);
+	rep.rep_msgh.msgh_local_port = req.req_msgh.msgh_local_port;
+	rep.rep_msgh.msgh_id = 3912; /* XXX why? */
+	rep.rep_trailer.msgh_trailer_type = 0x80001513; /* XXX why? */
+	rep.rep_trailer.msgh_trailer_size = 0x00000713; /* XXX why? */
+
+	if ((error = copyout(&rep, msgh, sizeof(rep))) != 0)
+		return error;
+	return 0;
+}
+
+int
+mach_vm_deallocate(p, msgh)
+	struct proc *p;
+	mach_msg_header_t *msgh;
+{
+	mach_vm_deallocate_request_t req;
+	mach_vm_deallocate_reply_t rep;
+	struct sys_munmap_args cup;
+	int error;
+
+	if ((error = copyin(msgh, &req, sizeof(req))) != 0)
+		return error;
+
+	bzero(&rep, sizeof(rep));
+
+	SCARG(&cup, addr) = (caddr_t)req.req_address;
+	SCARG(&cup, len) = req.req_size;
+
+	if ((error = sys_munmap(p, &cup, &rep.rep_retval)) != 0)
+		return error;
+	
+	rep.rep_msgh.msgh_bits = 0x1200; /* XXX why? */
+	rep.rep_msgh.msgh_size = sizeof(rep);
+	rep.rep_msgh.msgh_local_port = req.req_msgh.msgh_local_port;
+	rep.rep_msgh.msgh_id = 3902; /* XXX why? */
+
+	if ((error = copyout(&rep, msgh, sizeof(rep))) != 0)
+		return error;
+	return 0;
+}

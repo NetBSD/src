@@ -1,4 +1,4 @@
-/*	$NetBSD: mach_misc.c,v 1.8 2002/11/10 09:41:45 manu Exp $	 */
+/*	$NetBSD: mach_misc.c,v 1.9 2002/11/10 21:53:40 manu Exp $	 */
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mach_misc.c,v 1.8 2002/11/10 09:41:45 manu Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mach_misc.c,v 1.9 2002/11/10 21:53:40 manu Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -127,38 +127,6 @@ mach_print_msg_header_t(mach_msg_header_t *mh) {
 }
 #endif /* DEBUG_MACH */
 
-int
-mach_sys_reply_port(struct proc *p, void *vv, register_t *r) {
-	static int current_port = 0x80b;
-
-	*r = current_port++; /* XXX */
-	DPRINTF(("mach_sys_reply_port();\n"));
-	return 0;
-}
-
-int
-mach_sys_thread_self_trap(struct proc *p, void *v, register_t *r) {
-	*r = 0;
-	DPRINTF(("mach_sys_thread_self();\n"));
-	return 0;
-}
-
-
-int
-mach_sys_task_self_trap(struct proc *p, void *v, register_t *r) {
-	*r = 0xa07; /* XXX */
-	DPRINTF(("mach_sys_task_self();\n"));
-	return 0;
-}
-
-
-int
-mach_sys_host_self_trap(struct proc *p, void *v, register_t *r) {
-	*r = 0x90b; /* XXX */
-	DPRINTF(("mach_sys_host_self();\n"));
-	return 0;
-}
-
 
 int
 mach_sys_msg_overwrite_trap(struct proc *p, void *v, register_t *r) {
@@ -192,10 +160,10 @@ mach_sys_msg_overwrite_trap(struct proc *p, void *v, register_t *r) {
 			    namemap->map_id; namemap++)
 				if (namemap->map_id == mh.msgh_id)
 					break;
-			if (namemap->map_id) {
-				DPRINTF(("mach_%s()\n", namemap->map_name));
-				return (*namemap->map_handler)(SCARG(ap, msg));
-			}
+			if (namemap->map_handler == NULL)
+				break;
+			DPRINTF(("mach_%s()\n", namemap->map_name));
+			return (*namemap->map_handler)(p, SCARG(ap, msg));
 		}
 		break;
 	default:
@@ -227,10 +195,10 @@ mach_sys_msg_trap(struct proc *p, void *v, register_t *r) {
 			    namemap->map_id; namemap++)
 				if (namemap->map_id == mh.msgh_id)
 					break;
-			if (namemap->map_id) {
-				DPRINTF(("mach_%s()\n", namemap->map_name));
-				return (*namemap->map_handler)(SCARG(ap, msg));
-			}
+			if (namemap->map_handler == NULL)
+				break;
+			DPRINTF(("mach_%s()\n", namemap->map_name));
+			return (*namemap->map_handler)(p, SCARG(ap, msg));
 		}
 		break;
 	default:
