@@ -1,4 +1,4 @@
-/*	$NetBSD: ld.c,v 1.74 2000/12/26 01:29:03 jhawk Exp $	*/
+/*	$NetBSD: ld.c,v 1.75 2001/08/26 00:02:46 thorpej Exp $	*/
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -88,7 +88,7 @@
 
 #ifndef lint
 /* from: "@(#)ld.c	6.10 (Berkeley) 5/22/91"; */
-__RCSID("$NetBSD: ld.c,v 1.74 2000/12/26 01:29:03 jhawk Exp $");
+__RCSID("$NetBSD: ld.c,v 1.75 2001/08/26 00:02:46 thorpej Exp $");
 #endif /* not lint */
 
 #define GNU_BINUTIL_COMPAT	/* forwards compatiblity with binutils 2.x */
@@ -896,6 +896,11 @@ decode_option(swt, arg)
 	if (!strcmp(swt + 1, "assert"))
 		return;
 #ifdef GNU_BINUTIL_COMPAT
+	if (!strcmp(swt + 1, "export-dynamic")) {
+		if (warn_forwards_compatible_inexact)
+			warnx("-export-dynamic ignored"); 
+		return;
+	}
 	if (!strcmp(swt + 1, "-export-dynamic")) {
 		if (warn_forwards_compatible_inexact)
 			warnx("-export-dynamic ignored");
