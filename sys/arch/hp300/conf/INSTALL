@@ -1,4 +1,4 @@
-# $NetBSD: INSTALL,v 1.13 2003/11/08 11:18:33 tsutsui Exp $
+# $NetBSD: INSTALL,v 1.14 2003/11/22 17:24:29 tsutsui Exp $
 #
 # INSTALL machine description file
 #
@@ -167,7 +167,8 @@ grf*		at topcat?
 # Internal Terminal Emulator
 ite*		at grf?
 
-com*		at dio? scode ?		# DCA serial interfaces
+com*		at dio0 scode 9		# DCA serial interfaces
+com*		at dio? scode ?
 
 dcm*		at dio? scode ?	flags 0xe # DCM 4- or 8-port serial interfaces
 
