@@ -1,4 +1,4 @@
-#	$NetBSD: ssh_config,v 1.6 2002/06/24 05:48:38 itojun Exp $
+#	$NetBSD: ssh_config,v 1.7 2002/07/03 14:23:14 itojun Exp $
 #	$OpenBSD: ssh_config,v 1.15 2002/06/20 20:03:34 stevesk Exp $
 
 # This is the ssh client system-wide configuration file.  See
@@ -23,6 +23,7 @@
 #   RhostsRSAAuthentication no
 #   RSAAuthentication yes
 #   PasswordAuthentication yes
+#   HostbasedAuthentication no
 #   BatchMode no
 #   CheckHostIP yes
 #   StrictHostKeyChecking ask
