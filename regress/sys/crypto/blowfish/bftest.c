@@ -1,5 +1,5 @@
-/*	$NetBSD: bftest.c,v 1.1.1.1 2000/11/01 15:33:25 itojun Exp $	*/
-/*	$KAME: bftest.c,v 1.1 2000/11/01 14:03:37 itojun Exp $	*/
+/*	$NetBSD: bftest.c,v 1.2 2000/11/05 03:15:57 itojun Exp $	*/
+/*	$KAME: bftest.c,v 1.2 2000/11/05 02:54:35 itojun Exp $	*/
 
 /*
  * Copyright (C) 2000 WIDE Project.
@@ -102,57 +102,92 @@ static char *bf_key[2]={
 };
 
 /* big endian */
-static BF_LONG bf_plain[2][2]={
-	{0x424c4f57L,0x46495348L},
-	{0xfedcba98L,0x76543210L}
+static const char *bf_plain[2] = {
+	"424c4f5746495348", "fedcba9876543210"
 };
 
-static BF_LONG bf_cipher[2][2]={
-	{0x324ed0feL,0xf413a203L},
-	{0xcc91732bL,0x8022f684L}
+static const char *bf_cipher[2] = {
+	"324ed0fef413a203", "cc91732b8022f684"
 };
 
+static void hex2bin __P((u_int8_t *, const char *));
+static const char *pt __P((u_int8_t *));
 int main __P((int, char **));
+
+static void
+hex2bin(p, s)
+	u_int8_t *p;
+	const char *s;
+{
+	int i;
+	u_int v;
+
+	for (i = 0; i < 8; i++) {
+		sscanf(s, "%02x", &v);
+		*p++ = v & 0xff;
+		s += 2;
+	}
+}
+
+static const char *
+pt(p)
+	u_int8_t *p;
+{
+	static char bufs[10][20];
+	static int bnum = 0;
+	char *ret;
+	int i;
+
+	ret = bufs[bnum++];
+	bnum %= 10;
+	for (i = 0; i < 8; i++)
+		snprintf(&ret[i * 2], 3, "%02x", p[i]);
+	ret[8 * 2] = '\0';
+	return(ret);
+}
 
 int
 main(argc, argv)
 	int argc;
 	char **argv;
 {
-	int i, n, error = 0;
+	int n, error = 0;
 	BF_KEY key;
-	BF_LONG data[2]; 
+	BF_LONG data[2], plain[2], cipher[2]; 
 
 	printf("testing blowfish in raw ecb mode\n");
 	for (n = 0; n < 2; n++) {
 		BF_set_key(&key, strlen(bf_key[n]), (unsigned char *)bf_key[n]);
 
-		data[0] = bf_plain[n][0];
-		data[1] = bf_plain[n][1];
+		hex2bin((u_int8_t *)plain, bf_plain[n]);
+		hex2bin((u_int8_t *)cipher, bf_cipher[n]);
+
+		memcpy(data, plain, 8);
+
+		data[0] = (BF_LONG)ntohl(data[0]);
+		data[1] = (BF_LONG)ntohl(data[1]);
 		BF_encrypt(data, &key, BF_ENCRYPT);
-		if (memcmp(&(bf_cipher[n][0]), &(data[0]), 8) != 0) {
+		data[0] = (BF_LONG)htonl(data[0]);
+		data[1] = (BF_LONG)htonl(data[1]);
+		if (memcmp(data, cipher, 8) != 0) {
 			printf("BF_encrypt error encrypting\n");
-			printf("got     :");
-			for (i = 0; i < 2; i++)
-				printf("%08lX ", (unsigned long)data[i]);
+			printf("got     : %s", pt((u_int8_t *)data));
 			printf("\n");
-			printf("expected:");
-			for (i = 0; i < 2; i++)
-				printf("%08lX ", (unsigned long)bf_cipher[n][i]);
+			printf("expected: %s", pt((u_int8_t *)cipher));
 			error = 1;
 			printf("\n");
 		}
 
-		BF_encrypt(&(data[0]), &key, BF_DECRYPT);
-		if (memcmp(&(bf_plain[n][0]), &(data[0]), 8) != 0) {
+		data[0] = (BF_LONG)ntohl(data[0]);
+		data[1] = (BF_LONG)ntohl(data[1]);
+		BF_encrypt(data, &key, BF_DECRYPT);
+		data[0] = (BF_LONG)htonl(data[0]);
+		data[1] = (BF_LONG)htonl(data[1]);
+		if (memcmp(data, plain, 8) != 0) {
 			printf("BF_encrypt error decrypting\n");
-			printf("got     :");
-			for (i = 0; i < 2; i++)
-				printf("%08lX ", (unsigned long)data[i]);
+			printf("got     : %s", pt((u_int8_t *)data));
 			printf("\n");
-			printf("expected:");
-			for (i = 0; i < 2; i++)
-				printf("%08lX ", (unsigned long)bf_plain[n][i]);
+			printf("expected: %s", pt((u_int8_t *)plain));
 			printf("\n");
 			error = 1;
 		}
