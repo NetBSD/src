@@ -1,6 +1,6 @@
 .\" -*- nroff -*-
 .\"
-.\"	$NetBSD: bpf.4,v 1.25 2003/03/30 21:20:17 wiz Exp $
+.\"	$NetBSD: bpf.4,v 1.26 2003/06/26 10:20:39 wiz Exp $
 .\"
 .\" Copyright (c) 1990, 1991, 1992, 1993, 1994
 .\"	The Regents of the University of California.  All rights reserved.
@@ -471,16 +471,16 @@ halfword
 or byte
 .Sy ( BPF_B ) .
 The semantics of all the recognized BPF_LD instructions follow.
-.Bl -column "BPF_LD+BPF_W+BPF_ABS" "A \*[Lt]- P[k:4]" -width indent -offset indent
+.Bl -column "BPF_LD_BPF_W_BPF_ABS" "A \*[Lt]- P[k:4]" -offset indent
 .It Sy BPF_LD+BPF_W+BPF_ABS Ta A \*[Lt]- P[k:4]
-.It Li Sy BPF_LD+BPF_H+BPF_ABS Ta A \*[Lt]- P[k:2]
-.It Li Sy BPF_LD+BPF_B+BPF_ABS Ta A \*[Lt]- P[k:1]
-.It Li Sy BPF_LD+BPF_W+BPF_IND Ta A \*[Lt]- P[X+k:4]
-.It Li Sy BPF_LD+BPF_H+BPF_IND Ta A \*[Lt]- P[X+k:2]
-.It Li Sy BPF_LD+BPF_B+BPF_IND Ta A \*[Lt]- P[X+k:1]
-.It Li Sy BPF_LD+BPF_W+BPF_LEN Ta A \*[Lt]- len
-.It Li Sy BPF_LD+BPF_IMM Ta A \*[Lt]- k
-.It Li Sy BPF_LD+BPF_MEM Ta A \*[Lt]- M[k]
+.It Sy BPF_LD+BPF_H+BPF_ABS Ta A \*[Lt]- P[k:2]
+.It Sy BPF_LD+BPF_B+BPF_ABS Ta A \*[Lt]- P[k:1]
+.It Sy BPF_LD+BPF_W+BPF_IND Ta A \*[Lt]- P[X+k:4]
+.It Sy BPF_LD+BPF_H+BPF_IND Ta A \*[Lt]- P[X+k:2]
+.It Sy BPF_LD+BPF_B+BPF_IND Ta A \*[Lt]- P[X+k:1]
+.It Sy BPF_LD+BPF_W+BPF_LEN Ta A \*[Lt]- len
+.It Sy BPF_LD+BPF_IMM Ta A \*[Lt]- k
+.It Sy BPF_LD+BPF_MEM Ta A \*[Lt]- M[k]
 .El
 .It Sy BPF_LDX
 These instructions load a value into the index register.  Note that
@@ -488,22 +488,22 @@ the addressing modes are more restricted than those of the accumulator loads,
 but they include
 .Sy BPF_MSH ,
 a hack for efficiently loading the IP header length.
-.Bl -column "BPF_LDX+BPF_W+BPF_IMM" "X \*[Lt]- k" -width indent -offset indent
+.Bl -column "BPF_LDX_BPF_W_BPF_IMM" "X \*[Lt]- k" -offset indent
 .It Sy BPF_LDX+BPF_W+BPF_IMM Ta X \*[Lt]- k
-.It Li Sy BPF_LDX+BPF_W+BPF_MEM Ta X \*[Lt]- M[k]
-.It Li Sy BPF_LDX+BPF_W+BPF_LEN Ta X \*[Lt]- len
-.It Li Sy BPF_LDX+BPF_B+BPF_MSH Ta X \*[Lt]- 4*(P[k:1]\*[Am]0xf)
+.It Sy BPF_LDX+BPF_W+BPF_MEM Ta X \*[Lt]- M[k]
+.It Sy BPF_LDX+BPF_W+BPF_LEN Ta X \*[Lt]- len
+.It Sy BPF_LDX+BPF_B+BPF_MSH Ta X \*[Lt]- 4*(P[k:1]\*[Am]0xf)
 .El
 .It Sy BPF_ST
 This instruction stores the accumulator into the scratch memory.
 We do not need an addressing mode since there is only one possibility
 for the destination.
-.Bl -column "BPF_ST" "M[k] \*[Lt]- A" -width indent -offset indent
+.Bl -column "BPF_ST" "M[k] \*[Lt]- A" -offset indent
 .It Sy BPF_ST Ta M[k] \*[Lt]- A
 .El
 .It Sy BPF_STX
 This instruction stores the index register in the scratch memory store.
-.Bl -column "BPF_STX" "M[k] \*[Lt]- X" -width indent -offset indent
+.Bl -column "BPF_STX" "M[k] \*[Lt]- X" -offset indent
 .It Sy BPF_STX Ta M[k] \*[Lt]- X
 .El
 .It Sy BPF_ALU
@@ -513,24 +513,24 @@ For binary operations, a source mode is required
 .Sy ( BPF_K
 or
 .Sy BPF_X ) .
-.Bl -column "BPF_ALU+BPF_ADD+BPF_K" "A \*[Lt]- A + k" -width indent -offset indent
+.Bl -column "BPF_ALU_BPF_ADD_BPF_K" "A \*[Lt]- A + k" -offset indent
 .It Sy BPF_ALU+BPF_ADD+BPF_K Ta A \*[Lt]- A + k
-.It Li Sy BPF_ALU+BPF_SUB+BPF_K Ta A \*[Lt]- A - k
-.It Li Sy BPF_ALU+BPF_MUL+BPF_K Ta A \*[Lt]- A * k
-.It Li Sy BPF_ALU+BPF_DIV+BPF_K Ta A \*[Lt]- A / k
-.It Li Sy BPF_ALU+BPF_AND+BPF_K Ta A \*[Lt]- A \*[Am] k
-.It Li Sy BPF_ALU+BPF_OR+BPF_K Ta A \*[Lt]- A | k
-.It Li Sy BPF_ALU+BPF_LSH+BPF_K Ta A \*[Lt]- A \*[Lt]\*[Lt] k
-.It Li Sy BPF_ALU+BPF_RSH+BPF_K Ta A \*[Lt]- A \*[Gt]\*[Gt] k
-.It Li Sy BPF_ALU+BPF_ADD+BPF_X Ta A \*[Lt]- A + X
-.It Li Sy BPF_ALU+BPF_SUB+BPF_X Ta A \*[Lt]- A - X
-.It Li Sy BPF_ALU+BPF_MUL+BPF_X Ta A \*[Lt]- A * X
-.It Li Sy BPF_ALU+BPF_DIV+BPF_X Ta A \*[Lt]- A / X
-.It Li Sy BPF_ALU+BPF_AND+BPF_X Ta A \*[Lt]- A \*[Am] X
-.It Li Sy BPF_ALU+BPF_OR+BPF_X Ta A \*[Lt]- A | X
-.It Li Sy BPF_ALU+BPF_LSH+BPF_X Ta A \*[Lt]- A \*[Lt]\*[Lt] X
-.It Li Sy BPF_ALU+BPF_RSH+BPF_X Ta A \*[Lt]- A \*[Gt]\*[Gt] X
-.It Li Sy BPF_ALU+BPF_NEG Ta A \*[Lt]- -A
+.It Sy BPF_ALU+BPF_SUB+BPF_K Ta A \*[Lt]- A - k
+.It Sy BPF_ALU+BPF_MUL+BPF_K Ta A \*[Lt]- A * k
+.It Sy BPF_ALU+BPF_DIV+BPF_K Ta A \*[Lt]- A / k
+.It Sy BPF_ALU+BPF_AND+BPF_K Ta A \*[Lt]- A \*[Am] k
+.It Sy BPF_ALU+BPF_OR+BPF_K Ta A \*[Lt]- A | k
+.It Sy BPF_ALU+BPF_LSH+BPF_K Ta A \*[Lt]- A \*[Lt]\*[Lt] k
+.It Sy BPF_ALU+BPF_RSH+BPF_K Ta A \*[Lt]- A \*[Gt]\*[Gt] k
+.It Sy BPF_ALU+BPF_ADD+BPF_X Ta A \*[Lt]- A + X
+.It Sy BPF_ALU+BPF_SUB+BPF_X Ta A \*[Lt]- A - X
+.It Sy BPF_ALU+BPF_MUL+BPF_X Ta A \*[Lt]- A * X
+.It Sy BPF_ALU+BPF_DIV+BPF_X Ta A \*[Lt]- A / X
+.It Sy BPF_ALU+BPF_AND+BPF_X Ta A \*[Lt]- A \*[Am] X
+.It Sy BPF_ALU+BPF_OR+BPF_X Ta A \*[Lt]- A | X
+.It Sy BPF_ALU+BPF_LSH+BPF_X Ta A \*[Lt]- A \*[Lt]\*[Lt] X
+.It Sy BPF_ALU+BPF_RSH+BPF_X Ta A \*[Lt]- A \*[Gt]\*[Gt] X
+.It Sy BPF_ALU+BPF_NEG Ta A \*[Lt]- -A
 .El
 .It Sy BPF_JMP
 The jump instructions alter flow of control.  Conditional jumps
@@ -547,16 +547,16 @@ opcode uses the 32 bit
 .Va k
 field as the offset, allowing arbitrarily distant destinations.
 All conditionals use unsigned comparison conventions.
-.Bl -column "BPF_JMP+BPF_JGE+BPF_K" "pc += (A \*[Ge] k) ? jt : jf" -width indent -offset indent
+.Bl -column "BPF_JMP+BPF_JGE+BPF_K" "pc += (A \*[Ge] k) ? jt : jf" -offset indent
 .It Sy BPF_JMP+BPF_JA Ta pc += k
-.It Li Sy BPF_JMP+BPF_JGT+BPF_K Ta "pc += (A \*[Gt] k) ? jt : jf"
-.It Li Sy BPF_JMP+BPF_JGE+BPF_K Ta "pc += (A \*[Ge] k) ? jt : jf"
-.It Li Sy BPF_JMP+BPF_JEQ+BPF_K Ta "pc += (A == k) ? jt : jf"
-.It Li Sy BPF_JMP+BPF_JSET+BPF_K Ta "pc += (A \*[Am] k) ? jt : jf"
-.It Li Sy BPF_JMP+BPF_JGT+BPF_X Ta "pc += (A \*[Gt] X) ? jt : jf"
-.It Li Sy BPF_JMP+BPF_JGE+BPF_X Ta "pc += (A \*[Ge] X) ? jt : jf"
-.It Li Sy BPF_JMP+BPF_JEQ+BPF_X Ta "pc += (A == X) ? jt : jf"
-.It Li Sy BPF_JMP+BPF_JSET+BPF_X Ta "pc += (A \*[Am] X) ? jt : jf"
+.It Sy BPF_JMP+BPF_JGT+BPF_K Ta "pc += (A \*[Gt] k) ? jt : jf"
+.It Sy BPF_JMP+BPF_JGE+BPF_K Ta "pc += (A \*[Ge] k) ? jt : jf"
+.It Sy BPF_JMP+BPF_JEQ+BPF_K Ta "pc += (A == k) ? jt : jf"
+.It Sy BPF_JMP+BPF_JSET+BPF_K Ta "pc += (A \*[Am] k) ? jt : jf"
+.It Sy BPF_JMP+BPF_JGT+BPF_X Ta "pc += (A \*[Gt] X) ? jt : jf"
+.It Sy BPF_JMP+BPF_JGE+BPF_X Ta "pc += (A \*[Ge] X) ? jt : jf"
+.It Sy BPF_JMP+BPF_JEQ+BPF_X Ta "pc += (A == X) ? jt : jf"
+.It Sy BPF_JMP+BPF_JSET+BPF_X Ta "pc += (A \*[Am] X) ? jt : jf"
 .El
 .It Sy BPF_RET
 The return instructions terminate the filter program and specify the amount
@@ -566,18 +566,18 @@ The return value is either a constant
 .Sy ( BPF_K )
 or the accumulator
 .Sy ( BPF_A ) .
-.Bl -column "BPF_RET+BPF_A" "accept A bytes" -width indent -offset indent
+.Bl -column "BPF_RET+BPF_A" "accept A bytes" -offset indent
 .It Sy BPF_RET+BPF_A Ta accept A bytes
-.It Li Sy BPF_RET+BPF_K Ta accept k bytes
+.It Sy BPF_RET+BPF_K Ta accept k bytes
 .El
 .It Sy BPF_MISC
 The miscellaneous category was created for anything that doesn't
 fit into the above classes, and for any new instructions that might need to
 be added.  Currently, these are the register transfer instructions
 that copy the index register to the accumulator or vice versa.
-.Bl -column "BPF_MISC+BPF_TAX" "X \*[Lt]- A" -width indent -offset indent
+.Bl -column "BPF_MISC+BPF_TAX" "X \*[Lt]- A" -offset indent
 .It Sy BPF_MISC+BPF_TAX Ta X \*[Lt]- A
-.It Li Sy BPF_MISC+BPF_TXA Ta A \*[Lt]- X
+.It Sy BPF_MISC+BPF_TXA Ta A \*[Lt]- X
 .El
 .El
 .Pp
