@@ -1,4 +1,4 @@
-.\"	$NetBSD: xfer,v 1.43 2004/08/20 20:52:36 hubertf Exp $
+.\"	$NetBSD: xfer,v 1.44 2004/08/21 00:36:29 jdolecek Exp $
 .\"
 .\" Copyright (c) 1999-2002 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -77,9 +77,11 @@ have a 1.2M floppy drive, use
 and
 .Pa boot-small2.fs .
 .Pp
-.\" XXX HF There is no boot-ps2.fs - pinged jdolecek
 For old IBM PS/2 machines with MCA, use
-.Pa boot-ps2.fs .
+.Pa boot-ps2-1.fs
+and
+.Pa boot-ps2-2.fs
+floppy images.
 .Pp
 For all other systems, use
 .Pa boot1.fs
