@@ -1,4 +1,4 @@
-#	$NetBSD: files.pmax,v 1.72 1999/11/23 20:07:34 thorpej Exp $
+#	$NetBSD: files.pmax,v 1.73 1999/11/25 02:53:46 nisimura Exp $
 # DECstation-specific configuration info
 
 # maxpartitions must be first item in files.${ARCH}.
@@ -103,13 +103,13 @@ file	arch/pmax/pmax/md_root.c	memory_disk_hooks
 major { md = 17 }
 
 #
-# Old 4.4bsd pmax-specific scsi driver (deprecated).
+# Old 4.4bsd pmax-specific SCSI driver (deprecated).
 #
 define	oldscsi {}
 device oldscsibus {target = -1, drive = -1}
 attach oldscsibus at oldscsi
 
-# asc: system-slot or turbochannel-option SCSI interface
+# asc: SCSI interface in TC option slot or in IOASIC slot
 #device asc: oldscsi,scsi
 device asc: oldscsi
 attach asc at ioasic with asc_ioasic
@@ -126,7 +126,6 @@ file	arch/pmax/dev/sii.c		sii needs-flag
 attach sii at ibus with sii_ds
 file	arch/pmax/dev/sii_ds.c		sii_ds
 
-
 device	tz: tape
 attach	tz at oldscsibus
 file	arch/pmax/dev/tz.c		tz needs-count
@@ -135,12 +134,8 @@ device	rz: disk
 attach	rz at oldscsibus
 file	arch/pmax/dev/rz.c		rz needs-count
 
-#
-# Optional device-drivers
-#
 
-# DC7085 (DZ-like four-port serial device) on mainbus on non-IOASIC machines.
-# For the 3MAX (aka kn02 aka 5k/200) pretend that it's on an ASIC.
+# DC7085 (DZ-like four-port serial device) on ibus
 device dc: tty
 file	arch/pmax/dev/dc.c		dc
 attach dc at ibus with dc_ds
@@ -152,16 +147,19 @@ device dtop
 attach dtop at ioasic
 file	arch/pmax/dev/dtop.c		dtop needs-flag
 
+
 # LANCE ethernet driver.
 #   device defined in sys/conf/files.
-#   TC and ioasic attachment and files in sys/dev/tc/files.tc
+#   TC and IOASIC attachment and files in sys/dev/tc/files.tc
 
 attach le at ibus with le_pmax:		le24, le_dec_subr
 file	dev/tc/if_le_ibus.c		le_pmax		needs-flag #for kn01_intr
 
+
 # Raster operations for rcons. This isn't in the rcons section, since
 # it depends on fb devices for configuration glue. 
 include "dev/rasops/files.rasops"
+
 
 # 3100 (pmax) onboard framebuffer
 device pm: rasops1, rasops8
@@ -170,8 +168,9 @@ file	arch/pmax/dev/bt478.c		pm
 attach pm at ibus with pm_ds
 file	arch/pmax/dev/pm_ds.c		pm_ds
 
+
 #########################################################################
-# Turbochannel options.							#
+# TURBOchannel option cards.						#
 #########################################################################
 
 device cfb: rasops8
