@@ -1,4 +1,4 @@
-/*	$NetBSD: job.h,v 1.10 2000/12/05 15:20:10 sommerfeld Exp $	*/
+/*	$NetBSD: job.h,v 1.11 2000/12/30 02:05:20 sommerfeld Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -221,6 +221,8 @@ typedef struct Shell {
     char          *exit;	/* exit on error */
 }               Shell;
 
+extern int	job_pipe[2];	/* token pipe for jobs. */
+
 #ifdef REMOTE
 extern char 	*targFmt;   	/* Format string for banner that separates
 				 * output from multiple jobs. Contains a
@@ -235,7 +237,6 @@ extern int  	nLocal;	    	/* Number of jobs running locally */
 extern Lst  	jobs;	    	/* List of active job descriptors */
 extern Lst  	stoppedJobs;	/* List of jobs that are stopped or didn't
 				 * quite get started */
-extern Boolean	jobFull;    	/* Non-zero if no more jobs should/will start*/
 #endif
 
 void Job_Touch __P((GNode *, Boolean));
@@ -252,5 +253,8 @@ void Job_End __P((void));
 void Job_Wait __P((void));
 void Job_AbortAll __P((void));
 void JobFlagForMigration __P((int));
+void Job_TokenReturn __P((void));
+Boolean Job_TokenWithdraw __P((void));
+void Job_ServerStart __P((int));
 
 #endif /* _JOB_H_ */

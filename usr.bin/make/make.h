@@ -1,4 +1,4 @@
-/*	$NetBSD: make.h,v 1.29 2000/06/11 07:39:53 mycroft Exp $	*/
+/*	$NetBSD: make.h,v 1.30 2000/12/30 02:05:21 sommerfeld Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -337,6 +337,7 @@ extern Boolean 	queryFlag;    	/* TRUE if we aren't supposed to really make
 
 extern Boolean	checkEnvFirst;	/* TRUE if environment should be searched for
 				 * variables before the global context */
+extern Boolean	jobServer;	/* a jobServer already exists */
 
 extern GNode    *DEFAULT;    	/* .DEFAULT rule */
 
@@ -355,6 +356,8 @@ extern time_t 	now;	    	/* The time at the start of this whole
 extern Boolean	oldVars;    	/* Do old-style variable substitution */
 
 extern Lst	sysIncPath;	/* The system include path. */
+
+#define	MAKEFLAGS	".MAKEFLAGS"
 
 /*
  * debug control:

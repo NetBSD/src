@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.57 2000/06/06 03:00:11 sjg Exp $	*/
+/*	$NetBSD: main.c,v 1.58 2000/12/30 02:05:21 sommerfeld Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -39,7 +39,7 @@
  */
 
 #ifdef MAKE_BOOTSTRAP
-static char rcsid[] = "$NetBSD: main.c,v 1.57 2000/06/06 03:00:11 sjg Exp $";
+static char rcsid[] = "$NetBSD: main.c,v 1.58 2000/12/30 02:05:21 sommerfeld Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
@@ -51,7 +51,7 @@ __COPYRIGHT("@(#) Copyright (c) 1988, 1989, 1990, 1993\n\
 #if 0
 static char sccsid[] = "@(#)main.c	8.3 (Berkeley) 3/19/94";
 #else
-__RCSID("$NetBSD: main.c,v 1.57 2000/06/06 03:00:11 sjg Exp $");
+__RCSID("$NetBSD: main.c,v 1.58 2000/12/30 02:05:21 sommerfeld Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -108,12 +108,11 @@ __RCSID("$NetBSD: main.c,v 1.57 2000/06/06 03:00:11 sjg Exp $");
 #include "dir.h"
 #include "job.h"
 #include "pathnames.h"
+#include "trace.h"
 
 #ifndef	DEFMAXLOCAL
 #define	DEFMAXLOCAL DEFMAXJOBS
 #endif	/* DEFMAXLOCAL */
-
-#define	MAKEFLAGS	".MAKEFLAGS"
 
 Lst			create;		/* Targets to be made */
 time_t			now;		/* Time at start of make */
@@ -137,8 +136,9 @@ Boolean			ignoreErrors;	/* -i flag */
 Boolean			beSilent;	/* -s flag */
 Boolean			oldVars;	/* variable substitution style */
 Boolean			checkEnvFirst;	/* -e flag */
+Boolean			jobServer; 	/* -J flag */
 static Boolean		jobsRunning;	/* TRUE if the jobs might be running */
-
+static const char *	tracefile;
 static char *		Check_Cwd_av __P((int, char **, int));
 static void		MainParseArgs __P((int, char **));
 char *			chdir_verify_path __P((char *, char *));
@@ -148,6 +148,9 @@ static void		usage __P((void));
 static char *curdir;			/* startup directory */
 static char *objdir;			/* where we chdir'ed to */
 static char *progname;			/* the program name */
+
+Boolean forceJobs = FALSE;
+Boolean forceSerial = FALSE;
 
 /*-
  * MainParseArgs --
@@ -170,13 +173,12 @@ MainParseArgs(argc, argv)
 {
 	char *p;
 	int c;
-	int forceJobs = 0;
 
 	optind = 1;	/* since we're called more than once */
 #ifdef REMOTE
-# define OPTFLAGS "BD:I:L:PSV:d:ef:ij:km:nqrst"
+# define OPTFLAGS "BD:I:J:L:PST:V:d:ef:ij:km:nqrst"
 #else
-# define OPTFLAGS "BD:I:PSV:d:ef:ij:km:nqrst"
+# define OPTFLAGS "BD:I:J:PST:V:d:ef:ij:km:nqrst"
 #endif
 rearg:	while((c = getopt(argc, argv, OPTFLAGS)) != -1) {
 		switch(c) {
@@ -189,6 +191,25 @@ rearg:	while((c = getopt(argc, argv, OPTFLAGS)) != -1) {
 			Parse_AddIncludeDir(optarg);
 			Var_Append(MAKEFLAGS, "-I", VAR_GLOBAL);
 			Var_Append(MAKEFLAGS, optarg, VAR_GLOBAL);
+			break;
+		case 'J':
+			if (sscanf(optarg, "%d,%d", &job_pipe[0], &job_pipe[1]) != 2) {
+				(void)fprintf(stderr,
+				    "make: internal error -- J option malformed (%s??)\n", optarg);
+				usage();
+			}
+			if ((fcntl(job_pipe[0], F_GETFD, 0) < 0) ||
+			    (fcntl(job_pipe[1], F_GETFD, 0) < 0)) {
+			    (void)fprintf(stderr,
+			      "make: warning -- J descriptors were closed!\n");
+			    job_pipe[0] = -1;
+			    job_pipe[1] = -1;
+			    forceSerial = TRUE;
+			} else {
+			    Var_Append(MAKEFLAGS, "-J", VAR_GLOBAL);
+			    Var_Append(MAKEFLAGS, optarg, VAR_GLOBAL);
+			    jobServer = TRUE;
+			}
 			break;
 		case 'V':
 			printVars = TRUE;
@@ -217,6 +238,11 @@ rearg:	while((c = getopt(argc, argv, OPTFLAGS)) != -1) {
 		case 'S':
 			keepgoing = FALSE;
 			Var_Append(MAKEFLAGS, "-S", VAR_GLOBAL);
+			break;
+		case 'T':
+			tracefile = optarg;
+			Var_Append(MAKEFLAGS, "-T", VAR_GLOBAL);
+			Var_Append(MAKEFLAGS, optarg, VAR_GLOBAL);
 			break;
 		case 'd': {
 			char *modules = optarg;
@@ -332,13 +358,6 @@ rearg:	while((c = getopt(argc, argv, OPTFLAGS)) != -1) {
 			usage();
 		}
 	}
-
-	/*
-	 * Be compatible if user did not specify -j and did not explicitly
-	 * turned compatibility on
-	 */
-	if (!compatMake && !forceJobs)
-		compatMake = TRUE;
 
 	oldVars = TRUE;
 
@@ -676,16 +695,31 @@ main(argc, argv)
 	MainParseArgs(argc, argv);
 
 	/*
+	 * Be compatible if user did not specify -j and did not explicitly
+	 * turned compatibility on
+	 */
+	if (forceSerial) {
+		forceJobs = FALSE;
+	}
+
+	if (!compatMake && !forceJobs) {
+		compatMake = TRUE;
+	}
+	
+	/*
 	 * Initialize archive, target and suffix modules in preparation for
 	 * parsing the makefile(s)
 	 */
 	Arch_Init();
 	Targ_Init();
 	Suff_Init();
+	Trace_Init(tracefile);
 
 	DEFAULT = NILGNODE;
 	(void)time(&now);
 
+	Trace_Log(MAKESTART, NULL);
+	
 	/*
 	 * Set up the .TARGETS variable to contain the list of targets to be
 	 * created. If none specified, make the variable empty -- the parser
@@ -760,6 +794,12 @@ main(argc, argv)
 	Var_Append("MFLAGS", Var_Value(MAKEFLAGS, VAR_GLOBAL, &p1), VAR_GLOBAL);
 	if (p1)
 	    free(p1);
+
+	if (!jobServer && !compatMake)
+	    Job_ServerStart(maxJobs);
+	if (DEBUG(JOB))
+	    printf("job_pipe %d %d, maxjobs %d maxlocal %d compat %d\n", job_pipe[0], job_pipe[1], maxJobs,
+	           maxLocal, compatMake);
 
 	/* Install all the flags into the MAKE envariable. */
 	if (((p = Var_Value(MAKEFLAGS, VAR_GLOBAL, &p1)) != NULL) && *p)
@@ -881,6 +921,8 @@ main(argc, argv)
 	if (DEBUG(GRAPH2))
 		Targ_PrintGraph(2);
 
+	Trace_Log(MAKEEND, 0);
+
 	Suff_End();
         Targ_End();
 	Arch_End();
@@ -888,6 +930,7 @@ main(argc, argv)
 	Parse_End();
 	Dir_End();
 	Job_End();
+	Trace_End();
 
 	if (queryFlag && outOfDate)
 		return(1);
@@ -1348,6 +1391,7 @@ Fatal(va_alist)
 
 	if (DEBUG(GRAPH2))
 		Targ_PrintGraph(2);
+	Trace_Log(MAKEERROR, 0);
 	exit(2);		/* Not 1 so -q can distinguish error */
 }
 
@@ -1407,6 +1451,7 @@ DieHorribly()
 		Job_AbortAll();
 	if (DEBUG(GRAPH2))
 		Targ_PrintGraph(2);
+	Trace_Log(MAKEERROR, 0);
 	exit(2);		/* Not 1, so -q can distinguish error */
 }
 

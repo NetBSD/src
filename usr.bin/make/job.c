@@ -1,4 +1,4 @@
-/*	$NetBSD: job.c,v 1.39 2000/12/05 21:57:20 mycroft Exp $	*/
+/*	$NetBSD: job.c,v 1.40 2000/12/30 02:05:20 sommerfeld Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -39,14 +39,14 @@
  */
 
 #ifdef MAKE_BOOTSTRAP
-static char rcsid[] = "$NetBSD: job.c,v 1.39 2000/12/05 21:57:20 mycroft Exp $";
+static char rcsid[] = "$NetBSD: job.c,v 1.40 2000/12/30 02:05:20 sommerfeld Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)job.c	8.2 (Berkeley) 3/19/94";
 #else
-__RCSID("$NetBSD: job.c,v 1.39 2000/12/05 21:57:20 mycroft Exp $");
+__RCSID("$NetBSD: job.c,v 1.40 2000/12/30 02:05:20 sommerfeld Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -80,8 +80,6 @@ __RCSID("$NetBSD: job.c,v 1.39 2000/12/05 21:57:20 mycroft Exp $");
  *	    	  	    	before this function is called.
  *
  *	Job_End  	    	Cleanup any memory used.
- *
- *	Job_Full  	    	Return TRUE if the job table is filled.
  *
  *	Job_Empty 	    	Return TRUE if the job table is completely
  *	    	  	    	empty.
@@ -130,6 +128,7 @@ __RCSID("$NetBSD: job.c,v 1.39 2000/12/05 21:57:20 mycroft Exp $");
 #include "dir.h"
 #include "job.h"
 #include "pathnames.h"
+#include "trace.h"
 #ifdef REMOTE
 #include "rmt.h"
 # define STATIC
@@ -232,11 +231,8 @@ static int  	maxLocal;    	/* The most local ones we can have */
 STATIC int     	nJobs;	    	/* The number of children currently running */
 STATIC int	nLocal;    	/* The number of local children */
 STATIC Lst     	jobs;		/* The structures that describe them */
-STATIC Boolean	jobFull;    	/* Flag to tell when the job table is full. It
-				 * is set TRUE when (1) the total number of
-				 * running jobs equals the maximum allowed or
-				 * (2) a job can only be run locally, but
-				 * nLocal equals maxLocal */
+static Boolean	wantToken;	/* we want a token */
+
 /*
  * Set of descriptors of pipes connected to
  * the output channels of children
@@ -262,6 +258,8 @@ STATIC GNode   	*lastNode;	/* The node for which output was most recently
 STATIC char    	*targFmt;   	/* Format string to use to head output from a
 				 * job when it's not the most-recent job heard
 				 * from */
+static Job tokenWaitJob;	/* token wait pseudo-job */
+int	job_pipe[2] = { -1, -1 }; /* job server pipes. */
 
 #ifdef REMOTE
 # define TARG_FMT  "--- %s at %s ---\n" /* Default format */
@@ -331,6 +329,7 @@ static void JobDoOutput __P((Job *, Boolean));
 static Shell *JobMatchShell __P((char *));
 static void JobInterrupt __P((int, int));
 static void JobRestartJobs __P((void));
+static void JobTokenAdd __P((void));
 
 /*-
  *-----------------------------------------------------------------------
@@ -965,13 +964,6 @@ JobFinish(job, status)
   		}
 		nLocal += 1;
 	    }
-	    if (nJobs == maxJobs) {
-		jobFull = TRUE;
-		if (DEBUG(JOB)) {
-		    (void) fprintf(stdout, "Job queue is full.\n");
-		    (void) fflush(stdout);
-  		}
-  	    }
 	    (void) fflush(out);
   	    return;
 	} else {
@@ -1015,6 +1007,8 @@ JobFinish(job, status)
 	done = TRUE;
     }
 
+    if (done)
+	    Trace_Log(JOBEND, job);
 
     if (done &&
 	(aborting != ABORT_ERROR) &&
@@ -1038,6 +1032,9 @@ JobFinish(job, status)
     } else if (*status != 0) {
 	errors += 1;
 	free((Address)job);
+    }
+    if (done && (*status != 0) && !compatMake) {
+	Job_TokenReturn();
     }
 
     JobRestartJobs();
@@ -1291,6 +1288,14 @@ JobExec(job, argv)
 	(void) fcntl(0, F_SETFD, 0);
 	(void) lseek(0, (off_t)0, SEEK_SET);
 
+	if (job->node->type & OP_MAKE) {
+		/*
+		 * Pass job token pipe to submakes.
+		 */
+		fcntl(job_pipe[0], F_SETFD, 0);
+		fcntl(job_pipe[1], F_SETFD, 0);		
+	}
+	
 	if (usePipes) {
 	    /*
 	     * Set up the child's output to be routed through the pipe
@@ -1349,6 +1354,8 @@ JobExec(job, argv)
 #endif
 	job->pid = cpid;
 
+	Trace_Log(JOBSTART, job);
+
 	if (usePipes && (job->flags & JOB_FIRST)) {
 	    /*
 	     * The first time a job is run for a node, we set the current
@@ -1397,9 +1404,6 @@ jobExecFinish:
      */
     nJobs += 1;
     (void) Lst_AtEnd(jobs, (ClientData)job);
-    if (nJobs == maxJobs) {
-	jobFull = TRUE;
-    }
 }
 
 /*-
@@ -1465,9 +1469,6 @@ JobMakeArgv(job, argv)
  * Results:
  *	None.
  *
- * Side Effects:
- *	jobFull will be set if the job couldn't be run.
- *
  *-----------------------------------------------------------------------
  */
 static void
@@ -1532,11 +1533,6 @@ JobRestart(job)
 		   (void) fflush(stdout);
   		}
 		(void)Lst_AtFront(stoppedJobs, (ClientData)job);
-		jobFull = TRUE;
-		if (DEBUG(JOB)) {
-		   (void) fprintf(stdout, "Job queue is full.\n");
-		   (void) fflush(stdout);
-		}
 		return;
 	    }
 #ifdef REMOTE
@@ -1554,13 +1550,6 @@ JobRestart(job)
 
 	(void)Lst_AtEnd(jobs, (ClientData)job);
 	nJobs += 1;
-	if (nJobs == maxJobs) {
-	    jobFull = TRUE;
-	    if (DEBUG(JOB)) {
-		(void) fprintf(stdout, "Job queue is full.\n");
-		(void) fflush(stdout);
-	    }
-	}
     } else if (job->flags & JOB_RESTART) {
 	/*
 	 * Set up the control arguments to the shell. This is based on the
@@ -1598,11 +1587,6 @@ JobRestart(job)
 		    (void) fflush(stdout);
 		}
 		(void)Lst_AtFront(stoppedJobs, (ClientData)job);
-		jobFull = TRUE;
-		if (DEBUG(JOB)) {
-		    (void) fprintf(stdout, "Job queue is full.\n");
-		    (void) fflush(stdout);
-		}
 		return;
 	    } else {
 		/*
@@ -1696,11 +1680,6 @@ JobRestart(job)
 		(void) fflush(stdout);
 	    }
 	    (void) Lst_AtFront(stoppedJobs, (ClientData)job);
-	    jobFull = TRUE;
-	    if (DEBUG(JOB)) {
-		(void) fprintf(stdout, "Job queue is full.\n");
-		(void) fflush(stdout);
-	    }
 	}
     }
 }
@@ -2011,26 +1990,9 @@ JobStart(gn, flags, previous)
 	 * all possible. In addition, any target marked with .NOEXPORT will
 	 * be run locally if maxLocal is 0.
 	 */
-	jobFull = TRUE;
-
-	if (DEBUG(JOB)) {
-	   (void) fprintf(stdout, "Can only run job locally.\n");
-	   (void) fflush(stdout);
-	}
 	job->flags |= JOB_RESTART;
 	(void) Lst_AtEnd(stoppedJobs, (ClientData)job);
     } else {
-	if ((nLocal >= maxLocal) && local) {
-	    /*
-	     * If we're running this job locally as a special case (see above),
-	     * at least say the table is full.
-	     */
-	    jobFull = TRUE;
-	    if (DEBUG(JOB)) {
-		(void) fprintf(stdout, "Local job queue is full.\n");
-		(void) fflush(stdout);
-	    }
-	}
 	JobExec(job, argv);
     }
     return(JOB_RUNNING);
@@ -2352,11 +2314,6 @@ Job_CatchChildren(block)
 	    job = (Job *) Lst_Datum(jnode);
 	    (void) Lst_Remove(jobs, jnode);
 	    nJobs -= 1;
-	    if (jobFull && DEBUG(JOB)) {
-		(void) fprintf(stdout, "Job queue is no longer full.\n");
-		(void) fflush(stdout);
-	    }
-	    jobFull = FALSE;
 #ifdef REMOTE
 	    if (!(job->flags & JOB_REMOTE)) {
 		if (DEBUG(JOB)) {
@@ -2438,7 +2395,8 @@ Job_CatchOutput()
 			   (fd_set *) 0, &timeout)) <= 0)
 	    return;
 #else
-	if ((nready = poll(fds, nfds, POLL_MSEC)) <= 0)
+	if ((nready = poll((wantToken ? fds : (fds + 1)),
+	  		   (wantToken ? nfds : (nfds - 1)), POLL_MSEC)) <= 0)
 	    return;
 #endif
 	else {
@@ -2512,7 +2470,7 @@ Job_Init(maxproc, maxlocal)
     maxLocal = 	  maxlocal;
     nJobs = 	  0;
     nLocal = 	  0;
-    jobFull = 	  FALSE;
+    wantToken =	  FALSE;
 
     aborting = 	  0;
     errors = 	  0;
@@ -2526,7 +2484,7 @@ Job_Init(maxproc, maxlocal)
 		     ) {
 	/*
 	 * If only one job can run at a time, there's no need for a banner,
-	 * no is there?
+	 * is there?
 	 */
 	targFmt = "";
     } else {
@@ -2610,26 +2568,6 @@ Job_Init(maxproc, maxlocal)
 
 /*-
  *-----------------------------------------------------------------------
- * Job_Full --
- *	See if the job table is full. It is considered full if it is OR
- *	if we are in the process of aborting OR if we have
- *	reached/exceeded our local quota. This prevents any more jobs
- *	from starting up.
- *
- * Results:
- *	TRUE if the job table is full, FALSE otherwise
- * Side Effects:
- *	None.
- *-----------------------------------------------------------------------
- */
-Boolean
-Job_Full()
-{
-    return(aborting || jobFull);
-}
-
-/*-
- *-----------------------------------------------------------------------
  * Job_Empty --
  *	See if the job table is empty.  Because the local concurrency may
  *	be set to 0, it is possible for the job table to become empty,
@@ -2653,7 +2591,6 @@ Job_Empty()
 	     * The job table is obviously not full if it has no jobs in
 	     * it...Try and restart the stopped jobs.
 	     */
-	    jobFull = FALSE;
 	    JobRestartJobs();
 	    return(FALSE);
 	} else {
@@ -3019,6 +2956,7 @@ JobInterrupt(runINTERRUPT, signo)
 	    }
 	}
     }
+    Trace_Log(MAKEINTR, 0);
     exit(signo);
 }
 
@@ -3229,10 +3167,9 @@ JobFlagForMigration(hostID)
 static void
 JobRestartJobs()
 {
-    while (!jobFull && !Lst_IsEmpty(stoppedJobs)) {
+    while (!Lst_IsEmpty(stoppedJobs)) {
 	if (DEBUG(JOB)) {
-	    (void) fprintf(stdout,
-		       "Job queue is not full. Restarting a stopped job.\n");
+	    (void) fprintf(stdout, "Restarting a stopped job.\n");
 	    (void) fflush(stdout);
 	}
 	JobRestart((Job *)Lst_DeQueue(stoppedJobs));
@@ -3252,6 +3189,12 @@ watchfd(job)
 	maxfds = JBSTART;
 	fds = emalloc(sizeof(struct pollfd) * maxfds);
 	jobfds = emalloc(sizeof(Job **) * maxfds);
+
+	fds[0].fd = job_pipe[0];
+	fds[0].events = POLLIN;
+	jobfds[0] = &tokenWaitJob;
+	tokenWaitJob.inPollfd = &fds[0];
+	nfds++;
     } else if (nfds == maxfds) {
 	maxfds *= JBFACTOR;
 	fds = erealloc(fds, sizeof(struct pollfd) * maxfds);
@@ -3297,3 +3240,151 @@ readyfd(job)
 }
 #endif
 #endif
+
+/*-
+ *-----------------------------------------------------------------------
+ * JobTokenAdd --
+ *	Put a token into the job pipe so that some make process can start
+ *	another job.
+ *
+ * Side Effects:
+ *	Allows more build jobs to be spawned somewhere.
+ *
+ *-----------------------------------------------------------------------
+ */
+
+static void
+JobTokenAdd()
+{
+
+    if (DEBUG(JOB))
+	printf("deposit token\n");
+    write(job_pipe[1], "+", 1);
+}
+
+/*-
+ *-----------------------------------------------------------------------
+ * Job_ServerStartTokenAdd --
+ *	Prep the job token pipe in the root make process.
+ *
+ *-----------------------------------------------------------------------
+ */
+
+void Job_ServerStart(maxproc)
+    int maxproc;
+{
+    int i, flags;
+    char jobarg[64];
+    
+    if (pipe(job_pipe) < 0)
+	Fatal ("error in pipe: %s", strerror(errno));
+
+    /*
+     * We mark the input side of the pipe non-blocking; we poll(2) the
+     * pipe when we're waiting for a job token, but we might lose the
+     * race for the token when a new one becomes available, so the read 
+     * from the pipe should not block.
+     */
+    flags = fcntl(job_pipe[0], F_GETFL, 0);
+    flags |= O_NONBLOCK;
+    fcntl(job_pipe[0], F_SETFL, flags);
+
+    /*
+     * Mark job pipes as close-on-exec.
+     * Note that we will clear this when executing submakes.
+     */
+    fcntl(job_pipe[0], F_SETFD, 1);
+    fcntl(job_pipe[1], F_SETFD, 1);
+
+    snprintf(jobarg, sizeof(jobarg), "%d,%d", job_pipe[0], job_pipe[1]);
+
+    Var_Append(MAKEFLAGS, "-J", VAR_GLOBAL);
+    Var_Append(MAKEFLAGS, jobarg, VAR_GLOBAL);			
+	
+    /*
+     * Preload job_pipe with one token per job, save the one
+     * "extra" token for the primary job.
+     * 
+     * XXX should clip maxJobs against PIPE_BUF -- if maxJobs is
+     * larger than the write buffer size of the pipe, we will
+     * deadlock here.
+     */
+    for (i=1; i < maxproc; i++)
+	JobTokenAdd();
+}
+
+/*
+ * this tracks the number of tokens currently "out" to build jobs.
+ */
+static int tokensOutstanding = 0;
+
+/*-
+ *-----------------------------------------------------------------------
+ * Job_TokenReturn --
+ *	Return a withdrawn token to the pool.
+ *
+ *-----------------------------------------------------------------------
+ */
+
+void
+Job_TokenReturn()
+{
+    tokensOutstanding--;
+    if (tokensOutstanding < 0)
+	Punt("token botch");
+    if (tokensOutstanding)
+	JobTokenAdd();
+}
+
+/*-
+ *-----------------------------------------------------------------------
+ * Job_TokenWithdraw --
+ *	Attempt to withdraw a token from the pool.
+ *
+ * Results:
+ *	Returns TRUE if a token was withdrawn, and FALSE if the pool
+ *	is currently empty.
+ *
+ * Side Effects:
+ * 	If pool is empty, set wantToken so that we wake up
+ *	when a token is released.
+ *
+ *-----------------------------------------------------------------------
+ */
+
+
+Boolean
+Job_TokenWithdraw()
+{
+    char tok;
+    int count;
+
+    if (aborting)
+	    return FALSE;
+
+    if (tokensOutstanding == 0) {
+	if (DEBUG(JOB))
+	    printf("first one's free\n");
+	tokensOutstanding++;
+	wantToken = FALSE;
+	return TRUE;
+    }
+    count = read(job_pipe[0], &tok, 1);
+    if (count == 0)
+	Fatal("eof on job pipe!");
+    else if (count < 0) {
+	if (errno != EAGAIN) {
+	    Fatal("job pipe read: %s", strerror(errno));
+	}
+	if (DEBUG(JOB))
+	    printf("blocked for token\n");
+	wantToken = TRUE;
+	return FALSE;
+    }
+    wantToken = FALSE;
+    tokensOutstanding++;
+    if (DEBUG(JOB))
+	printf("withdrew token\n");
+    return TRUE;
+}
+

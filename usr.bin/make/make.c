@@ -1,4 +1,4 @@
-/*	$NetBSD: make.c,v 1.31 2000/06/11 07:39:52 mycroft Exp $	*/
+/*	$NetBSD: make.c,v 1.32 2000/12/30 02:05:21 sommerfeld Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -39,14 +39,14 @@
  */
 
 #ifdef MAKE_BOOTSTRAP
-static char rcsid[] = "$NetBSD: make.c,v 1.31 2000/06/11 07:39:52 mycroft Exp $";
+static char rcsid[] = "$NetBSD: make.c,v 1.32 2000/12/30 02:05:21 sommerfeld Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)make.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: make.c,v 1.31 2000/06/11 07:39:52 mycroft Exp $");
+__RCSID("$NetBSD: make.c,v 1.32 2000/12/30 02:05:21 sommerfeld Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -579,6 +579,7 @@ Make_Update (cgn)
     time_t mtime = -1;
     char *p1;
 
+    Job_TokenReturn();
     cname = Var_Value (TARGET, cgn, &p1);
     if (p1)
 	free(p1);
@@ -804,7 +805,7 @@ MakeStartJobs ()
 {
     register GNode	*gn;
 
-    while (!Job_Full() && !Lst_IsEmpty (toBeMade)) {
+    while (!Lst_IsEmpty (toBeMade)) {
 	gn = (GNode *) Lst_DeQueue (toBeMade);
 	if (DEBUG(MAKE)) {
 	    printf ("Examining %s...", gn->name);
@@ -835,6 +836,11 @@ MakeStartJobs ()
 	    if (ln != NILLNODE) {
 		continue;
 	    }
+	}
+
+	if (!Job_TokenWithdraw()) {
+	    Lst_AtFront(toBeMade, gn);
+	    break;
 	}
 
 	numNodes--;
@@ -1067,7 +1073,7 @@ Make_Run (targs)
      * Note that the Job module will exit if there were any errors unless the
      * keepgoing flag was given.
      */
-    while (!Job_Empty ()) {
+    while (!Lst_IsEmpty(toBeMade) || !Job_Empty ()) {
 	Job_CatchOutput ();
 	Job_CatchChildren (!usePipes);
 	(void)MakeStartJobs();
