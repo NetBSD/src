@@ -1,4 +1,4 @@
-/*	$NetBSD: restore.c,v 1.9 1997/06/18 07:10:16 lukem Exp $	*/
+/*	$NetBSD: restore.c,v 1.10 1997/07/04 21:48:39 pk Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)restore.c	8.3 (Berkeley) 9/13/94";
 #else
-static char rcsid[] = "$NetBSD: restore.c,v 1.9 1997/06/18 07:10:16 lukem Exp $";
+static char rcsid[] = "$NetBSD: restore.c,v 1.10 1997/07/04 21:48:39 pk Exp $";
 #endif
 #endif /* not lint */
 
@@ -824,7 +824,7 @@ checkrestore()
 			ep->e_flags &= ~KEEP;
 			if (ep->e_type == NODE)
 				ep->e_flags &= ~(NEW|EXISTED);
-			if (ep->e_flags != NULL)
+			if (ep->e_flags != 0)
 				badentry(ep, "incomplete operations");
 		}
 	}
