@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-1.6.2,v 1.1.2.11 2003/06/16 12:36:46 grant Exp $
+#	$NetBSD: CHANGES-1.6.2,v 1.1.2.12 2003/06/16 12:45:13 grant Exp $
 
 A complete list of changes from NetBSD 1.6.1 to NetBSD 1.6.2:
 
@@ -259,6 +259,15 @@ bin/csh/csh.1					1.37
 
 libexec/talkd/talkd.c				1.16
 
-verify strvis() buffer length is enough.  make sure string termination before
-use.  remove extra ntohs() which is not needed.  from Charles Blundell
+	verify strvis() buffer length is enough.  make sure string termination
+	before use.  remove extra ntohs() which is not needed.  from Charles
+	Blundell
 	[itojun, ticket #1001]
+
+sys/dev/scsipi/ses.c				1.19-1.20
+
+	The Double-Semi-Colon Police.
+
+	kern/20231- pass the correct argument (arg_addr) on thru to
+	scsipi_do_ioctl, not the locally dereferenced fetch.
+	[mjacob, ticket #1162]
