@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.53 2001/10/18 01:33:48 matt Exp $	*/
+/*	$NetBSD: trap.c,v 1.54 2001/12/05 05:02:10 chs Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -66,8 +66,8 @@
 #ifndef MULTIPROCESSOR
 volatile int astpending;
 volatile int want_resched;
-#endif
 extern int intr_depth;
+#endif
 
 void *syscall = NULL;	/* XXX dummy symbol for emul_netbsd */
 
