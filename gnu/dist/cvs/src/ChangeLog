@@ -1,3 +1,28 @@
+2004-06-09  Derek Price  <derek@ximbiot.com>
+
+	* commit.c, filesubr.c, history.c, server.c, wrapper.c: Various
+	security fixes.
+	(Original patch from Stefan Essler <s.esser@e-matters.de> & Sebastian
+	Krahmer <krahmer@suse.de>.)
+
+	* cvs.h: Include xsize.h.
+
+2004-06-09  Derek Price  <derek@ximbiot.com>
+
+	* server.c (serve_entry, serve_is_modified, serve_unchanged): Protect
+	against malformed entries.
+	* sanity.sh (server): Tests for same.
+
+2004-06-07  Larry Jones  <lawrence.jones@ugsplm.com>
+
+	* sanity.sh (basica): More tests for string-based revision inc.
+
+2004-06-04  Larry Jones  <lawrence.jones@ugsplm.com>
+
+	* subr.c (increment_revnum): Rewrite ala RCS to work directly on
+	the string rather than converting to int to avoid overflow.
+	* sanity.sh (basica): New tests for above, update others to match.
+
 2004-05-19  Derek Price  <derek@ximbiot.com>
 
 	* server.c (serve_unchanged, serve_is_modified): Overwrite existing

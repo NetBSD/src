@@ -1,5 +1,20 @@
-Changes since 1.11.15:
+Changes since 1.11.16:
 **********************
+
+SERVER SECURITY FIXES
+
+* Thanks to Stefan Esser & Sebastian Krahmer, several potential security
+  problems have been fixed.  The ones which were considered dangerous enough
+  to catalogue were assigned issue numbers CAN-2004-0416, CAN-2004-0417, &
+  CAN-2004-0418 by the Common Vulnerabilities and Exposures Project.  Please
+  see <http://www.cve.mitre.org> for more information.
+
+* A potential buffer overflow vulnerability in the server has been fixed.
+  This addresses the Common Vulnerabilities and Exposures Project's issue
+  #CAN-2004-0414.  Please see <http://www.cve.mitre.org> for more information.
+
+Changes from 1.11.15 to 1.11.16:
+********************************
 
 SERVER SECURITY FIXES
 
