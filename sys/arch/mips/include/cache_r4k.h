@@ -1,4 +1,4 @@
-/*	$NetBSD: cache_r4k.h,v 1.4 2001/11/23 06:21:49 tsutsui Exp $	*/
+/*	$NetBSD: cache_r4k.h,v 1.5 2001/12/23 13:10:46 takemura Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -170,6 +170,38 @@ do {									\
 } while (/*CONSTCOND*/0)
 
 /*
+ * cache_r4k_op_16lines_16_2way:
+ *
+ *	Perform the specified cache operation on 16 16-byte
+ * 	cache lines, 2-ways.
+ */
+#define	cache_r4k_op_16lines_16_2way(va1, va2, op)			\
+do {									\
+	__asm __volatile(						\
+		".set noreorder					\n\t"	\
+		"cache %2, 0x000(%0); cache %2, 0x000(%1);	\n\t"	\
+		"cache %2, 0x010(%0); cache %2, 0x010(%1);	\n\t"	\
+		"cache %2, 0x020(%0); cache %2, 0x020(%1);	\n\t"	\
+		"cache %2, 0x030(%0); cache %2, 0x030(%1);	\n\t"	\
+		"cache %2, 0x040(%0); cache %2, 0x040(%1);	\n\t"	\
+		"cache %2, 0x050(%0); cache %2, 0x050(%1);	\n\t"	\
+		"cache %2, 0x060(%0); cache %2, 0x060(%1);	\n\t"	\
+		"cache %2, 0x070(%0); cache %2, 0x070(%1);	\n\t"	\
+		"cache %2, 0x080(%0); cache %2, 0x080(%1);	\n\t"	\
+		"cache %2, 0x090(%0); cache %2, 0x090(%1);	\n\t"	\
+		"cache %2, 0x0a0(%0); cache %2, 0x0a0(%1);	\n\t"	\
+		"cache %2, 0x0b0(%0); cache %2, 0x0b0(%1);	\n\t"	\
+		"cache %2, 0x0c0(%0); cache %2, 0x0c0(%1);	\n\t"	\
+		"cache %2, 0x0d0(%0); cache %2, 0x0d0(%1);	\n\t"	\
+		"cache %2, 0x0e0(%0); cache %2, 0x0e0(%1);	\n\t"	\
+		"cache %2, 0x0f0(%0); cache %2, 0x0f0(%1);	\n\t"	\
+		".set reorder"						\
+	    :								\
+	    : "r" (va1), "r" (va2), "i" (op)				\
+	    : "memory");						\
+} while (/*CONSTCOND*/0)
+
+/*
  * cache_r4k_op_16lines_32_2way:
  *
  *	Perform the specified cache operation on 16 32-byte
@@ -227,17 +259,22 @@ void	r5k_icache_sync_all_32(void);
 void	r5k_icache_sync_range_32(vaddr_t, vsize_t);
 void	r5k_icache_sync_range_index_32(vaddr_t, vsize_t);
 
+void	r5k_pdcache_wbinv_all_16(void);
 void	r5k_pdcache_wbinv_all_32(void);
 void	r4600v1_pdcache_wbinv_range_32(vaddr_t, vsize_t);
 void	r4600v2_pdcache_wbinv_range_32(vaddr_t, vsize_t);
+void	r5k_pdcache_wbinv_range_16(vaddr_t, vsize_t);
 void	r5k_pdcache_wbinv_range_32(vaddr_t, vsize_t);
+void	r5k_pdcache_wbinv_range_index_16(vaddr_t, vsize_t);
 void	r5k_pdcache_wbinv_range_index_32(vaddr_t, vsize_t);
 
 void	r4600v1_pdcache_inv_range_32(vaddr_t, vsize_t);
 void	r4600v2_pdcache_inv_range_32(vaddr_t, vsize_t);
+void	r5k_pdcache_inv_range_16(vaddr_t, vsize_t);
 void	r5k_pdcache_inv_range_32(vaddr_t, vsize_t);
 void	r4600v1_pdcache_wb_range_32(vaddr_t, vsize_t);
 void	r4600v2_pdcache_wb_range_32(vaddr_t, vsize_t);
+void	r5k_pdcache_wb_range_16(vaddr_t, vsize_t);
 void	r5k_pdcache_wb_range_32(vaddr_t, vsize_t);
 
 void	r4k_sdcache_wbinv_all_32(void);
