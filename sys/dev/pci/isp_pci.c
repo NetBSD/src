@@ -1,4 +1,4 @@
-/*	$NetBSD: isp_pci.c,v 1.12 1997/04/13 20:14:32 cgd Exp $	*/
+/*	$NetBSD: isp_pci.c,v 1.13 1997/06/08 06:34:52 thorpej Exp $	*/
 
 /*
  * PCI specific probe and attach routines for Qlogic ISP SCSI adapters.
@@ -52,22 +52,13 @@
 #include <dev/ic/ispmbox.h>
 #include <dev/microcode/isp/asm_pci.h>
 
-#ifdef	__alpha__	/* XXX */
-/* XXX XXX NEED REAL DMA MAPPING SUPPORT XXX XXX */
-extern vm_offset_t alpha_XXX_dmamap(vm_offset_t);
-#undef vtophys
-#define	vtophys(va)	alpha_XXX_dmamap((vm_offset_t) va)
-#endif
-#define	KVTOPHYS(x)	vtophys(x)
-
-
 static u_int16_t isp_pci_rd_reg __P((struct ispsoftc *, int));
 static void isp_pci_wr_reg __P((struct ispsoftc *, int, u_int16_t));
-static vm_offset_t
-isp_pci_mbxdma __P((struct ispsoftc *, vm_offset_t, u_int32_t));
-static int
-isp_pci_dmasetup __P((struct ispsoftc *, struct scsi_xfer *, ispreq_t *,
-		      u_int8_t *, u_int8_t));
+static int isp_pci_mbxdma __P((struct ispsoftc *));
+static int isp_pci_dmasetup __P((struct ispsoftc *, struct scsi_xfer *,
+	ispreq_t *, u_int8_t *, u_int8_t));
+static void isp_pci_dmateardown __P((struct ispsoftc *, struct scsi_xfer *,
+	u_int32_t));
 
 static void isp_pci_reset1 __P((struct ispsoftc *));
 
@@ -76,7 +67,7 @@ static struct ispmdvec mdvec = {
 	isp_pci_wr_reg,
 	isp_pci_mbxdma,
 	isp_pci_dmasetup,
-	NULL,
+	isp_pci_dmateardown,
 	NULL,
 	isp_pci_reset1,
 	ISP_RISC_CODE,
@@ -104,6 +95,10 @@ struct isp_pcisoftc {
 	struct ispsoftc		pci_isp;
 	bus_space_tag_t		pci_st;
 	bus_space_handle_t	pci_sh;
+	bus_dma_tag_t		pci_dmat;
+	bus_dmamap_t		pci_rquest_dmap;
+	bus_dmamap_t		pci_result_dmap;
+	bus_dmamap_t		pci_xfer_dmap[RQUEST_QUEUE_LEN];
 	void *			pci_ih;
 };
 
@@ -143,6 +138,7 @@ isp_pci_attach(parent, self, aux)
 	pci_intr_handle_t ih;
 	const char *intrstr;
 	int ioh_valid, memh_valid;
+	int i;
 
 	ioh_valid = (pci_mapreg_map(pa, IO_MAP_REG,
 	    PCI_MAPREG_TYPE_IO, 0,
@@ -165,6 +161,7 @@ isp_pci_attach(parent, self, aux)
 
 	pcs->pci_st = st;
 	pcs->pci_sh = sh;
+	pcs->pci_dmat = pa->pa_dmat;
 	pcs->pci_isp.isp_mdvec = &mdvec;
 	isp_reset(&pcs->pci_isp);
 	if (pcs->pci_isp.isp_state != ISP_RESETSTATE) {
@@ -195,6 +192,20 @@ isp_pci_attach(parent, self, aux)
 		return;
 	}
 	printf("%s: interrupting at %s\n", pcs->pci_isp.isp_name, intrstr);
+
+	/*
+	 * Create the DMA maps for the data transfers.
+	 */
+	for (i = 0; i < RQUEST_QUEUE_LEN; i++) {
+		if (bus_dmamap_create(pcs->pci_dmat, MAXPHYS,
+		    (MAXPHYS / NBPG) + 1, MAXPHYS, 0, BUS_DMA_NOWAIT,
+		    &pcs->pci_xfer_dmap[i])) {
+			printf("%s: can't create dma maps\n",
+			    pcs->pci_isp.isp_name);
+			isp_uninit(&pcs->pci_isp);
+			return;
+		}
+	}
 
 	/*
 	 * Do Generic attach now.
@@ -261,37 +272,51 @@ isp_pci_wr_reg(isp, regoff, val)
 	bus_space_write_2(pcs->pci_st, pcs->pci_sh, offset, val);
 }
 
-static vm_offset_t
-isp_pci_mbxdma(isp, kva, len)
+static int
+isp_pci_mbxdma(isp)
 	struct ispsoftc *isp;
-	vm_offset_t kva;
-	u_int32_t len;
 {
-	vm_offset_t pg, start, s1;
+	struct isp_pcisoftc *pci = (struct isp_pcisoftc *)isp;
+	bus_dma_segment_t seg;
+	bus_size_t len;
+	int rseg;
 
-	start = KVTOPHYS(kva);
+	/*
+	 * Allocate and map the request queue.
+	 */
+	len = ISP_QUEUE_SIZE(RQUEST_QUEUE_LEN);
+	if (bus_dmamem_alloc(pci->pci_dmat, len, NBPG, 0, &seg, 1, &rseg,
+	      BUS_DMA_NOWAIT) ||
+	    bus_dmamem_map(pci->pci_dmat, &seg, rseg, len,
+	      (caddr_t *)&isp->isp_rquest, BUS_DMA_NOWAIT|BUS_DMAMEM_NOSYNC))
+		return (1);
+	if (bus_dmamap_create(pci->pci_dmat, len, 1, len, 0, BUS_DMA_NOWAIT,
+	      &pci->pci_rquest_dmap) ||
+	    bus_dmamap_load(pci->pci_dmat, pci->pci_rquest_dmap,
+	      (caddr_t)isp->isp_rquest, len, NULL, BUS_DMA_NOWAIT))
+		return (1);
 
-	pg = kva + NBPG;
-	s1 = (start >> PGSHIFT) + 1;
-	len -= NBPG;
+	isp->isp_rquest_dma = pci->pci_rquest_dmap->dm_segs[0].ds_addr;
 
-	while ((int32_t)len > 0) {
-		if (s1 != (KVTOPHYS(pg) >> PGSHIFT)) {
-			printf("%s: mailboxes across noncontiguous pages\n",
-					isp->isp_name);
-			return ((vm_offset_t) 0);
-		}
-		len -= NBPG;
-		pg += NBPG;
-		s1++;
-	}
-	return (start);
+	/*
+	 * Allocate and map the result queue.
+	 */
+	len = ISP_QUEUE_SIZE(RESULT_QUEUE_LEN);
+	if (bus_dmamem_alloc(pci->pci_dmat, len, NBPG, 0, &seg, 1, &rseg,
+	      BUS_DMA_NOWAIT) ||
+	    bus_dmamem_map(pci->pci_dmat, &seg, rseg, len,
+	      (caddr_t *)&isp->isp_result, BUS_DMA_NOWAIT|BUS_DMAMEM_NOSYNC))
+		return (1);
+	if (bus_dmamap_create(pci->pci_dmat, len, 1, len, 0, BUS_DMA_NOWAIT,
+	      &pci->pci_result_dmap) ||
+	    bus_dmamap_load(pci->pci_dmat, pci->pci_result_dmap,
+	      (caddr_t)isp->isp_result, len, NULL, BUS_DMA_NOWAIT))
+		return (1);
+
+	isp->isp_result_dma = pci->pci_result_dmap->dm_segs[0].ds_addr;
+
+	return (0);
 }
-
-/*
- * TODO: reduce the number of segments by
- *	cchecking for adjacent physical page.
- */
 
 static int
 isp_pci_dmasetup(isp, xs, rq, iptrp, optr)
@@ -301,9 +326,10 @@ isp_pci_dmasetup(isp, xs, rq, iptrp, optr)
 	u_int8_t *iptrp;
 	u_int8_t optr;
 {
+	struct isp_pcisoftc *pci = (struct isp_pcisoftc *)isp;
+	bus_dmamap_t dmap = pci->pci_xfer_dmap[rq->req_handle];
 	ispcontreq_t *crq;
-	unsigned long thiskv, nextkv;
-	int datalen, amt;
+	int segcnt, seg, error, ovseg;
 
 	if (xs->datalen == 0) {
 		rq->req_seg_count = 1;
@@ -311,68 +337,80 @@ isp_pci_dmasetup(isp, xs, rq, iptrp, optr)
 		return (0);
 	}
 
+	if (rq->req_handle >= RQUEST_QUEUE_LEN) {
+		panic("%s: bad handle (%d) in isp_sbus_dmasetup\n",
+		    isp->isp_name, rq->req_handle);
+		/* NOTREACHED */
+	}
+
 	if (xs->flags & SCSI_DATA_IN) {
 		rq->req_flags |= REQFLAG_DATA_IN;
 	} else {
 		rq->req_flags |= REQFLAG_DATA_OUT;
 	}
-	datalen = xs->datalen;
-	thiskv = (unsigned long) xs->data;
 
-	while (datalen && rq->req_seg_count < ISP_RQDSEG) {
-		nextkv = (thiskv + NBPG) & ~(NBPG-1);
-		amt = nextkv - thiskv;
-		if (amt > datalen)
-			amt = datalen;
-		rq->req_dataseg[rq->req_seg_count].ds_count = amt;
-		rq->req_dataseg[rq->req_seg_count].ds_base = KVTOPHYS(thiskv);
-#if	0
-		printf("%s: seg%d: 0x%lx..0x%lx\n", isp->isp_name,
-		       rq->req_seg_count, thiskv,
-		       thiskv + (unsigned long) amt);
-#endif
-		datalen -= amt;
-		thiskv = nextkv;
-		rq->req_seg_count++;
+	error = bus_dmamap_load(pci->pci_dmat, dmap, xs->data, xs->datalen,
+	    NULL, xs->flags & SCSI_NOSLEEP ? BUS_DMA_NOWAIT : BUS_DMA_WAITOK);
+	if (error)
+		return (error);
+
+	segcnt = dmap->dm_nsegs;
+
+	for (seg = 0, rq->req_seg_count = 0;
+	    seg < segcnt && rq->req_seg_count < ISP_RQDSEG;
+	    seg++, rq->req_seg_count++) {
+		rq->req_dataseg[rq->req_seg_count].ds_count =
+		    dmap->dm_segs[seg].ds_len;
+		rq->req_dataseg[rq->req_seg_count].ds_base =
+		    dmap->dm_segs[seg].ds_addr;
 	}
 
-	if (datalen == 0) {
-		return (0);
-	}
+	if (seg == segcnt)
+		goto mapsync;
 
 	do {
-		int seg;
-		crq = (ispcontreq_t *) &isp->isp_rquest[*iptrp][0];
+		crq = (ispcontreq_t *) ISP_QUEUE_ENTRY(isp->isp_rquest,
+		    *iptrp);
 		*iptrp = (*iptrp + 1) & (RQUEST_QUEUE_LEN - 1);
 		if (*iptrp == optr) {
 			printf("%s: Request Queue Overflow++\n",
 			       isp->isp_name);
-			return (1);
+			bus_dmamap_unload(pci->pci_dmat, dmap);
+			return (EFBIG);
 		}
 		rq->req_header.rqs_entry_count++;
 		bzero((void *)crq, sizeof (*crq));
 		crq->req_header.rqs_entry_count = 1;
 		crq->req_header.rqs_entry_type = RQSTYPE_DATASEG;
-		seg = 0;
-		while (datalen && seg < ISP_CDSEG) {
-			nextkv = (thiskv + NBPG) & ~(NBPG-1);
-			amt = nextkv - thiskv;
-			if (amt > datalen)
-				amt = datalen;
-			crq->req_dataseg[seg].ds_count = amt;
-			crq->req_dataseg[seg].ds_base = KVTOPHYS(thiskv);
-#if	0
-			printf("%s: Cont%d seg%d: 0x%lx..0x%lx\n",
-			      isp->isp_name, rq->req_header.rqs_entry_count,
-			       seg, thiskv, thiskv + (unsigned long) amt);
-#endif
-			datalen -= amt;
-			thiskv = nextkv;
-			rq->req_seg_count++;
-			seg++;
+
+		for (ovseg = 0; seg < segcnt && ovseg < ISP_CDSEG;
+		    rq->req_seg_count++, seg++, ovseg++) {
+			crq->req_dataseg[ovseg].ds_count =
+			    dmap->dm_segs[seg].ds_len;
+			crq->req_dataseg[ovseg].ds_base =
+			    dmap->dm_segs[seg].ds_addr;
 		}
-	} while (datalen > 0);
+	} while (seg < segcnt);
+
+ mapsync:
+	bus_dmamap_sync(pci->pci_dmat, dmap, xs->flags & SCSI_DATA_IN ?
+	    BUS_DMASYNC_PREREAD : BUS_DMASYNC_PREWRITE);
 	return (0);
+}
+
+static void
+isp_pci_dmateardown(isp, xs, handle)
+	struct ispsoftc *isp;
+	struct scsi_xfer *xs;
+	u_int32_t handle;
+{
+	struct isp_pcisoftc *pci = (struct isp_pcisoftc *)isp;
+	bus_dmamap_t dmap = pci->pci_xfer_dmap[handle];
+
+	bus_dmamap_sync(pci->pci_dmat, dmap, xs->flags & SCSI_DATA_IN ?
+	    BUS_DMASYNC_POSTREAD : BUS_DMASYNC_POSTWRITE);
+
+	bus_dmamap_unload(pci->pci_dmat, dmap);
 }
 
 static void
