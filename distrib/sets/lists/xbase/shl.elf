@@ -1,4 +1,4 @@
-# $NetBSD: shl.elf,v 1.9 2004/08/12 16:13:59 lukem Exp $
+# $NetBSD: shl.elf,v 1.10 2005/03/22 13:45:46 tron Exp $
 ./usr/X11R6/lib/X11/locale/lib/common/ximcp.so.2
 ./usr/X11R6/lib/X11/locale/lib/common/xlcDef.so.2
 ./usr/X11R6/lib/X11/locale/lib/common/xlcUTF8Load.so.2
@@ -76,6 +76,8 @@
 ./usr/X11R6/lib/libXxf86misc.so.1
 ./usr/X11R6/lib/libXxf86vm.so
 ./usr/X11R6/lib/libXxf86vm.so.1
+./usr/X11R6/lib/libdmx.so
+./usr/X11R6/lib/libdmx.so.1
 ./usr/X11R6/lib/libdps.so
 ./usr/X11R6/lib/libdps.so.1
 ./usr/X11R6/lib/libdpstk.so
