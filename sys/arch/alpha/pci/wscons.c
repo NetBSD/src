@@ -1,7 +1,7 @@
-/*	$NetBSD: wscons.c,v 1.1 1995/08/03 00:39:58 cgd Exp $	*/
+/*	$NetBSD: wscons.c,v 1.2 1995/08/03 01:17:40 cgd Exp $	*/
 
 /*
- * Copyright (c) 1994, 1995 Carnegie-Mellon University.
+ * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
  *
  * Author: Chris G. Demetriou

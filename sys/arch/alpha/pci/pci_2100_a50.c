@@ -1,7 +1,7 @@
-/*	$NetBSD: pci_2100_a50.c,v 1.1 1995/06/28 01:25:43 cgd Exp $	*/
+/*	$NetBSD: pci_2100_a50.c,v 1.2 1995/08/03 01:17:10 cgd Exp $	*/
 
 /*
- * Copyright (c) 1994, 1995 Carnegie-Mellon University.
+ * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
  *
  * Author: Chris G. Demetriou
