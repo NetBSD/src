@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.c,v 1.120 2001/07/07 20:09:15 mrg Exp $ */
+/*	$NetBSD: cpu.c,v 1.121 2001/07/10 15:15:24 mrg Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -537,6 +537,108 @@ raise_ipi_wait_and_unlock(cpi)
 	simple_unlock(&cpi->msg.lock);
 }
 
+/*
+ * Call a function on every CPU.  One must hold xpmsg_lock around
+ * this function.
+ */
+void
+cross_call(func, arg0, arg1, arg2, arg3, cpuset)
+	int	(*func)(int, int, int, int);
+	int	arg0, arg1, arg2, arg3;
+	int	cpuset;	/* XXX unused; cpus to send to: we do all */
+{
+	int n, i, not_done;
+	struct xpmsg_func *p;
+
+	/*
+	 * If no cpus are configured yet, just call ourselves.
+	 */
+	if (cpus == NULL) {
+		p = &cpuinfo.msg.u.xpmsg_func;
+		p->func = func;
+		p->arg0 = arg0;
+		p->arg1 = arg1;
+		p->arg2 = arg2;
+		p->arg3 = arg3;
+		p->retval = (*p->func)(p->arg0, p->arg1, p->arg2, p->arg3); 
+		return;
+	}
+
+	/*
+	 * Firstly, call each CPU.  We do this so that they might have
+	 * finished by the time we start looking.
+	 */
+	for (n = 0; n < ncpu; n++) {
+		struct cpu_info *cpi = cpus[n];
+
+		if (CPU_READY(cpi))
+			continue;
+		
+		simple_lock(&cpi->msg.lock);
+		cpi->msg.tag = XPMSG_FUNC;
+		p = &cpi->msg.u.xpmsg_func;
+		p->func = func;
+		p->arg0 = arg0;
+		p->arg1 = arg1;
+		p->arg2 = arg2;
+		p->arg3 = arg3;
+		cpi->flags &= ~CPUFLG_GOTMSG;
+		raise_ipi(cpi);
+	}
+
+	/*
+	 * Second, call ourselves.
+	 */
+
+	p = &cpuinfo.msg.u.xpmsg_func;
+
+	/* Call this on me first. */
+	p->func = func;
+	p->arg0 = arg0;
+	p->arg1 = arg1;
+	p->arg2 = arg2;
+	p->arg3 = arg3;
+
+	p->retval = (*p->func)(p->arg0, p->arg1, p->arg2, p->arg3); 
+
+	/*
+	 * Lastly, start looping, waiting for all cpu's to register that they
+	 * have completed (bailing if it takes "too long", being loud about
+	 * this in the process).
+	 */
+	i = 0;
+	while (not_done) {
+		not_done = 0;
+		for (n = 0; n < ncpu; n++) {
+			struct cpu_info *cpi = cpus[n];
+
+			if (CPU_READY(cpi))
+				continue;
+
+			if ((cpi->flags & CPUFLG_GOTMSG) != 0)
+				not_done = 1;
+		}
+		if (not_done && i++ > 100000) {
+			printf("cross_call(cpu%d): couldn't ping cpus:",
+			    cpuinfo.ci_cpuid);
+			break;
+		}
+		if (not_done == 0)
+			break;
+	}
+	for (n = 0; n < ncpu; n++) {
+		struct cpu_info *cpi = cpus[n];
+
+		if (CPU_READY(cpi))
+			continue;
+		simple_unlock(&cpi->msg.lock);
+		if ((cpi->flags & CPUFLG_GOTMSG) != 0)
+			printf(" cpu%d", cpi->ci_cpuid);
+	}
+	if (not_done)
+		printf("\n");
+}
+
 void
 mp_pause_cpus()
 {
@@ -549,8 +651,7 @@ mp_pause_cpus()
 	for (n = 0; n < ncpu; n++) {
 		struct cpu_info *cpi = cpus[n];
 
-		if (cpi == NULL || cpuinfo.mid == cpi->mid ||
-		    (cpi->flags & CPUFLG_READY) == 0)
+		if (CPU_READY(cpi))
 			continue;
 
 		simple_lock(&cpi->msg.lock);
