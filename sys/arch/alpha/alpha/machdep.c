@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.58 1996/12/03 17:34:49 cgd Exp $	*/
+/*	$NetBSD: machdep.c,v 1.59 1996/12/03 18:11:40 cgd Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995, 1996 Carnegie-Mellon University.
@@ -1434,37 +1434,31 @@ do_sir()
 	u_int64_t n;
 	int s;
 
-	while (ssir) {
+	do {
 		s = splhigh();
 		n = ssir;
 		ssir = 0;
-		splx(s);
+		splsoft(s);		/* don't recurse through spl0() */
+	
+#define	DO_SIR(bit, fn)							\
+		do {							\
+			if (n & (1 << (bit))) {				\
+				cnt.v_soft++;				\
+				fn;					\
+			}						\
+		} while (0)
 
-		if (n & SIR_NET) {
-			cnt.v_soft++;
-			netintr();
-		}
-		if (n & SIR_CLOCK) {
-			cnt.v_soft++;
-			softclock();
-		}
-		if (n & SIR_TTY) {
-			extern void comsoft __P((void));
-
-			cnt.v_soft++;
-			comsoft();
-		}
-	}
+		DO_SIR(SIR_NET, netintr);
+		DO_SIR(SIR_CLOCK, softclock);
+	} while (ssir != 0);
 }
 
 int
 spl0()
 {
 
-	if (ssir) {
-		splsoft();
-		do_sir();
-	}
+	if (ssir)
+		do_sir();		/* it lowers the IPL itself */
 
 	return (alpha_pal_swpipl(ALPHA_PSL_IPL_0));
 }
