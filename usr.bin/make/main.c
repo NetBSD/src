@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.47 1999/08/02 17:23:58 hubertf Exp $	*/
+/*	$NetBSD: main.c,v 1.48 1999/09/04 04:21:28 christos Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -39,7 +39,7 @@
  */
 
 #ifdef MAKE_BOOTSTRAP
-static char rcsid[] = "$NetBSD: main.c,v 1.47 1999/08/02 17:23:58 hubertf Exp $";
+static char rcsid[] = "$NetBSD: main.c,v 1.48 1999/09/04 04:21:28 christos Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
@@ -51,7 +51,7 @@ __COPYRIGHT("@(#) Copyright (c) 1988, 1989, 1990, 1993\n\
 #if 0
 static char sccsid[] = "@(#)main.c	8.3 (Berkeley) 3/19/94";
 #else
-__RCSID("$NetBSD: main.c,v 1.47 1999/08/02 17:23:58 hubertf Exp $");
+__RCSID("$NetBSD: main.c,v 1.48 1999/09/04 04:21:28 christos Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -390,6 +390,7 @@ Main_ParseArgLine(line)
 	char *args;			/* Space used by the args */
 	char *buf, *p1;
 	char *argv0 = Var_Value(".MAKE", VAR_GLOBAL, &p1);
+	size_t len;
 
 	if (line == NULL)
 		return;
@@ -398,8 +399,8 @@ Main_ParseArgLine(line)
 	if (!*line)
 		return;
 
-	buf = emalloc(strlen(line) + strlen(argv0) + 2);
-	(void)sprintf(buf, "%s %s", argv0, line);
+	buf = emalloc(len = strlen(line) + strlen(argv0) + 2);
+	(void)snprintf(buf, len, "%s %s", argv0, line);
 	if (p1)
 		free(p1);
 
@@ -874,7 +875,8 @@ ReadMakefile(p, q)
 	char *fname = p;		/* makefile to read */
 	extern Lst parseIncPath;
 	FILE *stream;
-	char *name, path[MAXPATHLEN + 1];
+	size_t len = MAXPATHLEN;
+	char *name, *path = emalloc(len);
 
 	if (!strcmp(fname, "-")) {
 		Parse_File("(stdin)", stdin);
@@ -884,7 +886,11 @@ ReadMakefile(p, q)
 			goto found;
 		/* if we've chdir'd, rebuild the path name */
 		if (curdir != objdir && *fname != '/') {
-			(void)sprintf(path, "%s/%s", curdir, fname);
+			size_t plen = strlen(curdir) + strlen(fname) + 2;
+			if (len < plen)
+				path = erealloc(path, len = 2 * plen);
+			
+			(void)snprintf(path, len, "%s/%s", curdir, fname);
 			if ((stream = fopen(path, "r")) != NULL) {
 				fname = path;
 				goto found;
@@ -894,8 +900,10 @@ ReadMakefile(p, q)
 		name = Dir_FindFile(fname, parseIncPath);
 		if (!name)
 			name = Dir_FindFile(fname, sysIncPath);
-		if (!name || !(stream = fopen(name, "r")))
+		if (!name || !(stream = fopen(name, "r"))) {
+			free(path);
 			return(FALSE);
+		}
 		fname = name;
 		/*
 		 * set the MAKEFILE variable desired by System V fans -- the
@@ -906,6 +914,7 @@ found:		Var_Set("MAKEFILE", fname, VAR_GLOBAL);
 		Parse_File(fname, stream);
 		(void)fclose(stream);
 	}
+	free(path);
 	return(TRUE);
 }
 

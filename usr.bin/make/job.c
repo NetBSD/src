@@ -1,4 +1,4 @@
-/*	$NetBSD: job.c,v 1.28 1999/07/16 05:38:20 christos Exp $	*/
+/*	$NetBSD: job.c,v 1.29 1999/09/04 04:21:28 christos Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -39,14 +39,14 @@
  */
 
 #ifdef MAKE_BOOTSTRAP
-static char rcsid[] = "$NetBSD: job.c,v 1.28 1999/07/16 05:38:20 christos Exp $";
+static char rcsid[] = "$NetBSD: job.c,v 1.29 1999/09/04 04:21:28 christos Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)job.c	8.2 (Berkeley) 3/19/94";
 #else
-__RCSID("$NetBSD: job.c,v 1.28 1999/07/16 05:38:20 christos Exp $");
+__RCSID("$NetBSD: job.c,v 1.29 1999/09/04 04:21:28 christos Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -1383,7 +1383,7 @@ JobMakeArgv(job, argv)
 	 * Bourne shell thinks its second argument is a file to source.
 	 * Grrrr. Note the ten-character limitation on the combined arguments.
 	 */
-	(void)sprintf(args, "-%s%s",
+	(void)snprintf(args, sizeof(args), "-%s%s",
 		      ((job->flags & JOB_IGNERR) ? "" :
 		       (commandShell->exit ? commandShell->exit : "")),
 		      ((job->flags & JOB_SILENT) ? "" :
@@ -1519,7 +1519,7 @@ JobRestart(job)
 	 * 'echo' flag of the commandShell is used to get it to start echoing
 	 * as soon as it starts processing commands.
 	 */
-	char	  *argv[4];
+	char	  *argv[10];
 
 	JobMakeArgv(job, argv);
 
@@ -1680,7 +1680,7 @@ JobStart(gn, flags, previous)
 			       * if any. */
 {
     register Job  *job;       /* new job descriptor */
-    char	  *argv[4];   /* Argument vector to shell */
+    char	  *argv[10];  /* Argument vector to shell */
     static int    jobno = 0;  /* job number of catching output in a file */
     Boolean	  cmdsOK;     /* true if the nodes commands were all right */
     Boolean 	  local;      /* Set true if the job was run locally */
@@ -1902,7 +1902,8 @@ JobStart(gn, flags, previous)
 	} else {
 	    (void) fprintf(stdout, "Remaking `%s'\n", gn->name);
   	    (void) fflush(stdout);
-	    sprintf(job->outFile, "%s%02d", tfile, jobno);
+	    (void)snprintf(job->outFile, sizeof(job->outFile), "%s%02d", tfile,
+		jobno);
 	    jobno = (jobno + 1) % 100;
 	    job->outFd = open(job->outFile,O_WRONLY|O_CREAT|O_APPEND,0600);
 	    (void) fcntl(job->outFd, F_SETFD, 1);
@@ -2422,7 +2423,8 @@ Job_Init(maxproc, maxlocal)
 {
     GNode         *begin;     /* node for commands to do at the very start */
 
-    (void) sprintf(tfile, "/tmp/make%05ld", (unsigned long)getpid());
+    (void) snprintf(tfile, sizeof(tfile), "/tmp/make%05ld",
+	(unsigned long)getpid());
 
     jobs =  	  Lst_Init(FALSE);
     stoppedJobs = Lst_Init(FALSE);

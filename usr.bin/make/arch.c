@@ -1,4 +1,4 @@
-/*	$NetBSD: arch.c,v 1.29 1998/11/11 19:37:06 christos Exp $	*/
+/*	$NetBSD: arch.c,v 1.30 1999/09/04 04:21:28 christos Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -39,14 +39,14 @@
  */
 
 #ifdef MAKE_BOOTSTRAP
-static char rcsid[] = "$NetBSD: arch.c,v 1.29 1998/11/11 19:37:06 christos Exp $";
+static char rcsid[] = "$NetBSD: arch.c,v 1.30 1999/09/04 04:21:28 christos Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)arch.c	8.2 (Berkeley) 1/2/94";
 #else
-__RCSID("$NetBSD: arch.c,v 1.29 1998/11/11 19:37:06 christos Exp $");
+__RCSID("$NetBSD: arch.c,v 1.30 1999/09/04 04:21:28 christos Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -205,7 +205,7 @@ Arch_ParseArchive (linePtr, nodeLst, ctxt)
     GNode	    *gn;     	    /* New node */
     char	    *libName;  	    /* Library-part of specification */
     char	    *memName;  	    /* Member-part of specification */
-    char	    nameBuf[MAKE_BSIZE]; /* temporary place for node name */
+    char	    *nameBuf;	    /* temporary place for node name */
     char	    saveChar;  	    /* Ending delimiter of member-name */
     Boolean 	    subLibName;	    /* TRUE if libName should have/had
 				     * variable substitution performed on it */
@@ -318,6 +318,7 @@ Arch_ParseArchive (linePtr, nodeLst, ctxt)
 	    char    *buf;
 	    char    *sacrifice;
 	    char    *oldMemName = memName;
+	    size_t   sz;
 
 	    memName = Var_Subst(NULL, memName, ctxt, TRUE);
 
@@ -326,9 +327,10 @@ Arch_ParseArchive (linePtr, nodeLst, ctxt)
 	     * variables and multi-word variable values.... The results
 	     * are just placed at the end of the nodeLst we're returning.
 	     */
-	    buf = sacrifice = emalloc(strlen(memName)+strlen(libName)+3);
+	    sz = strlen(memName)+strlen(libName)+3;
+	    buf = sacrifice = emalloc(sz);
 
-	    sprintf(buf, "%s(%s)", libName, memName);
+	    snprintf(buf, sz, "%s(%s)", libName, memName);
 
 	    if (strchr(memName, '$') && strcmp(memName, oldMemName) == 0) {
 		/*
@@ -360,15 +362,21 @@ Arch_ParseArchive (linePtr, nodeLst, ctxt)
 	} else if (Dir_HasWildcards(memName)) {
 	    Lst	  members = Lst_Init(FALSE);
 	    char  *member;
+	    size_t sz = MAXPATHLEN, nsz;
+	    nameBuf = emalloc(sz);
 
 	    Dir_Expand(memName, dirSearchPath, members);
 	    while (!Lst_IsEmpty(members)) {
 		member = (char *)Lst_DeQueue(members);
+		nsz = strlen(libName) + strlen(member) + 3;
+		if (sz > nsz)
+		    nameBuf = erealloc(nameBuf, sz = nsz * 2);
 
-		sprintf(nameBuf, "%s(%s)", libName, member);
+		snprintf(nameBuf, sz, "%s(%s)", libName, member);
 		free(member);
 		gn = Targ_FindNode (nameBuf, TARG_CREATE);
 		if (gn == NILGNODE) {
+		    free(nameBuf);
 		    return (FAILURE);
 		} else {
 		    /*
@@ -383,9 +391,13 @@ Arch_ParseArchive (linePtr, nodeLst, ctxt)
 		}
 	    }
 	    Lst_Destroy(members, NOFREE);
+	    free(nameBuf);
 	} else {
-	    sprintf(nameBuf, "%s(%s)", libName, memName);
+	    size_t	sz = strlen(libName) + strlen(memName) + 3;
+	    nameBuf = emalloc(sz);
+	    snprintf(nameBuf, sz, "%s(%s)", libName, memName);
 	    gn = Targ_FindNode (nameBuf, TARG_CREATE);
+	    free(nameBuf);
 	    if (gn == NILGNODE) {
 		return (FAILURE);
 	    } else {
@@ -951,7 +963,7 @@ Arch_Touch (gn)
 	free(p1);
     if (p2)
 	free(p2);
-    sprintf(arh.ar_date, "%-12ld", (long) now);
+    snprintf(arh.ar_date, sizeof(arh.ar_date), "%-12ld", (long) now);
 
     if (arch != (FILE *) NULL) {
 	(void)fwrite ((char *)&arh, sizeof (struct ar_hdr), 1, arch);
@@ -984,7 +996,7 @@ Arch_TouchLib (gn)
     struct utimbuf  times;	/* Times for utime() call */
 
     arch = ArchFindMember (gn->path, RANLIBMAG, &arh, "r+");
-    sprintf(arh.ar_date, "%-12ld", (long) now);
+    snprintf(arh.ar_date, sizeof(arh.ar_date), "%-12ld", (long) now);
 
     if (arch != (FILE *) NULL) {
 	(void)fwrite ((char *)&arh, sizeof (struct ar_hdr), 1, arch);
@@ -1122,9 +1134,10 @@ Arch_FindLib (gn, path)
     Lst	    	    path;	      /* Search path */
 {
     char	    *libName;   /* file name for archive */
+    size_t	     sz = strlen(gn->name) + 6 - 2;
 
-    libName = (char *)emalloc (strlen (gn->name) + 6 - 2);
-    sprintf(libName, "lib%s.a", &gn->name[2]);
+    libName = (char *)emalloc(sz);
+    snprintf(libName, sz, "lib%s.a", &gn->name[2]);
 
     gn->path = Dir_FindFile (libName, path);
 
