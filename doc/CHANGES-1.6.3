@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-1.6.3,v 1.1.2.134 2004/11/12 00:00:29 he Exp $
+#	$NetBSD: CHANGES-1.6.3,v 1.1.2.135 2004/12/16 05:12:14 jmc Exp $
 
 A complete list of changes from NetBSD 1.6.2 to NetBSD 1.6.3:
 
@@ -1515,3 +1515,17 @@ usr.bin/newsyslog/newsyslog.c			1.47
 
 	Various fixes for when ngen is 0.  Fixes PR#26991.
 	[mjl, ticket #1746]
+
+sys/compat/hpux/hpux_compat.c			patch
+sys/compat/hpux/hpux_tty.c			patch
+sys/compat/ibcs2/ibcs2_misc.c			patch
+sys/compat/irix/irix_prctl.c			patch
+sys/compat/irix/irix_swap.c			patch
+sys/compat/osf1/osf1_signal.c			patch
+sys/compat/svr4/svr4_filio.c			patch
+sys/compat/svr4/svr4_signal.c			patch
+sys/compat/svr4_32/svr4_32_filio.c		patch
+sys/compat/ultrix/ultrix_misc.c			patch
+
+	Bounds check syscall arguments where appropriate.
+	[david, ticket #1800]
