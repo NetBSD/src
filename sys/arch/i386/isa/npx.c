@@ -1,7 +1,7 @@
-/*	$NetBSD: npx.c,v 1.32 1995/01/03 01:30:53 mycroft Exp $	*/
+/*	$NetBSD: npx.c,v 1.33 1995/01/26 06:14:14 mycroft Exp $	*/
 
 /*-
- * Copyright (c) 1994 Charles Hannum.
+ * Copyright (c) 1994, 1995 Charles Hannum.
  * Copyright (c) 1990 William Jolitz.
  * Copyright (c) 1991 The Regents of the University of California.
  * All rights reserved.
@@ -36,8 +36,6 @@
  *
  *	@(#)npx.c	7.2 (Berkeley) 5/12/91
  */
-#include "npx.h"
-#if NNPX > 0
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -63,8 +61,6 @@
  * 387 and 287 Numeric Coprocessor Extension (NPX) Driver.
  */
 
-#ifdef	__GNUC__
-
 #define	fldcw(addr)		__asm("fldcw %0" : : "m" (*addr))
 #define	fnclex()		__asm("fnclex")
 #define	fninit()		__asm("fninit")
@@ -85,28 +81,6 @@
 				  __asm("lmsw %0" : : "r" (msw));})
 #define	stop_emulating()	__asm("clts")
 
-#else	/* not __GNUC__ */
-
-void	disable_intr	__P((void));
-void	enable_intr	__P((void));
-void	fldcw		__P((caddr_t addr));
-void	fnclex		__P((void));
-void	fninit		__P((void));
-void	fnsave		__P((caddr_t addr));
-void	fnstcw		__P((caddr_t addr));
-void	fnstsw		__P((caddr_t addr));
-void	fp_divide_by_0	__P((void));
-void	frstor		__P((caddr_t addr));
-void	fwait		__P((void));
-u_long	read_eflags	__P((void));
-void	start_emulating	__P((void));
-void	stop_emulating	__P((void));
-void	write_eflags	__P((u_long ef));
-
-#endif	/* __GNUC__ */
-
-typedef u_char bool_t;
-
 extern	struct gate_descriptor idt[];
 
 int	npxdna		__P((void));
@@ -116,11 +90,16 @@ int	npxintr		__P((struct intrframe *frame));
 void	npxsave		__P((struct save87 *addr));
 int	npxprobe1	__P((struct isa_attach_args *));
 
+struct npx_softc {
+	struct device sc_dev;
+	struct intrhand sc_ih;
+};
+
 int npxprobe __P((struct device *, void *, void *));
 void npxattach __P((struct device *, struct device *, void *));
 
 struct cfdriver npxcd = {
-	NULL, "npx", npxprobe, npxattach, DV_DULL, sizeof(struct device)
+	NULL, "npx", npxprobe, npxattach, DV_DULL, sizeof(struct npx_softc)
 };
 
 struct proc	*npxproc;
@@ -342,22 +321,22 @@ npxattach(parent, self, aux)
 	struct device *parent, *self;
 	void *aux;
 {
+	struct npx_softc *sc = (void *)self;
 	struct isa_attach_args *ia = aux;
-	static struct intrhand npxhand;
 
 	switch (npx_type) {
 	case NPX_INTERRUPT:
 		printf("\n");
-		npxhand.ih_fun = npxintr;
-		npxhand.ih_arg = 0;
-		npxhand.ih_level = IPL_NONE;
-		intr_establish(ia->ia_irq, IST_EDGE, &npxhand);
+		sc->sc_ih.ih_fun = npxintr;
+		sc->sc_ih.ih_arg = 0;
+		sc->sc_ih.ih_level = IPL_NONE;
+		intr_establish(ia->ia_irq, IST_EDGE, &sc->sc_ih);
 		break;
 	case NPX_EXCEPTION:
 		printf(": using exception 16\n");
 		break;
 	case NPX_BROKEN:
-		printf(": error reporting broken; using emulator\n");
+		printf(": error reporting broken; not using\n");
 		npx_type = NPX_NONE;
 		return;
 	}
@@ -597,5 +576,3 @@ npxinit()
 	fldcw(&control);
 	fwait();
 }
-
-#endif /* NNPX > 0 */
