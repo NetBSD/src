@@ -12,7 +12,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBM_SCCS) && !defined(lint)
-__RCSID("$NetBSD: e_atan2.c,v 1.9 1997/10/09 11:28:40 lukem Exp $");
+__RCSID("$NetBSD: e_atan2.c,v 1.9.2.1 1997/11/11 22:36:16 veego Exp $");
 #endif
 
 /* __ieee754_atan2(y,x)
@@ -75,7 +75,7 @@ pi_lo   = 1.2246467991473531772E-16; /* 0x3CA1A626, 0x33145C07 */
 	if(((ix|((lx|-lx)>>31))>0x7ff00000)||
 	   ((iy|((ly|-ly)>>31))>0x7ff00000))	/* x or y is NaN */
 	   return x+y;
-	if((hx-(0x3ff00000|lx))==0) return atan(y);   /* x=1.0 */
+	if(((hx-0x3ff00000)|lx)==0) return atan(y);   /* x=1.0 */
 	m = ((hy>>31)&1)|((hx>>30)&2);	/* 2*sign(x)+sign(y) */
 
     /* when y = 0 */
