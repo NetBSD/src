@@ -34,22 +34,27 @@
  * SUCH DAMAGE.
  */
 
+#include <sys/cdefs.h>
 #ifndef lint
-static char copyright[] =
-"@(#) Copyright (c) 1983, 1993\n\
-	The Regents of the University of California.  All rights reserved.\n";
+__COPYRIGHT("@(#) Copyright (c) 1983, 1993\n\
+	The Regents of the University of California.  All rights reserved.\n");
 #endif /* not lint */
 
 #ifndef lint
-/*static char sccsid[] = "from: @(#)fsplit.c	8.1 (Berkeley) 6/6/93";*/
-static char rcsid[] = "$NetBSD: fsplit.c,v 1.4 1995/09/28 05:15:07 perry Exp $";
+#if 0
+static char sccsid[] = "from: @(#)fsplit.c	8.1 (Berkeley) 6/6/93";
+#elsej
+__RCSID("$NetBSD: fsplit.c,v 1.5 1997/10/18 15:14:52 lukem Exp $");
+#endif
 #endif /* not lint */
+
+#include <sys/types.h>
+#include <sys/stat.h>
 
 #include <ctype.h>
 #include <stdio.h>
 #include <string.h>
-#include <sys/types.h>
-#include <sys/stat.h>
+#include <unistd.h>
 
 /*
  *	usage:		fsplit [-e efile] ... [file]
@@ -82,7 +87,18 @@ FILE *ifp;
 char 	x[]="zzz000.f",
 	mainp[]="main000.f",
 	blkp[]="blkdta000.f";
-char *look(), *skiplab(), *functs();
+
+void	badparms __P((void));
+char   *functs __P((char *));
+int	getline __P((void));
+void	get_name __P((char *, int));
+int	main __P((int, char **));
+int	lend __P((void));
+int	lname __P((char *));
+char   *look __P((char *, char *));
+int	saveit __P((char *));
+int	scan_name __P((char *, char *));
+char   *skiplab __P((char *));
 
 #define TRUE 1
 #define FALSE 0
@@ -95,17 +111,17 @@ struct stat sbuf;
 
 #define trim(p)	while (*p == ' ' || *p == '\t') p++
 
+int
 main(argc, argv)
-char **argv;
+	int argc;
+	char **argv;
 {
-	register FILE *ofp;	/* output file */
-	register rv;		/* 1 if got card in output file, 0 otherwise */
-	register char *ptr;
-	int nflag,		/* 1 if got name of subprog., 0 otherwise */
-		retval,
-		i;
-	char name[20],
-		*extrptr = extrbuf;
+	FILE *ofp;	/* output file */
+	int rv;		/* 1 if got card in output file, 0 otherwise */
+	char *ptr;
+	int nflag;	/* 1 if got name of subprog., 0 otherwise */
+	int retval, i;
+	char name[20], *extrptr = extrbuf;
 
 	/*  scan -e options */
 	while ( argc > 1  && argv[1][0] == '-' && argv[1][1] == 'e') {
@@ -186,14 +202,16 @@ char **argv;
     }
 }
 
+void
 badparms()
 {
 	fprintf(stderr, "fsplit: usage:  fsplit [-e efile] ... [file] \n");
 	exit(1);
 }
 
+int
 saveit(name)
-char *name;
+	char *name;
 {
 	int i;
 	char	fname[50],
@@ -211,11 +229,12 @@ char *name;
 	return(0);
 }
 
+void
 get_name(name, letters)
-char *name;
-int letters;
+	char *name;
+	int letters;
 {
-	register char *ptr;
+	char *ptr;
 
 	while (stat(name, &sbuf) >= 0) {
 		for (ptr = name + letters + 2; ptr >= name + letters; ptr--) {
@@ -231,9 +250,10 @@ int letters;
 	}
 }
 
+int
 getline()
 {
-	register char *ptr;
+	char *ptr;
 
 	for (ptr = buf; ptr < &buf[BSZ]; ) {
 		*ptr = getc(ifp);
@@ -250,9 +270,10 @@ getline()
 }
 
 /* return 1 for 'end' alone on card (up to col. 72),  0 otherwise */
+int
 lend()
 {
-	register char *p;
+	char *p;
 
 	if ((p = skiplab(buf)) == 0)
 		return (0);
@@ -275,11 +296,13 @@ lend()
 		return 0 if comment card, 1 if found
 		name and put in arg string. invent name for unnamed
 		block datas and main programs.		*/
+
+int
 lname(s)
-char *s;
+	char *s;
 {
 #	define LINESIZE 80 
-	register char *ptr, *p, *sptr;
+	char *ptr, *p;
 	char	line[LINESIZE], *iptr = line;
 
 	/* first check for comment cards */
@@ -326,8 +349,9 @@ char *s;
 	return(1);
 }
 
+int
 scan_name(s, ptr)
-char *s, *ptr;
+	char *s, *ptr;
 {
 	char *sptr;
 
@@ -348,10 +372,11 @@ char *s, *ptr;
 	return(1);
 }
 
-char *functs(p)
-char *p;
+char *
+functs(p)
+	char *p;
 {
-        register char *ptr;
+        char *ptr;
 
 /*      look for typed functions such as: real*8 function,
                 character*16 function, character*(*) function  */
@@ -376,10 +401,12 @@ char *p;
 /* 	if first 6 col. blank, return ptr to col. 7,
 	if blanks and then tab, return ptr after tab,
 	else return 0 (labelled statement, comment or continuation */
-char *skiplab(p)
-char *p;
+
+char *
+skiplab(p)
+	char *p;
 {
-	register char *ptr;
+	char *ptr;
 
 	for (ptr = p; ptr < &p[6]; ptr++) {
 		if (*ptr == ' ')
@@ -395,10 +422,12 @@ char *p;
 
 /* 	return 0 if m doesn't match initial part of s;
 	otherwise return ptr to next char after m in s */
-char *look(s, m)
-char *s, *m;
+
+char *
+look(s, m)
+	char *s, *m;
 {
-	register char *sp, *mp;
+	char *sp, *mp;
 
 	sp = s; mp = m;
 	while (*mp) {
