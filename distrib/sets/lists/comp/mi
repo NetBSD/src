@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.138 1999/05/04 15:50:24 kleink Exp $
+# $NetBSD: mi,v 1.139 1999/05/06 00:08:23 thorpej Exp $
 ./sys
 ./usr/bin/ar
 ./usr/bin/as
@@ -227,6 +227,7 @@
 ./usr/include/dev/mulaw.h
 ./usr/include/dev/ofisa
 ./usr/include/dev/ofisa/ofisavar.h
+./usr/include/dev/ofw/ofw_pci.h
 ./usr/include/dev/ofw/openfirm.h
 ./usr/include/dev/pci
 ./usr/include/dev/pci/if_devar.h
