@@ -1,4 +1,4 @@
-.\"	$NetBSD: prep,v 1.9 2000/11/02 08:20:27 mbw Exp $
+.\"	$NetBSD: prep,v 1.10 2000/11/04 14:06:24 wiz Exp $
 .
 .Ss2 Open Firmware System Preparation
 .
@@ -900,8 +900,8 @@ the
 .Ic mountd
 process.  Otherwise, you need to run:
 .Pp
-.Dl # Ic "/sbin/mountd"
-.Dl # Ic "/sbin/nfsd -tun 4"
+.Dl # Ic "/usr/sbin/mountd"
+.Dl # Ic "/usr/sbin/nfsd -tun 4"
 .Pp
 Now, you need to place the files your netboot client will need.
 As noted above in the section
