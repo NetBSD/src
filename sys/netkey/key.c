@@ -1,3 +1,5 @@
+/*	$NetBSD: key.c,v 1.5 1999/07/03 21:32:47 thorpej Exp $	*/
+
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
  * All rights reserved.
@@ -27,7 +29,7 @@
  * SUCH DAMAGE.
  */
 
-/* KAME $Id: key.c,v 1.4 1999/07/03 04:45:53 lukem Exp $ */
+/* KAME $Id: key.c,v 1.5 1999/07/03 21:32:47 thorpej Exp $ */
 
 /*
  * This code is referd to RFC 2367,
