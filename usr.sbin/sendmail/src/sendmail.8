@@ -1,5 +1,5 @@
-.\" Copyright (c) 1988, 1991 The Regents of the University of California.
-.\" All rights reserved.
+.\" Copyright (c) 1988, 1991, 1993
+.\"	The Regents of the University of California.  All rights reserved.
 .\"
 .\" Redistribution and use in source and binary forms, with or without
 .\" modification, are permitted provided that the following conditions
@@ -29,9 +29,9 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.\"     @(#)sendmail.8	6.10 (Berkeley) 8/5/91
+.\"     @(#)sendmail.8	8.1 (Berkeley) 6/7/93
 .\"
-.Dd August 5, 1991
+.Dd June 7, 1993
 .Dt SENDMAIL 8
 .Os BSD 4
 .Sh NAME
@@ -83,6 +83,13 @@ then the letter will not be delivered to `john'.
 .Pp
 Flags are:
 .Bl -tag -width Fl
+.It Fl B Ns Ar type
+Set the body type to
+.Ar type .
+Current legal values
+.Li 7BIT
+or
+.Li 8BITMIME .
 .It Fl ba
 Go into
 .Tn ARPANET
@@ -169,6 +176,10 @@ Set option
 to the specified
 .Em value .
 Options are described below.
+.It Fl p Ns Ar protocol
+Set the name of the protocol used to receive the message.
+This can be a simple protocol name such as ``UUCP''
+or a protocol and hostname, such as ``UUCP:ucbvax''.
 .It Fl q Ns Bq Ar time
 Processed saved messages in the queue at given intervals.
 If
@@ -236,6 +247,13 @@ Use alternate alias file.
 On mailers that are considered ``expensive'' to connect to,
 don't initiate immediate connection.
 This requires queueing.
+.It Li C Ar N
+Checkpoint the queue file after every
+.Ar N
+successful deliveries (default 10).
+This avoids excessive duplicate deliveries
+when sending to long mailing lists
+interrupted by system crashes.
 .It Li d Ns Ar x
 Set the delivery mode to
 .Ar x .
@@ -291,16 +309,12 @@ The default group id to use when calling mailers.
 The
 .Tn SMTP
 help file.
+.It Li h Ar N
+The maximum number of times a message is allowed to ``hop''
+before we decide it is in a loop.
 .It Li i
 Do not take dots on a line by themselves
 as a message terminator.
-.It Li k Ar N
-Checkpoint the queue file after every
-.Ar N
-successful deliveries (default 10).
-This avoids excessive duplicate deliveries
-when sending to long mailing lists
-interrupted by system crashes.
 .It Li L Ns Ar n
 The log level.
 .It Li m
@@ -350,17 +364,17 @@ option compiled in.
 .It Li u Ns Ar N
 Set the default user id for mailers.
 .It Li w
-If not set, name server lookups will us a querytype of ANY
+If set, name server lookups will us a querytype of ANY
 to find types
 .Dv CNAME , A ,
 and
 .Dv MX ,
 and will cause all existing records to be cached by our local server.
-If there is (might be) a wildcard MX in the local domain
-or its parents that are searched, you
-.ul
-must
-set this option, which will use a querytype of
+If you are certain that there are no wildcard MX records in the local domain
+or its parents that are searched, you can
+set this option.
+If the option is not set,
+name server lookups will use a querytype of
 .Dv CNAME
 only;
 otherwise, it would cause all fully-qualified names
