@@ -1,4 +1,4 @@
-#	$NetBSD: files.arm32,v 1.106 2001/04/05 20:31:50 bjh21 Exp $
+#	$NetBSD: files.arm32,v 1.107 2001/04/14 19:22:43 reinoud Exp $
 #
 # First try for arm-specific configuration info
 #
@@ -140,6 +140,13 @@ file    arch/arm32/dev/qms.c			qms needs-flag
 
 attach	qms at iomd with qms_iomd
 file    arch/arm32/iomd/qms_iomd.c		qms_iomd
+
+# wscons quadmouse device
+device	wsqms : wsmousedev
+file	arch/arm32/dev/wsqms.c			wsqms needs-flag
+
+attach wsqms at iomd with wsqms_iomd  
+file	arch/arm32/iomd/wsqms_iomd.c		wsqms_iomd
 
 # attribute used to represent the "keyboard controller" on the shark
 # XXX should be a real device

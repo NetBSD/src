@@ -1,4 +1,4 @@
-#	$NetBSD: RPC_WSCONS,v 1.3 2001/04/14 14:51:04 reinoud Exp $
+#	$NetBSD: RPC_WSCONS,v 1.4 2001/04/14 19:22:43 reinoud Exp $
 #
 #	RPC_WSCONS -- Full RiscPC config with wscons
 #
@@ -145,9 +145,6 @@ iomd0	at mainbus?
 # system clock via IOMD
 clock*	at iomd?
 
-# quadrature mouse via IOMD
-qms*	at iomd?
-
 # IIC bus device
 iic*	at iomd?
 
@@ -184,6 +181,9 @@ wsdisplay*      at vidcvideo? console ?  # display itself
 rpckbd*         at iomd?                 # based on old `kbd' driver
 wskbd*          at rpckbd?               # wskbd on RiscPC keyboard
 
+wsqms*		at iomd?		 # ws quadmouse driver
+wsmouse*	at wsqms?		 # wsmouse on ws quadmouse
+
 pseudo-device	wsmux	2		 # why 2 ?
 
 
@@ -192,7 +192,8 @@ pseudo-device	wsmux	2		 # why 2 ?
 # vidcconsole PS2 mouse at IOMD
 #vidcconsole0   at vidc?                 # display + vt100 emulation
 #kbd*           at iomd?                 # PS/2 keyboard for vidcconsole
-#opms*          at iomd?                 # RiscPC mouse for vidcconsole
+#qms*		at iomd?		 # RiscPC mouse for vidcconsole
+#opms*          at iomd?                 # A7000/NC? mouse for vidcconsole
 
 # generic VT console device
 #vt0     at vidc?
