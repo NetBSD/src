@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.3 2003/09/30 06:41:30 lukem Exp $
+#	$NetBSD: Makefile,v 1.4 2003/12/19 14:13:03 rtr Exp $
 
 .include "../Makefile.serverlib"
 
@@ -18,6 +18,10 @@ SRCS=		allowev.c chgdctl.c chgfctl.c chgkbd.c chgkmap.c chgprop.c \
 CPPFLAGS+=	-I${X11SRCDIR.xc}/programs/Xserver/include \
 		-I${DESTDIR}${X11INCDIR}/X11/extensions \
 		-I${DESTDIR}${X11INCDIR}/X11
+
+.if ${MACHINE} == "sparc" || ${MACHINE} == "sparc64"
+CPPFLAGS+=	-DXINPUT
+.endif
 
 .include <bsd.x11.mk>
 .include <bsd.lib.mk>
