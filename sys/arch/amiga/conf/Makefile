@@ -1,81 +1,30 @@
-#	$NetBSD: Makefile,v 1.9 2002/03/13 20:23:44 jandberg Exp $
+#	$NetBSD: Makefile,v 1.10 2002/06/18 17:39:39 lukem Exp $
 
 #
-# Use this file to regenerate AMIGA and DRACO out of the GENERIC template.
+# Use this file to regenerate AMIGA, DRACO, GENERIC, INSTALL and WSCONS
+# out of the GENERIC.in template.
 #
 
-all: AMIGA DRACO INSTALL WSCONS
+all: AMIGA DRACO GENERIC INSTALL WSCONS
 
-AMIGA: GENERIC
-	@echo Generating AMIGA...
-	@echo -n '# '$$ > $@
-	@echo NetBSD$$ >> $@
-	@echo '#' >> $@
-	@echo '# This file was automatically created. Changes will be' >> $@
-	@echo '# lost when running make in this directory.' >> $@
-	@echo '#' >> $@
-	@echo -n '# Created from: ' >> $@
-	@sed -e '1s/$$NetBSD/NetBSD/' GENERIC |\
-		cpp -undef -P -DAMIGA_CONFIGURATION 2>/dev/null |\
-		sed -e 's/\([ 	][ 	]*\)\#\([^ ]\)/\1# \2/' |\
-		awk '{if (NF>1)count=0;else count++;if(count<=1)print}' >> $@
+AMIGA: __generate_config
 
-DRACO: GENERIC
-	@echo Generating DRACO...
-	@echo -n '# '$$ > $@
-	@echo NetBSD$$ >> $@
-	@echo '#' >> $@
-	@echo '# This file was automatically created. Changes will be' >> $@
-	@echo '# lost when running make in this directory.' >> $@
-	@echo '#' >> $@
-	@echo -n '# Created from: ' >> $@
-	@sed -e '1s/$$NetBSD/NetBSD/' GENERIC |\
-		cpp -undef -P -DDRACO_CONFIGURATION 2>/dev/null |\
-		sed -e 's/\([ 	][ 	]*\)\#\([^ ]\)/\1# \2/' |\
-		awk '{if (NF>1)count=0;else count++;if(count<=1)print}' >> $@
+DRACO: __generate_config
 
-INSTALL: GENERIC
-	@echo Generating INSTALL...
-	@echo -n '# '$$ > $@
-	@echo NetBSD$$ >> $@
-	@echo '#' >> $@
-	@echo '# This file was automatically created. Changes will be' >> $@
-	@echo '# lost when running make in this directory.' >> $@
-	@echo '#' >> $@
-	@echo -n '# Created from: ' >> $@
-	@sed -e '1s/$$NetBSD/NetBSD/' \
-		-e 's/	pty	/	pty 2	/' GENERIC |\
-		cpp -undef -P \
-			-DAMIGA_CONFIGURATION -DDRACO_CONFIGURATION \
-			-DINSTALL_CONFIGURATION 2>/dev/null |\
-		sed -e 's/\([ 	][ 	]*\)\#\([^ ]\)/\1# \2/' |\
-		awk '{if (NF>1)count=0;else count++;if(count<=1)print}' >> $@
+GENERIC: __generate_config
 
-#
-# Generate WSCONS by uncommenting needed things and commenting
-# out ite.
-#
-WSCONS: GENERIC
-	@echo Generating $@ ...
-	@echo -n '# '$$ > $@
-	@echo NetBSD$$ >> $@
-	@echo '#' >> $@
-	@echo '# This file was automatically created. Changes will be' >> $@
-	@echo '# lost when running make in this directory.' >> $@
-	@echo '#' >> $@
-	@echo -n '# Created from: ' >> $@
-	@cat GENERIC | \
-		sed -e 's/^ite/#ite/' | \
-		sed -e 's/^grf/#grf/' | \
-		sed -e 's/^#ws/ws/' | \
-		sed -e 's/^#amidisplay/amidisplay/' | \
-		sed -e 's/^#\(options.*[[:<:]]WS.*\)/\1/' | \
-		sed -e 's/^#\(options.*[[:<:]]FONT_.*\)/\1/' | \
-		cpp -undef -P 2>/dev/null \
-			-DAMIGA_CONFIGURATION \
-			-DDRACO_CONFIGURATION | \
-		sed -e '1s/$$NetBSD/NetBSD/' | \
-		awk '{if (NF>1)count=0;else count++;if(count<=1)print}' | \
-		cat >>$@
+INSTALL: __generate_config
 
-AMIGA DRACO INSTALL WSCONS: GENERIC Makefile
+WSCONS: __generate_config
+
+__generate_config: .USE GENERIC.in Makefile
+	@echo Generating ${.TARGET}...
+	@echo -n '# '$$ > ${.TARGET}
+	@echo NetBSD$$ >> ${.TARGET}
+	@echo '#' >> ${.TARGET}
+	@echo '# This file was automatically created.' >> ${.TARGET}
+	@echo '# Changes will be lost when make is run in this directory.' >> ${.TARGET}
+	@echo '#' >> ${.TARGET}
+	@echo -n '# Created from: ' >> ${.TARGET}
+	sed -e '1s/$$NetBSD/NetBSD/' GENERIC.in |\
+		m4 -P -DM4_Target=${.TARGET} >> ${.TARGET}
