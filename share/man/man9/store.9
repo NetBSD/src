@@ -1,4 +1,4 @@
-.\"	$NetBSD: store.9,v 1.2 1996/01/09 21:59:27 perry Exp $
+.\"	$NetBSD: store.9,v 1.3 1996/06/19 22:50:26 pk Exp $
 .\"
 .\" Copyright (c) 1996 Jason R. Thorpe.
 .\" All rights reserved.
@@ -60,17 +60,17 @@ routines provide the following functionality:
 .Bl -tag -width "suswintr()"
 .It Fn subyte
 Stores a byte of data to the user-space address
-.Pa base .
+.Fa base .
 .It Fn susword
 Stores a short word of data to the user-space address
-.Pa base .
+.Fa base .
 .It Fn suswintr
 Stores a short word of data to the user-space address
-.Pa base .
+.Fa base .
 This function is safe to call during an interrupt context.
 .It Fn suword
 Stores a word of data to the user-space address
-.Pa base .
+.Fa base .
 .El
 .Sh RETURN VALUES
 The
