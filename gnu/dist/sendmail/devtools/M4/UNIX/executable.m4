@@ -1,6 +1,6 @@
 divert(-1)
 #
-# Copyright (c) 1999 Sendmail, Inc. and its suppliers.
+# Copyright (c) 1999, 2001 Sendmail, Inc. and its suppliers.
 #	All rights reserved.
 #
 # By using this file, you agree to the terms and conditions set
@@ -10,7 +10,7 @@ divert(-1)
 #
 #  Definitions for Makefile construction for sendmail
 #
-#	Id: executable.m4,v 8.18 1999/10/13 07:08:36 gshapiro Exp
+#	Id: executable.m4,v 8.20 2001/06/27 21:46:37 gshapiro Exp
 #
 divert(0)dnl
 include(confBUILDTOOLSDIR`/M4/'bldM4_TYPE_DIR`/links.m4')dnl
@@ -29,7 +29,7 @@ bldCURRENT_PRODUCT: ${bldCURRENT_PRODUCT`OBJS'} ${bldCURRENT_PRODUCT`SMDEPLIBS'}
 ifdef(`bldLINK_SOURCES', `bldMAKE_SOURCE_LINKS(bldLINK_SOURCES)')
 
 ifdef(`bldNO_INSTALL', ,
-`install-`'bldCURRENT_PRODUCT: bldCURRENT_PRODUCT
+`install-`'bldCURRENT_PRODUCT: bldCURRENT_PRODUCT ifdef(`bldTARGET_INST_DEP', `bldTARGET_INST_DEP')
 	${INSTALL} -c -o ${bldBIN_TYPE`'BINOWN} -g ${bldBIN_TYPE`'BINGRP} -m ${bldBIN_TYPE`'BINMODE} bldCURRENT_PRODUCT ${DESTDIR}${bldINSTALL_DIR`'BINDIR}
 ifdef(`bldTARGET_LINKS', `bldMAKE_TARGET_LINKS(${bldINSTALL_DIR`'BINDIR}/bldCURRENT_PRODUCT, ${bldCURRENT_PRODUCT`'TARGET_LINKS})')')
 
