@@ -108,6 +108,7 @@
 #define shutdown	_shutdown
 #define sigaction	_sigaction
 #define sigaltstack	_sigaltstack
+#define sigprocmask	_sigprocmask
 #define socket		_socket
 #define socketpair	_socketpair
 #define stat		_stat
@@ -159,3 +160,9 @@
 #define vwarnx		_vwarnx
 #define warn		_warn
 #define warnx		_warnx
+
+#define sigaddset	_sigaddset
+#define sigdelset	_sigdelset
+#define sigemptyset	_sigemptyset
+#define sigfillset	_sigfillset
+#define sigismember	_sigismember
