@@ -1,4 +1,4 @@
-/*	$NetBSD: pk_acct.c,v 1.6 1994/06/29 06:37:30 cgd Exp $	*/
+/*	$NetBSD: pk_acct.c,v 1.7 1994/11/14 06:02:41 christos Exp $	*/
 
 /*
  * Copyright (c) University of British Columbia, 1984
@@ -75,7 +75,7 @@ pk_accton (path)
 	if (path == 0)
 		goto close;
 	NDINIT(&nd, LOOKUP, FOLLOW, UIO_USERSPACE, path, p);
-	if (error = vn_open (&nd, FWRITE, 0644))
+	if (error = vn_open (&nd, FWRITE, 0644, NULL))
 		return (error);
 	vp = nd.ni_vp;
 	VOP_UNLOCK(vp);
