@@ -1,4 +1,4 @@
-/*	$NetBSD: bcopy_page.S,v 1.2 2001/08/11 12:44:42 chris Exp $	*/
+/*	$NetBSD: bcopy_page.S,v 1.3 2002/08/07 16:21:29 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1995 Scott Stevens
@@ -57,8 +57,32 @@
  *   otherwise.
  */
 
+#define	CHUNK_SIZE	32
+
+#ifdef __XSCALE__
+	/* Conveniently, the chunk size is the XScale cache line size. */
+#define	PREFETCH_FIRST_CHUNK	pld	[r0]
+#define	PREFETCH_NEXT_CHUNK	pld	[r0, #(CHUNK_SIZE)]
+#else
+#define	PREFETCH_FIRST_CHUNK	/* nothing */
+#define	PREFETCH_NEXT_CHUNK	/* nothing */
+#endif
+
+#ifndef COPY_CHUNK
+#define	COPY_CHUNK \
+	PREFETCH_NEXT_CHUNK ; \
+	ldmia	r0!, {r3-r8,ip,lr} ; \
+	stmia	r1!, {r3-r8,ip,lr}
+#endif /* ! COPY_CHUNK */
+
+#ifndef SAVE_REGS
+#define	SAVE_REGS	stmfd	sp!, {r4-r8, lr}
+#define	RESTORE_REGS	ldmfd	sp!, {r4-r8, pc}
+#endif
+
 ENTRY(bcopy_page)
-	stmfd	sp!, {r4-r8, lr}
+	PREFETCH_FIRST_CHUNK
+	SAVE_REGS
 #ifdef BIG_LOOPS
 	mov	r2, #(NBPG >> 9)
 #else
@@ -66,50 +90,34 @@ ENTRY(bcopy_page)
 #endif
 
 Lloopcopy:
-	ldmia	r0!, {r3-r8,ip,lr}
-	stmia	r1!, {r3-r8,ip,lr}
-	ldmia	r0!, {r3-r8,ip,lr}
-	stmia	r1!, {r3-r8,ip,lr}
-	ldmia	r0!, {r3-r8,ip,lr}
-	stmia	r1!, {r3-r8,ip,lr}
-	ldmia	r0!, {r3-r8,ip,lr}
-	stmia	r1!, {r3-r8,ip,lr}
+	COPY_CHUNK
+	COPY_CHUNK
+	COPY_CHUNK
+	COPY_CHUNK
 
 #ifdef BIG_LOOPS
 	/* There is little point making the loop any larger; unless we are
 	   running with the cache off, the load/store overheads will
 	   completely dominate this loop.  */
-	ldmia	r0!, {r3-r8,ip,lr}
-	stmia	r1!, {r3-r8,ip,lr}
-	ldmia	r0!, {r3-r8,ip,lr}
-	stmia	r1!, {r3-r8,ip,lr}
-	ldmia	r0!, {r3-r8,ip,lr}
-	stmia	r1!, {r3-r8,ip,lr}
-	ldmia	r0!, {r3-r8,ip,lr}
-	stmia	r1!, {r3-r8,ip,lr}
+	COPY_CHUNK
+	COPY_CHUNK
+	COPY_CHUNK
+	COPY_CHUNK
 
-	ldmia	r0!, {r3-r8,ip,lr}
-	stmia	r1!, {r3-r8,ip,lr}
-	ldmia	r0!, {r3-r8,ip,lr}
-	stmia	r1!, {r3-r8,ip,lr}
-	ldmia	r0!, {r3-r8,ip,lr}
-	stmia	r1!, {r3-r8,ip,lr}
-	ldmia	r0!, {r3-r8,ip,lr}
-	stmia	r1!, {r3-r8,ip,lr}
+	COPY_CHUNK
+	COPY_CHUNK
+	COPY_CHUNK
+	COPY_CHUNK
 
-	ldmia	r0!, {r3-r8,ip,lr}
-	stmia	r1!, {r3-r8,ip,lr}
-	ldmia	r0!, {r3-r8,ip,lr}
-	stmia	r1!, {r3-r8,ip,lr}
-	ldmia	r0!, {r3-r8,ip,lr}
-	stmia	r1!, {r3-r8,ip,lr}
-	ldmia	r0!, {r3-r8,ip,lr}
-	stmia	r1!, {r3-r8,ip,lr}
+	COPY_CHUNK
+	COPY_CHUNK
+	COPY_CHUNK
+	COPY_CHUNK
 #endif
 	subs	r2, r2, #1
 	bne	Lloopcopy
 
-	ldmfd	sp!, {r4-r8, pc}
+	RESTORE_REGS		/* ...and return. */
 
 /*
  * bzero_page(dest)
