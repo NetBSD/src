@@ -1,4 +1,4 @@
-#	$NetBSD: files.algor,v 1.6 2001/06/22 06:50:21 thorpej Exp $
+#	$NetBSD: files.algor,v 1.7 2001/06/22 07:00:25 thorpej Exp $
 
 # Algorithmics evaluation board specific configuration info.
 
@@ -132,8 +132,8 @@ file	arch/algor/dev/bonito_mainbus.c		bonito_mainbus
 
 device	pcib: isabus
 attach	pcib at pci
-file	arch/algor/pci/pcib.c			pcib & algor_p5064 &
-						       algor_p6032
+file	arch/algor/pci/pcib.c			pcib & (algor_p5064 |
+						        algor_p6032)
 
 file	arch/algor/pci/pciide_machdep.c		pciide
 
@@ -143,8 +143,8 @@ file	arch/algor/pci/pciide_machdep.c		pciide
 attach	mcclock at isa with mcclock_isa
 file	arch/algor/isa/mcclock_isa.c		mcclock_isa
 
-file	arch/algor/isa/isadma_bounce.c		isa & algor_p5064 &
-						      algor_p6032
+file	arch/algor/isa/isadma_bounce.c		isa & (algor_p5064 |
+						       algor_p6032)
 
 # ISA speaker generates keyboard beep
 #device	isabeep
