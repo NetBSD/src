@@ -1,4 +1,4 @@
-/*      $NetBSD: ukbd.c,v 1.61 2000/08/17 23:08:07 augustss Exp $        */
+/*      $NetBSD: ukbd.c,v 1.62 2000/08/20 22:30:17 augustss Exp $        */
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -71,7 +71,7 @@
 
 #include "opt_wsdisplay_compat.h"
 
-#ifdef USB_DEBUG
+#ifdef UKBD_DEBUG
 #define DPRINTF(x)	if (ukbddebug) logprintf x
 #define DPRINTFN(n,x)	if (ukbddebug>(n)) logprintf x
 int	ukbddebug = 0;
@@ -179,6 +179,10 @@ struct ukbd_softc {
 
 	int sc_console_keyboard;	/* we are the console keyboard */
 
+	char sc_debounce;		/* for quirk handling */
+	struct callout sc_delay;	/* for quirk handling */
+	struct ukbd_data sc_data;	/* for quirk handling */
+
 	int sc_leds;
 #if defined(__NetBSD__)
 	struct callout sc_rawrepeat_ch;
@@ -200,6 +204,33 @@ struct ukbd_softc {
 	u_char sc_dying;
 };
 
+#ifdef UKBD_DEBUG
+#define UKBDTRACESIZE 64
+struct ukbdtraceinfo {
+	int unit;
+	struct timeval tv;
+	struct ukbd_data ud;
+};
+struct ukbdtraceinfo ukbdtracedata[UKBDTRACESIZE];
+int ukbdtraceindex = 0;
+int ukbdtrace = 0;
+void ukbdtracedump(void);
+void
+ukbdtracedump(void)
+{
+	int i;
+	for (i = 0; i < UKBDTRACESIZE; i++) {
+		struct ukbdtraceinfo *p = 
+		    &ukbdtracedata[(i+ukbdtraceindex)%UKBDTRACESIZE];
+		printf("%lu.%06lu: mod=0x%02x key0=0x%02x key1=0x%02x "
+		       "key2=0x%02x key3=0x%02x\n",
+		       p->tv.tv_sec, p->tv.tv_usec,
+		       p->ud.modifiers, p->ud.keycode[0], p->ud.keycode[1],
+		       p->ud.keycode[2], p->ud.keycode[3]);
+	}
+}
+#endif
+
 #define	UKBDUNIT(dev)	(minor(dev))
 #define	UKBD_CHUNK	128	/* chunk size for read */
 #define	UKBD_BSIZE	1020	/* buffer size */
@@ -217,6 +248,8 @@ const struct wskbd_consops ukbd_consops = {
 #endif
 
 Static void	ukbd_intr(usbd_xfer_handle, usbd_private_handle, usbd_status);
+Static void	ukbd_decode(struct ukbd_softc *sc, struct ukbd_data *ud);
+Static void	ukbd_delayed_decode(void *addr);
 
 Static int	ukbd_enable(void *, int);
 Static void	ukbd_set_leds(void *, int);
@@ -267,6 +300,7 @@ USB_ATTACH(ukbd)
 	usb_interface_descriptor_t *id;
 	usb_endpoint_descriptor_t *ed;
 	usbd_status err;
+	u_int32_t qflags;
 	char devinfo[1024];
 #if defined(__NetBSD__)
 	struct wskbddev_attach_args a;
@@ -305,7 +339,8 @@ USB_ATTACH(ukbd)
 		USB_ATTACH_ERROR_RETURN;
 	}
 
-	if ((usbd_get_quirks(uaa->device)->uq_flags & UQ_NO_SET_PROTO) == 0) {
+	qflags = usbd_get_quirks(uaa->device)->uq_flags;
+	if ((qflags & UQ_NO_SET_PROTO) == 0) {
 		err = usbd_set_protocol(iface, 0);
 		DPRINTFN(5, ("ukbd_attach: protocol set\n"));
 		if (err) {
@@ -314,9 +349,10 @@ USB_ATTACH(ukbd)
 			USB_ATTACH_ERROR_RETURN;
 		}
 	}
+	sc->sc_debounce = (qflags & UQ_SPUR_BUT_UP) != 0;
 
 	/* Ignore if SETIDLE fails since it is not crucial. */
-	usbd_set_idle(iface, 0, 0);
+	(void)usbd_set_idle(iface, 0, 0);
 
 	sc->sc_ep_addr = ed->bEndpointAddress;
 
@@ -345,6 +381,8 @@ USB_ATTACH(ukbd)
 	a.accesscookie = sc;
 
 	callout_init(&sc->sc_rawrepeat_ch);
+
+	callout_init(&sc->sc_delay);
 
 	/* Flash the leds; no real purpose, just shows we're alive. */
 	ukbd_set_leds(sc, WSKBD_LED_SCROLL | WSKBD_LED_NUM | WSKBD_LED_CAPS);
@@ -465,12 +503,6 @@ ukbd_intr(xfer, addr, status)
 {
 	struct ukbd_softc *sc = addr;
 	struct ukbd_data *ud = &sc->sc_ndata;
-	int mod, omod;
-	u_int16_t ibuf[MAXKEYS];	/* chars events */
-	int s;
-	int nkeys, i, j;
-	int key;
-#define ADDKEY(c) ibuf[nkeys++] = (c)
 
 	DPRINTFN(5, ("ukbd_intr: status=%d\n", status));
 	if (status == USBD_CANCELLED)
@@ -482,8 +514,61 @@ ukbd_intr(xfer, addr, status)
 		return;
 	}
 
-	DPRINTFN(5, ("          mod=0x%02x key0=0x%02x key1=0x%02x\n",
-		     ud->modifiers, ud->keycode[0], ud->keycode[1]));
+	if (sc->sc_debounce) {
+		/*
+		 * Some keyboards have a peculiar quirk.  They sometimes
+		 * generate a key up followed by a key down for the same
+		 * key after about 10 ms.
+		 * We avoid this bug by holding off decoding for 20 ms.
+		 */
+		sc->sc_data = *ud;
+		callout_reset(&sc->sc_delay, hz / 50, ukbd_delayed_decode, sc);
+	} else {
+		ukbd_decode(sc, ud);
+	}
+}
+
+void
+ukbd_delayed_decode(void *addr)
+{
+	struct ukbd_softc *sc = addr;
+
+	ukbd_decode(sc, &sc->sc_data);
+}
+
+void
+ukbd_decode(struct ukbd_softc *sc, struct ukbd_data *ud)
+{
+	int mod, omod;
+	u_int16_t ibuf[MAXKEYS];	/* chars events */
+	int s;
+	int nkeys, i, j;
+	int key;
+#define ADDKEY(c) ibuf[nkeys++] = (c)
+
+#ifdef UKBD_DEBUG
+	/* 
+	 * Keep a trace of the last events.  Using printf changes the
+	 * timing, so this can be useful sometimes.
+	 */
+	if (ukbdtrace) {
+		struct ukbdtraceinfo *p = &ukbdtracedata[ukbdtraceindex];
+		p->unit = sc->sc_dev.dv_unit;
+		microtime(&p->tv);
+		p->ud = *ud;
+		if (++ukbdtraceindex >= UKBDTRACESIZE)
+			ukbdtraceindex = 0;
+	}
+	if (ukbddebug > 5) {
+		struct timeval tv;
+		microtime(&tv);
+		DPRINTF((" at %lu.%06lu  mod=0x%02x key0=0x%02x key1=0x%02x "
+			 "key2=0x%02x key3=0x%02x\n",
+			 tv.tv_sec, tv.tv_usec,
+			 ud->modifiers, ud->keycode[0], ud->keycode[1],
+			 ud->keycode[2], ud->keycode[3]));
+	}
+#endif
 
 	if (ud->keycode[0] == KEY_ERROR) {
 		DPRINTF(("ukbd_intr: KEY_ERROR\n"));
@@ -508,6 +593,7 @@ ukbd_intr(xfer, addr, status)
 			for (j = 0; j < NKEYCODE; j++)
 				if (key == ud->keycode[j])
 					goto rfound;
+			DPRINTFN(3,("ukbd_intr: relse key=0x%02x\n", key));
 			ADDKEY(key | RELEASE);
 		rfound:
 			;
