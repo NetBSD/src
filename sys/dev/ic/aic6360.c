@@ -1,4 +1,4 @@
-/*	$NetBSD: aic6360.c,v 1.42 1996/04/03 10:33:45 mycroft Exp $	*/
+/*	$NetBSD: aic6360.c,v 1.43 1996/04/03 15:58:13 mycroft Exp $	*/
 
 #define	integrate	static inline
 
@@ -1406,7 +1406,7 @@ nextbyte:
 	for (;;) {
 		for (;;) {
 			sstat1 = inb(iobase + SSTAT1);
-			if ((sstat1 & (REQINIT | BUSFREE)) != 0)
+			if ((sstat1 & (REQINIT | PHASECHG | BUSFREE)) != 0)
 				break;
 			/* Wait for REQINIT.  XXX Need timeout. */
 		}
@@ -1657,11 +1657,6 @@ aic_msgout(sc)
 
 	AIC_TRACE(("aic_msgout  "));
 
-	/*
-	 * Set ATN.  If we're just sending a trivial 1-byte message, we'll
-	 * clear ATN later on anyway.
-	 */
-	outb(iobase + SCSISIG, PH_MSGOUT | ATNO);
 	/* Reset the FIFO. */
 	outb(iobase + DMACNTRL0, RSTFIFO);
 	/* Enable REQ/ACK protocol. */
@@ -1682,6 +1677,11 @@ aic_msgout(sc)
 			 */
 			AIC_MISC(("retransmitting  "));
 			sc->sc_msgpriq |= sc->sc_msgoutq;
+			/*
+			 * Set ATN.  If we're just sending a trivial 1-byte
+			 * message, we'll clear ATN later on anyway.
+			 */
+			outb(iobase + SCSISIG, PH_MSGOUT | ATNO);
 		} else {
 			/* This is a continuation of the previous message. */
 			n = sc->sc_omp - sc->sc_omess;
@@ -1775,7 +1775,7 @@ nextbyte:
 	for (;;) {
 		for (;;) {
 			sstat1 = inb(iobase + SSTAT1);
-			if ((sstat1 & (REQINIT | BUSFREE)) != 0)
+			if ((sstat1 & (REQINIT | PHASECHG | BUSFREE)) != 0)
 				break;
 			/* Wait for REQINIT.  XXX Need timeout. */
 		}
@@ -2252,6 +2252,7 @@ loop:
 		 * Turn off selection stuff, and prepare to catch bus free
 		 * interrupts, parity errors, and phase changes.
 		 */
+		outb(iobase + SXFRCTL0, CHEN | CLRSTCNT | CLRCH);
 		outb(iobase + SXFRCTL1, 0);
 		outb(iobase + SCSISEQ, ENAUTOATNP);
 		outb(iobase + CLRSINT0, CLRSELDI | CLRSELDO);
