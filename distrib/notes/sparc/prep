@@ -1,4 +1,4 @@
-.\"	$NetBSD: prep,v 1.17 2002/04/29 23:33:41 mbw Exp $
+.\"	$NetBSD: prep,v 1.18 2002/05/03 03:58:45 mbw Exp $
 .
 .Ss2 Configuring your PROM
 .
@@ -28,6 +28,15 @@ keys. If you are using a serial console, send a
 signal from your terminal (the method of sending
 .Dq BREAK
 varies from terminal to terminal).
+.Pp
+If the ethernet address of your \*M system is
+.Li ff:ff:ff:ff:ff:ff ,
+then your NVRAM battery is dead and you will have trouble using
+ethernet (among other problems).  Read the Sun NVRAM/Hostid FAQ.
+.Lk http://www.squirrel.com/squirrel/sun-nvram-hostid.faq.html
+.Pp
+If you have a valid ethernet address and you plan to netboot, write down
+your system's ethernet address.
 .Pp
 Next, you should set your system to always use the OpenBoot PROM
 (sometimes called
