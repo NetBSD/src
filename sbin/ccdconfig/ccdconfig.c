@@ -1,4 +1,4 @@
-/*	$NetBSD: ccdconfig.c,v 1.14 1997/09/14 08:39:43 lukem Exp $	*/
+/*	$NetBSD: ccdconfig.c,v 1.15 1997/12/01 03:40:52 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
 __COPYRIGHT(
 "@(#) Copyright (c) 1996, 1997\
 	The NetBSD Foundation, Inc.  All rights reserved.");
-__RCSID("$NetBSD: ccdconfig.c,v 1.14 1997/09/14 08:39:43 lukem Exp $");
+__RCSID("$NetBSD: ccdconfig.c,v 1.15 1997/12/01 03:40:52 lukem Exp $");
 #endif
 
 #include <sys/param.h>
@@ -331,9 +331,8 @@ do_all(action)
 	int action;
 {
 	FILE *f;
-	char line[_POSIX2_LINE_MAX];
-	char *cp, **argv;
-	int argc, rval;
+	char *line, *cp, *vp, **argv;
+	int argc, rval, len;
 
 	rval = 0;
 
@@ -342,25 +341,26 @@ do_all(action)
 		return (1);
 	}
 
-	while (fgets(line, sizeof(line), f) != NULL) {
+	while ((line = fparseln(f, &len, &lineno, "\\\\#", FPARSELN_UNESCALL))
+	    != NULL) {
 		argc = 0;
 		argv = NULL;
-		++lineno;
-		if ((cp = strrchr(line, '\n')) != NULL)
-			*cp = '\0';
-
-		/* Break up the line and pass it's contents to do_single(). */
-		if (line[0] == '\0')
+		if (len == 0)
 			goto end_of_line;
-		for (cp = line; (cp = strtok(cp, " \t")) != NULL; cp = NULL) {
-			if (*cp == '#')
-				break;
+
+		for (cp = line; cp != NULL; ) {
+			while ((vp = strsep(&cp, "\t ")) != NULL && *vp == '\0')
+				;
+			if (vp == NULL)
+				continue;
+
 			if ((argv = realloc(argv,
 			    sizeof(char *) * ++argc)) == NULL) {
 				warnx("no memory to configure ccds");
 				return (1);
 			}
-			argv[argc - 1] = cp;
+			argv[argc - 1] = vp;
+
 			/*
 			 * If our action is to unconfigure all, then pass
 			 * just the first token to do_single() and ignore
@@ -381,6 +381,7 @@ do_all(action)
  end_of_line:
 		if (argv != NULL)
 			free(argv);
+		free(line);
 	}
 
 	(void)fclose(f);
