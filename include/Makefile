@@ -1,5 +1,5 @@
 #	from: @(#)Makefile	5.45.1.1 (Berkeley) 5/6/91
-#	$Id: Makefile,v 1.39 1994/05/29 21:47:12 jtc Exp $
+#	$Id: Makefile,v 1.40 1994/06/12 22:49:59 cgd Exp $
 
 # Doing a make install builds /usr/include
 #
@@ -22,6 +22,8 @@ LFILES=	errno.h fcntl.h syslog.h termios.h
 
 DIRS=	arpa protocols rpc rpcsvc
 LDIRS=	dev net netinet netccitt netiso netns nfs sys ufs vm 
+# the following only used when making copies
+LSUBDIRS= ufs/ffs ufs/lfs ufs/mfs ufs/ufs
 
 NOOBJ=	noobj
 
@@ -63,6 +65,12 @@ beforeinstall:
 copies:
 	@echo copies: ${LDIRS}
 	@-for i in ${LDIRS}; do \
+		rm -rf ${DESTDIR}/usr/include/$$i; \
+		cd ../sys; \
+		install -d -o bin -g bin -m 755 ${DESTDIR}/usr/include/$$i ; \
+		tar cf - $$i/*.h | (cd ${DESTDIR}/usr/include; tar xpfB -); \
+	done
+	@-for i in ${LSUBDIRS}; do \
 		rm -rf ${DESTDIR}/usr/include/$$i; \
 		cd ../sys; \
 		install -d -o bin -g bin -m 755 ${DESTDIR}/usr/include/$$i ; \
