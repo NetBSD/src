@@ -1,4 +1,4 @@
-/*	$NetBSD: Locore.c,v 1.1 1997/04/16 20:29:11 thorpej Exp $	*/
+/*	$NetBSD: Locore.c,v 1.2 1997/04/28 18:36:31 mycroft Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -465,11 +465,11 @@ putchar(c)
 int
 getchar()
 {
-	unsigned char ch;
+	unsigned char ch = '\0';
 	int l;
 
 	while ((l = OF_read(stdin, &ch, 1)) != 1)
-		if (l != -2)
+		if (l != -2 && l != 0)
 			return -1;
 	return ch;
 }

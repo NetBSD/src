@@ -1,4 +1,4 @@
-/*	$NetBSD: netif_of.c,v 1.1 1997/04/16 20:29:19 thorpej Exp $	*/
+/*	$NetBSD: netif_of.c,v 1.2 1997/04/28 18:36:35 mycroft Exp $	*/
 
 /*
  * Copyright (C) 1995 Wolfgang Solfrank.
@@ -212,7 +212,8 @@ netif_get(desc, pkt, maxlen, timo)
 
 	do {
 		len = OF_read(op->handle, pkt, maxlen);
-	} while ((len == -2) && ((OF_milliseconds() - tick0) < tmo_ms));
+	} while ((len == -2 || len == 0) &&
+		 (OF_milliseconds() - tick0 < tmo_ms));
 
 #ifdef	NETIF_DEBUG
 	printf("netif_get: received len=%d\n", len);
