@@ -20,7 +20,7 @@
  * NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
- *	$Id: lms.c,v 1.6.2.6 1993/09/30 20:19:05 mycroft Exp $
+ *	$Id: lms.c,v 1.6.2.7 1993/10/01 00:38:45 mycroft Exp $
  */
 
 #include "param.h"
@@ -35,6 +35,7 @@
 #include "proc.h"
 #include "vnode.h"
 #include "sys/device.h"
+#include "machine/cpu.h"
 
 #include "i386/isa/isavar.h"
 #include "i386/isa/isa.h"

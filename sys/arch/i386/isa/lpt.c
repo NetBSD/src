@@ -46,7 +46,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	$Id: lpt.c,v 1.7.4.4 1993/09/30 20:19:06 mycroft Exp $
+ *	$Id: lpt.c,v 1.7.4.5 1993/10/01 00:38:54 mycroft Exp $
  */
 
 /*
@@ -62,6 +62,7 @@
 #include "ioctl.h"
 #include "uio.h"
 #include "sys/device.h"
+#include "machine/cpu.h"
 
 #include "i386/isa/isavar.h"
 #include "i386/isa/isa.h"
