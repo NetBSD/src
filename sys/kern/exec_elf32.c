@@ -1,4 +1,4 @@
-/*	$NetBSD: exec_elf32.c,v 1.38 1998/10/01 16:06:24 erh Exp $	*/
+/*	$NetBSD: exec_elf32.c,v 1.39 1998/10/03 20:39:32 christos Exp $	*/
 
 /*-
  * Copyright (c) 1994 The NetBSD Foundation, Inc.
@@ -96,7 +96,7 @@
 #include <machine/reg.h>
 
 #ifdef COMPAT_LINUX
-#include <compat/linux/linux_exec.h>
+#include <compat/linux/common/linux_exec.h>
 #endif
 
 #ifdef COMPAT_SVR4
