@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_socketcall.c,v 1.4 1995/05/28 08:52:07 mycroft Exp $	*/
+/*	$NetBSD: linux_socketcall.c,v 1.5 1995/05/28 09:39:45 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1995 Frank van der Linden
@@ -530,8 +530,7 @@ linux_to_bsd_udp_sockopt(lopt)
 }
 
 /*
- * Another reasonably straightforward function: setsockopt(2). Only
- * the SOL_SOCKET and IPPROTO_IP levels are implemented here.
+ * Another reasonably straightforward function: setsockopt(2).
  * The level and option numbers are converted; the values passed
  * are not (yet) converted, the ones currently implemented don't
  * need conversion, as they are the same on both systems.
@@ -556,7 +555,6 @@ linux_setsockopt(p, args, retval)
 		return error;
 
 	SCARG(&bsa, s) = lsa.s;
-
 	SCARG(&bsa, level) = linux_to_bsd_sopt_level(lsa.level);
 
 	switch (SCARG(&bsa, level)) {
@@ -608,7 +606,6 @@ linux_getsockopt(p, args, retval)
 		return error;
 
 	SCARG(&bga, s) = lga.s;
-
 	SCARG(&bga, level) = linux_to_bsd_sopt_level(lga.level);
 
 	switch (SCARG(&bga, level)) {
@@ -630,6 +627,7 @@ linux_getsockopt(p, args, retval)
 
 	if (name == -1)
 		return EINVAL;
+	SCARG(&bga, name) = name;
 	SCARG(&bga, val) = lga.optval;
 	SCARG(&bga, avalsize) = lga.optlen;
 
