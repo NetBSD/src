@@ -1,4 +1,4 @@
-/*	$NetBSD: skeysubr.c,v 1.14 1999/07/02 15:45:23 simonb Exp $	*/
+/*	$NetBSD: skeysubr.c,v 1.15 2000/01/23 02:11:02 mycroft Exp $	*/
 
 /* S/KEY v1.1b (skeysubr.c)
  *
@@ -54,7 +54,7 @@ const char *passwd;	/* Password, any length */
 	sevenbit(buf);
 	MD4Init(&md);
 	MD4Update(&md, (unsigned char *) buf, buflen);
-	MD4Final((unsigned char *) hash, &md);
+	MD4Final((unsigned char *)(void *) hash, &md);
 
 	free(buf);
 
@@ -77,7 +77,7 @@ f(x)
 
 	MD4Init(&md);
 	MD4Update(&md, (unsigned char *) x, 8);
-	MD4Final((unsigned char *) hash, &md);
+	MD4Final((unsigned char *)(void *) hash, &md);
 
 	/* Fold 128 to 64 bits */
 	hash[0] ^= hash[2];
@@ -161,6 +161,7 @@ unset_term()
 	tcsetattr(fileno(stdin), TCSADRAIN, &oldtty);
 }
 
+/*ARGSUSED*/
 static void
 trapped(sig)
 	int sig;
@@ -223,7 +224,7 @@ btoa8(out, in)
 /* Convert hex digit to binary integer */
 int
 htoi(c)
-	char c;
+	int c;
 {
 	if ('0' <= c && c <= '9')
 		return c - '0';

@@ -1,4 +1,4 @@
-/*	$NetBSD: skey.h,v 1.5 1998/07/26 21:58:46 mycroft Exp $	*/
+/*	$NetBSD: skey.h,v 1.6 2000/01/23 02:11:02 mycroft Exp $	*/
 
 /*
  * S/KEY v1.1b (skey.h)
@@ -73,5 +73,5 @@ int skey_haskey __ARGS ((const char *));
 int getskeyprompt __ARGS ((struct skey *, char *, char *));
 int atob8 __ARGS((char *, const char *));
 int btoa8 __ARGS((char *, const char *));
-int htoi __ARGS((char));
+int htoi __ARGS((int));
 
