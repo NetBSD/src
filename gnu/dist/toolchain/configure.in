@@ -557,6 +557,9 @@ case "${host}" in
   *-*-cygwin*)
      noconfigdirs="autoconf automake send-pr rcs guile perl texinfo apache inet"
     ;;
+  x86_64-*-netbsd*)
+    noconfigdirs="$noconfigdirs gcc gdb rcs"
+    ;;
   *-*-netbsd*)
     noconfigdirs="rcs"
     ;;
