@@ -1,4 +1,4 @@
-/*	$NetBSD: freebsd_syscall.c,v 1.1 2000/12/18 20:38:28 jdolecek Exp $	*/
+/*	$NetBSD: freebsd_syscall.c,v 1.2 2000/12/18 20:49:17 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
@@ -36,9 +36,10 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
+#if defined(_KERNEL) && !defined(_LKM)
 #include "opt_syscall_debug.h"
-#include "opt_vm86.h"
 #include "opt_ktrace.h"
+#endif
 
 #include <sys/param.h>
 #include <sys/systm.h>
