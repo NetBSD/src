@@ -1,4 +1,4 @@
-/*	$NetBSD: ka750.c,v 1.5 1995/03/30 21:25:21 ragge Exp $	*/
+/*	$NetBSD: ka750.c,v 1.5.2.1 1995/10/15 14:18:49 ragge Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1988 The Regents of the University of California.
@@ -66,7 +66,7 @@ ka750_conf()
 	extern char cpu_model[];
 
 	strcpy(cpu_model,"VAX 11/750");
-	config_rootfound("backplane",75);
+	config_rootfound("backplane",(void *)75);
 }
 
 int
