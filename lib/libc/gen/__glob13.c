@@ -1,4 +1,4 @@
-/*	$NetBSD: glob.c,v 1.8 1997/10/21 00:56:55 fvdl Exp $	*/
+/*	$NetBSD: __glob13.c,v 1.1 1997/10/21 00:56:49 fvdl Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)glob.c	8.3 (Berkeley) 10/13/93";
 #else
-__RCSID("$NetBSD: glob.c,v 1.8 1997/10/21 00:56:55 fvdl Exp $");
+__RCSID("$NetBSD: __glob13.c,v 1.1 1997/10/21 00:56:49 fvdl Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -84,15 +84,9 @@ __RCSID("$NetBSD: glob.c,v 1.8 1997/10/21 00:56:55 fvdl Exp $");
 #include <string.h>
 #include <unistd.h>
 
-#undef glob
-#undef globfree
-#undef fstat
-#undef lstat
-#undef stat
-
 #ifdef __weak_alias
-__weak_alias(glob,_glob);
-__weak_alias(globfree,_globfree);
+__weak_alias(__glob13,___glob13);
+__weak_alias(__globfree13,___globfree13);
 #endif
 
 #define	DOLLAR		'$'
@@ -147,31 +141,31 @@ typedef char Char;
 
 static int	 compare __P((const void *, const void *));
 static void	 g_Ctoc __P((const Char *, char *));
-static int	 g_lstat __P((Char *, struct stat12 *, glob12_t *));
-static DIR	*g_opendir __P((Char *, glob12_t *));
+static int	 g_lstat __P((Char *, struct stat *, glob_t *));
+static DIR	*g_opendir __P((Char *, glob_t *));
 static Char	*g_strchr __P((Char *, int));
 #ifdef notdef
 static Char	*g_strcat __P((Char *, const Char *));
 #endif
-static int	 g_stat __P((Char *, struct stat12 *, glob12_t *));
-static int	 glob0 __P((const Char *, glob12_t *));
-static int	 glob1 __P((Char *, glob12_t *));
-static int	 glob2 __P((Char *, Char *, Char *, glob12_t *));
-static int	 glob3 __P((Char *, Char *, Char *, Char *, glob12_t *));
-static int	 globextend __P((const Char *, glob12_t *));
-static const Char *	 globtilde __P((const Char *, Char *, glob12_t *));
-static int	 globexp1 __P((const Char *, glob12_t *));
-static int	 globexp2 __P((const Char *, const Char *, glob12_t *, int *));
+static int	 g_stat __P((Char *, struct stat *, glob_t *));
+static int	 glob0 __P((const Char *, glob_t *));
+static int	 glob1 __P((Char *, glob_t *));
+static int	 glob2 __P((Char *, Char *, Char *, glob_t *));
+static int	 glob3 __P((Char *, Char *, Char *, Char *, glob_t *));
+static int	 globextend __P((const Char *, glob_t *));
+static const Char *	 globtilde __P((const Char *, Char *, glob_t *));
+static int	 globexp1 __P((const Char *, glob_t *));
+static int	 globexp2 __P((const Char *, const Char *, glob_t *, int *));
 static int	 match __P((Char *, Char *, Char *));
 #ifdef DEBUG
 static void	 qprintf __P((const char *, Char *));
 #endif
 
 int
-glob(pattern, flags, errfunc, pglob)
+__glob13(pattern, flags, errfunc, pglob)
 	const char *pattern;
 	int flags, (*errfunc) __P((const char *, int));
-	glob12_t *pglob;
+	glob_t *pglob;
 {
 	const u_char *patnext;
 	int c;
@@ -221,7 +215,7 @@ glob(pattern, flags, errfunc, pglob)
  */
 static int globexp1(pattern, pglob)
 	const Char *pattern;
-	glob12_t *pglob;
+	glob_t *pglob;
 {
 	const Char* ptr = pattern;
 	int rv;
@@ -245,7 +239,7 @@ static int globexp1(pattern, pglob)
  */
 static int globexp2(ptr, pattern, pglob, rv)
 	const Char *ptr, *pattern;
-	glob12_t *pglob;
+	glob_t *pglob;
 	int *rv;
 {
 	int     i;
@@ -352,7 +346,7 @@ static const Char *
 globtilde(pattern, patbuf, pglob)
 	const Char *pattern;
 	Char *patbuf;
-	glob12_t *pglob;
+	glob_t *pglob;
 {
 	struct passwd *pwd;
 	char *h;
@@ -413,7 +407,7 @@ globtilde(pattern, patbuf, pglob)
 static int
 glob0(pattern, pglob)
 	const Char *pattern;
-	glob12_t *pglob;
+	glob_t *pglob;
 {
 	const Char *qpatnext;
 	int c, err, oldpathc;
@@ -505,7 +499,7 @@ compare(p, q)
 static int
 glob1(pattern, pglob)
 	Char *pattern;
-	glob12_t *pglob;
+	glob_t *pglob;
 {
 	Char pathbuf[MAXPATHLEN+1];
 
@@ -523,9 +517,9 @@ glob1(pattern, pglob)
 static int
 glob2(pathbuf, pathend, pattern, pglob)
 	Char *pathbuf, *pathend, *pattern;
-	glob12_t *pglob;
+	glob_t *pglob;
 {
-	struct stat12 sb;
+	struct stat sb;
 	Char *p, *q;
 	int anymeta;
 
@@ -574,7 +568,7 @@ glob2(pathbuf, pathend, pattern, pglob)
 static int
 glob3(pathbuf, pathend, pattern, restpattern, pglob)
 	Char *pathbuf, *pathend, *pattern, *restpattern;
-	glob12_t *pglob;
+	glob_t *pglob;
 {
 	register struct dirent *dp;
 	DIR *dirp;
@@ -638,7 +632,7 @@ glob3(pathbuf, pathend, pattern, restpattern, pglob)
 
 
 /*
- * Extend the gl_pathv member of a glob12_t structure to accomodate a new item,
+ * Extend the gl_pathv member of a glob_t structure to accomodate a new item,
  * add the new item, and update gl_pathc.
  *
  * This assumes the BSD realloc, which only copies the block when its size
@@ -647,14 +641,14 @@ glob3(pathbuf, pathend, pattern, restpattern, pglob)
  *
  * Return 0 if new item added, error code if memory couldn't be allocated.
  *
- * Invariant of the glob12_t structure:
+ * Invariant of the glob_t structure:
  *	Either gl_pathc is zero and gl_pathv is NULL; or gl_pathc > 0 and
  *	gl_pathv points to (gl_offs + gl_pathc + 1) items.
  */
 static int
 globextend(path, pglob)
 	const Char *path;
-	glob12_t *pglob;
+	glob_t *pglob;
 {
 	register char **pathv;
 	register int i;
@@ -739,10 +733,10 @@ match(name, pat, patend)
 	return(*name == EOS);
 }
 
-/* Free allocated data belonging to a glob12_t structure. */
+/* Free allocated data belonging to a glob_t structure. */
 void
-globfree(pglob)
-	glob12_t *pglob;
+__globfree13(pglob)
+	glob_t *pglob;
 {
 	register int i;
 	register char **pp;
@@ -759,7 +753,7 @@ globfree(pglob)
 static DIR *
 g_opendir(str, pglob)
 	register Char *str;
-	glob12_t *pglob;
+	glob_t *pglob;
 {
 	char buf[MAXPATHLEN];
 
@@ -777,8 +771,8 @@ g_opendir(str, pglob)
 static int
 g_lstat(fn, sb, pglob)
 	register Char *fn;
-	struct stat12 *sb;
-	glob12_t *pglob;
+	struct stat *sb;
+	glob_t *pglob;
 {
 	char buf[MAXPATHLEN];
 
@@ -791,8 +785,8 @@ g_lstat(fn, sb, pglob)
 static int
 g_stat(fn, sb, pglob)
 	register Char *fn;
-	struct stat12 *sb;
-	glob12_t *pglob;
+	struct stat *sb;
+	glob_t *pglob;
 {
 	char buf[MAXPATHLEN];
 
