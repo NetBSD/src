@@ -1,4 +1,4 @@
-.\"	$NetBSD: installboot.8,v 1.1 1997/03/14 02:40:32 perry Exp $
+.\"	$NetBSD: installboot.8,v 1.2 1997/06/13 22:15:06 drochner Exp $
 .\"
 .\" Copyright (c) 1997 Perry E. Metzger.  All rights reserved.
 .\" Copyright (c) 1996, 1997 Christopher G. Demetriou.  All rights reserved.
@@ -29,7 +29,7 @@
 .\" (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd March 14, 1997
+.Dd June 13, 1997
 .Dt INSTALLBOOT 8 i386
 .Os 
 .Sh NAME
@@ -45,9 +45,7 @@ The
 .Nm installboot
 utility prepares a disk for bootstrapping.
 .Pp
-The
-.Nx /i386
-disk bootstrap software is split into two parts:
+The NetBSD/i386 disk bootstrap software is split into two parts:
 a small first-stage boot program that is written into the disklabel
 area of a disk and a second-stage boot program that resides in a FFS file
 system on the disk (named
@@ -63,13 +61,6 @@ have been hard-coded into it by
 .Nm
 during execution.
 The second-stage boot program then locates and loads the kernel.
-.Pp
-Note: so that the
-.Pa /boot
-file can be installed on the bootable partition, the partition must be
-mounted before
-.Nm
-is run.
 .Pp
 The options recognized by
 .Nm installboot
@@ -94,22 +85,21 @@ The name of the special object file
 .Pa /usr/mdec/biosboot.sym )
 where the first and second stage boot programs to be installed reside.
 .It Ar rawdiskdevice
-The name of the device corresponding to the raw whole-disk partition (the
-.Dq raw partition )
-of the disk on which the first-stage boot program is to be installed.
+The name of the raw device corresponding to the partition on which
+the boot program is to be installed. The partition should
+start at the beginning of the
+.Nx
+portion of the disk and must contain a FFS filesystem. The
+.Nm
+program enforces its name to be in the form
+.Dq /dev/r*a
+\&.
 .El
 .Sh EXAMPLES
 Assuming the file containing the boot program is in its typical place,
 and you wished to make
 .Pa /dev/fd0a
-bootable. One might first mount
-.Pa /dev/fd0a
-on
-.Pa /mnt ,
-and in the case that there is already a file named
-.Pa boot
-in that directory, remove it.
-To install the boot blocks, one then would issue the command:
+bootable. To install the boot blocks, one then would issue the command:
 .Bd -literal -offset indent
 installboot -f /usr/mdec/biosboot.sym /dev/rfd0a
 .Ed
@@ -122,9 +112,16 @@ it is advisable that
 .Dq a
 partitions reside entirely within the first 1024 cylinders.
 .Pp
+The BIOS partition
+table must reflect the correct location of the
+.Nx
+portion according to disk geometry used by the BIOS. (This is automatically
+the case if the
+.Nx
+portion is located at the beginning of the disk.)
+.Pp
 .Nm
-requires simultaneous access to the mounted file system and
-the disks' raw partition.
+requires access to the disks' raw partition.
 That is not allowed with the kernel
 .Dv securelevel
 variable
@@ -136,7 +133,7 @@ set to a value greater than one, or with
 .Dv securelevel
 set to one if the
 .Dq boot
-program resides in a file system on the disk's raw partition.
+partition is mounted.
 .Sh "SEE ALSO"
 .Xr boot 8 ,
 .Xr disklabel 8 ,
