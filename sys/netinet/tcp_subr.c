@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_subr.c,v 1.78 1999/08/25 15:23:13 itojun Exp $	*/
+/*	$NetBSD: tcp_subr.c,v 1.79 1999/08/27 02:56:14 itojun Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -268,7 +268,7 @@ tcp_template(tp)
 		}
 		if (m == NULL)
 			return NULL;
-		m->m_len = hlen + sizeof(struct tcphdr);
+		m->m_pkthdr.len = m->m_len = hlen + sizeof(struct tcphdr);
 	}
 	bzero(mtod(m, caddr_t), m->m_len);
 	switch (tp->t_family) {
