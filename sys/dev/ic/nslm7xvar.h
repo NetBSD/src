@@ -1,4 +1,4 @@
-/*	$NetBSD: nslm7xvar.h,v 1.1 2000/02/25 02:17:43 groo Exp $ */
+/*	$NetBSD: nslm7xvar.h,v 1.2 2000/03/07 18:39:14 groo Exp $ */
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -74,12 +74,13 @@ struct lm_softc {
 	bus_space_tag_t lm_iot;
 	bus_space_handle_t lm_ioh;
 
-	int	sc_flags;         /* see SCFLAG_* below */
+	int	sc_flags;
 	struct	timeval lastread; /* only allow reads every 1.5 seconds */
 	struct	envsys_tre_data sensors[LM_NUM_SENSORS];
 	struct	envsys_basic_info info[LM_NUM_SENSORS];
 };
 
 void lm_attach __P((struct lm_softc *));
+int lm_probe __P((bus_space_tag_t, bus_space_handle_t));
 
 #endif /* _DEV_ISA_NSLM7XVAR_H_ */
