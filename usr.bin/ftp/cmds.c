@@ -1,4 +1,4 @@
-/*	$NetBSD: cmds.c,v 1.79 1999/11/11 02:53:02 lukem Exp $	*/
+/*	$NetBSD: cmds.c,v 1.80 1999/11/26 21:41:55 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1996-1999 The NetBSD Foundation, Inc.
@@ -107,7 +107,7 @@
 #if 0
 static char sccsid[] = "@(#)cmds.c	8.6 (Berkeley) 10/9/94";
 #else
-__RCSID("$NetBSD: cmds.c,v 1.79 1999/11/11 02:53:02 lukem Exp $");
+__RCSID("$NetBSD: cmds.c,v 1.80 1999/11/26 21:41:55 lukem Exp $");
 #endif
 #endif /* not lint */
 
@@ -1710,7 +1710,7 @@ idlecmd(argc, argv)
 {
 	int oldverbose = verbose;
 
-	if (argc != 2) {
+	if (argc < 1 || argc > 2) {
 		fprintf(ttyout, "usage: %s [seconds]\n", argv[0]);
 		code = -1;
 		return;
