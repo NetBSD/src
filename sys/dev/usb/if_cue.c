@@ -1,4 +1,4 @@
-/*	$NetBSD: if_cue.c,v 1.32 2001/01/23 17:04:30 augustss Exp $	*/
+/*	$NetBSD: if_cue.c,v 1.33 2001/01/29 01:24:43 enami Exp $	*/
 /*
  * Copyright (c) 1997, 1998, 1999, 2000
  *	Bill Paul <wpaul@ee.columbia.edu>.  All rights reserved.
@@ -389,7 +389,9 @@ cue_setmulti(struct cue_softc *sc)
 	DPRINTFN(2,("%s: cue_setmulti if_flags=0x%x\n", 
 		    USBDEVNAME(sc->cue_dev), ifp->if_flags));
 
-	if (ifp->if_flags & IFF_ALLMULTI || ifp->if_flags & IFF_PROMISC) {
+	if (ifp->if_flags & IFF_PROMISC) {
+allmulti:
+		ifp->if_flags |= IFF_ALLMULTI;
 		for (i = 0; i < CUE_MCAST_TABLE_LEN; i++)
 			sc->cue_mctab[i] = 0xFF;
 		cue_mem(sc, CUE_CMD_WRITESRAM, CUE_MCAST_TABLE_ADDR,
@@ -408,18 +410,16 @@ cue_setmulti(struct cue_softc *sc)
 	ETHER_FIRST_MULTI(step, &sc->arpcom, enm);
 #endif
 	while (enm != NULL) {
-#if 0
 		if (memcmp(enm->enm_addrlo,
-			   enm->enm_addrhi, ETHER_ADDR_LEN) != 0) {
-			ifp->if_flags |= IFF_ALLMULTI;
-			/* XXX what now? */
-			return;
-		}
-#endif
+		    enm->enm_addrhi, ETHER_ADDR_LEN) != 0)
+			goto allmulti;
+
 		h = cue_crc(enm->enm_addrlo);
 		sc->cue_mctab[h >> 3] |= 1 << (h & 0x7);		
 		ETHER_NEXT_MULTI(step, enm);
 	}
+
+	ifp->if_flags &= ~IFF_ALLMULTI;
 
 	/*
 	 * Also include the broadcast address in the filter
