@@ -1,4 +1,4 @@
-/*	$NetBSD: trap_subr.S,v 1.38 2003/04/29 15:16:14 scw Exp $	*/
+/*	$NetBSD: trap_subr.S,v 1.39 2003/07/09 22:51:51 matt Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -740,7 +740,7 @@ trapexit:
  * Trap handler for syscalls (EXC_SC)
  */
 /* LINTSTUB: Var: int sctrap[1], scsize[1]; */
-	.globl	_C_LABEL(sctrap),_C_LABEL(scsize)
+	.globl	_C_LABEL(sctrap),_C_LABEL(scsize),_C_LABEL(sctrapexit)
 _C_LABEL(sctrap):
 	mtsprg	1,1			/* save SP */
 	GET_CPUINFO(1)
@@ -770,6 +770,7 @@ s_sctrap:
 	lwz	4,P_MD_SYSCALL(4)
 	mtctr	4
 	bctrl
+_C_LABEL(sctrapexit):
 /* Disable interrupts: */
 	mfmsr	3
 	andi.	3,3,~PSL_EE@l

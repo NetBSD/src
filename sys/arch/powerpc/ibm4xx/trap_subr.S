@@ -1,4 +1,4 @@
-/*	$NetBSD: trap_subr.S,v 1.7 2003/02/02 20:43:23 matt Exp $	*/
+/*	$NetBSD: trap_subr.S,v 1.8 2003/07/09 22:51:50 matt Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -340,7 +340,7 @@ _C_LABEL(trapexit):
 
 
 
-	.globl	_C_LABEL(sctrap),_C_LABEL(scsize)
+	.globl	_C_LABEL(sctrap),_C_LABEL(scsize),_C_LABEL(sctrapexit)
 _C_LABEL(sctrap):
 	STANDARD_PROLOG(tempsave);
 	bla	s_sctrap
@@ -358,6 +358,7 @@ s_sctrap:
 	lwz	4,P_MD_SYSCALL(4)
 	mtctr	4
 	bctrl
+_C_LABEL(sctrapexit):
 /* Disable interrupts: */
 	wrteei	0
 /* Test AST pending: */

@@ -1,4 +1,4 @@
-/*	$NetBSD: db_trace.c,v 1.28 2003/04/02 02:47:19 thorpej Exp $	*/
+/*	$NetBSD: db_trace.c,v 1.29 2003/07/09 22:51:51 matt Exp $	*/
 /*	$OpenBSD: db_trace.c,v 1.3 1997/03/21 02:10:48 niklas Exp $	*/
 
 /* 
@@ -111,7 +111,7 @@ db_stack_trace_print(addr, have_addr, count, modif, pr)
 	char *symname;
 	boolean_t kernel_only = TRUE;
 	boolean_t trace_thread = FALSE;
-	extern int trapexit[];
+	extern int trapexit[], sctrapexit[];
 #ifdef PPC_OEA
 	extern int end[];
 #endif
@@ -194,9 +194,14 @@ db_stack_trace_print(addr, have_addr, count, modif, pr)
 		} else {
 			(*pr)("  <?>  : ");
 		}
-		if (caller + 4 == (db_addr_t) &trapexit) {
+		if (caller + 4 == (db_addr_t) trapexit ||
+		    caller + 4 == (db_addr_t) sctrapexit) {
 			const char *trapstr;
 			struct trapframe *tf = (struct trapframe *) (frame+8);
+			if (caller + 4 == (db_addr_t) sctrapexit) {
+				(*pr)("SC trap #%d by ", tf->fixreg[0]);
+				goto print_trap;
+			}
 			(*pr)("%s ", tf->srr1 & PSL_PR ? "user" : "kernel");
 			switch (tf->exc) {
 			case EXC_DSI:
@@ -274,6 +279,8 @@ db_stack_trace_print(addr, have_addr, count, modif, pr)
 			fakeframe[1] = (db_addr_t) tf->lr;
 			frame = (db_addr_t) fakeframe;
 			if (kernel_only && (tf->srr1 & PSL_PR))
+				break;
+			if (tf->exc == EXC_SC)
 				break;
 			goto next_frame;
 		}
