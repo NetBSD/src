@@ -65,6 +65,7 @@
 #define   MPC620		  0x0014
 #define   MPC860		  0x0050
 #define   MPC8240		  0x0081
+#define   IBM750FX		  0x7000
 #define   MPC7450		  0x8000
 #define   MPC7455		  0x8001
 #define   MPC7410		  0x800c
