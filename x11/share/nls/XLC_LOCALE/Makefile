@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.2 2003/09/13 20:19:08 lukem Exp $
+#	$NetBSD: Makefile,v 1.3 2003/11/08 13:57:30 lukem Exp $
 
 .include <bsd.own.mk>
 
@@ -16,7 +16,8 @@ FILESNAME=	XLC_LOCALE
 
 .for _F in ${LTFILES}
 ${_F}.lt: ${_F}
-	@rm -f ${.TARGET}
+	${_MKTARGET_CREATE}
+	rm -f ${.TARGET}
 	${CPP} -undef -traditional -DWCHAR32=1 \
 	    < ${.ALLSRC} | ${X11TOOL_UNXCOMM} > ${.TARGET}
 

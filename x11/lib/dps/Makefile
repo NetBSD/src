@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.3 2003/09/13 20:18:53 lukem Exp $
+#	$NetBSD: Makefile,v 1.4 2003/11/08 13:57:29 lukem Exp $
 
 .include <bsd.own.mk>
 
@@ -36,6 +36,7 @@ CLEANFILES+=	${DPSOPSHEADERFILES} ${DPSOPSCFILES}
 CLEANFILES+=	${PSOPSHEADERFILES} ${PSOPSCFILES}
 
 psops.h: ${PSOPSHEADERFILES} psname.txt header.txt psifdef.txt psendif.txt
+	${_MKTARGET_CREATE}
 	rm -rf ${.TARGET} ${.TARGET}.tmp
 	( \
 		(cd ${DIST} && cat psname.txt header.txt psifdef.txt ); \
@@ -50,6 +51,7 @@ psops.h: ${PSOPSHEADERFILES} psname.txt header.txt psifdef.txt psendif.txt
 CLEANFILES+=	psops.h psops.h.tmp
 
 dpsops.h: ${DPSOPSHEADERFILES} dpsname.txt header.txt dpsifdef.txt dpsendif.txt
+	${_MKTARGET_CREATE}
 	rm -rf ${.TARGET} ${.TARGET}.tmp
 	( \
 		(cd ${DIST} && cat dpsname.txt header.txt dpsifdef.txt ); \
