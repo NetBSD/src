@@ -1,5 +1,5 @@
-/*	$NetBSD: key.c,v 1.45 2001/07/27 04:48:13 itojun Exp $	*/
-/*	$KAME: key.c,v 1.182 2001/02/16 23:43:01 thorpej Exp $	*/
+/*	$NetBSD: key.c,v 1.46 2001/08/02 12:10:14 itojun Exp $	*/
+/*	$KAME: key.c,v 1.203 2001/07/28 03:12:18 itojun Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -354,7 +354,7 @@ static struct mbuf *key_setsadbaddr __P((u_int16_t,
 static struct mbuf *key_setsadbident __P((u_int16_t, u_int16_t, caddr_t,
 	int, u_int64_t));
 #endif
-static struct mbuf *key_setsadbxsa2(u_int8_t, u_int32_t);
+static struct mbuf *key_setsadbxsa2 __P((u_int8_t, u_int32_t, u_int32_t));
 static struct mbuf *key_setsadbxpolicy __P((u_int16_t, u_int8_t,
 	u_int32_t));
 static void *key_newbuf __P((const void *, u_int));
@@ -3148,6 +3148,7 @@ key_setdumpsa(sav, type, satype, seq, pid)
 
 		case SADB_X_EXT_SA2:
 			m = key_setsadbxsa2(sav->sah->saidx.mode,
+					sav->replay ? sav->replay->count : 0,
 					sav->sah->saidx.reqid);
 			if (!m)
 				goto fail;
@@ -3420,9 +3421,9 @@ key_setsadbident(exttype, idtype, string, stringlen, id)
  * set data into sadb_x_sa2.
  */
 static struct mbuf *
-key_setsadbxsa2(mode, reqid)
+key_setsadbxsa2(mode, seq, reqid)
 	u_int8_t mode;
-	u_int32_t reqid;
+	u_int32_t seq, reqid;
 {
 	struct mbuf *m;
 	struct sadb_x_sa2 *p;
@@ -3444,7 +3445,7 @@ key_setsadbxsa2(mode, reqid)
 	p->sadb_x_sa2_mode = mode;
 	p->sadb_x_sa2_reserved1 = 0;
 	p->sadb_x_sa2_reserved2 = 0;
-	p->sadb_x_sa2_reserved3 = 0;
+	p->sadb_x_sa2_sequence = seq;
 	p->sadb_x_sa2_reqid = reqid;
 
 	return m;
@@ -6283,7 +6284,9 @@ key_expire(sav)
 	m_cat(result, m);
 
 	/* create SA extension */
-	m = key_setsadbxsa2(sav->sah->saidx.mode, sav->sah->saidx.reqid);
+	m = key_setsadbxsa2(sav->sah->saidx.mode,
+			sav->replay ? sav->replay->count : 0,
+			sav->sah->saidx.reqid);
 	if (!m) {
 		error = ENOBUFS;
 		goto fail;
