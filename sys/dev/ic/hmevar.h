@@ -1,4 +1,4 @@
-/*	$NetBSD: hmevar.h,v 1.9 2002/12/18 23:13:03 martin Exp $	*/
+/*	$NetBSD: hmevar.h,v 1.10 2003/02/13 12:10:20 pk Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -81,7 +81,6 @@ struct hme_softc {
 	bus_space_handle_t sc_mif;	/* HME MIF registers */
 	int		sc_burst;	/* DVMA burst size in effect */
 	int		sc_phys[2];	/* MII instance -> PHY map */
-	int		sc_tcvr;	/* which phy are we forcing? */
 
 	int		sc_pci;		/* XXXXX -- PCI buses are LE. */
 
