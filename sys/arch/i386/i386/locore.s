@@ -37,7 +37,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)locore.s	7.3 (Berkeley) 5/13/91
- *	$Id: locore.s,v 1.79 1994/08/03 22:11:53 mycroft Exp $
+ *	$Id: locore.s,v 1.80 1994/08/03 22:35:02 mycroft Exp $
  */
 
 /*
@@ -243,6 +243,16 @@ is486:	movl	$CPU_486,_cpu-KERNBASE
 	movl	$0x69727943,_cpu_vendor-KERNBASE	# store vendor string
 	movw	$0x0078,_cpu_vendor-KERNBASE+4
 
+#ifndef notdef
+	/* Disable caching of the ISA hole only. */
+	invd
+	movb	$CCR0,%al		# Configuration Register index (CCR0)
+	outb	%al,$0x22
+	inb	$0x23,%al
+	orb	$CCR0_NC1,%al
+	outb	%al,$0x23
+	invd
+#else
 	/* Set cache parameters */
 	invd				# Start with guaranteed clean cache
 #ifdef CYRIX_CACHE_WORKS
@@ -283,6 +293,7 @@ is486:	movl	$CPU_486,_cpu-KERNBASE
 	movl	%eax,%cr0
 #endif
 	invd
+#endif /* notdef */
 
 	jmp	2f
 
@@ -559,6 +570,7 @@ reloc_gdt:
 1:
 #endif
 
+#ifdef notdef
 	cmp	$CPU_486DLC,_cpu
 	jne	1f
 	pushl	$2f
@@ -571,6 +583,7 @@ reloc_gdt:
 2:	.asciz	"WARNING: CYRIX 486DLC CACHE DISABLED BY DEFAULT.\n"
 #endif
 1:
+#endif /* notdef */
 
 	INTRFASTEXIT
 	/* NOTREACHED */
