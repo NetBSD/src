@@ -1,4 +1,4 @@
-/*	$NetBSD: conf.h,v 1.20 1995/04/10 00:46:11 mycroft Exp $	*/
+/*	$NetBSD: conf.h,v 1.21 1995/04/10 06:32:14 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -215,7 +215,7 @@ extern struct cdevsw cdevsw[];
 /* open, close, read, write, ioctl, select -- XXX should be a tty */
 #define	cdev_cn_init(c,n) { \
 	dev_init(c,n,open), dev_init(c,n,close), dev_init(c,n,read), \
-	dev_init(c,n,write), dev_init(c,n,ioctl), (dev_type_stop((*))) nullop, \
+	dev_init(c,n,write), dev_init(c,n,ioctl), dev_init(c,n,stop), \
 	(dev_type_reset((*))) nullop, 0, dev_init(c,n,select), \
 	(dev_type_mmap((*))) enodev, 0, D_TTY }
 
