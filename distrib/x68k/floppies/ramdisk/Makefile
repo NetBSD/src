@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.7.2.3 2000/07/09 21:45:02 he Exp $
+#	$NetBSD: Makefile,v 1.7.2.4 2000/07/27 17:55:22 he Exp $
 
 TOP=		${.CURDIR}/..
 
@@ -69,11 +69,6 @@ release:
 
 clean cleandir distclean:
 	/bin/rm -f ${AUXCLEAN} *.core ${IMAGE} ${CBIN} ${CBIN}.mk ${CBIN}.cache *.o *.lo *.c
-
-.if make(clean) || make(cleandir) || make(distclean) || make(depend) || make(obj)
-UTILDIR=	../../../utils
-SUBDIR+=	${UTILDIR}/init_s ${UTILDIR}/x_ifconfig ${UTILDIR}/x_route
-.endif
 
 .include <bsd.obj.mk>
 .include <bsd.subdir.mk>
