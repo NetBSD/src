@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_sa.c,v 1.1.2.6 2001/11/17 01:04:59 nathanw Exp $	*/
+/*	$NetBSD: kern_sa.c,v 1.1.2.7 2001/11/17 21:20:11 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -64,6 +64,48 @@ int	sadebug = 0;
 #define DPRINTFN(n,x)
 #endif
 
+/*
+ * sadata_upcall_alloc:
+ *
+ *	Allocate an sadata_upcall structure.
+ */
+struct sadata_upcall *
+sadata_upcall_alloc(void)
+{
+
+	return (pool_get(&saupcall_pool, PR_WAITOK));
+}
+
+/*
+ * sadata_upcall_free:
+ *
+ *	Free an sadata_upcall structure, and any associated
+ *	argument data.
+ */
+void
+sadata_upcall_free(struct sadata_upcall *sau)
+{
+	extern struct pool siginfo_pool;	/* XXX Ew. */
+
+	/*
+	 * XXX We have to know what the origin of sau_arg is
+	 * XXX in order to do the right thing, here.  Sucks
+	 * XXX to be a non-garbage-collecting kernel.
+	 */
+	if (sau->sau_arg) {
+		switch (sau->sau_type) {
+		case SA_UPCALL_SIGNAL:
+			pool_put(&siginfo_pool, sau->sau_arg);
+			break;
+
+		default:
+			panic("sadata_free: unknown type of sau_arg: %d",
+			    sau->sau_type);
+		}
+	}
+
+	pool_put(&saupcall_pool, sau);
+}
 
 int
 sys_sa_register(struct lwp *l, void *v, register_t *retval)
@@ -236,7 +278,7 @@ sa_upcall(struct lwp *l, int type, struct lwp *event, struct lwp *interrupted,
 
 	l->l_flag &= ~L_SA; /* XXX prevent recursive upcalls if we sleep for 
 			      memory */
-	s = pool_get(&saupcall_pool, PR_WAITOK);
+	s = sadata_upcall_alloc();
 	l->l_flag |= L_SA;
 
 	/* Grab a stack */
