@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.h,v 1.49 2001/03/01 15:56:47 pk Exp $ */
+/*	$NetBSD: pmap.h,v 1.50 2001/03/26 23:18:51 pk Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -144,7 +144,6 @@ struct pmap {
 	struct mmuhd	pm_reglist;	/* MMU regions on this pmap (4/4c) */
 	struct mmuhd	pm_seglist;	/* MMU segments on this pmap (4/4c) */
 
-	void		*pm_regstore;
 	struct regmap	*pm_regmap;
 
 	int		**pm_reg_ptps;	/* SRMMU-edible region tables for 4m */
@@ -258,12 +257,9 @@ void		pmap_destroy __P((pmap_t));
 void		pmap_init __P((void));
 vaddr_t		pmap_map __P((vaddr_t, paddr_t, paddr_t, int));
 paddr_t		pmap_phys_address __P((int));
-void		pmap_pinit __P((pmap_t));
 void		pmap_reference __P((pmap_t));
-void		pmap_release __P((pmap_t));
 void		pmap_remove __P((pmap_t, vaddr_t, vaddr_t));
 void		pmap_update __P((void));
-void		pmap_init __P((void));
 void		pmap_virtual_space __P((vaddr_t *, vaddr_t *));
 void		pmap_redzone __P((void));
 void		kvm_uncache __P((caddr_t, int));
