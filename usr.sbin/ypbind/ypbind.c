@@ -1,4 +1,4 @@
-/*	$NetBSD: ypbind.c,v 1.41 2000/02/20 14:31:28 itojun Exp $	*/
+/*	$NetBSD: ypbind.c,v 1.42 2000/04/11 11:36:47 itojun Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993 Theo de Raadt <deraadt@fsa.ca>
@@ -34,7 +34,7 @@
 
 #include <sys/cdefs.h>
 #ifndef LINT
-__RCSID("$NetBSD: ypbind.c,v 1.41 2000/02/20 14:31:28 itojun Exp $");
+__RCSID("$NetBSD: ypbind.c,v 1.42 2000/04/11 11:36:47 itojun Exp $");
 #endif
 
 #include <sys/param.h>
@@ -73,6 +73,7 @@ __RCSID("$NetBSD: ypbind.c,v 1.41 2000/02/20 14:31:28 itojun Exp $");
 #include <util.h>
 #include <rpcsvc/yp_prot.h>
 #include <rpcsvc/ypclnt.h>
+#include <ifaddrs.h>
 
 #include "pathnames.h"
 
@@ -837,74 +838,47 @@ broadcast(buf, outlen)
 	char *buf;
 	int outlen;
 {
-	struct ifconf ifc;
-	struct ifreq ifreq, *ifr;
-	struct in_addr in;
-	int i, sock, len;
-	char inbuf[8192];
+	struct ifaddrs *ifap, *ifa;
 	struct sockaddr_in bindsin;
-
-	/* find all networks and send the RPC packet out them all */
-	if ((sock = socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP)) == -1) {
-		yp_log(LOG_WARNING, "broadcast: socket: %m");
-		return -1;
-	}
+	struct in_addr in;
 
 	memset(&bindsin, 0, sizeof bindsin);
 	bindsin.sin_family = AF_INET;
 	bindsin.sin_len = sizeof(bindsin);
 	bindsin.sin_port = htons(PMAPPORT);
 
-	ifc.ifc_len = sizeof inbuf;
-	ifc.ifc_buf = inbuf;
-	if (ioctl(sock, SIOCGIFCONF, &ifc) < 0) {
-		yp_log(LOG_WARNING, "broadcast: ioctl(SIOCGIFCONF): %m");
-		(void)close(sock);
-		return -1;
+	if (getifaddrs(&ifap) != 0) {
+		yp_log(LOG_WARNING, "broadcast: getifaddrs: %m");
+		return (-1);
 	}
-	ifr = ifc.ifc_req;
-	ifreq.ifr_name[0] = '\0';
-	for (i = 0; i < ifc.ifc_len; i += len, ifr = (struct ifreq *)((caddr_t)ifr + len)) {
-		memcpy(&ifreq, ifr, sizeof(ifreq));
-#if defined(BSD) && BSD >= 199103
-		len = sizeof ifreq.ifr_name + ifreq.ifr_addr.sa_len;
-#else
-		len = sizeof ifc.ifc_len / sizeof(struct ifreq);
-#endif
-		if (ifreq.ifr_addr.sa_family != AF_INET)
+	for (ifa = ifap; ifa; ifa = ifa->ifa_next) {
+		if (ifa->ifa_addr->sa_family != AF_INET)
 			continue;
-		if (ioctl(sock, SIOCGIFFLAGS, &ifreq) < 0) {
-			yp_log(LOG_WARNING,
-			    "broadcast: ioctl(SIOCGIFFLAGS): %m");
+		if ((ifa->ifa_flags & IFF_UP) == 0)
+			continue;
+
+		switch (ifa->ifa_flags & (IFF_LOOPBACK | IFF_BROADCAST)) {
+		case IFF_BROADCAST:
+			if (!ifa->ifa_broadaddr)
+				continue;
+			if (ifa->ifa_broadaddr->sa_family != AF_INET)
+				continue;
+			in = ((struct sockaddr_in *)ifa->ifa_broadaddr)->sin_addr;
+			break;
+		case IFF_LOOPBACK:
+			in = ((struct sockaddr_in *)ifa->ifa_addr)->sin_addr;
+			break;
+		default:
 			continue;
 		}
-		if ((ifreq.ifr_flags & IFF_UP) == 0)
-			continue;
 
-		ifreq.ifr_flags &= (IFF_LOOPBACK | IFF_BROADCAST);
-		if (ifreq.ifr_flags == IFF_BROADCAST) {
-			if (ioctl(sock, SIOCGIFBRDADDR, &ifreq) < 0) {
-				yp_log(LOG_WARNING, 
-				    "broadcast: ioctl(SIOCGIFBRDADDR): %m");
-				continue;
-			}
-		} else if (ifreq.ifr_flags == IFF_LOOPBACK) {
-			if (ioctl(sock, SIOCGIFADDR, &ifreq) < 0) {
-				yp_log(LOG_WARNING,
-				    "broadcast: ioctl(SIOCGIFADDR): %m");
-				continue;
-			}
-		} else
-			continue;
-
-		in = ((struct sockaddr_in *)&ifreq.ifr_addr)->sin_addr;
 		bindsin.sin_addr = in;
 		if (sendto(rpcsock, buf, outlen, 0, (struct sockaddr *)&bindsin,
-			   sizeof bindsin) == -1)
+			   bindsin.sin_len) == -1)
 			yp_log(LOG_WARNING, "broadcast: sendto: %m");
 	}
-	(void)close(sock);
-	return 0;
+	freeifaddrs(ifap);
+	return (0);
 }
 
 static int
