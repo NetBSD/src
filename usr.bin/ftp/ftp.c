@@ -1,4 +1,4 @@
-/*	$NetBSD: ftp.c,v 1.104 2000/07/30 06:10:44 lukem Exp $	*/
+/*	$NetBSD: ftp.c,v 1.105 2000/07/30 09:32:09 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1996-2000 The NetBSD Foundation, Inc.
@@ -103,7 +103,7 @@
 #if 0
 static char sccsid[] = "@(#)ftp.c	8.6 (Berkeley) 10/27/94";
 #else
-__RCSID("$NetBSD: ftp.c,v 1.104 2000/07/30 06:10:44 lukem Exp $");
+__RCSID("$NetBSD: ftp.c,v 1.105 2000/07/30 09:32:09 lukem Exp $");
 #endif
 #endif /* not lint */
 
@@ -259,18 +259,17 @@ hookup(char *host, char *port)
 	}
 	memcpy(&hisctladdr.si_su, res->ai_addr, res->ai_addrlen);
 	hisctladdr.su_len = res->ai_addrlen;
-	len = hisctladdr.su_len;
 	freeaddrinfo(res0);
 	res0 = res = NULL;
 
+	len = hisctladdr.su_len;
 	memset((char *)&myctladdr, 0, sizeof (myctladdr));
 	if (getsockname(s, (struct sockaddr *)&myctladdr.si_su, &len) < 0) {
 		warn("getsockname");
 		code = -1;
 		goto bad;
 	}
-	if (myctladdr.su_len == 0)
-		myctladdr.su_len = len;
+	myctladdr.su_len = len;
 
 #ifdef IPTOS_LOWDELAY
 	if (hisctladdr.su_family == AF_INET) {
@@ -1407,7 +1406,7 @@ initconn(void)
 		if (strcmp(pasvcmd, "PASV") == 0) {
 			if (data_addr.su_family != AF_INET) {
 				fputs(
-"Passive mode AF mismatch. Shouldn't happen!\n", ttyout);
+    "Passive mode AF mismatch. Shouldn't happen!\n", ttyout);
 				error = 1;
 				goto bad;
 			}
@@ -1592,11 +1591,13 @@ initconn(void)
 	    setsockopt(data, SOL_SOCKET, SO_DEBUG, (char *)&on,
 			sizeof(on)) < 0)
 		warn("setsockopt (ignored)");
-	len = sizeof(data_addr.si_su);		/* XXXLUKEM */
+	len = sizeof(data_addr.si_su);
+	memset((char *)&data_addr, 0, sizeof (data_addr));
 	if (getsockname(data, (struct sockaddr *)&data_addr.si_su, &len) < 0) {
 		warn("getsockname");
 		goto bad;
 	}
+	data_addr.su_len = len;
 	if (xlisten(data, 1) < 0)
 		warn("listen");
 
@@ -1705,7 +1706,7 @@ dataconn(const char *lmode)
 	if (passivemode)
 		return (fdopen(data, lmode));
 
-	s = accept(data, (struct sockaddr *) &from, &fromlen);
+	s = accept(data, (struct sockaddr *) &from.si_su, &fromlen);
 	if (s < 0) {
 		warn("accept");
 		(void)close(data), data = -1;
