@@ -1,4 +1,4 @@
-/*	$NetBSD: pcmcia.c,v 1.45 2004/08/09 02:01:16 mycroft Exp $	*/
+/*	$NetBSD: pcmcia.c,v 1.46 2004/08/09 02:10:25 mycroft Exp $	*/
 
 /*
  * Copyright (c) 2004 Charles M. Hannum.  All rights reserved.
@@ -48,7 +48,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pcmcia.c,v 1.45 2004/08/09 02:01:16 mycroft Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pcmcia.c,v 1.46 2004/08/09 02:10:25 mycroft Exp $");
 
 #include "opt_pcmciaverbose.h"
 
@@ -948,8 +948,10 @@ pcmcia_card_intrdebug(arg)
 		       pcmcia_ccr_read(pf, PCMCIA_CCR_STATUS),
 		       pcmcia_ccr_read(pf, PCMCIA_CCR_PIN));
 		if ((pf->pf_flags & PFF_ENABLED) == 0 ||
-		    pf->ih_fct == NULL)
+		    pf->ih_fct == NULL) {
+			printf("\n");
 			continue;
+		}
 		if (pf->ccr_mask & (1 << PCMCIA_CCR_STATUS)) {
 			reg = pcmcia_ccr_read(pf, PCMCIA_CCR_STATUS);
 			if (reg & PCMCIA_CCR_STATUS_INTR) {
