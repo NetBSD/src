@@ -1,4 +1,4 @@
-/*	$NetBSD: exec.c,v 1.13 1999/05/15 15:42:23 drochner Exp $	 */
+/*	$NetBSD: exec.c,v 1.14 1999/09/07 18:27:58 ross Exp $	 */
 
 /*
  * Copyright (c) 1982, 1986, 1990, 1993
@@ -214,7 +214,7 @@ exec_netbsd(file, loadaddr, boothowto)
 #ifdef XMS
 	if (loadaddr != origaddr) {
 		/*
-		 * We know have done our last DOS IO, so we may
+		 * We now have done our last DOS IO, so we may
 		 * trash the OS. Copy the data from the temporary
 		 * buffer to its real adress.
 		 */
