@@ -1,4 +1,4 @@
-.\"	$NetBSD: main,v 1.253.2.6 2004/09/25 21:39:27 tron Exp $
+.\"	$NetBSD: main,v 1.253.2.7 2004/10/01 03:40:07 jmc Exp $
 .\"
 .\" Copyright (c) 1999-2004 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -165,8 +165,8 @@ or
 partition.
 .\}
 .if \n[macppc]:\n[sparc]:\n[sparc64] \{\
-Alternatively, you may netboot the installation kernel.  This process is
-covered below, in detail.
+Alternatively, you may netboot the installation kernel.
+This process is covered below, in detail.
 .\}
 .It
 The actual binary distribution is in the
@@ -223,7 +223,8 @@ If your \*M has a floppy drive, create the pair of boot floppies using
 .Ic dd
 (any
 .Ul
-system with floppy support).  If your system has Open Firmware 3, drag
+system with floppy support).
+If your system has Open Firmware 3, drag
 .Pa ofwboot.xcf No and Pa netbsd-GENERIC_MD.gz
 to your hard drive icon (the top level of the drive, not the desktop).
 If you are using the CD image, burn it now.
@@ -449,25 +450,27 @@ evbsh5,
 and
 xen.
 .It
-Native thread support has been added, based on Scheduler Activations. 
+Native thread support has been added, based on Scheduler Activations.
 Applications which support native threads can now take full advantage of the 
 high-performance NetBSD POSIX threads implementation.
 .It
 Kernel events notification framework - kqueue
 .
-kqueue provides a stateful and efficient event notification framework. 
+kqueue provides a stateful and efficient event notification framework.
 Currently supported events include socket, file, directory, fifo, pipe, tty 
 and device changes, and monitoring of processes and signals.
 .
-kqueue is supported by all writable filesystems in the NetBSD tree (with the exception of Coda) and all device drivers supporting poll(2).
+kqueue is supported by all writable filesystems in the NetBSD tree (with
+the exception of Coda) and all device drivers supporting poll(2).
 .It
 Improvements have been made to NetBSD's Linux emulation to support the latest 
-Sun JDK/JRE for Linux. Testing has shown that it now runs as well as it does 
-on Linux natively.
+Sun JDK/JRE for Linux.
+Testing has shown that it now runs as well as it does on Linux natively.
 .It
-NetBSD 2.0 has support for non-executable mappings on many platforms. If 
-enabled, parts of the stack and heap are made non-executable when they are 
-marked writable. This makes exploiting potential buffer overflows harder.
+NetBSD 2.0 has support for non-executable mappings on many platforms.
+If enabled, parts of the stack and heap are made non-executable
+when they are marked writable.
+This makes exploiting potential buffer overflows harder.
 .It
 For the i386 port it now supports SMP and has a new ACPI and power management 
 framework which takes advantage of Intel's ACPI implementation.
@@ -477,7 +480,7 @@ G4 models has been added.
 .It
 SMP support has been added to the sparc port as well.
 .It 
-New generic i2c framework, supporting bit-bang and "intelligent" controllers. 
+New generic i2c framework, supporting bit-bang and "intelligent" controllers.
 .It
 .Xr sysctl 9
 was switched from a static binding to a dynamic implementation.
@@ -498,11 +501,12 @@ has been upgraded to version 4.1.3.
 now implements path MTU discovery blackhole detection (i.e. it will turn off
 path MTU discovery if the connection is losing).
 .It
-Socket buffer insertion is now O(C).  This can provide a substantial 
+Socket buffer insertion is now O(C).
+This can provide a substantial 
 performance boost to some applications which use large socket buffers.
 .It
 .Xr wi 4
-has support for Host-AP mode, allowing Intelsil Prism2/2.5/3-based boards to 
+has support for Host-AP mode, allowing Intersil Prism2/2.5/3-based boards to 
 be used to make an 802.11 Access Point.
 .It
 Support for 
@@ -518,22 +522,27 @@ Change port allocation from linked list to a hash table for better performance.
 .Ss2 File system
 .
 .(bullet
-FreeBSD's UFS2 has been ported to NetBSD. UFS2 is an extension to FFS, adding 
-64 bit block pointers and support for extended file storage. Among other 
+FreeBSD's UFS2 has been ported to NetBSD.
+UFS2 is an extension to FFS, adding 
+64 bit block pointers and support for extended file storage.
+Among other 
 enhancements, UFS2 allows for file systems larger than 1Terabyte.
 .It
 The cryptographic disk driver (cgd) can be used to encrypt disks or 
 partitions, using some strong encryption algorithms, like AES (Rijndael) 
-and Blowfish. cgd can also be configured to encrypt swap.
+and Blowfish.
+cgd can also be configured to encrypt swap.
 .bullet)
 .
 .Ss2 Security
 .
 .(bullet
-The systrace utility has been added to the system. systrace monitors and
-controls an application access to the system by enforcing access policies for
-system calls. The systrace utility might be used to trace an untrusted
-application's access to the system. In addition, it can be used to protect the
+The systrace utility has been added to the system.
+systrace monitors and controls an application access to the system
+by enforcing access policies for system calls.
+The systrace utility might be used to trace an untrusted
+application's access to the system.
+In addition, it can be used to protect the
 system from software bugs (such as buffer overflows) by constraining a
 daemon's access to the system.
 .
@@ -541,28 +550,31 @@ The privilege elevation feature of systrace can be used to obviate the need to
 run large, untrusted programs as root when only one or two system calls
 require the elevated privilege.
 .It
-Verified Exec support has been added in this release. Verified Exec verifies a
+Verified Exec support has been added in this release.
+Verified Exec verifies a
 cryptographic hash before allowing execution of binaries and scripts.
 .
 This can be used to prevent a system from running binaries or scripts which
-have been illegally modified or installed. In addition, Verified Exec can also
-be used to limit the use of script interpreters to authorized scripts only
-and disallow interactive use.
+have been illegally modified or installed.
+In addition, Verified Exec can also be used to limit the use of
+script interpreters to authorized scripts only and disallow
+interactive use.
 .bullet)
 .
 .Ss2 System administration and user tools
 .
 .(bullet
-Switched from the GPL version to a non GPL version of various tools including
+Switched from the GPL version to a non-GPL version of various tools including
 gzip and awk.
 .bullet)
 .
 .Ss2 Miscellaneous
 .
 .(bullet
-NetBSD 2.0 supports a new toolchain based on gcc 3.3.3 and binutils 2.14. 
+NetBSD 2.0 supports a new toolchain based on gcc 3.3.3 and binutils 2.14.
 gcc 3.3.1 adds support for a number of CPU targets and greatly improved 
-support for i386 and other targets. New platforms supported by gcc 3.3.3 has 
+support for i386 and other targets.
+The support for new platforms in gcc 3.3.3 has
 enabled the porting of NetBSD to even more architectures.
 .It
 Updates of most third party packages that are shipped in the base
@@ -586,7 +598,7 @@ grep 2.5.1
 .It
 groff 1.19
 .It
-less less-381
+less 381
 .It
 openssl 0.9.7d
 .It
@@ -605,12 +617,13 @@ system, including the latest open source desktop KDE3, OpenOffice,
 perl, Apache and many more.
 .
 A number of new platforms are supported, including Darwin, FreeBSD, IRIX, 
-Linux, OpenBSD and Solaris. Support for various other platforms (among them 
+Linux, OpenBSD and Solaris.
+Support for various other platforms (among them 
 AIX, BSD/OS and HP-UX) is currently being worked on thanks to our new, 
 portable bootstrap kit which makes it much simpler to port pkgsrc support to 
 new operating systems.
 .
-At the time of writing, there are over 4000 third party packages
+At the time of writing, there are over 4500 third party packages
 available in pkgsrc.
 .It
 .bullet)
@@ -843,7 +856,8 @@ of the release files.
 .Pp
 Other directories provide unpacked source trees e.g. for distribution via
 the the software update protocol (SUP) or the
-concurrent version system (CVS). For more information see:
+concurrent version system (CVS).
+For more information see:
 .Lk http://www.NetBSD.org/mirrors/
 .\}
 .
@@ -1127,7 +1141,7 @@ The Helsinki University of Technology in Finland for hosting the
 backup CVS and backup server.
 .It
 SSH Communications Security in Finland for operating
-the backup server. 
+the backup server.
 .It
 The many organisations that provide
 .Nx
