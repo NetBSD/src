@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.83.2.39 2001/05/23 04:37:25 sommerfeld Exp $	*/
+/*	$NetBSD: pmap.c,v 1.83.2.40 2001/05/26 20:05:42 sommerfeld Exp $	*/
 
 /*
  *
@@ -229,8 +229,8 @@
  * locking data structures
  */
 
-static simple_lock_data_t pvalloc_lock;
-static simple_lock_data_t pmaps_lock;
+static struct simplelock pvalloc_lock;
+static struct simplelock pmaps_lock;
 
 #if defined(MULTIPROCESSOR) || defined(LOCKDEBUG)
 static struct lock pmap_main_lock;
