@@ -1,4 +1,4 @@
-/*	$NetBSD: md.c,v 1.4.2.6 1997/12/05 14:57:02 simonb Exp $ */
+/*	$NetBSD: md.c,v 1.4.2.7 1997/12/15 00:41:03 fvdl Exp $ */
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -46,12 +46,14 @@
 #include "menu_defs.h"
 
 int mbr_present;
+int c1024_resp;
+
+int edit_mbr __P((void));
 
 /* prototypes */
 
 int md_get_info()
 {
-	int i, j;
 
 	get_fdisk_info();
 
@@ -98,6 +100,12 @@ int md_get_info()
 		if (dlsize < bsize)
 			bcyl = dlsize / bcylsize;
 	}
+	return edit_mbr();
+}
+
+int edit_mbr()
+{
+	int i, j;
 
 	/* Ask full/part */
 	msg_display (MSG_fullpart, diskdev);
@@ -257,6 +265,7 @@ int md_make_bsd_partitions (void)
 	int remain;
 	char isize[20];
 
+editlab:
 	/* Ask for layout type -- standard or special */
 	msg_display (MSG_layout,
 			(1.0*fsptsize*sectorsize)/MEG,
@@ -402,6 +411,20 @@ int md_make_bsd_partitions (void)
 	if (edit_and_check_label(bsdlabel, maxpart, RAW_PART, RAW_PART) == 0) {
 		msg_display(MSG_abort);
 		return 0;
+	}
+
+	if ((bsdlabel[A][D_OFFSET] + bsdlabel[A][D_SIZE]) / bcylsize > 1024) {
+		process_menu(MENU_cyl1024);
+		/* XXX UGH! need arguments to process_menu */
+		switch (c1024_resp) {
+		case 1:
+			edit_mbr();
+			/*FALLTHROUGH*/
+		case 2:
+			goto editlab;
+		default:
+			break;
+		}
 	}
 
 	/* Disk name */
