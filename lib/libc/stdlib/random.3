@@ -1,4 +1,4 @@
-.\"	$NetBSD: random.3,v 1.11 2001/06/09 01:43:53 assar Exp $
+.\"	$NetBSD: random.3,v 1.12 2001/09/16 01:31:53 wiz Exp $
 .\"
 .\" Copyright (c) 1983, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -152,8 +152,6 @@ generator is greater than
 .if t 2\u\s769\s10\d,
 .if n 2**69
 which should be sufficient for most purposes.
-.Sh AUTHORS
-.An Earl T. Cohen
 .Sh DIAGNOSTICS
 If
 .Fn initstate
@@ -170,6 +168,8 @@ messages are printed on the standard error output.
 These
 functions appeared in
 .Bx 4.2 .
+.Sh AUTHORS
+.An Earl T. Cohen
 .Sh BUGS
 About 2/3 the speed of
 .Xr rand 3 .
