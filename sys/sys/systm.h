@@ -1,4 +1,4 @@
-/*	$NetBSD: systm.h,v 1.143.2.3 2002/05/16 12:47:25 gehenna Exp $	*/
+/*	$NetBSD: systm.h,v 1.143.2.4 2002/05/16 13:11:18 gehenna Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1988, 1991, 1993
@@ -123,6 +123,8 @@ extern const char *rootspec;	/* how root device was specified */
  */
 extern const dev_t swapdev;	/* swapping device */
 extern struct vnode *swapdev_vp;/* vnode equivalent to above */
+
+extern const dev_t zerodev;	/* /dev/zero */
 
 typedef int	sy_call_t(struct proc *, void *, register_t *);
 
