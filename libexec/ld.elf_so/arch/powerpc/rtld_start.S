@@ -1,4 +1,4 @@
-/*	$NetBSD: rtld_start.S,v 1.5 2002/09/10 02:24:51 mycroft Exp $	*/
+/*	$NetBSD: rtld_start.S,v 1.6 2002/09/10 02:52:33 mycroft Exp $	*/
 
 /*-
  * Copyright (C) 1998	Tsubai Masanari
@@ -45,13 +45,6 @@ _rtld_start:
 
 	bl	_GLOBAL_OFFSET_TABLE_@local-4
 	mflr	11			# r11 = (real) GOT
-	subi	3,11,4			# r3 = _GLOBAL_OFFSET_TABLE_-4
-
-	dcbst	0,3			# sync i-cache with d-cache
-	sync
-	icbi	0,3
-	isync
-
 	lwz	10,_GLOBAL_OFFSET_TABLE_@got(11)
 					# the linker thought GOT were ...
 	subf	9,10,11			# r9 = displacement
@@ -63,7 +56,7 @@ _rtld_start:
 	add	3,3,9			# add the displacement
 	stw	3,0(11)
 	addi	11,11,4			# r11++
-	cmpl	0,11,8			# done?
+	cmplw	0,11,8			# done?
 	blt	1b
 
 	lwz	4,16(1)
