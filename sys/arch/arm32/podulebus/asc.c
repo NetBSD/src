@@ -1,4 +1,4 @@
-/* $NetBSD: asc.c,v 1.3 1996/03/17 01:24:42 thorpej Exp $ */
+/* $NetBSD: asc.c,v 1.4 1996/03/27 21:51:22 mark Exp $ */
 
 /*
  * Copyright (c) 1996 Mark Brinicombe
@@ -201,6 +201,8 @@ ascattach(pdp, dp, auxp)
 	sc->sc_ih.ih_func = asc_intr;
 	sc->sc_ih.ih_arg = sc;
 	sc->sc_ih.ih_level = IPL_BIO;
+	sc->sc_ih.ih_name = "asc";
+
 #ifdef ASC_POLL
 	if (!asc_poll)
 #endif
