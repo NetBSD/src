@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.vax,v 1.9 1995/06/24 21:14:40 christos Exp $
+#	$NetBSD: Makefile.vax,v 1.10 1995/07/05 08:17:17 ragge Exp $
 
 #	@(#)Makefile.vax	7.18 (Berkeley) 12/16/90
 #
@@ -19,7 +19,6 @@
 # -DQUOTA	compile in file system quotas
 # -DUUDMA	compile in unibus tu58 pseudo-dma code
 #
-C2=	/usr/libexec/cc1
 CC=	cc
 CPP=	cpp
 LD=	/usr/bin/ld
@@ -29,15 +28,10 @@ S=	../../../..
 VAX=	../..
 
 INCLUDES= -I. -I$S/arch -I$S -I$S/sys
-COPTS=	${INCLUDES} ${IDENT} -D_KERNEL
+COPTS=	${INCLUDES} ${IDENT} -D_KERNEL -D_VAX_INLINE_
 AOPTS=  ${COPTS} -DASSEMBLER
 CFLAGS=	${COPTS}
 LOAD_ADDRESS=80000000
-
-INLINECMD=	${VAX}/inline/obj/inline
-INLINE= ${INLINECMD} ${INLINEOPTS}
-
-#AHEADS=	${VAX}/vax/pcb.m
 
 ### find out what to use for libkern
 .include "$S/lib/libkern/Makefile.inc"
@@ -45,14 +39,6 @@ INLINE= ${INLINECMD} ${INLINEOPTS}
 LIBKERN=	${KERNLIB}
 .else
 LIBKERN=        ${KERNLIB_PROF}
-.endif
-
-### find out what to use for libcompat
-.include "$S/compat/common/Makefile.inc"
-.ifndef PROF
-LIBCOMPAT=	${COMPATLIB}
-.else
-LIBCOMPAT=	${COMPATLIB_PROF}
 .endif
 
 NORMAL_C= ${CC} -O -c ${CFLAGS} ${PROF} $<
@@ -80,7 +66,7 @@ SYSTEM_LD_TAIL=@echo Nu {r k{rnan klar!!!!
 
 clean::
 	rm -f eddep *vmunix tags *.o subr.i [a-tv-z]*.s \
-		Errs errs linterrs makelinks vnode_if.* genassym
+	Errs errs linterrs makelinks vnode_if.* genassym
 
 lint: /tmp param.c
 	@lint -hbxn -DGENERIC ${COPTS} ${PARAM} \
@@ -92,69 +78,19 @@ symbols.sort: ${VAX}/vax/symbols.raw
 	grep -v '^#' ${VAX}/vax/symbols.raw \
 	    | sed 's/^	//' | sort -u > symbols.sort
 
-${INLINECMD}:
-	cd ${VAX}/inline; make
-
 intvec.o: ${VAX}/vax/intvec.s
 	${CC} -x assembler-with-cpp -E ${AOPTS} ${VAX}/vax/intvec.s| as -o intvec.o
 
 subr.o: ${VAX}/vax/subr.s
 	${CC} -x assembler-with-cpp -E ${AOPTS} ${VAX}/vax/subr.s| as -o subr.o
 
-#
-# Den h{r filen borde st{das upp och fixas till, det blir nog n{r 
-# glue-filerna g|r vad dom ska :)
 
-#emulate.o: ${VAX}/vax/emulate.s
-#	cpp -I. ${COPTS} ${VAX}/vax/emulate.s | ${AS} -o emulate.o
-
-# the following is necessary because autoconf.o depends on #if GENERIC
-#autoconf.o tu.o: Makefile
-
-# the following are necessary because the files depend on the types of
-# vax cpu's included in the system configuration
-#clock.o machdep.o autoconf.o conf.o cons.o cpudata.o : Makefile
-#crl.o flp.o mba.o uba.o vaxcpu.o : Makefile
-
-# depend on network configuration
-#af.o uipc_proto.o uipc_domain.o subr.o: Makefile
-lim.o: Makefile
-
-# depends on kdb being configured
-#trap.o:	Makefile
-
-# depend on maxusers
-assym.s: Makefile
-
-assym.s: genassym
-	./genassym >assym.s
-
-genassym:
-	${CC} ${INCLUDES} ${IDENT} ${PARAM} -o genassym ${VAX}/vax/genassym.c
-
-depend: assym.s ${CFILES}
+depend: ${CFILES}
 	mkdep ${COPTS} ${.ALLSRC:M*.c} ioconf.c
-	mkdep -a -p ${INCLUDES} ${IDENT} ${PARAM} ${VAX}/vax/genassym.c
-
-links:
-	egrep '#if' ${CFILES} | sed -f $S/conf/defines | \
-	  sed -e 's/:.*//' -e 's/\.c/.o/' | sort -u > dontlink
-	echo ${CFILES} | tr -s ' ' '\12' | sed 's/\.c/.o/' | \
-	  sort -u | comm -23 - dontlink | \
-	  sed 's,../.*/\(.*.o\),rm -f \1;ln -s ../GENERIC/\1 \1,' > makelinks
-	echo 'rm -f udiv.o;ln -s ../GENERIC/udiv.o udiv.o' >> makelinks
-	echo 'rm -f urem.o;ln -s ../GENERIC/urem.o urem.o' >> makelinks
-	sh makelinks && rm -f dontlink
-
-tags:
-	@echo "see $S/kern/Makefile for tags"
+	mkdep -a -p ${INCLUDES} ${IDENT} ${PARAM}
 
 ioconf.o:
 	${CC} -c ${CFLAGS} ${PARAM} ioconf.c
-
-#	${CC} -c -S ${COPTS} ioconf.c
-#	cat ioconf.s | ${INLINE} | ${AS} -o ioconf.o
-#	rm -f ioconf.s
 
 lim.o:	Makefile
 	../../conf/mkoldconf.awk < ioconf.c > lim.c

@@ -1,4 +1,4 @@
-#	$NetBSD: GENERIC,v 1.6 1995/03/29 22:50:47 ragge Exp $
+#	$NetBSD: GENERIC,v 1.7 1995/07/05 08:17:16 ragge Exp $
 #
 # GENERIC VAX, currently only supports 11/750 anyway.
 #
@@ -19,7 +19,7 @@ maxusers	16
 options		SWAPPAGER, DEVPAGER, VNODEPAGER
 
 # Kernel compiled-in symbolic debugger & system call tracer
-#options		DDB
+options		DDB
 options		KTRACE
 
 # Network support
@@ -30,6 +30,7 @@ options         ETHER
 options		FFS,QUOTA
 options		LFS
 options		MFS
+options		NFSCLIENT
 options		FDESC
 options		FIFO
 options		KERNFS

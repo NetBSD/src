@@ -1,4 +1,4 @@
-#       $NetBSD: files.vax,v 1.11 1995/06/16 15:09:56 ragge Exp $
+#       $NetBSD: files.vax,v 1.12 1995/07/05 08:17:18 ragge Exp $
 #
 # new style config file for vax architecture
 #
@@ -214,6 +214,7 @@ file	arch/vax/vax/random.s		inet
 file	arch/vax/vax/disksubr.c		ffs
 file	arch/vax/if/if_uba.c		de qe
 file	arch/vax/vax/db_machdep.c	ddb
+file	arch/vax/vax/db_disasm.c	ddb
 
 # Dom h{ra f}r vara kvar s} l{nge f}r vi se vilka vi beh|ver...
 #arch/vax/vax/crl.c           standard
