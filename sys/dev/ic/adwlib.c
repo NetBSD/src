@@ -1,4 +1,4 @@
-/* $NetBSD: adwlib.c,v 1.15 2000/05/15 16:38:49 dante Exp $        */
+/* $NetBSD: adwlib.c,v 1.16 2000/05/26 15:13:43 dante Exp $        */
 
 /*
  * Low level routines for the Advanced Systems Inc. SCSI controllers chips
@@ -73,30 +73,30 @@
 #include <vm/pmap.h>
 
 #include <dev/ic/adwlib.h>
-#include <dev/ic/adw.h>
 #include <dev/ic/adwmcode.h>
+#include <dev/ic/adw.h>
 
 
 /* Static Functions */
 
-static u_int16_t AdvGet3550EEPConfig __P((bus_space_tag_t, bus_space_handle_t,
+static u_int16_t AdwGet3550EEPConfig __P((bus_space_tag_t, bus_space_handle_t,
      							ADW_EEP_3550_CONFIG *));
-static u_int16_t AdvGet38C0800EEPConfig __P((bus_space_tag_t, bus_space_handle_t,
+static u_int16_t AdwGet38C0800EEPConfig __P((bus_space_tag_t, bus_space_handle_t,
      							ADW_EEP_38C0800_CONFIG *));
-static u_int16_t AdvGet38C1600EEPConfig __P((bus_space_tag_t, bus_space_handle_t,
+static u_int16_t AdwGet38C1600EEPConfig __P((bus_space_tag_t, bus_space_handle_t,
      							ADW_EEP_38C1600_CONFIG *));
-static u_int16_t AdvReadEEPWord __P((bus_space_tag_t, bus_space_handle_t, int));
-static void AdvWaitEEPCmd __P((bus_space_tag_t, bus_space_handle_t));
-static void AdvSet3550EEPConfig __P((bus_space_tag_t, bus_space_handle_t,
+static u_int16_t AdwReadEEPWord __P((bus_space_tag_t, bus_space_handle_t, int));
+static void AdwWaitEEPCmd __P((bus_space_tag_t, bus_space_handle_t));
+static void AdwSet3550EEPConfig __P((bus_space_tag_t, bus_space_handle_t,
 					                 ADW_EEP_3550_CONFIG *));
-static void AdvSet38C0800EEPConfig __P((bus_space_tag_t, bus_space_handle_t,
+static void AdwSet38C0800EEPConfig __P((bus_space_tag_t, bus_space_handle_t,
 					                 ADW_EEP_38C0800_CONFIG *));
-static void AdvSet38C1600EEPConfig __P((bus_space_tag_t, bus_space_handle_t,
+static void AdwSet38C1600EEPConfig __P((bus_space_tag_t, bus_space_handle_t,
 					                 ADW_EEP_38C1600_CONFIG *));
-static void AdvInquiryHandling __P((ADW_SOFTC *, ADW_SCSI_REQ_Q *));
+static void AdwInquiryHandling __P((ADW_SOFTC *, ADW_SCSI_REQ_Q *));
 
-static void AdvSleepMilliSecond __P((u_int32_t));
-static void AdvDelayMicroSecond __P((u_int32_t));
+static void AdwSleepMilliSecond __P((u_int32_t));
+static void AdwDelayMicroSecond __P((u_int32_t));
 
 
 /*
@@ -104,7 +104,7 @@ static void AdvDelayMicroSecond __P((u_int32_t));
  *
  * All drivers should use this structure to set the default EEPROM
  * configuration. The BIOS now uses this structure when it is built.
- * Additional structure information can be found in advlib.h where
+ * Additional structure information can be found in adwlib.h where
  * the structure is defined.
  */
 static ADW_EEP_3550_CONFIG
@@ -127,8 +127,8 @@ Default_3550_EEPROM_Config = {
 	0xFFE7,			/* bios_ctrl */
 	0xFFFF,			/* ultra_able */
 	0,			/* reserved2 */
-	ASC_DEF_MAX_HOST_QNG,	/* max_host_qng */
-	ASC_DEF_MAX_DVC_QNG,	/* max_dvc_qng */
+	ADW_DEF_MAX_HOST_QNG,	/* max_host_qng */
+	ADW_DEF_MAX_DVC_QNG,	/* max_dvc_qng */
 	0,			/* dvc_cntl */
 	0,			/* bug_fix */
 	0,			/* serial_number_word1 */
@@ -165,8 +165,8 @@ Default_38C0800_EEPROM_Config = {
 	0xFFE7,			/* 12 bios_ctrl */
 	0x4444,			/* 13 sdtr_speed2 */
 	0x4444,			/* 14 sdtr_speed3 */
-	ASC_DEF_MAX_HOST_QNG,	/* 15 max_host_qng */
-	ASC_DEF_MAX_DVC_QNG,	/*    max_dvc_qng */
+	ADW_DEF_MAX_HOST_QNG,	/* 15 max_host_qng */
+	ADW_DEF_MAX_DVC_QNG,	/*    max_dvc_qng */
 	0,			/* 16 dvc_cntl */
 	0x4444,			/* 17 sdtr_speed4 */
 	0,			/* 18 serial_number_word1 */
@@ -230,8 +230,8 @@ Default_38C1600_EEPROM_Config = {
 	0xFFE7,			/* 12 bios_ctrl */
 	0x5555,			/* 13 sdtr_speed2 */
 	0x5555,			/* 14 sdtr_speed3 */
-	ASC_DEF_MAX_HOST_QNG,	/* 15 max_host_qng */
-	ASC_DEF_MAX_DVC_QNG,	/*    max_dvc_qng */
+	ADW_DEF_MAX_HOST_QNG,	/* 15 max_host_qng */
+	ADW_DEF_MAX_DVC_QNG,	/*    max_dvc_qng */
 	0,			/* 16 dvc_cntl */
 	0x5555,			/* 17 sdtr_speed4 */
 	0,			/* 18 serial_number_word1 */
@@ -284,7 +284,7 @@ Default_38C1600_EEPROM_Config = {
  * then 0 is returned.
  */
 int
-AdvInitAsc3550Driver(sc)
+AdwInitAsc3550Driver(sc)
 ADW_SOFTC      *sc;
 {
 	bus_space_tag_t iot = sc->sc_iot;
@@ -299,7 +299,7 @@ ADW_SOFTC      *sc;
 	int		adv_asc3550_expanded_size;
 	u_int16_t	scsi_cfg1;
 	u_int8_t	tid;
-	u_int16_t	bios_mem[ASC_MC_BIOSLEN/2];	/* BIOS RISC Memory
+	u_int16_t	bios_mem[ADW_MC_BIOSLEN/2];	/* BIOS RISC Memory
 								0x40-0x8F. */
 	u_int16_t	wdtr_able = 0, sdtr_able, tagqng_able;
 	u_int8_t	max_cmd[ADW_MAX_TID + 1];
@@ -315,31 +315,31 @@ ADW_SOFTC      *sc;
 	 * Note: This code makes the assumption, which is currently true,
 	 * that a chip reset does not clear RISC LRAM.
 	 */
-	for (i = 0; i < ASC_MC_BIOSLEN/2; i++) {
-		ADW_READ_WORD_LRAM(iot, ioh, ASC_MC_BIOSMEM+(2*i), bios_mem[i]);
+	for (i = 0; i < ADW_MC_BIOSLEN/2; i++) {
+		ADW_READ_WORD_LRAM(iot, ioh, ADW_MC_BIOSMEM+(2*i), bios_mem[i]);
 	}
 
 	/*
 	 * Save current per TID negotiated values.
 	 */
-	if (bios_mem[(ASC_MC_BIOS_SIGNATURE - ASC_MC_BIOSMEM)/2] == 0x55AA) {
+	if (bios_mem[(ADW_MC_BIOS_SIGNATURE - ADW_MC_BIOSMEM)/2] == 0x55AA) {
 
 		u_int16_t  bios_version, major, minor;
 
-		bios_version = bios_mem[(ASC_MC_BIOS_VERSION-ASC_MC_BIOSMEM)/2];
+		bios_version = bios_mem[(ADW_MC_BIOS_VERSION-ADW_MC_BIOSMEM)/2];
 		major = (bios_version  >> 12) & 0xF;
 		minor = (bios_version  >> 8) & 0xF;
 		if (major < 3 || (major == 3 && minor == 1)) {
 		    /* BIOS 3.1 and earlier location of 'wdtr_able' variable. */
 		    ADW_READ_WORD_LRAM(iot, ioh, 0x120, wdtr_able);
 		} else {
-		    ADW_READ_WORD_LRAM(iot, ioh, ASC_MC_WDTR_ABLE, wdtr_able);
+		    ADW_READ_WORD_LRAM(iot, ioh, ADW_MC_WDTR_ABLE, wdtr_able);
 		}
 	}
-	ADW_READ_WORD_LRAM(iot, ioh, ASC_MC_SDTR_ABLE, sdtr_able);
-	ADW_READ_WORD_LRAM(iot, ioh, ASC_MC_TAGQNG_ABLE, tagqng_able);
+	ADW_READ_WORD_LRAM(iot, ioh, ADW_MC_SDTR_ABLE, sdtr_able);
+	ADW_READ_WORD_LRAM(iot, ioh, ADW_MC_TAGQNG_ABLE, tagqng_able);
 	for (tid = 0; tid <= ADW_MAX_TID; tid++) {
-		ADW_READ_BYTE_LRAM(iot, ioh, ASC_MC_NUMBER_OF_MAX_CMD + tid,
+		ADW_READ_BYTE_LRAM(iot, ioh, ADW_MC_NUMBER_OF_MAX_CMD + tid,
 			max_cmd[tid]);
 	}
 
@@ -366,25 +366,25 @@ ADW_SOFTC      *sc;
 	 *	FF BB WW WW: (4 byte code) Emit BB count times next word WW WW.
 	 */
 	word = 0;
-	for (i = 253 * 2; i < adv_asc3550_mcode_size; i++) {
-		if (adv_asc3550_mcode[i] == 0xff) {
-			for (j = 0; j < adv_asc3550_mcode[i + 1]; j++) {
+	for (i = 253 * 2; i < adw_asc3550_mcode_data.mcode_size; i++) {
+		if (adw_asc3550_mcode_data.mcode_data[i] == 0xff) {
+			for (j = 0; j < adw_asc3550_mcode_data.mcode_data[i + 1]; j++) {
 				ADW_WRITE_WORD_AUTO_INC_LRAM(iot, ioh,
-				  (((u_int16_t)adv_asc3550_mcode[i + 3] << 8) |
-				  adv_asc3550_mcode[i + 2]));
+				  (((u_int16_t)adw_asc3550_mcode_data.mcode_data[i + 3] << 8) |
+				  adw_asc3550_mcode_data.mcode_data[i + 2]));
 				word++;
 			}
 			i += 3;
-		} else if (adv_asc3550_mcode[i] == 0xfe) {
+		} else if (adw_asc3550_mcode_data.mcode_data[i] == 0xfe) {
 			ADW_WRITE_WORD_AUTO_INC_LRAM(iot, ioh,
-			    (((u_int16_t)adv_asc3550_mcode[i + 2] << 8) |
-			    adv_asc3550_mcode[i + 1]));
+			    (((u_int16_t)adw_asc3550_mcode_data.mcode_data[i + 2] << 8) |
+			    adw_asc3550_mcode_data.mcode_data[i + 1]));
 			i += 2;
 			word++;
 		} else {
 			ADW_WRITE_WORD_AUTO_INC_LRAM(iot, ioh, (((u_int16_t)
-			 adv_asc3550_mcode[(adv_asc3550_mcode[i] * 2) + 1] <<8)|
-			 adv_asc3550_mcode[adv_asc3550_mcode[i] * 2]));
+			 adw_asc3550_mcode_data.mcode_data[(adw_asc3550_mcode_data.mcode_data[i] * 2) + 1] <<8)|
+			 adw_asc3550_mcode_data.mcode_data[adw_asc3550_mcode_data.mcode_data[i] * 2]));
 			word++;
 		}
 	}
@@ -399,7 +399,7 @@ ADW_SOFTC      *sc;
 	/*
 	 * Clear the rest of ASC-3550 Internal RAM (8KB).
 	 */
-	for (; word < ADV_3550_MEMSIZE; word += 2) {
+	for (; word < ADW_3550_MEMSIZE; word += 2) {
 		ADW_WRITE_WORD_AUTO_INC_LRAM(iot, ioh, 0);
 	}
 
@@ -413,43 +413,43 @@ ADW_SOFTC      *sc;
 		sum += ADW_READ_WORD_AUTO_INC_LRAM(iot, ioh);
 	}
 
-	if (sum != adv_asc3550_mcode_chksum) {
-		return ASC_IERR_MCODE_CHKSUM;
+	if (sum != adw_asc3550_mcode_data.mcode_chksum) {
+		return ADW_IERR_MCODE_CHKSUM;
 	}
 
 	/*
 	 * Restore the RISC memory BIOS region.
 	 */
-	for (i = 0; i < ASC_MC_BIOSLEN/2; i++) {
-		ADW_WRITE_BYTE_LRAM(iot, ioh, ASC_MC_BIOSMEM + (2 * i),
+	for (i = 0; i < ADW_MC_BIOSLEN/2; i++) {
+		ADW_WRITE_BYTE_LRAM(iot, ioh, ADW_MC_BIOSMEM + (2 * i),
 				bios_mem[i]);
 	}
 
 	/*
 	 * Calculate and write the microcode code checksum to the microcode
-	 * code checksum location ASC_MC_CODE_CHK_SUM (0x2C).
+	 * code checksum location ADW_MC_CODE_CHK_SUM (0x2C).
 	 */
-	ADW_READ_WORD_LRAM(iot, ioh, ASC_MC_CODE_BEGIN_ADDR, begin_addr);
-	ADW_READ_WORD_LRAM(iot, ioh, ASC_MC_CODE_END_ADDR, end_addr);
+	ADW_READ_WORD_LRAM(iot, ioh, ADW_MC_CODE_BEGIN_ADDR, begin_addr);
+	ADW_READ_WORD_LRAM(iot, ioh, ADW_MC_CODE_END_ADDR, end_addr);
 	code_sum = 0;
 	ADW_WRITE_WORD_REGISTER(iot, ioh, IOPW_RAM_ADDR, begin_addr);
 	for (word = begin_addr; word < end_addr; word += 2) {
 		code_sum += ADW_READ_WORD_AUTO_INC_LRAM(iot, ioh);
 	}
-	ADW_WRITE_WORD_LRAM(iot, ioh, ASC_MC_CODE_CHK_SUM, code_sum);
+	ADW_WRITE_WORD_LRAM(iot, ioh, ADW_MC_CODE_CHK_SUM, code_sum);
 
 	/*
 	 * Read and save microcode version and date.
 	 */
-	ADW_READ_WORD_LRAM(iot, ioh, ASC_MC_VERSION_DATE,
+	ADW_READ_WORD_LRAM(iot, ioh, ADW_MC_VERSION_DATE,
 			sc->cfg.mcode_date);
-	ADW_READ_WORD_LRAM(iot, ioh, ASC_MC_VERSION_NUM,
+	ADW_READ_WORD_LRAM(iot, ioh, ADW_MC_VERSION_NUM,
 			sc->cfg.mcode_version);
 
 	/*
 	 * Set the chip type to indicate the ASC3550.
 	 */
-	ADW_WRITE_WORD_LRAM(iot, ioh, ASC_MC_CHIP_TYPE, ADV_CHIP_ASC3550);
+	ADW_WRITE_WORD_LRAM(iot, ioh, ADW_MC_CHIP_TYPE, ADW_CHIP_ASC3550);
 
 	/*
 	 * If the PCI Configuration Command Register "Parity Error Response
@@ -458,9 +458,9 @@ ADW_SOFTC      *sc;
 	 * to ignore DMA parity errors.
 	 */
 	if (sc->cfg.control_flag & CONTROL_FLAG_IGNORE_PERR) {
-		ADW_READ_WORD_LRAM(iot, ioh, ASC_MC_CONTROL_FLAG, word);
+		ADW_READ_WORD_LRAM(iot, ioh, ADW_MC_CONTROL_FLAG, word);
 		word |= CONTROL_FLAG_IGNORE_PERR;
-		ADW_WRITE_WORD_LRAM(iot, ioh, ASC_MC_CONTROL_FLAG, word);
+		ADW_WRITE_WORD_LRAM(iot, ioh, ADW_MC_CONTROL_FLAG, word);
 	}
 
 	/*
@@ -472,10 +472,10 @@ ADW_SOFTC      *sc;
 
 	/*
 	 * Microcode operating variables for WDTR, SDTR, and command tag
-	 * queuing will be set in AdvInquiryHandling() based on what a
+	 * queuing will be set in AdwInquiryHandling() based on what a
 	 * device reports it is capable of in Inquiry byte 7.
 	 *
-	 * If SCSI Bus Resets haev been disabled, then directly set
+	 * If SCSI Bus Resets have been disabled, then directly set
 	 * SDTR and WDTR from the EEPROM configuration. This will allow
 	 * the BIOS and warm boot to work without a SCSI bus hang on
 	 * the Inquiry caused by host and target mismatched DTR values.
@@ -483,9 +483,9 @@ ADW_SOFTC      *sc;
 	 * be assumed to be in Asynchronous, Narrow mode.
 	 */
 	if ((sc->bios_ctrl & BIOS_CTRL_RESET_SCSI_BUS) == 0) {
-		ADW_WRITE_WORD_LRAM(iot, ioh, ASC_MC_WDTR_ABLE,
+		ADW_WRITE_WORD_LRAM(iot, ioh, ADW_MC_WDTR_ABLE,
 				sc->wdtr_able);
-		ADW_WRITE_WORD_LRAM(iot, ioh, ASC_MC_SDTR_ABLE,
+		ADW_WRITE_WORD_LRAM(iot, ioh, ADW_MC_SDTR_ABLE,
 				sc->sdtr_able);
 	}
 
@@ -522,19 +522,19 @@ ADW_SOFTC      *sc;
 		}
 		/* Check if done with sdtr_speed1. */
 		if (tid == 3) {
-			ADW_WRITE_WORD_LRAM(iot, ioh, ASC_MC_SDTR_SPEED1, word);
+			ADW_WRITE_WORD_LRAM(iot, ioh, ADW_MC_SDTR_SPEED1, word);
 			word = 0;
 		/* Check if done with sdtr_speed2. */
 		} else if (tid == 7) {
-			ADW_WRITE_WORD_LRAM(iot, ioh, ASC_MC_SDTR_SPEED2, word);
+			ADW_WRITE_WORD_LRAM(iot, ioh, ADW_MC_SDTR_SPEED2, word);
 			word = 0;
 		/* Check if done with sdtr_speed3. */
 		} else if (tid == 11) {
-			ADW_WRITE_WORD_LRAM(iot, ioh, ASC_MC_SDTR_SPEED3, word);
+			ADW_WRITE_WORD_LRAM(iot, ioh, ADW_MC_SDTR_SPEED3, word);
 			word = 0;
 		/* Check if done with sdtr_speed4. */
 		} else if (tid == 15) {
-			ADW_WRITE_WORD_LRAM(iot, ioh, ASC_MC_SDTR_SPEED4, word);
+			ADW_WRITE_WORD_LRAM(iot, ioh, ADW_MC_SDTR_SPEED4, word);
 			/* End of loop. */
 		}
 	}
@@ -542,7 +542,7 @@ ADW_SOFTC      *sc;
 	/*
 	 * Set microcode operating variable for the disconnect per TID bitmask.
 	 */
-	ADW_WRITE_WORD_LRAM(iot, ioh, ASC_MC_DISC_ENABLE, sc->cfg.disc_enable);
+	ADW_WRITE_WORD_LRAM(iot, ioh, ADW_MC_DISC_ENABLE, sc->cfg.disc_enable);
 
 
 	/*
@@ -551,7 +551,7 @@ ADW_SOFTC      *sc;
 	 * The microcode will set the SCSI_CFG0 register using this value
 	 * after it is started below.
 	 */
-	ADW_WRITE_WORD_LRAM(iot, ioh, ASC_MC_DEFAULT_SCSI_CFG0,
+	ADW_WRITE_WORD_LRAM(iot, ioh, ADW_MC_DEFAULT_SCSI_CFG0,
 		ADW_PARITY_EN | ADW_QUEUE_128 | ADW_SEL_TMO_LONG |
 		ADW_OUR_ID_EN | sc->chip_scsi_id);
 
@@ -570,7 +570,7 @@ ADW_SOFTC      *sc;
 	 */
 	if ((scsi_cfg1 & CABLE_ILLEGAL_A) == 0 ||
 	    (scsi_cfg1 & CABLE_ILLEGAL_B) == 0) {
-		return ASC_IERR_ILLEGAL_CONNECTION;
+		return ADW_IERR_ILLEGAL_CONNECTION;
 	}
 
 	/*
@@ -580,7 +580,7 @@ ADW_SOFTC      *sc;
 	 */
 	if ((ADW_READ_WORD_REGISTER(iot, ioh, IOPW_SCSI_CTRL) & 0x3F07) ==
 			0x3F07) {
-		return ASC_IERR_REVERSED_CABLE;
+		return ADW_IERR_REVERSED_CABLE;
 	}
 
 	/*
@@ -588,7 +588,7 @@ ADW_SOFTC      *sc;
 	 * is attached to one of the connectors, return an error.
 	 */
 	if ((scsi_cfg1 & ADW_DIFF_MODE) && (scsi_cfg1 & ADW_DIFF_SENSE) == 0) {
-		return ASC_IERR_SINGLE_END_DEVICE;
+		return ADW_IERR_SINGLE_END_DEVICE;
 	}
 
 	/*
@@ -596,7 +596,7 @@ ADW_SOFTC      *sc;
 	 * termination value based on a table listed in a_condor.h.
 	 *
 	 * If manual termination was specified with an EEPROM setting
-	 * then 'termination' was set-up in AdvInitFrom3550EEPROM() and
+	 * then 'termination' was set-up in AdwInitFrom3550EEPROM() and
 	 * is ready to be 'ored' into SCSI_CFG1.
 	 */
 	if (sc->cfg.termination == 0) {
@@ -649,7 +649,7 @@ ADW_SOFTC      *sc;
 	 * The microcode will set the SCSI_CFG1 register using this value
 	 * after it is started below.
 	 */
-	ADW_WRITE_WORD_LRAM(iot, ioh, ASC_MC_DEFAULT_SCSI_CFG1,
+	ADW_WRITE_WORD_LRAM(iot, ioh, ADW_MC_DEFAULT_SCSI_CFG1,
 		ADW_FLTR_DISABLE | scsi_cfg1);
 
 	/*
@@ -663,7 +663,7 @@ ADW_SOFTC      *sc;
 	 *
 	 * ASC-3550 has 8KB internal memory.
 	 */
-	ADW_WRITE_WORD_LRAM(iot, ioh, ASC_MC_DEFAULT_MEM_CFG,
+	ADW_WRITE_WORD_LRAM(iot, ioh, ADW_MC_DEFAULT_MEM_CFG,
 		ADW_BIOS_EN | ADW_RAM_SZ_8KB);
 
 	/*
@@ -672,18 +672,27 @@ ADW_SOFTC      *sc;
 	 * The microcode will set the SEL_MASK register using this value
 	 * after it is started below.
 	 */
-	ADW_WRITE_WORD_LRAM(iot, ioh, ASC_MC_DEFAULT_SEL_MASK,
+	ADW_WRITE_WORD_LRAM(iot, ioh, ADW_MC_DEFAULT_SEL_MASK,
 		ADW_TID_TO_TIDMASK(sc->chip_scsi_id));
 
+
+	i = AdwInitCarriers(sc->sc_dmamap_carrier,
+			sc->sc_control->carriers, &sc->carr_freelist);
+	if (i == 0) {
+		return ADW_IERR_NO_CARRIER; /* (ENOMEM) */ ;
+	} else if (i != ADW_MAX_CARRIER) {
+		printf("%s: WARNING: only %d of %d Carriers created\n",
+		       sc->sc_dev.dv_xname, i, ADW_MAX_CARRIER);
+	}
 
 	/*
 	 * Set-up the Host->RISC Initiator Command Queue (ICQ).
 	 */
 
 	if ((sc->icq_sp = sc->carr_freelist) == NULL) {
-		return ASC_IERR_NO_CARRIER;
+		return ADW_IERR_NO_CARRIER;
 	}
-	sc->carr_freelist = adw_carrier_phys_kv(sc,
+	sc->carr_freelist = ADW_CARRIER_VADDR(sc,
 			ASC_GET_CARRP(sc->icq_sp->next_ba));
 
 	/*
@@ -694,15 +703,15 @@ ADW_SOFTC      *sc;
 	/*
 	 * Set RISC ICQ physical address start value.
 	 */
-	ADW_WRITE_DWORD_LRAM(iot, ioh, ASC_MC_ICQ, sc->icq_sp->carr_ba);
+	ADW_WRITE_DWORD_LRAM(iot, ioh, ADW_MC_ICQ, sc->icq_sp->carr_ba);
 
 	/*
 	 * Set-up the RISC->Host Initiator Response Queue (IRQ).
 	 */
 	if ((sc->irq_sp = sc->carr_freelist) == NULL) {
-		return ASC_IERR_NO_CARRIER;
+		return ADW_IERR_NO_CARRIER;
 	}
-	sc->carr_freelist = adw_carrier_phys_kv(sc,
+	sc->carr_freelist = ADW_CARRIER_VADDR(sc,
 			ASC_GET_CARRP(sc->irq_sp->next_ba));
 
 	/*
@@ -710,20 +719,20 @@ ADW_SOFTC      *sc;
 	 * the stopper.
 	 *
 	 * Note: Set 'next_ba' to ASC_CQ_STOPPER. When the request is
-	 * completed the RISC will set the ASC_RQ_STOPPER bit.
+	 * completed the RISC will set the ASC_RQ_DONE bit.
 	 */
 	sc->irq_sp->next_ba = ASC_CQ_STOPPER;
 
 	/*
 	 * Set RISC IRQ physical address start value.
 	 */
-	ADW_WRITE_DWORD_LRAM(iot, ioh, ASC_MC_IRQ, sc->irq_sp->carr_ba);
+	ADW_WRITE_DWORD_LRAM(iot, ioh, ADW_MC_IRQ, sc->irq_sp->carr_ba);
 	sc->carr_pending_cnt = 0;
 
 	ADW_WRITE_BYTE_REGISTER(iot, ioh, IOPB_INTR_ENABLES,
 		(ADW_INTR_ENABLE_HOST_INTR | ADW_INTR_ENABLE_GLOBAL_INTR));
 
-	ADW_READ_WORD_LRAM(iot, ioh, ASC_MC_CODE_BEGIN_ADDR, word);
+	ADW_READ_WORD_LRAM(iot, ioh, ADW_MC_CODE_BEGIN_ADDR, word);
 	ADW_WRITE_WORD_REGISTER(iot, ioh, IOPW_PC, word);
 
 	/* finally, finally, gentlemen, start your engine */
@@ -741,25 +750,25 @@ ADW_SOFTC      *sc;
 		 * BIOS Handshake Configuration Table and do not perform
 		 * a SCSI Bus Reset.
 		 */
-		if (bios_mem[(ASC_MC_BIOS_SIGNATURE - ASC_MC_BIOSMEM)/2] ==
+		if (bios_mem[(ADW_MC_BIOS_SIGNATURE - ADW_MC_BIOSMEM)/2] ==
 				0x55AA) {
 			/*
 			 * Restore per TID negotiated values.
 			 */
-			ADW_WRITE_WORD_LRAM(iot, ioh, ASC_MC_WDTR_ABLE,
+			ADW_WRITE_WORD_LRAM(iot, ioh, ADW_MC_WDTR_ABLE,
 					wdtr_able);
-			ADW_WRITE_WORD_LRAM(iot, ioh, ASC_MC_SDTR_ABLE,
+			ADW_WRITE_WORD_LRAM(iot, ioh, ADW_MC_SDTR_ABLE,
 					sdtr_able);
-			ADW_WRITE_WORD_LRAM(iot, ioh, ASC_MC_TAGQNG_ABLE,
+			ADW_WRITE_WORD_LRAM(iot, ioh, ADW_MC_TAGQNG_ABLE,
 					tagqng_able);
 			for (tid = 0; tid <= ADW_MAX_TID; tid++) {
 				ADW_WRITE_BYTE_LRAM(iot, ioh,
-					ASC_MC_NUMBER_OF_MAX_CMD + tid,
+					ADW_MC_NUMBER_OF_MAX_CMD + tid,
 					max_cmd[tid]);
 			}
 		} else {
-			if (AdvResetCCB(sc) != ADW_TRUE) {
-				warn_code = ASC_WARN_BUSRESET_ERROR;
+			if (AdwResetCCB(sc) != ADW_TRUE) {
+				warn_code = ADW_WARN_BUSRESET_ERROR;
 			}
 		}
 	}
@@ -776,7 +785,7 @@ ADW_SOFTC      *sc;
  * then 0 is returned.
  */
 int
-AdvInitAsc38C0800Driver(sc)
+AdwInitAsc38C0800Driver(sc)
 ADW_SOFTC      *sc;
 {
 	bus_space_tag_t iot = sc->sc_iot;
@@ -792,7 +801,7 @@ ADW_SOFTC      *sc;
 	u_int16_t	scsi_cfg1;
 	u_int8_t	byte;
 	u_int8_t	tid;
-	u_int16_t	bios_mem[ASC_MC_BIOSLEN/2];	/* BIOS RISC Memory
+	u_int16_t	bios_mem[ADW_MC_BIOSLEN/2];	/* BIOS RISC Memory
 								0x40-0x8F. */
 	u_int16_t	wdtr_able, sdtr_able, tagqng_able;
 	u_int8_t	max_cmd[ADW_MAX_TID + 1];
@@ -808,18 +817,18 @@ ADW_SOFTC      *sc;
 	 * Note: This code makes the assumption, which is currently true,
 	 * that a chip reset does not clear RISC LRAM.
 	 */
-	for (i = 0; i < ASC_MC_BIOSLEN/2; i++) {
-	    ADW_READ_WORD_LRAM(iot, ioh, ASC_MC_BIOSMEM + (2 * i), bios_mem[i]);
+	for (i = 0; i < ADW_MC_BIOSLEN/2; i++) {
+	    ADW_READ_WORD_LRAM(iot, ioh, ADW_MC_BIOSMEM + (2 * i), bios_mem[i]);
 	}
 
 	/*
 	 * Save current per TID negotiated values.
 	 */
-	ADW_READ_WORD_LRAM(iot, ioh, ASC_MC_WDTR_ABLE, wdtr_able);
-	ADW_READ_WORD_LRAM(iot, ioh, ASC_MC_SDTR_ABLE, sdtr_able);
-	ADW_READ_WORD_LRAM(iot, ioh, ASC_MC_TAGQNG_ABLE, tagqng_able);
+	ADW_READ_WORD_LRAM(iot, ioh, ADW_MC_WDTR_ABLE, wdtr_able);
+	ADW_READ_WORD_LRAM(iot, ioh, ADW_MC_SDTR_ABLE, sdtr_able);
+	ADW_READ_WORD_LRAM(iot, ioh, ADW_MC_TAGQNG_ABLE, tagqng_able);
 	for (tid = 0; tid <= ADW_MAX_TID; tid++) {
-		ADW_READ_BYTE_LRAM(iot, ioh, ASC_MC_NUMBER_OF_MAX_CMD + tid,
+		ADW_READ_BYTE_LRAM(iot, ioh, ADW_MC_NUMBER_OF_MAX_CMD + tid,
 			max_cmd[tid]);
 	}
 
@@ -854,18 +863,18 @@ ADW_SOFTC      *sc;
 	 */
 	for (i = 0; i < 2; i++) {
 		ADW_WRITE_BYTE_REGISTER(iot, ioh, IOPB_RAM_BIST, PRE_TEST_MODE);
-		AdvSleepMilliSecond(10);  /* Wait for 10ms before reading back. */
+		AdwSleepMilliSecond(10);  /* Wait for 10ms before reading back. */
 		byte = ADW_READ_BYTE_REGISTER(iot, ioh, IOPB_RAM_BIST);
 		if ((byte & RAM_TEST_DONE) == 0 || (byte & 0x0F) !=
 				PRE_TEST_VALUE) {
-			return ASC_IERR_BIST_PRE_TEST;
+			return ADW_IERR_BIST_PRE_TEST;
 		}
 
 		ADW_WRITE_BYTE_REGISTER(iot, ioh, IOPB_RAM_BIST, NORMAL_MODE);
-		AdvSleepMilliSecond(10);  /* Wait for 10ms before reading back. */
+		AdwSleepMilliSecond(10);  /* Wait for 10ms before reading back. */
 		if (ADW_READ_BYTE_REGISTER(iot, ioh, IOPB_RAM_BIST)
 		    != NORMAL_VALUE) {
-			return ASC_IERR_BIST_PRE_TEST;
+			return ADW_IERR_BIST_PRE_TEST;
 		}
 	}
 
@@ -877,12 +886,12 @@ ADW_SOFTC      *sc;
 	 * err_code, and return an error.
 	 */
 	ADW_WRITE_BYTE_REGISTER(iot, ioh, IOPB_RAM_BIST, RAM_TEST_MODE);
-	AdvSleepMilliSecond(10);  /* Wait for 10ms before checking status. */
+	AdwSleepMilliSecond(10);  /* Wait for 10ms before checking status. */
 
 	byte = ADW_READ_BYTE_REGISTER(iot, ioh, IOPB_RAM_BIST);
 	if ((byte & RAM_TEST_DONE) == 0 || (byte & RAM_TEST_STATUS) != 0) {
 		/* Get here if Done bit not set or Status not 0. */
-		return ASC_IERR_BIST_RAM_TEST;
+		return ADW_IERR_BIST_RAM_TEST;
 	}
 
 	/* We need to reset back to normal mode after LRAM test passes. */
@@ -912,26 +921,26 @@ ADW_SOFTC      *sc;
 	 *	FF BB WW WW: (4 byte code) Emit BB count times next word WW WW.
 	 */
 	word = 0;
-	for (i = 253 * 2; i < adv_asc38C0800_mcode_size; i++) {
-		if (adv_asc38C0800_mcode[i] == 0xff) {
-			for (j = 0; j < adv_asc38C0800_mcode[i + 1]; j++) {
+	for (i = 253 * 2; i < adw_asc38C0800_mcode_data.mcode_size; i++) {
+		if (adw_asc38C0800_mcode_data.mcode_data[i] == 0xff) {
+			for (j = 0; j < adw_asc38C0800_mcode_data.mcode_data[i + 1]; j++) {
 				ADW_WRITE_WORD_AUTO_INC_LRAM(iot, ioh,
 				    (((u_int16_t)
-				    adv_asc38C0800_mcode[i + 3] << 8) |
-				    adv_asc38C0800_mcode[i + 2]));
+				    adw_asc38C0800_mcode_data.mcode_data[i + 3] << 8) |
+				    adw_asc38C0800_mcode_data.mcode_data[i + 2]));
 				word++;
 			}
 			i += 3;
-		} else if (adv_asc38C0800_mcode[i] == 0xfe) {
+		} else if (adw_asc38C0800_mcode_data.mcode_data[i] == 0xfe) {
 			ADW_WRITE_WORD_AUTO_INC_LRAM(iot, ioh, (((u_int16_t)
-			    adv_asc38C0800_mcode[i + 2] << 8) |
-			    adv_asc38C0800_mcode[i + 1]));
+			    adw_asc38C0800_mcode_data.mcode_data[i + 2] << 8) |
+			    adw_asc38C0800_mcode_data.mcode_data[i + 1]));
 			i += 2;
 			word++;
 		} else {
 			ADW_WRITE_WORD_AUTO_INC_LRAM(iot, ioh, (((u_int16_t)
-			  adv_asc38C0800_mcode[(adv_asc38C0800_mcode[i] * 2) + 1] << 8) |
-			  adv_asc38C0800_mcode[adv_asc38C0800_mcode[i] * 2]));
+			  adw_asc38C0800_mcode_data.mcode_data[(adw_asc38C0800_mcode_data.mcode_data[i] * 2) + 1] << 8) |
+			  adw_asc38C0800_mcode_data.mcode_data[adw_asc38C0800_mcode_data.mcode_data[i] * 2]));
 			word++;
 		}
 	}
@@ -946,7 +955,7 @@ ADW_SOFTC      *sc;
 	/*
 	 * Clear the rest of ASC-38C0800 Internal RAM (16KB).
 	 */
-	for (; word < ADV_38C0800_MEMSIZE; word += 2) {
+	for (; word < ADW_38C0800_MEMSIZE; word += 2) {
 		ADW_WRITE_WORD_AUTO_INC_LRAM(iot, ioh, 0);
 	}
 
@@ -960,43 +969,43 @@ ADW_SOFTC      *sc;
 		sum += ADW_READ_WORD_AUTO_INC_LRAM(iot, ioh);
 	}
 
-	if (sum != adv_asc38C0800_mcode_chksum) {
-	    return ASC_IERR_MCODE_CHKSUM;
+	if (sum != adw_asc38C0800_mcode_data.mcode_chksum) {
+	    return ADW_IERR_MCODE_CHKSUM;
 	}
 
 	/*
 	 * Restore the RISC memory BIOS region.
 	 */
-	for (i = 0; i < ASC_MC_BIOSLEN/2; i++) {
-		ADW_WRITE_WORD_LRAM(iot, ioh, ASC_MC_BIOSMEM + (2 * i),
+	for (i = 0; i < ADW_MC_BIOSLEN/2; i++) {
+		ADW_WRITE_WORD_LRAM(iot, ioh, ADW_MC_BIOSMEM + (2 * i),
 				bios_mem[i]);
 	}
 
 	/*
 	 * Calculate and write the microcode code checksum to the microcode
-	 * code checksum location ASC_MC_CODE_CHK_SUM (0x2C).
+	 * code checksum location ADW_MC_CODE_CHK_SUM (0x2C).
 	 */
-	ADW_READ_WORD_LRAM(iot, ioh, ASC_MC_CODE_BEGIN_ADDR, begin_addr);
-	ADW_READ_WORD_LRAM(iot, ioh, ASC_MC_CODE_END_ADDR, end_addr);
+	ADW_READ_WORD_LRAM(iot, ioh, ADW_MC_CODE_BEGIN_ADDR, begin_addr);
+	ADW_READ_WORD_LRAM(iot, ioh, ADW_MC_CODE_END_ADDR, end_addr);
 	code_sum = 0;
 	ADW_WRITE_WORD_REGISTER(iot, ioh, IOPW_RAM_ADDR, begin_addr);
 	for (word = begin_addr; word < end_addr; word += 2) {
 		code_sum += ADW_READ_WORD_AUTO_INC_LRAM(iot, ioh);
 	}
-	ADW_WRITE_WORD_LRAM(iot, ioh, ASC_MC_CODE_CHK_SUM, code_sum);
+	ADW_WRITE_WORD_LRAM(iot, ioh, ADW_MC_CODE_CHK_SUM, code_sum);
 
 	/*
 	 * Read microcode version and date.
 	 */
-	ADW_READ_WORD_LRAM(iot, ioh, ASC_MC_VERSION_DATE,
+	ADW_READ_WORD_LRAM(iot, ioh, ADW_MC_VERSION_DATE,
 			sc->cfg.mcode_date);
-	ADW_READ_WORD_LRAM(iot, ioh, ASC_MC_VERSION_NUM,
+	ADW_READ_WORD_LRAM(iot, ioh, ADW_MC_VERSION_NUM,
 			sc->cfg.mcode_version);
 
 	/*
 	 * Set the chip type to indicate the ASC38C0800.
 	 */
-	ADW_WRITE_WORD_LRAM(iot, ioh, ASC_MC_CHIP_TYPE, ADV_CHIP_ASC38C0800);
+	ADW_WRITE_WORD_LRAM(iot, ioh, ADW_MC_CHIP_TYPE, ADW_CHIP_ASC38C0800);
 
 	/*
 	 * Write 1 to bit 14 'DIS_TERM_DRV' in the SCSI_CFG1 register.
@@ -1017,9 +1026,9 @@ ADW_SOFTC      *sc;
 	 * to ignore DMA parity errors.
 	 */
 	if (sc->cfg.control_flag & CONTROL_FLAG_IGNORE_PERR) {
-		ADW_READ_WORD_LRAM(iot, ioh, ASC_MC_CONTROL_FLAG, word);
+		ADW_READ_WORD_LRAM(iot, ioh, ADW_MC_CONTROL_FLAG, word);
 		word |= CONTROL_FLAG_IGNORE_PERR;
-		ADW_WRITE_WORD_LRAM(iot, ioh, ASC_MC_CONTROL_FLAG, word);
+		ADW_WRITE_WORD_LRAM(iot, ioh, ADW_MC_CONTROL_FLAG, word);
 	}
 
 	/*
@@ -1035,7 +1044,7 @@ ADW_SOFTC      *sc;
 
 	/*
 	 * Microcode operating variables for WDTR, SDTR, and command tag
-	 * queuing will be set in AdvInquiryHandling() based on what a
+	 * queuing will be set in AdwInquiryHandling() based on what a
 	 * device reports it is capable of in Inquiry byte 7.
 	 *
 	 * If SCSI Bus Resets have been disabled, then directly set
@@ -1046,8 +1055,8 @@ ADW_SOFTC      *sc;
 	 * be assumed to be in Asynchronous, Narrow mode.
 	 */
 	if ((sc->bios_ctrl & BIOS_CTRL_RESET_SCSI_BUS) == 0) {
-		ADW_WRITE_WORD_LRAM(iot, ioh, ASC_MC_WDTR_ABLE, sc->wdtr_able);
-		ADW_WRITE_WORD_LRAM(iot, ioh, ASC_MC_SDTR_ABLE, sc->sdtr_able);
+		ADW_WRITE_WORD_LRAM(iot, ioh, ADW_MC_WDTR_ABLE, sc->wdtr_able);
+		ADW_WRITE_WORD_LRAM(iot, ioh, ADW_MC_SDTR_ABLE, sc->sdtr_able);
 	}
 
 	/*
@@ -1059,11 +1068,11 @@ ADW_SOFTC      *sc;
 	 * SDTR_SPEED3, and SDTR_SPEED4 values so it is safe to set them
 	 * without determining here whether the device supports SDTR.
 	 */
-	ADW_WRITE_WORD_LRAM(iot, ioh, ASC_MC_DISC_ENABLE, sc->cfg.disc_enable);
-	ADW_WRITE_WORD_LRAM(iot, ioh, ASC_MC_SDTR_SPEED1, sc->sdtr_speed1);
-	ADW_WRITE_WORD_LRAM(iot, ioh, ASC_MC_SDTR_SPEED2, sc->sdtr_speed2);
-	ADW_WRITE_WORD_LRAM(iot, ioh, ASC_MC_SDTR_SPEED3, sc->sdtr_speed3);
-	ADW_WRITE_WORD_LRAM(iot, ioh, ASC_MC_SDTR_SPEED4, sc->sdtr_speed4);
+	ADW_WRITE_WORD_LRAM(iot, ioh, ADW_MC_DISC_ENABLE, sc->cfg.disc_enable);
+	ADW_WRITE_WORD_LRAM(iot, ioh, ADW_MC_SDTR_SPEED1, sc->sdtr_speed1);
+	ADW_WRITE_WORD_LRAM(iot, ioh, ADW_MC_SDTR_SPEED2, sc->sdtr_speed2);
+	ADW_WRITE_WORD_LRAM(iot, ioh, ADW_MC_SDTR_SPEED3, sc->sdtr_speed3);
+	ADW_WRITE_WORD_LRAM(iot, ioh, ADW_MC_SDTR_SPEED4, sc->sdtr_speed4);
 
 	/*
 	 * Set SCSI_CFG0 Microcode Default Value.
@@ -1071,7 +1080,7 @@ ADW_SOFTC      *sc;
 	 * The microcode will set the SCSI_CFG0 register using this value
 	 * after it is started below.
 	 */
-	ADW_WRITE_WORD_LRAM(iot, ioh, ASC_MC_DEFAULT_SCSI_CFG0,
+	ADW_WRITE_WORD_LRAM(iot, ioh, ADW_MC_DEFAULT_SCSI_CFG0,
 		ADW_PARITY_EN | ADW_QUEUE_128 | ADW_SEL_TMO_LONG |
 		ADW_OUR_ID_EN | sc->chip_scsi_id);
 
@@ -1092,7 +1101,7 @@ ADW_SOFTC      *sc;
 	 */
 	if ((ADW_READ_WORD_REGISTER(iot, ioh, IOPW_SCSI_CTRL) & 0x3F07) ==
 			0x3F07) {
-		return ASC_IERR_REVERSED_CABLE;
+		return ADW_IERR_REVERSED_CABLE;
 	}
 
 	/*
@@ -1105,7 +1114,7 @@ ADW_SOFTC      *sc;
 	 * However, there is no way to detect HVD device attached to SE connectors.
 	 */
 	if (scsi_cfg1 & ADW_HVD) {
-		return ASC_IERR_HVD_DEVICE;
+		return ADW_IERR_HVD_DEVICE;
 	}
 
 	/*
@@ -1113,7 +1122,7 @@ ADW_SOFTC      *sc;
 	 * set the termination value based on a table listed in a_condor.h.
 	 *
 	 * If manual termination was specified with an EEPROM setting then
-	 * 'termination' was set-up in AdvInitFrom38C0800EEPROM() and is ready to
+	 * 'termination' was set-up in AdwInitFrom38C0800EEPROM() and is ready to
 	 * be 'ored' into SCSI_CFG1.
 	 */
 	if ((sc->cfg.termination & ADW_TERM_SE) == 0) {
@@ -1172,7 +1181,7 @@ ADW_SOFTC      *sc;
 	 * The microcode will set the SCSI_CFG1 register using this value
 	 * after it is started below.
 	 */
-	ADW_WRITE_WORD_LRAM(iot, ioh, ASC_MC_DEFAULT_SCSI_CFG1, scsi_cfg1);
+	ADW_WRITE_WORD_LRAM(iot, ioh, ADW_MC_DEFAULT_SCSI_CFG1, scsi_cfg1);
 
 	/*
 	 * Set MEM_CFG Microcode Default Value
@@ -1185,7 +1194,7 @@ ADW_SOFTC      *sc;
 	 *
 	 * ASC-38C0800 has 16KB internal memory.
 	 */
-	ADW_WRITE_WORD_LRAM(iot, ioh, ASC_MC_DEFAULT_MEM_CFG,
+	ADW_WRITE_WORD_LRAM(iot, ioh, ADW_MC_DEFAULT_MEM_CFG,
 		ADW_BIOS_EN | ADW_RAM_SZ_16KB);
 
 	/*
@@ -1194,18 +1203,27 @@ ADW_SOFTC      *sc;
 	 * The microcode will set the SEL_MASK register using this value
 	 * after it is started below.
 	 */
-	ADW_WRITE_WORD_LRAM(iot, ioh, ASC_MC_DEFAULT_SEL_MASK,
+	ADW_WRITE_WORD_LRAM(iot, ioh, ADW_MC_DEFAULT_SEL_MASK,
 		ADW_TID_TO_TIDMASK(sc->chip_scsi_id));
 
+
+	i = AdwInitCarriers(sc->sc_dmamap_carrier,
+			sc->sc_control->carriers, &sc->carr_freelist);
+	if (i == 0) {
+		return ADW_IERR_NO_CARRIER; /* (ENOMEM) */ ;
+	} else if (i != ADW_MAX_CARRIER) {
+		printf("%s: WARNING: only %d of %d Carriers created\n",
+		       sc->sc_dev.dv_xname, i, ADW_MAX_CARRIER);
+	}
 
 	/*
 	 * Set-up the Host->RISC Initiator Command Queue (ICQ).
 	 */
 
 	if ((sc->icq_sp = sc->carr_freelist) == NULL) {
-		return ASC_IERR_NO_CARRIER;
+		return ADW_IERR_NO_CARRIER;
 	}
-	sc->carr_freelist = adw_carrier_phys_kv(sc,
+	sc->carr_freelist = ADW_CARRIER_VADDR(sc,
 			ASC_GET_CARRP(sc->icq_sp->next_ba));
 
 	/*
@@ -1216,15 +1234,15 @@ ADW_SOFTC      *sc;
 	/*
 	 * Set RISC ICQ physical address start value.
 	 */
-	ADW_WRITE_DWORD_LRAM(iot, ioh, ASC_MC_ICQ, sc->icq_sp->carr_ba);
+	ADW_WRITE_DWORD_LRAM(iot, ioh, ADW_MC_ICQ, sc->icq_sp->carr_ba);
 
 	/*
 	 * Set-up the RISC->Host Initiator Response Queue (IRQ).
 	 */
 	if ((sc->irq_sp = sc->carr_freelist) == NULL) {
-		return ASC_IERR_NO_CARRIER;
+		return ADW_IERR_NO_CARRIER;
 	}
-	sc->carr_freelist = adw_carrier_phys_kv(sc,
+	sc->carr_freelist = ADW_CARRIER_VADDR(sc,
 			ASC_GET_CARRP(sc->irq_sp->next_ba));
 
 	/*
@@ -1232,20 +1250,20 @@ ADW_SOFTC      *sc;
 	 * the stopper.
 	 *
 	 * Note: Set 'next_ba' to ASC_CQ_STOPPER. When the request is
-	 * completed the RISC will set the ASC_RQ_STOPPER bit.
+	 * completed the RISC will set the ASC_RQ_DONE bit.
 	 */
 	sc->irq_sp->next_ba = ASC_CQ_STOPPER;
 
 	/*
 	 * Set RISC IRQ physical address start value.
 	 */
-	ADW_WRITE_DWORD_LRAM(iot, ioh, ASC_MC_IRQ, sc->irq_sp->carr_ba);
+	ADW_WRITE_DWORD_LRAM(iot, ioh, ADW_MC_IRQ, sc->irq_sp->carr_ba);
 	sc->carr_pending_cnt = 0;
 
 	ADW_WRITE_BYTE_REGISTER(iot, ioh, IOPB_INTR_ENABLES,
 		(ADW_INTR_ENABLE_HOST_INTR | ADW_INTR_ENABLE_GLOBAL_INTR));
 
-	ADW_READ_WORD_LRAM(iot, ioh, ASC_MC_CODE_BEGIN_ADDR, word);
+	ADW_READ_WORD_LRAM(iot, ioh, ADW_MC_CODE_BEGIN_ADDR, word);
 	ADW_WRITE_WORD_REGISTER(iot, ioh, IOPW_PC, word);
 
 	/* finally, finally, gentlemen, start your engine */
@@ -1262,25 +1280,25 @@ ADW_SOFTC      *sc;
 		 * BIOS Handshake Configuration Table and do not perform
 		 * a SCSI Bus Reset.
 		 */
-		if (bios_mem[(ASC_MC_BIOS_SIGNATURE - ASC_MC_BIOSMEM)/2] ==
+		if (bios_mem[(ADW_MC_BIOS_SIGNATURE - ADW_MC_BIOSMEM)/2] ==
 				0x55AA) {
 			/*
 			 * Restore per TID negotiated values.
 			 */
-			ADW_WRITE_WORD_LRAM(iot, ioh, ASC_MC_WDTR_ABLE,
+			ADW_WRITE_WORD_LRAM(iot, ioh, ADW_MC_WDTR_ABLE,
 					wdtr_able);
-			ADW_WRITE_WORD_LRAM(iot, ioh, ASC_MC_SDTR_ABLE,
+			ADW_WRITE_WORD_LRAM(iot, ioh, ADW_MC_SDTR_ABLE,
 					sdtr_able);
-			ADW_WRITE_WORD_LRAM(iot, ioh, ASC_MC_TAGQNG_ABLE,
+			ADW_WRITE_WORD_LRAM(iot, ioh, ADW_MC_TAGQNG_ABLE,
 					tagqng_able);
 			for (tid = 0; tid <= ADW_MAX_TID; tid++) {
 				ADW_WRITE_BYTE_LRAM(iot, ioh,
-						ASC_MC_NUMBER_OF_MAX_CMD + tid,
+						ADW_MC_NUMBER_OF_MAX_CMD + tid,
 						max_cmd[tid]);
 			}
 		} else {
-			if (AdvResetCCB(sc) != ADW_TRUE) {
-				warn_code = ASC_WARN_BUSRESET_ERROR;
+			if (AdwResetCCB(sc) != ADW_TRUE) {
+				warn_code = ADW_WARN_BUSRESET_ERROR;
 			}
 		}
 	}
@@ -1298,7 +1316,7 @@ ADW_SOFTC      *sc;
  * then 0 is returned.
  */
 int
-AdvInitAsc38C1600Driver(sc)
+AdwInitAsc38C1600Driver(sc)
 ADW_SOFTC      *sc;
 {
 	bus_space_tag_t iot = sc->sc_iot;
@@ -1314,7 +1332,7 @@ ADW_SOFTC      *sc;
 	u_int16_t	scsi_cfg1;
 	u_int8_t	byte;
 	u_int8_t	tid;
-	u_int16_t	bios_mem[ASC_MC_BIOSLEN/2];	/* BIOS RISC Memory
+	u_int16_t	bios_mem[ADW_MC_BIOSLEN/2];	/* BIOS RISC Memory
 								0x40-0x8F. */
 	u_int16_t	wdtr_able, sdtr_able, ppr_able, tagqng_able;
 	u_int8_t	max_cmd[ADW_MAX_TID + 1];
@@ -1331,19 +1349,19 @@ ADW_SOFTC      *sc;
 	 * Note: This code makes the assumption, which is currently true,
 	 * that a chip reset does not clear RISC LRAM.
 	 */
-	for (i = 0; i < ASC_MC_BIOSLEN/2; i++) {
-	    ADW_READ_WORD_LRAM(iot, ioh, ASC_MC_BIOSMEM + (2 * i), bios_mem[i]);
+	for (i = 0; i < ADW_MC_BIOSLEN/2; i++) {
+	    ADW_READ_WORD_LRAM(iot, ioh, ADW_MC_BIOSMEM + (2 * i), bios_mem[i]);
 	}
 
 	/*
 	 * Save current per TID negotiated values.
 	 */
-	ADW_READ_WORD_LRAM(iot, ioh, ASC_MC_WDTR_ABLE, wdtr_able);
-	ADW_READ_WORD_LRAM(iot, ioh, ASC_MC_SDTR_ABLE, sdtr_able);
-	ADW_READ_WORD_LRAM(iot, ioh, ASC_MC_PPR_ABLE, ppr_able);
-	ADW_READ_WORD_LRAM(iot, ioh, ASC_MC_TAGQNG_ABLE, tagqng_able);
+	ADW_READ_WORD_LRAM(iot, ioh, ADW_MC_WDTR_ABLE, wdtr_able);
+	ADW_READ_WORD_LRAM(iot, ioh, ADW_MC_SDTR_ABLE, sdtr_able);
+	ADW_READ_WORD_LRAM(iot, ioh, ADW_MC_PPR_ABLE, ppr_able);
+	ADW_READ_WORD_LRAM(iot, ioh, ADW_MC_TAGQNG_ABLE, tagqng_able);
 	for (tid = 0; tid <= ADW_MAX_TID; tid++) {
-		ADW_READ_BYTE_LRAM(iot, ioh, ASC_MC_NUMBER_OF_MAX_CMD + tid,
+		ADW_READ_BYTE_LRAM(iot, ioh, ADW_MC_NUMBER_OF_MAX_CMD + tid,
 			max_cmd[tid]);
 	}
 
@@ -1378,18 +1396,18 @@ ADW_SOFTC      *sc;
 	 */
 	for (i = 0; i < 2; i++) {
 		ADW_WRITE_BYTE_REGISTER(iot, ioh, IOPB_RAM_BIST, PRE_TEST_MODE);
-		AdvSleepMilliSecond(10);  /* Wait for 10ms before reading back. */
+		AdwSleepMilliSecond(10);  /* Wait for 10ms before reading back. */
 		byte = ADW_READ_BYTE_REGISTER(iot, ioh, IOPB_RAM_BIST);
 		if ((byte & RAM_TEST_DONE) == 0 || (byte & 0x0F) !=
 				PRE_TEST_VALUE) {
-			return ASC_IERR_BIST_PRE_TEST;
+			return ADW_IERR_BIST_PRE_TEST;
 		}
 
 		ADW_WRITE_BYTE_REGISTER(iot, ioh, IOPB_RAM_BIST, NORMAL_MODE);
-		AdvSleepMilliSecond(10);  /* Wait for 10ms before reading back. */
+		AdwSleepMilliSecond(10);  /* Wait for 10ms before reading back. */
 		if (ADW_READ_BYTE_REGISTER(iot, ioh, IOPB_RAM_BIST)
 		    != NORMAL_VALUE) {
-			return ASC_IERR_BIST_PRE_TEST;
+			return ADW_IERR_BIST_PRE_TEST;
 		}
 	}
 
@@ -1401,12 +1419,12 @@ ADW_SOFTC      *sc;
 	 * err_code, and return an error.
 	 */
 	ADW_WRITE_BYTE_REGISTER(iot, ioh, IOPB_RAM_BIST, RAM_TEST_MODE);
-	AdvSleepMilliSecond(10);  /* Wait for 10ms before checking status. */
+	AdwSleepMilliSecond(10);  /* Wait for 10ms before checking status. */
 
 	byte = ADW_READ_BYTE_REGISTER(iot, ioh, IOPB_RAM_BIST);
 	if ((byte & RAM_TEST_DONE) == 0 || (byte & RAM_TEST_STATUS) != 0) {
 		/* Get here if Done bit not set or Status not 0. */
-		return ASC_IERR_BIST_RAM_TEST;
+		return ADW_IERR_BIST_RAM_TEST;
 	}
 
 	/* We need to reset back to normal mode after LRAM test passes. */
@@ -1437,26 +1455,26 @@ ADW_SOFTC      *sc;
 	 *	FF BB WW WW: (4 byte code) Emit BB count times next word WW WW.
 	 */
 	word = 0;
-	for (i = 253 * 2; i < adv_asc38C1600_mcode_size; i++) {
-		if (adv_asc38C1600_mcode[i] == 0xff) {
-			for (j = 0; j < adv_asc38C1600_mcode[i + 1]; j++) {
+	for (i = 253 * 2; i < adw_asc38C1600_mcode_data.mcode_size; i++) {
+		if (adw_asc38C1600_mcode_data.mcode_data[i] == 0xff) {
+			for (j = 0; j < adw_asc38C1600_mcode_data.mcode_data[i + 1]; j++) {
 				ADW_WRITE_WORD_AUTO_INC_LRAM(iot, ioh,
 				    (((u_int16_t)
-				    adv_asc38C1600_mcode[i + 3] << 8) |
-				    adv_asc38C1600_mcode[i + 2]));
+				    adw_asc38C1600_mcode_data.mcode_data[i + 3] << 8) |
+				    adw_asc38C1600_mcode_data.mcode_data[i + 2]));
 				word++;
 			}
 			i += 3;
-		} else if (adv_asc38C1600_mcode[i] == 0xfe) {
+		} else if (adw_asc38C1600_mcode_data.mcode_data[i] == 0xfe) {
 			ADW_WRITE_WORD_AUTO_INC_LRAM(iot, ioh, (((u_int16_t)
-			    adv_asc38C1600_mcode[i + 2] << 8) |
-			    adv_asc38C1600_mcode[i + 1]));
+			    adw_asc38C1600_mcode_data.mcode_data[i + 2] << 8) |
+			    adw_asc38C1600_mcode_data.mcode_data[i + 1]));
 			i += 2;
 			word++;
 		} else {
 			ADW_WRITE_WORD_AUTO_INC_LRAM(iot, ioh, (((u_int16_t)
-			  adv_asc38C1600_mcode[(adv_asc38C1600_mcode[i] * 2) + 1] << 8) |
-			  adv_asc38C1600_mcode[adv_asc38C1600_mcode[i] * 2]));
+			  adw_asc38C1600_mcode_data.mcode_data[(adw_asc38C1600_mcode_data.mcode_data[i] * 2) + 1] << 8) |
+			  adw_asc38C1600_mcode_data.mcode_data[adw_asc38C1600_mcode_data.mcode_data[i] * 2]));
 			word++;
 		}
 	}
@@ -1471,7 +1489,7 @@ ADW_SOFTC      *sc;
 	/*
 	 * Clear the rest of ASC-38C0800 Internal RAM (16KB).
 	 */
-	for (; word < ADV_38C1600_MEMSIZE; word += 2) {
+	for (; word < ADW_38C1600_MEMSIZE; word += 2) {
 		ADW_WRITE_WORD_AUTO_INC_LRAM(iot, ioh, 0);
 	}
 
@@ -1485,43 +1503,43 @@ ADW_SOFTC      *sc;
 		sum += ADW_READ_WORD_AUTO_INC_LRAM(iot, ioh);
 	}
 
-	if (sum != adv_asc38C1600_mcode_chksum) {
-	    return ASC_IERR_MCODE_CHKSUM;
+	if (sum != adw_asc38C1600_mcode_data.mcode_chksum) {
+	    return ADW_IERR_MCODE_CHKSUM;
 	}
 
 	/*
 	 * Restore the RISC memory BIOS region.
 	 */
-	for (i = 0; i < ASC_MC_BIOSLEN/2; i++) {
-		ADW_WRITE_WORD_LRAM(iot, ioh, ASC_MC_BIOSMEM + (2 * i),
+	for (i = 0; i < ADW_MC_BIOSLEN/2; i++) {
+		ADW_WRITE_WORD_LRAM(iot, ioh, ADW_MC_BIOSMEM + (2 * i),
 				bios_mem[i]);
 	}
 
 	/*
 	 * Calculate and write the microcode code checksum to the microcode
-	 * code checksum location ASC_MC_CODE_CHK_SUM (0x2C).
+	 * code checksum location ADW_MC_CODE_CHK_SUM (0x2C).
 	 */
-	ADW_READ_WORD_LRAM(iot, ioh, ASC_MC_CODE_BEGIN_ADDR, begin_addr);
-	ADW_READ_WORD_LRAM(iot, ioh, ASC_MC_CODE_END_ADDR, end_addr);
+	ADW_READ_WORD_LRAM(iot, ioh, ADW_MC_CODE_BEGIN_ADDR, begin_addr);
+	ADW_READ_WORD_LRAM(iot, ioh, ADW_MC_CODE_END_ADDR, end_addr);
 	code_sum = 0;
 	ADW_WRITE_WORD_REGISTER(iot, ioh, IOPW_RAM_ADDR, begin_addr);
 	for (word = begin_addr; word < end_addr; word += 2) {
 		code_sum += ADW_READ_WORD_AUTO_INC_LRAM(iot, ioh);
 	}
-	ADW_WRITE_WORD_LRAM(iot, ioh, ASC_MC_CODE_CHK_SUM, code_sum);
+	ADW_WRITE_WORD_LRAM(iot, ioh, ADW_MC_CODE_CHK_SUM, code_sum);
 
 	/*
 	 * Read microcode version and date.
 	 */
-	ADW_READ_WORD_LRAM(iot, ioh, ASC_MC_VERSION_DATE,
+	ADW_READ_WORD_LRAM(iot, ioh, ADW_MC_VERSION_DATE,
 			sc->cfg.mcode_date);
-	ADW_READ_WORD_LRAM(iot, ioh, ASC_MC_VERSION_NUM,
+	ADW_READ_WORD_LRAM(iot, ioh, ADW_MC_VERSION_NUM,
 			sc->cfg.mcode_version);
 
 	/*
 	 * Set the chip type to indicate the ASC38C1600.
 	 */
-	ADW_WRITE_WORD_LRAM(iot, ioh, ASC_MC_CHIP_TYPE, ADV_CHIP_ASC38C1600);
+	ADW_WRITE_WORD_LRAM(iot, ioh, ADW_MC_CHIP_TYPE, ADW_CHIP_ASC38C1600);
 
 	/*
 	 * Write 1 to bit 14 'DIS_TERM_DRV' in the SCSI_CFG1 register.
@@ -1542,9 +1560,9 @@ ADW_SOFTC      *sc;
 	 * to ignore DMA parity errors.
 	 */
 	if (sc->cfg.control_flag & CONTROL_FLAG_IGNORE_PERR) {
-		ADW_READ_WORD_LRAM(iot, ioh, ASC_MC_CONTROL_FLAG, word);
+		ADW_READ_WORD_LRAM(iot, ioh, ADW_MC_CONTROL_FLAG, word);
 		word |= CONTROL_FLAG_IGNORE_PERR;
-		ADW_WRITE_WORD_LRAM(iot, ioh, ASC_MC_CONTROL_FLAG, word);
+		ADW_WRITE_WORD_LRAM(iot, ioh, ADW_MC_CONTROL_FLAG, word);
 	}
 
 	/*
@@ -1554,9 +1572,9 @@ ADW_SOFTC      *sc;
 	 * AIPP checking and encoding.
 	 */
 	if ((sc->bios_ctrl & BIOS_CTRL_AIPP_DIS) == 0) {
-		ADW_READ_WORD_LRAM(iot, ioh, ASC_MC_CONTROL_FLAG, word);
+		ADW_READ_WORD_LRAM(iot, ioh, ADW_MC_CONTROL_FLAG, word);
 		word |= CONTROL_FLAG_ENABLE_AIPP;
-		ADW_WRITE_WORD_LRAM(iot, ioh, ASC_MC_CONTROL_FLAG, word);
+		ADW_WRITE_WORD_LRAM(iot, ioh, ADW_MC_CONTROL_FLAG, word);
 	}
 
 	/*
@@ -1568,7 +1586,7 @@ ADW_SOFTC      *sc;
 
 	/*
 	 * Microcode operating variables for WDTR, SDTR, and command tag
-	 * queuing will be set in AdvInquiryHandling() based on what a
+	 * queuing will be set in AdwInquiryHandling() based on what a
 	 * device reports it is capable of in Inquiry byte 7.
 	 *
 	 * If SCSI Bus Resets have been disabled, then directly set
@@ -1579,8 +1597,8 @@ ADW_SOFTC      *sc;
 	 * be assumed to be in Asynchronous, Narrow mode.
 	 */
 	if ((sc->bios_ctrl & BIOS_CTRL_RESET_SCSI_BUS) == 0) {
-		ADW_WRITE_WORD_LRAM(iot, ioh, ASC_MC_WDTR_ABLE, sc->wdtr_able);
-		ADW_WRITE_WORD_LRAM(iot, ioh, ASC_MC_SDTR_ABLE, sc->sdtr_able);
+		ADW_WRITE_WORD_LRAM(iot, ioh, ADW_MC_WDTR_ABLE, sc->wdtr_able);
+		ADW_WRITE_WORD_LRAM(iot, ioh, ADW_MC_SDTR_ABLE, sc->sdtr_able);
 	}
 
 	/*
@@ -1592,11 +1610,11 @@ ADW_SOFTC      *sc;
 	 * SDTR_SPEED3, and SDTR_SPEED4 values so it is safe to set them
 	 * without determining here whether the device supports SDTR.
 	 */
-	ADW_WRITE_WORD_LRAM(iot, ioh, ASC_MC_DISC_ENABLE, sc->cfg.disc_enable);
-	ADW_WRITE_WORD_LRAM(iot, ioh, ASC_MC_SDTR_SPEED1, sc->sdtr_speed1);
-	ADW_WRITE_WORD_LRAM(iot, ioh, ASC_MC_SDTR_SPEED2, sc->sdtr_speed2);
-	ADW_WRITE_WORD_LRAM(iot, ioh, ASC_MC_SDTR_SPEED3, sc->sdtr_speed3);
-	ADW_WRITE_WORD_LRAM(iot, ioh, ASC_MC_SDTR_SPEED4, sc->sdtr_speed4);
+	ADW_WRITE_WORD_LRAM(iot, ioh, ADW_MC_DISC_ENABLE, sc->cfg.disc_enable);
+	ADW_WRITE_WORD_LRAM(iot, ioh, ADW_MC_SDTR_SPEED1, sc->sdtr_speed1);
+	ADW_WRITE_WORD_LRAM(iot, ioh, ADW_MC_SDTR_SPEED2, sc->sdtr_speed2);
+	ADW_WRITE_WORD_LRAM(iot, ioh, ADW_MC_SDTR_SPEED3, sc->sdtr_speed3);
+	ADW_WRITE_WORD_LRAM(iot, ioh, ADW_MC_SDTR_SPEED4, sc->sdtr_speed4);
 
 	/*
 	 * Set SCSI_CFG0 Microcode Default Value.
@@ -1604,7 +1622,7 @@ ADW_SOFTC      *sc;
 	 * The microcode will set the SCSI_CFG0 register using this value
 	 * after it is started below.
 	 */
-	ADW_WRITE_WORD_LRAM(iot, ioh, ASC_MC_DEFAULT_SCSI_CFG0,
+	ADW_WRITE_WORD_LRAM(iot, ioh, ADW_MC_DEFAULT_SCSI_CFG0,
 		ADW_PARITY_EN | ADW_QUEUE_128 | ADW_SEL_TMO_LONG |
 		ADW_OUR_ID_EN | sc->chip_scsi_id);
 
@@ -1626,7 +1644,7 @@ ADW_SOFTC      *sc;
 	 */
 	if ((ADW_READ_WORD_REGISTER(iot, ioh, IOPW_SCSI_CTRL) & 0x3F07) ==
 			0x3F07) {
-		return ASC_IERR_REVERSED_CABLE;
+		return ADW_IERR_REVERSED_CABLE;
 	}
 
 	/*
@@ -1638,7 +1656,7 @@ ADW_SOFTC      *sc;
 	 * If an HVD device is attached, return an error.
 	 */
 	if (scsi_cfg1 & ADW_HVD) {
-		return ASC_IERR_HVD_DEVICE;
+		return ADW_IERR_HVD_DEVICE;
 	}
 
 	/*
@@ -1702,7 +1720,7 @@ ADW_SOFTC      *sc;
 	 * The microcode will set the SCSI_CFG1 register using this value
 	 * after it is started below.
 	 */
-	ADW_WRITE_WORD_LRAM(iot, ioh, ASC_MC_DEFAULT_SCSI_CFG1, scsi_cfg1);
+	ADW_WRITE_WORD_LRAM(iot, ioh, ADW_MC_DEFAULT_SCSI_CFG1, scsi_cfg1);
 
 	/*
 	 * Set MEM_CFG Microcode Default Value
@@ -1715,7 +1733,7 @@ ADW_SOFTC      *sc;
 	 *
 	 * ASC-38C1600 has 32KB internal memory.
 	 */
-	ADW_WRITE_WORD_LRAM(iot, ioh, ASC_MC_DEFAULT_MEM_CFG,
+	ADW_WRITE_WORD_LRAM(iot, ioh, ADW_MC_DEFAULT_MEM_CFG,
 		ADW_BIOS_EN | ADW_RAM_SZ_32KB);
 
 	/*
@@ -1724,17 +1742,27 @@ ADW_SOFTC      *sc;
 	 * The microcode will set the SEL_MASK register using this value
 	 * after it is started below.
 	 */
-	ADW_WRITE_WORD_LRAM(iot, ioh, ASC_MC_DEFAULT_SEL_MASK,
+	ADW_WRITE_WORD_LRAM(iot, ioh, ADW_MC_DEFAULT_SEL_MASK,
 		ADW_TID_TO_TIDMASK(sc->chip_scsi_id));
+
+
+	i = AdwInitCarriers(sc->sc_dmamap_carrier,
+			sc->sc_control->carriers, &sc->carr_freelist);
+	if (i == 0) {
+		return ADW_IERR_NO_CARRIER; /* (ENOMEM) */ ;
+	} else if (i != ADW_MAX_CARRIER) {
+		printf("%s: WARNING: only %d of %d Carriers created\n",
+		       sc->sc_dev.dv_xname, i, ADW_MAX_CARRIER);
+	}
 
 	/*
 	 * Set-up the Host->RISC Initiator Command Queue (ICQ).
 	 */
 
 	if ((sc->icq_sp = sc->carr_freelist) == NULL) {
-		return ASC_IERR_NO_CARRIER;
+		return ADW_IERR_NO_CARRIER;
 	}
-	sc->carr_freelist = adw_carrier_phys_kv(sc,
+	sc->carr_freelist = ADW_CARRIER_VADDR(sc,
 			ASC_GET_CARRP(sc->icq_sp->next_ba));
 
 	/*
@@ -1747,16 +1775,16 @@ ADW_SOFTC      *sc;
 	 * COMMA register to the same value otherwise the RISC will
 	 * prematurely detect a command is available.
 	 */
-	ADW_WRITE_DWORD_LRAM(iot, ioh, ASC_MC_ICQ, sc->icq_sp->carr_ba);
+	ADW_WRITE_DWORD_LRAM(iot, ioh, ADW_MC_ICQ, sc->icq_sp->carr_ba);
 	ADW_WRITE_DWORD_REGISTER(iot, ioh, IOPDW_COMMA, sc->icq_sp->carr_ba);
 
 	/*
 	 * Set-up the RISC->Host Initiator Response Queue (IRQ).
 	 */
 	if ((sc->irq_sp = sc->carr_freelist) == NULL) {
-		return ASC_IERR_NO_CARRIER;
+		return ADW_IERR_NO_CARRIER;
 	}
-	sc->carr_freelist = adw_carrier_phys_kv(sc,
+	sc->carr_freelist = ADW_CARRIER_VADDR(sc,
 			ASC_GET_CARRP(sc->irq_sp->next_ba));
 
 	/*
@@ -1764,19 +1792,19 @@ ADW_SOFTC      *sc;
 	 * the stopper.
 	 *
 	 * Note: Set 'next_ba' to ASC_CQ_STOPPER. When the request is
-	 * completed the RISC will set the ASC_RQ_STOPPER bit.
+	 * completed the RISC will set the ASC_RQ_DONE bit.
 	 */
 	sc->irq_sp->next_ba = ASC_CQ_STOPPER;
 
 	/*
 	 * Set RISC IRQ physical address start value.
 	 */
-	ADW_WRITE_DWORD_LRAM(iot, ioh, ASC_MC_IRQ, sc->irq_sp->carr_ba);
+	ADW_WRITE_DWORD_LRAM(iot, ioh, ADW_MC_IRQ, sc->irq_sp->carr_ba);
 	sc->carr_pending_cnt = 0;
 
 	ADW_WRITE_BYTE_REGISTER(iot, ioh, IOPB_INTR_ENABLES,
 		(ADW_INTR_ENABLE_HOST_INTR | ADW_INTR_ENABLE_GLOBAL_INTR));
-	ADW_READ_WORD_LRAM(iot, ioh, ASC_MC_CODE_BEGIN_ADDR, word);
+	ADW_READ_WORD_LRAM(iot, ioh, ADW_MC_CODE_BEGIN_ADDR, word);
 	ADW_WRITE_WORD_REGISTER(iot, ioh, IOPW_PC, word);
 
 	/* finally, finally, gentlemen, start your engine */
@@ -1792,27 +1820,27 @@ ADW_SOFTC      *sc;
 		 * If the BIOS Signature is present in memory, restore the
 		 * per TID microcode operating variables.
 		 */
-		if (bios_mem[(ASC_MC_BIOS_SIGNATURE - ASC_MC_BIOSMEM)/2] ==
+		if (bios_mem[(ADW_MC_BIOS_SIGNATURE - ADW_MC_BIOSMEM)/2] ==
 				0x55AA) {
 			/*
 			 * Restore per TID negotiated values.
 			 */
-			ADW_WRITE_WORD_LRAM(iot, ioh, ASC_MC_WDTR_ABLE,
+			ADW_WRITE_WORD_LRAM(iot, ioh, ADW_MC_WDTR_ABLE,
 					wdtr_able);
-			ADW_WRITE_WORD_LRAM(iot, ioh, ASC_MC_SDTR_ABLE,
+			ADW_WRITE_WORD_LRAM(iot, ioh, ADW_MC_SDTR_ABLE,
 					sdtr_able);
-			ADW_WRITE_WORD_LRAM(iot, ioh, ASC_MC_PPR_ABLE,
+			ADW_WRITE_WORD_LRAM(iot, ioh, ADW_MC_PPR_ABLE,
 					ppr_able);
-			ADW_WRITE_WORD_LRAM(iot, ioh, ASC_MC_TAGQNG_ABLE,
+			ADW_WRITE_WORD_LRAM(iot, ioh, ADW_MC_TAGQNG_ABLE,
 					tagqng_able);
 			for (tid = 0; tid <= ADW_MAX_TID; tid++) {
 				ADW_WRITE_BYTE_LRAM(iot, ioh,
-						ASC_MC_NUMBER_OF_MAX_CMD + tid,
+						ADW_MC_NUMBER_OF_MAX_CMD + tid,
 						max_cmd[tid]);
 			}
 		} else {
-			if (AdvResetCCB(sc) != ADW_TRUE) {
-				warn_code = ASC_WARN_BUSRESET_ERROR;
+			if (AdwResetCCB(sc) != ADW_TRUE) {
+				warn_code = ADW_WARN_BUSRESET_ERROR;
 			}
 		}
 	}
@@ -1834,7 +1862,7 @@ ADW_SOFTC      *sc;
  * Note: Chip is stopped on entry.
  */
 int
-AdvInitFrom3550EEP(sc)
+AdwInitFrom3550EEP(sc)
 ADW_SOFTC      *sc;
 {
 	bus_space_tag_t iot = sc->sc_iot;
@@ -1853,8 +1881,8 @@ ADW_SOFTC      *sc;
 	 *
 	 * XXX - Don't handle big-endian access to EEPROM yet.
 	 */
-	if (AdvGet3550EEPConfig(iot, ioh, &eep_config) != eep_config.check_sum){
-		warn_code |= ASC_WARN_EEPROM_CHKSUM;
+	if (AdwGet3550EEPConfig(iot, ioh, &eep_config) != eep_config.check_sum){
+		warn_code |= ADW_WARN_EEPROM_CHKSUM;
 
 		/*
 		 * Set EEPROM default values.
@@ -1870,21 +1898,21 @@ ADW_SOFTC      *sc;
 		 * failed.
 		 */
 		eep_config.serial_number_word3 =
-			AdvReadEEPWord(iot, ioh, ASC_EEP_DVC_CFG_END - 1);
+			AdwReadEEPWord(iot, ioh, ASC_EEP_DVC_CFG_END - 1);
 
 		eep_config.serial_number_word2 =
-			AdvReadEEPWord(iot, ioh, ASC_EEP_DVC_CFG_END - 2);
+			AdwReadEEPWord(iot, ioh, ASC_EEP_DVC_CFG_END - 2);
 
 		eep_config.serial_number_word1 =
-			AdvReadEEPWord(iot, ioh, ASC_EEP_DVC_CFG_END - 3);
+			AdwReadEEPWord(iot, ioh, ASC_EEP_DVC_CFG_END - 3);
 
-		AdvSet3550EEPConfig(iot, ioh, &eep_config);
+		AdwSet3550EEPConfig(iot, ioh, &eep_config);
 	}
 	/*
 	 * Set sc and sc->cfg variables from the EEPROM configuration
 	 * that was read.
 	 *
-	 * This is the mapping of EEPROM fields to Adv Library fields.
+	 * This is the mapping of EEPROM fields to Adw Library fields.
 	 */
 	sc->wdtr_able = eep_config.wdtr_able;
 	sc->sdtr_able = eep_config.sdtr_able;
@@ -1906,26 +1934,26 @@ ADW_SOFTC      *sc;
 	 * Set the host maximum queuing (max. 253, min. 16) and the per device
 	 * maximum queuing (max. 63, min. 4).
 	 */
-	if (eep_config.max_host_qng > ASC_DEF_MAX_HOST_QNG) {
-		eep_config.max_host_qng = ASC_DEF_MAX_HOST_QNG;
-	} else if (eep_config.max_host_qng < ASC_DEF_MIN_HOST_QNG)
+	if (eep_config.max_host_qng > ADW_DEF_MAX_HOST_QNG) {
+		eep_config.max_host_qng = ADW_DEF_MAX_HOST_QNG;
+	} else if (eep_config.max_host_qng < ADW_DEF_MIN_HOST_QNG)
 	{
 		/* If the value is zero, assume it is uninitialized. */
 		if (eep_config.max_host_qng == 0) {
-			eep_config.max_host_qng = ASC_DEF_MAX_HOST_QNG;
+			eep_config.max_host_qng = ADW_DEF_MAX_HOST_QNG;
 		} else {
-			eep_config.max_host_qng = ASC_DEF_MIN_HOST_QNG;
+			eep_config.max_host_qng = ADW_DEF_MIN_HOST_QNG;
 		}
 	}
 
-	if (eep_config.max_dvc_qng > ASC_DEF_MAX_DVC_QNG) {
-		eep_config.max_dvc_qng = ASC_DEF_MAX_DVC_QNG;
-	} else if (eep_config.max_dvc_qng < ASC_DEF_MIN_DVC_QNG) {
+	if (eep_config.max_dvc_qng > ADW_DEF_MAX_DVC_QNG) {
+		eep_config.max_dvc_qng = ADW_DEF_MAX_DVC_QNG;
+	} else if (eep_config.max_dvc_qng < ADW_DEF_MIN_DVC_QNG) {
 		/* If the value is zero, assume it is uninitialized. */
 		if (eep_config.max_dvc_qng == 0) {
-			eep_config.max_dvc_qng = ASC_DEF_MAX_DVC_QNG;
+			eep_config.max_dvc_qng = ADW_DEF_MAX_DVC_QNG;
 		} else {
-			eep_config.max_dvc_qng = ASC_DEF_MIN_DVC_QNG;
+			eep_config.max_dvc_qng = ADW_DEF_MIN_DVC_QNG;
 		}
 	}
 
@@ -1968,7 +1996,7 @@ ADW_SOFTC      *sc;
 	case 0:
 		break;
 	default:
-		warn_code |= ASC_WARN_EEPROM_TERMINATION;
+		warn_code |= ADW_WARN_EEPROM_TERMINATION;
 	}
 
 	return warn_code;
@@ -1988,7 +2016,7 @@ ADW_SOFTC      *sc;
  * Note: Chip is stopped on entry.
  */
 int
-AdvInitFrom38C0800EEP(sc)
+AdwInitFrom38C0800EEP(sc)
 ADW_SOFTC      *sc;
 {
 	bus_space_tag_t iot = sc->sc_iot;
@@ -2007,9 +2035,9 @@ ADW_SOFTC      *sc;
 	 *
 	 * Set default values if a bad checksum is found.
 	 */
-	if (AdvGet38C0800EEPConfig(iot, ioh, &eep_config) != 
+	if (AdwGet38C0800EEPConfig(iot, ioh, &eep_config) != 
 			eep_config.check_sum) {
-		warn_code |= ASC_WARN_EEPROM_CHKSUM;
+		warn_code |= ADW_WARN_EEPROM_CHKSUM;
 
 		/*
 		 * Set EEPROM default values.
@@ -2025,21 +2053,21 @@ ADW_SOFTC      *sc;
 		 * failed.
 		 */
 		eep_config.serial_number_word3 =
-			AdvReadEEPWord(iot, ioh, ASC_EEP_DVC_CFG_END - 1);
+			AdwReadEEPWord(iot, ioh, ASC_EEP_DVC_CFG_END - 1);
 
 		eep_config.serial_number_word2 =
-			AdvReadEEPWord(iot, ioh, ASC_EEP_DVC_CFG_END - 2);
+			AdwReadEEPWord(iot, ioh, ASC_EEP_DVC_CFG_END - 2);
 
 		eep_config.serial_number_word1 =
-			AdvReadEEPWord(iot, ioh, ASC_EEP_DVC_CFG_END - 3);
+			AdwReadEEPWord(iot, ioh, ASC_EEP_DVC_CFG_END - 3);
 
-		AdvSet38C0800EEPConfig(iot, ioh, &eep_config);
+		AdwSet38C0800EEPConfig(iot, ioh, &eep_config);
 	}
 	/*
 	 * Set ADV_DVC_VAR and ADV_DVC_CFG variables from the
 	 * EEPROM configuration that was read.
 	 *
-	 * This is the mapping of EEPROM fields to Adv Library fields.
+	 * This is the mapping of EEPROM fields to Adw Library fields.
 	 */
 	sc->wdtr_able = eep_config.wdtr_able;
 	sc->sdtr_speed1 = eep_config.sdtr_speed1;
@@ -2084,25 +2112,25 @@ ADW_SOFTC      *sc;
 	 * Set the host maximum queuing (max. 253, min. 16) and the per device
 	 * maximum queuing (max. 63, min. 4).
 	 */
-	if (eep_config.max_host_qng > ASC_DEF_MAX_HOST_QNG) {
-		eep_config.max_host_qng = ASC_DEF_MAX_HOST_QNG;
-	} else if (eep_config.max_host_qng < ASC_DEF_MIN_HOST_QNG) {
+	if (eep_config.max_host_qng > ADW_DEF_MAX_HOST_QNG) {
+		eep_config.max_host_qng = ADW_DEF_MAX_HOST_QNG;
+	} else if (eep_config.max_host_qng < ADW_DEF_MIN_HOST_QNG) {
 		/* If the value is zero, assume it is uninitialized. */
 		if (eep_config.max_host_qng == 0) {
-			eep_config.max_host_qng = ASC_DEF_MAX_HOST_QNG;
+			eep_config.max_host_qng = ADW_DEF_MAX_HOST_QNG;
 		} else {
-			eep_config.max_host_qng = ASC_DEF_MIN_HOST_QNG;
+			eep_config.max_host_qng = ADW_DEF_MIN_HOST_QNG;
 		}
 	}
 
-	if (eep_config.max_dvc_qng > ASC_DEF_MAX_DVC_QNG) {
-		eep_config.max_dvc_qng = ASC_DEF_MAX_DVC_QNG;
-	} else if (eep_config.max_dvc_qng < ASC_DEF_MIN_DVC_QNG) {
+	if (eep_config.max_dvc_qng > ADW_DEF_MAX_DVC_QNG) {
+		eep_config.max_dvc_qng = ADW_DEF_MAX_DVC_QNG;
+	} else if (eep_config.max_dvc_qng < ADW_DEF_MIN_DVC_QNG) {
 		/* If the value is zero, assume it is uninitialized. */
 		if (eep_config.max_dvc_qng == 0) {
-			eep_config.max_dvc_qng = ASC_DEF_MAX_DVC_QNG;
+			eep_config.max_dvc_qng = ADW_DEF_MAX_DVC_QNG;
 		} else {
-			eep_config.max_dvc_qng = ASC_DEF_MIN_DVC_QNG;
+			eep_config.max_dvc_qng = ADW_DEF_MIN_DVC_QNG;
 		}
 	}
 
@@ -2153,7 +2181,7 @@ ADW_SOFTC      *sc;
 		 * Use automatic termination instead.
 		 */
 		termination = 0;
-		warn_code |= ASC_WARN_EEPROM_TERMINATION;
+		warn_code |= ADW_WARN_EEPROM_TERMINATION;
 	}
 
 	switch(eep_config.termination_lvd) {
@@ -2179,7 +2207,7 @@ ADW_SOFTC      *sc;
 		 * Use automatic termination instead.
 		 */
 		sc->cfg.termination = termination;
-		warn_code |= ASC_WARN_EEPROM_TERMINATION;
+		warn_code |= ADW_WARN_EEPROM_TERMINATION;
 	}
 
 	return warn_code;
@@ -2199,7 +2227,7 @@ ADW_SOFTC      *sc;
  * Note: Chip is stopped on entry.
  */
 int
-AdvInitFrom38C1600EEP(sc)
+AdwInitFrom38C1600EEP(sc)
 ADW_SOFTC      *sc;
 {
 	bus_space_tag_t iot = sc->sc_iot;
@@ -2218,9 +2246,9 @@ ADW_SOFTC      *sc;
 	 *
 	 * Set default values if a bad checksum is found.
 	 */
-	if (AdvGet38C1600EEPConfig(iot, ioh, &eep_config) !=
+	if (AdwGet38C1600EEPConfig(iot, ioh, &eep_config) !=
 			eep_config.check_sum) {
-		warn_code |= ASC_WARN_EEPROM_CHKSUM;
+		warn_code |= ADW_WARN_EEPROM_CHKSUM;
 
 		/*
 		 * Set EEPROM default values.
@@ -2280,22 +2308,22 @@ ADW_SOFTC      *sc;
 		 * failed.
 		 */
 		eep_config.serial_number_word3 =
-			AdvReadEEPWord(iot, ioh, ASC_EEP_DVC_CFG_END - 1);
+			AdwReadEEPWord(iot, ioh, ASC_EEP_DVC_CFG_END - 1);
 
 		eep_config.serial_number_word2 =
-			AdvReadEEPWord(iot, ioh, ASC_EEP_DVC_CFG_END - 2);
+			AdwReadEEPWord(iot, ioh, ASC_EEP_DVC_CFG_END - 2);
 
 		eep_config.serial_number_word1 =
-			AdvReadEEPWord(iot, ioh, ASC_EEP_DVC_CFG_END - 3);
+			AdwReadEEPWord(iot, ioh, ASC_EEP_DVC_CFG_END - 3);
 
-		AdvSet38C1600EEPConfig(iot, ioh, &eep_config);
+		AdwSet38C1600EEPConfig(iot, ioh, &eep_config);
 	}
 
 	/*
 	 * Set ASC_DVC_VAR and ASC_DVC_CFG variables from the
 	 * EEPROM configuration that was read.
 	 *
-	 * This is the mapping of EEPROM fields to Adv Library fields.
+	 * This is the mapping of EEPROM fields to Adw Library fields.
 	 */
 	sc->wdtr_able = eep_config.wdtr_able;
 	sc->sdtr_speed1 = eep_config.sdtr_speed1;
@@ -2338,25 +2366,25 @@ ADW_SOFTC      *sc;
 	 * Set the host maximum queuing (max. 253, min. 16) and the per device
 	 * maximum queuing (max. 63, min. 4).
 	 */
-	if (eep_config.max_host_qng > ASC_DEF_MAX_HOST_QNG) {
-		eep_config.max_host_qng = ASC_DEF_MAX_HOST_QNG;
-	} else if (eep_config.max_host_qng < ASC_DEF_MIN_HOST_QNG) {
+	if (eep_config.max_host_qng > ADW_DEF_MAX_HOST_QNG) {
+		eep_config.max_host_qng = ADW_DEF_MAX_HOST_QNG;
+	} else if (eep_config.max_host_qng < ADW_DEF_MIN_HOST_QNG) {
 		/* If the value is zero, assume it is uninitialized. */
 		if (eep_config.max_host_qng == 0) {
-			eep_config.max_host_qng = ASC_DEF_MAX_HOST_QNG;
+			eep_config.max_host_qng = ADW_DEF_MAX_HOST_QNG;
 		} else {
-			eep_config.max_host_qng = ASC_DEF_MIN_HOST_QNG;
+			eep_config.max_host_qng = ADW_DEF_MIN_HOST_QNG;
 		}
 	}
 
-	if (eep_config.max_dvc_qng > ASC_DEF_MAX_DVC_QNG) {
-		eep_config.max_dvc_qng = ASC_DEF_MAX_DVC_QNG;
-	} else if (eep_config.max_dvc_qng < ASC_DEF_MIN_DVC_QNG) {
+	if (eep_config.max_dvc_qng > ADW_DEF_MAX_DVC_QNG) {
+		eep_config.max_dvc_qng = ADW_DEF_MAX_DVC_QNG;
+	} else if (eep_config.max_dvc_qng < ADW_DEF_MIN_DVC_QNG) {
 		/* If the value is zero, assume it is uninitialized. */
 		if (eep_config.max_dvc_qng == 0) {
-			eep_config.max_dvc_qng = ASC_DEF_MAX_DVC_QNG;
+			eep_config.max_dvc_qng = ADW_DEF_MAX_DVC_QNG;
 		} else {
-			eep_config.max_dvc_qng = ASC_DEF_MIN_DVC_QNG;
+			eep_config.max_dvc_qng = ADW_DEF_MIN_DVC_QNG;
 		}
 	}
 
@@ -2403,7 +2431,7 @@ ADW_SOFTC      *sc;
 		 * Use automatic termination instead.
 		 */
 		termination = 0;
-		warn_code |= ASC_WARN_EEPROM_TERMINATION;
+		warn_code |= ADW_WARN_EEPROM_TERMINATION;
 	}
 
 	switch(eep_config.termination_lvd) {
@@ -2425,7 +2453,7 @@ ADW_SOFTC      *sc;
 		 * Use automatic termination instead.
 		 */
 		sc->cfg.termination = termination;
-		warn_code |= ASC_WARN_EEPROM_TERMINATION;
+		warn_code |= ADW_WARN_EEPROM_TERMINATION;
 	}
 
 	return warn_code;
@@ -2438,7 +2466,7 @@ ADW_SOFTC      *sc;
  * Return a checksum based on the EEPROM configuration read.
  */
 static u_int16_t
-AdvGet3550EEPConfig(iot, ioh, cfg_buf)
+AdwGet3550EEPConfig(iot, ioh, cfg_buf)
 	bus_space_tag_t		iot;
 	bus_space_handle_t	ioh;
 	ADW_EEP_3550_CONFIG	*cfg_buf;
@@ -2454,17 +2482,17 @@ AdvGet3550EEPConfig(iot, ioh, cfg_buf)
 	for (eep_addr = ASC_EEP_DVC_CFG_BEGIN;
 		eep_addr < ASC_EEP_DVC_CFG_END;
 		eep_addr++, wbuf++) {
-		wval = AdvReadEEPWord(iot, ioh, eep_addr);
+		wval = AdwReadEEPWord(iot, ioh, eep_addr);
 		chksum += wval;
 		*wbuf = wval;
 	}
 
-	*wbuf = AdvReadEEPWord(iot, ioh, eep_addr);
+	*wbuf = AdwReadEEPWord(iot, ioh, eep_addr);
 	wbuf++;
 	for (eep_addr = ASC_EEP_DVC_CTL_BEGIN;
 			eep_addr < ASC_EEP_MAX_WORD_ADDR;
 			eep_addr++, wbuf++) {
-		*wbuf = AdvReadEEPWord(iot, ioh, eep_addr);
+		*wbuf = AdwReadEEPWord(iot, ioh, eep_addr);
 	}
 
 	return chksum;
@@ -2477,7 +2505,7 @@ AdvGet3550EEPConfig(iot, ioh, cfg_buf)
  * Return a checksum based on the EEPROM configuration read.
  */
 static u_int16_t
-AdvGet38C0800EEPConfig(iot, ioh, cfg_buf)
+AdwGet38C0800EEPConfig(iot, ioh, cfg_buf)
 	bus_space_tag_t		iot;
 	bus_space_handle_t	ioh;
 	ADW_EEP_38C0800_CONFIG	*cfg_buf;
@@ -2493,17 +2521,17 @@ AdvGet38C0800EEPConfig(iot, ioh, cfg_buf)
 	for (eep_addr = ASC_EEP_DVC_CFG_BEGIN;
 		eep_addr < ASC_EEP_DVC_CFG_END;
 		eep_addr++, wbuf++) {
-		wval = AdvReadEEPWord(iot, ioh, eep_addr);
+		wval = AdwReadEEPWord(iot, ioh, eep_addr);
 		chksum += wval;
 		*wbuf = wval;
 	}
 
-	*wbuf = AdvReadEEPWord(iot, ioh, eep_addr);
+	*wbuf = AdwReadEEPWord(iot, ioh, eep_addr);
 	wbuf++;
 	for (eep_addr = ASC_EEP_DVC_CTL_BEGIN;
 			eep_addr < ASC_EEP_MAX_WORD_ADDR;
 			eep_addr++, wbuf++) {
-		*wbuf = AdvReadEEPWord(iot, ioh, eep_addr);
+		*wbuf = AdwReadEEPWord(iot, ioh, eep_addr);
 	}
 
 	return chksum;
@@ -2516,7 +2544,7 @@ AdvGet38C0800EEPConfig(iot, ioh, cfg_buf)
  * Return a checksum based on the EEPROM configuration read.
  */
 static u_int16_t
-AdvGet38C1600EEPConfig(iot, ioh, cfg_buf)
+AdwGet38C1600EEPConfig(iot, ioh, cfg_buf)
 	bus_space_tag_t		iot;
 	bus_space_handle_t	ioh;
 	ADW_EEP_38C1600_CONFIG	*cfg_buf;
@@ -2532,17 +2560,17 @@ AdvGet38C1600EEPConfig(iot, ioh, cfg_buf)
 	for (eep_addr = ASC_EEP_DVC_CFG_BEGIN;
 		eep_addr < ASC_EEP_DVC_CFG_END;
 		eep_addr++, wbuf++) {
-		wval = AdvReadEEPWord(iot, ioh, eep_addr);
+		wval = AdwReadEEPWord(iot, ioh, eep_addr);
 		chksum += wval;
 		*wbuf = wval;
 	}
 
-	*wbuf = AdvReadEEPWord(iot, ioh, eep_addr);
+	*wbuf = AdwReadEEPWord(iot, ioh, eep_addr);
 	wbuf++;
 	for (eep_addr = ASC_EEP_DVC_CTL_BEGIN;
 			eep_addr < ASC_EEP_MAX_WORD_ADDR;
 			eep_addr++, wbuf++) {
-		*wbuf = AdvReadEEPWord(iot, ioh, eep_addr);
+		*wbuf = AdwReadEEPWord(iot, ioh, eep_addr);
 	}
 
 	return chksum;
@@ -2553,14 +2581,14 @@ AdvGet38C1600EEPConfig(iot, ioh, cfg_buf)
  * Read the EEPROM from specified location
  */
 static u_int16_t
-AdvReadEEPWord(iot, ioh, eep_word_addr)
+AdwReadEEPWord(iot, ioh, eep_word_addr)
 	bus_space_tag_t		iot;
 	bus_space_handle_t	ioh;
 	int			eep_word_addr;
 {
 	ADW_WRITE_WORD_REGISTER(iot, ioh, IOPW_EE_CMD,
 		ASC_EEP_CMD_READ | eep_word_addr);
-	AdvWaitEEPCmd(iot, ioh);
+	AdwWaitEEPCmd(iot, ioh);
 
 	return ADW_READ_WORD_REGISTER(iot, ioh, IOPW_EE_DATA);
 }
@@ -2570,7 +2598,7 @@ AdvReadEEPWord(iot, ioh, eep_word_addr)
  * Wait for EEPROM command to complete
  */
 static void
-AdvWaitEEPCmd(iot, ioh)
+AdwWaitEEPCmd(iot, ioh)
 	bus_space_tag_t		iot;
 	bus_space_handle_t	ioh;
 {
@@ -2582,7 +2610,7 @@ AdvWaitEEPCmd(iot, ioh)
 				ASC_EEP_CMD_DONE) {
 			break;
 		}
-		AdvSleepMilliSecond(1);
+		AdwSleepMilliSecond(1);
 	}
 
 	ADW_READ_WORD_REGISTER(iot, ioh, IOPW_EE_CMD);
@@ -2593,7 +2621,7 @@ AdvWaitEEPCmd(iot, ioh)
  * Write the EEPROM from 'cfg_buf'.
  */
 static void
-AdvSet3550EEPConfig(iot, ioh, cfg_buf)
+AdwSet3550EEPConfig(iot, ioh, cfg_buf)
 	bus_space_tag_t		iot;
 	bus_space_handle_t	ioh;
 	ADW_EEP_3550_CONFIG	*cfg_buf;
@@ -2606,7 +2634,7 @@ AdvSet3550EEPConfig(iot, ioh, cfg_buf)
 	chksum = 0;
 
 	ADW_WRITE_WORD_REGISTER(iot, ioh, IOPW_EE_CMD, ASC_EEP_CMD_WRITE_ABLE);
-	AdvWaitEEPCmd(iot, ioh);
+	AdwWaitEEPCmd(iot, ioh);
 
 	/*
 	 * Write EEPROM from word 0 to word 20
@@ -2617,8 +2645,8 @@ AdvSet3550EEPConfig(iot, ioh, cfg_buf)
 		ADW_WRITE_WORD_REGISTER(iot, ioh, IOPW_EE_DATA, *wbuf);
 		ADW_WRITE_WORD_REGISTER(iot, ioh, IOPW_EE_CMD,
 				ASC_EEP_CMD_WRITE | addr);
-		AdvWaitEEPCmd(iot, ioh);
-		AdvSleepMilliSecond(ASC_EEP_DELAY_MS);
+		AdwWaitEEPCmd(iot, ioh);
+		AdwSleepMilliSecond(ASC_EEP_DELAY_MS);
 	}
 
 	/*
@@ -2627,7 +2655,7 @@ AdvSet3550EEPConfig(iot, ioh, cfg_buf)
 	ADW_WRITE_WORD_REGISTER(iot, ioh, IOPW_EE_DATA, chksum);
 	ADW_WRITE_WORD_REGISTER(iot, ioh, IOPW_EE_CMD,
 			ASC_EEP_CMD_WRITE | addr);
-	AdvWaitEEPCmd(iot, ioh);
+	AdwWaitEEPCmd(iot, ioh);
 	wbuf++;        /* skip over check_sum */
 
 	/*
@@ -2638,12 +2666,12 @@ AdvSet3550EEPConfig(iot, ioh, cfg_buf)
 		ADW_WRITE_WORD_REGISTER(iot, ioh, IOPW_EE_DATA, *wbuf);
 		ADW_WRITE_WORD_REGISTER(iot, ioh, IOPW_EE_CMD,
 				ASC_EEP_CMD_WRITE | addr);
-		AdvWaitEEPCmd(iot, ioh);
+		AdwWaitEEPCmd(iot, ioh);
 	}
 
 	ADW_WRITE_WORD_REGISTER(iot, ioh, IOPW_EE_CMD,
 			ASC_EEP_CMD_WRITE_DISABLE);
-	AdvWaitEEPCmd(iot, ioh);
+	AdwWaitEEPCmd(iot, ioh);
 
 	return;
 }
@@ -2653,7 +2681,7 @@ AdvSet3550EEPConfig(iot, ioh, cfg_buf)
  * Write the EEPROM from 'cfg_buf'.
  */
 static void
-AdvSet38C0800EEPConfig(iot, ioh, cfg_buf)
+AdwSet38C0800EEPConfig(iot, ioh, cfg_buf)
 	bus_space_tag_t		iot;
 	bus_space_handle_t	ioh;
 	ADW_EEP_38C0800_CONFIG	*cfg_buf;
@@ -2666,7 +2694,7 @@ AdvSet38C0800EEPConfig(iot, ioh, cfg_buf)
 	chksum = 0;
 
 	ADW_WRITE_WORD_REGISTER(iot, ioh, IOPW_EE_CMD, ASC_EEP_CMD_WRITE_ABLE);
-	AdvWaitEEPCmd(iot, ioh);
+	AdwWaitEEPCmd(iot, ioh);
 
 	/*
 	 * Write EEPROM from word 0 to word 20
@@ -2677,8 +2705,8 @@ AdvSet38C0800EEPConfig(iot, ioh, cfg_buf)
 		ADW_WRITE_WORD_REGISTER(iot, ioh, IOPW_EE_DATA, *wbuf);
 		ADW_WRITE_WORD_REGISTER(iot, ioh, IOPW_EE_CMD,
 				ASC_EEP_CMD_WRITE | addr);
-		AdvWaitEEPCmd(iot, ioh);
-		AdvSleepMilliSecond(ASC_EEP_DELAY_MS);
+		AdwWaitEEPCmd(iot, ioh);
+		AdwSleepMilliSecond(ASC_EEP_DELAY_MS);
 	}
 
 	/*
@@ -2687,7 +2715,7 @@ AdvSet38C0800EEPConfig(iot, ioh, cfg_buf)
 	ADW_WRITE_WORD_REGISTER(iot, ioh, IOPW_EE_DATA, chksum);
 	ADW_WRITE_WORD_REGISTER(iot, ioh, IOPW_EE_CMD,
 			ASC_EEP_CMD_WRITE | addr);
-	AdvWaitEEPCmd(iot, ioh);
+	AdwWaitEEPCmd(iot, ioh);
 	wbuf++;        /* skip over check_sum */
 
 	/*
@@ -2698,12 +2726,12 @@ AdvSet38C0800EEPConfig(iot, ioh, cfg_buf)
 		ADW_WRITE_WORD_REGISTER(iot, ioh, IOPW_EE_DATA, *wbuf);
 		ADW_WRITE_WORD_REGISTER(iot, ioh, IOPW_EE_CMD,
 				ASC_EEP_CMD_WRITE | addr);
-		AdvWaitEEPCmd(iot, ioh);
+		AdwWaitEEPCmd(iot, ioh);
 	}
 
 	ADW_WRITE_WORD_REGISTER(iot, ioh, IOPW_EE_CMD,
 			ASC_EEP_CMD_WRITE_DISABLE);
-	AdvWaitEEPCmd(iot, ioh);
+	AdwWaitEEPCmd(iot, ioh);
 
 	return;
 }
@@ -2713,7 +2741,7 @@ AdvSet38C0800EEPConfig(iot, ioh, cfg_buf)
  * Write the EEPROM from 'cfg_buf'.
  */
 static void
-AdvSet38C1600EEPConfig(iot, ioh, cfg_buf)
+AdwSet38C1600EEPConfig(iot, ioh, cfg_buf)
 	bus_space_tag_t		iot;
 	bus_space_handle_t	ioh;
 	ADW_EEP_38C1600_CONFIG	*cfg_buf;
@@ -2726,7 +2754,7 @@ AdvSet38C1600EEPConfig(iot, ioh, cfg_buf)
 	chksum = 0;
 
 	ADW_WRITE_WORD_REGISTER(iot, ioh, IOPW_EE_CMD, ASC_EEP_CMD_WRITE_ABLE);
-	AdvWaitEEPCmd(iot, ioh);
+	AdwWaitEEPCmd(iot, ioh);
 
 	/*
 	 * Write EEPROM from word 0 to word 20
@@ -2737,8 +2765,8 @@ AdvSet38C1600EEPConfig(iot, ioh, cfg_buf)
 		ADW_WRITE_WORD_REGISTER(iot, ioh, IOPW_EE_DATA, *wbuf);
 		ADW_WRITE_WORD_REGISTER(iot, ioh, IOPW_EE_CMD,
 				ASC_EEP_CMD_WRITE | addr);
-		AdvWaitEEPCmd(iot, ioh);
-		AdvSleepMilliSecond(ASC_EEP_DELAY_MS);
+		AdwWaitEEPCmd(iot, ioh);
+		AdwSleepMilliSecond(ASC_EEP_DELAY_MS);
 	}
 
 	/*
@@ -2747,7 +2775,7 @@ AdvSet38C1600EEPConfig(iot, ioh, cfg_buf)
 	ADW_WRITE_WORD_REGISTER(iot, ioh, IOPW_EE_DATA, chksum);
 	ADW_WRITE_WORD_REGISTER(iot, ioh, IOPW_EE_CMD,
 			ASC_EEP_CMD_WRITE | addr);
-	AdvWaitEEPCmd(iot, ioh);
+	AdwWaitEEPCmd(iot, ioh);
 	wbuf++;        /* skip over check_sum */
 
 	/*
@@ -2758,19 +2786,19 @@ AdvSet38C1600EEPConfig(iot, ioh, cfg_buf)
 		ADW_WRITE_WORD_REGISTER(iot, ioh, IOPW_EE_DATA, *wbuf);
 		ADW_WRITE_WORD_REGISTER(iot, ioh, IOPW_EE_CMD,
 				ASC_EEP_CMD_WRITE | addr);
-		AdvWaitEEPCmd(iot, ioh);
+		AdwWaitEEPCmd(iot, ioh);
 	}
 
 	ADW_WRITE_WORD_REGISTER(iot, ioh, IOPW_EE_CMD,
 			ASC_EEP_CMD_WRITE_DISABLE);
-	AdvWaitEEPCmd(iot, ioh);
+	AdwWaitEEPCmd(iot, ioh);
 
 	return;
 }
 
 
 /*
- * AdvExeScsiQueue() - Send a request to the RISC microcode program.
+ * AdwExeScsiQueue() - Send a request to the RISC microcode program.
  *
  *   Allocate a carrier structure, point the carrier to the ADW_SCSI_REQ_Q,
  *   add the carrier to the ICQ (Initiator Command Queue), and tickle the
@@ -2787,7 +2815,7 @@ AdvSet38C1600EEPConfig(iot, ioh, cfg_buf)
  *                       host IC error.
  */
 int
-AdvExeScsiQueue(sc, scsiq)
+AdwExeScsiQueue(sc, scsiq)
 ADW_SOFTC	*sc;
 ADW_SCSI_REQ_Q	*scsiq;
 {
@@ -2814,13 +2842,12 @@ ADW_SCSI_REQ_Q	*scsiq;
 	ccb = adw_ccb_phys_kv(sc, scsiq->ccb_ptr);
 
 	/*
-	 * Allocate a carrier ensuring at least one carrier always
-	 * remains on the freelist and initialize fields.
+	 * Allocate a carrier and initialize fields.
 	 */
 	if ((new_carrp = sc->carr_freelist) == NULL) {
 		return ADW_BUSY;
 	}
-	sc->carr_freelist = adw_carrier_phys_kv(sc,
+	sc->carr_freelist = ADW_CARRIER_VADDR(sc,
 			ASC_GET_CARRP(new_carrp->next_ba));
 	sc->carr_pending_cnt++;
 
@@ -2871,14 +2898,14 @@ ADW_SCSI_REQ_Q	*scsiq;
 	 */
 	sc->icq_sp = new_carrp;
 
-	if (sc->chip_type == ADV_CHIP_ASC3550 ||
-	    sc->chip_type == ADV_CHIP_ASC38C0800) {
+	if (sc->chip_type == ADW_CHIP_ASC3550 ||
+	    sc->chip_type == ADW_CHIP_ASC38C0800) {
 		/*
 		 * Tickle the RISC to tell it to read its Command Queue Head
 		 * pointer.
 		 */
 		ADW_WRITE_BYTE_REGISTER(iot, ioh, IOPB_TICKLE, ADV_TICKLE_A);
-		if (sc->chip_type == ADV_CHIP_ASC3550) {
+		if (sc->chip_type == ADW_CHIP_ASC3550) {
 			/*
 			 * Clear the tickle value. In the ASC-3550 the RISC flag
 			 * command 'clr_tickle_a' does not work unless the host
@@ -2887,7 +2914,7 @@ ADW_SCSI_REQ_Q	*scsiq;
 			ADW_WRITE_BYTE_REGISTER(iot, ioh, IOPB_TICKLE,
 					ADV_TICKLE_NOP);
 		}
-	} else if (sc->chip_type == ADV_CHIP_ASC38C1600) {
+	} else if (sc->chip_type == ADW_CHIP_ASC38C1600) {
 		/*
 		 * Notify the RISC a carrier is ready by writing the physical
 		 * address of the new carrier stopper to the COMMA register.
@@ -2905,7 +2932,7 @@ ADW_SCSI_REQ_Q	*scsiq;
 
 
 void
-AdvResetChip(iot, ioh)
+AdwResetChip(iot, ioh)
 	bus_space_tag_t iot;
 	bus_space_handle_t ioh;
 {
@@ -2915,7 +2942,7 @@ AdvResetChip(iot, ioh)
 	 */
 	ADW_WRITE_WORD_REGISTER(iot, ioh, IOPW_CTRL_REG,
 			ADW_CTRL_REG_CMD_RESET);
-	AdvSleepMilliSecond(100);
+	AdwSleepMilliSecond(100);
 	ADW_WRITE_WORD_REGISTER(iot, ioh, IOPW_CTRL_REG,
 			ADW_CTRL_REG_CMD_WR_IO_REG);
 }
@@ -2931,7 +2958,7 @@ AdvResetChip(iot, ioh)
  *                      may be hung which requires driver recovery.
  */
 int
-AdvResetCCB(sc)
+AdwResetCCB(sc)
 ADW_SOFTC	*sc;
 {
 	int	    status;
@@ -2940,7 +2967,7 @@ ADW_SOFTC	*sc;
 	 * Send the SCSI Bus Reset idle start idle command which asserts
 	 * the SCSI Bus Reset signal.
 	 */
-	status = AdvSendIdleCmd(sc, (u_int16_t) IDLE_CMD_SCSI_RESET_START, 0L);
+	status = AdwSendIdleCmd(sc, (u_int16_t) IDLE_CMD_SCSI_RESET_START, 0L);
 	if (status != ADW_TRUE) {
 		return status;
 	}
@@ -2951,18 +2978,18 @@ ADW_SOFTC	*sc;
 	 * The hold time delay is done on the host because the RISC has no
 	 * microsecond accurate timer.
 	 */
-	AdvDelayMicroSecond((u_int16_t) ASC_SCSI_RESET_HOLD_TIME_US);
+	AdwDelayMicroSecond((u_int16_t) ASC_SCSI_RESET_HOLD_TIME_US);
 
 	/*
 	 * Send the SCSI Bus Reset end idle command which de-asserts
 	 * the SCSI Bus Reset signal and purges any pending requests.
 	 */
-	status = AdvSendIdleCmd(sc, (u_int16_t) IDLE_CMD_SCSI_RESET_END, 0L);
+	status = AdwSendIdleCmd(sc, (u_int16_t) IDLE_CMD_SCSI_RESET_END, 0L);
 	if (status != ADW_TRUE) {
 		return status;
 	}
 
-	AdvSleepMilliSecond((u_int32_t) sc->scsi_reset_wait * 1000);
+	AdwSleepMilliSecond((u_int32_t) sc->scsi_reset_wait * 1000);
 
 	return status;
 }
@@ -2976,7 +3003,7 @@ ADW_SOFTC	*sc;
  *      ADW_FALSE(0) -  Chip re-initialization and SCSI Bus Reset failure.
  */
 int
-AdvResetSCSIBus(sc)
+AdwResetSCSIBus(sc)
 ADW_SOFTC	*sc;
 {
 	bus_space_tag_t iot = sc->sc_iot;
@@ -2990,25 +3017,25 @@ ADW_SOFTC	*sc;
 	/*
 	 * Save current per TID negotiated values.
 	 */
-	ADW_READ_WORD_LRAM(iot, ioh, ASC_MC_WDTR_ABLE, wdtr_able);
-	ADW_READ_WORD_LRAM(iot, ioh, ASC_MC_SDTR_ABLE, sdtr_able);
-	if (sc->chip_type == ADV_CHIP_ASC38C1600) {
-		ADW_READ_WORD_LRAM(iot, ioh, ASC_MC_PPR_ABLE, ppr_able);
+	ADW_READ_WORD_LRAM(iot, ioh, ADW_MC_WDTR_ABLE, wdtr_able);
+	ADW_READ_WORD_LRAM(iot, ioh, ADW_MC_SDTR_ABLE, sdtr_able);
+	if (sc->chip_type == ADW_CHIP_ASC38C1600) {
+		ADW_READ_WORD_LRAM(iot, ioh, ADW_MC_PPR_ABLE, ppr_able);
 	}
-	ADW_READ_WORD_LRAM(iot, ioh, ASC_MC_TAGQNG_ABLE, tagqng_able);
+	ADW_READ_WORD_LRAM(iot, ioh, ADW_MC_TAGQNG_ABLE, tagqng_able);
 	for (tid = 0; tid <= ADW_MAX_TID; tid++) {
-		ADW_READ_BYTE_LRAM(iot, ioh, ASC_MC_NUMBER_OF_MAX_CMD + tid,
+		ADW_READ_BYTE_LRAM(iot, ioh, ADW_MC_NUMBER_OF_MAX_CMD + tid,
 			max_cmd[tid]);
 	}
 
 	/*
-	 * Force the AdvInitAsc3550/38C0800Driver() function to
+	 * Force the AdwInitAsc3550/38C0800Driver() function to
 	 * perform a SCSI Bus Reset by clearing the BIOS signature word.
 	 * The initialization functions assumes a SCSI Bus Reset is not
 	 * needed if the BIOS signature word is present.
 	 */
-	ADW_READ_WORD_LRAM(iot, ioh, ASC_MC_BIOS_SIGNATURE, bios_sig);
-	ADW_WRITE_WORD_LRAM(iot, ioh, ASC_MC_BIOS_SIGNATURE, 0);
+	ADW_READ_WORD_LRAM(iot, ioh, ADW_MC_BIOS_SIGNATURE, bios_sig);
+	ADW_WRITE_WORD_LRAM(iot, ioh, ADW_MC_BIOS_SIGNATURE, 0);
 
 	/*
 	 * Stop chip and reset it.
@@ -3016,7 +3043,7 @@ ADW_SOFTC	*sc;
 	ADW_WRITE_WORD_REGISTER(iot, ioh, IOPW_RISC_CSR, ADW_RISC_CSR_STOP);
 	ADW_WRITE_WORD_REGISTER(iot, ioh, IOPW_CTRL_REG,
 			ADW_CTRL_REG_CMD_RESET);
-	AdvSleepMilliSecond(100);
+	AdwSleepMilliSecond(100);
 	ADW_WRITE_WORD_REGISTER(iot, ioh, IOPW_CTRL_REG,
 			ADW_CTRL_REG_CMD_WR_IO_REG);
 
@@ -3024,12 +3051,12 @@ ADW_SOFTC	*sc;
 	 * Reset Adv Library error code, if any, and try
 	 * re-initializing the chip.
 	 */
-	if (sc->chip_type == ADV_CHIP_ASC38C1600) {
-	    status = AdvInitAsc38C1600Driver(sc);
-	} else if (sc->chip_type == ADV_CHIP_ASC38C0800) {
-		status = AdvInitAsc38C0800Driver(sc);
+	if (sc->chip_type == ADW_CHIP_ASC38C1600) {
+	    status = AdwInitAsc38C1600Driver(sc);
+	} else if (sc->chip_type == ADW_CHIP_ASC38C0800) {
+		status = AdwInitAsc38C0800Driver(sc);
 	} else {
-		status = AdvInitAsc3550Driver(sc);
+		status = AdwInitAsc3550Driver(sc);
 	}
 
 	/* Translate initialization return value to status value. */
@@ -3038,19 +3065,19 @@ ADW_SOFTC	*sc;
 	/*
 	 * Restore the BIOS signature word.
 	 */
-	ADW_WRITE_WORD_LRAM(iot, ioh, ASC_MC_BIOS_SIGNATURE, bios_sig);
+	ADW_WRITE_WORD_LRAM(iot, ioh, ADW_MC_BIOS_SIGNATURE, bios_sig);
 
 	/*
 	 * Restore per TID negotiated values.
 	 */
-	ADW_WRITE_WORD_LRAM(iot, ioh, ASC_MC_WDTR_ABLE, wdtr_able);
-	ADW_WRITE_WORD_LRAM(iot, ioh, ASC_MC_SDTR_ABLE, sdtr_able);
-	if (sc->chip_type == ADV_CHIP_ASC38C1600) {
-		ADW_WRITE_WORD_LRAM(iot, ioh, ASC_MC_PPR_ABLE, ppr_able);
+	ADW_WRITE_WORD_LRAM(iot, ioh, ADW_MC_WDTR_ABLE, wdtr_able);
+	ADW_WRITE_WORD_LRAM(iot, ioh, ADW_MC_SDTR_ABLE, sdtr_able);
+	if (sc->chip_type == ADW_CHIP_ASC38C1600) {
+		ADW_WRITE_WORD_LRAM(iot, ioh, ADW_MC_PPR_ABLE, ppr_able);
 	}
-	ADW_WRITE_WORD_LRAM(iot, ioh, ASC_MC_TAGQNG_ABLE, tagqng_able);
+	ADW_WRITE_WORD_LRAM(iot, ioh, ADW_MC_TAGQNG_ABLE, tagqng_able);
 	for (tid = 0; tid <= ADW_MAX_TID; tid++) {
-		ADW_WRITE_BYTE_LRAM(iot, ioh, ASC_MC_NUMBER_OF_MAX_CMD + tid,
+		ADW_WRITE_BYTE_LRAM(iot, ioh, ADW_MC_NUMBER_OF_MAX_CMD + tid,
 			max_cmd[tid]);
 	}
 
@@ -3067,7 +3094,7 @@ ADW_SOFTC	*sc;
  *  When a microcode idle command is completed, the ADV_DVC_VAR
  *  'idle_cmd_done' field is set to ADW_TRUE.
  *
- *  Note: AdvISR() can be called when interrupts are disabled or even
+ *  Note: AdwISR() can be called when interrupts are disabled or even
  *  when there is no hardware interrupt condition present. It will
  *  always check for completed idle commands and microcode requests.
  *  This is an important feature that shouldn't be changed because it
@@ -3078,7 +3105,7 @@ ADW_SOFTC	*sc;
  *   ADW_FALSE(0) - no interrupt was pending
  */
 int
-AdvISR(sc)
+AdwISR(sc)
 ADW_SOFTC	*sc;
 {
 	bus_space_tag_t iot = sc->sc_iot;
@@ -3106,20 +3133,20 @@ ADW_SOFTC	*sc;
 	/*
 	 * Notify the driver of an asynchronous microcode condition by
 	 * calling the ADV_DVC_VAR.async_callback function. The function
-	 * is passed the microcode ASC_MC_INTRB_CODE byte value.
+	 * is passed the microcode ADW_MC_INTRB_CODE byte value.
 	 */
 	if (int_stat & ADW_INTR_STATUS_INTRB) {
 		u_int8_t intrb_code;
 
-		ADW_READ_BYTE_LRAM(iot, ioh, ASC_MC_INTRB_CODE, intrb_code);
+		ADW_READ_BYTE_LRAM(iot, ioh, ADW_MC_INTRB_CODE, intrb_code);
 
-		if (sc->chip_type == ADV_CHIP_ASC3550 ||
-	    	    sc->chip_type == ADV_CHIP_ASC38C0800) {
+		if (sc->chip_type == ADW_CHIP_ASC3550 ||
+	    	    sc->chip_type == ADW_CHIP_ASC38C0800) {
 			if (intrb_code == ADV_ASYNC_CARRIER_READY_FAILURE &&
 				sc->carr_pending_cnt != 0) {
 				ADW_WRITE_BYTE_REGISTER(iot, ioh,
 					IOPB_TICKLE, ADV_TICKLE_A);
-				if (sc->chip_type == ADV_CHIP_ASC3550) {
+				if (sc->chip_type == ADW_CHIP_ASC3550) {
 					ADW_WRITE_BYTE_REGISTER(iot, ioh,
 						IOPB_TICKLE, ADV_TICKLE_NOP);
 				}
@@ -3151,7 +3178,7 @@ ADW_SOFTC	*sc;
 		 * The firmware will have copied the ASC_SCSI_REQ_Q.ccb_ptr
 		 * field to the carrier ADV_CARR_T.areq_ba field.
 		 * The conversion below complements the conversion of
-		 * ASC_SCSI_REQ_Q.scsiq_ptr' in AdvExeScsiQueue().
+		 * ASC_SCSI_REQ_Q.scsiq_ptr' in AdwExeScsiQueue().
 		 */
 		ccb = adw_ccb_phys_kv(sc, sc->irq_sp->areq_ba);
 		scsiq = &ccb->scsiq;
@@ -3174,9 +3201,10 @@ ADW_SOFTC	*sc;
 		 * stopper carrier.
 		 */
 		free_carrp = sc->irq_sp;
-		sc->irq_sp = adw_carrier_phys_kv(sc, ASC_GET_CARRP(irq_next_pa));
+		sc->irq_sp = ADW_CARRIER_VADDR(sc, ASC_GET_CARRP(irq_next_pa));
 
-		free_carrp->next_ba = sc->carr_freelist->carr_ba;
+		free_carrp->next_ba = (sc->carr_freelist == NULL)? NULL
+					: sc->carr_freelist->carr_ba;
 		sc->carr_freelist = free_carrp;
 		sc->carr_pending_cnt--;
 
@@ -3199,7 +3227,7 @@ ADW_SOFTC	*sc;
 		if (scsiq->done_status == QD_NO_ERROR &&
 		    scsiq->cdb[0] == INQUIRY &&
 		    scsiq->target_lun == 0) {
-			AdvInquiryHandling(sc, scsiq);
+			AdwInquiryHandling(sc, scsiq);
 		}
 
 		/*
@@ -3237,7 +3265,7 @@ ADW_SOFTC	*sc;
  *   ADW_ERROR - command timed out
  */
 int
-AdvSendIdleCmd(sc, idle_cmd, idle_cmd_parameter)
+AdwSendIdleCmd(sc, idle_cmd, idle_cmd_parameter)
 ADW_SOFTC      *sc;
 u_int16_t       idle_cmd;
 u_int32_t       idle_cmd_parameter;
@@ -3253,7 +3281,7 @@ u_int32_t       idle_cmd_parameter;
 	 * Clear the idle command status which is set by the microcode
 	 * to a non-zero value to indicate when the command is completed.
 	 */
-	ADW_WRITE_WORD_LRAM(iot, ioh, ASC_MC_IDLE_CMD_STATUS, (u_int16_t) 0);
+	ADW_WRITE_WORD_LRAM(iot, ioh, ADW_MC_IDLE_CMD_STATUS, (u_int16_t) 0);
 
 	/*
 	 * Write the idle command value after the idle command parameter
@@ -3261,15 +3289,15 @@ u_int32_t       idle_cmd_parameter;
 	 * followed, the microcode may process the idle command before the
 	 * parameters have been written to LRAM.
 	 */
-	ADW_WRITE_DWORD_LRAM(iot, ioh, ASC_MC_IDLE_CMD_PARAMETER,
+	ADW_WRITE_DWORD_LRAM(iot, ioh, ADW_MC_IDLE_CMD_PARAMETER,
 			idle_cmd_parameter);
-	ADW_WRITE_WORD_LRAM(iot, ioh, ASC_MC_IDLE_CMD, idle_cmd);
+	ADW_WRITE_WORD_LRAM(iot, ioh, ADW_MC_IDLE_CMD, idle_cmd);
 
 	/*
 	 * Tickle the RISC to tell it to process the idle command.
 	 */
 	ADW_WRITE_BYTE_REGISTER(iot, ioh, IOPB_TICKLE, ADV_TICKLE_B);
-	if (sc->chip_type == ADV_CHIP_ASC3550) {
+	if (sc->chip_type == ADW_CHIP_ASC3550) {
 		/*
 		 * Clear the tickle value. In the ASC-3550 the RISC flag
 		 * command 'clr_tickle_b' does not work unless the host
@@ -3282,12 +3310,12 @@ u_int32_t       idle_cmd_parameter;
 	for (i = 0; i < SCSI_WAIT_100_MSEC; i++) {
 		/* Poll once each microsecond for command completion. */
 		for (j = 0; j < SCSI_US_PER_MSEC; j++) {
-			ADW_READ_WORD_LRAM(iot, ioh, ASC_MC_IDLE_CMD_STATUS, result);
+			ADW_READ_WORD_LRAM(iot, ioh, ADW_MC_IDLE_CMD_STATUS, result);
 			if (result != 0) {
 				splx(s);
 				return result;
 			}
-			AdvDelayMicroSecond(1);
+			AdwDelayMicroSecond(1);
 		}
 	}
 
@@ -3304,7 +3332,7 @@ u_int32_t       idle_cmd_parameter;
  * Queuing.
  */
 static void
-AdvInquiryHandling(sc, scsiq)
+AdwInquiryHandling(sc, scsiq)
 ADW_SOFTC	*sc;
 ADW_SCSI_REQ_Q *scsiq;
 {
@@ -3318,7 +3346,7 @@ ADW_SCSI_REQ_Q *scsiq;
 
 
 	/*
-	 * AdvInquiryHandling() requires up to INQUIRY information Byte 7
+	 * AdwInquiryHandling() requires up to INQUIRY information Byte 7
 	 * to be available.
 	 *
 	 * If less than 8 bytes of INQUIRY information were requested or less
@@ -3365,29 +3393,30 @@ ADW_SCSI_REQ_Q *scsiq;
 	if(!(tidmask & SCSI_ADW_WDTR_DISABLE))
 #endif /* SCSI_ADW_WDTR_DISABLE */
 		if ((sc->wdtr_able & tidmask) && (inq->flags3 & SID_WBus16)) {
-			ADW_READ_WORD_LRAM(iot, ioh, ASC_MC_WDTR_ABLE,
+			ADW_READ_WORD_LRAM(iot, ioh, ADW_MC_WDTR_ABLE,
 					cfg_word);
 			if ((cfg_word & tidmask) == 0) {
 				cfg_word |= tidmask;
-				ADW_WRITE_WORD_LRAM(iot, ioh, ASC_MC_WDTR_ABLE,
+				ADW_WRITE_WORD_LRAM(iot, ioh, ADW_MC_WDTR_ABLE,
 						cfg_word);
 
 				/*
-				 * Clear the microcode "SDTR negotiation" and "WDTR
-				 * negotiation" done indicators for the target to cause
-				 * it to negotiate with the new setting set above.
+				 * Clear the microcode "SDTR negotiation" and
+				 * "WDTR negotiation" done indicators for the
+				 * target to cause it to negotiate with the new
+				 * setting set above.
 				 * WDTR when accepted causes the target to enter
-				 * asynchronous mode, so SDTR must be negotiated.
+				 * asynchronous mode, so SDTR must be negotiated
 				 */
-				ADW_READ_WORD_LRAM(iot, ioh, ASC_MC_SDTR_DONE,
+				ADW_READ_WORD_LRAM(iot, ioh, ADW_MC_SDTR_DONE,
 						cfg_word);
 				cfg_word &= ~tidmask;
-				ADW_WRITE_WORD_LRAM(iot, ioh, ASC_MC_SDTR_DONE,
+				ADW_WRITE_WORD_LRAM(iot, ioh, ADW_MC_SDTR_DONE,
 						cfg_word);
-				ADW_READ_WORD_LRAM(iot, ioh, ASC_MC_WDTR_DONE,
+				ADW_READ_WORD_LRAM(iot, ioh, ADW_MC_WDTR_DONE,
 						cfg_word);
 				cfg_word &= ~tidmask;
-				ADW_WRITE_WORD_LRAM(iot, ioh, ASC_MC_WDTR_DONE,
+				ADW_WRITE_WORD_LRAM(iot, ioh, ADW_MC_WDTR_DONE,
 						cfg_word);
 			}
 		}
@@ -3403,21 +3432,21 @@ ADW_SCSI_REQ_Q *scsiq;
 	if(!(tidmask & SCSI_ADW_SDTR_DISABLE))
 #endif /* SCSI_ADW_SDTR_DISABLE */
 		if ((sc->sdtr_able & tidmask) && (inq->flags3 & SID_Sync)) {
-			ADW_READ_WORD_LRAM(iot, ioh, ASC_MC_SDTR_ABLE, cfg_word);
+			ADW_READ_WORD_LRAM(iot, ioh, ADW_MC_SDTR_ABLE, cfg_word);
 			if ((cfg_word & tidmask) == 0) {
 				cfg_word |= tidmask;
-				ADW_WRITE_WORD_LRAM(iot, ioh, ASC_MC_SDTR_ABLE,
+				ADW_WRITE_WORD_LRAM(iot, ioh, ADW_MC_SDTR_ABLE,
 						cfg_word);
 
 				/*
-				 * Clear the microcode "SDTR negotiation" done indicator
-				 * for the target to cause it to negotiate with the new
-				 * setting set above.
+				 * Clear the microcode "SDTR negotiation"
+				 * done indicator for the target to cause it
+				 * to negotiate with the new setting set above.
 				 */
-				ADW_READ_WORD_LRAM(iot, ioh, ASC_MC_SDTR_DONE,
+				ADW_READ_WORD_LRAM(iot, ioh, ADW_MC_SDTR_DONE,
 						cfg_word);
 				cfg_word &= ~tidmask;
-				ADW_WRITE_WORD_LRAM(iot, ioh, ASC_MC_SDTR_DONE,
+				ADW_WRITE_WORD_LRAM(iot, ioh, ADW_MC_SDTR_DONE,
 						cfg_word);
 			}
 		}
@@ -3425,7 +3454,7 @@ ADW_SCSI_REQ_Q *scsiq;
 		 * If the Inquiry data included enough space for the SPI-3
 		 * Clocking field, then check if DT mode is supported.
 		 */
-		if (sc->chip_type == ADV_CHIP_ASC38C1600 &&
+		if (sc->chip_type == ADW_CHIP_ASC38C1600 &&
 			(scsiq->cdb[4] >= 57 ||
 				(scsiq->cdb[4] - scsiq->data_cnt) >= 57)) {
 			/*
@@ -3438,10 +3467,10 @@ ADW_SCSI_REQ_Q *scsiq;
 			 * and offset, transfer width, and protocol options.
 			 */
 			if((inq->flags4 & SID_Clocking) & SID_CLOCKING_DT_ONLY){
-				ADW_READ_WORD_LRAM(iot, ioh, ASC_MC_PPR_ABLE,
+				ADW_READ_WORD_LRAM(iot, ioh, ADW_MC_PPR_ABLE,
 						sc->ppr_able);
 				sc->ppr_able |= tidmask;
-				ADW_WRITE_WORD_LRAM(iot, ioh, ASC_MC_PPR_ABLE,
+				ADW_WRITE_WORD_LRAM(iot, ioh, ADW_MC_PPR_ABLE,
 						sc->ppr_able);
 			}
 		}
@@ -3462,14 +3491,14 @@ ADW_SCSI_REQ_Q *scsiq;
 	if(!(tidmask & SCSI_ADW_TAGQ_DISABLE))
 #endif /* SCSI_ADW_TAGQ_DISABLE */
 		if ((sc->tagqng_able & tidmask) && (inq->flags3 & SID_CmdQue)) {
-			ADW_READ_WORD_LRAM(iot, ioh, ASC_MC_TAGQNG_ABLE,
+			ADW_READ_WORD_LRAM(iot, ioh, ADW_MC_TAGQNG_ABLE,
 					cfg_word);
 			cfg_word |= tidmask;
-			ADW_WRITE_WORD_LRAM(iot, ioh, ASC_MC_TAGQNG_ABLE,
+			ADW_WRITE_WORD_LRAM(iot, ioh, ADW_MC_TAGQNG_ABLE,
 					cfg_word);
 
 			ADW_WRITE_BYTE_LRAM(iot, ioh,
-					ASC_MC_NUMBER_OF_MAX_CMD + tid,
+					ADW_MC_NUMBER_OF_MAX_CMD + tid,
 					sc->max_dvc_qng);
 		}
 	}
@@ -3478,7 +3507,7 @@ ADW_SCSI_REQ_Q *scsiq;
 
 
 static void
-AdvSleepMilliSecond(n)
+AdwSleepMilliSecond(n)
 u_int32_t	n;
 {
 
@@ -3487,7 +3516,7 @@ u_int32_t	n;
 
 
 static void
-AdvDelayMicroSecond(n)
+AdwDelayMicroSecond(n)
 u_int32_t	n;
 {
 
