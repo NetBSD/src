@@ -1,4 +1,4 @@
-.\"	$NetBSD: curses.3,v 1.52 2003/10/05 10:13:02 jdc Exp $
+.\"	$NetBSD: curses.3,v 1.53 2004/01/20 08:26:44 wiz Exp $
 .\"
 .\" Copyright (c) 1985, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -180,7 +180,10 @@ must be called before any of the other routines that deal with color are used.
 .It mvgetnstr Ta Xr curses_input 3
 .It mvgetstr Ta Xr curses_input 3
 .It mvhline Ta Xr curses_line 3
+.It mvinchstr Ta Xr curses_inch 3
+.It mvinchnstr Ta Xr curses_inch 3
 .It mvprintw Ta Xr curses_print 3
+.It mvscanw Ta Xr curses_scanw 3
 .It mvvline Ta Xr curses_line 3
 .It mvwaddch Ta Xr curses_addch 3
 .It mvwaddchnstr Ta Xr curses_addchstr 3
@@ -190,7 +193,10 @@ must be called before any of the other routines that deal with color are used.
 .It mvwgetnstr Ta Xr curses_input 3
 .It mvwgetstr Ta Xr curses_input 3
 .It mvwhline Ta Xr curses_line 3
+.It mvwinchstr Ta Xr curses_inch 3
+.It mvwinchnstr Ta Xr curses_inch 3
 .It mvwprintw Ta Xr curses_print 3
+.It mvwscanw Ta Xr curses_scanw 3
 .It mvwvline Ta Xr curses_line 3
 .It napms Ta Xr curses_tty 3
 .It newpad Ta Xr curses_pad 3
