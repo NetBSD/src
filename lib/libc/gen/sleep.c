@@ -33,7 +33,7 @@
 
 #if defined(LIBC_SCCS) && !defined(lint)
 /*static char *sccsid = "from: @(#)sleep.c	5.6 (Berkeley) 2/23/91";*/
-static char *rcsid = "$Id: sleep.c,v 1.4 1994/05/28 06:25:04 jtc Exp $";
+static char *rcsid = "$Id: sleep.c,v 1.5 1994/12/11 17:34:10 mycroft Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 #include <sys/time.h>
@@ -44,49 +44,42 @@ unsigned int
 sleep(seconds)
 	unsigned int seconds;
 {
-	register struct itimerval *itp;
 	struct itimerval itv, oitv;
 	struct sigaction act, oact;
 	struct timeval diff;
 	sigset_t set, oset;
 	static void sleephandler();
 
-	itp = &itv;
 	if (!seconds)
 		return 0;
 
-	sigemptyset (&set);
-	sigaddset (&set, SIGALRM);
+	sigemptyset(&set);
+	sigaddset(&set, SIGALRM);
 	sigprocmask(SIG_BLOCK, &set, &oset);
 
 	act.sa_handler = sleephandler;
-	act.sa_flags   = 0;
+	act.sa_flags = 0;
 	sigemptyset(&act.sa_mask);
 	sigaction(SIGALRM, &act, &oact);
 
-	timerclear(&itp->it_interval);
-	itp->it_value.tv_sec = seconds;
-	itp->it_value.tv_usec = 0;
-	diff.tv_sec = diff.tv_usec = 0;
-	setitimer(ITIMER_REAL, itp, &oitv);
+	timerclear(&itv.it_interval);
+	itv.it_value.tv_sec = seconds;
+	itv.it_value.tv_usec = 0;
+	timerclear(&diff);
+	setitimer(ITIMER_REAL, &itv, &oitv);
 
 	if (timerisset(&oitv.it_value)) {
-		if (timercmp(&oitv.it_value, &itp->it_value, >)) {
+		if (timercmp(&oitv.it_value, &itv.it_value, >)) {
 			oitv.it_value.tv_sec -= itv.it_value.tv_sec;
 		} else {
-			/* The existing timer was scheduled to fire 
-			   before ours, so we compute the time diff
-			   so we can add it back in the end. */
-
-			itp->it_value.tv_sec  -= oitv.it_value.tv_sec;
-			itp->it_value.tv_usec -= oitv.it_value.tv_usec;
-			if (itp->it_value.tv_usec < 0) {
-				itp->it_value.tv_sec--;
-				itp->it_value.tv_usec += 1000000;
-			}
-			diff = itp->it_value;
-
-			itp->it_value = oitv.it_value;
+			/*
+			 * The existing timer was scheduled to fire 
+			 * before ours, so we compute the time diff
+			 * so we can add it back in the end.
+			 */
+			diff = itv.it_value;
+			__timersub(&diff, &oitv.it_value);
+			itv.it_value = oitv.it_value;
 			/*
 			 * This is a hack, but we must have time to return
 			 * from the setitimer after the alarm or else it'll
@@ -105,18 +98,12 @@ sleep(seconds)
 	sigaction(SIGALRM, &oact, NULL);
 	sigprocmask(SIG_SETMASK, &oset, NULL);
 
-	(void) setitimer(ITIMER_REAL, &oitv, itp);
+	(void) setitimer(ITIMER_REAL, &oitv, &itv);
 
-	if (diff.tv_sec != 0 || diff.tv_usec != 0) {
-		itp->it_value.tv_sec  += diff.tv_sec;
-		itp->it_value.tv_usec += diff.tv_usec;
-		if (itp->it_value.tv_usec > 1000000) {
-			itp->it_value.tv_usec -= 1000000;
-			itp->it_value.tv_sec++;
-		}
-	}
+	if (timerisset(&diff))
+		__timeradd(&itv.it_value, &diff);
 
-	return (itp->it_value.tv_sec);
+	return (itv.it_value.tv_sec);
 }
 
 static void
