@@ -1,4 +1,4 @@
-/*	$NetBSD: login.c,v 1.28 1997/10/12 12:42:38 mycroft Exp $	*/
+/*	$NetBSD: login.c,v 1.29 1997/10/12 15:05:26 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1980, 1987, 1988, 1991, 1993, 1994
@@ -44,7 +44,7 @@ __COPYRIGHT(
 #if 0
 static char sccsid[] = "@(#)login.c	8.4 (Berkeley) 4/2/94";
 #endif
-__RCSID("$NetBSD: login.c,v 1.28 1997/10/12 12:42:38 mycroft Exp $");
+__RCSID("$NetBSD: login.c,v 1.29 1997/10/12 15:05:26 mycroft Exp $");
 #endif /* not lint */
 
 /*
@@ -66,7 +66,6 @@ __RCSID("$NetBSD: login.c,v 1.28 1997/10/12 12:42:38 mycroft Exp $");
 #include <setjmp.h>
 #include <signal.h>
 #include <stdio.h>
-#include <skey.h>
 #include <stdlib.h>
 #include <string.h>
 #include <syslog.h>
@@ -75,9 +74,11 @@ __RCSID("$NetBSD: login.c,v 1.28 1997/10/12 12:42:38 mycroft Exp $");
 #include <unistd.h>
 #include <utmp.h>
 #include <util.h>
-
+#ifdef SKEY
+#include <skey.h>
+#endif
 #ifdef KERBEROS5
-#include <krb5.h>		/* Solely for definition of kcontext */
+#include <krb5.h>
 #endif
 
 #include "pathnames.h"
@@ -93,7 +94,6 @@ void	 sigint __P((int));
 void	 sleepexit __P((int));
 char	*stypeof __P((char *));
 void	 timedout __P((int));
-int	 pwcheck __P((char *, char *, char *, char *));
 #if defined(KERBEROS) || defined(KERBEROS5)
 int	 klogin __P((struct passwd *, char *, char *, char *));
 void	 kdestroy __P((void));
@@ -114,7 +114,6 @@ u_int	timeout = 300;
 int	notickets = 1;
 char	*instance;
 char	*krbtkfile_env;
-int	authok;
 #endif
 #ifdef KERBEROS5
 extern krb5_context kcontext;
@@ -123,11 +122,6 @@ extern krb5_context kcontext;
 struct	passwd *pwd;
 int	failures;
 char	term[64], *envinit[1], *hostname, *username, *tty;
-#ifdef SKEY
-int	used_skey = 0;
-int 	require_skey = 0;
-char	skeypw[] = "s/key";
-#endif
 
 int
 main(argc, argv)
@@ -139,12 +133,12 @@ main(argc, argv)
 	struct stat st;
 	struct timeval tp;
 	struct utmp utmp;
-	int ask, ch, cnt, fflag, hflag, pflag, quietlog, rootlogin, rval;
+	int ask, ch, cnt, fflag, hflag, pflag, sflag, quietlog, rootlogin, rval;
 	uid_t uid;
 	char *domain, *p, *salt, *ttyn, *pwprompt;
 	char tbuf[MAXPATHLEN + 2], tname[sizeof(_PATH_TTY) + 10];
 	char localhost[MAXHOSTNAMELEN];
-	int need_chpass;
+	int need_chpass, require_chpass;
 #ifdef KERBEROS5
 	krb5_error_code kerror;
 #endif
@@ -152,7 +146,7 @@ main(argc, argv)
 	tbuf[0] = '\0';
 	rval = 0;
 	pwprompt = NULL;
-	need_chpass = 0;
+	need_chpass = require_chpass = 0;
 
 	(void)signal(SIGALRM, timedout);
 	(void)alarm(timeout);
@@ -175,7 +169,7 @@ main(argc, argv)
 	else
 		domain = strchr(localhost, '.');
 
-	fflag = hflag = pflag = 0;
+	fflag = hflag = pflag = sflag = 0;
 	uid = getuid();
 	while ((ch = getopt(argc, argv, "fh:ps")) != -1)
 		switch (ch) {
@@ -195,23 +189,12 @@ main(argc, argv)
 			pflag = 1;
 			break;
 		case 's':
-#ifdef SKEY
-			/*
-			 * If -s given twice, use S/Key or no login
-			 * otherwise just insist on S/Key if user has one.
-			 */
-			require_skey++;
-#else
-			syslog(LOG_ERR, "-s option used without s/key support");
-			exit(1);
-#endif
+			sflag = 1;
 			break;
-		case '?':
 		default:
-			if (!uid)
-				syslog(LOG_ERR, "invalid flag %c", ch);
+		case '?':
 			(void)fprintf(stderr,
-			    "usage: login [-fp] [-h hostname] [username]\n");
+			    "usage: login [-fps] [-h hostname] [username]\n");
 			exit(1);
 		}
 	argc -= optind;
@@ -246,9 +229,6 @@ main(argc, argv)
 #endif KERBEROS5
 
 	for (cnt = 0;; ask = 1) {
-#ifdef SKEY
-		used_skey = 0;
-#endif
 #if defined(KERBEROS) || defined(KERBEROS5)
 	        kdestroy();
 #endif
@@ -257,20 +237,16 @@ main(argc, argv)
 			getloginname();
 		}
 		rootlogin = 0;
-#ifdef	KERBEROS
-		if ((instance = strchr(username, '.')) != NULL) {
-			if (strncmp(instance, ".root", 5) == 0)
-				rootlogin = 1;
+#ifdef KERBEROS
+		if ((instance = strchr(username, '.')) != NULL)
 			*instance++ = '\0';
-		} else
+		else
 			instance = "";
 #endif
 #ifdef KERBEROS5
-		if ((instance = strchr(username, '/')) != NULL) {
-			if (strncmp(instance, "/root", 5) == 0)
-				rootlogin = 1;
+		if ((instance = strchr(username, '/')) != NULL)
 			*instance++ = '\0';
-		} else
+		else
 			instance = "";
 #endif
 		if (strlen(username) > MAXLOGNAME)
@@ -317,49 +293,54 @@ main(argc, argv)
 
 		(void)setpriority(PRIO_PROCESS, 0, -4);
 
-		p = NULL;
-		pwprompt = "Password:";
-		
 #ifdef SKEY
-		if (require_skey > 1)		/* -s -s */
-			p = skeypw;
-		else if (skey_haskey(username) == 0) {
-			if (require_skey > 0)	/* -s */
-				p = skeypw;
-			else {
-				static char skprompt[80];
-				char *skinfo = skey_keyinfo(username);
+		if (skey_haskey(username) == 0) {
+			static char skprompt[80];
+			char *skinfo = skey_keyinfo(username);
 				
-				(void)snprintf(skprompt, sizeof(skprompt)-1,
-				    "Password [%s]:", skinfo);
-				pwprompt = skprompt;
-			}
+			(void)snprintf(skprompt, sizeof(skprompt)-1,
+			    "Password [%s]:",
+			    skinfo ? skinfo : "error getting challenge");
+			pwprompt = skprompt;
+		} else
+#endif
+			pwprompt = "Password:";
+
+		p = getpass(pwprompt);
+
+		if (pwd == NULL) {
+			rval = 1;
+			goto skip;
+		}
+#ifdef KERBEROS
+		if (klogin(pwd, instance, localhost, p) == 0) {
+			rval = 0;
+			goto skip;
 		}
 #endif
-
-		if (p == NULL)
-			p = getpass(pwprompt);
-
-		if (pwd) {
-#if defined(KERBEROS) || defined(KERBEROS5)
-			rval = klogin(pwd, instance, localhost, p);
-			if (rval != 0 && rootlogin && pwd->pw_uid != 0)
-				rootlogin = 0;
-			if (rval == 0)
-				authok = 1;
-			else if (rval == 1) {
-				if (pwd->pw_uid != 0)
-					rootlogin = 0;
-				rval = pwcheck(username, p, salt, pwd->pw_passwd);
-			}
-#else
-			rval = pwcheck(username, p, salt, pwd->pw_passwd);
-#endif
+#ifdef KERBEROS5
+		if (klogin(pwd, instance, localhost, p) == 0) {
+			rval = 0;
+			goto skip;
 		}
+#endif
 #ifdef SKEY
-		if (used_skey == 0 && p != skeypw)
+		if (skey_haskey(username) == 0 &&
+		    skey_passcheck(username, p) != -1) {
+			rval = 0;
+			goto skip;
+		}
 #endif
-			memset(p, 0, strlen(p));
+		if (!sflag && *pwd->pw_passwd != '\0' &&
+		    !strcmp(crypt(p, pwd->pw_passwd), pwd->pw_passwd)) {
+			rval = 0;
+			require_chpass = 1;
+			goto skip;
+		}
+		rval = 1;
+
+	skip:
+		memset(p, 0, strlen(p));
 
 		(void)setpriority(PRIO_PROCESS, 0, 0);
 
@@ -368,9 +349,6 @@ main(argc, argv)
 		 * If trying to log in as root without Kerberos,
 		 * but with insecure terminal, refuse the login attempt.
 		 */
-#if defined(KERBEROS) || defined(KERBEROS5)
-		if (authok == 0)
-#endif
 		if (pwd && !rval && rootlogin && !rootterm(tty)) {
 			(void)fprintf(stderr,
 			    "%s login refused on this terminal.\n",
@@ -461,7 +439,7 @@ main(argc, argv)
 #if defined(KERBEROS) || defined(KERBEROS5)
 	/* Fork so that we can call kdestroy */
 	if (krbtkfile_env)
-	    dofork();
+		dofork();
 #endif
 	(void)setgid(pwd->pw_gid);
 
@@ -539,50 +517,19 @@ main(argc, argv)
 
 	/* Wait to change password until we're unprivileged */
 	if (need_chpass) {
-#ifdef SKEY
-		/* If the user logged on using S/Key, don't force
-		 * a password change
-		 */
-		if (used_skey) {
+		if (!require_chpass)
 			(void)printf(
 "Warning: your password has expired. Please change it as soon as possible.\n");
-		} else
-#endif
-		(void)printf(
+		else {
+			(void)printf(
 		    "Your password has expired. Please choose a new one.\n");
-		if (system(_PATH_BINPASSWD) != 0)
-			sleepexit(1);
+			if (system(_PATH_BINPASSWD) != 0)
+				sleepexit(1);
+		}
 	}
 
 	execlp(pwd->pw_shell, tbuf, 0);
 	err(1, "%s", pwd->pw_shell);
-}
-
-int
-pwcheck(user, p, salt, passwd)
-	char *user, *p, *salt, *passwd;
-{
-	int sts = strcmp(crypt(p, salt), passwd);
-	
-#ifdef SKEY
-	if (sts) {				/* wasn't passwd */
-		if (skey_haskey(user)) {
-			if (strcasecmp(p, skeypw) == 0)
-				return 1;
-		} else {
-			if (strcasecmp(p, skeypw) == 0) {
-				sts = skey_authenticate(user);
-			} else {
-				if ((sts = skey_passcheck(user, p)) != -1) {
-					sts = 0; /* ok */
-				}
-			}
-		}
-		if (sts == 0)
-			used_skey = 1;
-	}
-#endif
-	return sts;
 }
 
 #if defined(KERBEROS) || defined(KERBEROS5)
