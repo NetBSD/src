@@ -1,4 +1,4 @@
-.\" $NetBSD: ukbd.4,v 1.9 2001/12/28 17:38:00 augustss Exp $
+.\" $NetBSD: ukbd.4,v 1.10 2001/12/29 15:12:32 augustss Exp $
 .\"
 .\" Copyright (c) 1999, 2001 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -41,13 +41,13 @@
 .Nm ukbd
 .Nd USB keyboard support
 .Sh SYNOPSIS
-.Cd "ukbd*     at uhidev? reportid ?"
-.Cd "wskbd*    at ukbd? console ?"
+.Cd "ukbd*  at uhidev? reportid ?"
+.Cd "wskbd* at ukbd? console ?"
 .Sh DESCRIPTION
 The
 .Nm
-driver provides support for USB keyboards that follow the boot
-protocol.
+driver provides support for USB keyboards (i.e., HID devices
+with reports in usage page 7).
 Access to the keyboard is through the
 .Xr wscons 4
 driver.
