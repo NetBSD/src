@@ -1,4 +1,4 @@
-/*	$NetBSD: darwin_iohidsystem.c,v 1.9 2003/07/01 19:15:49 manu Exp $ */
+/*	$NetBSD: darwin_iohidsystem.c,v 1.10 2003/09/11 23:16:19 manu Exp $ */
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -37,17 +37,28 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: darwin_iohidsystem.c,v 1.9 2003/07/01 19:15:49 manu Exp $");
+__KERNEL_RCSID(0, "$NetBSD: darwin_iohidsystem.c,v 1.10 2003/09/11 23:16:19 manu Exp $");
+
+#include "ioconf.h"
+#include "wsmux.h"
 
 #include <sys/types.h>
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/malloc.h>
+#include <sys/fcntl.h>
+#include <sys/uio.h>
+#include <sys/select.h>
 #include <sys/signal.h>
 #include <sys/mount.h>
 #include <sys/proc.h>
+#include <sys/conf.h>
 #include <sys/device.h>
 #include <sys/kthread.h>
+
+#include <dev/wscons/wsconsio.h>
+#include <dev/wscons/wseventvar.h>
+#include <dev/wscons/wsmuxvar.h>
 
 #include <uvm/uvm_extern.h>
 #include <uvm/uvm_map.h>
@@ -62,9 +73,21 @@ __KERNEL_RCSID(0, "$NetBSD: darwin_iohidsystem.c,v 1.9 2003/07/01 19:15:49 manu 
 #include <compat/darwin/darwin_iokit.h>
 #include <compat/darwin/darwin_iohidsystem.h>
 
+/* Redefined from sys/dev/wscons/wsmux.c */
+extern const struct cdevsw wsmux_cdevsw;
+
 static struct uvm_object *darwin_iohidsystem_shmem = NULL;
 static void darwin_iohidsystem_shmeminit(vaddr_t);
 static void darwin_iohidsystem_thread(void *);
+static int darwin_findwsmux(dev_t *, int);
+static void darwin_wscons_to_iohidsystem
+    (struct wscons_event *, darwin_iohidsystem_event *);
+static void mach_notify_iohidsystem(struct lwp *, struct mach_right *);
+
+struct darwin_iohidsystem_thread_args {
+	vaddr_t dita_shmem;
+	struct proc **dita_p;
+};
 
 #if 0
 static char darwin_iohidsystem_properties[] = "<dict ID=\"0\"><key>IOKit</key><string ID=\"1\">IOService</string><key>AccessMPC106PerformanceRegister</key><string ID=\"2\">AppleGracklePCI is not serializable</string><key>IONVRAM</key><reference IDREF=\"1\"/><key>IOiic0</key><string ID=\"3\">ApplePMU is not serializable</string><key>IORTC</key><reference IDREF=\"3\"/><key>IOBSD</key><reference IDREF=\"1\"/><key>setModemSound</key><string ID=\"4\">AppleScreamerAudio is not serializable</string><key>kdp</key><reference IDREF=\"1\"/></dict>";
@@ -82,6 +105,7 @@ struct mach_iokit_devclass darwin_iohidsystem_devclass = {
 	NULL,
 	darwin_iohidsystem_connect_map_memory,
 	"IOHIDSystem",
+	NULL,
 };
 
 int
@@ -117,6 +141,7 @@ darwin_iohidsystem_connect_method_scalari_scalaro(args)
 		int error;
 		size_t memsize;
 		vaddr_t kvaddr;
+		struct darwin_iohidsystem_thread_args *dita;
 
 		version = req->req_in[0]; /* 1 */
 #ifdef DEBUG_DARWIN
@@ -148,8 +173,12 @@ darwin_iohidsystem_connect_method_scalari_scalaro(args)
 
 			darwin_iohidsystem_shmeminit(kvaddr);
 
+			dita = malloc(sizeof(*dita), M_TEMP, M_WAITOK);
+			dita->dita_shmem = kvaddr;
+			dita->dita_p = &newpp;
+
 			kthread_create1(darwin_iohidsystem_thread, 
-			    (void *)kvaddr, &newpp, "iohidsystem");
+			    (void *)dita, &newpp, "iohidsystem");
 		}
 		rep->rep_outcount = 0;
 		break;
@@ -244,21 +273,87 @@ darwin_iohidsystem_connect_map_memory(args)
 }
 
 static void
-darwin_iohidsystem_thread(shmem)
-	void *shmem;
+darwin_iohidsystem_thread(args)
+	void *args;
 {
+	struct darwin_iohidsystem_thread_args *dita;
+	struct darwin_iohidsystem_shmem *shmem;
+	struct darwin_iohidsystem_evglobals *evg;
+	darwin_iohidsystem_event_item *diei;
+	darwin_iohidsystem_event *die;
+	dev_t dev;
+	struct uio auio;
+	struct iovec aiov;
+	struct wscons_event wsevt;
+	struct proc *p;
+	int error = 0;
+	struct mach_right *mr;
+	struct lwp *l;
+	
 #ifdef DEBUG_DARWIN
 	printf("darwin_iohidsystem_thread: start\n");
 #endif
-	/* 
-	 * This will receive wscons events and modify the IOHIDSystem
-	 * shared page. But for now it just sleep forever.
-	 */
-	(void)tsleep(shmem, PZERO | PCATCH, "iohidsystem", 0);
-#ifdef DEBUG_DARWIN
-	printf("darwin_iohidsystem_thread: exit\n");
-#endif
-	return;
+	dita = (struct darwin_iohidsystem_thread_args *)args;
+	shmem = (struct  darwin_iohidsystem_shmem *)dita->dita_shmem;
+	p = *dita->dita_p;
+	l = proc_representative_lwp(p);
+
+	evg = (struct darwin_iohidsystem_evglobals *)&shmem->dis_evglobals;
+
+	/* Use the first wsmux available */
+	if ((error = darwin_findwsmux(&dev, 0)) != 0)
+		goto exit;		
+
+	if ((error = (*wsmux_cdevsw.d_open)(dev, FREAD|FWRITE, 0, p)) != 0)
+		goto exit;
+	
+	while(1) {
+		auio.uio_iov = &aiov;
+		auio.uio_iovcnt = 1;
+		aiov.iov_base = &wsevt;
+		aiov.iov_len = sizeof(wsevt);
+		auio.uio_resid = sizeof(wsevt);
+		auio.uio_offset = 0;
+		auio.uio_segflg = UIO_SYSSPACE;
+		auio.uio_rw = UIO_READ;
+		auio.uio_procp = p;
+
+		if ((error = (*wsmux_cdevsw.d_read)(dev, &auio, 0)) != 0)
+			goto exit;
+
+		/* 
+		 * Send a, I/O notification 
+		 */
+		mr = darwin_iohidsystem_devclass.mid_notify;
+		if (mr != NULL)
+			mach_notify_iohidsystem(l, mr);
+
+		diei = &evg->evg_evqueue[evg->evg_event_last];
+		while (diei->diei_sem != 0)
+			tsleep((void *)&diei->diei_sem, PZERO, "iohid_lock", 1);
+
+		/* 
+		 * No need to take the lock since we will not
+		 * yield control to the user process.
+		 */
+
+		diei->diei_next = evg->evg_event_tail;
+
+		diei = &evg->evg_evqueue[evg->evg_event_tail];
+		die = (darwin_iohidsystem_event *)&diei->diei_event;
+
+		darwin_wscons_to_iohidsystem(&wsevt, die);
+
+		evg->evg_event_last = evg->evg_event_tail;
+		evg->evg_event_tail++;
+		if (evg->evg_event_tail == DARWIN_IOHIDSYSTEM_EVENTQUEUE_LEN)
+			evg->evg_event_tail = 0;
+	}
+
+exit:
+	free(dita, M_TEMP);	
+	kthread_exit(error);
+	/* NOTREACHED */
 };
 
 static void
@@ -267,6 +362,7 @@ darwin_iohidsystem_shmeminit(kvaddr)
 {
 	struct darwin_iohidsystem_shmem *shmem;
 	struct darwin_iohidsystem_evglobals *evglobals;
+	int i;
 
 	shmem = (struct darwin_iohidsystem_shmem *)kvaddr;
 	shmem->dis_global_offset = 
@@ -275,7 +371,128 @@ darwin_iohidsystem_shmeminit(kvaddr)
 	    shmem->dis_global_offset + sizeof(*evglobals);
 
 	evglobals = &shmem->dis_evglobals;
-	evglobals->die_struct_size = sizeof(*evglobals);
+	evglobals->evg_struct_size = sizeof(*evglobals);
 
+	for (i = 0; i < DARWIN_IOHIDSYSTEM_EVENTQUEUE_LEN; i++) 
+		evglobals->evg_evqueue[i].diei_next = i + 1;
+	evglobals->
+	    evg_evqueue[DARWIN_IOHIDSYSTEM_EVENTQUEUE_LEN - 1].diei_next = 0;
+
+	return;
+}
+
+static int
+darwin_findwsmux(dev, mux)
+	dev_t *dev;
+	int mux;
+{
+	struct wsmux_softc *wsm_sc;
+	int minor, major;
+
+	if ((wsm_sc = wsmux_getmux(mux)) == NULL)
+		return ENODEV;
+
+	major = cdevsw_lookup_major(&wsmux_cdevsw);
+	minor = wsm_sc->sc_base.me_dv.dv_unit;
+	*dev = makedev(major, minor);
+
+	return 0;
+}
+
+static void
+darwin_wscons_to_iohidsystem(wsevt, hidevt)
+	struct wscons_event *wsevt;
+	darwin_iohidsystem_event *hidevt;
+{
+	struct timeval tv;
+	static int px = 0; /* Previous mouse location */
+	static int py = 0;
+	static int pf = 0; /* previous kbd flags */
+
+	microtime(&tv);
+	(void)memset((void *)hidevt, 0, sizeof(*hidevt));
+	hidevt->die_time_hi = tv.tv_sec;
+	hidevt->die_time_lo = tv.tv_usec;
+	hidevt->die_location_x = px;
+	hidevt->die_location_y = py;
+	hidevt->die_flags = pf;
+
+	switch (wsevt->type) {
+	case WSCONS_EVENT_MOUSE_DELTA_X:
+		hidevt->die_type = DARWIN_NX_MOUSEMOVED;
+		px += wsevt->value;
+		hidevt->die_data.mouse_move.dx = wsevt->value;
+		hidevt->die_location_x = px;
+		break;
+
+	case WSCONS_EVENT_MOUSE_DELTA_Y:
+		hidevt->die_type = DARWIN_NX_MOUSEMOVED;
+		py += wsevt->value;
+		hidevt->die_data.mouse_move.dy = wsevt->value;
+		hidevt->die_location_y = py;
+		break;
+
+	case WSCONS_EVENT_MOUSE_ABSOLUTE_X:
+		hidevt->die_type = DARWIN_NX_MOUSEMOVED;
+		hidevt->die_location_x = wsevt->value;
+		px = wsevt->value;
+		break;
+
+	case WSCONS_EVENT_MOUSE_ABSOLUTE_Y:
+		hidevt->die_type = DARWIN_NX_MOUSEMOVED;
+		hidevt->die_location_y = wsevt->value;
+		py = wsevt->value;
+		break;
+
+	default:
+#ifdef DEBUG_DARWIN
+		printf("Untranslated wsevt->type = %d, wsevt->value = %d\n", 
+		    wsevt->type, wsevt->value);
+#endif
+		break;
+	}
+
+	return;
+}
+
+static void 
+mach_notify_iohidsystem(l, mr)
+	struct lwp *l;
+	struct mach_right *mr;
+{
+	struct mach_port *mp;
+	mach_notify_iohidsystem_request_t *req;
+
+	mp = mr->mr_port;
+
+#ifdef DEBUG_MACH
+	if (mp == NULL) {
+		printf("Warning: notification right without a port\n");
+		return;
+	}
+#endif
+
+	req = malloc(sizeof(*req), M_EMULDATA, M_WAITOK | M_ZERO);
+
+	req->req_msgh.msgh_bits =
+	    MACH_MSGH_REPLY_LOCAL_BITS(MACH_MSG_TYPE_MOVE_SEND_ONCE);
+	req->req_msgh.msgh_size = sizeof(*req) - sizeof(req->req_trailer);
+	req->req_msgh.msgh_local_port = mr->mr_name;
+	req->req_msgh.msgh_id = 0;
+	req->req_trailer.msgh_trailer_size = 8;
+
+#ifdef KTRACE
+	ktruser(l->l_proc, "notify_iohidsystem", NULL, 0, 0);
+#endif
+	
+	mr->mr_refcount++;
+	(void)mach_message_get((mach_msg_header_t *)req, sizeof(*req), mp, l);
+#ifdef DEBUG_MACH_MSG
+	printf("pid %d: message queued on port %p (%d) [%p]\n",
+	    l->l_proc->p_pid, mp, req->req_msgh.msgh_id,
+	    mp->mp_recv->mr_sethead);
+#endif
+	wakeup(mp->mp_recv->mr_sethead);
+	
 	return;
 }

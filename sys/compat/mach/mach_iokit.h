@@ -1,4 +1,4 @@
-/*	$NetBSD: mach_iokit.h,v 1.17 2003/06/03 06:48:47 manu Exp $ */
+/*	$NetBSD: mach_iokit.h,v 1.18 2003/09/11 23:16:18 manu Exp $ */
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -563,6 +563,9 @@ struct mach_iokit_devclass {
 	int (*mid_connect_method_scalari_structi)(struct mach_trap_args *);
 	int (*mid_connect_map_memory)(struct mach_trap_args *);
 	char *mid_name;
+	struct mach_right *mid_notify;
 };
+
+void mach_iokit_cleanup_notify(struct mach_right *);
 	
 #endif /* _MACH_IOKIT_H_ */
