@@ -1,4 +1,4 @@
-/*      $NetBSD: ata.c,v 1.2 1998/10/12 16:09:14 bouyer Exp $      */
+/*      $NetBSD: ata.c,v 1.3 1998/11/16 11:25:41 bouyer Exp $      */
 /*
  * Copyright (c) 1998 Manuel Bouyer.  All rights reserved.
  *
@@ -82,7 +82,7 @@ ata_get_params(drvp, flags, prms)
 	} else {
 		wdc_c.r_command = ATAPI_IDENTIFY_DEVICE;
 		wdc_c.r_st_bmask = 0;
-		wdc_c.r_st_pmask = WDCS_DRDY | WDCS_DRQ;
+		wdc_c.r_st_pmask = WDCS_DRQ;
 	}
 	wdc_c.flags = AT_READ | flags;
 	wdc_c.timeout = 1000; /* 1s */
