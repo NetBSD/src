@@ -1,4 +1,4 @@
-/* $NetBSD: gzio_compat.c,v 1.1 1999/10/26 03:42:58 itojun Exp $ */
+/* $NetBSD: gzio_compat.c,v 1.2 1999/10/26 22:16:48 itojun Exp $ */
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -45,11 +45,11 @@ long ZEXPORT gzseek (file, offset, whence)
     long offset;
     int whence;
 {
-    return (long)__gzseek15(file, (off_t)offset, whence);
+    return (long)__gzseek1(file, (off_t)offset, whence);
 }
 
 long ZEXPORT gztell (file)
     gzFile file;
 {
-    return (long)__gztell15(file);
+    return (long)__gztell1(file);
 }
