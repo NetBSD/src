@@ -1,4 +1,4 @@
-/*	$NetBSD: apm.c,v 1.4 1997/10/17 04:31:56 lukem Exp $ */
+/*	$NetBSD: apm.c,v 1.5 1998/03/31 02:36:13 mycroft Exp $ */
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -151,7 +151,7 @@ open_socket(const char *sockname)
     return sock;
 }
 
-void
+int
 main(int argc, char *argv[])
 {
     char *sockname = _PATH_APM_SOCKET;
