@@ -1,4 +1,4 @@
-/*	$NetBSD: start_dos.S,v 1.4 1999/01/22 22:43:45 thorpej Exp $	*/
+/*	$NetBSD: start_dos.S,v 1.5 1999/02/28 11:45:44 drochner Exp $	*/
 	
 /*
  * startup for DOS .COM programs
@@ -65,7 +65,8 @@ WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 #define	data32	.byte 0x66
 
 	.data
-ENTRY(ourseg)
+	.globl _C_LABEL(ourseg)
+_C_LABEL(ourseg):
 	.long	0
 
 /**************************************************************************
