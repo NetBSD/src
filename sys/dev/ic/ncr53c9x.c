@@ -1,4 +1,4 @@
-/*	$NetBSD: ncr53c9x.c,v 1.36.2.11 2001/01/05 17:35:44 bouyer Exp $	*/
+/*	$NetBSD: ncr53c9x.c,v 1.36.2.12 2001/01/15 09:25:36 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -1482,7 +1482,7 @@ gotit:
 				NCRCMD(sc, NCRCMD_FLUSH);
 				DELAY(1);
 				ti->flags |= T_TAGOFF;
-				lun = ecb->xs->sc_link->scsipi_scsi.lun;
+				lun = ecb->xs->xs_periph->periph_lun;
 				li = TINFO_LUN(ti, lun);
 				if (ecb->tag[0] &&
 				    li->queued[ecb->tag[1]] != NULL) {
