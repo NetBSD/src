@@ -1,4 +1,4 @@
-/*	$NetBSD: ts.c,v 1.9 1996/10/13 03:35:21 christos Exp $ */
+/*	$NetBSD: ts.c,v 1.10 1996/11/15 03:32:46 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1991 The Regents of the University of California.
@@ -819,7 +819,11 @@ tsintr(ctlr)
 	short cmask = tscmdp->cmdr & TS_CF_CMASK;
 
 #ifdef DEBUG
-	printf ("TSSR: %b, MSG: %x ", sr, TS_TSSR_BITS, mh);
+	{
+		char bits[64];
+		printf ("TSSR: %s, MSG: %x ", bitmask_snprintf(sr,
+		    TS_TSSR_BITS, bits, sizeof(bits)), mh);
+	}
 	switch (tsmsgp->hdr & 0x001F) {
 	case 16:	printf ("(End)");	break;
 	case 17:	printf ("(Fail)");	break;
@@ -1352,7 +1356,10 @@ tsstatus (sr)
 	int sr;
 {
 #ifdef DEBUG
-	debug (("status: TSSR=%b\n", sr, TS_TSSR_BITS));
+	char bits[64];
+
+	debug (("status: TSSR=%s\n", bitmask_snprintf(sr, TS_TSSR_BITS,
+	    bits, sizeof(bits))));
 
 	if (tsdebug < 5)
 		return (0);
@@ -1386,10 +1393,18 @@ tsxstatus (mp)
 	struct tsmsg *mp;
 {
 #ifdef DEBUG
-	debug (("tsxstatus: xst0=%b, xst1=%b, xst2=%b, xst3=%b, xst4=%b\n",
-		mp->xst0, TS_XST0_BITS, mp->xst1, TS_XST1_BITS,
-		mp->xst2, TS_XST2_BITS, mp->xst3, TS_XST3_BITS,
-		mp->xst4, "\20"));
+	char bits[64];
+
+	debug (("tsxstatus: xst0=%s, ", bitmask_snprintf(mp->xst0,
+	    TS_XST0_BITS, bits, sizeof(bits))));
+	debug (("xst1=%s, ", bitmask_snprintf(mp->xst1, TS_XST1_BITS,
+	    bits, sizeof(bits))));
+	debug (("xst2=%s, ", bitmask_snprintf(mp->xst2, TS_XST2_BITS, 
+	    bits, sizeof(bits))));
+	debug (("xst3=%s, ", bitmask_snprintf(mp->xst3, TS_XST3_BITS,
+	    bits, sizeof(bits))));
+	debug (("xst4=%s\n", bitmask_snprintf(mp->xst4, "\20",
+	    bits, sizeof(bits))));
 
 	if (tsdebug < 10)
 		return (0);
