@@ -1,4 +1,4 @@
-/*	$NetBSD: xform_esp.c,v 1.4 2003/10/06 22:05:15 tls Exp $	*/
+/*	$NetBSD: xform_esp.c,v 1.5 2004/03/17 00:21:43 jonathan Exp $	*/
 /*	$FreeBSD: src/sys/netipsec/xform_esp.c,v 1.2.2.1 2003/01/24 05:11:36 sam Exp $	*/
 /*	$OpenBSD: ip_esp.c,v 1.69 2001/06/26 06:18:59 angelos Exp $ */
 
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xform_esp.c,v 1.4 2003/10/06 22:05:15 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xform_esp.c,v 1.5 2004/03/17 00:21:43 jonathan Exp $");
 
 #include "opt_inet.h"
 #ifdef __FreeBSD__
@@ -74,7 +74,9 @@ __KERNEL_RCSID(0, "$NetBSD: xform_esp.c,v 1.4 2003/10/06 22:05:15 tls Exp $");
 #ifdef INET6
 #include <netinet6/ip6_var.h>
 #include <netipsec/ipsec6.h>
-#include <netinet6/ip6_ecn.h>
+#  ifdef __FreeBSD__
+#  include <netinet6/ip6_ecn.h>
+#  endif
 #endif
 
 #include <netipsec/key.h>
