@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-1.6.2,v 1.1.2.160 2003/09/24 11:05:21 tron Exp $
+#	$NetBSD: CHANGES-1.6.2,v 1.1.2.161 2003/09/24 11:17:52 tron Exp $
 
 A complete list of changes from NetBSD 1.6.1 to NetBSD 1.6.2:
 
@@ -1835,4 +1835,19 @@ sys/ufs/ffs/ffs_vfsops.c			1.121 (via patch)
 	on-disk superblock.
 	Proposed in http://mail-index.netbsd.org/tech-kern/2003/09/06/0005.html
 	[bouyer, ticket #1464]
+
+bin/cat/cat.1					1.30
+
+	Add missing "."
+	[junyoung, ticket #1469]
+
+lib/libc/string/strcasecmp.c			1.15
+
+	Use unsigned char rather than u_char.
+	[junyoung, ticket #1470]
+
+sys/dev/ic/wdc.c				1.132
+
+	Fix a typo that prevented pre-ata drives from working since 1999.
+	[bouyer, ticket #1481]
 
