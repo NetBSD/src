@@ -1,4 +1,4 @@
-/* $NetBSD: trap.c,v 1.48 1999/05/09 19:43:58 cgd Exp $ */
+/* $NetBSD: trap.c,v 1.49 1999/05/10 01:27:28 cgd Exp $ */
 
 /*
  * Copyright (c) 1999 Christopher G. Demetriou.  All rights reserved.
@@ -64,7 +64,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.48 1999/05/09 19:43:58 cgd Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.49 1999/05/10 01:27:28 cgd Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -968,6 +968,13 @@ unaligned_fixup(va, opcode, reg, p)
 	u_int16_t worddata;	/* unsigned to _avoid_ extension */
 
 	/*
+	 * Read USP into frame in case it's the register to be modified.
+	 * This keeps us from having to check for it in lots of places
+	 * later.
+	 */
+	p->p_md.md_tf->tf_regs[FRAME_SP] = alpha_pal_rdusp();
+
+	/*
 	 * Figure out what actions to take.
 	 *
 	 * XXX In the future, this should have a per-process component
@@ -1107,6 +1114,11 @@ unaligned_fixup(va, opcode, reg, p)
 		signal = SIGBUS;
 
 out:
+	/*
+	 * Write back USP.
+	 */
+	alpha_pal_wrusp(p->p_md.md_tf->tf_regs[FRAME_SP]);
+
 	return (signal);
 }
 
@@ -1131,6 +1143,13 @@ handle_opdec(p, ucodep)
 	register_t *regptr, memaddr;
 	u_int64_t inst_pc;
 	int sig;
+
+	/*
+	 * Read USP into frame in case it's going to be used or modified.
+	 * This keeps us from having to check for it in lots of places
+	 * later.
+	 */
+	p->p_md.md_tf->tf_regs[FRAME_SP] = alpha_pal_rdusp();
 
 	inst_pc = memaddr = p->p_md.md_tf->tf_regs[FRAME_PC] - 4;
 	if (copyin((caddr_t)inst_pc, &inst, sizeof (inst)) != 0) {
@@ -1243,6 +1262,13 @@ handle_opdec(p, ucodep)
 	default:
 		goto sigill;
 	}
+
+	/*
+	 * Write back USP.  Note that in the error cases below,
+	 * nothing will have been successfully modified so we don't
+	 * have to write it out.
+	 */
+	alpha_pal_wrusp(p->p_md.md_tf->tf_regs[FRAME_SP]);
 
 	return (0);
 
