@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.222 2000/04/15 22:02:15 tsarna Exp $
+# $NetBSD: mi,v 1.223 2000/04/16 23:39:58 perry Exp $
 ./usr/share/info/am-utils.info
 ./usr/share/info/awk.info
 ./usr/share/info/bfd.info
@@ -355,12 +355,15 @@
 ./usr/share/man/cat4/ate.0
 ./usr/share/man/cat4/audio.0
 ./usr/share/man/cat4/aue.0
+./usr/share/man/cat4/auvia.0
 ./usr/share/man/cat4/awi.0
 ./usr/share/man/cat4/bha.0
 ./usr/share/man/cat4/bicc.0
 ./usr/share/man/cat4/boca.0
 ./usr/share/man/cat4/bpf.0
 ./usr/share/man/cat4/bt.0
+./usr/share/man/cat4/ca.0
+./usr/share/man/cat4/cac.0
 ./usr/share/man/cat4/cardbus.0
 ./usr/share/man/cat4/cbb.0
 ./usr/share/man/cat4/ccd.0
@@ -421,6 +424,7 @@
 ./usr/share/man/cat4/ipf.0
 ./usr/share/man/cat4/ipfilter.0
 ./usr/share/man/cat4/ipip.0
+./usr/share/man/cat4/ipkdb.0
 ./usr/share/man/cat4/ipl.0
 ./usr/share/man/cat4/ipnat.0
 ./usr/share/man/cat4/ipsec.0
@@ -1383,6 +1387,7 @@
 ./usr/share/man/man4/ipf.4
 ./usr/share/man/man4/ipfilter.4
 ./usr/share/man/man4/ipip.4
+./usr/share/man/man4/ipkdb.4
 ./usr/share/man/man4/ipl.4
 ./usr/share/man/man4/ipnat.4
 ./usr/share/man/man4/ipsec.4
