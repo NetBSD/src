@@ -1,4 +1,4 @@
-/*	$NetBSD: uhci.c,v 1.170 2003/02/19 01:35:04 augustss Exp $	*/
+/*	$NetBSD: uhci.c,v 1.171 2003/02/22 05:24:17 tsutsui Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/uhci.c,v 1.33 1999/11/17 22:33:41 n_hibma Exp $	*/
 
 /*
@@ -49,7 +49,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uhci.c,v 1.170 2003/02/19 01:35:04 augustss Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uhci.c,v 1.171 2003/02/22 05:24:17 tsutsui Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -89,8 +89,6 @@ __KERNEL_RCSID(0, "$NetBSD: uhci.c,v 1.170 2003/02/19 01:35:04 augustss Exp $");
 
 #define delay(d)		DELAY(d)
 #endif
-
-#define MS_TO_TICKS(ms) ((ms) * hz / 1000)
 
 #if defined(__OpenBSD__)
 struct cfdriver uhci_cd = {
@@ -1864,7 +1862,7 @@ uhci_device_bulk_start(usbd_xfer_handle xfer)
 	uhci_add_intr_info(sc, ii);
 
 	if (xfer->timeout && !sc->sc_bus.use_polling) {
-		usb_callout(xfer->timeout_handle, MS_TO_TICKS(xfer->timeout),
+		usb_callout(xfer->timeout_handle, mstohz(xfer->timeout),
 			    uhci_timeout, ii);
 	}
 	xfer->status = USBD_IN_PROGRESS;
@@ -2280,7 +2278,7 @@ uhci_device_request(usbd_xfer_handle xfer)
 	}
 #endif
 	if (xfer->timeout && !sc->sc_bus.use_polling) {
-		usb_callout(xfer->timeout_handle, MS_TO_TICKS(xfer->timeout),
+		usb_callout(xfer->timeout_handle, mstohz(xfer->timeout),
 			    uhci_timeout, ii);
 	}
 	xfer->status = USBD_IN_PROGRESS;
@@ -3482,7 +3480,7 @@ uhci_root_intr_start(usbd_xfer_handle xfer)
 	if (sc->sc_dying)
 		return (USBD_IOERROR);
 
-	sc->sc_ival = MS_TO_TICKS(xfer->pipe->endpoint->edesc->bInterval);
+	sc->sc_ival = mstohz(xfer->pipe->endpoint->edesc->bInterval);
 	usb_callout(sc->sc_poll_handle, sc->sc_ival, uhci_poll_hub, xfer);
 	sc->sc_intr_xfer = xfer;
 	return (USBD_IN_PROGRESS);
