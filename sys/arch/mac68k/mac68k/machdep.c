@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.106 1996/06/04 03:04:49 briggs Exp $	*/
+/*	$NetBSD: machdep.c,v 1.107 1996/06/07 00:15:24 briggs Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -2087,6 +2087,13 @@ getenvvars()
 	mac68k_machine.do_graybars = getenv("GRAYBARS");
 	mac68k_machine.serial_boot_echo = getenv("SERIALECHO");
 	mac68k_machine.serial_console = getenv("SERIALCONSOLE");
+
+	mac68k_machine.modem_flags = getenv("SERIAL_MODEM_FLAGS");
+	mac68k_machine.modem_cts_clk = getenv("SERIAL_MODEM_HSKICLK");
+	mac68k_machine.modem_dcd_clk = getenv("SERIAL_MODEM_GPICLK");
+	mac68k_machine.print_flags = getenv("SERIAL_PRINT_FLAGS");
+	mac68k_machine.print_cts_clk = getenv("SERIAL_PRINT_HSKICLK");
+	mac68k_machine.print_dcd_clk = getenv("SERIAL_PRINT_GPICLK");
 	/* Should probably check this and fail if old */
 	mac68k_machine.booter_version = getenv("BOOTERVER");
 
