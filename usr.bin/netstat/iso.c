@@ -1,4 +1,4 @@
-/*	$NetBSD: iso.c,v 1.20 2000/10/11 14:46:14 is Exp $	*/
+/*	$NetBSD: iso.c,v 1.21 2001/03/31 20:11:18 christos Exp $	*/
 
 /*
  * Copyright (c) 1983, 1988, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "from: @(#)iso.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: iso.c,v 1.20 2000/10/11 14:46:14 is Exp $");
+__RCSID("$NetBSD: iso.c,v 1.21 2001/03/31 20:11:18 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -669,7 +669,7 @@ tprintstat(s, indent)
 	 */
 #define pgroup(group, header) \
 for (j = 0, tpfirst=1; group[j].text; j++) \
-	if (*(u_long*)((paddr_t)s + group[j].off) || \
+	if (*(u_long*)((u_long)s + group[j].off) || \
 	    sflag <=1) { \
 		if (tpfirst) { \
 			fprintf(stdout, \
@@ -677,8 +677,8 @@ for (j = 0, tpfirst=1; group[j].text; j++) \
 			tpfirst=0; \
 		} \
 		fprintf(stdout, group[j].text, indent, " ", \
-		    *(u_long*)((paddr_t)s + group[j].off), \
-		    plural(*(u_long*)((paddr_t)s + group[j].off))); \
+		    *(u_long*)((u_long)s + group[j].off), \
+		    plural(*(u_long*)((u_long)s + group[j].off))); \
 	}
 
 
