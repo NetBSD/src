@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.44 1998/05/27 03:58:16 scottr Exp $	*/
+/*	$NetBSD: pmap.c,v 1.45 1998/05/27 05:47:22 scottr Exp $	*/
 
 /* 
  * Copyright (c) 1991, 1993
@@ -2578,10 +2578,17 @@ pmap_check_wiring(str, va)
 	    !pmap_pte_v(pmap_pte(pmap_kernel(), va)))
 		return;
 
+#if defined(UVM)
+	if (!uvm_map_lookup_entry(pt_map, va, &entry)) {
+		printf("wired_check: entry for %lx not found\n", va);
+		return;
+	}
+#else
 	if (!vm_map_lookup_entry(pt_map, va, &entry)) {
 		printf("wired_check: entry for %lx not found\n", va);
 		return;
 	}
+#endif
 	count = 0;
 	for (pte = (pt_entry_t *)va; pte < (pt_entry_t *)(va + NBPG); pte++)
 		if (*pte)
