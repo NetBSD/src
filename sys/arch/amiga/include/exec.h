@@ -24,7 +24,7 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
- *	$Id: exec.h,v 1.3 1993/10/30 23:41:52 mw Exp $
+ *	$Id: exec.h,v 1.4 1994/01/26 21:12:16 mw Exp $
  */
 
 #ifndef _AMIGA_EXEC_H_
@@ -33,7 +33,7 @@
 #define __LDPGSZ	8192
 
 /* Relocation format. */
-struct relocation_info_amiga {
+struct relocation_info_m68k {
 	int r_address;			/* offset in text or data segment */
 	unsigned int r_symbolnum : 24,	/* ordinal number of add symbol */
 			 r_pcrel :  1,	/* 1 if value should be pc-relative */
@@ -44,7 +44,7 @@ struct relocation_info_amiga {
 		      r_relative :  1,	/* load address relative */
 			  r_copy :  1;	/* run time copy */
 };
-#define relocation_info	relocation_info_hp300
+#define relocation_info	relocation_info_m68k
 
 
 #endif  /* _AMIGA_EXEC_H_ */

@@ -123,7 +123,7 @@ extern unsigned char ssir;
  */
 
 /* values for machineid (happen to be AFF_* settings of AttnFlags)
- * NOTE: '40 support does NOT YET exist! */
+ * NOTE: '40 support does exist! */
 #define AMIGA_68020	(1L<<1)
 #define AMIGA_68030	(1L<<2)
 #define AMIGA_68040	(1L<<3)
@@ -135,6 +135,7 @@ extern unsigned char ssir;
 /* values for mmutype (assigned for quick testing) */
 #define	MMU_68030	-1	/* 68030 on-chip subset of 68851 */
 #define	MMU_68851	1	/* Motorola 68851 */
+#define MMU_68040	0	/* 68040 on-chip subsubset */
 
 /* values for cpuspeed (not really related to clock speed due to caches) */
 #define	MHZ_8		1
@@ -144,7 +145,7 @@ extern unsigned char ssir;
 #define	MHZ_50		6
 
 #ifdef KERNEL
-extern	int machineid, mmutype;
+extern	int machineid, mmutype, cpu040;
 
 /* what is this supposed to do? i.e. how is it different than startrtclock? 
    #define	enablertclock()
@@ -259,8 +260,16 @@ extern	int machineid, mmutype;
 #define	DC_BE		0x1000	/* data burst enable */
 #define	DC_WA		0x2000	/* write allocate */
 
+/* fields in the 68040 cache control register */
+#define	IC40_ENABLE	0x00008000	/* enable instruction cache */
+#define DC40_ENABLE	0x80000000	/* enable data cache */
+
 #define	CACHE_ON	(DC_WA|DC_BE|DC_CLR|DC_ENABLE|IC_BE|IC_CLR|IC_ENABLE)
 #define	CACHE_OFF	(DC_CLR|IC_CLR)
 #define	CACHE_CLR	(CACHE_ON)
 #define	IC_CLEAR	(DC_WA|DC_BE|DC_ENABLE|IC_BE|IC_CLR|IC_ENABLE)
 #define	DC_CLEAR	(DC_WA|DC_BE|DC_CLR|DC_ENABLE|IC_BE|IC_ENABLE)
+
+/* 68040 cache control */
+#define	CACHE40_ON	(IC40_ENABLE|DC40_ENABLE)
+#define	CACHE40_OFF	0x00000000
