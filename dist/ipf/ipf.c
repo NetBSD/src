@@ -1,4 +1,4 @@
-/*	$NetBSD: ipf.c,v 1.2 1999/12/11 23:33:07 veego Exp $	*/
+/*	$NetBSD: ipf.c,v 1.3 1999/12/12 12:35:32 veego Exp $	*/
 
 /*
  * Copyright (C) 1993-1998 by Darren Reed.
@@ -533,7 +533,7 @@ static void showversion()
 	u_32_t flags;
 	char *s;
 
-	printf("ipf: %s (%d)\n", IPL_VERSION, sizeof(frentry_t));
+	printf("ipf: %s (%d)\n", IPL_VERSION, (int)sizeof(frentry_t));
 
 	if (opendevice(ipfname) != -2 && ioctl(fd, SIOCGETFS, &fio)) {
 		perror("ioctl(SIOCGETFS");
