@@ -1,4 +1,4 @@
-/*	$NetBSD: fetch.c,v 1.117 2000/07/07 15:13:23 itojun Exp $	*/
+/*	$NetBSD: fetch.c,v 1.118 2000/07/18 06:49:21 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1997-2000 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: fetch.c,v 1.117 2000/07/07 15:13:23 itojun Exp $");
+__RCSID("$NetBSD: fetch.c,v 1.118 2000/07/18 06:49:21 lukem Exp $");
 #endif /* not lint */
 
 /*
@@ -185,7 +185,7 @@ auth_url(const char *challenge, char **response, const char *guser,
 	memset(clear, 0, clen);
 	rval = 0;
 
-cleanup_auth_url:
+ cleanup_auth_url:
 	FREEPTR(clear);
 	FREEPTR(line);
 	FREEPTR(realm);
@@ -310,7 +310,7 @@ parse_url(const char *url, const char *desc, url_t *type,
 		*type = FILE_URL_T;
 	} else {
 		warnx("Invalid %s `%s'", desc, url);
-cleanup_parse_url:
+ cleanup_parse_url:
 		FREEPTR(*user);
 		FREEPTR(*pass);
 		FREEPTR(*host);
@@ -1319,10 +1319,10 @@ fetch_url(const char *url, const char *proxyenv, char *proxyauth, char *wwwauth)
 	rval = 0;
 	goto cleanup_fetch_url;
 
-improper:
+ improper:
 	warnx("Improper response from `%s'", host);
 
-cleanup_fetch_url:
+ cleanup_fetch_url:
 	if (oldintr)
 		(void)xsignal(SIGINT, oldintr);
 	if (oldintp)
@@ -1520,10 +1520,10 @@ fetch_ftp(const char *url)
 
 	switch (type) {
 	case TYPE_A:
-		setascii(0, NULL);
+		setascii(1, xargv);
 		break;
 	case TYPE_I:
-		setbinary(0, NULL);
+		setbinary(1, xargv);
 		break;
 	default:
 		errx(1, "fetch_ftp: unknown transfer type %d", type);
@@ -1679,7 +1679,7 @@ fetch_ftp(const char *url)
 	if ((code / 100) == COMPLETE)
 		rval = 0;
 
-cleanup_fetch_ftp:
+ cleanup_fetch_ftp:
 	FREEPTR(host);
 	FREEPTR(path);
 	FREEPTR(user);
@@ -1879,7 +1879,7 @@ auto_put(int argc, char **argv, const char *uploadserver)
 	}
 	rval = 0;
 
-cleanup_auto_put:
+ cleanup_auto_put:
 	FREEPTR(uargv[2]);
 	return (rval);
 }
