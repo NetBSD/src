@@ -87,7 +87,7 @@
   ""
   "*
 {
-  if (!(/*TARGET_HALFPIC || */flag_pic) || GET_CODE (operands[1]) != SYMBOL_REF)
+  if (!(TARGET_HALFPIC || flag_pic) || GET_CODE (operands[1]) != SYMBOL_REF)
       return \"cmpl %0,%1\";
   return \"pushab %a1;cmpl %0,(sp)+\";
 }")
@@ -249,6 +249,7 @@
 
 ;;  Loads of constants between 64 and 128 used to be done with
 ;; "addl3 $63,#,dst" but this is slower than movzbl and takes as much space.
+
 (define_insn ""
   [(set (match_operand:SI 0 "vax_general_operand" "=g")
 	(match_operand:SI 1 "vax_general_operand" "g"))]
@@ -266,7 +267,9 @@
       /* Make sure the reg hasn't been clobbered.  */
       && ! reg_set_between_p (operands[0], XEXP (link, 0), insn))
     return \"incl %0\";
-  if (GET_CODE (operands[1]) == SYMBOL_REF || GET_CODE (operands[1]) == CONST)
+  if (GET_CODE (operands[1]) == SYMBOL_REF
+      || GET_CODE (operands[1]) == LABEL_REF
+      || GET_CODE (operands[1]) == CONST)
     {
       if (push_operand (operands[0], SImode))
 	return \"pushab %a1\";
