@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.36 1997/04/14 02:28:43 thorpej Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.37 1997/04/27 20:43:37 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1996 Jason R. Thorpe.  All rights reserved.
@@ -83,6 +83,7 @@
 #include <machine/autoconf.h>
 #include <machine/vmparam.h>
 #include <machine/cpu.h>
+#include <machine/hp300spu.h>
 #include <machine/intr.h>
 #include <machine/pte.h>
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: clock.c,v 1.19 1997/04/01 03:12:09 scottr Exp $	*/
+/*	$NetBSD: clock.c,v 1.20 1997/04/27 20:43:38 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -57,6 +57,7 @@
 
 #include <machine/psl.h>
 #include <machine/cpu.h>
+#include <machine/hp300spu.h>
 
 #include <hp300/dev/hilreg.h>
 #include <hp300/dev/hilioctl.h>
