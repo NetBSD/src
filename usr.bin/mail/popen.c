@@ -1,4 +1,4 @@
-/*	$NetBSD: popen.c,v 1.4 1996/06/08 19:48:35 christos Exp $	*/
+/*	$NetBSD: popen.c,v 1.5 1996/10/29 00:02:01 christos Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)popen.c	8.1 (Berkeley) 6/6/93";
 #else
-static char rcsid[] = "$NetBSD: popen.c,v 1.4 1996/06/08 19:48:35 christos Exp $";
+static char rcsid[] = "$NetBSD: popen.c,v 1.5 1996/10/29 00:02:01 christos Exp $";
 #endif
 #endif /* not lint */
 
@@ -282,10 +282,14 @@ prepare_child(nset, infd, outfd)
 		dup2(infd, 0);
 	if (outfd >= 0)
 		dup2(outfd, 1);
-	for (i = 1; i <= NSIG; i++)
-		if (sigismember(nset, i))
-			(void) signal(i, SIG_IGN);
-	if (!sigismember(nset, SIGINT))
+	if (nset == NULL)
+		return;
+	if (nset != NULL) {
+		for (i = 1; i <= NSIG; i++)
+			if (sigismember(nset, i))
+				(void) signal(i, SIG_IGN);
+	}
+	if (nset == NULL || !sigismember(nset, SIGINT))
 		(void) signal(SIGINT, SIG_DFL);
 	sigfillset(&fset);
 	(void) sigprocmask(SIG_UNBLOCK, &fset, NULL);
