@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_netbsdkintf.c,v 1.16.2.1 1999/04/07 16:37:50 oster Exp $	*/
+/*	$NetBSD: rf_netbsdkintf.c,v 1.16.2.2 1999/04/12 22:09:10 oster Exp $	*/
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -1863,14 +1863,14 @@ raidgetdisklabel(dev)
 		if (lp->d_secperunit != rs->sc_size)
 			printf("WARNING: %s: "
 			    "total sector size in disklabel (%d) != "
-			    "the size of raid (%d)\n", rs->sc_xname,
-			    lp->d_secperunit, rs->sc_size);
+			    "the size of raid (%ld)\n", rs->sc_xname,
+			    lp->d_secperunit, (long) rs->sc_size);
 		for (i = 0; i < lp->d_npartitions; i++) {
 			pp = &lp->d_partitions[i];
 			if (pp->p_offset + pp->p_size > rs->sc_size)
 				printf("WARNING: %s: end of partition `%c' "
-				    "exceeds the size of raid (%d)\n",
-				    rs->sc_xname, 'a' + i, rs->sc_size);
+				    "exceeds the size of raid (%ld)\n",
+				    rs->sc_xname, 'a' + i, (long) rs->sc_size);
 		}
 	}
 
