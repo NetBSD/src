@@ -31,7 +31,7 @@
 | SUCH DAMAGE.
 |
 |	from: @(#)vectors.s	8.2 (Berkeley) 1/21/94
-|	$Id: vectors.s,v 1.4 1994/07/03 11:40:38 mycroft Exp $
+|	$Id: vectors.s,v 1.5 1994/07/05 17:08:55 mycroft Exp $
 |
 
 	.text
@@ -94,15 +94,14 @@ Lvectab:
 	.long	_illinst	/* 46: TRAP instruction vector */
 	.long	_trap15		/* 47: TRAP instruction vector */
 #ifdef FPSP
-	.globl	fpsp_bsun, real_inex, real_dz, fpsp_unfl, fpsp_operr
-	.globl	fpsp_ovfl, fpsp_snan
- 	.long	fpsp_bsun	/* 48: FPCP branch/set on unordered cond */
- 	.long	real_inex	/* 49: FPCP inexact result */
- 	.long	real_dz		/* 50: FPCP divide by zero */
- 	.long	fpsp_unfl	/* 51: FPCP underflow */
- 	.long	fpsp_operr	/* 52: FPCP operand error */
- 	.long	fpsp_ovfl	/* 53: FPCP overflow */
- 	.long	fpsp_snan	/* 54: FPCP signalling NAN */
+	.globl	bsun, inex, dz, unfl, operr, ovfl, snan
+ 	.long	bsun		/* 48: FPCP branch/set on unordered cond */
+ 	.long	inex		/* 49: FPCP inexact result */
+ 	.long	dz		/* 50: FPCP divide by zero */
+ 	.long	unfl		/* 51: FPCP underflow */
+ 	.long	operr		/* 52: FPCP operand error */
+ 	.long	ovfl		/* 53: FPCP overflow */
+ 	.long	snan		/* 54: FPCP signalling NAN */
 #else
 	.globl	_fpfault
  	.long	_fpfault	/* 48: FPCP branch/set on unordered cond */
