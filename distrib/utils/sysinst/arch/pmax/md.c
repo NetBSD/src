@@ -1,4 +1,4 @@
-/*	$NetBSD: md.c,v 1.17 1998/02/20 01:53:59 jonathan Exp $	*/
+/*	$NetBSD: md.c,v 1.18 1998/02/20 02:33:52 jonathan Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -440,8 +440,8 @@ void	md_copy_filesystem (void)
 	/* Make sure target has a copy of install kernel. */
 	dup_file_into_target("/netbsd");
 
-	/* Copy next-stage profile into target /.profile. */
-	dup_file_into_target ("/tmp/.hdprofile" "/.profile");
+	/* Copy next-stage install profile into target /.profile. */
+	cp_to_target ("/tmp/.hdprofile", "/.profile");
 }
 
 
