@@ -38,7 +38,7 @@
 
 /* Note: This code heavily modified by tih@barsoom.nhh.no; use at own risk! */
 /* The following defines represent only a very small part of the mods, most */
-/* of them are not marked in any way.  -tih                                 */
+/* of them are not marked in any way.  -tih				 */
 
 #undef	WDOPENLOCK	/* Prevent reentrancy in wdopen() for testing */
 #define	TIHMODS		/* wdopen() workaround, some splx() calls */
@@ -230,9 +230,7 @@ int
 wdattach(struct isa_device *dvp)
 {
 	int unit, lunit;
-	struct isa_device *wdup;
 	struct disk *du;
-	int first = 0;
 
 	if (dvp->id_masunit == -1)
 		return(0);
@@ -263,8 +261,15 @@ wdattach(struct isa_device *dvp)
 	if(wdgetctlr(unit, du) == 0)  {
 		int i, blank;
 
-		printf("wd%d at wdc%d slave %d: <",
-			lunit, dvp->id_masunit, unit);
+		printf("wd%d at wdc%d targ %d: ",
+			dvp->id_unit, dvp->id_masunit, dvp->id_physid);
+		if(du->dk_params.wdp_heads==0)
+			printf("(unknown size) <");
+		else
+			printf("%dMB %d cyl, %d head, %d sec <",
+				du->dk_dd.d_ncylinders * du->dk_dd.d_secpercyl / 2048,
+				du->dk_dd.d_ncylinders, du->dk_dd.d_ntracks,
+				du->dk_dd.d_nsectors);
 		for (i=blank=0; i<sizeof(du->dk_params.wdp_model); i++) {
 			char c = du->dk_params.wdp_model[i];
 			if (blank && c == ' ')
@@ -282,7 +287,7 @@ wdattach(struct isa_device *dvp)
 		printf(">\n");
 	} else {
 		/*printf("wd%d at wdc%d slave %d -- error\n",
-			lunit, dvp->id_masunit, unit); */
+			lunit, dvp->id_masunit, unit);*/
 		wddrives[lunit] = 0;
 		free(du, M_TEMP);
 		return 0;
@@ -627,7 +632,7 @@ wdintr(struct intrframe wdif)
 #ifdef	WDDEBUG
 	printf("I%d ", ctrlr);
 #endif
-    
+
 	while ((status = inb(wdc+wd_status)) & WDCS_BUSY)
 		;
     
@@ -1135,59 +1140,66 @@ wdgetctlr(int u, struct disk *du)
 	}
 #endif
 
-	/*
-	 * If WDCC_READP fails then we might have an old drive so we try
-	 * a seek to 0; if that passes then the drive is there but it's
-	 * OLD AND KRUSTY.
-	 */
-	if (stat & WDCS_ERR) {
-		stat = wdcommand(du, WDCC_RESTORE | WD_STEP);
-	        if(stat & WDCS_ERR) {
-	                splx(x);
-	                return(inb(wdc+wd_error));
+	if( (stat & WDCS_ERR) == 0) {
+		/* obtain parameters */
+		wp = &du->dk_params;
+		insw(wdc+wd_data, tb, sizeof(tb)/sizeof(short));
+		bcopy(tb, wp, sizeof(struct wdparams));
+
+		/* shuffle string byte order */
+		for (i=0; i < sizeof(wp->wdp_model); i+=2) {
+			u_short *p;
+			p = (u_short *) (wp->wdp_model + i);
+			*p = ntohs(*p);
 		}
-		stat = 0x7f; /* MFM/RLL marker for later. */
-	}
-    
-	/* obtain parameters */
-	wp = &du->dk_params;
-	insw(wdc+wd_data, tb, sizeof(tb)/sizeof(short));
-	bcopy(tb, wp, sizeof(struct wdparams));
-    
-	/* shuffle string byte order */
-	for (i=0; i < sizeof(wp->wdp_model); i+=2) {
-		u_short *p;
-		p = (u_short *) (wp->wdp_model + i);
-		*p = ntohs(*p);
-	}
 
-/*
-	printf("gc %x cyl %d trk %d sec %d type %d sz %d model %s\n", wp->wdp_config,
-		wp->wdp_fixedcyl+wp->wdp_removcyl, wp->wdp_heads, wp->wdp_sectors,
-		wp->wdp_cntype, wp->wdp_cnsbsz, wp->wdp_model);
-*/
-    
-	/* update disklabel given drive information */
-	du->dk_dd.d_ncylinders = wp->wdp_fixedcyl + wp->wdp_removcyl /*+- 1*/;
-	du->dk_dd.d_ntracks = wp->wdp_heads;
-	du->dk_dd.d_nsectors = wp->wdp_sectors;
-	du->dk_dd.d_secpercyl = du->dk_dd.d_ntracks * du->dk_dd.d_nsectors;
-	du->dk_dd.d_partitions[1].p_size = du->dk_dd.d_secpercyl * wp->wdp_sectors;
-	du->dk_dd.d_partitions[1].p_offset = 0;
+		strncpy(du->dk_dd.d_typename, "ESDI/IDE", sizeof du->dk_dd.d_typename);
+		du->dk_dd.d_type = DTYPE_ESDI;
+		bcopy(wp->wdp_model+20, du->dk_dd.d_packname, 14-1);
 
-	/* dubious ... */
-	if(stat == 0x7f) {
+		/* update disklabel given drive information */
+		du->dk_dd.d_ncylinders = wp->wdp_fixedcyl + wp->wdp_removcyl /*+- 1*/;
+		du->dk_dd.d_ntracks = wp->wdp_heads;
+		du->dk_dd.d_nsectors = wp->wdp_sectors;
+		du->dk_dd.d_secpercyl = du->dk_dd.d_ntracks * du->dk_dd.d_nsectors;
+		du->dk_dd.d_partitions[1].p_size = du->dk_dd.d_secpercyl *
+			wp->wdp_sectors;
+		du->dk_dd.d_partitions[1].p_offset = 0;
+	} else {
+		/*
+		 * If WDCC_READP fails then we might have an old drive
+		 * so we try a seek to 0; if that passes then the
+		 * drive is there but it's OLD AND KRUSTY.
+		 */
+		stat = wdcommand(du, WDCC_RESTORE | WD_STEP);
+		if(stat & WDCS_ERR) {
+			splx(x);
+			return(inb(wdc+wd_error));
+		}
+
 		strncpy(du->dk_dd.d_typename, "ST506", sizeof du->dk_dd.d_typename);
 		for(i=0; i<sizeof(wp->wdp_model); i++)
 			wp->wdp_model[i] = ' ';
 		strncpy(du->dk_params.wdp_model, "Unknown Type",
 			sizeof du->dk_params.wdp_model);
 		du->dk_dd.d_type = DTYPE_ST506;
-	} else {
-		strncpy(du->dk_dd.d_typename, "ESDI/IDE", sizeof du->dk_dd.d_typename);
-		du->dk_dd.d_type = DTYPE_ESDI;
-		bcopy(wp->wdp_model+20, du->dk_dd.d_packname, 14-1);
+	
+		/* XXX -- HOW DO WE FAKE THIS?? */
+		du->dk_dd.d_ncylinders = wp->wdp_fixedcyl + wp->wdp_removcyl /*+- 1*/;
+		du->dk_dd.d_ntracks = wp->wdp_heads;
+		du->dk_dd.d_nsectors = wp->wdp_sectors;
+		du->dk_dd.d_secpercyl = du->dk_dd.d_ntracks * du->dk_dd.d_nsectors;
+		du->dk_dd.d_partitions[1].p_size = du->dk_dd.d_secpercyl *
+			wp->wdp_sectors;
+		du->dk_dd.d_partitions[1].p_offset = 0;
 	}
+
+#if 0
+	printf("gc %x cyl %d trk %d sec %d type %d sz %d model %s\n", wp->wdp_config,
+		wp->wdp_fixedcyl+wp->wdp_removcyl, wp->wdp_heads, wp->wdp_sectors,
+		wp->wdp_cntype, wp->wdp_cnsbsz, wp->wdp_model);
+#endif
+    
 	/* better ... */
 	du->dk_dd.d_subtype |= DSTYPE_GEOMETRY;
     
@@ -1289,7 +1301,7 @@ wdioctl(dev_t dev, int cmd, caddr_t addr, int flag)
 			wdsetctlr(dev, du);
 	    
 			/* simulate opening partition 0 so write succeeds */
-			du->dk_openpart |= (1 << 0);            /* XXX */
+			du->dk_openpart |= (1 << 0);	    /* XXX */
 			wlab = du->dk_wlabel;
 			du->dk_wlabel = 1;
 			error = writedisklabel(dev, wdstrategy,
@@ -1368,7 +1380,7 @@ wdsize(dev_t dev)
 		return((int)du->dk_dd.d_partitions[part].p_size);
 }
 
-extern        char *vmmap;            /* poor name! */
+extern	char *vmmap;	    /* poor name! */
 
 /* dump core after a system crash */
 int
@@ -1502,7 +1514,7 @@ wddump(dev_t dev)
 	
 		if (inb(wdc+wd_status) & WDCS_ERR)
 			return(EIO);
-		/* Check data request (should be done).         */
+		/* Check data request (should be done). */
 		if (inb(wdc+wd_status) & WDCS_DRQ)
 			return(EIO);
 	
