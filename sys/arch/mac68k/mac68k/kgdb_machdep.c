@@ -1,4 +1,4 @@
-/*	$NetBSD: kgdb_machdep.c,v 1.2 1998/12/22 08:47:06 scottr Exp $	*/
+/*	$NetBSD: kgdb_machdep.c,v 1.3 1999/12/12 08:18:49 scottr Exp $	*/
 
 /*
  * Copyright (c) 1990, 1993
@@ -72,7 +72,7 @@ kgdb_acc(va, ulen)
 	pt_entry_t *pte;
 
 	len = (int)ulen;
-	pgoff = va & PGOFSET;
+	pgoff = m68k_page_offset(va);
 	va  -= pgoff;
 	len += pgoff;
 
