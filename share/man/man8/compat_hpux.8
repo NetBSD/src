@@ -1,4 +1,4 @@
-.\"	$NetBSD: compat_hpux.8,v 1.1 2001/12/16 19:40:50 mbw Exp $
+.\"	$NetBSD: compat_hpux.8,v 1.2 2001/12/16 23:47:19 wiz Exp $
 .\"     from: compat_linux.8,v 1.23 2001/10/07 10:12:05 mbw Exp
 .\"
 .\" Copyright (c) 1995 Frank van der Linden
@@ -41,19 +41,19 @@
 supports running HP-UX binaries.  This applies only to m68k systems (such
 as hp300 systems). Most programs should work, such as Matlab 4.2c and the
 HP-UX X11R5 server. Programs that will not work are fairly uncommon, and
-often involve very low level hardware access. 
+often involve very low level hardware access.
 .Pp
 The HP-UX compatibility feature is active
 for kernels compiled with the
 .Dv COMPAT_HPUX
 and
 .Dv COMPAT_M68K4K
-options enabled.  HP-UX for m68k uses 4 KB page sizes, and 
+options enabled.  HP-UX for m68k uses 4 KB page sizes, and
 .Nx
 for all m68k platforms now use 8 KB page sizes.
 .Pp
 A lot of programs are dynamically linked. This means that you will
-need the HP-UX shared libraries that the program depends on
+need the HP-UX shared libraries that the program depends on.
 Also, you will need to create a
 .Dq shadow root
 directory for HP-UX binaries on your
@@ -74,7 +74,7 @@ and if that does not exist open the
 .Sq real
 .Pa /etc/passwd
 file. It is recommended that you install
-hpux packages that include configuration files, etc under
+hpux packages that include configuration files etc. under
 .Pa /emul/hpux ,
 to avoid naming conflicts with possible
 .Nx
@@ -108,18 +108,18 @@ Use tar, or a similar utility to collect the following files:
 .It
 All files in the
 .Pa /usr/lib
-directory ending in 
+directory ending in
 .Li ".sl" .
 There should be about 46 files and two soft links.
 .It
 All files in the
 .Pa /lib
-directory ending in 
+directory ending in
 .Li ".sl" .
 There should be 5 files.
 .El
 .Pp
-Now, you need to copy these files to your 
+Now, you need to copy these files to your
 .Nx
 system, and extract them into
 .Pa /emul/hpux ,
@@ -136,7 +136,7 @@ for example, you should end up with the following files:
 .It
 .Pa /emul/hpux/lib/libcurses.sl
 .It
-And a whole bunch of files in 
+And a whole bunch of files in
 .Pa /emul/hpux/usr/lib .
 .El
 Overall, HP-UX 9.10 has about 10 MB of shared libraries that you will have
@@ -145,10 +145,10 @@ ended up copying to your system.
 You have access to an HP-UX system with its entire root drive exported via NFS.
 In this case, you simply mount the entire HP-UX system under
 .Pa /emul/hpux .
-For example, on your 
+For example, on your
 .Nx
 system, you might mount it as:
-.Dl "mount_nfs hpux-host.test.net:/ /emul/hpux"
+.Dl mount_nfs hpux-host.test.net:/ /emul/hpux
 .El
 .Ss Setting up X11R5
 If you want to run the HP-UX X11R5 server instead of the X server that
@@ -201,41 +201,41 @@ All the files in
 You'll also need to perform a few configuration steps:
 .Bl -enum
 .It
-Get and extract the 
+Get and extract the
 .Pa xbase.tgz
-set for your version of 
+set for your version of
 .Nx
 to provide the X11R6 clients you'll be using with your new X server.
 .It
 Create the following directory for the X server to deposit its socket files
 in:
-.Dl "mkdir -p /usr/spool/sockets/X11"
-.Dl "chmod 777 /usr/spool/sockets/X11"
+.Dl mkdir -p /usr/spool/sockets/X11
+.Dl chmod 777 /usr/spool/sockets/X11
 .It
-Add the following lines to your 
+Add the following lines to your
 .Pa /etc/rc.local
 to create the necessary directories for the X server to deposit its files in,
 when your system boots:
-.Dl "mkdir /tmp/.X11-unix"
-.Dl "chmod 777 /tmp/.X11-unix"
-.Dl "ln -s /usr/spool/sockets/X11/0 /tmp/.X11-unix/X0"
+.Dl mkdir /tmp/.X11-unix
+.Dl chmod 777 /tmp/.X11-unix
+.Dl ln -s /usr/spool/sockets/X11/0 /tmp/.X11-unix/X0
 .It
 To allow the X server to beep, you need to link some device names together:
-.Dl "ln -s /dev/hil0 /dev/rhil"
+.Dl ln -s /dev/hil0 /dev/rhil
 .It
 You may also want to link your X server to a more convenient location, such as:
-.Dl "ln -s /emul/hpux/usr/bin/X /usr/X11R6/bin/X"
+.Dl ln -s /emul/hpux/usr/bin/X /usr/X11R6/bin/X
 .El
 .Sh SEE ALSO
 .Pa http://www.netbsd.org/Ports/hp300/faq.html#x110
 .Pa http://www.blobulent.com/hp300/X11
 .Sh BUGS
 See PR kern/6042 on why you must create directories for sockets outside
-of the 
+of the
 .Pa /emul/hpux
 directory tree when running the HP-UX X server.
 .Pp
 You may not be able to run the X server on multiple framebuffers, even though
-both the X server and 
+both the X server and
 .Nx
 support them.
