@@ -1,4 +1,5 @@
-/*	$NetBSD: mrt.h,v 1.1 2000/01/28 19:32:49 itojun Exp $	*/
+/*	$NetBSD: mrt.h,v 1.2 2000/12/04 07:09:36 itojun Exp $	*/
+/*	$KAME: mrt.h,v 1.8 2000/12/04 06:45:30 itojun Exp $	*/
 
 /*
  *  Copyright (c) 1998 by the University of Southern California.
@@ -52,18 +53,6 @@
 
 #ifndef MRT_H
 #define MRT_H
-
-#include <sys/param.h>
-#include <sys/time.h>
-#include <sys/types.h>
-#include <sys/socket.h>
-#include <net/route.h>
-#include <netinet/in.h>
-#include <netinet/ip_mroute.h>
-#include <netinet6/ip6_mroute.h>
-#include <string.h>
-#include "defs.h"
-
 
 /* flags for the mrt entries */
 
@@ -153,16 +142,16 @@ typedef struct build_jp_message {
 
 
 typedef struct pim_nbr_entry {
-	struct pim_nbr_entry 	*next;			/* link to next neighbor          */
-	struct pim_nbr_entry 	*prev;			/* link to prev neighbor          */ 
-	struct sockaddr_in6 	address;		/* neighbor address               */
-	vifi_t 					vifi;   /* which interface                */	
-	u_int16 				timer; 	/* for timing out neighbor        */	
-	build_jp_message_t 		*build_jp_message;  /* A structure for fairly
-                                           		 * complicated Join/Prune
-                                           		 * message construction.
-                                           		 */
- 
+	struct pim_nbr_entry 	*next; /* link to next neighbor */
+	struct pim_nbr_entry 	*prev; /* link to prev neighbor */ 
+	struct sockaddr_in6 	address; /* (primary) neighbor address */
+	struct phaddr		*aux_addrs; /* additional addresses */
+	vifi_t 			vifi;   /* which interface                */
+	u_int16 		timer; 	/* for timing out neighbor        */
+	build_jp_message_t	*build_jp_message;  /* A structure for fairly
+						     * complicated Join/Prune
+						     * message construction.
+						     */
 } pim_nbr_entry_t;
 
 typedef struct srcentry {

@@ -1,4 +1,5 @@
-/*	$NetBSD: mld6_proto.h,v 1.1 2000/01/28 19:32:49 itojun Exp $	*/
+/*	$NetBSD: mld6_proto.h,v 1.2 2000/12/04 07:09:36 itojun Exp $	*/
+/*	$KAME: mld6_proto.h,v 1.4 2000/12/04 06:45:30 itojun Exp $	*/
 
 /*
  * Copyright (C) 1999 LSIIT Laboratory.
@@ -48,8 +49,6 @@
 
 #ifndef MLD6_PROTO_H
 #define MLD6_PROTO_H
-
-#include "vif.h"
 
 extern void     query_groups            __P((struct uvif *v));
 extern int      check_grp_membership    __P((struct uvif *v, 

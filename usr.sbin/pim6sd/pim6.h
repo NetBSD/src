@@ -1,4 +1,5 @@
-/*	$NetBSD: pim6.h,v 1.1 2000/01/28 19:32:49 itojun Exp $	*/
+/*	$NetBSD: pim6.h,v 1.2 2000/12/04 07:09:36 itojun Exp $	*/
+/*	$KAME: pim6.h,v 1.5 2000/12/04 06:45:31 itojun Exp $	*/
 
 /*
  * Copyright (C) 1999 LSIIT Laboratory.
@@ -48,14 +49,6 @@
 
 #ifndef PIM6_H
 #define PIM6_H
-
-#include <sys/param.h>
-#include <sys/types.h>
-#include <sys/socket.h>
-#include <sys/time.h>
-#include <netinet/in.h>
-#include <unistd.h>
-#include <netinet6/ip6_mroute.h>
 
 extern struct sockaddr_in6 allpim6routers_group;
 extern char *pim6_send_buf;
