@@ -1,4 +1,4 @@
-/*	$NetBSD: readline.c,v 1.14 2001/01/01 11:03:16 jdolecek Exp $	*/
+/*	$NetBSD: readline.c,v 1.15 2001/01/01 15:52:25 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #if !defined(lint) && !defined(SCCSID)
-__RCSID("$NetBSD: readline.c,v 1.14 2001/01/01 11:03:16 jdolecek Exp $");
+__RCSID("$NetBSD: readline.c,v 1.15 2001/01/01 15:52:25 jdolecek Exp $");
 #endif /* not lint && not SCCSID */
 
 #include <sys/types.h>
@@ -103,11 +103,23 @@ int rl_completion_type = 0;
 int rl_completion_query_items = 100;
 
 /*
- * If not zero, non-unique completions always show list of possible matches.
+ * List of characters which are word break characters, but should be left
+ * in the parsed text when it is passed to the completion function.
+ * Shell uses this to help determine what kind of completing to do.
  */
+char *rl_special_prefixes = (char *)NULL;
+
+/*
+ * This is the character appended to the completed words if at the end of
+ * the line. Default is ' ' (a space).
+ */
+int rl_completion_append_character = ' ';
+
+/* stuff below is used internally by libedit for readline emulation */
+
+/* if not zero, non-unique completions always show list of possible matches */
 static int _rl_complete_show_all = 0;
 
-/* used for readline emulation */
 static History *h = NULL;
 static EditLine *e = NULL;
 static int el_rl_complete_cmdnum = 0;
@@ -1422,10 +1434,13 @@ rl_complete_internal(int what_to_do)
 	if (!complet_func)
 		complet_func = filename_completion_function;
 
+	/* We now look backwards for the start of a filename/variable word */
 	li = el_line(e);
 	ctemp = (char *) li->cursor;
-	while (ctemp > li->buffer &&
-	    !strchr(rl_basic_word_break_characters, *(ctemp - 1)))
+	while (ctemp > li->buffer
+	    && !strchr(rl_basic_word_break_characters, ctemp[-1])
+	    && (!rl_special_prefixes
+			|| !strchr(rl_special_prefixes, ctemp[-1]) ) )
 		ctemp--;
 
 	len = li->cursor - ctemp;
@@ -1469,9 +1484,14 @@ rl_complete_internal(int what_to_do)
 			 * object is a directory.
 			 */
 			size_t alen = strlen(matches[0]);
-			if (complet_func != filename_completion_function
-			    || (alen > 0 && (matches[0])[alen - 1] != '/'))
-				el_insertstr(e, " ");
+			if ((complet_func != filename_completion_function
+			      || (alen > 0 && (matches[0])[alen - 1] != '/'))
+			    && rl_completion_append_character) {
+				char buf[2];
+				buf[0] = rl_completion_append_character;
+				buf[1] = '\0';
+				el_insertstr(e, buf);
+			}
 		} else if (what_to_do == '!') {
     display_matches:
 			/*
