@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.README,v 1.90 2002/01/02 23:48:19 thorpej Exp $
+#	$NetBSD: bsd.README,v 1.91 2002/01/04 19:07:18 thorpej Exp $
 #	@(#)bsd.README	8.2 (Berkeley) 4/2/94
 
 This is the README file for the new make "include" files for the BSD
@@ -450,12 +450,6 @@ DPADD		Additional dependencies for the program.  Usually used for
 		LIBWRAP?=	${DESTDIR}/usr/lib/libwrap.a
 		LIBY?=		${DESTDIR}/usr/lib/liby.a
 		LIBZ?=		${DESTDIR}/usr/lib/libz.a
-
-HAVE_GCC3	If defined and PROG_CXX is defined by the program's
-		Makefile, causes <bsd.prog.mk> to pull in additional
-		C++ support libraries required for programs compiled
-		with GNU C++ 3.x.  This is intended as a temporary
-		measure to ease the transition to GCC 3.x.
 
 SHAREDSTRINGS	If defined, a new .c.o rule is used that results in shared
 		strings, using xstr(1). Note that this will not work with
