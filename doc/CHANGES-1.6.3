@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-1.6.3,v 1.1.2.14 2004/03/12 06:11:22 jmc Exp $
+#	$NetBSD: CHANGES-1.6.3,v 1.1.2.15 2004/03/12 06:18:40 jmc Exp $
 
 A complete list of changes from NetBSD 1.6.2 to NetBSD 1.6.3:
 
@@ -80,3 +80,8 @@ sys/arch/hpcmips/tx/tx39clock.c			1.16
 
 	Initialize sc_epoch and RTC properly when reboot/resume.
 	[shin, ticket #1588]
+
+gnu/dist/cvs/src/filesubr.c			1.4
+
+	Implement proper group membership testing. PR#24021
+	[christos, ticket #1592]
