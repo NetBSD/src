@@ -1,4 +1,4 @@
-/*	$NetBSD: iop.c,v 1.7 2000/12/03 15:51:36 ad Exp $	*/
+/*	$NetBSD: iop.c,v 1.8 2001/01/01 19:03:30 ad Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -625,7 +625,7 @@ iop_configure_devices(struct iop_softc *sc)
 	struct iop_attach_args ia;
 	struct iop_initiator *ii;
 	const struct i2o_lct_entry *le;
-	int i, nent;
+	int i, j, nent;
 
 	nent = sc->sc_nlctent;
 	for (i = 0, le = sc->sc_lct->entry; i < nent; i++, le++) {
@@ -637,6 +637,14 @@ iop_configure_devices(struct iop_softc *sc)
 
 		ia.ia_class = le16toh(le->classid) & 4095;
 		ia.ia_tid = le32toh(le->localtid) & 4095;
+
+		/* Ignore uninteresting devices. */
+		for (j = 0; j < sizeof(iop_class) / sizeof(iop_class[0]); j++)
+			if (iop_class[j].ic_class == ia.ia_class)
+				break;
+		if (j < sizeof(iop_class) / sizeof(iop_class[0]) &&
+		    (iop_class[j].ic_flags & IC_CONFIGURE) == 0)
+			continue;
 
 		/*
 		 * Try to configure the device only if it's not already
