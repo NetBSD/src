@@ -1,4 +1,4 @@
-/* $NetBSD: bus.c,v 1.5 2001/05/30 00:19:43 bjh21 Exp $ */
+/* $NetBSD: bus.c,v 1.6 2001/06/02 10:45:43 bjh21 Exp $ */
 /*-
  * Copyright (c) 1999, 2000 Ben Harris
  * All rights reserved.
@@ -32,7 +32,7 @@
 
 #include <sys/param.h>
 
-__RCSID("$NetBSD: bus.c,v 1.5 2001/05/30 00:19:43 bjh21 Exp $");
+__RCSID("$NetBSD: bus.c,v 1.6 2001/06/02 10:45:43 bjh21 Exp $");
 
 #include <machine/bus.h>
 #include <machine/memcreg.h>
@@ -93,10 +93,8 @@ bus_space_write_multi_1(bus_space_tag_t bst, bus_space_handle_t bsh,
 			bus_size_t offset, u_int8_t const *datap,
 			bus_size_t count)
 {
-	int i;
 
-	for (i = 0; i < count; i++)
-		bus_space_write_1(bst, bsh, offset, datap[i]);
+	write_multi_1(bsh + (offset << bst), datap, count);
 }
 
 void
