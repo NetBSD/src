@@ -1,4 +1,4 @@
-# $NetBSD: README,v 1.5 2001/03/05 16:53:12 wiz Exp $
+# $NetBSD: README,v 1.6 2002/02/21 14:21:49 agc Exp $
 # Original from FreeBSD, no rcs id.
 
 This is the pkg_install suite of tools for doing maintainance of
@@ -14,5 +14,5 @@ In another round of enhancements, NetBSD changes were added by
 Alistair Crooks and Hubert Feyrer, Thorsten Frueauf and Christian E.
 Hopps.
 
-When making snapshots, please increase PKGTOOLS_VERSION in lib/version.h
+When making snapshots, please modify PKGTOOLS_VERSION in lib/version.h
 to that day's date.
