@@ -1,4 +1,4 @@
-/*	$NetBSD: fetch.c,v 1.15 1997/09/13 09:05:54 lukem Exp $	*/
+/*	$NetBSD: fetch.c,v 1.16 1997/09/21 01:06:31 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: fetch.c,v 1.15 1997/09/13 09:05:54 lukem Exp $");
+__RCSID("$NetBSD: fetch.c,v 1.16 1997/09/21 01:06:31 lukem Exp $");
 #endif /* not lint */
 
 /*
@@ -505,10 +505,10 @@ bad_ftp_url:
 			portnum = strchr(host, ':');
 			if (portnum != NULL)
 				*portnum++ = '\0';
-parsed_url:
 		} else {			/* classic style `host:file' */
 			dir = strchr(host, ':');
 		}
+parsed_url:
 		if (EMPTYSTRING(host)) {
 			rval = argpos + 1;
 			continue;
