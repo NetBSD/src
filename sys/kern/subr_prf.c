@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_prf.c,v 1.58 1999/01/28 00:05:49 msaitoh Exp $	*/
+/*	$NetBSD: subr_prf.c,v 1.59 1999/02/03 01:16:20 msaitoh Exp $	*/
 
 /*-
  * Copyright (c) 1986, 1988, 1991, 1993
@@ -941,7 +941,7 @@ kprintf(fmt0, oflags, vp, sbuf, ap)
 	int size;		/* size of converted field or string */
 	char *xdigs;		/* digits for [xX] conversion */
 	char buf[KPRINTF_BUFSIZE]; /* space for %c, %[diouxX] */
-	char *tailp;	/* tail pointer for snprintf */
+	char *tailp = NULL;	/* tail pointer for snprintf */
 
 	if (oflags == TOBUFONLY)
 		tailp = (vp != NULL) ?  *(char **)vp : NULL;
