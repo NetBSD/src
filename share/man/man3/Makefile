@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.19 2000/05/27 22:27:33 mycroft Exp $
+#	$NetBSD: Makefile,v 1.20 2000/08/03 09:49:10 ad Exp $
 #	@(#)Makefile	8.2 (Berkeley) 12/13/93
 
 MAN=	assert.3 bitstring.3 dlfcn.3 end.3 intro.3 queue.3 stdarg.3
@@ -31,8 +31,6 @@ MLINKS+=stdarg.3 varargs.3 stdarg.3 va_arg.3 stdarg.3 va_copy.3
 MLINKS+=stdarg.3 va_end.3 stdarg.3 va_start.3
 MLINKS+=dlfcn.3 dlopen.3 dlfcn.3 dlclose.3 dlfcn.3 dlsym.3 dlfcn.3 dlctl.3 \
 	dlfcn.3 dlerror.3 dlfcn.3 dladdr.3
-
-SUBDIR=	man3.i386
 
 .include <bsd.man.mk>
 .include <bsd.subdir.mk>
