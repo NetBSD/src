@@ -1,4 +1,4 @@
-/*	$NetBSD: bonitoreg.h,v 1.2 2001/06/22 03:58:03 thorpej Exp $	*/
+/*	$NetBSD: bonitoreg.h,v 1.3 2001/06/25 20:15:03 thorpej Exp $	*/
 
 /*
  * Bonito Register Map 
@@ -84,6 +84,9 @@
 #define BONITO_PCILTIMER_BUSLATENCY_SHIFT	8
 
 
+#define	BONITO_REV_FPGA(x)		((x) & 0x80)
+#define	BONITO_REV_MAJOR(x)		(((x) >> 4) & 0x7)
+#define	BONITO_REV_MINOR(x)		((x) & 0xf)
 
 
 /* 1. Bonito h/w Configuration */
