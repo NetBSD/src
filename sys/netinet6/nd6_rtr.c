@@ -1,4 +1,4 @@
-/*	$NetBSD: nd6_rtr.c,v 1.44 2003/06/24 07:54:48 itojun Exp $	*/
+/*	$NetBSD: nd6_rtr.c,v 1.45 2003/09/26 22:23:58 wiz Exp $	*/
 /*	$KAME: nd6_rtr.c,v 1.95 2001/02/07 08:09:47 itojun Exp $	*/
 
 /*
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nd6_rtr.c,v 1.44 2003/06/24 07:54:48 itojun Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nd6_rtr.c,v 1.45 2003/09/26 22:23:58 wiz Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -418,7 +418,7 @@ nd6_ra_input(m, off, icmp6len)
 }
 
 /*
- * default router list proccessing sub routines
+ * default router list processing sub routines
  */
 
 /* tell the change to user processes watching the routing socket. */
