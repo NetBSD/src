@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# $NetBSD: ppp2netbsd,v 1.1 2005/02/20 10:51:07 cube Exp $
+# $NetBSD: ppp2netbsd,v 1.2 2005/02/20 10:51:52 cube Exp $
 #
 #  Copyright (c) 2005 The NetBSD Foundation.
 #  All rights reserved.
@@ -44,7 +44,7 @@
 
 # Stuff we don't need
 UNUSED_DIRS="common contrib etc.ppp include linux modules solaris scripts"
-UNUSED_FILES="Changes-2.3 README.linux README.pppoe configure"
+UNUSED_FILES="Changes-2.3 README.linux README.pppoe README.sol2 configure"
 UNUSED_FILES="${UNUSED_FILES} pppd/md[45].* pppd/sha1.* pppd/srp-entry.*"
 UNUSED_FILES="${UNUSED_FILES} pppd/sys-linux.c pppd/sys-solaris.c"
 UNUSED_FILES="${UNUSED_FILES} pppdump/zlib.* pppdump/ppp-comp.h"
