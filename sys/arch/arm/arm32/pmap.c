@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.25 2001/10/18 16:32:40 rearnsha Exp $	*/
+/*	$NetBSD: pmap.c,v 1.26 2001/10/18 16:50:30 rearnsha Exp $	*/
 
 /*
  * Copyright (c) 2001 Richard Earnshaw
@@ -142,7 +142,7 @@
 #include <machine/param.h>
 #include <machine/katelib.h>
 
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.25 2001/10/18 16:32:40 rearnsha Exp $");        
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.26 2001/10/18 16:50:30 rearnsha Exp $");        
 #ifdef PMAP_DEBUG
 #define	PDEBUG(_lev_,_stat_) \
 	if (pmap_debug_level >= (_lev_)) \
@@ -1336,7 +1336,8 @@ pmap_alloc_l1pt(void)
 	va = uvm_km_valloc(kernel_map, PD_SIZE);
 	if (va == 0) {
 #ifdef DIAGNOSTIC
-		printf("pmap: Cannot allocate pageable memory for L1\n");
+		PDEBUG(0,
+		    printf("pmap: Cannot allocate pageable memory for L1\n"));
 #endif	/* DIAGNOSTIC */
 		return(NULL);
 	}
@@ -1352,8 +1353,9 @@ pmap_alloc_l1pt(void)
 	    PD_SIZE, 0, &pt->pt_plist, 1, M_WAITOK);
 	if (error) {
 #ifdef DIAGNOSTIC
-		printf("pmap: Cannot allocate physical memory for L1 (%d)\n",
-		    error);
+		PDEBUG(0,
+		    printf("pmap: Cannot allocate physical mem for L1 (%d)\n",
+		    error));
 #endif	/* DIAGNOSTIC */
 		/* Release the resources we already have claimed */
 		free(pt, M_VMPMAP);
@@ -1517,6 +1519,9 @@ void
 pmap_pinit(pmap)
 	struct pmap *pmap;
 {
+	int backoff = 6;
+	int retry = 10;
+
 	PDEBUG(0, printf("pmap_pinit(%p)\n", pmap));
 
 	/* Keep looping until we succeed in allocating a page directory */
@@ -1530,8 +1535,21 @@ pmap_pinit(pmap)
 		 *
 		 * Since we cannot fail we will sleep for a while and try
 		 * again.
+		 *
+		 * Searching for a suitable L1 PT is expensive:
+		 * to avoid hogging the system when memory is really
+		 * scarce, use an exponential back-off so that
+		 * eventually we won't retry more than once every 8
+		 * seconds.  This should allow other processes to run
+		 * to completion and free up resources.
 		 */
-		(void) ltsleep(&lbolt, PVM, "l1ptwait", hz >> 3, NULL);
+		(void) ltsleep(&lbolt, PVM, "l1ptwait", (hz << 3) >> backoff,
+		    NULL);
+		if (--retry == 0) {
+			retry = 10;
+			if (backoff)
+				--backoff;
+		}
 	}
 
 	/* Map zero page for the pmap. This will also map the L2 for it */
