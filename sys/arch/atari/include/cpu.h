@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.6 1995/05/14 15:26:55 leo Exp $	*/
+/*	$NetBSD: cpu.h,v 1.7 1995/05/28 21:02:21 leo Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -127,6 +127,8 @@ extern int	want_resched;	/* resched() was called */
 #define	ATARI_FPU40	(1L<<10)
 #define	ATARI_TT	(1L<<11)
 #define	ATARI_FALCON	(1L<<12)
+
+#define	ATARI_CLKBROKEN	(1L<<16)
 
 
 /*
