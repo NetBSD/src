@@ -41,13 +41,13 @@
 #define CLOCK_ATOM 1
 
 /* PPS auxiliary interface for ATOM */
-/* #undef PPS_SAMPLE */
+#define PPS_SAMPLE 1
 
 /* Datum/Bancomm bc635/VME interface */
 /* #undef CLOCK_BANC */
 
 /* Diems Computime Radio Clock */
-/* #undef CLOCK_COMPUTIME */
+#define CLOCK_COMPUTIME 1
 
 /* Chronolog K-series WWVB receiver */
 #define CLOCK_CHRONOLOG 1
@@ -56,7 +56,7 @@
 #define CLOCK_DATUM 1
 
 /* ELV/DCF7000 clock */
-/* #undef CLOCK_DCF7000 */
+#define CLOCK_DCF7000 1
 
 /* Dumb generic hh:mm:ss local clock */
 #define CLOCK_DUMBCLOCK 1
@@ -71,7 +71,7 @@
 #define CLOCK_HEATH 1
 
 /* HOPF 6021 clock */
-/* #undef CLOCK_HOPF6021 */
+#define CLOCK_HOPF6021 1
 
 /* HP 58503A GPS receiver */
 #define CLOCK_HPGPS 1
@@ -89,7 +89,7 @@
 #define CLOCK_LOCAL 1
 
 /* Meinberg clocks */
-/* #undef CLOCK_MEINBERG */
+#define CLOCK_MEINBERG 1
 
 /* EES M201 MSF receiver */
 #define CLOCK_MSFEES 1
@@ -107,7 +107,7 @@
 #define CLOCK_PALISADE 1
 
 /* PARSE driver interface */
-/* #undef CLOCK_PARSE */
+#define CLOCK_PARSE 1
 
 /* Conrad parallel port radio clock */
 #define CLOCK_PCF 1
@@ -122,13 +122,13 @@
 #define CLOCK_PTBACTS 1
 
 /* DCF77 raw time code */
-/* #undef CLOCK_RAWDCF */
+#define CLOCK_RAWDCF 1
 
 /* RCC 8000 clock */
-/* #undef CLOCK_RCC8000 */
+#define CLOCK_RCC8000 1
 
 /* Schmid DCF77 clock */
-/* #undef CLOCK_SCHMID */
+#define CLOCK_SCHMID 1
 
 /* clock thru shared memory */
 /* #undef CLOCK_SHM */
@@ -143,10 +143,10 @@
 #define CLOCK_TRAK 1
 
 /* Trimble GPS receiver/TAIP protocol */
-/* #undef CLOCK_TRIMTAIP */
+#define CLOCK_TRIMTAIP 1
 
 /* Trimble GPS receiver/TSIP protocol */
-/* #undef CLOCK_TRIMTSIP */
+#define CLOCK_TRIMTSIP 1
 
 /* Kinemetrics/TrueTime receivers */
 #define CLOCK_TRUETIME 1
@@ -158,13 +158,13 @@
 #define CLOCK_USNO 1
 
 /* WHARTON 400A Series protocol */
-/* #undef CLOCK_WHARTON_400A */
+#define CLOCK_WHARTON_400A 1
 
 /* WWV audio driver */
 #define CLOCK_WWV 1
 
 /* VARITEXT protocol */
-/* #undef CLOCK_VARITEXT */
+#define CLOCK_VARITEXT 1
 
 /* define if we need to declare int errno; */
 /* #undef DECL_ERRNO */
@@ -191,7 +191,7 @@
 /* #undef NEED_HPUX_FINDCONFIG */
 
 /* canonical system (cpu-vendor-os) string */
-#define STR_SYSTEM "alpha-unknown-netbsd1.4X"
+#define STR_SYSTEM "i386-unknown-netbsd1.5U"
 
 /* define if NetInfo support is available */
 /* #undef HAVE_NETINFO */
@@ -866,7 +866,7 @@
 #define SIZEOF_INT 4
 
 /* The number of bytes in a `long'. */
-#define SIZEOF_LONG 8
+#define SIZEOF_LONG 4
 
 /* The number of bytes in a `signed char'. */
 #define SIZEOF_SIGNED_CHAR 1
