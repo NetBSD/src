@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.2.2.1 2004/04/16 07:50:34 tron Exp $
+#	$NetBSD: Makefile,v 1.2.2.2 2004/04/16 07:52:20 tron Exp $
 
 NOMAN=		1
 
@@ -62,7 +62,6 @@ HOST_CPPFLAGS+=	-DDARWIN_NO_CARBON
 SRCS=	${SRCS.mkfontscale} ${SRCS.freetype} ${SRCS.fontenc}
 
 LDADD=	-lz
-DPADD=	${LIBZ}
 
 .include <bsd.x11.mk>
 .include <bsd.hostprog.mk>
