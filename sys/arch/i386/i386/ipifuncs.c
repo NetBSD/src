@@ -1,4 +1,4 @@
-/* $NetBSD: ipifuncs.c,v 1.2 2002/10/01 12:56:53 fvdl Exp $ */
+/* $NetBSD: ipifuncs.c,v 1.3 2002/10/05 21:19:39 fvdl Exp $ */
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -142,7 +142,7 @@ i386_reload_mtrr(struct cpu_info *ci)
 }
 #endif
 
-void
+int
 i386_send_ipi (struct cpu_info *ci, int ipimask)
 {
 	int ret;
@@ -151,7 +151,7 @@ i386_send_ipi (struct cpu_info *ci, int ipimask)
 
 	/* Don't send IPI to cpu which isn't (yet) running. */
 	if (!(ci->ci_flags & CPUF_RUNNING))
-		return;
+		return ENOENT;
 
 	ret = i386_ipi(LAPIC_IPI_VECTOR, ci->ci_cpuid, LAPIC_DLMODE_FIXED);
 	if (ret != 0) {
@@ -161,6 +161,7 @@ i386_send_ipi (struct cpu_info *ci, int ipimask)
 		    ci->ci_dev->dv_xname);
 	}
 
+	return ret;
 }
 
 void
