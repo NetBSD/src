@@ -1,4 +1,4 @@
-/*	$NetBSD: cache.h,v 1.4 1998/02/05 04:57:27 gwr Exp $	*/
+/*	$NetBSD: cache.h,v 1.5 2001/02/07 14:28:50 tsutsui Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -46,11 +46,6 @@
 #define	IC_CE		0x0004	/* clear instruction cache entry */
 #define	IC_CLR		0x0008	/* clear entire instruction cache */
 
-#ifdef	_SUN3_
-#define IC_CLEAR (IC_CLR|IC_ENABLE)
-#endif	/* SUN3 */
-
-#ifdef	_SUN3X_
 /* additional fields in the 68030 cache control register */
 #define	IC_BE		0x0010	/* instruction burst enable */
 #define	DC_ENABLE	0x0100	/* data cache enable */
@@ -65,4 +60,3 @@
 #define	CACHE_CLR	(CACHE_ON)
 #define	IC_CLEAR	(DC_WA|DC_BE|DC_ENABLE|IC_BE|IC_CLR|IC_ENABLE)
 #define	DC_CLEAR	(DC_WA|DC_BE|DC_CLR|DC_ENABLE|IC_BE|IC_ENABLE)
-#endif	/* SUN3X */
