@@ -1,4 +1,4 @@
-;	$NetBSD: siop.ss,v 1.16 2002/07/26 01:00:44 wiz Exp $
+;	$NetBSD: siop.ss,v 1.17 2002/07/26 14:11:34 wiz Exp $
 
 ;
 ;  Copyright (c) 2000 Manuel Bouyer.
@@ -215,7 +215,7 @@ led_on2:
 	NOP;
 	MOVE SSID & 0x8f to SFBR
 	MOVE SFBR to SCRATCHA0 ; save reselect ID
-; find the rigth param for this target
+; find the right param for this target
 resel_targ0:
 	JUMP abs_targ0, IF 0xff;
 	JUMP abs_targ0, IF 0xff;

@@ -1,4 +1,4 @@
-/*	$NetBSD: pciide.c,v 1.161 2002/07/26 10:23:30 onoe Exp $	*/
+/*	$NetBSD: pciide.c,v 1.162 2002/07/26 14:11:35 wiz Exp $	*/
 
 
 /*
@@ -76,7 +76,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pciide.c,v 1.161 2002/07/26 10:23:30 onoe Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pciide.c,v 1.162 2002/07/26 14:11:35 wiz Exp $");
 
 #ifndef WDCDEBUG
 #define WDCDEBUG
@@ -838,7 +838,7 @@ pciide_mapregs_native(pa, cp, cmdsizep, ctlsizep, pci_intr)
 	/*
 	 * In native mode, 4 bytes of I/O space are mapped for the control
 	 * register, the control register is at offset 2. Pass the generic
-	 * code a handle for only one byte at the rigth offset.
+	 * code a handle for only one byte at the right offset.
 	 */
 	if (bus_space_subregion(wdc_cp->ctl_iot, cp->ctl_baseioh, 2, 1,
 	    &wdc_cp->ctl_ioh) != 0) {
