@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-1.4.2,v 1.1.2.42 1999/09/27 03:16:12 cgd Exp $
+#	$NetBSD: CHANGES-1.4.2,v 1.1.2.43 1999/09/27 05:05:30 cgd Exp $
 
 A complete list of changes from NetBSD 1.4.1 to NetBSD 1.4.2:
 
@@ -537,3 +537,22 @@ usr.bin/systat/keyboard.c			1.6
 
   Do not downcase input, which prevented "ignore X11" in the
   "netstat" display from working.  Fixes PR#7655.
+
+sys/dev/raidframe/rf_layout.c			1.4
+
+  Do not continue the configuration process if sectorsPerStripeUnit is
+  not larger than 0.
+
+sys/dev/raidframe/rf_driver.c			1.12
+
+  rf_UnconfigureVnodes() needs to be called in the DO_RAID_FAIL macro.
+
+sys/dev/raidframe/rf_netbsdkintf.c		1.21
+
+  splbio()/splx() protect some reconstruction code to avoid
+  potentially bad interatctions with the pool code.
+
+sys/dev/raidframe/rf_parityscan.c		1.5
+
+  Do not allow rebuilding parity on a degraded RAID set.  Also, don't
+  allow parity rewriting on a RAID 0 set, as that makes no sense.
