@@ -1,4 +1,4 @@
-#	$NetBSD: INSTALL,v 1.7 2003/04/10 22:07:03 christos Exp $
+#	$NetBSD: INSTALL,v 1.8 2004/01/30 14:25:54 augustss Exp $
 #
 #	INSTALL
 #
@@ -23,28 +23,29 @@ options 	MEMORY_DISK_ROOT_SIZE=5120	# size of memory disk, in blocks
 
 options 	INSECURE	# disable kernel security levels
 #options 	NTP		# NTP phase/frequency locked loop
-options 	KTRACE		# system call tracing via ktrace(1)
+#options 	KTRACE		# system call tracing via ktrace(1)
 
 options 	SYSVMSG		# System V message queues
 options 	SYSVSEM		# System V semaphores
 options 	SYSVSHM		# System V shared memory
 #options 	SHMMAXPGS=1024	# 1024 pages is the default
 
-options 	LKM		# loadable kernel modules
+#options 	LKM		# loadable kernel modules
 
-options 	USERCONF	# userconf(4) support
+#options 	USERCONF	# userconf(4) support
 options 	PIPE_SOCKETPAIR		# smaller, but slower pipe(2)
 options 	MALLOC_NOINLINE		# Not inlining MALLOC saves memory
 
 # Diagnostic/debugging support options
-options 	DIAGNOSTIC	# cheap kernel consistency checks
-options 	DEBUG		# expensive debugging checks/support
-options 	DDB		# in-kernel debugger
-options 	DDB_HISTORY_SIZE=512	# enable history editing in DDB
-options 	TRAP_PANICWAIT
-options 	SYMTAB_SPACE=400000	# size for embedded symbol table
+#options 	DIAGNOSTIC	# cheap kernel consistency checks
+#options 	DEBUG		# expensive debugging checks/support
+#options 	DDB		# in-kernel debugger
+#options 	DDB_HISTORY_SIZE=512	# enable history editing in DDB
+#options 	TRAP_PANICWAIT
+#options 	SYMTAB_SPACE=200000	# size for embedded symbol table
+no makeoptions	NEED_SYMTAB
 
-makeoptions	DEBUG="-g"	# compile full symbol table
+#makeoptions	DEBUG="-g"	# compile full symbol table
 
 # Compatibility options
 #options 	COMPAT_09	# NetBSD 0.9,
