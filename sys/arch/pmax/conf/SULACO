@@ -1,17 +1,8 @@
-#	$NetBSD: SULACO,v 1.5 2000/05/28 06:02:13 gmcgarry Exp $
+#	$NetBSD: SULACO,v 1.6 2000/06/14 22:02:35 veego Exp $
 #
 # sulaco.nas.nasa.gov - thorpej's DECstation 5000/200
 #
 include		"arch/pmax/conf/std.pmax"
-
-# Pull in config fragments for kernel crypto.  This is required for
-# options IPSEC etc. to work. If you want to run with IPSEC, uncomment  
-# one of these, based on whether you use crypto-us or crypto-intl, and
-# adjust the prefixes as necessary.     
-
-prefix ../crypto-us/sys
-cinclude "conf/files.crypto-us"
-prefix
 
 maxusers	64
 
