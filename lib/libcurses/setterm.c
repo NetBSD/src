@@ -1,4 +1,4 @@
-/*	$NetBSD: setterm.c,v 1.32 2002/06/26 18:14:07 christos Exp $	*/
+/*	$NetBSD: setterm.c,v 1.33 2002/09/11 15:23:24 jdc Exp $	*/
 
 /*
  * Copyright (c) 1981, 1993, 1994
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)setterm.c	8.8 (Berkeley) 10/25/94";
 #else
-__RCSID("$NetBSD: setterm.c,v 1.32 2002/06/26 18:14:07 christos Exp $");
+__RCSID("$NetBSD: setterm.c,v 1.33 2002/09/11 15:23:24 jdc Exp $");
 #endif
 #endif /* not lint */
 
@@ -113,6 +113,8 @@ static char	*_PC,
 	};
 
 attr_t	 __mask_op, __mask_me, __mask_ue, __mask_se;
+
+const char *__attroff = "\x1b[m";
 
 int
 setterm(char *type)
@@ -222,53 +224,69 @@ _cursesi_setterm(char *type, SCREEN *screen)
 	    ((screen->tc_AL == NULL && screen->tc_al == NULL) ||
 	     (screen->tc_DL == NULL && screen->tc_dl == NULL));
 
-	/* Precalculate conflict info for color/attribute end commands. */
+	/*
+	 * Precalculate conflict info for color/attribute end commands.
+	 * Add a hack for xterm-like terminals where "\E[m" will turn off
+	 * other attributes.
+	 */
 	screen->mask_op = __ATTRIBUTES & ~__COLOR;
 	if (screen->tc_op != NULL) {
 		if (screen->tc_se != NULL &&
-		    !strcmp(screen->tc_op, screen->tc_se))
+		    (!strcmp(screen->tc_op, screen->tc_se) ||
+		    !strcmp(screen->tc_op, __attroff)))
 			screen->mask_op &= ~__STANDOUT;
 		if (screen->tc_ue != NULL &&
-		    !strcmp(screen->tc_op, screen->tc_ue))
+		    (!strcmp(screen->tc_op, screen->tc_ue) ||
+		    !strcmp(screen->tc_op, __attroff)))
 			screen->mask_op &= ~__UNDERSCORE;
 		if (screen->tc_me != NULL &&
-		    !strcmp(screen->tc_op, screen->tc_me))
+		    (!strcmp(screen->tc_op, screen->tc_me) ||
+		    !strcmp(screen->tc_op, __attroff)))
 			screen->mask_op &= ~__TERMATTR;
 	}
 	screen->mask_me = __ATTRIBUTES & ~__TERMATTR;
 	if (screen->tc_me != NULL) {
 		if (screen->tc_se != NULL &&
-		    !strcmp(screen->tc_me, screen->tc_se))
+		    (!strcmp(screen->tc_me, screen->tc_se) ||
+		    !strcmp(screen->tc_me, __attroff)))
 			screen->mask_me &= ~__STANDOUT;
 		if (screen->tc_ue != NULL &&
-		    !strcmp(screen->tc_me, screen->tc_ue))
+		    (!strcmp(screen->tc_me, screen->tc_ue) ||
+		    !strcmp(screen->tc_me, __attroff)))
 			screen->mask_me &= ~__UNDERSCORE;
 		if (screen->tc_op != NULL &&
-		    !strcmp(screen->tc_me, screen->tc_op))
+		    (!strcmp(screen->tc_me, screen->tc_op) ||
+		    !strcmp(screen->tc_me, __attroff)))
 			screen->mask_me &= ~__COLOR;
 	}
 	screen->mask_ue = __ATTRIBUTES & ~__UNDERSCORE;
 	if (screen->tc_ue != NULL) {
 		if (screen->tc_se != NULL &&
-		    !strcmp(screen->tc_ue, screen->tc_se))
+		    (!strcmp(screen->tc_ue, screen->tc_se) ||
+		    !strcmp(screen->tc_ue, __attroff)))
 			screen->mask_ue &= ~__STANDOUT;
 		if (screen->tc_me != NULL &&
-		    !strcmp(screen->tc_ue, screen->tc_me))
+		    (!strcmp(screen->tc_ue, screen->tc_me) ||
+		    !strcmp(screen->tc_ue, __attroff)))
 			screen->mask_ue &= ~__TERMATTR;
 		if (screen->tc_op != NULL &&
-		    !strcmp(screen->tc_ue, screen->tc_op))
+		    (!strcmp(screen->tc_ue, screen->tc_op) ||
+		    !strcmp(screen->tc_ue, __attroff)))
 			screen->mask_ue &= ~__COLOR;
 	}
 	screen->mask_se = __ATTRIBUTES & ~__STANDOUT;
 	if (screen->tc_se != NULL) {
 		if (screen->tc_ue != NULL &&
-		    !strcmp(screen->tc_se, screen->tc_ue))
+		    (!strcmp(screen->tc_se, screen->tc_ue) ||
+		    !strcmp(screen->tc_se, __attroff)))
 			screen->mask_se &= ~__UNDERSCORE;
 		if (screen->tc_me != NULL &&
-		    !strcmp(screen->tc_se, screen->tc_me))
+		    (!strcmp(screen->tc_se, screen->tc_me) ||
+		    !strcmp(screen->tc_se, __attroff)))
 			screen->mask_se &= ~__TERMATTR;
 		if (screen->tc_op != NULL &&
-		    !strcmp(screen->tc_se, screen->tc_op))
+		    (!strcmp(screen->tc_se, screen->tc_op) ||
+		    !strcmp(screen->tc_se, __attroff)))
 			screen->mask_se &= ~__COLOR;
 	}
 
