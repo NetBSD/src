@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_machdep.c,v 1.5 1998/09/09 00:07:55 thorpej Exp $	*/
+/*	$NetBSD: vm_machdep.c,v 1.6 1998/09/09 11:17:30 thorpej Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -193,7 +193,7 @@ cpu_coredump(p, vp, cred, chdr)
 	tf = trapframe(p);
 	bcopy(tf, &md_core.frame, sizeof md_core.frame);
 	
-	CORE_SETMAGIC(cseg, CORESEGMAGIC, MID_POWERPC, CORE_CPU);
+	CORE_SETMAGIC(cseg, CORESEGMAGIC, MID_MACHINE, CORE_CPU);
 	cseg.c_addr = 0;
 	cseg.c_size = chdr->c_cpusize;
 

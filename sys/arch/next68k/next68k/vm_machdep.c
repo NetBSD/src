@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_machdep.c,v 1.4 1998/09/09 00:07:54 thorpej Exp $	*/
+/*	$NetBSD: vm_machdep.c,v 1.5 1998/09/09 11:17:29 thorpej Exp $	*/
 
 /*
  * This file was taken from from mvme68k/mvme68k/vm_machdep.c
@@ -175,7 +175,7 @@ cpu_coredump(p, vp, cred, chdr)
 		return (hpux_dumpu(vp, cred));
 #endif
 
-	CORE_SETMAGIC(*chdr, COREMAGIC, MID_M68K, 0);
+	CORE_SETMAGIC(*chdr, COREMAGIC, MID_MACHINE, 0);
 	chdr->c_hdrsize = ALIGN(sizeof(*chdr));
 	chdr->c_seghdrsize = ALIGN(sizeof(cseg));
 	chdr->c_cpusize = sizeof(md_core);
@@ -190,7 +190,7 @@ cpu_coredump(p, vp, cred, chdr)
 	if (error)
 		return error;
 
-	CORE_SETMAGIC(cseg, CORESEGMAGIC, MID_M68K, CORE_CPU);
+	CORE_SETMAGIC(cseg, CORESEGMAGIC, MID_MACHINE, CORE_CPU);
 	cseg.c_addr = 0;
 	cseg.c_size = chdr->c_cpusize;
 

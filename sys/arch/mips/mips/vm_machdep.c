@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_machdep.c,v 1.28 1998/09/09 00:07:53 thorpej Exp $	*/
+/*	$NetBSD: vm_machdep.c,v 1.29 1998/09/09 11:17:28 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
-__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.28 1998/09/09 00:07:53 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.29 1998/09/09 11:17:28 thorpej Exp $");
 
 #include "opt_uvm.h"
 
@@ -185,7 +185,7 @@ cpu_coredump(p, vp, cred, chdr)
 		struct fpreg fpregs;
 	} cpustate;
 
-	CORE_SETMAGIC(*chdr, COREMAGIC, MID_MIPS, 0);
+	CORE_SETMAGIC(*chdr, COREMAGIC, MID_MACHINE, 0);
 	chdr->c_hdrsize = ALIGN(sizeof(struct core));
 	chdr->c_seghdrsize = ALIGN(sizeof(struct coreseg));
 	chdr->c_cpusize = sizeof(struct cpustate);
@@ -199,7 +199,7 @@ cpu_coredump(p, vp, cred, chdr)
 	else
 		bzero((caddr_t)&cpustate.fpregs, sizeof(struct fpreg));
 
-	CORE_SETMAGIC(cseg, CORESEGMAGIC, MID_MIPS, CORE_CPU);
+	CORE_SETMAGIC(cseg, CORESEGMAGIC, MID_MACHINE, CORE_CPU);
 	cseg.c_addr = 0;
 	cseg.c_size = chdr->c_cpusize;
 	error = vn_rdwr(UIO_WRITE, vp, (caddr_t)&cseg, chdr->c_seghdrsize,

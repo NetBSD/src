@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_machdep.c,v 1.30 1998/09/09 00:07:52 thorpej Exp $	*/
+/*	$NetBSD: vm_machdep.c,v 1.31 1998/09/09 11:17:28 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -184,7 +184,7 @@ cpu_coredump(p, vp, cred, chdr)
 	struct user *up = p->p_addr;
 	int i;
 
-	CORE_SETMAGIC(*chdr, COREMAGIC, MID_M68K, 0);
+	CORE_SETMAGIC(*chdr, COREMAGIC, MID_MACHINE, 0);
 	chdr->c_hdrsize = ALIGN(sizeof(*chdr));
 	chdr->c_seghdrsize = ALIGN(sizeof(cseg));
 	chdr->c_cpusize = sizeof(md_core);
@@ -215,7 +215,7 @@ cpu_coredump(p, vp, cred, chdr)
 		bzero((caddr_t)&md_core.freg, sizeof(md_core.freg));
 	}
 
-	CORE_SETMAGIC(cseg, CORESEGMAGIC, MID_M68K, CORE_CPU);
+	CORE_SETMAGIC(cseg, CORESEGMAGIC, MID_MACHINE, CORE_CPU);
 	cseg.c_addr = 0;
 	cseg.c_size = chdr->c_cpusize;
 
