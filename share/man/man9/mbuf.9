@@ -1,4 +1,4 @@
-.\"	$NetBSD: mbuf.9,v 1.19 2001/11/28 19:14:56 kleink Exp $
+.\"	$NetBSD: mbuf.9,v 1.20 2001/12/26 01:07:45 wiz Exp $
 .\"
 .\" Copyright (c) 1997 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -616,7 +616,18 @@ and places the successor, if any, in mbuf
 .Fa n .
 Implemented as a macro.
 .El
-.\" .Sh ERRORS
+.Sh FILES
+The
+.Nm
+management functions are implemented within the file
+.Pa sys/kern/uipc_mbuf.c .
+Function prototypes, and the functions implemented as macros
+are located in
+.Pa sys/sys/mbuf.h .
+Both pathnames are relative to the root of the
+.Nx
+source tree,
+.Pa /usr/src .
 .Sh SEE ALSO
 .Pa /usr/share/doc/smm/18.net ,
 .Xr netstat 1 ,
@@ -637,16 +648,3 @@ and Mike Karels at CSRG.
 Current implementation of external storage by Matt Thomas
 .br
 <matt@3am-software.com> and Jason R. Thorpe <thorpej@NetBSD.ORG>.
-.Sh FILES
-The
-.Nm
-management functions are implemented within the file
-.Pa sys/kern/uipc_mbuf.c .
-Function prototypes, and the functions implemented as macros
-are located in
-.Pa sys/sys/mbuf.h .
-Both pathnames are relative to the root of the
-.Nx
-source tree,
-.Pa /usr/src .
-.\" .Sh HISTORY
