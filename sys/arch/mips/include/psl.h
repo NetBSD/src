@@ -1,4 +1,4 @@
-/*	$NetBSD: psl.h,v 1.5 1997/06/15 18:02:22 mhitch Exp $	*/
+/*	$NetBSD: psl.h,v 1.6 1997/06/16 01:10:03 jonathan Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -38,7 +38,7 @@
  *	@(#)psl.h	8.1 (Berkeley) 6/10/93
  */
 
-#include <machine/machConst.h>
+#include <mips/cpuregs.h>
 
 #ifdef MIPS3		/* OUCH! */
 
