@@ -146,9 +146,16 @@ int hide_aout(int inf, const char *filename)
      * keep list.
      */
 
-    for(symp = symbase; symp < symbase + nsyms; symp++)
-	if(IS_GLOBAL_DEFINED(symp) && !in_keep_list(SYMSTR(symp)))
-	    symp->n_type = 0;
+    for(symp = symbase; symp < symbase + nsyms; symp++) {
+	if(!IS_GLOBAL_DEFINED(symp))		/* keep undefined syms */
+	    continue;
+
+	/* keep (C) symbols which are on the keep list */
+	if(SYMSTR(symp)[0] == '_' && in_keep_list(SYMSTR(symp) + 1))
+	    continue;
+
+	symp->n_type = 0;
+    }
 
     /*
      * Check whether the relocation entries reference any symbols that we
