@@ -36,7 +36,7 @@
 
 #if defined(LIBC_SCCS) && !defined(lint)
 /*static char *sccsid = "from: @(#)vfprintf.c	5.50 (Berkeley) 12/16/92";*/
-static char *rcsid = "$Id: vfprintf.c,v 1.10 1994/05/22 23:21:41 cgd Exp $";
+static char *rcsid = "$Id: vfprintf.c,v 1.11 1994/09/19 04:43:03 mycroft Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 /*
@@ -59,9 +59,6 @@ static char *rcsid = "$Id: vfprintf.c,v 1.10 1994/05/22 23:21:41 cgd Exp $";
 
 #include "local.h"
 #include "fvwrite.h"
-
-/* Define FLOATING_POINT to get floating point. */
-#define	FLOATING_POINT
 
 /*
  * Flush out all the vectors defined by the given uio,
