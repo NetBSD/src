@@ -1,4 +1,4 @@
-.\"	$NetBSD: main,v 1.90 2000/11/12 03:22:47 hubertf Exp $
+.\"	$NetBSD: main,v 1.91 2000/11/13 01:22:39 hubertf Exp $
 .\"
 .\" Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -124,7 +124,7 @@ is a completely integrated system.
 In addition to its highly portable, high performance kernel,
 .Nx
 features a complete set of user utilities, compilers for several
-languages, The X Window System,
+languages, The X Window System, firewall software
 and numerous other tools, all accompanied by full source code.
 .Pp
 .\" XXX Should we include some text here about NetBSD's license
@@ -140,8 +140,8 @@ wouldn't exist.
 .Pp
 The
 .Nx \*V
-release is a substantial improvement over its predecessors.  We have
-provided numerous significant functional enhancements, including
+release 
+provides numerous significant functional enhancements, including
 support for many new devices, integration of hundreds of bug fixes,
 new and updated kernel subsystems, and many userland enhancements. The
 result of these improvements is a stable operating system fit for
@@ -217,10 +217,10 @@ Support for the
 .Sq NTFS
 file system (read-only at this stage).
 .It
-Support for the
+Support for revision 1 of the
 .Tn Linux
 .Sq extfs
-(revision 1) file system.
+file system.
 .It
 Enhanced stability and usability of LFS (the
 .Bx
@@ -237,11 +237,11 @@ Support for
 Joliet extensions to the ISO9660 CD file system.
 .It
 Improved file system vnode locking mechanisms,
-thus resolving a source of some panics in the past.
+thus resolving a source of several panics in the past.
 .It
-Support for NFS (and RPC) over IPv6.
+Support for NFS and RPC over IPv6.
 .It
-The NFS locking protocol (implemented with
+NFS locking (implemented with
 .Xr rpc.lockd 8 )
 now works.
 .bullet)
@@ -439,8 +439,6 @@ release is organized as follows:
 .Pp
 .Pa .../NetBSD-\*V/
 .(tag LAST_MINUTE
-.It Li BUGS
-Known bugs list (somewhat incomplete and out of date).
 .It Li CHANGES
 Changes since earlier
 .Nx
@@ -498,7 +496,7 @@ This set contains the
 .Dq pkgsrc
 sources, which contain the infrastructure to build third-party packages.
 .br
-.Em 7.1 MB gzipped, 61.0 MB uncompressed
+.Em 5.6 MB gzipped, 57.0 MB uncompressed
 .It Sy sharesrc
 This set contains the
 .Dq share
@@ -516,11 +514,11 @@ sources which are not in
 or
 .Sy syssrc .
 .br
-.Em 23.8 MB gzipped, 117.4 MB uncompressed
+.Em 24.2 MB gzipped, 120.6 MB uncompressed
 .It Sy syssrc
 This set contains the sources to the
 .Nx \*V
-kernel,
+kernel for all architectures,
 .Xr config 8 ,
 and
 .Xr dbsym 8 .
@@ -529,7 +527,7 @@ and
 .It Sy xsrc
 This set contains the sources to the X Window System.
 .br
-.Em 35.2 MB gzipped, 175.2 MB uncompressed
+.Em 35.2 MB gzipped, 176.8 MB uncompressed
 .tag)
 .Pp
 All the above source sets are located in the
@@ -548,7 +546,7 @@ The
 subdirectory contains split
 versions of the source sets for those users who need to load the
 source sets from floppy or otherwise need a split distribution. The
-split sets are are named
+split sets are named
 .Pa "set_name." Ns Ar xx
 where
 .Pa set_name
@@ -846,7 +844,7 @@ logging in, enter
 to read the documentation for
 .Xr passwd 1 .
 To view the documentation for
-.Xr passwd 5 m
+.Xr passwd 5 ,
 enter
 .Pp
 .Dl # Ic "man 5 passwd"
@@ -911,7 +909,7 @@ you could be useful, send us mail or subscribe to:
 .Pp
 As a favor, please avoid mailing huge documents or files to these
 mailing lists. Instead, put the material you would have sent up
-for FTP somewhere, then mail the appropriate list about it, or, if
+for FTP or WWW somewhere, then mail the appropriate list about it, or, if
 you'd rather not do that, mail the list saying you'll send the data
 to those who want it.
 .

@@ -1,4 +1,4 @@
-.\"	$NetBSD: postinstall,v 1.18 2000/11/12 03:10:45 wiz Exp $
+.\"	$NetBSD: postinstall,v 1.19 2000/11/13 01:22:40 hubertf Exp $
 .\"
 .\" Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -39,7 +39,8 @@ Configuring
 .Pa /etc/rc.conf
 .Pp
 If you or the installation software haven't done any configuration of
-.Pa /etc/rc.conf ,
+.Pa /etc/rc.conf 
+(sysinst usually will),
 the system will drop you into single user mode on first reboot with the
 message
 .Pp
@@ -50,7 +51,9 @@ and with the root file system
 mounted read-write. When the system
 asks you to choose a shell, simply press
 .Key RETURN
-to get to a prompt. If you are asked for a terminal type, respond with
+to get to a 
+.Pa /bin/sh
+prompt. If you are asked for a terminal type, respond with
 .ie r_hp300 \{\
 .Ic hp300h
 for a local console, or whatever is appropriate for your serial console.
@@ -86,7 +89,8 @@ file. Modify it to your tastes, making sure that you set
 so that your changes will be enabled and a multi-user boot can
 proceed.
 Default values for the various programs can be found in
-/etc/defaults/rc.conf, where some in-line documentation may be found.
+.Pa /etc/defaults/rc.conf ,
+where some in-line documentation may be found.
 More complete documentation can be found in
 .Xr rc.conf 5 .
 .Pp
@@ -127,8 +131,9 @@ for a networked environment are
 .Ar defaultroute ,
 furthermore add an
 .Ar ifconfig_int
-for your interface
-.Aq int ,
+for your
+.Aq int
+network interface, 
 .ie r_macppc \{\
 where your on-board interfaces may be one of
 .Li mc0 , bm0 , No or Li gm0
@@ -180,8 +185,8 @@ Logging in
 .Pp
 After reboot, you can log in as
 .Li root
-at the login prompt. There
-is no initial password, but if you're using the machine in a
+at the login prompt. Unless you've set a password in sysinst, there
+is no initial password. If you're using the machine in a
 networked environment, you should create an account for yourself
 (see below) and protect it and the
 .Dq root
@@ -244,9 +249,24 @@ A browsable listing of available packages is at
 .Lk ftp://ftp.netbsd.org/pub/NetBSD/packages/pkgsrc/README.html
 .It
 Precompiled binaries can be found at
-.Lk ftp://ftp.netbsd.org/pub/NetBSD/packages/
+.Lk ftp://ftp.netbsd.org/pub/NetBSD/packages ,
+usually in the
+.Pa \*V/\*M/All
+subdir.  You can install them with the following commands:
+.Pp
+.Dl # Ic export PKG_PATH=ftp://ftp.netbsd.org/pub/NetBSD/packages/\*V/\*M/All
+.Dl # Ic pkg_add -v tcsh
+.Dl # Ic pkg_add -v cvs
+.Dl # Ic pkg_add -v apache
+.Dl # Ic pkg_add -v perl
+.Dl # Ic ...
+.Pp
+The above commands will install the tcsh shell, the CVS source code
+management system, the Apache web server and
+the perl programming language as well as all the packages they
+depend on. 
 .It
-Package sources for compiling packages can be obtained by
+Package sources for compiling packages on your own can be obtained by
 retrieving the file
 .Lk ftp://ftp.netbsd.org/pub/NetBSD/NetBSD-current/tar_files/pkgsrc.tar.gz
 They are typically extracted into
@@ -267,9 +287,9 @@ Misc
 .(bullet
 Edit
 .Pa /etc/mail/aliases
-to forward root mail to the right place (run
+to forward root mail to the right place. Don't forget to run
 .Xr newaliases 1
-afterwards.)
+afterwards.
 .It
 The
 .Pa /etc/mail/sendmail.cf

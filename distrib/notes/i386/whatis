@@ -1,4 +1,4 @@
-.\"	$NetBSD: whatis,v 1.13 2000/10/14 22:27:43 lukem Exp $
+.\"	$NetBSD: whatis,v 1.14 2000/11/13 01:22:41 hubertf Exp $
 .
 This is the eighth major release of
 .Nx
@@ -13,6 +13,7 @@ See the supported hardware list for details.
 Some (but not all!) notable \*M-specific improvements include:
 .(bullet
 Migration to the ELF binary format from a.out.
+You can still use your pre-1.5 a.out applications, though.
 .It
 Preliminary support for MCA (MicroChannel Architecture)
 .bullet)
