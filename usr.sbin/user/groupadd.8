@@ -1,4 +1,4 @@
-.\" $NetBSD: groupadd.8,v 1.3.4.2 2000/01/21 00:00:25 he Exp $ */
+.\" $NetBSD: groupadd.8,v 1.3.4.3 2000/10/25 17:05:24 he Exp $ */
 .\"
 .\"
 .\" Copyright (c) 1999 Alistair G. Crooks.  All rights reserved.
@@ -39,10 +39,9 @@
 .Nd add a group to the system
 .Sh SYNOPSIS
 .Nm
+.Op Fl ov
 .Op Fl g Ar gid
-.Op Fl o
-.Op Fl v
-group
+.Ar group
 .Sh DESCRIPTION
 The
 .Nm
@@ -60,6 +59,9 @@ enables verbose mode - explain the commands as they are executed.
 The
 .Nm
 utility exits 0 on success, and >0 if an error occurs.
+.Sh SEE ALSO
+.Xr group 5 ,
+.Xr user 8
 .Sh HISTORY
 The
 .Nm
@@ -72,6 +74,3 @@ package by the same author.
 The
 .Nm
 utility was written by Alistair G. Crooks (agc@netbsd.org).
-.Sh SEE ALSO
-.Xr group 5 ,
-.Xr user 8
