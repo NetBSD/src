@@ -1,4 +1,4 @@
-/*	$NetBSD: ipc.h,v 1.18 1998/11/12 16:15:45 christos Exp $	*/
+/*	$NetBSD: ipc.h,v 1.19 1999/04/17 20:55:45 kleink Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -52,12 +52,13 @@
 #define _SYS_IPC_H_
 
 struct ipc_perm {
-	ushort	cuid;	/* creator user id */
-	ushort	cgid;	/* creator group id */
-	ushort	uid;	/* user id */
-	ushort	gid;	/* group id */
-	ushort	mode;	/* r/w permission */
-	ushort	seq;	/* sequence # (to generate unique msg/sem/shm id) */
+	unsigned short	cuid;	/* creator user id */
+	unsigned short	cgid;	/* creator group id */
+	unsigned short	uid;	/* user id */
+	unsigned short	gid;	/* group id */
+	unsigned short	mode;	/* r/w permission */
+	unsigned short	seq;	/* sequence # (to generate unique msg/sem/shm
+				   id) */
 	key_t	key;	/* user specified msg/sem/shm key */
 };
 
