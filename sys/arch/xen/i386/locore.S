@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.S,v 1.9 2005/03/09 22:39:20 bouyer Exp $	*/
+/*	$NetBSD: locore.S,v 1.10 2005/03/16 14:52:29 bouyer Exp $	*/
 /*	NetBSD: locore.S,v 1.31 2004/08/26 10:12:33 junyoung Exp	*/
 
 /*-
@@ -929,6 +929,7 @@ ENTRY(copyoutstr)
 	 */
 	movl	$VM_MAXUSER_ADDRESS,%eax
 	subl	%edi,%eax
+	jc	_C_LABEL(copystr_efault)
 	cmpl	%edx,%eax
 	jae	1f
 	movl	%eax,%edx
@@ -983,6 +984,7 @@ ENTRY(copyinstr)
 	 */
 	movl	$VM_MAXUSER_ADDRESS,%eax
 	subl	%esi,%eax
+	jc	_C_LABEL(copystr_efault)
 	cmpl	%edx,%eax
 	jae	1f
 	movl	%eax,%edx
