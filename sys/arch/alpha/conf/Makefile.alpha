@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.alpha,v 1.28 1996/12/22 08:33:19 cgd Exp $
+#	$NetBSD: Makefile.alpha,v 1.28.2.1 1997/01/30 05:15:06 thorpej Exp $
 
 # Makefile for NetBSD
 #
@@ -40,7 +40,8 @@ CWARNFLAGS?=	-Werror -Wall -Wstrict-prototypes -Wmissing-prototypes \
 		-Wno-format
 CFLAGS=		${DEBUG} ${COPTS} ${CWARNFLAGS} -mno-fp-regs
 AFLAGS=		-traditional -D_LOCORE
-LINKFLAGS=	-N -Ttext fffffc0000230000 -e __start -G 4
+LOADADDRESS?=	fffffc0000230000
+LINKFLAGS=	-N -Ttext ${LOADADDRESS} -e __start -G 4
 STRIPFLAGS=	-g -X -x
 
 HOSTED_CC=	${CC}
@@ -126,7 +127,8 @@ newvers: ${SYSTEM_DEP} ${SYSTEM_SWAP_DEP}
 	${CC} ${CFLAGS} ${CPPFLAGS} ${PROF} -c vers.c
 
 
-clean::
+clean: cleankernel
+cleankernel:
 	rm -f eddep *netbsd netbsd.gdb tags *.[io] [a-z]*.s \
 	    [Ee]rrs linterrs makelinks genassym genassym.o assym.h
 
@@ -149,7 +151,7 @@ links:
 
 SRCS=	${ALPHA}/alpha/locore.s \
 	param.c ioconf.c ${CFILES} ${SFILES}
-depend:: .depend
+depend: .depend
 .depend: ${SRCS} assym.h param.c
 	${MKDEP} ${AFLAGS} ${CPPFLAGS} ${ALPHA}/alpha/locore.s
 	${MKDEP} -a ${CFLAGS} ${CPPFLAGS} param.c ioconf.c ${CFILES}
