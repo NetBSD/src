@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.467 2002/08/07 14:47:09 tron Exp $
+#	$NetBSD: mi,v 1.468 2002/08/08 16:50:37 abs Exp $
 ./sys				comp-sysutil-root
 ./usr/bin/addr2line		comp-debug-bin
 ./usr/bin/ar			comp-util-bin
@@ -1972,6 +1972,7 @@
 ./usr/share/man/cat3/hstrerror.0	comp-c-catman
 ./usr/share/man/cat3/htonl.0	comp-c-catman
 ./usr/share/man/cat3/htons.0	comp-c-catman
+./usr/share/man/cat3/humanize_number.0	comp-c-catman
 ./usr/share/man/cat3/hypot.0	comp-c-catman
 ./usr/share/man/cat3/hypotf.0	comp-c-catman
 ./usr/share/man/cat3/ieee.0	comp-c-catman
@@ -4571,6 +4572,7 @@
 ./usr/share/man/man3/hstrerror.3		comp-c-man
 ./usr/share/man/man3/htonl.3		comp-c-man
 ./usr/share/man/man3/htons.3		comp-c-man
+./usr/share/man/man3/humanize_number.3		comp-c-man
 ./usr/share/man/man3/hypot.3		comp-c-man
 ./usr/share/man/man3/hypotf.3		comp-c-man
 ./usr/share/man/man3/ieee.3		comp-c-man

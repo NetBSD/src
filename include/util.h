@@ -1,4 +1,4 @@
-/*	$NetBSD: util.h,v 1.23 2002/07/27 23:49:00 christos Exp $	*/
+/*	$NetBSD: util.h,v 1.24 2002/08/08 16:50:35 abs Exp $	*/
 
 /*-
  * Copyright (c) 1995
@@ -54,6 +54,14 @@
 #define	FPARSELN_UNESCREST	0x08
 #define	FPARSELN_UNESCALL	0x0f
 
+#define	HN_DECIMAL		0x01
+#define	HN_NOSPACE		0x02
+#define	HN_B			0x04
+#define	HN_DIVISOR_1000		0x08
+
+#define	HN_GETSCALE		0x10
+#define	HN_AUTOSCALE		0x20
+
 __BEGIN_DECLS
 struct iovec;
 struct passwd;
@@ -66,6 +74,7 @@ char	       *fparseln(FILE *, size_t *, size_t *, const char[3], int);
 const char     *getbootfile(void);
 int		getmaxpartitions(void);
 int		getrawpartition(void);
+int		humanize_number(char *, size_t, int64_t, const char *, int, int);
 void		login(const struct utmp *);
 void		loginx(const struct utmpx *);
 int		login_tty(int);
