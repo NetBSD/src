@@ -1,4 +1,4 @@
-/*	$NetBSD: i80312_space.c,v 1.1 2001/11/09 03:27:51 thorpej Exp $	*/
+/*	$NetBSD: i80312_space.c,v 1.2 2001/11/28 21:08:47 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
@@ -46,6 +46,7 @@
 
 #include <machine/bus.h>
 
+#include <arm/xscale/i80312reg.h>
 #include <arm/xscale/i80312var.h>
 
 /* Prototypes for all the bus_space structure functions */
@@ -284,16 +285,18 @@ i80312_mem_bs_map(void *t, bus_addr_t bpa, bus_size_t size, int flags,
 	struct i80312_softc *sc = t;
 	vaddr_t va;
 	uint32_t busbase, bussize;
-	paddr_t pa, endpa;
+	paddr_t pa, endpa, physbase;
 
 	if (bpa >= sc->sc_pmemout_base &&
 	    bpa < (sc->sc_pmemout_base + sc->sc_pmemout_size)) {
 		busbase = sc->sc_pmemout_base;
 		bussize = sc->sc_pmemout_size;
+		physbase = I80312_PCI_XLATE_PMW_BASE;
 	} else if (bpa >= sc->sc_smemout_base &&
 		   bpa < (sc->sc_smemout_base + sc->sc_smemout_size)) {
 		busbase = sc->sc_smemout_base;
 		bussize = sc->sc_smemout_size;
+		physbase = I80312_PCI_XLATE_SMW_BASE;
 	} else
 		return (EINVAL);
 
@@ -305,8 +308,8 @@ i80312_mem_bs_map(void *t, bus_addr_t bpa, bus_size_t size, int flags,
 	 * some kernel VA space and mapping the pages with pmap_enter().
 	 * pmap_enter() will map unmanaged pages as non-cacheable.
 	 */
-	pa = trunc_page(bpa - busbase);
-	endpa = round_page((bpa - busbase) + size);
+	pa = trunc_page((bpa - busbase) + physbase);
+	endpa = round_page(((bpa - busbase) + physbase) + size);
 
 	va = uvm_km_valloc(kernel_map, endpa - pa);
 	if (va == 0)
