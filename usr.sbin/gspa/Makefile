@@ -1,5 +1,5 @@
-#	$NetBSD: Makefile,v 1.2 1997/10/17 06:58:37 lukem Exp $
+#	$NetBSD: Makefile,v 1.3 2002/06/07 12:00:10 is Exp $
 
-SUBDIR += gspa gspahextoc
+SUBDIR += gspa
 
 .include <bsd.subdir.mk>
