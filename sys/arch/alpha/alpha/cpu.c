@@ -1,7 +1,7 @@
-/* $NetBSD: cpu.c,v 1.45 2000/05/26 21:19:19 thorpej Exp $ */
+/* $NetBSD: cpu.c,v 1.46 2000/05/31 05:14:26 thorpej Exp $ */
 
 /*-
- * Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.
+ * Copyright (c) 1998, 1999, 2000 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -66,7 +66,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.45 2000/05/26 21:19:19 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.46 2000/05/31 05:14:26 thorpej Exp $");
 
 #include "opt_multiprocessor.h"
 
@@ -100,8 +100,6 @@ __volatile u_long cpus_running;
 
 void	cpu_boot_secondary __P((struct cpu_info *));
 #else
-paddr_t curpcb;				/* PA of our current context */
-struct	proc *fpcurproc;		/* current owner of FPU */
 struct	cpu_info cpu_info_store;
 #endif /* MULTIPROCESSOR */
 
@@ -219,10 +217,10 @@ cpuattach(parent, dev, aux)
 	int needcomma;
 #endif
 	u_int32_t major, minor;
+	struct cpu_info *ci;
 #if defined(MULTIPROCESSOR)
 	extern paddr_t avail_start, avail_end;
 	struct pcb *pcb;
-	struct cpu_info *ci;
 	struct pglist mlist;
 	int error;
 #endif
@@ -290,16 +288,20 @@ recognized:
 	}
 #endif
 
-#if defined(MULTIPROCESSOR)
 	if (ma->ma_slot > ALPHA_WHAMI_MAXID) {
+		if (ma->ma_slot == hwrpb->rpb_primary_cpu_id)
+			panic("cpu_attach: primary CPU ID too large");
 		printf("%s: procssor ID too large, ignoring\n", dev->dv_xname);
 		return;
 	}
 
+#if defined(MULTIPROCESSOR)
 	ci = &cpu_info[ma->ma_slot];
+#else
+	ci = &cpu_info_store;
+#endif
 	ci->ci_cpuid = ma->ma_slot;
 	ci->ci_dev = dev;
-#endif /* MULTIPROCESSOR */
 
 	/*
 	 * Though we could (should?) attach the LCA cpus' PCI
