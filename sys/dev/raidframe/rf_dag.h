@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_dag.h,v 1.11 2004/03/04 00:56:13 oster Exp $	*/
+/*	$NetBSD: rf_dag.h,v 1.12 2004/03/18 16:40:05 oster Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -117,7 +117,8 @@ struct RF_DagNode_s {
 	RF_DagHeader_t *dagHdr;	/* ptr to head of dag containing this node */
 	void   *dagFuncData;	/* dag execution func uses this for whatever
 				 * it wants */
-	RF_DagNode_t *next;
+	RF_DagNode_t *next;     /* next in terms of propagating results */
+	RF_DagNode_t *list_next; /* next in the list of DAG nodes for this DAG */
 	int     nodeNum;	/* used by PrintDAG for debug only */
 	int     visited;	/* used to avoid re-visiting nodes on DAG
 				 * walks */
@@ -168,7 +169,7 @@ struct RF_DagHeader_s {
 					 * completes */
 	void   *cbArg;		/* argument for cbFunc */
 	char   *creator;	/* name of function used to create this dag */
-
+	RF_DagNode_t *nodes;    /* linked list of nodes used in this DAG */
 	RF_Raid_t *raidPtr;	/* the descriptor for the RAID device this DAG
 				 * is for */
 	void   *bp;		/* the bp for this I/O passed down from the
