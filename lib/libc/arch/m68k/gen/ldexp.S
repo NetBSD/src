@@ -1,4 +1,4 @@
-/*	$NetBSD: ldexp.S,v 1.2 1995/12/13 19:36:36 thorpej Exp $	*/
+/*	$NetBSD: ldexp.S,v 1.3 1996/06/26 15:04:06 jtc Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -43,7 +43,7 @@
 #if 0
 	RCSID("from: @(#)ldexp.s	5.1 (Berkeley) 5/12/90")
 #else
-	RCSID("$NetBSD: ldexp.S,v 1.2 1995/12/13 19:36:36 thorpej Exp $")
+	RCSID("$NetBSD: ldexp.S,v 1.3 1996/06/26 15:04:06 jtc Exp $")
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -54,8 +54,7 @@
 ENTRY(ldexp)
 	fmoved		sp@(4),fp0
 	fbeq		Ldone
-	ftwotoxl	sp@(12),fp1
-	fmulx		fp1,fp0
+	fscalel		sp@(12),fp0
 Ldone:
 	fmoved		fp0,sp@-
 	movel		sp@+,d0
