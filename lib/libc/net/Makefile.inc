@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.52 2000/03/02 07:41:52 itojun Exp $
+#	$NetBSD: Makefile.inc,v 1.53 2000/03/14 14:34:50 sjg Exp $
 #	@(#)Makefile.inc	8.2 (Berkeley) 9/5/93
 
 # net sources
@@ -10,7 +10,7 @@ SRCS+=	__cmsg_alignbytes.c base64.c ethers.c gethnamaddr.c getifaddrs.c \
 	getservent.c herror.c hesiod.c inet_lnaof.c inet_makeaddr.c \
 	inet_net_ntop.c inet_net_pton.c inet_neta.c inet_ntop.c inet_pton.c \
 	inet_netof.c inet_network.c inet_ntoa.c iso_addr.c linkaddr.c \
-	nsdispatch.c nslexer.c nsparser.c ns_addr.c ns_ntoa.c nsap_addr.c \
+	nsdispatch.c nslexer.l nsparser.y ns_addr.c ns_ntoa.c nsap_addr.c \
 	rcmd.c recv.c res_comp.c res_data.c res_debug.c res_init.c \
 	res_mkquery.c res_query.c res_send.c send.c sethostent.c
 
