@@ -1,4 +1,4 @@
-/*      $NetBSD: en.c,v 1.6 2002/09/11 02:17:15 mycroft Exp $        */
+/*      $NetBSD: en.c,v 1.7 2002/09/11 06:32:07 mycroft Exp $        */
 /*
  * Copyright (c) 1996 Rolf Grossmann
  * All rights reserved.
@@ -237,6 +237,7 @@ en_put(struct iodesc *desc, void *pkt, size_t len)
 
 		while(1) {
 			if (en_wait_for_intr(ENETX_DMA_INTR)) {
+				printf("en_put: timed out\n");
 				errno = EIO;
 				return -1;
 			}
@@ -331,10 +332,8 @@ en_get(struct iodesc *desc, void *pkt, size_t len, time_t timeout)
 #endif
 
 	while(1) {
-		if (en_wait_for_intr(ENETR_DMA_INTR)) {	/* ### use timeout? */
-			errno = EIO;
- 			return -1;
-		}
+		if (en_wait_for_intr(ENETR_DMA_INTR))	/* ### use timeout? */
+			return 0;
 		
 		state = rxdma->dd_csr &
 			(DMACSR_BUSEXC | DMACSR_COMPLETE
@@ -510,6 +509,5 @@ en_wait_for_intr(int flag)
 		if (*intrstat & flag)
 			return 0;
 
-	printf("enintr: timed out.\n");
 	return -1;
 }
