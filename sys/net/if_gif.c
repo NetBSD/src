@@ -1,4 +1,4 @@
-/*	$NetBSD: if_gif.c,v 1.4 1999/12/13 15:17:19 itojun Exp $	*/
+/*	$NetBSD: if_gif.c,v 1.5 2000/01/06 15:46:08 itojun Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -33,25 +33,16 @@
  * gif.c
  */
 
-#if (defined(__FreeBSD__) && __FreeBSD__ >= 3) || defined(__NetBSD__)
 #include "opt_inet.h"
-#endif
 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/kernel.h>
-#if defined(__FreeBSD__) && __FreeBSD__ >= 3
-#include <sys/malloc.h>
-#endif
 #include <sys/mbuf.h>
 #include <sys/socket.h>
 #include <sys/sockio.h>
 #include <sys/errno.h>
-#if defined(__FreeBSD__) || __FreeBSD__ >= 3
-/*nothing*/
-#else
 #include <sys/ioctl.h>
-#endif
 #include <sys/time.h>
 #include <sys/syslog.h>
 #include <machine/cpu.h>
@@ -89,11 +80,7 @@
 
 #if NGIF > 0
 
-#ifdef __FreeBSD__
-void gifattach __P((void *));
-#else
 void gifattach __P((int));
-#endif
 
 /*
  * gif global variable definitions
@@ -103,11 +90,7 @@ struct gif_softc *gif = 0;
 
 void
 gifattach(dummy)
-#ifdef __FreeBSD__
-	void *dummy;
-#else
 	int dummy;
-#endif
 {
 	register struct gif_softc *sc;
 	register int i;
@@ -127,10 +110,6 @@ gifattach(dummy)
 #endif
 	}
 }
-
-#ifdef __FreeBSD__
-PSEUDO_SET(gifattach, if_gif);
-#endif
 
 int
 gif_output(ifp, m, dst, rt)
@@ -330,7 +309,6 @@ gif_ioctl(ifp, cmd, data)
 
 	case SIOCADDMULTI:
 	case SIOCDELMULTI:
-#if !(defined(__FreeBSD__) && __FreeBSD__ >= 3)
 		switch (ifr->ifr_addr.sa_family) {
 #ifdef INET
 		case AF_INET:	/* IP supports Multicast */
@@ -344,29 +322,21 @@ gif_ioctl(ifp, cmd, data)
 			error = EAFNOSUPPORT;
 			break;
 		}
-#endif /*not FreeBSD3*/
 		break;
 
 #ifdef	SIOCSIFMTU /* xxx */
-#ifndef __OpenBSD__
 	case SIOCGIFMTU:
 		break;
 	case SIOCSIFMTU:
 		{
-#ifdef __bsdi__
-			short mtu;
-			mtu = *(short *)ifr->ifr_data;
-#else
 			u_long mtu;
 			mtu = ifr->ifr_mtu;
-#endif
 			if (mtu < GIF_MTU_MIN || mtu > GIF_MTU_MAX) {
 				return (EINVAL);
 			}
 			ifp->if_mtu = mtu;
 		}
 		break;
-#endif
 #endif /* SIOCSIFMTU */
 
 	case SIOCSIFPHYADDR:

@@ -1,4 +1,4 @@
-/*	$NetBSD: ipsec.c,v 1.11 1999/12/13 15:17:23 itojun Exp $	*/
+/*	$NetBSD: ipsec.c,v 1.12 2000/01/06 15:46:10 itojun Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -33,12 +33,8 @@
  * IPsec controller part.
  */
 
-#if (defined(__FreeBSD__) && __FreeBSD__ >= 3) || defined(__NetBSD__)
 #include "opt_inet.h"
-#ifdef __NetBSD__	/*XXX*/
 #include "opt_ipsec.h"
-#endif
-#endif
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -52,13 +48,9 @@
 #include <sys/time.h>
 #include <sys/kernel.h>
 #include <sys/syslog.h>
-#ifdef __NetBSD__
 #include <sys/proc.h>
 #include <vm/vm.h>
-#endif
-#if defined(__NetBSD__) || defined(__FreeBSD__)
 #include <sys/sysctl.h>
-#endif
 
 #include <net/if.h>
 #include <net/route.h>
@@ -106,31 +98,6 @@ int ip4_ah_net_deflev = IPSEC_LEVEL_USE;
 struct secpolicy ip4_def_policy;
 int ip4_ipsec_ecn = 0;		/* ECN ignore(-1)/forbidden(0)/allowed(1) */
 
-#ifdef __FreeBSD__
-/* net.inet.ipsec */
-SYSCTL_STRUCT(_net_inet_ipsec, IPSECCTL_STATS,
-	stats, CTLFLAG_RD,	&ipsecstat,	ipsecstat, "");
-SYSCTL_INT(_net_inet_ipsec, IPSECCTL_DEF_POLICY,
-	def_policy, CTLFLAG_RW,	&ip4_def_policy.policy,	0, "");
-SYSCTL_INT(_net_inet_ipsec, IPSECCTL_DEF_ESP_TRANSLEV, esp_trans_deflev,
-	CTLFLAG_RW, &ip4_esp_trans_deflev,	0, "");
-SYSCTL_INT(_net_inet_ipsec, IPSECCTL_DEF_ESP_NETLEV, esp_net_deflev,
-	CTLFLAG_RW, &ip4_esp_net_deflev,	0, "");
-SYSCTL_INT(_net_inet_ipsec, IPSECCTL_DEF_AH_TRANSLEV, ah_trans_deflev,
-	CTLFLAG_RW, &ip4_ah_trans_deflev,	0, "");
-SYSCTL_INT(_net_inet_ipsec, IPSECCTL_DEF_AH_NETLEV, ah_net_deflev,
-	CTLFLAG_RW, &ip4_ah_net_deflev,	0, "");
-SYSCTL_INT(_net_inet_ipsec, IPSECCTL_INBOUND_CALL_IKE,
-	inbound_call_ike, CTLFLAG_RW,	&ip4_inbound_call_ike,	0, "");
-SYSCTL_INT(_net_inet_ipsec, IPSECCTL_AH_CLEARTOS,
-	ah_cleartos, CTLFLAG_RW,	&ip4_ah_cleartos,	0, "");
-SYSCTL_INT(_net_inet_ipsec, IPSECCTL_AH_OFFSETMASK,
-	ah_offsetmask, CTLFLAG_RW,	&ip4_ah_offsetmask,	0, "");
-SYSCTL_INT(_net_inet_ipsec, IPSECCTL_DFBIT,
-	dfbit, CTLFLAG_RW,	&ip4_ipsec_dfbit,	0, "");
-SYSCTL_INT(_net_inet_ipsec, IPSECCTL_ECN,
-	ecn, CTLFLAG_RW,	&ip4_ipsec_ecn,	0, "");
-#endif /* __FreeBSD__ */
 
 #ifdef INET6
 struct ipsecstat ipsec6stat;
@@ -142,25 +109,6 @@ int ip6_ah_net_deflev = IPSEC_LEVEL_USE;
 struct secpolicy ip6_def_policy;
 int ip6_ipsec_ecn = 0;		/* ECN ignore(-1)/forbidden(0)/allowed(1) */
 
-#ifdef __FreeBSD__
-/* net.inet6.ipsec6 */
-SYSCTL_STRUCT(_net_inet6_ipsec6, IPSECCTL_STATS,
-	stats, CTLFLAG_RD, &ipsec6stat, ipsecstat, "");
-SYSCTL_INT(_net_inet6_ipsec6, IPSECCTL_DEF_POLICY,
-	def_policy, CTLFLAG_RW,	&ip6_def_policy.policy,	0, "");
-SYSCTL_INT(_net_inet6_ipsec6, IPSECCTL_DEF_ESP_TRANSLEV, esp_trans_deflev,
-	CTLFLAG_RW, &ip6_esp_trans_deflev,	0, "");
-SYSCTL_INT(_net_inet6_ipsec6, IPSECCTL_DEF_ESP_NETLEV, esp_net_deflev,
-	CTLFLAG_RW, &ip6_esp_net_deflev,	0, "");
-SYSCTL_INT(_net_inet6_ipsec6, IPSECCTL_DEF_AH_TRANSLEV, ah_trans_deflev,
-	CTLFLAG_RW, &ip6_ah_trans_deflev,	0, "");
-SYSCTL_INT(_net_inet6_ipsec6, IPSECCTL_DEF_AH_NETLEV, ah_net_deflev,
-	CTLFLAG_RW, &ip6_ah_net_deflev,	0, "");
-SYSCTL_INT(_net_inet6_ipsec6, IPSECCTL_INBOUND_CALL_IKE,
-	inbound_call_ike, CTLFLAG_RW,	&ip6_inbound_call_ike,	0, "");
-SYSCTL_INT(_net_inet6_ipsec6, IPSECCTL_ECN,
-	ecn, CTLFLAG_RW,	&ip6_ipsec_ecn,	0, "");
-#endif /*__FreeBSD__*/
 #endif /* INET6 */
 
 static int ipsec_setsecidx __P((struct secindex *, u_int, struct mbuf *, int));
@@ -229,26 +177,18 @@ ipsec4_getpolicybysock(m, so, error)
 	switch (so->so_proto->pr_domain->dom_family) {
 	case AF_INET:
 		sp = sotoinpcb(so)->inp_sp;
-#if defined(__NetBSD__) || (defined(__FreeBSD__) && __FreeBSD__ >= 3)
 		if (so->so_uid == 0)	/*XXX*/
 			priv = 1;
 		else
 			priv = 0;
-#else
-		priv = sotoinpcb(so)->inp_socket->so_state & SS_PRIV;
-#endif
 		break;
 #ifdef INET6
 	case AF_INET6:
 		sp = sotoin6pcb(so)->in6p_sp;
-#if defined(__NetBSD__) || (defined(__FreeBSD__) && __FreeBSD__ >= 3)
 		if (so->so_uid == 0)	/*XXX*/
 			priv = 1;
 		else
 			priv = 0;
-#else
-		priv = sotoin6pcb(so)->in6p_socket->so_state & SS_PRIV;
-#endif
 		break;
 #endif
 	default:
@@ -469,14 +409,10 @@ ipsec6_getpolicybysock(m, so, error)
 		panic("ipsec6_getpolicybysock: no socket found.\n");
 
 	/* when privilieged socket */
-#if defined(__NetBSD__) || (defined(__FreeBSD__) && __FreeBSD__ >= 3)
 	if (so->so_uid == 0)	/*XXX*/
 		priv = 1;
 	else
 		priv = 0;
-#else
-	priv = (in6p->in6p_socket->so_state & SS_PRIV);
-#endif
 	if (priv) {
 		switch (in6p->in6p_sp->policy) {
 		case IPSEC_POLICY_BYPASS:
@@ -1077,11 +1013,7 @@ ipsec_get_policy(pcb_sp, mp)
 		return ENOBUFS;
 	}
 
-#if defined(__FreeBSD__) && __FreeBSD__ >= 3
-	*mp = m_get(M_WAIT, MT_DATA);
-#else
 	*mp = m_get(M_WAIT, MT_SOOPTS);
-#endif
 	(*mp)->m_len = PFKEY_EXTLEN(xpl);
 	m_copyback((*mp), 0, PFKEY_EXTLEN(xpl), (caddr_t)xpl);
 	KEYDEBUG(KEYDEBUG_IPSEC_DUMP,
@@ -1399,11 +1331,7 @@ ipsec6_in_reject_so(m, so)
 int
 ipsec6_in_reject(m, in6p)
 	struct mbuf *m;
-#if defined(__FreeBSD__) && __FreeBSD__ >= 3
-	struct inpcb *in6p;
-#else
 	struct in6pcb *in6p;
-#endif
 {
 	if (in6p == NULL)
 		return ipsec6_in_reject_so(m, NULL);
@@ -2137,11 +2065,7 @@ ipsec4_output(state, sp, flags)
 		 * There may be the case that SA status will be changed when
 		 * we are refering to one. So calling splsoftnet().
 		 */
-#ifdef __NetBSD__
 		s = splsoftnet();
-#else
-		s = splnet();
-#endif
 
 		if (isr->mode == IPSEC_MODE_TUNNEL && isr->proxy) {
 			/*
@@ -2163,7 +2087,7 @@ ipsec4_output(state, sp, flags)
 			         _INADDRBYSA(isr->sa->proxy),
 			         _INALENBYAF(isr->proxy->sa_family)) != 0) {
 				printf("ipsec4_output: proxy address mismatch.\n");
-#if defined(IPSEC_DEBUG)
+#ifdef IPSEC_DEBUG
 				printf("  SP: ");
 				ipsec_hexdump((caddr_t)isr->proxy,
 				        _SALENBYAF(isr->proxy->sa_family));
@@ -2172,7 +2096,7 @@ ipsec4_output(state, sp, flags)
 				ipsec_hexdump((caddr_t)isr->sa->proxy,
 				        _SALENBYAF(isr->sa->proxy->sa_family));
 				printf("\n");
-#endif /* defined(IPSEC_DEBUG) */
+#endif /* IPSEC_DEBUG */
 				printf("ipsec4_output: applyed SP's proxy.\n");
 			}
 
@@ -2496,11 +2420,7 @@ ipsec6_output_tunnel(state, sp, flags)
 		 * There may be the case that SA status will be changed when
 		 * we are refering to one. So calling splsoftnet().
 		 */
-#ifdef __NetBSD__
 		s = splsoftnet();
-#else
-		s = splnet();
-#endif
 
 		if (isr->mode == IPSEC_MODE_TUNNEL && isr->proxy) {
 			/*
@@ -2522,7 +2442,7 @@ ipsec6_output_tunnel(state, sp, flags)
 			         _INADDRBYSA(isr->sa->proxy),
 			         _INALENBYAF(isr->proxy->sa_family)) != 0) {
 				printf("ipsec6_output_tunnel: proxy address mismatch.\n");
-#if defined(IPSEC_DEBUG)
+#ifdef IPSEC_DEBUG
 				printf("  SP: ");
 				ipsec_hexdump((caddr_t)isr->proxy,
 				        _SALENBYAF(isr->proxy->sa_family));
@@ -2531,7 +2451,7 @@ ipsec6_output_tunnel(state, sp, flags)
 				ipsec_hexdump((caddr_t)isr->sa->proxy,
 				        _SALENBYAF(isr->sa->proxy->sa_family));
 				printf("\n");
-#endif /* defined(IPSEC_DEBUG) */
+#endif /* IPSEC_DEBUG */
 				printf("ipsec6_output_tunnel: applyed SP's proxy.\n");
 			}
 
@@ -2821,18 +2741,7 @@ ipsec_copypkt(m)
 			 * to the cluster.
 			 * XXX: is this approach effective?
 			 */
-			if (
-#ifdef __bsdi__
-				n->m_ext.ext_func ||
-#else
-				n->m_ext.ext_free ||
-#endif 
-#ifdef __NetBSD__
-				MCLISREFERENCED(n)
-#else
-				mclrefcnt[mtocl(n->m_ext.ext_buf)] > 1
-#endif
-			    )
+			if (n->m_ext.ext_free || MCLISREFERENCED(n))
 			{
 				int remain, copied;
 				struct mbuf *mm;
@@ -2915,138 +2824,8 @@ ipsec_copypkt(m)
 	return(NULL);
 }
 
-#ifdef __bsdi__
-/*
- * System control for IP
- */
-u_char	ipsecctlerrmap[PRC_NCMDS] = {
-	0,		0,		0,		0,
-	0,		EMSGSIZE,	EHOSTDOWN,	EHOSTUNREACH,
-	EHOSTUNREACH,	EHOSTUNREACH,	ECONNREFUSED,	ECONNREFUSED,
-	EMSGSIZE,	EHOSTUNREACH,	0,		0,
-	0,		0,		0,		0,
-	ENOPROTOOPT
-};
-
-int *ipsec_sysvars[] = IPSECCTL_VARS;
-
-int
-ipsec_sysctl(name, namelen, oldp, oldlenp, newp, newlen)
-	int	*name;
-	u_int	namelen;
-	void	*oldp;
-	size_t	*oldlenp;
-	void	*newp;
-	size_t	newlen;
-{
-	if (name[0] >= IPSECCTL_MAXID)
-		return (EOPNOTSUPP);
-
-	switch (name[0]) {
-	case IPSECCTL_STATS:
-		return sysctl_rdtrunc(oldp, oldlenp, newp, &ipsecstat,
-		    sizeof(ipsecstat));
-	case IPSECCTL_DEF_POLICY:
-		if (newp != NULL && newlen == sizeof(int)) {
-			switch (*(int *)newp) {
-			case IPSEC_POLICY_DISCARD:
-			case IPSEC_POLICY_NONE:
-				break;
-			default:
-				return EINVAL;
-			}
-		}
-		return (sysctl_int_arr(ipsec_sysvars, name, namelen,
-		    oldp, oldlenp, newp, newlen));
-	case IPSECCTL_DEF_ESP_TRANSLEV:
-	case IPSECCTL_DEF_ESP_NETLEV:
-	case IPSECCTL_DEF_AH_TRANSLEV:	
-	case IPSECCTL_DEF_AH_NETLEV:
-		if (newp != NULL && newlen == sizeof(int)) {
-			switch (*(int *)newp) {
-			case IPSEC_LEVEL_USE:
-			case IPSEC_LEVEL_REQUIRE:
-				break;
-			default:
-				return EINVAL;
-			}
-		}
-		return (sysctl_int_arr(ipsec_sysvars, name, namelen,
-		    oldp, oldlenp, newp, newlen));
-	default:
-		return (sysctl_int_arr(ipsec_sysvars, name, namelen,
-		    oldp, oldlenp, newp, newlen));
-	}
-}
-
-#ifdef INET6
-/*
- * System control for IP6
- */
-u_char	ipsec6ctlerrmap[PRC_NCMDS] = {
-	0,		0,		0,		0,
-	0,		EMSGSIZE,	EHOSTDOWN,	EHOSTUNREACH,
-	EHOSTUNREACH,	EHOSTUNREACH,	ECONNREFUSED,	ECONNREFUSED,
-	EMSGSIZE,	EHOSTUNREACH,	0,		0,
-	0,		0,		0,		0,
-	ENOPROTOOPT
-};
-
-int *ipsec6_sysvars[] = IPSEC6CTL_VARS;
-
-int
-ipsec6_sysctl(name, namelen, oldp, oldlenp, newp, newlen)
-	int	*name;
-	u_int	namelen;
-	void	*oldp;
-	size_t	*oldlenp;
-	void	*newp;
-	size_t	newlen;
-{
-	if (name[0] >= IPSECCTL_MAXID)	/* xxx no 6 in this definition */
-		return (EOPNOTSUPP);
-
-	switch (name[0]) {
-	case IPSECCTL_STATS:	/* xxx no 6 in this definition */
-		return sysctl_rdtrunc(oldp, oldlenp, newp, &ipsec6stat,
-		    sizeof(ipsec6stat));
-	case IPSECCTL_DEF_POLICY:
-		if (newp != NULL && newlen == sizeof(int)) {
-			switch (*(int *)newp) {
-			case IPSEC_POLICY_DISCARD:
-			case IPSEC_POLICY_NONE:
-				break;
-			default:
-				return EINVAL;
-			}
-		}
-		return (sysctl_int_arr(ipsec6_sysvars, name, namelen,
-		    oldp, oldlenp, newp, newlen));
-	case IPSECCTL_DEF_ESP_TRANSLEV:
-	case IPSECCTL_DEF_ESP_NETLEV:
-	case IPSECCTL_DEF_AH_TRANSLEV:	
-	case IPSECCTL_DEF_AH_NETLEV:
-		if (newp != NULL && newlen == sizeof(int)) {
-			switch (*(int *)newp) {
-			case IPSEC_LEVEL_USE:
-			case IPSEC_LEVEL_REQUIRE:
-				break;
-			default:
-				return EINVAL;
-			}
-		}
-		return (sysctl_int_arr(ipsec6_sysvars, name, namelen,
-		    oldp, oldlenp, newp, newlen));
-	default:
-		return (sysctl_int_arr(ipsec6_sysvars, name, namelen,
-		    oldp, oldlenp, newp, newlen));
-	}
-}
-#endif /*INET6*/
-#endif /*__bsdi__*/
 
 
-#ifdef __NetBSD__
 /*
  * System control for IPSEC
  */
@@ -3225,5 +3004,3 @@ ipsec6_sysctl(name, namelen, oldp, oldlenp, newp, newlen)
 	/* NOTREACHED */
 }
 #endif /*INET6*/
-
-#endif /* __NetBSD__ */

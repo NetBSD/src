@@ -1,4 +1,4 @@
-/*	$NetBSD: udp6_usrreq.c,v 1.16 1999/12/22 04:03:03 itojun Exp $	*/
+/*	$NetBSD: udp6_usrreq.c,v 1.17 2000/01/06 15:46:11 itojun Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -64,9 +64,7 @@
  *	@(#)udp_var.h	8.1 (Berkeley) 6/10/93
  */
 
-#ifdef __NetBSD__	/*XXX*/
 #include "opt_ipsec.h"
-#endif
 
 #include <sys/param.h>
 #include <sys/malloc.h>
@@ -77,9 +75,7 @@
 #include <sys/errno.h>
 #include <sys/stat.h>
 #include <sys/systm.h>
-#ifdef __NetBSD__
 #include <sys/proc.h>
-#endif
 #include <sys/syslog.h>
 
 #include <net/if.h>
@@ -114,7 +110,7 @@
 
 struct	in6pcb *udp6_last_in6pcb = &udb6;
 
-#ifndef __NetBSD__
+#ifdef UDP6
 static	int in6_mcmatch __P((struct in6pcb *, struct in6_addr *, struct ifnet *));
 #endif
 static	void udp6_detach __P((struct in6pcb *));
@@ -126,7 +122,7 @@ udp6_init()
 	udb6.in6p_next = udb6.in6p_prev = &udb6;
 }
 
-#ifndef __NetBSD__
+#ifdef UDP6
 static int
 in6_mcmatch(in6p, ia6, ifp)
 	struct in6pcb *in6p;
@@ -948,33 +944,6 @@ udp6_detach(in6p)
 	splx(s);
 }
 
-#ifdef __bsdi__
-int *udp6_sysvars[] = UDP6CTL_VARS;
-
-int
-udp6_sysctl(name, namelen, oldp, oldlenp, newp, newlen)
-	int	*name;
-	u_int	namelen;
-	void	*oldp;
-	size_t	*oldlenp;
-	void	*newp;
-	size_t	newlen;
-{
-	if (name[0] >= UDP6CTL_MAXID)
-		return (EOPNOTSUPP);
-	switch (name[0]) {
-	case UDP6CTL_STATS:
-		return sysctl_rdtrunc(oldp, oldlenp, newp, &udp6stat,
-		    sizeof(udp6stat));
-	
-	default:
-		return (sysctl_int_arr(udp6_sysvars, name, namelen,
-		    oldp, oldlenp, newp, newlen));
-	}
-}
-#endif /*__bsdi__*/
-
-#ifdef __NetBSD__
 #include <vm/vm.h>
 #include <sys/sysctl.h>
 
@@ -1004,4 +973,3 @@ udp6_sysctl(name, namelen, oldp, oldlenp, newp, newlen)
 	}
 	/* NOTREACHED */
 }
-#endif

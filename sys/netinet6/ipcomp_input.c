@@ -1,4 +1,4 @@
-/*	$NetBSD: ipcomp_input.c,v 1.6 1999/11/05 14:57:00 itojun Exp $	*/
+/*	$NetBSD: ipcomp_input.c,v 1.7 2000/01/06 15:46:10 itojun Exp $	*/
 
 /*
  * Copyright (C) 1999 WIDE Project.
@@ -33,9 +33,7 @@
  * RFC2393 IP payload compression protocol (IPComp).
  */
 
-#if (defined(__FreeBSD__) && __FreeBSD__ >= 3) || defined(__NetBSD__)
 #include "opt_inet.h"
-#endif
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -64,9 +62,7 @@
 
 #ifdef INET6
 #include <netinet6/ip6.h>
-#if !defined(__FreeBSD__) || __FreeBSD__ < 3
 #include <netinet6/in6_pcb.h>
-#endif
 #include <netinet6/ip6_var.h>
 #endif
 #include <netinet6/ipcomp.h>
@@ -86,9 +82,7 @@
 
 #ifdef INET
 extern struct protosw inetsw[];
-#if defined(__bsdi__) || defined(__NetBSD__)
 extern u_char ip_protox[];
-#endif
 
 void
 #if __STDC__

@@ -1,4 +1,4 @@
-/*	$NetBSD: pim6_var.h,v 1.6 1999/12/13 15:17:23 itojun Exp $	*/
+/*	$NetBSD: pim6_var.h,v 1.7 2000/01/06 15:46:11 itojun Exp $	*/
 
 /*
  * Copyright (C) 1998 WIDE Project.
@@ -60,7 +60,6 @@ int pim6_input __P((struct mbuf **, int*, int));
 /*
  * Names for PIM sysctl objects
  */
-#if (defined(__bsdi__)) || (defined(__NetBSD__))
 #define PIMCTL_STATS		1	/* statistics (read-only) */
 #define PIMCTL_MAXID		2
 
@@ -68,6 +67,5 @@ int pim6_input __P((struct mbuf **, int*, int));
 	{ 0, 0 }, \
 	{ 0, 0 }, \
 }
-#endif /* bsdi || NetBSD */
 
 #endif /* _NETINET6_PIM6_VAR_H_ */

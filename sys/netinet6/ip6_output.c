@@ -1,4 +1,4 @@
-/*	$NetBSD: ip6_output.c,v 1.10 2000/01/06 06:41:19 itojun Exp $	*/
+/*	$NetBSD: ip6_output.c,v 1.11 2000/01/06 15:46:10 itojun Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -64,15 +64,8 @@
  *	@(#)ip_output.c	8.3 (Berkeley) 1/21/94
  */
 
-#ifdef __FreeBSD__
-#include "opt_ip6fw.h"
-#endif
-#if (defined(__FreeBSD__) && __FreeBSD__ >= 3) || defined(__NetBSD__)
 #include "opt_inet.h"
-#ifdef __NetBSD__	/*XXX*/
 #include "opt_ipsec.h"
-#endif
-#endif
 
 #include <sys/param.h>
 #include <sys/malloc.h>
@@ -82,12 +75,6 @@
 #include <sys/socket.h>
 #include <sys/socketvar.h>
 #include <sys/systm.h>
-#if (defined(__FreeBSD__) && __FreeBSD__ >= 3)
-#include <sys/kernel.h>
-#endif
-#if defined(__bsdi__) && _BSDI_VERSION >= 199802
-#include <machine/pcpu.h>
-#endif
 #include <sys/proc.h>
 
 #include <net/if.h>
@@ -95,23 +82,11 @@
 
 #include <netinet/in.h>
 #include <netinet/in_var.h>
-#if defined(__OpenBSD__) || (defined(__bsdi__) && _BSDI_VERSION >= 199802)
-#include <netinet/in_systm.h>
-#include <netinet/ip.h>
-#endif
 #include <netinet6/ip6.h>
 #include <netinet6/icmp6.h>
 #include <netinet6/ip6_var.h>
-#if (defined(__FreeBSD__) && __FreeBSD__ >= 3) || defined(__OpenBSD__) || (defined(__bsdi__) && _BSDI_VERSION >= 199802)
-#include <netinet/in_pcb.h>
-#else
 #include <netinet6/in6_pcb.h>
-#endif
 #include <netinet6/nd6.h>
-
-#ifdef __OpenBSD__ /*KAME IPSEC*/
-#undef IPSEC
-#endif
 
 #ifdef IPSEC
 #include <netinet6/ipsec.h>
@@ -119,18 +94,12 @@
 #include <netkey/key_debug.h>
 #endif /* IPSEC */
 
-#ifndef __bsdi__
 #include "loop.h"
-#endif
 
 #include <net/net_osdep.h>
 
 #ifdef IPV6FIREWALL
 #include <netinet6/ip6_fw.h>
-#endif
-
-#if defined(__FreeBSD__) && __FreeBSD__ >= 3
-static MALLOC_DEFINE(M_IPMOPTS, "ip6_moptions", "internet multicast options");
 #endif
 
 struct ip6_exthdrs {
@@ -150,18 +119,9 @@ static int ip6_insertfraghdr __P((struct mbuf *, struct mbuf *, int,
 				  struct ip6_frag **));
 static int ip6_insert_jumboopt __P((struct ip6_exthdrs *, u_int32_t));
 static int ip6_splithdr __P((struct mbuf *, struct ip6_exthdrs *));
-#if (defined(__bsdi__) && _BSDI_VERSION < 199802) || defined(__OpenBSD__)
-extern struct ifnet loif;
-struct ifnet *loifp = &loif;
-#endif
-#if defined(__bsdi__) && _BSDI_VERSION >= 199802
-extern struct ifnet *loifp;
-#endif
 
-#ifdef __NetBSD__
 extern struct ifnet **ifindex2ifnet;
 extern struct ifnet loif[NLOOP];
-#endif
 
 /*
  * IP6 output. The packet in mbuf chain m contains a skeletal IP6
@@ -565,18 +525,11 @@ skip_ipsec2:;
 		 * ifp must point it.
 		 */
 		if (ro->ro_rt == 0) {
-#if defined(__NetBSD__) || defined(__OpenBSD__)
 			/*
 			 * NetBSD/OpenBSD always clones routes, if parent is
 			 * PRF_CLONING.
 			 */
 			rtalloc((struct route *)ro);
-#else
-			if (ro == &ip6route)	/* xxx kazu */
-				rtalloc((struct route *)ro);
-			else
-				rtcalloc((struct route *)ro);
-#endif
 		}
 		if (ro->ro_rt == 0) {
 			ip6stat.ip6s_noroute++;
@@ -655,11 +608,7 @@ skip_ipsec2:;
 				goto bad;
 			}
 			else {
-#ifdef __bsdi__
-				ifp = &loif;
-#else
 				ifp = &loif[0];
-#endif
 			}
 		}
 
@@ -677,9 +626,6 @@ skip_ipsec2:;
 			if (ro->ro_rt == 0) {
 				ro->ro_rt = rtalloc1((struct sockaddr *)
 						&ro->ro_dst, 0
-#ifdef __FreeBSD__
-						, 0UL
-#endif
 						);
 			}
 			if (ro->ro_rt == 0) {
@@ -775,11 +721,7 @@ skip_ipsec2:;
 			sin6_fin->sin6_len = sizeof(struct sockaddr_in6);
 			sin6_fin->sin6_addr = finaldst;
 
-#ifdef __FreeBSD__
-			rtcalloc((struct route *)ro_pmtu);
-#else
 			rtalloc((struct route *)ro_pmtu);
-#endif
 		}
 	}
 	if (ro_pmtu->ro_rt != NULL) {
@@ -866,7 +808,7 @@ skip_ipsec2:;
 #endif
 	    )
 	{
-#if defined(__NetBSD__) && defined(IFA_STATS)
+#ifdef IFA_STATS
 		if (IFA_STATS) {
 			struct in6_ifaddr *ia6;
 			ip6 = mtod(m, struct ip6_hdr *);
@@ -1001,7 +943,7 @@ sendorfree:
 		m0 = m->m_nextpkt;
 		m->m_nextpkt = 0;
 		if (error == 0) {
-#if defined(__NetBSD__) && defined(IFA_STATS)
+#ifdef IFA_STATS
 			if (IFA_STATS) {
 				struct in6_ifaddr *ia6;
 				ip6 = mtod(m, struct ip6_hdr *);
@@ -1330,14 +1272,10 @@ ip6_ctloutput(op, so, level, optname, mp)
 				caddr_t req = NULL;
 				int len = 0;
 				int priv = 0;
-#ifdef __NetBSD__
 				if (p == 0 || suser(p->p_ucred, &p->p_acflag))
 					priv = 0;
 				else
 					priv = 1;
-#else
-				priv = (in6p->in6p_socket->so_state & SS_PRIV);
-#endif
 				if (m != 0) {
 					req = mtod(m, caddr_t);
 					len = m->m_len;
@@ -1678,11 +1616,7 @@ ip6_setmoptions(optname, im6op, m)
 			 *   XXX: is it a good approach?
 			 */
 			if (IN6_IS_ADDR_MC_NODELOCAL(&mreq->ipv6mr_multiaddr)) {
-#ifdef __bsdi__
-				ifp = &loif;
-#else
 				ifp = &loif[0];
-#endif
 			}
 			else {
 				ro.ro_rt = NULL;

@@ -1,4 +1,4 @@
-/*	$NetBSD: in6_pcb.c,v 1.11 2000/01/06 06:41:19 itojun Exp $	*/
+/*	$NetBSD: in6_pcb.c,v 1.12 2000/01/06 15:46:09 itojun Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -64,9 +64,7 @@
  *	@(#)in_pcb.c	8.2 (Berkeley) 1/4/94
  */
 
-#ifdef __NetBSD__	/*XXX*/
 #include "opt_ipsec.h"
-#endif
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -93,12 +91,8 @@
 #include <netinet6/in6_pcb.h>
 #include <netinet6/nd6.h>
 
-#ifndef __bsdi__
 #include "loop.h"
-#endif
-#ifdef __NetBSD__
 extern struct ifnet loif[NLOOP];
-#endif
 #include "faith.h"
 
 #ifdef IPSEC
@@ -132,7 +126,7 @@ in6_pcballoc(so, head)
 	in6p->in6p_prev = head;
 	in6p->in6p_next->in6p_prev = in6p;
 #endif
-#if defined(__NetBSD__) && !defined(INET6_BINDV6ONLY)
+#ifndef INET6_BINDV6ONLY
 	if (ip6_bindv6only)
 		in6p->in6p_flags |= IN6P_BINDV6ONLY;
 #else
@@ -574,16 +568,9 @@ in6_selectsrc(dstsock, opts, mopts, ro, laddr, errorp)
 	 */
 	if (IN6_IS_ADDR_MULTICAST(dst)) {
 		struct ifnet *ifp = mopts ? mopts->im6o_multicast_ifp : NULL;
-#ifdef __bsdi__
-		extern struct ifnet loif;
-#endif
 
 		if (ifp == NULL && IN6_IS_ADDR_MC_NODELOCAL(dst)) {
-#ifdef __bsdi__
-			ifp = &loif;
-#else
 			ifp = &loif[0];
-#endif
 		}
 
 		if (ifp) {
@@ -639,20 +626,10 @@ in6_selectsrc(dstsock, opts, mopts, ro, laddr, errorp)
 			ro->ro_dst.sin6_len = sizeof(struct sockaddr_in6);
 			ro->ro_dst.sin6_addr = *dst;
 			if (IN6_IS_ADDR_MULTICAST(dst)) {
-#ifdef __FreeBSD__
-				ro->ro_rt = rtalloc1(&((struct route *)ro)
-						     ->ro_dst, 0, 0UL);
-#endif /*__FreeBSD__*/
-#if defined(__bsdi__) || defined(__NetBSD__)
 				ro->ro_rt = rtalloc1(&((struct route *)ro)
 						     ->ro_dst, 0);
-#endif /*__bsdi__*/
 			} else {
-#ifdef __bsdi__			/* bsdi needs rtcalloc to make a host route */
-				rtcalloc((struct route *)ro);
-#else
 				rtalloc((struct route *)ro);
-#endif
 			}
 
 		}

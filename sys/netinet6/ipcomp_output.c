@@ -1,4 +1,4 @@
-/*	$NetBSD: ipcomp_output.c,v 1.6 1999/09/10 02:05:24 itojun Exp $	*/
+/*	$NetBSD: ipcomp_output.c,v 1.7 2000/01/06 15:46:10 itojun Exp $	*/
 
 /*
  * Copyright (C) 1999 WIDE Project.
@@ -33,9 +33,7 @@
  * RFC2393 IP payload compression protocol (IPComp).
  */
 
-#if (defined(__FreeBSD__) && __FreeBSD__ >= 3) || defined(__NetBSD__)
 #include "opt_inet.h"
-#endif
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -64,9 +62,7 @@
 
 #ifdef INET6
 #include <netinet6/ip6.h>
-#if !defined(__FreeBSD__) || __FreeBSD__ < 3
 #include <netinet6/in6_pcb.h>
-#endif
 #include <netinet6/ip6_var.h>
 #endif
 #include <netinet6/ipcomp.h>

@@ -1,4 +1,4 @@
-/*	$NetBSD: icmp6.h,v 1.7 2000/01/02 16:31:18 itojun Exp $	*/
+/*	$NetBSD: icmp6.h,v 1.8 2000/01/06 15:46:09 itojun Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -581,13 +581,7 @@ void	icmp6_reflect __P((struct mbuf *, size_t));
 void	icmp6_prepare __P((struct mbuf *));
 void	icmp6_redirect_input __P((struct mbuf *, int));
 void	icmp6_redirect_output __P((struct mbuf *, struct rtentry *));
-#ifdef __bsdi__
 int	icmp6_sysctl __P((int *, u_int, void *, size_t *, void *, size_t));
-void	icmp6_mtuexpire __P((struct rtentry *, struct rttimer *));
-#endif /*__bsdi__*/
-#if defined(__NetBSD__) || defined(__OpenBSD__)
-int	icmp6_sysctl __P((int *, u_int, void *, size_t *, void *, size_t));
-#endif
 
 /* XXX: is this the right place for these macros? */
 #define icmp6_ifstat_inc(ifp, tag) \
@@ -657,4 +651,3 @@ extern int	icmp6_redirtimeout;	/* cache time for redirect routes */
 #endif /* _KERNEL */
 
 #endif /* not _NETINET6_ICMPV6_H_ */
-

@@ -1,4 +1,4 @@
-/*	$NetBSD: udp_usrreq.c,v 1.55 2000/01/06 06:41:19 itojun Exp $	*/
+/*	$NetBSD: udp_usrreq.c,v 1.56 2000/01/06 15:46:08 itojun Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -155,6 +155,7 @@ udp_init()
 	in_pcbinit(&udbtable, udbhashsize, udbhashsize);
 }
 
+#ifndef UDP6
 void
 #if __STDC__
 udp_input(struct mbuf *m, ...)
@@ -873,7 +874,8 @@ bad:
 }
 #endif
 
-#if 0
+#else /*UDP6*/
+
 void
 #if __STDC__
 udp_input(struct mbuf *m, ...)
@@ -1144,7 +1146,7 @@ bad:
 	if (opts)
 		m_freem(opts);
 }
-#endif
+#endif /*UDP6*/
 
 /*
  * Notify a udp user of an asynchronous error;

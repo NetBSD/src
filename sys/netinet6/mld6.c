@@ -1,4 +1,4 @@
-/*	$NetBSD: mld6.c,v 1.8 1999/12/15 06:28:44 itojun Exp $	*/
+/*	$NetBSD: mld6.c,v 1.9 2000/01/06 15:46:10 itojun Exp $	*/
 
 /*
  * Copyright (C) 1998 WIDE Project.
@@ -68,12 +68,8 @@
  *	@(#)igmp.c	8.1 (Berkeley) 7/19/93
  */
 
-#if (defined(__FreeBSD__) && __FreeBSD__ >= 3) || defined(__NetBSD__)
 #include "opt_inet.h"
-#ifdef __NetBSD__	/*XXX*/
 #include "opt_ipsec.h"
-#endif
-#endif
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -141,11 +137,7 @@ void
 mld6_start_listening(in6m)
 	struct in6_multi *in6m;
 {
-#ifdef __NetBSD__
 	int s = splsoftnet();
-#else
-	int s = splnet();
-#endif
 
 	/*
 	 * (draft-ietf-ipngwg-mld, page 10)
@@ -196,9 +188,6 @@ mld6_input(m, off)
 	struct ifnet *ifp = m->m_pkthdr.rcvif;
 	struct in6_multi *in6m;
 	struct in6_ifaddr *ia;
-#if defined(__FreeBSD__) && __FreeBSD__ >= 3
-	struct ifmultiaddr *ifma;
-#endif
 	int timer;		/* timer value in the MLD query header */
 
 	/* source address validation */
@@ -263,30 +252,15 @@ mld6_input(m, off)
 		mld6_all_nodes_linklocal.s6_addr16[1] =
 			htons(ifp->if_index); /* XXX */
 		
-#if defined(__FreeBSD__) && __FreeBSD__ >= 3
-		LIST_FOREACH(ifma, &ifp->if_multiaddrs, ifma_link)
-#else
 		for (in6m = ia->ia6_multiaddrs.lh_first;
 		     in6m;
 		     in6m = in6m->in6m_entry.le_next)
-#endif
 		{
-#if defined(__FreeBSD__) && __FreeBSD__ >= 3
-			if (ifma->ifma_addr->sa_family != AF_INET6)
-				continue;
-			in6m = (struct in6_multi *)ifma->ifma_protospec;
-			if (IN6_ARE_ADDR_EQUAL(&in6m->in6m_addr,
-					&mld6_all_nodes_linklocal) ||
-			    IPV6_ADDR_MC_SCOPE(&in6m->in6m_addr) <
-			    IPV6_ADDR_SCOPE_LINKLOCAL)
-				continue;
-#else
 			if (IN6_ARE_ADDR_EQUAL(&in6m->in6m_addr,
 						&mld6_all_nodes_linklocal) ||
 			    IPV6_ADDR_MC_SCOPE(&in6m->in6m_addr) <
 			    IPV6_ADDR_SCOPE_LINKLOCAL)
 				continue;
-#endif
 
 			if (IN6_IS_ADDR_UNSPECIFIED(&mldh->mld6_addr) ||
 			    IN6_ARE_ADDR_EQUAL(&mldh->mld6_addr,
@@ -363,11 +337,7 @@ mld6_fasttimeo()
 	if (!mld6_timers_are_running)
 		return;
 
-#ifdef __NetBSD__
 	s = splsoftnet();
-#else
-	s = splnet();
-#endif
 	mld6_timers_are_running = 0;
 	IN6_FIRST_MULTI(step, in6m);
 	while (in6m != NULL) {
@@ -421,9 +391,7 @@ mld6_sendpkt(in6m, type, dst)
 	mh->m_next = md;
 
 #ifdef IPSEC
-#ifndef __OpenBSD__ /*KAME IPSEC*/
 	mh->m_pkthdr.rcvif = NULL;
-#endif
 #endif 
 	mh->m_pkthdr.len = sizeof(struct ip6_hdr) + sizeof(struct mld6_hdr);
 	mh->m_len = sizeof(struct ip6_hdr);

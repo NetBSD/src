@@ -1,4 +1,4 @@
-/*	$NetBSD: in6_gif.c,v 1.9 1999/12/15 06:28:44 itojun Exp $	*/
+/*	$NetBSD: in6_gif.c,v 1.10 2000/01/06 15:46:09 itojun Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -33,12 +33,8 @@
  * in6_gif.c
  */
 
-#if (defined(__FreeBSD__) && __FreeBSD__ >= 3) || defined(__NetBSD__)
 #include "opt_inet.h"
-#ifdef __NetBSD__	/*XXX*/
 #include "opt_ipsec.h"
-#endif
-#endif
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -46,9 +42,7 @@
 #include <sys/sockio.h>
 #include <sys/mbuf.h>
 #include <sys/errno.h>
-#if !(defined(__FreeBSD__) && __FreeBSD__ >= 3)
 #include <sys/ioctl.h>
-#endif
 #include <sys/protosw.h>
 
 #include <net/if.h>
@@ -209,9 +203,7 @@ in6_gif_output(ifp, family, m, rt)
 	}
 	
 #ifdef IPSEC
-#ifndef __OpenBSD__ /*KAME IPSEC*/
 	m->m_pkthdr.rcvif = NULL;
-#endif
 #endif /*IPSEC*/
 	return(ip6_output(m, 0, &sc->gif_ro6, 0, 0, NULL));
 }
