@@ -1,10 +1,10 @@
-/*	$NetBSD: pcmciadevs.h,v 1.92.2.2 2000/07/21 18:52:09 onoe Exp $	*/
+/*	$NetBSD: pcmciadevs.h,v 1.92.2.3 2000/08/09 23:30:02 gmcgarry Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcmciadevs,v 1.93.2.1 2000/07/03 22:34:04 thorpej Exp 
+ *	NetBSD: pcmciadevs,v 1.93.2.3 2000/08/09 23:15:58 gmcgarry Exp 
  */
 
 /*-
@@ -333,6 +333,15 @@
 #define	PCMCIA_CIS_XIRCOM_CEM28	{ NULL, NULL, NULL, NULL }
 #define	PCMCIA_PRODUCT_XIRCOM_CEM28	0x110b
 #define	PCMCIA_STR_XIRCOM_CEM28	"Xircom CreditCard Ethernet + Modem 28"
+#define	PCMCIA_CIS_XIRCOM_CEM33	{ NULL, NULL, NULL, NULL }
+#define	PCMCIA_PRODUCT_XIRCOM_CEM33	0x110b
+#define	PCMCIA_STR_XIRCOM_CEM33	"Xircom CreditCard Ethernet + Modem 33"
+#define	PCMCIA_CIS_XIRCOM_CEM56	{ NULL, NULL, NULL, NULL }
+#define	PCMCIA_PRODUCT_XIRCOM_CEM56	0x110b
+#define	PCMCIA_STR_XIRCOM_CEM56	"Xircom CreditCard Ethernet + Modem 56"
+#define	PCMCIA_CIS_XIRCOM_REM56	{ NULL, NULL, NULL, NULL }
+#define	PCMCIA_PRODUCT_XIRCOM_REM56	0x110a
+#define	PCMCIA_STR_XIRCOM_REM56	"Xircom RealPort Ethernet 10/100 + Modem 56"
 #define	PCMCIA_CIS_XIRCOM_CNW_801	{ NULL, NULL, NULL, NULL }
 #define	PCMCIA_PRODUCT_XIRCOM_CNW_801	0x0801
 #define	PCMCIA_STR_XIRCOM_CNW_801	"Xircom CreditCard Netwave (Canada)"

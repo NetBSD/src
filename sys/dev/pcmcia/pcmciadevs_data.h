@@ -1,10 +1,10 @@
-/*	$NetBSD: pcmciadevs_data.h,v 1.92.2.2 2000/07/21 18:52:10 onoe Exp $	*/
+/*	$NetBSD: pcmciadevs_data.h,v 1.92.2.3 2000/08/09 23:30:03 gmcgarry Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcmciadevs,v 1.93.2.1 2000/07/03 22:34:04 thorpej Exp 
+ *	NetBSD: pcmciadevs,v 1.93.2.3 2000/08/09 23:15:58 gmcgarry Exp 
  */
 
 /*-
@@ -484,6 +484,27 @@ struct pcmcia_knowndev pcmcia_knowndevs[] = {
 	    0,
 	    "Xircom",
 	    "Xircom CreditCard Ethernet + Modem 28"	},
+	},
+	{
+	    PCMCIA_VENDOR_XIRCOM, PCMCIA_PRODUCT_XIRCOM_CEM33,
+	    PCMCIA_CIS_XIRCOM_CEM33,
+	    0,
+	    "Xircom",
+	    "Xircom CreditCard Ethernet + Modem 33"	},
+	},
+	{
+	    PCMCIA_VENDOR_XIRCOM, PCMCIA_PRODUCT_XIRCOM_CEM56,
+	    PCMCIA_CIS_XIRCOM_CEM56,
+	    0,
+	    "Xircom",
+	    "Xircom CreditCard Ethernet + Modem 56"	},
+	},
+	{
+	    PCMCIA_VENDOR_XIRCOM, PCMCIA_PRODUCT_XIRCOM_REM56,
+	    PCMCIA_CIS_XIRCOM_REM56,
+	    0,
+	    "Xircom",
+	    "Xircom RealPort Ethernet 10/100 + Modem 56"	},
 	},
 	{
 	    PCMCIA_VENDOR_XIRCOM, PCMCIA_PRODUCT_XIRCOM_CNW_801,
