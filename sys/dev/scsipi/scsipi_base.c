@@ -1,4 +1,4 @@
-/*	$NetBSD: scsipi_base.c,v 1.36 2000/05/27 23:59:58 fvdl Exp $	*/
+/*	$NetBSD: scsipi_base.c,v 1.37 2000/05/31 11:14:25 fvdl Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -134,6 +134,7 @@ scsipi_get_xs(sc_link, flags)
 	if (xs != NULL) {
 		callout_init(&xs->xs_callout);
 		xs->xs_control = flags;
+		xs->xs_status = 0;
 		TAILQ_INSERT_TAIL(&sc_link->pending_xfers, xs, device_q);
 		bzero(&xs->cmdstore, sizeof(xs->cmdstore));
 	}
