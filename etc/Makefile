@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.118 1999/05/21 03:45:50 gwr Exp $
+#	$NetBSD: Makefile,v 1.119 1999/06/30 18:42:03 ross Exp $
 #	from: @(#)Makefile	8.7 (Berkeley) 5/25/95
 
 # Environment variables without default values:
@@ -24,6 +24,9 @@
 #	instead of a named.conf in etc/namedb.
 #   EXTRA_KERNELS has a machine-dependent list of kernels to build added
 #	to it, but you may also set this to have extra ones built.
+#   BUILD_KERNELS are a machine-dependent list of kernels that should just
+#	be built in place but not made into sets or installed, e.g., an
+#	INSTALL kernel used later in src/distrib/.
 # 
 # Targets:
 #    distribution: makes a full NetBSD distribution in DESTDIR. If
