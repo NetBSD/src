@@ -1,5 +1,5 @@
 # Country Code : City Code : City : Country
-#	$NetBSD: inter.phone,v 1.15 2000/12/11 15:35:09 hubertf Exp $
+#	$NetBSD: inter.phone,v 1.16 2000/12/11 15:44:19 ad Exp $
 #	@(#)inter.phone	8.1 (Berkeley) 6/9/93
 20:2:Cairo:Egypt, Arab Rep. of
 20:3:Alexandria:Egypt, Arab Rep. of
@@ -100,8 +100,8 @@
 43:222:Vienna:Austria
 43:316:Graz:Austria
 43:5222:Innsbruck:Austria
-44:171:Inner-London, Eng.:United Kingdom
-44:181:Outer-London, Eng.:United Kingdom
+44:207:Inner-London, Eng.:United Kingdom
+44:208:Outer-London, Eng.:United Kingdom
 44:1203:Coventry, Eng.:United Kingdom
 44:121:Birmingham, Eng.:United Kingdom
 44:1222:Cardiff, Wales:United Kingdom
