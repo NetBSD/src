@@ -1,4 +1,4 @@
-/*	$NetBSD: mroute.c,v 1.11 1997/04/03 04:46:50 christos Exp $	*/
+/*	$NetBSD: mroute.c,v 1.12 1997/10/19 05:50:06 lukem Exp $	*/
 
 /*
  * Copyright (c) 1989 Stephen Deering
@@ -38,6 +38,15 @@
  *
  *	from: @(#)mroute.c	8.1 (Berkeley) 6/6/93
  */
+
+#include <sys/cdefs.h>
+#ifndef lint
+#if 0
+static char sccsid[] = "from: @(#)mroute.c	8.1 (Berkeley) 6/6/93";
+#else
+__RCSID("$NetBSD: mroute.c,v 1.12 1997/10/19 05:50:06 lukem Exp $");
+#endif
+#endif /* not lint */
 
 /*
  * Print DVMRP multicast routing structures and statistics.
@@ -94,8 +103,8 @@ mroutepr(mrpaddr, mfchashtbladdr, mfchashaddr, vifaddr)
 	u_long mfchash;
 	struct vif viftable[MAXVIFS];
 	struct mfc *mfcp, mfc;
-	register struct vif *v;
-	register vifi_t vifi;
+	struct vif *v;
+	vifi_t vifi;
 	int i;
 	int banner_printed;
 	int saved_nflag;

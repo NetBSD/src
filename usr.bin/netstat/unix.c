@@ -1,4 +1,4 @@
-/*	$NetBSD: unix.c,v 1.16 1997/04/03 04:46:54 christos Exp $	*/
+/*	$NetBSD: unix.c,v 1.17 1997/10/19 05:50:11 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1983, 1988, 1993
@@ -33,11 +33,12 @@
  * SUCH DAMAGE.
  */
 
+#include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "from: @(#)unix.c	8.1 (Berkeley) 6/6/93";
 #else
-static char *rcsid = "$NetBSD: unix.c,v 1.16 1997/04/03 04:46:54 christos Exp $";
+__RCSID("$NetBSD: unix.c,v 1.17 1997/10/19 05:50:11 lukem Exp $");
 #endif
 #endif /* not lint */
 
@@ -74,7 +75,7 @@ void
 unixpr(off)
 	u_long	off;
 {
-	register struct file *fp;
+	struct file *fp;
 	struct socket sock, *so = &sock;
 	char *filebuf;
 	struct protosw *unixsw = (struct protosw *)off;
@@ -103,7 +104,7 @@ static	char *socktype[] =
 
 static void
 unixdomainpr(so, soaddr)
-	register struct socket *so;
+	struct socket *so;
 	caddr_t soaddr;
 {
 	struct unpcb unp;

@@ -1,4 +1,4 @@
-/*	$NetBSD: atalk.c,v 1.2 1997/05/22 17:21:26 christos Exp $	*/
+/*	$NetBSD: atalk.c,v 1.3 1997/10/19 05:49:56 lukem Exp $	*/
 
 /*
  * Copyright (c) 1983, 1988, 1993
@@ -33,11 +33,12 @@
  * SUCH DAMAGE.
  */
 
+#include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "from @(#)atalk.c	1.1 (Whistle) 6/6/96";
 #else
-static char rcsid[] = "$NetBSD: atalk.c,v 1.2 1997/05/22 17:21:26 christos Exp $";
+__RCSID("$NetBSD: atalk.c,v 1.3 1997/10/19 05:49:56 lukem Exp $");
 #endif
 #endif /* not lint */
 
@@ -236,7 +237,7 @@ atalkprotopr(off, name)
 	char  *name;
 {
 	struct ddpcb    cb;
-	register struct ddpcb *prev, *next;
+	struct ddpcb *prev, *next;
 	struct ddpcb   *initial;
 
 	if (off == 0)

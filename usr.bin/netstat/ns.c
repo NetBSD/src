@@ -1,4 +1,4 @@
-/*	$NetBSD: ns.c,v 1.9 1997/04/03 04:46:51 christos Exp $	*/
+/*	$NetBSD: ns.c,v 1.10 1997/10/19 05:50:08 lukem Exp $	*/
 
 /*
  * Copyright (c) 1983, 1988, 1993
@@ -33,11 +33,12 @@
  * SUCH DAMAGE.
  */
 
+#include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "from: @(#)ns.c	8.1 (Berkeley) 6/6/93";
 #else
-static char *rcsid = "$NetBSD: ns.c,v 1.9 1997/04/03 04:46:51 christos Exp $";
+__RCSID("$NetBSD: ns.c,v 1.10 1997/10/19 05:50:08 lukem Exp $");
 #endif
 #endif /* not lint */
 
@@ -92,7 +93,7 @@ nsprotopr(off, name)
 	char *name;
 {
 	struct nspcb cb;
-	register struct nspcb *prev, *next;
+	struct nspcb *prev, *next;
 	int isspp;
 
 	if (off == 0)
@@ -284,8 +285,8 @@ nserr_stats(off, name)
 	char *name;
 {
 	struct ns_errstat ns_errstat;
-	register int j;
-	register int histoprint = 1;
+	int j;
+	int histoprint = 1;
 	int z;
 
 	if (off == 0)

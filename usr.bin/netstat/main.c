@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.11 1997/04/03 04:46:48 christos Exp $	*/
+/*	$NetBSD: main.c,v 1.12 1997/10/19 05:50:03 lukem Exp $	*/
 
 /*
  * Copyright (c) 1983, 1988, 1993
@@ -33,17 +33,17 @@
  * SUCH DAMAGE.
  */
 
+#include <sys/cdefs.h>
 #ifndef lint
-char copyright[] =
-"@(#) Copyright (c) 1983, 1988, 1993\n\
-	Regents of the University of California.  All rights reserved.\n";
+__COPYRIGHT("@(#) Copyright (c) 1983, 1988, 1993\n\
+	Regents of the University of California.  All rights reserved.\n");
 #endif /* not lint */
 
 #ifndef lint
 #if 0
 static char sccsid[] = "from: @(#)main.c	8.4 (Berkeley) 3/1/94";
 #else
-static char *rcsid = "$NetBSD: main.c,v 1.11 1997/04/03 04:46:48 christos Exp $";
+__RCSID("$NetBSD: main.c,v 1.12 1997/10/19 05:50:03 lukem Exp $");
 #endif
 #endif /* not lint */
 
@@ -217,15 +217,16 @@ main(argc, argv)
 {
 	extern char *optarg;
 	extern int optind;
-	register struct protoent *p;
-	register struct protox *tp;	/* for printing cblocks & stats */
+	struct protoent *p;
+	struct protox *tp;	/* for printing cblocks & stats */
 	int ch;
 	char *nlistf = NULL, *memf = NULL;
 	char buf[_POSIX2_LINE_MAX];
 
+	tp = NULL;
 	af = AF_UNSPEC;
 
-	while ((ch = getopt(argc, argv, "Aadf:ghI:iM:mN:np:rstuw:")) != EOF)
+	while ((ch = getopt(argc, argv, "Aadf:ghI:iM:mN:np:rstuw:")) != -1)
 		switch(ch) {
 		case 'A':
 			Aflag = 1;
@@ -422,7 +423,7 @@ main(argc, argv)
  */
 static void
 printproto(tp, name)
-	register struct protox *tp;
+	struct protox *tp;
 	char *name;
 {
 	void (*pr) __P((u_long, char *));

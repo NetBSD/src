@@ -1,4 +1,4 @@
-/*	$NetBSD: inet.c,v 1.22 1997/07/23 21:31:27 thorpej Exp $	*/
+/*	$NetBSD: inet.c,v 1.23 1997/10/19 05:49:59 lukem Exp $	*/
 
 /*
  * Copyright (c) 1983, 1988, 1993
@@ -33,11 +33,12 @@
  * SUCH DAMAGE.
  */
 
+#include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "from: @(#)inet.c	8.4 (Berkeley) 4/20/94";
 #else
-static char *rcsid = "$NetBSD: inet.c,v 1.22 1997/07/23 21:31:27 thorpej Exp $";
+__RCSID("$NetBSD: inet.c,v 1.23 1997/10/19 05:49:59 lukem Exp $");
 #endif
 #endif /* not lint */
 
@@ -94,7 +95,7 @@ protopr(off, name)
 	char *name;
 {
 	struct inpcbtable table;
-	register struct inpcb *head, *next, *prev;
+	struct inpcb *head, *next, *prev;
 	struct inpcb inpcb;
 	int istcp;
 	static int first = 1;
@@ -382,7 +383,7 @@ icmp_stats(off, name)
 	char *name;
 {
 	struct icmpstat icmpstat;
-	register int i, first;
+	int i, first;
 
 	if (off == 0)
 		return;
@@ -459,7 +460,7 @@ igmp_stats(off, name)
  */
 void
 inetprint(in, port, proto)
-	register struct in_addr *in;
+	struct in_addr *in;
 	int port;
 	char *proto;
 {
@@ -468,7 +469,7 @@ inetprint(in, port, proto)
 	int width;
 
 	sprintf(line, "%.*s.", (Aflag && !nflag) ? 12 : 16, inetname(in));
-	cp = index(line, '\0');
+	cp = strchr(line, '\0');
 	if (!nflag && port)
 		sp = getservbyport((int)port, proto);
 	if (sp || port == 0)
@@ -488,7 +489,7 @@ char *
 inetname(inp)
 	struct in_addr *inp;
 {
-	register char *cp;
+	char *cp;
 	static char line[50];
 	struct hostent *hp;
 	struct netent *np;
@@ -498,7 +499,7 @@ inetname(inp)
 	if (first && !nflag) {
 		first = 0;
 		if (gethostname(domain, MAXHOSTNAMELEN) == 0 &&
-		    (cp = index(domain, '.')))
+		    (cp = strchr(domain, '.')))
 			(void) strcpy(domain, cp + 1);
 		else
 			domain[0] = 0;
@@ -516,7 +517,7 @@ inetname(inp)
 		if (cp == 0) {
 			hp = gethostbyaddr((char *)inp, sizeof (*inp), AF_INET);
 			if (hp) {
-				if ((cp = index(hp->h_name, '.')) &&
+				if ((cp = strchr(hp->h_name, '.')) &&
 				    !strcmp(cp + 1, domain))
 					*cp = 0;
 				cp = hp->h_name;

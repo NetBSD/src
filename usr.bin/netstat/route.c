@@ -1,4 +1,4 @@
-/*	$NetBSD: route.c,v 1.22 1997/04/10 15:45:58 christos Exp $	*/
+/*	$NetBSD: route.c,v 1.23 1997/10/19 05:50:10 lukem Exp $	*/
 
 /*
  * Copyright (c) 1983, 1988, 1993
@@ -33,11 +33,12 @@
  * SUCH DAMAGE.
  */
 
+#include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "from: @(#)route.c	8.3 (Berkeley) 3/9/94";
 #else
-static char *rcsid = "$NetBSD: route.c,v 1.22 1997/04/10 15:45:58 christos Exp $";
+__RCSID("$NetBSD: route.c,v 1.23 1997/10/19 05:50:10 lukem Exp $");
 #endif
 #endif /* not lint */
 
@@ -213,7 +214,7 @@ pr_rthdr()
 
 static struct sockaddr *
 kgetsa(dst)
-	register struct sockaddr *dst;
+	struct sockaddr *dst;
 {
 
 	kget(dst, pt_u.u_sa);
@@ -305,7 +306,7 @@ ntreestuff()
 	size_t needed;
 	int mib[6];
 	char *buf, *next, *lim;
-	register struct rt_msghdr *rtm;
+	struct rt_msghdr *rtm;
 
         mib[0] = CTL_NET;
         mib[1] = PF_ROUTE;
@@ -328,9 +329,9 @@ ntreestuff()
 
 static void
 np_rtentry(rtm)
-	register struct rt_msghdr *rtm;
+	struct rt_msghdr *rtm;
 {
-	register struct sockaddr *sa = (struct sockaddr *)(rtm + 1);
+	struct sockaddr *sa = (struct sockaddr *)(rtm + 1);
 #ifdef notdef
 	static int masks_done, banner_printed;
 #endif
@@ -374,12 +375,12 @@ p_sockaddr(sa, mask, flags, width)
 	int flags, width;
 {
 	char workbuf[128], *cplim;
-	register char *cp = workbuf;
+	char *cp = workbuf;
 
 	switch(sa->sa_family) {
 	case AF_INET:
 	    {
-		register struct sockaddr_in *sin = (struct sockaddr_in *)sa;
+		struct sockaddr_in *sin = (struct sockaddr_in *)sa;
 
 		if (sin->sin_addr.s_addr == INADDR_ANY)
 			cp = "default";
@@ -408,7 +409,7 @@ p_sockaddr(sa, mask, flags, width)
 
 	case AF_LINK:
 	    {
-		register struct sockaddr_dl *sdl = (struct sockaddr_dl *)sa;
+		struct sockaddr_dl *sdl = (struct sockaddr_dl *)sa;
 
 		if (sdl->sdl_nlen == 0 && sdl->sdl_alen == 0 &&
 		    sdl->sdl_slen == 0)
@@ -417,8 +418,8 @@ p_sockaddr(sa, mask, flags, width)
 		case IFT_FDDI:
 		case IFT_ETHER:
 		    {
-			register int i;
-			register u_char *lla = (u_char *)sdl->sdl_data +
+			int i;
+			u_char *lla = (u_char *)sdl->sdl_data +
 			    sdl->sdl_nlen;
 
 			cplim = "";
@@ -438,7 +439,7 @@ p_sockaddr(sa, mask, flags, width)
 
 	default:
 	    {
-		register u_char *s = (u_char *)sa->sa_data, *slim;
+		u_char *s = (u_char *)sa->sa_data, *slim;
 
 		slim =  sa->sa_len + (u_char *) sa;
 		cplim = cp + sizeof(workbuf) - 6;
@@ -463,11 +464,11 @@ p_sockaddr(sa, mask, flags, width)
 
 static void
 p_flags(f, format)
-	register int f;
+	int f;
 	char *format;
 {
 	char name[33], *flags;
-	register struct bits *p = bits;
+	struct bits *p = bits;
 
 	for (flags = name; p->b_mask; p++)
 		if (p->b_mask & f)
@@ -478,17 +479,17 @@ p_flags(f, format)
 
 static void
 p_rtentry(rt)
-	register struct rtentry *rt;
+	struct rtentry *rt;
 {
 	static struct ifnet ifnet, *lastif;
 	struct sockaddr *sa, addr, mask;
 
 	if (!(sa = kgetsa(rt_key(rt))))
-		bzero(&addr, sizeof addr);
+		memset(&addr, 0, sizeof addr);
 	else
 		addr = *sa;
 	if (!rt_mask(rt) || !(sa = kgetsa(rt_mask(rt))))
-		bzero(&mask, sizeof mask);
+		memset(&mask, 0, sizeof mask);
 	else
 		mask = *sa;
 	p_sockaddr(&addr, &mask, rt->rt_flags, WID_DST);
@@ -514,7 +515,7 @@ char *
 routename(in)
 	u_int32_t in;
 {
-	register char *cp;
+	char *cp;
 	static char line[MAXHOSTNAMELEN + 1];
 	struct hostent *hp;
 	static char domain[MAXHOSTNAMELEN + 1];
@@ -523,7 +524,7 @@ routename(in)
 	if (first) {
 		first = 0;
 		if (gethostname(domain, MAXHOSTNAMELEN) == 0 &&
-		    (cp = index(domain, '.')))
+		    (cp = strchr(domain, '.')))
 			(void) strcpy(domain, cp + 1);
 		else
 			domain[0] = 0;
@@ -533,7 +534,7 @@ routename(in)
 		hp = gethostbyaddr((char *)&in, sizeof (struct in_addr),
 			AF_INET);
 		if (hp) {
-			if ((cp = index(hp->h_name, '.')) &&
+			if ((cp = strchr(hp->h_name, '.')) &&
 			    !strcmp(cp + 1, domain))
 				*cp = 0;
 			cp = hp->h_name;
@@ -570,7 +571,7 @@ domask(dst, addr, mask)
 	char *dst;
 	u_long addr, mask;
 {
-	register int b, i;
+	int b, i;
 
 	if (!mask || (forgemask(addr) == mask)) {
 		*dst = '\0';
@@ -579,7 +580,7 @@ domask(dst, addr, mask)
 	i = 0;
 	for (b = 0; b < 32; b++)
 		if (mask & (1 << b)) {
-			register int bb;
+			int bb;
 
 			i = b;
 			for (bb = b+1; bb < 32; bb++)
@@ -607,7 +608,7 @@ netname(in, mask)
 	static char line[MAXHOSTNAMELEN + 4];
 	struct netent *np = 0;
 	u_int32_t net, omask;
-	register u_int32_t i;
+	u_int32_t i;
 	int subnetshift;
 
 	i = ntohl(in);
@@ -691,13 +692,14 @@ char *
 ns_print(sa)
 	struct sockaddr *sa;
 {
-	register struct sockaddr_ns *sns = (struct sockaddr_ns*)sa;
+	struct sockaddr_ns *sns = (struct sockaddr_ns*)sa;
 	struct ns_addr work;
 	union { union ns_net net_e; u_long long_e; } net;
 	u_short port;
 	static char mybuf[50], cport[10], chost[25];
 	char *host = "";
-	register char *p; register u_char *q;
+	char *p;
+	u_char *q;
 
 	work = sns->sns_addr;
 	port = ntohs(work.x_port);
@@ -712,9 +714,9 @@ ns_print(sa)
 		return (mybuf);
 	}
 
-	if (bcmp(ns_bh, work.x_host.c_host, 6) == 0) {
+	if (memcmp(ns_bh, work.x_host.c_host, 6) == 0) {
 		host = "any";
-	} else if (bcmp(ns_nullh, work.x_host.c_host, 6) == 0) {
+	} else if (memcmp(ns_nullh, work.x_host.c_host, 6) == 0) {
 		host = "*";
 	} else {
 		q = work.x_host.c_host;
@@ -738,7 +740,7 @@ char *
 ns_phost(sa)
 	struct sockaddr *sa;
 {
-	register struct sockaddr_ns *sns = (struct sockaddr_ns *)sa;
+	struct sockaddr_ns *sns = (struct sockaddr_ns *)sa;
 	struct sockaddr_ns work;
 	static union ns_net ns_zeronet;
 	char *p;
@@ -756,7 +758,7 @@ void
 upHex(p0)
 	char *p0;
 {
-	register char *p = p0;
+	char *p = p0;
 	for (; *p; p++) switch (*p) {
 
 	case 'a': case 'b': case 'c': case 'd': case 'e': case 'f':
