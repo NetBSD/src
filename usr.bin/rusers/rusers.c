@@ -1,4 +1,4 @@
-/*	$NetBSD: rusers.c,v 1.14 1998/02/03 04:08:01 perry Exp $	*/
+/*	$NetBSD: rusers.c,v 1.15 1998/04/02 10:59:14 kleink Exp $	*/
 
 /*-
  *  Copyright (c) 1993 John Brezak
@@ -30,12 +30,12 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: rusers.c,v 1.14 1998/02/03 04:08:01 perry Exp $");
+__RCSID("$NetBSD: rusers.c,v 1.15 1998/04/02 10:59:14 kleink Exp $");
 #endif /* not lint */
 
 #include <sys/types.h>
-#include <sys/param.h>
 #include <sys/socket.h>
+
 #include <rpc/rpc.h>
 #include <arpa/inet.h>
 
@@ -44,6 +44,7 @@ __RCSID("$NetBSD: rusers.c,v 1.14 1998/02/03 04:08:01 perry Exp $");
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <time.h>
 #include <unistd.h>
 #include <utmp.h>
 
