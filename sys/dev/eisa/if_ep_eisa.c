@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ep_eisa.c,v 1.5 1996/05/12 23:38:08 mycroft Exp $	*/
+/*	$NetBSD: if_ep_eisa.c,v 1.6 1996/05/14 22:21:05 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1994 Herb Peyerl <hpeyerl@beer.org>
@@ -114,15 +114,14 @@ ep_eisa_attach(parent, self, aux)
 	struct eisa_attach_args *ea = aux;
 	bus_chipset_tag_t bc = ea->ea_bc;
 	bus_io_handle_t ioh;
-	int irq, k;
-	u_short conn = 0;
+	u_int16_t k, conn = 0;
 	eisa_chipset_tag_t ec = ea->ea_ec;
 	eisa_intr_handle_t ih;
 	const char *model, *intrstr;
+	u_int irq;
 
 	/* Map i/o space. */
-	if (bus_io_map(bc, EISA_SLOT_ADDR(ea->ea_slot), EISA_SLOT_SIZE,
-	    &ioh))
+	if (bus_io_map(bc, EISA_SLOT_ADDR(ea->ea_slot), EISA_SLOT_SIZE, &ioh))
 		panic("ep_eisa_attach: can't map i/o space");
 
 	sc->bustype = EP_BUS_EISA;
@@ -157,7 +156,7 @@ ep_eisa_attach(parent, self, aux)
 	printf(": %s\n", model);
 
 	if (eisa_intr_map(ec, irq, &ih)) {
-		printf("%s: couldn't map interrupt (%d)\n",
+		printf("%s: couldn't map interrupt (%u)\n",
 		    sc->sc_dev.dv_xname, irq);
 		return;
 	}
