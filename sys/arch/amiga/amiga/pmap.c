@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.52 1998/07/10 20:26:35 mhitch Exp $	*/
+/*	$NetBSD: pmap.c,v 1.53 1998/07/14 03:17:05 mhitch Exp $	*/
 
 /* 
  * Copyright (c) 1991 Regents of the University of California.
@@ -661,7 +661,7 @@ pmap_init()
 	    FALSE, &st_map_store);
 
 	addr = AMIGA_UPTBASE;
-	if ((AMIGA_UPTMAXSIZE / AMIGA_MAX_PTSIZE) < maxproc) {
+	if ((AMIGA_UPTMAXSIZE / AMIGA_UPTSIZE) < maxproc) {
 		s = AMIGA_UPTMAXSIZE;
 		/*
 		 * XXX We don't want to hang when we run out of
@@ -669,9 +669,9 @@ pmap_init()
 		 * will fail instead.  Note that root could still raise
 		 * this value via sysctl(2).
 		 */
-		maxproc = (AMIGA_UPTMAXSIZE / AMIGA_MAX_PTSIZE);
+		maxproc = (AMIGA_UPTMAXSIZE / AMIGA_UPTSIZE);
 	} else
-		s = (maxproc * AMIGA_MAX_PTSIZE);
+		s = (maxproc * AMIGA_UPTSIZE);
 	pt_map = uvm_km_suballoc(kernel_map, &addr, &addr2, s, TRUE,
 	    TRUE, &pt_map_store);
 #else
