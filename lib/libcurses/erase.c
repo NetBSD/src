@@ -1,4 +1,4 @@
-/*	$NetBSD: erase.c,v 1.13 2000/04/15 13:17:03 blymn Exp $	*/
+/*	$NetBSD: erase.c,v 1.14 2000/04/18 22:45:24 jdc Exp $	*/
 
 /*
  * Copyright (c) 1981, 1993, 1994
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)erase.c	8.2 (Berkeley) 5/4/94";
 #else
-__RCSID("$NetBSD: erase.c,v 1.13 2000/04/15 13:17:03 blymn Exp $");
+__RCSID("$NetBSD: erase.c,v 1.14 2000/04/18 22:45:24 jdc Exp $");
 #endif
 #endif				/* not lint */
 
@@ -81,12 +81,15 @@ werase(WINDOW *win)
 		start = win->lines[y]->line;
 		end = &start[win->maxx];
 		for (sp = start; sp < end; sp++)
-			if (sp->ch != ' ' || sp->attr != 0) {
+			if (sp->ch != ' ' || sp->attr != 0 ||
+			    sp->bch != win->bch || sp->battr != win->battr) {
 				maxx = sp;
 				if (minx == -1)
 					minx = sp - start;
 				sp->ch = ' ';
+				sp->bch = win->bch;
 				sp->attr = 0;
+				sp->battr = win->battr;
 			}
 		if (minx != -1)
 			__touchline(win, y, minx, maxx - win->lines[y]->line,
