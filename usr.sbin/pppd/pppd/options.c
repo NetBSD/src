@@ -1,4 +1,4 @@
-/*	$NetBSD: options.c,v 1.39 2003/05/16 18:15:34 itojun Exp $	*/
+/*	$NetBSD: options.c,v 1.40 2003/05/17 21:00:57 itojun Exp $	*/
 
 /*
  * options.c - handles option processing for PPP.
@@ -47,7 +47,7 @@
 #if 0
 #define RCSID	"Id: options.c,v 1.80 2001/03/12 22:56:12 paulus Exp "
 #else
-__RCSID("$NetBSD: options.c,v 1.39 2003/05/16 18:15:34 itojun Exp $");
+__RCSID("$NetBSD: options.c,v 1.40 2003/05/17 21:00:57 itojun Exp $");
 #endif
 #endif
 
@@ -1503,14 +1503,13 @@ static int
 setdomain(argv)
     char **argv;
 {
-    gethostname(hostname, MAXNAMELEN);
+    gethostname(hostname, sizeof(hostname));
     if (**argv != 0) {
 	if (**argv != '.')
-	    strncat(hostname, ".", MAXNAMELEN - strlen(hostname));
+	    strlcat(hostname, ".", sizeof(hostname));
 	domain = hostname + strlen(hostname);
-	strncat(hostname, *argv, MAXNAMELEN - strlen(hostname));
+	strlcat(hostname, *argv, sizeof(hostname));
     }
-    hostname[MAXNAMELEN-1] = 0;
     return (1);
 }
 
