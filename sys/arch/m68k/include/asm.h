@@ -1,4 +1,4 @@
-/*	$NetBSD: asm.h,v 1.15 1997/10/04 17:34:08 thorpej Exp $	*/
+/*	$NetBSD: asm.h,v 1.16 1998/12/02 00:58:43 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -179,5 +179,16 @@
 	.long	0
 
 #endif /* _KERNEL */
+
+#ifdef __STDC__
+#define	WARN_REFERENCES(sym,msg)					\
+	.stabs \" ## msg ## \",30,0,0,0 ;				\
+	.stabs \"_ ## sym ## \",1,0,0,0
+#else
+#define	WARN_REFERENCES_STRING(x)	"x"
+#define	WARN_REFERENCES(sym,msg)					\
+	.stabs msg,30,0,0,0 ;						\
+	.stabs WARN_REFERENCES_STRING(_/**/sym),1,0,0,0
+#endif /* __STDC__ */
 
 #endif /* _ASM_H_ */

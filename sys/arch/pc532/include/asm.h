@@ -1,4 +1,4 @@
-/*	$NetBSD: asm.h,v 1.12 1998/04/03 23:01:37 matthias Exp $	*/
+/*	$NetBSD: asm.h,v 1.13 1998/12/02 00:58:43 thorpej Exp $	*/
 
 /* 
  * Mach Operating System
@@ -214,5 +214,16 @@
 		.long	0
 
 #endif
+
+#ifdef __STDC__
+#define	WARN_REFERENCES(sym,msg)					\
+	.stabs \" ## msg ## \",30,0,0,0 ;				\
+	.stabs \"_ ## sym ## \",1,0,0,0
+#else
+#define	WARN_REFERENCES_STRING(x)	"x"
+#define	WARN_REFERENCES(sym,msg)					\
+	.stabs msg,30,0,0,0 ;						\
+	.stabs WARN_REFERENCES_STRING(_/**/sym),1,0,0,0
+#endif /* __STDC__ */
 
 #endif
