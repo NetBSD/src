@@ -1,4 +1,4 @@
-/*	$NetBSD: xbits.c,v 1.6 1998/09/05 13:08:40 pk Exp $	*/
+/*	$NetBSD: xbits.c,v 1.7 1998/12/17 14:34:52 pk Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -40,25 +40,20 @@
  * "Generic" byte-swap routines.
  */
 
-#include <sys/param.h>
-#include <stdio.h>
-#include <stdlib.h>
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <sys/file.h>
-#include <fcntl.h>
-#include <ar.h>
-#include <ranlib.h>
 #include <a.out.h>
-#include <stab.h>
-#include <string.h>
+#include <stdio.h>
+#include <stdlib.h>
 
 #include "ld.h"
+#include "ld_i.h"
 
 void
 swap_longs(lp, n)
-int	n;
-long	*lp;
+	int	n;
+	long	*lp;
 {
 	for (; n > 0; n--, lp++)
 		*lp = md_swap_long(*lp);
@@ -66,8 +61,8 @@ long	*lp;
 
 void
 swap_symbols(s, n)
-struct nlist *s;
-int n;
+	struct nlist *s;
+	int n;
 {
 	for (; n; n--, s++) {
 		s->n_un.n_strx = md_swap_long(s->n_un.n_strx);
@@ -78,8 +73,8 @@ int n;
 
 void
 swap_zsymbols(s, n)
-struct nzlist *s;
-int n;
+	struct nzlist *s;
+	int n;
 {
 	for (; n; n--, s++) {
 		s->nz_strx = md_swap_long(s->nz_strx);
@@ -92,8 +87,8 @@ int n;
 
 void
 swap_ranlib_hdr(rlp, n)
-struct ranlib *rlp;
-int n;
+	struct ranlib *rlp;
+	int n;
 {
 	for (; n; n--, rlp++) {
 		rlp->ran_un.ran_strx = md_swap_long(rlp->ran_un.ran_strx);
@@ -103,7 +98,7 @@ int n;
 
 void
 swap__dynamic(dp)
-struct _dynamic *dp;
+	struct _dynamic *dp;
 {
 	dp->d_version = md_swap_long(dp->d_version);
 	dp->d_debug = (struct so_debug *)md_swap_long((long)dp->d_debug);
@@ -114,22 +109,22 @@ struct _dynamic *dp;
 
 void
 swap_section_dispatch_table(sdp)
-struct section_dispatch_table *sdp;
+	struct section_dispatch_table *sdp;
 {
 	swap_longs((long *)sdp, sizeof(*sdp)/sizeof(long));
 }
 
 void
 swap_so_debug(ddp)
-struct so_debug	*ddp;
+	struct so_debug	*ddp;
 {
 	swap_longs((long *)ddp, sizeof(*ddp)/sizeof(long));
 }
 
 void
 swapin_sod(sodp, n)
-struct sod *sodp;
-int n;
+	struct sod *sodp;
+	int n;
 {
 	unsigned long	bits;
 
@@ -145,8 +140,8 @@ int n;
 
 void
 swapout_sod(sodp, n)
-struct sod *sodp;
-int n;
+	struct sod *sodp;
+	int n;
 {
 	unsigned long	bits;
 
@@ -162,12 +157,11 @@ int n;
 
 void
 swap_rrs_hash(fsp, n)
-struct rrs_hash	*fsp;
-int n;
+	struct rrs_hash	*fsp;
+	int n;
 {
 	for (; n; n--, fsp++) {
 		fsp->rh_symbolnum = md_swap_long(fsp->rh_symbolnum);
 		fsp->rh_next = md_swap_long(fsp->rh_next);
 	}
 }
-

@@ -1,4 +1,4 @@
-/*	$NetBSD: warnings.c,v 1.22 1998/12/15 22:34:38 pk Exp $	*/
+/*	$NetBSD: warnings.c,v 1.23 1998/12/17 14:34:52 pk Exp $	*/
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -21,7 +21,9 @@
 #include <varargs.h>
 #endif
 
+#include "shlib.h"
 #include "ld.h"
+#include "ld_i.h"
 
 static int reported_undefineds;
 
@@ -109,7 +111,7 @@ print_symbols(outfile)
 		else if (sp->defined == (N_UNDF|N_EXT))
 			fprintf(outfile, "common: size %#x", sp->common_size);
 		else
-			fprintf(outfile, "type %d, value %#x, size %#x",
+			fprintf(outfile, "type %d, value %#lx, size %#x",
 				sp->defined, sp->value, sp->size);
 		if (!(sp->flags & GS_REFERENCED))
 			fprintf(outfile, ", unreferenced");
@@ -131,7 +133,8 @@ describe_file_sections(entry, outfile)
 	if (entry->flags & (E_JUST_SYMS | E_DYNAMIC))
 		fprintf(outfile, " symbols only\n");
 	else
-		fprintf(outfile, " text %x(%x), data %x(%x), bss %x(%x) hex\n",
+		fprintf(outfile,
+			" text %#x(%#lx), data %#x(%#lx), bss %#x(%#lx)\n",
 			entry->text_start_address, entry->header.a_text,
 			entry->data_start_address, entry->header.a_data,
 			entry->bss_start_address, entry->header.a_bss);
@@ -159,7 +162,7 @@ list_file_locals (entry, outfile)
 		 * update it if necessary by this file's start address.
 		 */
 		if (!(p->n_type & (N_STAB | N_EXT)))
-			fprintf(outfile, "  %s: 0x%x\n",
+			fprintf(outfile, "  %s: %#lx\n",
 				entry->strings + p->n_un.n_strx, p->n_value);
 	}
 
@@ -186,9 +189,17 @@ struct line_debug_entry
 	struct localsymbol	*sym;
 };
 
+
+static void do_file_warnings __P((struct file_entry *, void *));
+
 /*
  * Helper routines for do_file_warnings.
  */
+static int reloc_cmp __P((const void *, const void *));
+static int next_debug_entry __P((int, struct line_debug_entry[]));
+static void do_relocation_warnings __P((struct file_entry *, int,
+					FILE *, unsigned char *));
+static int address_to_line __P((unsigned long, struct line_debug_entry []));
 
 /*
  * Return an integer less than, equal to, or greater than 0 as per the
@@ -196,9 +207,13 @@ struct line_debug_entry
  */
 
 static int
-reloc_cmp(rel1, rel2)
-	struct relocation_info *rel1, *rel2;
+reloc_cmp(v1, v2)
+	const void *v1;
+	const void *v2;
 {
+	const struct relocation_info *rel1 = v1;
+	const struct relocation_info *rel2 = v2;
+
 	return RELOC_ADDRESS(rel1) - RELOC_ADDRESS(rel2);
 }
 
@@ -386,7 +401,7 @@ address_to_line(address, state_pointer)
 /*
  * This routine will scan through the relocation data of file ENTRY, printing
  * out references to undefined symbols and references to symbols defined in
- * files with N_WARNING symbols.  If DATA_SEGMENT is non-zero, it will scan
+ * files with N_WARN symbols.  If DATA_SEGMENT is non-zero, it will scan
  * the data relocation segment (and use N_DSLINE symbols to track line
  * number); otherwise it will scan the text relocation segment.  Warnings
  * will be printed on the output stream OUTFILE.  Eventually, every nlist
@@ -534,10 +549,11 @@ do_relocation_warnings(entry, data_segment, outfile, nlist_bitvector)
  */
 
 void
-do_file_warnings (entry, outfile)
+do_file_warnings (entry, arg)
 	struct file_entry	*entry;
-	FILE			*outfile;
+	void			*arg;
 {
+	FILE	*outfile = arg;
 	int	nsym;
 	int	i;
 	char	*errfmt, *file_name;
@@ -545,6 +561,8 @@ do_file_warnings (entry, outfile)
 	int	dont_allow_symbol_name;
 	u_char	*nlist_bitvector;
 	struct line_debug_entry	*text_scan, *data_scan;
+
+	file_name = "<GCC induced initialization - should never print>";
 
 	nsym = entry->nsymbols;
 	nlist_bitvector = (u_char *)alloca((nsym >> 3) + 1);
@@ -657,7 +675,7 @@ do_file_warnings (entry, outfile)
 				      "of symbol `%s', type %#x",
 				      get_file_name(entry),
 				      g->name, np->n_type);
-				break;
+				continue;
 			}
 
 		} else if (BIT_SET_P(nlist_bitvector, i)) {
@@ -691,7 +709,7 @@ do_file_warnings (entry, outfile)
 			 * used by the warning stabs itself.
 			 */
 			if (np->n_type != (N_EXT | N_UNDF) ||
-			    (entry->symbols[i].flags & LS_WARNING))
+			    (entry->symbols[i].flags & LS_WARN))
 				continue;
 
 			errfmt = g->warning;

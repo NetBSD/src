@@ -1,4 +1,39 @@
-/*	$NetBSD: ld.c,v 1.61 1998/12/15 22:34:38 pk Exp $	*/
+/*	$NetBSD: ld.c,v 1.62 1998/12/17 14:34:51 pk Exp $	*/
+/*-
+ * Copyright (c) 1998 The NetBSD Foundation, Inc.
+ * All rights reserved.
+ *
+ * This code is derived from software contributed to The NetBSD Foundation
+ * by Paul Kranenburg.
+ *
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions
+ * are met:
+ * 1. Redistributions of source code must retain the above copyright
+ *    notice, this list of conditions and the following disclaimer.
+ * 2. Redistributions in binary form must reproduce the above copyright
+ *    notice, this list of conditions and the following disclaimer in the
+ *    documentation and/or other materials provided with the distribution.
+ * 3. All advertising materials mentioning features or use of this software
+ *    must display the following acknowledgement:
+ *        This product includes software developed by the NetBSD
+ *        Foundation, Inc. and its contributors.
+ * 4. Neither the name of The NetBSD Foundation nor the names of its
+ *    contributors may be used to endorse or promote products derived
+ *    from this software without specific prior written permission.
+ *
+ * THIS SOFTWARE IS PROVIDED BY THE NETBSD FOUNDATION, INC. AND CONTRIBUTORS
+ * ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
+ * TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
+ * PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL THE FOUNDATION OR CONTRIBUTORS
+ * BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+ * CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
+ * SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+ * INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
+ * CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+ * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+ * POSSIBILITY OF SUCH DAMAGE.
+ */
 
 /*-
  * This code is derived from software copyrighted by the Free Software
@@ -9,9 +44,6 @@
  * Modified 1993 by Paul Kranenburg, Erasmus University
  */
 
-#ifndef lint
-static char sccsid[] = "@(#)ld.c	6.10 (Berkeley) 5/22/91";
-#endif /* not lint */
 
 /* Linker `ld' for GNU
    Copyright (C) 1988 Free Software Foundation, Inc.
@@ -37,10 +69,10 @@ static char sccsid[] = "@(#)ld.c	6.10 (Berkeley) 5/22/91";
 
 #include <sys/param.h>
 #include <sys/types.h>
+#include <sys/cdefs.h>
 #include <sys/stat.h>
 #include <sys/file.h>
 #include <sys/time.h>
-#include <sys/resource.h>
 #include <limits.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -53,13 +85,200 @@ static char sccsid[] = "@(#)ld.c	6.10 (Berkeley) 5/22/91";
 #include <stab.h>
 #include <string.h>
 
+#ifndef lint
+/* from: "@(#)ld.c	6.10 (Berkeley) 5/22/91"; */
+__RCSID("$NetBSD: ld.c,v 1.62 1998/12/17 14:34:51 pk Exp $");
+#endif /* not lint */
+
 #define GNU_BINUTIL_COMPAT	/* forwards compatiblity with binutils 2.x */
 /*#define DEBUG_COMPAT*/
 
+#include "shlib.h"
 #include "ld.h"
+#include "ld_i.h"
 
-/* Vector of entries for input files specified by arguments.
-   These are all the input files except for members of specified libraries. */
+/*
+ * Symbol types understood and processed by this linker which do
+ * not appear in the original <a.out> format.
+ *
+ * N_WARN
+ * 	If a this type of symbol is encountered, its name is a warning
+ * 	message to print each time the symbol referenced by the next symbol
+ * 	table entry is referenced.
+ * 
+ * 	This feature may be used to allow backwards compatibility with
+ * 	certain functions (eg. gets) but to discourage programmers from
+ * 	their use.
+ * 
+ * 	So if, for example, you wanted to have ld print a warning whenever
+ * 	the function "gets" was used in their C program, you would add the
+ * 	following to the assembler file in which gets is defined:
+ * 
+ * 	.stabs "Obsolete function \"gets\" referenced",30,0,0,0
+ * 	.stabs "_gets",1,0,0,0
+ * 
+ * 	These .stabs do not necessarily have to be in the same file as the
+ * 	gets function, they simply must exist somewhere in the compilation.
+ * 
+ * 
+ * N_INDR
+ * 	Indicates the definition of a symbol as being an indirect reference
+ *	to another symbol.  The other symbol appears as an undefined
+ *	reference, immediately following this symbol.
+ * 
+ * 	Indirection is asymmetrical.  The other symbol's value will be used
+ * 	to satisfy requests for the indirect symbol, but not vice versa.
+ * 	If the other symbol does not have a definition, libraries will
+ * 	be searched to find a definition.
+ * 
+ * 	So, for example, the following two lines placed in an assembler
+ * 	input file would result in an object file which would direct gnu ld
+ * 	to resolve all references to symbol "foo" as references to symbol
+ * 	"bar".
+ * 
+ * 	.stabs "_foo",11,0,0,0
+ * 	.stabs "_bar",1,0,0,0
+ * 
+ * 	Note that (11 == (N_INDR | N_EXT)) and (1 == (N_UNDF | N_EXT)).
+ * 
+ * 
+ * N_SETA
+ * N_SETT
+ * N_SETD
+ * N_SETB
+ * N_SETV
+ * 	These symbols refer to set elements.  These are expected only
+ * 	in input to the loader; they should not appear in loader output
+ * 	(unless relocatable output is requested).  To be recognized by
+ * 	the loader, the input symbols must have their N_EXT bit set.
+ * 	All the N_SET[ATDB] symbols with the same name form one set.  The
+ * 	loader collects all of these elements at load time and outputs a
+ * 	vector for each name.
+ * 	Space (an array of 32 bit words) is allocated for the set in the
+ * 	data section, and the n_value field of each set element value is
+ * 	stored into one word of the array.
+ * 	The first word of the array is the length of the set (number of
+ * 	elements).  The last word of the vector is set to zero for possible
+ * 	use by incremental loaders.  The array is ordered by the linkage
+ * 	order; the first symbols which the linker encounters will be first
+ * 	in the array.
+ * 
+ * 	In C syntax this looks like:
+ * 
+ * 	struct set_vector {
+ * 		unsigned int length;
+ * 		unsigned int vector[length];
+ * 		unsigned int always_zero;
+ * 	};
+ * 
+ * 	Before being placed into the array, each element is relocated
+ * 	according to its type.  This allows the loader to create an array
+ * 	of pointers to objects automatically.  N_SETA type symbols will not
+ * 	be relocated.
+ * 
+ * 	The address of the set is made into an N_SETV symbol whose name is
+ *	the same as the name of the set. This symbol acts like a N_DATA global
+ *	symbol in that it can satisfy undefined external references.
+ * 
+ * 	For the purposes of determining whether or not to load in a library
+ * 	file, set element definitions are not considered "real
+ * 	definitions"; they will not cause the loading of a library
+ * 	member.
+ * 
+ * 	If relocatable output is requested, none of this processing is
+ * 	done.  The symbols are simply relocated and passed through to the
+ * 	output file.
+ * 
+ * 	So, for example, the following three lines of assembler code
+ * 	(whether in one file or scattered between several different ones)
+ * 	will produce a three element vector (total length is five words;
+ * 	see above), referenced by the symbol "_xyzzy", which will have the
+ * 	addresses of the routines _init1, _init2, and _init3.
+ * 
+ * 	*NOTE*: If symbolic addresses are used in the n_value field of the
+ * 	defining .stabs, those symbols must be defined in the same file as
+ * 	that containing the .stabs.
+ * 
+ * 	.stabs "_xyzzy",23,0,0,_init1
+ * 	.stabs "_xyzzy",23,0,0,_init2
+ * 	.stabs "_xyzzy",23,0,0,_init3
+ * 
+ * 	Note that (23 == (N_SETT | N_EXT)).
+ * 
+ */
+
+/*
+ * Ok.  Following are the relocation information macros.  If your
+ * system should not be able to use the default set (below), you must
+ * define the following (in <arch/---/md.h>:
+
+ *   relocation_info: This must be typedef'd (or #define'd) to the type
+ * of structure that is stored in the relocation info section of your
+ * a.out files.  Often this is defined in the a.out.h for your system.
+ *
+ *   RELOC_ADDRESS (rval): Offset into the current section of the
+ * <whatever> to be relocated.  *Must be an lvalue*.
+ *
+ *   RELOC_EXTERN_P (rval):  Is this relocation entry based on an
+ * external symbol (1), or was it fully resolved upon entering the
+ * loader (0) in which case some combination of the value in memory
+ * (if RELOC_MEMORY_ADD_P) and the extra (if RELOC_ADD_EXTRA) contains
+ * what the value of the relocation actually was.  *Must be an lvalue*.
+ *
+ *   RELOC_TYPE (rval): If this entry was fully resolved upon
+ * entering the loader, what type should it be relocated as?
+ *
+ *   RELOC_SYMBOL (rval): If this entry was not fully resolved upon
+ * entering the loader, what is the index of it's symbol in the symbol
+ * table?  *Must be a lvalue*.
+ *
+ *   RELOC_MEMORY_ADD_P (rval): This should return true if the final
+ * relocation value output here should be added to memory, or if the
+ * section of memory described should simply be set to the relocation
+ * value.
+ *
+ *   RELOC_ADD_EXTRA (rval): (Optional) This macro, if defined, gives
+ * an extra value to be added to the relocation value based on the
+ * individual relocation entry.  *Must be an lvalue if defined*.
+ *
+ *   RELOC_PCREL_P (rval): True if the relocation value described is
+ * pc relative.
+ *
+ *   RELOC_VALUE_RIGHTSHIFT (rval): Number of bits right to shift the
+ * final relocation value before putting it where it belongs.
+ *
+ *   RELOC_TARGET_SIZE (rval): log to the base 2 of the number of
+ * bytes of size this relocation entry describes; 1 byte == 0; 2 bytes
+ * == 1; 4 bytes == 2, and etc.  This is somewhat redundant (we could
+ * do everything in terms of the bit operators below), but having this
+ * macro could end up producing better code on machines without fancy
+ * bit twiddling.  Also, it's easier to understand/code big/little
+ * endian distinctions with this macro.
+ *
+ *   RELOC_TARGET_BITPOS (rval): The starting bit position within the
+ * object described in RELOC_TARGET_SIZE in which the relocation value
+ * will go.
+ *
+ *   RELOC_TARGET_BITSIZE (rval): How many bits are to be replaced
+ * with the bits of the relocation value.  It may be assumed by the
+ * code that the relocation value will fit into this many bits.  This
+ * may be larger than RELOC_TARGET_SIZE if such be useful.
+ *
+ *
+ *		Things I haven't implemented
+ *		----------------------------
+ *
+ *    Values for RELOC_TARGET_SIZE other than 0, 1, or 2.
+ *
+ *    Pc relative relocation for External references.
+ *
+ *
+ */
+
+/*
+ * Vector of entries for input files specified by arguments.
+ * These are all the input files except for members of specified libraries.
+ */
 struct file_entry	*file_table;
 int			number_of_files;
 
@@ -261,6 +480,7 @@ static void	consider_local_symbols __P((struct file_entry *));
 static void	perform_relocation __P((char *, int,
 						struct relocation_info *, int,
 						struct file_entry *, int));
+unsigned long	contains_symbol __P((struct file_entry *, struct nlist *));
 static void	copy_text __P((struct file_entry *));
 static void	copy_data __P((struct file_entry *));
 static void	coptxtrel __P((struct file_entry *));
@@ -272,8 +492,12 @@ static void	write_data __P((void));
 static void	write_rel __P((void));
 static void	write_syms __P((void));
 static void	assign_symbolnums __P((struct file_entry *, int *));
+static int	assign_string_table_index __P((char *));
 static void	cleanup __P((void));
+static void	file_close __P((void));
 static int	parse __P((char *, char *, char *));
+static void	add_cmdline_ref __P((symbol *));
+int		main __P((int, char *[]));
 
 
 int
@@ -877,10 +1101,10 @@ do_rpath:
 
 void
 each_file(function, arg)
-	register void	(*function)();
-	register void	*arg;
+	void	(*function) __P((struct file_entry *, void *));
+	void	*arg;
 {
-	register int    i;
+	int i;
 
 	for (i = 0; i < number_of_files; i++) {
 		register struct file_entry *entry = &file_table[i];
@@ -930,11 +1154,11 @@ each_file(function, arg)
 
 unsigned long
 check_each_file(function, arg)
-	register unsigned long	(*function)();
-	register void		*arg;
+	unsigned long	(*function) __P((struct file_entry *, void *));
+	void		*arg;
 {
-	register int    i;
-	register unsigned long return_val;
+	int  i;
+	unsigned long ret;
 
 	for (i = 0; i < number_of_files; i++) {
 		register struct file_entry *entry = &file_table[i];
@@ -945,23 +1169,23 @@ check_each_file(function, arg)
 			for (; subentry; subentry = subentry->chain) {
 				if (subentry->flags & E_SCRAPPED)
 					continue;
-				if (return_val = (*function)(subentry, arg))
-					return return_val;
+				if ((ret = (*function)(subentry, arg)) != 0)
+					return (ret);
 			}
-		} else if (return_val = (*function)(entry, arg))
-			return return_val;
+		} else if ((ret = (*function)(entry, arg)) != 0)
+			return (ret);
 	}
-	return 0;
+	return (0);
 }
 
 /* Like `each_file' but ignore files that were just for symbol definitions.  */
 
 void
 each_full_file(function, arg)
-	register void	(*function)();
-	register void	*arg;
+	void	(*function) __P((struct file_entry *, void *));
+	void	*arg;
 {
-	register int    i;
+	int  i;
 
 	for (i = 0; i < number_of_files; i++) {
 		register struct file_entry *entry = &file_table[i];
@@ -1003,8 +1227,9 @@ each_full_file(function, arg)
 	}
 }
 
-/* Close the input file that is now open.  */
-
+/*
+ * Close the input file that is now open.
+ */
 void
 file_close()
 {
@@ -1356,7 +1581,7 @@ enter_file_symbols(entry)
 			if (!relocatable_output)
 				enter_global_ref(lsp,
 					p->n_un.n_strx + entry->strings, entry);
-		} else if (p->n_type == N_WARNING) {
+		} else if (p->n_type == N_WARN) {
 			char *msg = p->n_un.n_strx + entry->strings;
 
 			/* Grab the next entry.  */
@@ -1372,7 +1597,7 @@ enter_file_symbols(entry)
 				symbol *sp;
 				char *name = p->n_un.n_strx + entry->strings;
 				/* Deal with the warning symbol.  */
-				lsp->flags |= LS_WARNING;
+				lsp->flags |= LS_WARN;
 				enter_global_ref(lsp, name, entry);
 				sp = getsym(name);
 				if (sp->warning == NULL) {
@@ -1481,7 +1706,7 @@ enter_global_ref(lsp, name, entry)
 		if (nzp->nz_size > sp->size)
 			sp->size = nzp->nz_size;
 
-		if ((lsp->flags & LS_WARNING) && (sp->flags & GS_REFERENCED))
+		if ((lsp->flags & LS_WARN) && (sp->flags & GS_REFERENCED))
 			/*
 			 * Prevent warning symbols from getting
 			 * gratuitously referenced.
@@ -1494,7 +1719,7 @@ enter_global_ref(lsp, name, entry)
 	sp->refs = lsp;
 	lsp->symbol = sp;
 
-	if (lsp->flags & LS_WARNING) {
+	if (lsp->flags & LS_WARN) {
 		/*
 		 * Prevent warning symbols from getting
 		 * gratuitously referenced.
@@ -1676,8 +1901,8 @@ enter_global_ref(lsp, name, entry)
 
 unsigned long
 contains_symbol(entry, np)
-     struct file_entry *entry;
-     register struct nlist *np;
+	struct file_entry *entry;
+	struct nlist *np;
 {
 	if (np >= &entry->symbols->nzlist.nlist &&
 		np < &(entry->symbols + entry->nsymbols)->nzlist.nlist)
@@ -2295,7 +2520,7 @@ consider_local_symbols(entry)
 		register struct nlist *p = &lsp->nzlist.nlist;
 		register int type = p->n_type;
 
-		if (type == N_WARNING)
+		if (type == N_WARN)
 			continue;
 
 		if (SET_ELEMENT_P (type)) {
@@ -2530,7 +2755,7 @@ digest_pass2()
 				/* Flag second-hand definitions */
 				undefined_global_sym_count++;
 			if (sp->flags & GS_TRACE)
-				printf("symbol %s assigned to location %#x\n",
+				printf("symbol %s assigned to location %#lx\n",
 					sp->name, sp->value);
 		}
 
@@ -2595,7 +2820,7 @@ digest_pass2()
 		}
 		bss_size += size;
 		if (write_map)
-			printf("Allocating %s %s: %x at %x\n",
+			printf("Allocating %s %s: %x at %lx\n",
 				sp->defined==(N_BSS|N_EXT)?"common":"data",
 				sp->name, size, sp->value);
 
@@ -3378,16 +3603,16 @@ static int	strtab_index;
 
 static int
 assign_string_table_index(name)
-	char           *name;
+	char	*name;
 {
-	register int    index = strtab_size;
-	register int    len = strlen(name) + 1;
+	int	index = strtab_size;
+	int	len = strlen(name) + 1;
 
 	strtab_size += len;
 	strtab_vector[strtab_index] = name;
 	strtab_lens[strtab_index++] = len;
 
-	return index;
+	return (index);
 }
 
 /*
@@ -3482,11 +3707,11 @@ write_syms()
 			continue;
 
 		/*
-		 * Propagate N_WARNING symbols.
+		 * Propagate N_WARN symbols.
 		 */
 		if ((relocatable_output || building_shared_object)
 		     && sp->warning) {
-			nl.n_type = N_WARNING;
+			nl.n_type = N_WARN;
 			nl.n_un.n_strx = assign_string_table_index(sp->warning);
 			nl.n_value = 0;
 			nl.n_other = 0;
@@ -3562,7 +3787,7 @@ write_syms()
 					nl.n_type = sp->defined;
 				if (nl.n_type == (N_INDR|N_EXT) &&
 							sp->value != 0)
-					errx(1, "%s: N_INDR has value %#x",
+					errx(1, "%s: N_INDR has value %#lx",
 							sp->name, sp->value);
 				nl.n_value = sp->value;
 				if (sp->def_lsp)
@@ -3663,7 +3888,7 @@ printf("writesym(#%d): %s, type %x\n", syms_written, sp->name, sp->defined);
 
 	if (symtab_offset + symtab_len != strtab_offset)
 		errx(1,
-		"internal error: inconsistent symbol table length: %d vs %s",
+		"internal error: inconsistent symbol table length: %d vs %d",
 		symtab_offset + symtab_len, strtab_offset);
 
 	if (fseek(outstream, strtab_offset, SEEK_SET) != 0)
