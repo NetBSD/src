@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_time.c,v 1.39 1999/08/16 18:42:25 tron Exp $	*/
+/*	$NetBSD: kern_time.c,v 1.40 1999/08/16 18:53:55 tron Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -60,8 +60,6 @@
 #endif
 
 #include <machine/cpu.h>
-
-int	settime __P((struct timeval *));
 
 /*
  * Time of day and interval timer support.
