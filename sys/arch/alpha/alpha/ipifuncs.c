@@ -1,4 +1,4 @@
-/* $NetBSD: ipifuncs.c,v 1.20 2000/11/18 19:25:36 thorpej Exp $ */
+/* $NetBSD: ipifuncs.c,v 1.21 2000/11/19 20:05:25 sommerfeld Exp $ */
 
 /*-
  * Copyright (c) 1998, 1999, 2000 The NetBSD Foundation, Inc.
@@ -39,7 +39,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: ipifuncs.c,v 1.20 2000/11/18 19:25:36 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ipifuncs.c,v 1.21 2000/11/19 20:05:25 sommerfeld Exp $");
 
 /*
  * Interprocessor interrupt handlers.
@@ -145,7 +145,7 @@ alpha_broadcast_ipi(u_long ipimask)
 	u_long i, cpu_id = cpu_number();
 	u_long cpumask;
 
-	cpumask = cpus_running &= ~(1UL << cpu_id);
+	cpumask = cpus_running & ~(1UL << cpu_id);
 
 	for (i = 0; i < hwrpb->rpb_pcs_cnt; i++) {
 		if ((cpumask & (1UL << i)) == 0)
