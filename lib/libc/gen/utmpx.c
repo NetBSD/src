@@ -1,4 +1,4 @@
-/*	$NetBSD: utmpx.c,v 1.3.2.4 2002/08/01 03:28:12 nathanw Exp $	 */
+/*	$NetBSD: utmpx.c,v 1.3.2.5 2002/08/02 23:30:35 thorpej Exp $	 */
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
 #include <sys/cdefs.h>
 
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: utmpx.c,v 1.3.2.4 2002/08/01 03:28:12 nathanw Exp $");
+__RCSID("$NetBSD: utmpx.c,v 1.3.2.5 2002/08/02 23:30:35 thorpej Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include <sys/types.h>
@@ -49,6 +49,7 @@ __RCSID("$NetBSD: utmpx.c,v 1.3.2.4 2002/08/01 03:28:12 nathanw Exp $");
 #include <sys/stat.h>
 
 #include <stdio.h>
+#include <stdlib.h>
 #include <string.h>
 #include <vis.h>
 #include <utmp.h>
