@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.680 2004/04/03 04:20:38 uwe Exp $
+# $NetBSD: mi,v 1.681 2004/04/04 15:59:44 mrg Exp $
 ./etc/mtree/set.man				man-sys-root
 ./usr/share/info/am-utils.info			man-amd-info		info
 ./usr/share/info/as.info			man-computil-info	bfd,info
@@ -1387,6 +1387,7 @@
 ./usr/share/man/cat5/ipf6.conf.0		man-ipf-catman		.cat
 ./usr/share/man/cat5/ipnat.0			man-ipf-catman		.cat
 ./usr/share/man/cat5/ipnat.conf.0		man-ipf-catman		.cat
+./usr/share/man/cat5/ippool.0			man-ipf-catman		.cat
 ./usr/share/man/cat5/ipsec.conf.0		man-netutil-catman	.cat
 ./usr/share/man/cat5/ipsend.0			man-ipf-catman		.cat
 ./usr/share/man/cat5/isdnd.acct.0		man-isdn-catman		.cat
@@ -3468,6 +3469,7 @@
 ./usr/share/man/man5/ipf6.conf.5		man-ipf-man		.man
 ./usr/share/man/man5/ipnat.5			man-ipf-man		.man
 ./usr/share/man/man5/ipnat.conf.5		man-ipf-man		.man
+./usr/share/man/man5/ippool.5			man-ipf-man		.man
 ./usr/share/man/man5/ipsec.conf.5		man-netutil-man		.man
 ./usr/share/man/man5/ipsend.5			man-ipf-man		.man
 ./usr/share/man/man5/isdnd.acct.5		man-isdn-man		.man
