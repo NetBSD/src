@@ -1,4 +1,4 @@
-/*	$NetBSD: mips_machdep.c,v 1.8 1997/06/08 10:48:02 jonathan Exp $	*/
+/*	$NetBSD: mips_machdep.c,v 1.9 1997/06/15 17:47:46 mhitch Exp $	*/
 
 /*
  * Copyright 1996 The Board of Trustees of The Leland Stanford
@@ -54,7 +54,9 @@ mips_locore_jumpvec_t R2000_locore_vec =
 	mips1_TLBFlush,
 	mips1_TLBFlushAddr,
 	mips1_TLBUpdate,
-	mips1_TLBWriteIndexed
+	mips1_TLBWriteIndexed,
+	mips1_wbflush,
+	mips1_proc_trampoline
 };
 
 void
@@ -70,7 +72,7 @@ mips1_vector_init()
 		panic("startup: UTLB code too large");
 	bcopy(mips1_UTLBMiss, (char *)MACH_UTLB_MISS_EXC_VEC,
 		mips1_UTLBMissEnd - mips1_UTLBMiss);
-	bcopy(mips1_exception, (char *)MACH_GEN_EXC_VEC,
+	bcopy(mips1_exception, (char *)MIPS_3K_GEN_EXC_VEC,
 	      mips1_exceptionEnd - mips1_exception);
 
 	/*
@@ -110,28 +112,32 @@ mips_locore_jumpvec_t R4000_locore_vec =
 	mips3_TLBFlush,
 	mips3_TLBFlushAddr,
 	mips3_TLBUpdate,
-	mips3_TLBWriteIndexed
+	mips3_TLBWriteIndexed,
+	mips3_wbflush,
+	mips3_proc_trampoline
 };
 
 void
 mips3_vector_init()
 {
 
-	/* TLB miss handler address and end */
+	/* r4000 exception handler address and end */
 	extern char mips3_exception[], mips3_exceptionEnd[];
 
-	/* r4000 exception handler address and end */
+	/* TLB miss handler address and end */
 	extern char mips3_TLBMiss[], mips3_TLBMissEnd[];
 
 	/*
 	 * Copy down exception vector code.
 	 */
+#if 0  /* XXX not restricted? */
 	if (mips3_TLBMissEnd - mips3_TLBMiss > 0x80)
 		panic("startup: UTLB code too large");
+#endif
 	bcopy(mips3_TLBMiss, (char *)MACH_UTLB_MISS_EXC_VEC,
 	      mips3_TLBMissEnd - mips3_TLBMiss);
 
-	bcopy(mips3_exception, (char *)MACH_GEN_EXC_VEC,
+	bcopy(mips3_exception, (char *)MIPS_4K_GEN_EXC_VEC,
 	      mips3_exceptionEnd - mips3_exception);
 
 	/*
@@ -240,11 +246,9 @@ cpu_identify()
 		break;
 
 	case MIPS_R4000:
-#ifdef pica /* XXX*/
 		if(machPrimaryInstCacheSize == 16384)
 			printf("MIPS R4400 CPU");
 		else
-#endif /* XXX*/
 			printf("MIPS R4000 CPU");
 		break;
 	case MIPS_R3LSI:
@@ -346,9 +350,11 @@ cpu_identify()
 	printf(" Rev. %d.%d", fpu_id.cpu.cp_majrev, fpu_id.cpu.cp_minrev);
 	printf("\n");
 
-#ifdef pica
-	printf("        Primary cache size: %dkb Instruction, %dkb Data.\n",
-		machPrimaryInstCacheSize / 1024,
-		machPrimaryDataCacheSize / 1024);
+#ifdef MIPS3
+	printf("        Primary cache size: %dkb Instruction, %dkb Data, %dkb Secondary.\n",
+	    machPrimaryInstCacheSize / 1024,
+	    machPrimaryDataCacheSize / 1024,
+	    machSecondaryCacheSize / 1024);
 #endif
+/* XXX cache sizes for MIPS1? */
 }
