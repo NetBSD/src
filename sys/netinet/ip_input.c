@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_input.c,v 1.169 2003/06/30 07:54:28 itojun Exp $	*/
+/*	$NetBSD: ip_input.c,v 1.170 2003/07/03 05:03:53 itojun Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -102,7 +102,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip_input.c,v 1.169 2003/06/30 07:54:28 itojun Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip_input.c,v 1.170 2003/07/03 05:03:53 itojun Exp $");
 
 #include "opt_gateway.h"
 #include "opt_pfil_hooks.h"
@@ -1726,17 +1726,15 @@ ip_forward(m, srcrt)
 			struct route *ro;
 
 			sp = ipsec4_getpolicybyaddr(mcopy,
-			                            IPSEC_DIR_OUTBOUND,
-			                            IP_FORWARDING,
-			                            &ipsecerror);
+			    IPSEC_DIR_OUTBOUND, IP_FORWARDING,
+			    &ipsecerror);
 
 			if (sp == NULL)
 				destifp = ipforward_rt.ro_rt->rt_ifp;
 			else {
 				/* count IPsec header size */
 				ipsechdr = ipsec4_hdrsiz(mcopy,
-				                         IPSEC_DIR_OUTBOUND,
-				                         NULL);
+				    IPSEC_DIR_OUTBOUND, NULL);
 
 				/*
 				 * find the correct route for outer IPv4
