@@ -1,4 +1,4 @@
-/*	$NetBSD: ip6.c,v 1.4 2000/06/13 13:37:13 ad Exp $	*/
+/*	$NetBSD: ip6.c,v 1.4.2.1 2000/07/14 05:49:37 itojun Exp $	*/
 
 /*
  * Copyright (c) 1999 Andrew Doran <ad@NetBSD.org>
@@ -29,7 +29,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: ip6.c,v 1.4 2000/06/13 13:37:13 ad Exp $");
+__RCSID("$NetBSD: ip6.c,v 1.4.2.1 2000/07/14 05:49:37 itojun Exp $");
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -129,9 +129,6 @@ labelip6(void)
 	RHD(10,	"  can't be fragmented");
 
 	RHD(12,	"violated scope rules");
-	RHD(13,	"call to m_pulldown");
-	RHD(14,	"mbuf allocation in m_pulldown");
-	RHD(15,	"mbuf copy in m_pulldown");
 }
 	
 void
@@ -186,9 +183,6 @@ showip6(void)
 	SHOW(i.ip6s_cantfrag, 10, 35);
 
 	SHOW(i.ip6s_badscope, 12, 35);
-	SHOW(i.ip6s_pulldown, 13, 35);
-	SHOW(i.ip6s_pulldown_alloc, 14, 35);
-	SHOW(i.ip6s_pulldown_copy, 15, 35);
 }
 
 int
