@@ -1,6 +1,6 @@
 /*-
- * Copyright (c) 1980, 1987, 1988, 1991 The Regents of the University
- * of California.  All rights reserved.
+ * Copyright (c) 1980, 1987, 1988, 1991, 1993
+ *	The Regents of the University of California.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -32,14 +32,13 @@
  */
 
 #ifndef lint
-char copyright[] =
-"@(#) Copyright (c) 1980, 1987, 1988, 1991 The Regents of the University of California.\n\
- All rights reserved.\n";
+static char copyright[] =
+"@(#) Copyright (c) 1980, 1987, 1988, 1991, 1993\n\
+	The Regents of the University of California.  All rights reserved.\n";
 #endif /* not lint */
 
 #ifndef lint
-/*static char sccsid[] = "from: @(#)login.c	5.78 (Berkeley) 6/29/92";*/
-static char rcsid[] = "$Id: login.c,v 1.9 1994/05/24 06:51:03 deraadt Exp $";
+static char sccsid[] = "@(#)login.c	8.1 (Berkeley) 6/9/93";
 #endif /* not lint */
 
 /*
@@ -80,8 +79,10 @@ void	 sleepexit __P((int));
 char	*stypeof __P((char *));
 void	 timedout __P((int));
 int	 pwcheck __P((char *, char *, char *, char *));
-#ifdef KERBEROS
+#if defined(KERBEROS) || defined(KERBEROS5)
 int	 klogin __P((struct passwd *, char *, char *, char *));
+void     kdestroy __P((void));
+void     dofork __P((void));
 #endif
 
 #define	TTYGRPNAME	"tty"		/* name of group to own ttys */
@@ -92,10 +93,10 @@ int	 klogin __P((struct passwd *, char *, char *, char *));
  */
 int	timeout = 300;
 
-#ifdef KERBEROS
+#if defined(KERBEROS) || defined(KERBEROS5)
 int	notickets = 1;
 char	*instance;
-char	*krbtkfile_env;
+char	*krbtkfile_env = NULL;
 int	authok;
 #endif
 
@@ -193,6 +194,9 @@ main(argc, argv)
 		tty = ttyn;
 
 	for (cnt = 0;; ask = 1) {
+#if defined(KERBEROS) || defined(KERBEROS5)
+	        kdestroy();
+#endif
 		if (ask) {
 			fflag = 0;
 			getloginname();
@@ -201,6 +205,14 @@ main(argc, argv)
 #ifdef	KERBEROS
 		if ((instance = index(username, '.')) != NULL) {
 			if (strncmp(instance, ".root", 5) == 0)
+				rootlogin = 1;
+			*instance++ = '\0';
+		} else
+			instance = "";
+#endif
+#ifdef KERBEROS5
+		if ((instance = index(username, '/')) != NULL) {
+			if (strncmp(instance, "/root", 5) == 0)
 				rootlogin = 1;
 			*instance++ = '\0';
 		} else
@@ -253,12 +265,15 @@ main(argc, argv)
 		p = getpass("Password:");
 
 		if (pwd) {
-#ifdef KERBEROS
+#if defined(KERBEROS) || defined(KERBEROS5)
 			rval = klogin(pwd, instance, localhost, p);
 			if (rval == 0)
 				authok = 1;
-			else if (rval == 1)
+			else if (rval == 1) {
+				if (pwd->pw_uid != 0)
+					rootlogin = 0;
 				rval = pwcheck(username, p, salt, pwd->pw_passwd);
+			}
 #else
 			rval = pwcheck(username, p, salt, pwd->pw_passwd);
 #endif
@@ -272,7 +287,7 @@ main(argc, argv)
 		 * If trying to log in as root without Kerberos,
 		 * but with insecure terminal, refuse the login attempt.
 		 */
-#ifdef KERBEROS
+#if defined(KERBEROS) || defined(KERBEROS5)
 		if (authok == 0)
 #endif
 		if (pwd && !rval && rootlogin && !rootterm(tty)) {
@@ -356,6 +371,11 @@ main(argc, argv)
 
 	(void)chown(ttyn, pwd->pw_uid,
 	    (gr = getgrnam(TTYGRPNAME)) ? gr->gr_gid : pwd->pw_gid);
+#if defined(KERBEROS) || defined(KERBEROS5)
+	/* Fork so that we can call kdestroy */
+	if (krbtkfile_env)
+	    dofork();
+#endif
 	(void)setgid(pwd->pw_gid);
 
 	initgroups(username, pwd->pw_gid);
@@ -378,6 +398,10 @@ main(argc, argv)
 	if (krbtkfile_env)
 		(void)setenv("KRBTKFILE", krbtkfile_env, 1);
 #endif
+#ifdef KERBEROS5
+	if (krbtkfile_env)
+		(void)setenv("KRB5CCNAME", krbtkfile_env, 1);
+#endif
 
 	if (tty[sizeof("tty")-1] == 'd')
 		syslog(LOG_INFO, "DIALUP %s, %s", tty, pwd->pw_name);
@@ -390,15 +414,16 @@ main(argc, argv)
 		else
 			syslog(LOG_NOTICE, "ROOT LOGIN (%s) ON %s", username, tty);
 
-#ifdef KERBEROS
+#if defined(KERBEROS) || defined(KERBEROS5)
 	if (!quietlog && notickets == 1)
 		(void)printf("Warning: no Kerberos tickets issued.\n");
 #endif
 
 	if (!quietlog) {
-		(void)printf(
-"Copyright (c) 1980,1983,1986,1988,1990,1991 The Regents of the University\n%s",
-"of California.  All rights reserved.\n\n");
+		(void)printf("%s\n\t%s  %s\n\n",
+		    "Copyright (c) 1980, 1983, 1986, 1988, 1990, 1991, 1993",
+		    "The Regents of the University of California. ",
+		    "All rights reserved.");
 		motd();
 		(void)snprintf(tbuf,
 		    sizeof(tbuf), "%s/%s", _PATH_MAILDIR, pwd->pw_name);
@@ -447,10 +472,40 @@ pwcheck(user, p, salt, passwd)
 	return strcmp(crypt(p, salt), passwd);
 }
 
-#ifdef	KERBEROS
+#if defined(KERBEROS) || defined(KERBEROS5)
 #define	NBUFSIZ		(UT_NAMESIZE + 1 + 5)	/* .root suffix */
 #else
 #define	NBUFSIZ		(UT_NAMESIZE + 1)
+#endif
+
+#if defined(KERBEROS) || defined(KERBEROS5)
+/*
+ * This routine handles cleanup stuff, and the like.
+ * It exists only in the child process.
+ */
+#include <sys/wait.h>
+void
+dofork()
+{
+    int child;
+
+    if (!(child = fork()))
+	    return; /* Child process */
+
+    /* Setup stuff?  This would be things we could do in parallel with login */
+    (void) chdir("/");	/* Let's not keep the fs busy... */
+    
+    /* If we're the parent, watch the child until it dies */
+    while (wait(0) != child)
+	    ;
+
+    /* Cleanup stuff */
+    /* Run kdestroy to destroy tickets */
+    kdestroy();
+
+    /* Leave */
+    exit(0);
+}
 #endif
 
 void
