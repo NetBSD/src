@@ -1,7 +1,7 @@
 #
 # GENERIC AMIGA
 #
-#	$Id: GENERIC,v 1.20 1994/06/20 02:29:51 chopps Exp $
+#	$Id: GENERIC,v 1.21 1994/06/21 03:58:52 chopps Exp $
 #
 # This configuration file contains all possible options
 #
@@ -27,7 +27,6 @@ options		DEVPAGER	# Pager for devices (Required)
 #
 # Networking options
 #
-options		ETHER		# XXXX!!!!
 options		INET		# IP networking support (Required)
 #options	ISO		# ISO Networking support
 #options	TPIP		# ARGO TP networking support
@@ -119,6 +118,8 @@ grf2		at grfrh0
 ite0		at grf0			# terminal emulators for grf's
 ite1		at grf1			# terminal emulators for grf's
 ite2		at grf2			# terminal emulators for grf's
+
+le0		at ztwobus0		# Lance ethernet.
 
 # scsi stuff, all possible
 gvpbus0		at ztwobus0
