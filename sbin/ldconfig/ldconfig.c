@@ -1,4 +1,4 @@
-/*	$NetBSD: ldconfig.c,v 1.22 1998/12/15 22:49:42 pk Exp $	*/
+/*	$NetBSD: ldconfig.c,v 1.22.2.1 1999/10/20 23:15:02 he Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -166,8 +166,12 @@ do_conf ()
 	size_t		len;
 	int		rval = 0;
 
-	if ((conf = fopen(_PATH_LD_SO_CONF, "r")) == NULL)
-		return (-1);
+	if ((conf = fopen(_PATH_LD_SO_CONF, "r")) == NULL) {
+		if (verbose) {
+			warnx("can't open `%s'", _PATH_LD_SO_CONF);
+		}
+		return (0);
+	}
 
 	while ((line = fgetln(conf, &len)) != NULL) {
 		if (*line == '#' || *line == '\n')
@@ -196,6 +200,8 @@ do_conf ()
 			cline = NULL;
 		}
 	}
+
+	(void) fclose(conf);
 
 	return (rval);
 }
@@ -259,6 +265,8 @@ dodir(dir, silent, update_dir_list)
 		ndewey = getdewey(dewey, cp + 4);
 		enter(dir, dp->d_name, name, dewey, ndewey);
 	}
+
+	(void) closedir(dd);
 
 	return (0);
 }
