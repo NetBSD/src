@@ -1,4 +1,4 @@
-/* $NetBSD: i82596.c,v 1.6 2005/02/17 15:16:26 tsutsui Exp $ */
+/* $NetBSD: i82596.c,v 1.7 2005/02/18 22:39:31 tsutsui Exp $ */
 
 /*
  * Copyright (c) 2003 Jochen Kunz.
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: i82596.c,v 1.6 2005/02/17 15:16:26 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: i82596.c,v 1.7 2005/02/18 22:39:31 tsutsui Exp $");
 
 /* autoconfig and device stuff */
 #include <sys/param.h>
@@ -97,13 +97,13 @@ static void iee_watchdog(struct ifnet *);		/* timer routine */
 static void iee_drain(struct ifnet *);			/* release resources */
 
 /* internal helper functions */
-static void iee_cb_setup(struct iee_softc *, u_int32_t);
+static void iee_cb_setup(struct iee_softc *, uint32_t);
 
 /*
 Things a MD frontend has to provide:
 
 The functions via function pointers in the softc:
-        int (*sc_iee_cmd)(struct iee_softc *sc, u_int32_t cmd);
+        int (*sc_iee_cmd)(struct iee_softc *sc, uint32_t cmd);
         int (*sc_iee_reset)(struct iee_softc *sc);
         void (*sc_mediastatus)(struct ifnet *, struct ifmediareq *);
         int (*sc_mediachange)(struct ifnet *);
@@ -148,7 +148,7 @@ to a cache line if sc->sc_cl_align != 1.
 
 An interrupt with iee_intr() as handler must be established.
 
-Call void iee_attach(struct iee_softc *sc, u_int8_t *ether_address, 
+Call void iee_attach(struct iee_softc *sc, uint8_t *ether_address, 
 int *media, int nmedia, int defmedia); when everything is set up. First 
 parameter is a pointer to the MI softc, ether_address is an array that
 contains the ethernet address. media is an array of the media types 
@@ -408,7 +408,7 @@ a multicast list length of 0, thus disabling the multicast filter.
 A defered MCS is signaled via ((sc->sc_flags & IEE_WANT_MCAST) != 0)
 */
 void
-iee_cb_setup(struct iee_softc *sc, u_int32_t cmd)
+iee_cb_setup(struct iee_softc *sc, uint32_t cmd)
 {
 	struct iee_cb *cb = SC_CB(sc->sc_next_cb);
 	struct ifnet *ifp = &sc->sc_ethercom.ec_if;
@@ -501,7 +501,7 @@ iee_cb_setup(struct iee_softc *sc, u_int32_t cmd)
 
 
 void
-iee_attach(struct iee_softc *sc, u_int8_t *eth_addr, int *media, int nmedia, 
+iee_attach(struct iee_softc *sc, uint8_t *eth_addr, int *media, int nmedia, 
     int defmedia)
 {
 	struct ifnet *ifp = &sc->sc_ethercom.ec_if;
