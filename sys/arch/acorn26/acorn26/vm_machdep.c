@@ -1,4 +1,4 @@
-/* $NetBSD: vm_machdep.c,v 1.1 2002/03/24 15:46:49 bjh21 Exp $ */
+/* $NetBSD: vm_machdep.c,v 1.2 2002/03/24 23:37:42 bjh21 Exp $ */
 
 /*-
  * Copyright (c) 2000, 2001 Ben Harris
@@ -62,11 +62,10 @@
  * any improvements or extensions that they make and grant Carnegie the
  * rights to redistribute these changes.
  */
-/* This file is part of NetBSD/arm26 -- a port of NetBSD to ARM2/3 machines. */
 
 #include <sys/param.h>
 
-__RCSID("$NetBSD: vm_machdep.c,v 1.1 2002/03/24 15:46:49 bjh21 Exp $");
+__RCSID("$NetBSD: vm_machdep.c,v 1.2 2002/03/24 23:37:42 bjh21 Exp $");
 
 #include <sys/buf.h>
 #include <sys/mount.h> /* XXX syscallargs.h uses fhandle_t and fsid_t */
