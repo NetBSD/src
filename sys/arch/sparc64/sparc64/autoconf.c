@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.32 2000/06/24 04:42:55 eeh Exp $ */
+/*	$NetBSD: autoconf.c,v 1.33 2000/06/24 20:48:39 eeh Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -75,7 +75,6 @@
 #include <machine/openfirm.h>
 #include <machine/sparc64.h>
 #include <machine/cpu.h>
-#include <machine/ctlreg.h>
 #include <machine/pmap.h>
 #include <sparc64/sparc64/timerreg.h>
 
@@ -233,7 +232,9 @@ bootstrap(nctx)
 	/* This can only be installed on an 64-bit system cause otherwise our stack is screwed */
 	OF_set_symbol_lookup(OF_sym2val, OF_val2sym);
 #else
+#if 1
 	OF_set_symbol_lookup(OF_sym2val32, OF_val2sym32);
+#endif
 #endif
 #endif
 
