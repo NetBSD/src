@@ -1,4 +1,4 @@
-/* $NetBSD: ne.c,v 1.1 2001/11/01 09:37:17 yamt Exp $ */
+/* $NetBSD: ne.c,v 1.2 2001/11/03 09:36:47 yamt Exp $ */
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -91,18 +91,6 @@ void DELAY(x)
 	for (i=0; i<x; i++) {y++;}
 }
 
-void
-dump(void *vp, size_t len)
-{
-	int i;
-	u_char *p = vp;
-
-	for (i=0; i<len; i++) {
-		printf("%x ", p[i]);
-	}
-	printf("\n");
-}
-
 #define ASIC_PORT(x) (NE_ASIC_BASEREG + (x))
 #define ASIC_INB(x) inb(ASIC_PORT(x))
 #define ASIC_INW(x) inw(ASIC_PORT(x))
@@ -140,13 +128,11 @@ EtherInit(unsigned char *myadr)
 	tmp = NIC_INB(ED_P0_CR);
 	if ((tmp & (ED_CR_RD2 | ED_CR_TXP | ED_CR_STA | ED_CR_STP)) !=
 		(ED_CR_RD2 | ED_CR_STP)) {
-		printf("1 0x%x\n", tmp);
 		goto out;
 	}
 
 	tmp = NIC_INB(ED_P0_ISR);
 	if ((tmp & ED_ISR_RST) != ED_ISR_RST) {
-		printf("2 0x%x\n", tmp);
 		goto out;
 	}
 
@@ -199,8 +185,17 @@ out:
 
 void
 EtherStop() {
-	printf("EtherStop called\n");
+	u_int8_t tmp;
+
 	dp8390_stop();
+
+	tmp = ASIC_INB(NE2000_ASIC_RESET);
+	DELAY(10000);
+	ASIC_OUTB(NE2000_ASIC_RESET, tmp);
+	DELAY(5000);
+
+	NIC_OUTB(ED_P0_CR, ED_CR_RD2 | ED_CR_PAGE_0 | ED_CR_STP);
+	DELAY(5000);
 }
 
 void
