@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.38 2001/02/19 22:56:19 cgd Exp $	*/
+/*	$NetBSD: main.c,v 1.39 2001/02/23 07:51:41 christos Exp $	*/
 
 /*
  * Copyright (c) 1980, 1986, 1993
@@ -43,7 +43,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1986, 1993\n\
 #if 0
 static char sccsid[] = "@(#)main.c	8.6 (Berkeley) 5/14/95";
 #else
-__RCSID("$NetBSD: main.c,v 1.38 2001/02/19 22:56:19 cgd Exp $");
+__RCSID("$NetBSD: main.c,v 1.39 2001/02/23 07:51:41 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -311,7 +311,9 @@ checkfilesys(filesys, mntpt, auxdata, child)
 	muldup = (struct dups *)0;
 	inocleanup();
 	if (fsmodified) {
-		(void)time(&sblock->fs_time);
+		time_t t;
+		(void)time(&t);
+		sblock->fs_time = t;
 		sbdirty();
 	}
 	if (rerun)
