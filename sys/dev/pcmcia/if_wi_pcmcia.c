@@ -1,4 +1,4 @@
-/* $NetBSD: if_wi_pcmcia.c,v 1.46 2004/08/07 05:27:39 mycroft Exp $ */
+/* $NetBSD: if_wi_pcmcia.c,v 1.47 2004/08/07 17:18:09 mycroft Exp $ */
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_wi_pcmcia.c,v 1.46 2004/08/07 05:27:39 mycroft Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_wi_pcmcia.c,v 1.47 2004/08/07 17:18:09 mycroft Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -113,20 +113,23 @@ static const struct wi_pcmcia_product {
 	u_int32_t	pp_product;	/* product ID */
 	const char	*pp_cisinfo[4];	/* CIS information */
 } wi_pcmcia_products[] = {
-	{ PCMCIA_VENDOR_LUCENT, PCMCIA_PRODUCT_LUCENT_WAVELAN_IEEE,
+	{ PCMCIA_VENDOR_INVALID, PCMCIA_PRODUCT_INVALID,
 	  PCMCIA_CIS_SMC_2632W },
 
-	{ PCMCIA_VENDOR_LUCENT, PCMCIA_PRODUCT_LUCENT_WAVELAN_IEEE,
+	{ PCMCIA_VENDOR_INVALID, PCMCIA_PRODUCT_INVALID,
 	  PCMCIA_CIS_NANOSPEED_PRISM2 },
 
-	{ PCMCIA_VENDOR_LUCENT, PCMCIA_PRODUCT_LUCENT_WAVELAN_IEEE,
+	{ PCMCIA_VENDOR_INVALID, PCMCIA_PRODUCT_INVALID,
 	  PCMCIA_CIS_NEC_CMZ_RT_WP },
 
-	{ PCMCIA_VENDOR_LUCENT, PCMCIA_PRODUCT_LUCENT_WAVELAN_IEEE,
+	{ PCMCIA_VENDOR_INVALID, PCMCIA_PRODUCT_INVALID,
 	  PCMCIA_CIS_NTT_ME_WLAN },
 
-	{ PCMCIA_VENDOR_LUCENT, PCMCIA_PRODUCT_LUCENT_WAVELAN_IEEE,
-	  PCMCIA_CIS_LUCENT_WAVELAN_IEEE },
+	{ PCMCIA_VENDOR_LUCENT, PCMCIA_PRODUCT_LUCENT_HERMES,
+	  PCMCIA_CIS_INVALID },
+
+	{ PCMCIA_VENDOR_LUCENT, PCMCIA_PRODUCT_LUCENT_HERMES2,
+	  PCMCIA_CIS_INVALID },
 
 	{ PCMCIA_VENDOR_3COM, PCMCIA_PRODUCT_3COM_3CRWE737A,
 	  PCMCIA_CIS_3COM_3CRWE737A },
@@ -369,6 +372,7 @@ wi_pcmcia_attach(parent, self, aux)
 	const struct wi_pcmcia_product *pp;
 	struct pcmcia_attach_args *pa = aux;
 	struct pcmcia_config_entry *cfe;
+	int haveaddr;
 
 	aprint_normal("\n");
 
@@ -427,7 +431,8 @@ wi_pcmcia_attach(parent, self, aux)
 
 	printf("%s:", self->dv_xname);
 
-	if (wi_attach(sc) != 0) {
+	haveaddr = pa->pf->pf_funce_lan_nidlen == IEEE80211_ADDR_LEN;
+	if (wi_attach(sc, haveaddr ? pa->pf->pf_funce_lan_nid : 0) != 0) {
 		aprint_error("%s: failed to attach controller\n", self->dv_xname);
 		goto attach_failed;
 	}
