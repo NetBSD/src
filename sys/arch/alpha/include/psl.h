@@ -1,4 +1,4 @@
-/*	$NetBSD: psl.h,v 1.6 1996/07/09 00:37:51 cgd Exp $	*/
+/* $NetBSD: psl.h,v 1.6.2.1 1997/06/01 04:12:31 cgd Exp $ */
 
 /*
  * Everything which would be defined here is defined in

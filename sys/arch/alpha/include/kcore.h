@@ -1,4 +1,4 @@
-/*	$NetBSD: kcore.h,v 1.1 1996/10/01 18:38:05 cgd Exp $	*/
+/* $NetBSD: kcore.h,v 1.1.2.1 1997/06/01 04:12:21 cgd Exp $ */
 
 /*
  * Copyright (c) 1996 Carnegie-Mellon University.

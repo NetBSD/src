@@ -1,4 +1,4 @@
-/*	$NetBSD: cfb.c,v 1.6.2.3 1997/01/25 01:16:51 cgd Exp $	*/
+/* $NetBSD: cfb.c,v 1.6.2.4 1997/06/01 04:14:32 cgd Exp $ */
 
 /*
  * Copyright (c) 1995, 1996 Carnegie-Mellon University.
@@ -35,17 +35,22 @@
  * XXX XXX XXX XXX XXX XXX XXX XXX XXX XXX XXX XXX XXX XXX XXX XXX XXX XXX XXX
  */
 
+#include <machine/options.h>		/* Config options headers */
+#include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
+
+__KERNEL_RCSID(0, "$NetBSD: cfb.c,v 1.6.2.4 1997/06/01 04:14:32 cgd Exp $");
+
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/kernel.h>
 #include <sys/device.h>
 #include <sys/malloc.h>
 #include <sys/buf.h>
-#include <sys/conf.h>
 #include <sys/ioctl.h>
 
 #include <machine/bus.h>
 #include <machine/intr.h>
+#include <machine/conf.h>
 
 #include <dev/tc/tcvar.h>
 #include <machine/cfbreg.h>

@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.c,v 1.15.2.2 1996/12/08 00:31:23 cgd Exp $	*/
+/* $NetBSD: cpu.c,v 1.15.2.3 1997/06/01 04:11:10 cgd Exp $ */
 
 /*
  * Copyright (c) 1994, 1995, 1996 Carnegie-Mellon University.
@@ -26,6 +26,11 @@
  * any improvements or extensions that they make and grant Carnegie the
  * rights to redistribute these changes.
  */
+
+#include <machine/options.h>		/* Config options headers */
+#include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
+
+__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.15.2.3 1997/06/01 04:11:10 cgd Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -58,6 +63,9 @@ cpumatch(parent, cfdata, aux)
 	if (strcmp(ca->ca_name, cpu_cd.cd_name) != 0)
 		return (0);
 
+	/* XXX CHECK SLOT? */
+	/* XXX CHECK PRIMARY? */
+
 	return (1);
 }
 
@@ -67,16 +75,21 @@ cpuattach(parent, dev, aux)
 	struct device *dev;
 	void *aux;
 {
+	struct confargs *ca = aux;
         struct pcs *p;
+#ifdef DEBUG
 	int needcomma;
+#endif
 	u_int32_t major, minor;
 
-        p = (struct pcs*)((char *)hwrpb + hwrpb->rpb_pcs_off +
-	    (dev->dv_unit * hwrpb->rpb_pcs_size));
+	p = (struct pcs *)((char *)hwrpb + hwrpb->rpb_pcs_off +
+	    (ca->ca_slot * hwrpb->rpb_pcs_size));
 	major = (p->pcs_proc_type & PCS_PROC_MAJOR) >> PCS_PROC_MAJORSHIFT;
 	minor = (p->pcs_proc_type & PCS_PROC_MINOR) >> PCS_PROC_MINORSHIFT;
 
-	printf(": ");
+	printf(": ID %d%s, ", ca->ca_slot,
+	    ca->ca_slot == hwrpb->rpb_primary_cpu_id ? " (primary)" : "");
+
 	switch (major) {
 	case PCS_PROC_EV3:
 		printf("EV3 (minor type 0x%x)", minor);
@@ -232,6 +245,7 @@ cpuattach(parent, dev, aux)
 	}
 	printf("\n");
 
+#ifdef DEBUG
 	/* XXX SHOULD CHECK ARCHITECTURE MASK, TOO */
 	if (p->pcs_proc_var != 0) {
 		printf("cpu%d: ", dev->dv_unit);
@@ -254,6 +268,7 @@ cpuattach(parent, dev, aux)
 			    p->pcs_proc_var & PCS_VAR_RESERVED);
 		printf("\n");
 	}
+#endif
 
 	/*
 	 * Though we could (should?) attach the LCA cpus' PCI

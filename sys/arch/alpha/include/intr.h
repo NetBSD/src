@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.h,v 1.4 1996/12/03 17:34:47 cgd Exp $	*/
+/* $NetBSD: intr.h,v 1.4.2.1 1997/06/01 04:12:19 cgd Exp $ */
 
 /*
  * Copyright (c) 1996 Carnegie-Mellon University.

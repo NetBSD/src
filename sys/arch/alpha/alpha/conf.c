@@ -1,4 +1,71 @@
-/*	$NetBSD: conf.c,v 1.16.2.4 1997/01/31 17:14:40 cgd Exp $	*/
+/* $NetBSD: conf.c,v 1.16.2.5 1997/06/01 04:11:09 cgd Exp $ */
+
+/*
+ * Copyright Notice:
+ *
+ * Copyright (c) 1997 Christopher G. Demetriou.  All rights reserved.
+ *
+ * License:
+ *
+ * This License applies to this software ("Software"), created
+ * by Christopher G. Demetriou ("Author").
+ *
+ * You may use, copy, modify and redistribute this Software without
+ * charge, in either source code form, binary form, or both, on the
+ * following conditions:
+ *
+ * 1.  (a) Binary code: (i) a complete copy of the above copyright notice
+ * must be included within each copy of the Software in binary code form,
+ * and (ii) a complete copy of the above copyright notice and all terms
+ * of this License as presented here must be included within each copy of
+ * all documentation accompanying or associated with binary code, in any
+ * medium, along with a list of the software modules to which the license
+ * applies.
+ *
+ * (b) Source Code: A complete copy of the above copyright notice and all
+ * terms of this License as presented here must be included within: (i)
+ * each copy of the Software in source code form, and (ii) each copy of
+ * all accompanying or associated documentation, in any medium.
+ *
+ * 2. The following Acknowledgment must be used in communications
+ * involving the Software as described below:
+ *
+ *      This product includes software developed by
+ *      Christopher G. Demetriou for the NetBSD Project.
+ *
+ * The Acknowledgment must be conspicuously and completely displayed
+ * whenever the Software, or any software, products or systems containing
+ * the Software, are mentioned in advertising, marketing, informational
+ * or publicity materials of any kind, whether in print, electronic or
+ * other media (except for information provided to support use of
+ * products containing the Software by existing users or customers).
+ *
+ * 3. The name of the Author may not be used to endorse or promote
+ * products derived from this Software without specific prior written
+ * permission (conditions (1) and (2) above are not considered
+ * endorsement or promotion).
+ *
+ * 4.  This license applies to: (a) all copies of the Software, whether
+ * partial or whole, original or modified, and (b) your actions, and the
+ * actions of all those who may act on your behalf.  All uses not
+ * expressly permitted are reserved to the Author.
+ *
+ * 5.  Disclaimer.  THIS SOFTWARE IS MADE AVAILABLE BY THE AUTHOR TO THE
+ * PUBLIC FOR FREE AND "AS IS.''  ALL USERS OF THIS FREE SOFTWARE ARE
+ * SOLELY AND ENTIRELY RESPONSIBLE FOR THEIR OWN CHOICE AND USE OF THIS
+ * SOFTWARE FOR THEIR OWN PURPOSES.  BY USING THIS SOFTWARE, EACH USER
+ * AGREES THAT THE AUTHOR SHALL NOT BE LIABLE FOR DAMAGES OF ANY KIND IN
+ * RELATION TO ITS USE OR PERFORMANCE.
+ *
+ * 6.  If you have a special need for a change in one or more of these
+ * license conditions, please contact the Author via electronic mail to
+ *
+ *     cgd@NetBSD.ORG
+ *
+ * or via the contact information on
+ *
+ *     http://www.NetBSD.ORG/People/Pages/cgd.html
+ */
 
 /*-
  * Copyright (c) 1991 The Regents of the University of California.
@@ -35,31 +102,112 @@
  *      @(#)conf.c	7.9 (Berkeley) 5/28/91
  */
 
+#if 0
+XXX Cannot do this until the DEC_XXX vs. NDEC_XXX nonsense is worked out.
+#include <machine/options.h>		/* Config options headers */
+#endif
+#include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
+
+__KERNEL_RCSID(0, "$NetBSD: conf.c,v 1.16.2.5 1997/06/01 04:11:09 cgd Exp $");
+__KERNEL_COPYRIGHT(0, \
+    "Copyright (c) 1997 Christopher G. Demetriou.  All rights reserved.");
+
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/buf.h>
 #include <sys/ioctl.h>
 #include <sys/tty.h>
-#include <sys/conf.h>
 #include <sys/vnode.h>
+#include <machine/conf.h>
 
-#include "fdc.h"
-bdev_decl(fd);
-bdev_decl(sw);
-#include "st.h"
-bdev_decl(st);
-#include "cd.h"
-bdev_decl(cd);
-#include "wdc.h"
-bdev_decl(wd);
-#include "sd.h"
-bdev_decl(sd);
-#include "vnd.h"
-bdev_decl(vnd);
+/* CPU support flag headers. */
+#include "dec_2100_a50.h"
+#include "dec_3000_300.h"
+#include "dec_3000_500.h"
+#include "dec_axppci_33.h"
+#include "dec_eb164.h"
+#include "dec_eb64plus.h"
+#include "dec_kn20aa.h"
+#include "dec_kn8ae.h"
+
+/* Device support flag headers. */
+#include "audio.h"
+#include "bpfilter.h"
 #include "ccd.h"
-bdev_decl(ccd);
+#include "cd.h"
+#include "ch.h"
+#include "com.h"
+#include "fdc.h"
+#include "ipfilter.h"
+#include "lpt.h"
 #include "md.h"
-bdev_decl(md);
+#include "pty.h"
+#include "scc.h"
+#include "sd.h"
+#include "se.h"
+#include "ss.h"
+#include "st.h"
+#include "tun.h"
+#include "uk.h"
+#include "vnd.h"
+#include "awdc.h"
+#include "wsdisplay.h"
+#include "wskbd.h"
+#include "wsmouse.h"
+
+
+/*
+ * CPU support switch table.
+ */
+
+const struct cpusw cpusw[] = {
+	cpu_unknown(),				/*  0: ??? */
+	cpu_notdef("Alpha Demonstration Unit"),	/*  1: ST_ADU */
+	cpu_notdef("DEC 4000 (\"Cobra\")"),	/*  2: ST_DEC_4000 */
+	cpu_notdef("DEC 7000 (\"Ruby\")"),	/*  3: ST_DEC_7000 */
+	cpu_init("DEC 3000/500 (\"Flamingo\")",DEC_3000_500,dec_3000_500),
+						/*  4: ST_DEC_3000_500 */
+	cpu_unknown(),				/*  5: ??? */
+	cpu_notdef("DEC 2000/300 (\"Jensen\")"),
+						/*  6: ST_DEC_2000_300 */
+	cpu_init("DEC 3000/300 (\"Pelican\")",DEC_3000_300,dec_3000_300),
+						/*  7: ST_DEC_3000_300 */
+	cpu_unknown(),				/*  8: ??? */
+	cpu_notdef("DEC 2100/A500 (\"Sable\")"),
+						/*  9: ST_DEC_2100_A500 */
+	cpu_notdef("AXPvme 64"),		/* 10: ST_DEC_APXVME_64 */
+	cpu_init("DEC AXPpci",DEC_AXPPCI_33,dec_axppci_33),
+						/* 11: ST_DEC_AXPPCI_33 */
+	cpu_init("AlphaServer 8400",DEC_KN8AE,dec_kn8ae),
+						/* 12: ST_DEC_21000 */
+	cpu_init("AlphaStation 200/400 (\"Avanti\")",DEC_2100_A50,dec_2100_a50),
+						/* 13: ST_DEC_2100_A50 */
+	cpu_notdef("Mustang"),			/* 14: ST_DEC_MUSTANG */
+	cpu_init("AlphaStation 600 (KN20AA)",DEC_KN20AA,dec_kn20aa),
+						/* 15: ST_DEC_KN20AA */
+	cpu_unknown(),				/* 16: ??? */
+	cpu_notdef("DEC 1000 (\"Mikasa\")"),	/* 17: ST_DEC_1000 */
+	cpu_unknown(),				/* 18: ??? */
+	cpu_notdef("EB66"),			/* 19: ST_EB66 */
+	cpu_init("EB64+",DEC_EB64PLUS,dec_eb64plus),
+						/* 20: ST_EB64P */
+	cpu_unknown(),				/* 21: ??? */
+	cpu_notdef("DEC 4100 (\"Rawhide\")"),	/* 22: ST_DEC_4100 */
+	cpu_notdef("??? (\"Lego\")"),		/* 23: ST_DEC_EV45_PBP */
+	cpu_notdef("DEC 2100A/A500 (\"Lynx\")"),
+						/* 24: ST_DEC_2100A_A500 */
+	cpu_unknown(),				/* 25: ??? */
+	cpu_init("EB164",DEC_EB164,dec_eb164),	/* 26: ST_EB164 */
+	cpu_notdef("DEC 1000A (\"Noritake\")"),	/* 27: ST_DEC_1000A */
+	cpu_notdef("AlphaVME 224 (\"Cortex\")"),
+						/* 28: ST_DEC_ALPHAVME_224 */
+};
+const int ncpusw = sizeof (cpusw) / sizeof (cpusw[0]);
+
+
+/*
+ * Device support switch tables.
+ */
 
 struct bdevsw	bdevsw[] =
 {
@@ -67,7 +215,7 @@ struct bdevsw	bdevsw[] =
 	bdev_swap_init(1,sw),		/* 1: swap pseudo-device */
 	bdev_tape_init(NST,st),		/* 2: SCSI tape */
 	bdev_disk_init(NCD,cd),		/* 3: SCSI CD-ROM */
-	bdev_disk_init(NWDC,wd),	/* 4: IDE disk driver */
+	bdev_disk_init(NAWDC,wd),	/* 4: IDE disk driver */
 	bdev_notdef(),			/* 5 */
 	bdev_disk_init(NMD,md),		/* 6: memory disk driver */
 	bdev_disk_init(NCCD,ccd),	/* 7: concatenated disk driver */
@@ -81,71 +229,6 @@ struct bdevsw	bdevsw[] =
 	bdev_lkm_dummy(),		/* 15 */
 };
 int	nblkdev = sizeof (bdevsw) / sizeof (bdevsw[0]);
-
-/* open, close, read, write, ioctl, tty, mmap */
-#define cdev_wsdisplay_init(c,n) { \
-	dev_init(c,n,open), dev_init(c,n,close), dev_init(c,n,read), \
-	dev_init(c,n,write), dev_init(c,n,ioctl), dev_init(c,n,stop), \
-	dev_init(c,n,tty), dev_init(c,n,poll), dev_init(c,n,mmap), D_TTY }
-
-/* open, close, write, ioctl */
-#define cdev_lpt_init(c,n) { \
-	dev_init(c,n,open), dev_init(c,n,close), (dev_type_read((*))) enodev, \
-	dev_init(c,n,write), dev_init(c,n,ioctl), (dev_type_stop((*))) enodev, \
-	0, seltrue, (dev_type_mmap((*))) enodev }
-
-cdev_decl(cn);
-cdev_decl(ctty);
-#define	mmread  mmrw
-#define	mmwrite mmrw
-cdev_decl(mm);
-cdev_decl(sw);
-#include "pty.h"
-#define	ptstty		ptytty
-#define	ptsioctl	ptyioctl
-cdev_decl(pts);
-#define	ptctty		ptytty
-#define	ptcioctl	ptyioctl
-cdev_decl(ptc);
-cdev_decl(log);
-#include "tun.h"
-cdev_decl(tun);
-cdev_decl(sd);
-cdev_decl(vnd);
-cdev_decl(ccd);
-dev_type_open(filedescopen);
-#include "bpfilter.h"
-cdev_decl(bpf);
-cdev_decl(st);
-cdev_decl(cd);
-#include "ch.h"
-cdev_decl(ch);
-#include "scc.h"
-cdev_decl(scc);
-#include "audio.h"
-cdev_decl(audio);
-#include "wsdisplay.h"
-cdev_decl(wsdisplay);
-#include "wskbd.h"
-cdev_decl(wskbd);
-#include "wsmouse.h"
-cdev_decl(wsmouse);
-#include "com.h"
-cdev_decl(com);
-#include "lpt.h"
-cdev_decl(lpt);
-cdev_decl(md);
-#include "ss.h"
-cdev_decl(ss);
-#include "uk.h"
-cdev_decl(uk);
-cdev_decl(fd);
-#include "ipfilter.h"
-cdev_decl(ipl);
-cdev_decl(wd);
-
-cdev_decl(prom);			/* XXX XXX XXX */
-
 
 struct cdevsw	cdevsw[] =
 {
@@ -187,7 +270,8 @@ struct cdevsw	cdevsw[] =
 	cdev_uk_init(NUK,uk),		/* 33: SCSI unknown */
 	cdev_disk_init(NFDC,fd),	/* 34: PC-ish floppy disk driver */
 	cdev_ipf_init(NIPFILTER,ipl),	/* 35: ip-filter device */
-	cdev_disk_init(NWDC,wd),	/* 36: IDE disk driver */
+	cdev_disk_init(NAWDC,wd),	/* 36: IDE disk driver */
+	cdev_se_init(NSE,se),		/* 37: Cabletron SCSI<->Ethernet */
 };
 int	nchrdev = sizeof (cdevsw) / sizeof (cdevsw[0]);
 
@@ -266,6 +350,7 @@ static int chrtoblktbl[] = {
 	/* 34 */	0,		/* fd */
 	/* 35 */	NODEV,
 	/* 36 */	4,		/* wd */
+	/* 37 */	NODEV,
 };
 
 /*

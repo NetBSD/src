@@ -1,4 +1,71 @@
-/*	$NetBSD: locore.s,v 1.27 1996/12/03 19:54:16 cgd Exp $	*/
+/* $NetBSD: locore.s,v 1.27.2.1 1997/06/01 04:11:24 cgd Exp $ */
+
+/*
+ * Copyright Notice:
+ *
+ * Copyright (c) 1997 Christopher G. Demetriou.  All rights reserved.
+ *
+ * License:
+ *
+ * This License applies to this software ("Software"), created
+ * by Christopher G. Demetriou ("Author").
+ *
+ * You may use, copy, modify and redistribute this Software without
+ * charge, in either source code form, binary form, or both, on the
+ * following conditions:
+ *
+ * 1.  (a) Binary code: (i) a complete copy of the above copyright notice
+ * must be included within each copy of the Software in binary code form,
+ * and (ii) a complete copy of the above copyright notice and all terms
+ * of this License as presented here must be included within each copy of
+ * all documentation accompanying or associated with binary code, in any
+ * medium, along with a list of the software modules to which the license
+ * applies.
+ *
+ * (b) Source Code: A complete copy of the above copyright notice and all
+ * terms of this License as presented here must be included within: (i)
+ * each copy of the Software in source code form, and (ii) each copy of
+ * all accompanying or associated documentation, in any medium.
+ *
+ * 2. The following Acknowledgment must be used in communications
+ * involving the Software as described below:
+ *
+ *      This product includes software developed by
+ *      Christopher G. Demetriou for the NetBSD Project.
+ *
+ * The Acknowledgment must be conspicuously and completely displayed
+ * whenever the Software, or any software, products or systems containing
+ * the Software, are mentioned in advertising, marketing, informational
+ * or publicity materials of any kind, whether in print, electronic or
+ * other media (except for information provided to support use of
+ * products containing the Software by existing users or customers).
+ *
+ * 3. The name of the Author may not be used to endorse or promote
+ * products derived from this Software without specific prior written
+ * permission (conditions (1) and (2) above are not considered
+ * endorsement or promotion).
+ *
+ * 4.  This license applies to: (a) all copies of the Software, whether
+ * partial or whole, original or modified, and (b) your actions, and the
+ * actions of all those who may act on your behalf.  All uses not
+ * expressly permitted are reserved to the Author.
+ *
+ * 5.  Disclaimer.  THIS SOFTWARE IS MADE AVAILABLE BY THE AUTHOR TO THE
+ * PUBLIC FOR FREE AND "AS IS.''  ALL USERS OF THIS FREE SOFTWARE ARE
+ * SOLELY AND ENTIRELY RESPONSIBLE FOR THEIR OWN CHOICE AND USE OF THIS
+ * SOFTWARE FOR THEIR OWN PURPOSES.  BY USING THIS SOFTWARE, EACH USER
+ * AGREES THAT THE AUTHOR SHALL NOT BE LIABLE FOR DAMAGES OF ANY KIND IN
+ * RELATION TO ITS USE OR PERFORMANCE.
+ *
+ * 6.  If you have a special need for a change in one or more of these
+ * license conditions, please contact the Author via electronic mail to
+ *
+ *     cgd@NetBSD.ORG
+ *
+ * or via the contact information on
+ *
+ *     http://www.NetBSD.ORG/People/Pages/cgd.html
+ */
 
 /*
  * Copyright (c) 1994, 1995, 1996 Carnegie-Mellon University.
@@ -27,7 +94,13 @@
  * rights to redistribute these changes.
  */
 
+#include <machine/options.h>		/* Config options headers */
 #include <machine/asm.h>
+
+__KERNEL_RCSID(0, "$NetBSD: locore.s,v 1.27.2.1 1997/06/01 04:11:24 cgd Exp $");
+__KERNEL_COPYRIGHT(0, \
+    "Copyright (c) 1997 Christopher G. Demetriou.  All rights reserved.");
+
 #ifndef EVCNT_COUNTERS
 #include <machine/intrcnt.h>
 #endif
@@ -273,9 +346,7 @@ LEAF(exception_restore_regs, 0)
 	ldq	t10,(FRAME_T10*8)(sp)
 	ldq	t11,(FRAME_T11*8)(sp)
 	ldq	t12,(FRAME_T12*8)(sp)
-#ifndef __OpenBSD__
 	RET
-#endif
 	END(exception_restore_regs)
 
 /**************************************************************************/
@@ -696,6 +767,7 @@ Lcs5:
 	call_pal PAL_OSF1_swpctx
 	ldiq	a0, -1				/* & invalidate old TLB ents */
 	call_pal PAL_OSF1_tbi
+	call_pal PAL_OSF1_imb
 
 	/*
 	 * Now running on the new u struct.
@@ -718,6 +790,7 @@ Lcs5:
 	call_pal PAL_OSF1_swpctx
 	ldiq	a0, -2				/* & invalidate old TLB ents */
 	call_pal PAL_OSF1_tbi
+	call_pal PAL_OSF1_imb
 
 	ldq	a0, P_VMSPACE(s0)
 	lda	a1, U_PCB_HWPCB(s1)
@@ -802,6 +875,7 @@ LEAF(switch_exit, 1)
 #ifndef NEW_PMAP
 	ldiq	a0, -1				/* & invalidate old TLB ents */
 	call_pal PAL_OSF1_tbi
+	call_pal PAL_OSF1_imb
 #endif /* NEW_PMAP */
 
 	/*
@@ -1574,3 +1648,71 @@ LXconsole_restart1: LDGP(pv)
 
 	call_pal PAL_halt
 	END(XentRestart)
+
+/**************************************************************************/
+
+/*
+ * Kernel setjmp and longjmp.  Rather minimalist.
+ *
+ *	longjmp(label_t *a)
+ * will generate a "return (1)" from the last call to
+ *	setjmp(label_t *a)
+ * by restoring registers from the stack,
+ */
+
+	.set	noreorder
+
+LEAF(setjmp, 1)
+	LDGP(pv)
+
+	stq	ra, (0 * 8)(a0)			/* return address */
+	stq	s0, (1 * 8)(a0)			/* callee-saved registers */
+	stq	s1, (2 * 8)(a0)
+	stq	s2, (3 * 8)(a0)
+	stq	s3, (4 * 8)(a0)
+	stq	s4, (5 * 8)(a0)
+	stq	s5, (6 * 8)(a0)
+	stq	s6, (7 * 8)(a0)
+	stq	sp, (8 * 8)(a0)
+
+	ldiq	t0, 0xbeeffedadeadbabe		/* set magic number */
+	stq	t0, (9 * 8)(a0)
+
+	mov	zero, v0			/* return zero */
+	RET
+END(setjmp)
+
+LEAF(longjmp, 1)
+	LDGP(pv)
+
+	ldiq	t0, 0xbeeffedadeadbabe		/* check magic number */
+	ldq	t1, (9 * 8)(a0)
+	cmpeq	t0, t1, t0
+	beq	t0, longjmp_botch		/* if bad, punt */
+
+	ldq	ra, (0 * 8)(a0)			/* return address */
+	ldq	s0, (1 * 8)(a0)			/* callee-saved registers */
+	ldq	s1, (2 * 8)(a0)
+	ldq	s2, (3 * 8)(a0)
+	ldq	s3, (4 * 8)(a0)
+	ldq	s4, (5 * 8)(a0)
+	ldq	s5, (6 * 8)(a0)
+	ldq	s6, (7 * 8)(a0)
+	ldq	sp, (8 * 8)(a0)
+
+	ldiq	v0, 1
+	RET
+
+longjmp_botch:
+	lda	a0, longjmp_botchmsg
+	mov	ra, a1
+	CALL(panic)
+	call_pal PAL_bugchk
+
+	.data
+longjmp_botchmsg:
+	.asciz	"longjmp botch from %p"
+	.text
+END(longjmp)
+
+/**************************************************************************/

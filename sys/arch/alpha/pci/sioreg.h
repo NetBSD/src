@@ -1,4 +1,4 @@
-/*	$NetBSD: sioreg.h,v 1.1 1996/04/23 14:10:53 cgd Exp $	*/
+/* $NetBSD: sioreg.h,v 1.1.2.1 1997/06/01 04:13:49 cgd Exp $ */
 
 /*
  * Copyright (c) 1996 BBN Corporation.

@@ -1,4 +1,4 @@
-/*	$NetBSD: sio_pic.c,v 1.16 1996/11/17 02:05:26 cgd Exp $	*/
+/* $NetBSD: sio_pic.c,v 1.16.2.1 1997/06/01 04:13:48 cgd Exp $ */
 
 /*
  * Copyright (c) 1995, 1996 Carnegie-Mellon University.
@@ -26,6 +26,11 @@
  * any improvements or extensions that they make and grant Carnegie the
  * rights to redistribute these changes.
  */
+
+#include <machine/options.h>		/* Config options headers */
+#include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
+
+__KERNEL_RCSID(0, "$NetBSD: sio_pic.c,v 1.16.2.1 1997/06/01 04:13:48 cgd Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

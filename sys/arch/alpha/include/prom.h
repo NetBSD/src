@@ -1,4 +1,4 @@
-/*	$NetBSD: prom.h,v 1.6 1996/11/13 22:21:03 cgd Exp $	*/
+/* $NetBSD: prom.h,v 1.6.2.1 1997/06/01 04:12:30 cgd Exp $ */
 
 /*
  * Copyright (c) 1994, 1995, 1996 Carnegie-Mellon University.

@@ -1,4 +1,4 @@
-/*	$NetBSD: cfbreg.h,v 1.1 1996/05/01 23:25:00 cgd Exp $	*/
+/* $NetBSD: cfbreg.h,v 1.1.2.1 1997/06/01 04:12:08 cgd Exp $ */
 
 /*
  * Copyright (c) 1996 Carnegie-Mellon University.

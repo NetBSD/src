@@ -1,4 +1,4 @@
-/*	$NetBSD: lca.c,v 1.13.2.2 1996/12/08 00:31:32 cgd Exp $	*/
+/* $NetBSD: lca.c,v 1.13.2.3 1997/06/01 04:13:17 cgd Exp $ */
 
 /*
  * Copyright (c) 1995, 1996 Carnegie-Mellon University.
@@ -27,6 +27,11 @@
  * rights to redistribute these changes.
  */
 
+#include <machine/options.h>		/* Config options headers */
+#include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
+
+__KERNEL_RCSID(0, "$NetBSD: lca.c,v 1.13.2.3 1997/06/01 04:13:17 cgd Exp $");
+
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/kernel.h>
@@ -44,7 +49,7 @@
 #include <dev/pci/pcivar.h>
 #include <alpha/pci/lcareg.h>
 #include <alpha/pci/lcavar.h>
-#if defined(DEC_AXPPCI_33)
+#ifdef DEC_AXPPCI_33
 #include <alpha/pci/pci_axppci_33.h>
 #endif
 
@@ -206,7 +211,7 @@ lcaattach(parent, self, aux)
 	printf("\n");
 
 	switch (hwrpb->rpb_type) {
-#if defined(DEC_AXPPCI_33)
+#ifdef DEC_AXPPCI_33
 	case ST_DEC_AXPPCI_33:
 		pci_axppci_33_pickintr(lcp);
 		break;
@@ -221,6 +226,7 @@ lcaattach(parent, self, aux)
 	pba.pba_memt = lcp->lc_memt;
 	pba.pba_pc = &lcp->lc_pc;
 	pba.pba_bus = 0;
+	pba.pba_flags = PCI_FLAGS_IO_ENABLED | PCI_FLAGS_MEM_ENABLED;
 	config_found(self, &pba, lcaprint);
 }
 

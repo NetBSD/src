@@ -1,4 +1,4 @@
-/*	$NetBSD: cia.c,v 1.14.2.2 1996/12/08 00:31:31 cgd Exp $	*/
+/* $NetBSD: cia.c,v 1.14.2.3 1997/06/01 04:13:05 cgd Exp $ */
 
 /*
  * Copyright (c) 1995, 1996 Carnegie-Mellon University.
@@ -27,6 +27,11 @@
  * rights to redistribute these changes.
  */
 
+#include <machine/options.h>		/* Config options headers */
+#include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
+
+__KERNEL_RCSID(0, "$NetBSD: cia.c,v 1.14.2.3 1997/06/01 04:13:05 cgd Exp $");
+
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/kernel.h>
@@ -44,10 +49,10 @@
 #include <dev/pci/pcivar.h>
 #include <alpha/pci/ciareg.h>
 #include <alpha/pci/ciavar.h>
-#if defined(DEC_KN20AA)
+#ifdef DEC_KN20AA
 #include <alpha/pci/pci_kn20aa.h>
 #endif
-#if defined(DEC_EB164)
+#ifdef DEC_EB164
 #include <alpha/pci/pci_eb164.h>
 #endif
 
@@ -145,7 +150,7 @@ ciaattach(parent, self, aux)
 	printf("\n");
 
 	switch (hwrpb->rpb_type) {
-#if defined(DEC_KN20AA)
+#ifdef DEC_KN20AA
 	case ST_DEC_KN20AA:
 		pci_kn20aa_pickintr(ccp);
 #ifdef EVCNT_COUNTERS
@@ -154,7 +159,7 @@ ciaattach(parent, self, aux)
 		break;
 #endif
 
-#if defined(DEC_EB164)
+#ifdef DEC_EB164
 	case ST_EB164:
 		pci_eb164_pickintr(ccp);
 #ifdef EVCNT_COUNTERS
@@ -172,6 +177,7 @@ ciaattach(parent, self, aux)
 	pba.pba_memt = ccp->cc_memt;
 	pba.pba_pc = &ccp->cc_pc;
 	pba.pba_bus = 0;
+	pba.pba_flags = PCI_FLAGS_IO_ENABLED | PCI_FLAGS_MEM_ENABLED;
 	config_found(self, &pba, ciaprint);
 }
 

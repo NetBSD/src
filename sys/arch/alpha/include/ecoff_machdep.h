@@ -1,4 +1,4 @@
-/*	$NetBSD: ecoff_machdep.h,v 1.3 1996/05/09 23:47:25 cgd Exp $	*/
+/* $NetBSD: ecoff_machdep.h,v 1.3.2.1 1997/06/01 04:12:13 cgd Exp $ */
 
 /*
  * Copyright (c) 1994 Adam Glass

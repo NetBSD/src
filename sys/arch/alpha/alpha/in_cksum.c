@@ -1,4 +1,4 @@
-/*	$NetBSD: in_cksum.c,v 1.4 1996/11/13 21:13:06 cgd Exp $	*/
+/* $NetBSD: in_cksum.c,v 1.4.2.1 1997/06/01 04:11:22 cgd Exp $ */
 
 /*
  * Copyright (c) 1988, 1992, 1993
@@ -36,6 +36,11 @@
  *
  *	@(#)in_cksum.c	8.1 (Berkeley) 6/10/93
  */
+
+#include <machine/options.h>		/* Config options headers */
+#include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
+
+__KERNEL_RCSID(0, "$NetBSD: in_cksum.c,v 1.4.2.1 1997/06/01 04:11:22 cgd Exp $");
 
 #include <sys/param.h>
 #include <sys/mbuf.h>

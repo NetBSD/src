@@ -1,4 +1,4 @@
-/*	$NetBSD: lca_bus_io.c,v 1.1 1996/11/25 03:42:14 cgd Exp $	*/
+/* $NetBSD: lca_bus_io.c,v 1.1.2.1 1997/06/01 04:13:18 cgd Exp $ */
 
 /*
  * Copyright (c) 1996 Carnegie-Mellon University.
@@ -27,6 +27,11 @@
  * rights to redistribute these changes.
  */
 
+#include <machine/options.h>		/* Config options headers */
+#include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
+
+__KERNEL_RCSID(1, "$NetBSD: lca_bus_io.c,v 1.1.2.1 1997/06/01 04:13:18 cgd Exp $");
+
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/malloc.h>
@@ -50,4 +55,4 @@
 #define	CHIP_IO_W1_SYS_START(v)	LCA_PCI_SIO
 #define	CHIP_IO_W1_SYS_END(v)	(LCA_PCI_SIO + ((0x00ffffffUL + 1) << 5) - 1)
 
-#include "pcs_bus_io_common.c"
+#include "pci_swiz_io_chipdep.c"

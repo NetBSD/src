@@ -1,4 +1,4 @@
-/*	$NetBSD: bus.h,v 1.10 1996/12/02 22:19:32 cgd Exp $	*/
+/* $NetBSD: bus.h,v 1.10.2.1 1997/06/01 04:12:06 cgd Exp $ */
 
 /*
  * Copyright (c) 1996 Carnegie-Mellon University.

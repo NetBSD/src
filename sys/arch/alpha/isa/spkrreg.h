@@ -1,4 +1,4 @@
-/*	$NetBSD: spkrreg.h,v 1.1 1996/04/12 01:54:46 cgd Exp $	*/
+/* $NetBSD: spkrreg.h,v 1.1.2.1 1997/06/01 04:12:55 cgd Exp $ */
 
 /*
  * PIT port addresses and speaker control values

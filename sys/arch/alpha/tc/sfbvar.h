@@ -1,4 +1,4 @@
-/*	$NetBSD: sfbvar.h,v 1.1 1996/05/01 21:15:51 cgd Exp $	*/
+/* $NetBSD: sfbvar.h,v 1.1.2.1 1997/06/01 04:14:44 cgd Exp $ */
 
 /*
  * Copyright (c) 1995, 1996 Carnegie-Mellon University.

@@ -1,4 +1,4 @@
-#	$NetBSD: NOSY,v 1.10.2.3 1997/01/31 17:14:48 cgd Exp $
+# $NetBSD: NOSY,v 1.10.2.4 1997/06/01 04:11:56 cgd Exp $
 #
 # Kernel for nostromo.nas.nasa.gov.
 #
@@ -11,9 +11,12 @@ maxusers 8
 options		DEC_3000_500	# Flamingo etc:	3000/[4-9]00*
 
 # Standard system options
-options		DEBUG, DIAGNOSTIC	# Extra kernel debugging
 options		KTRACE			# System call tracing support
 options 	NTP			# NTP PLL
+
+# Diagnostic/debugging support options
+options		DIAGNOSTIC		# Cheap kernel consistency checks
+options		DEBUG			# Expensive debugging checks/support
 
 # File systems
 file-system 	FFS		# Fast file system
@@ -67,13 +70,13 @@ le*	at	ioasic? offset ?
 scc0	at	ioasic? offset ?
 scc1	at	ioasic? offset ?
 tcds0	at	tc? slot ? offset ?
-esp0	at	tcds? slot ?
-esp1	at	tcds? slot ?
+asc0	at	tcds? slot ?
+asc1	at	tcds? slot ?
 #sfb*	at	tc? slot ? offset ?
 #fta*	at	tc? slot ? offset ?		# DEC DEFTA FDDI cards
 
 # SCSI bus support
-scsibus* at	esp?
+scsibus* at	asc?
 
 # SCSI devices
 sd*	at	scsibus? target ? lun ?
