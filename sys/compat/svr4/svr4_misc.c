@@ -1,4 +1,4 @@
-/*	$NetBSD: svr4_misc.c,v 1.22 1995/06/27 22:12:47 christos Exp $	 */
+/*	$NetBSD: svr4_misc.c,v 1.23 1995/07/01 23:42:54 christos Exp $	 */
 
 /*
  * Copyright (c) 1994 Christos Zoulas
@@ -201,7 +201,12 @@ svr4_getdents(p, uap, retval)
 
 #define	BSD_DIRENT(cp)		((struct dirent *)(cp))
 #define SVR4_DIRENT(cp)		((struct svr4_dirent *)(cp))
+#ifdef sparc
+#define	SVR4_RECLEN(reclen)	(reclen + sizeof(u_long))
+#else
 #define	SVR4_RECLEN(reclen)	(reclen + sizeof(u_short))
+#endif
+#define SVR4_DSIZE(i) (sizeof(i.d_ino) + sizeof(i.d_off) + sizeof(i.d_reclen))
 
 	if ((error = getvnode(p->p_fd, SCARG(uap, fd), &fp)) != 0)
 		return (error);
@@ -263,8 +268,11 @@ again:
 		idb.d_ino = (svr4_ino_t) BSD_DIRENT(inp)->d_fileno;
 		idb.d_off = (svr4_off_t) off;
 		idb.d_reclen = (u_short) SVR4_RECLEN(reclen);
-		if ((error = copyout((caddr_t) & idb, outp, 10)) != 0 ||
-		    (error = copyout(BSD_DIRENT(inp)->d_name, outp + 10,
+
+		if ((error = copyout((caddr_t) & idb, outp,
+				     SVR4_DSIZE(idb))) != 0 ||
+		    (error = copyout(BSD_DIRENT(inp)->d_name,
+				     outp + SVR4_DSIZE(idb),
 				     BSD_DIRENT(inp)->d_namlen + 1)) != 0)
 			goto out;
 		/* advance past this real entry */
