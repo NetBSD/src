@@ -1,4 +1,4 @@
-/*	$NetBSD: vrgiu.c,v 1.32 2002/02/02 10:50:09 takemura Exp $	*/
+/*	$NetBSD: vrgiu.c,v 1.33 2002/02/09 15:00:40 sato Exp $	*/
 /*-
  * Copyright (c) 1999-2001
  *         Shin Takemura and PocketBSD Project. All rights reserved.
@@ -97,11 +97,6 @@ int vrgiu_intr_led = 1;
 
 #define	LEGAL_INTR_PORT(x)	((x) >= 0 && (x) < MAX_GPIO_INOUT)
 #define	LEGAL_OUT_PORT(x)	((x) >= 0 && (x) < MAX_GPIO_OUT)
-
-/* flags for variant chips */
-#if !defined(VR4122) && !defined(VR4131)
-#define VRGIU_HAVE_PULLUPDNREGS
-#endif
 
 /*
  * type declarations
@@ -292,12 +287,15 @@ vrgiu_dump_iosetting(struct vrgiu_softc *sc)
 	edge = vrgiu_regread_4(sc, GIUINTTYP_REG);
 	hold = vrgiu_regread_4(sc, GIUINTHTSEL_REG);
 	level = vrgiu_regread_4(sc, GIUINTALSEL_REG);
-#ifndef VRGIU_HAVE_PULLUPDNREGS
-	useupdn = termupdn = 0;
-#else
-	useupdn = vrgiu_regread(sc, GIUUSEUPDN_REG_W);
-	termupdn = vrgiu_regread(sc, GIUTERMUPDN_REG_W);
-#endif
+
+	if (GIUUSEUPDN_REG_W == GIU_NO_REG_W)
+		useupdn = 0;
+	else
+		useupdn = vrgiu_regread(sc, GIUUSEUPDN_REG_W);
+	if (GIUTERMUPDN_REG_W == GIU_NO_REG_W)
+		termupdn = 0;
+	else
+		termupdn = vrgiu_regread(sc, GIUTERMUPDN_REG_W);
 	for (m = 0x80000000; m; m >>=1)
 		printf ("%c", syms[
 			((useupdn&m) ? 32 : 0) +
@@ -318,12 +316,14 @@ vrgiu_diff_iosetting()
 
 	iosel= vrgiu_regread_4(sc, GIUIOSEL_REG);
 	inten= vrgiu_regread_4(sc, GIUINTEN_REG);
-#ifndef VRGIU_HAVE_PULLUPDNREGS
-	useupdn = termupdn = 0;
-#else
-	useupdn = vrgiu_regread(sc, GIUUSEUPDN_REG_W);
-	termupdn = vrgiu_regread(sc, GIUTERMUPDN_REG_W);
-#endif
+	if (GIUUSEUPDN_REG_W == GIU_NO_REG_W)
+		useupdn = 0;
+	else
+		useupdn = vrgiu_regread(sc, GIUUSEUPDN_REG_W);
+	if (GIUTERMUPDN_REG_W == GIU_NO_REG_W)
+		termupdn = 0;
+	else
+		termupdn = vrgiu_regread(sc, GIUTERMUPDN_REG_W);
 	if (oiosel != iosel || ointen != inten ||
 	    ouseupdn != useupdn || otermupdn != termupdn) {
 		for (m = 0x80000000; m; m >>=1)

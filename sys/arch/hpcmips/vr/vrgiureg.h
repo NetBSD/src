@@ -1,4 +1,4 @@
-/*	$NetBSD: vrgiureg.h,v 1.1.1.1 1999/09/16 12:23:32 takemura Exp $	*/
+/*	$NetBSD: vrgiureg.h,v 1.2 2002/02/09 15:00:40 sato Exp $	*/
 
 /*-
  * Copyright (c) 1999
@@ -37,6 +37,7 @@
 /*
  *	VR GIU (General Purpose I/O Unit) Registers.
  */
+#define GIU_NO_REG_W		0xffffffff	/* no register */
 
 #define	GIUIOSEL_REG		0x00
 #define	GIUIOSEL_L_REG_W	0x00
@@ -62,8 +63,23 @@
 #define GIUPODAT_REG		0x1c
 #define GIUPODAT_L_REG_W	0x1c
 #define GIUPODAT_H_REG_W	0x1e
-#define GIUUSEUPDN_REG_W	0x1e0
-#define GIUTERMUPDN_REG_W	0x1e2
+
+#define VR4102_GIUUSEUPDN_REG_W		0x1e0
+#define VR4102_GIUTERMUPDN_REG_W	0x1e2
+
+#define VR4122_GIUUSEUPDN_REG_W		GIU_NO_REG_W
+#define VR4122_GIUTERMUPDN_REG_W	GIU_NO_REG_W
+
+#if defined SINGLE_VRIP_BASE
+#if defined VRGROUP_4102_4121
+#define GIUUSEUPDN_REG_W	VR4102_GIUUSEUPDN_REG_W
+#define GIUTERMUPDN_REG_W	VR4102_GIUTERMUPDN_REG_W
+#endif /* defined VRGROUP_4102_4121 */
+#if defined VRGROUP_4122_4131
+#define GIUUSEUPDN_REG_W	VR4122_GIUUSEUPDN_REG_W
+#define GIUTERMUPDN_REG_W	VR4122_GIUTERMUPDN_REG_W
+#endif /* defined VRGROUP_4122_4131 */
+#endif /* defined SINGLE_VRIP_BASE */
 
 #define GIUINTTYP_EDGE		1
 #define GIUINTTYP_LEVEL		0
