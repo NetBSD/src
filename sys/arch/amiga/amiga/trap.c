@@ -38,7 +38,7 @@
  * from: Utah $Hdr: trap.c 1.32 91/04/06$
  *
  *	@(#)trap.c	7.15 (Berkeley) 8/2/91
- *	$Id: trap.c,v 1.11 1994/04/04 07:32:50 chopps Exp $
+ *	$Id: trap.c,v 1.12 1994/04/04 11:10:55 chopps Exp $
  */
 
 #include <sys/param.h>
@@ -69,6 +69,7 @@
 struct	sysent	sysent[];
 int	nsysent;
 #ifdef COMPAT_SUNOS
+#include <compat/sunos/sun_syscall.h>
 struct	sysent	sun_sysent[];
 int	nsun_sysent;
 #endif
@@ -612,7 +613,7 @@ syscall(code, frame)
 		 * XXX stored pc on the stack to skip, the argument follows
 		 * XXX the syscall number without a gap.
 		 */
-		if (code != 139 /* sun SYS_sigreturn */) {
+		if (code != SUN_SYS_sigreturn) {
 			frame.f_regs[SP] += sizeof (int);
 			/*
 			 * remember that we adjusted the SP, 
