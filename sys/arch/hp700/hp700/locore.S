@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.S,v 1.1 2002/06/06 19:48:06 fredette Exp $	*/
+/*	$NetBSD: locore.S,v 1.2 2002/08/05 20:58:36 fredette Exp $	*/
 
 /*	$OpenBSD: locore.S,v 1.46 2001/09/20 18:33:03 mickey Exp $	*/
 
@@ -154,7 +154,7 @@ kernelmapped			/* set when kernel is mapped */
 /*
  * This is the starting location for the kernel
  */
-ENTRY($start,0)
+ENTRY(start,0)
 /*
  *	start(pdc, boothowto, bootdev, esym, bootapiver, argv, argc)
  *
@@ -354,7 +354,7 @@ $callmain
 	/* should never return... */
 	bv	(rp)
 	nop
-EXIT($start)
+EXIT(start)
 
 /* int
  * pdc_call(func, pdc_flag, ...)
