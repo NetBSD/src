@@ -1,4 +1,4 @@
-/*	$NetBSD: smb_rq.c,v 1.8 2003/02/24 19:31:45 jdolecek Exp $	*/
+/*	$NetBSD: smb_rq.c,v 1.9 2003/02/24 21:13:13 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 2000-2001, Boris Popov
@@ -128,9 +128,9 @@ smb_rq_new(struct smb_rq *rqp, u_char cmd)
 	mb_put_uint8(mbp, vcp->vc_hflags);
 	mb_put_uint16le(mbp, vcp->vc_hflags2);
 	mb_put_mem(mbp, tzero, 12, MB_MSYSTEM);
-	rqp->sr_rqtid = (u_int16_t*)mb_reserve(mbp, sizeof(u_int16_t));
+	rqp->sr_rqtid = mb_reserve(mbp, sizeof(u_int16_t));
 	mb_put_uint16le(mbp, 1 /*scred->sc_p->p_pid & 0xffff*/);
-	rqp->sr_rquid = (u_int16_t*)mb_reserve(mbp, sizeof(u_int16_t));
+	rqp->sr_rquid = mb_reserve(mbp, sizeof(u_int16_t));
 	mb_put_uint16le(mbp, rqp->sr_mid);
 	return 0;
 }
@@ -216,35 +216,34 @@ smb_rq_wstart(struct smb_rq *rqp)
 void
 smb_rq_wend(struct smb_rq *rqp)
 {
-	if (rqp->sr_wcount == NULL) {
-		SMBERROR("no wcount\n");	/* actually panic */
-		return;
-	}
+#ifdef DIAGNOSTIC
+	if (rqp->sr_wcount == NULL)
+		panic("smb_rq_wend: no wcount");
 	if (rqp->sr_rq.mb_count & 1)
-		SMBERROR("odd word count\n");
-	*rqp->sr_wcount = rqp->sr_rq.mb_count / 2;
+		panic("smb_rq_wend: odd word count");
+#endif
+	rqp->sr_wcount[0] = rqp->sr_rq.mb_count / 2;
 }
 
 void
 smb_rq_bstart(struct smb_rq *rqp)
 {
-	rqp->sr_bcount = (u_short*)mb_reserve(&rqp->sr_rq, sizeof(u_short));
+	rqp->sr_bcount = mb_reserve(&rqp->sr_rq, sizeof(u_int16_t));
 	rqp->sr_rq.mb_count = 0;
 }
 
 void
 smb_rq_bend(struct smb_rq *rqp)
 {
-	int bcnt;
+	u_int16_t bcnt = rqp->sr_rq.mb_count;
 
-	if (rqp->sr_bcount == NULL) {
-		SMBERROR("no bcount\n");	/* actually panic */
-		return;
-	}
-	bcnt = rqp->sr_rq.mb_count;
-	if (bcnt > 0xffff)
-		SMBERROR("byte count too large (%d)\n", bcnt);
-	*rqp->sr_bcount = htole16(bcnt);
+#ifdef DIAGNOSTIC
+	if (rqp->sr_bcount == NULL)
+		panic("smb_rq_bend: no bcount");
+	if (rqp->sr_rq.mb_count > 0xffff)
+		panic("smb_rq_bend: byte count too large (%d)", bcnt);
+#endif
+	SMBRQ_PUTLE16(rqp->sr_bcount, bcnt);
 }
 
 int
