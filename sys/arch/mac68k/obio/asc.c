@@ -1,4 +1,4 @@
-/*	$NetBSD: asc.c,v 1.18 1997/02/11 22:44:25 scottr Exp $	*/
+/*	$NetBSD: asc.c,v 1.19 1997/02/13 19:55:48 scottr Exp $	*/
 
 /*
  * Copyright (C) 1997 Scott Reynolds
@@ -147,7 +147,7 @@ ascattach(parent, self, aux)
 	    oa->oa_addr : MAC68K_ASC_BASE);
 	if (bus_space_map(sc->sc_tag, addr, MAC68K_ASC_LEN, 0,
 	    &sc->sc_handle)) {
-		printf("%s: can't map memory space\n", sc->sc_dev.dv_xname);
+		printf(": can't map memory space\n");
 		return;
 	}
 	sc->sc_open = 0;
