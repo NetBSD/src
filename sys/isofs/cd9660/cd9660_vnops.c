@@ -1,4 +1,4 @@
-/*	$NetBSD: cd9660_vnops.c,v 1.36 1996/10/10 22:39:41 christos Exp $	*/
+/*	$NetBSD: cd9660_vnops.c,v 1.37 1996/10/13 02:32:00 christos Exp $	*/
 
 /*-
  * Copyright (c) 1994
@@ -304,7 +304,7 @@ int
 cd9660_ioctl(v)
 	void *v;
 {
-	kprintf("You did ioctl for isofs !!\n");
+	printf("You did ioctl for isofs !!\n");
 	return (ENOTTY);
 }
 
@@ -747,7 +747,7 @@ start:
 	if (ip->i_lockholder != 0)
 		panic("lockholder (%d) != 0", ip->i_lockholder);
 	if (p && p->p_pid == 0)
-		kprintf("locking by process 0\n");
+		printf("locking by process 0\n");
 	if (p)
 		ip->i_lockholder = p->p_pid;
 	else
@@ -838,7 +838,7 @@ int
 cd9660_print(v)
 	void *v;
 {
-	kprintf("tag VT_ISOFS, isofs vnode\n");
+	printf("tag VT_ISOFS, isofs vnode\n");
 	return (0);
 }
 

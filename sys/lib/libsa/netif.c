@@ -1,4 +1,4 @@
-/*	$NetBSD: netif.c,v 1.6 1996/10/10 22:46:26 christos Exp $	*/
+/*	$NetBSD: netif.c,v 1.7 1996/10/13 02:29:03 christos Exp $	*/
 
 /*
  * Copyright (c) 1993 Adam Glass
@@ -64,7 +64,7 @@ netif_init()
     
 #ifdef NETIF_DEBUG
 	if (netif_debug)
-		kprintf("netif_init: called\n");
+		printf("netif_init: called\n");
 #endif
 	for (d = 0; d < n_netif_drivers; d++) {
 		drv = netif_drivers[d];
@@ -82,7 +82,7 @@ netif_match(nif, machdep_hint)
 
 #if 0
 	if (netif_debug)
-		kprintf("%s%d: netif_match (%d)\n", drv->netif_bname,
+		printf("%s%d: netif_match (%d)\n", drv->netif_bname,
 		    nif->nif_unit, nif->nif_sel);
 #endif
 	return drv->netif_match(nif, machdep_hint);
@@ -104,7 +104,7 @@ netif_select(machdep_hint)
 
 #ifdef NETIF_DEBUG
 	if (netif_debug)
-		kprintf("netif_select: %d interfaces\n", n_netif_drivers);
+		printf("netif_select: %d interfaces\n", n_netif_drivers);
 #endif
 
 	for (d = 0; d < n_netif_drivers; d++) {
@@ -117,7 +117,7 @@ netif_select(machdep_hint)
 		
 #ifdef NETIF_DEBUG
 			if (netif_debug)
-				kprintf("\t%s%d:", drv->netif_bname,
+				printf("\t%s%d:", drv->netif_bname,
 				    cur_if.nif_unit);
 #endif
 
@@ -127,7 +127,7 @@ netif_select(machdep_hint)
 				if (drv->netif_ifs[u].dif_used & (1 << s)) {
 #ifdef NETIF_DEBUG
 					if (netif_debug)
-						kprintf(" [%d used]", s);
+						printf(" [%d used]", s);
 #endif
 					continue;
 				}
@@ -135,7 +135,7 @@ netif_select(machdep_hint)
 				val = netif_match(&cur_if, machdep_hint);
 #ifdef NETIF_DEBUG
 				if (netif_debug)
-					kprintf(" [%d -> %d]", s, val);
+					printf(" [%d -> %d]", s, val);
 #endif
 				if (val > best_val) {
 					best_val = val;
@@ -144,7 +144,7 @@ netif_select(machdep_hint)
 			}
 #ifdef NETIF_DEBUG
 			if (netif_debug)
-				kprintf("\n");
+				printf("\n");
 #endif
 		}
 	}
@@ -157,7 +157,7 @@ netif_select(machdep_hint)
 
 #ifdef NETIF_DEBUG
 	if (netif_debug)
-		kprintf("netif_select: %s%d(%d) wins\n",
+		printf("netif_select: %s%d(%d) wins\n",
 			best_if.nif_driver->netif_bname,
 			best_if.nif_unit, best_if.nif_sel);
 #endif
@@ -173,7 +173,7 @@ netif_probe(nif, machdep_hint)
 
 #ifdef NETIF_DEBUG
 	if (netif_debug)
-		kprintf("%s%d: netif_probe\n", drv->netif_bname, nif->nif_unit);
+		printf("%s%d: netif_probe\n", drv->netif_bname, nif->nif_unit);
 #endif
 	return drv->netif_probe(nif, machdep_hint);
 }
@@ -188,7 +188,7 @@ netif_attach(nif, desc, machdep_hint)
 
 #ifdef NETIF_DEBUG
 	if (netif_debug)
-		kprintf("%s%d: netif_attach\n", drv->netif_bname, nif->nif_unit);
+		printf("%s%d: netif_attach\n", drv->netif_bname, nif->nif_unit);
 #endif
 	desc->io_netif = nif; 
 #ifdef PARANOID
@@ -209,7 +209,7 @@ netif_detach(nif)
 
 #ifdef NETIF_DEBUG
 	if (netif_debug)
-		kprintf("%s%d: netif_detach\n", drv->netif_bname, nif->nif_unit);
+		printf("%s%d: netif_detach\n", drv->netif_bname, nif->nif_unit);
 #endif
 #ifdef PARANOID
 	if (drv->netif_end == NULL)
@@ -232,7 +232,7 @@ netif_get(desc, pkt, len, timo)
 
 #ifdef NETIF_DEBUG
 	if (netif_debug)
-		kprintf("%s%d: netif_get\n", drv->netif_bname, nif->nif_unit);
+		printf("%s%d: netif_get\n", drv->netif_bname, nif->nif_unit);
 #endif
 #ifdef PARANOID
 	if (drv->netif_get == NULL)
@@ -242,7 +242,7 @@ netif_get(desc, pkt, len, timo)
 	rv = drv->netif_get(desc, pkt, len, timo);
 #ifdef NETIF_DEBUG
 	if (netif_debug)
-		kprintf("%s%d: netif_get returning %d\n", drv->netif_bname,
+		printf("%s%d: netif_get returning %d\n", drv->netif_bname,
 		    nif->nif_unit, rv);
 #endif
 	return rv;
@@ -260,7 +260,7 @@ netif_put(desc, pkt, len)
 
 #ifdef NETIF_DEBUG
 	if (netif_debug)
-		kprintf("%s%d: netif_put\n", drv->netif_bname, nif->nif_unit);
+		printf("%s%d: netif_put\n", drv->netif_bname, nif->nif_unit);
 #endif
 #ifdef PARANOID
 	if (drv->netif_put == NULL)
@@ -270,7 +270,7 @@ netif_put(desc, pkt, len)
 	rv = drv->netif_put(desc, pkt, len);
 #ifdef NETIF_DEBUG
 	if (netif_debug)
-		kprintf("%s%d: netif_put returning %d\n", drv->netif_bname,
+		printf("%s%d: netif_put returning %d\n", drv->netif_bname,
 		    nif->nif_unit, rv);
 #endif
 	return rv;
@@ -309,7 +309,7 @@ fnd:
 	if (!nif) 
 		panic("netboot: no interfaces left untried");
 	if (netif_probe(nif, machdep_hint)) {
-		kprintf("netboot: couldn't probe %s%d\n",
+		printf("netboot: couldn't probe %s%d\n",
 		    nif->nif_driver->netif_bname, nif->nif_unit);
 		errno = EINVAL;
 		return(-1);
