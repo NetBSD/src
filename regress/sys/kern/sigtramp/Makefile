@@ -1,8 +1,8 @@
-#	$NetBSD: Makefile,v 1.1 1999/07/08 17:37:36 ws Exp $
+#	$NetBSD: Makefile,v 1.2 2000/01/24 00:10:22 mycroft Exp $
 #
 PROG=	sigtramp
 MKMAN=	no
-LDFLAGS= -static -N
+LDFLAGS= -static
 
 regress:
 	sh ${.CURDIR}/dotest
