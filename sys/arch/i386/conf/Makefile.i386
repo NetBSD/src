@@ -1,5 +1,5 @@
 # Copyright 1993 Charles Hannum
-#	$Id: Makefile.i386,v 1.28.2.4 1993/12/04 07:28:01 cgd Exp $
+#	$Id: Makefile.i386,v 1.28.2.5 1994/02/01 20:48:30 mycroft Exp $
 #
 # Makefile for NetBSD
 #
@@ -77,10 +77,9 @@ LDX=-x
 SYSTEM_OBJ=	locore.o ${OBJS} param.o ioconf.o
 SYSTEM_DEP=	Makefile symbols.sort ${SYSTEM_OBJ} ${LIBKERN}
 SYSTEM_LD_HEAD=	rm -f $@
-SYSTEM_LD= 	${LD} ${LDX} -z -e start -T fe100000 -o $@ ${SYSTEM_OBJ} \
+SYSTEM_LD= 	${LD} ${LDX} -z -e start -T f8100000 -o $@ ${SYSTEM_OBJ} \
 		vers.o ${LIBKERN}
 SYSTEM_LD_TAIL=	@symorder symbols.sort $@; \
-		dbsym -fT fe100000 $@; \
 		strip ${LDX} $@; \
 		size $@; chmod 755 $@
 
