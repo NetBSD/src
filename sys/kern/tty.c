@@ -1,4 +1,4 @@
-/*	$NetBSD: tty.c,v 1.50 1994/08/02 08:45:46 mycroft Exp $	*/
+/*	$NetBSD: tty.c,v 1.51 1994/08/30 03:06:07 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1990, 1991, 1993
@@ -1856,11 +1856,11 @@ ttyinfo(tp)
 		ttyprintf(tp, "not a controlling terminal\n");
 	else if (tp->t_pgrp == NULL)
 		ttyprintf(tp, "no foreground process group\n");
-	else if ((p = tp->t_pgrp->pg_mem) == NULL)
+	else if ((p = tp->t_pgrp->pg_members.lh_first) == 0)
 		ttyprintf(tp, "empty foreground process group\n");
 	else {
 		/* Pick interesting process. */
-		for (pick = NULL; p != NULL; p = p->p_pgrpnxt)
+		for (pick = NULL; p != 0; p = p->p_pglist.le_next)
 			if (proc_compare(pick, p))
 				pick = p;
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: param.c,v 1.12 1994/08/22 23:37:03 deraadt Exp $	*/
+/*	$NetBSD: param.c,v 1.13 1994/08/30 03:04:28 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1980, 1986, 1989 Regents of the University of California.
@@ -162,30 +162,5 @@ struct 	callout *callout;
 struct	cblock *cfree;
 struct	buf *buf, *swbuf;
 char	*buffers;
-
-/*
- * Proc/pgrp hashing.
- * Here so that hash table sizes can depend on MAXUSERS/NPROC.
- * Hash size must be a power of two.
- * NOW omission of this file will cause loader errors!
- */
-
-#if NPROC > 1024
-#define	PIDHSZ		512
-#else
-#if NPROC > 512
-#define	PIDHSZ		256
-#else
-#if NPROC > 256
-#define	PIDHSZ		128
-#else
-#define	PIDHSZ		64
-#endif
-#endif
-#endif
-
-struct	proc *pidhash[PIDHSZ];
-struct	pgrp *pgrphash[PIDHSZ];
-int	pidhashmask = PIDHSZ - 1;
 
 struct	utsname utsname;
