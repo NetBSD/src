@@ -1,4 +1,4 @@
-.\"	$NetBSD: sysctl.8,v 1.79 2002/05/29 23:30:50 msaitoh Exp $
+.\"	$NetBSD: sysctl.8,v 1.80 2002/10/01 14:57:46 wiz Exp $
 .\"
 .\" Copyright (c) 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -149,7 +149,7 @@ For a detailed description of these variable see
 .Xr sysctl 3 .
 The changeable column indicates whether a process with appropriate
 privilege can change the value.
-.Bl -column proc.\*[Lt]pid\*[Gt].rlimit.coredumpsize.hardxxxxxx integerxxx
+.Bl -column proc.xpidx.rlimit.coredumpsize.hardxxxxxx integerxxx
 .It Sy Name	Type	Changeable
 .It ddb.fromconsole	integer 	yes
 .It ddb.lines	integer		yes
@@ -396,32 +396,32 @@ operating system in their products.
 Values and structure are vendor-defined, and no registry
 exists right now.
 .Sh FILES
-.Bl -tag -width \*[Lt]netinet6/udp6Xvar.h\*[Gt] -compact
-.It Pa \*[Lt]sys/sysctl.h\*[Gt]
+.Bl -tag -width xnetinet6/udp6Xvar.hx -compact
+.It Aq Pa sys/sysctl.h
 definitions for top level identifiers, second level kernel and hardware
 identifiers, and user level identifiers
-.It Pa \*[Lt]sys/socket.h\*[Gt]
+.It Aq Pa sys/socket.h
 definitions for second level network identifiers
-.It Pa \*[Lt]sys/gmon.h\*[Gt]
+.It Aq Pa sys/gmon.h
 definitions for third level profiling identifiers
-.It Pa \*[Lt]uvm/uvm_param.h\*[Gt]
+.It Aq Pa uvm/uvm_param.h
 definitions for second level virtual memory identifiers
-.It Pa \*[Lt]netinet/in.h\*[Gt]
+.It Aq Pa netinet/in.h
 definitions for third level IPv4/v6 identifiers and
 fourth level IPv4/v6 identifiers
-.It Pa \*[Lt]netinet/icmp_var.h\*[Gt]
+.It Aq Pa netinet/icmp_var.h
 definitions for fourth level ICMP identifiers
-.It Pa \*[Lt]netinet/icmp6.h\*[Gt]
+.It Aq Pa netinet/icmp6.h
 definitions for fourth level ICMPv6 identifiers
-.It Pa \*[Lt]netinet/tcp_var.h\*[Gt]
+.It Aq Pa netinet/tcp_var.h
 definitions for fourth level TCP identifiers
-.It Pa \*[Lt]netinet/udp_var.h\*[Gt]
+.It Aq Pa netinet/udp_var.h
 definitions for fourth level UDP identifiers
-.It Pa \*[Lt]netinet6/udp6_var.h\*[Gt]
+.It Aq Pa netinet6/udp6_var.h
 definitions for fourth level IPv6 UDP identifiers
-.It Pa \*[Lt]netinet6/ipsec.h\*[Gt]
+.It Aq Pa netinet6/ipsec.h
 definitions for fourth level IPsec identifiers
-.It Pa \*[Lt]netkey/key_var.h\*[Gt]
+.It Aq Pa netkey/key_var.h
 definitions for third level PF_KEY identifiers
 .El
 .Sh EXAMPLES
