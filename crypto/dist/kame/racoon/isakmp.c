@@ -1,4 +1,4 @@
-/*	$KAME: isakmp.c,v 1.177 2003/05/29 08:59:51 sakane Exp $	*/
+/*	$KAME: isakmp.c,v 1.181 2004/03/31 03:14:39 sakane Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: isakmp.c,v 1.13 2003/07/12 09:37:10 itojun Exp $");
+__RCSID("$NetBSD: isakmp.c,v 1.14 2004/03/31 07:19:27 itojun Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -184,6 +184,18 @@ isakmp_handler(so_isakmp)
 		plog(LLV_ERROR, LOCATION, (struct sockaddr *)&remote,
 			"packet shorter than isakmp header size.\n");
 		/* dummy receive */
+		if ((len = recvfrom(so_isakmp, (char *)&isakmp, sizeof(isakmp),
+			    0, (struct sockaddr *)&remote, &remote_len)) < 0) {
+			plog(LLV_ERROR, LOCATION, NULL,
+				"failed to receive isakmp packet\n");
+		}
+		goto end;
+	}
+
+	/* reject it if the size is tooooo big. */
+	if (ntohl(isakmp.len) > 0xffff) {
+		plog(LLV_ERROR, LOCATION, NULL,
+			"the length of the isakmp header is too big.\n");
 		if ((len = recvfrom(so_isakmp, (char *)&isakmp, sizeof(isakmp),
 			    0, (struct sockaddr *)&remote, &remote_len)) < 0) {
 			plog(LLV_ERROR, LOCATION, NULL,
