@@ -1,4 +1,4 @@
-/*	$NetBSD: mapper.c,v 1.17 2003/05/16 23:00:29 dsl Exp $	*/
+/*	$NetBSD: mapper.c,v 1.18 2003/05/17 00:44:49 itojun Exp $	*/
 
 /* Mapper for connections between MRouteD multicast routers.
  * Written by Pavel Curtis <Pavel@PARC.Xerox.Com>
@@ -177,7 +177,7 @@ logit(int severity, int syserr, const char *format, ...)
 	default:
 	    fmt[0] = '\0';
 	    if (severity == LOG_WARNING)
-		strcat(fmt, "warning - ");
+		strlcat(fmt, "warning - ", sizeof(fmt));
 	    strncat(fmt, format, 80);
 	    format = fmt;
 	    va_start(ap, format);
