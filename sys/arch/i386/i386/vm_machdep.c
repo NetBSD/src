@@ -36,7 +36,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)vm_machdep.c	7.3 (Berkeley) 5/13/91
- *	vm_machdep.c,v 1.7 1993/08/02 23:20:55 mycroft Exp
+ *	$Id: vm_machdep.c,v 1.23 1994/05/26 11:28:51 pk Exp $
  */
 
 /*
