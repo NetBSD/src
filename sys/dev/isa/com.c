@@ -1,4 +1,4 @@
-/*	$NetBSD: com.c,v 1.71 1996/02/19 15:23:25 mycroft Exp $	*/
+/*	$NetBSD: com.c,v 1.72 1996/02/20 12:13:09 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994, 1995, 1996
@@ -1010,14 +1010,20 @@ comintr(arg)
 	struct tty *tp;
 	u_char lsr, data, msr, delta;
 #ifdef COM_DEBUG
-	int n = 0;
+	int n;
 	struct {
-		u_char lsr, msr;
+		u_char iir, lsr, msr;
 	} iter[32];
 #endif
 
+#ifdef COM_DEBUG
+	n = 0;
+	if (ISSET(iter[n].iir = inb(iobase + com_iir), IIR_NOPEND))
+		return (0);
+#else
 	if (ISSET(inb(iobase + com_iir), IIR_NOPEND))
 		return (0);
+#endif
 
 	tp = sc->sc_tty;
 
@@ -1034,7 +1040,7 @@ comintr(arg)
 			do {
 				data = inb(iobase + com_data);
 				if (ISSET(lsr, LSR_BI)) {
-#ifdef COM_DEBUG
+#ifdef notdef
 					printf("break %02x %02x %02x %02x\n",
 					    sc->sc_msr, sc->sc_mcr, sc->sc_lcr,
 					    sc->sc_dtr);
@@ -1105,11 +1111,14 @@ comintr(arg)
 			(*linesw[tp->t_line].l_start)(tp);
 		}
 
-		if (ISSET(inb(iobase + com_iir), IIR_NOPEND))
-			return (1);
 #ifdef COM_DEBUG
 		if (++n >= 32)
 			goto ohfudge;
+		if (ISSET(iter[n].iir = inb(iobase + com_iir), IIR_NOPEND))
+			return (1);
+#else
+		if (ISSET(inb(iobase + com_iir), IIR_NOPEND))
+			return (1);
 #endif
 	}
 #ifdef COM_DEBUG
@@ -1117,10 +1126,14 @@ ohfudge:
 	printf("comintr: too many iterations");
 	for (n = 0; n < 32; n++) {
 		if ((n % 4) == 0)
-			printf("\ncomintr: iter[%02d]:", n);
-		printf(" %02x %02x ", iter[n].lsr, iter[n].msr);
+			printf("\ncomintr: iter[%02d]", n);
+		printf("  %02x %02x %02x", iter[n].iir, iter[n].lsr, iter[n].msr);
 	}
 	printf("\n");
+	printf("comintr: msr %02x mcr %02x lcr %02x ier %02x\n",
+	    sc->sc_msr, sc->sc_mcr, sc->sc_lcr, sc->sc_ier);
+	printf("comintr: state %08x cc %d\n", sc->sc_tty->t_state,
+	    sc->sc_tty->t_outq.c_cc);
 #endif
 }
 
