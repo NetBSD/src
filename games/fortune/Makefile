@@ -2,14 +2,10 @@
 
 SUBDIR=	fortune
 
-.ifmake (clean) || (cleandir) || (obj)
-SUBDIR+=datfiles
+.ifmake !(install)
+SUBDIR+= strfile
 .endif
 
-.ifmake !(install)
-SUBDIR+=strfile
-.else
-SUBDIR+=datfiles
-.endif
+SUBDIR+= datfiles
 
 .include <bsd.subdir.mk>

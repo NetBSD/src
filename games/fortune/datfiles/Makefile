@@ -13,7 +13,9 @@ DATFILES= ${NORMDAT} ${OBSDAT}
 
 CLEANFILES+=${DATFILES}
 
-install: ${DATFILES}
+all: ${DATFILES}
+
+install:
 	@if [ ! -d ${DESTDIR}/usr/share/games/fortune ]; then \
                 /bin/rm -f ${DESTDIR}/usr/share/games/fortune ; \
                 mkdir -p ${DESTDIR}/usr/share/games/fortune ; \
