@@ -1,12 +1,10 @@
-#	$NetBSD: Makefile,v 1.4 2004/01/05 12:25:36 rtr Exp $
+#	$NetBSD: Makefile,v 1.4.8.1 2005/04/06 21:07:34 tron Exp $
 
 .include <bsd.own.mk>
 
-MAN=	X.7 XConsortium.7 XStandards.7 XProjectTeam.7 Xsecurity.7
-MLINKS= XProjectTeam.7 X.Org.7
+MAN=	X.7 XStandards.7 Xsecurity.7
 
-BUILDSYMLINKS=	Consortium.man	XConsortium.man	\
-		Standards.man	XStandards.man	\
+BUILDSYMLINKS=	Standards.man	XStandards.man	\
 		security.man	Xsecurity.man
 
 .PATH:  ${X11SRCDIR.xc}/doc/man/general
