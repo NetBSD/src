@@ -1,4 +1,4 @@
-/*	$NetBSD: vs.c,v 1.12 2002/03/16 09:00:43 isaki Exp $	*/
+/*	$NetBSD: vs.c,v 1.13 2002/03/26 15:05:29 isaki Exp $	*/
 
 /*
  * Copyright (c) 2001 Tetsuya Isaki. All rights reserved.
@@ -398,25 +398,21 @@ vs_set_params(void *hdl, int setmode, int usemode,
 		case AUDIO_ENCODING_ULAW:
 			if (p->precision != 8)
 				return EINVAL;
-			if (mode == AUMODE_PLAY) {
+			p->factor_denom = 2;
+			if (mode == AUMODE_PLAY)
 				p->sw_code = msm6258_mulaw_to_adpcm;
-				p->factor_denom = 2;
-			} else {
+			else
 				p->sw_code = msm6258_adpcm_to_mulaw;
-				p->factor = 2;
-			}
 			break;
 		case AUDIO_ENCODING_ULINEAR_LE:
 		case AUDIO_ENCODING_ULINEAR_BE:
 			if (p->precision != 8)
 				return EINVAL;
-			if (mode == AUMODE_PLAY) {
+			p->factor_denom = 2;
+			if (mode == AUMODE_PLAY)
 				p->sw_code = msm6258_ulinear8_to_adpcm;
-				p->factor_denom = 2;
-			} else {
+			else
 				p->sw_code = msm6258_adpcm_to_ulinear8;
-				p->factor = 2;
-			}
 			break;
 		case AUDIO_ENCODING_ADPCM:
 			if (p->precision != 4)
