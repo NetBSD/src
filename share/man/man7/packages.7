@@ -1,4 +1,4 @@
-.\"	$NetBSD: packages.7,v 1.28.4.8 2001/03/30 22:17:32 he Exp $
+.\"	$NetBSD: packages.7,v 1.28.4.9 2001/05/20 01:58:48 hubertf Exp $
 .\"
 .\" from: NetBSD: bsd.pkg.mk,v 1.89 1998/06/01 21:30:10 hubertf Exp
 .\"
@@ -91,6 +91,23 @@ shared libs.
 .It USE_GLX 
 Says that if Mesa is requested, a package should preferably use a
 GLX (hardware-accelerated) version of the Mesa library.
+.It BINPKG_SITES
+List of sites carrying binary pkgs. Variables
+.Dq rel
+and
+.Dq arch
+are
+replaced with OS release (
+.Dq 1.5 ,
+...) and architecture (
+.Dq mipsel ,
+...)
+.It BIN_INSTALL_FLAGS
+List of flags handed to
+.Xr pkg_add 8
+in
+.Dq bin-install
+target. 
 .El
 .Sh PACKAGE SPECIFIC VARIABLES
 This section documents variables that typically apply to an individual
