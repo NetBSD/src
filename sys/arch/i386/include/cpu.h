@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.25 1995/03/28 18:16:47 jtc Exp $	*/
+/*	$NetBSD: cpu.h,v 1.26 1995/04/21 21:56:01 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -77,8 +77,8 @@
  * Preempt the current process if in interrupt from user mode,
  * or after the current trap/syscall if in system mode.
  */
-int	want_resched;	/* resched() was called */
-#define	need_resched()	(want_resched = 1, setsoftast())
+int	want_resched;		/* resched() was called */
+#define	need_resched()		(want_resched = 1, setsoftast())
 
 /*
  * Give a profiling tick to the current process when the user profiling
@@ -91,7 +91,12 @@ int	want_resched;	/* resched() was called */
  * Notify the current process (p) that it has a signal pending,
  * process as soon as possible.
  */
-#define	signotify(p)	setsoftast()
+#define	signotify(p)		setsoftast()
+
+/*
+ * We need a machine-independent name for this.
+ */
+#define	DELAY(x)		delay(x)
 
 /*
  * pull in #defines for kinds of processors
