@@ -1,4 +1,4 @@
-#	$NetBSD: files.sparc.newconf,v 1.19 1994/12/07 14:46:05 deraadt Exp $
+#	$NetBSD: files.sparc.newconf,v 1.20 1994/12/16 21:53:01 deraadt Exp $
 
 # @(#)files.sparc	8.1 (Berkeley) 7/19/93
 # sparc-specific configuration info
@@ -19,6 +19,7 @@ device auxreg at mainbus
 file	arch/sparc/sparc/auxreg.c
 
 device clock at mainbus, obio
+device oclock at obio
 device timer at mainbus, obio
 file	arch/sparc/sparc/clock.c
 
