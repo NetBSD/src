@@ -8,7 +8,7 @@
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)vi_keymap.c	6.4 (Berkeley) 5/8/91";*/
-static char rcsid[] = "$Id: vi_keymap.c,v 1.2 1993/08/01 18:48:05 mycroft Exp $";
+static char vi_keymap_rcsid[] = "$Id: vi_keymap.c,v 1.3 1993/08/10 00:13:56 mycroft Exp $";
 #endif /* not lint */
 
 /* vi_keymap.c -- the keymap for vi_mode in readline (). */
