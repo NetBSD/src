@@ -625,7 +625,8 @@ enum dhcp_state {
 	S_REQUESTING = 4, 
 	S_BOUND = 5,
 	S_RENEWING = 6,
-	S_REBINDING = 7
+	S_REBINDING = 7,
+	S_STOPPED = 8
 };
 
 /* Authentication and BOOTP policy possibilities (not all values work
@@ -1650,6 +1651,7 @@ extern u_int16_t remote_port;
 extern int (*dhcp_interface_setup_hook) (struct interface_info *,
 					 struct iaddr *);
 extern int (*dhcp_interface_discovery_hook) (struct interface_info *);
+isc_result_t (*dhcp_interface_startup_hook) (struct interface_info *);
 
 extern void (*bootp_packet_handler) PROTO ((struct interface_info *,
 					    struct dhcp_packet *, unsigned,
@@ -1811,6 +1813,7 @@ void client_location_changed PROTO ((void));
 void do_release PROTO ((struct client_state *));
 int dhclient_interface_shutdown_hook (struct interface_info *);
 int dhclient_interface_discovery_hook (struct interface_info *);
+isc_result_t dhclient_interface_startup_hook (struct interface_info *);
 
 /* db.c */
 int write_lease PROTO ((struct lease *));
@@ -2182,6 +2185,24 @@ isc_result_t dhcp_class_create (omapi_object_t **,
 				omapi_object_t *);
 isc_result_t dhcp_class_remove (omapi_object_t *,
 				omapi_object_t *);
+isc_result_t dhcp_subclass_set_value  (omapi_object_t *, omapi_object_t *,
+				       omapi_data_string_t *,
+				       omapi_typed_data_t *);
+isc_result_t dhcp_subclass_get_value (omapi_object_t *, omapi_object_t *,
+				      omapi_data_string_t *,
+				      omapi_value_t **); 
+isc_result_t dhcp_subclass_destroy (omapi_object_t *, const char *, int);
+isc_result_t dhcp_subclass_signal_handler (omapi_object_t *,
+					   const char *, va_list);
+isc_result_t dhcp_subclass_stuff_values (omapi_object_t *,
+					 omapi_object_t *,
+					 omapi_object_t *);
+isc_result_t dhcp_subclass_lookup (omapi_object_t **,
+				   omapi_object_t *, omapi_object_t *);
+isc_result_t dhcp_subclass_create (omapi_object_t **,
+				   omapi_object_t *);
+isc_result_t dhcp_subclass_remove (omapi_object_t *,
+				   omapi_object_t *);
 isc_result_t dhcp_shared_network_set_value  (omapi_object_t *,
 					     omapi_object_t *,
 					     omapi_data_string_t *,
@@ -2215,22 +2236,6 @@ isc_result_t dhcp_subnet_lookup (omapi_object_t **,
 				 omapi_object_t *, omapi_object_t *);
 isc_result_t dhcp_subnet_create (omapi_object_t **,
 				 omapi_object_t *);
-isc_result_t dhcp_class_set_value  (omapi_object_t *, omapi_object_t *,
-				    omapi_data_string_t *,
-				    omapi_typed_data_t *);
-isc_result_t dhcp_class_get_value (omapi_object_t *, omapi_object_t *,
-				   omapi_data_string_t *,
-				   omapi_value_t **); 
-isc_result_t dhcp_class_destroy (omapi_object_t *, const char *, int);
-isc_result_t dhcp_class_signal_handler (omapi_object_t *,
-					const char *, va_list);
-isc_result_t dhcp_class_stuff_values (omapi_object_t *,
-				      omapi_object_t *,
-				      omapi_object_t *);
-isc_result_t dhcp_class_lookup (omapi_object_t **,
-				omapi_object_t *, omapi_object_t *);
-isc_result_t dhcp_class_create (omapi_object_t **,
-				omapi_object_t *);
 isc_result_t dhcp_interface_set_value (omapi_object_t *,
 				       omapi_object_t *,
 				       omapi_data_string_t *,
