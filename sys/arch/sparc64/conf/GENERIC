@@ -1,8 +1,8 @@
-# 	$NetBSD: GENERIC,v 1.37 2000/06/30 17:10:20 itojun Exp $
+# 	$NetBSD: GENERIC,v 1.38 2000/07/02 21:11:26 pk Exp $
 
 include "arch/sparc64/conf/std.sparc64"
 
-#ident 		"GENERIC-$Revision: 1.37 $"
+#ident 		"GENERIC-$Revision: 1.38 $"
 
 maxusers	32
 
@@ -260,8 +260,8 @@ ms0	at zs1 channel 1	# mouse
 ## sun4u on-board SCSI, and FSBE/S SBus SCSI cards, an NCR53c94 or
 ## equivalent behind an LSI Logic DMA controller
 
-dma*	at sbus? slot ? offset ?			# SBus
-esp*	at dma? flags 0x0000				# SBus
+dma*	at sbus? slot ? offset ?		# SBus
+esp*	at dma? flags 0x0000			# SBus
 
 scsibus* at esp?
 
@@ -274,8 +274,12 @@ scsibus* at isp?
 #scsibus* at fas?
 
 ## GLM support missing
-siop*	at pci?						# 53C875 "glm" compatible
+siop*	at pci?					# 53C875 "glm" compatible
 scsibus* at siop?
+
+## Adaptec [23]94x, aic78x0 SCSI controller
+ahc*	at pci? dev ? function ?
+scsibus* at ahc?
 
 ## These entries find devices on all SCSI busses and assign
 ## unit numbers dynamically.
