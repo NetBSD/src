@@ -1,4 +1,4 @@
-/* $NetBSD: user.c,v 1.56 2002/08/06 11:56:26 agc Exp $ */
+/* $NetBSD: user.c,v 1.57 2002/08/07 14:24:52 wiz Exp $ */
 
 /*
  * Copyright (c) 1999 Alistair G. Crooks.  All rights reserved.
@@ -35,7 +35,7 @@
 #ifndef lint
 __COPYRIGHT("@(#) Copyright (c) 1999 \
 	        The NetBSD Foundation, Inc.  All rights reserved.");
-__RCSID("$NetBSD: user.c,v 1.56 2002/08/06 11:56:26 agc Exp $");
+__RCSID("$NetBSD: user.c,v 1.57 2002/08/07 14:24:52 wiz Exp $");
 #endif
 
 #include <sys/types.h>
@@ -1011,7 +1011,8 @@ adduser(char *login_name, user_t *up)
 	    strlen(up->u_password) == PasswordLength) {
 		(void) memcpy(password, up->u_password, PasswordLength);
 	} else {
-		(void) memset(password, '*', PasswordLength);
+		(void) memset(password, '\0', PasswordLength);
+		password[0] = '*';
 		if (up->u_password != NULL) {
 			warnx("Password `%s' is invalid: setting it to `%s'",
 				up->u_password, password);
@@ -1790,8 +1791,8 @@ userdel(int argc, char **argv)
 	if (u.u_preserve) {
 		u.u_flags |= F_SHELL;
 		memsave(&u.u_shell, NOLOGIN, strlen(NOLOGIN));
-		(void) memset(password, '*', PasswordLength);
-		password[PasswordLength] = '\0';
+		(void) memset(password, '\0', PasswordLength);
+		password[0] = '*';
 		memsave(&u.u_password, password, PasswordLength);
 		u.u_flags |= F_PASSWORD;
 		return moduser(*argv, *argv, &u) ? EXIT_SUCCESS : EXIT_FAILURE;
