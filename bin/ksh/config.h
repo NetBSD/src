@@ -1,4 +1,4 @@
-/*	$NetBSD: config.h,v 1.5 2001/02/04 19:25:43 christos Exp $	*/
+/*	$NetBSD: config.h,v 1.6 2002/11/11 19:03:57 jdolecek Exp $	*/
 
 /* config.h.  Generated automatically by configure.  */
 /* config.h.in.  Generated automatically from configure.in by autoheader.  */
@@ -223,7 +223,7 @@
 #define POSIXLY_CORRECT 1
 
 /* Specify default $ENV? (see comments in configure.in for more details) */
-/* #undef DEFAULT_ENV */
+#define DEFAULT_ENV	"$HOME/.kshrc"
 
 /* Include shl(1) support? (see comments in configure.in for more details) */
 /* #undef SWTCH */
