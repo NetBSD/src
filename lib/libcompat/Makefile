@@ -1,4 +1,4 @@
-#	$Id: Makefile,v 1.8 1994/05/19 06:20:17 jtc Exp $
+#	$Id: Makefile,v 1.9 1994/05/19 06:23:50 jtc Exp $
 
 LIB=	compat
 CFLAGS+=-DLIBC_SCCS -DSYSLIBC_SCCS
@@ -37,6 +37,7 @@ MAN3+=	insque.0 lsearch.0 re_comp.0 rexec.0
 
 #MLINKS+=ecvt.3 fcvt.3 ecvt.3 gcvt.3
 MLINKS+=insque.3 remque.3
+MLINKS+=lsearch.3 lfind.3
 MLINKS+=re_comp.3 re_exec.3
 
 
@@ -47,10 +48,6 @@ MAN3+=	cuserid.0
 
 # regexp sources
 SRCS+=	regerror.c regexp.c regsub.c
-
 MAN3+=	regexp.0
-
-MLINKS+=regexp.3 regcomp.3 regexp.3 regexec.3 regexp.3 regsub.3 \
-	regexp.3 regerror.3
 
 .include <bsd.lib.mk>
