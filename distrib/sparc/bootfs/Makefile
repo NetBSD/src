@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.19 2000/05/02 16:06:54 sjg Exp $
+#	$NetBSD: Makefile,v 1.20 2000/05/06 14:18:53 sjg Exp $
 
 TOP=		${.CURDIR}/..
 MINIROOT=	${.CURDIR}/../../miniroot
@@ -26,7 +26,7 @@ RAMDISK!=	cd ${TOP}/ramdisk/; \
 		printf "xxx: .MAKE\n\t@echo \$${.OBJDIR}/ramdisk.fs\n" |\
 		${MAKE} -s -f-
 
-DISKTYPE=	floppy
+DISKTYPE=	instfs
 
 # Some reasonable values for the -i parameter to newfs are:
 #
@@ -35,12 +35,18 @@ DISKTYPE=	floppy
 # 204800	1167k,  29 inodes free
 INO_BYTES=	204800
 
-CLEANFILES+=	netbsd.ram.gz netbsd.tmp
+BLOCKSIZE=512
+FSTSIZE=32
+FSSIZE!=BLOCKSIZE=${BLOCKSIZE} du -s ${RAMDISK} | awk '{ print $$1 }'
+FSSIZE!= expr ${FSTSIZE} \* \( \( ${FSSIZE} + ${FSTSIZE} - 1 \) / ${FSTSIZE} \)
+FSNC!=expr ${FSSIZE} / ${FSTSIZE}
 
-all:	netbsd.ram.gz
-	dd if=/dev/zero of=${IMAGE} bs=1440k count=1
+CLEANFILES+=	netbsd.ram.gz netbsd.tmp disktab.tmp
+
+all:	netbsd.ram.gz disktab.tmp
+	dd if=/dev/zero of=${IMAGE} bs=${BLOCKSIZE} count=${FSSIZE}
 	vnconfig -t ${DISKTYPE} -v -c ${VND_CDEV} ${IMAGE}
-	disklabel -rw ${VND_CDEV} ${DISKTYPE}
+	disklabel -f disktab.tmp -rw ${VND_CDEV} ${DISKTYPE}
 	disklabel -W ${VND_CDEV}
 	newfs -B be -m 0 -o space -i ${INO_BYTES} -c 80 ${VND_RDEV}
 	mount ${VND_DEV} ${MOUNT_POINT}
@@ -59,6 +65,9 @@ all:	netbsd.ram.gz
 unconfig:
 	-umount -f ${MOUNT_POINT}
 	-vnconfig -u ${VND_DEV}
+
+disktab.tmp:	netbsd.ram.gz 
+	@echo "instfs:ty=floppy:se#512:nt#2:rm#300:ns#16:nc#${FSNC}:pa#${FSSIZE}:oa#0:ba#4096:fa#512:ta=4.2BSD:pc#${FSSIZE}:oc#0:" > ${.TARGET}
 
 netbsd.ram: ${KERN} ${RAMDISK}
 	cp ${KERN} netbsd.tmp
