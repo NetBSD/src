@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-2.0,v 1.1.2.464 2004/09/23 02:43:57 jmc Exp $
+#	$NetBSD: CHANGES-2.0,v 1.1.2.465 2004/09/23 02:45:08 jmc Exp $
 
 A complete list of changes from the initial NetBSD 2.0 branch on 28 March 2004
 until 2.0 release:
@@ -7601,3 +7601,9 @@ sbin/newfs_msdos/newfs_msdos.8			1.13
 
 	Default the OEM ID to "NetBSD" rather than "BSD  4.4".
 	[thorpej, ticket #869]
+
+sbin/newfs_msdos/newfs_msdos.c			1.17
+sbin/newfs_msdos/newfs_msdos.8			1.14
+
+	Change the default volume label from "NO NAME" to "NO_NAME".
+	[thorpej, ticket #870]
