@@ -1,4 +1,4 @@
-/*	$NetBSD: boot.c,v 1.4 2001/01/30 14:29:48 tsutsui Exp $	*/
+/*	$NetBSD: boot.c,v 1.5 2002/01/04 16:30:02 tsutsui Exp $	*/
 
 /*-
  * Copyright (C) 1999 Izumi Tsutsui.  All rights reserved.
@@ -110,7 +110,7 @@ boot(d4, d5, d6, d7)
 		if (fd != -1)
 			break;
 	}
-	if (fd == -1) {
+	if (kernels[i] == NULL) {
 #if 0 /* bootxx() may be overrided by loaded kernel */
 		return;
 #else
