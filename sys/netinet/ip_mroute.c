@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_mroute.c,v 1.49 2000/04/16 20:59:49 chs Exp $	*/
+/*	$NetBSD: ip_mroute.c,v 1.50 2000/04/19 06:30:55 itojun Exp $	*/
 
 /*
  * IP multicast forwarding procedures
@@ -1451,7 +1451,7 @@ encap_send(ip, vifp, m)
  *
  * Return 1 if we handled the packet, 0 if we did not.
  *
- * Called from ipip_input().
+ * Called from encap4_input() in sys/netinet/ip_encap.c.
  */
 int
 mrt_ipip_input(m, hlen)
