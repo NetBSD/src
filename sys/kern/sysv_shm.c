@@ -1,4 +1,4 @@
-/*	$NetBSD: sysv_shm.c,v 1.56.2.1 2004/04/08 03:13:19 jmc Exp $	*/
+/*	$NetBSD: sysv_shm.c,v 1.56.2.2 2004/04/11 02:21:06 jmc Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -79,6 +79,10 @@
 
 #include <vm/vm.h>
 #include <uvm/uvm_extern.h>
+
+struct uvm_faultinfo;
+#include <uvm/uvm_pager.h>
+#include <uvm/uvm_object.h>
 
 #include <sys/sysctl.h>
 #include <sys/mount.h>		/* XXX for <sys/syscallargs.h> */
