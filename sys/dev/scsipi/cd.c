@@ -1,4 +1,4 @@
-/*	$NetBSD: cd.c,v 1.132 1999/10/29 15:02:57 mycroft Exp $	*/
+/*	$NetBSD: cd.c,v 1.133 1999/10/31 14:03:16 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -1619,9 +1619,9 @@ dvd_read_physical(cd, s)
                 layer->nlayers = (bufp[2] >> 5) & 3;
                 layer->track_density = bufp[3] & 0xf;
                 layer->linear_density = bufp[3] >> 4;
-                layer->start_sector = _3btol(&bufp[5]);
-                layer->end_sector = _3btol(&bufp[9]);
-                layer->end_sector_l0 = _3btol(&bufp[13]);
+                layer->start_sector = _4btol(&bufp[4]);
+                layer->end_sector = _4btol(&bufp[8]);
+                layer->end_sector_l0 = _4btol(&bufp[12]);
                 layer->bca = bufp[16] >> 7;
 	}
 	return (0);
