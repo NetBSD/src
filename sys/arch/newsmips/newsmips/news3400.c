@@ -1,4 +1,4 @@
-/*	$NetBSD: news3400.c,v 1.2 2000/04/14 10:11:07 tsubai Exp $	*/
+/*	$NetBSD: news3400.c,v 1.3 2000/07/29 08:21:43 tsubai Exp $	*/
 
 /*-
  * Copyright (C) 1999 Tsubai Masanari.  All rights reserved.
@@ -252,4 +252,5 @@ news3400_init()
 	disable_intr = disable_intr_3400;
 
 	readidrom_3400((u_char *)&idrom);
+	hostid = idrom.id_serial;
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: news5000.c,v 1.4 2000/04/14 10:11:07 tsubai Exp $	*/
+/*	$NetBSD: news5000.c,v 1.5 2000/07/29 08:21:44 tsubai Exp $	*/
 
 /*-
  * Copyright (C) 1999 SHIMIZU Ryo.  All rights reserved.
@@ -208,4 +208,5 @@ news5000_init()
 	disable_intr = disable_intr_5000;
 
 	readidrom_5000((u_char *)&idrom);
+	hostid = idrom.id_serial;
 }
