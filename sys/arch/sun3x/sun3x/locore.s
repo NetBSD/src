@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.5 1997/02/02 08:38:51 thorpej Exp $	*/
+/*	$NetBSD: locore.s,v 1.5.2.1 1997/03/12 14:22:20 is Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -110,7 +110,10 @@ L_high_code:
 | just before the start of the kernel text segment, so the
 | kernel can sanity-check the DDB symbols at [end...esym].
 | Pass the struct exec at tmpstk-32 to __bootstrap().
+| Also, make sure the initial frame pointer is zero so that
+| the backtrace algorithm used by KGDB terminates nicely.
 	lea	tmpstk-32, sp
+	movl	#0,a6
 	jsr	__bootstrap		| See _startup.c
 
 | Now turn off the transparent translation of the low 1GB.
@@ -146,16 +149,18 @@ L_high_code:
  * cpu_set_kpc() to arrange for a call to a kernel function
  * before the new process does its rte out to user mode.
  */
-	clrw	sp@-			| vector offset/frame type
-	clrl	sp@-			| PC - filled in by "execve"
-	movw	#PSL_USER,sp@-		| in user mode
-	clrl	sp@-			| stack adjust count and padding
-	lea	sp@(-64),sp		| construct space for D0-D7/A0-A7
-	lea	_proc0,a0		| proc0 in a0
-	movl	sp,a0@(P_MDREGS)	| save frame for proc0
-	movl	usp,a1
-	movl	a1,sp@(FR_SP)		| save user stack pointer in frame
-	jbsr	_main			| main()
+	clrw	sp@-			| tf_format,tf_vector
+	clrl	sp@-			| tf_pc (filled in later)
+	movw	#PSL_USER,sp@-		| tf_sr for user mode
+	clrl	sp@-			| tf_stackadj
+	lea	sp@(-64),sp		| tf_regs[16]
+	movl	sp,a1			| a1=trapframe
+	lea	_proc0,a0		| proc0.p_md.md_regs = 
+	movl	a1,a0@(P_MDREGS)	|   trapframe
+	movl	a2,a1@(FR_SP)		| a2 == usp (from above)
+	pea	a1@			| push &trapframe
+	jbsr	_main			| main(&trapframe)
+	addql	#4,sp			| help DDB backtrace
 	trap	#15			| should not get here
 
 | This is used by cpu_fork() to return to user mode.
@@ -572,44 +577,18 @@ Lbrkpt1:
 	bgt	Lbrkpt1
 
 Lbrkpt2:
-	| Call the trap handler for the kernel debugger.
-	| Do not call trap() to do it, so that we can
+	| Call the special kernel debugger trap handler.
+	| Do not call trap() to handle it, so that we can
 	| set breakpoints in trap() if we want.  We know
 	| the trap type is either T_TRACE or T_BREAKPOINT.
-	| If we have both DDB and KGDB, let KGDB see it first,
-	| because KGDB will just return 0 if not connected.
-	| Save args in d2, a2
-	movl	d0,d2			| trap type
-	movl	sp,a2			| frame ptr
-#ifdef	KGDB
-	| Let KGDB handle it (if connected)
-	movl	a2,sp@-			| push frame ptr
-	movl	d2,sp@-			| push trap type
-	jbsr	_kgdb_trap		| handle the trap
-	addql	#8,sp			| pop args
-	cmpl	#0,d0			| did kgdb handle it
-	jne	Lbrkpt3			| yes, done
-#endif
-#ifdef	DDB
-	| Let DDB handle it.
-	movl	a2,sp@-			| push frame ptr
-	movl	d2,sp@-			| push trap type
-	jbsr	_kdb_trap		| handle the trap
-	addql	#8,sp			| pop args
-	cmpl	#0,d0			| did ddb handle it
-	jne	Lbrkpt3			| yes, done
-#endif
-	| Drop into the PROM temporarily...
-	movl	a2,sp@-			| push frame ptr
-	movl	d2,sp@-			| push trap type
-	jbsr	__nodb_trap		| handle the trap
-	addql	#8,sp			| pop args
-Lbrkpt3:
+	movl	d0,sp@-			| push trap type
+	jbsr	_trap_kdebug
+	addql	#4,sp			| pop args
+
 	| The stack pointer may have been modified, or
 	| data below it modified (by kgdb push call),
 	| so push the hardware frame at the current sp
 	| before restoring registers and returning.
-
 	movl	sp@(FR_SP),a0		| modified sp
 	lea	sp@(FR_SIZE),a1		| end of our frame
 	movl	a1@-,a0@-		| copy 2 longs with
@@ -908,7 +887,7 @@ Lrem2:
 	jbsr	_panic
 Lrem3:
 	.asciz	"remrunqueue"
-
+	.even
 
 | Message for Lbadsw panic
 Lsw0:
@@ -921,9 +900,6 @@ Lsw0:
 _masterpaddr:			| XXX compatibility (debuggers)
 _curpcb:
 	.long	0
-mdpflag:
-	.byte	0		| copy of proc md_flags low byte
-	.align	2
 	.comm	nullpcb,SIZEOF_PCB
 	.text
 
@@ -1059,6 +1035,13 @@ Lsw2:
 	fmovem	fpcr/fpsr/fpi,a2@(FPF_FPCR)	| save FP control regs
 Lswnofpsave:
 
+	/*
+	 * Now that we have saved all the registers that must be
+	 * preserved, we are free to use those registers until
+	 * we load the registers for the switched-to process.
+	 * In this section, keep:  a0=curproc, a1=curpcb
+	 */
+
 #ifdef DIAGNOSTIC
 	tstl	a0@(P_WCHAN)
 	jne	Lbadsw
@@ -1068,21 +1051,47 @@ Lswnofpsave:
 	clrl	a0@(P_BACK)		| clear back link
 	movl	a0@(P_ADDR),a1		| get p_addr
 	movl	a1,_curpcb
-	movb	a0@(P_MDFLAG+3),mdpflag	| low byte of p_md.md_flags
 
-	/* Our pmap does not need pmap_activate() */
+	/*
+	 * Load the new VM context (new MMU root pointer)
+	 */
+	movl	a0@(P_VMSPACE),a2	| vm = p->p_vmspace
+#ifdef DIAGNOSTIC
+	tstl	a2			| map == VM_MAP_NULL?
+	jeq	Lbadsw			| panic
+#endif
+#ifdef PMAP_DEBUG
+	/*
+	 * Just call pmap_activate() for now.  Later on,
+	 * use the in-line version below (for speed).
+	 */
+	lea	a2@(VM_PMAP),a2 	| pmap = &vmspace.vm_pmap
+	pea	a2@			| push pmap
+	jbsr	_pmap_activate		| pmap_activate(pmap)
+	addql	#4,sp
+	movl	_curpcb,a1		| restore p_addr
+#else
+	/* XXX - Later, use this inline version. */
 	/* Just load the new CPU Root Pointer (MMU) */
-	/* XXX - Skip if oldproc has same pm_a_tbl? */
-	movl	a0@(P_VMSPACE),a0	| vm = p->p_vmspace
-	lea	a0@(VM_PMAP_MMUCRP),a0	| a0 = &vm->vm_pmap.pm_mmucrp
-
+	lea	_kernel_crp, a3		| our CPU Root Ptr. (CRP)
+	lea	a2@(VM_PMAP),a2 	| pmap = &vmspace.vm_pmap
+	movl	a2@(PM_A_PHYS),d0	| phys = pmap->pm_a_phys
+	cmpl	a3@(4),d0		|  == kernel_crp.rp_addr ?
+	jeq	Lsame_mmuctx		| skip loadcrp/flush
+	/* OK, it is a new MMU context.  Load it up. */
+	movl	d0,a3@(4)
 	movl	#CACHE_CLR,d0
 	movc	d0,cacr			| invalidate cache(s)
 	pflusha				| flush entire TLB
-	pmove	a0@,crp			| load new user root pointer
+	pmove	a3@,crp			| load new user root pointer
+Lsame_mmuctx:
+#endif
 
-	| Reload registers of new process.
-	moveml	a1@(PCB_REGS),#0xFCFC	| kernel registers
+	/*
+	 * Reload the registers for the new process.
+	 * After this point we can only use d0,d1,a0,a1
+	 */
+	moveml	a1@(PCB_REGS),#0xFCFC	| reload registers
 	movl	a1@(PCB_USP),a0
 	movl	a0,usp			| and USP
 
@@ -1273,6 +1282,15 @@ ENTRY(loadcrp)
 	movc	d0,cacr			| invalidate cache(s)
 	pflusha				| flush entire TLB
 	pmove	a0@,crp			| load new user root pointer
+	rts
+
+/*
+ * Get the physical address of the PTE for a given VA.
+ */
+ENTRY(ptest_addr)
+	movl	sp@(4),a0		| VA
+	ptestr	#5,a0@,#7,a1		| a1 = addr of PTE
+	movl	a1,d0
 	rts
 
 /*

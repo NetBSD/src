@@ -1,4 +1,4 @@
-/*	$NetBSD: obio.c,v 1.3 1997/01/27 22:15:06 gwr Exp $	*/
+/*	$NetBSD: obio.c,v 1.3.4.1 1997/03/12 14:21:55 is Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -87,7 +87,6 @@ static int obio_alist[] = {
 	OBIO_EEPROM,	/* the next two are part of the eeprom */
 	OBIO_IDPROM2,	/* 3/80 only */
 	OBIO_CLOCK2,	/* 3/80 only */
-
 	OBIO_CLOCK1,	/* 3/470 only */
 
 	/* These are all in the same page - could be just one driver... */
@@ -98,18 +97,32 @@ static int obio_alist[] = {
 	OBIO_MEMREG,
 	OBIO_INTERREG,
 
+	/*
+	 * The addresses listed before this point were already found
+	 * and mapped in by the startup code, so keep those in the
+	 * order shown, and separated from what follows.
+	 * (Just to be honest about attach order.)
+	 *
+	 * The following are carefully ordered.
+	 */
+
+	/* This is used by video board drivers... */
 	OBIO_P4_REG,
+
+	/* This is used by the Ethernet and SCSI drivers. */
 	OBIO_IOMMU,
 
 	OBIO_INTEL_ETHER,
 	OBIO_LANCE_ETHER,
 
+	OBIO_EMULEX_SCSI, /* 3/80 only */
+
 	/* ...todo... */
 	OBIO_FDC,
 	OBIO_PRINTER_PORT,
 };
-#define	OBIO_ALIST_LEN (sizeof(obio_alist) / \
-						sizeof(obio_alist[0]))
+#define OBIO_ALIST_LEN (sizeof(obio_alist) / \
+                        sizeof(obio_alist[0]))
 
 static void
 obio_attach(parent, self, aux)

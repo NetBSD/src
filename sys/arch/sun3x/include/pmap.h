@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.h,v 1.2 1997/01/23 22:24:04 gwr Exp $	*/
+/*	$NetBSD: pmap.h,v 1.2.4.1 1997/03/12 14:22:04 is Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -39,47 +39,50 @@
 #ifndef	_SUN3X_PMAP_H
 #define	_SUN3X_PMAP_H
 
-#include <machine/pte.h>
-
 /*
  * Physical map structures exported to the VM code.
  */
 
 struct pmap {
-	struct mmu_rootptr 	pm_mmucrp;	/* MMU Current Root Ptr. */
-	struct a_tmgr_struct    *pm_a_tmgr;	/* Level-A table manager */
-	int	                pm_refcount;	/* pmap reference count */
-	simple_lock_data_t      pm_lock;	/* lock on pmap */
-	struct pmap_statistics	pm_stats;	/* pmap statistics */
+	struct a_tmgr_struct	*pm_a_tmgr; 	/* Level-A table manager */
+	u_long              	pm_a_phys;  	/* MMU level-A phys addr */
+	int                 	pm_refcount;	/* reference count */
+	simple_lock_data_t  	pm_lock;    	/* lock on pmap */
 };
 
-typedef struct pmap *pmap_t;
+typedef struct pmap 	*pmap_t;
 
 #ifdef _KERNEL
-extern	struct pmap	kernel_pmap;
-struct pcb;
-void   pmap_activate __P((pmap_t pmap, struct pcb *pcbp));
-void   pmap_deactivate __P((pmap_t pmap, struct pcb *pcbp));
+extern	struct pmap 	kernel_pmap;
+#define	pmap_kernel()	(&kernel_pmap)
 
-#define	pmap_kernel()			(&kernel_pmap)
+/* This is called from locore.s:cpu_switch() */
+void	pmap_activate __P((pmap_t pmap));
 
 #define _pmap_fault(map, va, ftype) \
 	vm_fault(map, va, ftype, 0)
 
-#define	pmap_resident_count(pmap)	((pmap)->pm_stats.resident_count)
-#define	pmap_wired_count(pmap)		((pmap)->pm_stats.wired_count)
+/* Common function for pmap_resident_count(), pmap_wired_count() */
+segsz_t pmap_count __P((pmap_t, int));
 
-#define pmap_phys_address(page) 	(page)
+/* This needs to be a macro for kern_sysctl.c */
+#define	pmap_resident_count(pmap)	(pmap_count((pmap), 0))
+
+/* This needs to be a macro for vm_mmap.c */
+#define	pmap_wired_count(pmap)  	(pmap_count((pmap), 1))
+
+/* We use the PA plus some low bits for device mmap. */
+#define pmap_phys_address(addr) 	(addr)
 
 /*
  * Flags to tell pmap_enter `this is not to be cached', etc.
  * Since physical addresses are always aligned, we can use
  * the low order bits for this.
  */
-#define	PMAP_VME16	0x10		/* pmap will add the necessary offset */
-#define	PMAP_VME32	0x20		/* etc. */
-#define	PMAP_NC		0x40		/* tells pmap_enter to set PTE_CI */
-#define	PMAP_SPEC	0xFF		/* mask to get all above. */
+#define	PMAP_VME16	0x10	/* pmap will add the necessary offset */
+#define	PMAP_VME32	0x20	/* etc. */
+#define	PMAP_NC		0x40	/* tells pmap_enter to set PTE_CI */
+#define	PMAP_SPEC	0xFF	/* mask to get all above. */
 
 #endif	/* _KERNEL */
 #endif	/* _SUN3X_PMAP_H */

@@ -1,4 +1,4 @@
-/*	$NetBSD: clock.c,v 1.6 1997/01/27 22:24:03 gwr Exp $	*/
+/*	$NetBSD: clock.c,v 1.6.4.1 1997/03/12 14:22:11 is Exp $	*/
 
 /*
  * Copyright (c) 1994 Gordon W. Ross
@@ -53,21 +53,25 @@
 #include <sys/kernel.h>
 #include <sys/device.h>
 
+#include <m68k/asm_single.h>
+
 #include <machine/autoconf.h>
 #include <machine/cpu.h>
 #include <machine/mon.h>
 #include <machine/obio.h>
 #include <machine/machdep.h>
 
+#include <dev/clock_subr.h>
+
 #include <sun3/sun3/interreg.h>
 #include "mostek48t02.h"
 
 #define	CLOCK_PRI	5
+#define IREG_CLK_BITS	(IREG_CLOCK_ENAB_7 | IREG_CLOCK_ENAB_5)
 
 void _isr_clock __P((void));	/* in locore.s */
 void clock_intr __P((struct clockframe));
 
-/* Note: this is used by locore.s:__isr_clock */
 static volatile void *clock_va;
 
 static int  clock_match __P((struct device *, struct cfdata *, void *args));
@@ -81,8 +85,28 @@ struct cfdriver clock_cd = {
 	NULL, "clock", DV_DULL
 };
 
+
 /*
- * XXX - Need to determine which type of clock we have!
+ * This is called very early (by obio_init()) but after
+ * intreg_init() has found the PROM mapping for the
+ * interrupt register and cleared it.
+ */
+void
+clock_init()
+{
+	/* Yes, use the EEPROM address.  It is the same H/W device. */
+	clock_va = obio_find_mapping(OBIO_EEPROM, sizeof(struct clockreg));
+	if (!clock_va) {
+		mon_printf("clock_init\n");
+		sunmon_abort();
+	}
+}
+
+/*
+ * XXX  Need to determine which type of clock we have!
+ * XXX  The Sun3/80 always has the MK4802, while the
+ * XXX  Sun3/470 can (reportedly) have that or the old
+ * XXX  intersil7170.  Should have two clock drivers...
  */
 static int
 clock_match(parent, cf, args)
@@ -128,73 +152,73 @@ clock_attach(parent, self, args)
  * Set and/or clear the desired clock bits in the interrupt
  * register.  We have to be extremely careful that we do it
  * in such a manner that we don't get ourselves lost.
+ * XXX:  Watch out!  It's really easy to break this!
  */
 void
-set_clk_mode(on, off, enable)
+set_clk_mode(on, off, enable_clk)
 	u_char on, off;
-	int enable;
+	int enable_clk;
 {
 	register u_char interreg;
-	register int s;
 
-	/* If we don't have this, we must not have touched it! */
+	/*
+	 * If we have not yet mapped the register,
+	 * then we do not want to do any of this...
+	 */
 	if (!interrupt_reg)
 		return;
 
-	s = getsr();
-	if ((s & PSL_IPL) < PSL_IPL7)
-		panic("set_clk_mode: ipl");
+#ifdef	DIAGNOSTIC
+	/* Assertion: were are at splhigh! */
+	if ((getsr() & PSL_IPL) < PSL_IPL7)
+		panic("set_clk_mode: bad ipl");
+#endif
 
 	/*
 	 * make sure that we are only playing w/
 	 * clock interrupt register bits
 	 */
-	on &= (IREG_CLOCK_ENAB_7 | IREG_CLOCK_ENAB_5);
-	off &= (IREG_CLOCK_ENAB_7 | IREG_CLOCK_ENAB_5);
+	on  &= IREG_CLK_BITS;
+	off &= IREG_CLK_BITS;
+
+	/* First, turn off the "master" enable bit. */
+	single_inst_bclr_b(*interrupt_reg, IREG_ALL_ENAB);
 
 	/*
-	 * Get a copy of current interrupt register,
-	 * turning off any undesired bits (aka `off')
+	 * Save the current interrupt register clock bits,
+	 * and turn off/on the requested bits in the copy.
 	 */
-	interreg = *interrupt_reg & ~(off | IREG_ALL_ENAB);
-	*interrupt_reg &= ~IREG_ALL_ENAB;
+	interreg = *interrupt_reg & IREG_CLK_BITS;
+	interreg &= ~off;
+	interreg |= on;
 
-	/*
-	 * Next we turns off the CLK5 and CLK7 bits to clear
-	 * the flip-flops, then we disable clock interrupts.
-	 * Now we can read the clock's interrupt register
-	 * to clear any pending signals there.
-	 */
-	*interrupt_reg &= ~(IREG_CLOCK_ENAB_7 | IREG_CLOCK_ENAB_5);
+	/* Clear the CLK5 and CLK7 bits to clear the flip-flops. */
+	single_inst_bclr_b(*interrupt_reg, IREG_CLK_BITS);
 
-	/* XXX - hit the clock? */
-
-	/*
-	 * Now we set all the desired bits
-	 * in the interrupt register, then
-	 * we turn the clock back on and
-	 * finally we can enable all interrupts.
-	 */
-	*interrupt_reg |= (interreg | on);		/* enable flip-flops */
-
-	/* XXX - hit the clock? */
-
-	*interrupt_reg |= IREG_ALL_ENAB;		/* enable interrupts */
-}
-
-/* Called very early by internal_configure. */
-void clock_init()
-{
-	/* XXX - Yes, use the EEPROM address.  Same H/W device. */
-	clock_va = obio_find_mapping(OBIO_EEPROM, sizeof(struct clockreg));
-
-	if (!clock_va || !interrupt_reg) {
-		mon_printf("clock_init\n");
-		sunmon_abort();
+#ifdef	SUN3_470
+	if (intersil_va) {
+		/*
+		 * Then disable clock interrupts, and read the clock's
+		 * interrupt register to clear any pending signals there.
+		 */
+		intersil_clock->clk_cmd_reg =
+			intersil_command(INTERSIL_CMD_RUN, INTERSIL_CMD_IDISABLE);
+		intersil_clear();
 	}
+#endif	/* SUN3_470 */
 
-	/* Turn off clock interrupts until cpu_initclocks() */
-	/* intreg_init() already cleared the interrupt register. */
+	/* Set the requested bits in the interrupt register. */
+	single_inst_bset_b(*interrupt_reg, interreg);
+
+#ifdef	SUN3_470
+	/* Turn the clock back on (maybe) */
+	if (intersil_va && enable_clk)
+		intersil_clock->clk_cmd_reg =
+			intersil_command(INTERSIL_CMD_RUN, INTERSIL_CMD_IENABLE);
+#endif	/* SUN3_470 */
+
+	/* Finally, turn the "master" enable back on. */
+	single_inst_bset_b(*interrupt_reg, IREG_ALL_ENAB);
 }
 
 /*
@@ -207,21 +231,14 @@ cpu_initclocks(void)
 {
 	int s;
 
-	if (!clock_va)
-		panic("cpu_initclocks");
 	s = splhigh();
 
 	/* Install isr (in locore.s) that calls clock_intr(). */
 	isr_add_custom(5, (void*)_isr_clock);
 
-	/* Set the clock to interrupt 100 time per second. */
-	/* XXX - Hard wired? */
+	/* Now enable the clock at level 5 in the interrupt reg. */
+	set_clk_mode(IREG_CLOCK_ENAB_5, 0, 1);
 
-	*interrupt_reg |= IREG_CLOCK_ENAB_5;	/* enable clock */
-
-	/* XXX enable the clock? */
-
-	*interrupt_reg |= IREG_ALL_ENAB;		/* enable interrupts */
 	splx(s);
 }
 
@@ -238,21 +255,26 @@ setstatclockrate(newhz)
 
 /*
  * This is is called by the "custom" interrupt handler.
+ * Note that we can get ZS interrupts while this runs,
+ * and zshard may touch the interrupt_reg, so we must
+ * be careful to use the single_inst_* macros to modify
+ * the interrupt register atomically.
  */
 void
 clock_intr(cf)
 	struct clockframe cf;
 {
-	/* volatile struct clockreg *clk = clock_va; */
 
-#if 1	/* XXX - Needed? */
 	/* Pulse the clock intr. enable low. */
-	*interrupt_reg &= ~IREG_CLOCK_ENAB_5;
-	*interrupt_reg |=  IREG_CLOCK_ENAB_5;
-#endif
+	single_inst_bclr_b(*interrupt_reg, IREG_CLOCK_ENAB_5);
+	single_inst_bset_b(*interrupt_reg, IREG_CLOCK_ENAB_5);
 
+	/* Call common clock interrupt handler. */
 	hardclock(&cf);
+
+	/* No LED frobbing on the 3/80 */
 }
+
 
 /*
  * Return the best possible estimate of the time in the timeval
@@ -297,8 +319,6 @@ microtime(tvp)
  *
  * Resettodr restores the time of day hardware after a time change.
  */
-#define SECDAY		86400L
-#define SECYR		(SECDAY * 365)
 
 static long clk_get_secs(void);
 static void clk_set_secs(long);
@@ -362,44 +382,19 @@ void resettodr()
 	clk_set_secs(time.tv_sec);
 }
 
-
-/*
- * XXX - Todo: take one of the implementations of
- * "POSIX time" to/from "YY/MM/DD/hh/mm/ss"
- * and put that in libkern (or somewhere).
- * Also put this stuct in some header...
- */
-struct date_time {
-    u_char dt_year;	/* since POSIX_BASE_YEAR (1970) */
-    u_char dt_mon;
-    u_char dt_day;
-    u_char dt_hour;
-    u_char dt_min;
-    u_char dt_sec;
-	u_char dt_csec;	/* hundredths of a second */
-	u_char dt_wday;	/* Day of week (needed?) */
-};
-void gmt_to_dt __P((long gmt, struct date_time *dt));
-long dt_to_gmt __P((struct date_time *dt));
-/* Traditional UNIX base year */
-#define	POSIX_BASE_YEAR	1970
-/*
- * XXX - End of stuff that should move to a header.
- */
-
 
 /*
  * Routines to copy state into and out of the clock.
  * The clock CSR has to be set for read or write.
  */
-
 static void
-clk_get_dt(struct date_time *dt)
+clk_get_dt(struct clock_ymdhms *dt)
 {
 	volatile struct clockreg *cl = clock_va;
 	int s;
 
 	s = splhigh();
+
 	/* enable read (stop time) */
 	cl->cl_csr |= CLK_READ;
 
@@ -418,7 +413,7 @@ clk_get_dt(struct date_time *dt)
 }
 
 static void
-clk_set_dt(struct date_time *dt)
+clk_set_dt(struct clock_ymdhms *dt)
 {
 	volatile struct clockreg *cl = clock_va;
 	int s;
@@ -444,161 +439,52 @@ clk_set_dt(struct date_time *dt)
 
 /*
  * Now routines to get and set clock as POSIX time.
- * Our clock keeps "years since 1/1/1968", so we must
- * convert to/from "years since 1/1/1970" before the
- * common time conversion functions are used.
+ * Our clock keeps "years since 1/1/1968".
  */
-#define	CLOCK_YEAR_ADJUST (POSIX_BASE_YEAR - 1968)
+#define	CLOCK_BASE_YEAR 1968
+
 static long
 clk_get_secs()
 {
-	struct date_time dt;
-	long gmt;
+	struct clock_ymdhms dt;
+	long secs;
 
 	clk_get_dt(&dt);
-	dt.dt_year -= CLOCK_YEAR_ADJUST;
-	gmt = dt_to_gmt(&dt);
-	return (gmt);
+
+	/* Convert BCD values to binary. */
+	dt.dt_sec  = FROMBCD(dt.dt_sec);
+	dt.dt_min  = FROMBCD(dt.dt_min);
+	dt.dt_hour = FROMBCD(dt.dt_hour);
+	dt.dt_day  = FROMBCD(dt.dt_day);
+	dt.dt_mon  = FROMBCD(dt.dt_mon);
+	dt.dt_year = FROMBCD(dt.dt_year);
+
+	if ((dt.dt_hour > 24) ||
+		(dt.dt_day  > 31) ||
+		(dt.dt_mon  > 12))
+		return (0);
+
+	dt.dt_year += CLOCK_BASE_YEAR;
+	secs = clock_ymdhms_to_secs(&dt);
+	return (secs);
 }
+
 static void
 clk_set_secs(secs)
 	long secs;
 {
-	struct date_time dt;
-	long gmt;
+	struct clock_ymdhms dt;
 
-	gmt = secs;
-	gmt_to_dt(gmt, &dt);
-	dt.dt_year += CLOCK_YEAR_ADJUST;
+	clock_secs_to_ymdhms(secs, &dt);
+	dt.dt_year -= CLOCK_BASE_YEAR;
+
+	/* Convert binary values to BCD. */
+	dt.dt_sec  = TOBCD(dt.dt_sec);
+	dt.dt_min  = TOBCD(dt.dt_min);
+	dt.dt_hour = TOBCD(dt.dt_hour);
+	dt.dt_day  = TOBCD(dt.dt_day);
+	dt.dt_mon  = TOBCD(dt.dt_mon);
+	dt.dt_year = TOBCD(dt.dt_year);
+
 	clk_set_dt(&dt);
-}
-
-
-
-/*****************************************************************
- *
- * Generic routines to convert to or from a POSIX date
- * (seconds since 1/1/1970) and  yr/mo/day/hr/min/sec
- *
- * These are organized this way mostly to so the code
- * can easily be tested in an independent user program.
- * (These are derived from the hp300 code.)
- *
- * XXX - Should move these to libkern or somewhere...
- */
-static inline int leapyear __P((int year));
-#define FEBRUARY	2
-#define	days_in_year(a) 	(leapyear(a) ? 366 : 365)
-#define	days_in_month(a) 	(month_days[(a) - 1])
-
-/*
- * Note:  This array may be modified by gmt_to_dt(),
- * but these functions DO NOT need to be reentrant.
- * If we ever DO need reentrance, we should just make
- * gmt_to_dt() copy this to a local before use. -gwr
- */
-static int month_days[12] = {
-	31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31
-};
-
-/* Use an inline to make the logic more obvious. */
-static inline int
-leapyear(year)
-	int year;
-{
-	int rv = 0;
-
-	if ((year % 4) == 0) {
-		rv = 1;
-		if ((year % 100) == 0) {
-			rv = 0;
-			if ((year % 400) == 0)
-				rv = 1;
-		}
-	}
-	return rv;
-}
-
-void gmt_to_dt(long gmt, struct date_time *dt)
-{
-	long secs;
-	int i, days;
-
-	days = gmt / SECDAY;
-	secs = gmt % SECDAY;
-
-	/* Hours, minutes, seconds are easy */
-	dt->dt_hour = secs / 3600;
-	secs = secs % 3600;
-	dt->dt_min  = secs / 60;
-	secs = secs % 60;
-	dt->dt_sec  = secs;
-
-	/* Day of week (Note: 1/1/1970 was a Thursday) */
-	dt->dt_wday = (days + 4) % 7;
-
-	/* Subtract out whole years... */
-	i = POSIX_BASE_YEAR;
-	while (days >= days_in_year(i)) {
-		days -= days_in_year(i);
-		i++;
-	}
-	dt->dt_year = i - POSIX_BASE_YEAR;
-
-	/* Subtract out whole months... */
-	/* XXX - Note temporary change to month_days */
-	if (leapyear(i))
-		days_in_month(FEBRUARY) = 29;
-	for (i = 1; days >= days_in_month(i); i++)
-		days -= days_in_month(i);
-	/* XXX - Undo temporary change to month_days */
-	days_in_month(FEBRUARY) = 28;
-	dt->dt_mon = i;
-
-	/* Days are what is left over (+1) from all that. */
-	dt->dt_day = days + 1;
-}
-
-long dt_to_gmt(struct date_time *dt)
-{
-	long gmt;
-	int i, year;
-
-	/*
-	 * Hours are different for some reason. Makes no sense really.
-	 */
-
-	gmt = 0;
-
-	if (dt->dt_hour >= 24) goto out;
-	if (dt->dt_day  >  31) goto out;
-	if (dt->dt_mon   > 12) goto out;
-
-	year = dt->dt_year + POSIX_BASE_YEAR;
-
-	/*
-	 * Compute days since start of time
-	 * First from years, then from months.
-	 */
-	for (i = POSIX_BASE_YEAR; i < year; i++)
-		gmt += days_in_year(i);
-	if (leapyear(year) && dt->dt_mon > FEBRUARY)
-		gmt++;
-
-	/* Months */
-	for (i = 1; i < dt->dt_mon; i++)
-	  	gmt += days_in_month(i);
-	gmt += (dt->dt_day - 1);
-
-	/* Now do hours */
-	gmt = gmt * 24 + dt->dt_hour;
-
-	/* Now do minutes */
-	gmt = gmt * 60 + dt->dt_min;
-
-	/* Now do seconds */
-	gmt = gmt * 60 + dt->dt_sec;
-
- out:
-	return gmt;
 }

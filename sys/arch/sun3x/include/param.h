@@ -1,4 +1,4 @@
-/*	$NetBSD: param.h,v 1.1.1.1 1997/01/14 20:57:06 gwr Exp $	*/
+/*	$NetBSD: param.h,v 1.1.1.1.6.1 1997/03/12 14:22:02 is Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -56,15 +56,22 @@
  * Round p (pointer or byte index) up to a correctly-aligned value
  * for all data types (int, long, ...).   The result is u_int and
  * must be cast to any desired pointer type.
+ *
+ * ALIGNED_POINTER is a boolean macro that checks whether an address
+ * is valid to fetch data elements of type t from on this architecture.
+ * This does not reflect the optimal alignment, just the possibility
+ * (within reasonable limits). 
+ *
  */
-#define	ALIGNBYTES	3
-#define	ALIGN(p)	(((u_int)(p) + ALIGNBYTES) &~ ALIGNBYTES)
+#define	ALIGNBYTES		3
+#define	ALIGN(p)		(((u_int)(p) + ALIGNBYTES) &~ ALIGNBYTES)
+#define ALIGNED_POINTER(p,t)	((((u_long)(p)) & ALIGNBYTES) == 0)
 
 #define	NBPG		8192		/* bytes/page */
 #define	PGOFSET		(NBPG-1)	/* byte offset into page */
 #define	PGSHIFT		13		/* LOG2(NBPG) */
 
-#define NBSG		0x80000	/* bytes/segment */
+#define NBSG		0x80000 	/* bytes/segment */
 #define	SEGOFSET	(NBSG-1)	/* byte offset into segment */
 #define SEGSHIFT	19	        /* LOG2(NBSG) */
 
@@ -97,9 +104,14 @@
  * of the hardware page size.
  */
 #define	MSIZE		128		/* size of an mbuf */
-#define	MCLBYTES	2048		/* large enough for ether MTU */
-#define	MCLSHIFT	11
+
+#ifndef  MCLSHIFT
+# define MCLSHIFT	11		/* Makes MCLBYTES == 2048 */
+#endif	/* MCLSHIFT */
+
+#define	MCLBYTES	(1 << MCLSHIFT)
 #define	MCLOFSET	(MCLBYTES - 1)
+
 #ifndef NMBCLUSTERS
 #ifdef GATEWAY
 #define	NMBCLUSTERS	512		/* map size, max cluster allocation */

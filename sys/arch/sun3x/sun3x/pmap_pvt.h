@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap_pvt.h,v 1.1.1.1 1997/01/14 20:57:08 gwr Exp $	*/
+/*	$NetBSD: pmap_pvt.h,v 1.1.1.1.6.1 1997/03/12 14:22:31 is Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -108,6 +108,7 @@ struct c_tmgr_struct {
  * are currently mapped to it (if any).  This array of structures is
  * known as the 'PV' list.
  *
+ ** Old PV Element structure
  * To keep a list of page descriptors currently using the page, another
  * structure had to be invented.  Its sole purpose is to be a link in
  * a chain of such structures.  No other information is contained within
@@ -117,17 +118,27 @@ struct c_tmgr_struct {
  * readily be translated into its associated page descriptor by using a
  * simple macro.  This bizzare structure is simply known as a 'PV
  * Element', or 'pve' for short.
+ *
+ ** New PV Element structure
+ * To keep a list of page descriptors currently using the page, another
+ * structure had to be invented.  Its sole purpose is to indicate the index
+ * of the next PTE currently referencing the page.  By maintaining a one-to-
+ * one correspondence of page descriptors in the system and such structures,
+ * this same index is also the index of the next PV element, which describes
+ * the index of yet another page mapped to the same address and so on.  The
+ * special index 'PVE_EOL' is used to represent the end of the list.
  */
 struct pv_struct {
-    LIST_HEAD(pv_head_struct, pv_elem_struct) pv_head;
-    int pv_flags; /* Physical page status flags */   
+	u_short	pv_idx;		/* Index of PTE using this page */
+	u_short	pv_flags;	/* Physical page status flags */
 #define PV_FLAGS_USED	MMU_SHORT_PTE_USED
 #define PV_FLAGS_MDFY	MMU_SHORT_PTE_M
 };
 typedef struct pv_struct pv_t;
 
 struct pv_elem_struct {
-    LIST_ENTRY(pv_elem_struct) pve_link;
+	u_short	pve_next;
+#define	PVE_EOL	0xffff		/* End-of-list marker */
 };
 typedef struct pv_elem_struct pv_elem_t;
 
@@ -149,49 +160,40 @@ struct pmap_physmem_struct {
 a_tmgr_t *get_a_table __P((void));
 b_tmgr_t *get_b_table __P((void));
 c_tmgr_t *get_c_table __P((void));
-a_tmgr_t *pmap_find_a_tmgr __P((mmu_long_dte_t *));
-b_tmgr_t *pmap_find_b_tmgr __P((mmu_short_dte_t *));
-c_tmgr_t *pmap_find_c_tmgr __P((mmu_short_pte_t *));
-int    free_a_table __P((a_tmgr_t *));
-int    free_b_table __P((b_tmgr_t *));
-int    free_c_table __P((c_tmgr_t *));
-void   free_c_table_novalid __P((c_tmgr_t *));
+int    free_a_table __P((a_tmgr_t *, boolean_t));
+int    free_b_table __P((b_tmgr_t *, boolean_t));
+int    free_c_table __P((c_tmgr_t *, boolean_t));
 void   pmap_bootstrap_aalign __P((int));
 void   pmap_alloc_usermmu __P((void));
 void   pmap_alloc_usertmgr __P((void));
 void   pmap_alloc_pv __P((void));
-void   pmap_alloc_etc __P((void));
 void   pmap_init_a_tables __P((void));
 void   pmap_init_b_tables __P((void));
 void   pmap_init_c_tables __P((void));
 void   pmap_init_pv __P((void));
 void   pmap_clear_pv __P((vm_offset_t, int));
-void   pmap_remove_a __P((a_tmgr_t *, vm_offset_t, vm_offset_t));
-void   pmap_remove_b __P((b_tmgr_t *, vm_offset_t, vm_offset_t));
-void   pmap_remove_c __P((c_tmgr_t *, vm_offset_t, vm_offset_t));
+boolean_t pmap_remove_a __P((a_tmgr_t *, vm_offset_t, vm_offset_t));
+boolean_t pmap_remove_b __P((b_tmgr_t *, vm_offset_t, vm_offset_t));
+boolean_t pmap_remove_c __P((c_tmgr_t *, vm_offset_t, vm_offset_t));
 void   pmap_remove_pte __P((mmu_short_pte_t *));
-void   pmap_dereference_pte __P((mmu_short_pte_t *));
 void   pmap_enter_kernel __P((vm_offset_t, vm_offset_t, vm_prot_t));
 void   pmap_remove_kernel __P((vm_offset_t, vm_offset_t));
 void   pmap_protect_kernel __P((vm_offset_t, vm_offset_t, vm_prot_t));
-pmap_t pmap_who_owns_pte __P((mmu_short_pte_t *));
 vm_offset_t pmap_extract_kernel __P((vm_offset_t));
-vm_offset_t pmap_find_va __P((mmu_short_pte_t *));
-char   pmap_find_tia __P((mmu_long_dte_t *));
-char   pmap_find_tib __P((mmu_short_dte_t *));
-char   pmap_find_tic __P((mmu_short_pte_t *));
+vm_offset_t pmap_get_pteinfo __P((u_int, pmap_t *, c_tmgr_t **));
 void   pmap_pinit __P((pmap_t));
 int    pmap_dereference __P((pmap_t));
-void   flush_atc_crp __P((mmu_long_dte_t *));
-pv_t   *pa2pv __P((vm_offset_t));
 boolean_t is_managed __P((vm_offset_t));
 boolean_t pmap_stroll __P((pmap_t, vm_offset_t, a_tmgr_t **, b_tmgr_t **,\
 	c_tmgr_t **, mmu_short_pte_t **, int *, int *, int *));
 void  pmap_bootstrap_copyprom __P((void));
 void  pmap_takeover_mmu __P((void));
+void  pmap_bootstrap_setprom __P((void));
+
+/* Debugging function definitions */
+void  pv_list __P((vm_offset_t, int));
 
 /* These are defined in pmap.c */
 extern struct pmap_physmem_struct avail_mem[];
 
 #endif /* _SUN3X_MYPMAP_H */
-

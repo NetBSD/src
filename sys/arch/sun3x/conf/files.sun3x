@@ -1,4 +1,4 @@
-#	$NetBSD: files.sun3x,v 1.6 1997/01/27 22:26:50 gwr Exp $
+#	$NetBSD: files.sun3x,v 1.6.4.1 1997/03/12 14:21:41 is Exp $
 
 #
 # sun3x-specific configuration info
@@ -11,7 +11,8 @@ maxusers 2 8 64
 
 # Standard stuff
 file arch/sun3x/sun3x/_startup.c
-file arch/sun3x/sun3x/autoconf.c
+file arch/sun3/sun3/autoconf.c
+file arch/sun3x/sun3x/bus_subr.c
 file arch/sun3/sun3/conf.c
 file arch/sun3x/sun3x/db_machdep.c		ddb
 file arch/sun3x/sun3x/db_memrw.c		ddb | kgdb
@@ -19,10 +20,12 @@ file arch/sun3/sun3/disksubr.c
 file arch/sun3x/sun3x/dvma.c
 file arch/sun3x/sun3x/fpu.c
 file arch/sun3/sun3/isr.c
-file arch/sun3/sun3/kgdb_stub.c 		kgdb
+file arch/sun3x/sun3x/kgdb_machdep.c 		kgdb
 file arch/sun3x/sun3x/machdep.c
 file arch/sun3x/sun3x/mem.c
 file arch/sun3x/sun3x/pmap.c
+file arch/sun3/sun3/regdump.c
+file arch/sun3/sun3/sig_machdep.c
 file arch/sun3x/sun3x/stub.c
 file arch/sun3/sun3/sunmon.c
 file arch/sun3x/sun3x/sys_machdep.c
@@ -87,6 +90,7 @@ file arch/sun3x/dev/eeprom.c		eeprom
 device clock
 attach clock at obio
 file arch/sun3x/sun3x/clock.c		clock
+file dev/clock_subr.c			clock
 
 device memerr
 attach memerr at obio
@@ -100,9 +104,21 @@ device iommu
 attach iommu at obio
 file arch/sun3x/sun3x/iommu.c		iommu
 
+device esp: scsi
+attach esp at obio
+file arch/sun3x/dev/esp.c		esp
+file arch/sun3x/dev/dma.c		esp
+
 # device defined in sys/conf/files
 attach le at obio
 file arch/sun3x/dev/if_le.c		le
+
+# Floppy disk controller (fdc), floppy disk (fd)
+device fdc {}
+attach fdc at obio
+device fd: disk
+attach fd at fdc
+file	arch/sun3x/dev/fd.c			fdc | fd needs-flag
 
 #
 # Sun-compatible Frame Buffers (?)
