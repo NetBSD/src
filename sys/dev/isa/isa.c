@@ -34,7 +34,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)isa.c	7.2 (Berkeley) 5/13/91
- *	$Id: isa.c,v 1.36 1994/02/22 23:39:32 mycroft Exp $
+ *	$Id: isa.c,v 1.37 1994/03/01 18:16:33 mycroft Exp $
  */
 
 /*
@@ -78,6 +78,7 @@ u_short *Crtat = (u_short *)MONO_BUF;
 **  Register definitions for DMA controller 1 (channels 0..3):
 */
 #define	DMA1_CHN(c)	(IO_DMA1 + 1*(2*(c)))	/* addr reg for channel c */
+#define	DMA1_SR		(IO_DMA1 + 1*8)		/* status register */
 #define	DMA1_SMSK	(IO_DMA1 + 1*10)	/* single mask register */
 #define	DMA1_MODE	(IO_DMA1 + 1*11)	/* mode register */
 #define	DMA1_FFC	(IO_DMA1 + 1*12)	/* clear first/last FF */
@@ -86,6 +87,7 @@ u_short *Crtat = (u_short *)MONO_BUF;
 **  Register definitions for DMA controller 2 (channels 4..7):
 */
 #define	DMA2_CHN(c)	(IO_DMA2 + 2*(2*(c)))	/* addr reg for channel c */
+#define	DMA2_SR		(IO_DMA2 + 2*8)		/* status register */
 #define	DMA2_SMSK	(IO_DMA2 + 2*10)	/* single mask register */
 #define	DMA2_MODE	(IO_DMA2 + 2*11)	/* mode register */
 #define	DMA2_FFC	(IO_DMA2 + 2*12)	/* clear first/last FF */
@@ -306,10 +308,14 @@ static short dmapageport[8] =
  * external dma control by a board.
  */
 void
-isa_dmacascade(unsigned chan)
+isa_dmacascade(chan)
+	int chan;
 {
-	if (chan > 7)
+
+#ifdef DIAGNOSTIC
+	if (chan < 0 || chan > 7)
 		panic("isa_dmacascade: impossible request"); 
+#endif
 
 	/* set dma channel mode, and set dma channel mode */
 	if ((chan & 4) == 0) {
@@ -326,27 +332,33 @@ isa_dmacascade(unsigned chan)
  * problems by using a bounce buffer.
  */
 void
-isa_dmastart(int flags, caddr_t addr, unsigned nbytes, unsigned chan)
-{	vm_offset_t phys;
+isa_dmastart(flags, addr, nbytes, chan)
+	int flags;
+	caddr_t addr;
+	vm_size_t nbytes;
+	int chan;
+{
+	vm_offset_t phys;
 	int waport;
 	caddr_t newaddr;
 
-	if (    chan > 7
-	    || (chan < 4 && nbytes > (1<<16))
-	    || (chan >= 4 && (nbytes > (1<<17) || (u_int)addr & 1)))
+#ifdef DIAGNOSTIC
+	if (chan < 0 || chan > 7 ||
+	    ((chan & 4) ? (nbytes >= (1<<17) || nbytes & 1 || (u_int)addr & 1) :
+	    (nbytes >= (1<<16))))
 		panic("isa_dmastart: impossible request"); 
+#endif
 
 	if (isa_dmarangecheck(addr, nbytes, chan)) {
 		if (dma_bounce[chan] == 0)
 			dma_bounce[chan] =
-				/*(caddr_t)malloc(MAXDMASZ, M_TEMP, M_WAITOK);*/
-				(caddr_t) isaphysmem + NBPG*chan;
+			    /*(caddr_t)malloc(MAXDMASZ, M_TEMP, M_WAITOK);*/
+			    (caddr_t) isaphysmem + NBPG*chan;
 		bounced[chan] = 1;
 		newaddr = dma_bounce[chan];
 		*(int *) newaddr = 0;	/* XXX */
-
 		/* copy bounce buffer on write */
-		if (!(flags & B_READ))
+		if ((flags & B_READ) == 0)
 			bcopy(addr, newaddr, nbytes);
 		addr = newaddr;
 	}
@@ -361,9 +373,9 @@ isa_dmastart(int flags, caddr_t addr, unsigned nbytes, unsigned chan)
 		 */
 		/* set dma channel mode, and reset address ff */
 		if (flags & B_READ)
-			outb(DMA1_MODE, DMA37MD_SINGLE|DMA37MD_WRITE|chan);
+			outb(DMA1_MODE, chan | DMA37MD_SINGLE | DMA37MD_WRITE);
 		else
-			outb(DMA1_MODE, DMA37MD_SINGLE|DMA37MD_READ|chan);
+			outb(DMA1_MODE, chan | DMA37MD_SINGLE | DMA37MD_READ);
 		outb(DMA1_FFC, 0);
 
 		/* send start address */
@@ -377,7 +389,7 @@ isa_dmastart(int flags, caddr_t addr, unsigned nbytes, unsigned chan)
 		outb(waport + 1, nbytes>>8);
 
 		/* unmask channel */
-		outb(DMA1_SMSK, chan);
+		outb(DMA1_SMSK, chan | DMA37SM_CLEAR);
 	} else {
 		/*
 		 * Program one of DMA channels 4..7.  These are
@@ -385,13 +397,13 @@ isa_dmastart(int flags, caddr_t addr, unsigned nbytes, unsigned chan)
 		 */
 		/* set dma channel mode, and reset address ff */
 		if (flags & B_READ)
-			outb(DMA2_MODE, DMA37MD_SINGLE|DMA37MD_WRITE|(chan&3));
+			outb(DMA2_MODE, (chan & 3) | DMA37MD_SINGLE | DMA37MD_WRITE);
 		else
-			outb(DMA2_MODE, DMA37MD_SINGLE|DMA37MD_READ|(chan&3));
+			outb(DMA2_MODE, (chan & 3) | DMA37MD_SINGLE | DMA37MD_READ);
 		outb(DMA2_FFC, 0);
 
 		/* send start address */
-		waport = DMA2_CHN(chan - 4);
+		waport = DMA2_CHN(chan & 3);
 		outb(waport, phys>>1);
 		outb(waport, phys>>9);
 		outb(dmapageport[chan], phys>>16);
@@ -402,20 +414,44 @@ isa_dmastart(int flags, caddr_t addr, unsigned nbytes, unsigned chan)
 		outb(waport + 2, nbytes>>8);
 
 		/* unmask channel */
-		outb(DMA2_SMSK, chan & 3);
+		outb(DMA2_SMSK, (chan & 3) | DMA37SM_CLEAR);
 	}
 }
 
 void
-isa_dmadone(int flags, caddr_t addr, int nbytes, int chan)
+isa_dmadone(flags, addr, nbytes, chan)
+	int flags;
+	caddr_t addr;
+	vm_size_t nbytes;
+	int chan;
 {
+	u_char tc;
+
+#ifdef DIAGNOSTIC
+	if (chan < 0 || chan > 7)
+		panic("isa_dmadone: impossible request");
+#endif
+
+	/* check that the terminal count was reached */
+	if ((chan & 4) == 0)
+		tc = inb(DMA1_SR) & (1 << chan);
+	else
+		tc = inb(DMA2_SR) & (1 << (chan & 3));
+	if (tc == 0)
+		/* XXX probably should panic or something */
+		log(LOG_ERR, "dma channel %d not finished\n", chan);
 
 	/* copy bounce buffer on read */
-	/*if ((flags & (B_PHYS|B_READ)) == (B_PHYS|B_READ))*/
 	if (bounced[chan]) {
 		bcopy(dma_bounce[chan], addr, nbytes);
 		bounced[chan] = 0;
 	}
+
+	/* mask channel */
+	if ((chan & 4) == 0)
+		outb(DMA1_SMSK, DMA37SM_SET | chan);
+	else
+		outb(DMA2_SMSK, DMA37SM_SET | (chan & 3));
 }
 
 /*
@@ -424,30 +460,32 @@ isa_dmadone(int flags, caddr_t addr, int nbytes, int chan)
  * crossing DMA page boundaries).
  * Return true if special handling needed.
  */
-
 int
-isa_dmarangecheck(caddr_t va, unsigned length, unsigned chan) {
+isa_dmarangecheck(va, length, chan)
+	vm_offset_t va;
+	u_long length;
+	int chan;
+{
 	vm_offset_t phys, priorpage = 0, endva;
 	u_int dma_pgmsk = (chan & 4) ?  ~(128*1024-1) : ~(64*1024-1);
 
-	endva = (vm_offset_t)round_page(va + length);
-	for (; va < (caddr_t) endva ; va += NBPG) {
-		phys = trunc_page(pmap_extract(pmap_kernel(), (vm_offset_t)va));
-#define ISARAM_END	RAM_END
+	endva = round_page(va + length);
+	for (; va < endva ; va += NBPG) {
+		phys = trunc_page(pmap_extract(pmap_kernel(), va));
 		if (phys == 0)
 			panic("isa_dmacheck: no physical page present");
-		if (phys > ISARAM_END) 
-			return (1);
+		if (phys >= (1<<24)) 
+			return 1;
 		if (priorpage) {
 			if (priorpage + NBPG != phys)
-				return (1);
+				return 1;
 			/* check if crossing a DMA page boundary */
-			if (((u_int)priorpage ^ (u_int)phys) & dma_pgmsk)
-				return (1);
+			if ((priorpage ^ phys) & dma_pgmsk)
+				return 1;
 		}
 		priorpage = phys;
 	}
-	return (0);
+	return 0;
 }
 
 /* head of queue waiting for physmem to become available */
