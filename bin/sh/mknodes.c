@@ -1,4 +1,4 @@
-/*	$NetBSD: mknodes.c,v 1.14 1997/04/11 23:03:08 christos Exp $	*/
+/*	$NetBSD: mknodes.c,v 1.15 1997/07/04 21:02:12 christos Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -36,17 +36,17 @@
  * SUCH DAMAGE.
  */
 
+#include <sys/cdefs.h>
 #ifndef lint
-static char copyright[] =
-"@(#) Copyright (c) 1991, 1993\n\
-	The Regents of the University of California.  All rights reserved.\n";
+__COPYRIGHT("@(#) Copyright (c) 1991, 1993\n\
+	The Regents of the University of California.  All rights reserved.\n");
 #endif /* not lint */
 
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)mknodes.c	8.2 (Berkeley) 5/4/95";
 #else
-static char rcsid[] = "$NetBSD: mknodes.c,v 1.14 1997/04/11 23:03:08 christos Exp $";
+__RCSID("$NetBSD: mknodes.c,v 1.15 1997/07/04 21:02:12 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -115,6 +115,7 @@ static void skipbl __P((void));
 static int readline __P((void));
 static void error __P((const char *, ...));
 static char *savestr __P((const char *));
+int main __P((int, char **));
 
 
 int

@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.25 1997/04/11 23:01:44 christos Exp $	*/
+/*	$NetBSD: main.c,v 1.26 1997/07/04 21:02:07 christos Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -36,17 +36,17 @@
  * SUCH DAMAGE.
  */
 
+#include <sys/cdefs.h>
 #ifndef lint
-static char copyright[] =
-"@(#) Copyright (c) 1991, 1993\n\
-	The Regents of the University of California.  All rights reserved.\n";
+__COPYRIGHT("@(#) Copyright (c) 1991, 1993\n\
+	The Regents of the University of California.  All rights reserved.\n");
 #endif /* not lint */
 
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)main.c	8.7 (Berkeley) 7/19/95";
 #else
-static char rcsid[] = "$NetBSD: main.c,v 1.25 1997/04/11 23:01:44 christos Exp $";
+__RCSID("$NetBSD: main.c,v 1.26 1997/07/04 21:02:07 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -92,6 +92,7 @@ extern int etext();
 
 STATIC void read_profile __P((char *));
 STATIC char *find_dot_file __P((char *));
+int main __P((int, char **));
 
 /*
  * Main routine.  We initialize things, parse the arguments, execute

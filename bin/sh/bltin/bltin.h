@@ -1,4 +1,4 @@
-/*	$NetBSD: bltin.h,v 1.8 1996/10/16 15:28:10 christos Exp $	*/
+/*	$NetBSD: bltin.h,v 1.9 1997/07/04 21:02:29 christos Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -70,13 +70,9 @@
 #define INITARGS(argv)	if ((commandname = argv[0]) == NULL) {fputs("Argc is zero\n", stderr); exit(2);} else
 #endif
 
-#ifdef __STDC__
-pointer stalloc(int);
-void error(char *, ...);
-#else
-pointer stalloc();
-void error();
-#endif
+pointer stalloc __P((int));
+void error __P((char *, ...));
+int	echocmd __P((int, char **));
 
 
 extern char *commandname;

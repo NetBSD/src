@@ -1,4 +1,4 @@
-/*	$NetBSD: mkinit.c,v 1.16 1997/01/11 02:04:39 tls Exp $	*/
+/*	$NetBSD: mkinit.c,v 1.17 1997/07/04 21:02:11 christos Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -36,17 +36,17 @@
  * SUCH DAMAGE.
  */
 
+#include <sys/cdefs.h>
 #ifndef lint
-static char copyright[] =
-"@(#) Copyright (c) 1991, 1993\n\
-	The Regents of the University of California.  All rights reserved.\n";
+__COPYRIGHT("@(#) Copyright (c) 1991, 1993\n\
+	The Regents of the University of California.  All rights reserved.\n");
 #endif /* not lint */
 
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)mkinit.c	8.2 (Berkeley) 5/4/95";
 #else
-static char rcsid[] = "$NetBSD: mkinit.c,v 1.16 1997/01/11 02:04:39 tls Exp $";
+__RCSID("$NetBSD: mkinit.c,v 1.17 1997/07/04 21:02:11 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -167,6 +167,7 @@ FILE *ckfopen __P((char *, char *));
 void *ckmalloc __P((int));
 char *savestr __P((char *));
 void error __P((char *));
+int main __P((int, char **));
 
 #define equal(s1, s2)	(strcmp(s1, s2) == 0)
 
@@ -179,6 +180,7 @@ main(argc, argv)
 
 	header_files[0] = "\"shell.h\"";
 	header_files[1] = "\"mystring.h\"";
+	header_files[2] = "\"init.h\"";
 	for (ap = argv + 1 ; *ap ; ap++)
 		readfile(*ap);
 	output();

@@ -1,4 +1,4 @@
-/*	$NetBSD: miscbltin.c,v 1.18 1997/04/11 23:08:15 christos Exp $	*/
+/*	$NetBSD: miscbltin.c,v 1.19 1997/07/04 21:02:09 christos Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -36,11 +36,12 @@
  * SUCH DAMAGE.
  */
 
+#include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)miscbltin.c	8.4 (Berkeley) 5/4/95";
 #else
-static char rcsid[] = "$NetBSD: miscbltin.c,v 1.18 1997/04/11 23:08:15 christos Exp $";
+__RCSID("$NetBSD: miscbltin.c,v 1.19 1997/07/04 21:02:09 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -62,6 +63,7 @@ static char rcsid[] = "$NetBSD: miscbltin.c,v 1.18 1997/04/11 23:08:15 christos 
 #include "output.h"
 #include "memalloc.h"
 #include "error.h"
+#include "miscbltin.h"
 #include "mystring.h"
 
 #undef eflag
@@ -295,7 +297,7 @@ ulimitcmd(argc, argv)
 	char **argv;
 {
 	int	c;
-	rlim_t val;
+	rlim_t val = 0;
 	enum { SOFT = 0x1, HARD = 0x2 }
 			how = SOFT | HARD;
 	const struct limits	*l;

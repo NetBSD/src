@@ -1,59 +1,5 @@
-%token ARITH_NUM ARITH_LPAREN ARITH_RPAREN
-
-%left ARITH_OR
-%left ARITH_AND
-%left ARITH_BOR
-%left ARITH_BXOR
-%left ARITH_BAND
-%left ARITH_EQ ARITH_NE
-%left ARITH_LT ARITH_GT ARITH_GE ARITH_LE
-%left ARITH_LSHIFT ARITH_RSHIFT
-%left ARITH_ADD ARITH_SUB
-%left ARITH_MUL ARITH_DIV ARITH_REM
-%left ARITH_UNARYMINUS ARITH_UNARYPLUS ARITH_NOT ARITH_BNOT
-%%
-
-exp:	expr = {
-			return ($1);
-		}
-	;
-
-
-expr:	ARITH_LPAREN expr ARITH_RPAREN = { $$ = $2; }
-	| expr ARITH_OR expr	= { $$ = $1 ? $1 : $3 ? $3 : 0; }
-	| expr ARITH_AND expr	= { $$ = $1 ? ( $3 ? $3 : 0 ) : 0; }
-	| expr ARITH_BOR expr	= { $$ = $1 | $3; }
-	| expr ARITH_BXOR expr	= { $$ = $1 ^ $3; }
-	| expr ARITH_BAND expr	= { $$ = $1 & $3; }
-	| expr ARITH_EQ expr	= { $$ = $1 == $3; }
-	| expr ARITH_GT expr	= { $$ = $1 > $3; }
-	| expr ARITH_GE expr	= { $$ = $1 >= $3; }
-	| expr ARITH_LT expr	= { $$ = $1 < $3; }
-	| expr ARITH_LE expr	= { $$ = $1 <= $3; }
-	| expr ARITH_NE expr	= { $$ = $1 != $3; }
-	| expr ARITH_LSHIFT expr = { $$ = $1 << $3; }
-	| expr ARITH_RSHIFT expr = { $$ = $1 >> $3; }
-	| expr ARITH_ADD expr	= { $$ = $1 + $3; }
-	| expr ARITH_SUB expr	= { $$ = $1 - $3; }
-	| expr ARITH_MUL expr	= { $$ = $1 * $3; }
-	| expr ARITH_DIV expr	= {
-			if ($3 == 0)
-				yyerror("division by zero");
-			$$ = $1 / $3;
-			}
-	| expr ARITH_REM expr   = {
-			if ($3 == 0)
-				yyerror("division by zero");
-			$$ = $1 % $3;
-			}
-	| ARITH_NOT expr	= { $$ = !($2); }
-	| ARITH_BNOT expr	= { $$ = ~($2); }
-	| ARITH_SUB expr %prec ARITH_UNARYMINUS = { $$ = -($2); }
-	| ARITH_ADD expr %prec ARITH_UNARYPLUS = { $$ = $2; }
-	| ARITH_NUM
-	;
-%%
-/*	$NetBSD: arith.y,v 1.7 1996/10/16 15:45:05 christos Exp $	*/
+%{
+/*	$NetBSD: arith.y,v 1.8 1997/07/04 21:01:50 christos Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -91,20 +37,29 @@ expr:	ARITH_LPAREN expr ARITH_RPAREN = { $$ = $2; }
  * SUCH DAMAGE.
  */
 
+#include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)arith.y	8.3 (Berkeley) 5/4/95";
 #else
-static char sccsid[] = "$NetBSD: arith.y,v 1.7 1996/10/16 15:45:05 christos Exp $";
+__RCSID("$NetBSD: arith.y,v 1.8 1997/07/04 21:01:50 christos Exp $");
 #endif
 #endif /* not lint */
 
+#include "arith.h"
 #include "shell.h"
 #include "error.h"
 #include "output.h"
 #include "memalloc.h"
 
 char *arith_buf, *arith_startbuf;
+
+void yyerror __P((char *));
+int yyparse __P((void));
+#ifdef TESTARITH
+int main __P((int , char *[]));
+int error __P((char *));
+#endif
 
 int
 arith(s)
@@ -122,16 +77,6 @@ arith(s)
 	return (result);
 }
 
-void
-yyerror(s)
-	char *s;
-{
-
-	yyerrok;
-	yyclearin;
-	arith_lex_reset();	/* reprime lex */
-	error("arithmetic expression: %s: \"%s\"", s, arith_startbuf);
-}
 
 /*
  *  The exp(1) builtin.
@@ -188,3 +133,69 @@ error(s)
 	exit(1);
 }
 #endif
+%}
+%token ARITH_NUM ARITH_LPAREN ARITH_RPAREN
+
+%left ARITH_OR
+%left ARITH_AND
+%left ARITH_BOR
+%left ARITH_BXOR
+%left ARITH_BAND
+%left ARITH_EQ ARITH_NE
+%left ARITH_LT ARITH_GT ARITH_GE ARITH_LE
+%left ARITH_LSHIFT ARITH_RSHIFT
+%left ARITH_ADD ARITH_SUB
+%left ARITH_MUL ARITH_DIV ARITH_REM
+%left ARITH_UNARYMINUS ARITH_UNARYPLUS ARITH_NOT ARITH_BNOT
+%%
+
+exp:	expr = {
+			return ($1);
+		}
+	;
+
+
+expr:	ARITH_LPAREN expr ARITH_RPAREN = { $$ = $2; }
+	| expr ARITH_OR expr	= { $$ = $1 ? $1 : $3 ? $3 : 0; }
+	| expr ARITH_AND expr	= { $$ = $1 ? ( $3 ? $3 : 0 ) : 0; }
+	| expr ARITH_BOR expr	= { $$ = $1 | $3; }
+	| expr ARITH_BXOR expr	= { $$ = $1 ^ $3; }
+	| expr ARITH_BAND expr	= { $$ = $1 & $3; }
+	| expr ARITH_EQ expr	= { $$ = $1 == $3; }
+	| expr ARITH_GT expr	= { $$ = $1 > $3; }
+	| expr ARITH_GE expr	= { $$ = $1 >= $3; }
+	| expr ARITH_LT expr	= { $$ = $1 < $3; }
+	| expr ARITH_LE expr	= { $$ = $1 <= $3; }
+	| expr ARITH_NE expr	= { $$ = $1 != $3; }
+	| expr ARITH_LSHIFT expr = { $$ = $1 << $3; }
+	| expr ARITH_RSHIFT expr = { $$ = $1 >> $3; }
+	| expr ARITH_ADD expr	= { $$ = $1 + $3; }
+	| expr ARITH_SUB expr	= { $$ = $1 - $3; }
+	| expr ARITH_MUL expr	= { $$ = $1 * $3; }
+	| expr ARITH_DIV expr	= {
+			if ($3 == 0)
+				yyerror("division by zero");
+			$$ = $1 / $3;
+			}
+	| expr ARITH_REM expr   = {
+			if ($3 == 0)
+				yyerror("division by zero");
+			$$ = $1 % $3;
+			}
+	| ARITH_NOT expr	= { $$ = !($2); }
+	| ARITH_BNOT expr	= { $$ = ~($2); }
+	| ARITH_SUB expr %prec ARITH_UNARYMINUS = { $$ = -($2); }
+	| ARITH_ADD expr %prec ARITH_UNARYPLUS = { $$ = $2; }
+	| ARITH_NUM
+	;
+%%
+void
+yyerror(s)
+	char *s;
+{
+
+	yyerrok;
+	yyclearin;
+	arith_lex_reset();	/* reprime lex */
+	error("arithmetic expression: %s: \"%s\"", s, arith_startbuf);
+}

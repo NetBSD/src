@@ -1,4 +1,4 @@
-/*	$NetBSD: var.c,v 1.18 1997/04/11 22:45:38 christos Exp $	*/
+/*	$NetBSD: var.c,v 1.19 1997/07/04 21:02:25 christos Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -36,11 +36,12 @@
  * SUCH DAMAGE.
  */
 
+#include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)var.c	8.3 (Berkeley) 5/4/95";
 #else
-static char rcsid[] = "$NetBSD: var.c,v 1.18 1997/04/11 22:45:38 christos Exp $";
+__RCSID("$NetBSD: var.c,v 1.19 1997/07/04 21:02:25 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -199,6 +200,9 @@ setvarsafe(name, val, flags)
 	struct jmploc jmploc;
 	struct jmploc *volatile savehandler = handler;
 	int err = 0;
+#ifdef __GNUC__
+	(void) &err;
+#endif
 
 	if (setjmp(jmploc.loc))
 		err = 1;
@@ -423,7 +427,7 @@ environment() {
  */
 
 #ifdef mkinit
-MKINIT void shprocvar();
+MKINIT void shprocvar __P((void));
 
 SHELLPROC {
 	shprocvar();

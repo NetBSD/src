@@ -1,4 +1,4 @@
-/*	$NetBSD: mail.c,v 1.10 1997/01/11 02:04:37 tls Exp $	*/
+/*	$NetBSD: mail.c,v 1.11 1997/07/04 21:02:06 christos Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -36,11 +36,12 @@
  * SUCH DAMAGE.
  */
 
+#include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)mail.c	8.2 (Berkeley) 5/4/95";
 #else
-static char rcsid[] = "$NetBSD: mail.c,v 1.10 1997/01/11 02:04:37 tls Exp $";
+__RCSID("$NetBSD: mail.c,v 1.11 1997/07/04 21:02:06 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -54,6 +55,7 @@ static char rcsid[] = "$NetBSD: mail.c,v 1.10 1997/01/11 02:04:37 tls Exp $";
 #include "output.h"
 #include "memalloc.h"
 #include "error.h"
+#include "mail.h"
 #include <sys/types.h>
 #include <sys/stat.h>
 

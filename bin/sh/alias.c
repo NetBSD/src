@@ -1,4 +1,4 @@
-/*	$NetBSD: alias.c,v 1.8 1997/01/11 02:04:27 tls Exp $	*/
+/*	$NetBSD: alias.c,v 1.9 1997/07/04 21:01:48 christos Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -36,11 +36,12 @@
  * SUCH DAMAGE.
  */
 
+#include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)alias.c	8.3 (Berkeley) 5/4/95";
 #else
-static char rcsid[] = "$NetBSD: alias.c,v 1.8 1997/01/11 02:04:27 tls Exp $";
+__RCSID("$NetBSD: alias.c,v 1.9 1997/07/04 21:01:48 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -151,7 +152,7 @@ unalias(name)
 }
 
 #ifdef mkinit
-MKINIT void rmaliases();
+MKINIT void rmaliases __P((void));
 
 SHELLPROC {
 	rmaliases();

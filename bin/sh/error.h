@@ -1,4 +1,4 @@
-/*	$NetBSD: error.h,v 1.9 1996/10/16 14:35:43 christos Exp $	*/
+/*	$NetBSD: error.h,v 1.10 1997/07/04 21:01:55 christos Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -90,9 +90,9 @@ extern char *commandname;	/* name of command--printed on error */
 #define CLEAR_PENDING_INT intpending = 0
 #define int_pending() intpending
 
-void exraise __P((int));
+void exraise __P((int)) __attribute__((__noreturn__));
 void onint __P((void));
-void error __P((char *, ...));
+void error __P((char *, ...)) __attribute__((__noreturn__));
 void exerror __P((int, char *, ...));
 char *errmsg __P((int, int));
 

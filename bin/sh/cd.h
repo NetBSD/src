@@ -1,4 +1,4 @@
-/*	$NetBSD: cd.h,v 1.1 1995/11/19 23:27:40 christos Exp $	*/
+/*	$NetBSD: cd.h,v 1.2 1997/07/04 21:01:52 christos Exp $	*/
 
 /*-
  * Copyright (c) 1995
@@ -34,4 +34,6 @@
  *
  */
 
-void getpwd __P((void));
+void	getpwd __P((void));
+int	cdcmd __P((int, char **));
+int	pwdcmd __P((int, char **));

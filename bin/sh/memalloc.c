@@ -1,4 +1,4 @@
-/*	$NetBSD: memalloc.c,v 1.19 1997/01/11 02:04:38 tls Exp $	*/
+/*	$NetBSD: memalloc.c,v 1.20 1997/07/04 21:02:08 christos Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -36,11 +36,12 @@
  * SUCH DAMAGE.
  */
 
+#include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)memalloc.c	8.3 (Berkeley) 5/4/95";
 #else
-static char rcsid[] = "$NetBSD: memalloc.c,v 1.19 1997/01/11 02:04:38 tls Exp $";
+__RCSID("$NetBSD: memalloc.c,v 1.20 1997/07/04 21:02:08 christos Exp $");
 #endif
 #endif /* not lint */
 

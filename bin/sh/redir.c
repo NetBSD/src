@@ -1,4 +1,4 @@
-/*	$NetBSD: redir.c,v 1.15 1997/04/21 12:38:25 christos Exp $	*/
+/*	$NetBSD: redir.c,v 1.16 1997/07/04 21:02:21 christos Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -36,11 +36,12 @@
  * SUCH DAMAGE.
  */
 
+#include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)redir.c	8.2 (Berkeley) 5/4/95";
 #else
-static char rcsid[] = "$NetBSD: redir.c,v 1.15 1997/04/21 12:38:25 christos Exp $";
+__RCSID("$NetBSD: redir.c,v 1.16 1997/07/04 21:02:21 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -104,7 +105,7 @@ redirect(redir, flags)
 	int flags;
 	{
 	union node *n;
-	struct redirtab *sv;
+	struct redirtab *sv = NULL;
 	int i;
 	int fd;
 	int try;
