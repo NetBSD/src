@@ -1,4 +1,4 @@
-/*	$NetBSD: wt.c,v 1.45 1998/06/09 07:25:07 thorpej Exp $	*/
+/*	$NetBSD: wt.c,v 1.46 1999/01/10 21:57:19 augustss Exp $	*/
 
 /*
  * Streamer tape driver.
@@ -732,7 +732,7 @@ wtintr(arg)
 
 	if (sc->dmacount < sc->dmatotal) {
 		/* Continue I/O. */
-		sc->dmavaddr += sc->bsize;
+		sc->dmavaddr = (char *)sc->dmavaddr + sc->bsize;
 		wtdma(sc);
 		WTDBPRINT(("continue i/o, %d\n", sc->dmacount));
 		return 1;
