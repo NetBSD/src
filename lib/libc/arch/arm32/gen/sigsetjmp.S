@@ -1,7 +1,7 @@
-/* $NetBSD: sigsetjmp.S,v 1.2 1996/05/12 20:25:53 mark Exp $ */
+/*	$NetBSD: sigsetjmp.S,v 1.3 1997/10/06 00:10:36 mark Exp $	*/
 
 /*
- * Copyright (c) 1995 Mark Brinicombe
+ * Copyright (c) 1997 Mark Brinicombe
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -32,53 +32,30 @@
  * SUCH DAMAGE.
  */
 
-# include "DEFS.h"
+#include <machine/asm.h>
+#include <machine/setjmp.h>
 
-	.text
-	.align	0
+/*
+ * C library -- sigsetjmp, siglongjmp
+ *
+ *	longjmp(a,v)
+ * will generate a "return(v)" from the last call to
+ *	setjmp(a, m)
+ * by restoring registers from the stack.
+ * The previous signal state is restored.
+ */
 
 ENTRY(sigsetjmp)
-/*        LDR     a4,[pc,#|__fpflag_ptr|-.-8]
-        LDR     a4,[a4,#0]
-        CMP     a4,#0
-        ADDEQ   a1,a1,#48
-        BEQ     |__sigsetjmp_l1|
-        STFE    f4,[a1],#12
-        STFE    f5,[a1],#12
-        STFE    f6,[a1],#12
-        STFE    f7,[a1],#12
-|__sigsetjmp_l1|*/
-	add	r0, r0, #48
-        stmia	r0, {r1-r12, r13, r14}
-        mov	r0, #0x00000000
-        mov	r15, r14
+	teq	r1, #0
+	beq	__setjmp
+	b	_setjmp
+
+L_setjmp_magic:
+	.word	JMPBUF_MAGIC__SETJMP
 
 ENTRY(siglongjmp)
-	ldr	r2, L_siglongjmpret
-	str	r1, [r2]
-/*        LDR     a4,[pc,#|__fpflag_ptr|-.-8]
-        LDR     a4,[a4,#0]
-        CMP     a4,#0
-        ADDEQ   a1,a1,#48
-        BEQ     |__siglongjmp_l1|
-        LDFE    f4,[a1],#12
-        LDFE    f5,[a1],#12
-        LDFE    f6,[a1],#12
-        LDFE    f7,[a1],#12
-|__siglongjmp_l1|*/
-	add	r0, r0, #48
-        ldmia	r0, {r1-r12, r13, r14}
-	ldr	r0, L_siglongjmpret
-	ldr	r0, [r0]
-	teq	r0, #0x00000000
-	moveq	r0, #0x00000001
-	mov	r15, r14
-
-L_siglongjmpret:
-	.word	_siglongjmpret
-
-	.data
-	.align	0
-
-_siglongjmpret:
-	.word	0x00000000
+	ldr	r2, L_setjmp_magic
+	ldr	r3, [r0]
+	teq	r2, r3
+	beq	__longjmp
+	b	_longjmp
