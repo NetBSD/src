@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.256 2000/07/02 16:40:14 assar Exp $
+# $NetBSD: mi,v 1.257 2000/07/06 11:24:03 ad Exp $
 ./usr/share/info/am-utils.info
 ./usr/share/info/as.info
 ./usr/share/info/awk.info
@@ -1702,6 +1702,7 @@
 ./usr/share/man/man5/newsyslog.conf.5
 ./usr/share/man/man5/nsswitch.conf.5
 ./usr/share/man/man5/passwd.5
+./usr/share/man/man5/passwd.conf.5
 ./usr/share/man/man5/phones.5
 ./usr/share/man/man5/pim6dd.conf.5
 ./usr/share/man/man5/pim6sd.conf.5
