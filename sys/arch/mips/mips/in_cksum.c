@@ -1,4 +1,4 @@
-/*	$NetBSD: in_cksum.c,v 1.3 1997/08/12 06:05:28 jonathan Exp $	*/
+/*	$NetBSD: in_cksum.c,v 1.3.4.1 1998/02/07 09:44:04 mellon Exp $	*/
  
 /*
  * Copyright (c) 1993 Regents of the University of California.
@@ -46,6 +46,7 @@
 #include <sys/mbuf.h>
 #include <sys/cdefs.h>
 #include <netinet/in.h>
+#include <machine/endian.h>
 
 union memptr {
 	unsigned int *i;
@@ -91,7 +92,11 @@ fastsum(buf, n, oldsum, odd_aligned)
 		 *'buf' before accumulating it.
 		 */
 		if (buf.u & 0x1) {
+#if BYTE_ORDER == BIG_ENDIAN
+			sum += *(buf.c++);
+#else
 			sum += (*(buf.c++) << 8);
+#endif
 			n -= 1;
 			odd_aligned = !odd_aligned;
 		}
@@ -203,7 +208,11 @@ fastsum(buf, n, oldsum, odd_aligned)
 	
 	/* handle trailing byte */
 	if (n > 0)
+#if BYTE_ORDER == BIG_ENDIAN
+		sum += *buf.c << 8;
+#else
 		sum += *buf.c;
+#endif
 
 	/*
 	 * compensate for a trailing byte in previous mbuf
