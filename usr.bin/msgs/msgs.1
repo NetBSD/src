@@ -30,7 +30,7 @@
 .\" SUCH DAMAGE.
 .\"
 .\"	from: @(#)msgs.1	6.9 (Berkeley) 7/30/91
-.\"	$Id: msgs.1,v 1.2 1993/08/01 07:30:31 mycroft Exp $
+.\"	$Id: msgs.1,v 1.3 1993/08/17 20:02:27 jtc Exp $
 .\"
 .Dd July 30, 1991
 .Dt MSGS 1
@@ -124,7 +124,7 @@ The
 .Fl s
 option is used for setting up the posting of messages.  The line
 .Pp
-.Dl msgs: \&"\&| /usr/ucb/msgs \-s\&"
+.Dl msgs: \&"\&| /usr/bin/msgs \-s\&"
 .Pp
 should be included in
 .Pa /etc/aliases
@@ -197,8 +197,8 @@ and
 environment variables for the default home directory and
 terminal type.
 .Sh FILES
-.Bl -tag -width /usr/msgs/* -compact
-.It Pa /usr/msgs/*
+.Bl -tag -width /var/msgs/* -compact
+.It Pa /var/msgs/*
 database
 .It ~/.msgsrc
 number of next message to be presented
