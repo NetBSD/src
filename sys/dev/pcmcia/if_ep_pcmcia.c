@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ep_pcmcia.c,v 1.35 2001/11/13 07:26:33 lukem Exp $	*/
+/*	$NetBSD: if_ep_pcmcia.c,v 1.36 2001/12/24 09:30:40 christos Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ep_pcmcia.c,v 1.35 2001/11/13 07:26:33 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ep_pcmcia.c,v 1.36 2001/12/24 09:30:40 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -182,18 +182,19 @@ ep_pcmcia_enable(sc)
 	struct pcmcia_function *pf = psc->sc_pf;
 	int error;
 
+	if ((error = ep_pcmcia_enable1(sc)) != 0)
+		return error;
+
 	/* establish the interrupt. */
 	sc->sc_ih = pcmcia_intr_establish(pf, IPL_NET, epintr, sc);
 	if (sc->sc_ih == NULL) {
 		printf("%s: couldn't establish interrupt\n",
 		    sc->sc_dev.dv_xname);
+		ep_pcmcia_disable1(sc);
 		return (1);
 	}
 
-	error = ep_pcmcia_enable1(sc);
-	if (error != 0)
-		pcmcia_intr_disestablish(psc->sc_pf, sc->sc_ih);
-	return (error);
+	return 0;
 }
 
 int
