@@ -1,4 +1,4 @@
-# $NetBSD: md.evbsh3,v 1.18 2002/09/07 12:48:52 gehenna Exp $
+# $NetBSD: md.evbsh3,v 1.19 2003/01/18 17:50:24 thorpej Exp $
 ./usr/include/evbsh3	comp-c-include
 ./usr/include/evbsh3/ansi.h	comp-c-include
 ./usr/include/evbsh3/aout_machdep.h	comp-c-include
@@ -27,6 +27,7 @@
 ./usr/include/evbsh3/limits.h	comp-c-include
 ./usr/include/evbsh3/lock.h	comp-c-include
 ./usr/include/evbsh3/math.h	comp-c-include
+./usr/include/evbsh3/mcontext.h	comp-c-include
 ./usr/include/evbsh3/param.h	comp-c-include
 ./usr/include/evbsh3/pcb.h	comp-c-include
 ./usr/include/evbsh3/pmap.h	comp-c-include

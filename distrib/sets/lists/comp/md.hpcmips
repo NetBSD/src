@@ -1,4 +1,4 @@
-# $NetBSD: md.hpcmips,v 1.16 2002/10/14 02:11:09 takemura Exp $
+# $NetBSD: md.hpcmips,v 1.17 2003/01/18 17:50:24 thorpej Exp $
 ./usr/include/dev/hpc	comp-c-include
 ./usr/include/dev/hpc/hpcfbio.h	comp-c-include
 ./usr/include/hpcmips	comp-c-include
@@ -35,6 +35,7 @@
 ./usr/include/hpcmips/lock.h	comp-c-include
 ./usr/include/hpcmips/locore.h	comp-c-include
 ./usr/include/hpcmips/math.h	comp-c-include
+./usr/include/hpcmips/mcontext.h	comp-c-include
 ./usr/include/hpcmips/mips_opcode.h	comp-c-include
 ./usr/include/hpcmips/param.h	comp-c-include
 ./usr/include/hpcmips/pcb.h	comp-c-include

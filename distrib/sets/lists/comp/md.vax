@@ -1,4 +1,4 @@
-# $NetBSD: md.vax,v 1.22 2002/08/07 21:21:03 briggs Exp $
+# $NetBSD: md.vax,v 1.23 2003/01/18 17:50:31 thorpej Exp $
 ./usr/include/vax	comp-c-include
 ./usr/include/vax/_G_config.h	comp-c-include
 ./usr/include/vax/ansi.h	comp-c-include
@@ -38,6 +38,7 @@
 ./usr/include/vax/lock.h	comp-c-include
 ./usr/include/vax/macros.h	comp-c-include
 ./usr/include/vax/math.h	comp-c-include
+./usr/include/vax/mcontext.h	comp-c-include
 ./usr/include/vax/mtpr.h	comp-c-include
 ./usr/include/vax/nexus.h	comp-c-include
 ./usr/include/vax/param.h	comp-c-include

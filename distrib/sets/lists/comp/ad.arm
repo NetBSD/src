@@ -1,4 +1,4 @@
-# $NetBSD: ad.arm,v 1.13 2002/10/25 09:19:29 jdolecek Exp $
+# $NetBSD: ad.arm,v 1.14 2003/01/18 17:50:19 thorpej Exp $
 ./usr/include/arm			comp-c-include
 ./usr/include/arm/ansi.h		comp-c-include
 ./usr/include/arm/aout_machdep.h	comp-c-include
@@ -44,6 +44,7 @@
 ./usr/include/arm/limits.h		comp-c-include
 ./usr/include/arm/lock.h		comp-c-include
 ./usr/include/arm/math.h		comp-c-include
+./usr/include/arm/mcontext.h		comp-c-include
 ./usr/include/arm/param.h		comp-c-include
 ./usr/include/arm/pcb.h			comp-c-include
 ./usr/include/arm/pmc.h			comp-c-include

@@ -1,4 +1,4 @@
-# $NetBSD: md.alpha,v 1.40 2002/09/07 12:48:51 gehenna Exp $
+# $NetBSD: md.alpha,v 1.41 2003/01/18 17:50:21 thorpej Exp $
 ./usr/include/alpha	comp-c-include
 ./usr/include/alpha/_G_config.h	comp-c-include
 ./usr/include/alpha/alpha_cpu.h	comp-c-include
@@ -36,6 +36,7 @@
 ./usr/include/alpha/limits.h	comp-c-include
 ./usr/include/alpha/lock.h	comp-c-include
 ./usr/include/alpha/math.h	comp-c-include
+./usr/include/alpha/mcontext.h	comp-c-include
 ./usr/include/alpha/pal.h	comp-c-include
 ./usr/include/alpha/param.h	comp-c-include
 ./usr/include/alpha/pcb.h	comp-c-include

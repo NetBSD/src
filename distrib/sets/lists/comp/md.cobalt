@@ -1,4 +1,4 @@
-# $NetBSD: md.cobalt,v 1.12 2002/09/07 12:48:52 gehenna Exp $
+# $NetBSD: md.cobalt,v 1.13 2003/01/18 17:50:22 thorpej Exp $
 ./usr/include/cobalt			comp-c-include
 ./usr/include/cobalt/_G_config.h	comp-c-include
 ./usr/include/cobalt/ansi.h		comp-c-include
@@ -31,6 +31,7 @@
 ./usr/include/cobalt/lock.h		comp-c-include
 ./usr/include/cobalt/locore.h		comp-c-include
 ./usr/include/cobalt/math.h		comp-c-include
+./usr/include/cobalt/mcontext.h		comp-c-include
 ./usr/include/cobalt/mips_opcode.h	comp-c-include
 ./usr/include/cobalt/nvram.h		comp-c-include
 ./usr/include/cobalt/param.h		comp-c-include
