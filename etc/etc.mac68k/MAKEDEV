@@ -20,7 +20,7 @@
 # MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE.
 #
 #	from: @(#)MAKEDEV	5.2 (Berkeley) 6/22/90
-#	$Id: MAKEDEV,v 1.8 1994/08/04 21:48:17 briggs Exp $
+#	$Id: MAKEDEV,v 1.9 1994/10/31 23:31:06 briggs Exp $
 #
 # Device "make" file.  Valid arguments:
 #	std	standard devices
@@ -47,9 +47,10 @@
 #
 # Special purpose devices:
 #	bpf*	packet filter
+#	lkm	Device to for loadable kernel modules
 #
 
-PATH=/sbin:/bin/:/usr/bin
+PATH=/sbin:/bin/:/usr/bin:/usr/sbin
 umask 77
 for i
 do
