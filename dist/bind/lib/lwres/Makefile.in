@@ -13,7 +13,7 @@
 # OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 # PERFORMANCE OF THIS SOFTWARE.
 
-# Id: Makefile.in,v 1.25.12.4 2004/03/08 09:05:09 marka Exp
+# Id: Makefile.in,v 1.25.12.6 2004/08/28 06:25:23 marka Exp
 
 srcdir =	@srcdir@
 VPATH =		@srcdir@
@@ -35,14 +35,14 @@ OBJS =		context.@O@ gai_strerror.@O@ getaddrinfo.@O@ gethost.@O@ \
 		getipnode.@O@ getnameinfo.@O@ getrrset.@O@ herror.@O@ \
 		lwbuffer.@O@ lwconfig.@O@ lwpacket.@O@ lwresutil.@O@ \
 		lwres_gabn.@O@ lwres_gnba.@O@ lwres_grbn.@O@ lwres_noop.@O@ \
-		lwinetaton.@O@ lwinetpton.@O@ lwinetntop.@O@
+		lwinetaton.@O@ lwinetpton.@O@ lwinetntop.@O@ print.@O@
 
 # Alphabetically
 SRCS =		context.c gai_strerror.c getaddrinfo.c gethost.c \
 		getipnode.c getnameinfo.c getrrset.c herror.c \
 		lwbuffer.c lwconfig.c lwpacket.c lwresutil.c \
 		lwres_gabn.c lwres_gnba.c lwres_grbn.c lwres_noop.c \
-		lwinetaton.c lwinetpton.c lwinetntop.c
+		lwinetaton.c lwinetpton.c lwinetntop.c print.c
 
 LIBS =		@LIBS@
 
@@ -65,7 +65,7 @@ liblwres.@SA@: ${OBJS} version.@O@
 
 liblwres.la: ${OBJS} version.@O@
 	${LIBTOOL_MODE_LINK} \
-		${CC} ${ALL_CFLAGS} -o liblwres.la -rpath ${libdir} \
+		${CC} ${ALL_CFLAGS} ${LDFLAGS} -o liblwres.la -rpath ${libdir} \
 		-version-info ${LIBINTERFACE}:${LIBREVISION}:${LIBAGE} \
 		${OBJS} version.@O@ ${LIBS}
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: shutdown_test.c,v 1.1.1.1 2004/05/17 23:43:27 christos Exp $	*/
+/*	$NetBSD: shutdown_test.c,v 1.1.1.2 2004/11/06 23:53:39 christos Exp $	*/
 
 /*
  * Copyright (C) 2004  Internet Systems Consortium, Inc. ("ISC")
@@ -17,7 +17,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: shutdown_test.c,v 1.18.12.4 2004/03/08 04:04:27 marka Exp */
+/* Id: shutdown_test.c,v 1.18.12.5 2004/08/28 06:25:31 marka Exp */
 
 #include <config.h>
 
@@ -26,6 +26,7 @@
 
 #include <isc/app.h>
 #include <isc/mem.h>
+#include <isc/print.h>
 #include <isc/task.h>
 #include <isc/time.h>
 #include <isc/timer.h>

@@ -1,4 +1,4 @@
-/*	$NetBSD: byaddr.c,v 1.1.1.1 2004/05/17 23:44:48 christos Exp $	*/
+/*	$NetBSD: byaddr.c,v 1.1.1.2 2004/11/06 23:55:34 christos Exp $	*/
 
 /*
  * Copyright (C) 2004  Internet Systems Consortium, Inc. ("ISC")
@@ -17,12 +17,13 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: byaddr.c,v 1.29.2.1.2.7 2004/03/09 05:21:08 marka Exp */
+/* Id: byaddr.c,v 1.29.2.1.2.8 2004/08/28 06:25:18 marka Exp */
 
 #include <config.h>
 
 #include <isc/mem.h>
 #include <isc/netaddr.h>
+#include <isc/print.h>
 #include <isc/string.h>		/* Required for HP/UX (and others?) */
 #include <isc/task.h>
 #include <isc/util.h>

@@ -13,7 +13,7 @@
 # OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 # PERFORMANCE OF THIS SOFTWARE.
 
-# Id: Makefile.in,v 1.30.12.6 2004/03/08 04:04:29 marka Exp
+# Id: Makefile.in,v 1.30.12.7 2004/07/20 07:01:51 marka Exp
 
 srcdir =	@srcdir@
 VPATH =		@srcdir@
@@ -45,10 +45,10 @@ SRCS =		dst_test.c t_dst.c
 @BIND9_MAKE_RULES@
 
 dst_test@EXEEXT@: dst_test.@O@ ${DEPLIBS}
-	${LIBTOOL_MODE_LINK} ${PURIFY} ${CC} ${CFLAGS} -o $@ dst_test.@O@ ${LIBS}
+	${LIBTOOL_MODE_LINK} ${PURIFY} ${CC} ${CFLAGS} ${LDFLAGS} -o $@ dst_test.@O@ ${LIBS}
 
 t_dst@EXEEXT@: t_dst.@O@ ${DEPLIBS} ${TLIB}
-	${LIBTOOL_MODE_LINK} ${PURIFY} ${CC} ${CFLAGS} -o $@ t_dst.@O@  ${TLIB} ${LIBS}
+	${LIBTOOL_MODE_LINK} ${PURIFY} ${CC} ${CFLAGS} ${LDFLAGS} -o $@ t_dst.@O@  ${TLIB} ${LIBS}
 
 test: t_dst@EXEEXT@
 	../genrandom@EXEEXT@ 100 randomfile

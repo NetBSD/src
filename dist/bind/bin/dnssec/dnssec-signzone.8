@@ -1,4 +1,4 @@
-.\"	$NetBSD: dnssec-signzone.8,v 1.1.1.1 2004/05/17 23:43:20 christos Exp $
+.\"	$NetBSD: dnssec-signzone.8,v 1.1.1.2 2004/11/06 23:53:32 christos Exp $
 .\"
 .\" Copyright (C) 2004  Internet Systems Consortium, Inc. ("ISC")
 .\" Copyright (C) 2000-2003  Internet Software Consortium.
@@ -15,7 +15,7 @@
 .\" OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 .\" PERFORMANCE OF THIS SOFTWARE.
 .\"
-.\" Id: dnssec-signzone.8,v 1.23.2.1.4.4 2004/03/15 01:02:42 marka Exp
+.\" Id: dnssec-signzone.8,v 1.23.2.1.4.6 2004/06/11 02:32:46 marka Exp
 .\"
 .TH "DNSSEC-SIGNZONE" "8" "June 30, 2000" "BIND9" ""
 .SH NAME
@@ -25,14 +25,12 @@ dnssec-signzone \- DNSSEC zone signing tool
 \fBdnssec-signzone\fR [ \fB-a\fR ]  [ \fB-c \fIclass\fB\fR ]  [ \fB-d \fIdirectory\fB\fR ]  [ \fB-e \fIend-time\fB\fR ]  [ \fB-f \fIoutput-file\fB\fR ]  [ \fB-g\fR ]  [ \fB-h\fR ]  [ \fB-k \fIkey\fB\fR ]  [ \fB-l \fIdomain\fB\fR ]  [ \fB-i \fIinterval\fB\fR ]  [ \fB-n \fInthreads\fB\fR ]  [ \fB-o \fIorigin\fB\fR ]  [ \fB-p\fR ]  [ \fB-r \fIrandomdev\fB\fR ]  [ \fB-s \fIstart-time\fB\fR ]  [ \fB-t\fR ]  [ \fB-v \fIlevel\fB\fR ]  [ \fB-z\fR ]  \fBzonefile\fR [ \fBkey\fR\fI...\fR ] 
 .SH "DESCRIPTION"
 .PP
-\fBdnssec-signzone\fR signs a zone. It generates NSEC
-and RRSIG records and produces a signed version of the zone. If there
-is a \fIsignedkey\fR file from the zone's parent,
-the parent's signatures will be incorporated into the generated
-signed zone file. The security status of delegations from the
-signed zone (that is, whether the child zones are secure or not) is
+\fBdnssec-signzone\fR signs a zone. It generates
+NSEC and RRSIG records and produces a signed version of the
+zone. The security status of delegations from the signed zone
+(that is, whether the child zones are secure or not) is
 determined by the presence or absence of a
-\fIsignedkey\fR file for each child zone.
+\fIkeyset\fR file for each child zone.
 .SH "OPTIONS"
 .TP
 \fB-a\fR
@@ -50,7 +48,7 @@ Generate a DLV set in addition to the key (DNSKEY) and DS sets.
 The domain is appended to the name of the records.
 .TP
 \fB-d \fIdirectory\fB\fR
-Look for \fIsignedkey\fR files in
+Look for \fIkeyset\fR files in
 \fBdirectory\fR as the directory 
 .TP
 \fB-g\fR
@@ -148,8 +146,8 @@ current directory.
 The following command signs the \fBexample.com\fR
 zone with the DSA key generated in the \fBdnssec-keygen\fR
 man page. The zone's keys must be in the zone. If there are
-\fIsignedkey\fR files associated with this zone
-or any child zones, they must be in the current directory.
+\fIkeyset\fR files associated with child zones,
+they must be in the current directory.
 \fBexample.com\fR, the following command would be
 issued:
 .PP
@@ -164,9 +162,8 @@ should be referenced in a zone statement in a
 .SH "SEE ALSO"
 .PP
 \fBdnssec-keygen\fR(8),
-\fBdnssec-signkey\fR(8),
 \fIBIND 9 Administrator Reference Manual\fR,
 \fIRFC 2535\fR.
 .SH "AUTHOR"
 .PP
-Internet Software Consortium
+Internet Systems Consortium

@@ -1,11 +1,11 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
 <HTML
 ><HEAD
 ><TITLE
 >Introduction </TITLE
 ><META
 NAME="GENERATOR"
-CONTENT="Modular DocBook HTML Stylesheet Version 1.73
-"><LINK
+CONTENT="Modular DocBook HTML Stylesheet Version 1.7"><LINK
 REL="HOME"
 TITLE="BIND 9 Administrator Reference Manual"
 HREF="Bv9ARM.html"><LINK
@@ -70,8 +70,8 @@ CLASS="chapter"
 ><H1
 ><A
 NAME="ch01"
->Chapter 1. Introduction </A
-></H1
+></A
+>Chapter 1. Introduction </H1
 ><DIV
 CLASS="TOC"
 ><DL
@@ -97,24 +97,24 @@ HREF="Bv9ARM.ch01.html#AEN42"
 ><DT
 >1.4. <A
 HREF="Bv9ARM.ch01.html#AEN107"
->The Domain Name System (<SPAN
+>The Domain Name System (<ACRONYM
 CLASS="acronym"
->DNS</SPAN
+>DNS</ACRONYM
 >)</A
 ></DT
 ></DL
 ></DIV
 ><P
->The Internet Domain Name System (<SPAN
+>The Internet Domain Name System (<ACRONYM
 CLASS="acronym"
->DNS</SPAN
+>DNS</ACRONYM
 >) consists of the syntax
   to specify the names of entities in the Internet in a hierarchical
   manner, the rules used for delegating authority over names, and the
   system implementation that actually maps names to Internet
-  addresses.  <SPAN
+  addresses.  <ACRONYM
 CLASS="acronym"
->DNS</SPAN
+>DNS</ACRONYM
 > data is maintained in a group of distributed
   hierarchical databases.</P
 ><DIV
@@ -126,19 +126,19 @@ NAME="AEN15"
 >1.1. Scope of Document</A
 ></H1
 ><P
->The Berkeley Internet Name Domain (<SPAN
+>The Berkeley Internet Name Domain (<ACRONYM
 CLASS="acronym"
->BIND</SPAN
+>BIND</ACRONYM
 >) implements an
     domain name server for a number of operating systems. This
     document provides basic information about the installation and
-    care of the Internet Software Consortium (<SPAN
+    care of the Internet Software Consortium (<ACRONYM
 CLASS="acronym"
->ISC</SPAN
+>ISC</ACRONYM
 >)
-    <SPAN
+    <ACRONYM
 CLASS="acronym"
->BIND</SPAN
+>BIND</ACRONYM
 > version 9 software package for system
     administrators.</P
 ><P
@@ -160,12 +160,12 @@ CLASS="emphasis"
 >Section 1</I
 ></SPAN
 > introduces
-    the basic <SPAN
+    the basic <ACRONYM
 CLASS="acronym"
->DNS</SPAN
-> and <SPAN
+>DNS</ACRONYM
+> and <ACRONYM
 CLASS="acronym"
->BIND</SPAN
+>BIND</ACRONYM
 > concepts. <SPAN
 CLASS="emphasis"
 ><I
@@ -173,9 +173,9 @@ CLASS="emphasis"
 >Section 2</I
 ></SPAN
 >
-    describes resource requirements for running <SPAN
+    describes resource requirements for running <ACRONYM
 CLASS="acronym"
->BIND</SPAN
+>BIND</ACRONYM
 > in various
     environments. Information in <SPAN
 CLASS="emphasis"
@@ -192,9 +192,9 @@ CLASS="emphasis"
 ></SPAN
 > in its presentation and is
     organized functionally, to aid in the process of installing the
-    <SPAN
+    <ACRONYM
 CLASS="acronym"
->BIND</SPAN
+>BIND</ACRONYM
 > 9 software. The task-oriented section is followed by
     <SPAN
 CLASS="emphasis"
@@ -211,9 +211,9 @@ CLASS="emphasis"
 >Section 5</I
 ></SPAN
 >
-    describes the <SPAN
+    describes the <ACRONYM
 CLASS="acronym"
->BIND</SPAN
+>BIND</ACRONYM
 > 9 lightweight
     resolver.  The contents of <SPAN
 CLASS="emphasis"
@@ -253,9 +253,9 @@ CLASS="emphasis"
 >Bibliography</I
 ></SPAN
 > and
-    historic information related to <SPAN
+    historic information related to <ACRONYM
 CLASS="acronym"
->BIND</SPAN
+>BIND</ACRONYM
 > and the Domain Name
     System.</P
 ></DIV
@@ -272,11 +272,11 @@ NAME="AEN42"
     conventions:</P
 ><DIV
 CLASS="informaltable"
+><P
+></P
 ><A
 NAME="AEN45"
 ></A
-><P
-></P
 ><TABLE
 CELLPADDING="3"
 BORDER="1"
@@ -284,9 +284,6 @@ CLASS="CALSTABLE"
 ><TBODY
 ><TR
 ><TD
-WIDTH="288"
-ALIGN="LEFT"
-VALIGN="MIDDLE"
 >&#13;<P
 ><SPAN
 CLASS="emphasis"
@@ -298,9 +295,6 @@ describe:</I
 ></P
 ></TD
 ><TD
-WIDTH="252"
-ALIGN="LEFT"
-VALIGN="MIDDLE"
 >&#13;<P
 ><SPAN
 CLASS="emphasis"
@@ -313,17 +307,11 @@ CLASS="emphasis"
 ></TR
 ><TR
 ><TD
-WIDTH="288"
-ALIGN="LEFT"
-VALIGN="MIDDLE"
 >&#13;<P
 >a pathname, filename, URL, hostname,
 mailing list name, or new term or concept</P
 ></TD
 ><TD
-WIDTH="252"
-ALIGN="LEFT"
-VALIGN="MIDDLE"
 ><P
 ><TT
 CLASS="filename"
@@ -333,42 +321,28 @@ CLASS="filename"
 ></TR
 ><TR
 ><TD
-WIDTH="288"
-ALIGN="LEFT"
-VALIGN="MIDDLE"
 ><P
 >literal user
 input</P
 ></TD
 ><TD
-WIDTH="252"
-ALIGN="LEFT"
-VALIGN="MIDDLE"
 ><P
-><TT
+><KBD
 CLASS="userinput"
-><B
->Fixed Width Bold</B
-></TT
+>Fixed Width Bold</KBD
 ></P
 ></TD
 ></TR
 ><TR
 ><TD
-WIDTH="288"
-ALIGN="LEFT"
-VALIGN="MIDDLE"
 ><P
 >program output</P
 ></TD
 ><TD
-WIDTH="252"
-ALIGN="LEFT"
-VALIGN="MIDDLE"
 ><P
-><TT
+><SAMP
 CLASS="computeroutput"
->Fixed Width</TT
+>Fixed Width</SAMP
 ></P
 ></TD
 ></TR
@@ -379,16 +353,16 @@ CLASS="computeroutput"
 ></DIV
 ><P
 >The following conventions are used in descriptions of the
-<SPAN
+<ACRONYM
 CLASS="acronym"
->BIND</SPAN
+>BIND</ACRONYM
 > configuration file:<DIV
 CLASS="informaltable"
+><P
+></P
 ><A
 NAME="AEN77"
 ></A
-><P
-></P
 ><TABLE
 CELLPADDING="3"
 BORDER="1"
@@ -396,9 +370,6 @@ CLASS="CALSTABLE"
 ><TBODY
 ><TR
 ><TD
-WIDTH="288"
-ALIGN="LEFT"
-VALIGN="MIDDLE"
 ><P
 ><SPAN
 CLASS="emphasis"
@@ -410,9 +381,6 @@ describe:</I
 ></P
 ></TD
 ><TD
-WIDTH="252"
-ALIGN="LEFT"
-VALIGN="MIDDLE"
 ><P
 ><SPAN
 CLASS="emphasis"
@@ -425,54 +393,36 @@ CLASS="emphasis"
 ></TR
 ><TR
 ><TD
-WIDTH="288"
-ALIGN="LEFT"
-VALIGN="MIDDLE"
 ><P
 >keywords</P
 ></TD
 ><TD
-WIDTH="252"
-ALIGN="LEFT"
-VALIGN="MIDDLE"
 ><P
-><TT
+><VAR
 CLASS="literal"
->Fixed Width</TT
+>Fixed Width</VAR
 ></P
 ></TD
 ></TR
 ><TR
 ><TD
-WIDTH="288"
-ALIGN="LEFT"
-VALIGN="MIDDLE"
 ><P
 >variables</P
 ></TD
 ><TD
-WIDTH="252"
-ALIGN="LEFT"
-VALIGN="MIDDLE"
 ><P
-><TT
+><VAR
 CLASS="varname"
->Fixed Width</TT
+>Fixed Width</VAR
 ></P
 ></TD
 ></TR
 ><TR
 ><TD
-WIDTH="288"
-ALIGN="LEFT"
-VALIGN="MIDDLE"
 ><P
 >Optional input</P
 ></TD
 ><TD
-WIDTH="252"
-ALIGN="LEFT"
-VALIGN="MIDDLE"
 ><P
 >[<SPAN
 CLASS="optional"
@@ -493,24 +443,24 @@ CLASS="sect1"
 CLASS="sect1"
 ><A
 NAME="AEN107"
->1.4. The Domain Name System (<SPAN
+>1.4. The Domain Name System (<ACRONYM
 CLASS="acronym"
->DNS</SPAN
+>DNS</ACRONYM
 >)</A
 ></H1
 ><P
 >The purpose of this document is to explain the installation
-and upkeep of the <SPAN
+and upkeep of the <ACRONYM
 CLASS="acronym"
->BIND</SPAN
+>BIND</ACRONYM
 > software package, and we
 begin by reviewing the fundamentals of the Domain Name System
-(<SPAN
+(<ACRONYM
 CLASS="acronym"
->DNS</SPAN
->) as they relate to <SPAN
+>DNS</ACRONYM
+>) as they relate to <ACRONYM
 CLASS="acronym"
->BIND</SPAN
+>BIND</ACRONYM
 >.
 </P
 ><DIV
@@ -542,9 +492,9 @@ CLASS="emphasis"
 >name servers</I
 ></SPAN
 > and interprets the responses.
-The <SPAN
+The <ACRONYM
 CLASS="acronym"
->BIND</SPAN
+>BIND</ACRONYM
 > 9 software distribution contains a
 name server, <B
 CLASS="command"
@@ -604,30 +554,30 @@ CLASS="emphasis"
 >Example, Inc.</I
 ></SPAN
 > could be
-<TT
+<VAR
 CLASS="literal"
->mail.example.com</TT
+>mail.example.com</VAR
 >,
-where <TT
+where <VAR
 CLASS="literal"
->com</TT
+>com</VAR
 > is the
 top level domain to which
-<TT
+<VAR
 CLASS="literal"
->ourhost.example.com</TT
+>ourhost.example.com</VAR
 > belongs,
-<TT
+<VAR
 CLASS="literal"
->example</TT
+>example</VAR
 > is
-a subdomain of <TT
+a subdomain of <VAR
 CLASS="literal"
->com</TT
+>com</VAR
 >, and
-<TT
+<VAR
 CLASS="literal"
->ourhost</TT
+>ourhost</VAR
 > is the
 name of the host.</P
 ><P
@@ -664,9 +614,9 @@ CLASS="emphasis"
 CLASS="emphasis"
 >resource records</I
 ></SPAN
-> (<SPAN
+> (<ACRONYM
 CLASS="acronym"
->RR</SPAN
+>RR</ACRONYM
 >s).
 Some of the supported resource record types are described in
 <A
@@ -707,9 +657,9 @@ CLASS="emphasis"
 >.</P
 ><P
 >As we stated previously, a zone is a point of delegation in
-the <SPAN
+the <ACRONYM
 CLASS="acronym"
->DNS</SPAN
+>DNS</ACRONYM
 > tree. A zone consists of
 those contiguous parts of the domain
 tree for which a name server has complete information and over which
@@ -726,36 +676,36 @@ CLASS="emphasis"
 parent zone, which should be matched by equivalent NS records at
 the root of the delegated zone.</P
 ><P
->For instance, consider the <TT
+>For instance, consider the <VAR
 CLASS="literal"
->example.com</TT
+>example.com</VAR
 >
 domain which includes names
-such as <TT
+such as <VAR
 CLASS="literal"
->host.aaa.example.com</TT
+>host.aaa.example.com</VAR
 > and
-<TT
+<VAR
 CLASS="literal"
->host.bbb.example.com</TT
+>host.bbb.example.com</VAR
 > even though
-the <TT
+the <VAR
 CLASS="literal"
->example.com</TT
+>example.com</VAR
 > zone includes
-only delegations for the <TT
+only delegations for the <VAR
 CLASS="literal"
->aaa.example.com</TT
+>aaa.example.com</VAR
 > and
-<TT
+<VAR
 CLASS="literal"
->bbb.example.com</TT
+>bbb.example.com</VAR
 > zones.  A zone can map
 exactly to a single domain, but could also include only part of a
 domain, the rest of which could be delegated to other
-name servers. Every name in the <SPAN
+name servers. Every name in the <ACRONYM
 CLASS="acronym"
->DNS</SPAN
+>DNS</ACRONYM
 > tree is a
 <SPAN
 CLASS="emphasis"
@@ -783,9 +733,9 @@ not intuitive and we suggest that you read RFCs 1033, 1034 and 1035 to
 gain a complete understanding of this difficult and subtle
 topic.</P
 ><P
->Though <SPAN
+>Though <ACRONYM
 CLASS="acronym"
->BIND</SPAN
+>BIND</ACRONYM
 > is called a "domain name server",
 it deals primarily in terms of zones. The master and slave
 declarations in the <TT
@@ -1056,14 +1006,14 @@ and they are queried in turn until the list is exhausted or an answer
 is found. Forwarders are typically used when you do not
 wish all the servers at a given site to interact directly with the rest of
 the Internet servers. A typical scenario would involve a number
-of internal <SPAN
+of internal <ACRONYM
 CLASS="acronym"
->DNS</SPAN
+>DNS</ACRONYM
 > servers and an Internet firewall. Servers unable
 to pass packets through the firewall would forward to the server
-that can do it, and that server would query the Internet <SPAN
+that can do it, and that server would query the Internet <ACRONYM
 CLASS="acronym"
->DNS</SPAN
+>DNS</ACRONYM
 > servers
 on the internal server's behalf. An added benefit of using the forwarding
 feature is that the central machine develops a much more complete
@@ -1080,9 +1030,9 @@ NAME="AEN218"
 >1.4.6. Name Servers in Multiple Roles</A
 ></H2
 ><P
->The <SPAN
+>The <ACRONYM
 CLASS="acronym"
->BIND</SPAN
+>BIND</ACRONYM
 > name server can simultaneously act as
 a master for some zones, a slave for other zones, and as a caching
 (recursive) server for a set of local clients.</P
@@ -1169,9 +1119,9 @@ VALIGN="top"
 WIDTH="33%"
 ALIGN="right"
 VALIGN="top"
-><SPAN
+><ACRONYM
 CLASS="acronym"
->BIND</SPAN
+>BIND</ACRONYM
 > Resource Requirements</TD
 ></TR
 ></TABLE

@@ -1,4 +1,4 @@
-/*	$NetBSD: client.h,v 1.1.1.1 2004/05/17 23:43:24 christos Exp $	*/
+/*	$NetBSD: client.h,v 1.1.1.2 2004/11/06 23:53:37 christos Exp $	*/
 
 /*
  * Copyright (C) 2004  Internet Systems Consortium, Inc. ("ISC")
@@ -17,7 +17,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: client.h,v 1.60.2.2.10.7 2004/03/08 04:04:20 marka Exp */
+/* Id: client.h,v 1.60.2.2.10.8 2004/07/23 02:56:52 marka Exp */
 
 #ifndef NAMED_CLIENT_H
 #define NAMED_CLIENT_H 1
@@ -96,6 +96,7 @@ struct ns_client {
 	int			nreads;
 	int			nsends;
 	int			nrecvs;
+	int			nupdates;
 	int			nctls;
 	int			references;
 	unsigned int		attributes;

@@ -1,4 +1,4 @@
-/*	$NetBSD: gethostent_r.c,v 1.1.1.1 2004/05/17 23:44:42 christos Exp $	*/
+/*	$NetBSD: gethostent_r.c,v 1.1.1.2 2004/11/06 23:55:26 christos Exp $	*/
 
 /*
  * Copyright (c) 2004 by Internet Systems Consortium, Inc. ("ISC")
@@ -18,7 +18,7 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static const char rcsid[] = "Id: gethostent_r.c,v 1.4.206.2 2004/04/22 03:32:06 marka Exp";
+static const char rcsid[] = "Id: gethostent_r.c,v 1.4.206.3 2004/09/01 02:03:07 marka Exp";
 #endif /* LIBC_SCCS and not lint */
 
 #include <port_before.h>
@@ -49,7 +49,7 @@ gethostbyname_r(const char *name,  struct hostent *hptr, HOST_R_ARGS) {
 	HOST_R_ERRNO;
 
 #ifdef HOST_R_SETANSWER
-	if (he == NULL || (n = copy_hostent(he, hptr, HOST_R_COPY)) == 0)
+	if (he == NULL || (n = copy_hostent(he, hptr, HOST_R_COPY)) != 0)
 		*answerp = NULL;
 	else
 		*answerp = hptr;
@@ -74,7 +74,7 @@ gethostbyaddr_r(const char *addr, int len, int type,
 	HOST_R_ERRNO;
 
 #ifdef HOST_R_SETANSWER
-	if (he == NULL || (n = copy_hostent(he, hptr, HOST_R_COPY)) == 0)
+	if (he == NULL || (n = copy_hostent(he, hptr, HOST_R_COPY)) != 0)
 		*answerp = NULL;
 	else
 		*answerp = hptr;
@@ -104,7 +104,7 @@ gethostent_r(struct hostent *hptr, HOST_R_ARGS) {
 	HOST_R_ERRNO;
 
 #ifdef HOST_R_SETANSWER
-	if (he == NULL || (n = copy_hostent(he, hptr, HOST_R_COPY)) == 0)
+	if (he == NULL || (n = copy_hostent(he, hptr, HOST_R_COPY)) != 0)
 		*answerp = NULL;
 	else
 		*answerp = hptr;

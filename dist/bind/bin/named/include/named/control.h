@@ -1,4 +1,4 @@
-/*	$NetBSD: control.h,v 1.1.1.1 2004/05/17 23:43:24 christos Exp $	*/
+/*	$NetBSD: control.h,v 1.1.1.2 2004/11/06 23:53:37 christos Exp $	*/
 
 /*
  * Copyright (C) 2004  Internet Systems Consortium, Inc. ("ISC")
@@ -17,7 +17,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: control.h,v 1.6.2.2.2.6 2004/03/08 04:04:20 marka Exp */
+/* Id: control.h,v 1.6.2.2.2.6.6.1 2004/09/20 01:00:01 marka Exp */
 
 #ifndef NAMED_CONTROL_H
 #define NAMED_CONTROL_H 1
@@ -49,6 +49,7 @@
 #define NS_COMMAND_STATUS	"status"
 #define NS_COMMAND_FREEZE	"freeze"
 #define NS_COMMAND_UNFREEZE	"unfreeze"
+#define NS_COMMAND_THAW		"thaw"
 #define NS_COMMAND_RECURSING	"recursing"
 #define NS_COMMAND_NULL		"null"
 
