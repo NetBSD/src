@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_bootparam.c,v 1.16 2000/10/02 04:27:57 itojun Exp $	*/
+/*	$NetBSD: nfs_bootparam.c,v 1.17 2000/10/03 17:18:15 chs Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1997 The NetBSD Foundation, Inc.
@@ -41,6 +41,7 @@
  */
 
 #include "opt_nfs_boot.h"
+#include "opt_inet.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
