@@ -1,4 +1,4 @@
-#	$NetBSD: files.sparc64,v 1.60 2002/04/16 20:50:23 thorpej Exp $
+#	$NetBSD: files.sparc64,v 1.61 2002/05/05 11:22:19 martin Exp $
 
 # @(#)files.sparc64	8.1 (Berkeley) 7/19/93
 # sparc64-specific configuration info
@@ -102,6 +102,9 @@ file	arch/sparc64/sparc64/bsd_fdintr.s	fdc
 
 attach	audiocs at ebus with audiocs_ebus
 file	dev/ebus/cs4231_ebus.c			audiocs_ebus
+
+# PCMCIA bus (references fdc)
+include "dev/pcmcia/files.pcmcia"
 
 #
 # Console related stuff
