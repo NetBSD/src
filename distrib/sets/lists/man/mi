@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.560 2003/04/17 11:49:35 bjh21 Exp $
+# $NetBSD: mi,v 1.561 2003/04/17 20:48:33 tron Exp $
 ./usr/share/info/am-utils.info			man-amd-info
 ./usr/share/info/as.info			man-computil-info
 ./usr/share/info/awk.info			man-util-info
@@ -3578,6 +3578,7 @@
 ./usr/share/man/man8/wdogctl.8			man-sysutil-man
 ./usr/share/man/man8/wiconfig.8			man-netutil-man
 ./usr/share/man/man8/wire-test.8		man-netutil-man
+./usr/share/man/man8/wizd.8			man-sysutil-man
 ./usr/share/man/man8/wsconscfg.8		man-sysutil-man
 ./usr/share/man/man8/wsconsctl.8		man-sysutil-man
 ./usr/share/man/man8/wsfontload.8		man-sysutil-man
