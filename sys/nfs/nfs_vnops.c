@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_vnops.c,v 1.49 1995/01/10 06:50:07 mycroft Exp $	*/
+/*	$NetBSD: nfs_vnops.c,v 1.50 1995/03/18 05:56:32 gwr Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -912,11 +912,17 @@ nfs_writerpc(vp, uiop, cred, ioflags)
 			txdr_hyper(&uiop->uio_offset, tl);
 			tl += 2;
 			*tl++ = 0;
+			*tl = txdr_unsigned(len);
 		} else {
-			*++tl = txdr_unsigned(uiop->uio_offset);
-			tl += 2;
+			register u_int32_t x;
+			/* Set both "begin" and "current" to non-garbage. */
+			x = txdr_unsigned((u_int32_t)uiop->uio_offset);
+			*tl++ = x;	/* "begin offset" */
+			*tl++ = x;	/* "current offset" */
+			x = txdr_unsigned(len);
+			*tl++ = x;	/* total to this offset */
+			*tl = x;	/* size of this write */
 		}
-		*tl = txdr_unsigned(len);
 		nfsm_uiotom(uiop, len);
 		nfsm_request(vp, NFSPROC_WRITE, uiop->uio_procp, cred);
 		nfsm_loadattr(vp, (struct vattr *)0);
