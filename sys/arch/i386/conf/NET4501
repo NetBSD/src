@@ -1,4 +1,4 @@
-# $NetBSD: NET4501,v 1.23 2003/12/14 09:54:01 dyoung Exp $
+# $NetBSD: NET4501,v 1.24 2004/01/11 12:55:19 cube Exp $
 #
 # NET4501 -- kernel configuration for a Soekris Engineering net4501
 # single-board computer.
@@ -10,7 +10,7 @@ include 	"arch/i386/conf/std.i386"
 
 #options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"NET4501-$Revision: 1.23 $"
+#ident 		"NET4501-$Revision: 1.24 $"
 
 maxusers	32		# estimated number of users
 
@@ -222,6 +222,9 @@ com1	at isa? port 0x2f8 irq 3
 
 # IDE and related devices
 
+# ATA (IDE) bus support
+atabus*	at ata?
+
 # ISA ST506, ESDI, and IDE controllers
 # Use flags 0x01 if you want to try to use 32bits data I/O (the driver will
 # fall back to 16bits I/O if 32bits I/O are not functional).
@@ -239,7 +242,7 @@ wdc0	at isa? port 0x1f0 irq 14 flags 0x00
 # 0x0fac means 'use PIO mode 4, DMA mode 2, disable UltraDMA'.
 # (0xc=1100, 0xa=1010, 0xf=1111)
 # 0x0000 means "use whatever the drive claims to support".
-wd*	at wdc? channel ? drive ? flags 0x0000
+wd*	at atabus? drive ? flags 0x0000
 
 # Network Interfaces
 
