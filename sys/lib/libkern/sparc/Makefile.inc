@@ -1,12 +1,11 @@
-#	$Id: Makefile.inc,v 1.5 1994/01/15 19:48:56 pk Exp $
+#	$Id: Makefile.inc,v 1.6 1994/03/22 19:17:22 deraadt Exp $
 
 SRCS+=  __main.c imax.c imin.c lmax.c lmin.c max.c min.c ulmax.c ulmin.c \
 	bcmp.c bzero.S ffs.S strcat.c strcmp.c strcpy.c strlen.S strncmp.c \
 	strncpy.c htonl.S htons.S ntohl.S ntohs.S scanc.c skpc.c
 
 SRCS+=	umul.S mul.S rem.S sdiv.S udiv.S umul.S urem.S
-SRCS+=	_setjmp.S fabs.S fixunsdfsi.S modf.S mul.S saveregs.S setjmp.S umul.S
-SRCS+=	frexp.c isinf.c isnan.c ldexp.c
+SRCS+=	_setjmp.S mul.S saveregs.S setjmp.S umul.S
 
 # `source' files built from m4 source
 # the name `div.o' is taken for the ANSI C `div' function, hence sdiv here
