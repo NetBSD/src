@@ -1,4 +1,4 @@
-/*	$NetBSD: ofnet.c,v 1.9 1997/04/28 18:32:58 mycroft Exp $	*/
+/*	$NetBSD: ofnet.c,v 1.10 1998/01/12 09:33:33 thorpej Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -81,10 +81,6 @@ static void ofnattach __P((struct device *, struct device *, void *));
 
 struct cfattach ofnet_ca = {
 	sizeof(struct ofn_softc), ofnprobe, ofnattach
-};
-
-struct cfdriver ofnet_cd = {
-	NULL, "ofnet", DV_IFNET
 };
 
 static void ofnread __P((struct ofn_softc *));

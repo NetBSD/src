@@ -1,4 +1,4 @@
-/*	$NetBSD: ofcons.c,v 1.5 1997/04/28 18:33:57 mycroft Exp $	*/
+/*	$NetBSD: ofcons.c,v 1.6 1998/01/12 09:33:32 thorpej Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -61,9 +61,7 @@ struct cfattach ofcons_ca = {
 	sizeof(struct ofc_softc), ofcmatch, ofcattach
 };
 
-struct cfdriver ofcons_cd = {
-	NULL, "ofcons", DV_TTY
-};
+extern struct cfdriver ofcons_cd;
 
 static int ofcprobe __P((void));
 

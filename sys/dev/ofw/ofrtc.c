@@ -1,4 +1,4 @@
-/*	$NetBSD: ofrtc.c,v 1.4 1997/04/16 23:41:53 thorpej Exp $	*/
+/*	$NetBSD: ofrtc.c,v 1.5 1998/01/12 09:33:34 thorpej Exp $	*/
 
 /*
  * Copyright (C) 1996 Wolfgang Solfrank.
@@ -49,9 +49,7 @@ struct cfattach ofrtc_ca = {
 	sizeof(struct ofrtc_softc), ofrtcprobe, ofrtcattach
 };
 
-struct cfdriver ofrtc_cd = {
-	NULL, "ofrtc", DV_DULL
-};
+extern struct cfdriver ofrtc_cd;
 
 static int
 ofrtcprobe(parent, match, aux)
