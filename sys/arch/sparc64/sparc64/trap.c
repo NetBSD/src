@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.70 2001/07/19 23:33:09 eeh Exp $ */
+/*	$NetBSD: trap.c,v 1.71 2001/07/23 17:19:57 eeh Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -110,8 +110,6 @@
 /* trapstats */
 int trapstats = 0;
 int protfix = 0;
-int protmmu = 0;
-int missmmu = 0;
 int udmiss = 0;	/* Number of normal/nucleus data/text miss/protection faults */
 int udhit = 0;	
 int udprot = 0;
@@ -1014,14 +1012,6 @@ data_access_fault(type, addr, pc, tf)
 		       (long)tf->tf_pc, (long)tf->tf_npc);
 		Debugger();
 	}
-	if (protmmu || missmmu) {
-		extern int trap_trace_dis;
-		trap_trace_dis = 1;
-		printf("%ld: data_access_fault(%x, %lx, %lx, %p) %s=%d\n",
-		       (long)(curproc?curproc->p_pid:-1), type, addr, pc, tf, 
-		       (protmmu)?"protmmu":"missmmu", (protmmu)?protmmu:missmmu);
-		Debugger();
-	}
 	write_user_windows();
 	if ((cpcb->pcb_nsaved > 8) ||
 	    (trapdebug&TDB_NSAVED && cpcb->pcb_nsaved) ||
@@ -1242,14 +1232,6 @@ data_access_error(type, sfva, sfsr, afva, afsr, tf)
 	if (tf->tf_pc == tf->tf_npc) {
 		printf("data_access_error: tpc %lx == tnpc %lx\n", 
 		       (long)tf->tf_pc, (long)tf->tf_npc);
-		Debugger();
-	}
-	if (protmmu || missmmu) {
-		extern int trap_trace_dis;
-		trap_trace_dis = 1;
-		printf("%d: data_access_error(%x, %lx, %lx, %p) %s=%d\n",
-		       curproc?curproc->p_pid:-1, type, sfva, afva, tf, 
-		       (protmmu)?"protmmu":"missmmu", (protmmu)?protmmu:missmmu);
 		Debugger();
 	}
 	write_user_windows();
@@ -1494,14 +1476,6 @@ text_access_fault(type, pc, tf)
 		printf("text_access_fault: tpc %p == tnpc %p\n", (void *)(u_long)tf->tf_pc, (void *)(u_long)tf->tf_npc);
 		Debugger();
 	}
-	if (protmmu || missmmu) {
-		extern int trap_trace_dis;
-		trap_trace_dis = 1;
-		printf("%d: text_access_fault(%x, %lx, %p) %s=%d\n",
-		       curproc?curproc->p_pid:-1, type, pc, tf, 
-		       (protmmu)?"protmmu":"missmmu", (protmmu)?protmmu:missmmu);
-		Debugger();
-	}
 	write_user_windows();
 	if (((trapdebug&TDB_NSAVED) && cpcb->pcb_nsaved) || 
 	    (trapdebug&(TDB_TXTFLT|TDB_FOLLOW)))
@@ -1632,14 +1606,6 @@ text_access_error(type, pc, sfsr, afva, afsr, tf)
 	if (tf->tf_pc == tf->tf_npc) {
 		printf("text_access_error: tpc %p == tnpc %p\n",
 		    (void *)(u_long)tf->tf_pc, (void *)(u_long)tf->tf_npc);
-		Debugger();
-	}
-	if (protmmu || missmmu) {
-		extern int trap_trace_dis;
-		trap_trace_dis = 1;
-		printf("%ld: text_access_error(%lx, %lx, %lx, %p) %s=%d\n",
-		       (long)(curproc?curproc->p_pid:-1), (long)type, (long)sfsr, (long)afsr, tf, 
-		       (protmmu)?"protmmu":"missmmu", (protmmu)?protmmu:missmmu);
 		Debugger();
 	}
 	write_user_windows();
