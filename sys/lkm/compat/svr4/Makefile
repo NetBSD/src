@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.4 2000/12/08 20:15:19 jdolecek Exp $
+#	$NetBSD: Makefile,v 1.5 2000/12/09 11:21:41 jdolecek Exp $
 
 .include "../Makefile.inc"
 
@@ -20,7 +20,7 @@ SRCS+=	svr4_errno.c svr4_exec.c svr4_fcntl.c svr4_filio.c svr4_ioctl.c \
 SRCS+=	svr4_machdep.c
 
 .if ${MACHINE} == "i386"
-SRCS+=	svr4_sigcode.s
+SRCS+=	svr4_sigcode.s svr4_syscall.c
 .endif
 
 .include <bsd.kmod.mk>
