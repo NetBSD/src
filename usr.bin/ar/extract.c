@@ -1,4 +1,4 @@
-/*	$NetBSD: extract.c,v 1.5 1995/03/26 03:27:53 glass Exp $	*/
+/*	$NetBSD: extract.c,v 1.6 1997/04/24 06:22:16 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993, 1994
@@ -40,7 +40,7 @@
 #if 0
 static char sccsid[] = "@(#)extract.c	8.3 (Berkeley) 4/2/94";
 #else 
-static char rcsid[] = "$NetBSD: extract.c,v 1.5 1995/03/26 03:27:53 glass Exp $";
+static char rcsid[] = "$NetBSD: extract.c,v 1.6 1997/04/24 06:22:16 mycroft Exp $";
 #endif
 #endif /* not lint */
 
@@ -115,7 +115,7 @@ extract(argv)
 		}
 		if (options & AR_O) {
 			tv[0].tv_sec = tv[1].tv_sec = chdr.date;
-			if (utimes(file, tv)) {
+			if (futimes(tfd, tv)) {
 				warn("utimes: %s", file);
 				eval = 1;
 			}
