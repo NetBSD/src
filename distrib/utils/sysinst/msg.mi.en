@@ -1,4 +1,4 @@
-/*	$NetBSD: msg.mi.en,v 1.64 2000/08/10 17:06:02 hubertf Exp $	*/
+/*	$NetBSD: msg.mi.en,v 1.65 2000/08/15 01:08:00 hubertf Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -748,3 +748,12 @@ of this partition to the new NetBSD-only partition type?}
 message continue
 {Continue?}
 
+message choose_timezone
+{Please choose the timezone that fits you best from the list below.
+Press RETURN to select an entry, press 'x' followed by RETURN to quit
+the timezone selection. 
+
+ Default:	%s 
+ Selected:	%s 
+ Local time: 	%s %s 
+}

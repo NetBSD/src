@@ -1,4 +1,4 @@
-/*	$NetBSD: util.c,v 1.51 2000/06/18 13:40:41 hubertf Exp $	*/
+/*	$NetBSD: util.c,v 1.52 2000/08/15 01:08:00 hubertf Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -47,6 +47,7 @@
 #include <sys/stat.h>
 #include <curses.h>
 #include <errno.h>
+#include <fts.h>
 #include "defs.h"
 #include "md.h"
 #include "msg_defs.h"
@@ -898,4 +899,166 @@ int askyesno(int reverse)
 	delwin(yesnowin);
 	refresh();
 	return(found);
+}
+
+/*
+ * Some globals to pass things back from callbacks
+ */
+static char zoneinfo_dir[STRSIZE];
+static char *tz_selected;	/* timezonename (relative to share/zoneinfo */
+static char *tz_default;	/* UTC, or whatever /etc/localtime points to */
+static char tz_env[STRSIZE];
+
+/*
+ * Callback from timezone menu
+ */
+static int
+set_timezone_select(menudesc *m)
+{
+	time_t t;
+
+	if (m)
+		tz_selected = m->opts[m->cursel].opt_name;
+	snprintf(tz_env, sizeof(tz_env), "%s/%s",
+		 zoneinfo_dir, tz_selected);
+	setenv("TZ", tz_env, 1);
+	t = time(NULL);
+	msg_display(MSG_choose_timezone, 
+		    tz_default, tz_selected, ctime(&t), localtime(&t)->tm_zone);
+	return 0;
+}
+
+/*
+ * Alarm-handler to update example-display
+ */
+static void
+timezone_sig(int sig)
+{
+	set_timezone_select(NULL);
+	alarm(1);
+}
+
+/*
+ * Choose from the files in usr/share/zoneinfo and set etc/localtime
+ */
+int
+set_timezone()
+{
+	char localtime_link[STRSIZE];
+	char localtime_target[STRSIZE];
+	int rc;
+	time_t t;
+	sig_t oldalrm;
+	FTS *tree;
+	FTSENT *entry;
+	int rval;
+	char *argv[2];
+	int skip;
+	struct stat sb;
+	int nfiles, n;
+	int menu_no;
+	menu_ent *tz_menu;
+
+	oldalrm=signal(SIGALRM, timezone_sig);
+	alarm(1);
+       
+	strncpy(zoneinfo_dir, target_expand("/usr/share/zoneinfo"), STRSIZE);
+	strncpy(localtime_link, target_expand("/etc/localtime"), STRSIZE);
+
+	/* Add sanity check that /mnt/usr/share/zoneinfo contains
+	 * something useful */
+
+	rc = readlink(localtime_link, localtime_target,
+		      sizeof(localtime_target));
+	if (rc < 0) {
+		endwin();
+		printf("readlink(\"%s\")\n", localtime_link);
+		exit (1);
+	}
+	localtime_target[rc] = '\0';
+
+	tz_default = strchr(strstr(localtime_target, "zoneinfo"), '/')+1;
+	tz_selected=tz_default;
+	snprintf(tz_env, sizeof(tz_env), "%s/%s",
+		 zoneinfo_dir, tz_selected);
+	setenv("TZ", tz_env, 1);
+	t = time(NULL);
+	msg_display(MSG_choose_timezone, 
+		    tz_default, tz_selected, ctime(&t), localtime(&t)->tm_zone);
+
+	skip = strlen(zoneinfo_dir);
+	argv[0] = zoneinfo_dir;
+	argv[1] = NULL;
+	if (!(tree = fts_open(argv, FTS_LOGICAL, NULL))) {
+		endwin();
+		fprintf(stderr, "ftsopen failed\n");
+		exit(1);
+	}
+	for (nfiles = 0; (entry = fts_read(tree)) != NULL;) {
+		stat(entry->fts_accpath, &sb);
+		if (S_ISREG(sb.st_mode))
+			nfiles++;
+	}
+	if (errno) {
+		endwin();
+		fprintf(stderr, "fts_read\n");
+		exit(1);
+	}
+	(void)fts_close(tree);
+	
+	tz_menu = malloc(nfiles * sizeof(struct menu_ent));
+	if (tz_menu == NULL) {
+		endwin();
+		fprintf(stderr, "malloc nfiles*menu_ent\n");
+		exit(1);
+	}
+	
+	if (!(tree = fts_open(argv, FTS_LOGICAL, NULL))) {
+		endwin();
+		fprintf(stderr, "ftsopen failed\n");
+		exit(1);
+	}
+	n=0;
+	for (rval=0; (entry = fts_read(tree)) != NULL; ) {
+
+		stat(entry->fts_accpath, &sb);
+		if (S_ISREG(sb.st_mode)) {
+			tz_menu[n].opt_name = strdup(entry->fts_accpath+skip+1);
+			tz_menu[n].opt_menu = OPT_NOMENU;
+			tz_menu[n].opt_flags = 0;
+			tz_menu[n].opt_action = set_timezone_select;
+
+			n++;
+		}
+	}
+	if (errno) {
+		endwin();
+		fprintf(stderr, "fts_read\n");
+		exit(1);
+	}
+	(void)fts_close(tree);  
+	
+	menu_no = new_menu(NULL, tz_menu, nfiles, 23, 9,
+			   12, 32, MC_SCROLL|MC_NOSHORTCUT, NULL, NULL,
+			   "\nPlease consult the install documents.");
+	if (menu_no < 0) {
+		endwin();
+		(void) fprintf(stderr, "Dynamic menu creation failed.\n");
+		exit(1);
+	}
+	process_menu(menu_no);
+
+	free_menu(menu_no);
+	for(n=0; n < nfiles; n++)
+		free(tz_menu[n].opt_name);
+	free(tz_menu);
+
+	signal(SIGALRM, SIG_IGN);
+
+	snprintf(localtime_target, sizeof(localtime_target),
+		 "/usr/share/zoneinfo/%s", tz_selected);
+	unlink(localtime_link);
+	symlink(localtime_target, localtime_link);
+	
+	return 1;
 }
