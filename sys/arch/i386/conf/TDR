@@ -1,16 +1,18 @@
 #
 # Theo Deraadt's 486
 #
-#	$Id: TDR,v 1.33 1994/04/20 23:39:36 mycroft Exp $
+#	$Id: TDR,v 1.34 1994/04/24 12:18:49 deraadt Exp $
 #
 machine		"i386"
+cpu		"I386_CPU"
 cpu		"I486_CPU"
+cpu		"I586_CPU"
 ident		TDR
 timezone	7 dst
 maxusers	10
 maxfdescs	2048
 options		SWAPPAGER,VNODEPAGER,DEVPAGER
-options		FFS,KERNFS,FDESC
+options		FFS,KERNFS,FDESC,MSDOSFS
 options		INET,NFSSERVER,NFSCLIENT,GATEWAY
 options		"COMPAT_43"
 options		"TCP_COMPAT_42"
