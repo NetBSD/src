@@ -1,4 +1,4 @@
-#	$NetBSD: GENERIC,v 1.48 1999/08/07 10:36:44 ragge Exp $
+#	$NetBSD: GENERIC,v 1.49 1999/08/08 11:45:01 ragge Exp $
 #
 # GENERIC VAX configuration file; all supported devices.
 #
@@ -108,7 +108,7 @@ smg0		at vsbus0 csr 0x200f0000 # Small monochrome display ctlr.
 
 # Ibus, the internal bus on most Microvaxen
 uba0		at ibus0 		# Qbus adapter
-#sgec0		at ibus0 		# On-board ethernet
+ze0		at ibus0 		# SGEC on-board ethernet
 #shac0		at ibus0 		# DSSI controller
 
 # Devices connected at VAXBI
