@@ -1,4 +1,4 @@
-/*	$NetBSD: grfvar.h,v 1.21 1998/06/02 02:14:21 scottr Exp $	*/
+/*	$NetBSD: grfvar.h,v 1.22 1998/08/12 02:36:37 scottr Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -51,12 +51,12 @@ struct grfbus_softc {
 	struct	device	sc_dev;
 	nubus_slot	sc_slot;
 
-	caddr_t			sc_bufpa;
+	bus_addr_t		sc_basepa;	/* base of video space */
+	bus_addr_t		sc_fbofs;	/* offset to framebuffer */
 
 	bus_space_tag_t		sc_tag;
 	bus_space_handle_t	sc_handle;
 	bus_space_handle_t	sc_regh;
-	bus_space_handle_t	sc_fbh;
 
 	struct	grfmode curr_mode;	/* hardware desc(for ioctl)	*/
 	u_int32_t	card_id;	/* DrHW value for nubus cards	*/
@@ -76,7 +76,7 @@ struct grf_softc {
 	bus_space_handle_t	sc_handle;
 
 	int	sc_flags;		/* driver flags */
-	caddr_t	sc_phys;		/* PA of framebuffer */
+	u_long	sc_phys;		/* PA of framebuffer */
 
 	struct	grfmode *sc_grfmode;	/* forwarded ... */
 	nubus_slot	*sc_slot;
@@ -94,7 +94,7 @@ struct grfbus_attach_args {
 	bus_space_handle_t ga_handle;
 	struct grfmode	*ga_grfmode;
 	nubus_slot	*ga_slot;
-	caddr_t		ga_phys;
+	bus_addr_t	ga_phys;
 	int		(*ga_mode) __P((struct grf_softc *, int, void *));
 };
 

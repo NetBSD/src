@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.103 1998/07/09 06:02:50 scottr Exp $	*/
+/*	$NetBSD: locore.s,v 1.104 1998/08/12 02:36:37 scottr Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -228,9 +228,11 @@ Lstart2:
 	jra	Lstart3
 
 Lget040TC:
+#if 0
 	movl	_C_LABEL(current_mac_model),a1	 | if an AV Mac, save current
 	cmpl	#MACH_CLASSAV,a1@(CPUINFO_CLASS) | TC so internal video will
 	jne	LnotAV				 | get configured
+#endif
 	.long	0x4e7a0003		| movc tc,d0
 	jra	LsaveTC
 LnotAV:	

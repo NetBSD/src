@@ -1,4 +1,4 @@
-/*	$NetBSD: grf.c,v 1.54 1998/07/01 14:49:08 scottr Exp $	*/
+/*	$NetBSD: grf.c,v 1.55 1998/08/12 02:36:36 scottr Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -362,7 +362,7 @@ grfmap(dev, addrp, p)
 	struct grfmode *gm;
 	struct specinfo si;
 	struct vnode vn;
-	u_long len, ofs;
+	u_long len;
 	int error, flags;
 
 	gp = grf_cd.cd_devs[GRFUNIT(dev)];
@@ -372,9 +372,8 @@ grfmap(dev, addrp, p)
 		printf("grfmap(%d): addr %p\n", p->p_pid, *addrp);
 #endif
 
-	*addrp = (caddr_t)m68k_trunc_page(gp->sc_phys);
-	ofs = (u_long)gp->sc_phys & PGOFSET;
-	len = m68k_round_page(ofs + gm->fboff + gm->fbsize);
+	*addrp = (caddr_t)gp->sc_phys;
+	len = m68k_round_page(gm->fboff + gm->fbsize);
 	flags = MAP_SHARED | MAP_FIXED;
 
 	vn.v_type = VCHR;	/* XXX */
@@ -390,7 +389,7 @@ grfmap(dev, addrp, p)
 #endif
 
 	/* Offset into page: */
-	*addrp += (unsigned long)gm->fboff + ofs;
+	*addrp += (unsigned long)gm->fboff;
 
 #ifdef GRF_DEBUG
 	if (grfdebug & GDB_MMAP)

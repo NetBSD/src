@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap_bootstrap.c,v 1.46 1998/07/07 00:33:39 scottr Exp $	*/
+/*	$NetBSD: pmap_bootstrap.c,v 1.47 1998/08/12 02:36:38 scottr Exp $	*/
 
 /* 
  * Copyright (c) 1991, 1993
@@ -84,7 +84,6 @@ u_long	high[8];
 u_long	maxaddr;	/* PA of the last physical page */
 int	vidlen;
 #define VIDMAPSIZE	btoc(vidlen)
-extern u_int32_t	mac68k_vidlog;
 extern u_int32_t	mac68k_vidphys;
 extern u_int32_t	videoaddr;
 extern u_int32_t	videorowbytes;
@@ -415,18 +414,15 @@ pmap_bootstrap(nextpa, firstpa)
 	 */
 	Sysmap = (pt_entry_t *)m68k_ptob(nptpages * NPTEPG);
 
-	IOBase = (u_long)m68k_ptob(nptpages*NPTEPG -
-			(IIOMAPSIZE + ROMMAPSIZE + VIDMAPSIZE));
+	IOBase = (u_long)m68k_ptob(nptpages * NPTEPG -
+	    (IIOMAPSIZE + ROMMAPSIZE + VIDMAPSIZE));
 
-	ROMBase = (char *)m68k_ptob(nptpages*NPTEPG -
-					(ROMMAPSIZE + VIDMAPSIZE));
+	ROMBase = (char *)m68k_ptob(nptpages * NPTEPG -
+	    (ROMMAPSIZE + VIDMAPSIZE));
 
 	if (vidlen) {
-		newvideoaddr = (u_int32_t)
-				m68k_ptob(nptpages*NPTEPG - VIDMAPSIZE)
-				+ (mac68k_vidphys & PGOFSET);
-		if (mac68k_vidlog)
-			mac68k_vidlog = newvideoaddr;
+		newvideoaddr = (u_int32_t)m68k_ptob(nptpages * NPTEPG -
+		    VIDMAPSIZE) + (mac68k_vidphys & PGOFSET);
 	}
 
 	/*
