@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_sa.c,v 1.1.2.43 2002/12/15 23:32:01 thorpej Exp $	*/
+/*	$NetBSD: kern_sa.c,v 1.1.2.44 2002/12/16 19:46:17 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_sa.c,v 1.1.2.43 2002/12/15 23:32:01 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_sa.c,v 1.1.2.44 2002/12/16 19:46:17 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -762,7 +762,7 @@ sa_upcall_userret(struct lwp *l)
 	if (l->l_flag & L_SA_BLOCKING) {
 		/* Invoke an "unblocked" upcall */
 		struct lwp *l2;
-		DPRINTFN(8,("sa_upcall_userret(%d.%d) unblocking ",
+		DPRINTFN(8,("sa_upcall_userret(%d.%d) unblocking\n",
 		    p->p_pid, l->l_lid));
 
 		while (sa->sa_nstacks == 0) {
