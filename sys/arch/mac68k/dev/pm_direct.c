@@ -1,4 +1,4 @@
-/*	$NetBSD: pm_direct.c,v 1.5 1998/03/29 03:50:30 scottr Exp $	*/
+/*	$NetBSD: pm_direct.c,v 1.6 1998/08/12 05:42:44 scottr Exp $	*/
 
 /*
  * Copyright (C) 1997 Takashi Hamada
@@ -221,10 +221,12 @@ struct adbCommand {
 extern	void	adb_pass_up __P((struct adbCommand *));
 
 
+#if 0
 /*
  * Define the external functions
  */
 extern int	zshard __P((int));		/* from zs.c */
+#endif
 
 #ifdef ADB_DEBUG
 /*
@@ -304,7 +306,11 @@ pm_wait_busy(delay)
 {
 	while (PM_IS_ON) {
 #ifdef PM_GRAB_SI
+#if 0
 		zshard(0);		/* grab any serial interrupts */
+#else
+		(void)intr_dispatch(0x70);
+#endif
 #endif
 		if ((--delay) < 0)
 			return 1;	/* timeout */
@@ -322,7 +328,11 @@ pm_wait_free(delay)
 {
 	while (PM_IS_OFF) {
 #ifdef PM_GRAB_SI
+#if 0
 		zshard(0);		/* grab any serial interrupts */
+#else
+		(void)intr_dispatch(0x70);
+#endif
 #endif
 		if ((--delay) < 0)
 			return 0;	/* timeout */
@@ -1038,7 +1048,11 @@ pm_adb_op(buffer, compRout, data, command)
 		if ((via_reg(VIA1, vIFR) & 0x10) == 0x10)
 			pm_intr();
 #ifdef PM_GRAB_SI
+#if 0
 			zshard(0);		/* grab any serial interrupts */
+#else
+			(void)intr_dispatch(0x70);
+#endif
 #endif
 		if ((--delay) < 0)
 			return 1;
