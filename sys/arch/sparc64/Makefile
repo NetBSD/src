@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.10 2001/04/03 17:12:24 jhawk Exp $
+#	$NetBSD: Makefile,v 1.11 2001/09/13 23:19:59 eeh Exp $
 
 # Makefile for sparc64 tags file and boot blocks
 
@@ -20,6 +20,7 @@ tags:
 	    >> tags
 	sort -o ${TSPARC64} ${TSPARC64}
 
+SYSDIR?= ../..
 .ifmake TAGS
 COMM!=  find ${SYSDIR} -name "arch" -prune -o -name "*.[ch]" -print 
 .endif
