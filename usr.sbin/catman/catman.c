@@ -1,4 +1,4 @@
-/*      $NetBSD: catman.c,v 1.11 1999/04/20 05:02:36 mycroft Exp $       */
+/*      $NetBSD: catman.c,v 1.12 1999/04/20 10:59:13 dante Exp $       */
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -422,14 +422,17 @@ scanmandir(catdir, mandir)
 		if(e_build == NULL) {
 			continue;
 		} else {
-			crunchp = getlist("_crunch");
-			for(e_crunch = crunchp->list.tqh_first; e_crunch;
-					e_crunch = e_crunch->q.tqe_next) {
-				splitentry(e_crunch->s, crunchsuff, crunchcmd);
-				snprintf(match, sizeof(match), "*%s",
-						crunchsuff);
-				if(!fnmatch(match, manpage, 0))
-					break;
+			e_crunch = NULL;
+			if(crunchp = getlist("_crunch")) {
+				for(e_crunch=crunchp->list.tqh_first; e_crunch;
+						e_crunch=e_crunch->q.tqe_next) {
+					splitentry(e_crunch->s, crunchsuff,
+								crunchcmd);
+					snprintf(match, sizeof(match), "*%s",
+								crunchsuff);
+					if(!fnmatch(match, manpage, 0))
+						break;
+				}
 			}
 		}
 
