@@ -1,4 +1,4 @@
-/*	$NetBSD: smb_smb.c,v 1.16 2003/03/24 15:07:52 jdolecek Exp $	*/
+/*	$NetBSD: smb_smb.c,v 1.17 2003/04/01 08:35:42 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 2000-2001 Boris Popov
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: smb_smb.c,v 1.16 2003/03/24 15:07:52 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: smb_smb.c,v 1.17 2003/04/01 08:35:42 jdolecek Exp $");
  
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -101,15 +101,6 @@ smb_vc_maxwrite(struct smb_vc *vcp)
 		return (vcp->vc_sopt.sv_maxtx);
 }
 
-static int
-smb_smb_nomux(struct smb_vc *vcp, struct smb_cred *scred, const char *name)
-{
-	if (scred->scr_p == vcp->vc_iod->iod_p)
-		return 0;
-	SMBERROR("wrong function called(%s)\n", name);
-	return EINVAL;
-}
-
 int
 smb_smb_negotiate(struct smb_vc *vcp, struct smb_cred *scred)
 {
@@ -122,8 +113,8 @@ smb_smb_negotiate(struct smb_vc *vcp, struct smb_cred *scred)
 	u_int16_t dindex, tw, swlen, bc;
 	int error, maxqsz;
 
-	if (smb_smb_nomux(vcp, scred, __func__) != 0)
-		return EINVAL;
+	KASSERT(scred->scr_p == vcp->vc_iod->iod_p);
+
 	vcp->vc_hflags = 0;
 	vcp->vc_hflags2 = 0;
 	vcp->obj.co_flags &= ~(SMBV_ENCRYPT);
@@ -275,14 +266,13 @@ smb_smb_ssnsetup(struct smb_vc *vcp, struct smb_cred *scred)
 	char *pp, *up, *pbuf, *encpass;
 	int error, plen, uniplen, ulen, upper;
 
+	KASSERT(scred->scr_p == vcp->vc_iod->iod_p);
+
 	upper = 0;
 
 again:
 
 	vcp->vc_smbuid = SMB_UID_UNKNOWN;
-
-	if (smb_smb_nomux(vcp, scred, __func__) != 0)
-		return EINVAL;
 
 	error = smb_rq_alloc(VCTOCP(vcp), SMB_COM_SESSION_SETUP_ANDX, scred, &rqp);
 	if (error)
@@ -415,11 +405,10 @@ smb_smb_ssnclose(struct smb_vc *vcp, struct smb_cred *scred)
 	struct mbchain *mbp;
 	int error;
 
+	KASSERT(scred->scr_p == vcp->vc_iod->iod_p);
+
 	if (vcp->vc_smbuid == SMB_UID_UNKNOWN)
 		return 0;
-
-	if (smb_smb_nomux(vcp, scred, __func__) != 0)
-		return EINVAL;
 
 	error = smb_rq_alloc(VCTOCP(vcp), SMB_COM_LOGOFF_ANDX, scred, &rqp);
 	if (error)
