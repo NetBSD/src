@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_machdep.c,v 1.16 1996/08/21 15:54:18 cgd Exp $	*/
+/*	$NetBSD: vm_machdep.c,v 1.17 1996/10/07 19:09:17 cgd Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995, 1996 Carnegie-Mellon University.
@@ -68,6 +68,7 @@ cpu_coredump(p, vp, cred, chdr)
 	chdr->c_cpusize = sizeof(cpustate);
 
 	cpustate.regs = *p->p_md.md_tf;
+	cpustate.regs.tf_regs[FRAME_SP] = alpha_pal_rdusp();	/* XXX */
 	if (p->p_md.md_flags & MDP_FPUSED)
 		if (p == fpcurproc) {
 			alpha_pal_wrfen(1);
