@@ -1,4 +1,4 @@
-/*	$NetBSD: clock.c,v 1.20 1996/10/11 21:32:56 mhitch Exp $	*/
+/*	$NetBSD: clock.c,v 1.21 1996/10/13 03:06:51 christos Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -142,7 +142,7 @@ clockattach(pdp, dp, auxp)
 		clockchip = "CIA B";
 	}
 
-	kprintf(": %s system hz %d hardware hz %d\n", clockchip, hz,
+	printf(": %s system hz %d hardware hz %d\n", clockchip, hz,
 #ifdef DRACO
 		dracorev >= 4 ? eclockfreq / 7 : eclockfreq);
 #else
@@ -209,7 +209,7 @@ void calibrate_delay()
 	extern u_int32_t delaydivisor;
 		/* XXX this should be defined elsewhere */
 
-	kprintf("Calibrating delay loop... "); 
+	printf("Calibrating delay loop... "); 
 
 	do {
 		t1 = clkread();
@@ -219,7 +219,7 @@ void calibrate_delay()
 	t2 -= t1;
 	delaydivisor = (delaydivisor * t2 + 1023) >> 10;
 #ifdef DIAGNOSTIC
-	kprintf("\ndiff %ld us, new divisor %u ns\n", t2, delaydivisor); 
+	printf("\ndiff %ld us, new divisor %u ns\n", t2, delaydivisor); 
 	do {
 		t1 = clkread();
 		delay(1024);
@@ -227,7 +227,7 @@ void calibrate_delay()
 	} while (t2 <= t1);
 	t2 -= t1;
 	delaydivisor = (delaydivisor * t2 + 1023) >> 10;
-	kprintf("diff %ld us, new divisor %u ns\n", t2, delaydivisor); 
+	printf("diff %ld us, new divisor %u ns\n", t2, delaydivisor); 
 #endif
 	do {
 		t1 = clkread();
@@ -237,9 +237,9 @@ void calibrate_delay()
 	t2 -= t1;
 	delaydivisor = (delaydivisor * t2 + 1023) >> 10;
 #ifdef DIAGNOSTIC
-	kprintf("diff %ld us, new divisor ", t2);
+	printf("diff %ld us, new divisor ", t2);
 #endif
-	kprintf("%u ns\n", delaydivisor); 
+	printf("%u ns\n", delaydivisor); 
 }
 
 void
@@ -656,12 +656,12 @@ inittodr(base)
 	u_long timbuf = base;	/* assume no battery clock exists */
   
 	if (gettod == NULL && rtcinit() == 0)
-		kprintf("WARNING: no battery clock\n");
+		printf("WARNING: no battery clock\n");
 	else
 		timbuf = gettod();
   
 	if (timbuf < base) {
-		kprintf("WARNING: bad date in battery clock\n");
+		printf("WARNING: bad date in battery clock\n");
 		timbuf = base;
 	}
   
@@ -673,7 +673,7 @@ void
 resettodr()
 {
 	if (settod && settod(time.tv_sec) == 0)
-		kprintf("Cannot set battery backed clock\n");
+		printf("Cannot set battery backed clock\n");
 }
 
 int

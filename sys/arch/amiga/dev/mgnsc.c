@@ -1,4 +1,4 @@
-/*	$NetBSD: mgnsc.c,v 1.21 1996/10/10 23:56:19 christos Exp $	*/
+/*	$NetBSD: mgnsc.c,v 1.22 1996/10/13 03:07:24 christos Exp $	*/
 
 /*
  * Copyright (c) 1994 Michael L. Hitch
@@ -108,7 +108,7 @@ mgnscattach(pdp, dp, auxp)
 	struct zbus_args *zap;
 	siop_regmap_p rp;
 
-	kprintf("\n");
+	printf("\n");
 	zap = auxp;
 
 	sc = (struct siop_softc *)dp;

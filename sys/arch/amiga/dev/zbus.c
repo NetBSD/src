@@ -1,4 +1,4 @@
-/*	$NetBSD: zbus.c,v 1.25 1996/10/10 23:56:41 christos Exp $	*/
+/*	$NetBSD: zbus.c,v 1.26 1996/10/13 03:07:38 christos Exp $	*/
 
 /*
  * Copyright (c) 1994 Christian E. Hopps
@@ -249,11 +249,11 @@ zbusattach(pdp, dp, auxp)
 	ecdp = &cfdev[ncfdev];
 	if (amiga_realconfig) {
 		if (ZTWOMEMADDR)
-			kprintf(": mem 0x%08lx-0x%08lx",
+			printf(": mem 0x%08lx-0x%08lx",
 			    ZTWOMEMADDR, ZTWOMEMADDR + NBPG * NZTWOMEMPG - 1);
 		if (ZBUSAVAIL)
-			kprintf (": i/o size 0x%08x", ZBUSAVAIL);
-		kprintf("\n");
+			printf (": i/o size 0x%08x", ZBUSAVAIL);
+		printf("\n");
 	}
 	for (cdp = cfdev; cdp < ecdp; cdp++) {
 		for (pcp = preconftab; pcp < epcp; pcp++) {
@@ -309,12 +309,12 @@ zbusprint(auxp, pnp)
 	zap = auxp;
 
 	if (pnp) {
-		kprintf("%s at %s:", aconflookup(zap->manid, zap->prodid),
+		printf("%s at %s:", aconflookup(zap->manid, zap->prodid),
 		    pnp);
 		if (zap->manid == -1)
 			rv = UNSUPP;
 	}
-	kprintf(" rom %p man/pro %d/%d", zap->pa, zap->manid, zap->prodid);
+	printf(" rom %p man/pro %d/%d", zap->pa, zap->manid, zap->prodid);
 	return(rv);
 }
 

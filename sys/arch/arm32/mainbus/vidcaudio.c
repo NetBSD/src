@@ -1,4 +1,4 @@
-/* $NetBSD: vidcaudio.c,v 1.4 1996/10/11 00:07:29 christos Exp $ */
+/* $NetBSD: vidcaudio.c,v 1.5 1996/10/13 03:06:31 christos Exp $ */
 
 /*
  * Copyright (c) 1995 Melvin Tang-Richardson
@@ -166,7 +166,7 @@ vidcaudio_probe(parent, match, aux)
 		return(1);
 		break;
 	default:
-		kprintf("vidcaudio: Unknown IOMD id=%04x", id);
+		printf("vidcaudio: Unknown IOMD id=%04x", id);
 		break;
 	}
 
@@ -232,7 +232,7 @@ vidcaudio_attach(parent, self, aux)
 	vidcaudio_hw_attach(sc);
 
 #ifdef DEBUG
-	kprintf(" UNDER DEVELOPMENT (nuts)\n");
+	printf(" UNDER DEVELOPMENT (nuts)\n");
 #endif
 }
 
@@ -246,7 +246,7 @@ vidcaudio_open(dev, flags)
 	int s;
 
 #ifdef DEBUG
-	kprintf("DEBUG: vidcaudio_open called\n");
+	printf("DEBUG: vidcaudio_open called\n");
 #endif
 
 	if (unit >= vidcaudio_cd.cd_ndevs)
@@ -280,7 +280,7 @@ vidcaudio_close(addr)
 	vidcaudio_shutdown ();
 
 #ifdef DEBUG
-	kprintf("DEBUG: vidcaudio_close called\n");
+	printf("DEBUG: vidcaudio_close called\n");
 #endif
 
 	sc->open = 0;
@@ -385,7 +385,7 @@ int vidcaudio_set_encoding ( void *addr, u_int enc )
     {
 	case AUDIO_ENCODING_ULAW:
 #ifdef DEBUG
-	    kprintf ( "DEBUG: Set ulaw encoding\n" );
+	    printf ( "DEBUG: Set ulaw encoding\n" );
 #endif
             sc->encoding = enc;
 	    break;
@@ -462,7 +462,7 @@ int vidcaudio_get_in_port ( void *addr )
 int vidcaudio_commit_settings ( void *addr )
 {
 #ifdef DEBUG
-kprintf ( "DEBUG: committ_settings\n" );
+printf ( "DEBUG: committ_settings\n" );
 #endif
     return 0;
 }
@@ -483,7 +483,7 @@ u_int vidcaudio_get_silence ( int enc )
 void vidcaudio_sw_encode ( int e, u_char *p, int cc )
 {
 #ifdef DEBUG
-    kprintf ( "DEBUG: sw_encode\n" );    
+    printf ( "DEBUG: sw_encode\n" );    
 #endif
     return;
 }
@@ -491,7 +491,7 @@ void vidcaudio_sw_encode ( int e, u_char *p, int cc )
 void vidcaudio_sw_decode ( int e, u_char *p, int cc )
 {
 #ifdef DEBUG
-    kprintf ( "DEBUG: sw_decode\n" );    
+    printf ( "DEBUG: sw_decode\n" );    
 #endif
 }
 
@@ -503,7 +503,7 @@ int vidcaudio_start_output ( void *addr, void *p, int cc,
     /* I can only DMA inside 1 page */
 
 #ifdef DEBUG
-    kprintf ( "vidcaudio_start_output (%d) %08x %08x\n", cc, intr, arg );
+    printf ( "vidcaudio_start_output (%d) %08x %08x\n", cc, intr, arg );
 #endif
 
     if ( ROUND(p) != ROUND(p+cc) )
@@ -511,7 +511,7 @@ int vidcaudio_start_output ( void *addr, void *p, int cc,
         /* If it's over a page I can fix it up by copying it into my buffer */
 
 #ifdef DEBUG
-        kprintf ( "vidcaudio: DMA over page boundary requested.  Fixing up\n" );
+        printf ( "vidcaudio: DMA over page boundary requested.  Fixing up\n" );
 #endif
         bcopy ( (char *)ag.silence, p, cc>NBPG ? NBPG : cc );
         p=(void *)ag.silence;
@@ -524,7 +524,7 @@ int vidcaudio_start_output ( void *addr, void *p, int cc,
 
 	if ( cc>NBPG )
 	{
-	    kprintf ( "vidcaudio: DMA buffer truncated. I could fix this up\n" );
+	    printf ( "vidcaudio: DMA buffer truncated. I could fix this up\n" );
 	    cc=NBPG;
 	}
     }
@@ -541,7 +541,7 @@ int vidcaudio_start_input ( void *addr, void *p, int cc,
 int vidcaudio_halt_output ( void *addr )
 {
 #ifdef DEBUG
-    kprintf ( "DEBUG: vidcaudio_halt_output\n" );
+    printf ( "DEBUG: vidcaudio_halt_output\n" );
 #endif
     return EIO;
 }
@@ -549,7 +549,7 @@ int vidcaudio_halt_output ( void *addr )
 int vidcaudio_halt_input ( void *addr )
 {
 #ifdef DEBUG
-    kprintf ( "DEBUG: vidcaudio_halt_output\n" );
+    printf ( "DEBUG: vidcaudio_halt_output\n" );
 #endif
     return EIO;
 }
@@ -557,7 +557,7 @@ int vidcaudio_halt_input ( void *addr )
 int vidcaudio_cont_output ( void *addr )
 {
 #ifdef DEBUG
-    kprintf ( "DEBUG: vidcaudio_halt_output\n" );
+    printf ( "DEBUG: vidcaudio_halt_output\n" );
 #endif
     return EIO;
 }
@@ -565,7 +565,7 @@ int vidcaudio_cont_output ( void *addr )
 int vidcaudio_cont_input ( void *addr )
 {
 #ifdef DEBUG
-    kprintf ( "DEBUG: vidcaudio_halt_output\n" );
+    printf ( "DEBUG: vidcaudio_halt_output\n" );
 #endif
     return EIO;
 }
@@ -573,7 +573,7 @@ int vidcaudio_cont_input ( void *addr )
 int vidcaudio_speaker_ctl ( void *addr, int newstate )
 {
 #ifdef DEBUG
-    kprintf ( "DEBUG: vidcaudio_speaker_ctl\n" );
+    printf ( "DEBUG: vidcaudio_speaker_ctl\n" );
 #endif
     return 0;
 }
@@ -648,7 +648,7 @@ struct audio_hw_if vidcaudio_hw_if = {
 void vidcaudio_dummy_routine ( void *arg )
 {
 #ifdef DEBUG
-    kprintf ( "vidcaudio_dummy_routine\n" );
+    printf ( "vidcaudio_dummy_routine\n" );
 #endif
 }
 
@@ -713,10 +713,10 @@ int vidcaudio_dma_program ( vm_offset_t cur, vm_offset_t end,
 	ag.arg = NULL;
 
 #ifdef PRINT
-kprintf ( "vidcaudio: start output\n" );
+printf ( "vidcaudio: start output\n" );
 #endif
 #ifdef DEBUG
-	kprintf ( "SE" );
+	printf ( "SE" );
 #endif
         enable_irq ( IRQ_DMASCH0 );
     }
@@ -726,7 +726,7 @@ kprintf ( "vidcaudio: start output\n" );
 	if ( ag.next_cur!=0 )
 	{
 	    /* If there's one scheduled then complain */
-	    kprintf ( "vidcaudio: Buffer already Q'ed\n" );
+	    printf ( "vidcaudio: Buffer already Q'ed\n" );
 	    return EIO;
 	}
 	else
@@ -738,7 +738,7 @@ kprintf ( "vidcaudio: start output\n" );
             ag.next_intr = intr;
             ag.next_arg = arg;
 #ifdef DEBUG
-kprintf ( "s" );
+printf ( "s" );
 #endif
 	}
     }
@@ -751,7 +751,7 @@ void vidcaudio_shutdown ( void )
     ag.intr = NULL;
     ag.in_progress = 0;
 #ifdef PRINT
-kprintf ( "vidcaudio: stop output\n" );
+printf ( "vidcaudio: stop output\n" );
 #endif
     WriteWord ( IOMD_SD0CURB, ag.silence );
     WriteWord ( IOMD_SD0ENDB, (ag.silence + NBPG - 16) | (1<<30) );
@@ -769,7 +769,7 @@ int vidcaudio_intr ( void *arg )
     WriteWord ( IOMD_DMARQ, 0x10 );
 
 #ifdef PRINT
-    kprintf ( "I" );
+    printf ( "I" );
 #endif
 
     if ( ag.open==0 )
@@ -781,7 +781,7 @@ int vidcaudio_intr ( void *arg )
     /* Have I got the generic audio device attached */
 
 #ifdef DEBUG
-    kprintf ( "[B%01x]", status );
+    printf ( "[B%01x]", status );
 #endif
 
     nintr=ag.intr;
@@ -799,7 +799,7 @@ int vidcaudio_intr ( void *arg )
     if ( nintr )
     {
 #ifdef DEBUG
-	kprintf ( "i" );
+	printf ( "i" );
 #endif
 	(*nintr)(narg);
     }
@@ -818,7 +818,7 @@ int vidcaudio_intr ( void *arg )
 	{
 	    case (INTERRUPT|BANK_A):
 #ifdef PRINT
-kprintf( "B" );
+printf( "B" );
 #endif
         	WriteWord ( IOMD_SD0CURB, xcur );
         	WriteWord ( IOMD_SD0ENDB, xend|FLAGS );
@@ -826,7 +826,7 @@ kprintf( "B" );
 
 	    case (INTERRUPT|BANK_B):
 #ifdef PRINT
-kprintf( "A" );
+printf( "A" );
 #endif
         	WriteWord ( IOMD_SD0CURA, xcur );
         	WriteWord ( IOMD_SD0ENDA, xend|FLAGS );
@@ -834,7 +834,7 @@ kprintf( "A" );
 
 	    case (OVERRUN|INTERRUPT|BANK_A):
 #ifdef PRINT
-kprintf( "A" );
+printf( "A" );
 #endif
         	WriteWord ( IOMD_SD0CURA, xcur );
         	WriteWord ( IOMD_SD0ENDA, xend|FLAGS );
@@ -842,7 +842,7 @@ kprintf( "A" );
 		 
 	    case (OVERRUN|INTERRUPT|BANK_B):
 #ifdef PRINT
-kprintf( "B" );
+printf( "B" );
 #endif
         	WriteWord ( IOMD_SD0CURB, xcur );
         	WriteWord ( IOMD_SD0ENDB, xend|FLAGS );
@@ -855,7 +855,7 @@ kprintf( "B" );
 */
     }
 #ifdef PRINT
-kprintf ( "i" );
+printf ( "i" );
 #endif
 
     if ( ag.next_cur==0 )

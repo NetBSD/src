@@ -1,4 +1,4 @@
-/*	$NetBSD: drsc.c,v 1.5 1996/10/10 23:55:33 christos Exp $	*/
+/*	$NetBSD: drsc.c,v 1.6 1996/10/13 03:06:52 christos Exp $	*/
 
 /*
  * Copyright (c) 1996 Ignatios Souvatzis
@@ -111,7 +111,7 @@ drscattach(pdp, dp, auxp)
 	struct zbus_args *zap;
 	siop_regmap_p rp;
 
-	kprintf("\n");
+	printf("\n");
 
 	zap = auxp;
 
@@ -197,7 +197,7 @@ drsc_handler()
 	*draco_intpen &= ~DRIRQ_SCSI;
 #ifdef DEBUG
 	if (*draco_intpen & DRIRQ_SCSI)
-		kprintf("%s: intpen still 0x%x\n", sc->sc_dev.dv_xname,
+		printf("%s: intpen still 0x%x\n", sc->sc_dev.dv_xname,
 		    *draco_intpen);
 #endif
 	add_sicallback((sifunc_t)siopintr, sc, NULL);

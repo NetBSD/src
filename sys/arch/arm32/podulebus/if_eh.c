@@ -1,4 +1,4 @@
-/* $NetBSD: if_eh.c,v 1.9 1996/10/11 00:07:38 christos Exp $ */
+/* $NetBSD: if_eh.c,v 1.10 1996/10/13 03:06:41 christos Exp $ */
 
 /*
  * Copyright (c) 1995 Melvin Tang-Richardson.
@@ -110,7 +110,7 @@
 #define ETHER_MIN_LEN   (64)
 #define ETHER_MAX_LEN   (1522)
 
-#define PRINTF	kprintf
+#define PRINTF	printf
 
 /****************************************************************************/
 /* Prototype internal data structures ***************************************/
@@ -315,7 +315,7 @@ ehattach(parent, self, aux)
 	}
 
 	if (counter == 0) {
-		kprintf(": card faulty\n");
+		printf(": card faulty\n");
 		sc->sc_flags |= EH_BROKEN;
 		return;
 	}
@@ -350,7 +350,7 @@ ehattach(parent, self, aux)
 			if (read_buffer == NULL)
 				panic("Cannot allocate temporary memory for buffer test (1)\n");
 
-			kprintf("1.");
+			printf("1.");
 
 		/* Fill the test_data block */
 
@@ -360,17 +360,17 @@ ehattach(parent, self, aux)
 					test_data[counter]=0x23;
 			}
 
-			kprintf("2.");
+			printf("2.");
 	
 			eh_copyout(sc, test_data, NBASE, NLEN);
-			kprintf("3.");
+			printf("3.");
 			delay(10000);
 			eh_copyin(sc, NBASE, read_buffer, NLEN);
-			kprintf("4.");
+			printf("4.");
 	
 		        if (bcmp(test_data, read_buffer, NLEN))
 				PRINTF("Block test failed\n");
-			kprintf("5.");
+			printf("5.");
 			FREE(test_data, M_TEMP);
 			FREE(read_buffer, M_TEMP);
 		}
@@ -705,7 +705,7 @@ eh_ensure_dma_competed(sc, type)
 
 	if ( (status&COM_ABORT)==0 ) {
 	        int dummy=0;
-		kprintf ( "EHDEBUG: Remote %d wasn't finished\n", type );
+		printf ( "EHDEBUG: Remote %d wasn't finished\n", type );
 		SetReg ( EH_COMMAND, status|COM_ABORT );
 		switch ( type ) {
 		case COM_READ:
@@ -733,16 +733,16 @@ eh_copyring(sc, src, dest, len)
 	if ( (src+len)>sc->sc_rbd ) {
 		register int in = sc->sc_rbd - src;
 		if ( eh_copyin ( sc, src, dest, in )==0 ) {
-			kprintf ( "copyring failed pass 1\n" );
+			printf ( "copyring failed pass 1\n" );
 			return 0;
 		}
 		if ( eh_copyin ( sc, sc->sc_rbs, dest+in, len-in )==0 ) {
-			kprintf ( "copyring failed pass 2\n" );
+			printf ( "copyring failed pass 2\n" );
 			return 0;
 		}
 	} else {
 		if ( eh_copyin ( sc, src, dest, len )==0 ) {
-			kprintf ( "copyring faild on 1 pass copy\n" );
+			printf ( "copyring faild on 1 pass copy\n" );
 			return 0;
 		}
 	}
@@ -765,7 +765,7 @@ eh_copyin(sc, src, dest, len)
 	if (len & 1)
 		len++;
 	if (src & 1) {
-		kprintf ( "EHDEBUG: Copying from odd address\n" );
+		printf ( "EHDEBUG: Copying from odd address\n" );
 		src++;
 	}
 
@@ -810,7 +810,7 @@ eh_copyout(sc, src, dest, len)
 	if (len & 1)
 		len++;
 	if (dest & 1) {
-		kprintf ( "EHDEBUG: Copying to odd address\n" );
+		printf ( "EHDEBUG: Copying to odd address\n" );
 		dest++;
 	}
 
@@ -872,7 +872,7 @@ ehinit(sc)
 	}
 
 	if ( card_freestart > sc->sc_physend ) {
-		kprintf ( "eh: card short of ram %02x required %02x present\n",
+		printf ( "eh: card short of ram %02x required %02x present\n",
 		    card_freestart, sc->sc_physstart );
 	        sc->sc_arpcom.ac_if.if_flags &= ~IFF_RUNNING;
 		sc->sc_arpcom.ac_if.if_flags |= IFF_OACTIVE;
@@ -1007,8 +1007,8 @@ eh_rint(sc)
 			/* Copy the ether h receive header */
 
 			if ( eh_copyring ( sc, ptr, (char *)&hdr, 4 ) != 4 ) {
-				kprintf ( "eh: Failed copying in header\n" );
-				kprintf ( "eh: thispacket %02x\n", thispacket );
+				printf ( "eh: Failed copying in header\n" );
+				printf ( "eh: thispacket %02x\n", thispacket );
 				ehinit (sc);
 				return;
 			}
@@ -1020,29 +1020,29 @@ eh_rint(sc)
 
 			/* Check the packet's status */
 			if ( hdr.rx_status&(RSR_CRC|RSR_FAE|RSR_FO|RSR_MPA) ) {
-				kprintf ( "eh: intact packet is corrupt %02x %04x\n",
+				printf ( "eh: intact packet is corrupt %02x %04x\n",
 				    hdr.rx_status, ptr );
 			}
 
 			if (((hdr.rx_nxtpkt<<8)>sc->sc_rbd) || ((hdr.rx_nxtpkt<<8)<sc->sc_rbs)) {
-				kprintf ( "eh: ring buffer empty %04x %04x\n",
+				printf ( "eh: ring buffer empty %04x %04x\n",
 				    hdr.rx_nxtpkt, ptr );
 				ehinit (sc);
 				return;
 			}
 
 			if (0)
-				kprintf ( "pulling packet at %08x, next at %08x\n", thispacket, sc->sc_nxtpkt );
+				printf ( "pulling packet at %08x, next at %08x\n", thispacket, sc->sc_nxtpkt );
 
 			if ( totlen>ETHER_MAX_LEN ) {
-				kprintf ( "eh: giant packet received %04x\n", totlen );
+				printf ( "eh: giant packet received %04x\n", totlen );
 				totlen = ETHER_MAX_LEN;
 			}
 
 			/* Copy the ether header */
 
 			if ((eh_copyring ( sc, ptr, (char *)&eh, sizeof (eh)))!=sizeof(eh))  {
-				kprintf ( "eh: Failed copying in ethenet header\n" );
+				printf ( "eh: Failed copying in ethenet header\n" );
 				return;
 			}
 			ptr+=sizeof(eh);
@@ -1076,7 +1076,7 @@ eh_rint(sc)
 				m->m_len = len = min ( totlen, len );
 
 				if ((eh_copyring ( sc, ptr, mtod(m, caddr_t), len))!=len)
-					kprintf ( "eh: failed copying in buffer %d\n", len );
+					printf ( "eh: failed copying in buffer %d\n", len );
 
 				ptr += len;
 				totlen -= len;
@@ -1132,7 +1132,7 @@ ehintr(arg)
 			PRINTF ( " missed packet" );
 		if ( status&RSR_DIS )
 			PRINTF ( " receiver disabled" );
-		kprintf ( "\n" );
+		printf ( "\n" );
 		INTR_ACK ( ISR_RXE );
 		ehinit (sc);
 		return 0;
@@ -1205,7 +1205,7 @@ ehintr(arg)
 	*/
 
 	if ( (isr&GetReg(EH_IMR))!=0 )
-		kprintf ( "eh: Interrupt not serviced\n" );
+		printf ( "eh: Interrupt not serviced\n" );
 
 	return 0;
 }
