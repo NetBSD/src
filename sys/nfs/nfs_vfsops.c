@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_vfsops.c,v 1.136 2004/04/21 01:05:43 christos Exp $	*/
+/*	$NetBSD: nfs_vfsops.c,v 1.137 2004/04/27 17:37:31 jrf Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993, 1995
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_vfsops.c,v 1.136 2004/04/21 01:05:43 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_vfsops.c,v 1.137 2004/04/27 17:37:31 jrf Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_compat_netbsd.h"
@@ -1077,7 +1077,7 @@ nfs_quotactl(mp, cmd, uid, arg, p)
 	struct mount *mp;
 	int cmd;
 	uid_t uid;
-	caddr_t arg;
+	void *arg;
 	struct proc *p;
 {
 
