@@ -1,6 +1,6 @@
 #!/bin/sh -
 #
-#	$NetBSD: MAKEDEV,v 1.52 2002/02/02 20:58:48 tls Exp $
+#	$NetBSD: MAKEDEV,v 1.53 2002/02/11 14:57:34 augustss Exp $
 #
 # Copyright (c) 1990 The Regents of the University of California.
 # All rights reserved.
@@ -642,11 +642,13 @@ uhid*)
 ulpt*)
 	unit=${i#ulpt}
 	ulpt=ulpt$unit
+	ulpn=ulpn$unit
 	major=41
-	rm -f $ulpt
+	rm -f $ulpt $ulpn
 	mknod $ulpt c $major $unit
-	chown root.wheel $ulpt
-	chmod 600 $ulpt
+	mknod $ulpn c $major $(($unit + 64))
+	chown root.wheel $ulpt $ulpn
+	chmod 600 $ulpt $ulpn
 	;;
 
 ugen*)
