@@ -1,4 +1,4 @@
-	$NetBSD: install,v 1.10 1998/11/16 00:59:38 simonb Exp $	
+	$NetBSD: install,v 1.11 1998/11/16 01:07:16 simonb Exp $	
 
 Reminder:
 	Always back up files before installing or upgrading.
@@ -37,6 +37,11 @@ and from an Ultrix host
 	mount -r -t cdfs -o nodefperm,noversion /dev/rzXc /mnt
 
 where X is the SCSI id of the CDROM.
+
+
+** NOTE:  Ultrix does not have Rock Ridge extensions so leave out
+everything between the first and last . in the paths on the CD.
+For example, the path NetBSD-1.3.2 would show up as NetBSD-1.2.
 
 
 The diskimage file can be found on the CDROM at the following
