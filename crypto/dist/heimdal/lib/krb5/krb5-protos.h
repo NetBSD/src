@@ -2020,7 +2020,7 @@ krb5_parse_name (
 	const char */*name*/,
 	krb5_principal */*principal*/);
 
-const char *
+const char*
 krb5_passwd_result_to_string (
 	krb5_context /*context*/,
 	int /*result*/);
