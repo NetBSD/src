@@ -1,7 +1,10 @@
-#	$NetBSD: Makefile.makedev,v 1.3 2002/06/01 16:22:54 lukem Exp $
+#	$NetBSD: Makefile.makedev,v 1.4 2003/03/10 23:42:45 lukem Exp $
 #
 # Makefile snippet to add ${MAKEDEVTARGETS} devices to the mtree list
 # (if set), otherwise copy etc.${MACHINE}/MAKEDEV to ./dev
+#
+# If this is to be used with Makefile.image, then this file should be
+# .include-d first.
 #
 
 #
