@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_driver.c,v 1.37 2000/06/04 02:05:13 oster Exp $	*/
+/*	$NetBSD: rf_driver.c,v 1.38 2000/09/21 01:45:46 oster Exp $	*/
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -142,7 +142,8 @@ RF_DECLARE_MUTEX(rf_printf_mutex)	/* debug only:  avoids interleaved
 
 #define SIGNAL_QUIESCENT_COND(_raid_)  wakeup(&((_raid_)->accesses_suspended))
 #define WAIT_FOR_QUIESCENCE(_raid_) \
-	tsleep(&((_raid_)->accesses_suspended),PRIBIO,"raidframe quiesce", 0);
+	ltsleep(&((_raid_)->accesses_suspended), PRIBIO, \
+		"raidframe quiesce", 0, &((_raid_)->access_suspend_mutex))
 
 #define IO_BUF_ERR(bp, err) { \
 	bp->b_flags |= B_ERROR; \
