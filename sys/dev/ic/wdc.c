@@ -1,4 +1,4 @@
-/*	$NetBSD: wdc.c,v 1.162 2003/12/30 16:28:37 thorpej Exp $ */
+/*	$NetBSD: wdc.c,v 1.163 2003/12/30 16:40:12 thorpej Exp $ */
 
 /*
  * Copyright (c) 1998, 2001, 2003 Manuel Bouyer.  All rights reserved.
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wdc.c,v 1.162 2003/12/30 16:28:37 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wdc.c,v 1.163 2003/12/30 16:40:12 thorpej Exp $");
 
 #ifndef WDCDEBUG
 #define WDCDEBUG
@@ -191,8 +191,7 @@ struct simplelock atabus_interlock = SIMPLELOCK_INITIALIZER;
  */
 
 void
-atabusconfig(atabus_sc)
-	struct atabus_softc *atabus_sc;
+atabusconfig(struct atabus_softc *atabus_sc)
 {
 	struct channel_softc *chp = atabus_sc->sc_chan;
 	int i, error, need_delref = 0;
@@ -433,7 +432,7 @@ atabusconfig(atabus_sc)
 			chp->ch_drive[i].state = 0;
 	}
 
-out:
+ out:
 	if (atabus_initq == NULL) {
 		simple_lock(&atabus_interlock);
 		while(1) {
@@ -458,16 +457,14 @@ out:
 }
 
 int
-wdcprobe(chp)
-	struct channel_softc *chp;
+wdcprobe(struct channel_softc *chp)
 {
-	return wdcprobe1(chp, 1);
+
+	return (wdcprobe1(chp, 1));
 }
 
 int
-wdcprobe1(chp, poll)
-	struct channel_softc *chp;
-	int poll;
+wdcprobe1(struct channel_softc *chp, int poll)
 {
 	u_int8_t st0, st1, sc, sn, cl, ch;
 	u_int8_t ret_value = 0x03;
@@ -644,8 +641,7 @@ wdcprobe1(chp, poll)
 }
 
 void
-wdcattach(chp)
-	struct channel_softc *chp;
+wdcattach(struct channel_softc *chp)
 {
 	static int inited = 0;
 
@@ -666,9 +662,8 @@ wdcattach(chp)
 	chp->atabus = config_found(&chp->wdc->sc_dev, chp, atabusprint);
 }
 
-int wdcactivate(self, act)
-	struct device *self;
-	enum devact act;
+int
+wdcactivate(struct device *self, enum devact act)
 {
 	struct wdc_softc *wdc = (struct wdc_softc *)self;
 	int s, i, error = 0;
@@ -692,9 +687,7 @@ int wdcactivate(self, act)
 }
 	
 int
-wdcdetach(self, flags)
-	struct device *self;
-	int flags;
+wdcdetach(struct device *self, int flags)
 {
 	struct wdc_softc *wdc = (struct wdc_softc *)self;
 	struct channel_softc *chp;
@@ -717,8 +710,7 @@ wdcdetach(self, flags)
  * are shared.
  */
 void
-wdcstart(chp)
-	struct channel_softc *chp;
+wdcstart(struct channel_softc *chp)
 {
 	struct wdc_xfer *xfer;
 
@@ -770,8 +762,7 @@ wdcstart(chp)
 
 /* restart an interrupted I/O */
 void
-wdcrestart(v)
-	void *v;
+wdcrestart(void *v)
 {
 	struct channel_softc *chp = v;
 	int s;
@@ -789,8 +780,7 @@ wdcrestart(v)
  * the next chunk if so.
  */
 int
-wdcintr(arg)
-	void *arg;
+wdcintr(void *arg)
 {
 	struct channel_softc *chp = arg;
 	struct wdc_xfer *xfer;
@@ -830,12 +820,11 @@ wdcintr(arg)
 
 /* Put all disk in RESET state */
 void
-wdc_reset_channel(drvp, flags)
-	struct ata_drive_datas *drvp;
-	int flags;
+wdc_reset_channel(struct ata_drive_datas *drvp, int flags)
 {
 	struct channel_softc *chp = drvp->chnl_softc;
 	int drive;
+
 	WDCDEBUG_PRINT(("ata_reset_channel %s:%d for drive %d\n",
 	    chp->wdc->sc_dev.dv_xname, chp->channel, drvp->drive),
 	    DEBUG_FUNCS);
@@ -856,9 +845,7 @@ wdc_reset_channel(drvp, flags)
 }
 
 int
-wdcreset(chp, poll)
-	struct channel_softc *chp;
-	int poll;
+wdcreset(struct channel_softc *chp, int poll)
 {
 	int drv_mask1, drv_mask2;
 	int s = 0;
@@ -901,9 +888,7 @@ wdcreset(chp, poll)
 }
 
 static int
-__wdcwait_reset(chp, drv_mask, poll)
-	struct channel_softc *chp;
-	int drv_mask;
+__wdcwait_reset(struct channel_softc *chp, int drv_mask, int poll)
 {
 	int timeout, nloop;
 	u_int8_t st0 = 0, st1 = 0;
@@ -1003,9 +988,7 @@ end:
  * return -1 for a timeout after "timeout" ms.
  */
 int
-__wdcwait(chp, mask, bits, timeout)
-	struct channel_softc *chp;
-	int mask, bits, timeout;
+__wdcwait(struct channel_softc *chp, int mask, int bits, int timeout)
 {
 	u_char status;
 	int time = 0;
@@ -1062,9 +1045,7 @@ __wdcwait(chp, mask, bits, timeout)
  * thread if possible
  */
 int
-wdcwait(chp, mask, bits, timeout, flags)
-	struct channel_softc *chp;
-	int mask, bits, timeout, flags;
+wdcwait(struct channel_softc *chp, int mask, int bits, int timeout, int flags)
 {
 	int error, i, timeout_hz = mstohz(timeout);
 
@@ -1103,7 +1084,7 @@ wdcwait(chp, mask, bits, timeout, flags)
 			}
 		}
 	}
-	return(error);
+	return (error);
 }
 
 
@@ -1111,10 +1092,7 @@ wdcwait(chp, mask, bits, timeout, flags)
  * Busy-wait for DMA to complete
  */
 int
-wdc_dmawait(chp, xfer, timeout)
-	struct channel_softc *chp;
-	struct wdc_xfer *xfer;
-	int timeout;
+wdc_dmawait(struct channel_softc *chp, struct wdc_xfer *xfer, int timeout)
 {
 	int time;
 	for (time = 0;  time < timeout * 1000 / WDCDELAY; time++) {
@@ -1132,8 +1110,7 @@ wdc_dmawait(chp, xfer, timeout)
 }
 
 void
-wdctimeout(arg)
-	void *arg;
+wdctimeout(void *arg)
 {
 	struct channel_softc *chp = (struct channel_softc *)arg;
 	struct wdc_xfer *xfer = chp->ch_queue->sc_xfer.tqh_first;
@@ -1177,8 +1154,7 @@ wdctimeout(arg)
  * XXX this should be a controller-indep function
  */
 void
-wdc_probe_caps(drvp)
-	struct ata_drive_datas *drvp;
+wdc_probe_caps(struct ata_drive_datas *drvp)
 {
 	struct ataparams params, params2;
 	struct channel_softc *chp = drvp->chnl_softc;
@@ -1395,8 +1371,7 @@ wdc_probe_caps(drvp)
  * downgrade was possible, 0 otherwise.
  */
 int
-wdc_downgrade_mode(drvp, flags)
-	struct ata_drive_datas *drvp;
+wdc_downgrade_mode(struct ata_drive_datas *drvp, int flags)
 {
 	struct channel_softc *chp = drvp->chnl_softc;
 	struct device *drv_dev = drvp->drv_softc;
@@ -1454,9 +1429,7 @@ wdc_downgrade_mode(drvp, flags)
 }
 
 int
-wdc_exec_command(drvp, wdc_c)
-	struct ata_drive_datas *drvp;
-	struct wdc_command *wdc_c;
+wdc_exec_command(struct ata_drive_datas *drvp, struct wdc_command *wdc_c)
 {
 	struct channel_softc *chp = drvp->chnl_softc;
 	struct wdc_xfer *xfer;
@@ -1509,9 +1482,7 @@ wdc_exec_command(drvp, wdc_c)
 }
 
 void
-__wdccommand_start(chp, xfer)
-	struct channel_softc *chp;
-	struct wdc_xfer *xfer;
+__wdccommand_start(struct channel_softc *chp, struct wdc_xfer *xfer)
 {   
 	int drive = xfer->drive;
 	struct wdc_command *wdc_c = xfer->cmd;
@@ -1558,10 +1529,7 @@ __wdccommand_start(chp, xfer)
 }
 
 int
-__wdccommand_intr(chp, xfer, irq)
-	struct channel_softc *chp;
-	struct wdc_xfer *xfer;
-	int irq;
+__wdccommand_intr(struct channel_softc *chp, struct wdc_xfer *xfer, int irq)
 {
 	struct wdc_command *wdc_c = xfer->cmd;
 	int bcount = wdc_c->bcount;
@@ -1575,7 +1543,7 @@ __wdccommand_intr(chp, xfer, irq)
 		wflags = AT_POLL;
 	}
 
-again:
+ again:
 	WDCDEBUG_PRINT(("__wdccommand_intr %s:%d:%d\n",
 	    chp->wdc->sc_dev.dv_xname, chp->channel, xfer->drive), DEBUG_INTR);
 	/*
@@ -1652,15 +1620,13 @@ again:
 			goto again;
 		}
 	}
-out:
+ out:
 	__wdccommand_done(chp, xfer);
 	return 1;
 }
 
 void
-__wdccommand_done(chp, xfer)
-	struct channel_softc *chp;
-	struct wdc_xfer *xfer;
+__wdccommand_done(struct channel_softc *chp, struct wdc_xfer *xfer)
 {
 	struct wdc_command *wdc_c = xfer->cmd;
 
@@ -1714,13 +1680,11 @@ __wdccommand_done(chp, xfer)
  * Assumes interrupts are blocked.
  */
 void
-wdccommand(chp, drive, command, cylin, head, sector, count, precomp)
-	struct channel_softc *chp;
-	u_int8_t drive;
-	u_int8_t command;
-	u_int16_t cylin;
-	u_int8_t head, sector, count, precomp;
+wdccommand(struct channel_softc *chp, u_int8_t drive, u_int8_t command,
+    u_int16_t cylin, u_int8_t head, u_int8_t sector, u_int8_t count,
+    u_int8_t precomp)
 {
+
 	WDCDEBUG_PRINT(("wdccommand %s:%d:%d: command=0x%x cylin=%d head=%d "
 	    "sector=%d count=%d precomp=%d\n", chp->wdc->sc_dev.dv_xname,
 	    chp->channel, drive, command, cylin, head, sector, count, precomp),
@@ -1751,13 +1715,10 @@ wdccommand(chp, drive, command, cylin, head, sector, count, precomp)
  * Assumes interrupts are blocked.
  */
 void
-wdccommandext(chp, drive, command, blkno, count)
-	struct channel_softc *chp;
-	u_int8_t drive;
-	u_int8_t command;
-	u_int64_t blkno;
-	u_int16_t count;
+wdccommandext(struct channel_softc *chp, u_int8_t drive, u_int8_t command,
+    u_int64_t blkno, u_int16_t count)
 {
+
 	WDCDEBUG_PRINT(("wdccommandext %s:%d:%d: command=0x%x blkno=%d "
 	    "count=%d\n", chp->wdc->sc_dev.dv_xname,
 	    chp->channel, drive, command, (u_int32_t) blkno, count),
@@ -1800,10 +1761,7 @@ wdccommandext(chp, drive, command, blkno, count)
  * tested by the caller.
  */
 void
-wdccommandshort(chp, drive, command)
-	struct channel_softc *chp;
-	int drive;
-	int command;
+wdccommandshort(struct channel_softc *chp, int drive, int command)
 {
 
 	WDCDEBUG_PRINT(("wdccommandshort %s:%d:%d command 0x%x\n",
@@ -1821,12 +1779,10 @@ wdccommandshort(chp, drive, command)
 }
 
 /* Add a command to the queue and start controller. Must be called at splbio */
-
 void
-wdc_exec_xfer(chp, xfer)
-	struct channel_softc *chp;
-	struct wdc_xfer *xfer;
+wdc_exec_xfer(struct channel_softc *chp, struct wdc_xfer *xfer)
 {
+
 	WDCDEBUG_PRINT(("wdc_exec_xfer %p channel %d drive %d\n", xfer,
 	    chp->channel, xfer->drive), DEBUG_XFERS);
 
@@ -1850,8 +1806,7 @@ wdc_exec_xfer(chp, xfer)
 }
 
 struct wdc_xfer *
-wdc_get_xfer(flags)
-	int flags;
+wdc_get_xfer(int flags)
 {
 	struct wdc_xfer *xfer;
 	int s;
@@ -1867,9 +1822,7 @@ wdc_get_xfer(flags)
 }
 
 void
-wdc_free_xfer(chp, xfer)
-	struct channel_softc *chp;
-	struct wdc_xfer *xfer;
+wdc_free_xfer(struct channel_softc *chp, struct wdc_xfer *xfer)
 {
 	struct wdc_softc *wdc = chp->wdc;
 	int s;
@@ -1889,8 +1842,7 @@ wdc_free_xfer(chp, xfer)
  * Must be called at splbio().
  */
 void
-wdc_kill_pending(chp)
-	struct channel_softc *chp;
+wdc_kill_pending(struct channel_softc *chp)
 {
 	struct wdc_xfer *xfer;
 
@@ -1901,9 +1853,7 @@ wdc_kill_pending(chp)
 }
 
 static void
-__wdcerror(chp, msg) 
-	struct channel_softc *chp;
-	char *msg;
+__wdcerror(struct channel_softc *chp, char *msg) 
 {
 	struct wdc_xfer *xfer = chp->ch_queue->sc_xfer.tqh_first;
 
@@ -1919,9 +1869,7 @@ __wdcerror(chp, msg)
  * the bit bucket
  */
 void
-wdcbit_bucket(chp, size)
-	struct channel_softc *chp; 
-	int size;
+wdcbit_bucket(struct channel_softc *chp, int size)
 {
 
 	for (; size >= 2; size -= 2)
@@ -1931,8 +1879,7 @@ wdcbit_bucket(chp, size)
 }
 
 int
-wdc_addref(chp)
-	struct channel_softc *chp;
+wdc_addref(struct channel_softc *chp)
 {
 	struct wdc_softc *wdc = chp->wdc; 
 	struct scsipi_adapter *adapt = &wdc->sc_atapi_adapter._generic;
@@ -1950,8 +1897,7 @@ wdc_addref(chp)
 }
 
 void
-wdc_delref(chp)
-	struct channel_softc *chp;
+wdc_delref(struct channel_softc *chp)
 {
 	struct wdc_softc *wdc = chp->wdc;
 	struct scsipi_adapter *adapt = &wdc->sc_atapi_adapter._generic;
