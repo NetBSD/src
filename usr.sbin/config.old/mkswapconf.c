@@ -33,7 +33,7 @@
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)mkswapconf.c	5.10 (Berkeley) 7/1/91";*/
-static char rcsid[] = "$Id: mkswapconf.c,v 1.6 1994/01/09 17:53:58 deraadt Exp $";
+static char rcsid[] = "$Id: mkswapconf.c,v 1.7 1994/04/25 23:30:52 cgd Exp $";
 #endif /* not lint */
 
 /*
@@ -104,7 +104,7 @@ do_swap(fl)
 		    major(dev), minor(dev), swap->f_swapsize, swap->f_fn);
 		swap = swap->f_next;
 	} while (swap && swap->f_type == SWAPSPEC);
-	fprintf(fp, "\t{ 0, 0, 0 }\n");
+	fprintf(fp, "\t{ NODEV, 0, 0 }\n");
 	fprintf(fp, "};\n\n");
 	fprintf(fp, "extern int ufs_mountroot();\n");
 	fprintf(fp, "int (*mountroot)() = ufs_mountroot;\n\n");
