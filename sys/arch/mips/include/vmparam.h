@@ -1,4 +1,4 @@
-/*	$NetBSD: vmparam.h,v 1.11 1999/01/06 04:11:26 nisimura Exp $	*/
+/*	$NetBSD: vmparam.h,v 1.12 1999/01/16 20:32:25 chuck Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -230,9 +230,6 @@
 
 /* pcb base */
 #define	pcbb(p)		((u_int)(p)->p_addr)
-
-/* Use new non-contiguous physical memory code. */
-#define	MACHINE_NEW_NONCONTIG
 
 /* VM_PHYSSEG_MAX defined by platform-dependent code. */
 #define	VM_PHYSSEG_STRAT	VM_PSTRAT_BSEARCH
