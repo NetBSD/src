@@ -1,4 +1,4 @@
-/*	$NetBSD: nlist.h,v 1.12 2005/02/03 04:39:32 perry Exp $	*/
+/*	$NetBSD: nlist.h,v 1.13 2005/02/26 21:16:35 dsl Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -52,7 +52,7 @@ struct nlist {
 		long n_strx;		/* file string table offset (on disk) */
 	} n_un;
 #else
-	__aconst char *n_name;		/* symbol name (in memory) */
+	const char *n_name;		/* symbol name (in memory) */
 #endif
 
 #define	N_UNDF	0x00		/* undefined */
