@@ -1,5 +1,5 @@
 #	from: @(#)Makefile.vax	7.18 (Berkeley) 12/16/90
-#	$Id: Makefile.vax,v 1.2 1994/08/16 23:41:11 ragge Exp $
+#	$Id: Makefile.vax,v 1.3 1994/10/08 15:42:28 ragge Exp $
 #
 # This makefile is constructed from a machine description:
 #	config machineid
@@ -22,6 +22,7 @@ C2=	/usr/libexec/cc1
 CC=	cc
 CPP=	cpp
 LD=	/usr/bin/ld
+AWK=	awk
 
 S=	../../../..
 VAX=	../..
@@ -50,12 +51,12 @@ NORMAL_C_C= ${CC} -c ${CFLAGS} ${PROF} ${PARAM} $<
 NORMAL_S= ${CPP} -I. -DLOCORE ${COPTS} $< | ${AS} ${ASFLAGS} -o $*.o
 DRIVER_C= ${CC} -c ${CFLAGS} ${PROF} $<
 DRIVER_C_C= ${CC} -c ${CFLAGS} ${PROF} ${PARAM} $<
-SYSTEM_ASMS=intvec.o locore.o locon.o
-SYSTEM_OBJS=${SYSTEM_ASMS} ${OBJS} glue.o param.o ioconf.o ${LIBKERN}
+SYSTEM_ASMS=intvec.o subr.o
+SYSTEM_OBJS=${SYSTEM_ASMS} vnode_if.o ${OBJS} glue.o param.o ioconf.o ${LIBKERN}
 #SYSTEM_DEP=${SYSTEM_ASMS} lovm.o pmap.o
 SYSTEM_DEP=${SYSTEM_ASMS} ${SYSTEM_OBJS}
 SYSTEM_LD_HEAD=         @echo loading $@; rm -f $@
-SYSTEM_LD= ${LD} -d -e start -T ${LOAD_ADDRESS} -o $@ ${SYSTEM_OBJS} vers.o
+SYSTEM_LD= ${LD} -d -e _start -T ${LOAD_ADDRESS} -o $@ ${SYSTEM_OBJS} vers.o
 #SYSTEM_LD_TAIL= @echo rearranging symbols; symorder symbols.sort $@; ${DBSYM} -f
 SYSTEM_LD_TAIL=@echo Nu {r k{rnan klar!!!!
 
@@ -67,8 +68,8 @@ SYSTEM_LD_TAIL=@echo Nu {r k{rnan klar!!!!
 %LOAD
 
 clean:
-	rm -f eddep *vmunix tags *.o locore.i [a-tv-z]*.s \
-		Errs errs linterrs makelinks
+	rm -f eddep *vmunix tags *.o subr.i [a-tv-z]*.s \
+		Errs errs linterrs makelinks vnode_if.*
 
 lint: /tmp param.c
 	@lint -hbxn -DGENERIC ${COPTS} ${PARAM} \
@@ -83,14 +84,11 @@ symbols.sort: ${VAX}/vax/symbols.raw
 ${INLINECMD}:
 	cd ${VAX}/inline; make
 
-locon.o: ${VAX}/vax/locon.s
-	${CC} -x assembler-with-cpp -E ${AOPTS} ${VAX}/vax/locon.s| as -o locon.o
-
 intvec.o: ${VAX}/vax/intvec.s
 	${CC} -x assembler-with-cpp -E ${AOPTS} ${VAX}/vax/intvec.s| as -o intvec.o
 
-locore.o: ${VAX}/vax/locore.s
-	${CC} -x assembler-with-cpp -E ${AOPTS} ${VAX}/vax/locore.s| as -o locore.o
+subr.o: ${VAX}/vax/subr.s
+	${CC} -x assembler-with-cpp -E ${AOPTS} ${VAX}/vax/subr.s| as -o subr.o
 
 #
 # Den h{r filen borde st{das upp och fixas till, det blir nog n{r 
@@ -108,7 +106,7 @@ clock.o machdep.o autoconf.o conf.o cons.o cpudata.o : Makefile
 crl.o flp.o mba.o uba.o vaxcpu.o : Makefile
 
 # depend on network configuration
-#af.o uipc_proto.o uipc_domain.o locore.o: Makefile
+#af.o uipc_proto.o uipc_domain.o subr.o: Makefile
 
 # depends on kdb being configured
 trap.o:	Makefile
@@ -162,5 +160,9 @@ conf.o: ${VAX}/vax/conf.c
 newvers:
 	sh $S/conf/newvers.sh
 	${CC} ${CFLAGS} -c vers.c
+
+vnode_if.c vnode_if.h : $S/kern/vnode_if.sh $S/kern/vnode_if.src
+	AWK="${AWK}" sh $S/kern/vnode_if.sh $S/kern/vnode_if.src
+
 
 %RULES
