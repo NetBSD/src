@@ -1,4 +1,4 @@
-/*	$NetBSD: algor_p5064_intr.c,v 1.7 2001/06/21 18:58:18 thorpej Exp $	*/
+/*	$NetBSD: algor_p5064_intr.c,v 1.8 2001/08/24 02:11:02 simonb Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -424,7 +424,7 @@ algor_p5064_cal_timer(bus_space_tag_t st, bus_space_handle_t sh)
 	    cps, ctrdiff[2], ctrdiff[3]);
 	printf("CPU clock speed = %lu.%02luMHz "
 	    "(hz cycles = %lu, delay divisor = %u)\n",
-	    cps / 1000000, (cps % 1000000) / 100,
+	    cps / 1000000, (cps % 1000000) / 10000,
 	    cycles_per_hz, delay_divisor);
 }
 
