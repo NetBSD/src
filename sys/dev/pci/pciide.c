@@ -1,4 +1,4 @@
-/*	$NetBSD: pciide.c,v 1.200 2003/09/19 21:36:05 mycroft Exp $	*/
+/*	$NetBSD: pciide.c,v 1.201 2003/09/20 22:46:02 enami Exp $	*/
 
 
 /*
@@ -76,7 +76,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pciide.c,v 1.200 2003/09/19 21:36:05 mycroft Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pciide.c,v 1.201 2003/09/20 22:46:02 enami Exp $");
 
 #ifndef WDCDEBUG
 #define WDCDEBUG
@@ -803,6 +803,7 @@ pciide_attach(parent, self, aux)
 	const char *displaydev;
 
 	aprint_naive(": disk controller\n");
+	aprint_normal("\n");
 
 	sc->sc_pci_vendor = PCI_VENDOR(pa->pa_id);
 	sc->sc_pp = pciide_lookup_product(pa->pa_id);
@@ -815,7 +816,8 @@ pciide_attach(parent, self, aux)
 
 	/* if displaydev == NULL, printf is done in chip-specific map */
 	if (displaydev)
-		aprint_normal(": %s (rev. 0x%02x)\n", displaydev,
+		aprint_normal("%s: %s (rev. 0x%02x)\n",
+		    sc->sc_wdcdev.sc_dev.dv_xname, displaydev,
 		    PCI_REVISION(pa->pa_class));
 
 	sc->sc_pc = pa->pa_pc;
@@ -849,13 +851,14 @@ pciide_chipen(sc, pa)
 	struct pci_attach_args *pa;
 {
 	pcireg_t csr;
+
 	if ((pa->pa_flags & PCI_FLAGS_IO_ENABLED) == 0) {
 		csr = pci_conf_read(sc->sc_pc, sc->sc_tag,
 		    PCI_COMMAND_STATUS_REG);
 		aprint_normal("%s: device disabled (at %s)\n",
-	 	   sc->sc_wdcdev.sc_dev.dv_xname,
-	  	  (csr & PCI_COMMAND_IO_ENABLE) == 0 ?
-		  "device" : "bridge");
+		    sc->sc_wdcdev.sc_dev.dv_xname,
+		   (csr & PCI_COMMAND_IO_ENABLE) == 0 ?
+		   "device" : "bridge");
 		return 0;
 	}
 	return 1;
@@ -2092,6 +2095,7 @@ amd7x6_chip_map(sc, pa)
 
 	if (pciide_chipen(sc, pa) == 0)
 		return;
+
 	aprint_normal("%s: bus-master DMA support present",
 	    sc->sc_wdcdev.sc_dev.dv_xname);
 	pciide_mapreg_dma(sc, pa);
@@ -2279,12 +2283,13 @@ apollo_chip_map(sc, pa)
 
 	if (pciide_chipen(sc, pa) == 0)
 		return;
+
 	/* get a PCI tag for the ISA bridge (function 0 of the same device) */
 	pcib_tag = pci_make_tag(pa->pa_pc, pa->pa_bus, pa->pa_device, 0);
 	/* and read ID and rev of the ISA bridge */
 	pcib_id = pci_conf_read(sc->sc_pc, pcib_tag, PCI_ID_REG);
 	pcib_class = pci_conf_read(sc->sc_pc, pcib_tag, PCI_CLASS_REG);
-	aprint_normal(": VIA Technologies ");
+	aprint_normal("%s: VIA Technologies ", sc->sc_wdcdev.sc_dev.dv_xname);
 	switch (PCI_PRODUCT(pcib_id)) {
 	case PCI_PRODUCT_VIATECH_VT82C586_ISA:
 		aprint_normal("VT82C586 (Apollo VP) ");
@@ -2697,6 +2702,7 @@ cmd0643_9_chip_map(sc, pa)
 	if (pciide_chipen(sc, pa) == 0)
 		return;
 #endif
+
 	aprint_normal("%s: bus-master DMA support present",
 	    sc->sc_wdcdev.sc_dev.dv_xname);
 	pciide_mapreg_dma(sc, pa);
@@ -2877,6 +2883,7 @@ cmd680_chip_map(sc, pa)
 
 	if (pciide_chipen(sc, pa) == 0)
 		return;
+
 	aprint_normal("%s: bus-master DMA support present",
 	    sc->sc_wdcdev.sc_dev.dv_xname);
 	pciide_mapreg_dma(sc, pa);
@@ -3160,6 +3167,7 @@ cy693_chip_map(sc, pa)
 
 	if (pciide_chipen(sc, pa) == 0)
 		return;
+
 	/*
 	 * this chip has 2 PCI IDE functions, one for primary and one for
 	 * secondary. So we need to call pciide_mapregs_compat() with
@@ -3393,7 +3401,9 @@ sis_chip_map(sc, pa)
 
 	if (pciide_chipen(sc, pa) == 0)
 		return;
-	aprint_normal(": Silicon Integrated System ");
+
+	aprint_normal("%s: Silicon Integrated System ",
+	    sc->sc_wdcdev.sc_dev.dv_xname);
 	pci_find_device(NULL, sis_hostbr_match);
 	if (sis_hostbr_type_match) {
 		if (sis_hostbr_type_match->type == SIS_TYPE_SOUTH) {
@@ -3679,6 +3689,7 @@ acer_chip_map(sc, pa)
 
 	if (pciide_chipen(sc, pa) == 0)
 		return;
+
 	aprint_normal("%s: bus-master DMA support present",
 	    sc->sc_wdcdev.sc_dev.dv_xname);
 	pciide_mapreg_dma(sc, pa);
@@ -3887,8 +3898,10 @@ hpt_chip_map(sc, pa)
 
 	if (pciide_chipen(sc, pa) == 0)
 		return;
+
 	revision = PCI_REVISION(pa->pa_class);
-	aprint_normal(": Triones/Highpoint ");
+	aprint_normal("%s: Triones/Highpoint ",
+	    sc->sc_wdcdev.sc_dev.dv_xname);
 	if (sc->sc_pp->ide_product == PCI_PRODUCT_TRIONES_HPT374)
 		aprint_normal("HPT374 IDE Controller\n");
 	else if (sc->sc_pp->ide_product == PCI_PRODUCT_TRIONES_HPT372)
@@ -3927,7 +3940,7 @@ hpt_chip_map(sc, pa)
 	}
 
 	aprint_normal("%s: bus-master DMA support present",
-		sc->sc_wdcdev.sc_dev.dv_xname);
+	    sc->sc_wdcdev.sc_dev.dv_xname);
 	pciide_mapreg_dma(sc, pa);
 	aprint_normal("\n");
 	sc->sc_wdcdev.cap = WDC_CAPABILITY_DATA16 | WDC_CAPABILITY_DATA32 |
@@ -4665,6 +4678,7 @@ opti_chip_map(sc, pa)
 
 	if (pciide_chipen(sc, pa) == 0)
 		return;
+
 	aprint_normal("%s: bus-master DMA support present",
 	    sc->sc_wdcdev.sc_dev.dv_xname);
 
