@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.43 2002/12/23 21:04:23 pooka Exp $	*/
+/*	$NetBSD: machdep.c,v 1.44 2003/01/03 06:26:06 rafal Exp $	*/
 
 /*
  * Copyright (c) 2000 Soren S. Jorvang
@@ -233,12 +233,6 @@ mach_init(argc, argv, magic, btinfo)
 	kernstartpfn = atop(MIPS_KSEG0_TO_PHYS((vaddr_t) kernel_text));
 	kernendpfn = atop(MIPS_KSEG0_TO_PHYS(kernend));
 
-	/*
-	 * Now set up the real console.
-	 * XXX Should be done later after we determine systype.
-	 */
-	consinit();
-
 #if 1 /* skidt? */
 	ARCBIOS->FlushAllCaches();
 #endif
@@ -359,6 +353,11 @@ mach_init(argc, argv, magic, btinfo)
 		panic("IP%d architecture not yet supported", mach_type);
 		break;
 	}
+
+	/*
+	 * Now that we know the system type, set up the real console
+	 */
+	consinit();
 
 	physmem = arcsmem = 0;
 	mem_cluster_cnt = 0;
