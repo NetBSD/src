@@ -1,4 +1,4 @@
-/*	$NetBSD: copystr.S,v 1.1 2001/02/23 03:48:09 ichiro Exp $	*/
+/*	$NetBSD: copystr.S,v 1.1 2001/03/04 08:25:39 matt Exp $	*/
 
 /*
  * Copyright (c) 1995 Mark Brinicombe.

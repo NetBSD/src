@@ -1,4 +1,4 @@
-#	$NetBSD: files.arm32,v 1.97 2001/03/04 05:15:39 matt Exp $
+#	$NetBSD: files.arm32,v 1.98 2001/03/04 08:25:38 matt Exp $
 #
 # First try for arm-specific configuration info
 #
@@ -341,12 +341,6 @@ file	arch/arm32/arm32/spl.S
 file	arch/arm32/arm32/intr.c
 file	arch/arm32/dev/bus_space_notimpl.S
 
-# library functions
-file	arch/arm32/arm32/strstr.c
-file	arch/arm32/arm32/bcopy_page.S
-file	arch/arm32/arm32/bcopyinout.S
-file	arch/arm32/arm32/copystr.S
-
 # files related to the shell
 file	arch/arm32/kshell/kshell_input.c	kshell
 file	arch/arm32/kshell/kshell_shell.c	kshell
@@ -484,10 +478,3 @@ include "dev/usb/files.usb"
 include "dev/wscons/files.wscons"
 
 include "dev/pckbc/files.pckbc"
-
-#
-# Compatibility modules
-#
-
-# Binary compatibility with previous NetBSD releases (COMPAT_XX)
-file	arch/arm32/arm32/compat_13_machdep.c	compat_13
