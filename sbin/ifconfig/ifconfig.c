@@ -1,6 +1,6 @@
 /*
- * Copyright (c) 1983 Regents of the University of California.
- * All rights reserved.
+ * Copyright (c) 1983, 1993
+ *	The Regents of the University of California.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -32,14 +32,14 @@
  */
 
 #ifndef lint
-char copyright[] =
-"@(#) Copyright (c) 1983 Regents of the University of California.\n\
- All rights reserved.\n";
+static char copyright[] =
+"@(#) Copyright (c) 1983, 1993\n\
+	The Regents of the University of California.  All rights reserved.\n";
 #endif /* not lint */
 
 #ifndef lint
-/*static char sccsid[] = "from: @(#)ifconfig.c	5.1 (Berkeley) 2/28/91";*/
-static char rcsid[] = "$Id: ifconfig.c,v 1.12 1994/01/22 02:04:35 cgd Exp $";
+/*static char sccsid[] = "from: @(#)ifconfig.c	8.2 (Berkeley) 2/16/94";*/
+static char *rcsid = "$Id: ifconfig.c,v 1.13 1994/09/23 01:38:52 mycroft Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -53,28 +53,25 @@ static char rcsid[] = "$Id: ifconfig.c,v 1.12 1994/01/22 02:04:35 cgd Exp $";
 #define	NSIP
 #include <netns/ns.h>
 #include <netns/ns_if.h>
+#include <netdb.h>
 
 #define EON
 #include <netiso/iso.h>
 #include <netiso/iso_var.h>
-
-#include <netdb.h>
 #include <sys/protosw.h>
 
-#include <unistd.h>
-#include <stdio.h>
-#include <errno.h>
 #include <ctype.h>
+#include <err.h>
+#include <errno.h>
+#include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <err.h>
+#include <unistd.h>
 
 struct	ifreq		ifr, ridreq;
 struct	ifaliasreq	addreq;
-#ifdef	EON
 struct	iso_ifreq	iso_ridreq;
 struct	iso_aliasreq	iso_addreq;
-#endif
 struct	sockaddr_in	netmask;
 
 char	name[30];
@@ -87,11 +84,14 @@ int	doalias;
 int	clearaddr;
 int	newaddr = 1;
 int	s;
-extern	int errno;
+int	af = AF_INET;
 
 int	setifflags(), setifaddr(), setifdstaddr(), setifnetmask();
 int	setifmetric(), setifbroadaddr(), setifipdst();
-int	notealias(), setsnpaoffset(), setnsellength();
+int	notealias(), setsnpaoffset(), setnsellength(), notrailers();
+int	getinfo __P((struct ifreq *));
+void	getsock __P((int));
+void	printall __P((void));
 
 #define	NEXTARG		0xffffff
 
@@ -102,18 +102,12 @@ struct	cmd {
 } cmds[] = {
 	{ "up",		IFF_UP,		setifflags } ,
 	{ "down",	-IFF_UP,	setifflags },
-	{ "trailers",	-IFF_NOTRAILERS,setifflags },
-	{ "-trailers",	IFF_NOTRAILERS,	setifflags },
+	{ "trailers",	-1,		notrailers },
+	{ "-trailers",	1,		notrailers },
 	{ "arp",	-IFF_NOARP,	setifflags },
 	{ "-arp",	IFF_NOARP,	setifflags },
 	{ "debug",	IFF_DEBUG,	setifflags },
 	{ "-debug",	-IFF_DEBUG,	setifflags },
-	{ "link0",	IFF_LINK0,	setifflags },
-	{ "-link0",	-IFF_LINK0,	setifflags },
-	{ "link1",	IFF_LINK1,	setifflags },
-	{ "-link1",	-IFF_LINK1,	setifflags },
-	{ "link2",	IFF_LINK2,	setifflags },
-	{ "-link2",	-IFF_LINK2,	setifflags },
 	{ "alias",	IFF_UP,		notealias },
 	{ "-alias",	-IFF_UP,	notealias },
 	{ "delete",	-IFF_UP,	notealias },
@@ -128,26 +122,23 @@ struct	cmd {
 	{ "ipdst",	NEXTARG,	setifipdst },
 	{ "snpaoffset",	NEXTARG,	setsnpaoffset },
 	{ "nsellength",	NEXTARG,	setnsellength },
+	{ "link0",	IFF_LINK0,	setifflags } ,
+	{ "-link0",	-IFF_LINK0,	setifflags } ,
+	{ "link1",	IFF_LINK1,	setifflags } ,
+	{ "-link1",	-IFF_LINK1,	setifflags } ,
+	{ "link2",	IFF_LINK2,	setifflags } ,
+	{ "-link2",	-IFF_LINK2,	setifflags } ,
 	{ 0,		0,		setifaddr },
 	{ 0,		0,		setifdstaddr },
 };
 
 /*
- * XNS support liberally adapted from
- * code written at the University of Maryland
- * principally by James O'Toole and Chris Torek.
+ * XNS support liberally adapted from code written at the University of
+ * Maryland principally by James O'Toole and Chris Torek.
  */
 int	in_status(), in_getaddr();
-int	in_s = -1;
-
-#ifdef NSIP
 int	xns_status(), xns_getaddr();
-int	xns_s = -1;
-#endif
-#ifdef EON
 int	iso_status(), iso_getaddr();
-int	iso_s = -1;
-#endif
 
 /* Known address families */
 struct afswtch {
@@ -163,14 +154,10 @@ struct afswtch {
 #define C(x) ((caddr_t) &x)
 	{ "inet", AF_INET, in_status, in_getaddr,
 	     SIOCDIFADDR, SIOCAIFADDR, C(ridreq), C(addreq) },
-#ifdef	NSIP
 	{ "ns", AF_NS, xns_status, xns_getaddr,
 	     SIOCDIFADDR, SIOCAIFADDR, C(ridreq), C(addreq) },
-#endif
-#ifdef	EON
 	{ "iso", AF_ISO, iso_status, iso_getaddr,
 	     SIOCDIFADDR_ISO, SIOCAIFADDR_ISO, C(iso_ridreq), C(iso_addreq) },
-#endif
 	{ 0,	0,	    0,		0 }
 };
 
@@ -180,27 +167,23 @@ main(argc, argv)
 	int argc;
 	char *argv[];
 {
-	int af = AF_INET;
 	register struct afswtch *rafp;
-	int all = 0;
+	int aflag = 0;
 
 	if (argc < 2) {
-		fprintf(stderr, "usage: ifconfig interface\n%s%s%s%s%s%s",
+		fprintf(stderr, "usage: ifconfig interface\n%s%s%s%s%s",
 		    "\t[ af [ address [ dest_addr ] ] [ up ] [ down ] ",
 			    "[ netmask mask ] ]\n",
 		    "\t[ metric n ]\n",
 		    "\t[ arp | -arp ]\n",
-		    "\t[ link0 | -link0 ] [ link1 | -link1 ] ",
-			    "[ link2 | -link2 ]\n");
+		    "\t[ link0 | -link0 ] [ link1 | -link1 ] [ link2 | -link2 ]\n");
 		exit(1);
 	}
 	argc--, argv++;
-	if(strcmp(*argv, "-a")==0)
-		all = 1;
-	else {
+	if (!strcmp(*argv, "-a"))
+		aflag = 1;
+	else
 		strncpy(name, *argv, sizeof(name));
-		strncpy(ifr.ifr_name, name, sizeof(ifr.ifr_name));
-	}
 	argc--, argv++;
 	if (argc > 0) {
 		for (afp = rafp = afs; rafp->af_name; rafp++)
@@ -211,48 +194,17 @@ main(argc, argv)
 		rafp = afp;
 		af = ifr.ifr_addr.sa_family = rafp->af_af;
 	}
-	in_s = s = socket(af, SOCK_DGRAM, 0);
-	if (s < 0) {
-		perror("ifconfig: socket");
-		exit(1);
-	}
-#ifdef NSIP
-	xns_s = socket(AF_NS, SOCK_DGRAM, 0);
-	if(xns_s < 0) {
-		if (errno != EPROTONOSUPPORT) {
-			perror("ifconfig: xns: socket");
-		}
-	}
-#endif	
-#ifdef EON
-	iso_s = socket(AF_ISO, SOCK_DGRAM, 0);
-	if (iso_s < 0) {
-		if (errno != EPROTONOSUPPORT) {
-			perror("ifconfig: iso: socket");
-		}
-	}
-#endif
-
-	if(all) {
-		printall(af);
+	if (aflag) {
+		printall();
 		exit(0);
 	}
-	if (ioctl(s, SIOCGIFFLAGS, (caddr_t)&ifr) < 0) {
-		Perror("ioctl (SIOCGIFFLAGS)");
+	strncpy(ifr.ifr_name, name, sizeof(ifr.ifr_name));
+	if (getinfo(&ifr) < 0)
 		exit(1);
-	}
-	if(argc==0) {
-		handle_ifreq(&ifr);
+	if (argc == 0) {
+		status();
 		exit(0);
 	}
-	
-	strncpy(ifr.ifr_name, name, sizeof ifr.ifr_name);
-	flags = ifr.ifr_flags;
-	if (ioctl(s, SIOCGIFMETRIC, (caddr_t)&ifr) < 0)
-		perror("ioctl (SIOCGIFMETRIC)");
-	else
-		metric = ifr.ifr_metric;
-
 	while (argc > 0) {
 		register struct cmd *p;
 
@@ -275,7 +227,6 @@ main(argc, argv)
 	}
 	if (af == AF_ISO)
 		adjust_nsellength();
-#ifdef	NSIP
 	if (setipdst && af==AF_NS) {
 		struct nsip_req rq;
 		int size = sizeof(rq);
@@ -284,9 +235,8 @@ main(argc, argv)
 		rq.rq_ip = addreq.ifra_dstaddr;
 
 		if (setsockopt(s, 0, SO_NSIP_ROUTE, &rq, size) < 0)
-			Perror("Encapsulation Routing");
+			warn("encapsulation routing");
 	}
-#endif
 	if (clearaddr) {
 		int ret;
 		strncpy(rafp->af_ridreq, name, sizeof ifr.ifr_name);
@@ -294,73 +244,84 @@ main(argc, argv)
 			if (errno == EADDRNOTAVAIL && (doalias >= 0)) {
 				/* means no previous address for interface */
 			} else
-				Perror("ioctl (SIOCDIFADDR)");
+				warn("SIOCDIFADDR");
 		}
 	}
 	if (newaddr) {
 		strncpy(rafp->af_addreq, name, sizeof ifr.ifr_name);
 		if (ioctl(s, rafp->af_aifaddr, rafp->af_addreq) < 0)
-			Perror("ioctl (SIOCAIFADDR)");
+			warn("SIOCAIFADDR");
 	}
-
 	exit(0);
 }
 
+void
+getsock(naf)
+	int naf;
+{
+	static int oaf = -1;
+
+	if (oaf == naf)
+		return;
+	if (oaf != -1)
+		close(s);
+	s = socket(naf, SOCK_DGRAM, 0);
+	if (s < 0)
+		oaf = -1;
+	else
+		oaf = naf;
+}
+
+int
+getinfo(ifr)
+	struct ifreq *ifr;
+{
+
+	getsock(af);
+	if (s < 0)
+		err(1, "socket");
+	if (ioctl(s, SIOCGIFFLAGS, (caddr_t)ifr) < 0) {
+		warn("SIOCGIFFLAGS");
+		return (-1);
+	}
+	flags = ifr->ifr_flags;
+	if (ioctl(s, SIOCGIFMETRIC, (caddr_t)ifr) < 0) {
+		warn("SIOCGIFMETRIC");
+		metric = 0;
+	} else
+		metric = ifr->ifr_metric;
+	return (0);
+}
+
+void
 printall()
 {
 	char inbuf[8192];
 	struct ifconf ifc;
 	struct ifreq ifreq, *ifr;
-	struct in_addr in;
-	int i, len;
+	int i;
 
-	ifc.ifc_len = sizeof inbuf;
+	ifc.ifc_len = sizeof(inbuf);
 	ifc.ifc_buf = inbuf;
-	if( ioctl(s, SIOCGIFCONF, &ifc) < 0) {
-		perror("ioctl(SIOCGIFCONF)");
-		return -1;
-	}
+	getsock(af);
+	if (s < 0)
+		err(1, "socket");
+	if (ioctl(s, SIOCGIFCONF, &ifc) < 0)
+		err(1, "SIOCGIFCONF");
 	ifr = ifc.ifc_req;
 	ifreq.ifr_name[0] = '\0';
-	for(i=0; i<ifc.ifc_len; i+=len, ifr=(struct ifreq *)((caddr_t)ifr+len)) {
-		len = sizeof ifr->ifr_name + ifr->ifr_addr.sa_len;
-		ifreq = *ifr;
-		if( ioctl(s, SIOCGIFFLAGS, &ifreq) < 0) {
-			perror("ioctl(SIOCGIFFLAGS)");
+	for (i = 0; i < ifc.ifc_len; ) {
+		ifr = (struct ifreq *)((caddr_t)ifc.ifc_req + i);
+		i += sizeof(ifr->ifr_name) + ifr->ifr_addr.sa_len;
+		if (!strncmp(ifreq.ifr_name, ifr->ifr_name,
+			     sizeof(ifr->ifr_name)))
 			continue;
-		}
-		handle_ifreq(&ifreq);
+		strncpy(name, ifr->ifr_name, sizeof(ifr->ifr_name));
+		ifreq = *ifr;
+		if (getinfo(&ifreq) < 0)
+			continue;
+		status();
 	}
-}
-
-struct ifseen {
-	struct ifseen *next;
-	char *name;
-} *ifshead;
-
-handle_ifreq(ifr)
-struct ifreq *ifr;
-{
-	struct ifseen *ifs;
-
-	for(ifs=ifshead; ifs; ifs=ifs->next)
-		if(strcmp(ifs->name, ifr->ifr_name)==0)
-			return;
-
-	strncpy(name, ifr->ifr_name, sizeof ifr->ifr_name);
-	flags = ifr->ifr_flags;
-
-	if (ioctl(s, SIOCGIFMETRIC, (caddr_t)ifr) < 0) {
-		perror("ioctl (SIOCGIFMETRIC)");
-		metric = 0;
-	} else
-		metric = ifr->ifr_metric;
-	status();
-	
-	ifs = (struct ifseen *)malloc(sizeof *ifs);
-	ifs->name = strdup(ifr->ifr_name);
-	ifs->next = ifshead;
-	ifshead = ifs;
 }
 
 #define RIDADDR 0
@@ -422,6 +383,14 @@ notealias(addr, param)
 }
 
 /*ARGSUSED*/
+notrailers(vname, value)
+	char *vname;
+	int value;
+{
+	printf("Note: trailers are no longer sent, but always received\n");
+}
+
+/*ARGSUSED*/
 setifdstaddr(addr, param)
 	char *addr;
 	int param;
@@ -433,10 +402,8 @@ setifflags(vname, value)
 	char *vname;
 	short value;
 {
- 	if (ioctl(s, SIOCGIFFLAGS, (caddr_t)&ifr) < 0) {
- 		Perror("ioctl (SIOCGIFFLAGS)");
- 		exit(1);
- 	}
+ 	if (ioctl(s, SIOCGIFFLAGS, (caddr_t)&ifr) < 0)
+		err(1, "SIOCGIFFLAGS");
 	strncpy(ifr.ifr_name, name, sizeof (ifr.ifr_name));
  	flags = ifr.ifr_flags;
 
@@ -447,7 +414,7 @@ setifflags(vname, value)
 		flags |= value;
 	ifr.ifr_flags = flags;
 	if (ioctl(s, SIOCSIFFLAGS, (caddr_t)&ifr) < 0)
-		Perror(vname);
+		err(1, "SIOCSIFFLAGS");
 }
 
 setifmetric(val)
@@ -456,19 +423,18 @@ setifmetric(val)
 	strncpy(ifr.ifr_name, name, sizeof (ifr.ifr_name));
 	ifr.ifr_metric = atoi(val);
 	if (ioctl(s, SIOCSIFMETRIC, (caddr_t)&ifr) < 0)
-		perror("ioctl (set metric)");
+		warn("SIOCSIFMETRIC");
 }
 
 setsnpaoffset(val)
 	char *val;
 {
-#ifdef	EON
 	iso_addreq.ifra_snpaoffset = atoi(val);
-#endif
 }
 
 #define	IFFBITS \
-"\020\1UP\2BROADCAST\3DEBUG\4LOOPBACK\5POINTOPOINT\6NOTRAILERS\7RUNNING\10NOARP\11PROMISC\12ALLMULTI\13OACTIVE\14SIMPLEX\15LINK0\16LINK1\17LINK2\20MULTICAST"
+"\020\1UP\2BROADCAST\3DEBUG\4LOOPBACK\5POINTOPOINT\6NOTRAILERS\7RUNNING\10NOARP\
+\11PROMISC\12ALLMULTI\13OACTIVE\14SIMPLEX\15LINK0\16LINK1\17LINK2\20MULTICAST"
 
 /*
  * Print the status of the interface.  If an address family was
@@ -498,31 +464,39 @@ in_status(force)
 	struct sockaddr_in *sin;
 	char *inet_ntoa();
 
-	strncpy(ifr.ifr_name, name, sizeof (ifr.ifr_name));
-	if (ioctl(in_s, SIOCGIFADDR, (caddr_t)&ifr) < 0) {
+	getsock(AF_INET);
+	if (s < 0) {
+		if (errno == EPROTONOSUPPORT)
+			return;
+		err(1, "socket");
+	}
+	bzero((caddr_t)&ifr, sizeof(ifr));
+	strncpy(ifr.ifr_name, name, sizeof(ifr.ifr_name));
+	if (ioctl(s, SIOCGIFADDR, (caddr_t)&ifr) < 0) {
 		if (errno == EADDRNOTAVAIL || errno == EAFNOSUPPORT) {
 			if (!force)
 				return;
 			bzero((char *)&ifr.ifr_addr, sizeof(ifr.ifr_addr));
 		} else
-			perror("ioctl (SIOCGIFADDR)");
+			warn("SIOCGIFADDR");
 	}
+	strncpy(ifr.ifr_name, name, sizeof (ifr.ifr_name));
 	sin = (struct sockaddr_in *)&ifr.ifr_addr;
 	printf("\tinet %s ", inet_ntoa(sin->sin_addr));
 	strncpy(ifr.ifr_name, name, sizeof (ifr.ifr_name));
-	if (ioctl(in_s, SIOCGIFNETMASK, (caddr_t)&ifr) < 0) {
+	if (ioctl(s, SIOCGIFNETMASK, (caddr_t)&ifr) < 0) {
 		if (errno != EADDRNOTAVAIL)
-			perror("ioctl (SIOCGIFNETMASK)");
+			warn("SIOCGIFNETMASK");
 		bzero((char *)&ifr.ifr_addr, sizeof(ifr.ifr_addr));
 	} else
 		netmask.sin_addr =
 		    ((struct sockaddr_in *)&ifr.ifr_addr)->sin_addr;
 	if (flags & IFF_POINTOPOINT) {
-		if (ioctl(in_s, SIOCGIFDSTADDR, (caddr_t)&ifr) < 0) {
+		if (ioctl(s, SIOCGIFDSTADDR, (caddr_t)&ifr) < 0) {
 			if (errno == EADDRNOTAVAIL)
 			    bzero((char *)&ifr.ifr_addr, sizeof(ifr.ifr_addr));
 			else
-			    perror("ioctl (SIOCGIFDSTADDR)");
+			    warn("SIOCGIFDSTADDR");
 		}
 		strncpy(ifr.ifr_name, name, sizeof (ifr.ifr_name));
 		sin = (struct sockaddr_in *)&ifr.ifr_dstaddr;
@@ -530,11 +504,11 @@ in_status(force)
 	}
 	printf("netmask 0x%x ", ntohl(netmask.sin_addr.s_addr));
 	if (flags & IFF_BROADCAST) {
-		if (ioctl(in_s, SIOCGIFBRDADDR, (caddr_t)&ifr) < 0) {
+		if (ioctl(s, SIOCGIFBRDADDR, (caddr_t)&ifr) < 0) {
 			if (errno == EADDRNOTAVAIL)
 			    bzero((char *)&ifr.ifr_addr, sizeof(ifr.ifr_addr));
 			else
-			    perror("ioctl (SIOCGIFADDR)");
+			    warn("SIOCGIFBRDADDR");
 		}
 		strncpy(ifr.ifr_name, name, sizeof (ifr.ifr_name));
 		sin = (struct sockaddr_in *)&ifr.ifr_addr;
@@ -544,33 +518,36 @@ in_status(force)
 	putchar('\n');
 }
 
-#ifdef	NSIP
-
 xns_status(force)
 	int force;
 {
 	struct sockaddr_ns *sns;
 
-	if (xns_s < 0)
+	getsock(AF_NS);
+	if (s < 0) {
+		if (errno == EPROTONOSUPPORT)
 			return;
-
-	if (ioctl(xns_s, SIOCGIFADDR, (caddr_t)&ifr) < 0) {
+		err(1, "socket");
+	}
+	bzero((caddr_t)&ifr, sizeof(ifr));
+	strncpy(ifr.ifr_name, name, sizeof(ifr.ifr_name));
+	if (ioctl(s, SIOCGIFADDR, (caddr_t)&ifr) < 0) {
 		if (errno == EADDRNOTAVAIL || errno == EAFNOSUPPORT) {
 			if (!force)
 				return;
 			bzero((char *)&ifr.ifr_addr, sizeof(ifr.ifr_addr));
 		} else
-			perror("ioctl (SIOCGIFADDR)");
+			warn("SIOCGIFADDR");
 	}
 	strncpy(ifr.ifr_name, name, sizeof ifr.ifr_name);
 	sns = (struct sockaddr_ns *)&ifr.ifr_addr;
 	printf("\tns %s ", ns_ntoa(sns->sns_addr));
 	if (flags & IFF_POINTOPOINT) { /* by W. Nesheim@Cornell */
-		if (ioctl(xns_s, SIOCGIFDSTADDR, (caddr_t)&ifr) < 0) {
+		if (ioctl(s, SIOCGIFDSTADDR, (caddr_t)&ifr) < 0) {
 			if (errno == EADDRNOTAVAIL)
 			    bzero((char *)&ifr.ifr_addr, sizeof(ifr.ifr_addr));
 			else
-			    Perror("ioctl (SIOCGIFDSTADDR)");
+			    warn("SIOCGIFDSTADDR");
 		}
 		strncpy(ifr.ifr_name, name, sizeof (ifr.ifr_name));
 		sns = (struct sockaddr_ns *)&ifr.ifr_dstaddr;
@@ -579,70 +556,51 @@ xns_status(force)
 	putchar('\n');
 }
 
-#endif
-#ifdef	EON
 iso_status(force)
 	int force;
 {
 	struct sockaddr_iso *siso;
 	struct iso_ifreq ifr;
 
-	if (iso_s < 0)
+	getsock(AF_ISO);
+	if (s < 0) {
+		if (errno == EPROTONOSUPPORT)
 			return;
+		err(1, "socket");
+	}
 	bzero((caddr_t)&ifr, sizeof(ifr));
 	strncpy(ifr.ifr_name, name, sizeof(ifr.ifr_name));
-	if (ioctl(iso_s, SIOCGIFADDR_ISO, (caddr_t)&ifr) < 0) {
+	if (ioctl(s, SIOCGIFADDR_ISO, (caddr_t)&ifr) < 0) {
 		if (errno == EADDRNOTAVAIL || errno == EAFNOSUPPORT) {
 			if (!force)
 				return;
 			bzero((char *)&ifr.ifr_Addr, sizeof(ifr.ifr_Addr));
-		} else {
-			perror("ioctl (SIOCGIFADDR_ISO)");
-			exit(1);
-		}
+		} else
+			warn("SIOCGIFADDR_ISO");
 	}
 	strncpy(ifr.ifr_name, name, sizeof ifr.ifr_name);
 	siso = &ifr.ifr_Addr;
 	printf("\tiso %s ", iso_ntoa(&siso->siso_addr));
-	if (ioctl(iso_s, SIOCGIFNETMASK_ISO, (caddr_t)&ifr) < 0) {
-		if (errno != EADDRNOTAVAIL)
-			perror("ioctl (SIOCGIFNETMASK_ISO)");
+	if (ioctl(s, SIOCGIFNETMASK_ISO, (caddr_t)&ifr) < 0) {
+		if (errno == EADDRNOTAVAIL)
+			bzero((char *)&ifr.ifr_Addr, sizeof(ifr.ifr_Addr));
+		else
+			warn("SIOCGIFNETMASK_ISO");
 	} else {
 		printf(" netmask %s ", iso_ntoa(&siso->siso_addr));
 	}
 	if (flags & IFF_POINTOPOINT) {
-		if (ioctl(iso_s, SIOCGIFDSTADDR_ISO, (caddr_t)&ifr) < 0) {
+		if (ioctl(s, SIOCGIFDSTADDR_ISO, (caddr_t)&ifr) < 0) {
 			if (errno == EADDRNOTAVAIL)
 			    bzero((char *)&ifr.ifr_Addr, sizeof(ifr.ifr_Addr));
 			else
-			    Perror("ioctl (SIOCGIFDSTADDR_ISO)");
+			    warn("SIOCGIFDSTADDR_ISO");
 		}
 		strncpy(ifr.ifr_name, name, sizeof (ifr.ifr_name));
 		siso = &ifr.ifr_Addr;
 		printf("--> %s ", iso_ntoa(&siso->siso_addr));
 	}
 	putchar('\n');
-}
-#endif
-
-Perror(cmd)
-	char *cmd;
-{
-	extern int errno;
-
-	switch (errno) {
-
-	case ENXIO:
-		errx(1, "%s: no such interface", cmd);
-		break;
-
-	case EPERM:
-		errx(1, "%s: permission denied", cmd);
-		break;
-
-	default:
-		err(1, "%s", cmd);
-	}
 }
 
 struct	in_addr inet_makeaddr();
@@ -706,7 +664,6 @@ printb(s, v, bits)
 		putchar('>');
 	}
 }
-#ifdef	NSIP
 
 #define SNS(x) ((struct sockaddr_ns *) &(x))
 struct sockaddr_ns *snstab[] = {
@@ -726,8 +683,6 @@ char *addr;
 		printf("Attempt to set XNS netmask will be ineffectual\n");
 }
 
-#endif
-#ifdef	EON
 #define SISO(x) ((struct sockaddr_iso *) &(x))
 struct sockaddr_iso *sisotab[] = {
 SISO(iso_ridreq.ifr_Addr), SISO(iso_addreq.ifra_addr),
@@ -748,7 +703,6 @@ char *addr;
 		siso->siso_family = AF_ISO;
 	}
 }
-#endif
 
 setnsellength(val)
 	char *val;
@@ -760,7 +714,6 @@ setnsellength(val)
 		errx(1, "Setting NSEL length valid only for iso");
 }
 
-#ifdef EON
 fixnsel(s)
 register struct sockaddr_iso *s;
 {
@@ -768,13 +721,10 @@ register struct sockaddr_iso *s;
 		return;
 	s->siso_tlen = nsellength;
 }
-#endif
 
 adjust_nsellength()
 {
-#ifdef EON
 	fixnsel(sisotab[RIDADDR]);
 	fixnsel(sisotab[ADDR]);
 	fixnsel(sisotab[DSTADDR]);
-#endif
 }

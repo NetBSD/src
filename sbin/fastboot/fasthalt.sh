@@ -1,7 +1,7 @@
 #!/bin/sh -
 #
-# Copyright (c) 1988 The Regents of the University of California.
-# All rights reserved.
+# Copyright (c) 1988, 1993
+#	The Regents of the University of California.  All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
 # modification, are permitted provided that the following conditions
@@ -31,9 +31,8 @@
 # OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 # SUCH DAMAGE.
 #
-#	@(#)fasthalt.sh	5.4 (Berkeley) 4/16/91
-#
-#	$Header: /cvsroot/src/sbin/fastboot/fasthalt.sh,v 1.3 1993/03/23 00:27:41 cgd Exp $
+#	from: @(#)fasthalt.sh	8.1 (Berkeley) 6/5/93
+#	$Id: fasthalt.sh,v 1.4 1994/09/23 01:38:48 mycroft Exp $
 #
 
 cp /dev/null /fastboot

@@ -1,5 +1,5 @@
-.\" Copyright (c) 1985, 1991 The Regents of the University of California.
-.\" All rights reserved.
+.\" Copyright (c) 1985, 1991, 1993
+.\"	The Regents of the University of California.  All rights reserved.
 .\"
 .\" Redistribution and use in source and binary forms, with or without
 .\" modification, are permitted provided that the following conditions
@@ -29,10 +29,10 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.\"     from: @(#)ping.8	6.7 (Berkeley) 3/16/91
-.\"	$Id: ping.8,v 1.4 1993/08/01 07:38:34 mycroft Exp $
+.\"     from: @(#)ping.8	8.2 (Berkeley) 12/11/93
+.\"	$Id: ping.8,v 1.5 1994/09/23 01:38:59 mycroft Exp $
 .\"
-.Dd March 16, 1991
+.Dd December 11, 1993
 .Dt PING 8
 .Os BSD 4.3
 .Sh NAME
@@ -42,12 +42,14 @@
 packets to network hosts
 .Sh SYNOPSIS
 .Nm ping
-.Op Fl dfnqrvR
+.Op Fl dfLnqRrv
 .Op Fl c Ar count
+.Op Fl I Ar ifaddr
 .Op Fl i Ar wait
 .Op Fl l Ar preload
 .Op Fl p Ar pattern
 .Op Fl s Ar packetsize
+.Op Fl t Ar ttl
 .Sh DESCRIPTION
 .Nm Ping
 uses the
@@ -66,7 +68,6 @@ followed by a
 and then an arbitrary number of ``pad'' bytes used to fill out the
 packet.
 The options are as follows:
-Other options are:
 .Bl -tag -width Ds
 .It Fl c Ar count
 Stop after sending (and receiving)
@@ -83,7 +84,7 @@ Outputs packets as fast as they come back or one hundred times per second,
 whichever is more.
 For every
 .Tn ECHO_REQUEST
-sent a period ``.'' is printed, while for ever
+sent a period ``.'' is printed, while for every
 .Tn ECHO_REPLY
 received a backspace is printed.
 This provides a rapid display of how many packets are being dropped.
@@ -152,6 +153,17 @@ Verbose output.
 packets other than
 .Tn ECHO_RESPONSE
 that are received are listed.
+.El
+.Pp
+In addition, the following options may be used for multicast pings:
+.Bl -tag -width Ds
+.It Fl I Ar ifaddr
+Transmit using the specified interface address.
+.It Fl L
+Disable the loopback, so the transmitting host doesn't see the ICMP
+requests.
+.It Fl t Ar ttl
+Use the specified time-to-live.
 .El
 .Pp
 When using

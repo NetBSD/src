@@ -1,6 +1,6 @@
 /*
- * Copyright (c) 1989 The Regents of the University of California.
- * All rights reserved.
+ * Copyright (c) 1989, 1993
+ *	The Regents of the University of California.  All rights reserved.
  *
  * This code is derived from software contributed to Berkeley by
  * Mike Muuss.
@@ -35,14 +35,14 @@
  */
 
 #ifndef lint
-char copyright[] =
-"@(#) Copyright (c) 1989 The Regents of the University of California.\n\
- All rights reserved.\n";
+static char copyright[] =
+"@(#) Copyright (c) 1989, 1993\n\
+	The Regents of the University of California.  All rights reserved.\n";
 #endif /* not lint */
 
 #ifndef lint
-/*static char sccsid[] = "from: @(#)ping.c	5.9 (Berkeley) 5/12/91";*/
-static char rcsid[] = "$Id: ping.c,v 1.7 1993/12/15 04:46:13 hpeyerl Exp $";
+/*static char sccsid[] = "from: @(#)ping.c	8.1 (Berkeley) 6/5/93";*/
+static char *rcsid = "$Id: ping.c,v 1.8 1994/09/23 01:39:00 mycroft Exp $";
 #endif /* not lint */
 
 /*
@@ -108,9 +108,9 @@ int options;
 
 /* multicast options */
 int moptions;
-#define MULTICAST_NOLOOP	0x001
-#define MULTICAST_TTL		0x002
-#define MULTICAST_IF		0x004
+#define	MULTICAST_NOLOOP	0x001
+#define	MULTICAST_TTL		0x002
+#define	MULTICAST_IF		0x004
 
 /*
  * MAX_DUP_CHK is the number of bits in received table, i.e. the maximum
@@ -139,9 +139,9 @@ int interval = 1;		/* interval between packets */
 
 /* timing */
 int timing;			/* flag to do timing */
-double tmin = 100.0*(double)LONG_MAX;		/* minimum round trip time */
-double tmax;			/* maximum round trip time */
-double tsum;			/* sum of all times, for doing average */
+double tmin = 999999999.0;	/* minimum round trip time */
+double tmax = 0.0;		/* maximum round trip time */
+double tsum = 0.0;		/* sum of all times, for doing average */
 
 char *pr_addr();
 void catcher(), finish();
@@ -157,11 +157,11 @@ main(argc, argv)
 	struct sockaddr_in *to;
 	struct protoent *proto;
 	struct in_addr ifaddr;
-	int i;
+	register int i;
 	int ch, fdmask, hold, packlen, preload;
 	u_char *datap, *packet;
 	char *target, hnamebuf[MAXHOSTNAMELEN], *malloc();
-	u_char ttl, loop;
+	u_char ttl, loop = 1;
 #ifdef IP_OPTIONS
 	char rspace[3 + 4 * NROUTES + 1];	/* record route space */
 #endif
@@ -172,40 +172,38 @@ main(argc, argv)
 		switch(ch) {
 		case 'c':
 			npackets = atoi(optarg);
-			if (npackets <= 0) {
-				(void)fprintf(stderr,
-				    "ping: bad number of packets to transmit.\n");
-				exit(1);
-			}
+			if (npackets <= 0)
+				errx(1, "bad number of packets to transmit: %s",
+				    optarg);
 			break;
 		case 'd':
 			options |= F_SO_DEBUG;
 			break;
 		case 'f':
-			if (getuid()) {
-				(void)fprintf(stderr,
-				    "ping: %s\n", strerror(EPERM));
-				exit(1);
-			}
+			if (getuid())
+				errx(1, "%s", strerror(EPERM));
 			options |= F_FLOOD;
 			setbuf(stdout, (char *)NULL);
 			break;
+		case 'I':
+			if (inet_aton(optarg, &ifaddr) == 0)
+				errx(1, "bad interface address: %s", optarg);
+			moptions |= MULTICAST_IF;
+			break;
 		case 'i':		/* wait between sending packets */
 			interval = atoi(optarg);
-			if (interval <= 0) {
-				(void)fprintf(stderr,
-				    "ping: bad timing interval.\n");
-				exit(1);
-			}
+			if (interval <= 0)
+				errx(1, "bad timing interval: %s", optarg);
 			options |= F_INTERVAL;
+			break;
+		case 'L':
+			moptions |= MULTICAST_NOLOOP;
+			loop = 0;
 			break;
 		case 'l':
 			preload = atoi(optarg);
-			if (preload < 0) {
-				(void)fprintf(stderr,
-				    "ping: bad preload value.\n");
-				exit(1);
-			}
+			if (preload < 0)
+				errx(1, "bad preload value: %s", optarg);
 			break;
 		case 'n':
 			options |= F_NUMERIC;
@@ -225,54 +223,27 @@ main(argc, argv)
 			break;
 		case 's':		/* size of packet to send */
 			datalen = atoi(optarg);
-			if (datalen > MAXPACKET) {
-				(void)fprintf(stderr,
-				    "ping: packet size too large.\n");
-				exit(1);
-			}
-			if (datalen <= 0) {
-				(void)fprintf(stderr,
-				    "ping: illegal packet size.\n");
-				exit(1);
-			}
+			if (datalen <= 0)
+				errx(1, "bad packet size: %s", optarg);
+			if (datalen > MAXPACKET)
+				errx(1, "packet size too large: %s", optarg);
+			break;
+		case 't':
+			ttl = atoi(optarg);
+			if (ttl <= 0)
+				errx(1, "bad ttl value: %s", optarg);
+			if (ttl > 255)
+				errx(1, "ttl value too large: %s", optarg);
 			break;
 		case 'v':
 			options |= F_VERBOSE;
-			break;
-		case 'L':
-			moptions |= MULTICAST_NOLOOP;
-			loop = 0;
-			break;
-		case 't':
-			moptions |= MULTICAST_TTL;
-			i = atoi(optarg);
-			if (i < 0 || i > 255) {
-				printf("ttl %u out of range\n", i);
-				exit(1);
-			}
-			ttl = i;
-			break;
-		case 'I':
-			moptions |= MULTICAST_IF;
-			{
-				int i1, i2, i3, i4;
-
-				if (sscanf(optarg, "%u.%u.%u.%u%c",
-					   &i1, &i2, &i3, &i4, &i) != 4) {
-					printf("bad interface address '%s'\n",
-					       optarg);
-					exit(1);
-				}
-				ifaddr.s_addr = (i1<<24)|(i2<<16)|(i3<<8)|i4;
-				ifaddr.s_addr = htonl(ifaddr.s_addr);
-			}
 			break;
 		default:
 			usage();
 		}
 	argc -= optind;
 	argv += optind;
-	
+
 	if (argc != 1)
 		usage();
 	target = *argv;
@@ -285,44 +256,32 @@ main(argc, argv)
 		hostname = target;
 	else {
 		hp = gethostbyname(target);
-		if (!hp) {
-			(void)fprintf(stderr,
-			    "ping: unknown host %s\n", target);
-			exit(1);
-		}
+		if (!hp)
+			errx(1, "unknown host: %s", target);
 		to->sin_family = hp->h_addrtype;
 		bcopy(hp->h_addr, (caddr_t)&to->sin_addr, hp->h_length);
 		(void)strncpy(hnamebuf, hp->h_name, sizeof(hnamebuf) - 1);
 		hostname = hnamebuf;
 	}
 
-	if (options & F_FLOOD && options & F_INTERVAL) {
-		(void)fprintf(stderr,
-		    "ping: -f and -i incompatible options.\n");
-		exit(1);
-	}
+	if (options & F_FLOOD && options & F_INTERVAL)
+		errx(1, "-f and -i options are incompatible");
 
 	if (datalen >= sizeof(struct timeval))	/* can we time transfer */
 		timing = 1;
 	packlen = datalen + MAXIPLEN + MAXICMPLEN;
-	if (!(packet = (u_char *)malloc((u_int)packlen))) {
-		(void)fprintf(stderr, "ping: out of memory.\n");
-		exit(1);
-	}
+	if (!(packet = (u_char *)malloc((u_int)packlen)))
+		err(1, "malloc");
 	if (!(options & F_PINGFILLED))
 		for (i = 8; i < datalen; ++i)
 			*datap++ = i;
 
 	ident = getpid() & 0xFFFF;
 
-	if (!(proto = getprotobyname("icmp"))) {
-		(void)fprintf(stderr, "ping: unknown protocol icmp.\n");
-		exit(1);
-	}
-	if ((s = socket(AF_INET, SOCK_RAW, proto->p_proto)) < 0) {
-		perror("ping: socket");
-		exit(1);
-	}
+	if (!(proto = getprotobyname("icmp")))
+		errx(1, "unknown protocol icmp");
+	if ((s = socket(AF_INET, SOCK_RAW, proto->p_proto)) < 0)
+		err(1, "socket");
 	hold = 1;
 	if (options & F_SO_DEBUG)
 		(void)setsockopt(s, SOL_SOCKET, SO_DEBUG, (char *)&hold,
@@ -343,11 +302,22 @@ main(argc, argv)
 			exit(1);
 		}
 #else
-		(void)fprintf(stderr,
-		  "ping: record route not available in this implementation.\n");
-		exit(1);
+		errx(1, "record route not available in this implementation");
 #endif /* IP_OPTIONS */
 	}
+
+	if ((moptions & MULTICAST_NOLOOP) &&
+	    setsockopt(s, IPPROTO_IP, IP_MULTICAST_LOOP, &loop,
+		       sizeof(loop)) < 0)
+		err(1, "setsockopt IP_MULTICAST_LOOP");
+	if ((moptions & MULTICAST_TTL) &&
+	    setsockopt(s, IPPROTO_IP, IP_MULTICAST_TTL, &ttl,
+		       sizeof(ttl)) < 0)
+		err(1, "setsockopt IP_MULTICAST_TTL");
+	if ((moptions & MULTICAST_IF) &&
+	    setsockopt(s, IPPROTO_IP, IP_MULTICAST_IF, &ifaddr,
+		       sizeof(ifaddr)) < 0)
+		err(1, "setsockopt IP_MULTICAST_IF");
 
 	/*
 	 * When pinging the broadcast address, you can get a lot of answers.
@@ -358,28 +328,6 @@ main(argc, argv)
 	hold = 48 * 1024;
 	(void)setsockopt(s, SOL_SOCKET, SO_RCVBUF, (char *)&hold,
 	    sizeof(hold));
-
-	if (moptions & MULTICAST_NOLOOP) {
-		if (setsockopt(s, IPPROTO_IP, IP_MULTICAST_LOOP,
-							&loop, 1) == -1) {
-			perror ("can't disable multicast loopback");
-			exit(92);
-		}
-	}
-	if (moptions & MULTICAST_TTL) {
-		if (setsockopt(s, IPPROTO_IP, IP_MULTICAST_TTL,
-							&ttl, 1) == -1) {
-			perror ("can't set multicast time-to-live");
-			exit(93);
-		}
-	}
-	if (moptions & MULTICAST_IF) {
-		if (setsockopt(s, IPPROTO_IP, IP_MULTICAST_IF,
-					&ifaddr, sizeof(ifaddr)) == -1) {
-			perror ("can't set multicast source interface");
-			exit(94);
-		}
-	}
 
 	if (to->sin_family == AF_INET)
 		(void)printf("PING %s (%s): %d data bytes\n", hostname,
@@ -431,7 +379,7 @@ main(argc, argv)
  * catcher --
  *	This routine causes another PING to be transmitted, and then
  * schedules another SIGALRM for 1 second from now.
- * 
+ *
  * bug --
  *	Our sense of time will slowly skew (i.e., packets will not be
  * launched exactly at 1-second intervals).  This does not affect the
@@ -448,7 +396,7 @@ catcher()
 		alarm((u_int)interval);
 	else {
 		if (nreceived) {
-			waittime = 2 * tmax / 1000000.0;
+			waittime = 2 * tmax / 1000;
 			if (!waittime)
 				waittime = 1;
 		} else
@@ -460,7 +408,7 @@ catcher()
 
 /*
  * pinger --
- * 	Compose and transmit an ICMP ECHO REQUEST packet.  The IP packet
+ *	Compose and transmit an ICMP ECHO REQUEST packet.  The IP packet
  * will be added on by the kernel.  The ID field is our UNIX process ID,
  * and the sequence number is an ascending integer.  The first 8 bytes
  * of the data portion are used to hold a UNIX "timeval" struct in VAX
@@ -533,8 +481,7 @@ pr_pack(buf, cc, from)
 	hlen = ip->ip_hl << 2;
 	if (cc < hlen + ICMP_MINLEN) {
 		if (options & F_VERBOSE)
-			(void)fprintf(stderr,
-			  "ping: packet too short (%d bytes) from %s\n", cc,
+			warnx("packet too short (%d bytes) from %s", cc,
 			  inet_ntoa(*(struct in_addr *)&from->sin_addr.s_addr));
 		return;
 	}
@@ -553,7 +500,8 @@ pr_pack(buf, cc, from)
 			tp = (struct timeval *)icp->icmp_data;
 #endif
 			tvsub(&tv, tp);
-			triptime = tv.tv_sec * 1000000.0 + tv.tv_usec;
+			triptime = ((double)tv.tv_sec) * 1000.0 +
+			    ((double)tv.tv_usec) / 1000.0;
 			tsum += triptime;
 			if (triptime < tmin)
 				tmin = triptime;
@@ -581,7 +529,7 @@ pr_pack(buf, cc, from)
 			   icp->icmp_seq);
 			(void)printf(" ttl=%d", ip->ip_ttl);
 			if (timing)
-				(void)printf(" time=%.3f ms", triptime/1000.0);
+				(void)printf(" time=%.3f ms", triptime);
 			if (dupflag)
 				(void)printf(" (DUP!)");
 			/* check the data */
@@ -749,6 +697,8 @@ tvsub(out, in)
 void
 finish()
 {
+	register int i;
+
 	(void)signal(SIGINT, SIG_IGN);
 	(void)putchar('\n');
 	(void)fflush(stdout);
@@ -765,10 +715,12 @@ finish()
 			    (int) (((ntransmitted - nreceived) * 100) /
 			    ntransmitted));
 	(void)putchar('\n');
-	if (nreceived && timing)
+	if (nreceived && timing) {
+		/* Only display average to microseconds */
+		i = 1000.0 * tsum / (nreceived + nrepeats);
 		(void)printf("round-trip min/avg/max = %.3f/%.3f/%.3f ms\n",
-		    tmin / 1000.0, tsum / 1000.0 / (nreceived + nrepeats),
-		    tmax / 1000.0);
+		    tmin, ((double)i) / 1000.0, tmax);
+	}
 	exit(0);
 }
 
@@ -1007,11 +959,8 @@ fill(bp, patp)
 	char *cp;
 
 	for (cp = patp; *cp; cp++)
-		if (!isxdigit(*cp)) {
-			(void)fprintf(stderr,
-			    "ping: patterns must be specified as hex digits.\n");
-			exit(1);
-		}
+		if (!isxdigit(*cp))
+			errx(1, "patterns must be specified as hex digits");
 	ii = sscanf(patp,
 	    "%2x%2x%2x%2x%2x%2x%2x%2x%2x%2x%2x%2x%2x%2x%2x%2x",
 	    &pat[0], &pat[1], &pat[2], &pat[3], &pat[4], &pat[5], &pat[6],
@@ -1019,7 +968,9 @@ fill(bp, patp)
 	    &pat[13], &pat[14], &pat[15]);
 
 	if (ii > 0)
-		for (kk = 0; kk <= MAXPACKET - (8 + ii); kk += ii)
+		for (kk = 0;
+		    kk <= MAXPACKET - (8 + sizeof(struct timeval) + ii);
+		    kk += ii)
 			for (jj = 0; jj < ii; ++jj)
 				bp[jj + kk] = pat[jj];
 	if (!(options & F_QUIET)) {
@@ -1033,6 +984,6 @@ fill(bp, patp)
 usage()
 {
 	(void)fprintf(stderr,
-	    "usage: ping [-LRdfnqrv] [-c count] [-i wait] [-l preload]\n\t[-p pattern] [-s packetsize] [-t ttl] [-I interface address] host\n");
+	    "usage: ping [-dfLnqRrv] [-c count] [-I ifaddr] [-i wait] [-l preload]\n\t[-p pattern] [-s packetsize] [-t ttl] host\n");
 	exit(1);
 }
