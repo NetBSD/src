@@ -1,4 +1,4 @@
-/*	$NetBSD: make.h,v 1.24 2000/04/20 11:23:26 sjg Exp $	*/
+/*	$NetBSD: make.h,v 1.25 2000/05/04 18:27:53 drochner Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -130,7 +130,7 @@ typedef struct GNode {
 #define FORCE		0x4	/* children don't exist, and we pretend made */
     enum {
 	UNMADE, BEINGMADE, MADE, UPTODATE, ERROR, ABORTED,
-	CYCLE, ENDCYCLE,
+	CYCLE, ENDCYCLE
     }	    	    made;    	/* Set to reflect the state of processing
 				 * on this node:
 				 *  UNMADE - Not examined yet
