@@ -1,4 +1,4 @@
-/*	$NetBSD: internals.c,v 1.8 2001/06/13 10:45:59 wiz Exp $	*/
+/*	$NetBSD: internals.c,v 1.9 2002/02/04 13:02:05 blymn Exp $	*/
 
 /*-
  * Copyright (c) 1998-1999 Brett Lymn (blymn@baea.com.au, brett_lymn@yahoo.com.au)
@@ -384,14 +384,14 @@ _menui_draw_item(MENU *menu, int item)
 	
 	mark_len = max(menu->mark.length, menu->unmark.length);
 	
-	wmove(menu->menu_subwin,
+	wmove(menu->scrwin,
 	      menu->items[item]->row - menu->top_row,
 	      menu->items[item]->col * menu->col_width);
 
 	if ((menu->cur_item == item) || (menu->items[item]->selected == 1))
-		wattrset(menu->menu_subwin, menu->fore);
+		wattrset(menu->scrwin, menu->fore);
 	if ((menu->items[item]->opts & O_SELECTABLE) != O_SELECTABLE)
-		wattron(menu->menu_subwin, menu->grey);
+		wattron(menu->scrwin, menu->grey);
 
 	  /* deal with the menu mark, if  one is set.
 	   * We mark the selected items and write blanks for
@@ -401,28 +401,28 @@ _menui_draw_item(MENU *menu, int item)
 	if (menu->items[item]->selected == 1) {
 		if (menu->mark.string != NULL) {
 			for (j = 0; j < menu->mark.length; j++) {
-				waddch(menu->menu_subwin,
+				waddch(menu->scrwin,
 				       menu->mark.string[j]);
 			}
 		}
 		  /* blank any length difference between mark & unmark */
 		for (j = menu->mark.length; j < mark_len; j++)
-			waddch(menu->menu_subwin, ' ');
+			waddch(menu->scrwin, ' ');
 	} else {
 		if (menu->unmark.string != NULL) {
 			for (j = 0; j < menu->unmark.length; j++) {
-				waddch(menu->menu_subwin,
+				waddch(menu->scrwin,
 				       menu->unmark.string[j]);
 			}
 		}
 		  /* blank any length difference between mark & unmark */
 		for (j = menu->unmark.length; j < mark_len; j++)
-			waddch(menu->menu_subwin, ' ');
+			waddch(menu->scrwin, ' ');
 	}
 	
 	  /* add the menu name */
 	for (j=0; j < menu->items[item]->name.length; j++)
-		waddch(menu->menu_subwin,
+		waddch(menu->scrwin,
 		       menu->items[item]->name.string[j]);
 	
 	pad_len = menu->col_width - menu->items[item]->name.length
@@ -430,14 +430,14 @@ _menui_draw_item(MENU *menu, int item)
 	if ((menu->opts & O_SHOWDESC) == O_SHOWDESC) {
 		pad_len -= menu->items[item]->description.length - 1;
 		for (j = 0; j < pad_len; j++)
-			waddch(menu->menu_subwin, menu->pad);
+			waddch(menu->scrwin, menu->pad);
 		for (j = 0; j < menu->items[item]->description.length; j++) {
-			waddch(menu->menu_subwin,
+			waddch(menu->scrwin,
 			       menu->items[item]->description.string[j]);
 		}
 	} else {
 		for (j = 0; j < pad_len; j++)
-			waddch(menu->menu_subwin, ' ');
+			waddch(menu->scrwin, ' ');
 	}
 	menu->items[item]->visible = 1;
 	
@@ -447,14 +447,14 @@ _menui_draw_item(MENU *menu, int item)
 	   * have the same attributes as the items.
 	   */
 	if (menu->items[item]->col > 0) {
-		wmove(menu->menu_subwin,
+		wmove(menu->scrwin,
 		      menu->items[item]->row - menu->top_row,
 		      menu->items[item]->col * menu->col_width - 1);
-		waddch(menu->menu_subwin, ' ');
+		waddch(menu->scrwin, ' ');
 	}
 	
 	  /* kill any special attributes... */
-	wattrset(menu->menu_subwin, menu->back);
+	wattrset(menu->scrwin, menu->back);
 
 	  /* and position the cursor nicely */
 	pos_menu_cursor(menu);
@@ -476,9 +476,9 @@ _menui_draw_menu(MENU *menu)
 		menu->items[i]->visible = 0;
 	}
 
-	wmove(menu->menu_subwin, 0, 0);
+	wmove(menu->scrwin, 0, 0);
 
-	menu->col_width = getmaxx(menu->menu_subwin) / menu->cols;
+	menu->col_width = getmaxx(menu->scrwin) / menu->cols;
 
 	max_items = menu->rows * menu->cols;
 	last_item = ((max_items + i) > menu->item_count) ? menu->item_count :
@@ -487,7 +487,7 @@ _menui_draw_menu(MENU *menu)
 	for (; i < last_item; i++) {
 		if (i > menu->item_count) {
 			  /* no more items to draw, write background blanks */
-			wattrset(menu->menu_subwin, menu->back);
+			wattrset(menu->scrwin, menu->back);
 			if (row < 0) {
 				row = menu->items[menu->item_count - 1]->row;
 				col = menu->items[menu->item_count - 1]->col;
@@ -506,10 +506,10 @@ _menui_draw_menu(MENU *menu)
 					col++;
 				}
 			}
-			wmove(menu->menu_subwin, row,
+			wmove(menu->scrwin, row,
 			      col * menu->col_width);
 			for (j = 0; j < menu->col_width; j++)
-				waddch(menu->menu_subwin, ' ');
+				waddch(menu->scrwin, ' ');
 		} else {
 			_menui_draw_item(menu, i);
 			
@@ -563,7 +563,7 @@ _menui_redraw_menu(MENU *menu, int old_top_row, int old_cur_item)
 		   * XXXX we could scroll the window and just fill in the
 		   * XXXX changed lines.
 		   */
-		wclear(menu->menu_subwin);
+		wclear(menu->scrwin);
 		_menui_draw_menu(menu);
 	} else {
 		if (menu->cur_item != old_cur_item) {
