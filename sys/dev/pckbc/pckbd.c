@@ -1,4 +1,4 @@
-/* $NetBSD: pckbd.c,v 1.26 2001/07/07 16:58:27 thorpej Exp $ */
+/* $NetBSD: pckbd.c,v 1.27 2001/11/13 07:24:43 lukem Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -77,6 +77,9 @@
 /*
  * code to work keyboard for PC-style console
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: pckbd.c,v 1.27 2001/11/13 07:24:43 lukem Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

@@ -33,13 +33,16 @@
  *	ELSA MicroLink MC/all card specific routines
  *	--------------------------------------------
  *
- *	$Id: isic_pcmcia_elsa_mcall.c,v 1.2 2001/02/20 22:24:40 martin Exp $
+ *	$Id: isic_pcmcia_elsa_mcall.c,v 1.3 2001/11/13 07:26:34 lukem Exp $
  *
  *      last edit-date: [Fri Jan  5 11:39:32 2001]
  *
  *	-mh	started support for ELSA MC/all
  *
  *---------------------------------------------------------------------------*/
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: isic_pcmcia_elsa_mcall.c,v 1.3 2001/11/13 07:26:34 lukem Exp $");
 
 #include "opt_isicpcmcia.h"
 #ifdef ISICPCMCIA_ELSA_MCALL

@@ -1,4 +1,4 @@
-/*	$NetBSD: lpt_ofisa.c,v 1.2 1998/03/21 02:06:17 cgd Exp $	*/
+/*	$NetBSD: lpt_ofisa.c,v 1.3 2001/11/13 07:29:45 lukem Exp $	*/
 
 /*
  * Copyright 1997, 1998
@@ -36,6 +36,9 @@
 /*
  * OFW Attachment for 'lpt' parallel port driver
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: lpt_ofisa.c,v 1.3 2001/11/13 07:29:45 lukem Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>

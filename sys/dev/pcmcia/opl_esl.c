@@ -1,4 +1,4 @@
-/* $NetBSD: opl_esl.c,v 1.3 2001/09/29 19:30:29 augustss Exp $ */
+/* $NetBSD: opl_esl.c,v 1.4 2001/11/13 07:26:34 lukem Exp $ */
 
 /*
  * Copyright (c) 2001 Jared D. McNeill <jmcneill@invisible.yi.org>
@@ -33,6 +33,9 @@
  * SUCH DAMAGE.
  *
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: opl_esl.c,v 1.4 2001/11/13 07:26:34 lukem Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
