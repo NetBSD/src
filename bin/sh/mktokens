@@ -34,7 +34,8 @@
 # OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 # SUCH DAMAGE.
 #
-#	@(#)mktokens	8.1 (Berkeley) 5/31/93
+#	from: @(#)mktokens	8.1 (Berkeley) 5/31/93
+#	$Id: mktokens,v 1.5 1994/06/11 16:12:16 mycroft Exp $
 
 # The following is a list of tokens.  The second column is nonzero if the
 # token marks the end of a list.  The third column is the name to print in

@@ -33,7 +33,8 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	@(#)output.h	8.1 (Berkeley) 5/31/93
+ *	from: @(#)output.h	8.1 (Berkeley) 5/31/93
+ *	$Id: output.h,v 1.8 1994/06/11 16:12:27 mycroft Exp $
  */
 
 #ifndef OUTPUT_INCL

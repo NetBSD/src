@@ -33,7 +33,8 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	@(#)expand.h	8.1 (Berkeley) 5/31/93
+ *	from: @(#)expand.h	8.1 (Berkeley) 5/31/93
+ *	$Id: expand.h,v 1.6 1994/06/11 16:11:56 mycroft Exp $
  */
 
 struct strlist {

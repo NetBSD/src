@@ -33,7 +33,8 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	@(#)main.h	8.1 (Berkeley) 5/31/93
+ *	from: @(#)main.h	8.1 (Berkeley) 5/31/93
+ *	$Id: main.h,v 1.6 1994/06/11 16:12:07 mycroft Exp $
  */
 
 extern int rootpid;	/* pid of main shell */
