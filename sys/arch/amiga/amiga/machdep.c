@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.70 1996/05/17 12:56:55 is Exp $	*/
+/*	$NetBSD: machdep.c,v 1.71 1996/05/19 09:13:56 veego Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -1881,7 +1881,9 @@ cpu_exec_aout_makecmds(p, epp)
 	struct exec_package *epp;
 {
 	int error = ENOEXEC;
+#ifdef COMPAT_NOMID
 	struct exec *execp = epp->ep_hdr;
+#endif
 
 #ifdef COMPAT_NOMID
 	if (!((execp->a_midmag >> 16) & 0x0fff)
