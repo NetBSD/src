@@ -1,4 +1,4 @@
-/*	$NetBSD: make.h,v 1.34 2001/06/01 20:33:37 sjg Exp $	*/
+/*	$NetBSD: make.h,v 1.35 2001/06/09 05:22:47 sjg Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -367,6 +367,7 @@ extern Lst	sysIncPath;	/* The system include path. */
 extern char	*progname;	/* The program name */
 
 #define	MAKEFLAGS	".MAKEFLAGS"
+#define	MAKEOVERRIDES	".MAKEOVERRIDES"
 
 /*
  * debug control:
@@ -413,5 +414,6 @@ Boolean Make_Run __P((Lst));
 char * Check_Cwd_Cmd __P((char *));
 void Check_Cwd __P((char **));
 void PrintOnError __P((char *));
+void ExportMAKEFLAGS __P((int));
 
 #endif /* _MAKE_H_ */
