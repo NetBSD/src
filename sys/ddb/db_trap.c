@@ -22,58 +22,18 @@
  * 
  * any improvements or extensions that they make and grant Carnegie the
  * rights to redistribute these changes.
- */
-/*
- * $Id: db_trap.c,v 1.2 1993/05/20 03:39:34 cgd Exp $
  *
- * HISTORY
- * $Log: db_trap.c,v $
- * Revision 1.2  1993/05/20 03:39:34  cgd
- * add explicit rcs id
- *
- * Revision 1.1.1.1  1993/03/21  09:46:27  cgd
- * initial import of 386bsd-0.1 sources
- *
- * Revision 1.1  1992/03/25  21:45:31  pace
- * Initial revision
- *
- * Revision 2.5  91/02/05  17:07:16  mrt
- * 	Changed to new Mach copyright
- * 	[91/01/31  16:19:35  mrt]
- * 
- * Revision 2.4  91/01/08  15:09:17  rpd
- * 	Changed db_stop_at_pc's arguments.
- * 	Print db_inst_count, db_load_count, db_store_count.
- * 	[90/11/27            rpd]
- * 
- * Revision 2.3  90/10/25  14:44:11  rwd
- * 	From rpd.
- * 	[90/10/19  17:03:17  rwd]
- * 
- * 	Generalized the watchpoint support.
- * 	[90/10/16            rwd]
- * 	Added watchpoint support.
- * 	[90/10/16            rpd]
- * 
- * Revision 2.2  90/08/27  21:52:52  dbg
- * 	Assign to db_dot before calling the print function.
- * 	[90/08/20            af]
- * 	Reduce lint.
- * 	[90/08/07            dbg]
- * 	Created.
- * 	[90/07/25            dbg]
- * 
- */
-/*
  * 	Author: David B. Golub, Carnegie Mellon University
  *	Date:	7/90
+ *	$Id: db_trap.c,v 1.3 1993/12/18 04:46:40 mycroft Exp $
  */
 
 /*
  * Trap entry point to kernel debugger.
  */
-#include "param.h"
-#include "proc.h"
+#include <sys/param.h>
+#include <sys/proc.h>
+
 #include <ddb/db_command.h>
 #include <ddb/db_break.h>
 

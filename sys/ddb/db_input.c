@@ -22,43 +22,15 @@
  * 
  * any improvements or extensions that they make and grant Carnegie the
  * rights to redistribute these changes.
- */
-/*
- * $Id: db_input.c,v 1.2 1993/05/20 03:39:15 cgd Exp $
  *
- * HISTORY
- * $Log: db_input.c,v $
- * Revision 1.2  1993/05/20 03:39:15  cgd
- * add explicit rcs id
- *
- * Revision 1.1.1.1  1993/03/21  09:46:26  cgd
- * initial import of 386bsd-0.1 sources
- *
- * Revision 1.1  1992/03/25  21:45:10  pace
- * Initial revision
- *
- * Revision 2.4  91/02/14  14:41:53  mrt
- * 	Add input line editing.
- * 	[90/11/11            dbg]
- * 
- * Revision 2.3  91/02/05  17:06:32  mrt
- * 	Changed to new Mach copyright
- * 	[91/01/31  16:18:13  mrt]
- * 
- * Revision 2.2  90/08/27  21:51:03  dbg
- * 	Reduce lint.
- * 	[90/08/07            dbg]
- * 	Created.
- * 	[90/07/25            dbg]
- * 
- */
-/*
  *	Author: David B. Golub, Carnegie Mellon University
  *	Date:	7/90
+ *	$Id: db_input.c,v 1.3 1993/12/18 04:46:33 mycroft Exp $
  */
 
-#include "param.h"
-#include "proc.h"
+#include <sys/param.h>
+#include <sys/proc.h>
+
 #include <ddb/db_output.h>
 
 /*
