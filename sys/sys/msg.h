@@ -1,4 +1,4 @@
-/*	$NetBSD: msg.h,v 1.9 1996/02/09 18:25:18 christos Exp $	*/
+/*	$NetBSD: msg.h,v 1.10 1998/05/07 16:41:08 kleink Exp $	*/
 
 /*
  * SVID compatible msg.h file
@@ -150,10 +150,10 @@ struct msqid_ds *msqids;	/* MSGMNI msqid_ds struct's */
 #include <sys/cdefs.h>
 
 __BEGIN_DECLS
-int msgctl __P((int, int, struct msqid_ds *));
-int msgget __P((key_t, int));
-int msgsnd __P((int, void *, size_t, int));
-int msgrcv __P((int, void *, size_t, long, int));
+int	msgctl __P((int, int, struct msqid_ds *));
+int	msgget __P((key_t, int));
+int	msgsnd __P((int, const void *, size_t, int));
+ssize_t	msgrcv __P((int, void *, size_t, long, int));
 __END_DECLS
 #else
 void msginit __P((void));
