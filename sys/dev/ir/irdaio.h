@@ -1,4 +1,4 @@
-/*	$NetBSD: irdaio.h,v 1.1 2001/12/02 10:44:43 augustss Exp $	*/
+/*	$NetBSD: irdaio.h,v 1.2 2001/12/04 23:33:33 augustss Exp $	*/
 
 /*
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -78,6 +78,19 @@ struct irda_params {
 #define IRDA_SET_PARAMS		_IOW('I', 2, struct irda_params)
 #define IRDA_GET_SPEEDMASK	_IOR('I', 3, int)
 #define IRDA_GET_TURNAROUNDMASK	_IOR('I', 4, int)
+
+
+/* irframetty device ioctls */
+#define IRFRAMETTY_GET_DEVICE	_IOR('I', 100, int)
+#define IRFRAMETTY_GET_DONGLE	_IOR('I', 101, int)
+#define IRFRAMETTY_SET_DONGLE	_IOW('I', 102, int)
+#define   DONGLE_NONE		0
+#define   DONGLE_TEKRAM		1
+#define   DONGLE_JETEYE		2
+#define   DONGLE_ACTISYS	3
+#define   DONGLE_ACTISYS_PLUS	4
+#define   DONGLE_LITELINK	5
+#define   DONGLE_GIRBIL		6
 
 #endif /* _SYS_DEV_IRDA_H_ */
 
