@@ -1,4 +1,4 @@
-/*	$NetBSD: com.c,v 1.173 2000/07/06 01:47:36 thorpej Exp $	*/
+/*	$NetBSD: com.c,v 1.174 2000/08/03 00:30:47 jeffs Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.
@@ -77,6 +77,7 @@
  */
 
 #include "opt_ddb.h"
+#include "opt_ddbparam.h"
 #include "opt_com.h"
 
 #include "rnd.h"
@@ -1942,6 +1943,7 @@ comintr(arg)
 		lsr = bus_space_read_1(iot, ioh, com_lsr);
 #if defined(DDB) || defined(KGDB)
 		if (ISSET(lsr, LSR_BI)) {
+#ifndef DDB_BREAK_CHAR
 #ifdef DDB 
 			if (ISSET(sc->sc_hwflags, COM_HW_CONSOLE)) {
 				console_debugger();
@@ -1954,6 +1956,7 @@ comintr(arg)
 				continue;
 			}
 #endif
+#endif
 		}
 #endif /* DDB || KGDB */
 
@@ -1962,6 +1965,18 @@ comintr(arg)
 			while (cc > 0) {
 				put[0] = bus_space_read_1(iot, ioh, com_data);
 				put[1] = lsr;
+#if defined(DDB) && defined(DDB_BREAKCHAR)
+				if (put[0] == DDB_BREAK_CHAR &&
+				    ISSET(sc->sc_hwflags, COM_HW_CONSOLE)) {
+					console_debugger();
+
+					lsr = bus_space_read_1(iot, ioh, com_lsr);
+					if (!ISSET(lsr, LSR_RCV_MASK))
+						break;
+
+					continue;
+				}
+#endif
 				put += 2;
 				if (put >= end)
 					put = sc->sc_rbuf;
@@ -2148,6 +2163,12 @@ comintr(arg)
  * by the console and kgdb glue.
  */
 
+#if defined(DDB) && defined(DDB_BREAK_CHAR)
+#define MAX_UNGETC	20
+static int com_ungetc[MAX_UNGETC];
+static int com_ungetccount = 0;
+#endif
+
 int
 com_common_getc(iot, ioh)
 	bus_space_tag_t iot;
@@ -2156,12 +2177,36 @@ com_common_getc(iot, ioh)
 	int s = splserial();
 	u_char stat, c;
 
+#if defined(DDB) && defined(DDB_BREAK_CHAR)
+	/* got a character from reading things earlier */
+	if (com_ungetccount > 0) {
+		int i;
+
+		c = com_ungetc[0];
+		for (i = 1; i < com_ungetccount; i++) {
+			com_ungetc[i -1] = com_ungetc[i];
+		}
+		com_ungetccount--;
+		splx(s);
+		return (c);
+	}
+#endif
+
 	/* block until a character becomes available */
 	while (!ISSET(stat = bus_space_read_1(iot, ioh, com_lsr), LSR_RXRDY))
 		;
 
 	c = bus_space_read_1(iot, ioh, com_data);
 	stat = bus_space_read_1(iot, ioh, com_iir);
+#if defined(DDB) && defined(DDB_BREAK_CHAR)
+	if (c == DDB_BREAK_CHAR) {
+		extern int db_active;
+
+		if (db_active == 0) {
+			console_debugger();
+		}
+	}
+#endif
 	splx(s);
 	return (c);
 }
@@ -2174,6 +2219,19 @@ com_common_putc(iot, ioh, c)
 {
 	int s = splserial();
 	int timo;
+
+#if defined(DDB) && defined(DDB_BREAK_CHAR)
+	int cin, stat;
+	if (com_ungetccount < MAX_UNGETC 
+	     && ISSET(stat = bus_space_read_1(iot, ioh, com_lsr), LSR_RXRDY)) {
+		cin = bus_space_read_1(iot, ioh, com_data);
+		stat = bus_space_read_1(iot, ioh, com_iir);
+		if (cin == DDB_BREAK_CHAR) {
+			console_debugger();
+		}
+		com_ungetc[com_ungetccount++] = cin;
+	}
+#endif
 
 	/* wait for any pending transmission to finish */
 	timo = 150000;
