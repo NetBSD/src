@@ -1,4 +1,4 @@
-#	$NetBSD: list,v 1.13 2002/03/06 12:04:53 lukem Exp $
+#	$NetBSD: list,v 1.13.2.1 2002/05/28 04:36:45 lukem Exp $
 
 # extras in bin
 PROG	bin/csh
@@ -12,14 +12,14 @@ PROG	sbin/fsck_ext2fs
 PROG	sbin/mount_ext2fs
 PROG	sbin/mount_kernfs
 
-# extras in /usr.bin
+# extras in usr/bin
 PROG	usr/bin/netstat
 PROG	usr/bin/rsh
 PROG	usr/bin/tset usr/bin/reset
 PROG	usr/bin/vi
 
-# extras in /usr/mdec
-PROG	usr/mdec/installboot
+# extras in usr/sbin
+PROG	usr/sbin/installboot
 
 # crunchgen source directory specials: progs built in nonstandard places
 SPECIAL	vi	srcdir usr.bin/vi/build
