@@ -1,4 +1,4 @@
-/*	$NetBSD: citrus_pivot_factory.c,v 1.1 2003/06/25 09:51:39 tshiozak Exp $	*/
+/*	$NetBSD: citrus_pivot_factory.c,v 1.2 2003/06/30 12:32:21 tshiozak Exp $	*/
 
 /*-
  * Copyright (c)2003 Citrus Project,
@@ -26,9 +26,13 @@
  * SUCH DAMAGE.
  */
 
+#if HAVE_CONFIG_H
+#include "config.h"
+#endif
+
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: citrus_pivot_factory.c,v 1.1 2003/06/25 09:51:39 tshiozak Exp $");
+__RCSID("$NetBSD: citrus_pivot_factory.c,v 1.2 2003/06/30 12:32:21 tshiozak Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include <assert.h>
