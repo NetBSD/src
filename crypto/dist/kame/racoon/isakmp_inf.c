@@ -136,10 +136,79 @@ isakmp_info_recv(iph1, msg0)
 
 	isakmp = (struct isakmp *)msg->v;
 	gen = (struct isakmp_gen *)((caddr_t)isakmp + sizeof(struct isakmp));
-	if (isakmp->np == ISAKMP_NPTYPE_HASH)
-		np = gen->np;
-	else
-		np = isakmp->np;
+
+	if (isakmp->np != ISAKMP_NPTYPE_HASH) {
+		plog(LLV_ERROR, LOCATION, NULL,
+		    "ignore information because the message has no hash payload.\n");
+		goto end;
+	}
+
+	if (iph1->status != PHASE1ST_ESTABLISHED) {
+		plog(LLV_ERROR, LOCATION, NULL,
+		    "ignore information because ISAKMP-SA has not been established yet.\n");
+		goto end;
+	}
+
+	np = gen->np;
+
+	{
+		void *p;
+		vchar_t *hash, *payload;
+		struct isakmp_gen *nd;
+
+		p = (caddr_t) gen + sizeof(struct isakmp_gen);
+		nd = (struct isakmp_gen *) ((caddr_t) gen + ntohs(gen->len));
+
+		/* nd length check */
+		if (ntohs(nd->len) > msg->l - (sizeof(struct isakmp) +
+		    ntohs(gen->len))) {
+			plog(LLV_ERROR, LOCATION, NULL,
+				 "too long payload length (broken message?)\n");
+			goto end;
+		}
+
+		payload = vmalloc(ntohs(nd->len));
+		if (payload == NULL) {
+			plog(LLV_ERROR, LOCATION, NULL,
+			    "cannot allocate memory\n");
+			goto end;
+		}
+
+		memcpy(payload->v, (caddr_t) nd, ntohs(nd->len));
+
+		/* compute HASH */
+		hash = oakley_compute_hash1(iph1, isakmp->msgid, payload);
+		if (hash == NULL) {
+			plog(LLV_ERROR, LOCATION, NULL,
+			    "cannot compute hash\n");
+
+			vfree(payload);
+			goto end;
+		}
+		
+		if (ntohs(gen->len) - sizeof(struct isakmp_gen) != hash->l) {
+			plog(LLV_ERROR, LOCATION, NULL,
+			    "ignore information due to hash length mismatch\n");
+
+			vfree(hash);
+			vfree(payload);
+			goto end;
+		}
+
+		if (memcmp(p, hash->v, hash->l) != 0) {
+			plog(LLV_ERROR, LOCATION, NULL,
+			    "ignore information due to hash mismatch\n");
+
+			vfree(hash);
+			vfree(payload);
+			goto end;
+		}
+
+		plog(LLV_DEBUG, LOCATION, NULL, "hash validated.\n");
+
+		vfree(hash);
+		vfree(payload);
+	}
 		
 	/* make sure the packet were encrypted. */
 	if (!encrypted) {
