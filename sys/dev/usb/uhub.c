@@ -1,4 +1,4 @@
-/*	$NetBSD: uhub.c,v 1.21 1999/08/19 19:51:36 augustss Exp $	*/
+/*	$NetBSD: uhub.c,v 1.22 1999/08/22 20:12:39 augustss Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -62,7 +62,6 @@
 #define DPRINTF(x)	if (usbdebug) logprintf x
 #define DPRINTFN(n,x)	if (usbdebug>(n)) logprintf x
 extern int	usbdebug;
-extern char 	*usbd_error_strs[];
 #else
 #define DPRINTF(x)
 #define DPRINTFN(n,x)

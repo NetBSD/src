@@ -1,4 +1,4 @@
-/*	$NetBSD: ugen.c,v 1.16 1999/08/19 19:57:21 augustss Exp $	*/
+/*	$NetBSD: ugen.c,v 1.17 1999/08/22 20:12:39 augustss Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -85,6 +85,7 @@ struct ugen_endpoint {
 	struct clist q;
 	struct selinfo rsel;
 	void *ibuf;
+	u_int32_t timeout;
 };
 
 #define	UGEN_CHUNK	128	/* chunk size for read */
@@ -286,6 +287,7 @@ ugenopen(dev, flag, mode, p)
 			continue;
 		sce = &sc->sc_endpoints[endpt][dir];
 		sce->state = 0;
+		sce->timeout = USBD_NO_TIMEOUT;
 		DPRINTFN(5, ("ugenopen: sc=%p, endpt=%d, dir=%d, sce=%p\n", 
 			     sc, endpt, dir, sce));
 		edesc = sce->edesc;
@@ -468,10 +470,12 @@ ugen_do_read(sc, endpt, uio, flag)
 				reqh, sce->pipeh,
 				sce->state & UGEN_SHORT_OK ? 
 				    USBD_SHORT_XFER_OK : 0, 
-				buf, &tn, "ugenrb");
+				sce->timeout, buf, &tn, "ugenrb");
 			if (r != USBD_NORMAL_COMPLETION) {
 				if (r == USBD_INTERRUPTED)
 					error = EINTR;
+				else if (r == USBD_TIMEOUT)
+					error = ETIMEDOUT;
 				else
 					error = EIO;
 				break;
@@ -545,8 +549,8 @@ ugen_do_write(sc, endpt, uio, flag)
 			if (error)
 				break;
 			DPRINTFN(1, ("ugenwrite: transfer %d bytes\n", n));
-			r = usbd_bulk_transfer(reqh, sce->pipeh, 0, buf, 
-					       &n, "ugenwb");
+			r = usbd_bulk_transfer(reqh, sce->pipeh, 0, 
+					       sce->timeout, buf, &n,"ugenwb");
 			if (r != USBD_NORMAL_COMPLETION) {
 				if (r == USBD_INTERRUPTED)
 					error = EINTR;
@@ -641,10 +645,7 @@ ugenintr(reqh, addr, status)
 {
 	struct ugen_endpoint *sce = addr;
 	/*struct ugen_softc *sc = sce->sc;*/
-	usbd_private_handle priv;
-	void *buffer;
 	u_int32_t count;
-	usbd_status xstatus;
 	u_char *ibuf;
 
 	if (status == USBD_CANCELLED)
@@ -656,11 +657,11 @@ ugenintr(reqh, addr, status)
 		return;
 	}
 
-	(void)usbd_get_request_status(reqh, &priv, &buffer, &count, &xstatus);
+	usbd_get_request_status(reqh, 0, 0, &count, 0);
 	ibuf = sce->ibuf;
 
 	DPRINTFN(5, ("ugenintr: reqh=%p status=%d count=%d\n", 
-		     reqh, xstatus, count));
+		     reqh, status, count));
 	DPRINTFN(5, ("          data = %02x %02x %02x\n",
 		     ibuf[0], ibuf[1], ibuf[2]));
 
@@ -815,7 +816,7 @@ ugen_do_ioctl(sc, endpt, cmd, addr, flag, p)
 		sce = &sc->sc_endpoints[endpt][IN];
 #ifdef DIAGNOSTIC
 		if (!sce->pipeh) {
-			printf("ugenioctl: no pipe\n");
+			printf("ugenioctl: USB_SET_SHORT_XFER, no pipe\n");
 			return (EIO);
 		}
 #endif
@@ -823,6 +824,16 @@ ugen_do_ioctl(sc, endpt, cmd, addr, flag, p)
 			sce->state |= UGEN_SHORT_OK;
 		else
 			sce->state &= ~UGEN_SHORT_OK;
+		return (0);
+	case USB_SET_TIMEOUT:
+		sce = &sc->sc_endpoints[endpt][IN];
+#ifdef DIAGNOSTIC
+		if (!sce->pipeh) {
+			printf("ugenioctl: USB_SET_TIMEOUT, no pipe\n");
+			return (EIO);
+		}
+#endif
+		sce->timeout = *(int *)addr;
 		return (0);
 	default:
 		break;

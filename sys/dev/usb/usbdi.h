@@ -1,4 +1,4 @@
-/*	$NetBSD: usbdi.h,v 1.23 1999/08/19 19:51:37 augustss Exp $	*/
+/*	$NetBSD: usbdi.h,v 1.24 1999/08/22 20:12:39 augustss Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -82,7 +82,8 @@ typedef void (*usbd_callback) __P((usbd_request_handle, usbd_private_handle,
 /* Request flags */
 #define USBD_XFER_OUT		0x01
 #define USBD_XFER_IN		0x02
-#define USBD_SHORT_XFER_OK	0x04
+#define USBD_SHORT_XFER_OK	0x04	/* allow short reads */
+#define USBD_SYNCHRONOUS	0x08	/* wait for completion */
 
 #define USBD_NO_TIMEOUT 0
 #define USBD_DEFAULT_TIMEOUT 5000 /* ms = 5 s */
@@ -104,7 +105,7 @@ usbd_status usbd_setup_default_request
 	     usbd_private_handle priv, u_int32_t timeout,
 	     usb_device_request_t *req,  void *buffer,
 	     u_int32_t length, u_int16_t flags, usbd_callback));
-usbd_status usbd_get_request_status
+void usbd_get_request_status
 	__P((usbd_request_handle reqh, usbd_private_handle *priv,
 	     void **buffer, u_int32_t *count, usbd_status *status));
 usb_endpoint_descriptor_t *usbd_interface2endpoint_descriptor
