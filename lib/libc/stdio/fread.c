@@ -36,7 +36,7 @@
 
 #if defined(LIBC_SCCS) && !defined(lint)
 /*static char *sccsid = "from: @(#)fread.c	5.4 (Berkeley) 5/4/91";*/
-static char *rcsid = "$Id: fread.c,v 1.4 1993/10/04 18:51:10 jtc Exp $";
+static char *rcsid = "$Id: fread.c,v 1.5 1993/12/14 23:17:09 jtc Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 #include <stdio.h>
@@ -54,7 +54,7 @@ fread(buf, size, count, fp)
 	size_t total;
 
 	if ((resid = count * size) == 0)
-		return (count);
+		return (0);
 	if (fp->_r < 0)
 		fp->_r = 0;
 	total = resid;
