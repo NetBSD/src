@@ -1,4 +1,4 @@
-/*	$NetBSD: if_csvar.h,v 1.7 1998/07/21 00:24:45 thorpej Exp $	*/
+/*	$NetBSD: if_csvar.h,v 1.8 1998/07/21 00:40:17 thorpej Exp $	*/
 
 /*
  * Copyright 1997
@@ -71,22 +71,29 @@ struct cs_softc {
 
 	void	*sc_ih;			/* interupt handler */
 	void 	*sc_sh;			/* shutdown hook */
+
 	bus_space_tag_t sc_iot;		/* bus space tag for IO */
 	bus_space_tag_t sc_memt;	/* bus space tag for memory mode */
 	bus_space_handle_t sc_ioh;	/* bus space handles */
 	bus_space_handle_t sc_memh;
+
 	isa_chipset_tag_t sc_ic;	/* ISA chipset */
-   	u_int16_t  sc_int;		/* interrupt level */ 
-	int pPacketPagePhys;		/* physical io address */
-   	u_int16_t  mediaType;		/* 10BaseT, thin wire */
-   	u_int16_t  configFlags;		/* chip configuration software flag */
-   	int    inMemoryMode;		/* status */
-   	int    txInProgress;		/* flags  */
-   	int    resetting;		/* chip in reset mode flag */
-	uint dmaMemSize;		/* 16K or 64K if DMA being used */
-	char *dmaBase;			/* DMA memory base */
-	char *dma_offset;		/* offset into DMA space */
-	int sc_drq;			/* DMA request channel : 5,6,7 */
+
+	int	sc_irq;			/* IRQ line */
+	int	sc_drq;			/* DRQ line */
+
+	bus_addr_t sc_pktpgaddr;	/* PacketPage bus memory address */
+
+	bus_size_t sc_dmasize;		/* DMA size (16k or 64k) */
+	caddr_t	sc_dmabase;		/* base DMA address (KVA) */
+	caddr_t	sc_dmacur;		/* current DMA address (KVA) */
+
+	int	sc_cfgflags;		/* software configuration flags */
+	int	sc_mediatype;		/* media type (XXX if_media) */
+
+	int	sc_memorymode;		/* are we in memory mode? */
+	int	sc_txbusy;		/* transmit in progress */
+	int	sc_resetting;		/* reset in progress */
 
 	int	sc_xe_ent;		/* current early-xmit table entry */
 	int	sc_xe_togo;		/* # of packets to go at this ent */
@@ -119,7 +126,6 @@ struct cs_softc {
 /* Miscellaneous definitions */
 
 #define MAXLOOP            0x8888
-#define CS_DMA_FRAME_HEADER_SIZE   (sizeof(u_int16_t) * 2)
 #define RXBUFCOUNT         16
 #define MC_LOANED          5
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_cs_isa.c,v 1.13 1998/07/21 00:24:45 thorpej Exp $	*/
+/*	$NetBSD: if_cs_isa.c,v 1.14 1998/07/21 00:40:17 thorpej Exp $	*/
 
 /*
  * Copyright 1997
@@ -83,7 +83,7 @@
 **     can't be allocated.
 **
 **     Revision 1.19  1997/06/03 03:09:58  dettori
-**     Turn off txInProgress flag when a transmit underrun
+**     Turn off sc_txbusy flag when a transmit underrun
 **     occurs.
 **
 **     Revision 1.18  1997/06/02 00:04:35  dettori
@@ -253,7 +253,7 @@
 	bus_space_read_2((memt), (memh), (offset))
 
 #define	CS_READ_PACKET_PAGE(sc, offset)					\
-	((sc)->inMemoryMode ? CS_READ_PACKET_PAGE_MEM((sc)->sc_memt,	\
+	((sc)->sc_memorymode ? CS_READ_PACKET_PAGE_MEM((sc)->sc_memt,	\
 	                      (sc)->sc_memh, (offset)) :		\
 	 CS_READ_PACKET_PAGE_IO((sc)->sc_iot, (sc)->sc_ioh, (offset)))
 
@@ -268,7 +268,7 @@ do {									\
 
 #define	CS_WRITE_PACKET_PAGE(sc, offset, val)				\
 do {									\
-	if ((sc)->inMemoryMode)						\
+	if ((sc)->sc_memorymode)					\
 		CS_WRITE_PACKET_PAGE_MEM((sc)->sc_memt, (sc)->sc_memh,	\
 		    (offset), (val));					\
 	else								\
@@ -419,7 +419,7 @@ csAttach(parent, self, aux)
 	sc->sc_memt = ia->ia_memt;
 
 	sc->sc_drq = ia->ia_drq;
-	sc->sc_int = ia->ia_irq;
+	sc->sc_irq = ia->ia_irq;
 
 	/*
 	 * Map the device.
@@ -473,8 +473,8 @@ csAttach(parent, self, aux)
 	 *
 	 * I think we always want to use the external latch logic.
 	 */
-	sc->pPacketPagePhys = ia->ia_maddr;
-	sc->configFlags |= CFGFLG_MEM_MODE | CFGFLG_USE_SA | CFGFLG_IOCHRDY;
+	sc->sc_pktpgaddr = ia->ia_maddr;
+	sc->sc_cfgflags |= CFGFLG_MEM_MODE | CFGFLG_USE_SA | CFGFLG_IOCHRDY;
 
 	/*
 	 * the first thing to do is check that the mbuf cluster size is
@@ -489,10 +489,10 @@ csAttach(parent, self, aux)
 	}
 
 	/* Start out in IO mode */
-	sc->inMemoryMode = FALSE;
+	sc->sc_memorymode = FALSE;
 
 	/* Start out not transmitting */
-	sc->txInProgress = FALSE;
+	sc->sc_txbusy = FALSE;
 
 	/* Set up early transmit threshhold */
 	sc->sc_xe_ent = 0;
@@ -516,7 +516,7 @@ csAttach(parent, self, aux)
 		return;
 	}
 
-	sc->mediaType = MEDIA_10BASET;	/* XXX get from OpenFirmware */
+	sc->sc_mediatype = MEDIA_10BASET;	/* XXX get from OpenFirmware */
 #else
 	/* Get parameters, which were not specified, from the EEPROM */
 	if (csGetUnspecifiedParms(sc) == CS_ERROR) {
@@ -565,7 +565,7 @@ csAttach(parent, self, aux)
 			goto after_dma_block;
 		}
 		if (isa_dmamem_map(sc->sc_ic, sc->sc_drq, dma_addr,
-		    CS8900_DMASIZE, &sc->dmaBase,
+		    CS8900_DMASIZE, &sc->sc_dmabase,
 		       BUS_DMA_NOWAIT | BUS_DMA_COHERENT /* XXX */ ) != 0) {
 			printf("%s: unable to map DMA buffer\n",
 			    sc->sc_dev.dv_xname);
@@ -574,8 +574,8 @@ csAttach(parent, self, aux)
 			goto after_dma_block;
 		}
 
-		sc->dmaMemSize = CS8900_DMASIZE;
-		sc->configFlags |= CFGFLG_DMA_MODE;
+		sc->sc_dmasize = CS8900_DMASIZE;
+		sc->sc_cfgflags |= CFGFLG_DMA_MODE;
 	}
 after_dma_block:
 
@@ -619,8 +619,8 @@ csGetUnspecifiedParms(sc)
 	u_int16_t xmitCtl;
 
 	/* If all of these parameters were specified */
-	if (sc->configFlags != 0 && sc->pPacketPagePhys != MADDRUNK
-	    && sc->sc_int != 0 && sc->mediaType != 0) {
+	if (sc->sc_cfgflags != 0 && sc->sc_pktpgaddr != (bus_addr_t)MADDRUNK
+	    && sc->sc_irq != 0 && sc->sc_mediatype != 0) {
 		return CS_OK;
 	}
 
@@ -645,32 +645,32 @@ csGetUnspecifiedParms(sc)
 		return CS_ERROR;
 
 	/* If the configuration flags were not specified */
-	if (sc->configFlags == 0) {
+	if (sc->sc_cfgflags == 0) {
 		/* Copy the memory mode flag */
 		if (isaConfig & ISA_CFG_MEM_MODE)
-			sc->configFlags |= CFGFLG_MEM_MODE;
+			sc->sc_cfgflags |= CFGFLG_MEM_MODE;
 
 		/* Copy the USE_SA flag */
 		if (isaConfig & ISA_CFG_USE_SA)
-			sc->configFlags |= CFGFLG_USE_SA;
+			sc->sc_cfgflags |= CFGFLG_USE_SA;
 
 		/* Copy the IO Channel Ready flag */
 		if (isaConfig & ISA_CFG_IOCHRDY)
-			sc->configFlags |= CFGFLG_IOCHRDY;
+			sc->sc_cfgflags |= CFGFLG_IOCHRDY;
 
 		/* Copy the DC/DC Polarity flag */
 		if (adapterConfig & ADPTR_CFG_DCDC_POL)
-			sc->configFlags |= CFGFLG_DCDC_POL;
+			sc->sc_cfgflags |= CFGFLG_DCDC_POL;
 
 		/* Copy the Full Duplex flag */
 		if (xmitCtl & XMIT_CTL_FDX)
-			sc->configFlags |= CFGFLG_FDX;
+			sc->sc_cfgflags |= CFGFLG_FDX;
 	}
 
 	/* If the PacketPage pointer was not specified */
-	if (sc->pPacketPagePhys == MADDRUNK) {
+	if (sc->sc_pktpgaddr == (bus_addr_t)MADDRUNK) {
 		/* If memory mode is enabled */
-		if (sc->configFlags & CFGFLG_MEM_MODE) {
+		if (sc->sc_cfgflags & CFGFLG_MEM_MODE) {
 			/* Get the memory base address from EEPROM */
 			if (csReadEEPROM(sc, EEPROM_MEM_BASE,
 			    &memBase) == CS_ERROR)
@@ -679,32 +679,32 @@ csGetUnspecifiedParms(sc)
 			memBase &= MEM_BASE_MASK;	/* Clear unused bits */
 
 			/* Setup the PacketPage pointer */
-			sc->pPacketPagePhys = (((u_long) memBase) << 8);
+			sc->sc_pktpgaddr = (((u_long) memBase) << 8);
 		}
 	}
 
 	/* If the interrupt level was not specified */
-	if (sc->sc_int == 0) {
+	if (sc->sc_irq == 0) {
 		/* Get the interrupt level from the ISA config */
-		sc->sc_int = isaConfig & ISA_CFG_IRQ_MASK;
-		if (sc->sc_int == 3)
-			sc->sc_int = 5;
+		sc->sc_irq = isaConfig & ISA_CFG_IRQ_MASK;
+		if (sc->sc_irq == 3)
+			sc->sc_irq = 5;
 		else
-			sc->sc_int += 10;
+			sc->sc_irq += 10;
 	}
 
 	/* If the media type was not specified */
-	if (sc->mediaType == 0) {
+	if (sc->sc_mediatype == 0) {
 		switch (adapterConfig & ADPTR_CFG_MEDIA) {
 		case ADPTR_CFG_AUI:
-			sc->mediaType = MEDIA_AUI;
+			sc->sc_mediatype = MEDIA_AUI;
 			break;
 		case ADPTR_CFG_10BASE2:
-			sc->mediaType = MEDIA_10BASE2;
+			sc->sc_mediatype = MEDIA_10BASE2;
 			break;
 		case ADPTR_CFG_10BASET:
 		default:
-			sc->mediaType = MEDIA_10BASET;
+			sc->sc_mediatype = MEDIA_10BASET;
 			break;
 		}
 	}
@@ -717,7 +717,7 @@ csValidateParms(sc)
 {
 	int memAddr;
 
-	memAddr = sc->pPacketPagePhys;
+	memAddr = sc->sc_pktpgaddr;
 
 	if ((memAddr & 0x000FFF) != 0) {
 		printf("%s: memory address not on 4k boundary\n",
@@ -725,15 +725,16 @@ csValidateParms(sc)
 		return CS_ERROR;
 	}
 
-	if (!(sc->sc_int == 5 || sc->sc_int == 10 || sc->sc_int == 11 ||
-	      sc->sc_int == 12)) {
+	if (!(sc->sc_irq == 5 || sc->sc_irq == 10 || sc->sc_irq == 11 ||
+	      sc->sc_irq == 12)) {
 		printf("%s: invalid IRQ\n", sc->sc_dev.dv_xname);
 		return CS_ERROR;
 	}
 
-	if (!(sc->mediaType == MEDIA_AUI || sc->mediaType == MEDIA_10BASE2 ||
-	      sc->mediaType == MEDIA_10BASET)) {
-		printf("%s: invalud media type\n", sc->sc_dev.dv_xname);
+	if (!(sc->sc_mediatype == MEDIA_AUI ||
+	      sc->sc_mediatype == MEDIA_10BASE2 ||
+	      sc->sc_mediatype == MEDIA_10BASET)) {
+		printf("%s: invalid media type\n", sc->sc_dev.dv_xname);
 		return CS_ERROR;
 	}
 
@@ -784,7 +785,7 @@ csResetChip(sc)
 	 * A spurious interrupt is generated by the chip when it is reset. This
 	 * variable informs the interrupt handler to ignore this interrupt.
 	 */
-	sc->resetting = TRUE;
+	sc->sc_resetting = TRUE;
 
 	/* Issue a reset command to the chip */
 	CS_WRITE_PACKET_PAGE(sc, PKTPG_SELF_CTL, SELF_CTL_RESET);
@@ -793,10 +794,10 @@ csResetChip(sc)
 	splx(intState);
 
 	/* The chip is always in IO mode after a reset */
-	sc->inMemoryMode = FALSE;
+	sc->sc_memorymode = FALSE;
 
 	/* If transmission was in progress, it is not now */
-	sc->txInProgress = FALSE;
+	sc->sc_txbusy = FALSE;
 
 	/*
 	 * there was a delay(125); here, but it seems uneccesary 125 usec is
@@ -830,7 +831,7 @@ csResetChip(sc)
 		return CS_ERROR;
 
 	/* Reset is no longer in progress */
-	sc->resetting = FALSE;
+	sc->sc_resetting = FALSE;
 
 	return CS_OK;
 }
@@ -893,7 +894,7 @@ csInitChip(sc)
 
 	/* If IOCHRDY is enabled then clear the bit in the busCtl register */
 	busCtl = CS_READ_PACKET_PAGE(sc, PKTPG_BUS_CTL);
-	if (sc->configFlags & CFGFLG_IOCHRDY) {
+	if (sc->sc_cfgflags & CFGFLG_IOCHRDY) {
 		CS_WRITE_PACKET_PAGE(sc, PKTPG_BUS_CTL,
 		    busCtl & ~BUS_CTL_IOCHRDY);
 	} else {
@@ -902,7 +903,7 @@ csInitChip(sc)
 	}
 
 	/* Set the Line Control register to match the media type */
-	if (sc->mediaType == MEDIA_10BASET) {
+	if (sc->sc_mediatype == MEDIA_10BASET) {
 		CS_WRITE_PACKET_PAGE(sc, PKTPG_LINE_CTL, LINE_CTL_10BASET);
 	} else {
 		CS_WRITE_PACKET_PAGE(sc, PKTPG_LINE_CTL, LINE_CTL_AUI_ONLY);
@@ -915,11 +916,11 @@ csInitChip(sc)
 	selfCtl = SELF_CTL_HC1E;
 
 	/* If the media type is 10Base2 */
-	if (sc->mediaType == MEDIA_10BASE2) {
+	if (sc->sc_mediatype == MEDIA_10BASE2) {
 		/*
 		 * Enable the DC/DC converter if it has a low enable.
 		 */
-		if ((sc->configFlags & CFGFLG_DCDC_POL) == 0)
+		if ((sc->sc_cfgflags & CFGFLG_DCDC_POL) == 0)
 			/*
 			 * Set the HCB1 bit, which causes the HC1 pin to go
 			 * low.
@@ -929,7 +930,7 @@ csInitChip(sc)
 		/*
 		 * Disable the DC/DC converter if it has a high enable.
 		 */
-		if ((sc->configFlags & CFGFLG_DCDC_POL) != 0) {
+		if ((sc->sc_cfgflags & CFGFLG_DCDC_POL) != 0) {
 			/*
 			 * Set the HCB1 bit, which causes the HC1 pin to go
 			 * low.
@@ -940,12 +941,12 @@ csInitChip(sc)
 	CS_WRITE_PACKET_PAGE(sc, PKTPG_SELF_CTL, selfCtl);
 
 	/* If media type is 10BaseT */
-	if (sc->mediaType == MEDIA_10BASET) {
+	if (sc->sc_mediatype == MEDIA_10BASET) {
 		/*
 		 * If full duplex mode then set the FDX bit in TestCtl
 		 * register
 		 */
-		if (sc->configFlags & CFGFLG_FDX) {
+		if (sc->sc_cfgflags & CFGFLG_FDX) {
 			CS_WRITE_PACKET_PAGE(sc, PKTPG_TEST_CTL, TEST_CTL_FDX);
 		}
 	}
@@ -972,19 +973,19 @@ csInitChip(sc)
 	CS_WRITE_PACKET_PAGE(sc, PKTPG_BUF_CFG, BUF_CFG_TX_UNDR_IE |
 			  BUF_CFG_RX_DMA_IE);
 
-	if (sc->configFlags & CFGFLG_DMA_MODE) {
+	if (sc->sc_cfgflags & CFGFLG_DMA_MODE) {
 		/*
 		 * First we program the DMA controller and ensure the memory
 		 * buffer is valid. If it isn't then we just go on without
 		 * DMA.
 		 */
-		if (isa_dmastart(sc->sc_ic, sc->sc_drq, sc->dmaBase,
-		    sc->dmaMemSize, NULL, DMAMODE_READ | DMAMODE_LOOPDEMAND,
+		if (isa_dmastart(sc->sc_ic, sc->sc_drq, sc->sc_dmabase,
+		    sc->sc_dmasize, NULL, DMAMODE_READ | DMAMODE_LOOPDEMAND,
 		    BUS_DMA_NOWAIT)) {
 			/* XXX XXX XXX */
 			panic("%s: unable to start DMA\n", sc->sc_dev.dv_xname);
 		}
-		sc->dma_offset = sc->dmaBase;
+		sc->sc_dmacur = sc->sc_dmabase;
 
 		/* interrupt when a DMA'd frame is received */
 		CS_WRITE_PACKET_PAGE(sc, PKTPG_RX_CFG,
@@ -994,7 +995,7 @@ csInitChip(sc)
 		 * set the DMA burst bit so we don't tie up the bus for too
 		 * long.
 		 */
-		if (sc->dmaMemSize == 16384) {
+		if (sc->sc_dmasize == 16384) {
 			CS_WRITE_PACKET_PAGE(sc, PKTPG_BUS_CTL,
 			    ((CS_READ_PACKET_PAGE(sc, PKTPG_BUS_CTL) &
 			     ~BUS_CTL_DMA_SIZE) | BUS_CTL_DMA_BURST));
@@ -1008,7 +1009,7 @@ csInitChip(sc)
 	}
 
 	/* If memory mode is enabled */
-	if (sc->configFlags & CFGFLG_MEM_MODE) {
+	if (sc->sc_cfgflags & CFGFLG_MEM_MODE) {
 		/* If external logic is present for address decoding */
 		if (CS_READ_PACKET_PAGE(sc, PKTPG_SELF_ST) & SELF_ST_EL_PRES) {
 			/*
@@ -1016,7 +1017,7 @@ csInitChip(sc)
 			 * SA20-SA23
 			 */
 			CS_WRITE_PACKET_PAGE(sc, PKTPG_EEPROM_CMD,
-			    ((sc->pPacketPagePhys & 0xffffff) >> 20) |
+			    ((sc->sc_pktpgaddr & 0xffffff) >> 20) |
 			    EEPROM_CMD_ELSEL);
 		}
 
@@ -1025,20 +1026,20 @@ csInitChip(sc)
 		 * base register.
 		 */
 		CS_WRITE_PACKET_PAGE(sc, PKTPG_MEM_BASE,
-		    sc->pPacketPagePhys & 0xFFFF);
+		    sc->sc_pktpgaddr & 0xFFFF);
 		CS_WRITE_PACKET_PAGE(sc, PKTPG_MEM_BASE + 2,
-		    sc->pPacketPagePhys >> 16);
+		    sc->sc_pktpgaddr >> 16);
 		busCtl = BUS_CTL_MEM_MODE;
 
 		/* tell the chip to read the addresses off the SA pins */
-		if (sc->configFlags & CFGFLG_USE_SA) {
+		if (sc->sc_cfgflags & CFGFLG_USE_SA) {
 			busCtl |= BUS_CTL_USE_SA;
 		}
 		CS_WRITE_PACKET_PAGE(sc, PKTPG_BUS_CTL,
 		    CS_READ_PACKET_PAGE(sc, PKTPG_BUS_CTL) | busCtl);
 
 		/* We are in memory mode now! */
-		sc->inMemoryMode = TRUE;
+		sc->sc_memorymode = TRUE;
 
 		/*
 		 * wait here (10ms) for the chip to swap over. this is the
@@ -1057,13 +1058,13 @@ csInitChip(sc)
 		if (isaId != EISA_NUM_CRYSTAL) {
 			printf("%s: failed to enable memory mode\n",
 			    sc->sc_dev.dv_xname);
-			sc->inMemoryMode = FALSE;
+			sc->sc_memorymode = FALSE;
 		} else {
 			/*
 			 * we are in memory mode so if we aren't using DMA,
 			 * then program the chip to interrupt early.
 			 */
-			if ((sc->configFlags & CFGFLG_DMA_MODE) == 0) {
+			if ((sc->sc_cfgflags & CFGFLG_DMA_MODE) == 0) {
 				CS_WRITE_PACKET_PAGE(sc, PKTPG_BUF_CFG,
 				    BUF_CFG_RX_DEST_IE |
 				    BUF_CFG_RX_MISS_OVER_IE |
@@ -1080,10 +1081,10 @@ csInitChip(sc)
 	CS_WRITE_PACKET_PAGE(sc, PKTPG_IND_ADDR + 4, myea[2]);
 
 	/* Set the interrupt level in the chip */
-	if (sc->sc_int == 5) {
+	if (sc->sc_irq == 5) {
 		CS_WRITE_PACKET_PAGE(sc, PKTPG_INT_NUM, 3);
 	} else {
-		CS_WRITE_PACKET_PAGE(sc, PKTPG_INT_NUM, (sc->sc_int) - 10);
+		CS_WRITE_PACKET_PAGE(sc, PKTPG_INT_NUM, (sc->sc_irq) - 10);
 	}
 
 	/* write the multicast mask to the address filter register */
@@ -1363,7 +1364,7 @@ csIntr(arg)
 	u_int16_t Event;
 
 	/* Ignore any interrupts that happen while the chip is being reset */
-	if (sc->resetting) {
+	if (sc->sc_resetting) {
 		printf("%s: csIntr: reset in progress\n",
 		    sc->sc_dev.dv_xname);
 		return 1;
@@ -1489,7 +1490,7 @@ csBufferEvent(sc, bufEvent)
 		    cs_xmit_early_table[sc->sc_xe_ent].better_count;
 
 		/* had an underrun, transmit is finished */
-		sc->txInProgress = FALSE;
+		sc->sc_txbusy = FALSE;
 	}
 
 	if (bufEvent & BUF_EVENT_SW_INT) {
@@ -1550,7 +1551,7 @@ csTransmitEvent(sc, txEvent)
 	pIf->if_opackets++;
 
 	/* Transmission is no longer in progress */
-	sc->txInProgress = FALSE;
+	sc->sc_txbusy = FALSE;
 
 	/* If there is more to transmit */
 	if (pIf->if_snd.ifq_head != NULL) {
@@ -1779,7 +1780,7 @@ csProcessRxDMA(sc)
 	 * received while we were processing
 	 */
 	while (num_dma_frames != 0) {
-		dma_mem_ptr = sc->dma_offset;
+		dma_mem_ptr = sc->sc_dmacur;
 
 		/*
 		 * process all of the dma frames in memory
@@ -1795,8 +1796,8 @@ csProcessRxDMA(sc)
 			 * to check for wraparound before reading the length
 			 */
 			status = *((unsigned short *) dma_mem_ptr)++;
-			if (dma_mem_ptr > (sc->dmaBase + sc->dmaMemSize)) {
-				dma_mem_ptr = sc->dmaBase;
+			if (dma_mem_ptr > (sc->sc_dmabase + sc->sc_dmasize)) {
+				dma_mem_ptr = sc->sc_dmabase;
 			}
 			pkt_length = *((unsigned short *) dma_mem_ptr)++;
 
@@ -1897,7 +1898,7 @@ csProcessRxDMA(sc)
 				 * is and go back to the start.
 				 */
 				if ((dma_mem_ptr + pkt_length) <
-				    (sc->dmaBase + sc->dmaMemSize)) {
+				    (sc->sc_dmabase + sc->sc_dmasize)) {
 					/*
 					 * No wrap around. Copy the frame
 					 * header
@@ -1906,7 +1907,7 @@ csProcessRxDMA(sc)
 					dma_mem_ptr += pkt_length;
 				} else {
 					to_copy = (u_int)
-					    ((sc->dmaBase + sc->dmaMemSize) -
+					    ((sc->sc_dmabase + sc->sc_dmasize) -
 					    dma_mem_ptr);
 
 					/* Copy the first half of the frame. */
@@ -1924,7 +1925,7 @@ csProcessRxDMA(sc)
 					 */
 					to_copy = pkt_length - to_copy;
 
-					dma_mem_ptr = sc->dmaBase;
+					dma_mem_ptr = sc->sc_dmabase;
 
 					/* Copy rest of the frame. */
 					bcopy(dma_mem_ptr, pBuff, to_copy);
@@ -1983,10 +1984,10 @@ csProcessRxDMA(sc)
 			dma_mem_ptr += 3;
 			dma_mem_ptr = (char *)
 			    ((long) dma_mem_ptr & 0xfffffffc);
-			if (dma_mem_ptr < (sc->dmaBase + sc->dmaMemSize)) {
-				sc->dma_offset = dma_mem_ptr;
+			if (dma_mem_ptr < (sc->sc_dmabase + sc->sc_dmasize)) {
+				sc->sc_dmacur = dma_mem_ptr;
 			} else {
-				dma_mem_ptr = sc->dma_offset = sc->dmaBase;
+				dma_mem_ptr = sc->sc_dmacur = sc->sc_dmabase;
 			}
 		} /* for all frames */
 		/* Read the number of frames DMAed again. */
@@ -2124,7 +2125,7 @@ csStartOutput(pIf)
 	}
 
 	/* Don't interrupt a transmission in progress */
-	if (sc->txInProgress) {
+	if (sc->sc_txbusy) {
 		return;
 	}
 
@@ -2133,7 +2134,7 @@ csStartOutput(pIf)
 	 * While there are packets to transmit and a transmit is not in
 	 * progress
 	 */
-	while ((pTxQueue->ifq_head != NULL) && !(sc->txInProgress) &&
+	while ((pTxQueue->ifq_head != NULL) && !(sc->sc_txbusy) &&
 	    !(dropout)) {
 		IF_DEQUEUE(pTxQueue, pMbufChain);
 
@@ -2215,7 +2216,7 @@ csStartOutput(pIf)
 					m_freem(pMbufChain);
 
 					/* Transmission is now in progress */
-					sc->txInProgress = TRUE;
+					sc->sc_txbusy = TRUE;
 					txLoop = 0;
 				} else {
 					/*
@@ -2231,7 +2232,7 @@ csStartOutput(pIf)
 						 * Transmission is not in
 						 * progress
 						 */
-						sc->txInProgress = FALSE;
+						sc->sc_txbusy = FALSE;
 						/*
 						 * Increment the output error
 						 * count
