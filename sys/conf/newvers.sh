@@ -45,7 +45,7 @@ touch version
 
 kernvers="386BSD 0.1"
 v=`cat version`
-t=`date "+%m/%d/%y %H:%M"`
+t=`date`
 user=${USER-root}
 host=`hostname`
 dir=`pwd`
