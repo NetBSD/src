@@ -1,4 +1,4 @@
-/*	$NetBSD: raw_ip6.c,v 1.21 2000/02/28 16:10:52 itojun Exp $	*/
+/*	$NetBSD: raw_ip6.c,v 1.22 2000/03/01 12:49:50 itojun Exp $	*/
 /*	$KAME: raw_ip6.c,v 1.24 2000/02/28 15:44:12 itojun Exp $	*/
 
 /*
@@ -458,10 +458,6 @@ rip6_output(m, va_alist)
 		*p = in6_cksum(m, ip6->ip6_nxt, sizeof(*ip6), plen);
 	}
 
-#ifdef IPSEC
-	m->m_pkthdr.rcvif = (struct ifnet *)so;
-#endif /*IPSEC*/
-	
 	error = ip6_output(m, optp, &in6p->in6p_route, 0, in6p->in6p_moptions,
 			   &oifp);
 	if (so->so_proto->pr_protocol == IPPROTO_ICMPV6) {

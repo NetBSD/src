@@ -1,4 +1,4 @@
-/*	$NetBSD: raw_ip.c,v 1.51 2000/02/17 10:59:36 darrenr Exp $	*/
+/*	$NetBSD: raw_ip.c,v 1.52 2000/03/01 12:49:36 itojun Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -279,7 +279,7 @@ rip_output(m, va_alist)
 		ipstat.ips_rawout++;
 	}
 #ifdef IPSEC
-	m->m_pkthdr.rcvif = (struct ifnet *)inp->inp_socket;	/*XXX*/
+	ipsec_setsocket(m, inp->inp_socket);
 #endif /*IPSEC*/
 	return (ip_output(m, opts, &inp->inp_route, flags, inp->inp_moptions, &inp->inp_errormtu));
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: ns_ip.c,v 1.24 1999/12/24 05:01:34 itojun Exp $	*/
+/*	$NetBSD: ns_ip.c,v 1.25 2000/03/01 12:49:53 itojun Exp $	*/
 
 /*
  * Copyright (c) 1984, 1985, 1986, 1987, 1993
@@ -40,7 +40,6 @@
  */
 
 #include "opt_ns.h"		/* options NSIP, needed by ns_if.h */
-#include "opt_ipsec.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -326,9 +325,6 @@ nsipoutput(ifp, m, dst, rt)
 	/*
 	 * Output final datagram.
 	 */
-#ifdef IPSEC
-	m->m_pkthdr.rcvif = NULL;
-#endif
 	error =  (ip_output(m, (struct mbuf *)0, ro, SO_BROADCAST, NULL));
 	if (error) {
 		ifn->ifen_ifnet.if_oerrors++;

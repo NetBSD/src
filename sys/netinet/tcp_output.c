@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_output.c,v 1.54 2000/02/09 00:50:40 itojun Exp $	*/
+/*	$NetBSD: tcp_output.c,v 1.55 2000/03/01 12:49:41 itojun Exp $	*/
 
 /*
 %%% portions-copyright-nrl-95
@@ -1024,7 +1024,7 @@ send:
 		}
 	}
 #ifdef IPSEC
-	m->m_pkthdr.rcvif = (struct ifnet *)so;
+	ipsec_setsocket(m, so);
 #endif /*IPSEC*/
 
 	switch (af) {
