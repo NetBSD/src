@@ -1,4 +1,4 @@
-/*	$NetBSD: pcmcia.c,v 1.70 2004/08/12 19:59:07 mycroft Exp $	*/
+/*	$NetBSD: pcmcia.c,v 1.71 2004/08/18 12:01:13 drochner Exp $	*/
 
 /*
  * Copyright (c) 2004 Charles M. Hannum.  All rights reserved.
@@ -48,7 +48,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pcmcia.c,v 1.70 2004/08/12 19:59:07 mycroft Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pcmcia.c,v 1.71 2004/08/18 12:01:13 drochner Exp $");
 
 #include "opt_pcmciaverbose.h"
 
@@ -79,12 +79,16 @@ int	pcmcia_verbose = 0;
 #endif
 
 int	pcmcia_match __P((struct device *, struct cfdata *, void *));
-int	pcmcia_submatch __P((struct device *, struct cfdata *, void *));
+int	pcmcia_submatch __P((struct device *, struct cfdata *,
+			     const locdesc_t *, void *));
 void	pcmcia_attach __P((struct device *, struct device *, void *));
+int	pcmcia_rescan(struct device *, const char *, const int *);
+void	pcmcia_childdetached(struct device *, struct device *);
 int	pcmcia_print __P((void *, const char *));
 
-CFATTACH_DECL(pcmcia, sizeof(struct pcmcia_softc),
-    pcmcia_match, pcmcia_attach, NULL, NULL);
+CFATTACH_DECL2(pcmcia, sizeof(struct pcmcia_softc),
+    pcmcia_match, pcmcia_attach, NULL, NULL,
+    pcmcia_rescan, pcmcia_childdetached);
 
 int
 pcmcia_ccr_read(pf, ccr)
@@ -148,8 +152,10 @@ pcmcia_card_attach(dev)
 {
 	struct pcmcia_softc *sc = (struct pcmcia_softc *) dev;
 	struct pcmcia_function *pf;
-	struct pcmcia_attach_args paa;
-	int attached = 0;
+	int error;
+	static const int wildcard[2] = {
+		PCMCIACF_FUNCTION_DEFAULT, PCMCIACF_IRQ_DEFAULT
+	};
 
 	/*
 	 * this is here so that when socket_enable calls gettype, trt happens
@@ -161,17 +167,19 @@ pcmcia_card_attach(dev)
 	pcmcia_read_cis(sc);
 	pcmcia_check_cis_quirks(sc);
 
+#if 1 /* XXX remove this, done below ??? */
 	/*
 	 * bail now if the card has no functions, or if there was an error in
 	 * the cis.
 	 */
-
 	if (sc->card.error ||
 	    SIMPLEQ_EMPTY(&sc->card.pf_head)) {
 		printf("%s: card appears to have bogus CIS\n",
 		    sc->dev.dv_xname);
+		error = EIO;
 		goto done;
 	}
+#endif
 
 	if (pcmcia_verbose)
 		pcmcia_print_cis(sc);
@@ -194,23 +202,52 @@ pcmcia_card_attach(dev)
 		pf->pf_ih = NULL;
 	}
 
+	error = pcmcia_rescan(dev, "pcmcia", wildcard);
+done:
+	pcmcia_socket_disable(dev);
+	return (error);
+}
+
+int
+pcmcia_rescan(struct device *self, const char *ifattr, const int *locators)
+{
+	struct pcmcia_softc *sc = (struct pcmcia_softc *)self;
+	struct pcmcia_function *pf;
+	struct pcmcia_attach_args paa;
+	int help[3];
+	locdesc_t *ldesc = (void *)&help; /* XXX */
+
+	if (sc->card.error ||
+	    SIMPLEQ_EMPTY(&sc->card.pf_head)) {
+		/* XXX silently ignore if no card present? */
+		return (EIO);
+	}
+
 	SIMPLEQ_FOREACH(pf, &sc->card.pf_head, pf_list) {
 		if (SIMPLEQ_EMPTY(&pf->cfe_head))
 			continue;
+
+		if ((locators[PCMCIACF_FUNCTION] != PCMCIACF_FUNCTION_DEFAULT)
+		    && (locators[PCMCIACF_FUNCTION] != pf->number))
+			continue;
+
+		if (pf->child)
+			continue;
+
+		ldesc->len = 2;
+		ldesc->locs[PCMCIACF_FUNCTION] = pf->number;
+		ldesc->locs[PCMCIACF_IRQ] = PCMCIACF_IRQ_DEFAULT;
 
 		paa.manufacturer = sc->card.manufacturer;
 		paa.product = sc->card.product;
 		paa.card = &sc->card;
 		paa.pf = pf;
 
-		if ((pf->child = config_found_sm(&sc->dev, &paa, pcmcia_print,
-		    pcmcia_submatch)) != NULL)
-			attached++;
+		pf->child = config_found_sm_loc(self, "pcmcia", ldesc, &paa,
+						pcmcia_print, pcmcia_submatch);
 	}
 
-done:
-	pcmcia_socket_disable(dev);
-	return (attached ? 0 : 1);
+	return (0);
 }
 
 void
@@ -238,8 +275,7 @@ pcmcia_card_detach(dev, flags)
 			printf("%s: error %d detaching %s (function %d)\n",
 			    sc->dev.dv_xname, error, pf->child->dv_xname,
 			    pf->number);
-		} else
-			pf->child = NULL;
+		}
 	}
 
 	if (sc->sc_enabled_count != 0) {
@@ -249,6 +285,27 @@ pcmcia_card_detach(dev, flags)
 		pcmcia_chip_socket_disable(sc->pct, sc->pch);
 		sc->sc_enabled_count = 0;
 	}
+}
+
+void
+pcmcia_childdetached(struct device *self, struct device *child)
+{
+	struct pcmcia_softc *sc = (struct pcmcia_softc *)self;
+	struct pcmcia_function *pf;
+
+	SIMPLEQ_FOREACH(pf, &sc->card.pf_head, pf_list) {
+		if (SIMPLEQ_EMPTY(&pf->cfe_head))
+			continue;
+		if (pf->child == child) {
+			KASSERT(child->dv_locators[PCMCIACF_FUNCTION]
+				== pf->number);
+			pf->child = NULL;
+			return;
+		}
+	}
+
+	printf("%s: pcmcia_childdetached: %s not found\n",
+	       self->dv_xname, child->dv_xname);
 }
 
 void
@@ -275,15 +332,15 @@ pcmcia_card_deactivate(dev)
 }
 
 int
-pcmcia_submatch(parent, cf, aux)
+pcmcia_submatch(parent, cf, ldesc, aux)
 	struct device *parent;
+	const locdesc_t *ldesc;
 	struct cfdata *cf;
 	void *aux;
 {
-	struct pcmcia_attach_args *paa = aux;
 
 	if (cf->cf_loc[PCMCIACF_FUNCTION] != PCMCIACF_FUNCTION_DEFAULT &&
-	    cf->cf_loc[PCMCIACF_FUNCTION] != paa->pf->number)
+	    cf->cf_loc[PCMCIACF_FUNCTION] != ldesc->locs[PCMCIACF_FUNCTION])
 		return (0);
 
 	return (config_match(parent, cf, aux));
