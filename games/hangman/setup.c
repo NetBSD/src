@@ -1,4 +1,4 @@
-/*	$NetBSD: setup.c,v 1.3 1995/03/23 08:32:59 cgd Exp $	*/
+/*	$NetBSD: setup.c,v 1.4 1997/10/11 01:16:42 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1983, 1993
@@ -33,24 +33,26 @@
  * SUCH DAMAGE.
  */
 
+#include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)setup.c	8.1 (Berkeley) 5/31/93";
 #else
-static char rcsid[] = "$NetBSD: setup.c,v 1.3 1995/03/23 08:32:59 cgd Exp $";
+__RCSID("$NetBSD: setup.c,v 1.4 1997/10/11 01:16:42 lukem Exp $");
 #endif
-#endif /* not lint */
+#endif				/* not lint */
 
-# include	"hangman.h"
+#include	"hangman.h"
 
 /*
  * setup:
  *	Set up the strings on the screen.
  */
+void
 setup()
 {
-	register char		**sp;
-	static struct stat	sbuf;
+	char **sp;
+	static struct stat sbuf;
 
 	noecho();
 	crmode();

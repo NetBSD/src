@@ -1,4 +1,4 @@
-/*	$NetBSD: playgame.c,v 1.3 1995/03/23 08:32:53 cgd Exp $	*/
+/*	$NetBSD: playgame.c,v 1.4 1997/10/11 01:16:36 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1983, 1993
@@ -33,30 +33,32 @@
  * SUCH DAMAGE.
  */
 
+#include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)playgame.c	8.1 (Berkeley) 5/31/93";
 #else
-static char rcsid[] = "$NetBSD: playgame.c,v 1.3 1995/03/23 08:32:53 cgd Exp $";
+__RCSID("$NetBSD: playgame.c,v 1.4 1997/10/11 01:16:36 lukem Exp $");
 #endif
 #endif /* not lint */
 
-# include	"hangman.h"
+#include	"hangman.h"
 
 /*
  * playgame:
  *	play a game
  */
+void
 playgame()
 {
-	register bool	*bp;
+	bool *bp;
 
 	getword();
 	Errors = 0;
 	bp = Guessed;
 	while (bp < &Guessed[26])
 		*bp++ = FALSE;
-	while (Errors < MAXERRS && index(Known, '-') != NULL) {
+	while (Errors < MAXERRS && strchr(Known, '-') != NULL) {
 		prword();
 		prdata();
 		prman();
