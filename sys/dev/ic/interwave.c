@@ -1,4 +1,4 @@
-/*	$NetBSD: interwave.c,v 1.3 1997/10/11 11:28:49 mycroft Exp $	*/
+/*	$NetBSD: interwave.c,v 1.4 1997/10/11 12:36:04 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -669,13 +669,13 @@ iw_query_encoding(addr, fp)
 		fp->flags = 0;
 		break;
 	case 4:
-		strcpy(fp->name, AudioElinear_le);
+		strcpy(fp->name, AudioEslinear_le);
 		fp->encoding = AUDIO_ENCODING_SLINEAR_LE;
 		fp->precision = 16;
 		fp->flags = 0;
 		break;
 	case 5:
-		strcpy(fp->name, AudioElinear_be);
+		strcpy(fp->name, AudioEslinear_be);
 		fp->encoding = AUDIO_ENCODING_SLINEAR_BE;
 		fp->precision = 16;
 		fp->flags = 0;
