@@ -1,4 +1,4 @@
-/*	$NetBSD: ssh-keygen.c,v 1.13 2001/11/27 04:10:25 itojun Exp $	*/
+/*	$NetBSD: ssh-keygen.c,v 1.14 2001/12/06 03:54:06 itojun Exp $	*/
 /*
  * Author: Tatu Ylonen <ylo@cs.hut.fi>
  * Copyright (c) 1994 Tatu Ylonen <ylo@cs.hut.fi>, Espoo, Finland
@@ -13,7 +13,7 @@
  */
 
 #include "includes.h"
-RCSID("$OpenBSD: ssh-keygen.c,v 1.84 2001/11/17 19:14:34 stevesk Exp $");
+RCSID("$OpenBSD: ssh-keygen.c,v 1.85 2001/12/05 10:06:12 deraadt Exp $");
 
 #include <openssl/evp.h>
 #include <openssl/pem.h>
@@ -269,7 +269,7 @@ do_convert_private_ssh2_from_blob(u_char *blob, int blen)
 		break;
 	}
 	rlen = buffer_len(&b);
-	if(rlen != 0)
+	if (rlen != 0)
 		error("do_convert_private_ssh2_from_blob: "
 		    "remaining bytes in key blob %d", rlen);
 	buffer_free(&b);
@@ -390,7 +390,7 @@ do_print_public(struct passwd *pw)
 		debug("#bytes %d", len); \
 		if (BN_bn2bin(prv->rsa->x, elements[i]) < 0) \
 			goto done; \
-	} while(0)
+	} while (0)
 
 static int
 get_AUT0(char *aut0)
