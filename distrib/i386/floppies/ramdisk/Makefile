@@ -1,9 +1,9 @@
-#	$NetBSD: Makefile,v 1.4 1997/07/29 18:07:53 phil Exp $
+#	$NetBSD: Makefile,v 1.4.2.1 1997/11/29 21:29:11 perry Exp $
 
 TOP=		${.CURDIR}/..
 
 .include "${TOP}/Makefile.inc"
-IMAGE=		ramdisk-${REV}.fs
+IMAGE=		ramdisk.fs
 
 AUXTARGETS=	install.sh upgrade.sh start.sh
 AUXCLEAN=	${AUXTARGETS}
@@ -17,7 +17,7 @@ VND_DEV=	/dev/${VND}a
 VND_RDEV=	/dev/r${VND}a
 VND_CDEV=	/dev/${VND}d
 VND_CRDEV=	/dev/r${VND}d
-IMAGE?=		xxx-${REV}.fs
+IMAGE?=		xxx.fs
 MDEC=		${DESTDIR}/usr/mdec
 
 LISTS=		list
