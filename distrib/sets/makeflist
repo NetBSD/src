@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# $NetBSD: makeflist,v 1.47 2002/05/06 23:38:47 nathanw Exp $
+# $NetBSD: makeflist,v 1.48 2002/07/17 23:34:20 fredette Exp $
 #
 # Print out the files in some or all lists.
 # Usage: makeflist [-b] [-x] [-a arch] [-m machine] [-s setsdir] [setname ...]
@@ -99,9 +99,14 @@ unset _lists
 
 for setname in $lists; do
 	cat $setd/lists/$setname/mi
-	if [ "$machine" != "$machine_arch" -a \
-	     -f $setd/lists/$setname/ad.${machine_cpu} ]; then
-		cat $setd/lists/$setname/ad.${machine_cpu}
+	if [ "$machine" != "$machine_arch" ]; then
+		if [ -f $setd/lists/$setname/ad.${machine_cpu} ]; then
+			cat $setd/lists/$setname/ad.${machine_cpu}
+		fi
+		if [ "$shlib" != "no" -a \
+		     -f $setd/lists/$setname/ad.${machine_cpu}.shl ]; then
+			cat $setd/lists/$setname/ad.${machine_cpu}.shl
+		fi
 	fi
 	if [ -f $setd/lists/$setname/md.${machine} ]; then
 		cat $setd/lists/$setname/md.${machine}
