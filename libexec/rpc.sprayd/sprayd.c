@@ -1,4 +1,4 @@
-/*	$NetBSD: sprayd.c,v 1.10 1998/07/03 11:51:19 mrg Exp $	*/
+/*	$NetBSD: sprayd.c,v 1.11 1999/01/31 08:51:53 mrg Exp $	*/
 
 /*
  * Copyright (c) 1994 Christos Zoulas
@@ -32,7 +32,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: sprayd.c,v 1.10 1998/07/03 11:51:19 mrg Exp $");
+__RCSID("$NetBSD: sprayd.c,v 1.11 1999/01/31 08:51:53 mrg Exp $");
 #endif /* not lint */
 
 #include <stdio.h>
@@ -106,7 +106,7 @@ main(argc, argv)
 		alarm(TIMEOUT);
 	}
 
-	openlog("rpc.sprayd", LOG_CONS|LOG_PID, LOG_DAEMON);
+	openlog("rpc.sprayd", LOG_PID, LOG_DAEMON);
 
 	transp = svcudp_create(sock);
 	if (transp == NULL) {

@@ -1,4 +1,4 @@
-/*	$NetBSD: fingerd.c,v 1.9 1998/08/29 22:54:58 kim Exp $	*/
+/*	$NetBSD: fingerd.c,v 1.10 1999/01/31 08:51:53 mrg Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -43,7 +43,7 @@ static char const copyright[] =
 #if 0
 static char sccsid[] = "from: @(#)fingerd.c	8.1 (Berkeley) 6/4/93";
 #else
-static char const rcsid[] = "$NetBSD: fingerd.c,v 1.9 1998/08/29 22:54:58 kim Exp $";
+static char const rcsid[] = "$NetBSD: fingerd.c,v 1.10 1999/01/31 08:51:53 mrg Exp $";
 #endif
 #endif /* not lint */
 
@@ -80,7 +80,7 @@ main(argc, argv)
 
 	prog = _PATH_FINGER;
 	logging = no_forward = user_required = short_list = 0;
-	openlog("fingerd", LOG_PID | LOG_CONS, LOG_DAEMON);
+	openlog("fingerd", LOG_PID, LOG_DAEMON);
 	opterr = 0;
 	while ((ch = getopt(argc, argv, "gsluShmpP:")) != -1)
 		switch (ch) {
