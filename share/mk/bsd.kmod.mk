@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.kmod.mk,v 1.46 2001/12/28 07:48:39 thorpej Exp $
+#	$NetBSD: bsd.kmod.mk,v 1.47 2001/12/28 07:49:26 thorpej Exp $
 
 .include <bsd.init.mk>
 
@@ -12,8 +12,9 @@ realinstall:	kmodinstall
 S?=		/sys
 KERN=		$S/kern
 
-CFLAGS+=	-ffreestanding ${COPTS} -D_KERNEL -D_LKM
+CFLAGS+=	-ffreestanding ${COPTS}
 CPPFLAGS+=	-nostdinc -I. -I${.CURDIR} -isystem $S -isystem $S/arch
+CPPFLAGS+=	-D_KERNEL -D_LKM
 
 DPSRCS+=	${SRCS:M*.l:.l=.c} ${SRCS:M*.y:.y=.c}
 CLEANFILES+=	${DPSRCS} ${YHEADER:D${SRCS:M*.y:.y=.h}} \
