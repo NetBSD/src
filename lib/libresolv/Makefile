@@ -1,8 +1,9 @@
-#	$NetBSD: Makefile,v 1.7 1999/07/01 18:20:13 itojun Exp $
+#	$NetBSD: Makefile,v 1.8 2000/01/31 15:42:34 christos Exp $
 #	from: @(#)Makefile	5.1 (Berkeley) 6/5/90
 
 LIB=resolv
 CPPFLAGS+=-DDEBUG -DLIBC_SCCS -I${.CURDIR}/../libc/include
+CPPFLAGS+=-DRESOLVSORT
 CPPFLAGS+=-DINET6
 
 .PATH:	${.CURDIR}/../libc/net
