@@ -1,11 +1,11 @@
-/*	$NetBSD: str.c,v 1.20 2000/01/25 12:09:21 hubertf Exp $	*/
+/*	$NetBSD: str.c,v 1.21 2000/02/07 11:26:26 abs Exp $	*/
 
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static const char *rcsid = "Id: str.c,v 1.5 1997/10/08 07:48:21 charnier Exp";
 #else
-__RCSID("$NetBSD: str.c,v 1.20 2000/01/25 12:09:21 hubertf Exp $");
+__RCSID("$NetBSD: str.c,v 1.21 2000/02/07 11:26:26 abs Exp $");
 #endif
 #endif
 
@@ -105,13 +105,35 @@ deweycmp(char *a, deweyop_t op, char *b)
 {
 	int     ad;
 	int     bd;
+	char	*a_nb;
+	char	*b_nb;
+	int	in_nb = 0;
 	int     cmp;
+
+	/* Null out 'n' in any "nb" suffixes for initial pass */
+	if ((a_nb = strstr(a, "nb")))
+	    *a_nb = 0;
+	if ((b_nb = strstr(b, "nb")))
+	    *b_nb = 0;
 
 	for (;;) {
 		if (*a == 0 && *b == 0) {
-			cmp = 0;
-			break;
+			if (!in_nb && (a_nb || b_nb)) {
+				/*
+				 * If exact match on first pass, test
+				 * "nb<X>" suffixes in second pass
+				 */
+				in_nb = 1;
+				if (a_nb)
+				    a = a_nb + 2;	/* Skip "nb" suffix */
+				if (b_nb)
+				    b = b_nb + 2;	/* Skip "nb" suffix */
+			} else {
+				cmp = 0;
+				break;
+			}
 		}
+
 		ad = bd = 0;
 		for (; *a && *a != '.'; a++) {
 			ad = (ad * 10) + (*a - '0');
@@ -122,13 +144,16 @@ deweycmp(char *a, deweyop_t op, char *b)
 		if ((cmp = ad - bd) != 0) {
 			break;
 		}
-		if (*a == '.') {
-			a++;
-		}
-		if (*b == '.') {
-			b++;
-		}
+		if (*a == '.')
+			++a;
+		if (*b == '.')
+			++b;
 	}
+	/* Replace any nulled 'n' */
+	if (a_nb)
+		*a_nb = 'n';
+	if (b_nb)
+		*b_nb = 'n';
 	return (op == GE) ? cmp >= 0 : (op == GT) ? cmp > 0 : (op == LE) ? cmp <= 0 : cmp < 0;
 }
 
