@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-2.0,v 1.1.2.365 2004/08/02 07:29:42 tron Exp $
+#	$NetBSD: CHANGES-2.0,v 1.1.2.366 2004/08/03 16:55:18 jmc Exp $
 
 A complete list of changes from the initial NetBSD 2.0 branch on 28 March 2004
 until 2.0 release:
@@ -6278,3 +6278,12 @@ sys/arch/mac68k/mac68k/machdep.c		1.299
 	we have, so defer this until we've probed the FPU type.
 	[scottr, ticket #728]
 
+
+sys/net80211/ieee80211_input.c			patch
+sys/net80211/ieee80211_node.c			patch
+sys/net80211/ieee80211_node.h			patch
+
+	Fix a problem with APs advertising multiple SSIDs by
+	allocating multiple nodes for the same AP when the announced
+	SSID differs.  Fixes PR#26377.
+	[he, ticket #729]
