@@ -1,4 +1,4 @@
-/*	$NetBSD: atapi_wdc.c,v 1.20.2.4 1999/08/28 22:02:01 he Exp $	*/
+/*	$NetBSD: atapi_wdc.c,v 1.20.2.5 2000/01/23 12:27:03 he Exp $	*/
 
 /*
  * Copyright (c) 1998 Manuel Bouyer.
@@ -234,10 +234,13 @@ wdc_atapi_start(chp, xfer)
 	    sc_xfer->flags), DEBUG_XFERS);
 	/* Adjust C_DMA, it may have changed if we are requesting sense */
 	if ((drvp->drive_flags & (DRIVE_DMA | DRIVE_UDMA)) &&
-	    (sc_xfer->datalen > 0 || (xfer->c_flags & C_SENSE)))
+	    (sc_xfer->datalen > 0 || (xfer->c_flags & C_SENSE))) {
+		if (drvp->n_xfers <= NXFER)
+			drvp->n_xfers++;
 		xfer->c_flags |= C_DMA;
-	else
+	} else {
 		xfer->c_flags &= ~C_DMA;
+	}
 	/* start timeout machinery */
 	if ((sc_xfer->flags & SCSI_POLL) == 0)
 		timeout(wdctimeout, chp, sc_xfer->timeout * hz / 1000);
@@ -345,14 +348,14 @@ wdc_atapi_intr(chp, xfer, irq)
 		    chp->wdc->sc_dev.dv_xname, chp->channel, xfer->drive,
 		    xfer->c_bcount, xfer->c_skip);
 		if (xfer->c_flags & C_DMA)
-			drvp->n_dmaerrs++;
+			ata_dmaerr(drvp);
 		sc_xfer->error = XS_TIMEOUT;
 		wdc_atapi_reset(chp, xfer);
 		return 1;
 	}
 	/* If we missed an IRQ and were using DMA, flag it as a DMA error */
 	if ((xfer->c_flags & C_TIMEOU) && (xfer->c_flags & C_DMA))
-		drvp->n_dmaerrs++;
+		ata_dmaerr(drvp);
 	/* 
 	 * if the request sense command was aborted, report the short sense
 	 * previously recorded, else continue normal processing
@@ -449,7 +452,7 @@ again:
 			if (xfer->c_flags & C_DMA) {
 				(*chp->wdc->dma_finish)(chp->wdc->dma_arg,
 				    chp->channel, xfer->drive, dma_flags);
-				drvp->n_dmaerrs++;
+				ata_dmaerr(drvp);
 			}
 			sc_xfer->error = XS_TIMEOUT;
 			wdc_atapi_reset(chp, xfer);
@@ -527,7 +530,7 @@ again:
 			if (xfer->c_flags & C_DMA) {
 				(*chp->wdc->dma_finish)(chp->wdc->dma_arg,
 				    chp->channel, xfer->drive, dma_flags);
-				drvp->n_dmaerrs++;
+				ata_dmaerr(drvp);
 			}
 			sc_xfer->error = XS_TIMEOUT;
 			wdc_atapi_reset(chp, xfer);
@@ -612,8 +615,8 @@ again:
 				 * request sense failed ! it's not suppossed
 				 * to be possible
 				 */
-				if (dma_err < 0)
-					drvp->n_dmaerrs++;
+				if (xfer->c_flags & C_DMA)
+					ata_dmaerr(drvp);
 				sc_xfer->error = XS_RESET;
 				wdc_atapi_reset(chp, xfer);
 				return (1);
@@ -650,7 +653,7 @@ again:
 					return 1;
 				}
 			} else if (dma_err < 0) {
-				drvp->n_dmaerrs++;
+				ata_dmaerr(drvp);
 				sc_xfer->error = XS_RESET;
 				wdc_atapi_reset(chp, xfer);
 				return (1);
@@ -682,6 +685,8 @@ again:
 			sc_xfer->error = XS_SHORTSENSE;
 			sc_xfer->sense.atapi_sense = chp->ch_error;
 		} else {
+			if (xfer->c_flags & C_DMA)
+				ata_dmaerr(drvp);
 			sc_xfer->error = XS_RESET;
 			wdc_atapi_reset(chp, xfer);
 			return (1);
@@ -802,7 +807,6 @@ wdc_atapi_done(chp, xfer)
 {
 	struct scsipi_xfer *sc_xfer = xfer->cmd;
 	int need_done =  xfer->c_flags & C_NEEDDONE;
-	struct ata_drive_datas *drvp = &chp->ch_drive[xfer->drive];
 
 	WDCDEBUG_PRINT(("wdc_atapi_done %s:%d:%d: flags 0x%x\n",
 	    chp->wdc->sc_dev.dv_xname, chp->channel, xfer->drive,
@@ -811,12 +815,6 @@ wdc_atapi_done(chp, xfer)
 	/* remove this command from xfer queue */
 	wdc_free_xfer(chp, xfer);
 	sc_xfer->flags |= ITSDONE;
-	if (drvp->n_dmaerrs ||
-	  (sc_xfer->error != XS_NOERROR && sc_xfer->error != XS_SENSE &&
-	  sc_xfer->error != XS_SHORTSENSE)) {
-		drvp->n_dmaerrs = 0;
-		wdc_downgrade_mode(drvp);
-	}
 	    
 	if (need_done) {
 		WDCDEBUG_PRINT(("wdc_atapi_done: scsipi_done\n"), DEBUG_XFERS);
