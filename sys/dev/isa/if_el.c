@@ -1,4 +1,4 @@
-/*	$NetBSD: if_el.c,v 1.62 2000/11/15 01:02:18 thorpej Exp $	*/
+/*	$NetBSD: if_el.c,v 1.63 2000/12/14 06:59:57 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1994, Matthew E. Kimmel.  Permission is hereby granted
@@ -233,6 +233,7 @@ elattach(parent, self, aux)
 	ifp->if_ioctl = elioctl;
 	ifp->if_watchdog = elwatchdog;
 	ifp->if_flags = IFF_BROADCAST | IFF_SIMPLEX | IFF_NOTRAILERS;
+	IFQ_SET_READY(&ifp->if_snd);
 
 	/* Now we can attach the interface. */
 	DPRINTF(("Attaching interface...\n"));
@@ -376,7 +377,7 @@ elstart(ifp)
 	 */
 	for (;;) {
 		/* Dequeue the next datagram. */
-		IF_DEQUEUE(&ifp->if_snd, m0);
+		IFQ_DEQUEUE(&ifp->if_snd, m0);
 
 		/* If there's nothing to send, return. */
 		if (m0 == 0)

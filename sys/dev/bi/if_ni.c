@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ni.c,v 1.7 2000/11/15 01:02:14 thorpej Exp $ */
+/*	$NetBSD: if_ni.c,v 1.8 2000/12/14 07:02:53 thorpej Exp $ */
 /*
  * Copyright (c) 2000 Ludd, University of Lule}, Sweden. All rights reserved.
  *
@@ -288,6 +288,7 @@ niattach(parent, self, aux)
 	ifp->if_start = nistart;
 	ifp->if_ioctl = niioctl;
 	ifp->if_watchdog = nitimeout;
+	IFQ_SET_READY(&ifp->if_snd);
 
 	/*
 	 * Start init sequence.
@@ -520,16 +521,17 @@ nistart(ifp)
 #endif
 
 	while (fqb->nf_dforw) {
-		IF_DEQUEUE(&sc->sc_if.if_snd, m);
+		IFQ_POLL(&ifp->if_snd, m);
 		if (m == 0)
 			break;
 
 		data = REMQHI(&fqb->nf_dforw);
 		if ((int)data == Q_EMPTY) {
-			IF_PREPEND(&sc->sc_if.if_snd, m);
 			ifp->if_flags |= IFF_OACTIVE;
 			break;
 		}
+
+		IFQ_DEQUEUE(&ifp->if_snd, m);
 
 		/*
 		 * Count number of mbufs in chain.
