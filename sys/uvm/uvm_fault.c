@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_fault.c,v 1.88 2004/05/05 11:54:32 yamt Exp $	*/
+/*	$NetBSD: uvm_fault.c,v 1.89 2005/01/01 09:14:49 yamt Exp $	*/
 
 /*
  *
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_fault.c,v 1.88 2004/05/05 11:54:32 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_fault.c,v 1.89 2005/01/01 09:14:49 yamt Exp $");
 
 #include "opt_uvmhist.h"
 
@@ -563,7 +563,6 @@ uvm_fault(orig_map, vaddr, fault_type, access_type)
 	int npages, nback, nforw, centeridx, error, lcv, gotpages;
 	vaddr_t startva, objaddr, currva;
 	voff_t uoff;
-	paddr_t pa;
 	struct vm_amap *amap;
 	struct uvm_object *uobj;
 	struct vm_anon *anons_store[UVM_MAXRANGE], **anons, *anon, *oanon;
@@ -800,7 +799,7 @@ ReFault:
 		 * except for center)
 		 */
 		if (lcv != centeridx &&
-		    pmap_extract(ufi.orig_map->pmap, currva, &pa)) {
+		    pmap_extract(ufi.orig_map->pmap, currva, NULL)) {
 			pages[lcv] = PGO_DONTCARE;
 			continue;
 		}
