@@ -1,4 +1,4 @@
-/*	$NetBSD: if_le_vme.c,v 1.15 2002/09/27 20:31:04 thorpej Exp $	*/
+/*	$NetBSD: if_le_vme.c,v 1.16 2002/10/02 05:04:27 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998 maximum entropy.  All rights reserved.
@@ -121,9 +121,8 @@ static int bvme410_mem_size __P((bus_space_tag_t, u_long));
 static void bvme410_copytobuf __P((struct lance_softc *, void *, int, int));
 static void bvme410_zerobuf __P((struct lance_softc *, int, int));
 
-const struct cfattach le_vme_ca = {
-	sizeof(struct le_softc), le_vme_match, le_vme_attach
-};
+CFATTACH_DECL(le_vme, sizeof(struct le_softc),
+    le_vme_match, le_vme_attach, NULL, NULL);
 
 #if defined(_KERNEL_OPT)
 #include "opt_ddb.h"

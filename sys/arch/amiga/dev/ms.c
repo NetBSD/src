@@ -1,4 +1,4 @@
-/*	$NetBSD: ms.c,v 1.22 2002/09/27 20:30:15 thorpej Exp $ */
+/*	$NetBSD: ms.c,v 1.23 2002/10/02 04:55:52 thorpej Exp $ */
 
 /*
  * based on:
@@ -49,7 +49,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ms.c,v 1.22 2002/09/27 20:30:15 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ms.c,v 1.23 2002/10/02 04:55:52 thorpej Exp $");
 
 /*
  * Mouse driver.
@@ -100,9 +100,8 @@ struct ms_softc {
 	struct ms_port sc_ports[MS_NPORTS];
 };
 
-const struct cfattach ms_ca = {
-	sizeof(struct ms_softc), msmatch, msattach
-};
+CFATTACH_DECL(ms, sizeof(struct ms_softc),
+    msmatch, msattach, NULL, NULL);
 
 void msintr(void *);
 void ms_enable(struct ms_port *);

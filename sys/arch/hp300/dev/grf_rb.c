@@ -1,4 +1,4 @@
-/*	$NetBSD: grf_rb.c,v 1.22 2002/09/27 20:31:48 thorpej Exp $	*/
+/*	$NetBSD: grf_rb.c,v 1.23 2002/10/02 05:15:51 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -83,7 +83,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: grf_rb.c,v 1.22 2002/09/27 20:31:48 thorpej Exp $");                                                  
+__KERNEL_RCSID(0, "$NetBSD: grf_rb.c,v 1.23 2002/10/02 05:15:51 thorpej Exp $");                                                  
 
 #include "opt_compat_hpux.h"
 
@@ -126,13 +126,11 @@ void	rbox_dio_attach __P((struct device *, struct device *, void *));
 
 int	rboxcnattach __P((bus_space_tag_t, bus_addr_t, int));
 
-const struct cfattach rbox_intio_ca = {
-	sizeof(struct grfdev_softc), rbox_intio_match, rbox_intio_attach
-};
+CFATTACH_DECL(rbox_intio, sizeof(struct grfdev_softc),
+    rbox_intio_match, rbox_intio_attach, NULL, NULL);
 
-const struct cfattach rbox_dio_ca = {
-	sizeof(struct grfdev_softc), rbox_dio_match, rbox_dio_attach
-};
+CFATTACH_DECL(rbox_dio, sizeof(struct grfdev_softc),
+    rbox_dio_match, rbox_dio_attach, NULL, NULL);
 
 /* Renaissance grf switch */
 struct grfsw rbox_grfsw = {

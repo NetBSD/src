@@ -1,4 +1,4 @@
-/*	$NetBSD: esp.c,v 1.33 2002/09/27 20:33:26 thorpej Exp $	*/
+/*	$NetBSD: esp.c,v 1.34 2002/10/02 05:36:38 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1997 Jason R. Thorpe.
@@ -109,9 +109,8 @@ void	espattach	__P((struct device *, struct device *, void *));
 int	espmatch	__P((struct device *, struct cfdata *, void *));
 
 /* Linkup to the rest of the kernel */
-const struct cfattach esp_ca = {
-	sizeof(struct esp_softc), espmatch, espattach
-};
+CFATTACH_DECL(esp, sizeof(struct esp_softc),
+    espmatch, espattach, NULL, NULL);
 
 /*
  * Functions and the switch for the MI code.

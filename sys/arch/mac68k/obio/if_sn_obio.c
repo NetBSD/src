@@ -1,4 +1,4 @@
-/*	$NetBSD: if_sn_obio.c,v 1.20 2002/09/27 20:33:27 thorpej Exp $	*/
+/*	$NetBSD: if_sn_obio.c,v 1.21 2002/10/02 05:36:39 thorpej Exp $	*/
 
 /*
  * Copyright (C) 1997 Allen Briggs
@@ -66,9 +66,8 @@ static void	sn_obio_attach __P((struct device *, struct device *, void *));
 static int	sn_obio_getaddr __P((struct sn_softc *, u_int8_t *));
 static int	sn_obio_getaddr_kludge __P((struct sn_softc *, u_int8_t *));
 
-const struct cfattach sn_obio_ca = {
-	sizeof(struct sn_softc), sn_obio_match, sn_obio_attach
-};
+CFATTACH_DECL(sn_obio, sizeof(struct sn_softc),
+    sn_obio_match, sn_obio_attach, NULL, NULL);
 
 static int
 sn_obio_match(parent, cf, aux)

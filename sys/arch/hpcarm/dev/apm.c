@@ -1,4 +1,4 @@
-/*	$NetBSD: apm.c,v 1.2 2002/09/27 20:32:05 thorpej Exp $	*/
+/*	$NetBSD: apm.c,v 1.3 2002/10/02 05:18:51 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -39,7 +39,7 @@
 #include "apm.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: apm.c,v 1.2 2002/09/27 20:32:05 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: apm.c,v 1.3 2002/10/02 05:18:51 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -70,9 +70,8 @@ struct apm_softc {
 	void *sc_parent;
 };
 
-const struct cfattach apm_ca = {
-	sizeof(struct apm_softc), apmmatch, apmattach, NULL, NULL
-};
+CFATTACH_DECL(apm, sizeof(struct apm_softc),
+    apmmatch, apmattach, NULL, NULL);
 
 const struct cdevsw apm_cdevsw = {
 	apmopen, apmclose, noread, nowrite, apmioctl,

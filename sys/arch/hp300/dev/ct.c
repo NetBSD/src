@@ -1,4 +1,4 @@
-/*	$NetBSD: ct.c,v 1.31 2002/09/27 20:31:41 thorpej Exp $	*/
+/*	$NetBSD: ct.c,v 1.32 2002/10/02 05:15:48 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -86,7 +86,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ct.c,v 1.31 2002/09/27 20:31:41 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ct.c,v 1.32 2002/10/02 05:15:48 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -150,9 +150,8 @@ struct	ct_softc {
 int	ctmatch __P((struct device *, struct cfdata *, void *));
 void	ctattach __P((struct device *, struct device *, void *));
 
-const struct cfattach ct_ca = {
-	sizeof(struct ct_softc), ctmatch, ctattach
-};
+CFATTACH_DECL(ct, sizeof(struct ct_softc),
+    ctmatch, ctattach, NULL, NULL);
 
 extern struct cfdriver ct_cd;
 

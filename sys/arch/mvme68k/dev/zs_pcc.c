@@ -1,4 +1,4 @@
-/*	$NetBSD: zs_pcc.c,v 1.14 2002/09/27 20:34:02 thorpej Exp $	*/
+/*	$NetBSD: zs_pcc.c,v 1.15 2002/10/02 05:28:16 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -74,9 +74,8 @@
 static int	zsc_pcc_match  __P((struct device *, struct cfdata *, void *));
 static void	zsc_pcc_attach __P((struct device *, struct device *, void *));
 
-const struct cfattach zsc_pcc_ca = {
-	sizeof(struct zsc_softc), zsc_pcc_match, zsc_pcc_attach
-};
+CFATTACH_DECL(zsc_pcc, sizeof(struct zsc_softc),
+    zsc_pcc_match, zsc_pcc_attach, NULL, NULL);
 
 extern struct cfdriver zsc_cd;
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: bcu_vrip.c,v 1.18 2002/09/27 20:32:30 thorpej Exp $	*/
+/*	$NetBSD: bcu_vrip.c,v 1.19 2002/10/02 05:26:52 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1999-2001 SATO Kazumi. All rights reserved.
@@ -68,9 +68,8 @@ int	vr_major=-1;
 int	vr_minor=-1;
 int	vr_cpuid=-1;
 
-const struct cfattach vrbcu_ca = {
-	sizeof(struct vrbcu_softc), vrbcu_match, vrbcu_attach
-};
+CFATTACH_DECL(vrbcu, sizeof(struct vrbcu_softc),
+    vrbcu_match, vrbcu_attach, NULL, NULL);
 
 struct vrbcu_softc *the_bcu_sc = NULL;
 

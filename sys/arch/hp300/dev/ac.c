@@ -1,4 +1,4 @@
-/*	$NetBSD: ac.c,v 1.16 2002/09/27 20:31:39 thorpej Exp $	*/
+/*	$NetBSD: ac.c,v 1.17 2002/10/02 05:15:48 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -88,7 +88,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ac.c,v 1.16 2002/09/27 20:31:39 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ac.c,v 1.17 2002/10/02 05:15:48 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -108,9 +108,8 @@ __KERNEL_RCSID(0, "$NetBSD: ac.c,v 1.16 2002/09/27 20:31:39 thorpej Exp $");
 static int	acmatch __P((struct device *, struct cfdata *, void *));
 static void	acattach __P((struct device *, struct device *, void *));
 
-const struct cfattach ac_ca = {
-	sizeof(struct ac_softc), acmatch, acattach
-};
+CFATTACH_DECL(ac, sizeof(struct ac_softc),
+    acmatch, acattach, NULL, NULL);
 
 extern struct cfdriver ac_cd;
 

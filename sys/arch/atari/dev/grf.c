@@ -1,4 +1,4 @@
-/*	$NetBSD: grf.c,v 1.28 2002/09/27 20:30:54 thorpej Exp $	*/
+/*	$NetBSD: grf.c,v 1.29 2002/10/02 05:04:25 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1995 Leo Weppelman
@@ -99,9 +99,8 @@ void grfbusattach __P((struct device *, struct device *, void *));
  */
 struct grf_softc *grfsp[NGRF]; /* XXX */
 
-const struct cfattach grfbus_ca = {
-	sizeof(struct device), grfbusmatch, grfbusattach
-};
+CFATTACH_DECL(grfbus, sizeof(struct device),
+    grfbusmatch, grfbusattach, NULL, NULL);
 
 extern struct cfdriver grfbus_cd;
 

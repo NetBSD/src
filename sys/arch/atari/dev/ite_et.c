@@ -1,4 +1,4 @@
-/*	$NetBSD: ite_et.c,v 1.14 2002/09/27 20:30:57 thorpej Exp $	*/
+/*	$NetBSD: ite_et.c,v 1.15 2002/10/02 05:04:25 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1996 Leo Weppelman.
@@ -95,9 +95,8 @@ void grfetattach __P((struct device *, struct device *, void *));
 int  grfetmatch __P((struct device *, struct cfdata *, void *));
 int  grfetprint __P((void *, const char *));
 
-const struct cfattach grfet_ca = {
-	sizeof(struct grf_softc), grfetmatch, grfetattach
-};
+CFATTACH_DECL(grfet, sizeof(struct grf_softc),
+    grfetmatch, grfetattach, NULL, NULL);
 
 /*
  * only used in console init.

@@ -1,4 +1,4 @@
-/*	$NetBSD: siop_gsc.c,v 1.2 2002/09/27 20:32:03 thorpej Exp $	*/
+/*	$NetBSD: siop_gsc.c,v 1.3 2002/10/02 05:17:50 thorpej Exp $	*/
 
 /*	$OpenBSD: siop_gsc.c,v 1.1 1998/11/04 17:01:35 mickey Exp $	*/
 
@@ -52,9 +52,8 @@
 int	ncr53c7xx_gsc_probe __P((struct device *, void *, void *));
 void	ncr53c7xx_gsc_attach __P((struct device *, struct device *, void *));
 
-const struct cfattach ncr_ca = {
-	sizeof(struct ncr53c7xx_softc),
-	ncr53c7xx_gsc_probe, ncr53c7xx_gsc_attach
+CFATTACH_DECL(ncr, sizeof(struct ncr53c7xx_softc),
+    ncr53c7xx_gsc_probe, ncr53c7xx_gsc_attach, NULL, NULL);
 };
 
 struct cfdriver ncr_cd = {

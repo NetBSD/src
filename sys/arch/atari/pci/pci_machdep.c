@@ -1,4 +1,4 @@
-/*	$NetBSD: pci_machdep.c,v 1.37 2002/09/27 20:31:03 thorpej Exp $	*/
+/*	$NetBSD: pci_machdep.c,v 1.38 2002/10/02 05:04:26 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1996 Leo Weppelman.  All rights reserved.
@@ -125,9 +125,8 @@ static void insert_into_list __P((PCI_MEMREG *head, struct pci_memreg *elem));
 static int overlap_pci_areas __P((struct pci_memreg *p,
 	struct pci_memreg *self, u_int addr, u_int size, u_int what));
 
-const struct cfattach pcibus_ca = {
-	sizeof(struct device), pcibusmatch, pcibusattach
-};
+CFATTACH_DECL(pcibus, sizeof(struct device),
+    pcibusmatch, pcibusattach, NULL, NULL);
 
 /*
  * We need some static storage to probe pci-busses for VGA cards during

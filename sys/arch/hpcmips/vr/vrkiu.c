@@ -1,4 +1,4 @@
-/*	$NetBSD: vrkiu.c,v 1.32 2002/09/27 20:32:38 thorpej Exp $	*/
+/*	$NetBSD: vrkiu.c,v 1.33 2002/10/02 05:26:56 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1999 SASAKI Takesi All rights reserved.
@@ -91,9 +91,8 @@ static void eliminate_phantom_keys(struct vrkiu_chip *, unsigned short *);
 static int vrkiu_poll(void*);
 static int vrkiu_input_establish(void*, struct hpckbd_if*);
 
-const struct cfattach vrkiu_ca = {
-	sizeof(struct vrkiu_softc), vrkiumatch, vrkiuattach
-};
+CFATTACH_DECL(vrkiu, sizeof(struct vrkiu_softc),
+    vrkiumatch, vrkiuattach, NULL, NULL);
 
 struct vrkiu_chip *vrkiu_consdata = NULL;
 

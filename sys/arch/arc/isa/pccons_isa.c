@@ -1,4 +1,4 @@
-/* $NetBSD: pccons_isa.c,v 1.3 2002/09/27 20:30:27 thorpej Exp $ */
+/* $NetBSD: pccons_isa.c,v 1.4 2002/10/02 04:59:48 thorpej Exp $ */
 /* NetBSD: vga_isa.c,v 1.4 2000/08/14 20:14:51 thorpej Exp  */
 
 /*
@@ -42,9 +42,8 @@
 int	pccons_isa_match __P((struct device *, struct cfdata *, void *));
 void	pccons_isa_attach __P((struct device *, struct device *, void *));
 
-const struct cfattach pc_isa_ca = {
-	sizeof(struct pc_softc), pccons_isa_match, pccons_isa_attach,
-};
+CFATTACH_DECL(pc_isa, sizeof(struct pc_softc),
+    pccons_isa_match, pccons_isa_attach, NULL, NULL);
 
 struct pccons_config *pccons_isa_conf;
 

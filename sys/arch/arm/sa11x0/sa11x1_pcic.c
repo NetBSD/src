@@ -1,4 +1,4 @@
-/*      $NetBSD: sa11x1_pcic.c,v 1.6 2002/09/27 20:30:50 thorpej Exp $        */
+/*      $NetBSD: sa11x1_pcic.c,v 1.7 2002/10/02 05:02:32 thorpej Exp $        */
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -104,9 +104,8 @@ static struct platid_data sacpcic_platid_table[] = {
 };
 #endif
 
-const struct cfattach sacpcic_ca = {
-	sizeof(struct sacpcic_softc), sacpcic_match, sacpcic_attach
-};
+CFATTACH_DECL(sacpcic, sizeof(struct sacpcic_softc),
+    sacpcic_match, sacpcic_attach, NULL, NULL);
 
 static int
 sacpcic_match(parent, cf, aux)

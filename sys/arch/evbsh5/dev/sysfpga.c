@@ -1,4 +1,4 @@
-/*	$NetBSD: sysfpga.c,v 1.8 2002/10/01 07:58:54 scw Exp $	*/
+/*	$NetBSD: sysfpga.c,v 1.9 2002/10/02 05:33:54 thorpej Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -80,9 +80,8 @@ static int sysfpgamatch(struct device *, struct cfdata *, void *);
 static void sysfpgaattach(struct device *, struct device *, void *);
 static int sysfpgaprint(void *, const char *);
 
-const struct cfattach sysfpga_ca = {
-	sizeof(struct sysfpga_softc), sysfpgamatch, sysfpgaattach
-};
+CFATTACH_DECL(sysfpga, sizeof(struct sysfpga_softc),
+    sysfpgamatch, sysfpgaattach, NULL, NULL);
 extern struct cfdriver sysfpga_cd;
 
 /*

@@ -1,4 +1,4 @@
-/*	$NetBSD: dio.c,v 1.18 2002/09/27 20:31:44 thorpej Exp $	*/
+/*	$NetBSD: dio.c,v 1.19 2002/10/02 05:15:49 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dio.c,v 1.18 2002/09/27 20:31:44 thorpej Exp $");                                                  
+__KERNEL_RCSID(0, "$NetBSD: dio.c,v 1.19 2002/10/02 05:15:49 thorpej Exp $");                                                  
 
 #define	_HP300_INTR_H_PRIVATE
 
@@ -72,9 +72,8 @@ void	dioattach __P((struct device *, struct device *, void *));
 int	dioprint __P((void *, const char *));
 int	diosubmatch __P((struct device *, struct cfdata *, void *));
 
-const struct cfattach dio_ca = {
-	sizeof(struct device), diomatch, dioattach
-};
+CFATTACH_DECL(dio, sizeof(struct device),
+    diomatch, dioattach, NULL, NULL);
 
 int
 diomatch(parent, match, aux)

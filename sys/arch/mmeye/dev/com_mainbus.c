@@ -1,4 +1,4 @@
-/*	$NetBSD: com_mainbus.c,v 1.2 2002/09/27 20:33:53 thorpej Exp $	*/
+/*	$NetBSD: com_mainbus.c,v 1.3 2002/10/02 05:39:04 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -68,9 +68,8 @@ void com_mainbus_attach(struct device *, struct device *, void *);
 void comcnprobe(struct consdev *);
 void comcninit(struct consdev *);
 
-const struct cfattach com_mainbus_ca = {
-	sizeof(struct com_mainbus_softc), com_mainbus_match, com_mainbus_attach
-};
+CFATTACH_DECL(com_mainbus, sizeof(struct com_mainbus_softc),
+    com_mainbus_match, com_mainbus_attach, NULL, NULL);
 
 int
 com_mainbus_match(struct device *parent, struct cfdata *match, void *aux)

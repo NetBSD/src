@@ -1,4 +1,4 @@
-/*	$NetBSD: vrc4173bcu.c,v 1.10 2002/09/27 20:32:34 thorpej Exp $	*/
+/*	$NetBSD: vrc4173bcu.c,v 1.11 2002/10/02 05:26:54 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2001,2002 Enami Tsugutomo.
@@ -208,9 +208,8 @@ static struct vrc4173bcu_unit vrc4173bcu_units[] = {
 	},
 };
 
-const struct cfattach vrc4173bcu_ca = {
-	sizeof(struct vrc4173bcu_softc), vrc4173bcu_match, vrc4173bcu_attach,
-};
+CFATTACH_DECL(vrc4173bcu, sizeof(struct vrc4173bcu_softc),
+    vrc4173bcu_match, vrc4173bcu_attach, NULL, NULL);
 
 static const struct vrip_chipset_tag vrc4173bcu_chipset_methods = {
 	.vc_power		= __vrc4173bcu_power,

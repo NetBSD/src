@@ -1,4 +1,4 @@
-/*	$NetBSD: ite.c,v 1.55 2002/09/27 20:31:50 thorpej Exp $	*/
+/*	$NetBSD: ite.c,v 1.56 2002/10/02 05:15:53 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -85,7 +85,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ite.c,v 1.55 2002/09/27 20:31:50 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ite.c,v 1.56 2002/10/02 05:15:53 thorpej Exp $");
 
 #include "hil.h"
 
@@ -124,9 +124,8 @@ int	iteburst = 64;
 int	itematch __P((struct device *, struct cfdata *, void *));
 void	iteattach __P((struct device *, struct device *, void *));
 
-const struct cfattach ite_ca = {
-	sizeof(struct ite_softc), itematch, iteattach
-};
+CFATTACH_DECL(ite, sizeof(struct ite_softc),
+    itematch, iteattach, NULL, NULL);
 
 /* XXX this has always been global, but shouldn't be */
 static struct kbdmap *ite_km;
