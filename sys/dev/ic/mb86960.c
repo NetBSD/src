@@ -1,4 +1,4 @@
-/*	$NetBSD: mb86960.c,v 1.28 1998/11/18 18:34:52 thorpej Exp $	*/
+/*	$NetBSD: mb86960.c,v 1.29 1998/12/03 23:33:45 pk Exp $	*/
 
 /*
  * All Rights Reserved, Copyright (C) Fujitsu Limited 1995
@@ -1362,7 +1362,8 @@ mb86960_get_packet(sc, len)
 	m->m_len = len;
 
 	/* Get a packet. */
-	bus_space_read_multi_2(bst, bsh, FE_BMPR8, m->m_data, (len + 1) >> 1);
+	bus_space_read_multi_2(bst, bsh, FE_BMPR8, mtod(m, u_int16_t *),
+			       (len + 1) >> 1);
 
 #if NBPFILTER > 0
 	/*
@@ -1520,8 +1521,8 @@ mb86960_write_mbufs(sc, m)
 
 		/* Output contiguous words. */
 		if (len > 1)
-			bus_space_write_multi_2(bst, bsh, FE_BMPR8, data,
-			    len >> 1);
+			bus_space_write_multi_2(bst, bsh, FE_BMPR8,
+						(u_int16_t *)data, len >> 1);
 
 		/* Save remaining byte, if there is one. */
 		if (len & 1) {
