@@ -1,4 +1,4 @@
-/*	$NetBSD: search.h,v 1.10 1999/02/16 18:12:24 kleink Exp $	*/
+/*	$NetBSD: search.h,v 1.11 1999/02/16 18:23:01 kleink Exp $	*/
 
 /*
  * Written by J.T. Conklin <jtc@netbsd.org>
@@ -7,6 +7,7 @@
 
 #ifndef _SEARCH_H_
 #define _SEARCH_H_
+
 #include <sys/cdefs.h>
 #include <machine/ansi.h>
 
@@ -17,7 +18,7 @@ typedef	_BSD_SIZE_T_	size_t;
 
 typedef struct entry {
 	char *key;
-	char *data;
+	void *data;
 } ENTRY;
 
 typedef enum {
@@ -54,4 +55,4 @@ extern void	*tsearch __P((const void *, void **,
 extern void      twalk __P((const void *, void (*)(const void *, VISIT, int)));
 __END_DECLS
 
-#endif
+#endif /* !_SEARCH_H_ */
