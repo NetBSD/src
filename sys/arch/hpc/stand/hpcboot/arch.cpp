@@ -1,4 +1,4 @@
-/* -*-C++-*-	$NetBSD: arch.cpp,v 1.7 2002/03/25 17:23:19 uch Exp $	 */
+/* -*-C++-*-	$NetBSD: arch.cpp,v 1.8 2003/12/18 12:25:03 uwe Exp $	 */
 
 /*-
  * Copyright (c) 2001, 2002 The NetBSD Foundation, Inc.
@@ -113,7 +113,8 @@ Architecture::_load_func(const TCHAR * name)
 
 	if (_dll == NULL) {
 		MessageBox(HpcMenuInterface::Instance()._root->_window,
-		    TEXT("Can't load Coredll.dll"), TEXT("WARNING"), 0);
+		    TEXT("Can't load coredll.dll."), TEXT("WARNING"),
+		    MB_ICONWARNING | MB_OK);
 
 		return NULL;
 	}
