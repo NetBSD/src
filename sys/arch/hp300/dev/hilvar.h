@@ -1,4 +1,4 @@
-/*	$NetBSD: hilvar.h,v 1.16 2000/10/10 19:58:43 he Exp $	*/
+/*	$NetBSD: hilvar.h,v 1.17 2001/11/17 23:53:37 gmcgarry Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -96,6 +96,7 @@ struct hilloopdev {
 #define HIL_DERROR	0x80	/* loop has reconfigured, reality altered */
 
 struct hil_softc {
+	struct	device hl_dev;
 	struct	hil_dev	*hl_addr;	/* base of hardware registers */
 	u_char 	hl_cmddone;		/* */
 	u_char 	hl_cmdending;		/* */
@@ -122,9 +123,9 @@ struct hil_softc {
 #define KBD_AR2		0x04		/* keyboard auto-repeat rate 2 */
 
 #ifdef _KERNEL
-void	kbdbell __P((int));
-void	kbdenable __P((int));
-void	kbddisable __P((int));
+void	kbdbell __P((struct hil_softc *));
+void	kbdenable __P((struct hil_softc *));
+void	kbddisable __P((struct hil_softc *));
 int	kbdgetc __P((int *));
 void	kbdcninit __P((void));
 
