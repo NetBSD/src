@@ -1,4 +1,4 @@
-#	$NetBSD: RISCPC,v 1.20 1998/09/06 02:37:47 mark Exp $
+#	$NetBSD: RISCPC,v 1.21 1998/10/05 00:49:14 mark Exp $
 #
 #	RISCPC -- Full RiscPC config
 #
@@ -197,6 +197,9 @@ beep0	at vidc?
 # Audio device
 vidcaudio0	at vidc?
 audio*		at vidcaudio0
+
+# System beep
+sysbeep0	at vidc?
 
 # Podule bus device
 podulebus0	at root

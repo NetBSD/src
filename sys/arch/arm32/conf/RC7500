@@ -1,4 +1,4 @@
-#	$NetBSD: RC7500,v 1.24 1998/09/06 02:37:47 mark Exp $
+#	$NetBSD: RC7500,v 1.25 1998/10/05 00:49:14 mark Exp $
 #
 #	RC7500 - Config for the VLSI RC7500 board
 #
@@ -180,6 +180,9 @@ pms*	at iomd?
 
 # Crude sound device
 #beep0	at vidc? irq 31
+
+# System beep
+sysbeep0	at vidc?
 
 # IIC bus device
 iic*	at iomd?
