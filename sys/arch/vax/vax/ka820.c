@@ -1,4 +1,4 @@
-/*	$NetBSD: ka820.c,v 1.38 2003/08/07 16:30:19 agc Exp $	*/
+/*	$NetBSD: ka820.c,v 1.39 2003/09/29 22:54:28 matt Exp $	*/
 /*
  * Copyright (c) 1988 Regents of the University of California.
  * All rights reserved.
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ka820.c,v 1.38 2003/08/07 16:30:19 agc Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ka820.c,v 1.39 2003/09/29 22:54:28 matt Exp $");
 
 #include "opt_multiprocessor.h"
 
@@ -569,7 +569,7 @@ ka820_startslave(struct device *dev, struct cpu_info *ci)
 		if ((volatile int)ci->ci_flags & CI_RUNNING)
 			break;
 	if (i == 10000)
-		printf("%s: (ID %d) failed starting??!!??\n",
+		printf("%s: (ID %d) failed starting??\n",
 		    dev->dv_xname, sc->sc_binid);
 }
 

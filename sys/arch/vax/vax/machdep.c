@@ -1,4 +1,4 @@
-/* $NetBSD: machdep.c,v 1.140 2003/09/29 21:04:53 matt Exp $	 */
+/* $NetBSD: machdep.c,v 1.141 2003/09/29 22:54:28 matt Exp $	 */
 
 /*
  * Copyright (c) 1982, 1986, 1990 The Regents of the University of California.
@@ -83,7 +83,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.140 2003/09/29 21:04:53 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.141 2003/09/29 22:54:28 matt Exp $");
 
 #include "opt_ddb.h"
 #include "opt_compat_netbsd.h"
@@ -222,7 +222,7 @@ cpu_startup()
 	size = MAXBSIZE * nbuf;		/* # bytes for buffers */
 
 	/* allocate VM for buffers... area is not managed by VM system */
-	if (uvm_map(kernel_map, (vaddr_t *) &buffers, round_page(size),
+	if (uvm_map(kernel_map, (vaddr_t *)(void *) &buffers, round_page(size),
 		    NULL, UVM_UNKNOWN_OFFSET, 0,
 		    UVM_MAPFLAG(UVM_PROT_NONE, UVM_PROT_NONE, UVM_INH_NONE,
 				UVM_ADV_NORMAL, 0)) != 0)
