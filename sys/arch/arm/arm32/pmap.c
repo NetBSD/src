@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.54 2002/03/23 19:21:58 thorpej Exp $	*/
+/*	$NetBSD: pmap.c,v 1.55 2002/03/24 03:25:10 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2002 Wasabi Systems, Inc.
@@ -143,7 +143,7 @@
 #include <machine/param.h>
 #include <arm/arm32/katelib.h>
 
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.54 2002/03/23 19:21:58 thorpej Exp $");        
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.55 2002/03/24 03:25:10 thorpej Exp $");        
 #ifdef PMAP_DEBUG
 #define	PDEBUG(_lev_,_stat_) \
 	if (pmap_debug_level >= (_lev_)) \
@@ -2625,7 +2625,7 @@ pmap_enter(pmap, va, pa, prot, flags)
 	 * Get a pointer to the page.  Later on in this function, we
 	 * test for a managed page by checking pg != NULL.
 	 */
-	pg = PHYS_TO_VM_PAGE(pa);
+	pg = pmap_initialized ? PHYS_TO_VM_PAGE(pa) : NULL;
 
 	/* get lock */
 	PMAP_MAP_TO_HEAD_LOCK();
@@ -2725,7 +2725,7 @@ pmap_enter(pmap, va, pa, prot, flags)
 		/*
 		 * Enter on the PV list if part of our managed memory
 		 */
-		if (pmap_initialized && pg != NULL) {
+		if (pg != NULL) {
 			if (pve == NULL) {
 				pve = pmap_alloc_pv(pmap, ALLOCPV_NEED);
 				if (pve == NULL) {
@@ -2757,7 +2757,7 @@ pmap_enter(pmap, va, pa, prot, flags)
 	if (pmap != pmap_kernel() && va != 0)
 		npte |= PT_AP(AP_U);
 
-	if (pmap_initialized && pg != NULL) {
+	if (pg != NULL) {
 #ifdef DIAGNOSTIC
 		if ((flags & VM_PROT_ALL) & ~prot)
 			panic("pmap_enter: access_type exceeds prot");
@@ -2787,7 +2787,7 @@ pmap_enter(pmap, va, pa, prot, flags)
 
 	*pte = npte;
 
-	if (pmap_initialized && pg != NULL) {
+	if (pg != NULL) {
 		boolean_t pmap_active = FALSE;
 		/* XXX this will change once the whole of pmap_enter uses
 		 * map_ptes
