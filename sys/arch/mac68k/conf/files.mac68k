@@ -1,4 +1,4 @@
-#	$NetBSD: files.mac68k,v 1.35 1995/09/03 03:37:32 briggs Exp $
+#	$NetBSD: files.mac68k,v 1.36 1995/11/03 04:50:21 briggs Exp $
 
 # mac68k-specific configuration info
 
@@ -48,7 +48,8 @@ device	ncr96scsi at mainbus: scsi
 file	arch/mac68k/dev/scsi96.c	ncr96scsi needs-flag
 
 file	arch/m68k/m68k/copy.s
-file	arch/m68k/fpe/fpu_emulate.c		fpu_emulate
+include "../../m68k/fpe/files.fpe"
+
 file	arch/mac68k/mac68k/autoconf.c
 file	arch/mac68k/mac68k/clock.c
 file	arch/mac68k/mac68k/disksubr.c		disk
