@@ -1,6 +1,6 @@
 #! /bin/sh -
 #
-# $NetBSD: newvers_rm.sh,v 1.2 2002/04/02 13:14:43 bjh21 Exp $
+# $NetBSD: newvers_rm.sh,v 1.3 2002/04/02 13:17:41 bjh21 Exp $
 #
 # Copyright (c) 2000 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -41,6 +41,8 @@
 #
 # Called as:
 #	sh newvers_rm.sh VERSION_FILE MODULENAME
+
+set -e
 
 r=`awk -F: '$1 ~ /^[0-9.]*$/ { it = $1; } END { print it }' $1`
 r=`echo $r | sed 's/\.\([0-9]\)$/.0\1/'`
