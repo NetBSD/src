@@ -1,4 +1,4 @@
-/*	$NetBSD: bus_dma.c,v 1.3.4.4 2002/04/01 07:39:07 nathanw Exp $	*/
+/*	$NetBSD: bus_dma.c,v 1.3.4.5 2002/04/11 06:59:21 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -384,7 +384,8 @@ _bus_dmamap_sync(bus_dma_tag_t t, bus_dmamap_t map, bus_addr_t offset,
 	 *
 	 * XXX REVISIT WHEN WE DO FCSE!
 	 */
-	if (__predict_false(map->_dm_proc != NULL && map->_dm_proc != curproc))
+	if (__predict_false(map->_dm_proc != NULL &&
+	    curproc != NULL && map->_dm_proc != curproc->l_proc))
 		return;
 
 	for (i = 0; i < map->dm_nsegs && len != 0; i++) {
