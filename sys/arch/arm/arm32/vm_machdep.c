@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_machdep.c,v 1.9 2001/11/19 20:38:58 chris Exp $	*/
+/*	$NetBSD: vm_machdep.c,v 1.10 2001/11/24 01:26:24 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1994-1998 Mark Brinicombe.
@@ -64,7 +64,7 @@
 #include <machine/vmparam.h>
 
 #ifdef ARMFPE
-#include <arm32/fpe-arm/armfpe.h>
+#include <arm/fpe-arm/armfpe.h>
 #endif
 
 extern pv_addr_t systempage;
