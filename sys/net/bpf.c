@@ -1,4 +1,4 @@
-/*	$NetBSD: bpf.c,v 1.32 1996/10/13 02:10:56 christos Exp $	*/
+/*	$NetBSD: bpf.c,v 1.33 1997/02/21 23:59:35 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1990, 1991, 1993
@@ -746,6 +746,8 @@ bpfioctl(dev, cmd, addr, flag, p)
 
 			/* Compute number of ticks. */
 			d->bd_rtout = tv->tv_sec * hz + tv->tv_usec / tick;
+			if ((d->bd_rtout == 0) && (tv->tv_usec != 0))
+				d->bd_rtout = 1;
 			break;
 		}
 
