@@ -1,4 +1,4 @@
-#	$NetBSD: list,v 1.14 2002/05/07 14:59:35 lukem Exp $
+#	$NetBSD: list,v 1.15 2002/05/29 03:58:31 lukem Exp $
 
 # Atari extra's
 PROG	sbin/ahdilabel
@@ -31,4 +31,5 @@ MTREE	./usr/share/keymaps	type=dir uname=root gname=wheel mode=0755
 COPYDIR	${DESTDIR}/usr/share/keymaps/atari	usr/share/keymaps/atari
 
 # strip /etc/services - not enough space... (leaves ftp in).
-CMD	grep ftp ${DESTDIR}/etc/services > etc/services
+CMD	chmod u+w etc/services
+CMD	grep ftp ${NETBSDSRCDIR}/etc/services > etc/services
