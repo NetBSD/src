@@ -1,4 +1,4 @@
-/*	$NetBSD: svr4_machdep.h,v 1.2 2002/07/13 08:28:42 scw Exp $	*/
+/*	$NetBSD: svr4_machdep.h,v 1.3 2004/08/28 21:31:07 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -116,6 +116,6 @@ typedef struct svr4_mcontext {
 #define SVR4_SYSARCH_LIMUSER		95
 #define SVR4_SYSARCH_KERNADDR		99
 
-void svr4_syscall_intern __P((struct proc *));
+void	svr4_syscall_intern(struct proc *);
 
 #endif /* !_M68K_SVR4_MACHDEP_H_ */
