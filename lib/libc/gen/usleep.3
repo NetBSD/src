@@ -1,5 +1,7 @@
-.\" Copyright (c) 1986, 1991 Regents of the University of California.
-.\" All rights reserved.
+.\"	$NetBSD: usleep.3,v 1.3 1995/02/25 15:39:48 cgd Exp $
+.\"
+.\" Copyright (c) 1986, 1991, 1993
+.\"	The Regents of the University of California.  All rights reserved.
 .\"
 .\" Redistribution and use in source and binary forms, with or without
 .\" modification, are permitted provided that the following conditions
@@ -29,10 +31,9 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.\"     from: @(#)usleep.3	6.4 (Berkeley) 4/19/91
-.\"	$Id: usleep.3,v 1.2 1993/07/30 08:40:26 mycroft Exp $
+.\"     @(#)usleep.3	8.1 (Berkeley) 6/4/93
 .\"
-.Dd April 19, 1991
+.Dd June 4, 1993
 .Dt USLEEP 3
 .Os BSD 4.3
 .Sh NAME
@@ -44,7 +45,7 @@
 .Fn usleep "u_int microseconds"
 .Sh DESCRIPTION
 The
-.Fn sleep
+.Fn usleep
 function
 suspends execution of the calling process
 for
