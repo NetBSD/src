@@ -1,9 +1,11 @@
+/*	$NetBSD: node.c,v 1.1.1.2 2003/10/06 15:46:24 wiz Exp $	*/
+
 /*
  * node.c -- routines for node management
  */
 
 /* 
- * Copyright (C) 1986, 1988, 1989, 1991-1997 the Free Software Foundation, Inc.
+ * Copyright (C) 1986, 1988, 1989, 1991-2001, 2003 the Free Software Foundation, Inc.
  * 
  * This file is part of GAWK, the GNU implementation of the
  * AWK Programming Language.
@@ -28,43 +30,52 @@
 /* r_force_number --- force a value to be numeric */
 
 AWKNUM
-r_force_number(n)
-register NODE *n;
+r_force_number(register NODE *n)
 {
 	register char *cp;
 	register char *cpend;
 	char save;
 	char *ptr;
 	unsigned int newflags;
+	extern double strtod();
 
-#ifdef DEBUG
+#ifdef GAWKDEBUG
 	if (n == NULL)
 		cant_happen();
 	if (n->type != Node_val)
 		cant_happen();
-	if(n->flags == 0)
+	if (n->flags == 0)
 		cant_happen();
-	if (n->flags & NUM)
+	if (n->flags & NUMCUR)
 		return n->numbr;
 #endif
 
 	/* all the conditionals are an attempt to avoid the expensive strtod */
 
 	n->numbr = 0.0;
-	n->flags |= NUM;
+	n->flags |= NUMCUR;
 
-	if (n->stlen == 0)
+	if (n->stlen == 0) {
+		if (0 && do_lint)
+			lintwarn(_("can't convert string to float"));
 		return 0.0;
+	}
 
 	cp = n->stptr;
-	if (ISALPHA(*cp))
+	if (ISALPHA(*cp)) {
+		if (0 && do_lint)
+			lintwarn(_("can't convert string to float"));
 		return 0.0;
+	}
 
 	cpend = cp + n->stlen;
-	while (cp < cpend && isspace(*cp))
+	while (cp < cpend && ISSPACE(*cp))
 		cp++;
-	if (cp == cpend || isalpha(*cp))
+	if (cp == cpend || ISALPHA(*cp)) {
+		if (0 && do_lint)
+			lintwarn(_("can't convert string to float"));
 		return 0.0;
+	}
 
 	if (n->flags & MAYBE_NUM) {
 		newflags = NUMBER;
@@ -75,17 +86,18 @@ register NODE *n;
 		if (ISDIGIT(*cp)) {
 			n->numbr = (AWKNUM)(*cp - '0');
 			n->flags |= newflags;
-		}
+		} else if (0 && do_lint)
+			lintwarn(_("can't convert string to float"));
 		return n->numbr;
 	}
 
-#ifdef NONDECDATA
-	errno = 0;
-	if (! do_traditional && isnondecimal(cp)) {
-		n->numbr = nondec2awknum(cp, cpend - cp);
-		goto finish;
+	if (do_non_decimal_data) {
+		errno = 0;
+		if (! do_traditional && isnondecimal(cp)) {
+			n->numbr = nondec2awknum(cp, cpend - cp);
+			goto finish;
+		}
 	}
-#endif /* NONDECDATA */
 
 	errno = 0;
 	save = *cpend;
@@ -98,10 +110,13 @@ register NODE *n;
 	*cpend = save;
 finish:
 	/* the >= should be ==, but for SunOS 3.5 strtod() */
-	if (errno == 0 && ptr >= cpend)
+	if (errno == 0 && ptr >= cpend) {
 		n->flags |= newflags;
-	else
+	} else {
+		if (0 && do_lint && ptr < cpend)
+			lintwarn(_("can't convert string to float"));
 		errno = 0;
+	}
 
 	return n->numbr;
 }
@@ -111,7 +126,7 @@ finish:
  * (more complicated) variations on this theme didn't seem to pay off, but 
  * systematic testing might be in order at some point
  */
-static const char *values[] = {
+static const char *const values[] = {
 	"0",
 	"1",
 	"2",
@@ -128,31 +143,49 @@ static const char *values[] = {
 /* format_val --- format a numeric value based on format */
 
 NODE *
-format_val(format, index, s)
-char *format;
-int index;
-register NODE *s;
+format_val(const char *format, int index, register NODE *s)
 {
-	char buf[128];
+	char buf[BUFSIZ];
 	register char *sp = buf;
 	double val;
+	char *orig, *trans, save;
+
+	if (! do_traditional && (s->flags & INTLSTR) != 0) {
+		save = s->stptr[s->stlen];
+		s->stptr[s->stlen] = '\0';
+
+		orig = s->stptr;
+		trans = dgettext(TEXTDOMAIN, orig);
+
+		s->stptr[s->stlen] = save;
+		return tmp_string(trans, strlen(trans));
+	}
 
 	/* not an integral value, or out of range */
 	if ((val = double_to_int(s->numbr)) != s->numbr
 	    || val < LONG_MIN || val > LONG_MAX) {
-#ifdef GFMT_WORKAROUND
+		/*
+		 * Once upon a time, if GFMT_WORKAROUND wasn't defined,
+		 * we just blindly did this:
+		 *	sprintf(sp, format, s->numbr);
+		 *	s->stlen = strlen(sp);
+		 *	s->stfmt = (char) index;
+		 * but that's no good if, e.g., OFMT is %s. So we punt,
+		 * and just always format the value ourselves.
+		 */
+
 		NODE *dummy, *r;
 		unsigned short oflags;
-		extern NODE *format_tree P((const char *, int, NODE *));
 		extern NODE **fmt_list;          /* declared in eval.c */
 
 		/* create dummy node for a sole use of format_tree */
 		getnode(dummy);
+		dummy->type = Node_expression_list;
 		dummy->lnode = s;
 		dummy->rnode = NULL;
 		oflags = s->flags;
 		s->flags |= PERM; /* prevent from freeing by format_tree() */
-		r = format_tree(format, fmt_list[index]->stlen, dummy);
+		r = format_tree(format, fmt_list[index]->stlen, dummy, 2);
 		s->flags = oflags;
 		s->stfmt = (char) index;
 		s->stlen = r->stlen;
@@ -161,15 +194,6 @@ register NODE *s;
 		freenode(dummy);	/* to keep s->stptr == r->stpr.  */
 
 		goto no_malloc;
-#else
-		/*
-		 * no need for a "replacement" formatting by gawk,
-		 * just use sprintf
-		 */
-		sprintf(sp, format, s->numbr);
-		s->stlen = strlen(sp);
-		s->stfmt = (char) index;
-#endif /* GFMT_WORKAROUND */
 	} else {
 		/* integral value */
 	        /* force conversion to long only once */
@@ -183,37 +207,34 @@ register NODE *s;
 		}
 		s->stfmt = -1;
 	}
-	emalloc(s->stptr, char *, s->stlen + 2, "force_string");
+	emalloc(s->stptr, char *, s->stlen + 2, "format_val");
 	memcpy(s->stptr, sp, s->stlen+1);
-#ifdef GFMT_WORKAROUND
 no_malloc:
-#endif /* GFMT_WORKAROUND */
 	s->stref = 1;
-	s->flags |= STR;
+	s->flags |= STRCUR;
 	return s;
 }
 
 /* r_force_string --- force a value to be a string */
 
 NODE *
-r_force_string(s)
-register NODE *s;
+r_force_string(register NODE *s)
 {
-#ifdef DEBUG
+	NODE *ret;
+#ifdef GAWKDEBUG
 	if (s == NULL)
 		cant_happen();
 	if (s->type != Node_val)
 		cant_happen();
-	if ((s->flags & NUM) == 0)
-		cant_happen();
 	if (s->stref <= 0)
 		cant_happen();
-	if ((s->flags & STR) != 0
+	if ((s->flags & STRCUR) != 0
 	    && (s->stfmt == -1 || s->stfmt == CONVFMTidx))
 		return s;
 #endif
 
-	return format_val(CONVFMT, CONVFMTidx, s);
+	ret = format_val(CONVFMT, CONVFMTidx, s);
+	return ret;
 }
 
 /*
@@ -223,48 +244,78 @@ register NODE *s;
  */
 
 NODE *
-dupnode(n)
-NODE *n;
+r_dupnode(NODE *n)
 {
 	register NODE *r;
 
+#ifndef DUPNODE_MACRO
 	if ((n->flags & TEMP) != 0) {
 		n->flags &= ~TEMP;
 		n->flags |= MALLOC;
 		return n;
 	}
-	if ((n->flags & (MALLOC|STR)) == (MALLOC|STR)) {
+	if ((n->flags & PERM) != 0)
+		return n;
+#endif
+	if ((n->flags & (MALLOC|STRCUR)) == (MALLOC|STRCUR)) {
 		if (n->stref < LONG_MAX)
 			n->stref++;
+		else
+			n->flags |= PERM;
+		return n;
+	} else if ((n->flags & MALLOC) != 0 && n->type == Node_ahash) {
+		if (n->ahname_ref < LONG_MAX)
+			n->ahname_ref++;
+		else
+			n->flags |= PERM;
 		return n;
 	}
 	getnode(r);
 	*r = *n;
-	r->flags &= ~(PERM|TEMP);
+	r->flags &= ~(PERM|TEMP|FIELD);
 	r->flags |= MALLOC;
-	if (n->type == Node_val && (n->flags & STR) != 0) {
+	if (n->type == Node_val && (n->flags & STRCUR) != 0) {
 		r->stref = 1;
 		emalloc(r->stptr, char *, r->stlen + 2, "dupnode");
 		memcpy(r->stptr, n->stptr, r->stlen);
 		r->stptr[r->stlen] = '\0';
+	} else if (n->type == Node_ahash && (n->flags & MALLOC) != 0) {
+		r->ahname_ref = 1;
+		emalloc(r->ahname_str, char *, r->ahname_len + 2, "dupnode");
+		memcpy(r->ahname_str, n->ahname_str, r->ahname_len);
+		r->ahname_str[r->ahname_len] = '\0';
 	}
 	return r;
+}
+
+/* copy_node --- force a brand new copy of a node to be allocated */
+
+NODE *
+copynode(NODE *old)
+{
+	NODE *new;
+	int saveflags;
+
+	assert(old != NULL);
+	saveflags = old->flags;
+	old->flags &= ~(MALLOC|PERM);
+	new = dupnode(old);
+	old->flags = saveflags;
+	return new;
 }
 
 /* mk_number --- allocate a node with defined number */
 
 NODE *
-mk_number(x, flags)
-AWKNUM x;
-unsigned int flags;
+mk_number(AWKNUM x, unsigned int flags)
 {
 	register NODE *r;
 
 	getnode(r);
 	r->type = Node_val;
 	r->numbr = x;
-	r->flags = flags | SCALAR;
-#ifdef DEBUG
+	r->flags = flags;
+#ifdef GAWKDEBUG
 	r->stref = 1;
 	r->stptr = NULL;
 	r->stlen = 0;
@@ -275,16 +326,13 @@ unsigned int flags;
 /* make_str_node --- make a string node */
 
 NODE *
-make_str_node(s, len, flags)
-char *s;
-size_t len;
-int flags;
+make_str_node(char *s, unsigned long len, int flags)
 {
 	register NODE *r;
 
 	getnode(r);
 	r->type = Node_val;
-	r->flags = (STRING|STR|MALLOC|SCALAR);
+	r->flags = (STRING|STRCUR|MALLOC);
 	if (flags & ALREADY_MALLOCED)
 		r->stptr = s;
 	else {
@@ -294,10 +342,10 @@ int flags;
 	r->stptr[len] = '\0';
 	       
 	if ((flags & SCAN) != 0) {	/* scan for escape sequences */
-		char *pf;
+		const char *pf;
 		register char *ptm;
 		register int c;
-		register char *end;
+		register const char *end;
 
 		end = &(r->stptr[len]);
 		for (pf = ptm = r->stptr; pf < end;) {
@@ -306,7 +354,7 @@ int flags;
 				c = parse_escape(&pf);
 				if (c < 0) {
 					if (do_lint)
-						warning("backslash at end of string");
+						lintwarn(_("backslash at end of string"));
 					c = '\\';
 				}
 				*ptm++ = c;
@@ -328,9 +376,7 @@ int flags;
 /* tmp_string --- allocate a temporary string */
 
 NODE *
-tmp_string(s, len)
-char *s;
-size_t len;
+tmp_string(char *s, size_t len)
 {
 	register NODE *r;
 
@@ -351,9 +397,12 @@ more_nodes()
 	register NODE *np;
 
 	/* get more nodes and initialize list */
-	emalloc(nextfree, NODE *, NODECHUNK * sizeof(NODE), "newnode");
+	emalloc(nextfree, NODE *, NODECHUNK * sizeof(NODE), "more_nodes");
 	for (np = nextfree; np <= &nextfree[NODECHUNK - 1]; np++) {
 		np->flags = 0;
+#ifndef NO_PROFILING
+		np->exec_count = 0;
+#endif
 		np->nextp = np + 1;
 	}
 	--np;
@@ -363,41 +412,47 @@ more_nodes()
 	return np;
 }
 
-#ifdef DEBUG
+#ifdef MEMDEBUG
+#undef freenode
 /* freenode --- release a node back to the pool */
 
 void
-freenode(it)
-NODE *it;
+freenode(NODE *it)
 {
-	it->flags &= ~SCALAR;
 #ifdef MPROF
 	it->stref = 0;
 	free((char *) it);
 #else	/* not MPROF */
+#ifndef NO_PROFILING
+	it->exec_count = 0;
+#endif
 	/* add it to head of freelist */
 	it->nextp = nextfree;
 	nextfree = it;
 #endif	/* not MPROF */
 }
-#endif	/* DEBUG */
+#endif	/* GAWKDEBUG */
 
 /* unref --- remove reference to a particular node */
 
 void
-unref(tmp)
-register NODE *tmp;
+unref(register NODE *tmp)
 {
 	if (tmp == NULL)
 		return;
 	if ((tmp->flags & PERM) != 0)
 		return;
-	if ((tmp->flags & (MALLOC|TEMP)) != 0) {
-		tmp->flags &= ~TEMP;
-		if ((tmp->flags & STR) != 0) {
+	tmp->flags &= ~TEMP;
+	if ((tmp->flags & MALLOC) != 0) {
+		if (tmp->type == Node_ahash) {
+			if (tmp->ahname_ref > 1) {
+				tmp->ahname_ref--;
+				return;
+			}
+			free(tmp->ahname_str);
+		} else if ((tmp->flags & STRCUR) != 0) {
 			if (tmp->stref > 1) {
-				if (tmp->stref != LONG_MAX)
-					tmp->stref--;
+				tmp->stref--;
 				return;
 			}
 			free(tmp->stptr);
@@ -431,8 +486,7 @@ register NODE *tmp;
  */
 
 int
-parse_escape(string_ptr)
-char **string_ptr;
+parse_escape(const char **string_ptr)
 {
 	register int c = *(*string_ptr)++;
 	register int i;
@@ -484,18 +538,20 @@ char **string_ptr;
 
 			if (! didwarn) {
 				didwarn = TRUE;
-				warning("POSIX does not allow \"\\x\" escapes");
+				lintwarn(_("POSIX does not allow `\\x' escapes"));
 			}
 		}
 		if (do_posix)
 			return ('x');
-		if (! isxdigit((*string_ptr)[0])) {
-			warning("no hex digits in \\x escape sequence");
+		if (! ISXDIGIT((*string_ptr)[0])) {
+			warning(_("no hex digits in `\\x' escape sequence"));
 			return ('x');
 		}
 		i = 0;
 		for (;;) {
-			if (ISXDIGIT((c = *(*string_ptr)++))) {
+			/* do outside test to avoid multiple side effects */
+			c = *(*string_ptr)++;
+			if (ISXDIGIT(c)) {
 				i *= 16;
 				if (ISDIGIT(c))
 					i += c - '0';
@@ -509,7 +565,22 @@ char **string_ptr;
 			}
 		}
 		return i;
+	case '\\':
+	case '"':
+		return c;
 	default:
+	{
+		static short warned[256];
+		unsigned char uc = (unsigned char) c;
+
+		/* N.B.: use unsigned char here to avoid Latin-1 problems */
+
+		if (! warned[uc]) {
+			warned[uc] = TRUE;
+
+			warning(_("escape sequence `\\%c' treated as plain `%c'"), uc, uc);
+		}
+	}
 		return c;
 	}
 }
