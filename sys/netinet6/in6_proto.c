@@ -1,4 +1,4 @@
-/*	$NetBSD: in6_proto.c,v 1.25 2001/02/11 06:49:52 itojun Exp $	*/
+/*	$NetBSD: in6_proto.c,v 1.26 2001/02/20 08:49:16 itojun Exp $	*/
 /*	$KAME: in6_proto.c,v 1.66 2000/10/10 15:35:47 itojun Exp $	*/
 
 /*
@@ -67,6 +67,7 @@
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
+#include "opt_iso.h"
 
 #include <sys/param.h>
 #include <sys/socket.h>
@@ -220,6 +221,13 @@ struct ip6protosw inet6sw[] = {
   encap_init,	0,		0,		0,
 #endif
 },
+#ifdef ISO
+{ SOCK_RAW,	&inet6domain,	IPPROTO_EON,	0,
+  encap6_input,	rip6_output,	0,		rip6_ctloutput,
+  rip_usrreq,	/*XXX*/
+  0,		0,		0,		0,
+},
+#endif
 { SOCK_RAW,     &inet6domain,	IPPROTO_PIM,	PR_ATOMIC|PR_ADDR,
   pim6_input,    rip6_output,	0,              rip6_ctloutput, 
   rip6_usrreq,
