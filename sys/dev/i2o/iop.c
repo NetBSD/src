@@ -1,4 +1,4 @@
-/*	$NetBSD: iop.c,v 1.34 2003/01/18 21:23:13 thorpej Exp $	*/
+/*	$NetBSD: iop.c,v 1.35 2003/01/20 04:26:02 simonb Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2001, 2002 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: iop.c,v 1.34 2003/01/18 21:23:13 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: iop.c,v 1.35 2003/01/20 04:26:02 simonb Exp $");
 
 #include "opt_i2o.h"
 #include "iop.h"
@@ -2186,7 +2186,7 @@ static void
 iop_msg_poll(struct iop_softc *sc, struct iop_msg *im, int timo)
 {
 	u_int32_t rmfa;
-	int s, status;
+	int s;
 
 	s = splbio();
 
@@ -2198,7 +2198,7 @@ iop_msg_poll(struct iop_softc *sc, struct iop_msg *im, int timo)
 			if (rmfa == IOP_MFA_EMPTY)
 				rmfa = iop_inl(sc, IOP_REG_OFIFO);
 			if (rmfa != IOP_MFA_EMPTY) {
-				status = iop_handle_reply(sc, rmfa);
+				iop_handle_reply(sc, rmfa);
 
 				/*
 				 * Return the reply frame to the IOP's
