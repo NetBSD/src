@@ -33,13 +33,12 @@
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)unix.c	8.1 (Berkeley) 6/6/93";*/
-static char *rcsid = "$Id: unix.c,v 1.10 1994/05/13 08:08:23 mycroft Exp $";
+static char *rcsid = "$Id: unix.c,v 1.11 1994/11/02 09:20:33 deraadt Exp $";
 #endif /* not lint */
 
 /*
  * Display protocol blocks in the unix domain.
  */
-#include <kvm.h>
 #include <sys/param.h>
 #include <sys/protosw.h>
 #include <sys/socket.h>
@@ -57,6 +56,7 @@ struct proc;
 
 #include <stdio.h>
 #include <stdlib.h>
+#include <kvm.h>
 #include "netstat.h"
 
 static	void unixdomainpr __P((struct socket *, caddr_t));
