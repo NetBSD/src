@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.129 1999/10/09 15:33:38 hubertf Exp $
+# $NetBSD: mi,v 1.130 1999/10/28 02:34:15 perry Exp $
 .
 ./altroot
 ./bin
@@ -66,6 +66,7 @@
 ./sbin/disklabel
 ./sbin/dmesg
 ./sbin/dump
+./sbin/dump_lfs
 ./sbin/fastboot
 ./sbin/fasthalt
 ./sbin/fsck
@@ -110,6 +111,7 @@
 ./sbin/ping6
 ./sbin/raidctl
 ./sbin/rdump
+./sbin/rdump_lfs
 ./sbin/reboot
 ./sbin/restore
 ./sbin/rndctl
