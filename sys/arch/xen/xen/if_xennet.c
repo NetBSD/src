@@ -1,4 +1,4 @@
-/*	$NetBSD: if_xennet.c,v 1.4 2004/04/21 12:43:43 cl Exp $	*/
+/*	$NetBSD: if_xennet.c,v 1.5 2004/04/21 17:36:59 cl Exp $	*/
 
 /*
  *
@@ -33,7 +33,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_xennet.c,v 1.4 2004/04/21 12:43:43 cl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_xennet.c,v 1.5 2004/04/21 17:36:59 cl Exp $");
 
 #include "opt_inet.h"
 
@@ -75,6 +75,7 @@ __KERNEL_RCSID(0, "$NetBSD: if_xennet.c,v 1.4 2004/04/21 12:43:43 cl Exp $");
 #include <nfs/nfsmount.h>
 #include <nfs/nfsdiskless.h>
 
+#include "bpfilter.h"
 #if NBPFILTER > 0
 #include <net/bpf.h>
 #include <net/bpfdesc.h>
@@ -126,6 +127,7 @@ static void network_alloc_rx_buffers(struct xennet_softc *);
 static void network_alloc_tx_buffers(struct xennet_softc *);
 void xennet_init(struct xennet_softc *);
 void xennet_reset(struct xennet_softc *);
+static void xennet_setvfrrules(struct ifnet *, struct ifaddr *);
 #ifdef mediacode
 static int xennet_mediachange (struct ifnet *);
 static void xennet_mediastatus(struct ifnet *, struct ifmediareq *);
@@ -196,8 +198,19 @@ xennet_attach(struct device *parent, struct device *self, void *aux)
 
 	sc->sc_ifno = xneta->xa_netop.vif;
 
-        memcpy(sc->sc_enaddr, xneta->xa_netop.u.get_vif_info.vmac,
+	memcpy(sc->sc_enaddr, xneta->xa_netop.u.get_vif_info.vmac,
 	    ETHER_ADDR_LEN);
+	if (xen_start_info.flags & SIF_PRIVILEGED) {
+		/* XXX for domain-0 change out ethernet address to be
+		 * different than the physical address since arp
+		 * replies from other domains will report the physical
+		 * address.
+		 */
+		if (sc->sc_enaddr[0] != 0xaa)
+			sc->sc_enaddr[0] = 0xaa;
+		else
+			sc->sc_enaddr[0] = 0xab;
+	}
 
 	/* Initialize ifnet structure. */
 	memcpy(ifp->if_xname, sc->sc_dev.dv_xname, IFNAMSIZ);
@@ -682,6 +695,8 @@ xennet_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 #ifdef INET
 		case AF_INET:
 			xennet_init(sc);
+			if (xen_start_info.flags & SIF_PRIVILEGED)
+				xennet_setvfrrules(ifp, ifa);
 			arp_ifinit(ifp, ifa);
 			break;
 #endif
@@ -760,6 +775,39 @@ xennet_reset(struct xennet_softc *sc)
 	DPRINTFN(XEDB_FOLLOW, ("%s: xennet_reset()\n", sc->sc_dev.dv_xname));
 }
 
+static void
+xennet_setvfrrules(struct ifnet *ifp, struct ifaddr *ifa)
+{
+	struct xennet_softc *sc = ifp->if_softc;
+	struct in_addr *ip;
+	network_op_t op;
+
+	ip = &IA_SIN(ifa)->sin_addr;
+	if (in_nullhost(*ip))
+		return;
+
+	memset(&op, 0, sizeof(op));
+	op.u.net_rule.proto = NETWORK_PROTO_ANY;
+	op.u.net_rule.action = NETWORK_ACTION_ACCEPT;
+
+	op.cmd = NETWORK_OP_ADDRULE;
+
+	op.u.net_rule.src_vif = sc->sc_ifno;
+	op.u.net_rule.dst_vif = VIF_PHYSICAL_INTERFACE;
+	op.u.net_rule.src_addr = ntohl(ip->s_addr);
+	op.u.net_rule.src_addr_mask = ~0UL;
+	op.u.net_rule.dst_addr = 0;
+	op.u.net_rule.dst_addr_mask = 0;
+	(void)HYPERVISOR_network_op(&op);
+    
+	op.u.net_rule.src_vif = VIF_ANY_INTERFACE;
+	op.u.net_rule.dst_vif = sc->sc_ifno;
+	op.u.net_rule.src_addr = 0;
+	op.u.net_rule.src_addr_mask = 0;    
+	op.u.net_rule.dst_addr = ntohl(ip->s_addr);
+	op.u.net_rule.dst_addr_mask = ~0UL;
+	(void)HYPERVISOR_network_op(&op);
+}
 
 #ifdef mediacode
 /*
