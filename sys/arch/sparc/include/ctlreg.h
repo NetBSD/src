@@ -42,7 +42,7 @@
  *	@(#)ctlreg.h	8.1 (Berkeley) 6/11/93
  *
  * from: Header: ctlreg.h,v 1.6 93/04/27 14:29:07 torek Exp 
- * $Id: ctlreg.h,v 1.4 1994/08/20 01:19:27 deraadt Exp $
+ * $Id: ctlreg.h,v 1.5 1994/10/26 07:15:09 deraadt Exp $
  */
 
 /*
@@ -60,7 +60,7 @@
 #define	ASI_HWFLUSHPG	0x06	/* hardware assisted version of FLUSHPG */
 #define	ASI_HWFLUSHCTX	0x07	/* hardware assisted version of FLUSHCTX */
 #endif
-#if defined(SUN4M) || defined(SUN4M)
+#if defined(SUN4M)
 #define ASI_SRMMUFP	0x03	/* ref mmu flush/probe */
 #define ASI_SRMMUFP_L3	(0<<8)	/* probe L3	| flush L3 PTE */
 #define ASI_SRMMUFP_L2	(1<<8)	/* probe L2	| flush L2/L3 PTE/PTD's */
@@ -81,9 +81,9 @@
 #define	ASI_FLUSHSEG	0x0c	/* causes hardware to flush cache segment */
 #define	ASI_FLUSHPG	0x0d	/* causes hardware to flush cache page */
 #define	ASI_FLUSHCTX	0x0e	/* causes hardware to flush cache context */
+#endif
 #if defined(SUN4)
 #define	ASI_DCACHE	0x0f	/* flush data cache; not used on 4c */
-#endif
 #endif
 
 #if defined(SUN4M)
@@ -102,7 +102,7 @@
 #define ASI_DCACHEDIAG	0x39	/* data cache diagnostic register access */
 #endif
 
-#if defined(SUN4) || defined(SUN4C)
+#if defined(SUN4C) || defined(SUN4)
 /* registers in the control space */
 #define	AC_CONTEXT	0x30000000	/* context register (byte) */
 #define	AC_SYSENABLE	0x40000000	/* system enable register (byte) */
@@ -117,8 +117,9 @@
 #define	AC_BUS_ERR	0x60000000	/* bus error register */
 #define	AC_DIAG_REG	0x70000000	/* diagnostic reg */
 #define	AC_DVMA_MAP	0xd0000000	/* user dvma map entries */
+#define AC_VMEINTVEC	0xe0000000	/* vme interrupt vector */
 
-/* where does this belong? */
+/* XXX: does not belong here */
 #define	ME_REG_IERR	0x80		/* memory err ctrl reg error intr pending bit */
 #endif
 
@@ -130,7 +131,7 @@
 #define	AC_CACHEDATA	0x90000000	/* cached data */
 #endif
 
-#if defined(SUN4) || defined(SUN4C)
+#if defined(SUN4C) || defined(SUN4)
 /*
  * Bits in sync error register.  Reading the register clears these;
  * otherwise they accumulate.  The error(s) occurred at the virtual
