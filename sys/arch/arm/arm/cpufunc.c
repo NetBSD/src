@@ -1,4 +1,4 @@
-/*	$NetBSD: cpufunc.c,v 1.21 2001/12/01 14:21:18 bjh21 Exp $	*/
+/*	$NetBSD: cpufunc.c,v 1.22 2001/12/01 23:06:45 thorpej Exp $	*/
 
 /*
  * arm7tdmi support code Copyright (c) 2001 John Fremlin
@@ -870,6 +870,31 @@ set_cpufuncs()
 #endif	/* CPU_SA110 */
 #ifdef CPU_XSCALE
 	if (cputype == CPU_ID_I80200) {
+		/*
+		 * Reset the Interrupt Controller Unit to a pristine
+		 * state:
+		 *	- all interrupt sources disabled
+		 *	- PMU/BCU sterred to IRQ
+		 */
+		__asm __volatile("mcr p13, 0, %0, c0, c0, 0"
+			:
+			: "r" (0));
+		__asm __volatile("mcr p13, 0, %0, c2, c0, 0"
+			:
+			: "r" (0));
+
+		/*
+		 * Reset the Performance Monitoring Unit to a
+		 * pristine state:
+		 *	- CCNT, PMN0, PMN1 reset to 0
+		 *	- overflow indications cleared
+		 *	- all counters disabled
+		 */
+		__asm __volatile("mcr p14, 0, %0, c0, c0, 0"
+			:
+			: "r" (PMNC_P|PMNC_C|PMNC_PMN0_IF|PMNC_PMN1_IF|
+			       PMNC_CC_IF));
+
 		/*
 		 * XXX Disable ECC in the Bus Controller Unit; we
 		 * don't really support it, yet.  Clear any pending
