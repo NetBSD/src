@@ -1,4 +1,4 @@
-/*	$NetBSD: boot.c,v 1.16 2001/05/02 06:56:54 matt Exp $ */
+/*	$NetBSD: boot.c,v 1.17 2001/05/02 15:33:14 matt Exp $ */
 /*-
  * Copyright (c) 1982, 1986 The Regents of the University of California.
  * All rights reserved.
@@ -144,7 +144,8 @@ Xmain(void)
 			marks[MARK_START] = 0;
 			err = loadfile(filelist[fileindex].name, marks, LOAD_KERNEL|COUNT_KERNEL);
 			if (err == 0) {
-				machdep_start((char *)marks[MARK_ENTRY], 0,
+				machdep_start((char *)marks[MARK_ENTRY],
+						      marks[MARK_NSYM],
 					      (void *)marks[MARK_START],
 					      (void *)marks[MARK_SYM],
 					      (void *)marks[MARK_END]);
@@ -234,7 +235,8 @@ load:
 	marks[MARK_START] = 0;
 	err = loadfile(fn, marks, LOAD_KERNEL|COUNT_KERNEL);
 	if (err == 0) {
-		machdep_start((char *)marks[MARK_ENTRY], 0,
+		machdep_start((char *)marks[MARK_ENTRY],
+				      marks[MARK_NSYM],
 			      (void *)marks[MARK_START],
 			      (void *)marks[MARK_SYM],
 			      (void *)marks[MARK_END]);
