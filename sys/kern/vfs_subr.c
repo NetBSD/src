@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_subr.c,v 1.64 1997/04/23 20:18:18 mycroft Exp $	*/
+/*	$NetBSD: vfs_subr.c,v 1.65 1997/04/23 20:19:45 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1997 Jason R. Thorpe.  All rights reserved.
@@ -1514,7 +1514,7 @@ vaccess(file_mode, uid, gid, acc_mode, cred)
 	 * on at least one execute bit being set.
 	 */
 	if (cred->cr_uid == 0) {
-		if (acc_mode == VEXEC &&
+		if (acc_mode & VEXEC &&
 		    (file_mode & (S_IXUSR | S_IXGRP | S_IXOTH)) == 0)
 			return (EACCES);
 		else
