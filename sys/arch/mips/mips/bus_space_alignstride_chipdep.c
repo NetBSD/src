@@ -1,4 +1,4 @@
-/* $NetBSD: bus_space_alignstride_chipdep.c,v 1.3 2002/06/05 06:27:10 simonb Exp $ */
+/* $NetBSD: bus_space_alignstride_chipdep.c,v 1.4 2002/08/19 12:03:48 simonb Exp $ */
 
 /*-
  * Copyright (c) 1998, 2000, 2001 The NetBSD Foundation, Inc.
@@ -331,7 +331,7 @@ __BS(init)(bus_space_tag_t t, void *v)
 	}
 
 #ifdef EXTENT_DEBUG
-	printf("xxx: freeing from 0x%lx to 0x%lx\n", CHIP_W1_BUS_START(v),
+	printf("xxx: freeing from 0x%x to 0x%x\n", CHIP_W1_BUS_START(v),
 	    CHIP_W1_BUS_END(v));
 #endif
 	extent_free(ex, CHIP_W1_BUS_START(v),
