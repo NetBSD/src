@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.c,v 1.164 2003/01/16 16:57:43 pk Exp $ */
+/*	$NetBSD: cpu.c,v 1.165 2003/01/16 16:58:23 pk Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -777,7 +777,6 @@ mp_pause_cpus()
 	}
 }
 
-int cpunum(void); int cpunum(void) {return cpuinfo.ci_cpuid;}
 /*
  * Resume all idling CPUs.
  */
