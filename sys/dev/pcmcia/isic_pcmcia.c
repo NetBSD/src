@@ -33,7 +33,7 @@
  *	isic_pcmcia.c - pcmcia bus frontend for i4b_isic driver
  *	-------------------------------------------------------
  *
- *	$Id: isic_pcmcia.c,v 1.5 2001/11/15 09:48:12 lukem Exp $ 
+ *	$Id: isic_pcmcia.c,v 1.6 2002/03/24 20:35:54 martin Exp $ 
  *
  *      last edit-date: [Fri Jan  5 11:39:32 2001]
  *
@@ -42,7 +42,7 @@
  *---------------------------------------------------------------------------*/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: isic_pcmcia.c,v 1.5 2001/11/15 09:48:12 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: isic_pcmcia.c,v 1.6 2002/03/24 20:35:54 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/errno.h>
@@ -71,6 +71,9 @@ __KERNEL_RCSID(0, "$NetBSD: isic_pcmcia.c,v 1.5 2001/11/15 09:48:12 lukem Exp $"
 #else
 #include <netisdn/i4b_ioctl.h>
 #include <netisdn/i4b_trace.h>
+#include <netisdn/i4b_debug.h>
+#include <netisdn/i4b_l2.h>
+#include <netisdn/i4b_l1l2.h>
 #endif
 
 #include <dev/ic/isic_l1.h>
@@ -90,10 +93,10 @@ extern const struct isdn_layer1_bri_driver isic_std_driver;
 static int isic_pcmcia_match __P((struct device *, struct cfdata *, void *));
 static void isic_pcmcia_attach __P((struct device *, struct device *, void *));
 static const struct isic_pcmcia_card_entry * find_matching_card __P((struct pcmcia_attach_args *pa));
-static int isic_pcmcia_isdn_attach __P((struct l1_softc *sc));
+static int isic_pcmcia_isdn_attach __P((struct isic_softc *sc, const char*));
 
 struct cfattach isic_pcmcia_ca = {
-	sizeof(struct pcmcia_l1_softc), isic_pcmcia_match, isic_pcmcia_attach
+	sizeof(struct pcmcia_isic_softc), isic_pcmcia_match, isic_pcmcia_attach
 };
 
 struct isic_pcmcia_card_entry {
@@ -202,8 +205,8 @@ isic_pcmcia_attach(parent, self, aux)
 	struct device *parent, *self;
 	void *aux;
 {
-	struct pcmcia_l1_softc *psc = (void*) self;
-	struct l1_softc *sc = &psc->sc_isic;
+	struct pcmcia_isic_softc *psc = (void*) self;
+	struct isic_softc *sc = &psc->sc_isic;
 	struct pcmcia_attach_args *pa = aux;
 	struct pcmcia_config_entry *cfe;
 	const struct isic_pcmcia_card_entry * cde;
@@ -224,8 +227,6 @@ isic_pcmcia_attach(parent, self, aux)
 	if (!cde->attach(psc, cfe, pa))
 		return;		/* Ooops ? */
 
-	sc->sc_unit = sc->sc_dev.dv_unit;
-
 	/* Announce card name */
 	printf(": %s\n", cde->name);
 
@@ -234,7 +235,8 @@ isic_pcmcia_attach(parent, self, aux)
 	s = splhigh();
 	
 	/* MI initilization */
-	if (isic_pcmcia_isdn_attach(sc) == 0) {
+	sc->sc_cardtyp = cde->card_type;
+	if (isic_pcmcia_isdn_attach(sc, cde->name) == 0) {
 		/* setup interrupt */
 		psc->sc_ih = pcmcia_intr_establish(pa->pf, IPL_NET, isicintr, sc);
 	}
@@ -259,7 +261,7 @@ isic_pcmcia_attach(parent, self, aux)
 #endif
 
 int
-isic_pcmcia_isdn_attach(struct l1_softc *sc)
+isic_pcmcia_isdn_attach(struct isic_softc *sc, const char *cardname)
 {
   	static char *ISACversion[] = {
   		"2085 Version A1/A2 or 2086/2186 Version 1.1",
@@ -351,7 +353,7 @@ isic_pcmcia_isdn_attach(struct l1_softc *sc)
 
 	/* init higher protocol layers */
 	
-	sc->sc_l2 = isdn_attach_layer1_bri(sc, sc->sc_dev.dv_xname, "some isic card", &isic_std_driver);
+	isic_attach_bri(sc, cardname, &isic_std_driver);
 
 	/* announce chip versions */
 	

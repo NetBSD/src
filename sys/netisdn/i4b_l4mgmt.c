@@ -27,7 +27,7 @@
  *	i4b_l4mgmt.c - layer 4 calldescriptor management utilites
  *	-----------------------------------------------------------
  *
- *	$Id: i4b_l4mgmt.c,v 1.5 2002/03/16 16:56:04 martin Exp $ 
+ *	$Id: i4b_l4mgmt.c,v 1.6 2002/03/24 20:36:02 martin Exp $ 
  *
  * $FreeBSD$
  *
@@ -36,7 +36,7 @@
  *---------------------------------------------------------------------------*/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: i4b_l4mgmt.c,v 1.5 2002/03/16 16:56:04 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: i4b_l4mgmt.c,v 1.6 2002/03/24 20:36:02 martin Exp $");
 
 #include "isdn.h"
 
@@ -74,19 +74,19 @@ __KERNEL_RCSID(0, "$NetBSD: i4b_l4mgmt.c,v 1.5 2002/03/16 16:56:04 martin Exp $"
 #include <netisdn/i4b_isdnq931.h>
 #include <netisdn/i4b_global.h>
 
-#include <netisdn/i4b_l1l2.h>	/* XXX ! */
-#include <netisdn/i4b_l2.h>	/* XXX ! */
+#include <netisdn/i4b_l2.h>
+#include <netisdn/i4b_l1l2.h>
 #include <netisdn/i4b_l4.h>
 
-call_desc_t call_desc[N_CALL_DESC];	/* call descriptor array */
-
 static unsigned int get_cdid(void);
-
-int nctrl;				/* number of attached controllers */
 
 #if (defined(__NetBSD__) && __NetBSD_Version__ >= 104230000) || defined(__FreeBSD__)
 void i4b_init_callout(call_desc_t *);
 #endif
+
+#define N_CALL_DESC 40	/* XXX - make this sizeable */
+call_desc_t call_desc[N_CALL_DESC];	/* call descriptor array */
+int num_call_desc = 0;
 
 /*---------------------------------------------------------------------------*
  *      return a new unique call descriptor id
@@ -116,7 +116,7 @@ again:
 
 	/* check if id already in use */
 	
-	for(i=0; i < N_CALL_DESC; i++)
+	for(i=0; i < num_call_desc; i++)
 	{
 		if(call_desc[i].cdid == cdid_count)
 		{
@@ -149,17 +149,25 @@ reserve_cd(void)
 
 	cd = NULL;
 	
-	for(i=0; i < N_CALL_DESC; i++)
+	for(i=0; i < num_call_desc; i++)
 	{
 		if(call_desc[i].cdid == CDID_UNUSED)
 		{
-			bzero(&call_desc[i], sizeof(call_desc_t)); /* clear it */
-			call_desc[i].cdid = get_cdid();	/* fill in new cdid */
 			cd = &(call_desc[i]);	/* get pointer to descriptor */
 			NDBGL4(L4_MSG, "found free cd - index=%d cdid=%u",
 				 i, call_desc[i].cdid);
 			break;
 		}
+	}
+	if (cd == NULL && num_call_desc < N_CALL_DESC) {
+		i = num_call_desc++;
+		cd = &(call_desc[i]);	/* get pointer to descriptor */
+		NDBGL4(L4_MSG, "found free cd - index=%d cdid=%u",
+			 i, call_desc[i].cdid);
+	}
+	if (cd != NULL) {
+		memset(cd, 0, sizeof(call_desc_t)); /* clear it */
+		cd->cdid = get_cdid();	/* fill in new cdid */
 	}
 
 	splx(x);
@@ -186,7 +194,7 @@ freecd_by_cd(call_desc_t *cd)
 	int i;
 	int x = splnet();
 	
-	for(i=0; i < N_CALL_DESC; i++)
+	for(i=0; i < num_call_desc; i++)
 	{
 		if( (call_desc[i].cdid != CDID_UNUSED) &&
 		    (&(call_desc[i]) == cd) )
@@ -216,7 +224,7 @@ cd_by_cdid(unsigned int cdid)
 {
 	int i;
 
-	for(i=0; i < N_CALL_DESC; i++)
+	for(i=0; i < num_call_desc; i++)
 	{
 		if(call_desc[i].cdid == cdid)
 		{
@@ -239,13 +247,13 @@ cd_by_cdid(unsigned int cdid)
  *	It returns a pointer to the calldescriptor if found, else a NULL.
  *---------------------------------------------------------------------------*/
 call_desc_t *
-cd_by_unitcr(int unit, int cr, int crf)
+cd_by_bricr(int bri, int cr, int crf)
 {
 	int i;
 
-	for(i=0; i < N_CALL_DESC; i++)
+	for(i=0; i < num_call_desc; i++)
 	{
-	  if (call_desc[i].cdid != CDID_UNUSED && call_desc[i].bri == unit  &&
+	  if (call_desc[i].cdid != CDID_UNUSED && call_desc[i].bri == bri &&
 	     call_desc[i].cr == cr && call_desc[i].crflag == crf)
 	  {
 	    NDBGL4(L4_MSG, "found cd, index=%d cdid=%u cr=%d",
@@ -296,7 +304,7 @@ get_rand_cr(int unit)
 		if(retval == 0 || retval == 0x7f)
 			continue;
 
-		for(j=0; j < N_CALL_DESC; j++)
+		for(j=0; j < num_call_desc; j++)
 		{
 			if( (call_desc[j].cdid != CDID_UNUSED) &&
 			    (call_desc[j].cr == retval) )
@@ -345,38 +353,6 @@ i4b_init_callout(call_desc_t *cd)
 }
 #endif
 
-/*---------------------------------------------------------------------------*
- *      daemon is attached
- *---------------------------------------------------------------------------*/
-void 
-i4b_l4_daemon_attached(void)
-{
-	int i;
-
-	int x = splnet();
-	for(i=0; i < nctrl; i++)
-	{
-		ctrl_desc[i].N_MGMT_COMMAND(ctrl_desc[i].bri, CMR_DOPEN, 0);
-	}
-	splx(x);
-}
-
-/*---------------------------------------------------------------------------*
- *      daemon is detached
- *---------------------------------------------------------------------------*/
-void 
-i4b_l4_daemon_detached(void)
-{
-	int i;
-
-	int x = splnet();
-	for(i=0; i < nctrl; i++)
-	{
-		ctrl_desc[i].N_MGMT_COMMAND(ctrl_desc[i].bri, CMR_DCLOSE, 0);
-	}
-	splx(x);
-}
-
 #ifdef I4B_CD_DEBUG_PRINT
 
 extern char *print_l3state(call_desc_t *cd);
@@ -392,7 +368,7 @@ void i4b_print_cdaa(void);
 void 
 i4b_print_cdp(call_desc_t *cdp)
 {
-	if((cdp > &(call_desc[N_CALL_DESC])) || (cdp < &(call_desc[0])))
+	if((cdp > &(call_desc[num_call_desc])) || (cdp < &(call_desc[0])))
 	{
 		printf("i4b_print_cd: cdp out of range!\n");
 		return;
@@ -435,7 +411,7 @@ i4b_print_cdp(call_desc_t *cdp)
 void 
 i4b_print_cdx(int index)
 {
-	if(index >= N_CALL_DESC)
+	if(index >= num_call_desc)
 	{
 		printf("i4b_print_cdx: index %d >= N_CALL_DESC %d\n", index, N_CALL_DESC);
 		return;
@@ -451,7 +427,7 @@ i4b_print_cda(void)
 {
 	int i;
 
-	for(i=0; i < N_CALL_DESC; i++)
+	for(i=0; i < num_call_desc; i++)
 	{
 		i4b_print_cdp(&(call_desc[i]));
 	}
@@ -465,7 +441,7 @@ i4b_print_cdaa(void)
 {
 	int i;
 
-	for(i=0; i < N_CALL_DESC; i++)
+	for(i=0; i < num_call_desc; i++)
 	{
 		if(call_desc[i].cdid != CDID_UNUSED)
 		{

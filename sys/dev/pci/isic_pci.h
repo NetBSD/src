@@ -33,7 +33,7 @@
  *	pci_isic.h - pci bus frontend for i4b_isic driver
  *	-------------------------------------------------
  *
- *	$Id: isic_pci.h,v 1.1 2001/02/18 09:37:20 martin Exp $ 
+ *	$Id: isic_pci.h,v 1.2 2002/03/24 20:35:53 martin Exp $ 
  *
  *      last edit-date: [Wed Mar 10 07:22:08 1999]
  *
@@ -41,13 +41,13 @@
  *
  *---------------------------------------------------------------------------*/
 
-struct pci_l1_softc {
-	struct l1_softc sc_isic;	/* parent class */
+struct pci_isic_softc {
+	struct isic_softc sc_isic;	/* parent class */
 
 	/* PCI-specific goo */
 	void *sc_ih;				/* interrupt handler */
 };
 
-extern void isic_attach_Eqs1pp __P((struct pci_l1_softc *psc, struct pci_attach_args *pa));
-extern void isic_attach_fritzPci __P((struct pci_l1_softc *psc, struct pci_attach_args *pa));
+extern void isic_attach_Eqs1pp __P((struct pci_isic_softc *psc, struct pci_attach_args *pa));
+extern void isic_attach_fritzPci __P((struct pci_isic_softc *psc, struct pci_attach_args *pa));
 

@@ -27,7 +27,7 @@
  *	i4b_i4bdrv.c - i4b userland interface driver
  *	--------------------------------------------
  *
- *	$Id: i4b_i4bdrv.c,v 1.13 2002/03/22 09:54:17 martin Exp $ 
+ *	$Id: i4b_i4bdrv.c,v 1.14 2002/03/24 20:35:57 martin Exp $ 
  *
  * $FreeBSD$
  *
@@ -36,7 +36,7 @@
  *---------------------------------------------------------------------------*/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: i4b_i4bdrv.c,v 1.13 2002/03/22 09:54:17 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: i4b_i4bdrv.c,v 1.14 2002/03/24 20:35:57 martin Exp $");
 
 #include "isdn.h"
 
@@ -331,6 +331,7 @@ isdnread(dev_t dev, struct uio *uio, int ioflag)
 PDEVSTATIC int
 isdnioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct proc *p)
 {
+	struct isdn_l3_driver *d;
 	call_desc_t *cd;
 	int error = 0;
 	
@@ -364,8 +365,10 @@ isdnioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct proc *p)
 				break;
 			}
 
+			d = isdn_find_l3_by_bri(cd->bri);
+
 			/* prevent dialling on leased lines */
-			if(ctrl_desc[mcr->controller].protocol == PROTOCOL_D64S)
+			if(d->protocol == PROTOCOL_D64S)
 			{
 				SET_CAUSE_TYPE(cd->cause_in, CAUSET_I4B);
 				SET_CAUSE_VAL(cd->cause_in, CAUSE_I4B_LLDIAL);
@@ -412,13 +415,13 @@ isdnioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct proc *p)
 			{
 				case CHAN_B1:
 				case CHAN_B2:
-					if(ctrl_desc[mcr->controller].bch_state[mcr->channel] != BCH_ST_FREE)
+					if(d->bch_state[mcr->channel] != BCH_ST_FREE)
 						SET_CAUSE_VAL(cd->cause_in, CAUSE_I4B_NOCHAN);
 					break;
 
 				case CHAN_ANY:
-					if((ctrl_desc[mcr->controller].bch_state[CHAN_B1] != BCH_ST_FREE) &&
-					   (ctrl_desc[mcr->controller].bch_state[CHAN_B2] != BCH_ST_FREE))
+					if((d->bch_state[CHAN_B1] != BCH_ST_FREE) &&
+					   (d->bch_state[CHAN_B2] != BCH_ST_FREE))
 						SET_CAUSE_VAL(cd->cause_in, CAUSE_I4B_NOCHAN);
 					break;
 
@@ -438,7 +441,7 @@ isdnioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct proc *p)
 			}
 			else
 			{
-				ctrl_desc[cd->bri].N_CONNECT_REQUEST(mcr->cdid);
+				d->l3driver->N_CONNECT_REQUEST(mcr->cdid);
 			}
 			break;
 		}
@@ -473,7 +476,8 @@ isdnioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct proc *p)
 			
 			NDBGL4(L4_TIMO, "I4B_CONNECT_RESP max_idle_time set to %ld seconds", (long)cd->max_idle_time);
 
-			(*ctrl_desc[cd->bri].N_CONNECT_RESPONSE)(mcrsp->cdid, mcrsp->response, mcrsp->cause);
+			d = isdn_find_l3_by_bri(cd->bri);
+			d->l3driver->N_CONNECT_RESPONSE(mcrsp->cdid, mcrsp->response, mcrsp->cause);
 			break;
 		}
 		
@@ -494,8 +498,9 @@ isdnioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct proc *p)
 
 			/* preset causes with our cause */
 			cd->cause_in = cd->cause_out = mdr->cause;
-			
-			(*ctrl_desc[cd->bri].N_DISCONNECT_REQUEST)(mdr->cdid, mdr->cause);
+
+			d = isdn_find_l3_by_bri(cd->bri);
+			d->l3driver->N_DISCONNECT_REQUEST(mdr->cdid, mdr->cause);
 			break;
 		}
 		
@@ -504,26 +509,21 @@ isdnioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct proc *p)
 		case I4B_CTRL_INFO_REQ:
 		{
 			msg_ctrl_info_req_t *mcir;
+			struct isdn_l3_driver *d;
+			int bri;
 			
 			mcir = (msg_ctrl_info_req_t *)data;
-			mcir->ncontroller = nctrl;
-
-			if(mcir->controller > nctrl)
-			{
-				mcir->ctrl_type = -1;
-				mcir->card_type = -1;
-			}
-			else
-			{
-				mcir->ctrl_type = 
-					ctrl_desc[mcir->controller].ctrl_type;
-				mcir->card_type = 
-					ctrl_desc[mcir->controller].card_type;
-
-				if(ctrl_desc[mcir->controller].ctrl_type == CTRL_PASSIVE)
-					mcir->tei = ctrl_desc[mcir->controller].tei;
-				else
-					mcir->tei = -1;
+			bri = mcir->controller;
+			memset(mcir, 0, sizeof(msg_ctrl_info_req_t));
+			mcir->controller = bri;
+			mcir->ncontroller = isdn_count_bri(&mcir->maxbri);
+			d = isdn_find_l3_by_bri(bri);
+			if (d != NULL) {
+				mcir->tei = d->tei;
+				strncpy(mcir->devname, d->devname, sizeof(mcir->devname)-1);
+				strncpy(mcir->cardname, d->card_name, sizeof(mcir->cardname)-1);
+			} else {
+				error = ENODEV;
 			}
 			break;
 		}
@@ -658,7 +658,8 @@ isdnioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct proc *p)
 
 			T400_stop(cd);
 			
-			(*ctrl_desc[cd->bri].N_ALERT_REQUEST)(mar->cdid);
+			d = isdn_find_l3_by_bri(cd->bri);
+			d->l3driver->N_ALERT_REQUEST(mar->cdid);
 
 			break;
 		}
@@ -685,7 +686,8 @@ isdnioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct proc *p)
 			
 			mpi = (msg_prot_ind_t *)data;
 
-			ctrl_desc[mpi->controller].protocol = mpi->protocol;
+			d = isdn_find_l3_by_bri(mpi->controller);
+			d->protocol = mpi->protocol;
 			
 			break;
 		}
@@ -706,13 +708,14 @@ isdnioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct proc *p)
 				(struct isdn_download_request*)data;
 			int i;
 
-			if (r->controller < 0 || r->controller >= nctrl)
+			d = isdn_find_l3_by_bri(r->controller);
+			if (d == NULL)
 			{
 				error = ENODEV;
 				goto download_done;
 			}
 
-			if(!ctrl_desc[r->controller].N_DOWNLOAD)
+			if(d->l3driver->N_DOWNLOAD == NULL)
 			{
 				error = ENODEV;
 				goto download_done;
@@ -739,8 +742,8 @@ isdnioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct proc *p)
 				prots2[i].bytecount = prots[i].bytecount; 
 			}
 
-			error = ctrl_desc[r->controller].N_DOWNLOAD(
-						ctrl_desc[r->controller].l1_token,
+			error = d->l3driver->N_DOWNLOAD(
+						d->l1_token,
 						r->numprotos, prots2);
 
 download_done:
@@ -771,13 +774,14 @@ download_done:
 				(struct isdn_diagnostic_request*)data;
 
 			req.in_param = req.out_param = NULL;
-			if (r->controller < 0 || r->controller >= nctrl)
+			d = isdn_find_l3_by_bri(r->controller);
+			if (d == NULL)
 			{
 				error = ENODEV;
 				goto diag_done;
 			}
 
-			if(!ctrl_desc[r->controller].N_DIAGNOSTICS)
+			if (d->l3driver->N_DIAGNOSTICS == NULL)
 			{
 				error = ENODEV;
 				goto diag_done;
@@ -816,7 +820,7 @@ download_done:
 				}
 			}
 			
-			error = ctrl_desc[r->controller].N_DIAGNOSTICS(ctrl_desc[r->controller].l1_token, &req);
+			error = d->l3driver->N_DIAGNOSTICS(d->l1_token, &req);
 
 			if(!error && req.out_param_len)
 				error = copyout(req.out_param, r->out_param, req.out_param_len);

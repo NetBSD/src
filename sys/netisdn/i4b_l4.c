@@ -27,7 +27,7 @@
  *	i4b_l4.c - kernel interface to userland
  *	-----------------------------------------
  *
- *	$Id: i4b_l4.c,v 1.11 2002/03/17 20:54:05 martin Exp $ 
+ *	$Id: i4b_l4.c,v 1.12 2002/03/24 20:36:00 martin Exp $ 
  *
  * $FreeBSD$
  *
@@ -36,7 +36,7 @@
  *---------------------------------------------------------------------------*/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: i4b_l4.c,v 1.11 2002/03/17 20:54:05 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: i4b_l4.c,v 1.12 2002/03/24 20:36:00 martin Exp $");
 
 #include "isdn.h"
 #include "irip.h"
@@ -76,8 +76,138 @@ __KERNEL_RCSID(0, "$NetBSD: i4b_l4.c,v 1.11 2002/03/17 20:54:05 martin Exp $");
 
 unsigned int i4b_l4_debug = L4_DEBUG_DEFAULT;
 
-struct ctrl_type_desc ctrl_types[CTRL_NUMTYPES] = { { NULL, NULL} };
+/*
+ * BRIs (in userland sometimes called "controllers", but one controller
+ * may have multiple BRIs, for example daic QUAD cards attach four BRIs).
+ */
+static SIMPLEQ_HEAD(, isdn_l3_driver) bri_list = SIMPLEQ_HEAD_INITIALIZER(bri_list);
+static int next_bri = 0;
 
+/*
+ * Attach a new L3 driver instance and return it's BRI identifier
+ */
+struct isdn_l3_driver *
+isdn_attach_bri(const char *devname, const char *cardname, 
+    void *l1_token, const struct isdn_l3_driver_functions *l3driver)
+{
+	int l, bri = next_bri++;
+	struct isdn_l3_driver *new_ctrl;
+
+	new_ctrl = malloc(sizeof(*new_ctrl), M_DEVBUF, 0);
+	memset(new_ctrl, 0, sizeof *new_ctrl);
+	SIMPLEQ_INSERT_HEAD(&bri_list, new_ctrl, l3drvq);
+	new_ctrl->bri = bri;
+	l = strlen(devname);
+	new_ctrl->devname = malloc(l+1, M_DEVBUF, 0);
+	strcpy(new_ctrl->devname, devname);
+	l = strlen(cardname);
+	new_ctrl->card_name = malloc(l+1, M_DEVBUF, 0);
+	strcpy(new_ctrl->card_name, cardname);
+
+	new_ctrl->l3driver = l3driver;
+	new_ctrl->l1_token = l1_token;
+	new_ctrl->bri = bri;
+	new_ctrl->dl_est = DL_DOWN;
+	new_ctrl->bch_state[0] = BCH_ST_FREE;
+	new_ctrl->bch_state[1] = BCH_ST_FREE;
+
+	printf("BRI %d at %s\n", bri, devname);
+
+	return new_ctrl;
+}
+
+/*
+ * Detach a L3 driver instance
+ */
+int
+isdn_detach_bri(const struct isdn_l3_driver *l3drv)
+{
+	/* XXX - not yet implemented*/
+	printf("BRI %d detached\n", l3drv->bri);
+	return 1;
+}
+
+struct isdn_l3_driver *
+isdn_find_l3_by_bri(int bri)
+{
+	struct isdn_l3_driver *sc;
+
+	SIMPLEQ_FOREACH(sc, &bri_list, l3drvq)
+		if (sc->bri == bri)
+			return sc;
+	return NULL;
+}
+
+int isdn_count_bri(int *mbri)
+{
+	struct isdn_l3_driver *sc;
+	int count = 0;
+	int maxbri = -1;
+
+	SIMPLEQ_FOREACH(sc, &bri_list, l3drvq) {
+		count++;
+		if (sc->bri > maxbri)
+			maxbri = sc->bri;
+	}
+
+	if (mbri)
+		*mbri = maxbri;
+
+	return count;
+}
+
+void *
+isdn_find_softc_by_bri(int bri)
+{
+	struct isdn_l3_driver *sc = isdn_find_l3_by_bri(bri);
+	if (sc == NULL)
+		return NULL;
+	/*
+	 * XXX - hack: do not return a softc for active cards.
+	 *       all callers of this expecting l2_softc* results
+	 *       should be fixed!
+	 */
+	if (sc->l3driver->N_DOWNLOAD)
+		return NULL;
+	return sc->l1_token;
+}
+
+/*---------------------------------------------------------------------------*
+ *      daemon is attached
+ *---------------------------------------------------------------------------*/
+void 
+i4b_l4_daemon_attached(void)
+{
+	struct isdn_l3_driver *d;
+
+	int x = splnet();
+	SIMPLEQ_FOREACH(d, &bri_list, l3drvq)
+	{
+		d->l3driver->N_MGMT_COMMAND(d->bri, CMR_DOPEN, 0);
+	}
+	splx(x);
+}
+
+/*---------------------------------------------------------------------------*
+ *      daemon is detached
+ *---------------------------------------------------------------------------*/
+void 
+i4b_l4_daemon_detached(void)
+{
+	struct isdn_l3_driver *d;
+
+	int x = splnet();
+	SIMPLEQ_FOREACH(d, &bri_list, l3drvq)
+	{
+		d->l3driver->N_MGMT_COMMAND(d->bri, CMR_DCLOSE, 0);
+	}
+	splx(x);
+}
+
+/*
+ * B-channel layer 4 drivers and their registry.
+ * (Application drivers connecting to a B-channel)
+ */
 static int i4b_link_bchandrvr(call_desc_t *cd);
 static void i4b_unlink_bchandrvr(call_desc_t *cd);
 static void i4b_l4_setup_timeout(call_desc_t *cd);
@@ -86,9 +216,6 @@ static void i4b_idle_check_var_unit(call_desc_t *cd);
 static void i4b_l4_setup_timeout_fix_unit(call_desc_t *cd);
 static void i4b_l4_setup_timeout_var_unit(call_desc_t *cd);
 static time_t i4b_get_idletime(call_desc_t *cd);
-#if NIPPP > 0
-extern time_t i4bisppp_idletime(int);
-#endif
 
 static int next_l4_driver_id = 0;
 
@@ -159,11 +286,12 @@ const struct isdn_l4_driver_functions *isdn_l4_get_driver(int driver_id, int uni
 void
 i4b_l4_pdeact(int controller, int numactive)
 {
+	struct isdn_l3_driver *d = isdn_find_l3_by_bri(controller);
 	struct mbuf *m;
 	int i;
 	call_desc_t *cd;
 	
-	for(i=0; i < N_CALL_DESC; i++)
+	for(i=0; i < num_call_desc; i++)
 	{
 		if(call_desc[i].cdid != CDID_UNUSED && call_desc[i].bri == controller)
 		{
@@ -182,7 +310,7 @@ i4b_l4_pdeact(int controller, int numactive)
 		
 			if((cd->channelid == CHAN_B1) || (cd->channelid == CHAN_B2))
 			{
-				ctrl_desc[cd->bri].bch_state[cd->channelid] = BCH_ST_FREE;
+				d->bch_state[cd->channelid] = BCH_ST_FREE;
 			}
 
 			cd->cdid = CDID_UNUSED;
@@ -232,6 +360,7 @@ i4b_l4_l12stat(int controller, int layer, int state)
 void
 i4b_l4_teiasg(int controller, int tei)
 {
+	struct isdn_l3_driver *d = isdn_find_l3_by_bri(controller);
 	struct mbuf *m;
 
 	if((m = i4b_Dgetmbuf(sizeof(msg_teiasg_ind_t))) != NULL)
@@ -242,7 +371,7 @@ i4b_l4_teiasg(int controller, int tei)
 		md->header.cdid = -1;
 
 		md->controller = controller;
-		md->tei = ctrl_desc[controller].tei;
+		md->tei = d->tei;
 
 		i4bputqueue(m);
 	}
@@ -470,6 +599,7 @@ i4b_l4_connect_active_ind(call_desc_t *cd)
 void
 i4b_l4_disconnect_ind(call_desc_t *cd)
 {
+	struct isdn_l3_driver *d;
 	struct mbuf *m;
 
 	if(cd->timeout_active)
@@ -481,9 +611,11 @@ i4b_l4_disconnect_ind(call_desc_t *cd)
 		i4b_unlink_bchandrvr(cd);
 	}
 
+	d = isdn_find_l3_by_bri(cd->bri);
+
 	if((cd->channelid == CHAN_B1) || (cd->channelid == CHAN_B2))
 	{
-		ctrl_desc[cd->bri].bch_state[cd->channelid] = BCH_ST_FREE;
+		d->bch_state[cd->channelid] = BCH_ST_FREE;
 		i4b_l2_channel_set_state(cd->bri, cd->channelid, BCH_ST_FREE);
 	}
 	else
@@ -634,18 +766,16 @@ i4b_l4_packet_ind(int driver, int driver_unit, int dir, struct mbuf *pkt)
 static int
 i4b_link_bchandrvr(call_desc_t *cd)
 {
-	int t = ctrl_desc[cd->bri].ctrl_type;
+	struct isdn_l3_driver *d = isdn_find_l3_by_bri(cd->bri);
 	
-	if(t < 0 || t >= CTRL_NUMTYPES || ctrl_types[t].get_linktab == NULL)
+	if (d == NULL || d->l3driver == NULL || d->l3driver->get_linktab == NULL)
 	{
 			cd->ilt = NULL;
+			return 1;
 	}
-	else
-	{
-		cd->ilt = ctrl_types[t].get_linktab(
-			ctrl_desc[cd->bri].l1_token,
-			cd->channelid);
-	}
+
+	cd->ilt = d->l3driver->get_linktab(d->l1_token,
+	    cd->channelid);
 
 	cd->l4_driver = isdn_l4_get_driver(cd->bchan_driver_index, cd->bchan_driver_unit);
 	if (cd->l4_driver != NULL)
@@ -656,12 +786,10 @@ i4b_link_bchandrvr(call_desc_t *cd)
 	if(cd->l4_driver == NULL || cd->l4_driver_softc == NULL || cd->ilt == NULL)
 		return(-1);
 
-	if(t >= 0 && t < CTRL_NUMTYPES && ctrl_types[t].set_l4_driver != NULL)
+	if (d->l3driver->set_l4_driver != NULL)
 	{
-		ctrl_types[t].set_l4_driver(
-				ctrl_desc[cd->bri].l1_token,
-				cd->channelid,
-				cd->l4_driver, cd->l4_driver_softc);
+		d->l3driver->set_l4_driver(d->l1_token,
+		    cd->channelid, cd->l4_driver, cd->l4_driver_softc);
 	}
 
 	cd->l4_driver->set_linktab(cd->l4_driver_softc, cd->ilt);
@@ -679,18 +807,22 @@ i4b_link_bchandrvr(call_desc_t *cd)
 static void
 i4b_unlink_bchandrvr(call_desc_t *cd)
 {
-	int t = ctrl_desc[cd->bri].ctrl_type;
+	struct isdn_l3_driver *d = isdn_find_l3_by_bri(cd->bri);
 
-	if(t < 0 || t >= CTRL_NUMTYPES || ctrl_types[t].get_linktab == NULL)
+	/*
+	 * XXX - what's this *cd manipulation for? Shouldn't we
+	 * close the bchannel driver first and then just set ilt to NULL
+	 * in *cd?
+	 */
+	if (d == NULL || d->l3driver == NULL || d->l3driver->get_linktab == NULL)
 	{
 		cd->ilt = NULL;
 		return;
 	}
 	else
 	{
-		cd->ilt = ctrl_types[t].get_linktab(
-				ctrl_desc[cd->bri].l1_token,
-				cd->channelid);
+		cd->ilt = d->l3driver->get_linktab(
+		    d->l1_token, cd->channelid);
 	}
 	
 	/* deactivate B channel */
@@ -883,8 +1015,9 @@ i4b_idle_check(call_desc_t *cd)
 	{
 		if((i4b_get_idletime(cd) + cd->max_idle_time) <= SECOND)
 		{
+			struct isdn_l3_driver *d = isdn_find_l3_by_bri(cd->bri);
 			NDBGL4(L4_TIMO, "%ld: incoming-call, line idle timeout, disconnecting!", (long)SECOND);
-			(*ctrl_desc[cd->bri].N_DISCONNECT_REQUEST)(cd->cdid,
+			d->l3driver->N_DISCONNECT_REQUEST(cd->cdid,
 					(CAUSET_I4B << 8) | CAUSE_I4B_NORMAL);
 			i4b_l4_idle_timeout_ind(cd);
 		}
@@ -925,6 +1058,7 @@ i4b_idle_check(call_desc_t *cd)
 static void
 i4b_idle_check_fix_unit(call_desc_t *cd)
 {
+	struct isdn_l3_driver *d = isdn_find_l3_by_bri(cd->bri);
 
 	/* simple idletime calculation */
 
@@ -933,7 +1067,7 @@ i4b_idle_check_fix_unit(call_desc_t *cd)
 		if((i4b_get_idletime(cd) + cd->shorthold_data.idle_time) <= SECOND)
 		{
 			NDBGL4(L4_TIMO, "%ld: outgoing-call-st, idle timeout, disconnecting!", (long)SECOND);
-			(*ctrl_desc[cd->bri].N_DISCONNECT_REQUEST)(cd->cdid, (CAUSET_I4B << 8) | CAUSE_I4B_NORMAL);
+			d->l3driver->N_DISCONNECT_REQUEST(cd->cdid, (CAUSET_I4B << 8) | CAUSE_I4B_NORMAL);
 			i4b_l4_idle_timeout_ind(cd);
 		}
 		else
@@ -974,7 +1108,7 @@ i4b_idle_check_fix_unit(call_desc_t *cd)
 			else
 			{	/* no activity, hangup */
 				NDBGL4(L4_TIMO, "%ld: outgoing-call, idle timeout, last activity at %ld", (long)SECOND, (long)i4b_get_idletime(cd));
-				(*ctrl_desc[cd->bri].N_DISCONNECT_REQUEST)(cd->cdid, (CAUSET_I4B << 8) | CAUSE_I4B_NORMAL);
+				d->l3driver->N_DISCONNECT_REQUEST(cd->cdid, (CAUSET_I4B << 8) | CAUSE_I4B_NORMAL);
 				i4b_l4_idle_timeout_ind(cd);
 				cd->idletime_state = IST_IDLE;
 			}
@@ -1028,8 +1162,9 @@ i4b_idle_check_var_unit(call_desc_t *cd)
 		}
 		else
 		{	/* no activity, hangup */
+			struct isdn_l3_driver *d = isdn_find_l3_by_bri(cd->bri);
 			NDBGL4(L4_TIMO, "%ld: outgoing-call, var idle timeout - last activity at %ld", (long)SECOND, (long)i4b_get_idletime(cd));
-			(*ctrl_desc[cd->bri].N_DISCONNECT_REQUEST)(cd->cdid, (CAUSET_I4B << 8) | CAUSE_I4B_NORMAL);
+			d->l3driver->N_DISCONNECT_REQUEST(cd->cdid, (CAUSET_I4B << 8) | CAUSE_I4B_NORMAL);
 			i4b_l4_idle_timeout_ind(cd);
 			cd->idletime_state = IST_IDLE;
 		}
