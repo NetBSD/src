@@ -37,7 +37,7 @@
  *
  *	from: Utah Hdr: hpux_compat.c 1.41 91/04/06
  *	from: @(#)hpux_compat.c	7.16 (Berkeley) 5/30/91
- *	$Id: hpux_compat.c,v 1.7 1994/05/05 10:11:52 mycroft Exp $
+ *	$Id: hpux_compat.c,v 1.8 1994/05/17 10:37:09 cgd Exp $
  */
 
 /*
@@ -1528,11 +1528,13 @@ ohpux_times(p, uap, retval)
 	register struct ohpux_times_args *uap;
 	time_t *retval;
 {
+	struct timeval ru, rs;
 	struct tms atms;
 	int error;
 
-	atms.tms_utime = hpux_scale(&p->p_utime);
-	atms.tms_stime = hpux_scale(&p->p_stime);
+	calcru(p, &ru, &rs, NULL);
+	atms.tms_utime = hpux_scale(&ru);
+	atms.tms_stime = hpux_scale(&rs);
 	atms.tms_cutime = hpux_scale(&p->p_stats->p_cru.ru_utime);
 	atms.tms_cstime = hpux_scale(&p->p_stats->p_cru.ru_stime);
 	error = copyout((caddr_t)&atms, (caddr_t)uap->tmsb, sizeof (atms));

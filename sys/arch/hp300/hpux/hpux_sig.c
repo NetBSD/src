@@ -37,7 +37,7 @@
  *
  *	from: Utah Hdr: hpux_sig.c 1.1 90/07/09
  *	from: @(#)hpux_sig.c	7.8 (Berkeley) 4/20/91
- *	$Id: hpux_sig.c,v 1.7 1994/05/05 10:12:01 mycroft Exp $
+ *	$Id: hpux_sig.c,v 1.8 1994/05/17 10:37:12 cgd Exp $
  */
 
 /*
@@ -271,7 +271,7 @@ hpux_sigpending(p, uap, retval)
 {
 	hpux_sigset_t sigset;
 
-	sigset.sigset[0] = bsdtohpuxmask(p->p_sig);
+	sigset.sigset[0] = bsdtohpuxmask(p->p_siglist);
 	return (copyout((caddr_t)&sigset, (caddr_t)uap->set, sizeof(sigset)));
 }
 
