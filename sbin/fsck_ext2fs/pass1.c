@@ -1,4 +1,4 @@
-/*	$NetBSD: pass1.c,v 1.2 1997/07/10 04:52:39 mikel Exp $	*/
+/*	$NetBSD: pass1.c,v 1.3 1997/09/14 14:27:26 lukem Exp $	*/
 
 /*
  * Copyright (c) 1997 Manuel Bouyer.
@@ -34,11 +34,12 @@
  * SUCH DAMAGE.
  */
 
+#include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)pass1.c	8.1 (Berkeley) 6/5/93";
 #else
-static char rcsid[] = "$NetBSD: pass1.c,v 1.2 1997/07/10 04:52:39 mikel Exp $";
+__RCSID("$NetBSD: pass1.c,v 1.3 1997/09/14 14:27:26 lukem Exp $");
 #endif
 #endif /* not lint */
 
@@ -106,13 +107,12 @@ pass1()
 static void
 checkinode(inumber, idesc)
 	ino_t inumber;
-	register struct inodesc *idesc;
+	struct inodesc *idesc;
 {
-	register struct ext2fs_dinode *dp;
+	struct ext2fs_dinode *dp;
 	struct zlncnt *zlnp;
 	int ndb, j;
 	mode_t mode;
-	char *symbuf;
 
 	dp = getnextinode(inumber);
 	if (inumber < EXT2_FIRSTINO && inumber != EXT2_ROOTINO) 
@@ -269,12 +269,12 @@ unknown:
 
 int
 pass1check(idesc)
-	register struct inodesc *idesc;
+	struct inodesc *idesc;
 {
 	int res = KEEPON;
 	int anyout, nfrags;
 	daddr_t blkno = idesc->id_blkno;
-	register struct dups *dlp;
+	struct dups *dlp;
 	struct dups *new;
 
 	if ((anyout = chkrange(blkno, idesc->id_numfrags)) != 0) {

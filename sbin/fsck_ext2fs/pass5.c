@@ -1,4 +1,4 @@
-/*	$NetBSD: pass5.c,v 1.2 1997/07/10 04:52:40 mikel Exp $	*/
+/*	$NetBSD: pass5.c,v 1.3 1997/09/14 14:27:29 lukem Exp $	*/
 
 /*
  * Copyright (c) 1997 Manuel Bouyer.
@@ -34,11 +34,12 @@
  * SUCH DAMAGE.
  */
 
+#include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)pass5.c	8.6 (Berkeley) 11/30/94";
 #else
-static char rcsid[] = "$NetBSD: pass5.c,v 1.2 1997/07/10 04:52:40 mikel Exp $";
+__RCSID("$NetBSD: pass5.c,v 1.3 1997/09/14 14:27:29 lukem Exp $");
 #endif
 #endif /* not lint */
 
@@ -61,11 +62,11 @@ void print_bmap __P((u_char *,u_int32_t));
 void
 pass5()
 {
-	int c, blk, frags, basesize, sumsize, mapsize, savednrpos;
-	register struct m_ext2fs *fs = &sblock;
+	int c;
+	struct m_ext2fs *fs = &sblock;
 	daddr_t dbase, dmax;
-	register daddr_t d;
-	register long i, j;
+	daddr_t d;
+	long i, j;
 	struct inodesc idesc[3];
 	struct bufarea *ino_bitmap = NULL, *blk_bitmap = NULL;
 	char *ibmap, *bbmap;
@@ -248,7 +249,7 @@ print_bmap(map, size)
 	while (i < size) {
 		printf("%u: ",i);
 		for (j = 0; j < 16; j++, i++)
-			printf("%2x ", (u_int)map[i]) & 0xff;
+			printf("%2x ", (u_int)map[i] & 0xff);
 		printf("\n");
 	}
 }
