@@ -1,4 +1,4 @@
-/*	$NetBSD: msdosfs_vnops.c,v 1.114 2001/09/22 22:20:00 chs Exp $	*/
+/*	$NetBSD: msdosfs_vnops.c,v 1.115 2001/11/03 23:49:58 augustss Exp $	*/
 
 /*-
  * Copyright (C) 1994, 1995, 1997 Wolfgang Solfrank.
@@ -356,7 +356,9 @@ msdosfs_setattr(v)
 	if ((vap->va_type != VNON) || (vap->va_nlink != (nlink_t)VNOVAL) ||
 	    (vap->va_fsid != VNOVAL) || (vap->va_fileid != VNOVAL) ||
 	    (vap->va_blocksize != VNOVAL) || (vap->va_rdev != VNOVAL) ||
-	    (vap->va_bytes != VNOVAL) || (vap->va_gen != VNOVAL)) {
+	    (vap->va_bytes != VNOVAL) || (vap->va_gen != VNOVAL) ||
+	    (vap->va_uid != VNOVAL && vap->va_uid != pmp->pm_uid) || 
+	    (vap->va_gid != VNOVAL && vap->va_gid != pmp->pm_gid)) {
 #ifdef MSDOSFS_DEBUG
 		printf("msdosfs_setattr(): returning EINVAL\n");
 		printf("    va_type %d, va_nlink %x, va_fsid %lx, va_fileid %lx\n",
