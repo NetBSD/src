@@ -1,4 +1,4 @@
-# $NetBSD: dot.profile,v 1.8 2000/10/31 21:09:22 pk Exp $
+# $NetBSD: dot.profile,v 1.9 2000/11/29 03:06:18 tv Exp $
 #
 # Copyright (c) 1995 Jason R. Thorpe
 # Copyright (c) 1994 Christopher G. Demetriou
@@ -64,18 +64,27 @@ if [ "X${DONEPROFILE}" = "X" ]; then
 	while [ "X${_forceloop}" = X"" ]; do
 		cat <<'EOF'
 
-This distribution contains the experimental `sysinst' installation tool.
-If you feel like trying it out, choose option (X) below.
+This installer now uses the new `sysinst' installer tool by default.  To
+use the old install or upgrade shell scripts instead, enter the options
+(OI) for Old Install or (OU) for Old Upgrade.
+
+The script-based installers may be removed in a future release.
 
 EOF
-		echo -n '(I)nstall, (U)pgrade, (H)alt or (S)hell or (X)? '
+		echo -n '(I)nstall/Upgrade, (H)alt or (S)hell? '
 		read _forceloop
 		case "$_forceloop" in
-			i*|I*)
+			i*|I*|u*|U*)
+				# setup a writable /tmp directory
+				mount_mfs swap /tmp || continue
+				/sysinst
+				;;
+
+			oi*|OI*)
 				/install
 				;;
 
-			u*|U*)
+			ou*|OU*)
 				/upgrade
 				;;
 
@@ -95,12 +104,6 @@ EOF
 			s*|S*)
 				/bin/sh
 				continue
-				;;
-
-			x*|X*)
-				# setup a writable /tmp directory
-				mount_mfs swap /tmp || continue
-				/sysinst
 				;;
 
 			*)
