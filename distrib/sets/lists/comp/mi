@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.416 2001/12/15 01:07:15 explorer Exp $
+#	$NetBSD: mi,v 1.417 2001/12/17 13:10:13 wiz Exp $
 ./sys				comp-sysutil-root
 ./usr/bin/addr2line		comp-debug-bin
 ./usr/bin/ar			comp-util-bin
@@ -3057,6 +3057,10 @@
 ./usr/share/man/cat9/getnewvnode.0		comp-sys-catman
 ./usr/share/man/cat9/gsignal.0		comp-sys-catman
 ./usr/share/man/cat9/hardclock.0		comp-sys-catman
+./usr/share/man/cat9/hash.0		comp-sys-catman
+./usr/share/man/cat9/hash32_buf.0		comp-sys-catman
+./usr/share/man/cat9/hash32_str.0		comp-sys-catman
+./usr/share/man/cat9/hash32_strn.0		comp-sys-catman
 ./usr/share/man/cat9/holdrele.0		comp-sys-catman
 ./usr/share/man/cat9/humanize_number.0		comp-sys-catman
 ./usr/share/man/cat9/hz.0		comp-sys-catman
@@ -5511,6 +5515,10 @@
 ./usr/share/man/man9/getnewvnode.9		comp-sys-man
 ./usr/share/man/man9/gsignal.9		comp-sys-man
 ./usr/share/man/man9/hardclock.9		comp-sys-man
+./usr/share/man/man9/hash.9		comp-sys-man
+./usr/share/man/man9/hash32_buf.9		comp-sys-man
+./usr/share/man/man9/hash32_str.9		comp-sys-man
+./usr/share/man/man9/hash32_strn.9		comp-sys-man
 ./usr/share/man/man9/holdrele.9		comp-sys-man
 ./usr/share/man/man9/humanize_number.9		comp-sys-man
 ./usr/share/man/man9/hz.9		comp-sys-man
@@ -5929,6 +5937,7 @@
 ./usr/share/mk/bsd.doc.mk		comp-util-share
 ./usr/share/mk/bsd.files.mk		comp-util-share
 ./usr/share/mk/bsd.files.mk		comp-util-share
+./usr/share/mk/bsd.hostlib.mk		comp-util-share
 ./usr/share/mk/bsd.hostprog.mk		comp-util-share
 ./usr/share/mk/bsd.inc.mk		comp-util-share
 ./usr/share/mk/bsd.info.mk		comp-util-share
