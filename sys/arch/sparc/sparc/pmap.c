@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.141 1999/03/26 23:41:35 mycroft Exp $ */
+/*	$NetBSD: pmap.c,v 1.141.2.1 1999/04/26 15:43:49 perry Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -6417,11 +6417,11 @@ pmap_zero_page4m(pa)
 		pte &= ~SRMMU_PG_C;
 
 	va = vpage[0];
-	*vpage_pte[0] = pte;
+	setpgt4m(vpage_pte[0], pte);
 	qzero(va, NBPG);
 	/* Remove temporary mapping */
 	tlb_flush_page((int)va);
-	*vpage_pte[0] = SRMMU_TEINVALID;
+	setpgt4m(vpage_pte[0], SRMMU_TEINVALID);
 }
 
 /*
@@ -6461,12 +6461,12 @@ pmap_copy_page4m(src, dst)
 
 	sva = vpage[0];
 	dva = vpage[1];
-	*vpage_pte[0] = spte;
-	*vpage_pte[1] = dpte;
+	setpgt4m(vpage_pte[0], spte);
+	setpgt4m(vpage_pte[1], dpte);
 	qcopy(sva, dva, NBPG);	/* loads cache, so we must ... */
 	cache_flush_page((int)sva);
-	*vpage_pte[0] = SRMMU_TEINVALID;
-	*vpage_pte[1] = SRMMU_TEINVALID;
+	setpgt4m(vpage_pte[0], SRMMU_TEINVALID);
+	setpgt4m(vpage_pte[1], SRMMU_TEINVALID);
 	tlb_flush_page((int)sva);
 	tlb_flush_page((int)dva);
 }
