@@ -1,4 +1,4 @@
-/*	$NetBSD: gzip.c,v 1.68 2004/10/08 12:46:24 dsl Exp $	*/
+/*	$NetBSD: gzip.c,v 1.69 2004/12/08 06:38:40 jmc Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 2003, 2004 Matthew R. Green
@@ -32,7 +32,7 @@
 #ifndef lint
 __COPYRIGHT("@(#) Copyright (c) 1997, 1998, 2003, 2004 Matthew R. Green\n\
      All rights reserved.\n");
-__RCSID("$NetBSD: gzip.c,v 1.68 2004/10/08 12:46:24 dsl Exp $");
+__RCSID("$NetBSD: gzip.c,v 1.69 2004/12/08 06:38:40 jmc Exp $");
 #endif /* not lint */
 
 /*
@@ -65,6 +65,7 @@ __RCSID("$NetBSD: gzip.c,v 1.68 2004/10/08 12:46:24 dsl Exp $");
 #include <libgen.h>
 #include <stdarg.h>
 #include <getopt.h>
+#include <time.h>
 
 #ifndef PRIdOFF
 #define PRIdOFF PRId64
@@ -1566,6 +1567,10 @@ static void
 handle_stdout(void)
 {
 	off_t gsize, usize;
+	struct stat sb;
+	time_t systime;
+	uint32_t mtime;
+	int ret;
 
 #ifndef SMALL
 	if (fflag == 0 && isatty(STDOUT_FILENO)) {
@@ -1573,8 +1578,30 @@ handle_stdout(void)
 		return;
 	}
 #endif
-	usize = gz_compress(STDIN_FILENO, STDOUT_FILENO, &gsize, "", 0);
+	/* If stdin is a file use it's mtime, otherwise use current time */
+	ret = fstat(STDIN_FILENO, &sb);
 
+#ifndef SMALL
+	if (ret < 0) {
+		maybe_warn("Can't stat stdin");
+		return;
+	}
+#endif
+
+	if (S_ISREG(sb.st_mode))
+		mtime = (uint32_t)sb.st_mtime;
+	else {
+		systime = time(NULL);
+#ifndef SMALL
+		if (systime == -1) {
+			maybe_warn("time");
+			return;
+		} 
+#endif
+		mtime = (uint32_t)systime;
+	}
+	 		
+	usize = gz_compress(STDIN_FILENO, STDOUT_FILENO, &gsize, "", mtime);
 #ifndef SMALL
         if (vflag && !tflag && usize != -1 && gsize != -1)
 		print_verbage(NULL, NULL, usize, gsize);
