@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.alpha,v 1.24 1996/09/09 21:06:55 mycroft Exp $
+#	$NetBSD: Makefile.alpha,v 1.25 1996/09/27 17:33:04 cgd Exp $
 
 # Makefile for NetBSD
 #
@@ -37,7 +37,7 @@ CPPFLAGS=	${INCLUDES} ${IDENT} ${PARAM} -D_KERNEL \
 		-Dalpha
 CWARNFLAGS?=	-Werror -Wall -Wstrict-prototypes -Wmissing-prototypes
 CFLAGS=		${DEBUG} ${CWARNFLAGS} -O2 -mno-fp-regs
-AFLAGS=		-x assembler-with-cpp -traditional-cpp -D_LOCORE
+AFLAGS=		-traditional -D_LOCORE
 LINKFLAGS=	-N -Ttext fffffc0000230000 -e __start -G 4
 STRIPFLAGS=	-g -X -x
 
@@ -65,7 +65,7 @@ LIBCOMPAT=	${COMPATLIB_PROF}
 # HOSTED}, and SUFFIX is the file suffix, capitalized (e.g. C for a .c file).
 
 NORMAL_C=	${CC} ${CFLAGS} ${CPPFLAGS} ${PROF} -c $<
-NORMAL_S=	${CC} ${AFLAGS} ${CPPFLAGS} -c $<
+NORMAL_S=	${CPP} ${AFLAGS} ${CPPFLAGS} $< | sed -e 's,^\#.*,,' | ${AS} -o ${.TARGET}
 
 HOSTED_C=	${HOSTED_CC} ${HOSTED_CFLAGS} ${HOSTED_CPPFLAGS} -c $<
 
