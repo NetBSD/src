@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.4 2004/03/06 03:05:40 rtr Exp $
+#	$NetBSD: Makefile,v 1.5 2004/03/17 23:15:30 perry Exp $
 
 .include <bsd.own.mk>
 
@@ -21,6 +21,10 @@ INCSDIR=${X11INCDIR}/freetype2
 
 CPPFLAGS+=	${X11FLAGS.THREADLIB}
 CPPFLAGS+=	-I${DESTDIR}${X11INCDIR}/freetype2
+
+.if defined(MKTTINTERP) && ${MKTTINTERP} != "no"
+CPPFLAGS+=	-DTT_CONFIG_OPTION_BYTECODE_INTERPRETER
+.endif
 
 .PATH:	${FREETYPESRC}/autohint
 .PATH:	${FREETYPESRC}/base
