@@ -1,4 +1,4 @@
-/*	$NetBSD: crt0.c,v 1.12 1999/03/19 23:34:51 thorpej Exp $	*/
+/*	$NetBSD: crt0.c,v 1.13 1999/03/19 23:55:17 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1995 Christopher G. Demetriou
@@ -37,10 +37,6 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifdef ECOFF_COMPAT
-#undef DYNAMIC
-#endif
-
 #include <sys/types.h>
 #include <sys/exec.h>
 #include <sys/syscall.h>
@@ -75,10 +71,8 @@ char	**environ;
 char	*__progname = "";
 struct ps_strings *__ps_strings = 0;
 
-#ifndef ECOFF_COMPAT
 extern void	_init __P((void));
 extern void	_fini __P((void));
-#endif /* ECOFF_COMPAT */
 
 #ifdef DYNAMIC
 void		_rtld_setup __P((void (*)(void), const Obj_Entry *obj));
@@ -209,10 +203,8 @@ __start(sp, cleanup, obj, ps_strings)
 	monstartup((u_long)&_eprol, (u_long)&_etext);
 #endif
 
-#ifndef ECOFF_COMPAT
 	atexit(_fini);
 	_init();
-#endif /* ECOFF_COMPAT */
 
 	exit(main(argc, argv, environ));
 }
@@ -222,7 +214,7 @@ __start(sp, cleanup, obj, ps_strings)
  *  is the entrypoint. (Only needed for old toolchains).
  */
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: crt0.c,v 1.12 1999/03/19 23:34:51 thorpej Exp $");
+__RCSID("$NetBSD: crt0.c,v 1.13 1999/03/19 23:55:17 thorpej Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include "common.c"
