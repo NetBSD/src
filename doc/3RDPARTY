@@ -1,4 +1,4 @@
-#	$NetBSD: 3RDPARTY,v 1.171 2003/12/20 00:26:37 kleink Exp $
+#	$NetBSD: 3RDPARTY,v 1.172 2004/01/02 11:35:24 itojun Exp $
 #
 # This file contains a list of the software that has been integrated into
 # NetBSD where we are not the primary maintainer.
@@ -70,6 +70,7 @@ too much constraint between bind and libc, as well as problem with
 _res declaration differences.  DNSSEC portion is disabled.
 On switching to BIND9: waiting for the release of 9.3.x, as 9.2.x has some
 issues (A6 queries for glue, for instance).
+8.4.3 includes serious bug so do not pull it in.  if anything, wait for 8.4.4.
 
 Package:	bind/resolver
 Version:	4.9.11
@@ -142,8 +143,8 @@ ftp://ftp.isc.org/isc/cron/cron_4.0_b1.shar is available, aparently
 there's also a version in the works that has all changes from *BSD and Linux.
 
 Package:	cvs
-Version:	1.11.10
-Current Vers:	1.11.10/1.12.3
+Version:	1.11.11
+Current Vers:	1.11.11/1.12.3
 Maintainer:	cvshome
 Archive Site:	ftp://ftp.cvshome.org/pub/
 Mailing List:	bug-cvs@gnu.org
