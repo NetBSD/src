@@ -1,4 +1,4 @@
-/*	$NetBSD: inet6.c,v 1.17 2001/02/07 08:59:49 itojun Exp $	*/
+/*	$NetBSD: inet6.c,v 1.18 2001/03/20 17:02:33 itojun Exp $	*/
 /*	BSDI inet.c,v 2.3 1995/10/24 02:19:29 prb Exp	*/
 
 /*
@@ -68,7 +68,7 @@
 #if 0
 static char sccsid[] = "@(#)inet.c	8.4 (Berkeley) 4/20/94";
 #else
-__RCSID("$NetBSD: inet6.c,v 1.17 2001/02/07 08:59:49 itojun Exp $");
+__RCSID("$NetBSD: inet6.c,v 1.18 2001/03/20 17:02:33 itojun Exp $");
 #endif
 #endif /* not lint */
 
@@ -429,7 +429,12 @@ static	char *ip6nh[] = {
 /*105*/	NULL, NULL, NULL, NULL, NULL,
 /*110*/	NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL,
 /*120*/	NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL,
-	NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL,
+/*130*/	NULL,
+	NULL,
+	"SCTP",
+	NULL,
+	NULL,
+/*135*/	NULL, NULL, NULL, NULL, NULL,
 /*140*/	NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL,
 	NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL,
 /*160*/	NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL,
