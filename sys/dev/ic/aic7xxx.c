@@ -1,4 +1,4 @@
-/*	$NetBSD: aic7xxx.c,v 1.56 2000/06/26 14:38:52 mrg Exp $	*/
+/*	$NetBSD: aic7xxx.c,v 1.57 2000/06/26 19:38:14 fvdl Exp $	*/
 
 /*
  * Generic driver for the aic7xxx based adaptec SCSI controllers
@@ -112,8 +112,6 @@
 #include <dev/microcode/aic7xxx/sequencer.h>
 #include <dev/microcode/aic7xxx/aic7xxx_reg.h>
 #include <dev/microcode/aic7xxx/aic7xxx_seq.h>
-
-#define XS_STS_DEBUG	0x00000002
 
 #define MAX(a,b) (((a) > (b)) ? (a) : (b))
 #define MIN(a,b) (((a) < (b)) ? (a) : (b))
@@ -1722,8 +1720,6 @@ ahc_handle_seqint(struct ahc_softc *ahc, u_int intstat)
 		u_int  scb_index;
 		struct hardware_scb *hscb;
 		struct scsipi_xfer *xs;
-		struct scb *scbp;
-		int todo, inqueue;
 		/*
 		 * The sequencer will notify us when a command
 		 * has an error that would be of interest to
@@ -1892,34 +1888,10 @@ ahc_handle_seqint(struct ahc_softc *ahc, u_int intstat)
 		case SCSI_STATUS_BUSY:
 			/*
 			 * XXX middle layer doesn't handle XS_BUSY well.
-			 * So, requeue this ourselves internally. It will
-			 * get its turn once all outstanding (tagged)
-			 * commands have finished.
+			 * So, requeue this ourselves internally.
 			 */
 			xs->error = XS_BUSY;
-			xs->xs_status |= XS_STS_DEBUG;
 			scb->flags |= SCB_REQUEUE;
-
-			/*
-			 * Walk through all pending SCBs for this target,
-			 * incrementing the freeze count for the queue.
-			 * When all of these have been completed, the
-			 * queue will be available again.
-			 */
-			inqueue = todo = 0;
-			scbp = ahc->pending_ccbs.lh_first;
-			while (scbp != NULL) {
-				inqueue++;
-				if (ahc_match_scb(scbp, SCB_TARGET(scb),
-				    SCB_CHANNEL(scb), SCB_LUN(scb), 
-				    SCB_LIST_NULL, ROLE_INITIATOR)) {
-					ahc_freeze_ccb(scbp);
-					todo++;
-				}
-				scbp = scbp->plinks.le_next;
-			}
-			scsi_print_addr(xs->sc_link);
-			printf("%d SCBs pending, %d to drain\n", inqueue, todo);
 			break;
 		}
 		break;
@@ -3453,21 +3425,10 @@ ahc_done(struct ahc_softc *ahc, struct scb *scb)
 		 */
 		int s;
 
-		if (xs->xs_status & XS_STS_DEBUG) {
-			scsi_print_addr(xs->sc_link);
-			printf("putting SCB that caused queue full back"
-			       " in queue\n");
-		}
-
 		s = splbio();
 		TAILQ_INSERT_HEAD(&ahc->sc_q, xs, adapter_q);
 		splx(s);
 	} else {
-		if (xs->xs_status & XS_STS_DEBUG) {
-			xs->xs_status &= ~XS_STS_DEBUG;
-			scsi_print_addr(xs->sc_link);
-			printf("completed SCB that caused queue full\n");
-		}
 		xs->xs_status |= XS_STS_DONE;
 		ahc_check_tags(ahc, xs);
 		scsipi_done(xs);
@@ -4095,11 +4056,6 @@ get_scb:
 		
 	if ((tstate->discenable & mask) != 0)
 		hscb->control |= DISCENB;
-
-	if (xs->xs_status & XS_STS_DEBUG) {
-		scsi_print_addr(xs->sc_link);
-		printf("redoing command that caused queue full\n");
-	}
 
 	if (xs->xs_control & XS_CTL_RESET) {
 		hscb->cmdpointer = 0;
