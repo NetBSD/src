@@ -1,4 +1,4 @@
-/*	$NetBSD: mt.c,v 1.35 2001/02/13 19:39:34 mason Exp $	*/
+/* $NetBSD: mt.c,v 1.36 2001/09/16 21:57:34 wiz Exp $ */
 
 /*
  * Copyright (c) 1980, 1993
@@ -43,7 +43,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1993\n\
 #if 0
 static char sccsid[] = "@(#)mt.c	8.2 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: mt.c,v 1.35 2001/02/13 19:39:34 mason Exp $");
+__RCSID("$NetBSD: mt.c,v 1.36 2001/09/16 21:57:34 wiz Exp $");
 #endif
 #endif /* not lint */
 
@@ -60,12 +60,11 @@ __RCSID("$NetBSD: mt.c,v 1.35 2001/02/13 19:39:34 mason Exp $");
 #include <err.h>
 #include <fcntl.h>
 #include <paths.h>
+#include <rmt.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
-
-#include <rmt.h>
 
 /* pseudo ioctl constants */
 #define MTASF	100
@@ -106,15 +105,13 @@ const struct commands com[] = {
 	{ NULL }
 };
 
-void printreg __P((const char *, u_int, const char *));
-void status __P((struct mtget *));
-void usage __P((void));
-int  main __P((int, char *[]));
+void printreg(const char *, u_int, const char *);
+void status(struct mtget *);
+void usage(void);
+int main(int, char *[]);
 
 int
-main(argc, argv)
-	int argc;
-	char *argv[];
+main(int argc, char *argv[])
 {
 	const struct commands *comp = (const struct commands *) NULL;
 	struct mtget mt_status;
@@ -124,6 +121,7 @@ main(argc, argv)
 	const char *tape;
 	int count;
 
+	setprogname(argv[0]);
 	if ((tape = getenv("TAPE")) == NULL)
 		tape = _PATH_DEFTAPE;
 
@@ -253,8 +251,7 @@ const struct tape_desc {
  * Interpret the status buffer returned
  */
 void
-status(bp)
-	struct mtget *bp;
+status(struct mtget *bp)
 {
 	const struct tape_desc *mt;
 
@@ -285,14 +282,12 @@ status(bp)
  * Print a register a la the %b format of the kernel's printf.
  */
 void
-printreg(s, v, bits)
-	const char *s;
-	u_int v;
-	const char *bits;
+printreg(const char *s, u_int v, const char *bits)
 {
-	int i, any = 0;
+	int any, i;
 	char c;
 
+	any = 0;
 	if (bits && *bits == 8)
 		printf("%s=%o", s, v);
 	else
@@ -316,9 +311,9 @@ printreg(s, v, bits)
 }
 
 void
-usage()
+usage(void)
 {
-	(void)fprintf(stderr, "usage: mt [-f device] command [ count ]\n");
+	(void)fprintf(stderr, "usage: %s [-f device] command [ count ]\n", getprogname());
 	exit(1);
 	/* NOTREACHED */
 }
