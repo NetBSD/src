@@ -1,4 +1,4 @@
-/* $NetBSD: aucom_aubus.c,v 1.9 2003/11/08 05:05:14 simonb Exp $ */
+/* $NetBSD: aucom_aubus.c,v 1.10 2003/12/15 09:13:41 simonb Exp $ */
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: aucom_aubus.c,v 1.9 2003/11/08 05:05:14 simonb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: aucom_aubus.c,v 1.10 2003/12/15 09:13:41 simonb Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -90,7 +90,7 @@ aucom_aubus_attach(struct device *parent, struct device *self, void *aux)
 	asc->sc_irq = aa->aa_irq[0];
 
 	if (aucom_is_console(sc->sc_iot, sc->sc_iobase, &sc->sc_ioh) == 0 &&
-	    bus_space_map(sc->sc_iot, sc->sc_iobase, COM_NPORTS, 0,
+	    bus_space_map(sc->sc_iot, sc->sc_iobase, UART_SIZE, 0,
 			  &sc->sc_ioh) != 0) {
 		printf(": can't map i/o space\n");
 		return;
