@@ -1,4 +1,4 @@
-/*	$NetBSD: usb.h,v 1.49 2000/05/30 10:10:17 augustss Exp $	*/
+/*	$NetBSD: usb.h,v 1.50 2000/06/01 15:43:32 augustss Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/usb.h,v 1.14 1999/11/17 22:33:46 n_hibma Exp $	*/
 
 /*
@@ -76,27 +76,32 @@ MALLOC_DECLARE(M_USBHC);
 /*
  * The USB records contain some unaligned little-endian word
  * components.  The U[SG]ETW macros take care of both the alignment
- * and endian problem and should always be used to access 16 bit
+ * and endian problem and should always be used to access non-byte
  * values.
  */
 typedef u_int8_t uByte;
 typedef u_int8_t uWord[2];
+typedef u_int8_t uDWord[4];
+
+#define USETW2(w,h,l) ((w)[0] = (u_int8_t)(l), (w)[1] = (u_int8_t)(h))
+
+#if 1
 #define UGETW(w) ((w)[0] | ((w)[1] << 8))
 #define USETW(w,v) ((w)[0] = (u_int8_t)(v), (w)[1] = (u_int8_t)((v) >> 8))
-#define USETW2(w,h,l) ((w)[0] = (u_int8_t)(l), (w)[1] = (u_int8_t)(h))
-typedef u_int8_t uDWord[4];
 #define UGETDW(w) ((w)[0] | ((w)[1] << 8) | ((w)[2] << 16) | ((w)[3] << 24))
 #define USETDW(w,v) ((w)[0] = (u_int8_t)(v), \
 		     (w)[1] = (u_int8_t)((v) >> 8), \
 		     (w)[2] = (u_int8_t)((v) >> 16), \
 		     (w)[3] = (u_int8_t)((v) >> 24))
+#else
 /* 
  * On little-endian machines that can handle unanliged accesses
  * (e.g. i386) these macros can be replaced by the following.
  */
-#if 0
 #define UGETW(w) (*(u_int16_t *)(w))
 #define USETW(w,v) (*(u_int16_t *)(w) = (v))
+#define UGETDW(w) (*(u_int32_t *)(w))
+#define USETDW(w,v) (*(u_int32_t *)(w) = (v))
 #endif
 
 #define UPACKED __attribute__((__packed__))
