@@ -1,4 +1,4 @@
-/*	$NetBSD: pccons.c,v 1.6 2001/05/02 10:32:22 scw Exp $	*/
+/*	$NetBSD: pccons.c,v 1.7 2001/06/15 15:53:27 nonaka Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -2376,7 +2376,7 @@ pcmmap(dev, offset, nprot)
 
 	if ((u_int)offset >= 0x20000)
 		return (-1);
-	return (ISA_MEM(0xa0000 + offset));
+	return (paddr_t)(ISA_MEM(0xa0000 + offset));
 }
 
 #ifdef XSERVER
