@@ -1,5 +1,5 @@
 #	from: @(#)Makefile	5.4.1.1 (Berkeley) 5/7/91
-#	$Id: Makefile,v 1.14 1994/01/12 20:24:12 cgd Exp $
+#	$Id: Makefile,v 1.15 1994/03/30 09:30:37 cgd Exp $
 
 # Not ported: XNSrouted enpload
 # Missing: icheck ncheck
@@ -9,7 +9,7 @@ SUBDIR=	badsect clri disklabel dmesg dump dumpfs fastboot fsck \
 	mount_isofs mount_kernfs mount_lofs mount_msdos mount_portal \
 	mount_procfs mountd newfs \
 	nfsd nfsiod ping quotacheck reboot restore route routed savecore \
-	shutdown slattach swapon tunefs umount
+	shutdown slattach swapon ttyflags tunefs umount
 
 .if   make(clean) || make(cleandir)
 SUBDIR+= fdisk
