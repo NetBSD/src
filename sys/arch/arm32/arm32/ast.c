@@ -1,4 +1,4 @@
-/* $NetBSD: ast.c,v 1.7 1996/10/13 03:05:43 christos Exp $ */
+/* $NetBSD: ast.c,v 1.8 1996/10/15 01:04:27 mark Exp $ */
 
 /*
  * Copyright (c) 1994,1995 Mark Brinicombe
@@ -69,11 +69,15 @@ userret(p, pc, oticks)
 	if ((GetCPSR() & PSR_MODE) != PSR_SVC32_MODE)
 		panic("userret called in non SVC mode !");
 
-	if (current_spl_level != SPL_0)
+	if (current_spl_level != SPL_0) {
 		printf("userret: spl level=%d on entry\n", current_spl_level);
-#endif
+#ifdef DDB
+		Debugger();
+#endif	/* DDB */
+	}
+#endif	/* DIAGNOSTIC */
 
-/* take pending signals */
+	/* take pending signals */
 
 	while ((sig = (CURSIG(p))) != 0) {
 		postsig(sig);
@@ -81,19 +85,19 @@ userret(p, pc, oticks)
 
 	p->p_priority = p->p_usrpri;
 
-/*
- * Check for reschedule request
- */
+	/*
+	 * Check for reschedule request
+	 */
 
 	if (want_resched) {
-        /*
-         * Since we are curproc, a clock interrupt could
-         * change our priority without changing run queues
-         * (the running process is not kept on a run queue).
-         * If this happened after we setrunqueue ourselves but
-         * before we switch()'ed, we might not be on the queue
-         * indicated by our priority
-         */
+		/*
+		 * Since we are curproc, a clock interrupt could
+		 * change our priority without changing run queues
+	         * (the running process is not kept on a run queue).
+		 * If this happened after we setrunqueue ourselves but
+		 * before we switch()'ed, we might not be on the queue
+		 * indicated by our priority
+		 */
 
 	        s = splstatclock();
 		setrunqueue(p);
@@ -107,9 +111,9 @@ userret(p, pc, oticks)
 		}
 	}
 
-/*
- * Not sure if this profiling bit is working yet ... Not been tested
- */
+	/*
+	 * Not sure if this profiling bit is working yet ... Not been tested
+	 */
 
 	if (p->p_flag & P_PROFIL) {
 		extern int psratio;
@@ -119,9 +123,13 @@ userret(p, pc, oticks)
 	curpriority = p->p_priority;
 
 #ifdef DIAGNOSTIC
-	if (current_spl_level != SPL_0)
+	if (current_spl_level != SPL_0) {
 		printf("userret: spl level=%d on exit\n", current_spl_level);
-#endif
+#ifdef DDB
+		Debugger();
+#endif	/* DDB */
+	}
+#endif	/* DIAGNOSTIC */
 }
 
 
@@ -154,13 +162,13 @@ ast(frame)
 	}
 #ifdef VALIDATE_TRAPFRAME
 	validate_trapframe(frame, 3);
-#endif
+#endif	/* VALIDATE_TRAPFRAME */
 
 	userret(p, frame->tf_pc, p->p_sticks);
 
 #ifdef VALIDATE_TRAPFRAME
 	validate_trapframe(frame, 3);
-#endif
+#endif	/* VALIDATE_TRAPFRAME */
 }
 
 /* End of ast.c */
