@@ -1,4 +1,4 @@
-/*	$NetBSD: mach_exec.c,v 1.13 2002/12/07 15:33:01 manu Exp $	 */
+/*	$NetBSD: mach_exec.c,v 1.14 2002/12/12 23:18:20 manu Exp $	 */
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -37,12 +37,13 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mach_exec.c,v 1.13 2002/12/07 15:33:01 manu Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mach_exec.c,v 1.14 2002/12/12 23:18:20 manu Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/proc.h>
 #include <sys/exec.h>
+#include <sys/queue.h>
 #include <sys/exec_macho.h>
 #include <sys/malloc.h>
 
@@ -52,6 +53,8 @@ __KERNEL_RCSID(0, "$NetBSD: mach_exec.c,v 1.13 2002/12/07 15:33:01 manu Exp $");
 #include <uvm/uvm_param.h>
 
 #include <compat/mach/mach_types.h>
+#include <compat/mach/mach_message.h>
+#include <compat/mach/mach_semaphore.h>
 #include <compat/mach/mach_exec.h>
 
 static void mach_e_proc_exec(struct proc *, struct exec_package *);
@@ -224,6 +227,10 @@ mach_e_proc_init(p, vmspace)
 	med = (struct mach_emuldata *)p->p_emuldata;
 	med->med_p = 0;
 
+	/* Initialize semaphores if needed. Not the best place for that... */
+	if (mach_semaphore_cold == 1)
+		mach_semaphore_init();
+
 	return;
 }
 
@@ -233,6 +240,8 @@ mach_e_proc_exit(p)
 {
 	free(p->p_emuldata, M_EMULDATA);
 	p->p_emuldata = NULL;
+
+	mach_semaphore_cleanup(p);
 
 	return;
 }
