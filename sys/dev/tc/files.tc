@@ -1,4 +1,4 @@
-#	$NetBSD: files.tc,v 1.15 1999/03/16 14:07:22 simonb Exp $
+#	$NetBSD: files.tc,v 1.16 1999/04/13 19:06:54 ad Exp $
 #
 # Config file and device description for machine-independent
 # TurboChannel code.  Included by ports that need it.
@@ -33,16 +33,3 @@ file	dev/tc/am7930_ioasic.c		am7930_ioasic
 device	fta: pdq, fddi, ifnet, arp
 attach	fta at tc
 file	dev/tc/if_fta.c			fta
-
-# pixelstamp and STIC (stamp interface chip) support
-define stic
-file	dev/tc/stic.c		stic
-
-# DEC PMAG-C 2-D pixelstamp graphics board
-device	px
-attach	px at tc:		stic
-file	dev/tc/px.c		px
-
-# DEC PMAG-D/E/F    3-D pixelstamp+i860 8,24-plane,z-buffer graphics board
-device	pxg: stic
-attach	pxg at tc
