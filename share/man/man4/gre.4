@@ -1,4 +1,4 @@
-.\" $NetBSD: gre.4,v 1.27 2002/06/09 20:05:55 wiz Exp $
+.\" $NetBSD: gre.4,v 1.28 2002/06/10 02:49:35 itojun Exp $
 .\"
 .\" Copyright 1998 (c) The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -143,8 +143,8 @@ On host A
 .Bd -literal
    # route add default B
    # ifconfig greN create
-   # ifconfig greN tunnel A D
    # ifconfig greN A D netmask 0xffffffff linkX up
+   # ifconfig greN tunnel A D
    # route add E D
 .Ed
 On Host D (Cisco):
@@ -163,8 +163,8 @@ On Host D
 .Bd -literal
    # route add default C
    # ifconfig greN create
-   # ifconfig tunnel greN D A
    # ifconfig greN D A
+   # ifconfig tunnel greN D A
 .Ed
 .Pp
 If all goes well, you should see packets flowing ;-)
@@ -194,16 +194,16 @@ Assuming router A has the (external) IP address A and the internal address
 On router A:
 .Bd -literal
    # ifconfig greN create
-   # ifconfig greN tunnel A B
    # ifconfig greN 192.168.1.1 192.168.2.1 link1
+   # ifconfig greN tunnel A B
    # route add -net 192.168.2 -netmask 255.255.255.0 192.168.2.1
 .Ed
 .Pp
 On router B:
 .Bd -literal
    # ifconfig greN create
-   # ifconfig greN tunnel B A
    # ifconfig greN 192.168.2.1 192.168.1.1 link1
+   # ifconfig greN tunnel B A
    # route add -net 192.168.1 -netmask 255.255.255.0 192.168.1.1
 .Ed
 .Pp
