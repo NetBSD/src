@@ -1,4 +1,4 @@
-/*	$NetBSD: comsat.c,v 1.15 2000/08/22 16:42:37 mjl Exp $	*/
+/*	$NetBSD: comsat.c,v 1.16 2000/10/04 18:24:03 mjl Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -40,7 +40,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1993\n\
 #if 0
 static char sccsid[] = "from: @(#)comsat.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: comsat.c,v 1.15 2000/08/22 16:42:37 mjl Exp $");
+__RCSID("$NetBSD: comsat.c,v 1.16 2000/10/04 18:24:03 mjl Exp $");
 #endif
 #endif /* not lint */
 
@@ -233,14 +233,14 @@ notify(utp, offset)
 		dsyslog(LOG_DEBUG, "%s: wrong mode on %s", utp->ut_name, tty);
 		return;
 	}
-	dsyslog(LOG_DEBUG, "notify %s on %s\n", utp->ut_name, tty);
+	dsyslog(LOG_DEBUG, "notify %s on %s", utp->ut_name, tty);
 	if (fork())
 		return;
 	(void)signal(SIGALRM, SIG_DFL);
 	(void)alarm((u_int)30);
 	if ((tp = fopen(tty, "w")) == NULL) {
 		dsyslog(LOG_ERR, "%s: %s", tty, strerror(errno));
-		_exit(-1);
+		_exit(1);
 	}
 	(void)tcgetattr(fileno(tp), &ttybuf);
 	cr = (ttybuf.c_oflag & ONLCR) && (ttybuf.c_oflag & OPOST) ?
@@ -253,7 +253,7 @@ notify(utp, offset)
 	    initgroups(p->pw_name, p->pw_gid) < 0 ||
 	    setgid(p->pw_gid) < 0 ||
 	    setuid(p->pw_uid) < 0)
-		_exit(-1);
+		_exit(1);
 
 	if (logging)
 		syslog(LOG_INFO, "biff message for %s", name);
