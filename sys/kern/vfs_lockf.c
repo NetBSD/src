@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_lockf.c,v 1.15 2000/03/30 09:27:14 augustss Exp $	*/
+/*	$NetBSD: vfs_lockf.c,v 1.16 2000/06/12 14:33:06 sommerfeld Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -61,6 +61,26 @@ int	lockf_debug = 0;
 #define NOLOCKF (struct lockf *)0
 #define SELF	0x1
 #define OTHERS	0x2
+
+/*
+ * XXX TODO
+ * Misc cleanups: "caddr_t id" should be visible in the API as a
+ * "struct proc *".
+ * (This requires rototilling all VFS's which support advisory locking).
+ *
+ * Use pools for lock allocation.
+ */
+
+/*
+ * XXXSMP TODO: Using either (a) a global lock, or (b) the vnode's
+ * interlock should be sufficient; (b) requires a change to the API
+ * because the vnode isn't visible here.
+ *
+ * If there's a lot of lock contention on a single vnode, locking
+ * schemes which allow for more paralleism would be needed.  Given how
+ * infrequently byte-range locks are actually used in typical BSD
+ * code, a more complex approach probably isn't worth it.
+ */
 
 /*
  * Do an advisory lock operation.
@@ -196,7 +216,7 @@ lf_setlock(lock)
 		 * Deadlock detection is done by looking through the
 		 * wait channels to see if there are any cycles that
 		 * involve us. MAXDEPTH is set just to make sure we
-		 * do not go off into neverland.
+		 * do not go off into neverneverland.
 		 */
 		if ((lock->lf_flags & F_POSIX) &&
 		    (block->lf_flags & F_POSIX)) {
@@ -219,6 +239,15 @@ lf_setlock(lock)
 					free(lock, M_LOCKF);
 					return (EDEADLK);
 				}
+			}
+			/*
+			 * If we're still following a dependancy chain
+			 * after maxlockdepth iterations, assume we're in
+			 * a cycle to be safe.
+			 */
+			if (i >= maxlockdepth) {
+				free(lock, M_LOCKF);
+				return (EDEADLK);
 			}
 		}
 		/*
@@ -245,18 +274,20 @@ lf_setlock(lock)
 		}
 #endif /* LOCKF_DEBUG */
 		error = tsleep((caddr_t)lock, priority, lockstr, 0);
+
+		/*
+		 * We may have been awakened by a signal (in
+		 * which case we must remove ourselves from the
+		 * blocked list) and/or by another process
+		 * releasing a lock (in which case we have already
+		 * been removed from the blocked list and our
+		 * lf_next field set to NOLOCKF).
+		 */
+		if (lock->lf_next != NOLOCKF) {
+			TAILQ_REMOVE(&lock->lf_next->lf_blkhd, lock, lf_block);
+			lock->lf_next = NOLOCKF;
+		}
 		if (error) {
-			/*
-			 * We may have been awakened by a signal (in
-			 * which case we must remove ourselves from the
-			 * blocked list) and/or by another process
-			 * releasing a lock (in which case we have already
-			 * been removed from the blocked list and our
-			 * lf_next field set to NOLOCKF).
-			 */
-			if (lock->lf_next)
-				TAILQ_REMOVE(&lock->lf_next->lf_blkhd, lock,
-				    lf_block);
 			free(lock, M_LOCKF);
 			return (error);
 		}
@@ -334,8 +365,10 @@ lf_setlock(lock)
 				lf_wakelock(overlap);
 			} else {
 				while ((ltmp = overlap->lf_blkhd.tqh_first)) {
+					KASSERT(ltmp->lf_next == overlap);
 					TAILQ_REMOVE(&overlap->lf_blkhd, ltmp,
 					    lf_block);
+					ltmp->lf_next = lock;
 					TAILQ_INSERT_TAIL(&lock->lf_blkhd,
 					    ltmp, lf_block);
 				}
@@ -693,6 +726,7 @@ lf_wakelock(listhead)
 	struct lockf *wakelock;
 
 	while ((wakelock = listhead->lf_blkhd.tqh_first)) {
+		KASSERT(wakelock->lf_next == listhead);
 		TAILQ_REMOVE(&listhead->lf_blkhd, wakelock, lf_block);
 		wakelock->lf_next = NOLOCKF;
 #ifdef LOCKF_DEBUG
