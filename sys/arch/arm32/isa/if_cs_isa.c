@@ -1,4 +1,4 @@
-/*	$NetBSD: if_cs_isa.c,v 1.8 1998/07/15 03:29:47 thorpej Exp $	*/
+/*	$NetBSD: if_cs_isa.c,v 1.9 1998/07/21 00:11:03 thorpej Exp $	*/
 
 /*
  * Copyright 1997
@@ -214,6 +214,8 @@
 #include <dev/isa/isavar.h>
 #include <dev/isa/isadmavar.h>
 
+#include <dev/isa/cs89x0reg.h>
+
 #include <arch/arm32/isa/if_csvar.h>
 
 #include "bpfilter.h"
@@ -234,7 +236,6 @@
  * MACRO DEFINITIONS
  */
 #define CS_OUTPUT_LOOP_MAX 100	/* max times round notorious tx loop */
-#define DMA_BUFFER_SIZE 16384	/* 16K or 64K */
 #define DMA_STATUS_BITS 0x0007	/* bit masks for checking DMA status */
 #define DMA_STATUS_OK 0x0004
 #define CS_MEM_SIZE 4096	/* 4096 bytes of on chip memory */
@@ -359,8 +360,6 @@ struct cs_xmit_early {
 struct cfattach cs_ca = {
 	sizeof(struct cs_softc), csProbe, csAttach
 };
-
-extern struct cfdriver cs_cd;
 
 int csdebug = 0x00000000;	/* debug status, used with kerndebug
 				 * macros */
@@ -577,28 +576,28 @@ csAttach(parent, self, aux)
 		bus_addr_t dma_addr;
 
 		if (isa_dmamap_create(sc->sc_ic, sc->sc_drq,
-		    CS8900_DMA_BUFFER_SIZE, BUS_DMA_NOWAIT) != 0) {
+		    CS8900_DMASIZE, BUS_DMA_NOWAIT) != 0) {
 			printf("%s: unable to create ISA DMA map\n",
 			    sc->sc_dev.dv_xname);
 			goto after_dma_block;
 		}
 		if (isa_dmamem_alloc(sc->sc_ic, sc->sc_drq,
-		    CS8900_DMA_BUFFER_SIZE, &dma_addr, BUS_DMA_NOWAIT) != 0) {
+		    CS8900_DMASIZE, &dma_addr, BUS_DMA_NOWAIT) != 0) {
 			printf("%s: unable to allocate DMA buffer\n",
 			    sc->sc_dev.dv_xname);
 			goto after_dma_block;
 		}
 		if (isa_dmamem_map(sc->sc_ic, sc->sc_drq, dma_addr,
-		    CS8900_DMA_BUFFER_SIZE, &sc->dmaBase,
+		    CS8900_DMASIZE, &sc->dmaBase,
 		       BUS_DMA_NOWAIT | BUS_DMA_COHERENT /* XXX */ ) != 0) {
 			printf("%s: unable to map DMA buffer\n",
 			    sc->sc_dev.dv_xname);
 			isa_dmamem_free(sc->sc_ic, sc->sc_drq, dma_addr,
-			    CS8900_DMA_BUFFER_SIZE);
+			    CS8900_DMASIZE);
 			goto after_dma_block;
 		}
 
-		sc->dmaMemSize = CS8900_DMA_BUFFER_SIZE;
+		sc->dmaMemSize = CS8900_DMASIZE;
 		sc->configFlags |= CFGFLG_DMA_MODE;
 	}
 after_dma_block:
