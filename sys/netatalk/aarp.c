@@ -1,4 +1,4 @@
-/*	$NetBSD: aarp.c,v 1.5.6.4 2002/11/11 22:15:08 nathanw Exp $	*/
+/*	$NetBSD: aarp.c,v 1.5.6.5 2002/12/29 20:55:45 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1990,1991 Regents of The University of Michigan.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: aarp.c,v 1.5.6.4 2002/11/11 22:15:08 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: aarp.c,v 1.5.6.5 2002/12/29 20:55:45 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/socket.h>
@@ -62,7 +62,6 @@ static void aarpwhohas __P((struct ifnet *, struct sockaddr_at *));
 #define AARPTAB_NB	19
 #define AARPTAB_SIZE	(AARPTAB_BSIZ * AARPTAB_NB)
 struct aarptab  aarptab[AARPTAB_SIZE];
-int             aarptab_size = AARPTAB_SIZE;
 
 #define AARPTAB_HASH(a) \
     ((((a).s_net << 8 ) + (a).s_node ) % AARPTAB_NB )

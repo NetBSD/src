@@ -1,4 +1,4 @@
-/*	$NetBSD: proc.h,v 1.124.2.30 2002/12/19 00:59:47 thorpej Exp $	*/
+/*	$NetBSD: proc.h,v 1.124.2.31 2002/12/29 20:56:55 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1986, 1989, 1991, 1993
@@ -125,6 +125,7 @@ struct emul {
 					/* Emulation specific sysctl */
 	int		(*e_sysctl) __P((int *, u_int , void *, size_t *,
 				void *, size_t, struct proc *p));
+					/* Specific VM fault handling */
 	int		(*e_fault) __P((struct proc *, vaddr_t, int, int));
 };
 

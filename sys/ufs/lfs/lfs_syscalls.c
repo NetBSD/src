@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_syscalls.c,v 1.56.2.13 2002/12/19 00:59:49 thorpej Exp $	*/
+/*	$NetBSD: lfs_syscalls.c,v 1.56.2.14 2002/12/29 20:57:19 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_syscalls.c,v 1.56.2.13 2002/12/19 00:59:49 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_syscalls.c,v 1.56.2.14 2002/12/29 20:57:19 thorpej Exp $");
 
 #define LFS		/* for prototypes in syscallargs.h */
 
@@ -235,6 +235,8 @@ sys_lfs_markv(struct lwp *l, void *v, register_t *retval)
 }
 #endif
 
+#define	LFS_MARKV_MAX_BLOCKS	(LFS_MAX_BUFS)
+
 static int
 lfs_markv(struct proc *p, fsid_t *fsidp, BLOCK_INFO *blkiov, int blkcnt)
 {
@@ -259,6 +261,9 @@ lfs_markv(struct proc *p, fsid_t *fsidp, BLOCK_INFO *blkiov, int blkcnt)
 	int numrefed = 0;
 	ino_t maxino;
 	size_t obsize;
+
+	/* number of blocks/inodes that we have already bwrite'ed */
+	int nblkwritten, ninowritten;
 
 	if ((mntp = vfs_getvfs(fsidp)) == NULL)
 		return (ENOENT);
@@ -302,6 +307,7 @@ lfs_markv(struct proc *p, fsid_t *fsidp, BLOCK_INFO *blkiov, int blkcnt)
 	/* these were inside the initialization for the for loop */
 	v_daddr = LFS_UNUSED_DADDR;
 	lastino = LFS_UNUSED_INUM;
+	nblkwritten = ninowritten = 0;
 	for (blkp = blkiov; cnt--; ++blkp)
 	{
 		if (blkp->bi_daddr == LFS_FORCE_WRITE)
@@ -398,6 +404,7 @@ lfs_markv(struct proc *p, fsid_t *fsidp, BLOCK_INFO *blkiov, int blkcnt)
 				continue;
 			}
 			ip = VTOI(vp);
+			ninowritten++;
 		} else if (v_daddr == LFS_UNUSED_DADDR) {
 			/*
 			 * This can only happen if the vnode is dead (or
@@ -503,6 +510,20 @@ lfs_markv(struct proc *p, fsid_t *fsidp, BLOCK_INFO *blkiov, int blkcnt)
 		}
 		if ((error = lfs_bwrite_ext(bp,BW_CLEAN)) != 0)
 			goto err2;
+
+		nblkwritten++;
+		/*
+		 * XXX should account indirect blocks and ifile pages as well
+		 */
+		if (nblkwritten + lblkno(fs, ninowritten * DINODE_SIZE)
+		    > LFS_MARKV_MAX_BLOCKS) {
+#ifdef DEBUG_LFS
+			printf("lfs_markv: writing %d blks %d inos\n",
+			    nblkwritten, ninowritten);
+#endif
+			lfs_segwrite(mntp, SEGM_CLEAN);
+			nblkwritten = ninowritten = 0;
+		}
 	}
 	
 	/*
@@ -524,6 +545,10 @@ lfs_markv(struct proc *p, fsid_t *fsidp, BLOCK_INFO *blkiov, int blkcnt)
 	}
 #endif
 	
+#ifdef DEBUG_LFS
+	printf("lfs_markv: writing %d blks %d inos (check point)\n",
+	    nblkwritten, ninowritten);
+#endif
 	/*
 	 * The last write has to be SEGM_SYNC, because of calling semantics.
 	 * It also has to be SEGM_CKP, because otherwise we could write
@@ -1218,7 +1243,10 @@ lfs_fakebuf(struct lfs *fs, struct vnode *vp, int lbn, size_t size, caddr_t uadd
 	 * reading blocks that isn't written yet.
 	 * it's needed because we'll update metadatas in lfs_updatemeta
 	 * before data pointed by them is actually written to disk.
+	 *
 	 * XXX no need to allocbuf.
+	 *
+	 * XXX this can cause buf starvation.
 	 */
 	obp = getblk(vp, lbn, size, 0, 0);
 	if (obp == NULL)

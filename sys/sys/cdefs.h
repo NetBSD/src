@@ -1,4 +1,4 @@
-/*	$NetBSD: cdefs.h,v 1.40.2.4 2002/11/01 23:04:38 thorpej Exp $	*/
+/*	$NetBSD: cdefs.h,v 1.40.2.5 2002/12/29 21:03:39 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1991, 1993
@@ -69,7 +69,7 @@
 
 #if defined(__cplusplus)
 #define	__BEGIN_DECLS		extern "C" {
-#define	__END_DECLS		};
+#define	__END_DECLS		}
 #define	__static_cast(x,y)	static_cast<x>(y)
 #else
 #define	__BEGIN_DECLS

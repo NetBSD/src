@@ -27,7 +27,7 @@
  *	i4b_ipr.c - isdn4bsd IP over raw HDLC ISDN network driver
  *	---------------------------------------------------------
  *
- *	$Id: i4b_ipr.c,v 1.4.2.7 2002/07/15 20:34:02 nathanw Exp $
+ *	$Id: i4b_ipr.c,v 1.4.2.8 2002/12/29 20:55:45 thorpej Exp $
  *
  * $FreeBSD$
  *
@@ -59,7 +59,7 @@
  *---------------------------------------------------------------------------*/ 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: i4b_ipr.c,v 1.4.2.7 2002/07/15 20:34:02 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: i4b_ipr.c,v 1.4.2.8 2002/12/29 20:55:45 thorpej Exp $");
 
 #include "irip.h"
 
@@ -641,7 +641,7 @@ iripioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 #else
 			if((error = suser(p->p_ucred, &p->p_acflag)) != 0)
 #endif
-				return (error);
+				break;
 		        sl_compress_setup(sc->sc_compr, *(int *)data);
 			}
 			break;
