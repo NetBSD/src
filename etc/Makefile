@@ -92,7 +92,7 @@ distrib-dirs:
 	chown uucp.dialer ${DESTDIR}/var/spool/lock
 	chmod 755 ${DESTDIR}/var/spool/lock ${DESTDIR}/var/spool/mqueue \
 		  ${DESTDIR}/var/spool/uucp ${DESTDIR}/var/spool/uucppublic
-	/bin/rm ${DESTDIR}/sys
+	rm -f ${DESTDIR}/sys
 	ln -s ${DESTDIR}/usr/src/sys.386bsd ${DESTDIR}/sys
 
 .include <bsd.prog.mk>
