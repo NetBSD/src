@@ -37,7 +37,7 @@
  * From:
  *	Id: procfs_ctl.c,v 4.1 1993/12/17 10:47:45 jsp Rel
  *
- *	$Id: procfs_ctl.c,v 1.7 1994/01/20 21:23:05 ws Exp $
+ *	$Id: procfs_ctl.c,v 1.8 1994/05/04 03:42:18 cgd Exp $
  */
 
 #include <sys/param.h>
@@ -58,7 +58,7 @@
  */
 #define TRACE_WAIT_P(p) \
 	((p)->p_stat == SSTOP && \
-	 ((p)->p_flag & STRC))
+	 ((p)->p_flag & P_TRACED))
 
 #define PROCFS_CTL_ATTACH	1
 #define PROCFS_CTL_DETACH	2
@@ -87,7 +87,7 @@ procfs_control(curp, p, op)
 
 	/*
 	 * Target process must be stopped and
-	 * be set up for tracing (SFSTRC flag set).
+	 * be set up for tracing (P_FSTRACE flag set).
 	 * Of course ATTACH is allowed any time.
 	 * Allow DETACH to take place at any time for sanity.
 	 */
@@ -113,7 +113,7 @@ procfs_control(curp, p, op)
 		 * by the calling process.
 		 */
 		/* check whether already being traced */
-		if (p->p_flag & STRC)
+		if (p->p_flag & P_TRACED)
 			return (EBUSY);
 		
 		/* can't trace yourself! */
@@ -129,7 +129,7 @@ procfs_control(curp, p, op)
 		 *   proc gets to see all the action.
 		 * Stop the target.
 		 */
-		p->p_flag |= STRC|SFSTRC;
+		p->p_flag |= P_TRACED|P_FSTRACE;
 		psignal(p, SIGSTOP);
 		break;
 
@@ -139,14 +139,14 @@ procfs_control(curp, p, op)
 	 */
 	case PROCFS_CTL_DETACH:
 		/* if not being traced, then this is a painless no-op */
-		if ((p->p_flag & SFSTRC) == 0)
+		if ((p->p_flag & P_FSTRACE) == 0)
 			return (0);
 
 		if (error = process_sstep(p, 0))
 			return error;
 		
 		/* not being traced any more */
-		p->p_flag &= ~(STRC|SFSTRC);
+		p->p_flag &= ~(P_TRACED|P_FSTRACE);
 		setrun(p);
 		return 0;
 		
@@ -172,7 +172,7 @@ procfs_control(curp, p, op)
 	 * Wait for the target process to stop.
 	 */
 	while ((p->p_stat != SSTOP) &&
-	       (p->p_flag & SFSTRC)) {
+	       (p->p_flag & P_FSTRACE)) {
 		if (error = tsleep((caddr_t) p,
 				   PWAIT|PCATCH, "procfs", 0))
 			return error;

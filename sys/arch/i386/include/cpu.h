@@ -34,7 +34,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)cpu.h	5.4 (Berkeley) 5/9/91
- *	$Id: cpu.h,v 1.15 1994/04/07 06:49:19 mycroft Exp $
+ *	$Id: cpu.h,v 1.16 1994/05/04 03:41:21 cgd Exp $
  */
 
 #ifndef _I386_CPU_H_
@@ -81,8 +81,8 @@ int	want_resched;	/* resched() was called */
  * buffer pages are invalid.  On the i386, request an ast to send us
  * through trap(), marking the proc as needing a profiling tick.
  */
-#define	profile_tick(p, framep)	((p)->p_flag |= SOWEUPC, setsoftast())
-#define	need_proftick(p)	((p)->p_flag |= SOWEUPC, setsoftast())
+#define	profile_tick(p, framep)	((p)->p_flag |= P_OWEUPC, setsoftast())
+#define	need_proftick(p)	((p)->p_flag |= P_OWEUPC, setsoftast())
 
 /*
  * Notify the current process (p) that it has a signal pending,

@@ -37,7 +37,7 @@
  * From:
  *	Id: procfs_note.c,v 4.1 1993/12/17 10:47:45 jsp Rel
  *
- *	$Id: procfs_note.c,v 1.2 1994/01/20 21:23:06 ws Exp $
+ *	$Id: procfs_note.c,v 1.3 1994/05/04 03:42:19 cgd Exp $
  */
 
 #include <sys/param.h>
@@ -113,7 +113,7 @@ pfs_donote(curp, p, pfs, uio)
 		
 		mask = p->p_sig & ~p->p_sigmask;
 		
-		if (p->p_flag&SPPWAIT)
+		if (p->p_flag&P_PPWAIT)
 			mask &= ~stopsigmask;
 		if (mask == 0)
 			return 0;
