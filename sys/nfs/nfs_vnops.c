@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_vnops.c,v 1.115 2000/07/22 15:26:14 jdolecek Exp $	*/
+/*	$NetBSD: nfs_vnops.c,v 1.116 2000/08/03 06:15:06 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -1961,8 +1961,7 @@ nfs_readdir(v)
 
 	if (!error && ap->a_cookies) {
 		ncookies = count / 16;
-		MALLOC(cookies, off_t *, sizeof (off_t) * ncookies, M_TEMP,
-		    M_WAITOK);
+		cookies = malloc(sizeof (off_t) * ncookies, M_TEMP, M_WAITOK);
 		*ap->a_cookies = cookies;
 	}
 
