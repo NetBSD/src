@@ -1,4 +1,4 @@
-/*	$NetBSD: boot.c,v 1.4 2001/06/17 15:57:13 nonaka Exp $	*/
+/*	$NetBSD: boot.c,v 1.5 2001/06/19 11:56:28 nonaka Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -33,10 +33,8 @@
 
 #include <lib/libsa/stand.h>
 #include <lib/libsa/loadfile.h>
-
 #include <sys/reboot.h>
 #include <sys/boot_flag.h>
-
 #include <machine/bootinfo.h>
 #include <machine/cpu.h>
 #include <machine/residual.h>
@@ -61,7 +59,6 @@ char bootinfo[BOOTINFO_MAXSIZE];
 struct btinfo_residual btinfo_residual;
 struct btinfo_console btinfo_console;
 struct btinfo_clock btinfo_clock;
-struct btinfo_model btinfo_model;
 
 RESIDUAL residual;
 u_long ladr;
@@ -69,8 +66,8 @@ u_long ladr;
 extern u_long ns_per_tick;
 extern char bootprog_name[], bootprog_rev[], bootprog_maker[], bootprog_date[];
 
-void boot(void *, u_long);
-static void exec_kernel(char *);
+void boot __P((void *, u_long));
+static void exec_kernel __P((char *));
 
 void
 boot(resp, loadaddr)
@@ -113,17 +110,10 @@ boot(resp, loadaddr)
 	/*
 	 * clock
 	 */
-	btinfo_clock.common.next = sizeof(btinfo_clock);
+	btinfo_clock.common.next = 0;
 	btinfo_clock.common.type = BTINFO_CLOCK;
 	btinfo_clock.ticks_per_sec = resp ?
 	    residual.VitalProductData.ProcessorBusHz / 4 : TICKS_PER_SEC;
-
-	/*
-	 * prep vendor & product info
-	 */
-	btinfo_model.common.next = 0;
-	btinfo_model.common.type = BTINFO_MODEL;
-	btinfo_model.model = prep_identify(resp);
 
 	p = bootinfo;
         memcpy(p, (void *)&btinfo_residual, sizeof(btinfo_residual));
@@ -131,8 +121,6 @@ boot(resp, loadaddr)
         memcpy(p, (void *)&btinfo_console, sizeof(btinfo_console));
         p += sizeof(btinfo_console);
         memcpy(p, (void *)&btinfo_clock, sizeof(btinfo_clock));
-        p += sizeof(btinfo_model);
-        memcpy(p, (void *)&btinfo_model, sizeof(btinfo_model));
 
 	/*
 	 * attached kernel check

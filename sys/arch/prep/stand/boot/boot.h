@@ -1,6 +1,4 @@
-/*	$NetBSD: boot.h,v 1.2 2001/06/17 15:57:13 nonaka Exp $	*/
-
-#define	NELEMS(array)	(sizeof(array)/sizeof(array[0]))
+/*	$NetBSD: boot.h,v 1.3 2001/06/19 11:56:28 nonaka Exp $	*/
 
 #define TICKS_PER_SEC	(33000000 / 4)		/* 33MHz */
 #define NS_PER_TICK	(1000000000 / TICKS_PER_SEC)
@@ -8,84 +6,79 @@
 /*
  * srt0
  */
-void run(void *, void *, void *, void *, void *);
+void run __P((void *, void *, void *, void *, void *));
 
 /*
  * clock
  */
-void delay(u_int);
+void delay __P((u_int));
 
 /*
  * com
  */
-int comspeed(long);
+int comspeed __P((long));
 
 /*
  * console
  */
-char *cninit(int *, int *);
-int cngetc(void);
-void cnputc(int);
-int cnscan(void);
+char *cninit __P((int *, int *));
+int cngetc __P((void));
+void cnputc __P((int));
+int cnscan __P((void));
 
 /*
  * fd
  */
-int fdstrategy(void *, int, daddr_t, size_t, void *, size_t *);
-int fdopen(struct open_file *, int, int, int);
-int fdclose(struct open_file *);
-
-/*
- * ident
- */
-int prep_identify(void *);
+int fdstrategy __P((void *, int, daddr_t, size_t, void *, size_t *));
+int fdopen __P((struct open_file *, int, int, int));
+int fdclose __P((struct open_file *));
 
 /*
  * inkernel
  */
-void init_in(void);
-int instrategy(void *, int , daddr_t, size_t, void *, size_t *);
-int inopen(struct open_file *);
-int inclose(struct open_file *);
+void init_in __P((void));
+int instrategy __P((void *, int , daddr_t, size_t, void *, size_t *));
+int inopen __P((struct open_file *));
+int inclose __P((struct open_file *));
 
 /*
  * io
  */
-void outb(int, char);
-u_char inb(int);
-u_long local_to_PCI(u_long);
+void outb __P((int, char));
+u_char inb __P((int));
+u_long local_to_PCI __P((u_long));
 
 /*
  * kbd
  */
-int kbd(int);
-void kbdreset(void);
-int kbd_getc(void);
+int kbd __P((int));
+void kbdreset __P((void));
+int kbd_getc __P((void));
 
 /*
  * monitor
  */
-int db_monitor(void);
+int db_monitor __P((void));
 
 /*
  * tgets
  */
-int tgets(char *);
+int tgets __P((char *));
 
 /*
  * video
  */
-void video_init(u_char *);
-void video_putc(int);
+void video_init __P((u_char *));
+void video_putc __P((int));
 
 /*
  * vga
  */
-void vga_init(u_char *);
-void vga_putc(int);
-void vga_puts(char *);
+void vga_init __P((u_char *));
+void vga_putc __P((int));
+void vga_puts __P((char *));
 
 /*
  * vreset
  */
-void vga_reset(u_char *);
+void vga_reset __P((u_char *));
