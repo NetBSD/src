@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_map.c,v 1.77 2000/06/13 04:10:47 chs Exp $	*/
+/*	$NetBSD: uvm_map.c,v 1.77.2.1 2000/08/06 00:11:24 fvdl Exp $	*/
 
 /* 
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -1840,9 +1840,9 @@ uvm_map_inherit(map, start, end, new_inheritance)
 	    map, start, end, new_inheritance);
 
 	switch (new_inheritance) {
-	case VM_INHERIT_NONE:
-	case VM_INHERIT_COPY:
-	case VM_INHERIT_SHARE:
+	case MAP_INHERIT_NONE:
+	case MAP_INHERIT_COPY:
+	case MAP_INHERIT_SHARE:
 		break;
 	default:
 		UVMHIST_LOG(maphist,"<- done (INVALID ARG)",0,0,0,0);
@@ -2929,13 +2929,13 @@ uvmspace_fork(vm1)
 
 
 		switch (old_entry->inheritance) {
-		case VM_INHERIT_NONE:
+		case MAP_INHERIT_NONE:
 			/*
 			 * drop the mapping
 			 */
 			break;
 
-		case VM_INHERIT_SHARE:
+		case MAP_INHERIT_SHARE:
 			/*
 			 * share the mapping: this means we want the old and
 			 * new entries to share amaps and backing objects.
@@ -2992,7 +2992,7 @@ uvmspace_fork(vm1)
 
 			break;
 
-		case VM_INHERIT_COPY:
+		case MAP_INHERIT_COPY:
 
 			/*
 			 * copy-on-write the mapping (using mmap's
