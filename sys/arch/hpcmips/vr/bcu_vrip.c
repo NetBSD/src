@@ -1,4 +1,4 @@
-/*	$NetBSD: bcu_vrip.c,v 1.5 2000/01/27 06:25:54 sato Exp $	*/
+/*	$NetBSD: bcu_vrip.c,v 1.6 2000/10/27 08:10:32 sato Exp $	*/
 
 /*-
  * Copyright (c) 1999 SATO Kazumi. All rights reserved.
@@ -176,7 +176,8 @@ vrbcu_dump_regs()
 	default:
 		break;
 	}
-	printf("vrbcu: cpu %d.%03dMHz, bus %d.%03dMHz, ram %d.%03dMHz\n",
+	printf("%s: cpu %d.%03dMHz, bus %d.%03dMHz, ram %d.%03dMHz\n",
+		sc->sc_dev.dv_xname,
 		cpuclock/1000000, (cpuclock%1000000)/1000,
 		tclock/1000000, (tclock%1000000)/1000,
 		vtclock/1000000, (vtclock%1000000)/1000);
