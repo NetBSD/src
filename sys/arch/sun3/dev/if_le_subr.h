@@ -1,7 +1,4 @@
-/* access LANCE registers */
 
-#define	LERDWR(cntl, src, dst) (dst) = (src)
+/* One might also set: LE_C3_ACON | LE_C3_BCON */
+#define	LE_C3_CONFIG LE_C3_BSWP
 
-#define LANCE_ADDR(lance) ((unsigned int) lance & 0x00FFFFFF)
-
-#define le_machdep_intrcheck(le, unit) 
