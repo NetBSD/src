@@ -1,4 +1,4 @@
-/*	$NetBSD: vga_raster.c,v 1.10 2003/01/31 21:57:26 tsutsui Exp $	*/
+/*	$NetBSD: vga_raster.c,v 1.11 2003/04/07 05:48:54 junyoung Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002 Bang Jun-Young
@@ -405,8 +405,8 @@ vga_raster_init(struct vga_config *vc, bus_space_tag_t iot,
 		int cookie;
 
 		/* prefer 8x16 pixel font */
-		cookie = wsfont_find(NULL, 8, 16, 0,
-		     WSDISPLAY_FONTORDER_L2R, 0);
+		cookie = wsfont_find(NULL, 8, 16, 0, WSDISPLAY_FONTORDER_L2R,
+		    0);
 		if (cookie == -1)
 			cookie = wsfont_find(NULL, 0, 0, 0,
 			    WSDISPLAY_FONTORDER_L2R, WSDISPLAY_FONTORDER_L2R);
@@ -649,7 +649,7 @@ vga_raster_mmap(void *v, off_t offset, int prot)
 
 int
 vga_raster_alloc_screen(void *v, const struct wsscreen_descr *type,
-			void **cookiep, int *curxp, int *curyp, long *defattrp)
+    void **cookiep, int *curxp, int *curyp, long *defattrp)
 {
 	struct vga_config *vc = v;
 	struct vgascreen *scr;
@@ -696,7 +696,7 @@ vga_raster_free_screen(void *v, void *cookie)
 
 int
 vga_raster_show_screen(void *v, void *cookie, int waitok,
-		       void (*cb)(void *, int, int), void *cbarg)
+    void (*cb)(void *, int, int), void *cbarg)
 {
 	struct vgascreen *scr = cookie, *oldscr;
 	struct vga_config *vc = scr->cfg;
@@ -785,6 +785,7 @@ static int
 vga_raster_load_font(void *v, void *id, struct wsdisplay_font *data)
 {
 	/* XXX */
+	printf("vga_raster_load_font: called\n");
 
 	return (0);
 }
@@ -1132,7 +1133,7 @@ vga_raster_putchar(void *id, int row, int col, u_int c, long attr)
 
 static void
 _vga_raster_putchar(void *id, int row, int col, u_int c, long attr,
-		    struct vga_raster_font *fs)
+    struct vga_raster_font *fs)
 {
 	struct vgascreen *scr = id;
 	struct vga_handle *vh = scr->hdl;
