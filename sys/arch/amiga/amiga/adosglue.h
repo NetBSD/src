@@ -27,7 +27,7 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
- *	$Id: adosglue.h,v 1.1 1994/05/08 05:56:18 chopps Exp $
+ *	$Id: adosglue.h,v 1.2 1994/05/25 21:48:48 chopps Exp $
  */
 #ifndef _ADOSGLUE_H_
 #define _ADOSGLUE_H_
@@ -42,6 +42,7 @@
 #define DOST_NBS	0x4e425300	/* 'NBS0' Netbsd swap partition */
 #define DOST_NBU	0x4e425500	/* 'NBUx' Netbsd user partition */
 #define DOST_DOS	0x444f5300	/* 'DOSx' AmigaDos partition */
+#define DOST_AMIX	0x554e4900	/* 'UNIx' AmigaDos partition */
 
 struct adostype {
 	u_char archtype;	/* see ADT_xxx below */
@@ -54,6 +55,7 @@ struct adostype {
 #define ADT_NETBSDROOT	2
 #define ADT_NETBSDSWAP	3
 #define ADT_NETBSDUSER	4
+#define ADT_AMIX	5
 
 #define ISFSARCH_NETBSD(adt) \
 	((adt).archtype >= ADT_NETBSDROOT && (adt).archtype <= ADT_NETBSDUSER)
