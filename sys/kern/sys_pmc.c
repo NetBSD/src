@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_pmc.c,v 1.1 2002/08/07 05:16:26 briggs Exp $	*/
+/*	$NetBSD: sys_pmc.c,v 1.2 2002/08/07 11:13:41 briggs Exp $	*/
 
 /*
  * Copyright (c) 2002 Wasabi Systems, Inc.
@@ -38,7 +38,7 @@
 #include "opt_perfctrs.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sys_pmc.c,v 1.1 2002/08/07 05:16:26 briggs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sys_pmc.c,v 1.2 2002/08/07 11:13:41 briggs Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -47,7 +47,9 @@ __KERNEL_RCSID(0, "$NetBSD: sys_pmc.c,v 1.1 2002/08/07 05:16:26 briggs Exp $");
 #include <sys/syscallargs.h>
 #include <sys/types.h>
 
+#if defined(PERFCTRS)
 #include <sys/pmc.h>
+#endif
 
 int
 sys_pmc_control(struct proc *p, void *v, register_t *rv)
