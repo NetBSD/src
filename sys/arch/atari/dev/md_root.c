@@ -1,4 +1,4 @@
-/*	$NetBSD: md_root.c,v 1.6 1996/10/11 00:09:34 christos Exp $	*/
+/*	$NetBSD: md_root.c,v 1.7 1996/10/13 04:11:11 christos Exp $	*/
 
 /*
  * Copyright (c) 1996 Leo Weppelman.
@@ -109,7 +109,7 @@ int		unit;
 struct rd_conf	*rd;
 {
 	if (atari_realconfig && (unit < RAMD_NDEV) && rd_info[unit].ramd_flag) {
-		kprintf ("rd%d:%sauto-load on open. Size %ld bytes.\n", unit,
+		printf ("rd%d:%sauto-load on open. Size %ld bytes.\n", unit,
 		    rd_info[unit].ramd_flag & RAMD_LCOMP ? " decompress/" : "",
 		    rd_info[unit].ramd_size);
 		rd->rd_type = RD_UNCONFIGURED; /* Paranoia... */
@@ -234,9 +234,9 @@ struct read_info	*rsp;
 		splx(s);
 
 		/* Dot counter */
-		kprintf(".");
+		printf(".");
 		if(!(++dotc % 40))
-			kprintf("\n");
+			printf("\n");
 
 		done = bp->b_bcount - bp->b_resid;
 		bytes_left   -= done;
@@ -247,13 +247,13 @@ struct read_info	*rsp;
 			break;
 
 		if((rsp->offset == rsp->media_sz) && (bytes_left != 0)) {
-			kprintf("\nInsert next media and hit any key...");
+			printf("\nInsert next media and hit any key...");
 			cngetc();
-			kprintf("\n");
+			printf("\n");
 			rsp->offset = 0;
 		}
 	}
-	kprintf("\n");
+	printf("\n");
 	return(error);
 }
 
@@ -317,9 +317,9 @@ int			nbyte;
 		splx(s);
 
 		/* Dot counter */
-		kprintf(".");
+		printf(".");
 		if(!(++dotc % 40))
-			kprintf("\n");
+			printf("\n");
 
 		done = bp->b_bcount - bp->b_resid;
 		nbyte        -= done;
@@ -331,9 +331,9 @@ int			nbyte;
 
 		if((rsp->offset == rsp->media_sz) && (nbyte != 0)) {
 		if(rsp->offset == rsp->media_sz) {
-			kprintf("\nInsert next media and hit any key...");
+			printf("\nInsert next media and hit any key...");
 			if(cngetc() != '\n')
-				kprintf("\n");
+				printf("\n");
 			rsp->offset = 0;
 		}
 	}

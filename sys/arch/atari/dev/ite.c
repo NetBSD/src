@@ -1,4 +1,4 @@
-/*	$NetBSD: ite.c,v 1.18 1996/10/11 20:50:34 leo Exp $	*/
+/*	$NetBSD: ite.c,v 1.19 1996/10/13 04:10:58 christos Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -222,15 +222,15 @@ void		*auxp;
 		splx(s);
 
 		iteinit(gp->g_itedev);
-		kprintf(": %dx%d", ip->rows, ip->cols);
-		kprintf(" repeat at (%d/100)s next at (%d/100)s",
+		printf(": %dx%d", ip->rows, ip->cols);
+		printf(" repeat at (%d/100)s next at (%d/100)s",
 		    start_repeat_timeo, next_repeat_timeo);
 
 		if (kbd_ite == NULL)
 			kbd_ite = ip;
 		if (kbd_ite == ip)
-			kprintf(" has keyboard");
-		kprintf("\n");
+			printf(" has keyboard");
+		printf("\n");
 	} else {
 		if (con_itesoftc.grf != NULL &&
 		    con_itesoftc.grf->g_conpri > gp->g_conpri)
@@ -1799,7 +1799,7 @@ iteputchar(c, ip)
 			break;
 		      case 6:
 			/* cursor position report */
-		        ksprintf (ip->argbuf, "\033[%d;%dR", 
+		        sprintf (ip->argbuf, "\033[%d;%dR", 
 				 ip->cury + 1, ip->curx + 1);
 			ite_sendstr (ip->argbuf);
 			break;

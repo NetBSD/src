@@ -1,4 +1,4 @@
-/*	$NetBSD: ite_et.c,v 1.3 1996/10/11 21:01:27 leo Exp $	*/
+/*	$NetBSD: ite_et.c,v 1.4 1996/10/13 04:11:02 christos Exp $	*/
 
 /*
  * Copyright (c) 1996 Leo Weppelman.
@@ -236,10 +236,10 @@ void		*auxp;
 		grf_viewsync(gp);
 	}
 
-	kprintf(": %dx%d", gp->g_display.gd_dwidth, gp->g_display.gd_dheight);
+	printf(": %dx%d", gp->g_display.gd_dwidth, gp->g_display.gd_dheight);
 	if(gp->g_display.gd_colors == 2)
-		kprintf(" monochrome\n");
-	else kprintf(" colors %d\n", gp->g_display.gd_colors);
+		printf(" monochrome\n");
+	else printf(" colors %d\n", gp->g_display.gd_colors);
 	
 	/*
 	 * try and attach an ite
@@ -263,7 +263,7 @@ void *auxp;
 const char *pnp;
 {
 	if(pnp) /* XXX */
-		kprintf("ite at %s", pnp);
+		printf("ite at %s", pnp);
 	return(UNCONF);
 }
 

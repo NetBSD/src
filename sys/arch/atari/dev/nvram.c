@@ -1,4 +1,4 @@
-/*	$NetBSD: nvram.c,v 1.4 1996/10/11 00:09:33 christos Exp $	*/
+/*	$NetBSD: nvram.c,v 1.5 1996/10/13 04:11:10 christos Exp $	*/
 
 /*
  * Copyright (c) 1995 Leo Weppelman.
@@ -96,14 +96,14 @@ void	*auxp;
 	 * Check the validity of the NVram contents
 	 */
 	if (!nvram_csum_valid(nvram_csum())) {
-		kprintf(": Invalid checksum - re-initialized");
+		printf(": Invalid checksum - re-initialized");
 		for (nreg = MC_NVRAM_START; nreg < MC_NVRAM_CSUM; nreg++)
 			mc146818_write(RTC, nreg, 0);
 		nvram_set_csum(nvram_csum());
 	}
 	nvr_soft = nvr_cd.cd_devs[0];
 	nvr_soft->nvr_flags = NVR_CONFIGURED;
-	kprintf("\n");
+	printf("\n");
 }
 /*
  * End of auto config stuff....
@@ -147,7 +147,7 @@ struct uio	*uio;
 		return ENXIO;
 
 #ifdef NV_DEBUG
-	kprintf("Request to transfer %d bytes offset: %d, %s nvram\n",
+	printf("Request to transfer %d bytes offset: %d, %s nvram\n",
 				(long)uio->uio_resid, (long)uio->uio_offset,
 				(uio->uio_rw == UIO_READ) ? "from" : "to");
 #endif /* NV_DEBUG */
@@ -162,7 +162,7 @@ struct uio	*uio;
 			return (EINVAL);
 	}
 #ifdef NV_DEBUG
-	kprintf("Translated: offset = %d, bytes: %d\n", (long)offset, nleft);
+	printf("Translated: offset = %d, bytes: %d\n", (long)offset, nleft);
 #endif /* NV_DEBUG */
 
 	if (uio->uio_rw == UIO_READ) {
