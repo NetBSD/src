@@ -1,4 +1,4 @@
-.\"     $NetBSD: wskbd.9,v 1.2 2001/10/22 08:21:33 wiz Exp $
+.\"     $NetBSD: wskbd.9,v 1.3 2001/11/28 16:49:03 wiz Exp $
 .\"
 .\" Copyright (c) 2001 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -113,9 +113,9 @@ and pass it to the
 child device.  If the keyboard cannot be a console, it is not
 necessary to specify this structure.  It has the following members:
 .Bd -literal
-	void	(*getc) __P((void *, u_int *, int *));
-	void	(*pollc) __P((void *, int));
-	void	(*bell) __P((void *, u_int, u_int, u_int));
+	void	(*getc)(void *, u_int *, int *);
+	void	(*pollc)(void *, int);
+	void	(*bell)(void *, u_int, u_int, u_int);
 .Ed
 .Pp
 There is a
