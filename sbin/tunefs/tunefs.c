@@ -1,4 +1,4 @@
-/*	$NetBSD: tunefs.c,v 1.29 2004/01/05 23:23:34 jmmv Exp $	*/
+/*	$NetBSD: tunefs.c,v 1.30 2004/03/21 20:38:08 dsl Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1993\n\
 #if 0
 static char sccsid[] = "@(#)tunefs.c	8.3 (Berkeley) 5/3/95";
 #else
-__RCSID("$NetBSD: tunefs.c,v 1.29 2004/01/05 23:23:34 jmmv Exp $");
+__RCSID("$NetBSD: tunefs.c,v 1.30 2004/03/21 20:38:08 dsl Exp $");
 #endif
 #endif /* not lint */
 
@@ -332,14 +332,16 @@ getsb(struct fs *fs, const char *file)
 {
 	int i;
 
-	for (i = 0; sblock_try[i] != -1; i++) {
+	for (i = 0; ; i++) {
+		if (sblock_try[i] == -1)
+			errx(5, "cannot find filesystem superblock");
 		bread(sblock_try[i] / dev_bsize, (char *)fs, SBLOCKSIZE, file);
 		switch(fs->fs_magic) {
 		case FS_UFS2_MAGIC:
 			is_ufs2 = 1;
 			/*FALLTHROUGH*/
 		case FS_UFS1_MAGIC:
-			goto found;
+			break;
 		case FS_UFS2_MAGIC_SWAPPED:
 			is_ufs2 = 1;
 			/*FALLTHROUGH*/
@@ -347,15 +349,18 @@ getsb(struct fs *fs, const char *file)
 			warnx("%s: swapping byte order", file);
 			needswap = 1;
 			ffs_sb_swap(fs, fs);
-			goto found;
-		default:
 			break;
+		default:
+			continue;
 		}
+		if (!is_ufs2 && sblock_try[i] == SBLOCK_UFS2)
+			continue;
+		if (fs->fs_old_flags & FS_FLAGS_UPDATED
+		    && fs->fs_sblockloc != sblock_try[i])
+			continue;
+		break;
 	}
-	errx(5, "cannot find filesystem superblock");
-found:
-	if (is_ufs2 && fs->fs_sblockloc != sblock_try[i])
-		errx(5, "bad super block");
+
 	dev_bsize = fs->fs_fsize / fsbtodb(fs, 1);
 	sblockloc = sblock_try[i] / dev_bsize;
 }
