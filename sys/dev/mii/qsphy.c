@@ -1,4 +1,4 @@
-/*	$NetBSD: qsphy.c,v 1.9 1998/11/05 00:19:32 thorpej Exp $	*/
+/*	$NetBSD: qsphy.c,v 1.10 1998/11/05 04:01:32 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -272,34 +272,42 @@ qsphy_status(sc)
 	if (bmcr & BMCR_LOOP)
 		mii->mii_media_active |= IFM_LOOP;
 
-	if ((bmcr & BMCR_AUTOEN) && (bmsr & BMSR_ACOMP) == 0) {
-		/* Erg, still trying, I guess... */
-		mii->mii_media_active |= IFM_NONE;
-		return;
-	}
-
-	pctl = PHY_READ(sc, MII_QSPHY_PCTL) |
-	    PHY_READ(sc, MII_QSPHY_PCTL);
-	switch (pctl & PCTL_OPMASK) {
-	case PCTL_10_T:
-		mii->mii_media_active |= IFM_10_T;
-		break;
-	case PCTL_10_T_FDX:
-		mii->mii_media_active |= IFM_10_T|IFM_FDX;
-		break;
-	case PCTL_100_TX:
-		mii->mii_media_active |= IFM_100_TX;
-		break;
-	case PCTL_100_TX_FDX:
-		mii->mii_media_active |= IFM_100_TX|IFM_FDX;
-		break;
-	case PCTL_100_T4:
-		mii->mii_media_active |= IFM_100_T4;
-		break;
-	default:
-		/* Erg... this shouldn't happen. */
-		mii->mii_media_active |= IFM_NONE;
-		break;
+	if (bmcr & BMCR_AUTOEN) {
+		if ((bmsr & BMSR_ACOMP) == 0) {
+			/* Erg, still trying, I guess... */
+			mii->mii_media_active |= IFM_NONE;
+			return;
+		}
+		pctl = PHY_READ(sc, MII_QSPHY_PCTL) |
+		    PHY_READ(sc, MII_QSPHY_PCTL);
+		switch (pctl & PCTL_OPMASK) {
+		case PCTL_10_T:
+			mii->mii_media_active |= IFM_10_T;
+			break;
+		case PCTL_10_T_FDX:
+			mii->mii_media_active |= IFM_10_T|IFM_FDX;
+			break;
+		case PCTL_100_TX:
+			mii->mii_media_active |= IFM_100_TX;
+			break;
+		case PCTL_100_TX_FDX:
+			mii->mii_media_active |= IFM_100_TX|IFM_FDX;
+			break;
+		case PCTL_100_T4:
+			mii->mii_media_active |= IFM_100_T4;
+			break;
+		default:
+			/* Erg... this shouldn't happen. */
+			mii->mii_media_active |= IFM_NONE;
+			break;
+		}
+	} else {
+		if (bmcr & BMCR_S100)
+			mii->mii_media_active |= IFM_100_TX;
+		else
+			mii->mii_media_active |= IFM_10_T;
+		if (bmcr & BMCR_FDX)
+			mii->mii_media_active |= IFM_FDX;
 	}
 }
 
