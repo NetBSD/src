@@ -1,4 +1,4 @@
-/*	$NetBSD: script.c,v 1.6 1998/04/02 11:08:34 kleink Exp $	*/
+/*	$NetBSD: script.c,v 1.7 1998/12/19 21:53:56 christos Exp $	*/
 
 /*
  * Copyright (c) 1980, 1992, 1993
@@ -43,7 +43,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1992, 1993\n\
 #if 0
 static char sccsid[] = "@(#)script.c	8.1 (Berkeley) 6/6/93";
 #endif
-__RCSID("$NetBSD: script.c,v 1.6 1998/04/02 11:08:34 kleink Exp $");
+__RCSID("$NetBSD: script.c,v 1.7 1998/12/19 21:53:56 christos Exp $");
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -156,11 +156,10 @@ void
 finish(signo)
 	int signo;
 {
-	int die, pid;
-	union wait status;
+	int die, pid, status;
 
 	die = 0;
-	while ((pid = wait3((int *)&status, WNOHANG, 0)) > 0)
+	while ((pid = wait3(&status, WNOHANG, 0)) > 0)
 		if (pid == child)
 			die = 1;
 
