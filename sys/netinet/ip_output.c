@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_output.c,v 1.128 2003/11/19 18:39:34 jonathan Exp $	*/
+/*	$NetBSD: ip_output.c,v 1.129 2003/12/10 11:46:33 itojun Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -98,7 +98,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip_output.c,v 1.128 2003/11/19 18:39:34 jonathan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip_output.c,v 1.129 2003/12/10 11:46:33 itojun Exp $");
 
 #include "opt_pfil_hooks.h"
 #include "opt_inet.h"
@@ -1492,9 +1492,11 @@ ip_multicast_if(a, ifindexp)
 		*ifindexp = 0;
 	if (ntohl(a->s_addr) >> 24 == 0) {
 		ifindex = ntohl(a->s_addr) & 0xffffff;
-		if (ifindex < 0 || if_index < ifindex)
+		if (ifindex < 0 || if_indexlim <= ifindex)
 			return NULL;
 		ifp = ifindex2ifnet[ifindex];
+		if (!ifp)
+			return NULL;
 		if (ifindexp)
 			*ifindexp = ifindex;
 	} else {
