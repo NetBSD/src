@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_page.c,v 1.72 2001/12/09 03:07:19 chs Exp $	*/
+/*	$NetBSD: uvm_page.c,v 1.73 2001/12/31 19:21:37 chs Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_page.c,v 1.72 2001/12/09 03:07:19 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_page.c,v 1.73 2001/12/31 19:21:37 chs Exp $");
 
 #include "opt_uvmhist.h"
 
@@ -1226,32 +1226,38 @@ uvm_pagefree(pg)
 		 * unbusy the page, and we're done.
 		 */
 
-		if (pg->pqflags & PQ_ANON) {
-			pg->pqflags &= ~PQ_ANON;
-			pg->uanon = NULL;
-		} else if (pg->flags & PG_TABLED) {
+		if (pg->uobject != NULL) {
 			uvm_pageremove(pg);
 			pg->flags &= ~PG_CLEAN;
+		} else if (pg->uanon != NULL) {
+			if ((pg->pqflags & PQ_ANON) == 0) {
+				pg->loan_count--;
+			} else {
+				pg->pqflags &= ~PQ_ANON;
+			}
+			pg->uanon = NULL;
 		}
 		if (pg->flags & PG_WANTED) {
 			wakeup(pg);
 		}
-		pg->flags &= ~(PG_WANTED|PG_BUSY);
+		pg->flags &= ~(PG_WANTED|PG_BUSY|PG_RELEASED);
 #ifdef UVM_PAGE_TRKOWN
 		pg->owner_tag = NULL;
 #endif
-		return;
+		if (pg->loan_count) {
+			return;
+		}
 	}
 
 	/*
 	 * remove page from its object or anon.
-	 * adjust swpgonly if the page is swap-backed.
 	 */
 
-	if (pg->flags & PG_TABLED) {
+	if (pg->uobject != NULL) {
 		uvm_pageremove(pg);
-	} else if (pg->pqflags & PQ_ANON) {
+	} else if (pg->uanon != NULL) {
 		pg->uanon->u.an_page = NULL;
+		uvmexp.anonpages--;
 	}
 
 	/*
@@ -1267,9 +1273,6 @@ uvm_pagefree(pg)
 	if (pg->wire_count) {
 		pg->wire_count = 0;
 		uvmexp.wired--;
-	}
-	if (pg->pqflags & PQ_ANON) {
-		uvmexp.anonpages--;
 	}
 
 	/*

@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_pager.c,v 1.54 2001/11/10 07:37:00 lukem Exp $	*/
+/*	$NetBSD: uvm_pager.c,v 1.55 2001/12/31 19:21:38 chs Exp $	*/
 
 /*
  *
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_pager.c,v 1.54 2001/11/10 07:37:00 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_pager.c,v 1.55 2001/12/31 19:21:38 chs Exp $");
 
 #include "opt_uvmhist.h"
 
@@ -319,19 +319,20 @@ uvm_aio_aiodone(bp)
 
 	swslot = 0;
 	slock = NULL;
-	swap = (pgs[0]->pqflags & PQ_SWAPBACKED) != 0;
-	pageout = (pgs[0]->flags & PG_PAGEOUT) != 0;
+	pg = pgs[0];
+	swap = (pg->uanon != NULL && pg->uobject == NULL) ||
+		(pg->pqflags & PQ_AOBJ) != 0;
+	pageout = (pg->flags & PG_PAGEOUT) != 0;
 	if (!swap) {
-		uobj = pgs[0]->uobject;
+		uobj = pg->uobject;
 		slock = &uobj->vmobjlock;
 		simple_lock(slock);
 		uvm_lock_pageq();
 	} else if (error) {
-		pg = pgs[0];
-		if (pg->pqflags & PQ_ANON) {
-			swslot = pg->uanon->an_swslot;
-		} else {
+		if (pg->uobject != NULL) {
 			swslot = uao_find_swslot(pg->uobject, pg->offset);
+		} else {
+			swslot = pg->uanon->an_swslot;
 		}
 		KASSERT(swslot);
 	}
@@ -347,10 +348,10 @@ uvm_aio_aiodone(bp)
 		 */
 
 		if (swap) {
-			if (pg->pqflags & PQ_ANON) {
-				slock = &pg->uanon->an_lock;
-			} else {
+			if (pg->uobject != NULL) {
 				slock = &pg->uobject->vmobjlock;
+			} else {
+				slock = &pg->uanon->an_lock;
 			}
 			simple_lock(slock);
 			uvm_lock_pageq();
