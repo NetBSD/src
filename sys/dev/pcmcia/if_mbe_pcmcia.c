@@ -1,4 +1,4 @@
-/*	$NetBSD: if_mbe_pcmcia.c,v 1.16 2000/02/04 04:54:51 enami Exp $	*/
+/*	$NetBSD: if_mbe_pcmcia.c,v 1.17 2000/02/04 09:30:28 enami Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
@@ -76,7 +76,6 @@ struct cfattach mbe_pcmcia_ca = {
 
 int	mbe_pcmcia_enable __P((struct mb86960_softc *));
 void	mbe_pcmcia_disable __P((struct mb86960_softc *));
-void	mbe_pcmcia_intr_disestablish __P((struct mbe_pcmcia_softc *));
 
 struct mbe_pcmcia_get_enaddr_args {
 	u_int8_t enaddr[ETHER_ADDR_LEN];
@@ -154,13 +153,12 @@ mbe_pcmcia_attach(parent, self, aux)
 
 	psc->sc_pf = pa->pf;
 	cfe = pa->pf->cfe_head.sqh_first;
-	psc->sc_io_window = -1;
 
 	/* Enable the card. */
 	pcmcia_function_init(pa->pf, cfe);
 	if (pcmcia_function_enable(pa->pf)) {
 		printf(": function enable failed\n");
-		return;
+		goto enable_failed;
 	}
 
 	/* Allocate and map i/o space for the card. */
@@ -230,6 +228,9 @@ mbe_pcmcia_attach(parent, self, aux)
 
  ioalloc_failed:
 	pcmcia_function_disable(pa->pf);
+
+ enable_failed:
+	psc->sc_io_window = -1;
 }
 
 int
@@ -257,30 +258,12 @@ mbe_pcmcia_detach(self, flags)
 	return (0);
 }
 
-void
-mbe_pcmcia_intr_disestablish(psc)
-	struct mbe_pcmcia_softc *psc;
-{
-
-	if (psc->sc_ih != NULL)
-		pcmcia_intr_disestablish(psc->sc_pf, psc->sc_ih);
-	psc->sc_ih = NULL;
-}
-
 int
 mbe_pcmcia_enable(sc)
 	struct mb86960_softc *sc;
 {
 	struct mbe_pcmcia_softc *psc = (struct mbe_pcmcia_softc *)sc;
-	int error;
 
-#ifdef DIAGNOSTIC
-	if (psc->sc_ih != NULL) {
-		printf("%s: interrupt is already established\n",
-		    sc->sc_dev.dv_xname);
-		panic("mbe_pcmcia_enable");
-	}
-#endif
 	/* Establish the interrupt handler. */
 	psc->sc_ih = pcmcia_intr_establish(psc->sc_pf, IPL_NET, mb86960_intr,
 	    sc);
@@ -290,11 +273,12 @@ mbe_pcmcia_enable(sc)
 		return (1);
 	}
 
-	error = pcmcia_function_enable(psc->sc_pf);
-	if (error != 0)
-		mbe_pcmcia_intr_disestablish(psc);
+	if (pcmcia_function_enable(psc->sc_pf)) {
+		pcmcia_intr_disestablish(psc->sc_pf, psc->sc_ih);
+		return (1);
+	}
 
-	return (error);
+	return (0);
 }
 
 void
@@ -304,7 +288,7 @@ mbe_pcmcia_disable(sc)
 	struct mbe_pcmcia_softc *psc = (struct mbe_pcmcia_softc *)sc;
 
 	pcmcia_function_disable(psc->sc_pf);
-	mbe_pcmcia_intr_disestablish(psc);
+	pcmcia_intr_disestablish(psc->sc_pf, psc->sc_ih);
 }
 
 int
