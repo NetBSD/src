@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.2 1998/04/10 19:35:22 tv Exp $
+#	$NetBSD: Makefile,v 1.3 1998/04/12 13:59:28 veego Exp $
 
 LIB=	f2c
 
@@ -61,7 +61,7 @@ dirs:
 
 .include <bsd.lib.mk>
 
-clean: __cleanlibdir
+clean cleandir: __cleanlibdir
 .PHONY: __cleanlibdir
 __cleanlibdir:
 	rm -rf dirs libF77 libI77 libU77
