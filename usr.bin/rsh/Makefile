@@ -1,7 +1,6 @@
-#	$NetBSD: Makefile,v 1.10 1997/07/06 19:31:28 christos Exp $
+#	$NetBSD: Makefile,v 1.11 1997/10/19 14:23:26 lukem Exp $
 #	from: @(#)Makefile	8.1 (Berkeley) 7/19/93
 
-WARNS=	1
 PROG=	rsh
 #CFLAGS+=-DKERBEROS -DCRYPT
 #SRCS=	rsh.c krcmd.c kcmd.c des_rw.c
