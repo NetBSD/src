@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.3 1999/10/27 14:37:49 takemura Exp $	*/
+/*	$NetBSD: machdep.c,v 1.4 1999/11/03 04:00:04 takemura Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -43,7 +43,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.3 1999/10/27 14:37:49 takemura Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.4 1999/11/03 04:00:04 takemura Exp $");
 
 /* from: Utah Hdr: machdep.c 1.63 91/04/24 */
 
@@ -661,9 +661,6 @@ microtime(tvp)
 int
 initcpu()
 {
-#ifdef notyet /*__hpcmips__*/
-	volatile struct chiptime *c;
-#endif
 	int i = 0;
 
 	/*
@@ -673,23 +670,7 @@ initcpu()
 
 	(*platform.bus_reset)();	/* XXX_cf_alpha */
 
-	/*
-	 * With newconf, this should be  done elswhere, but without it
-	 * we hang (?)
-	 */
-#ifdef notyet /*__hpcmips__*/
-#if 1 /*XXX*/
-	/* disable clock interrupts (until startrtclock()) */
-	if (mcclock_addr) {
-		c = mcclock_addr;
-		c->regb = REGB_DATA_MODE | REGB_HOURS_FORMAT;
-		i = c->regc;
-	}
-	return (i);
-#endif
-#else
 	return i;
-#endif
 }
 
 
