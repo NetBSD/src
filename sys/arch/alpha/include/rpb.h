@@ -1,4 +1,4 @@
-/* $NetBSD: rpb.h,v 1.16 1998/02/12 02:27:48 cgd Exp $ */
+/* $NetBSD: rpb.h,v 1.17 1998/02/13 00:07:25 thorpej Exp $ */
 
 /*
  * Copyright (c) 1994, 1995, 1996 Carnegie-Mellon University.
@@ -363,4 +363,24 @@ struct mddt {
 		int64_t		mddt_usage;	/*  30: bitmap permissions */
 	} mddt_clusters[1];			/* variable length array */
 };
+
+/*
+ * DSR: Dynamic System Recognition.  We're interested in the sysname
+ * offset.  The data pointed to by sysname is:
+ *
+ *	[8 bytes: length of system name][N bytes: system name string]
+ *
+ * The system name string is NUL-terminated.
+ */
+struct dsrdb {
+	int64_t		dsr_smm;		/*  0: SMM number */
+	u_int64_t	dsr_lurt_off;		/*  8: LURT table offset */
+	u_int64_t	dsr_sysname_off;	/* 16: offset to sysname */
+};
+
+/*
+ * The DSR appeared in version 5 of the HWRPB.
+ */
+#define	HWRPB_DSRDB_MINVERS	5
+
 #endif /* ASSEMBLER */
