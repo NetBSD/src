@@ -1,4 +1,4 @@
-/*	$NetBSD: asm.h,v 1.15 1999/09/27 09:47:45 kleink Exp $	*/
+/*	$NetBSD: asm.h,v 1.16 1999/11/07 07:20:26 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -62,11 +62,7 @@
 #endif
 
 #ifdef __ELF__
-# ifdef __STDC__
-#  define _C_LABEL(x)	x
-# else
-#  define _C_LABEL(x)	x
-# endif
+# define _C_LABEL(x)	x
 #else
 # ifdef __STDC__
 #  define _C_LABEL(x)	_ ## x
@@ -75,6 +71,14 @@
 # endif
 #endif
 #define	_ASM_LABEL(x)	x
+
+#ifdef __STDC__
+# define __CONCAT(x,y)	x ## y
+# define __STRING(x)	#x
+#else
+# define __CONCAT(x,y)	x/**/y
+# define __STRING(x)	"x"
+#endif
 
 /* let kernels and others override entrypoint alignment */
 #ifndef _ALIGN_TEXT
@@ -111,12 +115,14 @@
 #define RCSID(x)	.text; .asciz x
 
 #ifdef __STDC__
-#define	__STRING(x)			#x
 #define	WARN_REFERENCES(sym,msg)					\
 	.stabs msg ## ,30,0,0,0 ;					\
-	.stabs __STRING(_ ## sym) ## ,1,0,0,0
+	.stabs __STRING(_C_LABEL(sym)) ## ,1,0,0,0
+#elifdef __ELF__
+#define	WARN_REFERENCES(sym,msg)					\
+	.stabs msg,30,0,0,0 ;						\
+	.stabs __STRING(sym),1,0,0,0
 #else
-#define	__STRING(x)			"x"
 #define	WARN_REFERENCES(sym,msg)					\
 	.stabs msg,30,0,0,0 ;						\
 	.stabs __STRING(_/**/sym),1,0,0,0
