@@ -28,7 +28,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * $Header: /cvsroot/src/sys/arch/sun3/sun3/Attic/isr.c,v 1.6 1994/03/01 08:23:08 glass Exp $
+ * $Header: /cvsroot/src/sys/arch/sun3/sun3/Attic/isr.c,v 1.7 1994/05/16 16:47:38 gwr Exp $
  */
 
 #include <sys/param.h>
@@ -218,6 +218,10 @@ void intrhand(sr)
 netintr()
 {
 #ifdef INET
+	if (netisr & (1 << NETISR_ARP)) {
+		netisr &= ~(1 << NETISR_ARP);
+		arpintr();
+	}
 	if (netisr & (1 << NETISR_IP)) {
 		netisr &= ~(1 << NETISR_IP);
 		ipintr();
