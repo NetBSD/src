@@ -1,4 +1,4 @@
-#	$NetBSD: files,v 1.432 2001/03/31 00:26:53 jdolecek Exp $
+#	$NetBSD: files,v 1.433 2001/04/11 03:43:23 thorpej Exp $
 
 #	@(#)files.newconf	7.5 (Berkeley) 5/10/93
 
@@ -627,6 +627,7 @@ defpseudo ppp: ifnet, bpf_filter
 defpseudo sppp: ifnet
 defpseudo tun: ifnet
 defpseudo vlan: ifnet, ether
+defpseudo bridge: ifnet, ether
 defpseudo bpfilter: ifnet, bpf_filter
 defpseudo strip: ifnet
 defpseudo ipfilter: ifnet
@@ -910,6 +911,8 @@ file	net/bsd-comp.c			ppp & ppp_bsdcomp
 file	net/if.c
 file	net/if_arcsubr.c		arc			needs-flag
 file	net/if_atmsubr.c		atm
+file	net/if_bridge.c			bridge			needs-flag
+file	net/bridgestp.c			bridge
 file	net/if_ethersubr.c		ether | fddi | netatalk | token |
 					    wlan | vlan
 file	net/if_faith.c			faith			needs-flag
