@@ -1,7 +1,7 @@
-/* $NetBSD: version.c,v 1.13 2003/06/01 14:07:09 atatat Exp $ */
+/* $NetBSD: version.c,v 1.14 2003/09/17 20:23:00 tron Exp $ */
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: version.c,v 1.13 2003/06/01 14:07:09 atatat Exp $");
+__RCSID("$NetBSD: version.c,v 1.14 2003/09/17 20:23:00 tron Exp $");
 #endif
 
 /*
@@ -21,4 +21,4 @@ __RCSID("$NetBSD: version.c,v 1.13 2003/06/01 14:07:09 atatat Exp $");
 
 SM_RCSID("@(#)Id: version.c,v 8.104.2.15 2003/03/19 21:19:53 ca Exp")
 
-char	Version[] = "8.12.9";
+char	Version[] = "8.12.9p1";
