@@ -1,4 +1,4 @@
-# $NetBSD: defs.mk,v 1.2 2003/11/10 21:59:58 matt Exp $
+# $NetBSD: defs.mk,v 1.3 2004/01/02 22:42:05 nathanw Exp $
 G_GDB_OBJS=\
 alpha-tdep.o \
 alphabsd-nat.o \
@@ -70,6 +70,7 @@ jv-exp.tab.o \
 jv-lang.o \
 jv-typeprint.o \
 jv-valprint.o \
+kcore-nbsd.o \
 kod-cisco.o \
 kod.o \
 language.o \
