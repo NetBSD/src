@@ -1,4 +1,4 @@
-/* $NetBSD: lkminit_exec.c,v 1.6 2001/12/08 00:37:14 thorpej Exp $ */
+/* $NetBSD: lkminit_exec.c,v 1.7 2002/01/04 06:51:02 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lkminit_exec.c,v 1.6 2001/12/08 00:37:14 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lkminit_exec.c,v 1.7 2002/01/04 06:51:02 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -68,7 +68,7 @@ static struct execsw exec_svr4_elf =
 	  SVR4_AUX_ARGSIZ,
 	  svr4_copyargs,
 	  NULL,
-	  coredump_netbsd };
+	  coredump_elf32 };
 #else
 	/* SVR4 Elf64 */
 	{ sizeof (Elf64_Ehdr),
@@ -78,7 +78,7 @@ static struct execsw exec_svr4_elf =
 	  SVR4_AUX_ARGSIZ64,
 	  svr4_copyargs64,
 	  NULL,
-	  coredump_netbsd };
+	  coredump_elf64 };
 #endif
 
 /*

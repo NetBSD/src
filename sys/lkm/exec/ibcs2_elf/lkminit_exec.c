@@ -1,4 +1,4 @@
-/* $NetBSD: lkminit_exec.c,v 1.5 2001/12/08 00:37:11 thorpej Exp $ */
+/* $NetBSD: lkminit_exec.c,v 1.6 2002/01/04 06:51:01 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lkminit_exec.c,v 1.5 2001/12/08 00:37:11 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lkminit_exec.c,v 1.6 2002/01/04 06:51:01 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -65,7 +65,7 @@ static struct execsw exec_ibcs2_elf =
 	  IBCS2_ELF_AUX_ARGSIZ,
 	  elf32_copyargs,
 	  NULL,
-	  coredump_netbsd };
+	  coredump_elf32 };
 
 /*
  * declare the exec
