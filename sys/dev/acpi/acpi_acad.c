@@ -1,4 +1,4 @@
-/*	$NetBSD: acpi_acad.c,v 1.15 2004/05/01 12:03:48 kochi Exp $	*/
+/*	$NetBSD: acpi_acad.c,v 1.16 2004/05/03 07:44:36 kochi Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -44,7 +44,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_acad.c,v 1.15 2004/05/01 12:03:48 kochi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_acad.c,v 1.16 2004/05/03 07:44:36 kochi Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -68,6 +68,7 @@ struct acpiacad_softc {
 	int sc_flags;			/* see below */
 
 	struct sysmon_envsys sc_sysmon;
+	struct sysmon_pswitch sc_smpsw;	/* our sysmon glue */
 	struct envsys_basic_info sc_info[ACPIACAD_NSENSORS];
 	struct envsys_tre_data sc_data[ACPIACAD_NSENSORS];
 
@@ -163,6 +164,14 @@ acpiacad_attach(struct device *parent, struct device *self, void *aux)
 	sc->sc_node = aa->aa_node;
 	simple_lock_init(&sc->sc_lock);
 
+	sc->sc_smpsw.smpsw_name = sc->sc_dev.dv_xname;
+	sc->sc_smpsw.smpsw_type = PSWITCH_TYPE_ACADAPTER;
+	if (sysmon_pswitch_register(&sc->sc_smpsw) != 0) {
+		printf("%s: unable to register with sysmon\n",
+		       sc->sc_dev.dv_xname);
+		return;
+	}
+
 	rv = AcpiInstallNotifyHandler(sc->sc_node->ad_handle,
 	    ACPI_DEVICE_NOTIFY, acpiacad_notify_handler, sc);
 	if (ACPI_FAILURE(rv)) {
@@ -210,6 +219,14 @@ acpiacad_get_status(void *arg)
 	sc->sc_data[ACPIACAD_DISCONNECTED].cur.data_s = !(status);
 	AACAD_SET(sc, AACAD_F_AVAILABLE);
 	AACAD_UNLOCK(sc, s);
+
+	/*
+	 * PSWITCH_EVENT_RELEASED : AC offline
+	 * PSWITCH_EVENT_PRESSED  : AC online
+	 */
+
+	sysmon_pswitch_event(&sc->sc_smpsw, status == 0 ?
+	    PSWITCH_EVENT_RELEASED : PSWITCH_EVENT_PRESSED);
 
 	if (AACAD_ISSET(sc, AACAD_F_VERBOSE))
 		printf("%s: AC adapter %sconnected\n",
