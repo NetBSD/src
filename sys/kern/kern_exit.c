@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_exit.c,v 1.100 2002/08/28 07:16:36 gmcgarry Exp $	*/
+/*	$NetBSD: kern_exit.c,v 1.101 2002/09/04 01:32:32 matt Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.
@@ -78,7 +78,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_exit.c,v 1.100 2002/08/28 07:16:36 gmcgarry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_exit.c,v 1.101 2002/09/04 01:32:32 matt Exp $");
 
 #include "opt_ktrace.h"
 #include "opt_perfctrs.h"
@@ -256,11 +256,11 @@ exit1(struct proc *p, int rv)
 	/*
 	 * Give orphaned children to init(8).
 	 */
-	q = p->p_children.lh_first;
+	q = LIST_FIRST(&p->p_children);
 	if (q)		/* only need this if any child is S_ZOMB */
 		wakeup((caddr_t)initproc);
 	for (; q != 0; q = nq) {
-		nq = q->p_sibling.le_next;
+		nq = LIST_NEXT(q, p_sibling);
 		proc_reparent(q, initproc);
 		/*
 		 * Traced processes are killed
@@ -326,7 +326,7 @@ exit1(struct proc *p, int rv)
 		 * parent, so in case he was wait(2)ing, he will
 		 * continue.
 		 */
-		if (pp->p_children.lh_first == NULL)
+		if (LIST_FIRST(&pp->p_children) == NULL)
 			wakeup((caddr_t)pp);
 	}
 
@@ -460,7 +460,7 @@ sys_wait4(struct proc *q, void *v, register_t *retval)
 
  loop:
 	nfound = 0;
-	for (p = q->p_children.lh_first; p != 0; p = p->p_sibling.le_next) {
+	LIST_FOREACH(p, &q->p_children, p_sibling) {
 		if (SCARG(uap, pid) != WAIT_ANY &&
 		    p->p_pid != SCARG(uap, pid) &&
 		    p->p_pgid != -SCARG(uap, pid))

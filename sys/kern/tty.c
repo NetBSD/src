@@ -1,4 +1,4 @@
-/*	$NetBSD: tty.c,v 1.140 2002/08/26 01:17:18 thorpej Exp $	*/
+/*	$NetBSD: tty.c,v 1.141 2002/09/04 01:32:43 matt Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1990, 1991, 1993
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tty.c,v 1.140 2002/08/26 01:17:18 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tty.c,v 1.141 2002/09/04 01:32:43 matt Exp $");
 
 #include "opt_uconsole.h"
 
@@ -1935,11 +1935,11 @@ ttyinfo(struct tty *tp)
 		ttyprintf(tp, "not a controlling terminal\n");
 	else if (tp->t_pgrp == NULL)
 		ttyprintf(tp, "no foreground process group\n");
-	else if ((p = tp->t_pgrp->pg_members.lh_first) == 0)
+	else if ((p = LIST_FIRST(&tp->t_pgrp->pg_members)) == 0)
 		ttyprintf(tp, "empty foreground process group\n");
 	else {
 		/* Pick interesting process. */
-		for (pick = NULL; p != NULL; p = p->p_pglist.le_next)
+		for (pick = NULL; p != NULL; p = LIST_NEXT(p, p_pglist))
 			if (proc_compare(pick, p))
 				pick = p;
 

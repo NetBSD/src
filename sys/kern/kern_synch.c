@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_synch.c,v 1.111 2002/08/07 11:13:40 briggs Exp $	*/
+/*	$NetBSD: kern_synch.c,v 1.112 2002/09/04 01:32:39 matt Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
@@ -78,7 +78,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_synch.c,v 1.111 2002/08/07 11:13:40 briggs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_synch.c,v 1.112 2002/09/04 01:32:39 matt Exp $");
 
 #include "opt_ddb.h"
 #include "opt_ktrace.h"
@@ -253,7 +253,7 @@ schedcpu(void *arg)
 	int clkhz;
 
 	proclist_lock_read();
-	for (p = allproc.lh_first; p != 0; p = p->p_list.le_next) {
+	LIST_FOREACH(p, &allproc, p_list) {
 		/*
 		 * Increment time in/out of memory and sleep time
 		 * (if sleeping).  We ignore overflow; with 16-bit int's
