@@ -1,4 +1,4 @@
-/*	$NetBSD: bootparamd.c,v 1.9 1996/10/14 19:28:09 cgd Exp $	*/
+/*	$NetBSD: bootparamd.c,v 1.10 1996/12/08 13:44:26 mycroft Exp $	*/
 
 /*
  * This code is not copyright, and is placed in the public domain.
@@ -13,14 +13,20 @@
 #include <sys/ioctl.h>
 #include <sys/stat.h>
 #include <sys/socket.h>
+
+#include <ctype.h>
+#include <err.h>
+#include <netdb.h>
+#include <stdio.h>
+#include <string.h>
+#include <syslog.h>
+
+#include <netinet/in.h>
+#include <arpa/inet.h>
+
 #include <rpc/rpc.h>
 #include <rpcsvc/bootparam_prot.h>
-#include <stdio.h>
-#include <netdb.h>
-#include <ctype.h>
-#include <syslog.h>
-#include <string.h>
-#include <arpa/inet.h>
+
 #include "pathnames.h"
 
 #define MAXLEN 800
@@ -48,6 +54,7 @@ usage()
 {
 	fprintf(stderr,
 	    "usage: rpc.bootparamd [-d] [-s] [-r router] [-f bootparmsfile]\n");
+	exit(1);
 }
 
 
@@ -82,10 +89,8 @@ main(argc, argv)
 			}
 			he = gethostbyname(optarg);
 			if (!he) {
-				fprintf(stderr, "%s: No such host %s\n",
-				    progname, optarg);
+				warnx("no such host: %s\n", optarg);
 				usage();
-				exit(1);
 			}
 			bcopy(he->h_addr, (char *) &route_addr, sizeof(route_addr));
 			break;
@@ -103,38 +108,33 @@ main(argc, argv)
 			break;
 		default:
 			usage();
-			exit(1);
 		}
 
-	if (stat(bootpfile, &buf)) {
-		fprintf(stderr, "%s: ", progname);
-		perror(bootpfile);
-		exit(1);
-	}
+	if (stat(bootpfile, &buf))
+		err(1, "%s", bootpfile);
+
 	if (!route_addr) {
 		get_myaddress(&my_addr);
 		bcopy(&my_addr.sin_addr.s_addr, &route_addr, sizeof(route_addr));
 	}
-	if (!debug)
-		daemon();
+	if (!debug) {
+		if (daemon(0, 0))
+			err(1, "can't detach from terminal");
+	}
 
 	(void) pmap_unset(BOOTPARAMPROG, BOOTPARAMVERS);
 
 	transp = svcudp_create(RPC_ANYSOCK);
-	if (transp == NULL) {
-		fprintf(stderr, "cannot create udp service.\n");
-		exit(1);
-	}
-	if (!svc_register(transp, BOOTPARAMPROG, BOOTPARAMVERS,
-		bootparamprog_1, IPPROTO_UDP)) {
-		fprintf(stderr,
-		    "bootparamd: unable to register BOOTPARAMPROG version %d, udp)\n",
+	if (transp == NULL)
+		errx(1, "can't create udp service");
+
+	if (!svc_register(transp, BOOTPARAMPROG, BOOTPARAMVERS, bootparamprog_1,
+	    IPPROTO_UDP))
+		errx(1, "unable to register BOOTPARAMPROG version %d, udp",
 		    BOOTPARAMVERS);
-		exit(1);
-	}
+
 	svc_run();
-	fprintf(stderr, "svc_run returned\n");
-	exit(1);
+	errx(1, "svc_run returned");
 }
 
 bp_whoami_res *
@@ -148,7 +148,7 @@ bootparamproc_whoami_1_svc(whoami, rqstp)
 	long    haddr;
 
 	if (debug)
-		fprintf(stderr, "whoami got question for %d.%d.%d.%d\n",
+		warnx("whoami got question for %d.%d.%d.%d\n",
 		    255 & whoami->client_address.bp_address_u.ip_addr.net,
 		    255 & whoami->client_address.bp_address_u.ip_addr.host,
 		    255 & whoami->client_address.bp_address_u.ip_addr.lh,
@@ -171,7 +171,7 @@ bootparamproc_whoami_1_svc(whoami, rqstp)
 	}
 
 	if (debug)
-		fprintf(stderr, "This is host %s\n", askname);
+		warnx("This is host %s\n", askname);
 	if (dolog)
 		syslog(LOG_NOTICE, "This is host %s\n", askname);
 
@@ -185,7 +185,7 @@ bootparamproc_whoami_1_svc(whoami, rqstp)
 			bcopy(&route_addr, &res.router_address.bp_address_u.ip_addr, 4);
 		}
 		if (debug)
-			fprintf(stderr, "Returning %s   %s    %d.%d.%d.%d\n",
+			warnx("Returning %s   %s    %d.%d.%d.%d\n",
 			    res.client_name, res.domain_name,
 			    255 & res.router_address.bp_address_u.ip_addr.net,
 			    255 & res.router_address.bp_address_u.ip_addr.host,
@@ -202,7 +202,7 @@ bootparamproc_whoami_1_svc(whoami, rqstp)
 		return (&res);
 	}
 	if (debug)
-		fprintf(stderr, "whoami failed\n");
+		warnx("whoami failed\n");
 	if (dolog)
 		syslog(LOG_NOTICE, "whoami failed\n");
 	return (NULL);
@@ -219,7 +219,7 @@ bootparamproc_getfile_1_svc(getfile, rqstp)
 	int     err;
 
 	if (debug)
-		fprintf(stderr, "getfile got question for \"%s\" and file \"%s\"\n",
+		warnx("getfile got question for \"%s\" and file \"%s\"\n",
 		    getfile->client_name, getfile->file_id);
 
 	if (dolog)
@@ -248,7 +248,7 @@ bootparamproc_getfile_1_svc(getfile, rqstp)
 	} else {
 failed:
 		if (debug)
-			fprintf(stderr, "getfile failed for %s\n",
+			warnx("getfile failed for %s\n",
 			    getfile->client_name);
 		if (dolog)
 			syslog(LOG_NOTICE,
@@ -257,7 +257,7 @@ failed:
 	}
 
 	if (debug)
-		fprintf(stderr,
+		warnx(
 		    "returning server:%s path:%s address: %d.%d.%d.%d\n",
 		    res.server_name, res.server_path,
 		    255 & res.server_address.bp_address_u.ip_addr.net,
