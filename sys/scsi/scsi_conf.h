@@ -1,4 +1,4 @@
-/*	$NetBSD: scsi_conf.h,v 1.1 1996/02/14 21:47:19 christos Exp $	*/
+/*	$NetBSD: scsi_conf.h,v 1.2 1996/02/18 20:32:41 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1995 Christos Zoulas.  All rights reserved.
@@ -33,6 +33,9 @@
 
 #include "ch.h"
 cdev_decl(ch);
+
+#include "ss.h"
+cdev_decl(ss);
 
 #include "sd.h"
 bdev_decl(sd);
