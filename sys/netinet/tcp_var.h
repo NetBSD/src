@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_var.h,v 1.25.2.2 1998/01/29 10:34:43 mellon Exp $	*/
+/*	$NetBSD: tcp_var.h,v 1.25.2.3 1998/05/05 23:02:34 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1993, 1994, 1995
@@ -386,6 +386,7 @@ void	 tcp_mtudisc __P((struct inpcb *, int));
 struct tcpcb *
 	 tcp_newtcpcb __P((struct inpcb *));
 void	 tcp_notify __P((struct inpcb *, int));
+u_int	 tcp_optlen __P((struct tcpcb *));
 int	 tcp_output __P((struct tcpcb *));
 void	 tcp_pulloutofband __P((struct socket *,
 	    struct tcpiphdr *, struct mbuf *));
