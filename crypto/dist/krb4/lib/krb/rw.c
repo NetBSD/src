@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1995, 1996, 1997, 1998 Kungliga Tekniska Högskolan
+ * Copyright (c) 1995 - 2000 Kungliga Tekniska Högskolan
  * (Royal Institute of Technology, Stockholm, Sweden).
  * All rights reserved.
  * 
@@ -39,7 +39,7 @@
 
 #include "krb_locl.h"
 
-RCSID("$Id: rw.c,v 1.2 2000/07/15 00:40:37 thorpej Exp $");
+RCSID("$Id: rw.c,v 1.3 2000/12/29 01:52:14 assar Exp $");
 
 int
 krb_get_int(void *f, u_int32_t *to, int size, int lsb)
@@ -110,14 +110,17 @@ krb_get_string(void *from, char *to, size_t to_size)
 }
 
 int
-krb_get_nir(void *from, char *name, char *instance, char *realm)
+krb_get_nir(void *from,
+	    char *name, size_t name_len,
+	    char *instance, size_t instance_len,
+	    char *realm, size_t realm_len)
 {
     char *p = (char *)from;
 
-    p += krb_get_string(p, name, ANAME_SZ);
-    p += krb_get_string(p, instance, INST_SZ);
+    p += krb_get_string(p, name, name_len);
+    p += krb_get_string(p, instance, instance_len);
     if(realm)
-	p += krb_get_string(p, realm, REALM_SZ);
+	p += krb_get_string(p, realm, realm_len);
     return p - (char *)from;
 }
 
