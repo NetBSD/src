@@ -69,3 +69,7 @@ rarpd to open extra BPF's.
 
 [kernel/i386]: Fix register constraints so gcc-2.7.2 can be used to
 build kernels.
+
+[amiga]: Fix documentation about CPU support: we don't support 68060, only
+68020, 68030 and 68040.
+
