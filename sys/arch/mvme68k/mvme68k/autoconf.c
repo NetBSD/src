@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.26 2000/07/25 20:52:30 scw Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.27 2000/09/06 19:51:44 scw Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -70,7 +70,7 @@
 #ifdef MVME147
 #include <mvme68k/dev/pccreg.h>
 #endif
-#if defined(MVME167) || defined(MVME177)
+#if defined(MVME162) || defined(MVME167) || defined(MVME177)
 #include <mvme68k/dev/pcctworeg.h>
 #endif
 
@@ -153,11 +153,12 @@ device_register(dev, aux)
 			break;
 #endif /* MVME_147 */
 
-#if defined(MVME167) || defined(MVME177)
+#if defined(MVME162) || defined(MVME167) || defined(MVME177)
+		case MVME_162:
 		case MVME_167:
 		case MVME_177:
 			/*
-			 * We currently only support booting from the 167's
+			 * We currently only support booting from the 16x and 17x
 			 * onboard scsi and ethernet. So ensure this
 			 * device's parent is the PCCTWO driver.
 			 */
@@ -178,7 +179,7 @@ device_register(dev, aux)
 			}
 
 			break;
-#endif /* MVME_167 || MVME_177 */
+#endif /* MVME_162 || MVME_167 || MVME_177 */
 
 		default:
 			break;

@@ -1,4 +1,4 @@
-/*	$NetBSD: ncrsc_pcctwo.c,v 1.5 2000/07/25 20:52:28 scw Exp $ */
+/*	$NetBSD: ncrsc_pcctwo.c,v 1.6 2000/09/06 19:51:43 scw Exp $ */
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -168,10 +168,7 @@ ncrsc_pcctwo_attach(parent, self, args)
 	siopinitialize(sc);
 
 	/* Hook the chip's interrupt */
-	pcc2_reg_write(sys_pcctwo, PCC2REG_SCSI_ICSR, 0);
 	pcctwointr_establish(PCCTWOV_SCSI, ncrsc_pcctwo_intr, pa->pa_ipl, sc);
-	pcc2_reg_write(sys_pcctwo, PCC2REG_SCSI_ICSR,
-	    pa->pa_ipl | PCCTWO_ICR_IEN);
 
 	(void) config_found(self, &sc->sc_link, scsiprint);
 }

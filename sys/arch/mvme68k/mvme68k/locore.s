@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.63 2000/08/20 21:50:10 thorpej Exp $	*/
+/*	$NetBSD: locore.s,v 1.64 2000/09/06 19:51:44 scw Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -254,11 +254,14 @@ Lnot147:
 	/* MVME-162 - 68040 CPU/MMU/FPU */
 	cmpw	#MVME_162,d0
 	jne	Lnot162
+	btst	#6,0xfff4202e		| MVME162LX 200/300 ?
+	jeq	Lnotyet			| We don't support any others
+
 	RELOC(mmutype,a0)
 	movl	#MMU_68040,a0@
 	RELOC(cputype,a0)
 	movl	#CPU_68040,a0@
-	RELOC(fputype,a0)
+	RELOC(fputype,a0)		| XXX What about FPU-less version?
 	movl	#FPU_68040,a0@
 	RELOC(vectab,a0)
 	RELOC(buserr40,a1)
@@ -266,12 +269,49 @@ Lnot147:
 	movl	a1,a0@(8)
 	movl	a2,a0@(12)
 
-#if 1	/* XXX */
-	jra	Lnotyet
-#else
-	/* XXX more XXX */
-	jra	Lstart1
-#endif
+	/*
+	 * Determine if this board has a VMEchip2
+	 */
+	btst	#1,0xfff4202e		| VMEchip2 presence detect
+	jne	1f			| Jump if it doesn't exist.
+
+	/*
+	 * Disable all interrupts from VMEchip2. This is especially
+	 * useful when the kernel doesn't have the VMEchip2 driver
+	 * configured. If we didn't do this, then we're at the mercy
+	 * of whatever VMEchip2 interrupts the ROM set up. For example,
+	 * hitting the ABORT switch could kill the system...
+	 */
+	movl	0xfff40088,d0
+	andl	#0xff7fffff,d0		| Clear 'MIEN'
+	movl	d0,0xfff40088
+1:
+	/*
+	 * Determine how much onboard memory is installed
+	 */
+	movql	#0x07,d0
+	andb	0xfff42024,d0
+	lea	Ldramsize162,a0
+	movl	a0@(d0:w:4),d1		| Lookup the size
+	jeq	Lmemcquery		| Assume a MEMC chip if this is zero.
+	jra	Lis16x_common
+
+	.data
+	.even
+	/*
+	 * Table of DRAM register size values -> actual size in bytes
+	 */
+Ldramsize162:
+	.long	0x00100000
+	.long	0x00200000
+	.long	0x00000000
+	.long	0x00400000
+	.long	0x00400000
+	.long	0x00800000
+	.long	0x00000000
+	.long	0x01000000
+	.text
+
 Lnot162:
 #endif
 
@@ -294,12 +334,6 @@ Lis167:
 	movl	a1,a0@(8)
 	movl	a2,a0@(12)
 
-	/* Save our ethernet address */
-	movel	0xfffc1f2e,d0
-	lsll	#8,d0
-	RELOC(myea, a0)
-	movl	d0,a0@
-
 	/*
 	 * Disable all interrupts from VMEchip2. This is especially
 	 * useful when the kernel doesn't have the VMEchip2 driver
@@ -310,16 +344,10 @@ Lis167:
 	movl	0xfff40088,d0
 	andl	#0xff7fffff,d0		| Clear 'MIEN'
 	movl	d0,0xfff40088
+#endif
 
-	/*
-	 * Fix up the physical addresses of the MVME167's onboard
-	 * I/O registers.
-	 */
-	RELOC(intiobase_phys, a0);
-	movl	#INTIOBASE167,a0@
-	RELOC(intiotop_phys, a0);
-	movl	#INTIOTOP167,a0@
-
+#if defined(MVME167) || defined(MVME162)
+Lmemcquery:
 	/*
 	 * Figure out the size of onboard DRAM by querying
 	 * the memory controller ASIC(s)
@@ -338,6 +366,23 @@ Lis167:
 	bsr	memc040read
 	addl	d0,d1
 #endif
+
+Lis16x_common:
+	/* Save our ethernet address */
+	movel	0xfffc1f2e,d0
+	lsll	#8,d0
+	RELOC(myea, a0)
+	movl	d0,a0@
+
+	/*
+	 * Fix up the physical addresses of the MVME167's onboard
+	 * I/O registers.
+	 */
+	RELOC(intiobase_phys, a0);
+	movl	#INTIOBASE167,a0@
+	RELOC(intiotop_phys, a0);
+	movl	#INTIOTOP167,a0@
+
 	/*
 	 * Initialise first physical memory segment with onboard RAM details
 	 */
@@ -346,10 +391,37 @@ Lis167:
 	movl	d1,a0@(4)		| phys_seg_list[0].ps_end
 	clrl	a0@(8)			| phys_seg_list[0].ps_startpage
 
-	/* No offboard RAM (yet) */
+	/* offboard RAM */
 	clrl	a0@(0x0c)		| phys_seg_list[1].ps_start
-	clrl	a0@(0x10)		| phys_seg_list[1].ps_end
+	movl	#NBPG-1,d0
+	addl	0xfffc0000,d0		| Start of offboard segment
+	andl	#-NBPG,d0		| Round up to page boundary
+	beq	Ldone167		| Jump if none defined
+	movl	#NBPG,d1		| Note: implicit '+1'
+	addl	0xfffc0004,d1		| End of offboard segment
+	andl	#-NBPG,d1		| Round up to page boundary
+	cmpl	d1,d0			| Quick and dirty validity check
+	bcss	Lramsave167		| Yup, looks good.
+	movel	a0@(4),d1		| Just use onboard RAM otherwise
+	bras	Ldone167
 
+Lramsave167:
+	movl	d0,a0@(0x0c)		| phys_seg_list[1].ps_start
+	movl	d1,a0@(0x10)		| phys_seg_list[1].ps_end
+	clrl	a0@(0x14)		| phys_seg_list[1].ps_startpage
+
+	/*
+	 * Offboard RAM needs to be cleared to zero to initialise parity
+	 * on most VMEbus RAM cards. Without this, some cards will buserr
+	 * when first read.
+	 */
+	movel	d0,a0			| offboard start address again.
+Lramclr167:
+	clrl	a0@+			| zap a word
+	cmpl	a0,d1			| reached end?
+	bnes	Lramclr167
+
+Ldone167:
 	moveq	#PGSHIFT,d2
 	lsrl	d2,d1			| convert to page (click) number
 	RELOC(maxmem, a0)

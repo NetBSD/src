@@ -1,4 +1,4 @@
-/*	$NetBSD: pcctworeg.h,v 1.5 2000/07/25 20:52:28 scw Exp $ */
+/*	$NetBSD: pcctworeg.h,v 1.6 2000/09/06 19:51:44 scw Exp $ */
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -58,6 +58,12 @@
 #define PCCTWO_RTC_OFF      0x7fff8	/* Offset of MK48T18 RTC registers */
 
 /*
+ * The two devices on mvme162's MCchip
+ */
+#define MCCHIP_ZS0_OFF      0x03000
+#define MCCHIP_ZS1_OFF      0x03800
+
+/*
  * This is needed to figure out the boot device.
  * (The physical address of the boot device's registers are passed in
  * from the Boot ROM)
@@ -109,7 +115,43 @@
 #define	PCC2REG_IRQ_LEVEL	0x3e	/* Interrupt Priority Level */
 #define	PCC2REG_IRQ_MASK	0x3f	/* Interrupt Mask */
 
-#define PCC2REG_SIZE		0x40
+/*
+ * Additions to the registers for the MCChip. Some of these overlap with
+ * the PCCchip2's registers, but only where hardware is not present, eg.
+ * the printer registers.
+ */
+#define	MCCHIPREG_TIMER4_ICSR	0x18	/* Tick timer 4 interrupt control */
+#define	MCCHIPREG_TIMER3_ICSR	0x19	/* Tick timer 4 interrupt control */
+#define	MCCHIPREG_PARERR_ICSR	0x1c	/* Parity error interrupt control */
+#define	MCCHIPREG_SCC_ICSR	0x1d	/* ZS-85230 interrupt control */
+#define	MCCHIPREG_TIMER4_CTRL	0x1e	/* Tick timer 4 control */
+#define	MCCHIPREG_TIMER3_CTRL	0x1f	/* Tick timer 3 control */
+#define	MCCHIPREG_DRAM_BAR	0x20	/* DRAM Base Address (16-bits) */
+#define	MCCHIPREG_SRAM_BAR	0x22	/* SRAM Base Address (16-bits) */
+#define	MCCHIPREG_DRAM_SIZE	0x24	/* DRAM Size */
+#define	MCCHIPREG_RAM_OPTIONS	0x25	/* DRAM/SRAM Options */
+#define	MCCHIPREG_SRAM_SIZE	0x26	/* SRAM Size */
+#define	MCCHIPREG_GP_INPUTS	0x2d	/* General Purpose Inputs */
+#define	MCCHIPREG_162_VERSION	0x2e	/* MVME162-LX Series Version */
+#define	MCCHIPREG_TIMER3_COMP	0x30	/* Tick Timer 3 Compare (32-bit) */
+#define	MCCHIPREG_TIMER3_CNTR	0x34	/* Tick Timer 3 Counter (32-bit) */
+#define	MCCHIPREG_TIMER4_COMP	0x38	/* Tick Timer 4 Compare (32-bit) */
+#define	MCCHIPREG_TIMER4_CNTR	0x3c	/* Tick Timer 4 Counter (32-bit) */
+#define	MCCHIPREG_BUS_CLOCK	0x40	/* Bus Clock */
+#define	MCCHIPREG_EPROM_TIMING	0x41	/* EPROM Access Time Control */
+#define	MCCHIPREG_FLASH_TIMING	0x42	/* FLASH Access Time Control */
+#define	MCCHIPREG_ABORT_ICSR	0x43	/* ABORT Switch Interrupt Control */
+#define	MCCHIPREG_RESET_CONTROL	0x44	/* Reset Switch Control */
+#define	MCCHIPREG_WDOG_CONTROL	0x45	/* Watchdog Timer Control */
+#define	MCCHIPREG_TIMEBASE_SEL	0x46	/* Access & Watchdog Timebase Select */
+#define	MCCHIPREG_DRAM_CONTROL	0x48	/* Parity DRAM Control */
+#define	MCCHIPREG_MPU_STATUS	0x4a	/* MPU Status */
+#define	MCCHIPREG_PRESCALER	0x4c	/* Prescaler Count Register (32-bits) */
+
+/*
+ * PCCchip2's register size is 0x40. MCchip's is 0x50. Plump for the latter.
+ */
+#define PCC2REG_SIZE		0x50
 
 /*
  * Convenience macroes for accessing the PCCChip2's registers
@@ -134,12 +176,14 @@
  * its control. The second is written to the CD2401's Local Interrupt
  * Vector Register. Thus, we don't use the Auto-Vector facilities
  * for the CD2401, as recommended in the PCCChip2 Programmer's Guide.
+ * The third is used as a base for the ZS85230 serial chips on mvme162.
  */
 #define PCCTWO_VECBASE		0x50
 #define PCCTWO_SCC_VECBASE	0x5c
+#define MCCHIP_ZS_VECBASE	0x5c
 
 /*
- * Vector Encoding (Offsets from PCCTWO_VECBASE)
+ * PCCchip2 Vector Encoding (Offsets from PCCTWO_VECBASE)
  * The order 0x0 -> 0xf also indicates priority, with 0x0 lowest.
  */
 #define PCCTWOV_PRT_BUSY	0x0	/* Printer Port 'BSY' */
@@ -158,6 +202,22 @@
 #define PCCTWOV_SCC_TX		0xe	/* SCC Tx (Non-Auto-vector mode) */
 #define PCCTWOV_SCC_RX		0xf	/* SCC Rx (Non-Auto-vector mode) */
 #define PCCTWOV_MAX		16
+
+/*
+ * MCchip-specific Vector Encoding (Offsets from PCCTWO_VECBASE)
+ */
+#define MCCHIPV_TIMER4		0x3	/* Tick Timer 4 Interrupt */
+#define MCCHIPV_TIMER3		0x4	/* Tick Timer 3 Interrupt */
+#define MCCHIPV_PARITY_ERR	0xb	/* Parity DRAM Error Exception */
+#define MCCHIPV_ZS0		0xc	/* First ZS85230 Interrupt Vector */
+#define MCCHIPV_ZS1		0xc	/* Second ZS85230 Interrupt Vector */
+#define MCCHIPV_ABORT		0xe	/* Abort Switch */
+
+/*
+ * How to identify the PCCchip2 from an MCchip
+ */
+#define PCCTWO_CHIP_ID_PCC2	0x20
+#define PCCTWO_CHIP_ID_MCCHIP	0x84
 
 
 /*
