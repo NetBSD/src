@@ -1,4 +1,4 @@
-/*	$NetBSD: mktemp.c,v 1.5 1995/02/02 02:10:09 jtc Exp $	*/
+/*	$NetBSD: mktemp.c,v 1.6 1997/03/16 05:00:38 lukem Exp $	*/
 
 /*
  * Copyright (c) 1987, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)mktemp.c	8.1 (Berkeley) 6/4/93";
 #endif
-static char rcsid[] = "$NetBSD: mktemp.c,v 1.5 1995/02/02 02:10:09 jtc Exp $";
+static char rcsid[] = "$NetBSD: mktemp.c,v 1.6 1997/03/16 05:00:38 lukem Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 #include <sys/types.h>
@@ -60,10 +60,20 @@ mkstemp(path)
 }
 
 char *
+_mktemp(path)
+	char *path;
+{
+	return (_gettemp(path, (int *)NULL) ? path : (char *)NULL);
+}
+
+__warn_references(mktemp,
+    "warning: mktemp() possibly used unsafely, consider using mkstemp()");
+
+char *
 mktemp(path)
 	char *path;
 {
-	return(_gettemp(path, (int *)NULL) ? path : (char *)NULL);
+	return (_mktemp(path));
 }
 
 static int
@@ -93,10 +103,10 @@ _gettemp(path, doopen)
 		if (*trv == '/') {
 			*trv = '\0';
 			if (stat(path, &sbuf))
-				return(0);
+				return (0);
 			if (!S_ISDIR(sbuf.st_mode)) {
 				errno = ENOTDIR;
-				return(0);
+				return (0);
 			}
 			*trv = '/';
 			break;
@@ -107,17 +117,17 @@ _gettemp(path, doopen)
 		if (doopen) {
 			if ((*doopen =
 			    open(path, O_CREAT|O_EXCL|O_RDWR, 0600)) >= 0)
-				return(1);
+				return (1);
 			if (errno != EEXIST)
-				return(0);
+				return (0);
 		}
 		else if (stat(path, &sbuf))
-			return(errno == ENOENT ? 1 : 0);
+			return (errno == ENOENT ? 1 : 0);
 
 		/* tricky little algorithm for backward compatibility */
 		for (trv = start;;) {
 			if (!*trv)
-				return(0);
+				return (0);
 			if (*trv == 'z')
 				*trv++ = 'a';
 			else {
