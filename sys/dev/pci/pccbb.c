@@ -1,4 +1,4 @@
-/*	$NetBSD: pccbb.c,v 1.25 2000/02/22 02:35:26 enami Exp $	*/
+/*	$NetBSD: pccbb.c,v 1.26 2000/02/23 07:28:54 haya Exp $	*/
 
 /*
  * Copyright (c) 1998, 1999 and 2000
@@ -130,9 +130,13 @@ static int pccbb_mem_open __P((cardbus_chipset_tag_t, int, u_int32_t,
     u_int32_t));
 static int pccbb_mem_close __P((cardbus_chipset_tag_t, int));
 #endif /* !rbus */
-static void *pccbb_intr_establish __P((cardbus_chipset_tag_t, int irq,
+static void *pccbb_intr_establish __P((struct pccbb_softc *, int irq,
     int level, int (*ih) (void *), void *sc));
-static void pccbb_intr_disestablish __P((cardbus_chipset_tag_t ct, void *ih));
+static void pccbb_intr_disestablish __P((struct pccbb_softc *, void *ih));
+
+static void *pccbb_cb_intr_establish __P((cardbus_chipset_tag_t, int irq,
+    int level, int (*ih) (void *), void *sc));
+static void pccbb_cb_intr_disestablish __P((cardbus_chipset_tag_t ct, void *ih));
 
 static cardbustag_t pccbb_make_tag __P((cardbus_chipset_tag_t, int, int, int));
 static void pccbb_free_tag __P((cardbus_chipset_tag_t, cardbustag_t));
@@ -228,8 +232,8 @@ static struct pcmcia_chip_functions pccbb_pcmcia_funcs = {
 static struct cardbus_functions pccbb_funcs = {
 	pccbb_rbus_cb_space_alloc,
 	pccbb_rbus_cb_space_free,
-	pccbb_intr_establish,
-	pccbb_intr_disestablish,
+	pccbb_cb_intr_establish,
+	pccbb_cb_intr_disestablish,
 	pccbb_ctrl,
 	pccbb_power,
 	pccbb_make_tag,
@@ -245,8 +249,8 @@ static struct cardbus_functions pccbb_funcs = {
 	pccbb_mem_close,
 	pccbb_io_open,
 	pccbb_io_close,
-	pccbb_intr_establish,
-	pccbb_intr_disestablish,
+	pccbb_cb_intr_establish,
+	pccbb_cb_intr_disestablish,
 	pccbb_make_tag,
 	pccbb_conf_read,
 	pccbb_conf_write,
@@ -507,6 +511,21 @@ pccbbattach(parent, self, aux)
 #endif
 }
 
+
+
+
+/*
+ * static void pccbb_pci_callback(struct device *self)
+ *
+ *   The actual attach routine: get memory space for YENTA register
+ *   space, setup YENTA register and route interrupt.
+ *
+ *   This function should be deferred because this device may obtain
+ *   memory space dynamically.  This function must avoid obtaining
+ *   memory area which has already kept for another device.  Also,
+ *   this function MUST be done before ISA attach process because this
+ *   function kills pcic compatible port used by ISA pcic.
+ */
 static void
 pccbb_pci_callback(self)
 	struct device *self;
@@ -650,6 +669,20 @@ pccbb_pci_callback(self)
 	return;
 }
 
+
+
+
+
+/*
+ * static void pccbb_chipinit(struct pccbb_softc *sc)
+ *
+ *   This function initialise YENTA chip registers listed below:
+ *     1) PCI command reg,
+ *     2) PCI and CardBus latency timer,
+ *     3) disable legacy (PCIC-compatible) io,
+ *     4) route PCI interrupt,
+ *     5) close all memory and io windows.
+ */
 static void
 pccbb_chipinit(sc)
 	struct pccbb_softc *sc;
@@ -778,10 +811,10 @@ pccbb_chipinit(sc)
 		cbctrl &= ~PCI12XX_CBCTRL_INT_MASK;	/* intr routing reset */
 		pci_conf_write(pc, tag, PCI_CBCTRL, cbctrl);
 		/* 
-		 * set ExCA regs: PCI12XX required to be set bit 4 at Interrupt
-		 * and General Register, which is IRQ Enable Register, and clear
-		 * bit 3:0 to zero in order to route CSC interrupt to PCI
-		 * interrupt pin.
+		 * set ExCA regs: PCI12XX required to be set bit 4 at
+		 * Interrupt and General Register, which is IRQ Enable
+		 * Register, and clear bit 3:0 to zero in order to
+		 * route CSC interrupt to PCI interrupt pin.
 		 */
 		bus_space_write_1(base_memt, base_memh, 0x0803, 0x10);
 		/* set ExCA regs: prohibit all pcmcia-style CSC intr. */
@@ -818,8 +851,14 @@ pccbb_chipinit(sc)
 	return;
 }
 
+
+
+
 /*
- * attach pccard bus
+ * STATIC void pccbb_pcmcia_attach_setup(struct pccbb_softc *sc,
+ *					 struct pcmciabus_attach_args *paa)
+ *
+ *   This function attaches 16-bit PCcard bus.
  */
 STATIC void
 pccbb_pcmcia_attach_setup(sc, paa)
@@ -1542,7 +1581,50 @@ pccbb_mem_close(ct, win)
 #endif
 
 /*
- * static void *pccbb_intr_establish(cardbus_chipset_tag_t ct,
+ * static void *pccbb_cb_intr_establish(cardbus_chipset_tag_t ct,
+ *					int irq,
+ *					int level,
+ *					int (* func) __P((void *)),
+ *					void *arg)
+ *
+ *   This function registers an interrupt handler at the bridge, in
+ *   order not to call the interrput handlers of child devices when
+ *   a card-deletion interrput occurs.
+ *
+ *   The arguments irq and level are not used.
+ */
+static void *
+pccbb_cb_intr_establish(ct, irq, level, func, arg)
+	cardbus_chipset_tag_t ct;
+	int irq, level;
+	int (*func) __P((void *));
+	void *arg;
+{
+	struct pccbb_softc *sc = (struct pccbb_softc *)ct;
+
+	return pccbb_intr_establish(sc, irq, level, func, arg);
+}
+
+
+/*
+ * static void *pccbb_cb_intr_disestablish(cardbus_chipset_tag_t ct,
+ *					   void *ih)
+ *
+ *   This function removes an interrupt handler pointed by ih.
+ */
+static void
+pccbb_cb_intr_disestablish(ct, ih)
+	cardbus_chipset_tag_t ct;
+	void *ih;
+{
+	struct pccbb_softc *sc = (struct pccbb_softc *)ct;
+
+	pccbb_intr_disestablish(sc, ih);
+}
+
+
+/*
+ * static void *pccbb_intr_establish(struct pccbb_softc *sc,
  *				     int irq,
  *				     int level,
  *				     int (* func) __P((void *)),
@@ -1555,14 +1637,15 @@ pccbb_mem_close(ct, win)
  *   The arguments irq and level are not used.
  */
 static void *
-pccbb_intr_establish(ct, irq, level, func, arg)
-	cardbus_chipset_tag_t ct;
+pccbb_intr_establish(sc, irq, level, func, arg)
+	struct pccbb_softc *sc;
 	int irq, level;
 	int (*func) __P((void *));
 	void *arg;
 {
-	struct pccbb_softc *sc = (struct pccbb_softc *)ct;
 	struct pccbb_intrhand_list *pil, *newpil;
+
+	DPRINTF(("pccbb_intr_establish start. %p\n", sc->sc_pil));
 
 	if (sc->sc_pil == NULL) {
 		/* initialise bridge intr routing */
@@ -1605,22 +1688,25 @@ pccbb_intr_establish(ct, irq, level, func, arg)
 		pil->pil_next = newpil;
 	}
 
+	DPRINTF(("pccbb_intr_establish add pil. %p\n", sc->sc_pil));
+
 	return newpil;
 }
 
 /*
- * static void *pccbb_intr_disestablish(cardbus_chipset_tag_t ct,
+ * static void *pccbb_intr_disestablish(struct pccbb_softc *sc,
  *					void *ih)
  *
  *   This function removes an interrupt handler pointed by ih.
  */
 static void
-pccbb_intr_disestablish(ct, ih)
-	cardbus_chipset_tag_t ct;
+pccbb_intr_disestablish(sc, ih)
+	struct pccbb_softc *sc;
 	void *ih;
 {
-	struct pccbb_softc *sc = (struct pccbb_softc *)ct;
 	struct pccbb_intrhand_list *pil, **pil_prev;
+
+	DPRINTF(("pccbb_intr_disestablish start. %p\n", sc->sc_pil));
 
 	pil_prev = &sc->sc_pil;
 
@@ -1628,6 +1714,7 @@ pccbb_intr_disestablish(ct, ih)
 		if (pil == ih) {
 			*pil_prev = pil->pil_next;
 			free(pil, M_DEVBUF);
+			DPRINTF(("pccbb_intr_disestablish frees one pil\n"));
 			break;
 		}
 		pil_prev = &pil->pil_next;
@@ -1635,6 +1722,8 @@ pccbb_intr_disestablish(ct, ih)
 
 	if (sc->sc_pil == NULL) {
 		/* No interrupt handlers */
+
+		DPRINTF(("pccbb_intr_disestablish: no interrupt handler\n"));
 
 		switch (sc->sc_chipset) {
 		case CB_TI113X:
@@ -2659,8 +2748,6 @@ pccbb_pcmcia_intr_establish(pch, pf, ipl, func, arg)
 {
 	struct pcic_handle *ph = (struct pcic_handle *)pch;
 	struct pccbb_softc *sc = (struct pccbb_softc *)ph->ph_parent;
-	pci_intr_handle_t handle;
-	void *ih;
 
 	if (!(pf->cfe->flags & PCMCIA_CFE_IRQLEVEL)) {
 		/* what should I do? */
@@ -2676,44 +2763,7 @@ pccbb_pcmcia_intr_establish(pch, pf, ipl, func, arg)
 		 */
 	}
 
-	if (pci_intr_map(sc->sc_pc, sc->sc_intrtag, sc->sc_intrpin,
-	    sc->sc_intrline, &handle)) {
-		printf("%s: couldn't map interrupt\n", sc->sc_dev.dv_xname);
-		return NULL;
-	}
-	DPRINTF(("pccbb_pcmcia_intr_establish: line %d, handle %d\n",
-	    sc->sc_intrline, handle));
-
-	if (NULL != (ih =
-	    pci_intr_establish(sc->sc_pc, handle, ipl, func, arg))) {
-		u_int32_t cbctrl;
-
-		if ((CB_TI113X == sc->sc_chipset)) {
-			cbctrl =
-			    pci_conf_read(sc->sc_pc, sc->sc_tag, PCI_CBCTRL);
-			/* PCI functional intr req */
-			cbctrl |= PCI113X_CBCTRL_PCI_INTR;
-			pci_conf_write(sc->sc_pc, sc->sc_tag, PCI_CBCTRL,
-			    cbctrl);
-		}
-	}
-#if defined PCCBB_PCMCIA_POLL
-	if (pccbb_poll_n < 10) {
-		pccbb_poll[pccbb_poll_n].arg = arg;
-		pccbb_poll[pccbb_poll_n].func = func;
-		pccbb_poll[pccbb_poll_n].level = ipl;
-		pccbb_poll[pccbb_poll_n].count = 0;
-		pccbb_poll[pccbb_poll_n].num = pccbb_poll_n;
-		pccbb_poll[pccbb_poll_n].ph = ph;
-		timeout(pccbb_pcmcia_poll, &pccbb_poll[pccbb_poll_n++], hz * 2);
-		printf("polling set\n");
-	}
-#endif
-#if defined SHOW_REGS
-	cb_show_regs(sc->sc_pc, sc->sc_tag, sc->sc_base_memt, sc->sc_base_memh);
-#endif
-
-	return ih;
+	return pccbb_intr_establish(sc, IST_LEVEL, ipl, func, arg);
 }
 
 /*
@@ -2730,7 +2780,7 @@ pccbb_pcmcia_intr_disestablish(pch, ih)
 	struct pcic_handle *ph = (struct pcic_handle *)pch;
 	struct pccbb_softc *sc = (struct pccbb_softc *)ph->ph_parent;
 
-	pci_intr_disestablish(sc->sc_pc, ih);
+	pccbb_intr_disestablish(sc, ih);
 }
 
 #if rbus
