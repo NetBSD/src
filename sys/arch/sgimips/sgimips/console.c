@@ -1,4 +1,4 @@
-/*	$NetBSD: console.c,v 1.4 2001/05/11 04:56:56 thorpej Exp $	*/
+/*	$NetBSD: console.c,v 1.5 2001/06/07 19:23:04 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995, 1996 Carnegie-Mellon University.
@@ -63,30 +63,27 @@ void
 consinit()
 {
 	char* consdev;
-	int force_arcs = 0;
-	int bad_consdev = 0;
 
-	if ((consdev = ARCS->GetEnvironmentVariable("console")) != NULL) {
-	    if (consdev[0] != 'd' && consdev[0] != 'g' && consdev[0] != 'G')
-		bad_consdev = 1;
-	    else if (consdev[0] == 'g' || consdev[0] == 'G')
-		force_arcs  = 1;
-	} else
-	    bad_consdev = 1;
+	/* Ask ARCS what it is using for console output. */
+	consdev = ARCS->GetEnvironmentVariable("ConsoleOut");
+	if (consdev == NULL) {
+		printf("WARNING: ConsoleOut environment variable not set\n");
+		goto force_arcs;
+	}
 
 #if NZSC > 0
-	/* 
-	 * Only use zs driver as console if we know the console port is set
-	 * to one of the serial ports.  If it's set to the graphic display,
-	 * something unknown or not set, fall back to ARCS console.
-	 */
-	if (!force_arcs && !bad_consdev) {
-	    cn_tab = &zs_cn;
-	    (*cn_tab->cn_init)(cn_tab);
-	    return;
+	/* XXX This is Indigo2/Indy-specific. */
+	if (strlen(consdev) == 9 &&
+	    strncmp(consdev, "serial", 6) == 0 &&
+	    (consdev[7] == '0' || consdev[7] == '1')) {
+		cn_tab = &zs_cn;
+		(*cn_tab->cn_init)(cn_tab);
+		return;
 	}
 #endif
 
+ force_arcs:
+	printf("Using ARCS for console I/O.\n");
 	cn_tab = &arcs_cn;
 	arcs_cn.cn_dev = makedev(37, 0);
 

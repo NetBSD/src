@@ -1,4 +1,4 @@
-/*	$NetBSD: zs.c,v 1.1 2001/05/11 04:24:44 thorpej Exp $	*/
+/*	$NetBSD: zs.c,v 1.2 2001/06/07 19:23:03 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1996, 2000 The NetBSD Foundation, Inc.
@@ -157,7 +157,7 @@ static u_char zs_init_reg[16] = {
 	ZSWR11_TXCLK_BAUD | ZSWR11_RXCLK_BAUD | ZSWR11_TRXC_OUT_ENA,
 	BPS_TO_TCONST(PCLK/16, ZS_DEFSPEED), /*12: BAUDLO (default=9600) */
 	0,				/*13: BAUDHI (default=9600) */
-	ZSWR14_BAUD_ENA | ZSWR14_BAUD_FROM_PCLK,
+	ZSWR14_BAUD_ENA,
 	ZSWR15_BREAK_IE,
 };
 
@@ -216,7 +216,7 @@ zs_hpc_attach(parent, self, aux)
 	int    zs_unit, channel, err, s;
 	char  *promconsdev;
 
-	promconsdev = ARCS->GetEnvironmentVariable("console");
+	promconsdev = ARCS->GetEnvironmentVariable("ConsoleOut");
 
 	zsc->zsc_bustag = haa->ha_iot;
 	if ((err = bus_space_subregion(haa->ha_iot, haa->ha_ioh,
@@ -271,16 +271,16 @@ zs_hpc_attach(parent, self, aux)
 		     * pass the generic zs driver a 'no reset' flag so the
 		     * channel gets left in the appropriate state after
 		     * attach.
-		     * 
-		     * Note that the funky wiring means 'd2' == channel 0
-		     * and 'd' == channel 1 (though you might expect other-
-		     * wise).
+		     *
+		     * Note: the channel mappings are swapped.
 		     */
-		    if (promconsdev != NULL && promconsdev[0] == 'd') {
-			if (promconsdev[1] == '2' && channel == 0)
+		    if (promconsdev != NULL &&
+			strlen(promconsdev) == 9 &&
+			strncmp(promconsdev, "serial", 6) == 0 &&
+			(promconsdev[7] == '0' || promconsdev[7] == '1')) {
+			if (promconsdev[7] == '1' && channel == 0)
 			    zsc_args.hwflags |= ZS_HWFLAG_NORESET;
-
-			if (promconsdev[1] == '\0' && channel == 1)
+			else if (promconsdev[7] == '0' && channel == 1)
 			    zsc_args.hwflags |= ZS_HWFLAG_NORESET;
 		    }
 		}
@@ -691,16 +691,14 @@ zscninit(cn)
 {
 	char* consdev;
 
-	if ((consdev = ARCS->GetEnvironmentVariable("console")) == NULL)
-	    panic("zscninit without valid ARCS console setting!\n");
+	if ((consdev = ARCS->GetEnvironmentVariable("ConsoleOut")) == NULL)
+	    panic("zscninit without valid ARCS ConsoleOut setting!\n");
 
-	if (consdev[0] != 'd')
+	if (strlen(consdev) != 9 ||
+	    strncmp(consdev, "serial", 6) != 0)
 	    panic("zscninit with ARCS console not set to serial!\n");
 
-	if (consdev[0] == 'd' && consdev[1] == '2')
-	   cons_port = 1;
-	if (consdev[0] == 'd' && consdev[1] == '\0')
-	   cons_port = 0;
+	cons_port = consdev[7] - '0';
 
 	cn->cn_dev = makedev(zs_major, cons_port);
 	cn->cn_pri = CN_REMOTE;
