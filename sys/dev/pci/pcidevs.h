@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs.h,v 1.684 2005/01/15 08:38:19 jdolecek Exp $	*/
+/*	$NetBSD: pcidevs.h,v 1.685 2005/01/15 08:40:41 jdolecek Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.683 2005/01/15 08:37:34 jdolecek Exp 
+ *	NetBSD: pcidevs,v 1.684 2005/01/15 08:40:07 jdolecek Exp 
  */
 
 /*
@@ -2151,7 +2151,7 @@
 #define	PCI_PRODUCT_NVIDIA_GEFORCE_6800U	0x0040		/* GeForce 6800 Ultra */
 #define	PCI_PRODUCT_NVIDIA_GEFORCE_6800	0x0041		/* GeForce 6800 */
 #define	PCI_PRODUCT_NVIDIA_GEFORCE_6800LE	0x0042		/* GeForce 6800LE */
-#define	PCI_PRODUCT_NVIDIA_GEFORCE_6800GT	0x0041		/* GeForce 6800 GT */
+#define	PCI_PRODUCT_NVIDIA_GEFORCE_6800GT	0x0045		/* GeForce 6800 GT */
 #define	PCI_PRODUCT_NVIDIA_NFORCE2_PCIB	0x0060		/* nForce2 PCI-ISA bridge */
 #define	PCI_PRODUCT_NVIDIA_NFORCE2_SMBUS	0x0064		/* nForce2 SMBus Controller */
 #define	PCI_PRODUCT_NVIDIA_NFORCE2_ATA133	0x0065		/* nForce2 ATA133 IDE */
