@@ -31,11 +31,11 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)ns_cksum.c	7.7 (Berkeley) 4/29/91
- *	$Id: ns_cksum.c,v 1.2 1993/05/22 07:57:36 cgd Exp $
+ *	$Id: ns_cksum.c,v 1.3 1994/01/08 11:17:27 cgd Exp $
  */
 
-#include "sys/param.h"
-#include "sys/mbuf.h"
+#include <sys/param.h>
+#include <sys/mbuf.h>
 
 /*
  * Checksum routine for Network Systems Protocol Packets (Big-Endian).
