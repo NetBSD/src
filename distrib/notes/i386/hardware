@@ -1,4 +1,4 @@
-.\"	$NetBSD: hardware,v 1.71.2.12 2001/05/09 00:09:03 he Exp $
+.\"	$NetBSD: hardware,v 1.71.2.13 2001/05/15 21:38:42 he Exp $
 .
 .Nx \*V
 runs on ISA (AT-Bus), EISA, PCI, and VL-bus systems
@@ -29,6 +29,8 @@ PCI controllers
 .(bullet -compact
 Acer labs M5229 IDE Controller
 .It
+Advanced Micro Devices AMD-756 and 766 IDE Controllers
+.It
 CMD Tech PCI0643, 0646, 0648 and 0649 IDE Controllers
 .It
 Contaq Microsystems/Cypress CY82C693 IDE Controller
@@ -43,7 +45,7 @@ Promise PDC20246 (Ultra/33), PDC20262 (Ultra/66) and PDC20265/PDC20267 (Ultra/10
 .It
 Silicon Integrated System 5597/5598 IDE controller
 .It
-VIA Technologies VT82C586 and VT82C586A IDE Controllers
+VIA Technologies VT82C586, VT82C586A, VT82C596A and VT82C686A IDE Controllers
 .bullet)
 .Pp
 Most of these controllers are only available in multifunction PCI chips.
