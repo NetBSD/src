@@ -1,4 +1,4 @@
-/*	$NetBSD: init.c,v 1.5 2001/02/19 20:50:17 jdolecek Exp $	*/
+/*	$NetBSD: init.c,v 1.6 2001/12/31 18:45:04 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -39,7 +39,7 @@
 #include "sort.h"
 
 #ifndef lint
-__RCSID("$NetBSD: init.c,v 1.5 2001/02/19 20:50:17 jdolecek Exp $");
+__RCSID("$NetBSD: init.c,v 1.6 2001/12/31 18:45:04 thorpej Exp $");
 __SCCSID("@(#)init.c	8.1 (Berkeley) 6/6/93");
 #endif /* not lint */
 
@@ -134,7 +134,8 @@ setcolumn(pos, cur_fld, gflag)
 	if (*pos == '.') {
 		if (!col->num)
 			errx(2, "cannot indent end of line");
-		pos += sscanf(++pos, "%d", &(col->indent));
+		++pos;
+		pos += sscanf(pos, "%d", &(col->indent));
 		while (isdigit(*pos))
 			pos++;
 		if (&cur_fld->icol == col)
@@ -246,7 +247,8 @@ fixit(argc, argv)
 				tpos++;
 			vpos += sprintf(vpos, "%d", v+1);
 			if (*tpos == '.') {
-				tpos += sscanf(++tpos, "%d", &x);
+				++tpos;
+				tpos += sscanf(tpos, "%d", &x);
 				vpos += sprintf(vpos, ".%d", x+1);
 			}
 			while (*tpos)
@@ -260,7 +262,8 @@ fixit(argc, argv)
 					tpos++;
 				x = 0;
 				if (*tpos == '.') {
-					tpos += sscanf(++tpos, "%d", &x);
+					++tpos;
+					tpos += sscanf(tpos, "%d", &x);
 					while (isdigit(*tpos))
 						tpos++;
 				}
