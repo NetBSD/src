@@ -31,7 +31,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)stdlib.h	5.13 (Berkeley) 6/4/91
- *	$Id: stdlib.h,v 1.8 1993/10/22 17:34:38 jtc Exp $
+ *	$Id: stdlib.h,v 1.9 1993/10/22 17:52:28 jtc Exp $
  */
 
 #ifndef _STDLIB_H_
@@ -111,7 +111,7 @@ void  *alloca __P((size_t));
 #endif /* __GNUC__ */ 
 
 long	 a64l __P((const char *));
-long	*l64a __P((long));
+char	*l64a __P((long));
 
 void	 cfree __P((void *));
 
