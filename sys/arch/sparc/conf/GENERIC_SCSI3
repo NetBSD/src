@@ -1,4 +1,4 @@
-# 	$NetBSD: GENERIC_SCSI3,v 1.1 1994/12/07 14:45:55 deraadt Exp $
+# 	$NetBSD: GENERIC_SCSI3,v 1.2 1994/12/16 21:53:44 deraadt Exp $
 
 # Kernel for Theo's wimpy sparcstation IPC
 
@@ -60,6 +60,7 @@ audio0	at mainbus0
 auxreg0	at mainbus0
 clock0	at mainbus0
 clock0	at obio0 addr 0xf2000000
+oclock0	at obio0 addr 0xf3000000
 memreg0	at mainbus0
 memreg0	at obio0 addr 0xf4000000
 timer0	at mainbus0
@@ -90,7 +91,11 @@ le0	at sbus? slot ? offset ?
 le*	at sbus? slot ? offset ?
 le0	at obio0 addr 0xf9000000 level 6
 
-ie0	at vmes0 addr 0xffe88000 level 5 vect 0x75
+ie0	at obio0 addr 0xf6000000 level 6
+ie1	at vmes0 addr 0xe88000 level 5 vect 0x75
+ie2	at vmes0 addr 0x31ff02 level 5 vect 0x76
+ie3	at vmes0 addr 0x35ff02 level 5 vect 0x77
+ie4	at vmes0 addr 0x2dff02 level 5 vect 0x7c
 
 bwtwo0	at sbus? slot ? offset ?
 bwtwo*	at sbus? slot ? offset ?
