@@ -1,4 +1,4 @@
-/*	$NetBSD: in_pcb.c,v 1.65 2000/04/03 03:51:16 enami Exp $	*/
+/*	$NetBSD: in_pcb.c,v 1.65.4.1 2000/08/26 16:38:32 tron Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -148,6 +148,8 @@ struct inpcb *
 
 int	anonportmin = IPPORT_ANONMIN;
 int	anonportmax = IPPORT_ANONMAX;
+int	lowportmin  = IPPORT_RESERVEDMIN;
+int	lowportmax  = IPPORT_RESERVEDMAX;
 
 struct pool inpcb_pool;
 
@@ -288,8 +290,8 @@ noname:
 			if (p == 0 || (error = suser(p->p_ucred, &p->p_acflag)))
 				return (EACCES);
 #endif
-			min = IPPORT_RESERVEDMIN;
-			max = IPPORT_RESERVEDMAX;
+			min = lowportmin;
+			max = lowportmax;
 			lastport = &table->inpt_lastlow;
 		} else {
 			min = anonportmin;
