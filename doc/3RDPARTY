@@ -1,4 +1,4 @@
-#	$NetBSD: 3RDPARTY,v 1.44 2003/01/27 00:13:05 wiz Exp $
+#	$NetBSD: 3RDPARTY,v 1.45 2003/01/27 00:51:12 wiz Exp $
 #
 # This file contains a list of the software that has been integrated into
 # NetBSD where we are not the primary maintainer.
@@ -325,7 +325,7 @@ Use groff2netbsd from src/gnu/dist/groff to prepare the distribution
 for import.
 
 Package:	gzip
-Version:	1.2.4
+Version:	1.2.4a
 Current Vers:	1.2.4a
 Maintainer:	Jean-loup Gailly <gzip@gnu.org>
 Archive Site:	ftp://ftp.gnu.org/gnu/gzip/
