@@ -1,4 +1,4 @@
-.\"	$NetBSD: sort.1,v 1.24 2003/08/07 11:32:34 jdolecek Exp $
+.\"	$NetBSD: sort.1,v 1.25 2004/07/23 13:20:36 wiz Exp $
 .\"
 .\" Copyright (c) 2000-2003 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -74,15 +74,15 @@
 .Nd sort or merge text files
 .Sh SYNOPSIS
 .Nm sort
-.Op Fl cmubdfHinrsS
-.Op Fl t Ar char
-.Op Fl R Ar char
+.Op Fl bcdfHimnrSsu
 .Oo
 .Fl k
 .Ar field1 Ns Op Li \&, Ns Ar field2
 .Oc
-.Op Fl T Ar dir
 .Op Fl o Ar output
+.Op Fl R Ar char
+.Op Fl T Ar dir
+.Op Fl t Ar char
 .Op Ar
 .Sh DESCRIPTION
 The
