@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.h,v 1.11 2003/04/02 07:53:59 thorpej Exp $	*/
+/*	$NetBSD: pmap.h,v 1.12 2003/04/09 18:22:14 thorpej Exp $	*/
 
 /*
  *
@@ -587,6 +587,11 @@ vaddr_t	pmap_map __P((vaddr_t, paddr_t, paddr_t, vm_prot_t));
 void	pmap_ldt_cleanup __P((struct lwp *));
 #define	PMAP_FORK
 #endif /* USER_LDT */
+
+/* 
+ * Hooks for the pool allocator.
+ */
+#define	POOL_VTOPHYS(va)	vtophys((vaddr_t) (va))
 
 #endif /* _KERNEL && !_LOCORE */
 #endif	/* _X86_64_PMAP_H_ */
