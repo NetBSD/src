@@ -1,4 +1,4 @@
-/*	$NetBSD: svr4_machdep.c,v 1.53 2001/06/17 21:01:36 sommerfeld Exp $	 */
+/*	$NetBSD: svr4_machdep.c,v 1.54 2001/07/13 23:32:26 kristerw Exp $	 */
 
 /*-
  * Copyright (c) 1994, 2000 The NetBSD Foundation, Inc.
@@ -532,7 +532,6 @@ void
 svr4_fasttrap(frame)
 	struct trapframe frame;
 {
-	extern struct emul emul_svr4;
 	struct proc *p = curproc;
 
 	p->p_md.md_regs = &frame;
