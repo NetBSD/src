@@ -39,7 +39,7 @@ char copyright[] =
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)msgs.c	5.8 (Berkeley) 2/4/91";*/
-static char rcsid[] = "$Id: msgs.c,v 1.3 1993/10/26 18:24:02 jtc Exp $";
+static char rcsid[] = "$Id: msgs.c,v 1.4 1993/12/04 01:57:30 jtc Exp $";
 #endif /* not lint */
 
 /*
@@ -70,8 +70,8 @@ static char rcsid[] = "$Id: msgs.c,v 1.3 1993/10/26 18:24:02 jtc Exp $";
 /* #define UNBUFFERED	/* use unbuffered output */
 
 #include <sys/param.h>
-#include <sys/dir.h>
 #include <sys/stat.h>
+#include <dirent.h>
 #include <ctype.h>
 #include <errno.h>
 #include <pwd.h>
@@ -245,7 +245,7 @@ int argc; char *argv[];
 		keep = t - (rcback? rcback : NDAYS) DAYS;
 
 	if (clean || bounds == NULL) {	/* relocate message bounds */
-		struct direct *dp;
+		struct dirent *dp;
 		struct stat stbuf;
 		bool seenany = NO;
 		DIR	*dirp;
