@@ -1,4 +1,4 @@
-/*	$NetBSD: am7990.c,v 1.32 1997/04/24 02:25:36 mycroft Exp $	*/
+/*	$NetBSD: am7990.c,v 1.33 1997/04/24 08:05:13 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1997 Jason R. Thorpe.  All rights reserved.
@@ -437,7 +437,7 @@ am7990_get(sc, boff, totlen)
 		}
 		if (totlen >= MINCLSIZE) {
 			MCLGET(m, M_DONTWAIT);
-			if ((m->m_flags & M_EXT) == 0)
+			if ((m->m_flags & M_EXT) == 0) {
 				m_freem(top);
 				return 0;
 			}
