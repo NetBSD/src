@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.27 1996/12/07 19:00:46 thorpej Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.28 1996/12/09 03:07:11 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1996 Jason R. Thorpe.  All rights reserved.
@@ -266,6 +266,8 @@ configure()
 				printf("csr at %x\n", sc);
 		}
 	}
+
+	isrprintlevels();
 
 	/* XXX Should enable interrupts here. */
 
