@@ -1,4 +1,4 @@
-/*	$NetBSD: ifconfig.c,v 1.135 2003/05/17 00:48:13 lukem Exp $	*/
+/*	$NetBSD: ifconfig.c,v 1.136 2003/05/17 23:07:22 itojun Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 2000 The NetBSD Foundation, Inc.
@@ -80,7 +80,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1993\n\
 #if 0
 static char sccsid[] = "@(#)ifconfig.c	8.2 (Berkeley) 2/16/94";
 #else
-__RCSID("$NetBSD: ifconfig.c,v 1.135 2003/05/17 00:48:13 lukem Exp $");
+__RCSID("$NetBSD: ifconfig.c,v 1.136 2003/05/17 23:07:22 itojun Exp $");
 #endif
 #endif /* not lint */
 
@@ -527,7 +527,7 @@ main(argc, argv)
 	/* Make sure there's an interface name. */
 	if (argc < 1)
 		usage();
-	(void) strncpy(name, argv[0], sizeof(name));
+	(void) strlcpy(name, argv[0], sizeof(name));
 	argc--; argv++;
 
 	/*
@@ -779,8 +779,7 @@ printall(ifname)
 			sdl = (const struct sockaddr_dl *) ifa->ifa_addr;
 		if (p && strcmp(p, ifa->ifa_name) == 0)
 			continue;
-		(void) strncpy(name, ifa->ifa_name, sizeof(name));
-		name[sizeof(name) - 1] = '\0';
+		(void) strlcpy(name, ifa->ifa_name, sizeof(name));
 		p = ifa->ifa_name;
 
 		if (getinfo(&paifr) < 0)
@@ -2375,7 +2374,7 @@ in6_alias(creq)
 	scopeid = sin6->sin6_scope_id;
 	if (getnameinfo((struct sockaddr *)sin6, sin6->sin6_len,
 			hbuf, sizeof(hbuf), NULL, 0, niflag))
-		strncpy(hbuf, "", sizeof(hbuf));	/* some message? */
+		strlcpy(hbuf, "", sizeof(hbuf));	/* some message? */
 	printf("\tinet6 %s", hbuf);
 
 	if (flags & IFF_POINTOPOINT) {
@@ -2394,7 +2393,7 @@ in6_alias(creq)
 		hbuf[0] = '\0';
 		if (getnameinfo((struct sockaddr *)sin6, sin6->sin6_len,
 				hbuf, sizeof(hbuf), NULL, 0, niflag))
-			strncpy(hbuf, "", sizeof(hbuf)); /* some message? */
+			strlcpy(hbuf, "", sizeof(hbuf)); /* some message? */
 		printf(" -> %s", hbuf);
 	}
 
