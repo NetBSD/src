@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_lock.c,v 1.36 2000/08/08 19:55:26 thorpej Exp $	*/
+/*	$NetBSD: kern_lock.c,v 1.37 2000/08/10 04:37:59 eeh Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
@@ -103,7 +103,7 @@
 #include <machine/stdarg.h>
 
 void	lock_printf(const char *fmt, ...)
-    __kprintf_attribute__((__format__(__kprintf__,1,2)));
+    __attribute__((__format__(__printf__,1,2)));
 
 int	lock_debug_syslog = 0;	/* defaults to printf, but can be patched */
 #endif
