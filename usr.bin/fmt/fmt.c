@@ -1,4 +1,4 @@
-/*	$NetBSD: fmt.c,v 1.7 1997/10/18 15:01:05 lukem Exp $	*/
+/*	$NetBSD: fmt.c,v 1.8 1998/02/12 21:11:00 ross Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -43,7 +43,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1993\n\
 #if 0
 static char sccsid[] = "@(#)fmt.c	8.1 (Berkeley) 7/20/93";
 #endif
-__RCSID("$NetBSD: fmt.c,v 1.7 1997/10/18 15:01:05 lukem Exp $");
+__RCSID("$NetBSD: fmt.c,v 1.8 1998/02/12 21:11:00 ross Exp $");
 #endif /* not lint */
 
 #include <stdio.h>
@@ -119,11 +119,11 @@ main(argc, argv)
 	if (argc > 1 && (1 == (sscanf(argv[1], "%d", &number)))) {
 		argv++;
 		argc--;
-		goal_length = number;
+		goal_length = abs(number);
 		if (argc > 1 && (1 == (sscanf(argv[1], "%d", &number)))) {
 			argv++;
 			argc--;
-			max_length = number;
+			max_length = abs(number);
 		}
 	}
 	if (max_length <= goal_length) {
