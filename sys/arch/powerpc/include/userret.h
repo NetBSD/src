@@ -1,4 +1,4 @@
-/*	$NetBSD: userret.h,v 1.1 2002/08/02 03:46:43 chs Exp $	*/
+/*	$NetBSD: userret.h,v 1.2 2002/08/06 06:18:24 chs Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -44,9 +44,7 @@ userret(struct proc *p, struct trapframe *frame)
 
 	/* Take pending signals. */
 	while ((sig = CURSIG(p)) != 0) {
-		KERNEL_PROC_LOCK(p);
 		postsig(sig);
-		KERNEL_PROC_UNLOCK(p);
 	}
 
 	pcb = &p->p_addr->u_pcb;
