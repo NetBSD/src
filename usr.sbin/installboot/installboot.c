@@ -1,4 +1,4 @@
-/*	$NetBSD: installboot.c,v 1.3 2002/04/11 07:56:13 lukem Exp $	*/
+/*	$NetBSD: installboot.c,v 1.4 2002/04/12 03:15:20 lukem Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(__lint)
-__RCSID("$NetBSD: installboot.c,v 1.3 2002/04/11 07:56:13 lukem Exp $");
+__RCSID("$NetBSD: installboot.c,v 1.4 2002/04/12 03:15:20 lukem Exp $");
 #endif	/* !__lint */
 
 #include <sys/utsname.h>
@@ -185,6 +185,8 @@ main(int argc, char *argv[])
 	if (rv == 0)
 		errx(1, "%s boot block operation failed", op);
 
+	if (fsync(params->fsfd) == -1)
+		err(1, "Synchronising file system `%s'", params->filesystem);
 	if (close(params->fsfd) == -1)
 		err(1, "Closing file system `%s'", params->filesystem);
 	if (argc == 2)
