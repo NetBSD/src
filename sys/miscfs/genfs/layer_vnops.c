@@ -1,4 +1,4 @@
-/*	$NetBSD: layer_vnops.c,v 1.3 2000/03/30 12:22:14 augustss Exp $	*/
+/*	$NetBSD: layer_vnops.c,v 1.3.4.1 2000/12/14 23:36:11 he Exp $	*/
 
 /*
  * Copyright (c) 1999 National Aeronautics & Space Administration
@@ -71,7 +71,7 @@
  *
  * Ancestors:
  *	@(#)lofs_vnops.c	1.2 (Berkeley) 6/18/92
- *	$Id: layer_vnops.c,v 1.3 2000/03/30 12:22:14 augustss Exp $
+ *	$Id: layer_vnops.c,v 1.3.4.1 2000/12/14 23:36:11 he Exp $
  *	...and...
  *	@(#)null_vnodeops.c 1.20 92/07/07 UCLA Ficus project
  */
@@ -716,6 +716,8 @@ layer_fsync(v)
 		struct vnode *a_vp;
 		struct ucred *a_cred;
 		int  a_flags;
+		off_t offlo;
+		off_t offhi;
 		struct proc *a_p;
 	} */ *ap = v;
 
