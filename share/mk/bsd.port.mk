@@ -2,7 +2,7 @@
 # ex:ts=4
 #
 #	Id: bsd.port.mk,v 1.263 1997/07/17 17:47:36 markm Exp 
-#	$NetBSD: bsd.port.mk,v 1.2 1997/08/20 10:50:26 agc Exp $
+#	$NetBSD: bsd.port.mk,v 1.3 1997/08/20 16:02:48 agc Exp $
 #
 #	bsd.port.mk - 940820 Jordan K. Hubbard.
 #	This file is in the public domain.
@@ -282,10 +282,11 @@ OPSYS!=	uname -s
 # by individual Makefiles or local system make configuration.
 .if (${OPSYS} == "NetBSD")
 PORTSDIR?=		/usr/pkg/src
+LOCALBASE?=		${DESTDIR}/usr/pkg
 .else
 PORTSDIR?=		/usr/ports
+LOCALBASE?=		${DESTDIR}/usr/local
 .endif
-LOCALBASE?=		${DESTDIR}/usr/pkg
 X11BASE?=		${DESTDIR}/usr/X11R6
 DISTDIR?=		${PORTSDIR}/distfiles
 _DISTDIR?=		${DISTDIR}/${DIST_SUBDIR}
@@ -444,7 +445,11 @@ EXTRACT_BEFORE_ARGS?=   -xzf
 .if defined(USE_IMAKE) || defined(USE_X11)
 MTREE_FILE=	/etc/mtree/BSD.x11.dist
 .else
+.if (${OPSYS} == "NetBSD")
+MTREE_FILE=	/etc/mtree/BSD.pkg.dist
+.else
 MTREE_FILE=	/etc/mtree/BSD.local.dist
+.endif
 .endif
 .endif
 MTREE_CMD?=	/usr/sbin/mtree
