@@ -1,4 +1,4 @@
-/*	$NetBSD: bwtwo.c,v 1.37 1998/03/29 22:10:32 pk Exp $ */
+/*	$NetBSD: bwtwo.c,v 1.38 1998/04/07 20:18:17 pk Exp $ */
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -570,7 +570,8 @@ bwtwommap(dev, off, prot)
 	dev_t dev;
 	int off, prot;
 {
-	register struct bwtwo_softc *sc = bwtwo_cd.cd_devs[minor(dev)];
+	struct bwtwo_softc *sc = bwtwo_cd.cd_devs[minor(dev)];
+	bus_space_handle_t bh;
 
 	if (off & PGOFSET)
 		panic("bwtwommap");
@@ -578,10 +579,13 @@ bwtwommap(dev, off, prot)
 	if ((unsigned)off >= sc->sc_fb.fb_type.fb_size)
 		return (-1);
 
-	return (bus_space_mmap (sc->sc_bustag,
-				sc->sc_btype,
-				sc->sc_paddr + sc->sc_pixeloffset + off,
-				BUS_SPACE_MAP_LINEAR));
+	if (bus_space_mmap(sc->sc_bustag,
+			   sc->sc_btype,
+			   sc->sc_paddr + sc->sc_pixeloffset + off,
+			   BUS_SPACE_MAP_LINEAR, &bh))
+		return (-1);
+
+	return ((int)bh);
 }
 
 static int

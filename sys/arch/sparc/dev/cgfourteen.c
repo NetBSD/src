@@ -1,7 +1,7 @@
-/*	$NetBSD: cgfourteen.c,v 1.11 1998/03/21 20:11:30 pk Exp $ */
+/*	$NetBSD: cgfourteen.c,v 1.12 1998/04/07 20:18:18 pk Exp $ */
 
 /*
- * Copyright (c) 1996 
+ * Copyright (c) 1996
  *	The President and Fellows of Harvard College. All rights reserved.
  * Copyright (c) 1992, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -63,16 +63,16 @@
 
 #include "opt_uvm.h"
 
-/* 
+/*
  * The following is for debugging only; it opens up a security hole
- * enabled by allowing any user to map the control registers for the 
+ * enabled by allowing any user to map the control registers for the
  * cg14 into their space.
  */
 #undef CG14_MAP_REGS
 
 /*
  * The following enables 24-bit operation: when opened, the framebuffer
- * will switch to 24-bit mode (actually 32-bit mode), and provide a 
+ * will switch to 24-bit mode (actually 32-bit mode), and provide a
  * simple cg8 emulation.
  *
  * XXX Note that the code enabled by this define is currently untested/broken.
@@ -117,7 +117,7 @@ extern struct cfdriver cgfourteen_cd;
 
 /* frame buffer generic driver */
 static struct fbdriver cgfourteenfbdriver = {
-	cgfourteenunblank, cgfourteenopen, cgfourteenclose, cgfourteenioctl, 
+	cgfourteenunblank, cgfourteenopen, cgfourteenclose, cgfourteenioctl,
 	cgfourteenpoll, cgfourteenmmap
 };
 
@@ -288,7 +288,7 @@ cgfourteenattach(parent, self, aux)
 }
 
 /*
- * Keep track of the number of opens made. In the 24-bit driver, we need to 
+ * Keep track of the number of opens made. In the 24-bit driver, we need to
  * switch to 24-bit mode on the first open, and switch back to 8-bit on
  * the last close. This kind of nonsense is needed to give screenblank
  * a fighting chance of working.
@@ -305,7 +305,7 @@ cgfourteenopen(dev, flags, mode, p)
 	int unit = minor(dev);
 	int s, oldopens;
 
-	if (unit >= cgfourteen_cd.cd_ndevs || 
+	if (unit >= cgfourteen_cd.cd_ndevs ||
 	    cgfourteen_cd.cd_devs[unit] == NULL)
 		return (ENXIO);
 
@@ -377,7 +377,7 @@ cgfourteenioctl(dev, cmd, data, flags, p)
 		break;
 
 	case FBIOGETCMAP:
-		return (cg14_get_cmap((struct fbcmap *)data, &sc->sc_cmap, 
+		return (cg14_get_cmap((struct fbcmap *)data, &sc->sc_cmap,
 				     CG14_CLUT_SIZE));
 
 	case FBIOPUTCMAP:
@@ -542,8 +542,8 @@ cgfourteenunblank(dev)
  * channel information. We hardwire the Xlut to all zeroes to insure
  * that, regardless of this value, direct 24-bit color access will be
  * used.
- * 
- * Alternatively, mapping the frame buffer at an offset of 16M seems to 
+ *
+ * Alternatively, mapping the frame buffer at an offset of 16M seems to
  * tell the chip to ignore the X channel. XXX where does it get the X value
  * to use?
  */
@@ -553,9 +553,10 @@ cgfourteenmmap(dev, off, prot)
 	int off, prot;
 {
 	struct cgfourteen_softc *sc = cgfourteen_cd.cd_devs[minor(dev)];
-	
-#define CG3START		(128*1024 + 128*1024)
-#define CG8START		(256*1024)
+	bus_space_handle_t bh;
+
+#define CG3START	(128*1024 + 128*1024)
+#define CG8START	(256*1024)
 #define NOOVERLAY	(0x04000000)
 
 	if (off & PGOFSET)
@@ -563,16 +564,18 @@ cgfourteenmmap(dev, off, prot)
 
 #if defined(DEBUG) && defined(CG14_MAP_REGS) /* XXX: security hole */
 	/*
-	 * Map the control registers into user space. Should only be 
+	 * Map the control registers into user space. Should only be
 	 * used for debugging!
 	 */
 	if ((u_int)off >= 0x10000000 && (u_int)off < 0x10000000 + 16*4096) {
 		off -= 0x10000000;
-		return (bus_space_mmap(
-				sc->sc_bustag,
-				sc->sc_physadr[CG14_CTL_IDX].rr_iospace,
-				sc->sc_physadr[CG14_CTL_IDX].rr_paddr + off,
-				BUS_SPACE_MAP_LINEAR));
+		if (bus_space_mmap(sc->sc_bustag,
+				   sc->sc_physadr[CG14_CTL_IDX].rr_iospace,
+				   sc->sc_physadr[CG14_CTL_IDX].rr_paddr + off,
+				   BUS_SPACE_MAP_LINEAR, &bh))
+			return (-1);
+
+		return ((int)bh);
 	}
 #endif
 	
@@ -593,16 +596,19 @@ cgfourteenmmap(dev, off, prot)
 		sc->sc_fb.fb_type.fb_depth/8) {
 #ifdef DEBUG
 		printf("\nmmap request out of bounds: request 0x%x, "
-		    "bound 0x%x\n", (unsigned) off, 
+		    "bound 0x%x\n", (unsigned) off,
 		    (unsigned)sc->sc_fb.fb_type.fb_size);
 #endif
 		return (-1);
 	}
 
-	return (bus_space_mmap (sc->sc_bustag,
-				sc->sc_physadr[CG14_PXL_IDX].rr_iospace,
-				sc->sc_physadr[CG14_PXL_IDX].rr_paddr + off,
-				BUS_SPACE_MAP_LINEAR));
+	if (bus_space_mmap(sc->sc_bustag,
+			   sc->sc_physadr[CG14_PXL_IDX].rr_iospace,
+			   sc->sc_physadr[CG14_PXL_IDX].rr_paddr + off,
+			   BUS_SPACE_MAP_LINEAR, &bh))
+		return (-1);
+
+	return ((int)bh);
 }
 
 int
@@ -613,14 +619,14 @@ cgfourteenpoll(dev, events, p)
 {
 
 	return (seltrue(dev, events, p));
-} 
+}
 
 /*
- * Miscellaneous helper functions 
+ * Miscellaneous helper functions
  */
 
 /* Initialize the framebuffer, storing away useful state for later reset */
-static void 
+static void
 cg14_init(sc)
 	struct cgfourteen_softc *sc;
 {
@@ -653,7 +659,7 @@ cg14_init(sc)
 	sc->sc_ctl->ctl_mctl = CG14_MCTL_ENABLEVID | CG14_MCTL_PIXMODE_32 |
 		CG14_MCTL_POWERCTL;
 
-	/* 
+	/*
 	 * Zero the xlut to enable direct-color mode
 	 */
 	bzero(sc->sc_xlut, CG14_CLUT_SIZE);
@@ -705,7 +711,7 @@ cg14_set_video(sc, enable)
 	struct cgfourteen_softc *sc;
 	int enable;
 {
-	/* 
+	/*
 	 * We can only use DPMS to power down the display if the chip revision
 	 * is greater than 0.
 	 */
@@ -733,7 +739,7 @@ cg14_get_video(sc)
 }
 
 /* Read the software shadow colormap */
-static int 
+static int
 cg14_get_cmap(p, cm, cmsize)
 	struct fbcmap *p;
 	union cg14cmap *cm;
@@ -741,7 +747,7 @@ cg14_get_cmap(p, cm, cmsize)
 {
         u_int i, start, count;
         u_char *cp;
- 
+
         start = p->index;
         count = p->count;
         if (start >= cmsize || start + count > cmsize)
@@ -783,7 +789,7 @@ cg14_put_cmap(p, cm, cmsize)
 {
         u_int i, start, count;
         u_char *cp;
- 
+
         start = p->index;
         count = p->count;
         if (start >= cmsize || start + count > cmsize)
