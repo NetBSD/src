@@ -1,3 +1,4 @@
+/*	$NetBSD: gspa.c,v 1.2 1997/10/17 06:59:12 lukem Exp $	*/
 /*
  * GSP assembler main program
  *
@@ -29,15 +30,22 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
+
+#include <sys/cdefs.h>
+#ifndef lint
+__RCSID("$NetBSD: gspa.c,v 1.2 1997/10/17 06:59:12 lukem Exp $");
+#endif
+
 #include <sys/param.h>
-#include <stdio.h>
-#include <stdarg.h>
-#include <stdlib.h>
-#include <setjmp.h>
-#include <string.h>
-#include <errno.h>
 #include <err.h>
+#include <errno.h>
+#include <setjmp.h>
+#include <stdarg.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
 #include <unistd.h>
+
 #include "gsp_ass.h"
 #include "y.tab.h"
 
@@ -72,18 +80,25 @@ struct input {
 
 jmp_buf synerrjmp;
 
+void	setext(char *, const char *, const char *);
+void	usage(void);
+int	yyparse(void);
+
+int
 main(int argc, char **argv)
 {
 	char *hex_name, *list_name;
-	short in_given, hex_given, list_given;
-	int i, v;
 	int c;
-	char *p;
+
+#if __GNUC__		/* XXX: borken compilers... */
+	(void)&hex_name;
+	(void)&list_name;
+#endif
 
 	hex_name = list_name = 0;
 
 	/* parse options */
-	while ((c = getopt(argc, argv, "o:l:")) != EOF) {
+	while ((c = getopt(argc, argv, "o:l:")) != -1) {
 		switch (c) {
 		case 'o':
 			if (hex_name)
@@ -159,6 +174,7 @@ main(int argc, char **argv)
 	exit(err_count != 0);
 }
 
+void
 setext(char *out, const char *in, const char *ext)
 {
 	const char *p;
@@ -173,6 +189,7 @@ setext(char *out, const char *in, const char *ext)
 	}
 }
 
+void
 push_input(char *fn)
 {
 	FILE *f;
@@ -256,7 +273,7 @@ yyerror(char *err)
 char *
 alloc(size_t nbytes)
 {
-	register char *p;
+	char *p;
 
 	if( (p = malloc(nbytes)) == NULL ){
 		fprintf(stderr, "Insufficient memory at line %d\n", lineno);
@@ -265,6 +282,7 @@ alloc(size_t nbytes)
 	return p;
 }
 
+void
 usage()
 {
 	fprintf(stderr,

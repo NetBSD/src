@@ -1,3 +1,4 @@
+/*	$NetBSD: gsp_out.c,v 1.3 1997/10/17 06:59:04 lukem Exp $	*/
 /*
  * GSP assembler - binary & listing output
  *
@@ -29,7 +30,14 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
+
+#include <sys/cdefs.h>
+#ifndef lint
+__RCSID("$NetBSD: gsp_out.c,v 1.3 1997/10/17 06:59:04 lukem Exp $");
+#endif
+
 #include <stdio.h>
+#include <stdlib.h>
 #include <string.h>
 #include "gsp_ass.h"
 
@@ -53,7 +61,11 @@ struct error {
 
 struct error *error_list, *error_last;
 
+void do_list_pc(void);
+void do_show_val(int32_t);
+void listing_line(void);
 void put1code(u_int16_t);
+void show_errors(void);
 
 void
 putcode(u_int16_t *v, int n)
@@ -90,18 +102,21 @@ put1code(u_int16_t v)
 	show_pc = TRUE;
 }
 
+void
 start_at(int32_t val)
 {
 	if( objfile != NULL )
-		fprintf(objfile, ":%.lX\n", val);
+		fprintf(objfile, ":%lX\n", (long)val);
 }
 
+void
 do_list_pc()
 {
 	if( pass2 )
 		show_pc = TRUE;
 }
 
+void
 do_show_val(int32_t v)
 {
 	if( ncode == 0 ){
@@ -111,6 +126,7 @@ do_show_val(int32_t v)
 	}
 }
 
+void
 list_error(char *string)
 {
 	struct error *p;
@@ -129,6 +145,7 @@ list_error(char *string)
 	error_last = p;
 }
 
+void
 show_errors()
 {
 	struct error *p, *q;
@@ -142,6 +159,7 @@ show_errors()
 	error_list = error_last = NULL;
 }
 
+void
 listing()
 {
 	if( objfile != NULL && ncode % 8 != 0 )
@@ -152,9 +170,10 @@ listing()
 	show_pc = FALSE;
 }
 
+void
 listing_line()
 {
-	register int i;
+	int i;
 
 	if( listfile == NULL ){
 		code_idx = 0;
