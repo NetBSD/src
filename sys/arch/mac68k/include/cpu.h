@@ -57,7 +57,7 @@
  * from: Utah $Hdr: cpu.h 1.16 91/03/25$
  *
  *	from: @(#)cpu.h	7.7 (Berkeley) 6/27/91
- *	$Id: cpu.h,v 1.3 1993/12/15 03:22:56 briggs Exp $
+ *	$Id: cpu.h,v 1.4 1994/01/17 01:04:08 briggs Exp $
  */
 
 /*
@@ -131,7 +131,6 @@ typedef struct intrframe {
 int	astpending;		/* need to trap before returning to user mode */
 int	want_resched;		/* resched() was called */
 
-/* XXX why is this duplicated in mtpr.h? brad@fcr.com */
 /*
  * simulated software interrupt register
  */
