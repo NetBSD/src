@@ -20,7 +20,7 @@
    or (US mail) as Mike Haertel c/o Free Software Foundation. */
 
 #ifndef lint
-static char rcsid[] = "$Id: sort.c,v 1.4 1993/12/03 09:57:46 mycroft Exp $";
+static char rcsid[] = "$Id: sort.c,v 1.4.2.1 1994/08/06 06:28:40 mycroft Exp $";
 #endif /* not lint */
 
 #define _GNU_SOURCE
@@ -1487,10 +1487,8 @@ main (argc, argv)
 	  if (*s)
 	    badfieldspec (argv[i]);
 	}
-      else if (argv[i][0] == '-')
+      else if (argv[i][0] == '-' && argv[i][1])
 	{
-	  if (!strcmp ("-", argv[i]))
-	    break;
 	  s = argv[i] + 1;
 	  if (digits[UCHAR (*s)])
 	    {

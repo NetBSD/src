@@ -33,7 +33,7 @@
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)inet.c	8.2 (Berkeley) 8/14/93";*/
-static char *rcsid = "$Id: inet.c,v 1.5 1994/05/13 08:04:37 mycroft Exp $";
+static char *rcsid = "$Id: inet.c,v 1.5.2.1 1994/08/06 05:51:38 mycroft Exp $";
 #endif /* not lint */
 
 /*
@@ -144,9 +144,9 @@ inet_maskof(inaddr)
 	} else if (IN_CLASSA(i)) {
 		mask = IN_CLASSA_NET;
 	} else if (IN_CLASSB(i)) {
-		mask = i & IN_CLASSB_NET;
+		mask = IN_CLASSB_NET;
 	} else
-		mask = i & IN_CLASSC_NET;
+		mask = IN_CLASSC_NET;
 
 	/*
 	 * Check whether network is a subnet;
