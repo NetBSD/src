@@ -1,4 +1,4 @@
-/*	$NetBSD: tftpd.c,v 1.27 2004/01/06 14:30:10 briggs Exp $	*/
+/*	$NetBSD: tftpd.c,v 1.28 2004/05/05 20:15:45 kleink Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -36,7 +36,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1993\n\
 #if 0
 static char sccsid[] = "@(#)tftpd.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: tftpd.c,v 1.27 2004/01/06 14:30:10 briggs Exp $");
+__RCSID("$NetBSD: tftpd.c,v 1.28 2004/05/05 20:15:45 kleink Exp $");
 #endif
 #endif /* not lint */
 
@@ -68,6 +68,7 @@ __RCSID("$NetBSD: tftpd.c,v 1.27 2004/01/06 14:30:10 briggs Exp $");
 #include <stdlib.h>
 #include <string.h>
 #include <syslog.h>
+#include <time.h>
 #include <unistd.h>
 
 #include "tftpsubs.h"
@@ -161,6 +162,7 @@ main(int argc, char *argv[])
 
 	n = 0;
 	fd = 0;
+	tzset();
 	openlog("tftpd", LOG_PID | LOG_NDELAY, LOG_DAEMON);
 	tgtuser = DEFAULTUSER;
 	tgtgroup = NULL;
