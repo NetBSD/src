@@ -1,4 +1,4 @@
-# $NetBSD: README,v 1.3 1999/12/01 05:08:34 hubertf Exp $
+# $NetBSD: README,v 1.4 2000/05/16 16:38:15 hubertf Exp $
 # Original from FreeBSD, no rcs id.
 
 This is the pkg_install suite of tools for doing maintainance of
@@ -11,4 +11,5 @@ FreeBSD again by Jordan, who then proceeded to add another couple
 of dozen features on top.  Whee! :-)
 
 In another round of enhancements, NetBSD changes were added by
-Alistair Crooks, Hubert Feyrer and Thorsten Frueauf.
+Alistair Crooks and Hubert Feyrer, Thorsten Frueauf and Christian E.
+Hopps.
