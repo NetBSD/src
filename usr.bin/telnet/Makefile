@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.23 2000/08/03 04:02:33 assar Exp $
+#	$NetBSD: Makefile,v 1.24 2000/08/03 22:47:43 assar Exp $
 #
 # Copyright (c) 1990 The Regents of the University of California.
 # All rights reserved.
@@ -59,7 +59,7 @@ CPPFLAGS+=-DINET6
 CPPFLAGS+=-DAUTHENTICATION -DENCRYPTION -DKRB4
 CPPFLAGS+=-DKRB5 -DFORWARD
 
-LDADD+= -lkrb5 -lkrb -lcrypto -lasn1 -lcom_err -lvers -lroken
+LDADD+= -lkrb5 -lkrb -lcrypto -lasn1 -lcom_err -lroken
 DPADD+=	${LIBKRB5} ${LIBKRB} ${LIBCRYPTO} ${LIBASN1} ${LIBCOM_ERR} ${LIBROKEN}
 .endif
 

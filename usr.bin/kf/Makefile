@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.4 2000/08/03 04:02:30 assar Exp $
+# $NetBSD: Makefile,v 1.5 2000/08/03 22:47:41 assar Exp $
 DIST=		${.CURDIR}/../../crypto/dist
 .PATH: ${DIST}/heimdal/appl/kf
 
@@ -15,11 +15,13 @@ CPPFLAGS+= -I.					\
 	-I${DESTDIR}/usr/include/krb5		\
 	-DHAVE_CONFIG_H
 
+VERS!=	cd ${.CURDIR}/../../lib/libvers && make print-objdir
+
 LDADD=	-lkrb5 \
 	-lcrypto \
 	-lasn1 \
 	-lcom_err \
-	-lvers \
+	-L${VERS} -lvers \
 	-lroken \
 	-lcrypt
 
