@@ -36,7 +36,7 @@
 //
 #define AFLAG_DEFAULT	0
 #define PFLAG_DEFAULT	1
-#define FFLAG_DEFAULT	1
+#define FFLAG_DEFAULT	0
 
 
 //

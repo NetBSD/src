@@ -388,7 +388,7 @@ get_options(int argc, char **argv)
 	{"debug",	no_argument,		0,	'd'},
 	{"readonly",	no_argument,		0,	'r'},
 	{"abbr",	no_argument,		0,	'a'},
-	{"pname",	no_argument,		0,	'p'},
+	{"fname",	no_argument,		0,	'f'},
 	{"logical",	no_argument,		0,	kLogicalOption},
 	{"interactive",	no_argument,		0,	'i'},
 	{"compute_size", no_argument,		0,	'c'},
@@ -418,11 +418,11 @@ get_options(int argc, char **argv)
 
 #if defined(__linux__) || defined(__NetBSD__)
     optind = 0;	// reset option scanner logic
-    while ((c = getopt_long(argc, argv, "hlvdricp", long_options,
+    while ((c = getopt_long(argc, argv, "hlvdraLicf", long_options,
 	    &option_index)) >= 0)
 #else
     opterr = 0;			/* tell getopt to be quiet */
-    while ((c = getopt(argc, argv, "hlvdraLicp")) != EOF)
+    while ((c = getopt(argc, argv, "hlvdraLicf")) != EOF)
 #endif
 	{
 #if !(defined(__linux__) || defined(__NetBSD__))
