@@ -1,4 +1,4 @@
-/*	$NetBSD: sb_isapnp.c,v 1.1 1997/01/16 22:01:08 christos Exp $	*/
+/*	$NetBSD: sb_isapnp.c,v 1.2 1997/03/13 01:45:11 christos Exp $	*/
 
 /*
  * Copyright (c) 1991-1993 Regents of the University of California.
@@ -80,7 +80,8 @@ sb_isapnp_match(parent, match, aux)
 {
 	struct isapnp_attach_args *ipa = aux;
 
-	return strcmp(ipa->ipa_devlogic, "CTL0001") == 0;
+	return strcmp(ipa->ipa_devlogic, "CTL0001") == 0 ||
+	    strcmp(ipa->ipa_devlogic, "ESS1868") == 0;
 }
 
 
