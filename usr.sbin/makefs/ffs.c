@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs.c,v 1.12 2002/01/31 22:44:02 tv Exp $	*/
+/*	$NetBSD: ffs.c,v 1.13 2002/02/06 02:17:14 lukem Exp $	*/
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
@@ -71,7 +71,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(__lint)
-__RCSID("$NetBSD: ffs.c,v 1.12 2002/01/31 22:44:02 tv Exp $");
+__RCSID("$NetBSD: ffs.c,v 1.13 2002/02/06 02:17:14 lukem Exp $");
 #endif	/* !__lint */
 
 #include <sys/param.h>
@@ -104,7 +104,7 @@ __RCSID("$NetBSD: ffs.c,v 1.12 2002/01/31 22:44:02 tv Exp $");
 #define	DFL_BLKSIZE		8192		/* block size */
 #define	DFL_SECSIZE		512		/* sector size */
 #define	DFL_CYLSPERGROUP	65536		/* cylinders per group */
-#define	DFL_FRAGSPERINODE	4		/* fragments per inode - XXX */
+#define	DFL_FRAGSPERINODE	4		/* fragments per inode */
 #define	DFL_ROTDELAY		0		/* rotational delay */
 #define	DFL_NRPOS		1		/* rotational positions */
 #define	DFL_RPM			3600		/* rpm of disk */
@@ -479,13 +479,16 @@ ffs_create_image(const char *image, fsinfo_t *fsopts)
 		t = ((struct fs *)fsopts->superblock)->fs_time;
 		printf("mkfs returned %p; fs_time %s",
 		    fsopts->superblock, ctime(&t));
+		printf("fs totals: nbfree %d, nffree %d, nifree %d, ndir %d\n",
+		    fs->fs_cstotal.cs_nbfree, fs->fs_cstotal.cs_nffree,
+		    fs->fs_cstotal.cs_nifree, fs->fs_cstotal.cs_ndir);
 	}
 
-	if ((long long)fs->fs_ncg * fs->fs_ipg < fsopts->inodes) {
+	if (fs->fs_cstotal.cs_nifree < fsopts->inodes) {
 		warnx(
-		"Image file `%s' only has %lld inodes, but %lld are required.",
+		"Image file `%s' has %lld free inodes; %lld are required.",
 		    image,
-		    (long long)fs->fs_ncg * fs->fs_ipg,
+		    (long long)fs->fs_cstotal.cs_nifree,
 		    (long long)fsopts->inodes);
 		return (-1);
 	}
@@ -522,7 +525,7 @@ ffs_size_dir(fsnode *root, fsinfo_t *fsopts)
 } while (0);
 
 	/*
-	 * XXX	this must take into account extra space consumed
+	 * XXX	this needs to take into account extra space consumed
 	 *	by indirect blocks, etc.
 	 */
 #define	ADDSIZE(x) do {							\
@@ -535,12 +538,11 @@ ffs_size_dir(fsnode *root, fsinfo_t *fsopts)
 		if (node == root) {			/* we're at "." */
 			assert(strcmp(node->name, ".") == 0);
 			ADDDIRENT("..");
-		}
-		if ((node->inode->flags & FI_SIZED) == 0) {
+		} else if ((node->inode->flags & FI_SIZED) == 0) {
 				/* don't count duplicate names */
 			node->inode->flags |= FI_SIZED;
 			if (debug & DEBUG_FS_SIZE_DIR_NODE)
-				printf("ffs_size_dir: %s size %lld\n",
+				printf("ffs_size_dir: `%s' size %lld\n",
 				    node->name,
 				    (long long)node->inode->st.st_size);
 			fsopts->inodes++;

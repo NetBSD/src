@@ -1,7 +1,9 @@
-$NetBSD: TODO,v 1.5 2002/01/24 03:21:34 lukem Exp $
+$NetBSD: TODO,v 1.6 2002/02/06 02:17:14 lukem Exp $
 
 todo
 ----
+
+- display block numbers for a given file (e.g, /boot)
 
 - finish makefs.8
 
@@ -18,11 +20,10 @@ outstanding bugs
 
 - size estimation is still out (need to take into account indirect blocks!)
 
-- mkfs.c parameter checking when density is rather high or low (dumps core)
-  e.g, a large directory with a small number of files dumps core with a
-  floating exception i.e, density is too high such as 21886635 or too
-  low such as 30.
-  update: lukem, 2001/01/23.  not sure if this is still an issue.
+- parameter checking when density is rather high or low.
+
+- filling up a file system (running out of inodes or whatever)
+  doesn't do the right thing.
 
 
 discuss
