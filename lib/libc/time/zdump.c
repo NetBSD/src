@@ -1,15 +1,13 @@
-/*	$NetBSD: zdump.c,v 1.13 2002/05/26 11:49:58 wiz Exp $	*/
+/*	$NetBSD: zdump.c,v 1.14 2003/10/29 20:43:27 kleink Exp $	*/
 
 #include <sys/cdefs.h>
 #ifndef lint
 #ifndef NOID
-#if 0
-static char	elsieid[] = "@(#)zdump.c	7.29";
-#else
-__RCSID("$NetBSD: zdump.c,v 1.13 2002/05/26 11:49:58 wiz Exp $");
-#endif
+__RCSID("$NetBSD: zdump.c,v 1.14 2003/10/29 20:43:27 kleink Exp $");
 #endif /* !defined NOID */
 #endif /* !defined lint */
+
+static char	elsieid[] = "@(#)zdump.c	7.31";
 
 /*
 ** This code has been made independent of the rest of the time
@@ -164,6 +162,11 @@ char *	argv[];
 	(void) textdomain(TZ_DOMAIN);
 #endif /* HAVE_GETTEXT - 0 */
 	progname = argv[0];
+	for (i = 1; i < argc; ++i)
+		if (strcmp(argv[i], "--version") == 0) {
+			(void) printf("%s\n", elsieid);
+			(void) exit(EXIT_SUCCESS);
+		}
 	vflag = 0;
 	cutoff = NULL;
 	while ((c = getopt(argc, argv, "c:v")) == 'c' || c == 'v')
@@ -173,7 +176,7 @@ char *	argv[];
 	if ((c != EOF && c != -1) ||
 		(optind == argc - 1 && strcmp(argv[optind], "=") == 0)) {
 			(void) fprintf(stderr,
-_("%s: usage is %s [ -v ] [ -c cutoff ] zonename ...\n"),
+_("%s: usage is %s [ --version ] [ -v ] [ -c cutoff ] zonename ...\n"),
 				argv[0], argv[0]);
 			(void) exit(EXIT_FAILURE);
 	}
