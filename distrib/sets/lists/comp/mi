@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.568 2003/05/20 06:54:45 jdc Exp $
+#	$NetBSD: mi,v 1.569 2003/05/20 09:49:06 agc Exp $
 ./usr/bin/addr2line		comp-debug-bin
 ./usr/bin/ar			comp-util-bin
 ./usr/bin/as			comp-util-bin
@@ -5752,7 +5752,7 @@
 ./usr/share/man/man3/mrand48.3		comp-c-man
 ./usr/share/man/man3/mvaddch.3		comp-c-man
 ./usr/share/man/man3/mvaddnstr.3	comp-c-man
-./usr/share/man/cat3/mvaddstr.3		comp-c-man
+./usr/share/man/man3/mvaddstr.3		comp-c-man
 ./usr/share/man/man3/mvcur.3		comp-c-man
 ./usr/share/man/man3/mvderwin.3		comp-c-man
 ./usr/share/man/man3/mvgetnstr.3		comp-c-man
