@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_exit.c,v 1.89.2.5 2001/08/24 04:20:07 nathanw Exp $	*/
+/*	$NetBSD: kern_exit.c,v 1.89.2.6 2001/11/05 19:59:02 briggs Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.
@@ -399,7 +399,7 @@ exit1(struct lwp *l, int rv)
 		(*p->p_emul->e_proc_exit)(p);
 
 	/* This process no longer needs to hold the kernel lock. */
-	KERNEL_PROC_UNLOCK(p);
+	KERNEL_PROC_UNLOCK(l);
 
 	/*
 	 * Finally, call machine-dependent code to switch to a new
