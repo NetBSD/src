@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.60 2002/03/19 00:53:46 simonb Exp $	*/
+/*	$NetBSD: cpu.h,v 1.61 2002/04/03 03:48:33 simonb Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -342,8 +342,9 @@ void	mips_init_msgbuf(void);
 void	savefpregs(struct proc *);
 void	loadfpregs(struct proc *);
 
-/* locore.S */
+/* locore*.S */
 int	badaddr(void *, size_t);
+int	badaddr64(uint64_t, size_t);
 
 /* mips_machdep.c */
 void	cpu_identify(void);
