@@ -1,4 +1,4 @@
-#	$NetBSD: files,v 1.186 1998/05/20 05:33:45 enami Exp $
+#	$NetBSD: files,v 1.187 1998/05/28 16:53:18 drochner Exp $
 
 #	@(#)files.newconf	7.5 (Berkeley) 5/10/93
 
@@ -223,8 +223,11 @@ define  wskbddev {[console = -1]}
 define	wsmousedev { }
 # attribute to pull in raster support
 define	wsrasteremulops
+# common PC display functions
+define pcdisplayops
+file	dev/ic/pcdisplay_subr.c	pcdisplayops
 # VGA graphics
-device	vga: wsemuldisplaydev
+device	vga: wsemuldisplaydev, pcdisplayops
 file	dev/ic/vga.c		vga	needs-flag
 file	dev/ic/vga_subr.c	vga
 
