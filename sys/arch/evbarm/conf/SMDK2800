@@ -1,4 +1,4 @@
-#	$NetBSD: SMDK2800,v 1.1 2002/11/20 18:06:25 bsh Exp $
+#	$NetBSD: SMDK2800,v 1.2 2003/05/16 08:11:36 bsh Exp $
 #
 #	SMDK2800 -- Samsung's S3C2800 evaluation board.
 #
@@ -8,10 +8,10 @@ include	"arch/evbarm/conf/std.smdk2800"
 #options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
 # Enable the hooks used for initializing the root memory-disk.
-options 	MEMORY_DISK_HOOKS
-options 	MEMORY_DISK_DYNAMIC
-options 	MEMORY_DISK_IS_ROOT	# force root on memory disk
-options 	MEMORY_DISK_SERVER=0	# no userspace memory disk support
+#options 	MEMORY_DISK_HOOKS
+#options 	MEMORY_DISK_DYNAMIC
+#options 	MEMORY_DISK_IS_ROOT	# force root on memory disk
+#options 	MEMORY_DISK_SERVER=0	# no userspace memory disk support
 #options 	MEMORY_DISK_ROOT_SIZE=4096	# size of memory disk, in blocks
 #options 	MEMORY_DISK_ROOT_SIZE=2880	# 1.44M, same as a floppy
 
@@ -28,6 +28,8 @@ options 	NTP		# NTP phase/frequency locked loop
 
 options 	CPU_ARM9	# Support the ARM9TDMI core
 makeoptions	COPTS="-O2 -march=armv4"
+
+options 	S3C2XX0_XTAL_CLK=6000000	# 6MHz external Xtal
 
 # Architecture options
 
@@ -111,7 +113,7 @@ options 	KTRACE		# system call tracing, a la ktrace(1)
 options 	SCSIVERBOSE	# Verbose SCSI errors
 options 	PCIVERBOSE	# Verbose PCI descriptions
 options 	MIIVERBOSE	# Verbose MII autoconfuration messages
-options 	PCI_CONFIG_DUMP	# verbosely dump PCI config space
+#options 	PCI_CONFIG_DUMP	# verbosely dump PCI config space
 options 	PCI_NETBSD_CONFIGURE	# Do not rely on BIOS/whatever to
 					# configure PCI devices
 #options 	PCI_CONFIGURE_VERBOSE	# Show PCI config information
