@@ -1,4 +1,4 @@
-/*	$NetBSD: iostat.c,v 1.19.2.2 2002/11/12 16:54:59 skrll Exp $	*/
+/*	$NetBSD: iostat.c,v 1.19.2.3 2003/01/17 06:57:19 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1980, 1992, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)iostat.c	8.1 (Berkeley) 6/6/93";
 #endif
-__RCSID("$NetBSD: iostat.c,v 1.19.2.2 2002/11/12 16:54:59 skrll Exp $");
+__RCSID("$NetBSD: iostat.c,v 1.19.2.3 2003/01/17 06:57:19 thorpej Exp $");
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -179,8 +179,8 @@ barlabels(int row)
 		if (cur.dk_select[i]) {
 			if (row > getmaxy(wnd) - linesperregion)
 				break;
-			mvwprintw(wnd, row++, 0, "%7.7s  kBps|", cur.dk_name[i],
-			    read_write ? ' ' : 'r');
+			mvwprintw(wnd, row++, 0, "%7.7s  kBps|",
+			    cur.dk_name[i]);
 			mvwaddstr(wnd, row++, 0, "          tps|");
 			if (read_write) {
 				mvwprintw(wnd, row++, 0, " (write) kBps|");
@@ -254,12 +254,12 @@ stats(int row, int col, int dn)
 	wwords = cur.dk_wbytes[dn] / 1024.0;
 	if (numbers) {
 		if (read_write)
-			mvwprintw(wnd, row, col, " %3.0f%4.0f%5.1f %3.0f%4.0f",
+			mvwprintw(wnd, row, col, "%4.0f%4.0f%5.1f %3.0f%4.0f",
 			    rwords / etime, cur.dk_rxfer[dn] / etime,
 			    atime / etime,
 			    wwords / etime, cur.dk_wxfer[dn] / etime);
 		else
-			mvwprintw(wnd, row, col, " %3.0f%4.0f%5.1f",
+			mvwprintw(wnd, row, col, "%4.0f%4.0f%5.1f",
 			    (rwords + wwords) / etime,
 			    (cur.dk_rxfer[dn] + cur.dk_wxfer[dn]) / etime,
 			    atime / etime);
