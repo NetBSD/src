@@ -1,4 +1,4 @@
-/*	$NetBSD: svr4_32_misc.c,v 1.7 2001/07/01 16:55:19 thorpej Exp $	 */
+/*	$NetBSD: svr4_32_misc.c,v 1.8 2001/11/12 01:23:51 atatat Exp $	 */
 
 /*-
  * Copyright (c) 1994 The NetBSD Foundation, Inc.
@@ -686,7 +686,11 @@ svr4_32_sys_sysconfig(p, v, retval)
 		*retval = 0;	/* No delaytimer support */
 		break;
 	case SVR4_CONFIG_MQ_OPEN_MAX:
+#ifdef SYSVMSG
 		*retval = msginfo.msgmni;
+#else
+		*retval = 0;
+#endif
 		break;
 	case SVR4_CONFIG_MQ_PRIO_MAX:
 		*retval = 0;	/* XXX: Don't know */
@@ -695,10 +699,18 @@ svr4_32_sys_sysconfig(p, v, retval)
 		*retval = 0;
 		break;
 	case SVR4_CONFIG_SEM_NSEMS_MAX:
+#ifdef SYSVSEM
 		*retval = seminfo.semmni;
+#else
+		*retval = 0;
+#endif
 		break;
 	case SVR4_CONFIG_SEM_VALUE_MAX:
+#ifdef SYSVSEM
 		*retval = seminfo.semvmx;
+#else
+		*retval = 0;
+#endif
 		break;
 	case SVR4_CONFIG_SIGQUEUE_MAX:
 		*retval = 0;	/* XXX: Don't know */
