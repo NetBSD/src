@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_bio.c,v 1.49 2002/12/17 15:23:37 yamt Exp $	*/
+/*	$NetBSD: lfs_bio.c,v 1.50 2002/12/22 17:31:52 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_bio.c,v 1.49 2002/12/17 15:23:37 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_bio.c,v 1.50 2002/12/22 17:31:52 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -141,6 +141,13 @@ lfs_reserve(struct lfs *fs, struct vnode *vp, int fsb)
 		 * because we might sleep very long time.
 		 */
 		VOP_UNLOCK(vp, 0);
+#else
+		/*
+		 * XXX since we'll sleep for cleaner with vnode lock holding,
+		 * deadlock will occur if cleaner wants to acquire the vnode
+		 * lock.
+		 * (eg. lfs_markv -> lfs_fastvget -> getnewvnode -> vclean)
+		 */
 #endif
 
 		if (!slept) {
