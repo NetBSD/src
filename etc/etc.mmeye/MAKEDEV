@@ -1,6 +1,6 @@
 #!/bin/sh -
 #
-#	$NetBSD: MAKEDEV,v 1.5 2000/09/27 10:33:27 tsutsui Exp $
+#	$NetBSD: MAKEDEV,v 1.6 2001/05/10 01:04:39 lukem Exp $
 #
 # Copyright (c) 1990 The Regents of the University of California.
 # All rights reserved.
@@ -48,7 +48,6 @@
 #
 # Console ports:
 #	ttyv0	pccons or pcvt screen 0
-#	ttyv*	pcvt
 #
 # Terminal ports:
 #	com*	standard PC COM ports			(XXX)
@@ -95,7 +94,6 @@ all)
 	sh $0 lpt0 lpt1 lpt2 ttyv0 bpf0 bpf1 bpf2 bpf3 tun0 tun1 ipl
 	sh $0 ccd0 ccd1 ccd2 ccd3 md0 ss0 ch0 uk0 uk1 random
 	sh $0 speaker lkm audio joy0 joy1 apm local satlink0
-	sh $0 ttyv0 ttyv1 ttyv2 ttyv3 ttyv4 ttyv5 ttyv6 ttyv7 ttyv8
 	sh $0 scsibus0 scsibus1
 	;;
 
