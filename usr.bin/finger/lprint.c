@@ -1,4 +1,4 @@
-/*	$NetBSD: lprint.c,v 1.11 1998/07/26 15:14:54 mycroft Exp $	*/
+/*	$NetBSD: lprint.c,v 1.12 1998/12/19 16:00:33 christos Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)lprint.c	8.3 (Berkeley) 4/28/95";
 #else
-__RCSID( "$NetBSD: lprint.c,v 1.11 1998/07/26 15:14:54 mycroft Exp $");
+__RCSID( "$NetBSD: lprint.c,v 1.12 1998/12/19 16:00:33 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -78,6 +78,12 @@ static int	demi_print __P((char *, int));
 static void	lprint __P((PERSON *));
 static int	show_text __P((char *, char *, char *));
 static void	vputc __P((int));
+
+#ifdef __SVR4
+#define TIMEZONE(a)	tzname[0]
+#else
+#define TIMEZONE(a)	(a)->tm_zone
+#endif
 
 void
 lflag_print()
@@ -190,7 +196,7 @@ no_gecos:
 		case LOGGEDIN:
 			tp = localtime(&w->loginat);
 			t = asctime(tp);
-			tzn = tp->tm_zone;
+			tzn = TIMEZONE(tp);
 			cpr = printf("On since %.16s (%s) on %s",
 			    t, tzn, w->tty);
 			/*
@@ -224,7 +230,7 @@ no_gecos:
 			}
 			tp = localtime(&w->loginat);
 			t = asctime(tp);
-			tzn = tp->tm_zone;
+			tzn = TIMEZONE(tp);
 			if (now - w->loginat > SECSPERDAY * DAYSPERNYEAR / 2)
 				cpr =
 				    printf("Last login %.16s %.4s (%s) on %s",
@@ -246,16 +252,16 @@ no_gecos:
 	else if (pn->mailrecv > pn->mailread) {
 		tp = localtime(&pn->mailrecv);
 		t = asctime(tp);
-		tzn = tp->tm_zone;
+		tzn = TIMEZONE(tp);
 		printf("New mail received %.16s %.4s (%s)\n", t, t + 20, tzn);
 		tp = localtime(&pn->mailread);
 		t = asctime(tp);
-		tzn = tp->tm_zone;
+		tzn = TIMEZONE(tp);
 		printf("     Unread since %.16s %.4s (%s)\n", t, t + 20, tzn);
 	} else {
 		tp = localtime(&pn->mailread);
 		t = asctime(tp);
-		tzn = tp->tm_zone;
+		tzn = TIMEZONE(tp);
 		printf("Mail last read %.16s %.4s (%s)\n", t, t + 20, tzn);
 	}
 }
