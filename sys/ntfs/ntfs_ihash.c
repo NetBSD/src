@@ -1,4 +1,4 @@
-/*	$NetBSD: ntfs_ihash.c,v 1.3 1999/07/26 14:02:31 jdolecek Exp $	*/
+/*	$NetBSD: ntfs_ihash.c,v 1.4 1999/09/12 16:41:05 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1991, 1993, 1995
@@ -43,6 +43,7 @@
 #include <sys/vnode.h>
 #include <sys/malloc.h>
 #include <sys/proc.h>
+#include <sys/mount.h>
 
 #include <ntfs/ntfs.h>
 #include <ntfs/ntfs_inode.h>
