@@ -1,4 +1,4 @@
-/*      $NetBSD: ac97.c,v 1.4 1999/11/20 01:16:15 augustss Exp $ */
+/*      $NetBSD: ac97.c,v 1.5 1999/11/24 23:21:01 augustss Exp $ */
 /*      $OpenBSD: ac97.c,v 1.2 1999/09/21 16:06:27 csapuntz Exp $ */
 
 /*
@@ -295,7 +295,8 @@ static struct ac97_codecid {
 	char *name;
 } ac97codecid[] = {
 	{ 0x414B4D00, "Asahi Kasei AK4540" 	},
-	{ 0x43525900, "Cirrus Logic CS4297" 	},
+	/*0x43525900, "Cirrus Logic CS4297" 	},*/
+	{ 0x43525903, "Cirrus Logic CS4297" 	},
 	{ 0x83847600, "SigmaTel STAC????" 	},
 	{ 0x83847604, "SigmaTel STAC9701/3/4/5" },
 	{ 0x83847605, "SigmaTel STAC9704" 	},
