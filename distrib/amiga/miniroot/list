@@ -1,4 +1,4 @@
-#	$NetBSD: list,v 1.13 2002/03/06 12:04:50 lukem Exp $
+#	$NetBSD: list,v 1.14 2002/04/10 01:57:27 lukem Exp $
 
 # Amiga extra's
 PROG	sbin/disklabel
@@ -33,6 +33,7 @@ COPY	${ARCHDIR}/install.md		install.md
 COPY	${ARCHDIR}/dot.profile		.profile
 
 # and the keyboard maps
+MTREE	./usr/share/keymaps	type=dir uname=root gname=wheel mode=0755
 COPYDIR	${DESTDIR}/usr/share/keymaps/amiga	usr/share/keymaps/amiga
 
 # boot loader
