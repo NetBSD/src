@@ -1,4 +1,4 @@
-/*	$NetBSD: dirs.c,v 1.32 1998/03/18 17:18:21 bouyer Exp $	*/
+/*	$NetBSD: dirs.c,v 1.33 1998/05/12 00:42:48 enami Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -43,7 +43,7 @@
 #if 0
 static char sccsid[] = "@(#)dirs.c	8.7 (Berkeley) 5/1/95";
 #else
-__RCSID("$NetBSD: dirs.c,v 1.32 1998/03/18 17:18:21 bouyer Exp $");
+__RCSID("$NetBSD: dirs.c,v 1.33 1998/05/12 00:42:48 enami Exp $");
 #endif
 #endif /* not lint */
 
@@ -639,11 +639,13 @@ setdirmodes(flags)
 		if (ep == NULL) {
 			panic("cannot find directory inode %d\n", node.ino);
 		} else {
-			cp = myname(ep);
-			(void) utimes(cp, node.timep);
-			(void) chown(cp, node.uid, node.gid);
-			(void) chmod(cp, node.mode);
-			(void) chflags(cp, node.flags);
+			if (!Nflag) {
+				cp = myname(ep);
+				(void) utimes(cp, node.timep);
+				(void) chown(cp, node.uid, node.gid);
+				(void) chmod(cp, node.mode);
+				(void) chflags(cp, node.flags);
+			}
 			ep->e_flags &= ~NEW;
 		}
 	}
