@@ -1,4 +1,4 @@
-/*	$NetBSD: atactl.c,v 1.2 1998/11/20 18:27:40 kenh Exp $	*/
+/*	$NetBSD: atactl.c,v 1.3 1998/11/23 23:02:58 kenh Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -80,6 +80,7 @@ extern const char *__progname;		/* from crt0.o */
 void	device_identify __P((int, char *[]));
 void	device_setidle __P((int, char *[]));
 void	device_idle __P((int, char *[]));
+void	device_checkpower __P((int, char *[]));
 
 struct command commands[] = {
 	{ "identify",	device_identify },
@@ -88,6 +89,7 @@ struct command commands[] = {
 	{ "idle",	device_idle },
 	{ "standby",	device_idle },
 	{ "sleep",	device_idle },
+	{ "checkpower",	device_checkpower },
 	{ NULL,		NULL },
 };
 
@@ -488,5 +490,50 @@ device_setidle(argc, argv)
 usage:
 	fprintf(stderr, "usage; %s device %s idle-time\n", __progname,
 		cmdname);
+	exit(1);
+}
+
+/*
+ * Query the device for the current power mode
+ */
+
+void
+device_checkpower(argc, argv)
+	int argc;
+	char *argv[];
+{
+	struct atareq req;
+
+	/* No arguments. */
+	if (argc != 0)
+		goto usage;
+
+	memset(&req, 0, sizeof(req));
+
+	req.command = WDCC_CHECK_PWR;
+	req.timeout = 1000;
+	req.flags = ATACMD_READREG;
+
+	ata_command(&req);
+
+	printf("Current power status: ");
+
+	switch (req.sec_count) {
+	case 0x00:
+		printf("Standby mode\n");
+		break;
+	case 0x80:
+		printf("Idle mode\n");
+		break;
+	case 0xff:
+		printf("Active mode\n");
+		break;
+	default:
+		printf("Unknown power code (%02x)\n", req.sec_count);
+	}
+
+	return;
+usage:
+	fprintf(stderr, "usage: %s device %s\n", __progname, cmdname);
 	exit(1);
 }
