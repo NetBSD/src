@@ -1,4 +1,4 @@
-/*	$NetBSD: skey.c,v 1.10 2000/07/07 15:18:14 mjl Exp $	*/
+/*	$NetBSD: skey.c,v 1.11 2000/07/07 15:45:00 mjl Exp $	*/
 
 /*
  * S/KEY v1.1b (skey.c)
@@ -23,9 +23,10 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: skey.c,v 1.10 2000/07/07 15:18:14 mjl Exp $");
+__RCSID("$NetBSD: skey.c,v 1.11 2000/07/07 15:45:00 mjl Exp $");
 #endif
 
+#include <ctype.h>
 #include <err.h>
 #include <fcntl.h>
 #include <stdio.h>
@@ -42,7 +43,7 @@ main(int	argc, char **argv)
 {
 	int     n, cnt, i, pass = 0, hexmode = 0;
 	char    passwd[SKEY_MAX_PW_LEN+1], key[SKEY_BINKEY_SIZE];
-	char	buf[33], *seed, *slash;
+	char	buf[33], *seed, *slash, *t;
 
 	cnt = 1;
 
@@ -101,6 +102,14 @@ main(int	argc, char **argv)
 		seed = argv[++optind];
 	}
 
+	for(t = seed; *t; t++) {
+		if(!isalnum(*t))
+			errx(1, "seed must be alphanumeric");
+	}
+
+	if(!*seed || strlen(seed) > SKEY_MAX_SEED_LEN)
+		errx(1, "seed must be between 1 and %d long", SKEY_MAX_SEED_LEN);
+
 	/* Get user's secret password */
 	if (!pass) {
 		(void)fputs("Reminder - Do not use this program while "
@@ -110,6 +119,9 @@ main(int	argc, char **argv)
 		if (passwd[0] == '\0') 
 			exit(1);
 	}
+
+	if(strlen(passwd) < SKEY_MIN_PW_LEN)
+		errx(1, "password must be at least %d long", SKEY_MIN_PW_LEN);
 
 	/* Crunch seed and password into starting key */
 	if (keycrunch(key, seed, passwd) != 0)
