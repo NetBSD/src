@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.24 2000/01/12 05:02:10 mjl Exp $
+#	$NetBSD: Makefile,v 1.25 2000/05/12 18:31:55 mjl Exp $
 #	@(#)Makefile	8.1 (Berkeley) 6/4/93
 
 LIB=	util
@@ -17,15 +17,15 @@ MAN=	fparseln.3 getmaxpartitions.3 getrawpartition.3 \
 
 MLINKS+=login.3 logout.3
 MLINKS+=login.3 logwtmp.3
-MKLINKS+=login_cap.3 login_getclass.3
-MKLINKS+=login_cap.3 login_getcapbool.3
-MKLINKS+=login_cap.3 login_getcapnum.3
-MKLINKS+=login_cap.3 login_getcapsize.3
-MKLINKS+=login_cap.3 login_getcapstr.3
-MKLINKS+=login_cap.3 login_getcaptime.3
-MKLINKS+=login_cap.3 login_close.3
-MKLINKS+=login_cap.3 setclasscontext.3
-MKLINKS+=login_cap.3 setusercontext.3
+MLINKS+=login_cap.3 login_getclass.3
+MLINKS+=login_cap.3 login_getcapbool.3
+MLINKS+=login_cap.3 login_getcapnum.3
+MLINKS+=login_cap.3 login_getcapsize.3
+MLINKS+=login_cap.3 login_getcapstr.3
+MLINKS+=login_cap.3 login_getcaptime.3
+MLINKS+=login_cap.3 login_close.3
+MLINKS+=login_cap.3 setclasscontext.3
+MLINKS+=login_cap.3 setusercontext.3
 MLINKS+=openpty.3 login_tty.3
 MLINKS+=openpty.3 forkpty.3
 MLINKS+=pw_init.3 pw_edit.3
