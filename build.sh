@@ -1,5 +1,5 @@
 #! /usr/bin/env sh
-#  $NetBSD: build.sh,v 1.71 2002/11/05 01:53:58 enami Exp $
+#  $NetBSD: build.sh,v 1.72 2002/11/17 12:59:37 lukem Exp $
 #
 # Top level build wrapper, for a system containing no tools.
 #
@@ -138,8 +138,8 @@ _usage_
 MAKEFLAGS=
 buildtarget=build
 do_buildsystem=true
-do_buildonlykernel=false
-do_buildonlytools=false
+do_buildkernel=false
+do_buildtools=false
 do_rebuildmake=false
 do_removedirs=false
 makeenv=
@@ -179,9 +179,9 @@ while eval $getoptcmd; do case $opt in
 	-j)	eval $optargcmd
 		parallel="-j $OPTARG";;
 
-	-k)	do_buildonlykernel=true; do_buildsystem=false
+	-k)	do_buildkernel=true; do_buildsystem=false
 		eval $optargcmd
-		KERNCONFNAME=$OPTARG;;
+		kernconfname=$OPTARG;;
 
 	# -m overrides MACHINE_ARCH unless "-a" is specified
 	-m)	eval $optargcmd
@@ -193,7 +193,7 @@ while eval $getoptcmd; do case $opt in
 
 	-r)	do_removedirs=true; do_rebuildmake=true;;
 
-	-t)	do_buildonlytools=true; do_buildsystem=false;;
+	-t)	do_buildtools=true; do_buildsystem=false;;
 
 	-U)	UNPRIVED=yes; export UNPRIVED
 		makeenv="$makeenv UNPRIVED";;
@@ -279,8 +279,10 @@ if $do_rebuildmake; then
 	trap "exit 1" 1 2 3 15
 	$runcmd cd "$tmpdir"
 
-	$runcmd env CC="${HOST_CC-cc}" CPPFLAGS="${HOST_CPPFLAGS}" CFLAGS="${HOST_CFLAGS--O}" LDFLAGS="${HOST_LDFLAGS}" \
-		"$TOP/tools/make/configure" || bomb "configure of nbmake failed"
+	$runcmd env CC="${HOST_CC-cc}" CPPFLAGS="${HOST_CPPFLAGS}" \
+		CFLAGS="${HOST_CFLAGS--O}" LDFLAGS="${HOST_LDFLAGS}" \
+		"$TOP/tools/make/configure" \
+		|| bomb "configure of nbmake failed"
 	$runcmd sh buildmake.sh || bomb "build of nbmake failed"
 
 	make="$tmpdir/nbmake"
@@ -317,7 +319,8 @@ fi
 # default setting from <bsd.own.mk> is used.
 if [ -z "$TOOLDIR" ] && [ "$MKOBJDIRS" != "no" ]; then
 	$runcmd cd tools
-	$runcmd $make -m ${TOP}/share/mk obj NOSUBDIR= || exit 1
+	$runcmd $make -m ${TOP}/share/mk obj NOSUBDIR= \
+		|| bomb "make obj failed in tools"
 	$runcmd cd "$TOP"
 fi
 
@@ -337,11 +340,11 @@ if [ "$runcmd" = "echo" ]; then
 else
 	DESTDIR=`getmakevar DESTDIR`;
 	[ $? = 0 ] || bomb "getmakevar DESTDIR failed";
-	echo "===> DESTDIR path: $DESTDIR"
+	$runcmd echo "===> DESTDIR path: $DESTDIR"
 
 	TOOLDIR=`getmakevar TOOLDIR`;
 	[ $? = 0 ] || bomb "getmakevar TOOLDIR failed";
-	echo "===> TOOLDIR path: $TOOLDIR"
+	$runcmd echo "===> TOOLDIR path: $TOOLDIR"
 
 	export DESTDIR TOOLDIR
 fi
@@ -359,8 +362,8 @@ if [ -z "$DESTDIR" ] || [ "$DESTDIR" = "/" ]; then
 	    [ "`uname -m`" != "$MACHINE" ]); then
 		bomb "DESTDIR must be set to a non-root path for cross builds or -d or -R."
 	elif $do_buildsystem; then
-		echo "===> WARNING: Building to /."
-		echo "===> If your kernel is not up to date, this may cause the system to break!"
+		$runcmd echo "===> WARNING: Building to /."
+		$runcmd echo "===> If your kernel is not up to date, this may cause the system to break!"
 	fi
 else
 	removedirs="$removedirs $DESTDIR"
@@ -369,7 +372,7 @@ fi
 # Remove the target directories.
 if $do_removedirs; then
 	for f in $removedirs; do
-		echo "===> Removing $f"
+		$runcmd echo "===> Removing $f"
 		$runcmd rm -r -f $f
 	done
 fi
@@ -380,7 +383,9 @@ $runcmd mkdir -p "$TOOLDIR/bin" || bomb "mkdir of '$TOOLDIR/bin' failed"
 # Install nbmake if it was built.
 if $do_rebuildmake; then
 	$runcmd rm -f "$TOOLDIR/bin/nbmake"
-	$runcmd cp $make "$TOOLDIR/bin/nbmake"
+	$runcmd cp $make "$TOOLDIR/bin/nbmake" \
+		|| bomb "failed to install \$TOOLDIR/bin/nbmake"
+	make="$TOOLDIR/bin/nbmake"
 	$runcmd rm -r -f "$tmpdir"
 	trap 0 1 2 3 15
 fi
@@ -404,7 +409,7 @@ fi
 eval cat <<EOF $makewrapout
 #! /bin/sh
 # Set proper variables to allow easy "make" building of a NetBSD subtree.
-# Generated from:  \$NetBSD: build.sh,v 1.71 2002/11/05 01:53:58 enami Exp $
+# Generated from:  \$NetBSD: build.sh,v 1.72 2002/11/17 12:59:37 lukem Exp $
 #
 
 EOF
@@ -421,53 +426,88 @@ EOF
 $runcmd chmod +x "$makewrapper"
 
 if $do_buildsystem; then
-	${runcmd-exec} "$makewrapper" $parallel $buildtarget
+	# Build everything.
+	${runcmd-exec} "$makewrapper" $parallel $buildtarget \
+		|| bomb "failed to make $buildtarget"
 else
-	# One or more of do_buildonlytools and do_buildonlykernel
+	# One or more of do_buildtools and do_buildkernel
 	# might be set.  Do them in the appropriate order.
-	if $do_buildonlytools; then
+	if $do_buildtools; then
 		if [ "$MKOBJDIRS" != "no" ]; then
-			$runcmd "$makewrapper" $parallel obj-tools || exit 1
+			$runcmd "$makewrapper" $parallel obj-tools \
+				|| bomb "failed to make obj-tools"
 		fi
 		$runcmd cd tools
 		if [ "$UPDATE" = "" ]; then
-			$runcmd "$makewrapper" cleandir dependall install
+			$runcmd "$makewrapper" cleandir dependall install \
+				|| bomb "failed to make tools"
 		else
-			$runcmd "$makewrapper" dependall install
+			$runcmd "$makewrapper" dependall install \
+				|| bomb "failed to make tools"
 		fi
 	fi
-	if $do_buildonlykernel; then
-		$runcmd echo "===> Building kernel ${KERNCONFNAME}"
+	if $do_buildkernel; then
+		if ! $do_buildtools; then
+			# Building tools every time we build a kernel
+			# is clearly unnecessary.  We could try to
+			# figure out whether rebuilding the tools is
+			# necessary this time, but it doesn't seem
+			# worth the trouble.  Instead, we say it's the
+			# user's responsibility to rebuild the tools if
+			# necessary.
+			$runcmd echo "===> Building kernel" \
+				"without building new tools"
+		fi
+		$runcmd echo "===> Building kernel ${kernconfname}"
+		# The correct value of KERNOBJDIR might depend on a
+		# prior "make obj" in TOP/etc.
+		if [ "$MKOBJDIRS" != "no" ] && [ ! -z "$makeobjdir" ]; then
+			$runcmd cd "$TOP/etc"
+			$runcmd "$makewrapper" obj \
+				|| bomb "failed to make obj in etc"
+			$runcmd cd "$TOP"
+		fi
 		if [ "$runcmd" = "echo" ]; then
 			# shown symbolically with -n
 			# because getmakevar might not work yet
-			KERNCONFDIR='${KERNCONFDIR}'
-			KERNOBJDIR='${KERNOBJDIR}'
+			KERNCONFDIR='$KERNCONFDIR'
+			KERNOBJDIR='$KERNOBJDIR'
 		else
 			KERNCONFDIR="$( getmakevar KERNCONFDIR )"
+			[ $? = 0 ] || bomb "getmakevar KERNCONFDIR failed";
 			KERNOBJDIR="$( getmakevar KERNOBJDIR )"
+			[ $? = 0 ] || bomb "getmakevar KERNOBJDIR failed";
 		fi
-		case "${KERNCONFNAME}" in
+		case "${kernconfname}" in
 		*/*)
-			kernconfpath=${KERNCONFNAME}
-			KERNCONFNAME=`basename ${KERNCONFNAME}`
+			kernconfpath="${kernconfname}"
+			kernconfbase="$( basename "${kernconfname}" )"
 			;;
 		*)
-			kernconfpath=${KERNCONFDIR}/${KERNCONFNAME}
+			kernconfpath="${KERNCONFDIR}/${kernconfname}"
+			kernconfbase="${kernconfname}"
 			;;
 		esac
-		$runcmd mkdir -p "${KERNOBJDIR}/${KERNCONFNAME}"
+		kernbuilddir="${KERNOBJDIR}/${kernconfbase}"
+		$runcmd echo "===> Kernel build directory: ${kernbuilddir}"
+		$runcmd mkdir -p "${kernbuilddir}" \
+			|| bomb "cannot mkdir: ${kernbuilddir}"
 		if [ "$UPDATE" = "" ]; then
-			$runcmd cd "${KERNOBJDIR}/${KERNCONFNAME}"
-			$runcmd "$makewrapper" cleandir
+			$runcmd cd "${kernbuilddir}"
+			$runcmd "$makewrapper" cleandir \
+				|| bomb "make cleandir failed in " \
+					"${kernbuilddir}"
 			$runcmd cd "$TOP"
 		fi
 		$runcmd "${TOOLDIR}/bin/nbconfig" \
-			-b "${KERNOBJDIR}/${KERNCONFNAME}" \
-			-s "${TOP}/sys" "${kernconfpath}"
-		$runcmd cd "${KERNOBJDIR}/${KERNCONFNAME}"
-		$runcmd "$makewrapper" depend
-		$runcmd "$makewrapper" $parallel all
-		echo "New kernel should be in ${KERNOBJDIR}/${KERNCONFNAME}"
+			-b "${kernbuilddir}" \
+			-s "${TOP}/sys" "${kernconfpath}" \
+			|| bomb "nbconfig failed for ${kernconfname}"
+		$runcmd cd "${kernbuilddir}"
+		$runcmd "$makewrapper" depend \
+			|| bomb "make depend failed in ${kernbuilddir}"
+		$runcmd "$makewrapper" $parallel all \
+			|| bomb "make all failed in ${kernbuilddir}"
+		$runcmd echo "===> New kernel should be in ${kernbuilddir}"
 	fi
 fi
