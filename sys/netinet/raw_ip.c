@@ -1,4 +1,4 @@
-/*	$NetBSD: raw_ip.c,v 1.55.2.5 2002/08/27 23:48:03 nathanw Exp $	*/
+/*	$NetBSD: raw_ip.c,v 1.55.2.6 2002/11/07 17:58:51 thorpej Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -65,7 +65,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: raw_ip.c,v 1.55.2.5 2002/08/27 23:48:03 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: raw_ip.c,v 1.55.2.6 2002/11/07 17:58:51 thorpej Exp $");
 
 #include "opt_ipsec.h"
 #include "opt_mrouting.h"
@@ -126,8 +126,6 @@ rip_init()
 	in_pcbinit(&rawcbtable, 1, 1);
 }
 
-static struct	sockaddr_in ripsrc = { sizeof(ripsrc), AF_INET };
-
 /*
  * Setup generic address and protocol structures
  * for raw_input routine, then pass them along with
@@ -142,7 +140,7 @@ rip_input(m, va_alist)
 	va_dcl
 #endif
 {
-	int off, proto;
+	int proto;
 	struct ip *ip = mtod(m, struct ip *);
 	struct inpcb *inp;
 	struct inpcb *last = 0;
@@ -151,7 +149,7 @@ rip_input(m, va_alist)
 	va_list ap;
 
 	va_start(ap, m);
-	off = va_arg(ap, int);
+	(void)va_arg(ap, int);		/* ignore value, advance ap */
 	proto = va_arg(ap, int);
 	va_end(ap);
 
@@ -350,6 +348,21 @@ rip_output(m, va_alist)
 			return (EMSGSIZE);
 		}
 		ip = mtod(m, struct ip *);
+
+		/*
+		 * If the mbuf is read-only, we need to allocate
+		 * a new mbuf for the header, since we need to
+		 * modify the header.
+		 */
+		if (M_READONLY(m)) {
+			int hlen = ip->ip_hl << 2;
+
+			m = m_copyup(m, hlen, (max_linkhdr + 3) & ~3);
+			if (m == NULL)
+				return (ENOMEM);	/* XXX */
+			ip = mtod(m, struct ip *);
+		}
+
 		/* XXX userland passes ip_len and ip_off in host order */
 		if (m->m_pkthdr.len != ip->ip_len) {
 			m_freem(m);
