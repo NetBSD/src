@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_input.c,v 1.113 2000/07/09 12:49:08 itojun Exp $	*/
+/*	$NetBSD: tcp_input.c,v 1.114 2000/07/23 05:00:01 itojun Exp $	*/
 
 /*
 %%% portions-copyright-nrl-95
@@ -3360,6 +3360,10 @@ syn_cache_respond(sc, m)
 	 */
 	if (m)
 		m_freem(m);
+#ifdef DIAGNOSTIC
+	if (max_linkhdr + tlen > MCLBYTES)
+		return (ENOBUFS);
+#endif
 	MGETHDR(m, M_DONTWAIT, MT_DATA);
 	if (m && tlen > MHLEN) {
 		MCLGET(m, M_DONTWAIT);
