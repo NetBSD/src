@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_prf.c,v 1.77 2001/03/09 13:35:50 tsutsui Exp $	*/
+/*	$NetBSD: subr_prf.c,v 1.78 2001/04/30 21:29:45 kleink Exp $	*/
 
 /*-
  * Copyright (c) 1986, 1988, 1991, 1993
@@ -45,6 +45,7 @@
 #include "opt_multiprocessor.h"
 
 #include <sys/param.h>
+#include <sys/stdint.h>
 #include <sys/systm.h>
 #include <sys/buf.h>
 #include <sys/reboot.h>
@@ -894,20 +895,29 @@ out:
 #define	LONGINT		0x010		/* long integer */
 #define	QUADINT		0x020		/* quad integer */
 #define	SHORTINT	0x040		/* short integer */
-#define	ZEROPAD		0x080		/* zero (as opposed to blank) pad */
-#define FPT		0x100		/* Floating point number */
+#define	MAXINT		0x080		/* intmax_t */
+#define	PTRINT		0x100		/* intptr_t */
+#define	SIZEINT		0x200		/* size_t */
+#define	ZEROPAD		0x400		/* zero (as opposed to blank) pad */
+#define FPT		0x800		/* Floating point number */
 
 	/*
 	 * To extend shorts properly, we need both signed and unsigned
 	 * argument extraction methods.
 	 */
 #define	SARG() \
-	(flags&QUADINT ? va_arg(ap, quad_t) : \
+	(flags&MAXINT ? va_arg(ap, intmax_t) : \
+	    flags&PTRINT ? va_arg(ap, intptr_t) : \
+	    flags&SIZEINT ? va_arg(ap, ssize_t) : /* XXX */ \
+	    flags&QUADINT ? va_arg(ap, quad_t) : \
 	    flags&LONGINT ? va_arg(ap, long) : \
 	    flags&SHORTINT ? (long)(short)va_arg(ap, int) : \
 	    (long)va_arg(ap, int))
 #define	UARG() \
-	(flags&QUADINT ? va_arg(ap, u_quad_t) : \
+	(flags&MAXINT ? va_arg(ap, uintmax_t) : \
+	    flags&PTRINT ? va_arg(ap, uintptr_t) : \
+	    flags&SIZEINT ? va_arg(ap, size_t) : \
+	    flags&QUADINT ? va_arg(ap, u_quad_t) : \
 	    flags&LONGINT ? va_arg(ap, u_long) : \
 	    flags&SHORTINT ? (u_long)(u_short)va_arg(ap, int) : \
 	    (u_long)va_arg(ap, u_int))
@@ -1049,6 +1059,9 @@ reswitch:	switch (ch) {
 		case 'h':
 			flags |= SHORTINT;
 			goto rflag;
+		case 'j':
+			flags |= MAXINT;
+			goto rflag;
 		case 'l':
 			if (*fmt == 'l') {
 				fmt++;
@@ -1059,6 +1072,12 @@ reswitch:	switch (ch) {
 			goto rflag;
 		case 'q':
 			flags |= QUADINT;
+			goto rflag;
+		case 't':
+			flags |= PTRINT;
+			goto rflag;
+		case 'z':
+			flags |= SIZEINT;
 			goto rflag;
 		case 'c':
 			*(cp = buf) = va_arg(ap, int);
@@ -1078,7 +1097,13 @@ reswitch:	switch (ch) {
 			base = DEC;
 			goto number;
 		case 'n':
-			if (flags & QUADINT)
+			if (flags & MAXINT)
+				*va_arg(ap, intmax_t *) = ret;
+			else if (flags & PTRINT)
+				*va_arg(ap, intptr_t *) = ret;
+			else if (flags & SIZEINT)
+				*va_arg(ap, ssize_t *) = ret;
+			else if (flags & QUADINT)
 				*va_arg(ap, quad_t *) = ret;
 			else if (flags & LONGINT)
 				*va_arg(ap, long *) = ret;
