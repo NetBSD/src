@@ -39,7 +39,7 @@ char copyright[] =
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)mkdir.c	5.7 (Berkeley) 5/31/90";*/
-static char rcsid[] = "$Id: mkdir.c,v 1.8 1994/04/28 00:10:30 jtc Exp $";
+static char rcsid[] = "$Id: mkdir.c,v 1.9 1994/04/29 00:13:54 jtc Exp $";
 #endif /* not lint */
 
 #include <stdio.h>
@@ -92,6 +92,13 @@ main(argc, argv)
 		usage();
 	
 	for (exitval = 0; *argv; ++argv) {
+		register char *slash;
+
+		/* delete trailing slashes */
+		slash = strrchr(*argv, '\0');
+		while (--slash > *argv && *slash == '/')
+			*slash = '\0';
+
 		if (pflag) {
 			exitval |= mkpath(*argv, mode, dir_mode);
 		} else if (mkdir(*argv, mode) < 0) {
