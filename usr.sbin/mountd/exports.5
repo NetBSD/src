@@ -1,4 +1,4 @@
-.\"	$NetBSD: exports.5,v 1.15 2000/02/17 09:05:07 fvdl Exp $
+.\"	$NetBSD: exports.5,v 1.16 2000/06/09 00:03:31 fvdl Exp $
 .\"
 .\" Copyright (c) 1989, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -262,6 +262,8 @@ For example:
 /usr -maproot=daemon grumpy.cis.uoguelph.ca 131.104.48.16
 /usr -ro -mapall=nobody
 /u -maproot=bin: -network 131.104.48 -mask 255.255.255.0
+/a -network 192.168.0/24
+/a -network 3ffe:1ce1:1:fe80::/64
 /u2 -maproot=root friends
 /u2 -alldirs -kerb -network cis-net -mask cis-mask
 .Ed
@@ -301,6 +303,18 @@ associated with ``root'';
 it is exported to all hosts on network ``cis-net'' allowing mounts at any
 directory within /u2 and mapping all uids to credentials for the principal
 that is authenticated by a Kerberos ticket.
+.Pp
+.Sy /a
+is exported to the network 192.168.0.0, with a netmask of 255.255.255.0.
+However, the netmask length in the entry for /a is not specified through
+a -mask option, but through the /prefix notation.
+.Pp
+.Sy /a
+is also exported to the IPv6 network 3ffe:1ce1:1:fe80:: address, using
+the upper 64 bits as the prefix. Note that, unlike with IPv4 network
+addresses, the specified network address must be complete, and not just
+contain the upper bits. With IPv6 addresses, the -mask option must not
+be used.
 .Sh FILES
 .Bl -tag -width /etc/exports -compact
 .It Pa /etc/exports
