@@ -1,4 +1,4 @@
-/*	$NetBSD: amidisplaycc.c,v 1.13 2003/11/12 17:26:36 jandberg Exp $ */
+/*	$NetBSD: amidisplaycc.c,v 1.14 2003/11/12 17:42:40 jandberg Exp $ */
 
 /*-
  * Copyright (c) 2000 Jukka Andberg.
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: amidisplaycc.c,v 1.13 2003/11/12 17:26:36 jandberg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: amidisplaycc.c,v 1.14 2003/11/12 17:42:40 jandberg Exp $");
 
 /*
  * wscons interface to amiga custom chips. Contains the necessary functions
@@ -71,7 +71,6 @@ __KERNEL_RCSID(0, "$NetBSD: amidisplaycc.c,v 1.13 2003/11/12 17:26:36 jandberg E
 /* These can be lowered if you are sure you dont need that much colors. */
 #define MAXDEPTH 8
 #define MAXROWS 128
-#define MAXCOLUMNS 80
 
 #define ADJUSTCOLORS
 
@@ -190,7 +189,6 @@ const struct wsdisplay_emulops amidisplaycc_emulops = {
 struct amidisplaycc_screen_descr {
 	struct wsscreen_descr  wsdescr;
 	int                    depth;
-	char                   name[16];
 };
 
 /*
@@ -208,20 +206,38 @@ struct amidisplaycc_screen_descr {
     WSSCREEN_HILIT | WSSCREEN_UNDERLINE }, \
     depth }
 
+/*
+ * Screen types.
+ *
+ * The first in list is used for the console screen.
+ * A suitable screen mode is guessed for it by looking
+ * at the GRF_* options.
+ */
 struct amidisplaycc_screen_descr amidisplaycc_screentab[] = {
 	/* name, width, height, depth, fontwidth==8, fontheight */
+
+#if defined(GRF_PAL) && !defined(GRF_NTSC)
+	ADCC_SCREEN("default", 640, 512, 3, 8, 8),
+#else
+	ADCC_SCREEN("default", 640, 400, 3, 8, 8),
+#endif
 	ADCC_SCREEN("80x50", 640, 400, 3, 8, 8),
 	ADCC_SCREEN("80x40", 640, 400, 3, 8, 10),
 	ADCC_SCREEN("80x25", 640, 400, 3, 8, 16),
-	ADCC_SCREEN("80x24", 640, 384, 3, 8, 16),
+	ADCC_SCREEN("80x24", 640, 192, 3, 8, 8),
+
+	ADCC_SCREEN("80x64", 640, 512, 3, 8, 8),
+	ADCC_SCREEN("80x51", 640, 510, 3, 8, 10),
+	ADCC_SCREEN("80x32", 640, 512, 3, 8, 16),
+	ADCC_SCREEN("80x31", 640, 248, 3, 8, 8),
 
 	ADCC_SCREEN("640x400x1", 640, 400, 1, 8, 8),
 	ADCC_SCREEN("640x400x2", 640, 400, 2, 8, 8),
 	ADCC_SCREEN("640x400x3", 640, 400, 3, 8, 8),
 
 	ADCC_SCREEN("640x200x1", 640, 200, 1, 8, 8),
-	ADCC_SCREEN("640x200x1", 640, 200, 2, 8, 8),
-	ADCC_SCREEN("640x200x1", 640, 200, 3, 8, 8),
+	ADCC_SCREEN("640x200x2", 640, 200, 2, 8, 8),
+	ADCC_SCREEN("640x200x3", 640, 200, 3, 8, 8),
 };
 
 #define ADCC_SCREENPTR(index) &amidisplaycc_screentab[index].wsdescr
@@ -236,6 +252,11 @@ const struct wsscreen_descr *amidisplaycc_screens[] = {
 	ADCC_SCREENPTR(7),
 	ADCC_SCREENPTR(8),
 	ADCC_SCREENPTR(9),
+	ADCC_SCREENPTR(10),
+	ADCC_SCREENPTR(11),
+	ADCC_SCREENPTR(12),
+	ADCC_SCREENPTR(13),
+	ADCC_SCREENPTR(14),
 };
 
 #define NELEMS(arr) (sizeof(arr)/sizeof((arr)[0]))
@@ -460,8 +481,10 @@ amidisplaycc_attach(struct device *pdp, struct device *dp, void *auxp)
 		 */
 		adp->gfxview = NULL;
 		adp->gfxon = 0;
-		adp->gfxwidth = 640;
-		adp->gfxheight = 480;
+		adp->gfxwidth = amidisplaycc_screentab[0].wsdescr.ncols *
+			amidisplaycc_screentab[0].wsdescr.fontwidth;
+		adp->gfxheight = amidisplaycc_screentab[0].wsdescr.nrows *
+			amidisplaycc_screentab[0].wsdescr.fontheight;
 
 		if (aga_enable)
 			adp->gfxdepth = 8;
