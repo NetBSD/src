@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap_bootstrap.c,v 1.10 1998/08/22 10:55:35 scw Exp $	*/
+/*	$NetBSD: pmap_bootstrap.c,v 1.10.6.1 1999/01/31 14:12:31 scw Exp $	*/
 
 /* 
  * Copyright (c) 1991, 1993
@@ -81,7 +81,22 @@ extern int pmap_aliasmask;
  */
 caddr_t		CADDR1, CADDR2, vmmap;
 extern caddr_t	msgbufaddr;
-extern void *ledatabuf; /* XXXCDC */
+
+/*
+ * We have to allocate the ethernet packet buffer early on
+ * from physical memory <= 16Mb due to address limitations
+ * in the ethernet chips. In fact, we also have to ensure
+ * the memory is allocated from on-board RAM only.
+ *
+ * The driver for the ethernet chip appropriate to the
+ * platform (lance or i82596) will use these two variables
+ * to locate and size the chip's packet buffer.
+ */
+#ifndef ETHER_DATA_BUFF_PAGES
+#define	ETHER_DATA_BUFF_PAGES	4
+#endif
+void	*ether_data_buff;
+u_long	ether_data_buff_size = ETHER_DATA_BUFF_PAGES * NBPG;
 
 /*
  * Bootstrap the VM system.
@@ -152,10 +167,8 @@ pmap_bootstrap(nextpa, firstpa)
 	nextpa += NBPG;
 	p0upa = nextpa;
 	nextpa += USPACE;
-	{ /* XXXCDC */
-		ledatabuf = (void *)nextpa;
-		nextpa += 4 * NBPG;
-	} /* XXXCDC */
+	ether_data_buff = (void *)nextpa;
+	nextpa += ether_data_buff_size;
 
 	/*
 	 * Initialize segment table and kernel page table map.
@@ -333,14 +346,13 @@ pmap_bootstrap(nextpa, firstpa)
 		*pte++ = protopte;
 		protopte += NBPG;
 	}
-	{ /* XXXCDC -- uncache lebuf */
-		u_int *lepte = &((u_int *)kptpa)[m68k_btop(ledatabuf)];
 
-		lepte[0] = lepte[0] | PG_CI;
-		lepte[1] = lepte[1] | PG_CI;
-		lepte[2] = lepte[2] | PG_CI;
-		lepte[3] = lepte[3] | PG_CI;
-	} /* XXXCDC yuck */
+	/*
+	 * Un-cache the ethernet data buffer
+	 */
+	pte = &((u_int *)kptpa)[m68k_btop(ether_data_buff)];
+	for (i = 0; i < ETHER_DATA_BUFF_PAGES; i++)
+		pte[i] |= PG_CI;
 
 	/*
 	 * Finally, validate the internal IO space PTEs (RW+CI).

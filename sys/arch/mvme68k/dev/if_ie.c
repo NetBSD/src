@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ie.c,v 1.1.2.1 1999/01/30 21:58:41 scw Exp $ */
+/*	$NetBSD: if_ie.c,v 1.1.2.2 1999/01/31 14:12:30 scw Exp $ */
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -92,6 +92,9 @@ struct cfattach ie_pcctwo_ca = {
 };
 
 extern struct cfdriver ie_cd;
+
+extern void	*ether_data_buff;
+extern u_long	ether_data_buff_len;
 
 
 /*
