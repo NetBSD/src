@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread_types.h,v 1.1.2.4 2001/07/25 21:24:13 nathanw Exp $	*/
+/*	$NetBSD: pthread_types.h,v 1.1.2.5 2001/07/25 23:50:48 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -85,10 +85,10 @@ struct	pthread_mutex_st {
 	struct pt_queue_t	ptm_blocked;
 };
 
-#define	_PT_MUTEX_MAGIC	0xCAFEFEED
-#define	_PT_MUTEX_DEAD	0xFEEDDEAD
+#define	_PT_MUTEX_MAGIC	0x33330003
+#define	_PT_MUTEX_DEAD	0xDEAD0003
 
-#define PTHREAD_MUTEX_INITIALIZER { PT_MUTEX_MAGIC, 			\
+#define PTHREAD_MUTEX_INITIALIZER { _PT_MUTEX_MAGIC, 			\
 				    __SIMPLELOCK_UNLOCKED,		\
 				    __SIMPLELOCK_UNLOCKED,		\
 				    NULL,				\
@@ -97,8 +97,11 @@ struct	pthread_mutex_st {
 	
 
 struct	pthread_mutexattr_st {
-	int	pad;
+	unsigned int	ptma_magic;
 };
+
+#define _PT_MUTEXATTR_MAGIC	0x44440004
+#define _PT_MUTEXATTR_DEAD	0xDEAD0004
 
 
 struct	pthread_cond_st {
@@ -111,11 +114,20 @@ struct	pthread_cond_st {
 	pthread_mutex_t	*ptc_mutex;	/* Current mutex */
 };
 
-#define	_PT_COND_MAGIC	0xCAFEC00D
-#define	_PT_COND_DEAD	0xDEADC00D
+#define	_PT_COND_MAGIC	0x55550005
+#define	_PT_COND_DEAD	0xDEAD0005
+
+#define PTHREAD_COND_INITIALIZER { _PT_COND_MAGIC,			\
+				   __SIMPLELOCK_UNLOCKED,		\
+				   PTQ_HEAD_INITIALIZER,		\
+				   NULL					\
+				 }
 
 struct	pthread_condattr_st {
-	int	pad;
+	unsigned int	ptca_magic;
 };
+
+#define	_PT_CONDATTR_MAGIC	0x66660006
+#define	_PT_CONDATTR_DEAD	0xDEAD0006
 
 #endif	/* _LIB_PTHREAD_TYPES_H */
