@@ -1,4 +1,4 @@
-/*	$NetBSD: promlib.c,v 1.6 2001/08/26 18:39:15 fredette Exp $	*/
+/*	$NetBSD: promlib.c,v 1.7 2001/10/01 01:46:57 fredette Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -165,6 +165,7 @@ type new proto								\
 PROMLIB_FUNC(int, prom_memsize, (void), memorySize, + 0, return(rc))
 PROMLIB_FUNC(int, prom_stdin, (void), inSource, + 0, return(rc))
 PROMLIB_FUNC(int, prom_stdout, (void), outSink, + 0, return(rc))
+PROMLIB_FUNC(int, prom_kbdid, (void), keyBid, + 0, return(rc))
 PROMLIB_FUNC(int, prom_getchar, (void), getChar, (), return(rc))
 PROMLIB_FUNC(int, prom_peekchar, (void), mayGet, (), return(rc))
 PROMLIB_FUNC(void, prom_putchar, (int c), putChar, (c), return)

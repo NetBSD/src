@@ -1,4 +1,4 @@
-/*	$NetBSD: promlib.h,v 1.2 2001/06/14 13:15:21 fredette Exp $ */
+/*	$NetBSD: promlib.h,v 1.3 2001/10/01 01:46:56 fredette Exp $ */
 
 /*-
  * Copyright (c) 1999, 2001 The NetBSD Foundation, Inc.
@@ -64,6 +64,7 @@ void	prom_init	__P((void));	/* To setup promops */
 int	prom_memsize	__P((void));
 int	prom_stdin	__P((void));
 int	prom_stdout	__P((void));
+int	prom_kbdid	__P((void));
 int	prom_getchar	__P((void));
 int	prom_peekchar	__P((void));
 void	prom_putchar	__P((int));
