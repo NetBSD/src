@@ -1,4 +1,4 @@
-#	$NetBSD: RPCINST,v 1.8 1998/03/14 17:15:53 mark Exp $
+#	$NetBSD: RPCINST,v 1.9 1998/03/22 18:33:28 mark Exp $
 #
 #	RPCINST -- RiscPC install configuration
 #
@@ -238,8 +238,7 @@ wdc*	at simide?
 ie*	at podulebus?			# Ether1 podules
 ea*	at podulebus?			# Ether3 podules
 eb0	at podulebus?			# EtherB network slot cards
-eh0	at podulebus?			# EtherH network slot cards
-em0	at podulebus?			# EtherM network slot cards
+ne*	at podulebus?			# NE2000 clone cards
 
 pseudo-device	loop	1               # network loopback
 #pseudo-device	bpfilter 8              # packet filter
