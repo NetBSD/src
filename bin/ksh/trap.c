@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.3 1999/10/20 15:10:00 hubertf Exp $	*/
+/*	$NetBSD: trap.c,v 1.3.6.1 2002/02/26 19:50:53 he Exp $	*/
 
 /*
  * signal handling
@@ -158,7 +158,7 @@ fatal_trap_check()
 }
 
 /* Returns the signal number of any pending traps: ie, a signal which has
- * occured for which a trap has been set or for which the TF_DFL_INTR flag
+ * occurred for which a trap has been set or for which the TF_DFL_INTR flag
  * is set.
  */
 int

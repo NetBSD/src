@@ -1,4 +1,4 @@
-/*	$NetBSD: c_sh.c,v 1.3 1999/10/20 15:09:59 hubertf Exp $	*/
+/*	$NetBSD: c_sh.c,v 1.3.6.1 2002/02/26 19:50:52 he Exp $	*/
 
 /*
  * built-in Bourne commands
@@ -10,6 +10,7 @@
 #include "ksh_times.h"
 
 static	char *clocktos ARGS((clock_t t));
+extern clock_t j_usrtime, j_systime; /* computed by j_wait */
 
 
 /* :, false and true */
@@ -722,7 +723,6 @@ timex(t, f)
 	struct tms t0, t1, tms;
 	clock_t t0t, t1t = 0;
 	int tf = 0;
-	extern clock_t j_usrtime, j_systime; /* computed by j_wait */
 	char opts[1];
 
 	t0t = ksh_times(&t0);
@@ -862,9 +862,6 @@ c_builtin(wp)
 {
 	return 0;
 }
-
-extern	int c_test ARGS((char **wp));		/* in c_test.c */
-extern	int c_ulimit ARGS((char **wp));		/* in c_ulimit.c */
 
 /* A leading = means assignments before command are kept;
  * a leading * means a POSIX special builtin;
