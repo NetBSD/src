@@ -1,4 +1,4 @@
-/*	$NetBSD: bireg.h,v 1.5 1999/07/12 13:42:42 ragge Exp $	*/
+/*	$NetBSD: bireg.h,v 1.6 1999/08/04 19:12:22 ragge Exp $	*/
 /*
  * Copyright (c) 1988 Regents of the University of California.
  * All rights reserved.
@@ -44,7 +44,8 @@
 /*
  * BI node addresses
  */
-#define	BI_NODE(node)	(0x2000 * (node))
+#define	NODESIZE	0x2000	/* Size of one BI node */
+#define	BI_NODE(node)	(NODESIZE * (node))
 #define	BI_BASE(bi,nod)	((0x20000000 + (bi) * 0x2000000) + BI_NODE(nod))
 #define	MAXNBI		16	/* Spec says there can be 16 anyway */
 #define	NNODEBI		16	/* 16 nodes per BI */
@@ -55,7 +56,10 @@
  * These are followed with interface-specific registers.
  *
  * NB: This structure does NOT include the four GPRs (not anymore!)
+ *
+ * 990712: The structs not used anymore due to conversion to bus.h.
  */
+#ifdef notdef
 struct biiregs {
 	u_short	bi_dtype;	/* device type */
 	u_short	bi_revs;	/* revisions */
@@ -97,6 +101,22 @@ struct bi_cpu {
 	u_long	bi_xxx[63];	/* pad */
 	u_long	bi_rxcd;	/* receive console data register */
 };
+#endif
+
+#define	BIREG_DTYPE		0x00
+#define	BIREG_VAXBICSR		0x04
+#define	BIREG_BER		0x08
+#define	BIREG_EINTRCSR		0x0c
+#define	BIREG_INTRDES		0x10
+#define	BIREG_IPINTRMSK		0x14
+#define	BIREG_FIPSDES		0x18
+#define	BIREG_IPINTRSRC		0x1c
+#define	BIREG_SADR		0x20
+#define	BIREG_EADR		0x24
+#define	BIREG_BCICSR		0x28
+#define	BIREG_WSTAT		0x2c
+#define	BIREG_FIPSCMD		0x30
+#define	BIREG_UINTRCSR		0x40
 
 /* device types */
 #define	BIDT_MS820	0x0001	/* MS820 memory board */
