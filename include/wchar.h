@@ -1,4 +1,4 @@
-/*	$NetBSD: wchar.h,v 1.9.2.3 2002/01/28 21:27:19 nathanw Exp $	*/
+/*	$NetBSD: wchar.h,v 1.9.2.4 2002/03/22 21:10:10 nathanw Exp $	*/
 
 /*-
  * Copyright (c)1999 Citrus Project,
@@ -146,9 +146,9 @@ wint_t ungetwc __P((wint_t, FILE *));
 wint_t fgetwc __P((FILE *));
 wint_t getwc __P((FILE *));
 wint_t getwchar __P((void));
-wint_t fputwc __P((wint_t, FILE *));
-wint_t putwc __P((wint_t, FILE *));
-wint_t putwchar __P((wint_t));
+wint_t fputwc __P((wchar_t, FILE *));
+wint_t putwc __P((wchar_t, FILE *));
+wint_t putwchar __P((wchar_t));
 
 int fwide __P((FILE *, int));
 __END_DECLS
