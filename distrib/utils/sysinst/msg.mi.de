@@ -1,4 +1,4 @@
-/*	$NetBSD: msg.mi.de,v 1.6.2.2 2004/06/13 08:44:47 jdc Exp $	*/
+/*	$NetBSD: msg.mi.de,v 1.6.2.3 2004/06/17 09:19:09 tron Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -456,7 +456,6 @@ nun die Anweisungen im INSTALL Dokument beachten, damit Ihr System -
 entsprechend Ihrer Situation - neu konfiguriert werden kann.
 Lesen Sie (erneut) die afterboot(8) Manpage, da diese seit ihrem letzten
 Upgrade (Aufrüstung) bzw. Installation zusätzliche Angaben enthalten kann.
-Ihr altes /etc Verzeichnis wurde als /etc.old gesichert.
 
 Sie sollten wenigstens rc.conf ändern; dort gilt es rc_configured=NO auf
 rc_configured=YES umzustellen, da das System sonst nur bis zum Single User
@@ -466,9 +465,8 @@ Modus (Einbenutzermodus) startet.
 
 message unpackcomplete
 {Das Entpacken der zusätzlichen Releasesets von NetBSD-@@VERSION@@ ist nun
-beendet. Das Entpacken der Sets hat /etc verändert. Bestehende /etc.old
-Verzeichnisse - erstellt von Upgrade Prozeduren - wurden nicht
-modifiziert. Sie sollten nun die Anweisungen im INSTALL Dokument beachten, um
+beendet.
+Sie sollten nun die Anweisungen im INSTALL Dokument beachten, um
 Ihr System Ihrer Konfiguration entsprechend einzurichten. Die afterboot(8)
 Manpage kann ebenfalls nützlich sein.
   
@@ -736,21 +734,6 @@ message badetcfstab
 {Hilfe! Es besteht eine fehlerhafte /etc/fstab im Ziellaufwerk %s. Das Upgrade
 wird abgebrochen.
 }
-
-message etc_oldexists
-{Ich kann /etc nicht als /etc.old sichern, weil auf dem Ziellaufwerk bereits
-ein /etc.old Verzeichnis existiert. Bitte korrigieren Sie dies bevor Sie
-fortfahren.
-
-Eine Möglichkeit dazu ist, im Extras-Menü eine Shell zu starten,
-wodurch Sie den Inhalt der /etc.old prüfen können. Gehört das /etc.old
-Verzeichnis zu einem früheren Upgrade, so können Sie dieses mit rm -f /etc.old
-löschen und danach das Upgrade neu starten. Gehört die /etc.old aber zu einem 
-aktuellen, nicht abgeschlossenen Upgrade, dann sollten Sie /etc
-mit mv /etc.old /etc überschreiben und das begonnene Upgrade
-fortsetzen. 
-
-Upgrade wird abgebrochen.}
 
 message X_oldexists
 {Der alte X Server /usr/X11R6/bin/X kann nicht als /usr/X11R6/bin/X.old
