@@ -1,5 +1,3 @@
-/*	$NetBSD: compat.c,v 1.1.1.2 2001/01/14 04:50:16 itojun Exp $	*/
-
 /*
  * Copyright (c) 1999,2000 Markus Friedl.  All rights reserved.
  *
@@ -24,20 +22,15 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-/* from OpenBSD: compat.c,v 1.32 2000/12/09 23:51:11 provos Exp */
-
-#include <sys/cdefs.h>
-#ifndef lint
-__RCSID("$NetBSD: compat.c,v 1.1.1.2 2001/01/14 04:50:16 itojun Exp $");
-#endif
-
 #include "includes.h"
+RCSID("$OpenBSD: compat.c,v 1.34 2001/01/21 19:05:48 markus Exp $");
 
-#include "ssh.h"
+#include <regex.h>
+
 #include "packet.h"
 #include "xmalloc.h"
 #include "compat.h"
-#include <regex.h>
+#include "log.h"
 
 int compat13 = 0;
 int compat20 = 0;
@@ -66,7 +59,10 @@ compat_datafellows(const char *version)
 		char	*pat;
 		int	bugs;
 	} check[] = {
-		{ "^OpenSSH[-_]2\\.[012]",	SSH_OLD_SESSIONID },
+		{ "^OpenSSH[-_]2\\.[012]",
+					SSH_OLD_SESSIONID|SSH_BUG_BANNER },
+		{ "^OpenSSH_2\\.3\\.0", SSH_BUG_BANNER },
+		{ "^OpenSSH",		0 },
 		{ "MindTerm",		0 },
 		{ "^2\\.1\\.0",		SSH_BUG_SIGBLOB|SSH_BUG_HMAC|
 					SSH_OLD_SESSIONID|SSH_BUG_DEBUG },

@@ -1,5 +1,3 @@
-/*	$NetBSD: uidswap.c,v 1.1.1.2 2001/01/14 04:51:04 itojun Exp $	*/
-
 /*
  * Author: Tatu Ylonen <ylo@cs.hut.fi>
  * Copyright (c) 1995 Tatu Ylonen <ylo@cs.hut.fi>, Espoo, Finland
@@ -13,16 +11,10 @@
  * called by a name other than "ssh" or "Secure Shell".
  */
 
-/* from OpenBSD: uidswap.c,v 1.12 2000/12/29 10:48:56 markus Exp */
-
-#include <sys/cdefs.h>
-#ifndef lint
-__RCSID("$NetBSD: uidswap.c,v 1.1.1.2 2001/01/14 04:51:04 itojun Exp $");
-#endif
-
 #include "includes.h"
+RCSID("$OpenBSD: uidswap.c,v 1.13 2001/01/21 19:06:01 markus Exp $");
 
-#include "ssh.h"
+#include "log.h"
 #include "uidswap.h"
 
 /*

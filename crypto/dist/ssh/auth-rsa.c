@@ -1,5 +1,3 @@
-/*	$NetBSD: auth-rsa.c,v 1.1.1.2 2001/01/14 04:49:59 itojun Exp $	*/
-
 /*
  * Author: Tatu Ylonen <ylo@cs.hut.fi>
  * Copyright (c) 1995 Tatu Ylonen <ylo@cs.hut.fi>, Espoo, Finland
@@ -15,29 +13,24 @@
  * called by a name other than "ssh" or "Secure Shell".
  */
 
-/* from OpenBSD: auth-rsa.c,v 1.34 2000/12/19 23:17:55 markus Exp */
-
-#include <sys/cdefs.h>
-#ifndef lint
-__RCSID("$NetBSD: auth-rsa.c,v 1.1.1.2 2001/01/14 04:49:59 itojun Exp $");
-#endif
-
 #include "includes.h"
-
-#include "rsa.h"
-#include "packet.h"
-#include "pathnames.h"
-#include "xmalloc.h"
-#include "ssh.h"
-#include "mpaux.h"
-#include "uidswap.h"
-#include "match.h"
-#include "servconf.h"
-#include "auth-options.h"
+RCSID("$OpenBSD: auth-rsa.c,v 1.38 2001/01/21 19:05:42 markus Exp $");
 
 #include <openssl/rsa.h>
 #include <openssl/md5.h>
 
+#include "rsa.h"
+#include "packet.h"
+#include "xmalloc.h"
+#include "ssh1.h"
+#include "mpaux.h"
+#include "uidswap.h"
+#include "match.h"
+#include "auth-options.h"
+#include "pathnames.h"
+#include "log.h"
+#include "servconf.h"
+#include "auth.h"
 
 /* import */
 extern ServerOptions options;
@@ -129,7 +122,7 @@ auth_rsa_challenge_dialog(RSA *pk)
 int
 auth_rsa(struct passwd *pw, BIGNUM *client_n)
 {
-	char line[8192], file[1024];
+	char line[8192], file[MAXPATHLEN];
 	int authenticated;
 	u_int bits;
 	FILE *f;
@@ -244,9 +237,9 @@ auth_rsa(struct passwd *pw, BIGNUM *client_n)
 		/* Parse the key from the line. */
 		if (!auth_rsa_read_key(&cp, &bits, pk->e, pk->n)) {
 			debug("%.100s, line %lu: bad key syntax",
-			      _PATH_SSH_USER_PERMITTED_KEYS, linenum);
+			    file, linenum);
 			packet_send_debug("%.100s, line %lu: bad key syntax",
-					  _PATH_SSH_USER_PERMITTED_KEYS, linenum);
+			    file, linenum);
 			continue;
 		}
 		/* cp now points to the comment part. */
@@ -266,7 +259,7 @@ auth_rsa(struct passwd *pw, BIGNUM *client_n)
 		 * If our options do not allow this key to be used,
 		 * do not send challenge.
 		 */
-		if (!auth_parse_options(pw, options, linenum))
+		if (!auth_parse_options(pw, options, file, linenum))
 			continue;
 
 		/* Perform the challenge-response dialog for this key. */

@@ -1,5 +1,3 @@
-/*	$NetBSD: pty.h,v 1.1.1.1 2000/09/28 22:10:08 thorpej Exp $	*/
-
 /*
  * Author: Tatu Ylonen <ylo@cs.hut.fi>
  * Copyright (c) 1995 Tatu Ylonen <ylo@cs.hut.fi>, Espoo, Finland
@@ -14,7 +12,7 @@
  * called by a name other than "ssh" or "Secure Shell".
  */
 
-/* from OpenBSD: pty.h,v 1.8 2000/09/07 20:27:52 deraadt Exp */
+/* RCSID("$OpenBSD: pty.h,v 1.8 2000/09/07 20:27:52 deraadt Exp $"); */
 
 #ifndef PTY_H
 #define PTY_H

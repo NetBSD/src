@@ -1,5 +1,3 @@
-/*	$NetBSD: packet.h,v 1.1.1.2 2001/01/14 04:50:29 itojun Exp $	*/
-
 /*
  * Author: Tatu Ylonen <ylo@cs.hut.fi>
  * Copyright (c) 1995 Tatu Ylonen <ylo@cs.hut.fi>, Espoo, Finland
@@ -13,7 +11,7 @@
  * called by a name other than "ssh" or "Secure Shell".
  */
 
-/* from OpenBSD: packet.h,v 1.18 2000/12/19 23:17:57 markus Exp */
+/* RCSID("$OpenBSD: packet.h,v 1.19 2001/01/13 18:32:50 markus Exp $"); */
 
 #ifndef PACKET_H
 #define PACKET_H
@@ -67,7 +65,7 @@ void    packet_start_compression(int level);
  * Informs that the current session is interactive.  Sets IP flags for
  * optimal performance in interactive use.
  */
-void    packet_set_interactive(int interactive, int keepalives);
+void    packet_set_interactive(int interactive);
 
 /* Returns true if the current connection is interactive. */
 int     packet_is_interactive(void);

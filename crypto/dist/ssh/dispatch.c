@@ -1,5 +1,3 @@
-/*	$NetBSD: dispatch.c,v 1.1.1.1 2000/09/28 22:10:01 thorpej Exp $	*/
-
 /*
  * Copyright (c) 2000 Markus Friedl.  All rights reserved.
  *
@@ -23,18 +21,15 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
-
-/* from OpenBSD: dispatch.c,v 1.5 2000/09/21 11:25:34 markus Exp */
-
-#include <sys/cdefs.h>
-#ifndef lint
-__RCSID("$NetBSD: dispatch.c,v 1.1.1.1 2000/09/28 22:10:01 thorpej Exp $");
-#endif
-
 #include "includes.h"
-#include "ssh.h"
+RCSID("$OpenBSD: dispatch.c,v 1.9 2001/02/04 15:32:23 stevesk Exp $");
+
+#include "ssh1.h"
+#include "ssh2.h"
+#include "log.h"
 #include "dispatch.h"
 #include "packet.h"
+#include "compat.h"
 
 #define DISPATCH_MIN	0
 #define DISPATCH_MAX	255
@@ -45,6 +40,8 @@ void
 dispatch_protocol_error(int type, int plen, void *ctxt)
 {
 	error("Hm, dispatch protocol error: type %d plen %d", type, plen);
+	if (compat20 && type == SSH2_MSG_KEXDH_INIT)
+		fatal("dispatch_protocol_error: rekeying is not supported");
 }
 void
 dispatch_init(dispatch_fn *dflt)
@@ -75,7 +72,7 @@ dispatch_run(int mode, int *done, void *ctxt)
 		if (type > 0 && type < DISPATCH_MAX && dispatch[type] != NULL)
 			(*dispatch[type])(type, plen, ctxt);
 		else
-			packet_disconnect("protocol error: rcvd type %d", type);	
+			packet_disconnect("protocol error: rcvd type %d", type);
 		if (done != NULL && *done)
 			return;
 	}

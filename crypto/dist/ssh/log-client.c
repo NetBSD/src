@@ -1,5 +1,3 @@
-/*	$NetBSD: log-client.c,v 1.1.1.1 2000/09/28 22:10:03 thorpej Exp $	*/
-
 /*
  * Author: Tatu Ylonen <ylo@cs.hut.fi>
  * Copyright (c) 1995 Tatu Ylonen <ylo@cs.hut.fi>, Espoo, Finland
@@ -37,17 +35,11 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-/* from OpenBSD: log-client.c,v 1.12 2000/09/12 20:53:10 markus Exp */
-
-#include <sys/cdefs.h>
-#ifndef lint
-__RCSID("$NetBSD: log-client.c,v 1.1.1.1 2000/09/28 22:10:03 thorpej Exp $");
-#endif
-
 #include "includes.h"
+RCSID("$OpenBSD: log-client.c,v 1.15 2001/01/21 19:05:50 markus Exp $");
 
 #include "xmalloc.h"
-#include "ssh.h"
+#include "log.h"
 
 static LogLevel log_level = SYSLOG_LEVEL_INFO;
 
@@ -57,17 +49,12 @@ static LogLevel log_level = SYSLOG_LEVEL_INFO;
  */
 
 void
-log_init(const char *av0, LogLevel level,
-    SyslogFacility facility,	/* ignored */
-    int on_stderr,		/* ignored */
-    int quiet_mode,		/* ignored */
-    int debug_mode		/* ignored */)
+log_init(char *av0, LogLevel level, SyslogFacility ignored1, int ignored2)
 {
-
 	switch (level) {
 	case SYSLOG_LEVEL_QUIET:
-	case SYSLOG_LEVEL_ERROR:
 	case SYSLOG_LEVEL_FATAL:
+	case SYSLOG_LEVEL_ERROR:
 	case SYSLOG_LEVEL_INFO:
 	case SYSLOG_LEVEL_VERBOSE:
 	case SYSLOG_LEVEL_DEBUG1:

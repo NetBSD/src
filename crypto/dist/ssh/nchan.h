@@ -1,5 +1,3 @@
-/*	$NetBSD: nchan.h,v 1.1.1.1 2000/09/28 22:10:05 thorpej Exp $	*/
-
 /*
  * Copyright (c) 1999 Markus Friedl.  All rights reserved.
  *
@@ -24,7 +22,7 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-/* from OpenBSD: nchan.h,v 1.9 2000/09/07 20:27:52 deraadt Exp */
+/* RCSID("$OpenBSD: nchan.h,v 1.9 2000/09/07 20:27:52 deraadt Exp $"); */
 
 #ifndef NCHAN_H
 #define NCHAN_H

@@ -1,5 +1,3 @@
-/*	$NetBSD: log.c,v 1.1.1.2 2001/01/14 04:50:23 itojun Exp $	*/
-
 /*
  * Author: Tatu Ylonen <ylo@cs.hut.fi>
  * Copyright (c) 1995 Tatu Ylonen <ylo@cs.hut.fi>, Espoo, Finland
@@ -37,16 +35,10 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-/* from OpenBSD: log.c,v 1.12 2000/12/19 23:17:57 markus Exp */
-
-#include <sys/cdefs.h>
-#ifndef lint
-__RCSID("$NetBSD: log.c,v 1.1.1.2 2001/01/14 04:50:23 itojun Exp $");
-#endif
-
 #include "includes.h"
+RCSID("$OpenBSD: log.c,v 1.15 2001/01/21 19:05:51 markus Exp $");
 
-#include "ssh.h"
+#include "log.h"
 #include "xmalloc.h"
 
 /* Fatal messages.  This function never returns. */
@@ -224,10 +216,9 @@ static struct {
 };
 
 SyslogFacility
-log_facility_number(const char *name)
+log_facility_number(char *name)
 {
 	int i;
-
 	if (name != NULL)
 		for (i = 0; log_facilities[i].name; i++)
 			if (strcasecmp(log_facilities[i].name, name) == 0)
@@ -236,10 +227,9 @@ log_facility_number(const char *name)
 }
 
 LogLevel
-log_level_number(const char *name)
+log_level_number(char *name)
 {
 	int i;
-
 	if (name != NULL)
 		for (i = 0; log_levels[i].name; i++)
 			if (strcasecmp(log_levels[i].name, name) == 0)

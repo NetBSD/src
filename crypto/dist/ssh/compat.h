@@ -1,5 +1,3 @@
-/*	$NetBSD: compat.h,v 1.1.1.2 2001/01/14 04:50:16 itojun Exp $	*/
-
 /*
  * Copyright (c) 1999 Markus Friedl.  All rights reserved.
  *
@@ -23,8 +21,7 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
-
-/* from OpenBSD: compat.h,v 1.13 2000/12/06 22:58:15 markus Exp */
+/* RCSID("$OpenBSD: compat.h,v 1.14 2001/01/08 22:29:05 markus Exp $"); */
 
 #ifndef COMPAT_H
 #define COMPAT_H
@@ -41,6 +38,7 @@
 #define SSH_OLD_SESSIONID	0x10
 #define SSH_BUG_PKAUTH		0x20
 #define SSH_BUG_DEBUG		0x40
+#define SSH_BUG_BANNER		0x80
 
 void    enable_compat13(void);
 void    enable_compat20(void);

@@ -1,4 +1,4 @@
-/*	$NetBSD: hmac.h,v 1.1.1.2 2001/01/14 04:50:19 itojun Exp $	*/
+/*	$OpenBSD: hmac.h,v 1.4 2001/01/29 01:58:15 niklas Exp $	*/
 
 /*
  * Copyright (c) 2000 Markus Friedl.  All rights reserved.
@@ -23,7 +23,6 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
-
 #ifndef HMAC_H
 #define HMAC_H
 

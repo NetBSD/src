@@ -1,5 +1,3 @@
-/*	$NetBSD: crc32.h,v 1.1.1.2 2001/01/14 04:50:17 itojun Exp $	*/
-
 /*
  * Author: Tatu Ylonen <ylo@cs.hut.fi>
  * Copyright (c) 1992 Tatu Ylonen, Espoo, Finland
@@ -13,7 +11,7 @@
  * called by a name other than "ssh" or "Secure Shell".
  */
 
-/* from OpenBSD: crc32.h,v 1.9 2000/12/19 23:17:56 markus Exp */
+/* RCSID("$OpenBSD: crc32.h,v 1.9 2000/12/19 23:17:56 markus Exp $"); */
 
 #ifndef CRC32_H
 #define CRC32_H

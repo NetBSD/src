@@ -1,5 +1,3 @@
-/*	$NetBSD: authfd.c,v 1.1.1.2 2001/01/14 04:50:03 itojun Exp $	*/
-
 /*
  * Author: Tatu Ylonen <ylo@cs.hut.fi>
  * Copyright (c) 1995 Tatu Ylonen <ylo@cs.hut.fi>, Espoo, Finland
@@ -36,14 +34,10 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-/* from OpenBSD: authfd.c,v 1.32 2000/12/20 19:37:21 markus Exp */
-
-#include <sys/cdefs.h>
-#ifndef lint
-__RCSID("$NetBSD: authfd.c,v 1.1.1.2 2001/01/14 04:50:03 itojun Exp $");
-#endif
-
 #include "includes.h"
+RCSID("$OpenBSD: authfd.c,v 1.35 2001/02/04 15:32:22 stevesk Exp $");
+
+#include <openssl/evp.h>
 
 #include "ssh.h"
 #include "rsa.h"
@@ -51,14 +45,13 @@ __RCSID("$NetBSD: authfd.c,v 1.1.1.2 2001/01/14 04:50:03 itojun Exp $");
 #include "bufaux.h"
 #include "xmalloc.h"
 #include "getput.h"
-
-#include <openssl/rsa.h>
-#include <openssl/dsa.h>
-#include <openssl/evp.h>
 #include "key.h"
 #include "authfd.h"
+#include "cipher.h"
 #include "kex.h"
 #include "compat.h"
+#include "log.h"
+#include "atomicio.h"
 
 /* helper */
 int	decode_reply(int type);
@@ -100,7 +93,7 @@ ssh_get_authentication_socket(void)
 	return sock;
 }
 
-static int
+int
 ssh_request_reply(AuthenticationConnection *auth, Buffer *request, Buffer *reply)
 {
 	int l, len;
@@ -111,8 +104,8 @@ ssh_request_reply(AuthenticationConnection *auth, Buffer *request, Buffer *reply
 	PUT_32BIT(buf, len);
 
 	/* Send the length and then the packet to the agent. */
-	if (atomic_write(auth->fd, buf, 4) != 4 ||
-	    atomic_write(auth->fd, buffer_ptr(request),
+	if (atomicio(write, auth->fd, buf, 4) != 4 ||
+	    atomicio(write, auth->fd, buffer_ptr(request),
 	    buffer_len(request)) != buffer_len(request)) {
 		error("Error writing to authentication socket.");
 		return 0;
@@ -419,7 +412,7 @@ ssh_agent_sign(AuthenticationConnection *auth,
 
 /* Encode key for a message to the agent. */
 
-static void
+void
 ssh_encode_identity_rsa1(Buffer *b, RSA *key, const char *comment)
 {
 	buffer_clear(b);
@@ -435,7 +428,7 @@ ssh_encode_identity_rsa1(Buffer *b, RSA *key, const char *comment)
 	buffer_put_string(b, comment, strlen(comment));
 }
 
-static void
+void
 ssh_encode_identity_ssh2(Buffer *b, Key *key, const char *comment)
 {
 	buffer_clear(b);
@@ -560,7 +553,7 @@ ssh_remove_all_identities(AuthenticationConnection *auth, int version)
 	return decode_reply(type);
 }
 
-int 
+int
 decode_reply(int type)
 {
 	switch (type) {

@@ -1,18 +1,10 @@
-/*	$NetBSD: cli.c,v 1.1.1.1 2001/01/14 04:51:06 itojun Exp $	*/
-
-/* from OpenBSD: cli.c,v 1.2 2000/10/16 09:38:44 djm Exp */
-
-#include <sys/cdefs.h>
-#ifndef lint
-__RCSID("$NetBSD: cli.c,v 1.1.1.1 2001/01/14 04:51:06 itojun Exp $");
-#endif
-
 #include "includes.h"
+RCSID("$OpenBSD: cli.c,v 1.7 2001/02/04 15:32:23 stevesk Exp $");
 
 #include "xmalloc.h"
-#include "ssh.h"
+#include "log.h"
+
 #include <vis.h>
-#include "cli.h"
 
 static int cli_input = -1;
 static int cli_output = -1;
@@ -52,7 +44,7 @@ cli_open(int from_stdin)
 }
 
 static void
-cli_close(void)
+cli_close()
 {
 	if (!cli_from_stdin && cli_input >= 0)
 		close(cli_input);
@@ -62,14 +54,14 @@ cli_close(void)
 	return;
 }
 
-static void
-intrcatch(int sig)
+void
+intrcatch()
 {
 	intr = 1;
 }
 
 static void
-cli_echo_disable(void)
+cli_echo_disable()
 {
 	sigemptyset(&nset);
 	sigaddset(&nset, SIGTSTP);
@@ -92,7 +84,7 @@ cli_echo_disable(void)
 }
 
 static void
-cli_echo_restore(void)
+cli_echo_restore()
 {
 	if (echo_modified != 0) {
 		tcsetattr(cli_input, TCSANOW, &otio);
@@ -146,18 +138,21 @@ cli_write(char* buf, int size)
 
 	output = xmalloc(4*size);
 	for (p = output, i = 0; i < size; i++) {
-                if (buf[i] == '\n')
-                        *p++ = buf[i];
-                else
-                        p = vis(p, buf[i], 0, 0);
-        }
+		if (buf[i] == '\n')
+			*p++ = buf[i];
+		else
+			p = vis(p, buf[i], 0, 0);
+	}
 	len = p - output;
 
 	for (pos = 0; pos < len; pos += ret) {
 		ret = write(cli_output, output + pos, len - pos);
-		if (ret == -1)
+		if (ret == -1) {
+			xfree(output);
 			return -1;
+		}
 	}
+	xfree(output);
 	return 0;
 }
 

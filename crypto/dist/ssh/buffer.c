@@ -1,5 +1,3 @@
-/*	$NetBSD: buffer.c,v 1.1.1.2 2001/01/14 04:50:06 itojun Exp $	*/
-
 /*
  * Author: Tatu Ylonen <ylo@cs.hut.fi>
  * Copyright (c) 1995 Tatu Ylonen <ylo@cs.hut.fi>, Espoo, Finland
@@ -13,18 +11,12 @@
  * called by a name other than "ssh" or "Secure Shell".
  */
 
-/* from OpenBSD: buffer.c,v 1.9 2000/12/19 23:17:55 markus Exp */
-
-#include <sys/cdefs.h>
-#ifndef lint
-__RCSID("$NetBSD: buffer.c,v 1.1.1.2 2001/01/14 04:50:06 itojun Exp $");
-#endif
-
 #include "includes.h"
+RCSID("$OpenBSD: buffer.c,v 1.10 2001/01/21 19:05:45 markus Exp $");
 
 #include "xmalloc.h"
 #include "buffer.h"
-#include "ssh.h"
+#include "log.h"
 
 /* Initializes the buffer structure. */
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: key.h,v 1.1.1.2 2001/01/14 04:50:22 itojun Exp $	*/
+/*	$OpenBSD: key.h,v 1.9 2001/01/29 01:58:16 niklas Exp $	*/
 
 /*
  * Copyright (c) 2000 Markus Friedl.  All rights reserved.
@@ -23,9 +23,11 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
-
 #ifndef KEY_H
 #define KEY_H
+
+#include <openssl/rsa.h>
+#include <openssl/dsa.h>
 
 typedef struct Key Key;
 enum types {

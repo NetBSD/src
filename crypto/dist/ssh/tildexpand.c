@@ -1,5 +1,3 @@
-/*	$NetBSD: tildexpand.c,v 1.1.1.2 2001/01/14 04:51:03 itojun Exp $	*/
-
 /*
  * Author: Tatu Ylonen <ylo@cs.hut.fi>
  * Copyright (c) 1995 Tatu Ylonen <ylo@cs.hut.fi>, Espoo, Finland
@@ -12,17 +10,11 @@
  * called by a name other than "ssh" or "Secure Shell".
  */
 
-/* from OpenBSD: tildexpand.c,v 1.9 2000/12/19 23:17:59 markus Exp */
-
-#include <sys/cdefs.h>
-#ifndef lint
-__RCSID("$NetBSD: tildexpand.c,v 1.1.1.2 2001/01/14 04:51:03 itojun Exp $");
-#endif
-
 #include "includes.h"
+RCSID("$OpenBSD: tildexpand.c,v 1.10 2001/01/21 19:06:01 markus Exp $");
 
 #include "xmalloc.h"
-#include "ssh.h"
+#include "log.h"
 
 /*
  * Expands tildes in the file name.  Returns data allocated by xmalloc.

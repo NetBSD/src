@@ -1,5 +1,3 @@
-/*	$NetBSD: crc32.c,v 1.1.1.2 2001/01/14 04:50:17 itojun Exp $	*/
-
 /*
  *  COPYRIGHT (C) 1986 Gary S. Brown.  You may use this program, or
  *  code or tables extracted from it, as desired without restriction.
@@ -39,14 +37,9 @@
  *      polynomial $edb88320
  */
 
-/* from OpenBSD: crc32.c,v 1.8 2000/12/19 23:17:56 markus Exp */
-
-#include <sys/cdefs.h>
-#ifndef lint
-__RCSID("$NetBSD: crc32.c,v 1.1.1.2 2001/01/14 04:50:17 itojun Exp $");
-#endif
 
 #include "includes.h"
+RCSID("$OpenBSD: crc32.c,v 1.8 2000/12/19 23:17:56 markus Exp $");
 
 #include "crc32.h"
 

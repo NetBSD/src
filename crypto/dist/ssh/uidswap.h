@@ -1,4 +1,4 @@
-/*	$NetBSD: uidswap.h,v 1.1.1.1 2000/09/28 22:10:43 thorpej Exp $	*/
+/*	$OpenBSD: uidswap.h,v 1.6 2001/01/29 01:58:19 niklas Exp $	*/
 
 /*
  * Author: Tatu Ylonen <ylo@cs.hut.fi>

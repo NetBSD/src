@@ -1,5 +1,3 @@
-/*	$NetBSD: authfd.h,v 1.1.1.2 2001/01/14 04:50:03 itojun Exp $	*/
-
 /*
  * Author: Tatu Ylonen <ylo@cs.hut.fi>
  * Copyright (c) 1995 Tatu Ylonen <ylo@cs.hut.fi>, Espoo, Finland
@@ -13,7 +11,7 @@
  * called by a name other than "ssh" or "Secure Shell".
  */
 
-/* from OpenBSD: authfd.h,v 1.16 2000/12/20 19:37:21 markus Exp */
+/* RCSID("$OpenBSD: authfd.h,v 1.16 2000/12/20 19:37:21 markus Exp $"); */
 
 #ifndef AUTHFD_H
 #define AUTHFD_H

@@ -1,5 +1,3 @@
-/*	$NetBSD: ttymodes.h,v 1.1.1.1 2000/09/28 22:10:43 thorpej Exp $	*/
-
 /*
  * Author: Tatu Ylonen <ylo@cs.hut.fi>
  * 	SGTTY stuff contributed by Janne Snabb <snabb@niksula.hut.fi>
@@ -13,7 +11,7 @@
  * called by a name other than "ssh" or "Secure Shell".
  */
 
-/* from OpenBSD: ttymodes.h,v 1.9 2000/09/07 20:27:55 deraadt Exp */
+/* RCSID("$OpenBSD: ttymodes.h,v 1.9 2000/09/07 20:27:55 deraadt Exp $"); */
 
 /* The tty mode description is a stream of bytes.  The stream consists of
  * opcode-arguments pairs.  It is terminated by opcode TTY_OP_END (0).

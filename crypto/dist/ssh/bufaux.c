@@ -1,5 +1,3 @@
-/*	$NetBSD: bufaux.c,v 1.1.1.2 2001/01/14 04:50:05 itojun Exp $	*/
-
 /*
  * Author: Tatu Ylonen <ylo@cs.hut.fi>
  * Copyright (c) 1995 Tatu Ylonen <ylo@cs.hut.fi>, Espoo, Finland
@@ -38,20 +36,14 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-/* from OpenBSD: bufaux.c,v 1.14 2000/12/19 23:17:55 markus Exp */
-
-#include <sys/cdefs.h>
-#ifndef lint
-__RCSID("$NetBSD: bufaux.c,v 1.1.1.2 2001/01/14 04:50:05 itojun Exp $");
-#endif
-
 #include "includes.h"
+RCSID("$OpenBSD: bufaux.c,v 1.17 2001/01/21 19:05:45 markus Exp $");
 
-#include "ssh.h"
 #include <openssl/bn.h>
 #include "bufaux.h"
 #include "xmalloc.h"
 #include "getput.h"
+#include "log.h"
 
 /*
  * Stores an BIGNUM in the buffer with a 2-byte msb first bit count, followed
@@ -98,7 +90,7 @@ buffer_get_bignum(Buffer *buffer, BIGNUM *value)
 	bytes = (bits + 7) / 8;
 	if (buffer_len(buffer) < bytes)
 		fatal("buffer_get_bignum: input buffer too small");
-	bin = (u_char*) buffer_ptr(buffer);
+	bin = (u_char *) buffer_ptr(buffer);
 	BN_bin2bn(bin, bytes, value);
 	buffer_consume(buffer, bytes);
 
@@ -160,6 +152,14 @@ buffer_get_int(Buffer *buffer)
 	return GET_32BIT(buf);
 }
 
+u_int64_t
+buffer_get_int64(Buffer *buffer)
+{
+	u_char buf[8];
+	buffer_get(buffer, (char *) buf, 8);
+	return GET_64BIT(buf);
+}
+
 /*
  * Stores an integer in the buffer in 4 bytes, msb first.
  */
@@ -169,6 +169,14 @@ buffer_put_int(Buffer *buffer, u_int value)
 	char buf[4];
 	PUT_32BIT(buf, value);
 	buffer_append(buffer, buf, 4);
+}
+
+void
+buffer_put_int64(Buffer *buffer, u_int64_t value)
+{
+	char buf[8];
+	PUT_64BIT(buf, value);
+	buffer_append(buffer, buf, 8);
 }
 
 /*

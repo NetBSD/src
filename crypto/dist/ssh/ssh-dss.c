@@ -1,5 +1,3 @@
-/*	$NetBSD: ssh-dss.c,v 1.1.1.1 2001/01/14 04:51:07 itojun Exp $	*/
-
 /*
  * Copyright (c) 2000 Markus Friedl.  All rights reserved.
  *
@@ -24,28 +22,18 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-/* from OpenBSD: ssh-dss.c,v 1.2 2000/12/19 23:17:58 markus Exp */
-
-#include <sys/cdefs.h>
-#ifndef lint
-__RCSID("$NetBSD: ssh-dss.c,v 1.1.1.1 2001/01/14 04:51:07 itojun Exp $");
-#endif
-
 #include "includes.h"
+RCSID("$OpenBSD: ssh-dss.c,v 1.5 2001/02/04 15:32:25 stevesk Exp $");
 
-#include "ssh.h"
+#include <openssl/bn.h>
+#include <openssl/evp.h>
+
 #include "xmalloc.h"
 #include "buffer.h"
 #include "bufaux.h"
 #include "compat.h"
-
-#include <openssl/bn.h>
-#include <openssl/rsa.h>
-#include <openssl/dsa.h>
-#include <openssl/evp.h>
-
+#include "log.h"
 #include "key.h"
-#include "ssh-dss.h"
 
 #define INTBLOB_LEN	20
 #define SIGBLOB_LEN	(2*INTBLOB_LEN)
@@ -63,7 +51,7 @@ ssh_dss_sign(
 	EVP_MD_CTX md;
 	u_int rlen;
 	u_int slen;
-	u_int len;
+	u_int len, dlen;
 	u_char sigblob[SIGBLOB_LEN];
 	Buffer b;
 
@@ -71,15 +59,18 @@ ssh_dss_sign(
 		error("ssh_dss_sign: no DSA key");
 		return -1;
 	}
-	digest = xmalloc(evp_md->md_size);
+	dlen = evp_md->md_size;
+	digest = xmalloc(dlen);
 	EVP_DigestInit(&md, evp_md);
 	EVP_DigestUpdate(&md, data, datalen);
 	EVP_DigestFinal(&md, digest, NULL);
 
-	sig = DSA_do_sign(digest, evp_md->md_size, key->dsa);
+	sig = DSA_do_sign(digest, dlen, key->dsa);
 	if (sig == NULL) {
 		fatal("ssh_dss_sign: cannot sign");
 	}
+	memset(digest, 0, dlen);
+	xfree(digest);
 
 	rlen = BN_num_bytes(sig->r);
 	slen = BN_num_bytes(sig->s);
@@ -194,7 +185,7 @@ ssh_dss_verify(
 		memset(sigblob, 0, len);
 		xfree(sigblob);
 	}
-	
+
 	/* sha1 the data */
 	dlen = evp_md->md_size;
 	digest = xmalloc(dlen);

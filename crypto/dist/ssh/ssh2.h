@@ -1,5 +1,3 @@
-/*	$NetBSD: ssh2.h,v 1.1.1.2 2001/01/14 04:50:52 itojun Exp $	*/
-
 /*
  * Copyright (c) 2000 Markus Friedl.  All rights reserved.
  *
@@ -54,8 +52,7 @@
  *
  *     192-255  Local extensions
  */
-
-/* from OpenBSD: ssh2.h,v 1.5 2000/10/11 04:02:17 provos Exp */
+/* RCSID("$OpenBSD: ssh2.h,v 1.5 2000/10/11 04:02:17 provos Exp $"); */
 
 /* transport layer: generic */
 

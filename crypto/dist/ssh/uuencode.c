@@ -1,4 +1,4 @@
-/*	$NetBSD: uuencode.c,v 1.1.1.2 2001/01/14 04:51:05 itojun Exp $	*/
+/*	$OpenBSD: uuencode.c,v 1.9 2001/02/07 08:54:16 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2000 Markus Friedl.  All rights reserved.
@@ -24,18 +24,12 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-/* from OpenBSD: uuencode.c,v 1.8 2000/12/19 23:17:59 markus Exp */
-
-#include <sys/cdefs.h>
-#ifndef lint
-__RCSID("$NetBSD: uuencode.c,v 1.1.1.2 2001/01/14 04:51:05 itojun Exp $");
-#endif
-
 #include "includes.h"
 #include "xmalloc.h"
-#include "uuencode.h"
 
 #include <resolv.h>
+
+RCSID("$OpenBSD: uuencode.c,v 1.9 2001/02/07 08:54:16 deraadt Exp $");
 
 int
 uuencode(u_char *src, u_int srclength,
@@ -69,6 +63,7 @@ dump_base64(FILE *fp, u_char *data, int len)
 {
 	u_char *buf = xmalloc(2*len);
 	int i, n;
+
 	n = uuencode(data, len, buf, 2*len);
 	for (i = 0; i < n; i++) {
 		fprintf(fp, "%c", buf[i]);

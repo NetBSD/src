@@ -1,5 +1,3 @@
-/*	$NetBSD: channels.h,v 1.1.1.2 2001/01/14 04:50:12 itojun Exp $	*/
-
 /*
  * Author: Tatu Ylonen <ylo@cs.hut.fi>
  * Copyright (c) 1995 Tatu Ylonen <ylo@cs.hut.fi>, Espoo, Finland
@@ -34,8 +32,7 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
-
-/* from OpenBSD: channels.h,v 1.24 2000/12/05 20:34:10 markus Exp */
+/* RCSID("$OpenBSD: channels.h,v 1.26 2001/01/31 20:37:23 markus Exp $"); */
 
 #ifndef CHANNELS_H
 #define CHANNELS_H
@@ -166,8 +163,12 @@ int     channel_allocate(int type, int sock, char *remote_name);
 /* Free the channel and close its socket. */
 void    channel_free(int channel);
 
-/* Add any bits relevant to channels in select bitmasks. */
-void    channel_prepare_select(fd_set * readset, fd_set * writeset);
+/*
+ * Allocate/update select bitmasks and add any bits relevant to channels in
+ * select bitmasks.
+ */
+void
+channel_prepare_select(fd_set **readsetp, fd_set **writesetp, int *maxfdp);
 
 /*
  * After select, perform any appropriate operations for channels which have
@@ -191,9 +192,6 @@ void    channel_stop_listening(void);
  */
 void    channel_close_all(void);
 
-/* Returns the maximum file descriptor number used by the channels. */
-int     channel_max_fd(void);
-
 /* Returns true if there is still an open channel over the connection. */
 int     channel_still_open(void);
 
@@ -208,10 +206,10 @@ char   *channel_open_message(void);
  * Initiate forwarding of connections to local port "port" through the secure
  * channel to host:port from remote side.
  */
-void
+int
 channel_request_local_forwarding(u_short listen_port,
     const char *host_to_connect, u_short port_to_connect, int gateway_ports);
-void
+int
 channel_request_forwarding(const char *listen_address, u_short listen_port,
     const char *host_to_connect, u_short port_to_connect, int gateway_ports,
     int remote_fwd);

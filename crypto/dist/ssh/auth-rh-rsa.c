@@ -1,5 +1,3 @@
-/*	$NetBSD: auth-rh-rsa.c,v 1.1.1.2 2001/01/14 04:49:58 itojun Exp $	*/
-
 /*
  * Author: Tatu Ylonen <ylo@cs.hut.fi>
  * Copyright (c) 1995 Tatu Ylonen <ylo@cs.hut.fi>, Espoo, Finland
@@ -14,26 +12,20 @@
  * called by a name other than "ssh" or "Secure Shell".
  */
 
-/* from OpenBSD: auth-rh-rsa.c,v 1.19 2000/12/21 15:10:16 markus Exp */
-
-#include <sys/cdefs.h>
-#ifndef lint
-__RCSID("$NetBSD: auth-rh-rsa.c,v 1.1.1.2 2001/01/14 04:49:58 itojun Exp $");
-#endif
-
 #include "includes.h"
+RCSID("$OpenBSD: auth-rh-rsa.c,v 1.22 2001/02/03 10:08:36 markus Exp $");
 
 #include "packet.h"
-#include "pathnames.h"
-#include "ssh.h"
 #include "xmalloc.h"
 #include "uidswap.h"
+#include "log.h"
 #include "servconf.h"
-
-#include <openssl/rsa.h>
-#include <openssl/dsa.h>
 #include "key.h"
 #include "hostfile.h"
+#include "pathnames.h"
+#include "auth.h"
+#include "tildexpand.h"
+#include "canohost.h"
 
 /*
  * Tries to authenticate the user using the .rhosts file and the host using
@@ -57,7 +49,8 @@ auth_rhosts_rsa(struct passwd *pw, const char *client_user, RSA *client_host_key
 	if (!auth_rhosts(pw, client_user))
 		return 0;
 
-	canonical_hostname = get_canonical_hostname();
+	canonical_hostname = get_canonical_hostname(
+	    options.reverse_mapping_check);
 
 	debug("Rhosts RSA authentication: canonical host %.900s", canonical_hostname);
 

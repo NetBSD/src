@@ -1,4 +1,4 @@
-/*	$NetBSD: dispatch.h,v 1.1.1.1 2000/09/28 22:10:01 thorpej Exp $	*/
+/*	$OpenBSD: dispatch.h,v 1.4 2001/01/29 01:58:15 niklas Exp $	*/
 
 /*
  * Copyright (c) 2000 Markus Friedl.  All rights reserved.
@@ -23,7 +23,6 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
-
 enum {
 	DISPATCH_BLOCK,
 	DISPATCH_NONBLOCK

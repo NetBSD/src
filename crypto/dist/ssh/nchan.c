@@ -1,5 +1,3 @@
-/*	$NetBSD: nchan.c,v 1.1.1.2 2001/01/14 04:50:25 itojun Exp $	*/
-
 /*
  * Copyright (c) 1999 Markus Friedl.  All rights reserved.
  *
@@ -24,24 +22,17 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-/* from OpenBSD: nchan.c,v 1.20 2000/11/06 23:04:56 markus Exp */
-
-#include <sys/cdefs.h>
-#ifndef lint
-__RCSID("$NetBSD: nchan.c,v 1.1.1.2 2001/01/14 04:50:25 itojun Exp $");
-#endif
-
 #include "includes.h"
+RCSID("$OpenBSD: nchan.c,v 1.22 2001/01/21 19:05:52 markus Exp $");
 
-#include "ssh.h"
-
+#include "ssh1.h"
+#include "ssh2.h"
 #include "buffer.h"
 #include "packet.h"
 #include "channels.h"
 #include "nchan.h"
-
-#include "ssh2.h"
 #include "compat.h"
+#include "log.h"
 
 /* functions manipulating channel states */
 /*

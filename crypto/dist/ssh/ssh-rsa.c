@@ -1,5 +1,3 @@
-/*	$NetBSD: ssh-rsa.c,v 1.1.1.1 2001/01/14 04:51:09 itojun Exp $	*/
-
 /*
  * Copyright (c) 2000 Markus Friedl.  All rights reserved.
  *
@@ -24,30 +22,17 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-/* from OpenBSD: ssh-rsa.c,v 1.2 2000/12/19 23:17:58 markus Exp */
-
-#include <sys/cdefs.h>
-#ifndef lint
-__RCSID("$NetBSD: ssh-rsa.c,v 1.1.1.1 2001/01/14 04:51:09 itojun Exp $");
-#endif
-
 #include "includes.h"
-
-#include "ssh.h"
-#include "xmalloc.h"
-#include "buffer.h"
-#include "bufaux.h"
+RCSID("$OpenBSD: ssh-rsa.c,v 1.5 2001/01/21 19:05:58 markus Exp $");
 
 #include <openssl/evp.h>
-#include <openssl/dsa.h>
-#include <openssl/rsa.h>
 #include <openssl/err.h>
 
+#include "xmalloc.h"
+#include "log.h"
+#include "buffer.h"
+#include "bufaux.h"
 #include "key.h"
-#include "ssh-rsa.h"
-
-#define INTBLOB_LEN	20
-#define SIGBLOB_LEN	(2*INTBLOB_LEN)
 
 /* RSASSA-PKCS1-v1_5 (PKCS #1 v2.0 signature) with SHA1 */
 int
@@ -132,6 +117,11 @@ ssh_rsa_verify(
 
 	if (key == NULL || key->type != KEY_RSA || key->rsa == NULL) {
 		error("ssh_rsa_verify: no RSA key");
+		return -1;
+	}
+	if (BN_num_bits(key->rsa->n) < 768) {
+		error("ssh_rsa_verify: n too small: %d bits",
+		    BN_num_bits(key->rsa->n));
 		return -1;
 	}
 	buffer_init(&b);

@@ -1,5 +1,3 @@
-/*	$NetBSD: match.c,v 1.1.1.2 2001/01/14 04:50:24 itojun Exp $	*/
-
 /*
  * Author: Tatu Ylonen <ylo@cs.hut.fi>
  * Copyright (c) 1995 Tatu Ylonen <ylo@cs.hut.fi>, Espoo, Finland
@@ -13,16 +11,9 @@
  * called by a name other than "ssh" or "Secure Shell".
  */
 
-/* from OpenBSD: match.c,v 1.10 2000/12/19 23:17:57 markus Exp */
-
-#include <sys/cdefs.h>
-#ifndef lint
-__RCSID("$NetBSD: match.c,v 1.1.1.2 2001/01/14 04:50:24 itojun Exp $");
-#endif
-
 #include "includes.h"
+RCSID("$OpenBSD: match.c,v 1.11 2001/01/21 19:05:52 markus Exp $");
 
-#include "ssh.h"
 #include "match.h"
 
 /*
