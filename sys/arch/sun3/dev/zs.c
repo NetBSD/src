@@ -43,7 +43,7 @@
  *
  * from: Header: zs.c,v 1.30 93/07/19 23:44:42 torek Exp 
  * from: sparc/dev/zs.c,v 1.3 1993/10/13 02:36:44 deraadt Exp 
- * $Id: zs.c,v 1.5 1994/05/06 07:49:20 gwr Exp $
+ * $Id: zs.c,v 1.6 1994/05/20 05:19:31 gwr Exp $
  */
 
 /*
@@ -237,7 +237,7 @@ zsattach(struct device *parent, struct device *dev, void *aux)
 	zslist = cs;
 
 	cs->cs_unit = unit;
-	cs->cs_zc =	&addr->zs_chan[CHAN_A];
+	cs->cs_zc = &addr->zs_chan[CHAN_A];
 	cs->cs_speed = zs_getspeed(cs->cs_zc);
 #ifdef	DEBUG
 	mon_printf("zs%da speed %d ",  zs, cs->cs_speed);
@@ -251,7 +251,6 @@ zsattach(struct device *parent, struct device *dev, void *aux)
 	tp->t_dev = makedev(ZSMAJOR, unit);
 	tp->t_oproc = zsstart;
 	tp->t_param = zsparam;
-	/*tp->t_stop = zsstop;*/
 	if (cs->cs_zc == zs_conschan) {
 		/* This unit is the console. */
 		cs->cs_consio = 1;
@@ -291,7 +290,6 @@ zsattach(struct device *parent, struct device *dev, void *aux)
 	tp->t_dev = makedev(ZSMAJOR, unit);
 	tp->t_oproc = zsstart;
 	tp->t_param = zsparam;
-	/*tp->t_stop = zsstop;*/
 	if (cs->cs_zc == zs_conschan) {
 		/* This unit is the console. */
 		cs->cs_consio = 1;
@@ -645,6 +643,14 @@ zsclose(dev_t dev, int flags, int mode, struct proc *p)
 		/* hold low for 1 second */
 		(void) tsleep((caddr_t)cs, TTIPRI, ttclos, hz);
 	}
+	if (cs->cs_creg[5] & ZSWR5_BREAK)
+	{
+		s = splzs();
+		cs->cs_preg[5] &= ~ZSWR5_BREAK;
+		cs->cs_creg[5] &= ~ZSWR5_BREAK;
+		ZS_WRITE(cs->cs_zc, 5, cs->cs_creg[5]);
+		splx(s);
+	}
 	ttyclose(tp);
 #ifdef KGDB
 	/* Reset the speed if we're doing kgdb on this port */
@@ -981,7 +987,7 @@ again:
 					tp->t_state &= ~TS_FLUSH;
 				else
 					ndflush(&tp->t_outq,
-					    (char *)cs->cs_tba - tp->t_outq.c_cf);
+					    cs->cs_tba - tp->t_outq.c_cf);
 				line->l_start(tp);
 				break;
 
@@ -1017,8 +1023,9 @@ zsioctl(dev_t dev, int cmd, caddr_t data, int flag, struct proc *p)
 {
 	int unit = minor(dev);
 	struct zsinfo *zi = zscd.cd_devs[unit >> 1];
-	register struct tty *tp = zi->zi_cs[unit & 1].cs_ttyp;
-	register int error;
+	register struct zs_chanstate *cs = &zi->zi_cs[unit & 1];
+	register struct tty *tp = cs->cs_ttyp;
+	register int error, s;
 
 	error = linesw[tp->t_line].l_ioctl(tp, cmd, data, flag, p);
 	if (error >= 0)
@@ -1030,9 +1037,24 @@ zsioctl(dev_t dev, int cmd, caddr_t data, int flag, struct proc *p)
 	switch (cmd) {
 
 	case TIOCSBRK:
-		/* FINISH ME ... need implicit TIOCCBRK in zsclose as well */
+		{
+			s = splzs();
+			cs->cs_preg[5] |= ZSWR5_BREAK;
+			cs->cs_creg[5] |= ZSWR5_BREAK;
+			ZS_WRITE(cs->cs_zc, 5, cs->cs_creg[5]);
+			splx(s);
+			break;
+		}
 
 	case TIOCCBRK:
+		{
+			s = splzs();
+			cs->cs_preg[5] &= ~ZSWR5_BREAK;
+			cs->cs_creg[5] &= ~ZSWR5_BREAK;
+			ZS_WRITE(cs->cs_zc, 5, cs->cs_creg[5]);
+			splx(s);
+			break;
+		}
 
 	case TIOCSDTR:
 
