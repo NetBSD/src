@@ -11,7 +11,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$Id: s_atan.c,v 1.4 1994/03/03 17:04:27 jtc Exp $";
+static char rcsid[] = "$Id: s_atan.c,v 1.5 1994/08/10 20:31:55 jtc Exp $";
 #endif
 
 /* atan(x)
@@ -34,14 +34,8 @@ static char rcsid[] = "$Id: s_atan.c,v 1.4 1994/03/03 17:04:27 jtc Exp $";
  * to produce the hexadecimal values shown.
  */
 
-#include <math.h>
-#include <machine/endian.h>
-
-#if BYTE_ORDER == LITTLE_ENDIAN
-#define n0	1
-#else
-#define n0	0
-#endif
+#include "math.h"
+#include "math_private.h"
 
 #ifdef __STDC__
 static const double atanhi[] = {
@@ -101,11 +95,13 @@ huge   = 1.0e300;
 	double w,s1,s2,z;
 	int ix,hx,id;
 
-	hx = *(n0+(int*)&x);
+	GET_HIGH_WORD(hx,x);
 	ix = hx&0x7fffffff;
 	if(ix>=0x44100000) {	/* if |x| >= 2^66 */
+	    unsigned int low;
+	    GET_LOW_WORD(low,x);
 	    if(ix>0x7ff00000||
-		(ix==0x7ff00000&&(*(1-n0+(int*)&x)!=0)))
+		(ix==0x7ff00000&&(low!=0)))
 		return x+x;		/* NaN */
 	    if(hx>0) return  atanhi[3]+atanlo[3];
 	    else     return -atanhi[3]-atanlo[3];

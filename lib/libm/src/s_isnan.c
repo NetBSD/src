@@ -11,7 +11,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$Id: s_isnan.c,v 1.4 1994/03/03 17:04:39 jtc Exp $";
+static char rcsid[] = "$Id: s_isnan.c,v 1.5 1994/08/10 20:32:34 jtc Exp $";
 #endif
 
 /*
@@ -19,20 +19,8 @@ static char rcsid[] = "$Id: s_isnan.c,v 1.4 1994/03/03 17:04:39 jtc Exp $";
  * no branching!
  */
 
-#include <math.h>
-#include <machine/endian.h>
-
-#if BYTE_ORDER == LITTLE_ENDIAN
-#define n0	1
-#else
-#define n0	0
-#endif
-
-#ifdef __STDC__
-static const double one = 1.0;
-#else
-static double one = 1.0;
-#endif
+#include "math.h"
+#include "math_private.h"
 
 #ifdef __STDC__
 	int isnan(double x)
@@ -42,8 +30,8 @@ static double one = 1.0;
 #endif
 {
 	int hx,lx;
-	hx = (*(n0+(int*)&x)&0x7fffffff);
-	lx = *(1-n0+(int*)&x);
+	EXTRACT_WORDS(hx,lx,x);
+	hx &= 0x7fffffff;
 	hx |= (unsigned)(lx|(-lx))>>31;	
 	hx = 0x7ff00000 - hx;
 	return ((unsigned)(hx))>>31;

@@ -11,7 +11,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$Id: s_log1p.c,v 1.4 1994/03/03 17:04:40 jtc Exp $";
+static char rcsid[] = "$Id: s_log1p.c,v 1.5 1994/08/10 20:32:41 jtc Exp $";
 #endif
 
 /* double log1p(double x)
@@ -79,14 +79,8 @@ static char rcsid[] = "$Id: s_log1p.c,v 1.4 1994/03/03 17:04:40 jtc Exp $";
  *	 See HP-15C Advanced Functions Handbook, p.193.
  */
 
-#include <math.h>
-#include <machine/endian.h>
-
-#if BYTE_ORDER == LITTLE_ENDIAN
-#define n0	1
-#else
-#define n0	0
-#endif
+#include "math.h"
+#include "math_private.h"
 
 #ifdef __STDC__
 static const double
@@ -104,7 +98,11 @@ Lp5 = 1.818357216161805012e-01,  /* 3FC74664 96CB03DE */
 Lp6 = 1.531383769920937332e-01,  /* 3FC39A09 D078C69F */
 Lp7 = 1.479819860511658591e-01;  /* 3FC2F112 DF3E5244 */
 
+#ifdef __STDC__
+static const double zero = 0.0;
+#else
 static double zero = 0.0;
+#endif
 
 #ifdef __STDC__
 	double log1p(double x)
@@ -116,7 +114,7 @@ static double zero = 0.0;
 	double hfsq,f,c,s,z,R,u;
 	int k,hx,hu,ax;
 
-	hx = *(n0+(int*)&x);		/* high word of x */
+	GET_HIGH_WORD(hx,x);
 	ax = hx&0x7fffffff;
 
 	k = 1;
@@ -139,22 +137,22 @@ static double zero = 0.0;
 	if(k!=0) {
 	    if(hx<0x43400000) {
 		u  = 1.0+x; 
-	        hu = *(n0+(int*)&u);		/* high word of u */
+		GET_HIGH_WORD(hu,u);
 	        k  = (hu>>20)-1023;
 	        c  = (k>0)? 1.0-(u-x):x-(u-1.0);/* correction term */
 		c /= u;
 	    } else {
 		u  = x;
-	        hu = *(n0+(int*)&u);		/* high word of u */
+		GET_HIGH_WORD(hu,u);
 	        k  = (hu>>20)-1023;
 		c  = 0;
 	    }
 	    hu &= 0x000fffff;
 	    if(hu<0x6a09e) {
-	        *(n0+(int*)&u) = hu|0x3ff00000;	/* normalize u */
+	        SET_HIGH_WORD(u,hu|0x3ff00000);	/* normalize u */
 	    } else {
 	        k += 1; 
-	        *(n0+(int*)&u) = hu|0x3fe00000;	/* normalize u/2 */
+		SET_HIGH_WORD(u,hu|0x3fe00000);	/* normalize u/2 */
 	        hu = (0x00100000-hu)>>2;
 	    }
 	    f = u-1.0;

@@ -11,7 +11,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$Id: e_remainder.c,v 1.4 1994/03/03 17:04:20 jtc Exp $";
+static char rcsid[] = "$Id: e_remainder.c,v 1.5 1994/08/10 20:31:24 jtc Exp $";
 #endif
 
 /* __ieee754_remainder(x,p)
@@ -23,16 +23,8 @@ static char rcsid[] = "$Id: e_remainder.c,v 1.4 1994/03/03 17:04:20 jtc Exp $";
  *	Based on fmod() return x-[x/p]chopped*p exactlp.
  */
 
-#include <math.h>
-#include <machine/endian.h>
-
-#if BYTE_ORDER == LITTLE_ENDIAN
-#define n0	1
-#define n1	0
-#else
-#define n0	0
-#define n1	1
-#endif
+#include "math.h"
+#include "math_private.h"
 
 #ifdef __STDC__
 static const double zero = 0.0;
@@ -52,10 +44,8 @@ static double zero = 0.0;
 	unsigned sx,lx,lp;
 	double p_half;
 
-	hx = *( n0 + (int*)&x);		/* high word of x */
-	lx = *( n1 + (int*)&x);		/* low  word of x */
-	hp = *( n0 + (int*)&p);		/* high word of p */
-	lp = *( n1 + (int*)&p);		/* low  word of p */
+	EXTRACT_WORDS(hx,lx,x);
+	EXTRACT_WORDS(hp,lp,p);
 	sx = hx&0x80000000;
 	hp &= 0x7fffffff;
 	hx &= 0x7fffffff;
@@ -84,6 +74,7 @@ static double zero = 0.0;
 		if(x>=p_half) x -= p;
 	    }
 	}
-	*(n0+(int*)&x) ^= sx;
+	GET_HIGH_WORD(hx,x);
+	SET_HIGH_WORD(x,hx^sx);
 	return x;
 }

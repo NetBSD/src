@@ -11,17 +11,11 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$Id: s_cbrt.c,v 1.4 1994/03/03 17:04:28 jtc Exp $";
+static char rcsid[] = "$Id: s_cbrt.c,v 1.5 1994/08/10 20:31:59 jtc Exp $";
 #endif
 
-#include <math.h>
-#include <machine/endian.h>
-
-#if BYTE_ORDER == LITTLE_ENDIAN
-#define n0	1
-#else
-#define n0	0
-#endif
+#include "math.h"
+#include "math_private.h"
 
 /* cbrt(x)
  * Return cube root of x
@@ -54,23 +48,25 @@ G =  3.57142857142857150787e-01; /* 5/14      = 0x3FD6DB6D, 0xB6DB6DB7 */
 {
 	int	hx;
 	double r,s,t=0.0,w;
-	unsigned *pt = (unsigned *) &t, sign;
+	unsigned sign;
+	unsigned int high,low;
 
-	hx = *( n0 + (int*)&x);		/* high word of x */
+	GET_HIGH_WORD(hx,x);
 	sign=hx&0x80000000; 		/* sign= sign(x) */
 	hx  ^=sign;
 	if(hx>=0x7ff00000) return(x+x); /* cbrt(NaN,INF) is itself */
-	if((hx|*(1-n0+(int*)&x))==0) 
+	GET_LOW_WORD(low,x);
+	if((hx|low)==0) 
 	    return(x);		/* cbrt(0) is itself */
 
-	*(n0+(int*)&x) = hx;	/* x <- |x| */
+	SET_HIGH_WORD(x,hx);	/* x <- |x| */
     /* rough cbrt to 5 bits */
 	if(hx<0x00100000) 		/* subnormal number */
-	  {pt[n0]=0x43500000; 		/* set t= 2**54 */
-	   t*=x; pt[n0]=pt[n0]/3+B2;
+	  {SET_HIGH_WORD(t,0x43500000);	/* set t= 2**54 */
+	   t*=x; GET_HIGH_WORD(high,t); SET_HIGH_WORD(t,high/3+B2);
 	  }
 	else
-	  pt[n0]=hx/3+B1;	
+	  SET_HIGH_WORD(t,hx/3+B1);
 
 
     /* new cbrt to 23 bits, may be implemented in single precision */
@@ -79,7 +75,8 @@ G =  3.57142857142857150787e-01; /* 5/14      = 0x3FD6DB6D, 0xB6DB6DB7 */
 	t*=G+F/(s+E+D/s);	
 
     /* chopped to 20 bits and make it larger than cbrt(x) */ 
-	pt[1-n0]=0; pt[n0]+=0x00000001;
+	GET_HIGH_WORD(high,t);
+	INSERT_WORDS(t,high+0x00000001,0);
 
 
     /* one step newton iteration to 53 bits with error less than 0.667 ulps */
@@ -90,6 +87,7 @@ G =  3.57142857142857150787e-01; /* 5/14      = 0x3FD6DB6D, 0xB6DB6DB7 */
 	t=t+t*r;
 
     /* retore the sign bit */
-	pt[n0] |= sign;
+	GET_HIGH_WORD(high,t);
+	SET_HIGH_WORD(t,high|sign);
 	return(t);
 }

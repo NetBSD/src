@@ -11,7 +11,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$Id: s_tanh.c,v 1.3 1994/02/18 02:27:03 jtc Exp $";
+static char rcsid[] = "$Id: s_tanh.c,v 1.4 1994/08/10 20:33:15 jtc Exp $";
 #endif
 
 /* Tanh(x)
@@ -38,7 +38,8 @@ static char rcsid[] = "$Id: s_tanh.c,v 1.3 1994/02/18 02:27:03 jtc Exp $";
  *	only tanh(0)=0 is exact for finite argument.
  */
 
-#include <math.h>
+#include "math.h"
+#include "math_private.h"
 
 #ifdef __STDC__
 static const double one=1.0, two=2.0, tiny = 1.0e-300;
@@ -57,7 +58,7 @@ static double one=1.0, two=2.0, tiny = 1.0e-300;
 	int jx,ix;
 
     /* High word of |x|. */
-	jx = *( (((*(int*)&one)>>29)^1) + (int*)&x);
+	GET_HIGH_WORD(jx,x);
 	ix = jx&0x7fffffff;
 
     /* x is INF or NaN */

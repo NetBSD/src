@@ -1,5 +1,5 @@
 #  @(#)Makefile 5.1beta 93/09/24 
-#  $Id: Makefile,v 1.21 1994/03/12 01:20:02 jtc Exp $
+#  $Id: Makefile,v 1.22 1994/08/10 20:30:00 jtc Exp $
 # 
 #  ====================================================
 #  Copyright (C) 1993 by Sun Microsystems, Inc. All rights reserved.
@@ -63,24 +63,33 @@ ARCH_SRCS = e_acos.S e_asin.S e_atanh.S e_cosh.S e_exp.S e_log.S e_log10.S \
 CFLAGS+= -D_MULTI_LIBM -D_POSIX_MODE
 
 LIB=	m
-COMMON_SRCS = k_standard.c k_rem_pio2.c k_cos.c k_sin.c k_tan.c \
-	e_acos.c e_acosh.c e_asin.c e_atan2.c e_atanh.c e_cosh.c e_exp.c \
-	e_fmod.c e_gamma.c e_gamma_r.c e_hypot.c e_j0.c e_j1.c e_jn.c \
-	e_lgamma.c e_lgamma_r.c e_log.c e_log10.c e_pow.c e_rem_pio2.c \
-	e_remainder.c e_scalb.c e_sinh.c e_sqrt.c \
-	w_acos.c w_acosh.c w_asin.c w_atan2.c \
-	w_atanh.c w_cosh.c w_exp.c w_fmod.c \
-	w_gamma.c w_gamma_r.c w_hypot.c w_j0.c \
-	w_j1.c w_jn.c w_lgamma.c w_lgamma_r.c \
-	w_log.c w_log10.c w_pow.c w_remainder.c \
-	w_scalb.c w_sinh.c w_sqrt.c \
-	w_cabs.c w_drem.c \
-	s_asinh.c s_atan.c s_cbrt.c s_ceil.c s_copysign.c \
-	s_cos.c s_erf.c s_expm1.c s_finite.c s_floor.c \
-	s_ilogb.c s_lib_version.c \
-	s_log1p.c s_logb.c s_matherr.c s_nextafter.c \
-	s_rint.c s_scalbn.c s_signgam.c s_significand.c s_sin.c \
-	s_tan.c s_tanh.c
+COMMON_SRCS = e_acos.c e_acosf.c e_acosh.c e_acoshf.c e_asin.c e_asinf.c \
+	e_atan2.c e_atan2f.c e_atanh.c e_atanhf.c e_cosh.c e_coshf.c e_exp.c \
+	e_expf.c e_fmod.c e_fmodf.c e_gamma.c e_gamma_r.c e_gammaf.c \
+	e_gammaf_r.c e_hypot.c e_hypotf.c e_j0.c e_j0f.c e_j1.c e_j1f.c \
+	e_jn.c e_jnf.c e_lgamma.c e_lgamma_r.c e_lgammaf.c e_lgammaf_r.c \
+	e_log.c e_log10.c e_log10f.c e_logf.c e_pow.c e_powf.c e_rem_pio2.c \
+	e_rem_pio2f.c e_remainder.c e_remainderf.c e_scalb.c e_scalbf.c \
+	e_sinh.c e_sinhf.c e_sqrt.c e_sqrtf.c \
+	k_cos.c k_cosf.c k_rem_pio2.c k_rem_pio2f.c k_sin.c k_sinf.c \
+	k_standard.c k_tan.c k_tanf.c \
+	s_asinh.c s_asinhf.c s_atan.c s_atanf.c s_cbrt.c s_cbrtf.c s_ceil.c \
+	s_ceilf.c s_copysign.c s_copysignf.c s_cos.c s_cosf.c s_erf.c s_erff.c \
+	s_expm1.c s_expm1f.c s_fabsf.c s_finite.c s_finitef.c \
+	s_floor.c s_floorf.c s_frexpf.c s_ilogb.c s_ilogbf.c \
+	s_isnanf.c s_ldexpf.c s_lib_version.c s_log1p.c \
+	s_log1pf.c s_logb.c s_logbf.c s_matherr.c s_modff.c \
+	s_nextafter.c s_nextafterf.c s_rint.c s_rintf.c s_scalbn.c s_scalbnf.c \
+	s_signgam.c s_significand.c s_significandf.c s_sin.c s_sinf.c s_tan.c \
+	s_tanf.c s_tanh.c s_tanhf.c \
+	w_acos.c w_acosf.c w_acosh.c w_acoshf.c w_asin.c w_asinf.c w_atan2.c \
+	w_atan2f.c w_atanh.c w_atanhf.c w_cabs.c w_cabsf.c w_cosh.c w_coshf.c \
+	w_drem.c w_dremf.c w_exp.c w_expf.c w_fmod.c w_fmodf.c w_gamma.c \
+	w_gamma_r.c w_gammaf.c w_gammaf_r.c w_hypot.c w_hypotf.c w_j0.c \
+	w_j0f.c w_j1.c w_j1f.c w_jn.c w_jnf.c w_lgamma.c w_lgamma_r.c \
+	w_lgammaf.c w_lgammaf_r.c w_log.c w_log10.c w_log10f.c w_logf.c \
+	w_pow.c w_powf.c w_remainder.c w_remainderf.c w_scalb.c w_scalbf.c \
+	w_sinh.c w_sinhf.c w_sqrt.c w_sqrtf.c
 
 # NetBSD's C library supplies these functions:
 #COMMON_SRCS+=	s_fabs.c s_frexp.c s_isnan.c s_ldexp.c s_modf.c
