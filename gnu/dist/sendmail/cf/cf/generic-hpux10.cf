@@ -1,5 +1,5 @@
 #
-# Copyright (c) 1998-2000 Sendmail, Inc. and its suppliers.
+# Copyright (c) 1998-2001 Sendmail, Inc. and its suppliers.
 #	All rights reserved.
 # Copyright (c) 1983, 1995 Eric P. Allman.  All rights reserved.
 # Copyright (c) 1988, 1993
@@ -16,14 +16,14 @@
 #####
 #####		SENDMAIL CONFIGURATION FILE
 #####
-##### built by gshapiro@horsey.gshapiro.net on Fri Dec 29 22:30:59 PST 2000
-##### in /usr/local/src/sendmail/devel/8.11/OpenSource/sendmail-8.11.2/cf/cf
+##### built by gshapiro@horsey.gshapiro.net on Tue Feb 27 14:54:24 PST 2001
+##### in /usr/local/src/sendmail/devel/8.11/OpenSource/sendmail-8.11.3/cf/cf
 ##### using ../ as configuration include directory
 #####
 ######################################################################
 ######################################################################
 
-#####  Id: cfhead.m4,v 8.76.4.13 2000/08/24 17:09:50 gshapiro Exp  #####
+#####  Id: cfhead.m4,v 8.76.4.15 2001/02/14 04:07:20 gshapiro Exp  #####
 #####  Id: cf.m4,v 8.32 1999/02/07 07:26:14 gshapiro Exp  #####
 #####  Id: generic-hpux10.mc,v 8.11 1999/02/07 07:26:02 gshapiro Exp  #####
 
@@ -106,7 +106,7 @@ Kdequote dequote
 # class M: domains that should be converted to $M
 # class N: domains that should not be converted to $M
 #CL root
-CEroot
+C{E}root
 
 # who I masquerade as (null for no masquerading) (see also $=M)
 DM
@@ -118,7 +118,7 @@ DnMAILER-DAEMON
 CPREDIRECT
 
 # Configuration version number
-DZ8.11.2
+DZ8.11.3
 
 
 ###############

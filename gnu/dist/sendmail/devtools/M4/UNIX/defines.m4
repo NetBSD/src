@@ -1,6 +1,6 @@
 divert(-1)
 #
-# Copyright (c) 1999-2000 Sendmail, Inc. and its suppliers.
+# Copyright (c) 1999-2001 Sendmail, Inc. and its suppliers.
 #	All rights reserved.
 #
 # By using this file, you agree to the terms and conditions set
@@ -10,7 +10,7 @@ divert(-1)
 #
 #  Definitions for Makefile construction for sendmail
 #
-#	Id: defines.m4,v 8.31.4.4 2000/12/20 21:21:39 gshapiro Exp
+#	Id: defines.m4,v 8.31.4.6 2001/02/14 04:07:22 gshapiro Exp
 #
 divert(0)dnl
 
@@ -51,7 +51,7 @@ ENVDEF= ifdef(`confENVDEF', `confENVDEF') ifdef(`conf_'bldCURRENT_PRD`_ENVDEF', 
 # location of the source directory
 SRCDIR=	ifdef(`confSRCDIR', `confSRCDIR', `_SRC_PATH_')
 
-# include directories
+# inc`'lude directories
 INCDIRS= confINCDIRS
 
 # library directories
@@ -75,8 +75,8 @@ SBINDIR=ifdef(`confSBINDIR', `confSBINDIR', `/usr/sbin')
 # location of "libexec" binaries (usually /usr/libexec or /usr/etc)
 EBINDIR=ifdef(`confEBINDIR', `confEBINDIR', `/usr/libexec')
 
-# where to install include files (usually /usr/include)
-INCLUDEDIR=ifdef(`confINCLUDEDIR', `confINCLUDEDIR', `/usr/include')
+# where to install inc`'lude files (usually /usr/inc`'lude)
+INCLUDEDIR=ifdef(`confINCLUDEDIR', `confINCLUDEDIR', `/usr/inc`'lude')
 
 # where to install library files (usually /usr/lib)
 LIBDIR=ifdef(`confLIBDIR', `confLIBDIR', `/usr/lib')
@@ -131,3 +131,12 @@ SBINOWN=ifdef(`confSBINOWN', `confSBINOWN', `root')
 SBINGRP=ifdef(`confSBINGRP', `confSBINGRP', `bin')
 SBINMODE=ifdef(`confSBINMODE', `confSBINMODE', `4555')
 
+# Library ownership/permissions
+LIBOWN=ifdef(`confLIBOWN', `confLIBOWN', `root')
+LIBGRP=ifdef(`confLIBGRP', `confLIBGRP', `bin')
+LIBMODE=ifdef(`confLIBMODE', `confLIBMODE', `0444')
+
+# Include file ownership/permissions
+INCOWN=ifdef(`confINCOWN', `confINCOWN', `root')
+INCGRP=ifdef(`confINCGRP', `confINCGRP', `bin')
+INCMODE=ifdef(`confINCMODE', `confINCMODE', `0444')
