@@ -35,19 +35,19 @@ LIBDIRS=-L/usr/local/lib
 LIBS=	-lbsd -ldbm
 
 # location of sendmail binary (usually /usr/sbin or /usr/lib)
-BINDIR=	${DESTDIR}/etc/sendmail
+BINDIR=	${DESTDIR}/usr/lib
 
 # location of sendmail.st file (usually /var/log or /usr/lib)
-STDIR=	${DESTDIR}/etc/sendmail
+STDIR=	${DESTDIR}/usr/lib
 
 # location of sendmail.hf file (usually /usr/share/misc or /usr/lib)
-HFDIR=	${DESTDIR}/etc/sendmail
+HFDIR=	${DESTDIR}/usr/lib
 
 # additional .o files needed
 OBJADD=
 
 # additional pseudo-sources needed
-BEFORE=	unistd.h dirent.h
+BEFORE=
 
 ###################  end of user configuration flags  ######################
 
@@ -78,14 +78,16 @@ dirent.h:
 	echo "#include <sys/dir.h>" > dirent.h
 	echo "#define dirent	direct" >> dirent.h
 
+NROFF=	nroff
+
 aliases.0: aliases.5
-	nroff -mandoc aliases.5 > aliases.0
+	${NROFF} -mandoc aliases.5 > aliases.0
 
 newaliases.0: newaliases.1
-	nroff -mandoc newaliases.1 > newaliases.0
+	${NROFF} -mandoc newaliases.1 > newaliases.0
 
 sendmail.0: sendmail.8
-	nroff -mandoc sendmail.8 > sendmail.0
+	${NROFF} -mandoc sendmail.8 > sendmail.0
 
 install: install-sendmail install-docs
 
