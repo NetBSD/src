@@ -1,4 +1,4 @@
-/*	$NetBSD: filter.c,v 1.10 2002/10/10 14:06:30 provos Exp $	*/
+/*	$NetBSD: filter.c,v 1.11 2002/10/11 21:54:57 provos Exp $	*/
 /*	$OpenBSD: filter.c,v 1.16 2002/08/08 21:18:20 provos Exp $	*/
 /*
  * Copyright 2002 Niels Provos <provos@citi.umich.edu>
@@ -30,7 +30,7 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: filter.c,v 1.10 2002/10/10 14:06:30 provos Exp $");
+__RCSID("$NetBSD: filter.c,v 1.11 2002/10/11 21:54:57 provos Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -174,6 +174,10 @@ filter_evaluate(struct intercept_tlq *tls, struct filterq *fls,
 			if (action == ICPOLICY_NEVER)
 				action = filter->match_error;
 			icpid->uflags = filter->match_flags;
+
+			/* Policy requests privilege elevation */
+			if (filter->elevate.e_flags)
+				icpid->elevate = &filter->elevate;
 			return (action);
 		}
 
@@ -408,7 +412,7 @@ filter_quickpredicate(struct filter *filter)
 	if (!pdc->p_flags)
 		return (1);
 
-	intercept_setpid(&icpid);
+	intercept_setpid(&icpid, getuid(), getgid());
 
 	if (!filter_predicate(&icpid, pdc))
 		return (0);
