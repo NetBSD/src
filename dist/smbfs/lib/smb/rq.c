@@ -33,17 +33,15 @@
  */
 #include <sys/param.h>
 #include <sys/ioctl.h>
-#include <sys/errno.h>
 #include <sys/stat.h>
 #include <ctype.h>
+#include <errno.h>
 #include <err.h>
 #include <stdio.h>
 #include <unistd.h>
 #include <strings.h>
 #include <stdlib.h>
 #include <sysexits.h>
-
-#include <sys/mchain.h>
 
 #include <netsmb/smb_lib.h>
 #include <netsmb/smb_conn.h>
