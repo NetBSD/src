@@ -39,7 +39,7 @@ static char copyright[] =
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)rm.c	8.5 (Berkeley) 4/18/94";*/
-static char *rcsid = "$Id: rm.c,v 1.15 1994/09/20 00:37:15 mycroft Exp $";
+static char *rcsid = "$Id: rm.c,v 1.16 1994/11/02 16:17:14 jtc Exp $";
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -344,6 +344,16 @@ check(path, name, sp)
 	return (first == 'y' || first == 'Y');
 }
 
+
+/*
+ * POSIX.2 requires that if "." or ".." are specified as the basename
+ * portion of an operand, a diagnostic message be written to standard
+ * error and nothing more be done with such operands.
+ *
+ * Since POSIX.2 defines basename as the final portion of a path after
+ * trailing slashes have been removed, we'll remove them here.
+ */
+
 #define ISDOT(a)	((a)[0] == '.' && (!(a)[1] || (a)[1] == '.' && !(a)[2]))
 void
 checkdot(argv)
@@ -354,10 +364,17 @@ checkdot(argv)
 
 	complained = 0;
 	for (t = argv; *t;) {
+		/* strip trailing slashes */
+		p = strrchr (*t, '\0');
+		while (--p > *t && *p == '/')
+			*p = '\0';
+
+		/* extract basename */
 		if ((p = strrchr(*t, '/')) != NULL)
 			++p;
 		else
 			p = *t;
+
 		if (ISDOT(p)) {
 			if (!complained++)
 				warnx("\".\" and \"..\" may not be removed");
