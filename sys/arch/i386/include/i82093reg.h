@@ -1,4 +1,4 @@
-/*	 $NetBSD: i82093reg.h,v 1.5 2003/05/04 22:01:58 fvdl Exp $ */
+/*	 $NetBSD: i82093reg.h,v 1.6 2003/05/11 14:02:17 fvdl Exp $ */
 
 #include <x86/i82093reg.h>
 
@@ -30,7 +30,6 @@
 
 #endif	/* MULTIPROCESSOR */
 
-
 #define ioapic_mask(num) \
 	movl	IS_PIC(%ebp),%edi				;\
 	ioapic_asm_lock(num)					;\
@@ -44,19 +43,26 @@
 	movl	%esi,(%ebx)					;\
 	ioapic_asm_unlock(num)
 
+/*
+ * Since this is called just before the interrupt stub exits, AND
+ * because the apic ACK doesn't use any registers, all registers
+ * can be used here.
+ * XXX this is not obvious
+ */
 #define ioapic_unmask(num) \
-	cmpl	$IREENT_MAGIC,(TF_ERR+4)(%esp)			;\
-	jne	79f						;\
+	cmpl    $IREENT_MAGIC,(TF_ERR+4)(%esp)			;\
+	jne     79f						;\
 	movl	IS_PIC(%ebp),%edi				;\
 	ioapic_asm_lock(num)					;\
 	movl	IS_PIN(%ebp),%esi				;\
 	leal	0x10(%esi,%esi,1),%esi				;\
 	movl	IOAPIC_SC_REG(%edi),%ebx			;\
+	movl	IOAPIC_SC_DATA(%edi),%eax			;\
 	movl	%esi, (%ebx)					;\
-	movl	IOAPIC_SC_DATA(%edi),%ebx			;\
-	movl	(%ebx),%esi					;\
-	andl	$~IOAPIC_REDLO_MASK,%esi			;\
-	movl	%esi,(%ebx)					;\
+	movl	(%eax),%edx					;\
+	andl	$~IOAPIC_REDLO_MASK,%edx			;\
+	movl	%esi, (%ebx)					;\
+	movl	%edx,(%eax)					;\
 	ioapic_asm_unlock(num)					;\
 79:
 
