@@ -1,4 +1,4 @@
-/*	$NetBSD: prom.h,v 1.3 1996/09/26 22:51:53 cgd Exp $	*/
+/*	$NetBSD: prom.h,v 1.4 1996/10/15 23:52:49 cgd Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Carnegie-Mellon University.
@@ -54,6 +54,8 @@ void	putchar __P((int));
 
 void	prom_halt __P((int)) __attribute__((__noreturn__));
 int	prom_getenv __P((int, char *, int));
+
+void	hwrpb_restart_setup __P((void));
 #endif
 
 /* Prom operation values. */
