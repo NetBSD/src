@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.S,v 1.12 2003/08/07 16:27:54 agc Exp $	*/
+/*	$NetBSD: locore.S,v 1.13 2003/08/08 20:14:06 christos Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
@@ -238,7 +238,7 @@ _C_LABEL(biosextmem):	.long	REALEXTMEM
 tmpstk:
 
 
-#define	_RELOC(x)	((x) - KERNBASE)
+#define	_RELOC(x)	((x) - KERNBASE_LOCORE)
 #define	RELOC(x)	_RELOC(_C_LABEL(x))
 
 	.text
@@ -292,7 +292,7 @@ start:	movw	$0x1234,0x472			# warm boot
  	movl	16(%esp),%eax
 	testl	%eax,%eax
 	jz	1f
-	addl	$KERNBASE,%eax
+	addl	$KERNBASE_LOCORE,%eax
 1: 	movl	%eax,RELOC(esym)
 
 	movl	RELOC(biosextmem),%eax
@@ -512,7 +512,7 @@ try586:	/* Use the `cpuid' instruction. */
 	movl	RELOC(esym),%eax
 	testl	%eax,%eax
 	jz	1f
-	subl	$KERNBASE,%eax
+	subl	$KERNBASE_LOCORE,%eax
 	movl	%eax,%edi
 1:
 #endif
@@ -628,10 +628,10 @@ try586:	/* Use the `cpuid' instruction. */
 	ret
 
 begin:
-	/* Now running relocated at KERNBASE.  Remove double mapping. */
+	/* Now running relocated at KERNBASE_LOCORE.  Remove double mapping. */
 	movl	_C_LABEL(nkpde),%ecx		# for this many pde s,
 	leal	(PROC0PDIR+0*4)(%esi),%ebx	# which is where temp maps!
-	addl	$(KERNBASE), %ebx	# now use relocated address
+	addl	$(KERNBASE_LOCORE), %ebx	# now use relocated address
 1:	movl	$0,(%ebx)
 	addl	$4,%ebx	# next pde
 	loop	1b
@@ -639,12 +639,12 @@ begin:
 	/* Relocate atdevbase. */
 	movl	_C_LABEL(nkpde),%edx
 	shll	$PGSHIFT,%edx
-	addl	$(TABLESIZE+KERNBASE),%edx
+	addl	$(TABLESIZE+KERNBASE_LOCORE),%edx
 	addl	%esi,%edx
 	movl	%edx,_C_LABEL(atdevbase)
 
 	/* Set up bootstrap stack. */
-	leal	(PROC0STACK+KERNBASE)(%esi),%eax
+	leal	(PROC0STACK+KERNBASE_LOCORE)(%esi),%eax
 	movl	%eax,_C_LABEL(proc0paddr)
 	leal	(USPACE-FRAMESIZE)(%eax),%esp
 	movl	%esi,PCB_CR3(%eax)	# pcb->pcb_cr3
