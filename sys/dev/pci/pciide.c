@@ -1,4 +1,4 @@
-/*	$NetBSD: pciide.c,v 1.23 1998/12/03 13:30:00 bouyer Exp $	*/
+/*	$NetBSD: pciide.c,v 1.24 1998/12/03 13:50:38 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1996, 1998 Christopher G. Demetriou.  All rights reserved.
@@ -1696,7 +1696,7 @@ cmd_channel_map(sc, pa, cp)
 		if (pciiide_chan_candisable(sc, pa, cp, cmdsize, ctlsize)) {
 			ctrl &= ~CMD_CTRL_2PORT;
 			pciide_pci_write(pa->pa_pc, pa->pa_tag,
-			    CMD_CTRL_2PORT, ctrl);
+			    CMD_CTRL, ctrl);
 		}
 	}
 	pciide_map_compat_intr(sc, pa, cp, wdc_cp->channel, interface);
