@@ -1,4 +1,4 @@
-/* $NetBSD: vmstat.c,v 1.111 2003/03/19 11:36:35 dsl Exp $ */
+/* $NetBSD: vmstat.c,v 1.112 2003/04/09 19:02:29 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1998, 2000, 2001 The NetBSD Foundation, Inc.
@@ -81,7 +81,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1986, 1991, 1993\n\
 #if 0
 static char sccsid[] = "@(#)vmstat.c	8.2 (Berkeley) 3/1/95";
 #else
-__RCSID("$NetBSD: vmstat.c,v 1.111 2003/03/19 11:36:35 dsl Exp $");
+__RCSID("$NetBSD: vmstat.c,v 1.112 2003/04/09 19:02:29 thorpej Exp $");
 #endif
 #endif /* not lint */
 
@@ -1139,8 +1139,18 @@ dopoolcache(struct pool *pp, int verbose)
 			    "pool cache group trashed");
 			printf("\t\tgroup %p: avail %d\n", pcg_addr,
 			    pcg->pcg_avail);
-			for (i = 0; i < PCG_NOBJECTS; i++)
-				printf("\t\t\t%p\n", pcg->pcg_objects[i]);
+			for (i = 0; i < PCG_NOBJECTS; i++) {
+				if (pcg->pcg_objects[i].pcgo_pa !=
+				    POOL_PADDR_INVALID) {
+					printf("\t\t\t%p, 0x%llx\n",
+					    pcg->pcg_objects[i].pcgo_va,
+					    (unsigned long long)
+					    pcg->pcg_objects[i].pcgo_pa);
+				} else {
+					printf("\t\t\t%p\n",
+					    pcg->pcg_objects[i].pcgo_va);
+				}
+			}
 		}
 	}
 
