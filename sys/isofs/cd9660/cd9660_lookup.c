@@ -1,4 +1,4 @@
-/*	$NetBSD: cd9660_lookup.c,v 1.9 1994/07/19 15:14:07 mycroft Exp $	*/
+/*	$NetBSD: cd9660_lookup.c,v 1.10 1994/07/20 06:09:38 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1989, 1993, 1994
@@ -258,7 +258,8 @@ searchloop:
 		reclen = isonum_711(ep->length);
 		if (reclen == 0) {
 			/* skip to next block, if any */
-			dp->i_offset = (dp->i_offset + bmask) & ~bmask;
+			dp->i_offset =
+			    (dp->i_offset & ~bmask) + imp->logical_block_size;
 			continue;
 		}
 		
@@ -344,8 +345,9 @@ foundino:
 				    (off_t)saveoffset, NULL, &bp))
 					return (error);
 			}
+			entryoffsetinblock = saveoffset & bmask;
 			ep = (struct iso_directory_record *)
-				(bp->b_data + blkoff(imp, saveoffset));
+				((char *)bp->b_data + entryoffsetinblock);
 			dp->i_offset = saveoffset;
 		}
 		goto found;
