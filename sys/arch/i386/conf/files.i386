@@ -1,8 +1,7 @@
-#	$Id: files.i386,v 1.31 1994/01/28 18:22:31 glass Exp $
+#	$Id: files.i386,v 1.32 1994/01/29 02:43:54 cgd Exp $
 #
 arch/i386/i386/autoconf.c	standard
 arch/i386/i386/cons.c		standard
-arch/i386/i386/consconf.c	standard
 arch/i386/i386/db_disasm.c	optional ddb
 arch/i386/i386/db_interface.c	optional ddb
 arch/i386/i386/db_trace.c	optional ddb
