@@ -1,11 +1,11 @@
-# $NetBSD: GENERIC,v 1.80 2001/07/08 16:32:25 abs Exp $
+# $NetBSD: GENERIC,v 1.81 2001/09/01 21:52:32 atatat Exp $
 
 # GENERIC Sun3 (3/50, 3/60, 3/110, 3/160, 3/260, 3/E)
 # Supports root on: ie0, le0, sd*, ...
 
 include "arch/sun3/conf/std.sun3"
 
-#ident 		"GENERIC-$Revision: 1.80 $"
+#ident 		"GENERIC-$Revision: 1.81 $"
 
 # Machines to be supported by this kernel
 options 	FPU_EMULATE
@@ -218,6 +218,7 @@ pseudo-device	gif		4	# IPv[46] over IPv[46] tunnel (RFC1933)
 #pseudo-device	faith		1	# IPv[46] tcp relay translation i/f
 #pseudo-device	stf		1	# 6to4 IPv6 over IPv4 encapsulation
 pseudo-device	vlan			# IEEE 802.1q encapsulation
+pseudo-device	bridge			# simple inter-network bridging
 pseudo-device	rnd			# /dev/random and in-kernel generator
 
 pseudo-device	pty			# pseudo-terminals
