@@ -1,4 +1,4 @@
-/*	$NetBSD: installboot.c,v 1.2 1999/10/25 14:00:46 kleink Exp $ */
+/*	$NetBSD: installboot.c,v 1.3 2002/04/13 08:14:07 tsutsui Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -56,7 +56,7 @@
 #include <string.h>
 #include <unistd.h>
 
-int	verbose, nowrite;
+int	verbose, nowrite, conblockmode, conblockstart;
 char	*boot, *proto, *dev;
 
 #define BOOTSECTOR_OFFSET 512
@@ -84,7 +84,8 @@ int32_t	*entry_point_p;		/* entry point */
 int32_t	max_block_count;
 
 char		*loadprotoblocks __P((char *, long *));
-int		loadblocknums __P((char *, int));
+int		loadblocknums_contig __P((char *, int));
+int		loadblocknums_ffs __P((char *, int));
 static void	devread __P((int, void *, daddr_t, size_t, char *));
 static void	usage __P((void));
 int 		main __P((int, char *[]));
@@ -94,7 +95,7 @@ static void
 usage()
 {
 	fprintf(stderr,
-		"usage: installboot [-n] [-v] <boot> <proto> <device>\n");
+	    "usage: installboot [-n] [-v] [-b bno] <boot> <proto> <device>\n");
 	exit(1);
 }
 
@@ -108,11 +109,17 @@ main(argc, argv)
 	char	*protostore;
 	long	protosize;
 	size_t	size;
+	int (*loadblocknums_func) __P((char *, int));
 	int boot00[512/4];
 
-	while ((c = getopt(argc, argv, "vn")) != EOF) {
+	while ((c = getopt(argc, argv, "vnb:")) != -1) {
 		switch (c) {
 
+		case 'b':
+			/* generic override, supply starting block # */
+			conblockmode = 1;
+			conblockstart = atoi(optarg);
+			break;
 		case 'n':
 			/* Do not actually write the bootblock to disk */
 			nowrite = 1;
@@ -149,7 +156,12 @@ main(argc, argv)
 		err(1, "open: %s", dev);
 
 	/* Extract and load block numbers */
-	if (loadblocknums(boot, devfd) != 0)
+	if (conblockmode)
+		loadblocknums_func = loadblocknums_contig;
+	else
+		loadblocknums_func = loadblocknums_ffs;
+
+	if ((loadblocknums_func)(boot, devfd) != 0)
 		exit(1);
 
 	(void)close(devfd);
@@ -338,10 +350,36 @@ devread(fd, buf, blk, size, msg)
 		err(1, "%s: devread: read", msg);
 }
 
+int
+loadblocknums_contig(boot, devfd)
+	char *boot;
+	int devfd;
+{
+	int size;
+	struct stat sb;
+
+	if (stat(boot, &sb) == -1)
+		err(1, "stat: %s", boot);
+	size = sb.st_size;
+
+	if (verbose) {
+		printf("%s: blockstart %d\n", dev, conblockstart);
+		printf("%s: size %d\n", boot, size);
+	}
+
+	*block_size_p = roundup(size, 512);
+	*block_count_p = 1;
+	*entry_point_p = DEFAULT_ENTRY;
+
+	block_table[0] = conblockstart;
+
+	return 0;
+}
+
 static char sblock[SBSIZE];
 
 int
-loadblocknums(boot, devfd)
+loadblocknums_ffs(boot, devfd)
 char	*boot;
 int	devfd;
 {
