@@ -1,4 +1,4 @@
-/*	$NetBSD: pf_ioctl.c,v 1.8 2004/07/26 13:46:43 yamt Exp $	*/
+/*	$NetBSD: pf_ioctl.c,v 1.9 2004/07/27 12:22:59 yamt Exp $	*/
 /*	$OpenBSD: pf_ioctl.c,v 1.112 2004/03/22 04:54:18 mcbride Exp $ */
 
 /*
@@ -2797,29 +2797,45 @@ pfil6_wrapper(void *arg, struct mbuf **mp, struct ifnet *ifp, int dir)
 }
 #endif
 
-extern void pfi_kifaddr_update_if(struct ifnet *);
-
 int
-pfil_if_wrapper(void *arg, struct mbuf **mp, struct ifnet *ifp, int dir)
+pfil_ifnet_wrapper(void *arg, struct mbuf **mp, struct ifnet *ifp, int dir)
 {
 	u_long cmd = (u_long)mp;
 
 	switch (cmd) {
-	case 0:
+	case PFIL_IFNET_ATTACH:
 		pfi_attach_ifnet(ifp);
 		break;
+	case PFIL_IFNET_DETACH:
+		pfi_detach_ifnet(ifp);
+		break;
+	}
+
+	return (0);
+}
+
+int
+pfil_ifaddr_wrapper(void *arg, struct mbuf **mp, struct ifnet *ifp, int dir)
+{
+	extern void pfi_kifaddr_update_if(struct ifnet *);
+
+	u_long cmd = (u_long)mp;
+
+	switch (cmd) {
 	case SIOCSIFADDR:
 	case SIOCAIFADDR:
 	case SIOCDIFADDR:
+#ifdef INET6
 	case SIOCAIFADDR_IN6:
 	case SIOCDIFADDR_IN6:
+#endif
 		pfi_kifaddr_update_if(ifp);
 		break;
 	default:
 		panic("unexpected ioctl");
 	}
 
-	return 0;
+	return (0);
 }
 
 static int
@@ -2835,48 +2851,53 @@ pf_pfil_attach(void)
 	if (pf_pfil_attached)
 		return (0);
 
-	error = pfil_add_hook(pfil_if_wrapper, NULL, PFIL_IFADDR|PFIL_NEWIF,
-	    &if_pfil);
+	error = pfil_add_hook(pfil_ifnet_wrapper, NULL, PFIL_IFNET, &if_pfil);
 	if (error)
-		return (error);
+		goto bad1;
+	error = pfil_add_hook(pfil_ifaddr_wrapper, NULL, PFIL_IFADDR, &if_pfil);
+	if (error)
+		goto bad2;
+
 	ph_inet = pfil_head_get(PFIL_TYPE_AF, AF_INET);
 	if (ph_inet)
 		error = pfil_add_hook((void *)pfil4_wrapper, NULL,
 		    PFIL_IN|PFIL_OUT, ph_inet);
 	else
 		error = ENOENT;
-	if (error) {
-		pfil_remove_hook(pfil_if_wrapper, NULL, PFIL_IFADDR|PFIL_NEWIF, 
-		    &if_pfil);
-	}
+	if (error)
+		goto bad3;
+
 #ifdef INET6
-	if (error) {
-		return (error);
-	}
 	ph_inet6 = pfil_head_get(PFIL_TYPE_AF, AF_INET6);
 	if (ph_inet6)
 		error = pfil_add_hook((void *)pfil6_wrapper, NULL,
 		    PFIL_IN|PFIL_OUT, ph_inet6);
 	else
 		error = ENOENT;
-	if (error) {
-		pfil_remove_hook(pfil_if_wrapper, NULL, PFIL_IFADDR|PFIL_NEWIF, 
-		    &if_pfil);
-		pfil_remove_hook((void *)pfil4_wrapper, NULL,
-		    PFIL_IN|PFIL_OUT, ph_inet);
-	}
+	if (error)
+		goto bad4;
 #endif
-	if (!error) {
-		for (i = 0; i < if_indexlim; i++) {
-			if (ifindex2ifnet[i])
-				pfi_attach_ifnet(ifindex2ifnet[i]);
-		}
-		pf_pfil_attached = 1;
-	}
+
+	for (i = 0; i < if_indexlim; i++)
+		if (ifindex2ifnet[i])
+			pfi_attach_ifnet(ifindex2ifnet[i]);
+	pf_pfil_attached = 1;
+
+	return (0);
+
+#ifdef INET6
+bad4:
+	pfil_remove_hook(pfil4_wrapper, NULL, PFIL_IN|PFIL_OUT, ph_inet);
+#endif
+bad3:
+	pfil_remove_hook(pfil_ifaddr_wrapper, NULL, PFIL_IFADDR, &if_pfil);
+bad2:
+	pfil_remove_hook(pfil_ifnet_wrapper, NULL, PFIL_IFNET, &if_pfil);
+bad1:
 	return (error);
 }
 
-int
+static int
 pf_pfil_detach(void)
 {
 	struct pfil_head *ph_inet;
@@ -2888,12 +2909,13 @@ pf_pfil_detach(void)
 	if (pf_pfil_attached == 0)
 		return (0);
 
-	for (i = 0; i < if_indexlim; i++) {
+	for (i = 0; i < if_indexlim; i++)
 		if (pfi_index2kif[i])
 			pfi_detach_ifnet(ifindex2ifnet[i]);
-	}
-	pfil_remove_hook(pfil_if_wrapper, NULL, PFIL_IFADDR|PFIL_NEWIF, 
-	    &if_pfil);
+
+	pfil_remove_hook(pfil_ifaddr_wrapper, NULL, PFIL_IFADDR, &if_pfil);
+	pfil_remove_hook(pfil_ifnet_wrapper, NULL, PFIL_IFNET, &if_pfil);
+
 	ph_inet = pfil_head_get(PFIL_TYPE_AF, AF_INET);
 	if (ph_inet)
 		pfil_remove_hook((void *)pfil4_wrapper, NULL,
