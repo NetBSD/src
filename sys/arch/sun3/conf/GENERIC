@@ -1,4 +1,4 @@
-#	$NetBSD: GENERIC,v 1.19 1995/04/03 22:03:38 gwr Exp $
+#	$NetBSD: GENERIC,v 1.20 1995/04/07 02:18:39 gwr Exp $
 
 #
 # GENERIC kernel - supports root on: ie0, le0, sd*, ...
@@ -26,7 +26,7 @@ options		KTRACE				# system call tracing support
 #makeoptions	DEBUG="-g"			# symbols for kgdb + nm
 # I use DDB by copying in the symbols with dbsym.
 options		DDB
-options		SYMTAB_SPACE=97000
+options		SYMTAB_SPACE=98000
 
 # Filesystem options
 options 	NFSSERVER			# nfs server support
@@ -64,8 +64,9 @@ config		netbsd swap generic
 
 # Devices
 
-bwtwo0 at obmem? addr ?
-cgfour0 at obmem? addr ?
+bwtwo0 at obmem0 addr ?
+cgtwo0 at vmes0 addr 0xff400000 level 4 vect 0xA8
+cgfour0 at obmem0 addr ?
 
 ie0 at obio0 addr ? level ?
 ie1 at vmes0 addr 0xffe88000 level 3 vect 0x75
