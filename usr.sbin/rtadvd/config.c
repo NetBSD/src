@@ -1,3 +1,5 @@
+/*	$NetBSD: config.c,v 1.3 1999/07/06 13:02:09 itojun Exp $	*/
+
 /*
  * Copyright (C) 1998 WIDE Project.
  * All rights reserved.
@@ -325,7 +327,7 @@ getconfig(intface)
 static void
 get_prefix(struct rainfo *rai)
 {
-	int len;
+	size_t len;
 	u_char *buf, *lim, *next;
 	u_char ntopbuf[INET6_ADDRSTRLEN];
 

@@ -1,3 +1,5 @@
+/*	$NetBSD: rtadvd.c,v 1.2 1999/07/06 13:02:09 itojun Exp $	*/
+
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
  * All rights reserved.
@@ -231,7 +233,8 @@ main(argc, argv)
 static void
 rtmsg_input()
 {
-	int n, len, type, ifindex, plen;
+	int n, type, ifindex, plen;
+	size_t len;
 	char msg[2048], *next, *lim;
 	u_char ifname[16];
 	struct prefix *prefix;
