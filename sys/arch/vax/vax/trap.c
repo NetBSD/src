@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.36 1998/06/08 18:42:40 ragge Exp $     */
+/*	$NetBSD: trap.c,v 1.37 1998/06/25 21:19:20 thorpej Exp $     */
 /*
  * Copyright (c) 1994 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -31,7 +31,7 @@
 
  /* All bugs are subject to removal without further notice */
 		
-
+#include "opt_ktrace.h"
 
 #include <sys/types.h>
 #include <sys/param.h>

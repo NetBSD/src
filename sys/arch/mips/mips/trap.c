@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.83 1998/03/26 09:21:05 jonathan Exp $	*/
+/*	$NetBSD: trap.c,v 1.84 1998/06/25 21:19:15 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -43,8 +43,9 @@
  */
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.83 1998/03/26 09:21:05 jonathan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.84 1998/06/25 21:19:15 thorpej Exp $");
 
+#include "opt_ktrace.h"
 #include "opt_uvm.h"
 
 #if !defined(MIPS1) && !defined(MIPS3)
