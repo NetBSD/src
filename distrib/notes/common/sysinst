@@ -1,4 +1,4 @@
-.\"	$NetBSD: sysinst,v 1.44 2002/07/01 20:31:32 skrll Exp $
+.\"	$NetBSD: sysinst,v 1.45 2002/07/08 17:56:04 lukem Exp $
 .\"
 .\" Copyright (c) 1999-2002 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -1488,7 +1488,7 @@ Now you need to mount your destination root partition:
 .Em Finalizing your installation
 .Pp
 Congratulations, you have successfully installed
-.Nx*V .
+.Nx \*V .
 .if r_cats \{\
 .Pp
 To finalize the installation of
