@@ -1,4 +1,4 @@
-/*	$NetBSD: play.c,v 1.7 1999/03/30 19:33:31 augustss Exp $	*/
+/*	$NetBSD: play.c,v 1.8 1999/04/02 16:05:55 augustss Exp $	*/
 
 /*
  * Copyright (c) 1999 Matthew R. Green
@@ -293,8 +293,8 @@ audioctl_write_fromhdr(hdr, fsz, fd)
 			return (-1);
 		}
 
-		sample_rate = ntohl(sunhdr->sample_rate);
-		channels = ntohl(sunhdr->channels);
+		info.play.sample_rate = ntohl(sunhdr->sample_rate);
+		info.play.channels = ntohl(sunhdr->channels);
 		hdr_len = ntohl(sunhdr->hdr_size); 
 
 		goto set_audio_mode;
@@ -331,9 +331,9 @@ set_audio_mode:
 		info.play.balance = balance;
 	if (fflag) {
 		if (sample_rate)
-			info.play.gain = sample_rate;
+			info.play.sample_rate = sample_rate;
 		if (channels)
-			info.play.gain = channels;
+			info.play.channels = channels;
 		if (encoding)
 			info.play.encoding = encoding;
 		if (precision)
