@@ -1,4 +1,4 @@
-/*	$NetBSD: timer.c,v 1.3.6.1 2002/07/15 16:27:48 thorpej Exp $ */
+/*	$NetBSD: timer.c,v 1.3.6.2 2002/11/22 17:38:22 tron Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -271,8 +271,8 @@ timerattach_obio(parent, self, aux)
 		i = sa->sa_nreg - 1;
 		if (bus_space_map2(sa->sa_bustag,
 				 BUS_ADDR(
-					sa->sa_reg[i].sbr_slot,
-					sa->sa_reg[i].sbr_offset),
+					sa->sa_reg[i].oa_space,
+					sa->sa_reg[i].oa_base),
 				 sizeof(struct timer_4m),
 				 BUS_SPACE_MAP_LINEAR,
 				 TIMERREG_VA, &bh) != 0) {
@@ -301,8 +301,8 @@ timerattach_obio(parent, self, aux)
 			if (cpi == NULL)
 				continue;
 			if (sbus_bus_map(sa->sa_bustag,
-					 sa->sa_reg[i].sbr_slot,
-					 sa->sa_reg[i].sbr_offset,
+					 sa->sa_reg[i].oa_space,
+					 sa->sa_reg[i].oa_base,
 					 sizeof(struct timer_4m),
 					 BUS_SPACE_MAP_LINEAR,
 					 &bh) != 0) {
