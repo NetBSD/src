@@ -1,4 +1,4 @@
-/*	$NetBSD: ibcs2_types.h,v 1.4 1995/08/14 00:50:28 mycroft Exp $	*/
+/*	$NetBSD: ibcs2_types.h,v 1.5 1995/08/14 01:11:54 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1994 Scott Bartram
@@ -50,7 +50,5 @@ typedef long		ibcs2_time_t;
 typedef long		ibcs2_clock_t;
 typedef unsigned short	ibcs2_mode_t;
 typedef short		ibcs2_pid_t;
-typedef long		ibcs2_sigset_t;
-typedef void		(*ibcs2_sig_t)(int);
 
 #endif /* _IBCS2_TYPES_H */

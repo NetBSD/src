@@ -1,4 +1,4 @@
-/*	$NetBSD: svr4_signal.c,v 1.14 1995/08/14 00:41:02 mycroft Exp $	 */
+/*	$NetBSD: svr4_signal.c,v 1.15 1995/08/14 01:12:47 mycroft Exp $	 */
 
 /*
  * Copyright (c) 1994 Christos Zoulas
@@ -42,6 +42,7 @@
 #include <sys/syscallargs.h>
 
 #include <compat/svr4/svr4_types.h>
+#include <compat/svr4/svr4_signal.h>
 #include <compat/svr4/svr4_syscallargs.h>
 #include <compat/svr4/svr4_util.h>
 #include <compat/svr4/svr4_ucontext.h>
@@ -65,6 +66,7 @@ static inline int
 svr4_sigfillset(s)
 	svr4_sigset_t *s;
 {
+	int i;
 
 	svr4_sigemptyset(s);
 	for (i = 1; i < SVR4_NSIG; i++)
@@ -223,7 +225,7 @@ bsd_to_svr4_sigaction(bsa, ssa)
 
 void
 svr4_to_bsd_sigaltstack(sss, bss)
-	const svr4_stack_t *sss;
+	const struct svr4_sigaltstack *sss;
 	struct sigaltstack *bss;
 {
 
@@ -240,7 +242,7 @@ svr4_to_bsd_sigaltstack(sss, bss)
 void
 bsd_to_svr4_sigaltstack(bss, sss)
 	const struct sigaltstack *bss;
-	svr4_stack_t *sss;
+	struct svr4_sigaltstack *sss;
 {
 
 	sss->ss_sp = bss->ss_base;
@@ -310,12 +312,12 @@ int
 svr4_sigaltstack(p, uap, retval)
 	register struct proc *p;
 	struct svr4_sigaltstack_args /* {
-		syscallarg(svr4_stack_t *) nss;
-		syscallarg(svr4_stack_t *) oss;
+		syscallarg(struct svr4_sigaltstack *) nss;
+		syscallarg(struct svr4_sigaltstack *) oss;
 	} */ *uap;
 	register_t *retval;
 {
-	struct svr4_stack_t *nsss, *osss, tmpsss;
+	struct svr4_sigaltstack *nsss, *osss, tmpsss;
 	struct sigaltstack *nbss, *obss, tmpbss;
 	struct sigaltstack_args sa;
 	caddr_t sg;
@@ -571,7 +573,7 @@ int
 svr4_sigsuspend(p, uap, retval)
 	register struct proc *p;
 	struct svr4_sigsuspend_args /* {
-		syscallarg(svr4_sigset_t *) sss;
+		syscallarg(svr4_sigset_t *) ss;
 	} */ *uap;
 	register_t *retval;
 {
@@ -580,7 +582,7 @@ svr4_sigsuspend(p, uap, retval)
 	struct sigsuspend_args sa;
 	int error;
 
-	if ((error = copyin(SCARG(uap, sss), &sss, sizeof(sss))) != 0)
+	if ((error = copyin(SCARG(uap, ss), &sss, sizeof(sss))) != 0)
 		return error;
 
 	svr4_to_bsd_sigset(&sss, &bss);

@@ -1,4 +1,4 @@
-/*	$NetBSD: svr4_signal.h,v 1.10 1995/08/14 00:51:12 mycroft Exp $	 */
+/*	$NetBSD: svr4_signal.h,v 1.11 1995/08/14 01:12:49 mycroft Exp $	 */
 
 /*
  * Copyright (c) 1994 Christos Zoulas
@@ -88,18 +88,23 @@
 #define SVR4_SIG_UNBLOCK	2
 #define SVR4_SIG_SETMASK	3
 
+typedef struct {
+        u_long bits[4];
+} svr4_sigset_t;
+typedef void    (*svr4_sig_t) __P((int));
+
 struct svr4_sigaction {
-	int		  sa_flags;
-	void		(*sa_handler)();
-	svr4_sigset_t	  sa_mask;
-	int 		  sa_reserved[2];
+	int		sa_flags;
+	svr4_sig_t	sa_handler;
+	svr4_sigset_t	sa_mask;
+	int 		sa_reserved[2];
 };
 
-typedef struct svr4_sigaltstack {
-	char		 *ss_sp;
-	int		  ss_size;
-	int		  ss_flags;
-} svr4_stack_t;
+struct svr4_sigaltstack {
+	char		*ss_sp;
+	int		ss_size;
+	int		ss_flags;
+};
 
 /* sa_flags */
 #define SVR4_SA_ONSTACK		0x00000001
