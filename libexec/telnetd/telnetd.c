@@ -1,4 +1,4 @@
-/*	$NetBSD: telnetd.c,v 1.29 2001/08/24 00:14:04 wiz Exp $	*/
+/*	$NetBSD: telnetd.c,v 1.30 2001/08/30 23:25:16 wiz Exp $	*/
 
 /*
  * Copyright (C) 1997 and 1998 WIDE Project.
@@ -69,7 +69,7 @@ __COPYRIGHT("@(#) Copyright (c) 1989, 1993\n\
 #if 0
 static char sccsid[] = "@(#)telnetd.c	8.4 (Berkeley) 5/30/95";
 #else
-__RCSID("$NetBSD: telnetd.c,v 1.29 2001/08/24 00:14:04 wiz Exp $");
+__RCSID("$NetBSD: telnetd.c,v 1.30 2001/08/30 23:25:16 wiz Exp $");
 #endif
 #endif /* not lint */
 
@@ -211,9 +211,6 @@ char valid_opts[] = {
 #ifdef DIAGNOSTICS
 	'D', ':',
 #endif
-#if	defined(CRAY) && defined(NEWINIT)
-	'I', ':',
-#endif
 #ifdef	LINEMODE
 	'l',
 #endif
@@ -354,14 +351,6 @@ main(argc, argv)
 		    }
 #endif	/* KRB5 */
 
-#if	defined(CRAY) && defined(NEWINIT)
-		case 'I':
-		    {
-			extern char *gen_id;
-			gen_id = optarg;
-			break;
-		    }
-#endif	/* defined(CRAY) && defined(NEWINIT) */
 
 #ifdef	LINEMODE
 		case 'l':
@@ -651,9 +640,6 @@ usage()
 	fprintf(stderr, " [-edebug]");
 #endif
 	fprintf(stderr, " [-h]");
-#if	defined(CRAY) && defined(NEWINIT)
-	fprintf(stderr, " [-Iinitid]");
-#endif
 #if	defined(LINEMODE) && defined(KLUDGELINEMODE)
 	fprintf(stderr, " [-k]");
 #endif
@@ -1168,10 +1154,6 @@ telnet(f, p, host)
 	}
 #endif
 
-#if	defined(CRAY) && defined(NEWINIT) && defined(TIOCSCTTY)
-	(void) setsid();
-	ioctl(p, TIOCSCTTY, 0);
-#endif
 
 	/*
 	 * Show banner that getty never gave.
@@ -1181,10 +1163,8 @@ telnet(f, p, host)
 	 * other pty --> client data.
 	 */
 
-#if	!defined(CRAY) || !defined(NEWINIT)
 	if (getenv("USER"))
 		hostinfo = 0;
-#endif
 
 	if (getent(defent, gettyname) == 1) {
 		char *cp=defstrs;
