@@ -1,4 +1,4 @@
-/*	$NetBSD: pci_machdep.c,v 1.12 1995/04/17 12:07:58 cgd Exp $	*/
+/*	$NetBSD: pci_machdep.c,v 1.13 1995/05/23 03:43:58 cgd Exp $	*/
 
 /*
  * Copyright (c) 1994 Charles Hannum.  All rights reserved.
@@ -62,6 +62,13 @@ int pci_mode = -1;
 
 static isa_intrlevel	pcilevel_to_isa __P((pci_intrlevel level));
 
+int pcimatch __P((struct device *, void *, void *));
+void pciattach __P((struct device *, struct device *, void *));
+
+struct cfdriver pcicd = {
+	NULL, "pci", pcimatch, pciattach, DV_DULL, sizeof(struct device)
+};
+
 int
 pcimatch(parent, match, aux)
 	struct device *parent;
@@ -71,6 +78,31 @@ pcimatch(parent, match, aux)
 	if (pci_mode_detect() == 0)
 		return 0;
 	return 1;
+}
+
+void
+pciattach(parent, self, aux)
+	struct device *parent, *self;
+	void *aux;
+{
+	int bus, device;
+
+	printf(": configuration mode %d\n", pci_mode);
+
+#if 0
+	for (bus = 0; bus <= 255; bus++)
+#else
+	/*
+	 * XXX
+	 * Some current chipsets do wacky things with bus numbers > 0.
+	 * This seems like a violation of protocol, but the PCI BIOS does
+	 * allow one to query the maximum bus number, and eventually we
+	 * should do so.
+	 */
+	for (bus = 0; bus <= 0; bus++)
+#endif
+		for (device = 0; device <= (pci_mode == 2 ? 15 : 31); device++)
+			pci_attach_subdev(self, bus, device);
 }
 
 #define	PCI_MODE1_ENABLE	0x80000000UL
