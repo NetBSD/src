@@ -1,4 +1,4 @@
-/*	$NetBSD: cmds.c,v 1.65 1999/09/30 23:51:26 lukem Exp $	*/
+/*	$NetBSD: cmds.c,v 1.66 1999/10/01 05:08:31 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.
@@ -107,7 +107,7 @@
 #if 0
 static char sccsid[] = "@(#)cmds.c	8.6 (Berkeley) 10/9/94";
 #else
-__RCSID("$NetBSD: cmds.c,v 1.65 1999/09/30 23:51:26 lukem Exp $");
+__RCSID("$NetBSD: cmds.c,v 1.66 1999/10/01 05:08:31 lukem Exp $");
 #endif
 #endif /* not lint */
 
@@ -2066,11 +2066,11 @@ parserate(argc, argv, cmdlineopt)
 usage:
 		if (cmdlineopt)
 			fprintf(ttyout,
-			    "usage: %s (all|get|put),maximum[,increment]]\n",
+	"usage: %s (all|get|put),maximum-bytes[,increment-bytes]]\n",
 			    argv[0]);
 		else
 			fprintf(ttyout,
-			    "usage: %s (all|get|put) [maximum [increment]]\n",
+	"usage: %s (all|get|put) [maximum-bytes [increment-bytes]]\n",
 			    argv[0]);
 		return -1;
 	}

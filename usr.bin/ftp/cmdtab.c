@@ -1,4 +1,4 @@
-/*	$NetBSD: cmdtab.c,v 1.28 1999/09/28 06:47:40 lukem Exp $	*/
+/*	$NetBSD: cmdtab.c,v 1.29 1999/10/01 05:08:31 lukem Exp $	*/
 
 /*
  * Copyright (c) 1985, 1989, 1993, 1994
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)cmdtab.c	8.4 (Berkeley) 10/9/94";
 #else
-__RCSID("$NetBSD: cmdtab.c,v 1.28 1999/09/28 06:47:40 lukem Exp $");
+__RCSID("$NetBSD: cmdtab.c,v 1.29 1999/10/01 05:08:31 lukem Exp $");
 #endif
 #endif /* not lint */
 
@@ -102,7 +102,7 @@ char	proxyhelp[] =	"issue command on alternate connection";
 char	pwdhelp[] =	"print working directory on remote machine";
 char	quithelp[] =	"terminate ftp session and exit";
 char	quotehelp[] =	"send arbitrary ftp command";
-char	ratehelp[] =	"set transfer rate limit";
+char	ratehelp[] =	"set transfer rate limit (in bytes/second)";
 char	receivehelp[] =	"receive file";
 char	regethelp[] =	"get file restarting at end of local file";
 char	remotehelp[] =	"get help from remote server";
