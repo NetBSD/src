@@ -39,7 +39,7 @@
  #	responsibility for the use of this software.
  #	@(#)snmp.awk.x	1.1 (LANL) 1/15/90
  * 
- * $Id: print-snmp.c,v 1.1 1993/11/14 21:20:53 deraadt Exp $
+ * $Id: print-snmp.c,v 1.2 1994/12/23 17:06:32 cgd Exp $
  */
 #ifndef lint
 static char rcsid[] =
@@ -49,6 +49,7 @@ static char rcsid[] =
 #include <sys/param.h>
 #include <sys/types.h>
 #include <stdio.h>
+#include <string.h>
 #include <ctype.h>
 
 #include "interface.h"
