@@ -1,4 +1,4 @@
-/*	$NetBSD: umidi.c,v 1.19 2004/01/06 05:42:47 gson Exp $	*/
+/*	$NetBSD: umidi.c,v 1.20 2004/01/19 07:36:35 gson Exp $	*/
 /*
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: umidi.c,v 1.19 2004/01/06 05:42:47 gson Exp $");
+__KERNEL_RCSID(0, "$NetBSD: umidi.c,v 1.20 2004/01/19 07:36:35 gson Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -615,20 +615,17 @@ alloc_all_endpoints_yamaha(struct umidi_softc *sc)
 static usbd_status
 alloc_all_endpoints_genuine(struct umidi_softc *sc)
 {
+	usb_interface_descriptor_t *interface_desc;
+	usb_config_descriptor_t *config_desc;
 	usb_descriptor_t *desc;
 	int num_ep;
 	size_t remain, descsize;
 	struct umidi_endpoint *p, *q, *lowest, *endep, tmpep;
 	int epaddr;
 
-	desc = TO_D(usbd_get_interface_descriptor(sc->sc_iface));
-	num_ep = TO_IFD(desc)->bNumEndpoints;
-	desc = NEXT_D(desc); /* ifd -> csifd */
-	remain = ((size_t)UGETW(TO_CSIFD(desc)->wTotalLength) -
-		  (size_t)desc->bLength);
-	desc = NEXT_D(desc);
-
-	sc->sc_endpoints = p = malloc(sizeof(struct umidi_endpoint)*num_ep,
+	interface_desc = usbd_get_interface_descriptor(sc->sc_iface);
+	num_ep = interface_desc->bNumEndpoints;
+	sc->sc_endpoints = p = malloc(sizeof(struct umidi_endpoint) * num_ep,
 				      M_USBDEV, M_WAITOK);
 	if (!p)
 		return USBD_NOMEM;
@@ -638,6 +635,9 @@ alloc_all_endpoints_genuine(struct umidi_softc *sc)
 	epaddr = -1;
 
 	/* get the list of endpoints for midi stream */
+	config_desc = usbd_get_config_descriptor(sc->sc_udev);
+	desc = (usb_descriptor_t *) config_desc;
+	remain = (size_t)UGETW(config_desc->wTotalLength);
 	while (remain>=sizeof(usb_descriptor_t)) {
 		descsize = desc->bLength;
 		if (descsize>remain || descsize==0)
