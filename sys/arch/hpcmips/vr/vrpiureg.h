@@ -1,4 +1,4 @@
-/*	$NetBSD: vrpiureg.h,v 1.1 1999/12/28 03:15:18 takemura Exp $	*/
+/*	$NetBSD: vrpiureg.h,v 1.2 2000/10/27 08:13:54 sato Exp $	*/
 
 /*
  * Copyright (c) 1999 Shin Takemura All rights reserved.
@@ -152,5 +152,6 @@
 #define	PIUAB1_REG_W	0x192	/* PIU A/D scan Buffer 1 register	*/
 #define	PIUAB2_REG_W	0x194	/* PIU A/D scan Buffer 2 register	*/
 #define	PIUAB3_REG_W	0x196	/* PIU A/D scan Buffer 3 register	*/
+#define PIUAB(n)	(0x190+(n)*2)
 #define PIUAB_VALID		(1<<15)
 #define PIUAB_PADDATA_MASK	0x3FF
