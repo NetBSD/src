@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_mmap.c,v 1.31 1994/06/29 06:48:14 cgd Exp $	*/
+/*	$NetBSD: vm_mmap.c,v 1.31.2.1 1994/09/16 19:33:27 cgd Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -418,18 +418,19 @@ munmap(p, uap, retval)
 }
 
 void
-munmapfd(fd)
+munmapfd(p, fd)
+	struct proc *p;
 	int fd;
 {
 #ifdef DEBUG
 	if (mmapdebug & MDB_FOLLOW)
-		printf("munmapfd(%d): fd %d\n", curproc->p_pid, fd);
+		printf("munmapfd(%d): fd %d\n", p->p_pid, fd);
 #endif
 
 	/*
 	 * XXX should vm_deallocate any regions mapped to this file
 	 */
-	curproc->p_fd->fd_ofileflags[fd] &= ~UF_MAPPED;
+	p->p_fd->fd_ofileflags[fd] &= ~UF_MAPPED;
 }
 
 struct mprotect_args {
