@@ -1,4 +1,4 @@
-/*	$NetBSD: zs.c,v 1.8 1999/03/26 04:42:59 dbj Exp $	*/
+/*	$NetBSD: zs.c,v 1.9 1999/03/27 01:21:36 wrstuden Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -461,9 +461,12 @@ zs_set_modes(cs, cflag)
 	 * status interrupt to detect CTS changes.
 	 */
 	s = splzs();
-	if ((cflag & (CLOCAL | MDMBUF)) != 0)
+	cs->cs_rr0_pps = 0;
+	if ((cflag & (CLOCAL | MDMBUF)) != 0) {
 		cs->cs_rr0_dcd = 0;
-	else
+		if ((cflag & MDMBUF) == 0)
+			cs->cs_rr0_pps = ZSRR0_DCD;
+	} else
 		cs->cs_rr0_dcd = ZSRR0_DCD;
 	if ((cflag & CRTSCTS) != 0) {
 		cs->cs_wr5_dtr = ZSWR5_DTR;
