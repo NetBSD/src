@@ -1,7 +1,7 @@
-/*	$NetBSD: less.h,v 1.1.1.3 1997/09/21 12:23:16 mrg Exp $	*/
+/*	$NetBSD: less.h,v 1.1.1.4 1999/04/06 05:30:38 mrg Exp $	*/
 
 /*
- * Copyright (c) 1984,1985,1989,1994,1995,1996  Mark Nudelman
+ * Copyright (c) 1984,1985,1989,1994,1995,1996,1999  Mark Nudelman
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -141,11 +141,9 @@ void free();
  * Special types and constants.
  */
 typedef long		POSITION;
-/*
- * {{ Warning: if POSITION is changed to other than "long",
- *    you may have to change some of the printfs which use "%ld"
- *    to print a variable of type POSITION. }}
- */
+#define PR_POSITION	"%ld"
+#define MAX_PRINT_POSITION 20
+#define MAX_PRINT_INT      10
 
 #define	NULL_POSITION	((POSITION)(-1))
 
@@ -284,7 +282,74 @@ struct textlist
 #define	AT_INVIS	(4)
 #define	AT_STANDOUT	(5)
 
+#if IS_EBCDIC_HOST
+/*
+ * Long definition for EBCDIC.
+ * Since the argument is usually a constant, this macro normally compiles
+ * into a constant.
+ */
+#define CONTROL(c) ( \
+	(c)=='[' ? '\047' : \
+	(c)=='a' ? '\001' : \
+	(c)=='b' ? '\002' : \
+	(c)=='c' ? '\003' : \
+	(c)=='d' ? '\067' : \
+	(c)=='e' ? '\055' : \
+	(c)=='f' ? '\056' : \
+	(c)=='g' ? '\057' : \
+	(c)=='h' ? '\026' : \
+	(c)=='i' ? '\005' : \
+	(c)=='j' ? '\025' : \
+	(c)=='k' ? '\013' : \
+	(c)=='l' ? '\014' : \
+	(c)=='m' ? '\015' : \
+	(c)=='n' ? '\016' : \
+	(c)=='o' ? '\017' : \
+	(c)=='p' ? '\020' : \
+	(c)=='q' ? '\021' : \
+	(c)=='r' ? '\022' : \
+	(c)=='s' ? '\023' : \
+	(c)=='t' ? '\074' : \
+	(c)=='u' ? '\075' : \
+	(c)=='v' ? '\062' : \
+	(c)=='w' ? '\046' : \
+	(c)=='x' ? '\030' : \
+	(c)=='y' ? '\031' : \
+	(c)=='z' ? '\077' : \
+	(c)=='A' ? '\001' : \
+	(c)=='B' ? '\002' : \
+	(c)=='C' ? '\003' : \
+	(c)=='D' ? '\067' : \
+	(c)=='E' ? '\055' : \
+	(c)=='F' ? '\056' : \
+	(c)=='G' ? '\057' : \
+	(c)=='H' ? '\026' : \
+	(c)=='I' ? '\005' : \
+	(c)=='J' ? '\025' : \
+	(c)=='K' ? '\013' : \
+	(c)=='L' ? '\014' : \
+	(c)=='M' ? '\015' : \
+	(c)=='N' ? '\016' : \
+	(c)=='O' ? '\017' : \
+	(c)=='P' ? '\020' : \
+	(c)=='Q' ? '\021' : \
+	(c)=='R' ? '\022' : \
+	(c)=='S' ? '\023' : \
+	(c)=='T' ? '\074' : \
+	(c)=='U' ? '\075' : \
+	(c)=='V' ? '\062' : \
+	(c)=='W' ? '\046' : \
+	(c)=='X' ? '\030' : \
+	(c)=='Y' ? '\031' : \
+	(c)=='Z' ? '\077' : \
+	(c)=='|' ? '\031' : \
+	(c)=='\\' ? '\034' : \
+	(c)=='^' ? '\036' : \
+	(c)&077)
+#else
 #define	CONTROL(c)	((c)&037)
+#endif /* IS_EBCDIC_HOST */
+
 #define	ESC		CONTROL('[')
 
 #if _OSK_MWC32

@@ -1,7 +1,7 @@
-/*	$NetBSD: main.c,v 1.1.1.3 1997/09/21 12:22:51 mrg Exp $	*/
+/*	$NetBSD: main.c,v 1.1.1.4 1999/04/06 05:30:34 mrg Exp $	*/
 
 /*
- * Copyright (c) 1984,1985,1989,1994,1995,1996  Mark Nudelman
+ * Copyright (c) 1984,1985,1989,1994,1995,1996,1999  Mark Nudelman
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -41,6 +41,9 @@ public IFILE	curr_ifile = NULL_IFILE;
 public IFILE	old_ifile = NULL_IFILE;
 public struct scrpos initial_scrpos;
 public int	any_display = FALSE;
+public int	twiddle = TRUE;
+public POSITION	start_attnpos = NULL_POSITION;
+public POSITION	end_attnpos = NULL_POSITION;
 public int	wscroll;
 public char *	progname;
 public int	quitting;
@@ -90,6 +93,27 @@ main(argc, argv)
 	s = lgetenv("LESSSECURE");
 	if (s != NULL && *s != '\0')
 		secure = 1;
+
+#ifdef WIN32
+	if (getenv("HOME") == NULL)
+	{
+		/*
+		 * If there is no HOME environment variable,
+		 * try the concatenation of HOMEDRIVE + HOMEPATH.
+		 */
+		char *drive = getenv("HOMEDRIVE");
+		char *path  = getenv("HOMEPATH");
+		if (drive != NULL && path != NULL)
+		{
+			char *env = (char *) ecalloc(strlen(drive) + 
+					strlen(path) + 6, sizeof(char));
+			strcpy(env, "PATH=");
+			strcat(env, drive);
+			strcat(env, path);
+			putenv(env);
+		}
+	}
+#endif /* WIN32 */
 
 	/*
 	 * Process command line arguments and LESS environment arguments.
@@ -215,6 +239,7 @@ main(argc, argv)
 	open_getchr();
 	init_signals(1);
 
+
 	/*
 	 * Select the first file to examine.
 	 */
@@ -259,20 +284,6 @@ main(argc, argv)
 	commands();
 	quit(QUIT_OK);
 	/*NOTREACHED*/
-}
-
-/*
- * Copy a string, truncating to the specified length if necessary.
- * Unlike strncpy(), the resulting string is guaranteed to be null-terminated.
- */
-	public void
-strtcpy(to, from, len)
-	char *to;
-	char *from;
-	unsigned int len;
-{
-	strncpy(to, from, len);
-	to[len-1] = '\0';
 }
 
 /*

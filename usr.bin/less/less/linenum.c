@@ -1,7 +1,7 @@
-/*	$NetBSD: linenum.c,v 1.1.1.3 1997/09/21 12:23:02 mrg Exp $	*/
+/*	$NetBSD: linenum.c,v 1.1.1.4 1999/04/06 05:30:36 mrg Exp $	*/
 
 /*
- * Copyright (c) 1984,1985,1989,1994,1995,1996  Mark Nudelman
+ * Copyright (c) 1984,1985,1989,1994,1995,1996,1999  Mark Nudelman
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without

@@ -1,7 +1,7 @@
-/*	$NetBSD: screen.c,v 1.1.1.3 1997/09/21 12:22:55 mrg Exp $	*/
+/*	$NetBSD: screen.c,v 1.1.1.4 1999/04/06 05:30:35 mrg Exp $	*/
 
 /*
- * Copyright (c) 1984,1985,1989,1994,1995,1996  Mark Nudelman
+ * Copyright (c) 1984,1985,1989,1994,1995,1996,1999  Mark Nudelman
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -139,17 +139,16 @@ static HANDLE con_out_save = INVALID_HANDLE_VALUE; /* previous console */
 static HANDLE con_out_ours = INVALID_HANDLE_VALUE; /* our own */
 HANDLE con_out = INVALID_HANDLE_VALUE;             /* current console */
 
-#if 1
 extern int quitting;
 static void win32_init_term();
 static void win32_deinit_term();
-#endif
 
 #define FG_COLORS       (FOREGROUND_RED | FOREGROUND_GREEN | FOREGROUND_BLUE | FOREGROUND_INTENSITY)
 #define BG_COLORS       (BACKGROUND_RED | BACKGROUND_GREEN | BACKGROUND_BLUE | BACKGROUND_INTENSITY)
 #define	MAKEATTR(fg,bg)		((WORD)((fg)|((bg)<<4)))
-#define	SETCOLORS(fg,bg)	curr_attr = MAKEATTR(fg,bg); \
-				SetConsoleTextAttribute(con_out, curr_attr);
+#define	SETCOLORS(fg,bg)	{ curr_attr = MAKEATTR(fg,bg); \
+				if (SetConsoleTextAttribute(con_out, curr_attr) == 0) \
+				error("SETCOLORS failed"); }
 #endif
 
 #if MSDOS_COMPILER
@@ -374,14 +373,14 @@ raw_mode(on)
 		);
 
 		s.c_oflag |= (0
-#ifdef XTABS
-			| XTABS
+#ifdef OXTABS
+			| OXTABS
 #else
 #ifdef TAB3
 			| TAB3
 #else
-#ifdef OXTABS
-			| OXTABS
+#ifdef XTABS
+			| XTABS
 #endif
 #endif
 #endif
@@ -741,10 +740,10 @@ scrsize()
 #endif
 #endif
 
-	if ((s = lgetenv("LINES")) != NULL)
-		sc_height = atoi(s);
-	else if (sys_height > 0)
+	if (sys_height > 0)
 		sc_height = sys_height;
+	else if ((s = lgetenv("LINES")) != NULL)
+		sc_height = atoi(s);
 #if !MSDOS_COMPILER
 	else if ((n = ltgetnum("li")) > 0)
  		sc_height = n;
@@ -752,10 +751,10 @@ scrsize()
 	else
 		sc_height = DEF_SC_HEIGHT;
 
-	if ((s = lgetenv("COLUMNS")) != NULL)
-		sc_width = atoi(s);
-	else if (sys_width > 0)
+	if (sys_width > 0)
 		sc_width = sys_width;
+	else if ((s = lgetenv("COLUMNS")) != NULL)
+		sc_width = atoi(s);
 #if !MSDOS_COMPILER
 	else if ((n = ltgetnum("co")) > 0)
  		sc_width = n;
@@ -1017,16 +1016,6 @@ get_term()
 	 * Set up default colors.
 	 * The xx_s_width and xx_e_width vars are already initialized to 0.
 	 */
-	nm_fg_color = 7;
-	nm_bg_color = 0;
-	bo_fg_color = 11;
-	bo_bg_color = 0;
-	ul_fg_color = 9;
-	ul_bg_color = 0;
-	so_fg_color = 15;
-	so_bg_color = 9;
-	bl_fg_color = 15;
-	bl_bg_color = 0;
 #if MSDOS_COMPILER==MSOFTC
 	sy_bg_color = _getbkcolor();
 	sy_fg_color = _gettextcolor();
@@ -1060,6 +1049,17 @@ get_term()
 #endif
 #endif
 #endif
+	nm_fg_color = sy_fg_color;
+	nm_bg_color = sy_bg_color;
+	bo_fg_color = 11;
+	bo_bg_color = 0;
+	ul_fg_color = 9;
+	ul_bg_color = 0;
+	so_fg_color = 15;
+	so_bg_color = 9;
+	bl_fg_color = 15;
+	bl_bg_color = 0;
+
 	/*
 	 * Get size of the screen.
 	 */
@@ -1571,14 +1571,15 @@ add_line()
 
 	GetConsoleScreenBufferInfo(con_out,&csbi);
 
-	/* Get the extent of all-visible-rows-but-the-last. */
-	rcSrc.Left = csbi.srWindow.Left;
-	rcSrc.Top = csbi.srWindow.Top;
-	rcSrc.Right = csbi.srWindow.Right;
-	rcSrc.Bottom = csbi.srWindow.Bottom - 1;
+	/* The clip rectangle is the entire visible screen. */
+	rcClip.Left = csbi.srWindow.Left;
+	rcClip.Top = csbi.srWindow.Top;
+	rcClip.Right = csbi.srWindow.Right;
+	rcClip.Bottom = csbi.srWindow.Bottom;
 
-	/* The clip rectangle is the same as the source. */
-	rcClip = rcSrc;
+	/* The source rectangle is the visible screen minus the last line. */
+	rcSrc = rcClip;
+	rcSrc.Bottom--;
 
 	/* Move the top left corner of the source window down one row. */
 	new_org.X = rcSrc.Left;
@@ -1624,16 +1625,16 @@ remove_top(n)
 	GetConsoleScreenBufferInfo(con_out, &csbi);
 
 	/* Get the extent of all-visible-rows-but-the-last. */
-	rcSrc.Left = csbi.srWindow.Left;
-	rcSrc.Top = csbi.srWindow.Top + n;
-	rcSrc.Right = csbi.srWindow.Right;
-	rcSrc.Bottom = csbi.srWindow.Bottom;
+	rcSrc.Left    = csbi.srWindow.Left;
+	rcSrc.Top     = csbi.srWindow.Top + n;
+	rcSrc.Right   = csbi.srWindow.Right;
+	rcSrc.Bottom  = csbi.srWindow.Bottom;
 
 	/* Get the clip rectangle. */
-	rcClip.Left = rcSrc.Left;
-	rcClip.Top = csbi.srWindow.Top;
-	rcClip.Right = rcSrc.Right;
-	rcClip.Bottom = rcSrc.Bottom - 1;
+	rcClip.Left   = rcSrc.Left;
+	rcClip.Top    = csbi.srWindow.Top;
+	rcClip.Right  = rcSrc.Right;
+	rcClip.Bottom = rcSrc.Bottom ;
 
 	/* Move the source window up n rows. */
 	new_org.X = rcSrc.Left;
@@ -1644,8 +1645,7 @@ remove_top(n)
 	curr_attr = MAKEATTR(nm_fg_color, nm_bg_color);
 	fillchar.Attributes = curr_attr;
 
-	ScrollConsoleScreenBuffer(con_out, &rcSrc, &rcClip,
-	new_org, &fillchar);
+	ScrollConsoleScreenBuffer(con_out, &rcSrc, &rcClip, new_org, &fillchar);
 
 	/* Position cursor on first blank line. */
 	goto_line(sc_height - n - 1);

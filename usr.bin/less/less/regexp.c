@@ -1,4 +1,4 @@
-/*	$NetBSD: regexp.c,v 1.1.1.3 1997/09/21 12:23:07 mrg Exp $	*/
+/*	$NetBSD: regexp.c,v 1.1.1.4 1999/04/06 05:30:37 mrg Exp $	*/
 
 /*
  * regcomp and regexec -- regsub and regerror are elsewhere
@@ -28,9 +28,15 @@
  * Slightly modified by David MacKenzie to undo most of the changes for TCL.
  */
 
+#include "less.h"
+#if HAVE_STDIO_H
 #include <stdio.h>
+#endif
+#if STDC_HEADERS
+#include <stdlib.h>
+#include <string.h>
+#endif
 #include "regexp.h"
-char *strchr();
 
 /*
  * The "internal use only" fields in regexp.h are present to pass info from

@@ -1,7 +1,7 @@
-/*	$NetBSD: opttbl.c,v 1.1.1.3 1997/09/21 12:22:53 mrg Exp $	*/
+/*	$NetBSD: opttbl.c,v 1.1.1.4 1999/04/06 05:30:35 mrg Exp $	*/
 
 /*
- * Copyright (c) 1984,1985,1989,1994,1995,1996  Mark Nudelman
+ * Copyright (c) 1984,1985,1989,1994,1995,1996,1999  Mark Nudelman
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -49,7 +49,6 @@ public int squeeze;		/* Squeeze multiple blank lines into one */
 public int tabstop;		/* Tab settings */
 public int back_scroll;		/* Repaint screen on backwards movement */
 public int forw_scroll;		/* Repaint screen on forward movement */
-public int twiddle;		/* Display "~" for lines after EOF */
 public int caseless;		/* Do "caseless" searches */
 public int linenums;		/* Use line numbers */
 public int cbufs;		/* Current number of buffers */
@@ -60,6 +59,7 @@ public int swindow;		/* Size of scrolling window */
 public int jump_sline;		/* Screen line of "jump target" */
 public int chopline;		/* Truncate displayed lines at screen width */
 public int no_init;		/* Disable sending ti/te termcap strings */
+public int show_attn;		/* Hilite first unread line */
 #if HILITE_SEARCH
 public int hilite_search;	/* Highlight matched search patterns? */
 #endif
@@ -199,10 +199,10 @@ static struct option option[] =
 	{ 'V', NOVAR, 0, NULL, opt__V,
 		NULL, NULL, NULL
 	},
-	{ 'w', BOOL|REPAINT, OPT_ON, &twiddle, NULL,
-		"Display nothing for lines after end-of-file",
-		"Display ~ for lines after end-of-file",
-		NULL
+	{ 'w', TRIPLE|REPAINT, OPT_OFF, &show_attn, NULL,
+		"Don't highlight first unread line",
+		"Highlight first unread line after forward-screen",
+		"Highlight first unread line after any forward movement",
 	},
 	{ 'x', NUMBER|REPAINT, 8, &tabstop, NULL,
 		"Tab stops: ",
@@ -230,7 +230,7 @@ static struct option option[] =
 	{ '?', NOVAR, 0, NULL, opt_query,
 		NULL, NULL, NULL
 	},
-	{ '\0' }
+	{ '\0', NOVAR, 0, NULL, NULL, NULL, NULL, NULL }
 };
 
 

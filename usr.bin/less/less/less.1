@@ -1,4 +1,4 @@
-.TH LESS 1 "Version 332: 22 Apr 97"
+.TH LESS 1 "Version 335: 03 Apr 1999"
 .SH NAME
 less \- opposite of more
 .SH SYNOPSIS
@@ -389,8 +389,12 @@ If an option appears in the LESS variable, it can be reset
 to its default on the command line by beginning the command
 line option with "-+".
 .sp
-For options like -P which take a following string,
-a dollar sign ($) may be used to signal the end of the string.
+For options like -P or -D which take a following string,
+a dollar sign ($) must be used to signal the end of the string.
+For example, to set two -D options on MS-DOS, you must have
+a dollar sign between them, like this:
+.sp
+LESS="-Dn9.1$-Ds4.1"
 .IP -?
 This option displays a summary of the commands accepted by
 .I less
@@ -665,10 +669,14 @@ Displays the version number of
 .IP --version
 Same as -V.
 .IP -w
-Causes blank lines to be used to represent lines
-past the end of the file.
-By default,
-a tilde character (~) is used.
+Temporarily highlights the first "new" line after a forward movement
+of a full page.
+The first "new" line is the line immediately following the line previously
+at the bottom of the screen.
+The highlight is removed at the next command which causes movement.
+.IP -W
+Like -w, but temporarily highlights the first new line after any 
+forward movement command larger than one line.
 .IP -x\fIn\fP
 Sets tab stops every \fIn\fP positions.
 The default for \fIn\fP is 8.
@@ -976,14 +984,18 @@ Possible values for LESSCHARSET are:
 .IP ascii
 The default character set.
 BS, TAB, NL, CR, and formfeed are control characters,
-all chars with values between 127 and 255 are binary,
-and all others are normal.
-.IP latin1
+all chars with values between 32 and 126 are normal,
+and all others are binary.
+.IP iso8859
 Selects the ISO 8859/1 character set.
 latin-1 is the same as ASCII, except characters between 161 and 255 are
 treated as normal characters.
+.IP latin1
+Same as iso8859.
 .IP dos
 Selects a character set appropriate for MS-DOS.
+.IP ebcdic
+Selects an EBCDIC character set.
 .IP koi8-r
 Selects a Russian character set.
 .IP next
@@ -1011,11 +1023,17 @@ to each of the possible values for LESSCHARSET:
 .sp
 	ascii\ 	8bcccbcc18b95.b
 .br
-	latin1	8bcccbcc18b95.33b.
-.br
 	dos\ \ \ 	8bcccbcc12bc5b95.b.
 .br
+	ebcdic	5bc6bcc7bcc41b.9b7.9b5.b..8b6.10b6.b9.7b
+.br
+	\ \ \ \ \ \ 	9.8b8.17b3.3b9.7b9.8b8.6b10.b.b.b.
+.br
+	iso8859	8bcccbcc18b95.33b.
+.br
 	koi8-r	8bcccbcc18b95.b128.
+.br
+	latin1	8bcccbcc18b95.33b.
 .br
 	next\ \ 	8bcccbcc18b95.bb125.bb
 .PP
@@ -1043,7 +1061,7 @@ The remainder of LESSBINFMT is a string which may include one
 printf-style escape sequence (a % followed by x, X, o, d, etc.).
 For example, if LESSBINFMT is "*u[%x]", binary characters
 are displayed in underlined hexadecimal surrounded by brackets.
-The default if no LESSBINFMT is specified is "*d<%X>".
+The default if no LESSBINFMT is specified is "*s<%X>".
 
 .SH "PROMPTS"
 The -P option allows you to tailor the prompt to your preference.
@@ -1067,6 +1085,12 @@ a "B" means use the line just after the bottom line,
 and a "j" means use the "target" line, as specified by the -j option.
 .IP "%B"
 Replaced by the size of the current input file.
+.IP "%d\fIX\fP"
+Replaced by the page number of a line in the input file.
+The line to be used is determined by the \fIX\fP, as with the %b option.
+.IP "%D"
+Replaced by the number of pages in the input file,
+or equivalently, the page number of the last line in the input file.
 .IP "%E"
 Replaced by the name of the editor (from the VISUAL environment variable,
 or the EDITOR environment variable if VISUAL is not defined).
@@ -1115,6 +1139,8 @@ True if any characters have been included in the prompt so far.
 True if the byte offset of the specified line is known.
 .IP "?B"
 True if the size of current input file is known.
+.IP "?d\fIX\fP"
+True if the page number of the specified line is known.
 .IP "?e"
 True if at end-of-file.
 .IP "?f"
@@ -1240,6 +1266,9 @@ as usual, or in a
 .IP COLUMNS
 Sets the number of columns on the screen.
 Takes precedence over the number of columns specified by the TERM variable.
+(But if you have a windowing system which supports TIOCGWINSZ or WIOCGETD,
+the window system's idea of the screen size takes precedence over the
+LINES and COLUMNS environment variables.)
 .IP EDITOR
 The name of the editor (used for the v command).
 .IP HOME
@@ -1288,6 +1317,9 @@ String to be appended to a directory name in filename completion.
 .IP LINES
 Sets the number of lines on the screen.
 Takes precedence over the number of lines specified by the TERM variable.
+(But if you have a windowing system which supports TIOCGWINSZ or WIOCGETD,
+the window system's idea of the screen size takes precedence over the
+LINES and COLUMNS environment variables.)
 .IP PATH
 User's search path (used to find a lesskey file 
 on MS-DOS and OS/2 systems).
@@ -1320,6 +1352,8 @@ to avoid possible problems.
 In certain cases, when search highlighting is enabled and 
 a search pattern begins with a ^,
 more text than the matching string may be highlighted.
+(This problem does not occur when less is compiled to use the POSIX
+regular expression package.)
 .PP
 On some systems,
 .I setlocale
@@ -1332,7 +1366,7 @@ To workaround this problem, set the environment variable
 LESSCHARSET to "ascii" (or whatever character set is appropriate).
 
 .SH COPYRIGHT
-Copyright (c) 1984,1985,1989,1994,1995,1996  Mark Nudelman
+Copyright (c) 1984,1985,1989,1994,1995,1996,1999  Mark Nudelman
 .br
-Comments to: markn@fog.net
+Comments to: marknu@flash.net
 

@@ -1,5 +1,7 @@
+/*	$NetBSD: lessecho.c,v 1.1.1.2 1999/04/06 05:30:40 mrg Exp $	*/
+
 /*
- * Copyright (c) 1984,1985,1989,1994,1995,1996  Mark Nudelman
+ * Copyright (c) 1984,1985,1989,1994,1995,1996,1999  Mark Nudelman
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -39,7 +41,7 @@
 
 #include "less.h"
 
-static char *version = "$Revision: 1.1.1.1 $";
+static char *version = "$Revision: 1.1.1.2 $";
 
 static int quote_all = 0;
 static char openquote = '"';
