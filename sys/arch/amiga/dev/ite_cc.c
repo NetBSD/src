@@ -1,4 +1,4 @@
-/*	$NetBSD: ite_cc.c,v 1.32 2002/03/17 19:40:31 atatat Exp $ */
+/*	$NetBSD: ite_cc.c,v 1.32.4.1 2002/05/16 16:48:33 gehenna Exp $ */
 
 /*
  * Copyright (c) 1994 Christian E. Hopps
@@ -33,7 +33,7 @@
 #include "opt_amigaccgrf.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ite_cc.c,v 1.32 2002/03/17 19:40:31 atatat Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ite_cc.c,v 1.32.4.1 2002/05/16 16:48:33 gehenna Exp $");
 
 #include "grfcc.h"
 #if NGRFCC > 0
@@ -199,6 +199,7 @@ int
 ite_newsize(struct ite_softc *ip, struct itewinsize *winsz)
 {
 	extern struct view_softc views[];
+	extern const struct cdevsw view_cdevsw;
 	struct view_size vs;
 	ipriv_t *cci = ip->priv;
 	u_long i;
@@ -209,7 +210,8 @@ ite_newsize(struct ite_softc *ip, struct itewinsize *winsz)
 	vs.width = winsz->width;
 	vs.height = winsz->height;
 	vs.depth = winsz->depth;
-	error = viewioctl(0, VIOCSSIZE, (caddr_t)&vs, -1, NULL); /* XXX type of vs ? */
+	/* XXX type of vs ? */
+	error = (*view_cdevsw.d_ioctl)(0, VIOCSSIZE, (caddr_t)&vs, -1, NULL);
 
 	/*
 	 * Reinitialize our structs
@@ -315,6 +317,8 @@ ite_grf_ioctl(struct ite_softc *ip, u_long cmd, caddr_t addr, int flag,
 {
 	struct winsize ws;
 	struct itewinsize *is;
+	extern const struct cdevsw ite_cdevsw;
+	extern const struct cdevsw view_cdevsw;
 	ipriv_t *cci;
 	int error;
 
@@ -345,7 +349,8 @@ ite_grf_ioctl(struct ite_softc *ip, u_long cmd, caddr_t addr, int flag,
 			 * XXX tell tty about the change
 			 * XXX this is messy, but works
 			 */
-			iteioctl(0, TIOCSWINSZ, (caddr_t)&ws, 0, p);
+			(*ite_cdevsw.d_ioctl)(0, TIOCSWINSZ,
+					      (caddr_t)&ws, 0, p);
 		}
 		break;
 	case ITEIOCDSPWIN:
@@ -361,7 +366,7 @@ ite_grf_ioctl(struct ite_softc *ip, u_long cmd, caddr_t addr, int flag,
 		 * XXX watchout for that -1 its not really the kernel talking
 		 * XXX these two commands don't use the proc pointer though
 		 */
-		error = viewioctl(0, cmd, addr, -1, p);
+		error = (*view_cdevsw.d_ioctl)(0, cmd, addr, -1, p);
 		break;
 	default:
 		error = EPASSTHROUGH;
