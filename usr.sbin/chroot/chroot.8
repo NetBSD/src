@@ -30,9 +30,9 @@
 .\" SUCH DAMAGE.
 .\"
 .\"     from: @(#)chroot.8	8.1 (Berkeley) 6/9/93
-.\"	$NetBSD: chroot.8,v 1.6 1998/06/08 12:41:44 lukem Exp $
+.\"	$NetBSD: chroot.8,v 1.7 1998/10/06 03:47:50 mrg Exp $
 .\"
-.Dd June 9, 1993
+.Dd October 6, 1998
 .Dt CHROOT 8
 .Os BSD 4.3
 .Sh NAME
@@ -40,6 +40,9 @@
 .Nd change root directory
 .Sh SYNOPSIS
 .Nm
+.Op Fl u user
+.Op Fl g group
+.Op Fl G group,group,...
 .Ar newroot
 .Op Ar command
 .Sh DESCRIPTION
@@ -50,6 +53,20 @@ command changes its root directory to the supplied directory
 and exec's
 .Ar command ,
 if supplied, or an interactive copy of your shell.
+.Pp
+If the
+.Fl u ,
+.Fl g
+or
+.Fl G
+options are given, the user, group and group list of the process are
+set to these values after the chroot has taken place.  See
+.Xr setgid 2 ,
+.Xr setgroups 2 ,
+.Xr setuid 2 ,
+.Xr getgrnam 3
+and
+.Xr getpwnam 3 .
 .Pp
 Note,
 .Ar command
