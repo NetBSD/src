@@ -1,4 +1,4 @@
-.\"	$NetBSD: sysctl.3,v 1.136 2004/07/02 18:17:45 heas Exp $
+.\"	$NetBSD: sysctl.3,v 1.137 2004/07/05 11:45:12 cube Exp $
 .\"
 .\" Copyright (c) 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -29,7 +29,7 @@
 .\"
 .\"	@(#)sysctl.3	8.4 (Berkeley) 5/9/95
 .\"
-.Dd July 2, 2004
+.Dd July 5, 2004
 .Dt SYSCTL 3
 .Os
 .Sh NAME
@@ -397,7 +397,7 @@ information.
 .It KERN\_BOOTTIME	struct timeval	no
 .It KERN\_CCPU	integer	no
 .It KERN\_CLOCKRATE	struct clockinfo	no
-.It KERN\_CP\_TIME	long[\|]	no
+.It KERN\_CP\_TIME	uint64_t[\|]	no
 .It KERN\_DEFCORENAME	string	yes
 .It KERN\_DOMAINNAME	string	yes
 .It KERN\_DRIVERS	struct kinfo_drivers	no
@@ -485,11 +485,13 @@ This structure contains the clock, statistics clock and profiling clock
 frequencies, the number of micro-seconds per hz tick, and the clock
 skew rate.
 .It Li KERN_CP_TIME
-Returns an array of CPUSTATES longs.
+Returns an array of CPUSTATES uint64_ts.
 This array contains the
 number of clock ticks spent in different CPU states.
-On multi-processor system, the sum across all CPUs is returned unless
+On multi-processor systems, the sum across all CPUs is returned unless
 appropriate space is given for one data set for each CPU.
+Data for a specific CPU can also be obtained by adding the number of the
+CPU at the end of the MIB, enlarging it by one.
 .It Li KERN_DEFCORENAME
 Default template for the name of core dump files (see also PROC_PID_CORENAME
 in the per-process variables CTL_PROC, and
