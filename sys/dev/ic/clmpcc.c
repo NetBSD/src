@@ -1,4 +1,4 @@
-/*	$NetBSD: clmpcc.c,v 1.11 2000/07/06 01:47:35 thorpej Exp $ */
+/*	$NetBSD: clmpcc.c,v 1.12 2000/07/15 18:12:42 scw Exp $ */
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -1068,7 +1068,7 @@ clmpccstop(tp, flag)
 	int flag;
 {
 	struct clmpcc_softc *sc =
-	    device_lookup(&clmpcc_cd, CLMPCCUNIT(tp->dev));
+	    device_lookup(&clmpcc_cd, CLMPCCUNIT(tp->t_dev));
 	struct clmpcc_chan *ch = &sc->sc_chans[CLMPCCCHAN(tp->t_dev)];
 	int s;
 
