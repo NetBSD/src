@@ -130,7 +130,7 @@ checkout (argc, argv)
      * options to be default (like -kv) and takes care to remove the CVS
      * directory when it has done its duty
      */
-    if (strcmp (command_name, "export") == 0)
+    if (strcmp (cvs_cmd_name, "export") == 0)
     {
         m_type = EXPORT;
 	valid_options = "+Nnk:d:flRQqr:D:";
@@ -177,7 +177,7 @@ checkout (argc, argv)
 #endif
 		    error (1, 0,
 			   "-q or -Q must be specified before \"%s\"",
-			   command_name);
+			   cvs_cmd_name);
 		break;
 	    case 'l':
 		local = 1;
@@ -421,7 +421,6 @@ safe_location (where)
     char *where_location;
     char *hardpath;
     size_t hardpath_len;
-    int  x;
     int retval;
 
     if (trace)
@@ -467,8 +466,11 @@ safe_location (where)
 		char *parent;
 
 		/* strip the last_component */
-		where_location = xstrdup( where );
-		parent = last_component( where_location );
+		where_location = xstrdup (where);
+                /* It's okay to cast out the const below since we know we just
+                 * allocated where_location and can do what we like with it.
+                 */
+		parent = (char *)last_component (where_location);
 		parent[-1] = '\0';
 
 		if( chdir( where_location ) != -1 )
@@ -930,52 +932,48 @@ internal error: %s doesn't start with %s in checkout_proc",
 	/* clean up */
 	free (reposcopy);
 
-	{
-	    int where_is_absolute = isabsolute (where);
-	    
-	    /* The top-level CVSADM directory should always be
-	       current_parsed_root->directory.  Create it, but only if WHERE is
-	       relative.  If WHERE is absolute, our current directory
-	       may not have a thing to do with where the sources are
-	       being checked out.  If it does, build_dirs_and_chdir
-	       will take care of creating adm files here. */
-	    /* FIXME: checking where_is_absolute is a horrid kludge;
-	       I suspect we probably can just skip the call to
-	       build_one_dir whenever the -d command option was specified
-	       to checkout.  */
+	/* The top-level CVSADM directory should always be
+	   current_parsed_root->directory.  Create it, but only if WHERE is
+	   relative.  If WHERE is absolute, our current directory
+	   may not have a thing to do with where the sources are
+	   being checked out.  If it does, build_dirs_and_chdir
+	   will take care of creating adm files here. */
+	/* FIXME: checking is_absolute (where) is a horrid kludge;
+	   I suspect we probably can just skip the call to
+	   build_one_dir whenever the -d command option was specified
+	   to checkout.  */
 
-	    if (! where_is_absolute && top_level_admin && m_type == CHECKOUT)
-	    {
-		/* It may be argued that we shouldn't set any sticky
-		   bits for the top-level repository.  FIXME?  */
-		build_one_dir (current_parsed_root->directory, ".", argc <= 1);
+	if (!isabsolute (where) && top_level_admin && m_type == CHECKOUT)
+	{
+	    /* It may be argued that we shouldn't set any sticky
+	       bits for the top-level repository.  FIXME?  */
+	    build_one_dir (current_parsed_root->directory, ".", argc <= 1);
 
 #ifdef SERVER_SUPPORT
-		/* We _always_ want to have a top-level admin
-		   directory.  If we're running in client/server mode,
-		   send a "Clear-static-directory" command to make
-		   sure it is created on the client side.  (See 5.10
-		   in cvsclient.dvi to convince yourself that this is
-		   OK.)  If this is a duplicate command being sent, it
-		   will be ignored on the client side.  */
+	    /* We _always_ want to have a top-level admin
+	       directory.  If we're running in client/server mode,
+	       send a "Clear-static-directory" command to make
+	       sure it is created on the client side.  (See 5.10
+	       in cvsclient.dvi to convince yourself that this is
+	       OK.)  If this is a duplicate command being sent, it
+	       will be ignored on the client side.  */
 
-		if (server_active)
-		    server_clear_entstat (".", current_parsed_root->directory);
+	    if (server_active)
+		server_clear_entstat (".", current_parsed_root->directory);
 #endif
-	    }
+	}
 
 
-	    /* Build dirs on the path if necessary and leave us in the
-	       bottom directory (where if where was specified) doesn't
-	       contain a CVS subdir yet, but all the others contain
-	       CVS and Entries.Static files */
+	/* Build dirs on the path if necessary and leave us in the
+	   bottom directory (where if where was specified) doesn't
+	   contain a CVS subdir yet, but all the others contain
+	   CVS and Entries.Static files */
 
-	    if (build_dirs_and_chdir (head, argc <= 1) != 0)
-	    {
-		error (0, 0, "ignoring module %s", omodule);
-		err = 1;
-		goto out;
-	    }
+	if (build_dirs_and_chdir (head, argc <= 1) != 0)
+	{
+	    error (0, 0, "ignoring module %s", omodule);
+	    err = 1;
+	    goto out;
 	}
 
 	/* set up the repository (or make sure the old one matches) */
@@ -1206,8 +1204,28 @@ emptydir_name ()
 }
 
 /* Build all the dirs along the path to DIRS with CVS subdirs with appropriate
-   repositories.  If ->repository is NULL, do not create a CVSADM directory
-   for that subdirectory; just CVS_CHDIR into it.  */
+ * repositories.  If DIRS->repository is NULL or the directory already exists,
+ * do not create a CVSADM directory for that subdirectory; just CVS_CHDIR into
+ * it.  Frees all storage used by DIRS.
+ *
+ * ASSUMPTIONS
+ *   1. Parent directories will be listed in DIRS before their children.
+ *   2. At most a single directory will need to be changed at one time.  In
+ *      other words, if we are in /a/b/c, and our final destination is
+ *      /a/b/c/d/e/f, then we will build d, then d/e, then d/e/f.
+ *
+ * INPUTS
+ *   dirs	Simple list composed of dir_to_build structures, listing
+ *		information about directories to build.
+ *   sticky	Passed to build_one_dir to tell it whether there are any sticky
+ *		tags or dates to be concerned with.
+ *
+ * RETURNS
+ *   1 on error, 0 otherwise.
+ *
+ * ERRORS
+ *  The only nonfatal error this function may return is if the CHDIR fails.
+ */
 static int
 build_dirs_and_chdir (dirs, sticky)
     struct dir_to_build *dirs;
@@ -1218,7 +1236,7 @@ build_dirs_and_chdir (dirs, sticky)
 
     while (dirs != NULL)
     {
-	char *dir = last_component (dirs->dirpath);
+	const char *dir = last_component (dirs->dirpath);
 
 	if (!dirs->just_chdir)
 	{

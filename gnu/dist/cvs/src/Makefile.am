@@ -73,6 +73,7 @@ cvs_SOURCES = \
 	run.c \
 	scramble.c \
 	server.c \
+	stack.c \
 	status.c \
 	subr.c \
 	tag.c \
@@ -95,6 +96,7 @@ cvs_SOURCES = \
 	rcs.h \
 	root.h \
 	server.h \
+	stack.h \
 	update.h \
 	version.h \
 	watch.h
