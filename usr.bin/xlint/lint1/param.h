@@ -1,4 +1,4 @@
-/*	$NetBSD: param.h,v 1.8 1998/10/08 01:30:50 wsanchez Exp $	*/
+/*	$NetBSD: param.h,v 1.9 1999/09/12 16:10:45 itojun Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -73,6 +73,9 @@
 #define PTRDIFF_IS_LONG		0
 #define SIZEOF_IS_ULONG		0
 #elif defined(__ns32k__)
+#define PTRDIFF_IS_LONG		0
+#define SIZEOF_IS_ULONG		0
+#elif defined(__sh3__)
 #define PTRDIFF_IS_LONG		0
 #define SIZEOF_IS_ULONG		0
 #elif defined(__sparc__)
