@@ -1,4 +1,4 @@
-/*	$NetBSD: cons.c,v 1.35 2000/03/30 12:45:27 augustss Exp $	*/
+/*	$NetBSD: cons.c,v 1.36 2000/05/08 16:30:57 itojun Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -235,6 +235,54 @@ cngetc()
 	if (cn_tab == NULL)
 		return (0);
 	return ((*cn_tab->cn_getc)(cn_tab->cn_dev));
+}
+
+int
+cngetsn(cp, size)
+	char *cp;
+	int size;
+{
+	char *lp;
+	int c, len;
+
+	cnpollc(1);
+
+	lp = cp;
+	len = 0;
+	for (;;) {
+		c = cngetc();
+		switch (c) {
+		case '\n':
+		case '\r':
+			printf("\n");
+			*lp++ = '\0';
+			cnpollc(0);
+			return (len);
+		case '\b':
+		case '\177':
+		case '#':
+			if (len) {
+				--len;
+				--lp;
+				printf("\b \b");
+			}
+			continue;
+		case '@':
+		case 'u'&037:
+			len = 0;
+			lp = cp;
+			printf("\n");
+			continue;
+		default:
+			if (len + 1 >= size || c < ' ') {
+				printf("\007");
+				continue;
+			}
+			printf("%c", c);
+			++len;
+			*lp++ = c;
+		}
+	}
 }
 
 void

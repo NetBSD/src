@@ -1,4 +1,4 @@
-/*	$NetBSD: cons.h,v 1.17 2000/03/06 21:36:12 thorpej Exp $	*/
+/*	$NetBSD: cons.h,v 1.18 2000/05/08 16:30:58 itojun Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -84,6 +84,7 @@ int	cnwrite __P((dev_t, struct uio *, int));
 int	cnioctl __P((dev_t, u_long, caddr_t, int, struct proc *));
 int	cnpoll __P((dev_t, int, struct proc *));
 int	cngetc __P((void));
+int	cngetsn __P((char *, int));
 void	cnputc __P((int));
 void	cnpollc __P((int));
 void	cnbell __P((u_int, u_int, u_int));
