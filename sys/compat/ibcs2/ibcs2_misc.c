@@ -1,4 +1,4 @@
-/*	$NetBSD: ibcs2_misc.c,v 1.4 1995/03/14 15:12:30 scottb Exp $	*/
+/*	$NetBSD: ibcs2_misc.c,v 1.5 1995/03/22 01:28:53 scottb Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Scott Bartram
@@ -412,7 +412,7 @@ ibcs2_read(p, uap, retval)
 		char name[14];
 	} idb;
 	off_t off;			/* true file offset */
-	int buflen, error, eofflag;
+	int buflen, error, eofflag, size;
 
 	if (error = getvnode(p->p_fd, SCARG(uap, fd), &fp)) {
 		if (error == EINVAL)
@@ -479,7 +479,8 @@ again:
 		 */
 		idb.ino = (BSD_DIRENT(inp)->d_ino > 0xfffe) ? 0xfffe :
 			BSD_DIRENT(inp)->d_ino;
-		bcopy(BSD_DIRENT(inp)->d_name, &idb.name, 14);
+		(void)copystr(BSD_DIRENT(inp)->d_name, idb.name, 14, &size);
+		bzero(idb.name + size, 14 - size);
 		if (error = copyout(&idb, outp, sizeof(struct ibcs2_direct)))
 			goto out;
 		/* advance past this real entry */
