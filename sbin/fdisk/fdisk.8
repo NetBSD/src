@@ -1,11 +1,11 @@
-.\"	$NetBSD: fdisk.8,v 1.42 2003/06/03 12:35:54 joda Exp $
+.\"	$NetBSD: fdisk.8,v 1.43 2003/10/06 12:02:52 lukem Exp $
 .\"
-.Dd April 30, 2003
+.Dd October 6, 2003
 .Dt FDISK 8
 .Os
 .Sh NAME
 .Nm fdisk
-.Nd DOS partition maintenance program
+.Nd MS-DOS partition maintenance program
 .Sh SYNOPSIS
 .Nm
 .Op Fl afiuvBS
@@ -187,7 +187,7 @@ Explicitly request initialisation of the master boot code
 (similar to what
 .Nm fdisk /mbr
 does under
-.Tn MSDOS ) ,
+.Tn MS-DOS ) ,
 even if the magic number in the first sector is ok.
 The partition table is left alone by this (but see above).
 .It Fl l
