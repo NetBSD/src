@@ -1,4 +1,4 @@
-/*	$NetBSD: irix_prctl.c,v 1.8 2002/04/29 16:01:12 manu Exp $ */
+/*	$NetBSD: irix_prctl.c,v 1.9 2002/05/02 17:17:29 manu Exp $ */
 
 /*-
  * Copyright (c) 2001-2002 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: irix_prctl.c,v 1.8 2002/04/29 16:01:12 manu Exp $");
+__KERNEL_RCSID(0, "$NetBSD: irix_prctl.c,v 1.9 2002/05/02 17:17:29 manu Exp $");
 
 #include <sys/errno.h>
 #include <sys/types.h>
@@ -63,6 +63,7 @@ struct irix_sproc_child_args {
 	struct proc **isc_proc; 
 	void *isc_entry;
 	void *isc_arg;
+	void *isc_aux;
 }; 
 static void irix_sproc_child __P((struct irix_sproc_child_args *));
 static int irix_sproc __P((void *, unsigned int, void *, caddr_t, size_t, 
@@ -85,6 +86,32 @@ irix_sys_prctl(p, v, retval)
 #endif
 
 	switch(option) {
+	case IRIX_PR_GETSHMASK:	{	/* Get shared resources */
+		struct proc *p2;
+		int shmask = 0;
+
+		p2 = pfind((pid_t)SCARG(uap, arg1));
+
+		if (p2 == p || SCARG(uap, arg1) == 0) {
+			/* XXX return our own shmask */
+			return 0;
+		}
+
+		if (p2 == NULL)
+			return EINVAL;
+
+		if (p->p_vmspace == p2->p_vmspace)
+			shmask |= IRIX_PR_SADDR;
+		if (p->p_fd == p2->p_fd)
+			shmask |= IRIX_PR_SFDS;
+		if (p->p_cwdi == p2->p_cwdi);
+			shmask |= IRIX_PR_SDIR;
+
+		*retval = (register_t)shmask;
+		return 0;
+		break;
+	}
+		
 	case IRIX_PR_LASTSHEXIT:	/* "Last sproc exit" */
 		/* We do nothing */
 		break;
@@ -232,6 +259,9 @@ static int irix_sproc(entry, inh, arg, sp, len, pid, p, retval)
 	isc.isc_proc = &p2;
 	isc.isc_entry = entry;
 	isc.isc_arg = arg;
+	if ((error = copyin((void *)(tf->f_regs[SP] + 28), 
+	    &isc.isc_aux, sizeof(isc.isc_aux))) != 0)
+		isc.isc_aux = 0;
 
 	if ((error = fork1(p, bsd_flags, SIGCHLD, (void *)sp, len, 
 	    (void *)irix_sproc_child, (void *)&isc, retval, &p2)) != 0)
@@ -265,9 +295,11 @@ irix_sproc_child(isc)
 
 	/* 
 	 * Setup child arguments 
-	 */
+	 * The libc stub will copy S3 to A1 once we return to userland.
+	*/
 	tf->f_regs[A0] = (unsigned long)isc->isc_arg;
-	tf->f_regs[A1] = tf->f_regs[S3]; /* XXX Really useful? */
+	tf->f_regs[A1] = (unsigned long)isc->isc_aux;
+	tf->f_regs[S3] = (unsigned long)isc->isc_aux;
 
 	/* 
 	 * We do not need isc anymore, we can wakeup our parent
