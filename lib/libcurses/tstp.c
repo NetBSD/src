@@ -1,4 +1,4 @@
-/*	$NetBSD: tstp.c,v 1.25 2002/01/02 10:38:29 blymn Exp $	*/
+/*	$NetBSD: tstp.c,v 1.26 2002/08/04 14:11:59 jdc Exp $	*/
 
 /*
  * Copyright (c) 1981, 1993, 1994
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)tstp.c	8.3 (Berkeley) 5/4/94";
 #else
-__RCSID("$NetBSD: tstp.c,v 1.25 2002/01/02 10:38:29 blymn Exp $");
+__RCSID("$NetBSD: tstp.c,v 1.26 2002/08/04 14:11:59 jdc Exp $");
 #endif
 #endif				/* not lint */
 
@@ -170,11 +170,11 @@ __restartwin(void)
 	/* Reset meta */
 	__restore_meta_state();
 
-	/* Reset cursor visibility */
-	__restore_cursor_vis();
-
 	/* Restart the screen. */
 	__startwin(_cursesi_screen);
+
+	/* Reset cursor visibility */
+	__restore_cursor_vis();
 
 	/* Repaint the screen. */
 	wrefresh(curscr);
