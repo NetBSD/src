@@ -1,8 +1,8 @@
-#	$NetBSD: Makefile,v 1.1 1999/03/25 04:05:36 explorer Exp $
+#	$NetBSD: Makefile,v 1.1.2.1 1999/04/19 20:55:39 perry Exp $
 
 PROG=	lmcctl
 SRCS=	lmcctl.c clockgen.c
-NOMAN=	lmcctl.8
+MAN=	lmcctl.8
 BINOWN=	root
 BINMODE=555
 
