@@ -8,13 +8,11 @@ CFLAGS+= ${CPPFLAGS}
 .include "${.CURDIR}/arch/${MACHINE}/Makefile.inc"
 .include "${.CURDIR}/pthreads/Makefile.inc"
 
-all: includelinks
-
-beforedepend: includelinks
+all beforedepend: pthread
 
 CLEANFILES+=pthread 
 
-includelinks: 
+pthread: 
 	if [ ! -e pthread ]; then; \
 		ln -s ${.CURDIR}/include pthread; \
 	fi
