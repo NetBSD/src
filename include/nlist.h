@@ -1,4 +1,4 @@
-/*	$NetBSD: nlist.h,v 1.5 1994/10/26 00:56:11 cgd Exp $	*/
+/*	$NetBSD: nlist.h,v 1.6 1996/10/01 21:48:30 cgd Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -85,6 +85,7 @@ struct nlist {
 
 __BEGIN_DECLS
 int nlist __P((const char *, struct nlist *));
+int __fdnlist __P((int, struct nlist *));		/* XXX for libkvm */
 __END_DECLS
 
 #endif /* !_NLIST_H_ */
