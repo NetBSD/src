@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: daic.c,v 1.8 2002/03/24 20:35:45 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: daic.c,v 1.9 2002/03/25 09:08:10 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -141,15 +141,15 @@ cardtypename(cardtype)
 	
 /*---------------------------------------------------------------------------*
  * Probe for presence of device at given io space. 
- * Return:	0 no card identified
- *		1 card found
+ * Return the card type (stupid ISA needs to know this in advance, to 
+ * calculate the share memory size).
  *---------------------------------------------------------------------------*/
 int
 daic_probe(bus, io)
 	bus_space_tag_t bus;
 	bus_space_handle_t io;
 {
-	return (daic_reset(bus, io, 0, NULL) > 0);
+	return (daic_reset(bus, io, 0, NULL));
 }
 
 /*---------------------------------------------------------------------------*

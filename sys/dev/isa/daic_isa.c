@@ -24,7 +24,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: daic_isa.c,v 1.5 2002/03/22 09:54:17 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: daic_isa.c,v 1.6 2002/03/25 09:08:09 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/errno.h>
@@ -82,7 +82,7 @@ daic_isa_probe(parent, cf, aux)
 	struct isa_attach_args *ia = aux;
 	bus_space_tag_t memt = ia->ia_memt;
 	bus_space_handle_t memh;
-	int card;
+	int card, need_unmap = 0;
 
 	/* We need some controller memory to comunicate! */
 	if (ia->ia_iomem[0].ir_addr == 0 || ia->ia_iomem[0].ir_size == -1)
@@ -97,6 +97,7 @@ daic_isa_probe(parent, cf, aux)
 	if (bus_space_map(memt, ia->ia_iomem[0].ir_addr, ia->ia_iomem[0].ir_size,
 	    0, &memh))
 		goto bad;
+	need_unmap = 1;
 
 	/* MI check for card at this location */
 	card = daic_probe(memt, memh);
@@ -109,8 +110,9 @@ daic_isa_probe(parent, cf, aux)
 	return 1;
 
 bad:
-	/* unmap card RAM */
-	bus_space_unmap(memt, memh, DAIC_ISA_MEMSIZE);
+	/* unmap card RAM if already mapped */
+	if (need_unmap)
+		bus_space_unmap(memt, memh, DAIC_ISA_MEMSIZE);
 	return 0;
 }
 
