@@ -1,4 +1,4 @@
-/*	$NetBSD: fd.c,v 1.38 2003/08/07 16:29:55 agc Exp $	*/
+/*	$NetBSD: fd.c,v 1.39 2003/09/26 21:41:16 tsutsui Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -73,7 +73,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fd.c,v 1.38 2003/08/07 16:29:55 agc Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fd.c,v 1.39 2003/09/26 21:41:16 tsutsui Exp $");
 
 #include "opt_ddb.h"
 
@@ -636,7 +636,7 @@ fdstrategy(bp)
 	struct fd_softc *fd;
 	int unit = FDUNIT(bp->b_dev);
 	int sz;
- 	int s;
+	int s;
 
 	/* Valid unit, controller, and request? */
 	if (unit >= fd_cd.cd_ndevs ||
@@ -671,7 +671,7 @@ fdstrategy(bp)
 	}
 
 	bp->b_rawblkno = bp->b_blkno;
- 	bp->b_cylinder = bp->b_blkno / (FDC_BSIZE / DEV_BSIZE) / fd->sc_type->seccyl;
+	bp->b_cylinder = bp->b_blkno / (FDC_BSIZE / DEV_BSIZE) / fd->sc_type->seccyl;
 
 #ifdef FD_DEBUG
 	if (fdc_debug > 1)
@@ -863,7 +863,7 @@ fdopen(dev, flags, fmt, p)
 	int flags, fmt;
 	struct proc *p;
 {
- 	int unit, pmask;
+	int unit, pmask;
 	struct fd_softc *fd;
 	struct fd_type *type;
 
@@ -937,22 +937,22 @@ fdclose(dev, flags, fmt, p)
 
 int
 fdread(dev, uio, flag)
-        dev_t dev;
-        struct uio *uio;
+	dev_t dev;
+	struct uio *uio;
 	int flag;
 {
 
-        return (physio(fdstrategy, NULL, dev, B_READ, minphys, uio));
+	return (physio(fdstrategy, NULL, dev, B_READ, minphys, uio));
 }
 
 int
 fdwrite(dev, uio, flag)
-        dev_t dev;
-        struct uio *uio;
+	dev_t dev;
+	struct uio *uio;
 	int flag;
 {
 
-        return (physio(fdstrategy, NULL, dev, B_WRITE, minphys, uio));
+	return (physio(fdstrategy, NULL, dev, B_WRITE, minphys, uio));
 }
 
 void
@@ -1182,7 +1182,7 @@ loop:
 	fd = fdc->sc_drives.tqh_first;
 	if (fd == NULL) {
 		fdc->sc_state = DEVIDLE;
- 		return (0);
+		return (0);
 	}
 
 	/* Is there a transfer to this drive?  If not, deactivate drive. */
