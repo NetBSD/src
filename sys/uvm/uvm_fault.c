@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_fault.c,v 1.34 1999/06/16 00:29:04 thorpej Exp $	*/
+/*	$NetBSD: uvm_fault.c,v 1.35 1999/06/16 18:43:28 thorpej Exp $	*/
 
 /*
  *
@@ -1735,8 +1735,7 @@ uvm_fault_wire(map, start, end, access_type)
 
 	/*
 	 * now fault it in page at a time.   if the fault fails then we have
-	 * to undo what we have done.   note that in uvm_fault VM_PROT_NONE 
-	 * is replaced with the max protection if fault_type is VM_FAULT_WIRE.
+	 * to undo what we have done.
 	 */
 
 	for (va = start ; va < end ; va += PAGE_SIZE) {
