@@ -34,6 +34,7 @@ options 	COMPAT_43
 options 	COMPAT_10
 options 	COMPAT_11
 options 	COMPAT_12
+options 	COMPAT_13
 options 	SYSVMSG		# System V-like message queues
 options 	SYSVSEM		# System V-like semaphores
 options 	SYSVSHM		# System V-like memory sharing

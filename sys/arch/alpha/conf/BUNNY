@@ -1,4 +1,4 @@
-# $NetBSD: BUNNY,v 1.18 1997/08/24 06:37:13 cgd Exp $
+# $NetBSD: BUNNY,v 1.19 1997/11/30 23:19:00 mjacob Exp $
 #
 # Kernel for bunnahabhain.pdl.cs.cmu.edu.
 #
@@ -42,6 +42,7 @@ options 	COMPAT_43
 options 	COMPAT_10
 options 	COMPAT_11
 options 	COMPAT_12
+options 	COMPAT_13
 
 # Loadable Kernel Modules
 options 	LKM
