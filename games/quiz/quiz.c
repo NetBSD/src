@@ -130,13 +130,13 @@ get_file(file)
 	qp = &qlist;
 	qsize = 0;
 	while ((lp = fgetln(fp, &len)) != NULL) {
+		lp[--len] = '\0';
 		if (qp->q_text && qp->q_text[strlen(qp->q_text) - 1] == '\\')
 			qp->q_text = appdstr(qp->q_text, lp, len);
 		else {
 			if ((qp->q_next = malloc(sizeof(QE))) == NULL)
 				err(1, NULL);
 			qp = qp->q_next;
-			lp[len - 1] = '\0';
 			if ((qp->q_text = strdup(lp)) == NULL)
 				err(1, NULL);
 			qp->q_asked = qp->q_answered = FALSE;
@@ -316,9 +316,10 @@ appdstr(s, tp, len)
 	if ((m = malloc(strlen(s) + len + 1)) == NULL)
 		err(1, NULL);
 	for (mp = m, sp = s; *mp++ = *sp++;);
-
+	--mp;
 	if (*(mp - 1) == '\\')
 		--mp;
+
 	while ((ch = *mp++ = *tp++) && ch != '\n');
 	*mp = '\0';
 
