@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.8 1997/02/14 03:56:50 gwr Exp $	*/
+/*	$NetBSD: pmap.c,v 1.9 1997/02/16 19:38:08 gwr Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -517,9 +517,13 @@ current_pmap()
 	pmap_t	pmap;
 
 	p = curproc;	/* XXX */
-	vm = p->p_vmspace;
-	map = &vm->vm_map;
-	pmap = vm_map_pmap(map);
+	if (p == NULL)
+		pmap = &kernel_pmap;
+	else {
+		vm = p->p_vmspace;
+		map = &vm->vm_map;
+		pmap = vm_map_pmap(map);
+	}
 
 	return (pmap);
 }
@@ -1779,10 +1783,13 @@ pmap_enter(pmap, va, pa, prot, wired)
 		/*
 		 * If the process receiving a new A table is the current
 		 * process, we are responsible for setting the MMU so that
-		 * it becomes the current address space.
+		 * it becomes the current address space.  This only adds
+		 * new mappings, so no need to flush anything.
 		 */
-		if (pmap == current_pmap())
-			pmap_activate(pmap);
+		if (pmap == current_pmap()) {
+			kernel_crp.rp_addr = pmap->pm_a_phys;
+			loadcrp(&kernel_crp);
+		}
 
 		if (!wired)
 			llevel = NEWA;
@@ -2535,9 +2542,22 @@ pmap_release(pmap)
 	if (pmap == NULL)
 		return;
 	if (pmap == pmap_kernel())
-		panic("pmap_release: kernel pmap release requested.");
+		panic("pmap_release: kernel pmap");
 #endif
+	/*
+	 * XXX - If this pmap has an A table, give it back.
+	 * The pmap SHOULD be empty by now, and pmap_remove
+	 * should have already given back the A table...
+	 * However, I see:  pmap->pm_a_tmgr->at_ecnt == 1
+	 * at this point, which means some mapping was not
+	 * removed when it should have been. -gwr
+	 */
 	if (pmap->pm_a_tmgr != NULL) {
+		/* First make sure we are not using it! */
+		if (kernel_crp.rp_addr == pmap->pm_a_phys) {
+			kernel_crp.rp_addr = kernAphys;
+			loadcrp(&kernel_crp);
+		}
 		free_a_table(pmap->pm_a_tmgr, TRUE);
 		pmap->pm_a_tmgr = NULL;
 		pmap->pm_a_phys = kernAphys;
@@ -2971,22 +2991,25 @@ pmap_extract_kernel(va)
 /* pmap_remove_kernel		INTERNAL
  **
  * Remove the mapping of a range of virtual addresses from the kernel map.
+ * The arguments are already page-aligned.
  */
 void
-pmap_remove_kernel(start, end)
-	vm_offset_t start;
-	vm_offset_t end;
+pmap_remove_kernel(sva, eva)
+	vm_offset_t sva;
+	vm_offset_t eva;
 {
-	start -= KERNBASE;
-	end   -= KERNBASE;
-	start = sun3x_round_page(start); /* round down */
-	start = sun3x_btop(start);
-	end   += MMU_PAGE_SIZE - 1;    /* next round operation will be up */
-	end   = sun3x_round_page(end); /* round */
-	end   = sun3x_btop(end);
+	int idx, eidx;
 
-	while (start < end)
-		pmap_remove_pte(&kernCbase[start++]);
+#ifdef	PMAP_DEBUG
+	if ((sva & PGOFSET) || (eva & PGOFSET))
+		panic("pmap_remove_kernel: alignment");
+#endif
+
+	idx  = sun3x_btop(sva - KERNBASE);
+	eidx = sun3x_btop(eva - KERNBASE);
+
+	while (idx < eidx)
+		pmap_remove_pte(&kernCbase[idx++]);
 	/* Always flush the ATC when maniplating the kernel address space. */
 	TBIAS();
 }
@@ -3034,22 +3057,25 @@ pmap_remove(pmap, start, end)
 	 * with the default 'kernel' map.
 	 */ 
 	if (pmap_remove_a(pmap->pm_a_tmgr, start, end)) {
+		if (kernel_crp.rp_addr == pmap->pm_a_phys) {
+			kernel_crp.rp_addr = kernAphys;
+			loadcrp(&kernel_crp);
+			/* will do TLB flush below */
+		}
 		pmap->pm_a_tmgr = NULL;
 		pmap->pm_a_phys = kernAphys;
-		if (pmap == current_pmap())
-			pmap_activate(pmap);
-	} else {
-		/*
-		 * If we just modified the current address space,
-		 * make sure to flush the MMU cache.
-		 *
-		 * XXX - this could be an unecessarily large flush.
-		 * XXX - Could decide, based on the size of the VA range
-		 * to be removed, whether to flush "by pages" or "all".
-		 */
-		if (pmap == current_pmap())
-			TBIAU();
 	}
+
+	/*
+	 * If we just modified the current address space,
+	 * make sure to flush the MMU cache.
+	 *
+	 * XXX - this could be an unecessarily large flush.
+	 * XXX - Could decide, based on the size of the VA range
+	 * to be removed, whether to flush "by pages" or "all".
+	 */
+	if (pmap == current_pmap())
+		TBIAU();
 }
 
 /* pmap_remove_a			INTERNAL
@@ -3356,13 +3382,13 @@ pmap_remove_c(c_tbl, start, end)
 	if (c_tbl->ct_ecnt == 0) {
 		c_tbl->ct_parent = NULL;
 		TAILQ_REMOVE(&c_pool, c_tbl, ct_link);
-                TAILQ_INSERT_HEAD(&c_pool, c_tbl, ct_link);
-                empty = TRUE;
-        } else {
-                empty = FALSE;
-        }
+		TAILQ_INSERT_HEAD(&c_pool, c_tbl, ct_link);
+		empty = TRUE;
+	} else {
+		empty = FALSE;
+	}
 
-        return empty;
+	return empty;
 }
 
 /* is_managed				INTERNAL
