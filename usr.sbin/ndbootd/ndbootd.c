@@ -1,4 +1,4 @@
-/*	$NetBSD: ndbootd.c,v 1.6 2002/07/11 19:47:17 scw Exp $	*/
+/*	$NetBSD: ndbootd.c,v 1.7 2002/09/19 16:45:59 mycroft Exp $	*/
 
 /* ndbootd.c - the Sun Network Disk (nd) daemon: */
 
@@ -81,7 +81,7 @@
 #if 0
 static const char _ndbootd_c_rcsid[] = "<<Id: ndbootd.c,v 1.9 2001/06/13 21:19:11 fredette Exp >>";
 #else
-__RCSID("$NetBSD: ndbootd.c,v 1.6 2002/07/11 19:47:17 scw Exp $");
+__RCSID("$NetBSD: ndbootd.c,v 1.7 2002/09/19 16:45:59 mycroft Exp $");
 #endif
 
 /* includes: */
@@ -118,7 +118,7 @@ __RCSID("$NetBSD: ndbootd.c,v 1.6 2002/07/11 19:47:17 scw Exp $");
 #define NDBOOTD_CLIENT_TTL_SECONDS (10)
 
 /* this determines how long we wait before sending a packet: */
-#define NDBOOTD_SEND_DELAY_USECONDS (10000)
+#define NDBOOTD_SEND_DELAY_NSECONDS (10000000)
 
 /* this macro helps us size a struct ifreq: */
 #ifdef HAVE_SOCKADDR_SA_LEN
@@ -383,7 +383,7 @@ main(int argc, char *argv[])
 	size_t byte_offset;
 	ssize_t byte_count;
 	ssize_t byte_count_wanted;
-	struct timeval send_delay;
+	struct timespec send_delay;
 	int fd;
 
 	/* check our command line: */
@@ -1024,8 +1024,8 @@ where OPTIONS are:\n\
 
 			/* delay before sending the packet: */
 			send_delay.tv_sec = 0;
-			send_delay.tv_usec = NDBOOTD_SEND_DELAY_USECONDS;
-			select(0, NULL, NULL, NULL, &send_delay);
+			send_delay.tv_nsec = NDBOOTD_SEND_DELAY_NSECONDS;
+			nanosleep(&send_delay, NULL);
 
 			/* transmit the packet: */
 			if (ndbootd_raw_write(interface, packet_buffer,

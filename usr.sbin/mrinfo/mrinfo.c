@@ -1,4 +1,4 @@
-/*	$NetBSD: mrinfo.c,v 1.15 2002/08/08 00:21:36 itojun Exp $	*/
+/*	$NetBSD: mrinfo.c,v 1.16 2002/09/19 16:45:59 mycroft Exp $	*/
 
 /*
  * This tool requests configuration info from a multicast router
@@ -80,13 +80,14 @@
 static char rcsid[] =
     "@(#) Header: mrinfo.c,v 1.6 93/04/08 15:14:16 van Exp (LBL)";
 #else
-__RCSID("$NetBSD: mrinfo.c,v 1.15 2002/08/08 00:21:36 itojun Exp $");
+__RCSID("$NetBSD: mrinfo.c,v 1.16 2002/09/19 16:45:59 mycroft Exp $");
 #endif
 #endif
 
 #include <string.h>
 #include <netdb.h>
 #include <sys/time.h>
+#include <sys/poll.h>
 #include "defs.h"
 #include <arpa/inet.h>
 #include <stdarg.h>
@@ -421,7 +422,7 @@ main(int argc, char *argv[])
 
 	    /* Main receive loop */
 	    for (;;) {
-		fd_set  fds;
+		struct pollfd set[1];
 		struct timeval tv, now;
 		int     count, recvlen, dummy = 0;
 		u_int32_t src, dst, group;
@@ -429,10 +430,8 @@ main(int argc, char *argv[])
 		struct igmp *igmp;
 		int     ipdatalen, iphdrlen, igmpdatalen;
 
-		FD_ZERO(&fds);
-		if (igmp_socket >= FD_SETSIZE)
-			log(LOG_ERR, 0, "descriptor too big");
-		FD_SET(igmp_socket, &fds);
+		set[0].fd = igmp_socket;
+		set[0].events = POLLIN;
 
 		gettimeofday(&now, 0);
 		tv.tv_sec = et.tv_sec - now.tv_sec;
@@ -445,7 +444,7 @@ main(int argc, char *argv[])
 		if (tv.tv_sec < 0)
 			tv.tv_sec = tv.tv_usec = 0;
 
-		count = select(igmp_socket + 1, &fds, 0, 0, &tv);
+		count = poll(set, 1, tv.tv_sec * 1000 + tv.tv_usec / 1000);
 
 		if (count < 0) {
 			if (errno != EINTR)
