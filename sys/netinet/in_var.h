@@ -1,4 +1,4 @@
-/*	$NetBSD: in_var.h,v 1.54 2005/01/24 21:25:09 matt Exp $	*/
+/*	$NetBSD: in_var.h,v 1.55 2005/03/09 05:07:19 atatat Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -308,6 +308,10 @@ void	in_purgeaddr(struct ifaddr *, struct ifnet *);
 void	in_purgeif(struct ifnet *);
 void	ip_input(struct mbuf *);
 int	ipflow_fastforward(struct mbuf *);
+
+#ifdef SYSCTLFN_PROTO
+int	sysctl_inpcblist(SYSCTLFN_PROTO);
+#endif
 
 #endif
 
