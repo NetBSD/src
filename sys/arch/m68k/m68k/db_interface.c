@@ -1,3 +1,5 @@
+/*	$NetBSD: db_interface.c,v 1.9 1994/10/26 07:51:08 cgd Exp $	*/
+
 /* 
  * Mach Operating System
  * Copyright (c) 1992 Carnegie Mellon University

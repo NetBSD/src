@@ -1,3 +1,5 @@
+/*	$NetBSD: reg.h,v 1.8 1994/10/26 07:50:53 cgd Exp $	*/
+
 /*
  * Copyright (c) 1988 University of Utah.
  * Copyright (c) 1982, 1986, 1990 The Regents of the University of California.
@@ -35,9 +37,9 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	from: Utah Hdr: reg.h 1.1 90/07/09
- *	from: @(#)reg.h	7.2 (Berkeley) 11/3/90
- *	$Id: reg.h,v 1.7 1994/01/08 10:41:23 cgd Exp $
+ * from: Utah Hdr: reg.h 1.1 90/07/09
+ *
+ *	@(#)reg.h	7.2 (Berkeley) 11/3/90
  */
 
 #ifndef _M68K_REG_H_

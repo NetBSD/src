@@ -1,3 +1,5 @@
+/*	$NetBSD: ansi.h,v 1.5 1994/10/26 07:50:40 cgd Exp $	*/
+
 /*-
  * Copyright (c) 1990, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -30,8 +32,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	from: @(#)ansi.h	8.2 (Berkeley) 1/4/94
- *	$Id: ansi.h,v 1.4 1994/05/21 06:49:08 cgd Exp $
+ *	@(#)ansi.h	8.2 (Berkeley) 1/4/94
  */
 
 #ifndef	_ANSI_H_

@@ -1,3 +1,5 @@
+*	$NetBSD: fpsp.h,v 1.2 1994/10/26 07:49:04 cgd Exp $
+
 *	MOTOROLA MICROPROCESSOR & MEMORY TECHNOLOGY GROUP
 *	M68000 Hi-Performance Microprocessor Division
 *	M68040 Software Package 

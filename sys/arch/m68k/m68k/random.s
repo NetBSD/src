@@ -1,3 +1,5 @@
+/*	$NetBSD: random.s,v 1.4 1994/10/26 07:51:16 cgd Exp $	*/
+
 /*
  * Copyright (c) 1990,1993 The Regents of the University of California.
  * All rights reserved.

@@ -1,3 +1,5 @@
+/*	$NetBSD: profile.h,v 1.2 1994/10/26 07:50:49 cgd Exp $	*/
+
 /*
  * Copyright (c) 1992, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -30,8 +32,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	from: @(#)profile.h	8.1 (Berkeley) 6/10/93
- *	$Id: profile.h,v 1.1 1994/05/13 10:40:50 mycroft Exp $
+ *	@(#)profile.h	8.1 (Berkeley) 6/10/93
  */
 
 #define	_MCOUNT_DECL static inline void _mcount

@@ -1,3 +1,5 @@
+|	$NetBSD: copyright.s,v 1.2 1994/10/26 07:48:57 cgd Exp $
+
 .text
 .ascii	"MOTOROLA MICROPROCESSOR & MEMORY TECHNOLOGY GROUP\n"
 .ascii	"M68000 Hi-Performance Microprocessor Division\n"

@@ -1,3 +1,5 @@
+/*	$NetBSD: frame.h,v 1.8 1994/10/26 07:50:47 cgd Exp $	*/
+
 /*
  * Copyright (c) 1988 University of Utah.
  * Copyright (c) 1982, 1990, 1993
@@ -37,8 +39,7 @@
  *
  * from: Utah $Hdr: frame.h 1.8 92/12/20$
  *
- *	from: @(#)frame.h	8.1 (Berkeley) 6/10/93
- *	$Id: frame.h,v 1.7 1994/05/23 06:32:35 mycroft Exp $
+ *	@(#)frame.h	8.1 (Berkeley) 6/10/93
  */
 
 struct frame {

@@ -1,3 +1,5 @@
+/*	$NetBSD: process_machdep.c,v 1.9 1994/10/26 07:51:14 cgd Exp $	*/
+
 /*
  * Copyright (c) 1993 Christopher G. Demetriou
  * All rights reserved.
@@ -26,8 +28,6 @@
  * THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
- *
- *	$Id: process_machdep.c,v 1.8 1994/08/15 16:37:16 cgd Exp $
  */
 
 /*
