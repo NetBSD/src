@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.22.2.1 2000/11/20 20:31:19 bouyer Exp $	*/
+/*	$NetBSD: trap.c,v 1.22.2.2 2000/12/08 09:30:18 bouyer Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -31,6 +31,7 @@
  * ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
+#include "opt_altivec.h"
 #include "opt_ddb.h"
 #include "opt_ktrace.h"
 
@@ -51,7 +52,7 @@
 #include <machine/psl.h>
 #include <machine/trap.h>
 
-/* These definitions should probably be somewhere else				XXX */
+/* These definitions should probably be somewhere else			XXX */
 #define	FIRSTARG	3		/* first argument is in reg 3 */
 #define	NARGREG		8		/* 8 args are in registers */
 #define	MOREARGS(sp)	((caddr_t)((int)(sp) + 8)) /* more args go here */
@@ -68,6 +69,7 @@ trap(frame)
 	struct proc *p = curproc;
 	int type = frame->exc;
 	u_quad_t sticks;
+	int ftype, rv;
 
 	if (frame->srr1 & PSL_PR) {
 		type |= EXC_USER;
@@ -76,21 +78,23 @@ trap(frame)
 
 	switch (type) {
 	case EXC_TRC|EXC_USER:
+		KERNEL_PROC_LOCK(p);
 		frame->srr1 &= ~PSL_SE;
 		trapsignal(p, SIGTRAP, EXC_TRC);
+		KERNEL_PROC_UNLOCK(p);
 		break;
 	case EXC_DSI:
 		{
 			vm_map_t map;
 			vaddr_t va;
-			int ftype;
 			faultbuf *fb;
-			
+
+			KERNEL_LOCK(LK_CANRECURSE|LK_EXCLUSIVE);
 			map = kernel_map;
 			va = frame->dar;
 			if ((va >> ADDR_SR_SHFT) == USER_SR) {
 				sr_t user_sr;
-				
+
 				asm ("mfsr %0, %1"
 				     : "=r"(user_sr) : "K"(USER_SR));
 				va &= ADDR_PIDX | ADDR_POFF;
@@ -101,8 +105,9 @@ trap(frame)
 				ftype = VM_PROT_READ | VM_PROT_WRITE;
 			else
 				ftype = VM_PROT_READ;
-			if (uvm_fault(map, trunc_page(va), 0, ftype)
-			    == KERN_SUCCESS)
+			rv = uvm_fault(map, trunc_page(va), 0, ftype);
+			KERNEL_UNLOCK();
+			if (rv == KERN_SUCCESS)
 				return;
 			if (fb = p->p_addr->u_pcb.pcb_onfault) {
 				frame->srr0 = (*fb)[0];
@@ -117,58 +122,60 @@ trap(frame)
 		}
 		goto brain_damage;
 	case EXC_DSI|EXC_USER:
-		{
-			int ftype, rv;
-			
-			if (frame->dsisr & DSISR_STORE)
-				ftype = VM_PROT_READ | VM_PROT_WRITE;
-			else
-				ftype = VM_PROT_READ;
-			if ((rv = uvm_fault(&p->p_vmspace->vm_map,
-					    trunc_page(frame->dar), 0, ftype))
-			    == KERN_SUCCESS)
-				break;
-			if (rv == KERN_RESOURCE_SHORTAGE) {
-				printf("UVM: pid %d (%s), uid %d killed: "
-				       "out of swap\n",
-				       p->p_pid, p->p_comm,
-				       p->p_cred && p->p_ucred ?
-				       p->p_ucred->cr_uid : -1);
-				trapsignal(p, SIGKILL, EXC_DSI);
-			} else {
-				trapsignal(p, SIGSEGV, EXC_DSI);
-			}
+		KERNEL_PROC_LOCK(p);
+		if (frame->dsisr & DSISR_STORE)
+			ftype = VM_PROT_READ | VM_PROT_WRITE;
+		else
+			ftype = VM_PROT_READ;
+		if ((rv = uvm_fault(&p->p_vmspace->vm_map,
+				    trunc_page(frame->dar), 0, ftype))
+		    == KERN_SUCCESS) {
+			KERNEL_PROC_UNLOCK(p);
+			break;
 		}
+		if (rv == KERN_RESOURCE_SHORTAGE) {
+			printf("UVM: pid %d (%s), uid %d killed: "
+			       "out of swap\n",
+			       p->p_pid, p->p_comm,
+			       p->p_cred && p->p_ucred ?
+			       p->p_ucred->cr_uid : -1);
+			trapsignal(p, SIGKILL, EXC_DSI);
+		} else {
+			trapsignal(p, SIGSEGV, EXC_DSI);
+		}
+		KERNEL_PROC_UNLOCK(p);
 		break;
 	case EXC_ISI|EXC_USER:
-		{
-			int ftype;
-			
-			ftype = VM_PROT_READ | VM_PROT_EXECUTE;
-			if (uvm_fault(&p->p_vmspace->vm_map,
-				     trunc_page(frame->srr0), 0, ftype)
-			    == KERN_SUCCESS)
-				break;
+		KERNEL_PROC_LOCK(p);
+		ftype = VM_PROT_READ | VM_PROT_EXECUTE;
+		if (uvm_fault(&p->p_vmspace->vm_map,
+			     trunc_page(frame->srr0), 0, ftype)
+		    == KERN_SUCCESS) {
+			KERNEL_PROC_UNLOCK(p);
+			break;
 		}
 		trapsignal(p, SIGSEGV, EXC_ISI);
+		KERNEL_PROC_UNLOCK(p);
 		break;
 	case EXC_SC|EXC_USER:
 		{
-			struct sysent *callp;
+			const struct sysent *callp;
 			size_t argsize;
 			register_t code, error;
 			register_t *params, rval[2];
 			int nsys, n;
 			register_t args[10];
-			
+
+			KERNEL_PROC_LOCK(p);
+
 			uvmexp.syscalls++;
-			
+
 			nsys = p->p_emul->e_nsysent;
 			callp = p->p_emul->e_sysent;
-			
+
 			code = frame->fixreg[0];
 			params = frame->fixreg + FIRSTARG;
-			
+
 			switch (code) {
 			case SYS_syscall:
 				/*
@@ -218,7 +225,7 @@ trap(frame)
 #endif
 			rval[0] = 0;
 			rval[1] = frame->fixreg[FIRSTARG + 1];
-			
+
 			switch (error = (*callp->sy_call)(p, params, rval)) {
 			case 0:
 				frame->fixreg[FIRSTARG] = rval[0];
@@ -247,6 +254,7 @@ syscall_bad:
 				ktrsysret(p, code, error, rval[0]);
 #endif
 		}
+		KERNEL_PROC_UNLOCK(p);
 		break;
 
 	case EXC_FPU|EXC_USER:
@@ -256,23 +264,36 @@ syscall_bad:
 		enable_fpu(p);
 		break;
 
+#ifdef ALTIVEC
+	case EXC_VEC|EXC_USER:
+		if (vecproc)
+			save_vec(vecproc);
+		vecproc = p;
+		enable_vec(p);
+		break;
+#endif
+
 	case EXC_AST|EXC_USER:
 		/* This is just here that we trap */
 		break;
 
 	case EXC_ALI|EXC_USER:
+		KERNEL_PROC_LOCK(p);
 		if (fix_unaligned(p, frame) != 0)
 			trapsignal(p, SIGBUS, EXC_ALI);
 		else
 			frame->srr0 += 4;
+		KERNEL_PROC_UNLOCK(p);
 		break;
 
 	case EXC_PGM|EXC_USER:
 /* XXX temporarily */
+		KERNEL_PROC_LOCK(p);
 		if (frame->srr1 & 0x0002000)
 			trapsignal(p, SIGTRAP, EXC_PGM);
 		else
 			trapsignal(p, SIGILL, EXC_PGM);
+		KERNEL_PROC_UNLOCK(p);
 		break;
 
 	case EXC_MCHK:
@@ -295,7 +316,8 @@ syscall_bad:
 brain_damage:
 		printf("trap type %x at %x\n", type, frame->srr0);
 #ifdef DDB
-		Debugger();			 /* XXX temporarily */
+		if (kdb_trap(type, frame))
+			return;
 #endif
 #ifdef TRAP_PANICWAIT
 		printf("Press a key to panic.\n");
@@ -342,10 +364,15 @@ brain_damage:
 			    (int)(p->p_sticks - sticks) * psratio);
 	}
 	/*
-	 * If someone stole the fpu while we were away, disable it
+	 * If someone stole the fp or vector unit while we were away,
+	 * disable it
 	 */
 	if (p != fpuproc)
 		frame->srr1 &= ~PSL_FP;
+#ifdef ALTIVEC
+	if (p != vecproc)
+		frame->srr1 &= ~PSL_VEC;
+#endif
 	curcpu()->ci_schedstate.spc_curpriority = p->p_priority;
 }
 
@@ -356,13 +383,18 @@ child_return(arg)
 	struct proc *p = arg;
 	struct trapframe *tf = trapframe(p);
 
+	KERNEL_PROC_UNLOCK(p);
+
 	tf->fixreg[FIRSTARG] = 0;
 	tf->fixreg[FIRSTARG + 1] = 1;
 	tf->cr &= ~0x10000000;
-	tf->srr1 &= ~PSL_FP;	/* Disable FPU, as we can't be fpuproc */
+	tf->srr1 &= ~(PSL_FP|PSL_VEC);	/* Disable FP & AltiVec, as we can't be them */
 #ifdef	KTRACE
-	if (KTRPOINT(p, KTR_SYSRET))
+	if (KTRPOINT(p, KTR_SYSRET)) {
+		KERNEL_PROC_LOCK(p);
 		ktrsysret(p, SYS_fork, 0, 0);
+		KERNEL_PROC_UNLOCK(p);
+	}
 #endif
 	/* Profiling?							XXX */
 	curcpu()->ci_schedstate.spc_curpriority = p->p_priority;

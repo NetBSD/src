@@ -1,4 +1,4 @@
-/*	$NetBSD: vmparam.h,v 1.5.2.2 2000/11/22 16:01:18 bouyer Exp $	*/
+/*	$NetBSD: vmparam.h,v 1.5.2.3 2000/12/08 09:28:53 bouyer Exp $	*/
 
 /*
  * This file was taken from from mvme68k/include/vmparam.h and
@@ -152,9 +152,6 @@
 
 /* # of kernel PT pages (initial only, can grow dynamically) */
 #define VM_KERNEL_PT_PAGES	((vsize_t)2)		/* XXX: SYSPTSIZE */
-
-/* pcb base */
-#define	pcbb(p)		((u_int)(p)->p_addr)
 
 /*
  * Constants which control the way the VM system deals with memory segments.

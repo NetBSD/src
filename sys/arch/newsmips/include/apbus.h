@@ -1,4 +1,4 @@
-/*	$NetBSD: apbus.h,v 1.2.6.2 2000/11/20 20:17:23 bouyer Exp $	*/
+/*	$NetBSD: apbus.h,v 1.2.6.3 2000/12/08 09:28:51 bouyer Exp $	*/
 
 /*-
  * Copyright (C) 1999 SHIMIZU Ryo.  All rights reserved.
@@ -71,7 +71,7 @@ struct apbus_dev {
 
 struct apbus_sysinfo {
 	int	apbsi_revision;
-	int	(*apbsi_call)();	/* apcall entry */
+	int	(*apbsi_call)(int, ...);/* apcall entry */
 	int	apbsi_errno;		/* errno from apcall? */
 	void	*apbsi_bootstart;	/* entry of primary boot */
 	void	*apbsi_bootend;

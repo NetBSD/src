@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.S,v 1.11.8.2 2000/11/22 16:01:21 bouyer Exp $	*/
+/*	$NetBSD: locore.S,v 1.11.8.3 2000/12/08 09:30:12 bouyer Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -49,6 +49,9 @@
  * Some instructions gas doesn't understand (yet?)
  */
 #define	bdneq	bdnzf 2,
+
+#define	INTSTK	(8*1024)	/* 8K interrupt stack */
+#define	SPILLSTK 1024		/* 1K spill stack */
 
 /*
  * Globals

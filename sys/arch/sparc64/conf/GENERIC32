@@ -1,8 +1,8 @@
-# 	$NetBSD: GENERIC32,v 1.9.2.3 2000/11/22 16:01:44 bouyer Exp $
+# 	$NetBSD: GENERIC32,v 1.9.2.4 2000/12/08 09:30:32 bouyer Exp $
 
 include "arch/sparc64/conf/std.sparc64"
 
-#ident 		"GENERIC-$Revision: 1.9.2.3 $"
+#ident 		"GENERIC-$Revision: 1.9.2.4 $"
 
 maxusers	64
 
@@ -12,7 +12,7 @@ maxusers	64
 # Options for variants of the Sun SPARC architecure.
 # We currently support three architecture types; at least one is required.
 options 	SUN4U		# sun4u - Ultra 140 and 170
-options 	TRAPWIN
+#options 	TRAPWIN
 options 	__ELF__		# we use elf 
 #options 	_LP64		# we're using a 64-bit compiler
 

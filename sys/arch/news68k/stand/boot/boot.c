@@ -1,4 +1,4 @@
-/*	$NetBSD: boot.c,v 1.2.6.2 2000/11/20 20:16:18 bouyer Exp $	*/
+/*	$NetBSD: boot.c,v 1.2.6.3 2000/12/08 09:28:48 bouyer Exp $	*/
 
 /*-
  * Copyright (C) 1999 Izumi Tsutsui.  All rights reserved.
@@ -102,8 +102,14 @@ boot(d4, d5, d6, d7)
 		if (fd != -1)
 			break;
 	}
-	if (fd == -1)
+	if (fd == -1) {
+#if 0 /* bootxx() may be overrided by loaded kernel */
 		return;
+#else
+		rom_halt();
+		/* NOTREACHED */
+#endif
+	}
 
 	DPRINTF("entry = 0x%x\n", (int)marks[MARK_ENTRY]);
 	DPRINTF("ssym = 0x%x\n", (int)marks[MARK_SYM]);

@@ -1,4 +1,4 @@
-/* $NetBSD: dec_3100.c,v 1.12.2.1 2000/11/20 20:20:35 bouyer Exp $ */
+/* $NetBSD: dec_3100.c,v 1.12.2.2 2000/12/08 09:30:15 bouyer Exp $ */
 
 /*
  * Copyright (c) 1998 Jonathan Stone.  All rights reserved.
@@ -105,6 +105,8 @@ static void	dec_3100_intr_establish __P((struct device *, void *,
 void
 dec_3100_init()
 {
+	const char *submodel;
+
 	platform.iobus = "baseboard";
 	platform.bus_reset = dec_3100_bus_reset;
 	platform.cons_init = dec_3100_cons_init;
@@ -123,7 +125,11 @@ dec_3100_init()
 	/* calibrate cpu_mhz value */
 	mc_cpuspeed(MIPS_PHYS_TO_KSEG1(KN01_SYS_CLOCK), MIPS_INT_MASK_3);
 
-	sprintf(cpu_model, "DECstation %d100 (PMAX)", cpu_mhz < 15 ? 2 : 3);
+	if (cpu_mhz < 15)
+		submodel = "2100 (PMIN)";
+	else
+		submodel = "3100 (PMAX)";
+	sprintf(cpu_model, "DECstation %s", submodel);
 }
 
 /*

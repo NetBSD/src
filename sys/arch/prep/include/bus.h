@@ -1,4 +1,4 @@
-/*	$NetBSD: bus.h,v 1.3.2.2 2000/11/20 20:22:57 bouyer Exp $	*/
+/*	$NetBSD: bus.h,v 1.3.2.3 2000/12/08 09:30:19 bouyer Exp $	*/
 /*	$OpenBSD: bus.h,v 1.1 1997/10/13 10:53:42 pefo Exp $	*/
 
 /*-
@@ -125,7 +125,16 @@
 typedef u_int32_t bus_addr_t;
 typedef u_int32_t bus_size_t;
 typedef	u_int32_t bus_space_handle_t;
-typedef	u_int32_t bus_space_tag_t;
+typedef	const struct prep_bus_space {
+	u_int32_t pbs_type;
+	bus_addr_t pbs_base;
+	bus_addr_t pbs_limit;
+} *bus_space_tag_t;
+
+extern const struct prep_bus_space prep_io_space_tag;
+extern const struct prep_bus_space prep_isa_io_space_tag;
+extern const struct prep_bus_space prep_mem_space_tag;
+extern const struct prep_bus_space prep_isa_mem_space_tag;
 
 #define BUS_SPACE_MAP_CACHEABLE         0x01
 #define BUS_SPACE_MAP_LINEAR            0x02

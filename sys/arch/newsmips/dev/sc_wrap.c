@@ -1,4 +1,4 @@
-/*	$NetBSD: sc_wrap.c,v 1.11.2.1 2000/11/20 20:17:21 bouyer Exp $	*/
+/*	$NetBSD: sc_wrap.c,v 1.11.2.2 2000/12/08 09:28:51 bouyer Exp $	*/
 
 /*
  * This driver is slow!  Need to rewrite.
@@ -362,7 +362,7 @@ sc_done(scb)
 	xs->status = 0;
 
 	if (scb->istatus != INST_EP) {
-		if (scb->istatus == INST_EP|INST_TO)
+		if (scb->istatus == (INST_EP|INST_TO))
 			xs->error = XS_SELTIMEOUT;
 		else {
 			printf("SC(i): [istatus=0x%x, tstatus=0x%x]\n",

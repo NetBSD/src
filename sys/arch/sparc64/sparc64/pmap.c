@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.44.2.2 2000/11/22 16:01:56 bouyer Exp $	*/
+/*	$NetBSD: pmap.c,v 1.44.2.3 2000/12/08 09:30:41 bouyer Exp $	*/
 #undef	NO_VCACHE /* Don't forget the locked TLB in dostart */
 #define	HWREF
 /*
@@ -1477,7 +1477,7 @@ pmap_growkernel(maxkvaddr)
 	s = splimp();
 	simple_lock(&pm->pm_lock);
 	DPRINTF(PDB_GROW, 
-		("pmap_growkernel(%p...%p)\n", kbreak, maxkvaddr));
+		("pmap_growkernel(%lx...%lx)\n", kbreak, maxkvaddr));
 	/* Align with the start of a page table */
 	for (kbreak &= (-1<<PDSHIFT); kbreak < maxkvaddr;
 	     kbreak += (1<<PDSHIFT)) {
@@ -1486,7 +1486,7 @@ pmap_growkernel(maxkvaddr)
 		pg = 0;
 		while (pseg_set(pm, kbreak, 0, pg) == 1) {
 			DPRINTF(PDB_GROW, 
-				("pmap_growkernel: extending %p\n", kbreak));
+				("pmap_growkernel: extending %lx\n", kbreak));
 			pg = 0;
 			if (pmap_initialized ||
 			    !uvm_page_physget(&pg)) {
@@ -1573,7 +1573,7 @@ pmap_pinit(pm)
 	}
 #ifdef DEBUG
 	if (pmapdebug & PDB_CREATE)
-		printf("pmap_pinit(%x): ctx %d\n", pm, pm->pm_ctx);
+		printf("pmap_pinit(%p): ctx %d\n", pm, pm->pm_ctx);
 #endif
 	simple_unlock(&pm->pm_lock);
 }
@@ -1649,7 +1649,7 @@ pmap_release(pm)
 
 #ifdef DEBUG
 							printf("pmap_release: pm=%p page %llx still in use\n", pm, 
-							       ((u_int64_t)i<<STSHIFT)|((u_int64_t)k<<PDSHIFT)|((u_int64_t)j<<PTSHIFT));
+							       (unsigned long long)(((u_int64_t)i<<STSHIFT)|((u_int64_t)k<<PDSHIFT)|((u_int64_t)j<<PTSHIFT)));
 							Debugger();
 #endif
 							/* Save REF/MOD info */
@@ -1712,8 +1712,9 @@ pmap_copy(dst_pmap, src_pmap, dst_addr, len, src_addr)
 {
 #ifdef DEBUG
 	if (pmapdebug&PDB_CREATE)
-		printf("pmap_copy(%p, %p, %p, %x, %p)\n",
-		       dst_pmap, src_pmap, dst_addr, len, src_addr);
+		printf("pmap_copy(%p, %p, %p, %lx, %p)\n",
+		       dst_pmap, src_pmap, (void *)(u_long)dst_addr,
+		       (u_long)len, (void *)(u_long)src_addr);
 #endif
 }
 
@@ -1744,6 +1745,9 @@ pmap_collect(pm)
 	/* This is a good place to scan the pmaps for page tables with
 	 * no valid mappings in them and free them. */
 	
+	/* NEVER GARBAGE COLLECT THE KERNEL PMAP */
+	if (pm == pmap_kernel()) return;
+
 	s = splimp();
 	simple_lock(&pm->pm_lock);
 	for (i=0; i<STSZ; i++) {
@@ -2003,7 +2007,7 @@ pmap_kremove(va, size)
 #ifdef DEBUG
 	if (pmapdebug & PDB_DEMAP) {
 		printf("pmap_kremove: start %p size %lx\n",
-		       va, size);
+		    (void *)(u_long)va, size);
 	}
 #endif
 	while (size >= NBPG) {
@@ -2012,7 +2016,7 @@ pmap_kremove(va, size)
 		 */
 #ifdef DIAGNOSTIC
 		if (pm == pmap_kernel() && (va >= ktext && va < kdata+4*MEG))
-			panic("pmap_kremove: va=%08x in locked TLB\r\n", va);
+			panic("pmap_kremove: va=%08x in locked TLB\r\n", (u_int)va);
 #endif
 		/* Shouldn't need to do this if the entry's not valid. */
 		if ((data = pseg_get(pm, va))) {
@@ -2416,7 +2420,8 @@ pmap_remove(pm, va, endva)
 	simple_lock(&pm->pm_lock);
 #ifdef DEBUG
 	if (pmapdebug & PDB_REMOVE)
-		printf("pmap_remove(pm=%x, va=%p, endva=%p):", pm, va, endva);
+		printf("pmap_remove(pm=%p, va=%p, endva=%p):", pm,
+		    (void *)(u_long)va, (void *)(u_long)endva);
 	remove_stats.calls ++;
 #endif
 
@@ -2427,7 +2432,7 @@ pmap_remove(pm, va, endva)
 		 */
 #ifdef DIAGNOSTIC
 		if( pm == pmap_kernel() && va >= ktext && va < kdata+4*MEG ) 
-			panic("pmap_remove: va=%08x in locked TLB\r\n", va);
+			panic("pmap_remove: va=%08x in locked TLB\r\n", (u_int)va);
 #endif
 		/* We don't really need to do this if the valid bit is not set... */
 		if ((data = pseg_get(pm, va))) {
@@ -2550,18 +2555,18 @@ pmap_protect(pm, sva, eva, prot)
 
 #ifdef DEBUG
 		if (pmapdebug & PDB_CHANGEPROT)
-			printf("pmap_protect: va %p\n", sva);
+			printf("pmap_protect: va %p\n", (void *)(u_long)sva);
 #endif
 		if (((data = pseg_get(pm, sva))&TLB_V) /*&& ((data&TLB_TSB_LOCK) == 0)*/) {
 			pa = data&TLB_PA_MASK;
 #ifdef DEBUG
 			if (pmapdebug & (PDB_CHANGEPROT|PDB_REF))
 				printf("pmap_protect: va=%08x data=%x:%08x seg=%08x pte=%08x\r\n", 
-					    sva, (int)(pa>>32), (int)pa, (int)va_to_seg(sva), (int)va_to_pte(sva));
+					    (u_int)sva, (int)(pa>>32), (int)pa, (int)va_to_seg(sva), (int)va_to_pte(sva));
 /* Catch this before the assertion */
 			if (data & TLB_NFO) {
-				printf("pmap_protect: pm=%x NFO mapping va=%x data=%x:%x\n",
-				       pm, sva, (int)(data>>32), (int)data);
+				printf("pmap_protect: pm=%p  NFO mapping va=%x data=%x:%x\n",
+				       pm, (u_int)sva, (int)(data>>32), (int)data);
 				Debugger();
 			}
 #endif
@@ -2620,7 +2625,7 @@ pmap_extract(pm, va, pap)
 		pa = (paddr_t) (kdata - kdata + va);
 #ifdef DEBUG
 		if (pmapdebug & PDB_EXTRACT) {
-			printf("pmap_extract: va=%x pa=%lx\n", va, (long)pa);
+			printf("pmap_extract: va=%lx pa=%llx\n", (u_long)va, (unsigned long long)pa);
 		}
 #endif
 	} else if( pm == pmap_kernel() && va >= ktext && va < ektext ) {
@@ -2628,7 +2633,8 @@ pmap_extract(pm, va, pap)
 		pa = (paddr_t) (ktextp - ktext + va);
 #ifdef DEBUG
 		if (pmapdebug & PDB_EXTRACT) {
-			printf("pmap_extract: va=%x pa=%lx\n", va, (long)pa);
+			printf("pmap_extract: va=%lx pa=%llx\n",
+			    (u_long)va, (unsigned long long)pa);
 		}
 #endif
 	} else {
@@ -2640,10 +2646,10 @@ pmap_extract(pm, va, pap)
 #ifdef DEBUG
 		if (pmapdebug & PDB_EXTRACT) {
 			pa = ldxa((vaddr_t)&pm->pm_segs[va_to_seg(va)], ASI_PHYS_CACHED);
-			printf("pmap_extract: va=%p segs[%ld]=%lx", va, (long)va_to_seg(va), (long)pa);
+			printf("pmap_extract: va=%p segs[%ld]=%llx", (void *)(u_long)va, (long)va_to_seg(va), (unsigned long long)pa);
 			if (pa) {
 				pa = (paddr_t)ldxa((vaddr_t)&((paddr_t*)(u_long)pa)[va_to_dir(va)], ASI_PHYS_CACHED);
-				printf(" segs[%ld][%ld]=%lx", va_to_seg(va), (long)va_to_dir(va), (long)pa);
+				printf(" segs[%ld][%ld]=%lx", (long)va_to_seg(va), (long)va_to_dir(va), (long)pa);
 			}
 			if (pa)	{
 				pa = (paddr_t)ldxa((vaddr_t)&((paddr_t*)(u_long)pa)[va_to_pte(va)], ASI_PHYS_CACHED);
@@ -2883,13 +2889,13 @@ pmap_clear_modify(pg)
 	
 #ifdef DEBUG
 	if (pmapdebug & (PDB_CHANGEPROT|PDB_REF))
-		printf("pmap_clear_modify(%p)\n", pa);
+		printf("pmap_clear_modify(%p)\n", (void *)pa);
 #endif
 
 	if (!IS_VM_PHYSADDR(pa)) {
 		pv_check();
 #ifdef DEBUG
-		printf("pmap_clear_modify(%p): page not managed\n", pa);
+		printf("pmap_clear_modify(%p): page not managed\n", (void *)pa);
 		Debugger();
 #endif
 		/* We always return 0 for I/O mappings */
@@ -2983,12 +2989,12 @@ pmap_clear_reference(pg)
 
 #ifdef DEBUG
 	if (pmapdebug & (PDB_CHANGEPROT|PDB_REF))
-		printf("pmap_clear_reference(%p)\n", pa);
+		printf("pmap_clear_reference(%p)\n", (void *)pa);
 #endif
 	if (!IS_VM_PHYSADDR(pa)) {
 		pv_check();
 #ifdef DEBUG
-		printf("pmap_clear_reference(%p): page not managed\n", pa);
+		printf("pmap_clear_reference(%p): page not managed\n", (void *)pa);
 		Debugger();
 #endif
 		return (changed);
@@ -3020,8 +3026,8 @@ pmap_clear_reference(pg)
 			data = pseg_get(pv->pv_pmap, pv->pv_va&PV_VAMASK);
 #ifdef DEBUG
 			if (pmapdebug & PDB_CHANGEPROT)
-				printf("clearing ref pm:%p va:%p ctx:%x data:%x:%x\n", pv->pv_pmap,
-				       pv->pv_va, pv->pv_pmap->pm_ctx, (int)(data>>32), (int)data);
+				printf("clearing ref pm:%p va:%p ctx:%lx data:%x:%x\n", pv->pv_pmap,
+				       (void *)(u_long)pv->pv_va, (u_long)pv->pv_pmap->pm_ctx, (int)(data>>32), (int)data);
 #endif
 #ifdef HWREF
 			if (data & TLB_ACCESS)
@@ -3088,7 +3094,7 @@ pmap_is_modified(pg)
 	if (!IS_VM_PHYSADDR(pa)) {
 		pv_check();
 #ifdef DEBUG
-		printf("pmap_is_modified(%p): page not managed\n", pa);
+		printf("pmap_is_modified(%p): page not managed\n", (void *)pa);
 		Debugger();
 #endif
 		return 0;
@@ -3124,7 +3130,7 @@ pmap_is_modified(pg)
 
 #ifdef DEBUG
 	if (pmapdebug & (PDB_CHANGEPROT|PDB_REF)) {
-		printf("pmap_is_modified(%p) = %d\n", pa, i);
+		printf("pmap_is_modified(%p) = %d\n", (void *)pa, i);
 		/* if (i) Debugger(); */
 	}
 #endif
@@ -3142,7 +3148,7 @@ pmap_is_referenced(pg)
 
 	if (!IS_VM_PHYSADDR(pa)) {
 #ifdef DEBUG
-		printf("pmap_is_referenced(%p): page not managed\n", pa);
+		printf("pmap_is_referenced(%p): page not managed\n", (void *)pa);
 		Debugger();
 #endif
 		return 0;
@@ -3176,7 +3182,7 @@ pmap_is_referenced(pg)
 
 #ifdef DEBUG
 	if (pmapdebug & (PDB_CHANGEPROT|PDB_REF)) {
-		printf("pmap_is_referenced(%p) = %d\n", pa, i);
+		printf("pmap_is_referenced(%p) = %d\n", (void *)pa, i);
 		/* if (i) Debugger(); */
 	}
 #endif
@@ -3253,12 +3259,12 @@ pmap_page_protect(pg, prot)
 
 #ifdef DEBUG
 	if (pmapdebug & PDB_CHANGEPROT)
-		printf("pmap_page_protect: pa %p prot %x\n", pa, prot);
+		printf("pmap_page_protect: pa %p prot %x\n", (void *)pa, prot);
 #endif
 
 	if (!IS_VM_PHYSADDR(pa)) {
 #ifdef DEBUG
-		printf("pmap_page_protect(%p): page unmanaged\n", pa);
+		printf("pmap_page_protect(%p): page unmanaged\n", (void *)(u_long)pa);
 		Debugger();
 #endif
 		pv_check();
@@ -3295,7 +3301,7 @@ pmap_page_protect(pg, prot)
 #ifdef DEBUG
 				if (pmapdebug & (PDB_CHANGEPROT|PDB_REF)) {
 					printf("pmap_page_protect: RO va %p of pa %p...\n",
-					       pv->pv_va, pa);
+					    (void *)(u_long)pv->pv_va, (void *)(u_long)pa);
 				}
 #if 0
 				if (!pv->pv_pmap->pm_segs[va_to_seg(pv->pv_va&PV_VAMASK)]) {
@@ -3352,7 +3358,7 @@ pmap_page_protect(pg, prot)
 #ifdef DEBUG
 			if (pmapdebug & (PDB_CHANGEPROT|PDB_REF|PDB_REMOVE)) {
 				printf("pmap_page_protect: demap va %p of pa %p in pmap %p...\n",
-				       npv->pv_va, (long)pa, npv->pv_pmap);
+				       (void *)(u_long)npv->pv_va, (void *)(u_long)pa, npv->pv_pmap);
 			}
 #if 0
 			if (!npv->pv_pmap->pm_segs[va_to_seg(npv->pv_va&PV_VAMASK)]) {
@@ -3374,7 +3380,7 @@ pmap_page_protect(pg, prot)
 			if (data & TLB_TSB_LOCK) {
 #ifdef DIAGNOSTIC
 				printf("pmap_page_protect: wired page pm %p va %p not removed\n",
-				       npv->pv_pmap, npv->pv_va);
+				       npv->pv_pmap, (void *)(u_long)npv->pv_va);
 				printf("vm wire count %d\n", 
 					PHYS_TO_VM_PAGE(pa)->wire_count);
 				continue;
@@ -3414,7 +3420,7 @@ pmap_page_protect(pg, prot)
 #ifdef DEBUG
 			if (pmapdebug & (PDB_CHANGEPROT|PDB_REF|PDB_REMOVE)) {
 				printf("pmap_page_protect: demap va %p of pa %lx from pm %p...\n",
-				       pv->pv_va, (long)pa, pv->pv_pmap);
+				       (void *)(u_long)pv->pv_va, (long)pa, pv->pv_pmap);
 			}
 #endif
 			data = pseg_get(pv->pv_pmap, pv->pv_va&PV_VAMASK);
@@ -3426,7 +3432,7 @@ pmap_page_protect(pg, prot)
 			if (data & TLB_TSB_LOCK) {
 #ifdef DIAGNOSTIC
 				printf("pmap_page_protect: Removing wired page pm %p va %p\n",
-				       pv->pv_pmap, pv->pv_va);
+				       (void *)(u_long)pv->pv_pmap, (void *)(u_long)pv->pv_va);
 #endif			
 			}
 			if (pseg_set(pv->pv_pmap, pv->pv_va&PV_VAMASK, 0, 0)) {
@@ -3568,7 +3574,8 @@ ctx_free(pm)
 	if (ctxbusy[oldctx] != pm->pm_physaddr) {
 		printf("ctx_free: freeing someone esle's context\n "
 		       "ctxbusy[%d] = %p, pm(%p)->pm_ctx = %p\n", 
-		       oldctx, ctxbusy[oldctx], pm, pm->pm_physaddr);
+		       oldctx, (void *)(u_long)ctxbusy[oldctx], pm,
+		       (void *)(u_long)pm->pm_physaddr);
 		Debugger();
 	}
 #endif
@@ -3699,14 +3706,16 @@ pmap_remove_pv(pmap, va, pa)
 
 #ifdef DEBUG
 	if (pmapdebug & (PDB_REMOVE))
-		printf("pmap_remove_pv(pm=%p, va=%p, pa=%lx)\n", pmap, va, (long)pa);
+		printf("pmap_remove_pv(pm=%p, va=%p, pa=%llx)\n", pmap,
+		    (void *)(u_long)va, (unsigned long long)pa);
 #endif
 	/*
 	 * Remove page from the PV table (raise IPL since we
 	 * may be called at interrupt time).
 	 */
 	if (!IS_VM_PHYSADDR(pa)) {
-		printf("pmap_remove_pv(): %p not managed\n", pa);
+		printf("pmap_remove_pv(): %llx not managed\n",
+		    (unsigned long long)pa);
 		pv_check();
 		return;
 	}
@@ -3752,7 +3761,7 @@ pmap_remove_pv(pmap, va, pa)
 		 */
 		return; 
 #ifdef DIAGNOSTIC
-		printf("pmap_remove_pv(%x, %x, %x) not found\n", pmap, va, pa);
+		printf("pmap_remove_pv(%lx, %x, %x) not found\n", (u_long)pmap, (u_int)va, (u_int)pa);
 		
 		Debugger();
 		splx(s);
@@ -3884,7 +3893,7 @@ vm_page_free1(mem)
 {
 	if (mem->flags != (PG_CLEAN|PG_FAKE)) {
 		printf("Freeing invalid page %p\n", mem);
-		printf("pa = %llx\n", (paddr_t)VM_PAGE_TO_PHYS(mem));
+		printf("pa = %llx\n", (unsigned long long)VM_PAGE_TO_PHYS(mem));
 		Debugger();
 		return;
 	}
@@ -3911,8 +3920,9 @@ db_dump_pv(addr, have_addr, count, modif)
 	}
 
 	for (pv = pa_to_pvh(addr); pv; pv = pv->pv_next)
-		db_printf("pv@%p: next=%p pmap=%p va=0x%x\n",
-			  pv, pv->pv_next, pv->pv_pmap, pv->pv_va);
+		db_printf("pv@%p: next=%p pmap=%p va=0x%llx\n",
+			  pv, pv->pv_next, pv->pv_pmap,
+			  (unsigned long long)pv->pv_va);
 	
 }
 
@@ -3946,7 +3956,7 @@ pmap_testout()
 	ref = pmap_clear_reference(pg);
 	mod = pmap_clear_modify(pg);
 	printf("Clearing page va %p pa %lx: ref %d, mod %d\n",
-	       va, (long)pa,
+	       (void *)(u_long)va, (long)pa,
 	       ref, mod);
 
 	/* Check it's properly cleared */
@@ -3967,7 +3977,7 @@ pmap_testout()
 	ref = pmap_clear_reference(pg);
 	mod = pmap_clear_modify(pg);
 	printf("Clearing page va %p pa %lx: ref %d, mod %d\n",
-	       va, (long)pa,
+	       (void *)(u_long)va, (long)pa,
 	       ref, mod);
 	
 	/* Modify page */
@@ -3982,7 +3992,7 @@ pmap_testout()
 	ref = pmap_clear_reference(pg);
 	mod = pmap_clear_modify(pg);
 	printf("Clearing page va %p pa %lx: ref %d, mod %d\n",
-	       va, (long)pa,
+	       (void *)(u_long)va, (long)pa,
 	       ref, mod);
 
 	/* Check it's properly cleared */
@@ -4010,7 +4020,7 @@ pmap_testout()
 	ref = pmap_clear_reference(pg);
 	mod = pmap_clear_modify(pg);
 	printf("Clearing page va %p pa %lx: ref %d, mod %d\n",
-	       va, (long)pa,
+	       (void *)(u_long)va, (long)pa,
 	       ref, mod);
 
 	/* Modify page */
@@ -4033,7 +4043,7 @@ pmap_testout()
 	ref = pmap_clear_reference(pg);
 	mod = pmap_clear_modify(pg);
 	printf("Clearing page va %p pa %lx: ref %d, mod %d\n",
-	       va, (long)pa,
+	       (void *)(u_long)va, (long)pa,
 	       ref, mod);
 
 	/* Modify page */
@@ -4056,7 +4066,7 @@ pmap_testout()
 	ref = pmap_clear_reference(pg);
 	mod = pmap_clear_modify(pg);
 	printf("Clearing page va %p pa %lx: ref %d, mod %d\n",
-	       va, (long)pa,
+	       (void *)(u_long)va, (long)pa,
 	       ref, mod);
 
 
@@ -4080,22 +4090,20 @@ pmap_testout()
 	ref = pmap_clear_reference(pg);
 	mod = pmap_clear_modify(pg);
 	printf("Clearing page va %p pa %lx: ref %d, mod %d\n",
-	       va, (long)pa,
+	       (void *)(u_long)va, (long)pa,
 	       ref, mod);
 
 	/* Unmap page */
 	pmap_remove(pmap_kernel(), va, va+1);
 	ref = pmap_is_referenced(pg);
 	mod = pmap_is_modified(pg);
-	printf("Unmapped page: ref %d, mod %d\n",
-	       ref, mod);
+	printf("Unmapped page: ref %d, mod %d\n", ref, mod);
 
 	/* Now clear reference and modify */
 	ref = pmap_clear_reference(pg);
 	mod = pmap_clear_modify(pg);
 	printf("Clearing page va %p pa %lx: ref %d, mod %d\n",
-	       va, (long)pa,
-	       ref, mod);
+	       (void *)(u_long)va, (long)pa, ref, mod);
 
 	/* Check it's properly cleared */
 	ref = pmap_is_referenced(pg);

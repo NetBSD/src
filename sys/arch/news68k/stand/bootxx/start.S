@@ -1,4 +1,4 @@
-/*	$NetBSD: start.S,v 1.1.8.2 2000/11/20 20:16:19 bouyer Exp $	*/
+/*	$NetBSD: start.S,v 1.1.8.3 2000/12/08 09:28:48 bouyer Exp $	*/
 
 /*-
  * Copyright (C) 1999 Izumi Tsutsui. All rights reserved.
@@ -52,5 +52,6 @@ ASENTRY_NOPROFILE(start)
 	movl	%d4,%sp@-	| %d4: physmem
 
 	jbsr	_C_LABEL(bootxx)
+	lea	%sp@(16),%sp
 
-	jra	_ASM_LABEL(halt)
+	jra	_C_LABEL(rom_halt)

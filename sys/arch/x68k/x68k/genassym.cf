@@ -1,4 +1,4 @@
-#	$NetBSD: genassym.cf,v 1.10.2.1 2000/11/20 20:30:23 bouyer Exp $
+#	$NetBSD: genassym.cf,v 1.10.2.2 2000/12/08 09:30:56 bouyer Exp $
 
 #
 # Copyright (c) 1982, 1990, 1993
@@ -194,6 +194,12 @@ define	FR_SP			offsetof(struct frame, f_regs[15])
 define	FR_HW			offsetof(struct frame, f_sr)
 define	FR_ADJ			offsetof(struct frame, f_stackadj)
 define	FR_SIZE			sizeof(struct trapframe)
+
+# FP frame offsets
+define	FPF_REGS		offsetof(struct fpframe, fpf_regs[0])
+define	FPF_FPCR		offsetof(struct fpframe, fpf_fpcr)
+define	FPF_FPSR		offsetof(struct fpframe, fpf_fpsr)
+define	FPF_FPI			offsetof(struct fpframe, fpf_fpiar)
 
 # system calls
 define	SYS_exit		SYS_exit

@@ -1,4 +1,4 @@
-/*	$NetBSD: trap_subr.S,v 1.1.2.2 2000/11/22 16:01:30 bouyer Exp $	*/
+/*	$NetBSD: trap_subr.S,v 1.1.2.3 2000/12/08 09:30:18 bouyer Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -47,8 +47,6 @@
 /*
  * XXX Interrupt and spill stacks need to be per-CPU.
  */
-
-#define	INTSTK	(8*1024)	/* 8K interrupt stack */
 	.data
 	.align	4
 intstk:
@@ -56,8 +54,6 @@ intstk:
 
 GLOBAL(intr_depth)
 	.long	-1		/* in-use marker */
-
-#define	SPILLSTK 1024		/* 1K spill stack */
 
 	.comm	spillstk,SPILLSTK,8
 

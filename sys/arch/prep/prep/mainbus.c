@@ -1,4 +1,4 @@
-/*	$NetBSD: mainbus.c,v 1.1.6.2 2000/11/20 20:23:06 bouyer Exp $	*/
+/*	$NetBSD: mainbus.c,v 1.1.6.3 2000/12/08 09:30:24 bouyer Exp $	*/
 
 
 /*
@@ -98,8 +98,8 @@ mainbus_attach(parent, self, aux)
 	 */
 #if NPCI > 0
 	mba.mba_pba.pba_busname = "pci";
-	mba.mba_pba.pba_iot = (bus_space_tag_t)PREP_BUS_SPACE_IO;
-	mba.mba_pba.pba_memt = (bus_space_tag_t)PREP_BUS_SPACE_MEM;
+	mba.mba_pba.pba_iot = &prep_io_space_tag;
+	mba.mba_pba.pba_memt = &prep_mem_space_tag;
 	mba.mba_pba.pba_dmat = &pci_bus_dma_tag;
 	mba.mba_pba.pba_bus = 0;
 	mba.mba_pba.pba_flags = PCI_FLAGS_IO_ENABLED |

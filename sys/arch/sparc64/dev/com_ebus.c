@@ -1,4 +1,4 @@
-/*	$NetBSD: com_ebus.c,v 1.2.2.3 2000/11/22 16:01:45 bouyer Exp $	*/
+/*	$NetBSD: com_ebus.c,v 1.2.2.4 2000/12/08 09:30:32 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000 Matthew R. Green
@@ -118,7 +118,6 @@ com_ebus_attach(parent, self, aux)
 	struct com_softc *sc = (void *)self;
 	struct ebus_attach_args *ea = aux;
 	struct kbd_ms_tty_attach_args kma;
-	struct consdev *old_cn = cn_tab;
 #if (NKBD > 0) || (NMS > 0)
 	int maj;
 #endif

@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.S,v 1.2.6.2 2000/11/20 20:16:18 bouyer Exp $	*/
+/*	$NetBSD: locore.S,v 1.2.6.3 2000/12/08 09:28:48 bouyer Exp $	*/
 
 /*-
  * Copyright (C) 1999 Izumi Tsutsui.  All rights reserved.
@@ -27,7 +27,8 @@
  */
 
 #include <m68k/asm.h>
-#include <m68k/cpu.h>
+
+	.set	IC_CLEAR,0x9
 
 	.text
 	.align	4
@@ -42,9 +43,8 @@ ASENTRY_NOPROFILE(start)
 	dbra	%d0,1b
 
 	jra	_C_LABEL(boot)
-	jra	_ASM_LABEL(halt)
 
 ENTRY_NOPROFILE(ICIA)
-	movl	#0x9, %d0	| IC_CLEAR
-	movc	%d0, %cacr
+	movl	#IC_CLEAR,%d0
+	movc	%d0,%cacr
 	rts

@@ -1,4 +1,4 @@
-/*	$NetBSD: iommu.c,v 1.3.2.1 2000/11/20 20:26:43 bouyer Exp $	*/
+/*	$NetBSD: iommu.c,v 1.3.2.2 2000/12/08 09:30:33 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000 Matthew R. Green
@@ -215,10 +215,12 @@ iommu_init(name, is, tsbsize)
 		/* Probe the iommu */
 		struct iommureg *regs = is->is_iommu;
 
-		printf("iommu regs at: cr=%lx tsb=%lx flush=%lx\n", &regs->iommu_cr,
-		       &regs->iommu_tsb, &regs->iommu_flush);
-		printf("iommu cr=%qx tsb=%qx\n", regs->iommu_cr, regs->iommu_tsb);
-		printf("TSB base %p phys %qx\n", (void *)is->is_tsb, (u_int64_t)is->is_ptsb);
+		printf("iommu regs at: cr=%lx tsb=%lx flush=%lx\n",
+		    (u_long)&regs->iommu_cr,
+		    (u_long)&regs->iommu_tsb,
+		    (u_long)&regs->iommu_flush);
+		printf("iommu cr=%llx tsb=%llx\n", (unsigned long long)regs->iommu_cr, (unsigned long long)regs->iommu_tsb);
+		printf("TSB base %p phys %llx\n", (void *)is->is_tsb, (unsigned long long)is->is_ptsb);
 		delay(1000000); /* 1 s */
 	}
 #endif
@@ -308,14 +310,14 @@ iommu_enter(is, va, pa, flags)
 		iommu_strbuf_flush(is);
 	}
 	DPRINTF(IDB_IOMMU, ("Clearing TSB slot %d for va %p\n", 
-		       (int)IOTSBSLOT(va,is->is_tsbsize), va));
+		       (int)IOTSBSLOT(va,is->is_tsbsize), (void *)(u_long)va));
 	is->is_tsb[IOTSBSLOT(va,is->is_tsbsize)] = tte;
 	bus_space_write_8(is->is_bustag, (bus_space_handle_t)(u_long)
 			  &is->is_iommu->iommu_flush, 0, va);
 	DPRINTF(IDB_IOMMU, ("iommu_enter: va %lx pa %lx TSB[%lx]@%p=%lx\n",
-		       va, (long)pa, IOTSBSLOT(va,is->is_tsbsize), 
-		       &is->is_tsb[IOTSBSLOT(va,is->is_tsbsize)],
-		       (long)tte));
+		       va, (long)pa, (u_long)IOTSBSLOT(va,is->is_tsbsize), 
+		       (void *)(u_long)&is->is_tsb[IOTSBSLOT(va,is->is_tsbsize)],
+		       (u_long)tte));
 }
 
 /*
@@ -334,25 +336,25 @@ iommu_remove(is, va, len)
 
 #ifdef DIAGNOSTIC
 	if (va < is->is_dvmabase)
-		panic("iommu_remove: va 0x%lx not in DVMA space", (long)va);
+		panic("iommu_remove: va 0x%lx not in DVMA space", (u_long)va);
 	if ((long)(va + len) < (long)va)
 		panic("iommu_remove: va 0x%lx + len 0x%lx wraps", 
 		      (long) va, (long) len);
 	if (len & ~0xfffffff) 
-		panic("iommu_remove: rediculous len 0x%lx", (long)len);
+		panic("iommu_remove: rediculous len 0x%lx", (u_long)len);
 #endif
 
 	va = trunc_page(va);
 	DPRINTF(IDB_IOMMU, ("iommu_remove: va %lx TSB[%lx]@%p\n",
-	    va, IOTSBSLOT(va,is->is_tsbsize), 
+	    va, (u_long)IOTSBSLOT(va,is->is_tsbsize), 
 	    &is->is_tsb[IOTSBSLOT(va,is->is_tsbsize)]));
 	while (len > 0) {
 		DPRINTF(IDB_IOMMU, ("iommu_remove: clearing TSB slot %d for va %p size %lx\n", 
-		    (int)IOTSBSLOT(va,is->is_tsbsize), va, (u_long)len));
+		    (int)IOTSBSLOT(va,is->is_tsbsize), (void *)(u_long)va, (u_long)len));
 		if (is->is_sb) {
 			DPRINTF(IDB_IOMMU, ("iommu_remove: flushing va %p TSB[%lx]@%p=%lx, %lu bytes left\n", 	       
-			       (long)va, (long)IOTSBSLOT(va,is->is_tsbsize), 
-			       (long)&is->is_tsb[IOTSBSLOT(va,is->is_tsbsize)],
+			       (void *)(u_long)va, (long)IOTSBSLOT(va,is->is_tsbsize), 
+			       (void *)(u_long)&is->is_tsb[IOTSBSLOT(va,is->is_tsbsize)],
 			       (long)(is->is_tsb[IOTSBSLOT(va,is->is_tsbsize)]), 
 			       (u_long)len));
 			bus_space_write_8(is->is_bustag, (bus_space_handle_t)(u_long)
@@ -360,8 +362,8 @@ iommu_remove(is, va, len)
 			if (len <= NBPG)
 				iommu_strbuf_flush(is);
 			DPRINTF(IDB_IOMMU, ("iommu_remove: flushed va %p TSB[%lx]@%p=%lx, %lu bytes left\n", 	       
-			       (long)va, (long)IOTSBSLOT(va,is->is_tsbsize), 
-			       (long)&is->is_tsb[IOTSBSLOT(va,is->is_tsbsize)],
+			       (void *)(u_long)va, (long)IOTSBSLOT(va,is->is_tsbsize), 
+			       (void *)(u_long)&is->is_tsb[IOTSBSLOT(va,is->is_tsbsize)],
 			       (long)(is->is_tsb[IOTSBSLOT(va,is->is_tsbsize)]), 
 			       (u_long)len));
 		} else
@@ -434,8 +436,9 @@ iommu_strbuf_flush(is)
 
 #ifdef DIAGNOSTIC
 	if (!is->is_flush) {
-		printf("iommu_strbuf_flush: flush timeout %p at %p\n", (long)is->is_flush, 
-		       (long)is->is_flushpa); /* panic? */
+		printf("iommu_strbuf_flush: flush timeout %p at %p\n",
+		    (void *)(u_long)is->is_flush, 
+		    (void *)(u_long)is->is_flushpa); /* panic? */
 #ifdef DDB
 		Debugger();
 #endif
@@ -482,7 +485,7 @@ iommu_dvmamap_load(t, is, map, buf, buflen, p, flags)
 	if (buflen > map->_dm_size) {
 		DPRINTF(IDB_BUSDMA,
 		    ("iommu_dvmamap_load(): error %d > %d -- "
-		     "map size exceeded!\n", buflen, map->_dm_size));
+		     "map size exceeded!\n", (int)buflen, (int)map->_dm_size));
 		return (EINVAL);
 	}
 
@@ -504,7 +507,7 @@ iommu_dvmamap_load(t, is, map, buf, buflen, p, flags)
 	if (err || (dvmaddr == (bus_addr_t)-1))	
 	{ 
 		printf("iommu_dvmamap_load(): extent_alloc(%d, %x) failed!\n",
-		    sgsize, flags);
+		    (int)sgsize, flags);
 		Debugger();
 	}		
 #endif	
@@ -635,10 +638,13 @@ iommu_dvmamap_load_raw(t, is, map, segs, nsegs, flags, size)
 	if (segs[0].ds_addr != 0)
 		panic("iommu_dvmamap_load_raw: segment already loaded: "
 			"addr %#llx, size %#llx",
-			(u_int64_t)segs[0].ds_addr, (u_int64_t)segs[0].ds_len);
+			(unsigned long long)segs[0].ds_addr,
+			(unsigned long long)segs[0].ds_len);
 	if (segs[0].ds_len != size)
 		panic("iommu_dvmamap_load_raw: segment size changed: "
-			"ds_len %#llx size %#llx", segs[0].ds_len, size);
+			"ds_len %#llx size %#llx",
+			(unsigned long long)segs[0].ds_len,
+			(unsigned long long)size);
 #endif
 	sgsize = round_page(size);
 
@@ -663,7 +669,7 @@ iommu_dvmamap_load_raw(t, is, map, segs, nsegs, flags, size)
 	if (dvmaddr == (bus_addr_t)-1)	
 	{ 
 		printf("iommu_dvmamap_load_raw(): extent_alloc(%d, %x) failed!\n",
-		    sgsize, flags);
+		    (int)sgsize, flags);
 		Debugger();
 	}		
 #endif	
@@ -714,20 +720,20 @@ iommu_dvmamap_sync(t, is, map, offset, len, ops)
 	if (ops & BUS_DMASYNC_PREREAD) {
 		DPRINTF(IDB_BUSDMA,
 		    ("iommu_dvmamap_sync: syncing va %p len %lu "
-		     "BUS_DMASYNC_PREREAD\n", (long)va, (u_long)len));
+		     "BUS_DMASYNC_PREREAD\n", (void *)(u_long)va, (u_long)len));
 
 		/* Nothing to do */;
 	}
 	if (ops & BUS_DMASYNC_POSTREAD) {
 		DPRINTF(IDB_BUSDMA,
 		    ("iommu_dvmamap_sync: syncing va %p len %lu "
-		     "BUS_DMASYNC_POSTREAD\n", (long)va, (u_long)len));
+		     "BUS_DMASYNC_POSTREAD\n", (void *)(u_long)va, (u_long)len));
 		/* if we have a streaming buffer, flush it here first */
 		if (is->is_sb)
 			while (len > 0) {
 				DPRINTF(IDB_BUSDMA,
 				    ("iommu_dvmamap_sync: flushing va %p, %lu "
-				     "bytes left\n", (long)va, (u_long)len));
+				     "bytes left\n", (void *)(u_long)va, (u_long)len));
 				bus_space_write_8(is->is_bustag, 
 						  (bus_space_handle_t)(u_long)
 						  &is->is_sb->strbuf_pgflush, 0, va);
@@ -742,13 +748,13 @@ iommu_dvmamap_sync(t, is, map, offset, len, ops)
 	if (ops & BUS_DMASYNC_PREWRITE) {
 		DPRINTF(IDB_BUSDMA,
 		    ("iommu_dvmamap_sync: syncing va %p len %lu "
-		     "BUS_DMASYNC_PREWRITE\n", (long)va, (u_long)len));
+		     "BUS_DMASYNC_PREWRITE\n", (void *)(u_long)va, (u_long)len));
 		/* Nothing to do */;
 	}
 	if (ops & BUS_DMASYNC_POSTWRITE) {
 		DPRINTF(IDB_BUSDMA,
 		    ("iommu_dvmamap_sync: syncing va %p len %lu "
-		     "BUS_DMASYNC_POSTWRITE\n", (long)va, (u_long)len));
+		     "BUS_DMASYNC_POSTWRITE\n", (void *)(u_long)va, (u_long)len));
 		/* Nothing to do */;
 	}
 }
@@ -764,8 +770,10 @@ iommu_dvmamem_alloc(t, is, size, alignment, boundary, segs, nsegs, rsegs, flags)
 	int flags;
 {
 
-	DPRINTF(IDB_BUSDMA, ("iommu_dvmamem_alloc: sz %qx align %qx bound %qx "
-	   "segp %p flags %d\n", size, alignment, boundary, segs, flags));
+	DPRINTF(IDB_BUSDMA, ("iommu_dvmamem_alloc: sz %llx align %llx bound %llx "
+	   "segp %p flags %d\n", (unsigned long long)size,
+	   (unsigned long long)alignment, (unsigned long long)boundary,
+	   segs, flags));
 	return (bus_dmamem_alloc(t->_parent, size, alignment, boundary,
 	    segs, nsegs, rsegs, flags|BUS_DMA_DVMA));
 }
@@ -837,7 +845,7 @@ iommu_dvmamem_map(t, is, segs, nsegs, size, kvap, flags)
 #endif
 		addr = VM_PAGE_TO_PHYS(m);
 		DPRINTF(IDB_BUSDMA, ("iommu_dvmamem_map: "
-		    "mapping va %lx at %qx\n", va, addr | cbit));
+		    "mapping va %lx at %llx\n", va, (unsigned long long)addr | cbit));
 		pmap_enter(pmap_kernel(), va, addr | cbit,
 		    VM_PROT_READ | VM_PROT_WRITE,
 		    VM_PROT_READ | VM_PROT_WRITE | PMAP_WIRED);

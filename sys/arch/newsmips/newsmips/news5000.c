@@ -1,4 +1,4 @@
-/*	$NetBSD: news5000.c,v 1.6.2.2 2000/11/20 20:17:32 bouyer Exp $	*/
+/*	$NetBSD: news5000.c,v 1.6.2.3 2000/12/08 09:28:53 bouyer Exp $	*/
 
 /*-
  * Copyright (C) 1999 SHIMIZU Ryo.  All rights reserved.
@@ -37,10 +37,17 @@
 #include <newsmips/apbus/apbusvar.h>
 #include <newsmips/newsmips/machid.h>
 
-extern void (*readmicrotime) __P((struct timeval *tvp));
+extern void (*readmicrotime) (struct timeval *tvp);
 
-static void level1_intr __P((void));
-static void level0_intr __P((void));
+static void level1_intr (void);
+static void level0_intr (void);
+
+static void enable_intr_5000 (void);
+static void disable_intr_5000 (void);
+static void readmicrotime_5000 (struct timeval *);
+static void readidrom_5000 (u_char *);
+
+void news5000_init (void);
 
 static u_int freerun_off;
 
@@ -147,8 +154,8 @@ news5000_intr(status, cause, pc, ipending)
 }
 
 
-void
-level1_intr()
+static void
+level1_intr(void)
 {
 	u_int int1stat;
 
@@ -162,8 +169,8 @@ level1_intr()
 		printf("level1 stray interrupt?\n");
 }
 
-void
-level0_intr()
+static void
+level0_intr(void)
 {
 	u_int int0stat;
 
@@ -177,8 +184,8 @@ level0_intr()
 		printf("level0 stray interrupt?\n");
 }
 
-void
-enable_intr_5000()
+static void
+enable_intr_5000(void)
 {
 
 	/* INT0 and INT1 has been enabled at attach */
@@ -192,8 +199,8 @@ enable_intr_5000()
 	*(volatile u_int *)NEWS5000_INTEN5 = 0;
 }
 
-void
-disable_intr_5000()
+static void
+disable_intr_5000(void)
 {
 	*(volatile u_int *)NEWS5000_INTEN0 = 0;
 	*(volatile u_int *)NEWS5000_INTEN1 = 0;
@@ -203,7 +210,7 @@ disable_intr_5000()
 	*(volatile u_int *)NEWS5000_INTEN5 = 0;
 }
 
-void
+static void
 readmicrotime_5000(tvp)
 	struct timeval *tvp;
 {
@@ -221,7 +228,7 @@ readmicrotime_5000(tvp)
 	}
 }
 
-void
+static void
 readidrom_5000(rom)
 	u_char *rom;
 {
@@ -235,7 +242,7 @@ readidrom_5000(rom)
 extern struct idrom idrom;
 
 void
-news5000_init()
+news5000_init(void)
 {
 	enable_intr = enable_intr_5000;
 	disable_intr = disable_intr_5000;

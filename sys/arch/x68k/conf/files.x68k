@@ -1,4 +1,4 @@
-#	$NetBSD: files.x68k,v 1.28.2.1 2000/11/20 20:29:55 bouyer Exp $
+#	$NetBSD: files.x68k,v 1.28.2.2 2000/12/08 09:30:55 bouyer Exp $
 #
 # new style config file for x68k architecture
 #
@@ -171,7 +171,7 @@ defpseudo pow
 file	arch/x68k/dev/pow.c		pow needs-count
 
 # memory disk
-file	arch/x68k/dev/md_root.c		memory_disk_hooks
+file	dev/md_root.c			memory_disk_hooks
 major	{md = 8}
 
 # RAIDframe

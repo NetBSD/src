@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.c,v 1.4.2.1 2000/11/20 20:26:51 bouyer Exp $ */
+/*	$NetBSD: cpu.c,v 1.4.2.2 2000/12/08 09:30:36 bouyer Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -197,7 +197,7 @@ cpu_init(pa, cpu_num)
 		break;
 	default:
 		panic("cpu_start: stack size %x not a machine page size\n",
-			size);
+			(unsigned)size);
 	}
 	return (pte|TLB_L);
 }

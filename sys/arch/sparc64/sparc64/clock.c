@@ -1,4 +1,4 @@
-/*	$NetBSD: clock.c,v 1.15.2.1 2000/11/20 20:26:50 bouyer Exp $ */
+/*	$NetBSD: clock.c,v 1.15.2.2 2000/12/08 09:30:35 bouyer Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -273,7 +273,8 @@ sbus_wenable(handle, onoff)
 		/* We can panic now or take a datafault later... */
 		if (sbi->si_bh != newaddr)
 			panic("sbus_wenable: address %p changed to %p\n",
-			      (vaddr_t)sbi->si_bh, (vaddr_t)newaddr);
+			      (void *)(u_long)sbi->si_bh,
+			      (void *)(u_long)newaddr);
 	}
 	return (err);
 }
@@ -348,7 +349,8 @@ ebus_wenable(handle, onoff)
 		/* We can panic now or take a datafault later... */
 		if (ebi->ei_bh != newaddr)
 			panic("ebus_wenable: address %p changed to %p\n",
-			      (vaddr_t)ebi->ei_bh, (vaddr_t)newaddr);
+			      (void *)(u_long)ebi->ei_bh,
+			      (void *)(u_long)newaddr);
 	}
 	return (err);
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: fpu.c,v 1.6.20.1 2000/11/20 20:25:36 bouyer Exp $ */
+/*	$NetBSD: fpu.c,v 1.6.20.2 2000/12/08 09:30:27 bouyer Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -195,7 +195,7 @@ fpu_cleanup(p, fs)
 		case NOTFPU:
 #ifdef SUN4U
 #ifdef DEBUG
-			printf("fpu_cleanup: not an FPU error -- sending SIGILL\n", p);
+			printf("fpu_cleanup: not an FPU error -- sending SIGILL\n");
 			Debugger();
 #endif
 #endif /* SUN4U */

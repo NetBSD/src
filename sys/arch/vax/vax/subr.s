@@ -1,4 +1,4 @@
-/*	$NetBSD: subr.s,v 1.32.8.1 2000/11/20 20:33:33 bouyer Exp $	   */
+/*	$NetBSD: subr.s,v 1.32.8.2 2000/12/08 09:30:52 bouyer Exp $	   */
 
 /*
  * Copyright (c) 1994 Ludd, University of Lule}, Sweden.
@@ -397,10 +397,6 @@ noque:	.asciz	"swtch"
 #
 	svpctx
 	mtpr	r3,$PR_PCBB
-#if defined(MULTIPROCESSOR)
-	.globl	_C_LABEL(tramp)	# used to kick off multiprocessor systems.
-_C_LABEL(tramp):
-#endif
 	ldpctx
 #if defined(LOCKDEBUG)
 	calls	$0,_C_LABEL(sched_unlock_idle)
@@ -408,6 +404,13 @@ _C_LABEL(tramp):
 	clrl	_C_LABEL(sched_lock)	# clear sched lock
 #endif
 	rei
+
+#if defined(MULTIPROCESSOR)
+	.globl	_C_LABEL(tramp)	# used to kick off multiprocessor systems.
+_C_LABEL(tramp):
+	ldpctx
+	rei
+#endif
 
 #
 # the last routine called by a process.
@@ -555,6 +558,8 @@ ENTRY(suswintr,0)
 3:	mnegl	$1,r0
 	ret
 
+	.align	2
+ALTENTRY(fusword)
 ENTRY(fuswintr,0)
 	movl	4(ap),r0
 	blss	3b

@@ -1,4 +1,4 @@
-/*	$NetBSD: svr4_machdep.h,v 1.4 1999/01/21 23:06:25 christos Exp $	 */
+/*	$NetBSD: svr4_machdep.h,v 1.4.8.1 2000/12/08 09:30:35 bouyer Exp $	 */
 
 /*-
  * Copyright (c) 1994 The NetBSD Foundation, Inc.
@@ -117,9 +117,6 @@ typedef struct svr4_mcontext {
 
 struct svr4_ucontext;
 
-void svr4_getcontext __P((struct proc *, struct svr4_ucontext *, sigset_t *));
-int svr4_setcontext __P((struct proc *p, struct svr4_ucontext *));
-void svr4_sendsig __P((sig_t, int, sigset_t *, u_long));
 int svr4_trap __P((int, struct proc *));
 
 #endif /* !_SPARC_SVR4_MACHDEP_H_ */

@@ -1,4 +1,4 @@
-# 	$NetBSD: POWEROFSEVEN32,v 1.4.2.2 2000/11/20 20:26:41 bouyer Exp $
+# 	$NetBSD: POWEROFSEVEN32,v 1.4.2.3 2000/12/08 09:30:32 bouyer Exp $
 #
 # Configuration for Ultra5/Ultra10
 
@@ -31,7 +31,6 @@ options		__ELF__		# we use elf
 ## automagically determined at boot time.
 
 config		netbsd	root on ? type ?
-options 	BUFCACHE=25
 
 ## UVM options.
 options 	UVM_PAGE_TRKOWN

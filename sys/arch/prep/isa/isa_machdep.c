@@ -1,4 +1,4 @@
-/*	$NetBSD: isa_machdep.c,v 1.2.4.2 2000/11/20 22:35:43 bouyer Exp $	*/
+/*	$NetBSD: isa_machdep.c,v 1.2.4.3 2000/12/08 09:30:20 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -175,7 +175,7 @@ isa_intr_clr(irq)
  * Initialize the Interrupt controller logic.
  */
 void
-init_icu()
+init_icu(int lvlmask)
 {
 	int i;
 	extern int intrtype[];
@@ -188,12 +188,14 @@ init_icu()
 			intrtype[i] = IST_EDGE;
 			break;
 		default:
-			intrtype[i] = IST_NONE;
+			intrtype[i] = (1 << i) & lvlmask ? IST_LEVEL : IST_NONE;
 		}
 	}
 
-	isa_outb(IO_ELCR1, 0);
-	isa_outb(IO_ELCR2, 0);
+	printf("old elcr = 0x%02x%02x, new = 0x%04x\n",
+		isa_inb(IO_ELCR2), isa_inb(IO_ELCR1), lvlmask);
+	isa_outb(IO_ELCR1, (lvlmask >> 0) & 0xff);
+	isa_outb(IO_ELCR2, (lvlmask >> 8) & 0xff);
 
 	isa_outb(IO_ICU1, 0x11);		/* program device, four bytes */
 	isa_outb(IO_ICU1+1, 0);			/* starting at this vector */
@@ -228,4 +230,41 @@ isa_setirqstat(irq, enabled, type)
 
 	isa_outb(IO_ELCR1, elcr[0]);
 	isa_outb(IO_ELCR2, elcr[1]);
+}
+
+int
+isa_intr_alloc(isa_chipset_tag_t c, int mask, int type, int *irq_p)
+{
+	int irq;
+	int maybe_irq = -1;
+	int shared_depth = 0;
+	mask &= 0x8b28;	/* choose from 3, 5, 8, 9, 11, 15 XXX */
+	for (irq = 0; mask != 0; mask >>= 1, irq++) {
+		if ((mask & 1) == 0)
+			continue;
+		if (intrtype[irq] == IST_NONE) {
+			*irq_p = irq;
+			return 0;
+		}
+		/* Level interrupts can be shared */
+		if (type == IST_LEVEL && intrtype[irq] == IST_LEVEL) {
+			struct intrhand *ih = intrhand[irq];
+			int depth;
+			if (maybe_irq == -1) {
+				maybe_irq = irq;
+				continue;
+			}
+			for (depth = 0; ih != NULL; ih = ih->ih_next)
+				depth++;
+			if (depth < shared_depth) {
+				maybe_irq = irq;
+				shared_depth = depth;
+			}
+		}
+	}
+	if (maybe_irq != -1) {
+		*irq_p = maybe_irq;
+		return 0;
+	}
+	return 1;
 }

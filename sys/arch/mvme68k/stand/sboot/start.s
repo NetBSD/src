@@ -1,5 +1,5 @@
 /*
- * $NetBSD: start.s,v 1.5 1998/01/05 20:51:45 perry Exp $
+ * $NetBSD: start.s,v 1.5.16.1 2000/12/08 09:28:44 bouyer Exp $
  *
  * Copyright (c) 1995 Charles D. Cranor
  * All rights reserved.
@@ -33,32 +33,33 @@
  * start: at address 0x4000, load at 0xa000 (so put stack at 0x9ff0)
  */
 
-.text
-.globl start
-start:
-	movb	#0,_reboot
+#include <m68k/asm.h>
+
+	.text
+ASENTRY_NOPROFILE(_start)
+ASENTRY_NOPROFILE(start)
+	movb	#0,_C_LABEL(reboot)
 	jra	Ldoit
 restart:
-	movb	#1,_reboot | fall through
+	movb	#1,_C_LABEL(reboot) | fall through
 	
 Ldoit:
-	movl	#0x00006ff0,sp
-	jsr _sboot
+	movl	#0x00006ff0,%sp
+	jsr _C_LABEL(sboot)
 
 Lname:
 	.ascii "sboot\0"
 
-.globl  _go
-_go:
-	clrl	d0		| dev lun
-	clrl	d1		| ctrl lun
-	movl	#0x2c, d4	| flags for IPL
-	movl	#0xfffe1800, a0	| address of "disk" ctrl
-	movl	sp@(4), a1	| entry point of loaded program
-	movl	d0, a2		| media config block (NULL)
-	movl	sp@(8), a3	| nb args (start)
-	movl	sp@(12), a4	| nb end args
-	movl	#Lname, a5	| args
-	movl	#Lname+5, a6	| end args
+ENTRY_NOPROFILE(go)
+	clrl	%d0		| dev lun
+	clrl	%d1		| ctrl lun
+	movl	#0x2c, %d4	| flags for IPL
+	movl	#0xfffe1800, %a0	| address of "disk" ctrl
+	movl	%sp@(4), %a1	| entry point of loaded program
+	movl	%d0, %a2	| media config block (NULL)
+	movl	%sp@(8), %a3	| nb args (start)
+	movl	%sp@(12), %a4	| nb end args
+	movl	#Lname, %a5	| args
+	movl	#Lname+5, %a6	| end args
 				| SRT0 will set stack
-	jmp	a1@		| GO!
+	jmp	%a1@		| GO!

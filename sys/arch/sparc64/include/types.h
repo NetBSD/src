@@ -1,4 +1,4 @@
-/*	$NetBSD: types.h,v 1.8.8.1 2000/11/20 20:26:49 bouyer Exp $ */
+/*	$NetBSD: types.h,v 1.8.8.2 2000/12/08 09:30:35 bouyer Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -100,7 +100,5 @@ typedef paddr_t			psize_t;
 #endif
 
 #define __HAVE_DEVICE_REGISTER
-
-#define __BROKEN_CONFIG_UNIT_USAGE
 
 #endif	/* _MACHTYPES_H_ */

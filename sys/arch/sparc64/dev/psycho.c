@@ -1,4 +1,4 @@
-/*	$NetBSD: psycho.c,v 1.2.2.2 2000/11/22 16:01:47 bouyer Exp $	*/
+/*	$NetBSD: psycho.c,v 1.2.2.3 2000/12/08 09:30:33 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000 Matthew R. Green
@@ -272,7 +272,8 @@ sabre_init(sc, ma, pba)
 		 PCICTL_ARB_PRIO |
 		 PCICTL_RTRYWAIT);
 	bus_space_write_8(sc->sc_bustag,
-	    (bus_space_handle_t)&sc->sc_regs->psy_pcictl[0].pci_csr, 0, csr);
+	    (bus_space_handle_t)(u_long)&sc->sc_regs->psy_pcictl[0].pci_csr,
+	    0, csr);
 
 	/* allocate a pair of psycho_pbm's for our simba's */
 	sc->sc_sabre = malloc(sizeof *pp, M_DEVBUF, M_NOWAIT);
@@ -332,7 +333,7 @@ sabre_init(sc, ma, pba)
 			pp->pp_nregs = nregs;
 			break;
 		default:
-			panic("illegal simba funcion %d\n");
+			panic("illegal simba funcion %d\n", fn);
 		}
 		pp->pp_pcictl = &sc->sc_regs->psy_pcictl[0];
 		/* link us in .. */
@@ -821,7 +822,8 @@ _psycho_bus_map(t, btype, offset, size, flags, vaddr, hp)
 	struct psycho_softc *sc = pp->pp_sc;
 	int i, ss;
 
-	DPRINTF(PDB_BUSMAP, ("_psycho_bus_map: type %d off %qx sz %qx flags %d va %p", t->type, offset, size, flags, vaddr));
+	DPRINTF(PDB_BUSMAP, ("_psycho_bus_map: type %d off %qx sz %qx flags %d va %p", t->type, (unsigned long long)offset, (unsigned long long)size, flags,
+	    (void *)vaddr));
 
 	ss = get_childspace(t->type);
 	DPRINTF(PDB_BUSMAP, (" cspace %d", ss));
@@ -836,7 +838,8 @@ _psycho_bus_map(t, btype, offset, size, flags, vaddr, hp)
 		paddr = pp->pp_range[i].phys_lo + offset;
 		paddr |= ((bus_addr_t)pp->pp_range[i].phys_hi<<32);
 		DPRINTF(PDB_BUSMAP, ("\n_psycho_bus_map: mapping paddr space %lx offset %lx paddr %qx\n",
-			       (long)ss, (long)offset, paddr));
+			       (long)ss, (long)offset,
+			       (unsigned long long)paddr));
 		return (bus_space_map2(sc->sc_bustag, t->type, paddr,
 					size, flags, vaddr, hp));
 	}
@@ -859,7 +862,7 @@ psycho_bus_mmap(t, btype, paddr, flags, hp)
 
 	ss = get_childspace(t->type);
 
-	DPRINTF(PDB_BUSMAP, ("_psycho_bus_mmap: type %d flags %d pa %qx\n", btype, flags, paddr));
+	DPRINTF(PDB_BUSMAP, ("_psycho_bus_mmap: type %d flags %d pa %qx\n", btype, flags, (unsigned long long)paddr));
 
 	for (i = 0; i < pp->pp_nrange; i++) {
 		bus_addr_t paddr;
@@ -870,7 +873,8 @@ psycho_bus_mmap(t, btype, paddr, flags, hp)
 		paddr = pp->pp_range[i].phys_lo + offset;
 		paddr |= ((bus_addr_t)pp->pp_range[i].phys_hi<<32);
 		DPRINTF(PDB_BUSMAP, ("\n_psycho_bus_mmap: mapping paddr space %lx offset %lx paddr %qx\n",
-			       (long)ss, (long)offset, paddr));
+			       (long)ss, (long)offset,
+			       (unsigned long long)paddr));
 		return (bus_space_mmap(sc->sc_bustag, 0, paddr,
 				       flags, hp));
 	}
@@ -958,7 +962,7 @@ psycho_intr_establish(t, ihandle, level, flags, handler, arg)
 		int64_t intrmap = 0;
 		int i;
 
-		DPRINTF(PDB_INTR, ("\npsycho: intr %lx: %lx\nHunting for IRQ...\n",
+		DPRINTF(PDB_INTR, ("\npsycho: intr %lx: %p\nHunting for IRQ...\n",
 		    (long)ino, intrlev[ino]));
 		if ((ino & INTMAP_OBIO) == 0) {
 			/*
@@ -977,7 +981,7 @@ psycho_intr_establish(t, ihandle, level, flags, handler, arg)
 			 */
 			i = INTPCIOBINOX(vec);
 			if (i > INTPCI_MAXOBINO)
-				panic("ino %d", vec);
+				panic("ino %ld", vec);
 
 			intrmapptr = &((&sc->sc_regs->scsi_int_map)[i]);
 			intrclrptr = &((&sc->sc_regs->scsi_clr_int)[i]);
@@ -994,15 +998,17 @@ psycho_intr_establish(t, ihandle, level, flags, handler, arg)
 		 * valid bit so so make sure only this bit is changed.
 		 */
 		intrmap = *intrmapptr;
-		DPRINTF(PDB_INTR, ("; read intrmap = %016qx", intrmap));
+		DPRINTF(PDB_INTR, ("; read intrmap = %016qx",
+		    (unsigned long long)intrmap));
 
 		/* Enable the interrupt */
 		intrmap |= INTMAP_V;
 		DPRINTF(PDB_INTR, ("; addr of intrmapptr = %p", intrmapptr));
-		DPRINTF(PDB_INTR, ("; writing intrmap = %016qx\n", intrmap));
+		DPRINTF(PDB_INTR, ("; writing intrmap = %016qx\n",
+		    (unsigned long long)intrmap));
 		*intrmapptr = intrmap;
 		DPRINTF(PDB_INTR, ("; reread intrmap = %016qx",
-		    (intrmap = *intrmapptr)));
+		    (unsigned long long)(intrmap = *intrmapptr)));
 	}
 #ifdef NOT_DEBUG
 	if (psycho_debug & PDB_INTR) {

@@ -1,4 +1,4 @@
-/*	$NetBSD: disksubr.c,v 1.2.2.3 2000/11/22 16:01:33 bouyer Exp $	*/
+/*	$NetBSD: disksubr.c,v 1.2.2.4 2000/12/08 09:30:25 bouyer Exp $	*/
 
 /*
  * Copyright (c) 2000 Soren S. Jorvang
@@ -157,11 +157,54 @@ writedisklabel(dev, strat, lp, clp)
 	return ENODEV;
 }
 
-int      
-bounds_check_with_label(bp, lp, wlabel) 
+
+/*
+ * Determine the size of the transfer, and make sure it is
+ * within the boundaries of the partition. Adjust transfer
+ * if needed, and signal errors or early completion.
+ */
+int
+bounds_check_with_label(bp, lp, wlabel)
 	struct buf *bp;
 	struct disklabel *lp;
-	int wlabel; 
-{               
-	return 1;
+	int wlabel;
+{
+	struct partition *p = lp->d_partitions + DISKPART(bp->b_dev);
+	int maxsz = p->p_size;
+	int sz = (bp->b_bcount + DEV_BSIZE - 1) >> DEV_BSHIFT;
+
+	/*
+	 * Overwriting disk label?
+	 * The label is always in sector LABELSECTOR.
+	 */
+	if (bp->b_blkno + p->p_offset <= LABELSECTOR &&
+	    (bp->b_flags & B_READ) == 0 && wlabel == 0) {
+		bp->b_error = EROFS;
+		goto bad;
+	}
+
+	/*
+	 * Beyond partition?
+	 */
+	if (bp->b_blkno < 0 || bp->b_blkno + sz > maxsz) {
+		/* if exactly at end of disk, return an EOF */
+		if (bp->b_blkno == maxsz) {
+			bp->b_resid = bp->b_bcount;
+			return(0);
+		}
+		/* or truncate if part of it fits */
+		sz = maxsz - bp->b_blkno;
+		if (sz <= 0) {
+			bp->b_error = EINVAL;
+			goto bad;
+		}
+		bp->b_bcount = sz << DEV_BSHIFT;
+	}
+
+	/* calculate cylinder for disksort to order transfers with */
+	bp->b_resid = (bp->b_blkno + p->p_offset) / lp->d_secpercyl;
+	return(1);
+bad:
+	bp->b_flags |= B_ERROR;
+	return(-1);
 }

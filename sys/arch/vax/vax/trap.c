@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.47.2.1 2000/11/20 20:33:33 bouyer Exp $     */
+/*	$NetBSD: trap.c,v 1.47.2.2 2000/12/08 09:30:53 bouyer Exp $     */
 
 /*
  * Copyright (c) 1994 Ludd, University of Lule}, Sweden.
@@ -332,7 +332,7 @@ void
 syscall(frame)
 	struct	trapframe *frame;
 {
-	struct sysent *callp;
+	const struct sysent *callp;
 	u_quad_t oticks;
 	int nsys;
 	int err, rval[2], args[8];

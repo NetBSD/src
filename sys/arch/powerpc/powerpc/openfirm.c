@@ -1,4 +1,4 @@
-/*	$NetBSD: openfirm.c,v 1.4.8.1 2000/11/22 16:01:29 bouyer Exp $	*/
+/*	$NetBSD: openfirm.c,v 1.4.8.2 2000/12/08 09:30:18 bouyer Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -202,7 +202,7 @@ int
 OF_nextprop(handle, prop, nextprop)
 	int handle;
 	char *prop;
-	char *nextprop;
+	void *nextprop;
 {
 	static struct {
 		char *name;

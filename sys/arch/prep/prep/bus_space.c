@@ -1,4 +1,4 @@
-/*	$NetBSD: bus_space.c,v 1.2.6.2 2000/11/20 20:23:04 bouyer Exp $	*/
+/*	$NetBSD: bus_space.c,v 1.2.6.3 2000/12/08 09:30:22 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -45,6 +45,18 @@
 
 #include <machine/bus.h>
 
+const struct prep_bus_space prep_io_space_tag = {
+	PREP_BUS_SPACE_IO,  0x80000000, 0x3f800000
+};
+const struct prep_bus_space prep_isa_io_space_tag = {
+	PREP_BUS_SPACE_IO,  0x80000000, 0x00010000
+};
+const struct prep_bus_space prep_mem_space_tag = {
+	PREP_BUS_SPACE_MEM, 0xC0000000, 0x3f000000
+};
+const struct prep_bus_space prep_isa_mem_space_tag = {
+	PREP_BUS_SPACE_MEM, 0xC0000000, 0x01000000
+};
 static long ioport_ex_storage[EXTENT_FIXED_STORAGE_SIZE(8) / sizeof(long)];
 static long iomem_ex_storage[EXTENT_FIXED_STORAGE_SIZE(8) / sizeof(long)];
 
@@ -56,11 +68,15 @@ static int ioport_malloc_safe;
 void
 prep_bus_space_init()
 {
+	int error;
 
-	ioport_ex = extent_create("ioport", 0, 0xffffffff, M_DEVBUF,
+	ioport_ex = extent_create("ioport", 0, 0x3f7fffff, M_DEVBUF,
 	    (caddr_t)ioport_ex_storage, sizeof(ioport_ex_storage),
 	    EX_NOCOALESCE|EX_NOWAIT);
-	iomem_ex = extent_create("iomem", 0x0, 0xffffffff, M_DEVBUF,
+	error = extent_alloc_region(ioport_ex, 0x10000, 0x7F0000, EX_NOWAIT);
+	if (error)
+		panic("prep_bus_space_init: can't block out reserved I/O space 0x10000-0x7fffff: error=%d\n", error);
+	iomem_ex = extent_create("iomem", 0, 0x3effffff, M_DEVBUF,
 	    (caddr_t)iomem_ex_storage, sizeof(iomem_ex_storage),
 	    EX_NOCOALESCE|EX_NOWAIT);
 }
@@ -83,16 +99,18 @@ prep_memio_map(t, bpa, size, flags, bshp)
 	int error;
 	struct extent *ex;
 
+	if (bpa + size > t->pbs_limit)
+		return (EINVAL);
 	/*
 	 * Pick the appropriate extent map.
 	 */
-	if (t == PREP_BUS_SPACE_IO) {
+	if (t->pbs_type == PREP_BUS_SPACE_IO) {
 		if (flags & BUS_SPACE_MAP_LINEAR)
 			return (EOPNOTSUPP);
 		ex = ioport_ex;
-	} else if (t == PREP_BUS_SPACE_MEM)
+	} else if (t->pbs_type == PREP_BUS_SPACE_MEM) {
 		ex = iomem_ex;
-	else
+	} else
 		panic("prep_memio_map: bad bus space tag");
 
 	/*
@@ -104,7 +122,7 @@ prep_memio_map(t, bpa, size, flags, bshp)
 	if (error)
 		return (error);
 
-	*bshp = t + bpa;
+	*bshp = t->pbs_base + bpa;
 
 	return (0);
 }
@@ -121,19 +139,19 @@ prep_memio_unmap(t, bsh, size)
 	/*
 	 * Find the correct extent and bus physical address.
 	 */
-	if (t == PREP_BUS_SPACE_IO)
+	if (t->pbs_type == PREP_BUS_SPACE_IO)
 		ex = ioport_ex;
-	else if (t == PREP_BUS_SPACE_MEM)
+	else if (t->pbs_type == PREP_BUS_SPACE_MEM)
 		ex = iomem_ex;
 	else
 		panic("prep_memio_unmap: bad bus space tag");
 
-	bpa = bsh - t;
+	bpa = bsh - t->pbs_base;
 
 	if (extent_free(ex, bpa, size,
 	    EX_NOWAIT | (ioport_malloc_safe ? EX_MALLOCOK : 0))) {
 		printf("prep_memio_unmap: %s 0x%lx, size 0x%lx\n",
-		    (t == PREP_BUS_SPACE_IO) ? "port" : "mem",
+		    (t->pbs_type == PREP_BUS_SPACE_IO) ? "port" : "mem",
 		    (unsigned long)bpa, (unsigned long)size);
 		printf("prep_memio_unmap: can't free region\n");
 	}
@@ -153,13 +171,16 @@ prep_memio_alloc(t, rstart, rend, size, alignment, boundary, flags,
 	u_long bpa;
 	int error;
 
-	if (t == PREP_BUS_SPACE_IO) {
+	if (rstart + size > t->pbs_limit)
+		return (EINVAL);
+
+	if (t->pbs_type == PREP_BUS_SPACE_IO) {
 		if (flags & BUS_SPACE_MAP_LINEAR)
 			return (EOPNOTSUPP);
 		ex = ioport_ex;
-	} else if (t == PREP_BUS_SPACE_MEM)
+	} else if (t->pbs_type == PREP_BUS_SPACE_MEM) {
 		ex = iomem_ex;
-	else
+	} else
 		panic("prep_memio_alloc: bad bus space tag");
 
 	if (rstart < ex->ex_start || rend > ex->ex_end)
@@ -173,7 +194,8 @@ prep_memio_alloc(t, rstart, rend, size, alignment, boundary, flags,
 	if (error)
 		return (error);
 
-	*bshp = *bpap = t + bpa;
+	*bpap = bpa;
+	*bshp = t->pbs_base + bpa;
 
 	return (0);
 }

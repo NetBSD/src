@@ -1,4 +1,4 @@
-/*	$NetBSD: bus.c,v 1.3.2.2 2000/11/20 20:17:27 bouyer Exp $	*/
+/*	$NetBSD: bus.c,v 1.3.2.3 2000/12/08 09:28:52 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -689,7 +689,7 @@ _bus_dmamem_map(t, segs, nsegs, size, kvap, flags)
 	 * If we're only mapping 1 segment, and the address is lower than
 	 * 256MB, use KSEG0 or KSEG1, to avoid TLB thrashing.
 	 */
-	if (nsegs == 1 & segs[0].ds_addr + segs[0].ds_len <= 0x10000000) {
+	if (nsegs == 1 && segs[0].ds_addr + segs[0].ds_len <= 0x10000000) {
 		if (flags & BUS_DMA_COHERENT)
 			*kvap = (caddr_t)MIPS_PHYS_TO_KSEG1(segs[0].ds_addr);
 		else

@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.36.2.2 2000/11/22 16:02:07 bouyer Exp $	*/
+/*	$NetBSD: locore.s,v 1.36.2.3 2000/12/08 09:30:48 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -597,6 +597,12 @@ Ldorte:
  * Use common m68k sigcode.
  */
 #include <m68k/m68k/sigcode.s>
+#ifdef COMPAT_SUNOS
+#include <m68k/m68k/sunos_sigcode.s>
+#endif
+#ifdef COMPAT_SVR4
+#include <m68k/m68k/svr4_sigcode.s>
+#endif
 
 	.text
 

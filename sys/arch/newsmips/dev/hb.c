@@ -1,4 +1,4 @@
-/*	$NetBSD: hb.c,v 1.3.2.1 2000/11/20 20:17:21 bouyer Exp $	*/
+/*	$NetBSD: hb.c,v 1.3.2.2 2000/12/08 09:28:51 bouyer Exp $	*/
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -10,6 +10,7 @@ static int	hb_match __P((struct device *, struct cfdata *, void *));
 static void	hb_attach __P((struct device *, struct device *, void *));
 static int	hb_search __P((struct device *, struct cfdata *, void *));
 static int	hb_print __P((void *, const char *));
+void		hb_intr_dispatch __P((int));	/* XXX */
 
 struct cfattach hb_ca = {
 	sizeof(struct device), hb_match, hb_attach

@@ -1,4 +1,4 @@
-/*	$NetBSD: pcb.h,v 1.2.10.1 2000/11/20 20:31:10 bouyer Exp $	*/
+/*	$NetBSD: pcb.h,v 1.2.10.2 2000/12/08 09:30:16 bouyer Exp $	*/
 
 /*-
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -33,6 +33,8 @@
 #ifndef	_MACHINE_PCB_H_
 #define	_MACHINE_PCB_H_
 
+#include <powerpc/reg.h>
+
 typedef int faultbuf[23];
 
 struct pcb {
@@ -47,17 +49,20 @@ struct pcb {
 		double fpr[32];
 		double fpscr;	/* FPSCR stored as double for easier access */
 	} pcb_fpu;		/* Floating point processor */
+	struct vreg *pcb_vr;
 };
 
 struct md_coredump {
 	struct trapframe frame;
 	struct fpu fpstate;
+	struct vreg vstate;
 };
 
 #if defined(_KERNEL) && !defined(MULTIPROCESSOR)
 extern struct pcb *curpcb;
 extern struct pmap *curpm;
-extern struct proc *fpuproc;
+extern struct proc *fpuproc, *vecproc;
+extern struct pool *vecpl;
 #endif
 
 #endif	/* _MACHINE_PCB_H_ */

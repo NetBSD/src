@@ -1,4 +1,4 @@
-/*	$NetBSD: db_interface.c,v 1.22.2.1 2000/11/20 20:26:51 bouyer Exp $ */
+/*	$NetBSD: db_interface.c,v 1.22.2.2 2000/12/08 09:30:36 bouyer Exp $ */
 
 /*
  * Mach Operating System
@@ -184,7 +184,8 @@ kdb_trap(type, tf)
 
 	switch (type) {
 	case T_BREAKPOINT:	/* breakpoint */
-		printf("kdb breakpoint at %p\n", tf->tf_pc);
+		printf("kdb breakpoint at %llx\n",
+		    (unsigned long long)tf->tf_pc);
 		break;
 	case -1:		/* keyboard interrupt */
 		printf("kdb tf=%p\n", tf);
@@ -340,11 +341,11 @@ db_dump_dtlb(addr, have_addr, count, modif)
 		p = buf;
 		for (i=0; i<64;) {
 #ifdef __arch64__
-			db_printf("%2d:%016.16lx %016.16lx ", i++, *p++, *p++);
-			db_printf("%2d:%016.16lx %016.16lx\n", i++, *p++, *p++);
+			db_printf("%2d:%16.16lx %16.16lx ", i++, *p++, *p++);
+			db_printf("%2d:%16.16lx %16.16lx\n", i++, *p++, *p++);
 #else
-			db_printf("%2d:%016.16qx %016.16qx ", i++, *p++, *p++);
-			db_printf("%2d:%016.16qx %016.16qx\n", i++, *p++, *p++);
+			db_printf("%2d:%16.16qx %16.16qx ", i++, *p++, *p++);
+			db_printf("%2d:%16.16qx %16.16qx\n", i++, *p++, *p++);
 #endif
 		}
 	} else {
@@ -362,6 +363,7 @@ db_pload_cmd(addr, have_addr, count, modif)
 	char *modif;
 {
 	static paddr_t oldaddr = -1;
+	int asi = ASI_PHYS_CACHED;
 
 	if (!have_addr) {
 		addr = oldaddr;
@@ -371,13 +373,19 @@ db_pload_cmd(addr, have_addr, count, modif)
 		return;
 	}
 	addr &= ~0x7; /* align */
+	{
+		register char c, *cp = modif;
+		while ((c = *cp++) != 0)
+			if (c == 'u')
+				asi = ASI_AIUS;
+	}
 	while (count--) {
 		if (db_print_position() == 0) {
 			/* Always print the address. */
-			db_printf("%016.16lx:\t", addr);
+			db_printf("%16.16lx:\t", addr);
 		}
 		oldaddr=addr;
-		db_printf("%08.8lx\n", (long)ldxa(addr, ASI_PHYS_CACHED));
+		db_printf("%8.8lx\n", (long)ldxa(addr, asi));
 		addr += 8;
 		if (db_print_position() != 0)
 			db_end_line();
@@ -409,11 +417,11 @@ struct pmap* pm;
 						data1 = ldxa((vaddr_t)&ptbl[j], ASI_PHYS_CACHED);
 						if (data0 || data1) {
 							db_printf("%llx: %llx\t",
-								  ((u_int64_t)i<<STSHIFT)|(k<<PDSHIFT)|((j-1)<<PTSHIFT),
-								  (u_long)(data0));
+								  (unsigned long long)(((u_int64_t)i<<STSHIFT)|(k<<PDSHIFT)|((j-1)<<PTSHIFT)),
+								  (unsigned long long)(data0));
 							db_printf("%llx: %llx\n",
-								  ((u_int64_t)i<<STSHIFT)|(k<<PDSHIFT)|(j<<PTSHIFT),
-								  (u_long)(data1));
+								  (unsigned long long)(((u_int64_t)i<<STSHIFT)|(k<<PDSHIFT)|(j<<PTSHIFT)),
+								  (unsigned long long)(data1));
 						}
 					}
 				}
@@ -446,22 +454,23 @@ db_pmap_kernel(addr, have_addr, count, modif)
 			db_printf("pmap_kernel(%p)->pm_segs[%lx][%lx][%lx]=>%qx\n",
 				  (void *)addr, (u_long)va_to_seg(addr), 
 				  (u_long)va_to_dir(addr), (u_long)va_to_pte(addr),
-				  (u_quad_t)data);
+				  (unsigned long long)data);
 		} else {
-			db_printf("No mapping for %p\n", addr);
+			db_printf("No mapping for %p\n", (void *)addr);
 		}
 		return;
 	}
 
-	db_printf("pmap_kernel(%p) psegs %p phys %p\n",
-		  kernel_pmap_, (long)kernel_pmap_.pm_segs, (long)kernel_pmap_.pm_physaddr);
+	db_printf("pmap_kernel(%p) psegs %p phys %llx\n",
+		  &kernel_pmap_, kernel_pmap_.pm_segs,
+		  (unsigned long long)kernel_pmap_.pm_physaddr);
 	if (full) {
 		db_dump_pmap(&kernel_pmap_);
 	} else {
 		for (j=i=0; i<STSZ; i++) {
 			long seg = (long)ldxa((vaddr_t)&kernel_pmap_.pm_segs[i], ASI_PHYS_CACHED);
 			if (seg)
-				db_printf("seg %ld => %p%c", i, seg, (j++%4)?'\t':'\n');
+				db_printf("seg %d => %lx%c", i, seg, (j++%4)?'\t':'\n');
 		}
 	}
 }
@@ -492,7 +501,7 @@ db_pmap_cmd(addr, have_addr, count, modif)
 
 	db_printf("pmap %p: ctx %x refs %d physaddr %llx psegs %p\n",
 		pm, pm->pm_ctx, pm->pm_refs,
-		(paddr_t)pm->pm_physaddr, pm->pm_segs);
+		(unsigned long long)pm->pm_physaddr, pm->pm_segs);
 
 	if (full) {
 		db_dump_pmap(pm);
@@ -500,7 +509,7 @@ db_pmap_cmd(addr, have_addr, count, modif)
 		for (i=0; i<STSZ; i++) {
 			long seg = (long)ldxa((vaddr_t)&kernel_pmap_.pm_segs[i], ASI_PHYS_CACHED);
 			if (seg)
-				db_printf("seg %ld => %p%c", i, seg, (j++%4)?'\t':'\n');
+				db_printf("seg %d => %lx%c", i, seg, (j++%4)?'\t':'\n');
 		}
 	}
 }
@@ -571,8 +580,8 @@ db_page_cmd(addr, have_addr, count, modif)
 		return;
 	}
 
-	db_printf("pa %llx pg %p\n", addr, PHYS_TO_VM_PAGE(addr));
-	
+	db_printf("pa %llx pg %p\n", (unsigned long long)addr,
+	    PHYS_TO_VM_PAGE(addr));
 }
 
 
@@ -599,12 +608,13 @@ db_proc_cmd(addr, have_addr, count, modif)
 		  p->p_wchan, p->p_priority, p->p_usrpri);
 	db_printf("thread @ %p = %p tf:%p ", &p->p_thread, p->p_thread,
 		  p->p_md.md_tf);
-	db_printf("maxsaddr:%p ssiz:%dpg or %pB\n",
+	db_printf("maxsaddr:%p ssiz:%dpg or %llxB\n",
 		  p->p_vmspace->vm_maxsaddr, p->p_vmspace->vm_ssize, 
-		  ctob(p->p_vmspace->vm_ssize));
+		  (unsigned long long)ctob(p->p_vmspace->vm_ssize));
 	db_printf("profile timer: %ld sec %ld usec\n",
 		  p->p_stats->p_timer[ITIMER_PROF].it_value.tv_sec,
 		  p->p_stats->p_timer[ITIMER_PROF].it_value.tv_usec);
+	db_printf("pcb: %p\n", &p->p_addr->u_pcb);
 	return;
 }
 
@@ -646,34 +656,34 @@ db_dump_pcb(addr, have_addr, count, modif)
 	if (have_addr) 
 		pcb = (struct pcb*) addr;
 
-	db_printf("pcb@%x sp:%p pc:%p cwp:%d pil:%d nsaved:%x onfault:%p\nlastcall:%s\nfull windows:\n",
+	db_printf("pcb@%p sp:%p pc:%p cwp:%d pil:%d nsaved:%x onfault:%p\nlastcall:%s\nfull windows:\n",
 		  pcb, pcb->pcb_sp, pcb->pcb_pc, pcb->pcb_cwp,
-		  pcb->pcb_pil, pcb->pcb_nsaved, pcb->pcb_onfault,
+		  pcb->pcb_pil, pcb->pcb_nsaved, (void *)pcb->pcb_onfault,
 		  (pcb->lastcall)?pcb->lastcall:"Null");
 	
 	for (i=0; i<pcb->pcb_nsaved; i++) {
-		db_printf("win %d: at %p:%p local, in\n", i, 
-			  pcb->pcb_rw[i+1].rw_in[6]);
-		db_printf("%16lx %16lx %16lx %16lx\n",
-			  pcb->pcb_rw[i].rw_local[0],
-			  pcb->pcb_rw[i].rw_local[1],
-			  pcb->pcb_rw[i].rw_local[2],
-			  pcb->pcb_rw[i].rw_local[3]);
-		db_printf("%16lx %16lx %16lx %16lx\n",
-			  pcb->pcb_rw[i].rw_local[4],
-			  pcb->pcb_rw[i].rw_local[5],
-			  pcb->pcb_rw[i].rw_local[6],
-			  pcb->pcb_rw[i].rw_local[7]);
-		db_printf("%16lx %16lx %16lx %16lx\n",
-			  pcb->pcb_rw[i].rw_in[0],
-			  pcb->pcb_rw[i].rw_in[1],
-			  pcb->pcb_rw[i].rw_in[2],
-			  pcb->pcb_rw[i].rw_in[3]);
-		db_printf("%16lx %16lx %16lx %16lx\n",
-			  pcb->pcb_rw[i].rw_in[4],
-			  pcb->pcb_rw[i].rw_in[5],
-			  pcb->pcb_rw[i].rw_in[6],
-			  pcb->pcb_rw[i].rw_in[7]);
+		db_printf("win %d: at %llx local, in\n", i, 
+			  (unsigned long long)pcb->pcb_rw[i+1].rw_in[6]);
+		db_printf("%16llx %16llx %16llx %16llx\n",
+			  (unsigned long long)pcb->pcb_rw[i].rw_local[0],
+			  (unsigned long long)pcb->pcb_rw[i].rw_local[1],
+			  (unsigned long long)pcb->pcb_rw[i].rw_local[2],
+			  (unsigned long long)pcb->pcb_rw[i].rw_local[3]);
+		db_printf("%16llx %16llx %16llx %16llx\n",
+			  (unsigned long long)pcb->pcb_rw[i].rw_local[4],
+			  (unsigned long long)pcb->pcb_rw[i].rw_local[5],
+			  (unsigned long long)pcb->pcb_rw[i].rw_local[6],
+			  (unsigned long long)pcb->pcb_rw[i].rw_local[7]);
+		db_printf("%16llx %16llx %16llx %16llx\n",
+			  (unsigned long long)pcb->pcb_rw[i].rw_in[0],
+			  (unsigned long long)pcb->pcb_rw[i].rw_in[1],
+			  (unsigned long long)pcb->pcb_rw[i].rw_in[2],
+			  (unsigned long long)pcb->pcb_rw[i].rw_in[3]);
+		db_printf("%16llx %16llx %16llx %16llx\n",
+			  (unsigned long long)pcb->pcb_rw[i].rw_in[4],
+			  (unsigned long long)pcb->pcb_rw[i].rw_in[5],
+			  (unsigned long long)pcb->pcb_rw[i].rw_in[6],
+			  (unsigned long long)pcb->pcb_rw[i].rw_in[7]);
 	}
 }
 
@@ -703,11 +713,11 @@ db_setpcb(addr, have_addr, count, modif)
 				switchtoctx(p->p_vmspace->vm_map.pmap->pm_ctx);
 				return;
 			}
-			db_printf("PID %d has a null context.\n", addr);
+			db_printf("PID %ld has a null context.\n", addr);
 			return;
 		}
 	}
-	db_printf("PID %d not found.\n", addr);
+	db_printf("PID %ld not found.\n", addr);
 }
 
 static void
@@ -715,11 +725,11 @@ db_print_trace_entry(te, i)
 	struct traptrace *te;
 	int i;
 {
-	db_printf("%d:%d p:%d tt:%x:%lx:%p %p:%p ", i, 
+	db_printf("%d:%d p:%d tt:%d:%llx:%llx %llx:%llx ", i, 
 		  (int)te->tl, (int)te->pid, 
-		  (int)te->tt, (u_long)te->tstate, 
-		  (u_long)te->tfault, (u_long)te->tsp,
-		  (u_long)te->tpc);
+		  (int)te->tt, (unsigned long long)te->tstate, 
+		  (unsigned long long)te->tfault, (unsigned long long)te->tsp,
+		  (unsigned long long)te->tpc);
 	db_printsym((u_long)te->tpc, DB_STGY_PROC, db_printf);
 	db_printf(": ");
 	if ((te->tpc && !(te->tpc&0x3)) &&
@@ -831,44 +841,6 @@ db_watch(addr, have_addr, count, modif)
 }
 
 
-#include <sys/buf.h>
-
-void
-db_dump_buf(addr, have_addr, count, modif)
-	db_expr_t addr;
-	int have_addr;
-	db_expr_t count;
-	char *modif;
-{
-	struct buf *buf;
-	static const char flagnames[] =
-		"\20\034VFLUSH\033XXX\032WRITEINPROG\031WRITE\030WANTED"
-		"\027UAREA\026TAPE\025READ\024RAW\023PHYS\022PAGIN\021PAGET"
-		"\020NOCACHE\017LOCKED\016INVAL\015GATHERED\014ERROR\013EINTR"
-		"\012DONE\011DIRTY\010DELWRI\007CALL\006CACHE\005BUSY\004BAD"
-		"\003ASYNC\002NEEDCOMMIT\001AGE";
-
-	char sbuf[sizeof(flagnames) + 64];
-
-	if (!have_addr) {
-		db_printf("No buf address\n");
-		return;
-	}
-	buf = (struct buf*) addr;
-	db_printf("buf %p:\nhash:%p vnbufs:%p freelist:%p actq next:%p\n",
-		  buf, buf->b_hash, buf->b_vnbufs, buf->b_freelist,
-		  BUFQ_NEXT(buf));
-	bitmask_snprintf(buf->b_flags, flagnames, sbuf, sizeof(sbuf));
-	db_printf("flags:%x => %s\n", buf->b_flags, sbuf);
-	db_printf("error:%x bufsiz:%x bcount:%x resid:%x dev:%x un.addr:%x\n",
-		  buf->b_error, buf->b_bufsize, buf->b_bcount, buf->b_resid,
-		  buf->b_dev, buf->b_data);
-	db_printf("saveaddr:%p lblkno:%x blkno:%x iodone:%x",
-		  buf->b_saveaddr, buf->b_lblkno, buf->b_blkno, buf->b_iodone);
-	db_printsym((long)buf->b_iodone, DB_STGY_PROC, db_printf);
-	db_printf("\nvp:%p dirtyoff:%x dirtyend:%x\n", buf->b_vp, buf->b_dirtyoff, buf->b_dirtyend);
-}
-
 #include <uvm/uvm.h>
 
 void db_uvmhistdump __P((db_expr_t, int, db_expr_t, char *));
@@ -886,11 +858,13 @@ db_uvmhistdump(addr, have_addr, count, modif)
 	uvmhist_dump(uvm_histories.lh_first);
 }
 
+extern void db_esp(db_expr_t, int, db_expr_t, char*);
+
 struct db_command sparc_db_command_table[] = {
-	{ "buf",	db_dump_buf,	0,	0 },
 	{ "ctx",	db_ctx_cmd,	0,	0 },
 	{ "dtlb",	db_dump_dtlb,	0,	0 },
 	{ "dtsb",	db_dump_dtsb,	0,	0 },
+	{ "esp",	db_esp,		0,	0 },
 	{ "kmap",	db_pmap_kernel,	0,	0 },
 	{ "lock",	db_lock,	0,	0 },
 	{ "pcb",	db_dump_pcb,	0,	0 },

@@ -1,4 +1,4 @@
-/*	$NetBSD: exec_mvme.c,v 1.5.14.1 2000/11/20 20:15:30 bouyer Exp $ */
+/*	$NetBSD: exec_mvme.c,v 1.5.14.2 2000/12/08 09:28:43 bouyer Exp $ */
 
 /*-
  * Copyright (c) 1982, 1986, 1990, 1993
@@ -38,13 +38,15 @@
 #include <sys/param.h>
 #include <sys/reboot.h>
 #include <machine/prom.h>
-#include <sys/exec_aout.h>
+
+#include "loadfile.h"
 
 #include "stand.h"
 #include "libsa.h"
 
-/* This must agree with what locore.s expects */
-typedef void (*kentry_t)(int, u_int, u_int, u_int, int, char *);
+/* These must agree with what locore.s expects */
+#define	KERN_LOADADDR	0x0
+typedef void (*kentry_t)(int, u_int, u_int, u_int, int, u_long);
 
 
 /*ARGSUSED*/
@@ -54,150 +56,32 @@ exec_mvme(file, flag, part)
 	int	flag;
 	int	part;
 {
-	char *loadaddr;
-	int io;
-	struct exec x;
-	int cc, magic;
-	kentry_t *entry;
-	char *cp;
-	int *ip;
+	kentry_t	entry;
+	u_long		marks[MARK_MAX];
+	int		fd;
+	int		lflags;
 
-#ifdef	DEBUG
-	printf("exec_mvme: partition=%d, file=%s flag=0x%x\n", part, file, flag);
-#endif
+	lflags = LOAD_KERNEL;
+	if ((flag & RB_NOSYM) != 0 )
+		lflags &= ~LOAD_SYM;
 
-	io = open(file, 0);
-	if (io < 0)
+	marks[MARK_START] = KERN_LOADADDR;
+	if ((fd = loadfile(file, marks, lflags)) == -1)
 		return;
+	close(fd);
 
-	/*
-	 * Read in the exec header, and validate it.
-	 */
-	if (read(io, (void *)&x, sizeof(x)) != sizeof(x))
-		goto shread;
-	if (N_BADMAG(x)) {
-		errno = EFTYPE;
-		goto closeout;
-	}
+	marks[MARK_END] = (((u_long) marks[MARK_END] + sizeof(int) - 1)) &
+	    (-sizeof(int));
 
-	/*
-	 * note: on the mvme ports, the kernel is linked in such a way that 
-	 * its entry point is the first item in .text, and thus a_entry can 
-	 * be used to determine both the load address and the entry point.
-	 * (also note that we make use of the fact that the kernel will live
-	 *  in a VA == PA range of memory ... otherwise we would take 
-	 *  loadaddr as a parameter and let the kernel relocate itself!)
-	 *
-	 * note that ZMAGIC files included the a.out header in the text area
-	 * so we must mask that off (has no effect on the other formats
-	 */
-	loadaddr = (void *)(x.a_entry & ~sizeof(x));
+	printf("Start @ 0x%lx [%ld=0x%lx-0x%lx]...\n",
+	    marks[MARK_ENTRY], marks[MARK_NSYM],
+	    marks[MARK_SYM], marks[MARK_END]);
 
-	cp = loadaddr;
-	magic = (int)N_GETMAGIC(x);
-	if (magic == ZMAGIC)
-		cp += sizeof(x);
-	/*LINTED*/
-	entry = (kentry_t *) cp;
+	entry = (kentry_t) marks[MARK_ENTRY];
 
-	/*
-	 * Leave a copy of the exec header before the text.
-	 * The sun3 kernel uses this to verify that the
-	 * symbols were loaded by this boot program.
-	 */
-	bcopy(&x, cp - sizeof(x), sizeof(x));
+	(*entry)(flag, bugargs.ctrl_addr, bugargs.ctrl_lun, bugargs.dev_lun,
+	    part, marks[MARK_END]);
 
-	/*
-	 * Read in the text segment.
-	 */
-	printf("%ld", x.a_text);
-	cc = (int)x.a_text;
-	if (magic == ZMAGIC) 
-		cc = cc - sizeof(x); /* a.out header part of text in zmagic */
-	if (read(io, cp, (size_t)cc) != (size_t)cc)
-		goto shread;
-	cp += cc;
-
-	/*
-	 * NMAGIC may have a gap between text and data.
-	 */
-	if (magic == NMAGIC) {
-		int mask = N_PAGSIZ(x) - 1;
-		/*LINTED*/
-		while ((int)cp & mask)
-			*cp++ = 0;
-	}
-
-	/*
-	 * Read in the data segment.
-	 */
-	printf("+%ld", x.a_data);
-	if (read(io, cp, (size_t)x.a_data) != (size_t)x.a_data)
-		goto shread;
-	cp += (int)x.a_data;
-
-	/*
-	 * Zero out the BSS section.
-	 * (Kernel doesn't care, but do it anyway.)
-	 */
-	printf("+%ld", x.a_bss);
-	cc = (int)x.a_bss;
-	/*LINTED*/
-	while ((int)cp & 3) {
-		*cp++ = 0;
-		--cc;
-	}
-	/*LINTED*/
-	ip = (int*)cp;
-	cp += cc;
-	/*LINTED*/
-	while ((char*)ip < cp)
-		*ip++ = 0;
-
-	/*
-	 * Read in the symbol table and strings.
-	 * (Always set the symtab size word.)
-	 */
-	*ip++ = (int)x.a_syms;
-	/*LINTED*/
-	cp = (char*) ip;
-
-	if (x.a_syms > 0 && (flag & RB_NOSYM) == 0) {
-
-		/* Symbol table and string table length word. */
-		cc = (int)x.a_syms;
-		printf("+[%d", cc);
-		cc += sizeof(int);	/* strtab length too */
-		if (read(io, cp, (size_t)cc) != (size_t)cc)
-			goto shread;
-		cp += (int)x.a_syms;
-		/*LINTED*/
-		ip = (int*)cp;  	/* points to strtab length */
-		cp += sizeof(int);
-
-		/* String table.  Length word includes itself. */
-		cc = *ip;
-		printf("+%d]", cc);
-		cc -= sizeof(int);
-		if (cc <= 0)
-			goto shread;
-		if (read(io, cp, (size_t)cc) != (size_t)cc)
-			goto shread;
-		cp += cc;
-	}
-	printf("=0x%x\n", cp - loadaddr);
-	close(io);
-
-	printf("Start @ 0x%p ...\n", entry);
-	(*entry)(flag, bugargs.ctrl_addr, 
-				bugargs.ctrl_lun, bugargs.dev_lun, part, cp);
 	printf("exec: kernel returned!\n");
-	return;
-
-shread:
-	printf("exec: short read\n");
-	errno = EIO;
-closeout:
-	close(io);
 	return;
 }

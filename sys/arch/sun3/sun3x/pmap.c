@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.50.2.2 2000/11/22 16:02:08 bouyer Exp $	*/
+/*	$NetBSD: pmap.c,v 1.50.2.3 2000/12/08 09:30:48 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -892,7 +892,7 @@ pmap_bootstrap(nextva)
 	pmap_bootstrap_setprom();
 
 	/* Notify the VM system of our page size. */
-	PAGE_SIZE = NBPG;
+	uvmexp.pagesize = NBPG;
 	uvm_setpagesize();
 
 	pmap_page_upload();

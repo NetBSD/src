@@ -1,4 +1,4 @@
-/*	$NetBSD: fb.c,v 1.3.8.2 2000/11/22 16:01:08 bouyer Exp $	*/
+/*	$NetBSD: fb.c,v 1.3.8.3 2000/12/08 09:28:50 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 2000 Tsubai Masanari.  All rights reserved.
@@ -67,7 +67,7 @@ int fb_show_screen(void *, void *, int, void (*)(void *, int, int), void *);
 
 void fb_cnattach(void);
 
-static void fb253_init();
+static void fb253_init(void);
 
 struct cfattach fb_ca = {
 	sizeof(struct fb_softc), fb_match, fb_attach,
@@ -434,7 +434,7 @@ static u_char
 };
 
 static void
-fb253_init()
+fb253_init(void)
 {
 	volatile u_short *ctlreg = NWB253_CTLREG;
 	volatile u_short *crtreg = NWB253_CRTREG;

@@ -1,4 +1,4 @@
-/*	$NetBSD: installboot.c,v 1.1.8.2 2000/11/20 20:16:19 bouyer Exp $ */
+/*	$NetBSD: installboot.c,v 1.1.8.3 2000/12/08 09:28:49 bouyer Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -36,8 +36,13 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
+#ifdef __ELF__
+#define	BOOT_ELF
+#undef	BOOT_AOUT
+#else
 #define	BOOT_AOUT
 #undef	BOOT_ELF
+#endif
 
 #include <sys/param.h>
 #include <sys/mount.h>
@@ -48,9 +53,7 @@
 #include <ufs/ufs/dir.h>
 #include <ufs/ffs/fs.h>
 #include <err.h>
-#ifdef BOOT_AOUT
 #include <a.out.h>
-#endif
 #include <sys/exec_elf.h>
 #include <fcntl.h>
 #include <nlist.h>
@@ -68,16 +71,27 @@ char	*boot, *proto, *dev;
 #define DEFAULT_ENTRY 0x3e0000
 #endif
 
+#if 0
+#ifdef __ELF__
+#define	SYMNAME(a)	a
+#else
+#define	SYMNAME(a)	__CONCAT("_",a)
+#endif
+#else
+/* XXX: Hack in libc nlist works with both formats */
+#define	SYMNAME(a)	__CONCAT("_",a)
+#endif
+
 struct nlist nl[] = {
 #define X_BLOCKTABLE	0
-	{"_block_table"},
+	{ {SYMNAME("block_table")} },
 #define X_BLOCKCOUNT	1
-	{"_block_count"},
+	{ {SYMNAME("block_count")} },
 #define X_BLOCKSIZE	2
-	{"_block_size"},
+	{ {SYMNAME("block_size")} },
 #define X_ENTRY_POINT	3
-	{"_entry_point"},
-	{NULL}
+	{ {SYMNAME("entry_point")} },
+	{ {NULL} }
 };
 
 daddr_t	*block_table;		/* block number array in prototype image */
@@ -200,7 +214,7 @@ loadprotoblocks(fname, size)
 	long *size;
 {
 	int	fd, sz;
-	char	*bp;
+	char	*bp, *p;
 	struct	stat statbuf;
 #ifdef BOOT_AOUT
 	struct	exec *hp;
@@ -264,7 +278,7 @@ loadprotoblocks(fname, size)
 	sz = 1024*7;
 
 	/* Find first executable psect */
-	while ((ph->p_flags & Elf_pf_x) == 0) {
+	while ((ph->p_flags & PF_X) == 0) {
 		ph++;		/* XXX check overrun (eh->e_phnum) */
 		eh->e_phnum--;
 		if (eh->e_phnum == 0) {
@@ -321,7 +335,13 @@ loadprotoblocks(fname, size)
 	}
 
 	*size = sz;
-	return bp + sizeof(struct exec) + 0x200;	/* XXX 0x200 */
+#ifdef BOOT_AOUT
+	p = bp + sizeof(struct exec) + 0x200;	/* XXX 0x200 */
+#endif
+#ifdef BOOT_ELF
+	p = bp + ph->p_offset + 0x200;		/* XXX 0x200 */
+#endif
+	return p;
 }
 
 static void

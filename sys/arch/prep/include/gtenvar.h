@@ -1,11 +1,9 @@
-/*	$NetBSD: md_root.c,v 1.3 1999/04/09 15:41:15 minoura Exp $	*/
-
 /*-
- * Copyright (c) 1996 The NetBSD Foundation, Inc.
+ * Copyright (c) 2000 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
- * by Gordon W. Ross.
+ * by Matt Thomas <matt@3am-software.com>
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -35,57 +33,25 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
+#ifndef _MACHINE_GTENVAR_H
+#define	_MACHINE_GTENVAR_H
 
-#include <sys/param.h>
-#include <sys/reboot.h>
-#include <sys/systm.h>
+struct rasops_info;
 
-#include <dev/md.h>
+struct gten_softc {
+	struct device gt_dev;
 
-#include "opt_mdsize.h"
+	struct rasops_info *gt_ri;
+	paddr_t gt_paddr;
+	size_t gt_psize;
+	bus_size_t gt_memsize;
+	bus_addr_t gt_memaddr;
+	int gt_nscreens;
+	u_char gt_cmap_red[256];
+	u_char gt_cmap_green[256];
+	u_char gt_cmap_blue[256];
+};
 
-extern int boothowto;
+int     gten_cnattach(bus_space_tag_t);
 
-#ifndef MINIROOTSIZE
-#define MINIROOTSIZE 512
-#endif
-
-#define ROOTBYTES (MINIROOTSIZE << DEV_BSHIFT)
-
-/*
- * This array will be patched to contain a file-system image.
- * See the program:  src/usr.sbin/mdsetimage
- */
-int md_root_size = ROOTBYTES;
-char md_root_image[ROOTBYTES] = "|This is the root ramdisk!\n";
-
-/*
- * This is called during pseudo-device attachment.
- */
-void
-md_attach_hook(unit, md)
-	int unit;
-	struct md_conf *md;
-{
-	if (unit == 0) {
-		/* Setup root ramdisk */
-		md->md_addr = (caddr_t) md_root_image;
-		md->md_size = (size_t)  md_root_size;
-		md->md_type = MD_KMEM_FIXED;
-		printf("md0: fixed, %d blocks\n", MINIROOTSIZE);
-	}
-}
-
-/*
- * This is called during open (i.e. mountroot)
- */
-void
-md_open_hook(unit, md)
-	int unit;
-	struct md_conf *md;
-{
-	if (unit == 0) {
-		/* The root ramdisk only works single-user. */
-		boothowto |= RB_SINGLE;
-	}
-}
+#endif /* _MACHINE_GTENVAR_H_ */
