@@ -1,4 +1,4 @@
-.\"	$NetBSD: main,v 1.179.2.3 2002/06/19 00:56:52 lukem Exp $
+.\"	$NetBSD: main,v 1.179.2.4 2002/06/19 01:26:38 lukem Exp $
 .\"
 .\" Copyright (c) 1999-2001 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -48,7 +48,7 @@
 .as MACHINE_LIST " cats cesfic cobalt dreamcast evbarm evbmips evbsh3 hp300 
 .as MACHINE_LIST " hpcarm hpcmips hpcsh i386 luna68k mac68k macppc mipsco
 .as MACHINE_LIST " mmeye mvme68k mvmeppc netwinder news68k newsmips next68k
-.as MACHINE_LIST " ofppc pc532 playstation2 pmax pmppc prep sandpoint sbmips
+.as MACHINE_LIST " ofppc pc532 playstation2 pmax prep sandpoint sbmips
 .as MACHINE_LIST " sgimips shark sparc sparc64 sun2 sun3 vax walnut x68k x86_64
 .
 .so \*[.CURDIR]/../common/macros
@@ -1461,7 +1461,6 @@ them, and would like to mentioned, tell us!)
 .br_ne 2i
 .It-span Em "The portmasters (and their ports):"
 .It Ta Ta
-.It Ta Lennart Augustsson Ta Mt augustss@netbsd.org Ta Sy pmppc
 .It Ta Simon Burge Ta Mt simonb@netbsd.org Ta Sy pmax
 .It Ta Simon Burge Ta Mt simonb@netbsd.org Ta Sy sbmips
 .It Ta Jeremy Cooper Ta Mt jeremy@netbsd.org Ta Sy sun3x
