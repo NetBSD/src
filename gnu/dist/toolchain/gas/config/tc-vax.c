@@ -1040,7 +1040,12 @@ md_assemble (instruction_string)
 			  /* {@}{q^}other_seg */
 			  know ((length == 0 && operandP->vop_short == ' ')
 			     || (length > 0 && operandP->vop_short != ' '));
-			  if (is_undefined)
+			  if (is_undefined
+#ifndef OBJ_VMS
+			      || S_IS_WEAK(this_add_symbol)
+			      || S_IS_EXTERNAL(this_add_symbol)
+#endif
+			      )
 			    {
 			      /*
 			       * We have a SEG_UNKNOWN symbol. It might
@@ -1247,6 +1252,7 @@ md_estimate_size_before_relax (fragP, segment)
 	      && (PLT_symbol == NULL || fragP->fr_symbol != PLT_symbol)
 	      && fragP->fr_symbol != NULL
 	      && (!S_IS_DEFINED (fragP->fr_symbol)
+	          || S_IS_WEAK (fragP->fr_symbol)
 	          || S_IS_EXTERNAL (fragP->fr_symbol)))
 	    {
 	      if (p[0] & 0x10)
