@@ -1,4 +1,4 @@
-/*	$NetBSD: fb.c,v 1.8 2002/09/06 13:18:43 gehenna Exp $ */
+/*	$NetBSD: fb.c,v 1.9 2002/10/03 16:13:25 uwe Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -50,7 +50,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fb.c,v 1.8 2002/09/06 13:18:43 gehenna Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fb.c,v 1.9 2002/10/03 16:13:25 uwe Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -363,7 +363,7 @@ fb_bell(on)
 	int on;
 {
 #if NKBD > 0
-	(void)kbd_docmd(on?KBD_CMD_BELL:KBD_CMD_NOBELL, 0);
+	kbd_bell(on);
 #endif
 }
 
