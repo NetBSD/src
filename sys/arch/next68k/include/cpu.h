@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.1.1.1 1998/06/09 07:53:05 dbj Exp $	*/
+/*	$NetBSD: cpu.h,v 1.2 1998/07/05 07:53:45 dbj Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -298,7 +298,7 @@ void	next68k_calibrate_delay __P((void));
 #define	NEXT_I_TIMER		NEXT_I(6,0,29)
 #define	NEXT_I_ENETX_DMA	NEXT_I(6,1,28)
 #define	NEXT_I_ENETR_DMA	NEXT_I(6,2,27)
-#define	NEXT_I_SCSNEXT_I_DMA	NEXT_I(6,3,26)
+#define	NEXT_I_SCSI_DMA		NEXT_I(6,3,26)
 #define	NEXT_I_DISK_DMA	        NEXT_I(6,4,25)
 #define	NEXT_I_PRINTER_DMA	NEXT_I(6,5,24)
 #define	NEXT_I_SOUND_OUT_DMA	NEXT_I(6,6,23)

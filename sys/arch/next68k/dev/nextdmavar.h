@@ -1,4 +1,4 @@
-/*	$NetBSD: nextdmavar.h,v 1.1.1.1 1998/06/09 07:53:05 dbj Exp $	*/
+/*	$NetBSD: nextdmavar.h,v 1.2 1998/07/05 07:53:45 dbj Exp $	*/
 /*
  * Copyright (c) 1998 Darrin B. Jewell
  * All rights reserved.
@@ -32,7 +32,7 @@
 
 struct nextdma_config {
 	bus_space_tag_t nd_bst;				/* bus space tag */
-	bus_space_tag_t nd_bsh;				/* bus space handle for device */
+	bus_space_handle_t nd_bsh;		/* bus space handle for device */
 
   u_long nd_intr;               /* NEXT_I_ values from cpu.h */
 

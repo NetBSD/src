@@ -1,4 +1,4 @@
-/*	$NetBSD: bus_space.h,v 1.1.1.1 1998/06/09 07:53:05 dbj Exp $	*/
+/*	$NetBSD: bus_space.h,v 1.2 1998/07/05 07:53:45 dbj Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -87,7 +87,7 @@ typedef u_long	bus_space_handle_t;
  */
 #define	bus_space_map(t, a, s, f, hp)					\
     ((((a)>=INTIOBASE)&&((a)+(s)<INTIOTOP)) ?				\
-     ((*(hp)=((t)+((a)-INTIOBASE))),0) : (-1))
+     ((*(hp)=(bus_space_handle_t)((t)+((a)-INTIOBASE))),0) : (-1))
 
 #define	bus_space_unmap(t, h, s)
 	

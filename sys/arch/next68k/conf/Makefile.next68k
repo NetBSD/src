@@ -1,4 +1,4 @@
-# $NetBSD: Makefile.next68k,v 1.1.1.1 1998/06/09 07:53:05 dbj Exp $
+# $NetBSD: Makefile.next68k,v 1.2 1998/07/05 07:53:44 dbj Exp $
 
 # Makefile for NetBSD
 #
@@ -59,7 +59,7 @@ CFLAGS=		${DEBUG} ${COPTS} ${CWARNFLAGS} -msoft-float
 AFLAGS=		-x assembler-with-cpp -traditional-cpp -D_LOCORE
 LINKFLAGS=	-n -Ttext 0 -e start 
 #LINKFLAGS=	-seg1addr 0x4000000
-STRIPFLAGS=	-d
+STRIPFLAGS?=	-d
 # -S is used in gnu strip, rather than -d:
 #STRIPFLAGS=	-S
 
