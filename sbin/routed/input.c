@@ -1,4 +1,4 @@
-/*	$NetBSD: input.c,v 1.28 2002/11/30 04:04:23 christos Exp $	*/
+/*	$NetBSD: input.c,v 1.29 2002/12/01 08:19:48 agc Exp $	*/
 
 /*
  * Copyright (c) 1983, 1988, 1993
@@ -36,7 +36,7 @@
 #include "defs.h"
 
 #ifdef __NetBSD__
-__RCSID("$NetBSD: input.c,v 1.28 2002/11/30 04:04:23 christos Exp $");
+__RCSID("$NetBSD: input.c,v 1.29 2002/12/01 08:19:48 agc Exp $");
 #elif defined(__FreeBSD__)
 __RCSID("$FreeBSD$");
 #else
@@ -992,9 +992,9 @@ ck_passwd(struct interface *aifp,
 				    != RIP_AUTH_MD5_HASH_LEN)
 					msglim(use_authp, from,
 					       "unknown MD5 RIPv2 auth len %#x"
-					       " instead of %#x from %s",
+					       " instead of %#lx from %s",
 					       NA->au.a_md5.md5_auth_len,
-					       RIP_AUTH_MD5_HASH_LEN,
+					       (unsigned long) RIP_AUTH_MD5_HASH_LEN,
 					       naddr_ntoa(from));
 				if (na2->a_family != RIP_AF_AUTH)
 					msglim(use_authp, from,
