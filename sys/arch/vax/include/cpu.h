@@ -1,4 +1,4 @@
-/*      $NetBSD: cpu.h,v 1.20 1997/01/31 02:11:51 thorpej Exp $      */
+/*      $NetBSD: cpu.h,v 1.20.4.1 1997/03/12 21:18:48 is Exp $      */
 
 /*
  * Copyright (c) 1994 Ludd, University of Lule}, Sweden
@@ -30,20 +30,21 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
- /* All bugs are subject to removal without further notice */
-
 #include <sys/cdefs.h>
 #include <sys/device.h>
 
 #include <machine/mtpr.h>
 #include <machine/pcb.h>
+#include <machine/uvax.h>
 
 #define enablertclock()
 #define	cpu_wait(p)
 #define	cpu_swapout(p)
 
-extern struct cpu_dep cpu_calls[];
-
+/*
+ * All cpu-dependent info is kept in this struct. Pointer to the
+ * struct for the current cpu is set up in locore.c.
+ */
 struct	cpu_dep {
 	void	(*cpu_steal_pages) __P((void)); /* pmap init before mm is on */
 	void	(*cpu_clock) __P((void)); /* CPU dep RT clock start */
@@ -53,7 +54,14 @@ struct	cpu_dep {
 	void	(*cpu_conf) __P((struct device *, struct device *, void *));
 	int	(*cpu_clkread) __P((time_t));	/* Read cpu clock time */
 	void	(*cpu_clkwrite) __P((void));	/* Write system time to cpu */
+	int	cpu_vups;	/* speed of cpu */
+	u_char  *cpu_intreq;	/* Used on some VAXstations */
+	u_char  *cpu_intclr;	/* Used on some VAXstations */
+	u_char  *cpu_intmsk;	/* Used on some VAXstations */
+	struct	uc_map *cpu_map; /* Map containing important addresses */
 };
+
+extern struct cpu_dep *dep_call; /* Holds pointer to current CPU struct. */
 
 struct clockframe {
         int     pc;
@@ -103,7 +111,6 @@ int	ra_getdev __P((int, int, int, struct device **));
 void	configure __P((void));
 void	dumpconf __P((void));
 void	dumpsys __P((void));
-void	findroot __P((void));
 void	swapconf __P((void));
 #ifdef DDB
 int	kdbrint __P((int));

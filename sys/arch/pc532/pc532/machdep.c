@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.55 1996/12/23 08:36:08 matthias Exp $	*/
+/*	$NetBSD: machdep.c,v 1.55.4.1 1997/03/12 21:17:05 is Exp $	*/
 
 /*-
  * Copyright (c) 1996 Matthias Pfaller.
@@ -62,8 +62,10 @@ static char rcsid[] = "/b/source/CVS/src/sys/arch/pc532/pc532/machdep.c,v 1.2 19
 #include <sys/msgbuf.h>
 #include <sys/vnode.h>
 #include <sys/device.h>
-#include <sys/sysctl.h>
 #include <sys/mount.h>
+#include <sys/core.h>
+#include <sys/kcore.h>
+#include <sys/sysctl.h>
 #include <sys/syscallargs.h>
 #ifdef SYSVMSG
 #include <sys/msg.h>
@@ -87,6 +89,7 @@ static char rcsid[] = "/b/source/CVS/src/sys/arch/pc532/pc532/machdep.c,v 1.2 19
 #include <machine/fpu.h>
 #include <machine/pmap.h>
 #include <machine/icu.h>
+#include <machine/kcore.h>
 
 #ifdef DDB
 #include <machine/db_machdep.h>
@@ -137,6 +140,7 @@ vm_map_t buffer_map;
 
 extern	vm_offset_t avail_start, avail_end;
 extern	int nkpde;
+extern	struct user *proc0paddr;
 
 caddr_t	allocsys __P((caddr_t));
 void	dumpsys __P((void));
@@ -536,16 +540,19 @@ boot(howto, bootstr)
 		goto haltsys;
 	}
 
+	/* If "always halt" was specified as a boot flag, obey. */
+	if ((boothowto & RB_HALT) != 0)
+		howto |= RB_HALT;
+
 	boothowto = howto;
 	if ((howto & RB_NOSYNC) == 0 && waittime < 0) {
 		waittime = 0;
 		vfs_shutdown();
 		/*
 		 * If we've been adjusting the clock, the todr
-		 * will be out of synch; adjust it now. (non panic!)
+		 * will be out of synch; adjust it now.
 		 */
-		if (panicstr == 0)
-			resettodr();
+		resettodr();
 	}
 
 	/* Disable interrupts. */
@@ -611,6 +618,54 @@ int 	dumpsize = 0;		/* pages */
 long	dumplo = 0; 		/* blocks */
 
 /*
+ * cpu_dumpsize: calculate size of machine-dependent kernel core dump headers.
+ */
+int
+cpu_dumpsize()
+{
+	int size;
+
+	size = ALIGN(sizeof(kcore_seg_t)) + ALIGN(sizeof(cpu_kcore_hdr_t));
+	if (roundup(size, dbtob(1)) != dbtob(1))
+		return -1;
+
+	return (1);
+}
+
+/*
+ * cpu_dump: dump machine-dependent kernel core dump headers.
+ */
+int
+cpu_dump()
+{
+	int (*dump) __P((dev_t, daddr_t, caddr_t, size_t));
+	long buf[dbtob(1) / sizeof (long)];
+	kcore_seg_t	*segp;
+	cpu_kcore_hdr_t	*cpuhdrp;
+
+        dump = bdevsw[major(dumpdev)].d_dump;
+
+	segp = (kcore_seg_t *)buf;
+	cpuhdrp =
+	    (cpu_kcore_hdr_t *)&buf[ALIGN(sizeof(*segp)) / sizeof (long)];
+
+	/*
+	 * Generate a segment header.
+	 */
+	CORE_SETMAGIC(*segp, KCORE_MAGIC, MID_MACHINE, CORE_CPU);
+	segp->c_size = dbtob(1) - ALIGN(sizeof(*segp));
+
+	/*
+	 * Add the machine-dependent header info
+	 */
+	cpuhdrp->ptd = proc0paddr->u_pcb.pcb_ptb;
+	cpuhdrp->core_seg.start = 0;
+	cpuhdrp->core_seg.size = ctob(physmem);
+
+	return (dump(dumpdev, dumplo, (caddr_t)buf, dbtob(1)));
+}
+
+/*
  * This is called by configure to set dumplo and dumpsize.
  * Dumps always skip the first CLBYTES of disk space
  * in case there might be a disk label stored there.
@@ -620,7 +675,7 @@ long	dumplo = 0; 		/* blocks */
 void
 dumpconf()
 {
-	int nblks;	/* size of dump area */
+	int nblks, dumpblks;	/* size of dump area */
 	int maj;
 
 	if (dumpdev == NODEV)
@@ -629,28 +684,34 @@ dumpconf()
 	if (maj < 0 || maj >= nblkdev)
 		panic("dumpconf: bad dumpdev=0x%x", dumpdev);
 	if (bdevsw[maj].d_psize == NULL)
-		return;
+		goto bad;
 	nblks = (*bdevsw[maj].d_psize)(dumpdev);
 	if (nblks <= ctod(1))
-		return;
+		goto bad;
 
+	dumpblks = cpu_dumpsize();
+	if (dumpblks < 0)
+		goto bad;
+	dumpblks += ctod(physmem);
+
+	/* If dump won't fit (incl. room for possible label), punt. */
+	if (dumpblks > (nblks - ctod(1)))
+		goto bad;
+
+	/* Put dump at end of partition */
+	dumplo = nblks - dumpblks;
+
+	/* dumpsize is in page units, and doesn't include headers. */
 	dumpsize = physmem;
+	return;
 
-	/* Always skip the first CLBYTES, in case there is a label there. */
-	if (dumplo < ctod(1))
-		dumplo = ctod(1);
-
-	/* Put dump at end of partition, and make it fit. */
-	if (dumpsize > dtoc(nblks - dumplo))
-		dumpsize = dtoc(nblks - dumplo);
-	if (dumplo < nblks - ctod(dumpsize))
-		dumplo = nblks - ctod(dumpsize);
+bad:
+	dumpsize = 0;
+	return;
 }
 
 /*
- * Doadump comes here after turning off memory management and
- * getting on the dump stack, either when called above, or by
- * the auto-restart code.
+ * Dump the kernel's image to the swap partition.
  */
 #define BYTES_PER_DUMP  NBPG	/* must be a multiple of pagesize XXX small */
 static vm_offset_t dumpspace;
@@ -683,8 +744,10 @@ dumpsys()
 	 */
 	if (dumpsize == 0)
 		dumpconf();
-	if (dumplo < 0)
+	if (dumplo <= 0) {
+		printf("\ndump to dev %x not possible\n", dumpdev);
 		return;
+	}
 	printf("\ndumping to dev %x, offset %ld\n", dumpdev, dumplo);
 
 	psize = (*bdevsw[major(dumpdev)].d_psize)(dumpdev);
@@ -694,14 +757,14 @@ dumpsys()
 		return;
 	}
 
-#if 0	/* XXX this doesn't work.  grr. */
-        /* toss any characters present prior to dump */
-	while (sget() != NULL); /*syscons and pccons differ */
-#endif
+	/* XXX should purge all outstanding keystrokes. */
+
+	if ((error = cpu_dump()) != 0)
+		goto err;
 
 	bytes = ctob(physmem);
 	maddr = 0;
-	blkno = dumplo;
+	blkno = dumplo + cpu_dumpsize();
 	dump = bdevsw[major(dumpdev)].d_dump;
 	error = 0;
 	for (i = 0; i < bytes; i += n) {
@@ -721,15 +784,10 @@ dumpsys()
 		maddr += n;
 		blkno += btodb(n);			/* XXX? */
 
-#if 0	/* XXX this doesn't work.  grr. */
-		/* operator aborting dump? */
-		if (sget() != NULL) {
-			error = EINTR;
-			break;
-		}
-#endif
+		/* XXX should look for keystrokes, to cancel. */
 	}
 
+err:
 	switch (error) {
 
 	case ENXIO:
@@ -864,13 +922,11 @@ map(pd, virtual, physical, protection, size)
  *
  * The cpu config register gets set.
  *
- * avail_start, avail_end, physmem, PTDpaddr and proc0paddr are set
+ * avail_start, avail_end, physmem and proc0paddr are set
  * to the correct values.
  *
  * The last action is to switch stacks and call main.
  */
-
-extern struct user *proc0paddr;
 
 #define kppa(x)	(ns532_round_page(x) & 0xffffff)
 #define kvpa(x) (ns532_round_page(x))
@@ -937,7 +993,6 @@ init532()
 
 	/* Allocate page table directory */
 	pd = (pd_entry_t *) alloc_pages(1);
-	PTDpaddr = (int)pd;
 
 	/* Recursively map in the page directory */
 	pd[PTDPTDI] = (pd_entry_t)pd | PG_V | PG_KW;

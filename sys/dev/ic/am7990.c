@@ -1,4 +1,4 @@
-/*	$NetBSD: am7990.c,v 1.24.4.3 1997/03/10 12:53:08 is Exp $	*/
+/*	$NetBSD: am7990.c,v 1.24.4.4 1997/03/12 21:22:23 is Exp $	*/
 
 /*-
  * Copyright (c) 1995 Charles M. Hannum.  All rights reserved.
@@ -145,7 +145,7 @@ void
 am7990_config(sc)
 	struct am7990_softc *sc;
 {
-	int mem;
+	int mem, i;
 
 	/* Make sure the chip is stopped. */
 	am7990_stop(sc);
@@ -202,6 +202,10 @@ am7990_config(sc)
 	sc->sc_sh = shutdownhook_establish(am7990_shutdown, sc);
 	if (sc->sc_sh == NULL)
 		panic("am7990_config: can't establish shutdownhook");
+	sc->sc_rbufaddr = malloc(sc->sc_nrbuf * sizeof(int), M_DEVBUF,
+					M_WAITOK);
+	sc->sc_tbufaddr = malloc(sc->sc_ntbuf * sizeof(int), M_DEVBUF,
+					M_WAITOK);
 
 	mem = 0;
 	sc->sc_initaddr = mem;
@@ -210,10 +214,10 @@ am7990_config(sc)
 	mem += sizeof(struct lermd) * sc->sc_nrbuf;
 	sc->sc_tmdaddr = mem;
 	mem += sizeof(struct letmd) * sc->sc_ntbuf;
-	sc->sc_rbufaddr = mem;
-	mem += LEBLEN * sc->sc_nrbuf;
-	sc->sc_tbufaddr = mem;
-	mem += LEBLEN * sc->sc_ntbuf;
+	for (i = 0; i < sc->sc_nrbuf; i++, mem += LEBLEN)
+		sc->sc_rbufaddr[i] = mem;
+	for (i = 0; i < sc->sc_ntbuf; i++, mem += LEBLEN)
+		sc->sc_tbufaddr[i] = mem;
 #ifdef notyet
 	if (mem > ...)
 		panic(...);
@@ -679,7 +683,8 @@ am7990_intr(arg)
 	register struct am7990_softc *sc = arg;
 	register u_int16_t isr;
 
-	isr = (*sc->sc_rdcsr)(sc, LE_CSR0);
+	isr = (*sc->sc_rdcsr)(sc, LE_CSR0) | sc->sc_saved_csr0;
+	sc->sc_saved_csr0 = 0;
 #ifdef LEDEBUG
 	if (sc->sc_debug)
 		printf("%s: am7990_intr entering with isr=%04x\n",

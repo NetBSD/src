@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.h,v 1.1 1996/11/24 13:34:42 matthias Exp $ */
+/*	$NetBSD: autoconf.h,v 1.1.4.1 1997/03/12 21:16:05 is Exp $ */
 
 /*
  * Copyright (c) 1994 Matthias Pfaller.
@@ -42,3 +42,6 @@ struct confargs {
 /* Locator aliases */
 #define cf_addr		cf_loc[0]
 #define cf_irq		cf_loc[1]
+
+extern u_long bootdev;
+extern struct device *booted_device;

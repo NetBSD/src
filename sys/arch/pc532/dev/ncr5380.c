@@ -1,4 +1,4 @@
-/*	$NetBSD: ncr5380.c,v 1.10 1996/08/27 21:56:32 cgd Exp $	*/
+/*	$NetBSD: ncr5380.c,v 1.10.2.1 1997/03/12 21:15:58 is Exp $	*/
 
 /*
  * Copyright (c) 1995 Leo Weppelman.

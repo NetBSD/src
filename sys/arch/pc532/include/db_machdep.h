@@ -1,4 +1,4 @@
-/*	$NetBSD: db_machdep.h,v 1.4 1996/10/09 07:28:44 matthias Exp $	*/
+/*	$NetBSD: db_machdep.h,v 1.4.6.1 1997/03/12 21:16:13 is Exp $	*/
 
 /* 
  * Mach Operating System
@@ -56,7 +56,7 @@
 #include <machine/trap.h>
 
 typedef	vm_offset_t	db_addr_t;	/* address - unsigned */
-typedef	int		db_expr_t;	/* expression - signed */
+typedef	long		db_expr_t;	/* expression - signed */
 
 typedef struct trapframe db_regs_t;
 db_regs_t  	ddb_regs;		/* register state */

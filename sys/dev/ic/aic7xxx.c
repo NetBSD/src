@@ -1,4 +1,4 @@
-/*	$NetBSD: aic7xxx.c,v 1.19 1996/12/10 21:27:58 thorpej Exp $	*/
+/*	$NetBSD: aic7xxx.c,v 1.19.4.1 1997/03/12 21:22:13 is Exp $	*/
 
 /*
  * Generic driver for the aic7xxx based adaptec SCSI controllers
@@ -93,11 +93,11 @@
  *    queue), the SCB is inserted onto the tail of the waiting_scbs list and
  *    we attempt to run this queue down.
  *
- * 4) ahc_run_waiing_queues() looks at both the assigned_scbs and waiting_scbs
+ * 4) ahc_run_waiting_queues() looks at both the assigned_scbs and waiting_scbs
  *    queues.  In the case of the assigned_scbs, the commands are immediately
  *    downloaded and started.  For waiting_scbs, we page in all that we can
  *    ensuring we don't create a resource deadlock (see comments in
- *    ahc_run_waing_queues()).
+ *    ahc_run_waiting_queues()).
  *
  * 5) After we handle a bunch of command completes, we also try running the
  *    queues since many SCBs may have disconnected since the last command
@@ -109,7 +109,7 @@
  *    queue for later use.
  *
  * 7) The driver handles page-in requests from the sequencer in response to
- *    the NO_MATCH sequencer interrupt.  For tagged commands, the approprite
+ *    the NO_MATCH sequencer interrupt.  For tagged commands, the appropriate
  *    SCB is easily found since the tag is a direct index into our kernel SCB
  *    array.  For non-tagged commands, we keep a separate array of 16 pointers
  *    that point to the single possible SCB that was paged out for that target.
@@ -155,7 +155,7 @@
 #define bootverbose	1
 
 #define DEBUGTARG	DEBUGTARGET
-#if DEBUGTARG < 0	/* Negative numbrs for disabling cause warnings */
+#if DEBUGTARG < 0	/* Negative numbers for disabling cause warnings */
 #undef DEBUGTARG
 #define DEBUGTARG	17
 #endif
@@ -376,7 +376,7 @@ static struct {
 	char *errmesg;
 } hard_error[] = {
 	{ ILLHADDR,  "Illegal Host Access" },
-	{ ILLSADDR,  "Illegal Sequencer Address referrenced" },
+	{ ILLSADDR,  "Illegal Sequencer Address referenced" },
 	{ ILLOPCODE, "Illegal Opcode in sequencer program" },
 	{ PARERR,    "Sequencer Ram Parity Error" }
 };
@@ -411,7 +411,7 @@ static int ahc_num_syncrates =
 	sizeof(ahc_syncrates) / sizeof(ahc_syncrates[0]);
 
 /*
- * Allocate a controller structures for a new device and initialize it.
+ * Allocate a controller structure for a new device and initialize it.
  * ahc_reset should be called before now since we assume that the card
  * is paused.
  */
@@ -585,12 +585,12 @@ ahc_scsirate(ahc, scsirate, period, offset, channel, target )
 		}
 	}
 	if (i >= ahc_num_syncrates) {
-		/* Use asyncronous transfers. */
+		/* Use asynchronous transfers. */
 		*scsirate = 0;
 		*period = 0;
 		*offset = 0;
 		if (bootverbose)
-			printf("%s: target %d using asyncronous transfers\n",
+			printf("%s: target %d using asynchronous transfers\n",
 			       ahc_name(ahc), target );
 	}
 	/*
@@ -646,6 +646,10 @@ ahc_attach(ahc)
 #elif defined(__NetBSD__)
 	ahc->sc_link.adapter_target = ahc->our_id;
 	ahc->sc_link.channel = 0;
+	/*
+	 * Set up max_target.
+	 */
+	ahc->sc_link.max_target = (ahc->type & AHC_WIDE) ? 15 : 7;
 #endif
 	ahc->sc_link.adapter_softc = ahc;
 	ahc->sc_link.adapter = &ahc_switch;
@@ -704,11 +708,6 @@ ahc_attach(ahc)
 		scbus = NULL;	/* Upper-level SCSI code owns this now */
 	}
 #elif defined(__NetBSD__)
-	/*
-	 * Set up max_target.
-	 */
-	ahc->sc_link.max_target = (ahc->type & AHC_WIDE) ? 15 : 7;
-
 	/*
 	 * ask the adapter what subunits are present
 	 */
@@ -852,13 +851,13 @@ ahc_run_waiting_queues(ahc)
 			/*
 			 * We have to be careful about when we allow
 			 * an SCB to be paged out.  There must always
-			 * be at least one slot availible for a
+			 * be at least one slot available for a
 			 * reconnecting target in case it references
 			 * an SCB that has been paged out.  Our
 			 * heuristic is that either the disconnected
 			 * list has at least two entries in it or
 			 * there is one entry and the sequencer is
-			 * activily working on an SCB which implies that
+			 * actively working on an SCB which implies that
 			 * it will either complete or disconnect before
 			 * another reconnection can occur.
 			 */
@@ -956,7 +955,7 @@ ahc_intr(arg)
 	intstat = AHC_INB(ahc, INTSTAT);
 	/*
 	 * Is this interrupt for me? or for
-	 * someone who is sharing my interrupt
+	 * someone who is sharing my interrupt?
 	 */
 	if (!(intstat & INT_PEND))
 #if defined(__FreeBSD__)
@@ -1331,7 +1330,7 @@ ahc_handle_seqint(ahc, intstat)
 	case SEND_REJECT: 
 	{
 		u_char rejbyte = AHC_INB(ahc, REJBYTE);
-		printf("%s:%c:%d: Warning - unknown message recieved from "
+		printf("%s:%c:%d: Warning - unknown message received from "
 		       "target (0x%x).  Rejecting\n", 
 		       ahc_name(ahc), channel, target, rejbyte);
 		break; 
@@ -1542,8 +1541,8 @@ ahc_handle_seqint(ahc, intstat)
 			targ_scratch &= 0xf0;
 			ahc->needsdtr &= ~targ_mask;
 			ahc->sdtrpending &= ~targ_mask;
-			printf("%s:%c:%d: refuses syncronous negotiation. "
-			       "Using asyncronous transfers\n",
+			printf("%s:%c:%d: refuses synchronous negotiation. "
+			       "Using asynchronous transfers\n",
 			       ahc_name(ahc),
 			       channel, target);
 		} else {
@@ -1770,7 +1769,7 @@ ahc_handle_seqint(ahc, intstat)
 		 * the target on a reconnect.
 		 */
 		sc_print_addr(xs->sc_link);
-		printf("invalid tag recieved -- sending ABORT_TAG\n");
+		printf("invalid tag received -- sending ABORT_TAG\n");
 		xs->error = XS_DRIVER_STUFFUP;
 		untimeout(ahc_timeout, (caddr_t)scb);
 		ahc_done(ahc, scb);
@@ -2139,7 +2138,7 @@ ahc_init(ahc)
 			/* Reset the bus */
 #if !defined(__NetBSD__) || (defined(__NetBSD__) && defined(DEBUG))
 			if(bootverbose)
-				printf("%s: Reseting Channel B\n",
+				printf("%s: Resetting Channel B\n",
 				       ahc_name(ahc));
 #endif
 			AHC_OUTB(ahc, SCSISEQ, SCSIRSTO);
@@ -2168,7 +2167,7 @@ ahc_init(ahc)
 		/* Reset the bus */
 #if !defined(__NetBSD__) || (defined(__NetBSD__) && defined(DEBUG))
 		if(bootverbose)
-			printf("%s: Reseting Channel A\n", ahc_name(ahc));
+			printf("%s: Resetting Channel A\n", ahc_name(ahc));
 #endif
 
 		AHC_OUTB(ahc, SCSISEQ, SCSIRSTO);
@@ -2184,8 +2183,8 @@ ahc_init(ahc)
 	 * Look at the information that board initialization or
 	 * the board bios has left us.  In the lower four bits of each
 	 * target's scratch space any value other than 0 indicates
-	 * that we should initiate syncronous transfers.  If it's zero,
-	 * the user or the BIOS has decided to disable syncronous
+	 * that we should initiate synchronous transfers.  If it's zero,
+	 * the user or the BIOS has decided to disable synchronous
 	 * negotiation to that target so we don't activate the needsdtr
 	 * flag.
 	 */
@@ -2218,7 +2217,7 @@ ahc_init(ahc)
 
 			if(target_settings & 0x0f){
 				ahc->needsdtr_orig |= (0x01 << i);
-				/*Default to a asyncronous transfers(0 offset)*/
+				/*Default to asynchronous transfers(0 offset)*/
 				target_settings &= 0xf0;
 			}
 			if(target_settings & 0x80){
@@ -2276,7 +2275,7 @@ ahc_init(ahc)
 			ahc->needwdtr, ahc->discenable);
 #endif
 	/*
-	 * Set the number of availible SCBs
+	 * Set the number of available SCBs
 	 */
 	AHC_OUTB(ahc, SCBCOUNT, ahc->maxhscbs);
 
@@ -2288,7 +2287,7 @@ ahc_init(ahc)
 
 	/*
 	 * QCount mask to deal with broken aic7850s that
-	 * sporatically get garbage in the upper bits of
+	 * sporadically get garbage in the upper bits of
 	 * their QCount registers.
 	 */
 	AHC_OUTB(ahc, QCNTMASK, ahc->qcntmask);
@@ -2446,7 +2445,7 @@ ahc_scsi_cmd(xs)
 		goto get_scb;
 	}
 
-	/* determine safey of software queueing */
+	/* determine safety of software queueing */
 	dontqueue = xs->flags & SCSI_POLL;
 
 	/*
@@ -2696,7 +2695,7 @@ ahc_scsi_cmd(xs)
 
 
 /*
- * A scb (and hence an scb entry on the board is put onto the
+ * A scb (and hence an scb entry on the board) is put onto the
  * free list.
  */
 static void
@@ -2719,7 +2718,7 @@ ahc_free_scb(ahc, scb, flags)
 		STAILQ_INSERT_HEAD(&ahc->page_scbs, scb, links);
 		if(!scb->links.stqe_next && !ahc->free_scbs.stqh_first)
 			/*
-			 * If there were no SCBs availible, wake anybody waiting
+			 * If there were no SCBs available, wake anybody waiting
 			 * for one to come free.
 			 */
 			wakeup((caddr_t)&ahc->free_scbs);
@@ -2746,7 +2745,7 @@ ahc_free_scb(ahc, scb, flags)
 		STAILQ_INSERT_HEAD(&ahc->page_scbs, scb, links);
 		if(!scb->links.stqe_next && !ahc->free_scbs.stqh_first)
 			/*
-			 * If there were no SCBs availible, wake anybody waiting
+			 * If there were no SCBs available, wake anybody waiting
 			 * for one to come free.
 			 */
 			wakeup((caddr_t)&ahc->free_scbs);
@@ -2755,7 +2754,7 @@ ahc_free_scb(ahc, scb, flags)
 		STAILQ_INSERT_HEAD(&ahc->free_scbs, scb, links);
 		if(!scb->links.stqe_next && !ahc->page_scbs.stqh_first)
 			/*
-			 * If there were no SCBs availible, wake anybody waiting
+			 * If there were no SCBs available, wake anybody waiting
 			 * for one to come free.
 			 */
 			wakeup((caddr_t)&ahc->free_scbs);
@@ -3108,7 +3107,7 @@ ahc_timeout(arg)
 		}
 		/*
 		 * No active target or a paged out SCB.
-		 * Try reseting the bus.
+		 * Try resetting the bus.
 		 */
 		channel = (scb->tcl & SELBUSB) ? 'B': 'A';	
 		found = ahc_reset_channel(ahc, channel, scb->tag, 

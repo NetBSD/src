@@ -1,4 +1,4 @@
-/*      $NetBSD: vm_machdep.c,v 1.30 1997/01/11 11:23:09 ragge Exp $       */
+/*      $NetBSD: vm_machdep.c,v 1.30.6.1 1997/03/12 21:20:55 is Exp $       */
 
 /*
  * Copyright (c) 1994 Ludd, University of Lule}, Sweden.
@@ -597,9 +597,12 @@ vmapbuf(bp, len)
         tmap = vm_map_pmap(phys_map);
         len = len >> PGSHIFT;
         while (len--) {
+		volatile int i = *(int *)faddr;
+
                 pa = pmap_extract(fmap, faddr);
                 if (pa == 0)
-                        panic("vmapbuf: null page frame for %x", faddr);
+                       	panic("vmapbuf: null page frame for %x", faddr);
+
                 pmap_enter(tmap, taddr, pa & ~(NBPG - 1),
                            VM_PROT_READ|VM_PROT_WRITE, TRUE);
                 faddr += NBPG;

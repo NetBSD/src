@@ -1,4 +1,4 @@
-/*	$NetBSD: null_vfsops.c,v 1.14 1996/12/22 10:10:23 cgd Exp $	*/
+/*	$NetBSD: null_vfsops.c,v 1.14.6.1 1997/03/12 21:24:22 is Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -157,7 +157,7 @@ nullfs_mount(mp, path, data, ndp, p)
 	if (NULLVPTOLOWERVP(nullm_rootvp)->v_mount->mnt_flag & MNT_LOCAL)
 		mp->mnt_flag |= MNT_LOCAL;
 	mp->mnt_data = (qaddr_t) xmp;
-	getnewfsid(mp, makefstype(MOUNT_LOFS));
+	getnewfsid(mp, makefstype(MOUNT_NULL));
 
 	(void) copyinstr(path, mp->mnt_stat.f_mntonname, MNAMELEN - 1, &size);
 	bzero(mp->mnt_stat.f_mntonname + size, MNAMELEN - size);

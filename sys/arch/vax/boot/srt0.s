@@ -1,4 +1,4 @@
-/*	$NetBSD: srt0.s,v 1.6 1996/08/02 11:22:44 ragge Exp $ */
+/*	$NetBSD: srt0.s,v 1.6.6.1 1997/03/12 21:18:31 is Exp $ */
 /*
  * Copyright (c) 1994 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -45,7 +45,13 @@ nisse:	.set	nisse,0		# pass -e nisse to ld gives OK start addr
 
 _start:	.globl	_start
 	nop;nop;		# If we get called by calls, or something
-	movl	$_start, sp	# Probably safe place for stack
+
+	cmpl	ap, $-1		# Check if we are net-booted. XXX - kludge
+	beql	2f		# jump if not
+	movzbl	102(r11), r10	# Get bootdev from rpb. XXX - mixing with DEC
+	movzbl	48(r11), r11	# Get howto
+
+2:	movl	$_start, sp	# Probably safe place for stack
 	subl2	$52, sp		# do not overwrite saved boot-registers
 
 	subl3	$_start, $_edata, r0
@@ -53,7 +59,6 @@ _start:	.globl	_start
 	subl3	$_start, $_end, r2
 	movl	$_start, r3
 	movc5	r0, (r1), $0, r2, (r3)
-
 	jsb	1f
 1:	movl    $relocated, (sp)   # return-address on top of stack
 	rsb                        # can be replaced with new address
@@ -71,3 +76,8 @@ _hoppabort: .word 0x0
         movl    0xc(ap), r10
 	movl	16(ap), r9
         calls   $0,(r6)
+
+# Restart after goodbye
+__rtt:	.globl	__rtt
+	.word 0x0
+	jmp	_start

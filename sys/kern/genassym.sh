@@ -1,4 +1,4 @@
-#	$NetBSD: genassym.sh,v 1.4 1997/02/06 22:16:12 pk Exp $
+#	$NetBSD: genassym.sh,v 1.4.4.1 1997/03/12 21:23:30 is Exp $
 
 #
 # Copyright (c) 1997 Matthias Pfaller.
@@ -121,5 +121,8 @@ END {
 if [ $ccode = 1 ] ; then
 	"$@" /tmp/$$.c -o /tmp/genassym.$$ && /tmp/genassym.$$
 else
-	"$@" -S /tmp/$$.c -o -| sed -n 's/.*XYZZY/#define/gp'
+	# Kill all of the "#" and "$" modifiers; locore.s already
+	# prepends the correct "constant" modifier.
+	"$@" -S /tmp/$$.c -o -| sed -e 's/#//g' -e 's/\$//g' | \
+	    sed -n 's/.*XYZZY/#define/gp'
 fi

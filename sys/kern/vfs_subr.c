@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_subr.c,v 1.59 1997/01/31 19:10:28 thorpej Exp $	*/
+/*	$NetBSD: vfs_subr.c,v 1.59.4.1 1997/03/12 21:23:53 is Exp $	*/
 
 /*
  * Copyright (c) 1997 Jason R. Thorpe.  All rights reserved.
@@ -195,13 +195,14 @@ int
 vfs_busy(mp)
 	register struct mount *mp;
 {
+	int unmounting = mp->mnt_flag & MNT_UNMOUNT;
 
 	while(mp->mnt_flag & MNT_MPBUSY) {
 		mp->mnt_flag |= MNT_MPWANT;
 		tsleep((caddr_t)&mp->mnt_flag, PVFS, "vfsbusy", 0);
+		if (unmounting)
+			return (1);
 	}
-	if (mp->mnt_flag & MNT_UNMOUNT)
-		return (1);
 	mp->mnt_flag |= MNT_MPBUSY;
 	return (0);
 }
@@ -1565,6 +1566,8 @@ vfs_unmountall()
 		printf("unmounting %s (%s)...\n",
 		    mp->mnt_stat.f_mntonname, mp->mnt_stat.f_mntfromname);
 #endif
+		if (vfs_busy(mp))
+			continue;
 		if ((error = dounmount(mp, MNT_FORCE, &proc0)) != 0) {
 			printf("unmount of %s failed with error %d\n",
 			    mp->mnt_stat.f_mntonname, error);

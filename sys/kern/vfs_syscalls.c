@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_syscalls.c,v 1.74 1996/12/22 10:21:13 cgd Exp $	*/
+/*	$NetBSD: vfs_syscalls.c,v 1.74.4.1 1997/03/12 21:23:59 is Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -364,11 +364,16 @@ sys_unmount(p, v, retval)
 		return (EINVAL);
 	}
 	vput(vp);
+
+	if (vfs_busy(mp))
+		return (EBUSY);
+
 	return (dounmount(mp, SCARG(uap, flags), p));
 }
 
 /*
- * Do the actual file system unmount.
+ * Do the actual file system unmount. File system is assumed to have been
+ * marked busy by the caller.
  */
 int
 dounmount(mp, flags, p)
@@ -380,11 +385,11 @@ dounmount(mp, flags, p)
 	int error;
 
 	coveredvp = mp->mnt_vnodecovered;
-	if (vfs_busy(mp))
-		return (EBUSY);
 	mp->mnt_flag |= MNT_UNMOUNT;
-	if ((error = vfs_lock(mp)) != 0)
+	if ((error = vfs_lock(mp)) != 0) {
+		vfs_unbusy(mp);
 		return (error);
+	}
 
 	mp->mnt_flag &=~ MNT_ASYNC;
 	vnode_pager_umount(mp);	/* release cached vnodes */
@@ -429,12 +434,12 @@ sys_sync(p, v, retval)
 	register struct mount *mp, *nmp;
 	int asyncflag;
 
-	for (mp = mountlist.cqh_first; mp != (void *)&mountlist; mp = nmp) {
+	for (mp = mountlist.cqh_last; mp != (void *)&mountlist; mp = nmp) {
 		/*
-		 * Get the next pointer in case we hang on vfs_busy
+		 * Get the prev pointer in case we hang on vfs_busy
 		 * while we are being unmounted.
 		 */
-		nmp = mp->mnt_list.cqe_next;
+		nmp = mp->mnt_list.cqe_prev;
 		/*
 		 * The lock check below is to avoid races with mount
 		 * and unmount.
@@ -443,14 +448,15 @@ sys_sync(p, v, retval)
 		    !vfs_busy(mp)) {
 			asyncflag = mp->mnt_flag & MNT_ASYNC;
 			mp->mnt_flag &= ~MNT_ASYNC;
+			vnode_pager_sync(mp);
 			VFS_SYNC(mp, MNT_NOWAIT, p->p_ucred, p);
 			if (asyncflag)
 				mp->mnt_flag |= MNT_ASYNC;
 			/*
-			 * Get the next pointer again, as the next filesystem
+			 * Get the prev pointer again, as the prior filesystem
 			 * might have been unmounted while we were sync'ing.
 			 */
-			nmp = mp->mnt_list.cqe_next;
+			nmp = mp->mnt_list.cqe_prev;
 			vfs_unbusy(mp);
 		}
 	}
@@ -1803,8 +1809,10 @@ out:
 		VOP_LEASE(tdvp, p, p->p_ucred, LEASE_WRITE);
 		if (fromnd.ni_dvp != tdvp)
 			VOP_LEASE(fromnd.ni_dvp, p, p->p_ucred, LEASE_WRITE);
-		if (tvp)
+		if (tvp) {
+			(void)vnode_pager_uncache(tvp);
 			VOP_LEASE(tvp, p, p->p_ucred, LEASE_WRITE);
+		}
 		error = VOP_RENAME(fromnd.ni_dvp, fromnd.ni_vp, &fromnd.ni_cnd,
 				   tond.ni_dvp, tond.ni_vp, &tond.ni_cnd);
 	} else {

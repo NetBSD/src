@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_clock.c,v 1.39 1997/01/15 04:59:39 cgd Exp $	*/
+/*	$NetBSD: kern_clock.c,v 1.39.4.1 1997/03/12 21:23:34 is Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1991, 1993
@@ -821,7 +821,7 @@ hzto(tv)
 	 * than they should be.)  Maximum value for any timeout in 10ms
 	 * ticks is 250 days.
 	 */
-	s = splhigh();
+	s = splclock();
 	sec = tv->tv_sec - time.tv_sec;
 	if (sec <= 0x7fffffff / 1000000 - 1)
 		ticks = ((tv->tv_sec - time.tv_sec) * 1000000 +

@@ -1,4 +1,4 @@
-/*	$NetBSD: db_machdep.h,v 1.17 1997/02/06 21:16:41 gwr Exp $	*/
+/*	$NetBSD: db_machdep.h,v 1.17.2.1 1997/03/12 21:14:41 is Exp $	*/
 
 /* 
  * Mach Operating System
@@ -32,10 +32,13 @@
 #ifndef	_M68K_DB_MACHDEP_H_
 #define	_M68K_DB_MACHDEP_H_
 
-#include <vm/vm_prot.h>
+#include <sys/types.h>
+
+/*
+ * XXX - Would rather not pull in vm headers, but need boolean_t,
+ * at least until boolean_t moves to <sys/types.h> or someplace.
+ */
 #include <vm/vm_param.h>
-#include <vm/vm_inherit.h>
-#include <vm/lock.h>
 
 #include <machine/frame.h>
 #include <machine/psl.h>
@@ -45,7 +48,7 @@ typedef	vm_offset_t	db_addr_t;	/* address - unsigned */
 typedef	long		db_expr_t;	/* expression - signed */
 typedef struct trapframe db_regs_t;
 
-db_regs_t	ddb_regs;		/* register state */
+extern db_regs_t	ddb_regs;	/* register state */
 #define DDB_REGS	(&ddb_regs)
 
 #define	PC_REGS(regs)	((db_addr_t)(regs)->tf_pc)
@@ -56,9 +59,8 @@ db_regs_t	ddb_regs;		/* register state */
 
 #define	FIXUP_PC_AFTER_BREAK(regs)	((regs)->tf_pc -= BKPT_SIZE)
 
-#define SR_T1 0x8000
-#define	db_clear_single_step(regs)	((regs)->tf_sr &= ~SR_T1)
-#define	db_set_single_step(regs)	((regs)->tf_sr |=  SR_T1)
+#define	db_clear_single_step(regs)	((regs)->tf_sr &= ~PSL_T)
+#define	db_set_single_step(regs)	((regs)->tf_sr |=  PSL_T)
 
 #define	IS_BREAKPOINT_TRAP(type, code)	((type) == T_BREAKPOINT)
 #ifdef T_WATCHPOINT
@@ -83,10 +85,19 @@ db_regs_t	ddb_regs;		/* register state */
 #define inst_load(ins)		0
 #define inst_store(ins)		0
 
+/*
+ * Things needed by kgdb:
+ */
+typedef long kgdb_reg_t;
+#define KGDB_NUMREGS	(16+2)
+#define KGDB_BUFLEN	512
+
+
 #ifdef _KERNEL
 
+void	Debugger __P((void));	/* XXX */
 void	kdb_kintr __P((db_regs_t *));
-int	kdb_trap __P((int, db_regs_t *));
+int 	kdb_trap __P((int, db_regs_t *));
 
 #endif /* _KERNEL */
 

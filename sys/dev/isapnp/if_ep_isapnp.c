@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ep_isapnp.c,v 1.2 1997/01/23 11:42:44 veego Exp $	*/
+/*	$NetBSD: if_ep_isapnp.c,v 1.2.4.1 1997/03/12 21:23:11 is Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles M. Hannum.  All rights reserved.
@@ -130,5 +130,6 @@ ep_isapnp_attach(parent, self, aux)
 	sc->sc_ih = isa_intr_establish(ipa->ipa_ic, ipa->ipa_irq[0].num,
 	    IST_EDGE, IPL_NET, epintr, sc);
 
-	epconfig(sc, conn);
+	/* we can't easily tell if this is a 3c509B or 3c515 */
+	epconfig(sc, EP_CHIPSET_UNKNOWN);	/* XXX */
 }

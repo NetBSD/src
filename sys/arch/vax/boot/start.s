@@ -1,4 +1,4 @@
-/*	$NetBSD: start.s,v 1.8 1996/08/02 11:22:47 ragge Exp $ */
+/*	$NetBSD: start.s,v 1.8.6.1 1997/03/12 21:18:34 is Exp $ */
 /*
  * Copyright (c) 1995 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -180,8 +180,10 @@ relocated:				# now relocation is done !!!
  * hoppabort() is called when jumping to the newly loaded program.
  */
 ENTRY(hoppabort, 0)
-        movl    4(ap),r6
-        movl    8(ap),r11
-        movl    0xc(ap),r10
-        calls   $0,(r6)
+	movl    4(ap),r6
+	movl    8(ap),r11
+	movl    0xc(ap),r10
+	mnegl	$1, ap		# Hack to figure out boot device.
+	jmp	2(r6)
+#	calls   $0,(r6)
 	halt

@@ -1,4 +1,4 @@
-/*	$NetBSD: strcat.c,v 1.6 1996/09/30 01:14:42 jonathan Exp $	*/
+/*	$NetBSD: strcat.c,v 1.6.6.1 1997/03/12 21:18:06 is Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -39,6 +39,7 @@
  */
 
 #include <arch/pmax/stand/dec_prom.h>
+#undef strcat
 
 char *
 strcat(s1, s2)

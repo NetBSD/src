@@ -1,4 +1,4 @@
-/*	$NetBSD: z8530tty.c,v 1.14 1996/12/17 20:42:43 gwr Exp $	*/
+/*	$NetBSD: z8530tty.c,v 1.14.4.1 1997/03/12 21:23:03 is Exp $	*/
 
 /*
  * Copyright (c) 1994 Gordon W. Ross
@@ -80,10 +80,6 @@
 
 #include <dev/ic/z8530reg.h>
 #include <machine/z8530var.h>
-
-#ifdef KGDB
-extern int zs_check_kgdb();
-#endif
 
 /*
  * How many input characters we can buffer.
@@ -253,12 +249,11 @@ zstty_attach(parent, self, aux)
 	else {
 #ifdef KGDB
 		/*
-		 * Allow kgdb to "take over" this port.  If this port is
-		 * NOT the kgdb port, zs_check_kgdb() will return zero.
-		 * If it IS the kgdb port, it will print "kgdb,...\n"
-		 * and then return non-zero.
+		 * Allow kgdb to "take over" this port.  Returns true
+		 * if this serial port is in-use by kgdb.
 		 */
 		if (zs_check_kgdb(cs, dev)) {
+			printf(" (kgdb)\n");
 			/*
 			 * This is the kgdb port (exclusive use)
 			 * so skip the normal attach code.
@@ -861,6 +856,8 @@ zsparam(tp, t)
 		}
 	}
 	splx(s);
+
+	/* XXX - Check for DCD in case ZSWR15_DCD_IE was just set? */
 
 	/* If we can throttle input, enable "high water" detection. */
 	if (cflag & CHWFLOW) {

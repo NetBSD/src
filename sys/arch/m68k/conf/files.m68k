@@ -1,9 +1,10 @@
-#       $NetBSD: files.m68k,v 1.15 1997/02/02 06:55:15 thorpej Exp $
+#       $NetBSD: files.m68k,v 1.15.2.1 1997/03/12 21:14:32 is Exp $
 #
 file	arch/m68k/m68k/db_disasm.c		ddb
 file	arch/m68k/m68k/db_interface.c		ddb
 file	arch/m68k/m68k/db_trace.c		ddb
 file	arch/m68k/m68k/in_cksum.c		inet
+file	arch/m68k/m68k/kgdb_m68k.c		kgdb
 file	arch/m68k/m68k/mappedcopy.c		mappedcopy
 file	arch/m68k/m68k/ns_cksum.c		ns
 file	arch/m68k/m68k/oc_cksum.s		inet

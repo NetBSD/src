@@ -1,4 +1,4 @@
-/*	$NetBSD: param.c,v 1.20 1997/01/30 10:16:18 tls Exp $	*/
+/*	$NetBSD: param.c,v 1.20.4.1 1997/03/12 21:21:38 is Exp $	*/
 
 /*
  * Copyright (c) 1980, 1986, 1989 Regents of the University of California.
@@ -197,3 +197,8 @@ int autoniceval = AUTONICEVAL;
 int autoniceval = 4;		/* default + 4 */
 #endif
 
+/*
+ * Actual network mbuf sizes (read-only), for netstat.
+ */
+int	msize = MSIZE;
+int	mclbytes = MCLBYTES;
