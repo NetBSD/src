@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-1.5.3,v 1.1.2.14 2001/12/09 20:08:03 he Exp $
+#	$NetBSD: CHANGES-1.5.3,v 1.1.2.15 2001/12/11 00:17:01 he Exp $
 
 A complete list of changes from NetBSD 1.5.2 to NetBSD 1.5.3:
 
@@ -902,3 +902,191 @@ sys/arch/i386/pci/pchb.c			1.23,1.26 via patch
 
   Also only pay attention to the low byte of configuration register
   0x44 on ServerWorks chips, and compress some duplicated code.
+
+crypto/dist/ssh/LICENCE				1.1.1.3
+crypto/dist/ssh/OVERVIEW			1.1.1.2
+crypto/dist/ssh/README				1.1.1.2
+crypto/dist/ssh/README.smartcard		1.1 (new)
+crypto/dist/ssh/atomicio.c			1.3-1.5
+crypto/dist/ssh/atomicio.h			1.3-1.5
+crypto/dist/ssh/auth-bsdauth.c			1.1 (new)
+crypto/dist/ssh/auth-chall.c			1.3-1.5
+crypto/dist/ssh/auth-krb4.c			1.1.1.3 -> 1.4
+crypto/dist/ssh/auth-krb5.c			1.1-1.5 (new)
+crypto/dist/ssh/auth-options.c			1.1.1.5-1.1.1.8
+crypto/dist/ssh/auth-options.h			1.1.1.4-1.1.1.5
+crypto/dist/ssh/auth-passwd.c			1.1.1.4 -> 1.4
+crypto/dist/ssh/auth-rh-rsa.c			1.1.1.4-1.1.1.6
+crypto/dist/ssh/auth-rhosts.c			1.6-1.9
+crypto/dist/ssh/auth-rsa.c			1.1.1.4-1.1.1.8
+crypto/dist/ssh/auth-skey.c			1.1-1.5 (new)
+crypto/dist/ssh/auth.c				1.4-1.10
+crypto/dist/ssh/auth.h				1.1.1.4 -> 1.7
+crypto/dist/ssh/auth1.c				1.7-1.15
+crypto/dist/ssh/auth2-chall.c			1.2-1.5
+crypto/dist/ssh/auth2.c				1.5-1.13
+crypto/dist/ssh/authfd.c			1.3-1.8
+crypto/dist/ssh/authfd.h			1.1.1.4-1.1.1.5
+crypto/dist/ssh/authfile.c			1.4-1.11
+crypto/dist/ssh/authfile.h			1.1.1.4-1.1.1.5
+crypto/dist/ssh/bufaux.c			1.1.1.4-1.1.1.5
+crypto/dist/ssh/bufaux.h			1.1.1.4-1.1.1.5
+crypto/dist/ssh/buffer.c			1.1.1.4-1.1.1.5
+crypto/dist/ssh/buffer.h			1.1.1.4-1.1.1.5
+crypto/dist/ssh/canohost.c			1.6-1.10
+crypto/dist/ssh/canohost.h			1.2-1.4
+crypto/dist/ssh/channels.c			1.7-1.11,1.13-1.17
+crypto/dist/ssh/channels.h			1.3-1.7
+crypto/dist/ssh/cipher.c			1.5-1.8
+crypto/dist/ssh/cipher.h			1.1.1.4-1.1.1.6
+crypto/dist/ssh/cli.c				deleted
+crypto/dist/ssh/cli.h				delete
+crypto/dist/ssh/clientloop.c			1.6-1.15
+crypto/dist/ssh/clientloop.h			1.2-1.3
+crypto/dist/ssh/compat.c			1.1.1.5-1.1.1.9
+crypto/dist/ssh/compat.h			1.1.1.5-1.1.1.8
+crypto/dist/ssh/compress.c			1.4-1.5
+crypto/dist/ssh/compress.h			1.1.1.4-1.1.1.5
+crypto/dist/ssh/crc32.c				1.1.1.4
+crypto/dist/ssh/crc32.h				1.1.1.4-1.1.1.6
+crypto/dist/ssh/deattack.c			1.5-1.10
+crypto/dist/ssh/deattack.h			1.1.1.4-1.1.1.5
+crypto/dist/ssh/dh.c				1.3-1.7
+crypto/dist/ssh/dh.h				1.1.1.2 -> 1.3
+crypto/dist/ssh/dispatch.c			1.1.1.4-1.1.1.5
+crypto/dist/ssh/dispatch.h			1.1.1.3-1.1.1.4
+crypto/dist/ssh/getput.h			1.1.1.4
+crypto/dist/ssh/groupaccess.c			1.2-1.3
+crypto/dist/ssh/groupaccess.h			1.2-1.3
+crypto/dist/ssh/hostfile.c			1.3-1.7
+crypto/dist/ssh/hostfile.h			1.4-1.5
+crypto/dist/ssh/includes.h			1.4-1.5
+crypto/dist/ssh/kex.c				1.6-1.12
+crypto/dist/ssh/kex.h				1.1.1.5-1.1.1.8
+crypto/dist/ssh/kexdh.c				1.1-1.5 (new)
+crypto/dist/ssh/kexgex.c			1.1-1.6 (new)
+crypto/dist/ssh/key.c				1.3-1.7,1.9-1.12 via patch
+crypto/dist/ssh/key.h				1.1.1.4-1.1.1.7
+crypto/dist/ssh/log-client.c			delete
+crypto/dist/ssh/log-server.c			deleted
+crypto/dist/ssh/log.c				1.1.1.4-1.1.1.6
+crypto/dist/ssh/log.h				1.2-1.3
+crypto/dist/ssh/login.c				delete
+crypto/dist/ssh/login.h				deleted
+crypto/dist/ssh/mac.c				1.2
+crypto/dist/ssh/mac.h				1.2-1.3
+crypto/dist/ssh/match.c				1.1.1.4-1.1.1.7
+crypto/dist/ssh/match.h				1.1.1.4-1.1.1.7
+crypto/dist/ssh/misc.c				1.2-1.8
+crypto/dist/ssh/misc.h				1.2-1.6
+crypto/dist/ssh/moduli				1.1 (new)
+crypto/dist/ssh/moduli.5			1.1-1.4 (new)
+crypto/dist/ssh/mpaux.c				1.4
+crypto/dist/ssh/mpaux.h				1.1.1.4-1.1.1.5
+crypto/dist/ssh/myproposal.h			1.1.1.5-1.1.1.6
+crypto/dist/ssh/nchan.c				1.1.1.4-1.1.1.9
+crypto/dist/ssh/nchan.h				delete
+crypto/dist/ssh/nchan.ms			1.1.1.3
+crypto/dist/ssh/nchan2.ms			1.1.1.2 -> 1.3
+crypto/dist/ssh/openssh2netbsd			1.2-1.3
+crypto/dist/ssh/packet.c			1.7-1.14
+crypto/dist/ssh/packet.h			1.1.1.4-1.1.1.9
+crypto/dist/ssh/pathnames.h			1.5-1.7
+crypto/dist/ssh/primes				deleted
+crypto/dist/ssh/pty.c				deleted
+crypto/dist/ssh/pty.h				delete
+crypto/dist/ssh/radix.c				1.1.1.3 -> 1.6
+crypto/dist/ssh/radix.h				1.2-1.3
+crypto/dist/ssh/readconf.c			1.6-1.13
+crypto/dist/ssh/readconf.h			1.1.1.4 -> 1.8
+crypto/dist/ssh/readpass.c			1.4-1.8
+crypto/dist/ssh/readpass.h			1.2-1.4
+crypto/dist/ssh/readpassphrase.3		1.1 (new)
+crypto/dist/ssh/readpassphrase.c		1.1 (new)
+crypto/dist/ssh/readpassphrase.h		1.1 (new)
+crypto/dist/ssh/rijndael.c			1.1.1.2 -> 1.3
+crypto/dist/ssh/rijndael.h			1.1.1.2 -> 1.5
+crypto/dist/ssh/rsa.c				1.1.1.4-1.1.1.5
+crypto/dist/ssh/rsa.h				1.1.1.4-1.1.1.5
+crypto/dist/ssh/scard.c				1.1.1.1-1.1.1.2 (new)
+crypto/dist/ssh/scard.h				1.1 (new)
+crypto/dist/ssh/scard/Makefile			1.1 (new)
+crypto/dist/ssh/scard/Ssh.bin.uu		1.1 (new)
+crypto/dist/ssh/scard/Ssh.java			1.1 (new)
+crypto/dist/ssh/scp.1				1.1.1.4-1.1.1.5
+crypto/dist/ssh/scp.c				1.9-1.17
+crypto/dist/ssh/servconf.c			1.6-1.14
+crypto/dist/ssh/servconf.h			1.6-1.10
+crypto/dist/ssh/serverloop.c			1.6-1.15
+crypto/dist/ssh/serverloop.h			1.2-1.3
+crypto/dist/ssh/session.c			1.6-1.14,1.16-1.21
+crypto/dist/ssh/session.h			1.1.1.3-1.1.1.5
+crypto/dist/ssh/sftp-client.c			1.7-1.11
+crypto/dist/ssh/sftp-client.h			1.2-1.4
+crypto/dist/ssh/sftp-common.c			1.2-1.4
+crypto/dist/ssh/sftp-common.h			1.2-1.3
+crypto/dist/ssh/sftp-glob.c			1.1-1.7 (new)
+crypto/dist/ssh/sftp-glob.h			1.1.1.1-1.1.1.4 (new)
+crypto/dist/ssh/sftp-int.c			1.6-1.11
+crypto/dist/ssh/sftp-int.h			1.2-1.4
+crypto/dist/ssh/sftp-server.8			1.1.1.4-1.1.1.7
+crypto/dist/ssh/sftp-server.c			1.8-1.13
+crypto/dist/ssh/sftp.1				1.1.1.5 -> 1.7
+crypto/dist/ssh/sftp.c				1.4-1.9
+crypto/dist/ssh/sftp.h				1.2-1.3
+crypto/dist/ssh/ssh-add.1			1.4-1.8
+crypto/dist/ssh/ssh-add.c			1.7-1.14
+crypto/dist/ssh/ssh-agent.1			1.4-1.9
+crypto/dist/ssh/ssh-agent.c			1.7-1.13
+crypto/dist/ssh/ssh-dss.c			1.4-1.8
+crypto/dist/ssh/ssh-dss.h			1.1.1.2 -> 1.3
+crypto/dist/ssh/ssh-keygen.1			1.4-1.11
+crypto/dist/ssh/ssh-keygen.c			1.6-1.14
+crypto/dist/ssh/ssh-keyscan.1			1.4-1.8
+crypto/dist/ssh/ssh-keyscan.c			1.7-1.13
+crypto/dist/ssh/ssh-rsa.c			1.4-1.8
+crypto/dist/ssh/ssh-rsa.h			1.1.1.2 -> 1.3
+crypto/dist/ssh/ssh.1				1.9-1.16
+crypto/dist/ssh/ssh.c				1.8-1.18
+crypto/dist/ssh/ssh.h				1.5-1.6
+crypto/dist/ssh/ssh1.h				1.2-1.5
+crypto/dist/ssh/ssh2.h				1.1.1.4
+crypto/dist/ssh/ssh_config			1.3-1.4
+crypto/dist/ssh/sshconnect.c			1.7-1.15
+crypto/dist/ssh/sshconnect.h			1.1.1.4-1.1.1.8
+crypto/dist/ssh/sshconnect1.c			1.7-1.17
+crypto/dist/ssh/sshconnect2.c			1.7-1.15
+crypto/dist/ssh/sshd.8				1.8-1.20
+crypto/dist/ssh/sshd.c				1.7-1.17
+crypto/dist/ssh/sshd_config			1.3-1.9
+crypto/dist/ssh/sshlogin.c			1.1.1.1-1.1.1.2 (new)
+crypto/dist/ssh/sshlogin.h			1.1.1.1-1.1.1.3 (new)
+crypto/dist/ssh/sshpty.c			1.1-1.3 (new)
+crypto/dist/ssh/sshpty.h			1.1.1.1-1.1.1.3 (new)
+crypto/dist/ssh/sshtty.c			1.1 (new)
+crypto/dist/ssh/sshtty.h			1.1.1.1-1.1.1.2 (new)
+crypto/dist/ssh/tildexpand.c			1.4-1.5
+crypto/dist/ssh/tildexpand.h			1.2-1.3
+crypto/dist/ssh/ttymodes.c			1.1.1.3-1.1.1.6
+crypto/dist/ssh/ttymodes.h			1.1.1.3-1.1.1.5
+crypto/dist/ssh/uidswap.c			1.1.1.4-1.1.1.6
+crypto/dist/ssh/uidswap.h			1.1.1.3-1.1.1.4
+crypto/dist/ssh/uuencode.c			1.4-1.5
+crypto/dist/ssh/uuencode.h			1.1.1.4-1.1.1.5
+crypto/dist/ssh/version.h			1.11-1.20 via patch
+crypto/dist/ssh/xmalloc.c			1.4-1.6
+crypto/dist/ssh/xmalloc.h			1.1.1.3-1.1.1.4
+usr.bin/ssh/Makefile				1.10,1.13
+usr.bin/ssh/libssh/Makefile			1.3-1.4,1.6-1.8 via patch
+usr.bin/ssh/scp/Makefile			1.3
+usr.bin/ssh/sftp-server/Makefile		1.3
+usr.bin/ssh/sftp/Makefile			1.2
+usr.bin/ssh/ssh-add/Makefile			1.2
+usr.bin/ssh/ssh-agent/Makefile			1.2
+usr.bin/ssh/ssh-keygen/Makefile			1.2
+usr.bin/ssh/ssh-keyscan/Makefile		1.2-1.3
+usr.bin/ssh/ssh/Makefile			1.6-1.9
+usr.bin/ssh/sshd/Makefile			1.4-1.9
+distrib/sets/lists/etc/mi			patch
+
+  Upgrade OpenSSH to version 3.0.2.
