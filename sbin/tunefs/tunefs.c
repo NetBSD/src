@@ -39,7 +39,7 @@ char copyright[] =
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)tunefs.c	5.11 (Berkeley) 6/1/90";*/
-static char rcsid[] = "$Id: tunefs.c,v 1.6 1994/04/12 05:03:24 cgd Exp $";
+static char rcsid[] = "$Id: tunefs.c,v 1.7 1994/04/20 03:57:08 cgd Exp $";
 #endif /* not lint */
 
 /*
@@ -62,13 +62,13 @@ static char rcsid[] = "$Id: tunefs.c,v 1.6 1994/04/12 05:03:24 cgd Exp $";
  * only the superuser may continue to allocate blocks. This may
  * be set to 0 if no reserve of free blocks is deemed necessary,
  * however throughput drops by fifty percent if the file system
- * is run at between 95% and 100% full; thus the default value of
- * fs_minfree is 5%. With 5% free space, fragmentation is not a
+ * is run at between 90% and 100% full; thus the default value of
+ * fs_minfree is 10%. With 10% free space, fragmentation is not a
  * problem, so we choose to optimize for time.  
  *
  * XXX should be in some header common with newfs; snarfed from there.
  */
-#define	MINFREE		5
+#define	MINFREE		10
 
 /* the optimization warning string template */
 #define	OPTWARN		"should optimize for %s with minfree %s %d%%"
