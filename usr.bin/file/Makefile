@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.11 1997/03/24 21:59:35 christos Exp $
+#	$NetBSD: Makefile,v 1.12 1997/04/03 07:17:24 mikel Exp $
 
 FILESDIR=	/etc
 FILES=		magic
@@ -13,10 +13,10 @@ MAN=		file.1 magic.5
 CLEANFILES+=	magic
 all:		file magic
 
-MAGFILES=	$(.CURDIR)/magdir/Header\
-		$(.CURDIR)/magdir/Localstuff\
-		$(.CURDIR)/magdir/netbsd\
-		$(.CURDIR)/magdir/[a-z]*
+MAGFILES=	$(.CURDIR)/magdir/Header \
+		$(.CURDIR)/magdir/Localstuff \
+		$(.CURDIR)/magdir/netbsd \
+		$(.CURDIR)/magdir/[0-9a-z]*
 
 magic:		$(MAGFILES)
 	cat $(MAGFILES) > $(.TARGET)
