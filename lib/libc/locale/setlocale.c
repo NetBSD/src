@@ -1,4 +1,4 @@
-/*	$NetBSD: setlocale.c,v 1.19 2000/08/10 10:03:43 kleink Exp $	*/
+/*	$NetBSD: setlocale.c,v 1.20 2000/09/08 20:56:36 tshiozak Exp $	*/
 
 /*
  * Copyright (c) 1991, 1993
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)setlocale.c	8.1 (Berkeley) 7/4/93";
 #else
-__RCSID("$NetBSD: setlocale.c,v 1.19 2000/08/10 10:03:43 kleink Exp $");
+__RCSID("$NetBSD: setlocale.c,v 1.20 2000/09/08 20:56:36 tshiozak Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -107,11 +107,8 @@ __setlocale_mb_len_max_32(category, locale)
 	size_t len;
 	char *env, *r;
 
-	/*
-	 * XXX potential security problem here with set-id programs
-	 * being able to read files the user can not normally read.
-	 */
-	if (!PathLocale && !(PathLocale = getenv("PATH_LOCALE")))
+	if (issetugid() ||
+	    (!PathLocale && !(PathLocale = getenv("PATH_LOCALE"))))
 		PathLocale = _PATH_LOCALE;
 
 	if (category < 0 || category >= _LC_LAST)
@@ -140,7 +137,7 @@ __setlocale_mb_len_max_32(category, locale)
 		if (!env || !*env)
 			env = getenv("LANG");
 
-		if (!env || !*env)
+		if (!env || !*env || strchr(env, '/'))
 			env = "C";
 
 		(void)strncpy(new_categories[category], env, 31);
