@@ -1,4 +1,4 @@
-/*	$NetBSD: adbsys.c,v 1.28 1997/08/08 17:58:48 ender Exp $	*/
+/*	$NetBSD: adbsys.c,v 1.29 1997/08/09 20:21:45 ender Exp $	*/
 
 /*-
  * Copyright (C) 1994	Bradley A. Grantham
@@ -317,6 +317,9 @@ adb_init()
 		/* Print out the glory */
 		printf("adb: ");
 		switch (adbdata.origADBAddr) {
+		case ADBADDR_SECURE:
+			printf("security dongle (%d)", adbdata.devType);
+			break;
 		case ADBADDR_MAP:
 			switch (adbdata.devType) {
 			case ADB_STDKBD:
@@ -352,11 +355,17 @@ adb_init()
 			case ADB_ADJJAPKBD:
 				printf("adjustable keyboard (Japanese layout)");
 				break;
-			case ADB_PB500KBD:
-				printf("PowerBook 5xx keyboard");
+			case ADB_PBEXTISOKBD:
+				printf("PowerBook extended keyboard (ISO layout)");
 				break;
-			case ADB_PB500ISOKBD:
-				printf("PowerBook 5xx keyboard (ISO layout)");
+			case ADB_PBEXTJAPKBD:
+				printf("PowerBook extended keyboard (Japanese layout)");
+				break;
+			case ADB_PBEXTKBD:
+				printf("PowerBook extended keyboard");
+				break;
+			case ADB_DESIGNKBD:
+				printf("extended keyboard");
 				break;
 			default:
 				printf("mapped device (%d)",
@@ -411,11 +420,16 @@ adb_init()
 			}
 			break;
 		case ADBADDR_ABS:
-			printf("absolute positioning device (tablet?) (%d)", adbdata.devType);
+			printf("absolute positioning device (tablet?) (%d)",
+			    adbdata.devType);
+			break;
+		case ADBADDR_DATATX:
+			printf("data transfer device (modem?) (%d)",
+			    adbdata.devType);
 			break;
 		default:
-			printf("unknown type device, (def %d, handler %d)", adbdata.origADBAddr,
-			    adbdata.devType);
+			printf("unknown type device, (def %d, handler %d)",
+			    adbdata.origADBAddr, adbdata.devType);
 			break;
 		}
 		printf(" at %d\n", adbaddr);
