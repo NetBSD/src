@@ -1,4 +1,4 @@
-/*	$NetBSD: fd.c,v 1.63 1994/12/03 15:17:24 mycroft Exp $	*/
+/*	$NetBSD: fd.c,v 1.64 1994/12/14 15:23:45 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994 Charles Hannum.
@@ -48,7 +48,6 @@
 #include <sys/device.h>
 #include <sys/disklabel.h>
 #include <sys/dkstat.h>
-#include <sys/dkbad.h>
 #include <sys/disk.h>
 #include <sys/buf.h>
 #include <sys/uio.h>
