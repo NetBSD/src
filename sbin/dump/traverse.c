@@ -1,4 +1,4 @@
-/*	$NetBSD: traverse.c,v 1.40 2003/05/01 10:59:20 fvdl Exp $	*/
+/*	$NetBSD: traverse.c,v 1.41 2003/05/01 11:29:55 fvdl Exp $	*/
 
 /*-
  * Copyright (c) 1980, 1988, 1991, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)traverse.c	8.7 (Berkeley) 6/15/95";
 #else
-__RCSID("$NetBSD: traverse.c,v 1.40 2003/05/01 10:59:20 fvdl Exp $");
+__RCSID("$NetBSD: traverse.c,v 1.41 2003/05/01 11:29:55 fvdl Exp $");
 #endif
 #endif /* not lint */
 
@@ -368,11 +368,11 @@ dirindir(ino_t ino, daddr_t blkno, int ind_level, off_t *filesize,
 	if (ind_level <= 0) {
 		for (i = 0; *filesize > 0 && i < ufsib->ufs_nindir; i++) {
 			if (is_ufs2)
-				blkno = idblk.i64[i];
+				blkno = iswap64(idblk.i64[i]);
 			else
-				blkno = idblk.i32[i];
+				blkno = iswap32(idblk.i32[i]);
 			if (blkno != 0)
-				ret |= searchdir(ino, iswap64(blkno),
+				ret |= searchdir(ino, blkno,
 				    ufsib->ufs_bsize, *filesize,
 				    tape_size, nodump);
 			if (ret & HASDUMPEDFILE)
@@ -385,9 +385,9 @@ dirindir(ino_t ino, daddr_t blkno, int ind_level, off_t *filesize,
 	ind_level--;
 	for (i = 0; *filesize > 0 && i < ufsib->ufs_nindir; i++) {
 		if (is_ufs2)
-			blkno = idblk.i64[i];
+			blkno = iswap64(idblk.i64[i]);
 		else
-			blkno = idblk.i32[i];
+			blkno = iswap32(idblk.i32[i]);
 		if (blkno != 0)
 			ret |= dirindir(ino, blkno, ind_level, filesize,
 			    tape_size, nodump);
