@@ -32,7 +32,7 @@ static char sccsid[] = "@(#)ld.c	6.10 (Berkeley) 5/22/91";
    Set, indirect, and warning symbol features added by Randy Smith. */
 
 /*
- *	$Id: ld.c,v 1.30 1994/06/29 11:18:45 pk Exp $
+ *	$Id: ld.c,v 1.31 1994/07/21 14:59:01 pk Exp $
  */
    
 /* Define how to initialize system-dependent header fields.  */
@@ -191,7 +191,8 @@ int	special_sym_count;	/* # of linker defined symbols. */
 int	global_alias_count;	/* # of aliased symbols */
 int	set_symbol_count;	/* # of N_SET* symbols. */
 int	set_vector_count;	/* # of set vectors in output. */
-int	warning_count;		/* # of warning symbols encountered. */
+int	warn_sym_count;		/* # of warning symbols encountered. */
+int	list_warning_symbols;	/* 1 => warning symbols referenced */
 
 struct string_list_element	*set_element_prefixes;
 
@@ -321,7 +322,8 @@ main(argc, argv)
 	non_L_local_sym_count = 0;
 	debugger_sym_count = 0;
 	undefined_global_sym_count = 0;
-	warning_count = 0;
+	warn_sym_count = 0;
+	list_warning_symbols = 0;
 	multiple_def_count = 0;
 	common_defined_global_count = 0;
 
@@ -1283,11 +1285,18 @@ enter_file_symbols(entry)
 				symbol *sp;
 				char *name = p->n_un.n_strx + entry->strings;
 				/* Deal with the warning symbol.  */
+				lsp->flags |= LS_WARNING;
 				enter_global_ref(lsp, name, entry);
 				sp = getsym(name);
-				sp->warning = (char *)xmalloc(strlen(msg)+1);
-				strcpy(sp->warning, msg);
-				warning_count++;
+				if (sp->warning == NULL) {
+					sp->warning = (char *)
+						xmalloc(strlen(msg)+1);
+					strcpy(sp->warning, msg);
+					warn_sym_count++;
+				} else if (strcmp(sp->warning, msg))
+					warnx(
+			"%s: multiple definitions for warning symbol `%s'",
+					get_file_name(entry), sp->name);
 			}
 		} else if (p->n_type & N_EXT) {
 			enter_global_ref(lsp,
@@ -1332,7 +1341,7 @@ enter_global_ref(lsp, name, entry)
 		sp->alias = getsym(entry->strings + (lsp + 1)->nzlist.nz_strx);
 		if (sp == sp->alias) {
 			warnx("%s: %s is alias for itself",
-					get_file_name(entry), name);
+				get_file_name(entry), name);
 			/* Rewrite symbol as global text symbol with value 0 */
 			lsp->nzlist.nz_type = N_TEXT|N_EXT;
 			lsp->nzlist.nz_value = 0;
@@ -1345,6 +1354,7 @@ enter_global_ref(lsp, name, entry)
 	if (entry->flags & E_DYNAMIC) {
 		lsp->next = sp->sorefs;
 		sp->sorefs = lsp;
+		lsp->symbol = sp;
 
 		/*
 		 * Handle commons from shared objects:
@@ -1376,7 +1386,6 @@ enter_global_ref(lsp, name, entry)
 		if (nzp->nz_size > sp->size)
 			sp->size = nzp->nz_size;
 
-		lsp->symbol = sp;
 		return;
 	}
 
@@ -1384,12 +1393,25 @@ enter_global_ref(lsp, name, entry)
 	sp->refs = lsp;
 	lsp->symbol = sp;
 
+	if (lsp->flags & LS_WARNING) {
+		/*
+		 * Prevent warning symbols from getting
+		 * gratuitously referenced.
+		 */
+		if (sp->flags & GS_REFERENCED)
+			list_warning_symbols = 1;
+		return;
+	}
+
+	if (sp->warning)
+		list_warning_symbols = 1;
+
 	sp->flags |= GS_REFERENCED;
 
 	if (sp == dynamic_symbol || sp == got_symbol) {
 		if (type != (N_UNDF | N_EXT) && !(entry->flags & E_JUST_SYMS))
 			errx(1,"Linker reserved symbol %s defined as type %x ",	
-						name, type);
+				name, type);
 		return;
 	}
 
@@ -1433,8 +1455,8 @@ enter_global_ref(lsp, name, entry)
 			 */
 			common_defined_global_count--;
 			sp->common_size = 0;
-		} else if (com && type == (N_UNDF | N_EXT)
-				  && sp->common_size < nzp->nz_value)
+		} else if (com && type == (N_UNDF | N_EXT) &&
+			   sp->common_size < nzp->nz_value)
 			/*
 			 * It used to be common and this is a new common entry
 			 * to which we need to pay attention.
@@ -1453,7 +1475,7 @@ enter_global_ref(lsp, name, entry)
 
 
 	if (sp == end_symbol && (entry->flags & E_JUST_SYMS) &&
-							!T_flag_specified)
+	    !T_flag_specified)
 		text_start = nzp->nz_value;
 
 	if (sp->flags & GS_TRACE) {
@@ -1656,7 +1678,7 @@ printf("set_sect_start = %#x, set_sect_size = %#x\n",
 	 * the output symbol table (barring DISCARD_* settings).
 	 */
 	global_sym_count = defined_global_sym_count +
-					undefined_global_sym_count;
+			   undefined_global_sym_count;
 
 	if (dynamic_symbol->flags & GS_REFERENCED)
 		global_sym_count++;
@@ -1668,15 +1690,20 @@ printf("set_sect_start = %#x, set_sect_size = %#x\n",
 		/* For each alias we write out two struct nlists */
 		global_sym_count += global_alias_count;
 
-	if (relocatable_output)
+	if (relocatable_output) {
 		/* We write out the original N_SET* symbols */
 		global_sym_count += size_sym_count;
+		/* Propagate warning symbols; costs two extra struct nlists */
+		global_sym_count += 2 * warn_sym_count;
+	}
 
 #ifdef DEBUG
-printf("global symbols %d (defined %d, undefined %d, aliases %d), locals: %d, \
-debug symbols: %d, set_symbols %d\n",
+printf(
+"global symbols %d (defined %d, undefined %d, aliases %d, warnings 2 * %d), \
+locals: %d, debug symbols: %d, set_symbols %d\n",
 	global_sym_count,
-	defined_global_sym_count, undefined_global_sym_count, global_alias_count,
+	defined_global_sym_count, undefined_global_sym_count,
+	global_alias_count, warn_sym_count,
 	local_sym_count, debugger_sym_count, set_symbol_count);
 #endif
 }
@@ -2801,12 +2828,12 @@ perform_relocation(data, data_size, reloc, nreloc, entry, dataseg)
 
 	}
 }
-
+
+
 /*
  * For relocatable_output only: write out the relocation,
  * relocating the addresses-to-be-relocated.
  */
-
 void
 write_rel()
 {
@@ -2827,13 +2854,17 @@ write_rel()
 	if (dynamic_symbol->flags & GS_REFERENCED)
 		dynamic_symbol->symbolnum = count++;
 	FOR_EACH_SYMBOL(i, sp) {
-		if (sp != dynamic_symbol && (sp->flags & GS_REFERENCED)) {
-			sp->symbolnum = count++;
-			if (sp->size)
-				count++;
-			if (sp->alias)
-				count++;
-		}
+		if (sp == dynamic_symbol)
+			continue;
+		if (sp->warning)
+			count += 2;
+		if (!(sp->flags & GS_REFERENCED))
+			continue;
+		sp->symbolnum = count++;
+		if (sp->size)
+			count++;
+		if (sp->alias)
+			count++;
 	} END_EACH_SYMBOL;
 
 	if (count != global_sym_count)
@@ -3170,6 +3201,27 @@ write_syms()
 		if (sp == dynamic_symbol)
 			/* Already dealt with above */
 			continue;
+
+		/*
+		 * Propagate N_WARNING symbols.
+		 */
+		if (relocatable_output && sp->warning) {
+			nl.n_type = N_WARNING;
+			nl.n_un.n_strx = assign_string_table_index(sp->warning);
+			nl.n_value = 0;
+			nl.n_other = 0;
+			nl.n_desc = 0;
+			*bufp++ = nl;
+			syms_written++;
+
+			nl.n_type = N_UNDF + N_EXT;
+			nl.n_un.n_strx = assign_string_table_index(sp->name);
+			nl.n_value = 0;
+			nl.n_other = 0;
+			nl.n_desc = 0;
+			*bufp++ = nl;
+			syms_written++;
+		}
 
 		if (!(sp->flags & GS_REFERENCED))
 			/* Came from shared object but was not used */
