@@ -1,4 +1,4 @@
-/* $NetBSD: vmstat.c,v 1.88 2001/11/26 10:18:08 lukem Exp $ */
+/* $NetBSD: vmstat.c,v 1.89 2001/11/26 10:38:59 lukem Exp $ */
 
 /*-
  * Copyright (c) 1998, 2000, 2001 The NetBSD Foundation, Inc.
@@ -81,7 +81,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1986, 1991, 1993\n\
 #if 0
 static char sccsid[] = "@(#)vmstat.c	8.2 (Berkeley) 3/1/95";
 #else
-__RCSID("$NetBSD: vmstat.c,v 1.88 2001/11/26 10:18:08 lukem Exp $");
+__RCSID("$NetBSD: vmstat.c,v 1.89 2001/11/26 10:38:59 lukem Exp $");
 #endif
 #endif /* not lint */
 
@@ -193,8 +193,16 @@ struct nlist namelist[] =
 	{ "_in_ifaddrhash" },
 #define	X_IFADDRHASHTBL	26
 	{ "_in_ifaddrhashtbl" },
+#define	X_NCHASH	27
+	{ "_nchash" },
+#define	X_NCHASHTBL	28
+	{ "_nchashtbl" },
+#define	X_NCVHASH	29
+	{ "_ncvhash" },
+#define	X_NCVHASHTBL	30
+	{ "_ncvhashtbl" },
 
-#define	X_END		27
+#define	X_END		31
 #if defined(pc532)
 #define	X_IVT		(X_END)
 	{ "_ivt" },
@@ -1160,6 +1168,12 @@ struct kernel_hash {
 	} , {
 		X_IFADDRHASH, X_IFADDRHASHTBL,
 		HASH_LIST, offsetof(struct in_ifaddr, ia_hash),
+	} , {
+		X_NCHASH, X_NCHASHTBL,
+		HASH_LIST, offsetof(struct namecache, nc_hash),
+	} , {
+		X_NCVHASH, X_NCVHASHTBL,
+		HASH_LIST, offsetof(struct namecache, nc_vhash),
 	} , {
 		-1, -1, 0, 0
 	}
