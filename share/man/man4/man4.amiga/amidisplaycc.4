@@ -1,4 +1,4 @@
-.\" $NetBSD: amidisplaycc.4,v 1.6 2002/03/13 19:46:01 jandberg Exp $
+.\" $NetBSD: amidisplaycc.4,v 1.7 2002/03/13 21:44:48 wiz Exp $
 .Dd February 4, 2002
 .Dt AMIDISPLAYCC 4 amiga
 .Sh NAME
@@ -28,10 +28,10 @@ What it does support is hilite (bold), underline, reverse and
 foreground/background colors.
 .Pp
 The number of virtual screens is limited only by
-the available chip memory. 
+the available chip memory.
 Each virtual screen can have a different display mode.
 A display mode defines the following things: height and width
-in pixels, number of colors, and the size of the font. 
+in pixels, number of colors, and the size of the font.
 The predefined modes are listed below.
 .Bl -bullet -offset indent -compact
 .It
@@ -48,10 +48,9 @@ Fonts of width 8 are supported. Fonts can be compiled into the kernel
 by specifying "options FONT_[fontname]" in the configuration file,
 or loaded with the
 .Xr wsfontload 8
-utility runtime. 
+utility runtime.
 .Sh SEE ALSO
 .Xr wscons 4 ,
 .Xr wsdisplay 4 ,
-.Xr wsfont 4 ,
-.Xr wsfontload 8
-
+.Xr wsfontload 8 ,
+.Xr wsfont 9
