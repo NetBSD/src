@@ -1,4 +1,4 @@
-/*	$NetBSD: ipsec.h,v 1.29 2002/06/12 17:56:45 itojun Exp $	*/
+/*	$NetBSD: ipsec.h,v 1.30 2002/09/11 02:41:28 itojun Exp $	*/
 /*	$KAME: ipsec.h,v 1.51 2001/08/05 04:52:58 itojun Exp $	*/
 
 /*
@@ -81,7 +81,7 @@ struct secpolicy {
 #define IPSEC_SPSTATE_DEAD	0
 #define IPSEC_SPSTATE_ALIVE	1
 
-	u_int policy;		/* DISCARD, NONE or IPSEC, see keyv2.h */
+	int policy;		/* DISCARD, NONE or IPSEC, see keyv2.h */
 	struct ipsecrequest *req;
 				/* pointer to the ipsec request tree, */
 				/* if policy == IPSEC else this value == NULL.*/

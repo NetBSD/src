@@ -1,4 +1,4 @@
-/*	$NetBSD: ip6_output.c,v 1.55 2002/06/09 14:43:12 itojun Exp $	*/
+/*	$NetBSD: ip6_output.c,v 1.56 2002/09/11 02:41:26 itojun Exp $	*/
 /*	$KAME: ip6_output.c,v 1.172 2001/03/25 09:55:56 itojun Exp $	*/
 
 /*
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip6_output.c,v 1.55 2002/06/09 14:43:12 itojun Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip6_output.c,v 1.56 2002/09/11 02:41:26 itojun Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -1031,7 +1031,7 @@ ip6_insert_jumboopt(exthdrs, plen)
 	u_int32_t plen;
 {
 	struct mbuf *mopt;
-	u_char *optbuf;
+	u_int8_t *optbuf;
 	u_int32_t v;
 
 #define JUMBOOPTLEN	8	/* length of jumbo payload option and padding */
@@ -1047,7 +1047,7 @@ ip6_insert_jumboopt(exthdrs, plen)
 		if (mopt == 0)
 			return(ENOBUFS);
 		mopt->m_len = JUMBOOPTLEN;
-		optbuf = mtod(mopt, u_char *);
+		optbuf = mtod(mopt, u_int8_t *);
 		optbuf[1] = 0;	/* = ((JUMBOOPTLEN) >> 3) - 1 */
 		exthdrs->ip6e_hbh = mopt;
 	} else {
@@ -1088,11 +1088,11 @@ ip6_insert_jumboopt(exthdrs, plen)
 			n->m_len = oldoptlen + JUMBOOPTLEN;
 			bcopy(mtod(mopt, caddr_t), mtod(n, caddr_t),
 			      oldoptlen);
-			optbuf = mtod(n, caddr_t) + oldoptlen;
+			optbuf = mtod(n, u_int8_t *) + oldoptlen;
 			m_freem(mopt);
 			mopt = exthdrs->ip6e_hbh = n;
 		} else {
-			optbuf = mtod(mopt, u_char *) + mopt->m_len;
+			optbuf = mtod(mopt, u_int8_t *) + mopt->m_len;
 			mopt->m_len += JUMBOOPTLEN;
 		}
 		optbuf[0] = IP6OPT_PADN;
