@@ -1,4 +1,4 @@
-/*	$NetBSD: db_memrw.c,v 1.9 1997/06/04 14:33:49 leo Exp $	*/
+/*	$NetBSD: db_memrw.c,v 1.10 1997/06/10 18:39:11 veego Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -126,7 +126,7 @@ db_write_text(addr, size, data)
 		/*
 		 * Get the VA for the page.
 		 */
-		pgva = atari_trunc_page((u_long)dst);
+		pgva = m68k_trunc_page((u_long)dst);
 
 		/*
 		 * Save this destination address, for TLB
