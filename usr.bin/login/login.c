@@ -39,7 +39,7 @@ char copyright[] =
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)login.c	5.78 (Berkeley) 6/29/92";*/
-static char rcsid[] = "$Id: login.c,v 1.6 1993/08/01 18:13:31 mycroft Exp $";
+static char rcsid[] = "$Id: login.c,v 1.7 1993/12/02 04:24:05 mycroft Exp $";
 #endif /* not lint */
 
 /*
@@ -231,12 +231,21 @@ main(argc, argv)
 		 * is root or the caller isn't changing their uid, don't
 		 * authenticate.
 		 */
-		if (pwd && (*pwd->pw_passwd == '\0' ||
-		    fflag && (uid == 0 || uid == pwd->pw_uid)))
-			break;
+		if (pwd) {
+			if (pwd->pw_uid == 0)
+				rootlogin = 1;
+
+			if (fflag && (uid == 0 || uid == pwd->pw_uid))) {
+				/* already authenticated */
+				break;
+			} else if (pwd->pw_passwd[0] == '\0') {
+				/* pretend password okay */
+				rval = 0;
+				goto ttycheck;
+			}
+		}
+
 		fflag = 0;
-		if (pwd && pwd->pw_uid == 0)
-			rootlogin = 1;
 
 		(void)setpriority(PRIO_PROCESS, 0, -4);
 
@@ -257,6 +266,7 @@ main(argc, argv)
 
 		(void)setpriority(PRIO_PROCESS, 0, 0);
 
+	ttycheck:
 		/*
 		 * If trying to log in as root without Kerberos,
 		 * but with insecure terminal, refuse the login attempt.
@@ -264,7 +274,7 @@ main(argc, argv)
 #ifdef KERBEROS
 		if (authok == 0)
 #endif
-		if (pwd && rootlogin && !rootterm(tty)) {
+		if (pwd && !rval && rootlogin && !rootterm(tty)) {
 			(void)fprintf(stderr,
 			    "%s login refused on this terminal.\n",
 			    pwd->pw_name);
