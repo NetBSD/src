@@ -1,4 +1,4 @@
-/*	$NetBSD: fix_options.c,v 1.7 2002/02/23 23:28:31 wiz Exp $	*/
+/*	$NetBSD: fix_options.c,v 1.8 2002/05/24 05:30:54 itojun Exp $	*/
 
  /*
   * Routine to disable IP-level socket options. This code was taken from 4.4BSD
@@ -12,7 +12,7 @@
 #if 0
 static char sccsid[] = "@(#) fix_options.c 1.6 97/04/08 02:29:19";
 #else
-__RCSID("$NetBSD: fix_options.c,v 1.7 2002/02/23 23:28:31 wiz Exp $");
+__RCSID("$NetBSD: fix_options.c,v 1.8 2002/05/24 05:30:54 itojun Exp $");
 #endif
 #endif
 
@@ -114,10 +114,23 @@ struct request_info *request;
 		break;
 	    if (opt == IPOPT_NOP) {
 		optlen = 1;
-	    } else {
+	    } else if (&cp[IPOPT_OLEN] < optbuf + optsize) {
 		optlen = cp[IPOPT_OLEN];
 		if (optlen <= 0)		/* Do not loop! */
 		    break;
+		if (cp + optlen >= optbuf + optsize) {
+		    syslog(LOG_WARNING,
+		       "refused connect from %s with malformed IP options",
+			   eval_client(request));
+		    shutdown(fd, 2);
+		    return;
+		}
+	    } else {
+		syslog(LOG_WARNING,
+		   "refused connect from %s with malformed IP options",
+		       eval_client(request));
+		shutdown(fd, 2);
+		return;
 	    }
 	}
 	lp = lbuf;
