@@ -1,4 +1,4 @@
-/*	$NetBSD: bus.h,v 1.2 2003/03/18 16:40:20 matt Exp $	*/
+/*	$NetBSD: bus.h,v 1.3 2003/07/28 07:58:50 scw Exp $	*/
 
 /*-
  * Copyright (c) 200e The NetBSD Foundation, Inc.
@@ -39,8 +39,10 @@
 #ifndef _MVMEPPC_BUS_H_
 #define _MVMEPPC_BUS_H_
 
-#include <powerpc/bus.h>
+#define PHYS_TO_BUS_MEM(t,x)	((x) | 0x80000000)
+#define BUS_MEM_TO_PHYS(t,x)	((x) & ~0x80000000)
 
+#include <powerpc/bus.h>
 
 #define	MVMEPPC_PHYS_BASE_IO		0x80000000
 #define	MVMEPPC_PHYS_SIZE_IO		0x3f800000
@@ -57,9 +59,6 @@
 #define	MVMEPPC_BUS_SPACE_IO		0
 #define	MVMEPPC_BUS_SPACE_MEM		1
 #define	MVMEPPC_BUS_SPACE_NUM_REGIONS	2
-
-#define PHYS_TO_BUS_MEM(t,x)	((x) | 0x80000000)
-#define BUS_MEM_TO_PHYS(t,x)	((x) & ~0x80000000)
 
 #ifdef _KERNEL
 extern struct powerpc_bus_space mvmeppc_isa_io_bs_tag;
