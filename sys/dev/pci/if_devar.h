@@ -1,4 +1,4 @@
-/*	$NetBSD: if_devar.h,v 1.32 1999/04/01 14:55:25 tsubai Exp $	*/
+/*	$NetBSD: if_devar.h,v 1.33 2000/01/15 18:39:32 matt Exp $	*/
 
 /*-
  * Copyright (c) 1994-1997 Matt Thomas (matt@3am-software.com)
@@ -533,7 +533,7 @@ struct _tulip_softc_t {
 #define	TULIP_INRESET		0x00000200
 #define	TULIP_NEEDRESET		0x00000400
 #define	TULIP_SQETEST		0x00000800
-#define	TULIP_xxxxxx0		0x00001000
+#define	TULIP_FULLDUPLEX	0x00001000
 #define	TULIP_xxxxxx1		0x00002000
 #define	TULIP_WANTTXSTART	0x00004000
 #define	TULIP_NEWTXTHRESH	0x00008000
