@@ -1,4 +1,4 @@
-/*	$NetBSD: pool.h,v 1.35 2002/03/11 01:16:43 enami Exp $	*/
+/*	$NetBSD: pool.h,v 1.36 2002/03/11 01:19:17 enami Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 1999, 2000 The NetBSD Foundation, Inc.
@@ -196,7 +196,7 @@ extern struct pool_allocator pool_allocator_kmem;
 extern struct pool_allocator pool_allocator_nointr;
 
 void		pool_init(struct pool *, size_t, u_int, u_int,
-				 int, const char *, struct pool_allocator *);
+		    int, const char *, struct pool_allocator *);
 void		pool_destroy(struct pool *);
 
 void		pool_set_drain_hook(struct pool *,
