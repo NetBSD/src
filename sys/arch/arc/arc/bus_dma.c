@@ -1,4 +1,4 @@
-/*	$NetBSD: bus_dma.c,v 1.7 2001/05/26 21:27:04 chs Exp $	*/
+/*	$NetBSD: bus_dma.c,v 1.8 2001/07/05 14:44:29 soda Exp $	*/
 /*	NetBSD: bus_dma.c,v 1.20 2000/01/10 03:24:36 simonb Exp 	*/
 
 /*-
@@ -445,7 +445,7 @@ _mips1_bus_dmamap_sync(t, map, offset, len, ops)
 	int i;
 
 	/*
-	 * Mising PRE and POST operations is not allowed.
+	 * Mixing PRE and POST operations is not allowed.
 	 */
 	if ((ops & (BUS_DMASYNC_PREREAD|BUS_DMASYNC_PREWRITE)) != 0 &&
 	    (ops & (BUS_DMASYNC_POSTREAD|BUS_DMASYNC_POSTWRITE)) != 0)
