@@ -1,4 +1,4 @@
-/*	$NetBSD: ncr5380.c,v 1.21 1996/03/07 02:26:37 briggs Exp $	*/
+/*	$NetBSD: ncr5380.c,v 1.22 1996/03/07 20:47:01 briggs Exp $	*/
 
 /*
  * Copyright (c) 1995 Leo Weppelman.
@@ -1219,7 +1219,7 @@ u_int	msg;
 			PID("hmessage9");
 			return (-1);
 		default: 
-			if ((msg & 0x80) & !(msg & 0x18)) {	/* IDENTIFY */
+			if ((msg & 0x80) && !(msg & 0x18)) {	/* IDENTIFY */
 				PID("hmessage10");
 				ack_message();
 				return (0);
