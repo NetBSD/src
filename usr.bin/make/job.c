@@ -1,4 +1,4 @@
-/*	$NetBSD: job.c,v 1.76 2003/04/08 17:46:59 christos Exp $	*/
+/*	$NetBSD: job.c,v 1.77 2003/07/14 18:19:12 christos Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -39,14 +39,14 @@
  */
 
 #ifdef MAKE_BOOTSTRAP
-static char rcsid[] = "$NetBSD: job.c,v 1.76 2003/04/08 17:46:59 christos Exp $";
+static char rcsid[] = "$NetBSD: job.c,v 1.77 2003/07/14 18:19:12 christos Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)job.c	8.2 (Berkeley) 3/19/94";
 #else
-__RCSID("$NetBSD: job.c,v 1.76 2003/04/08 17:46:59 christos Exp $");
+__RCSID("$NetBSD: job.c,v 1.77 2003/07/14 18:19:12 christos Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -223,7 +223,7 @@ static Shell 	*commandShell = &shells[DEFSHELL];/* this is the shell to
 						   * commands in the Makefile.
 						   * It is set by the
 						   * Job_ParseShell function */
-static char   	*shellPath = NULL,		  /* full pathname of
+static const char *shellPath = NULL,		  /* full pathname of
 						   * executable image */
                	*shellName = NULL,	      	  /* last component of shell */
 		*shellArgv = NULL;		  /* Custom shell args */
@@ -254,7 +254,7 @@ static int readyfd(Job *);
 
 STATIC GNode   	*lastNode;	/* The node for which output was most recently
 				 * produced. */
-STATIC char    	*targFmt;   	/* Format string to use to head output from a
+STATIC const char *targFmt;   	/* Format string to use to head output from a
 				 * job when it's not the most-recent job heard
 				 * from */
 static Job tokenWaitJob;	/* token wait pseudo-job */
@@ -332,7 +332,7 @@ static int JobRestart(Job *);
 static int JobStart(GNode *, int, Job *);
 static char *JobOutput(Job *, char *, char *, int);
 static void JobDoOutput(Job *, Boolean);
-static Shell *JobMatchShell(char *);
+static Shell *JobMatchShell(const char *);
 static void JobInterrupt(int, int);
 static void JobRestartJobs(void);
 static void JobTokenAdd(void);
@@ -629,7 +629,7 @@ JobPrintCommand(ClientData cmdp, ClientData jobp)
     Boolean	  errOff = FALSE;   /* true if we turned error checking
 				     * off before printing the command
 				     * and need to turn it back on */
-    char       	  *cmdTemplate;	    /* Template to use when printing the
+    const char    *cmdTemplate;	    /* Template to use when printing the
 				     * command */
     char    	  *cmdStart;	    /* Start of expanded command */
     char     	  *cmd = (char *) cmdp;
@@ -1224,7 +1224,7 @@ Job_Touch(GNode *gn, Boolean silent)
  *-----------------------------------------------------------------------
  */
 Boolean
-Job_CheckCommands(GNode *gn, void (*abortProc)(char *, ...))
+Job_CheckCommands(GNode *gn, void (*abortProc)(const char *, ...))
 {
     if (OP_NOP(gn->type) && Lst_IsEmpty(gn->commands) &&
 	((gn->type & OP_LIB) == 0 || Lst_IsEmpty(gn->children))) {
@@ -1518,9 +1518,9 @@ static void
 JobMakeArgv(Job *job, char **argv)
 {
     int	    	  argc;
-    static char	  args[10]; 	/* For merged arguments */
+    static char args[10]; 	/* For merged arguments */
 
-    argv[0] = shellName;
+    argv[0] = UNCONST(shellName);
     argc = 1;
 
     if ((commandShell->exit && (*commandShell->exit != '-')) ||
@@ -1544,11 +1544,11 @@ JobMakeArgv(Job *job, char **argv)
 	}
     } else {
 	if (!(job->flags & JOB_IGNERR) && commandShell->exit) {
-	    argv[argc] = commandShell->exit;
+	    argv[argc] = UNCONST(commandShell->exit);
 	    argc++;
 	}
 	if (!(job->flags & JOB_SILENT) && commandShell->echo) {
-	    argv[argc] = commandShell->echo;
+	    argv[argc] = UNCONST(commandShell->echo);
 	    argc++;
 	}
     }
@@ -2729,7 +2729,7 @@ Job_Empty(void)
  *-----------------------------------------------------------------------
  */
 static Shell *
-JobMatchShell(char *name)
+JobMatchShell(const char *name)
 {
     Shell	*sh;
 
@@ -2802,14 +2802,15 @@ Job_ParseShell(char *line)
     }
 
     if (shellArgv)
-	free(shellArgv);
+	free(UNCONST(shellArgv));
 
     memset((Address)&newShell, 0, sizeof(newShell));
 
     /*
      * Parse the specification by keyword
      */
-    words = brk_string(line, &argc, TRUE, &shellArgv);
+    words = brk_string(line, &argc, TRUE, &path);
+    shellArgv = path;
 
     for (path = NULL, argv = words; argc != 0; argc--, argv++) {
 	    if (strncmp(*argv, "path=", 5) == 0) {
@@ -2878,7 +2879,7 @@ Job_ParseShell(char *line)
 	shellPath = path;
 	path = strrchr(path, '/');
 	if (path == NULL) {
-	    path = shellPath;
+	    path = UNCONST(shellPath);
 	} else {
 	    path += 1;
 	}

@@ -1,4 +1,4 @@
-/*	$NetBSD: dir.h,v 1.8 2002/11/26 06:13:00 sjg Exp $	*/
+/*	$NetBSD: dir.h,v 1.9 2003/07/14 18:19:12 christos Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -60,11 +60,11 @@ void Dir_InitDot(void);
 void Dir_End(void);
 void Dir_SetPATH(void);
 Boolean Dir_HasWildcards(char *);
-void Dir_Expand(char *, Lst, Lst);
-char *Dir_FindFile(char *, Lst);
+void Dir_Expand(const char *, Lst, Lst);
+char *Dir_FindFile(const char *, Lst);
 int Dir_MTime(GNode *);
 Path *Dir_AddDir(Lst, const char *);
-char *Dir_MakeFlags(char *, Lst);
+char *Dir_MakeFlags(const char *, Lst);
 void Dir_ClearPath(Lst);
 void Dir_Concat(Lst, Lst);
 void Dir_PrintDirectories(void);

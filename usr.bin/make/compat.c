@@ -1,4 +1,4 @@
-/*	$NetBSD: compat.c,v 1.44 2002/06/15 18:24:56 wiz Exp $	*/
+/*	$NetBSD: compat.c,v 1.45 2003/07/14 18:19:11 christos Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -39,14 +39,14 @@
  */
 
 #ifdef MAKE_BOOTSTRAP
-static char rcsid[] = "$NetBSD: compat.c,v 1.44 2002/06/15 18:24:56 wiz Exp $";
+static char rcsid[] = "$NetBSD: compat.c,v 1.45 2003/07/14 18:19:11 christos Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)compat.c	8.2 (Berkeley) 3/19/94";
 #else
-__RCSID("$NetBSD: compat.c,v 1.44 2002/06/15 18:24:56 wiz Exp $");
+__RCSID("$NetBSD: compat.c,v 1.45 2003/07/14 18:19:11 christos Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -168,7 +168,7 @@ CompatRunCommand(ClientData cmdp, ClientData gnp)
     int	    	  cpid;	    	/* Child actually found */
     ReturnStatus  retstat;    	/* Status of fork */
     LstNode 	  cmdNode;  	/* Node where current command is located */
-    char    	  **av;	    	/* Argument vector for thing to exec */
+    const char  **av;	    	/* Argument vector for thing to exec */
     int	    	  argc;	    	/* Number of arguments in av or 0 if not
 				 * dynamically allocated */
     Boolean 	  local;    	/* TRUE if command should be executed
@@ -259,7 +259,7 @@ CompatRunCommand(ClientData cmdp, ClientData gnp)
 	 * -e flag as well as -c if it's supposed to exit when it hits an
 	 * error.
 	 */
-	static char	*shargv[4] = { _PATH_BSHELL };
+	static const char *shargv[4] = { _PATH_BSHELL };
 
 	if (DEBUG(SHELL))
 		shargv[1] = (errCheck ? "-exc" : "-xc");
@@ -275,7 +275,7 @@ CompatRunCommand(ClientData cmdp, ClientData gnp)
 	 * No meta-characters, so no need to exec a shell. Break the command
 	 * into words to form an argument vector we can execute.
 	 */
-	av = brk_string(cmd, &argc, TRUE, &bp);
+	av = (const char **)brk_string(cmd, &argc, TRUE, &bp);
     }
 
     local = TRUE;
@@ -290,9 +290,9 @@ CompatRunCommand(ClientData cmdp, ClientData gnp)
     if (cpid == 0) {
 	Check_Cwd(av);
 	if (local)
-	    (void)execvp(av[0], av);
+	    (void)execvp(av[0], (char *const *)UNCONST(av));
 	else
-	    (void)execv(av[0], av);
+	    (void)execv(av[0], (char *const *)UNCONST(av));
 	execError("exec", av[0]);
 	_exit(1);
     }
@@ -546,7 +546,7 @@ cohorts:
 void
 Compat_Run(Lst targs)
 {
-    char    	  *cp;	    /* Pointer to string of shell meta-characters */
+    const char    *cp;	    /* Pointer to string of shell meta-characters */
     GNode   	  *gn = NULL;/* Current root target */
     int	    	  errors;   /* Number of targets not remade due to errors */
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: str.c,v 1.18 2002/06/15 18:24:57 wiz Exp $	*/
+/*	$NetBSD: str.c,v 1.19 2003/07/14 18:19:13 christos Exp $	*/
 
 /*-
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -39,14 +39,14 @@
  */
 
 #ifdef MAKE_BOOTSTRAP
-static char rcsid[] = "$NetBSD: str.c,v 1.18 2002/06/15 18:24:57 wiz Exp $";
+static char rcsid[] = "$NetBSD: str.c,v 1.19 2003/07/14 18:19:13 christos Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char     sccsid[] = "@(#)str.c	5.8 (Berkeley) 6/1/90";
 #else
-__RCSID("$NetBSD: str.c,v 1.18 2002/06/15 18:24:57 wiz Exp $");
+__RCSID("$NetBSD: str.c,v 1.19 2003/07/14 18:19:13 christos Exp $");
 #endif
 #endif				/* not lint */
 #endif
@@ -62,7 +62,7 @@ __RCSID("$NetBSD: str.c,v 1.18 2002/06/15 18:24:57 wiz Exp $");
  *	the resulting string in allocated space.
  */
 char *
-str_concat(char *s1, char *s2, int flags)
+str_concat(const char *s1, const char *s2, int flags)
 {
 	int len1, len2;
 	char *result;
@@ -89,11 +89,6 @@ str_concat(char *s1, char *s2, int flags)
 	/* copy second string plus EOS into place */
 	memcpy(result + len1, s2, len2 + 1);
 
-	/* free original strings */
-	if (flags & STR_DOFREE) {
-		(void)free(s1);
-		(void)free(s2);
-	}
 	return(result);
 }
 
@@ -108,10 +103,11 @@ str_concat(char *s1, char *s2, int flags)
  *	the first word is always the value of the .MAKE variable.
  */
 char **
-brk_string(char *str, int *store_argc, Boolean expand, char **buffer)
+brk_string(const char *str, int *store_argc, Boolean expand, char **buffer)
 {
 	int argc, ch;
-	char inquote, *p, *start, *t;
+	char inquote, *start, *t;
+	const char *p;
 	int len;
 	int argmax = 50, curlen = 0;
     	char **argv = (char **)emalloc((argmax + 1) * sizeof(char *));
@@ -239,9 +235,9 @@ done:	argv[argc] = (char *)NULL;
  * Side effects: None.
  */
 char *
-Str_FindSubstring(char *string, char *substring)
+Str_FindSubstring(const char *string, const char *substring)
 {
-	char *a, *b;
+	const char *a, *b;
 
 	/*
 	 * First scan quickly through the two strings looking for a single-
@@ -255,13 +251,13 @@ Str_FindSubstring(char *string, char *substring)
 		a = string;
 		for (;;) {
 			if (*b == 0)
-				return(string);
+				return UNCONST(string);
 			if (*a++ != *b++)
 				break;
 		}
 		b = substring;
 	}
-	return((char *) NULL);
+	return NULL;
 }
 
 /*
@@ -276,7 +272,7 @@ Str_FindSubstring(char *string, char *substring)
  * Side effects: None.
  */
 int
-Str_Match(char *string, char *pattern)
+Str_Match(const char *string, const char *pattern)
 {
 	char c2;
 
@@ -384,16 +380,16 @@ thisCharOK:	++pattern;
  *-----------------------------------------------------------------------
  */
 char *
-Str_SYSVMatch(char *word, char *pattern, int *len)
+Str_SYSVMatch(const char *word, const char *pattern, int *len)
 {
-    char *p = pattern;
-    char *w = word;
-    char *m;
+    const char *p = pattern;
+    const char *w = word;
+    const char *m;
 
     if (*p == '\0') {
 	/* Null pattern is the whole string */
 	*len = strlen(w);
-	return w;
+	return UNCONST(w);
     }
 
     if ((m = strchr(p, '%')) != NULL) {
@@ -407,7 +403,7 @@ Str_SYSVMatch(char *word, char *pattern, int *len)
 	if (*++p == '\0') {
 	    /* No more pattern, return the rest of the string */
 	    *len = strlen(w);
-	    return w;
+	    return UNCONST(w);
 	}
     }
 
@@ -417,7 +413,7 @@ Str_SYSVMatch(char *word, char *pattern, int *len)
     do
 	if (strcmp(p, w) == 0) {
 	    *len = w - m;
-	    return m;
+	    return UNCONST(m);
 	}
     while (*w++ != '\0');
 
