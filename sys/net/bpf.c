@@ -1,4 +1,4 @@
-/*	$NetBSD: bpf.c,v 1.77 2003/02/26 06:31:12 matt Exp $	*/
+/*	$NetBSD: bpf.c,v 1.78 2003/03/13 10:18:35 dsl Exp $	*/
 
 /*
  * Copyright (c) 1990, 1991, 1993
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bpf.c,v 1.77 2003/02/26 06:31:12 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bpf.c,v 1.78 2003/03/13 10:18:35 dsl Exp $");
 
 #include "bpfilter.h"
 
@@ -629,6 +629,7 @@ bpfioctl(dev, cmd, addr, flag, p)
 {
 	struct bpf_d *d = &bpf_dtab[minor(dev)];
 	int s, error = 0;
+	pid_t pgid;
 #ifdef BPF_KERN_FILTER
 	struct bpf_insn **p;
 #endif
@@ -871,11 +872,16 @@ bpfioctl(dev, cmd, addr, flag, p)
 	 * the equivalent of a TIOCSPGRP and hence end up here.  *However*
 	 * TIOCSPGRP's arg is a process group if it's positive and a process
 	 * id if it's negative.  This is exactly the opposite of what the
-	 * other two functions want!  Therefore there is code in ioctl and
-	 * fcntl to negate the arg before calling here.
+	 * other two functions want!
+	 * There is code in ioctl and fcntl to make the SETOWN calls do
+	 * a TIOCSPGRP with the pgid of the process if a pid is given.
 	 */
 	case TIOCSPGRP:		/* Process or group to send signals to */
-		d->bd_pgid = *(int *)addr;
+		pgid = *(int *)addr;
+		if (pgid != 0)
+			error = pgid_in_session(p, pgid);
+		if (error == 0)
+			d->bd_pgid = pgid;
 		break;
 
 	case TIOCGPGRP:
