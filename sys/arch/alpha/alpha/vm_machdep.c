@@ -1,4 +1,4 @@
-/* $NetBSD: vm_machdep.c,v 1.34 1998/03/26 02:21:47 thorpej Exp $ */
+/* $NetBSD: vm_machdep.c,v 1.35 1998/07/28 18:30:54 thorpej Exp $ */
 
 /*
  * Copyright (c) 1994, 1995, 1996 Carnegie-Mellon University.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.34 1998/03/26 02:21:47 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.35 1998/07/28 18:30:54 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -98,7 +98,7 @@ cpu_coredump(p, vp, cred, chdr)
 
 	error = vn_rdwr(UIO_WRITE, vp, (caddr_t)&cpustate, sizeof(cpustate),
 	    (off_t)(chdr->c_hdrsize + chdr->c_seghdrsize), UIO_SYSSPACE,
-	    IO_NODELOCKED|IO_UNIT, cred, (int *)NULL, p);
+	    IO_NODELOCKED|IO_UNIT, cred, NULL, p);
 
 	if (!error)
 		chdr->c_nseg++;
