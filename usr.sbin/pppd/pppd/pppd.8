@@ -1,6 +1,6 @@
-.\"	$NetBSD: pppd.8,v 1.18 1997/10/18 04:37:46 lukem Exp $
+.\"	$NetBSD: pppd.8,v 1.19 1997/10/18 07:01:38 mikel Exp $
 .\" manual page [] for pppd 2.3
-.\" $NetBSD: pppd.8,v 1.18 1997/10/18 04:37:46 lukem Exp $
+.\" $NetBSD: pppd.8,v 1.19 1997/10/18 07:01:38 mikel Exp $
 .\" SH section heading
 .\" SS subsection heading
 .\" LP paragraph
@@ -54,7 +54,7 @@ mode.  This option is useful in conjunction with the
 \fBidle\fR option if there are packets being sent or received
 regularly over the link (for example, routing information packets)
 which would otherwise prevent the link from ever appearing to be idle.
-The \fIfilter-expression\fR syntax is as described for tcpdump(1),
+The \fIfilter-expression\fR syntax is as described for tcpdump(8),
 except that qualifiers which are inappropriate for a PPP link, such as
 \fBether\fR and \fBarp\fR, are not permitted.  Generally the filter
 expression should be enclosed in single-quotes to prevent whitespace
@@ -563,7 +563,7 @@ Packets which are rejected by the filter are silently discarded.  This
 option can be used to prevent specific network daemons (such as
 routed) using up link bandwidth, or to provide a basic firewall
 capability.
-The \fIfilter-expression\fR syntax is as described for tcpdump(1),
+The \fIfilter-expression\fR syntax is as described for tcpdump(8),
 except that qualifiers which are inappropriate for a PPP link, such as
 \fBether\fR and \fBarp\fR, are not permitted.  Generally the filter
 expression should be enclosed in single-quotes to prevent whitespace
