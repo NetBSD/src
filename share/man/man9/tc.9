@@ -1,4 +1,4 @@
-.\"     $NetBSD: tc.9,v 1.8 2003/04/16 13:35:34 wiz Exp $
+.\"     $NetBSD: tc.9,v 1.9 2004/10/04 19:12:52 rumble Exp $
 .\"
 .\" Copyright (c) 2001 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -142,7 +142,7 @@ Any CPU-to-memory reads/writes before the barrier must complete before
 any CPU-to-memory reads/writes after it.
 .It Fn tc_wmb ""
 A write memory barrier.
-Any CPU-to-memory writes before before the barrier must complete
+Any CPU-to-memory writes before the barrier must complete
 before any CPU-to-memory writes after it.
 .It Fn tc_syncbus ""
 Synchronise writes on the TURBOchannel bus by ensuring CPU writes are
