@@ -1,4 +1,4 @@
-# $NetBSD: md.newsmips,v 1.14 2001/04/15 17:14:28 kleink Exp $
+# $NetBSD: md.newsmips,v 1.15 2002/04/19 18:30:58 tsutsui Exp $
 ./usr/include/newsmips	comp-c-include
 ./usr/include/newsmips/_G_config.h	comp-c-include
 ./usr/include/newsmips/adrsmap.h	comp-c-include
@@ -18,7 +18,6 @@
 ./usr/include/newsmips/endian.h	comp-c-include
 ./usr/include/newsmips/endian_machdep.h	comp-c-include
 ./usr/include/newsmips/float.h	comp-c-include
-./usr/include/newsmips/framebuf.h	comp-c-include
 ./usr/include/newsmips/ieee.h	comp-c-include
 ./usr/include/newsmips/ieeefp.h	comp-c-include
 ./usr/include/newsmips/int_const.h	comp-c-include
@@ -29,14 +28,12 @@
 ./usr/include/newsmips/intr.h	comp-c-include
 ./usr/include/newsmips/kcore.h	comp-c-include
 ./usr/include/newsmips/kdbparam.h	comp-c-include
-./usr/include/newsmips/keyboard.h	comp-c-include
 ./usr/include/newsmips/limits.h	comp-c-include
 ./usr/include/newsmips/lock.h	comp-c-include
 ./usr/include/newsmips/locore.h	comp-c-include
 ./usr/include/newsmips/machConst.h	comp-c-include
 ./usr/include/newsmips/math.h	comp-c-include
 ./usr/include/newsmips/mips_opcode.h	comp-c-include
-./usr/include/newsmips/mouse.h	comp-c-include
 ./usr/include/newsmips/param.h	comp-c-include
 ./usr/include/newsmips/pcb.h	comp-c-include
 ./usr/include/newsmips/pmap.h	comp-c-include
