@@ -1,4 +1,4 @@
-/*	$NetBSD: citrus_ctype_template.h,v 1.28 2004/09/25 23:56:44 soda Exp $	*/
+/*	$NetBSD: citrus_ctype_template.h,v 1.29 2004/09/26 00:17:15 yamt Exp $	*/
 
 /*-
  * Copyright (c)2002 Citrus Project,
@@ -594,8 +594,10 @@ _FUNCNAME(ctype_wcrtomb)(void * __restrict cl, char * __restrict s, wchar_t wc,
 		/* reset state */
 		err = _FUNCNAME(put_state_reset)(_CEI_TO_EI(_TO_CEI(cl)), s,
 						 sz, psenc, &rsz);
-		if (err)
+		if (err) {
+			*nresult = -1;
 			goto quit;
+		}
 		s += rsz;
 		sz -= rsz;
 	}
