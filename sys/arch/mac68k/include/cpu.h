@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.32 1996/05/05 11:45:41 briggs Exp $	*/
+/*	$NetBSD: cpu.h,v 1.33 1996/05/05 12:02:41 briggs Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -375,10 +375,6 @@ void	proc_trampoline __P((void));
 /* trap.c */
 void	child_return __P((struct proc *, struct frame));
 
-#if defined(COMPAT_SUNOS)
-/* m68k/m68k/sunos_machdep.c */
-void	sunos_sendsig __P((sig_t, int, int, u_long));
-#endif
 __END_DECLS
 
 #endif	/* _CPU_MACHINE_ */
