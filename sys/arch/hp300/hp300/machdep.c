@@ -37,7 +37,7 @@
  *
  *	from: Utah Hdr: machdep.c 1.63 91/04/24
  *	from: @(#)machdep.c	7.16 (Berkeley) 6/3/91
- *	$Id: machdep.c,v 1.19 1994/01/08 06:34:01 mycroft Exp $
+ *	$Id: machdep.c,v 1.20 1994/01/08 07:14:24 cgd Exp $
  */
 
 #include "param.h"
@@ -1519,7 +1519,6 @@ cpu_exec_aout_prep_oldzmagic(p, epp)
 	struct exec_package *epp;
 {
 	struct exec *execp = epp->ep_execp;
-	struct exec_vmcmd *ccmdp;
 
 	epp->ep_taddr = 0;
 	epp->ep_tsize = execp->a_text;
@@ -1537,39 +1536,25 @@ cpu_exec_aout_prep_oldzmagic(p, epp)
 		if (epp->ep_vp->v_flag & VTEXT)
 			panic("exec: a VTEXT vnode has writecount != 0\n");
 #endif
-		epp->ep_vcp = NULL;
 		return ETXTBSY;
 	}
 	epp->ep_vp->v_flag |= VTEXT;
 
 	/* set up command for text segment */
-	epp->ep_vcp = new_vmcmd(vmcmd_map_pagedvn,
-	    execp->a_text,
-	    epp->ep_taddr,
-	    epp->ep_vp,
-	    NBPG,			/* should this be CLBYTES? */
-	    VM_PROT_READ | VM_PROT_EXECUTE);
-	ccmdp = epp->ep_vcp;
+	NEW_VMCMD(vmcmd_map_pagedvn, execp->a_text, epp->ep_taddr, epp->ep_vp,
+	    NBPG, /* XXX - should NBPG be CLBYTES? */
+	    VM_PROT_READ|VM_PROT_EXECUTE);
 
 	/* set up command for data segment */
-	ccmdp->ev_next = new_vmcmd(vmcmd_map_pagedvn,
-	    execp->a_data,
-	    epp->ep_daddr,
-	    epp->ep_vp,
-	    execp->a_text + NBPG,	/* should be CLBYTES? */
-	    VM_PROT_READ | VM_PROT_WRITE | VM_PROT_EXECUTE);
-	ccmdp = ccmdp->ev_next;
+	NEW_VMCMD(vmcmd_map_pagedvn, execp->a_data, epp->ep_daddr, epp->ep_vp,
+	    execp->a_text + NBPG, /* XXX - should NBPG be CLBYTES? */
+	    VM_PROT_READ|VM_PROT_WRITE|VM_PROT_EXECUTE);
 
 	/* set up command for bss segment */
-	ccmdp->ev_next = new_vmcmd(vmcmd_map_zero,
-	    execp->a_bss,
-	    epp->ep_daddr + execp->a_data,
-	    0,
-	    0,
-	    VM_PROT_READ | VM_PROT_WRITE | VM_PROT_EXECUTE);
-	ccmdp = ccmdp->ev_next;
+	NEW_VMCMD(vmcmd_map_zero, execp->a_bss, epp->ep_daddr + execp->a_data,
+	    0, 0, VM_PROT_READ|VM_PROT_WRITE|VM_PROT_EXECUTE);
 
-	return exec_aout_setup_stack(p, epp, ccmdp);
+	return exec_aout_setup_stack(p, epp);
 }
 #endif /* COMPAT_NOMID */
 
