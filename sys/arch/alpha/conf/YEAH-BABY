@@ -1,0 +1,388 @@
+# $NetBSD: YEAH-BABY,v 1.1 2000/05/22 16:46:11 thorpej Exp $
+#
+# yeah-baby.shagadelic.org -- thorpej's Alphastation 200 file server
+# and wireless network gateway
+
+include	"arch/alpha/conf/std.alpha"
+
+prefix ../crypto-us/sys
+cinclude "conf/files.crypto-us"
+prefix
+
+maxusers 32
+
+makeoptions	DEBUG="-g"
+
+# CPU Support
+#options 	DEC_2000_300	# "Jensen":	2000/300 (DECpc AXP 150)
+options 	DEC_2100_A50	# Avanti etc:	AlphaStation 400, 200, etc.
+#options 	DEC_3000_500	# Flamingo etc:	3000/[4-9]00*
+#options 	DEC_3000_300	# Pelican etc:	3000/300*
+#options 	DEC_AXPPCI_33	# NoName:	AXPpci33, etc.
+#options 	DEC_EB164	# EB164:	AlphaPC 164
+#options 	DEC_EB64PLUS	# EB64+:	AlphaPC 64, etc.
+#options 	DEC_KN20AA	# KN20AA:	AlphaStation 500 and 600
+#options 	DEC_KN8AE	# KN8AE:	AlphaServer 8200 and 8400
+#options 	DEC_KN300	# KN300:	AlphaServer 4100
+#options 	DEC_550		# Miata:	Digital Personal Workstation
+#options 	DEC_1000	# Mikasa etc:	Digital AlphaServer 1000
+#options 	DEC_1000A	# Corelle etc:	Digital AlphaServer 800/1000A
+#options 	DEC_ALPHABOOK1	# AlphaBook1:	Tadpole/DEC AlphaBook
+#options 	DEC_EB66	# EB66:		21066 Evaluation Board
+#options 	DEC_6600	# EV6:		264DP OEM Board
+
+# Standard system options
+options 	KTRACE			# System call tracing support
+options 	NTP			# kernel PLL for NTP
+
+# Diagnostic/debugging support options
+options 	DIAGNOSTIC		# Cheap kernel consistency checks
+#options 	DEBUG			# Expensive debugging checks/support
+#options 	KMEMSTATS		# Collect kmem usage statistics
+#options 	DDB			# Kernel Dynamic Debugger
+#options 	DDB_HISTORY_SIZE=100	# Enable history editing in DDB
+
+# File systems
+file-system	FFS		# Fast file system
+file-system	MFS		# Memory-based file system
+file-system	LFS		# Log-structured file system
+file-system	CD9660		# ISO-9660 CD-ROM FS (w/RockRidge extensions)
+#file-system	ADOSFS		# AmigaDOS-compatible file system
+file-system	MSDOSFS		# MS-DOS-compatible file system
+#file-system	EXT2FS		# Linux ext2 file system
+file-system	NFS		# Sun NFS-compatible file system client
+#file-system	NULLFS		# Null file system layer
+file-system	KERNFS		# Kernel variable file system (/kern)
+file-system	FDESC		# File descriptor file system (/dev/fd)
+#file-system	PORTAL		# Portal file system
+#file-system	UMAPFS		# User-mapping file system layer
+file-system	PROCFS		# Process file system (/proc)
+#file-system	UNION		# union file system
+
+# File system options
+#options 	QUOTA		# User and group quotas for the FFS
+options 	NFSSERVER	# Sun NFS-compatible file system server
+#options 	FFS_EI		# FFS Endian Independant support
+options 	SOFTDEP		# soft dependencies for FFS
+
+# Networking options
+options 	INET		# Internet protocol suite
+options 	INET6		# IPv6
+options 	IPSEC		# IP Security
+options 	IPSEC_ESP	# IP Security encryption
+#options 	NS		# Xerox NS protocol suite
+#options 	ISO,TPIP,EON	# ISO protocol suite
+#options 	CCITT,LLC,HDLC	# CCITT protocol suite
+options 	NETATALK	# AppleTalk networking protocols
+options 	GATEWAY		# packet forwarding and more mbuf space
+#options 	PPP_BSDCOMP	# BSD-Compress compression support for PPP
+#options 	PPP_DEFLATE	# Deflate compression support for PPP
+#options 	PPP_FILTER	# Active filter support for PPP (requires bpf)
+
+options 	NMBCLUSTERS=1024 # higher mbuf cluster limit
+
+# Compatibility with 4.2BSD implementation of TCP/IP.  Not suggested.
+#options 	TCP_COMPAT_42
+
+# 4.3BSD compatibility.  Should be optional, but necessary for now.
+options 	COMPAT_43
+
+# Binary compatibility with previous versions of NetBSD.
+#options 	COMPAT_09
+#options 	COMPAT_10
+#options 	COMPAT_11
+#options 	COMPAT_12
+options 	COMPAT_13
+options 	COMPAT_14
+
+# OSF/1 binary compatibility
+options 	COMPAT_OSF1
+
+# System V-like message queues
+options 	SYSVMSG
+
+# System V-like semaphores
+options 	SYSVSEM
+
+# System V-like shared memory
+options 	SYSVSHM
+#options 	SHMMAXPGS=1024		# 1024 pages is the default
+
+# Loadable Kernel Modules
+#options 	LKM
+
+# Disable kernel security.
+#options 	INSECURE
+
+# Misc. options
+#options 	EISAVERBOSE		# recognize "unknown" EISA devices
+#options 	EXTENT_DEBUG		# extent alloc/dealloc code debugging
+#options 	FIX_UNALIGNED_VAX_FP	# fix unaligned VAX FP loads & stores
+#options 	NO_KERNEL_RCSIDS	# don't include kernel file RCS IDs
+options 	PCIVERBOSE		# recognize "unknown" PCI devices
+options 	SCSIVERBOSE		# Verbose SCSI errors
+#options 	TCVERBOSE		# recognize "unknown" TC devices
+#options 	UCONSOLE		# users can use TIOCCONS (for xconsole)
+
+# The Alpha console firmware network boots using the BOOTP
+# protocol, so we ask the NFS code to use BOOTP/DHCP as well,
+# in case we have NFS root.
+#options 	NFS_BOOT_DHCP		# superset of BOOTP
+
+# WS console uses SUN or VT100 terminal emulation
+#options 	WSEMUL_VT100
+
+# realtime clock compatible to OSF/1
+#options 	CLOCK_COMPAT_OSF1
+
+config		netbsd	root on ? type ?
+#config		netbsd	root on sd0 type ffs
+#config		netbsd	root on ? type nfs
+
+mainbus0 at	root
+cpu*	at	mainbus0
+
+# TurboLaser bus support and devices
+#tlsb*	at	mainbus0
+#gbus*	at	tlsb? node ? offset ?
+#tlsbmem* at	tlsb? node ? offset ?
+#kft*	at	tlsb? node ? offset ?
+
+# Gbus Devices
+#mcclock* at	gbus? offset ?
+
+# MCBUS bus support
+#mcbus*	at	mainbus0
+#mcmem*	at	mcbus? mid ?
+
+#i2c	at	mcbus?
+
+#EV6 Tsunami Core Logic
+
+#tsc*	at	mainbus0
+
+# TurboChannel host bus adapter support
+#tcasic*	at	mainbus0
+
+# TurboChannel bus support
+#tc*	at	tcasic?
+
+# TurboChannel devices
+#ioasic*	at	tc? slot ? offset ?
+#mcclock* at	ioasic? offset ?
+#le*	at	ioasic? offset ?
+#scc0	at	ioasic? offset ?
+#scc1	at	ioasic? offset ?
+#tcds*	at	tc? slot ? offset ?
+#asc*	at	tcds? chip ?
+#cfb*	at	tc? slot ? offset ?
+#sfb*	at	tc? slot ? offset ?
+#le*	at	tc? slot ? offset ?
+#fta*	at	tc? slot ? offset ?		# DEC DEFTA FDDI cards
+
+# PCI host bus adapter support
+apecs*	at	mainbus?
+#cia*	at	mainbus?
+#lca*	at	mainbus?
+#dwlpx*	at	kft?
+#mcpcia*	at	mcbus? mid ?
+#tsp*	at	tsc?
+
+# PCI bus support
+pci*	at	apecs?
+#pci*	at	cia?
+#pci*	at	lca?
+#pci*	at	ppb?
+#pci*	at	dwlpx?
+#pci*	at	mcpcia?
+#pci*	at	tsp?
+
+# PCI devices
+#adv*	at	pci? dev ? function ?		# AdvanSys SCSI
+adw*	at	pci? dev ? function ?		# AdvanSys Wide SCSI
+#ahc*	at	pci? dev ? function ?		# Adaptec [23]94x, aic78x0 SCSI
+#bha*	at	pci? dev ? function ?		# BusLogic 9xx SCSI (untested)
+#cy*	at	pci? dev ? function ?		# Cyclades Cyclom-Y (untested)
+#de*	at	pci? dev ? function ?		# 21x4x-based Ethernet
+#en*	at	pci? dev ? function ?		# ENI PCI ATM (untested)
+#ep*	at	pci? dev ? function ?		# 3COM 3c59x
+#ex*	at	pci? dev ? function ?		# 3COM 3c90x[B] Ethernet
+#esh*	at	pci? dev ? function ?		# Essential HIPPI card
+#epic*	at	pci? dev ? function ?		# SMC EPIC/100 Ethernet
+#fpa*	at	pci? dev ? function ?		# DEC DEFPA FDDI
+#fxp*	at	pci? dev ? function ?		# Intel EEPRO 10+/100B
+#isp*	at	pci? dev ? function ?		# Qlogic ISP 10x0 SCSI
+#le*	at	pci? dev ? function ?		# PCI LANCE Ethernet (untested)
+#ncr*	at	pci? dev ? function ?		# NCR 53c8xx SCSI
+siop*	at	pci? dev ? function ?		# Symbios 53c8xx SCSI
+#pceb*	at	pci? dev ? function ?		# Intel PCI-EISA Bridges
+#pcscp*	at	pci? dev ? function ?		# AMD Am53c974 PCscsi-PCI
+#ppb*	at	pci? dev ? function ?		# PCI-PCI Bridges
+pciide*	at	pci? dev ? function ?		# PCI IDE controllers
+sio*	at	pci? dev ? function ?		# Intel PCI-ISA Bridges
+#tga*	at	pci? dev ? function ?		# DEC ZLXp-E[123] Graphics
+#tl*	at	pci? dev ? function ?		# TI ThunderLAN Ethernet
+options TLP_MATCH_21040
+tlp*	at	pci? dev ? function ?		# DEC 21x4x Ethernet and clones
+#vga*	at	pci? dev ? function ?		# PCI VGA Graphics
+#uhci*	at	pci? dev ? function ?		# USB Univ. Host Controller
+ohci*	at	pci? dev ? function ?		# USB Open Host Controller
+#eap*	at	pci? dev ? function ?		# Ensoniq AudioPCI
+#audio*	at	eap?
+
+# MII/PHY support
+#exphy*	at	mii? phy ?
+#inphy*	at	mii? phy ?
+#nsphy*	at	mii? phy ?
+#qsphy*	at	mii? phy ? 
+#tlphy*	at	mii? phy ?
+
+# ISA/EISA bus support
+#isa*	at	pceb?
+#eisa*	at	pceb?
+isa*	at	sio?
+
+# ISA devices
+mcclock* at	isa? port 0x70
+#pckbc*	at	isa?				# PC keyboard controller
+#pckbd*	at	pckbc?				# PC keyboard (kbd port)
+#pms*	at	pckbc?				# PS/2-style mouse (aux port)
+pcppi*	at	isa?				# PC prog. periph. interface
+midi*	at	pcppi?
+spkr0	at	pcppi?				# IBM BASIC emulation
+isabeep0 at	pcppi?				# "keyboard" beep
+com*	at	isa? port 0x3f8 irq 4		# standard serial ports
+com*	at	isa? port 0x2f8 irq 3
+#cs*	at	isa? port 0x300 iomem ? irq ? drq ? # CS8900 Ethernet
+#ep*	at	isa? port ? irq ?		# 3COM 3c509 Ethernet
+fdc0	at	isa? port 0x3f0 irq 6 drq 2	# floppy controller
+#lc0	at	isa? port 0x300 iomem ? irq ?	# DEC EtherWORKS III (LEMAC)
+#lc1	at	isa? port 0x320 iomem ? irq ?	# DEC EtherWORKS III (LEMAC)
+#depca0	at	isa? port 0x300 iomem 0xd0000 iosiz 0x10000 irq 5 	# DEPCA
+#depca1	at	isa? port 0x200 iomem 0xd8000 iosiz 0x8000 irq 10 	# DEPCA
+#le*	at	depca?
+lpt*	at	isa? port 0x3bc irq 7		# standard parallel port
+#vga*	at	isa?				# ISA (EISA: XXX) VGA
+#wdc0	at	isa? port 0x1f0 irq 14		# ST506/ESDI/IDE controllers
+#wdc1	at	isa? port 0x170 irq 15
+wss*	at	isa? port 0x530 irq 9 drq 0 drq2 1 # Windows Sound System
+audio*	at	wss?
+opl*	at	isa? port 0x388
+opl*	at	wss?
+midi*	at	opl?
+#aha*	at	isa? port 0x330 irq ? drq ?	# Adaptec 154[02] SCSI
+#aha*	at	isa? port 0x334 irq ? drq ?	# Adaptec 154[02] SCSI
+#bha*	at	isa? port 0x330 irq ? drq ?	# BusLogic [57]4X SCSI (unt.)
+#bha*	at	isa? port 0x334 irq ? drq ?	# BusLogic [57]4X SCSI (unt.)
+#uha*	at	isa? port 0x330 irq ? drq ?	# UltraStor [13]4f SCSI (unt.)
+#uha*	at	isa? port 0x334 irq ? drq ?	# UltraStor [13]4f SCSI (unt.)
+#satlink0 at	isa? port 0x300 drq 1		# PlanetConnect Satellite receiver.
+pcic0	at	isa? port 0x3e0 iomem 0xd0000 iosiz 0x10000
+pcic1	at	isa? port 0x3e2 iomem 0xe0000 iosiz 0x4000
+
+# EISA devices
+#ahb*	at	eisa? slot ?			# Adaptec 174[024] SCSI (unt.)
+#ahc*	at	eisa? slot ?			# Adaptec 274x, aic7770 SCSI
+#bha*	at	eisa? slot ?			# BusLogic 7xx SCSI
+#ep*	at	eisa? slot ?			# 3COM 3c579 Ethernet (untested)
+#fea*	at	eisa? slot ?			# DEC DEFEA FDDI
+#uha*	at	eisa? slot ?			# UltraStor 24f SCSI (unt.)
+
+# PCMCIA bus support
+pcmcia*	at	pcic? controller ? socket ?
+
+# PCMCIA device support
+ne*	at	pcmcia? function ?		# NE2000-compatible Ethernet
+ray*	at	pcmcia? function ?		# Raytheon Raylink 802.11
+
+mhzc*	at	pcmcia? function ?		# Megahertz Ethernet/modem
+com*	at	mhzc?
+sm*	at	mhzc?
+
+# SCSI bus support
+#scsibus* at	adv?
+scsibus* at	adw?
+#scsibus* at	aha?
+#scsibus* at	ahb?
+#scsibus* at	ahc?
+#scsibus* at	asc?
+#scsibus* at	bha?
+#scsibus* at	isp?
+#scsibus* at	ncr?
+scsibus* at	siop?
+#scsibus* at	pcscp?
+#scsibus* at	uha?
+
+# SCSI devices
+cd*	at	scsibus? target ? lun ?		# SCSI CD-ROM drives
+ch*	at	scsibus? target ? lun ?		# SCSI autochangers
+sd*	at	scsibus? target ? lun ?		# SCSI disk drives
+#se*	at	scsibus? target ? lun ?		# Cabletron SCSI<->Ethernet
+#ss*	at	scsibus? target ? lun ?		# SCSI scanners
+st*	at	scsibus? target ? lun ?		# SCSI tape drives
+uk*	at	scsibus? target ? lun ?		# SCSI unknown
+
+# ST506/ESDI/IDE devices
+wd*	at	pciide? channel ?
+#wd*	at	wdc? drive ?
+
+# ATAPI bus support
+atapibus* at	pciide? channel ?
+#atapibus* at	wdc?
+
+# ATAPI devices
+sd*	at	atapibus? drive ?		# ATAPI disk devices
+cd*	at	atapibus? drive ?		# ATAPI CD-ROM devices
+
+# Floppy drives
+fd*	at	fdc? drive ?
+
+# USB bus support
+#usb*	at	uhci?
+usb*	at	ohci?
+
+# USB hubs
+uhub*	at	usb?
+uhub*	at	uhub? port ?
+
+# USB mice
+#ums*	at	uhub? port ?
+#wsmouse* at	ums?
+
+# USB keyboards
+#ukbd*	at	uhub? port ?
+#wskbd*	at	ukbd? console ?
+
+# USB Generic HID devices
+#uhid*	at	uhub? port ?
+
+# USB Printers
+ulpt*	at	uhub? port ?
+
+# Workstation Console attachments
+#wsdisplay*	at	cfb?
+#wsdisplay*	at	vga?
+#wsdisplay*	at	sfb?
+#wsdisplay*	at	tga?
+#wskbd*		at	pckbd?
+#wsmouse*	at	pms?
+
+pseudo-device	bpfilter	32
+#pseudo-device	ccd		4
+#pseudo-device	raid		4		# RAIDframe disk driver
+pseudo-device	ipfilter	1
+pseudo-device	loop		1
+#pseudo-device	md		1
+#pseudo-device	ppp		4
+pseudo-device	pty		64
+#pseudo-device	sl		4
+#pseudo-device	strip		4
+#pseudo-device	tun		4
+pseudo-device	vnd		4
+
+pseudo-device	gif		4	# IPv[46] over IPv[46] tunnel (RFC1933)
+pseudo-device	faith		1	# IPv[46] tcp relay translation i/f
+
+# rnd is EXPERIMENTAL
+pseudo-device	rnd			# /dev/random and in-kernel generator
+#options 	RND_COM			# use "com" randomness too
