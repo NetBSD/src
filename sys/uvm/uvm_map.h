@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_map.h,v 1.44 2005/01/13 11:50:32 yamt Exp $	*/
+/*	$NetBSD: uvm_map.h,v 1.44.4.1 2005/01/25 12:58:29 yamt Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -359,7 +359,8 @@ void		uvm_unmap1(struct vm_map *, vaddr_t, vaddr_t, int);
 #define	uvm_unmap(map, s, e)	uvm_unmap1((map), (s), (e), 0)
 void		uvm_unmap_detach(struct vm_map_entry *,int);
 void		uvm_unmap_remove(struct vm_map *, vaddr_t, vaddr_t,
-		    struct vm_map_entry **, struct uvm_mapent_reservation *);
+		    struct vm_map_entry **, struct uvm_mapent_reservation *,
+		    int);
 
 int		uvm_map_prepare(struct vm_map *, vaddr_t, vsize_t,
 		    struct uvm_object *, voff_t, vsize_t, uvm_flag_t,

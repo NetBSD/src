@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_page.c,v 1.101 2004/10/23 21:29:27 yamt Exp $	*/
+/*	$NetBSD: uvm_page.c,v 1.101.6.1 2005/01/25 12:58:29 yamt Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_page.c,v 1.101 2004/10/23 21:29:27 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_page.c,v 1.101.6.1 2005/01/25 12:58:29 yamt Exp $");
 
 #include "opt_uvmhist.h"
 
@@ -873,7 +873,8 @@ uvm_page_rehash()
 	 * allocate the new buckets
 	 */
 
-	newbuckets = (struct pglist *) uvm_km_alloc(kernel_map, newsize);
+	newbuckets = (struct pglist *) uvm_km_alloc(kernel_map, newsize,
+	    0, UVM_KMF_WIRED);
 	if (newbuckets == NULL) {
 		printf("uvm_page_physrehash: WARNING: could not grow page "
 		    "hash table\n");
@@ -907,7 +908,8 @@ uvm_page_rehash()
 	 */
 
 	if (oldbuckets != &uvm_bootbucket)
-		uvm_km_free(kernel_map, (vaddr_t) oldbuckets, oldsize);
+		uvm_km_free(kernel_map, (vaddr_t) oldbuckets, oldsize,
+		    UVM_KMF_WIRED);
 }
 
 /*
