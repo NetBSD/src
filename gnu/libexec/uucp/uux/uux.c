@@ -26,7 +26,7 @@
 #include "uucp.h"
 
 #if USE_RCS_ID
-const char uux_rcsid[] = "$Id: uux.c,v 1.3 1995/08/24 05:23:38 jtc Exp $";
+const char uux_rcsid[] = "$Id: uux.c,v 1.4 1998/05/14 07:31:25 tron Exp $";
 #endif
 
 #include "uudefs.h"
@@ -532,7 +532,7 @@ main (argc, argv)
       else
 	{
 	  clen = zexclam - zcmd;
-	  zforward = zbufalc (clen);
+	  zforward = zbufalc (clen + 1);
 	  memcpy (zforward, zcmd, clen);
 	  zforward[clen] = '\0';
 	  zcmd = zexclam + 1;
