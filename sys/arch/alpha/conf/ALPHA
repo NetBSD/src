@@ -1,4 +1,4 @@
-# $NetBSD: ALPHA,v 1.30.2.7 1997/06/07 04:42:58 cgd Exp $
+# $NetBSD: ALPHA,v 1.30.2.8 1997/07/22 05:34:34 cgd Exp $
 #
 # Alpha kernel with all the options you'd want, and more.
 
@@ -37,6 +37,7 @@ file-system 	LFS		# Log-structured file system
 file-system 	CD9660		# ISO-9660 CD-ROM FS (w/RockRidge extensions)
 file-system 	ADOSFS		# AmigaDOS-compatible file system
 file-system 	MSDOSFS		# MS-DOS-compatible file system
+file-system 	EXT2FS		# Linux ext2 file system
 file-system 	NFS		# Sun NFS-compatible file system client
 file-system 	NULLFS		# Null file system layer
 file-system 	KERNFS		# Kernel variable file system (/kern)
@@ -104,7 +105,7 @@ options		TCVERBOSE		# recognize "unknown" TC devices
 options		UCONSOLE		# users can use TIOCCONS (for xconsole)
 
 config		netbsd	root on ? type ?
-#config		netbsd	root on sd0 type ffs swap on sd0
+#config		netbsd	root on sd0 type ffs
 #config		netbsd	root on ? type nfs
 
 mainbus0 at	root
@@ -198,6 +199,7 @@ bha*	at	isa? port 0x330 irq ? drq ?	# BusLogic [57]4X SCSI (unt.)
 bha*	at	isa? port 0x334 irq ? drq ?	# BusLogic [57]4X SCSI (unt.)
 uha*	at	isa? port 0x330 irq ? drq ?	# UltraStor [13]4f SCSI (unt.)
 uha*	at	isa? port 0x334 irq ? drq ?	# UltraStor [13]4f SCSI (unt.)
+#satlink0 at	isa? port 0x300 drq 1		# PlanetConnect Satellite receiver.
 
 # EISA devices
 ahb*	at	eisa? slot ?			# Adaptec 174[024] SCSI (unt.)
