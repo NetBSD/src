@@ -1,4 +1,4 @@
-/*	$NetBSD: locore_mips3.S,v 1.39 2000/07/19 20:46:00 jeffs Exp $	*/
+/*	$NetBSD: locore_mips3.S,v 1.40 2000/07/20 00:43:07 jeffs Exp $	*/
 
 /*
  * Copyright (c) 1997 Jonathan Stone (hereinafter referred to as the author)
@@ -814,7 +814,6 @@ NESTED_NOPROFILE(mips3_KernIntr, KERNFRAME_SIZ, ra)
 	REG_S	t9, TF_BASE+TF_REG_T9(sp)
 	REG_S	ra, TF_BASE+TF_REG_RA(sp)
 	REG_S	a0, TF_BASE+TF_REG_SR(sp)
-	and	a3, a0, a1			# 4th is STATUS & CAUSE
 	REG_S	v0, TF_BASE+TF_REG_MULLO(sp)
 	REG_S	v1, TF_BASE+TF_REG_MULHI(sp)
 	REG_S	a2, TF_BASE+TF_REG_EPC(sp)
@@ -827,7 +826,7 @@ NESTED_NOPROFILE(mips3_KernIntr, KERNFRAME_SIZ, ra)
 #endif
 	mtc0	zero, MIPS_COP_0_STATUS		# Reset exl, trap possible.
 	jal	_C_LABEL(cpu_intr)
-	nop
+	and	a3, a0, a1			# 4th is STATUS & CAUSE
 /*
  * Restore registers and return from the interrupt.
  */
@@ -924,7 +923,6 @@ NESTED_NOPROFILE(mips3_UserIntr, CALLFRAME_SIZ, ra)
 	REG_S	a0, FRAME_SR(k1)
 	REG_S	v0, FRAME_MULLO(k1)
 	REG_S	v1, FRAME_MULHI(k1)
-	and	a3, a0, a1			# 4th is STATUS & CAUSE
 	REG_S	a2, FRAME_EPC(k1)
 	addu	sp, k1, -CALLFRAME_SIZ		# switch to kernel SP
 #ifdef __GP_SUPPORT__
@@ -945,7 +943,7 @@ NESTED_NOPROFILE(mips3_UserIntr, CALLFRAME_SIZ, ra)
  */
 	mtc0	t0, MIPS_COP_0_STATUS
 	jal	_C_LABEL(cpu_intr)
-	nop
+	and	a3, a0, a1			# 4th is STATUS & CAUSE
 /*
  * Restore registers and return from the interrupt.
  */
