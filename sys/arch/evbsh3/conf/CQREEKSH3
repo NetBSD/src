@@ -1,4 +1,4 @@
-#	$NetBSD: CQREEKSH3,v 1.14 2002/01/27 13:23:15 jdolecek Exp $
+#	$NetBSD: CQREEKSH3,v 1.15 2002/02/17 20:59:35 uch Exp $
 #
 #	GENERIC -- everything that's currently supported
 #
@@ -19,6 +19,7 @@ options 	ROMIMAGE
 maxusers	32		# estimated number of users
 
 # CPU support.  At least one is REQUIRED.
+options		SH3
 options 	SH7708		# 100MHz
 options 	PCLOCK=15000000		# 15.000MHz
 options 	IOM_ROM_BEGIN=0x00000000
