@@ -31,7 +31,7 @@
  * SUCH DAMAGE.
  *
  *	from: from: @(#)ufs_disksubr.c	7.16 (Berkeley) 5/4/91
- *	$Id: disksubr.c,v 1.5 1994/02/10 04:29:11 briggs Exp $
+ *	$Id: disksubr.c,v 1.6 1994/02/22 01:16:33 briggs Exp $
  */
 /*-
  * Copyright (C) 1993	Allen K. Briggs, Chris P. Caputo,
@@ -187,10 +187,12 @@ int setRoot(struct partmapentry *part,struct disklabel *lp,int slot)
 	lp->d_partitions[slot].p_offset=part->pmPyPartStart;
 	lp->d_partitions[slot].p_fstype=FS_BSDFFS;
 
+#if PRINT_DISKLABELS
 	printf("%c: Root '%s' at %d size %d\n",slot+'a',
 		part->pmPartName,
 		part->pmPyPartStart,
 		part->pmPartBlkCnt);
+#endif
 
 	part->pmPartType[0]='\0';
 
@@ -203,10 +205,12 @@ int setSwap(struct partmapentry *part,struct disklabel *lp,int slot)
 	lp->d_partitions[slot].p_offset=part->pmPyPartStart;
 	lp->d_partitions[slot].p_fstype=FS_SWAP;
 
+#if PRINT_DISKLABELS
 	printf("%c: Swap '%s' at %d size %d\n",slot+'a',
 		part->pmPartName,
 		part->pmPyPartStart,
 		part->pmPartBlkCnt);
+#endif
 
 	part->pmPartType[0]='\0';
 
@@ -219,10 +223,12 @@ int setUfs(struct partmapentry *part,struct disklabel *lp,int slot)
 	lp->d_partitions[slot].p_offset=part->pmPyPartStart;
 	lp->d_partitions[slot].p_fstype=FS_BSDFFS;
 
+#if PRINT_DISKLABELS
 	printf("%c: Usr '%s' at %d size %d\n",slot+'a',
 		part->pmPartName,
 		part->pmPyPartStart,
 		part->pmPartBlkCnt);
+#endif
 
 	part->pmPartType[0]='\0';
 
@@ -235,10 +241,12 @@ int setHfs(struct partmapentry *part,struct disklabel *lp,int slot)
 	lp->d_partitions[slot].p_offset=part->pmPyPartStart;
 	lp->d_partitions[slot].p_fstype=FS_HFS;
 
+#if PRINT_DISKLABELS
 	printf("%c: HFS '%s' at %d size %d\n",slot+'a',
 		part->pmPartName,
 		part->pmPyPartStart,
 		part->pmPartBlkCnt);
+#endif
 
 	part->pmPartType[0]='\0';
 
@@ -251,11 +259,13 @@ int setScratch(struct partmapentry *part,struct disklabel *lp,int slot)
 	lp->d_partitions[slot].p_offset=part->pmPyPartStart;
 	lp->d_partitions[slot].p_fstype=FS_OTHER;
 
+#if PRINT_DISKLABELS
 	printf("%c: Other (%s) '%s' at %d size %d\n",slot+'a',
 		part->pmPartType,
 		part->pmPartName,
 		part->pmPyPartStart,
 		part->pmPartBlkCnt);
+#endif
 
 	part->pmPartType[0]='\0';
 
