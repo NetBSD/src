@@ -1,5 +1,5 @@
 #! /bin/sh
-#  $NetBSD: build.sh,v 1.47 2002/03/01 21:06:40 tv Exp $
+#  $NetBSD: build.sh,v 1.48 2002/03/02 02:09:18 mjl Exp $
 #
 # Top level build wrapper, for a system containing no tools.
 #
@@ -60,7 +60,7 @@ getarch () {
 validatearch () {
 	# Ensure that the MACHINE_ARCH exists (and is supported by build.sh).
 	case $MACHINE_ARCH in
-		alpha|arm|i386|m68000|m68k|mipse[bl]|sh3e[bl]|sparc|sparc64|vax|x86_64)
+		alpha|arm|i386|m68000|m68k|mipse[bl]|powerpc|sh3e[bl]|sparc|sparc64|vax|x86_64)
 			;;
 
 		*)	bomb "unknown target MACHINE_ARCH: $MACHINE_ARCH";;
@@ -365,7 +365,7 @@ fi
 eval cat <<EOF $makewrapout
 #! /bin/sh
 # Set proper variables to allow easy "make" building of a NetBSD subtree.
-# Generated from:  \$NetBSD: build.sh,v 1.47 2002/03/01 21:06:40 tv Exp $
+# Generated from:  \$NetBSD: build.sh,v 1.48 2002/03/02 02:09:18 mjl Exp $
 #
 
 EOF
