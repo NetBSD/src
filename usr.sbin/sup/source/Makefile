@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.20 2003/04/03 17:14:24 christos Exp $
+#	$NetBSD: Makefile,v 1.21 2003/04/03 20:32:41 christos Exp $
 # Copyright (c) 1992,1991 Carnegie Mellon University
 # All Rights Reserved.
 # 
@@ -48,7 +48,9 @@
 #SITE			= SOLARIS
 #SITE			= NETBSD
 #SITE			= CMUCS
-SITE			!= uname -s | tr '[a-z]' '[A-Z]'
+SITE1			!= uname -s | tr '[a-z]' '[A-Z]'
+SITE2			=$(shell uname -s | tr '[a-z]' '[A-Z]')
+SITE			= ${SITE1}${SITE2}
 
 LINUX_DEFINES		= -UMACH -DVAR_TMP -DHAS_DAEMON -DHAS_POSIX_DIR
 NETBSD_DEFINES		= -UMACH -DVAR_TMP -DHAS_DAEMON -DHAS_POSIX_DIR \
@@ -97,10 +99,8 @@ supscan_OFILES		= supscan.o stree.o scan.o
 SOLARIS_LIBS		= -lsocket -lnsl
 SUNOS_LIBS		= 
 
-.for i in ${SITE}
-DEFS			= -UCMUCS -UCMU  ${${i}_DEFINES}
-LIBS			= ${EXTRALIBS} ${${i}_LIBS}
-.endfor
+DEFS			= -UCMUCS -UCMU  ${${SITE}_DEFINES}
+LIBS			= ${EXTRALIBS} ${${SITE}_LIBS}
 
 all: ${PROGRAMS}
 
