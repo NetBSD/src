@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.203 2004/04/18 19:20:09 pk Exp $	*/
+/*	$NetBSD: locore.s,v 1.204 2004/04/18 20:44:39 pk Exp $	*/
 
 /*
  * Copyright (c) 1996 Paul Kranenburg
@@ -2784,7 +2784,7 @@ _ENTRY(_C_LABEL(ft_srmmu_vcache_flush_page))
 1:
 	sta	%g0, [%l3]ASI_IDCACHELFP	!  flush cache line
 	subcc	%l4, %l7, %l4			!  p += linesz;
-	bpos	1b				! while ((N -= linesz) > 0)
+	bgu	1b				! while ((N -= linesz) > 0)
 	 add	%l3, %l7, %l3
 
 	ld	[%l6 + CPUINFO_XMSG_ARG0], %l3	! reload va
@@ -2812,7 +2812,7 @@ _ENTRY(_C_LABEL(ft_srmmu_vcache_flush_segment))
 1:
 	sta	%g0, [%l3]ASI_IDCACHELFS	!  flush cache line
 	deccc	%l4				!  p += linesz;
-	bpos	1b				! while (--nlines > 0)
+	bgu	1b				! while (--nlines > 0)
 	 add	%l3, %l7, %l3
 
 	b	ft_rett
@@ -2833,7 +2833,7 @@ _ENTRY(_C_LABEL(ft_srmmu_vcache_flush_region))
 1:
 	sta	%g0, [%l3]ASI_IDCACHELFR	!  flush cache line
 	deccc	%l4				!  p += linesz;
-	bpos	1b				! while (--nlines > 0)
+	bgu	1b				! while (--nlines > 0)
 	 add	%l3, %l7, %l3
 
 	b	ft_rett
@@ -2852,7 +2852,7 @@ _ENTRY(_C_LABEL(ft_srmmu_vcache_flush_context))
 1:
 	sta	%g0, [%l3]ASI_IDCACHELFC	!  flush cache line
 	deccc	%l4				!  p += linesz;
-	bpos	1b				! while (--nlines > 0)
+	bgu	1b				! while (--nlines > 0)
 	 add	%l3, %l7, %l3
 
 	b	ft_rett
@@ -2862,19 +2862,20 @@ _ENTRY(_C_LABEL(ft_srmmu_vcache_flush_range))
 	!	<%l3 already fetched for us>	! va
 	ld	[%l6 + CPUINFO_XMSG_ARG2], %l4	! context
 
-	andn	%l3, 7, %l3			! double-word alignment
-
 	mov	SRMMU_CXR, %l7			!
 	lda	[%l7]ASI_SRMMU, %l5		! %l5 = old context
 	sta	%l4, [%l7]ASI_SRMMU		! set new context
 
 	ld	[%l6 + CPUINFO_XMSG_ARG1], %l4	! size
-	add	%l4, 8, %l4			! compensate for alignment
+	and	%l3, 7, %l7			! double-word alignment
+	andn	%l3, 7, %l3			!  off = va & 7; va &= ~7
+	add	%l4, %l7, %l4			!  sz += off
+
 	ld	[%l6 + CPUINFO_CACHE_LINESZ], %l7
 1:
 	sta	%g0, [%l3]ASI_IDCACHELFP	!  flush cache line
 	subcc	%l4, %l7, %l4			!  p += linesz;
-	bpos	1b				! while ((sz -= linesz) > 0)
+	bgu	1b				! while ((sz -= linesz) > 0)
 	 add	%l3, %l7, %l3
 
 	/* Flush TLB on all pages we visited */
@@ -2892,7 +2893,7 @@ _ENTRY(_C_LABEL(ft_srmmu_vcache_flush_range))
 	!or	%l3, ASI_SRMMUFP_L3(=0), %l3	!  va |= ASI_SRMMUFP_L3
 	sta	%g0, [%l3]ASI_SRMMUFP		!  flush TLB
 	subcc	%l4, %l7, %l4			! while ((sz -= PGSIZE) > 0)
-	bpos	2b
+	bgu	2b
 	 add	%l3, %l7, %l3
 
 	b	ft_rett
