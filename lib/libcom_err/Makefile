@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.5 2001/09/25 01:42:25 gmcgarry Exp $
+# $NetBSD: Makefile,v 1.6 2001/10/04 16:11:25 tv Exp $
 
 .include <bsd.own.mk>
 
@@ -13,7 +13,7 @@ SRCS=	error.c com_err.c roken_rename.h
 
 INCS=	com_err.h com_right.h
 
-.ifndef USE_NEW_TOOLCHAIN
+.if ${USETOOLS} == "no"
 .PHONY: compile_et
 
 includes: compile_et
@@ -31,11 +31,11 @@ CPPFLAGS+= -I.					\
 	 -I${DIST}/heimdal/lib/roken		\
 	 -DHAVE_CONFIG_H
 
-.ifndef USE_NEW_TOOLCHAIN
+.if ${USETOOLS} == "no"
 SUBDIR=	compile_et
 .endif
 
 .include <bsd.lib.mk>
-.ifndef USE_NEW_TOOLCHAIN
+.if ${USETOOLS} == "no"
 .include <bsd.subdir.mk>
 .endif
