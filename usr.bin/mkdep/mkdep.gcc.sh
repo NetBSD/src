@@ -1,6 +1,6 @@
 #!/bin/sh -
 #
-#	$NetBSD: mkdep.gcc.sh,v 1.9 1994/12/23 07:34:59 jtc Exp $
+#	$NetBSD: mkdep.gcc.sh,v 1.10 1997/07/20 23:27:09 cgd Exp $
 #
 # Copyright (c) 1991, 1993
 #	The Regents of the University of California.  All rights reserved.
@@ -36,6 +36,23 @@
 #	@(#)mkdep.gcc.sh	8.1 (Berkeley) 6/6/93
 #
 
+# If the user has set ${CC} then we use it, otherwise we use 'cc'.
+# We try to find the compiler in the user's path, and if that fails we
+# try to find it in the default path.  If we can't find it, we punt.
+# Once we find it, we canonicalize its name and set the path to the
+# default path so that other commands we use are picked properly.
+
+if ! type ${CC:=cc} > /dev/null 2>&1; then
+	PATH=/bin:/usr/bin:/usr/ucb
+	export PATH
+	if ! type ${CC} > /dev/null 2>&1; then
+		echo "mkdep: ${CC}: not found"
+		exit 1
+	fi
+fi
+cmd='set `type ${CC}` ; eval echo \$$#'
+CC=`eval $cmd`
+export CC
 PATH=/bin:/usr/bin:/usr/ucb
 export PATH
 
@@ -75,9 +92,9 @@ TMP=/tmp/mkdep$$
 trap 'rm -f $TMP ; exit 1' 1 2 3 13 15
 
 if [ x$pflag = x ]; then
-	gcc -M "$@" | sed -e 's; \./; ;g' > $TMP
+	${CC} -M "$@" | sed -e 's;\([ \t]*\)\./;\1;g' > $TMP
 else
-	gcc -M "$@" | sed -e 's;\.o :; :;' -e 's; \./; ;g' > $TMP
+	${CC} -M "$@" | sed -e 's;\.o\([ ]*\):;\1:;' -e 's;\([ \t]*\)\./;\1;g' > $TMP
 fi
 
 if [ $? != 0 ]; then
