@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread_sa.c,v 1.1.2.31 2002/10/29 18:32:39 nathanw Exp $	*/
+/*	$NetBSD: pthread_sa.c,v 1.1.2.32 2002/11/01 17:06:33 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -68,7 +68,10 @@ int	recycle_threshold;
 int	recycle_side;
 pthread_spin_t recycle_lock;
 
-timer_t pthread_rrtimer;
+#define	PTHREAD_RRTIMER_INTERVAL_DEFAULT	100
+static pthread_mutex_t rrtimer_mutex = PTHREAD_MUTEX_INITIALIZER;
+static timer_t pthread_rrtimer;
+static int pthread_rrtimer_interval = PTHREAD_RRTIMER_INTERVAL_DEFAULT;
 
 int pthread__maxlwps;
 
@@ -586,14 +589,50 @@ pthread__sa_recycle(pthread_t old, pthread_t new)
 	}
 }
 
+/*
+ * Set the round-robin timeslice timer.
+ */
+static int
+pthread__setrrtimer(int msec, int startit)
+{
+	static int rrtimer_created;
+	struct itimerspec it;
+
+	/*
+	 * This check is safe -- we will either be called before there
+	 * are any threads, or with the rrtimer_mutex held.
+	 */
+	if (rrtimer_created == 0) {
+		struct sigevent ev;
+
+		ev.sigev_notify = SIGEV_SA;
+		ev.sigev_signo = 0;
+		ev.sigev_value.sival_int = (int) PT_RRTIMER_MAGIC;
+		if (timer_create(CLOCK_VIRTUAL, &ev, &pthread_rrtimer) == -1)
+			return (errno);
+
+		rrtimer_created = 1;
+	}
+
+	if (startit) {
+		it.it_interval.tv_sec = 0;
+		it.it_interval.tv_nsec = (long)msec * 1000000;
+		it.it_value = it.it_interval;
+		if (timer_settime(pthread_rrtimer, 0, &it, NULL) == -1)
+			return (errno);
+	}
+
+	pthread_rrtimer_interval = msec;
+
+	return (0);
+}
+
 /* Get things rolling. */
 void
 pthread__sa_start(void)
 {
 	pthread_t self, t;
 	stack_t upcall_stacks[PT_UPCALLSTACKS];
-	struct sigevent ev;
-	struct itimerspec it;
 	int ret, i, errnosave, flags, rr;
 	char *value;
 
@@ -602,20 +641,27 @@ pthread__sa_start(void)
 	if (value && strcmp(value, "yes") == 0)
 		flags |= SA_FLAG_PREEMPT;
 
-	rr = 0;
+	/*
+	 * It's possible the user's program has set the round-robin
+	 * interval before starting any threads.
+	 *
+	 * Allow the environment variable to override the default.
+	 *
+	 * XXX Should we just nuke the environment variable?
+	 */
+	rr = pthread_rrtimer_interval;
 	value = getenv("PTHREAD_RRTIME");
 	if (value)
 		rr = atoi(value);
 
 	ret = sa_register(pthread__upcall, NULL, flags);
 	if (ret)
-		errx(1, "sa_register failed: %s", strerror(ret));
+		abort();
 
 	self = pthread__self();
 	for (i = 0; i < PT_UPCALLSTACKS; i++) {
 		if (0 != (ret = pthread__stackalloc(&t)))
-			errx(1, "Could not allocate upcall stack!: %s",
-			    strerror(ret));
+			abort();
 		upcall_stacks[i] = t->pt_stack;	
 		pthread__initthread(self, t);
 		t->pt_type = PT_THREAD_UPCALL;
@@ -629,7 +675,7 @@ pthread__sa_start(void)
 
 	ret = sa_stacks(i, upcall_stacks);
 	if (ret == -1)
-		err(1, "sa_stacks failed");
+		abort();
 
 	/* XXX 
 	 * Calling sa_enable() can mess with errno in bizzare ways,
@@ -649,19 +695,38 @@ pthread__sa_start(void)
 	sa_enable();
 	errno = errnosave;
 
-	if (rr) {
-		ev.sigev_notify = SIGEV_SA;
-		ev.sigev_signo = 0;
-		ev.sigev_value.sival_int = (int)PT_RRTIMER_MAGIC;
-		ret = timer_create(CLOCK_VIRTUAL, &ev, &pthread_rrtimer);
-		if (ret)
-			err(1, "timer_create");
-		it.it_interval.tv_sec = 0;
-		it.it_interval.tv_nsec = rr * 1000000;
-		it.it_value = it.it_interval;
-		ret = timer_settime(pthread_rrtimer, 0, &it, NULL);
-		if (ret)
-			err(1, "timer_settime");
+	/* Start the round-robin timer. */
+	if (rr != 0 && pthread__setrrtimer(rr, 1) != 0)
+		abort();
+}
 
-	}
+/*
+ * Interface routines to get/set the round-robin timer interval.
+ *
+ * XXX Sanity check the behavior for MP systems.
+ */
+
+int
+pthread_getrrtimer_np(void)
+{
+
+	return (pthread_rrtimer_interval);
+}
+
+int
+pthread_setrrtimer_np(int msec)
+{
+	extern int pthread__started;
+	int ret = 0;
+
+	if (msec < 0)
+		return (EINVAL);
+
+	pthread_mutex_lock(&rrtimer_mutex);
+
+	ret = pthread__setrrtimer(msec, pthread__started);
+
+	pthread_mutex_unlock(&rrtimer_mutex);
+
+	return (ret);
 }
