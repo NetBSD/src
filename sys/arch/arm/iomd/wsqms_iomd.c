@@ -1,4 +1,4 @@
-/*	$NetBSD: wsqms_iomd.c,v 1.3 2002/06/19 23:02:58 bjh21 Exp $	*/
+/*	$NetBSD: wsqms_iomd.c,v 1.4 2002/06/19 23:12:14 bjh21 Exp $	*/
 
 /*-
  * Copyright (c) 2001 Reinoud Zandijk
@@ -36,7 +36,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  *
  *
- * Quadratic mouse driver for the wscons as used in the IOMD; config glue...
+ * Quadrature mouse driver for the wscons as used in the IOMD; config glue...
  */
 
 
@@ -54,8 +54,8 @@
 #include <arm/iomd/wsqmsvar.h>
 #include <arm/iomd/iomdvar.h>
 
-static int  wsqms_iomd_probe     __P((struct device *, struct cfdata *, void *));
-static void wsqms_iomd_attach    __P((struct device *, struct device *, void *));
+static int  wsqms_iomd_probe(struct device *, struct cfdata *, void *);
+static void wsqms_iomd_attach(struct device *, struct device *, void *);
 
 
 struct cfattach wsqms_iomd_ca = {
@@ -64,10 +64,7 @@ struct cfattach wsqms_iomd_ca = {
 
 
 static int
-wsqms_iomd_probe(parent, cf, aux)
-	struct device *parent;
-	struct cfdata *cf;
-	void *aux;
+wsqms_iomd_probe(struct device *parent, struct cfdata *cf, void *aux)
 {
 	struct qms_attach_args *qa = aux;
 
@@ -79,10 +76,7 @@ wsqms_iomd_probe(parent, cf, aux)
 
 
 static void
-wsqms_iomd_attach(parent, self, aux)
-	struct device *parent;
-	struct device *self;
-	void *aux;
+wsqms_iomd_attach(struct device *parent, struct device *self, void *aux)
 {
 	struct wsqms_softc *sc = (void *)self;
 	struct qms_attach_args *qa = aux;
