@@ -8,17 +8,17 @@
 	.text
 	.align 2
 _map:
-	.long 1		/* round to nearest */
-	.long 3		/* round to negative infinity */
-	.long 2		/* round to positive infinity */
-	.long 0		/* round to zero */
+	.byte 1		/* round to nearest */
+	.byte 3		/* round to negative infinity */
+	.byte 2		/* round to positive infinity */
+	.byte 0		/* round to zero */
 
 ENTRY(__flt_rounds)
 	subl $4,%esp
-	fnstcw 2(%esp)
-	movw 2(%esp),%ax
+	fnstcw (%esp)
+	movw (%esp),%ax
 	shrl $10,%eax
 	andl $3,%eax
-	movl _map(,%eax,4),%eax
+	movb _map(,%eax,1),%al
 	addl $4,%esp
 	ret
