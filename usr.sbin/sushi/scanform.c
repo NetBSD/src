@@ -1,4 +1,4 @@
-/*      $NetBSD: scanform.c,v 1.34 2004/03/10 19:03:16 garbled Exp $       */
+/*      $NetBSD: scanform.c,v 1.35 2004/03/22 19:03:19 jdc Exp $       */
 
 /*
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -761,7 +761,7 @@ ENUM(FIELD_RECORD *x)
 
 	if (f) {
 		set_field_back(f, A_REVERSE);
-		set_field_type(f, TYPE_ENUM, x->list, FALSE, FALSE);
+		set_field_type(f, TYPE_ENUM, x->list, FALSE, TRUE);
 		set_field_userptr(f, x->list);
 		if (x->newpage == 1)
 			set_new_page(f, TRUE);
@@ -1267,7 +1267,8 @@ gen_escript(FTREE_ENTRY *ftp, char *dir, int max, char **args)
 		p[len - 1] = '\0';	/* strip newline & NUL terminate */
 		q = strdup(p);
 	} else
-		bailout("fgetln: %s", strerror(errno));
+		bailout("fgetln: on command '%s' gave error %s", buf,
+			strerror(errno));
 
 	pclose(file);
 	free(comm);
@@ -1382,7 +1383,8 @@ gen_iscript(FTREE_ENTRY *ftp, char *dir, int max, char **args)
 		p[len - 1] = '\0';	/* strip newline & NUL terminate */
 		q = strdup(p);
 	} else
-		bailout("fgetln: %s", strerror(errno));
+		bailout("fgetln: on command '%s' gave error %s", buf,
+			strerror(errno));
 
 	pclose(file);
 	snprintf(buf, sizeof(buf), "%d,%d,%d,%s", pre, min, maxi, q);
