@@ -1,4 +1,4 @@
-/*	$NetBSD: commands.c,v 1.53 2003/07/12 14:29:35 itojun Exp $	*/
+/*	$NetBSD: commands.c,v 1.54 2003/07/14 15:56:28 itojun Exp $	*/
 
 /*
  * Copyright (C) 1997 and 1998 WIDE Project.
@@ -67,26 +67,16 @@
 #if 0
 static char sccsid[] = "@(#)commands.c	8.4 (Berkeley) 5/30/95";
 #else
-__RCSID("$NetBSD: commands.c,v 1.53 2003/07/12 14:29:35 itojun Exp $");
+__RCSID("$NetBSD: commands.c,v 1.54 2003/07/14 15:56:28 itojun Exp $");
 #endif
 #endif /* not lint */
 
-#if	defined(unix)
 #include <sys/param.h>
-#if	defined(CRAY) || defined(sysV88)
-#include <sys/types.h>
-#endif
 #include <sys/file.h>
-#else
-#include <sys/types.h>
-#endif	/* defined(unix) */
 #include <sys/wait.h>
 #include <sys/socket.h>
 #include <netinet/in.h>
 #include <arpa/inet.h>
-#ifdef	CRAY
-#include <fcntl.h>
-#endif	/* CRAY */
 
 #include <ctype.h>
 #include <errno.h>
@@ -113,18 +103,9 @@ __RCSID("$NetBSD: commands.c,v 1.53 2003/07/12 14:29:35 itojun Exp $");
 #include <libtelnet/encrypt.h>
 #endif
 
-#if !defined(CRAY) && !defined(sysV88)
 #include <netinet/in_systm.h>
-# if (defined(vax) || defined(tahoe) || defined(hp300)) && !defined(ultrix)
-# include <machine/endian.h>
-# endif /* vax */
-#endif /* !defined(CRAY) && !defined(sysV88) */
 #include <netinet/ip.h>
 
-
-#ifndef	MAXHOSTNAMELEN
-#define	MAXHOSTNAMELEN 64
-#endif	/* MAXHOSTNAMELEN */
 
 #if	defined(IPPROTO_IP) && defined(IP_TOS)
 int tos = -1;
@@ -185,7 +166,7 @@ static struct envlist *getenvcmd(char *);
 #ifdef AUTHENTICATION
 static int auth_help(char *);
 #endif
-#if	defined(unix) && defined(TN3270)
+#ifdef TN3270
 static void filestuff(int);
 #endif
 static int status(int, char *[]);
@@ -707,7 +688,7 @@ static struct togglelist Togglelist[] = {
 	    0,
 		&autosynch,
 		    "send interrupt characters in urgent mode" },
-#if	defined(AUTHENTICATION)
+#ifdef AUTHENTICATION
     { "autologin",
 	"automatic sending of login and/or authentication info",
 	    0,
@@ -777,7 +758,7 @@ static struct togglelist Togglelist[] = {
 		&localchars,
 		    "recognize certain control characters" },
     { " ", "", 0 },		/* empty line */
-#if	defined(unix) && defined(TN3270)
+#ifdef TN3270
     { "apitrace",
 	"(debugging) toggle tracing of API transactions",
 	    0,
@@ -788,7 +769,7 @@ static struct togglelist Togglelist[] = {
 	    0,
 		&cursesdata,
 		    "print hexadecimal representation of curses data" },
-#endif	/* defined(unix) && defined(TN3270) */
+#endif	/* defined(TN3270) */
     { "debug",
 	"debugging",
 	    togdebug,
@@ -809,13 +790,11 @@ static struct togglelist Togglelist[] = {
 	    0,
 		&showoptions,
 		    "show option processing" },
-#if	defined(unix)
     { "termdata",
 	"(debugging) toggle printing of hexadecimal terminal data",
 	    0,
 		&termdata,
 		    "print hexadecimal representation of terminal traffic" },
-#endif	/* defined(unix) */
     { "?",
 	0,
 	    togglehelp },
@@ -907,9 +886,7 @@ toggle(int  argc, char *argv[])
  * The following perform the "set" command.
  */
 
-#ifdef	USE_TERMIO
-struct termio new_tc = { 0 };
-#endif
+struct termios new_tc = { 0 };
 
 struct setlist {
     char *name;				/* name */
@@ -1371,7 +1348,6 @@ togcrmod(int argc, char *argv[])
 int
 suspend(int argc, char *argv[])
 {
-#ifdef	SIGTSTP
     setcommandmode();
     {
 	long oldrows, oldcols, newrows, newcols, err;
@@ -1391,13 +1367,10 @@ suspend(int argc, char *argv[])
     /* reget parameters in case they were changed */
     TerminalSaveState();
     setconnmode(0);
-#else
-    printf("Suspend is not supported.  Try the '!' command instead\n");
-#endif
     return 1;
 }
 
-#if	!defined(TN3270)
+#ifndef TN3270
 /*ARGSUSED*/
 int
 shell(int argc, char *argv[])
@@ -1467,7 +1440,7 @@ bye(int  argc, char *argv[])
 #endif	/* defined(AUTHENTICATION) */
 	/* reset options */
 	tninit();
-#if	defined(TN3270)
+#ifdef TN3270
 	SetIn3270();		/* Get out of 3270 mode */
 #endif	/* defined(TN3270) */
     }
@@ -1892,7 +1865,7 @@ unknown:
 }
 #endif
 
-#if	defined(AUTHENTICATION)
+#ifdef AUTHENTICATION
 /*
  * The AUTHENTICATE command.
  */
@@ -2080,7 +2053,7 @@ encrypt_cmd(int argc, char *argv[])
 }
 #endif	/* ENCRYPTION */
 
-#if	defined(unix) && defined(TN3270)
+#ifdef TN3270
 static void
 filestuff(int fd)
 {
@@ -2110,7 +2083,7 @@ filestuff(int fd)
     printf("\tFlags are 0x%x: %s\n", res, decodeflags(res));
 #endif
 }
-#endif /* defined(unix) && defined(TN3270) */
+#endif /* defined(TN3270) */
 
 /*
  * Print status about the connection.
@@ -2149,14 +2122,13 @@ status(int argc, char *argv[])
     } else {
 	printf("No connection.\n");
     }
-#   if !defined(TN3270)
+#   ifndef TN3270
     printf("Escape character is '%s'.\n", control(escape));
     (void) fflush(stdout);
 #   else /* !defined(TN3270) */
     if ((!In3270) && ((argc < 2) || strcmp(argv[1], "notmuch"))) {
 	printf("Escape character is '%s'.\n", control(escape));
     }
-#   if defined(unix)
     if ((argc >= 2) && !strcmp(argv[1], "everything")) {
 	printf("SIGIO received %d time%s.\n",
 				sigiocount, (sigiocount == 1)? "":"s");
@@ -2174,7 +2146,6 @@ status(int argc, char *argv[])
     if (In3270 && transcom) {
 	printf("Transparent mode command is '%s'.\n", transcom);
     }
-#   endif /* defined(unix) */
     (void) fflush(stdout);
     if (In3270) {
 	return 0;
@@ -2469,18 +2440,16 @@ static char
 	togglestring[] ="toggle operating parameters ('toggle ?' for more)",
 	slchelp[] =	"change state of special charaters ('slc ?' for more)",
 	displayhelp[] =	"display operating parameters",
-#if	defined(TN3270) && defined(unix)
+#ifdef TN3270
 	transcomhelp[] = "specify Unix command for transparent mode pipe",
-#endif	/* defined(TN3270) && defined(unix) */
-#if	defined(AUTHENTICATION)
+#endif	/* defined(TN3270) */
+#ifdef AUTHENTICATION
 	authhelp[] =	"turn on (off) authentication ('auth ?' for more)",
 #endif
 #ifdef	ENCRYPTION
 	encrypthelp[] = "turn on (off) encryption ('encrypt ?' for more)",
 #endif	/* ENCRYPTION */
-#if	defined(unix)
 	zhelp[] =	"suspend telnet",
-#endif	/* defined(unix) */
 	shellhelp[] =	"invoke a subshell",
 	envhelp[] =	"change environment variables ('environ ?' for more)",
 	modestring[] = "try to enter line or character mode ('mode ?' for more)";
@@ -2498,19 +2467,17 @@ static Command cmdtab[] = {
 	{ "status",	statushelp,	status,		0 },
 	{ "toggle",	togglestring,	toggle,		0 },
 	{ "slc",	slchelp,	slccmd,		0 },
-#if	defined(TN3270) && defined(unix)
+#ifdef TN3270
 	{ "transcom",	transcomhelp,	settranscom,	0 },
-#endif	/* defined(TN3270) && defined(unix) */
+#endif	/* defined(TN3270) */
 #if	defined(AUTHENTICATION)
 	{ "auth",	authhelp,	auth_cmd,	0 },
 #endif
 #ifdef	ENCRYPTION
 	{ "encrypt",	encrypthelp,	encrypt_cmd,	0 },
 #endif
-#if	defined(unix)
 	{ "z",		zhelp,		suspend,	0 },
-#endif	/* defined(unix) */
-#if	defined(TN3270)
+#ifdef TN3270
 	{ "!",		shellhelp,	shell,		1 },
 #else
 	{ "!",		shellhelp,	shell,		0 },
@@ -2570,11 +2537,9 @@ command(int top, char *tbuf, int cnt)
     setcommandmode();
     if (!top) {
 	putchar('\n');
-#if	defined(unix)
     } else {
 	(void) signal(SIGINT, SIG_DFL);
 	(void) signal(SIGQUIT, SIG_DFL);
-#endif	/* defined(unix) */
     }
     for (;;) {
 	if (rlogin == _POSIX_VDISABLE)
@@ -2594,7 +2559,7 @@ command(int top, char *tbuf, int cnt)
 	getline:
 	    if (rlogin != _POSIX_VDISABLE)
 		printf("%s> ", prompt);
-#if defined(TN3270)
+#ifdef TN3270
 	    fflush(stdout);
 #endif
 	    if (fgets(line, sizeof(line), stdin) == NULL) {
@@ -2633,7 +2598,7 @@ command(int top, char *tbuf, int cnt)
 	    longjmp(toplevel, 1);
 	    /*NOTREACHED*/
 	}
-#if	defined(TN3270)
+#ifdef TN3270
 	if (shell_active == 0) {
 	    setconnmode(0);
 	}
@@ -2805,9 +2770,6 @@ cmdrc(const char *m1, const char *m2)
 int
 sourceroute(struct addrinfo *ai, char *arg, char **cpp, int *protop, int *optp)
 {
-#ifdef	sysV88
-	static IOPTN ipopt;
-#endif
 	char *cp, *cp2, *lsrp, *lsrep;
 	struct addrinfo hints, *res;
 	int len, error;
@@ -2847,25 +2809,15 @@ sourceroute(struct addrinfo *ai, char *arg, char **cpp, int *protop, int *optp)
 		 * route or a strict source route, and fill in
 		 * the begining of the option.
 		 */
-#ifndef	sysV88
 		if (*cp == '!') {
 			cp++;
 			*lsrp++ = IPOPT_SSRR;
 		} else
 			*lsrp++ = IPOPT_LSRR;
-#else
-		if (*cp == '!') {
-			cp++;
-			ipopt.io_type = IPOPT_SSRR;
-		} else
-			ipopt.io_type = IPOPT_LSRR;
-#endif
 		if (*cp != '@')
 			return -1;
-#ifndef	sysV88
 		lsrp++;		/* skip over length, we'll fill it in later */
 		*lsrp++ = 4;
-#endif
 		cp++;
 		*protop = IPPROTO_IP;
 		*optp = IP_OPTIONS;
@@ -2956,19 +2908,12 @@ sourceroute(struct addrinfo *ai, char *arg, char **cpp, int *protop, int *optp)
 		sin = (struct sockaddr_in *)ai->ai_addr;
 		memcpy(lsrp, &sin->sin_addr, sizeof(struct in_addr));
 		lsrp += sizeof(struct in_addr);
-#ifndef	sysV88
 		lsr[IPOPT_OLEN] = lsrp - lsr;
 		if (lsr[IPOPT_OLEN] <= 7 || lsr[IPOPT_OLEN] > 40)
 			return -1;
 		*lsrp++ = IPOPT_NOP;	/*32bit word align*/
 		len = lsrp - lsr;
 		*cpp = lsr;
-#else
-		ipopt.io_len = lsrp - lsr;
-		if (ipopt.io_len <= 5)	/*is 3 better?*/
-			return -1;
-		*cpp = (char 8)&ipopt;
-#endif
 	}
 #ifdef INET6
 	else if (ai->ai_family == AF_INET6) {

@@ -1,4 +1,4 @@
-/*	$NetBSD: externs.h,v 1.27 2003/07/12 14:29:35 itojun Exp $	*/
+/*	$NetBSD: externs.h,v 1.28 2003/07/14 15:56:29 itojun Exp $	*/
 
 /*
  * Copyright (c) 1988, 1990, 1993
@@ -46,51 +46,15 @@
 #define BSD 43
 #endif
 
-#ifndef	USE_TERMIO
-# if BSD > 43 || defined(SYSV_TERMIO)
-#  define USE_TERMIO
-# endif
-#endif
 
 #include <stdio.h>
 #include <stdlib.h>
 #include <setjmp.h>
-#if defined(CRAY) && !defined(NO_BSD_SETJMP)
-#include <bsdsetjmp.h>
-#endif
-#ifndef	FILIO_H
 #include <sys/ioctl.h>
-#else
-#include <sys/filio.h>
-#endif
 #include <errno.h>
-#ifdef	USE_TERMIO
-# ifndef	VINTR
-#  ifdef SYSV_TERMIO
-#   include <sys/termio.h>
-#  else
-#   include <sys/termios.h>
-#   define termio termios
-#  endif
-# else
-#  if defined(TCSANOW)
-#   define termio termios
-#  endif
-# endif
-#endif
-#if defined(NO_CC_T) || !defined(USE_TERMIO)
-# if !defined(USE_TERMIO)
-typedef char cc_t;
-# else
-typedef unsigned char cc_t;
-# endif
-#endif
+#include <sys/termios.h>
 
-#ifndef	NO_STRING_H
 #include <string.h>
-#else
-#include <strings.h>
-#endif
 
 #if defined(IPSEC)
 #include <netinet6/ipsec.h>
@@ -142,13 +106,11 @@ extern int
     crmod,
     netdata,		/* Print out network data flow */
     prettydump,		/* Print "netdata" output in user readable format */
-#if	defined(unix)
-#if	defined(TN3270)
+#ifdef TN3270
     cursesdata,		/* Print out curses data flow */
     apitrace,		/* Trace API transactions */
 #endif	/* defined(TN3270) */
     termdata,		/* Print out terminal data flow */
-#endif	/* defined(unix) */
     debug,		/* Debug level */
     doaddrlookup,	/* do a reverse address lookup? */
     clienteof;		/* Client received EOF */
@@ -392,47 +354,8 @@ void SetForExit(void);
 void Exit(int) __attribute__((__noreturn__));
 void ExitString(char *, int) __attribute__((__noreturn__));
 
-#ifndef	USE_TERMIO
 
-extern struct	tchars ntc;
-extern struct	ltchars nltc;
-extern struct	sgttyb nttyb;
-
-# define termEofChar		ntc.t_eofc
-# define termEraseChar		nttyb.sg_erase
-# define termFlushChar		nltc.t_flushc
-# define termIntChar		ntc.t_intrc
-# define termKillChar		nttyb.sg_kill
-# define termLiteralNextChar	nltc.t_lnextc
-# define termQuitChar		ntc.t_quitc
-# define termSuspChar		nltc.t_suspc
-# define termRprntChar		nltc.t_rprntc
-# define termWerasChar		nltc.t_werasc
-# define termStartChar		ntc.t_startc
-# define termStopChar		ntc.t_stopc
-# define termForw1Char		ntc.t_brkc
-extern cc_t termForw2Char;
-extern cc_t termAytChar;
-
-# define termEofCharp		(cc_t *)&ntc.t_eofc
-# define termEraseCharp		(cc_t *)&nttyb.sg_erase
-# define termFlushCharp		(cc_t *)&nltc.t_flushc
-# define termIntCharp		(cc_t *)&ntc.t_intrc
-# define termKillCharp		(cc_t *)&nttyb.sg_kill
-# define termLiteralNextCharp	(cc_t *)&nltc.t_lnextc
-# define termQuitCharp		(cc_t *)&ntc.t_quitc
-# define termSuspCharp		(cc_t *)&nltc.t_suspc
-# define termRprntCharp		(cc_t *)&nltc.t_rprntc
-# define termWerasCharp		(cc_t *)&nltc.t_werasc
-# define termStartCharp		(cc_t *)&ntc.t_startc
-# define termStopCharp		(cc_t *)&ntc.t_stopc
-# define termForw1Charp		(cc_t *)&ntc.t_brkc
-# define termForw2Charp		(cc_t *)&termForw2Char
-# define termAytCharp		(cc_t *)&termAytChar
-
-# else
-
-extern struct	termio new_tc;
+extern struct	termios new_tc;
 
 # define termEofChar		new_tc.c_cc[VEOF]
 # define termEraseChar		new_tc.c_cc[VERASE]
@@ -440,59 +363,16 @@ extern struct	termio new_tc;
 # define termKillChar		new_tc.c_cc[VKILL]
 # define termQuitChar		new_tc.c_cc[VQUIT]
 
-# ifndef	VSUSP
-extern cc_t termSuspChar;
-# else
 #  define termSuspChar		new_tc.c_cc[VSUSP]
-# endif
-# if	defined(VFLUSHO) && !defined(VDISCARD)
-#  define VDISCARD VFLUSHO
-# endif
-# ifndef	VDISCARD
-extern cc_t termFlushChar;
-# else
 #  define termFlushChar		new_tc.c_cc[VDISCARD]
-# endif
-# ifndef VWERASE
-extern cc_t termWerasChar;
-# else
 #  define termWerasChar		new_tc.c_cc[VWERASE]
-# endif
-# ifndef	VREPRINT
-extern cc_t termRprntChar;
-# else
 #  define termRprntChar		new_tc.c_cc[VREPRINT]
-# endif
-# ifndef	VLNEXT
-extern cc_t termLiteralNextChar;
-# else
 #  define termLiteralNextChar	new_tc.c_cc[VLNEXT]
-# endif
-# ifndef	VSTART
-extern cc_t termStartChar;
-# else
 #  define termStartChar		new_tc.c_cc[VSTART]
-# endif
-# ifndef	VSTOP
-extern cc_t termStopChar;
-# else
 #  define termStopChar		new_tc.c_cc[VSTOP]
-# endif
-# ifndef	VEOL
-extern cc_t termForw1Char;
-# else
 #  define termForw1Char		new_tc.c_cc[VEOL]
-# endif
-# ifndef	VEOL2
-extern cc_t termForw2Char;
-# else
 #  define termForw2Char		new_tc.c_cc[VEOL]
-# endif
-# ifndef	VSTATUS
-extern cc_t termAytChar;
-#else
 #  define termAytChar		new_tc.c_cc[VSTATUS]
-#endif
 
 # define termEofCharp		&termEofChar
 # define termEraseCharp		&termEraseChar
@@ -509,7 +389,6 @@ extern cc_t termAytChar;
 # define termForw1Charp		&termForw1Char
 # define termForw2Charp		&termForw2Char
 # define termAytCharp		&termAytChar
-#endif
 
 
 /* Tn3270 section */

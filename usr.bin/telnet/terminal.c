@@ -1,4 +1,4 @@
-/*	$NetBSD: terminal.c,v 1.10 2003/06/18 20:51:01 christos Exp $	*/
+/*	$NetBSD: terminal.c,v 1.11 2003/07/14 15:56:30 itojun Exp $	*/
 
 /*
  * Copyright (c) 1988, 1990, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)terminal.c	8.2 (Berkeley) 2/16/95";
 #else
-__RCSID("$NetBSD: terminal.c,v 1.10 2003/06/18 20:51:01 christos Exp $");
+__RCSID("$NetBSD: terminal.c,v 1.11 2003/07/14 15:56:30 itojun Exp $");
 #endif
 #endif /* not lint */
 
@@ -59,7 +59,6 @@ unsigned char	ttyobuf[2*BUFSIZ], ttyibuf[BUFSIZ];
 
 int termdata;			/* Debugging flag */
 
-#ifdef	USE_TERMIO
 # ifndef VDISCARD
 cc_t termFlushChar;
 # endif
@@ -90,10 +89,6 @@ cc_t termForw2Char;
 # ifndef VSTATUS
 cc_t termAytChar;
 # endif
-#else
-cc_t termForw2Char;
-cc_t termAytChar;
-#endif
 
 /*
  * initialize the terminal data structures.
