@@ -1,4 +1,4 @@
-/*	$NetBSD: unifdef.c,v 1.9 2003/07/04 04:20:05 itojun Exp $	*/
+/*	$NetBSD: unifdef.c,v 1.10 2003/07/04 04:26:47 itojun Exp $	*/
 
 /*
  * Copyright (c) 1985, 1993
@@ -46,7 +46,7 @@ __COPYRIGHT("@(#) Copyright (c) 1985, 1993\n\
 #if 0
 static char sccsid[] = "@(#)unifdef.c	8.1 (Berkeley) 6/6/93";
 #endif
-__RCSID("$NetBSD: unifdef.c,v 1.9 2003/07/04 04:20:05 itojun Exp $");
+__RCSID("$NetBSD: unifdef.c,v 1.10 2003/07/04 04:26:47 itojun Exp $");
 #endif				/* not lint */
 
 /*
@@ -132,11 +132,7 @@ main(argc, argv)
 			cp1++;
 		} else
 			ignorethis = NO;
-		if ((*cp1 == 'D'
-			|| *cp1 == 'U'
-		    )
-		    && cp1[1] != '\0'
-		    ) {
+		if ((*cp1 == 'D' || *cp1 == 'U') && cp1[1] != '\0') {
 			int     symind;
 
 			if ((symind = findsym(&cp1[1])) < 0) {
@@ -151,24 +147,20 @@ main(argc, argv)
 			}
 			ignore[symind] = ignorethis;
 			true[symind] = *cp1 == 'D' ? YES : NO;
-		} else
-			if (ignorethis)
-				goto unrec;
-			else
-				if (strcmp(&cp[1], "t") == 0)
-					text = YES;
-				else
-					if (strcmp(&cp[1], "l") == 0)
-						lnblank = YES;
-					else
-						if (strcmp(&cp[1], "c") == 0)
-							complement = YES;
-						else {
-					unrec:
-							prname();
-							fprintf(stderr, "unrecognized option: %s\n", cp);
-							goto usage;
-						}
+		} else if (ignorethis)
+			goto unrec;
+		else if (strcmp(&cp[1], "t") == 0)
+			text = YES;
+		else if (strcmp(&cp[1], "l") == 0)
+			lnblank = YES;
+		else if (strcmp(&cp[1], "c") == 0)
+			complement = YES;
+		else {
+	unrec:
+			prname();
+			fprintf(stderr, "unrecognized option: %s\n", cp);
+			goto usage;
+		}
 	}
 	if (nsyms == 0) {
 usage:
