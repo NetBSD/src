@@ -1,4 +1,4 @@
-.\"	$NetBSD: make.1,v 1.94 2003/12/07 20:48:25 wiz Exp $
+.\"	$NetBSD: make.1,v 1.95 2003/12/26 23:18:18 jmc Exp $
 .\"
 .\" Copyright (c) 1990, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -783,6 +783,14 @@ is the substring of
 .Ar old_string
 to be replaced in
 .Ar new_string .
+.Pp
+Variable expansion occurs in the normal fashion inside both
+.Ar old_string
+and
+.Ar new_string
+with the single exception that a backslash
+is used to prevent the expansion of a dollar sign (`$'), not a preceding
+dollar sign as is usual.
 .Sm off
 .It Cm \&:@ Ar temp Cm @ Xo
 .Ar string Cm @
