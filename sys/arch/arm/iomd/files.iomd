@@ -1,11 +1,9 @@
-#	$NetBSD: files.iomd,v 1.10 2004/03/13 17:52:02 bjh21 Exp $
+#	$NetBSD: files.iomd,v 1.11 2004/03/13 18:06:41 bjh21 Exp $
 #
 # IOMD-specific configuration data
 #
 
 # IOMD device
-# parent to kbd, qms, opms, iomdiic
-# also provides irq and timer services
 device	iomd {}
 attach	iomd at mainbus
 file	arch/arm/iomd/iomd.c			iomd		needs-flag
@@ -21,7 +19,6 @@ device	iomdiic: i2cbus, i2c_bitbang
 attach	iomdiic at iomd
 file	arch/arm/iomd/iomdiic.c			iomdiic
 
-# IOMD mouse devices
 # clock device
 device	clock
 attach	clock at iomd
