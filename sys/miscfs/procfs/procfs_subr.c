@@ -1,4 +1,4 @@
-/*	$NetBSD: procfs_subr.c,v 1.26.2.1 2000/02/01 22:56:44 he Exp $	*/
+/*	$NetBSD: procfs_subr.c,v 1.26.2.2 2000/02/28 09:47:49 he Exp $	*/
 
 /*
  * Copyright (c) 1994 Christopher G. Demetriou.  All rights reserved.
@@ -56,8 +56,8 @@ void procfs_hashrem __P((struct pfsnode *));
 struct vnode *procfs_hashget __P((pid_t, pfstype, struct mount *));
 
 LIST_HEAD(pfs_hashhead, pfsnode) *pfs_hashtbl;
-u_long	ihash;		/* size of hash table - 1 */
-#define PFSPIDHASH(pid)	(&pfs_hashtbl[(pid) & ihash])
+u_long	pfs_ihash;	/* size of hash table - 1 */
+#define PFSPIDHASH(pid)	(&pfs_hashtbl[(pid) & pfs_ihash])
 
 struct lock pfs_hashlock;
 struct simplelock pfs_hash_slock;
@@ -315,7 +315,8 @@ void
 procfs_hashinit()
 {
 	lockinit(&pfs_hashlock, PINOD, "pfs_hashlock", 0, 0);
-	pfs_hashtbl = hashinit(desiredvnodes / 4, M_UFSMNT, M_WAITOK, &ihash);
+	pfs_hashtbl = hashinit(desiredvnodes / 4, M_UFSMNT, M_WAITOK,
+	    &pfs_ihash);
 	simple_lock_init(&pfs_hash_slock);
 }
 
