@@ -2,4 +2,4 @@
 depend: ${BEFORE} ${LINKS}
 	makedepend -- ${COPTS} -- ${SRCS}
 
-#	End of $RCSfile: X11.m4,v $
+#	End of RCSfile: X11.m4,v
