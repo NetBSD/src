@@ -1,4 +1,4 @@
-/*	$NetBSD: ixm1200_machdep.c,v 1.5 2002/08/21 18:34:33 thorpej Exp $ */
+/*	$NetBSD: ixm1200_machdep.c,v 1.6 2002/08/22 01:13:57 thorpej Exp $ */
 #undef DEBUG_BEFOREMMU
 /*
  * Copyright (c) 2002
@@ -799,6 +799,7 @@ ixdp_ixp12x0_cc_setup(void)
                 pte = vtopte(ixp12x0_cc_base + loop);
                 *pte = L2_S_PROTO | kaddr |
                     L2_S_PROT(PTE_KERNEL, VM_PROT_READ) | pte_l2_s_cache_mode;
+		PTE_SYNC(pte);
         }
 	ixp12x0_cache_clean_addr = ixp12x0_cc_base;
 	ixp12x0_cache_clean_size = CPU_IXP12X0_CACHE_CLEAN_SIZE / 2;

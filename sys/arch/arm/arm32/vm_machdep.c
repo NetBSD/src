@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_machdep.c,v 1.19 2002/08/09 23:44:17 thorpej Exp $	*/
+/*	$NetBSD: vm_machdep.c,v 1.20 2002/08/22 01:13:55 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1994-1998 Mark Brinicombe.
@@ -291,7 +291,8 @@ pagemove(from, to, size)
 	caddr_t from, to;
 	size_t size;
 {
-	register pt_entry_t *fpte, *tpte;
+	pt_entry_t *fpte, *tpte;
+	size_t ptecnt = size >> PAGE_SHIFT;
 
 	if (size % NBPG)
 		panic("pagemove: size=%08lx", (u_long) size);
@@ -319,6 +320,8 @@ pagemove(from, to, size)
 		*fpte++ = 0;
 		size -= NBPG;
 	}
+	PTE_SYNC_RANGE(vtopte((vaddr_t)from), ptecnt);
+	PTE_SYNC_RANGE(vtopte((vaddr_t)to), ptecnt);
 	//cpu_tlb_flushD();
 }
 

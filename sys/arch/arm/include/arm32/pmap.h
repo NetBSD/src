@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.h,v 1.56 2002/08/09 23:08:39 thorpej Exp $	*/
+/*	$NetBSD: pmap.h,v 1.57 2002/08/22 01:13:55 thorpej Exp $	*/
 
 /*
  * Copyright (c 2002 Wasabi Systems, Inc.
@@ -230,6 +230,18 @@ extern vaddr_t	pmap_curmaxkvaddr;
 /* Virtual address to physical address */
 #define vtophys(va) \
 	((*vtopte(va) & L2_S_FRAME) | ((vaddr_t) (va) & L2_S_OFFSET))
+
+#if 0 /* Not yet... */
+#define	PTE_SYNC(pte) \
+	cpu_dcache_wb_range((vaddr_t)(pte), sizeof(pt_entry_t))
+
+#define	PTE_SYNC_RANGE(pte, cnt) \
+	cpu_dcache_wb_range((vaddr_t)(pte), (cnt) << 2) /* * sizeof(...) */
+#else
+#define	PTE_SYNC(pte)			(void)(pte)
+
+#define	PTE_SYNC_RANGE(pte, cnt)	(void)(pte), (void)(cnt)
+#endif
 
 #define	l1pte_valid(pde)	((pde) != 0)
 #define	l1pte_section_p(pde)	(((pde) & L1_TYPE_MASK) == L1_TYPE_S)
