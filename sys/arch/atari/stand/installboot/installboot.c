@@ -1,4 +1,4 @@
-/*	$NetBSD: installboot.c,v 1.2 1996/03/28 21:53:35 leo Exp $	*/
+/*	$NetBSD: installboot.c,v 1.3 1996/05/14 10:16:41 leo Exp $	*/
 
 /*
  * Copyright (c) 1995 Waldi Ravens
@@ -46,7 +46,7 @@
 /*
  * Small reminder for myself ;-)
  */
-#if NetBSD != 199511
+#if NetBSD != 199603
 #error New NetBSD version! Update OS_LIST in installboot.h
 #endif
 
