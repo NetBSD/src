@@ -1,11 +1,11 @@
-/*	$NetBSD: plist.c,v 1.27 2000/07/05 20:17:04 hubertf Exp $	*/
+/*	$NetBSD: plist.c,v 1.28 2001/04/17 10:33:35 hubertf Exp $	*/
 
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static const char *rcsid = "from FreeBSD Id: plist.c,v 1.24 1997/10/08 07:48:15 charnier Exp";
 #else
-__RCSID("$NetBSD: plist.c,v 1.27 2000/07/05 20:17:04 hubertf Exp $");
+__RCSID("$NetBSD: plist.c,v 1.28 2001/04/17 10:33:35 hubertf Exp $");
 #endif
 #endif
 
@@ -409,6 +409,7 @@ delete_package(Boolean ign_err, Boolean nukedirs, package_t *pkg)
 #ifdef PKGDB_DEBUG
 						printf("pkgdb_remove(\"%s\")\n", tmp);	/* HF */
 #endif
+						errno = 0;
 						if (pkgdb_remove(tmp)) {
 							if (errno) {
 								perror("pkgdb_remove");
