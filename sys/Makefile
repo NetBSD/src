@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.20.2.1 1997/10/13 07:13:38 cjs Exp $
+#	$NetBSD: Makefile,v 1.20.2.2 1997/10/13 21:21:04 cjs Exp $
 
 # The ``rm -rf''s used below are safe because rm doesn't follow symbolic
 # links.
@@ -68,14 +68,15 @@ build_symlinks:
 	@echo symlinks: ${LDIRS}
 	@for i in ${LDIRS}; do \
 		rm -rf ${BUILDDIR}/usr/include/$$i; \
-		ln -s /sys/$$i ${BUILDDIR}/usr/include/$$i; \
+		ln -s ${BSDSRCDIR}/sys/$$i ${BUILDDIR}/usr/include/$$i; \
 	done
 	rm -rf ${BUILDDIR}/usr/include/machine
-	ln -s /sys/arch/${MACHINE}/include ${BUILDDIR}/usr/include/machine
+	ln -s ${BSDSRCDIR}/sys/arch/${MACHINE}/include \
+	    ${BUILDDIR}/usr/include/machine
 	rm -rf ${BUILDDIR}/usr/include/${MACHINE_ARCH}
 	if test ${MACHINE} != ${MACHINE_ARCH} -a \
 	    -d arch/${MACHINE_ARCH}/include ; then \
-		ln -s /sys/arch/${MACHINE_ARCH}/include \
+		ln -s ${BSDSRCDIR}/sys/arch/${MACHINE_ARCH}/include \
 		    ${BUILDDIR}/usr/include/${MACHINE_ARCH} ; \
 	else \
 		ln -s machine ${BUILDDIR}/usr/include/${MACHINE_ARCH} ; \
@@ -127,14 +128,15 @@ install_symlinks:
 	@echo symlinks: ${LDIRS}
 	@for i in ${LDIRS}; do \
 		rm -rf ${DESTDIR}/usr/include/$$i; \
-		ln -s /sys/$$i ${DESTDIR}/usr/include/$$i; \
+		ln -s ${BSDSRCDIR}/sys/$$i ${DESTDIR}/usr/include/$$i; \
 	done
 	rm -rf ${DESTDIR}/usr/include/machine
-	ln -s /sys/arch/${MACHINE}/include ${DESTDIR}/usr/include/machine
+	ln -s ${BSDSRCDIR}/sys/arch/${MACHINE}/include \
+	    ${DESTDIR}/usr/include/machine
 	rm -rf ${DESTDIR}/usr/include/${MACHINE_ARCH}
 	if test ${MACHINE} != ${MACHINE_ARCH} -a \
 	    -d arch/${MACHINE_ARCH}/include ; then \
-		ln -s /sys/arch/${MACHINE_ARCH}/include \
+		ln -s ${BSDSRCDIR}/sys/arch/${MACHINE_ARCH}/include \
 		    ${DESTDIR}/usr/include/${MACHINE_ARCH} ; \
 	else \
 		ln -s machine ${DESTDIR}/usr/include/${MACHINE_ARCH} ; \
