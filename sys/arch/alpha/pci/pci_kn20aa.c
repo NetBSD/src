@@ -1,4 +1,4 @@
-/*	$NetBSD: pci_kn20aa.c,v 1.3 1996/04/13 00:24:33 cgd Exp $	*/
+/*	$NetBSD: pci_kn20aa.c,v 1.3.4.1 1996/06/05 03:42:26 cgd Exp $	*/
 
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
@@ -192,7 +192,7 @@ dec_kn20aa_intr_string(ccv, ih)
                 panic("dec_kn20aa_a50_intr_string: bogus kn20aa IRQ 0x%x\n",
 		    ih);
 
-        sprintf(irqstr, "KN20AA irq %d", ih);
+        sprintf(irqstr, "kn20aa irq %d", ih);
         return (irqstr);
 }
 
