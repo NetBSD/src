@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.28 1999/01/12 15:12:44 tsubai Exp $	*/
+/*	$NetBSD: machdep.c,v 1.29 1999/01/24 15:07:51 tsubai Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -695,6 +695,11 @@ setregs(p, pack, stack)
 	tf->srr0 = pack->ep_entry;
 	tf->srr1 = PSL_MBO | PSL_USERSET | PSL_FE_DFLT;
 	p->p_addr->u_pcb.pcb_flags = 0;
+
+	/* sync I-cache for signal trampoline code */
+	syncicache((void *)pmap_extract(p->p_addr->u_pcb.pcb_pm,
+					(vaddr_t)p->p_sigacts->ps_sigcode),
+		   pack->ep_emul->e_esigcode - pack->ep_emul->e_sigcode);
 }
 
 /*
