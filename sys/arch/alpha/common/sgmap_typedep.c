@@ -1,4 +1,4 @@
-/* $NetBSD: sgmap_typedep.c,v 1.1.2.2 1997/06/03 23:07:33 thorpej Exp $ */
+/* $NetBSD: sgmap_typedep.c,v 1.1.2.3 1997/06/04 00:19:33 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-__KERNEL_RCSID(0, "$NetBSD: sgmap_typedep.c,v 1.1.2.2 1997/06/03 23:07:33 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sgmap_typedep.c,v 1.1.2.3 1997/06/04 00:19:33 thorpej Exp $");
 
 int
 __C(SGMAP_TYPE,_sgmap_load)(t, map, buf, buflen, p, flags, sgmap)
@@ -84,11 +84,11 @@ __C(SGMAP_TYPE,_sgmap_load)(t, map, buf, buflen, p, flags, sgmap)
 			return (error);
 	}
 
-	pteidx = a->apdc_sgva >> PGSHIFT;
+	pteidx = (a->apdc_sgva >> PGSHIFT) * SGMAP_PTE_SPACING;
 	pte = &page_table[pteidx];
 
 	/*
-	 * Generate the PCI DMA address.
+	 * Generate the DMA address.
 	 */
 	map->dm_segs[0].ds_addr = sgmap->aps_wbase |
 	    ((pteidx << SGMAP_PTE_OFFSET_SHIFT) << SGMAP_ADDR_PTEOFF_SHIFT) |
@@ -113,7 +113,7 @@ __C(SGMAP_TYPE,_sgmap_load)(t, map, buf, buflen, p, flags, sgmap)
 		*pte = (pa >> SGPTE_PGADDR_SHIFT) | SGPTE_VALID;
 	}
 
-	alpha_mb();		/* XXX paranoia? */
+	alpha_mb();
 
 	map->dm_nsegs = 1;
 	a->apdc_flags |= APDC_USING_SGMAP;
