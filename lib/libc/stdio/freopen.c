@@ -1,4 +1,4 @@
-/*	$NetBSD: freopen.c,v 1.11.2.1 2002/01/28 20:50:58 nathanw Exp $	*/
+/*	$NetBSD: freopen.c,v 1.11.2.2 2002/02/06 23:18:45 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)freopen.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: freopen.c,v 1.11.2.1 2002/01/28 20:50:58 nathanw Exp $");
+__RCSID("$NetBSD: freopen.c,v 1.11.2.2 2002/02/06 23:18:45 nathanw Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -55,6 +55,7 @@ __RCSID("$NetBSD: freopen.c,v 1.11.2.1 2002/01/28 20:50:58 nathanw Exp $");
 #include <stdio.h>
 #include <stdlib.h>
 #include <wchar.h>
+#include "reentrant.h"
 #include "local.h"
 
 /* 

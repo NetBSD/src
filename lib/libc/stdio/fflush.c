@@ -1,4 +1,4 @@
-/*	$NetBSD: fflush.c,v 1.13.10.1 2001/08/08 16:27:44 nathanw Exp $	*/
+/*	$NetBSD: fflush.c,v 1.13.10.2 2002/02/06 23:18:43 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -41,15 +41,15 @@
 #if 0
 static char sccsid[] = "@(#)fflush.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: fflush.c,v 1.13.10.1 2001/08/08 16:27:44 nathanw Exp $");
+__RCSID("$NetBSD: fflush.c,v 1.13.10.2 2002/02/06 23:18:43 nathanw Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
 #include <assert.h>
 #include <errno.h>
 #include <stdio.h>
-#include "local.h"
 #include "reentrant.h"
+#include "local.h"
 
 #ifdef _REENTRANT
 extern rwlock_t __sfp_lock;

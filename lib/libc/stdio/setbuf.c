@@ -1,4 +1,4 @@
-/*	$NetBSD: setbuf.c,v 1.7 1999/09/20 04:39:32 lukem Exp $	*/
+/*	$NetBSD: setbuf.c,v 1.7.10.1 2002/02/06 23:18:49 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -41,13 +41,14 @@
 #if 0
 static char sccsid[] = "@(#)setbuf.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: setbuf.c,v 1.7 1999/09/20 04:39:32 lukem Exp $");
+__RCSID("$NetBSD: setbuf.c,v 1.7.10.1 2002/02/06 23:18:49 nathanw Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
 #include <assert.h>
 #include <errno.h>
 #include <stdio.h>
+#include "reentrant.h"
 #include "local.h"
 
 void

@@ -1,4 +1,4 @@
-/*	$NetBSD: vfprintf.c,v 1.35.2.3 2002/01/28 20:51:12 nathanw Exp $	*/
+/*	$NetBSD: vfprintf.c,v 1.35.2.4 2002/02/06 23:18:51 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -41,7 +41,7 @@
 #if 0
 static char *sccsid = "@(#)vfprintf.c	5.50 (Berkeley) 12/16/92";
 #else
-__RCSID("$NetBSD: vfprintf.c,v 1.35.2.3 2002/01/28 20:51:12 nathanw Exp $");
+__RCSID("$NetBSD: vfprintf.c,v 1.35.2.4 2002/02/06 23:18:51 nathanw Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -69,10 +69,10 @@ __RCSID("$NetBSD: vfprintf.c,v 1.35.2.3 2002/01/28 20:51:12 nathanw Exp $");
 #include <varargs.h>
 #endif
 
+#include "reentrant.h"
 #include "local.h"
 #include "fvwrite.h"
 #include "extern.h"
-#include "reentrant.h"
 
 static int __sprint __P((FILE *, struct __suio *));
 static int __sbprintf __P((FILE *, const char *, va_list)) 

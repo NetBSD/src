@@ -1,4 +1,4 @@
-/*	$NetBSD: fwrite.c,v 1.13 2001/01/25 02:06:25 lukem Exp $	*/
+/*	$NetBSD: fwrite.c,v 1.13.2.1 2002/02/06 23:18:47 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -41,16 +41,16 @@
 #if 0
 static char sccsid[] = "@(#)fwrite.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: fwrite.c,v 1.13 2001/01/25 02:06:25 lukem Exp $");
+__RCSID("$NetBSD: fwrite.c,v 1.13.2.1 2002/02/06 23:18:47 nathanw Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
 #include <assert.h>
 #include <errno.h>
 #include <stdio.h>
+#include "reentrant.h"
 #include "local.h"
 #include "fvwrite.h"
-#include "reentrant.h"
 
 /*
  * Write `count' objects (each size `size') from memory to the given file.

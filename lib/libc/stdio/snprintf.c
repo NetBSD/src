@@ -1,4 +1,4 @@
-/*	$NetBSD: snprintf.c,v 1.14.2.1 2002/01/28 20:51:07 nathanw Exp $	*/
+/*	$NetBSD: snprintf.c,v 1.14.2.2 2002/02/06 23:18:49 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)snprintf.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: snprintf.c,v 1.14.2.1 2002/01/28 20:51:07 nathanw Exp $");
+__RCSID("$NetBSD: snprintf.c,v 1.14.2.2 2002/02/06 23:18:49 nathanw Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -55,6 +55,7 @@ __RCSID("$NetBSD: snprintf.c,v 1.14.2.1 2002/01/28 20:51:07 nathanw Exp $");
 #else
 #include <varargs.h>
 #endif
+#include "reentrant.h"
 #include "local.h"
 
 #ifdef __weak_alias

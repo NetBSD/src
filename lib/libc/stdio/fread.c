@@ -1,4 +1,4 @@
-/*	$NetBSD: fread.c,v 1.14 2001/01/25 02:06:25 lukem Exp $	*/
+/*	$NetBSD: fread.c,v 1.14.2.1 2002/02/06 23:18:45 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)fread.c	8.2 (Berkeley) 12/11/93";
 #else
-__RCSID("$NetBSD: fread.c,v 1.14 2001/01/25 02:06:25 lukem Exp $");
+__RCSID("$NetBSD: fread.c,v 1.14.2.1 2002/02/06 23:18:45 nathanw Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -49,8 +49,8 @@ __RCSID("$NetBSD: fread.c,v 1.14 2001/01/25 02:06:25 lukem Exp $");
 #include <errno.h>
 #include <stdio.h>
 #include <string.h>
-#include "local.h"
 #include "reentrant.h"
+#include "local.h"
 
 size_t
 fread(buf, size, count, fp)

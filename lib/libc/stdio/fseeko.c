@@ -1,4 +1,4 @@
-/*	$NetBSD: fseeko.c,v 1.2 2000/07/26 08:52:57 kleink Exp $	*/
+/*	$NetBSD: fseeko.c,v 1.2.2.1 2002/02/06 23:18:45 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: fseeko.c,v 1.2 2000/07/26 08:52:57 kleink Exp $");
+__RCSID("$NetBSD: fseeko.c,v 1.2.2.1 2002/02/06 23:18:45 nathanw Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include "namespace.h"
@@ -50,8 +50,8 @@ __RCSID("$NetBSD: fseeko.c,v 1.2 2000/07/26 08:52:57 kleink Exp $");
 #include <fcntl.h>
 #include <stdio.h>
 #include <stdlib.h>
-#include "local.h"
 #include "reentrant.h"
+#include "local.h"
 
 #ifdef __weak_alias
 __weak_alias(fseeko, _fseeko)

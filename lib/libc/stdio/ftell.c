@@ -1,4 +1,4 @@
-/*	$NetBSD: ftell.c,v 1.13 1999/09/20 04:39:29 lukem Exp $	*/
+/*	$NetBSD: ftell.c,v 1.13.10.1 2002/02/06 23:18:45 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -41,15 +41,15 @@
 #if 0
 static char sccsid[] = "@(#)ftell.c	8.2 (Berkeley) 5/4/95";
 #else
-__RCSID("$NetBSD: ftell.c,v 1.13 1999/09/20 04:39:29 lukem Exp $");
+__RCSID("$NetBSD: ftell.c,v 1.13.10.1 2002/02/06 23:18:45 nathanw Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
 #include <assert.h>
 #include <errno.h>
 #include <stdio.h>
-#include "local.h"
 #include "reentrant.h"
+#include "local.h"
 
 /*
  * ftell: return current offset.

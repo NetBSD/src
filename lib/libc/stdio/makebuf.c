@@ -1,4 +1,4 @@
-/*	$NetBSD: makebuf.c,v 1.12 1999/09/20 04:39:30 lukem Exp $	*/
+/*	$NetBSD: makebuf.c,v 1.12.10.1 2002/02/06 23:18:47 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)makebuf.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: makebuf.c,v 1.12 1999/09/20 04:39:30 lukem Exp $");
+__RCSID("$NetBSD: makebuf.c,v 1.12.10.1 2002/02/06 23:18:47 nathanw Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -53,6 +53,7 @@ __RCSID("$NetBSD: makebuf.c,v 1.12 1999/09/20 04:39:30 lukem Exp $");
 #include <stdio.h>
 #include <stdlib.h>
 #include <unistd.h>
+#include "reentrant.h"
 #include "local.h"
 
 /*

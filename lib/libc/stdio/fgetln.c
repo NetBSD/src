@@ -1,4 +1,4 @@
-/*	$NetBSD: fgetln.c,v 1.10 2000/01/22 22:19:19 mycroft Exp $	*/
+/*	$NetBSD: fgetln.c,v 1.10.6.1 2002/02/06 23:18:43 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)fgetline.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: fgetln.c,v 1.10 2000/01/22 22:19:19 mycroft Exp $");
+__RCSID("$NetBSD: fgetln.c,v 1.10.6.1 2002/02/06 23:18:43 nathanw Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -51,8 +51,8 @@ __RCSID("$NetBSD: fgetln.c,v 1.10 2000/01/22 22:19:19 mycroft Exp $");
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include "local.h"
 #include "reentrant.h"
+#include "local.h"
 
 #ifdef __weak_alias
 __weak_alias(fgetln,_fgetln)

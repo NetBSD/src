@@ -1,4 +1,4 @@
-/* $NetBSD: fwide.c,v 1.1.2.2 2002/01/28 20:51:00 nathanw Exp $ */
+/* $NetBSD: fwide.c,v 1.1.2.3 2002/02/06 23:18:47 nathanw Exp $ */
 
 /*-
  * Copyright (c)2001 Citrus Project,
@@ -31,8 +31,8 @@
 #include <assert.h>
 #include <stdio.h>
 #include <wchar.h>
-#include "local.h"
 #include "reentrant.h"
+#include "local.h"
 
 int
 fwide(FILE *fp, int mode)

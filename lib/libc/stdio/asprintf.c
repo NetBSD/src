@@ -1,4 +1,4 @@
-/*	$NetBSD: asprintf.c,v 1.7.6.2 2002/01/28 20:50:52 nathanw Exp $	*/
+/*	$NetBSD: asprintf.c,v 1.7.6.3 2002/02/06 23:18:42 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1997 Todd C. Miller <Todd.Miller@courtesan.com>
@@ -29,7 +29,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: asprintf.c,v 1.7.6.2 2002/01/28 20:50:52 nathanw Exp $");
+__RCSID("$NetBSD: asprintf.c,v 1.7.6.3 2002/02/06 23:18:42 nathanw Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include "namespace.h"
@@ -42,6 +42,7 @@ __RCSID("$NetBSD: asprintf.c,v 1.7.6.2 2002/01/28 20:50:52 nathanw Exp $");
 #else
 #include <varargs.h>
 #endif
+#include "reentrant.h"
 #include "local.h"
 
 #ifdef __weak_alias
