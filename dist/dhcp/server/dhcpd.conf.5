@@ -64,9 +64,9 @@ group of declarations.   In any group of parameters and declarations,
 all parameters must be specified before any declarations which depend
 on those parameters may be specified.
 .PP
-Declarations about network topology include the
- \fIshared-network\fR and the \fIsubnet\fR
-declarations.   If clients on a subnet are to be assigned addresses
+Declarations about network topology include the \fIshared-network\fR
+and the \fIsubnet\fR declarations.   If clients on a subnet are to be
+assigned addresses
 dynamically, a \fIrange\fR declaration must appear within the
 \fIsubnet\fR declaration.   For clients with statically assigned
 addresses, or for installations where only known clients will be
@@ -115,10 +115,10 @@ used.
 .PP
 When dhcpd tries to find a \fIhost\fR declaration for a client, it
 first looks for a \fIhost\fR declaration which has a
-\fIfixed-address\fR parameter which matches the subnet or shared
-network on which the client is booting.   If it doesn't find any such
-entry, it then tries to find an entry which has no \fIfixed-address\fR
-parameter.
+\fIfixed-address\fR declaration that lists an IP address that is valid
+for the subnet or shared network on which the client is booting.   If
+it doesn't find any such entry, it tries to find an entry which has
+no \fIfixed-address\fR declaration.
 .SH EXAMPLES
 .PP
 A typical dhcpd.conf file will look something like this:
@@ -223,7 +223,7 @@ DHCP protocol (for example, server-name and filename).
 .PP
 In Figure 1, each host had \fIhost-specific parameters\fR.   These
 could include such things as the \fIhostname\fR option, the name of a
-file to upload (the \fIfilename parameter) and the address of the
+file to upload (the \fIfilename\fR parameter) and the address of the
 server from which to upload the file (the \fInext-server\fR
 parameter).   In general, any parameter can appear anywhere that
 parameters are allowed, and will be applied according to the scope in
@@ -334,13 +334,14 @@ attached and the server is authoritative for that network segment, in
 which case the server will send a DHCPNAK even though it doesn't know
 about the address.
 .PP
-There may be a host declaration matching the client's identification,
-and that host declaration contains a fixed-address declaration that is
-valid for the network segment to which the client is connected.  In
-this case, the DHCP server will never do dynamic address allocation.
-In this case, the client is \fIrequired\fB to take the address
-specified in the host declaration.   If the client is requesting some
-other address, the server will respond with a DHCPNAK.
+There may be a host declaration matching the client's identification.
+If that host declaration contains a fixed-address declaration that 
+lists an IP address that is valid for the network segment to which the
+client is connected.  In this case, the DHCP server will never do
+dynamic address allocation.  In this case, the client is \fIrequired\fR
+to take the address specified in the host declaration.   If the
+client sends a DHCPREQUEST for some other address, the server will respond
+with a DHCPNAK.
 .PP
 When the DHCP server allocates a new address for a client (remember,
 this only happens if the client has sent a DHCPDISCOVER), it first
@@ -373,6 +374,15 @@ immediately allocated to the client.   If the address is available for
 allocation but has been previously assigned to a different client, the
 server will keep looking in hopes of finding an address that has never
 before been assigned to a client.
+.PP
+The DHCP server generates the list of available IP addresses from a
+hash table.   This means that the addresses are not sorted in any
+particular order, and so it is not possible to predict the order in
+which the DHCP server will allocate IP addresses.   Users of previous
+versions of the ISC DHCP server may have become accustomed to the DHCP
+server allocating IP addresses in ascending order, but this is no
+longer possible, and there is no way to configure this behavior with
+version 3 of the ISC DHCP server.
 .SH IP ADDRESS CONFLICT PREVENTION
 The DHCP server checks IP addresses to see if they are in use before
 allocating them to clients.   It does this by sending an ICMP Echo
@@ -424,7 +434,7 @@ for allocation, and begin to reuse them.   This is called putting the
 server into the PARTNER-DOWN state.
 .PP
 You can put the server into the PARTNER-DOWN state either by using the
-.B omshell (8)
+.B omshell (1)
 command or by stopping the server, editing the last peer state
 declaration in the lease file, and restarting the server.   If you use
 this last method, be sure to leave the date and time of the start of
@@ -498,7 +508,18 @@ failover.   You do not have to do failover for all pools on a given
 network segment.    You must not tell one server it's doing failover
 on a particular address pool and tell the other it is not.   You must
 not have any common address pools on which you are not doing
-failover.
+failover.  A pool declaration that utilizes failover would look like this:
+.PP
+.nf
+pool {
+	failover peer "foo";
+	deny dynamic bootp clients;
+	\fIpool specific parameters\fR
+};
+.fi
+.PP
+Dynamic BOOTP leases are not compatible with failover, and, as such,
+you need to disallow BOOTP in pools that you are using failover for.
 .PP
 The  server currently  does very  little  sanity checking,  so if  you
 configure it wrong, it will just  fail in odd ways.  I would recommend
@@ -520,8 +541,7 @@ failover peer "foo" {
   max-response-delay 60;
   max-unacked-updates 10;
   mclt 3600;
-  hba ff:ff:ff:ff:ff:ff:ff:ff:ff:ff:ff:ff:ff:ff:ff:ff:
-      00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00;
+  split 128;
   load balance max seconds 3;
 }
 
@@ -550,10 +570,10 @@ statement
 .PP
 .B address \fIaddress\fR\fB;\fR
 .PP
-The \fBaddress\fR statement declares the IP address on which the
-server should listen for connections from its failover peer, and also
-the value to use for the DHCP Failover Protocol server identifier.
-Because this value is used as an identifier, it may not be omitted.
+The \fBaddress\fR statement declares the IP address or DNS name on which the
+server should listen for connections from its failover peer, and also the
+value to use for the DHCP Failover Protocol server identifier.  Because this
+value is used as an identifier, it may not be omitted.
 .RE
 .PP
 The 
@@ -563,8 +583,8 @@ statement
 .PP
 .B peer address \fIaddress\fR\fB;\fR
 .PP
-The \fBpeer address\fR statement declares the IP address to which the
-server should connect to reach its failover peer for failover
+The \fBpeer address\fR statement declares the IP address or DNS name to
+which the server should connect to reach its failover peer for failover
 messages.
 .RE
 .PP
@@ -658,8 +678,8 @@ secondary for the purposes of load balancing.   Whenever a client
 makes a DHCP request, the DHCP server runs a hash on the client
 identification.   If the hash comes out to less than the split value,
 the primary answers.   If it comes out to equal to or more than the
-split, the secondary answers.   This value should generally be set to
-128, and can only be configured on the primary.
+split, the secondary answers.   The only meaningful value is 128, and can
+only be configured on the primary.
 .RE
 .PP
 The 
@@ -678,6 +698,11 @@ for such fine-grained control, however.   An example hba statement:
   hba ff:ff:ff:ff:ff:ff:ff:ff:ff:ff:ff:ff:ff:ff:ff:ff:
       00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00;
 .fi
+.PP
+This is equivalent to a \fBsplit 128;\fR statement.  You must only have
+\fBsplit\fR or \fBhba\fR defined, never both.  For most cases, the
+fine-grained control that \fBhba\fR offers isn't necessary, and \fBsplit\fR
+should be used.  As such, the use of \fBhba\fR is deprecated.
 .RE
 .PP
 The 
@@ -700,7 +725,7 @@ clients retry.
 .RE
 .SH CLIENT CLASSING
 Clients can be separated into classes, and treated differently
-depending on what class they are in.   This seperation can be done
+depending on what class they are in.   This separation can be done
 either with a conditional statement, or with a match statement within
 the class declaration.   It is possible to specify a limit on the
 total number of clients within a particular class or subclass that may
@@ -715,11 +740,13 @@ class "ras-clients" {
   match if substring (option dhcp-client-identifier, 1, 3) = "RAS";
 }
 .fi
+.PP
 Note that whether you use matching expressions or add statements (or
 both) to classify clients, you must always write a class declaration
 for any class that you use.   If there will be no match statement and
 no in-scope statements for a class, the declaration should look like
 this:
+.PP
 .nf
 class "ras-clients" {
 }
@@ -895,6 +922,16 @@ to do dns updates.   This can be done with the
 .I ddns-update-style
 configuration parameter.
 .SH THE AD-HOC DNS UPDATE SCHEME
+The ad-hoc Dynamic DNS update scheme is
+.B now deprecated
+and
+.B
+does not work.
+In future releases of the ISC DHCP server, this scheme will not likely be
+available.  The interim scheme works, allows for failover, and should now be
+used.  The following description is left here for informational purposes
+only.
+.PP
 The ad-hoc Dynamic DNS update scheme implemented in this version of
 the ISC DHCP server is a prototype design, which does not
 have much to do with the standard update method that is being
@@ -956,7 +993,7 @@ client sends a DHCPDISCOVER message, then the server sends a
 DHCPOFFER, then the client sends a DHCPREQUEST, then the server sends
 a DHCPACK.   In the current version of the server, the server will do
 a DNS update after it has received the DHCPREQUEST, and before it has
-sent the DHCPOFFER.   It only sends the DNS update if it has not sent
+sent the DHCPACK.   It only sends the DNS update if it has not sent
 one for the client's address before, in order to minimize the impact
 on the DHCP server.
 .PP
@@ -1124,6 +1161,9 @@ zone 17.127.10.in-addr.arpa. {
 }
 .fi
 .PP
+The \fIprimary\fR statement specifies the IP address of the name
+server whose zone information is to be updated.
+.PP
 Note that the zone declarations have to correspond to authority
 records in your name server - in the above example, there must be an
 SOA record for "example.org." and for "17.10.10.in-addr.arpa.".   For
@@ -1141,11 +1181,14 @@ dnssec-keygen.  The version that comes with BIND 9 is likely to produce a
 substantially more random key, so we recommend you use that one even
 if you are not using BIND 9 as your DNS server.  If you are using BIND 9's
 dnssec-keygen, the above key would be created as follows:
+.PP
 .nf
 	dnssec-keygen -a HMAC-MD5 -b 128 -n USER DHCP_UPDATER
-
+.fi
+.PP
 If you are using the BIND 8 dnskeygen program, the following command will
 generate a key as seen above:
+.PP
 .nf
 	dnskeygen -H 128 -u -c -n DHCP_UPDATER
 .fi
@@ -1294,33 +1337,33 @@ single address, \fIhigh-address\fR can be omitted.
  \fB}\fR
 .fi
 .PP
-There must be at least one
+The
 .B host
-statement for every BOOTP client that is to be served.   
-.B host
-statements may also be specified for DHCP clients, although this is
-not required unless booting is only enabled for known hosts.
+declaration provides a scope in which to provide configuration information about
+a specific client, and also provides a way to assign a client a fixed address.
+The host declaration provides a way for the DHCP server to identify a DHCP or
+BOOTP client, and also a way to assign the client a static IP address.
 .PP
 If it is desirable to be able to boot a DHCP or BOOTP
 client on more than one subnet with fixed addresses, more than one
 address may be specified in the
 .I fixed-address
-parameter, or more than one
+declaration, or more than one
 .B host
 statement may be specified.
 .PP
 If client-specific boot parameters must change based on the network
 to which the client is attached, then multiple 
 .B host
-statements should
+declaration should
 be used.
 .PP
 If a client is to be booted using a fixed address if it's
 possible, but should be allocated a dynamic address otherwise, then a
 .B host
-statement must be specified without a
+declaration must be specified without a
 .B fixed-address
-clause.
+declaration.
 .I hostname
 should be a name identifying the host.  If a \fIhostname\fR option is
 not specified for the host, \fIhostname\fR is used.
@@ -1334,6 +1377,15 @@ parameter in the \fIhost\fR declaration to the network hardware
 address supplied by the client.   BOOTP clients do not normally
 provide a \fIdhcp-client-identifier\fR, so the hardware address must
 be used for all clients that may boot using the BOOTP protocol.
+.PP
+Please be aware that
+.B only
+the \fIdhcp-client-identifier\fR option and the hardware address can be
+used to match a host declaration.   For example, it is not possible to match
+a host declaration to a \fIhost-name\fR option.   This is because the
+host-name option cannot be guaranteed to be unique for any given client,
+whereas both the hardware address and \fIdhcp-client-identifier\fR option
+are at least theoretically guaranteed to be unique to a given client.
 .PP
 .B The
 .I group
@@ -1384,6 +1436,11 @@ or not to dynamically assign addresses to unknown clients.   Dynamic
 address assignment to unknown clients is \fBallow\fRed by default.
 An unknown client is simply a client that has no host declaration.
 .PP
+The use of this option is now \fIdeprecated\fR.  If you are trying to
+restrict access on your network to known clients, you should use \fBdeny
+unknown clients;\fR inside of your address pool, as described under the
+heading ALLOW AND DENY WITHIN POOL DECLARAIONS.
+.PP
 .B The
 .I bootp
 .B keyword
@@ -1395,6 +1452,11 @@ An unknown client is simply a client that has no host declaration.
 The \fBbootp\fR flag is used to tell dhcpd whether
 or not to respond to bootp queries.  Bootp queries are \fBallow\fRed
 by default.
+.PP
+This option does not satisfy the requirement of failover peers for denying
+dynamic bootp clients.  The \fBdeny dynamic bootp clients;\fR option should
+be used instead. See the ALLOW AND DENY WITHIN POOL DECLARATIONS section
+of this man page for more details.
 .PP
 .B The
 .I booting
@@ -1409,6 +1471,7 @@ to queries from a particular client.  This keyword only has meaning
 when it appears in a host declaration.   By default, booting is
 \fBallow\fRed, but if it is disabled for a particular client, then
 that client will not be able to get and address from the DHCP server.
+.PP
 .B The
 .I duplicates
 .B keyword
@@ -1431,6 +1494,7 @@ discarded by the server, even if the UID is not the same.   This is a
 violation of the DHCP protocol, but can prevent clients whose client
 identifiers change regularly from holding many leases at the same time.
 By default, duplicates are \fBallow\fRed.
+.PP
 .B The
 .I declines
 .B keyword
@@ -1454,6 +1518,7 @@ The \fBdeclines\fR flag tells the DHCP server whether or not to honor
 DHCPDECLINE messages.   If it is set to \fBdeny\fR or \fBignore\fR in
 a particular scope, the DHCP server will not respond to DHCPDECLINE
 messages.
+.PP
 .B The
 .I client-updates
 .B keyword
@@ -1553,11 +1618,12 @@ set the broadcast bit in the flags field of the BOOTP message header.
 Unfortunately, some DHCP and BOOTP clients do not do this, and
 therefore may not receive responses from the DHCP server.   The DHCP
 server can be made to always broadcast its responses to clients by
-setting this flag to 'on' for the relevant scope.   To avoid creating
-excess broadcast traffic on your network, we recommend that you
-restrict the use of this option to as few clients as possible.   For
-example, the Microsoft DHCP client is known not to have this problem,
-as are the OpenTransport and ISC DHCP clients.
+setting this flag to 'on' for the relevant scope; relevant scopes would be
+inside a conditional statement, as a parameter for a class, or as a parameter
+for a host declaration.   To avoid creating excess broadcast traffic on your
+network, we recommend that you restrict the use of this option to as few
+clients as possible.   For example, the Microsoft DHCP client is known not
+to have this problem, as are the OpenTransport and ISC DHCP clients.
 .RE
 .PP
 The
@@ -1624,7 +1690,7 @@ and not others.
 The \fIboot-unknown-clients\fR statement
 .RS 0.25i
 .PP
-.B boot-unknown-clients \fIname\fB;\fR
+.B boot-unknown-clients \fIflag\fB;\fR
 .PP
 If the \fIboot-unknown-clients\fR statement is present and has a value
 of \fIfalse\fR or \fIoff\fR, then clients for which there is no
@@ -1719,6 +1785,25 @@ time.
 .RE
 .PP
 The
+.I do-forward-updates
+statement
+.RS 0.25i
+.PP
+.B do-forward-updates \fIflag\fB;\fR
+.PP
+The \fIdo-forward-updates\fR statement instructs the DHCP server as
+to whether it should attempt to update a DHCP client's A record
+when the client acquires or renews a lease.   This statement has no
+effect unless DNS updates are enabled and \fBddns-update-style\fR is
+set to \fBinterim\fR.   Forward updates are enabled by default.   If
+this statement is used to disable forward updates, the DHCP server
+will never attempt to update the client's A record, and will only ever
+attempt to update the client's PTR record if the client supplies an
+FQDN that should be placed in the PTR record using the fqdn option.
+If forward updates are enabled, the DHCP server will still honor the
+setting of the \fBclient-updates\fR flag.
+.PP
+The
 .I dynamic-bootp-lease-cutoff
 statement
 .RS 0.25i
@@ -1784,21 +1869,21 @@ the client can be expected to use to load the file.
 .PP
 The
 .I fixed-address
-statement
+declaration
 .RS 0.25i
 .PP
 .B fixed-address address\fR [\fB,\fR \fIaddress\fR ... ]\fB;\fR
 .PP
-The \fIfixed-address\fR statement is used to assign one or more fixed
+The \fIfixed-address\fR declaration is used to assign one or more fixed
 IP addresses to a client.  It should only appear in a \fIhost\fR
 declaration.  If more than one address is supplied, then when the
-client boots, it will be assigned the address which corresponds to the
+client boots, it will be assigned the address that corresponds to the
 network on which it is booting.  If none of the addresses in the
-\fIfixed-address\fR statement are on the network on which the client
-is booting, that client will not match the \fIhost\fR declaration
-containing that \fIfixed-address\fR statement.  Each \fIaddress\fR
-should be either an IP address or a domain name which resolves to one
-or more IP addresses.
+\fIfixed-address\fR statement are valid for the network to which the client
+is connected, that client will not match the \fIhost\fR declaration
+containing that \fIfixed-address\fR declaration.  Each \fIaddress\fR
+in the \fIfixed-address\fR declaration should be either an IP address or
+a domain name that resolves to one or more IP addresses.
 .RE
 .PP
 The
@@ -2105,7 +2190,7 @@ on an ad hoc basis, it is quite possible that one vendor's DHCP client
 might use the same option code that another vendor's client uses, for
 different purposes.   The \fIsite-option-space\fR option can be used
 to assign a different set of site-specific options for each such
-vendor, using conditional evaluation (see \fIdhcp-eval.5\fR for
+vendor, using conditional evaluation (see \fBdhcp-eval (5)\fR for
 details).
 .RE
 .PP
@@ -2139,12 +2224,11 @@ the server will attempt a DNS update for that client each time the
 client renews its lease, rather than only attempting an update when it
 appears to be necessary.   This will allow the DNS to heal from
 database inconsistencies more easily, but the cost is that the DHCP
-server must do many more DNS updates.   We do not recommend enabling
-this on large networks with the current DHCP server.   This option
-only affects the behavior of the interim DNS update scheme,
-and has no effect on the ad-hoc DNS update scheme.   If this
-parameter is not specified, or is false, the DHCP server will only
-update when the client information changes, the client gets a
+server must do many more DNS updates.   We recommend leaving this option
+enabled, which is the default.  This option only affects the behavior of
+the interim DNS update scheme, and has no effect on the ad-hoc DNS update
+scheme.   If this parameter is not specified, or is true, the DHCP server
+will only update when the client information changes, the client gets a
 different lease, or the client's lease expires.
 .RE
 .PP
@@ -2184,16 +2268,16 @@ hostname.   So, for example,
       use-host-decl-names on;
 
       host joe {
-	hardware ethernet 08:00:2b:4c:29:32;
-	fixed-address joe.fugue.com;
+        hardware ethernet 08:00:2b:4c:29:32;
+        fixed-address joe.fugue.com;
       }
     }
 
 is equivalent to
 
       host joe {
-	hardware ethernet 08:00:2b:4c:29:32;
-	fixed-address joe.fugue.com;
+        hardware ethernet 08:00:2b:4c:29:32;
+        fixed-address joe.fugue.com;
         option host-name "joe";
       }
 .fi
@@ -2235,7 +2319,7 @@ statement
 .PP
 The \fIvendor-option-space\fR parameter determines from what option
 space vendor options are taken.   The use of this configuration
-parameter is illustrated in the \fIdhcp-options(5)\fR manual page, in
+parameter is illustrated in the \fBdhcp-options(5)\fR manual page, in
 the \fIVENDOR ENCAPSULATED OPTIONS\fR section.
 .RE
 .SH SETTING PARAMETER VALUES USING EXPRESSIONS
@@ -2269,8 +2353,8 @@ manual page.
 dhcpd(8), dhcpd.leases(5), dhcp-options(5), dhcp-eval(5), RFC2132, RFC2131.
 .SH AUTHOR
 .B dhcpd.conf(5)
-was written by Ted Lemon <mellon@vix.com>
+was written by Ted Lemon
 under a contract with Vixie Labs.   Funding
 for this project was provided by the Internet Software Consortium.
 Information about the Internet Software Consortium can be found at
-.B http://www.isc.org/isc.
+.B http://www.isc.org.

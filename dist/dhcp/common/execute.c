@@ -43,7 +43,7 @@
 
 #ifndef lint
 static char copyright[] =
-"$Id: execute.c,v 1.2 2002/06/10 00:30:34 itojun Exp $ Copyright (c) 1998-2000 The Internet Software Consortium.  All rights reserved.\n";
+"$Id: execute.c,v 1.3 2002/06/11 14:00:01 drochner Exp $ Copyright (c) 1998-2000 The Internet Software Consortium.  All rights reserved.\n";
 #endif /* not lint */
 
 #include "dhcpd.h"
@@ -541,7 +541,7 @@ int executable_statement_dereference (ptr, file, line)
 	}
 
 	(*ptr) -> refcnt--;
-	rc_register (file, line, ptr, *ptr, (*ptr) -> refcnt, 1);
+	rc_register (file, line, ptr, *ptr, (*ptr) -> refcnt, 1, RC_MISC);
 	if ((*ptr) -> refcnt > 0) {
 		*ptr = (struct executable_statement *)0;
 		return 1;
@@ -990,10 +990,10 @@ int executable_statement_foreach (struct executable_statement *stmt,
 	      case null_statement:
 		break;
 	      case if_statement:
-		if (executable_statement_foreach (stmt -> data.ie.tc,
+		if (executable_statement_foreach (foo -> data.ie.tc,
 						  callback, vp, 1))
 			ok = 1;
-		if (executable_statement_foreach (stmt -> data.ie.fc,
+		if (executable_statement_foreach (foo -> data.ie.fc,
 						  callback, vp, 1))
 			ok = 1;
 		break;
@@ -1015,17 +1015,17 @@ int executable_statement_foreach (struct executable_statement *stmt,
 		break;
 	      case statements_statement:
 		if ((executable_statement_foreach
-		     (stmt -> data.statements, callback, vp, condp)))
+		     (foo -> data.statements, callback, vp, condp)))
 			ok = 1;
 		break;
 	      case on_statement:
 		if ((executable_statement_foreach
-		     (stmt -> data.on.statements, callback, vp, 1)))
+		     (foo -> data.on.statements, callback, vp, 1)))
 			ok = 1;
 		break;
 	      case switch_statement:
 		if ((executable_statement_foreach
-		     (stmt -> data.s_switch.statements, callback, vp, 1)))
+		     (foo -> data.s_switch.statements, callback, vp, 1)))
 			ok = 1;
 		break;
 	      case case_statement:
@@ -1038,7 +1038,7 @@ int executable_statement_foreach (struct executable_statement *stmt,
 		break;
 	      case let_statement:
 		if ((executable_statement_foreach
-		     (stmt -> data.let.statements, callback, vp, 0)))
+		     (foo -> data.let.statements, callback, vp, 0)))
 			ok = 1;
 		break;
 	      case define_statement:

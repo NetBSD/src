@@ -3,7 +3,7 @@
    Routines for manipulating hash tables... */
 
 /*
- * Copyright (c) 1995-2000 Internet Software Consortium.
+ * Copyright (c) 1995-2001 Internet Software Consortium.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -43,7 +43,7 @@
 
 #ifndef lint
 static char copyright[] =
-"$Id: hash.c,v 1.2 2002/06/10 00:30:36 itojun Exp $ Copyright (c) 1995-2000 The Internet Software Consortium.  All rights reserved.\n";
+"$Id: hash.c,v 1.3 2002/06/11 14:00:04 drochner Exp $ Copyright (c) 1995-2000 The Internet Software Consortium.  All rights reserved.\n";
 #endif /* not lint */
 
 #include <omapip/omapip_p.h>
@@ -52,26 +52,45 @@ static char copyright[] =
 static int do_hash (const unsigned char *, unsigned, unsigned);
 static int do_case_hash (const unsigned char *, unsigned, unsigned);
 
-struct hash_table *new_hash_table (count, file, line)
+int new_hash_table (tp, count, file, line)
+	struct hash_table **tp;
 	int count;
 	const char *file;
 	int line;
 {
-	struct hash_table *rval = dmalloc (sizeof (struct hash_table)
-					   - (DEFAULT_HASH_SIZE
-					      * sizeof (struct hash_bucket *))
-					   + (count
-					      * sizeof (struct hash_bucket *)),
-					   file, line);
+	struct hash_table *rval;
+
+	if (!tp) {
+		log_error ("%s(%d): new_hash_table called with null pointer.",
+			   file, line);
+#if defined (POINTER_DEBUG)
+		abort ();
+#endif
+		return 0;
+	}
+	if (*tp) {
+		log_error ("%s(%d): non-null target for new_hash_table.",
+			   file, line);
+#if defined (POINTER_DEBUG)
+		abort ();
+#endif
+	}
+	rval = dmalloc (sizeof (struct hash_table) -
+			(DEFAULT_HASH_SIZE * sizeof (struct hash_bucket *)) +
+			(count * sizeof (struct hash_bucket *)), file, line);
+	if (!rval)
+		return 0;
 	rval -> hash_count = count;
-	return rval;
+	*tp = rval;
+	return 1;
 }
 
-void free_hash_table (ptr, file, line)
-	struct hash_table *ptr;
+void free_hash_table (tp, file, line)
+	struct hash_table **tp;
 	const char *file;
 	int line;
 {
+	struct hash_table *ptr = *tp;
 #if defined (DEBUG_MEMORY_LEAKAGE) || \
 		defined (DEBUG_MEMORY_LEAKAGE_ON_EXIT)
 	int i;
@@ -92,6 +111,7 @@ void free_hash_table (ptr, file, line)
 #endif
 
 	dfree ((VOIDPTR)ptr, MDL);
+	*tp = (struct hash_table *)0;
 }
 
 struct hash_bucket *free_hash_buckets;
@@ -178,25 +198,25 @@ void free_hash_bucket (ptr, file, line)
 	free_hash_buckets = ptr;
 }
 
-struct hash_table *new_hash (hash_reference referencer,
-			     hash_dereference dereferencer,
-			     int casep, const char *file, int line)
+int new_hash (struct hash_table **rp,
+	      hash_reference referencer,
+	      hash_dereference dereferencer,
+	      int casep, const char *file, int line)
 {
-	struct hash_table *rv = new_hash_table (DEFAULT_HASH_SIZE, file, line);
-	if (!rv)
-		return rv;
-	memset (&rv -> buckets [0], 0,
+	if (!new_hash_table (rp, DEFAULT_HASH_SIZE, file, line))
+		return 0;
+	memset (&(*rp) -> buckets [0], 0,
 		DEFAULT_HASH_SIZE * sizeof (struct hash_bucket *));
-	rv -> referencer = referencer;
-	rv -> dereferencer = dereferencer;
+	(*rp) -> referencer = referencer;
+	(*rp) -> dereferencer = dereferencer;
 	if (casep) {
-		rv -> cmp = casecmp;
-		rv -> do_hash = do_case_hash;
+		(*rp) -> cmp = casecmp;
+		(*rp) -> do_hash = do_case_hash;
 	} else {
-		rv -> cmp = (hash_comparator_t)memcmp;
-		rv -> do_hash = do_hash;
+		(*rp) -> cmp = (hash_comparator_t)memcmp;
+		(*rp) -> do_hash = do_hash;
 	}
-	return rv;
+	return 1;
 }
 
 static int do_case_hash (name, len, size)

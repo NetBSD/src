@@ -43,7 +43,7 @@
 
 #ifndef lint
 static char copyright[] =
-"$Id: ddns.c,v 1.2 2002/06/10 00:30:37 itojun Exp $ Copyright (c) 2000-2001 The Internet Software Consortium.  All rights reserved.\n";
+"$Id: ddns.c,v 1.3 2002/06/11 14:00:04 drochner Exp $ Copyright (c) 2000-2001 The Internet Software Consortium.  All rights reserved.\n";
 #endif /* not lint */
 
 #include "dhcpd.h"
@@ -121,7 +121,23 @@ static isc_result_t ddns_update_ptr (struct data_string *ddns_fwd_name,
 	 * Attempt to perform the update.
 	 */
 	result = minires_nupdate (&resolver_state, ISC_LIST_HEAD (updqueue));
+#if defined (DEBUG)
 	print_dns_status ((int)result, &updqueue);
+#endif
+	if (result == ISC_R_SUCCESS) {
+		log_info ("added reverse map from %.*s to %.*s",
+			  (int)ddns_rev_name -> len,
+			  (const char *)ddns_rev_name -> data,
+			  (int)ddns_fwd_name -> len,
+			  (const char *)ddns_fwd_name -> data);
+	} else {
+		log_error ("unable to add reverse map from %.*s to %.*s: %s",
+			   (int)ddns_rev_name -> len,
+			   (const char *)ddns_rev_name -> data,
+			   (int)ddns_fwd_name -> len,
+			   (const char *)ddns_fwd_name -> data,
+			   isc_result_totext (result));
+	}
 
 	/* Fall through. */
       error:
@@ -174,7 +190,24 @@ static isc_result_t ddns_remove_ptr (struct data_string *ddns_rev_name)
 	 * Attempt to perform the update.
 	 */
 	result = minires_nupdate (&resolver_state, ISC_LIST_HEAD (updqueue));
+#if defined (DEBUG)
 	print_dns_status ((int)result, &updqueue);
+#endif
+	if (result == ISC_R_SUCCESS) {
+		log_info ("removed reverse map on %.*s",
+			  (int)ddns_rev_name -> len,
+			  (const char *)ddns_rev_name -> data);
+	} else {
+		if (result != ISC_R_NXRRSET && result != ISC_R_NXDOMAIN)
+			log_error ("can't remove reverse map on %.*s: %s",
+				   (int)ddns_rev_name -> len,
+				   (const char *)ddns_rev_name -> data,
+				   isc_result_totext (result));
+	}
+
+	/* Not there is success. */
+	if (result == ISC_R_NXRRSET || result == ISC_R_NXDOMAIN)
+		result = ISC_R_SUCCESS;
 
 	/* Fall through. */
       error:
@@ -236,7 +269,7 @@ int ddns_updates (struct packet *packet,
 		   nonzero, don't try to use the client-supplied
 		   XXX */
 		if (!(oc = lookup_option (&fqdn_universe, packet -> options,
-					  FQDN_NO_CLIENT_UPDATE)) ||
+					  FQDN_SERVER_UPDATE)) ||
 		    evaluate_boolean_option_cache (&ignorep, packet, lease,
 						   (struct client_state *)0,
 						   packet -> options,
@@ -260,6 +293,18 @@ int ddns_updates (struct packet *packet,
 		goto client_updates;
 	}
       noclient:
+	/* If do-forward-updates is disabled, this basically means don't
+	   do an update unless the client is participating, so if we get
+	   here and do-forward-updates is disabled, we can stop. */
+	if ((oc = lookup_option (&server_universe, state -> options,
+				 SV_DO_FORWARD_UPDATES)) &&
+	    !evaluate_boolean_option_cache (&ignorep, packet, lease,
+					    (struct client_state *)0,
+					    packet -> options,
+					    state -> options,
+					    &lease -> scope, oc, MDL)) {
+		return 0;
+	}
 
 	/* If it's a static lease, then don't do the DNS update unless we're
 	   specifically configured to do so.   If the client asked to do its
@@ -379,11 +424,20 @@ int ddns_updates (struct packet *packet,
 	   PTR update. */
 	if (find_bound_string (&old_ddns_fwd_name,
 			       lease -> scope, "ddns-client-fqdn")) {
+		/* If the name is not different, no need to update
+		   the PTR record. */
 		if (old_ddns_fwd_name.len == ddns_fwd_name.len &&
 		    !memcmp (old_ddns_fwd_name.data, ddns_fwd_name.data,
-			     old_ddns_fwd_name.len)) {
-			/* If the name is not different, no need to update
-			   the PTR record. */
+			     old_ddns_fwd_name.len) &&
+		    (!(oc = lookup_option (&server_universe,
+					   state -> options,
+					   SV_UPDATE_OPTIMIZATION)) ||
+		     evaluate_boolean_option_cache (&ignorep, packet, lease,
+						    (struct client_state *)0,
+						    packet -> options,
+						    state -> options,
+						    &lease -> scope, oc,
+						    MDL))) {
 			goto noerror;
 		}
 	}
@@ -603,6 +657,9 @@ int ddns_removals (struct lease *lease)
 
 	/* No scope implies that DDNS has not been performed for this lease. */
 	if (!lease -> scope)
+		return 0;
+
+	if (ddns_update_style != 2)
 		return 0;
 
 	/*
