@@ -1,4 +1,4 @@
-/*	$NetBSD: aha1542.c,v 1.45 1995/07/27 01:00:11 mycroft Exp $	*/
+/*	$NetBSD: aha1542.c,v 1.46 1995/07/28 22:49:56 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1994 Charles Hannum.  All rights reserved.
@@ -778,10 +778,10 @@ aha_get_ccb(aha, flags)
 				    aha->sc_dev.dv_xname);
 			}
 			break;
-		} else {
-			if ((flags & SCSI_NOSLEEP) == 0)
-				tsleep(&aha->free_ccb, PRIBIO, "ahaccb", 0);
 		}
+		if ((flags & SCSI_NOSLEEP) != 0)
+			break;
+		tsleep(&aha->free_ccb, PRIBIO, "ahaccb", 0);
 	}
 
 	splx(opri);
