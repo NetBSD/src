@@ -1,10 +1,7 @@
-#include "guspnp.h"
-#if NGUSPNP > 0
-
-/*	$NetBSD: gus_isapnp.c,v 1.10 1999/02/17 02:37:42 mycroft Exp $	*/
+/*	$NetBSD: gus_isapnp.c,v 1.11 1999/02/17 21:44:55 mycroft Exp $	*/
 
 /*
- * Copyright (c) 1997 The NetBSD Foundation, Inc.
+ * Copyright (c) 1997, 1999 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * Author: Kari Mettinen
@@ -37,6 +34,9 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
+
+#include "guspnp.h"
+#if NGUSPNP > 0
 
 #include <sys/param.h>
 #include <sys/fcntl.h>

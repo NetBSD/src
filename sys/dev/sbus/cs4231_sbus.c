@@ -1,7 +1,7 @@
-/*	$NetBSD: cs4231_sbus.c,v 1.8 1999/02/17 02:37:42 mycroft Exp $	*/
+/*	$NetBSD: cs4231_sbus.c,v 1.9 1999/02/17 21:44:56 mycroft Exp $	*/
 
 /*-
- * Copyright (c) 1998 The NetBSD Foundation, Inc.
+ * Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
