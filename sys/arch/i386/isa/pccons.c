@@ -35,7 +35,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)pccons.c	5.11 (Berkeley) 5/21/91
- *	$Id: pccons.c,v 1.31.2.27 1993/11/10 19:38:49 mycroft Exp $
+ *	$Id: pccons.c,v 1.31.2.28 1993/11/11 08:18:59 mycroft Exp $
  */
 
 /*
@@ -684,7 +684,6 @@ static char bgansitopc[] =
 
 /*
  *   sput has support for emulation of the 'pc3' termcap entry.
- *   if ka, use kernel attributes.
  */
 static void
 sput(ps, cp, n)
@@ -708,28 +707,23 @@ sput(ps, cp, n)
 			if (state >= PSS_ESCAPE) {
 				wrtchar(c, ps->ps_sat);
 				state = 0;
-				if (ps->ps_col >= COL) {
-					ps->ps_col = 0;
-					scroll = 1;
-				}
+				goto maybe_scroll;
 			} else
 				state = PSS_ESCAPE;
 			break;
 
 		    case '\t': {
-			    int col = ps->ps_col,
-			    	inccol = (8 - col % 8);
-			    crtat += inccol;
-			    ps->ps_col = col + inccol;
-			    if (ps->ps_col >= COL) {
-				    if (COL % 8) /* evaluated at compile time */
-					    ps->ps_col -= COL;
-				    else
-					    ps->ps_col = 0;
-				    scroll = 1;
-			    }
-			    break;
+			int col = ps->ps_col,
+			    inccol = (8 - col % 8);
+			crtat += inccol;
+			ps->ps_col = col + inccol;
 		    }
+		    maybe_scroll:
+			if (ps->ps_col >= COL) {
+				ps->ps_col -= COL;
+				scroll = 1;
+			}
+			break;
 
 		    case '\010':
 			if (crtat <= Crtat)
@@ -794,6 +788,7 @@ sput(ps, cp, n)
 				} else { /* Invalid, clear state */
 					wrtchar(c, ps->ps_sat); 
 					state = 0;
+					goto maybe_scroll;
 				}
 				break;
 			    default: /* PSS_EBRACE or PSS_EPARAM */
