@@ -1,4 +1,4 @@
-.\"	$NetBSD: hunt.6,v 1.5 2002/02/08 01:25:13 ross Exp $
+.\"	$NetBSD: hunt.6,v 1.6 2002/09/26 16:12:40 wiz Exp $
 .\"
 .\"  hunt
 .\"  Copyright (c) 1985 Conrad C. Huang, Gregory S. Couch, Kenneth C.R.C. Arnold
@@ -31,8 +31,7 @@ walls and players.
 The more players you kill before you die, the better your score is.
 If the
 .Fl m
-flag is given,
-you enter the game as a monitor
+flag is given, you enter the game as a monitor
 (you can see the action but you cannot play).
 .Pp
 .Nm
@@ -44,8 +43,7 @@ argument.
 This presupposes that a hunt game is already running on that host, see
 .Xr huntd 6
 for details on how to setup a game on a specific host.
-If more than one game if found,
-you may pick which game to play in.
+If more than one game if found, you may pick which game to play in.
 .Pp
 If the
 .Fl q
@@ -111,19 +109,14 @@ only works on crt (vdt) terminals with at least 24 lines, 80 columns, and
 cursor addressing.
 The screen is divided in to 3 areas.
 On the right hand side is the status area.
-It shows damage sustained,
-charges remaining,
-who's in the game,
+It shows damage sustained, charges remaining, who's in the game,
 who's scanning (the
 .Dq *
-in front of the name),
-who's cloaked (the
+in front of the name), who's cloaked (the
 .Dq +
-in front of the name),
-and other players' scores.
+in front of the name), and other players' scores.
 The rest of the screen is taken up by your map of the maze.
-The 24th line
-is used for longer messages that don't fit in the status area.
+The 24th line is used for longer messages that don't fit in the status area.
 .Pp
 .Nm
 uses the same keys to move as
@@ -226,8 +219,7 @@ You can only fire three shots in a row, then the gun must cool off.
 .It
 Shots move 5 times faster than you do.
 .It
-To stab someone,
-you face that player and move at them.
+To stab someone, you face that player and move at them.
 .It
 Stabbing does 2 points worth of damage and shooting does 5 points.
 .It
@@ -246,8 +238,7 @@ The number of squares is equal to the number of charges used.
 .It
 One small mine and one large mine is placed in the maze for every new player.
 A mine has a 2% probability of tripping when you walk forward on to it;
-50% when going sideways;
-95% when backing up.
+50% when going sideways; 95% when backing up.
 Tripping a mine costs you 5 points or 10 points respectively.
 Defusing a mine is worth 1 charge or 9 charges respectively.
 .It
@@ -280,11 +271,10 @@ Slime goes around walls, not through them.
 Walls regenerate, reappearing in the order they were destroyed.
 One percent of the regenerated walls will be diagonal walls or doors.
 When a wall is generated directly beneath a player, he is thrown in
-a random direction for a random period of time.  When he lands, he
-sustains damage (up to 20 percent of the amount of damage already
-sustained); i.e.,
-the less damage he had, the more nimble he is and
-therefore less likely to hurt himself on landing.
+a random direction for a random period of time.
+When he lands, he sustains damage (up to 20 percent of the amount of
+damage already sustained); i.e., the less damage he had, the more nimble
+he is and therefore less likely to hurt himself on landing.
 .\"MP
 .\"There is a volcano close to the center of the maze which goes off
 .\"close to every 30 deaths.
@@ -306,10 +296,8 @@ will ask you what name you want to play under.
 If you wish to set other options than just your name,
 you can enumerate the options as follows:
 .Dl setenv HUNT "name=Sneaky,team=1,cloak,mapkey=zoFfGg1f2g3F4G"
-sets the player name to Sneaky,
-sets the team to one,
-sets the enter game attribute to cloaked,
-and the maps
+sets the player name to Sneaky, sets the team to one,
+sets the enter game attribute to cloaked, and the maps
 .Ic z
 to
 .Ic o , F

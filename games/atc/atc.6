@@ -1,4 +1,4 @@
-.\"	$NetBSD: atc.6,v 1.12 2002/02/08 01:25:12 ross Exp $
+.\"	$NetBSD: atc.6,v 1.13 2002/09/26 16:12:39 wiz Exp $
 .\"
 .\" Copyright (c) 1990, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -76,18 +76,19 @@ Same as
 .It Fl p
 Print the path to the special directory where
 .Nm
-expects to find its private files.  This is used during the
-installation of the program.
+expects to find its private files.
+This is used during the installation of the program.
 .It Fl g Ar game
-Play the named game.  If the game listed is not one of the
-ones printed from the
+Play the named game.
+If the game listed is not one of the ones printed from the
 .Fl l
 option, the default game is played.
 .It Fl f Ar game
 Same as
 .Fl g .
 .It Fl r Ar seed
-Set the random seed.  The purpose of this flag is questionable.
+Set the random seed.
+The purpose of this flag is questionable.
 .El
 .Sh GOALS
 Your goal in
@@ -102,15 +103,18 @@ out of exit points.
 Several things will cause the end of the game.
 Each plane has a destination (see information area), and
 sending a plane to the wrong destination is an error.
-Planes can run out of fuel, or can collide.  Collision is defined as
-adjacency in all three dimensions.  A plane leaving the arena
+Planes can run out of fuel, or can collide.
+Collision is defined as adjacency in all three dimensions.
+A plane leaving the arena
 in any other way than through its destination exit is an error as well.
 .Pp
-Scores are sorted in order of the number of planes safe.  The other
-statistics are provided merely for fun.  There is no penalty for
+Scores are sorted in order of the number of planes safe.
+The other statistics are provided merely for fun.
+There is no penalty for
 taking longer than another player (except in the case of ties).
 .Pp
-Suspending a game is not permitted.  If you get a talk message, tough.
+Suspending a game is not permitted.
+If you get a talk message, tough.
 When was the last time an Air Traffic Controller got called away to
 the phone?
 .Sh "THE DISPLAY"
@@ -120,10 +124,9 @@ Depending on the terminal you run
 on, the screen will be divided into 4 areas.
 It should be stressed that the terminal driver portion of the
 game was designed to be reconfigurable, so the display format can vary
-depending the version you are playing.  The descriptions here are based
-on the ascii version
-of the game.  The game rules and input format, however,
-should remain consistent.
+depending the version you are playing.
+The descriptions here are based on the ascii version of the game.
+The game rules and input format, however, should remain consistent.
 Control-L redraws the screen, should it become muddled.
 .Ss RADAR
 The first screen area is the radar display, showing the relative locations
@@ -131,11 +134,11 @@ of the planes, airports, standard entry/exit points, radar
 beacons, and ``lines'' which simply serve to aid you in guiding
 the planes.
 .Pp
-Planes are shown as a single letter with an altitude.  If
-the numerical altitude is a single digit, then it represents
+Planes are shown as a single letter with an altitude.
+If the numerical altitude is a single digit, then it represents
 thousands of feet.
-Some distinction is made between the prop
-planes and the jets.  On ascii terminals, prop planes are
+Some distinction is made between the prop planes and the jets.
+On ascii terminals, prop planes are
 represented by a upper case letter, jets by a lower case letter.
 .Pp
 Airports are shown as a number and some indication of the direction
@@ -150,13 +153,14 @@ Their purpose is to offer a place of easy reference to the plane pilots.
 See ``the delay command'' under the input section of this manual.
 .Pp
 Entry/exit points are displayed as numbers along the border of the
-radar screen.  Planes will enter the arena from these points without
-warning.  These points have a direction associated with them, and
-planes will always enter the arena from this direction.  On the
-ascii version of
+radar screen.
+Planes will enter the arena from these points without warning.
+These points have a direction associated with them, and
+planes will always enter the arena from this direction.
+On the ascii version of
 .Nm "" ,
-this direction is not displayed.  It will become apparent
-what this direction is as the game progresses.
+this direction is not displayed.
+It will become apparent what this direction is as the game progresses.
 .Pp
 Incoming planes will always enter at the same altitude: 7000 feet.
 For a plane to successfully depart through an entry/exit point,
@@ -171,35 +175,38 @@ Below this is a list of planes currently in the air, followed by a
 blank line, and then a list of planes on the ground (at airports).
 Each line lists the plane name and its current altitude,
 an optional asterisk indicating low fuel, the plane's destination,
-and the plane's current command.  Changing altitude is not considered
-to be a command and is therefore not displayed.  The following are
-some possible information lines:
+and the plane's current command.
+Changing altitude is not considered
+to be a command and is therefore not displayed.
+The following are some possible information lines:
 .Pp
 .Bd -literal -unfilled -offset indent
 B4*A0: Circle @ b1
 g7 E4: 225
 .Ed
 .Pp
-The first example shows a prop plane named `B' that is flying at 4000
-feet.  It is low on fuel (note the `*').  Its destination is
-Airport #0.
-The next command it expects
-to do is circle when it reaches Beacon #1.
+The first example shows a prop plane named `B' that is flying at 4000 feet.
+It is low on fuel (note the `*').
+Its destination is Airport #0.
+The next command it expects to do is circle when it reaches Beacon #1.
 The second example shows a jet named `g' at 7000 feet, destined for
-Exit #4.  It is just now executing a turn to 225 degrees (South-West).
+Exit #4.
+It is just now executing a turn to 225 degrees (South-West).
 .Ss "INPUT AREA"
-The third area of the display is the input area.  It is here that
-your input is reflected.  See the INPUT heading of this manual
-for more details.
+The third area of the display is the input area.
+It is here that your input is reflected.
+See the INPUT heading of this manual for more details.
 .Ss "AUTHOR AREA"
 This area is used simply to give credit where credit is due. :-)
 .Sh INPUT
-A command completion interface is built into
-the game.  At any time, typing `?' will list possible input characters.
+A command completion interface is built into the game.
+At any time, typing `?' will list possible input characters.
 Typing a backspace (your erase character) backs up, erasing the last part
-of the command.  When a command is complete, a return enters it, and
-any semantic checking is done at that time.  If no errors are detected,
-the command is sent to the appropriate plane.  If an error is discovered
+of the command.
+When a command is complete, a return enters it, and
+any semantic checking is done at that time.
+If no errors are detected, the command is sent to the appropriate plane.
+If an error is discovered
 during the check, the offending statement will be underscored and a
 (hopefully) descriptive message will be printed under it.
 .Pp
@@ -209,8 +216,7 @@ and
 .Em Delayable
 commands.
 .Em "Immediate Only"
-commands happen on the next
-update.
+commands happen on the next update.
 .Em Delayable
 commands also happen on the next update unless they
 are followed by an optional predicate called the
@@ -227,8 +233,10 @@ refers to North, or 0 degrees.
 In relative references, `q' refers to -45 degrees or 45 degrees left, and `w'
 refers to 0 degrees, or no change in direction.
 .Pp
-All commands start with a plane letter.  This indicates the recipient
-of the command.  Case is ignored.
+All commands start with a plane letter.
+This indicates the recipient
+of the command.
+Case is ignored.
 .Ss "IMMEDIATE ONLY COMMANDS"
 .Bl -tag -width "aaaa"
 .It "a [ cd+- ]" Em number
@@ -243,14 +251,17 @@ Climb: relative altitude change.
 Descend: relative altitude change.
 .El
 .It m
-Mark: Display in highlighted mode.  Plane and command information
+Mark: Display in highlighted mode.
+Plane and command information
 is displayed normally.
 .It i
-Ignore: Do not display highlighted.  Command is displayed as a
+Ignore: Do not display highlighted.
+Command is displayed as a
 line of dashes if there is no command.
 .It u
 Unmark: Same as ignore, but if a delayed command is processed,
-the plane will become marked.  This is useful if you want
+the plane will become marked.
+This is useful if you want
 to forget about a plane during part, but not all, of its
 journey.
 .El
@@ -274,7 +285,8 @@ The shortest turn will be taken.
 Left: Turn counterclockwise: 45 degrees by default, or the amount
 specified in \*[Lt]dir\*[Gt] (not
 .Em to
-\*[Lt]dir\*[Gt].) `w' (0 degrees) is no turn. `e' is 45 degrees; `q' gives -45
+\*[Lt]dir\*[Gt].) `w' (0 degrees) is no turn.
+`e' is 45 degrees; `q' gives -45
 degrees counterclockwise, that is, 45 degrees clockwise.
 .It "t- [ dir ]"
 Same as left.
@@ -288,8 +300,8 @@ Hard left: Turn counterclockwise 90 degrees.
 .It tR
 Hard right: Turn clockwise 90 degrees.
 .It "tt [abe*]"
-Towards: Turn towards a beacon, airport or exit.  The turn is
-just an estimate.
+Towards: Turn towards a beacon, airport or exit.
+The turn is just an estimate.
 .It "tta" Em number
 Turn towards the given airport.
 .It "ttb" Em number
@@ -306,30 +318,33 @@ The
 (a/@)
 command may be appended to any
 .Em Delayable
-command.  It allows the controller to instruct a plane to do an action
+command.
+It allows the controller to instruct a plane to do an action
 when the plane reaches a particular beacon (or other objects in future
 versions).
 .Bl -tag -width "aaaa"
 .It ab Em number
 Do the delayable command when the plane reaches the specified
-beacon. The `b' for ``beacon'' is redundant to allow for expansion.
+beacon.
+The `b' for ``beacon'' is redundant to allow for expansion.
 `@' can be used instead of `a'.
 .El
 .Ss "MARKING, UNMARKING AND IGNORING"
 Planes are
 .Em marked
-by default when they enter the arena.  This means they are displayed
-in highlighted mode on the radar display.  A plane may also be either
+by default when they enter the arena.
+This means they are displayed in highlighted mode on the radar display.
+A plane may also be either
 .Em unmarked
 or
 .Em ignored .
 An
 .Em ignored
 plane is drawn in unhighlighted mode, and a line of dashes is displayed in
-the command field of the information area.  The plane will remain this
-way until a mark command has been issued.  Any other command will be issued,
-but the command line will return to a line of dashes when the command
-is completed.
+the command field of the information area.
+The plane will remain this way until a mark command has been issued.
+Any other command will be issued, but the command line will return to a
+line of dashes when the command is completed.
 .Pp
 An
 .Em unmarked
@@ -337,12 +352,13 @@ plane is treated the same as an
 .Em ignored
 plane, except that it will automatically switch to
 .Em marked
-status when a delayed command has been processed.  This is useful if
-you want to forget about a plane for a while, but its flight path has
-not yet been completely set.
+status when a delayed command has been processed.
+This is useful if you want to forget about a plane for a while, but its
+flight path has not yet been completely set.
 .Pp
 As with all of the commands, marking, unmarking and ignoring will take effect
-at the beginning of the next update.  Do not be surprised if the plane does
+at the beginning of the next update.
+Do not be surprised if the plane does
 not immediately switch to unhighlighted mode.
 .Ss EXAMPLES
 .Bl -tag -width gtte4ab2 -offset indent
@@ -375,13 +391,15 @@ Planes waiting at airports can only be told to take off (climb in altitude).
 .Sh "NEW GAMES"
 The
 .Pa Game_List
-file lists the currently available play fields.  New field description
-file names must be placed in this file to be playable.  If a player
-specifies a game not in this file, his score will not be logged.
+file lists the currently available play fields.
+New field description file names must be placed in this file to be playable.
+If a player specifies a game not in this file, his score will not be logged.
 .Pp
-The game field description files are broken into two parts.  The first
-part is the definition section.  Here, the four tunable game parameters
-must be set.  These variables are set with the syntax:
+The game field description files are broken into two parts.
+The first
+part is the definition section.
+Here, the four tunable game parameters must be set.
+These variables are set with the syntax:
 .Pp
 .Dl "variable = number;"
 .Pp
@@ -413,25 +431,26 @@ The syntax is as follows:
 .Ed
 .Pp
 For beacons, a simple x, y coordinate pair is used (enclosed in
-parenthesis).  Airports and exits require a third value, which is one
-of the directions
+parenthesis).
+Airports and exits require a third value, which is one of the directions
 .Em wedcxzaq .
 For airports, this is the direction that planes must be going to take
 off and land, and for exits, this is the direction that planes will going
 when they
 .Em enter
-the arena.  This may not seem intuitive, but as there is no restriction on
+the arena.
+This may not seem intuitive, but as there is no restriction on
 direction of exit, this is appropriate.
 Lines are slightly different, since they need two coordinate pairs to
-specify the line endpoints.  These endpoints must be enclosed in
-square brackets.
+specify the line endpoints.
+These endpoints must be enclosed in square brackets.
 .Pp
-All statements are semi-colon (;) terminated.  Multiple item statements
-accumulate.  Each definition must occur exactly once, before any
-item statements.  Comments begin with a hash (#) symbol
-and terminate with a newline.
-The coordinates are between zero and width-1 and height-1
-inclusive.  All of the exit coordinates must lie on the borders, and
+All statements are semi-colon (;) terminated.
+Multiple item statements accumulate.
+Each definition must occur exactly once, before any item statements.
+Comments begin with a hash (#) symbol and terminate with a newline.
+The coordinates are between zero and width-1 and height-1 inclusive.
+All of the exit coordinates must lie on the borders, and
 all of the beacons and airports must lie inside of the borders.
 Line endpoints may be anywhere within the field, so long as
 the lines are horizontal, vertical or
@@ -465,14 +484,14 @@ line:		[ (  1  1 ) (  6  6 ) ]
 
 .Ed
 .Sh FILES
-Files are kept in a special directory. See the OPTIONS for a way to
-print this path out. It is normally
+Files are kept in a special directory.
+See the OPTIONS for a way to print this path out.
+It is normally
 .Pa /usr/share/games/atc .
 .Pp
 This directory contains the file
 .Pa Game_List ,
-which holds the list of playable games, as well as the games
-themselves.
+which holds the list of playable games, as well as the games themselves.
 .Pp
 The scores are kept in
 .Pa /var/games/atc_score .
