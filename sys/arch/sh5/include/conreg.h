@@ -1,4 +1,4 @@
-/*	$NetBSD: conreg.h,v 1.2 2002/08/26 10:34:43 scw Exp $	*/
+/*	$NetBSD: conreg.h,v 1.3 2002/09/12 12:35:00 scw Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -108,7 +108,7 @@ sh5_getctc(void)
 	return ((u_int)rv);
 }
 
-extern void sh5_setasid(u_int);
+extern u_int sh5_setasid(u_int);
 #endif
 
 #endif /* _SH5_CONREG_H */
