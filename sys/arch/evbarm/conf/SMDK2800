@@ -1,4 +1,4 @@
-#	$NetBSD: SMDK2800,v 1.22 2005/02/25 13:46:49 simonb Exp $
+#	$NetBSD: SMDK2800,v 1.23 2005/02/27 02:18:34 bsh Exp $
 #
 #	SMDK2800 -- Samsung's S3C2800 evaluation board.
 #
@@ -220,17 +220,38 @@ ukphy*		at mii? phy ?			# generic unknown PHYs
 # Pseudo-Devices
 
 # disk/mass storage pseudo-devices
-pseudo-device	md		1	# memory disk device (ramdisk)
+#pseudo-device	md		1	# memory disk device (ramdisk)
 #pseudo-device	vnd		4	# disk-like interface to files
 #pseudo-device	fss		4	# file system snapshot device
 
 # network pseudo-devices
-#pseudo-device	bpfilter	4	# Berkeley packet filter
-#pseudo-device	bridge			# simple inter-network bridging
+pseudo-device	bpfilter	4	# Berkeley packet filter
+pseudo-device	ipfilter		# IP filter (firewall) and NAT
 pseudo-device	loop			# network loopback
+#pseudo-device	kttcp			# network loopback
+#pseudo-device	ppp		2	# Point-to-Point Protocol
+#pseudo-device	pppoe			# PPP over Ethernet (RFC 2516)
+#pseudo-device	sl		2	# Serial Line IP
+#pseudo-device	strip		2	# Starmode Radio IP (Metricom)
+#pseudo-device	irframetty		# IrDA frame line discipline
+#pseudo-device	tap			# virtual Ethernet
+#pseudo-device	tun		2	# network tunneling over tty
+#pseudo-device	gre		2	# generic L3 over IP tunnel
+#pseudo-device	gif		4	# IPv[46] over IPv[46] tunnel (RFC1933)
+#pseudo-device	faith		1	# IPv[46] tcp relay translation i/f
+#pseudo-device	stf		1	# 6to4 IPv6 over IPv4 encapsulation
+#pseudo-device	vlan			# IEEE 802.1q encapsulation
+#pseudo-device	bridge			# simple inter-network bridging
+#options	BRIDGE_IPF		# bridge uses IP/IPv6 pfil hooks too
+#pseudo-device	pf			# PF packet filter
+#pseudo-device	pflog			# PF log if
 
 # miscellaneous pseudo-devices
 pseudo-device	pty			# pseudo-terminals
 pseudo-device	rnd			# /dev/random and in-kernel generator
 pseudo-device	clockctl		# user control of clock subsystem
-#pseudo-device	ksyms			# /dev/ksyms
+
+# wscons pseudo-devices
+#pseudo-device	wsmux			# mouse & keyboard multiplexor
+#pseudo-device	wsfont
+pseudo-device	ksyms			# /dev/ksyms
