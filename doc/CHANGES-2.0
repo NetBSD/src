@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-2.0,v 1.1.2.452 2004/09/17 04:02:03 jmc Exp $
+#	$NetBSD: CHANGES-2.0,v 1.1.2.453 2004/09/17 04:05:21 jmc Exp $
 
 A complete list of changes from the initial NetBSD 2.0 branch on 28 March 2004
 until 2.0 release:
@@ -7391,3 +7391,11 @@ sys/dev/ata/wd.c				patch
 	In case of error, reset the channel with AT_RST_NOCMD. We know the 
 	reset wont abort any command at this point.
 	[bouyer, ticket #853]
+
+sys/dev/ic/wdc.c				patch
+
+	__wdc_reset_channel(): give the loop over commands a chance to 
+	terminate by:
+	  - updating xfer on each iteration (ops)
+	  - making sure that xfers gets removed from the queue
+	[bouyer, ticket #854]
