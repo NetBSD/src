@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_output.c,v 1.39 1998/05/11 19:57:23 thorpej Exp $	*/
+/*	$NetBSD: tcp_output.c,v 1.40 1998/07/07 00:04:59 sommerfe Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -489,7 +489,7 @@ send:
 		} else {
 			m->m_next = m_copy(so->so_snd.sb_mb, off, (int) len);
 			if (m->m_next == 0) {
-				(void) m_freem(m);
+				m_freem(m);
 				error = ENOBUFS;
 				goto out;
 			}
