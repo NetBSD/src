@@ -1,10 +1,11 @@
-#	$NetBSD: Makefile,v 1.6 1997/04/28 23:53:25 thorpej Exp $
+#	$NetBSD: Makefile,v 1.7 1997/05/07 15:59:10 mycroft Exp $
 #	@(#)Makefile	8.1 (Berkeley) 5/31/93
 
 PROG=	strfile
 MAN=	strfile.8
 
-install:
+# only needed during build
+proginstall::
 
 # Override these rules for cross-compilation
 .c.o:

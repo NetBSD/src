@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.3 1995/04/20 22:42:19 cgd Exp $
+#	$NetBSD: Makefile,v 1.4 1997/05/07 16:01:46 mycroft Exp $
 #
 # C Optimizer (-O) breaks this program - don't use !!
 CFLAGS=-g
@@ -8,13 +8,9 @@ NOMAN=	noman
 DPADD+=	${LIBARCH}
 LDADD+=	-li386
 
-install:
-
 regress:
 	-@if ./testldt; \
 	then echo PASSED; \
 	else echo FAILED; fi
 
-
 .include <bsd.prog.mk>
-
