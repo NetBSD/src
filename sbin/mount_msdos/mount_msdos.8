@@ -1,4 +1,4 @@
-.\"	$NetBSD: mount_msdos.8,v 1.8 1995/10/15 15:35:47 ws Exp $
+.\"	$NetBSD: mount_msdos.8,v 1.9 1995/11/29 15:11:37 ws Exp $
 .\"
 .\" Copyright (c) 1993,1994 Christopher G. Demetriou
 .\" All rights reserved.
@@ -99,7 +99,8 @@ Force behaviour to
 ignore and not generate Win'95 long filenames.
 .It Fl l
 Force listing and generation of
-Win'95 long filenames.
+Win'95 long filenames
+and separate creation/modification/access dates.
 .Pp
 If neither
 .Fl s
@@ -139,6 +140,9 @@ will result in empty filesystems to be populated
 with short filenames only. To generate long filenames
 on empty DOS filesystems use
 .Fl l .
+.Pp
+Note that Win'95 handles only access dates,
+but not access times.
 .Sh HISTORY
 The
 .Nm mount_msdos
