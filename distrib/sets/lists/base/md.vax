@@ -1,4 +1,4 @@
-# $NetBSD: md.vax,v 1.15 2001/12/04 00:12:46 jdolecek Exp $
+# $NetBSD: md.vax,v 1.16 2002/03/29 06:46:09 matt Exp $
 ./boot				base-sys-root
 ./pcs750.bin			base-sys-root
 ./sbin/ldconfig			base-sysutil-root
@@ -14,3 +14,4 @@
 ./usr/mdec/rdboot		base-sysutil-bin
 ./usr/mdec/sdboot		base-sysutil-bin
 ./usr/mdec/xxboot		base-sysutil-bin
+./usr/mdec/xxboot_ustarfs	base-sysutil-bin
