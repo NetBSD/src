@@ -1,4 +1,4 @@
-/* $NetBSD: osf1_misc.c,v 1.62 2000/12/01 19:20:56 jdolecek Exp $ */
+/* $NetBSD: osf1_misc.c,v 1.63 2001/04/26 03:10:47 ross Exp $ */
 
 /*
  * Copyright (c) 1999 Christopher G. Demetriou.  All rights reserved.
@@ -87,6 +87,7 @@
 #include <machine/alpha.h>
 #include <machine/cpuconf.h>
 #include <machine/rpb.h>
+#include <machine/fpu.h>
 
 #include <compat/osf1/osf1.h>
 #include <compat/osf1/osf1_syscallargs.h>
@@ -163,6 +164,7 @@ osf1_sys_getsysinfo(struct proc *p, void *v, register_t *retval)
 	int unit;
 	long percpu;
 	long proctype;
+	u_int64_t fpflags;
 	struct osf1_cpu_info cpuinfo;
 
 	error = 0;
@@ -184,14 +186,11 @@ osf1_sys_getsysinfo(struct proc *p, void *v, register_t *retval)
 		retval[0] = 1;
 		break;
 	case OSF_GET_IEEE_FP_CONTROL:
-		/*
-		 * XXX This is not correct, but we don't keep track
-		 * XXX of the fp_control.  Return the fpcr just for fun.
-		 */
-		fpusave_proc(p, 1);
-		error = copyout(&p->p_addr->u_pcb.pcb_fp.fpr_cr,
-		                SCARG(uap, buffer),
-		                sizeof(p->p_addr->u_pcb.pcb_fp.fpr_cr));
+		if (((fpflags = alpha_read_fp_c(p)) & IEEE_INHERIT) != 0) {
+			fpflags |= 1UL << 63;
+			fpflags &= ~IEEE_INHERIT;
+		}
+		error = copyout(&fpflags, SCARG(uap, buffer), sizeof fpflags);
 		retval[0] = 1;
 		break;
 	case OSF_GET_CPU_INFO:
@@ -262,30 +261,20 @@ osf1_sys_setsysinfo(p, v, retval)
 	register_t *retval;
 {
 	struct osf1_sys_setsysinfo_args *uap = v;
+	u_int64_t temp;
 	int error;
 
 	error = 0;
 
-	switch(SCARG(uap, op))
-	{
-	case OSF_SET_IEEE_FP_CONTROL: {
-		u_int64_t temp;
-		/*
-		 * XXX This is definitely not correct.  This should instead
-		 * XXX set the fp_control, but we don't keep track of it.
-		 * XXX The fp_control is then used to reload the fpcr.
-		 */
-#define FPCR_SETTABLE (FP_X_INV | FP_X_DZ | FP_X_OFL | FP_X_UFL | FP_X_IMP)
+	switch(SCARG(uap, op)) {
+	case OSF_SET_IEEE_FP_CONTROL:
+
 		if ((error = copyin(SCARG(uap, buffer), &temp, sizeof(temp))))
 			break;
-
-#if 0
-		synchronize_fpstate(p, 1);
-		p->p_addr->u_pcb.pcb_fp.fp_control = (temp & FPCR_SETTABLE);
-		/* Translate from fp_control => fpr_cr. */
-#endif
+		if (temp >> 63 != 0)
+			temp |= IEEE_INHERIT;
+		alpha_write_fp_c(p, temp);
 		break;
-	}
 	default:
 		uprintf("osf1_setsysinfo called with op=%ld\n", SCARG(uap, op));
 		//error = EINVAL;
