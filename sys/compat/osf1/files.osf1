@@ -1,4 +1,4 @@
-#	$NetBSD: files.osf1,v 1.15 1999/05/01 05:49:01 cgd Exp $
+#	$NetBSD: files.osf1,v 1.16 1999/05/04 04:59:21 cgd Exp $
 #
 # Config file description for machine-independent OSF/1 compat code.
 # Included by ports that need it.
@@ -30,4 +30,5 @@ file	compat/osf1/osf1_prot.c		compat_osf1
 file	compat/osf1/osf1_resource.c	compat_osf1
 file	compat/osf1/osf1_signal.c	compat_osf1
 file	compat/osf1/osf1_socket.c	compat_osf1
+file	compat/osf1/osf1_sysv_ipc.c	compat_osf1
 file	compat/osf1/osf1_time.c		compat_osf1
