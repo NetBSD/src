@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.68 2000/06/18 08:13:26 mrg Exp $ */
+/*	$NetBSD: machdep.c,v 1.68.2.1 2000/06/30 16:27:42 simonb Exp $ */
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -1398,11 +1398,13 @@ _bus_dmamem_unmap(t, kva, size)
  * Common functin for mmap(2)'ing DMA-safe memory.  May be called by
  * bus-specific DMA mmap(2)'ing functions.
  */
-int
+paddr_t
 _bus_dmamem_mmap(t, segs, nsegs, off, prot, flags)
 	bus_dma_tag_t t;
 	bus_dma_segment_t *segs;
-	int nsegs, off, prot, flags;
+	int nsegs;
+	off_t off;
+	int prot, flags;
 {
 
 	panic("_bus_dmamem_mmap: not implemented");

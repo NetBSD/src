@@ -1,4 +1,4 @@
-/*	$NetBSD: grf.c,v 1.16 1999/06/27 14:13:14 minoura Exp $	*/
+/*	$NetBSD: grf.c,v 1.16.12.1 2000/06/30 16:27:44 simonb Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -103,7 +103,7 @@ int grfdebug = 0;
 cdev_decl(grf);
 int grfon __P((dev_t));
 int grfoff __P((dev_t));
-int grfaddr __P((struct grf_softc *, int));
+off_t grfaddr __P((struct grf_softc *, off_t));
 int grfmap __P((dev_t, caddr_t *, struct proc *));
 int grfunmap __P((dev_t, caddr_t, struct proc *));
 
@@ -243,10 +243,11 @@ grfpoll(dev, events, p)
 }
 
 /*ARGSUSED*/
-int
+paddr_t
 grfmmap(dev, off, prot)
 	dev_t dev;
-	int off, prot;
+	off_t off;
+	int prot;
 {
 
 	return (grfaddr(grf_cd.cd_devs[GRFUNIT(dev)], off));
@@ -287,10 +288,10 @@ grfoff(dev)
 	return(error);
 }
 
-int
+off_t
 grfaddr(gp, off)
 	struct grf_softc *gp;
-	register int off;
+	off_t off;
 {
 	register struct grfinfo *gi = &gp->g_display;
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: cgfourteen.c,v 1.4 1999/05/23 02:45:19 eeh Exp $ */
+/*	$NetBSD: cgfourteen.c,v 1.4.12.1 2000/06/30 16:27:40 simonb Exp $ */
 
 /*
  * Copyright (c) 1996 
@@ -569,10 +569,11 @@ cgfourteenunblank(dev)
  * tell the chip to ignore the X channel. XXX where does it get the X value
  * to use?
  */
-int
+paddr_t
 cgfourteenmmap(dev, off, prot)
 	dev_t dev;
-	int off, prot;
+	off_t off;
+	int prot;
 {
 	register struct cgfourteen_softc *sc = cgfourteen_cd.cd_devs[minor(dev)];
 	
@@ -610,7 +611,7 @@ cgfourteenmmap(dev, off, prot)
 	else
 		off = 0;
 
-	if ((unsigned)off >= sc->sc_fb.fb_type.fb_size *
+	if (off >= sc->sc_fb.fb_type.fb_size *
 		sc->sc_fb.fb_type.fb_depth/8) {
 #ifdef DEBUG
 		printf("\nmmap request out of bounds: request 0x%x, "

@@ -1,4 +1,4 @@
-/* $NetBSD: ega.c,v 1.4 2000/03/23 07:01:34 thorpej Exp $ */
+/* $NetBSD: ega.c,v 1.4.4.1 2000/06/30 16:27:47 simonb Exp $ */
 
 /*
  * Copyright (c) 1999
@@ -217,7 +217,7 @@ const struct wsscreen_list ega_screenlist = {
 };
 
 static int ega_ioctl __P((void *, u_long, caddr_t, int, struct proc *));
-static int ega_mmap __P((void *, off_t, int));
+static paddr_t ega_mmap __P((void *, off_t, int));
 static int ega_alloc_screen __P((void *, const struct wsscreen_descr *,
 				       void **, int *, int *, long *));
 static void ega_free_screen __P((void *, void *));
@@ -583,7 +583,7 @@ ega_ioctl(v, cmd, data, flag, p)
 	return (-1);
 }
 
-static int
+static paddr_t
 ega_mmap(v, offset, prot)
 	void *v;
 	off_t offset;

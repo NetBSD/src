@@ -1,4 +1,4 @@
-/*	$NetBSD: fb.c,v 1.45 2000/04/17 20:37:28 pk Exp $ */
+/*	$NetBSD: fb.c,v 1.45.4.1 2000/06/30 16:27:38 simonb Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -225,12 +225,13 @@ fbpoll(dev, events, p)
 	return (devfb->fb_driver->fbd_poll)(dev, events, p);
 }
 
-int
+paddr_t
 fbmmap(dev, off, prot)
 	dev_t dev;
-	int off, prot;
+	off_t off;
+	int prot;
 {
-	int (*map)__P((dev_t, int, int)) = devfb->fb_driver->fbd_mmap;
+	paddr_t (*map)__P((dev_t, off_t, int)) = devfb->fb_driver->fbd_mmap;
 
 	if (map == NULL)
 		return (-1);

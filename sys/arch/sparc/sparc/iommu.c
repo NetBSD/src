@@ -1,4 +1,4 @@
-/*	$NetBSD: iommu.c,v 1.44 2000/05/30 03:26:34 cjs Exp $ */
+/*	$NetBSD: iommu.c,v 1.44.2.1 2000/06/30 16:27:39 simonb Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -105,8 +105,8 @@ void	iommu_dmamap_sync __P((bus_dma_tag_t, bus_dmamap_t, bus_addr_t,
 
 int	iommu_dmamem_map __P((bus_dma_tag_t tag, bus_dma_segment_t *segs,
 			int nsegs, size_t size, caddr_t *kvap, int flags));
-int	iommu_dmamem_mmap __P((bus_dma_tag_t tag, bus_dma_segment_t *segs,
-			int nsegs, int off, int prot, int flags));
+paddr_t	iommu_dmamem_mmap __P((bus_dma_tag_t tag, bus_dma_segment_t *segs,
+			int nsegs, off_t off, int prot, int flags));
 int	iommu_dvma_alloc(bus_dmamap_t, vaddr_t, bus_size_t, int,
 			bus_addr_t *, bus_size_t *);
 
@@ -793,11 +793,13 @@ iommu_dmamem_map(t, segs, nsegs, size, kvap, flags)
 /*
  * mmap(2)'ing DMA-safe memory.
  */
-int
+paddr_t
 iommu_dmamem_mmap(t, segs, nsegs, off, prot, flags)
 	bus_dma_tag_t t;
 	bus_dma_segment_t *segs;
-	int nsegs, off, prot, flags;
+	int nsegs;
+	off_t off;
+	int prot, flags;
 {
 
 	panic("_bus_dmamem_mmap: not implemented");

@@ -1,4 +1,4 @@
-/*	$NetBSD: cgthree.c,v 1.45 2000/04/16 21:01:43 pk Exp $ */
+/*	$NetBSD: cgthree.c,v 1.45.4.1 2000/06/30 16:27:38 simonb Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -551,10 +551,11 @@ cgthreeloadcmap(sc, start, ncolors)
  * As well, mapping at an offset of 0x04000000 causes the cg3 to be
  * mapped in flat mode without the cg4 emulation.
  */
-int
+paddr_t
 cgthreemmap(dev, off, prot)
 	dev_t dev;
-	int off, prot;
+	off_t off;
+	int prot;
 {
 	struct cgthree_softc *sc = cgthree_cd.cd_devs[minor(dev)];
 	bus_space_handle_t bh;
@@ -573,7 +574,7 @@ cgthreemmap(dev, off, prot)
 	else
 		off = 0;
 
-	if ((unsigned)off >= sc->sc_fb.fb_type.fb_size)
+	if (off >= sc->sc_fb.fb_type.fb_size)
 		return (-1);
 
 	if (bus_space_mmap(sc->sc_bustag,
@@ -582,5 +583,5 @@ cgthreemmap(dev, off, prot)
 			   BUS_SPACE_MAP_LINEAR, &bh))
 		return (-1);
 
-	return ((int)bh);
+	return ((paddr_t)bh);
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: audio_if.h,v 1.34 1999/09/09 10:24:45 augustss Exp $	*/
+/*	$NetBSD: audio_if.h,v 1.34.12.1 2000/06/30 16:27:46 simonb Exp $	*/
 
 /*
  * Copyright (c) 1994 Havard Eidnes.
@@ -114,7 +114,7 @@ struct audio_hw_if {
 	void	*(*allocm)__P((void *, int, size_t, int, int));
 	void	(*freem)__P((void *, void *, int));
 	size_t	(*round_buffersize)__P((void *, int, size_t));
-	int	(*mappage)__P((void *, void *, int, int));
+	paddr_t	(*mappage)__P((void *, void *, off_t, int));
 
 	int 	(*get_props)__P((void *)); /* device properties */
 

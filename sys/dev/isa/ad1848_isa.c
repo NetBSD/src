@@ -1,4 +1,4 @@
-/*	$NetBSD: ad1848_isa.c,v 1.14 2000/02/07 22:07:30 thorpej Exp $	*/
+/*	$NetBSD: ad1848_isa.c,v 1.14.4.1 2000/06/30 16:27:47 simonb Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -724,11 +724,11 @@ ad1848_isa_round_buffersize(addr, direction, size)
 	return (size);
 }
 
-int
+paddr_t
 ad1848_isa_mappage(addr, mem, off, prot)
 	void *addr;
         void *mem;
-        int off;
+        off_t off;
 	int prot;
 {
 	return isa_mappage(mem, off, prot);

@@ -1,4 +1,4 @@
-/*	$NetBSD: mem.c,v 1.17 2000/03/04 07:27:50 matt Exp $	*/
+/*	$NetBSD: mem.c,v 1.17.4.1 2000/06/30 16:27:44 simonb Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -52,25 +52,18 @@
 #include <sys/malloc.h>
 #include <sys/proc.h>
 
-#include <machine/pte.h>
-#include <machine/mtpr.h>
-
 #include <vm/vm.h>
 
-extern unsigned int avail_end;
-caddr_t zeropage;
+#define mmread  mmrw
+#define mmwrite mmrw
+cdev_decl(mm);
 
-int	mmopen __P((dev_t, int, int));
-int	mmclose __P((dev_t, int, int));
-int	mmrw __P((dev_t, struct uio *, int));
-int	mmmmap __P((dev_t, int, int));
-
+extern	unsigned int avail_end;
+static	caddr_t zeropage;
 
 /*ARGSUSED*/
 int
-mmopen(dev, flag, mode)
-	dev_t dev;
-	int flag, mode;
+mmopen(dev_t dev, int flag, int mode, struct proc *p)
 {
 
 	return (0);
@@ -78,9 +71,7 @@ mmopen(dev, flag, mode)
 
 /*ARGSUSED*/
 int
-mmclose(dev, flag, mode)
-	dev_t dev;
-	int flag, mode;
+mmclose(dev_t dev, int flag, int mode, struct proc *p)
 {
 
 	return (0);
@@ -88,10 +79,7 @@ mmclose(dev, flag, mode)
 
 /*ARGSUSED*/
 int
-mmrw(dev, uio, flags)
-	dev_t dev;
-	struct uio *uio;
-	int flags;
+mmrw(dev_t dev, struct uio *uio, int flags)
 {
 	register vaddr_t v;
 	register int c;
@@ -163,10 +151,8 @@ mmrw(dev, uio, flags)
 	return (error);
 }
 
-int
-mmmmap(dev, off, prot)
-	dev_t dev;
-	int off, prot;
+paddr_t
+mmmmap(dev_t dev, off_t off, int prot)
 {
 
 	return (-1);

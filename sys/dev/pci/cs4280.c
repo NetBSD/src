@@ -1,4 +1,4 @@
-/*	$NetBSD: cs4280.c,v 1.4 2000/05/15 01:35:29 thorpej Exp $	*/
+/*	$NetBSD: cs4280.c,v 1.4.4.1 2000/06/30 16:27:49 simonb Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000 Tatoku Ogaito.  All rights reserved.
@@ -211,7 +211,7 @@ int	cs4280_query_devinfo __P((void *addr, mixer_devinfo_t *dip));
 void   *cs4280_malloc __P((void *, int, size_t, int, int));
 void	cs4280_free __P((void *, void *, int));
 size_t	cs4280_round_buffersize __P((void *, int, size_t));
-int	cs4280_mappage __P((void *, void *, int, int));
+paddr_t	cs4280_mappage __P((void *, void *, off_t, int));
 int	cs4280_get_props __P((void *));
 int	cs4280_trigger_output __P((void *, void *, void *, int, void (*)(void *),
 	    void *, struct audio_params *));
@@ -1231,11 +1231,11 @@ cs4280_mixer_get_port(addr, cp)
 	return (sc->codec_if->vtbl->mixer_get_port(sc->codec_if, cp));
 }
 
-int
+paddr_t
 cs4280_mappage(addr, mem, off, prot)
 	void *addr;
 	void *mem;
-	int off;
+	off_t off;
 	int prot;
 {
 	struct cs4280_softc *sc = addr;

@@ -1,4 +1,4 @@
-/*	$NetBSD: eso.c,v 1.18 2000/03/22 14:37:43 kleink Exp $	*/
+/*	$NetBSD: eso.c,v 1.18.4.1 2000/06/30 16:27:50 simonb Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000 Klaus J. Klein
@@ -106,7 +106,7 @@ static int	eso_query_devinfo __P((void *, mixer_devinfo_t *));
 static void *	eso_allocm __P((void *, int, size_t, int, int));
 static void	eso_freem __P((void *, void *, int));
 static size_t	eso_round_buffersize __P((void *, int, size_t));
-static int	eso_mappage __P((void *, void *, int, int));
+static paddr_t	eso_mappage __P((void *, void *, off_t, int));
 static int	eso_get_props __P((void *));
 static int	eso_trigger_output __P((void *, void *, void *, int,
 		    void (*)(void *), void *, struct audio_params *));
@@ -1597,11 +1597,11 @@ eso_round_buffersize(hdl, direction, bufsize)
 	return (bufsize);
 }
 
-static int
+static paddr_t
 eso_mappage(hdl, addr, offs, prot)
 	void *hdl;
 	void *addr;
-	int offs;
+	off_t offs;
 	int prot;
 {
 	struct eso_softc *sc = hdl;

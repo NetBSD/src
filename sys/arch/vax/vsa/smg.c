@@ -1,4 +1,4 @@
-/*	$NetBSD: smg.c,v 1.22 2000/03/31 18:40:58 ragge Exp $ */
+/*	$NetBSD: smg.c,v 1.22.4.1 2000/06/30 16:27:44 simonb Exp $ */
 /*
  * Copyright (c) 1998 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -114,7 +114,7 @@ extern char q_font[];
 
 
 static int	smg_ioctl __P((void *, u_long, caddr_t, int, struct proc *));
-static int	smg_mmap __P((void *, off_t, int));
+static paddr_t	smg_mmap __P((void *, off_t, int));
 static int	smg_alloc_screen __P((void *, const struct wsscreen_descr *,
 				      void **, int *, int *, long *));
 static void	smg_free_screen __P((void *, void *));
@@ -404,7 +404,7 @@ smg_ioctl(v, cmd, data, flag, p)
 	return 0;
 }
 
-static int
+static paddr_t
 smg_mmap(v, offset, prot)
 	void *v;
 	off_t offset;

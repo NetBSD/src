@@ -1,4 +1,4 @@
-/*	$NetBSD: cmpci.c,v 1.3 2000/06/08 22:15:52 gmcgarry Exp $	*/
+/*	$NetBSD: cmpci.c,v 1.3.2.1 2000/06/30 16:27:49 simonb Exp $	*/
 
 /*
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -139,7 +139,7 @@ static int cmpci_query_devinfo __P((void *, mixer_devinfo_t *));
 static void *cmpci_allocm __P((void *, int, size_t, int, int));
 static void cmpci_freem __P((void *, void *, int));
 static size_t cmpci_round_buffersize __P((void *, int, size_t));
-static int cmpci_mappage __P((void *, void *, int, int));
+static paddr_t cmpci_mappage __P((void *, void *, off_t, int));
 static int cmpci_get_props __P((void *));
 static int cmpci_trigger_output __P((void *, void *, void *, int,
                                      void (*)(void *), void *,
@@ -1498,12 +1498,12 @@ cmpci_round_buffersize(handle, direction, bufsize)
 }
 
 
-static int
+static paddr_t
 cmpci_mappage(handle, addr, offset, prot)
 	void *handle;
 	void *addr;
-	int   offset;
-	int   prot;
+	off_t offset;
+	int prot;
 {
 	struct cmpci_softc *sc = handle;
 	struct cmpci_dmanode *p;

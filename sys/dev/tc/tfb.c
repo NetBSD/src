@@ -1,4 +1,4 @@
-/* $NetBSD: tfb.c,v 1.24 2000/03/16 05:50:57 nisimura Exp $ */
+/* $NetBSD: tfb.c,v 1.24.4.1 2000/06/30 16:27:52 simonb Exp $ */
 
 /*
  * Copyright (c) 1998, 1999 Tohru Nishimura.  All rights reserved.
@@ -32,7 +32,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: tfb.c,v 1.24 2000/03/16 05:50:57 nisimura Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tfb.c,v 1.24.4.1 2000/06/30 16:27:52 simonb Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -242,14 +242,14 @@ static const struct wsscreen_list tfb_screenlist = {
 	sizeof(_tfb_scrlist) / sizeof(struct wsscreen_descr *), _tfb_scrlist
 };
 
-static int  tfbioctl __P((void *, u_long, caddr_t, int, struct proc *));
-static int  tfbmmap __P((void *, off_t, int));
+static int	tfbioctl __P((void *, u_long, caddr_t, int, struct proc *));
+static paddr_t	tfbmmap __P((void *, off_t, int));
 
-static int  tfb_alloc_screen __P((void *, const struct wsscreen_descr *,
+static int	tfb_alloc_screen __P((void *, const struct wsscreen_descr *,
 				      void **, int *, int *, long *));
-static void tfb_free_screen __P((void *, void *));
-static int tfb_show_screen __P((void *, void *, int,
-				void (*) (void *, int, int), void *));
+static void	tfb_free_screen __P((void *, void *));
+static int	tfb_show_screen __P((void *, void *, int,
+				     void (*) (void *, int, int), void *));
 
 static const struct wsdisplay_accessops tfb_accessops = {
 	tfbioctl,
@@ -490,7 +490,7 @@ tfbioctl(v, cmd, data, flag, p)
 	return (ENOTTY);
 }
 
-static int
+static paddr_t
 tfbmmap(v, offset, prot)
 	void *v;
 	off_t offset;

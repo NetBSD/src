@@ -1,4 +1,4 @@
-/*	$NetBSD: bwtwo.c,v 1.43 2000/03/19 15:38:45 pk Exp $ */
+/*	$NetBSD: bwtwo.c,v 1.43.4.1 2000/06/30 16:27:37 simonb Exp $ */
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -291,10 +291,11 @@ bwtwopoll(dev, events, p)
  * Return the address that would map the given device at the given
  * offset, allowing for the given protection, or return -1 for error.
  */
-int
+paddr_t
 bwtwommap(dev, off, prot)
 	dev_t dev;
-	int off, prot;
+	off_t off;
+	int prot;
 {
 	struct bwtwo_softc *sc = bwtwo_cd.cd_devs[minor(dev)];
 	bus_space_handle_t bh;
@@ -302,7 +303,7 @@ bwtwommap(dev, off, prot)
 	if (off & PGOFSET)
 		panic("bwtwommap");
 
-	if ((unsigned)off >= sc->sc_fb.fb_type.fb_size)
+	if (off >= sc->sc_fb.fb_type.fb_size)
 		return (-1);
 
 	if (bus_space_mmap(sc->sc_bustag,
@@ -311,5 +312,5 @@ bwtwommap(dev, off, prot)
 			   BUS_SPACE_MAP_LINEAR, &bh))
 		return (-1);
 
-	return ((int)bh);
+	return ((paddr_t)bh);
 }

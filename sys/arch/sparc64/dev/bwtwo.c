@@ -1,4 +1,4 @@
-/*	$NetBSD: bwtwo.c,v 1.8 1999/06/07 05:28:03 eeh Exp $ */
+/*	$NetBSD: bwtwo.c,v 1.8.12.1 2000/06/30 16:27:40 simonb Exp $ */
 
 /*
  * Copyright (c) 1996 Jason R. Thorpe.  All rights reserved.
@@ -455,16 +455,17 @@ bwtwopoll(dev, events, p)
  * Return the address that would map the given device at the given
  * offset, allowing for the given protection, or return -1 for error.
  */
-int
+paddr_t
 bwtwommap(dev, off, prot)
 	dev_t dev;
-	int off, prot;
+	off_t off;
+	int prot;
 {
 	register struct bwtwo_softc *sc = bwtwo_cd.cd_devs[minor(dev)];
 
 	if (off & PGOFSET)
 		panic("bwtwommap");
-	if ((unsigned)off >= sc->sc_fb.fb_type.fb_size)
+	if (off >= sc->sc_fb.fb_type.fb_size)
 		return (-1);
 	/*
 	 * I turned on PMAP_NC here to disable the cache as I was
