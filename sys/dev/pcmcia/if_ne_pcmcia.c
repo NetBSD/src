@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ne_pcmcia.c,v 1.84 2001/12/15 13:23:22 soren Exp $	*/
+/*	$NetBSD: if_ne_pcmcia.c,v 1.85 2002/01/13 10:41:11 aymeric Exp $	*/
 
 /*
  * Copyright (c) 1997 Marc Horowitz.  All rights reserved.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ne_pcmcia.c,v 1.84 2001/12/15 13:23:22 soren Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ne_pcmcia.c,v 1.85 2002/01/13 10:41:11 aymeric Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -107,6 +107,11 @@ static const struct ne2000dev {
 #define	NE2000DVF_DL10019	0x0001		/* chip is D-Link DL10019 */
 #define	NE2000DVF_AX88190	0x0002		/* chip is ASIX AX88190 */
 } ne2000devs[] = {
+    { PCMCIA_STR_EDIMAX_EP4000A,
+      PCMCIA_VENDOR_EDIMAX, PCMCIA_PRODUCT_EDIMAX_EP4000A,
+      PCMCIA_CIS_EDIMAX_EP4000A,
+      0, -1, { 0x00, 0xa0, 0x0c } },
+
     { PCMCIA_STR_SYNERGY21_S21810,
       PCMCIA_VENDOR_INVALID, PCMCIA_PRODUCT_INVALID,
       PCMCIA_CIS_SYNERGY21_S21810,
@@ -237,6 +242,11 @@ static const struct ne2000dev {
       PCMCIA_VENDOR_LINKSYS, PCMCIA_PRODUCT_LINKSYS_ETHERFAST,
       PCMCIA_CIS_LINKSYS_ETHERFAST,
       0, -1, { 0x00, 0x80, 0xc8 }, NE2000DVF_DL10019 },
+
+    { PCMCIA_STR_LINKSYS_ETHERFAST,
+      PCMCIA_VENDOR_LINKSYS, PCMCIA_PRODUCT_LINKSYS_ETHERFAST,
+      PCMCIA_CIS_LINKSYS_ETHERFAST,
+      0, -1, { 0x00, 0x40, 0x05 }, NE2000DVF_DL10019 },
 
     { PCMCIA_STR_LINKSYS_ETHERFAST,
       PCMCIA_VENDOR_LINKSYS, PCMCIA_PRODUCT_LINKSYS_ETHERFAST,
