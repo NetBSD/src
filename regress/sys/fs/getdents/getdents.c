@@ -1,4 +1,4 @@
-/*	$Id: getdents.c,v 1.4 2004/10/25 20:34:50 yamt Exp $	*/
+/*	$Id: getdents.c,v 1.5 2004/10/25 20:35:40 yamt Exp $	*/
 
 /*-
  * Copyright (c)2004 YAMAMOTO Takashi,
@@ -152,11 +152,13 @@ main(int argc, char *argv[])
 		if (ret == -1)
 			err(EXIT_FAILURE, "getdents");
 		if (p->sz != ret) {
+			fflush(NULL);
 			fprintf(stderr, "off=%" PRIx64
 			    ": different sz %d != %d\n",
 			    (uint64_t)off, p->sz, ret);
 			differ = 1;
 		} else if (memcmp(p->buf, buf, (size_t)ret)) {
+			fflush(NULL);
 			fprintf(stderr, "off=%" PRIx64 ": different data\n",
 			    (uint64_t)off);
 			fprintf(stderr, "previous:\n");
