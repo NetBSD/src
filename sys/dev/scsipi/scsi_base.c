@@ -1,4 +1,4 @@
-/*	$NetBSD: scsi_base.c,v 1.51 1997/10/01 18:47:01 mjacob Exp $	*/
+/*	$NetBSD: scsi_base.c,v 1.52 1997/10/02 16:03:42 mjacob Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995, 1997 Charles M. Hannum.  All rights reserved.
@@ -168,8 +168,8 @@ scsi_interpret_sense(xs)
 			sense->info[3],
 			sense->extra_len);
 		printf("extra: ");
-		for (count = 0; count < sense->extra_len; count++)
-			printf("0x%x ", sense->extra_bytes[count]);
+		for (count = 0; count < ADD_BYTES_LIM(sense); count++)
+			printf("0x%x ", sense->cmd_spec_info[count]);
 		printf("\n");
 	}
 #endif	/* SCSIDEBUG */
