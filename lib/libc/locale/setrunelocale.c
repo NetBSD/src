@@ -1,4 +1,4 @@
-/*	$NetBSD: setrunelocale.c,v 1.12 2002/04/17 13:40:35 kleink Exp $	*/
+/*	$NetBSD: setrunelocale.c,v 1.13 2002/08/03 11:10:51 yamt Exp $	*/
 
 /*-
  * Copyright (c)1999 Citrus Project,
@@ -100,7 +100,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: setrunelocale.c,v 1.12 2002/04/17 13:40:35 kleink Exp $");
+__RCSID("$NetBSD: setrunelocale.c,v 1.13 2002/08/03 11:10:51 yamt Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include "namespace.h"
@@ -175,10 +175,6 @@ _newrunelocale(path)
 
 found:
 	fclose(fp);
-	if (_StreamStateTable) {
-		free(_StreamStateTable);
-		_StreamStateTable = NULL;
-	}
 
 	rl->rl_citrus_ctype = NULL;
 	ret = _citrus_ctype_open(&rl->rl_citrus_ctype, rl->rl_encoding,

@@ -1,4 +1,4 @@
-/*	$NetBSD: runetype.h,v 1.9 2002/03/18 22:58:44 tshiozak Exp $	*/
+/*	$NetBSD: runetype.h,v 1.10 2002/08/03 11:10:51 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -190,7 +190,6 @@ typedef struct _RuneLocale {
 
 extern _RuneLocale _DefaultRuneLocale;
 extern _RuneLocale *_CurrentRuneLocale;
-extern void **_StreamStateTable;
 extern char *_PathLocale;
 
 #endif	/* !_RUNETYPE_H_ */
