@@ -1,4 +1,4 @@
-/*	$NetBSD: radix.h,v 1.10 2000/11/06 11:07:37 itojun Exp $	*/
+/*	$NetBSD: radix.h,v 1.11 2000/12/17 10:23:20 itojun Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1993
@@ -142,6 +142,7 @@ struct radix_node_head {
 
 void	 rn_init __P((void));
 int	 rn_inithead __P((void **, int));
+int	 rn_inithead0 __P((struct radix_node_head *, int));
 int	 rn_refines __P((void *, void *));
 int	 rn_walktree __P((struct radix_node_head *,
 			  int (*)(struct radix_node *, void *), void *));
