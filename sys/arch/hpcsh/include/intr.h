@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.h,v 1.5 2002/03/24 18:21:14 uch Exp $	*/
+/*	$NetBSD: intr.h,v 1.6 2002/03/28 15:27:05 uch Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -41,29 +41,31 @@
 #define _INTR_N		8	/* TMU0, TMU1, TMU2, SCIF * 4, HD6446x */
 
 #define	IPL_BIO		9	/* block I/O */
-#define	IPL_NET		11	/* network */
-#define	IPL_TTY		12	/* terminal */
-#define	IPL_SERIAL	12	/* serial */
+#define	IPL_NET		10	/* network */
+#define	IPL_TTY		11	/* terminal */
+#define	IPL_SERIAL	11	/* serial */
 #define	IPL_CLOCK	14	/* clock */
 #define	IPL_HIGH	15	/* everything */
 
-#define	splsoftclock()		_cpu_intr_raise(IPL_SOFTCLOCK << 4)
-#define	splsoftnet()		_cpu_intr_raise(IPL_SOFTNET << 4)
-#define	splsoftserial()		_cpu_intr_raise(IPL_SOFTSERIAL << 4)
-#define	splbio()		_cpu_intr_raise(IPL_BIO << 4)
-#define	splnet()		_cpu_intr_raise(IPL_NET << 4)
-#define	spltty()		_cpu_intr_raise(IPL_TTY << 4)
+#include <hpcsh/dev/hd6446x/hd6446xintcvar.h>
+
+#define	splsoftclock()		hd6446x_intr_raise(IPL_SOFTCLOCK << 4)
+#define	splsoftnet()		hd6446x_intr_raise(IPL_SOFTNET << 4)
+#define	splsoftserial()		hd6446x_intr_raise(IPL_SOFTSERIAL << 4)
+#define	splbio()		hd6446x_intr_raise(IPL_BIO << 4)
+#define	splnet()		hd6446x_intr_raise(IPL_NET << 4)
+#define	spltty()		hd6446x_intr_raise(IPL_TTY << 4)
 #define	splvm()			spltty()
-#define	splserial()		_cpu_intr_raise(IPL_SERIAL << 4)
-#define	splclock()		_cpu_intr_raise(IPL_CLOCK << 4)
+#define	splserial()		hd6446x_intr_raise(IPL_SERIAL << 4)
+#define	splclock()		hd6446x_intr_raise(IPL_CLOCK << 4)
 #define	splstatclock()		splclock()
 #define	splsched()		splclock()
-#define	splhigh()		_cpu_intr_raise(IPL_HIGH << 4)
+#define	splhigh()		hd6446x_intr_raise(IPL_HIGH << 4)
 #define	spllock()		splhigh()
 
-#define	spl0()			_cpu_intr_resume(0)
-#define	splx(x)			_cpu_intr_resume(x)
+#define	spl0()			hd6446x_intr_resume(0)
+#define	splx(x)			hd6446x_intr_resume(x)
 
-#define	spllowersoftclock()	_cpu_intr_resume(IPL_SOFTCLOCK << 4)
+#define	spllowersoftclock()	hd6446x_intr_resume(IPL_SOFTCLOCK << 4)
 
 #endif /* !_HPCSH_INTR_H_ */
