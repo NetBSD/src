@@ -1,4 +1,4 @@
-/* $NetBSD: darwin_sysent.c,v 1.10 2002/11/25 22:26:21 manu Exp $ */
+/* $NetBSD: darwin_sysent.c,v 1.11 2002/12/08 00:50:27 manu Exp $ */
 
 /*
  * System call switch table.
@@ -8,7 +8,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: darwin_sysent.c,v 1.10 2002/11/25 22:26:21 manu Exp $");
+__KERNEL_RCSID(0, "$NetBSD: darwin_sysent.c,v 1.11 2002/12/08 00:50:27 manu Exp $");
 
 #include "opt_ktrace.h"
 #include "opt_nfsserver.h"
@@ -23,9 +23,9 @@ __KERNEL_RCSID(0, "$NetBSD: darwin_sysent.c,v 1.10 2002/11/25 22:26:21 manu Exp 
 #include <sys/signal.h>
 #include <sys/mount.h>
 #include <sys/syscallargs.h>
+#include <compat/common/compat_file.h>
 #include <compat/mach/mach_types.h>
 #include <compat/mach/mach_vm.h>
-#include <compat/freebsd/freebsd_syscallargs.h>
 #include <compat/darwin/darwin_signal.h>
 #include <compat/darwin/darwin_syscallargs.h>
 
@@ -42,30 +42,30 @@ struct sysent darwin_sysent[] = {
 	    sys_read },				/* 3 = read */
 	{ 3, s(struct sys_write_args), 0,
 	    sys_write },			/* 4 = write */
-	{ 3, s(struct freebsd_sys_open_args), 0,
-	    freebsd_sys_open },			/* 5 = open */
+	{ 3, s(struct bsd_sys_open_args), 0,
+	    bsd_sys_open },			/* 5 = open */
 	{ 1, s(struct sys_close_args), 0,
 	    sys_close },			/* 6 = close */
 	{ 4, s(struct sys_wait4_args), 0,
 	    sys_wait4 },			/* 7 = wait4 */
-	{ 2, s(struct compat_43_freebsd_sys_creat_args), 0,
-	    compat_43_freebsd_sys_creat },	/* 8 = ocreat */
-	{ 2, s(struct freebsd_sys_link_args), 0,
-	    freebsd_sys_link },			/* 9 = link */
-	{ 1, s(struct freebsd_sys_unlink_args), 0,
-	    freebsd_sys_unlink },		/* 10 = unlink */
+	{ 2, s(struct bsd_compat_43_sys_creat_args), 0,
+	    bsd_compat_43_sys_creat },		/* 8 = ocreat */
+	{ 2, s(struct bsd_sys_link_args), 0,
+	    bsd_sys_link },			/* 9 = link */
+	{ 1, s(struct bsd_sys_unlink_args), 0,
+	    bsd_sys_unlink },			/* 10 = unlink */
 	{ 0, 0, 0,
 	    sys_nosys },			/* 11 = unimplemented execv */
-	{ 1, s(struct freebsd_sys_chdir_args), 0,
-	    freebsd_sys_chdir },		/* 12 = chdir */
+	{ 1, s(struct bsd_sys_chdir_args), 0,
+	    bsd_sys_chdir },			/* 12 = chdir */
 	{ 1, s(struct sys_fchdir_args), 0,
 	    sys_fchdir },			/* 13 = fchdir */
-	{ 3, s(struct freebsd_sys_mknod_args), 0,
-	    freebsd_sys_mknod },		/* 14 = mknod */
-	{ 2, s(struct freebsd_sys_chmod_args), 0,
-	    freebsd_sys_chmod },		/* 15 = chmod */
-	{ 3, s(struct freebsd_sys_chown_args), 0,
-	    freebsd_sys_chown },		/* 16 = chown */
+	{ 3, s(struct bsd_sys_mknod_args), 0,
+	    bsd_sys_mknod },			/* 14 = mknod */
+	{ 2, s(struct bsd_sys_chmod_args), 0,
+	    bsd_sys_chmod },			/* 15 = chmod */
+	{ 3, s(struct bsd_sys_chown_args), 0,
+	    bsd_sys_chown },			/* 16 = chown */
 	{ 1, s(struct sys_obreak_args), 0,
 	    sys_obreak },			/* 17 = break */
 	{ 3, s(struct sys_getfsstat_args), 0,
@@ -79,10 +79,10 @@ struct sysent darwin_sysent[] = {
 	{ 0, 0, SYCALL_MPSAFE | 0,
 	    sys_getpid },			/* 20 = getpid */
 #endif
-	{ 4, s(struct sys_mount_args), 0,
-	    sys_mount },			/* 21 = mount */
-	{ 2, s(struct sys_unmount_args), 0,
-	    sys_unmount },			/* 22 = unmount */
+	{ 4, s(struct bsd_sys_mount_args), 0,
+	    bsd_sys_mount },			/* 21 = mount */
+	{ 2, s(struct bsd_sys_unmount_args), 0,
+	    bsd_sys_unmount },			/* 22 = unmount */
 	{ 1, s(struct sys_setuid_args), 0,
 	    sys_setuid },			/* 23 = setuid */
 #ifdef COMPAT_43
@@ -108,22 +108,22 @@ struct sysent darwin_sysent[] = {
 	    sys_getpeername },			/* 31 = getpeername */
 	{ 3, s(struct sys_getsockname_args), 0,
 	    sys_getsockname },			/* 32 = getsockname */
-	{ 2, s(struct freebsd_sys_access_args), 0,
-	    freebsd_sys_access },		/* 33 = access */
-	{ 2, s(struct freebsd_sys_chflags_args), 0,
-	    freebsd_sys_chflags },		/* 34 = chflags */
+	{ 2, s(struct bsd_sys_access_args), 0,
+	    bsd_sys_access },			/* 33 = access */
+	{ 2, s(struct bsd_sys_chflags_args), 0,
+	    bsd_sys_chflags },			/* 34 = chflags */
 	{ 2, s(struct sys_fchflags_args), 0,
 	    sys_fchflags },			/* 35 = fchflags */
 	{ 0, 0, 0,
 	    sys_sync },				/* 36 = sync */
 	{ 2, s(struct sys_kill_args), 0,
 	    sys_kill },				/* 37 = kill */
-	{ 2, s(struct compat_43_freebsd_sys_stat_args), 0,
-	    compat_43_freebsd_sys_stat },	/* 38 = stat43 */
+	{ 2, s(struct bsd_compat_43_sys_stat_args), 0,
+	    bsd_compat_43_sys_stat },		/* 38 = stat43 */
 	{ 0, 0, 0,
 	    sys_getppid },			/* 39 = getppid */
-	{ 2, s(struct compat_43_freebsd_sys_lstat_args), 0,
-	    compat_43_freebsd_sys_lstat },	/* 40 = lstat43 */
+	{ 2, s(struct bsd_compat_43_sys_lstat_args), 0,
+	    bsd_compat_43_sys_lstat },		/* 40 = lstat43 */
 	{ 1, s(struct sys_dup_args), 0,
 	    sys_dup },				/* 41 = dup */
 	{ 0, 0, 0,
@@ -154,8 +154,8 @@ struct sysent darwin_sysent[] = {
 	    sys___getlogin },			/* 49 = __getlogin */
 	{ 1, s(struct sys_setlogin_args), 0,
 	    sys_setlogin },			/* 50 = setlogin */
-	{ 1, s(struct sys_acct_args), 0,
-	    sys_acct },				/* 51 = acct */
+	{ 1, s(struct bsd_sys_acct_args), 0,
+	    bsd_sys_acct },			/* 51 = acct */
 	{ 0, 0, 0,
 	    compat_13_sys_sigpending },		/* 52 = sigpending13 */
 	{ 2, s(struct compat_13_sys_sigaltstack_args), 0,
@@ -164,18 +164,18 @@ struct sysent darwin_sysent[] = {
 	    sys_ioctl },			/* 54 = ioctl */
 	{ 1, s(struct sys_reboot_args), 0,
 	    sys_reboot },			/* 55 = oreboot */
-	{ 1, s(struct freebsd_sys_revoke_args), 0,
-	    freebsd_sys_revoke },		/* 56 = revoke */
-	{ 2, s(struct freebsd_sys_symlink_args), 0,
-	    freebsd_sys_symlink },		/* 57 = symlink */
-	{ 3, s(struct freebsd_sys_readlink_args), 0,
-	    freebsd_sys_readlink },		/* 58 = readlink */
-	{ 3, s(struct freebsd_sys_execve_args), 0,
-	    freebsd_sys_execve },		/* 59 = execve */
+	{ 1, s(struct bsd_sys_revoke_args), 0,
+	    bsd_sys_revoke },			/* 56 = revoke */
+	{ 2, s(struct bsd_sys_symlink_args), 0,
+	    bsd_sys_symlink },			/* 57 = symlink */
+	{ 3, s(struct bsd_sys_readlink_args), 0,
+	    bsd_sys_readlink },			/* 58 = readlink */
+	{ 3, s(struct bsd_sys_execve_args), 0,
+	    bsd_sys_execve },			/* 59 = execve */
 	{ 1, s(struct sys_umask_args), 0,
 	    sys_umask },			/* 60 = umask */
-	{ 1, s(struct freebsd_sys_chroot_args), 0,
-	    freebsd_sys_chroot },		/* 61 = chroot */
+	{ 1, s(struct bsd_sys_chroot_args), 0,
+	    bsd_sys_chroot },			/* 61 = chroot */
 	{ 2, s(struct compat_43_sys_fstat_args), 0,
 	    compat_43_sys_fstat },		/* 62 = fstat43 */
 	{ 0, 0, 0,
@@ -222,8 +222,8 @@ struct sysent darwin_sysent[] = {
 	    sys_setitimer },			/* 83 = setitimer */
 	{ 0, 0, 0,
 	    compat_43_sys_wait },		/* 84 = owait */
-	{ 1, s(struct compat_12_sys_swapon_args), 0,
-	    compat_12_sys_swapon },		/* 85 = oswapon */
+	{ 1, s(struct bsd_compat_12_sys_swapon_args), 0,
+	    bsd_compat_12_sys_swapon },		/* 85 = swapon */
 	{ 2, s(struct sys_getitimer_args), 0,
 	    sys_getitimer },			/* 86 = getitimer */
 	{ 2, s(struct compat_43_sys_gethostname_args), 0,
@@ -308,28 +308,28 @@ struct sysent darwin_sysent[] = {
 	    sys_setreuid },			/* 126 = setreuid */
 	{ 2, s(struct sys_setregid_args), 0,
 	    sys_setregid },			/* 127 = setregid */
-	{ 2, s(struct freebsd_sys_rename_args), 0,
-	    freebsd_sys_rename },		/* 128 = rename */
-	{ 2, s(struct compat_43_freebsd_sys_truncate_args), 0,
-	    compat_43_freebsd_sys_truncate },	/* 129 = otruncate */
+	{ 2, s(struct bsd_sys_rename_args), 0,
+	    bsd_sys_rename },			/* 128 = rename */
+	{ 2, s(struct bsd_compat_43_sys_truncate_args), 0,
+	    bsd_compat_43_sys_truncate },	/* 129 = otruncate */
 	{ 2, s(struct compat_43_sys_ftruncate_args), 0,
 	    compat_43_sys_ftruncate },		/* 130 = oftruncate */
 	{ 2, s(struct sys_flock_args), 0,
 	    sys_flock },			/* 131 = flock */
-	{ 2, s(struct freebsd_sys_mkfifo_args), 0,
-	    freebsd_sys_mkfifo },		/* 132 = mkfifo */
+	{ 2, s(struct bsd_sys_mkfifo_args), 0,
+	    bsd_sys_mkfifo },			/* 132 = mkfifo */
 	{ 6, s(struct sys_sendto_args), 0,
 	    sys_sendto },			/* 133 = sendto */
 	{ 2, s(struct sys_shutdown_args), 0,
 	    sys_shutdown },			/* 134 = shutdown */
 	{ 4, s(struct sys_socketpair_args), 0,
 	    sys_socketpair },			/* 135 = socketpair */
-	{ 2, s(struct freebsd_sys_mkdir_args), 0,
-	    freebsd_sys_mkdir },		/* 136 = mkdir */
-	{ 1, s(struct freebsd_sys_rmdir_args), 0,
-	    freebsd_sys_rmdir },		/* 137 = rmdir */
-	{ 2, s(struct sys_utimes_args), 0,
-	    sys_utimes },			/* 138 = utimes */
+	{ 2, s(struct bsd_sys_mkdir_args), 0,
+	    bsd_sys_mkdir },			/* 136 = mkdir */
+	{ 1, s(struct bsd_sys_rmdir_args), 0,
+	    bsd_sys_rmdir },			/* 137 = rmdir */
+	{ 2, s(struct bsd_sys_utimes_args), 0,
+	    bsd_sys_utimes },			/* 138 = utimes */
 	{ 0, 0, 0,
 	    sys_nosys },			/* 139 = unimplemented futimes */
 	{ 2, s(struct sys_adjtime_args), 0,
@@ -371,8 +371,8 @@ struct sysent darwin_sysent[] = {
 #endif
 	{ 4, s(struct compat_43_sys_getdirentries_args), 0,
 	    compat_43_sys_getdirentries },	/* 156 = ogetdirentries */
-	{ 2, s(struct freebsd_sys_statfs_args), 0,
-	    freebsd_sys_statfs },		/* 157 = statfs */
+	{ 2, s(struct bsd_sys_statfs_args), 0,
+	    bsd_sys_statfs },			/* 157 = statfs */
 	{ 2, s(struct sys_fstatfs_args), 0,
 	    sys_fstatfs },			/* 158 = fstatfs */
 	{ 0, 0, 0,
@@ -380,8 +380,8 @@ struct sysent darwin_sysent[] = {
 	{ 0, 0, 0,
 	    sys_nosys },			/* 160 = unimplemented */
 #if defined(NFS) || defined(NFSSERVER) || !defined(_KERNEL)
-	{ 2, s(struct freebsd_sys_getfh_args), 0,
-	    freebsd_sys_getfh },		/* 161 = getfh */
+	{ 2, s(struct bsd_sys_getfh_args), 0,
+	    bsd_sys_getfh },			/* 161 = getfh */
 #else
 	{ 0, 0, 0,
 	    sys_nosys },			/* 161 = excluded getfh */
@@ -438,14 +438,14 @@ struct sysent darwin_sysent[] = {
 	    sys_nosys },			/* 186 = unimplemented */
 	{ 0, 0, 0,
 	    sys_nosys },			/* 187 = unimplemented */
-	{ 2, s(struct freebsd_sys_stat_args), 0,
-	    freebsd_sys_stat },			/* 188 = stat12 */
+	{ 2, s(struct bsd_compat_12_sys_stat_args), 0,
+	    bsd_compat_12_sys_stat },		/* 188 = stat12 */
 	{ 2, s(struct compat_12_sys_fstat_args), 0,
 	    compat_12_sys_fstat },		/* 189 = fstat */
-	{ 2, s(struct freebsd_sys_lstat_args), 0,
-	    freebsd_sys_lstat },		/* 190 = lstat12 */
-	{ 2, s(struct freebsd_sys_pathconf_args), 0,
-	    freebsd_sys_pathconf },		/* 191 = pathconf */
+	{ 2, s(struct bsd_compat_12_sys_lstat_args), 0,
+	    bsd_compat_12_sys_lstat },		/* 190 = lstat12 */
+	{ 2, s(struct bsd_sys_pathconf_args), 0,
+	    bsd_sys_pathconf },			/* 191 = pathconf */
 	{ 2, s(struct sys_fpathconf_args), 0,
 	    sys_fpathconf },			/* 192 = fpathconf */
 	{ 0, 0, 0,
@@ -462,8 +462,8 @@ struct sysent darwin_sysent[] = {
 	    sys_nosys },			/* 198 = unimplemented */
 	{ 4, s(struct compat_43_sys_lseek_args), 0,
 	    compat_43_sys_lseek },		/* 199 = lseek */
-	{ 3, s(struct freebsd_sys_truncate_args), 0,
-	    freebsd_sys_truncate },		/* 200 = truncate */
+	{ 3, s(struct bsd_sys_truncate_args), 0,
+	    bsd_sys_truncate },			/* 200 = truncate */
 	{ 3, s(struct sys_ftruncate_args), 0,
 	    sys_ftruncate },			/* 201 = ftruncate */
 	{ 6, s(struct darwin_sys___sysctl_args), 0,
@@ -472,8 +472,8 @@ struct sysent darwin_sysent[] = {
 	    sys_mlock },			/* 203 = mlock */
 	{ 2, s(struct sys_munlock_args), 0,
 	    sys_munlock },			/* 204 = munlock */
-	{ 1, s(struct sys_undelete_args), 0,
-	    sys_undelete },			/* 205 = undelete */
+	{ 1, s(struct bsd_sys_undelete_args), 0,
+	    bsd_sys_undelete },			/* 205 = undelete */
 	{ 0, 0, 0,
 	    sys_nosys },			/* 206 = unimplemented atsocket */
 	{ 0, 0, 0,
