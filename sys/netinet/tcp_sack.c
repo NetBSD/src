@@ -1,4 +1,4 @@
-/* $NetBSD: tcp_sack.c,v 1.4 2005/03/06 23:06:40 yamt Exp $ */
+/* $NetBSD: tcp_sack.c,v 1.5 2005/03/07 09:32:51 yamt Exp $ */
 
 /*
  * Copyright (c) 2005 The NetBSD Foundation, Inc.
@@ -109,7 +109,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tcp_sack.c,v 1.4 2005/03/06 23:06:40 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tcp_sack.c,v 1.5 2005/03/07 09:32:51 yamt Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -226,7 +226,8 @@ tcp_new_dsack(struct tcpcb *tp, tcp_seq seq, u_int32_t len)
 void
 tcp_sack_option(struct tcpcb *tp, struct tcphdr *th, u_char *cp, int optlen)
 {
-	struct sackblk t_sack_block[TCP_SACK_MAX];
+	struct sackblk
+	    t_sack_block[(MAX_TCPOPTLEN - 2) / (sizeof(u_int32_t) * 2)];
 	struct sackblk *sack = NULL;
 	struct sackhole *cur = NULL;
 	struct sackhole *tmp = NULL;
