@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.123 1998/09/11 12:23:44 mycroft Exp $	*/
+/*	$NetBSD: trap.c,v 1.124 1998/10/01 15:53:33 erh Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -79,6 +79,7 @@
  */
 
 #include "opt_ddb.h"
+#include "opt_execfmt.h"
 #include "opt_math_emulate.h"
 #include "opt_vm86.h"
 #include "opt_ktrace.h"
@@ -125,11 +126,22 @@
 #include <compat/ibcs2/ibcs2_exec.h>
 extern struct emul emul_ibcs2_coff, emul_ibcs2_xout, emul_ibcs2_elf;
 #endif
+
 #ifdef COMPAT_LINUX
 #include <sys/exec.h>
 #include <compat/linux/linux_syscall.h>
-extern struct emul emul_linux_aout, emul_linux_elf;
+
+#ifdef EXEC_AOUT
+extern struct emul emul_linux_aout;
 #endif
+#ifdef EXEC_ELF32
+extern struct emul emul_linux_elf32;
+#endif
+#ifdef EXEC_ELF64
+extern struct emul emul_linux_elf64;
+#endif
+#endif /* !COMPAT_LINUX */
+
 #ifdef COMPAT_FREEBSD
 extern struct emul emul_freebsd;
 #endif
@@ -685,8 +697,17 @@ syscall(frame)
 	case SYS_syscall:
 #ifdef COMPAT_LINUX
 		/* Linux has a special system setup call as number 0 */
-		if (p->p_emul == &emul_linux_aout ||
-		    p->p_emul == &emul_linux_elf)
+		if (0
+#ifdef EXEC_AOUT
+		    || (p->p_emul == &emul_linux_aout)
+#endif
+#ifdef EXEC_ELF32
+		    || (p->p_emul == &emul_linux_elf32)
+#endif
+#ifdef EXEC_ELF64
+		    || (p->p_emul == &emul_linux_elf64)
+#endif
+		)
 			break;
 #endif
 		/*
@@ -721,8 +742,17 @@ syscall(frame)
 	if (argsize) {
 #ifdef COMPAT_LINUX
 		/* XXX extra if() for every emul type.. */
-		if (p->p_emul == &emul_linux_aout ||
-		    p->p_emul == &emul_linux_elf) {
+		if (0
+#ifdef EXEC_AOUT
+		    || (p->p_emul == &emul_linux_aout)
+#endif
+#ifdef EXEC_ELF32
+		    || (p->p_emul == &emul_linux_elf32)
+#endif
+#ifdef EXEC_ELF64
+		    || (p->p_emul == &emul_linux_elf64)
+#endif
+		    ) {
 			/*
 			 * Linux passes the args in ebx, ecx, edx, esi, edi, in
 			 * increasing order.
@@ -746,7 +776,7 @@ syscall(frame)
 			}
 		}
 		else
-#endif
+#endif /* !COMPAT_LINUX */
 		{
 			error = copyin(params, (caddr_t)args, argsize);
 			if (error)
