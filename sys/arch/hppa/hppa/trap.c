@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.4 2002/08/19 15:07:33 fredette Exp $	*/
+/*	$NetBSD: trap.c,v 1.5 2002/11/15 20:06:01 manu Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002 The NetBSD Foundation, Inc.
@@ -1065,7 +1065,7 @@ syscall(frame, args)
 		callp += code;
 	argsize = callp->sy_argsize;
 
-	if ((error = trace_enter(p, code, args, rval)) != 0)
+	if ((error = trace_enter(p, code, code, args, rval)) != 0)
 		goto bad;
 
 	rval[0] = 0;

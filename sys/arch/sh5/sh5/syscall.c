@@ -1,4 +1,4 @@
-/*	$NetBSD: syscall.c,v 1.4 2002/10/14 09:46:31 scw Exp $	*/
+/*	$NetBSD: syscall.c,v 1.5 2002/11/15 20:06:03 manu Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -337,7 +337,7 @@ syscall_fancy(struct proc *p, struct trapframe *tf)
 
 	args += hidden;
 
-	if ((error = trace_enter(p, code, args, rval)) != 0)
+	if ((error = trace_enter(p, code, code, args, rval)) != 0)
 		goto bad;
 
 	rval[0] = 0;

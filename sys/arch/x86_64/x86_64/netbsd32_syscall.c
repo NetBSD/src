@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_syscall.c,v 1.7 2002/08/25 18:39:40 thorpej Exp $	*/
+/*	$NetBSD: netbsd32_syscall.c,v 1.8 2002/11/15 20:06:04 manu Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
@@ -237,7 +237,7 @@ netbsd32_syscall_fancy(frame)
 		for (i = 0; i < (argsize >> 2); i++)
 			args64[i] = args[i];
 		/* XXX we need to pass argsize << 1 here? */
-		if ((error = trace_enter(p, code, args64, rval)) != 0)
+		if ((error = trace_enter(p, code, code, args64, rval)) != 0)
 			goto bad;
 	}
 #endif
