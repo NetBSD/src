@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_ras.c,v 1.6 2003/11/04 10:33:15 dsl Exp $	*/
+/*	$NetBSD: kern_ras.c,v 1.7 2004/03/25 22:08:33 pooka Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_ras.c,v 1.6 2003/11/04 10:33:15 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_ras.c,v 1.7 2004/03/25 22:08:33 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/lock.h>
@@ -113,7 +113,7 @@ ras_fork(struct proc *p1, struct proc *p2)
 	simple_lock(&p1->p_lock);
 	LIST_FOREACH(rp, &p1->p_raslist, ras_list) {
 		nras++;
-		nrp = pool_get(&ras_pool, PR_NOWAIT);
+		nrp = pool_get(&ras_pool, PR_WAITOK);
 		nrp->ras_startaddr = rp->ras_startaddr;
 		nrp->ras_endaddr = rp->ras_endaddr;
 		nrp->ras_hits = 0;
@@ -173,7 +173,7 @@ ras_install(struct proc *p, caddr_t addr, size_t len)
 			return (EINVAL);
 		}
 	}
-	rp = pool_get(&ras_pool, PR_NOWAIT);
+	rp = pool_get(&ras_pool, PR_WAITOK);
 	rp->ras_startaddr = addr;
 	rp->ras_endaddr = endaddr;
 	rp->ras_hits = 0;
