@@ -1,4 +1,4 @@
-.\"	$NetBSD: audiorecord.1,v 1.24 2002/02/08 01:36:19 ross Exp $
+.\"	$NetBSD: audiorecord.1,v 1.25 2002/02/10 16:46:44 wiz Exp $
 .\"
 .\" Copyright (c) 1998-1999 Matthew R. Green
 .\" All rights reserved.
@@ -90,9 +90,22 @@ Set encoding to either
 .Dq alaw ,
 .Dq ulaw
 or
-.Dq linear .
+.Dq linear ,
+or any other value reported by
+.Ic audioctl encodings .
 The default encoding is
 .Dq ulaw .
+If the output format is
+.Dq sun ,
+the file will contain slinear_be samples, if it is
+.Dq wav ,
+then slinear_le, independent of the argument to
+.Fl e .
+Setting the argument to
+.Fl e
+still may be important since it is used in an
+.Xr ioctl 2
+call to the kernel to choose the kind of data provided.
 .It Fl f
 Force.  Normally when appending to audiofiles using the
 .Fl a
