@@ -42,7 +42,7 @@ static char copyright[] =
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)ping.c	8.1 (Berkeley) 6/5/93";*/
-static char *rcsid = "$Id: ping.c,v 1.11 1994/10/31 04:34:56 cgd Exp $";
+static char *rcsid = "$Id: ping.c,v 1.12 1994/12/18 00:20:51 cgd Exp $";
 #endif /* not lint */
 
 /*
@@ -75,12 +75,15 @@ static char *rcsid = "$Id: ping.c,v 1.11 1994/10/31 04:34:56 cgd Exp $";
 #include <netinet/ip.h>
 #include <netinet/ip_icmp.h>
 #include <netinet/ip_var.h>
+#include <arpa/inet.h>
 #include <netdb.h>
 #include <unistd.h>
 #include <stdio.h>
 #include <ctype.h>
+#include <err.h>
 #include <errno.h>
 #include <string.h>
+#include <stdlib.h>
 
 #define	DEFDATALEN	(64 - 8)	/* default data length */
 #define	MAXIPLEN	60
@@ -144,9 +147,18 @@ double tmin = 999999999.0;	/* minimum round trip time */
 double tmax = 0.0;		/* maximum round trip time */
 double tsum = 0.0;		/* sum of all times, for doing average */
 
-char *pr_addr();
+void fill __P((char *, char *));
 void catcher(), finish();
+int in_cksum __P((u_short *, int));
+void pinger();
+char *pr_addr __P((u_long));
+void pr_icmph __P((struct icmp *));
+void pr_pack __P((char *, int, struct sockaddr_in *));
+void pr_retip __P((struct ip *));
+void tvsub __P((struct timeval *, struct timeval *));
+void usage();
 
+int
 main(argc, argv)
 	int argc;
 	char **argv;
@@ -161,7 +173,7 @@ main(argc, argv)
 	register int i;
 	int ch, fdmask, hold, packlen, preload;
 	u_char *datap, *packet;
-	char *target, hnamebuf[MAXHOSTNAMELEN], *malloc();
+	char *target, hnamebuf[MAXHOSTNAMELEN];
 	u_char ttl, loop = 1;
 #ifdef IP_OPTIONS
 	char rspace[3 + 4 * NROUTES + 1];	/* record route space */
@@ -374,6 +386,7 @@ main(argc, argv)
 	}
 	finish();
 	/* NOTREACHED */
+	exit(0);	/* Make the compiler happy */
 }
 
 /*
@@ -415,6 +428,7 @@ catcher()
  * of the data portion are used to hold a UNIX "timeval" struct in VAX
  * byte-order, to compute the round-trip time.
  */
+void
 pinger()
 {
 	register struct icmp *icp;
@@ -459,6 +473,7 @@ pinger()
  * which arrive ('tis only fair).  This permits multiple copies of this
  * program to be run without having intermingled output (or statistics!).
  */
+void
 pr_pack(buf, cc, from)
 	char *buf;
 	int cc;
@@ -644,6 +659,7 @@ pr_pack(buf, cc, from)
  * in_cksum --
  *	Checksum routine for Internet Protocol family headers (C Version)
  */
+int
 in_cksum(addr, len)
 	u_short *addr;
 	int len;
@@ -681,6 +697,7 @@ in_cksum(addr, len)
  *	Subtract 2 timeval structs:  out = out - in.  Out is assumed to
  * be >= in.
  */
+void
 tvsub(out, in)
 	register struct timeval *out, *in;
 {
@@ -745,6 +762,7 @@ static char *ttab[] = {
  * pr_icmph --
  *	Print a descriptive string about an ICMP header.
  */
+void
 pr_icmph(icp)
 	struct icmp *icp;
 {
@@ -885,6 +903,7 @@ pr_icmph(icp)
  * pr_iph --
  *	Print an IP header with options.
  */
+void
 pr_iph(ip)
 	struct ip *ip;
 {
@@ -934,6 +953,7 @@ pr_addr(l)
  * pr_retip --
  *	Dump some info on a returned (via ICMP) IP packet.
  */
+void
 pr_retip(ip)
 	struct ip *ip;
 {
@@ -952,6 +972,7 @@ pr_retip(ip)
 			(*cp * 256 + *(cp + 1)), (*(cp + 2) * 256 + *(cp + 3)));
 }
 
+void
 fill(bp, patp)
 	char *bp, *patp;
 {
@@ -982,6 +1003,7 @@ fill(bp, patp)
 	}
 }
 
+void
 usage()
 {
 	(void)fprintf(stderr,

@@ -29,14 +29,9 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	$Id: modunload.c,v 1.6 1994/05/23 05:42:58 cgd Exp $
+ *	$Id: modunload.c,v 1.7 1994/12/18 00:17:49 cgd Exp $
  */
 
-#include <stdio.h>
-#include <stdlib.h>
-#include <err.h>
-#include <string.h>
-#include <a.out.h>
 #include <sys/param.h>
 #include <sys/ioctl.h>
 #include <sys/conf.h>
@@ -44,6 +39,12 @@
 #include <sys/lkm.h>
 #include <sys/file.h>
 #include <sys/errno.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <err.h>
+#include <string.h>
+#include <a.out.h>
+#include <unistd.h>
 #include "pathnames.h"
 
 void
