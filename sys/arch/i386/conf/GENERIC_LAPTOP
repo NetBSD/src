@@ -1,4 +1,4 @@
-#	$NetBSD: GENERIC_LAPTOP,v 1.71 2003/04/08 18:58:20 abs Exp $
+#	$NetBSD: GENERIC_LAPTOP,v 1.72 2003/04/10 22:06:57 christos Exp $
 #	From: NetBSD: GENERIC,v 1.414 2001/07/30 19:59:05 ad Exp
 #
 #	GENERIC_LAPTOP -- GENERIC with cardbus and some USB devices enabled
@@ -8,7 +8,7 @@ include "arch/i386/conf/std.i386"
 
 #options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.71 $"
+#ident 		"GENERIC-$Revision: 1.72 $"
 
 maxusers	32		# estimated number of users
 
@@ -48,7 +48,6 @@ options 	MTRR		# memory-type range register syscall support
 
 # Standard system options
 
-options 	UCONSOLE	# users can use TIOCCONS (for xconsole)
 options 	INSECURE	# disable kernel security levels - X needs this
 
 options 	RTC_OFFSET=0	# hardware clock is this many mins. west of GMT

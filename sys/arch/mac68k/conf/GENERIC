@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.136 2003/02/27 19:22:42 perseant Exp $
+# $NetBSD: GENERIC,v 1.137 2003/04/10 22:06:59 christos Exp $
 #
 # GENERIC machine description file
 # 
@@ -22,7 +22,7 @@ include		"arch/mac68k/conf/std.mac68k"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.136 $"
+#ident 		"GENERIC-$Revision: 1.137 $"
 
 maxusers	16		# estimated number of users
 
@@ -37,7 +37,6 @@ options 	FPU_EMULATE
 
 # Standard system options
 
-options 	UCONSOLE	# users can use TIOCCONS (for xconsole)
 options 	INSECURE	# disable kernel security levels
 
 options 	RTC_OFFSET=0	# hardware clock is this many mins. west of GMT
