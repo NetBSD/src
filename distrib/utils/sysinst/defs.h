@@ -1,4 +1,4 @@
-/*	$NetBSD: defs.h,v 1.102 2003/08/09 21:36:26 dsl Exp $	*/
+/*	$NetBSD: defs.h,v 1.103 2003/08/10 14:51:48 dsl Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -143,14 +143,17 @@ typedef struct _partinfo {
 	char	pi_mount[20];
 	uint	pi_isize;		/* bytes per inode */
 	uint	pi_flags;
-#define PIF_NEWFS	0x001		/* need to 'newfs' partition */
-#define PIF_MOUNT	0x002		/* need to mount partition */
-#define PIF_ASYNC	0x010		/* mount -o async */
-#define PIF_NOATIME	0x020		/* mount -o noatime */
-#define PIF_NODEVMTIME	0x040		/* mount -o nodevmtime */
-#define PIF_SOFTDEP	0x080		/* mount -o softdep */
-#define PIF_MOUNT_OPTS	0x0f0		/* all above mount flags */
-#define PIF_RESET	0x100		/* internal - restore previous values */
+#define PIF_NEWFS	0x0001		/* need to 'newfs' partition */
+#define PIF_MOUNT	0x0002		/* need to mount partition */
+#define PIF_ASYNC	0x0010		/* mount -o async */
+#define PIF_NOATIME	0x0020		/* mount -o noatime */
+#define PIF_NODEV	0x0040		/* mount -o nodev */
+#define PIF_NODEVMTIME	0x0080		/* mount -o nodevmtime */
+#define PIF_NOEXEC	0x0100		/* mount -o noexec */
+#define PIF_NOSUID	0x0200		/* mount -o nosuid */
+#define PIF_SOFTDEP	0x0400		/* mount -o softdep */
+#define PIF_MOUNT_OPTS	0x0ff0		/* all above mount flags */
+#define PIF_RESET	0x1000		/* internal - restore previous values */
 } partinfo;	/* Single partition from a disklabel */
 
 
