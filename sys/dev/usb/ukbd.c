@@ -1,4 +1,4 @@
-/*      $NetBSD: ukbd.c,v 1.18 1998/12/29 15:42:30 augustss Exp $        */
+/*      $NetBSD: ukbd.c,v 1.19 1998/12/30 18:03:37 augustss Exp $        */
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -126,7 +126,10 @@ static struct {
 };
 
 #define NN 0			/* no translation */
-/* Translate USB keycodes to US keyboard AT scancodes. */
+/* 
+ * Translate USB keycodes to US keyboard AT scancodes.
+ * Scancodes >= 128 represent EXTENDED keycodes.
+ */
 static u_int8_t ukbd_trtab[256] = {
 	   0,   0,   0,   0,  30,  48,  46,  32, /* 00 - 07 */
 	  18,  33,  34,  35,  23,  36,  37,  38, /* 08 - 0F */
@@ -215,6 +218,9 @@ const struct wskbd_accessops ukbd_accessops = {
 	ukbd_enable,
 	ukbd_set_leds,
 	ukbd_ioctl,
+#if 0
+	ukbd_cnattach,
+#endif
 };
 
 const struct wskbd_mapdata ukbd_keymapdata = {
@@ -307,7 +313,7 @@ USB_ATTACH(ukbd)
 	sc->sc_disconnected = 0;
 
 #if defined(__NetBSD__)
-	a.console = 0;	/* XXX */
+	a.console = 0;
 
 	a.keymap = &ukbd_keymapdata;
 
@@ -315,6 +321,11 @@ USB_ATTACH(ukbd)
 	a.accesscookie = sc;
 
 	sc->sc_wskbddev = config_found(self, &a, wskbddevprint);
+
+	/* Flash the leds; no real purpose, just shows we're alive. */
+	ukbd_set_leds(sc, WSKBD_LED_SCROLL | WSKBD_LED_NUM | WSKBD_LED_CAPS);
+	usbd_delay_ms(uaa->device, 300);
+	ukbd_set_leds(sc, 0);
 
 #elif defined(__FreeBSD__)
 	/* XXX why waste CPU in delay() ? */
@@ -397,6 +408,8 @@ ukbd_enable(v, on)
 	return (0);
 }
 
+#define MAXKEYS (NMOD+2*NKEYCODE)
+
 void
 ukbd_intr(reqh, addr, status)
 	usbd_request_handle reqh;
@@ -406,7 +419,7 @@ ukbd_intr(reqh, addr, status)
 	struct ukbd_softc *sc = addr;
 	struct ukbd_data *ud = &sc->sc_ndata;
 	int mod, omod;
-	int ibuf[NMOD+2*NKEYCODE];	/* chars events */
+	int ibuf[MAXKEYS];	/* chars events */
 	int nkeys, i, j;
 	int key, c;
 #define ADDKEY(c) ibuf[nkeys++] = (c)
@@ -472,10 +485,27 @@ ukbd_intr(reqh, addr, status)
 	sc->sc_odata = *ud;
 
 	if (sc->sc_polling) {
+		DPRINTFN(1,("ukbd_intr: pollchar = 0x%02x\n", ibuf[0]));
 		if (nkeys > 0)
 			sc->sc_pollchar = ibuf[0]; /* XXX lost keys? */
 		return;
 	}
+#if defined(__NetBSD__)
+	if (sc->sc_rawkbd) {
+		char cbuf[MAXKEYS * 2];
+		for (i = j = 0; i < nkeys; i++, j++) {
+			c = ibuf[i];
+			if (c & 0x80)
+				cbuf[j++] = 0xe0;
+			cbuf[j] = c & 0x7f;
+			if (c & RELEASE)
+				cbuf[j] |= 0x80;
+		}
+		wskbd_rawinput(sc->sc_wskbddev, cbuf, j);
+		return;
+	}
+#endif
+
 	for (i = 0; i < nkeys; i++) {
 		c = ibuf[i];
 #if defined(__NetBSD__)
@@ -544,6 +574,7 @@ ukbd_ioctl(v, cmd, data, flag, p)
 		return (0);
 #ifdef WSDISPLAY_COMPAT_RAWKBD
 	case WSKBDIO_SETMODE:
+		DPRINTF(("ukbd_ioctl: set raw = %d\n", *(int *)data));
 		sc->sc_rawkbd = *(int *)data == WSKBD_RAW;
 		return (0);
 #endif
@@ -552,7 +583,6 @@ ukbd_ioctl(v, cmd, data, flag, p)
 }
 
 /* Console interface. */
-/* XXX does not work. */
 void
 ukbd_cngetc(v, type, data)
 	void *v;
@@ -584,23 +614,21 @@ ukbd_cnpollc(v, on)
 {
 	struct ukbd_softc *sc = v;
 
-	DPRINTFN(1,("ukbd_cnpollc: sc=%p on=%d\n", v, on));
+	DPRINTFN(2,("ukbd_cnpollc: sc=%p on=%d\n", v, on));
 
 	usbd_set_polling(sc->sc_iface, on);
 }
 
-#if 0
-/* XXX We're not ready for this yet... */
 int
 ukbd_cnattach(v)
 	void *v;
 {
 	struct ukbd_softc *sc = v;
 
+	DPRINTF(("ukbd_cnattach: sc=%p\n", sc));
 	wskbd_cnattach(&ukbd_consops, sc, &ukbd_keymapdata);
 	return (0);
 }
-#endif
 
 #endif
 
