@@ -1,8 +1,58 @@
-#	$NetBSD: Makefile,v 1.9 2001/01/08 08:29:59 itojun Exp $
+#	$NetBSD: Makefile,v 1.10 2001/07/24 19:44:48 tv Exp $
 
 .include <bsd.own.mk>
 
 LIB=		g2c
+MKLINT=		no
+
+.if defined(USE_NEW_TOOLCHAIN)
+
+.include "${.CURDIR}/arch/${MACHINE_ARCH}/defs.mk"
+
+TOP=		${.CURDIR}/../..
+DIST=		${TOP}/dist/toolchain
+
+SRCS=		${G_OBJS:.o=.c} ${G_OBJ:.o=.c}
+
+GCPPFLAGS=	${G_ALL_CFLAGS:O:u}
+CPPFLAGS+=	-I${.CURDIR}/arch/${MACHINE_ARCH} \
+		${GCPPFLAGS:M-D*} ${GCPPFLAGS:M-I*:N-I.*} \
+		-DAllow_TYQUAD
+
+.for c in F I U
+CLEANFILES+=	Version${c}.c
+Version${c}.c: ${DIST}/libf2c/lib${c}77/Version.c
+	cp $> $@
+.endfor
+
+.for f in ${G_F2CEXT}
+OBJS+=		L${f}.o
+
+L${f}.o: f2cext.c
+	${COMPILE.c} -DL${f} -o $@ ${>:M*.c}
+
+.if ${MKPIC} != "no"
+L${f}.so: f2cext.c
+	${COMPILE.c} ${CPICFLAGS} -DL${f} -o $@ ${>:M*.c}
+.endif
+
+.if ${MKPROFILE} != "no"
+L${f}.po: f2cext.c
+	${COMPILE.c} -pg -DL${f} -o $@ ${>:M*.c}
+.endif
+.endfor
+
+.PATH: ${DIST}/libf2c ${DIST}/libf2c/libF77 ${DIST}/libf2c/libI77 ${DIST}/libf2c/libU77
+
+.include <bsd.lib.mk>
+
+${OBJS}: ${.CURDIR}/arch/${MACHINE_ARCH}/defs.mk
+
+.else
+#
+# XXX - BEGIN - Old toolchain build goop - delete when everything migrated - XXX
+#
+MKPIC=no	# XXX hack; shlib_version mismatch
 
 F77SRCS=	F77_aloc.c Version.c main.c s_rnge.c abort_.c getarg_.c \
 		iargc_.c getenv_.c signal_.c s_stop.c s_paus.c system_.c \
@@ -67,8 +117,6 @@ POBJS+=		${E77OBJS:.o=.po}
 .endif
 CLEANFILES+=	${LIBF77SRCS}
 DPSRCS+=	g2c.h
-
-MKLINT=		no
 
 CPPFLAGS+=	-I. -I${.CURDIR} -I${ARCH} -I${ARCH}/${ARCHSUBDIR} \
 		-I${DIST}/libf2c -I${DIST}/libf2c/libF77 \
@@ -138,3 +186,7 @@ ${E77OBJS:.o=.po}: f2cext.c
 .include <bsd.lib.mk>
 
 ${OBJS} ${SOBJS} ${POBJS}: g2c.h
+#
+# XXX - END - Old toolchain build goop - delete when everything migrated - XXX
+#
+.endif
