@@ -1,4 +1,4 @@
-/* $NetBSD: dec_axppci_33.c,v 1.34 1997/10/17 19:00:05 mjacob Exp $ */
+/* $NetBSD: dec_axppci_33.c,v 1.35 1998/02/13 00:12:47 thorpej Exp $ */
 
 /*
  * Copyright (c) 1995, 1996, 1997 Carnegie-Mellon University.
@@ -31,7 +31,7 @@
  */
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: dec_axppci_33.c,v 1.34 1997/10/17 19:00:05 mjacob Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dec_axppci_33.c,v 1.35 1998/02/13 00:12:47 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -67,25 +67,25 @@ void dec_axppci_33_init __P((void));
 static void dec_axppci_33_cons_init __P((void));
 static void dec_axppci_33_device_register __P((struct device *, void *));
 
+const struct alpha_variation_table dec_axppci_33_variations[] = {
+	{ 0, "Alpha PC AXPpci33 (\"NoName\")" },
+	{ 0, NULL },
+};
+
 void
 dec_axppci_33_init()
 {
-	platform.family = "DEC AXPpci";
-	switch (hwrpb->rpb_variation & SV_ST_MASK) {
-	case 0:
-		platform.model = "Alpha PC AXPpci33 (\"NoName\")";
-		break;
+	u_int64_t variation;
 
-	default:
-	{
-		/* string is 24 bytes plus 64 bit hex number (16 byte) */
-		static char s[42];
-		sprintf(s, "unknown model variation %lx",
-		    hwrpb->rpb_variation & SV_ST_MASK);
-		platform.model = (const char *) s;
-		break;
+	platform.family = "DEC AXPpci";
+
+	if ((platform.model = alpha_dsr_sysname()) == NULL) {
+		variation = hwrpb->rpb_variation & SV_ST_MASK;
+		if ((platform.model = alpha_variation_name(variation,
+		    dec_axppci_33_variations)) == NULL)
+			platform.model = alpha_unknown_sysname();
 	}
-	}
+
 	platform.iobus = "lca";
 	platform.cons_init = dec_axppci_33_cons_init;
 	platform.device_register = dec_axppci_33_device_register;

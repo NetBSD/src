@@ -1,4 +1,4 @@
-/* $NetBSD: dec_3000_300.c,v 1.19 1997/09/23 23:15:45 mjacob Exp $ */
+/* $NetBSD: dec_3000_300.c,v 1.20 1998/02/13 00:12:46 thorpej Exp $ */
 
 /*
  * Copyright (c) 1995, 1996 Carnegie-Mellon University.
@@ -33,7 +33,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: dec_3000_300.c,v 1.19 1997/09/23 23:15:45 mjacob Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dec_3000_300.c,v 1.20 1998/02/13 00:12:46 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -54,37 +54,28 @@ __KERNEL_RCSID(0, "$NetBSD: dec_3000_300.c,v 1.19 1997/09/23 23:15:45 mjacob Exp
 void dec_3000_300_init __P((void));
 static void dec_3000_300_device_register __P((struct device *, void *));
 
+const struct alpha_variation_table dec_3000_300_variations[] = {
+	{ SV_ST_PELICAN, "DEC 3000/300 (\"Pelican\")" },
+	{ SV_ST_PELICA, "DEC 3000/300L (\"Pelica\")" },
+	{ SV_ST_PELICANPLUS, "DEC 3000/300X (\"Pelican+\")" },
+	{ SV_ST_PELICAPLUS, "DEC 3000/300LX (\"Pelica+\")" },
+	{ 0, NULL },
+};
+
 void
 dec_3000_300_init()
 {
+	u_int64_t variation;
+
 	platform.family = "DEC 3000/300 (\"Pelican\")";
-	switch (hwrpb->rpb_variation & SV_ST_MASK) {
-	case SV_ST_PELICAN:
-		platform.model = "DEC 3000/300 (\"Pelican\")";
-		break;
 
-	case SV_ST_PELICA:
-		platform.model = "DEC 3000/300L (\"Pelica\")";
-		break;
-
-	case SV_ST_PELICANPLUS:
-		platform.model = "DEC 3000/300X (\"Pelican+\")";
-		break;
-
-	case SV_ST_PELICAPLUS:
-		platform.model = "DEC 3000/300LX (\"Pelica+\")";
-		break;
-
-	default:
-	{
-		/* string is 24 bytes plus 64 bit hex number (16 byte) */
-		static char s[42];
-		sprintf(s, "unknown model variation %lx",
-		    hwrpb->rpb_variation & SV_ST_MASK);
-		platform.model = (const char *) s;
-		break;
+	if ((platform.model = alpha_dsr_sysname()) == NULL) {
+		variation = hwrpb->rpb_variation & SV_ST_MASK;
+		if ((platform.model = alpha_variation_name(variation,
+		    dec_3000_300_variations)) == NULL)
+			platform.model = alpha_unknown_sysname();
 	}
-	}
+
 	platform.iobus = "tcasic";
 	platform.device_register = dec_3000_300_device_register;
 }
