@@ -1,4 +1,4 @@
-/*	$NetBSD: ohci.c,v 1.104 2001/09/28 23:57:21 augustss Exp $	*/
+/*	$NetBSD: ohci.c,v 1.105 2001/11/07 02:55:04 augustss Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/ohci.c,v 1.22 1999/11/17 22:33:40 n_hibma Exp $	*/
 
 /*
@@ -1071,6 +1071,8 @@ ohci_intr1(ohci_softc_t *sc)
 	u_int32_t intrs, eintrs;
 	ohci_physaddr_t done;
 
+	DPRINTFN(14,("ohci_intr1: enter\n"));
+
 	/* In case the interrupt occurs before initialization has completed. */
 	if (sc == NULL || sc->sc_hcca == NULL) {
 #ifdef DIAGNOSTIC
@@ -1240,6 +1242,8 @@ ohci_softintr(void *v)
 	usbd_xfer_handle xfer;
 	int len, cc, s;
 
+	DPRINTFN(10,("ohci_softintr: enter\n:"));
+
 	sc->sc_bus.intr_context++;
 
 	s = splhardusb();
@@ -1249,7 +1253,7 @@ ohci_softintr(void *v)
 	sc->sc_sidone = NULL;
 	splx(s);
 
-	DPRINTFN(10,("ohci_process_done: sdone=%p sidone=%p\n", sdone, sidone));
+	DPRINTFN(10,("ohci_softintr: sdone=%p sidone=%p\n", sdone, sidone));
 
 #ifdef OHCI_DEBUG
 	if (ohcidebug > 10) {
@@ -1327,7 +1331,7 @@ ohci_softintr(void *v)
 
 #ifdef OHCI_DEBUG
 	if (ohcidebug > 10) {
-		DPRINTF(("ohci_process_done: ITD done:\n"));
+		DPRINTF(("ohci_softintr: ITD done:\n"));
 		ohci_dump_itds(sidone);
 	}
 #endif
@@ -1371,6 +1375,7 @@ ohci_softintr(void *v)
 	}
 
 	sc->sc_bus.intr_context--;
+	DPRINTFN(10,("ohci_softintr: done:\n"));
 }
 
 void
@@ -1526,6 +1531,15 @@ void
 ohci_poll(struct usbd_bus *bus)
 {
 	ohci_softc_t *sc = (ohci_softc_t *)bus;
+#ifdef OHCI_DEBUG
+	static int last;
+	int new;
+	new = OREAD4(sc, OHCI_INTERRUPT_STATUS);
+	if (new != last) {
+		DPRINTFN(10,("ohci_poll: intrs=0x%04x\n", new));
+		last = new;
+	}
+#endif
 
 	if (OREAD4(sc, OHCI_INTERRUPT_STATUS) & sc->sc_eintrs)
 		ohci_intr1(sc);
