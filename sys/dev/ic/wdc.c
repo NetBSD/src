@@ -1,4 +1,4 @@
-/*	$NetBSD: wdc.c,v 1.12 1998/01/14 23:42:02 cgd Exp $ */
+/*	$NetBSD: wdc.c,v 1.13 1998/01/15 01:26:16 cgd Exp $ */
 
 /*
  * Copyright (c) 1994, 1995 Charles M. Hannum.  All rights reserved.
@@ -92,14 +92,6 @@
 #define	WDPART(dev)			DISKPART(dev)
 
 LIST_HEAD(xfer_free_list, wdc_xfer) xfer_free_list;
-
-#if (NetBSD > 199801 || NetBSD1_3 >= 3)
-/* XXX nothing needed here */
-#else
-struct cfdriver wdc_cd = {
-	NULL, "wdc", DV_DULL
-};
-#endif
 
 int	wdc_init_controller __P((struct wdc_softc *,
 	    const struct wdc_attachment_data *));
