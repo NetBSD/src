@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.116 1998/06/25 23:41:51 thorpej Exp $ */
+/*	$NetBSD: machdep.c,v 1.117 1998/07/28 20:46:28 pk Exp $ */
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -1654,7 +1654,7 @@ _bus_dmamem_map(t, segs, nsegs, size, kvap, flags)
 	vm_offset_t va, sva;
 	bus_addr_t addr;
 	struct pglist *mlist;
-	int r, cbit;
+	int cbit;
 	size_t oversize;
 	u_long align;
 #if defined(SUN4M)
@@ -1678,14 +1678,14 @@ _bus_dmamem_map(t, segs, nsegs, size, kvap, flags)
 	 */
 	oversize = size + align - PAGE_SIZE;
 #if defined(UVM)
-	r = uvm_map(kernel_map, &sva, oversize, NULL, UVM_UNKNOWN_OFFSET,
-	    UVM_MAPFLAG(UVM_PROT_NONE, UVM_PROT_NONE, UVM_INH_NONE,
-	    UVM_ADV_NORMAL, 0));
+	sva = uvm_km_valloc(kernel_map, oversize);
+	if (sva == 0)
+		return (ENOMEM);
 #else
 	r = vm_map_find(kernel_map, NULL, (vm_offset_t)0, &sva, oversize, TRUE);
-#endif
 	if (r != KERN_SUCCESS)
 		return (ENOMEM);
+#endif
 
 	/* Compute start of aligned region */
 	va = sva;
