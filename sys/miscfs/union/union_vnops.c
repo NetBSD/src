@@ -1,4 +1,4 @@
-/*	$NetBSD: union_vnops.c,v 1.47 2000/03/30 12:22:14 augustss Exp $	*/
+/*	$NetBSD: union_vnops.c,v 1.47.4.1 2000/12/14 23:36:22 he Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993, 1994, 1995 Jan-Simon Pendry.
@@ -1127,6 +1127,8 @@ union_fsync(v)
 		struct vnode *a_vp;
 		struct ucred *a_cred;
 		int  a_flags;
+		off_t offhi;
+		off_t offlo;
 		struct proc *a_p;
 	} */ *ap = v;
 	int error = 0;
@@ -1153,7 +1155,8 @@ union_fsync(v)
 			vn_lock(targetvp, LK_EXCLUSIVE | LK_RETRY);
 		else
 			FIXUP(VTOUNION(ap->a_vp));
-		error = VOP_FSYNC(targetvp, ap->a_cred, ap->a_flags, p);
+		error = VOP_FSYNC(targetvp, ap->a_cred, ap->a_flags,
+			    ap->a_offlo, ap->a_offhi, p);
 		if (dolock)
 			VOP_UNLOCK(targetvp, 0);
 	}
