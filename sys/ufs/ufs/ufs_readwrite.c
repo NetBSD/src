@@ -1,4 +1,4 @@
-/*	$NetBSD: ufs_readwrite.c,v 1.5 1994/12/14 13:04:02 mycroft Exp $	*/
+/*	$NetBSD: ufs_readwrite.c,v 1.6 1995/03/24 15:33:31 cgd Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -294,6 +294,7 @@ WRITE(ap)
 			uio->uio_resid = resid;
 		}
 	} else if (resid > uio->uio_resid && (ioflag & IO_SYNC))
-		error = VOP_UPDATE(vp, &time, &time, 1);
+		error = VOP_UPDATE(vp, (struct timeval *)&time,
+		    (struct timeval *)&time, 1);
 	return (error);
 }
