@@ -1,5 +1,5 @@
 #ifndef lint
-static char rcsid[] = "$NetBSD: scores.c,v 1.7 1996/08/15 03:53:48 mrg Exp $";
+static char rcsid[] = "$NetBSD: scores.c,v 1.8 1996/10/09 00:45:37 jtc Exp $";
 #endif /* not lint */
 
 /* scores.c			 Larn is copyrighted 1986 by Noah Morgan.
@@ -525,7 +525,9 @@ invalid:
 				lprcat("\nCan't open record file:  I can't post your score.\n");
 				sncbr();  resetscroll();  lflush();  exit();
 				}
+			seteuid(euid);
 			chmod(logfile,0660);
+			seteuid(uid);
 			}
 		seteuid(uid);
 		strcpy(logg.who,loginname);
