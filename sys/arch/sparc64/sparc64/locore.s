@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.156 2002/06/05 18:11:18 eeh Exp $	*/
+/*	$NetBSD: locore.s,v 1.157 2002/06/07 19:29:38 eeh Exp $	*/
 
 /*
  * Copyright (c) 1996-2002 Eduardo Horvath
@@ -6276,21 +6276,28 @@ ENTRY(dcache_flush_page)
 	clr	%o4
 	srl	%o1, 2, %o1	! Now we have bits <29:0> set
 	set	(2*NBPG), %o5
-	andn	%o1, 3, %o1	! Now we have bits <29:2> set
-
+	ba,pt	%icc, 1f
+	 andn	%o1, 3, %o1	! Now we have bits <29:2> set
+	
+	.align 8
 1:
 	ldxa	[%o4] ASI_DCACHE_TAG, %o3
-	dec	16, %o5
+	mov	%o4, %o0
+	deccc	16, %o5
+	bl,pn	%icc, 2f
+	
+	 inc	16, %o4
 	xor	%o3, %o2, %o3
 	andcc	%o3, %o1, %g0
-	bne,pt	%xcc, 2f
+	bne,pt	%xcc, 1b
 	 membar	#LoadStore
-	stxa	%g0, [%o4] ASI_DCACHE_TAG
-	membar	#StoreLoad
-2:
-	brnz,pt	%o5, 1b
-	 inc	16, %o4
 	
+	stxa	%g0, [%o0] ASI_DCACHE_TAG
+	ba,pt	%icc, 1b
+	 membar	#StoreLoad
+2:
+
+	wr	%g0, ASI_PRIMARY_NOFAULT, %asi
 	sethi	%hi(KERNBASE), %o5
 	flush	%o5
 	retl
