@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.71 2001/09/05 14:18:11 tsutsui Exp $	*/
+/*	$NetBSD: pmap.c,v 1.72 2001/09/07 10:36:00 tsutsui Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -407,7 +407,7 @@ mmu_vtop(vva)
 	va = (vaddr_t)vva;
 #ifdef	PMAP_DEBUG
 	if ((va < KERNBASE) || (va >= virtual_contig_end))
-		panic("mmu_ptov");
+		panic("mmu_vtop");
 #endif
 	return (va - KERNBASE);
 }
@@ -2092,7 +2092,7 @@ pmap_kremove(va, len)
 
 #ifdef	PMAP_DEBUG
 	if ((sva & PGOFSET) || (eva & PGOFSET))
-		panic("pmap_remove_kernel: alignment");
+		panic("pmap_kremove: alignment");
 #endif
 
 	idx  = m68k_btop(va - KERNBASE);
