@@ -1,4 +1,4 @@
-/*	$NetBSD: kernfs_vnops.c,v 1.32 1994/12/14 18:47:42 mycroft Exp $	*/
+/*	$NetBSD: kernfs_vnops.c,v 1.33 1994/12/24 16:44:24 ws Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -318,42 +318,10 @@ kernfs_access(ap)
 	} */ *ap;
 {
 	struct vnode *vp = ap->a_vp;
-	struct ucred *cred = ap->a_cred;
-	mode_t amode = ap->a_mode;
 	mode_t fmode =
 	    (vp->v_flag & VROOT) ? DIR_MODE : VTOKERN(vp)->kf_kt->kt_mode;
-	mode_t mask = 0;
-	gid_t *gp;
-	int i;
 
-	/* Some files are simply not modifiable. */
-	if ((amode & VWRITE) && (fmode & (S_IWUSR|S_IWGRP|S_IWOTH)) == 0)
-		return (EPERM);
-
-	/* Root can do anything else. */
-	if (cred->cr_uid == 0)
-		return (0);
-
-	/* Check for group 0 (wheel) permissions. */
-	for (i = 0, gp = cred->cr_groups; i < cred->cr_ngroups; i++, gp++)
-		if (*gp == 0) {
-			if (amode & VEXEC)
-				mask |= S_IXGRP;
-			if (amode & VREAD)
-				mask |= S_IRGRP;
-			if (amode & VWRITE)
-				mask |= S_IWGRP;
-			return ((fmode & mask) == mask ?  0 : EACCES);
-		}
-
-        /* Otherwise, check everyone else. */
-	if (amode & VEXEC)
-		mask |= S_IXOTH;
-	if (amode & VREAD)
-		mask |= S_IROTH;
-	if (amode & VWRITE)
-		mask |= S_IWOTH;
-	return ((fmode & mask) == mask ? 0 : EACCES);
+	return (vaccess(fmode, (uid_t)0, (gid_t)0, ap->a_mode, ap->a_cred));
 }
 
 kernfs_getattr(ap)

@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_vnops.c,v 1.43 1994/12/13 20:15:47 mycroft Exp $	*/
+/*	$NetBSD: nfs_vnops.c,v 1.44 1994/12/24 16:44:33 ws Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -2378,38 +2378,14 @@ nfsspec_access(ap)
 	} */ *ap;
 {
 	register struct vattr *vap;
-	register gid_t *gp;
-	register struct ucred *cred = ap->a_cred;
-	mode_t mode = ap->a_mode;
 	struct vattr vattr;
-	register int i;
 	int error;
 
-	/*
-	 * If you're the super-user,
-	 * you always get access.
-	 */
-	if (cred->cr_uid == 0)
-		return (0);
 	vap = &vattr;
 	if (error = VOP_GETATTR(ap->a_vp, vap, cred, ap->a_p))
 		return (error);
-	/*
-	 * Access check is based on only one of owner, group, public.
-	 * If not owner, then check group. If not a member of the
-	 * group, then check public access.
-	 */
-	if (cred->cr_uid != vap->va_uid) {
-		mode >>= 3;
-		gp = cred->cr_groups;
-		for (i = 0; i < cred->cr_ngroups; i++, gp++)
-			if (vap->va_gid == *gp)
-				goto found;
-		mode >>= 3;
-found:
-		;
-	}
-	return ((vap->va_mode & mode) == mode ? 0 : EACCES);
+	return (vaccess(vap->va_mode, vap->va_uid, vap->va_guid,
+			ap->a_mode, ap->a_cred));
 }
 
 /*

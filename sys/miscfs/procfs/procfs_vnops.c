@@ -1,4 +1,4 @@
-/*	$NetBSD: procfs_vnops.c,v 1.29 1994/12/14 18:47:46 mycroft Exp $	*/
+/*	$NetBSD: procfs_vnops.c,v 1.30 1994/12/24 16:44:27 ws Exp $	*/
 
 /*
  * Copyright (c) 1993 Jan-Simon Pendry
@@ -513,10 +513,6 @@ procfs_setattr(ap)
 /*
  * implement access checking.
  *
- * something very similar to this code is duplicated
- * throughout the 4bsd kernel and should be moved
- * into kern/vfs_subr.c sometime.
- *
  * actually, the check for super-user is slightly
  * broken since it will allow read access to write-only
  * objects.  this doesn't cause any particular trouble
@@ -535,40 +531,12 @@ procfs_access(ap)
 	struct vattr vattr;
 	int error;
 
-	/*
-	 * If you're the super-user,
-	 * you always get access.
-	 */
-	if (ap->a_cred->cr_uid == 0)
-		return (0);
-
 	vap = &vattr;
 	if (error = VOP_GETATTR(ap->a_vp, vap, ap->a_cred, ap->a_p))
 		return (error);
 
-	/*
-	 * Access check is based on only one of owner, group, public.
-	 * If not owner, then check group. If not a member of the
-	 * group, then check public access.
-	 */
-	if (ap->a_cred->cr_uid != vap->va_uid) {
-		gid_t *gp;
-		int i;
-
-		ap->a_mode >>= 3;
-		gp = ap->a_cred->cr_groups;
-		for (i = 0; i < ap->a_cred->cr_ngroups; i++, gp++)
-			if (vap->va_gid == *gp)
-				goto found;
-		ap->a_mode >>= 3;
-found:
-		;
-	}
-
-	if ((vap->va_mode & ap->a_mode) == ap->a_mode)
-		return (0);
-
-	return (EACCES);
+	return (vaccess(vap->va_mode, vap->va_uid, vap->va_gid,
+			ap->a_mode, ap->a_cred));
 }
 
 /*
