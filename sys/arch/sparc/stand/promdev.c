@@ -1,4 +1,4 @@
-/*	$NetBSD: promdev.c,v 1.6 1994/11/20 20:54:59 deraadt Exp $ */
+/*	$NetBSD: promdev.c,v 1.7 1994/11/25 23:09:20 deraadt Exp $ */
 
 /*
  * Copyright (c) 1993 Paul Kranenburg
@@ -228,6 +228,7 @@ pv_putchar(c)
 		(*promvec->pv_putchar)(c);
 }
 
+void
 putchar(c)
 	int c;
 {
