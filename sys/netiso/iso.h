@@ -1,4 +1,4 @@
-/*	$NetBSD: iso.h,v 1.12 2000/06/26 16:20:01 kleink Exp $	*/
+/*	$NetBSD: iso.h,v 1.13 2000/07/28 12:13:34 kleink Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -69,7 +69,7 @@ SOFTWARE.
 
 #ifndef sa_family_t
 typedef __sa_family_t	sa_family_t;
-#define sa_family_t	sa_family_t
+#define sa_family_t	__sa_family_t
 #endif
 
 /*

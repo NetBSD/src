@@ -1,4 +1,4 @@
-/*	$NetBSD: if_dl.h,v 1.10 2000/06/26 15:59:20 kleink Exp $	*/
+/*	$NetBSD: if_dl.h,v 1.11 2000/07/28 12:13:32 kleink Exp $	*/
 
 /*
  * Copyright (c) 1990, 1993
@@ -60,7 +60,7 @@
 
 #ifndef sa_family_t
 typedef __sa_family_t	sa_family_t;
-#define sa_family_t	sa_family_t
+#define sa_family_t	__sa_family_t
 #endif
 
 /*
