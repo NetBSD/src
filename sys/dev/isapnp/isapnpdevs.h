@@ -1,10 +1,10 @@
-/*	$NetBSD: isapnpdevs.h,v 1.9 1998/11/12 14:09:20 drochner Exp $	*/
+/*	$NetBSD: isapnpdevs.h,v 1.10 1998/11/23 20:49:20 christos Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: isapnpdevs,v 1.9 1998/11/12 14:06:34 drochner Exp 
+ *	NetBSD: isapnpdevs,v 1.10 1998/11/23 20:47:51 christos Exp 
  */
 
 
@@ -52,6 +52,8 @@ struct isapnp_devinfo {
 	const char *const *devcompat;
 };
 
+/* Adaptec SCSI */
+extern const struct isapnp_devinfo isapnp_aha_devinfo;
 /* Adaptec SCSI */
 extern const struct isapnp_devinfo isapnp_aic_devinfo;
 /* National Semiconductor Serial */
