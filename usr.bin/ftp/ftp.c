@@ -1,4 +1,4 @@
-/*	$NetBSD: ftp.c,v 1.106 2000/07/31 00:56:07 lukem Exp $	*/
+/*	$NetBSD: ftp.c,v 1.107 2000/08/01 22:47:28 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1996-2000 The NetBSD Foundation, Inc.
@@ -103,7 +103,7 @@
 #if 0
 static char sccsid[] = "@(#)ftp.c	8.6 (Berkeley) 10/27/94";
 #else
-__RCSID("$NetBSD: ftp.c,v 1.106 2000/07/31 00:56:07 lukem Exp $");
+__RCSID("$NetBSD: ftp.c,v 1.107 2000/08/01 22:47:28 lukem Exp $");
 #endif
 #endif /* not lint */
 
@@ -151,12 +151,12 @@ struct sockinet {
 		struct sockaddr_in6 su_sin6;
 #endif
 	} si_su;
-#if !defined(BSD4_4) && !HAVE_SIN_LEN
+#if !HAVE_SOCKADDR_SA_LEN
 	int	si_len;
 #endif
 };
 
-#if !defined(BSD4_4) && !HAVE_SIN_LEN
+#if !HAVE_SOCKADDR_SA_LEN
 # define su_len		si_len
 #else
 # define su_len		si_su.su_sin.sin_len
@@ -729,7 +729,7 @@ sendrequest(const char *cmd, const char *local, const char *remote,
 			warn("local: %s", local);
 			goto cleanupsend;
 		}
-		if (command("REST " QUADF, (QUADT)restart_point) != CONTINUE)
+		if (command("REST " LLF, (LLT)restart_point) != CONTINUE)
 			goto cleanupsend;
 		lmode = "r+w";
 	}
@@ -1033,7 +1033,7 @@ recvrequest(const char *cmd, const char *local, const char *remote,
 	if (sigsetjmp(xferabort, 1))
 		goto abort;
 	if (is_retr && restart_point &&
-	    command("REST " QUADF, (QUADT) restart_point) != CONTINUE)
+	    command("REST " LLF, (LLT) restart_point) != CONTINUE)
 		goto cleanuprecv;
 	if (! EMPTYSTRING(remote)) {
 		if (command("%s %s", cmd, remote) != PRELIM)
@@ -1885,7 +1885,7 @@ proxtrans(const char *cmd, const char *local, const char *remote)
 		goto abort;
 	oldintr = xsignal(SIGINT, abortpt);
 	if ((restart_point &&
-	    (command("REST " QUADF, (QUADT) restart_point) != CONTINUE))
+	    (command("REST " LLF, (LLT) restart_point) != CONTINUE))
 	    || (command("%s %s", cmd, remote) != PRELIM)) {
 		(void)xsignal(SIGINT, oldintr);
 		pswitch(1);
@@ -1895,7 +1895,7 @@ proxtrans(const char *cmd, const char *local, const char *remote)
 	pswitch(1);
 	secndflag++;
 	if ((restart_point &&
-	    (command("REST " QUADF, (QUADT) restart_point) != CONTINUE))
+	    (command("REST " LLF, (LLT) restart_point) != CONTINUE))
 	    || (command("%s %s", cmd2, local) != PRELIM))
 		goto abort;
 	ptflag++;
@@ -2120,7 +2120,7 @@ ai_unmapped(struct addrinfo *ai)
 	sin.sin_port = sin6->sin6_port;
 
 	ai->ai_family = AF_INET;
-#if defined(BSD4_4) || HAVE_SIN_LEN
+#if HAVE_SOCKADDR_SA_LEN
 	sin.sin_len = len;
 #endif
 	memcpy(ai->ai_addr, &sin, len);
