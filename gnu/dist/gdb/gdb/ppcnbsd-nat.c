@@ -22,6 +22,8 @@
 #include <sys/types.h>
 #include <sys/ptrace.h>
 #include <machine/reg.h>
+#include <machine/frame.h>
+#include <machine/pcb.h>
 
 #include "defs.h"
 #include "inferior.h"
@@ -119,3 +121,39 @@ store_inferior_registers (int regno)
 	perror_with_name ("Couldn't set FP registers");
     }
 }
+
+#ifdef	FETCH_KCORE_REGISTERS
+/*
+ * Get registers from a kernel crash dump or live kernel.
+ * Called by kcore-nbsd.c:get_kcore_registers().
+ */
+void
+fetch_kcore_registers (pcb)
+     struct pcb *pcb;
+{
+  const struct gdbarch_tdep *tdep = gdbarch_tdep (current_gdbarch);
+  struct switchframe sf;
+  struct callframe cf;
+  int regno;
+
+  /*
+   * get the register values out of the sys pcb and
+   * store them where `read_register' will find them.
+   */
+  if (target_read_memory(pcb->pcb_sp, (char *)&sf, sizeof(sf)))
+    error("Cannot read switchframe.");
+  supply_register(2, (char *)&sf.fixreg2);
+  supply_register(tdep->ppc_cr_regnum, (char *)&sf.cr);
+  for (regno = 13; regno < 32; regno++)
+    supply_register(regno, (char *)&sf.fixreg[regno - 13]);
+  if (target_read_memory(sf.sp, (char *)&cf, sizeof(cf)))
+    error("Cannot read callframe.");
+  supply_register(30, (char *)&cf.r30);
+  supply_register(31, (char *)&cf.r31);
+  supply_register(1, (char *)&cf.sp);
+  if (target_read_memory(cf.sp, (char *)&cf, sizeof(cf)))
+    error("Cannot read switchframe.");
+  supply_register(tdep->ppc_lr_regnum, (char *)&cf.lr);
+  supply_register(PC_REGNUM, (char *)&cf.lr);
+}
+#endif	/* FETCH_KCORE_REGISTERS */
