@@ -1,4 +1,4 @@
-/* $NetBSD: machdep.c,v 1.16 2004/02/13 11:36:12 wiz Exp $ */
+/* $NetBSD: machdep.c,v 1.17 2004/03/16 21:20:06 nathanw Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -77,7 +77,7 @@
  */
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.16 2004/02/13 11:36:12 wiz Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.17 2004/03/16 21:20:06 nathanw Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -322,17 +322,12 @@ mach_init(int argc, char **argv, yamon_env_var *envp, u_long memsize)
 		/*
 		 * Assign a clock for the USB Host controller.
 		 */
-		volatile u_int32_t *scsreg;
+		volatile u_int32_t *scsreg, *auxpll;
 		u_int32_t	tmp;
 
 		scsreg = (volatile u_int32_t *)(MIPS_PHYS_TO_KSEG1(SYS_CLKSRC));
-#if 0
 		auxpll = (volatile u_int32_t *)(MIPS_PHYS_TO_KSEG1(SYS_AUXPLL));
 		*auxpll = 8;		/* 96Mhz */
-		tmp = *sfc0;
-		tmp |= SFC_FE0|SFC_FRDIV0;
-		*sfc0 = tmp;
-#endif
 		tmp = *scsreg;
 		tmp &= ~USBH_ALL;	/* clear all USBH bits in SYS_CLKSRC first */
 		tmp |= (SCS_DUH|SCS_CUH|SCS_MUH(SCS_MEx_AUX));	/* 48Mhz */
