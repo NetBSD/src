@@ -1,6 +1,6 @@
 #!/bin/sh -
 #
-#	$NetBSD: MAKEDEV,v 1.14.2.1 1997/11/20 08:38:17 mellon Exp $
+#	$NetBSD: MAKEDEV,v 1.14.2.2 1998/10/09 18:29:41 cgd Exp $
 #
 # Copyright (c) 1990 The Regents of the University of California.
 # All rights reserved.
@@ -109,6 +109,10 @@ floppy)
 	sh $0 tty00 cd0 ttye0
 	;;
 
+ramdisk)
+	sh $0 floppy md0
+	;;
+
 std)
 	rm -f console drum kmem mem reload null zero tty
 	rm -f klog stdin stdout stderr
@@ -209,12 +213,9 @@ sd*|vnd*|ccd*)
 	rm -f $name$unit? r$name$unit?
 	case $unit in
 	[0-9]|1[0-5])
-		mknod ${name}${unit}c	b $blk $(($unit * 8 + 2))
-		mknod r${name}${unit}c	c $chr $(($unit * 8 + 2))
-		if [ $name != cd -a $name != vnd ]
-		then
 		mknod ${name}${unit}a	b $blk $(($unit * 8 + 0))
 		mknod ${name}${unit}b	b $blk $(($unit * 8 + 1))
+		mknod ${name}${unit}c	b $blk $(($unit * 8 + 2))
 		mknod ${name}${unit}d	b $blk $(($unit * 8 + 3))
 		mknod ${name}${unit}e	b $blk $(($unit * 8 + 4))
 		mknod ${name}${unit}f	b $blk $(($unit * 8 + 5))
@@ -222,12 +223,12 @@ sd*|vnd*|ccd*)
 		mknod ${name}${unit}h	b $blk $(($unit * 8 + 7))
 		mknod r${name}${unit}a	c $chr $(($unit * 8 + 0))
 		mknod r${name}${unit}b	c $chr $(($unit * 8 + 1))
+		mknod r${name}${unit}c	c $chr $(($unit * 8 + 2))
 		mknod r${name}${unit}d	c $chr $(($unit * 8 + 3))
 		mknod r${name}${unit}e	c $chr $(($unit * 8 + 4))
 		mknod r${name}${unit}f	c $chr $(($unit * 8 + 5))
 		mknod r${name}${unit}g	c $chr $(($unit * 8 + 6))
 		mknod r${name}${unit}h	c $chr $(($unit * 8 + 7))
-		fi
 		chgrp operator $name$unit? r$name$unit?
 		chmod 640 $name$unit? r$name$unit?
 		;;
@@ -261,11 +262,15 @@ md*)
 	case $i in
 	md*) name=md;	unit=${i#md};	blk=8; chr=7;;
 	esac
-	rm -f $name$unit r$name$unit
-	mknod $name$unit	b $blk $(($unit * 8 +  0))
-	mknod r$name$unit	c $chr $((($unit + 16) * 8))
-	chgrp operator $name$unit r$name$unit
-	chmod 640 $name$unit r$name$unit
+	rm -f $name$unit? r$name$unit?
+	mknod $name${unit}a	b $blk $(($unit * 8))
+	mknod $name${unit}b	b $blk $(($unit * 8 +  1))
+	mknod $name${unit}c	b $blk $(($unit * 8 +  2))
+	mknod r$name${unit}a	c $chr $((($unit + 16) * 8))
+	mknod r$name${unit}b	c $chr $((($unit + 16) * 8 + 1))
+	mknod r$name${unit}c	c $chr $((($unit + 16) * 8 + 2))
+	chgrp operator $name$unit? r$name$unit?
+	chmod 640 $name$unit? r$name$unit?
 	;;
 
 ss*)
