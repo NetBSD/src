@@ -1,4 +1,4 @@
-/*	$NetBSD: jot.c,v 1.2 1994/11/14 20:27:37 jtc Exp $	*/
+/*	$NetBSD: jot.c,v 1.3 1994/12/02 20:29:43 pk Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -43,7 +43,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)jot.c	8.1 (Berkeley) 6/6/93";
 #endif
-static char rcsid[] = "$NetBSD: jot.c,v 1.2 1994/11/14 20:27:37 jtc Exp $";
+static char rcsid[] = "$NetBSD: jot.c,v 1.3 1994/12/02 20:29:43 pk Exp $";
 #endif /* not lint */
 
 /*
@@ -77,7 +77,7 @@ int	prec;
 int	dox;
 int	chardata;
 int	nofinalnl;
-char	*sepstring = "\n";
+char	sepstring[BUFSIZ] = "\n";
 char	format[BUFSIZ];
 
 void	error __P((char *, char *));
@@ -314,7 +314,7 @@ putdata(x, notlast)
 	register long	*dp = &d;
 
 	if (boring)				/* repeated word */
-		printf(format);
+		printf("%s", format);
 	else if (dox)				/* scalar */
 		printf(format, *dp);
 	else					/* real */
