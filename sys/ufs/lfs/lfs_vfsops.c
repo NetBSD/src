@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_vfsops.c,v 1.109 2003/03/21 06:16:55 perseant Exp $	*/
+/*	$NetBSD: lfs_vfsops.c,v 1.110 2003/03/21 06:26:37 perseant Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003 The NetBSD Foundation, Inc.
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_vfsops.c,v 1.109 2003/03/21 06:16:55 perseant Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_vfsops.c,v 1.110 2003/03/21 06:26:37 perseant Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_quota.h"
@@ -1956,7 +1956,7 @@ lfs_gop_write(struct vnode *vp, struct vm_page **pgs, int npages, int flags)
 			bp->b_dev = devvp->v_rdev;
 		}
 		VOP_BWRITE(bp);
-		while(lfs_gatherblock(sp, bp, NULL))
+		while (lfs_gatherblock(sp, bp, NULL))
 			;
 	}
 

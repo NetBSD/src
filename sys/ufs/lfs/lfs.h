@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs.h,v 1.59 2003/03/21 06:16:53 perseant Exp $	*/
+/*	$NetBSD: lfs.h,v 1.60 2003/03/21 06:26:36 perseant Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003 The NetBSD Foundation, Inc.
@@ -705,7 +705,7 @@ struct segsum {
 	    (daddr_t)0, (F)->lfs_bsize, NOCRED, &(BP)))		\
 		panic("lfs: ifile read");				\
 	(CP) = (CLEANERINFO *)(BP)->b_data;				\
-} while(0)
+} while (0)
 
 /* Synchronize the Ifile cleaner info with current avail and bfree */
 #define LFS_SYNC_CLEANERINFO(cip, fs, bp, w) do {		 \
@@ -768,7 +768,7 @@ struct segsum {
 		(IP) = (IFILE *)((IFILE_V1 *)(BP)->b_data + (IN) % (F)->lfs_ifpb); \
 	else								\
 		(IP) = (IFILE *)(BP)->b_data + (IN) % (F)->lfs_ifpb;	\
-} while(0)
+} while (0)
 
 /* Read in the block with a specific segment usage entry from the ifile. */
 #define	LFS_SEGENTRY(SP, F, IN, BP) do {				\
@@ -783,7 +783,7 @@ struct segsum {
 			((IN) & ((F)->lfs_sepb - 1)));			\
 	else								\
 		(SP) = (SEGUSE *)(BP)->b_data + ((IN) % (F)->lfs_sepb);	\
-} while(0)
+} while (0)
 
 #define LFS_WRITESEGENTRY(SP, F, IN, BP) do {				\
 	if ((SP)->su_nbytes == 0)					\
@@ -792,7 +792,7 @@ struct segsum {
 		(SP)->su_flags &= ~SEGUSE_EMPTY;			\
 	(F)->lfs_suflags[(F)->lfs_activesb][(IN)] = (SP)->su_flags;	\
 	LFS_BWRITE_LOG(BP);						\
-} while(0)
+} while (0)
 
 /* Determine if a buffer belongs to the ifile */
 #define IS_IFILE(bp)	(VTOI(bp->b_vp)->i_number == LFS_IFILE_INUM)

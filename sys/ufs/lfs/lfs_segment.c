@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_segment.c,v 1.114 2003/03/21 06:16:54 perseant Exp $	*/
+/*	$NetBSD: lfs_segment.c,v 1.115 2003/03/21 06:26:36 perseant Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003 The NetBSD Foundation, Inc.
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_segment.c,v 1.114 2003/03/21 06:16:54 perseant Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_segment.c,v 1.115 2003/03/21 06:26:36 perseant Exp $");
 
 #define ivndebug(vp,str) printf("ino %d: %s\n",VTOI(vp)->i_number,(str))
 
@@ -1189,7 +1189,7 @@ loop:	for (bp = LIST_FIRST(&vp->v_dirtyblkhd); bp; bp = nbp) {
 			", was 0x0 (or %" PRId64 ")\n",			\
 			(n), ip->i_number, lbn, ndaddr, daddr);		\
 	}								\
-} while(0)
+} while (0)
 #else
 # define DEBUG_OOFF(n)
 #endif
@@ -1605,7 +1605,7 @@ lfs_newclusterbuf(struct lfs *fs, struct vnode *vp, daddr_t addr, int n)
 	/* Get an empty buffer header, or maybe one with something on it */
 	s = splbio();
 	simple_lock(&bqueue_slock);
-	if((bp = bufqueues[BQ_EMPTY].tqh_first) != NULL) {
+	if ((bp = bufqueues[BQ_EMPTY].tqh_first) != NULL) {
 		simple_lock(&bp->b_interlock);
 		bremfree(bp);
 		/* clear out various other fields */
@@ -1938,7 +1938,7 @@ lfs_writeseg(struct lfs *fs, struct segment *sp)
 		 * Construct the cluster.
 		 */
 		++fs->lfs_iocount;
-		while(i && cbp->b_bcount < CHUNKSIZE) {
+		while (i && cbp->b_bcount < CHUNKSIZE) {
 			bp = *bpp;
 
 			if (bp->b_bcount > (CHUNKSIZE - cbp->b_bcount))
@@ -2166,7 +2166,7 @@ lfs_cluster_aiodone(struct buf *bp)
 	extern int locked_queue_count;
 	extern long locked_queue_bytes;
 
-	if(bp->b_flags & B_ERROR)
+	if (bp->b_flags & B_ERROR)
 		error = bp->b_error;
 
 	cl = (struct lfs_cluster *)bp->b_saveaddr;
@@ -2176,9 +2176,9 @@ lfs_cluster_aiodone(struct buf *bp)
 
 	cp = (char *)bp->b_data + cl->bufsize;
 	/* Put the pages back, and release the buffer */
-	while(cl->bufcount--) {
+	while (cl->bufcount--) {
 		tbp = cl->bpp[cl->bufcount];
-		if(error) {
+		if (error) {
 			tbp->b_flags |= B_ERROR;
 			tbp->b_error = error;
 		}
@@ -2197,10 +2197,10 @@ lfs_cluster_aiodone(struct buf *bp)
 
 		LFS_BCLEAN_LOG(fs, tbp);
 
-		if(!(tbp->b_flags & B_CALL)) {
+		if (!(tbp->b_flags & B_CALL)) {
 			bremfree(tbp);
 			s = splbio();
-			if(vp)
+			if (vp)
 				reassignbuf(tbp, vp);
 			splx(s);
 			tbp->b_flags |= B_ASYNC; /* for biodone */
