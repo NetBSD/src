@@ -1,4 +1,4 @@
-.\"	$NetBSDd:$
+.\"	$NetBSD: pci.4,v 1.2 1997/02/23 22:43:16 jonathan Exp $
 .\"
 .\"
 .\" Copyright (c) 1997 Jonathan Stone
@@ -58,7 +58,7 @@ section for your CPU for additional machine-dependent  drivers
 includes machine-independent PCI drivers, sorted by device type and
 driver name:
 .Pp
-SCSI adaptors:
+.Ss SCSI adaptors
 .Bl -tag -width speaker -offset indent -compact
 .It ahc
 Adaptec 2940 and 3940 PCI SCSI adapter boards.
@@ -72,7 +72,7 @@ adaptors
 .\"
 .\"
 .Pp
-Network interfaces:
+.Ss Network interfaces
 .Bl -tag -width speaker -offset indent -compact
 .It de
 DEC  de-500 Ethernet interfaces. Also SMC and Znyx OEM cards, including
@@ -93,7 +93,7 @@ PCNet-PCI Ethernet interfaces.
 .\"
 .\"
 .\"
-Serial interface cards:
+.Ss Serial interface cards
 .Bl -tag -width speaker -offset indent -compact
 .It cy
 Cyclades Cyclom-4Y, -8Y, and -16Y asynchronous serial communications
@@ -128,4 +128,4 @@ The
 .Nm pci
 introduction
 appeared in
-.Nx 1.2 .
+.Nx 1.3 .
