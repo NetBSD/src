@@ -1,4 +1,4 @@
-/*	$NetBSD: proc.h,v 1.84.2.2 2000/11/22 16:06:39 bouyer Exp $	*/
+/*	$NetBSD: proc.h,v 1.84.2.3 2000/12/08 09:19:43 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1986, 1989, 1991, 1993
@@ -83,9 +83,11 @@ struct	pgrp {
  */
 struct exec_package;
 struct ps_strings;
+struct trapframe;
 
 struct	emul {
 	char	e_name[8];		/* Symbolic name */
+	const char *e_path;		/* Extra emulation path (NULL if none)*/
 	int	*e_errno;		/* Errno array */
 					/* Signal sending function */
 	void	(*e_sendsig) __P((sig_t, int, sigset_t *, u_long));
@@ -96,12 +98,21 @@ struct	emul {
 	char	*e_sigcode;		/* Start of sigcode */
 	char	*e_esigcode;		/* End of sigcode */
 
-	/* Per-process hooks */
+					/* Per-process hooks */
 	void	(*e_proc_exec) __P((struct proc *, struct exec_package *));
 	void	(*e_proc_fork) __P((struct proc *p, struct proc *parent));
 	void	(*e_proc_exit) __P((struct proc *));
+
+	int	e_flags;		/* Miscellaneous flags */
+					/* Syscall handling function */
+	void	(*e_syscall) __P((struct trapframe *));
+
 };
 
+#define EMUL_HAS_SYS___syscall	0x001	/* has SYS___syscall */
+#define EMUL_GETPID_PASS_PPID	0x002	/* pass parent pid in getpid() */
+#define EMUL_GETID_PASS_EID	0x003	/* pass also effective id in
+					 * get[ug]id() */
 /*
  * Description of a process.
  *

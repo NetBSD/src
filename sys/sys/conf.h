@@ -1,4 +1,4 @@
-/*	$NetBSD: conf.h,v 1.68.2.2 2000/11/22 16:06:37 bouyer Exp $	*/
+/*	$NetBSD: conf.h,v 1.68.2.3 2000/12/08 09:19:42 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -488,10 +488,10 @@ bdev_decl(uk);
 cdev_decl(uk);
 
 /*
- * [bc]dev_decl()s for logical storage units.
+ * [bc]dev_decl()s for logical disks.
  */
-bdev_decl(lsu);
-cdev_decl(lsu);
+bdev_decl(ld);
+cdev_decl(ld);
 
 /*
  * cdev_decl()s for Brooktree 8[47][89] based TV cards.

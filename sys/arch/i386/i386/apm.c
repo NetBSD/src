@@ -1,4 +1,4 @@
-/*	$NetBSD: apm.c,v 1.41.2.2 2000/11/22 16:00:18 bouyer Exp $ */
+/*	$NetBSD: apm.c,v 1.41.2.3 2000/12/08 09:26:35 bouyer Exp $ */
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -401,6 +401,8 @@ apm_suspend(sc)
 	}
 	sc->sc_power_state = PWR_SUSPEND;
 
+	dopowerhooks(PWR_SOFTSUSPEND);
+
 	apm_spl = splhigh();
 
 	dopowerhooks(PWR_SUSPEND);
@@ -422,6 +424,8 @@ apm_standby(sc)
 		return;
 	}
 	sc->sc_power_state = PWR_STANDBY;
+
+	dopowerhooks(PWR_SOFTSTANDBY);
 
 	apm_spl = splhigh();
 
@@ -455,6 +459,8 @@ apm_resume(sc, regs)
 	dopowerhooks(PWR_RESUME);
 
 	splx(apm_spl);
+
+	dopowerhooks(PWR_SOFTRESUME);
 
 	apm_record_event(sc, regs->BX);
 }

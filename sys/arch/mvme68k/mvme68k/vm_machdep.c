@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_machdep.c,v 1.25.2.2 2000/11/22 16:01:00 bouyer Exp $	*/
+/*	$NetBSD: vm_machdep.c,v 1.25.2.3 2000/12/08 09:28:39 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -61,7 +61,6 @@
 #include <machine/reg.h>
 #include <m68k/cacheops.h>
 
-void setredzone __P((pt_entry_t *, caddr_t));
 
 /*
  * Finish a fork operation, with process p2 nearly set up.
@@ -243,103 +242,6 @@ pagemove(from, to, size)
 		to += PAGE_SIZE;
 		size -= PAGE_SIZE;
 	}
-}
-
-/*
- * Map `size' bytes of physical memory starting at `paddr' into
- * kernel VA space at `vaddr'.  Read/write and cache-inhibit status
- * are specified by `prot'.
- */ 
-void
-physaccess(vaddr, paddr, size, prot)
-	caddr_t vaddr, paddr;
-	int size, prot;
-{
-	pt_entry_t *pte;
-	u_int page;
-
-	pte = kvtopte(vaddr);
-	page = (u_int)paddr & PG_FRAME;
-	for (size = btoc(size); size; size--) {
-		*pte++ = PG_V | prot | page;
-		page += NBPG;
-	}
-	TBIAS();
-}
-
-void
-physunaccess(vaddr, size)
-	caddr_t vaddr;
-	int size;
-{
-	pt_entry_t *pte;
-
-	pte = kvtopte(vaddr);
-	for (size = btoc(size); size; size--)
-		*pte++ = PG_NV;
-	TBIAS();
-}
-
-/*
- * Allocate/deallocate a cache-inhibited range of kernel virtual address
- * space mapping the indicated physical range [pa - pa+size].
- */
-void *
-iomap(paddr, size)
-	u_long paddr;
-	size_t size;
-{
-	u_long pa, off;
-	vaddr_t va, rval;
-
-	off = paddr & PGOFSET;
-	pa = m68k_trunc_page(paddr);
-	size += off;
-	size = m68k_round_page(size);
-
-	/* Get some kernel virtual space. */
-	va = uvm_km_alloc(kernel_map, size);
-	if (va == 0)
-		return (NULL);
-	rval = va + off;
-
-	/* Map the PA range. */
-	physaccess((caddr_t)va, (caddr_t)pa, size, PG_RW|PG_CI);
-
-	return ((void *)rval);
-}
-
-void
-iounmap(kva, size)
-	void *kva;
-	size_t size;
-{
-	vaddr_t va;
-
-	va = m68k_trunc_page((vaddr_t)kva);
-	size = m68k_round_page(size);
-
-	physunaccess((caddr_t)va, size);
-	uvm_km_free(kernel_map, va, size);
-}
-
-/*
- * Set a red zone in the kernel stack after the u. area.
- * We don't support a redzone right now.  It really isn't clear
- * that it is a good idea since, if the kernel stack were to roll
- * into a write protected page, the processor would lock up (since
- * it cannot create an exception frame) and we would get no useful
- * post-mortem info.  Currently, under the DEBUG option, we just
- * check at every clock interrupt to see if the current k-stack has
- * gone too far (i.e. into the "redzone" page) and if so, panic.
- * Look at _lev6intr in locore.s for more details.
- */
-/*ARGSUSED*/
-void
-setredzone(pte, vaddr)
-	pt_entry_t *pte;
-	caddr_t vaddr;
-{
 }
 
 /*

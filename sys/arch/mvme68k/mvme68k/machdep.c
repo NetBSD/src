@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.59.2.2 2000/11/22 16:00:56 bouyer Exp $	*/
+/*	$NetBSD: machdep.c,v 1.59.2.3 2000/12/08 09:28:38 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -69,6 +69,10 @@
 #include <sys/kcore.h>
 #include <sys/vnode.h>
 #include <sys/syscallargs.h>
+
+#if defined(DDB) && defined(__ELF__)
+#include <sys/exec_elf.h>
+#endif
 
 #include <uvm/uvm_extern.h>
 
@@ -278,18 +282,14 @@ mvme68k_init()
 void
 mvme147_init()
 {
-	bus_space_tag_t bt = MVME68K_INTIO_BUS_SPACE;
+	bus_space_tag_t bt = &_mainbus_space_tag;
 	bus_space_handle_t bh;
-
-	/*
-	 * Set up the correct bus dma map sync function for the '147
-	 */
-	_bus_dmamap_sync = _bus_dmamap_sync_030;
 
 	/*
 	 * Set up a temporary mapping to the PCC's registers
 	 */
-	bus_space_map(bt, MAINBUS_PCC_OFFSET + PCC_REG_OFF, PCCREG_SIZE, 0, &bh);
+	bus_space_map(bt, intiobase_phys + MAINBUS_PCC_OFFSET + PCC_REG_OFF,
+	    PCCREG_SIZE, 0, &bh);
 
 	/*
 	 * calibrate delay() using the 6.25 usec counter.
@@ -326,18 +326,13 @@ mvme147_init()
 void
 mvme1xx_init()
 {
-	bus_space_tag_t bt = MVME68K_INTIO_BUS_SPACE;
+	bus_space_tag_t bt = &_mainbus_space_tag;
 	bus_space_handle_t bh;
-
-	/*
-	 * Set up the correct bus dma map sync function
-	 */
-	_bus_dmamap_sync = _bus_dmamap_sync_0460;
 
 	/*
 	 * Set up a temporary mapping to the PCCChip2's registers
 	 */
-	bus_space_map(bt, MAINBUS_PCCTWO_OFFSET + PCCTWO_REG_OFF,
+	bus_space_map(bt, intiobase_phys + MAINBUS_PCCTWO_OFFSET + PCCTWO_REG_OFF,
 	    PCC2REG_SIZE, 0, &bh);
 
 	bus_space_write_1(bt, bh, PCC2REG_TIMER1_ICSR, 0);
@@ -379,7 +374,12 @@ consinit()
 		extern int end;
 		extern int *esym;
 
+#ifndef __ELF__
 		ddb_init(*(int *)&end, ((int *)&end) + 1, esym);
+#else
+		ddb_init((int)esym - (int)&end - sizeof(Elf32_Ehdr),
+		    (void *)&end, esym);
+#endif
 	}
 	if (boothowto & RB_KDB)
 		Debugger();
@@ -1141,46 +1141,6 @@ straytrap(pc, evec)
 {
 	printf("unexpected trap (vector offset %x) from %x\n",
 	       evec & 0xFFF, pc);
-}
-
-int	*nofault;
-
-int
-badaddr(addr, nbytes)
-	caddr_t addr;
-	int nbytes;
-{
-	int i;
-	label_t faultbuf;
-
-#ifdef lint
-	i = *addr; if (i) return (0);
-#endif
-
-	nofault = (int *) &faultbuf;
-	if (setjmp((label_t *)nofault)) {
-		nofault = (int *) 0;
-		return(1);
-	}
-
-	switch (nbytes) {
-	case 1:
-		i = *(volatile char *)addr;
-		break;
-
-	case 2:
-		i = *(volatile short *)addr;
-		break;
-
-	case 4:
-		i = *(volatile int *)addr;
-		break;
-
-	default:
-		panic("badaddr: bad request");
-	}
-	nofault = (int *) 0;
-	return (0);
 }
 
 /* XXX wrapper for locore.s; used only my level 7 autovector */

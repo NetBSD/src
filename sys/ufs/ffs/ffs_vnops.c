@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_vnops.c,v 1.19.2.1 2000/11/20 18:11:46 bouyer Exp $	*/
+/*	$NetBSD: ffs_vnops.c,v 1.19.2.2 2000/12/08 09:20:12 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -108,12 +108,16 @@ struct vnodeopv_entry_desc ffs_vnodeop_entries[] = {
 	{ &vop_blkatoff_desc, ffs_blkatoff },		/* blkatoff */
 	{ &vop_valloc_desc, ffs_valloc },		/* valloc */
 	{ &vop_balloc_desc, ffs_balloc },		/* balloc */
+	{ &vop_ballocn_desc, ffs_ballocn },		/* balloc */
 	{ &vop_reallocblks_desc, ffs_reallocblks },	/* reallocblks */
 	{ &vop_vfree_desc, ffs_vfree },			/* vfree */
 	{ &vop_truncate_desc, ffs_truncate },		/* truncate */
 	{ &vop_update_desc, ffs_update },		/* update */
 	{ &vop_bwrite_desc, vn_bwrite },		/* bwrite */
-	{ (struct vnodeop_desc*)NULL, (int(*) __P((void*)))NULL }
+	{ &vop_getpages_desc, genfs_getpages },		/* getpages */
+	{ &vop_putpages_desc, genfs_putpages },		/* putpages */
+	{ &vop_size_desc, ffs_size },			/* size */
+	{ NULL, NULL }
 };
 struct vnodeopv_desc ffs_vnodeop_opv_desc =
 	{ &ffs_vnodeop_p, ffs_vnodeop_entries };
@@ -165,7 +169,7 @@ struct vnodeopv_entry_desc ffs_specop_entries[] = {
 	{ &vop_truncate_desc, spec_truncate },		/* truncate */
 	{ &vop_update_desc, ffs_update },		/* update */
 	{ &vop_bwrite_desc, vn_bwrite },		/* bwrite */
-	{ (struct vnodeop_desc*)NULL, (int(*) __P((void *)))NULL }
+	{ NULL, NULL }
 };
 struct vnodeopv_desc ffs_specop_opv_desc =
 	{ &ffs_specop_p, ffs_specop_entries };
@@ -217,7 +221,7 @@ struct vnodeopv_entry_desc ffs_fifoop_entries[] = {
 	{ &vop_truncate_desc, fifo_truncate },		/* truncate */
 	{ &vop_update_desc, ffs_update },		/* update */
 	{ &vop_bwrite_desc, vn_bwrite },		/* bwrite */
-	{ (struct vnodeop_desc*)NULL, (int(*) __P((void *)))NULL }
+	{ NULL, NULL }
 };
 struct vnodeopv_desc ffs_fifoop_opv_desc =
 	{ &ffs_fifoop_p, ffs_fifoop_entries };
@@ -239,7 +243,7 @@ ffs_fsync(v)
 		off_t offhi;
 		struct proc *a_p;
 	} */ *ap = v;
-	struct buf *bp, *nbp, *ibp;
+	struct buf *bp;
 	int s, num, error, i;
 	struct indir ia[NIADDR + 1];
 	int bsize;
@@ -260,38 +264,32 @@ ffs_fsync(v)
 	if (ap->a_offhi % bsize != 0)
 		blk_high++;
 
-	/*
-	 * First, flush all data blocks in range.
-	 */
-loop:
 	s = splbio();
-	for (bp = LIST_FIRST(&vp->v_dirtyblkhd); bp; bp = nbp) {
-		nbp = LIST_NEXT(bp, b_vnbufs);
-		if ((bp->b_flags & B_BUSY))
-			continue;
-		if (bp->b_lblkno < blk_low || bp->b_lblkno > blk_high)
-			continue;
-		bp->b_flags |= B_BUSY | B_VFLUSH;
-		splx(s);
-		bawrite(bp);
-		goto loop;
-	}
 
 	/*
-	 * Then, flush possibly unwritten indirect blocks. Without softdeps,
-	 * these should be the only ones left.
+	 * First, flush all pages in range.
 	 */
+
+	simple_lock(&vp->v_uvm.u_obj.vmobjlock);
+	(vp->v_uvm.u_obj.pgops->pgo_flush)(&vp->v_uvm.u_obj,
+	    ap->a_offlo, ap->a_offhi - ap->a_offlo, PGO_CLEANIT|PGO_SYNCIO);
+	simple_unlock(&vp->v_uvm.u_obj.vmobjlock);
+
+	/*
+	 * Then, flush indirect blocks.
+	 */
+
 	if (!(ap->a_flags & FSYNC_DATAONLY) && blk_high >= NDADDR) {
 		error = ufs_getlbns(vp, blk_high, ia, &num);
-		if (error != 0)
+		if (error)
 			return error;
 		for (i = 0; i < num; i++) {
-			ibp = incore(vp, ia[i].in_lbn);
-			if (ibp != NULL && !(ibp->b_flags & B_BUSY) &&
-			    (ibp->b_flags & B_DELWRI)) {
-				ibp->b_flags |= B_BUSY | B_VFLUSH;
+			bp = incore(vp, ia[i].in_lbn);
+			if (bp != NULL && !(bp->b_flags & B_BUSY) &&
+			    (bp->b_flags & B_DELWRI)) {
+				bp->b_flags |= B_BUSY | B_VFLUSH;
 				splx(s);
-				bawrite(ibp);
+				bawrite(bp);
 				s = splbio();
 			}
 		}
@@ -300,11 +298,9 @@ loop:
 	if (ap->a_flags & FSYNC_WAIT) {
 		while (vp->v_numoutput > 0) {
 			vp->v_flag |= VBWAIT;
-			tsleep((caddr_t)&vp->v_numoutput, PRIBIO + 1,
-			    "fsync_range", 0);
+			tsleep(&vp->v_numoutput, PRIBIO + 1, "fsync_range", 0);
 		}
 	}
-
 	splx(s);
 
 	return (VOP_UPDATE(vp, NULL, NULL,
@@ -330,23 +326,33 @@ ffs_full_fsync(v)
 	struct vnode *vp = ap->a_vp;
 	struct buf *bp, *nbp;
 	int s, error, passes, skipmeta;
+	struct uvm_object *uobj;
 
 	if (vp->v_type == VBLK &&
 	    vp->v_specmountpoint != NULL &&
 	    (vp->v_specmountpoint->mnt_flag & MNT_SOFTDEP))
 		softdep_fsync_mountdev(vp);
 
-	/* 
-	 * Flush all dirty buffers associated with a vnode
+	/*
+	 * Flush all dirty data associated with a vnode.
 	 */
+
+	if (vp->v_type == VREG) {
+		uobj = &vp->v_uvm.u_obj;
+		simple_lock(&uobj->vmobjlock);
+		(uobj->pgops->pgo_flush)(uobj, 0, 0, PGO_ALLPAGES|PGO_CLEANIT|
+		    ((ap->a_flags & FSYNC_WAIT) ? PGO_SYNCIO : 0));
+		simple_unlock(&uobj->vmobjlock);
+	}
+
 	passes = NIADDR + 1;
 	skipmeta = 0;
 	if (ap->a_flags & (FSYNC_DATAONLY|FSYNC_WAIT))
 		skipmeta = 1;
 	s = splbio();
+
 loop:
-	for (bp = LIST_FIRST(&vp->v_dirtyblkhd); bp;
-	     bp = LIST_NEXT(bp, b_vnbufs))
+	LIST_FOREACH(bp, &vp->v_dirtyblkhd, b_vnbufs)
 		bp->b_flags &= ~B_SCANNED;
 	for (bp = LIST_FIRST(&vp->v_dirtyblkhd); bp; bp = nbp) {
 		nbp = LIST_NEXT(bp, b_vnbufs);
@@ -444,4 +450,32 @@ ffs_reclaim(v)
 	pool_put(&ffs_inode_pool, vp->v_data);
 	vp->v_data = NULL;
 	return (0);
+}
+
+/*
+ * Return the last logical file offset that should be written for this file
+ * if we're doing a write that ends at "size".
+ */
+int
+ffs_size(v)
+	void *v;
+{
+	struct vop_size_args /* {
+		struct vnode *a_vp;
+		off_t a_size;
+		off_t *a_eobp;
+	} */ *ap = v;
+	struct inode *ip = VTOI(ap->a_vp);
+	struct fs *fs = ip->i_fs;
+	ufs_lbn_t olbn, nlbn;
+
+	olbn = lblkno(fs, ip->i_ffs_size);
+	nlbn = lblkno(fs, ap->a_size);
+
+	if (nlbn < NDADDR && olbn <= nlbn) {
+		*ap->a_eobp = fragroundup(fs, ap->a_size);
+	} else {
+		*ap->a_eobp = blkroundup(fs, ap->a_size);
+	}
+	return 0;
 }

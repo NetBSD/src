@@ -1,4 +1,4 @@
-/*	$NetBSD: bootxx.c,v 1.2.14.1 2000/11/20 20:15:29 bouyer Exp $ */
+/*	$NetBSD: bootxx.c,v 1.2.14.2 2000/12/08 09:28:41 bouyer Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -49,12 +49,14 @@
 #include <sys/param.h>
 #include <sys/time.h>
 #include <sys/exec.h>
+#include <sys/exec_elf.h>
 #include <machine/prom.h>
 
 #include "stand.h"
 #include "libsa.h"
+#include "bootxx.h"
 
-int copyboot __P((struct open_file *, char *));
+int copyboot __P((struct open_file *, u_long *));
 void main __P((void));
 
 /*
@@ -63,18 +65,9 @@ void main __P((void));
 #define LOADADDR	0x11000 /* where to load level 2 bootstrap */
 				/* (l2 must relocate itself) */
 
-/* This determines the largest boot program we can load. */
-#define MAXBLOCKNUM	64
-
-/*
- * These three names are known by installboot.
- * The block_table contains starting block numbers,
- * in terms of 512-byte blocks.  Each non-zero value
- * will result in a read of block_size bytes.
- */
-int     	block_size = 512;	/* default */
-int     	block_count = MAXBLOCKNUM;	/* length of table */
-daddr_t 	block_table[MAXBLOCKNUM] = { 0 };
+extern int     	block_size;
+extern int     	block_count;	/* length of table */
+extern daddr_t 	block_table[];
 
 extern		char bootprog_name[], bootprog_rev[];
 
@@ -82,7 +75,8 @@ void
 main()
 {
 	struct open_file	f;
-	char	*addr;
+	u_long	addr;
+	char *foo;
 	int error;
 
 	printf("Boot: bug device: ctrl=%d, dev=%d\n", 
@@ -91,16 +85,16 @@ main()
 		bootprog_name, bootprog_rev);
 
 	f.f_flags = F_RAW;
-	if (devopen(&f, 0, &addr)) {
+	if (devopen(&f, 0, &foo)) {
 		printf("bootxx: open failed\n");
 		_rtt();
 	}
 
-	addr = (char*)LOADADDR;
-	error = copyboot(&f, addr);
+	addr = LOADADDR;
+	error = copyboot(&f, &addr);
 	f.f_dev->dv_close(&f);
 	if (!error)
-		bugexec((void (*)__P((void)))addr);
+		bugexec((void *)addr);
 
 	/* copyboot had a problem... */
 	_rtt();
@@ -109,13 +103,16 @@ main()
 int
 copyboot(fp, addr)
 	struct open_file	*fp;
-	char			*addr;
+	u_long			*addr;
 {
 	int	n, i, blknum;
-	struct exec *x;
+	char	*laddr = (char *) *addr;
+	union boothead {
+		struct exec ah;
+		Elf32_Ehdr eh;
+	} *x;
 
-	addr -= sizeof(struct exec); /* assume OMAGIC, verify below */
-	x = (struct exec *)addr;
+	x = (union boothead *)laddr;
 
 	if (!block_count) {
 		printf("bootxx: no data!?!\n");
@@ -131,7 +128,7 @@ copyboot(fp, addr)
 		printf("bootxx: read block # %d = %d\n", i, blknum);
 #endif
 		if ((fp->f_dev->dv_strategy)(fp->f_devdata, F_READ,
-					   blknum, block_size, addr, &n))
+					   blknum, block_size, laddr, &n))
 		{
 			printf("bootxx: read failed\n");
 			return -1;
@@ -140,13 +137,19 @@ copyboot(fp, addr)
 			printf("bootxx: short read\n");
 			return -1;
 		}
-		addr += block_size;
+		laddr += block_size;
 	}
 
-	if (N_GETMAGIC(*x) != OMAGIC) {
-		printf("bootxx: secondary bootstrap isn't in OMAGIC format\n");
+	if (N_GETMAGIC(x->ah) == OMAGIC)
+		*addr += sizeof(x->ah);
+	else
+	if (memcmp(x->eh.e_ident, ELFMAG, SELFMAG) == 0) {
+		Elf32_Phdr *ep = (Elf32_Phdr *)(*addr + x->eh.e_phoff);
+		*addr += ep->p_offset;
+	} else {
+		printf("bootxx: secondary bootstrap isn't an executable\n");
 		return(-1);
 	}
 
-	return 0;
+	return (0);
 }

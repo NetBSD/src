@@ -1,4 +1,4 @@
-/* $NetBSD: disksubr.c,v 1.10.2.3 2000/11/22 16:00:31 bouyer Exp $ */
+/* $NetBSD: disksubr.c,v 1.10.2.4 2000/12/08 09:28:14 bouyer Exp $ */
 
 /*
  * Copyright (c) 1994, 1995 Gordon W. Ross
@@ -80,13 +80,16 @@
  * It is found that LUNA Mach2.5 has BSD label embedded at offset 64
  * retaining UniOS/ISI label at the end of label block.  LUNA Mach
  * manipulates BSD disklabel in the same manner as 4.4BSD.  It's
- * uncertain LUNA Mach can create a disklabel on fresh disks;
- * writedisklabel fails when no BSD label is found.
+ * uncertain LUNA Mach can create a disklabel on fresh disks since
+ * Mach writedisklabel logic seems to fail when no BSD label is found.
  *
- * NetBSD/luna68k (1) creates UniOS/ISI label with BSD label
- * embedded at offset 64, (2) reads BSD label if found, (3) falls
- * back to reading UniOS/ISI label when no BSD label is found.  Plus,
- * (4) reads SunOS label if found in place of UniOS/ISI label.
+ * Kernel handles disklabel in this way;
+ *	- searchs BSD label at offset 64
+ *	- if not found, searchs UniOS/ISI label at the end of block
+ *	- kernel can distinguish whether it was SunOS label or UniOS/ISI
+ *	  label and understand both
+ *	- kernel writes UniOS/ISI label combined with BSD label to update
+ *	  the label block
  */
 
 #if LABELSECTOR != 0

@@ -1,4 +1,4 @@
-/*	$NetBSD: mbuf.h,v 1.46.2.2 2000/11/22 16:06:38 bouyer Exp $	*/
+/*	$NetBSD: mbuf.h,v 1.46.2.3 2000/12/08 09:19:43 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1999 The NetBSD Foundation, Inc.
@@ -92,11 +92,6 @@
 #define	MLEN		(MSIZE - sizeof(struct m_hdr))	/* normal data len */
 #define	MHLEN		(MLEN - sizeof(struct pkthdr))	/* data len w/pkthdr */
 
-/*
- * NOTE: MINCLSIZE is changed to MHLEN + 1, to avoid allocating chained
- * non-external mbufs in the driver.  This has no impact on performance
- * seen from the packet statistics, and avoid header pullups in network code.
- */
 #define	MINCLSIZE	(MHLEN+MLEN+1)	/* smallest amount to put in cluster */
 #define	M_MAXCOMPRESS	(MHLEN / 2)	/* max amount to copy for compression */
 

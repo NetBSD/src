@@ -1,4 +1,4 @@
-/*	$NetBSD: bus_space.c,v 1.3.2.3 2000/11/22 16:00:54 bouyer Exp $	*/
+/*	$NetBSD: bus_space.c,v 1.3.2.4 2000/12/08 09:28:37 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
@@ -47,15 +47,31 @@
 
 #include <machine/cpu.h>
 #include <machine/pte.h>
-#define _MVME68K_BUS_DMA_PRIVATE	/* For _bus_dmamem_map/_bus_dmamem_unmap */
+#define _MVME68K_BUS_DMA_PRIVATE    /* For _bus_dmamem_map/_bus_dmamem_unmap */
+#define _MVME68K_BUS_SPACE_PRIVATE
 #include <machine/bus.h>
 #undef _MVME68K_BUS_DMA_PRIVATE
+#undef _MVME68K_BUS_SPACE_PRIVATE
+
+static	void	peek1(void *, void *);
+static	void	peek2(void *, void *);
+static	void	peek4(void *, void *);
+static	void	poke1(void *, u_int);
+static	void	poke2(void *, u_int);
+static	void	poke4(void *, u_int);
+static	int	do_peek(void (*)(void *, void *), void *, void *);
+static	int	do_poke(void (*)(void *, u_int), void *, u_int);
+
+/*
+ * Used in locore.s/trap.c to determine if faults are being trapped.
+ */
+label_t *nofault;
 
 
 /* ARGSUSED */
 int
-bus_space_map(bust, addr, size, flags, bushp)
-	bus_space_tag_t bust;
+_bus_space_map(cookie, addr, size, flags, bushp)
+	void *cookie;
 	bus_addr_t addr;
 	bus_size_t size;
 	int flags;
@@ -63,31 +79,30 @@ bus_space_map(bust, addr, size, flags, bushp)
 {
 	bus_dma_segment_t seg;
 	caddr_t va;
-	int rv;
 
-	if ( bust == MVME68K_INTIO_BUS_SPACE ) {
+	if (addr >= intiobase_phys && addr < intiotop_phys) {
+#ifdef DEBUG
+		if ((addr + size) >= intiotop_phys)
+			panic("mvme68k_bus_space_map: Invalid INTIO range!");
+#endif
 		/*
 		 * Intio space is direct-mapped in pmap_bootstrap(); just
 		 * do the translation.
 		 */
-		if ( &(intiobase[addr + size]) >= intiolimit )
-			return (EINVAL);
-
+		addr -= intiobase_phys;
 		*bushp = (bus_space_handle_t) &(intiobase[addr]);
 		return (0);
 	}
 
-	if ( bust != MVME68K_VME_BUS_SPACE )
-		panic("bus_space_map: bad space tag");
-
-	seg._ds_cpuaddr = m68k_trunc_page(addr);
+	/*
+	 * Otherwise, set up a VM mapping for the requested address range
+	 */
+	seg.ds_addr = seg._ds_cpuaddr = m68k_trunc_page(addr);
 	seg.ds_len = m68k_round_page(size);
 
-	rv = _bus_dmamem_map(NULL, &seg, 1, seg.ds_len, &va,
-	    flags | BUS_DMA_COHERENT);
-
-	if ( rv != 0 )
-		return rv;
+	if (_bus_dmamem_map(NULL, &seg, 1, seg.ds_len, &va,
+	    flags | BUS_DMA_COHERENT))
+		return EIO;
 
 	/*
 	 * The handle is really the virtual address we just mapped
@@ -97,25 +112,188 @@ bus_space_map(bust, addr, size, flags, bushp)
 	return (0);
 }
 
+/* ARGSUSED */
 void
-bus_space_unmap(bust, bush, size)
-	bus_space_tag_t bust;
+_bus_space_unmap(cookie, bush, size)
+	void *cookie;
 	bus_space_handle_t bush;
 	bus_size_t size;
 {
-	if ( bust == MVME68K_INTIO_BUS_SPACE ) {
-		/*
-		 * Intio space is direct-mapped in pmap_bootstrap(); nothing
-		 * to do
-		 */
+	/* Nothing to do for INTIO space */
+	if ((char *)bush >= intiobase && (char *)bush < intiolimit)
 		return;
-	}
-
-	if ( bust != MVME68K_VME_BUS_SPACE )
-		panic("bus_space_unmap: bad space tag");
 
 	bush = m68k_trunc_page(bush);
 	size = m68k_round_page(size);
 
 	_bus_dmamem_unmap(NULL, (caddr_t) bush, size);
+}
+
+/* ARGSUSED */
+int
+_bus_space_peek_1(cookie, bush, offset, valuep)
+	void *cookie;
+	bus_space_handle_t bush;
+	bus_size_t offset;
+	u_int8_t *valuep;
+{
+	u_int8_t v;
+
+	if (valuep == NULL)
+		valuep = &v;
+
+	return (do_peek(&peek1, (void *)(bush + offset), (void *)valuep));
+}
+
+/* ARGSUSED */
+int
+_bus_space_peek_2(cookie, bush, offset, valuep)
+	void *cookie;
+	bus_space_handle_t bush;
+	bus_size_t offset;
+	u_int16_t *valuep;
+{
+	u_int16_t v;
+
+	if (valuep == NULL)
+		valuep = &v;
+
+	return (do_peek(&peek2, (void *)(bush + offset), (void *)valuep));
+}
+
+/* ARGSUSED */
+int
+_bus_space_peek_4(cookie, bush, offset, valuep)
+	void *cookie;
+	bus_space_handle_t bush;
+	bus_size_t offset;
+	u_int32_t *valuep;
+{
+	u_int32_t v;
+
+	if (valuep == NULL)
+		valuep = &v;
+
+	return (do_peek(&peek4, (void *)(bush + offset), (void *)valuep));
+}
+
+/* ARGSUSED */
+int
+_bus_space_poke_1(cookie, bush, offset, value)
+	void *cookie;
+	bus_space_handle_t bush;
+	bus_size_t offset;
+	u_int8_t value;
+{
+	return (do_poke(&poke1, (void *)(bush + offset), (u_int)value));
+}
+
+/* ARGSUSED */
+int
+_bus_space_poke_2(cookie, bush, offset, value)
+	void *cookie;
+	bus_space_handle_t bush;
+	bus_size_t offset;
+	u_int16_t value;
+{
+	return (do_poke(&poke2, (void *)(bush + offset), (u_int)value));
+}
+
+/* ARGSUSED */
+int
+_bus_space_poke_4(cookie, bush, offset, value)
+	void *cookie;
+	bus_space_handle_t bush;
+	bus_size_t offset;
+	u_int32_t value;
+{
+	return (do_poke(&poke4, (void *)(bush + offset), (u_int)value));
+}
+
+static void
+peek1(addr, vp)
+	void *addr;
+	void *vp;
+{
+	*((u_int8_t *)vp) =  *((u_int8_t *)addr);
+}
+
+static void
+peek2(addr, vp)
+	void *addr;
+	void *vp;
+{
+	*((u_int16_t *)vp) = *((u_int16_t *)addr);
+}
+
+static void
+peek4(addr, vp)
+	void *addr;
+	void *vp;
+{
+	*((u_int32_t *)vp) = *((u_int32_t *)addr);
+}
+
+static void
+poke1(addr, value)
+	void *addr;
+	u_int value;
+{
+	*((u_int8_t *)addr) = value;
+}
+
+static void
+poke2(addr, value)
+	void *addr;
+	u_int value;
+{
+	*((u_int16_t *)addr) = value;
+}
+
+static void
+poke4(addr, value)
+	void *addr;
+	u_int value;
+{
+	*((u_int32_t *)addr) = value;
+}
+
+static int
+do_peek(peekfn, addr, valuep)
+	void (*peekfn)(void *, void *);
+	void *addr;
+	void *valuep;
+{
+	label_t faultbuf;
+
+	nofault = &faultbuf;
+	if (setjmp(&faultbuf)) {
+		nofault = NULL;
+		return (1);
+	}
+
+	(*peekfn)(addr, valuep);
+
+	nofault = NULL;
+	return (0);
+}
+
+static int
+do_poke(pokefn, addr, value)
+	void (*pokefn)(void *, u_int);
+	void *addr;
+	u_int value;
+{
+	label_t faultbuf;
+
+	nofault = &faultbuf;
+	if (setjmp(&faultbuf)) {
+		nofault = NULL;
+		return (1);
+	}
+
+	(*pokefn)(addr, value);
+
+	nofault = NULL;
+	return (0);
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: mainbus.c,v 1.4.2.3 2000/11/22 16:00:50 bouyer Exp $	*/
+/*	$NetBSD: mainbus.c,v 1.4.2.4 2000/12/08 09:28:29 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -46,8 +46,10 @@
 #include <sys/device.h>
 
 #define _MVME68K_BUS_DMA_PRIVATE
+#define _MVME68K_BUS_SPACE_PRIVATE
 #include <machine/bus.h>
 #undef _MVME68K_BUS_DMA_PRIVATE
+#undef _MVME68K_BUS_SPACE_PRIVATE
 #include <machine/cpu.h>
 
 #include <mvme68k/dev/mainbus.h>
@@ -57,13 +59,8 @@ void mainbus_attach __P((struct device *, struct device *, void *));
 int mainbus_match __P((struct device *, struct cfdata *, void *));
 int mainbus_print __P((void *, const char *));
 
-struct mainbus_softc {
-	struct device sc_dev;
-	struct mvme68k_bus_dma_tag sc_dmat;
-};
-
 struct cfattach mainbus_ca = {
-	sizeof(struct mainbus_softc), mainbus_match, mainbus_attach
+	sizeof(struct device), mainbus_match, mainbus_attach
 };
 
 
@@ -87,6 +84,37 @@ static struct mainbus_devices mainbusdevs_1x7[] = {
 };
 #endif
 
+
+struct mvme68k_bus_dma_tag _mainbus_dma_tag = {
+	NULL,
+	_bus_dmamap_create,
+	_bus_dmamap_destroy,
+	_bus_dmamap_load_direct,
+	_bus_dmamap_load_mbuf_direct,
+	_bus_dmamap_load_uio_direct,
+	_bus_dmamap_load_raw_direct,
+	_bus_dmamap_unload,
+	NULL,			/* Set up at run-time */
+	_bus_dmamem_alloc,
+	_bus_dmamem_free,
+	_bus_dmamem_map,
+	_bus_dmamem_unmap,
+	_bus_dmamem_mmap
+};
+
+struct mvme68k_bus_space_tag _mainbus_space_tag = {
+	NULL,
+	_bus_space_map,
+	_bus_space_unmap,
+	_bus_space_peek_1,
+	_bus_space_peek_2,
+	_bus_space_peek_4,
+	_bus_space_poke_1,
+	_bus_space_poke_2,
+	_bus_space_poke_4
+};
+
+
 /* ARGSUSED */
 int
 mainbus_match(parent, cf, args)
@@ -109,30 +137,9 @@ mainbus_attach(parent, self, args)
 	struct device *self;
 	void *args;
 {
-	struct mainbus_softc *sc;
 	struct mainbus_attach_args ma;
 	struct mainbus_devices *devices;
 	int i;
-
-	sc = (struct mainbus_softc *) self;
-
-	/*
-	 * Initialise the mainbus Bus DMA tag.
-	 */
-	sc->sc_dmat._cookie = sc;
-	sc->sc_dmat._dmamap_create = _bus_dmamap_create;
-	sc->sc_dmat._dmamap_destroy = _bus_dmamap_destroy;
-	sc->sc_dmat._dmamap_load = _bus_dmamap_load_direct;
-	sc->sc_dmat._dmamap_load_mbuf = _bus_dmamap_load_mbuf_direct;
-	sc->sc_dmat._dmamap_load_uio = _bus_dmamap_load_uio_direct;
-	sc->sc_dmat._dmamap_load_raw = _bus_dmamap_load_raw_direct;
-	sc->sc_dmat._dmamap_unload = _bus_dmamap_unload;
-	sc->sc_dmat._dmamap_sync = _bus_dmamap_sync;
-	sc->sc_dmat._dmamem_alloc = _bus_dmamem_alloc;
-	sc->sc_dmat._dmamem_free = _bus_dmamem_free;
-	sc->sc_dmat._dmamem_map = _bus_dmamem_map;
-	sc->sc_dmat._dmamem_unmap = _bus_dmamem_unmap;
-	sc->sc_dmat._dmamem_mmap = _bus_dmamem_mmap;
 
 	printf("\n");
 
@@ -143,6 +150,7 @@ mainbus_attach(parent, self, args)
 #ifdef MVME147
 	case MVME_147:
 		devices = mainbusdevs_147;
+		_mainbus_dma_tag._dmamap_sync = _bus_dmamap_sync_030;
 		break;
 #endif
 
@@ -152,6 +160,7 @@ mainbus_attach(parent, self, args)
 	case MVME_172:
 	case MVME_177:
 		devices = mainbusdevs_1x7;
+		_mainbus_dma_tag._dmamap_sync = _bus_dmamap_sync_0460;
 		break;
 #endif
 
@@ -161,9 +170,9 @@ mainbus_attach(parent, self, args)
 
 	for (i = 0; devices[i].md_name != NULL; ++i) {
 		ma.ma_name = devices[i].md_name;
-		ma.ma_dmat = &sc->sc_dmat;
-		ma.ma_bust = MVME68K_INTIO_BUS_SPACE;
-		ma.ma_offset = devices[i].md_offset;
+		ma.ma_dmat = &_mainbus_dma_tag;
+		ma.ma_bust = &_mainbus_space_tag;
+		ma.ma_offset = devices[i].md_offset + intiobase_phys;
 
 		(void) config_found(self, &ma, mainbus_print);
 	}
@@ -181,7 +190,7 @@ mainbus_print(aux, cp)
 	if (cp)
 		printf("%s at %s", ma->ma_name, cp);
 
-	printf(" offset 0x%lx", ma->ma_offset);
+	printf(" offset 0x%lx", ma->ma_offset - intiobase_phys);
 
 	return (UNCONF);
 }

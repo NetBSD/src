@@ -1,4 +1,4 @@
-/* $NetBSD: intr.h,v 1.21.2.2 2000/11/22 15:59:45 bouyer Exp $ */
+/* $NetBSD: intr.h,v 1.21.2.3 2000/12/08 09:23:37 bouyer Exp $ */
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -166,9 +166,10 @@ _splraise(int s)
 #define	ALPHA_NIPIS		9	/* must not exceed 64 */
 
 struct cpu_info;
+struct trapframe;
 
 void	alpha_ipi_init(struct cpu_info *);
-void	alpha_ipi_process(struct cpu_info *);
+void	alpha_ipi_process(struct cpu_info *, struct trapframe *);
 void	alpha_send_ipi(unsigned long, unsigned long);
 void	alpha_broadcast_ipi(unsigned long);
 void	alpha_multicast_ipi(unsigned long, unsigned long);

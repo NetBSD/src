@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_syscalls.c,v 1.36.2.1 2000/11/20 18:11:19 bouyer Exp $	*/
+/*	$NetBSD: nfs_syscalls.c,v 1.36.2.2 2000/12/08 09:19:22 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -96,7 +96,10 @@ extern int nqsrv_writeslack;
 extern int nfsrtton;
 extern struct nfsstats nfsstats;
 extern int nfsrvw_procrastinate;
-struct nfssvc_sock *nfs_udpsock, *nfs_cltpsock;
+struct nfssvc_sock *nfs_udpsock;
+#ifdef ISO
+struct nfssvc_sock *nfs_cltpsock;
+#endif
 #ifdef INET6
 struct nfssvc_sock *nfs_udp6sock;
 #endif
@@ -868,11 +871,13 @@ nfsrv_init(terminating)
 	TAILQ_INSERT_TAIL(&nfssvc_sockhead, nfs_udp6sock, ns_chain);
 #endif
 
+#ifdef ISO
 	nfs_cltpsock = (struct nfssvc_sock *)
 	    malloc(sizeof (struct nfssvc_sock), M_NFSSVC, M_WAITOK);
 	memset((caddr_t)nfs_cltpsock, 0, sizeof (struct nfssvc_sock));
 	TAILQ_INIT(&nfs_cltpsock->ns_uidlruhead);
 	TAILQ_INSERT_TAIL(&nfssvc_sockhead, nfs_cltpsock, ns_chain);
+#endif
 }
 
 /*
@@ -965,10 +970,7 @@ nfssvc_iod(p)
 		    nmp->nm_bufqwant = FALSE;
 		    wakeup(&nmp->nm_bufq);
 		}
-		if (bp->b_flags & B_READ)
-		    (void) nfs_doio(bp, bp->b_rcred, (struct proc *)0);
-		else
-		    (void) nfs_doio(bp, bp->b_wcred, (struct proc *)0);
+		(void) nfs_doio(bp, NULL);
 		/*
 		 * If there are more than one iod on this mount, then defect
 		 * so that the iods can be shared out fairly between the mounts

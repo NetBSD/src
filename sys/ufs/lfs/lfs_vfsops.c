@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_vfsops.c,v 1.39.2.3 2000/11/22 16:06:53 bouyer Exp $	*/
+/*	$NetBSD: lfs_vfsops.c,v 1.39.2.4 2000/12/08 09:20:15 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
@@ -138,6 +138,9 @@ struct vfsops lfs_vfsops = {
 };
 
 struct pool lfs_inode_pool;
+
+extern int locked_queue_count;
+extern long locked_queue_bytes;
 
 /*
  * Initialize the filesystem, most work done by ufs_init.
@@ -319,6 +322,400 @@ lfs_mount(mp, path, data, ndp, p)
 	return (0);
 }
 
+#ifdef LFS_DO_ROLLFORWARD
+/*
+ * Roll-forward code.
+ */
+
+/*
+ * Load the appropriate indirect block, and change the appropriate pointer.
+ * Mark the block dirty.  Do segment and avail accounting.
+ */
+static int
+update_meta(struct lfs *fs, ino_t ino, int version, ufs_daddr_t lbn,
+	    daddr_t ndaddr, size_t size, struct proc *p)
+{
+	int error;
+	struct vnode *vp;
+	struct inode *ip;
+	daddr_t odaddr, ooff;
+	struct indir a[NIADDR], *ap;
+	struct buf *bp;
+	SEGUSE *sup;
+	int num;
+
+	if ((error = lfs_rf_valloc(fs, ino, version, p, &vp)) != 0) {
+		printf("update_meta: ino %d: lfs_rf_valloc returned %d\n", ino,
+		       error);
+		return error;
+	}
+
+	if ((error = VOP_BALLOC(vp, (lbn << fs->lfs_bshift), size,
+				NOCRED, 0, &bp)) != 0) {
+		vput(vp);
+		return (error);
+	}
+	/* No need to write, the block is already on disk */
+	if (bp->b_flags & B_DELWRI) {
+		LFS_UNLOCK_BUF(bp);
+		fs->lfs_avail += btodb(bp->b_bcount);
+	}
+	bp->b_flags |= B_INVAL;
+	brelse(bp);
+
+	/*
+	 * Extend the file, if it is not large enough already.
+	 * XXX this is not exactly right, we don't know how much of the
+	 * XXX last block is actually used.  We hope that an inode will
+	 * XXX appear later to give the correct size.
+	 */
+	ip = VTOI(vp);
+	if (ip->i_ffs_size <= (lbn << fs->lfs_bshift)) {
+		if (lbn < NDADDR)
+			ip->i_ffs_size = (lbn << fs->lfs_bshift) +
+				(size - fs->lfs_fsize) + 1;
+		else
+			ip->i_ffs_size = (lbn << fs->lfs_bshift) + 1;
+	}
+
+	error = ufs_bmaparray(vp, lbn, &odaddr, &a[0], &num, NULL);
+	if (error) {
+		printf("update_meta: ufs_bmaparray returned %d\n", error);
+		vput(vp);
+		return error;
+	}
+	switch (num) {
+	    case 0:
+		ooff = ip->i_ffs_db[lbn];
+		if (ooff == UNWRITTEN)
+			ip->i_ffs_blocks += btodb(size);
+		ip->i_ffs_db[lbn] = ndaddr;
+		break;
+	    case 1:
+		ooff = ip->i_ffs_ib[a[0].in_off];
+		if (ooff == UNWRITTEN)
+			ip->i_ffs_blocks += btodb(size);
+		ip->i_ffs_ib[a[0].in_off] = ndaddr;
+		break;
+	    default:
+		ap = &a[num - 1];
+		if (bread(vp, ap->in_lbn, fs->lfs_bsize, NOCRED, &bp))
+			panic("update_meta: bread bno %d", ap->in_lbn);
+		
+		ooff = ((ufs_daddr_t *)bp->b_data)[ap->in_off];
+		if (ooff == UNWRITTEN)
+			ip->i_ffs_blocks += btodb(size);
+		((ufs_daddr_t *)bp->b_data)[ap->in_off] = ndaddr;
+		(void) VOP_BWRITE(bp);
+	}
+	LFS_SET_UINO(ip, IN_CHANGE | IN_MODIFIED | IN_UPDATE);
+
+	/* Update segment usage information. */
+	if (odaddr > 0) {
+		LFS_SEGENTRY(sup, fs, datosn(fs, odaddr), bp);
+#ifdef DIAGNOSTIC
+		if (sup->su_nbytes < size) {
+			panic("update_meta: negative bytes "
+			      "(segment %d short by %ld)\n",
+			      datosn(fs, odaddr), (long)size - sup->su_nbytes);
+			sup->su_nbytes = size;
+		}
+#endif
+		sup->su_nbytes -= size;
+		VOP_BWRITE(bp);
+	}
+	LFS_SEGENTRY(sup, fs, datosn(fs, ndaddr), bp);
+	sup->su_nbytes += size;
+	VOP_BWRITE(bp);
+
+	/* Fix this so it can be released */
+	/* ip->i_lfs_effnblks = ip->i_ffs_blocks; */
+
+	/* Now look again to make sure it worked */
+	ufs_bmaparray(vp, lbn, &odaddr, &a[0], &num, NULL );
+	if (odaddr != ndaddr)
+		printf("update_meta: failed setting ino %d lbn %d to %x\n",
+		       ino, lbn, ndaddr);
+
+	vput(vp);
+	return 0;
+}
+
+static int
+update_inoblk(struct lfs *fs, daddr_t offset, struct ucred *cred,
+	      struct proc *p)
+{
+	struct vnode *devvp, *vp;
+	struct inode *ip;
+	struct dinode *dip;
+	struct buf *dbp, *ibp;
+	int error;
+	daddr_t daddr;
+	IFILE *ifp;
+	SEGUSE *sup;
+
+	devvp = VTOI(fs->lfs_ivnode)->i_devvp;
+
+	/*
+	 * Get the inode, update times and perms.
+	 * DO NOT update disk blocks, we do that separately.
+	 */
+	error = bread(devvp, offset, fs->lfs_bsize, cred, &dbp);
+	if (error) {
+		printf("update_inoblk: bread returned %d\n", error);
+		return error;
+	}
+	dip = ((struct dinode *)(dbp->b_data)) + INOPB(fs);
+	while(--dip >= (struct dinode *)dbp->b_data) {
+		if(dip->di_inumber > LFS_IFILE_INUM) {
+			/* printf("ino %d version %d\n", dip->di_inumber,
+			       dip->di_gen); */
+			error = lfs_rf_valloc(fs, dip->di_inumber, dip->di_gen,
+					      p, &vp);
+			if (error) {
+				printf("update_inoblk: lfs_rf_valloc returned %d\n", error);
+				continue;
+			}
+			ip = VTOI(vp);
+			if (dip->di_size != ip->i_ffs_size)
+				VOP_TRUNCATE(vp, dip->di_size, 0, NOCRED, p);
+			/* Get mode, link count, size, and times */
+			memcpy(&ip->i_din.ffs_din, dip, 
+			       offsetof(struct dinode, di_db[0]));
+
+			/* Then the rest, except di_blocks */
+			ip->i_ffs_flags = dip->di_flags;
+			ip->i_ffs_gen = dip->di_gen;
+			ip->i_ffs_uid = dip->di_uid;
+			ip->i_ffs_gid = dip->di_gid;
+
+			ip->i_ffs_effnlink = dip->di_nlink;
+
+			LFS_SET_UINO(ip, IN_CHANGE | IN_MODIFIED | IN_UPDATE);
+
+			/* Re-initialize to get type right */
+			ufs_vinit(vp->v_mount, lfs_specop_p, lfs_fifoop_p,
+				  &vp);
+			vput(vp);
+
+			/* Record change in location */
+			LFS_IENTRY(ifp, fs, dip->di_inumber, ibp);
+			daddr = ifp->if_daddr;
+			ifp->if_daddr = dbp->b_blkno;
+			error = VOP_BWRITE(ibp); /* Ifile */
+			/* And do segment accounting */
+			if (datosn(fs, daddr) != datosn(fs, dbp->b_blkno)) {
+				if (daddr > 0) {
+					LFS_SEGENTRY(sup, fs, datosn(fs, daddr),
+						     ibp);
+					sup->su_nbytes -= DINODE_SIZE;
+					VOP_BWRITE(ibp);
+				}
+				LFS_SEGENTRY(sup, fs, datosn(fs, dbp->b_blkno),
+					     ibp);
+				sup->su_nbytes += DINODE_SIZE;
+				VOP_BWRITE(ibp);
+			}
+		}
+	}
+	dbp->b_flags |= B_AGE;
+	brelse(dbp);
+
+	return 0;
+}
+
+#define CHECK_CKSUM   0x0001  /* Check the checksum to make sure it's valid */
+#define CHECK_UPDATE  0x0002  /* Update Ifile for new data blocks / inodes */
+
+static daddr_t
+check_segsum(struct lfs *fs, daddr_t offset,
+	     struct ucred *cred, int flags, int *pseg_flags, struct proc *p)
+{
+	struct vnode *devvp;
+	struct buf *bp, *dbp;
+	int error, nblocks, ninos, i, j;
+	SEGSUM *ssp;
+	u_long *dp, *datap; /* XXX u_int32_t */
+	daddr_t *iaddr, oldoffset;
+	FINFO *fip;
+	SEGUSE *sup;
+	size_t size;
+
+	devvp = VTOI(fs->lfs_ivnode)->i_devvp;
+	/*
+	 * If the segment has a superblock and we're at the top
+	 * of the segment, skip the superblock.
+	 */
+	if(sntoda(fs, datosn(fs, offset)) == offset) {
+       		LFS_SEGENTRY(sup, fs, datosn(fs, offset), bp); 
+       		if(sup->su_flags & SEGUSE_SUPERBLOCK)
+			offset += btodb(LFS_SBPAD);
+       		brelse(bp);
+	}
+
+	/* Read in the segment summary */
+	error = bread(devvp, offset, LFS_SUMMARY_SIZE, cred, &bp);
+	if(error)
+		return -1;
+	
+	/* Check summary checksum */
+	ssp = (SEGSUM *)bp->b_data;
+	if(flags & CHECK_CKSUM) {
+		if(ssp->ss_sumsum != cksum(&ssp->ss_datasum,
+					   LFS_SUMMARY_SIZE -
+					   sizeof(ssp->ss_sumsum))) {
+#ifdef DEBUG_LFS_RFW
+			printf("Sumsum error at 0x%x\n", offset);
+#endif
+			offset = -1;
+			goto err1;
+		}
+		if (ssp->ss_nfinfo == 0 && ssp->ss_ninos == 0) {
+#ifdef DEBUG_LFS_RFW
+			printf("Empty pseg at 0x%x\n", offset);
+#endif
+			offset = -1;
+			goto err1;
+		}
+		if (ssp->ss_create < fs->lfs_tstamp) {
+#ifdef DEBUG_LFS_RFW
+			printf("Old data at 0x%x\n", offset);
+#endif
+			offset = -1;
+			goto err1;
+		}
+	}
+	if(pseg_flags)
+		*pseg_flags = ssp->ss_flags;
+	oldoffset = offset;
+	offset += btodb(LFS_SUMMARY_SIZE);
+
+	ninos = howmany(ssp->ss_ninos, INOPB(fs));
+	iaddr = (daddr_t *)(bp->b_data + LFS_SUMMARY_SIZE - sizeof(daddr_t));
+	if(flags & CHECK_CKSUM) {
+		/* Count blocks */
+		nblocks = 0;
+		fip = (FINFO *)(bp->b_data + sizeof(SEGSUM));
+		for(i = 0; i < ssp->ss_nfinfo; ++i) {
+			nblocks += fip->fi_nblocks;
+			if(fip->fi_nblocks <= 0)
+				break;
+			fip = (FINFO *)(((char *)fip) + sizeof(FINFO) +
+					(fip->fi_nblocks - 1) *
+					sizeof(ufs_daddr_t));
+		}
+		nblocks += ninos;
+		/* Create the sum array */
+		datap = dp = (u_long *)malloc(nblocks * sizeof(u_long),
+					      M_SEGMENT, M_WAITOK);
+	}
+
+	/* Handle individual blocks */
+	fip = (FINFO *)(bp->b_data + sizeof(SEGSUM));
+	for(i = 0; i < ssp->ss_nfinfo || ninos; ++i) {
+		/* Inode block? */
+		if(ninos && *iaddr == offset) {
+			if(flags & CHECK_CKSUM) {
+				/* Read in the head and add to the buffer */
+				error = bread(devvp, offset, fs->lfs_bsize,
+					      cred, &dbp);
+				if(error) {
+					offset = -1;
+					goto err2;
+				}
+				(*dp++) = ((u_long *)(dbp->b_data))[0];
+				dbp->b_flags |= B_AGE;
+				brelse(dbp);
+			}
+			if(flags & CHECK_UPDATE) {
+				if ((error = update_inoblk(fs, offset, cred, p))
+				    != 0) {
+					offset = -1;
+					goto err2;
+				}
+			}
+			offset += fsbtodb(fs,1);
+			--iaddr;
+			--ninos;
+			--i; /* compensate */
+			continue;
+		}
+		/* printf("check: blocks from ino %d version %d\n",
+		       fip->fi_ino, fip->fi_version); */
+		size = fs->lfs_bsize;
+		for(j = 0; j < fip->fi_nblocks; ++j) {
+			if (j == fip->fi_nblocks - 1)
+				size = fip->fi_lastlength;
+			if(flags & CHECK_CKSUM) {
+				error = bread(devvp, offset, size, cred, &dbp);
+				if(error) {
+					offset = -1;
+					goto err2;
+				}
+				(*dp++) = ((u_long *)(dbp->b_data))[0];
+				dbp->b_flags |= B_AGE;
+				brelse(dbp);
+			}
+			/* Account for and update any direct blocks */
+			if((flags & CHECK_UPDATE) &&
+			   fip->fi_ino > LFS_IFILE_INUM &&
+			   fip->fi_blocks[j] >= 0) {
+				update_meta(fs, fip->fi_ino, fip->fi_version,
+					    fip->fi_blocks[j], offset, size, p);
+			}
+			offset += btodb(size);
+		}
+		fip = (FINFO *)(((char *)fip) + sizeof(FINFO)
+				+ (fip->fi_nblocks - 1) * sizeof(ufs_daddr_t));
+	}
+	/* Checksum the array, compare */
+	if((flags & CHECK_CKSUM) &&
+	   ssp->ss_datasum != cksum(datap, nblocks * sizeof(u_long)))
+	{
+		printf("Datasum error at 0x%x (wanted %x got %x)\n", offset,
+		       ssp->ss_datasum, cksum(datap, nblocks *
+					      sizeof(u_long)));
+		offset = -1;
+		goto err2;
+	}
+
+	/* If we're at the end of the segment, move to the next */
+	if(datosn(fs, offset + btodb(LFS_SUMMARY_SIZE + fs->lfs_bsize)) !=
+	   datosn(fs, offset)) {
+		if (datosn(fs, offset) == datosn(fs, ssp->ss_next)) {
+			offset = -1;
+			goto err2;
+		}
+		offset = ssp->ss_next;
+#ifdef DEBUG_LFS_RFW
+		printf("LFS roll forward: moving on to offset 0x%x "
+		       " -> segment %d\n", offset, datosn(fs,offset));
+#endif
+	}
+
+	if (flags & CHECK_UPDATE) {
+		fs->lfs_avail -= (offset - oldoffset);
+		/* Don't clog the buffer queue */
+		if (locked_queue_count > LFS_MAX_BUFS ||
+		    locked_queue_bytes > LFS_MAX_BYTES) {
+			++fs->lfs_writer;
+			lfs_flush(fs, SEGM_CKP);
+			if(--fs->lfs_writer==0)
+				wakeup(&fs->lfs_dirops);
+		}
+	}
+
+    err2:
+	if(flags & CHECK_CKSUM)
+		free(datap, M_SEGMENT);
+    err1:
+	bp->b_flags |= B_AGE;
+	brelse(bp);
+
+	return offset;
+}
+#endif /* LFS_DO_ROLLFORWARD */
+
 /*
  * Common code for mount and mountroot
  * LFS specific
@@ -330,7 +727,7 @@ lfs_mountfs(devvp, mp, p)
 	struct proc *p;
 {
 	extern struct vnode *rootvp;
-	struct dlfs *dfs, *adfs;
+	struct dlfs *tdfs, *dfs, *adfs;
 	struct lfs *fs;
 	struct ufsmount *ump;
 	struct vnode *vp;
@@ -341,6 +738,11 @@ lfs_mountfs(devvp, mp, p)
 	struct ucred *cred;
 	CLEANERINFO *cip;
         SEGUSE *sup;
+#ifdef LFS_DO_ROLLFORWARD
+	int flags, dirty;
+	daddr_t offset, oldoffset, lastgoodpseg;
+	int sn, curseg;
+#endif
 
 	cred = p ? p->p_ucred : NOCRED;
 	/*
@@ -389,6 +791,7 @@ lfs_mountfs(devvp, mp, p)
 	 * using the older of the two.  This is necessary to ensure that
 	 * the filesystem is valid if it was not unmounted cleanly.
 	 */
+
 	if (dfs->dlfs_sboffs[1] &&
 	    dfs->dlfs_sboffs[1]-(LFS_LABELPAD/size) > LFS_SBPAD/size)
 	{
@@ -398,7 +801,18 @@ lfs_mountfs(devvp, mp, p)
 		adfs = (struct dlfs *)abp->b_data;
 
 		if (adfs->dlfs_tstamp < dfs->dlfs_tstamp) /* XXX 1s? */
-			dfs = adfs;
+			tdfs = adfs;
+		else
+			tdfs = dfs;
+
+		/* Check the basics. */
+		if (tdfs->dlfs_magic != LFS_MAGIC ||
+		    tdfs->dlfs_bsize > MAXBSIZE ||
+	    	    tdfs->dlfs_version > LFS_VERSION ||
+	    	    tdfs->dlfs_bsize < sizeof(struct dlfs)) {
+			error = EINVAL;		/* XXX needs translation */
+			goto out;
+		}
 	} else {
 		printf("lfs_mountfs: invalid alt superblock daddr=0x%x\n",
 			dfs->dlfs_sboffs[1]);
@@ -408,12 +822,23 @@ lfs_mountfs(devvp, mp, p)
 
 	/* Allocate the mount structure, copy the superblock into it. */
 	fs = malloc(sizeof(struct lfs), M_UFSMNT, M_WAITOK);
-	memcpy(&fs->lfs_dlfs, dfs, sizeof(struct dlfs));
+	memcpy(&fs->lfs_dlfs, tdfs, sizeof(struct dlfs));
+
+#ifdef LFS_DO_ROLLFORWARD
+	/* Before rolling forward, lock so vget will sleep for other procs */
+	fs->lfs_flags = LFS_NOTYET;
+	fs->lfs_rfpid = p->p_pid;
+#else
+	fs->lfs_flags = 0;
+#endif
+
 	ump = malloc(sizeof *ump, M_UFSMNT, M_WAITOK);
 	memset((caddr_t)ump, 0, sizeof *ump);
 	ump->um_lfs = fs;
-	if (sizeof(struct lfs) < LFS_SBPAD)			/* XXX why? */
+	if (sizeof(struct lfs) < LFS_SBPAD) {			/* XXX why? */
 		bp->b_flags |= B_INVAL;
+		abp->b_flags |= B_INVAL;
+	}
 	brelse(bp);
 	bp = NULL;
 	brelse(abp);
@@ -461,6 +886,7 @@ lfs_mountfs(devvp, mp, p)
 	ump->um_bptrtodb = 0;
 	ump->um_seqinc = 1 << fs->lfs_fsbtodb;
 	ump->um_nindir = fs->lfs_nindir;
+	ump->um_lognindir = ffs(fs->lfs_nindir) - 1;
 	for (i = 0; i < MAXQUOTAS; i++)
 		ump->um_quotas[i] = NULLVP;
 	devvp->v_specmountpoint = mp;
@@ -476,6 +902,97 @@ lfs_mountfs(devvp, mp, p)
 	fs->lfs_ivnode = vp;
 	VREF(vp);
 	vput(vp);
+
+#ifdef LFS_DO_ROLLFORWARD
+	/*
+	 * Roll forward.
+	 */
+	/*
+	 * Phase I:
+	 * Find the address of the last good partial segment that was written
+	 * after the checkpoint.  Mark the segments in question dirty, so
+	 * they won't be reallocated.
+	 */
+	lastgoodpseg = oldoffset = offset = fs->lfs_offset;
+	flags = 0x0;
+#ifdef DEBUG_LFS_RFW
+	printf("LFS roll forward phase 1: starting at offset 0x%x\n", offset);
+#endif
+	LFS_SEGENTRY(sup, fs, datosn(fs, offset), bp);
+	if (!(sup->su_flags & SEGUSE_DIRTY))
+		--fs->lfs_nclean;
+	sup->su_flags |= SEGUSE_DIRTY;
+	(void) VOP_BWRITE(bp);
+	while ((offset = check_segsum(fs, offset, cred, CHECK_CKSUM, &flags,
+				      p)) > 0) {
+		if(sntoda(fs, oldoffset) != sntoda(fs, offset)) {
+        		LFS_SEGENTRY(sup, fs, datosn(fs, oldoffset), bp); 
+			if (!(sup->su_flags & SEGUSE_DIRTY))
+				--fs->lfs_nclean;
+        		sup->su_flags |= SEGUSE_DIRTY;
+        		(void) VOP_BWRITE(bp);
+		}
+
+#ifdef DEBUG_LFS_RFW
+		printf("LFS roll forward phase 1: offset=0x%x\n", offset);
+		if(flags & SS_DIROP) {
+			printf("lfs_mountfs: dirops at 0x%x\n", oldoffset);
+			if(!(flags & SS_CONT))
+				printf("lfs_mountfs: dirops end at 0x%x\n",
+				       oldoffset);
+		}
+#endif
+		if(!(flags & SS_CONT))
+			lastgoodpseg = offset;
+		oldoffset = offset;
+	}
+#ifdef DEBUG_LFS_RFW
+	if (flags & SS_CONT) {
+		printf("LFS roll forward: warning: incomplete dirops discarded\n");
+	}
+	printf("LFS roll forward phase 1: completed: lastgoodpseg=0x%x\n",
+	       lastgoodpseg);
+#endif
+
+	/* Don't accidentally overwrite what we're trying to preserve */
+	offset = fs->lfs_offset;
+	fs->lfs_offset = lastgoodpseg;
+	fs->lfs_curseg = sntoda(fs, datosn(fs, fs->lfs_offset));
+	for (sn = curseg = datosn(fs, fs->lfs_curseg);;) {
+		sn = (sn + 1) % fs->lfs_nseg;
+		if (sn == curseg)
+			panic("lfs_mountfs: no clean segments");
+		LFS_SEGENTRY(sup, fs, sn, bp);
+		dirty = (sup->su_flags & SEGUSE_DIRTY);
+		brelse(bp);
+		if (!dirty)
+			break;
+	}
+	fs->lfs_nextseg = sntoda(fs, sn);
+
+	/*
+	 * Phase II: Roll forward from the first superblock.
+	 */
+	while (offset != lastgoodpseg) {
+#ifdef DEBUG_LFS_RFW
+		printf("LFS roll forward phase 2: 0x%x\n", offset);
+#endif
+		oldoffset = offset;
+		offset = check_segsum(fs, offset, cred, CHECK_UPDATE, NULL, p);
+	}
+
+	/*
+	 * Finish: flush our changes to disk.
+	 */
+	lfs_segwrite(fs->lfs_ivnode->v_mount, SEGM_CKP | SEGM_SYNC);
+
+#ifdef DEBUG_LFS_RFW
+	printf("LFS roll forward complete\n");
+#endif
+	/* Allow vget now that roll-forward is complete */
+	fs->lfs_flags &= ~(LFS_NOTYET);
+	wakeup(&fs->lfs_flags);
+#endif /* LFS_DO_ROLLFORWARD */
 
 	/*
 	 * Initialize the ifile cleaner info with information from 
@@ -675,6 +1192,14 @@ lfs_vget(mp, ino, vpp)
 
 	ump = VFSTOUFS(mp);
 	dev = ump->um_dev;
+	fs = ump->um_lfs;
+
+	/*
+	 * If the filesystem is not completely mounted yet, suspend
+	 * any access requests (wait for roll-forward to complete).
+	 */
+	while((fs->lfs_flags & LFS_NOTYET) && curproc->p_pid != fs->lfs_rfpid)
+		tsleep(&fs->lfs_flags, PRIBIO+1, "lfs_notyet", 0);
 
 	if ((*vpp = ufs_ihashget(dev, ino, LK_EXCLUSIVE)) != NULL)
 		return (0);
@@ -692,10 +1217,10 @@ lfs_vget(mp, ino, vpp)
 	} while (lockmgr(&ufs_hashlock, LK_EXCLUSIVE|LK_SLEEPFAIL, 0));
 
 	/* Translate the inode number to a disk address. */
-	fs = ump->um_lfs;
 	if (ino == LFS_IFILE_INUM)
 		daddr = fs->lfs_idaddr;
 	else {
+		/* XXX bounds-check this too */
 		LFS_IENTRY(ifp, fs, ino, bp);
 		daddr = ifp->if_daddr;
 #ifdef LFS_ATIME_IFILE
@@ -703,6 +1228,8 @@ lfs_vget(mp, ino, vpp)
 #endif
 		brelse(bp);
 		if (daddr == LFS_UNUSED_DADDR) {
+			*vpp = NULLVP;
+			ungetnewvnode(vp);
 			lockmgr(&ufs_hashlock, LK_RELEASE, 0);
 			return (ENOENT);
 		}
@@ -774,6 +1301,8 @@ lfs_vget(mp, ino, vpp)
 	ip->i_devvp = ump->um_devvp;
 	VREF(ip->i_devvp);
 	*vpp = vp;
+
+	uvm_vnp_setsize(vp, ip->i_ffs_size);
 
 	return (0);
 }

@@ -1,4 +1,4 @@
-#	$NetBSD: files.i386,v 1.139.2.2 2000/11/22 16:00:18 bouyer Exp $
+#	$NetBSD: files.i386,v 1.139.2.3 2000/12/08 09:26:34 bouyer Exp $
 #
 # new style config file for i386 architecture
 #
@@ -100,8 +100,8 @@ major	{md = 17}
 # RAIDframe
 major	{raid = 18}
 
-# Logical storage units
-major	{lsu = 19}
+# Logical disk
+major	{ld = 19}
 
 #
 # Machine-independent I2O drivers
@@ -306,18 +306,24 @@ file	arch/i386/i386/compat_13_machdep.c	compat_13 | compat_aout
 # SVR4 binary compatibility (COMPAT_SVR4)
 include "compat/svr4/files.svr4"
 file	arch/i386/i386/svr4_machdep.c		compat_svr4
+file	arch/i386/i386/svr4_sigcode.s		compat_svr4
 
 # iBCS-2 binary compatibility (COMPAT_IBCS2)
 include "compat/ibcs2/files.ibcs2"
 file	arch/i386/i386/ibcs2_machdep.c		compat_ibcs2
+file	arch/i386/i386/ibcs2_sigcode.s		compat_ibcs2
+file	arch/i386/i386/ibcs2_syscall.c		compat_ibcs2
 
 # Linux binary compatibility (COMPAT_LINUX)
 include "compat/linux/files.linux"
 include "compat/linux/arch/i386/files.linux_i386"
+file	arch/i386/i386/linux_sigcode.s		compat_linux
+file	arch/i386/i386/linux_syscall.c		compat_linux
 
 # FreeBSD binary compatibility (COMPAT_FREEBSD)
 include "compat/freebsd/files.freebsd"
 file	arch/i386/i386/freebsd_machdep.c	compat_freebsd
+file	arch/i386/i386/freebsd_sigcode.s	compat_freebsd
 
 # a.out binary compatibility (COMPAT_AOUT)
 include "compat/aout/files.aout"

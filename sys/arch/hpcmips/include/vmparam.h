@@ -1,4 +1,4 @@
-/*	$NetBSD: vmparam.h,v 1.1.1.1.2.1 2000/11/20 20:46:52 bouyer Exp $	*/
+/*	$NetBSD: vmparam.h,v 1.1.1.1.2.2 2000/12/08 09:26:32 bouyer Exp $	*/
 
 #include <mips/vmparam.h>
 
@@ -9,6 +9,3 @@
 
 #define	VM_NFREELIST		1
 #define	VM_FREELIST_DEFAULT	0
-
-/* pcb base */
-/*#define	pcbb(p)		((u_int)(p)->p_addr) */

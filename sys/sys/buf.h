@@ -1,4 +1,4 @@
-/*	$NetBSD: buf.h,v 1.34.2.1 2000/11/20 18:11:26 bouyer Exp $	*/
+/*	$NetBSD: buf.h,v 1.34.2.2 2000/12/08 09:19:41 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
@@ -162,6 +162,7 @@ extern struct bio_ops {
  	int	(*io_sync) __P((struct mount *));
 	void	(*io_movedeps) __P((struct buf *, struct buf *));
 	int	(*io_countdeps) __P((struct buf *, int));
+	void	(*io_pageiodone) __P((struct buf *));
 } bioops;
 
 /*
@@ -190,13 +191,8 @@ struct buf {
 					   number (not partition relative) */
 					/* Function to call upon completion. */
 	void	(*b_iodone) __P((struct buf *));
-	struct	vnode *b_vp;		/* Device vnode. */
-	int	b_dirtyoff;		/* Offset in buffer of dirty region. */
-	int	b_dirtyend;		/* Offset of end of dirty region. */
-	struct	ucred *b_rcred;		/* Read credentials reference. */
-	struct	ucred *b_wcred;		/* Write credentials reference. */
-	int	b_validoff;		/* Offset in buffer of valid region. */
-	int	b_validend;		/* Offset of end of valid region. */
+	struct	vnode *b_vp;		/* File vnode. */
+	void	*b_private;		/* Private data for owner */
 	off_t	b_dcookie;		/* Offset cookie if dir block */
 	struct  workhead b_dep;		/* List of filesystem dependencies. */
 };
@@ -230,15 +226,16 @@ struct buf {
 #define	B_LOCKED	0x00004000	/* Locked in core (not reusable). */
 #define	B_NOCACHE	0x00008000	/* Do not cache block after use. */
 #define	B_ORDERED	0x00010000	/* ordered I/O request */
+#define	B_CACHE		0x00020000	/* Bread found us in the cache. */
 #define	B_PHYS		0x00040000	/* I/O to user memory. */
 #define	B_RAW		0x00080000	/* Set by physio for raw transfers. */
 #define	B_READ		0x00100000	/* Read buffer. */
 #define	B_TAPE		0x00200000	/* Magnetic tape I/O. */
 #define	B_WANTED	0x00800000	/* Process wants this buffer. */
 #define	B_WRITE		0x00000000	/* Write buffer (pseudo flag). */
-#define	B_WRITEINPROG	0x01000000	/* Write in progress. */
 #define	B_XXX		0x02000000	/* Debugging flag. */
 #define	B_VFLUSH	0x04000000	/* Buffer is being synced. */
+#define	B_PDAEMON	0x10000000	/* I/O initiated by pagedaemon. */
 
 /*
  * This structure describes a clustered I/O.  It is stored in the b_saveaddr
@@ -268,6 +265,7 @@ do {									\
 #define B_SYNC		0x02	/* Do all allocations synchronously. */
 
 #ifdef _KERNEL
+
 extern	int nbuf;		/* The number of buffer headers */
 extern	struct buf *buf;	/* The buffer headers. */
 extern	char *buffers;		/* The buffer contents. */

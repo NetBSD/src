@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_var.h,v 1.15.12.1 2000/11/20 18:11:20 bouyer Exp $	*/
+/*	$NetBSD: nfs_var.h,v 1.15.12.2 2000/12/08 09:19:23 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -74,8 +74,8 @@ int nfs_bioread __P((struct vnode *, struct uio *, int, struct ucred *, int));
 struct buf *nfs_getcacheblk __P((struct vnode *, daddr_t, int, struct proc *));
 int nfs_vinvalbuf __P((struct vnode *, int, struct ucred *, struct proc *,
 		       int));
-int nfs_asyncio __P((struct buf *, struct ucred *));
-int nfs_doio __P((struct buf *, struct ucred *, struct proc *));
+int nfs_asyncio __P((struct buf *));
+int nfs_doio __P((struct buf *, struct proc *));
 
 /* nfs_boot.c */
 /* see nfsdiskless.h */
@@ -91,9 +91,8 @@ int nfs_null __P((struct vnode *, struct ucred *, struct proc *));
 int nfs_setattrrpc __P((struct vnode *, struct vattr *, struct ucred *,
 			struct proc *));
 int nfs_readlinkrpc __P((struct vnode *, struct uio *, struct ucred *));
-int nfs_readrpc __P((struct vnode *, struct uio *, struct ucred *));
-int nfs_writerpc __P((struct vnode *, struct uio *, struct ucred *, int *,
-		      int *));
+int nfs_readrpc __P((struct vnode *, struct uio *));
+int nfs_writerpc __P((struct vnode *, struct uio *, int *, int *));
 int nfs_mknodrpc __P((struct vnode *, struct vnode **, struct componentname *,
 		      struct vattr *));
 int nfs_removeit __P((struct sillyrename *));
@@ -109,8 +108,7 @@ int nfs_sillyrename __P((struct vnode *, struct vnode *,
 			 struct componentname *));
 int nfs_lookitup __P((struct vnode *, const char *, int, struct ucred *,
 		      struct proc *, struct nfsnode **));
-int nfs_commit __P((struct vnode *, u_quad_t, unsigned, struct ucred *,
-		    struct proc *));
+int nfs_commit __P((struct vnode *, off_t, uint32_t, struct proc *));
 int nfs_flush __P((struct vnode *, struct ucred *, int, struct proc *, int));
 
 /* nfs_nqlease.c */
@@ -267,12 +265,12 @@ int netaddr_match __P((int, union nethostaddr *, struct mbuf *));
 
 void nfs_clearcommit __P((struct mount *));
 void nfs_merge_commit_ranges __P((struct vnode *));
-int nfs_in_committed_range __P((struct vnode *, struct buf *));
-int nfs_in_tobecommitted_range __P((struct vnode *, struct buf *));
-void nfs_add_committed_range __P((struct vnode *, struct buf *));
-void nfs_del_committed_range __P((struct vnode *, struct buf *));
-void nfs_add_tobecommitted_range __P((struct vnode *, struct buf *));
-void nfs_del_tobecommitted_range __P((struct vnode *, struct buf *));
+int nfs_in_committed_range __P((struct vnode *, off_t, off_t));
+int nfs_in_tobecommitted_range __P((struct vnode *, off_t, off_t));
+void nfs_add_committed_range __P((struct vnode *, off_t, off_t));
+void nfs_del_committed_range __P((struct vnode *, off_t, off_t));
+void nfs_add_tobecommitted_range __P((struct vnode *, off_t, off_t));
+void nfs_del_tobecommitted_range __P((struct vnode *, off_t, off_t));
 
 int nfsrv_errmap __P((struct nfsrv_descript *, int));
 void nfsrvw_sort __P((gid_t *, int));

@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_vnops.c,v 1.106.2.2 2000/11/22 16:06:35 bouyer Exp $	*/
+/*	$NetBSD: nfs_vnops.c,v 1.106.2.3 2000/12/08 09:19:23 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -43,6 +43,7 @@
  */
 
 #include "opt_nfs.h"
+#include "opt_uvmhist.h"
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -63,6 +64,7 @@
 #include <sys/unistd.h>
 
 #include <uvm/uvm_extern.h>
+#include <uvm/uvm.h>
 
 #include <miscfs/fifofs/fifo.h>
 #include <miscfs/genfs/genfs.h>
@@ -136,7 +138,9 @@ struct vnodeopv_entry_desc nfsv2_vnodeop_entries[] = {
 	{ &vop_truncate_desc, nfs_truncate },		/* truncate */
 	{ &vop_update_desc, nfs_update },		/* update */
 	{ &vop_bwrite_desc, nfs_bwrite },		/* bwrite */
-	{ (struct vnodeop_desc*)NULL, (int(*) __P((void *)))NULL }
+	{ &vop_getpages_desc, nfs_getpages },		/* getpages */
+	{ &vop_putpages_desc, nfs_putpages },		/* putpages */
+	{ NULL, NULL }
 };
 struct vnodeopv_desc nfsv2_vnodeop_opv_desc =
 	{ &nfsv2_vnodeop_p, nfsv2_vnodeop_entries };
@@ -163,7 +167,7 @@ struct vnodeopv_entry_desc spec_nfsv2nodeop_entries[] = {
 	{ &vop_poll_desc, spec_poll },			/* poll */
 	{ &vop_revoke_desc, spec_revoke },		/* revoke */
 	{ &vop_mmap_desc, spec_mmap },			/* mmap */
-	{ &vop_fsync_desc, nfs_fsync },			/* fsync */
+	{ &vop_fsync_desc, spec_fsync },		/* fsync */
 	{ &vop_seek_desc, spec_seek },			/* seek */
 	{ &vop_remove_desc, spec_remove },		/* remove */
 	{ &vop_link_desc, spec_link },			/* link */
@@ -191,7 +195,7 @@ struct vnodeopv_entry_desc spec_nfsv2nodeop_entries[] = {
 	{ &vop_truncate_desc, spec_truncate },		/* truncate */
 	{ &vop_update_desc, nfs_update },		/* update */
 	{ &vop_bwrite_desc, vn_bwrite },		/* bwrite */
-	{ (struct vnodeop_desc*)NULL, (int(*) __P((void *)))NULL }
+	{ NULL, NULL }
 };
 struct vnodeopv_desc spec_nfsv2nodeop_opv_desc =
 	{ &spec_nfsv2nodeop_p, spec_nfsv2nodeop_entries };
@@ -243,7 +247,7 @@ struct vnodeopv_entry_desc fifo_nfsv2nodeop_entries[] = {
 	{ &vop_truncate_desc, fifo_truncate },		/* truncate */
 	{ &vop_update_desc, nfs_update },		/* update */
 	{ &vop_bwrite_desc, vn_bwrite },		/* bwrite */
-	{ (struct vnodeop_desc*)NULL, (int(*) __P((void *)))NULL }
+	{ NULL, NULL }
 };
 struct vnodeopv_desc fifo_nfsv2nodeop_opv_desc =
 	{ &fifo_nfsv2nodeop_p, fifo_nfsv2nodeop_entries };
@@ -432,11 +436,22 @@ nfs_open(v)
 	int error;
 
 	if (vp->v_type != VREG && vp->v_type != VDIR && vp->v_type != VLNK) {
-#ifdef DIAGNOSTIC
-		printf("open eacces vtyp=%d\n",vp->v_type);
-#endif
 		return (EACCES);
 	}
+
+	/*
+	 * if we're opening with write access, initialize the write creds
+	 * in case we only write via memory mappings.
+	 */
+
+	if (ap->a_mode & FWRITE) {
+		if (np->n_wcred) {
+			crfree(np->n_wcred);
+		}
+		np->n_wcred = ap->a_cred;
+		crhold(np->n_wcred);
+	}
+
 #ifndef NFS_V2_ONLY
 	/*
 	 * Get a valid lease. If cached data is stale, flush it.
@@ -454,7 +469,6 @@ nfs_open(v)
 			if ((error = nfs_vinvalbuf(vp, V_SAVE, ap->a_cred,
 				ap->a_p, 1)) == EINTR)
 				return (error);
-			(void) uvm_vnp_uncache(vp);
 			np->n_brev = np->n_lrev;
 		    }
 		}
@@ -465,7 +479,6 @@ nfs_open(v)
 			if ((error = nfs_vinvalbuf(vp, V_SAVE, ap->a_cred,
 				ap->a_p, 1)) == EINTR)
 				return (error);
-			(void) uvm_vnp_uncache(vp);
 			np->n_attrstamp = 0;
 			if (vp->v_type == VDIR) {
 				nfs_invaldircache(vp, 0);
@@ -487,7 +500,6 @@ nfs_open(v)
 				if ((error = nfs_vinvalbuf(vp, V_SAVE,
 					ap->a_cred, ap->a_p, 1)) == EINTR)
 					return (error);
-				(void) uvm_vnp_uncache(vp);
 				np->n_mtime = vattr.va_mtime.tv_sec;
 			}
 		}
@@ -542,6 +554,7 @@ nfs_close(v)
 	struct vnode *vp = ap->a_vp;
 	struct nfsnode *np = VTONFS(vp);
 	int error = 0;
+	UVMHIST_FUNC("nfs_close"); UVMHIST_CALLED(ubchist);
 
 	if (vp->v_type == VREG) {
 	    if ((VFSTONFS(vp->v_mount)->nm_flag & NFSMNT_NQNFS) == 0 &&
@@ -558,6 +571,7 @@ nfs_close(v)
 		error = np->n_error;
 	    }
 	}
+	UVMHIST_LOG(ubchist, "returning %d", error,0,0,0);
 	return (error);
 }
 
@@ -1020,10 +1034,9 @@ nfs_readlinkrpc(vp, uiop, cred)
  * Ditto above
  */
 int
-nfs_readrpc(vp, uiop, cred)
+nfs_readrpc(vp, uiop)
 	struct vnode *vp;
 	struct uio *uiop;
-	struct ucred *cred;
 {
 	u_int32_t *tl;
 	caddr_t cp;
@@ -1055,7 +1068,8 @@ nfs_readrpc(vp, uiop, cred)
 			*tl++ = txdr_unsigned(len);
 			*tl = 0;
 		}
-		nfsm_request(vp, NFSPROC_READ, uiop->uio_procp, cred);
+		nfsm_request(vp, NFSPROC_READ, uiop->uio_procp,
+			     VTONFS(vp)->n_rcred);
 		if (v3) {
 			nfsm_postop_attr(vp, attrflag);
 			if (error) {
@@ -1084,10 +1098,9 @@ nfsmout:
  * nfs write call
  */
 int
-nfs_writerpc(vp, uiop, cred, iomode, must_commit)
+nfs_writerpc(vp, uiop, iomode, must_commit)
 	struct vnode *vp;
 	struct uio *uiop;
-	struct ucred *cred;
 	int *iomode, *must_commit;
 {
 	u_int32_t *tl;
@@ -1100,6 +1113,10 @@ nfs_writerpc(vp, uiop, cred, iomode, must_commit)
 	const int v3 = NFS_ISV3(vp);
 	int committed = NFSV3WRITE_FILESYNC;
 
+	if (vp->v_mount->mnt_flag & MNT_RDONLY) {
+		panic("writerpc readonly vp %p", vp);
+	}
+
 #ifndef DIAGNOSTIC
 	if (uiop->uio_iovcnt != 1)
 		panic("nfs: writerpc iovcnt > 1");
@@ -1110,7 +1127,7 @@ nfs_writerpc(vp, uiop, cred, iomode, must_commit)
 		return (EFBIG);
 	while (tsiz > 0) {
 		nfsstats.rpccnt[NFSPROC_WRITE]++;
-		len = (tsiz > nmp->nm_wsize) ? nmp->nm_wsize : tsiz;
+		len = min(tsiz, nmp->nm_wsize);
 		nfsm_reqhead(vp, NFSPROC_WRITE,
 			NFSX_FH(v3) + 5 * NFSX_UNSIGNED + nfsm_rndup(len));
 		nfsm_fhtom(vp, v3);
@@ -1135,7 +1152,8 @@ nfs_writerpc(vp, uiop, cred, iomode, must_commit)
 
 		}
 		nfsm_uiotom(uiop, len);
-		nfsm_request(vp, NFSPROC_WRITE, uiop->uio_procp, cred);
+		nfsm_request(vp, NFSPROC_WRITE, uiop->uio_procp,
+			     VTONFS(vp)->n_wcred);
 		if (v3) {
 			wccflag = NFSV3_WCCCHK;
 			nfsm_wcc_data(vp, wccflag);
@@ -2595,11 +2613,10 @@ nfs_lookitup(dvp, name, len, cred, procp, npp)
  * Nfs Version 3 commit rpc
  */
 int
-nfs_commit(vp, offset, cnt, cred, procp)
+nfs_commit(vp, offset, cnt, procp)
 	struct vnode *vp;
-	u_quad_t offset;
-	unsigned cnt;
-	struct ucred *cred;
+	off_t offset;
+	uint32_t cnt;
 	struct proc *procp;
 {
 	caddr_t cp;
@@ -2624,7 +2641,7 @@ nfs_commit(vp, offset, cnt, cred, procp)
 	txdr_hyper(offset, tl);
 	tl += 2;
 	*tl = txdr_unsigned(cnt);
-	nfsm_request(vp, NFSPROC_COMMIT, procp, cred);
+	nfsm_request(vp, NFSPROC_COMMIT, procp, VTONFS(vp)->n_wcred);
 	nfsm_wcc_data(vp, wccflag);
 	if (!error) {
 		nfsm_dissect(tl, u_int32_t *, NFSX_V3WRITEVERF);
@@ -2680,28 +2697,25 @@ nfs_strategy(v)
 {
 	struct vop_strategy_args *ap = v;
 	struct buf *bp = ap->a_bp;
-	struct ucred *cr;
 	struct proc *p;
 	int error = 0;
 
 	if ((bp->b_flags & (B_PHYS|B_ASYNC)) == (B_PHYS|B_ASYNC))
 		panic("nfs physio/async");
 	if (bp->b_flags & B_ASYNC)
-		p = (struct proc *)0;
+		p = NULL;
 	else
 		p = curproc;	/* XXX */
-	if (bp->b_flags & B_READ)
-		cr = bp->b_rcred;
-	else
-		cr = bp->b_wcred;
+
 	/*
 	 * If the op is asynchronous and an i/o daemon is waiting
 	 * queue the request, wake it up and wait for completion
 	 * otherwise just do it ourselves.
 	 */
+
 	if ((bp->b_flags & B_ASYNC) == 0 ||
-		nfs_asyncio(bp, NOCRED))
-		error = nfs_doio(bp, cr, p);
+	    nfs_asyncio(bp))
+		error = nfs_doio(bp, p);
 	return (error);
 }
 
@@ -2750,16 +2764,7 @@ nfs_fsync(v)
 }
 
 /*
- * Flush all the blocks associated with a vnode.
- * 	Walk through the buffer pool and push any dirty pages
- *	associated with the vnode.
- *
- *	Don't bother to cluster commits; the commitrange code will
- *	do that. In the first pass, push all dirty buffers to the
- *	server, using stable writes if commit is set to 1.
- *	In the 2nd pass, push anything that might be left,
- *	i.e. the buffer was busy in the first pass, or it wasn't
- *	committed in the first pass.
+ * Flush all the data associated with a vnode.
  */
 int
 nfs_flush(vp, cred, waitfor, p, commit)
@@ -2769,104 +2774,25 @@ nfs_flush(vp, cred, waitfor, p, commit)
 	struct proc *p;
 	int commit;
 {
+	struct uvm_object *uobj = &vp->v_uvm.u_obj;
 	struct nfsnode *np = VTONFS(vp);
-	struct nfsmount *nmp = VFSTONFS(vp->v_mount);
-	struct buf *bp;
-	struct buf *nbp;
-	int pass, s, error, slpflag, slptimeo;
+	int error;
+	int flushflags = PGO_ALLPAGES|PGO_CLEANIT|PGO_SYNCIO;
+	int rv;
+	UVMHIST_FUNC("nfs_flush"); UVMHIST_CALLED(ubchist);
 
-	pass = 1;
 	error = 0;
-	slptimeo = 0;
-	slpflag = nmp->nm_flag & NFSMNT_INT ? PCATCH : 0;
-loop:
-	s = splbio();
-	for (bp = vp->v_dirtyblkhd.lh_first; bp; bp = nbp) {
-		nbp = bp->b_vnbufs.le_next;
-		if (bp->b_flags & B_BUSY) {
-			if (pass == 2 && waitfor == MNT_WAIT) {
-				bp->b_flags |= B_WANTED;
-				error = tsleep((caddr_t)bp,
-				    slpflag | (PRIBIO + 1),
-				    "nfsfsync", slptimeo);
-				splx(s);
-				if (error) {
-				    if (nfs_sigintr(nmp, (struct nfsreq *)0, p))
-					return (EINTR);
-				    if (slpflag == PCATCH) {
-					slpflag = 0;
-					slptimeo = 2 * hz;
-				    }
-				}
-				goto loop;
-			} else
-				continue;
-		}
-#ifdef DIAGNOSTIC
-		if ((bp->b_flags & B_DELWRI) == 0)
-			panic("nfs_fsync: not dirty");
-#endif
-		if (!commit && (bp->b_flags & B_NEEDCOMMIT))
-			continue;
-		/*
-		 * Note: can't use B_VFLUSH here, since there is no
-		 * real vnode lock, so we can't leave the buffer on
-		 * the freelist.
-		 */
-		bremfree(bp);
-		if (commit && vp->v_type == VREG)
-			/*
-			 * Setting B_NOCACHE has the effect
-			 * effect of nfs_doio using a stable write
-			 * RPC. XXX this abuses the B_NOCACHE flag,
-			 * but it is needed to tell nfs_strategy
-			 * that this buffer is async, but needs to
-			 * be written with a stable RPC. nfs_doio
-			 * will remove B_NOCACHE again.
-			 */
-			bp->b_flags |= B_NOCACHE;
-
-		bp->b_flags |= B_BUSY | B_ASYNC;
-		splx(s);
-		VOP_BWRITE(bp);
-		goto loop;
-	}
-	splx(s);
-
-	if (commit && pass == 1) {
-		pass = 2;
-		goto loop;
-	}
-
-	if (waitfor == MNT_WAIT) {
-		s = splbio();
-		while (vp->v_numoutput) {
-			vp->v_flag |= VBWAIT;
-			error = tsleep((caddr_t)&vp->v_numoutput,
-				slpflag | (PRIBIO + 1), "nfsfsync", slptimeo);
-			if (error) {
-			    splx(s);
-			    if (nfs_sigintr(nmp, (struct nfsreq *)0, p))
-				return (EINTR);
-			    if (slpflag == PCATCH) {
-				slpflag = 0;
-				slptimeo = 2 * hz;
-			    }
-			    s = splbio();
-			}
-		}
-		splx(s);
-		if (vp->v_dirtyblkhd.lh_first && commit) {
-#if 0
-			vprint("nfs_fsync: dirty", vp);
-#endif
-			goto loop;
-		}
+	simple_lock(&uobj->vmobjlock);
+	rv = (uobj->pgops->pgo_flush)(uobj, 0, 0, flushflags);
+	simple_unlock(&uobj->vmobjlock);
+	if (!rv) {
+		error = EIO;
 	}
 	if (np->n_flag & NWRITEERR) {
 		error = np->n_error;
 		np->n_flag &= ~NWRITEERR;
 	}
+	UVMHIST_LOG(ubchist, "returning %d", error,0,0,0);
 	return (error);
 }
 

@@ -1,4 +1,4 @@
-/* $NetBSD: pmap.h,v 1.31.2.2 2000/11/22 15:59:46 bouyer Exp $ */
+/* $NetBSD: pmap.h,v 1.31.2.3 2000/12/08 09:23:38 bouyer Exp $ */
 
 /*-
  * Copyright (c) 1998, 1999, 2000 The NetBSD Foundation, Inc.
@@ -189,8 +189,11 @@ struct pv_head {
 #endif /* NEW_SCC_DRIVER */
 
 #if defined(MULTIPROCESSOR)
+struct cpu_info;
+struct trapframe;
+
 void	pmap_tlb_shootdown(pmap_t, vaddr_t, pt_entry_t);
-void	pmap_do_tlb_shootdown(void);
+void	pmap_do_tlb_shootdown(struct cpu_info *, struct trapframe *);
 void	pmap_tlb_shootdown_q_drain(u_long, boolean_t);
 #define	PMAP_TLB_SHOOTDOWN(pm, va, pte)					\
 	pmap_tlb_shootdown((pm), (va), (pte))

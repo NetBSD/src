@@ -1,4 +1,4 @@
-/* $NetBSD: locore.s,v 1.65.2.2 2000/11/22 15:59:40 bouyer Exp $ */
+/* $NetBSD: locore.s,v 1.65.2.3 2000/12/08 09:23:23 bouyer Exp $ */
 
 /*-
  * Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
@@ -69,15 +69,10 @@
 #include "opt_ddb.h"
 #include "opt_multiprocessor.h"
 #include "opt_lockdebug.h"
-#include "opt_compat_linux.h"
-
-#ifdef COMPAT_LINUX
-#include <compat/linux/linux_syscall.h>
-#endif
 
 #include <machine/asm.h>
 
-__KERNEL_RCSID(0, "$NetBSD: locore.s,v 1.65.2.2 2000/11/22 15:59:40 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: locore.s,v 1.65.2.3 2000/12/08 09:23:23 bouyer Exp $");
 
 #include "assym.h"
 
@@ -301,38 +296,6 @@ NESTED(sigcode,0,0,ra,0,0)
 	CALLSYS_NOERROR(exit)		/* and call exit() with it. */
 XNESTED(esigcode,0)
 	END(sigcode)
-
-/**************************************************************************/
-
-#ifdef COMPAT_LINUX
-/*
- * Linux signal trampoline code.  Almost identical to the normal one.
- */
-
-NESTED(linux_sigcode,0,0,ra,0,0)
-	lda	sp, -16(sp)		/* save the sigcontext pointer */
-	stq	a2, 0(sp)
-	jsr	ra, (t12)		/* call the signal handler */
-	ldq	a0, 0(sp)		/* get the sigcontext pointer */
-	lda	sp, 16(sp)
-	LINUX_CALLSYS_NOERROR(sigreturn)
-	mov	v0, a0
-	LINUX_CALLSYS_NOERROR(exit)
-XNESTED(linux_esigcode,0)
-	END(linux_sigcode)
-
-NESTED(linux_rt_sigcode,0,0,ra,0,0)
-	lda	sp, -16(sp)		/* save the sigcontext pointer */
-	stq	a2, 0(sp)
-	jsr	ra, (t12)		/* call the signal handler */
-	ldq	a0, 0(sp)		/* get the sigcontext pointer */
-	lda	sp, 16(sp)
-	LINUX_CALLSYS_NOERROR(rt_sigreturn)
-	mov	v0, a0
-	LINUX_CALLSYS_NOERROR(exit)
-XNESTED(linux_rt_esigcode,0)
-	END(linux_rt_sigcode)
-#endif
 
 /**************************************************************************/
 

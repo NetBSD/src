@@ -1,4 +1,4 @@
-/*	$NetBSD: mvmebus.c,v 1.5.2.2 2000/11/20 20:15:17 bouyer Exp $	*/
+/*	$NetBSD: mvmebus.c,v 1.5.2.3 2000/12/08 09:28:30 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -282,13 +282,13 @@ mvmebus_map(vsc, vmeaddr, len, am, datasize, swap, tag, handle, resc)
 	if (paddr == 0)
 		return (ENOMEM);
 
-	rv = bus_space_map(MVME68K_VME_BUS_SPACE, paddr, len, 0, handle);
+	rv = bus_space_map(sc->sc_bust, paddr, len, 0, handle);
 	if (rv != 0)
 		return (rv);
 
 	/* Allocate space for the resource tag */
 	if ((mr = malloc(sizeof(*mr), M_DEVBUF, M_NOWAIT)) == NULL) {
-		bus_space_unmap(MVME68K_VME_BUS_SPACE, *handle, len);
+		bus_space_unmap(sc->sc_bust, *handle, len);
 		return (ENOMEM);
 	}
 
@@ -300,7 +300,7 @@ mvmebus_map(vsc, vmeaddr, len, am, datasize, swap, tag, handle, resc)
 	mr->mr_handle = *handle;
 	mr->mr_range = i;
 
-	*tag = MVME68K_VME_BUS_SPACE;
+	*tag = sc->sc_bust;
 	*resc = (vme_mapresc_t *) mr;
 
 	return (0);
@@ -312,9 +312,10 @@ mvmebus_unmap(vsc, resc)
 	void *vsc;
 	vme_mapresc_t resc;
 {
+	struct mvmebus_softc *sc = vsc;
 	struct mvmebus_mapresc *mr = (struct mvmebus_mapresc *) resc;
 
-	bus_space_unmap(MVME68K_VME_BUS_SPACE, mr->mr_handle, mr->mr_size);
+	bus_space_unmap(sc->sc_bust, mr->mr_handle, mr->mr_size);
 
 	free(mr, M_DEVBUF);
 }
@@ -332,6 +333,7 @@ mvmebus_probe(vsc, vmeaddr, len, am, datasize, callback, arg)
 	bus_space_tag_t tag;
 	bus_space_handle_t handle;
 	vme_mapresc_t resc;
+	vme_size_t offs;
 	int rv;
 
 	/* Get a temporary mapping to the VMEbus range */
@@ -342,14 +344,25 @@ mvmebus_probe(vsc, vmeaddr, len, am, datasize, callback, arg)
 
 	if (callback)
 		rv = (*callback) (arg, tag, handle);
-	else {
-		/*
-		 * FIXME: Using badaddr() in this way may cause several
-		 * accesses to each VMEbus address. Also, using 'handle' in
-		 * this way is a bit presumptuous...
-		 */
-		rv = badaddr((caddr_t) handle, (int) len) ? EIO : 0;
-	}
+	else
+		for (offs = 0; offs < len && rv == 0;) {
+			switch (datasize) {
+			case VME_D8:
+				rv = bus_space_peek_1(tag, handle, offs, NULL);
+				offs += 1;
+				break;
+
+			case VME_D16:
+				rv = bus_space_peek_2(tag, handle, offs, NULL);
+				offs += 2;
+				break;
+
+			case VME_D32:
+				rv = bus_space_peek_4(tag, handle, offs, NULL);
+				offs += 4;
+				break;
+			}
+		}
 
 	mvmebus_unmap(vsc, resc);
 

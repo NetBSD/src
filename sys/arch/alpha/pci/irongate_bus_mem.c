@@ -1,4 +1,4 @@
-/* $NetBSD: irongate_bus_mem.c,v 1.4.2.2 2000/11/20 19:57:09 bouyer Exp $ */
+/* $NetBSD: irongate_bus_mem.c,v 1.4.2.3 2000/12/08 09:23:38 bouyer Exp $ */
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(1, "$NetBSD: irongate_bus_mem.c,v 1.4.2.2 2000/11/20 19:57:09 bouyer Exp $");
+__KERNEL_RCSID(1, "$NetBSD: irongate_bus_mem.c,v 1.4.2.3 2000/12/08 09:23:38 bouyer Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -67,3 +67,29 @@ __KERNEL_RCSID(1, "$NetBSD: irongate_bus_mem.c,v 1.4.2.2 2000/11/20 19:57:09 bou
 __asm(".arch ev6");
 
 #include <alpha/pci/pci_bwx_bus_mem_chipdep.c>
+
+#include <sys/kcore.h>
+
+extern phys_ram_seg_t mem_clusters[];
+extern int mem_cluster_cnt;
+
+void
+irongate_bus_mem_init2(bus_space_tag_t t, void *v)
+{
+	int i, error;
+
+	/*
+	 * Since the AMD 751 doesn't have DMA windows, we need to
+	 * allocate RAM out of the extent map.
+	 */
+	for (i = 0; i < mem_cluster_cnt; i++) {
+		error = extent_alloc_region(CHIP_MEM_EXTENT(v),
+		    mem_clusters[i].start, mem_clusters[i].size,
+		    EX_NOWAIT | (CHIP_EX_MALLOC_SAFE(v) ? EX_MALLOCOK : 0));
+		if (error) {
+			printf("WARNING: unable reserve RAM at 0x%lx - 0x%lx\n",
+			    mem_clusters[i].start,
+			    mem_clusters[i].start + (mem_clusters[i].size - 1));
+		}
+	}
+}

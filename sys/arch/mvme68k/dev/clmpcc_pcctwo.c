@@ -1,4 +1,4 @@
-/*	$NetBSD: clmpcc_pcctwo.c,v 1.2.8.1 2000/11/20 20:15:15 bouyer Exp $ */
+/*	$NetBSD: clmpcc_pcctwo.c,v 1.2.8.2 2000/12/08 09:28:29 bouyer Exp $ */
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -181,18 +181,9 @@ clmpcc_pcctwo_consiackhook(sc, which)
 	struct clmpcc_softc *sc;
 	int which;
 {
-	bus_space_tag_t bust;
 	bus_space_handle_t bush;
 	bus_size_t offset;
 	volatile u_char foo;
-
-	/*
-	 * We need to fake the tag and handle since 'sys_pcctwo' will
-	 * be NULL during early system startup...
-	 */
-	bust = MVME68K_INTIO_BUS_SPACE;
-	bush = (bus_space_tag_t) & (intiobase[MAINBUS_PCCTWO_OFFSET +
-		PCCTWO_REG_OFF]);
 
 	switch (which) {
 	case CLMPCC_IACK_MODEM:
@@ -214,7 +205,14 @@ clmpcc_pcctwo_consiackhook(sc, which)
 #endif
 	}
 
-	foo = bus_space_read_1(bust, bush, offset);
+	/*
+	 * We need to fake the tag and handle since 'sys_pcctwo' will
+	 * be NULL during early system startup...
+	 */
+	bush = (bus_space_handle_t) & (intiobase[MAINBUS_PCCTWO_OFFSET +
+		PCCTWO_REG_OFF]);
+
+	foo = bus_space_read_1(&_mainbus_space_tag, bush, offset);
 }
 
 
@@ -255,8 +253,9 @@ clmpcccninit(cp)
 {
 	static struct clmpcc_softc cons_sc;
 
-	cons_sc.sc_iot = MVME68K_INTIO_BUS_SPACE;
-	bus_space_map(cons_sc.sc_iot, MAINBUS_PCCTWO_OFFSET + PCCTWO_SCC_OFF,
+	cons_sc.sc_iot = &_mainbus_space_tag;
+	bus_space_map(&_mainbus_space_tag,
+	    intiobase_phys + MAINBUS_PCCTWO_OFFSET + PCCTWO_SCC_OFF,
 	    PCC2REG_SIZE, 0, &cons_sc.sc_ioh);
 	cons_sc.sc_clk = 20000000;
 	cons_sc.sc_byteswap = CLMPCC_BYTESWAP_LOW;

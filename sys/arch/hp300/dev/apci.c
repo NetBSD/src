@@ -1,4 +1,4 @@
-/*	$NetBSD: apci.c,v 1.7.2.2 2000/11/22 16:00:08 bouyer Exp $	*/
+/*	$NetBSD: apci.c,v 1.7.2.3 2000/12/08 09:26:26 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1999 The NetBSD Foundation, Inc.
@@ -482,7 +482,7 @@ apciintr(arg)
 
 		case IIR_TXRDY:
 			tp->t_state &=~ (TS_BUSY|TS_FLUSH);
-			if (tp->t_line)
+			if (tp->t_linesw != linesw[0])
 				(*tp->t_linesw->l_start)(tp);
 			else
 				apcistart(tp);

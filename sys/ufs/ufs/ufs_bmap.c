@@ -1,4 +1,4 @@
-/*	$NetBSD: ufs_bmap.c,v 1.8.14.1 2000/11/20 18:11:54 bouyer Exp $	*/
+/*	$NetBSD: ufs_bmap.c,v 1.8.14.2 2000/12/08 09:20:16 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1989, 1991, 1993
@@ -186,6 +186,9 @@ ufs_bmaparray(vp, bn, bnp, ap, nump, runp)
 
 		xap->in_exists = 1;
 		bp = getblk(vp, metalbn, mp->mnt_stat.f_iosize, 0, 0);
+		if (bp == NULL) {
+			return ENOMEM;
+		}
 		if (bp->b_flags & (B_DONE | B_DELWRI)) {
 			trace(TR_BREADHIT, pack(vp, size), metalbn);
 		}
@@ -243,6 +246,7 @@ ufs_getlbns(vp, bn, ap, nump)
 	long metalbn, realbn;
 	struct ufsmount *ump;
 	int64_t blockcnt;
+	int lbc;
 	int i, numlevels, off;
 
 	ump = VFSTOUFS(vp->v_mount);
@@ -263,10 +267,15 @@ ufs_getlbns(vp, bn, ap, nump)
 	 * at the given level of indirection, and NIADDR - i is the number
 	 * of levels of indirection needed to locate the requested block.
 	 */
-	for (blockcnt = 1, i = NIADDR, bn -= NDADDR;; i--, bn -= blockcnt) {
+
+	bn -= NDADDR;
+	for (lbc = 0, i = NIADDR;; i--, bn -= blockcnt) {
 		if (i == 0)
 			return (EFBIG);
-		blockcnt *= MNINDIR(ump);
+
+		lbc += ump->um_lognindir;
+		blockcnt = (int64_t)1 << lbc;
+
 		if (bn < blockcnt)
 			break;
 	}
@@ -292,8 +301,9 @@ ufs_getlbns(vp, bn, ap, nump)
 		if (metalbn == realbn)
 			break;
 
-		blockcnt /= MNINDIR(ump);
-		off = (bn / blockcnt) % MNINDIR(ump);
+		lbc -= ump->um_lognindir;
+		blockcnt = (int64_t)1 << lbc;
+		off = (bn >> lbc) & (MNINDIR(ump) - 1);
 
 		++numlevels;
 		ap->in_lbn = metalbn;

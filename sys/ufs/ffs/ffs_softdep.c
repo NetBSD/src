@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_softdep.c,v 1.7.2.3 2000/11/22 16:06:46 bouyer Exp $	*/
+/*	$NetBSD: ffs_softdep.c,v 1.7.2.4 2000/12/08 09:20:11 bouyer Exp $	*/
 
 /*
  * Copyright 1998 Marshall Kirk McKusick. All Rights Reserved.
@@ -53,6 +53,10 @@
 #include <ufs/ufs/ufs_extern.h>
 #include <ufs/ufs/ufs_bswap.h>
 
+#include <uvm/uvm.h>
+struct pool sdpcpool;
+int softdep_lockedbufs;
+
 /*
  * For now we want the safety net that the DIAGNOSTIC and DEBUG flags provide.
  */
@@ -97,6 +101,13 @@ extern char *memname[];
 /*
  * End system adaptaion definitions.
  */
+
+/*
+ * Definitions for page cache info hashtable.
+ */
+#define PCBPHASHSIZE 1024
+LIST_HEAD(, buf) pcbphashhead[PCBPHASHSIZE];
+#define PCBPHASH(vp, lbn) ((((vaddr_t)(vp) >> 8) ^ (lbn)) & (PCBPHASHSIZE - 1))
 
 /*
  * Internal function prototypes.
@@ -149,6 +160,16 @@ static	int pagedep_lookup __P((struct inode *, ufs_lbn_t, int,
 static	void pause_timer __P((void *));
 static	int request_cleanup __P((int, int));
 static	void add_to_worklist __P((struct worklist *));
+static	struct buf *softdep_setup_pagecache __P((struct inode *, ufs_lbn_t,
+						 long));
+static	void softdep_collect_pagecache __P((struct vnode *,
+					    struct bufq_head *));
+static	void softdep_free_pagecache __P((struct bufq_head *));
+static	struct vnode *softdep_lookupvp(struct fs *, ino_t);
+static	struct buf *softdep_lookup_pcbp __P((struct vnode *, ufs_lbn_t));
+void softdep_pageiodone __P((struct buf *));
+void softdep_flush_vnode __P((struct vnode *, ufs_lbn_t));
+static void softdep_flush_indir __P((struct vnode *));
 
 /*
  * Exported softdep operations.
@@ -169,6 +190,7 @@ struct bio_ops bioops = {
 	softdep_process_worklist,		/* io_sync */
 	softdep_move_dependencies,		/* io_movedeps */
 	softdep_count_dependencies,		/* io_countdeps */
+	softdep_pageiodone,			/* io_pageiodone */
 };
 
 /*
@@ -889,6 +911,7 @@ top:
 void 
 softdep_initialize()
 {
+	int i;
 
 	LIST_INIT(&mkdirlisthd);
 	LIST_INIT(&softdep_workitem_pending);
@@ -902,6 +925,11 @@ softdep_initialize()
 	newblk_hashtbl = hashinit(64, HASH_LIST, M_NEWBLK, M_WAITOK,
 	    &newblk_hash);
 	sema_init(&newblk_in_progress, "newblk", PRIBIO, 0);
+	pool_init(&sdpcpool, sizeof(struct buf), 0, 0, 0, "sdpcpool",
+	    0, pool_page_alloc_nointr, pool_page_free_nointr, M_TEMP);
+	for (i = 0; i < PCBPHASHSIZE; i++) {
+		LIST_INIT(&pcbphashhead[i]);
+	}
 }
 
 /*
@@ -1161,6 +1189,18 @@ softdep_setup_allocdirect(ip, lbn, newblkno, oldblkno, newsize, oldsize, bp)
 	LIST_REMOVE(newblk, nb_hash);
 	FREE(newblk, M_NEWBLK);
 
+	/*
+	 * If we were not passed a bp to attach the dep to,
+	 * then this must be for a regular file.
+	 * Allocate a buffer to represent the page cache pages
+	 * that are the real dependency.  The pages themselves
+	 * cannot refer to the dependency since we don't want to
+	 * add a field to struct vm_page for this.
+	 */
+
+	if (bp == NULL) {
+		bp = softdep_setup_pagecache(ip, lbn, newsize);
+	}
 	WORKLIST_INSERT(&bp->b_dep, &adp->ad_list);
 	if (lbn >= NDADDR) {
 		/* allocating an indirect block */
@@ -1310,7 +1350,10 @@ handle_workitem_freefrag(freefrag)
 	vp.v_data = &tip;
 	vp.v_mount = freefrag->ff_devvp->v_specmountpoint;
 	tip.i_vnode = &vp;
+	lockinit(&vp.v_glock, PVFS, "fglock", 0, 0);
+	lockmgr(&vp.v_glock, LK_EXCLUSIVE, NULL);
 	ffs_blkfree(&tip, freefrag->ff_blkno, freefrag->ff_fragsize);
+	lockmgr(&vp.v_glock, LK_RELEASE, NULL);
 	FREE(freefrag, M_FREEFRAG);
 }
 
@@ -1380,6 +1423,18 @@ softdep_setup_allocindir_page(ip, lbn, bp, ptrno, newblkno, oldblkno, nbp)
 	struct allocindir *aip;
 	struct pagedep *pagedep;
 
+	/*
+	 * If we are already holding "many" buffers busy (as the safe copies
+	 * of indirect blocks) flush the dependency for one of those before
+	 * potentially tying up more.  otherwise we could fill the
+	 * buffer cache with busy buffers and deadlock.
+	 * XXXUBC I'm sure there's a better way to deal with this.
+	 */
+
+	while (softdep_lockedbufs > nbuf >> 2) {
+		softdep_flush_indir(ITOV(ip));
+	}
+
 	aip = newallocindir(ip, ptrno, newblkno, oldblkno);
 	ACQUIRE_LOCK(&lk);
 	/*
@@ -1390,6 +1445,9 @@ softdep_setup_allocindir_page(ip, lbn, bp, ptrno, newblkno, oldblkno, nbp)
 	if ((ip->i_ffs_mode & IFMT) == IFDIR &&
 	    pagedep_lookup(ip, lbn, DEPALLOC, &pagedep) == 0)
 		WORKLIST_INSERT(&nbp->b_dep, &pagedep->pd_list);
+	if (nbp == NULL) {
+		nbp = softdep_setup_pagecache(ip, lbn, ip->i_fs->fs_bsize);
+	}
 	WORKLIST_INSERT(&nbp->b_dep, &aip->ai_list);
 	FREE_LOCK(&lk);
 	setup_allocindir_phase2(bp, ip, aip);
@@ -1495,8 +1553,10 @@ setup_allocindir_phase2(bp, ip, aip)
 			FREE_LOCK(&lk);
 		}
 		if (newindirdep) {
-			if (indirdep->ir_savebp != NULL)
+			if (indirdep->ir_savebp != NULL) {
 				brelse(newindirdep->ir_savebp);
+				softdep_lockedbufs--;
+			}
 			WORKITEM_FREE((caddr_t)newindirdep, D_INDIRDEP);
 		}
 		if (indirdep)
@@ -1513,6 +1573,7 @@ setup_allocindir_phase2(bp, ip, aip)
 		}
 		newindirdep->ir_savebp =
 		    getblk(ip->i_devvp, bp->b_blkno, bp->b_bcount, 0, 0);
+		softdep_lockedbufs++;
 		newindirdep->ir_savebp->b_flags |= B_ASYNC;
 		bcopy(bp->b_data, newindirdep->ir_savebp->b_data, bp->b_bcount);
 	}
@@ -1555,8 +1616,9 @@ softdep_setup_freeblocks(ip, length)
 	struct freeblks *freeblks;
 	struct inodedep *inodedep;
 	struct allocdirect *adp;
-	struct vnode *vp;
+	struct vnode *vp = ITOV(ip);
 	struct buf *bp;
+	struct bufq_head fbqh;
 	struct fs *fs = ip->i_fs;
 	int i, error;
 #ifdef FFS_EI
@@ -1616,7 +1678,13 @@ softdep_setup_freeblocks(ip, length)
 	 * with this inode are obsolete and can simply be de-allocated.
 	 * We must first merge the two dependency lists to get rid of
 	 * any duplicate freefrag structures, then purge the merged list.
+	 * We must remove any pagecache markers from the pagecache
+	 * hashtable first because any I/Os in flight will want to see
+	 * dependencies attached to their pagecache markers.  We cannot
+	 * free the pagecache markers until after we've freed all the
+	 * dependencies that reference them later.
 	 */
+	softdep_collect_pagecache(vp, &fbqh);
 	merge_inode_lists(inodedep);
 	while ((adp = TAILQ_FIRST(&inodedep->id_inoupdt)) != 0)
 		free_allocdirect(&inodedep->id_inoupdt, adp, 1);
@@ -1628,7 +1696,6 @@ softdep_setup_freeblocks(ip, length)
 	 * Once they are all there, walk the list and get rid of
 	 * any dependencies.
 	 */
-	vp = ITOV(ip);
 	ACQUIRE_LOCK(&lk);
 	drain_output(vp, 1);
 	while (getdirtybuf(&vp->v_dirtyblkhd.lh_first, MNT_WAIT)) {
@@ -1640,6 +1707,7 @@ softdep_setup_freeblocks(ip, length)
 		brelse(bp);
 		ACQUIRE_LOCK(&lk);
 	}
+	softdep_free_pagecache(&fbqh);
 	/*
 	 * Add the freeblks structure to the list of operations that
 	 * must await the zero'ed inode being written to disk. If we
@@ -1730,8 +1798,8 @@ deallocate_dependencies(bp, inodedep)
 			 * If the inode has already been written, then they 
 			 * can be dumped directly onto the work list.
 			 */
-			for (dirrem = LIST_FIRST(&pagedep->pd_dirremhd); dirrem;
-			     dirrem = LIST_NEXT(dirrem, dm_next)) {
+			while ((dirrem = LIST_FIRST(&pagedep->pd_dirremhd))
+			       != NULL) {
 				LIST_REMOVE(dirrem, dm_next);
 				dirrem->dm_dirinum = pagedep->pd_ino;
 				if (inodedep == NULL ||
@@ -1944,6 +2012,10 @@ handle_workitem_freeblocks(freeblks)
 	}
 	nblocks = btodb(fs->fs_bsize);
 	blocksreleased = 0;
+
+	lockinit(&vp.v_glock, PVFS, "fglock", 0, 0);
+	lockmgr(&vp.v_glock, LK_EXCLUSIVE, NULL);
+
 	/*
 	 * Indirect blocks first.
 	 */
@@ -1966,6 +2038,7 @@ handle_workitem_freeblocks(freeblks)
 		ffs_blkfree(&tip, bn, bsize);
 		blocksreleased += btodb(bsize);
 	}
+	lockmgr(&vp.v_glock, LK_RELEASE, NULL);
 
 #ifdef DIAGNOSTIC
 	if (freeblks->fb_chkcnt != blocksreleased)
@@ -2034,6 +2107,7 @@ indir_trunc(ip, dbn, level, lbn, countp)
 		error = bread(ip->i_devvp, dbn, (int)fs->fs_bsize, NOCRED, &bp);
 		if (error)
 			return (error);
+		softdep_lockedbufs++;
 	}
 	/*
 	 * Recursively free indirect blocks.
@@ -2053,6 +2127,7 @@ indir_trunc(ip, dbn, level, lbn, countp)
 	}
 	bp->b_flags |= B_INVAL | B_NOCACHE;
 	brelse(bp);
+	softdep_lockedbufs--;
 	return (allerror);
 }
 
@@ -2793,6 +2868,8 @@ softdep_disk_io_initiation(bp)
 			if (LIST_FIRST(&indirdep->ir_deplisthd) == NULL) {
 				indirdep->ir_savebp->b_flags |= B_INVAL | B_NOCACHE;
 				brelse(indirdep->ir_savebp);
+				softdep_lockedbufs--;
+
 				/* inline expand WORKLIST_REMOVE(wk); */
 				wk->wk_state &= ~ONWORKLIST;
 				LIST_REMOVE(wk, wk_list);
@@ -3681,8 +3758,9 @@ merge_inode_lists(inodedep)
 {
 	struct allocdirect *listadp, *newadp;
 
+	listadp = TAILQ_FIRST(&inodedep->id_inoupdt);
 	newadp = TAILQ_FIRST(&inodedep->id_newinoupdt);
-	for (listadp = TAILQ_FIRST(&inodedep->id_inoupdt); listadp && newadp;) {
+	while (listadp && newadp) {
 		if (listadp->ad_lbn < newadp->ad_lbn) {
 			listadp = TAILQ_NEXT(listadp, ad_next);
 			continue;
@@ -3935,6 +4013,7 @@ loop:
 		switch (wk->wk_type) {
 
 		case D_ALLOCDIRECT:
+			KASSERT(vp->v_type != VREG);
 			adp = WK_ALLOCDIRECT(wk);
 			if (adp->ad_state & DEPCOMPLETE)
 				break;
@@ -4141,6 +4220,7 @@ flush_inodedep_deps(fs, ino)
 	struct allocdirect *adp;
 	int error, waitfor;
 	struct buf *bp;
+	struct vnode *vp;
 
 	/*
 	 * This work is done in two passes. The first pass grabs most
@@ -4160,6 +4240,27 @@ flush_inodedep_deps(fs, ino)
 		ACQUIRE_LOCK(&lk);
 		if (inodedep_lookup(fs, ino, 0, &inodedep) == 0)
 			return (0);
+
+		/*
+		 * When file data was in the buffer cache,
+		 * softdep_sync_metadata() would start i/o on
+		 * file data buffers itself.  But now that
+		 * we're using the page cache to hold file data,
+		 * we need something else to trigger those flushes.
+		 * let's just do it here.
+		 */
+
+		vp = softdep_lookupvp(fs, ino);
+		if (vp) {
+			struct uvm_object *uobj = &vp->v_uvm.u_obj;
+
+			simple_lock(&uobj->vmobjlock);
+			(uobj->pgops->pgo_flush)(uobj, 0, 0,
+			    PGO_ALLPAGES|PGO_CLEANIT|
+			    (waitfor == MNT_NOWAIT ? 0: PGO_SYNCIO));
+			simple_unlock(&uobj->vmobjlock);
+		}
+
 		for (adp = TAILQ_FIRST(&inodedep->id_inoupdt); adp;
 		     adp = TAILQ_NEXT(adp, ad_next)) {
 			if (adp->ad_state & DEPCOMPLETE)
@@ -4726,4 +4827,237 @@ softdep_error(func, error)
 
 	/* XXX should do something better! */
 	printf("%s: got error %d while accessing filesystem\n", func, error);
+}
+
+/*
+ * Allocate a buffer on which to attach a dependency.
+ */
+static struct buf *
+softdep_setup_pagecache(ip, lbn, size)
+	struct inode *ip;
+	ufs_lbn_t lbn;
+	long size;
+{
+	struct vnode *vp = ITOV(ip);
+	struct buf *bp;
+	int s;
+
+	/*
+	 * Enter pagecache dependency buf in hash.
+	 */
+
+	bp = softdep_lookup_pcbp(vp, lbn);
+	if (bp == NULL) {
+		s = splbio();
+		bp = pool_get(&sdpcpool, PR_WAITOK);
+		splx(s);
+		memset(bp, 0, sizeof(*bp));
+
+		bp->b_vp = vp;
+		bp->b_lblkno = lbn;
+		bp->b_bcount = bp->b_resid = size;
+		LIST_INIT(&bp->b_dep);
+		LIST_INSERT_HEAD(&pcbphashhead[PCBPHASH(vp, lbn)], bp, b_hash);
+	} else {
+		KASSERT(size >= bp->b_bcount);
+		bp->b_resid += size - bp->b_bcount;
+		bp->b_bcount = size;
+	}
+	return bp;
+}
+
+/*
+ * softdep_collect_pagecache() and softdep_free_pagecache()
+ * are used to remove page cache dependency buffers when
+ * a file is being truncated to 0.
+ */
+
+static void
+softdep_collect_pagecache(vp, bqhp)
+	struct vnode *vp;
+	struct bufq_head *bqhp;
+{
+	struct buf *bp, *nextbp;
+	int i;
+
+	TAILQ_INIT(bqhp);
+	for (i = 0; i < PCBPHASHSIZE; i++) {
+		for (bp = LIST_FIRST(&pcbphashhead[i]);
+		     bp != NULL;
+		     bp = nextbp) {
+			nextbp = LIST_NEXT(bp, b_hash);
+			if (bp->b_vp == vp) {
+				LIST_REMOVE(bp, b_hash);
+				TAILQ_INSERT_HEAD(bqhp, bp, b_freelist);
+			}
+		}
+	}
+}
+
+static void
+softdep_free_pagecache(bqhp)
+	struct bufq_head *bqhp;
+{
+	struct buf *bp, *nextbp;
+
+	for (bp = TAILQ_FIRST(bqhp); bp != NULL; bp = nextbp) {
+		nextbp = TAILQ_NEXT(bp, b_freelist);
+		TAILQ_REMOVE(bqhp, bp, b_freelist);
+		KASSERT(LIST_FIRST(&bp->b_dep) == NULL);
+		pool_put(&sdpcpool, bp);
+	}
+}
+
+static struct vnode *
+softdep_lookupvp(fs, ino)
+	struct fs *fs;
+	ino_t ino;
+{
+	struct mount *mp;
+	extern struct vfsops ffs_vfsops;
+
+	CIRCLEQ_FOREACH(mp, &mountlist, mnt_list) {
+		if (mp->mnt_op == &ffs_vfsops &&
+		    VFSTOUFS(mp)->um_fs == fs) {
+			break;
+		}
+	}
+	if (mp == NULL) {
+		return NULL;
+	}
+	return ufs_ihashlookup(VFSTOUFS(mp)->um_dev, ino);
+}
+
+/*
+ * Flush some dependent page cache data for any vnode *except*
+ * the one specified.
+ * XXXUBC this is a horrible hack and it's probably not too hard to deadlock
+ * even with this, but it's better than nothing.
+ */
+
+static void
+softdep_flush_indir(vp)
+	struct vnode *vp;
+{
+	struct buf *bp;
+	int i;
+
+	for (i = 0; i < PCBPHASHSIZE; i++) {
+		LIST_FOREACH(bp, &pcbphashhead[i], b_hash) {
+			if (bp->b_vp == vp ||
+			    LIST_FIRST(&bp->b_dep)->wk_type != D_ALLOCINDIR) {
+				continue;
+			}
+
+			VOP_FSYNC(bp->b_vp, curproc->p_ucred, FSYNC_WAIT, 0, 0,
+				  curproc);
+			return;
+		}
+	}
+	printf("softdep_flush_indir: nothing to flush?\n");
+}
+
+
+static struct buf *
+softdep_lookup_pcbp(vp, lbn)
+	struct vnode *vp;
+	ufs_lbn_t lbn;
+{
+	struct buf *bp;
+
+	LIST_FOREACH(bp, &pcbphashhead[PCBPHASH(vp, lbn)], b_hash) {
+		if (bp->b_vp == vp && bp->b_lblkno == lbn) {
+			break;
+		}
+	}
+	return bp;	     
+}
+
+/*
+ * Do softdep i/o completion processing for page cache writes.
+ */
+ 
+void
+softdep_pageiodone(bp)
+	struct buf *bp;
+{
+	int npages = bp->b_bufsize >> PAGE_SHIFT;
+	struct vnode *vp = bp->b_vp;
+	struct vm_page *pg;
+	struct buf *pcbp = NULL;
+	struct allocdirect *adp;
+	struct allocindir *aip;
+	struct worklist *wk;
+	ufs_lbn_t lbn;
+	voff_t off;
+	long iosize = bp->b_bcount;
+	int size, asize, bshift, bsize;
+	int i;
+
+	KASSERT(!(bp->b_flags & B_READ));
+	bshift = vp->v_mount->mnt_fs_bshift;
+	bsize = 1 << bshift;
+	asize = min(PAGE_SIZE, bsize);
+	ACQUIRE_LOCK(&lk);
+	for (i = 0; i < npages; i++) {
+		pg = uvm_pageratop((vaddr_t)bp->b_data + (i << PAGE_SHIFT));
+		if (pg == NULL) {
+			continue;
+		}
+
+		for (off = pg->offset;
+		     off < pg->offset + PAGE_SIZE;
+		     off += bsize) {
+			size = min(asize, iosize);
+			iosize -= size;
+			lbn = off >> bshift;
+			if (pcbp == NULL || pcbp->b_lblkno != lbn) {
+				pcbp = softdep_lookup_pcbp(vp, lbn);
+			}
+			if (pcbp == NULL) {
+				continue;
+			}
+			pcbp->b_resid -= size;
+			if (pcbp->b_resid < 0) {
+				panic("softdep_pageiodone: "
+				      "resid < 0, vp %p lbn 0x%lx pcbp %p",
+				      vp, lbn, pcbp);
+			}
+			if (pcbp->b_resid > 0) {
+				continue;
+			}
+
+			/*
+			 * We've completed all the i/o for this block.
+			 * mark the dep complete.
+			 */
+
+			KASSERT(LIST_FIRST(&pcbp->b_dep) != NULL);
+			while ((wk = LIST_FIRST(&pcbp->b_dep))) {
+				WORKLIST_REMOVE(wk);
+				switch (wk->wk_type) {
+				case D_ALLOCDIRECT:
+					adp = WK_ALLOCDIRECT(wk);
+					adp->ad_state |= COMPLETE;
+					handle_allocdirect_partdone(adp);
+					break;
+
+				case D_ALLOCINDIR:
+					aip = WK_ALLOCINDIR(wk);
+					aip->ai_state |= COMPLETE;
+					handle_allocindir_partdone(aip);
+					break;
+
+				default:
+					panic("softdep_pageiodone: "
+					      "bad type %d, pcbp %p wk %p",
+					      wk->wk_type, pcbp, wk);
+				}
+			}
+			LIST_REMOVE(pcbp, b_hash);
+			pool_put(&sdpcpool, pcbp);
+			pcbp = NULL;
+		}
+	}
+	FREE_LOCK(&lk);
 }

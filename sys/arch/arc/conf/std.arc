@@ -1,4 +1,4 @@
-#	$NetBSD: std.arc,v 1.10.2.2 2000/11/20 20:00:26 bouyer Exp $
+#	$NetBSD: std.arc,v 1.10.2.3 2000/12/08 09:26:21 bouyer Exp $
 # standard arc info
 
 machine arc mips
@@ -20,3 +20,6 @@ options 	MIPS3_L2CACHE_PRESENT	# may have L2 cache
 options 	MIPS3_L2CACHE_ABSENT	# may not have L2 cache
 
 options 	__NO_SOFT_SERIAL_INTERRUPT	# for "com" driver
+
+makeoptions	DEFTEXTADDR="0x80200000"
+makeoptions	ENDIAN="-EL"

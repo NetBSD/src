@@ -1,4 +1,4 @@
-/*	$NetBSD: ibcs2_machdep.h,v 1.4.12.1 2000/11/20 20:09:27 bouyer Exp $	*/
+/*	$NetBSD: ibcs2_machdep.h,v 1.4.12.2 2000/12/08 09:26:38 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -52,5 +52,9 @@ void	ibcs2_sendsig __P((sig_t, int, sigset_t *, u_long));
 int	ibcs2_sys_sysmachine __P((struct proc *, void *, register_t *retval));
 
 #endif /* _KERNEL */
+
+/* i386 has separated ibcs2_syscall() from syscall() */
+#define IBCS2_MACHDEP_HAS_SEPARATED_SYSCALL
+void ibcs2_syscall __P((struct trapframe *));
 
 #endif /* !_I386_IBCS2_MACHDEP_H_ */

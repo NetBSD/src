@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_segment.c,v 1.31.2.2 2000/11/22 16:06:51 bouyer Exp $	*/
+/*	$NetBSD: lfs_segment.c,v 1.31.2.3 2000/12/08 09:20:14 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
@@ -72,7 +72,10 @@
 
 #define ivndebug(vp,str) printf("ino %d: %s\n",VTOI(vp)->i_number,(str))
 
+#if defined(_KERNEL) && !defined(_LKM)
 #include "opt_ddb.h"
+#endif
+
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/namei.h>
@@ -309,7 +312,7 @@ lfs_vflush(vp)
 		/* panic("VDIROP being flushed...this can\'t happen"); */
 	}
 	if(vp->v_usecount<0) {
-		printf("usecount=%ld\n",vp->v_usecount);
+		printf("usecount=%d\n",vp->v_usecount);
 		panic("lfs_vflush: usecount<0");
 	}
 #endif
@@ -587,22 +590,21 @@ lfs_segwrite(mp, flags)
 
 	did_ckp = 0;
 	if (do_ckp || fs->lfs_doifile) {
-	redo:
-		vp = fs->lfs_ivnode;
+		do {
+			vp = fs->lfs_ivnode;
 
-		vget(vp, LK_EXCLUSIVE | LK_CANRECURSE | LK_RETRY);
+			vget(vp, LK_EXCLUSIVE | LK_CANRECURSE | LK_RETRY);
 
-		ip = VTOI(vp);
-		if (vp->v_dirtyblkhd.lh_first != NULL)
-			lfs_writefile(fs, sp, vp);
-		if (ip->i_flag & IN_ALLMOD)
-			++did_ckp;
-		(void) lfs_writeinode(fs, sp, ip);
+			ip = VTOI(vp);
+			if (vp->v_dirtyblkhd.lh_first != NULL)
+				lfs_writefile(fs, sp, vp);
+			if (ip->i_flag & IN_ALLMOD)
+				++did_ckp;
+			(void) lfs_writeinode(fs, sp, ip);
+			
+			vput(vp);
+		} while (lfs_writeseg(fs, sp) && do_ckp);
 
-		vput(vp);
-
-		if (lfs_writeseg(fs, sp) && do_ckp)
-			goto redo;
 		/* The ifile should now be all clear */
 		LFS_CLR_UINO(ip, IN_ALLMOD);
 	} else {
@@ -814,6 +816,12 @@ lfs_writeinode(fs, sp, ip)
 			     IN_UPDATE);
 		if (ip->i_lfs_effnblks == ip->i_ffs_blocks)
 			LFS_CLR_UINO(ip, IN_MODIFIED);
+#ifdef DEBUG_LFS
+		else
+			printf("lfs_writeinode: ino %d: real blks=%d, "
+			       "eff=%d\n", ip->i_number, ip->i_ffs_blocks,
+			       ip->i_lfs_effnblks);
+#endif
 	}
 
 	if(ip->i_number == LFS_IFILE_INUM) /* We know sp->idp == NULL */
@@ -1553,10 +1561,6 @@ lfs_writeseg(fs, sp)
 					reassignbuf(bp, vn);
 				brelse(bp);
 			}
-			if(bp->b_flags & B_NEEDCOMMIT) { /* XXX */
-				bp->b_flags &= ~B_NEEDCOMMIT;
-				wakeup(bp);
-			}
 
 			bpp++;
 
@@ -1859,8 +1863,8 @@ lfs_vunref(vp)
 #ifdef DIAGNOSTIC
 	if(vp->v_usecount<=0) {
 		printf("lfs_vunref: inum is %d\n", VTOI(vp)->i_number);
-		printf("lfs_vunref: flags are 0x%lx\n", vp->v_flag);
-		printf("lfs_vunref: usecount = %ld\n", vp->v_usecount);
+		printf("lfs_vunref: flags are 0x%x\n", vp->v_flag);
+		printf("lfs_vunref: usecount = %d\n", vp->v_usecount);
 		panic("lfs_vunref: v_usecount<0");
 	}
 #endif

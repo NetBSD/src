@@ -1,4 +1,4 @@
-/* $NetBSD: machdep.c,v 1.184.2.2 2000/11/22 15:59:41 bouyer Exp $ */
+/* $NetBSD: machdep.c,v 1.184.2.3 2000/12/08 09:23:24 bouyer Exp $ */
 
 /*-
  * Copyright (c) 1998, 1999, 2000 The NetBSD Foundation, Inc.
@@ -73,7 +73,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.184.2.2 2000/11/22 15:59:41 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.184.2.3 2000/12/08 09:23:24 bouyer Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1033,29 +1033,25 @@ cpu_reboot(howto, bootstr)
 	char *bootstr;
 {
 #if defined(MULTIPROCESSOR)
-#if 0 /* XXX See below. */
-	u_long cpu_id;
+	u_long cpu_id = cpu_number();
+	u_long wait_mask = (1UL << cpu_id) |
+			   (1UL << hwrpb->rpb_primary_cpu_id);
+	int i;
 #endif
-#endif
-
-#if defined(MULTIPROCESSOR)
-	/* We must be running on the primary CPU. */
-	if (alpha_pal_whami() != hwrpb->rpb_primary_cpu_id)
-		panic("cpu_reboot: not on primary CPU!");
-#endif
-
-	/* If system is cold, just halt. */
-	if (cold) {
-		howto |= RB_HALT;
-		goto haltsys;
-	}
 
 	/* If "always halt" was specified as a boot flag, obey. */
 	if ((boothowto & RB_HALT) != 0)
 		howto |= RB_HALT;
 
 	boothowto = howto;
-	if ((howto & RB_NOSYNC) == 0 && waittime < 0) {
+
+	/* If system is cold, just halt. */
+	if (cold) {
+		boothowto |= RB_HALT;
+		goto haltsys;
+	}
+
+	if ((boothowto & RB_NOSYNC) == 0 && waittime < 0) {
 		waittime = 0;
 		vfs_shutdown();
 		/*
@@ -1068,11 +1064,30 @@ cpu_reboot(howto, bootstr)
 	/* Disable interrupts. */
 	splhigh();
 
+#if defined(MULTIPROCESSOR)
+	/*
+	 * Halt all other CPUs.  If we're not the primary, the
+	 * primary will spin, waiting for us to halt.
+	 */
+	alpha_broadcast_ipi(ALPHA_IPI_HALT);
+
+	for (i = 0; i < 10000; i++) {
+		alpha_mb();
+		if (cpus_running == wait_mask)
+			break;
+		delay(1000);
+	}
+	alpha_mb();
+	if (cpus_running != wait_mask)
+		printf("WARNING: Unable to halt secondary CPUs (0x%lx)\n",
+		    cpus_running);
+#endif /* MULTIPROCESSOR */
+
 	/* If rebooting and a dump is requested do it. */
 #if 0
-	if ((howto & (RB_DUMP | RB_HALT)) == RB_DUMP)
+	if ((boothowto & (RB_DUMP | RB_HALT)) == RB_DUMP)
 #else
-	if (howto & RB_DUMP)
+	if (boothowto & RB_DUMP)
 #endif
 		dumpsys();
 
@@ -1080,18 +1095,6 @@ haltsys:
 
 	/* run any shutdown hooks */
 	doshutdownhooks();
-
-#if defined(MULTIPROCESSOR)
-#if 0 /* XXX doesn't work when called from here?! */
-	/* Kill off any secondary CPUs. */
-	for (cpu_id = 0; cpu_id < hwrpb->rpb_pcs_cnt; cpu_id++) {
-		if (cpu_id == hwrpb->rpb_primary_cpu_id ||
-		    cpu_info[cpu_id].ci_softc == NULL)
-			continue;
-		cpu_halt_secondary(cpu_id);
-	}
-#endif
-#endif
 
 #ifdef BOOTKEY
 	printf("hit any key to %s...\n", howto & RB_HALT ? "halt" : "reboot");
@@ -1102,13 +1105,18 @@ haltsys:
 #endif
 
 	/* Finally, powerdown/halt/reboot the system. */
-	if ((howto & RB_POWERDOWN) == RB_POWERDOWN &&
+	if ((boothowto & RB_POWERDOWN) == RB_POWERDOWN &&
 	    platform.powerdown != NULL) {
 		(*platform.powerdown)();
 		printf("WARNING: powerdown failed!\n");
 	}
-	printf("%s\n\n", howto & RB_HALT ? "halted." : "rebooting...");
-	prom_halt(howto & RB_HALT);
+	printf("%s\n\n", (boothowto & RB_HALT) ? "halted." : "rebooting...");
+#if defined(MULTIPROCESSOR)
+	if (cpu_id != hwrpb->rpb_primary_cpu_id)
+		cpu_halt();
+	else
+#endif
+		prom_halt(boothowto & RB_HALT);
 	/*NOTREACHED*/
 }
 
@@ -1514,7 +1522,7 @@ sendsig(catcher, sig, mask, code)
 
 	/* save the floating-point state, if necessary, then copy it. */
 	if (p->p_addr->u_pcb.pcb_fpcpu != NULL)
-		synchronize_fpstate(p, 1);
+		fpusave_proc(p, 1);
 	ksc.sc_ownedfp = p->p_md.md_flags & MDP_FPUSED;
 	bcopy(&p->p_addr->u_pcb.pcb_fp, (struct fpreg *)ksc.sc_fpregs,
 	    sizeof(struct fpreg));
@@ -1642,7 +1650,7 @@ sys___sigreturn14(p, v, retval)
 
 	/* XXX ksc.sc_ownedfp ? */
 	if (p->p_addr->u_pcb.pcb_fpcpu != NULL)
-		synchronize_fpstate(p, 0);
+		fpusave_proc(p, 0);
 	bcopy((struct fpreg *)ksc.sc_fpregs, &p->p_addr->u_pcb.pcb_fp,
 	    sizeof(struct fpreg));
 	/* XXX ksc.sc_fp_control ? */
@@ -1766,37 +1774,40 @@ setregs(p, pack, stack)
 
 	p->p_md.md_flags &= ~MDP_FPUSED;
 	if (p->p_addr->u_pcb.pcb_fpcpu != NULL)
-		synchronize_fpstate(p, 0);
+		fpusave_proc(p, 0);
 }
 
 /*
  * Release the FPU.
  */
 void
-release_fpu(int save)
+fpusave_cpu(struct cpu_info *ci, int save)
 {
 	struct proc *p;
+#if defined(MULTIPROCESSOR)
 	int s;
+#endif
 
-	s = splhigh();
-	if ((p = fpcurproc) == NULL) {
-		splx(s);
+	KDASSERT(ci == curcpu());
+
+	p = ci->ci_fpcurproc;
+	if (p == NULL)
 		return;
-	}
-	fpcurproc = NULL;
-	splx(s);
 
 	if (save) {
 		alpha_pal_wrfen(1);
 		savefpstate(&p->p_addr->u_pcb.pcb_fp);
-#if defined(MULTIPROCESSOR)
-		alpha_mb();
-#endif
-		alpha_pal_wrfen(0);
 	}
 
-	p->p_addr->u_pcb.pcb_fpcpu = NULL;
+	alpha_pal_wrfen(0);
+
 #if defined(MULTIPROCESSOR)
+	s = splhigh();
+#endif
+	p->p_addr->u_pcb.pcb_fpcpu = NULL;
+	ci->ci_fpcurproc = NULL;
+#if defined(MULTIPROCESSOR)
+	splx(s);
 	alpha_mb();
 #endif
 }
@@ -1805,28 +1816,37 @@ release_fpu(int save)
  * Synchronize FP state for this process.
  */
 void
-synchronize_fpstate(struct proc *p, int save)
+fpusave_proc(struct proc *p, int save)
 {
+	struct cpu_info *ci = curcpu();
+	struct cpu_info *oci;
 
-	if (p->p_addr->u_pcb.pcb_fpcpu == NULL) {
-		/* Already in-sync. */
+	KDASSERT(p->p_addr != NULL);
+	KDASSERT(p->p_flag & P_INMEM);
+
+	oci = p->p_addr->u_pcb.pcb_fpcpu;
+	if (oci == NULL)
 		return;
-	}
 
 #if defined(MULTIPROCESSOR)
-	if (p->p_addr->u_pcb.pcb_fpcpu == curcpu()) {
-		KASSERT(fpcurproc == p);
-		release_fpu(save);
+	if (oci == ci) {
+		int s;
+		KASSERT(ci->ci_fpcurproc == p);
+		s = splhigh();
+		fpusave_cpu(ci, save);
+		splx(s);
 	} else {
-		alpha_send_ipi(p->p_addr->u_pcb.pcb_fpcpu->ci_cpuid, save ?
-		    ALPHA_IPI_SYNCH_FPU : ALPHA_IPI_DISCARD_FPU);
+		u_long ipi = save ? ALPHA_IPI_SYNCH_FPU :
+				    ALPHA_IPI_DISCARD_FPU;
+
+		KASSERT(oci->ci_fpcurproc == p);
 		do {
-			alpha_mb();
+			alpha_send_ipi(oci->ci_cpuid, ipi);
 		} while (p->p_addr->u_pcb.pcb_fpcpu != NULL);
 	}
 #else
-	KASSERT(fpcurproc == p);
-	release_fpu(save);
+	KASSERT(ci->ci_fpcurproc == p);
+	fpusave_cpu(ci, save);
 #endif /* MULTIPROCESSOR */
 }
 
@@ -1912,10 +1932,7 @@ microtime(tvp)
 	register struct timeval *tvp;
 {
 	static struct timeval lasttime;
-#if defined(MULTIPROCESSOR) || defined(LOCKDEBUG)
-	static struct simplelock microtime_slock =
-	    SIMPLELOCK_INITIALIZER;
-#endif
+	static struct simplelock microtime_slock = SIMPLELOCK_INITIALIZER;
 	int s;
 
 	s = splclock();
@@ -1982,6 +1999,11 @@ delay(n)
 		pcc0 = pcc1;
 	}
 }
+
+#if defined(COMPAT_OSF1) || 1		/* XXX */
+void	cpu_exec_ecoff_setregs __P((struct proc *, struct exec_package *,
+	    u_long));
+#endif
 
 #if 1		/* XXX */
 void

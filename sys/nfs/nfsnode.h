@@ -1,4 +1,4 @@
-/*	 $NetBSD: nfsnode.h,v 1.27.12.1 2000/11/20 18:11:22 bouyer Exp $	*/
+/*	 $NetBSD: nfsnode.h,v 1.27.12.2 2000/12/08 09:19:24 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -140,6 +140,8 @@ struct nfsnode {
 	off_t			n_pushhi;	/* Last block in range */
 	struct lock		n_commitlock;	/* Serialize commits XXX */
 	int			n_commitflags;
+	struct ucred		*n_rcred;
+	struct ucred		*n_wcred;
 };
 
 /*
@@ -173,7 +175,7 @@ struct nfsnode {
  * Convert between nfsnode pointers and vnode pointers
  */
 #define VTONFS(vp)	((struct nfsnode *)(vp)->v_data)
-#define NFSTOV(np)	((struct vnode *)(np)->n_vnode)
+#define NFSTOV(np)	((np)->n_vnode)
 
 /*
  * Queue head for nfsiod's
@@ -235,6 +237,8 @@ int	nfs_bwrite	__P((void *));
 #define	nfs_vfree	genfs_nullop
 int	nfs_truncate	__P((void *));
 int	nfs_update	__P((void *));
+int	nfs_getpages	__P((void *));
+int	nfs_putpages	__P((void *));
 
 extern int (**nfsv2_vnodeop_p) __P((void *));
 

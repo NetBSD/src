@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_alloc.c,v 1.29.8.1 2000/11/20 18:11:43 bouyer Exp $	*/
+/*	$NetBSD: ffs_alloc.c,v 1.29.8.2 2000/12/08 09:20:10 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -109,15 +109,33 @@ ffs_alloc(ip, lbn, bpref, size, cred, bnp)
 	struct ucred *cred;
 	ufs_daddr_t *bnp;
 {
-	struct fs *fs;
+	struct fs *fs = ip->i_fs;
 	ufs_daddr_t bno;
 	int cg;
 #ifdef QUOTA
 	int error;
 #endif
 	
+#ifdef UVM_PAGE_TRKOWN
+	if (ITOV(ip)->v_type == VREG && lbn > 0) {
+		struct vm_page *pg;
+		struct uvm_object *uobj = &ITOV(ip)->v_uvm.u_obj;
+		voff_t off = trunc_page(lblktosize(fs, lbn));
+		voff_t endoff = round_page(lblktosize(fs, lbn) + size);
+
+		simple_lock(&uobj->vmobjlock);
+		while (off < endoff) {
+			pg = uvm_pagelookup(uobj, off);
+			KASSERT(pg != NULL);
+			KASSERT(pg->owner == curproc->p_pid);
+			KASSERT((pg->flags & PG_CLEAN) == 0);
+			off += PAGE_SIZE;
+		}
+		simple_unlock(&uobj->vmobjlock);
+	}
+#endif
+
 	*bnp = 0;
-	fs = ip->i_fs;
 #ifdef DIAGNOSTIC
 	if ((u_int)size > fs->fs_bsize || fragoff(fs, size) != 0) {
 		printf("dev = 0x%x, bsize = %d, size = %d, fs = %s\n",
@@ -170,21 +188,39 @@ nospace:
  * invoked to get an appropriate block.
  */
 int
-ffs_realloccg(ip, lbprev, bpref, osize, nsize, cred, bpp)
+ffs_realloccg(ip, lbprev, bpref, osize, nsize, cred, bpp, blknop)
 	struct inode *ip;
 	ufs_daddr_t lbprev;
 	ufs_daddr_t bpref;
 	int osize, nsize;
 	struct ucred *cred;
 	struct buf **bpp;
+	ufs_daddr_t *blknop;
 {
-	struct fs *fs;
+	struct fs *fs = ip->i_fs;
 	struct buf *bp;
 	int cg, request, error;
 	ufs_daddr_t bprev, bno;
 
-	*bpp = 0;
-	fs = ip->i_fs;
+#ifdef UVM_PAGE_TRKOWN
+	if (ITOV(ip)->v_type == VREG) {
+		struct vm_page *pg;
+		struct uvm_object *uobj = &ITOV(ip)->v_uvm.u_obj;
+		voff_t off = trunc_page(lblktosize(fs, lbprev));
+		voff_t endoff = round_page(lblktosize(fs, lbprev) + osize);
+
+		simple_lock(&uobj->vmobjlock);
+		while (off < endoff) {
+			pg = uvm_pagelookup(uobj, off);
+			KASSERT(pg != NULL);
+			KASSERT(pg->owner == curproc->p_pid);
+			KASSERT((pg->flags & PG_CLEAN) == 0);
+			off += PAGE_SIZE;
+		}
+		simple_unlock(&uobj->vmobjlock);
+	}
+#endif
+
 #ifdef DIAGNOSTIC
 	if ((u_int)osize > fs->fs_bsize || fragoff(fs, osize) != 0 ||
 	    (u_int)nsize > fs->fs_bsize || fragoff(fs, nsize) != 0) {
@@ -206,7 +242,8 @@ ffs_realloccg(ip, lbprev, bpref, osize, nsize, cred, bpp)
 	/*
 	 * Allocate the extra space in the buffer.
 	 */
-	if ((error = bread(ITOV(ip), lbprev, osize, NOCRED, &bp)) != 0) {
+	if (bpp != NULL &&
+	    (error = bread(ITOV(ip), lbprev, osize, NOCRED, &bp)) != 0) {
 		brelse(bp);
 		return (error);
 	}
@@ -221,14 +258,20 @@ ffs_realloccg(ip, lbprev, bpref, osize, nsize, cred, bpp)
 	 */
 	cg = dtog(fs, bprev);
 	if ((bno = ffs_fragextend(ip, cg, (long)bprev, osize, nsize)) != 0) {
-		if (bp->b_blkno != fsbtodb(fs, bno))
-			panic("bad blockno");
 		ip->i_ffs_blocks += btodb(nsize - osize);
 		ip->i_flag |= IN_CHANGE | IN_UPDATE;
-		allocbuf(bp, nsize);
-		bp->b_flags |= B_DONE;
-		memset((char *)bp->b_data + osize, 0, (u_int)nsize - osize);
-		*bpp = bp;
+
+		if (bpp != NULL) {
+			if (bp->b_blkno != fsbtodb(fs, bno))
+				panic("bad blockno");
+			allocbuf(bp, nsize);
+			bp->b_flags |= B_DONE;
+			memset(bp->b_data + osize, 0, nsize - osize);
+			*bpp = bp;
+		}
+		if (blknop != NULL) {
+			*blknop = bno;
+		}
 		return (0);
 	}
 	/*
@@ -292,8 +335,6 @@ ffs_realloccg(ip, lbprev, bpref, osize, nsize, cred, bpp)
 	bno = (ufs_daddr_t)ffs_hashalloc(ip, cg, (long)bpref, request,
 	    			     ffs_alloccg);
 	if (bno > 0) {
-		bp->b_blkno = fsbtodb(fs, bno);
-		(void) uvm_vnp_uncache(ITOV(ip));
 		if (!DOINGSOFTDEP(ITOV(ip)))
 			ffs_blkfree(ip, bprev, (long)osize);
 		if (nsize < request)
@@ -301,10 +342,16 @@ ffs_realloccg(ip, lbprev, bpref, osize, nsize, cred, bpp)
 			    (long)(request - nsize));
 		ip->i_ffs_blocks += btodb(nsize - osize);
 		ip->i_flag |= IN_CHANGE | IN_UPDATE;
-		allocbuf(bp, nsize);
-		bp->b_flags |= B_DONE;
-		memset((char *)bp->b_data + osize, 0, (u_int)nsize - osize);
-		*bpp = bp;
+		if (bpp != NULL) {
+			bp->b_blkno = fsbtodb(fs, bno);
+			allocbuf(bp, nsize);
+			bp->b_flags |= B_DONE;
+			memset(bp->b_data + osize, 0, (u_int)nsize - osize);
+			*bpp = bp;
+		}
+		if (blknop != NULL) {
+			*blknop = bno;
+		}
 		return (0);
 	}
 #ifdef QUOTA
@@ -313,7 +360,10 @@ ffs_realloccg(ip, lbprev, bpref, osize, nsize, cred, bpp)
 	 */
 	(void) chkdq(ip, (long)-btodb(nsize - osize), cred, FORCE);
 #endif
-	brelse(bp);
+	if (bpp != NULL) {
+		brelse(bp);
+	}
+
 nospace:
 	/*
 	 * no space available
@@ -344,7 +394,6 @@ struct ctldebug debug15 = { "prtrealloc", &prtrealloc };
 #endif
 
 int doasyncfree = 1;
-extern int doreallocblks;
 
 int
 ffs_reallocblks(v)
@@ -363,6 +412,9 @@ ffs_reallocblks(v)
 	ufs_daddr_t start_lbn, end_lbn, soff, newblk, blkno;
 	struct indir start_ap[NIADDR + 1], end_ap[NIADDR + 1], *idp;
 	int i, len, start_lvl, end_lvl, pref, ssize;
+
+	/* XXXUBC don't reallocblks for now */
+	return ENOSPC;
 
 	vp = ap->a_vp;
 	ip = VTOI(vp);
@@ -1725,5 +1777,6 @@ ffs_fserr(fs, uid, cp)
 	char *cp;
 {
 
-	log(LOG_ERR, "uid %d on %s: %s\n", uid, fs->fs_fsmnt, cp);
+	log(LOG_ERR, "uid %d comm %s on %s: %s\n",
+	    uid, curproc->p_comm, fs->fs_fsmnt, cp);
 }

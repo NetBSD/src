@@ -1,4 +1,4 @@
-/*	$NetBSD: mq200.c,v 1.2.2.2 2000/11/20 20:46:04 bouyer Exp $	*/
+/*	$NetBSD: mq200.c,v 1.2.2.3 2000/12/08 09:26:31 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 2000 Takemura Shin
@@ -135,6 +135,11 @@ mq200_attach(sc)
 			sc->sc_dev.dv_xname);
 
 	mq200_fbinit(&sc->sc_fbconf);
+	sc->sc_fbconf.hf_baseaddr = (u_long)bootinfo->fb_addr;
+	sc->sc_fbconf.hf_offset	= (u_long)sc->sc_baseaddr -
+	    MIPS_PHYS_TO_KSEG1(mips_ptob(mips_btop(sc->sc_baseaddr)));
+	DPRINTF(("hf_baseaddr=%lx\n", sc->sc_fbconf.hf_baseaddr));
+	DPRINTF(("hf_offset=%lx\n", sc->sc_fbconf.hf_offset));
 
 	if (console && hpcfb_cnattach(&sc->sc_fbconf) != 0) {
 		panic("mq200_attach: can't init fb console");
@@ -443,10 +448,8 @@ mq200_mmap(ctx, offset, prot)
 {
 	struct mq200_softc *sc = (struct mq200_softc *)ctx;
 
-	if (offset < 0 ||
-	    (sc->sc_fbconf.hf_bytes_per_plane +
-		sc->sc_fbconf.hf_offset) <  offset)
+	if (offset < 0 || MQ200_MAPSIZE <= offset)
 		return -1;
 
-	return mips_btop(sc->sc_fbconf.hf_baseaddr + offset);
+	return mips_btop(sc->sc_baseaddr + offset);
 }

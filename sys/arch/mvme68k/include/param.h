@@ -1,4 +1,4 @@
-/*	$NetBSD: param.h,v 1.17.2.2 2000/11/22 16:00:53 bouyer Exp $	*/
+/*	$NetBSD: param.h,v 1.17.2.3 2000/12/08 09:28:36 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -68,7 +68,7 @@
 #endif
 #define	SEGOFSET	(NBSEG-1)	/* byte offset into segment */
 
-#define	UPAGES		3		/* pages of u-area */
+#define	UPAGES		2		/* pages of u-area */
 
 #include <m68k/param.h>
 

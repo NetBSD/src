@@ -1,4 +1,4 @@
-/*	$NetBSD: prom.c,v 1.2.2.2 2000/11/20 20:14:11 bouyer Exp $	*/
+/*	$NetBSD: prom.c,v 1.2.2.3 2000/12/08 09:28:25 bouyer Exp $	*/
 
 /*
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -47,10 +47,10 @@ static struct mips_prom callvec;
 
 struct mips_prom *callv;
 
-typedef void (*funcp_t)();
+typedef void (*funcp_t)(void);
 
 void
-prom_init()
+prom_init(void)
 {
 	int i;
 	funcp_t *fp;
@@ -67,7 +67,7 @@ prom_init()
  * port will be used for the console.
  */
 int
-prom_getconsole()
+prom_getconsole(void)
 {
 	char *cp;
 

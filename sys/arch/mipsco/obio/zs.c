@@ -1,4 +1,4 @@
-/*	$NetBSD: zs.c,v 1.4.2.2 2000/11/20 20:14:11 bouyer Exp $	*/
+/*	$NetBSD: zs.c,v 1.4.2.3 2000/12/08 09:28:26 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1996, 2000 The NetBSD Foundation, Inc.
@@ -60,6 +60,7 @@
 #include <machine/cpu.h>
 #include <machine/mainboard.h>
 #include <machine/autoconf.h>
+#include <machine/prom.h>
 #include <machine/z8530var.h>
 
 #include <dev/cons.h>
@@ -73,8 +74,6 @@
 #undef  NZS
 #define NZS 2
 #endif
-
-extern void Debugger __P((void));
 
 /*
  * Some warts needed by z8530tty.c -
@@ -95,6 +94,10 @@ int zs_major = 1;
 #define ZSHARD_PRI 64
 
 #define ZS_DELAY()	delay(2);
+
+static struct zschan *zs_get_chan_addr (int zs_unit, int channel);
+static int zs_getc (void *);
+static void zs_putc (void *, int);
 
 /* The layout of this is hardware-dependent (padding, order). */
 struct zschan {
@@ -135,7 +138,7 @@ static u_char zs_init_reg[16] = {
 };
 
 
-struct zschan *
+static struct zschan *
 zs_get_chan_addr(zs_unit, channel)
 	int zs_unit, channel;
 {
@@ -596,7 +599,7 @@ zs_getc(arg)
 /*
  * Polled output char.
  */
-void
+static void
 zs_putc(arg, c)
 	void *arg;
 	int c;
@@ -625,7 +628,6 @@ static void zscnputc __P((dev_t, int));
 static void zscnpollc __P((dev_t, int));
 
 static int  cons_port;
-extern int  prom_getconsole __P((void));
 
 struct consdev consdev_zs = {
 	zscnprobe,

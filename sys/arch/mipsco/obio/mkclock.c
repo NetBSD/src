@@ -1,4 +1,4 @@
-/*	$NetBSD: mkclock.c,v 1.1.2.2 2000/11/20 20:14:11 bouyer Exp $	*/
+/*	$NetBSD: mkclock.c,v 1.1.2.3 2000/12/08 09:28:26 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -57,8 +57,8 @@ struct	mkclock_softc {
 	bus_space_handle_t sc_bsh;
 };
 
-static int mkclock_match __P((struct device *, struct cfdata *, void *));
-static void mkclock_attach __P((struct device *, struct device *, void *));
+static int mkclock_match (struct device *, struct cfdata *, void *);
+static void mkclock_attach (struct device *, struct device *, void *);
 
 struct cfattach mkclock_ca = {
 	sizeof(struct mkclock_softc), mkclock_match, mkclock_attach
@@ -66,8 +66,11 @@ struct cfattach mkclock_ca = {
 
 static struct mkclock_softc *mk0; 
 
-void mkclock_read __P((struct clock_ymdhms *));
-void mkclock_write __P((struct clock_ymdhms *));
+void mkclock_read (struct clock_ymdhms *);
+void mkclock_write (struct clock_ymdhms *);
+
+static int mk_read (struct mkclock_softc *, int);
+static void mk_write (struct mkclock_softc *, int, int);
 
 int
 mkclock_match(parent, cf, aux)

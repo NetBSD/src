@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.45.2.2 2000/11/20 20:00:21 bouyer Exp $	*/
+/*	$NetBSD: machdep.c,v 1.45.2.3 2000/12/08 09:26:21 bouyer Exp $	*/
 /*	$OpenBSD: machdep.c,v 1.36 1999/05/22 21:22:19 weingart Exp $	*/
 
 /*
@@ -647,16 +647,6 @@ mach_init(argc, argv, envv)
 		ddb_init(1000, &end, (int*)esym);
 #endif
 #endif
-	/*
-	 * Alloc u pages for proc0 stealing KSEG0 memory.
-	 */
-	proc0.p_addr = proc0paddr = (struct user *)kernend;
-	proc0.p_md.md_regs = (struct frame *)(kernend + USPACE) - 1;
-	memset(proc0.p_addr, 0, USPACE);
-	curpcb = &proc0.p_addr->u_pcb;
-	curpcb->pcb_context[11] = MIPS_INT_MASK | MIPS_SR_INT_IE; /* SR */
-
-	kernend += USPACE;
 
 	maxmem = physmem;
 
@@ -721,6 +711,15 @@ mach_init(argc, argv, envv)
 	 * Initialize error message buffer (at end of core).
 	 */
 	mips_init_msgbuf();
+
+	/*
+	 * Allocate space for proc0's USPACE.
+	 */
+	v = (caddr_t)pmap_steal_memory(USPACE, NULL, NULL); 
+	proc0.p_addr = proc0paddr = (struct user *)v;
+	proc0.p_md.md_regs = (struct frame *)(v + USPACE) - 1;
+	curpcb = &proc0.p_addr->u_pcb;
+	curpcb->pcb_context[11] = MIPS_INT_MASK | MIPS_SR_INT_IE; /* SR */
 
 	/*
 	 * Allocate space for system data structures.  These data structures

@@ -1,4 +1,4 @@
-/*	$NetBSD: grf_obio.c,v 1.43.2.1 2000/11/20 20:12:26 bouyer Exp $	*/
+/*	$NetBSD: grf_obio.c,v 1.43.2.2 2000/12/08 09:28:18 bouyer Exp $	*/
 
 /*
  * Copyright (C) 1998 Scott Reynolds
@@ -123,6 +123,8 @@ grfiv_match(parent, cf, aux)
 			
 			/* Disable interrupts */
 			bus_space_write_1(oa->oa_tag, bsh, 0x18, 0x1);
+
+			bus_space_unmap(oa->oa_tag, bsh, 0x40);
 			break;
 		}
 		/*
@@ -142,27 +144,33 @@ grfiv_match(parent, cf, aux)
 		 */
 		base = DAFB_CONTROL_BASE;
 
-		if (bus_space_map(oa->oa_tag, base, 0x1000, 0, &bsh))
+		if (bus_space_map(oa->oa_tag, base, 0x20, 0, &bsh))
 			return 0;
 
 		if (mac68k_bus_space_probe(oa->oa_tag, bsh, 0x1c, 4) == 0) {
-			bus_space_unmap(oa->oa_tag, bsh, 0x1000);
+			bus_space_unmap(oa->oa_tag, bsh, 0x20);
 			return 0;
 		}
 
-		/* Set "Turbo SCSI" configuration to default */
-		bus_space_write_4(oa->oa_tag, bsh, 0x24, 0x1d1); /* ch0 */
-		bus_space_write_4(oa->oa_tag, bsh, 0x28, 0x1d1); /* ch1 */
+		bus_space_unmap(oa->oa_tag, bsh, 0x20);
+
+		if (bus_space_map(oa->oa_tag, base + 0x100, 0x20, 0, &bsh))
+			return 0;
+
+		if (mac68k_bus_space_probe(oa->oa_tag, bsh, 0x04, 4) == 0) {
+			bus_space_unmap(oa->oa_tag, bsh, 0x20);
+			return 0;
+		}
 
 		/* Disable interrupts */
-		bus_space_write_4(oa->oa_tag, bsh, 0x104, 0);
+		bus_space_write_4(oa->oa_tag, bsh, 0x04, 0);
 
 		/* Clear any interrupts */
-		bus_space_write_4(oa->oa_tag, bsh, 0x10C, 0);
-		bus_space_write_4(oa->oa_tag, bsh, 0x110, 0);
-		bus_space_write_4(oa->oa_tag, bsh, 0x114, 0);
+		bus_space_write_4(oa->oa_tag, bsh, 0x0C, 0);
+		bus_space_write_4(oa->oa_tag, bsh, 0x10, 0);
+		bus_space_write_4(oa->oa_tag, bsh, 0x14, 0);
 
-		bus_space_unmap(oa->oa_tag, bsh, 0x1000);
+		bus_space_unmap(oa->oa_tag, bsh, 0x20);
 		break;
 	case MACH_CLASSAV:
 		base = CIVIC_CONTROL_BASE;
@@ -229,7 +237,7 @@ grfiv_attach(parent, self, aux)
 	case MACH_CLASSQ:
 		base = DAFB_CONTROL_BASE;
 		sc->sc_tag = oa->oa_tag;
-		if (bus_space_map(sc->sc_tag, base, 0x1000, 0, &sc->sc_regh)) {
+		if (bus_space_map(sc->sc_tag, base, 0x20, 0, &sc->sc_regh)) {
 			printf(": failed to map DAFB register space\n");
 			return;
 		}
@@ -265,7 +273,7 @@ grfiv_attach(parent, self, aux)
 		    sc->sc_basepa + sc->sc_fbofs,
 		    (bus_space_read_4(sc->sc_tag, sc->sc_regh, 0x1c) & 0x7));
 
-		bus_space_unmap(sc->sc_tag, sc->sc_regh, 0x1000);
+		bus_space_unmap(sc->sc_tag, sc->sc_regh, 0x20);
 		break;
 	case MACH_CLASSAV:
 		sc->sc_basepa = CIVIC_BASE;

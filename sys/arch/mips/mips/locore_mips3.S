@@ -1,4 +1,4 @@
-/*	$NetBSD: locore_mips3.S,v 1.10.2.2 2000/11/22 16:00:45 bouyer Exp $	*/
+/*	$NetBSD: locore_mips3.S,v 1.10.2.3 2000/12/08 09:28:21 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1997 Jonathan Stone (hereinafter referred to as the author)
@@ -2109,10 +2109,9 @@ END(mips3_proc_trampoline)
 /*
  * void mips3_cpu_switch_resume(struct proc *newproc)
  *
- * Wiredown the USPACE of newproc with TLB entry#0, and possibly #1
- * if necessary.  Check whether target USPACE is already refered by
- * some TLB entry(s) before that, and make sure TBIS(them) in the
- * case.
+ * Wiredown the USPACE of newproc in TLB entry#0.  Check whether target
+ * USPACE is already in another place of TLB before that, and make
+ * sure TBIS(it) in the case.
  */
 LEAF_NOPROFILE(mips3_cpu_switch_resume)
 	lw	a1, P_MD_UPTE_0(a0)		# a1 = upte[0]
@@ -2126,42 +2125,7 @@ LEAF_NOPROFILE(mips3_cpu_switch_resume)
 	beq	s0, zero, entry0
 	nop
 
-	# p_addr starts on an odd page, need to set up 2 TLB entries
-	addu	v0, v0, MIPS3_PG_ODDPG
-	dmtc0	v0, MIPS_COP_0_TLB_HI		# VPN = va
-	nop
-	nop
-	tlbp					# probe VPN
-	nop
-	nop
-	mfc0	s0, MIPS_COP_0_TLB_INDEX
-	nop
-	bltz	s0, entry1set
-	li	s0, MIPS_KSEG0_START
-	dmtc0	s0, MIPS_COP_0_TLB_HI
-	dmtc0	zero, MIPS_COP_0_TLB_LO0
-	dmtc0	zero, MIPS_COP_0_TLB_LO1
-	nop
-	nop
-	tlbwi
-	nop
-	nop
-	dmtc0	v0, MIPS_COP_0_TLB_HI		# set VPN again
-entry1set:
-	li	s0, 1
-	mtc0	s0, MIPS_COP_0_TLB_INDEX	# TLB entry #1
-	or	a2, MIPS3_PG_G
-	dmtc0	a2, MIPS_COP_0_TLB_LO0		# lo0: upte[1] | PG_G
-	li	a2, MIPS3_PG_G
-	dmtc0	a2, MIPS_COP_0_TLB_LO1		# lo1: none | PG_G
-	nop
-	nop
-	tlbwi					# set TLB entry #1
-	#nop
-	#nop
-	move	a2, a1				# lo0: none
-	move	a1, zero			# lo1: u_pte[0]
-	addu	v0, v0, -NBPG * 2		# backup to odd page mapping
+	PANIC("USPACE sat on odd page boundary")
 
 entry0:
 	dmtc0	v0, MIPS_COP_0_TLB_HI		# VPN = va
@@ -2212,8 +2176,8 @@ LEAF_NOPROFILE(mips3_TBIS)
 	li	v0, (MIPS3_PG_HVPN | MIPS3_PG_ASID)
 	dmfc0	t0, MIPS_COP_0_TLB_HI		# save current ASID
 	mfc0	t3, MIPS_COP_0_TLB_PG_MASK	# save current pgMask
-	and	t2, a0, v0			# make sure valid entryHi
-	dmtc0	t2, MIPS_COP_0_TLB_HI		# look for the vaddr & ASID
+	and	a0, a0, v0			# make sure valid entryHi
+	dmtc0	a0, MIPS_COP_0_TLB_HI		# look for the vaddr & ASID
 	nop
 	nop
 	tlbp					# probe the entry in question
@@ -2223,22 +2187,6 @@ LEAF_NOPROFILE(mips3_TBIS)
 	#nop					# -slip-
 	#nop					# -slip-
 	bltz	v0, 1f				# index < 0 then skip
-	mfc0	t1, MIPS_COP_0_TLB_WIRED
-	bge	v0, t1, 2f
-	/*
-	 * The TLB entry is wired down, so invalidate only this half.
-	 */
-	andi	t2, a0, MIPS3_PG_ODDPG		# delay slot
-	tlbr
-	bnez	t2, 3f
-	li	t1, MIPS3_PG_G
-	dmtc0	t1, MIPS_COP_0_TLB_LO0
-	b	4f
-	nop
-3:	dmtc0	t1, MIPS_COP_0_TLB_LO1	
-	b	4f
-						# -slip-
-2:
 	li	t1, MIPS_KSEG0_START		# invalid address
 	dmtc0	t1, MIPS_COP_0_TLB_HI		# make entryHi invalid
 	dmtc0	zero, MIPS_COP_0_TLB_LO0	# zero out entryLo0
@@ -2246,7 +2194,6 @@ LEAF_NOPROFILE(mips3_TBIS)
 	mtc0	zero, MIPS_COP_0_TLB_PG_MASK	# zero out pageMask
 	nop
 	nop
-4:
 	tlbwi
 	nop
 	nop

@@ -1,4 +1,4 @@
-/*	$NetBSD: ite.c,v 1.41.14.2 2000/11/22 16:00:09 bouyer Exp $	*/
+/*	$NetBSD: ite.c,v 1.41.14.3 2000/12/08 09:26:27 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -574,11 +574,11 @@ itefilter(stat, c)
 
 	if (code == '\0' && (str = kbd_stringmap[(int)c]) != '\0') {
 		while (*str)
-			(*linesw[kbd_tty->t_line].l_rint)(*str++, kbd_tty);
+			(*kbd_tty->t_linesw->l_rint)(*str++, kbd_tty);
 	} else {
 		if (metamode)
 			code |= 0x80;
-		(*linesw[kbd_tty->t_line].l_rint)(code, kbd_tty);
+		(*kbd_tty->t_linesw->l_rint)(code, kbd_tty);
 	}
 }
 

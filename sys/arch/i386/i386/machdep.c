@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.366.2.2 2000/11/22 16:00:20 bouyer Exp $	*/
+/*	$NetBSD: machdep.c,v 1.366.2.3 2000/12/08 09:26:37 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2000 The NetBSD Foundation, Inc.
@@ -372,9 +372,12 @@ cpu_startup()
 		printf("cpu0: features %s\n", buf);
 	}
 
-	if (cpuid_level >= 3 && ((cpu_feature & CPUID_PN) != 0))
-		printf("cpu0: serial number %08X%08X%08X\n",
-		       cpu_serial[0], cpu_serial[1], cpu_serial[2]);
+	if (cpuid_level >= 3 && ((cpu_feature & CPUID_PN) != 0)) {
+		printf("cpu0: serial number %04X-%04X-%04X-%04X-%04X-%04X\n",
+			cpu_serial[0] / 65536, cpu_serial[0] % 65536,
+			cpu_serial[1] / 65536, cpu_serial[1] % 65536,
+			cpu_serial[2] / 65536, cpu_serial[2] % 65536);
+	}
 
 	format_bytes(pbuf, sizeof(pbuf), ptoa(physmem));
 	printf("total memory = %s\n", pbuf);
@@ -1919,7 +1922,13 @@ init386(first_avail)
 			physmem += atop(mem_clusters[mem_cluster_cnt].size);
 			mem_cluster_cnt++;
 		}
-	} else {
+	}
+
+	/*
+	 * If the loop above didn't find any valid segment, fall back to
+	 * former code.
+	 */
+	if (mem_cluster_cnt == 0) {
 		/*
 		 * Allocate the physical addresses used by RAM from the iomem
 		 * extent map.  This is done before the addresses are

@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.213.2.2 2000/11/22 16:00:20 bouyer Exp $	*/
+/*	$NetBSD: locore.s,v 1.213.2.3 2000/12/08 09:26:36 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -80,10 +80,6 @@
 #include "opt_vm86.h"
 #include "opt_user_ldt.h"
 #include "opt_dummy_nops.h"
-#include "opt_compat_freebsd.h"
-#include "opt_compat_linux.h"
-#include "opt_compat_ibcs2.h"
-#include "opt_compat_svr4.h"
 #include "opt_compat_oldboot.h"
 #include "opt_multiprocessor.h"
 #include "opt_lockdebug.h"
@@ -94,18 +90,6 @@
 
 #include <sys/errno.h>
 #include <sys/syscall.h>
-#ifdef COMPAT_SVR4
-#include <compat/svr4/svr4_syscall.h>
-#endif
-#ifdef COMPAT_LINUX
-#include <compat/linux/linux_syscall.h>
-#endif
-#ifdef COMPAT_FREEBSD
-#include <compat/freebsd/freebsd_syscall.h>
-#endif
-#ifdef COMPAT_IBCS2
-#include <compat/ibcs2/ibcs2_syscall.h>
-#endif
 
 #include <machine/cputypes.h>
 #include <machine/param.h>
@@ -742,120 +726,6 @@ NENTRY(sigcode)
 	.globl	_C_LABEL(esigcode)
 _C_LABEL(esigcode):
 
-/*****************************************************************************/
-
-#ifdef COMPAT_SVR4
-NENTRY(svr4_sigcode)
-	call	SVR4_SIGF_HANDLER(%esp)
-	leal	SVR4_SIGF_UC(%esp),%eax	# ucp (the call may have clobbered the
-					# copy at SIGF_UCP(%esp))
-#ifdef VM86
-	testl	$PSL_VM,SVR4_UC_EFLAGS(%eax)
-	jnz	1f
-#endif
-	movl	SVR4_UC_FS(%eax),%ecx
-	movl	SVR4_UC_GS(%eax),%edx
-	movl	%cx,%fs
-	movl	%dx,%gs
-1:	pushl	%eax
-	pushl	$1			# setcontext(p) == syscontext(1, p) 
-	pushl	%eax			# junk to fake return address
-	movl	$SVR4_SYS_context,%eax
-	int	$0x80	 		# enter kernel with args on stack
-	movl	$SVR4_SYS_exit,%eax
-	int	$0x80			# exit if sigreturn fails
-	.globl	_C_LABEL(svr4_esigcode)
-_C_LABEL(svr4_esigcode):
-#endif
-
-/*****************************************************************************/
-
-#ifdef COMPAT_LINUX
-/*
- * Signal trampoline; copied to top of user stack.
- */
-NENTRY(linux_sigcode)
-	call	LINUX_SIGF_HANDLER(%esp)
-	leal	LINUX_SIGF_SC(%esp),%ebx # scp (the call may have clobbered the
-					# copy at SIGF_SCP(%esp))
-#ifdef VM86
-	testl	$PSL_VM,LINUX_SC_EFLAGS(%ebx)
-	jnz	1f
-#endif
-	movl	LINUX_SC_FS(%ebx),%ecx
-	movl	LINUX_SC_GS(%ebx),%edx
-	movl	%cx,%fs
-	movl	%dx,%gs
-1:	pushl	%eax			# junk to fake return address
-	movl	$LINUX_SYS_sigreturn,%eax
-	int	$0x80	 		# enter kernel with args on stack
-	movl	$LINUX_SYS_exit,%eax
-	int	$0x80			# exit if sigreturn fails
-	.globl	_C_LABEL(linux_esigcode)
-_C_LABEL(linux_esigcode):
-
-NENTRY(linux_rt_sigcode)
-	call	LINUX_SIGF_HANDLER(%esp)
-	leal	LINUX_SIGF_SC(%esp),%ebx # scp (the call may have clobbered the
-					# copy at SIGF_SCP(%esp))
-#ifdef VM86
-	testl	$PSL_VM,LINUX_SC_EFLAGS(%ebx)
-	jnz	1f
-#endif
-	movl	LINUX_SC_FS(%ebx),%ecx
-	movl	LINUX_SC_GS(%ebx),%edx
-	movl	%cx,%fs
-	movl	%dx,%gs
-1:	pushl	%eax			# junk to fake return address
-	movl	$LINUX_SYS_rt_sigreturn,%eax
-	int	$0x80	 		# enter kernel with args on stack
-	movl	$LINUX_SYS_exit,%eax
-	int	$0x80			# exit if sigreturn fails
-	.globl	_C_LABEL(linux_rt_esigcode)
-_C_LABEL(linux_rt_esigcode):
-#endif
-
-/*****************************************************************************/
-
-#ifdef COMPAT_FREEBSD
-/*
- * Signal trampoline; copied to top of user stack.
- */
-NENTRY(freebsd_sigcode)
-	call	FREEBSD_SIGF_HANDLER(%esp)
-	leal	FREEBSD_SIGF_SC(%esp),%eax # scp (the call may have clobbered
-					# the copy at SIGF_SCP(%esp))
-	pushl	%eax
-	pushl	%eax			# junk to fake return address
-	movl	$FREEBSD_SYS_sigreturn,%eax
-	int	$0x80	 		# enter kernel with args on stack
-	movl	$FREEBSD_SYS_exit,%eax
-	int	$0x80			# exit if sigreturn fails
-	.globl	_C_LABEL(freebsd_esigcode)
-_C_LABEL(freebsd_esigcode):
-#endif
-
-/*****************************************************************************/
-
-#ifdef COMPAT_IBCS2
-NENTRY(ibcs2_sigcode)
-	call    SIGF_HANDLER(%esp)
-	leal    SIGF_SC(%esp),%eax      # scp (the call may have clobbered the
-					# copy at SIGF_SCP(%esp))
-	movl    SC_FS(%eax),%ecx
-	movl    SC_GS(%eax),%edx
-	movl    %cx,%fs
-	movl    %dx,%gs
-	pushl   %eax
-	pushl   %eax                    # junk to fake return address
-	movl    $IBCS2_SYS_sigreturn,%eax
-	int     $0x80                   # enter kernel with args on stack
-	movl    $IBCS2_SYS_exit,%eax
-	int     $0x80                   # exit if sigreturn fails
-	.globl  _C_LABEL(ibcs2_esigcode)
-_C_LABEL(ibcs2_esigcode):
-#endif
-	
 /*****************************************************************************/
 
 /*
@@ -2522,25 +2392,6 @@ syscall1:
 	jmp	2b
 4:	.asciz	"WARNING: SPL NOT LOWERED ON SYSCALL EXIT\n"
 #endif /* DIAGNOSTIC */
-
-#ifdef COMPAT_SVR4
-IDTVEC(svr4_fasttrap)
-	pushl	$2		# size of instruction for restart
-	pushl	$T_ASTFLT	# trap # for doing ASTs
-	INTRENTRY
-	call	_C_LABEL(svr4_fasttrap)
-2:	/* Check for ASTs on exit to user mode. */
-	cli
-	cmpb	$0,_C_LABEL(astpending)
-	je	1f
-	/* Always returning to user mode here. */
-	movb	$0,_C_LABEL(astpending)
-	sti
-	/* Pushed T_ASTFLT into tf_trapno on entry. */
-	call	_C_LABEL(trap)
-	jmp	2b
-1:	INTRFASTEXIT
-#endif /* COMPAT_SVR4 */
 
 #if NNPX > 0
 /*

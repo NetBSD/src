@@ -1,4 +1,4 @@
-/*	$NetBSD: db_machdep.c,v 1.14.2.1 2000/11/20 20:03:51 bouyer Exp $	*/
+/*	$NetBSD: db_machdep.c,v 1.14.2.2 2000/12/08 09:26:23 bouyer Exp $	*/
 
 /* 
  * Copyright (c) 1996 Mark Brinicombe
@@ -44,64 +44,6 @@
 #ifdef OFW
 #include <dev/ofw/openfirm.h>
 #endif
-
-/*
- * Print out a description of a vnode.
- * Some parts borrowed from kern/vfs_subr.c
- */
- 
-static char *typename[] =
-   { "VNON", "VREG", "VDIR", "VBLK", "VCHR", "VLNK", "VSOCK", "VFIFO", "VBAD" };
-
-void
-db_show_vnode_cmd(addr, have_addr, count, modif)
-	db_expr_t       addr;
-	int             have_addr;
-	db_expr_t       count;
-	char            *modif;
-{
-	char buf[64];
-	struct vnode *vp;
-
-	if (!have_addr) {
-		db_printf("vnode address must be specified\n");
-		return;
-	}
-
-	vp = (struct vnode *)addr;
-
-/* Decode the one argument */
-
-	db_printf("vp : %08x\n", (u_int)vp);
-	db_printf("vp->v_type = %d\n", vp->v_type);
-	db_printf("vp->v_flag = %ld\n", vp->v_flag);
-	db_printf("vp->v_numoutput = %ld\n", vp->v_numoutput);
-
-	db_printf("type %s, usecount %ld, writecount %ld, refcount %ld,",
-		typename[vp->v_type], vp->v_usecount, vp->v_writecount,
-		vp->v_holdcnt);
-	buf[0] = '\0';
-	if (vp->v_flag & VROOT)
-		strcat(buf, "|VROOT");
-	if (vp->v_flag & VTEXT)
-		strcat(buf, "|VTEXT");
-	if (vp->v_flag & VSYSTEM)
-		strcat(buf, "|VSYSTEM");
-	if (vp->v_flag & VXLOCK)
-		strcat(buf, "|VXLOCK");
-	if (vp->v_flag & VXWANT)
-		strcat(buf, "|VXWANT");
-	if (vp->v_flag & VBWAIT)
-		strcat(buf, "|VBWAIT");
-	if (vp->v_flag & VALIASED)
-		strcat(buf, "|VALIASED");
-	if (buf[0] != '\0')
-		db_printf(" flags (%s)", &buf[1]);
-		db_printf("\n");
-	if (vp->v_data != NULL) {
-		db_printf("data=%08x\n", (u_int)vp->v_data);
-	}
-}
 
 void
 db_show_vmstat_cmd(addr, have_addr, count, modif)

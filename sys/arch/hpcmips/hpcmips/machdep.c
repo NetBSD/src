@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.1.1.1.2.1 2000/11/20 20:46:36 bouyer Exp $	*/
+/*	$NetBSD: machdep.c,v 1.1.1.1.2.2 2000/12/08 09:26:32 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -43,7 +43,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.1.1.1.2.1 2000/11/20 20:46:36 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.1.1.1.2.2 2000/12/08 09:26:32 bouyer Exp $");
 
 /* from: Utah Hdr: machdep.c 1.63 91/04/24 */
 #include "opt_vr41x1.h"
@@ -423,6 +423,7 @@ mach_init(argc, argv, bi)
 	 * Initialize error message buffer (at end of core).
 	 */
 	mips_init_msgbuf();
+
 
 	/*
 	 * Allocate space for system data structures.  These data structures

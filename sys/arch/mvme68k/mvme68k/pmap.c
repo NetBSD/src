@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.38.2.2 2000/11/22 16:00:56 bouyer Exp $        */
+/*	$NetBSD: pmap.c,v 1.38.2.3 2000/12/08 09:28:38 bouyer Exp $        */
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -1386,6 +1386,7 @@ pmap_kenter_pa(va, pa, prot)
 
 	*pte = npte;
 	TBIS (va);
+	pmap->pm_stats.resident_count++;
 }
 
 void

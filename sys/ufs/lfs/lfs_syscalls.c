@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_syscalls.c,v 1.33.2.2 2000/11/22 16:06:52 bouyer Exp $	*/
+/*	$NetBSD: lfs_syscalls.c,v 1.33.2.3 2000/12/08 09:20:15 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
@@ -70,7 +70,7 @@
  *	@(#)lfs_syscalls.c	8.10 (Berkeley) 5/14/95
  */
 
-#include "fs_lfs.h"		/* for prototypes in syscallargs.h */
+#define LFS		/* for prototypes in syscallargs.h */
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -175,12 +175,13 @@ sys_lfs_markv(p, v, retval)
 		return (error);
 	
 	if ((mntp = vfs_getvfs(&fsid)) == NULL)
-		return (EINVAL);
+		return (ENOENT);
 
 	fs = VFSTOUFS(mntp)->um_lfs;
 
 	if ((error = suser(p->p_ucred, &p->p_acflag)) != 0)
 		return (error);
+
 
 	maxino = (dbtofsb(fs, VTOI(fs->lfs_ivnode)->i_ffs_blocks) -
 		      fs->lfs_cleansz - fs->lfs_segtabsz) * fs->lfs_ifpb;
@@ -191,6 +192,9 @@ sys_lfs_markv(p, v, retval)
 	if (error)
 		goto err1;
 	
+	if ((error = vfs_busy(mntp, LK_NOWAIT, NULL)) != 0)
+		return (error);
+
 	/*
 	 * This seglock is just to prevent the fact that we might have to sleep
 	 * from allowing the possibility that our blocks might become
@@ -357,15 +361,15 @@ sys_lfs_markv(p, v, retval)
 		if (blkp->bi_lbn == LFS_UNUSED_LBN) {
 			/* XXX need to make sure that the inode gets written in this case */
 			/* XXX but only write the inode if it's the right one */
-                        if (blkp->bi_inode != LFS_IFILE_INUM) {
-                                LFS_IENTRY(ifp, fs, blkp->bi_inode, bp);
-                                if(ifp->if_daddr == blkp->bi_daddr
+			if (blkp->bi_inode != LFS_IFILE_INUM) {
+				LFS_IENTRY(ifp, fs, blkp->bi_inode, bp);
+				if(ifp->if_daddr == blkp->bi_daddr
 				   || blkp->bi_daddr == LFS_FORCE_WRITE)
 				{
 					LFS_SET_UINO(ip, IN_CLEANING);
 				}
-                                brelse(bp);
-                        }
+				brelse(bp);
+			}
 			continue;
 		}
 
@@ -472,6 +476,7 @@ sys_lfs_markv(p, v, retval)
 	}
 #endif
 	
+	vfs_unbusy(mntp);
 	if(error)
 		return (error);
 	else if(do_again)
@@ -481,7 +486,13 @@ sys_lfs_markv(p, v, retval)
 	
  err2:
 	printf("lfs_markv err2\n");
+	if(lfs_fastvget_unlock) {
+		VOP_UNLOCK(vp, 0);
+		--numlocked;
+	}
 	lfs_vunref(vp);
+	--numrefed;
+
 	/* Free up fakebuffers -- have to take these from the LOCKED list */
  again:
 	s = splbio();
@@ -494,6 +505,8 @@ sys_lfs_markv(p, v, retval)
 				splx(s);
 				goto again;
 			}
+			if(bp->b_flags & B_DELWRI) 
+				fs->lfs_avail += btodb(bp->b_bcount);
 			bremfree(bp);
 			splx(s);
 			brelse(bp);
@@ -503,6 +516,13 @@ sys_lfs_markv(p, v, retval)
 	splx(s);
 	free(start, M_SEGMENT);
 	lfs_segunlock(fs);
+	vfs_unbusy(mntp);
+#ifdef DEBUG_LFS
+	if(numlocked != 0 || numrefed != 0) {
+		panic("lfs_markv: numlocked=%d numrefed=%d", numlocked, numrefed);
+	}
+#endif
+
 	return (error);
 	
  err1:	
@@ -557,15 +577,18 @@ sys_lfs_bmapv(p, v, retval)
 	if ((error = copyin(SCARG(uap, fsidp), &fsid, sizeof(fsid_t))) != 0)
 		return (error);
 	if ((mntp = vfs_getvfs(&fsid)) == NULL)
-		return (EINVAL);
+		return (ENOENT);
 	
 	ump = VFSTOUFS(mntp);
+	if ((error = vfs_busy(mntp, LK_NOWAIT, NULL)) != 0)
+		return (error);
 	
 	origcnt = cnt = SCARG(uap, blkcnt);
 	start = malloc(cnt * sizeof(BLOCK_INFO), M_SEGMENT, M_WAITOK);
 	error = copyin(SCARG(uap, blkiov), start, cnt * sizeof(BLOCK_INFO));
 	if (error) {
 		free(start, M_SEGMENT);
+		vfs_unbusy(mntp);
 		return (error);
 	}
 	
@@ -583,6 +606,7 @@ sys_lfs_bmapv(p, v, retval)
 			printf("lfs_bmapv: attempt to clean current segment? (#%d)\n",
 			       datosn(fs, fs->lfs_curseg));
 			free(start,M_SEGMENT);
+			vfs_unbusy(mntp);
 			return (EBUSY);
 		}
 #endif /* DEBUG */
@@ -599,6 +623,7 @@ sys_lfs_bmapv(p, v, retval)
 				printf("lfs_bmapv: attempt to clean pending segment? (#%d)\n",
 				       datosn(fs, fs->lfs_pending[j]));
 				free(start,M_SEGMENT);
+				vfs_unbusy(mntp);
 				return (EBUSY);
 			}
 		}
@@ -735,6 +760,7 @@ sys_lfs_bmapv(p, v, retval)
 	
 	copyout(start, SCARG(uap, blkiov), origcnt * sizeof(BLOCK_INFO));
 	free(start, M_SEGMENT);
+	vfs_unbusy(mntp);
 	
 	return 0;
 }
@@ -771,20 +797,24 @@ sys_lfs_segclean(p, v, retval)
 	if ((error = copyin(SCARG(uap, fsidp), &fsid, sizeof(fsid_t))) != 0)
 		return (error);
 	if ((mntp = vfs_getvfs(&fsid)) == NULL)
-		return (EINVAL);
+		return (ENOENT);
 	
 	fs = VFSTOUFS(mntp)->um_lfs;
 	
 	if (datosn(fs, fs->lfs_curseg) == SCARG(uap, segment))
 		return (EBUSY);
 	
+	if ((error = vfs_busy(mntp, LK_NOWAIT, NULL)) != 0) 
+		return (error);
 	LFS_SEGENTRY(sup, fs, SCARG(uap, segment), bp);
 	if (sup->su_flags & SEGUSE_ACTIVE) {
 		brelse(bp);
+		vfs_unbusy(mntp);
 		return (EBUSY);
 	}
 	if (!(sup->su_flags & SEGUSE_DIRTY)) {
 		brelse(bp);
+		vfs_unbusy(mntp);
 		return (EALREADY);
 	}
 	
@@ -808,6 +838,7 @@ sys_lfs_segclean(p, v, retval)
 	cip->avail = fs->lfs_avail - fs->lfs_ravail;
 	(void) VOP_BWRITE(bp);
 	wakeup(&fs->lfs_avail);
+	vfs_unbusy(mntp);
 
 	return (0);
 }
@@ -957,6 +988,19 @@ lfs_fastvget(mp, ino, daddr, vpp, dinp, need_unlock)
 	dev = ump->um_dev;
 	*need_unlock = 0;
 
+	/*
+	 * Wait until the filesystem is fully mounted before allowing vget
+	 * to complete.  This prevents possible problems with roll-forward.
+	 */
+	while(ump->um_lfs->lfs_flags & LFS_NOTYET) {
+		tsleep(&ump->um_lfs->lfs_flags, PRIBIO+1, "lfs_fnotyet", 0);
+	}
+	/*
+	 * This is playing fast and loose.  Someone may have the inode
+	 * locked, in which case they are going to be distinctly unhappy
+	 * if we trash something.
+	 */
+
 	error = lfs_fasthashget(dev, ino, need_unlock, vpp);
 	if (error != 0 || *vpp != NULL)
 		return (error);
@@ -1066,6 +1110,8 @@ lfs_fastvget(mp, ino, daddr, vpp, dinp, need_unlock)
 	VREF(ip->i_devvp);
 	*vpp = vp;
 	*need_unlock |= FVG_PUT;
+
+	uvm_vnp_setsize(vp, ip->i_ffs_size);
 
 	return (0);
 }

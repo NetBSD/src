@@ -1,4 +1,4 @@
-/* $NetBSD: db_trace.c,v 1.4.2.1 2000/11/20 19:56:22 bouyer Exp $ */
+/* $NetBSD: db_trace.c,v 1.4.2.2 2000/12/08 09:23:21 bouyer Exp $ */
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: db_trace.c,v 1.4.2.1 2000/11/20 19:56:22 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_trace.c,v 1.4.2.2 2000/12/08 09:23:21 bouyer Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -175,7 +175,8 @@ decode_syscall(int number, struct proc *p, void (*pr)(const char *, ...))
 {
 	db_sym_t sym;
 	db_expr_t diff;
-	char *symname, *ename;
+	char *symname;
+	const char *ename;
 	int (*f) __P((struct proc *, void *, register_t *));
 
 	(*pr)(" (%d", number); /* ) */

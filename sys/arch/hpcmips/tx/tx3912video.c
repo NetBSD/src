@@ -1,4 +1,4 @@
-/*	$NetBSD: tx3912video.c,v 1.20.2.2 2000/11/20 20:47:13 bouyer Exp $ */
+/*	$NetBSD: tx3912video.c,v 1.20.2.3 2000/12/08 09:26:32 bouyer Exp $ */
 
 /*-
  * Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
@@ -249,8 +249,9 @@ tx3912video_hpcfbinit(sc)
 					/* configuration name		*/
 	fb->hf_height		= chip->vc_fbheight;
 	fb->hf_width		= chip->vc_fbwidth;
-	fb->hf_baseaddr		= mips_ptob(mips_btop(fbvaddr));
-	fb->hf_offset		= (u_long)fbvaddr - fb->hf_baseaddr;
+	fb->hf_baseaddr		= (u_long)fbvaddr;
+	fb->hf_offset		= (u_long)fbvaddr -
+					 mips_ptob(mips_btop(fbvaddr));
 					/* frame buffer start offset   	*/
 	fb->hf_bytes_per_line	= (chip->vc_fbwidth * chip->vc_fbdepth)
 		/ NBBY;

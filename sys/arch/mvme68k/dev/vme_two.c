@@ -1,4 +1,4 @@
-/*	$NetBSD: vme_two.c,v 1.1.8.2 2000/11/22 16:00:51 bouyer Exp $ */
+/*	$NetBSD: vme_two.c,v 1.1.8.3 2000/12/08 09:28:33 bouyer Exp $ */
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -137,8 +137,6 @@ vmetwo_attach(parent, self, aux)
 	sc = vmetwo_sc = (struct vmetwo_softc *) self;
 	ma = aux;
 
-	sc->sc_bust = ma->ma_bust;
-
 	/*
 	 * Map the local control registers
 	 */
@@ -152,6 +150,17 @@ vmetwo_attach(parent, self, aux)
 	bus_space_map(ma->ma_bust, ma->ma_offset + VME2REG_GCSR_OFFSET,
 	    VME2GCSR_SIZE, 0, &sc->sc_gcrh);
 #endif
+
+	/* Initialise stuff for the mvme68k common VMEbus front-end */
+	sc->sc_mvmebus.sc_bust = ma->ma_bust;
+	sc->sc_mvmebus.sc_dmat = ma->ma_dmat;
+	sc->sc_mvmebus.sc_chip = sc;
+	sc->sc_mvmebus.sc_nmasters = VME2_NMASTERS;
+	sc->sc_mvmebus.sc_masters = &sc->sc_master[0];
+	sc->sc_mvmebus.sc_nslaves = VME2_NSLAVES;
+	sc->sc_mvmebus.sc_slaves = &sc->sc_slave[0];
+	sc->sc_mvmebus.sc_intr_establish = vmetwo_intr_establish;
+	sc->sc_mvmebus.sc_intr_disestablish = vmetwo_intr_disestablish;
 
 	/* Clear out the ISR handler array */
 	for (i = 0; i < VMETWO_HANDLERS_SZ; i++)
@@ -282,16 +291,6 @@ vmetwo_attach(parent, self, aux)
 		vmetwo_intr_establish(sc, 7, 7, VME2_VEC_ABORT, 1,
 		    nmihand, NULL);
 	}
-
-	/* Attach to the mvme68k common VMEbus front-end */
-	sc->sc_mvmebus.sc_dmat = ma->ma_dmat;
-	sc->sc_mvmebus.sc_chip = sc;
-	sc->sc_mvmebus.sc_nmasters = VME2_NMASTERS;
-	sc->sc_mvmebus.sc_masters = &sc->sc_master[0];
-	sc->sc_mvmebus.sc_nslaves = VME2_NSLAVES;
-	sc->sc_mvmebus.sc_slaves = &sc->sc_slave[0];
-	sc->sc_mvmebus.sc_intr_establish = vmetwo_intr_establish;
-	sc->sc_mvmebus.sc_intr_disestablish = vmetwo_intr_disestablish;
 
 	mvmebus_attach(&sc->sc_mvmebus);
 }

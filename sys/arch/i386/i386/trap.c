@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.133.2.2 2000/11/22 16:00:23 bouyer Exp $	*/
+/*	$NetBSD: trap.c,v 1.133.2.3 2000/12/08 09:26:38 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -80,15 +80,10 @@
 
 #include "opt_ddb.h"
 #include "opt_syscall_debug.h"
-#include "opt_execfmt.h"
 #include "opt_math_emulate.h"
 #include "opt_vm86.h"
 #include "opt_ktrace.h"
 #include "opt_cputype.h"
-#include "opt_compat_freebsd.h"
-#include "opt_compat_linux.h"
-#include "opt_compat_ibcs2.h"
-#include "opt_compat_aout.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -123,27 +118,6 @@
 #ifdef KGDB
 #include <sys/kgdb.h>
 #endif
-
-#ifdef COMPAT_IBCS2
-#include <sys/exec_elf.h>
-#include <compat/ibcs2/ibcs2_errno.h>
-#include <compat/ibcs2/ibcs2_exec.h>
-extern struct emul emul_ibcs2;
-#endif
-
-#ifdef COMPAT_LINUX
-# include <sys/exec.h>
-# include <compat/linux/linux_syscall.h>
-extern struct emul emul_linux;
-#endif /* COMPAT_LINUX */
-
-#ifdef COMPAT_FREEBSD
-extern struct emul emul_freebsd;
-#endif /* COMPAT_FREEBSD */
-
-#ifdef COMPAT_AOUT
-extern struct emul emul_netbsd_aout;
-#endif /* COMPAT_AOUT */
 
 #include "npx.h"
 
@@ -191,7 +165,7 @@ userret(p, pc, oticks)
 	curcpu()->ci_schedstate.spc_curpriority = p->p_priority;
 }
 
-char	*trap_type[] = {
+const char *trap_type[] = {
 	"privileged instruction fault",		/*  0 T_PRIVINFLT */
 	"breakpoint trap",			/*  1 T_BPTFLT */
 	"arithmetic trap",			/*  2 T_ARITHTRAP */
@@ -605,17 +579,17 @@ syscall(frame)
 	size_t argsize;
 	register_t code, args[8], rval[2];
 	u_quad_t sticks;
-#ifdef COMPAT_LINUX
-	int linux;
-#endif /* COMPAT_LINUX */
-#ifdef COMPAT_FREEBSD
-	int freebsd;
-#endif /* COMPAT_FREEBSD */
 
 	uvmexp.syscalls++;
 	if (!USERMODE(frame.tf_cs, frame.tf_eflags))
 		panic("syscall");
+
 	p = curproc;
+	if (p->p_emul->e_syscall) {
+		p->p_emul->e_syscall(&frame);
+		return;
+	}
+
 	sticks = p->p_sticks;
 	p->p_md.md_regs = &frame;
 	opc = frame.tf_eip;
@@ -624,20 +598,6 @@ syscall(frame)
 	nsys = p->p_emul->e_nsysent;
 	callp = p->p_emul->e_sysent;
 
-#ifdef COMPAT_LINUX
-	linux = (p->p_emul == &emul_linux);
-#endif /* COMPAT_LINUX */
-
-#ifdef COMPAT_FREEBSD
-	freebsd = (p->p_emul == &emul_freebsd);
-#endif /* COMPAT_FREEBSD */
-
-#ifdef COMPAT_IBCS2
-	if (p->p_emul == &emul_ibcs2) {
-		if (IBCS2_HIGH_SYSCALL(code))
-			code = IBCS2_CVT_HIGH_SYSCALL(code);
-	}
-#endif /* COMPAT_IBCS2 */
 	params = (caddr_t)frame.tf_esp + sizeof(int);
 
 #ifdef VM86
@@ -653,11 +613,6 @@ syscall(frame)
 
 	switch (code) {
 	case SYS_syscall:
-#ifdef COMPAT_LINUX
-		/* Linux has a special system setup call as number 0 */
-		if (linux)
-			break;
-#endif /* COMPAT_LINUX */
 		/*
 		 * Code is first argument, followed by actual args.
 		 */
@@ -669,14 +624,7 @@ syscall(frame)
 		 * Like syscall, but code is a quad, so as to maintain
 		 * quad alignment for the rest of the arguments.
 		 */
-		if (callp == sysent 	/* Native */
-#ifdef COMPAT_FREEBSD
-		    || freebsd		/* FreeBSD has the same function */
-#endif
-#ifdef COMPAT_AOUT
-		    || (p->p_emul == &emul_netbsd_aout)	/* Our a.out */
-#endif
-		    ) {
+		if (p->p_emul->e_flags & EMUL_HAS_SYS___syscall) {
 			code = fuword(params + _QUAD_LOWWORD * sizeof(int));
 			params += sizeof(quad_t);
 		}
@@ -690,37 +638,9 @@ syscall(frame)
 		callp += code;
 	argsize = callp->sy_argsize;
 	if (argsize) {
-#ifdef COMPAT_LINUX
-		if (linux) {
-			/*
-			 * Linux passes the args in ebx, ecx, edx, esi, edi, in
-			 * increasing order.
-			 */
-			switch (argsize >> 2) {
-			case 5:
-				args[4] = frame.tf_edi;
-			case 4:
-				args[3] = frame.tf_esi;
-			case 3:
-				args[2] = frame.tf_edx;
-			case 2:
-				args[1] = frame.tf_ecx;
-			case 1:
-				args[0] = frame.tf_ebx;
-				break;
-			default:
-				panic("linux syscall bogus argument size %d",
-				    argsize);
-				break;
-			}
-		}
-		else
-#endif /* COMPAT_LINUX */
-		{
-			error = copyin(params, (caddr_t)args, argsize);
-			if (error)
-				goto bad;
-		}
+		error = copyin(params, (caddr_t)args, argsize);
+		if (error)
+			goto bad;
 	}
 #ifdef SYSCALL_DEBUG
 	scdebug_call(p, code, args);
@@ -740,10 +660,7 @@ syscall(frame)
 		 */
 		p = curproc;
 		frame.tf_eax = rval[0];
-#ifdef COMPAT_LINUX
-		if (!linux)
-#endif /* COMPAT_LINUX */
-			frame.tf_edx = rval[1];
+		frame.tf_edx = rval[1];
 		frame.tf_eflags &= ~PSL_C;	/* carry bit */
 		break;
 	case ERESTART:

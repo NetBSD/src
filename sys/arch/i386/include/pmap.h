@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.h,v 1.42.2.1 2000/11/20 20:09:30 bouyer Exp $	*/
+/*	$NetBSD: pmap.h,v 1.42.2.2 2000/12/08 09:26:38 bouyer Exp $	*/
 
 /*
  *
@@ -513,7 +513,7 @@ kvtopte(vaddr_t va)
 	{
 		pd_entry_t *pde;
 
-		pde = &pmap_kernel()->pm_pdir[pdei(va)];
+		pde = PDP_BASE + pdei(va);
 		if (*pde & PG_PS)
 			return ((pt_entry_t *)pde);
 	}

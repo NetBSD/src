@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_nqlease.c,v 1.30.2.1 2000/11/20 18:11:16 bouyer Exp $	*/
+/*	$NetBSD: nfs_nqlease.c,v 1.30.2.2 2000/12/08 09:19:21 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -124,7 +124,10 @@ int nqnfs_piggy[NFS_NPROCS] = {
 
 extern nfstype nfsv2_type[9];
 extern nfstype nfsv3_type[9];
-extern struct nfssvc_sock *nfs_udpsock, *nfs_cltpsock;
+extern struct nfssvc_sock *nfs_udpsock;
+#ifdef ISO
+extern struct nfssvc_sock *nfs_cltpsock
+#endif
 #ifdef INET6
 extern struct nfssvc_sock *nfs_udp6sock;
 #endif
@@ -342,9 +345,11 @@ nqsrv_addhost(lph, slp, nam)
 		lph->lph_nam = m_copym(nam, 0, M_COPYALL, M_WAIT);
 		lph->lph_flag |= (LC_VALID | LC_UDP6);
 #endif
+#ifdef ISO
 	} else if (slp == nfs_cltpsock) {
 		lph->lph_nam = m_copym(nam, 0, M_COPYALL, M_WAIT);
 		lph->lph_flag |= (LC_VALID | LC_CLTP);
+#endif
 	} else {
 		lph->lph_flag |= (LC_VALID | LC_SREF);
 		lph->lph_slp = slp;
@@ -410,7 +415,10 @@ nqsrv_cmpnam(slp, nam, lph)
 		else
 			return (0);
 	}
-	if (slp == nfs_udpsock || slp == nfs_cltpsock
+	if (slp == nfs_udpsock
+#ifdef ISO
+	    || slp == nfs_cltpsock
+#endif
 #ifdef INET6
 	    || slp == nfs_udp6sock
 #endif
@@ -473,9 +481,11 @@ nqsrv_send_eviction(vp, lp, slp, nam, cred)
 				saddr->sin_addr.s_addr = lph->lph_inetaddr;
 				saddr->sin_port = lph->lph_port;
 				so = nfs_udpsock->ns_so;
+#ifdef ISO
 			} else if (lph->lph_flag & LC_CLTP) {
 				nam2 = lph->lph_nam;
 				so = nfs_cltpsock->ns_so;
+#endif
 #ifdef INET6
 			} else if (lph->lph_flag & LC_UDP6) {
 				nam2 = lph->lph_nam;

@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_extern.h,v 1.14.2.2 2000/11/22 16:06:50 bouyer Exp $	*/
+/*	$NetBSD: lfs_extern.h,v 1.14.2.3 2000/12/08 09:20:14 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
@@ -111,6 +111,7 @@ extern struct pool lfs_inode_pool;		/* memory pool for inodes */
 
 __BEGIN_DECLS
 /* lfs_alloc.c */
+int lfs_rf_valloc __P((struct lfs *, ino_t, int, struct proc *, struct vnode **));
 void lfs_vcreate __P((struct mount *, ino_t, struct vnode *));
 /* lfs_bio.c */
 int lfs_availwait __P((struct lfs *, int));
@@ -119,13 +120,22 @@ int lfs_fits __P((struct lfs *, int));
 void lfs_flush_fs __P((struct lfs *, int));
 void lfs_flush __P((struct lfs *, int));
 int lfs_check __P((struct vnode *, ufs_daddr_t, int));
+#ifdef MALLOCLOG
+void lfs_freebuf_malloclog __P((struct buf *, char *, int));
+struct buf *lfs_newbuf_malloclog __P((struct vnode *, ufs_daddr_t, size_t,
+				      char *, int));
+#define lfs_freebuf(BP) lfs_freebuf_malloclog((BP), __FILE__, __LINE__)
+#define lfs_newbuf(V, A, S) lfs_newbuf_malloclog((V),(A),(S),__FILE__,__LINE__)
+#else
 void lfs_freebuf __P((struct buf *));
+struct buf *lfs_newbuf __P((struct vnode *, ufs_daddr_t, size_t));
+#endif
 void lfs_countlocked __P((int *, long *));
 int lfs_reserve __P((struct lfs *, struct vnode *, int));
 
 /* lfs_cksum.c */
-u_long cksum __P((void *, size_t));
-u_long lfs_sb_cksum __P((struct dlfs *));
+u_int32_t cksum __P((void *, size_t));
+u_int32_t lfs_sb_cksum __P((struct dlfs *));
 
 /* lfs_debug.c */
 #ifdef DEBUG
@@ -156,7 +166,6 @@ int lfs_match_data __P((struct lfs *, struct buf *));
 int lfs_match_indir __P((struct lfs *, struct buf *));
 int lfs_match_dindir __P((struct lfs *, struct buf *));
 int lfs_match_tindir __P((struct lfs *, struct buf *));
-struct buf *lfs_newbuf __P((struct vnode *, ufs_daddr_t, size_t));
 void lfs_callback __P((struct buf *));
 void lfs_supercallback __P((struct buf *));
 void lfs_shellsort __P((struct buf **, ufs_daddr_t *, int));

@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs.h,v 1.20.10.1 2000/11/20 18:11:14 bouyer Exp $	*/
+/*	$NetBSD: nfs.h,v 1.20.10.2 2000/12/08 09:19:20 bouyer Exp $	*/
 /*
  * Copyright (c) 1989, 1993, 1995
  *	The Regents of the University of California.  All rights reserved.
@@ -84,8 +84,18 @@ extern int nfs_niothreads;              /* Number of async_daemons desired */
  * DIRBLKSIZ.
  */
 
+#if 1
+/*
+ * XXXUBC temp hack because of the removal of b_validend.
+ * eventually we'll store NFS VDIR data in the page cache as well,
+ * we'll fix this at that point.
+ */
+#define	NFS_DIRBLKSIZ	PAGE_SIZE
+#define	NFS_DIRFRAGSIZ	PAGE_SIZE
+#else
 #define	NFS_DIRBLKSIZ	8192		/* Must be a multiple of DIRBLKSIZ */
 #define NFS_DIRFRAGSIZ	 512		/* Same as DIRBLKSIZ, generally */
+#endif
 
 /*
  * Maximum number of directory entries cached per NFS node, to avoid
@@ -120,10 +130,10 @@ extern int nfs_niothreads;              /* Number of async_daemons desired */
 #endif
 
 /*
- * The B_INVAFTERWRITE flag should be set to whatever is required by the
- * buffer cache code to say "Invalidate the block after it is written back".
+ * Use the vm_page flag reserved for pager use to indicate pages
+ * which have been written to the server but not yet committed.
  */
-#define	B_INVAFTERWRITE	B_INVAL
+#define PG_NEEDCOMMIT PG_PAGER1
 
 /*
  * The IO_METASYNC flag should be implemented for local file systems.

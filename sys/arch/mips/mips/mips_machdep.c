@@ -1,4 +1,4 @@
-/*	$NetBSD: mips_machdep.c,v 1.57.2.2 2000/11/20 20:13:35 bouyer Exp $	*/
+/*	$NetBSD: mips_machdep.c,v 1.57.2.3 2000/12/08 09:28:22 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -52,7 +52,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: mips_machdep.c,v 1.57.2.2 2000/11/20 20:13:35 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mips_machdep.c,v 1.57.2.3 2000/12/08 09:28:22 bouyer Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "opt_compat_ultrix.h"
@@ -423,6 +423,7 @@ mips_vector_init()
 
 	case MIPS_R10000:
 	case MIPS_R12000:
+	case MIPS_R14000:
 		cpu_arch = CPU_ARCH_MIPS4;
 		mips_num_tlb_entries = 64;
 		mips3_L1TwoWayCache = 1;
@@ -500,11 +501,12 @@ struct pridtab cputab[] = {
 	{ MIPS_R3LSI,	"LSI Logic R3000 derivative", },
 	{ MIPS_R6000A,	"MIPS R6000A CPU",	},
 	{ MIPS_R3IDT,	"IDT R3041 or RC36100 CPU", },
-	{ MIPS_R10000,	"MIPS R10000/T5 CPU",	},
+	{ MIPS_R10000,	"MIPS R10000 CPU",	},
 	{ MIPS_R4200,	"NEC VR4200 CPU",	},
 	{ MIPS_R4300,	"NEC VR4300 CPU",	},
 	{ MIPS_R4100,	"NEC VR4100 CPU",	},
 	{ MIPS_R12000,	"MIPS R12000 CPU",	},
+	{ MIPS_R14000,	"MIPS R14000 CPU",	},
 	{ MIPS_R8000,	"MIPS R8000 Blackbird/TFP CPU", },
 	{ MIPS_R4600,	"QED R4600 Orion CPU",	},
 	{ MIPS_R4700,	"QED R4700 Orion CPU",	},
@@ -536,8 +538,7 @@ struct pridtab fputab[] = {
 	{ MIPS_R3010,	"MIPS R3010 FPC", },
 	{ MIPS_R6010,	"MIPS R6010 FPC", },
 	{ MIPS_R4010,	"MIPS R4010 FPC", },
-	{ MIPS_R4210,	"NEC VR4210 FPC", },
-	{ MIPS_R5010,	"MIPS R5010 FPC", },
+	{ MIPS_R10000,	"built-in FPU", },
 };
 
 /*

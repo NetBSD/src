@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.79.2.2 2000/11/22 16:00:21 bouyer Exp $	*/
+/*	$NetBSD: pmap.c,v 1.79.2.3 2000/12/08 09:26:37 bouyer Exp $	*/
 
 /*
  *
@@ -61,8 +61,6 @@
 
 #include "opt_cputype.h"
 #include "opt_user_ldt.h"
-#include "opt_lockdebug.h"
-#include "opt_multiprocessor.h"
 #include "opt_largepages.h"
 
 #include <sys/param.h>
@@ -253,33 +251,22 @@
  * locking data structures
  */
 
-#if defined(MULTIPROCESSOR) || defined(LOCKDEBUG)
-struct lock pmap_main_lock;
-simple_lock_data_t pvalloc_lock;
-simple_lock_data_t pmaps_lock;
-simple_lock_data_t pmap_copy_page_lock;
-simple_lock_data_t pmap_zero_page_lock;
-simple_lock_data_t pmap_tmpptp_lock;
+static struct lock pmap_main_lock;
+static simple_lock_data_t pvalloc_lock;
+static simple_lock_data_t pmaps_lock;
+static simple_lock_data_t pmap_copy_page_lock;
+static simple_lock_data_t pmap_zero_page_lock;
+static simple_lock_data_t pmap_tmpptp_lock;
 
 #define PMAP_MAP_TO_HEAD_LOCK() \
-     spinlockmgr(&pmap_main_lock, LK_SHARED, (void *) 0)
+     (void) spinlockmgr(&pmap_main_lock, LK_SHARED, NULL)
 #define PMAP_MAP_TO_HEAD_UNLOCK() \
-     spinlockmgr(&pmap_main_lock, LK_RELEASE, (void *) 0)
+     (void) spinlockmgr(&pmap_main_lock, LK_RELEASE, NULL)
 
 #define PMAP_HEAD_TO_MAP_LOCK() \
-     spinlockmgr(&pmap_main_lock, LK_EXCLUSIVE, (void *) 0)
+     (void) spinlockmgr(&pmap_main_lock, LK_EXCLUSIVE, NULL)
 #define PMAP_HEAD_TO_MAP_UNLOCK() \
-     spinlockmgr(&pmap_main_lock, LK_RELEASE, (void *) 0)
-
-#else
-
-#define PMAP_MAP_TO_HEAD_LOCK()		/* null */
-#define PMAP_MAP_TO_HEAD_UNLOCK()	/* null */
-
-#define PMAP_HEAD_TO_MAP_LOCK()		/* null */
-#define PMAP_HEAD_TO_MAP_UNLOCK()	/* null */
-
-#endif
+     (void) spinlockmgr(&pmap_main_lock, LK_RELEASE, NULL)
 
 /*
  * global data structures
@@ -914,14 +901,12 @@ pmap_bootstrap(kva_start)
 	 * init the static-global locks and global lists.
 	 */
 
-#if defined(MULTIPROCESSOR) || defined(LOCKDEBUG)
 	spinlockinit(&pmap_main_lock, "pmaplk", 0);
 	simple_lock_init(&pvalloc_lock);
 	simple_lock_init(&pmaps_lock);
 	simple_lock_init(&pmap_copy_page_lock);
 	simple_lock_init(&pmap_zero_page_lock);
 	simple_lock_init(&pmap_tmpptp_lock);
-#endif
 	LIST_INIT(&pmaps);
 	TAILQ_INIT(&pv_freepages);
 	TAILQ_INIT(&pv_unusedpgs);
@@ -2616,6 +2601,9 @@ pmap_page_remove(pg)
 		ptes = pmap_map_ptes(pve->pv_pmap);		/* locks pmap */
 
 #ifdef DIAGNOSTIC
+		if (pve->pv_va >= uvm.pager_sva && pve->pv_va < uvm.pager_eva) {
+			printf("pmap_page_remove: found pager VA on pv_list\n");
+		}
 		if (pve->pv_ptp && (pve->pv_pmap->pm_pdir[pdei(pve->pv_va)] &
 				    PG_FRAME)
 		    != VM_PAGE_TO_PHYS(pve->pv_ptp)) {
@@ -2989,7 +2977,7 @@ pmap_unwire(pmap, va)
 
 #ifdef DIAGNOSTIC
 		if (!pmap_valid_entry(ptes[i386_btop(va)]))
-			panic("pmap_unwire: invalid (unmapped) va");
+			panic("pmap_unwire: invalid (unmapped) va 0x%lx", va);
 #endif
 		if ((ptes[i386_btop(va)] & PG_W) != 0) {
 			ptes[i386_btop(va)] &= ~PG_W;

@@ -1,4 +1,4 @@
-/* $NetBSD: irongatevar.h,v 1.2.2.3 2000/11/22 15:59:46 bouyer Exp $ */
+/* $NetBSD: irongatevar.h,v 1.2.2.4 2000/12/08 09:23:38 bouyer Exp $ */
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -72,5 +72,7 @@ void	irongate_dma_init(struct irongate_config *);
 
 void	irongate_bus_io_init(bus_space_tag_t, void *);
 void	irongate_bus_mem_init(bus_space_tag_t, void *);
+
+void	irongate_bus_mem_init2(bus_space_tag_t, void *);
 
 pcireg_t irongate_conf_read0(void *, pcitag_t, int);

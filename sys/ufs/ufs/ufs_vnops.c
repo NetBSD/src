@@ -1,4 +1,4 @@
-/*	$NetBSD: ufs_vnops.c,v 1.58.2.1 2000/11/20 18:11:55 bouyer Exp $	*/
+/*	$NetBSD: ufs_vnops.c,v 1.58.2.2 2000/12/08 09:20:17 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993, 1995
@@ -461,8 +461,6 @@ ufs_chmod(vp, mode, cred, p)
 	ip->i_ffs_mode &= ~ALLPERMS;
 	ip->i_ffs_mode |= (mode & ALLPERMS);
 	ip->i_flag |= IN_CHANGE;
-	if ((vp->v_flag & VTEXT) && (ip->i_ffs_mode & S_ISTXT) == 0)
-		(void) uvm_vnp_uncache(vp);
 	return (0);
 }
 
@@ -1632,6 +1630,7 @@ ufs_strategy(v)
 	ip = VTOI(vp);
 	if (vp->v_type == VBLK || vp->v_type == VCHR)
 		panic("ufs_strategy: spec");
+	KASSERT(bp->b_bcount != 0);
 	if (bp->b_blkno == bp->b_lblkno) {
 		error = VOP_BMAP(vp, bp->b_lblkno, NULL, &bp->b_blkno,
 				 NULL);

@@ -1,4 +1,4 @@
-# $NetBSD: files.alpha,v 1.104.2.2 2000/11/22 15:59:44 bouyer Exp $
+# $NetBSD: files.alpha,v 1.104.2.3 2000/12/08 09:23:36 bouyer Exp $
 #
 # alpha-specific configuration info
 
@@ -93,8 +93,8 @@ major { md = 6 }
 # RAIDframe 
 major { raid = 16 }
 
-# Logical storage unit 
-major { lsu = 17 }
+# Logical disks 
+major { ld = 17 }
 
 # Raster operations
 include "dev/rasops/files.rasops"
@@ -527,6 +527,7 @@ file	arch/alpha/alpha/osf1_locore.s		compat_osf1
 # Linux Binary Compatibility (COMPAT_LINUX)
 include "compat/linux/files.linux"
 include "compat/linux/arch/alpha/files.linux_alpha"
+file	arch/alpha/alpha/linux_sigcode.s	compat_linux
 
 # OSS audio driver compatibility
 include "compat/ossaudio/files.ossaudio"

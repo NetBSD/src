@@ -1,6 +1,6 @@
-#
-# $NetBSD: copyright.S,v 1.2 1996/05/16 15:37:49 is Exp $
-#
+|#
+|# $NetBSD: copyright.S,v 1.2.30.1 2000/12/08 09:28:15 bouyer Exp $
+|#
 
  .ascii "MOTOROLA MICROPROCESSOR & MEMORY TECHNOLOGY GROUP\n"
  .ascii "M68000 Hi-Performance Microprocessor Division\n"

@@ -1,4 +1,4 @@
-#	$NetBSD: genassym.cf,v 1.15.2.1 2000/11/20 20:12:22 bouyer Exp $
+#	$NetBSD: genassym.cf,v 1.15.2.2 2000/12/08 09:28:17 bouyer Exp $
 
 #
 # Copyright (c) 1990 The Regents of the University of California.
@@ -35,7 +35,9 @@
 #	@(#)genassym.c	7.8 (Berkeley) 5/7/91
 #
 
+if defined(_KERNEL) && !defined(_LKM)
 include "opt_compat_svr4.h"
+endif
 
 include	<sys/param.h>
 include	<sys/buf.h>
@@ -153,6 +155,10 @@ define	FR_SP			offsetof(struct frame, f_regs[15])
 define	FR_HW			offsetof(struct frame, f_sr)
 define	FR_ADJ			offsetof(struct frame, f_stackadj)
 define	FR_SIZE			sizeof(struct trapframe)
+
+# FP frame offsets
+define	FPF_REGS		offsetof(struct fpframe, fpf_regs[0])
+define	FPF_FPCR		offsetof(struct fpframe, fpf_fpcr)
 
 # system calls
 define	SYS_exit		SYS_exit

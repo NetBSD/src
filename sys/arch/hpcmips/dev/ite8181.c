@@ -1,4 +1,4 @@
-/*	$NetBSD: ite8181.c,v 1.3.2.3 2000/11/22 16:00:10 bouyer Exp $	*/
+/*	$NetBSD: ite8181.c,v 1.3.2.4 2000/12/08 09:26:31 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 2000 SATO Kazumi
@@ -479,8 +479,9 @@ ite8181_fbinit(fb)
 					/* configuration name		*/
 	fb->hf_height		= bootinfo->fb_height;
 	fb->hf_width		= bootinfo->fb_width;
-	fb->hf_baseaddr		= mips_ptob(mips_btop(bootinfo->fb_addr));
-	fb->hf_offset		= (u_long)bootinfo->fb_addr - fb->hf_baseaddr;
+	fb->hf_baseaddr		= (u_long)bootinfo->fb_addr;
+	fb->hf_offset		= (u_long)bootinfo->fb_addr -
+				     mips_ptob(mips_btop(bootinfo->fb_addr));
 					/* frame buffer start offset   	*/
 	fb->hf_bytes_per_line	= bootinfo->fb_line_bytes;
 	fb->hf_nplanes		= 1;
@@ -672,5 +673,5 @@ ite8181_mmap(ctx, offset, prot)
 		sc->sc_fbconf.hf_offset) <  offset)
 		return -1;
 
-	return mips_btop(sc->sc_fbconf.hf_baseaddr + offset);
+	return mips_btop((u_long)bootinfo->fb_addr + offset);
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_bio.c,v 1.11.2.2 2000/11/22 16:06:49 bouyer Exp $	*/
+/*	$NetBSD: lfs_bio.c,v 1.11.2.3 2000/12/08 09:20:13 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
@@ -448,27 +448,30 @@ lfs_check(vp, blkno, flags)
 			wakeup(&fs->lfs_dirops);
 	}
 
-	while  (locked_queue_count > LFS_WAIT_BUFS
-		|| locked_queue_bytes > LFS_WAIT_BYTES)
+	while (locked_queue_count > LFS_WAIT_BUFS
+	       || locked_queue_bytes > LFS_WAIT_BYTES)
 	{
 		if(lfs_dostats)
 			++lfs_stats.wait_exceeded;
-#ifdef DEBUG_LFS
+#ifdef DEBUG
 		printf("lfs_check: waiting: count=%d, bytes=%ld\n",
 			locked_queue_count, locked_queue_bytes);
 #endif
 		error = tsleep(&locked_queue_count, PCATCH | PUSER,
 			       "buffers", hz * LFS_BUFWAIT);
+		if (error != EWOULDBLOCK)
+			break;
 		/*
 		 * lfs_flush might not flush all the buffers, if some of the
-		 * inodes were locked.  Try flushing again to keep us from
-		 * blocking indefinitely.
+		 * inodes were locked or if most of them were Ifile blocks
+		 * and we weren't asked to checkpoint.  Try flushing again
+		 * to keep us from blocking indefinitely.
 		 */
 		if (locked_queue_count > LFS_MAX_BUFS ||
 		    locked_queue_bytes > LFS_MAX_BYTES)
 		{
 			++fs->lfs_writer;
-			lfs_flush(fs, flags);
+			lfs_flush(fs, flags | SEGM_CKP);
 			if(--fs->lfs_writer==0)
 				wakeup(&fs->lfs_dirops);
 		}
@@ -479,11 +482,23 @@ lfs_check(vp, blkno, flags)
 /*
  * Allocate a new buffer header.
  */
+#ifdef MALLOCLOG
+# define DOMALLOC(S, T, F) _malloc((S), (T), (F), file, line)
+struct buf *
+lfs_newbuf_malloclog(vp, daddr, size, file, line)
+	struct vnode *vp;
+	ufs_daddr_t daddr;
+	size_t size;
+	char *file;
+	int line;
+#else
+# define DOMALLOC(S, T, F) malloc((S), (T), (F))
 struct buf *
 lfs_newbuf(vp, daddr, size)
 	struct vnode *vp;
 	ufs_daddr_t daddr;
 	size_t size;
+#endif
 {
 	struct buf *bp;
 	size_t nbytes;
@@ -491,10 +506,10 @@ lfs_newbuf(vp, daddr, size)
 	
 	nbytes = roundup(size, DEV_BSIZE);
 	
-	bp = malloc(sizeof(struct buf), M_SEGMENT, M_WAITOK);
+	bp = DOMALLOC(sizeof(struct buf), M_SEGMENT, M_WAITOK);
 	bzero(bp, sizeof(struct buf));
 	if (nbytes)
-		bp->b_data = malloc(nbytes, M_SEGMENT, M_WAITOK);
+		bp->b_data = DOMALLOC(nbytes, M_SEGMENT, M_WAITOK);
 	if(nbytes) {
 		bzero(bp->b_data, nbytes);
 	}
@@ -520,9 +535,19 @@ lfs_newbuf(vp, daddr, size)
 	return (bp);
 }
 
+#ifdef MALLOCLOG
+# define DOFREE(A, T) _free((A), (T), file, line)
+void
+lfs_freebuf_malloclog(bp, file, line)
+	struct buf *bp;
+	char *file;
+	int line;
+#else
+# define DOFREE(A, T) free((A), (T))
 void
 lfs_freebuf(bp)
 	struct buf *bp;
+#endif
 {
 	int s;
 	
@@ -531,10 +556,10 @@ lfs_freebuf(bp)
 		brelvp(bp);
 	splx(s);
 	if (!(bp->b_flags & B_INVAL)) { /* B_INVAL indicates a "fake" buffer */
-		free(bp->b_data, M_SEGMENT);
+		DOFREE(bp->b_data, M_SEGMENT);
 		bp->b_data = NULL;
 	}
-	free(bp, M_SEGMENT);
+	DOFREE(bp, M_SEGMENT);
 }
 
 /*

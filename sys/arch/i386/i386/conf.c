@@ -1,4 +1,4 @@
-/*	$NetBSD: conf.c,v 1.115.2.2 2000/11/22 16:00:19 bouyer Exp $	*/
+/*	$NetBSD: conf.c,v 1.115.2.3 2000/12/08 09:26:35 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -71,8 +71,8 @@ bdev_decl(ccd);
 bdev_decl(raid);
 #include "md.h"
 bdev_decl(md);
-#include "lsu.h"
-bdev_decl(lsu);
+#include "ld.h"
+bdev_decl(ld);
 
 struct bdevsw	bdevsw[] =
 {
@@ -95,7 +95,7 @@ struct bdevsw	bdevsw[] =
 	bdev_disk_init(NCCD,ccd),	/* 16: concatenated disk driver */
 	bdev_disk_init(NMD,md),		/* 17: memory disk driver */
 	bdev_disk_init(NRAID,raid),	/* 18: RAIDframe disk driver */
-	bdev_disk_init(NLSU,lsu),	/* 19: logical storage unit */
+	bdev_disk_init(NLD,ld),		/* 19: logical disk */
 };
 int	nblkdev = sizeof(bdevsw) / sizeof(bdevsw[0]);
 
@@ -200,7 +200,7 @@ cdev_decl(music);
 cdev_decl(svr4_net);
 cdev_decl(ccd);
 cdev_decl(raid);
-cdev_decl(lsu);
+cdev_decl(ld);
 #include "joy.h"
 cdev_decl(joy);
 #include "apm.h"
@@ -298,6 +298,8 @@ cdev_decl(i4btel);
 
 #include "vmegeneric.h"
 cdev_decl(vmegeneric);
+#include "iop.h"
+cdev_decl(iop);
 
 struct cdevsw	cdevsw[] =
 {
@@ -386,13 +388,14 @@ struct cdevsw	cdevsw[] =
 	cdev_tty_init(NUCOM, ucom),	/* 66: USB tty */
 	cdev_sysmon_init(NSYSMON, sysmon),/* 67: System Monitor */
 	cdev_vmegen_init(NVMEGENERIC, vmegeneric), /* 68: generic VME access */
-	cdev_disk_init(NLSU, lsu),	/* 69: logical storage unit */
+	cdev_disk_init(NLD, ld),	/* 69: logical disk */
 	cdev_usbdev_init(NURIO,urio),	/* 70: Diamond Rio 500 */
 	cdev_bktr_init(NBKTR, bktr),    /* 71: Bt848 video capture device */
 	cdev_notdef(),			/* 72 */
 	cdev_tty_init(NCZ,cztty),	/* 73: Cyclades-Z serial port */
 	cdev_ses_init(NSES,ses),	/* 74: SCSI SES/SAF-TE */
 	cdev_ugen_init(NUSCANNER,uscanner),/* 75: USB scanner */
+	cdev__oci_init(NIOP,iop),	/* 76: I2O IOP control interface */
 };
 int	nchrdev = sizeof(cdevsw) / sizeof(cdevsw[0]);
 
@@ -510,6 +513,7 @@ static int chrtoblktbl[] = {
 	/* 73 */	NODEV,
 	/* 74 */	NODEV,
 	/* 75 */	NODEV,
+	/* 76 */	NODEV
 };
 
 /*

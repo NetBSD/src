@@ -1,15 +1,15 @@
-#	$NetBSD: Makefile.arc,v 1.39.4.2 2000/11/20 20:00:24 bouyer Exp $
+#	$NetBSD: Makefile.mips,v 1.8.2.2 2000/12/08 09:28:20 bouyer Exp $
 
 # Makefile for NetBSD
 #
 # This makefile is constructed from a machine description:
 #	config machineid
 # Most changes should be made in the machine description
-#	/sys/arch/arc/conf/``machineid''
+#	/sys/arch/<machine>/conf/``machineid''
 # after which you should do
 #	config machineid
 # Machine generic makefile changes should be made in
-#	/sys/arch/arc/conf/Makefile.arc
+#	/sys/arch/mips/conf/Makefile.mips
 # after which config should be rerun for all machines of that type.
 #
 # N.B.: NO DEPENDENCIES ON FOLLOWING FLAGS ARE VISIBLE TO MAKEFILE
@@ -21,52 +21,63 @@
 # DEBUG is set to -g if debugging.
 # PROF is set to -pg if profiling.
 
-AR?=	ar
-AS?=	as
-CC?=	cc
-CPP?=	cpp
-LD?=	ld
-LORDER?=lorder
-MKDEP?=	mkdep
-NM?=	nm
-RANLIB?=ranlib
-STRIP?=	strip
-SIZE?=	size
-OBJCOPY?=objcopy
-ELF2ECOFF?=${OBJCOPY} -O ecoff-littlemips
-TOUCH?=	touch -f -c
-TSORT?=	tsort -q
+AR?=		${CROSSDIR}ar
+AS?=		${CROSSDIR}as
+CC?=		${CROSSDIR}cc
+CPP?=		${CROSSDIR}cpp
+LD?=		${CROSSDIR}ld
+LORDER?=	${CROSSDIR}lorder
+MKDEP?=		${CROSSDIR}mkdep
+NM?=		${CROSSDIR}nm
+RANLIB?=	${CROSSDIR}ranlib
+SIZE?=		${CROSSDIR}size
+STRIP?=		${CROSSDIR}strip
+TSORT?=		${CROSSDIR}tsort -q
 
-COPTS?= 	-O2 # -mmemcpy # XXX: - profile this
+COPTS?=		-O2
 
-TEXTADDR?=	80200000
+DEFGP?=		-G 0
+TEXTADDR?=	${DEFTEXTADDR}
 
 # source tree is located via $S relative to the compilation directory
 .ifndef S
-#S!=	cd ../../../..; pwd
 S=	../../../..
 .endif
-ARC=	$S/arch/arc
-MIPS=	$S/arch/mips
+THISMIPS=	$S/arch/${TARGET_MACHINE}
+MIPS=		$S/arch/mips
 
-HAVE_EGCS!=	${CC} --version | egrep "^(2\.[89]|egcs)" ; echo 
+HAVE_EGCS!=	${CC} --version | egrep "^(2\.[89]|egcs)" ; echo
 INCLUDES=	-I. -I$S/arch -I$S -nostdinc
-CPPFLAGS=	${INCLUDES} ${IDENT} ${PARAM} -D_KERNEL -Darc
-CWARNFLAGS?=	-Werror -Wall -Wmissing-prototypes -Wstrict-prototypes \
+CPPFLAGS=	${INCLUDES} ${IDENT} ${PARAM} -D_KERNEL -D${TARGET_MACHINE}
+CWARNFLAGS?=	-Wall -Werror -Wstrict-prototypes -Wmissing-prototypes \
 		-Wpointer-arith
 # XXX Delete -Wuninitialized for now, since the compiler doesn't
-# XXX always get it right.  --thorpej 
+# XXX always get it right.  --thorpej
 CWARNFLAGS+=	-Wno-uninitialized
 .if (${HAVE_EGCS} != "")
 CWARNFLAGS+=	-Wno-main
 .endif
-GP?=		-G 0 # -G 30 # XXX: check this
+GP?=		${DEFGP}
 CFLAGS=		${DEBUG} ${COPTS} ${CWARNFLAGS} ${GP} \
-		-mips2 -mcpu=r4000 -mno-abicalls -mno-half-pic
-AFLAGS=		-x assembler-with-cpp -traditional-cpp -mips2 -D_LOCORE
-LINKFLAGS=	-T${MIPS}/conf/kern.ldscript.le -Ttext ${TEXTADDR} \
-		-e start ${GP}
+		-mno-abicalls -mno-half-pic
+AFLAGS=		-x assembler-with-cpp -traditional-cpp -D_LOCORE
+LINKFLAGS+=	-Ttext ${TEXTADDR} -e start ${GP}
+.if (${ENDIAN} == "-EB")
+LINKFLAGS+=	-T ${MIPS}/conf/kern.ldscript.be
+CFLAGS+=	-EB
+AFLAGS+=	-EB
+LD+=		-EB
+.else
+LINKFLAGS+=	-T ${MIPS}/conf/kern.ldscript.le
+CFLAGS+=	-EL
+AFLAGS+=	-EL
+LD+=		-EL
+.endif
 STRIPFLAGS=	-g -X -x
+
+.if exists(${THISMIPS}/conf/Makefile.${TARGET_MACHINE}.inc)
+.include "${THISMIPS}/conf/Makefile.${TARGET_MACHINE}.inc"
+.endif
 
 %INCLUDES
 
@@ -104,37 +115,50 @@ NORMAL_S=	${CC} ${AFLAGS} ${CPPFLAGS} -c $<
 #	${SYSTEM_LD_HEAD}
 #	${SYSTEM_LD} swapxxx.o
 #	${SYSTEM_LD_TAIL}
-SYSTEM_OBJ=	locore.o fp.o locore_machdep.o \
-		param.o ioconf.o ${OBJS} ${LIBCOMPAT} ${LIBKERN}
+SYSTEM_OBJ=	locore.o locore_machdep.o
+.if !empty(IDENT:M-DMIPS1)
+SYSTEM_OBJ+=	locore_mips1.o
+.endif
 .if !empty(IDENT:M-DMIPS3)
 SYSTEM_OBJ+=	locore_mips3.o
 .endif
+.if empty(IDENT:M-DNOFPU)
+SYSTEM_OBJ+=	fp.o
+.endif
+SYSTEM_OBJ+=	param.o ioconf.o ${OBJS} ${LIBKERN} ${LIBCOMPAT}
 SYSTEM_DEP=	Makefile ${SYSTEM_OBJ}
-SYSTEM_LD_HEAD=	@rm -f $@
-SYSTEM_LD=	@echo ${LD} ${LINKFLAGS} -o $@ '$${SYSTEM_OBJ}' vers.o ; \
+SYSTEM_LD_HEAD?=@rm -f $@
+SYSTEM_LD?=	@echo ${LD} ${LINKFLAGS} -o $@ '$${SYSTEM_OBJ}' vers.o ; \
 		${LD} ${LINKFLAGS} -o $@ ${SYSTEM_OBJ} vers.o
-SYSTEM_LD_TAIL=	@${SIZE} $@; chmod 755 $@
+SYSTEM_LD_TAIL?= \
+		@${SIZE} $@; chmod 755 $@
 
 DEBUG?=
 .if ${DEBUG} == "-g"
 LINKFLAGS+=	-X
+.ifdef DEBUG_SYSTEM_LD_TAIL
+SYSTEM_LD_TAIL+=${DEBUG_SYSTEM_LD_TAIL}
+.else
 SYSTEM_LD_TAIL+=; \
 		echo mv -f $@ $@.gdb; mv -f $@ $@.gdb; \
 		echo ${STRIP} ${STRIPFLAGS} -o $@ $@.gdb; \
 		${STRIP} ${STRIPFLAGS} -o $@ $@.gdb
+.endif
 .else
 LINKFLAGS+=	-x
 .endif
 
-SYSTEM_LD_TAIL+=;\
-		${ELF2ECOFF} $@ $@.ecoff
+.ifdef POST_STRIP_SYSTEM_LD_TAIL
+SYSTEM_LD_TAIL+=${POST_STRIP_SYSTEM_LD_TAIL}
+.endif
 
 %LOAD
 
 assym.h: $S/kern/genassym.sh ${MIPS}/mips/genassym.cf
 	sh $S/kern/genassym.sh ${CC} ${CFLAGS} ${CPPFLAGS} ${PROF} \
-	    < ${MIPS}/mips/genassym.cf > assym.h.tmp && \
+	  < ${MIPS}/mips/genassym.cf > assym.h.tmp && \
 	mv -f assym.h.tmp assym.h
+
 
 param.c: $S/conf/param.c
 	rm -f param.c
@@ -152,8 +176,8 @@ newvers: ${SYSTEM_DEP} ${SYSTEM_SWAP_DEP}
 
 __CLEANKERNEL: .USE
 	@echo "${.TARGET}ing the kernel objects"
-	rm -f eddep *netbsd netbsd.gdb netbsd.ecoff netbsd.elf \
-	    tags *.[io] [a-z]*.s [Ee]rrs linterrs makelinks assym.h.tmp assym.h
+	rm -f eddep *netbsd netbsd.ecoff netbsd.gdb tags *.[io] \
+	  [a-z]*.s [Ee]rrs linterrs makelinks assym.h.tmp assym.h
 
 __CLEANDEPEND: .USE
 	rm -f .depend
@@ -164,9 +188,9 @@ cleandir distclean: __CLEANKERNEL __CLEANDEPEND
 
 lint:
 	@lint -hbxncez -Dvolatile= ${CPPFLAGS} -UKGDB \
-	    ${ARC}/arc/Locore.c ${CFILES} \
-	    ioconf.c param.c | \
-	    grep -v 'static function .* unused'
+	  ${MIPS}/mips/Locore.c ${CFILES} \
+	  ioconf.c param.c | \
+	  grep -v 'static function .* unused'
 
 tags:
 	@echo "see $S/kern/Makefile for tags"
@@ -179,18 +203,38 @@ links:
 	  sed 's,../.*/\(.*.o\),rm -f \1; ln -s ../GENERIC/\1 \1,' > makelinks
 	sh makelinks && rm -f dontlink
 
-SRCS=	${MIPS}/mips/locore.S ${MIPS}/mips/fp.S \
-	${ARC}/arc/locore_machdep.S \
+SRCS=	${MIPS}/mips/locore.S \
+	${THISMIPS}/${TARGET_MACHINE}/locore_machdep.S \
 	param.c ioconf.c ${CFILES} ${SFILES}
+.if !empty(IDENT:M-DMIPS1)
+SRCS+=	${MIPS}/mips/locore_mips1.S
+.endif
+.if !empty(IDENT:M-DMIPS3)
+SRCS+=	${MIPS}/mips/locore_mips3.S
+.endif
+.if empty(IDENT:M-DNOFPU)
+SRCS+=	${MIPS}/mips/fp.S
+.endif
+
 depend: .depend
 .depend: ${SRCS} assym.h param.c
-	${MKDEP} ${AFLAGS} ${CPPFLAGS} ${MIPS}/mips/locore.S ${MIPS}/mips/fp.S
-	${MKDEP} -a ${AFLAGS} ${CPPFLAGS} ${ARC}/arc/locore_machdep.S 
+	${MKDEP} ${AFLAGS} ${CPPFLAGS} ${MIPS}/mips/locore.S
+.if !empty(IDENT:M-DMIPS1)
+	${MKDEP} -a ${AFLAGS} ${CPPFLAGS} ${MIPS}/mips/locore_mips1.S
+.endif
+.if !empty(IDENT:M-DMIPS3)
+	${MKDEP} -a ${AFLAGS} ${CPPFLAGS} ${MIPS}/mips/locore_mips3.S
+.endif
+.if empty(IDENT:M-DNOFPU)
+	${MKDEP} -a ${AFLAGS} ${CPPFLAGS} ${MIPS}/mips/fp.S
+.endif
+	${MKDEP} -a ${AFLAGS} ${CPPFLAGS} ${THISMIPS}/${TARGET_MACHINE}/locore_machdep.S
 	${MKDEP} -a ${CFLAGS} ${CPPFLAGS} param.c ioconf.c ${CFILES}
-	[ "${SFILES}" = "" ] || \
+.if (${SFILES} != "")
 	${MKDEP} -a ${AFLAGS} ${CPPFLAGS} ${SFILES}
+.endif
 	sh $S/kern/genassym.sh ${MKDEP} -f assym.dep ${CFLAGS} \
-	  ${CPPFLAGS} ${PROF} < ${MIPS}/mips/genassym.cf
+	  ${CPPFLAGS} < ${MIPS}/mips/genassym.cf
 	@sed -e 's/.*\.o:.*\.c/assym.h:/' < assym.dep >> .depend
 	@rm -f assym.dep
 
@@ -224,7 +268,7 @@ locore_mips3.o: ${MIPS}/mips/locore_mips3.S assym.h
 fp.o: ${MIPS}/mips/fp.S assym.h
 	${NORMAL_S}
 
-locore_machdep.o: ${ARC}/arc/locore_machdep.S assym.h
+locore_machdep.o: ${THISMIPS}/${TARGET_MACHINE}/locore_machdep.S assym.h
 	${NORMAL_S}
 
 # The install target can be redefined by putting a

@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_anon.c,v 1.4.2.1 2000/11/20 18:11:57 bouyer Exp $	*/
+/*	$NetBSD: uvm_anon.c,v 1.4.2.2 2000/12/08 09:20:50 bouyer Exp $	*/
 
 /*
  *
@@ -213,19 +213,12 @@ uvm_anfree(anon)
 		 */
 
 		if (pg->uobject) {
-
-			/* kill loan */
 			uvm_lock_pageq();
-#ifdef DIAGNOSTIC
-			if (pg->loan_count < 1)
-				panic("uvm_anfree: obj owned page "
-				      "with no loan count");
-#endif
+			KASSERT(pg->loan_count > 0);
 			pg->loan_count--;
 			pg->uanon = NULL;
 			uvm_unlock_pageq();
 			simple_unlock(&pg->uobject->vmobjlock);
-
 		} else {
 
 			/*
@@ -245,13 +238,11 @@ uvm_anfree(anon)
 				    anon, pg, 0, 0);
 				return;
 			} 
-
 			pmap_page_protect(pg, VM_PROT_NONE);
 			uvm_lock_pageq();	/* lock out pagedaemon */
 			uvm_pagefree(pg);	/* bye bye */
 			uvm_unlock_pageq();	/* free the daemon */
-
-			UVMHIST_LOG(maphist,"  anon 0x%x, page 0x%x: freed now!", 
+			UVMHIST_LOG(maphist,"anon 0x%x, page 0x%x: freed now!",
 			    anon, pg, 0, 0);
 		}
 	}
@@ -363,12 +354,14 @@ uvm_anon_lockloanpg(anon)
 
 			if (!locked) {
 				simple_unlock(&anon->an_lock);
+
 				/*
 				 * someone locking the object has a chance to
 				 * lock us right now
 				 */
+
 				simple_lock(&anon->an_lock);
-				continue;		/* start over */
+				continue;
 			}
 		}
 
@@ -387,13 +380,9 @@ uvm_anon_lockloanpg(anon)
 		/*
 		 * we did it!   break the loop
 		 */
+
 		break;
 	}
-
-	/*
-	 * done!
-	 */
-
 	return(pg);
 }
 
@@ -478,7 +467,6 @@ anon_pagein(anon)
 	struct vm_page *pg;
 	struct uvm_object *uobj;
 	int rv;
-	UVMHIST_FUNC("anon_pagein"); UVMHIST_CALLED(pdhist);
 
 	/* locked: anon */
 	rv = uvmfault_anonget(NULL, NULL, anon);

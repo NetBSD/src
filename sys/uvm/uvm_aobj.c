@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_aobj.c,v 1.26.2.2 2000/11/22 16:06:55 bouyer Exp $	*/
+/*	$NetBSD: uvm_aobj.c,v 1.26.2.3 2000/12/08 09:20:51 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1998 Chuck Silvers, Charles D. Cranor and
@@ -50,6 +50,7 @@
 #include <sys/systm.h>
 #include <sys/proc.h>
 #include <sys/malloc.h>
+#include <sys/kernel.h>
 #include <sys/pool.h>
 #include <sys/kernel.h>
 
@@ -183,8 +184,6 @@ static boolean_t		 uao_releasepg __P((struct vm_page *,
 static boolean_t		 uao_pagein __P((struct uvm_aobj *, int, int));
 static boolean_t		 uao_pagein_page __P((struct uvm_aobj *, int));
 
-
-
 /*
  * aobj_pager
  * 
@@ -198,11 +197,9 @@ struct uvm_pagerops aobj_pager = {
 	NULL,			/* fault */
 	uao_flush,		/* flush */
 	uao_get,		/* get */
-	NULL,			/* asyncget */
 	NULL,			/* put (done by pagedaemon) */
 	NULL,			/* cluster */
 	NULL,			/* mk_pcluster */
-	NULL,			/* aiodone */
 	uao_releasepg		/* releasepg */
 };
 
@@ -245,7 +242,7 @@ uao_find_swhash_elt(aobj, pageidx, create)
 	/*
 	 * now search the bucket for the requested tag
 	 */
-	for (elt = swhash->lh_first; elt != NULL; elt = elt->list.le_next) {
+	LIST_FOREACH(elt, swhash, list) {
 		if (elt->tag == page_tag)
 			return(elt);
 	}
@@ -377,7 +374,6 @@ uao_set_swslot(uobj, pageidx, slot)
 				pool_put(&uao_swhash_elt_pool, elt);
 			}
 		}
-
 	} else { 
 		/* we are using an array */
 		oldslot = aobj->u_swslots[pageidx];
@@ -420,17 +416,18 @@ uao_free(aobj)
 				for (j = 0; j < UAO_SWHASH_CLUSTER_SIZE; j++) {
 					int slot = elt->slots[j];
 
-					if (slot) {
-						uvm_swap_free(slot, 1);
-
-						/*
-						 * this page is no longer
-						 * only in swap.
-						 */
-						simple_lock(&uvm.swap_data_lock);
-						uvmexp.swpgonly--;
-						simple_unlock(&uvm.swap_data_lock);
+					if (slot == 0) {
+						continue;
 					}
+					uvm_swap_free(slot, 1);
+
+					/*
+					 * this page is no longer
+					 * only in swap.
+					 */
+					simple_lock(&uvm.swap_data_lock);
+					uvmexp.swpgonly--;
+					simple_unlock(&uvm.swap_data_lock);
 				}
 
 				next = LIST_NEXT(elt, list);
@@ -854,7 +851,7 @@ uao_flush(uobj, start, stop, flags)
 	for ( ; (by_list && pp != NULL) ||
 	    (!by_list && curoff < stop) ; pp = ppnext) {
 		if (by_list) {
-			ppnext = pp->listq.tqe_next;
+			ppnext = TAILQ_NEXT(pp, listq);
 
 			/* range check */
 			if (pp->offset < start || pp->offset >= stop)
@@ -974,7 +971,7 @@ uao_get(uobj, offset, pps, npagesp, centeridx, access_type, advice, flags)
 
 	UVMHIST_LOG(pdhist, "aobj=%p offset=%d, flags=%d",
 		    aobj, offset, flags,0);
-	
+
 	/*
  	 * get number of pages
  	 */
@@ -1253,7 +1250,7 @@ uao_get(uobj, offset, pps, npagesp, centeridx, access_type, advice, flags)
  * => returns TRUE if page's object is still alive, FALSE if we
  *      killed the page's object.    if we return TRUE, then we
  *      return with the object locked.
- * => if (nextpgp != NULL) => we return pageq.tqe_next here, and return
+ * => if (nextpgp != NULL) => we return the next page on the queue, and return
  *                              with the page queues locked [for pagedaemon]
  * => if (nextpgp == NULL) => we return with page queues unlocked [normal case]
  * => we kill the aobj if it is not referenced and we are suppose to
@@ -1278,7 +1275,7 @@ uao_releasepg(pg, nextpgp)
 	uao_dropswap(&aobj->u_obj, pg->offset >> PAGE_SHIFT);
 	uvm_lock_pageq();
 	if (nextpgp)
-		*nextpgp = pg->pageq.tqe_next;	/* next page for daemon */
+		*nextpgp = TAILQ_NEXT(pg, pageq); /* next page for daemon */
 	uvm_pagefree(pg);
 	if (!nextpgp)
 		uvm_unlock_pageq();		/* keep locked for daemon */
@@ -1288,11 +1285,7 @@ uao_releasepg(pg, nextpgp)
  	 */
 	if ((aobj->u_flags & UAO_FLAG_KILLME) == 0)
 		return TRUE;
-
-#ifdef DIAGNOSTIC
-	if (aobj->u_obj.uo_refs)
-		panic("uvm_km_releasepg: kill flag set on referenced object!");
-#endif
+	KASSERT(aobj->u_obj.uo_refs == 0);
 
 	/*
  	 * if there are still pages in the object, we're done for now.
@@ -1496,7 +1489,6 @@ uao_pagein_page(aobj, pageidx)
 {
 	struct vm_page *pg;
 	int rv, slot, npages;
-	UVMHIST_FUNC("uao_pagein_page");  UVMHIST_CALLED(pdhist);
 
 	pg = NULL;
 	npages = 1;
