@@ -1,4 +1,4 @@
-/*	$NetBSD: nlist_ecoff.c,v 1.2 1996/10/03 23:05:27 cgd Exp $	*/
+/*	$NetBSD: nlist_ecoff.c,v 1.3 1996/10/03 23:14:23 cgd Exp $	*/
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All rights reserved.
@@ -31,7 +31,7 @@
  */
 
 #ifndef lint
-static char *rcsid = "$NetBSD: nlist_ecoff.c,v 1.2 1996/10/03 23:05:27 cgd Exp $";
+static char *rcsid = "$NetBSD: nlist_ecoff.c,v 1.3 1996/10/03 23:14:23 cgd Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -225,11 +225,11 @@ create_knlist_ecoff(name, db)
 			/* Find the version string, relative to start */
 			vma = nbuf.n_value;
 			if (exechdrp->a.text_start <= vma &&
-		            vma <= (exechdrp->a.text_start + exechdrp->a.tsize))
+		            vma < (exechdrp->a.text_start + exechdrp->a.tsize))
                 		vma = vma - exechdrp->a.text_start +
 				    ECOFF_TXTOFF(exechdrp);
 			else if (exechdrp->a.data_start <= vma &&
-			    vma <= (exechdrp->a.data_start + exechdrp->a.dsize))
+			    vma < (exechdrp->a.data_start + exechdrp->a.dsize))
 				vma = vma - exechdrp->a.data_start +
 				    ECOFF_DATOFF(exechdrp);
 			else {
