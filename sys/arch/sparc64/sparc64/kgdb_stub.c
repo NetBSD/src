@@ -1,4 +1,4 @@
-/*	$NetBSD: kgdb_stub.c,v 1.7 2001/11/20 08:43:36 lukem Exp $ */
+/*	$NetBSD: kgdb_stub.c,v 1.8 2002/08/23 02:46:37 thorpej Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -662,7 +662,7 @@ kdb_mkwrite(addr, len)
 	register caddr_t addr;
 	register int len;
 {
-	if (CPU_ISSUN4OR4C && kernel_map != NULL) {
+	if (CPU_ISSUN4 || CPU_ISSUN4C && kernel_map != NULL) {
 		chgkprot(addr, len, B_WRITE);
 		return;
 	}
