@@ -1,4 +1,4 @@
-/*	$NetBSD: tcvar.h,v 1.9 1997/09/01 08:09:28 jonathan Exp $	*/
+/*	$NetBSD: tcvar.h,v 1.10 1998/01/12 09:51:34 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
@@ -162,11 +162,5 @@ void	tc_intr_disestablish __P((struct device *, void *));
  */
 #define	TC_SPEED_12_5_MHZ	0		/* 12.5MHz TC bus */
 #define	TC_SPEED_25_MHZ		1		/* 25MHz TC bus */
-
-/*
- * The TurboChannel bus cfdriver, so that subdevices can more
- * easily tell what bus they're on.
- */
-extern struct cfdriver tc_cd;
 
 #endif /* __DEV_TC_TCVAR_H__ */
