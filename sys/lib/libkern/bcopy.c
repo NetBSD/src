@@ -1,4 +1,4 @@
-/*	$NetBSD: bcopy.c,v 1.1 1998/02/22 06:55:42 mycroft Exp $	*/
+/*	$NetBSD: bcopy.c,v 1.2 1998/02/22 09:13:16 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -41,11 +41,15 @@
 #if 0
 static char sccsid[] = "@(#)bcopy.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: bcopy.c,v 1.1 1998/02/22 06:55:42 mycroft Exp $");
+__RCSID("$NetBSD: bcopy.c,v 1.2 1998/02/22 09:13:16 mycroft Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
+#ifndef _KERNEL
 #include <string.h>
+#else
+#include <lib/libkern/libkern.h>
+#endif
 
 /*
  * sizeof(word) MUST BE A POWER OF TWO
