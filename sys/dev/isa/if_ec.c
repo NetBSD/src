@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ec.c,v 1.7 1998/06/25 19:21:03 thorpej Exp $	*/
+/*	$NetBSD: if_ec.c,v 1.8 1998/07/05 00:51:20 jonathan Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -54,6 +54,7 @@
  * Device driver for the 3Com Etherlink II (3c503).
  */
 
+#include "opt_inet.h"
 #include "bpfilter.h"
 #include "rnd.h" 
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_de.c,v 1.30 1998/04/13 12:19:23 ragge Exp $	*/
+/*	$NetBSD: if_de.c,v 1.31 1998/07/05 00:51:15 jonathan Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989 Regents of the University of California.
@@ -44,6 +44,8 @@
  * TODO:
  *	timeout routine (get statistics)
  */
+
+#include "opt_inet.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_le.c,v 1.1 1998/02/18 13:48:09 tsubai Exp $	*/
+/*	$NetBSD: if_le.c,v 1.2 1998/07/05 00:51:12 jonathan Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -36,6 +36,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
+#include "opt_inet.h"
 #include "bpfilter.h"
 
 #include <sys/param.h>

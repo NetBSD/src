@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ed.c,v 1.27 1998/01/12 10:39:49 thorpej Exp $	*/
+/*	$NetBSD: if_ed.c,v 1.28 1998/07/05 00:51:06 jonathan Exp $	*/
 
 /*
  * Device driver for National Semiconductor DS8390/WD83C690 based ethernet
@@ -15,6 +15,7 @@
  * Currently supports the Hydra Systems ethernet card.
  */
 
+#include "opt_inet.h"
 #include "bpfilter.h"
 
 #include <sys/param.h>

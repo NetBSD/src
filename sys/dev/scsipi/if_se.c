@@ -1,4 +1,4 @@
-/*	$NetBSD: if_se.c,v 1.13 1998/01/12 09:49:14 thorpej Exp $	*/
+/*	$NetBSD: if_se.c,v 1.14 1998/07/05 00:51:25 jonathan Exp $	*/
 
 /*
  * Copyright (c) 1997 Ian W. Dall <ian.dall@dsto.defence.gov.au>
@@ -58,6 +58,8 @@
  * Normal operation does not require any special userland program.
  */
 
+#include "opt_inet.h"
+#include "opt_atalk.h"
 #include "bpfilter.h"
 
 #include <sys/types.h>

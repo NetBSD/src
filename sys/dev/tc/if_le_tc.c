@@ -1,4 +1,4 @@
-/*	$NetBSD: if_le_tc.c,v 1.7 1997/07/22 03:44:31 jonathan Exp $	*/
+/*	$NetBSD: if_le_tc.c,v 1.8 1998/07/05 00:51:25 jonathan Exp $	*/
 
 /*
  * Copyright (c) 1996 Carnegie-Mellon University.
@@ -30,6 +30,7 @@
 /*
  * LANCE on TurboChannel.
  */
+#include "opt_inet.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>

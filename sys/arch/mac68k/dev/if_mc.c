@@ -1,4 +1,4 @@
-/*	$NetBSD: if_mc.c,v 1.6 1998/03/29 23:14:14 mycroft Exp $	*/
+/*	$NetBSD: if_mc.c,v 1.7 1998/07/05 00:51:09 jonathan Exp $	*/
 
 /*-
  * Copyright (c) 1997 David Huang <khym@bga.com>
@@ -33,6 +33,9 @@
  * Driver for the AMD Am79C940 (MACE) ethernet chip, used for onboard
  * ethernet on the Centris/Quadra 660av and Quadra 840av.
  */
+
+#include "opt_ddb.h"
+#include "opt_inet.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -81,6 +84,14 @@
 #include <machine/bus.h>
 #include <mac68k/dev/if_mcreg.h>
 #include <mac68k/dev/if_mcvar.h>
+
+#ifdef DDB
+#define	integrate
+#define hide
+#else
+#define	integrate	static __inline
+#define hide		static
+#endif
 
 hide void	mcwatchdog __P((struct ifnet *));
 hide int	mcinit __P((struct mc_softc *sc));

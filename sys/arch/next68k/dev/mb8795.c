@@ -1,4 +1,4 @@
-/*	$NetBSD: mb8795.c,v 1.1.1.1 1998/06/09 07:53:05 dbj Exp $	*/
+/*	$NetBSD: mb8795.c,v 1.2 1998/07/05 00:51:12 jonathan Exp $	*/
 /*
  * Copyright (c) 1998 Darrin B. Jewell
  * All rights reserved.
@@ -29,6 +29,7 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
+#include "opt_inet.h"
 #include "bpfilter.h"
 #include "rnd.h"
 

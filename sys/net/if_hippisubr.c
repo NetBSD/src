@@ -1,4 +1,4 @@
-/*	$NetBSD: if_hippisubr.c,v 1.1 1998/05/14 00:04:58 kml Exp $	*/
+/*	$NetBSD: if_hippisubr.c,v 1.2 1998/07/05 00:51:26 jonathan Exp $	*/
 
 /*
  * Copyright (c) 1982, 1989, 1993
@@ -32,6 +32,8 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  */
+
+#include "opt_inet.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>

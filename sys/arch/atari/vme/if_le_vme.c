@@ -1,4 +1,4 @@
-/*	$NetBSD: if_le_vme.c,v 1.4 1997/03/17 13:29:05 leo Exp $	*/
+/*	$NetBSD: if_le_vme.c,v 1.5 1998/07/05 00:51:08 jonathan Exp $	*/
 
 /*-
  * Copyright (c) 1997 Leo Weppelman.  All rights reserved.
@@ -40,6 +40,7 @@
  *	@(#)if_le.c	8.2 (Berkeley) 11/16/93
  */
 
+#include "opt_inet.h"
 #include "bpfilter.h"
 
 #include <sys/param.h>

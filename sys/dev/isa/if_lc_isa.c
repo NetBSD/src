@@ -1,4 +1,4 @@
-/*	$NetBSD: if_lc_isa.c,v 1.7 1998/06/09 07:25:03 thorpej Exp $ */
+/*	$NetBSD: if_lc_isa.c,v 1.8 1998/07/05 00:51:21 jonathan Exp $ */
 
 /*-
  * Copyright (c) 1994, 1995, 1997 Matt Thomas <matt@3am-software.com>
@@ -32,6 +32,7 @@
  *   This driver supports the LEMAC (DE203, DE204, and DE205) cards.
  */
 
+#include "opt_inet.h"
 #include "bpfilter.h"
 
 #include <sys/param.h>

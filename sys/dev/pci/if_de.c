@@ -1,4 +1,4 @@
-/*	$NetBSD: if_de.c,v 1.70 1998/06/21 10:32:46 matt Exp $	*/
+/*	$NetBSD: if_de.c,v 1.71 1998/07/05 00:51:23 jonathan Exp $	*/
 
 /*-
  * Copyright (c) 1994-1997 Matt Thomas (matt@3am-software.com)
@@ -37,6 +37,10 @@
  *   board which support 21040, 21041, or 21140 (mostly).
  */
 #define	TULIP_HDR_DATA
+
+#ifdef __NetBSD__
+#include "opt_inet.h"
+#endif
 
 #include <sys/param.h>
 #include <sys/systm.h>

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ep_eisa.c,v 1.15 1998/06/08 07:04:46 thorpej Exp $	*/
+/*	$NetBSD: if_ep_eisa.c,v 1.16 1998/07/05 00:51:17 jonathan Exp $	*/
 
 /*
  * Copyright (c) 1997 Jonathan Stone <jonathan@NetBSD.org>
@@ -31,6 +31,7 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
+#include "opt_inet.h"
 #include "bpfilter.h"
 
 #include <sys/param.h>

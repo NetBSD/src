@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.c,v 1.6 1998/06/04 17:45:50 mark Exp $	*/
+/*	$NetBSD: intr.c,v 1.7 1998/07/05 00:51:07 jonathan Exp $	*/
 
 /*
  * Copyright (c) 1994-1996 Mark Brinicombe.
@@ -36,6 +36,9 @@
  */
 
 #include "opt_uvm.h"
+#include "opt_inet.h"
+#include "opt_atalk.h"
+
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/syslog.h>

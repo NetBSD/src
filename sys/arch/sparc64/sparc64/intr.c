@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.c,v 1.1.1.1 1998/06/20 04:58:52 eeh Exp $ */
+/*	$NetBSD: intr.c,v 1.2 1998/07/05 00:51:14 jonathan Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -44,6 +44,7 @@
  *	@(#)intr.c	8.3 (Berkeley) 11/11/93
  */
 
+#include "opt_inet.h"
 #include "ppp.h"
 
 #include <sys/param.h>

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_qn.c,v 1.14 1998/04/17 17:38:14 veego Exp $	*/
+/*	$NetBSD: if_qn.c,v 1.15 1998/07/05 00:51:06 jonathan Exp $	*/
 
 /*
  * Copyright (c) 1995 Mika Kortelainen
@@ -78,6 +78,8 @@
  * Fujitsu MB86950 Ethernet Controller (as used in the QuickNet QN2000
  * Ethernet card)
  */
+
+#include "opt_inet.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_le_isapnp.c,v 1.11 1998/06/25 19:18:06 thorpej Exp $	*/
+/*	$NetBSD: if_le_isapnp.c,v 1.12 1998/07/05 00:51:22 jonathan Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -67,6 +67,7 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
+#include "opt_inet.h"
 #include "bpfilter.h" 
  
 #include <sys/param.h>

@@ -1,4 +1,4 @@
-/*	$NetBSD: mb86960.c,v 1.24 1998/03/29 22:36:42 mycroft Exp $	*/
+/*	$NetBSD: mb86960.c,v 1.25 1998/07/05 00:51:19 jonathan Exp $	*/
 
 /*
  * All Rights Reserved, Copyright (C) Fujitsu Limited 1995
@@ -46,6 +46,7 @@
  * they are useful.
  */
 
+#include "opt_inet.h"
 #include "bpfilter.h"
 #include "rnd.h"
 

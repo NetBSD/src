@@ -1,4 +1,4 @@
-/*	$NetBSD: pdq_ifsubr.c,v 1.16 1998/05/27 01:17:53 matt Exp $	*/
+/*	$NetBSD: pdq_ifsubr.c,v 1.17 1998/07/05 00:51:19 jonathan Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1996 Matt Thomas <matt@3am-software.com>
@@ -34,6 +34,9 @@
  *	(ie. it provides an ifnet interface to the rest of the system)
  */
 
+#ifdef __NetBSD__
+#include "opt_inet.h"
+#endif
 
 #include <sys/param.h>
 #include <sys/kernel.h>

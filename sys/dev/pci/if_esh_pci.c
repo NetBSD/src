@@ -1,4 +1,4 @@
-/*	$NetBSD: if_esh_pci.c,v 1.3 1998/06/08 06:55:55 thorpej Exp $	*/
+/*	$NetBSD: if_esh_pci.c,v 1.4 1998/07/05 00:51:23 jonathan Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 
-
+#include "opt_inet.h"
 #include "bpfilter.h" 
  
 #include <sys/param.h>

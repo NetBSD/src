@@ -1,4 +1,4 @@
-/*	$NetBSD: if_tun.c,v 1.32 1997/09/25 13:11:58 matt Exp $	*/
+/*	$NetBSD: if_tun.c,v 1.33 1998/07/05 00:51:27 jonathan Exp $	*/
 
 /*
  * Copyright (c) 1988, Julian Onions <jpo@cs.nott.ac.uk>
@@ -16,6 +16,8 @@
 
 #include "tun.h"
 #if NTUN > 0
+
+#include "opt_inet.h"
 
 #include <sys/param.h>
 #include <sys/proc.h>

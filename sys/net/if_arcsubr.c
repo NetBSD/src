@@ -1,4 +1,4 @@
-/*	$NetBSD: if_arcsubr.c,v 1.16 1997/10/02 19:41:58 is Exp $	*/
+/*	$NetBSD: if_arcsubr.c,v 1.17 1998/07/05 00:51:26 jonathan Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Ignatios Souvatzis
@@ -37,6 +37,7 @@
  *       @(#)if_ethersubr.c	8.1 (Berkeley) 6/10/93
  *
  */
+#include "opt_inet.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>

@@ -1,4 +1,4 @@
-/*	$NetBSD: smc90cx6.c,v 1.23 1998/01/12 09:23:34 thorpej Exp $ */
+/*	$NetBSD: smc90cx6.c,v 1.24 1998/07/05 00:51:20 jonathan Exp $ */
 
 /*
  * Copyright (c) 1994, 1995 Ignatios Souvatzis
@@ -47,6 +47,7 @@
 #undef BAHASMCOPY
 #endif
 
+#include "opt_inet.h"
 #include "bpfilter.h"
 
 #include <sys/param.h>

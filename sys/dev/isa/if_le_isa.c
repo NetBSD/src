@@ -1,4 +1,4 @@
-/*	$NetBSD: if_le_isa.c,v 1.20 1998/06/25 19:18:05 thorpej Exp $	*/
+/*	$NetBSD: if_le_isa.c,v 1.21 1998/07/05 00:51:21 jonathan Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -76,6 +76,7 @@
  *	@(#)if_le.c	8.2 (Berkeley) 11/16/93
  */
 
+#include "opt_inet.h"
 #include "bpfilter.h"
 
 #include <sys/param.h>

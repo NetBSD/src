@@ -1,4 +1,4 @@
-/*	$NetBSD: if_we.c,v 1.9 1998/06/25 19:21:03 thorpej Exp $	*/
+/*	$NetBSD: if_we.c,v 1.10 1998/07/05 00:51:22 jonathan Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -55,6 +55,7 @@
  * and the SMC Elite Ultra (8216).
  */
 
+#include "opt_inet.h"
 #include "bpfilter.h"
 #include "rnd.h" 
 

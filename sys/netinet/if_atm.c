@@ -1,4 +1,4 @@
-/*      $NetBSD: if_atm.c,v 1.7 1998/04/29 05:44:47 thorpej Exp $       */
+/*      $NetBSD: if_atm.c,v 1.8 1998/07/05 00:51:28 jonathan Exp $       */
 
 /*
  *
@@ -35,6 +35,8 @@
 /*
  * IP <=> ATM address resolution.
  */
+
+#include "opt_inet.h"
 
 #ifdef INET
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: tp_output.c,v 1.16 1998/03/01 02:24:46 fvdl Exp $	*/
+/*	$NetBSD: tp_output.c,v 1.17 1998/07/05 00:51:28 jonathan Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -64,6 +64,8 @@ SOFTWARE.
 /*
  * In here is tp_ctloutput(), the guy called by [sg]etsockopt(),
  */
+
+#include "opt_inet.h"
 
 #include <sys/param.h>
 #include <sys/mbuf.h>

@@ -1,4 +1,4 @@
-/*	$NetBSD: am7990.c,v 1.45 1998/07/04 22:18:49 jonathan Exp $	*/
+/*	$NetBSD: am7990.c,v 1.46 1998/07/05 00:51:18 jonathan Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -77,6 +77,7 @@
  */
 
 #include "opt_ddb.h"
+#include "opt_inet.h"
 #include "bpfilter.h"
 #include "rnd.h"
 

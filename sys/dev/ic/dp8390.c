@@ -1,4 +1,4 @@
-/*	$NetBSD: dp8390.c,v 1.11 1998/01/27 23:26:21 thorpej Exp $	*/
+/*	$NetBSD: dp8390.c,v 1.12 1998/07/05 00:51:18 jonathan Exp $	*/
 
 /*
  * Device driver for National Semiconductor DS8390/WD83C690 based ethernet
@@ -13,6 +13,7 @@
  * the author assume any responsibility for damages incurred with its use.
  */
 
+#include "opt_inet.h"
 #include "bpfilter.h"
 
 #include <sys/param.h>

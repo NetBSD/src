@@ -1,4 +1,4 @@
-/*	$NetBSD: if_sn_obio.c,v 1.16 1998/06/09 03:39:50 scottr Exp $	*/
+/*	$NetBSD: if_sn_obio.c,v 1.17 1998/07/05 00:51:10 jonathan Exp $	*/
 
 /*
  * Copyright (C) 1997 Allen Briggs
@@ -29,6 +29,8 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
+
+#include "opt_inet.h"
 
 #include <sys/param.h>
 #include <sys/device.h>

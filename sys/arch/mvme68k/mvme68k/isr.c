@@ -1,4 +1,4 @@
-/*	$NetBSD: isr.c,v 1.8 1998/02/21 19:03:26 scw Exp $	*/
+/*	$NetBSD: isr.c,v 1.9 1998/07/05 00:51:11 jonathan Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -40,6 +40,7 @@
  * Link and dispatch interrupts.
  */
 
+#include "opt_inet.h"
 #include "opt_uvm.h"
 
 #include <sys/param.h>

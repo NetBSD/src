@@ -1,4 +1,4 @@
-/*	$NetBSD: if_el.c,v 1.52 1998/06/09 07:25:01 thorpej Exp $	*/
+/*	$NetBSD: if_el.c,v 1.53 1998/07/05 00:51:21 jonathan Exp $	*/
 
 /*
  * Copyright (c) 1994, Matthew E. Kimmel.  Permission is hereby granted
@@ -18,6 +18,7 @@
  *	- Does not currently support multicasts
  */
 
+#include "opt_inet.h"
 #include "bpfilter.h"
 #include "rnd.h"
 
