@@ -1,4 +1,4 @@
-/*	$NetBSD: if_cs_isa.c,v 1.17 1998/07/21 01:04:34 thorpej Exp $	*/
+/*	$NetBSD: if_cs_isa.c,v 1.18 1998/07/21 01:17:14 thorpej Exp $	*/
 
 /*
  * Copyright 1997
@@ -78,7 +78,7 @@
 **     Added call to ledNetActive
 **
 **     Revision 1.20  1997/06/05 00:47:06  dettori
-**     Changed csProcessRxDMA to reset and re-initialise the
+**     Changed cs_process_rx_dma to reset and re-initialise the
 **     ethernet chip when DMA gets out of sync, or mbufs
 **     can't be allocated.
 **
@@ -120,7 +120,7 @@
 **     20-25% better than the driver had previously been getting).
 **
 **     Revision 1.13  1997/05/22  21:06:54  cgd
-**     redo csCopyTxFrame() from scratch.  It had a fatal flaw: it was blindly
+**     redo cs_copy_tx_frame() from scratch.  It had a fatal flaw: it was blindly
 **     casting from u_int8_t * to u_int16_t * without worrying about alignment
 **     issues.  This would cause bogus data to be spit out for mbufs with
 **     misaligned data.  For instance, it caused the following bits to appear
@@ -162,17 +162,17 @@
 **       the code, the latter name makes more sense.
 **
 **     Revision 1.10  1997/05/19  02:03:20  cgd
-**     Set RX_CTL in csSetLadrFilt(), rather than csInitChip().  csInitChip()
-**     is the only caller of csSetLadrFilt(), and always calls it, so this
-**     ends up being logically the same.  In csSetLadrFilt(), if IFF_PROMISC
+**     Set RX_CTL in cs_set_ladr_filt(), rather than cs_initChip().  cs_initChip()
+**     is the only caller of cs_set_ladr_filt(), and always calls it, so this
+**     ends up being logically the same.  In cs_set_ladr_filt(), if IFF_PROMISC
 **     is set, enable promiscuous mode (and set IFF_ALLMULTI), otherwise behave
 **     as before.
 **
 **     Revision 1.9  1997/05/19  01:45:37  cgd
-**     create a new function, csEtherInput(), which does received-packet
+**     create a new function, cs_ether_input(), which does received-packet
 **     BPF and ether_input processing.  This code used to be in three places,
 **     and centralizing it will make adding IFF_PROMISC support much easier.
-**     Also, in csCopyTxFrame(), put it some (currently disabled) code to
+**     Also, in cs_copy_tx_frame(), put it some (currently disabled) code to
 **     do copies with bus_space_write_region_2().  It's more correct, and
 **     potentially more efficient.  That function needs to be gutted (to
 **     deal properly with alignment issues, which it currently does wrong),
@@ -244,33 +244,31 @@
 /*
  * FUNCTION PROTOTYPES
  */
-int	csProbe __P((struct device *, struct cfdata *, void *));
-void	csAttach __P((struct device *, struct device *, void *));
-int	csGetUnspecifiedParms __P((struct cs_softc *sc));
-int	csValidateParms __P((struct cs_softc *sc));
-int	csGetEthernetAddr __P((struct cs_softc *sc));
-int	csReadEEPROM __P((struct cs_softc *sc, u_int16_t offset,
-	    u_int16_t *pValue));
-int	csResetChip __P((struct cs_softc *sc));
-void	csShow __P((struct cs_softc *sc, int Zap));
-int	csInit __P((struct cs_softc *sc));
-void	csReset __P((void *));
-int	csIoctl __P((struct ifnet *, u_long cmd, caddr_t data));
-void	csInitChip __P((struct cs_softc *sc));
-int	csIntr __P((void *arg));
-void	csBufferEvent __P((struct cs_softc *sc, u_int16_t BuffEvent));
-void	csTransmitEvent __P((struct cs_softc *sc, u_int16_t txEvent));
-void	csReceiveEvent __P((struct cs_softc *sc, u_int16_t rxEvent));
-void	csEtherInput __P((struct cs_softc *sc, struct mbuf *m));
-void	csProcessReceive __P((struct cs_softc *sc));
-void	csProcessRxEarly __P((struct cs_softc *sc));
-void	csProcessRxDMA __P((struct cs_softc *sc));
-void	csStartOutput __P((struct ifnet *ifp));
-void	csCopyTxFrame __P((struct cs_softc *sc, struct mbuf *pMbufChain));
-void	csSetLadrFilt __P((struct cs_softc *sc, struct ethercom *ec));
-u_int16_t csHashIndex __P((char *addr));
-void	csCounterEvent __P((struct cs_softc * sc, u_int16_t cntEvent));
-void	csPrintRxErrors __P((struct cs_softc *sc, u_int16_t rxEvent));
+int	cs_probe __P((struct device *, struct cfdata *, void *));
+void	cs_attach __P((struct device *, struct device *, void *));
+int	cs_get_params __P((struct cs_softc *));
+int	cs_validate_params __P((struct cs_softc *));
+int	cs_get_enaddr __P((struct cs_softc *));
+int	cs_read_eeprom __P((struct cs_softc *, u_int16_t, u_int16_t *));
+int	cs_reset_chip __P((struct cs_softc *));
+int	cs_init __P((struct cs_softc *));
+void	cs_reset __P((void *));
+int	cs_ioctl __P((struct ifnet *, u_long, caddr_t));
+void	cs_initChip __P((struct cs_softc *));
+int	cs_intr __P((void *));
+void	cs_buffer_event __P((struct cs_softc *, u_int16_t));
+void	cs_transmit_event __P((struct cs_softc *, u_int16_t));
+void	cs_receive_event __P((struct cs_softc *, u_int16_t));
+void	cs_ether_input __P((struct cs_softc *, struct mbuf *));
+void	cs_process_receive __P((struct cs_softc *));
+void	cs_process_rx_early __P((struct cs_softc *));
+void	cs_process_rx_dma __P((struct cs_softc *));
+void	cs_start_output __P((struct ifnet *));
+void	cs_copy_tx_frame __P((struct cs_softc *, struct mbuf *));
+void	cs_set_ladr_filt __P((struct cs_softc *, struct ethercom *));
+u_int16_t cs_hash_index __P((char *));
+void	cs_counter_event __P((struct cs_softc *, u_int16_t));
+void	cs_print_rx_errors __P((struct cs_softc *, u_int16_t));
 
 /*
  * GLOBAL DECLARATIONS
@@ -305,11 +303,11 @@ struct cs_xmit_early {
 };
 
 struct cfattach cs_ca = {
-	sizeof(struct cs_softc), csProbe, csAttach
+	sizeof(struct cs_softc), cs_probe, cs_attach
 };
 
 int 
-csProbe(parent, cf, aux)
+cs_probe(parent, cf, aux)
 	struct device *parent;
 	struct cfdata *cf;
 	void *aux;
@@ -370,7 +368,7 @@ csProbe(parent, cf, aux)
 }
 
 void 
-csAttach(parent, self, aux)
+cs_attach(parent, self, aux)
 	struct device *parent, *self;
 	void *aux;
 {
@@ -409,7 +407,7 @@ csAttach(parent, self, aux)
 		chipname = "CS892x";
 		break;
 	default:
-		panic("csAttach: impossible");
+		panic("cs_attach: impossible");
 	}
 
 	printf(": %s, rev. %c\n", chipname, ((reg & PROD_REV_MASK) >> 8) + 'A');
@@ -467,8 +465,8 @@ csAttach(parent, self, aux)
 	/* Initialize ifnet structure. */
 	bcopy(sc->sc_dev.dv_xname, ifp->if_xname, IFNAMSIZ);
 	ifp->if_softc = sc;
-	ifp->if_start = csStartOutput;
-	ifp->if_ioctl = csIoctl;
+	ifp->if_start = cs_start_output;
+	ifp->if_ioctl = cs_ioctl;
 	ifp->if_watchdog = NULL;	/* no watchdog at this stage */
 	ifp->if_flags = IFF_SIMPLEX | IFF_NOTRAILERS |
 	    IFF_BROADCAST | IFF_MULTICAST;
@@ -485,20 +483,20 @@ csAttach(parent, self, aux)
 	sc->sc_mediatype = MEDIA_10BASET;	/* XXX get from OpenFirmware */
 #else
 	/* Get parameters, which were not specified, from the EEPROM */
-	if (csGetUnspecifiedParms(sc) == CS_ERROR) {
+	if (cs_get_params(sc) == CS_ERROR) {
 		printf("%s: unable to get settings from EEPROM\n",
 		    sc->sc_dev.dv_xname);
 		return;
 	}
 
 	/* Verify that parameters are valid */
-	if (csValidateParms(sc) == CS_ERROR) {
+	if (cs_validate_params(sc) == CS_ERROR) {
 		printf("%s: invalid EEPROM settings\n", sc->sc_dev.dv_xname);
 		return;
 	}
 
 	/* Get and store the Ethernet address */
-	if (csGetEthernetAddr(sc) == CS_ERROR) {
+	if (cs_get_enaddr(sc) == CS_ERROR) {
 		printf("%s: unable to read Ethernet address\n",
 		    sc->sc_dev.dv_xname);
 		return;
@@ -545,7 +543,7 @@ csAttach(parent, self, aux)
 	}
 after_dma_block:
 
-	sc->sc_sh = shutdownhook_establish(csReset, sc);
+	sc->sc_sh = shutdownhook_establish(cs_reset, sc);
 	if (sc->sc_sh == NULL) {
 		printf("%s: unable to establish shutdownhook\n",
 		    sc->sc_dev.dv_xname);
@@ -554,7 +552,7 @@ after_dma_block:
 
 	/* XXX get IST from front-end. */
 	sc->sc_ih = isa_intr_establish(ia->ia_ic, ia->ia_irq, IST_LEVEL,
-	    IPL_NET, csIntr, sc);
+	    IPL_NET, cs_intr, sc);
 	if (sc->sc_ih == NULL) {
 		printf("%s: unable to establish interrupt\n",
 		    sc->sc_dev.dv_xname);
@@ -570,12 +568,12 @@ after_dma_block:
 #endif
 
 	/* Reset the chip */
-	if (csResetChip(sc) == CS_ERROR)
+	if (cs_reset_chip(sc) == CS_ERROR)
 		printf("%s: reset failed\n", sc->sc_dev.dv_xname);
 }
 
 int 
-csGetUnspecifiedParms(sc)
+cs_get_params(sc)
 	struct cs_softc *sc;
 {
 	u_int16_t selfStatus;
@@ -599,15 +597,15 @@ csGetUnspecifiedParms(sc)
 	}
 
 	/* Get ISA configuration from the EEPROM */
-	if (csReadEEPROM(sc, EEPROM_ISA_CFG, &isaConfig) == CS_ERROR)
+	if (cs_read_eeprom(sc, EEPROM_ISA_CFG, &isaConfig) == CS_ERROR)
 		return CS_ERROR;
 
 	/* Get adapter configuration from the EEPROM */
-	if (csReadEEPROM(sc, EEPROM_ADPTR_CFG, &adapterConfig) == CS_ERROR)
+	if (cs_read_eeprom(sc, EEPROM_ADPTR_CFG, &adapterConfig) == CS_ERROR)
 		return CS_ERROR;
 
 	/* Get transmission control from the EEPROM */
-	if (csReadEEPROM(sc, EEPROM_XMIT_CTL, &xmitCtl) == CS_ERROR)
+	if (cs_read_eeprom(sc, EEPROM_XMIT_CTL, &xmitCtl) == CS_ERROR)
 		return CS_ERROR;
 
 	/* If the configuration flags were not specified */
@@ -638,7 +636,7 @@ csGetUnspecifiedParms(sc)
 		/* If memory mode is enabled */
 		if (sc->sc_cfgflags & CFGFLG_MEM_MODE) {
 			/* Get the memory base address from EEPROM */
-			if (csReadEEPROM(sc, EEPROM_MEM_BASE,
+			if (cs_read_eeprom(sc, EEPROM_MEM_BASE,
 			    &memBase) == CS_ERROR)
 				return CS_ERROR;
 
@@ -678,7 +676,7 @@ csGetUnspecifiedParms(sc)
 }
 
 int 
-csValidateParms(sc)
+cs_validate_params(sc)
 	struct cs_softc *sc;
 {
 	int memAddr;
@@ -708,7 +706,7 @@ csValidateParms(sc)
 }
 
 int 
-csGetEthernetAddr(sc)
+cs_get_enaddr(sc)
 	struct cs_softc *sc;
 {
 	u_int16_t selfStatus, *myea;
@@ -725,18 +723,18 @@ csGetEthernetAddr(sc)
 
 	/* Get Ethernet address from the EEPROM */
 	/* XXX this will likely lose on a big-endian machine. -- cgd */
-	if (csReadEEPROM(sc, EEPROM_IND_ADDR_H, &myea[0]) == CS_ERROR)
+	if (cs_read_eeprom(sc, EEPROM_IND_ADDR_H, &myea[0]) == CS_ERROR)
 		return CS_ERROR;
-	if (csReadEEPROM(sc, EEPROM_IND_ADDR_M, &myea[1]) == CS_ERROR)
+	if (cs_read_eeprom(sc, EEPROM_IND_ADDR_M, &myea[1]) == CS_ERROR)
 		return CS_ERROR;
-	if (csReadEEPROM(sc, EEPROM_IND_ADDR_L, &myea[2]) == CS_ERROR)
+	if (cs_read_eeprom(sc, EEPROM_IND_ADDR_L, &myea[2]) == CS_ERROR)
 		return CS_ERROR;
 
 	return CS_OK;
 }
 
 int 
-csResetChip(sc)
+cs_reset_chip(sc)
 	struct cs_softc *sc;
 {
 	int intState;
@@ -803,7 +801,7 @@ csResetChip(sc)
 }
 
 int 
-csReadEEPROM(sc, offset, pValue)
+cs_read_eeprom(sc, offset, pValue)
 	struct cs_softc *sc;
 	u_int16_t offset, *pValue;
 {
@@ -841,7 +839,7 @@ csReadEEPROM(sc, offset, pValue)
 }
 
 void 
-csInitChip(sc)
+cs_initChip(sc)
 	struct cs_softc *sc;
 {
 	u_int16_t busCtl;
@@ -917,7 +915,7 @@ csInitChip(sc)
 		}
 	}
 
-	/* RX_CTL set in csSetLadrFilt(), below */
+	/* RX_CTL set in cs_set_ladr_filt(), below */
 
 	/* enable all transmission interrupts */
 	CS_WRITE_PACKET_PAGE(sc, PKTPG_TX_CFG, TX_CFG_ALL_IE);
@@ -1054,7 +1052,7 @@ csInitChip(sc)
 	}
 
 	/* write the multicast mask to the address filter register */
-	csSetLadrFilt(sc, &sc->sc_ethercom);
+	cs_set_ladr_filt(sc, &sc->sc_ethercom);
 
 	/* Enable reception and transmission of frames */
 	CS_WRITE_PACKET_PAGE(sc, PKTPG_LINE_CTL,
@@ -1067,7 +1065,7 @@ csInitChip(sc)
 }
 
 int 
-csInit(sc)
+cs_init(sc)
 	struct cs_softc *sc;
 {
 	int intState;
@@ -1084,9 +1082,9 @@ csInit(sc)
 #endif
 
 	/* Reset the chip */
-	if ((error = csResetChip(sc)) == CS_OK) {
+	if ((error = cs_reset_chip(sc)) == CS_OK) {
 		/* Initialize the chip */
-		csInitChip(sc);
+		cs_initChip(sc);
 
 		/* Mark the interface as up and running */
 		sc->sc_ethercom.ec_if.if_flags |= (IFF_UP | IFF_RUNNING);
@@ -1101,7 +1099,7 @@ csInit(sc)
 }
 
 void 
-csSetLadrFilt(sc, ec)
+cs_set_ladr_filt(sc, ec)
 	struct cs_softc *sc;
 	struct ethercom *ec;
 {
@@ -1167,7 +1165,7 @@ csSetLadrFilt(sc, ec)
 	                 * we have got an individual address so just set that
 	                 * bit.
 	                 */
-			index = csHashIndex(enm->enm_addrlo);
+			index = cs_hash_index(enm->enm_addrlo);
 
 			/* Set the bit the Logical address filter. */
 			port = (u_int16_t) (2 * ((index / 16)));
@@ -1187,7 +1185,7 @@ csSetLadrFilt(sc, ec)
 }
 
 u_int16_t
-csHashIndex(addr)
+cs_hash_index(addr)
 	char *addr;
 {
 	u_int POLY = 0x04c11db6;
@@ -1226,7 +1224,7 @@ csHashIndex(addr)
 }
 
 void 
-csReset(arg)
+cs_reset(arg)
 	void *arg;
 {
 	struct cs_softc *sc = arg;
@@ -1235,11 +1233,11 @@ csReset(arg)
 	sc->sc_ethercom.ec_if.if_flags &= ~IFF_RUNNING;
 
 	/* Reset the chip */
-	csResetChip(sc);
+	cs_reset_chip(sc);
 }
 
 int 
-csIoctl(ifp, cmd, data)
+cs_ioctl(ifp, cmd, data)
 	struct ifnet *ifp;
 	u_long cmd;
 	caddr_t data;
@@ -1261,12 +1259,12 @@ csIoctl(ifp, cmd, data)
 		switch (ifa->ifa_addr->sa_family) {
 #ifdef INET
 		case AF_INET:
-			csInit(sc);
+			cs_init(sc);
 			arp_ifinit(ifp, ifa);
 			break;
 #endif
 		default:
-			csInit(sc);
+			cs_init(sc);
 			break;
 		}
 		break;
@@ -1278,7 +1276,7 @@ csIoctl(ifp, cmd, data)
 			 * If interface is marked down and it is running,
 			 * then stop it.
 			 */
-			csResetChip(sc);
+			cs_reset_chip(sc);
 			ifp->if_flags &= ~IFF_RUNNING;
 		} else if ((ifp->if_flags & IFF_UP) != 0 &&
 			   (ifp->if_flags & IFF_RUNNING) == 0) {
@@ -1286,13 +1284,13 @@ csIoctl(ifp, cmd, data)
 			 * If interface is marked up and it is stopped,
 			 * start it.
 			 */
-			csInit(sc);
+			cs_init(sc);
 		} else {
 			/*
 			 * Reset the interface to pick up any changes in
 			 * any other flags that affect hardware registers.
 			 */
-			csInit(sc);
+			cs_init(sc);
 		}
 		break;
 
@@ -1307,7 +1305,7 @@ csIoctl(ifp, cmd, data)
 	                 * Multicast list has changed; set the hardware filter
 	                 * accordingly.
 	                 */
-			csInit(sc);
+			cs_init(sc);
 			result = 0;
 		}
 		break;
@@ -1323,7 +1321,7 @@ csIoctl(ifp, cmd, data)
 }
 
 int 
-csIntr(arg)
+cs_intr(arg)
 	void *arg;
 {
 	struct cs_softc *sc = arg;
@@ -1331,7 +1329,7 @@ csIntr(arg)
 
 	/* Ignore any interrupts that happen while the chip is being reset */
 	if (sc->sc_resetting) {
-		printf("%s: csIntr: reset in progress\n",
+		printf("%s: cs_intr: reset in progress\n",
 		    sc->sc_dev.dv_xname);
 		return 1;
 	}
@@ -1347,17 +1345,17 @@ csIntr(arg)
 		/* Dispatch to an event handler based on the register number */
 		switch (Event & REG_NUM_MASK) {
 		case REG_NUM_RX_EVENT:
-			csReceiveEvent(sc, Event);
+			cs_receive_event(sc, Event);
 			break;
 		case REG_NUM_TX_EVENT:
-			csTransmitEvent(sc, Event);
+			cs_transmit_event(sc, Event);
 			break;
 		case REG_NUM_BUF_EVENT:
-			csBufferEvent(sc, Event);
+			cs_buffer_event(sc, Event);
 			break;
 		case REG_NUM_TX_COL:
 		case REG_NUM_RX_MISS:
-			csCounterEvent(sc, Event);
+			cs_counter_event(sc, Event);
 			break;
 		default:
 			printf("%s: unknown interrupt event 0x%x\n",
@@ -1374,14 +1372,14 @@ csIntr(arg)
 }
 
 void 
-csCounterEvent(sc, cntEvent)
+cs_counter_event(sc, cntEvent)
 	struct cs_softc *sc;
 	u_int16_t cntEvent;
 {
-	struct ifnet *pIf;
+	struct ifnet *ifp;
 	u_int16_t errorCount;
 
-	pIf = &sc->sc_ethercom.ec_if;
+	ifp = &sc->sc_ethercom.ec_if;
 
 	switch (cntEvent & REG_NUM_MASK) {
 	case REG_NUM_TX_COL:
@@ -1405,7 +1403,7 @@ csCounterEvent(sc, cntEvent)
 		 * Increment the input error count, the first 6bits are the
 		 * register id.
 		 */
-		pIf->if_ierrors += ((errorCount & 0xffC0) >> 6);
+		ifp->if_ierrors += ((errorCount & 0xffC0) >> 6);
 		break;
 	default:
 		/* do nothing */
@@ -1414,13 +1412,13 @@ csCounterEvent(sc, cntEvent)
 }
 
 void 
-csBufferEvent(sc, bufEvent)
+cs_buffer_event(sc, bufEvent)
 	struct cs_softc *sc;
 	u_int16_t bufEvent;
 {
-	struct ifnet *pIf;
+	struct ifnet *ifp;
 
-	pIf = &sc->sc_ethercom.ec_if;
+	ifp = &sc->sc_ethercom.ec_if;
 
 	/*
 	 * multiple events can be in the buffer event register at one time so
@@ -1433,12 +1431,12 @@ csBufferEvent(sc, bufEvent)
 	 * will be cleared and 128 event will be set.
 	 */
 	if ((bufEvent & (BUF_EVENT_RX_DEST | BUF_EVENT_RX_128)) != 0) {
-		csProcessRxEarly(sc);
+		cs_process_rx_early(sc);
 	}
 
 	if (bufEvent & BUF_EVENT_RX_DMA) {
 		/* process the receive data */
-		csProcessRxDMA(sc);
+		cs_process_rx_dma(sc);
 	}
 
 	if (bufEvent & BUF_EVENT_TX_UNDR) {
@@ -1466,20 +1464,20 @@ csBufferEvent(sc, bufEvent)
 }
 
 void 
-csTransmitEvent(sc, txEvent)
+cs_transmit_event(sc, txEvent)
 	struct cs_softc *sc;
 	u_int16_t txEvent;
 {
-	struct ifnet *pIf = &sc->sc_ethercom.ec_if;
+	struct ifnet *ifp = &sc->sc_ethercom.ec_if;
 
 	/* If there were any errors transmitting this frame */
 	if (txEvent & (TX_EVENT_LOSS_CRS | TX_EVENT_SQE_ERR | TX_EVENT_OUT_WIN |
 		       TX_EVENT_JABBER | TX_EVENT_16_COLL)) {
 		/* Increment the output error count */
-		pIf->if_oerrors++;
+		ifp->if_oerrors++;
 
 		/* If debugging is enabled then log error messages */
-		if (pIf->if_flags & IFF_DEBUG) {
+		if (ifp->if_flags & IFF_DEBUG) {
 			if (txEvent & TX_EVENT_LOSS_CRS) {
 				printf("%s: lost carrier\n",
 				    sc->sc_dev.dv_xname);
@@ -1509,25 +1507,25 @@ csTransmitEvent(sc, txEvent)
 
 	/* Add the number of collisions for this frame */
 	if (txEvent & TX_EVENT_16_COLL) {
-		pIf->if_collisions += 16;
+		ifp->if_collisions += 16;
 	} else {
-		pIf->if_collisions += ((txEvent & TX_EVENT_COLL_MASK) >> 11);
+		ifp->if_collisions += ((txEvent & TX_EVENT_COLL_MASK) >> 11);
 	}
 
-	pIf->if_opackets++;
+	ifp->if_opackets++;
 
 	/* Transmission is no longer in progress */
 	sc->sc_txbusy = FALSE;
 
 	/* If there is more to transmit */
-	if (pIf->if_snd.ifq_head != NULL) {
+	if (ifp->if_snd.ifq_head != NULL) {
 		/* Start the next transmission */
-		csStartOutput(pIf);
+		cs_start_output(ifp);
 	}
 }
 
 void
-csPrintRxErrors(sc, rxEvent)
+cs_print_rx_errors(sc, rxEvent)
 	struct cs_softc *sc;
 	u_int16_t rxEvent;
 {
@@ -1550,23 +1548,23 @@ csPrintRxErrors(sc, rxEvent)
 }
 
 void 
-csReceiveEvent(sc, rxEvent)
+cs_receive_event(sc, rxEvent)
 	struct cs_softc *sc;
 	u_int16_t rxEvent;
 {
-	struct ifnet *pIf = &sc->sc_ethercom.ec_if;
+	struct ifnet *ifp = &sc->sc_ethercom.ec_if;
 
 	/* If the frame was not received OK */
 	if (!(rxEvent & RX_EVENT_RX_OK)) {
 		/* Increment the input error count */
-		pIf->if_ierrors++;
+		ifp->if_ierrors++;
 
 		/*
 		 * If debugging is enabled then log error messages.
 		 */
-		if (pIf->if_flags & IFF_DEBUG) {
+		if (ifp->if_flags & IFF_DEBUG) {
 			if (rxEvent != REG_NUM_RX_EVENT) {
-				csPrintRxErrors(sc, rxEvent);
+				cs_print_rx_errors(sc, rxEvent);
 
 				/*
 				 * Must read the length of all received
@@ -1588,12 +1586,12 @@ csReceiveEvent(sc, rxEvent)
 		 * process the received frame and pass it up to the upper
 		 * layers.
 		 */
-		csProcessReceive(sc);
+		cs_process_receive(sc);
 	}
 }
 
 void
-csEtherInput(sc, m)
+cs_ether_input(sc, m)
 	struct cs_softc *sc;
 	struct mbuf *m;
 {
@@ -1642,10 +1640,10 @@ csEtherInput(sc, m)
 }
 
 void 
-csProcessReceive(sc)
+cs_process_receive(sc)
 	struct cs_softc *sc;
 {
-	struct ifnet *pIf;
+	struct ifnet *ifp;
 	struct mbuf *m;
 	int totlen;
 	int len;
@@ -1657,7 +1655,7 @@ csProcessReceive(sc)
 	ledNetActive();
 #endif
 
-	pIf = &sc->sc_ethercom.ec_if;
+	ifp = &sc->sc_ethercom.ec_if;
 
 	/* Initialize the frame offset */
 	frameOffset = PKTPG_RX_LENGTH;
@@ -1668,9 +1666,9 @@ csProcessReceive(sc)
 
 	MGETHDR(m, M_DONTWAIT, MT_DATA);
 	if (m == 0) {
-		printf("%s: csProcessReceive: unable to allocate mbuf\n",
+		printf("%s: cs_process_receive: unable to allocate mbuf\n",
 		    sc->sc_dev.dv_xname);
-		pIf->if_ierrors++;
+		ifp->if_ierrors++;
 		/*
 		 * couldn't allocate an mbuf so things are not good, may as
 		 * well drop the packet I think.
@@ -1682,7 +1680,7 @@ csProcessReceive(sc)
 		    CS_READ_PACKET_PAGE(sc, PKTPG_RX_CFG) | RX_CFG_SKIP);
 		return;
 	}
-	m->m_pkthdr.rcvif = pIf;
+	m->m_pkthdr.rcvif = ifp;
 	m->m_pkthdr.len = totlen;
 
 	/*
@@ -1694,7 +1692,7 @@ csProcessReceive(sc)
 		len = MCLBYTES;
 	} else {
 		/* couldn't allocate an mbuf cluster */
-		printf("%s: csProcessReceive: unable to allocate a cluster\n",
+		printf("%s: cs_process_receive: unable to allocate a cluster\n",
 		    sc->sc_dev.dv_xname);
 		m_freem(m);
 
@@ -1719,14 +1717,14 @@ csProcessReceive(sc)
 		frameOffset += 2;
 	}
 
-	csEtherInput(sc, m);
+	cs_ether_input(sc, m);
 }
 
 void 
-csProcessRxDMA(sc)
+cs_process_rx_dma(sc)
 	struct cs_softc *sc;
 {
-	struct ifnet *pIf;
+	struct ifnet *ifp;
 	u_int16_t num_dma_frames;
 	u_int16_t pkt_length;
 	u_int16_t status;
@@ -1737,7 +1735,7 @@ csProcessRxDMA(sc)
 	int pad;
 
 	/* initialise the pointers */
-	pIf = &sc->sc_ethercom.ec_if;
+	ifp = &sc->sc_ethercom.ec_if;
 
 	/* Read the number of frames DMAed. */
 	num_dma_frames = CS_READ_PACKET_PAGE(sc, PKTPG_DMA_FRAME_COUNT);
@@ -1781,15 +1779,15 @@ csProcessRxDMA(sc)
 				 * should increment the error count and reset
 				 * the dma operation.
 				 */
-				printf("%s: csProcessRxDMA: DMA buffer out of sync about to reset\n",
+				printf("%s: cs_process_rx_dma: DMA buffer out of sync about to reset\n",
 				    sc->sc_dev.dv_xname);
-				pIf->if_ierrors++;
+				ifp->if_ierrors++;
 
 				/* skip the rest of the DMA buffer */
 				isa_dmaabort(sc->sc_ic, sc->sc_drq);
 
 				/* now reset the chip and reinitialise */
-				csInit(sc);
+				cs_init(sc);
 				return;
 			}
 			/* Check the status of the received packet. */
@@ -1797,9 +1795,9 @@ csProcessRxDMA(sc)
 				/* get a new mbuf */
 				MGETHDR(m, M_DONTWAIT, MT_DATA);
 				if (m == 0) {
-					printf("%s: csProcessRxDMA: unable to allocate mbuf\n",
+					printf("%s: cs_process_rx_dma: unable to allocate mbuf\n",
 					    sc->sc_dev.dv_xname);
-					pIf->if_ierrors++;
+					ifp->if_ierrors++;
 					/*
 					 * couldn't allocate an mbuf so
 					 * things are not good, may as well
@@ -1815,7 +1813,7 @@ csProcessRxDMA(sc)
 					 * now reset the chip and
 					 * reinitialise
 					 */
-					csInit(sc);
+					cs_init(sc);
 					return;
 				}
 				/*
@@ -1825,7 +1823,7 @@ csProcessRxDMA(sc)
 				MCLGET(m, M_DONTWAIT);
 				if ((m->m_flags & M_EXT) == 0) {
 					/* couldn't allocate an mbuf cluster */
-					printf("%s: csProcessRxDMA: unable to allocate a cluster\n",
+					printf("%s: cs_process_rx_dma: unable to allocate a cluster\n",
 					    sc->sc_dev.dv_xname);
 					m_freem(m);
 
@@ -1837,10 +1835,10 @@ csProcessRxDMA(sc)
 					 * now reset the chip and
 					 * reinitialise
 					 */
-					csInit(sc);
+					cs_init(sc);
 					return;
 				}
-				m->m_pkthdr.rcvif = pIf;
+				m->m_pkthdr.rcvif = ifp;
 				m->m_pkthdr.len = pkt_length;
 				m->m_len = pkt_length;
 
@@ -1901,21 +1899,21 @@ csProcessRxDMA(sc)
 					dma_mem_ptr += to_copy;
 				}
 
-				csEtherInput(sc, m);
+				cs_ether_input(sc, m);
 			}
 			/* (status & RX_OK) */ 
 			else {
 				/* the frame was not received OK */
 				/* Increment the input error count */
-				pIf->if_ierrors++;
+				ifp->if_ierrors++;
 
 				/*
 				 * If debugging is enabled then log error
 				 * messages if we got any.
 				 */
-				if ((pIf->if_flags & IFF_DEBUG) &&
+				if ((ifp->if_flags & IFF_DEBUG) &&
 				    status != REG_NUM_RX_EVENT)
-					csPrintRxErrors(sc, status);
+					cs_print_rx_errors(sc, status);
 			}
 			/*
 			 * now update the current frame pointer. the
@@ -1942,10 +1940,10 @@ csProcessRxDMA(sc)
 }
 
 void 
-csProcessRxEarly(sc)
+cs_process_rx_early(sc)
 	struct cs_softc *sc;
 {
-	struct ifnet *pIf;
+	struct ifnet *ifp;
 	struct mbuf *m;
 	u_int16_t frameCount, oldFrameCount;
 	u_int16_t rxEvent;
@@ -1954,7 +1952,7 @@ csProcessRxEarly(sc)
 	unsigned int frameOffset;
 
 
-	pIf = &sc->sc_ethercom.ec_if;
+	ifp = &sc->sc_ethercom.ec_if;
 
 	/* Initialize the frame offset */
 	frameOffset = PKTPG_RX_FRAME;
@@ -1962,9 +1960,9 @@ csProcessRxEarly(sc)
 
 	MGETHDR(m, M_DONTWAIT, MT_DATA);
 	if (m == 0) {
-		printf("%s: csProcessRxEarly: unable to allocate mbuf\n",
+		printf("%s: cs_process_rx_early: unable to allocate mbuf\n",
 		    sc->sc_dev.dv_xname);
-		pIf->if_ierrors++;
+		ifp->if_ierrors++;
 		/*
 		 * couldn't allocate an mbuf so things are not good, may as
 		 * well drop the packet I think.
@@ -1976,7 +1974,7 @@ csProcessRxEarly(sc)
 		    CS_READ_PACKET_PAGE(sc, PKTPG_RX_CFG) | RX_CFG_SKIP);
 		return;
 	}
-	m->m_pkthdr.rcvif = pIf;
+	m->m_pkthdr.rcvif = ifp;
 	/*
 	 * save processing by always using a mbuf cluster, guarenteed to fit
 	 * packet
@@ -1984,7 +1982,7 @@ csProcessRxEarly(sc)
 	MCLGET(m, M_DONTWAIT);
 	if ((m->m_flags & M_EXT) == 0) {
 		/* couldn't allocate an mbuf cluster */
-		printf("%s: csProcessRxEarly: unable to allocate a cluster\n",
+		printf("%s: cs_process_rx_early: unable to allocate a cluster\n",
 		    sc->sc_dev.dv_xname);
 		m_freem(m);
 		/* skip the frame */
@@ -2041,16 +2039,16 @@ csProcessRxEarly(sc)
 		 */
 		rxEvent = CS_READ_PACKET_PAGE(sc, PKTPG_RX_EVENT);
 
-		csEtherInput(sc, m);
+		cs_ether_input(sc, m);
 	} else {
 		m_freem(m);
-		pIf->if_ierrors++;
+		ifp->if_ierrors++;
 	}
 }
 
 void 
-csStartOutput(pIf)
-	struct ifnet *pIf;
+cs_start_output(ifp)
+	struct ifnet *ifp;
 {
 	struct cs_softc *sc;
 	struct mbuf *pMbuf;
@@ -2061,11 +2059,11 @@ csStartOutput(pIf)
 	int txLoop = 0;
 	int dropout = 0;
 
-	sc = pIf->if_softc;
+	sc = ifp->if_softc;
 	pTxQueue = &sc->sc_ethercom.ec_if.if_snd;
 
 	/* check that the interface is up and running */
-	if ((pIf->if_flags & (IFF_RUNNING | IFF_OACTIVE)) != IFF_RUNNING) {
+	if ((ifp->if_flags & (IFF_RUNNING | IFF_OACTIVE)) != IFF_RUNNING) {
 		return;
 	}
 
@@ -2088,8 +2086,8 @@ csStartOutput(pIf)
 	         * If BPF is listening on this interface, let it see the packet
 	         * before we commit it to the wire.
 	         */
-		if (pIf->if_bpf)
-			bpf_mtap(pIf->if_bpf, pMbufChain);
+		if (ifp->if_bpf)
+			bpf_mtap(ifp->if_bpf, pMbufChain);
 #endif
 
 		/* Find the total length of the data to transmit */
@@ -2155,7 +2153,7 @@ csStartOutput(pIf)
 					 * Copy the frame to the chip to
 					 * start transmission
 					 */
-					csCopyTxFrame(sc, pMbufChain);
+					cs_copy_tx_frame(sc, pMbufChain);
 
 					/* Free the mbuf chain */
 					m_freem(pMbufChain);
@@ -2182,7 +2180,7 @@ csStartOutput(pIf)
 						 * Increment the output error
 						 * count
 						 */
-						pIf->if_oerrors++;
+						ifp->if_oerrors++;
 						/*
 						 * exit the routine and drop
 						 * the packet.
@@ -2197,7 +2195,7 @@ csStartOutput(pIf)
 }
 
 void 
-csCopyTxFrame(sc, m0)
+cs_copy_tx_frame(sc, m0)
 	struct cs_softc *sc;
 	struct mbuf *m0;
 {
@@ -2268,10 +2266,10 @@ csCopyTxFrame(sc, m0)
 			}
 		}
 		if (len < 0)
-			panic("csCopyTxFrame: negative len");
+			panic("cs_copy_tx_frame: negative len");
 #ifdef DIAGNOSTIC
 		if (p != lim)
-			panic("csCopyTxFrame: p != lim");
+			panic("cs_copy_tx_frame: p != lim");
 #endif
 	}
 	if (leftover)
