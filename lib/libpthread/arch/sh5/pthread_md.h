@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread_md.h,v 1.1 2003/01/21 00:34:56 scw Exp $	*/
+/*	$NetBSD: pthread_md.h,v 1.2 2003/01/22 13:52:48 scw Exp $	*/
 
 /*
  * Copyright 2003 Wasabi Systems, Inc.
@@ -52,7 +52,7 @@ pthread__sp(void)
 #define pthread__uc_pc(ucp) ((ucp)->uc_mcontext.__gregs[_REG_PC])
 
 /*
- * SH5 needs no additional stack space below ucontext_t
+ * SH5 requires no extra stack space
  */
 #define STACKSPACE	0
 

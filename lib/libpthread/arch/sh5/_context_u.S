@@ -1,4 +1,4 @@
-/*	$NetBSD: _context_u.S,v 1.2 2003/01/21 11:31:38 scw Exp $	*/
+/*	$NetBSD: _context_u.S,v 1.3 2003/01/22 13:52:48 scw Exp $	*/
 
 /*
  * Copyright 2003 Wasabi Systems, Inc.
@@ -50,12 +50,14 @@
  */
 #define	GETC						\
 	st.q	r2, UC_REGS_PC, r18			;\
+	st.q	r2, UC_REGS_R2, r63			;\
 	st.q	r2, UC_REGS_R10, r10			;\
 	st.q	r2, UC_REGS_R11, r11			;\
 	st.q	r2, UC_REGS_R12, r12			;\
 	st.q	r2, UC_REGS_R13, r13			;\
 	st.q	r2, UC_REGS_R14, r14			;\
 	st.q	r2, UC_REGS_SP, r15			;\
+	st.q	r2, UC_REGS_R18, r18			;\
 	st.q	r2, UC_REGS_R26, r26			;\
 	st.q	r2, UC_REGS_R27, r27			;\
 	st.q	r2, UC_REGS_R28, r28			;\
@@ -89,7 +91,7 @@
 	st.q	r2, UC_REGS_TR6, r0			;\
 	gettr	tr7, r0					;\
 	st.q	r2, UC_REGS_TR7, r0			;\
-	pta/l	3f, tr0					;\
+	pta/l	4f, tr0					;\
 	st.q	r2, UC_REGS_USR, r1			;\
 	fgetscr	fr0					;\
 	shlri	r1, SH5_CONREG_USR_FPRS_SHIFT, r1	;\
@@ -122,8 +124,10 @@
 	fst.d	r2, UC_FPREGS_DR58, dr58		;\
 	fst.d	r2, UC_FPREGS_DR60, dr60		;\
 	fst.d	r2, UC_FPREGS_DR62, dr62		;\
-	ori	r3, _UC_FPU, r3				;\
-3:	st.l	r2, UC_FLAGS, r3
+3:	ori	r3, _UC_FPU, r3				;\
+4:	ld.q	r2, UC_REGS_USR, r1			;\
+	st.l	r2, UC_FLAGS, r3			;\
+	putcon	r1, usr
 
 /*
  * Restore the context pointed to by r2
@@ -139,7 +143,7 @@
 	 * jump to the new context. Which just isn't	\
 	 * quite good enough. Sigh.)			\
 	 */						\
-	ld.q	r2, UC_FLAGS, r3			;\
+	ld.l	r2, UC_FLAGS, r3			;\
 	ld.q	r2, UC_REGS_R10, r10			;\
 	shlri	r3, _UC_USER_BIT, r0			;\
 	ld.q	r2, UC_REGS_R11, r11			;\
@@ -149,6 +153,7 @@
 	beq/u	r0, r63, tr0				;\
 	ld.q	r2, UC_REGS_R13, r13			;\
 	ld.q	r2, UC_REGS_R14, r14			;\
+	ld.q	r2, UC_REGS_R18, r18			;\
 	ld.q	r2, UC_REGS_R26, r26			;\
 	ld.q	r2, UC_REGS_R27, r27			;\
 	ld.q	r2, UC_REGS_R28, r28			;\
@@ -223,7 +228,7 @@
 							\
 4:	pta/l	_C_LABEL(setcontext), tr0		;\
 	blink	tr0, r18				;\
-	trapa	r63	/* Catch setcontex() failure */
+	brk	/* Catch setcontext() failure */
 
 
 /*
