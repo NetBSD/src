@@ -1,4 +1,4 @@
-$NetBSD: README,v 1.2 2002/04/24 16:28:55 bjh21 Exp $
+$NetBSD: README,v 1.3 2002/04/28 22:28:38 bjh21 Exp $
 
 Special notes for cross-hosting a NetBSD build on certain platforms.  
 Only those platforms which have been tested to complete a "build.sh" run
@@ -48,11 +48,6 @@ SOLARIS:
 
   (/usr/ucb may optionally be placed before /usr/bin per your preference,
   but /usr/ucb *MUST NOT* be before /usr/ccs/bin or /usr/xpg4/bin!)
-
-* /bin/sh *MUST* be replaced with a copy of, or symlink to, either
-  /bin/ksh or /usr/xpg4/bin/sh.  This will be fixed in the future to use
-  /usr/xpg4/bin/sh in nbmake by default.  (Solaris's /bin/sh is broken
-  in some fantastic and amazing ways.)
 
 * Needs the "mktemp" script from src/tools/compat/scripts, made
   executable, available somewhere in $PATH.  (Solaris has no
