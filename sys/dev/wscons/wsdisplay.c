@@ -1,4 +1,4 @@
-/* $NetBSD: wsdisplay.c,v 1.11 1998/08/02 14:18:07 drochner Exp $ */
+/* $NetBSD: wsdisplay.c,v 1.12 1998/12/15 14:25:59 drochner Exp $ */
 
 /*
  * Copyright (c) 1996, 1997 Christopher G. Demetriou.  All rights reserved.
@@ -33,7 +33,7 @@
 static const char _copyright[] __attribute__ ((unused)) =
     "Copyright (c) 1996, 1997 Christopher G. Demetriou.  All rights reserved.";
 static const char _rcsid[] __attribute__ ((unused)) =
-    "$NetBSD: wsdisplay.c,v 1.11 1998/08/02 14:18:07 drochner Exp $";
+    "$NetBSD: wsdisplay.c,v 1.12 1998/12/15 14:25:59 drochner Exp $";
 
 #include <sys/param.h>
 #include <sys/conf.h>
@@ -852,9 +852,11 @@ wsdisplaystart(tp)
 	
 	n = q_to_b(&tp->t_outq, buf, sizeof(buf));
 
-	if (WSSCREEN_HAS_EMULATOR(scr))
+	if (!(scr->scr_flags & SCR_GRAPHICS)) {
+		KASSERT(WSSCREEN_HAS_EMULATOR(scr));
 		(*scr->scr_dconf->wsemul->output)(scr->scr_dconf->wsemulcookie,
 		    buf, n, 0);
+	}
 
 	s = spltty();
 	tp->t_state &= ~TS_BUSY;
