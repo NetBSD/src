@@ -1,7 +1,7 @@
-# $NetBSD: Makefile,v 1.3 1996/12/31 22:36:20 veego Exp $
+# $NetBSD: Makefile,v 1.4 1997/07/14 15:05:14 veego Exp $
 
 PROG=us-kbdmap
 NOMAN=
-MAP=us.map
+FILES=us.map
 
 .include <bsd.prog.mk>
