@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.8 2003/08/22 07:52:48 itojun Exp $
+# $NetBSD: GENERIC,v 1.9 2003/09/01 00:35:44 fvdl Exp $
 #
 # GENERIC machine description file
 # 
@@ -22,7 +22,7 @@ include	"arch/amd64/conf/std.amd64"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.8 $"
+#ident 		"GENERIC-$Revision: 1.9 $"
 
 maxusers	32		# estimated number of users
 
@@ -224,7 +224,7 @@ mainbus0 at root
 #wss* 		at acpi?		# NeoMagic 256AV in wss mode
 
 options 	MPBIOS
-#options 	MPBIOS_SCANPCI		# MPBIOS configures PCI roots
+options 	MPBIOS_SCANPCI		# MPBIOS configures PCI roots
 cpu* 		at mainbus?
 ioapic* 	at mainbus? apid ?
 
