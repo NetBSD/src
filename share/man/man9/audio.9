@@ -1,4 +1,4 @@
-.\"	$NetBSD: audio.9,v 1.32 2005/02/20 19:48:47 wiz Exp $
+.\"	$NetBSD: audio.9,v 1.33 2005/02/20 19:55:05 wiz Exp $
 .\"
 .\" Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -208,8 +208,8 @@ for playing or
 for recording with conversion information.
 For example, if
 .Va play
-requests [8000Hz, mu-law, 8/8bit, 1ch] and the hardware supports
-not 8bit mu-law but 16bit slinear_le, the driver should call
+requests [8000Hz, mu-law, 8/8bit, 1ch] and the hardware does not
+support 8bit mu-law, but 16bit slinear_le, the driver should call
 .Dv pfil-\*[Gt]append()
 with
 .Va pfil ,
