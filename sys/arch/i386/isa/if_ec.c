@@ -51,6 +51,16 @@
  *   onboard xceiver or not.  Since the Clarkson drivers do a very
  *   good rendition of a 3c503, I also scavenged a lot of ideas from
  *   there.
+ *
+ * Onboard transceiver selection:
+ *		David Burren (davidb@melb.cpr.itg.telecom.com.au) May 1993
+ *
+ * Whereas Herb's original version of this driver kludged the transceiver
+ * selection into bit 7 of the unit number, it is now taken from the
+ * "flags" specified in the kernel config file.
+ * If bit 0 of the flags is set, the external transceiver is used.
+ * This has been tested with the Etherlink II and the Etherlink II TP
+ * (where the onboard transceiver is UTP).
  */
 #include "param.h"
 #include "mbuf.h"
@@ -143,15 +153,20 @@ struct isa_device *is;
 /* 
  * Now we get the MAC address. Assume thin ethernet unless told otherwise later.
  */
-	outb(sc->ec_io_ctl_addr + E33G_CNTRL, ECNTRL_RESET|2);	/* Toggle reset bit on*/
+	/* Toggle reset bit on*/
+	outb(sc->ec_io_ctl_addr + E33G_CNTRL, ECNTRL_RESET|ECNTRL_ONBOARD);
 	DELAY(100);
-	outb(sc->ec_io_ctl_addr + E33G_CNTRL, 2); 	/* Toggle reset bit off */
+	/* Toggle reset bit off */
+	outb(sc->ec_io_ctl_addr + E33G_CNTRL, ECNTRL_ONBOARD);
 	DELAY(100);
-	outb(sc->ec_io_ctl_addr + E33G_CNTRL, ECNTRL_SAPROM|2);	/* Map SA_PROM */
+	/* Map SA_PROM */
+	outb(sc->ec_io_ctl_addr + E33G_CNTRL, ECNTRL_SAPROM|ECNTRL_ONBOARD);
 	for (i=0;i<ETHER_ADDR_LEN; ++i)
 		sc->ec_addr[i] = inb(sc->ec_io_nic_addr + i);
-	outb(sc->ec_io_ctl_addr + E33G_CNTRL, 2);   /* Disable SA_PROM */
-	outb(sc->ec_io_ctl_addr + E33G_GACFR, EGACFR_IRQOFF);   /* tcm, rsel, mbs0, nim */
+	/* Disable SA_PROM */
+	outb(sc->ec_io_ctl_addr + E33G_CNTRL, ECNTRL_ONBOARD);
+	/* tcm, rsel, mbs0, nim */
+	outb(sc->ec_io_ctl_addr + E33G_GACFR, EGACFR_IRQOFF);
 /*
  * Stop the chip just in case.
  */
@@ -226,6 +241,11 @@ struct isa_device *is;
 	ifp->if_name = "ec" ;
 	ifp->if_mtu = ETHERMTU;
 	ifp->if_flags = IFF_BROADCAST | IFF_SIMPLEX | IFF_NOTRAILERS;
+	/*
+	 *	IFF_LLC0 if "flags & 1" (ie. "use external transceiver")
+	 *	so that ec_init() knows what to do.
+	 */
+	ifp->if_flags |= (is->id_flags & 1) ? IFF_LLC0 : 0;
 	ifp->if_init = ec_init;
 	ifp->if_output = ether_output;
 	ifp->if_start = ec_start_output;
@@ -239,8 +259,9 @@ struct isa_device *is;
 /*
  * Weeee.. We get to tell people we exist...
  */
-	printf("ec%d: ethernet address %s\n", is->id_unit,
-	       ether_sprintf(sc->ec_addr));
+	printf("ec%d: ethernet address %s (using %s transceiver)\n",
+		is->id_unit, ether_sprintf(sc->ec_addr),
+		(is->id_flags & 1) ? "external" : "on-board");
 }
 
 ec_init(unit)
@@ -261,10 +282,8 @@ int unit;
 	/*
 	 * select thick (e.g. AUI connector) if LLC0 bit is set
 	 */
-	if (ifp->if_flags & IFF_LLC0)
-		outb(sc->ec_io_ctl_addr + E33G_CNTRL, 0);
-	else
-		outb(sc->ec_io_ctl_addr + E33G_CNTRL, 2);
+	outb(sc->ec_io_ctl_addr + E33G_CNTRL,
+		(ifp->if_flags & IFF_LLC0) ? 0 : ECNTRL_ONBOARD);
 
 /*
  * Set up the 8390 chip.
