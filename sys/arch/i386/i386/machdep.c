@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.379 2000/04/05 07:46:33 jdolecek Exp $	*/
+/*	$NetBSD: machdep.c,v 1.380 2000/04/05 10:09:50 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -662,9 +662,9 @@ cyrix6x86_cpu_setup()
 void
 winchip_cpu_setup()
 {
+#if defined(I586_CPU)
 	extern int cpu_id;
 
-#if defined(I586_CPU)
 	switch (CPUID2MODEL(cpu_id)) { /* model */
 	case 4:	/* WinChip C6 */
 		cpu_feature &= ~CPUID_TSC;
