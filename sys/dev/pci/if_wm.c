@@ -1,4 +1,4 @@
-/*	$NetBSD: if_wm.c,v 1.68 2004/02/19 05:19:52 thorpej Exp $	*/
+/*	$NetBSD: if_wm.c,v 1.68.2.1 2004/07/12 20:36:58 he Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002, 2003 Wasabi Systems, Inc.
@@ -48,7 +48,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.68 2004/02/19 05:19:52 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.68.2.1 2004/07/12 20:36:58 he Exp $");
 
 #include "bpfilter.h"
 #include "rnd.h"
@@ -1584,8 +1584,8 @@ wm_start(struct ifnet *ifp)
 			DPRINTF(WM_DEBUG_TX,
 			    ("%s: TX: desc %d: low 0x%08x, len 0x%04x\n",
 			    sc->sc_dev.dv_xname, nexttx,
-			    le32toh(dmamap->dm_segs[seg].ds_addr),
-			    le32toh(dmamap->dm_segs[seg].ds_len)));
+			    (u_int)le32toh(dmamap->dm_segs[seg].ds_addr),
+			    (u_int)le32toh(dmamap->dm_segs[seg].ds_len)));
 		}
 
 		KASSERT(lasttx != -1);
