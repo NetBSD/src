@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.410 2000/11/09 19:22:30 christos Exp $	*/
+/*	$NetBSD: machdep.c,v 1.411 2000/11/10 03:58:15 enami Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2000 The NetBSD Foundation, Inc.
@@ -2017,17 +2017,18 @@ init386(first_avail)
 				    atop(tmp), atop(seg_start),
 				    atop(tmp), first16q);
 				seg_start = tmp;
-				if (seg_start == seg_end)
-					continue;
 			}
+
+			if (seg_start != seg_end) {
 #if DEBUG_MEMLOAD
-			printf("loading 0x%qx-0x%qx (0x%lx-0x%lx)\n",
-			    seg_start, seg_end,
-			    atop(seg_start), atop(seg_end));
+				printf("loading 0x%qx-0x%qx (0x%lx-0x%lx)\n",
+				    seg_start, seg_end,
+				    atop(seg_start), atop(seg_end));
 #endif
-			uvm_page_physload(atop(seg_start), atop(seg_end),
-			    atop(seg_start), atop(seg_end),
-			    VM_FREELIST_DEFAULT);
+				uvm_page_physload(atop(seg_start),
+				    atop(seg_end), atop(seg_start),
+				    atop(seg_end), VM_FREELIST_DEFAULT);
+			}
 		}
 
 		/* Second hunk */
