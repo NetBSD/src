@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ep.c,v 1.81 1995/07/27 05:01:08 mycroft Exp $	*/
+/*	$NetBSD: if_ep.c,v 1.82 1995/10/10 03:11:28 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1994 Herb Peyerl <hpeyerl@novatel.ca>
@@ -846,9 +846,6 @@ epget(sc, totlen)
 	int len;
 	int sh;
 
-	/* We're going to use at least one mbuf. */
-	timeout(epmbuffill, sc, 1);
-
 	m = sc->mb[sc->next_mb];
 	sc->mb[sc->next_mb] = 0;
 	if (m == 0) {
@@ -856,6 +853,9 @@ epget(sc, totlen)
 		if (m == 0)
 			return 0;
 	} else {
+		/* If the queue is no longer full, refill. */
+		if (sc->last_mb == sc->next_mb)
+			timeout(epmbuffill, sc, 1);
 		/* Convert one of our saved mbuf's. */
 		sc->next_mb = (sc->next_mb + 1) % MAX_MBS;
 		m->m_data = m->m_pktdat;
@@ -1143,6 +1143,9 @@ epmbuffill(sc)
 		i = (i + 1) % MAX_MBS;
 	} while (i != sc->next_mb);
 	sc->last_mb = i;
+	/* If the queue was not filled, try again. */
+	if (sc->last_mb != sc->next_mb)
+		timeout(epmbuffill, sc, 1);
 	splx(s);
 }
 
