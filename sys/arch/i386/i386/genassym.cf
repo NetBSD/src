@@ -1,4 +1,4 @@
-#	$NetBSD: genassym.cf,v 1.24.2.2 2001/04/09 01:53:30 nathanw Exp $
+#	$NetBSD: genassym.cf,v 1.24.2.3 2001/06/21 19:25:27 nathanw Exp $
 
 #
 # Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -90,6 +90,7 @@ include <sys/mbuf.h>
 include <netinet/in.h>
 include <netinet/in_systm.h>
 include <netinet/ip.h>
+include <netinet/ip6.h>
 include <netinet/ip_var.h>
 
 include <uvm/uvm.h>
@@ -161,14 +162,15 @@ define	M_NEXT			offsetof(struct mbuf, m_next)
 define	IP_SRC			offsetof(struct ip, ip_src)
 define	IP_DST			offsetof(struct ip, ip_dst)
 
+define	IP6_SRC			offsetof(struct ip6_hdr, ip6_src)
+define	IP6_DST			offsetof(struct ip6_hdr, ip6_dst)
+
 define	V_TRAP			offsetof(struct uvmexp, traps)
 define	V_INTR			offsetof(struct uvmexp, intrs)
 
 define	PCB_CR3			offsetof(struct pcb, pcb_cr3)
 define	PCB_EBP			offsetof(struct pcb, pcb_ebp)
 define	PCB_ESP			offsetof(struct pcb, pcb_esp)
-define	PCB_FS			offsetof(struct pcb, pcb_fs)
-define	PCB_GS			offsetof(struct pcb, pcb_gs)
 define	PCB_CR0			offsetof(struct pcb, pcb_cr0)
 define	PCB_LDT_SEL		offsetof(struct pcb, pcb_ldt_sel)
 define	PCB_ONFAULT		offsetof(struct pcb, pcb_onfault)
@@ -183,25 +185,16 @@ define	FRAMESIZE		sizeof(struct trapframe)
 
 define	SIGF_HANDLER		offsetof(struct sigframe, sf_handler)
 define	SIGF_SC			offsetof(struct sigframe, sf_sc)
-define	SC_FS			offsetof(struct sigcontext, sc_fs)
-define	SC_GS			offsetof(struct sigcontext, sc_gs)
-define	SC_EFLAGS		offsetof(struct sigcontext, sc_eflags)
 
 define	SAF_UPCALL		offsetof(struct saframe, sa_upcall)
 ifdef COMPAT_SVR4
 define	SVR4_SIGF_HANDLER	offsetof(struct svr4_sigframe, sf_handler)
 define	SVR4_SIGF_UC		offsetof(struct svr4_sigframe, sf_uc)
-define	SVR4_UC_FS		offsetof(struct svr4_ucontext, uc_mcontext.greg[SVR4_X86_FS])
-define	SVR4_UC_GS		offsetof(struct svr4_ucontext, uc_mcontext.greg[SVR4_X86_GS])
-define	SVR4_UC_EFLAGS		offsetof(struct svr4_ucontext, uc_mcontext.greg[SVR4_X86_EFL])
 endif
 
 ifdef COMPAT_LINUX
 define	LINUX_SIGF_HANDLER	offsetof(struct linux_sigframe, sf_handler)
 define	LINUX_SIGF_SC		offsetof(struct linux_sigframe, sf_sc)
-define	LINUX_SC_FS		offsetof(struct linux_sigcontext, sc_fs)
-define	LINUX_SC_GS		offsetof(struct linux_sigcontext, sc_gs)
-define	LINUX_SC_EFLAGS		offsetof(struct linux_sigcontext, sc_eflags)
 endif
 
 ifdef COMPAT_FREEBSD
@@ -232,4 +225,8 @@ define	BIOSCALLREG_EDX		offsetof(struct bioscallregs, EDX)
 define	BIOSCALLREG_ESI		offsetof(struct bioscallregs, ESI)
 define	BIOSCALLREG_EDI		offsetof(struct bioscallregs, EDI)
 define	BIOSCALLREG_EFLAGS	offsetof(struct bioscallregs, EFLAGS)
+endif
+
+if defined(__HAVE_GENERIC_SOFT_INTERRUPTS)
+define	__HAVE_GENERIC_SOFT_INTERRUPTS 1
 endif

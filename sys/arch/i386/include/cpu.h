@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.68.2.1 2001/03/05 22:49:16 nathanw Exp $	*/
+/*	$NetBSD: cpu.h,v 1.68.2.2 2001/06/21 19:25:46 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -41,7 +41,7 @@
 #ifndef _I386_CPU_H_
 #define _I386_CPU_H_
 
-#if defined(_KERNEL) && !defined(_LKM)
+#if defined(_KERNEL_OPT)
 #include "opt_multiprocessor.h"
 #include "opt_lockdebug.h"
 #endif
@@ -54,12 +54,33 @@
 #include <machine/segments.h>
 
 #include <sys/sched.h>
+
+struct i386_cache_info {
+	int		cai_index;
+	u_int32_t	cai_desc;
+	u_int		cai_totalsize;
+	u_int		cai_associativity;
+	u_int		cai_linesize;
+};
+
+#define	CAI_ITLB	0		/* Instruction TLB (4K pages) */
+#define	CAI_ITLB2	1		/* Instruction TLB (2/4M pages) */
+#define	CAI_DTLB	2		/* Data TLB (4K pages) */
+#define	CAI_DTLB2	3		/* Data TLB (2/4M pages) */
+#define	CAI_ICACHE	4		/* Instruction cache */
+#define	CAI_DCACHE	5		/* Data cache */
+#define	CAI_L2CACHE	6		/* Level 2 cache */
+
+#define	CAI_COUNT	7
+
 struct cpu_info {
 	struct schedstate_percpu ci_schedstate; /* scheduler state */
 #if defined(DIAGNOSTIC) || defined(LOCKDEBUG)
 	u_long ci_spin_locks;		/* # of spin locks held */
 	u_long ci_simple_locks;		/* # of simple locks held */
 #endif
+
+	struct i386_cache_info ci_cinfo[CAI_COUNT];
 };
 
 #ifdef _KERNEL
@@ -131,6 +152,7 @@ struct cpu_nocpuid_nameclass {
 	const char *cpu_name;
 	int cpu_class;
 	void (*cpu_setup) __P((void));
+	void (*cpu_cacheinfo) __P((struct cpu_info *));
 };
 
 
@@ -142,6 +164,7 @@ struct cpu_cpuid_nameclass {
 		int cpu_class;
 		const char *cpu_models[CPU_MAXMODEL+2];
 		void (*cpu_setup) __P((void));
+		void (*cpu_cacheinfo) __P((struct cpu_info *));
 	} cpu_family[CPU_MAXFAMILY - CPU_MINFAMILY + 1];
 };
 
@@ -214,9 +237,6 @@ int	isa_nmi __P((void));
 /* vm86.c */
 void	vm86_gpfault __P((struct lwp *, int));
 #endif /* VM86 */
-
-/* trap.c */
-void	child_return __P((void *));
 
 /* consinit.c */
 void kgdb_port_init __P((void));

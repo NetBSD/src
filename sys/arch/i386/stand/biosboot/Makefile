@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.33.4.1 2001/04/09 01:53:38 nathanw Exp $
+#	$NetBSD: Makefile,v 1.33.4.2 2001/06/21 19:26:10 nathanw Exp $
 
 S=	${.CURDIR}/../../../../
 
@@ -15,7 +15,7 @@ SRCS= main.c devopen.c conf.c exec.c
 
 CLEANFILES+= ${BSSTART}
 
-CPPFLAGS+= -DCOMPAT_OLDBOOT -DCOMPAT_386BSD_MBRPART
+CPPFLAGS+= -DCOMPAT_386BSD_MBRPART -DSUPPORT_PS2
 
 .if (${BASE} == "biosboot")
 # Various serial line configurations
@@ -34,11 +34,6 @@ CPPFLAGS+= -DSUPPORT_SERIAL=CONSDEV_COM0 -DDIRECT_SERIAL
 
 .if (${BASE} == "biosboot_resetvideo")
 CPPFLAGS+= -DRESET_VIDEO
-CPPFLAGS+= -DSUPPORT_SERIAL=CONSDEV_PC -DDIRECT_SERIAL
-.endif
-
-.if (${BASE} == "biosboot_ps2")
-CPPFLAGS+= -DIBM_L40
 CPPFLAGS+= -DSUPPORT_SERIAL=CONSDEV_PC -DDIRECT_SERIAL
 .endif
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: db_machdep.h,v 1.15 2000/06/29 08:44:57 mrg Exp $	*/
+/*	$NetBSD: db_machdep.h,v 1.15.4.1 2001/06/21 19:25:46 nathanw Exp $	*/
 
 /* 
  * Mach Operating System
@@ -44,7 +44,11 @@ typedef struct trapframe db_regs_t;
 db_regs_t	ddb_regs;	/* register state */
 #define	DDB_REGS	(&ddb_regs)
 
+#if defined(lint)
+#define	PC_REGS(regs)	((regs)->tf_eip)
+#else
 #define	PC_REGS(regs)	((db_addr_t)(regs)->tf_eip)
+#endif
 
 #define	BKPT_INST	0xcc		/* breakpoint instruction */
 #define	BKPT_SIZE	(1)		/* size of breakpoint inst */
@@ -101,7 +105,7 @@ boolean_t	db_phys_eq __P((task_t, vaddr_t, task_t, vaddr_t));
  * Constants for KGDB.
  */
 typedef	long		kgdb_reg_t;
-#define	KGDB_NUMREGS	14
+#define	KGDB_NUMREGS	16
 #define	KGDB_BUFLEN	512
 
 #if 0

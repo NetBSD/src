@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_sigcode.s,v 1.1 2000/11/26 11:18:20 jdolecek Exp $	*/
+/*	$NetBSD: linux_sigcode.s,v 1.1.6.1 2001/06/21 19:25:30 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -74,7 +74,7 @@
  *	@(#)locore.s	7.3 (Berkeley) 5/13/91
  */
 
-#if defined(_KERNEL) && !defined(_LKM)
+#if defined(_KERNEL_OPT)
 #include "opt_vm86.h"
 #endif
 
@@ -90,19 +90,12 @@
 /*
  * Signal trampoline; copied to top of user stack.
  */
+/* LINTSTUB: Var: char linux_sigcode[1], linux_esigcode[1]; */
 NENTRY(linux_sigcode)
 	call	LINUX_SIGF_HANDLER(%esp)
 	leal	LINUX_SIGF_SC(%esp),%ebx # scp (the call may have clobbered the
 					# copy at SIGF_SCP(%esp))
-#ifdef VM86
-	testl	$PSL_VM,LINUX_SC_EFLAGS(%ebx)
-	jnz	1f
-#endif
-	movl	LINUX_SC_FS(%ebx),%ecx
-	movl	LINUX_SC_GS(%ebx),%edx
-	movl	%cx,%fs
-	movl	%dx,%gs
-1:	pushl	%eax			# junk to fake return address
+	pushl	%eax			# junk to fake return address
 	movl	$LINUX_SYS_sigreturn,%eax
 	int	$0x80	 		# enter kernel with args on stack
 	movl	$LINUX_SYS_exit,%eax
@@ -110,19 +103,12 @@ NENTRY(linux_sigcode)
 	.globl	_C_LABEL(linux_esigcode)
 _C_LABEL(linux_esigcode):
 
+/* LINTSTUB: Var: char linux_rt_sigcode[1], linux_rt_esigcode[1]; */
 NENTRY(linux_rt_sigcode)
 	call	LINUX_SIGF_HANDLER(%esp)
 	leal	LINUX_SIGF_SC(%esp),%ebx # scp (the call may have clobbered the
 					# copy at SIGF_SCP(%esp))
-#ifdef VM86
-	testl	$PSL_VM,LINUX_SC_EFLAGS(%ebx)
-	jnz	1f
-#endif
-	movl	LINUX_SC_FS(%ebx),%ecx
-	movl	LINUX_SC_GS(%ebx),%edx
-	movl	%cx,%fs
-	movl	%dx,%gs
-1:	pushl	%eax			# junk to fake return address
+	pushl	%eax			# junk to fake return address
 	movl	$LINUX_SYS_rt_sigreturn,%eax
 	int	$0x80	 		# enter kernel with args on stack
 	movl	$LINUX_SYS_exit,%eax

@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.h,v 1.53.2.1 2001/03/05 22:49:16 nathanw Exp $	*/
+/*	$NetBSD: pmap.h,v 1.53.2.2 2001/06/21 19:25:53 nathanw Exp $	*/
 
 /*
  *
@@ -39,7 +39,7 @@
 #ifndef	_I386_PMAP_H_
 #define	_I386_PMAP_H_
 
-#if defined(_KERNEL) && !defined(_LKM)
+#if defined(_KERNEL_OPT)
 #include "opt_user_ldt.h"
 #include "opt_largepages.h"
 #endif
@@ -269,7 +269,7 @@ struct pmap {
 struct pv_entry;
 
 struct pv_head {
-	simple_lock_data_t pvh_lock;	/* locks every pv on this list */
+	struct simplelock pvh_lock;	/* locks every pv on this list */
 	struct pv_entry *pvh_list;	/* head of list (locked by pvh_lock) */
 };
 
@@ -378,8 +378,8 @@ vaddr_t reserve_dumppages __P((vaddr_t)); /* XXX: not a pmap fn */
 /*
  * Do idle page zero'ing uncached to avoid polluting the cache.
  */
-boolean_t	pmap_zero_page_uncached __P((paddr_t));
-#define	PMAP_PAGEIDLEZERO(pa)	pmap_zero_page_uncached((pa))
+boolean_t			pmap_pageidlezero __P((paddr_t));
+#define	PMAP_PAGEIDLEZERO(pa)	pmap_pageidlezero((pa))
 
 /*
  * inline functions

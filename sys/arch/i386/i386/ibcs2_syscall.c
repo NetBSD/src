@@ -1,4 +1,4 @@
-/*	$NetBSD: ibcs2_syscall.c,v 1.14.4.1 2001/03/05 22:49:12 nathanw Exp $	*/
+/*	$NetBSD: ibcs2_syscall.c,v 1.14.4.2 2001/06/21 19:25:28 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
@@ -36,7 +36,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#if defined(_KERNEL) && !defined(_LKM)
+#if defined(_KERNEL_OPT)
 #include "opt_syscall_debug.h"
 #include "opt_vm86.h"
 #include "opt_ktrace.h"

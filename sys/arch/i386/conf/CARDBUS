@@ -1,4 +1,4 @@
-#	$NetBSD: CARDBUS,v 1.31.2.1 2001/04/09 01:53:26 nathanw Exp $
+#	$NetBSD: CARDBUS,v 1.31.2.2 2001/06/21 19:25:10 nathanw Exp $
 #
 #	CARDBUS: GENERIC + CardBus support.  Additionally, some
 #	things typically not found on laptops have been commented out.
@@ -8,7 +8,7 @@
 
 include "arch/i386/conf/std.i386"
 
-#ident		"CARDBUS-$Revision: 1.31.2.1 $"
+#ident		"CARDBUS-$Revision: 1.31.2.2 $"
 
 maxusers	32		# estimated number of users
 
@@ -61,7 +61,7 @@ options 	SYSVSHM		# System V-like memory sharing
 options 	LKM		# loadable kernel modules
 
 # Diagnostic/debugging support options
-options 	DIAGNOSTIC	# cheap kernel consistency checks
+options 	DIAGNOSTIC	# expensive kernel consistency checks
 #options 	DEBUG		# expensive debugging checks/support
 #options 	KMEMSTATS	# kernel memory statistics (vmstat -m)
 options 	DDB		# in-kernel debugger
@@ -148,7 +148,7 @@ options 	PCIVERBOSE	# verbose PCI device autoconfig messages
 options 	SCSIVERBOSE	# human readable SCSI error messages
 options 	USBVERBOSE	# verbose USB device autoconfig messages
 #options 	PNPBIOSVERBOSE	# verbose PnP BIOS messages
-#options	PNPBIOSDEBUG	# more fulsome Pnp BIOS debugging messages
+#options	PNPBIOSDEBUG	# more fulsome PnP BIOS debugging messages
 #options 	I2OVERBOSE	# verbose I2O driver messages
 
 options 	NFS_BOOT_DHCP,NFS_BOOT_BOOTPARAM

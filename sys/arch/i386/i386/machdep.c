@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.429.2.2 2001/04/09 01:53:31 nathanw Exp $	*/
+/*	$NetBSD: machdep.c,v 1.429.2.3 2001/06/21 19:25:33 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2000 The NetBSD Foundation, Inc.
@@ -78,6 +78,7 @@
 #include "opt_cputype.h"
 #include "opt_ddb.h"
 #include "opt_ipkdb.h"
+#include "opt_kgdb.h"
 #include "opt_vm86.h"
 #include "opt_user_ldt.h"
 #include "opt_compat_netbsd.h"
@@ -214,9 +215,9 @@ paddr_t	idt_paddr;
 vaddr_t	pentium_idt_vaddr;
 #endif
 
-vm_map_t exec_map = NULL;
-vm_map_t mb_map = NULL;
-vm_map_t phys_map = NULL;
+struct vm_map *exec_map = NULL;
+struct vm_map *mb_map = NULL;
+struct vm_map *phys_map = NULL;
 
 extern	paddr_t avail_start, avail_end;
 
@@ -235,58 +236,12 @@ int	cpu_dump __P((void));
 int	cpu_dumpsize __P((void));
 u_long	cpu_dump_mempagecnt __P((void));
 void	dumpsys __P((void));
-void	identifycpu __P((void));
+void	identifycpu __P((struct cpu_info *));
 void	init386 __P((paddr_t));
 
-const struct i386_cache_info *cpu_itlb_info, *cpu_dtlb_info, *cpu_icache_info,
-    *cpu_dcache_info, *cpu_l2cache_info;
-
-const struct i386_cache_info {
-	u_int8_t	cai_desc;
-	const struct i386_cache_info **cai_var;
-	const char	*cai_string;
-	u_int		cai_totalsize;
-	u_int		cai_linesize;
-} i386_cache_info[] = {
-	{ 0x01,		&cpu_itlb_info,		"32 4K entries 4-way",
-	  32,		4 * 1024 },
-	{ 0x02,		&cpu_itlb_info,		"2 4M entries",
-	  2,		4 * 1024 * 1024 },
-	{ 0x03,		&cpu_dtlb_info,		"64 4K entries 4-way",
-	  64,		4 * 1024 },
-	{ 0x04,		&cpu_dtlb_info,		"8 4M entries 4-way",
-	  8,		4 * 1024 * 1024 },
-	{ 0x06,		&cpu_icache_info,	"8K 32b/line 4-way",
-	  8 * 1024,	32 },
-	{ 0x08,		&cpu_icache_info,	"16K 32b/line 4-way",
-	  16 * 1024,	32 },
-	{ 0x0a,		&cpu_dcache_info,	"8K 32b/line 2-way",
-	  8 * 1024,	32 },
-	{ 0x0c,		&cpu_dcache_info,	"16K 32b/line 2/4-way",
-	  16 * 1024,	32 },
-	{ 0x40,		&cpu_l2cache_info,	"not present",
-	  0,		0 },
-	{ 0x41,		&cpu_l2cache_info,	"128K 32b/line 4-way",
-	  128 * 1024,	32 },
-	{ 0x42,		&cpu_l2cache_info,	"256K 32b/line 4-way",
-	  256 * 1024,	32 },
-	{ 0x43,		&cpu_l2cache_info,	"512K 32b/line 4-way",
-	  512 * 1024,	32 },
-	{ 0x44,		&cpu_l2cache_info,	"1M 32b/line 4-way",
-	  1 * 1024 * 1024, 32 },
-	{ 0x45,		&cpu_l2cache_info,	"2M 32b/line 4-way",
-	  2 * 1024 * 1024, 32 },
-	{ 0x82,		&cpu_l2cache_info,	"256K 32b/line 8-way",
-	  256 * 1024,	32 },
-	{ 0x84,		&cpu_l2cache_info,	"1M 32b/line 8-way",
-	  1 * 1024 * 1024, 32 },
-	{ 0x85,		&cpu_l2cache_info,	"2M 32b/line 8-way",
-	  2 * 1024 * 1024, 32 },
-
-	{ 0,		NULL,		NULL,	0,	0 },
-};
-
-const struct i386_cache_info *i386_cache_info_lookup __P((u_int8_t));
+#if !defined(REALBASEMEM) && !defined(REALEXTMEM)
+void	add_mem_cluster	__P((u_int64_t, u_int64_t, u_int32_t));
+#endif /* !defnied(REALBASEMEM) && !defined(REALEXTMEM) */
 
 /*
  * Map Brand ID from cpuid instruction to brand name.
@@ -305,6 +260,10 @@ static int exec_nomid	__P((struct proc *, struct exec_package *));
 
 void cyrix6x86_cpu_setup __P((void));
 void winchip_cpu_setup __P((void));
+void amd_family5_setup __P((void));
+
+void intel_cpuid_cpu_cacheinfo __P((struct cpu_info *));
+void amd_cpuid_cpu_cacheinfo __P((struct cpu_info *));
 
 static __inline u_char
 cyrix_read_reg(u_char reg)
@@ -326,16 +285,15 @@ cyrix_write_reg(u_char reg, u_char data)
 void
 cpu_startup()
 {
+	struct cpu_info *ci = curcpu();
 	caddr_t v;
 	int sz, x;
 	vaddr_t minaddr, maxaddr;
 	vsize_t size;
 	char buf[160];				/* about 2 line */
 	char pbuf[9];
-#if NBIOSCALL > 0
-	extern int biostramp_image_size;
-	extern u_char biostramp_image[];
-#endif
+	char cbuf[7];
+	int bigcache, cachesize;
 
 	/*
 	 * Initialize error message buffer (et end of core).
@@ -348,6 +306,7 @@ cpu_startup()
 	for (x = 0; x < btoc(MSGBUFSIZE); x++)
 		pmap_kenter_pa((vaddr_t)msgbuf_vaddr + x * PAGE_SIZE,
 		    msgbuf_paddr + x * PAGE_SIZE, VM_PROT_READ|VM_PROT_WRITE);
+	pmap_update();
 
 	initmsgbuf((caddr_t)msgbuf_vaddr, round_page(MSGBUFSIZE));
 
@@ -358,18 +317,112 @@ cpu_startup()
 		printf(", %qd.%02qd MHz", (cpu_tsc_freq + 4999) / 1000000,
 		    ((cpu_tsc_freq + 4999) / 10000) % 100);
 	printf("\n");
-	if (cpu_icache_info != NULL || cpu_dcache_info != NULL) {
+
+	bigcache = cachesize = 0;
+
+	if (ci->ci_cinfo[CAI_ICACHE].cai_totalsize != 0 ||
+	    ci->ci_cinfo[CAI_DCACHE].cai_totalsize != 0) {
 		printf("cpu0:");
-		if (cpu_icache_info)
-			printf(" I-cache %s", cpu_icache_info->cai_string);
-		if (cpu_dcache_info)
-			printf("%sD-cache %s",
-			    (cpu_icache_info != NULL) ? ", " : " ",
-			    cpu_dcache_info->cai_string);
+		if (ci->ci_cinfo[CAI_ICACHE].cai_totalsize) {
+			cachesize = ci->ci_cinfo[CAI_ICACHE].cai_totalsize;
+			format_bytes(cbuf, sizeof(cbuf),
+			    ci->ci_cinfo[CAI_ICACHE].cai_totalsize);
+			printf(" I-cache %s %db/line ", cbuf,
+			    ci->ci_cinfo[CAI_ICACHE].cai_linesize);
+			switch (ci->ci_cinfo[CAI_ICACHE].cai_associativity) {
+			case 0:
+				printf("disabled");
+				cachesize = 0;
+				break;
+			case 1:
+				printf("direct-mapped");
+				break;
+			case ~0:
+				printf("fully associative");
+				/* XXX Don't need any color bins? */
+				break;
+			default:
+				printf("%d-way",
+				    ci->ci_cinfo[CAI_ICACHE].cai_associativity);
+				cachesize /=
+				    ci->ci_cinfo[CAI_ICACHE].cai_associativity;
+				break;
+			}
+		}
+		if (cachesize > bigcache)
+			bigcache = cachesize;
+
+		if (ci->ci_cinfo[CAI_DCACHE].cai_totalsize) {
+			cachesize = ci->ci_cinfo[CAI_DCACHE].cai_totalsize;
+			format_bytes(cbuf, sizeof(cbuf),
+			    ci->ci_cinfo[CAI_DCACHE].cai_totalsize);
+			printf("%sD-cache %s %db/line ",
+			    (ci->ci_cinfo[CAI_ICACHE].cai_totalsize != 0) ?
+			    ", " : " ",
+			    cbuf, ci->ci_cinfo[CAI_DCACHE].cai_linesize);
+			switch (ci->ci_cinfo[CAI_DCACHE].cai_associativity) {
+			case 0:
+				printf("disabled");
+				cachesize = 0;
+				break;
+			case 1:
+				printf("direct-mapped");
+				break;
+			case ~0:
+				printf("fully associative");
+				/* XXX Don't need any color bins? */
+				break;
+			default:
+				printf("%d-way",
+				    ci->ci_cinfo[CAI_DCACHE].cai_associativity);
+				cachesize /=
+				    ci->ci_cinfo[CAI_DCACHE].cai_associativity;
+				break;
+			}
+		}
+		if (cachesize > bigcache)
+			bigcache = cachesize;
+
 		printf("\n");
 	}
-	if (cpu_l2cache_info)
-		printf("cpu0: L2 cache %s\n", cpu_l2cache_info->cai_string);
+	if (ci->ci_cinfo[CAI_L2CACHE].cai_totalsize) {
+		cachesize = ci->ci_cinfo[CAI_L2CACHE].cai_totalsize;
+		format_bytes(cbuf, sizeof(cbuf),
+		    ci->ci_cinfo[CAI_L2CACHE].cai_totalsize);
+		printf("cpu0: L2 cache %s %db/line ", cbuf,
+		    ci->ci_cinfo[CAI_L2CACHE].cai_linesize);
+		switch (ci->ci_cinfo[CAI_L2CACHE].cai_associativity) {
+		case 0:
+			printf("disabled");
+			cachesize = 0;
+			break;
+		case 1:
+			printf("direct-mapped");
+			break;
+		case ~0:
+			printf("fully associative");
+			/* XXX Don't need any color bins? */
+			break;
+		default:
+			printf("%d-way",
+			    ci->ci_cinfo[CAI_L2CACHE].cai_associativity);
+			cachesize /=
+			    ci->ci_cinfo[CAI_L2CACHE].cai_associativity;
+			break;
+		}
+		if (cachesize > bigcache)
+			bigcache = cachesize;
+
+		printf("\n");
+	}
+
+	/*
+	 * Know the size of the largest cache on this CPU, re-color
+	 * our pages.
+	 */
+	if (bigcache != 0)
+		uvm_page_recolor(atop(bigcache));
+
 	if ((cpu_feature & CPUID_MASK1) != 0) {
 		bitmask_snprintf(cpu_feature, CPUID_FLAGS1,
 		    buf, sizeof(buf));
@@ -461,25 +514,6 @@ cpu_startup()
 	format_bytes(pbuf, sizeof(pbuf), bufpages * PAGE_SIZE);
 	printf("using %d buffers containing %s of memory\n", nbuf, pbuf);
 
-#if NBIOSCALL > 0
-	/*
-	 * this should be caught at kernel build time, but put it here
-	 * in case someone tries to fake it out...
-	 */
-#ifdef DIAGNOSTIC
-	if (biostramp_image_size > PAGE_SIZE)
-	    panic("biostramp_image_size too big: %x vs. %x\n",
-		  biostramp_image_size, PAGE_SIZE);
-#endif
-	pmap_kenter_pa((vaddr_t)BIOSTRAMP_BASE,	/* virtual */
-		       (paddr_t)BIOSTRAMP_BASE,	/* physical */
-		       VM_PROT_ALL);		/* protection */
-	memcpy((caddr_t)BIOSTRAMP_BASE, biostramp_image, biostramp_image_size);
-#ifdef DEBUG
-	printf("biostramp installed @ %x\n", BIOSTRAMP_BASE);
-#endif
-#endif
-
 	/* Safe for i/o port / memory space allocation to use malloc now. */
 	i386_bus_space_mallocok();
 }
@@ -548,29 +582,18 @@ i386_bufinit()
 			if (pg == NULL)
 				panic("cpu_startup: not enough memory for "
 				    "buffer cache");
-			pmap_kenter_pgs(curbuf, &pg, 1);
+			pmap_kenter_pa(curbuf, VM_PAGE_TO_PHYS(pg),
+			    VM_PROT_READ|VM_PROT_WRITE);
 			curbuf += PAGE_SIZE;
 			curbufsize -= PAGE_SIZE;
 		}
 	}
+	pmap_update();
 
 	/*
 	 * Set up buffers, so they can be used to read disk labels.
 	 */
 	bufinit();
-}
-
-const struct i386_cache_info *
-i386_cache_info_lookup(u_int8_t desc)
-{
-	const struct i386_cache_info *cai;
-
-	for (cai = i386_cache_info; cai->cai_string != NULL; cai++) {
-		if (cai->cai_desc == desc)
-			return (cai);
-	}
-
-	return (NULL);
 }
 
 /*  
@@ -584,19 +607,19 @@ char	cpu_model[120];
  */
 const struct cpu_nocpuid_nameclass i386_nocpuid_cpus[] = {
 	{ CPUVENDOR_INTEL, "Intel", "386SX",	CPUCLASS_386,
-		NULL},				/* CPU_386SX */
+		NULL, NULL},			/* CPU_386SX */
 	{ CPUVENDOR_INTEL, "Intel", "386DX",	CPUCLASS_386,
-		NULL},				/* CPU_386   */
+		NULL, NULL},			/* CPU_386   */
 	{ CPUVENDOR_INTEL, "Intel", "486SX",	CPUCLASS_486,
-		NULL},				/* CPU_486SX */
+		NULL, NULL},			/* CPU_486SX */
 	{ CPUVENDOR_INTEL, "Intel", "486DX",	CPUCLASS_486,
-		NULL},				/* CPU_486   */
+		NULL, NULL},			/* CPU_486   */
 	{ CPUVENDOR_CYRIX, "Cyrix", "486DLC",	CPUCLASS_486,
-		NULL},				/* CPU_486DLC */
-	{ CPUVENDOR_CYRIX, "Cyrix", "6x86",		CPUCLASS_486,
-		cyrix6x86_cpu_setup},	/* CPU_6x86 */
+		NULL, NULL},			/* CPU_486DLC */
+	{ CPUVENDOR_CYRIX, "Cyrix", "6x86",	CPUCLASS_486,
+		cyrix6x86_cpu_setup, NULL},	/* CPU_6x86 */
 	{ CPUVENDOR_NEXGEN,"NexGen","586",      CPUCLASS_386,
-		NULL},				/* CPU_NX586 */
+		NULL, NULL},			/* CPU_NX586 */
 };
 
 const char *classnames[] = {
@@ -627,7 +650,8 @@ const struct cpu_cpuid_nameclass i386_cpuid_cpus[] = {
 				"486DX4", 0, 0, 0, 0, 0, 0, 0,
 				"486"		/* Default */
 			},
-			NULL
+			NULL,
+			intel_cpuid_cpu_cacheinfo,
 		},
 		/* Family 5 */
 		{
@@ -640,7 +664,8 @@ const struct cpu_cpuid_nameclass i386_cpuid_cpus[] = {
 				0, 0, 0, 0, 0, 0, 0,
 				"Pentium"	/* Default */
 			},
-			NULL
+			NULL,
+			intel_cpuid_cpu_cacheinfo,
 		},
 		/* Family 6 */
 		{
@@ -656,7 +681,8 @@ const struct cpu_cpuid_nameclass i386_cpuid_cpus[] = {
 				0, 0,
 				"Pentium Pro, II or III"	/* Default */
 			},
-			NULL
+			NULL,
+			intel_cpuid_cpu_cacheinfo,
 		},
 		/* Family > 6 */
 		{
@@ -666,7 +692,8 @@ const struct cpu_cpuid_nameclass i386_cpuid_cpus[] = {
 				0, 0, 0, 0, 0, 0, 0, 0, 0,
 				"Pentium 4"	/* Default */
 			},
-			NULL
+			NULL,
+			intel_cpuid_cpu_cacheinfo,
 		} }
 	},
 	{
@@ -685,7 +712,8 @@ const struct cpu_cpuid_nameclass i386_cpuid_cpus[] = {
 				"Am5x86 W/B 133/160",
 				"Am486 or Am5x86"	/* Default */
 			},
-			NULL
+			NULL,
+			NULL,
 		},
 		/* Family 5 */
 		{
@@ -696,7 +724,8 @@ const struct cpu_cpuid_nameclass i386_cpuid_cpus[] = {
 				"K6-2+/III+", 0, 0,
 				"K5 or K6"		/* Default */
 			},
-			NULL
+			amd_family5_setup,
+			amd_cpuid_cpu_cacheinfo,
 		},
 		/* Family 6 */
 		{
@@ -707,7 +736,8 @@ const struct cpu_cpuid_nameclass i386_cpuid_cpus[] = {
 				0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
 				"K7 (Athlon)"	/* Default */
 			},
-			NULL
+			NULL,
+			amd_cpuid_cpu_cacheinfo,
 		},
 		/* Family > 6 */
 		{
@@ -717,7 +747,8 @@ const struct cpu_cpuid_nameclass i386_cpuid_cpus[] = {
 				0, 0, 0, 0, 0, 0, 0, 0, 0,
 				"Unknown K7 (Athlon)"	/* Default */
 			},
-			NULL
+			NULL,
+			amd_cpuid_cpu_cacheinfo,
 		} }
 	},
 	{
@@ -733,7 +764,8 @@ const struct cpu_cpuid_nameclass i386_cpuid_cpus[] = {
 				0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
 				"486"		/* Default */
 			},
-			NULL
+			NULL,
+			NULL,
 		},
 		/* Family 5 */
 		{
@@ -744,7 +776,8 @@ const struct cpu_cpuid_nameclass i386_cpuid_cpus[] = {
 				0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
 				"6x86"		/* Default */
 			},
-			cyrix6x86_cpu_setup
+			cyrix6x86_cpu_setup,
+			NULL,
 		},
 		/* Family 6 */
 		{
@@ -753,7 +786,8 @@ const struct cpu_cpuid_nameclass i386_cpuid_cpus[] = {
 				"6x86MX", 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
 				"6x86MX"		/* Default */
 			},
-			cyrix6x86_cpu_setup
+			cyrix6x86_cpu_setup,
+			NULL,
 		},
 		/* Family > 6 */
 		{
@@ -762,7 +796,8 @@ const struct cpu_cpuid_nameclass i386_cpuid_cpus[] = {
 				0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
 				"Unknown 6x86MX"		/* Default */
 			},
-			NULL
+			NULL,
+			NULL,
 		} }
 	},
 	{
@@ -777,7 +812,8 @@ const struct cpu_cpuid_nameclass i386_cpuid_cpus[] = {
 				0, 0, 0, 0, 0, 0, 0, 0, 0,
 				"486 compatible"	/* Default */
 			},
-			NULL
+			NULL,
+			NULL,
 		},
 		/* Family 5 */
 		{
@@ -787,7 +823,8 @@ const struct cpu_cpuid_nameclass i386_cpuid_cpus[] = {
 				"WinChip 2", "WinChip 3", 0, 0, 0, 0, 0, 0,
 				"WinChip"		/* Default */
 			},
-			winchip_cpu_setup
+			winchip_cpu_setup,
+			NULL,
 		},
 		/* Family 6, not yet available from IDT */
 		{
@@ -797,7 +834,8 @@ const struct cpu_cpuid_nameclass i386_cpuid_cpus[] = {
 				0, 0, 0, 0, 0, 0, 0, 0, 0,
 				"Pentium Pro compatible"	/* Default */
 			},
-			NULL
+			NULL,
+			NULL,
 		},
 		/* Family > 6, not yet available from IDT */
 		{
@@ -807,10 +845,43 @@ const struct cpu_cpuid_nameclass i386_cpuid_cpus[] = {
 				0, 0, 0, 0, 0, 0, 0, 0, 0,
 				"Pentium Pro compatible"	/* Default */
 			},
-			NULL
+			NULL,
+			NULL,
 		} }
 	}
 };
+
+static void
+do_cpuid(u_int which, u_int *rv)
+{
+	register u_int eax __asm("%eax") = which;
+
+	__asm __volatile(
+	"	cpuid			;"
+	"	movl	%%eax,0(%2)	;"
+	"	movl	%%ebx,4(%2)	;"
+	"	movl	%%ecx,8(%2)	;"
+	"	movl	%%edx,12(%2)	"
+	: "=a" (eax)
+	: "0" (eax), "S" (rv)
+	: "ebx", "ecx", "edx");
+}
+
+static void
+do_cpuid_serial(u_int *serial)
+{
+	__asm __volatile(
+	"	movl	$1,%%eax	;"
+	"	cpuid			;"
+	"	movl	%%eax,0(%0)	;"
+	"	movl	$3,%%eax	;"
+	"	cpuid			;"
+	"	movl	%%edx,4(%0)	;"
+	"	movl	%%ecx,8(%0)	"
+	: /* no inputs */
+	: "S" (serial)
+	: "eax", "ebx", "ecx", "edx");
+}
 
 void
 cyrix6x86_cpu_setup()
@@ -849,40 +920,336 @@ winchip_cpu_setup()
 #endif
 }
 
-static void
-do_cpuid(u_int which, u_int *rv)
+void
+amd_family5_setup(void)
 {
-	register u_int eax __asm("%eax") = which;
+	extern int cpu_id;
 
-	__asm __volatile(
-	"	cpuid			;"
-	"	movl	%%eax,0(%2)	;"
-	"	movl	%%ebx,4(%2)	;"
-	"	movl	%%ecx,8(%2)	;"
-	"	movl	%%edx,12(%2)	"
-	: "=a" (eax)
-	: "0" (eax), "S" (rv)
-	: "ebx", "ecx", "edx");
+	switch (CPUID2MODEL(cpu_id)) {
+	case 0:		/* AMD-K5 Model 0 */
+		/*
+		 * According to the AMD Processor Recognition App Note,
+		 * the AMD-K5 Model 0 uses the wrong bit to indicate
+		 * support for global PTEs, instead using bit 9 (APIC)
+		 * rather than bit 13 (i.e. "0x200" vs. 0x2000".  Oops!).
+		 */
+		if (cpu_feature & CPUID_APIC)
+			cpu_feature = (cpu_feature & ~CPUID_APIC) | CPUID_PGE;
+		/*
+		 * XXX But pmap_pg_g is already initialized -- need to kick
+		 * XXX the pmap somehow.  How does the MP branch do this?
+		 */
+		break;
+	}
 }
 
-static void
-do_cpuid_serial(u_int *serial)
+static const struct i386_cache_info *
+cache_info_lookup(const struct i386_cache_info *cai, int count, u_int8_t desc)
 {
-	__asm __volatile(
-	"	movl	$1,%%eax	;"
-	"	cpuid			;"
-	"	movl	%%eax,0(%0)	;"
-	"	movl	$3,%%eax	;"
-	"	cpuid			;"
-	"	movl	%%edx,4(%0)	;"
-	"	movl	%%ecx,8(%0)	"
-	: /* no imputs */
-	: "S" (serial)
-	: "eax", "ebx", "ecx", "edx");
+	int i;
+
+	for (i = 0; i < count; i++) {
+		if (cai[i].cai_desc == desc)
+			return (&cai[i]);
+	}
+
+	return (NULL);
+}
+
+static const struct i386_cache_info intel_cpuid_cache_info[] = {
+	{ CAI_ITLB,
+	  0x01,
+	  32,		4,			4 * 1024 },
+	{ CAI_ITLB2,
+	  0x02,
+	  2,		1,			4 * 1024 * 1024 },
+	{ CAI_DTLB,
+	  0x03,
+	  64,		4,			4 * 1024 },
+	{ CAI_DTLB2,
+	  0x04,
+	  8,		4,			4 * 1024 * 1024 },
+	{ CAI_ICACHE,
+	  0x06,
+	  8 * 1024,	4,			32 },
+	{ CAI_ICACHE,
+	  0x08,
+	  16 * 1024,	4,			32 },
+	{ CAI_DCACHE,
+	  0x0a,
+	  8 * 1024,	2,			32 },
+	{ CAI_DCACHE,
+	  0x0c,
+	  16 * 1024,	2,			32 },
+	{ CAI_L2CACHE,
+	  0x40,
+	  0,		1,			0 },
+	{ CAI_L2CACHE,
+	  0x41,
+	  128 * 1024,	4,			32 },
+	{ CAI_L2CACHE,
+	  0x42,
+	  256 * 1024,	4,			32 },
+	{ CAI_L2CACHE,
+	  0x43,
+	  512 * 1024,	4,			32 },
+	{ CAI_L2CACHE,
+	  0x44,
+	  1 * 1024 * 1024, 4,			32 },
+	{ CAI_L2CACHE,
+	  0x45,
+	  2 * 1024 * 1024, 4,			32 },
+	{ CAI_L2CACHE,
+	  0x82,
+	  256 * 1024,	8,			32 },
+	{ CAI_L2CACHE,
+	  0x84,
+	  1 * 1024 * 1024, 8,			32 },
+	{ CAI_L2CACHE,
+	  0x85,
+	  2 * 1024 * 1024, 8,			32 },
+};
+static const int intel_cpuid_cache_info_count =
+    sizeof(intel_cpuid_cache_info) / sizeof(intel_cpuid_cache_info[0]);
+
+void
+intel_cpuid_cpu_cacheinfo(struct cpu_info *ci)
+{
+	const struct i386_cache_info *cai;
+	u_int descs[4];
+	int iterations, i, j;
+	u_int8_t desc;
+
+	/*
+	 * Parse the cache info from `cpuid'.
+	 * XXX This is kinda ugly, but hey, so is the architecture...
+	 */
+
+	do_cpuid(2, descs);
+	iterations = descs[0] & 0xff;
+	while (iterations-- > 0) {
+		for (i = 0; i < 4; i++) {
+			if (descs[i] & 0x80000000)
+				continue;
+			for (j = 0; j < 4; j++) {
+				if (i == 0 && j == 0)
+					continue;
+				desc = (descs[i] >> (j * 8)) & 0xff;
+				cai = cache_info_lookup(intel_cpuid_cache_info,
+				    intel_cpuid_cache_info_count, desc);
+				if (cai != NULL) {
+					memcpy(&ci->ci_cinfo[cai->cai_index],
+					    cai,
+					    sizeof(struct i386_cache_info));
+				}
+			}
+		}
+		do_cpuid(2, descs);
+	}
+}
+
+/*
+ * AMD Cache Info:
+ *
+ *	Athlon, Duron:
+ *
+ *		Function 8000.0005 L1 TLB/Cache Information
+ *		EAX -- L1 TLB 2/4MB pages
+ *		EBX -- L1 TLB 4K pages
+ *		ECX -- L1 D-cache
+ *		EDX -- L1 I-cache
+ *
+ *		Function 8000.0006 L2 TLB/Cache Information
+ *		EAX -- L2 TLB 2/4MB pages
+ *		EBX -- L2 TLB 4K pages
+ *		ECX -- L2 Unified cache
+ *		EDX -- reserved
+ *
+ *	K5, K6:
+ *
+ *		Function 8000.0005 L1 TLB/Cache Information
+ *		EAX -- reserved
+ *		EBX -- TLB 4K pages
+ *		ECX -- L1 D-cache
+ *		EDX -- L1 I-cache
+ *
+ *	K6-III:
+ *
+ *		Function 8000.0006 L2 Cache Information
+ *		EAX -- reserved
+ *		EBX -- reserved
+ *		ECX -- L2 Unified cache
+ *		EDX -- reserved
+ */
+
+/* L1 TLB 2/4MB pages */
+#define	AMD_L1_EAX_DTLB_ASSOC(x)	(((x) >> 24) & 0xff)
+#define	AMD_L1_EAX_DTLB_ENTRIES(x)	(((x) >> 16) & 0xff)
+#define	AMD_L1_EAX_ITLB_ASSOC(x)	(((x) >> 8)  & 0xff)
+#define	AMD_L1_EAX_ITLB_ENTRIES(x)	( (x)        & 0xff)
+
+/* L1 TLB 4K pages */
+#define	AMD_L1_EBX_DTLB_ASSOC(x)	(((x) >> 24) & 0xff)
+#define	AMD_L1_EBX_DTLB_ENTRIES(x)	(((x) >> 16) & 0xff)
+#define	AMD_L1_EBX_ITLB_ASSOC(x)	(((x) >> 8)  & 0xff)
+#define	AMD_L1_EBX_ITLB_ENTRIES(x)	( (x)        & 0xff)
+
+/* L1 Data Cache */
+#define	AMD_L1_ECX_DC_SIZE(x)		((((x) >> 24) & 0xff) * 1024)
+#define	AMD_L1_ECX_DC_ASSOC(x)		 (((x) >> 16) & 0xff)
+#define	AMD_L1_ECX_DC_LPT(x)		 (((x) >> 8)  & 0xff)
+#define	AMD_L1_ECX_DC_LS(x)		 ( (x)        & 0xff)
+
+/* L1 Instruction Cache */
+#define	AMD_L1_EDX_IC_SIZE(x)		((((x) >> 24) & 0xff) * 1024)
+#define	AMD_L1_EDX_IC_ASSOC(x)		 (((x) >> 16) & 0xff)
+#define	AMD_L1_EDX_IC_LPT(x)		 (((x) >> 8)  & 0xff)
+#define	AMD_L1_EDX_IC_LS(x)		 ( (x)        & 0xff)
+
+/* Note for L2 TLB -- if the upper 16 bits are 0, it is a unified TLB */
+
+/* L2 TLB 2/4MB pages */
+#define	AMD_L2_EAX_DTLB_ASSOC(x)	(((x) >> 28)  & 0xf)
+#define	AMD_L2_EAX_DTLB_ENTRIES(x)	(((x) >> 16)  & 0xfff)
+#define	AMD_L2_EAX_IUTLB_ASSOC(x)	(((x) >> 12)  & 0xf)
+#define	AMD_L2_EAX_IUTLB_ENTRIES(x)	( (x)         & 0xfff)
+
+/* L2 TLB 4K pages */
+#define	AMD_L2_EBX_DTLB_ASSOC(x)	(((x) >> 28)  & 0xf)
+#define	AMD_L2_EBX_DTLB_ENTRIES(x)	(((x) >> 16)  & 0xfff) 
+#define	AMD_L2_EBX_IUTLB_ASSOC(x)	(((x) >> 12)  & 0xf)
+#define	AMD_L2_EBX_IUTLB_ENTRIES(x)	( (x)         & 0xfff)
+
+/* L2 Cache */
+#define	AMD_L2_ECX_C_SIZE(x)		((((x) >> 16) & 0xffff) * 1024)
+#define	AMD_L2_ECX_C_ASSOC(x)		 (((x) >> 12) & 0xf)
+#define	AMD_L2_ECX_C_LPT(x)		 (((x) >> 8)  & 0xf)
+#define	AMD_L2_ECX_C_LS(x)		 ( (x)        & 0xff)
+
+static const struct i386_cache_info amd_cpuid_l2cache_assoc_info[] = {
+	{ 0,
+	  0x00,
+	  0,		0,			0 },
+	{ 0,
+	  0x01,
+	  0,		1,			0 },
+	{ 0,
+	  0x02,
+	  0,		2,			0 },
+	{ 0,
+	  0x04,
+	  0,		4,			0 },
+	{ 0,
+	  0x06,
+	  0,		8,			0 },
+	{ 0,
+	  0x08,
+	  0,		16,			0 },
+	{ 0,
+	  0x0f,
+	  0,		~0,			0 },
+};
+static const int amd_cpuid_l2cache_assoc_info_count =
+    sizeof(amd_cpuid_l2cache_assoc_info) /
+    sizeof(amd_cpuid_l2cache_assoc_info[0]);
+
+void
+amd_cpuid_cpu_cacheinfo(struct cpu_info *ci)
+{
+	extern int cpu_id;
+	const struct i386_cache_info *cp;
+	struct i386_cache_info *cai;
+	int family, model;
+	u_int descs[4];
+	u_int lfunc;
+
+	family = (cpu_id >> 8) & 15;
+	if (family < CPU_MINFAMILY)
+		panic("amd_cpuid_cpu_cacheinfo: strange family value");
+	model = CPUID2MODEL(cpu_id);
+
+	/*
+	 * K5 model 0 has none of this info.
+	 */
+	if (family == 5 && model == 0)
+		return;
+
+	/*
+	 * Determine the largest extended function value.
+	 */
+	do_cpuid(0x80000000, descs);
+	lfunc = descs[0];
+
+	/*
+	 * Determine L1 cache/TLB info.
+	 */
+	if (lfunc < 0x80000005) {
+		/* No L1 cache info available. */
+		return;
+	}
+
+	do_cpuid(0x80000005, descs);
+
+	/*
+	 * K6-III and higher have large page TLBs.
+	 */
+	if ((family == 5 && model >= 9) || family >= 6) {
+		cai = &ci->ci_cinfo[CAI_ITLB2];
+		cai->cai_totalsize = AMD_L1_EAX_ITLB_ENTRIES(descs[0]);
+		cai->cai_associativity = AMD_L1_EAX_ITLB_ASSOC(descs[0]);
+		cai->cai_linesize = (4 * 1024 * 1024);
+
+		cai = &ci->ci_cinfo[CAI_DTLB2];
+		cai->cai_totalsize = AMD_L1_EAX_DTLB_ENTRIES(descs[0]);
+		cai->cai_associativity = AMD_L1_EAX_DTLB_ASSOC(descs[0]);
+		cai->cai_linesize = (4 * 1024 * 1024);
+	}
+
+	cai = &ci->ci_cinfo[CAI_ITLB];
+	cai->cai_totalsize = AMD_L1_EBX_ITLB_ENTRIES(descs[1]);
+	cai->cai_associativity = AMD_L1_EBX_ITLB_ASSOC(descs[1]);
+	cai->cai_linesize = (4 * 1024);
+
+	cai = &ci->ci_cinfo[CAI_DTLB];
+	cai->cai_totalsize = AMD_L1_EBX_DTLB_ENTRIES(descs[1]);
+	cai->cai_associativity = AMD_L1_EBX_DTLB_ASSOC(descs[1]);
+	cai->cai_linesize = (4 * 1024);       
+
+	cai = &ci->ci_cinfo[CAI_DCACHE];
+	cai->cai_totalsize = AMD_L1_ECX_DC_SIZE(descs[2]);
+	cai->cai_associativity = AMD_L1_ECX_DC_ASSOC(descs[2]);
+	cai->cai_linesize = AMD_L1_EDX_IC_LS(descs[2]);
+
+	cai = &ci->ci_cinfo[CAI_ICACHE];
+	cai->cai_totalsize = AMD_L1_EDX_IC_SIZE(descs[3]);
+	cai->cai_associativity = AMD_L1_EDX_IC_ASSOC(descs[3]);
+	cai->cai_linesize = AMD_L1_EDX_IC_LS(descs[3]);
+
+	/*
+	 * Determine L2 cache/TLB info.
+	 */
+	if (lfunc < 0x80000006) {
+		/* No L2 cache info available. */
+		return;
+	}
+
+	do_cpuid(0x80000006, descs);
+
+	cai = &ci->ci_cinfo[CAI_L2CACHE];
+	cai->cai_totalsize = AMD_L2_ECX_C_SIZE(descs[2]);
+	cai->cai_associativity = AMD_L2_ECX_C_ASSOC(descs[2]);
+	cai->cai_linesize = AMD_L2_ECX_C_LS(descs[2]);
+
+	cp = cache_info_lookup(amd_cpuid_l2cache_assoc_info,
+	    amd_cpuid_l2cache_assoc_info_count, cai->cai_associativity);
+	if (cp != NULL)
+		cai->cai_associativity = cp->cai_associativity;
+	else
+		cai->cai_associativity = 0;	/* XXX Unknown/reserved */
 }
 
 void
-identifycpu()
+identifycpu(struct cpu_info *ci)
 {
 	extern char cpu_vendor[];
 	extern int cpu_id;
@@ -892,6 +1259,7 @@ identifycpu()
 	int family, model, step, modif;
 	const struct cpu_cpuid_nameclass *cpup = NULL;
 	void (*cpu_setup) __P((void));
+	void (*cpu_cacheinfo) __P((struct cpu_info *));
 
 	if (cpuid_level == -1) {
 #ifdef DIAGNOSTIC
@@ -904,6 +1272,7 @@ identifycpu()
 		vendorname = i386_nocpuid_cpus[cpu].cpu_vendorname;
 		class = i386_nocpuid_cpus[cpu].cpu_class;
 		cpu_setup = i386_nocpuid_cpus[cpu].cpu_setup;
+		cpu_cacheinfo = i386_nocpuid_cpus[cpu].cpu_cacheinfo;
 		modifier = "";
 	} else {
 		max = sizeof (i386_cpuid_cpus) / sizeof (i386_cpuid_cpus[0]);
@@ -938,6 +1307,7 @@ identifycpu()
 			modifier = "";
 			name = "";
 			cpu_setup = NULL;
+			cpu_cacheinfo = NULL;
 		} else {
 			vendor = cpup->cpu_vendor;
 			vendorname = cpup->cpu_vendorname;
@@ -953,6 +1323,7 @@ identifycpu()
 			    name = cpup->cpu_family[i].cpu_models[CPU_DEFMODEL];
 			class = cpup->cpu_family[i].cpu_class;
 			cpu_setup = cpup->cpu_family[i].cpu_setup;
+			cpu_cacheinfo = cpup->cpu_family[i].cpu_cacheinfo;
 
 			/*
 			 * Intel processors family >= 6, model 8 allow to
@@ -971,34 +1342,10 @@ identifycpu()
 	cpu_class = class;
 
 	/*
-	 * Parse the cache info from `cpuid', if we have it.
-	 * XXX This is kinda ugly, but hey, so is the architecture...
+	 * Get the cache info for this CPU, if we can.
 	 */
-	if (cpuid_level != -1) {
-		const struct i386_cache_info *cai;
-		u_int descs[4];
-		int iterations, j;
-		u_int8_t desc;
-
-		do_cpuid(2, descs);
-		iterations = descs[0] & 0xff;
-		while (iterations-- > 0) {
-			for (i = 0; i < 4; i++) {
-				if (descs[i] & 0x80000000)
-					continue;
-				for (j = 0; j < 4; j++) {
-					if (i == 0 && j == 0)
-						continue;
-					desc = (descs[i] >> (j * 8)) & 0xff;
-					cai = i386_cache_info_lookup(desc);
-					if (cai != NULL)
-						*cai->cai_var = cai;
-				}
-			}
-
-			do_cpuid(2, descs);
-		}
-	}
+	if (cpu_cacheinfo != NULL)
+		(*cpu_cacheinfo)(ci);
 
 	/*
 	 * If the processor serial number misfeature is present and supported,
@@ -1211,8 +1558,8 @@ sendsig(catcher, sig, mask, code)
 	} else
 #endif
 	{
-		__asm("movl %%gs,%w0" : "=r" (frame.sf_sc.sc_gs));
-		__asm("movl %%fs,%w0" : "=r" (frame.sf_sc.sc_fs));
+		frame.sf_sc.sc_gs = tf->tf_gs;
+		frame.sf_sc.sc_fs = tf->tf_fs;
 		frame.sf_sc.sc_es = tf->tf_es;
 		frame.sf_sc.sc_ds = tf->tf_ds;
 		frame.sf_sc.sc_eflags = tf->tf_eflags;
@@ -1259,8 +1606,8 @@ sendsig(catcher, sig, mask, code)
 	/*
 	 * Build context to run handler in.
 	 */
-	__asm("movl %w0,%%gs" : : "r" (GSEL(GUDATA_SEL, SEL_UPL)));
-	__asm("movl %w0,%%fs" : : "r" (GSEL(GUDATA_SEL, SEL_UPL)));
+	tf->tf_gs = GSEL(GUDATA_SEL, SEL_UPL);
+	tf->tf_fs = GSEL(GUDATA_SEL, SEL_UPL);
 	tf->tf_es = GSEL(GUDATA_SEL, SEL_UPL);
 	tf->tf_ds = GSEL(GUDATA_SEL, SEL_UPL);
 	tf->tf_eip = (int)p->p_sigctx.ps_sigcode;
@@ -1426,7 +1773,8 @@ sys___sigreturn14(l, v, retval)
 		    !USERMODE(context.sc_cs, context.sc_eflags))
 			return (EINVAL);
 
-		/* %fs and %gs were restored by the trampoline. */
+		tf->tf_gs = context.sc_gs;
+		tf->tf_fs = context.sc_fs;
 		tf->tf_es = context.sc_es;
 		tf->tf_ds = context.sc_ds;
 		tf->tf_eflags = context.sc_eflags;
@@ -1812,8 +2160,8 @@ setregs(l, pack, stack)
 	pcb->pcb_savefpu.sv_env.en_cw = __NetBSD_NPXCW__;
 
 	tf = l->l_md.md_regs;
-	__asm("movl %w0,%%gs" : : "r" (LSEL(LUDATA_SEL, SEL_UPL)));
-	__asm("movl %w0,%%fs" : : "r" (LSEL(LUDATA_SEL, SEL_UPL)));
+	tf->tf_gs = LSEL(LUDATA_SEL, SEL_UPL);
+	tf->tf_fs = LSEL(LUDATA_SEL, SEL_UPL);
 	tf->tf_es = LSEL(LUDATA_SEL, SEL_UPL);
 	tf->tf_ds = LSEL(LUDATA_SEL, SEL_UPL);
 	tf->tf_edi = 0;
@@ -1899,6 +2247,77 @@ extern vector IDTVEC(svr4_fasttrap);
 
 #define	KBTOB(x)	((size_t)(x) * 1024UL)
 
+#if !defined(REALBASEMEM) && !defined(REALEXTMEM)
+void
+add_mem_cluster(seg_start, seg_end, type)
+	u_int64_t seg_start, seg_end;
+	u_int32_t type;
+{
+	extern struct extent *iomem_ex;
+
+	if (seg_end > 0x100000000ULL) {
+		printf("WARNING: skipping large "
+		    "memory map entry: "
+		    "0x%qx/0x%qx/0x%x\n",
+		    seg_start,
+		    (seg_end - seg_start),
+		    type);
+		return;
+	}
+
+	/*
+	 * XXX Chop the last page off the size so that
+	 * XXX it can fit in avail_end.
+	 */
+	if (seg_end == 0x100000000ULL)
+		seg_end -= PAGE_SIZE;
+
+	if (seg_end <= seg_start)
+		return;
+
+	/*
+	 * Allocate the physical addresses used by RAM
+	 * from the iomem extent map.  This is done before
+	 * the addresses are page rounded just to make
+	 * sure we get them all.
+	 */
+	if (extent_alloc_region(iomem_ex, seg_start,
+	    seg_end - seg_start, EX_NOWAIT)) {
+		/* XXX What should we do? */
+		printf("WARNING: CAN'T ALLOCATE "
+		    "MEMORY SEGMENT "
+		    "(0x%qx/0x%qx/0x%x) FROM "
+		    "IOMEM EXTENT MAP!\n",
+		    seg_start, seg_end - seg_start, type);
+	}
+
+	/*
+	 * If it's not free memory, skip it.
+	 */
+	if (type != BIM_Memory)
+		return;
+
+	/* XXX XXX XXX */
+	if (mem_cluster_cnt >= VM_PHYSSEG_MAX)
+		panic("init386: too many memory segments");
+
+	seg_start = round_page(seg_start);
+	seg_end = trunc_page(seg_end);
+
+	if (seg_start == seg_end)
+		return;
+
+	mem_clusters[mem_cluster_cnt].start = seg_start;
+	mem_clusters[mem_cluster_cnt].size =
+	    seg_end - seg_start;
+
+	if (avail_end < seg_end)
+		avail_end = seg_end;
+	physmem += atop(mem_clusters[mem_cluster_cnt].size);
+	mem_cluster_cnt++;
+}
+#endif /* !defined(REALBASEMEM) && !defined(REALEXTMEM) */
+
 void
 init386(first_avail)
 	vaddr_t first_avail;
@@ -1912,6 +2331,10 @@ init386(first_avail)
 	int x, first16q;
 	u_int64_t seg_start, seg_end;
 	u_int64_t seg_start1, seg_end1;
+#if NBIOSCALL > 0
+	extern int biostramp_image_size;
+	extern u_char biostramp_image[];
+#endif
 
 	lwp0.l_addr = proc0paddr;
 	curpcb = &lwp0.l_addr->u_pcb;
@@ -1930,6 +2353,13 @@ init386(first_avail)
 	 */
 	if (PAGE_SIZE != NBPG)
 		panic("init386: PAGE_SIZE != NBPG");
+
+	/*
+	 * Start with 2 color bins -- this is just a guess to get us
+	 * started.  We'll recolor when we determine the largest cache
+	 * sizes on the system.
+	 */
+	uvmexp.ncolors = 2;
 
 #if NBIOSCALL > 0
 	avail_start = 3*PAGE_SIZE; /* save us a page for trampoline code and
@@ -1984,67 +2414,29 @@ init386(first_avail)
 			seg_start = bim->entry[x].addr;
 			seg_end = bim->entry[x].addr + bim->entry[x].size;
 
-			if (seg_end > 0x100000000ULL) {
-				printf("WARNING: skipping large "
-				    "memory map entry: "
-				    "0x%qx/0x%qx/0x%x\n",
-				    bim->entry[x].addr,
-				    bim->entry[x].size,
+			/*
+			 *   Avoid Compatibility Holes.
+			 * XXX  Holes within memory space that allow access
+			 * XXX to be directed to the PC-compatible frame buffer
+			 * XXX (0xa0000-0xbffff),to adapter ROM space 
+			 * XXX (0xc0000-0xdffff), and to system BIOS space
+			 * XXX (0xe0000-0xfffff).
+			 * XXX  Some laptop(for example,Toshiba Satellite2550X)
+			 * XXX report this area and occurred problems,
+			 * XXX so we avoid this area.
+			 */
+			if (seg_start < 0x100000 && seg_end > 0xa0000) {
+				printf("WARNING: memory map entry overlaps "
+				    "with ``Compatibility Holes'': "
+				    "0x%qx/0x%qx/0x%x\n", seg_start,
+				    seg_end - seg_start, bim->entry[x].type);
+				add_mem_cluster(seg_start, 0xa0000,
 				    bim->entry[x].type);
-				continue;
-			}
-
-			/*
-			 * XXX Chop the last page off the size so that
-			 * XXX it can fit in avail_end.
-			 */
-			if (seg_end == 0x100000000ULL) {
-				seg_end -= PAGE_SIZE;
-				if (seg_end <= seg_start)
-					continue;
-			}
-
-			/*
-			 * Allocate the physical addresses used by RAM
-			 * from the iomem extent map.  This is done before
-			 * the addresses are page rounded just to make
-			 * sure we get them all.
-			 */
-			if (extent_alloc_region(iomem_ex, seg_start,
-			    seg_end - seg_start, EX_NOWAIT)) {
-				/* XXX What should we do? */
-				printf("WARNING: CAN'T ALLOCATE "
-				    "MEMORY SEGMENT %d "
-				    "(0x%qx/0x%qx/0x%x) FROM "
-				    "IOMEM EXTENT MAP!\n",
-				    x, seg_start, seg_end - seg_start,
+				add_mem_cluster(0x100000, seg_end,
 				    bim->entry[x].type);
-			}
-
-			/*
-			 * If it's not free memory, skip it.
-			 */
-			if (bim->entry[x].type != BIM_Memory)
-				continue;
-
-			/* XXX XXX XXX */
-			if (mem_cluster_cnt >= VM_PHYSSEG_MAX)
-				panic("init386: too many memory segments");
-
-			seg_start = round_page(seg_start);
-			seg_end = trunc_page(seg_end);
-
-			if (seg_start == seg_end)
-				continue;
-
-			mem_clusters[mem_cluster_cnt].start = seg_start;
-			mem_clusters[mem_cluster_cnt].size =
-			    seg_end - seg_start;
-
-			if (avail_end < seg_end)
-				avail_end = seg_end;
-			physmem += atop(mem_clusters[mem_cluster_cnt].size);
-			mem_cluster_cnt++;
+			} else
+				add_mem_cluster(seg_start, seg_end,
+				    bim->entry[x].type);
 		}
 	}
 #endif /* ! REALBASEMEM && ! REALEXTMEM */
@@ -2270,15 +2662,36 @@ init386(first_avail)
 	/* install page 2 (reserved above) as PT page for first 4M */
 	pmap_enter(pmap_kernel(), (vaddr_t)vtopte(0), 2*PAGE_SIZE,
 	    VM_PROT_READ|VM_PROT_WRITE, PMAP_WIRED|VM_PROT_READ|VM_PROT_WRITE);
+	pmap_update();
 	memset(vtopte(0), 0, PAGE_SIZE);/* make sure it is clean before using */
+
+	/*
+	 * this should be caught at kernel build time, but put it here
+	 * in case someone tries to fake it out...
+	 */
+#ifdef DIAGNOSTIC
+	if (biostramp_image_size > PAGE_SIZE)
+	    panic("biostramp_image_size too big: %x vs. %x\n",
+		  biostramp_image_size, PAGE_SIZE);
+#endif
+	pmap_kenter_pa((vaddr_t)BIOSTRAMP_BASE,	/* virtual */
+		       (paddr_t)BIOSTRAMP_BASE,	/* physical */
+		       VM_PROT_ALL);		/* protection */
+	pmap_update();
+	memcpy((caddr_t)BIOSTRAMP_BASE, biostramp_image, biostramp_image_size);
+#ifdef DEBUG_BIOSCALL
+	printf("biostramp installed @ %x\n", BIOSTRAMP_BASE);
+#endif
 #endif
 
 	pmap_enter(pmap_kernel(), idt_vaddr, idt_paddr,
 	    VM_PROT_READ|VM_PROT_WRITE, PMAP_WIRED|VM_PROT_READ|VM_PROT_WRITE);
+	pmap_update();
 	idt = (union descriptor *)idt_vaddr;
 #ifdef I586_CPU
 	pmap_enter(pmap_kernel(), pentium_idt_vaddr, idt_paddr,
 	    VM_PROT_READ, PMAP_WIRED|VM_PROT_READ);
+	pmap_update();
 	pentium_idt = (union descriptor *)pentium_idt_vaddr;
 #endif
 	gdt = idt + NIDT;
@@ -2374,6 +2787,9 @@ init386(first_avail)
 	isa_defaultirq();
 #endif
 
+	/* Initialize software interrupts. */
+	softintr_init();
+
 	splraise(-1);
 	enable_intr();
 
@@ -2386,7 +2802,7 @@ init386(first_avail)
 		cngetc();
 	}
 
-	identifycpu();
+	identifycpu(curcpu());
 }
 
 struct queue {

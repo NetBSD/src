@@ -1,4 +1,4 @@
-/*	$NetBSD: db_interface.c,v 1.30 2000/06/29 08:44:51 mrg Exp $	*/
+/*	$NetBSD: db_interface.c,v 1.30.4.1 2001/06/21 19:25:26 nathanw Exp $	*/
 
 /* 
  * Mach Operating System
@@ -113,6 +113,12 @@ kdb_trap(type, code, regs)
 		asm("movw %%ss,%w0" : "=r" (ddb_regs.tf_ss));
 	}
 
+	ddb_regs.tf_cs &= 0xffff;
+	ddb_regs.tf_ds &= 0xffff;
+	ddb_regs.tf_es &= 0xffff;
+	ddb_regs.tf_fs &= 0xffff;		
+	ddb_regs.tf_gs &= 0xffff;
+	ddb_regs.tf_ss &= 0xffff;
 	s = splhigh();
 	db_active++;
 	cnpollc(TRUE);
@@ -121,6 +127,8 @@ kdb_trap(type, code, regs)
 	db_active--;
 	splx(s);
 
+	regs->tf_gs     = ddb_regs.tf_gs;
+	regs->tf_fs     = ddb_regs.tf_fs;
 	regs->tf_es     = ddb_regs.tf_es;
 	regs->tf_ds     = ddb_regs.tf_ds;
 	regs->tf_edi    = ddb_regs.tf_edi;

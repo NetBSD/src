@@ -1,4 +1,4 @@
-#	$NetBSD: files.i386,v 1.182.2.1 2001/04/09 01:53:28 nathanw Exp $
+#	$NetBSD: files.i386,v 1.182.2.2 2001/06/21 19:25:20 nathanw Exp $
 #
 # new style config file for i386 architecture
 #
@@ -75,6 +75,7 @@ file	netns/ns_cksum.c		ns
 file	arch/i386/i386/pmap.c
 file	arch/i386/i386/process_machdep.c
 file	arch/i386/i386/procfs_machdep.c	procfs
+file	arch/i386/i386/softintr.c
 file	arch/i386/i386/sys_machdep.c
 file	arch/i386/i386/syscall.c
 file	arch/i386/i386/trap.c
@@ -148,6 +149,7 @@ file	arch/i386/pci/opti82c558.c	pcibios & pcibios_intr_fixup
 file	arch/i386/pci/opti82c700.c	pcibios & pcibios_intr_fixup
 file	arch/i386/pci/sis85c503.c	pcibios & pcibios_intr_fixup
 file	arch/i386/pci/via82c586.c	pcibios & pcibios_intr_fixup
+file	arch/i386/pci/amd756.c		pcibios & pcibios_intr_fixup
 file	arch/i386/pci/pci_bus_fixup.c	pcibios & pcibios_bus_fixup
 file	arch/i386/pci/pci_addr_fixup.c	pcibios & pcibios_addr_fixup
 defopt	PCI_CONF_MODE
@@ -282,6 +284,8 @@ device	mca {[slot = -1]} : bioscall
 include	"dev/mca/files.mca"
 file	arch/i386/mca/mca_machdep.c	mca
 
+major	{ ed = 20 }
+
 # ISA Plug 'n Play devices
 file	arch/i386/isa/isapnp_machdep.c	isapnp
 
@@ -330,6 +334,7 @@ include	"compat/linux/files.linux"
 include	"compat/linux/arch/i386/files.linux_i386"
 file	arch/i386/i386/linux_sigcode.s		compat_linux
 file	arch/i386/i386/linux_syscall.c		compat_linux
+file	arch/i386/i386/linux_trap.c		compat_linux
 
 # FreeBSD binary compatibility (COMPAT_FREEBSD)
 include	"compat/freebsd/files.freebsd"

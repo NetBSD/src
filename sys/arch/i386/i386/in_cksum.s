@@ -1,4 +1,4 @@
-/*	$NetBSD: in_cksum.s,v 1.9.24.1 2001/04/09 01:53:30 nathanw Exp $	*/
+/*	$NetBSD: in_cksum.s,v 1.9.24.2 2001/06/21 19:25:29 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2001 The NetBSD Foundation, Inc.
@@ -69,8 +69,15 @@
  * SUCH DAMAGE.
  */
 
+#include "opt_inet.h"
+	
 #include <machine/asm.h>
 #include "assym.h"
+
+/* LINTSTUB: include <sys/types.h> */
+/* LINTSTUB: include <machine/param.h> */
+/* LINTSTUB: include <sys/mbuf.h> */
+/* LINTSTUB: include <netinet/in.h> */
 
 /*
  * Checksum routine for Internet Protocol family headers.
@@ -119,6 +126,72 @@
 	addw	%dx, %ax	; \
 	adcw	$0, %ax
 
+
+/*
+ * XXX KAME handles link-local scopes in a way which causes us great pain.
+ * we need to special-case link-local addresses and not include the scope id
+ * as part of the transport-layer pseudoheader.
+ * Both ff02::/16 and fe80::/10 get this treatment.
+ *
+ * so, big-endian, this would be:	
+ * (s6_addr32[0] & 0xffc00000) == 0xfe800000
+ * (s6_addr32[0] & 0xff0f) == 0xff020000
+ * since we're little-endian,
+ * (s6_addr32[0] & 0x0000c0ff) == 0x000080fe
+ * (s6_addr32[0] & 0x00000fff) == 0x000002ff
+ */
+	
+#define ADD6SCOPE(n) \
+	movw	n(%ebx), %cx	; \
+	addl	%ecx,%eax	; \
+	andl	$0xc0ff,%ecx	; \
+	cmpl	$0x80fe,%ecx	; \
+	je	1f		; \
+	movw	n(%ebx), %cx	; \
+	andl	$0xfff,%ecx	; \
+	cmpl	$0x2ff,%ecx	; \
+	je	1f		; \
+	movw	n+2(%ebx),%cx	; \
+	addl	%ecx,%eax	; \
+1:
+	
+#if defined(INET6) && defined(INET6_MD_CKSUM)
+/*
+ * XXX does not deal with jumbograms.
+ */
+/* LINTSTUB: Func: int in6_cksum(struct mbuf *m, u_int8_t nxt, int off, int len) */
+ENTRY(in6_cksum)
+	pushl	%ebp
+	pushl	%ebx
+	pushl	%esi
+
+	movl	16(%esp), %ebp
+	movzbl	20(%esp), %eax		/* sum = nxt */
+	movl	24(%esp), %edx		/* %edx = off */
+	movl	28(%esp), %esi		/* %esi = len */
+	testl	%eax, %eax
+	jz	mbuf_loop_0		/* skip if nxt == 0 */
+	movl	M_DATA(%ebp), %ebx
+	addl	%esi, %eax		/* sum += len */
+	shll	$8, %eax		/* sum = htons(sum) */
+	xorl	%ecx,%ecx		
+	ADD6SCOPE(IP6_SRC)
+	ADD6SCOPE(IP6_DST)
+	ADD(IP6_SRC+4)			/* sum += ip6->ip6_src */
+	ADC(IP6_SRC+8)			/* sum += ip6->ip6_src */
+	ADC(IP6_SRC+12)			/* sum += ip6->ip6_src */
+	ADC(IP6_DST+4)			/* sum += ip6->ip_dst */
+	ADC(IP6_DST+8)			/* sum += ip6->ip_dst */
+	ADC(IP6_DST+12)			/* sum += ip6->ip_dst */
+	
+	MOP
+#ifdef INET
+	jmp	mbuf_loop_0
+#endif
+#endif
+
+#ifdef INET
+/* LINTSTUB: Func: int in4_cksum(struct mbuf *m, u_int8_t nxt, int off, int len) */
 ENTRY(in4_cksum)
 	pushl	%ebp
 	pushl	%ebx
@@ -126,16 +199,18 @@ ENTRY(in4_cksum)
 
 	movl	16(%esp), %ebp
 	movzbl	20(%esp), %eax		/* sum = nxt */
-	movl	28(%esp), %esi
+	movl	24(%esp), %edx		/* %edx = off */
+	movl	28(%esp), %esi		/* %esi = len */
+	testl	%eax, %eax
+	jz	mbuf_loop_0		/* skip if nxt == 0 */
 	movl	M_DATA(%ebp), %ebx
 	addl	%esi, %eax		/* sum += len */
-	movl	24(%esp), %edx		/* %edx = off */
 	shll	$8, %eax		/* sum = htons(sum) */
 
 	ADD(IP_SRC)			/* sum += ip->ip_src */
 	ADC(IP_DST)			/* sum += ip->ip_dst */
 	MOP
-
+#endif
 mbuf_loop_0:
 	testl	%ebp, %ebp
 	jz	out_of_mbufs
@@ -161,6 +236,7 @@ mbuf_loop_0:
 	jmp	in4_entry
 
 
+/* LINTSTUB: Func: int in_cksum(struct mbuf *m, int len) */
 ENTRY(in_cksum)
 	pushl	%ebp
 	pushl	%ebx

@@ -1,4 +1,4 @@
-/*	$NetBSD: devopen.c,v 1.9 1999/10/28 05:20:05 mycroft Exp $	 */
+/*	$NetBSD: devopen.c,v 1.9.10.1 2001/06/21 19:26:10 nathanw Exp $	 */
 
 /*
  * Copyright (c) 1996, 1997
@@ -33,9 +33,6 @@
 
 
 #include <sys/types.h>
-#ifdef COMPAT_OLDBOOT
-#include <sys/disklabel.h>
-#endif
 
 #include <lib/libsa/stand.h>
 #include <lib/libkern/libkern.h>
@@ -46,47 +43,23 @@
 #ifdef _STANDALONE
 #include <bootinfo.h>
 #endif
-
-extern int parsebootfile __P((const char *, char**, char**, unsigned int*,
-			      unsigned int*, const char**));
-
-static int dev2bios __P((char *, unsigned int, int *));
-
-static struct {
-	char           *name;
-	int             biosdev;
-}               biosdevtab[] = {
-	{
-		"fd", 0
-	},
-	{
-		"hd", 0x80
-	},
-#ifdef COMPAT_OLDBOOT
-	{
-		"wd", 0x80
-	},
-	{
-		"sd", 0x80
-	}
+#ifdef SUPPORT_PS2
+#include <biosmca.h>
 #endif
-};
-#define NUMBIOSDEVS (sizeof(biosdevtab) / sizeof(biosdevtab[0]))
 
-static int
+static __inline int dev2bios __P((char *, unsigned int, int *));
+
+static __inline int
 dev2bios(devname, unit, biosdev)
 	char           *devname;
 	unsigned int    unit;
 	int            *biosdev;
 {
-	int             i;
-
-	for (i = 0; i < NUMBIOSDEVS; i++)
-		if (!strcmp(devname, biosdevtab[i].name)) {
-			*biosdev = biosdevtab[i].biosdev + unit;
-			break;
-		}
-	if (i == NUMBIOSDEVS)
+	if (strcmp(devname, "hd") == 0)
+		*biosdev = 0x80 + unit;
+	else if (strcmp(devname, "fd") == 0)
+		*biosdev = 0x00 + unit;
+	else
 		return (ENXIO);
 
 	return (0);
@@ -98,21 +71,10 @@ bios2dev(biosdev, devname, unit)
 	char          **devname;
 	unsigned int   *unit;
 {
-	if (biosdev & 0x80) {
-#if defined(COMPAT_OLDBOOT) && defined(_STANDALONE)
-		extern struct disklabel disklabel;
-
-		if(disklabel.d_magic == DISKMAGIC) {
-			if(disklabel.d_type == DTYPE_SCSI)
-				*devname = biosdevtab[3].name;
-			else
-				*devname = biosdevtab[2].name;
-		} else
-#endif
-			/* call it "hd", we don't know better */
-			*devname = biosdevtab[1].name;
-	} else
-		*devname = biosdevtab[0].name;
+	if (biosdev & 0x80)
+		*devname = "hd";
+	else
+		*devname = "fd";
 
 	*unit = biosdev & 0x7f;
 

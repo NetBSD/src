@@ -1,4 +1,4 @@
-/*	$NetBSD: rbus_machdep.h,v 1.4 2000/06/06 08:20:06 haya Exp $	*/
+/*	$NetBSD: rbus_machdep.h,v 1.4.6.1 2001/06/21 19:25:55 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1999
@@ -35,9 +35,6 @@
 #define _ARCH_I386_I386_RBUS_MACHDEP_H_
 
 struct pci_attach_args;		/* XXX */
-
-void _i386_memio_unmap(bus_space_tag_t, bus_space_handle_t,
-			     bus_size_t, bus_addr_t *);
 
 #define md_space_map(bt, physaddr, size, flags, bshp) \
 	_i386_memio_map((bt), (physaddr), (size), (flags), (bshp))

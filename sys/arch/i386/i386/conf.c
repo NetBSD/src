@@ -1,4 +1,4 @@
-/*	$NetBSD: conf.c,v 1.138.2.1 2001/04/09 01:53:29 nathanw Exp $	*/
+/*	$NetBSD: conf.c,v 1.138.2.2 2001/06/21 19:25:25 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -73,6 +73,8 @@ bdev_decl(raid);
 bdev_decl(md);
 #include "ld.h"
 bdev_decl(ld);
+#include "ed_mca.h"
+bdev_decl(edmca);
 
 struct bdevsw	bdevsw[] =
 {
@@ -96,6 +98,7 @@ struct bdevsw	bdevsw[] =
 	bdev_disk_init(NMD,md),		/* 17: memory disk driver */
 	bdev_disk_init(NRAID,raid),	/* 18: RAIDframe disk driver */
 	bdev_disk_init(NLD,ld),		/* 19: logical disk */
+	bdev_disk_init(NED_MCA,edmca),	/* 20: PS/2 ESDI disk */
 };
 int	nblkdev = sizeof(bdevsw) / sizeof(bdevsw[0]);
 
@@ -220,10 +223,7 @@ cdev_decl(i4brbch);
 cdev_decl(i4btel);
 
 /* open, close, read, write, ioctl, mmap */
-#define cdev_vmegen_init(c,n) { \
-	dev_init(c,n,open), dev_init(c,n,close), dev_init(c,n,read), \
-	dev_init(c,n,write), dev_init(c,n,ioctl), dev_noimpl(stop,enodev), \
-	0, seltrue, dev_init(c,n,mmap) }
+#define cdev_vmegen_init(c,n)	cdev__ocrwim_init(c,n)
 
 #include "vmegeneric.h"
 cdev_decl(vmegeneric);
@@ -231,6 +231,7 @@ cdev_decl(vmegeneric);
 cdev_decl(iop);
 #include "mlx.h"
 cdev_decl(mlx);
+cdev_decl(edmca);
 
 #include <altq/altqconf.h>
 
@@ -322,6 +323,7 @@ struct cdevsw	cdevsw[] =
 	cdev__oci_init(NIOP,iop),	/* 76: I2O IOP control interface */
 	cdev_altq_init(NALTQ,altq),	/* 77: ALTQ control interface */
 	cdev__oci_init(NMLX,mlx),	/* 78: Mylex DAC960 control interface */
+	cdev_disk_init(NED_MCA,edmca),	/* 79: PS/2 ESDI disk */
 };
 int	nchrdev = sizeof(cdevsw) / sizeof(cdevsw[0]);
 
@@ -442,6 +444,7 @@ static int chrtoblktbl[] = {
 	/* 76 */	NODEV,
 	/* 77 */	NODEV,
 	/* 78 */	NODEV,
+	/* 79 */	20,
 };
 
 /*

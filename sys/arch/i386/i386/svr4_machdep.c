@@ -1,4 +1,4 @@
-/*	$NetBSD: svr4_machdep.c,v 1.50.4.2 2001/03/13 20:45:41 nathanw Exp $	 */
+/*	$NetBSD: svr4_machdep.c,v 1.50.4.3 2001/06/21 19:25:38 nathanw Exp $	 */
 
 /*-
  * Copyright (c) 1994, 2000 The NetBSD Foundation, Inc.
@@ -36,7 +36,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#if defined(_KERNEL) && !defined(_LKM)
+#if defined(_KERNEL_OPT)
 #include "opt_vm86.h"
 #include "opt_user_ldt.h"
 #endif
@@ -148,8 +148,8 @@ svr4_getmcontext(l, mc, flags)
 	} else
 #endif
 	{
-	        __asm("movl %%gs,%w0" : "=r" (r[SVR4_X86_GS]));
-		__asm("movl %%fs,%w0" : "=r" (r[SVR4_X86_FS]));
+		r[SVR4_X86_GS] = tf->tf_gs;
+		r[SVR4_X86_FS] = tf->tf_fs;
 		r[SVR4_X86_ES] = tf->tf_es;
 		r[SVR4_X86_DS] = tf->tf_ds;
 		r[SVR4_X86_EFL] = tf->tf_eflags;
@@ -249,8 +249,6 @@ svr4_setmcontext(l, mc, flags)
 	tf->tf_edx = r[SVR4_X86_EDX];
 	tf->tf_ecx = r[SVR4_X86_ECX];
 	tf->tf_eax = r[SVR4_X86_EAX];
-	tf->tf_trapno = r[SVR4_X86_TRAPNO];
-	tf->tf_err = r[SVR4_X86_ERR];
 	tf->tf_eip = r[SVR4_X86_EIP];
 	tf->tf_cs = r[SVR4_X86_CS];
 	tf->tf_ss = r[SVR4_X86_SS];

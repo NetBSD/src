@@ -1,4 +1,4 @@
-/*	$NetBSD: pio.h,v 1.15 2000/03/13 21:10:24 kristerw Exp $	*/
+/*	$NetBSD: pio.h,v 1.15.8.1 2001/06/21 19:25:53 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -61,7 +61,7 @@
 
 
 #define	inb(port) \
-	(__use_immediate_port(port) ? __inbc(port) : __inb(port))
+    (/* CONSTCOND */ __use_immediate_port(port) ? __inbc(port) : __inb(port))
 
 static __inline u_int8_t
 __inbc(int port)
@@ -91,7 +91,7 @@ insb(int port, void *addr, int cnt)
 }
 
 #define	inw(port) \
-	(__use_immediate_port(port) ? __inwc(port) : __inw(port))
+    (/* CONSTCOND */ __use_immediate_port(port) ? __inwc(port) : __inw(port))
 
 static __inline u_int16_t
 __inwc(int port)
@@ -121,7 +121,7 @@ insw(int port, void *addr, int cnt)
 }
 
 #define	inl(port) \
-	(__use_immediate_port(port) ? __inlc(port) : __inl(port))
+    (/* CONSTCOND */ __use_immediate_port(port) ? __inlc(port) : __inl(port))
 
 static __inline u_int32_t
 __inlc(int port)
@@ -151,7 +151,8 @@ insl(int port, void *addr, int cnt)
 }
 
 #define	outb(port, data) \
-	(__use_immediate_port(port) ? __outbc(port, data) : __outb(port, data))
+    (/* CONSTCOND */ __use_immediate_port(port) ? __outbc(port, data) : \
+						__outb(port, data))
 
 static __inline void
 __outbc(int port, u_int8_t data)
@@ -166,7 +167,7 @@ __outb(int port, u_int8_t data)
 }
 
 static __inline void
-outsb(int port, void *addr, int cnt)
+outsb(int port, const void *addr, int cnt)
 {
 	void *dummy1;
 	int dummy2;
@@ -176,7 +177,8 @@ outsb(int port, void *addr, int cnt)
 }
 
 #define	outw(port, data) \
-	(__use_immediate_port(port) ? __outwc(port, data) : __outw(port, data))
+    (/* CONSTCOND */ __use_immediate_port(port) ? __outwc(port, data) : \
+						__outw(port, data))
 
 static __inline void
 __outwc(int port, u_int16_t data)
@@ -191,7 +193,7 @@ __outw(int port, u_int16_t data)
 }
 
 static __inline void
-outsw(int port, void *addr, int cnt)
+outsw(int port, const void *addr, int cnt)
 {
 	void *dummy1;
 	int dummy2;
@@ -201,7 +203,8 @@ outsw(int port, void *addr, int cnt)
 }
 
 #define	outl(port, data) \
-	(__use_immediate_port(port) ? __outlc(port, data) : __outl(port, data))
+    (/* CONSTCOND */ __use_immediate_port(port) ? __outlc(port, data) : \
+						__outl(port, data))
 
 static __inline void
 __outlc(int port, u_int32_t data)
@@ -216,7 +219,7 @@ __outl(int port, u_int32_t data)
 }
 
 static __inline void
-outsl(int port, void *addr, int cnt)
+outsl(int port, const void *addr, int cnt)
 {
 	void *dummy1;
 	int dummy2;

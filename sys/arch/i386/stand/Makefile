@@ -1,10 +1,9 @@
-#	$NetBSD: Makefile,v 1.13 2000/05/13 19:58:01 jdolecek Exp $
+#	$NetBSD: Makefile,v 1.13.8.1 2001/06/21 19:26:09 nathanw Exp $
 
 SUBDIR=		biosboot installboot
 SUBDIR+=	dosboot
 SUBDIR+=	biosboot_com0
 SUBDIR+=	biosboot_resetvideo
-SUBDIR+=	biosboot_ps2
 #SUBDIR+=	genprom netboot
 
 .include <bsd.subdir.mk>
