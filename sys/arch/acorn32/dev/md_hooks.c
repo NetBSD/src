@@ -1,4 +1,4 @@
-/*	$NetBSD: md_hooks.c,v 1.5 2003/07/14 22:48:24 lukem Exp $	*/
+/*	$NetBSD: md_hooks.c,v 1.5.10.1 2005/01/28 10:37:08 yamt Exp $	*/
 
 /*
  * Copyright (c) 1995 Gordon W. Ross
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: md_hooks.c,v 1.5 2003/07/14 22:48:24 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: md_hooks.c,v 1.5.10.1 2005/01/28 10:37:08 yamt Exp $");
 
 #include "opt_md.h"
 
@@ -79,7 +79,8 @@ md_attach_hook(unit, md)
 #endif	/* OLD_MEMORY_DISK_SIZE */
 		if (md_root_size != 0) {
 			md->md_size = round_page(md_root_size);
-			md->md_addr = (caddr_t)uvm_km_zalloc(kernel_map, md_root_size);
+			md->md_addr = (caddr_t)uvm_km_alloc(kernel_map,
+			    md_root_size, 0, UVM_KMF_WIRED | UVM_KMF_ZERO);
 			md->md_type = MD_KMEM_FIXED;
 			bootmd = md;
 		}

@@ -1,4 +1,4 @@
-/*	$NetBSD: esc.c,v 1.15 2003/11/10 08:51:51 wiz Exp $	*/
+/*	$NetBSD: esc.c,v 1.15.10.1 2005/01/28 10:37:08 yamt Exp $	*/
 
 /*
  * Copyright (c) 1990 The Regents of the University of California.
@@ -86,7 +86,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: esc.c,v 1.15 2003/11/10 08:51:51 wiz Exp $");
+__KERNEL_RCSID(0, "$NetBSD: esc.c,v 1.15.10.1 2005/01/28 10:37:08 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -243,7 +243,8 @@ escinitialize(dev)
 /*
  * Setup bump buffer.
  */
-	dev->sc_bump_va = (u_char *)uvm_km_zalloc(kernel_map, dev->sc_bump_sz);
+	dev->sc_bump_va = (u_char *)uvm_km_alloc(kernel_map, dev->sc_bump_sz, 0,
+	    UVM_KMF_WIRED | UVM_KMF_ZERO);
 	(void) pmap_extract(pmap_kernel(), (vaddr_t)dev->sc_bump_va,
 	    (paddr_t *)&dev->sc_bump_pa);
 
