@@ -1,13 +1,11 @@
-# $NetBSD: Makefile,v 1.1 2000/01/28 19:32:54 itojun Exp $
+# $NetBSD: Makefile,v 1.2 2000/02/25 08:52:03 mycroft Exp $
 
 PROG=	mtrace6
+MAN=	mtrace6.8
 
-BINOWN=	root
-BINGRP=	bin
 BINMODE=4555
+BINOWN=	root
 
 CPPFLAGS+= -I${.CURDIR}/../pim6sd
-
-MAN= mtrace6.8
 
 .include <bsd.prog.mk>

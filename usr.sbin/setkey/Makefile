@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.3 2000/01/31 14:22:41 itojun Exp $
+# $NetBSD: Makefile,v 1.4 2000/02/25 08:52:04 mycroft Exp $
 
 PROG=	setkey
 SRCS=	setkey.c parse.y token.l
@@ -9,10 +9,6 @@ CLEANFILES+=	y.tab.c y.tab.h key_test.o keytest
 YFLAGS+=-d
 
 SCRIPTS=	scriptdump
-
-BINOWN=root
-BINGRP=bin
-BINMODE=555
 
 all: ${PROG} scriptdump
 
