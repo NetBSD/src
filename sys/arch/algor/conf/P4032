@@ -1,4 +1,4 @@
-#	$NetBSD: P4032,v 1.12 2002/10/14 18:39:23 elric Exp $
+#	$NetBSD: P4032,v 1.13 2003/02/16 17:35:13 augustss Exp $
 #
 # Algorithmics P-4032 kernel.
 #
@@ -7,7 +7,7 @@ include	"arch/algor/conf/std.algor"
 
 #options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"P4032-$Revision: 1.12 $"
+#ident 		"P4032-$Revision: 1.13 $"
 
 maxusers 32
 
@@ -259,6 +259,8 @@ ukphy*	at mii? phy ?			# generic unknown PHYs
 #aue*	at uhub? port ?		# ADMtek AN986 Pegasus based adapters
 #cue*	at uhub? port ?		# CATC USB-EL1201A based adapters
 #kue*	at uhub? port ?		# Kawasaki LSI KL5KUSB101B based adapters
+#uax*	at uhub? port ?		# ASIX AX88172 based adapters
+#url*	at uhub? port ?		# Realtek RTL8150L based adapters
 
 # Serial adapters
 # FTDI FT8U100AX serial adapter
