@@ -1,4 +1,4 @@
-/* $NetBSD: machdep.c,v 1.194 2000/02/12 20:57:12 thorpej Exp $ */
+/* $NetBSD: machdep.c,v 1.195 2000/02/21 20:38:46 erh Exp $ */
 
 /*-
  * Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.
@@ -79,7 +79,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.194 2000/02/12 20:57:12 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.195 2000/02/21 20:38:46 erh Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1853,33 +1853,7 @@ netintr()
 			fn;						\
 	} while (0)
 
-#ifdef INET
-#if NARP > 0
-	DONETISR(NETISR_ARP, arpintr());
-#endif
-	DONETISR(NETISR_IP, ipintr());
-#endif
-#ifdef INET6
-	DONETISR(NETISR_IPV6, ip6intr());
-#endif
-#ifdef NETATALK
-	DONETISR(NETISR_ATALK, atintr());
-#endif
-#ifdef NS
-	DONETISR(NETISR_NS, nsintr());
-#endif
-#ifdef ISO
-	DONETISR(NETISR_ISO, clnlintr());
-#endif
-#ifdef CCITT
-	DONETISR(NETISR_CCITT, ccittintr());
-#endif
-#ifdef NATM
-	DONETISR(NETISR_NATM, natmintr());
-#endif
-#if NPPP > 0
-	DONETISR(NETISR_PPP, pppintr());
-#endif
+#include <net/netisr_dispatch.h>
 
 #undef DONETISR
 }

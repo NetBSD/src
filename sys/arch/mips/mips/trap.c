@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.120 2000/02/09 05:48:31 shin Exp $	*/
+/*	$NetBSD: trap.c,v 1.121 2000/02/21 20:38:49 erh Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.120 2000/02/09 05:48:31 shin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.121 2000/02/21 20:38:49 erh Exp $");
 
 #include "opt_cputype.h"	/* which mips CPU levels do we support? */
 #include "opt_inet.h"
@@ -795,30 +795,14 @@ interrupt(status, cause, pc)
 		uvmexp.softs++;
 		if (isr) {
 			intrcnt[SOFTNET_INTR]++;
-#ifdef INET
-#if NARP > 0
-			if (isr & (1 << NETISR_ARP)) arpintr();
-#endif
-			if (isr & (1 << NETISR_IP)) ipintr();
-#endif
-#ifdef INET6
-			if (isr & (1 << NETISR_IPV6)) ip6intr();
-#endif
-#ifdef NETATALK
-			if (isr & (1 << NETISR_ATALK)) atintr();
-#endif
-#ifdef NS
-			if (isr & (1 << NETISR_NS)) nsintr();
-#endif
-#ifdef ISO
-			if (isr & (1 << NETISR_ISO)) clnlintr();
-#endif
-#ifdef CCITT
-			if (isr & (1 << NETISR_CCITT)) ccittintr();
-#endif
-#if NPPP > 0
-			if (isr & (1 << NETISR_PPP)) pppintr();
-#endif
+#define DONETISR(bit, fn) do {		\
+	if (isr & (1 << bit))		\
+		fn();			\
+} while (0)
+
+#include <net/netisr_dispatch.h>
+
+#undef DONETISR
 		}
 		if (sisr && mips_software_intr)
 			(*mips_software_intr)(sisr);
