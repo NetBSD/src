@@ -1,4 +1,4 @@
-/* $NetBSD: locore.h,v 1.63 2002/06/03 01:51:05 simonb Exp $ */
+/* $NetBSD: locore.h,v 1.64 2002/11/04 19:40:04 thorpej Exp $ */
 
 /*
  * Copyright 1996 The Board of Trustees of The Leland Stanford
@@ -308,8 +308,43 @@ void mips_machdep_cache_config(void);
 /*
  * trapframe argument passed to trap()
  */
+
+#define	TF_AST		0
+#define	TF_V0		1
+#define	TF_V1		2
+#define	TF_A0		3
+#define	TF_A1		4
+#define	TF_A2		5
+#define	TF_A3		6
+#define	TF_T0		7
+#define	TF_T1		8
+#define	TF_T2		9
+#define	TF_T3		10
+
+#if defined(__mips_n32) || defined(__mips_n64)
+#define	TF_A4		11
+#define	TF_A5		12
+#define	TF_A6		13
+#define	TF_A7		14
+#else
+#define	TF_T4		11
+#define	TF_T5		12
+#define	TF_T6		13
+#define	TF_T7		14
+#endif /* __mips_n32 || __mips_n64 */
+
+#define	TF_TA0		11
+#define	TF_TA1		12
+#define	TF_TA2		13
+#define	TF_TA3		14
+
+#define	TF_T8		15
+#define	TF_T9		16
+
+#define	TF_NREGS	17
+
 struct trapframe {
-	mips_reg_t tf_regs[17];
+	mips_reg_t tf_regs[TF_NREGS];
 	mips_reg_t tf_ra;
 	mips_reg_t tf_sr;
 	mips_reg_t tf_mullo;
