@@ -1,9 +1,12 @@
-#	$NetBSD: COMPUTEXEVB,v 1.8 2000/09/29 08:08:38 msaitoh Exp $
+#	$NetBSD: COMPUTEXEVB,v 1.9 2001/01/03 23:49:22 itojun Exp $
 #
 #	GENERIC -- everything that's currently supported
 #
 
-include "arch/evbsh3/conf/std.evbsh3"
+# for big endian
+include "arch/evbsh3/conf/std.evbsh3.eb"
+# for little endian
+#include "arch/evbsh3/conf/std.evbsh3.el"
 
 # Enable the hooks used for initializing the root memory-disk.
 options 	MEMORY_DISK_HOOKS
@@ -35,9 +38,6 @@ options		BSC_RTCNT_VAL	=0xa500
 options		BSC_RTCOR_VAL	=0xa582
 options		FRQCR_VAL	=0x0122
 options		PFC_SCPCR_VAL	=0x00aa
-
-makeoptions 	LDSCRIPTBASE="sh.x"	# for big endian
-#makeoptions 	LDSCRIPTBASE="shl.x"	# for little endian
 
 # CPU-related options.
 #options 	MATH_EMULATE	# floating point emulation
