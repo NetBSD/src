@@ -1,9 +1,9 @@
-#	$NetBSD: GENERIC.v6,v 1.2 1999/07/01 07:00:14 itojun Exp $
+#	$NetBSD: GENERIC.v6,v 1.1 1999/07/01 07:00:14 itojun Exp $
 #
 #	GENERIC.v6 -- IPv6 variant of GENERIC.  should be in GENERIC.
 #
 
-include "arch/i386/conf/GENERIC"
+include "arch/bebox/conf/GENERIC"
 
 # IPv6 options
 options 	INET6		# IPV6
