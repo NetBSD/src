@@ -1,4 +1,4 @@
-/*	$NetBSD: wd.c,v 1.173 1998/04/26 06:03:23 mycroft Exp $ */
+/*	$NetBSD: wd.c,v 1.174 1998/05/09 05:20:35 mycroft Exp $ */
 
 /*
  * Copyright (c) 1994, 1995, 1998 Charles M. Hannum.  All rights reserved.
@@ -225,10 +225,12 @@ wdattach(parent, self, aux)
 	/* Prior to ATA-4, LBA was optional. */
 	if ((d_link->sc_params.wdp_capabilities1 & WD_CAP_LBA) != 0)
 		d_link->sc_flags |= WDF_LBA;
+#if 0
 	/* ATA-4 requires LBA. */
 	if (d_link->sc_params.wdp_ataversion != 0xffff &&
 	    d_link->sc_params.wdp_ataversion >= WD_VER_ATA4)
 		d_link->sc_flags |= WDF_LBA;
+#endif
 
 	if ((d_link->sc_flags & WDF_LBA) != 0) {
 		printf(" lba mode\n");
