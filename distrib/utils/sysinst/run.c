@@ -1,4 +1,4 @@
-/*	$NetBSD: run.c,v 1.27 2000/01/19 08:46:26 mycroft Exp $	*/
+/*	$NetBSD: run.c,v 1.28 2000/01/19 09:44:01 mycroft Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -297,13 +297,14 @@ launch_subwin(actionwin, args, win, display)
 	(void)tcsetattr(STDIN_FILENO, TCSAFLUSH, &rtt);
 
 	/* ignore tty signals until we're done with subprocess setup */
+	endwin();
 	ttysig_ignore = 1;
 
 	switch(child=fork()) {
 	case -1:
 		ttysig_ignore = 0;
+		refresh();
 		return -1;
-		break;
 	case 0:
 		(void)close(STDIN_FILENO);
 		subchild = fork();
@@ -315,7 +316,6 @@ launch_subwin(actionwin, args, win, display)
 					break;
 				write(dataflow[1], obuf, n);
 			} /* while spinning */
-			nonl();
 			_exit(EXIT_SUCCESS);
 		} /* subchild, child forks */
 		(void)close(master);
@@ -344,6 +344,7 @@ launch_subwin(actionwin, args, win, display)
 		 */
 		ttysig_forward = child;
 		ttysig_ignore = 0;
+		refresh();
 		break;
 	}
 	close(dataflow[1]);
@@ -373,27 +374,36 @@ launch_subwin(actionwin, args, win, display)
 					(void)write(master, ibuf, n);
 				for (j=0; j < n; j++) {
 					if (display) {
-						getyx(actionwin, ycor, xcor);
-						if (ibuf[j] == '\n') {
+						switch (ibuf[j]) {
+						case '\n':
 							getyx(actionwin, ycor, xcor);
 							if (ycor + 1 >= actionwin->maxy) {
 								scroll(actionwin);
 								wmove(actionwin, actionwin->maxy - 1, 0);
 							} else
 								wmove(actionwin, ycor + 1, 0);
-						} else if (ibuf[j] == '\r') {
+							break;
+						case '\r':
 							getyx(actionwin, ycor, xcor);
 							wmove(actionwin, ycor, 0);
-						} else
+							break;
+						case '\b':
+							getyx(actionwin, ycor, xcor);
+							if (xcor > 0)
+								wmove(actionwin, ycor, xcor - 1);
+							break;
+						default:
 							waddch(actionwin, ibuf[j]);
+							break;
+						}
 						if (logging)
 							putc(ibuf[j], log);
 					}
-					if (display)
-						wrefresh(actionwin);
-					if (logging)
-						fflush(log);
 				}
+				if (display)
+					wrefresh(actionwin);
+				if (logging)
+					fflush(log);
 			}
 		}
 loop:
@@ -454,20 +464,24 @@ run_prog(int fatal, int display, msg errmsg, const char *cmd, ...)
 		win.ws_col = 80;
 
 	if (display) {
-		wclear(stdscr); /* XXX shouldn't be needed */
-		wrefresh(stdscr);
+		wclear(stdscr);
+		clearok(stdscr, 1);
+		refresh();
+
 		statuswin = subwin(stdscr, 3, win.ws_col, 0, 0);
 		if (statuswin == NULL) {
 			fprintf(stderr, "sysinst: failed to allocate"
 			    " status window.\n");
 			exit(1);
 		}
+
 		boxwin = subwin(stdscr, 1, win.ws_col, 3, 0);
 		if (boxwin == NULL) {
 			fprintf(stderr, "sysinst: failed to allocate"
 			    " status box.\n");
 			exit(1);
 		}
+
 		actionwin = subwin(stdscr, win.ws_row - 4, win.ws_col, 4, 0);
 		if (actionwin == NULL) {
 			fprintf(stderr, "sysinst: failed to allocate"
@@ -478,10 +492,18 @@ run_prog(int fatal, int display, msg errmsg, const char *cmd, ...)
 
 		win.ws_row -= 4;
 
-		wclear(statuswin);
+		wmove(statuswin, 0, 5);
+		waddstr(statuswin, "Status: ");
+		wstandout(statuswin);
+		waddstr(statuswin, "Running");
+		wstandend(statuswin);
+		wmove(statuswin, 1, 4);
+		waddstr(statuswin, "Command: ");
+		wstandout(statuswin);
+		waddstr(statuswin, command);
+		wstandend(statuswin);
 		wrefresh(statuswin);
 
-		wclear(boxwin);
 		wmove(boxwin, 0, 0);
 		{
 			int n, m;
@@ -491,33 +513,15 @@ run_prog(int fatal, int display, msg errmsg, const char *cmd, ...)
 		}
 		wrefresh(boxwin);
 
-		wclear(actionwin);
 		wrefresh(actionwin);
-
-		wmove(statuswin, 0 , 5);
-		waddstr(statuswin, "Status: ");
-		wstandout(statuswin);
-		waddstr(statuswin, "Running");
-		wstandend(statuswin);
-
-		wmove(statuswin, 1, 4);
-		waddstr(statuswin, "Command: ");
-		wstandout(statuswin);
-		waddstr(statuswin, command);
-		wstandend(statuswin);
-		wrefresh(statuswin);
 
 		ret = launch_subwin(actionwin, args, win, 1);
 
 		wmove(statuswin, 0, 13);
-		waddstr(statuswin, "          ");
-		wmove(statuswin, 0, 13);
 		wstandout(statuswin);
-		if (ret != 0)
-			waddstr(statuswin, "Failed");
-		else
-			waddstr(statuswin, "Finished");
+		waddstr(statuswin, ret ? "Failed" : "Finished");
 		wstandend(statuswin);
+		waddstr(statuswin, "  ");
 		wmove(statuswin, 2, 5);
 		if (ret != 0)
 			waddstr(statuswin, "Press any key to continue");
@@ -526,15 +530,12 @@ run_prog(int fatal, int display, msg errmsg, const char *cmd, ...)
 			(void)getchar();
 
 		/* clean things up */
-		wclear(actionwin);
-		wrefresh(actionwin);
 		delwin(actionwin);
-		wclear(boxwin);
-		wrefresh(boxwin);
 		delwin(boxwin);
-		wclear(statuswin);
-		wrefresh(statuswin);
 		delwin(statuswin);
+
+		wclear(stdscr);
+		clearok(stdscr, 1);
 		refresh();
 	} else { /* display */
 		ret = launch_subwin(NULL, args, win, 0);
