@@ -1,4 +1,4 @@
-/*	$NetBSD: if_gre.c,v 1.12 2000/08/25 00:51:20 mjl Exp $ */
+/*	$NetBSD: if_gre.c,v 1.13 2000/11/19 18:48:44 martin Exp $ */
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -55,6 +55,7 @@
 #include <sys/param.h>
 #include <sys/malloc.h>
 #include <sys/mbuf.h>
+#include <sys/proc.h>
 #include <sys/protosw.h>
 #include <sys/socket.h>
 #include <sys/ioctl.h>
@@ -344,7 +345,7 @@ gre_output(struct ifnet *ifp, struct mbuf *m, struct sockaddr *dst,
 int
 gre_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 {
-
+	struct proc *p = curproc;	/* XXX */
 	struct ifaddr *ifa = (struct ifaddr *)data;
 	struct ifreq *ifr = (struct ifreq *)data;
 	struct in_ifaddr *ia = (struct in_ifaddr *)data;
@@ -360,6 +361,8 @@ gre_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 	switch(cmd) {
 	case SIOCSIFADDR:		
 	case SIOCSIFDSTADDR: 	
+		if ((error = suser(p->p_ucred, &p->p_acflag)) != 0)
+			break;
 		/* 
                  * set tunnel endpoints in case that we "only"
                  * have ip over ip encapsulation. This allows to
@@ -379,6 +382,8 @@ gre_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 		}
 		break;
 	case SIOCSIFFLAGS:
+		if ((error = suser(p->p_ucred, &p->p_acflag)) != 0)
+			break;
 		if ((sc->g_dst.s_addr == INADDR_ANY) || 
 		    (sc->g_src.s_addr == INADDR_ANY))
 			ifp->if_flags &= ~IFF_UP;
@@ -397,6 +402,8 @@ gre_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 		}
 		break;
 	case SIOCSIFMTU: 
+		if ((error = suser(p->p_ucred, &p->p_acflag)) != 0)
+			break;
 		if (ifr->ifr_mtu > GREMTU || ifr->ifr_mtu < 576) {
 			error = EINVAL;
 			break;
@@ -408,6 +415,8 @@ gre_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 		break;
 	case SIOCADDMULTI:
 	case SIOCDELMULTI:
+		if ((error = suser(p->p_ucred, &p->p_acflag)) != 0)
+			break;
 		if (ifr == 0) {
 			error = EAFNOSUPPORT;
 			break;
@@ -423,6 +432,8 @@ gre_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 		}
 		break;
 	case GRESPROTO:
+		if ((error = suser(p->p_ucred, &p->p_acflag)) != 0)
+			break;
 		sc->g_proto = ifr->ifr_flags;
 		switch (sc->g_proto) {
 		case IPPROTO_GRE :
@@ -442,6 +453,8 @@ gre_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 		break;
 	case GRESADDRS:
 	case GRESADDRD:
+		if ((error = suser(p->p_ucred, &p->p_acflag)) != 0)
+			break;
 		/*
 	         * set tunnel endpoints, compute a less specific route
 	         * to the remote end and mark if as up
