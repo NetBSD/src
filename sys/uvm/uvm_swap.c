@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_swap.c,v 1.8 1998/03/09 00:58:59 mrg Exp $	*/
+/*	$NetBSD: uvm_swap.c,v 1.9 1998/05/01 01:40:02 mrg Exp $	*/
 
 /*
  * Copyright (c) 1995, 1996, 1997 Matthew R. Green
@@ -1170,9 +1170,9 @@ sw_reg_strategy(sdp, bp, bn)
 {
 	struct vnode	*vp;
 	struct vndxfer	*vnx;
-	daddr_t		nbn;
+	daddr_t		nbn, byteoff;
 	caddr_t		addr;
-	int		byteoff, s, off, nra, error, sz, resid;
+	int		s, off, nra, error, sz, resid;
 	UVMHIST_FUNC("sw_reg_strategy"); UVMHIST_CALLED(pdhist);
 
 	/*
@@ -1193,7 +1193,7 @@ sw_reg_strategy(sdp, bp, bn)
 	error = 0;
 	bp->b_resid = bp->b_bcount;	/* nothing transfered yet! */
 	addr = bp->b_data;		/* current position in buffer */
-	byteoff = dbtob(bn);		/* XXX: should it be an off_t? */
+	byteoff = dbtob(bn);
 
 	for (resid = bp->b_resid; resid; resid -= sz) {
 		struct vndbuf	*nbp;
@@ -1238,8 +1238,8 @@ sw_reg_strategy(sdp, bp, bn)
 		if (resid < sz)
 			sz = resid;
 
-		UVMHIST_LOG(pdhist, "sw_reg_strategy: vp %p/%p bn 0x%x/0x%x",
-				sdp->swd_vp, vp, bn, nbn);
+		UVMHIST_LOG(pdhist, "sw_reg_strategy: vp %p/%p offset 0x%x/0x%x",
+				sdp->swd_vp, vp, byteoff, nbn);
 
 		/*
 		 * now get a buf structure.   note that the vb_buf is
@@ -1309,7 +1309,7 @@ sw_reg_strategy(sdp, bp, bn)
 		/*
 		 * advance to the next I/O
 		 */
-		bn   += sz;
+		byteoff += sz;
 		addr += sz;
 	}
 
