@@ -1,5 +1,5 @@
-/*	$NetBSD: intr.c,v 1.3 2004/10/23 21:27:35 yamt Exp $	*/
-/*	NetBSD: intr.c,v 1.15 2004/04/10 14:49:55 kochi Exp 	*/
+/*	$NetBSD: intr.c,v 1.3.4.1 2004/12/17 16:37:35 bouyer Exp $	*/
+/*	NetBSD: intr.c,v 1.20 2004/10/23 21:27:35 yamt Exp	*/
 
 /*
  * Copyright 2002 (c) Wasabi Systems, Inc.
@@ -36,8 +36,75 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
+/*-
+ * Copyright (c) 1991 The Regents of the University of California.
+ * All rights reserved.
+ *
+ * This code is derived from software contributed to Berkeley by
+ * William Jolitz.
+ *
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions
+ * are met:
+ * 1. Redistributions of source code must retain the above copyright
+ *    notice, this list of conditions and the following disclaimer.
+ * 2. Redistributions in binary form must reproduce the above copyright
+ *    notice, this list of conditions and the following disclaimer in the
+ *    documentation and/or other materials provided with the distribution.
+ * 3. Neither the name of the University nor the names of its contributors
+ *    may be used to endorse or promote products derived from this software
+ *    without specific prior written permission.
+ *
+ * THIS SOFTWARE IS PROVIDED BY THE REGENTS AND CONTRIBUTORS ``AS IS'' AND
+ * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+ * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+ * ARE DISCLAIMED.  IN NO EVENT SHALL THE REGENTS OR CONTRIBUTORS BE LIABLE
+ * FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+ * DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS
+ * OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
+ * HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
+ * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
+ * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
+ * SUCH DAMAGE.
+ *
+ *     @(#)isa.c       7.2 (Berkeley) 5/13/91
+ */
+/*-
+ * Copyright (c) 1993, 1994 Charles Hannum.
+ *
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions
+ * are met:
+ * 1. Redistributions of source code must retain the above copyright
+ *    notice, this list of conditions and the following disclaimer.
+ * 2. Redistributions in binary form must reproduce the above copyright
+ *    notice, this list of conditions and the following disclaimer in the
+ *    documentation and/or other materials provided with the distribution.
+ * 3. All advertising materials mentioning features or use of this software
+ *    must display the following acknowledgement:
+ *     This product includes software developed by the University of
+ *     California, Berkeley and its contributors.
+ * 4. Neither the name of the University nor the names of its contributors
+ *    may be used to endorse or promote products derived from this software
+ *    without specific prior written permission.
+ *
+ * THIS SOFTWARE IS PROVIDED BY THE REGENTS AND CONTRIBUTORS ``AS IS'' AND
+ * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+ * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+ * ARE DISCLAIMED.  IN NO EVENT SHALL THE REGENTS OR CONTRIBUTORS BE LIABLE
+ * FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+ * DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS
+ * OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
+ * HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
+ * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
+ * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
+ * SUCH DAMAGE.
+ *
+ *     @(#)isa.c       7.2 (Berkeley) 5/13/91
+ */
+
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: intr.c,v 1.3 2004/10/23 21:27:35 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: intr.c,v 1.3.4.1 2004/12/17 16:37:35 bouyer Exp $");
 
 #include "opt_multiprocessor.h"
 
@@ -265,7 +332,7 @@ intr_find_mpmapping(int bus, int pin, int *handle)
 			return ENOENT;
 		dev = pin >> 2;
 		pin = pin & 3;
-		pin = PPB_INTERRUPT_SWIZZLE(pin, dev);
+		pin = PPB_INTERRUPT_SWIZZLE(pin + 1, dev) - 1;
 		pci_decompose_tag(pci_chipset_tag, pci_bridge_tag, &bus,
 		    &dev, &func);
 		pin |= (dev << 2);
@@ -456,6 +523,29 @@ found:
 	return 0;
 }
 
+#ifdef MULTIPROCESSOR
+static int intr_biglock_wrapper(void *);
+
+/*
+ * intr_biglock_wrapper: grab biglock and call a real interrupt handler.
+ */
+
+static int
+intr_biglock_wrapper(void *vp)
+{
+	struct intrhand *ih = vp;
+	int ret;
+ 
+	KERNEL_LOCK(LK_EXCLUSIVE|LK_CANRECURSE);
+ 
+	ret = (*ih->ih_realfun)(ih->ih_realarg);
+ 
+	KERNEL_UNLOCK();
+ 
+	return ret;
+ }
+#endif /* MULTIPROCESSOR */
+
 void *
 intr_establish(int legacy_irq, struct pic *pic, int pin, int type, int level,
 	       int (*handler)(void *), void *arg)
@@ -465,6 +555,9 @@ intr_establish(int legacy_irq, struct pic *pic, int pin, int type, int level,
 	int slot, error, idt_vec;
 	struct intrsource *source;
 	struct intrstub *stubp;
+#ifdef MULTIPROCESSOR
+	boolean_t mpsafe = level >= IPL_SCHED;
+#endif /* MULTIPROCESSOR */
 
 #ifdef DIAGNOSTIC
 	if (legacy_irq != -1 && (legacy_irq < 0 || legacy_irq > 15))
@@ -544,13 +637,19 @@ intr_establish(int legacy_irq, struct pic *pic, int pin, int type, int level,
 	     p = &q->ih_next)
 		;
 
-	ih->ih_fun = handler;
-	ih->ih_arg = arg;
+	ih->ih_fun = ih->ih_realfun = handler;
+	ih->ih_arg = ih->ih_realarg = arg;
 	ih->ih_next = *p;
 	ih->ih_level = level;
 	ih->ih_pin = pin;
 	ih->ih_cpu = ci;
 	ih->ih_slot = slot;
+#ifdef MULTIPROCESSOR
+	if (!mpsafe) {
+		ih->ih_fun = intr_biglock_wrapper;
+		ih->ih_arg = ih;
+	}
+#endif /* MULTIPROCESSOR */
 	*p = ih;
 
 	intr_calculatemasks(ci);
@@ -781,20 +880,6 @@ cpu_intr_init(struct cpu_info *ci)
 }
 
 #ifdef MULTIPROCESSOR
-void
-x86_intlock(struct intrframe *iframe)
-{
-	if (iframe->if_ppl < IPL_SCHED)
-		KERNEL_LOCK(LK_EXCLUSIVE|LK_CANRECURSE);
-}
-
-void
-x86_intunlock(struct intrframe *iframe)
-{
-	if (iframe->if_ppl < IPL_SCHED)
-		KERNEL_UNLOCK();
-}
-
 void
 x86_softintlock(void)
 {
