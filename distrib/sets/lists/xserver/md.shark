@@ -1,7 +1,4 @@
-# $NetBSD: md.shark,v 1.4 2004/02/14 22:04:40 matt Exp $
-./usr/X11R6/bin/Xnest
+# $NetBSD: md.shark,v 1.5 2004/03/28 06:48:43 jmc Exp $
 ./usr/X11R6/bin/Xvfb
-./usr/X11R6/man/cat1/Xnest.0			-unknown-		.cat
 ./usr/X11R6/man/cat1/Xvfb.0			-unknown-		.cat
-./usr/X11R6/man/man1/Xnest.1			-unknown-		.man
 ./usr/X11R6/man/man1/Xvfb.1			-unknown-		.man
