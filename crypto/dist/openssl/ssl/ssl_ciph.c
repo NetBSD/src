@@ -154,7 +154,9 @@ static const SSL_CIPHER cipher_aliases[]={
 	{0,SSL_TXT_LOW,   0, 0,   SSL_LOW, 0,0,0,0,SSL_STRONG_MASK},
 	{0,SSL_TXT_MEDIUM,0, 0,SSL_MEDIUM, 0,0,0,0,SSL_STRONG_MASK},
 	{0,SSL_TXT_HIGH,  0, 0,  SSL_HIGH, 0,0,0,0,SSL_STRONG_MASK},
+#ifdef OPENSSL_FIPS
 	{0,SSL_TXT_FIPS,  0, 0,  SSL_FIPS, 0,0,0,0,SSL_FIPS|SSL_STRONG_NONE},
+#endif
 	};
 
 static int init_ciphers=1;
