@@ -1,4 +1,4 @@
-/*	$NetBSD: ioasic.c,v 1.2 1996/03/17 01:06:41 thorpej Exp $	*/
+/*	$NetBSD: ioasic.c,v 1.3 1996/04/12 01:31:46 cgd Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Carnegie-Mellon University.
@@ -53,11 +53,11 @@ void	ioasicattach __P((struct device *, struct device *, void *));
 int     ioasicprint(void *, char *);
 
 struct cfattach ioasic_ca = {
-	sizeof(struct ioasic_softc), ioasicmatch, ioasicattach
+	sizeof(struct ioasic_softc), ioasicmatch, ioasicattach,
 };
 
 struct cfdriver ioasic_cd = {
-	NULL, "ioasic", DV_DULL
+	NULL, "ioasic", DV_DULL,
 };
 
 int	ioasic_intr __P((void *));
@@ -80,7 +80,8 @@ struct ioasic_dev {
 	void		*iad_cookie;
 	u_int32_t	iad_intrbits;
 } ioasic_devs[] = {
-	{ "lance   ", 0x000c0000, C(IOASIC_DEV_LANCE), IOASIC_INTR_LANCE, },
+	/* XXX lance name */
+	{ "lance",    0x000c0000, C(IOASIC_DEV_LANCE), IOASIC_INTR_LANCE, },
 	{ "z8530   ", 0x00100000, C(IOASIC_DEV_SCC0),  IOASIC_INTR_SCC_0, },
 	{ "z8530   ", 0x00180000, C(IOASIC_DEV_SCC1),  IOASIC_INTR_SCC_1, },
 	{ "TOY_RTC ", 0x00200000, C(IOASIC_DEV_BOGUS), 0,                 },
@@ -106,10 +107,10 @@ ioasicmatch(parent, cfdata, aux)
 	void *cfdata;
 	void *aux;
 {
-	struct tcdev_attach_args *tcdev = aux;
+	struct tc_attach_args *ta = aux;
 
 	/* Make sure that we're looking for this type of device. */
-	if (strncmp("FLAMG-IO", tcdev->tcda_modname, TC_ROM_LLEN))
+	if (strncmp("FLAMG-IO", ta->ta_modname, TC_ROM_LLEN))
 		return (0);
 
 	/* Check that it can actually exist. */
@@ -128,15 +129,15 @@ ioasicattach(parent, self, aux)
 	void *aux;
 {
 	struct ioasic_softc *sc = (struct ioasic_softc *)self;
-	struct tcdev_attach_args *tcdev = aux;
+	struct tc_attach_args *ta = aux;
 	struct ioasicdev_attach_args ioasicdev;
 	u_long i;
 
 	ioasicfound = 1;
 
-	sc->sc_base = tcdev->tcda_addr;
+	sc->sc_base = ta->ta_addr;
 	ioasic_base = sc->sc_base;			/* XXX XXX XXX */
-	sc->sc_cookie = tcdev->tcda_cookie;
+	sc->sc_cookie = ta->ta_cookie;
 
 #ifdef DEC_3000_300
 	if (cputype == ST_DEC_3000_300) {
@@ -340,42 +341,3 @@ ioasic_lance_dma_setup(v)
 	    IOASIC_CSR_DMAEN_LANCE;
 	tc_mb();
 }
-
-#ifdef DEC_3000_300
-void
-ioasic_intr_300_opt0_enable(enable)
-	int enable;
-{
-
-	if (enable)
-		*(volatile u_int32_t *)IOASIC_REG_IMSK(ioasic_base) |=
-			IOASIC_INTR_300_OPT0;
-	else
-		*(volatile u_int32_t *)IOASIC_REG_IMSK(ioasic_base) &=
-			~IOASIC_INTR_300_OPT0;
-}
-
-void
-ioasic_intr_300_opt1_enable(enable)
-	int enable;
-{
-
-	if (enable)
-		*(volatile u_int32_t *)IOASIC_REG_IMSK(ioasic_base) |=
-			IOASIC_INTR_300_OPT1;
-	else
-		*(volatile u_int32_t *)IOASIC_REG_IMSK(ioasic_base) &=
-			~IOASIC_INTR_300_OPT1;
-}
-
-void
-ioasic_300_opts_isintr(opt0, opt1)
-	int *opt0, *opt1;
-{
-	u_int32_t sir;
-
-	sir = *(volatile u_int32_t *)IOASIC_REG_INTR(ioasic_base);
-	*opt0 = sir & IOASIC_INTR_300_OPT0;
-	*opt1 = sir & IOASIC_INTR_300_OPT1;
-}
-#endif
