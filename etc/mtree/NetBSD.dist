@@ -1,4 +1,4 @@
-#	$NetBSD: NetBSD.dist,v 1.48 1997/09/21 16:51:44 veego Exp $
+#	$NetBSD: NetBSD.dist,v 1.49 1997/09/25 19:05:08 thorpej Exp $
 #	@(#)4.4BSD.dist	8.1 (Berkeley) 6/13/93
 
 /set type=dir uname=root gname=wheel mode=0755
@@ -330,6 +330,16 @@ mdec
 # ./usr/obj		XXX
 obj
 # ./usr/obj		XXX
+..
+
+# ./usr/pkg
+pkg			ignore
+# ./usr/pkg
+..
+
+# ./usr/pkgsrc
+pkgsrc			ignore
+# ./usr/pkgsrc
 ..
 
 # ./usr/sbin
