@@ -1,4 +1,4 @@
-/*	$NetBSD: util.c,v 1.29 1998/06/20 13:05:51 mrg Exp $	*/
+/*	$NetBSD: util.c,v 1.30 1998/06/22 12:18:52 mrg Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -265,8 +265,6 @@ get_via_cdrom()
 	 * because we expect the CDROM structure to be the
 	 * same as the ftp site.
 	 */
-	strncat(cdrom_dir, rel, STRSIZE - strlen(cdrom_dir));
-	strcat(cdrom_dir, "/");
 	strncat(cdrom_dir, machine, STRSIZE - strlen(cdrom_dir));
 	strncat(cdrom_dir, ftp_prefix, STRSIZE - strlen(cdrom_dir));
 
