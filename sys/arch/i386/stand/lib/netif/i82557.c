@@ -1,4 +1,4 @@
-/* $NetBSD: i82557.c,v 1.1 1998/12/12 15:47:05 drochner Exp $ */
+/* $NetBSD: i82557.c,v 1.2 1999/02/19 19:30:46 drochner Exp $ */
 
 /*
  * Copyright (c) 1998
@@ -165,7 +165,7 @@ fxp_checkintr(msg)
 
 int
 EtherInit(myadr)
-	char *myadr;
+	unsigned char *myadr;
 {
 #ifndef _STANDALONE
 	u_int32_t id;
