@@ -1,4 +1,4 @@
-/*	$NetBSD: mach_host.h,v 1.2 2002/11/10 09:41:45 manu Exp $ */
+/*	$NetBSD: mach_host.h,v 1.3 2002/11/10 21:53:40 manu Exp $ */
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -38,6 +38,11 @@
 
 #ifndef	_MACH_HOST_H_
 #define	_MACH_HOST_H_
+
+#include <sys/types.h>
+#include <sys/param.h>
+#include <sys/signal.h>
+#include <sys/proc.h>
 
 #include <compat/mach/mach_types.h>
 #include <compat/mach/mach_message.h>
@@ -114,7 +119,23 @@ typedef struct {
 	mach_vm_size_t rep_page_size;
 } mach_host_page_size_reply_t;
 
-int mach_host_info __P((mach_msg_header_t *));
-int mach_host_page_size __P((mach_msg_header_t *));
+/* host_get_clock_service */
+
+typedef struct {
+	mach_msg_header_t req_msgh;
+	mach_ndr_record_t req_ndr;
+	mach_clock_id_t req_clock_id;
+} mach_host_get_clock_service_request_t;
+
+typedef struct {
+	mach_msg_header_t rep_msgh;
+	mach_msg_body_t rep_body;
+	mach_msg_port_descriptor_t rep_clock_serv;
+	mach_msg_trailer_t req_trailer;
+} mach_host_get_clock_service_reply_t;
+
+int mach_host_info __P((struct proc *, mach_msg_header_t *));
+int mach_host_page_size __P((struct proc *, mach_msg_header_t *));
+int mach_host_get_clock_service __P((struct proc *, mach_msg_header_t *));
 
 #endif /* _MACH_HOST_H_ */

@@ -1,4 +1,4 @@
-/*	$NetBSD: mach_message.h,v 1.3 2002/11/10 02:18:03 manu Exp $	 */
+/*	$NetBSD: mach_message.h,v 1.4 2002/11/10 21:53:40 manu Exp $	 */
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -39,11 +39,13 @@
 #ifndef	_MACH_MESSAGE_H_
 #define	_MACH_MESSAGE_H_
 
-typedef u_int32_t mach_msg_bits_t;
-typedef u_int32_t mach_msg_size_t;
-typedef u_int32_t mach_msg_id_t;
-typedef u_int32_t mach_msg_timeout_t;
-typedef u_int32_t mach_msg_option_t;
+typedef unsigned int mach_msg_bits_t;
+typedef unsigned int mach_msg_size_t;
+typedef unsigned int mach_msg_id_t;
+typedef unsigned int mach_msg_timeout_t;
+typedef unsigned int mach_msg_option_t;
+typedef unsigned int mach_msg_type_name_t;
+typedef unsigned int mach_msg_type_number_t;
 
 /*
  * Options
@@ -119,9 +121,37 @@ typedef struct {
 	mach_msg_trailer_size_t       msgh_trailer_size;
 } mach_msg_trailer_t;
 
+typedef struct {
+	void*			pad1;
+	mach_msg_size_t		pad2;
+	unsigned int		pad3 : 24;
+	mach_msg_descriptor_type_t type : 8;
+} mach_msg_type_descriptor_t;
+
+typedef struct {
+	mach_port_t		name;
+	mach_msg_size_t		pad1;
+	unsigned int		pad2 : 16;
+	mach_msg_type_name_t	disposition : 8;
+	mach_msg_descriptor_type_t type : 8;
+} mach_msg_port_descriptor_t;
+
+typedef struct {
+	void *			address;
+	mach_msg_size_t		count;
+	mach_boolean_t		deallocate: 8;
+	mach_msg_copy_options_t	copy: 8;
+	mach_msg_type_name_t	disposition : 8;
+	mach_msg_descriptor_type_t type : 8;
+} mach_msg_ool_ports_descriptor_t;
+
+typedef struct {
+	mach_msg_size_t	msgh_descriptor_count;
+} mach_msg_body_t;
+
 struct mach_subsystem_namemap {
-	int		map_id;
-	int		(*map_handler)	__P((mach_msg_header_t *));
+	int	map_id;
+	int	(*map_handler) __P((struct proc *, mach_msg_header_t *));
 	const char	*map_name;
 };
 extern struct mach_subsystem_namemap mach_namemap[];
