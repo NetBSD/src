@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.174 2001/01/14 05:31:36 christos Exp $
+#	$NetBSD: Makefile,v 1.175 2001/01/14 06:08:24 christos Exp $
 #	from: @(#)Makefile	8.7 (Berkeley) 5/25/95
 
 # Environment variables without default values:
@@ -279,9 +279,13 @@ distrib-dirs:
 	cd ${DESTDIR}; rm -f sys; ln -s usr/src/sys sys
 
 .if !defined(RELEASEDIR)
-release snapshot snap_pre snap_md_pre snap_md_post iso-image:
+__warnreleasedir: .USE
 	@echo setenv RELEASEDIR before doing that!
 	@false
+release snapshot snap_pre snap_md_pre iso-image: __warnreleasedir
+.if !target(snap_md_post)
+snap_md_post: __warnreleasedir
+.endif
 .else
 release snapshot: distribution snap_pre snap_md_pre snap_kern snap_md_post
 	(cd ../distrib/sets; ${MAKE} sets)
