@@ -1,4 +1,4 @@
-/*	$NetBSD: rsh.c,v 1.20 2003/06/14 22:43:32 joff Exp $	*/
+/*	$NetBSD: rsh.c,v 1.21 2003/07/23 20:31:19 itojun Exp $	*/
 
 /*-
  * Copyright (c) 1983, 1990, 1993, 1994
@@ -43,7 +43,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1990, 1993, 1994\n\
 #if 0
 static char sccsid[] = "@(#)rsh.c	8.4 (Berkeley) 4/29/95";
 #else
-__RCSID("$NetBSD: rsh.c,v 1.20 2003/06/14 22:43:32 joff Exp $");
+__RCSID("$NetBSD: rsh.c,v 1.21 2003/07/23 20:31:19 itojun Exp $");
 #endif
 #endif /* not lint */
 
@@ -70,7 +70,7 @@ __RCSID("$NetBSD: rsh.c,v 1.20 2003/06/14 22:43:32 joff Exp $");
 #include "pathnames.h"
 
 #ifdef KERBEROS
-#include <kerberosIV/des.h>
+#include <des.h>
 #include <kerberosIV/krb.h>
 
 CREDENTIALS cred;

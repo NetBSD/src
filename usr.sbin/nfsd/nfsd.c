@@ -1,4 +1,4 @@
-/*	$NetBSD: nfsd.c,v 1.41 2002/09/24 17:32:03 mycroft Exp $	*/
+/*	$NetBSD: nfsd.c,v 1.42 2003/07/23 20:31:53 itojun Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993, 1994
@@ -46,7 +46,7 @@ __COPYRIGHT("@(#) Copyright (c) 1989, 1993, 1994\n\
 #if 0
 static char sccsid[] = "@(#)nfsd.c	8.9 (Berkeley) 3/29/95";
 #else
-__RCSID("$NetBSD: nfsd.c,v 1.41 2002/09/24 17:32:03 mycroft Exp $");
+__RCSID("$NetBSD: nfsd.c,v 1.42 2003/07/23 20:31:53 itojun Exp $");
 #endif
 #endif /* not lint */
 
@@ -73,7 +73,7 @@ __RCSID("$NetBSD: nfsd.c,v 1.41 2002/09/24 17:32:03 mycroft Exp $");
 #include <nfs/nfs.h>
 
 #ifdef NFSKERB
-#include <kerberosIV/des.h>
+#include <des.h>
 #include <kerberosIV/krb.h>
 #endif
 
