@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.own.mk,v 1.157 2001/02/24 16:37:43 msaitoh Exp $
+#	$NetBSD: bsd.own.mk,v 1.158 2001/03/19 17:01:12 tsutsui Exp $
 
 .if !defined(_BSD_OWN_MK_)
 _BSD_OWN_MK_=1
@@ -108,7 +108,8 @@ NOLINT=1
     ${MACHINE_ARCH} == "i386" || \
     ${MACHINE} == "sun3" || \
     ${MACHINE} == "mvme68k" || \
-    ${MACHINE} == "hp300"
+    ${MACHINE} == "hp300" || \
+    ${MACHINE} == "news68k"
 OBJECT_FMT?=ELF
 .else
 OBJECT_FMT?=a.out
