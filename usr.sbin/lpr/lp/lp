@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-#	$NetBSD: lp,v 1.3 1998/07/07 02:01:37 mrg Exp $
+#	$NetBSD: lp,v 1.4 1998/07/07 17:05:28 mrg Exp $
 #
 # Copyright (c) 1995 Joerg Wunsch
 #
@@ -56,8 +56,8 @@ do
 
 	c)			# copy files before printing
 		symlink="";;
-	s)			# symlink files (SVR4 compatibility)
-		symlink="-s";;
+	s)			# silent
+		: ;;
 	d)			# destination
 		dest="${OPTARG}";;
 	n)			# number of copies
