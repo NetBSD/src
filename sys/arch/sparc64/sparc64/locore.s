@@ -5386,9 +5386,8 @@ _C_LABEL(sigcode):
 2:
 	lduw	[%fp + BIAS + CC64FSZ], %o0	! sig
 	lduw	[%fp + BIAS + CC64FSZ + 4], %o1	! code
-	add	%fp, BIAS + CC64FSZ + 8, %o2	! scp
 	call	%g1			! (*sa->sa_handler)(sig,code,scp)
-	 andn	%o2, 0x0f, %o2
+	 add	%fp, BIAS + 128 + 8, %o2	! scp
 
 	/*
 	 * Now that the handler has returned, re-establish all the state
@@ -5422,8 +5421,8 @@ _C_LABEL(sigcode):
 	mov	%l7, %g7
 
 	restore	%g0, SYS___sigreturn14, %g1 ! get registers back & set syscall #
-	add	%sp, BIAS + CC64FSZ + 8, %o0! compute scp
-	andn	%o0, 0x0f, %o0
+	add	%sp, BIAS + 128 + 8, %o0! compute scp
+!	andn	%o0, 0x0f, %o0
 	t	ST_SYSCALL		! sigreturn(scp)
 	! sigreturn does not return unless it fails
 	mov	SYS_exit, %g1		! exit(errno)
