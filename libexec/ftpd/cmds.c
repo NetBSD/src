@@ -1,4 +1,4 @@
-/*	$NetBSD: cmds.c,v 1.4.2.3 2001/03/29 14:14:17 lukem Exp $	*/
+/*	$NetBSD: cmds.c,v 1.4.2.4 2002/10/25 02:12:34 itojun Exp $	*/
 
 /*
  * Copyright (c) 1999-2000 The NetBSD Foundation, Inc.
@@ -101,7 +101,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: cmds.c,v 1.4.2.3 2001/03/29 14:14:17 lukem Exp $");
+__RCSID("$NetBSD: cmds.c,v 1.4.2.4 2002/10/25 02:12:34 itojun Exp $");
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -117,6 +117,7 @@ __RCSID("$NetBSD: cmds.c,v 1.4.2.3 2001/03/29 14:14:17 lukem Exp $");
 #include <string.h>
 #include <tzfile.h>
 #include <unistd.h>
+#include <ctype.h>
 
 #ifdef KERBEROS5
 #include <krb5/krb5.h>
@@ -493,12 +494,14 @@ statfilecmd(const char *filename)
 {
 	FILE *fin;
 	int c;
+	int atstart;
 	char *argv[] = { INTERNAL_LS, "-lgA", "", NULL };
 
 	argv[2] = (char *)filename;
 	fin = ftpd_popen(argv, "r", STDOUT_FILENO);
 	reply(-211, "status of %s:", filename);
 /* XXX: use fgetln() or fparseln() here? */
+	atstart = 1;
 	while ((c = getc(fin)) != EOF) {
 		if (c == '\n') {
 			if (ferror(stdout)){
@@ -514,7 +517,10 @@ statfilecmd(const char *filename)
 			}
 			CPUTC('\r', stdout);
 		}
+		if (atstart && isdigit(c))
+			CPUTC(' ', stdout);
 		CPUTC(c, stdout);
+		atstart = (c == '\n');
 	}
 	(void) ftpd_pclose(fin);
 	reply(211, "End of Status");
