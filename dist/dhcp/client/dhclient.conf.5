@@ -35,7 +35,7 @@
 .\" see ``http://www.vix.com''.   To learn more about Nominum, Inc., see
 .\" ``http://www.nominum.com''.
 .\"
-.\" $Id: dhclient.conf.5,v 1.5 2003/03/31 11:36:22 wiz Exp $
+.\" $Id: dhclient.conf.5,v 1.6 2003/03/31 17:31:19 perry Exp $
 .\"
 .TH dhclient.conf 5
 .SH NAME
@@ -52,7 +52,7 @@ are case-insensitive.   Comments may be placed anywhere within the
 file (except within quotes).   Comments begin with the # character and
 end at the end of the line.
 .PP
-The dhclient.conf file can be used to configure the behaviour of the
+The dhclient.conf file can be used to configure the behavior of the
 client in a wide variety of ways: protocol timing, information
 requested from the server, information required of the server,
 defaults to use if the server does not provide certain information,
@@ -61,13 +61,13 @@ values to prepend or append to information provided by the server.
 The configuration file can also be preinitialized with addresses to
 use on networks that don't have DHCP servers.
 .SH PROTOCOL TIMING
-The timing behaviour of the client need not be configured by the user.
+The timing behavior of the client need not be configured by the user.
 If no timing configuration is provided by the user, a fairly
-reasonable timing behaviour will be used by default - one which
+reasonable timing behavior will be used by default - one which
 results in fairly timely updates without placing an inordinate load on
 the server.
 .PP
-The following statements can be used to adjust the timing behaviour of
+The following statements can be used to adjust the timing behavior of
 the DHCP client if required, however:
 .PP
 .I The
@@ -152,7 +152,7 @@ a new address.   By default, the reboot timeout is ten seconds.
 .PP
 The client uses an exponential backoff algorithm with some randomness,
 so that if many clients try to configure themselves at the same time,
-they will not make their requests in lockstep.   The
+they will not make their requests in lock-step.   The
 .I backoff-cutoff
 statement determines the maximum amount of time that the client is
 allowed to back off.   It defaults to two minutes.
@@ -312,7 +312,7 @@ statement.   The
 .B prepend
 statement can only be used for options which
 allow more than one value to be given.   This restriction is not
-enforced - if you ignore it, the behaviour will be unpredictable.
+enforced - if you ignore it, the behavior will be unpredictable.
 .PP
 .I The
 .B append
@@ -328,7 +328,7 @@ statement.   The
 .B append
 statement can only be used for options which
 allow more than one value to be given.   This restriction is not
-enforced - if you ignore it, the behaviour will be unpredictable.
+enforced - if you ignore it, the behavior will be unpredictable.
 .SH LEASE DECLARATIONS
 .PP
 .I The
@@ -523,7 +523,7 @@ the bad DHCP server and fix it.
  \fBinterface "\fIname\fB" { \fIdeclarations ... \fB }
 .PP
 A client with more than one network interface may require different
-behaviour depending on which interface is being configured.   All
+behavior depending on which interface is being configured.   All
 timing parameters and declarations other than lease and alias
 declarations can be enclosed in an interface declaration, and those
 parameters will then be used only for the interface that matches the
