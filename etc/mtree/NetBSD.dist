@@ -1,5 +1,5 @@
 #	from: @(#)4.4BSD.dist	8.1 (Berkeley) 6/13/93
-#	$Id: NetBSD.dist,v 1.5 1994/07/09 05:04:35 mycroft Exp $
+#	$Id: NetBSD.dist,v 1.6 1994/07/21 01:48:53 cgd Exp $
 
 /set type=dir uname=root gname=wheel mode=0755
 # .
@@ -891,6 +891,11 @@ mac68k
 # ./usr/share/man/cat4/mac68k
 ..
 
+# ./usr/share/man/cat4/pc532
+pc532
+# ./usr/share/man/cat4/pc532
+..
+
 # ./usr/share/man/cat4/sparc
 sparc
 # ./usr/share/man/cat4/sparc
@@ -945,6 +950,11 @@ i386
 # ./usr/share/man/cat8/mac68k
 mac68k
 # ./usr/share/man/cat8/mac68k
+..
+
+# ./usr/share/man/cat8/pc532
+pc532
+# ./usr/share/man/cat8/pc532
 ..
 
 # ./usr/share/man/cat8/sparc
@@ -1008,6 +1018,11 @@ mac68k
 # ./usr/share/man/man4/mac68k
 ..
 
+# ./usr/share/man/man4/pc532
+pc532
+# ./usr/share/man/man4/pc532
+..
+
 # ./usr/share/man/man4/sparc
 sparc
 # ./usr/share/man/man4/sparc
@@ -1062,6 +1077,11 @@ i386
 # ./usr/share/man/man8/mac68k
 mac68k
 # ./usr/share/man/man8/mac68k
+..
+
+# ./usr/share/man/man8/pc532
+pc532
+# ./usr/share/man/man8/pc532
 ..
 
 # ./usr/share/man/man8/sparc
