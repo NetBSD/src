@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_timeout.c,v 1.7 2003/07/14 14:59:01 lukem Exp $	*/
+/*	$NetBSD: kern_timeout.c,v 1.8 2003/07/20 16:25:58 he Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_timeout.c,v 1.7 2003/07/14 14:59:01 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_timeout.c,v 1.8 2003/07/20 16:25:58 he Exp $");
 
 /*
  * Adapted from OpenBSD: kern_timeout.c,v 1.15 2002/12/08 04:21:07 art Exp,
@@ -258,7 +258,7 @@ callout_reset(struct callout *c, int to_ticks, void (*func)(void *), void *arg)
 	/* Initialize the time here, it won't change. */
 	old_time = c->c_time;
 	c->c_time = to_ticks + hardclock_ticks;
-	c->c_flags &= ~CALLOUT_FIRED;
+	c->c_flags &= ~(CALLOUT_FIRED|CALLOUT_INVOKING);
 
 	c->c_func = func;
 	c->c_arg = arg;
@@ -299,7 +299,7 @@ callout_schedule(struct callout *c, int to_ticks)
 	/* Initialize the time here, it won't change. */
 	old_time = c->c_time;
 	c->c_time = to_ticks + hardclock_ticks;
-	c->c_flags &= ~CALLOUT_FIRED;
+	c->c_flags &= ~(CALLOUT_FIRED|CALLOUT_INVOKING);
 
 	/*
 	 * If this timeout is already scheduled and now is moved
@@ -334,7 +334,7 @@ callout_stop(struct callout *c)
 	if (callout_pending(c))
 		CIRCQ_REMOVE(&c->c_list);
 
-	c->c_flags &= ~(CALLOUT_PENDING|CALLOUT_FIRED);
+	c->c_flags &= ~(CALLOUT_PENDING|CALLOUT_FIRED|CALLOUT_INVOKING);
 
 	CALLOUT_UNLOCK(s);
 }
@@ -393,7 +393,7 @@ softclock(void *v)
 				callout_ev_late.ev_count++;
 #endif
 			c->c_flags = (c->c_flags  & ~CALLOUT_PENDING) |
-			    CALLOUT_FIRED;
+			    (CALLOUT_FIRED|CALLOUT_INVOKING);
 
 			func = c->c_func;
 			arg = c->c_arg;

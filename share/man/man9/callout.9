@@ -1,4 +1,4 @@
-.\"	$NetBSD: callout.9,v 1.9 2003/04/16 13:35:25 wiz Exp $
+.\"	$NetBSD: callout.9,v 1.10 2003/07/20 16:25:57 he Exp $
 .\"
 .\" Copyright (c) 2000, 2003 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -43,6 +43,9 @@
 .Nm callout_schedule ,
 .Nm callout_setfunc ,
 .Nm callout_stop ,
+.Nm callout_expired ,
+.Nm callout_invoking ,
+.Nm callout_ack ,
 .Nm CALLOUT_INITIALIZER ,
 .Nm CALLOUT_INITIALIZER_SETFUNC
 .Nd execute a function after a specified length of time
@@ -63,6 +66,10 @@
 .Fn "callout_pending" "struct callout *c"
 .Ft int
 .Fn "callout_expired" "struct callout *c"
+.Ft int
+.Fn "callout_invoking" "struct callout *c"
+.Ft void
+.Fn "callout_ack" "struct callout *c"
 .Fd CALLOUT_INITIALIZER
 .Pp
 .Fd CALLOUT_INITIALIZER_SETFUNC(func, arg)
@@ -117,8 +124,10 @@ time.
 Once the timer is started, the callout handle is marked as
 .Em PENDING .
 Once the timer expires,
-the handle is marked at
+the handle is marked as
 .Em EXPIRED
+and
+.Em RUNNING
 and the
 .Em PENDING
 status is cleared.
@@ -153,11 +162,11 @@ The
 function stops the timer associated the callout handle
 .Fa c .
 The
-.Em PENDING
+.Em PENDING ,
+.Em EXPIRED ,
+and
+.Em RUNNING
 status for the callout handle is cleared.
-The
-.Em EXPIRED
-status is not affected.
 It is safe to call
 .Fn callout_stop
 on a callout handle that is not pending, so long as it is initialized.
@@ -183,6 +192,42 @@ The
 .Fn callout_expired
 function tests to see if the callout's timer has expired and its
 function called.
+.Pp
+The
+.Fn callout_invoking
+function tests the
+.Em INVOKING
+status of the callout handle
+.Fa c .
+This flag is set just before a callout's function is being called.
+Since the priority level is lowered prior to invocation of the
+callout function, other pending higher-priority code may run before
+the callout function is allowed to run.
+This may create a race condition if this higher-priority code
+deallocates storage containing one or more callout structures whose
+callout functions are about to be run.
+In such cases, one technique to prevent references to deallocated
+storage would be to test whether any callout functions are in the
+.Em INVOKING
+state using
+.Fn callout_invoking ,
+and if so, to mark the data structure and defer storage
+deallocation until the callout function is allowed to run.
+For this handshake protocol to work, the callout function will
+have to use the
+.Fn callout_ack
+function to clear this flag.
+.Pp
+The
+.Fn callout_ack
+function clears the
+.Em INVOKING
+state in the callout handle
+.Fa c .
+This is used in situations where it is necessary to protect against
+the race condition described under
+.Fn callout_invoking .
+The
 .Sh SEE ALSO
 .Xr hz 9
 .Sh HISTORY
