@@ -1,4 +1,4 @@
-/* $NetBSD: user.c,v 1.60 2002/09/30 04:05:22 itojun Exp $ */
+/* $NetBSD: user.c,v 1.61 2002/09/30 10:32:40 agc Exp $ */
 
 /*
  * Copyright (c) 1999 Alistair G. Crooks.  All rights reserved.
@@ -35,7 +35,7 @@
 #ifndef lint
 __COPYRIGHT("@(#) Copyright (c) 1999 \
 	        The NetBSD Foundation, Inc.  All rights reserved.");
-__RCSID("$NetBSD: user.c,v 1.60 2002/09/30 04:05:22 itojun Exp $");
+__RCSID("$NetBSD: user.c,v 1.61 2002/09/30 10:32:40 agc Exp $");
 #endif
 
 #include <sys/types.h>
@@ -876,6 +876,34 @@ getnextuid(int sync_uid_gid, int *uid, int low_uid, int high_uid)
 	return 0;
 }
 
+/* structure which defines a password type */
+typedef struct passwd_type_t {
+	char		type[2];		/* optional 2-character type descriptor */
+	int		desc_length;		/* length of type descriptor */
+	int		length;			/* length of password (incl. descriptor) */
+} passwd_type_t;
+
+static passwd_type_t	passwd_types[] = {
+	{ "$2",		2,	60 },		/* Blowfish */
+	{ "$1",		2,	34 },		/* MD5 passwords */
+	{ "",		0,	13 },		/* standard DES */
+	{ "",		-1,	-1 }		/* none - terminate search */
+};
+
+/* return the length of a given type of password */
+static int
+password_length(char *newpasswd)
+{
+	passwd_type_t  *pwtp;
+
+	for (pwtp = passwd_types ; pwtp->desc_length >= 0 ; pwtp++) {
+		if (strncmp(newpasswd, pwtp->type, pwtp->desc_length) == 0) {
+			return pwtp->length;
+		}
+	}
+	return -1;
+}
+
 /* add a user */
 static int
 adduser(char *login_name, user_t *up)
@@ -1014,10 +1042,7 @@ adduser(char *login_name, user_t *up)
 		    home);
 	}
 	password[sizeof(password) - 1] = '\0';
-	if (up->u_password != NULL &&
-	    (strlen(up->u_password) == 13 ||
-	     strncmp(up->u_password, "$1", 2) == 0 ||
-	     strncmp(up->u_password, "$2", 2) == 0)) {
+	if (up->u_password != NULL && strlen(up->u_password) == password_length(up->u_password)) {
 		(void) strlcpy(password, up->u_password, sizeof(password));
 	} else {
 		(void) memset(password, '\0', sizeof(password));
@@ -1213,6 +1238,7 @@ moduser(char *login_name, char *newlogin, user_t *up)
 	char	       *buf;
 	char	       *colon;
 	char	       *line;
+	int		passwdlen;
 	int		masterfd;
 	int		ptmpfd;
 	int		error;
@@ -1267,9 +1293,13 @@ moduser(char *login_name, char *newlogin, user_t *up)
 		}
 		if (up->u_flags & F_PASSWORD) {
 			if (up->u_password != NULL &&
-			    (strlen(up->u_password) == 13 ||
-			     strncmp(up->u_password, "$1", 2) == 0 ||
-			     strncmp(up->u_password, "$2", 2) == 0)) {
+			    (passwdlen = password_length(up->u_password)) > 0) {
+				if (strlen(up->u_password) != passwdlen) {
+					(void) close(ptmpfd);
+					pw_abort();
+					errx(EXIT_FAILURE, "Password length %d expected: got `%s' (%d)",
+						passwdlen, up->u_password, strlen(up->u_password));
+				}
 				pwp->pw_passwd = up->u_password;
 			}
 		}
