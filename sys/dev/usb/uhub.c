@@ -1,4 +1,4 @@
-/*	$NetBSD: uhub.c,v 1.57 2001/11/20 16:08:37 augustss Exp $	*/
+/*	$NetBSD: uhub.c,v 1.57.10.1 2004/03/15 04:37:39 jmc Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/uhub.c,v 1.18 1999/11/17 22:33:43 n_hibma Exp $	*/
 
 /*
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uhub.c,v 1.57 2001/11/20 16:08:37 augustss Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uhub.c,v 1.57.10.1 2004/03/15 04:37:39 jmc Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -178,7 +178,7 @@ USB_ATTACH(uhub)
 	/* Get hub descriptor. */
 	req.bmRequestType = UT_READ_CLASS_DEVICE;
 	req.bRequest = UR_GET_DESCRIPTOR;
-	USETW(req.wValue, 0);
+	USETW2(req.wValue, UDESC_HUB, 0);
 	USETW(req.wIndex, 0);
 	USETW(req.wLength, USB_HUB_DESCRIPTOR_SIZE);
 	DPRINTFN(1,("usb_init_hub: getting hub descriptor\n"));
