@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.12 1999/10/04 23:27:02 lukem Exp $	*/
+/*	$NetBSD: main.c,v 1.13 2000/01/19 19:02:27 jsm Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -43,7 +43,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1993\n\
 #if 0
 static char sccsid[] = "@(#)main.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: main.c,v 1.12 1999/10/04 23:27:02 lukem Exp $");
+__RCSID("$NetBSD: main.c,v 1.13 2000/01/19 19:02:27 jsm Exp $");
 #endif
 #endif /* not lint */
 
@@ -191,13 +191,6 @@ main(ac, av)
 	quit(0);
 	/* NOTREACHED */
 	return(0);
-}
-
-int
-__cputchar(ch)
-	int ch;
-{
-	return (putchar(ch));
 }
 
 /*
