@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.sys.mk,v 1.78 2002/05/28 21:56:06 bjh21 Exp $
+#	$NetBSD: bsd.sys.mk,v 1.79 2002/05/30 21:44:07 msaitoh Exp $
 #
 # Build definitions used for NetBSD source tree builds.
 
@@ -14,7 +14,7 @@ CFLAGS+=	-Wall -Wstrict-prototypes -Wmissing-prototypes -Wpointer-arith
 CFLAGS+=	-Wno-uninitialized
 .endif
 .if ${WARNS} > 1
-CFLAGS+=	-Wreturn-type -Wpointer-arith -Wswitch -Wshadow
+CFLAGS+=	-Wreturn-type -Wswitch -Wshadow
 .endif
 .if ${WARNS} > 2
 CFLAGS+=	-Wcast-qual -Wwrite-strings
