@@ -1,4 +1,4 @@
-/*	$NetBSD: cdefs.h,v 1.17 1997/01/22 07:09:07 mikel Exp $	*/
+/*	$NetBSD: cdefs.h,v 1.18 1997/06/18 19:09:50 christos Exp $	*/
 
 /*
  * Copyright (c) 1991, 1993
@@ -127,6 +127,17 @@
 #ifndef __dead
 #define	__dead
 #define	__pure
+#endif
+
+#define __IDSTRING(name,string) \
+	static const char name[] __attribute__((__unused__)) = string
+
+#ifndef __RCSID
+#define __RCSID(s) __IDSTRING(rcsid,s)
+#endif
+
+#ifndef __COPYRIGHT
+#define __COPYRIGHT(s) __IDSTRING(copyright,s)
 #endif
 
 #endif /* !_SYS_CDEFS_H_ */
