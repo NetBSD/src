@@ -1,4 +1,4 @@
-.\"	$NetBSD: stat.1,v 1.3 2002/04/28 17:44:43 wiz Exp $
+.\"	$NetBSD: stat.1,v 1.4 2002/05/09 17:52:03 atatat Exp $
 .\"
 .\" Copyright (c) 2002 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -126,10 +126,12 @@ formatted.  If the
 is immediately followed by one of
 .Cm n ,
 .Cm t ,
-or
 .Cm % ,
-then a newline character, a tab character, or a percent character is
-printed, otherwise the string is examined for the following:
+or
+.Cm @ ,
+then a newline character, a tab character, a percent character,
+or the current file number is printed, otherwise the string is
+examined for the following:
 .Pp
 Any of the following optional flags:
 .Bl -tag -width Ds
@@ -225,7 +227,9 @@ output formats.  It can be one of the following:
 .Cm r
 or
 .Cm d ,
-the high bits for permissions from the string form of
+the ``user'' bits for permissions from the string form of
+.Cm p ,
+the file ``type'' bits from the numeric forms of
 .Cm p ,
 and the long output form of
 .Cm T .
@@ -234,7 +238,9 @@ and the long output form of
 .Cm r
 or
 .Cm d ,
-the low bits for permissions from the string form of
+the ``other'' bits for permissions from the string form of
+.Cm p ,
+the ``user'', ``group'', and ``other'' bits from the numeric forms of
 .Cm p ,
 and the
 .Ic ls -F
@@ -244,8 +250,10 @@ style output character for file type when used with
 .Cm L
 for this is optional).
 .It Cm M
-``Middle'' -- specifies the middle bits for permissions from the
+``Middle'' -- specifies the ``group'' bits for permissions from the
 string output form of
+.Cm p ,
+or the ``suid'', ``sgid'', and ``sticky'' bits for the numeric forms of
 .Cm p .
 .El
 .It Cm datum

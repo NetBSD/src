@@ -1,4 +1,4 @@
-/*	$NetBSD: stat.c,v 1.1 2002/04/27 16:37:19 atatat Exp $ */
+/*	$NetBSD: stat.c,v 1.2 2002/05/09 17:52:03 atatat Exp $ */
 
 /*
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: stat.c,v 1.1 2002/04/27 16:37:19 atatat Exp $");
+__RCSID("$NetBSD: stat.c,v 1.2 2002/05/09 17:52:03 atatat Exp $");
 #endif
 
 #include <sys/types.h>
@@ -75,18 +75,28 @@ __RCSID("$NetBSD: stat.c,v 1.1 2002/04/27 16:37:19 atatat Exp $");
 
 #define TIME_FORMAT	"%b %e %T %Y"
 
-#define FMT_POUND	0x01
-#define FMT_SPACE	0x02
-#define FMT_PLUS	0x04
-#define FMT_ZERO	0x08
-#define FMT_MINUS	0x10
+#define FLAG_POUND	0x01
+#define FLAG_SPACE	0x02
+#define FLAG_PLUS	0x04
+#define FLAG_ZERO	0x08
+#define FLAG_MINUS	0x10
 
 /*
- * These format characters must all be unique.
+ * These format characters must all be unique, except the magic one.
  */
+#define FMT_MAGIC	'%'
+#define FMT_DOT		'.'
+
 #define SIMPLE_NEWLINE	'n'
 #define SIMPLE_TAB	't'
 #define SIMPLE_PERCENT	'%'
+#define SIMPLE_NUMBER	'@'
+
+#define FMT_POUND	'#'
+#define FMT_SPACE	' '
+#define FMT_PLUS	'+'
+#define FMT_ZERO	'0'
+#define FMT_MINUS	'-'
 
 #define FMT_DECIMAL 	'D'
 #define FMT_OCTAL 	'O'
@@ -121,7 +131,7 @@ __RCSID("$NetBSD: stat.c,v 1.1 2002/04/27 16:37:19 atatat Exp $");
 
 void	usage(void);
 void	output(const struct stat *, const char *,
-	    const char *, int);
+	    const char *, int, int);
 int	format1(const struct stat *,	/* stat info */
 	    const char *,		/* the file name */
 	    const char *, int,		/* the format string itself */
@@ -144,7 +154,7 @@ main(int argc, char *argv[])
 {
 	struct stat st;
 	int ch, rc, errs;
-	int lsF, fmtchar, usestat, nonl;
+	int lsF, fmtchar, usestat, fn, nonl;
 	char *statfmt;
 
 	lsF = 0;
@@ -186,6 +196,7 @@ main(int argc, char *argv[])
 
 	argc -= optind;
 	argv += optind;
+	fn = 1;
 
 	if (fmtchar == '\0') {
 		if (lsF)
@@ -239,10 +250,11 @@ main(int argc, char *argv[])
 			warn("%s: stat", argc == 0 ? "(stdin)" : argv[0]);
 		}
 		else
-			output(&st, argv[0], statfmt, nonl);
+			output(&st, argv[0], statfmt, fn, nonl);
 
 		argv++;
 		argc--;
+		fn++;
 	} while (argc > 0);
 
 	return (errs);
@@ -263,7 +275,7 @@ usage(void)
  */
 void
 output(const struct stat *st, const char *file,
-    const char *statfmt, int nonl)
+    const char *statfmt, int fn, int nonl)
 {
 	int flags, size, prec, ofmt, hilo, what;
 	char buf[4096], subbuf[MAXPATHLEN];
@@ -277,7 +289,7 @@ output(const struct stat *st, const char *file,
 		/*
 		 * Non-format characters go straight out.
 		 */
-		if (*statfmt != '%') {
+		if (*statfmt != FMT_MAGIC) {
 			addchar(buf, &len, sizeof(buf), *statfmt, &nl);
 			statfmt++;
 			continue;
@@ -285,7 +297,7 @@ output(const struct stat *st, const char *file,
 
 		/*
 		 * The current format "substring" starts here,
-		 * and then we skip the '%'.
+		 * and then we skip the magic.
 		 */
 		subfmt = statfmt;
 		statfmt++;
@@ -306,6 +318,15 @@ output(const struct stat *st, const char *file,
 			addchar(buf, &len, sizeof(buf), '%', &nl);
 			statfmt++;
 			continue;
+		case SIMPLE_NUMBER: {
+			char num[12], *p;
+
+			snprintf(num, sizeof(num), "%d", fn);
+			for (p = &num[0]; *p; p++)
+				addchar(buf, &len, sizeof(buf), *p, &nl);
+			statfmt++;
+			continue;
+		}
 		}
 
 		/*
@@ -332,16 +353,16 @@ output(const struct stat *st, const char *file,
 		 */
 		flags = 0;
 		do {
-			if      (*statfmt == '#')
-				flags |= FMT_POUND;
-			else if (*statfmt == ' ')
-				flags |= FMT_SPACE;
-			else if (*statfmt == '+')
-				flags |= FMT_PLUS;
-			else if (*statfmt == '0')
-				flags |= FMT_ZERO;
-			else if (*statfmt == '-')
-				flags |= FMT_MINUS;
+			if      (*statfmt == FMT_POUND)
+				flags |= FLAG_POUND;
+			else if (*statfmt == FMT_SPACE)
+				flags |= FLAG_SPACE;
+			else if (*statfmt == FMT_PLUS)
+				flags |= FLAG_PLUS;
+			else if (*statfmt == FMT_ZERO)
+				flags |= FLAG_ZERO;
+			else if (*statfmt == FMT_MINUS)
+				flags |= FLAG_MINUS;
 			else
 				break;
 			statfmt++;
@@ -359,7 +380,7 @@ output(const struct stat *st, const char *file,
 		}
 
 		prec = -1;
-		if (*statfmt == '.') {
+		if (*statfmt == FMT_DOT) {
 			statfmt++;
 
 			prec = 0;
@@ -436,7 +457,7 @@ output(const struct stat *st, const char *file,
 
 	(void)write(STDOUT_FILENO, buf, len);
 	if (!nl && !nonl)
-		(void)write(STDOUT_FILENO, "\n", sizeof("\n"));
+		(void)write(STDOUT_FILENO, "\n", sizeof("\n") - 1);
 }
 
 /*
@@ -515,13 +536,13 @@ format1(const struct stat *st,
 			hilo = 0;
 		}
 		else if (hilo == MIDDLE_PIECE) {
-			data &= 07777;
+			data = (data >> 9) & 07;
 			sdata += 4;
 			sdata[3] = '\0';
 			hilo = 0;
 		}
 		else if (hilo == LOW_PIECE) {
-			data &= 07777;
+			data &= 0777;
 			sdata += 7;
 			sdata[3] = '\0';
 			hilo = 0;
@@ -743,15 +764,15 @@ format1(const struct stat *st,
 	 */
 	lfmt[0] = '\0';
 	(void)strcat(lfmt, "%");
-	if (flags & FMT_POUND)
+	if (flags & FLAG_POUND)
 		(void)strcat(lfmt, "#");
-	if (flags & FMT_SPACE)
+	if (flags & FLAG_SPACE)
 		(void)strcat(lfmt, " ");
-	if (flags & FMT_PLUS)
+	if (flags & FLAG_PLUS)
 		(void)strcat(lfmt, "+");
-	if (flags & FMT_MINUS)
+	if (flags & FLAG_MINUS)
 		(void)strcat(lfmt, "-");
-	if (flags & FMT_ZERO)
+	if (flags & FLAG_ZERO)
 		(void)strcat(lfmt, "0");
 
 	/*
