@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.crunch,v 1.13 2003/05/09 12:20:04 dsl Exp $
+#	$NetBSD: Makefile.crunch,v 1.14 2003/05/15 17:52:32 dsl Exp $
 #
 # Makefile snippet to build a crunchgen(1)ed binary from the provided lists
 #
@@ -38,9 +38,15 @@ CRUNCHENV+=		SMALLPROG_INET6=1
 
 .PHONY:	${CRUNCHBIN}
 ${CRUNCHBIN}: ${CRUNCHBIN}.mk ${CRUNCHBIN}.cache ${CRUNCHBIN}.c
-	${CRUNCHENV} ${MAKE} -j 1 -f ${CRUNCHBIN}.mk all
+	${CRUNCHENV} ${MAKE} -j 1 -f ${CRUNCHBIN}.mk ${CRUNCHBIN}.crunched
 
-${CRUNCHBIN}.mk ${CRUNCHBIN}.cache ${CRUNCHBIN}.c: ${CRUNCHBIN}.conf
+${CRUNCHBIN}.c: ${CRUNCHBIN}.mk
+	[ ! -f ${.TARGET} ] || touch ${.TARGET}
+
+${CRUNCHBIN}.cache: ${CRUNCHBIN}.mk
+	[ ! -f ${.TARGET} ] || touch ${.TARGET}
+
+${CRUNCHBIN}.mk: ${CRUNCHBIN}.conf
 	${CRUNCHENV} ${CRUNCHGEN} -f -D ${NETBSDSRCDIR} -L ${DESTDIR}/usr/lib \
 	    -q ${CRUNCHGEN_FLAGS} ${.ALLSRC}
 
