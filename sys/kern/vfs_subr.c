@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_subr.c,v 1.38 1995/01/18 06:24:21 mycroft Exp $	*/
+/*	$NetBSD: vfs_subr.c,v 1.39 1995/04/10 19:46:56 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -1473,4 +1473,24 @@ vaccess(file_mode, uid, gid, acc_mode, cred)
 	if (acc_mode & VWRITE)
 		mask |= S_IWOTH;
 	return (file_mode & mask) == mask ? 0 : EACCES;
+}
+
+/*
+ * Unmount all file systems.
+ * We traverse the list in reverse order under the assumption that doing so
+ * will avoid needing to worry about dependencies.
+ */
+void
+vfs_unmountall()
+{
+	register struct mount *mp, *nmp;
+	int allerror;
+
+	for (allerror = 0,
+	     mp = mountlist.cqh_last; mp != (void *)&mountlist; mp = nmp) {
+		nmp = mp->mnt_list.cqe_prev;
+		allerror |= dounmount(mp, MNT_FORCE, &proc0);
+	}
+	if (allerror)
+		printf("some file systems would not unmount\n");
 }
