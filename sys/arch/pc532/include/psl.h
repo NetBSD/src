@@ -1,4 +1,4 @@
-/*	$NetBSD: psl.h,v 1.17 1996/11/24 13:34:45 matthias Exp $	*/
+/*	$NetBSD: psl.h,v 1.18 1996/12/23 08:37:41 matthias Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -69,15 +69,18 @@
 /*
  * Interrupt levels
  */
-#define	IPL_NONE	-1
 #define IPL_ZERO	0	/* level 0 */
-#define	IPL_BIO		1	/* block I/O */
-#define	IPL_NET		2	/* network */
-#define	IPL_TTY		3	/* terminal */
-#define	IPL_CLOCK	4	/* clock */
-#define IPL_IMP		5	/* memory allocation */
-#define	NIPL		6	/* number of interrupt priority levels */
-#define IPL_NAMES	{"zero", "bio", "net", "tty", "clock", "imp"}
+#define IPL_HIGH	1	/* block all interrupts */
+#define	IPL_BIO		2	/* block I/O */
+#define	IPL_NET		3	/* network */
+#define	IPL_TTY		4	/* terminal */
+#define	IPL_CLOCK	5	/* clock */
+#define IPL_IMP		6	/* memory allocation */
+#define	NIPL		7	/* number of interrupt priority levels */
+#define IPL_NAMES	{"zero", "", "bio", "net", "tty", "clock", "imp"}
+
+/* IPL_RTTY (for the scn driver) is the same as IPL_HIGH. */
+#define	IPL_RTTY	IPL_HIGH
 
 /*
  * Preassigned software interrupts
@@ -96,6 +99,8 @@
 struct iv {
 	void (*iv_vec) __P((void *));
 	void *iv_arg;
+	int iv_level;
+	int iv_mask;
 	int iv_cnt;
 	char *iv_use;
 };
@@ -116,7 +121,8 @@ extern unsigned int imask[], Cur_pl, sirpending, astpending;
 
 void	intr_init __P((void));
 void	check_sir __P((void *));
-int	intr_establish __P((int, void (*)(void *), void *, char *, int, int));
+int	intr_establish __P((int, void (*)(void *), void *, char *,
+				int, int, int));
 
 PSL_STATIC PSL_INLINE int splraise __P((unsigned int));
 PSL_STATIC PSL_INLINE int splx __P((unsigned int));
@@ -175,6 +181,7 @@ splx(ncpl)
 #define spltty()	splraise(imask[IPL_TTY])
 #define splclock()	splraise(imask[IPL_CLOCK])
 #define splimp()	splraise(imask[IPL_IMP])
+#define splrtty()	splraise(imask[IPL_RTTY])
 #define	splstatclock()	splclock()
 
 /*
