@@ -1,4 +1,4 @@
-/*	$NetBSD: in6_pcb.h,v 1.18 2001/10/15 09:51:16 itojun Exp $	*/
+/*	$NetBSD: in6_pcb.h,v 1.19 2001/10/24 06:36:38 itojun Exp $	*/
 /*	$KAME: in6_pcb.h,v 1.45 2001/02/09 05:59:46 itojun Exp $	*/
 
 /*
@@ -103,7 +103,7 @@ struct	in6pcb {
 	/* should move the following just after next/prev */
 	LIST_ENTRY(in6pcb) in6p_hlist;	/* hash chain */
 	u_long	in6p_hash;		/* hash value */
-#if 1 /*IPSEC*/
+#if 1 /* IPSEC */
 	struct inpcbpolicy *in6p_sp;	/* security policy. */
 #endif
 	struct icmp6_filter *in6p_icmp6filt;
