@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_descrip.c,v 1.67.4.7 2002/04/26 17:51:19 he Exp $	*/
+/*	$NetBSD: kern_descrip.c,v 1.67.4.8 2002/04/27 15:52:56 he Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1991, 1993
@@ -1438,15 +1438,12 @@ fdcheckstd(p)
 			VOP_UNLOCK(nd.ni_vp, 0);
 			devnull = fd;
 			devnullfp = fp;
-			FILE_SET_MATURE(fp);
 			FILE_UNUSE(fp, p);
 		} else {
 restart:
 			if ((error = fdalloc(p, 0, &fd)) != 0) {
-				if (error == ENOSPC) {
-					fdexpand(p);
+				if (error == ERESTART)
 					goto restart;
-				}
 				return error;
 			}
 
