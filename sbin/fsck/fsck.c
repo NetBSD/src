@@ -1,4 +1,4 @@
-/*	$NetBSD: fsck.c,v 1.27 2001/11/01 07:31:22 lukem Exp $	*/
+/*	$NetBSD: fsck.c,v 1.28 2001/12/20 20:10:36 soren Exp $	*/
 
 /*
  * Copyright (c) 1996 Christos Zoulas. All rights reserved.
@@ -40,7 +40,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: fsck.c,v 1.27 2001/11/01 07:31:22 lukem Exp $");
+__RCSID("$NetBSD: fsck.c,v 1.28 2001/12/20 20:10:36 soren Exp $");
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -522,7 +522,7 @@ static void
 usage(void)
 {
 	static const char common[] =
-	    "[-dpvlyn] [-T fstype:fsoptions] [-t fstype]";
+	    "[-dfnpvy] [-T fstype:fsoptions] [-t fstype]";
 
 	(void)fprintf(stderr, "Usage: %s %s [special|node]...\n",
 	    getprogname(), common);
