@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.231 2003/08/07 16:29:45 agc Exp $ */
+/*	$NetBSD: machdep.c,v 1.232 2003/08/27 15:59:53 mrg Exp $ */
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -78,7 +78,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.231 2003/08/07 16:29:45 agc Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.232 2003/08/27 15:59:53 mrg Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "opt_compat_sunos.h"
@@ -302,7 +302,7 @@ cpu_startup()
         size = MAXBSIZE * nbuf;         /* # bytes for buffers */
 
         /* allocate VM for buffers... area is not managed by VM system */
-        if (uvm_map(kernel_map, (vaddr_t *) &buffers, round_page(size),
+        if (uvm_map(kernel_map, (void *)&buffers, round_page(size),
                     NULL, UVM_UNKNOWN_OFFSET, 0,
                     UVM_MAPFLAG(UVM_PROT_NONE, UVM_PROT_NONE, UVM_INH_NONE,
                                 UVM_ADV_NORMAL, 0)) != 0)

@@ -1,4 +1,4 @@
-/*	$NetBSD: clock.c,v 1.61 2003/08/24 17:52:38 chs Exp $ */
+/*	$NetBSD: clock.c,v 1.62 2003/08/27 15:59:55 mrg Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -55,7 +55,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.61 2003/08/24 17:52:38 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.62 2003/08/27 15:59:55 mrg Exp $");
 
 #include "opt_multiprocessor.h"
 
@@ -584,7 +584,7 @@ myetheraddr(cp)
 		int node, n;
 
 		node = findroot();
-		if (PROM_getprop(node, "idprom", sizeof *idp, &n, (void *)&idp) ||
+		if (PROM_getprop(node, "idprom", sizeof *idp, &n, &idp) ||
 		    n != 1) {
 			printf("\nmyetheraddr: clock not setup yet, "
 			       "and no idprom property in /\n");

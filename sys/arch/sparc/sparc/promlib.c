@@ -1,4 +1,4 @@
-/*	$NetBSD: promlib.c,v 1.21 2003/08/10 14:50:09 martin Exp $ */
+/*	$NetBSD: promlib.c,v 1.22 2003/08/27 15:59:54 mrg Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: promlib.c,v 1.21 2003/08/10 14:50:09 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: promlib.c,v 1.22 2003/08/27 15:59:54 mrg Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_sparc_arch.h"
@@ -202,7 +202,7 @@ PROM_getprop(node, name, size, nitem, bufp)
 	char	*name;
 	int	size;
 	int	*nitem;
-	void	**bufp;
+	void	*bufp;
 {
 	void	*buf;
 	int	len;
@@ -214,7 +214,7 @@ PROM_getprop(node, name, size, nitem, bufp)
 	if ((len % size) != 0)
 		return (EINVAL);
 
-	buf = *bufp;
+	buf = *(void **)bufp;
 	if (buf == NULL) {
 		/* No storage provided, so we allocate some */
 		buf = malloc(len, M_DEVBUF, M_NOWAIT);
@@ -226,7 +226,7 @@ PROM_getprop(node, name, size, nitem, bufp)
 	}
 
 	_prom_getprop(node, name, buf, len);
-	*bufp = buf;
+	*(void **)bufp = buf;
 	*nitem = len / size;
 	return (0);
 }
@@ -258,7 +258,7 @@ PROM_getpropstringA(node, name, buf, bufsize)
 {
 	int len = bufsize - 1;
 
-	if (PROM_getprop(node, name, 1, &len, (void **)&buf) != 0)
+	if (PROM_getprop(node, name, 1, &len, &buf) != 0)
 		len = 0;
 
 	buf[len] = '\0';	/* usually unnecessary */
@@ -278,7 +278,7 @@ PROM_getpropint(node, name, deflt)
 	int intbuf, *ip = &intbuf;
 	int len = 1;
 
-	if (PROM_getprop(node, name, sizeof(int), &len, (void **)&ip) != 0)
+	if (PROM_getprop(node, name, sizeof(int), &len, &ip) != 0)
 		return (deflt);
 
 	return (*ip);
@@ -758,7 +758,7 @@ opf_getbootpath()
 	char *buf = NULL;
 	int blen = 0;
 
-	if (PROM_getprop(node, "bootpath", 1, &blen, (void **)&buf) != 0)
+	if (PROM_getprop(node, "bootpath", 1, &blen, &buf) != 0)
 		return ("");
 
 	return (buf);
@@ -771,7 +771,7 @@ opf_getbootargs()
 	char *buf = NULL;
 	int blen = 0;
 
-	if (PROM_getprop(node, "bootargs", 1, &blen, (void **)&buf) != 0)
+	if (PROM_getprop(node, "bootargs", 1, &blen, &buf) != 0)
 		return ("");
 
 	return (parse_bootargs(buf));
@@ -784,7 +784,7 @@ opf_getbootfile()
 	char *buf = NULL;
 	int blen = 0;
 
-	if (PROM_getprop(node, "bootargs", 1, &blen, (void **)&buf) != 0)
+	if (PROM_getprop(node, "bootargs", 1, &blen, &buf) != 0)
 		return ("");
 
 	return (parse_bootfile(buf));
@@ -889,7 +889,7 @@ prom_makememarr(ap, max, which)
 		} else {
 			n = max;
 			if (PROM_getprop(node, prop, sizeof(struct memarr),
-					&n, (void **)&ap) != 0)
+					&n, &ap) != 0)
 				panic("makememarr: cannot get property");
 		}
 		break;
@@ -940,7 +940,7 @@ prom_getidprom(void)
 		dst = (char *)&idprom;
 		len = sizeof(struct idprom);
 		node = prom_findroot();
-		if (PROM_getprop(node, "idprom", 1, &len, (void **)&dst) != 0) {
+		if (PROM_getprop(node, "idprom", 1, &len, &dst) != 0) {
 			printf("`idprom' property cannot be read: "
 				"cannot get ethernet address");
 		}

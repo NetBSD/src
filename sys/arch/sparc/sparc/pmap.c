@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.270 2003/08/24 18:10:31 chs Exp $ */
+/*	$NetBSD: pmap.c,v 1.271 2003/08/27 15:59:53 mrg Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -56,7 +56,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.270 2003/08/24 18:10:31 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.271 2003/08/27 15:59:53 mrg Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -7870,7 +7870,7 @@ pmap_dumpmmu(dump, blkno)
 	for (i = 0; i < npmemarr; i++) {
 		memseg.start = pmemarr[i].addr;
 		memseg.size = pmemarr[i].len;
-		EXPEDITE(&memseg, sizeof(phys_ram_seg_t));
+		EXPEDITE((void *)&memseg, sizeof(phys_ram_seg_t));
 	}
 
 	EXPEDITE(&kernel_segmap_store, sizeof(kernel_segmap_store));

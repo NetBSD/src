@@ -1,4 +1,4 @@
-/*	$NetBSD: sbus.c,v 1.61 2003/07/15 03:36:07 lukem Exp $ */
+/*	$NetBSD: sbus.c,v 1.62 2003/08/27 15:59:55 mrg Exp $ */
 
 /*
  * Copyright (c) 1999-2002 Eduardo Horvath
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sbus.c,v 1.61 2003/07/15 03:36:07 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sbus.c,v 1.62 2003/08/27 15:59:55 mrg Exp $");
 
 #include "opt_ddb.h"
 
@@ -244,7 +244,7 @@ sbus_attach(parent, self, aux)
 	 * Collect address translations from the OBP.
 	 */
 	error = PROM_getprop(node, "ranges", sizeof(struct openprom_range),
-			 &sc->sc_nrange, (void **)&sc->sc_range);
+			 &sc->sc_nrange, &sc->sc_range);
 	if (error)
 		panic("%s: error getting ranges property", sc->sc_dev.dv_xname);
 
@@ -334,7 +334,7 @@ sbus_setup_attach_args(sc, bustag, dmatag, node, sa)
 	int n;
 
 	bzero(sa, sizeof(struct sbus_attach_args));
-	error = PROM_getprop(node, "name", 1, &n, (void **)&sa->sa_name);
+	error = PROM_getprop(node, "name", 1, &n, &sa->sa_name);
 	if (error != 0)
 		return (error);
 	sa->sa_name[n] = '\0';
@@ -345,7 +345,7 @@ sbus_setup_attach_args(sc, bustag, dmatag, node, sa)
 	sa->sa_frequency = sc->sc_clockfreq;
 
 	error = PROM_getprop(node, "reg", sizeof(struct openprom_addr),
-			 &sa->sa_nreg, (void **)&sa->sa_reg);
+			 &sa->sa_nreg, &sa->sa_reg);
 	if (error != 0) {
 		char buf[32];
 		if (error != ENOENT ||
@@ -368,7 +368,7 @@ sbus_setup_attach_args(sc, bustag, dmatag, node, sa)
 		return (error);
 
 	error = PROM_getprop(node, "address", sizeof(u_int32_t),
-			 &sa->sa_npromvaddrs, (void **)&sa->sa_promvaddrs);
+			 &sa->sa_npromvaddrs, &sa->sa_promvaddrs);
 	if (error != 0 && error != ENOENT)
 		return (error);
 
@@ -548,7 +548,7 @@ sbus_get_intr(sc, node, ipp, np, slot)
 	 * The `interrupts' property contains the Sbus interrupt level.
 	 */
 	ipl = NULL;
-	if (PROM_getprop(node, "interrupts", sizeof(int), np, (void *)&ipl) == 0) {
+	if (PROM_getprop(node, "interrupts", sizeof(int), np, &ipl) == 0) {
 		struct openprom_intr *ip;
 		int pri;
 

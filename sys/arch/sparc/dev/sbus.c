@@ -1,4 +1,4 @@
-/*	$NetBSD: sbus.c,v 1.58 2003/08/07 16:29:36 agc Exp $ */
+/*	$NetBSD: sbus.c,v 1.59 2003/08/27 15:59:50 mrg Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -81,7 +81,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sbus.c,v 1.58 2003/08/07 16:29:36 agc Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sbus.c,v 1.59 2003/08/27 15:59:50 mrg Exp $");
 
 #include <sys/param.h>
 #include <sys/malloc.h>
@@ -404,7 +404,7 @@ sbus_attach_common(sc, busname, busnode, specials)
 	 * Collect address translations from the OBP.
 	 */
 	error = PROM_getprop(busnode, "ranges", sizeof(struct rom_range),
-			&sbt->nranges, (void **) &sbt->ranges);
+			&sbt->nranges, &sbt->ranges);
 	switch (error) {
 	case 0:
 		break;
@@ -472,7 +472,7 @@ sbus_setup_attach_args(sc, bustag, dmatag, node, sa)
 	int n, error;
 
 	bzero(sa, sizeof(struct sbus_attach_args));
-	error = PROM_getprop(node, "name", 1, &n, (void **)&sa->sa_name);
+	error = PROM_getprop(node, "name", 1, &n, &sa->sa_name);
 	if (error != 0)
 		return (error);
 	sa->sa_name[n] = '\0';
@@ -483,7 +483,7 @@ sbus_setup_attach_args(sc, bustag, dmatag, node, sa)
 	sa->sa_frequency = sc->sc_clockfreq;
 
 	error = PROM_getprop(node, "reg", sizeof(struct openprom_addr),
-			&sa->sa_nreg, (void **)&sa->sa_reg);
+			&sa->sa_nreg, &sa->sa_reg);
 	if (error != 0) {
 		char buf[32];
 		if (error != ENOENT ||
@@ -505,7 +505,7 @@ sbus_setup_attach_args(sc, bustag, dmatag, node, sa)
 		return (error);
 
 	error = PROM_getprop(node, "address", sizeof(u_int32_t),
-			 &sa->sa_npromvaddrs, (void **)&sa->sa_promvaddrs);
+			 &sa->sa_npromvaddrs, &sa->sa_promvaddrs);
 	if (error != 0 && error != ENOENT)
 		return (error);
 
@@ -617,7 +617,7 @@ sbus_get_intr(sc, node, ipp, np)
 	 * The `interrupts' property contains the Sbus interrupt level.
 	 */
 	if (PROM_getprop(node, "interrupts", sizeof(int), np,
-			 (void **)&ipl) == 0) {
+			 &ipl) == 0) {
 		/* Change format to an `struct openprom_intr' array */
 		struct openprom_intr *ip;
 		ip = malloc(*np * sizeof(struct openprom_intr), M_DEVBUF,
@@ -640,7 +640,7 @@ sbus_get_intr(sc, node, ipp, np)
 	 */
 	*ipp = NULL;
 	error = PROM_getprop(node, "intr", sizeof(struct openprom_intr),
-			np, (void **)ipp);
+			np, ipp);
 	switch (error) {
 	case 0:
 		for (n = *np; n-- > 0;) {

@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.h,v 1.14 2003/08/07 16:29:49 agc Exp $ */
+/*	$NetBSD: autoconf.h,v 1.15 2003/08/27 15:59:55 mrg Exp $ */
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -128,7 +128,7 @@ struct mainbus_attach_args {
  * length; the others convert or make some other guarantee.
  */
 long	PROM_getproplen __P((int node, char *name));
-int	PROM_getprop __P((int, char *, size_t, int *, void **));
+int	PROM_getprop __P((int, char *, size_t, int *, void *));
 char	*PROM_getpropstring __P((int node, char *name));
 int	PROM_getpropint __P((int node, char *name, int deflt));
 
