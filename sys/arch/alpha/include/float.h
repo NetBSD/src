@@ -1,4 +1,4 @@
-/*	$NetBSD: float.h,v 1.2 1995/04/29 05:45:44 cgd Exp $	*/
+/*	$NetBSD: float.h,v 1.3 1995/06/20 20:32:22 jtc Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -33,9 +33,14 @@
  * SUCH DAMAGE.
  */
 
+#include <sys/cdefs.h>
+
+__BEGIN_DECLS
+extern int __flt_rounds();
+__END_DECLS
+
 #define FLT_RADIX	2		/* b */
 #define FLT_ROUNDS	__flt_rounds()
-
 
 #define FLT_MANT_DIG	24		/* p */
 #define FLT_EPSILON	1.19209290E-07F	/* b**(1-p) */
