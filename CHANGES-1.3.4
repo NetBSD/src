@@ -1,0 +1,11 @@
+#	$NetBSD: CHANGES-1.3.4,v 1.1.2.1 1999/01/18 03:31:00 cgd Exp $
+
+Changes from NetBSD 1.3.3 to NetBSD 1.3.4:
+
+File						Version(s)
+----						--------
+
+sys/netinet/in_pcb.c				1.56
+
+  If INADDR_ANY is given in in_pcbconnect(), choose the ia_addr of the
+  first interface, not the ia_broadaddr.  (PR#5645 and PR#6425)  (lukem)
