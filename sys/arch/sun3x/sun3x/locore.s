@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.3 1997/01/17 16:30:05 gwr Exp $	*/
+/*	$NetBSD: locore.s,v 1.4 1997/01/23 22:47:36 gwr Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -602,7 +602,7 @@ Lbrkpt2:
 	| Drop into the PROM temporarily...
 	movl	a2,sp@-			| push frame ptr
 	movl	d2,sp@-			| push trap type
-	jbsr	_nodb_trap		| handle the trap
+	jbsr	__nodb_trap		| handle the trap
 	addql	#8,sp			| pop args
 Lbrkpt3:
 	| The stack pointer may have been modified, or
@@ -1074,12 +1074,13 @@ Lswnofpsave:
 
 	/* Our pmap does not need pmap_activate() */
 	/* Just load the new CPU Root Pointer (MMU) */
+	/* XXX - Skip if oldproc has same pm_a_tbl? */
+	movl	a0@(P_VMSPACE),a0	| vm = p->p_vmspace
+	lea	a0@(VM_PMAP_MMUCRP),a0	| a0 = &vm->vm_pmap.pm_mmucrp
 
 	movl	#CACHE_CLR,d0
 	movc	d0,cacr			| invalidate cache(s)
 	pflusha				| flush entire TLB
-
-	movl	a1@(PCB_MMUCRP),a0	| get CRP virtual address
 	pmove	a0@,crp			| load new user root pointer
 
 	| Reload registers of new process.
