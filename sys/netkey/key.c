@@ -1,4 +1,4 @@
-/*	$NetBSD: key.c,v 1.67 2002/06/12 01:47:36 itojun Exp $	*/
+/*	$NetBSD: key.c,v 1.68 2002/06/12 03:37:14 itojun Exp $	*/
 /*	$KAME: key.c,v 1.234 2002/05/13 03:21:17 itojun Exp $	*/
 
 /*
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: key.c,v 1.67 2002/06/12 01:47:36 itojun Exp $");
+__KERNEL_RCSID(0, "$NetBSD: key.c,v 1.68 2002/06/12 03:37:14 itojun Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -303,7 +303,6 @@ struct sadb_msghdr {
 };
 
 static struct secasvar *key_allocsa_policy __P((struct secasindex *));
-static void key_freesp_so __P((struct secpolicy **));
 static struct secasvar *key_do_allocsa_policy __P((struct secashead *, u_int));
 static void key_delsp __P((struct secpolicy *));
 static struct secpolicy *key_getsp __P((struct secpolicyindex *, int));
@@ -843,79 +842,6 @@ key_freesp(sp)
 
 	if (sp->refcnt == 0)
 		key_delsp(sp);
-
-	return;
-}
-
-/*
- * Must be called after calling key_allocsp().
- * For the packet with socket.
- */
-void
-key_freeso(so)
-	struct socket *so;
-{
-	/* sanity check */
-	if (so == NULL)
-		panic("key_freeso: NULL pointer is passed.\n");
-
-	switch (so->so_proto->pr_domain->dom_family) {
-#ifdef INET
-	case PF_INET:
-	    {
-		struct inpcb *pcb = sotoinpcb(so);
-
-		/* Does it have a PCB ? */
-		if (pcb == NULL)
-			return;
-		key_freesp_so(&pcb->inp_sp->sp_in);
-		key_freesp_so(&pcb->inp_sp->sp_out);
-	    }
-		break;
-#endif
-#ifdef INET6
-	case PF_INET6:
-	    {
-		struct in6pcb *pcb  = sotoin6pcb(so);
-
-		/* Does it have a PCB ? */
-		if (pcb == NULL)
-			return;
-		key_freesp_so(&pcb->in6p_sp->sp_in);
-		key_freesp_so(&pcb->in6p_sp->sp_out);
-	    }
-		break;
-#endif /* INET6 */
-	default:
-		ipseclog((LOG_DEBUG, "key_freeso: unknown address family=%d.\n",
-		    so->so_proto->pr_domain->dom_family));
-		return;
-	}
-
-	return;
-}
-
-static void
-key_freesp_so(sp)
-	struct secpolicy **sp;
-{
-	/* sanity check */
-	if (sp == NULL || *sp == NULL)
-		panic("key_freesp_so: sp == NULL\n");
-
-	switch ((*sp)->policy) {
-	case IPSEC_POLICY_IPSEC:
-		KEYDEBUG(KEYDEBUG_IPSEC_STAMP,
-			printf("DP freeso calls free SP:%p\n", *sp));
-		key_freesp(*sp);
-		*sp = NULL;
-		break;
-	case IPSEC_POLICY_ENTRUST:
-	case IPSEC_POLICY_BYPASS:
-		return;
-	default:
-		panic("key_freesp_so: Invalid policy found %d", (*sp)->policy);
-	}
 
 	return;
 }
