@@ -1,4 +1,4 @@
-/* $NetBSD: if_eareg.h,v 1.1 2000/05/09 21:56:03 bjh21 Exp $ */
+/* $NetBSD: if_eareg.h,v 1.2 2000/08/12 11:56:46 bjh21 Exp $ */
 
 /*
  * Copyright (c) 1995 Mark Brinicombe
@@ -160,9 +160,5 @@
 #define EA_BUFFER_SIZE		0x10000
 #define EA_TX_BUFFER_SIZE	0x4000
 #define EA_RX_BUFFER_SIZE	0xC000
-
-/* Packet buffer size */
-
-#define	EA_BUFSIZ	2048
 
 /* End of if_eareg.h */
