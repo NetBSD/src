@@ -1,4 +1,4 @@
-/*	$NetBSD: clock.c,v 1.15 2001/01/01 05:28:54 tsubai Exp $	*/
+/*	$NetBSD: clock.c,v 1.16 2001/05/27 23:38:12 wiz Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -90,7 +90,7 @@ inittodr(base)
 		return;
 	}
 	clockinitted = 1;
-	time.tv_sec = rtc_time - DIFF19041970;
+	time.tv_sec = rtc_time - DIFF19041970 + rtc_offset * 60;
 
 	deltat = time.tv_sec - base;
 	if (deltat < 0)
@@ -114,7 +114,7 @@ resettodr()
 	u_int rtc_time;
 
 	if (clockinitted) {
-		rtc_time = time.tv_sec + DIFF19041970;
+		rtc_time = time.tv_sec + DIFF19041970 - rtc_offset * 60;
 		adb_set_date_time(rtc_time);
 	}
 #endif
