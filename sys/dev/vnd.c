@@ -1,4 +1,4 @@
-/*	$NetBSD: vnd.c,v 1.95 2003/04/11 16:11:49 drochner Exp $	*/
+/*	$NetBSD: vnd.c,v 1.96 2003/04/26 12:02:12 dsl Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -98,7 +98,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vnd.c,v 1.95 2003/04/11 16:11:49 drochner Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vnd.c,v 1.96 2003/04/26 12:02:12 dsl Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "fs_nfs.h"
@@ -1312,7 +1312,7 @@ vndgetdisklabel(dev)
 			 * Don't wipe out port specific hack (such as
 			 * dos partition hack of i386 port).
 			 */
-			if (lp->d_partitions[i].p_fstype != FS_UNUSED)
+			if (lp->d_partitions[i].p_size != 0)
 				continue;
 
 			lp->d_partitions[i].p_size = lp->d_secperunit;
@@ -1323,6 +1323,7 @@ vndgetdisklabel(dev)
 		strncpy(lp->d_packname, "default label",
 		    sizeof(lp->d_packname));
 
+		lp->d_npartitions = MAXPARTITIONS;
 		lp->d_checksum = dkcksum(lp);
 	}
 }
