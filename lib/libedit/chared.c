@@ -1,4 +1,4 @@
-/*	$NetBSD: chared.c,v 1.12 2001/01/10 07:45:41 jdolecek Exp $	*/
+/*	$NetBSD: chared.c,v 1.13 2001/04/13 01:04:19 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)chared.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: chared.c,v 1.12 2001/01/10 07:45:41 jdolecek Exp $");
+__RCSID("$NetBSD: chared.c,v 1.13 2001/04/13 01:04:19 lukem Exp $");
 #endif
 #endif /* not lint && not SCCSID */
 
@@ -491,75 +491,76 @@ ch_reset(EditLine *el)
  */
 protected int
 ch_enlargebufs(el, addlen)
-    EditLine *el;
-    size_t addlen;
+	EditLine *el;
+	size_t addlen;
 {
-    size_t sz = el->el_line.limit - el->el_line.buffer + EL_LEAVE;
-    size_t newsz = sz * 2;
-    char *newbuffer, *oldbuf, *oldkbuf;
+	size_t sz, newsz;
+	char *newbuffer, *oldbuf, *oldkbuf;
 
-    /*
-     * If newly required length is longer than current buffer, we need
-     * to make the buffer big enough to hold both old and new stuff.
-     */
-    if (addlen > sz) {
-	while(newsz - sz < addlen)
-		newsz *= 2;
-    }
+	sz = el->el_line.limit - el->el_line.buffer + EL_LEAVE;
+	newsz = sz * 2;
+	/*
+	 * If newly required length is longer than current buffer, we need
+	 * to make the buffer big enough to hold both old and new stuff.
+	 */
+	if (addlen > sz) {
+		while(newsz - sz < addlen)
+			newsz *= 2;
+	}
 
-    /*
-     * Reallocate line buffer.
-     */
-    newbuffer = el_realloc(el->el_line.buffer, newsz);
-    if (!newbuffer)
-	return 0;
+	/*
+	 * Reallocate line buffer.
+	 */
+	newbuffer = el_realloc(el->el_line.buffer, newsz);
+	if (!newbuffer)
+		return 0;
 
-    /* zero the newly added memory, leave old data in */
-    (void) memset(&newbuffer[sz], 0, newsz - sz);
-	
-    oldbuf = el->el_line.buffer;
+	/* zero the newly added memory, leave old data in */
+	(void) memset(&newbuffer[sz], 0, newsz - sz);
+	    
+	oldbuf = el->el_line.buffer;
 
-    el->el_line.buffer = newbuffer;
-    el->el_line.cursor = newbuffer + (el->el_line.cursor - oldbuf);
-    el->el_line.lastchar = newbuffer + (el->el_line.lastchar - oldbuf);
-    el->el_line.limit  = &newbuffer[newsz - EL_LEAVE];
+	el->el_line.buffer = newbuffer;
+	el->el_line.cursor = newbuffer + (el->el_line.cursor - oldbuf);
+	el->el_line.lastchar = newbuffer + (el->el_line.lastchar - oldbuf);
+	el->el_line.limit  = &newbuffer[newsz - EL_LEAVE];
 
-    /*
-     * Reallocate kill buffer.
-     */
-    newbuffer = el_realloc(el->el_chared.c_kill.buf, newsz);
-    if (!newbuffer)
-	return 0;
+	/*
+	 * Reallocate kill buffer.
+	 */
+	newbuffer = el_realloc(el->el_chared.c_kill.buf, newsz);
+	if (!newbuffer)
+		return 0;
 
-    /* zero the newly added memory, leave old data in */
-    (void) memset(&newbuffer[sz], 0, newsz - sz);
+	/* zero the newly added memory, leave old data in */
+	(void) memset(&newbuffer[sz], 0, newsz - sz);
 
-    oldkbuf = el->el_chared.c_kill.buf;
+	oldkbuf = el->el_chared.c_kill.buf;
 
-    el->el_chared.c_kill.buf	= newbuffer;
-    el->el_chared.c_kill.last	= newbuffer +
+	el->el_chared.c_kill.buf = newbuffer;
+	el->el_chared.c_kill.last = newbuffer +
 					(el->el_chared.c_kill.last - oldkbuf);
-    el->el_chared.c_kill.mark	= el->el_line.buffer +
+	el->el_chared.c_kill.mark = el->el_line.buffer +
 					(el->el_chared.c_kill.mark - oldbuf);
 
-    /*
-     * Reallocate undo buffer.
-     */
-    newbuffer = el_realloc(el->el_chared.c_undo.buf, newsz);
-    if (!newbuffer)
-	return 0;
+	/*
+	 * Reallocate undo buffer.
+	 */
+	newbuffer = el_realloc(el->el_chared.c_undo.buf, newsz);
+	if (!newbuffer)
+		return 0;
 
-    /* zero the newly added memory, leave old data in */
-    (void) memset(&newbuffer[sz], 0, newsz - sz);
+	/* zero the newly added memory, leave old data in */
+	(void) memset(&newbuffer[sz], 0, newsz - sz);
 
-    el->el_chared.c_undo.ptr = el->el_line.buffer +
-				(el->el_chared.c_undo.ptr - oldbuf);
-    el->el_chared.c_undo.buf = newbuffer;
-    
-    if (!hist_enlargebuf(el, sz, newsz))
-	return 0;
+	el->el_chared.c_undo.ptr = el->el_line.buffer +
+				    (el->el_chared.c_undo.ptr - oldbuf);
+	el->el_chared.c_undo.buf = newbuffer;
+	
+	if (!hist_enlargebuf(el, sz, newsz))
+		return 0;
 
-    return 1;
+	return 1;
 }
 
 /* ch_end():
