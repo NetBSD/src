@@ -1,4 +1,4 @@
-/*	$NetBSD: sysctl.h,v 1.12 1996/02/27 04:20:33 jonathan Exp $	*/
+/*	$NetBSD: sysctl.h,v 1.13 1996/03/07 14:29:46 christos Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -346,6 +346,7 @@ int sysctl_clockrate __P((char *, size_t *));
 int sysctl_rdstring __P((void *, size_t *, void *, char *));
 int sysctl_rdstruct __P((void *, size_t *, void *, void *, int));
 int sysctl_vnode __P((char *, size_t *));
+int sysctl_ntptime __P((char *, size_t *));
 
 void fill_eproc __P((struct proc *, struct eproc *));
 
