@@ -1,4 +1,4 @@
-/*	$NetBSD: ncr5380.c,v 1.1 1995/09/03 03:36:37 briggs Exp $	*/
+/*	$NetBSD: ncr5380.c,v 1.2 1995/09/05 11:21:34 briggs Exp $	*/
 
 /*
  * Copyright (c) 1995 Leo Weppelman.
@@ -1130,11 +1130,21 @@ struct ncr_softc *sc;
 	 * SEL is true and BSY was false for at least one bus settle
 	 * delay (400 ns.).
 	 * We must assert BSY ourselves, until the target drops the SEL signal.
-	 * This should happen within 2 deskew delays (2 * 45ns.)
+	 * This should happen within 2 deskew delays (2 * 45ns.)  We wait too
+	 * long for this, but it's better to wait for slow targets than to
+	 * reset the bus too early...
 	 */
 	SET_5380_REG(NCR5380_ICOM, SC_A_BSY);
-	while (GET_5380_REG(NCR5380_IDSTAT) & SC_S_SEL)
-		;
+	len = 2;
+	while ((GET_5380_REG(NCR5380_IDSTAT) & SC_S_SEL) && (len > 0)) {
+		delay(1);
+		len--;
+	}
+	if (GET_5380_REG(NCR5380_IDSTAT) & SC_S_SEL) {
+		/* Damn SEL isn't dropping */
+		scsi_reset(sc);
+		return;
+	}
 	
 	SET_5380_REG(NCR5380_ICOM, 0);
 	
