@@ -650,3 +650,33 @@ sys/sys/socket.h				1.39
 
   Define COMPAT_OLDSOCK and MSG_COMPAT when COMPAT_ULTRIX is
   defined.  (mrg)
+
+gnu/usr.bin/gcc/common/loop.c			1.2
+
+  Fixes a bug that causes GCC to fail on some code, primarily on
+  the ARM.  (mycroft)
+
+gnu/usr.bin/gcc/common/global.c			1.3
+gnu/usr.bin/gcc/common/reload.c			1.4
+
+  Fixes yet another bug -- this one affecting pkgsrc/editors/emacs
+  and pkgsrc/games/abuse on the ARM.  (mycroft)
+
+gnu/usr.bin/gcc/common/version.c		1.4
+
+  Differentiate the compiler from previous versions.  (mycroft)
+
+share/examples/emul/svr4/etc/SVR4_MAKEDEV	1.2-1.3
+
+  Make "ptmx" and "pts[0-2]" devices, and remove devices before
+  (re)creating them.  (feyrer)
+
+share/man/man8/compat_svr4.8			1.11
+
+  Fix cut-and-paste error.  (feyrer)
+
+sys/dev/mii/mii.c				patch
+sys/dev/pci/if_tl.c				patch
+
+  Set the default media to UTP, and don't include 'none' in the media
+  list, so that sysinst will be able to set media properly.  (bouyer)
