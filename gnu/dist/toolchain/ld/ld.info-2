@@ -4,7 +4,7 @@ START-INFO-DIR-ENTRY
 * Ld: (ld).                       The GNU linker.
 END-INFO-DIR-ENTRY
 
-   This file documents the GNU linker LD version 2.11.
+   This file documents the GNU linker LD version 2.11.2.
 
    Copyright (C) 1991, 92, 93, 94, 95, 96, 97, 98, 99, 2000 Free
 Software Foundation, Inc.
@@ -485,6 +485,7 @@ GNU linker:
      available to `dlopen'.  `nodump' marks the object can not be
      dumped by `dldump'.  `now' marks the object with the non-lazy
      runtime binding.  `origin' marks the object may contain $ORIGIN.
+     `defs' disallows undefined symbols.
 
 `-( ARCHIVES -)'
 `--start-group ARCHIVES --end-group'
@@ -516,6 +517,13 @@ GNU linker:
      of this option are for compatibility with various systems.  You
      may use this option multiple times on the command line: it affects
      library searching for `-l' options which follow it.
+
+`-Bgroup'
+     Set the `DF_1_GROUP' flag in the `DT_FLAGS_1' entry in the dynamic
+     section.  This causes the runtime linker to handle lookups in this
+     object and its dependencies to be performed only inside the group.
+     `--no-undefined' is implied.  This option is only meaningful on ELF
+     platforms which support shared libraries.
 
 `-Bstatic'
 `-dn'
@@ -636,9 +644,10 @@ GNU linker:
      space while linking a large executable.
 
 `--no-undefined'
+`-z defs'
      Normally when creating a non-symbolic shared library, undefined
      symbols are allowed and left to be resolved by the runtime loader.
-     This option disallows such undefined symbols.
+     These options disallow such undefined symbols.
 
 `--allow-shlib-undefined'
      Allow undefined symbols in shared objects even  when -no-undefined

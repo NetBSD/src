@@ -4,7 +4,7 @@ START-INFO-DIR-ENTRY
 * Ld: (ld).                       The GNU linker.
 END-INFO-DIR-ENTRY
 
-   This file documents the GNU linker LD version 2.11.
+   This file documents the GNU linker LD version 2.11.2.
 
    Copyright (C) 1991, 92, 93, 94, 95, 96, 97, 98, 99, 2000 Free
 Software Foundation, Inc.
@@ -116,6 +116,7 @@ Index
 * -assert KEYWORD:                       Options.
 * -b FORMAT:                             Options.
 * -Bdynamic:                             Options.
+* -Bgroup:                               Options.
 * -Bshareable:                           Options.
 * -Bstatic:                              Options.
 * -Bsymbolic:                            Options.
@@ -173,6 +174,7 @@ Index
 * -x:                                    Options.
 * -Y PATH:                               Options.
 * -y SYMBOL:                             Options.
+* -z defs:                               Options.
 * -z KEYWORD:                            Options.
 * .:                                     Location Counter.
 * /DISCARD/:                             Output Section Discarding.

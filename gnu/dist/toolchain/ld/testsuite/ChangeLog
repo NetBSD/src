@@ -1,3 +1,64 @@
+2001-06-11  Alan Modra  <amodra@bigpond.net.au>
+
+	Merge from mainline.
+	2001-06-06  H.J. Lu  <hjl@gnu.org>
+	* ld-bootstrap/bootstrap.exp: Rebuild tmpdir/ld2 with tmpdir/ld3
+	on Linux/mips.
+	* ld-elfvers/vers.exp: Also run on Linux/mips.
+	* ld-elfvsb/elfvsb.exp: Likewise.
+	* ld-shared/shared.exp: Likewise.
+	* ld-selective/selective.exp: Mark selective2, selective3,
+	selective4 and selective5 xfail on Linux/mips.
+	* ld-shared/main.c: Skip invalid -Bsymbolic tests on Linux/mips.
+	* symbolic.dat: Remove invalid -Bsymbolic tests on Linux/mips.
+	* ld-srec/srec.exp: Add Linux/mips to xfail.
+
+	2001-05-24  H.J. Lu  <hjl@gnu.org>
+	* ld-scripts/phdrs.exp: Add sparc64 to 64 bit platform.
+
+	2001-05-25  Alan Modra  <amodra@one.net.au>
+	* ld-elfvers/vers.exp: Replace linuxoldld with linux*oldld and
+	linuxaout with linux*aout.
+
+	2001-05-01  Andreas Jaeger  <aj@suse.de>, Andreas Schwab <schwab@suse.de>
+	* ld-scripts/phdrs.exp: Fix regexp, s390x is 64 bit platform.
+	* ld-scripts/phdrs.t: Use startaddress that's greater than any
+	MAXPAGESIZE used.
+
+	2001-04-29  H.J. Lu  <hjl@gnu.org>
+	* ld-shared/symbolic.dat: New.
+	* ld-shared/shared.exp: Also check -Bsymbolic.
+
+	2001-03-06  DJ Delorie  <dj@redhat.com>
+	* ld-scripts/cross2.t: Support any type of text/data sections, not
+	just the canonical ones.
+
+	2001-02-28  Matt Hiller  <hiller@redhat.com>
+	* ld-scripts/crossref.exp: Initialize flags to [big_or_little_endian].
+	* ld-undefined/undefined.exp: Ditto, and include $flags in ld
+	invocations.
+	* lib/ld-lib.exp (big_or_little_endian): Recognize -EB, -eb, -EL
+	and -el.
+	(is_endian_output_format): New function.
+	(default_ld_link): Set flags to [big_or_little_endian] only if ld
+	is being invoked such that the output format being used is of
+	known endianness.
+	(default_ld_simple_link): Ditto.
+
+	2001-02-14  H.J. Lu  <hjl@gnu.org>
+	* ld-bootstrap/bootstrap.exp: Rebuild tmpdir/ld2 with tmpdir/ld3
+	for -static on ia64.
+	* ld-checks/checks.exp: Don't run on ia64-*-elf* nor
+	ia64-*-linux*.
+	* ld-elfvers/vers.exp: Also run ia64-*-elf* and ia64-*-linux*.
+	* ld-elfvsb/elfvsb.exp: Use i?86-*-*. Also run on ia64-*-linux*.
+	Set up expected failures for ia64-*-linux*.
+	* ld-shared/shared.exp: Likewise.
+
+2001-06-07  Alan Modra  <amodra@bigpond.net.au>
+
+	* Many files: Update copyright notices.
+
 2001-04-01  David O'Brien  <obrien@FreeBSD.org>
 
 	* ld-bootstrap/bootstrap.exp: FreeBSD 4.3+ will fail on the --static test
