@@ -4836,7 +4836,17 @@ expand_end_case (orig_index)
 	       || count < CASE_VALUES_THRESHOLD
 	       || ((unsigned HOST_WIDE_INT) (TREE_INT_CST_LOW (range))
 		   > 10 * count)
+#if 0
+/*
+ * XXX - Disabled temporarily.
+ * Use non-tablejump switch{} implementation when doing PIC code
+ * Currently, the tablejump method requires GOT access which undermines
+ * its use in self-relocating code such as the run-time linker.
+ */
 #ifndef ASM_OUTPUT_ADDR_DIFF_ELT
+	       || flag_pic
+#endif
+#else
 	       || flag_pic
 #endif
 	       || TREE_CODE (index_expr) == INTEGER_CST
