@@ -1,4 +1,4 @@
-/*	$NetBSD: sysctl.c,v 1.83 2004/03/24 15:34:56 atatat Exp $ */
+/*	$NetBSD: sysctl.c,v 1.84 2004/03/24 18:11:09 atatat Exp $ */
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -72,7 +72,7 @@ __COPYRIGHT(
 #if 0
 static char sccsid[] = "@(#)sysctl.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: sysctl.c,v 1.83 2004/03/24 15:34:56 atatat Exp $");
+__RCSID("$NetBSD: sysctl.c,v 1.84 2004/03/24 18:11:09 atatat Exp $");
 #endif
 #endif /* not lint */
 
@@ -140,6 +140,9 @@ static void usage(void);
 static void parse(char *);
 static void parse_create(char *);
 static void parse_destroy(char *);
+static void parse_describe(char *);
+static void getdesc1(int *, u_int, struct sysctlnode *);
+static void getdesc(int *, u_int, struct sysctlnode *);
 static void sysctlerror(int);
 
 /*
@@ -234,7 +237,7 @@ struct sysctlnode my_root = {
 #endif /* defined(lint) */
 };
 
-int	Aflag, aflag, Mflag, nflag, qflag, rflag, wflag, xflag;
+int	Aflag, aflag, dflag, Mflag, nflag, qflag, rflag, wflag, xflag;
 int	req;
 FILE	*warnfp = stderr;
 
@@ -259,13 +262,16 @@ main(int argc, char *argv[])
 	int name[CTL_MAXNAME];
 	int ch;
 
-	while ((ch = getopt(argc, argv, "Aabef:Mnqrwx")) != -1) {
+	while ((ch = getopt(argc, argv, "Aabdef:Mnqrwx")) != -1) {
 		switch (ch) {
 		case 'A':
 			Aflag++;
 			break;
 		case 'a':
 			aflag++;
+			break;
+		case 'd':
+			dflag++;
 			break;
 		case 'e':
 			eq = "=";
@@ -309,7 +315,7 @@ main(int argc, char *argv[])
 		usage(); */
 	/* if (aflag && Mflag)
 		usage(); */
-	if ((Aflag || Mflag) && argc == 0 && fn == NULL)
+	if ((Aflag || Mflag || dflag) && argc == 0 && fn == NULL)
 		aflag = 1;
 
 	if (Aflag)
@@ -540,6 +546,29 @@ print_tree(int *name, u_int namelen, struct sysctlnode *pnode, u_int type,
 		}
 	}
 
+	if (dflag && pnode != &my_root) {
+		if (Aflag || type != CTLTYPE_NODE) {
+			if (pnode->sysctl_desc == NULL)
+				getdesc1(name, namelen, pnode);
+			if (Aflag ||
+			    (pnode->sysctl_desc != NULL &&
+			     pnode->sysctl_desc != (const char*)-1)) {
+				if (!nflag)
+					printf("%s: ", gsname);
+				if (pnode->sysctl_desc == NULL ||
+				    pnode->sysctl_desc == (const char*)-1)
+					printf("(no description)\n");
+				else
+					printf("%s\n", pnode->sysctl_desc);
+			}
+		}
+
+		if (type != CTLTYPE_NODE) {
+			*sp = *dp = '\0';
+			return;
+		}
+	}
+
 	/*
 	 * if this is an alias and we added our name, that means we
 	 * got here by recursing down into the tree, so skip it.  The
@@ -584,10 +613,16 @@ print_tree(int *name, u_int namelen, struct sysctlnode *pnode, u_int type,
 			if (p != NULL)
 				(*p->ps_p)(gsname, gdname, NULL, name, namelen,
 					   pnode, type, p->ps_d);
-			else if ((Aflag || req) && !Mflag)
+			else if ((Aflag || req) && !Mflag && !dflag)
 				printf("%s: no children\n", gsname);
 		}
 		else {
+			if (dflag)
+				/*
+				 * get all descriptions for next level
+				 * in one chunk
+				 */
+				getdesc(name, namelen, pnode);
 			req = 0;
 			for (ni = 0; ni < pnode->sysctl_clen; ni++) {
 				name[namelen] = node[ni].sysctl_num;
@@ -683,7 +718,7 @@ parse(char *l)
 {
 	struct sysctlnode *node;
 	struct handlespec *w;
-	int name[CTL_MAXNAME];
+	int name[CTL_MAXNAME], dodesc = 0;
 	u_int namelen, type;
 	char *key, *value, *dot;
 	size_t sz;
@@ -709,6 +744,17 @@ parse(char *l)
 		else if (strncmp(key + 2, "destroy", 7) == 0 &&
 			 (key[9] == '=' || key[9] == sep[0]))
 			parse_destroy(key + 9 + (key[9] == '='));
+		else if (strncmp(key + 2, "describe", 8) == 0 &&
+			 (key[10] == '=' || key[10] == sep[0])) {
+			key += 10 + (key[10] == '=');
+			if ((value = strchr(key, '=')) != NULL)
+				parse_describe(key);
+			else {
+				if (!dflag)
+					dodesc = 1;
+				break;
+			}
+		}
 		else
 			fprintf(warnfp, "%s: unable to parse '%s'\n",
 				getprogname(), key);
@@ -729,7 +775,11 @@ parse(char *l)
 	type = SYSCTL_TYPE(node->sysctl_flags);
 
 	if (value == NULL) {
+		if (dodesc)
+			dflag = 1;
 		print_tree(&name[0], namelen, node, type, 0);
+		if (dodesc)
+			dflag = 0;
 		gsname[0] = '\0';
 		return;
 	}
@@ -1291,6 +1341,55 @@ parse_destroy(char *l)
 		       st(SYSCTL_TYPE(node.sysctl_flags)));
 }
 
+static void
+parse_describe(char *l)
+{
+	struct sysctlnode newdesc;
+	char buf[1024], *value;
+	struct sysctldesc *d = (void*)&buf[0];
+	int name[CTL_MAXNAME], rc;
+	u_int namelen;
+	size_t sz;
+
+	if (!wflag) {
+		fprintf(warnfp,
+			"%s: Must specify -w to set descriptions\n",
+			getprogname());
+		exit(1);
+	}
+
+	value = strchr(l, '=');
+	*value++ = '\0';
+
+	memset(name, 0, sizeof(name));
+	namelen = sizeof(name) / sizeof(name[0]);
+	sz = sizeof(gsname);
+	rc = sysctlgetmibinfo(l, &name[0], &namelen, gsname, &sz, NULL,
+			      SYSCTL_VERSION);
+	if (rc == -1) {
+		fprintf(warnfp,
+			"%s: %s level name '%s' in '%s' is invalid\n",
+			getprogname(), lname[namelen], gsname, l);
+		exit(1);
+	}
+
+	sz = sizeof(buf);
+	memset(&newdesc, 0, sizeof(newdesc));
+	newdesc.sysctl_flags = SYSCTL_VERSION|CTLFLAG_OWNDESC;
+	newdesc.sysctl_num = name[namelen - 1];
+	newdesc.sysctl_desc = value;
+	name[namelen - 1] = CTL_DESCRIBE;
+	rc = sysctl(name, namelen, d, &sz, &newdesc, sizeof(newdesc));
+	if (rc == -1)
+		fprintf(warnfp, "%s: %s: CTL_DESCRIBE failed: %s\n",
+			getprogname(), gsname, strerror(errno));
+	else if (d->descr_len == 1)
+		fprintf(warnfp, "%s: %s: description not set\n",
+			getprogname(), gsname);
+	else if (!qflag && !nflag)
+		printf("%s: %s\n", gsname, d->descr_str);
+}
+
 /*
  * ********************************************************************
  * when things go wrong...
@@ -1315,6 +1414,101 @@ usage(void)
 		      progname, "[-ne] -M",
 		      progname, "[-ne] [-q] -f file");
 	exit(1);
+}
+
+static void
+getdesc1(int *name, u_int namelen, struct sysctlnode *pnode)
+{
+	struct sysctlnode node;
+	char buf[1024], *desc;
+	struct sysctldesc *d = (void*)buf;
+	size_t sz = sizeof(buf);
+	int rc;
+
+	memset(&node, 0, sizeof(node));
+	node.sysctl_flags = SYSCTL_VERSION;
+	node.sysctl_num = name[namelen - 1];
+	name[namelen - 1] = CTL_DESCRIBE;
+	rc = sysctl(name, namelen, d, &sz, &node, sizeof(node));
+
+	if (rc == -1 ||
+	    d->descr_len == 1 ||
+	    d->descr_num != pnode->sysctl_num ||
+	    d->descr_ver != pnode->sysctl_ver)
+		desc = (char *)-1;
+	else
+		desc = malloc(d->descr_len);
+
+	if (desc == NULL)
+		desc = (char *)-1;
+	if (desc != (char *)-1)
+		memcpy(desc, &d->descr_str[0], sz);
+	name[namelen - 1] = node.sysctl_num;
+	if (pnode->sysctl_desc != NULL &&
+	    pnode->sysctl_desc != (const char *)-1)
+		free((void*)pnode->sysctl_desc);
+	pnode->sysctl_desc = desc;
+}
+
+static void
+getdesc(int *name, u_int namelen, struct sysctlnode *pnode)
+{
+	struct sysctlnode *node = pnode->sysctl_child;
+	struct sysctldesc *d, *p;
+	char *desc;
+	size_t sz;
+	int rc, i;
+
+	sz = 128 * pnode->sysctl_clen;
+	name[namelen] = CTL_DESCRIBE;
+
+	/*
+	 * attempt *twice* to get the description chunk.  if two tries
+	 * doesn't work, give up.
+	 */
+	i = 0;
+	do {
+		d = malloc(128 * pnode->sysctl_clen);
+		if (d == NULL)
+			return;
+		rc = sysctl(name, namelen + 1, d, &sz, NULL, 0);
+		if (rc == -1) {
+			free(d);
+			d = NULL;
+			if (i == 0 && errno == ENOMEM)
+				i = 1;
+			else
+				return;
+		}
+	} while (d == NULL);
+
+	/*
+	 * hokey nested loop here, giving O(n**2) behavior, but should
+	 * suffice for now
+	 */
+	for (i = 0; i < pnode->sysctl_clen; i++) {
+		node = &pnode->sysctl_child[i];
+		for (p = d; (char *)p < (char *)d + sz; p = NEXT_DESCR(p))
+			if (node->sysctl_num == p->descr_num)
+				break;
+		if ((char *)p < (char *)d + sz &&
+		    node[i].sysctl_ver == p->descr_ver) {
+			/*
+			 * match found, attempt to attach description
+			 */
+			if (p->descr_len == 1)
+				desc = NULL;
+			else
+				desc = malloc(p->descr_len);
+			if (desc == NULL)
+				desc = (char *)-1;
+			else
+				memcpy(desc, &p->descr_str[0], sz);
+			node->sysctl_desc = desc;
+		}
+	}
+
+	free(d);
 }
 
 void
