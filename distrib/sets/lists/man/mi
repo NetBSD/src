@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.368 2001/06/15 12:27:35 wiz Exp $
+# $NetBSD: mi,v 1.369 2001/06/15 16:57:08 veego Exp $
 ./usr/share/info/am-utils.info			man-amd-info
 ./usr/share/info/as.info			man-computil-info
 ./usr/share/info/awk.info			man-util-info
@@ -3072,8 +3072,8 @@
 ./usr/share/man/man8/vax/makedev.8		man-sysutil-man
 ./usr/share/man/man8/vipw.8			man-sysutil-man
 ./usr/share/man/man8/vnconfig.8			man-sysutil-man
-./usr/share/man/man8/walnut/MAKEDEV.0		man-sysutil-man
-./usr/share/man/man8/walnut/makedev.0		man-sysutil-man
+./usr/share/man/man8/walnut/MAKEDEV.8		man-sysutil-man
+./usr/share/man/man8/walnut/makedev.8		man-sysutil-man
 ./usr/share/man/man8/wdogctl.8			man-sysutil-man
 ./usr/share/man/man8/wiconfig.8			man-netutil-man
 ./usr/share/man/man8/wire-test.8		man-netutil-man
