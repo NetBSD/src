@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs_data.h,v 1.574 2003/09/21 14:27:41 nisimura Exp $	*/
+/*	$NetBSD: pcidevs_data.h,v 1.575 2003/09/25 16:49:03 joda Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.578 2003/09/21 14:23:21 nisimura Exp 
+ *	NetBSD: pcidevs,v 1.579 2003/09/25 16:47:54 joda Exp 
  */
 
 /*
@@ -6524,6 +6524,72 @@ const struct pci_knowndev pci_knowndevs[] = {
 	    0,
 	    "Nvidia Corporation",
 	    "Quadro FX 1000",
+	},
+	{
+	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_GF_FX5600U,
+	    0,
+	    "Nvidia Corporation",
+	    "GeForce FX 5600 Ultra",
+	},
+	{
+	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_GF_FX5600,
+	    0,
+	    "Nvidia Corporation",
+	    "GeForce FX 5600",
+	},
+	{
+	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_GF_FX5600_SE,
+	    0,
+	    "Nvidia Corporation",
+	    "GeForce FX 5600 SE",
+	},
+	{
+	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_GF_FX5200U,
+	    0,
+	    "Nvidia Corporation",
+	    "GeForce FX 5200 Ultra",
+	},
+	{
+	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_GF_FX5200,
+	    0,
+	    "Nvidia Corporation",
+	    "GeForce FX 5200",
+	},
+	{
+	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_GF_FX5200SE,
+	    0,
+	    "Nvidia Corporation",
+	    "GeForce FX 5200SE",
+	},
+	{
+	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_QUADRO_FX_500,
+	    0,
+	    "Nvidia Corporation",
+	    "Quadro FX 500",
+	},
+	{
+	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_GF_FX5900U,
+	    0,
+	    "Nvidia Corporation",
+	    "GeForce FX 5900 Ultra",
+	},
+	{
+	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_GF_FX5900,
+	    0,
+	    "Nvidia Corporation",
+	    "GeForce FX 5900",
+	},
+	{
+	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_GF_FX5950U,
+	    0,
+	    "Nvidia Corporation",
+	    "GeForce FX 5950 Ultra",
+	},
+	{
+	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_QUADRO_FX_3000,
+	    0,
+	    "Nvidia Corporation",
+	    "Quadro FX 3000",
 	},
 	{
 	    PCI_VENDOR_NVIDIA_SGS, PCI_PRODUCT_NVIDIA_SGS_RIVA128,
