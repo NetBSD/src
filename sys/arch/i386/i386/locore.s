@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.127 1995/05/01 08:06:25 mycroft Exp $	*/
+/*	$NetBSD: locore.s,v 1.128 1995/05/01 08:53:13 mycroft Exp $	*/
 
 #undef DIAGNOSTIC
 #define DIAGNOSTIC
@@ -149,7 +149,7 @@
 	.data
 
 	.globl	_cpu,_cpu_vendor,_cold,_esym,_boothowto,_bootdev,_atdevbase
-	.globl	_cyloffset,_proc0paddr,_curpcb,_IdlePTD
+	.globl	_cyloffset,_proc0paddr,_curpcb
 _cpu:		.long	0	# are we 386, 386sx, or 486
 _cpu_vendor:	.space	16	# vendor string returned by `cpuid' instruction
 _cold:		.long	1	# cold till we are not
@@ -157,7 +157,6 @@ _esym:		.long	0	# ptr to end of syms
 _atdevbase:	.long	0	# location of start of iomem in virtual
 _cyloffset:	.long	0
 _proc0paddr:	.long	0
-_IdlePTD:	.long	0
 
 	.space 512
 tmpstk:
@@ -341,7 +340,7 @@ try586:	/* Use the `cpuid' instruction. */
  * Virtual address space of kernel:
  *
  * text | data | bss | [syms] | page dir | usr stk map | proc0 kstack | Sysmap
- *			      0          1             2       2      3
+ *			      0          1             2       3      4
  */
 #define	PROC0PDIR	((0)              * NBPG)
 #define	PROC0STACKMAP	((1)		  * NBPG)
@@ -382,8 +381,6 @@ try586:	/* Use the `cpuid' instruction. */
 	cld
 	rep
 	stosl
-
-	movl	%esi,_IdlePTD-KERNBASE		# physaddr of proc0 stack
 
 /*
  * fillkpt
