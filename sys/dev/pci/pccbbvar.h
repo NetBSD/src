@@ -1,4 +1,4 @@
-/*	$NetBSD: pccbbvar.h,v 1.18 2002/10/01 09:09:16 haya Exp $	*/
+/*	$NetBSD: pccbbvar.h,v 1.19 2003/03/22 06:25:15 nakayama Exp $	*/
 /*
  * Copyright (c) 1999 HAYAKAWA Koichi.  All rights reserved.
  *
@@ -127,6 +127,7 @@ struct pccbb_softc {
 #define	CBB_INSERTING	0x01000000
 #define	CBB_16BITCARD	0x04
 #define	CBB_32BITCARD	0x08
+#define	CBB_MEMHMAPPED	0x02000000
 
 	pci_chipset_tag_t sc_pc;
 	pcitag_t sc_tag;
