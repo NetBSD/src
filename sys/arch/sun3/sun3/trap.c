@@ -130,8 +130,9 @@ trap(type, code, v, frame)
 	unsigned ncode;
 	int s;
 
-	printf("trap type %d, code = %x, v = %x\n", type, code, v);
 	cnt.v_trap++;
+	if (!p)
+	    p = &proc0;
 	syst = p->p_stime;
 	if (USERMODE(frame.f_sr)) {
 		type |= T_USER;
@@ -151,6 +152,7 @@ dopanic:
 	case T_BUSERR:		/* kernel bus error */
 		if (!p->p_addr->u_pcb.pcb_onfault)
 			goto dopanic;
+
 		/*
 		 * If we have arranged to catch this fault in any of the
 		 * copy to/from user space routines, set PC to return to
@@ -158,6 +160,7 @@ dopanic:
 		 * that it may need to clean up stack frame.
 		 */
 copyfault:
+
 		frame.f_stackadj = exframesize[frame.f_format];
 		frame.f_format = frame.f_vector = 0;
 		frame.f_pc = (int) p->p_addr->u_pcb.pcb_onfault;
@@ -290,7 +293,6 @@ copyfault:
 		break;
 
 	case T_ASTFLT:		/* system async trap, cannot happen */
-		printf("system async trap\n");
 		goto dopanic;
 
 	case T_ASTFLT|T_USER:	/* user async trap */
@@ -303,21 +305,17 @@ copyfault:
 		 * check.  Note that we ensure that we are at least at SIR
 		 * IPL while processing the SIR.
 		 */
-		printf("user async trap\n");
 		spl1();
 		/* fall into... */
 
 	case T_SSIR:		/* software interrupt */
 	case T_SSIR|T_USER:
-		printf("software interrupt\n");
 		if (ssir & SIR_NET) {
-		        printf("soft interrupt: network\n");
 			siroff(SIR_NET);
 			cnt.v_soft++;
 			netintr();
 		}
 		if (ssir & SIR_CLOCK) {
-		        printf("soft interrupt: clock\n");
 			siroff(SIR_CLOCK);
 			cnt.v_soft++;
 			softclock((caddr_t)frame.f_pc, (int)frame.f_sr);
@@ -326,13 +324,10 @@ copyfault:
 		 * If this was not an AST trap, we are all done.
 		 */
 		if (type != (T_ASTFLT|T_USER)) {
-		        printf("soft interrupt: NOT AST\n");
 			cnt.v_trap--;
 			return;
 		}
-		printf("soft interrupt: before spl0\n");
 		spl0();
-		printf("soft interrupt: after spl0\n");
 #ifndef PROFTIMER
 		if ((p->p_flag&SOWEUPC) && p->p_stats->p_prof.pr_scale) {
 			addupc(frame.f_pc, &p->p_stats->p_prof, 1);
@@ -379,6 +374,12 @@ copyfault:
 		}
 #endif
 		rv = vm_fault(map, va, ftype, FALSE);
+#if VMFAULT_TRACE
+		printf("vm_fault(%x, %x, %x, 0) -> %x in context %d\n",
+		       map, va, ftype, rv, get_context());
+		printf("  type %x, code [mmu,,ssw]: %x\n",
+		       type, code);
+#endif
 		/*
 		 * If this was a stack access we keep track of the maximum
 		 * accessed stack size.  Also, if vm_fault gets a protection
@@ -397,8 +398,13 @@ copyfault:
 				rv = KERN_INVALID_ADDRESS;
 		}
 		if (rv == KERN_SUCCESS) {
-			if (type == T_MMUFLT)
+			if (type == T_MMUFLT) {
+#if VMFAULT_TRACE
+	    printf("vm_fault resolved access to map %x va %x type ftype %d\n",
+	       map, va, ftype);
+#endif
 				return;
+			}
 			goto out;
 		}
 		if (type == T_MMUFLT) {
@@ -436,8 +442,6 @@ out:
 		p->p_stats->p_ru.ru_nivcsw++;
 		swtch();
 		splx(s);
-		printf("trap: survived the switch\n");
-		tracedump();
 		while (i = CURSIG(p))
 			psig(i);
 	}
@@ -483,6 +487,7 @@ syscall(code, frame)
 	extern int hpuxnsysent, notimp();
 #endif
 
+	printf("entered syscall()\n");
 	cnt.v_syscall++;
 	syst = p->p_stime;
 	if (!USERMODE(frame.f_sr))
