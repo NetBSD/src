@@ -1,4 +1,4 @@
-/*	$NetBSD: rtsock.c,v 1.48 2001/07/18 16:43:10 thorpej Exp $	*/
+/*	$NetBSD: rtsock.c,v 1.49 2001/07/19 00:12:09 enami Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -473,7 +473,6 @@ rt_xaddrs(cp, cplim, rtinfo)
 	struct sockaddr *sa;
 	int i;
 
-	memset(rtinfo->rti_info, 0, sizeof(rtinfo->rti_info));
 	for (i = 0; (i < RTAX_MAX) && (cp < cplim); i++) {
 		if ((rtinfo->rti_addrs & (1 << i)) == 0)
 			continue;
