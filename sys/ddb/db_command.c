@@ -23,7 +23,7 @@
  * any improvements or extensions that they make and grant Carnegie the
  * rights to redistribute these changes.
  *
- *	$Id: db_command.c,v 1.10 1994/03/23 20:00:56 pk Exp $
+ *	$Id: db_command.c,v 1.11 1994/04/27 10:49:07 pk Exp $
  */
 
 /*
@@ -319,6 +319,7 @@ db_object_print_cmd(addr, have_addr, count, modif)
  * 'show' commands
  */
 extern void	db_show_all_procs();
+extern void	db_show_callout();
 extern void	db_listbreak_cmd();
 extern void	db_listwatch_cmd();
 extern void	db_show_regs();
@@ -326,6 +327,7 @@ void		db_show_help();
 
 struct db_command db_show_all_cmds[] = {
 	{ "procs",	db_show_all_procs,0,	0 },
+	{ "callout",	db_show_callout,0,	0 },
 	{ (char *)0 }
 };
 
@@ -377,6 +379,7 @@ struct db_command db_command_table[] = {
 	{ "trace",	db_stack_trace_cmd,	0,		0 },
 	{ "call",	db_fncall,		CS_OWN,		0 },
 	{ "ps",		db_show_all_procs,	0,		0 },
+	{ "callout",	db_show_callout,	0,		0 },
 	{ "show",	0,			0,		db_show_cmds },
 	{ (char *)0, }
 };
