@@ -62,6 +62,12 @@ for i
 do
 case $i in
 
+all)
+	sh MAKEDEV std sd0 sd1 sd2 sd3 sd4 pty0
+	sh MAKEDEV vnd0 vnd1 vnd2 vnd3 audio tun0 tun1 tun2 tun3
+	sh MAKEDEV bpf0 bpf1 bpf2 bpf3 bwtwo0 cgthree0 cgsix0
+	sh MAKEDEV lkm local
+	;;
 std)
 	mknod console		c 0 0
 	mknod tty		c 2 0	; chmod 666 tty
