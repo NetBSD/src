@@ -1,4 +1,4 @@
-/*	$NetBSD: wi.c,v 1.145 2003/11/16 09:05:53 dyoung Exp $	*/
+/*	$NetBSD: wi.c,v 1.146 2003/11/16 09:41:01 dyoung Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wi.c,v 1.145 2003/11/16 09:05:53 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wi.c,v 1.146 2003/11/16 09:41:01 dyoung Exp $");
 
 #define WI_HERMES_AUTOINC_WAR	/* Work around data write autoinc bug. */
 #define WI_HERMES_STATS_WAR	/* Work around stats counter bug. */
@@ -214,7 +214,10 @@ wi_attach(struct wi_softc *sc)
 	struct ifnet *ifp = &ic->ic_if;
 	int chan, nrate, buflen;
 	u_int16_t val, chanavail;
-	u_int8_t ratebuf[2 + IEEE80211_RATE_SIZE];
+ 	struct {
+ 		u_int16_t nrates;
+ 		char rates[IEEE80211_RATE_SIZE];
+ 	} ratebuf;
 	static const u_int8_t empty_macaddr[IEEE80211_ADDR_LEN] = {
 		0x00, 0x00, 0x00, 0x00, 0x00, 0x00
 	};
@@ -353,12 +356,12 @@ wi_attach(struct wi_softc *sc)
 
 	/* Find supported rates. */
 	buflen = sizeof(ratebuf);
-	if (wi_read_rid(sc, WI_RID_DATA_RATES, ratebuf, &buflen) == 0) {
-		nrate = le16toh(*(u_int16_t *)ratebuf);
+	if (wi_read_rid(sc, WI_RID_DATA_RATES, &ratebuf, &buflen) == 0) {
+		nrate = le16toh(ratebuf.nrates);
 		if (nrate > IEEE80211_RATE_SIZE)
 			nrate = IEEE80211_RATE_SIZE;
 		memcpy(ic->ic_sup_rates[IEEE80211_MODE_11B].rs_rates,
-		    ratebuf + 2, nrate);
+		    &ratebuf.rates[0], nrate);
 		ic->ic_sup_rates[IEEE80211_MODE_11B].rs_nrates = nrate;
 	}
 	buflen = sizeof(val);
@@ -1162,6 +1165,7 @@ wi_media_status(struct ifnet *ifp, struct ifmediareq *imr)
 		rate = 0;
 	else {
 		/* convert to 802.11 rate */
+		val = le16toh(val);
 		rate = val * 2;
 		if (sc->sc_firmware_type == WI_LUCENT) {
 			if (rate == 10)
@@ -1487,6 +1491,7 @@ wi_info_intr(struct wi_softc *sc)
 		off = sizeof(ltbuf);
 		for (i = 0; i < len; i++, off += 2, ptr++) {
 			wi_read_bap(sc, fid, off, &stat, sizeof(stat));
+			stat = le16toh(stat);
 #ifdef WI_HERMES_STATS_WAR
 			if (stat & 0xf000)
 				stat = ~stat;
@@ -2446,8 +2451,8 @@ wi_scan_ap(struct wi_softc *sc, u_int16_t chanmask, u_int16_t txrate)
 		(void)wi_cmd(sc, WI_CMD_INQUIRE, WI_INFO_SCAN_RESULTS, 0, 0);
 		break;
 	case WI_INTERSIL:
-		val[0] = chanmask;	/* channel */
-		val[1] = txrate;	/* tx rate */
+		val[0] = htole16(chanmask);	/* channel */
+		val[1] = htole16(txrate);	/* tx rate */
 		error = wi_write_rid(sc, WI_RID_SCAN_REQ, val, sizeof(val));
 		break;
 	case WI_SYMBOL:
