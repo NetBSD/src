@@ -1,4 +1,4 @@
-/* 	$NetBSD: cdplay.c,v 1.6 2000/06/13 13:37:15 ad Exp $	*/
+/* 	$NetBSD: cdplay.c,v 1.7 2000/06/14 13:51:45 ad Exp $	*/
 
 /*
  * Copyright (c) 1999 Andrew Doran.
@@ -56,7 +56,7 @@
  
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: cdplay.c,v 1.6 2000/06/13 13:37:15 ad Exp $");
+__RCSID("$NetBSD: cdplay.c,v 1.7 2000/06/14 13:51:45 ad Exp $");
 #endif /* not lint */
 
 #include <sys/endian.h>
@@ -840,7 +840,7 @@ prtrack(e, lastflag)
 		block = msf2lba(e->addr.msf.minute, e->addr.msf.second,
 		    e->addr.msf.frame);
 	} else {
-		block = be32toh(e->addr.lba);
+		block = e->addr.lba;
 		lba2msf(block, &m, &s, &f);
 		/* Print track start */
 		printf("%2d:%02d.%02d  ", m, s, f);
@@ -854,7 +854,7 @@ prtrack(e, lastflag)
 		next = msf2lba(e[1].addr.msf.minute, e[1].addr.msf.second,
 		    e[1].addr.msf.frame);
 	else
-		next = be32toh(e[1].addr.lba);
+		next = e[1].addr.lba;
 	len = next - block;
 	lba2msf(len, &m, &s, &f);
 
