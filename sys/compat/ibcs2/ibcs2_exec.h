@@ -1,7 +1,7 @@
-/*	$NetBSD: ibcs2_exec.h,v 1.3 1994/10/26 02:52:53 cgd Exp $	*/
+/*	$NetBSD: ibcs2_exec.h,v 1.4 1995/03/14 15:12:24 scottb Exp $	*/
 
 /*
- * Copyright (c) 1994 Scott Bartram
+ * Copyright (c) 1994, 1995 Scott Bartram
  * All rights reserved.
  *
  * adapted from sys/sys/exec_ecoff.h
@@ -156,6 +156,7 @@ struct coff_slhdr {
 #define IBCS2_HIGH_SYSCALL(n)		(((n) & 0x7f) == 0x28)
 #define IBCS2_CVT_HIGH_SYSCALL(n)	(((n) >> 8) + 128)
 
+struct exec_package;
 int     exec_ibcs2_coff_makecmds __P((struct proc *, struct exec_package *));
 
 /*
