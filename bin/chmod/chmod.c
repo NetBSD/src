@@ -1,4 +1,4 @@
-/*	$NetBSD: chmod.c,v 1.13 1997/06/26 23:21:33 kleink Exp $	*/
+/*	$NetBSD: chmod.c,v 1.14 1997/07/20 04:51:02 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993, 1994
@@ -33,17 +33,18 @@
  * SUCH DAMAGE.
  */
 
+#include <sys/cdefs.h>
 #ifndef lint
-static char copyright[] =
+__COPYRIGHT(
 "@(#) Copyright (c) 1989, 1993, 1994\n\
-	The Regents of the University of California.  All rights reserved.\n";
+	The Regents of the University of California.  All rights reserved.\n");
 #endif /* not lint */
 
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)chmod.c	8.8 (Berkeley) 4/1/94";
 #else
-static char rcsid[] = "$NetBSD: chmod.c,v 1.13 1997/06/26 23:21:33 kleink Exp $";
+__RCSID("$NetBSD: chmod.c,v 1.14 1997/07/20 04:51:02 thorpej Exp $");
 #endif
 #endif /* not lint */
 
@@ -60,6 +61,7 @@ static char rcsid[] = "$NetBSD: chmod.c,v 1.13 1997/06/26 23:21:33 kleink Exp $"
 #include <unistd.h>
 #include <limits.h>
 
+int main __P((int, char *[]));
 void usage __P((void));
 
 int
@@ -74,6 +76,9 @@ main(argc, argv)
 	int oct, omode;
 	int Hflag, Lflag, Pflag, Rflag, ch, fflag, fts_options, hflag, rval;
 	char *ep, *mode;
+
+	set = NULL;	/* XXX gcc -Wuninitialized */
+	omode = 0;	/* XXX gcc -Wuninitialized */
 
 	setlocale(LC_ALL, "");
 
@@ -163,7 +168,7 @@ done:	argv += optind;
 	}
 
 	if ((ftsp = fts_open(++argv, fts_options, 0)) == NULL)
-		err(1, NULL);
+		err(1, argv[0]);
 	for (rval = 0; (p = fts_read(ftsp)) != NULL;) {
 		switch (p->fts_info) {
 		case FTS_D:
