@@ -1,13 +1,12 @@
-#	$NetBSD: tc.options,v 1.7 1999/03/27 08:15:29 simonb Exp $
+#	$NetBSD: tc.options,v 1.8 1999/05/10 04:52:34 simonb Exp $
 
 #########################################################################
 # Supported turbochannel option cards					#
 #########################################################################
-cfb0	at tc?
-mfb0	at tc?
-sfb0	at tc?
-#sfb1	at tc?
-px0	at tc?
+cfb*	at tc?
+mfb*	at tc?
+sfb*	at tc?
+px*	at tc?
 
 
 # Configure DS5000/200 (3MAX) baseboard built-in "options", which
