@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_vfsops.c,v 1.160 2005/01/09 03:11:48 mycroft Exp $	*/
+/*	$NetBSD: lfs_vfsops.c,v 1.161 2005/01/09 09:27:17 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_vfsops.c,v 1.160 2005/01/09 03:11:48 mycroft Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_vfsops.c,v 1.161 2005/01/09 09:27:17 mycroft Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_quota.h"
@@ -339,7 +339,7 @@ lfs_mount(struct mount *mp, const char *path, void *data, struct nameidata *ndp,
 	struct ufs_args args;
 	struct ufsmount *ump = NULL;
 	struct lfs *fs = NULL;				/* LFS */
-	int error;
+	int error, update;
 	mode_t accessmode;
 
 	if (mp->mnt_flag & MNT_GETARGS) {
@@ -354,26 +354,120 @@ lfs_mount(struct mount *mp, const char *path, void *data, struct nameidata *ndp,
 	if (error)
 		return (error);
 
+	update = mp->mnt_flag & MNT_UPDATE;
+
 	/*
 	 * If updating, check whether changing from read-only to
 	 * read/write; if there is no device name, that's all we do.
 	 */
-	if (mp->mnt_flag & MNT_UPDATE) {
+	if (update) {
 		ump = VFSTOUFS(mp);
+		devvp = ump->um_devvp;
+		if (args.fspec == NULL)
+			vref(devvp);
+	} else {
+		/* New mounts must have a filename for the device */
+		if (args.fspec == NULL)
+			return (EINVAL);
+	}
+
+	if (args.fspec != NULL) {
+		/*
+		 * Look up the name and verify that it's sane.
+		 */
+		NDINIT(ndp, LOOKUP, FOLLOW, UIO_USERSPACE, args.fspec, p);
+		if ((error = namei(ndp)) != 0)
+			return (error);
+		devvp = ndp->ni_vp;
+
+		if (!update) {
+			/*
+			 * Be sure this is a valid block device
+			 */
+			if (devvp->v_type != VBLK)
+				error = ENOTBLK;
+			else if (bdevsw_lookup(devvp->v_rdev) == NULL)
+				error = ENXIO;
+		} else {
+			/*
+			 * Be sure we're still naming the same device
+			 * used for our initial mount
+			 */
+			if (devvp != ump->um_devvp)
+				error = EINVAL;
+		}
+	}
+
+	/*
+	 * If mount by non-root, then verify that user has necessary
+	 * permissions on the device.
+	 */
+	if (error == 0 && p->p_ucred->cr_uid != 0) {
+		accessmode = VREAD;
+		if (update ?
+		    (mp->mnt_iflag & IMNT_WANTRDWR) != 0 :
+		    (mp->mnt_flag & MNT_RDONLY) == 0)
+			accessmode |= VWRITE;
+		vn_lock(devvp, LK_EXCLUSIVE | LK_RETRY);
+		error = VOP_ACCESS(devvp, accessmode, p->p_ucred, p);
+		VOP_UNLOCK(devvp, 0);
+	}
+
+	if (error) {
+		vrele(devvp);
+		return (error);
+	}
+
+	if (!update) {
+		int flags;
+
+		/*
+		 * Disallow multiple mounts of the same device.
+		 * Disallow mounting of a device that is currently in use
+		 * (except for root, which might share swap device for
+		 * miniroot).
+		 */
+		error = vfs_mountedon(devvp);
+		if (error)
+			goto fail;
+		if (vcount(devvp) > 1 && devvp != rootvp) {
+			error = EBUSY;
+			goto fail;
+		}
+		if (mp->mnt_flag & MNT_RDONLY)
+			flags = FREAD;
+		else
+			flags = FREAD|FWRITE;
+		error = VOP_OPEN(devvp, flags, FSCRED, p);
+		if (error)
+			goto fail;
+		error = lfs_mountfs(devvp, mp, p);		/* LFS */
+		if (error) {
+			vn_lock(devvp, LK_EXCLUSIVE | LK_RETRY);
+			(void)VOP_CLOSE(devvp, flags, NOCRED, p);
+			VOP_UNLOCK(devvp, 0);
+			goto fail;
+		}
+
+		ump = VFSTOUFS(mp);
+		fs = ump->um_lfs;
+	} else {
+		/*
+		 * Update the mount.
+		 */
+
+		/*
+		 * The initial mount got a reference on this
+		 * device, so drop the one obtained via
+		 * namei(), above.
+		 */
+		vrele(devvp);
+
 		fs = ump->um_lfs;
 		if (fs->lfs_ronly && (mp->mnt_iflag & IMNT_WANTRDWR)) {
 			/*
-			 * If upgrade to read-write by non-root, then verify
-			 * that user has necessary permissions on the device.
+			 * Changing from read-only to read/write
 			 */
-			if (p->p_ucred->cr_uid != 0) {
-				vn_lock(ump->um_devvp, LK_EXCLUSIVE | LK_RETRY);
-				error = VOP_ACCESS(ump->um_devvp, VREAD|VWRITE,
-						   p->p_ucred, p);
-				VOP_UNLOCK(ump->um_devvp, 0);
-				if (error)
-					return (error);
-			}
 			fs->lfs_ronly = 0;
 		}
 		if (args.fspec == 0) {
@@ -383,54 +477,13 @@ lfs_mount(struct mount *mp, const char *path, void *data, struct nameidata *ndp,
 			return (vfs_export(mp, &ump->um_export, &args.export));
 		}
 	}
-	/*
-	 * Not an update, or updating the name: look up the name
-	 * and verify that it refers to a sensible block device.
-	 */
-	NDINIT(ndp, LOOKUP, FOLLOW, UIO_USERSPACE, args.fspec, p);
-	if ((error = namei(ndp)) != 0)
-		return (error);
-	devvp = ndp->ni_vp;
-	if (devvp->v_type != VBLK) {
-		vrele(devvp);
-		return (ENOTBLK);
-	}
-	if (bdevsw_lookup(devvp->v_rdev) == NULL) {
-		vrele(devvp);
-		return (ENXIO);
-	}
-	/*
-	 * If mount by non-root, then verify that user has necessary
-	 * permissions on the device.
-	 */
-	if (p->p_ucred->cr_uid != 0) {
-		accessmode = VREAD;
-		if ((mp->mnt_flag & MNT_RDONLY) == 0)
-			accessmode |= VWRITE;
-		vn_lock(devvp, LK_EXCLUSIVE | LK_RETRY);
-		error = VOP_ACCESS(devvp, accessmode, p->p_ucred, p);
-		if (error) {
-			vput(devvp);
-			return (error);
-		}
-		VOP_UNLOCK(devvp, 0);
-	}
-	if ((mp->mnt_flag & MNT_UPDATE) == 0)
-		error = lfs_mountfs(devvp, mp, p);		/* LFS */
-	else {
-		if (devvp != ump->um_devvp)
-			error = EINVAL;	/* needs translation */
-		else
-			vrele(devvp);
-	}
-	if (error) {
-		vrele(devvp);
-		return (error);
-	}
-	ump = VFSTOUFS(mp);
-	fs = ump->um_lfs;					/* LFS */
+
 	return set_statvfs_info(path, UIO_USERSPACE, args.fspec,
 	    UIO_USERSPACE, mp, p);
+
+fail:
+	vrele(devvp);
+	return (error);
 }
 
 /*
@@ -848,7 +901,6 @@ check_segsum(struct lfs *fs, daddr_t offset, u_int64_t nextserial,
 int
 lfs_mountfs(struct vnode *devvp, struct mount *mp, struct proc *p)
 {
-	extern struct vnode *rootvp;
 	struct dlfs *tdfs, *dfs, *adfs;
 	struct lfs *fs;
 	struct ufsmount *ump;
@@ -865,23 +917,17 @@ lfs_mountfs(struct vnode *devvp, struct mount *mp, struct proc *p)
 	int sn, curseg;
 
 	cred = p ? p->p_ucred : NOCRED;
+
 	/*
-	 * Disallow multiple mounts of the same device.
-	 * Disallow mounting of a device that is currently in use
-	 * (except for root, which might share swap device for miniroot).
 	 * Flush out any old buffers remaining from a previous use.
 	 */
-	if ((error = vfs_mountedon(devvp)) != 0)
-		return (error);
-	if (vcount(devvp) > 1 && devvp != rootvp)
-		return (EBUSY);
-	if ((error = vinvalbuf(devvp, V_SAVE, cred, p, 0, 0)) != 0)
+	vn_lock(devvp, LK_EXCLUSIVE | LK_RETRY);
+	error = vinvalbuf(devvp, V_SAVE, cred, p, 0, 0);
+	VOP_UNLOCK(devvp, 0);
+	if (error)
 		return (error);
 
 	ronly = (mp->mnt_flag & MNT_RDONLY) != 0;
-	error = VOP_OPEN(devvp, ronly ? FREAD : FREAD|FWRITE, FSCRED, p);
-	if (error)
-		return (error);
 	if (VOP_IOCTL(devvp, DIOCGPART, &dpart, FREAD, cred, p) != 0)
 		secsize = DEV_BSIZE;
 	else
@@ -1289,14 +1335,12 @@ lfs_mountfs(struct vnode *devvp, struct mount *mp, struct proc *p)
 	}
 
 	return (0);
+
 out:
 	if (bp)
 		brelse(bp);
 	if (abp)
 		brelse(abp);
-	vn_lock(devvp, LK_EXCLUSIVE | LK_RETRY);
-	(void)VOP_CLOSE(devvp, ronly ? FREAD : FREAD|FWRITE, cred, p);
-	VOP_UNLOCK(devvp, 0);
 	if (ump) {
 		free(ump->um_lfs, M_UFSMNT);
 		free(ump, M_UFSMNT);
