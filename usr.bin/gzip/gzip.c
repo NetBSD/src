@@ -1,4 +1,4 @@
-/*	$NetBSD: gzip.c,v 1.64 2004/08/31 10:14:30 he Exp $	*/
+/*	$NetBSD: gzip.c,v 1.65 2004/09/04 10:48:57 dsl Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 2003, 2004 Matthew R. Green
@@ -32,11 +32,15 @@
 #ifndef lint
 __COPYRIGHT("@(#) Copyright (c) 1997, 1998, 2003, 2004 Matthew R. Green\n\
      All rights reserved.\n");
-__RCSID("$NetBSD: gzip.c,v 1.64 2004/08/31 10:14:30 he Exp $");
+__RCSID("$NetBSD: gzip.c,v 1.65 2004/09/04 10:48:57 dsl Exp $");
 #endif /* not lint */
 
 /*
  * gzip.c -- GPL free gzip using zlib.
+ *
+ * RFC 1950 covers the zlib format
+ * RFC 1951 covers the deflate format
+ * RFC 1952 covers the gzip format
  *
  * TODO:
  *	- use mmap where possible
@@ -522,7 +526,8 @@ gz_compress(int in, int out, off_t *gsizep, const char *origname, uint32_t mtime
 		     (mtime >> 8) & 0xff,
 		     (mtime >> 16) & 0xff,
 		     (mtime >> 24) & 0xff,
-		     0, OS_CODE, origname);
+		     numflag == 1 ? 4 : numflag == 9 ? 2 : 0,
+		     OS_CODE, origname);
 	if (i >= BUFLEN)     
 		/* this need PATH_MAX > BUFLEN ... */
 		maybe_err("snprintf");
