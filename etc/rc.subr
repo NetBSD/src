@@ -1,4 +1,4 @@
-# $NetBSD: rc.subr,v 1.49 2002/05/21 12:31:01 lukem Exp $
+# $NetBSD: rc.subr,v 1.50 2002/07/08 16:14:54 atatat Exp $
 #
 # Copyright (c) 1997-2002 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -300,6 +300,13 @@ wait_for_pids()
 #				to run the chrooted ${command} with.
 #				Requires /usr to be mounted.
 #
+#	${name}_systrace n	Flags passed to systrace(1) if it is used.
+#				Setting this variable enables systracing
+# 				of the given program.  The use of "-a" is
+#				recommended so that the boot process is not
+#				stalled.  In order to pass no flags to
+#				systrace, set this variable to "--".
+#
 #	${rc_arg}_cmd	n	If set, use this as the method when invoked;
 #				Otherwise, use default command (see below)
 #
@@ -423,7 +430,8 @@ run_rc_command()
 	fi
 	eval _chdir=\$${name}_chdir	_chroot=\$${name}_chroot \
 	    _nice=\$${name}_nice	_user=\$${name}_user \
-	    _group=\$${name}_group	_groups=\$${name}_groups
+	    _group=\$${name}_group	_groups=\$${name}_groups \
+	    _systrace=\$${name}_systrace
 
 	if [ -n "$_user" ]; then	# unset $_user if running as that user
 		if [ "$_user" = "$(id -un)" ]; then
@@ -531,12 +539,14 @@ run_rc_command()
 			if [ -n "$_chroot" ]; then
 				_doit="\
 ${_nice:+nice -n $_nice }\
+${_systrace:+systrace $_systrace }\
 chroot ${_user:+-u $_user }${_group:+-g $_group }${_groups:+-G $_groups }\
 $_chroot $command $rc_flags $command_args"
 			else
 				_doit="\
 ${_chdir:+cd $_chdir; }\
 ${_nice:+nice -n $_nice }\
+${_systrace:+systrace $_systrace }\
 $command $rc_flags $command_args"
 				if [ -n "$_user" ]; then
 				    _doit="su -m $_user -c 'sh -c \"$_doit\"'"
