@@ -3,8 +3,8 @@
 # (3MIN, MAXINE, 3MAXPLUS)                                             #
 ########################################################################
 ioasic0		at	tc?
-clock0	at ioasic? 			# RTC
-asc0	at ioasic?			# system SCSI subslot
-scc0	at ioasic?
-le0	at ioasic?			# tc onboard lance
-scc1	at ioasic?			# Not present on Maxine
+clock0	at ioasic? 	offset ?	# RTC
+asc0	at ioasic?	offset ?	# system SCSI subslot
+scc0	at ioasic?	offset ?
+le0	at ioasic?	offset ?	# tc onboard lance
+scc1	at ioasic?	offset ?	# Not present on Maxine

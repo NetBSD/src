@@ -2,6 +2,6 @@
 # MAXINE-only baseboard devices and on-baseboard "options"             #
 ########################################################################
 xcfb0	at tc?				# TC framebuffer "option"
-dtop0	at ioasic0			# destop bus,  lk501 kbd,  mouse
-#isdn	at ioasic0			# ISDN/audio (not supported)
-#fdc    at ioasic0			# floppy disk (not supported)
+dtop0	at ioasic0	offset ?	# destop bus,  lk501 kbd,  mouse
+#isdn	at ioasic0	offset ?	# ISDN/audio (not supported)
+#fdc    at ioasic0	offset ?	# floppy disk (not supported)

@@ -1,4 +1,4 @@
-#	$NetBSD: files.pmax,v 1.37 1996/12/03 01:18:21 cgd Exp $
+#	$NetBSD: files.pmax,v 1.38 1997/05/15 00:43:22 jonathan Exp $
 # DECstation-specific configuration info
 
 # maxpartitions must be first item in files.${ARCH}.
@@ -42,7 +42,7 @@ file	dev/tc/tc.c			tc		needs-flag
 # The TurboChannel IOCTL ASIC. Present on IOASIC machines,
 # which is all turbochannel machines ever built except the 3MAX (5000/200).
 #
-device ioasic { } 		#{ }	# not really optional
+device ioasic { offset = -1 }		# not really optional
 attach ioasic at tc
 file	arch/pmax/tc/asic.c		ioasic
 
