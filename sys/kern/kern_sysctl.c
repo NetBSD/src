@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_sysctl.c,v 1.52 1999/09/28 14:47:04 bouyer Exp $	*/
+/*	$NetBSD: kern_sysctl.c,v 1.53 1999/11/03 09:12:15 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -521,7 +521,7 @@ proc_sysctl(name, namelen, oldp, oldlenp, newp, newlen, p)
 	size_t newlen;
 	struct proc *p;
 {
-	struct proc *ptmp;
+	struct proc *ptmp=NULL;
 	const struct proclist_desc *pd;
 	int error = 0;
 	struct rlimit alim;
