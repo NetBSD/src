@@ -1,4 +1,4 @@
-/*	$NetBSD: proc.h,v 1.4 1994/10/26 21:09:52 cgd Exp $	*/
+/*	$NetBSD: proc.h,v 1.5 1997/05/25 09:56:52 jonathan Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -51,3 +51,6 @@ struct mdproc {
 
 /* md_flags */
 #define	MDP_FPUSED	0x0001	/* floating point coprocessor used */
+
+/* kernel single-step emulation */
+extern int mips_singlestep __P((struct proc *p));
