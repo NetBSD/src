@@ -1,3 +1,7 @@
+/*
+ *	$Id: kbdmap.h,v 1.5 1994/02/11 07:01:57 chopps Exp $
+ */
+
 #define NUL	0
 #define SOH	1
 #define STX	2

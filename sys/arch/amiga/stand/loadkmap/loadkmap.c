@@ -1,3 +1,7 @@
+/*
+ *	$Id: loadkmap.c,v 1.2 1994/02/11 07:03:07 chopps Exp $
+ */
+
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <sys/ioctl.h>

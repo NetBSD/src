@@ -1,3 +1,5 @@
+#	$Id: ZEUSONLY,v 1.2 1994/02/11 07:00:47 chopps Exp $
+
 machine		"amiga"
 cpu		"M68040"
 ident		ZEUS_SCSI

@@ -34,6 +34,7 @@
  * SUCH DAMAGE.
  *
  *	@(#)siopvar.h	7.1 (Berkeley) 5/8/90
+ *	$Id: siopvar.h,v 1.2 1994/02/11 07:02:20 chopps Exp $
  */
 
 struct siop_ds {			/* Data Structure */

@@ -1,5 +1,7 @@
 /*
  * Driver for custom chips display.
+ *
+ *	$Id: grf_ccreg.h,v 1.5 1994/02/11 07:01:39 chopps Exp $
  */
 
 /* this is a mere collection of data, the registers itself are in the

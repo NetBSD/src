@@ -31,6 +31,7 @@
  * SUCH DAMAGE.
  *
  *	kbd.c
+ *	$Id: kbd.c,v 1.6 1994/02/11 07:01:55 chopps Exp $
  */
 
 #include "ite.h"

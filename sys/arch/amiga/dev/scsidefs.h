@@ -34,6 +34,7 @@
  * SUCH DAMAGE.
  *
  *	@(#)scsidefs.h	7.3 (Berkeley) 2/5/91
+ *	$Id: scsidefs.h,v 1.2 1994/02/11 07:02:10 chopps Exp $
  */
 
 /*

@@ -1,3 +1,7 @@
+/*
+ *	$Id: grf_rt.c,v 1.6 1994/02/11 07:01:41 chopps Exp $
+ */
+
 #include "grf.h"
 #if NGRF > 0
 

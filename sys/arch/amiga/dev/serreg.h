@@ -31,6 +31,7 @@
  * SUCH DAMAGE.
  *
  *	@(#)dcareg.h	7.3 (Berkeley) 5/7/91
+ *	$Id: serreg.h,v 1.5 1994/02/11 07:02:17 chopps Exp $
  */
 
 struct serdevice {

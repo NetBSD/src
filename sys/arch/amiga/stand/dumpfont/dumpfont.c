@@ -1,7 +1,10 @@
 /* This is a *real* hack to dump the topaz80 kernel font. This one is 
    ways nicer than the ugly Mach font, but we'll have to dump it from a
    running system to not run against Commodore copyrights. *NEVER* distribute
-   the generated font with BSD, always regenerate! */
+   the generated font with BSD, always regenerate! 
+ *
+ *	$Id: dumpfont.c,v 1.4 1994/02/11 07:02:55 chopps Exp $
+ */
 
 #include <exec/types.h>
 #include <exec/memory.h>

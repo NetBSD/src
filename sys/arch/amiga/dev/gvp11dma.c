@@ -31,6 +31,7 @@
  * SUCH DAMAGE.
  *
  *	@(#)dma.c
+ *	$Id: gvp11dma.c,v 1.4 1994/02/11 07:01:46 chopps Exp $
  */
 
 /*

@@ -10,7 +10,10 @@
 
    TODO: could add read-write interface to turn this into
          a real /dev/rtclock device, that would allow reading
-	 and setting of the clock very easily. */
+	 and setting of the clock very easily. 
+ *
+ *	$Id: rtclockb.c,v 1.3 1994/02/11 07:02:07 chopps Exp $
+ */
 
 #include "rtclockb.h"
 #if NRTCLOCKB > 0

@@ -34,6 +34,7 @@
  * SUCH DAMAGE.
  *
  *	@(#)scsireg.h	7.3 (Berkeley) 2/5/91
+ *	$Id: scsireg.h,v 1.7 1994/02/11 07:02:11 chopps Exp $
  */
 
 /*

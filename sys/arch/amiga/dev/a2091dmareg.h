@@ -31,6 +31,7 @@
  * SUCH DAMAGE.
  *
  *	@(#)dmareg.h
+ *	$Id: a2091dmareg.h,v 1.3 1994/02/11 07:01:25 chopps Exp $
  */
 
 /* Hardware layout of the A2091 SDMAC. This also contains the

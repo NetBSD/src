@@ -34,6 +34,7 @@
  * SUCH DAMAGE.
  *
  *	@(#)siopreg.h	7.3 (Berkeley) 2/5/91
+ *	$Id: siopreg.h,v 1.3 1994/02/11 07:02:19 chopps Exp $
  */
 
 /*

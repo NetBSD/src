@@ -38,6 +38,7 @@
  * from: Utah $Hdr: grf.c 1.31 91/01/21$
  *
  *	@(#)grf.c	7.8 (Berkeley) 5/7/91
+ *	$Id: grf.c,v 1.7 1994/02/11 07:01:36 chopps Exp $
  */
 
 /*

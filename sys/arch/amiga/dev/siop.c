@@ -34,6 +34,7 @@
  * SUCH DAMAGE.
  *
  *	@(#)siop.c	7.5 (Berkeley) 5/4/91
+ *	$Id: siop.c,v 1.3 1994/02/11 07:02:18 chopps Exp $
  *
  * MULTICONTROLLER support only working for multiple controllers of the 
  * same kind at the moment !! 
@@ -50,7 +51,7 @@
 #if NSIOP > 0
 
 #ifndef lint
-static char rcsid[] = "$Header: /cvsroot/src/sys/arch/amiga/dev/siop.c,v 1.2 1994/02/01 11:52:35 chopps Exp $";
+static char rcsid[] = "$Header: /cvsroot/src/sys/arch/amiga/dev/siop.c,v 1.3 1994/02/11 07:02:18 chopps Exp $";
 #endif
 
 /* need to know if any tapes have been configured */

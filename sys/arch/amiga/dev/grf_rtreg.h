@@ -1,3 +1,7 @@
+/*
+ *	$Id: grf_rtreg.h,v 1.3 1994/02/11 07:01:42 chopps Exp $
+ */
+
 #ifndef _GRF_RTREG_H
 #define _GRF_RTREG_H
 

@@ -31,6 +31,7 @@
  * SUCH DAMAGE.
  *
  *      @(#)gvp11_dmareg.h
+ *	$Id: gvp11dmareg.h,v 1.2 1994/02/11 07:01:47 chopps Exp $
  */
 
 /* Hardware layout of the GVP Series II SDMAC. This also contains the

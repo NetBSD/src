@@ -38,6 +38,7 @@
  * from: Utah $Hdr: vmparam.h 1.16 91/01/18$
  *
  *	@(#)vmparam.h	7.3 (Berkeley) 5/7/91
+ *	$Id: vmparam.h,v 1.5 1994/02/11 07:02:49 chopps Exp $
  */
 
 

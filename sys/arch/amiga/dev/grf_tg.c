@@ -1,3 +1,7 @@
+/*
+ *	$Id: grf_tg.c,v 1.4 1994/02/11 07:01:43 chopps Exp $
+ */
+
 #include "errno.h"
 
 /* to be written.. */

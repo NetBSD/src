@@ -1,3 +1,5 @@
+#	$Id: GODZILLA,v 1.4 1994/02/11 07:00:42 chopps Exp $
+
 machine		"amiga"
 cpu		"M68040"
 ident		GODZILLA
