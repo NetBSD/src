@@ -1,5 +1,3 @@
-/*	$Id: color.h,v 1.2 1993/08/02 17:51:50 mycroft Exp $ */
-
 /* some colors, handy for debugging */
 
 #define COL_BLACK	0x000

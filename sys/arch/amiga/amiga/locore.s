@@ -35,15 +35,6 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
-<<<<<<< locore.s
- *	from: Utah Hdr: locore.s 1.58 91/04/22
- *	from: @(#)locore.s	7.11 (Berkeley) 5/9/91
- *	$Id: locore.s,v 1.3 1993/09/02 18:05:32 mw Exp $
-||||||| 1.1.1.2
- * from: Utah $Hdr: locore.s 1.58 91/04/22$
- *
- *	@(#)locore.s	7.11 (Berkeley) 5/9/91
-=======
  * from: Utah $Hdr: locore.s 1.58 91/04/22$
  *
  *	@(#)locore.s	7.11 (Berkeley) 5/9/91
@@ -51,7 +42,6 @@
  * Original (hp300) Author: unknown, maybe Mike Hibler?
  * Amiga author: Markus Wild
  * Other contributors: Bryan Ford (kernel reload stuff)
->>>>>>> /tmp/T4009466
  */
 
 #include "assym.s"

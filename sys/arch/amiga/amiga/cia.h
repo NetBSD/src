@@ -22,10 +22,7 @@
  *
  * any improvements or extensions that they make and grant Carnegie Mellon
  * the rights to redistribute these changes.
- *
- *	$Id: cia.h,v 1.3 1993/09/02 18:05:27 mw Exp $
  */
-
 /* This is a rewrite (retype) of the Amiga's CIA chip register map, based
    on the Hardware Reference Manual.  It is NOT based on the Amiga's
    hardware/cia.h.  */
