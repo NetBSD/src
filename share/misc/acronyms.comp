@@ -1,4 +1,4 @@
-$NetBSD: acronyms.comp,v 1.42 2004/04/01 04:35:45 simonb Exp $
+$NetBSD: acronyms.comp,v 1.43 2004/04/29 02:29:24 jschauma Exp $
 
 ABI	application binary interface
 ACPI	advanced configuration and power interface
@@ -85,6 +85,7 @@ IETF	internet engineering task force
 IKE	internet key exchange
 IMAP	internet mail access protocol
 INCITS	international committee on information technology standards
+IPC	interprocess communication
 IO	input/output
 IOCTL	input/output control
 IP	internet protocol
