@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.35 1999/05/26 19:16:36 thorpej Exp $	*/
+/*	$NetBSD: pmap.c,v 1.36 1999/05/31 14:39:13 minoura Exp $	*/
 
 /* 
  * Copyright (c) 1991, 1993
@@ -94,6 +94,7 @@
  */
 
 #include "opt_compat_hpux.h"
+#include "opt_pmap_new.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -283,7 +284,11 @@ int	pmap_mapmulti __P((pmap_t, vaddr_t));
  */
 void	pmap_remove_mapping __P((pmap_t, vaddr_t, pt_entry_t *, int));
 boolean_t pmap_testbit	__P((paddr_t, int));
+#if defined(PMAP_NEW)
+boolean_t pmap_changebit	__P((paddr_t, int, int));
+#else
 void	pmap_changebit	__P((paddr_t, int, int));
+#endif
 void	pmap_enter_ptpage	__P((pmap_t, vaddr_t));
 void	pmap_collect1	__P((pmap_t, paddr_t, paddr_t));
 void	pmap_pinit __P((pmap_t));
@@ -717,12 +722,21 @@ pmap_map(va, spa, epa, prot)
  *
  *	Note: no locking is necessary in this function.
  */
+#if defined(PMAP_NEW)
+pmap_t
+pmap_create()
+#else
 pmap_t
 pmap_create(size)
 	vsize_t	size;
+#endif
 {
 	pmap_t pmap;
 
+#if defined(PMAP_NEW)
+	PMAP_DPRINTF(PDB_FOLLOW|PDB_CREATE,
+	    ("pmap_create()\n"));
+#else
 	PMAP_DPRINTF(PDB_FOLLOW|PDB_CREATE,
 	    ("pmap_create(%lx)\n", size));
 
@@ -731,6 +745,7 @@ pmap_create(size)
 	 */
 	if (size)
 		return (NULL);
+#endif
 
 	pmap = pool_get(&pmap_pmap_pool, PR_WAITOK);
 
@@ -987,21 +1002,40 @@ pmap_remove(pmap, sva, eva)
  *	Lower the permission for all mappings to a given page to
  *	the permissions specified.
  */
+#if defined(PMAP_NEW)
+void
+pmap_page_protect(pg, prot)
+	struct vm_page *pg;
+	vm_prot_t prot;
+#else
 void
 pmap_page_protect(pa, prot)
 	paddr_t		pa;
 	vm_prot_t	prot;
+#endif
 {
 	struct pv_entry *pv;
 	int s;
+#if defined(PMAP_NEW)
+	paddr_t pa = VM_PAGE_TO_PHYS(pg);
+#endif
 
 #ifdef DEBUG
+#if defined(PMAP_NEW)
+	if ((pmapdebug & (PDB_FOLLOW|PDB_PROTECT)) ||
+	    (prot == VM_PROT_NONE && (pmapdebug & PDB_REMOVE)))
+		printf("pmap_page_protect(%p, %x)\n", pg, prot);
+
+#else
 	if ((pmapdebug & (PDB_FOLLOW|PDB_PROTECT)) ||
 	    (prot == VM_PROT_NONE && (pmapdebug & PDB_REMOVE)))
 		printf("pmap_page_protect(%lx, %x)\n", pa, prot);
 #endif
+#endif
+#if !defined(PMAP_NEW)
 	if (!PAGE_IS_MANAGED(pa))
 		return;
+#endif
 
 	switch (prot) {
 	case VM_PROT_READ|VM_PROT_WRITE:
@@ -1432,6 +1466,143 @@ validate:
 		pmap_check_wiring("enter", trunc_page(pmap_pte(pmap, va)));
 #endif
 }
+
+#if defined(PMAP_NEW)
+/*
+ * pmap_k* parts for PMAP_NEW is original for x68k.
+ * We support no VAC machines i.e. M68k_MMU_HP. (mi)
+ */
+
+/*
+ * pmap_kenter_pa:		[ INTERFACE ]
+ *
+ *	Enter a va -> pa mapping into the kernel pmap without any
+ *	physical->virtual tracking.
+ *
+ *	Note: no locking is necessary in this function.
+ */
+void
+pmap_kenter_pa(va, pa, prot)
+	vaddr_t va;
+	paddr_t pa;
+	vm_prot_t prot;
+{
+	pmap_t pmap = pmap_kernel();
+	pt_entry_t *pte;
+	int npte;
+
+	PMAP_DPRINTF(PDB_FOLLOW|PDB_ENTER,
+	    ("pmap_kenter_pa(%lx, %lx, %x)\n", va, pa, prot));
+
+#ifdef DIAGNOSTIC
+	/*
+	 * pmap_kenter() should never be used for CADDR1 and CADDR2.
+	 */
+	if (va == (vaddr_t)CADDR1 || va == (vaddr_t)CADDR2)
+		panic("pmap_kenter_pa: used for CADDR1 or CADDR2");
+#endif
+
+	/*
+	 * Segment table entry not valid, we need a new PT page
+	 */
+	if (!pmap_ste_v(pmap, va))
+		pmap_enter_ptpage(pmap, va);
+
+	/*
+	 * Build the new PTE.
+	 */
+	pte = pmap_pte(pmap, va);
+	npte = pa | pte_prot(pmap, prot) | PG_V;
+#if defined(M68040) || defined(M68060)
+#if defined(M68020) || defined(M68030)
+	if (mmutype == MMU_68040 && (npte & PG_PROT) == PG_RW)
+#else
+	if ((npte & PG_PROT) == PG_RW)
+#endif
+#ifdef DEBUG
+		if (dowriteback && dokwriteback)
+#endif
+		npte |= PG_CCB;
+#endif
+
+	*pte = npte;
+	pmap_update();
+}
+
+
+/*
+ * pmap_kenter_pgs:		[ INTERFACE ]
+ *
+ *	Enter a va -> pa mapping for the array of vm_page's into the
+ *	kernel pmap without any physical->virtual tracking, starting
+ *	at address va, for npgs pages.
+ *
+ *	Note: no locking is necessary in this function.
+ */
+void
+pmap_kenter_pgs(va, pgs, npgs)
+	vaddr_t va;
+	vm_page_t *pgs;
+	int npgs;
+{
+	int i;
+
+	PMAP_DPRINTF(PDB_FOLLOW|PDB_ENTER,
+	    ("pmap_kenter_pgs(%lx, %p, %d)\n", va, pgs, npgs));
+
+	for (i = 0; i < npgs; i++)
+		pmap_kenter_pa(va + (NBPG * i),
+		    VM_PAGE_TO_PHYS(pgs[i]),
+		    VM_PROT_READ|VM_PROT_WRITE);
+}
+
+/*
+ * pmap_kremove:		[ INTERFACE ]
+ *
+ *	Remove a mapping entered with pmap_kenter_pa() or pmap_kenter_pgs()
+ *	starting at va, for size bytes (assumed to be page rounded).
+ *
+ */
+void
+pmap_kremove(sva, size)
+	vaddr_t sva;
+	vsize_t size;
+{
+	pmap_t pmap = pmap_kernel();
+	vaddr_t nssva;
+	pt_entry_t *pte;
+	vaddr_t eva;
+
+	PMAP_DPRINTF(PDB_FOLLOW|PDB_REMOVE|PDB_PROTECT,
+	    ("pmap_kremove(%lx, %lx)\n", sva, size));
+
+	while (sva < eva) {
+		nssva = x68k_trunc_seg(sva) + X68K_SEG_SIZE;
+		if (nssva == 0 || nssva > eva)
+			nssva = eva;
+
+		/*
+		 * Invalidate every valid mapping within this segment.
+		 */
+		pte = pmap_pte(pmap, sva);
+		while (sva < nssva) {
+			if (!pmap_pte_v(pte)) {
+				printf ("pmap_kremove: attempt to remove invalid mapping.\n");
+				continue;
+			}
+			if (pmap_pte_w(pte)) {
+				printf ("pmap_kremove: attempt to remove wired mapping.\n");
+				pmap->pm_stats.wired_count--;
+			}
+			pmap->pm_stats.resident_count--;
+			*pte = PG_NV;
+			TBIS(sva);
+			pte++;
+			sva += NBPG;
+		}
+	}
+}
+#endif /* PMAP_NEW */
 
 /*
  * pmap_change_wiring:		[ INTERFACE ]
@@ -1913,14 +2084,27 @@ pmap_pageable(pmap, sva, eva, pageable)
  *
  *	Clear the modify bits on the specified physical page.
  */
+#if defined(PMAP_NEW)
+int
+pmap_clear_modify(pg)
+	struct vm_page *pg;
+#else
 void
 pmap_clear_modify(pa)
 	paddr_t	pa;
+#endif
 {
+#if defined(PMAP_NEW)
+	paddr_t pa = VM_PAGE_TO_PHYS(pg);
 
+	PMAP_DPRINTF(PDB_FOLLOW, ("pmap_clear_modify(%p)\n", pg));
+
+	return pmap_changebit(pa, 0, ~PG_M);
+#else
 	PMAP_DPRINTF(PDB_FOLLOW, ("pmap_clear_modify(%lx)\n", pa));
 
 	pmap_changebit(pa, 0, ~PG_M);
+#endif
 }
 
 /*
@@ -1928,14 +2112,27 @@ pmap_clear_modify(pa)
  *
  *	Clear the reference bit on the specified physical page.
  */
+#if defined(PMAP_NEW)
+int
+pmap_clear_reference(pg)
+	struct vm_page *pg;
+#else
 void
 pmap_clear_reference(pa)
 	paddr_t	pa;
+#endif
 {
+#if defined(PMAP_NEW)
+	paddr_t pa = VM_PAGE_TO_PHYS(pg);
 
+	PMAP_DPRINTF(PDB_FOLLOW, ("pmap_clear_reference(%p)\n", pg));
+
+	return pmap_changebit(pa, 0, ~PG_U);
+#else
 	PMAP_DPRINTF(PDB_FOLLOW, ("pmap_clear_reference(%lx)\n", pa));
 
 	pmap_changebit(pa, 0, ~PG_U);
+#endif
 }
 
 /*
@@ -1944,10 +2141,27 @@ pmap_clear_reference(pa)
  *	Return whether or not the specified physical page is referenced
  *	by any physical maps.
  */
+#if defined(PMAP_NEW)
+boolean_t
+pmap_is_referenced(pg)
+	struct vm_page *pg;
+#else
 boolean_t
 pmap_is_referenced(pa)
 	paddr_t	pa;
+#endif
 {
+#if defined(PMAP_NEW)
+	paddr_t pa = VM_PAGE_TO_PHYS(pg);
+
+#ifdef DEBUG
+	if (pmapdebug & PDB_FOLLOW) {
+		boolean_t rv = pmap_testbit(pa, PG_U);
+		printf("pmap_is_referenced(%p) -> %c\n", pg, "FT"[rv]);
+		return(rv);
+	}
+#endif
+#else
 #ifdef DEBUG
 	if (pmapdebug & PDB_FOLLOW) {
 		boolean_t rv = pmap_testbit(pa, PG_U);
@@ -1955,6 +2169,8 @@ pmap_is_referenced(pa)
 		return(rv);
 	}
 #endif
+#endif
+
 	return(pmap_testbit(pa, PG_U));
 }
 
@@ -1964,16 +2180,34 @@ pmap_is_referenced(pa)
  *	Return whether or not the specified physical page is modified
  *	by any physical maps.
  */
+#if defined(PMAP_NEW)
+boolean_t
+pmap_is_modified(pg)
+	struct vm_page *pg;
+#else
 boolean_t
 pmap_is_modified(pa)
 	paddr_t	pa;
+#endif
 {
+#if defined(PMAP_NEW)
+	paddr_t pa = VM_PAGE_TO_PHYS(pg);
+
+#ifdef DEBUG
+	if (pmapdebug & PDB_FOLLOW) {
+		boolean_t rv = pmap_testbit(pa, PG_M);
+		printf("pmap_is_modified(%p) -> %c\n", pg, "FT"[rv]);
+		return(rv);
+	}
+#endif
+#else
 #ifdef DEBUG
 	if (pmapdebug & PDB_FOLLOW) {
 		boolean_t rv = pmap_testbit(pa, PG_M);
 		printf("pmap_is_modified(%lx) -> %c\n", pa, "FT"[rv]);
 		return(rv);
 	}
+#endif
 #endif
 	return(pmap_testbit(pa, PG_M));
 }
@@ -2209,13 +2443,10 @@ pmap_remove_mapping(pmap, va, pte, flags)
 #ifdef DEBUG
 			ste -= NPTEPG/SG4_LEV3SIZE;
 #endif
-		}
-#if defined(M68020) || defined(M68030)
-		else
-#endif
+		} else
 #endif
 #if defined(M68020) || defined(M68030)
-			*ste = SG_NV;
+		*ste = SG_NV;
 #endif
 		/*
 		 * If it was a user PT page, we decrement the
@@ -2338,10 +2569,17 @@ pmap_testbit(pa, bit)
  *	for a physical page.
  */
 /* static */
+#if defined(PMAP_NEW)
+boolean_t			/* return whether the PTE is modified */
+pmap_changebit(pa, set, mask)
+	paddr_t pa;
+	int set, mask;
+#else
 void
 pmap_changebit(pa, set, mask)
 	paddr_t pa;
 	int set, mask;
+#endif
 {
 	struct pv_entry *pv;
 	pt_entry_t *pte, npte;
@@ -2350,12 +2588,15 @@ pmap_changebit(pa, set, mask)
 #if defined(M68K_MMU_HP) || defined(M68040) || defined(M68060)
 	boolean_t firstpage = TRUE;
 #endif
+#if defined(PMAP_NEW)
+	int r = FALSE;
+#endif
 
 	PMAP_DPRINTF(PDB_BITS,
 	    ("pmap_changebit(%lx, %x, %x)\n", pa, set, mask));
 
 	if (!PAGE_IS_MANAGED(pa))
-		return;
+		return (r);
 
 	pv = pa_to_pvh(pa);
 	s = splimp();
@@ -2400,6 +2641,9 @@ pmap_changebit(pa, set, mask)
 #endif
 			npte = (*pte | set) & mask;
 			if (*pte != npte) {
+#if defined(PMAP_NEW)
+				r = TRUE;
+#endif
 #if defined(M68040) || defined(M68060)
 				/*
 				 * If we are changing caching status or
@@ -2425,6 +2669,9 @@ pmap_changebit(pa, set, mask)
 		}
 	}
 	splx(s);
+#if defined(PMAP_NEW)
+	return(r);
+#endif
 }
 
 /*
@@ -2460,9 +2707,8 @@ pmap_enter_ptpage(pmap, va)
 			pmap_extract(pmap_kernel(), (vaddr_t)pmap->pm_stab);
 #if defined(M68040) || defined(M68060)
 #if defined(M68020) || defined(M68030)
-		if (mmutype == MMU_68040)
+		if (mmutype == MMU_68040) {
 #endif
-		{
 #ifdef DEBUG
 			if (dowriteback && dokwriteback)
 #endif
