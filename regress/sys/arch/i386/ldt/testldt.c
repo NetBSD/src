@@ -1,4 +1,4 @@
-/*	$NetBSD: testldt.c,v 1.10 2003/08/11 13:30:16 drochner Exp $	*/
+/*	$NetBSD: testldt.c,v 1.11 2003/08/11 17:19:51 drochner Exp $	*/
 
 /*-
  * Copyright (c) 1993 The NetBSD Foundation, Inc.
@@ -269,8 +269,8 @@ main(int argc, char *argv[])
 	*data = 0x97;
 
 	/* Get the next free LDT and set it to the allocated data. */
-	sd = make_sd(data, 4096, SDT_MEMRW, SEL_UPL, 0, 0);
-	if ((num = i386_set_ldt(6, sd, 1)) < 0)
+	sd = make_sd(data, 2048, SDT_MEMRW, SEL_UPL, 0, 0);
+	if ((num = i386_set_ldt(1024, sd, 1)) < 0)
 		err(1, "set_ldt");
 
 	if (verbose) printf("setldt returned: %d\n", num);
@@ -296,7 +296,7 @@ main(int argc, char *argv[])
 	fflush(stdout);
 	
 	gd = make_gd((void *)gated_call, cs, 0, SDT_SYS386CGT, SEL_UPL);
-	if ((num = i386_set_ldt(5, gd, 1)) < 0)
+	if ((num = i386_set_ldt(4095, gd, 1)) < 0)
 		err(1, "set_ldt: call gate");
 
 	if (verbose) {
@@ -318,7 +318,7 @@ main(int argc, char *argv[])
 	 * Long call to call gate.
 	 * Only the selector matters; offset is irrelevant.
 	 */
-	__asm__ __volatile__("lcall $0x2f,$0x0");
+	__asm__ __volatile__("lcall $0x7fff,$0x0");
 
 	printf("Gated call returned\n");
 
@@ -335,7 +335,7 @@ main(int argc, char *argv[])
 	sd[0] = *make_sd(&one, 1, SDT_MEMRO, SEL_UPL, 1, 0);
 	sd[1] = *make_sd(&two, 1, SDT_MEMRO, SEL_UPL, 1, 0);
 
-	if ((num = i386_set_ldt(6, (union descriptor *)sd, 2)) < 0)
+	if ((num = i386_set_ldt(8000, (union descriptor *)sd, 2)) < 0)
 		err(1, "set_ldt");
 
 	if (verbose) printf("setldt returned: %d\n", num);
