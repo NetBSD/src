@@ -32,7 +32,7 @@
 */
 /*
  *	from: @(#)genassym.c	7.8 (Berkeley) 5/7/91
- *	$Id: genassym.c,v 1.5 1994/04/18 02:58:39 briggs Exp $
+ *	$Id: genassym.c,v 1.6 1994/04/21 23:22:16 briggs Exp $
  */
 
 #include "sys/param.h"
@@ -128,28 +128,9 @@ main()
 	printf("#define\tSPL5 %d\n", PSL_S | PSL_IPL5);
 	printf("#define\tSPL6 %d\n", PSL_S | PSL_IPL6);
 	printf("#define\tFC_USERD %d\n", FC_USERD);
-#ifdef NOT_USED_SO_SHOOT_YOUR_DOG
-	printf("#define\tFC_PURGE %d\n", FC_PURGE);
-	printf("#define\tMAXADDR %d\n", MAXADDR);
-#endif // NOT_USED_SO_SHOOT_YOUR_DOG
+	printf("#define\tFC_SUPERD %d\n", FC_SUPERD);
 	printf("#define\tIIOMAPSIZE %d\n", IIOMAPSIZE);
 	printf("#define\tNBMAPSIZE %d\n", NBMAPSIZE);
-#ifdef NOT_USED_SO_SHOOT_YOUR_DOG
-	printf("#define\tPAEQUVA %d\n", PAEQUVA);
-	printf("#define\tINTIOBASE %d\n", INTIOBASE);
-	printf("#define\tMMUBASE %d\n", MMUBASE);
-	printf("#define\tMMUSTAT %d\n", MMUSTAT);
-	printf("#define\tMMUCMD %d\n", MMUCMD);
-	printf("#define\tMMUSSTP %d\n", MMUSSTP);
-	printf("#define\tMMUUSTP %d\n", MMUUSTP);
-	printf("#define\tMMUTBINVAL %d\n", MMUTBINVAL);
-	printf("#define\tMMU_BERR %d\n", MMU_BERR);
-	printf("#define\tMMU_ENAB %d\n", MMU_ENAB);
-	printf("#define\tMMU_FAULT %d\n", MMU_FAULT);
-	printf("#define\tMMU_CEN %d\n", MMU_CEN);
-	printf("#define\tMMU_IEN %d\n", MMU_IEN);
-	printf("#define\tMMU_FPE %d\n", MMU_FPE);
-#endif // NOT_USED_SO_SHOOT_YOUR_DOG
 	printf("#define\tCACHE_ON %d\n", CACHE_ON);
 	printf("#define\tCACHE_OFF %d\n", CACHE_OFF);
 	printf("#define\tCACHE_CLR %d\n", CACHE_CLR);
@@ -202,5 +183,8 @@ main()
 	printf("#define\tPCB_TRCB %d\n", 5);
 	printf("#define\tINTIOBASE %d\n", INTIOBASE);
 	printf("#define\tNBBASE %d\n", NBBASE);
+	printf("#define\tCACHE40_ON %d\n", CACHE40_ON);
+	printf("#define\tCACHE40_OFF %d\n", CACHE40_OFF);
+	printf("#define\tSG_040ISHIFT %d\n", SG_040ISHIFT);
 	exit(0);
 }
