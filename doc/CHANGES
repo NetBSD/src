@@ -1,4 +1,4 @@
-LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.81 $>
+LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.82 $>
 
 
 [Note: This file does not mention every change made to the NetBSD source tree.
@@ -249,3 +249,7 @@ Changes from NetBSD 1.6 to NetBSD 2.0:
 	tar(1): removed GNU tar (replaced by pax frontend) [wiz 20030118]
 	semaphores: Added p1003.1b semaphores from freebsd [christos 20030120]
 	cvs(1): upgraded to 1.11.5 [wiz 20030121]
+	progress(1): New standalone progress bar program factored out
+		from ftp(1) [jhawk 20030122]
+	sysinst: Leverage progress(1) for reasonable-looking file extraction
+		displays. [jhawk 20030122]
