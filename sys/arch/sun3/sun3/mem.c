@@ -46,8 +46,8 @@
  * Memory special file
  */
 
-#include "param.h"
-#include "conf.h"
+#include <sys/param.h>
+#include <sys/conf.h>
 /*
  * Copyright (c) 1988 University of Utah.
  * Copyright (c) 1982, 1986, 1990 The Regents of the University of California.
@@ -94,18 +94,18 @@
 /*
  * Memory special file
  */
-#include "buf.h"
-#include "systm.h"
-#include "malloc.h"
+#include <sys/buf.h>
+#include <sys/systm.h>
+#include <sys/malloc.h>
 
-#include "vm/vm.h"
-#include "vm/vm_param.h"
-#include "vm/lock.h"
-#include "vm/vm_statistics.h"
-#include "vm/pmap.h"
-#include "vm/vm_prot.h"
+#include <vm/vm.h>
+#include <vm/vm_param.h>
+#include <vm/lock.h>
+#include <vm/vm_statistics.h>
+#include <vm/pmap.h>
+#include <vm/vm_prot.h>
 
-#include "machine/cpu.h"
+#include <machine/cpu.h>
 
 extern caddr_t vmmap;
 

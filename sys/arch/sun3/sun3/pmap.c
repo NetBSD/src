@@ -28,26 +28,26 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * $Header: /cvsroot/src/sys/arch/sun3/sun3/pmap.c,v 1.18 1994/02/23 08:29:48 glass Exp $
+ * $Header: /cvsroot/src/sys/arch/sun3/sun3/pmap.c,v 1.19 1994/03/01 08:23:13 glass Exp $
  */
-#include "systm.h"
-#include "param.h"
-#include "proc.h"
-#include "malloc.h"
-#include "user.h"
+#include <sys/systm.h>
+#include <sys/param.h>
+#include <sys/proc.h>
+#include <sys/malloc.h>
+#include <sys/user.h>
 
-#include "vm/vm.h"
-#include "vm/vm_kern.h"
-#include "vm/vm_page.h"
-#include "vm/vm_statistics.h"
+#include <vm/vm.h>
+#include <vm/vm_kern.h>
+#include <vm/vm_page.h>
+#include <vm/vm_statistics.h>
 
-#include "machine/pte.h"
-#include "machine/control.h"
+#include <machine/pte.h>
+#include <machine/control.h>
     
-#include "machine/cpu.h"
-#include "machine/mon.h"
-#include "machine/vmparam.h"
-#include "machine/pmap.h"
+#include <machine/cpu.h>
+#include <machine/mon.h>
+#include <machine/vmparam.h>
+#include <machine/pmap.h>
 
 /*
  * globals needed by the vm system
@@ -355,14 +355,13 @@ void context_allocate(pmap)
     if (queue_empty(&context_free_queue)) { /* steal one from active*/
 	if (queue_empty(&context_active_queue))
 	    panic("pmap: no contexts to be found");
-	dequeue_first(context, context_t, &context_active_queue);
-	context_free(context->context_upmap);
+	context_free(((context_t) queue_first(&context_active_queue))->context_upmap);
 #ifdef CONTEXT_DEBUG    
     printf("context_allocate: pmap %x, stealing context %x num %d\n",
 	   pmap, context, context->context_num);
 #endif
-    } else 
-	dequeue_first(context, context_t, &context_free_queue);	
+    }
+    dequeue_first(context, context_t, &context_free_queue);
     enqueue_tail(&context_active_queue,context);
     if (context->context_upmap != NULL)
 	panic("pmap: context in use???");
@@ -401,7 +400,8 @@ void context_free(pmap)		/* :) */
     }
     set_context(saved_context);
     context->context_upmap = NULL;
-    enqueue_tail(&context_free_queue, context);
+    remqueue(&context_active_queue, context);
+    enqueue_tail(&context_free_queue, context);	/* active? XXX */
     pmap->pm_context = NULL;
 #ifdef CONTEXT_DEBUG
     printf("context_free: pmap %x context removed\n", pmap);
@@ -616,6 +616,27 @@ void pmeg_init()
     }
 }
 
+void pv_print(pa)
+{
+    pv_entry_t head;
+
+    printf("pv_list for pa %x\n", pa);
+
+    if (!pv_initialized) return;
+    head = pa_to_pvp(pa);
+    if (!head->pv_pmap) {
+	printf("empty pv_list\n");
+	return;
+    }
+    for (; head != NULL; head = head->pv_next) {
+	printf("pv_entry %x pmap %x va %x flags %x next %x\n",
+	       head, head->pv_pmap,
+	       head->pv_va,
+	       head->pv_flags,
+	       head->pv_next);
+    }
+}
+
 unsigned char pv_compute_cache(head)
      pv_entry_t head;
 {
@@ -670,11 +691,18 @@ void pv_remove_all(pa)
 {
     pv_entry_t npv,head,last;
 
+#ifdef PMAP_DEBUG
+    printf("pv_remove_all(%x)\n", pa);    
+#endif    
     if (!pv_initialized) return;
     head = pa_to_pvp(pa);
     for (npv = head ; npv != NULL; last= npv, npv = npv->pv_next ) {
 	if (npv->pv_pmap == NULL) continue; /* empty */
-	pmap_remove_range(npv->pv_pmap, npv->pv_va, npv->pv_va+NBPG);
+#ifdef PMAP_DEBUG
+	printf("pv_remove_all: removing pmap %x, va %x mapping\n",
+	       npv->pv_pmap, npv->pv_va);
+#endif
+	pmap_remove(npv->pv_pmap, npv->pv_va, npv->pv_va+NBPG);
     }
 }
 
@@ -687,10 +715,13 @@ unsigned char pv_link(pmap, pa, va, flags)
     pv_entry_t last,pv,head,npv;
     int s;
 
+#ifdef PMAP_DEBUG
+    printf("pv_link(%x, %x, %x, %x)\n", pmap, pa, va, flags);
+    pv_print(pa);
+#endif
     if (!pv_initialized) return 0;
     head = pv = pa_to_pvp(pa);
     PMAP_LOCK();
-
     if (pv->pv_pmap == NULL) {	/* not currently "managed" */
  	pv->pv_va = va;
 	pv->pv_pmap = pmap,
@@ -772,10 +803,13 @@ void pv_unlink(pmap, pa, va)
     unsigned char saved_flags,nflags;
 
     if (!pv_initialized) return;
+#ifdef PMAP_DEBUG
+    printf("pv_unlink(%x, %x, %x)\n", pmap, pa, va);
+#endif
     pv_list = pa_to_pvp(pa);
     if (pv_list->pv_pmap == NULL) {
 #ifdef PMAP_DEBUG
-	printf("pv_unlinking too many times\n");
+	panic("pv_unlinking too many times");
 #endif
 	return;
     }
@@ -818,7 +852,7 @@ void pv_unlink(pmap, pa, va)
 	return;
     }
 #ifdef PMAP_DEBUG
-    printf("pv_unlink: couldn't find entry");
+    panic("pv_unlink: couldn't find entry");
 #endif
 }
 void pv_init()
@@ -1709,7 +1743,7 @@ void pmap_protect_range_mmu(pmap, sva, eva,pte_proto)
     if (sme == SEGINV) {
 	if (pmap == kernel_pmap) return;
 	pmegp = pmeg_cache(pmap, VA_SEGNUM(sva), PM_UPDATE_CACHE);
-	if (!pmegp) return;
+	if (!pmegp) goto out;
 	set_segmap(sva, pmegp->pmeg_index);
     }
     else
@@ -1722,7 +1756,8 @@ void pmap_protect_range_mmu(pmap, sva, eva,pte_proto)
 	if (pte & PG_VALID) {
 	    if (pv_initialized)
 		save_modified_bits(pte);
-	    pte_proto |= (PG_MOD|PG_SYSTEM|PG_TYPE|PG_ACCESS|PG_FRAME) & pte;
+	    pte_proto = (pte_proto & (PG_VALID|PG_WRITE)) |
+		((PG_MOD|PG_SYSTEM|PG_TYPE|PG_ACCESS|PG_FRAME) & pte);
 	    nflags = pv_link(pmap, PG_PA(pte), va, PG_TO_PV_FLAGS(pte_proto));
 	    if (nflags & PV_NC)
 		set_pte(va, pte_proto | PG_NC);
@@ -1731,6 +1766,7 @@ void pmap_protect_range_mmu(pmap, sva, eva,pte_proto)
 	}
 	va+= NBPG;
     }
+ out:
     set_context(saved_context);
 }
 				/* within one pmeg */

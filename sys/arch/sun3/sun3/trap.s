@@ -120,9 +120,13 @@ Lbe10:
 sun3_mmu_specific:
 	clrl d0				| make sure top bits are cleard too
 	movl d1, sp@-			| save d1
+	movl d2, sp@-			| save d2
+	movc sfc, d2			| save sfc to d2
 	moveq #FC_CONTROL, d1		| need to set source to control space
 	movc d1, sfc			| control space source established
 	movsb BUSERR_REG, d0		| get value of bus error register
+	movc d2, sfc			| stop using control space (potential)
+	movl sp@+, d2			| restore d2
 	movl sp@+, d1			| restore d1
 	btst #5, d0 			| test to timeout bit
 	jne Lisberr			| if bus error, do it

@@ -28,15 +28,15 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * $Header: /cvsroot/src/sys/arch/sun3/sun3/Attic/isr.c,v 1.5 1994/02/23 08:29:40 glass Exp $
+ * $Header: /cvsroot/src/sys/arch/sun3/sun3/Attic/isr.c,v 1.6 1994/03/01 08:23:08 glass Exp $
  */
 
-#include "param.h"
-#include "systm.h"
-#include "malloc.h"
+#include <sys/param.h>
+#include <sys/systm.h>
+#include <sys/malloc.h>
 
-#include "net/netisr.h"
-#include "machine/isr.h"
+#include <net/netisr.h>
+#include <machine/isr.h>
 
 #include "vector.h"
 #include "interreg.h"
