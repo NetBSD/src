@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_var.h,v 1.48 1998/05/06 01:24:38 thorpej Exp $	*/
+/*	$NetBSD: tcp_var.h,v 1.49 1998/05/07 01:37:27 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -217,7 +217,8 @@ struct tcp_opt_info {
  * Data for the TCP compressed state engine.
  */
 struct syn_cache {
-	struct syn_cache *sc_next;
+	TAILQ_ENTRY(syn_cache) sc_queue;
+	u_int sc_timer;
 	u_int32_t sc_hash;
 	struct in_addr sc_src;
 	struct in_addr sc_dst;
@@ -233,17 +234,14 @@ struct syn_cache {
 	u_int16_t sc_dport;
 	u_int16_t sc_peermaxseg;
 	u_int16_t sc_ourmaxseg;
-	u_int8_t sc_timer;
 	u_int8_t sc_request_r_scale	: 4,
 		 sc_requested_s_scale	: 4;
 };
 
 struct syn_cache_head {
-	struct syn_cache *sch_first;		/* First entry in the bucket */
-	struct syn_cache *sch_last;		/* Last entry in the bucket */
-	struct syn_cache_head *sch_headq;	/* The next non-empty bucket */
-	int16_t sch_timer_sum;			/* Total time in this bucket */
-	u_int16_t sch_length;			/* @ # elements in bucket */
+	TAILQ_HEAD(, syn_cache) sch_queue;	/* time-sorted entries */
+	LIST_ENTRY(syn_cache_head) sch_headq;	/* non-empty buckets */
+	u_short sch_length;			/* # entries in bucket */
 };
 
 #define	intotcpcb(ip)	((struct tcpcb *)(ip)->inp_ppcb)
@@ -427,7 +425,7 @@ extern	int tcp_syn_cache_interval; /* compressed state timer */
 
 extern	int tcp_syn_cache_size;
 extern	int tcp_syn_cache_timeo;
-extern	struct syn_cache_head tcp_syn_cache[], *tcp_syn_cache_first;
+extern	struct syn_cache_head tcp_syn_cache[];
 extern	u_long syn_cache_count;
 
 #define	TCPCTL_VARIABLES { \
@@ -502,15 +500,14 @@ int	 syn_cache_add __P((struct socket *, struct mbuf *, u_char *,
 void	 syn_cache_unreach __P((struct ip *, struct tcphdr *));
 struct socket *
 	 syn_cache_get __P((struct socket *so, struct mbuf *));
-void	 syn_cache_insert __P((struct syn_cache *, struct syn_cache ***,
-	    struct syn_cache_head **));
+void	 syn_cache_init __P((void));
+void	 syn_cache_insert __P((struct syn_cache *));
 struct syn_cache *
-	 syn_cache_lookup __P((struct tcpiphdr *, struct syn_cache ***,
-	    struct syn_cache_head **));
+	 syn_cache_lookup __P((struct tcpiphdr *, struct syn_cache_head **));
 void	 syn_cache_reset __P((struct tcpiphdr *));
 int	 syn_cache_respond __P((struct syn_cache *, struct mbuf *,
 	    register struct tcpiphdr *, long, u_long));
-void	 syn_cache_timer __P((int));
+void	 syn_cache_timer __P((void));
 
 #endif
 
