@@ -1,4 +1,4 @@
-#	$NetBSD: SMALL,v 1.12.2.6 1999/02/13 17:58:42 minoura Exp $
+#	$NetBSD: SMALL,v 1.12.2.7 1999/03/14 08:12:17 minoura Exp $
 
 #
 #	SMALL -- works with a small memory, e.g. 4MB
@@ -197,11 +197,11 @@ fdc0	at intio0 addr 0xe94000 intr 96 dma 0 dmaintr 100 # floppy controler
 fd*	at fdc0 unit ?			# builtin floppy drives
 
 ## SCSI devices
-spc0	at intio0 addr 0xe96020 intr 108	# genuin SCSI
-spc1	at intio0 addr 0xea0000 intr 246	# genuin SCSI
+scsirom0 at intio0				# SCSI BIOS
+scsirom1 at intio0				# SCSI BIOS
+spc*	at scsirom?				# genuin SCSI
 scsibus* at spc?
-#!mha0	at intio0 addr 0xea0000 intr 246	# Mankai MK-HA1 (Mach-2)
-mha0	at mainbus0				#! MK-HA1 mach-2 SCSI
+mha0	at scsirom?				# Mankai MK-HA1 (Mach-2)
 scsibus* at mha0
 
 sd*	at scsibus? target ? lun ?	# SCSI disks

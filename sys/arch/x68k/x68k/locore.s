@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.37.4.6 1999/03/12 15:13:38 minoura Exp $	*/
+/*	$NetBSD: locore.s,v 1.37.4.7 1999/03/14 08:12:20 minoura Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -47,7 +47,6 @@
 #include "opt_uvm.h"
 
 #include "ite.h"
-#include "mha.h"
 #include "fd.h"
 #include "par.h"
 #include "assym.h"
@@ -554,27 +553,6 @@ _audioerrtrap:
 	INTERRUPT_RESTOREREG
 #endif
 	addql	#1,_C_LABEL(intrcnt)+32
-#if defined(UVM)
-	addql	#1,_C_LABEL(uvmexp)+UVMEXP_INTRS
-#else
-	addql	#1,_C_LABEL(cnt)+V_INTR
-#endif
-	jra	rei
-
-_exspctrap:
-	INTERRUPT_SAVEREG
-#if NMHA > 0
-	movel	#0,sp@-
-	jbsr	_mhaintr		| handle interrupt
-	addql	#4,sp
-#endif
-#if 0				/* XXX: NSPC > 1 */
-	movel	#1,sp@-
-	jbsr	_spcintr		| handle interrupt
-	addql	#4,sp
-#endif
-	INTERRUPT_RESTOREREG
-	addql	#1,_C_LABEL(intrcnt)+40
 #if defined(UVM)
 	addql	#1,_C_LABEL(uvmexp)+UVMEXP_INTRS
 #else

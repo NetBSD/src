@@ -1,4 +1,4 @@
-/*	$NetBSD: mhavar.h,v 1.2 1998/11/19 21:50:30 thorpej Exp $	*/
+/*	$NetBSD: mhavar.h,v 1.2.4.1 1999/03/14 08:12:19 minoura Exp $	*/
 
 /*
  * Copyright (c) 1994 Peter Galbavy.  All rights reserved.
@@ -86,7 +86,7 @@ struct spc_tinfo {
 
 struct mha_softc {
 	struct device sc_dev;			/* us as a device */
-	volatile struct mb86601 *sc_iobase;
+	volatile void *sc_iobase;
 	volatile u_char	*sc_pc;
 	volatile u_short *sc_ps;
 	volatile u_char *sc_pcx;

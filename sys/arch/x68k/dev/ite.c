@@ -1,4 +1,4 @@
-/*	$NetBSD: ite.c,v 1.13.6.1 1998/12/23 16:47:29 minoura Exp $	*/
+/*	$NetBSD: ite.c,v 1.13.6.2 1999/03/14 08:12:18 minoura Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -2542,12 +2542,22 @@ itecnputc(dev, c)
 	static int paniced = 0;
 	struct ite_softc *ip = getitesp(dev);
 	char ch = c;
+#ifdef ITE_KERNEL_ATTR
+	short save_attribute;
+#endif
 	
 	if (panicstr && !paniced &&
 	    (ip->flags & (ITE_ACTIVE|ITE_INGRF)) != ITE_ACTIVE) {
 		(void) iteon(dev, 3);
 		paniced = 1;
 	}
+#ifdef ITE_KERNEL_ATTR
+	save_attribute = ip->attribute;
+	ip->attribute = ITE_KERNEL_ATTR;
+#endif
 	ite_putstr(&ch, 1, dev);
+#ifdef ITE_KERNEL_ATTR
+	ip->attribute = save_attribute;
+#endif
 }
 #endif
