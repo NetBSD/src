@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_glue.c,v 1.45 1995/04/10 16:53:51 mycroft Exp $	*/
+/*	$NetBSD: vm_glue.c,v 1.46 1995/05/05 03:35:39 cgd Exp $	*/
 
 /* 
  * Copyright (c) 1991, 1993
@@ -490,49 +490,24 @@ swapout(p)
 		       p->p_pid, p->p_comm, p->p_addr, p->p_stat,
 		       p->p_slptime, cnt.v_free_count);
 #endif
-	size = round_page(USPACE);
+
+	/*
+	 * Do any machine-specific actions necessary before swapout.
+	 * This can include saving floating point state, etc.
+	 */
+	cpu_swapout(p);
+
+	/*
+	 * Unwire the to-be-swapped process's user struct and kernel stack.
+	 */
 	addr = (vm_offset_t) p->p_addr;
-#ifdef notyet	/* XXX GC -- enable swapping! */
-#ifdef m68k
-	/*
-	 * Ugh!  u-area is double mapped to a fixed address behind the
-	 * back of the VM system and accesses are usually through that
-	 * address rather than the per-process address.  Hence reference
-	 * and modify information are recorded at the fixed address and
-	 * lost at context switch time.  We assume the u-struct and
-	 * kernel stack are always accessed/modified and force it to be so.
-	 */
-	{
-		register int i;
-		volatile long tmp;
-
-		for (i = 0; i < UPAGES; i++) {
-			tmp = *(long *)addr; *(long *)addr = tmp;
-			addr += NBPG;
-		}
-		addr = (vm_offset_t) p->p_addr;
-	}
-#endif
-#ifdef mips
-	/*
-	 * Be sure to save the floating point coprocessor state before
-	 * paging out the u-struct.
-	 */
-	{
-		extern struct proc *machFPCurProcPtr;
-
-		if (p == machFPCurProcPtr) {
-			MachSaveCurFPState(p);
-			machFPCurProcPtr = (struct proc *)0;
-		}
-	}
-#endif
-/* temporary measure till we find spontaneous unwire of kstack */
-#if !defined(i386) && !defined(pc532)
+	size = round_page(USPACE);
 	vm_map_pageable(kernel_map, addr, addr+size, TRUE);
 	pmap_collect(vm_map_pmap(&p->p_vmspace->vm_map));
-#endif
-#endif
+
+	/*
+	 * Mark it as (potentially) swapped out.
+	 */
 	(void) splhigh();
 	p->p_flag &= ~P_INMEM;
 	if (p->p_stat == SRUN)
