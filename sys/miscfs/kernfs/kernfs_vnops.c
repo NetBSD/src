@@ -1,4 +1,4 @@
-/*	$NetBSD: kernfs_vnops.c,v 1.60 1998/08/09 20:51:08 perry Exp $	*/
+/*	$NetBSD: kernfs_vnops.c,v 1.61 1998/08/10 08:11:12 matthias Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -117,7 +117,7 @@ int	kernfs_getattr	__P((void *));
 int	kernfs_setattr	__P((void *));
 int	kernfs_read	__P((void *));
 int	kernfs_write	__P((void *));
-#define	kernfs_ioctl	genfs_eopnotsupp
+#define	kernfs_ioctl	genfs_enoioctl
 #define	kernfs_poll	genfs_poll
 #define kernfs_revoke	genfs_revoke
 #define	kernfs_mmap	genfs_eopnotsupp

@@ -1,4 +1,4 @@
-/*	$NetBSD: cd9660_vnops.c,v 1.49 1998/08/09 20:42:55 perry Exp $	*/
+/*	$NetBSD: cd9660_vnops.c,v 1.50 1998/08/10 08:11:11 matthias Exp $	*/
 
 /*-
  * Copyright (c) 1994
@@ -316,15 +316,6 @@ cd9660_read(v)
 		brelse(bp);
 	} while (error == 0 && uio->uio_resid > 0 && n != 0);
 	return (error);
-}
-
-/* ARGSUSED */
-int
-cd9660_ioctl(v)
-	void *v;
-{
-	printf("You did ioctl for isofs !!\n");
-	return (ENOTTY);
 }
 
 /*

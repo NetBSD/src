@@ -1,4 +1,4 @@
-/*	$NetBSD: genfs_vnops.c,v 1.8 1998/06/25 22:15:30 thorpej Exp $	*/
+/*	$NetBSD: genfs_vnops.c,v 1.9 1998/08/10 08:11:11 matthias Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -158,6 +158,15 @@ genfs_ebadf(v)
 {
 
 	return (EBADF);
+}
+
+/* ARGSUSED */
+int
+genfs_enoioctl(v)
+	void *v;
+{
+
+	return (ENOTTY);
 }
 
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: msdosfs_vnops.c,v 1.74 1998/08/09 20:52:21 perry Exp $	*/
+/*	$NetBSD: msdosfs_vnops.c,v 1.75 1998/08/10 08:11:13 matthias Exp $	*/
 
 /*-
  * Copyright (C) 1994, 1995, 1997 Wolfgang Solfrank.
@@ -725,24 +725,6 @@ errexit:
 	} else if ((ioflag & IO_SYNC) == IO_SYNC)
 		error = deupdat(dep, 1);
 	return (error);
-}
-
-int
-msdosfs_ioctl(v)
-	void *v;
-{
-#if 0
-	struct vop_ioctl_args /* {
-		struct vnode *a_vp;
-		u_long a_command;
-		caddr_t a_data;
-		int a_fflag;
-		struct ucred *a_cred;
-		struct proc *a_p;
-	} */ *ap;
-#endif
-
-	return (ENOTTY);
 }
 
 int
