@@ -1,5 +1,5 @@
 #!/bin/sh
-#	$NetBSD: binstall.sh,v 1.5 2000/08/10 13:27:47 mrg Exp $
+#	$NetBSD: binstall.sh,v 1.6 2000/08/10 13:34:39 mrg Exp $
 #
 
 vecho () {
@@ -41,7 +41,7 @@ Secure () {
 PATH=/bin:/usr/bin:/sbin:/usr/sbin
 MDEC=${MDEC:-/usr/mdec}
 BOOTPROG=${BOOTPROG:-boot}
-OFWBOOT=${OFWBOOTBLK:-ofwboot.sparc64}
+OFWBOOT=${OFWBOOTBLK:-ofwboot}
 if [ "`uname -m`" = sparc64 ]; then
 	ULTRASPARC=1
 else
@@ -89,7 +89,7 @@ SKIP=0
 
 if [ "$ULTRASPARC" = "1" ]; then
 	targ=ofwboot
-	netboot=ofwboot.net.sparc64
+	netboot=ofwboot.net
 	nettarg=boot.sparc.netbsd
 	BOOTPROG=$OFWBOOT
 else
@@ -125,8 +125,8 @@ case $WHAT in
 	$DOIT dd if=${MDEC}/${BOOTPROG} of=$TARGET bs=32 skip=$SKIP
 	sync; sync; sync
 	if [ "$ULTRASPARC" = "1" ]; then
-		vecho ${MDEC}/installboot -u ${VERBOSE:+-v} ${MDEC}/bootblk.sparc64 $DEV
-		$DOIT ${MDEC}/installboot -u ${VERBOSE:+-v} ${MDEC}/bootblk.sparc64 $DEV
+		vecho ${MDEC}/installboot -u ${VERBOSE:+-v} ${MDEC}/bootblk $DEV
+		$DOIT ${MDEC}/installboot -u ${VERBOSE:+-v} ${MDEC}/bootblk $DEV
 	else
 		vecho ${MDEC}/installboot ${VERBOSE:+-v} $TARGET ${MDEC}/bootxx $DEV
 		$DOIT ${MDEC}/installboot ${VERBOSE:+-v} $TARGET ${MDEC}/bootxx $DEV
