@@ -1,4 +1,4 @@
-/*	$NetBSD: __sigtramp.S,v 1.2 2003/07/26 19:24:37 salo Exp $	*/
+/*	$NetBSD: __sigtramp2.S,v 1.1 2003/09/27 21:43:29 matt Exp $	*/
 
 /*
  * Copyright (c) 2002 Anders Magnusson, (ragge@NetBSD.org).
