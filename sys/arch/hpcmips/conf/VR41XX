@@ -1,4 +1,4 @@
-# $NetBSD: VR41XX,v 1.16 2003/12/27 07:29:56 shin Exp $
+# $NetBSD: VR41XX,v 1.17 2004/04/03 16:29:06 sato Exp $
 #
 # GENERIC machine description file
 # 
@@ -20,7 +20,7 @@
 
 include		"arch/hpcmips/conf/std.hpcmips"
 include		"arch/hpcmips/conf/std.hpcmips.vr41"
-#ident 		"GENERIC-$Revision: 1.16 $"
+#ident 		"GENERIC-$Revision: 1.17 $"
 
 #options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
@@ -236,6 +236,7 @@ pwctl1 at vrgiu? platform NEC_MCCS id PWCTL_LCDLIGHT port 45
 pwctl2 at vrgiu? platform NEC_MCR_3XX id PWCTL_LCD port 10
 pwctl2 at vrgiu? platform NEC_MCR_500 id PWCTL_LCD port 10
 pwctl2 at vrgiu? platform NEC_MCCS id PWCTL_LCD port 10
+ewctl3 at vrgiu? platform NEC_MCCS id PWCTL_SPEAKER port 12
 pwctl3 at vrgiu? platform NEC_MCR_3XX id PWCTL_SPEAKER port 12
 pwctl3 at vrgiu? platform NEC_MCR_430 id PWCTL_SPEAKER port 44
 pwctl3 at vrgiu? platform NEC_MCR_500 id PWCTL_SPEAKER port 12
