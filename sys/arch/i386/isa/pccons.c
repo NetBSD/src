@@ -1,4 +1,4 @@
-/*	$NetBSD: pccons.c,v 1.143 2000/11/02 00:37:56 eeh Exp $	*/
+/*	$NetBSD: pccons.c,v 1.144 2000/12/01 07:55:10 soren Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -124,12 +124,12 @@
 #include <machine/cpu.h>
 #include <machine/intr.h>
 #include <machine/pio.h>
-#include <machine/pc/display.h>
 #include <machine/pccons.h>
 #include <machine/conf.h>
 
 #include <dev/isa/isareg.h>
 #include <dev/isa/isavar.h>
+#include <dev/ic/pcdisplay.h>
 #include <dev/ic/i8042reg.h>
 #include <dev/pckbc/pckbdreg.h>
 
