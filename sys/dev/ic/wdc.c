@@ -1,4 +1,4 @@
-/*	$NetBSD: wdc.c,v 1.78 2000/01/17 00:01:01 bouyer Exp $ */
+/*	$NetBSD: wdc.c,v 1.79 2000/02/14 12:37:35 bouyer Exp $ */
 
 
 /*
@@ -317,8 +317,11 @@ wdcattach(chp)
 		if ((chp->ch_drive[i].drive_flags & DRIVE) == 0)
 			continue;
 
-		/* Issue a IDENTIFY command, to try to detect slave ghost */
-		ata_get_params(&chp->ch_drive[i], AT_POLL, &params);
+		/*
+		 * Wait a bit, some devices are weird just after a reset.
+		 * Then issue a IDENTIFY command, to try to detect slave ghost
+		 */
+		delay(100);
 		error = ata_get_params(&chp->ch_drive[i], AT_POLL, &params);
 		if (error == CMD_OK) {
 			/* If IDENTIFY succeded, this is not an OLD ctrl */
@@ -1226,7 +1229,7 @@ __wdccommand_start(chp, xfer)
 
 	bus_space_write_1(chp->cmd_iot, chp->cmd_ioh, wd_sdh,
 	    WDSD_IBM | (drive << 4));
-	if (wdcwait(chp, wdc_c->r_st_bmask, wdc_c->r_st_bmask,
+	if (wdcwait(chp, wdc_c->r_st_bmask | WDCS_DRQ, wdc_c->r_st_bmask,
 	    wdc_c->timeout) != 0) {
 		wdc_c->flags |= AT_TIMEOU;
 		__wdccommand_done(chp, xfer);
