@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.27 2000/02/09 13:03:31 takemura Exp $	*/
+/*	$NetBSD: main.c,v 1.28 2000/02/14 07:22:19 jun Exp $	*/
 
 /*-
  * Copyright (c) 1999 Shin Takemura.
@@ -215,6 +215,9 @@ struct fb_setting fb_settings[] = {
 	{ TEXT("Sharp Mobilon HC-4100"), BIFB_D2_M2L_0, /* XXX 4bit greyscale */
 		640, 240, 0, 0,
 		PLATID_CPU_MIPS_TX_3912, PLATID_MACH_SHARP_MOBILON_HC4100},
+	{ TEXT("Sharp HC-1200"), BIFB_D2_M2L_0, /* XXX 4bit greyscale */
+		640, 240, 0, 0,
+		PLATID_CPU_MIPS_TX_3912, PLATID_MACH_SHARP_MOBILON_HC1200},
 };
 
 #define ARRAYSIZEOF(a)	(sizeof(a)/sizeof(*(a)))
