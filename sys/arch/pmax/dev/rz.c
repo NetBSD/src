@@ -1,4 +1,4 @@
-/*	$NetBSD: rz.c,v 1.36 1998/02/23 18:45:44 thorpej Exp $	*/
+/*	$NetBSD: rz.c,v 1.37 1998/03/02 23:17:19 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
-__KERNEL_RCSID(0, "$NetBSD: rz.c,v 1.36 1998/02/23 18:45:44 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rz.c,v 1.37 1998/03/02 23:17:19 thorpej Exp $");
 
 /*
  * SCSI CCS (Command Command Set) disk driver.
@@ -71,7 +71,8 @@ __KERNEL_RCSID(0, "$NetBSD: rz.c,v 1.36 1998/02/23 18:45:44 thorpej Exp $");
 #include <sys/rnd.h>
 #endif	/* NRND */
 
-#include <ufs/ffs/fs.h>
+#include <ufs/ufs/dinode.h>		/* XXX */
+#include <ufs/ffs/fs.h>			/* XXX */
 
 #include <pmax/dev/device.h>		/* 4.4bsdpmax driver definitions */
 #include <pmax/dev/scsi.h>
