@@ -665,7 +665,7 @@ alpha_adjust_reloc_in (abfd, intern, rptr)
     case ALPHA_R_OP_STORE:
       /* The STORE reloc needs the size and offset fields.  We store
 	 them in the addend.  */
-      BFD_ASSERT (intern->r_offset <= 256 && intern->r_size <= 256);
+      BFD_ASSERT (intern->r_offset <= 256 /* && intern->r_size <= 256 */);
       rptr->addend = (intern->r_offset << 8) + intern->r_size;
       break;
 
