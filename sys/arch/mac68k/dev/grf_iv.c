@@ -1,4 +1,4 @@
-/*	$NetBSD: grf_iv.c,v 1.25 1997/10/08 19:54:04 briggs Exp $	*/
+/*	$NetBSD: grf_iv.c,v 1.26 1997/11/08 04:12:52 briggs Exp $	*/
 
 /*
  * Copyright (c) 1995 Allen Briggs.  All rights reserved.
@@ -84,19 +84,19 @@ grfiv_match(parent, cf, aux)
 	struct obio_attach_args *oa = (struct obio_attach_args *)aux;
 	bus_space_handle_t bsh;
 	int found, sense;
+	u_int	base;
 
 	found = 1;
 
         switch (current_mac_model->class) {
 	case MACH_CLASSQ:
-	case MACH_CLASSQ2:
 		/*
 		 * Assume DAFB for all of these, unless we can't
 		 * access the memory.
 		 */
+		base = QUADRA_DAFB_BASE;
 
-		if (bus_space_map(oa->oa_tag, QUADRA_DAFB_BASE, 0x1000,
-					0, &bsh)) {
+		if (bus_space_map(oa->oa_tag, base, 0x1000, 0, &bsh)) {
 			panic("failed to map space for DAFB regs.\n");
 		}
 
@@ -127,13 +127,18 @@ grfiv_match(parent, cf, aux)
 		break;
 
         case MACH_CLASSAV:
-		if (bus_space_map(oa->oa_tag, CIVIC_CONTROL_BASE, 0x1000,
-					0, &bsh)) {
+		base = CIVIC_CONTROL_BASE;
+
+		if (bus_space_map(oa->oa_tag, base, 0x1000, 0, &bsh)) {
 			panic("failed to map space for CIVIC control regs.\n");
 		}
 		/* Disable interrupts */
 		bus_space_write_1(oa->oa_tag, bsh, 0x120, 0);
+
 		bus_space_unmap(oa->oa_tag, bsh, 0x1000);
+		break;
+
+	case MACH_CLASSQ2:
 		break;
 
 	default:
@@ -157,6 +162,7 @@ grfiv_attach(parent, self, aux)
 	struct obio_attach_args *oa = (struct obio_attach_args *)aux;
 	struct grfbus_softc *sc;
 	struct grfmode *gm;
+	u_int	base;
 
 	sc = (struct grfbus_softc *)self;
 
@@ -164,15 +170,16 @@ grfiv_attach(parent, self, aux)
 
         switch (current_mac_model->class) {
         case MACH_CLASSQ:
-        case MACH_CLASSQ2:
+		base=QUADRA_DAFB_BASE;
 		sc->sc_tag = oa->oa_tag;
-		if (bus_space_map(sc->sc_tag, QUADRA_DAFB_BASE, 0x1000,
-					0, &sc->sc_regh)) {
+		if (bus_space_map(sc->sc_tag, base, 0x1000, 0, &sc->sc_regh)) {
 			panic("failed to map space for DAFB regs.\n");
 		}
 		printf(": DAFB: Monitor sense %x.\n", R4(sc,0x1C)&7);
 		bus_space_unmap(sc->sc_tag, sc->sc_regh, 0x1000);
 		break;
+        case MACH_CLASSQ2:
+        case MACH_CLASSAV:
 	default:
 		printf(": Internal Video\n");
 		break;
