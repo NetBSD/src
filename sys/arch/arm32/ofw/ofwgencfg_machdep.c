@@ -1,4 +1,4 @@
-/*	$NetBSD: ofwgencfg_machdep.c,v 1.2 1998/05/01 21:18:44 cgd Exp $	*/
+/*	$NetBSD: ofwgencfg_machdep.c,v 1.3 1998/05/22 17:43:11 cgd Exp $	*/
 
 /*
  * Copyright 1997
@@ -53,6 +53,7 @@
 #include <sys/mount.h>
 #include <sys/vnode.h>
 #include <sys/device.h>
+#include <vm/vm.h>
 #include <sys/sysctl.h>
 #include <sys/syscallargs.h>
 
@@ -108,7 +109,9 @@ extern pv_addr_t kernelstack;
 extern u_int data_abort_handler_address;
 extern u_int prefetch_abort_handler_address;
 extern u_int undefined_handler_address;
+#ifdef PMAP_DEBUG
 extern int pmap_debug_level;
+#endif
 extern int bufpages;
 
 
@@ -118,7 +121,9 @@ extern int bufpages;
 extern void data_abort_handler		__P((trapframe_t *frame));
 extern void prefetch_abort_handler	__P((trapframe_t *frame));
 extern void undefinedinstruction_bounce	__P((trapframe_t *frame));
+#ifdef PMAP_DEBUG
 extern void pmap_debug	__P((int level));
+#endif
 #ifdef	DDB
 extern void db_machine_init     __P((void));
 #endif
@@ -153,7 +158,7 @@ int ofw_handleticks = 0;	/* set to TRUE by cpu_initclocks */
  */
 
 void
-boot(howto, bootstr)
+cpu_reboot(howto, bootstr)
 	int howto;
 	char *bootstr;
 {
@@ -256,8 +261,14 @@ initarm(ofw_handle)
 #ifdef DDB
     printf("ddb: ");
     db_machine_init();
-    ddb_init();
+  {
+    struct exec *kernexec = (struct exec *)KERNEL_BASE;
+    extern int end;
+    extern char *esym;
 
+    ddb_init(kernexec->a_syms, &end, esym);
+printf("ddb_init: a_syms = 0x%lx, end = 0x%lx, esym = 0x%lx\n", kernexec->a_syms, &end, esym);
+  }
     if (boothowto & RB_KDB)
 	Debugger();
 #endif
@@ -352,12 +363,14 @@ process_kernel_args(void)
 	if (strstr(args, "kdb"))
 	    boothowto |= RB_KDB;
 
+#ifdef PMAP_DEBUG
 	ptr = strstr(args, "pmapdebug=");
 	if (ptr) {
 	    pmap_debug_level = (int)strtoul(ptr + 10, NULL, 10);
 	    pmap_debug(pmap_debug_level);
 	    debug_flags |= 0x01;
 	}
+#endif
 
 	ptr = strstr(args, "nbuf=");
 	if (ptr)
