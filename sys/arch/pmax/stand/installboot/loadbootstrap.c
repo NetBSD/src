@@ -1,4 +1,4 @@
-/* $NetBSD: loadbootstrap.c,v 1.1 1999/11/28 00:32:29 simonb Exp $ */
+/* $NetBSD: loadbootstrap.c,v 1.2 1999/12/01 05:02:03 simonb Exp $ */
 
 /*
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -99,9 +99,9 @@ load_bootstrap(const char *bootstrap, char **data,
 
 	*loadaddr = lowaddr;
 	*execaddr = ehdr.e_entry;
-	*len = highaddr - lowaddr;
-	if ((*data = malloc(roundup(*len, BOOT_BLOCK_BLOCKSIZE))) == NULL)
-		err(1, "malloc %d bytes", roundup(*len, BOOT_BLOCK_BLOCKSIZE));
+	*len = roundup(highaddr - lowaddr, BOOT_BLOCK_BLOCKSIZE);
+	if ((*data = malloc(*len)) == NULL)
+		err(1, "malloc %d bytes", *len);
 
 	/* Now load the bootstrap into memory */
 	for (i = 0; i < nsegs; i++) {
