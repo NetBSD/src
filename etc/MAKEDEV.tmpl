@@ -1,5 +1,5 @@
 #!/bin/sh -
-#	$NetBSD: MAKEDEV.tmpl,v 1.18 2004/01/14 19:23:36 jdolecek Exp $
+#	$NetBSD: MAKEDEV.tmpl,v 1.19 2004/01/14 20:41:59 jdolecek Exp $
 #
 # Copyright (c) 2003 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -40,7 +40,7 @@
 #
 ###########################################################################
 #
-# Device "make" file.  Valid arguments:
+# Device "make" file.  Valid special arguments:
 #	all	makes all known devices, including local devices.
 #		Tries to make the 'standard' number of each type.
 #	init	A set of devices that is used for MFS /dev by init.
@@ -49,6 +49,7 @@
 #	ramdisk	devices to be put into INSTALL kernel ramdisks.
 #	std	standard devices
 #	local	configuration specific devices
+#	wscons	make wscons devices
 #	usbs	make USB devices
 #	isdns	make ISDN devices
 #
