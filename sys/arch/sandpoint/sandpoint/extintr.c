@@ -1,4 +1,4 @@
-/*	$NetBSD: extintr.c,v 1.7 2003/08/07 16:29:23 agc Exp $	*/
+/*	$NetBSD: extintr.c,v 1.8 2004/02/13 11:36:17 wiz Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -73,7 +73,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: extintr.c,v 1.7 2003/08/07 16:29:23 agc Exp $");
+__KERNEL_RCSID(0, "$NetBSD: extintr.c,v 1.8 2004/02/13 11:36:17 wiz Exp $");
 
 #include "opt_openpic.h"
 
@@ -491,7 +491,7 @@ openpic_init(unsigned char *base)
 	openpic_write(OPENPIC_ICR, x);
 #endif
 
-	/* send all interrupts to cpu 0 */
+	/* send all interrupts to CPU 0 */
 	for (irq = 0; irq < ICU_LEN; irq++)
 		openpic_write(OPENPIC_IDEST(irq), 1 << 0);
 

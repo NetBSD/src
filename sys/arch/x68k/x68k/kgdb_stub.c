@@ -1,4 +1,4 @@
-/*	$NetBSD: kgdb_stub.c,v 1.9 2003/08/07 16:30:30 agc Exp $	*/
+/*	$NetBSD: kgdb_stub.c,v 1.10 2004/02/13 11:36:20 wiz Exp $	*/
 
 /*
  * Copyright (c) 1990, 1993
@@ -41,17 +41,17 @@
  */
 
 /*
- * "Stub" to allow remote cpu to debug over a serial line using gdb.
+ * "Stub" to allow remote CPU to debug over a serial line using gdb.
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kgdb_stub.c,v 1.9 2003/08/07 16:30:30 agc Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kgdb_stub.c,v 1.10 2004/02/13 11:36:20 wiz Exp $");
 
 #include "opt_kgdb.h"
 
 #ifdef KGDB
 #ifndef lint
-static char rcsid[] = "$NetBSD: kgdb_stub.c,v 1.9 2003/08/07 16:30:30 agc Exp $";
+static char rcsid[] = "$NetBSD: kgdb_stub.c,v 1.10 2004/02/13 11:36:20 wiz Exp $";
 #endif
 
 #include <sys/param.h>

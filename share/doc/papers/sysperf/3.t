@@ -1,4 +1,4 @@
-.\"	$NetBSD: 3.t,v 1.3 2003/08/07 10:30:47 agc Exp $
+.\"	$NetBSD: 3.t,v 1.4 2004/02/13 11:36:08 wiz Exp $
 .\"
 .\" Copyright (c) 1985 The Regents of the University of California.
 .\" All rights reserved.
@@ -70,7 +70,7 @@ execution and their interference with basic system operation.  The
 number of context switches and disk transfers often doubled while
 \fIsendmail\fP operated; the system call rate jumped dramatically.
 System accounting information consistently
-showed \fIsendmail\fP as the top cpu user on the system.
+showed \fIsendmail\fP as the top CPU user on the system.
 .NH 3
 Network servers
 .PP
@@ -80,7 +80,7 @@ requests for each network service provided.  The presence of many
 such daemons increases the numbers of active processes and files,
 and requires a larger configuration to support the same number of users.
 The overhead of the routing and status updates can consume
-several percent of the cpu.
+several percent of the CPU.
 Remote logins and shells incur more overhead
 than their local equivalents.
 For example, a remote login uses three processes and a

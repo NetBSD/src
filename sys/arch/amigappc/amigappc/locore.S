@@ -1,4 +1,4 @@
-/*      $NetBSD: locore.S,v 1.11 2004/01/04 20:19:15 jdolecek Exp $   */
+/*      $NetBSD: locore.S,v 1.12 2004/02/13 11:36:10 wiz Exp $   */
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -341,7 +341,7 @@ ENTRY(cpu_switch)
 	mr	30,3
 	lis	3,_C_LABEL(curproc)@ha
 	xor	31,31,31
-	stw	31,_C_LABEL(curproc)@l(3) /* Zero to not accumulate cpu time */
+	stw	31,_C_LABEL(curproc)@l(3) /* Zero to not accumulate CPU time */
 	lis	3,_C_LABEL(curpcb)@ha
 	lwz	31,_C_LABEL(curpcb)@l(3)
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: iostat.c,v 1.40 2003/08/07 11:25:22 agc Exp $	*/
+/*	$NetBSD: iostat.c,v 1.41 2004/02/13 11:36:24 wiz Exp $	*/
 
 /*
  * Copyright (c) 1996 John M. Vinopal
@@ -71,7 +71,7 @@ __COPYRIGHT("@(#) Copyright (c) 1986, 1991, 1993\n\
 #if 0
 static char sccsid[] = "@(#)iostat.c	8.3 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: iostat.c,v 1.40 2003/08/07 11:25:22 agc Exp $");
+__RCSID("$NetBSD: iostat.c,v 1.41 2004/02/13 11:36:24 wiz Exp $");
 #endif
 #endif /* not lint */
 
@@ -272,7 +272,7 @@ header()
 				(void)printf("        %9.9s ", cur.dk_name[i]);
 
 	if (ISSET(todo, SHOW_CPU))
-		(void)printf("            cpu");
+		(void)printf("            CPU");
 
 	printf("\n");
 

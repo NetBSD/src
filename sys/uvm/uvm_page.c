@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_page.c,v 1.94 2004/01/14 11:28:05 yamt Exp $	*/
+/*	$NetBSD: uvm_page.c,v 1.95 2004/02/13 11:36:23 wiz Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_page.c,v 1.94 2004/01/14 11:28:05 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_page.c,v 1.95 2004/02/13 11:36:23 wiz Exp $");
 
 #include "opt_uvmhist.h"
 
@@ -104,7 +104,7 @@ int vm_nphysseg = 0;				/* XXXCDC: uvm.nphysseg */
  */
 /*
  * XXX disabled until we can find a way to do this without causing
- * problems for either cpu caches or DMA latency.
+ * problems for either CPU caches or DMA latency.
  */
 boolean_t vm_page_zero_enable = FALSE;
 
@@ -1054,7 +1054,7 @@ uvm_pagealloc_strat(obj, off, anon, flags, strat, free_list)
 	 * This implements a global round-robin page coloring
 	 * algorithm.
 	 *
-	 * XXXJRT: Should we make the `nextcolor' per-cpu?
+	 * XXXJRT: Should we make the `nextcolor' per-CPU?
 	 * XXXJRT: What about virtually-indexed caches?
 	 */
 
@@ -1245,7 +1245,7 @@ uvm_pagezerocheck(struct vm_page *pg)
 	 * XXX assuming pmap_kenter_pa and pmap_kremove never call
 	 * uvm page allocator.
 	 *
-	 * it might be better to have "cpu-local temporary map" pmap interface.
+	 * it might be better to have "CPU-local temporary map" pmap interface.
 	 */
 	pmap_kenter_pa(uvm_zerocheckkva, VM_PAGE_TO_PHYS(pg), VM_PROT_READ);
 	p = (int *)uvm_zerocheckkva;

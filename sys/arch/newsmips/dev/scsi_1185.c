@@ -1,4 +1,4 @@
-/*	$NetBSD: scsi_1185.c,v 1.13 2003/08/07 16:28:52 agc Exp $	*/
+/*	$NetBSD: scsi_1185.c,v 1.14 2004/02/13 11:36:16 wiz Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -43,7 +43,7 @@
  *
  *	CXD1185Q
  *	SCSI bus low level common routines
- *				for one cpu machine
+ *				for one CPU machine
  *
  * MODIFY HISTORY:
  *
@@ -53,7 +53,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: scsi_1185.c,v 1.13 2003/08/07 16:28:52 agc Exp $");
+__KERNEL_RCSID(0, "$NetBSD: scsi_1185.c,v 1.14 2004/02/13 11:36:16 wiz Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

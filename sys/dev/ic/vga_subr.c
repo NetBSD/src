@@ -1,4 +1,4 @@
-/* $NetBSD: vga_subr.c,v 1.15 2003/02/09 10:29:36 jdolecek Exp $ */
+/* $NetBSD: vga_subr.c,v 1.16 2004/02/13 11:36:22 wiz Exp $ */
 
 /*
  * Copyright (c) 1998
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vga_subr.c,v 1.15 2003/02/09 10:29:36 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vga_subr.c,v 1.16 2004/02/13 11:36:22 wiz Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -68,7 +68,7 @@ fontram(struct vga_handle *vh)
 
 	/* program graphics controller to access character generator */
 
-	vga_gdc_write(vh, rdplanesel, 0x02);	/* select map 2 for cpu reads */
+	vga_gdc_write(vh, rdplanesel, 0x02);	/* select map 2 for CPU reads */
 	vga_gdc_write(vh, mode, 0x00);	/* disable odd-even addressing */
 	vga_gdc_write(vh, misc, 0x04);	/* map starts at 0xA000 */
 }
@@ -86,7 +86,7 @@ textram(struct vga_handle *vh)
 
 	/* program graphics controller for text mode */
 
-	vga_gdc_write(vh, rdplanesel, 0x00);	/* select map 0 for cpu reads */
+	vga_gdc_write(vh, rdplanesel, 0x00);	/* select map 0 for CPU reads */
 	vga_gdc_write(vh, mode, 0x10);		/* enable odd-even addressing */
 	/* map starts at 0xb800 or 0xb000 (mono) */
 	vga_gdc_write(vh, misc, (vh->vh_mono ? 0x0a : 0x0e));

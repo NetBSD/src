@@ -1,4 +1,4 @@
-/*	$NetBSD: userret.h,v 1.5 2003/10/31 16:44:35 cl Exp $	*/
+/*	$NetBSD: userret.h,v 1.6 2004/02/13 11:36:17 wiz Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -70,7 +70,7 @@ userret(struct lwp *l, struct trapframe *frame)
 
 	/*
 	 * If the new process isn't the current AltiVec process on this
-	 * cpu, we need to stop any data streams that are active (since
+	 * CPU, we need to stop any data streams that are active (since
 	 * it will be a different address space).
 	 */
 	if (ci->ci_veclwp != NULL && ci->ci_veclwp != l) {

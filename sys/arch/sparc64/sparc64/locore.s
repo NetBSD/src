@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.192 2004/01/19 10:39:49 martin Exp $	*/
+/*	$NetBSD: locore.s,v 1.193 2004/02/13 11:36:18 wiz Exp $	*/
 
 /*
  * Copyright (c) 1996-2002 Eduardo Horvath
@@ -448,7 +448,7 @@ romp:	POINTER	0
 
 /* NB:	 Do we really need the following around? */
 /*
- * _cputyp is the current cpu type, used to distinguish between
+ * _cputyp is the current CPU type, used to distinguish between
  * the many variations of different sun4* machines. It contains
  * the value CPU_SUN4, CPU_SUN4C, or CPU_SUN4M.
  */
@@ -456,7 +456,7 @@ romp:	POINTER	0
 _C_LABEL(cputyp):
 	.word	1
 /*
- * _cpumod is the current cpu model, used to distinguish between variants
+ * _cpumod is the current CPU model, used to distinguish between variants
  * in the Sun4 and Sun4M families. See /sys/arch/sparc64/include/param.h
  * for possible values.
  */

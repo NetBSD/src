@@ -1,4 +1,4 @@
-/* $NetBSD: lapic.c,v 1.3 2003/07/14 22:32:40 lukem Exp $ */
+/* $NetBSD: lapic.c,v 1.4 2004/02/13 11:36:20 wiz Exp $ */
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lapic.c,v 1.3 2003/07/14 22:32:40 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lapic.c,v 1.4 2004/02/13 11:36:20 wiz Exp $");
 
 #include "opt_ddb.h"
 #include "opt_multiprocessor.h"
@@ -348,7 +348,7 @@ lapic_calibrate_timer(ci)
 	if (lapic_per_second != 0) {
 		/*
 		 * reprogram the apic timer to run in periodic mode.
-		 * XXX need to program timer on other cpu's, too.
+		 * XXX need to program timer on other CPUs, too.
 		 */
 		lapic_tval = (lapic_per_second * 2) / hz;
 		lapic_tval = (lapic_tval / 2) + (lapic_tval & 0x1);

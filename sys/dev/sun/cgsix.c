@@ -1,4 +1,4 @@
-/*	$NetBSD: cgsix.c,v 1.16 2003/11/13 03:09:29 chs Exp $ */
+/*	$NetBSD: cgsix.c,v 1.17 2004/02/13 11:36:22 wiz Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -85,7 +85,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cgsix.c,v 1.16 2003/11/13 03:09:29 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cgsix.c,v 1.17 2004/02/13 11:36:22 wiz Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -760,7 +760,7 @@ cg6_reset(sc)
 	/* take care of hardware bugs in old revisions */
 	if (sc->sc_fhcrev < 5) {
 		/*
-		 * Keep current resolution; set cpu to 68020, set test
+		 * Keep current resolution; set CPU to 68020, set test
 		 * window (size 1Kx1K), and for rev 1, disable dest cache.
 		 */
 		fhc = (*sc->sc_fhc & FHC_RES_MASK) | FHC_CPU_68020 |

@@ -1,4 +1,4 @@
-/*	$NetBSD: gdt.c,v 1.3 2003/07/14 23:32:30 lukem Exp $	*/
+/*	$NetBSD: gdt.c,v 1.4 2004/02/13 11:36:20 wiz Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -44,7 +44,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: gdt.c,v 1.3 2003/07/14 23:32:30 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gdt.c,v 1.4 2004/02/13 11:36:20 wiz Exp $");
 
 #include "opt_multiprocessor.h"
 
@@ -180,7 +180,7 @@ gdt_init()
 }
 
 /*
- * Allocate shadow GDT for a slave cpu.
+ * Allocate shadow GDT for a slave CPU.
  */
 void
 gdt_alloc_cpu(struct cpu_info *ci)
@@ -196,7 +196,7 @@ gdt_alloc_cpu(struct cpu_info *ci)
 
 /*
  * Load appropriate gdt descriptor; we better be running on *ci
- * (for the most part, this is how a cpu knows who it is).
+ * (for the most part, this is how a CPU knows who it is).
  */
 void
 gdt_init_cpu(struct cpu_info *ci)

@@ -1,4 +1,4 @@
-/*	$NetBSD: qv.c,v 1.14 2004/01/04 16:19:44 wiz Exp $	*/
+/*	$NetBSD: qv.c,v 1.15 2004/02/13 11:36:20 wiz Exp $	*/
 
 /*-
  * Copyright (c) 1988
@@ -123,7 +123,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: qv.c,v 1.14 2004/01/04 16:19:44 wiz Exp $");
+__KERNEL_RCSID(0, "$NetBSD: qv.c,v 1.15 2004/02/13 11:36:20 wiz Exp $");
 
 #include "qv.h"
 #if NQV > 0
@@ -1263,7 +1263,7 @@ qvcons_init()
 		return 0;
 
         /*
-         * Found an entry for this cpu. Because this device is Microvax specific
+         * Found an entry for this CPU. Because this device is Microvax specific
          * we assume that there is a single q-bus and don't have to worry about
          * multiple adapters.
          *
@@ -1312,7 +1312,7 @@ int probed;
                 return(0);
 
         /*
-         * Found an entry for this cpu. Because this device is Microvax specific
+         * Found an entry for this CPU. Because this device is Microvax specific
          * we assume that there is a single q-bus and don't have to worry about
          * multiple adapters.
          *

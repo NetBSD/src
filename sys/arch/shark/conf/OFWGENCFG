@@ -1,4 +1,4 @@
-#	$NetBSD: OFWGENCFG,v 1.10 2003/09/13 13:30:01 chris Exp $
+#	$NetBSD: OFWGENCFG,v 1.11 2004/02/13 11:36:17 wiz Exp $
 #
 #	OFWGENCFG: 'generic' configuration for Open Firmware boards.
 #
@@ -117,7 +117,7 @@ config		netbsd	root on ofnet0 type nfs
 # The main bus device
 mainbus0 at root
 
-# The boot cpu
+# The boot CPU
 cpu0 at mainbus?
 
 # Open Firmware devices

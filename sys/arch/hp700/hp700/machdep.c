@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.17 2003/12/30 12:33:16 pk Exp $	*/
+/*	$NetBSD: machdep.c,v 1.18 2004/02/13 11:36:13 wiz Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002 The NetBSD Foundation, Inc.
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.17 2003/12/30 12:33:16 pk Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.18 2004/02/13 11:36:13 wiz Exp $");
 
 #include "opt_cputype.h"
 #include "opt_ddb.h"
@@ -149,7 +149,7 @@ caddr_t msgbufaddr;
 /*
  * cache configuration, for most machines is the same
  * numbers, so it makes sense to do defines w/ numbers depending
- * on cofigured cpu types in the kernel
+ * on cofigured CPU types in the kernel
  */
 int icache_stride, icache_line_mask;
 int dcache_stride, dcache_line_mask;
@@ -436,7 +436,7 @@ hppa_init(paddr_t start)
 	pdc_init();	/* init PDC iface, so we can call em easy */
 
 	cpu_hzticks = (PAGE0->mem_10msec * 100) / hz;
-	delay_init();	/* calculate cpu clock ratio */
+	delay_init();	/* calculate CPU clock ratio */
 
 	/* cache parameters */
 	if ((error = pdc_call((iodcio_t)pdc, 0, PDC_CACHE, PDC_CACHE_DFLT,
@@ -655,7 +655,7 @@ hptsize=256;	/* XXX one page for now */
 
 	/*
 	 * Ptrs to various tlb handlers, to be filled
-	 * based on cpu features.
+	 * based on CPU features.
 	 * from locore.S
 	 */
 	extern u_int trap_ep_T_TLB_DIRTY[];
@@ -891,7 +891,7 @@ cpu_startup(void)
 }
 
 /*
- * compute cpu clock ratio such as:
+ * compute CPU clock ratio such as:
  *	cpu_ticksnum / cpu_ticksdenom = t + delta
  *	delta -> 0
  */

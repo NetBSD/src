@@ -1,4 +1,4 @@
-/*	$NetBSD: atari_init.c,v 1.60 2003/11/10 08:51:51 wiz Exp $	*/
+/*	$NetBSD: atari_init.c,v 1.61 2004/02/13 11:36:11 wiz Exp $	*/
 
 /*
  * Copyright (c) 1995 Leo Weppelman
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: atari_init.c,v 1.60 2003/11/10 08:51:51 wiz Exp $");
+__KERNEL_RCSID(0, "$NetBSD: atari_init.c,v 1.61 2004/02/13 11:36:11 wiz Exp $");
 
 #include "opt_ddb.h"
 #include "opt_mbtype.h"
@@ -256,7 +256,7 @@ char	*esym_addr;		/* Address of kernel '_esym' symbol	*/
 	set_machtype();
 
 	/*
-	 * Initialize cpu specific stuff
+	 * Initialize CPU specific stuff
 	 */
 	initcpu();
 

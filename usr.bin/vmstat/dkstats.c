@@ -1,4 +1,4 @@
-/*	$NetBSD: dkstats.c,v 1.20 2003/06/11 17:26:32 drochner Exp $	*/
+/*	$NetBSD: dkstats.c,v 1.21 2004/02/13 11:36:24 wiz Exp $	*/
 
 /*
  * Copyright (c) 1996 John M. Vinopal
@@ -164,7 +164,7 @@ dkswap(void)
 
 /*
  * Read the disk statistics for each disk in the disk list.
- * Also collect statistics for tty i/o and cpu ticks.
+ * Also collect statistics for tty i/o and CPU ticks.
  */
 void
 dkreadstats(void)

@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.82 2003/12/30 12:33:15 pk Exp $	*/
+/*	$NetBSD: machdep.c,v 1.83 2004/02/13 11:36:10 wiz Exp $	*/
 /*	$OpenBSD: machdep.c,v 1.36 1999/05/22 21:22:19 weingart Exp $	*/
 
 /*
@@ -78,7 +78,7 @@
 /* from: Utah Hdr: machdep.c 1.63 91/04/24 */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.82 2003/12/30 12:33:15 pk Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.83 2004/02/13 11:36:10 wiz Exp $");
 
 #include "fs_mfs.h"
 #include "opt_ddb.h"
@@ -177,7 +177,7 @@ struct vm_map *phys_map = NULL;
 
 int	maxmem;			/* max memory per process */
 int	physmem;		/* max supported memory, changes to actual */
-int	ncpu = 1;		/* At least one cpu in the system */
+int	ncpu = 1;		/* At least one CPU in the system */
 int	cpuspeed = 150;		/* approx CPU clock [MHz] */
 vaddr_t kseg2iobufsize = 0;	/* to reserve PTEs for KSEG2 I/O space */
 struct arc_bus_space arc_bus_io;/* Bus tag for bus.h macros */
@@ -514,7 +514,7 @@ consinit()
 
 /*
  * cpu_startup: allocate memory for variable-sized tables,
- * initialize cpu, and do autoconfiguration.
+ * initialize CPU, and do autoconfiguration.
  */
 void
 cpu_startup()

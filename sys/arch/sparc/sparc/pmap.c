@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.275 2003/12/13 10:26:13 martin Exp $ */
+/*	$NetBSD: pmap.c,v 1.276 2004/02/13 11:36:18 wiz Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -56,7 +56,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.275 2003/12/13 10:26:13 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.276 2004/02/13 11:36:18 wiz Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -1956,7 +1956,7 @@ region_alloc(mh, newpm, newvr)
 	}
 
 	/* update region tables */
-	simple_lock(&pm->pm_lock); /* what if other cpu takes mmuentry ?? */
+	simple_lock(&pm->pm_lock); /* what if other CPU takes mmuentry ?? */
 	if (pm->pm_ctx)
 		setregmap(VRTOVA(me->me_vreg), reginval);
 	rp->rg_smeg = reginval;
@@ -2313,7 +2313,7 @@ ctx_alloc(pm)
 		 * context table slot.
 		 *
 		 * Note on multi-threaded processes: a context must remain
-		 * valid as long as any thread is still running on a cpu.
+		 * valid as long as any thread is still running on a CPU.
 		 */
 		simple_lock(&pm->pm_lock);
 #if defined(MULTIPROCESSOR)
@@ -2789,7 +2789,7 @@ pv_syncflags4m(pg)
 			/*
 			 * Clear mod/ref bits from PTE and write it back.
 			 * We must do this before flushing the cache to
-			 * avoid races with another cpu setting the M bit
+			 * avoid races with another CPU setting the M bit
 			 * and creating dirty cache lines again.
 			 */
 
@@ -3988,7 +3988,7 @@ srmmu_restore_prom_ctx()
 
 #if defined(MULTIPROCESSOR)
 /*
- * Globalize the boot cpu's cpu_info structure.
+ * Globalize the boot CPU's cpu_info structure.
  */
 void
 pmap_globalize_boot_cpuinfo(cpi)
@@ -4147,7 +4147,7 @@ pmap_init()
 
 	/*
 	 * Setup a pool for pmap structures.
-	 * The pool size includes space for an array of per-cpu
+	 * The pool size includes space for an array of per-CPU
 	 * region table pointers & physical addresses
 	 */
 	sz = ALIGN(sizeof(struct pmap)) +
@@ -4247,7 +4247,7 @@ pmap_quiet_check(struct pmap *pm)
 			{
 				if (pm->pm_reg_ptps[n][vr] != SRMMU_TEINVALID)
 					printf("pmap_chk: spurious PTP in user "
-						"region %d on cpu %d\n", vr, n);
+						"region %d on CPU %d\n", vr, n);
 			}
 		}
 		if (rp->rg_nsegmap != 0)
@@ -4883,7 +4883,7 @@ pmap_rmu4_4c(pm, va, endva, vr, vs)
 		setcontext4(0);
 		if (HASSUN4_MMU3L)
 			setregmap(0, tregion);
-		/* XXX use per-cpu pteva? */
+		/* XXX use per-CPU pteva? */
 		setsegmap(0, pmeg);
 		pteva = VA_VPG(va) << PGSHIFT;
 		perpage = 0;
@@ -5109,7 +5109,7 @@ pmap_page_protect4_4c(pg, prot)
 				cache_flush_page(va, pm->pm_ctxnum);
 			} else {
 				setcontext4(0);
-				/* XXX use per-cpu pteva? */
+				/* XXX use per-CPU pteva? */
 				if (HASSUN4_MMU3L)
 					setregmap(0, tregion);
 				setsegmap(0, sp->sg_pmeg);
@@ -5241,7 +5241,7 @@ pmap_protect4_4c(pm, sva, eva, prot)
 				 * just update PTEs.
 				 */
 				setcontext4(0);
-				/* XXX use per-cpu pteva? */
+				/* XXX use per-CPU pteva? */
 				if (HASSUN4_MMU3L)
 					setregmap(0, tregion);
 				setsegmap(0, sp->sg_pmeg);
@@ -5319,7 +5319,7 @@ pmap_changeprot4_4c(pm, va, prot, flags)
 				cache_flush_page(va, pm->pm_ctxnum);
 		} else {
 			setcontext4(0);
-			/* XXX use per-cpu va? */
+			/* XXX use per-CPU va? */
 			if (HASSUN4_MMU3L)
 				setregmap(0, tregion);
 			setsegmap(0, pmeg);
@@ -5904,7 +5904,7 @@ pmap_enu4_4c(pm, va, prot, flags, pg, pteproto)
 						setcontext4(pm->pm_ctxnum);
 					} else {
 						setcontext4(0);
-						/* XXX use per-cpu pteva? */
+						/* XXX use per-CPU pteva? */
 						if (HASSUN4_MMU3L)
 							setregmap(0, tregion);
 						setsegmap(0, pmeg);
@@ -7642,14 +7642,14 @@ pm_check_u(s, pm)
 	cpu = cpuinfo.ci_cpuid;
 
 	if (pm->pm_regmap == NULL)
-		panic("%s: cpu %d: CHK(pmap %p): no region mapping",
+		panic("%s: CPU %d: CHK(pmap %p): no region mapping",
 			s, cpu, pm);
 
 #if defined(SUN4M) || defined(SUN4D)
 	if (CPU_HAS_SRMMU &&
 	    (pm->pm_reg_ptps[cpu] == NULL ||
 	     pm->pm_reg_ptps_pa[cpu] != VA2PA((caddr_t)pm->pm_reg_ptps[cpu])))
-		panic("%s: cpu %d: CHK(pmap %p): no SRMMU region table or bad pa: "
+		panic("%s: CPU %d: CHK(pmap %p): no SRMMU region table or bad pa: "
 		      "tblva=%p, tblpa=0x%x",
 			s, cpu, pm, pm->pm_reg_ptps[cpu], pm->pm_reg_ptps_pa[cpu]);
 
@@ -7657,7 +7657,7 @@ pm_check_u(s, pm)
 	    (cpuinfo.ctx_tbl[pm->pm_ctxnum] != ((VA2PA((caddr_t)pm->pm_reg_ptps[cpu])
 					      >> SRMMU_PPNPASHIFT) |
 					     SRMMU_TEPTD)))
-	    panic("%s: cpu %d: CHK(pmap %p): SRMMU region table at 0x%x not installed "
+	    panic("%s: CPU %d: CHK(pmap %p): SRMMU region table at 0x%x not installed "
 		  "for context %d", s, cpu, pm, pm->pm_reg_ptps_pa[cpu], pm->pm_ctxnum);
 #endif
 
@@ -7666,29 +7666,29 @@ pm_check_u(s, pm)
 		if (rp->rg_nsegmap == 0)
 			continue;
 		if (rp->rg_segmap == NULL)
-			panic("%s: cpu %d: CHK(vr %d): nsegmap = %d; sp==NULL",
+			panic("%s: CPU %d: CHK(vr %d): nsegmap = %d; sp==NULL",
 				s, cpu, vr, rp->rg_nsegmap);
 #if defined(SUN4M) || defined(SUN4D)
 		if (CPU_HAS_SRMMU && rp->rg_seg_ptps == NULL)
-		    panic("%s: cpu %d: CHK(vr %d): nsegmap=%d; no SRMMU segment table",
+		    panic("%s: CPU %d: CHK(vr %d): nsegmap=%d; no SRMMU segment table",
 			  s, cpu, vr, rp->rg_nsegmap);
 		if (CPU_HAS_SRMMU &&
 		    pm->pm_reg_ptps[cpu][vr] != ((VA2PA((caddr_t)rp->rg_seg_ptps) >>
 					    SRMMU_PPNPASHIFT) | SRMMU_TEPTD))
-		    panic("%s: cpu %d: CHK(vr %d): SRMMU segtbl not installed",
+		    panic("%s: CPU %d: CHK(vr %d): SRMMU segtbl not installed",
 				s, cpu, vr);
 #endif
 		if ((unsigned int)rp < KERNBASE)
-			panic("%s: cpu %d: rp=%p", s, cpu, rp);
+			panic("%s: CPU %d: rp=%p", s, cpu, rp);
 		n = 0;
 		for (vs = 0; vs < NSEGRG; vs++) {
 			sp = &rp->rg_segmap[vs];
 			if ((unsigned int)sp < KERNBASE)
-				panic("%s: cpu %d: sp=%p", s, cpu, sp);
+				panic("%s: CPU %d: sp=%p", s, cpu, sp);
 			if (sp->sg_npte != 0) {
 				n++;
 				if (sp->sg_pte == NULL)
-					panic("%s: cpu %d: CHK(vr %d, vs %d): npte=%d, "
+					panic("%s: CPU %d: CHK(vr %d, vs %d): npte=%d, "
 					   "pte=NULL", s, cpu, vr, vs, sp->sg_npte);
 #if defined(SUN4M) || defined(SUN4D)
 				if (CPU_HAS_SRMMU &&
@@ -7696,7 +7696,7 @@ pm_check_u(s, pm)
 				     ((VA2PA((caddr_t)sp->sg_pte)
 					>> SRMMU_PPNPASHIFT) |
 				       SRMMU_TEPTD))
-				    panic("%s: cpu %d: CHK(vr %d, vs %d): SRMMU page "
+				    panic("%s: CPU %d: CHK(vr %d, vs %d): SRMMU page "
 					  "table not installed correctly",
 						s, cpu, vr, vs);
 #endif
@@ -7708,13 +7708,13 @@ pm_check_u(s, pm)
 					 :(*pte & PG_V)))
 					m++;
 				if (m != sp->sg_npte)
-					printf("%s: cpu %d: user CHK(vr %d, vs %d): "
+					printf("%s: CPU %d: user CHK(vr %d, vs %d): "
 					    "npte(%d) != # valid(%d)\n",
 						s, cpu, vr, vs, sp->sg_npte, m);
 			}
 		}
 		if (n != rp->rg_nsegmap)
-			panic("%s: cpu %d: CHK(vr %d): inconsistent "
+			panic("%s: CPU %d: CHK(vr %d): inconsistent "
 				"# of pte's: %d, should be %d",
 				s, cpu, vr, rp->rg_nsegmap, n);
 	}
@@ -7738,31 +7738,31 @@ pm_check_k(s, pm)		/* Note: not as extensive as pm_check_u. */
 	if (CPU_HAS_SRMMU &&
 	    (pm->pm_reg_ptps[cpu] == NULL ||
 	     pm->pm_reg_ptps_pa[cpu] != VA2PA((caddr_t)pm->pm_reg_ptps[cpu])))
-	    panic("%s: cpu %d: CHK(pmap %p): no SRMMU region table or bad pa: tblva=%p, tblpa=0x%x",
+	    panic("%s: CPU %d: CHK(pmap %p): no SRMMU region table or bad pa: tblva=%p, tblpa=0x%x",
 		  s, cpu, pm, pm->pm_reg_ptps[cpu], pm->pm_reg_ptps_pa[cpu]);
 
 	if (CPU_HAS_SRMMU &&
 	    (cpuinfo.ctx_tbl[0] != ((VA2PA((caddr_t)pm->pm_reg_ptps[cpu]) >>
 					     SRMMU_PPNPASHIFT) | SRMMU_TEPTD)))
-	    panic("%s: cpu %d: CHK(pmap %p): SRMMU region table at 0x%x not installed "
+	    panic("%s: CPU %d: CHK(pmap %p): SRMMU region table at 0x%x not installed "
 		  "for context %d", s, cpu, pm, pm->pm_reg_ptps_pa[cpu], 0);
 #endif
 	for (vr = NUREG; vr < NUREG+NKREG; vr++) {
 		rp = &pm->pm_regmap[vr];
 		if (rp->rg_segmap == NULL)
-			panic("%s: cpu %d: CHK(vr %d): nsegmap = %d; sp==NULL",
+			panic("%s: CPU %d: CHK(vr %d): nsegmap = %d; sp==NULL",
 				s, cpu, vr, rp->rg_nsegmap);
 		if (rp->rg_nsegmap == 0)
 			continue;
 #if defined(SUN4M) || defined(SUN4D)
 		if (CPU_HAS_SRMMU && rp->rg_seg_ptps == NULL)
-		    panic("%s: cpu %d: CHK(vr %d): nsegmap=%d; no SRMMU segment table",
+		    panic("%s: CPU %d: CHK(vr %d): nsegmap=%d; no SRMMU segment table",
 			  s, cpu, vr, rp->rg_nsegmap);
 
-		if (CPU_HAS_SRMMU && vr != NUREG /* 1st kseg is per cpu */ &&
+		if (CPU_HAS_SRMMU && vr != NUREG /* 1st kseg is per CPU */ &&
 		    pm->pm_reg_ptps[cpu][vr] != ((VA2PA((caddr_t)rp->rg_seg_ptps) >>
 					    SRMMU_PPNPASHIFT) | SRMMU_TEPTD))
-		    panic("%s: cpu %d: CHK(vr %d): SRMMU segtbl not installed",
+		    panic("%s: CPU %d: CHK(vr %d): SRMMU segtbl not installed",
 				s, cpu, vr);
 #endif
 		if (CPU_HAS_SRMMU) {
@@ -7774,7 +7774,7 @@ pm_check_k(s, pm)		/* Note: not as extensive as pm_check_u. */
 			}
 		}
 		if (n != rp->rg_nsegmap)
-			printf("%s: cpu %d: kernel CHK(vr %d): inconsistent "
+			printf("%s: CPU %d: kernel CHK(vr %d): inconsistent "
 				"# of pte's: %d, should be %d\n",
 				s, cpu, vr, rp->rg_nsegmap, n);
 	}

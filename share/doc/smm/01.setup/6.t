@@ -1,4 +1,4 @@
-.\"	$NetBSD: 6.t,v 1.4 2003/08/07 10:30:53 agc Exp $
+.\"	$NetBSD: 6.t,v 1.5 2004/02/13 11:36:08 wiz Exp $
 .\"
 .\" Copyright (c) 1980, 1986, 1988, 1993 The Regents of the University of California.
 .\" All rights reserved.
@@ -284,11 +284,11 @@ systemwide activity.  The default ``pigs'' mode shows a dynamic ``ps''.
 By running in the ``vmstat'' mode
 when the system is active you can judge the system activity in several
 dimensions: job distribution, virtual memory load, paging and swapping
-activity, device interrupts, and disk and cpu utilization.
+activity, device interrupts, and disk and CPU utilization.
 Ideally, there should be few blocked (b) jobs,
 there should be little paging or swapping activity, there should
 be available bandwidth on the disk devices (most single arms peak
-out at 20-30 tps in practice), and the user cpu utilization (us) should
+out at 20-30 tps in practice), and the user CPU utilization (us) should
 be high (above 50%).
 .PP
 If the system is busy, then the count of active jobs may be large,

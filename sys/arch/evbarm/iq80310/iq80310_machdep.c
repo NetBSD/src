@@ -1,4 +1,4 @@
-/*	$NetBSD: iq80310_machdep.c,v 1.62 2003/09/09 20:42:38 thorpej Exp $	*/
+/*	$NetBSD: iq80310_machdep.c,v 1.63 2004/02/13 11:36:12 wiz Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002, 2003 Wasabi Systems, Inc.
@@ -73,7 +73,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: iq80310_machdep.c,v 1.62 2003/09/09 20:42:38 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: iq80310_machdep.c,v 1.63 2004/02/13 11:36:12 wiz Exp $");
 
 #include "opt_ddb.h"
 #include "opt_pmap_debug.h"
@@ -370,7 +370,7 @@ initarm(void *arg)
 	 * Heads up ... Setup the CPU / MMU / TLB functions
 	 */
 	if (set_cpufuncs())
-		panic("cpu not recognized!");
+		panic("CPU not recognized!");
 
 	/* Calibrate the delay loop. */
 	iq80310_calibrate_delay();

@@ -1,4 +1,4 @@
-LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.267 $>
+LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.268 $>
 
 
 [Note: This file does not mention every change made to the NetBSD source tree.
@@ -209,7 +209,7 @@ Changes from NetBSD 1.6 to NetBSD 2.0:
 		existing Walnut port as its first member. [scw 20021209]
 	db(1): Added.  Manipulates db(3) btree(3) and hash(3) databases.
 		[lukem 20021211]
-	mips: support fully coherent data caches on MIPS32 and MIPS64 cpus
+	mips: support fully coherent data caches on MIPS32 and MIPS64 CPUs
 		(enabled for Au1x00 and SB-1 CPUS).  [simonb 20021217]
 	install(1): added -N dbdir, to specify different location for user
 		and group databases.  [lukem 20021219]
@@ -310,7 +310,7 @@ Changes from NetBSD 1.6 to NetBSD 2.0:
 		is now done directly into the file. [dogcow 20030304]
 	x86_64: rearrange the x86_64 code, make it share code with i386, and
 		enable MP [fvdl 20030305]
-	kernel: Report correct child cpu times. [dsl 20030305]
+	kernel: Report correct child CPU times. [dsl 20030305]
 	kernel: Use common code for set{u,g}id functions. [dsl 20030305]
 	sysctl: Make hw.physmem and hw.usermem saturate if they are used
 		on a system with >=4G RAM.  [thorpej 20030306]

@@ -1,4 +1,4 @@
-/*	$NetBSD: m_netbsd15.c,v 1.21 2003/10/16 06:34:19 itojun Exp $	*/
+/*	$NetBSD: m_netbsd15.c,v 1.22 2004/02/13 11:36:24 wiz Exp $	*/
 
 /*
  * top - a top users display for Unix
@@ -36,12 +36,12 @@
  *		Tomas Svensson <ts@unix1.net>
  *
  *
- * $Id: m_netbsd15.c,v 1.21 2003/10/16 06:34:19 itojun Exp $
+ * $Id: m_netbsd15.c,v 1.22 2004/02/13 11:36:24 wiz Exp $
  */
 #include <sys/cdefs.h>
 
 #ifndef lint
-__RCSID("$NetBSD: m_netbsd15.c,v 1.21 2003/10/16 06:34:19 itojun Exp $");
+__RCSID("$NetBSD: m_netbsd15.c,v 1.22 2004/02/13 11:36:24 wiz Exp $");
 #endif
 
 #include <sys/param.h>
@@ -78,7 +78,7 @@ struct handle {
 	int remaining;		/* number of pointers remaining */
 };
 
-/* define what weighted cpu is. */
+/* define what weighted CPU is. */
 #define weighted_cpu(pct, pp) ((pp)->p_swtime == 0 ? 0.0 : \
 			 ((pct) / (1.0 - exp((pp)->p_swtime * logcpu))))
 
@@ -116,7 +116,7 @@ static double logcpu;
 static int hz;
 static int ccpu;
 
-/* these are for calculating cpu state percentages */
+/* these are for calculating CPU state percentages */
 
 static int ncpu = 0;
 static u_int64_t *cp_time;
@@ -132,7 +132,7 @@ char *procstatenames[] = {
 	NULL
 };
 
-/* these are for detailing the cpu states */
+/* these are for detailing the CPU states */
 
 int *cpu_states;
 char *cpustatenames[] = {
@@ -553,7 +553,7 @@ format_next_process(handle, get_userid)
 	cputime = pp->p_rtime_sec;	/* This does not count interrupts */
 #endif
 
-	/* calculate the base for cpu percentages */
+	/* calculate the base for CPU percentages */
 	pct = pctdouble(pp->p_pctcpu);
 
 	if (pp->p_stat == LSSLEEP) {
@@ -563,7 +563,7 @@ format_next_process(handle, get_userid)
 		statep = state_abbrev[(unsigned)pp->p_stat];
 
 #ifdef KI_NOCPU
-	/* Post-1.5 change: add cpu number if appropriate */
+	/* Post-1.5 change: add CPU number if appropriate */
 	if (pp->p_cpuid != KI_NOCPU) {
 		switch (pp->p_stat) {
 		case LSONPROC:
@@ -602,7 +602,7 @@ format_next_process(handle, get_userid)
  * one of these by indexing in to the array proc_compares.
  *
  * Possible keys are defined as macros below.  Currently these keys are
- * defined:  percent cpu, cpu ticks, process state, resident set size,
+ * defined:  percent CPU, CPU ticks, process state, resident set size,
  * total virtual memory usage.  The process states are ordered as follows
  * (from least to most important):  WAIT, zombie, sleep, stop, start, run.
  * The array declaration below maps a process state index into a number
@@ -653,7 +653,7 @@ static int sorted_state[] = {
 	5,	/* "onproc"	SONPROC	*/
 };
 
-/* compare_cpu - the comparison function for sorting by cpu percentage */
+/* compare_cpu - the comparison function for sorting by CPU percentage */
 
 static int
 compare_cpu(pp1, pp2)
@@ -783,7 +783,7 @@ compare_state(pp1, pp2)
 	return (result);
 }
 
-/* compare_time - the comparison function for sorting by total cpu time */
+/* compare_time - the comparison function for sorting by total CPU time */
 
 static int
 compare_time(pp1, pp2)
@@ -844,7 +844,7 @@ proc_owner(pid)
  *	"cnt" is size of each array and "diffs" is used for scratch space.
  *	The array "old" is updated on each call.
  *	The routine assumes modulo arithmetic.  This function is especially
- *	useful on BSD mchines for calculating cpu state percentages.
+ *	useful on BSD mchines for calculating CPU state percentages.
  */
 
 void

@@ -1,4 +1,4 @@
-/*	$NetBSD: au_icu.c,v 1.8 2003/10/27 02:16:15 simonb Exp $	*/
+/*	$NetBSD: au_icu.c,v 1.9 2004/02/13 11:36:15 wiz Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -44,7 +44,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: au_icu.c,v 1.8 2003/10/27 02:16:15 simonb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: au_icu.c,v 1.9 2004/02/13 11:36:15 wiz Exp $");
 
 #include "opt_ddb.h"
 
@@ -251,7 +251,7 @@ au_intr_establish(int irq, int req, int level, int type,
 	/*
 	 * First, link it into the tables.
 	 * XXX do we want a separate list (really, should only be one item, not
-	 *     a list anyway) per irq, not per cpu interrupt?
+	 *     a list anyway) per irq, not per CPU interrupt?
 	 */
 	cpu_intr = (irq < 32 ? 0 : 2);
 	LIST_INSERT_HEAD(&au1000_cpuintrs[cpu_intr].cintr_list, ih, ih_q);

@@ -1,4 +1,4 @@
-/*	$NetBSD: c_sh.c,v 1.7 2003/06/23 11:38:53 agc Exp $	*/
+/*	$NetBSD: c_sh.c,v 1.8 2004/02/13 11:36:08 wiz Exp $	*/
 
 /*
  * built-in Bourne commands
@@ -6,7 +6,7 @@
 #include <sys/cdefs.h>
 
 #ifndef lint
-__RCSID("$NetBSD: c_sh.c,v 1.7 2003/06/23 11:38:53 agc Exp $");
+__RCSID("$NetBSD: c_sh.c,v 1.8 2004/02/13 11:36:08 wiz Exp $");
 #endif
 
 
@@ -734,10 +734,10 @@ timex(t, f)
 	t0t = ksh_times(&t0);
 	if (t->left) {
 		/*
-		 * Two ways of getting cpu usage of a command: just use t0
-		 * and t1 (which will get cpu usage from other jobs that
+		 * Two ways of getting CPU usage of a command: just use t0
+		 * and t1 (which will get CPU usage from other jobs that
 		 * finish while we are executing t->left), or get the
-		 * cpu usage of t->left. at&t ksh does the former, while
+		 * CPU usage of t->left. at&t ksh does the former, while
 		 * pdksh tries to do the later (the j_usrtime hack doesn't
 		 * really work as it only counts the last job).
 		 */

@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.S,v 1.21 2004/01/04 11:44:52 jdolecek Exp $	*/
+/*	$NetBSD: locore.S,v 1.22 2004/02/13 11:36:13 wiz Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
@@ -1929,7 +1929,7 @@ switch_restored:
 	movl	PCB_CR0(%esi),%ecx
 #ifdef MULTIPROCESSOR
 	/* 
-	 * If our floating point registers are on a different cpu,
+	 * If our floating point registers are on a different CPU,
 	 * clear CR0_TS so we'll trap rather than reuse bogus state.
 	 */
 	movl	PCB_FPCPU(%esi),%ebx
@@ -2029,7 +2029,7 @@ ENTRY(cpu_switchto)
 
 /*
  * void cpu_exit(struct lwp *l)
- * Switch to the appropriate idle context (lwp0's if uniprocessor; the cpu's 
+ * Switch to the appropriate idle context (lwp0's if uniprocessor; the CPU's 
  * if multiprocessor) and deallocate the address space and kernel stack for p. 
  * Then jump into cpu_switch(), as if we were in the idle proc all along.
  */

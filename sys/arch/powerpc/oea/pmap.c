@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.19 2003/12/27 13:35:52 mjl Exp $	*/
+/*	$NetBSD: pmap.c,v 1.20 2004/02/13 11:36:17 wiz Exp $	*/
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.19 2003/12/27 13:35:52 mjl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.20 2004/02/13 11:36:17 wiz Exp $");
 
 #include "opt_ppcarch.h"
 #include "opt_altivec.h"
@@ -462,7 +462,7 @@ tlbia(void)
 	/*
 	 * Why not use "tlbia"?  Because not all processors implement it.
 	 *
-	 * This needs to be a per-cpu callback to do the appropriate thing
+	 * This needs to be a per-CPU callback to do the appropriate thing
 	 * for the CPU. XXX
 	 */
 	for (i = 0; i < (caddr_t)0x00040000; i += 0x00001000) {

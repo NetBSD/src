@@ -1,4 +1,4 @@
-/*	$NetBSD: frame.h,v 1.7 2003/10/05 09:57:47 scw Exp $	*/
+/*	$NetBSD: frame.h,v 1.8 2004/02/13 11:36:17 wiz Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -180,7 +180,7 @@ struct switchframe {
 };
 
 /*
- * Exception handling requires a per-cpu scratch frame with the
+ * Exception handling requires a per-CPU scratch frame with the
  * following contents.
  */
 struct exc_scratch_frame {
@@ -198,7 +198,7 @@ struct exc_scratch_frame {
 };
 
 /*
- * TLB Miss handling requires a per-cpu scratch frame/stack with the
+ * TLB Miss handling requires a per-CPU scratch frame/stack with the
  * following contents.
  */
 struct tlb_scratch_frame {

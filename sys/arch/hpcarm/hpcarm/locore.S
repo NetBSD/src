@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.S,v 1.7 2002/10/19 12:22:35 bsh Exp $	*/
+/*	$NetBSD: locore.S,v 1.8 2004/02/13 11:36:13 wiz Exp $	*/
 
 /*
  * Copyright (C) 1994-1997 Mark Brinicombe
@@ -121,7 +121,7 @@ ENTRY_NP(cpu_reset)
 
 	/*
 	 * _cpu_reset_address contains the address to branch to, to complete
-	 * the cpu reset after turning the MMU off
+	 * the CPU reset after turning the MMU off
 	 * This variable is provided by the hardware specific code
 	 */
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: mvmebus.c,v 1.6 2003/11/26 14:27:15 scw Exp $	*/
+/*	$NetBSD: mvmebus.c,v 1.7 2004/02/13 11:36:22 wiz Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2002 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mvmebus.c,v 1.6 2003/11/26 14:27:15 scw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mvmebus.c,v 1.7 2004/02/13 11:36:22 wiz Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -596,7 +596,7 @@ mvmebus_dmamap_load_common(sc, map)
 
 	/*
 	 * Traverse the list of segments which make up this map, and
-	 * convert the cpu-relative addresses therein to VMEbus addresses.
+	 * convert the CPU-relative addresses therein to VMEbus addresses.
 	 */
 	for (ds = &map->dm_segs[0]; ds < &map->dm_segs[map->dm_nsegs]; ds++) {
 		/*
@@ -843,7 +843,7 @@ mvmebus_dmamem_alloc(vsc, len, am, datasize, swap, segs, nsegs, rsegs, flags)
 	/*
 	 * Allocate physical memory.
 	 *
-	 * Note: This fills in the segments with cpu-relative physical
+	 * Note: This fills in the segments with CPU-relative physical
 	 * addresses. A further call to bus_dmamap_load_raw() (with a
 	 * DMA map which specifies the same VMEbus address space and
 	 * constraints as the call to here) must be made. The segments

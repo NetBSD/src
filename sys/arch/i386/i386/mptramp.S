@@ -1,4 +1,4 @@
-/*	$NetBSD: mptramp.S,v 1.5 2003/08/09 08:58:50 martin Exp $	*/
+/*	$NetBSD: mptramp.S,v 1.6 2004/02/13 11:36:14 wiz Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -106,7 +106,7 @@
  * value in cpu_trace.
  *
  * %edi points at cpu_trace;  cpu_trace[0] is the "hold point";
- * cpu_trace[1] is the point which the cpu has reached.
+ * cpu_trace[1] is the point which the CPU has reached.
  * cpu_trace[2] is the last value stored by HALTT.
  */
 

@@ -1,4 +1,4 @@
-/*      $NetBSD: advmcode.c,v 1.6 2003/11/02 11:07:44 wiz Exp $        */
+/*      $NetBSD: advmcode.c,v 1.7 2004/02/13 11:36:21 wiz Exp $        */
 
 /*
  * Generic driver definitions and exported functions for the Advanced
@@ -55,13 +55,13 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: advmcode.c,v 1.6 2003/11/02 11:07:44 wiz Exp $");
+__KERNEL_RCSID(0, "$NetBSD: advmcode.c,v 1.7 2004/02/13 11:36:21 wiz Exp $");
 
 #include <sys/param.h>
 
 
 /*
- * This is the uCode for the Narrow board RISC cpu.
+ * This is the uCode for the Narrow board RISC CPU.
  * This code is loaded into Lram during initialization procedure.
  */
 

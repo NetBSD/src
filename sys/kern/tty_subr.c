@@ -1,4 +1,4 @@
-/*	$NetBSD: tty_subr.c,v 1.25 2003/12/10 12:06:25 agc Exp $	*/
+/*	$NetBSD: tty_subr.c,v 1.26 2004/02/13 11:36:23 wiz Exp $	*/
 
 /*
  * Copyright (c) 1993, 1994 Theo de Raadt
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tty_subr.c,v 1.25 2003/12/10 12:06:25 agc Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tty_subr.c,v 1.26 2004/02/13 11:36:23 wiz Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -44,7 +44,7 @@ MALLOC_DEFINE(M_TTYS, "ttys", "allocated tty structures");
  * At compile time, choose:
  * There are two ways the TTY_QUOTE bit can be stored. If QBITS is
  * defined we allocate an array of bits -- 1/8th as much memory but
- * setbit(), clrbit(), and isset() take more cpu. If QBITS is
+ * setbit(), clrbit(), and isset() take more CPU. If QBITS is
  * undefined, we just use an array of bytes.
  * 
  * If TTY_QUOTE functionality isn't required by a line discipline,

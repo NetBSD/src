@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap_bootstrap.c,v 1.16 2003/10/01 06:14:57 mycroft Exp $	*/
+/*	$NetBSD: pmap_bootstrap.c,v 1.17 2004/02/13 11:36:16 wiz Exp $	*/
 
 /*
  * This file was taken from mvme68k/mvme68k/pmap_bootstrap.c
@@ -45,7 +45,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap_bootstrap.c,v 1.16 2003/10/01 06:14:57 mycroft Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap_bootstrap.c,v 1.17 2004/02/13 11:36:16 wiz Exp $");
 
 #include <sys/param.h>
 #include <sys/kcore.h>
@@ -344,7 +344,7 @@ pmap_bootstrap(nextpa, firstpa)
 	while (pte < epte)
 		*pte++ = PG_NV;
 #ifdef MAXADDR
-	/* tmp double-map for cpu's with physmem at the end of memory */
+	/* tmp double-map for CPUs with physmem at the end of memory */
 	*pte = MAXADDR | PG_RW | PG_CI | PG_U | PG_V;
 #endif
 	/*

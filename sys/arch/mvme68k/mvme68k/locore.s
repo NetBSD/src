@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.93 2003/08/07 16:28:42 agc Exp $	*/
+/*	$NetBSD: locore.s,v 1.94 2004/02/13 11:36:15 wiz Exp $	*/
 
 /*
  * Copyright (c) 1980, 1990, 1993
@@ -659,7 +659,7 @@ Lmotommu2:
  * Should be running mapped from this point on
  */
 Lenab1:
-/* Point the cpu VBR at our vector table */
+/* Point the CPU VBR at our vector table */
 	movc	%vbr,%d0		| Preserve Bug's VBR address
 	movl	%d0,_ASM_LABEL(bug_vbr)
 	movl	#_C_LABEL(vectab),%d0	| get our VBR address

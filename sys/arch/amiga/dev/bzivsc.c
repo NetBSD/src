@@ -1,4 +1,4 @@
-/*	$NetBSD: bzivsc.c,v 1.15 2003/04/01 21:26:28 thorpej Exp $ */
+/*	$NetBSD: bzivsc.c,v 1.16 2004/02/13 11:36:09 wiz Exp $ */
 
 /*
  * Copyright (c) 1997 Michael L. Hitch
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bzivsc.c,v 1.15 2003/04/01 21:26:28 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bzivsc.c,v 1.16 2004/02/13 11:36:09 wiz Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -344,7 +344,7 @@ bzivsc_dma_setup(struct ncr53c9x_softc *sc, caddr_t *addr, size_t *len,
 	 * DMA can be nasty for high-speed serial input, so limit the
 	 * size of this DMA operation if the serial port is running at
 	 * a high speed (higher than 19200 for now - should be adjusted
-	 * based on cpu type and speed?).
+	 * based on CPU type and speed?).
 	 * XXX - add serial speed check XXX
 	 */
 	if (ser_open_speed > 19200 && bzivsc_max_dma != 0 &&

@@ -1,4 +1,4 @@
-/*	$NetBSD: altq_hfsc.c,v 1.8 2003/11/09 22:11:12 christos Exp $	*/
+/*	$NetBSD: altq_hfsc.c,v 1.9 2004/02/13 11:36:09 wiz Exp $	*/
 /*	$KAME: altq_hfsc.c,v 1.9 2001/10/26 04:56:11 kjc Exp $	*/
 
 /*
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: altq_hfsc.c,v 1.8 2003/11/09 22:11:12 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: altq_hfsc.c,v 1.9 2004/02/13 11:36:09 wiz Exp $");
 
 #if defined(__FreeBSD__) || defined(__NetBSD__)
 #include "opt_altq.h"
@@ -1409,7 +1409,7 @@ hfscopen(dev, flag, fmt, p)
 		init_machclk();
 
 	if (machclk_freq == 0) {
-		printf("hfsc: no cpu clock available!\n");
+		printf("hfsc: no CPU clock available!\n");
 		return (ENXIO);
 	}
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: acpi_madt.c,v 1.9 2003/12/11 17:46:23 christos Exp $	*/
+/*	$NetBSD: acpi_madt.c,v 1.10 2004/02/13 11:36:20 wiz Exp $	*/
 
 /*
  * Copyright (c) 2003 Wasabi Systems, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_madt.c,v 1.9 2003/12/11 17:46:23 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_madt.c,v 1.10 2004/02/13 11:36:20 wiz Exp $");
 
 #include <sys/param.h>
 #include <sys/ioctl.h>
@@ -172,7 +172,7 @@ acpi_print_iosapic(MADT_IO_SAPIC *p)
 static void
 acpi_print_local_sapic(MADT_LOCAL_SAPIC *p)
 {
-	printf("local sapic: cpu %u sapid %u sapeid %u enabled: %s\n",
+	printf("local sapic: CPU %u sapid %u sapeid %u enabled: %s\n",
 	    p->ProcessorId, p->LocalSapicId, p->LocalSapicEid,
 	    p->ProcessorEnabled ? "yes" : "no");
 }

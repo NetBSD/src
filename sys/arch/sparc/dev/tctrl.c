@@ -1,4 +1,4 @@
-/*	$NetBSD: tctrl.c,v 1.25 2003/07/15 00:04:57 lukem Exp $	*/
+/*	$NetBSD: tctrl.c,v 1.26 2004/02/13 11:36:17 wiz Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tctrl.c,v 1.25 2003/07/15 00:04:57 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tctrl.c,v 1.26 2004/02/13 11:36:17 wiz Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -597,7 +597,7 @@ tctrl_set_lcd(what, which)
 	sc = (struct tctrl_softc *) tctrl_cd.cd_devs[TCTRL_STD_DEV];
 	s = splts102();
 
-	/* provide a quick exit to save cpu time */
+	/* provide a quick exit to save CPU time */
 	if ((what == 1 && sc->sc_lcdstate & which) ||
 	    (what == 0 && !(sc->sc_lcdstate & which))) {
 		splx(s);

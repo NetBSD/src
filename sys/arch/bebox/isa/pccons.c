@@ -1,4 +1,4 @@
-/*	$NetBSD: pccons.c,v 1.31 2003/10/24 18:20:51 matt Exp $	*/
+/*	$NetBSD: pccons.c,v 1.32 2004/02/13 11:36:11 wiz Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -79,7 +79,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pccons.c,v 1.31 2003/10/24 18:20:51 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pccons.c,v 1.32 2004/02/13 11:36:11 wiz Exp $");
 
 #include "opt_ddb.h"
 #include "opt_xserver.h"
@@ -477,7 +477,7 @@ get_cursor_shape()
 	 * real 6845's, as found on, MDA, Hercules or CGA cards, do
 	 * not support reading the cursor shape registers. the 6845
 	 * tri-states it's data bus. This is _normally_ read by the
-	 * cpu as either 0x00 or 0xff.. in which case we just use
+	 * CPU as either 0x00 or 0xff.. in which case we just use
 	 * a line cursor.
 	 */
 	if (cursor_shape == 0x0000 || cursor_shape == 0xffff)

@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_synch.c,v 1.140 2004/01/04 13:27:53 kleink Exp $	*/
+/*	$NetBSD: kern_synch.c,v 1.141 2004/02/13 11:36:23 wiz Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
@@ -74,7 +74,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_synch.c,v 1.140 2004/01/04 13:27:53 kleink Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_synch.c,v 1.141 2004/02/13 11:36:23 wiz Exp $");
 
 #include "opt_ddb.h"
 #include "opt_ktrace.h"
@@ -890,7 +890,7 @@ mi_switch(struct lwp *l, struct lwp *newl)
 	p->p_rtime.tv_sec = s;
 
 	/*
-	 * Check if the process exceeds its cpu resource allocation.
+	 * Check if the process exceeds its CPU resource allocation.
 	 * If over max, kill it.  In any case, if it has run for more
 	 * than 10 minutes, reduce priority to give others a chance.
 	 */
@@ -1118,11 +1118,11 @@ resetprocpriority(struct proc *p)
 
 /*
  * We adjust the priority of the current process.  The priority of a process
- * gets worse as it accumulates CPU time.  The cpu usage estimator (p_estcpu)
+ * gets worse as it accumulates CPU time.  The CPU usage estimator (p_estcpu)
  * is increased here.  The formula for computing priorities (in kern_synch.c)
  * will compute a different value each time p_estcpu increases. This can
  * cause a switch, but unless the priority crosses a PPQ boundary the actual
- * queue will not change.  The cpu usage estimator ramps up quite quickly
+ * queue will not change.  The CPU usage estimator ramps up quite quickly
  * when the process is running (linearly), and decays away exponentially, at
  * a rate which is proportionally slower when the system is busy.  The basic
  * principle is that the system will 90% forget that the process used a lot

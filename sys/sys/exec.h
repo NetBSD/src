@@ -1,4 +1,4 @@
-/*	$NetBSD: exec.h,v 1.103 2004/02/06 08:02:59 junyoung Exp $	*/
+/*	$NetBSD: exec.h,v 1.104 2004/02/13 11:36:23 wiz Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -231,7 +231,7 @@ struct exec_vmcmd {
 MALLOC_DECLARE(M_EXEC);
 
 /*
- * funtions used either by execve() or the various cpu-dependent execve()
+ * funtions used either by execve() or the various CPU-dependent execve()
  * hooks.
  */
 void	kill_vmcmd		__P((struct exec_vmcmd **));

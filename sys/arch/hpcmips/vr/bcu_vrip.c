@@ -1,4 +1,4 @@
-/*	$NetBSD: bcu_vrip.c,v 1.24 2003/12/12 16:21:35 jmc Exp $	*/
+/*	$NetBSD: bcu_vrip.c,v 1.25 2004/02/13 11:36:13 wiz Exp $	*/
 
 /*-
  * Copyright (c) 1999-2001 SATO Kazumi. All rights reserved.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bcu_vrip.c,v 1.24 2003/12/12 16:21:35 jmc Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bcu_vrip.c,v 1.25 2004/02/13 11:36:13 wiz Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -253,13 +253,13 @@ vrbcu_dump_regs()
 		break;
 	}
 	if (tclock)
-		printf("%s: cpu %d.%03dMHz, bus %d.%03dMHz, ram %d.%03dMHz\n",
+		printf("%s: CPU %d.%03dMHz, bus %d.%03dMHz, ram %d.%03dMHz\n",
 		    sc->sc_dev.dv_xname,
 		    cpuclock/1000000, (cpuclock%1000000)/1000,
 		    tclock/1000000, (tclock%1000000)/1000,
 		    vtclock/1000000, (vtclock%1000000)/1000);
 	else {
-		printf("%s: cpu %d.%03dMHz\n",
+		printf("%s: CPU %d.%03dMHz\n",
 		    sc->sc_dev.dv_xname,
 		    cpuclock/1000000, (cpuclock%1000000)/1000);
 		printf("%s: UNKNOWN BUS CLOCK SPEED:"

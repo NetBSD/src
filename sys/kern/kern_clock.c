@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_clock.c,v 1.89 2004/01/23 05:01:19 simonb Exp $	*/
+/*	$NetBSD: kern_clock.c,v 1.90 2004/02/13 11:36:22 wiz Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -74,7 +74,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_clock.c,v 1.89 2004/01/23 05:01:19 simonb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_clock.c,v 1.90 2004/02/13 11:36:22 wiz Exp $");
 
 #include "opt_ntp.h"
 #include "opt_multiprocessor.h"
@@ -109,9 +109,9 @@ __KERNEL_RCSID(0, "$NetBSD: kern_clock.c,v 1.89 2004/01/23 05:01:19 simonb Exp $
  * track of real time.  The second timer handles kernel and user profiling,
  * and does resource use estimation.  If the second timer is programmable,
  * it is randomized to avoid aliasing between the two clocks.  For example,
- * the randomization prevents an adversary from always giving up the cpu
+ * the randomization prevents an adversary from always giving up the CPU
  * just before its quantum expires.  Otherwise, it would never accumulate
- * cpu ticks.  The mean frequency of the second timer is stathz.
+ * CPU ticks.  The mean frequency of the second timer is stathz.
  *
  * If no second timer exists, stathz will be zero; in this case we drive
  * profiling and statistics off the main clock.  This WILL NOT be accurate;
@@ -823,7 +823,7 @@ hardclock(struct clockframe *frame)
 
 	/*
 	 * Update real-time timeout queue.
-	 * Process callouts at a very low cpu priority, so we don't keep the
+	 * Process callouts at a very low CPU priority, so we don't keep the
 	 * relatively high clock interrupt priority any longer than necessary.
 	 */
 	if (callout_hardclock()) {

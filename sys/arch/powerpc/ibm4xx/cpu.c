@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.c,v 1.17 2003/09/23 15:25:26 shige Exp $	*/
+/*	$NetBSD: cpu.c,v 1.18 2004/02/13 11:36:16 wiz Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.17 2003/09/23 15:25:26 shige Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.18 2004/02/13 11:36:16 wiz Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -159,7 +159,7 @@ cpu_probe_cache()
 	int version;
 
 	/*
-	 * First we need to identify the cpu and determine the
+	 * First we need to identify the CPU and determine the
 	 * cache line size, or things like memset/memcpy may lose
 	 * badly.
 	 */

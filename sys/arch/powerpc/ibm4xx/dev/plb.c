@@ -1,4 +1,4 @@
-/* $NetBSD: plb.c,v 1.11 2003/07/25 10:50:13 scw Exp $ */
+/* $NetBSD: plb.c,v 1.12 2004/02/13 11:36:16 wiz Exp $ */
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: plb.c,v 1.11 2003/07/25 10:50:13 scw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: plb.c,v 1.12 2004/02/13 11:36:16 wiz Exp $");
 
 #include "locators.h"
 
@@ -83,7 +83,7 @@ __KERNEL_RCSID(0, "$NetBSD: plb.c,v 1.11 2003/07/25 10:50:13 scw Exp $");
 #include <powerpc/ibm4xx/ibm405gp.h>
 
 /*
- * The devices that attach to the processor local bus on the 405GP cpu.
+ * The devices that attach to the processor local bus on the 405GP CPU.
  */
 const struct plb_dev plb_devs [] = {
 	{ "cpu", },

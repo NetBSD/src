@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.196 2003/11/16 14:56:05 pk Exp $	*/
+/*	$NetBSD: locore.s,v 1.197 2004/02/13 11:36:18 wiz Exp $	*/
 
 /*
  * Copyright (c) 1996 Paul Kranenburg
@@ -168,7 +168,7 @@ _EINTSTACKP = CPUINFO_VA + CPUINFO_EINTSTACK
 _CISELFP	= CPUINFO_VA + CPUINFO_SELF
 _CIFLAGS	= CPUINFO_VA + CPUINFO_FLAGS
 
-/* Per-cpu AST and reschedule requests */
+/* Per-CPU AST and reschedule requests */
 _WANT_AST	= CPUINFO_VA + CPUINFO_WANT_AST
 _WANT_RESCHED	= CPUINFO_VA + CPUINFO_WANT_RESCHED
 
@@ -218,7 +218,7 @@ cpcb = CPUINFO_VA + CPUINFO_CURPCB
 curlwp = CPUINFO_VA + CPUINFO_CURLWP
 
 /*
- * cputyp is the current cpu type, used to distinguish between
+ * cputyp is the current CPU type, used to distinguish between
  * the many variations of different sun4* machines. It contains
  * the value CPU_SUN4, CPU_SUN4C, or CPU_SUN4M.
  */
@@ -3957,7 +3957,7 @@ startmap_done:
 	jmp	%g1
 	 nop
 1:
-	sethi	%hi(_C_LABEL(cputyp)), %o0	! what type of cpu we are on
+	sethi	%hi(_C_LABEL(cputyp)), %o0	! what type of CPU we are on
 	st	%g4, [%o0 + %lo(_C_LABEL(cputyp))]
 
 	sethi	%hi(_C_LABEL(pgshift)), %o0	! pgshift = log2(nbpg)
@@ -4966,7 +4966,7 @@ Lsw_load:
 	ld	[%o2 + P_VMSPACE], %o3	! vm = p->p_vmspace;
 	ld	[%o3 + VM_PMAP], %o3	! pm = vm->vm_map.vm_pmap;
 #if defined(MULTIPROCESSOR)
-	/* Add this CPU to the pmap's cpu set */
+	/* Add this CPU to the pmap's CPU set */
 	sethi	%hi(CPUINFO_VA + CPUINFO_CPUNO), %o0
 	ld	[%o0 + %lo(CPUINFO_VA + CPUINFO_CPUNO)], %o1
 	mov	1, %o2
@@ -6062,7 +6062,7 @@ ENTRY(raise)
 	 add	%o1, %o3, %o1
 	retl
 	 st	%o2, [%o1]
-#else /* MSIIEP - ignore %o0, only one cpu ever */
+#else /* MSIIEP - ignore %o0, only one CPU ever */
 	mov	1, %o2
 	sethi	%hi(MSIIEP_PCIC_VA), %o0
 	sll	%o2, %o1, %o2
@@ -6247,7 +6247,7 @@ NOP_ON_4_4C_1:
  * void microtime(struct timeval *tv)
  *
  * This is similar to 4c/4m microtime.   The difference is that
- * counter uses 31 bits and ticks every 4 CPU cycles (cpu is @100MHz)
+ * counter uses 31 bits and ticks every 4 CPU cycles (CPU is @100MHz)
  * the magic to divide by 25 is stolen from gcc
  */
 ENTRY(microtime)

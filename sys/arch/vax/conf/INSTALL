@@ -1,4 +1,4 @@
-#	$NetBSD: INSTALL,v 1.30 2003/09/06 03:25:32 itojun Exp $
+#	$NetBSD: INSTALL,v 1.31 2004/02/13 11:36:19 wiz Exp $
 #
 # INSTALL kernel; all supported devices but nothing fancy.
 #
@@ -115,7 +115,7 @@ vsbus0		at mainbus0	# Internal "virtual" VAXstation bus
 ibus0		at mainbus0	# Internal MicroVAX bus
 
 # Devices connected at VAXBI
-cpu0		at bi? node?	# KA820/KA825 cpu
+cpu0		at bi? node?	# KA820/KA825 CPU
 cpu*		at bi? node?
 mem*		at bi? node?	# Memory subsystems
 #uba*		at bi? node?	# DWBUA BI-Unibus adapter

@@ -1,4 +1,4 @@
-/* $NetBSD: machdep.c,v 1.279 2003/12/30 12:33:13 pk Exp $ */
+/* $NetBSD: machdep.c,v 1.280 2004/02/13 11:36:09 wiz Exp $ */
 
 /*-
  * Copyright (c) 1998, 1999, 2000 The NetBSD Foundation, Inc.
@@ -75,7 +75,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.279 2003/12/30 12:33:13 pk Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.280 2004/02/13 11:36:09 wiz Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -178,7 +178,7 @@ struct	user *proc0paddr;
 /* Number of machine cycles per microsecond */
 u_int64_t	cycles_per_usec;
 
-/* number of cpus in the box.  really! */
+/* number of CPUs in the box.  really! */
 int		ncpus;
 
 struct bootinfo_kernel bootinfo;
@@ -764,7 +764,7 @@ nobootinfo:
 
 
 	/*
-	 * Figure out the number of cpus in the box, from RPB fields.
+	 * Figure out the number of CPUs in the box, from RPB fields.
 	 * Really.  We mean it.
 	 */
 	for (i = 0; i < hwrpb->rpb_pcs_cnt; i++) {

@@ -1,4 +1,4 @@
-/*	$NetBSD: stb1_locore.S,v 1.12 2003/11/28 08:15:10 scw Exp $	*/
+/*	$NetBSD: stb1_locore.S,v 1.13 2004/02/13 11:36:17 wiz Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -158,14 +158,14 @@ Lsh5_stb1_init:
 /*
  * TLB cookies are used to keep track of which TLB slot a particular mapping
  * was inserted into. This provides a quick way to invalidate the mapping
- * since we don't need to search the TLB (The sh5 cpu provides no h/w
+ * since we don't need to search the TLB (The sh5 CPU provides no h/w
  * assistance for invalidating specific mappings).
  *
  * There are 16-bits available in the cookie. We split that into two 8-bit
  * fields; one for the instruction TLB, the other for the data TLB.
  *
  * Each field is comprised of a "valid" bit and a TLB "index". The index
- * can range from 0-127. Since this cpu has only 64 TLB slots, values from
+ * can range from 0-127. Since this CPU has only 64 TLB slots, values from
  * 64-127 are not used.
  */
 
@@ -435,7 +435,7 @@ ENTRY_NOPROFILE(_sh5_stb1_tlbload)
  * Very Important Note: These Cache Ops MUST NOT CAUSE A TLB MISS EXCEPTION.
  *
  * The SH-5's cache can be somewhat painful to manage, at least the
- * implementation of this particular cpu's cache is.
+ * implementation of this particular CPU's cache is.
  *
  * The instruction cache is virtually indexed and tagged, therefore it needs
  * to be invalidated on each and every context switch. We also provide hooks

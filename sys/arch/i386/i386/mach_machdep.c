@@ -1,4 +1,4 @@
-/*	$NetBSD: mach_machdep.c,v 1.13 2003/12/02 04:53:11 christos Exp $	 */
+/*	$NetBSD: mach_machdep.c,v 1.14 2004/02/13 11:36:13 wiz Exp $	 */
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mach_machdep.c,v 1.13 2003/12/02 04:53:11 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mach_machdep.c,v 1.14 2004/02/13 11:36:13 wiz Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_vm86.h"
@@ -137,7 +137,7 @@ mach_host_basic_info(info)
 		info->cpu_subtype = MACHO_CPU_SUBTYPE_PENTPRO;
 		break;
 	default:
-		uprintf("Undefined cpu class %d",
+		uprintf("Undefined CPU class %d",
 		    cpu_info_primary.ci_cpu_class);
 		info->cpu_subtype = MACHO_CPU_SUBTYPE_I386_ALL;
 	}

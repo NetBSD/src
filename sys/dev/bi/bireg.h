@@ -1,4 +1,4 @@
-/*	$NetBSD: bireg.h,v 1.8 2003/08/07 16:30:53 agc Exp $	*/
+/*	$NetBSD: bireg.h,v 1.9 2004/02/13 11:36:20 wiz Exp $	*/
 /*
  * Copyright (c) 1988 Regents of the University of California.
  * All rights reserved.
@@ -88,7 +88,7 @@ struct bi_node {
 };
 
 /*
- * A cpu node.
+ * A CPU node.
  */
 struct bi_cpu {
 	struct	biiregs biic;	/* interface chip */
@@ -120,7 +120,7 @@ struct bi_cpu {
 #define	BIDT_DWBUA	0x0102	/* DWBUA Unibus adapter */
 #define	BIDT_KLESI	0x0103	/* KLESI-B (DWBLA) adapter */
 #define	BIDT_HSB70	0x4104	/* HSB70 */
-#define	BIDT_KA820	0x0105	/* KA820 cpu */
+#define	BIDT_KA820	0x0105	/* KA820 CPU */
 #define	BIDT_DB88	0x0106	/* DB88 (NBI) adapter */
 #define	BIDT_DWMBA	0x2107	/* XMI-BI (XBI) adapter */
 #define	BIDT_DWMBB	0x0107	/* XMI-BI (XBI) adapter */

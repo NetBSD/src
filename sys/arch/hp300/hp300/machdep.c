@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.177 2003/12/30 12:33:16 pk Exp $	*/
+/*	$NetBSD: machdep.c,v 1.178 2004/02/13 11:36:12 wiz Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1990, 1993
@@ -77,7 +77,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.177 2003/12/30 12:33:16 pk Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.178 2004/02/13 11:36:12 wiz Exp $");
 
 #include "opt_ddb.h"
 #include "opt_compat_hpux.h"
@@ -215,7 +215,7 @@ cpu_kcore_hdr_t cpu_kcore_hdr;
  * and 68030 systems.  See clock.c for the delay
  * calibration algorithm.
  */
-int	cpuspeed;		/* relative cpu speed; XXX skewed on 68040 */
+int	cpuspeed;		/* relative CPU speed; XXX skewed on 68040 */
 int	delay_divisor;		/* delay constant */
 
 /*
@@ -315,7 +315,7 @@ consinit()
 
 /*
  * cpu_startup: allocate memory for variable-sized tables,
- * initialize cpu
+ * initialize CPU
  */
 void
 cpu_startup()
@@ -1275,7 +1275,7 @@ done:
 
 /*
  * cpu_exec_aout_makecmds():
- *	cpu-dependent a.out format hook for execve().
+ *	CPU-dependent a.out format hook for execve().
  *
  * Determine of the given exec package refers to something which we
  * understand and, if so, set up the vmcmds for it.

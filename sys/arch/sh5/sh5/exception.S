@@ -1,4 +1,4 @@
-/*	$NetBSD: exception.S,v 1.23 2003/08/10 22:24:50 scw Exp $	*/
+/*	$NetBSD: exception.S,v 1.24 2004/02/13 11:36:17 wiz Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -71,7 +71,7 @@
  * Note that r1 holds the value of SR on entry to the exception and should
  * be written back to SR as soon as enough data contingent with the exception
  * has been saved by the handler. After _EXCEPTION_ENTRY, r2 points to the
- * cpu_info for this cpu so that handlers can retrieve exception contingent
+ * cpu_info for this CPU so that handlers can retrieve exception contingent
  * data, amongst other stuff.
  *
  * An explanation of why this code has to Tread Carefully is appropos...
@@ -656,7 +656,7 @@ Lsh5_vector_tlbmiss:
 	ori	r0, (SH5_PTEH_SH | SH5_PTEH_V), r0 /* Set SH and V bits */
 
 	/*
-	 * Invoke the cpu-specific TLB fill subroutine.
+	 * Invoke the CPU-specific TLB fill subroutine.
 	 *
 	 * It expects the following registers to be live:
 	 *
@@ -818,7 +818,7 @@ Lsh5_event_sync:
 
 	.type	Ltrapagain,@function
 Ltrapagain:
-	getcon	kcr0, r2		/* Get cpu_info for this cpu */
+	getcon	kcr0, r2		/* Get cpu_info for this CPU */
 	LEAF(_C_LABEL(trap), r0)
 	LDPTR	r2, CI_CURLWP, r2	/* Get lwp pointer */
 	ptabs/l	r0, tr0
@@ -833,7 +833,7 @@ Ltrapepilogue:
 	shlri	r2, SH5_CONREG_SR_MD_SHIFT, r0
 	andi	r0, 1, r0		/* Going back to user-mode? */
 	bne/u	r0, r63, tr0		/* Nope. No need to check for ASTs */
-	getcon	kcr0, r1		/* Get cpu_info for this cpu */
+	getcon	kcr0, r1		/* Get cpu_info for this CPU */
 	LDPTR	r1, CI_CURLWP, r1	/* Get curlwp */
 	beq/u	r1, r63, tr0		/* Exit if NULL */
 	LDPTR	r1, L_PROC, r1		/* r1 = l->l_proc */
@@ -908,7 +908,7 @@ Lsh5_event_interrupt:
 	getcon	sr, r1			/* Need to disable interrupts */
 	ori	r1, SH5_CONREG_SR_IMASK_ALL, r0
 	putcon	r0, sr
-	getcon	kcr0, r2		/* Get cpu_info for this cpu */
+	getcon	kcr0, r2		/* Get cpu_info for this CPU */
 	ld.l	r2, CI_INTR_DEPTH, r0	/* Fetch interrupt nesting level */
 	addi	r0, -1, r0		/* One less level */
 	st.l	r2, CI_INTR_DEPTH, r0	/* Write it back */
@@ -920,7 +920,7 @@ Lsh5_event_interrupt:
 	shlri	r2, SH5_CONREG_SR_MD_SHIFT, r0
 	andi	r0, 1, r0		/* Going back to user-mode? */
 	bne/u	r0, r63, tr0		/* Nope. No need to check for ASTs */
-	getcon	kcr0, r1		/* Get cpu_info for this cpu */
+	getcon	kcr0, r1		/* Get cpu_info for this CPU */
 	LDPTR	r1, CI_CURLWP, r1	/* Get curlwp */
 	beq/u	r1, r63, tr0		/* Exit if NULL */
 	LDPTR	r1, L_PROC, r1		/* r1 = l->l_proc */
@@ -1309,7 +1309,7 @@ GLOBAL(sh5_resvec_vector_table)
  * RESVEC Offset: 0x0
  *        Length: 0x100
  *
- * Come here when a gross error occurs. This is generally when the cpu wants
+ * Come here when a gross error occurs. This is generally when the CPU wants
  * to take a synchronous exception, but they're blocked by SR.BL being set.
  *
  * By now, the MMU is off, and the program counter/status register values

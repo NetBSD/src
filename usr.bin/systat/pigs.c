@@ -1,4 +1,4 @@
-/*	$NetBSD: pigs.c,v 1.26 2004/01/11 19:15:50 jdolecek Exp $	*/
+/*	$NetBSD: pigs.c,v 1.27 2004/02/13 11:36:24 wiz Exp $	*/
 
 /*-
  * Copyright (c) 1980, 1992, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)pigs.c	8.2 (Berkeley) 9/23/93";
 #endif
-__RCSID("$NetBSD: pigs.c,v 1.26 2004/01/11 19:15:50 jdolecek Exp $");
+__RCSID("$NetBSD: pigs.c,v 1.27 2004/02/13 11:36:24 wiz Exp $");
 #endif /* not lint */
 
 /*
@@ -100,7 +100,7 @@ showpigs(void)
 
 	if (pt == NULL)
 		return;
-	/* Accumulate the percent of cpu per user. */
+	/* Accumulate the percent of CPU per user. */
 	total = 0.0;
 	for (i = 0; i <= nproc; i++) {
 		/* Accumulate the percentage. */

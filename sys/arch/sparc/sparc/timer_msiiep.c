@@ -1,4 +1,4 @@
-/*	$NetBSD: timer_msiiep.c,v 1.11 2003/07/15 00:05:09 lukem Exp $	*/
+/*	$NetBSD: timer_msiiep.c,v 1.12 2004/02/13 11:36:18 wiz Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -58,7 +58,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: timer_msiiep.c,v 1.11 2003/07/15 00:05:09 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: timer_msiiep.c,v 1.12 2004/02/13 11:36:18 wiz Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -84,7 +84,7 @@ static struct intrhand level14;
 #define	msiiep	((volatile struct msiiep_pcic_reg *)MSIIEP_PCIC_VA)
 
 /*
- * ms-IIep counters tick every 4 cpu clock @100MHz.
+ * ms-IIep counters tick every 4 CPU clock @100MHz.
  * counter is reset to 1 when new limit is written.
  */
 #define	tmr_ustolimIIep(n)	((n) * 25 + 1)
@@ -193,7 +193,7 @@ timerattach_msiiep(struct device *parent, struct device *self, void *aux)
 {
 
 	/*
-	 * Attach system and cpu counters (kernel hard and stat clocks)
+	 * Attach system and CPU counters (kernel hard and stat clocks)
 	 * for ms-IIep. Counters are part of the PCIC and there's no
 	 * PROM node for them.
 	 */

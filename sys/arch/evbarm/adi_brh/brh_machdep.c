@@ -1,4 +1,4 @@
-/*	$NetBSD: brh_machdep.c,v 1.18 2003/07/15 00:24:56 lukem Exp $	*/
+/*	$NetBSD: brh_machdep.c,v 1.19 2004/02/13 11:36:11 wiz Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002, 2003 Wasabi Systems, Inc.
@@ -73,7 +73,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: brh_machdep.c,v 1.18 2003/07/15 00:24:56 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: brh_machdep.c,v 1.19 2004/02/13 11:36:11 wiz Exp $");
 
 #include "opt_ddb.h"
 #include "opt_pmap_debug.h"
@@ -416,7 +416,7 @@ initarm(void *arg)
 	 * Heads up ... Setup the CPU / MMU / TLB functions
 	 */
 	if (set_cpufuncs())
-		panic("cpu not recognized!");
+		panic("CPU not recognized!");
 
 	/*
 	 * We are currently running with the MMU enabled and the

@@ -1,4 +1,4 @@
-.\"	$NetBSD: 4.t,v 1.3 2003/08/07 10:30:47 agc Exp $
+.\"	$NetBSD: 4.t,v 1.4 2004/02/13 11:36:08 wiz Exp $
 .\"
 .\" Copyright (c) 1985 The Regents of the University of California.
 .\" All rights reserved.
@@ -385,7 +385,7 @@ The hardware clock interrupts the processor 100 times per second
 at high priority.
 As most of the clock-based events need not be done at high priority,
 the system schedules a lower priority software interrupt to do the less
-time-critical events such as cpu scheduling and timeout processing.
+time-critical events such as CPU scheduling and timeout processing.
 Often there are no such events, and the software interrupt handler
 finds nothing to do and returns. 
 The high priority event now checks to see if there are low priority

@@ -1,4 +1,4 @@
-LIST OF CHANGES FROM PREVIOUS RELEASES:			<$Revision: 1.6 $>
+LIST OF CHANGES FROM PREVIOUS RELEASES:			<$Revision: 1.7 $>
 
 
 Changes from 386bsd 0.1 + patchkit 0.2.2 to NetBSD 0.8:
@@ -201,7 +201,7 @@ Changes from NetBSD 0.8 to NetBSD 0.9:
 	sed(1): fixed NULL indirection (alm)
 	fix "cpu" declarations in kernel config files so that they
 		work as originally intended.  this means that only
-		cpus for which there is a cpu declaration (see kernel
+		CPUs for which there is a CPU declaration (see kernel
 		config files for examples) are supported by a kernel
 		compiled with the config.  also, if you want the math
 		emulator in your kernel, you now need the "MATH_EMULATE"
@@ -289,7 +289,7 @@ Changes from NetBSD 0.8 to NetBSD 0.9:
 		(previously only could be done for libraries) (cgd)
 	fix library "make depend" problem, in which it wasn't
 		generating dependencies for profiled .o files (cgd)
-	ps(1): fix to not show cpu/memory/swap usage if process is zombie (cgd)
+	ps(1): fix to not show CPU/memory/swap usage if process is zombie (cgd)
 	fix from Wolfgang Solfrank (ws@tools.de) to kill processes
 		outright if they exceed their hard CPU-usage limit (cgd)
 	fix for NFS's bogus use if va_flags and va_gen, and other minor
@@ -2492,7 +2492,7 @@ Changes from NetBSD 1.1 to NetBSD 1.2:
 		use the hardware they paid for.	 [thorpej 19960304]
 	amiga: added console driver for the CyberVision64. [veego 19960302]
 	mt(1) supports access of remote tapes via rmt(8).  [scottr 19960305]
-	vax: Support for VAX 8600/8650 cpu types added. [ragge 19960307]
+	vax: Support for VAX 8600/8650 CPU types added. [ragge 19960307]
 	added a set of interfaces, which live in <machine/bus.h>,
 		which define standard, machine-independent ways to
 		map and access device I/O and memory spaces.  [cgd 19960308]
@@ -3515,7 +3515,7 @@ Changes from NetBSD 1.2 to NetBSD 1.3:
 	isa: convert isadma.c to be a user of new bus dma framework,
 		and convert all drivers that use it to the new API.
 		[thorpej 19970606]
-	New sysctl hw.machine_arch which returns the cpu class of a machine.
+	New sysctl hw.machine_arch which returns the CPU class of a machine.
 		[veego 19970607]
 	ext2: Added kernel and userland support for the ext2 file system
 		[bouyer 19970611]
@@ -3606,7 +3606,7 @@ Changes from NetBSD 1.2 to NetBSD 1.3:
 		[thorpej 19970714]
 	amiga: add glue code for the m68k fpu emulation system.
 		XXX this is known to be broken on 68LC040, 68040V and 68LC060
-		cpus currently. [is 19970715]
+		CPUs currently. [is 19970715]
 	sendmail(8): added installation of cf tree to /usr/share/sendmail.
 		[phil 19970716]
 	ffs: fix overflow bug in indirect block computation that caused
@@ -4911,7 +4911,7 @@ Changes from NetBSD 1.4 to NetBSD 1.5:
 		whenever it becomes ready.  [itojun 19990701]
 	alpha:	added ddb traceback code from Jason Thorpe. [ross 19990701]
 	alpha:	Added support for the new generation of alpha systems based
-		on the EV6 (21264) cpu, include 264dp, xp1000, ds20, and
+		on the EV6 (21264) CPU, include 264dp, xp1000, ds20, and
 		others. Thanks to Alpha Processor, Inc, (alpha-processor.com)
 		for supporting this development effort.  [ross 19990701]
 	libc: add IPv6 support functions as documented in RFC2553 and RFC2292.

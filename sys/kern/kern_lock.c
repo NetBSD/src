@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_lock.c,v 1.74 2003/12/08 14:21:25 hannken Exp $	*/
+/*	$NetBSD: kern_lock.c,v 1.75 2004/02/13 11:36:22 wiz Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
@@ -76,7 +76,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_lock.c,v 1.74 2003/12/08 14:21:25 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_lock.c,v 1.75 2004/02/13 11:36:22 wiz Exp $");
 
 #include "opt_multiprocessor.h"
 #include "opt_lockdebug.h"
@@ -1015,7 +1015,7 @@ u_long simple_locks;
 #endif /* MULTIPROCESSOR */ /* } */
 
 #ifdef MULTIPROCESSOR
-#define SLOCK_MP()		lock_printf("on cpu %ld\n", 		\
+#define SLOCK_MP()		lock_printf("on CPU %ld\n", 		\
 				    (u_long) cpu_number())
 #else
 #define SLOCK_MP()		/* nothing */

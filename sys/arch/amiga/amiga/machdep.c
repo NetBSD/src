@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.188 2003/12/30 12:33:15 pk Exp $	*/
+/*	$NetBSD: machdep.c,v 1.189 2004/02/13 11:36:09 wiz Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1990 The Regents of the University of California.
@@ -85,7 +85,7 @@
 #include "opt_panicbutton.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.188 2003/12/30 12:33:15 pk Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.189 2004/02/13 11:36:09 wiz Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -256,7 +256,7 @@ consinit()
 
 /*
  * cpu_startup: allocate memory for variable-sized tables,
- * initialize cpu, and do autoconfiguration.
+ * initialize CPU, and do autoconfiguration.
  */
 void
 cpu_startup()

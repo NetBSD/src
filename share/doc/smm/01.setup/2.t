@@ -1,4 +1,4 @@
-.\"	$NetBSD: 2.t,v 1.3 2003/08/07 10:30:52 agc Exp $
+.\"	$NetBSD: 2.t,v 1.4 2004/02/13 11:36:08 wiz Exp $
 .\"
 .\" Copyright (c) 1988, 1993 The Regents of the University of California.
 .\" All rights reserved.
@@ -434,7 +434,7 @@ is present.
 The \*(lqroot device?\*(rq prompt was printed by the system
 to ask you for the name of the root filesystem to use.
 This happens because the distribution system is a \fIgeneric\fP
-system, i.e., it can be bootstrapped on a cpu with its root device
+system, i.e., it can be bootstrapped on a CPU with its root device
 and paging area on any available disk drive.
 You will most likely respond to the root device question with ``sd0''
 if you are booting from a SCSI disk,

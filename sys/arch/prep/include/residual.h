@@ -298,7 +298,7 @@ typedef struct _RESIDUAL {
   unsigned short MaxNumCpus;            /* Max CPUs in this system            */
   unsigned short ActualNumCpus;         /* ActualNumCpus < MaxNumCpus means   */
                                         /* that there are unpopulated or      */
-                                        /* otherwise unusable cpu locations   */
+                                        /* otherwise unusable CPU locations   */
   PPC_CPU Cpus[MAX_CPUS];
   /* Memory */
   unsigned long TotalMemory;            /* Total amount of memory installed   */

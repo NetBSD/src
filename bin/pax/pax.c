@@ -1,4 +1,4 @@
-/*	$NetBSD: pax.c,v 1.31 2003/10/27 00:12:41 lukem Exp $	*/
+/*	$NetBSD: pax.c,v 1.32 2004/02/13 11:36:08 wiz Exp $	*/
 
 /*-
  * Copyright (c) 1992 Keith Muller.
@@ -44,7 +44,7 @@ __COPYRIGHT("@(#) Copyright (c) 1992, 1993\n\
 #if 0
 static char sccsid[] = "@(#)pax.c	8.2 (Berkeley) 4/18/94";
 #else
-__RCSID("$NetBSD: pax.c,v 1.31 2003/10/27 00:12:41 lukem Exp $");
+__RCSID("$NetBSD: pax.c,v 1.32 2004/02/13 11:36:08 wiz Exp $");
 #endif
 #endif /* not lint */
 
@@ -338,7 +338,7 @@ sig_cleanup(int which_sig)
 	 */
 	vflag = vfpart = 1;
 	if (which_sig == SIGXCPU)
-		tty_warn(0, "Cpu time limit reached, cleaning up.");
+		tty_warn(0, "CPU time limit reached, cleaning up.");
 	else
 		tty_warn(0, "Signal caught, cleaning up.");
 
@@ -408,7 +408,7 @@ gen_init(void)
 	/*
 	 * signal handling to reset stored directory times and modes. Since
 	 * we deal with broken pipes via failed writes we ignore it. We also
-	 * deal with any file size limit thorugh failed writes. Cpu time
+	 * deal with any file size limit thorugh failed writes. CPU time
 	 * limits are caught and a cleanup is forced.
 	 */
 	if ((sigemptyset(&s_mask) < 0) || (sigaddset(&s_mask, SIGTERM) < 0) ||

@@ -1,4 +1,4 @@
-# $NetBSD: README,v 1.5 2001/10/20 06:11:21 jmc Exp $
+# $NetBSD: README,v 1.6 2004/02/13 11:36:08 wiz Exp $
 
 To: "NetBSD Port Maintainers"
 Subject: distribution sets, etc...
@@ -77,7 +77,7 @@ the sets are as follows:
 		Includes machine-dependent man pages for this CPU.
 
 	misc:	share/dict, share/doc, and the machine-dependent
-		man pages for other cpu's which happen to always
+		man pages for other CPUs which happen to always
 		be installed.
 
 	text:	text processing tools.  groff and all of its friends.

@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.11 2003/10/25 16:15:07 chs Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.12 2004/02/13 11:36:15 wiz Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -85,7 +85,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.11 2003/10/25 16:15:07 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.12 2004/02/13 11:36:15 wiz Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -119,7 +119,7 @@ static int	booted_partition;
 
 /*
  * Determine mass storage and memory configuration for a machine.
- * Print cpu type, and then iterate over an array of devices
+ * Print CPU type, and then iterate over an array of devices
  * found on the baseboard or in turbochannel option slots.
  * Once devices are configured, enable interrupts, and probe
  * for attached scsi devices.

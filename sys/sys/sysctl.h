@@ -1,4 +1,4 @@
-/*	$NetBSD: sysctl.h,v 1.107 2004/01/10 01:58:48 christos Exp $	*/
+/*	$NetBSD: sysctl.h,v 1.108 2004/02/13 11:36:23 wiz Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -136,7 +136,7 @@ struct ctlname {
 #define	CTL_VFS		3		/* file system, mount type is next */
 #define	CTL_NET		4		/* network, see socket.h */
 #define	CTL_DEBUG	5		/* debugging parameters */
-#define	CTL_HW		6		/* generic cpu/io */
+#define	CTL_HW		6		/* generic CPU/io */
 #define	CTL_MACHDEP	7		/* machine dependent */
 #define	CTL_USER	8		/* user-level */
 #define	CTL_DDB		9		/* in-kernel debugger */
@@ -220,7 +220,7 @@ struct ctlname {
 #define	KERN_PROC_ARGS		48	/* struct: process argv/env */
 #define	KERN_FSCALE		49	/* int: fixpt FSCALE */
 #define	KERN_CCPU		50	/* int: fixpt ccpu */
-#define	KERN_CP_TIME		51	/* struct: cpu time counters */
+#define	KERN_CP_TIME		51	/* struct: CPU time counters */
 #define	KERN_SYSVIPC_INFO	52	/* number of valid kern ids */
 #define	KERN_MSGBUF		53	/* kernel message buffer */
 #define	KERN_CONSDEV		54	/* dev_t: console terminal device */
@@ -440,7 +440,7 @@ struct kinfo_proc2 {
 	u_int32_t p_estcpu;		/* U_INT: Time averaged value of p_cpticks. */
 	u_int32_t p_rtime_sec;		/* STRUCT TIMEVAL: Real time. */
 	u_int32_t p_rtime_usec;		/* STRUCT TIMEVAL: Real time. */
-	int32_t	p_cpticks;		/* INT: Ticks of cpu time. */
+	int32_t	p_cpticks;		/* INT: Ticks of CPU time. */
 	u_int32_t p_pctcpu;		/* FIXPT_T: %cpu for this process during p_swtime */
 	u_int32_t p_swtime;		/* U_INT: Time swapped in or out. */
 	u_int32_t p_slptime;		/* U_INT: Time since last blocked. */
@@ -507,7 +507,7 @@ struct kinfo_proc2 {
 
 	u_int32_t p_uctime_sec;		/* STRUCT TIMEVAL: child u+s time. */
 	u_int32_t p_uctime_usec;	/* STRUCT TIMEVAL: child u+s time. */
-	u_int64_t p_cpuid;		/* LONG: cpu id */
+	u_int64_t p_cpuid;		/* LONG: CPU id */
 	u_int64_t p_realflag;	       	/* INT: P_* flags (not including LWPs). */
 	u_int64_t p_nlwps;		/* LONG: Number of LWPs */
 	u_int64_t p_nrlwps;		/* LONG: Number of running LWPs */
@@ -537,7 +537,7 @@ struct kinfo_lwp {
 	int32_t	l_pad2;			/* .. and then to an 8-byte boundary */
 	char	l_wmesg[KI_WMESGLEN];	/* wchan message */
 	u_int64_t l_wchan;		/* PTR: sleep address. */
-	u_int64_t l_cpuid;		/* LONG: cpu id */
+	u_int64_t l_cpuid;		/* LONG: CPU id */
 };
 
 /*

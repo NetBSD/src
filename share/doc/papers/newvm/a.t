@@ -1,4 +1,4 @@
-.\"	$NetBSD: a.t,v 1.4 2003/08/07 10:30:44 agc Exp $
+.\"	$NetBSD: a.t,v 1.5 2004/02/13 11:36:08 wiz Exp $
 .\"
 .\" Copyright (c) 1986 The Regents of the University of California.
 .\" All rights reserved.
@@ -69,7 +69,7 @@ Protection and sharing options are defined in \fI<sys/mman.h>\fP as:
 #define MAP_INHERIT	0x0040	/* region is retained after exec */
 #define MAP_HASSEMAPHORE	0x0080	/* region may contain semaphores */
 .DE
-The cpu-dependent size of a page is returned by the
+The CPU-dependent size of a page is returned by the
 \fIgetpagesize\fP system call:
 .DS
 pagesize = getpagesize();

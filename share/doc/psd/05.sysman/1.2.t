@@ -1,4 +1,4 @@
-.\"	$NetBSD: 1.2.t,v 1.3 2003/08/07 10:30:48 agc Exp $
+.\"	$NetBSD: 1.2.t,v 1.4 2004/02/13 11:36:08 wiz Exp $
 .\"
 .\" Copyright (c) 1983, 1993, 1994
 .\"	The Regents of the University of California.  All rights reserved.
@@ -107,7 +107,7 @@ MAP_HASSEMAPHORE	/* region may contain semaphores */
 .FS
 \(dg In 4.4BSD, only MAP_ANON and MAP_FIXED are implemented.
 .FE
-The size of a page is cpu-dependent, and is returned by the
+The size of a page is CPU-dependent, and is returned by the
 .Fn sysctl
 interface described in section
 .Xr 1.7.1 .

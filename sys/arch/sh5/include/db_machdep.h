@@ -1,4 +1,4 @@
-/*	$NetBSD: db_machdep.h,v 1.10 2003/08/10 22:22:31 scw Exp $	*/
+/*	$NetBSD: db_machdep.h,v 1.11 2004/02/13 11:36:17 wiz Exp $	*/
 
 /*
  * Mach Operating System
@@ -99,8 +99,8 @@ extern int kdb_trap(int, void *);
 
 /*
  * SH5 does have hardware single-step (using SR.T), but its use is
- * cpu dependent. (We need to be able to change DBGVEC, which is
- * frobbed in a cpu-dependent manner).
+ * CPU dependent. (We need to be able to change DBGVEC, which is
+ * frobbed in a CPU-dependent manner).
  *
  * Far easier to just use software single-stepping.
  */

@@ -1,4 +1,4 @@
-/*	$NetBSD: ka820.h,v 1.6 2003/08/07 16:30:10 agc Exp $	*/
+/*	$NetBSD: ka820.h,v 1.7 2004/02/13 11:36:20 wiz Exp $	*/
 /*
  * Copyright (c) 1988 Regents of the University of California.
  * All rights reserved.
@@ -34,7 +34,7 @@
  */
 
 /*
- * Definitions specific to the ka820 cpu.
+ * Definitions specific to the ka820 CPU.
  */
 #ifndef _VAX_KA820_H_
 #define _VAX_KA820_H_

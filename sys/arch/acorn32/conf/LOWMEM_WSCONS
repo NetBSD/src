@@ -1,4 +1,4 @@
-#	$NetBSD: LOWMEM_WSCONS,v 1.21 2004/01/25 13:46:59 bjh21 Exp $
+#	$NetBSD: LOWMEM_WSCONS,v 1.22 2004/02/13 11:36:09 wiz Exp $
 #
 #	LOWMEM_WSCONS -- RiscPC config with wscons for SMALL machines
 #
@@ -131,7 +131,7 @@ config		netbsd	root on wd0a type ?
 # The main bus device
 mainbus0 at root
 
-# The boot cpu
+# The boot CPU
 cpu0 at mainbus?
 
 # The IOMD

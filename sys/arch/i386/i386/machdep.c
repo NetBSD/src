@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.548 2004/01/28 10:48:55 yamt Exp $	*/
+/*	$NetBSD: machdep.c,v 1.549 2004/02/13 11:36:13 wiz Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2000 The NetBSD Foundation, Inc.
@@ -72,7 +72,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.548 2004/01/28 10:48:55 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.549 2004/02/13 11:36:13 wiz Exp $");
 
 #include "opt_beep.h"
 #include "opt_compat_ibcs2.h"
@@ -200,7 +200,7 @@ __KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.548 2004/01/28 10:48:55 yamt Exp $");
 #endif
 
 /* the following is used externally (sysctl_hw) */
-char machine[] = "i386";		/* cpu "architecture" */
+char machine[] = "i386";		/* CPU "architecture" */
 char machine_arch[] = "i386";		/* machine == machine_arch */
 
 char bootinfo[BOOTINFO_MAXSIZE];
@@ -1997,7 +1997,7 @@ exec_nomid(p, epp)
 
 /*
  * cpu_exec_aout_makecmds():
- *	cpu-dependent a.out format hook for execve().
+ *	CPU-dependent a.out format hook for execve().
  *
  * Determine of the given exec package refers to something which we
  * understand and, if so, set up the vmcmds for it.

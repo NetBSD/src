@@ -1,4 +1,4 @@
-/* $NetBSD: main.c,v 1.18 2004/01/05 23:23:38 jmmv Exp $ */
+/* $NetBSD: main.c,v 1.19 2004/02/13 11:36:24 wiz Exp $ */
 
 /*
  * Copyright (c) 1994 Christopher G. Demetriou
@@ -39,7 +39,7 @@
 __COPYRIGHT("@(#) Copyright (c) 1994 Christopher G. Demetriou\n\
  All rights reserved.\n");
 
-__RCSID("$NetBSD: main.c,v 1.18 2004/01/05 23:23:38 jmmv Exp $");
+__RCSID("$NetBSD: main.c,v 1.19 2004/02/13 11:36:24 wiz Exp $");
 #endif
 
 /*
@@ -129,12 +129,12 @@ main(argc, argv)
 			jflag = 1;
 			break;
 		case 'k':
-			/* sort by cpu-time average memory usage */
+			/* sort by CPU-time average memory usage */
 			kflag = 1;
 			sa_cmp = cmp_avgcpumem;
 			break;
 		case 'K':
-			/* print and sort by cpu-storage integral */
+			/* print and sort by CPU-storage integral */
 			sa_cmp = cmp_cpumem;
 			Kflag = 1;
 			break;
@@ -361,7 +361,7 @@ acct_load(pn, wr)
 			if (sflag || (mflag && !qflag))
 				usracct_add(&ci);
 		} else if (!qflag)
-			printf("%6u %12.2f cpu %12lluk mem %12llu io %s\n",
+			printf("%6u %12.2f CPU %12lluk mem %12llu io %s\n",
 			    ci.ci_uid,
 			    (ci.ci_utime + ci.ci_stime) / (double) AHZ,
 			    (unsigned long long)ci.ci_mem,
@@ -492,7 +492,7 @@ cmp_avgdkio(d1, d2)
 		return 1;
 }
 
-/* sort by the cpu-storage integral */
+/* sort by the CPU-storage integral */
 static int
 cmp_cpumem(d1, d2)
 	const DBT *d1, *d2;
@@ -510,7 +510,7 @@ cmp_cpumem(d1, d2)
 		return 1;
 }
 
-/* sort by the cpu-time average memory usage */
+/* sort by the CPU-time average memory usage */
 static int
 cmp_avgcpumem(d1, d2)
 	const DBT *d1, *d2;

@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.h,v 1.6 2003/11/28 19:02:25 chs Exp $	*/
+/*	$NetBSD: machdep.h,v 1.7 2004/02/13 11:36:13 wiz Exp $	*/
 
 /*
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -54,7 +54,7 @@
 /*      
  * cache configuration, for most machines is the same
  * numbers, so it makes sense to do defines w/ numbers depending
- * on configured cpu types in the kernel.
+ * on configured CPU types in the kernel.
  */
 extern int icache_stride, icache_line_mask;
 extern int dcache_stride, dcache_line_mask;

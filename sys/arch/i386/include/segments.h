@@ -1,4 +1,4 @@
-/*	$NetBSD: segments.h,v 1.39 2003/10/27 13:44:20 junyoung Exp $	*/
+/*	$NetBSD: segments.h,v 1.40 2004/02/13 11:36:14 wiz Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -251,7 +251,7 @@ void idt_vec_free(int);
  * Entries in the Interrupt Descriptor Table (IDT)
  */
 #define	NIDT	256
-#define	NRSVIDT	32		/* reserved entries for cpu exceptions */
+#define	NRSVIDT	32		/* reserved entries for CPU exceptions */
 
 /*
  * Entries in the Global Descriptor Table (GDT).

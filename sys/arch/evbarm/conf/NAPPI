@@ -1,4 +1,4 @@
-#	$NetBSD: NAPPI,v 1.8 2003/09/13 13:30:06 chris Exp $
+#	$NetBSD: NAPPI,v 1.9 2004/02/13 11:36:11 wiz Exp $
 #
 #	NAPPI -- Netwise APlication Platform Board Kernel
 #
@@ -131,7 +131,7 @@ config		netbsd		root on ? type ?
 # The main bus device
 mainbus0	at root
 
-# The boot cpu
+# The boot CPU
 cpu0		at mainbus?
 
 # IXP12x0 slow peripheral

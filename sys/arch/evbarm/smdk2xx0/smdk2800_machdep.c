@@ -1,4 +1,4 @@
-/*	$NetBSD: smdk2800_machdep.c,v 1.16 2003/08/03 14:11:16 bsh Exp $ */
+/*	$NetBSD: smdk2800_machdep.c,v 1.17 2004/02/13 11:36:12 wiz Exp $ */
 
 /*
  * Copyright (c) 2002 Fujitsu Component Limited
@@ -106,7 +106,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: smdk2800_machdep.c,v 1.16 2003/08/03 14:11:16 bsh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: smdk2800_machdep.c,v 1.17 2004/02/13 11:36:12 wiz Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -405,7 +405,7 @@ initarm(void *arg)
 	 * Heads up ... Setup the CPU / MMU / TLB functions
 	 */
 	if (set_cpufuncs())
-		panic("cpu not recognized!");
+		panic("CPU not recognized!");
 
 	LEDSTEP();
 

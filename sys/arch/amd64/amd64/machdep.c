@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.19 2003/12/30 12:33:15 pk Exp $	*/
+/*	$NetBSD: machdep.c,v 1.20 2004/02/13 11:36:20 wiz Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2000 The NetBSD Foundation, Inc.
@@ -72,7 +72,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.19 2003/12/30 12:33:15 pk Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.20 2004/02/13 11:36:20 wiz Exp $");
 
 #include "opt_user_ldt.h"
 #include "opt_ddb.h"
@@ -148,7 +148,7 @@ __KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.19 2003/12/30 12:33:15 pk Exp $");
 #include "ksyms.h"
 
 /* the following is used externally (sysctl_hw) */
-char machine[] = "amd64";		/* cpu "architecture" */
+char machine[] = "amd64";		/* CPU "architecture" */
 char machine_arch[] = "x86_64";		/* machine == machine_arch */
 
 char bootinfo[BOOTINFO_MAXSIZE];

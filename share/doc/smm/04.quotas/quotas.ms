@@ -1,4 +1,4 @@
-.\"	$NetBSD: quotas.ms,v 1.3 2003/08/07 10:30:53 agc Exp $
+.\"	$NetBSD: quotas.ms,v 1.4 2004/02/13 11:36:08 wiz Exp $
 .\"
 .\" Copyright (c) 1983, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -288,7 +288,7 @@ opportunity to object.
 .PP
 Measurements have shown
 that the quota code uses a very small percentage of the system
-cpu time consumed in writing a new block to disc.
+CPU time consumed in writing a new block to disc.
 .NH 1
 Acknowledgments
 .PP

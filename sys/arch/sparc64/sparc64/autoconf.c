@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.87 2004/01/06 09:38:19 petrov Exp $ */
+/*	$NetBSD: autoconf.c,v 1.88 2004/02/13 11:36:18 wiz Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -48,7 +48,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.87 2004/01/06 09:38:19 petrov Exp $");
+__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.88 2004/02/13 11:36:18 wiz Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -653,7 +653,7 @@ extern struct sparc_bus_space_tag mainbus_space_tag;
 	/* Establish the first component of the boot path */
 	bootpath_store(1, bootpath);
 
-	/* first early device to be configured is the cpu */
+	/* first early device to be configured is the CPU */
 	for (node = OF_child(node); node; node = OF_peer(node)) {
 		if (OF_getprop(node, "device_type", buf, sizeof(buf)) <= 0)
 			continue;

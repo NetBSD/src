@@ -1,4 +1,4 @@
-/*	$NetBSD: scores.c,v 1.11 2001/02/05 00:57:34 christos Exp $	*/
+/*	$NetBSD: scores.c,v 1.12 2004/02/13 11:36:08 wiz Exp $	*/
 
 /*
  * scores.c			 Larn is copyrighted 1986 by Noah Morgan.
@@ -26,7 +26,7 @@
  */
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: scores.c,v 1.11 2001/02/05 00:57:34 christos Exp $");
+__RCSID("$NetBSD: scores.c,v 1.12 2004/02/13 11:36:08 wiz Exp $");
 #endif				/* not lint */
 #include <sys/types.h>
 #include <sys/times.h>
@@ -74,9 +74,9 @@ struct log_fmt {		/* 102 bytes struct for the log file 				 */
 	long            moves;	/* number of moves made by player 					 */
 	short           ac;	/* armor class of player 							 */
 	short           hp, hpmax;	/* players hitpoints 								 */
-	short           cputime;/* cpu time needed in seconds 						 */
+	short           cputime;/* CPU time needed in seconds 						 */
 	short           killed, spused;	/* monsters killed and spells cast 					 */
-	short           usage;	/* usage of the cpu in % 							 */
+	short           usage;	/* usage of the CPU in % 							 */
 	short           lev;	/* player level 									 */
 #endif
 	char            who[12];/* player name 										 */
@@ -674,10 +674,10 @@ invalid:
 			snprintf(logg.what, sizeof(logg.what),
 			    "%s", whydead[x - 256]);
 		logg.cavelev = level;
-		time(&zzz);	/* get cpu time -- write out score info */
+		time(&zzz);	/* get CPU time -- write out score info */
 		logg.diedtime = zzz;
 #ifdef EXTRA
-		times(&cputime);/* get cpu time -- write out score info */
+		times(&cputime);/* get CPU time -- write out score info */
 		logg.cputime = i = (cputime.tms_utime + cputime.tms_stime) / 60 + c[CPUTIME];
 		logg.lev = c[LEVEL];
 		logg.ac = c[AC];
