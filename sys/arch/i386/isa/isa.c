@@ -35,7 +35,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)isa.c	7.2 (Berkeley) 5/13/91
- *	$Id: isa.c,v 1.28.2.20 1993/10/31 23:43:07 mycroft Exp $
+ *	$Id: isa.c,v 1.28.2.21 1993/11/08 20:20:03 mycroft Exp $
  */
 
 /*
@@ -132,10 +132,8 @@ isasubmatch(isa, cf, aux)
 
 #ifdef DIAGNOSTIC
 	if (cf->cf_driver->cd_match == NULL) {
-		/* we really ought to add printf formats to panic(). */
-		printf("isasubmatch: no match function for `%s' device\n",
-			cf->cf_driver->cd_name);
-		panic("isasubmatch: no match function\n");
+		panic("isasubmatch: no match function for `%s' device\n",
+		      cf->cf_driver->cd_name);
 	}
 #endif
 
