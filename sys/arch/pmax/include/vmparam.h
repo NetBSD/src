@@ -1,4 +1,4 @@
-/*	$NetBSD: vmparam.h,v 1.11 2000/01/09 15:34:44 ad Exp $	*/
+/*	$NetBSD: vmparam.h,v 1.12 2000/01/09 20:09:43 simonb Exp $	*/
 
 #ifndef _PMAX_VMPARAM_H_
 #define _PMAX_VMPARAM_H_
@@ -11,14 +11,9 @@
  *   free list, since some TC boards (e.g. PixelStamp boards) are only able 
  *   to DMA into this region, and we want them to have a fighting chance of
  *   allocating their DMA memory during autoconfiguration.
- *
- * VM_PHYSSEG_NOADD
- *   We can't add RAM after vm_mem_init.
  */
  
 #define	VM_PHYSSEG_MAX		2
-#define	VM_PHYSSEG_STRAT	VM_PSTRAT_BSEARCH
-#define	VM_PHYSSEG_NOADD	1
 
 #define	VM_NFREELIST		2
 #define	VM_FREELIST_DEFAULT	0
