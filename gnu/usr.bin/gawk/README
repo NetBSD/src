@@ -54,10 +54,12 @@ proceed.
 The next release will use the FSF autoconfig program, so we are no longer 
 soliciting new config files.
 
-If you have an MS-DOS system, use the stuff in the pc directory.
+If you have an MS-DOS or OS/2 system, use the stuff in the pc directory.
 For an Atari there is an atari directory and similarly one for VMS.
 
 Chapter 16 of The GAWK Manual discusses configuration in detail.
+(However, it does not discuss OS/2 configuration, see README.pc for
+the details. The manual is being massively revised for 2.16.)
 
 After successful compilation, do 'make test' to run a small test
 suite.  There should be no output from the 'cmp' invocations except in
@@ -114,3 +116,7 @@ VMS:
 Atari ST:
 	Michal Jaegermann
 	NTOMCZAK@vm.ucs.UAlberta.CA  (e-mail only)
+
+OS/2:
+	Kai Uwe Rommel
+	rommel@ars.muc.de (e-mail only)

@@ -24,7 +24,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$Id: node.c,v 1.2 1993/08/02 17:29:58 mycroft Exp $";
+static char rcsid[] = "$Id: node.c,v 1.3 1993/11/13 02:27:00 jtc Exp $";
 #endif /* not lint */
 
 #include "awk.h"
@@ -39,7 +39,7 @@ register NODE *n;
 	register char *cpend;
 	char save;
 	char *ptr;
-	unsigned int newflags = 0;
+	unsigned int newflags;
 
 #ifdef DEBUG
 	if (n == NULL)
@@ -73,7 +73,8 @@ register NODE *n;
 	if (n->flags & MAYBE_NUM) {
 		newflags = NUMBER;
 		n->flags &= ~MAYBE_NUM;
-	}
+	} else
+		newflags = 0;
 	if (cpend - cp == 1) {
 		if (isdigit(*cp)) {
 			n->numbr = (AWKNUM)(*cp - '0');

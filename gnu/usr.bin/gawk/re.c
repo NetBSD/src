@@ -24,7 +24,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$Id: re.c,v 1.2 1993/08/02 17:30:03 mycroft Exp $";
+static char rcsid[] = "$Id: re.c,v 1.3 1993/11/13 02:27:05 jtc Exp $";
 #endif /* not lint */
 
 #include "awk.h"
@@ -103,7 +103,7 @@ int dfa;
 	else
 		rp->pat.translate = NULL;
 	len = dest - temp;
-	if ((err = re_compile_pattern(temp, (size_t) len, &(rp->pat))) != NULL)
+	if ((err = re_compile_pattern(temp, len, &(rp->pat))) != NULL)
 		fatal("%s: /%s/", err, temp);
 	if (dfa && !ignorecase) {
 		regcompile(temp, len, &(rp->dfareg), 1);
