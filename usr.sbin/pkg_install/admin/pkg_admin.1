@@ -1,4 +1,4 @@
-.\"	$NetBSD: pkg_admin.1,v 1.5.2.2 2000/02/22 22:50:26 he Exp $
+.\"	$NetBSD: pkg_admin.1,v 1.5.2.3 2000/07/31 18:18:35 he Exp $
 .\"
 .\" Copyright (c) 1999 Hubert Feyrer.  All rights reserved.
 .\"
@@ -29,7 +29,7 @@
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
 
-.Dd January 16th, 1999
+.Dd May 4th, 2000
 .Dt pkg_admin 1
 .Os
 .Sh NAME
@@ -81,6 +81,35 @@ Dump the contents of the package database, similar to
 .Cm pkg_info -F .
 Columns are printed for the keyfield used in the pkgdb - the filename -,
 and the data field - the package the file belongs to. 
+.It Cm lsall /dir/pkgpattern
+.It Cm lsbest /dir/pkgpattern
+List all/best package matching pattern in the given directory.
+Can be used to work around limitations of /bin/sh and other
+filename globbing mechanisms. This option implemente matching of
+pkg-wildcards against arbitrary files, useful mainly in the build
+system itself. See
+.Xr pkg_info 1
+for a description of the pattern.
+
+Example:
+.Bd -literal
+yui# cd /usr/pkgsrc/packages/i386ELF/All/
+yui# ls unzip*
+unzip-5.40.tgz  unzip-5.41.tgz
+yui# pkg_admin lsall 'unzip*'
+unzip-5.40.tgz
+unzip-5.41.tgz
+yui# pkg_admin lsall 'unzip>=5.40'
+unzip-5.40.tgz
+unzip-5.41.tgz
+yui# pkg_admin lsall 'unzip>=5.41'
+unzip-5.41.tgz
+yui# pkg_admin lsbest 'unzip>=5.40'
+unzip-5.41.tgz
+yui# pkg_admin lsall /usr/pkgsrc/packages/i386ELF/All/'{mit,unproven}-pthread*'
+/usr/pkgsrc/packages/i386ELF/All/mit-pthreads-1.60b6.tgz
+/usr/pkgsrc/packages/i386ELF/All/unproven-pthreads-0.15.tgz
+.Ed
 .El
 .Pp
 .Sh ENVIRONMENT
@@ -96,7 +125,7 @@ Where to register packages instead of
 .Xr pkg_add 1 ,
 .Xr pkg_delete 1 ,
 .Xr pkg_info 1 ,
-.Xr pkg_create 1 .
+.Xr pkg_create 1
 .Sh AUTHOR
 The
 .Nm
