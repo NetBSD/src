@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_fault.c,v 1.16 1998/11/04 07:07:22 chs Exp $	*/
+/*	$NetBSD: uvm_fault.c,v 1.17 1998/11/07 05:50:19 mrg Exp $	*/
 
 /*
  * XXXCDC: "ROUGH DRAFT" QUALITY UVM PRE-RELEASE FILE!   
@@ -348,7 +348,7 @@ int uvmfault_anonget(ufi, amap, anon)
 
 			if ((pg->flags & (PG_BUSY|PG_RELEASED)) == 0) {
 				UVMHIST_LOG(maphist, "<- OK",0,0,0,0);
-				return(VM_PAGER_OK);
+				return (VM_PAGER_OK);
 			}
 			pg->flags |= PG_WANTED;
 			uvmexp.fltpgwait++;
@@ -459,7 +459,7 @@ int uvmfault_anonget(ufi, amap, anon)
 				  uvmfault_unlockall(ufi, amap, NULL, NULL);
 				uvmexp.fltpgrele++;
 				UVMHIST_LOG(maphist, "<- REFAULT", 0,0,0,0);
-				return(VM_PAGER_REFAULT);	/* refault! */
+				return (VM_PAGER_REFAULT);	/* refault! */
 			}
 
 			if (result != VM_PAGER_OK) {
@@ -485,7 +485,7 @@ int uvmfault_anonget(ufi, amap, anon)
 				else
 					simple_unlock(&anon->an_lock);
 				UVMHIST_LOG(maphist, "<- ERROR", 0,0,0,0);
-				return(VM_PAGER_ERROR);
+				return (VM_PAGER_ERROR);
 			}
 			
 			/*
@@ -506,7 +506,7 @@ int uvmfault_anonget(ufi, amap, anon)
 
 		if (!locked) {
 			UVMHIST_LOG(maphist, "<- REFAULT", 0,0,0,0);
-			return(VM_PAGER_REFAULT);
+			return (VM_PAGER_REFAULT);
 		}
 
 		/*
@@ -518,7 +518,7 @@ int uvmfault_anonget(ufi, amap, anon)
 			
 			uvmfault_unlockall(ufi, amap, NULL, anon);
 			UVMHIST_LOG(maphist, "<- REFAULT", 0,0,0,0);
-			return(VM_PAGER_REFAULT);
+			return (VM_PAGER_REFAULT);
 		}
 			
 		/*
@@ -598,7 +598,7 @@ ReFault:
 
 	if (uvmfault_lookup(&ufi, FALSE) == FALSE) {
 		UVMHIST_LOG(maphist, "<- no mapping @ 0x%x", vaddr, 0,0,0);
-		return(KERN_INVALID_ADDRESS);
+		return (KERN_INVALID_ADDRESS);
 	}
 	/* locked: maps(read) */
 
@@ -611,7 +611,7 @@ ReFault:
 		    "<- protection failure (prot=0x%x, access=0x%x)",
 		    ufi.entry->protection, access_type, 0, 0);
 		uvmfault_unlockmaps(&ufi, FALSE);
-		return(KERN_PROTECTION_FAILURE);
+		return (KERN_PROTECTION_FAILURE);
 	}
 
 	/*
@@ -670,7 +670,7 @@ ReFault:
 	if (amap == NULL && uobj == NULL) {
 		uvmfault_unlockmaps(&ufi, FALSE);
 		UVMHIST_LOG(maphist,"<- no backing store, no overlay",0,0,0,0);
-		return(KERN_INVALID_ADDRESS);
+		return (KERN_INVALID_ADDRESS);
 	}
 
 	/*
@@ -829,7 +829,7 @@ ReFault:
 	/* locked: maps(read), amap(if there) */
 	/* (shadowed == TRUE) if there is an anon at the faulting address */
 	UVMHIST_LOG(maphist, "  shadowed=%d, will_get=%d", shadowed, 
-	(uobj && shadowed == FALSE),0,0);
+	    (uobj && shadowed == FALSE),0,0);
 
 	/*
 	 * note that if we are really short of RAM we could sleep in the above
@@ -856,11 +856,11 @@ ReFault:
 		/* locked: nothing, pgo_fault has unlocked everything */
 
 		if (result == VM_PAGER_OK)
-			return(KERN_SUCCESS);	/* pgo_fault did pmap enter */
+			return (KERN_SUCCESS);	/* pgo_fault did pmap enter */
 		else if (result == VM_PAGER_REFAULT)
 			goto ReFault;		/* try again! */
 		else
-			return(KERN_PROTECTION_FAILURE);
+			return (KERN_PROTECTION_FAILURE);
 	}
 
 	/*
@@ -1032,7 +1032,7 @@ ReFault:
 	}
 
 	if (result != VM_PAGER_OK)
-		return(KERN_PROTECTION_FAILURE);		/* XXX??? */
+		return (KERN_PROTECTION_FAILURE);		/* XXX??? */
 
 	/*
 	 * uobj is non null if the page is on loan from an object (i.e. uobj)
@@ -1153,7 +1153,7 @@ ReFault:
 				    "<- failed.  out of VM",0,0,0,0);
 				uvmexp.fltnoanon++;
 				/* XXX: OUT OF VM, ??? */
-				return(KERN_RESOURCE_SHORTAGE);
+				return (KERN_RESOURCE_SHORTAGE);
 			}
 			uvmexp.fltnoram++;
 			uvm_wait("flt_noram3");	/* out of RAM, wait for more */
@@ -1222,7 +1222,7 @@ ReFault:
 	 */
 
 	uvmfault_unlockall(&ufi, amap, uobj, oanon);
-	return(KERN_SUCCESS);
+	return (KERN_SUCCESS);
 
 
 Case2:
@@ -1303,7 +1303,7 @@ Case2:
 
 			UVMHIST_LOG(maphist, "<- pgo_get failed (code %d)",
 			    result, 0,0,0);
-			return(KERN_PROTECTION_FAILURE); /* XXX i/o error */
+			return (KERN_PROTECTION_FAILURE); /* XXX i/o error */
 		}
 
 		/* locked: uobjpage */
@@ -1544,7 +1544,7 @@ Case2:
 				    0,0,0,0);
 				uvmexp.fltnoanon++;
 				/* XXX: out of VM */
-				return(KERN_RESOURCE_SHORTAGE);
+				return (KERN_RESOURCE_SHORTAGE);
 			}
 			UVMHIST_LOG(maphist, "  out of RAM, waiting for more",
 			    0,0,0,0);
@@ -1648,7 +1648,7 @@ Case2:
 	uvmfault_unlockall(&ufi, amap, uobj, NULL);
 
 	UVMHIST_LOG(maphist, "<- done (SUCCESS!)",0,0,0,0);
-	return(KERN_SUCCESS);
+	return (KERN_SUCCESS);
 }
 
 
@@ -1691,11 +1691,11 @@ uvm_fault_wire(map, start, end)
 			if (va != start) {
 				uvm_fault_unwire(map->pmap, start, va);
 			}
-			return(rv);
+			return (rv);
 		}
 	}
 
-	return(KERN_SUCCESS);
+	return (KERN_SUCCESS);
 }
 
 /*
