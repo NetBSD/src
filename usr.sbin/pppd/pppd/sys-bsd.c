@@ -1,4 +1,4 @@
-/*	$NetBSD: sys-bsd.c,v 1.42 2003/06/05 19:48:49 christos Exp $	*/
+/*	$NetBSD: sys-bsd.c,v 1.43 2003/06/09 13:35:10 christos Exp $	*/
 
 /*
  * sys-bsd.c - System-dependent procedures for setting up
@@ -79,7 +79,7 @@
 #if 0
 #define RCSID	"Id: sys-bsd.c,v 1.47 2000/04/13 12:04:23 paulus Exp "
 #else
-__RCSID("$NetBSD: sys-bsd.c,v 1.42 2003/06/05 19:48:49 christos Exp $");
+__RCSID("$NetBSD: sys-bsd.c,v 1.43 2003/06/09 13:35:10 christos Exp $");
 #endif
 #endif
 
@@ -1508,19 +1508,22 @@ dodefaultroute(g, cmd)
 
     if ((routes = socket(PF_ROUTE, SOCK_RAW, AF_INET)) < 0) {
 	error("Couldn't %s default route: socket: %m",
-	       cmd == 's' ? "add" : "delete");
+	    cmd == 's' ? "add" : "delete");
 	return 0;
     }
 
     memset(&rtmsg, 0, sizeof(rtmsg));
 
+    rtmsg.hdr.rtm_type = cmd == 's' ? RTM_ADD : RTM_DELETE;
     rtmsg.hdr.rtm_flags = RTF_UP | RTF_GATEWAY | RTF_STATIC;
     rtmsg.hdr.rtm_version = RTM_VERSION;
     rtmsg.hdr.rtm_seq = ++rtm_seq;
+    rtmsg.hdr.rtm_addrs =
+	RTA_DST | RTA_GATEWAY | RTA_NETMASK | RTA_GENMASK | RTA_IFP;
 
     rtmsg.dst.sin_len = sizeof(rtmsg.dst);
     rtmsg.dst.sin_family = AF_INET;
-    rtmsg.dst.sin_addr.s_addr = g;
+    rtmsg.dst.sin_addr.s_addr = 0;
 
     rtmsg.gway.sin_len = sizeof(rtmsg.gway);
     rtmsg.gway.sin_family = AF_INET;
@@ -1530,32 +1533,19 @@ dodefaultroute(g, cmd)
     rtmsg.netmask.sin_family = AF_INET;
     rtmsg.netmask.sin_addr.s_addr = 0;
 
-    if (cmd == 's') {
-	    rtmsg.hdr.rtm_type = RTM_ADD;
-	    rtmsg.hdr.rtm_addrs =
-		RTA_DST | RTA_GATEWAY | RTA_NETMASK | RTA_GENMASK | RTA_IFP;
+    rtmsg.genmask.sin_len = sizeof(rtmsg.genmask);
+    rtmsg.genmask.sin_family = AF_INET;
+    rtmsg.genmask.sin_addr.s_addr = 0;
 
-	    rtmsg.genmask.sin_len = sizeof(rtmsg.genmask);
-	    rtmsg.genmask.sin_family = AF_INET;
-	    rtmsg.genmask.sin_addr.s_addr = 0;
+    rtmsg.ifp.sdl_family = AF_LINK;
+    rtmsg.ifp.sdl_len = sizeof(rtmsg.ifp);
+    link_addr(ifname, &rtmsg.ifp);
 
-	    rtmsg.ifp.sdl_family = AF_LINK;
-	    rtmsg.ifp.sdl_len = sizeof(rtmsg.ifp);
-	    link_addr(ifname, &rtmsg.ifp);
+    rtmsg.hdr.rtm_msglen = sizeof(rtmsg);
 
-	    rtmsg.hdr.rtm_msglen = sizeof(rtmsg);
-    } else {
-	    rtmsg.hdr.rtm_type = RTM_DELETE;
-	    rtmsg.hdr.rtm_addrs =
-		RTA_DST | RTA_GATEWAY | RTA_NETMASK;
-
-	    rtmsg.hdr.rtm_msglen = sizeof(rtmsg) - sizeof(rtmsg.genmask)
-		- sizeof(rtmsg.ifp);
-    }
-
-    if (write(routes, &rtmsg, rtmsg.hdr.rtm_msglen) < 0) {
+    if (write(routes, &rtmsg, sizeof(rtmsg)) < 0) {
 	error("Couldn't %s default route: %m",
-	       cmd=='s'? "add": "delete");
+	    cmd == 's' ? "add" : "delete");
 	close(routes);
 	return 0;
     }
