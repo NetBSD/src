@@ -1,4 +1,4 @@
-/*	$NetBSD: inet_pton.c,v 1.15 2000/01/22 22:19:16 mycroft Exp $	*/
+/*	$NetBSD: inet_pton.c,v 1.16 2000/02/07 18:51:02 itojun Exp $	*/
 
 /* Copyright (c) 1996 by Internet Software Consortium.
  *
@@ -21,7 +21,7 @@
 #if 0
 static char rcsid[] = "Id: inet_pton.c,v 8.7 1996/08/05 08:31:35 vixie Exp ";
 #else
-__RCSID("$NetBSD: inet_pton.c,v 1.15 2000/01/22 22:19:16 mycroft Exp $");
+__RCSID("$NetBSD: inet_pton.c,v 1.16 2000/02/07 18:51:02 itojun Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -49,7 +49,7 @@ __weak_alias(inet_pton,_inet_pton)
  * sizeof(int) < 4.  sizeof(int) > 4 is fine; all the world's not a VAX.
  */
 
-static int	inet_pton4 __P((const char *src, u_char *dst));
+static int	inet_pton4 __P((const char *src, u_char *dst, int pton));
 static int	inet_pton6 __P((const char *src, u_char *dst));
 
 /* int
@@ -75,7 +75,7 @@ inet_pton(af, src, dst)
 
 	switch (af) {
 	case AF_INET:
-		return (inet_pton4(src, dst));
+		return (inet_pton4(src, dst, 1));
 	case AF_INET6:
 		return (inet_pton6(src, dst));
 	default:
@@ -86,19 +86,21 @@ inet_pton(af, src, dst)
 }
 
 /* int
- * inet_pton4(src, dst)
- *	like inet_aton() but without all the hexadecimal and shorthand.
+ * inet_pton4(src, dst, pton)
+ *	when last arg is 0: inet_aton(). with hexadecimal, octal and shorthand.
+ *	when last arg is 1: inet_pton(). decimal dotted-quad only.
  * return:
- *	1 if `src' is a valid dotted quad, else 0.
+ *	1 if `src' is a valid input, else 0.
  * notice:
  *	does not touch `dst' unless it's returning 1.
  * author:
  *	Paul Vixie, 1996.
  */
 static int
-inet_pton4(src, dst)
+inet_pton4(src, dst, pton)
 	const char *src;
 	u_char *dst;
+	int pton;
 {
 	u_int32_t val;
 	u_int digit;
@@ -124,9 +126,12 @@ inet_pton4(src, dst)
 			c = *++src;
 			if (c == 'x' || c == 'X')
 				base = 16, c = *++src;
-			else
+			else if (isdigit(c) && c != '9')
 				base = 8;
 		}
+		/* inet_pton() takes decimal only */
+		if (pton && base != 10)
+			return (0);
 		for (;;) {
 			if (isdigit(c)) {
 				digit = c - '0';
@@ -141,7 +146,7 @@ inet_pton4(src, dst)
 				val = (val << 4) | digit;
 				c = *++src;
 			} else
-			break;
+				break;
 		}
 		if (c == '.') {
 			/*
@@ -168,6 +173,9 @@ inet_pton4(src, dst)
 	 * the number of parts specified.
 	 */
 	n = pp - parts + 1;
+	/* inet_pton() takes dotted-quad only.  it does not take shorthand. */
+	if (pton && n != 4)
+		return (0);
 	switch (n) {
 
 	case 0:
@@ -270,7 +278,7 @@ inet_pton6(src, dst)
 			continue;
 		}
 		if (ch == '.' && ((tp + INADDRSZ) <= endp) &&
-		    inet_pton4(curtok, tp) > 0) {
+		    inet_pton4(curtok, tp, 1) > 0) {
 			tp += INADDRSZ;
 			saw_xdigit = 0;
 			break;	/* '\0' was seen by inet_pton4(). */
@@ -317,7 +325,7 @@ inet_addr(cp)
 
 	_DIAGASSERT(cp != NULL);
 
-	if (inet_pton4(cp, (u_char *)(void *)&val.s_addr))
+	if (inet_pton4(cp, (u_char *)(void *)&val.s_addr, 0))
 		return (val.s_addr);
 	return (INADDR_NONE);
 }
@@ -338,5 +346,5 @@ inet_aton(cp, addr)
 	_DIAGASSERT(cp != NULL);
 	_DIAGASSERT(addr != NULL);
 
-	return inet_pton4(cp, (u_char *)(void *)&addr->s_addr);
+	return inet_pton4(cp, (u_char *)(void *)&addr->s_addr, 0);
 }
