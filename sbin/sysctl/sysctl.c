@@ -1,4 +1,4 @@
-/*	$NetBSD: sysctl.c,v 1.24 2000/02/06 11:12:40 itojun Exp $	*/
+/*	$NetBSD: sysctl.c,v 1.25 2000/02/12 18:00:58 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1993
@@ -44,7 +44,7 @@ __COPYRIGHT(
 #if 0
 static char sccsid[] = "@(#)sysctl.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: sysctl.c,v 1.24 2000/02/06 11:12:40 itojun Exp $");
+__RCSID("$NetBSD: sysctl.c,v 1.25 2000/02/12 18:00:58 thorpej Exp $");
 #endif
 #endif /* not lint */
 
@@ -373,6 +373,21 @@ parse(string, flags)
 			fprintf(stdout, "%.2f %.2f %.2f\n", 
 			    loads[0], loads[1], loads[2]);
 			return;
+		}
+		if (mib[1] == VM_NKMEMPAGES) {
+			size_t nkmempages_len;
+			int nkmempages;
+
+			nkmempages_len = sizeof(nkmempages);
+
+			if (sysctl(mib, 2, &nkmempages, &nkmempages_len,
+			    NULL, 0)) {
+				warn("unable to get %s", string);
+				return;
+			}
+			if (!nflag)
+				fprintf(stdout, "%s: ", string);
+			fprintf(stdout, "%d\n", nkmempages);
 		}
 		if (flags == 0)
 			return;
