@@ -1,4 +1,4 @@
-/*	$NetBSD: arp.c,v 1.4 1995/02/20 11:04:00 mycroft Exp $	*/
+/*	$NetBSD: arp.c,v 1.5 1995/06/27 15:18:57 gwr Exp $	*/
 
 /*
  * Copyright (c) 1992 Regents of the University of California.
@@ -52,6 +52,9 @@
 #include "stand.h"
 #include "net.h"
 
+/* Might as well have this here... */
+u_char	bcea[6] = { 0xff, 0xff, 0xff, 0xff, 0xff, 0xff };
+
 /* Cache stuff */
 #define ARP_NUM 8			/* need at most 3 arp entries */
 
@@ -77,12 +80,18 @@ arpwhohas(d, addr)
 	register struct ether_arp *ah;
 	register struct arp_list *al;
 	struct {
-		u_char	header[ETHER_SIZE];
-		struct	ether_arp warp;
+		u_char header[ETHER_SIZE];
+		struct {
+			struct ether_arp arp;
+			u_char pad[18]; 	/* 60 - sizeof(arp) */
+		} data;
 	} wbuf;
 	struct {
-		u_char	header[ETHER_SIZE];
-		struct	ether_arp rarp;
+		u_char header[ETHER_SIZE];
+		struct {
+			struct ether_arp arp;
+			u_char pad[24]; 	/* extra space */
+		} data;
 	} rbuf;
 
 #ifdef ARP_DEBUG
@@ -103,9 +112,8 @@ arpwhohas(d, addr)
 		printf("arpwhohas: not cached\n");
 #endif
 
-	ah = &wbuf.warp;
-	bzero(ah, sizeof(*ah));
-
+	bzero((char*)&wbuf.data, sizeof(wbuf.data));
+	ah = &wbuf.data.arp;
 	ah->arp_hrd = htons(ARPHRD_ETHER);
 	ah->arp_pro = htons(ETHERTYPE_IP);
 	ah->arp_hln = sizeof(ah->arp_sha); /* hardware address length */
@@ -119,17 +127,12 @@ arpwhohas(d, addr)
 	al->addr = addr;
 
 	(void)sendrecv(d,
-	    arpsend, ah, sizeof(*ah),
-	    arprecv, &rbuf.rarp, sizeof(rbuf.rarp));
+	    arpsend, &wbuf.data, sizeof(wbuf.data),
+	    arprecv, &rbuf.data, sizeof(rbuf.data));
 
 	/* Store ethernet address in cache */
-	MACPY(rbuf.rarp.arp_sha, al->ea);
+	MACPY(rbuf.data.arp.arp_sha, al->ea);
 	++arp_num;
-
-#ifdef ARP_DEBUG
- 	if (debug)
-		printf("arpwhohas: cacheing %s --> %s\n", intoa(addr), ether_sprintf(al->ea));
-#endif
 
 	return (al->ea);
 }
@@ -162,27 +165,32 @@ arprecv(d, pkt, len, tleft)
 
 #ifdef ARP_DEBUG
  	if (debug)
- 		printf("arprecv: called\n");
+		printf("arprecv: ");
 #endif
 
 	len = readether(d, pkt, len, tleft);
-	if (len == -1 || len < sizeof(struct ether_arp))
+	if (len == -1 || len < sizeof(struct ether_arp)) {
+#ifdef ARP_DEBUG
+		if (debug)
+			printf("bad len=%d\n", len);
+#endif
 		goto bad;
+	}
 
 	eh = (struct ether_header *)pkt - 1;
+	if (eh->ether_type != htons(ETHERTYPE_ARP)) {
+#ifdef ARP_DEBUG
+		if (debug)
+			printf("not arp %d\n", ntohs(eh->ether_type));
+#endif
+		goto bad;
+	}
 	/* Must be to us */
 	if (bcmp(d->myea, eh->ether_dhost, 6) != 0 &&
 	    bcmp(bcea, eh->ether_dhost, 6) != 0) {
 #ifdef ARP_DEBUG
 		if (debug)
-			printf("arprecv: not ours %s\n", ether_sprintf(eh->ether_dhost));
-#endif
-		goto bad;
-	}
-	if (ntohs(eh->ether_type) != ETHERTYPE_ARP) {
-#ifdef ARP_DEBUG
-		if (debug)
-			printf("arprecv: not arp %d\n", ntohs(eh->ether_type));
+			printf("not ours %s\n", ether_sprintf(eh->ether_dhost));
 #endif
 		goto bad;
 	}
@@ -196,7 +204,7 @@ arprecv(d, pkt, len, tleft)
 	    ah->arp_pln != sizeof(ah->arp_spa) || ah->arp_op != ARPOP_REPLY) {
 #ifdef ARP_DEBUG
 		if (debug)
-			printf("arprecv: not valid reply\n");
+			printf("not valid reply\n");
 #endif
 		goto bad;
 	}
@@ -204,11 +212,17 @@ arprecv(d, pkt, len, tleft)
 	    bcmp(&d->myip, ah->arp_tpa, sizeof(d->myip)) != 0) {
 #ifdef ARP_DEBUG
 		if (debug)
-			printf("arprecv: already cached??\n");
+			printf("already cached??\n");
 #endif
 		goto bad;
 	}
 
+#ifdef ARP_DEBUG
+ 	if (debug)
+		printf("cacheing %s --> %s\n",
+			   intoa(ah->arp_spa),
+			   ether_sprintf(ah->arp_sha));
+#endif
 	return (0);
 
 bad:
