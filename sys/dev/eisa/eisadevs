@@ -1,4 +1,4 @@
-$NetBSD: eisadevs,v 1.10 1996/09/06 18:01:07 thorpej Exp $
+$NetBSD: eisadevs,v 1.11 1997/02/16 20:01:14 jonathan Exp $
 
 /*
  * Copyright (c) 1995, 1996 Christopher G. Demetriou
@@ -88,6 +88,8 @@ product ETI 1001	NE3300 Ethernet Rev. C & D
 product TCM 5091	3C509 Ethernet
 product TCM 5092	3C579-TP Ethernet
 product TCM 5093	3C579 Ethernet
+product	TCM 5920 	3C592 Ethernet	/* XXX low-order bit*/
+product	TCM 5970 	3C592 Fast Ethernet /* XXX low-order bit*/
 
 /* UltraStor products */
 product USC 0240	24f SCSI

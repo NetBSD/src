@@ -159,6 +159,16 @@ struct eisa_knowndev eisa_knowndevs[] = {
 	},
 	{
 	    0,
+	    "TCM5920",
+	    EISA_PRODUCT_TCM5920,
+	},
+	{
+	    0,
+	    "TCM5970",
+	    EISA_PRODUCT_TCM5970,
+	},
+	{
+	    0,
 	    "USC0240",
 	    EISA_PRODUCT_USC0240,
 	},
