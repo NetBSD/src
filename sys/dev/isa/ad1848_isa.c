@@ -1,4 +1,4 @@
-/*	$NetBSD: ad1848_isa.c,v 1.7 1999/02/18 17:27:39 mycroft Exp $	*/
+/*	$NetBSD: ad1848_isa.c,v 1.8 1999/02/22 02:25:20 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -463,8 +463,8 @@ ad1848_isa_trigger_input(addr, start, end, blksize, intr, arg, param)
 	u_int8_t reg;
 
 	isa_dmastart(isc->sc_ic, isc->sc_recdrq, start,
-	    (char *)end - (char *)start, NULL, DMAMODE_READ | DMAMODE_LOOP,
-	    BUS_DMA_NOWAIT);
+	    (char *)end - (char *)start, NULL,
+	    DMAMODE_READ | DMAMODE_LOOPDEMAND, BUS_DMA_NOWAIT);
 
 	isc->sc_recrun = 1;
 	isc->sc_intr = intr;
@@ -500,8 +500,8 @@ ad1848_isa_trigger_output(addr, start, end, blksize, intr, arg, param)
 	u_int8_t reg;
 
 	isa_dmastart(isc->sc_ic, isc->sc_playdrq, start,
-	    (char *)end - (char *)start, NULL, DMAMODE_WRITE | DMAMODE_LOOP,
-	    BUS_DMA_NOWAIT);
+	    (char *)end - (char *)start, NULL,
+	    DMAMODE_WRITE | DMAMODE_LOOPDEMAND, BUS_DMA_NOWAIT);
 
 	isc->sc_playrun = 1;
 	isc->sc_intr = intr;
