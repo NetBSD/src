@@ -1,4 +1,4 @@
-/*	$NetBSD: userret.h,v 1.2.6.2 2001/07/09 22:37:29 nathanw Exp $	*/
+/*	$NetBSD: userret.h,v 1.2.6.3 2001/07/19 16:54:05 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
@@ -87,14 +87,15 @@ userret(l)
 
 	struct proc *p = l->l_proc;
 
-	/* If our process is on the way out, die. */
-	if (p->p_flag & P_WEXIT)
-		lwp_exit(l);
-
 	/* Take pending signals. */
 	while ((sig = CURSIG(l)) != 0)
 		postsig(sig);
 
+	/* If our process is on the way out, die. */
+	if (p->p_flag & P_WEXIT)
+		lwp_exit(l);
+
+	/* Invoke any pending upcalls. */
 	if (l->l_flag & L_SA_UPCALL)
 		cpu_upcall(l);
 
