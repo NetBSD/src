@@ -1,4 +1,4 @@
-/*	$NetBSD: md.c,v 1.20 1999/03/24 05:51:20 mrg Exp $	*/
+/*	$NetBSD: md.c,v 1.21 2000/01/21 12:14:53 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 1995 Gordon W. Ross, Leo Weppelman.
@@ -73,16 +73,10 @@
 #endif
 
 /*
- * XXX: the "control" unit is (base unit + 16).
- * We should just use the cdev as the "control", but
- * that interferes with the security stuff preventing
- * simulatneous use of raw and block devices.
- *
- * XXX Assumption: 16 memory-disks are enough!
+ * We should use the raw partition for ioctl.
  */
 #define MD_MAX_UNITS	0x10
-#define MD_IS_CTRL(unit) (unit & 0x10)
-#define MD_UNIT(unit)    (unit &  0xF)
+#define MD_UNIT(unit)	DISKUNIT(unit)
 
 /* autoconfig stuff... */
 
@@ -91,15 +85,11 @@ struct md_softc {
 	struct disk sc_dkdev;	/* hook for generic disk handling */
 	struct md_conf sc_md;
 	struct buf *sc_buflist;
-	int sc_flags;
 };
 /* shorthand for fields in sc_md: */
 #define sc_addr sc_md.md_addr
 #define sc_size sc_md.md_size
 #define sc_type sc_md.md_type
-/* flags */
-#define MD_ISOPEN	0x01
-#define MD_SERVED	0x02
 
 void mdattach __P((int));
 static void md_attach __P((struct device *, struct device *, void *));
@@ -197,7 +187,8 @@ dev_type_ioctl(mdioctl);
 dev_type_size(mdsize);
 dev_type_dump(mddump);
 
-int mddump(dev, blkno, va, size)
+int
+mddump(dev, blkno, va, size)
 	dev_t dev;
 	daddr_t blkno;
 	caddr_t va;
@@ -206,13 +197,13 @@ int mddump(dev, blkno, va, size)
 	return ENODEV;
 }
 
-int mdsize(dev_t dev)
+int
+mdsize(dev_t dev)
 {
 	int unit;
 	struct md_softc *sc;
 
-	/* Disallow control units. */
-	unit = DISKUNIT(dev);
+	unit = MD_UNIT(dev);
 	if (unit >= ramdisk_ndevs)
 		return 0;
 	sc = ramdisk_devs[unit];
@@ -227,15 +218,14 @@ int mdsize(dev_t dev)
 
 int
 mdopen(dev, flag, fmt, proc)
-	dev_t   dev;
-	int     flag, fmt;
+	dev_t dev;
+	int flag, fmt;
 	struct proc *proc;
 {
-	int md, unit;
+	int unit;
 	struct md_softc *sc;
 
-	md = DISKUNIT(dev);
-	unit = MD_UNIT(md);
+	unit = MD_UNIT(dev);
 	if (unit >= ramdisk_ndevs)
 		return ENXIO;
 	sc = ramdisk_devs[unit];
@@ -243,10 +233,9 @@ mdopen(dev, flag, fmt, proc)
 		return ENXIO;
 
 	/*
-	 * The control device is not exclusive, and can
-	 * open uninitialized units (so you can setconf).
+	 * The raw partition is used for ioctl to configure.
 	 */
-	if (MD_IS_CTRL(md))
+	if (DISKPART(dev) == RAW_PART)
 		return 0;
 
 #ifdef	MEMORY_DISK_HOOKS
@@ -256,53 +245,71 @@ mdopen(dev, flag, fmt, proc)
 
 	/*
 	 * This is a normal, "slave" device, so
-	 * enforce initialized, exclusive open.
+	 * enforce initialized.
 	 */
 	if (sc->sc_type == MD_UNCONFIGURED)
 		return ENXIO;
-	if (sc->sc_flags & MD_ISOPEN)
-		return EBUSY;
 
 	return 0;
 }
 
 int
 mdclose(dev, flag, fmt, proc)
-	dev_t   dev;
-	int     flag, fmt;
+	dev_t dev;
+	int flag, fmt;
 	struct proc *proc;
 {
-	int md, unit;
-	struct md_softc *sc;
+	int unit;
 
-	md = DISKUNIT(dev);
-	unit = MD_UNIT(md);
-	sc = ramdisk_devs[unit];
+	unit = MD_UNIT(dev);
 
-	if (MD_IS_CTRL(md))
-		return 0;
-
-	/* Normal device. */
-	sc->sc_flags = 0;
+	if (unit >= ramdisk_ndevs)
+		return ENXIO;
 
 	return 0;
 }
 
 int
 mdread(dev, uio, flags)
-	dev_t		dev;
-	struct uio	*uio;
-	int		flags;
+	dev_t dev;
+	struct uio *uio;
+	int flags;
 {
+	int unit;
+	struct md_softc *sc;
+
+	unit = MD_UNIT(dev);
+
+	if (unit >= ramdisk_ndevs)
+		return ENXIO;
+
+	sc = ramdisk_devs[unit];
+
+	if (sc->sc_type == MD_UNCONFIGURED)
+		return ENXIO;
+
 	return (physio(mdstrategy, NULL, dev, B_READ, minphys, uio));
 }
 
 int
 mdwrite(dev, uio, flags)
-	dev_t		dev;
-	struct uio	*uio;
-	int		flags;
+	dev_t dev;
+	struct uio *uio;
+	int flags;
 {
+	int unit;
+	struct md_softc *sc;
+
+	unit = MD_UNIT(dev);
+
+	if (unit >= ramdisk_ndevs)
+		return ENXIO;
+
+	sc = ramdisk_devs[unit];
+
+	if (sc->sc_type == MD_UNCONFIGURED)
+		return ENXIO;
+
 	return (physio(mdstrategy, NULL, dev, B_WRITE, minphys, uio));
 }
 
@@ -314,14 +321,19 @@ void
 mdstrategy(bp)
 	struct buf *bp;
 {
-	int		md, unit;
+	int unit;
 	struct md_softc	*sc;
-	caddr_t		addr;
-	size_t		off, xfer;
+	caddr_t	addr;
+	size_t off, xfer;
 
-	md = DISKUNIT(bp->b_dev);
-	unit = MD_UNIT(md);
+	unit = MD_UNIT(bp->b_dev);
 	sc = ramdisk_devs[unit];
+
+	if (sc->sc_type == MD_UNCONFIGURED) {
+		bp->b_error = ENXIO;
+		bp->b_flags |= B_ERROR;
+		goto done;
+	}
 
 	switch (sc->sc_type) {
 #if MEMORY_DISK_SERVER
@@ -366,27 +378,27 @@ mdstrategy(bp)
 		bp->b_flags |= B_ERROR;
 		break;
 	}
+ done:
 	biodone(bp);
 }
 
 int
 mdioctl(dev, cmd, data, flag, proc)
-	dev_t		dev;
-	u_long		cmd;
-	int		flag;
-	caddr_t		data;
-	struct proc	*proc;
+	dev_t dev;
+	u_long cmd;
+	int flag;
+	caddr_t data;
+	struct proc *proc;
 {
-	int		md, unit;
-	struct md_softc	*sc;
-	struct md_conf	*umd;
+	int unit;
+	struct md_softc *sc;
+	struct md_conf *umd;
 
-	md = DISKUNIT(dev);
-	unit = MD_UNIT(md);
+	unit = MD_UNIT(dev);
 	sc = ramdisk_devs[unit];
 
-	/* If this is not the control device, punt! */
-	if (MD_IS_CTRL(md) == 0)
+	/* If this is not the raw partition, punt! */
+	if (DISKPART(dev) != RAW_PART)
 		return ENOTTY;
 
 	umd = (struct md_conf *)data;
@@ -422,10 +434,10 @@ static int
 md_ioctl_kalloc(sc, umd, proc)
 	struct md_softc *sc;
 	struct md_conf *umd;
-	struct proc	*proc;
+	struct proc *proc;
 {
 	vaddr_t addr;
-	vsize_t  size;
+	vsize_t size;
 
 	/* Sanity check the size. */
 	size = umd->md_size;
@@ -450,7 +462,7 @@ static int
 md_ioctl_server(sc, umd, proc)
 	struct md_softc *sc;
 	struct md_conf *umd;
-	struct proc	*proc;
+	struct proc *proc;
 {
 	vaddr_t end;
 	int error;
@@ -478,7 +490,7 @@ md_ioctl_server(sc, umd, proc)
 	return (error);
 }	
 
-int	md_sleep_pri = PWAIT | PCATCH;
+int md_sleep_pri = PWAIT | PCATCH;
 
 static int
 md_server_loop(sc)
@@ -486,8 +498,8 @@ md_server_loop(sc)
 {
 	struct buf *bp;
 	caddr_t addr;	/* user space address */
-	size_t  off;	/* offset into "device" */
-	size_t  xfer;	/* amount to transfer */
+	size_t off;	/* offset into "device" */
+	size_t xfer;	/* amount to transfer */
 	int error;
 
 	for (;;) {

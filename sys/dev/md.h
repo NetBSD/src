@@ -1,4 +1,4 @@
-/*	$NetBSD: md.h,v 1.5 1996/12/28 23:09:27 pk Exp $	*/
+/*	$NetBSD: md.h,v 1.6 2000/01/21 12:14:53 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 1995 Gordon W. Ross
@@ -66,13 +66,13 @@ struct md_conf {
 /*
  *     Small, wired-down chunk of kernel memory obtained from
  *     kmem_alloc().  The allocation is performed by an ioctl
- *     call on the "control" unit (regular unit + 16)
+ *     call on the raw partition.
  */
 #define MD_UMEM_SERVER 3
 /*
  *     Indirect access to user-space of a user-level server.
  *     (Like the MFS hack, but better! 8^)  Device operates
- *     only while the server has the control device open and
+ *     only while the server has the raw partition open and
  *     continues to service I/O requests.  The process that
  *     does this setconf will become the I/O server.  This
  *     configuration type can be disabled using:
