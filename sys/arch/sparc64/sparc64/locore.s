@@ -50,7 +50,7 @@
  */
 
 #undef NO_VCACHE
-#undef TRAPTRACE
+#define TRAPTRACE
 #define TRAPSTATS
 #undef TRAPS_USE_IG
 #undef LOCKED_PCB
@@ -3071,6 +3071,18 @@ slowtrap:
 #ifdef TRAPS_USE_IG
 	wrpr	%g0, PSTATE_KERN|PSTATE_IG, %pstate	! DEBUG
 #endif
+	/* Make sure kernel stack is aligned */
+	btst	0x03, %sp		! 32-bit stack OK?
+	bz,pt	%icc, 1f
+	 and	%sp, 0x07, %g4		! 64-bit stack OK?
+	cmp	%g4, 0x1		! Must end in 0b001
+	be,pt	%icc, 1f
+	 rdpr	%wstate, %g4
+	cmp	%g7, WSTATE_KERN
+	bnz,pt	%icc, 1f		! User stack -- we'll blow it away
+	 nop
+	set	panicstack, %sp		! Kernel stack corrupt -- use panicstack
+1:	
 	rdpr	%tt, %g4
 	rdpr	%tstate, %g1
 	rdpr	%tpc, %g2
@@ -4591,11 +4603,13 @@ dostart:
 	cmp	%o2, 8
 	blt	1f			! Not enuff args
 
-#ifdef _LP64
 	/*
 	 * First we'll see if we were loaded by a 64-bit bootloader
 	 */
+	 btst	0x7, %o1		! Check alignment
+	bne	0f
 	 set	0x44444230, %l3
+	
 	ldx	[%o1], %l4
 	cmp	%l3, %l4		! chk magic
 	bne	%xcc, 0f
@@ -4617,7 +4631,6 @@ dostart:
 	/*
 	 * Now we can try again with for a 32-bit bootloader
 	 */
-#endif
 	cmp	%o2, 8
 	blt	1f			! Not enuff args
 	
