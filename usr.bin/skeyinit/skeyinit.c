@@ -1,4 +1,4 @@
-/*	$NetBSD: skeyinit.c,v 1.16 2001/07/24 16:43:03 wiz Exp $	*/
+/*	$NetBSD: skeyinit.c,v 1.17 2002/04/23 06:10:42 itohy Exp $	*/
 
 /* S/KEY v1.1b (skeyinit.c)
  *
@@ -22,6 +22,7 @@
 #include <err.h>
 #include <errno.h>
 #include <fcntl.h>
+#include <paths.h>
 #include <pwd.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -52,6 +53,16 @@ int main(int argc, char **argv)
 	struct	passwd *pp;
 	struct	tm *tm;
 	int c;
+
+	/*
+	 * Make sure using stdin/stdout/stderr is safe
+	 * after opening any file.
+	 */
+	i = open(_PATH_DEVNULL, O_RDWR);
+	while (i >= 0 && i < 2)
+		i = dup(i);
+	if (i > 2)
+		close(i);
 
 	if (geteuid() != 0)
 		errx(1, "must be setuid root.");
