@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs.h,v 1.46 2003/02/17 23:48:16 perseant Exp $	*/
+/*	$NetBSD: lfs.h,v 1.47 2003/02/18 14:58:31 soren Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003 The NetBSD Foundation, Inc.
@@ -526,9 +526,11 @@ struct lfs {
 	LIST_HEAD(, lfs_res_blk) lfs_reshash[LFS_RESHASH_WIDTH]; 
 	int       lfs_pdflush;           /* pagedaemon wants us to flush */
 	u_int32_t **lfs_suflags;	/* Segment use flags */
+#ifdef _KERNEL
 	struct pool lfs_clpool;		/* Pool for struct lfs_cluster */
 	struct pool lfs_bpppool;	/* Pool for bpp */
 	struct pool lfs_segpool;	/* Pool for struct segment */
+#endif /* KERNEL */
 };
 
 /*
