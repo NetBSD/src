@@ -1,4 +1,4 @@
-/*	$NetBSD: hydra.c,v 1.1 2002/09/30 23:22:05 bjh21 Exp $	*/
+/*	$NetBSD: hydra.c,v 1.2 2002/10/01 22:18:00 bjh21 Exp $	*/
 
 /*-
  * Copyright (c) 2002 Ben Harris
@@ -29,7 +29,7 @@
 
 #include <sys/param.h>
 
-__KERNEL_RCSID(0, "$NetBSD: hydra.c,v 1.1 2002/09/30 23:22:05 bjh21 Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hydra.c,v 1.2 2002/10/01 22:18:00 bjh21 Exp $");
 
 #include <sys/device.h>
 #include <sys/systm.h>
@@ -48,6 +48,7 @@ struct hydra_softc {
 	bus_space_handle_t	sc_ioh;
 	paddr_t			sc_bootpage_pa;
 	vaddr_t			sc_bootpage_va;
+	void			*sc_shutdownhook;
 };
 
 struct hydra_attach_args {
@@ -59,6 +60,9 @@ static void hydra_attach(struct device *, struct device *, void *);
 static int hydra_probe_slave(struct hydra_softc *, int);
 static int hydra_print(void *, char const *);
 static int hydra_submatch(struct device *, struct cfdata *, void *);
+static void hydra_shutdown(void *);
+
+static void hydra_reset(struct hydra_softc *);
 
 struct cfattach hydra_ca = {
 	sizeof(struct hydra_softc), hydra_match, hydra_attach
@@ -158,20 +162,14 @@ hydra_attach(struct device *parent, struct device *self, void *aux)
 	    VM_PROT_READ | VM_PROT_WRITE | PMAP_WIRED);
 	pmap_update(pmap_kernel());
 
-	/* Halt all slaves */
-	bus_space_write_1(iot, ioh, HYDRA_HALT_SET, 0xf);
-	bus_space_write_1(iot, ioh, HYDRA_RESET, 0x0);
-	/* Clear IPFIQs to master */
-	bus_space_write_1(iot, ioh, HYDRA_FIQ_CLR, 0xf);
-	/* ... and to all slaves */
-	bus_space_write_1(iot, ioh, HYDRA_FORCEFIQ_CLR, 0xf);
-	/* Ditto IPIRQs */
-	bus_space_write_1(iot, ioh, HYDRA_IRQ_CLR, 0xf);
-	bus_space_write_1(iot, ioh, HYDRA_FORCEIRQ_CLR, 0xf);
+	hydra_reset(sc);
+
+	/* Ensure that the Hydra gets shut down properly. */
+	sc->sc_shutdownhook = shutdownhook_establish(hydra_shutdown, sc);
+
 	/* Initialise MMU */
 	bus_space_write_1(iot, ioh, HYDRA_MMU_LSN, sc->sc_bootpage_pa >> 21);
 	bus_space_write_1(iot, ioh, HYDRA_MMU_MSN, sc->sc_bootpage_pa >> 25);
-	bus_space_write_1(iot, ioh, HYDRA_MMU_CLR, 0xf);
 
 	printf("\n");
 
@@ -231,4 +229,40 @@ hydra_submatch(struct device *parent, struct cfdata *cf, void *aux)
 	    cf->cf_loc[HYDRACF_SLAVE] == ha->ha_slave)
 		return 1;
 	return 0;
+}
+
+static void
+hydra_shutdown(void *arg)
+{
+	struct hydra_softc *sc = arg;
+
+	hydra_reset(sc);
+}
+
+/*
+ * hydra_reset: Put the Hydra back into the state it's in after a hard reset.
+ * Must be run on the master CPU.
+ */
+static void
+hydra_reset(struct hydra_softc *sc)
+{
+	bus_space_tag_t iot = sc->sc_iot;
+	bus_space_handle_t ioh = sc->sc_ioh;
+
+	KASSERT((bus_space_read_1(iot, ioh, HYDRA_ID_STATUS) &
+	    HYDRA_ID_ISSLAVE) == 0);
+	/* Halt all slaves */
+	bus_space_write_1(iot, ioh, HYDRA_HALT_SET, 0xf);
+	bus_space_write_1(iot, ioh, HYDRA_RESET, 0x0);
+	/* Clear IPFIQs to master */
+	bus_space_write_1(iot, ioh, HYDRA_FIQ_CLR, 0xf);
+	/* ... and to all slaves */
+	bus_space_write_1(iot, ioh, HYDRA_FORCEFIQ_CLR, 0xf);
+	/* Ditto IPIRQs */
+	bus_space_write_1(iot, ioh, HYDRA_IRQ_CLR, 0xf);
+	bus_space_write_1(iot, ioh, HYDRA_FORCEIRQ_CLR, 0xf);
+	/* Initialise MMU */
+	bus_space_write_1(iot, ioh, HYDRA_MMU_LSN, 0);
+	bus_space_write_1(iot, ioh, HYDRA_MMU_MSN, 0);
+	bus_space_write_1(iot, ioh, HYDRA_MMU_CLR, 0xf);
 }
