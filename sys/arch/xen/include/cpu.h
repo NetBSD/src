@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.2 2004/04/24 18:55:02 cl Exp $	*/
+/*	$NetBSD: cpu.h,v 1.3 2004/04/25 19:01:27 cl Exp $	*/
 /*	NetBSD: cpu.h,v 1.113 2004/02/20 17:35:01 yamt Exp 	*/
 
 /*-
@@ -360,6 +360,7 @@ int	cpu_maxproc(void);
 void	cpu_reset(void);
 void	i386_init_pcb_tss_ldt(struct cpu_info *);
 void	i386_proc0_tss_ldt_init(void);
+void	i386_switch_context(struct pcb *);
 
 /* identcpu.c */
 extern int tmx86_has_longrun;
