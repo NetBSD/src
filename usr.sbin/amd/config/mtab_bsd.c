@@ -37,7 +37,7 @@
  *
  *	@(#)mtab_bsd.c	8.1 (Berkeley) 6/6/93
  *
- * $Id: mtab_bsd.c,v 1.3 1994/06/13 19:48:40 mycroft Exp $
+ * $Id: mtab_bsd.c,v 1.4 1994/06/13 20:17:59 mycroft Exp $
  *
  */
 
@@ -55,12 +55,16 @@ struct statfs *mp;
 
 	new_mp->mnt_fsname = strdup(mp->f_mntfromname);
 	new_mp->mnt_dir = strdup(mp->f_mntonname);
+#ifndef __NetBSD__
 	switch (mp->f_type) {
 	case MOUNT_UFS:  ty = MTAB_TYPE_UFS; break;
 	case MOUNT_NFS:  ty = MTAB_TYPE_NFS; break;
 	case MOUNT_MFS:  ty = MTAB_TYPE_MFS; break;
 	default:  ty = "unknown"; break;
 	}
+#else
+	ty = mp->f_fstypename;
+#endif
 	new_mp->mnt_type = strdup(ty);
 	new_mp->mnt_opts = strdup("unset");
 	new_mp->mnt_freq = 0;
