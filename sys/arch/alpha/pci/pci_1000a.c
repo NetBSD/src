@@ -1,4 +1,4 @@
-/* $NetBSD: pci_1000a.c,v 1.1 1998/06/24 01:41:16 ross Exp $ */
+/* $NetBSD: pci_1000a.c,v 1.2 1998/06/26 21:59:46 ross Exp $ */
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: pci_1000a.c,v 1.1 1998/06/24 01:41:16 ross Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pci_1000a.c,v 1.2 1998/06/26 21:59:46 ross Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -87,14 +87,14 @@ __KERNEL_RCSID(0, "$NetBSD: pci_1000a.c,v 1.1 1998/06/24 01:41:16 ross Exp $");
 
 #include <alpha/pci/pci_1000a.h>
 
-#ifndef EVCNT_COUNTERS
 #include <machine/intrcnt.h>
-#endif
 
 #include "sio.h"
 #if NSIO
 #include <alpha/pci/siovar.h>
 #endif
+
+#define	PCI_STRAY_MAX	   5
 
 #define IMR2IRQ(bn) ((bn) - 1)
 #define IRQ2IMR(irq) ((irq) + 1)
@@ -109,22 +109,13 @@ void	*dec_1000a_intr_establish __P((void *, pci_intr_handle_t,
 	    int, int (*func)(void *), void *));
 void	dec_1000a_intr_disestablish __P((void *, void *));
 
-#define	DEC_1000A_MAX_IRQ	32
-#define	PCI_STRAY_MAX	5
-
 struct alpha_shared_intr *dec_1000a_pci_intr;
-#ifdef EVCNT_COUNTERS
-struct evcnt dec_1000a_intr_evcnt;
-#endif
 
 static void dec_1000a_iointr __P((void *framep, unsigned long vec));
 static void dec_1000a_enable_intr __P((int irq));
 static void dec_1000a_disable_intr __P((int irq));
 static void pci_1000a_imi __P((void));
 static pci_chipset_tag_t pc_tag;
-
-int	ross_tmp_didr;			/* XXX XXX XXX */
-int	ross_tmp_didv;			/* XXX XXX XXX */
 
 void
 pci_1000a_pickintr(core, iot, memt, pc)
@@ -133,6 +124,7 @@ pci_1000a_pickintr(core, iot, memt, pc)
 	pci_chipset_tag_t pc;
 {
 	int i;
+
 	mystery_icu_iot = iot;
 
 	pc_tag = pc;
@@ -147,8 +139,8 @@ pci_1000a_pickintr(core, iot, memt, pc)
 
 	pc->pc_pciide_compat_intr_establish = NULL;
 
-	dec_1000a_pci_intr = alpha_shared_intr_alloc(DEC_1000A_MAX_IRQ);
-	for (i = 0; i < DEC_1000A_MAX_IRQ; i++)
+	dec_1000a_pci_intr = alpha_shared_intr_alloc(INTRCNT_DEC_1000A_IRQ_LEN);
+	for (i = 0; i < INTRCNT_DEC_1000A_IRQ_LEN; i++)
 		alpha_shared_intr_set_maxstrays(dec_1000a_pci_intr, i,
 		    PCI_STRAY_MAX);
 
@@ -215,7 +207,7 @@ dec_1000a_intr_string(ccv, ih)
         static char irqstr[sizeof irqmsg_fmt];
 
 
-        if (ih > DEC_1000A_MAX_IRQ)
+        if (ih >= INTRCNT_DEC_1000A_IRQ_LEN)
                 panic("dec_1000a_intr_string: bogus dec_1000a IRQ 0x%x\n", ih);
 
         sprintf(irqstr, irqmsg_fmt, ih);
@@ -231,7 +223,7 @@ dec_1000a_intr_establish(ccv, ih, level, func, arg)
 {           
 	void *cookie;
 
-        if (ih > DEC_1000A_MAX_IRQ)
+        if (ih >= INTRCNT_DEC_1000A_IRQ_LEN)
                 panic("dec_1000a_intr_establish: IRQ too high, 0x%x\n", ih);
 
 	cookie = alpha_shared_intr_establish(dec_1000a_pci_intr, ih, IST_LEVEL,
@@ -257,20 +249,11 @@ dec_1000a_iointr(framep, vec)
 {
 	int irq;
 
-if (ross_tmp_didv)
-printf("\tvec 0x%x\n", vec);
 	if (vec >= 0x900) {
-		if (vec >= 0x900 + (DEC_1000A_MAX_IRQ << 4))
+		if (vec >= 0x900 + (INTRCNT_DEC_1000A_IRQ_LEN << 4))
 			panic("dec_1000a_iointr: vec 0x%x out of range\n", vec);
 		irq = (vec - 0x900) >> 4;
-#ifdef EVCNT_COUNTERS
-		dec_1000a_intr_evcnt.ev_count++;
-#else
-		if (DEC_1000A_MAX_IRQ != INTRCNT_DEC_1000A_IRQ_LEN)
-			panic("dec_1000a interrupt counter sizes inconsistent");
 		intrcnt[INTRCNT_DEC_1000A_IRQ + irq]++;
-#endif
-
 		if (!alpha_shared_intr_dispatch(dec_1000a_pci_intr, irq)) {
 			alpha_shared_intr_stray(dec_1000a_pci_intr, irq,
 			    "dec_1000a irq");
@@ -307,11 +290,6 @@ dec_1000a_enable_intr(irq)
 	int imrval = IRQ2IMR(irq);
 	int i = imrval >= 16;
 
-if (ross_tmp_didr) {
-IW(0, ~0);
-IW(1, ~0);
-return;
-}
 	IW(i, IR(i) | 1 << (imrval & 0xf));
 }
 
