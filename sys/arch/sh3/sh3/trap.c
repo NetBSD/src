@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.25 2001/05/30 15:24:37 lukem Exp $	*/
+/*	$NetBSD: trap.c,v 1.26 2001/06/02 18:09:21 chs Exp $	*/
 
 /*-
  * Copyright (c) 1995 Charles M. Hannum.  All rights reserved.
@@ -322,10 +322,10 @@ trap(p1, p2, p3, p4, frame)
 	case T_PAGEFLT|T_USER: {	/* page fault */
 		register vaddrt_t va;
 		register struct vmspace *vm = p->p_vmspace;
-		register vm_map_t map;
+		register struct vm_map *map;
 		int rv;
 		vm_prot_t ftype;
-		extern vm_map_t kernel_map;
+		extern struct vm_map *kernel_map;
 		unsigned nss, v;
 
 		va = trunc_page((vaddr_t)rcr2());
@@ -608,11 +608,11 @@ tlb_handler(p1, p2, p3, p4, frame)
 	int pte_index;
 	struct proc *p;
 	struct vmspace *vm;
-	vm_map_t map;
+	struct vm_map *map;
 	int rv = 0;
 	u_quad_t sticks = 0;
 	vm_prot_t ftype;
-	extern vm_map_t kernel_map;
+	extern struct vm_map *kernel_map;
 	vaddr_t	va_save;
 	unsigned long pteh_save;
 	int exptype, user;

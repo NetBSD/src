@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_meter.c,v 1.19 2001/05/25 04:06:15 chs Exp $	*/
+/*	$NetBSD: uvm_meter.c,v 1.20 2001/06/02 18:09:27 chs Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -301,8 +301,8 @@ uvm_total(totalp)
 {
 	struct proc *p;
 #if 0
-	vm_map_entry_t	entry;
-	vm_map_t map;
+	struct vm_map_entry *	entry;
+	struct vm_map *map;
 	int paging;
 #endif
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.45 2001/05/30 15:24:36 lukem Exp $	*/
+/*	$NetBSD: trap.c,v 1.46 2001/06/02 18:09:18 chs Exp $	*/
 
 /*-
  * Copyright (c) 1996 Matthias Pfaller. All rights reserved.
@@ -356,10 +356,10 @@ trap(frame)
 	case T_ABT | T_USER: {		/* page fault */
 		vaddr_t va;
 		struct vmspace *vm = p->p_vmspace;
-		vm_map_t map;
+		struct vm_map *map;
 		int rv;
 		vm_prot_t ftype;
-		extern vm_map_t kernel_map;
+		extern struct vm_map *kernel_map;
 		unsigned nss;
 
 		va = trunc_page((vaddr_t)frame.tf_tear);

@@ -1,4 +1,4 @@
-/*	$NetBSD: db_break.c,v 1.14 2000/06/26 14:21:09 mrg Exp $	*/
+/*	$NetBSD: db_break.c,v 1.15 2001/06/02 18:09:24 chs Exp $	*/
 
 /* 
  * Mach Operating System
@@ -78,7 +78,7 @@ db_breakpoint_free(bkpt)
 
 void
 db_set_breakpoint(map, addr, count)
-	vm_map_t	map;
+	struct vm_map	*map;
 	db_addr_t	addr;
 	int		count;
 {
@@ -107,7 +107,7 @@ db_set_breakpoint(map, addr, count)
 
 void
 db_delete_breakpoint(map, addr)
-	vm_map_t	map;
+	struct vm_map	*map;
 	db_addr_t	addr;
 {
 	db_breakpoint_t	bkpt;
@@ -132,7 +132,7 @@ db_delete_breakpoint(map, addr)
 
 db_breakpoint_t
 db_find_breakpoint(map, addr)
-	vm_map_t	map;
+	struct vm_map	*map;
 	db_addr_t	addr;
 {
 	db_breakpoint_t	bkpt;
@@ -271,7 +271,8 @@ db_listbreak_cmd(addr, have_addr, count, modif)
 
 boolean_t
 db_map_equal(map1, map2)
-	vm_map_t	map1, map2;
+	struct vm_map	*map1;
+	struct vm_map	*map2;
 {
 	return ((map1 == map2) ||
 		((map1 == NULL) && (map2 == kernel_map)) ||
@@ -280,7 +281,7 @@ db_map_equal(map1, map2)
 
 boolean_t
 db_map_current(map)
-	vm_map_t	map;
+	struct vm_map	*map;
 {
 #if 0
 	thread_t	thread;
@@ -294,7 +295,7 @@ db_map_current(map)
 #endif
 }
 
-vm_map_t
+struct vm_map *
 db_map_addr(addr)
 	vaddr_t addr;
 {

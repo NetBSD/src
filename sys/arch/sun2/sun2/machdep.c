@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.7 2001/05/30 15:24:38 lukem Exp $	*/
+/*	$NetBSD: machdep.c,v 1.8 2001/06/02 18:09:22 chs Exp $	*/
 
 /*
  * Copyright (c) 2001 Matthew Fredette.
@@ -194,9 +194,9 @@ extern char etext[];
 /* Our exported CPU info; we can have only one. */  
 struct cpu_info cpu_info_store;
 
-vm_map_t exec_map = NULL;  
-vm_map_t mb_map = NULL;
-vm_map_t phys_map = NULL;
+struct vm_map *exec_map = NULL;  
+struct vm_map *mb_map = NULL;
+struct vm_map *phys_map = NULL;
 
 int	physmem;
 int	fputype;

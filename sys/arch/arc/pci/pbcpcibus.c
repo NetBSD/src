@@ -1,4 +1,4 @@
-/*	$NetBSD: pbcpcibus.c,v 1.6 2001/01/13 10:46:18 ur Exp $	*/
+/*	$NetBSD: pbcpcibus.c,v 1.7 2001/06/02 18:09:10 chs Exp $	*/
 /*	$OpenBSD: pbcpcibus.c,v 1.7 1998/03/25 11:52:48 pefo Exp $ */
 
 /*
@@ -57,7 +57,7 @@
 #include <arc/pci/pcibrvar.h>
 #include <arc/pci/v962pcbreg.h>
 
-extern vm_map_t phys_map;
+extern struct vm_map *phys_map;
 extern char eth_hw_addr[];	/* Hardware ethernet address stored elsewhere */
 
 int	 pbcpcibrmatch __P((struct device *, struct cfdata *, void *));
