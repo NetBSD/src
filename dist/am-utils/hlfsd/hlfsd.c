@@ -1,4 +1,4 @@
-/*	$NetBSD: hlfsd.c,v 1.4 2002/11/29 23:06:25 christos Exp $	*/
+/*	$NetBSD: hlfsd.c,v 1.5 2002/12/06 03:57:24 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1997-2002 Erez Zadok
@@ -750,7 +750,12 @@ hlfsd_init(void)
   if (setitimer(ITIMER_REAL, &reloadinterval, (struct itimerval *) 0) < 0)
     fatal("setitimer: %m");
 
-  gettimeofday((struct timeval *) &startup, (struct timezone *) 0);
+  {
+    struct timeval start_time;
+    gettimeofday((void *) &startup, (struct timezone *) 0);
+    startup.nt_seconds = (u_int) start_time.tv_sec;
+    startup.nt_useconds = (u_int) start_time.tv_usec;
+  }
 
 #ifdef DEBUG
   /*
