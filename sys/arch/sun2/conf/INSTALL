@@ -1,10 +1,10 @@
-# $NetBSD: INSTALL,v 1.10 2002/01/27 13:23:27 jdolecek Exp $
+# $NetBSD: INSTALL,v 1.11 2002/04/12 08:11:23 gmcgarry Exp $
 
 # INSTALL Sun2 (2/120, 2/170, 2/50, ...)
 
 include "arch/sun2/conf/std.sun2"
 
-#ident 		"INSTALL-$Revision: 1.10 $"
+#ident 		"INSTALL-$Revision: 1.11 $"
 
 # Machines to be supported by this kernel
 #options 	FPU_EMULATE
@@ -34,6 +34,7 @@ options		PIPE_SOCKETPAIR	# smaller, but slower pipe(2)
 #options 	DDB_HISTORY_SIZE=100	# enable history editing in DDB
 #options 	DEBUG		# kernel debugging code
 #options 	DIAGNOSTIC	# extra kernel sanity checking
+#options 	USERCONF	# userconf(4) support
 #options 	KMEMSTATS	# kernel memory statistics (vmstat -m)
 #options 	PMAP_DEBUG
 #options 	SCSIDEBUG

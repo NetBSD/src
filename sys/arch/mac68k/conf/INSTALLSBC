@@ -1,4 +1,4 @@
-#	$NetBSD: INSTALLSBC,v 1.6 2002/04/02 05:30:43 lukem Exp $
+#	$NetBSD: INSTALLSBC,v 1.7 2002/04/12 08:11:05 gmcgarry Exp $
 #
 # INSTALLSBC
 
@@ -29,6 +29,7 @@ options 	INSECURE	# disable kernel security levels
 
 options 	RTC_OFFSET=0	# hardware clock is this many mins. west of GMT
 
+#options 	USERCONF	# userconf(4) support
 options		PIPE_SOCKETPAIR	# smaller, but slower pipe(2)
 
 # Diagnostic/debugging support options - XXX remove these at some point

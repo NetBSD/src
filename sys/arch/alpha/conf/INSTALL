@@ -1,4 +1,4 @@
-# $NetBSD: INSTALL,v 1.61 2002/04/02 05:30:37 lukem Exp $
+# $NetBSD: INSTALL,v 1.62 2002/04/12 08:10:48 gmcgarry Exp $
 #
 # Alpha INSTALL kernel.
 
@@ -71,6 +71,7 @@ options 	COMPAT_14
 #options 	TCVERBOSE		# recognize "unknown" TC devices
 options 	UCONSOLE		# users can use TIOCCONS (for xconsole)
 options 	INSECURE		# disable `kernel security level'
+#options 	USERCONF		# userconf(4) support
 options		PIPE_SOCKETPAIR		# smaller, but slower pipe(2)
 
 # The Alpha console firmware network boots using the BOOTP

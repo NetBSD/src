@@ -1,11 +1,11 @@
-#	$NetBSD: LAMB,v 1.17 2002/03/04 13:24:10 sommerfeld Exp $
+#	$NetBSD: LAMB,v 1.18 2002/04/12 08:11:03 gmcgarry Exp $
 #
 #	GENERIC -- everything that's currently supported
 #
 
 include "arch/i386/conf/std.i386"
 
-#ident 		"GENERIC-$Revision: 1.17 $"
+#ident 		"GENERIC-$Revision: 1.18 $"
 
 maxusers	32		# estimated number of users
 
@@ -63,6 +63,7 @@ options 	SYSVSHM		# System V-like memory sharing
 
 options 	LKM		# loadable kernel modules
 
+#options 	USERCONF	# userconf(4) support
 #options	PIPE_SOCKETPAIR	# smaller, but slower pipe(2)
 
 options 	TIMER_FREQ=1189200	# LAMB uses nonstandard timer freq

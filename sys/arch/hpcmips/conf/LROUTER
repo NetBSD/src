@@ -1,5 +1,5 @@
 #
-# 	$NetBSD: LROUTER,v 1.4 2002/01/27 14:18:11 takemura Exp $
+# 	$NetBSD: LROUTER,v 1.5 2002/04/12 08:10:59 gmcgarry Exp $
 # 	From: NetBSD: MPC303,v 1.4 2001/11/21 11:28:09 uch Exp
 #
 # Kernel configuration file for LASER5 L-Router
@@ -26,6 +26,7 @@ options 	DIAGNOSTIC		# extra kernel debugging checks
 #options 	VRGIUDEBUG_CONF=2	# debug GIU intr
 options 	KTRACE			# system call tracing support
 options 	MSGBUFSIZE=16384	# dmesg buffer size
+#options 	USERCONF		# userconf(4) support
 #options	PIPE_SOCKETPAIR		# smaller, but slower pipe(2)
 
 ## UVM options.

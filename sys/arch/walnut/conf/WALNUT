@@ -1,4 +1,4 @@
-#	$NetBSD: WALNUT,v 1.14 2002/04/02 05:30:50 lukem Exp $
+#	$NetBSD: WALNUT,v 1.15 2002/04/12 08:11:27 gmcgarry Exp $
 #
 #	GENERIC -- everything that's currently supported
 #
@@ -31,6 +31,7 @@ options 	SYSVSHM		# System V shared memory
 
 #options 	LKM		# loadable kernel modules
 
+#options 	USERCONF	# userconf(4) support
 #options	PIPE_SOCKETPAIR	# smaller, but slower pipe(2)
 
 # Diagnostic/debugging support options

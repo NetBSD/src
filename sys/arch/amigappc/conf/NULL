@@ -1,4 +1,4 @@
-# $NetBSD: NULL,v 1.9 2002/03/04 13:24:08 sommerfeld Exp $
+# $NetBSD: NULL,v 1.10 2002/04/12 08:10:50 gmcgarry Exp $
 #
 # This file was automatically created. Changes will be
 # lost when running make in this directory.
@@ -107,6 +107,7 @@ options 	EXEC_ELF32	# 32-bit ELF executables (Linux, SVR4)
 #options 	INSECURE	# disable kernel security levels
 #options 	SCSIVERBOSE	# human readable SCSI error messages
 #options 	NTP		# NTP phase/frequency locked loop
+#options 	USERCONF	# userconf(4) support
 #options	PIPE_SOCKETPAIR	# smaller, but slower pipe(2)
 
 #Misc. debugging options

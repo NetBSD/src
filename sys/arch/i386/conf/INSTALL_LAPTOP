@@ -1,4 +1,4 @@
-#	$NetBSD: INSTALL_LAPTOP,v 1.25 2002/04/02 05:30:42 lukem Exp $
+#	$NetBSD: INSTALL_LAPTOP,v 1.26 2002/04/12 08:11:03 gmcgarry Exp $
 #
 #	INSTALL - Installation kernel.
 #
@@ -70,6 +70,7 @@ options 	RTC_OFFSET=0	# hardware clock is this many mins. west of GMT
 
 #options 	LKM		# loadable kernel modules
 
+#options 	USERCONF	# userconf(4) support
 options		PIPE_SOCKETPAIR	# smaller, but slower pipe(2)
 
 # Diagnostic/debugging support options

@@ -1,11 +1,11 @@
-#	$NetBSD: DELPHI,v 1.12 2002/02/10 17:36:57 wiz Exp $
+#	$NetBSD: DELPHI,v 1.13 2002/04/12 08:11:01 gmcgarry Exp $
 #
 #	DELPHI -- one of thorpej@zembu.com's devel machines
 #
 
 include "arch/i386/conf/std.i386"
 
-ident 		"DELPHI-$Revision: 1.12 $"
+ident 		"DELPHI-$Revision: 1.13 $"
 
 maxusers	64		# estimated number of users
 
@@ -61,6 +61,7 @@ options 	SYSVSHM		# System V-like memory sharing
 
 options 	LKM		# loadable kernel modules
 
+#options 	USERCONF	# userconf(4) support
 #options	PIPE_SOCKETPAIR	# smaller, but slower pipe(2)
 
 # Diagnostic/debugging support options

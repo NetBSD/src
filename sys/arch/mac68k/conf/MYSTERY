@@ -1,4 +1,4 @@
-#	$NetBSD: MYSTERY,v 1.27 2002/01/27 13:23:20 jdolecek Exp $
+#	$NetBSD: MYSTERY,v 1.28 2002/04/12 08:11:05 gmcgarry Exp $
 #
 # GENERIC
 
@@ -34,6 +34,7 @@ options 	SYSVSHM		# System V-like memory sharing
 
 #options 	LKM		# loadable kernel modules
 
+#options 	USERCONF	# userconf(4) support
 #options	PIPE_SOCKETPAIR	# smaller, but slower pipe(2)
 
 # Diagnostic/debugging support options

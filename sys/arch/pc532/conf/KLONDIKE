@@ -1,5 +1,5 @@
 
-#	$NetBSD: KLONDIKE,v 1.21 2002/01/27 13:23:24 jdolecek Exp $
+#	$NetBSD: KLONDIKE,v 1.22 2002/04/12 08:11:15 gmcgarry Exp $
 #
 # KLONDIKE: Matthias Pfaller's pc532
 #
@@ -25,6 +25,7 @@ options 	LKM			# loadable kernel modules
 options 	INSECURE		# allow lkms in multiuser mode
 options 	PFIL_HOOKS		# pfil(9) packet filter hooks
 options 	SCSIVERBOSE		# verbose SCSI error messages
+#options 	USERCONF		# userconf(4) support
 #options	PIPE_SOCKETPAIR		# smaller, but slower pipe(2)
 
 # compatibility options

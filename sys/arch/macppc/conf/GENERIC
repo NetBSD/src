@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.124 2002/04/10 13:41:04 tsutsui Exp $
+# $NetBSD: GENERIC,v 1.125 2002/04/12 08:11:06 gmcgarry Exp $
 #
 # GENERIC machine description file
 # 
@@ -20,7 +20,7 @@
 
 include		"arch/macppc/conf/std.macppc"
 
-#ident 		"GENERIC-$Revision: 1.124 $"
+#ident 		"GENERIC-$Revision: 1.125 $"
 
 maxusers	32
 
@@ -43,6 +43,7 @@ options 	SYSVSHM		# System V shared memory
 
 options 	LKM		# loadable kernel modules
 
+#options 	USERCONF	# userconf(4) support
 #options	PIPE_SOCKETPAIR	# smaller, but slower pipe(2)
 
 # Diagnostic/debugging support options

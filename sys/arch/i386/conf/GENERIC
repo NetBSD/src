@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.479 2002/04/02 20:48:01 augustss Exp $
+# $NetBSD: GENERIC,v 1.480 2002/04/12 08:11:01 gmcgarry Exp $
 #
 # GENERIC machine description file
 # 
@@ -20,7 +20,7 @@
 
 include 	"arch/i386/conf/std.i386"
 
-#ident 		"GENERIC-$Revision: 1.479 $"
+#ident 		"GENERIC-$Revision: 1.480 $"
 
 maxusers	32		# estimated number of users
 
@@ -78,6 +78,7 @@ options 	SYSVSHM		# System V-like memory sharing
 
 options 	LKM		# loadable kernel modules
 
+#options 	USERCONF	# userconf(4) support
 #options 	PIPE_SOCKETPAIR	# smaller, but slower pipe(2)
 
 # Diagnostic/debugging support options

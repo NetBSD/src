@@ -1,4 +1,4 @@
-#	$NetBSD: KZSH401,v 1.15 2002/04/02 05:30:41 lukem Exp $
+#	$NetBSD: KZSH401,v 1.16 2002/04/12 08:10:57 gmcgarry Exp $
 #
 #	GENERIC -- everything that's currently supported
 #
@@ -43,6 +43,7 @@ options 	LED_ADDR=0xa8000000
 
 options 	HZ=64		# clock interrupt generates every 1/HZ sec
 options 	COMPAT_43	# and 4.3BSD
+#options 	USERCONF	# userconf(4) support
 
 # Executable format options
 options 	EXEC_COFF	# COFF executables

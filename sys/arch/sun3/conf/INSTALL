@@ -1,4 +1,4 @@
-# $NetBSD: INSTALL,v 1.15 2002/01/27 13:23:28 jdolecek Exp $
+# $NetBSD: INSTALL,v 1.16 2002/04/12 08:11:25 gmcgarry Exp $
 #
 # INSTALL - Installation kernel for the Sun3
 #
@@ -27,6 +27,7 @@ maxusers	2
 #options 	LKM		# loadable kernel modules
 #options 	INSECURE	# disable kernel security level
 #options 	UCONSOLE	# Allow non-root TIOCCONS
+#options 	USERCONF	# userconf(4) support
 options		PIPE_SOCKETPAIR	# smaller, but slower pipe(2)
 
 # Which kernel debugger?  Uncomment either this:

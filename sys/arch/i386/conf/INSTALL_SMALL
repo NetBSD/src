@@ -1,4 +1,4 @@
-#	$NetBSD: INSTALL_SMALL,v 1.79 2002/04/02 05:30:42 lukem Exp $
+#	$NetBSD: INSTALL_SMALL,v 1.80 2002/04/12 08:11:03 gmcgarry Exp $
 #
 #	INSTALL_SMALL - Small Installation kernel.
 #
@@ -67,6 +67,7 @@ options 	RTC_OFFSET=0	# hardware clock is this many mins. west of GMT
 
 #options 	LKM		# loadable kernel modules
 
+#options 	USERCONF	# userconf(4) support
 options		PIPE_SOCKETPAIR	# smaller, but slower pipe(2)
 
 # Diagnostic/debugging support options

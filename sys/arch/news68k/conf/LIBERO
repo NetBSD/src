@@ -1,4 +1,4 @@
-# 	$NetBSD: LIBERO,v 1.15 2002/03/04 13:24:11 sommerfeld Exp $
+# 	$NetBSD: LIBERO,v 1.16 2002/04/12 08:11:12 gmcgarry Exp $
 
 #	NEWS1750 config file;
 #
@@ -21,6 +21,7 @@ options 	SYSVSHM			# System V shared memory
 #options 	SHMMAXPGS=1024		# 1024 pages is the default
 options 	LKM			# loadable kernel modules
 #options 	UCONSOLE		# users can redirect console (unsafe)
+#options 	USERCONF		# userconf(4) support
 #options	PIPE_SOCKETPAIR		# smaller, but slower pipe(2)
 
 # Debugging options

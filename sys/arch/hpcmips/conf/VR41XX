@@ -1,4 +1,4 @@
-# $NetBSD: VR41XX,v 1.6 2002/03/05 16:16:45 simonb Exp $
+# $NetBSD: VR41XX,v 1.7 2002/04/12 08:10:59 gmcgarry Exp $
 #
 # GENERIC machine description file
 # 
@@ -20,7 +20,7 @@
 
 include		"arch/hpcmips/conf/std.hpcmips"
 include		"arch/hpcmips/conf/std.hpcmips.vr41"
-#ident 		"GENERIC-$Revision: 1.6 $"
+#ident 		"GENERIC-$Revision: 1.7 $"
 
 maxusers	16
 
@@ -39,6 +39,7 @@ options 	DDB			# in-kernel debugger
 #options 	DEBUG			# extra kernel debugging support
 options 	KTRACE			# system call tracing support
 options 	MSGBUFSIZE=8192		# dmesg buffer size
+#options 	USERCONF		# userconf(4) support
 #options	PIPE_SOCKETPAIR		# smaller, but slower pipe(2)
 options 	KLOADER_KERNEL_PATH="\"/netbsd\""
 options		KLOADER_DEBUG

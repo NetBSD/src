@@ -1,4 +1,4 @@
-#	$NetBSD: CARDBUS,v 1.53 2002/03/04 13:24:09 sommerfeld Exp $
+#	$NetBSD: CARDBUS,v 1.54 2002/04/12 08:11:00 gmcgarry Exp $
 #
 #	CARDBUS: GENERIC + CardBus support.  Additionally, some
 #	things typically not found on laptops have been commented out.
@@ -8,7 +8,7 @@
 
 include "arch/i386/conf/std.i386"
 
-#ident		"CARDBUS-$Revision: 1.53 $"
+#ident		"CARDBUS-$Revision: 1.54 $"
 
 maxusers	32		# estimated number of users
 
@@ -71,6 +71,7 @@ options 	SYSVSHM		# System V-like memory sharing
 
 options 	LKM		# loadable kernel modules
 
+#options 	USERCONF	# userconf(4) support
 #options	PIPE_SOCKETPAIR	# smaller, but slower pipe(2)
 
 # Diagnostic/debugging support options

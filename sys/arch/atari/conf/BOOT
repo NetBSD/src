@@ -1,5 +1,5 @@
 #
-# $NetBSD: BOOT,v 1.41 2002/01/27 13:56:49 jdolecek Exp $
+# $NetBSD: BOOT,v 1.42 2002/04/12 08:10:52 gmcgarry Exp $
 #
 # This file was automatically created. Changes will be
 # lost when running makeconf in this directory.
@@ -65,6 +65,7 @@ options 	COMPAT_14	# Compatibility to NetBSD1.4
 options 	COMPAT_AOUT_M68K # Compatibility to a.out executables
 options 	EXEC_AOUT	# a.out format executables
 
+#options 	USERCONF	# userconf(4) support
 options		PIPE_SOCKETPAIR	# smaller, but slower pipe(2)
 
 #These options enable verbose messages for several subsystems.

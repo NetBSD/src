@@ -1,4 +1,4 @@
-#	$NetBSD: TEAMASA_NPWR,v 1.6 2002/04/02 05:30:40 lukem Exp $
+#	$NetBSD: TEAMASA_NPWR,v 1.7 2002/04/12 08:10:56 gmcgarry Exp $
 #
 #	TEAMASA_NPWR -- Team ASA, Inc. Npwr -- XScale/IOP310-based
 #	server appliance.
@@ -120,6 +120,7 @@ options 	PCIVERBOSE	# Verbose PCI descriptions
 options 	MIIVERBOSE	# Verbose MII autoconfuration messages
 #options 	PCI_CONFIG_DUMP	# verbosely dump PCI config space
 #options 	DDB_KEYCODE=0x40
+#options 	USERCONF	# userconf(4) support
 #options	PIPE_SOCKETPAIR	# smaller, but slower pipe(2)
 
 # Development and Debugging options

@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.16 2002/01/27 13:23:20 jdolecek Exp $
+# $NetBSD: GENERIC,v 1.17 2002/04/12 08:11:07 gmcgarry Exp $
 #
 # GENERIC machine description file
 # 
@@ -38,6 +38,7 @@ options 	SYSVSHM			# System V shared memory
 #options 	NTP			# network time protocol
 #options 	UCONSOLE		# users can redirect console (unsafe)
 options 	HZ=25
+#options 	USERCONF		# userconf(4) support
 #options	PIPE_SOCKETPAIR		# smaller, but slower pipe(2)
 
 # Debugging options

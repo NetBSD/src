@@ -1,4 +1,4 @@
-#	$NetBSD: NBFTP,v 1.36 2002/02/10 17:36:59 wiz Exp $
+#	$NetBSD: NBFTP,v 1.37 2002/04/12 08:11:04 gmcgarry Exp $
 #	From: GENERIC,v 1.212 1999/01/06 23:30:53 thorpej Exp
 #
 #	NBFTP -- ftp/sup.netbsd.org server machine
@@ -63,6 +63,7 @@ options 	BUFCACHE=10
 
 #options 	LKM		# loadable kernel modules
 
+#options 	USERCONF	# userconf(4) support
 #options	PIPE_SOCKETPAIR	# smaller, but slower pipe(2)
 
 # Diagnostic/debugging support options

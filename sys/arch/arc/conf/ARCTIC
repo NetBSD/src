@@ -1,4 +1,4 @@
-#	$NetBSD: ARCTIC,v 1.16 2002/03/04 13:24:08 sommerfeld Exp $
+#	$NetBSD: ARCTIC,v 1.17 2002/04/12 08:10:51 gmcgarry Exp $
 #	$OpenBSD: ARCTIC,v 1.12 1999/08/29 12:14:03 niklas Exp $
 #
 #	configuration file for DeskStation
@@ -30,6 +30,7 @@ options 	SYSVSHM		# System V-like memory sharing
 
 options 	LKM		# loadable kernel modules
 
+#options 	USERCONF	# userconf(4) support
 #options	PIPE_SOCKETPAIR	# smaller, but slower pipe(2)
 
 # Diagnostic/debugging support options

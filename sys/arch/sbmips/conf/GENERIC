@@ -1,9 +1,9 @@
-# $NetBSD: GENERIC,v 1.3 2002/03/18 11:11:30 simonb Exp $
+# $NetBSD: GENERIC,v 1.4 2002/04/12 08:11:17 gmcgarry Exp $
 
 include 	"arch/sbmips/conf/std.sbmips.eb"	# big-endian mode
 #include 	"arch/sbmips/conf/std.sbmips.el"	# little-endian mode
 
-#ident 		"GENERIC-$Revision: 1.3 $"
+#ident 		"GENERIC-$Revision: 1.4 $"
 
 # The following three options are required for BCM1250 pass 1 silicon
 options 	SB1250_PASS1
@@ -26,6 +26,7 @@ options 	LKM		# loadable kernel modules
 options 	DIAGNOSTIC	# extra kernel sanity checking
 #options 	DEBUG		# extra kernel debugging support
 #options 	KMEMSTATS	# kernel memory statistics (vmstat -m)
+#options 	USERCONF	# userconf(4) support
 options 	DDB		# kernel dynamic debugger
 options 	DDB_HISTORY_SIZE=100 # enable history editing in DDB
 #makeoptions 	DEBUG="-g"	# compile full symbol table

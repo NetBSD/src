@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.28 2002/03/05 13:59:13 wiz Exp $
+# $NetBSD: GENERIC,v 1.29 2002/04/12 08:11:04 gmcgarry Exp $
 #
 # GENERIC machine description file
 # 
@@ -20,7 +20,7 @@
 
 include		"arch/luna68k/conf/std.luna68k"
 
-#ident 		"GENERIC-$Revision: 1.28 $"
+#ident 		"GENERIC-$Revision: 1.29 $"
 
 maxusers	8
 
@@ -43,6 +43,7 @@ options 	KTRACE
 #optoins 	SHMMAXPGS=1024		# 1024 pages is the default
 #options 	LKM			# loadable kernel modules
 #options 	UCONSOLE		# users can redirect console (unsafe)
+#options 	USERCONF		# userconf(4) support
 #options	PIPE_SOCKETPAIR		# smaller, but slower pipe(2)
 
 # Debugging options

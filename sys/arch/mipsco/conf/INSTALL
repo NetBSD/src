@@ -1,4 +1,4 @@
-# 	$NetBSD: INSTALL,v 1.5 2002/01/27 13:23:20 jdolecek Exp $
+# 	$NetBSD: INSTALL,v 1.6 2002/04/12 08:11:07 gmcgarry Exp $
 #
 include		"arch/mipsco/conf/std.mipsco"
 
@@ -10,7 +10,8 @@ options 	MIPS1			# R2000/R3000 support
 
 # Standard system options
 options 	HZ=25
-options		PIPE_SOCKETPAIR	# smaller, but slower pipe(2)
+#options 	USERCONF		# userconf(4) support
+options		PIPE_SOCKETPAIR		# smaller, but slower pipe(2)
 
 # Debugging options
 #options 	DDB			# kernel dynamic debugger

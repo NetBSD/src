@@ -1,9 +1,9 @@
-# $NetBSD: MVME1600,v 1.3 2002/03/04 14:12:56 wiz Exp $
+# $NetBSD: MVME1600,v 1.4 2002/04/12 08:11:11 gmcgarry Exp $
 #
 
 include 	"arch/mvmeppc/conf/std.mvmeppc"
 
-#ident		"MVME1600-$Revision: 1.3 $"
+#ident		"MVME1600-$Revision: 1.4 $"
 
 maxusers	8
 
@@ -25,6 +25,7 @@ options 	SYSVSEM		# System V-like semaphores
 options 	SYSVSHM		# System V-like memory sharing
 #options 	SHMMAXPGS=1024	# 1024 pages is the default
 
+#options 	USERCONF	# userconf(4) support
 options 	PIPE_SOCKETPAIR	# smaller, but slower pipe(2)
 
 # Diagnostic/debugging support options

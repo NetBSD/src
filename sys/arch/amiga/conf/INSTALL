@@ -1,4 +1,4 @@
-# $NetBSD: INSTALL,v 1.25 2002/03/04 13:24:08 sommerfeld Exp $
+# $NetBSD: INSTALL,v 1.26 2002/04/12 08:10:50 gmcgarry Exp $
 #
 # This file was automatically created. Changes will be
 # lost when running make in this directory.
@@ -24,7 +24,7 @@
 #device.
 include "arch/amiga/conf/std.amiga"
 
-#ident  		"GENERIC-$Revision: 1.25 $"
+#ident  		"GENERIC-$Revision: 1.26 $"
 
 makeoptions	COPTS="-Os"
 
@@ -98,6 +98,7 @@ options 	COMPAT_AOUT_M68K # actually make some system calls work.
 #options 	INSECURE	# disable kernel security levels
 options 	SCSIVERBOSE	# human readable SCSI error messages
 
+#options 	USERCONF	# userconf(4) support
 options		PIPE_SOCKETPAIR	# smaller, but slower pipe(2)
 
 #Misc. debugging options

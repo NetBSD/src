@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.2 2002/04/02 05:30:36 lukem Exp $
+# $NetBSD: GENERIC,v 1.3 2002/04/12 08:10:45 gmcgarry Exp $
 #
 # GENERIC machine description file
 # 
@@ -112,6 +112,7 @@ options 	KTRACE		# system call tracing, a la ktrace(1)
 #options 	KMEMSTATS	# kernel memory statistics
 #options 	SCSIVERBOSE	# Verbose SCSI errors
 options 	NTP		# Kernel PLL for ntpd(8).
+#options 	USERCONF	# userconf(4) support
 #options	PIPE_SOCKETPAIR	# smaller, but slower pipe(2)
 
 # Disable kernel security.

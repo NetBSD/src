@@ -1,4 +1,4 @@
-#	$NetBSD: DR-EVIL,v 1.39 2002/03/04 13:24:09 sommerfeld Exp $
+#	$NetBSD: DR-EVIL,v 1.40 2002/04/12 08:11:01 gmcgarry Exp $
 #
 #	DR-EVIL -- Dell Inspiron 3800 laptop used by thorpej@netbsd.org
 #
@@ -67,6 +67,7 @@ options 	SYSVSHM		# System V-like memory sharing
 
 options 	LKM		# loadable kernel modules
 
+#options 	USERCONF	# userconf(4) support
 #options	PIPE_SOCKETPAIR	# smaller, but slower pipe(2)
 
 # Diagnostic/debugging support options
