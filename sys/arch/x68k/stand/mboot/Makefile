@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.7 2001/06/12 16:57:28 minoura Exp $
+#	$NetBSD: Makefile,v 1.8 2001/09/22 03:34:21 tv Exp $
 
 BOOT=		mboot
 VERSION=	0.1
@@ -14,7 +14,6 @@ MKMAN=		no
 STRIPFLAG=
 
 STRIP?=		/usr/bin/strip
-OBJCOPY?=	/usr/bin/objcopy
 
 SRCS=		srt0.S mboot.c
 KERN!=		cd ${.CURDIR}/../../../..; pwd

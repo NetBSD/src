@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.buildboot,v 1.4 2001/08/02 23:38:04 bjh21 Exp $
+#	$NetBSD: Makefile.buildboot,v 1.5 2001/09/22 03:34:18 tv Exp $
 
 S?=	${.CURDIR}/../../../..
 
@@ -47,7 +47,6 @@ RISCOS_AS=		library
 LIBRISCOS=		${RISCOSLIB}
 
 RELOC=8000
-OBJCOPY?=objcopy
 # -N (OMAGIC) since we don't need a gap between text and data.
 LINKFLAGS=-N
 

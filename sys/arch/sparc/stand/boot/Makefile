@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.25 2001/09/22 00:56:23 mrg Exp $
+#	$NetBSD: Makefile,v 1.26 2001/09/22 03:34:20 tv Exp $
 
 STRIPFLAG=
 PROGSOURCE=	boot.c net.c netif_sun.c conf.c openfirm.c bootinfo.c \
@@ -22,8 +22,6 @@ AFLAGS+=	-Wa,-32
 .include <bsd.own.mk>
 
 OBJS=${SRCS:N*.h:N*.sh:N*.fth:R:S/$/.o/g}
-
-OBJCOPY?=	objcopy
 
 LINKFLAGS=-N -e start
 
