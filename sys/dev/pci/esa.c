@@ -1,4 +1,4 @@
-/* $NetBSD: esa.c,v 1.8.2.2 2002/01/24 22:35:57 he Exp $ */
+/* $NetBSD: esa.c,v 1.8.2.3 2002/03/09 17:15:43 he Exp $ */
 
 /*
  * Copyright (c) 2001, 2002 Jared D. McNeill <jmcneill@invisible.yi.org>
@@ -575,7 +575,8 @@ esa_trigger_output(void *hdl, void *start, void *end, int blksize,
 	    ESA_SRC3_DIRECTION_OFFSET + 19, 0x400 + ESA_MINISRC_COEF_LOC);
 	/* Enable or disable low-pass filter? (0xff if rate > 45000) */
 	esa_write_assp(sc, ESA_MEMTYPE_INTERNAL_DATA, dac_data +
-	    ESA_SRC3_DIRECTION_OFFSET + 22, 0);
+	    ESA_SRC3_DIRECTION_OFFSET + 22,
+	    (param->sample_rate > 45000) ? 0xff : 0);
 	/* Tell it which way DMA is going */
 	esa_write_assp(sc, ESA_MEMTYPE_INTERNAL_DATA, dac_data +
 	    ESA_CDATA_DMA_CONTROL,
