@@ -48,11 +48,12 @@ struct ibcs2_socksys_args {
 };
 
 int
-ibcs2_socksys(p, uap, retval)
+ibcs2_socksys(p, v, retval)
 	register struct proc *p;
-	register struct ibcs2_socksys_args *uap;
+	void *v;
 	int *retval;
 {
+	register struct ibcs2_socksys_args *uap = v;
 	register struct filedesc *fdp = p->p_fd;
 	register struct file *fp;
 	int error;

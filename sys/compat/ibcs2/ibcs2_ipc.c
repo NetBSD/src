@@ -121,11 +121,13 @@ struct msqid_ds *bp;
 }
 
 int
-ibcs2_msgsys(p, uap, retval)
+ibcs2_msgsys(p, v, retval)
 	struct proc *p;
-	struct ibcs2_msgsys_args *uap;
+	void *v;
 	int *retval;
 {
+	struct ibcs2_msgsys_args *uap = v;
+
 	switch (SCARG(uap, which)) {
 #ifdef SYSVMSG
 	case 0:				/* msgget */
@@ -242,11 +244,12 @@ struct semid_ds *bp;
 }
 
 int
-ibcs2_semsys(p, uap, retval)
+ibcs2_semsys(p, v, retval)
 	struct proc *p;
-	struct ibcs2_semsys_args *uap;
+	void *v;
 	int *retval;
 {
+	struct ibcs2_semsys_args *uap = v;
 	int error;
 
 #ifdef SYSVSEM
@@ -356,11 +359,12 @@ struct shmid_ds *bp;
 }
 
 int
-ibcs2_shmsys(p, uap, retval)
+ibcs2_shmsys(p, v, retval)
 	struct proc *p;
-	struct ibcs2_shmsys_args *uap;
+	void *v;
 	int *retval;
 {
+	struct ibcs2_shmsys_args *uap = v;
 	int error;
 
 #ifdef SYSVSHM
