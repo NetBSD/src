@@ -1,4 +1,4 @@
-/*	$NetBSD: strptime.c,v 1.20 2000/07/07 08:03:41 itohy Exp $	*/
+/*	$NetBSD: strptime.c,v 1.21 2000/12/19 22:20:48 cgd Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: strptime.c,v 1.20 2000/07/07 08:03:41 itohy Exp $");
+__RCSID("$NetBSD: strptime.c,v 1.21 2000/12/19 22:20:48 cgd Exp $");
 #endif
 
 #include "namespace.h"
@@ -52,7 +52,7 @@ __RCSID("$NetBSD: strptime.c,v 1.20 2000/07/07 08:03:41 itohy Exp $");
 __weak_alias(strptime,_strptime)
 #endif
 
-#define	_ctloc(x)		__CONCAT(_CurrentTimeLocale->,x)
+#define	_ctloc(x)		(_CurrentTimeLocale->x)
 
 /*
  * We do not implement alternate representations. However, we always
