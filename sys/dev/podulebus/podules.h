@@ -1,10 +1,10 @@
-/*	$NetBSD: podules.h,v 1.2 2001/05/26 21:47:30 bjh21 Exp $	*/
+/*	$NetBSD: podules.h,v 1.3 2001/05/26 21:48:31 bjh21 Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: podules,v 1.4 2001/05/26 21:47:09 bjh21 Exp 
+ *	NetBSD: podules,v 1.5 2001/05/26 21:48:21 bjh21 Exp 
  */
 
 /*
@@ -56,7 +56,7 @@
 #define	MANUFACTURER_OAK	0x0021		/* Oak Solutions */
 #define	MANUFACTURER_SJ	0x0029		/* SJ Research */
 #define	MANUFACTURER_MORLEY	0x002b		/* Morley */
-manufacterer	HCCS2		0x002d	HCCS
+#define	MANUFACTURER_HCCS2	0x002d		/* HCCS */
 #define	MANUFACTURER_VTI	0x0035		/* Vertical Twist */
 #define	MANUFACTURER_CUMANA	0x003a		/* Cumana */
 #define	MANUFACTURER_ICS	0x003c		/* ICS */
