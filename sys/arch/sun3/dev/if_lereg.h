@@ -1,4 +1,4 @@
-/*	$NetBSD: if_lereg.h,v 1.9 1995/01/03 15:43:41 gwr Exp $	*/
+/*	$NetBSD: if_lereg.h,v 1.10 1995/01/24 05:50:52 gwr Exp $	*/
 
 /*
  * LANCE Ethernet driver header file
@@ -19,7 +19,7 @@
 #define TLEN	1
 #define NRBUF	8
 #define RLEN	3
-#define BUFSIZE	1518
+#define BUFSIZE	1536
 
 #define MEMSIZE 0x4000
 
