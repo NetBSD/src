@@ -1,5 +1,5 @@
 #	from: @(#)Makefile	5.9 (Berkeley) 7/1/91
-#	$NetBSD: Makefile,v 1.6 2001/06/30 00:19:25 hubertf Exp $
+#	$NetBSD: Makefile,v 1.7 2001/06/30 01:25:00 hubertf Exp $
 
 .include <bsd.own.mk>
 
@@ -36,6 +36,13 @@ man.ps:
 		done >man$${i}pages.tmp ;			\
 		grops <man$${i}pages.tmp >man$${i}pages.ps ;	\
 		rm man$${i}pages.tmp ; 				\
+	done
+
+man.pdf:
+	for i in 1 2 3 4 5 6 7 8 9 ; 				\
+	do							\
+		echo Chewing on man$${i}pages.pdf ;		\
+		ps2pdf man$${i}pages.ps man$${i}pages.pdf  ;	\
 	done
 
 .include <bsd.prog.mk>
