@@ -1,4 +1,4 @@
-/*	$NetBSD: if_pppvar.h,v 1.13 2001/01/15 16:33:31 thorpej Exp $	*/
+/*	$NetBSD: if_pppvar.h,v 1.14 2002/05/12 20:38:16 matt Exp $	*/
 /*	Id: if_pppvar.h,v 1.3 1996/07/01 01:04:37 paulus Exp	 */
 
 /*
@@ -115,7 +115,7 @@ struct ppp_softc {
 };
 
 #ifdef _KERNEL
-struct	ppp_softc ppp_softc[NPPP];
+extern	struct	ppp_softc ppp_softc[];
 
 struct	ppp_softc *pppalloc __P((pid_t pid));
 void	pppdealloc __P((struct ppp_softc *sc));

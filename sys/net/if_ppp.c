@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ppp.c,v 1.76 2002/03/17 19:41:10 atatat Exp $	*/
+/*	$NetBSD: if_ppp.c,v 1.77 2002/05/12 20:38:15 matt Exp $	*/
 /*	Id: if_ppp.c,v 1.6 1997/03/04 03:33:00 paulus Exp 	*/
 
 /*
@@ -86,7 +86,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ppp.c,v 1.76 2002/03/17 19:41:10 atatat Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ppp.c,v 1.77 2002/05/12 20:38:15 matt Exp $");
 
 #include "ppp.h"
 
@@ -185,6 +185,8 @@ void		pppintr(void *);
  */
 #define	M_HIGHPRI	M_LINK0	/* output packet for sc_fastq */
 #define	M_ERRMARK	M_LINK1	/* rx packet following lost/corrupted pkt */
+
+struct	ppp_softc ppp_softc[NPPP];
 
 #ifdef PPP_COMPRESS
 /*
