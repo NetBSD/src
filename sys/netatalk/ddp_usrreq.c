@@ -1,4 +1,4 @@
-/*	$NetBSD: ddp_usrreq.c,v 1.4 2000/02/02 23:28:09 thorpej Exp $	 */
+/*	$NetBSD: ddp_usrreq.c,v 1.5 2001/11/13 00:00:58 lukem Exp $	 */
 
 /*
  * Copyright (c) 1990,1991 Regents of The University of Michigan.
@@ -25,6 +25,9 @@
  *	+1-313-764-2278
  *	netatalk@umich.edu
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: ddp_usrreq.c,v 1.5 2001/11/13 00:00:58 lukem Exp $");
 
 #include <sys/errno.h>
 #include <sys/types.h>

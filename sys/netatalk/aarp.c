@@ -1,4 +1,4 @@
-/*	$NetBSD: aarp.c,v 1.6 2001/04/13 23:30:18 thorpej Exp $	*/
+/*	$NetBSD: aarp.c,v 1.7 2001/11/13 00:00:58 lukem Exp $	*/
 
 /*
  * Copyright (c) 1990,1991 Regents of The University of Michigan.
@@ -25,6 +25,9 @@
  *	+1-313-764-2278
  *	netatalk@umich.edu
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: aarp.c,v 1.7 2001/11/13 00:00:58 lukem Exp $");
 
 #include <sys/types.h>
 #include <sys/cdefs.h>

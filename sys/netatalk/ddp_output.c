@@ -1,4 +1,4 @@
-/*	$NetBSD: ddp_output.c,v 1.2 1999/03/27 01:24:50 aidan Exp $	 */
+/*	$NetBSD: ddp_output.c,v 1.3 2001/11/13 00:00:58 lukem Exp $	 */
 
 /*
  * Copyright (c) 1990,1991 Regents of The University of Michigan.
@@ -25,6 +25,9 @@
  *	+1-313-764-2278
  *	netatalk@umich.edu
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: ddp_output.c,v 1.3 2001/11/13 00:00:58 lukem Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
