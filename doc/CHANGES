@@ -1,4 +1,4 @@
-LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.381 $>
+LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.382 $>
 
 
 [Note: This file does not mention every change made to the NetBSD source tree.
@@ -150,3 +150,4 @@ Changes from NetBSD 2.0 to NetBSD 3.0:
 		Fixed all the fallout. [dsl 200411004]
 	bind: Bind-9.3.0 imported. [christos 20041106]
 	ptyfs: New pseudo-terminal filesystem [christos 20041111]
+	postfix: Postfix 2.1.5 imported.  [heas 20041113]
