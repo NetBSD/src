@@ -1,4 +1,4 @@
-/*	$NetBSD: aic7xxx.c,v 1.28 1998/03/16 15:36:17 leo Exp $	*/
+/*	$NetBSD: aic7xxx.c,v 1.29 1998/04/16 07:12:43 leo Exp $	*/
 
 /*
  * Generic driver for the aic7xxx based adaptec SCSI controllers
@@ -766,6 +766,11 @@ ahc_send_scb(ahc, scb)
         struct	ahc_data *ahc;
         struct	scb *scb;
 {
+#if BYTE_ORDER == BIG_ENDIAN
+	scb->SG_list_pointer = bswap32(scb->SG_list_pointer);
+	scb->cmdpointer      = bswap32(scb->cmdpointer);
+#endif
+	
 	AHC_OUTB(ahc, SCBCNT, SCBAUTO);
 
 	if( ahc->type == AHC_284 )
@@ -792,6 +797,17 @@ ahc_fetch_scb(ahc, scb)
 	AHC_INSB(ahc, SCBARRAY, scb, SCB_PIO_TRANSFER_SIZE);
 
 	AHC_OUTB(ahc, SCBCNT, 0);
+#if BYTE_ORDER == BIG_ENDIAN
+	{
+		u_char tmp;
+
+		scb->SG_list_pointer = bswap32(scb->SG_list_pointer);
+		scb->cmdpointer      = bswap32(scb->cmdpointer);
+		tmp = scb->residual_data_count[0];
+		scb->residual_data_count[0] = scb->residual_data_count[2];
+		scb->residual_data_count[2] = tmp;
+	}
+#endif
 }
 
 /*
@@ -1671,6 +1687,10 @@ ahc_handle_seqint(ahc, intstat)
 				sg->addr = KVTOPHYS(&xs->AIC_SCSI_SENSE);
 #endif
 				sg->len = sizeof(struct scsipi_sense_data);
+#if BYTE_ORDER == BIG_ENDIAN
+				sg->len = bswap32(sg->len);
+				sg->addr = bswap32(sg->addr);
+#endif
 
 				scb->control &= DISCENB;
 				scb->status = 0;
@@ -2727,6 +2747,10 @@ ahc_scsi_cmd(xs)
 			sg->len  = scb->dmamap_xfer->dm_segs[seg].ds_len;
 			SC_DEBUGN(xs->sc_link, SDEV_DB4, ("0x%lx",
 					(u_long)sg->addr));
+#if BYTE_ORDER == BIG_ENDIAN
+			sg->addr = bswap32(sg->addr);
+			sg->len  = bswap32(sg->len);
+#endif
 			sg++;
 		}
 		SC_DEBUGN(xs->sc_link, SDEV_DB4, ("\n"));
