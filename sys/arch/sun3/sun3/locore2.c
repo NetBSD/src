@@ -1,4 +1,4 @@
-/*	$NetBSD: locore2.c,v 1.39 1995/04/13 22:07:03 gwr Exp $	*/
+/*	$NetBSD: locore2.c,v 1.40 1995/04/26 23:42:35 gwr Exp $	*/
 
 /*
  * Copyright (c) 1994 Gordon W. Ross
@@ -585,7 +585,9 @@ void sun3_verify_hardware()
 		cpu_string = "260";
 		cpuspeed = 25; /* MHz */	/* XXX - Correct? */
 		cpu_has_vme = TRUE;
+#if 0	/* def	HAVECACHE */
 		cache_size = 0x10000;	/* 64K */
+#endif
 		break;
 
 	case SUN3_MACH_E  :
@@ -780,14 +782,14 @@ sun3_bootstrap()
 	int i;
 	extern int cold;
 
-	/* Clear BSS. */
+	/* First, Clear BSS. */
 	bzero(edata, end - edata);
 
 	cold = 1;
 
-	sun3_monitor_hooks();
+	sun3_monitor_hooks();	/* set v_handler, get boothowto */
 
-	sun3_verify_hardware();
+	sun3_verify_hardware();	/* get CPU type, etc. */
 
 	sun3_vm_init();		/* handle kernel mapping problems, etc */
 
@@ -802,5 +804,6 @@ sun3_bootstrap()
 	 * it will not cause "spurrious level 7" complaints.
 	 */
 	initialize_vector_table();
-	/* Interrupts are enabled in locore.s soon after this return. */
+
+	/* Interrupts are enabled in locore.s just after this return. */
 }
