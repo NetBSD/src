@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.77 1999/11/13 00:30:39 thorpej Exp $	*/
+/*	$NetBSD: pmap.c,v 1.78 1999/11/13 23:16:39 mhitch Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -78,7 +78,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.77 1999/11/13 00:30:39 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.78 1999/11/13 23:16:39 mhitch Exp $");
 
 /*
  *	Manages physical address maps.
@@ -1124,20 +1124,32 @@ pmap_enter(pmap, va, pa, prot, flags)
 #endif
 
 	if (PAGE_IS_MANAGED(pa)) {
+		int *attrs = pa_to_attribute(pa);
+
+		/* Set page referenced/modified status based on flags */
+		if (flags & VM_PROT_WRITE)
+			*attrs |= PV_MODIFIED | PV_REFERENCED;
+		else if (flags & VM_PROT_ALL)
+			*attrs |= PV_REFERENCED;
 		if (!(prot & VM_PROT_WRITE))
+			/*
+			 * If page is not yet referenced, we could emulate this
+			 * by not setting the page valid, and setting the
+			 * referenced status in the TLB fault handler, similar
+			 * to how page modified status is done for UTLBmod
+			 * exceptions.
+			 */
 			npte = mips_pg_ropage_bit();
 		else {
-			mem = PHYS_TO_VM_PAGE(pa);
 			if ((int)va < 0) {
 				/*
 				 * Don't bother to trap on kernel writes,
 				 * just record page as dirty.
 				 */
 				npte = mips_pg_rwpage_bit();
-				pmap_set_modified(pa);
+				*attrs |= PV_MODIFIED | PV_REFERENCED;
 			} else {
-				if ((*pa_to_attribute(pa) & PV_MODIFIED) ||
-/*??*/					!(mem->flags & PG_CLEAN)) {
+				if (*attrs & PV_MODIFIED) {
 					npte = mips_pg_rwpage_bit();
 				} else {
 					npte = mips_pg_cwpage_bit();
@@ -1213,7 +1225,7 @@ pmap_enter(pmap, va, pa, prot, flags)
 		 * Update the same virtual address entry.
 		 */
 		MachTLBUpdate(va, npte);
-		return;
+		return (KERN_SUCCESS);
 	}
 
 	if (!(pte = pmap_segmap(pmap, va))) {
@@ -1779,7 +1791,7 @@ pmap_set_modified(pa)
 	paddr_t pa;
 {
 	if (PAGE_IS_MANAGED(pa))
-		*pa_to_attribute(pa) |= PV_MODIFIED;
+		*pa_to_attribute(pa) |= PV_MODIFIED | PV_REFERENCED;
 #ifdef DEBUG
 	else
 		printf("pmap_set_modified: pa %lx\n", pa);
