@@ -1,4 +1,4 @@
-/*	$NetBSD: su.c,v 1.32 1999/03/15 18:56:12 christos Exp $	*/
+/*	$NetBSD: su.c,v 1.33 1999/03/22 03:25:33 abs Exp $	*/
 
 /*
  * Copyright (c) 1988 The Regents of the University of California.
@@ -44,7 +44,7 @@ __COPYRIGHT(
 #if 0
 static char sccsid[] = "@(#)su.c	8.3 (Berkeley) 4/2/94";*/
 #else
-__RCSID("$NetBSD: su.c,v 1.32 1999/03/15 18:56:12 christos Exp $");
+__RCSID("$NetBSD: su.c,v 1.33 1999/03/22 03:25:33 abs Exp $");
 #endif
 #endif /* not lint */
 
@@ -194,19 +194,20 @@ main(argc, argv)
 		 * but only if that group has any members.
 		 * If SUGROUP has no members, allow anyone to su root
 		 */
-		if (!ok &&
-		    (gr = getgrnam(SUGROUP)) && *gr->gr_mem) {
-
-			for (g = gr->gr_mem; ; g++) {
-				if (*g == NULL) {
-					ok = 0;
-					break;
+		if (!ok) {
+			if ( !(gr = getgrnam(SUGROUP)) || !*gr->gr_mem)
+				ok = 1;
+			else
+				for (g = gr->gr_mem; ; g++) {
+					if (*g == NULL) {
+						ok = 0;
+						break;
+					}
+					if (strcmp(username, *g) == 0) {
+						ok = 1;
+						break;
+					}
 				}
-				if (strcmp(username, *g) == 0) {
-					ok = 1;
-					break;
-				}
-			}
 		}
 #ifdef ROOTAUTH
 		/*
