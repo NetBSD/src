@@ -1,4 +1,4 @@
-/*	$NetBSD: pathnames.h,v 1.2 1995/07/03 21:25:20 cgd Exp $	*/
+/*	$NetBSD: pathnames.h,v 1.3 1999/04/22 04:40:58 mrg Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -33,6 +33,9 @@
 
 /* directory where lint1 and lint2 reside */
 #define	PATH_LIBEXEC		"/usr/libexec"
+
+/* directory where cc(1) resides */
+#define	PATH_USRBIN		"/usr/bin"
 
 /* default library search path */
 #define PATH_LINTLIB		"/usr/libdata/lint"
