@@ -1,11 +1,11 @@
-/*	$NetBSD: file.c,v 1.48 2001/09/26 13:48:28 hubertf Exp $	*/
+/*	$NetBSD: file.c,v 1.49 2002/06/09 03:50:13 yamt Exp $	*/
 
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static const char *rcsid = "from FreeBSD Id: file.c,v 1.29 1997/10/08 07:47:54 charnier Exp";
 #else
-__RCSID("$NetBSD: file.c,v 1.48 2001/09/26 13:48:28 hubertf Exp $");
+__RCSID("$NetBSD: file.c,v 1.49 2002/06/09 03:50:13 yamt Exp $");
 #endif
 #endif
 
@@ -180,13 +180,15 @@ fileURLHost(char *fname, char *where, int max)
 	char   *ret;
 	int     i;
 
+	assert(max > 0);
+
 	if ((i = URLlength(fname)) < 0) {	/* invalid URL? */
 		errx(1, "fileURLhost called with a bad URL: `%s'", fname);
 	}
 	fname += i;
 	/* Do we have a place to stick our work? */
 	if ((ret = where) != NULL) {
-		while (*fname && *fname != '/' && max--)
+		while (*fname && *fname != '/' && --max)
 			*where++ = *fname++;
 		*where = '\0';
 		return ret;
@@ -208,6 +210,8 @@ fileURLFilename(char *fname, char *where, int max)
 	char   *ret;
 	int     i;
 
+	assert(max > 0);
+
 	if ((i = URLlength(fname)) < 0) {	/* invalid URL? */
 		errx(1, "fileURLFilename called with a bad URL: `%s'", fname);
 	}
@@ -217,7 +221,7 @@ fileURLFilename(char *fname, char *where, int max)
 		while (*fname && *fname != '/')
 			++fname;
 		if (*fname == '/') {
-			while (*fname && max--)
+			while (*fname && --max)
 				*where++ = *fname++;
 		}
 		*where = '\0';
