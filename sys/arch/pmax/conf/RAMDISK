@@ -1,8 +1,8 @@
-# 	$NetBSD: RAMDISK,v 1.1 1998/11/19 06:05:11 jonathan Exp $
+# 	$NetBSD: RAMDISK,v 1.2 1998/11/27 00:09:33 simonb Exp $
 #
 # Install kernel with ramdisk added.
 # The ramdisk is be too big to netboot directly via ECOFF on some machines,
-# so keep it otherise identical to  INSTALL.
+# so keep it otherise identical to INSTALL.
 #
 
 # Pull in standard `install' config

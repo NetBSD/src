@@ -1,8 +1,8 @@
 #
-# Distribution kernel (any  model) kernel config file
+# Distribution kernel (any model) kernel config file
 
 #
-# 	$NetBSD: GENERIC,v 1.33 1998/11/25 20:30:46 hwr Exp $
+# 	$NetBSD: GENERIC,v 1.34 1998/11/27 00:09:33 simonb Exp $
 #
 include		"arch/pmax/conf/std.pmax"
 
@@ -13,12 +13,12 @@ options 	MIPS3			# R4000/R4400/R4600 CPUs
 
 
 # Support for specific models of DECstation
-options 	DEC_3100		# kn01:  DECstation 2100, 3100
-options 	DEC_5100		# kn230:  DECsystem 5100
+options 	DEC_3100		# kn01: DECstation 2100, 3100
+options 	DEC_5100		# kn230: DECsystem 5100
 options 	DEC_MAXINE		# kn02ca: 5000/xx (Personal DECstation)
-options 	DEC_3MIN		#  5000/1xx (kn02ba) , 5000/150 (kn04)
+options 	DEC_3MIN		#  5000/1xx (kn02ba), 5000/150 (kn04)
 options 	DEC_3MAX		# kn02: 5000/200 support
-options 	DEC_3MAXPLUS		#  5000/240 (kn03) , 5000/260 (kn05)
+options 	DEC_3MAXPLUS		#  5000/240 (kn03), 5000/260 (kn05)
 
 #options 	DEC_5400
 #options 	DEC_5800
@@ -46,7 +46,7 @@ options 	NTP			# network time protocol
 
 
 # Filesystem options
-file-system 	FFS             # fast filesystem with user and group quotas
+file-system 	FFS		# fast filesystem with user and group quotas
 file-system 	MFS		# memory-based filesystem
 file-system 	NFS		# Sun NFS-compatible filesystem (client)
 file-system	LFS		# Log-based filesystem (still experimental)
@@ -96,9 +96,9 @@ config		nfsnetbsd	root on ? type nfs
 mainbus0	at root
 cpu*		at mainbus0
 
-########################################################################
-###                   I/O bus and device options                     ###
-########################################################################
+#########################################################################
+# I/O bus and device options						#
+#########################################################################
 
 # TC bus and supported options. (All but PMAXes have a turbochannel.)
 include 	"arch/pmax/conf/tc.std"
@@ -119,13 +119,13 @@ include 	"arch/pmax/conf/builtin.3100"
 include 	"arch/pmax/conf/builtin.5100"
 
 
-#  baseboard devices on 5100, 3100 "ibus" virtual bus
+# baseboard devices on 5100, 3100 "ibus" virtual bus
 include 	"arch/pmax/conf/ibus.std"
 
 
-########################################################################
-# SCSI configuration                                                   #
-########################################################################
+#########################################################################
+# SCSI configuration							#
+#########################################################################
 
 oldscsibus*	at sii?
 oldscsibus*	at asc?
@@ -135,23 +135,23 @@ oldscsibus*	at asc?
 include 	"arch/pmax/conf/scsi.pmax"
 #include 	"arch/pmax/conf/mi.scsi"		# not yet supported
 
-########################################################################
-###                        Pseudo-devices                            ###
-########################################################################
+#########################################################################
+# Pseudo-devices							#
+#########################################################################
 
-pseudo-device	loop		1	# network loopback
+pseudo-device	loop		 1	# network loopback
 pseudo-device	sl		 4	# serial-line IP ports
-pseudo-device   ppp              2      # serial-line IP ports
+pseudo-device	ppp		 2	# serial-line IP ports
 pseudo-device	pty		64	# pseudo ptys
 pseudo-device	bpfilter	16	# packet filter ports
 #pseudo-device	ipfilter		# IP filter, NAT
-#pseudo-device	gre		2	# generic L3 over IP tunnel
+#pseudo-device	gre		 2	# generic L3 over IP tunnel
 
-pseudo-device	vnd		4	# virtual disk ick
-pseudo-device   ccd             4       # concatenated disks
-#pseudo-device	raid		4	# RAIDframe disk driver
+pseudo-device	vnd		 4	# virtual disk ick
+pseudo-device	ccd		 4	# concatenated disks
+#pseudo-device	raid		 4	# RAIDframe disk driver
 
-pseudo-device	rasterconsole	1 	# NB: raster console requires "fb"
-pseudo-device	fb		1	# up to 3 framebuffers
+pseudo-device	rasterconsole	 1 	# NB: raster console requires "fb"
+pseudo-device	fb		 1	# up to 3 framebuffers
 # rnd is EXPERIMENTAL
 #pseudo-device	rnd			# /dev/random and in-kernel generator

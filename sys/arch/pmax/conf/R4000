@@ -1,8 +1,8 @@
 #
-# R4000 (any  model) kernel config file
+# R4000 (any model) kernel config file
 
 #
-# 	$NetBSD: R4000,v 1.9 1998/11/15 06:27:11 jonathan Exp $
+# 	$NetBSD: R4000,v 1.10 1998/11/27 00:09:33 simonb Exp $
 #
 include		"arch/pmax/conf/std.pmax"
 
@@ -39,7 +39,7 @@ options 	NTP			# network time protocol
 
 
 # Filesystem options
-file-system 	FFS             # fast filesystem with user and group quotas
+file-system 	FFS		# fast filesystem with user and group quotas
 file-system 	MFS		# memory-based filesystem
 file-system 	NFS		# Sun NFS-compatible filesystem (client)
 file-system	LFS		# Log-based filesystem (still experimental)
@@ -84,9 +84,9 @@ mainbus0	at root
 cpu*		at mainbus0
 
 
-########################################################################
-###                   I/O bus and device options                     ###
-########################################################################
+#########################################################################
+# I/O bus and device options						#
+#########################################################################
 
 # TC bus and supported options. (All but PMAXes have a turbochannel.)
 include 	"arch/pmax/conf/tc.std"
@@ -97,9 +97,9 @@ include 	"arch/pmax/conf/builtin.ioasic"
 # MAXINE-only ioasic baseboard devices and on-baseboard "options"
 include 	"arch/pmax/conf/builtin.maxine"
 
-########################################################################
-# SCSI configuration                                                   #
-########################################################################
+#########################################################################
+# SCSI configuration							#
+#########################################################################
 
 oldscsibus*	at asc?
 #
@@ -109,19 +109,19 @@ include 	"arch/pmax/conf/scsi.pmax"
 #include 	"arch/pmax/conf/mi.scsi"		# not yet supported
 
 
-########################################################################
-###                        Pseudo-devices                            ###
-########################################################################
+#########################################################################
+# Pseudo-devices							#
+#########################################################################
 
-pseudo-device	loop		1	# network loopback
+pseudo-device	loop		 1	# network loopback
 pseudo-device	sl		 4	# serial-line IP ports
-pseudo-device   ppp              2      # serial-line IP ports
+pseudo-device	ppp		 2	# serial-line IP ports
 pseudo-device	pty		64	# pseudo ptys
 pseudo-device	bpfilter	16	# packet filter ports
 #pseudo-device	ipfilter		# IP filter, NAT
 
-pseudo-device	vnd		4	# virtual disk ick
-pseudo-device   ccd             4       # concatenated disks
+pseudo-device	vnd		 4	# virtual disk ick
+pseudo-device	ccd		 4	# concatenated disks
 
-pseudo-device	rasterconsole	1 	# NB: raster console requires "fb"
-pseudo-device	fb		1	# up to 3 framebuffers
+pseudo-device	rasterconsole	 1 	# NB: raster console requires "fb"
+pseudo-device	fb		 1	# up to 3 framebuffers

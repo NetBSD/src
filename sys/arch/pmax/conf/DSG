@@ -1,7 +1,7 @@
 #
-# Stanford DSG Decstation (any  model) kernel config file
+# Stanford DSG Decstation (any model) kernel config file
 #
-# 	$NetBSD: DSG,v 1.14 1998/06/26 01:54:08 lukem Exp $
+# 	$NetBSD: DSG,v 1.15 1998/11/27 00:09:33 simonb Exp $
 #
 include		"arch/pmax/conf/std.pmax"
 
@@ -12,11 +12,11 @@ options 	MIPS1			# R2000/R3000 support (new)
 
 
 # Support for specific models of DECstation
-options 	DEC_3100		# kn01:  DECstation 2100, 3100
+options 	DEC_3100		# kn01: DECstation 2100, 3100
 options 	DEC_MAXINE		# kn02ca: 5000/xx (Personal DECstation)
-options 	DEC_3MIN		# kn02ba: 5000/1xx (3min) support
+options 	DEC_3MIN		#  5000/1xx (kn02ba), 5000/150 (kn04)
 options 	DEC_3MAX		# kn02: 5000/200 support
-options 	DEC_3MAXPLUS		#  5000/240 (kn03) , 5000/260 (kn05)
+options 	DEC_3MAXPLUS		#  5000/240 (kn03), 5000/260 (kn05)
 
 
 #options 	DDB			# in-kernel debugger (not mips)
@@ -41,7 +41,7 @@ options 	NTP			# network time protocol
 
 
 # Filesystem options
-file-system 	FFS             # fast filesystem with user and group quotas
+file-system 	FFS		# fast filesystem with user and group quotas
 #file-system	LFS		# Log-based filesystem (still experimental)
 file-system 	MFS		# memory-based filesystem
 file-system 	NFS		# Sun NFS-compatible filesystem (client)
@@ -78,14 +78,14 @@ options 	COMPAT_ULTRIX	# ultrix compatibility
 options 	EXEC_ECOFF	# Ultrix RISC binaries are ECOFF format
 options 	"HZ=256"	# RTC rate required
 
-config		netbsd 		root on rz0a type ffs  dumps on rz0b
+config		netbsd 		root on rz0a type ffs dumps on rz0b
 config		nfsnetbsd	root on ? type nfs
 
 
 
-########################################################################
-###                   I/O bus and device options                     ###
-########################################################################
+#########################################################################
+# I/O bus and device options						#
+#########################################################################
 
 # TC bus and supported options. (All but PMAXes have a turbochannel.)
 include 	"arch/pmax/conf/tc.std"
@@ -104,12 +104,12 @@ include 	"arch/pmax/conf/builtin.3max"
 # (may also be present on a 5100).
 include 	"arch/pmax/conf/builtin.3100"
 
-#  baseboard devices on 5100, 3100 "ibus" virtual bus
+# baseboard devices on 5100, 3100 "ibus" virtual bus
 include 	"arch/pmax/conf/ibus.std"
 
-########################################################################
-# SCSI configuration                                                   #
-########################################################################
+#########################################################################
+# SCSI configuration							#
+#########################################################################
 
 oldscsibus*	at sii?
 oldscsibus*	at asc?
@@ -120,19 +120,19 @@ include 	"arch/pmax/conf/scsi.pmax"
 #include 	"arch/pmax/conf/mi.scsi"		# not yet supported
 
 
-########################################################################
-###                        Pseudo-devices                            ###
-########################################################################
+#########################################################################
+# Pseudo-devices							#
+#########################################################################
 
 pseudo-device	sl		 4	# serial-line IP ports
-pseudo-device	strip		2	# Metricom  IP encapsulation
-pseudo-device   ppp              2      # serial-line IP ports
+pseudo-device	strip		 2	# Metricom IP encapsulation
+pseudo-device	ppp		 2	# serial-line IP ports
 pseudo-device	pty		64	# pseudo ptys
 pseudo-device	bpfilter	16	# packet filter ports
 pseudo-device	loop
-pseudo-device	vnd		4	# virtual disk ick
-pseudo-device   ccd             4       # concatenated disks
+pseudo-device	vnd		 4	# virtual disk ick
+pseudo-device	ccd		 4	# concatenated disks
 
 #pseudo-device	ether			# From old config. what does it mean?
-pseudo-device	rasterconsole	1 	# NB: raster console requires "fb"
-pseudo-device	fb		1	# up to 3 framebuffers
+pseudo-device	rasterconsole	 1 	# NB: raster console requires "fb"
+pseudo-device	fb		 1	# up to 3 framebuffers
