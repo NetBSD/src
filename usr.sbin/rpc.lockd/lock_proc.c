@@ -1,4 +1,4 @@
-/*	$NetBSD: lock_proc.c,v 1.2 1997/10/18 04:01:15 lukem Exp $	*/
+/*	$NetBSD: lock_proc.c,v 1.2.4.1 2000/10/19 17:02:33 he Exp $	*/
 
 /*
  * Copyright (c) 1995
@@ -35,7 +35,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: lock_proc.c,v 1.2 1997/10/18 04:01:15 lukem Exp $");
+__RCSID("$NetBSD: lock_proc.c,v 1.2.4.1 2000/10/19 17:02:33 he Exp $");
 #endif
 
 #include <sys/param.h>
@@ -173,7 +173,7 @@ get_client(host_addr)
 	client = clntudp_create(host_addr, NLM_PROG, NLM_VERS,
 	    retry_time, &sock_no);
 	if (!client) {
-		syslog(LOG_ERR, clnt_spcreateerror("clntudp_create"));
+		syslog(LOG_ERR, "%s", clnt_spcreateerror("clntudp_create"));
 		syslog(LOG_ERR, "Unable to return result to %s",
 		    inet_ntoa(host_addr->sin_addr));
 		return NULL;
