@@ -1,4 +1,4 @@
-/* $NetBSD: macfb.c,v 1.2 2000/02/14 07:01:47 scottr Exp $ */
+/* $NetBSD: macfb.c,v 1.3 2000/03/17 04:46:32 scottr Exp $ */
 /*
  * Copyright (c) 1998 Matt DeBergalis
  * All rights reserved.
@@ -129,6 +129,19 @@ extern u_int32_t	mac68k_vidlen;
 static int
 macfb_is_console(paddr_t addr)
 {
+	if (addr != macfb_consaddr &&
+	    (addr >= 0xf9000000 && addr <= 0xfeffffff)) {
+		/*
+		 * This is in the NuBus standard slot space range, so we
+		 * may well have to look at 0xFssxxxxx, too.  Mask off the
+		 * slot number and duplicate it in bits 20-23, per IM:V
+		 * pp 459, 463, and IM:VI ch 30 p 17.
+		 * Note:  this is an ugly hack and I wish I knew what
+		 * to do about it.  -- sr
+		 */
+		addr = (paddr_t)(((u_long)addr & 0xff0fffff) |
+		    (((u_long)addr & 0x0f000000) >> 4));
+	}
 	return ((mac68k_machine.serial_console & 0x03) == 0
 	    && (addr == macfb_consaddr));
 }
