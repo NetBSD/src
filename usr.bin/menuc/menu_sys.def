@@ -1,4 +1,4 @@
-/*	$NetBSD: menu_sys.def,v 1.6 1998/06/24 14:44:52 phil Exp $	*/
+/*	$NetBSD: menu_sys.def,v 1.7 1998/06/25 09:58:57 phil Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -50,11 +50,13 @@
 #define KEYPAD_UP_ARROW   257
 
 #define MAX(x,y) ((x)>(y)?(x):(y))
+#define MIN(x,y) ((x)<(y)?(x):(y))
 
 /* Initialization state. */
 static int __menu_init = 0;
 int __m_endwin = 0;
 static int max_lines = 0;
+static char *scrolltext = " <: page up, >: page down";
 
 /* prototypes for in here! */
 
@@ -132,7 +134,7 @@ static int menucmd (WINDOW *w)
 		        return REQ_REDISPLAY;
 		}
 		
-		if (isalpha(ch) || ch == '?')
+		if (isalpha(ch) || ch == '?' || ch == '<' || ch == '>')
 			return (ch);
 
 		mbeep();
@@ -144,23 +146,44 @@ static void init_menu (struct menudesc *m)
 {
 	int max;
 	char **p;
-	int add=4;
+	int add, exitadd;
 
-	if (m->mopt & NOBOX)
-		add = 2;
-
+	add = ((m->mopt & NOBOX) ? 2 : 4);
+	exitadd = ((m->mopt & NOEXITOPT) ? 0 : 1);
 	max = strlen(m->title);
 
-	/* Calculate h? */
+	/* Calculate h? h == number of visible options. */
 	if (m->h == 0) {
-		m->h = m->numopts + ((m->mopt & NOEXITOPT) ? 0 : 1)
-			- (max ? 0 : 2);
+		m->h = m->numopts + exitadd;
+		if (m->h + m->y + add >= max_lines && (m->mopt & SCROLL))
+			m->h = max_lines - m->y - add - 1;
 	}
-	
+
+	/* Check window heights and set scrolling */
+	if (m->h < m->numopts + exitadd) {
+		if (m->mopt & SCROLL) {
+			if (m->h < 3) {
+				endwin();
+				(void) fprintf (stderr,
+					"Window too small for menu \"%s\"\n",
+			 		m->title);
+				exit(1);
+			}
+		} else {
+			endwin();
+			(void) fprintf (stderr,
+				"Menu too big for menu \"%s\"\n",
+			 	m->title);
+			exit(1);
+		}
+	} else
+		m->mopt &= ~SCROLL;
 
 	/* Calculate w? */
 	if (m->w == 0) {
 		p = m->opts;
+		if (m->mopt & SCROLL)
+			max = strlen(scrolltext);
 		while (*p) {
 			max = MAX(max,strlen(*p));
 			p++;
@@ -183,14 +206,16 @@ static void init_menu (struct menudesc *m)
 static void post_menu (struct menudesc *m)
 {
 	int i;
-	int hasbox, cury;
+	int hasbox, cury, maxy, selrow, lastopt;
 	int tadd;
 	
 	if (m->mopt & NOBOX) {
 		cury = 0;
+		maxy = m->h;
 		hasbox = 0;
 	} else {
 		cury = 1;
+		maxy = m->h+1;
 		hasbox = 1;
 	}
 
@@ -199,34 +224,66 @@ static void post_menu (struct menudesc *m)
 	if (tadd) {
 		mvwaddstr(m->mw, cury, cury, m->title);
 		cury += 2;
+		maxy += 2;
 	}
 
-	for (i=0; i<m->numopts; i++, cury++) {
+	/* Set defaults, calculate lastopt. */
+	selrow = -1;
+	if (m->mopt & SCROLL) {
+		lastopt = MIN(m->numopts, m->topline+m->h-1);
+		maxy -= 1;
+	} else
+		lastopt = m->numopts;
+
+	for (i=m->topline; i<lastopt; i++, cury++) {
 		if (m->cursel == i) {
 			mvwaddstr (m->mw, cury, hasbox, ">");
 			wstandout(m->mw);
+			selrow = cury;
 		} else
 			mvwaddstr (m->mw, cury, hasbox, " ");
 		waddstr (m->mw, m->opts[i]);
 		if (m->cursel == i)
 			wstandend(m->mw);
+		wclrtoeol(m->mw);
 	}
-	if (!(m->mopt & NOEXITOPT))
-		mvwaddstr (m->mw, cury, hasbox, " x: Exit");
-	
+
+	/* Add the exit option. */
+	if (!(m->mopt & NOEXITOPT) && cury < maxy) {
+		if (m->cursel >= m->numopts) {
+			mvwaddstr (m->mw, cury, hasbox, ">");
+			wstandout(m->mw);
+			selrow = cury;
+		} else
+			mvwaddstr (m->mw, cury, hasbox, " ");
+		waddstr (m->mw, "x: Exit");
+		if (m->cursel >= m->numopts)
+			wstandend(m->mw);
+		wclrtoeol(m->mw);
+		cury++;
+	}
+
+	/* Add the scroll line */
+	if (m->mopt & SCROLL) {
+		mvwaddstr (m->mw, cury, hasbox, scrolltext);
+		if (selrow < 0)
+			selrow = cury;
+	}
+
+	/* Add the box. */
 	if (!(m->mopt & NOBOX))
 		box(m->mw, '*', '*');
 
-	wmove(m->mw,tadd+hasbox+m->cursel, hasbox);
+	wmove(m->mw, selrow, hasbox);
 }
 
 static void process_help (struct menudesc *m, int num)
 {
 	char *help = m->helpstr;
-        int lineoff = 0;
+	int lineoff = 0;
 	int curoff = 0;
 	int again;
-        int winin;
+	int winin;
 
 	/* Is there help? */
 	if (!help) {
@@ -235,7 +292,7 @@ static void process_help (struct menudesc *m, int num)
 	}
 
 	/* Display the help information. */
-        do {
+	do {
 		if (lineoff < curoff) {
 			help = m->helpstr;
 			curoff = 0;
@@ -260,15 +317,19 @@ static void process_help (struct menudesc *m, int num)
 			switch (winin) {
 				case '<':
 				case 'u':
-		                case KEYPAD_UP_ARROW:
+				case KEYPAD_UP_ARROW:
 					if (lineoff)
 						lineoff -= max_lines - 2;
+					else
+						again = 1;
 					break;
 				case '>':
 				case 'd':
-		                case KEYPAD_DOWN_ARROW:
+				case KEYPAD_DOWN_ARROW:
 					if (*help)
 						lineoff += max_lines - 2;
+					else
+						again = 1;
 					break;
 				case 'q':
 					break;
@@ -282,67 +343,77 @@ static void process_help (struct menudesc *m, int num)
 	wclear(stdscr);
 	wrefresh(stdscr);
 	process_item (&num, -2);
-	post_menu (m);
-	wrefresh (m->mw);
 }
 
 static void process_req (struct menudesc *m, int num, int req)
 {
 	int ch;
-	int lastsel = m->cursel;
 	int hasexit = (m->mopt & NOEXITOPT ? 0 : 1 );
-	int hasbox = (m->mopt & NOBOX ? 0 : 1);
-	int tadd = strlen(m->title) ? 2 : 0;
+	int refresh = 0;
 
 	if (req == REQ_EXECUTE)
 		return;
+
 	else if (req == REQ_NEXT_ITEM) {
-		if (m->cursel < m->numopts + hasexit - 1)
+		if (m->cursel < m->numopts + hasexit - 1) {
 			m->cursel++;
-		else
+			refresh = 1;
+		} else
 			mbeep();
+
 	} else if (req == REQ_PREV_ITEM) {
-		if (m->cursel > 0)
+		if (m->cursel > 0) {
 			m->cursel--;
-		else
+			refresh = 1;
+		} else
 			mbeep();
 
 	} else if (req == REQ_REDISPLAY) {
 		wclear(stdscr);
 		wrefresh(stdscr);
 		process_item (&num, -2);
-		post_menu (m);
-		wrefresh (m->mw);
+		refresh = 1;
 
 	} else if (req == '?') {
 		process_help (m, num);
+		refresh = 1;
+
+	} else if (req == '<') {
+		if (m->topline == 0)
+			mbeep();
+		else {
+			m->topline -= m->h-1;
+			wclear (m->mw);
+			refresh = 1;
+		}
+
+	} else if (req == '>') {
+		if (m->topline + m->h - 1 > m->numopts + hasexit)
+			mbeep();
+		else {
+			m->topline += m->h-1;
+			wclear (m->mw);
+			refresh = 1;
+		}
+
 	} else {
 		ch = tolower (req);
-		if (ch == 'x' && hasexit)
+		if (ch == 'x' && hasexit) {
 			m->cursel = m->numopts;
-		else {
+			refresh = 1;
+		} else {
 			ch = ch - 'a';
 			if (ch < 0 || ch >= m->numopts)
 				mbeep();
-			else
+			else {
 				m->cursel = ch;
+				refresh = 1;
+			}
 		}
 	}
-	if (m->cursel != lastsel) {
-		mvwaddstr (m->mw, lastsel+tadd+hasbox, hasbox, " ");
-		if (lastsel < m->numopts)
-			waddstr (m->mw, m->opts[lastsel]);
-		else
-			waddstr (m->mw, "x: Exit");
-		mvwaddstr (m->mw, m->cursel+tadd+hasbox, hasbox, ">");
-		wstandout(m->mw);
-		if (m->cursel < m->numopts)
-			waddstr (m->mw, m->opts[m->cursel]);
-		else
-			waddstr (m->mw, "x: Exit");
-		wstandend(m->mw);
-		wmove(m->mw,tadd+hasbox+m->cursel, hasbox);
-		wrefresh(m->mw);
+	if (refresh) {
+		post_menu (m);
+		wrefresh (m->mw);
 	}
 }
 
@@ -368,15 +439,16 @@ void process_menu (int num)
 		__menu_init = 1;
 	}
 	if (__m_endwin) {
-     	        wclear(stdscr);
+     		wclear(stdscr);
 		wrefresh(stdscr);
 		__m_endwin = 0;
 	}
 	if (m->mw == NULL)
 		init_menu (m);
 
-	/* Always preselect 0! */
+	/* Always preselect option 0 and display from 0! */
 	m->cursel = 0;
+	m->topline = 0;
 
 	while (!done) {
 		last_num = num;
@@ -416,3 +488,4 @@ void process_menu (int num)
 	/* Process the exit action */
 	process_item (&num, -1);
 }
+

@@ -1,4 +1,4 @@
-/*	$NetBSD: mdb.c,v 1.5 1998/06/24 06:46:23 phil Exp $	*/
+/*	$NetBSD: mdb.c,v 1.6 1998/06/25 09:58:57 phil Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -160,6 +160,7 @@ write_menu_file (char *initcode)
 		"	int	mopt;\n"
 		"	int     numopts;\n"
 		"	int	cursel;\n"
+		"	int	topline;\n"
 		"	char   **opts;\n"
 		"	WINDOW *mw;\n"
 		"	char   *helpstr;\n"
@@ -168,6 +169,7 @@ write_menu_file (char *initcode)
 		"/* defines for mopt field. */\n"
 		"#define NOEXITOPT 1\n"
 		"#define NOBOX 2\n"
+		"#define SCROLL 4\n"
 		"\n"
 		"/* initilization flag */\n"
 		"extern int __m_endwin;\n"
@@ -218,7 +220,7 @@ write_menu_file (char *initcode)
 	(void) fprintf (out_file, "static struct menudesc menus[] = {\n");
 	for (i=0; i<menu_no; i++) {
 		(void) fprintf (out_file,
-			"\t{%s,%d,%d,%d,%d,%d,%d,0,optstr%d,NULL,",
+			"\t{%s,%d,%d,%d,%d,%d,%d,0,0,optstr%d,NULL,",
 			menus[i]->info->title, 	menus[i]->info->y,
 			menus[i]->info->x, menus[i]->info->h,
 			menus[i]->info->w, menus[i]->info->mopt,
