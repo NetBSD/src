@@ -1,4 +1,4 @@
-/*	$NetBSD: bus.h,v 1.9 1998/03/29 22:00:33 pk Exp $	*/
+/*	$NetBSD: bus.h,v 1.10 1998/04/07 20:07:23 pk Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -84,11 +84,14 @@ typedef u_long	bus_size_t;
 /*
  * Access methods for bus resources and address space.
  */
+typedef struct sparc_bus_space_tag	*bus_space_tag_t;
+
 struct sparc_bus_space_tag {
-	void	*cookie;
+	void		*cookie;
+	bus_space_tag_t	parent;
 
 	int	(*sparc_bus_map) __P((
-				void *,			/*cookie*/
+				bus_space_tag_t,
 				bus_type_t,
 				bus_addr_t,
 				bus_size_t,
@@ -96,26 +99,32 @@ struct sparc_bus_space_tag {
 				vm_offset_t,		/*preferred vaddr*/
 				bus_space_handle_t *));
 	int	(*sparc_bus_unmap) __P((
-				void *,			/*cookie*/
+				bus_space_tag_t,
 				bus_space_handle_t,
 				bus_size_t));
 	int	(*sparc_bus_subregion) __P((
-				void *,			/*cookie*/
+				bus_space_tag_t,
 				bus_space_handle_t,
-				bus_size_t,
-				bus_size_t,
+				bus_size_t,		/*offset*/
+				bus_size_t,		/*size*/
 				bus_space_handle_t *));
 
-	void	(*sparc_barrier) __P((void *));
-
-	int	(*sparc_bus_mmap) __P((
-				void *,			/*cookie*/
-				bus_type_t,		/**/
-				bus_addr_t,		/**/
+	void	(*sparc_bus_barrier) __P((
+				bus_space_tag_t,
+				bus_space_handle_t,
+				bus_size_t,		/*offset*/
+				bus_size_t,		/*size*/
 				int));			/*flags*/
 
+	int	(*sparc_bus_mmap) __P((
+				bus_space_tag_t,
+				bus_type_t,		/**/
+				bus_addr_t,		/**/
+				int,			/*flags*/
+				bus_space_handle_t *));
+
 	void	*(*sparc_intr_establish) __P((
-				void *,			/*cookie*/
+				bus_space_tag_t,
 				int,			/*level*/
 				int,			/*flags*/
 				int (*) __P((void *)),	/*handler*/
@@ -123,34 +132,155 @@ struct sparc_bus_space_tag {
 
 };
 
-typedef struct sparc_bus_space_tag	*bus_space_tag_t;
-
-#define bus_space_map(t, a, s, f, hp)					\
-	(*(t)->sparc_bus_map)((t)->cookie, 0, (a), (s), (f), 0, (hp))
-#define bus_space_map2(t, bt, a, s, f, v, hp)				\
-	(*(t)->sparc_bus_map)((t)->cookie, (bt), (a), (s), (f), (v), (hp))
-#define bus_space_unmap(t, h, s)					\
-	(*(t)->sparc_bus_unmap)((t)->cookie, (h), (s))
-#define bus_space_subregion(t, h, o, s, hp)				\
-	(*(t)->sparc_bus_subregion)((t)->cookie, (h), (o), (s), (hp))
-#define bus_space_mmap(t, bt, a, f)				\
-	(*(t)->sparc_bus_mmap)((t)->cookie, (bt), (a), (f))
+#if 0
+/*
+ * The following macro could be used to generate the bus_space*() functions
+ * but it uses a gcc extension and is ANSI-only.
+#define PROTO_bus_space_xxx		__P((bus_space_tag_t t, ...))
+#define RETURNTYPE_bus_space_xxx	void *
+#define BUSFUN(name, returntype, t, args...)			\
+	__inline__ RETURNTYPE_##name				\
+	bus_##name PROTO_##name					\
+	{							\
+		while (t->sparc_##name == NULL)			\
+			t = t->parent;				\
+		return (*(t)->sparc_##name)(t, args);		\
+	}
+ */
+#endif
 
 /*
- * The following base function are directly callable for now.
+ * Bus space function prototypes.
+ * In bus_space_map2(), supply a special virtual address only if you
+ * get it from ../sparc/vaddrs.h.
  */
-int sparc_bus_map __P(( void *, bus_type_t, bus_addr_t, bus_size_t,
-			int, vm_offset_t, bus_space_handle_t *));
+static int	bus_space_map __P((
+				bus_space_tag_t,
+				bus_addr_t,
+				bus_size_t,
+				int,			/*flags*/
+				bus_space_handle_t *));
+static int	bus_space_map2 __P((
+				bus_space_tag_t,
+				bus_type_t,
+				bus_addr_t,
+				bus_size_t,
+				int,			/*flags*/
+				vm_offset_t,		/*preferred vaddr*/
+				bus_space_handle_t *));
+static int	bus_space_unmap __P((
+				bus_space_tag_t,
+				bus_space_handle_t,
+				bus_size_t));
+static int	bus_space_subregion __P((
+				bus_space_tag_t,
+				bus_space_handle_t,
+				bus_size_t,
+				bus_size_t,
+				bus_space_handle_t *));
+static void	bus_space_barrier __P((
+				bus_space_tag_t,
+				bus_space_handle_t,
+				bus_size_t,
+				bus_size_t,
+				int));
+static int	bus_space_mmap __P((
+				bus_space_tag_t,
+				bus_type_t,		/**/
+				bus_addr_t,		/**/
+				int,			/*flags*/
+				bus_space_handle_t *));
+static void	*bus_intr_establish __P((
+				bus_space_tag_t,
+				int,			/*level*/
+				int,			/*flags*/
+				int (*) __P((void *)),	/*handler*/
+				void *));		/*handler arg*/
 
-int bus_space_probe __P((
-		bus_space_tag_t,
-		bus_type_t,
-		bus_addr_t,
-		bus_size_t,			/* probe size */
-		size_t,				/* offset */
-		int,				/* flags */
-		int (*) __P((void *, void *)),	/* callback function */
-		void *));			/* callback arg */
+
+/* This macro finds the first "upstream" implementation of method `f' */
+#define _BS_CALL(t,f)			\
+	while (t->f == NULL)		\
+		t = t->parent;		\
+	return (*(t)->f)
+
+__inline__ int
+bus_space_map(t, a, s, f, hp)
+	bus_space_tag_t	t;
+	bus_addr_t	a;
+	bus_size_t	s;
+	int		f;
+	bus_space_handle_t *hp;
+{
+	_BS_CALL(t, sparc_bus_map)((t), 0, (a), (s), (f), 0, (hp));
+}
+
+__inline__ int
+bus_space_map2(t, bt, a, s, f, v, hp)
+	bus_space_tag_t	t;
+	bus_type_t	bt;
+	bus_addr_t	a;
+	bus_size_t	s;
+	int		f;
+	vm_offset_t	v;
+	bus_space_handle_t *hp;
+{
+	_BS_CALL(t, sparc_bus_map)(t, bt, a, s, f, v, hp);
+}
+
+__inline__ int
+bus_space_unmap(t, h, s)
+	bus_space_tag_t t;
+	bus_space_handle_t h;
+	bus_size_t	s;
+{
+	_BS_CALL(t, sparc_bus_unmap)(t, h, s);
+}
+
+__inline__ int
+bus_space_subregion(t, h, o, s, hp)
+	bus_space_tag_t	t;
+	bus_space_handle_t h;
+	bus_size_t	o;
+	bus_size_t	s;
+	bus_space_handle_t *hp;
+{
+	_BS_CALL(t, sparc_bus_subregion)(t, h, o, s, hp);
+}
+
+__inline__ int
+bus_space_mmap(t, bt, a, f, hp)
+	bus_space_tag_t	t;
+	bus_type_t	bt;
+	bus_addr_t	a;
+	int		f;
+	bus_space_handle_t *hp;
+{
+	_BS_CALL(t, sparc_bus_mmap)(t, bt, a, f, hp);
+}
+
+__inline__ void *
+bus_intr_establish(t, l, f, h, a)
+	bus_space_tag_t t;
+	int	l;
+	int	f;
+	int	(*h)__P((void *));
+	void	*a;
+{
+	_BS_CALL(t, sparc_intr_establish)(t, l, f, h, a);
+}
+
+__inline__ void
+bus_space_barrier(t, h, o, s, f)
+	bus_space_tag_t t;
+	bus_space_handle_t h;
+	bus_size_t o;
+	bus_size_t s;
+	int f;
+{
+	_BS_CALL(t, sparc_bus_barrier)(t, h, o, s, f);
+}
+
 
 #if 0
 int	bus_space_alloc __P((bus_space_tag_t t, bus_addr_t rstart,
@@ -161,6 +291,7 @@ void	bus_space_free __P((bus_space_tag_t t, bus_space_handle_t bsh,
 	    bus_size_t size));
 #endif
 
+/* flags for bus space map functions */
 #define BUS_SPACE_MAP_CACHEABLE	0x0001
 #define BUS_SPACE_MAP_LINEAR	0x0002
 #define BUS_SPACE_MAP_BUS1	0x0100	/* placeholders for bus functions... */
@@ -169,12 +300,29 @@ void	bus_space_free __P((bus_space_tag_t t, bus_space_handle_t bsh,
 #define BUS_SPACE_MAP_BUS4	0x0800
 
 
-#define bus_intr_establish(t, l, f, h, a)				\
-	(*(t)->sparc_intr_establish)((t)->cookie, (l), (f), (h), (a))
-
 /* flags for intr_establish() */
 #define BUS_INTR_ESTABLISH_FASTTRAP	1
 #define BUS_INTR_ESTABLISH_SOFTINTR	2
+
+/* flags for bus_space_barrier() */
+#define	BUS_SPACE_BARRIER_READ	0x01		/* force read barrier */
+#define	BUS_SPACE_BARRIER_WRITE	0x02		/* force write barrier */
+
+/*
+ * Device space probe assistant.
+ * The optional callback function's arguments are:
+ *	the temporary virtual address
+ *	the passed `arg' argument
+ */
+int bus_space_probe __P((
+		bus_space_tag_t,
+		bus_type_t,
+		bus_addr_t,
+		bus_size_t,			/* probe size */
+		size_t,				/* offset */
+		int,				/* flags */
+		int (*) __P((void *, void *)),	/* callback function */
+		void *));			/* callback arg */
 
 
 /*
@@ -364,21 +512,6 @@ void	bus_space_free __P((bus_space_tag_t t, bus_space_handle_t bsh,
 	    bus_space_write_8(t, h1, o1, bus_space_read_4(t, h2, o2));	\
 } while (0)
 
-
-/*
- * Bus read/write barrier methods.
- *
- *	void bus_space_barrier __P((bus_space_tag_t tag,
- *	    bus_space_handle_t bsh, bus_size_t offset,
- *	    bus_size_t len, int flags));
- *
- */
-#define	bus_space_barrier(t, h, o, l, f) {		\
-	if ((t)->sparc_barrier)				\
-		(*(t)->sparc_barrier)((t)->cookie);	\
-}
-#define	BUS_SPACE_BARRIER_READ	0x01		/* force read barrier */
-#define	BUS_SPACE_BARRIER_WRITE	0x02		/* force write barrier */
 
 /*
  * Flags used in various bus DMA methods.
