@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_syscalls.c,v 1.26.2.3 2000/01/15 18:03:46 he Exp $	*/
+/*	$NetBSD: lfs_syscalls.c,v 1.26.2.4 2000/01/20 21:10:57 he Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -991,7 +991,7 @@ lfs_fastvget(mp, ino, daddr, vpp, dinp, need_unlock)
 			return (error);
 		}
 		ip->i_din.ffs_din =
-			*lfs_ifind(ump->um_lfs, ino, (struct dinode *)bp->b_data);
+			*lfs_ifind(ump->um_lfs, ino, bp);
 		brelse(bp);
 	}
 
