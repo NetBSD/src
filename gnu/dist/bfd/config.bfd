@@ -165,9 +165,13 @@ case "${targ}" in
     targ_selvecs=i386bsd_vec
     targ_underscore=yes
     ;;
+  i[3456]86-*-netbsdelf*)
+    targ_defvec=bfd_elf32_i386_vec
+    targ_selvecs="i386bsd_vec i386netbsd_vec"
+    ;;
   i[3456]86-*-netbsd* | i[3456]86-*-openbsd*)
     targ_defvec=i386netbsd_vec
-    targ_selvecs=i386bsd_vec
+    targ_selvecs="i386bsd_vec bfd_elf32_i386_vec"
     targ_underscore=yes
     ;;
   i[3456]86-*-netware*)
