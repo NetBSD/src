@@ -1,5 +1,5 @@
 #	from: @(#)rc	8.2 (Berkeley) 3/17/94
-#	$Id: rc,v 1.47 1994/06/27 21:14:19 deraadt Exp $
+#	$Id: rc,v 1.48 1994/09/16 23:38:01 mycroft Exp $
 
 # System startup script run by init on autoboot
 # or after single-user.
@@ -91,6 +91,7 @@ fi
 # if $nfs_server == YES, the machine is setup for being an nfs server
 if [ X${nfs_server} = X"YES" -a -r /etc/exports ]; then
 	rm -f /var/db/mountdtab	
+	echo -n > /var/db/mountdtab
 	echo -n ' mountd';		mountd
 	echo -n ' nfsd';		nfsd -tun 4
 fi
@@ -178,21 +179,21 @@ echo -n starting network daemons:
 # If $gated == YES, gated is used; otherwise routed.
 # If $routed_flags == NO, routed isn't run.
 if [ X${gated} = X"YES" -a -r /etc/gated.conf ]; then
-	echo -n ' gated';	gated $gated_flags
+	echo -n ' gated';		gated $gated_flags
 elif [ "X${routed_flags}" != X"NO" ]; then
-	echo -n ' routed';	routed $routed_flags
+	echo -n ' routed';		routed $routed_flags
 fi
 
 # $name_server is imported from /etc/netstart;
-# if $name_server == YES, named is run.
-if [ X${name_server} = X"YES" -a -r /etc/named.boot ]; then
-	echo -n ' named';		named
+# if $named_flags != NO, named is run.
+if [ "X${named_flags}" != X"NO" ]; then
+	echo -n ' named';		named $named_flags
 fi
 
 # $rwhod is imported from /etc/netstart;
 # if $rwhod == YES, rwhod is run.
 if [ X${rwhod} = X"YES" ]; then
-	echo -n ' rwhod';	rwhod
+	echo -n ' rwhod';		rwhod
 fi
 
 echo -n ' printer';		lpd
@@ -225,5 +226,4 @@ echo '.'
 . /etc/rc.local
 
 date
-
 exit 0
