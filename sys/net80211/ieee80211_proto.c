@@ -1,4 +1,4 @@
-/*	$NetBSD: ieee80211_proto.c,v 1.17 2004/09/07 01:07:40 enami Exp $	*/
+/*	$NetBSD: ieee80211_proto.c,v 1.18 2005/02/26 22:45:09 perry Exp $	*/
 /*-
  * Copyright (c) 2001 Atsushi Onoe
  * Copyright (c) 2002, 2003 Sam Leffler, Errno Consulting
@@ -35,7 +35,7 @@
 #ifdef __FreeBSD__
 __FBSDID("$FreeBSD: src/sys/net80211/ieee80211_proto.c,v 1.8 2004/04/02 20:22:25 sam Exp $");
 #else
-__KERNEL_RCSID(0, "$NetBSD: ieee80211_proto.c,v 1.17 2004/09/07 01:07:40 enami Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ieee80211_proto.c,v 1.18 2005/02/26 22:45:09 perry Exp $");
 #endif
 
 /*
@@ -45,8 +45,8 @@ __KERNEL_RCSID(0, "$NetBSD: ieee80211_proto.c,v 1.17 2004/09/07 01:07:40 enami E
 #include "opt_inet.h"
 
 #include <sys/param.h>
-#include <sys/systm.h> 
-#include <sys/mbuf.h>   
+#include <sys/systm.h>
+#include <sys/mbuf.h>
 #include <sys/malloc.h>
 #include <sys/kernel.h>
 #include <sys/socket.h>
@@ -62,7 +62,7 @@ __KERNEL_RCSID(0, "$NetBSD: ieee80211_proto.c,v 1.17 2004/09/07 01:07:40 enami E
 #ifdef __FreeBSD__
 #include <machine/atomic.h>
 #endif
- 
+
 #include <net/if.h>
 #include <net/if_dl.h>
 #include <net/if_media.h>
@@ -80,7 +80,7 @@ __KERNEL_RCSID(0, "$NetBSD: ieee80211_proto.c,v 1.17 2004/09/07 01:07:40 enami E
 #include <net/bpf.h>
 
 #ifdef INET
-#include <netinet/in.h> 
+#include <netinet/in.h>
 #ifdef __FreeBSD__
 #include <netinet/if_ether.h>
 #else
@@ -154,7 +154,7 @@ void
 ieee80211_print_essid(u_int8_t *essid, int len)
 {
 	int i;
-	u_int8_t *p; 
+	u_int8_t *p;
 
 	if (len > IEEE80211_NWID_LEN)
 		len = IEEE80211_NWID_LEN;

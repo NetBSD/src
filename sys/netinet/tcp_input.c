@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_input.c,v 1.220 2005/02/03 23:39:32 perry Exp $	*/
+/*	$NetBSD: tcp_input.c,v 1.221 2005/02/26 22:45:12 perry Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -148,7 +148,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tcp_input.c,v 1.220 2005/02/03 23:39:32 perry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tcp_input.c,v 1.221 2005/02/26 22:45:12 perry Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -1369,7 +1369,7 @@ findpcb:
 				 *   (2a) "SHOULD NOT be used if alternate
 				 *        address with sufficient scope is
 				 *        available"
-				 *   (2b) nothing mentioned otherwise. 
+				 *   (2b) nothing mentioned otherwise.
 				 * Here we fall into (2b) case as we have no
 				 * choice in our source address selection - we
 				 * must obey the peer.
@@ -1990,7 +1990,7 @@ after_listen:
 				m_freem(tcp_saveti);
 			return;
 		}
-			
+
 		goto dropafterack_ratelim;
 	}
 
@@ -4114,7 +4114,7 @@ syn_cache_respond(struct syn_cache *sc, struct mbuf *m)
 		u_int8_t *sigp;
 
 		sav = tcp_signature_getsav(m, th);
-		
+
 		if (sav == NULL) {
 			if (m)
 				m_freem(m);
@@ -4186,7 +4186,7 @@ syn_cache_respond(struct syn_cache *sc, struct mbuf *m)
 #ifdef INET
 	case AF_INET:
 		error = ip_output(m, sc->sc_ipopts, ro,
-		    (ip_mtudisc ? IP_MTUDISC : 0), 
+		    (ip_mtudisc ? IP_MTUDISC : 0),
 		    (struct ip_moptions *)NULL, so);
 		break;
 #endif

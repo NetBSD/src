@@ -1,4 +1,4 @@
-/*	$NetBSD: pk_input.c,v 1.24 2004/04/26 01:41:15 matt Exp $	*/
+/*	$NetBSD: pk_input.c,v 1.25 2005/02/26 22:45:10 perry Exp $	*/
 
 /*
  * Copyright (c) 1991, 1992, 1993
@@ -78,7 +78,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pk_input.c,v 1.24 2004/04/26 01:41:15 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pk_input.c,v 1.25 2005/02/26 22:45:10 perry Exp $");
 
 #include "opt_hdlc.h"
 #include "opt_llc.h"
@@ -375,17 +375,17 @@ struct mbuf    *pk_bad_packet;
 struct mbuf_cache pk_input_cache = {0};
 /*
  * X.25 PACKET INPUT
- * 
+ *
  * This procedure is called by a link level procedure whenever an information
  * frame is received. It decodes the packet and demultiplexes based on the
  * logical channel number.
- * 
+ *
  * We change the original conventions of the UBC code here -- since there may be
  * multiple pkcb's for a given interface of type 802.2 class 2, we retrieve
  * which one it is from m_pkthdr.rcvif (which has been overwritten by lower
  * layers); That field is then restored for the benefit of upper layers which
  * may make use of it, such as CLNP.
- * 
+ *
  */
 
 #define RESTART_DTE_ORIGINATED(xp) \
@@ -935,7 +935,7 @@ save_extra(m0, fp, so)
 	struct cmsghdr  cmsghdr;
 	/* XXX: christos:
 	 * used to be m_copy(m, 0, ...)
-	 * I think it is supposed to be m_copy(m0, 
+	 * I think it is supposed to be m_copy(m0,
 	 */
 	if ((m = m_copy(m0, 0, (int) M_COPYALL)) != NULL) {
 		int             off = fp - mtod(m0, octet *);

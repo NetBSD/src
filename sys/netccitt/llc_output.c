@@ -1,9 +1,9 @@
-/*	$NetBSD: llc_output.c,v 1.11 2004/04/26 01:41:15 matt Exp $	*/
+/*	$NetBSD: llc_output.c,v 1.12 2005/02/26 22:45:10 perry Exp $	*/
 
-/* 
+/*
  * Copyright (c) 1992, 1993
  *	The Regents of the University of California.  All rights reserved.
- * 
+ *
  * This code is derived from software contributed to Berkeley by
  * Dirk Husemann and the Computer Science Department (IV) of
  * the University of Erlangen-Nuremberg, Germany.
@@ -35,11 +35,11 @@
  *	@(#)llc_output.c	8.1 (Berkeley) 6/10/93
  */
 
-/* 
+/*
  * Copyright (c) 1990, 1991, 1992
- *		Dirk Husemann, Computer Science Department IV, 
+ *		Dirk Husemann, Computer Science Department IV,
  * 		University of Erlangen-Nuremberg, Germany.
- * 
+ *
  * This code is derived from software contributed to Berkeley by
  * Dirk Husemann and the Computer Science Department (IV) of
  * the University of Erlangen-Nuremberg, Germany.
@@ -76,7 +76,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: llc_output.c,v 1.11 2004/04/26 01:41:15 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: llc_output.c,v 1.12 2005/02/26 22:45:10 perry Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
