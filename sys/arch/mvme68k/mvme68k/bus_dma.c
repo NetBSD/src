@@ -1,4 +1,4 @@
-/* $NetBSD: bus_dma.c,v 1.1.2.2 2000/03/13 12:15:30 scw Exp $	*/
+/* $NetBSD: bus_dma.c,v 1.1.2.3 2000/03/14 10:24:29 scw Exp $	*/
 
 /*
  * This file was taken from from next68k/dev/bus_dma.c, which was originally
@@ -46,7 +46,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: bus_dma.c,v 1.1.2.2 2000/03/13 12:15:30 scw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bus_dma.c,v 1.1.2.3 2000/03/14 10:24:29 scw Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -598,7 +598,7 @@ _bus_dmamem_alloc(t, size, alignment, boundary, segs, nsegs, rsegs, flags)
 	m = m->pageq.tqe_next;
 
 	for (; m != NULL; m = m->pageq.tqe_next) {
-		if ( curseg > segs ) {
+		if ( curseg > nsegs ) {
 #ifdef DIAGNOSTIC
 			printf("_bus_dmamem_alloc: too many segments!\n");
 #ifdef DEBUG
