@@ -1,4 +1,4 @@
-/*	$NetBSD: fish.c,v 1.12 2000/03/28 19:37:54 tron Exp $	*/
+/*	$NetBSD: fish.c,v 1.13 2000/05/08 07:56:03 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -46,7 +46,7 @@ __COPYRIGHT("@(#) Copyright (c) 1990, 1993\n\
 #if 0
 static char sccsid[] = "@(#)fish.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: fish.c,v 1.12 2000/03/28 19:37:54 tron Exp $");
+__RCSID("$NetBSD: fish.c,v 1.13 2000/05/08 07:56:03 mycroft Exp $");
 #endif
 #endif /* not lint */
 
@@ -107,7 +107,7 @@ main(argc, argv)
 	int ch, move;
 
 	/* Revoke setgid privileges */
-	setregid(getgid(), getgid());
+	setgid(getgid());
 
 	while ((ch = getopt(argc, argv, "p")) != -1)
 		switch(ch) {
