@@ -1,11 +1,11 @@
-/*	$NetBSD: perform.c,v 1.36.2.4 2003/07/23 23:03:00 jlam Exp $	*/
+/*	$NetBSD: perform.c,v 1.36.2.5 2003/07/24 23:14:51 jlam Exp $	*/
 
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static const char *rcsid = "from FreeBSD Id: perform.c,v 1.15 1997/10/13 15:03:52 jkh Exp";
 #else
-__RCSID("$NetBSD: perform.c,v 1.36.2.4 2003/07/23 23:03:00 jlam Exp $");
+__RCSID("$NetBSD: perform.c,v 1.36.2.5 2003/07/24 23:14:51 jlam Exp $");
 #endif
 #endif
 
@@ -715,7 +715,24 @@ pkg_do(char *pkg)
 				return 1;
 		}
 	}
-	if (!NoDeInstall && fexists(DEINSTALL_FNAME)) {
+	/*
+	 * Ensure that we don't do VIEW-DEINSTALL action for old packages
+	 * or for the package in its depot directory.
+	 */
+	if (!NoDeInstall && fexists(DEINSTALL_FNAME) && fexists(DEPOT_FNAME)) {
+		if (Fake) {
+			printf("Would execute view de-install script at this point (arg: VIEW-DEINSTALL).\n");
+		} else {
+			vsystem("%s +x %s", CHMOD_CMD, DEINSTALL_FNAME);	/* make sure */
+			if (vsystem("./%s %s VIEW-DEINSTALL", DEINSTALL_FNAME, pkg)) {
+				warnx("view deinstall script returned error status");
+				if (!Force) {
+					return 1;
+				}
+			}
+		}
+	}
+	if (!NoDeInstall && fexists(DEINSTALL_FNAME) && !fexists(DEPOT_FNAME)) {
 		if (Fake)
 			printf("Would execute de-install script at this point (arg: DEINSTALL).\n");
 		else {
@@ -757,7 +774,7 @@ pkg_do(char *pkg)
 
 		require_delete(home, 1);
 	}
-	if (!NoDeInstall && fexists(DEINSTALL_FNAME)) {
+	if (!NoDeInstall && fexists(DEINSTALL_FNAME) && !fexists(DEPOT_FNAME)) {
 		if (Fake)
 			printf("Would execute post-de-install script at this point (arg: POST-DEINSTALL).\n");
 		else {
