@@ -28,7 +28,7 @@
 # (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 # THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #
-#	$Id: install.sh,v 1.1.1.1 1996/05/17 12:25:37 oki Exp $
+#	$Id: install.sh,v 1.2 1996/06/17 04:12:19 oki Exp $
 
 #	NetBSD installation script.
 #	In a perfect world, this would be a nice C program, with a reasonable
@@ -329,9 +329,16 @@ while [ $part_used -lt $partition ]; do
 				;;
 		esac
 	done
-	if [ "$ename" = "" ]; then
-		ename=$part_name
+	if [ "$dname" = "" ]; then
+		dname=$part_name
 		offset=`expr $part_offset + $root + $swap`
+		_size=`expr $part_size \* $sizemult`
+		_offset=`expr $offset \* $sizemult`
+		echo -n "	:pd#${_size}:od#${_offset}" >> $DT
+		echo ":te=4.2BSD:bd#${blocksize}:fd#${fragsize}:\\" >> $DT
+		offset=`expr $offset + $part_size`
+	elif [ "$ename" = "" ]; then
+		ename=$part_name
 		_size=`expr $part_size \* $sizemult`
 		_offset=`expr $offset \* $sizemult`
 		echo -n "	:pe#${_size}:oe#${_offset}" >> $DT
@@ -360,7 +367,7 @@ while [ $part_used -lt $partition ]; do
 		part_used=$partition
 	fi
 done
-echo	"	:pd#${disksize}:od#0:" >> $DT
+echo	"	:pc#${disksize}:oc#0:" >> $DT
 sync
 
 echo	""
@@ -392,7 +399,8 @@ done
 
 echo	""
 echo -n	"Labeling disk $drivename..."
-$DONTDOIT disklabel -w -B $drivename $labelname
+$DONTDOIT dd if=/usr/mdec/sdboot of=/dev/r${drivename}a conv=sync
+$DONTDOIT disklabel -w $drivename $labelname
 echo	" done."
 
 if [ "$sect_fwd" = "sf:" ]; then
@@ -404,6 +412,13 @@ fi
 echo	"Initializing root filesystem, and mounting..."
 $DONTDOIT newfs /dev/r${drivename}a $name
 $DONTDOIT mount -v /dev/${drivename}a /mnt
+if [ "$dname" != "" ]; then
+	echo	""
+	echo	"Initializing $dname filesystem, and mounting..."
+	$DONTDOIT newfs /dev/r${drivename}d $name
+	$DONTDOIT mkdir -p /mnt/$dname
+	$DONTDOIT mount -v /dev/${drivename}d /mnt/$dname
+fi
 if [ "$ename" != "" ]; then
 	echo	""
 	echo	"Initializing $ename filesystem, and mounting..."
@@ -441,6 +456,9 @@ $DONTDOIT cp /tmp/.hdprofile /mnt/.profile
 echo	""
 echo -n	"Creating an fstab..."
 echo /dev/${drivename}a / ffs rw 1 1 | sed -e s,//,/, > $FSTAB
+if [ "$dname" != "" ]; then
+	echo /dev/${drivename}d /$dname ffs rw 1 2 | sed -e s,//,/, >> $FSTAB
+fi
 if [ "$ename" != "" ]; then
 	echo /dev/${drivename}e /$ename ffs rw 1 2 | sed -e s,//,/, >> $FSTAB
 fi
