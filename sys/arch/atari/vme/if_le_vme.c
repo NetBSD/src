@@ -1,6 +1,7 @@
-/*	$NetBSD: if_le_vme.c,v 1.18 2003/08/07 16:27:08 agc Exp $	*/
+/*	$NetBSD: if_le_vme.c,v 1.19 2004/03/25 10:17:19 leo Exp $	*/
 
 /*-
+ * Copyright (c) 1997 Leo Weppelman.  All rights reserved.
  * Copyright (c) 1992, 1993
  *	The Regents of the University of California.  All rights reserved.
  *
@@ -36,7 +37,6 @@
 
 /*-
  * Copyright (c) 1998 maximum entropy.  All rights reserved.
- * Copyright (c) 1997 Leo Weppelman.  All rights reserved.
  * Copyright (c) 1995 Charles M. Hannum.  All rights reserved.
  *
  * This code is derived from software contributed to Berkeley by
@@ -74,7 +74,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_le_vme.c,v 1.18 2003/08/07 16:27:08 agc Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_le_vme.c,v 1.19 2004/03/25 10:17:19 leo Exp $");
 
 #include "opt_inet.h"
 #include "bpfilter.h"

@@ -1,6 +1,7 @@
-/*	$NetBSD: hdfd.c,v 1.42 2003/09/29 01:20:41 cl Exp $	*/
+/*	$NetBSD: hdfd.c,v 1.43 2004/03/25 10:17:19 leo Exp $	*/
 
 /*-
+ * Copyright (c) 1996 Leo Weppelman
  * Copyright (c) 1990 The Regents of the University of California.
  * All rights reserved.
  *
@@ -35,7 +36,6 @@
  */
 
 /*-
- * Copyright (c) 1996 Leo Weppelman
  * Copyright (c) 1993, 1994, 1995, 1996
  *	Charles M. Hannum.  All rights reserved.
  *
@@ -91,7 +91,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hdfd.c,v 1.42 2003/09/29 01:20:41 cl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hdfd.c,v 1.43 2004/03/25 10:17:19 leo Exp $");
 
 #include "opt_ddb.h"
 
