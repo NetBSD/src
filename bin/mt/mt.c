@@ -1,4 +1,4 @@
-/*	$NetBSD: mt.c,v 1.21 1997/07/20 18:59:32 christos Exp $	*/
+/*	$NetBSD: mt.c,v 1.22 1997/09/29 19:35:31 mjacob Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -43,7 +43,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1993\n\
 #if 0
 static char sccsid[] = "@(#)mt.c	8.2 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: mt.c,v 1.21 1997/07/20 18:59:32 christos Exp $");
+__RCSID("$NetBSD: mt.c,v 1.22 1997/09/29 19:35:31 mjacob Exp $");
 #endif
 #endif /* not lint */
 
@@ -93,6 +93,7 @@ const struct commands com[] = {
 	{ "status",	MTNOP,      1,  0 },
 	{ "retension",	MTRETEN,    1,  0 },
 	{ "weof",	MTWEOF,     0,  1 },
+	{ "compress",	MTCMPRESS,  1,  0 },
 	{ NULL }
 };
 
@@ -106,12 +107,12 @@ main(argc, argv)
 	int argc;
 	char *argv[];
 {
-	const struct commands *comp;
+	const struct commands *comp = (const struct commands *) NULL;
 	struct mtget mt_status;
 	struct mtop mt_com;
 	int ch, len, mtfd, flags;
 	char *p, *tape;
-	int count;
+	int count, spcl;
 
 	if ((tape = getenv("TAPE")) == NULL)
 		tape = _PATH_DEFTAPE;
@@ -132,27 +133,79 @@ main(argc, argv)
 	if (argc < 1 || argc > 2)
 		usage();
 
-	len = strlen(p = *argv++);
-	for (comp = com;; comp++) {
-		if (comp->c_name == NULL)
-			errx(1, "%s: unknown command", p);
-		if (strncmp(p, comp->c_name, len) == 0)
-			break;
+	if (strcmp(*argv, "rdspos") == 0) {
+		count = 0;
+		spcl = MTIOCRDSPOS;
+		flags = O_RDONLY;
+	} else if (strcmp(*argv, "rdhpos") == 0) {
+		count = 0;
+		spcl = MTIOCRDHPOS;
+		flags = O_RDONLY;
+	} else if (strcmp(*argv, "setspos") == 0) {
+		spcl = MTIOCSLOCATE;
+		flags = O_RDONLY;
+		
+		++argv;
+		if ((p = *argv) != NULL) {
+			count = strtol(*argv, &p, 0);
+			if (p == *argv) {
+				fprintf(stderr, "%s: illegal block address\n", p);
+				exit(1);
+			}
+		} else {
+			fprintf(stderr, "MTIOSLOCATE: missing block address\n");
+			exit(1);
+		}
+	} else if (strcmp(*argv, "sethpos") == 0) {
+		spcl = MTIOCHLOCATE;
+		flags = O_RDONLY;
+
+		++argv;
+		if ((p = *argv) != NULL) {
+			count = strtol(*argv, &p, 0);
+			if (p == *argv) {
+				fprintf(stderr, "%s: illegal block address\n", p);
+				exit(1);
+			}
+		} else {
+			fprintf(stderr, "MTIOHLOCATE: missing block address\n");
+			exit(1);
+		}
+	} else {
+
+		len = strlen(p = *argv++);
+		for (comp = com;; comp++) {
+			if (comp->c_name == NULL)
+				errx(1, "%s: unknown command", p);
+			if (strncmp(p, comp->c_name, len) == 0)
+				break;
+		}
+
+		if (*argv) {
+			count = strtol(*argv, &p, 10);
+			if (count < comp->c_mincount || *p)
+				errx(2, "%s: illegal count", *argv);
+		} else
+			count = 1;
+		flags = comp->c_ronly ? O_RDONLY : O_WRONLY;
+		spcl = 0;
 	}
 
-	if (*argv) {
-		count = strtol(*argv, &p, 10);
-		if (count < comp->c_mincount || *p)
-			errx(2, "%s: illegal count", *argv);
-	}
-	else
-		count = 1;
-
-	flags = comp->c_ronly ? O_RDONLY : O_WRONLY;
 	if ((mtfd = open(tape, flags)) < 0)
 		err(2, "%s", tape);
 
-	if (comp->c_code == MTASF) {
+	if (spcl) {
+		int doset = (count != 0);
+		if (ioctl(mtfd, spcl, (caddr_t) &count) < 0) {
+			err(2, "%s", tape);
+		} else if (doset) {
+			printf("%s: block location set to %u\n", tape,
+				(unsigned int) count);
+		} else {
+			printf("%s: block location %u\n", tape,
+				(unsigned int) count);
+		}
+	} else if (comp->c_code == MTASF) {
 		/* If mtget.mt_fileno was implemented, We could
 		   compute the minimal seek needed to position
 		   the tape.  Until then, rewind and seek from
