@@ -1,4 +1,4 @@
-#	$Id: GODZILLA,v 1.5 1994/03/09 21:21:41 ws Exp $
+#	$Id: GODZILLA,v 1.6 1994/04/15 02:33:07 chopps Exp $
 
 machine		"amiga"
 cpu		"M68040"
@@ -12,6 +12,7 @@ maxusers	16
 maxfdescs	2048
 
 # Standard options
+options		"COMPAT_09"
 #options	QUOTA
 options		COMPAT_SUNOS
 options		SWAPPAGER,VNODEPAGER,DEVPAGER,BANKEDDEVPAGER
