@@ -1,4 +1,4 @@
-/*	$NetBSD: ps.c,v 1.56 2004/11/29 04:44:10 atatat Exp $	*/
+/*	$NetBSD: ps.c,v 1.57 2005/02/11 18:26:18 christos Exp $	*/
 
 /*
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -75,7 +75,7 @@ __COPYRIGHT("@(#) Copyright (c) 1990, 1993, 1994\n\
 #if 0
 static char sccsid[] = "@(#)ps.c	8.4 (Berkeley) 4/2/94";
 #else
-__RCSID("$NetBSD: ps.c,v 1.56 2004/11/29 04:44:10 atatat Exp $");
+__RCSID("$NetBSD: ps.c,v 1.57 2005/02/11 18:26:18 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -269,7 +269,8 @@ main(int argc, char *argv[])
 				flag = KERN_PROC_TTY_REVOKE;
 			else if (strcmp(ttname, "co") == 0)
 				ttypath = _PATH_CONSOLE;
-			else if (strncmp(ttname, "pts/", 4) == 0)
+			else if (strncmp(ttname, "pts/", 4) == 0 ||
+				strncmp(ttname, "tty", 3) == 0)
 				(void)snprintf(ttypath = pathbuf,
 				    sizeof(pathbuf), "%s%s", _PATH_DEV, ttname);
 			else if (*ttname != '/')
