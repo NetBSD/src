@@ -31,7 +31,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)ct.c	7.3 (Berkeley) 5/4/91
- *	$Id: ct.c,v 1.2 1993/08/01 19:23:54 mycroft Exp $
+ *	$Id: ct.c,v 1.3 1994/01/11 17:19:39 mycroft Exp $
  */
 
 #include "ct.h"
@@ -379,6 +379,7 @@ again:
 		brelse(nbp);
 }
 
+void
 ctstrategy(bp)
 	register struct buf *bp;
 {
