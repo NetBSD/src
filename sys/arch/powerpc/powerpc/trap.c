@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.43 2001/06/06 17:36:03 matt Exp $	*/
+/*	$NetBSD: trap.c,v 1.44 2001/06/10 07:49:13 matt Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -133,7 +133,10 @@ trap(frame)
 			}
 			map = kernel_map;
 		}
-		goto brain_damage;
+		printf("trap: kernel %s DSI @ %#x by %#x (DSISR %#x)\n",
+		    (frame->dsisr & DSISR_STORE) ? "write" : "read",
+		    frame->dar, frame->srr0, frame->dsisr);
+		goto brain_damage2;
 	case EXC_DSI|EXC_USER:
 		KERNEL_PROC_LOCK(p);
 		if (frame->dsisr & DSISR_STORE)
@@ -158,6 +161,10 @@ trap(frame)
 		}
 		KERNEL_PROC_UNLOCK(p);
 		break;
+	case EXC_ISI:
+		printf("trap: kernel ISI by %#x (SRR1 %#x)\n",
+		    frame->dar, frame->srr0, frame->srr1);
+		goto brain_damage2;
 	case EXC_ISI|EXC_USER:
 		KERNEL_PROC_LOCK(p);
 		ftype = VM_PROT_READ | VM_PROT_EXECUTE;
@@ -338,6 +345,7 @@ syscall_bad:
 	default:
 brain_damage:
 		printf("trap type %x at %x\n", type, frame->srr0);
+brain_damage2:
 #ifdef DDB
 		if (kdb_trap(type, frame))
 			return;
