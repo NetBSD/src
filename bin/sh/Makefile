@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.41 1998/04/09 00:32:31 tv Exp $
+#	$NetBSD: Makefile,v 1.42 1998/04/13 12:06:48 lukem Exp $
 #	@(#)Makefile	8.4 (Berkeley) 5/5/95
 
 PROG=	sh
@@ -16,11 +16,6 @@ LFLAGS= -8	# 8-bit lex scanner for arithmetic
 YFLAGS=	-d
 
 CPPFLAGS+=-DSHELL -I. -I${.CURDIR}
-
-# XXX
-.if (${MACHINE_ARCH} == "powerpc")
-CFLAGS+= -w
-.endif
 
 .PATH:	${.CURDIR}/bltin ${.CURDIR}/../../usr.bin/printf
 
@@ -43,6 +38,6 @@ nodes.c nodes.h: mknodes nodetypes nodes.c.pat
 syntax.c syntax.h: mksyntax
 	./${.ALLSRC}
 
-.include <bsd.prog.mk>
-
 ${OBJS}: builtins.h nodes.h syntax.h token.h
+
+.include <bsd.prog.mk>
