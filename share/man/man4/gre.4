@@ -1,4 +1,4 @@
-.\" $NetBSD: gre.4,v 1.16 2001/09/19 01:03:44 wiz Exp $
+.\" $NetBSD: gre.4,v 1.17 2001/11/24 14:27:03 darrenr Exp $
 .\"
 .\" Copyright 1998 (c) The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -132,7 +132,8 @@ On host A
 .Ns ( Nx ) :
 .Bd -literal
    # route add default B
-   # ifconfig greN  A D netmask 0xffffffff linkX up
+   # ifconfig greN create
+   # ifconfig greN A D netmask 0xffffffff linkX up
    # greconfig -i greN -s A -d D
    # route add E D
 .Ed
@@ -151,6 +152,7 @@ On Host D
 .Ns ( Nx ) :
 .Bd -literal
    # route add default C
+   # ifconfig greN create
    # ifconfig greN D A
 .Ed
 .Pp
