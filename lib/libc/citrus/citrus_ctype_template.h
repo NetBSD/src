@@ -1,4 +1,4 @@
-/*	$NetBSD: citrus_ctype_template.h,v 1.12 2002/03/28 10:38:52 yamt Exp $	*/
+/*	$NetBSD: citrus_ctype_template.h,v 1.13 2002/03/28 10:53:48 yamt Exp $	*/
 
 /*-
  * Copyright (c)2002 Citrus Project,
@@ -168,6 +168,13 @@ static int _FUNCNAME(wcrtomb_priv)(_ENCODING_INFO * __restrict,
 				   _ENCODING_STATE * __restrict,
 				   size_t * __restrict);
 __END_DECLS
+
+
+/*
+ * macros
+ */
+
+#define _TO_CEI(_cl_)	((_CTYPE_INFO*)(_cl_))
 
 
 /*
@@ -406,7 +413,7 @@ static unsigned
 /*ARGSUSED*/
 _FUNCNAME(ctype_get_mb_cur_max)(void *cl)
 {
-	return _ENCODING_MB_CUR_MAX(_TO_EI(cl));
+	return _ENCODING_MB_CUR_MAX(_CEI_TO_EI(_TO_CEI(cl)));
 }
 
 static int
@@ -417,7 +424,7 @@ _FUNCNAME(ctype_mblen)(void * __restrict cl,
 
 	_DIAGASSERT(cl != NULL);
 
-	return _FUNCNAME(mbtowc_priv)(_TO_EI(cl), NULL, s, n,
+	return _FUNCNAME(mbtowc_priv)(_CEI_TO_EI(_TO_CEI(cl)), NULL, s, n,
 				      &_CEI_TO_STATE(_TO_CEI(cl), mblen),
 				      nresult);
 }
@@ -434,7 +441,7 @@ _FUNCNAME(ctype_mbrlen)(void * __restrict cl, const char * __restrict s,
 
 	_RESTART_BEGIN(mbrlen, _TO_CEI(cl), pspriv, psenc);
 	if (s == NULL) {
-		_FUNCNAME(init_state)(_TO_EI(cl), psenc);
+		_FUNCNAME(init_state)(_CEI_TO_EI(_TO_CEI(cl)), psenc);
 		*nresult = 0;
 	} else {
 		err = _FUNCNAME(mbrtowc_priv)(
@@ -549,7 +556,8 @@ _FUNCNAME(ctype_wcrtomb)(void * __restrict cl, char * __restrict s, wchar_t wc,
 
 	_RESTART_BEGIN(wcrtomb, _TO_CEI(cl), pspriv, psenc);
 	err = _FUNCNAME(wcrtomb_priv)(_CEI_TO_EI(_TO_CEI(cl)), s,
-						_ENCODING_MB_CUR_MAX(_TO_EI(cl)), wc, psenc, nresult);
+			    _ENCODING_MB_CUR_MAX(_CEI_TO_EI(_TO_CEI(cl))),
+			    wc, psenc, nresult);
 	_RESTART_END(wcrtomb, _TO_CEI(cl), pspriv, psenc);
 
 	return err;
@@ -605,9 +613,9 @@ _FUNCNAME(ctype_wctomb)(void * __restrict cl, char * __restrict s, wchar_t wc,
 	if (s==NULL)
 		s = s0;
 
-	err = _FUNCNAME(wcrtomb_priv)(cl, s, _ENCODING_MB_CUR_MAX(_TO_EI(cl)), wc,
-				      &_CEI_TO_STATE(_TO_CEI(cl), wctomb),
-				      &nr);
+	err = _FUNCNAME(wcrtomb_priv)(cl, s,
+		      _ENCODING_MB_CUR_MAX(_CEI_TO_EI(_TO_CEI(cl))),
+		      wc, &_CEI_TO_STATE(_TO_CEI(cl), wctomb), &nr);
 	*nresult = (int)nr;
 
 	return 0;
