@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_decluster.c,v 1.11 2002/09/23 02:40:08 oster Exp $	*/
+/*	$NetBSD: rf_decluster.c,v 1.12 2002/09/23 03:04:27 simonb Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -48,7 +48,7 @@
  *--------------------------------------------------------------------*/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_decluster.c,v 1.11 2002/09/23 02:40:08 oster Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_decluster.c,v 1.12 2002/09/23 03:04:27 simonb Exp $");
 
 #include <dev/raidframe/raidframevar.h>
 
@@ -60,12 +60,6 @@ __KERNEL_RCSID(0, "$NetBSD: rf_decluster.c,v 1.11 2002/09/23 02:40:08 oster Exp 
 #include "rf_alloclist.h"
 #include "rf_general.h"
 #include "rf_shutdown.h"
-
-
-extern int rf_copyback_in_progress;	/* debug only */
-
-/* found in rf_kintf.c */
-int     rf_GetSpareTableFromDaemon(RF_SparetWait_t * req);
 
 #if (RF_INCLUDE_PARITY_DECLUSTERING > 0) || (RF_INCLUDE_PARITY_DECLUSTERING_PQ > 0)
 
