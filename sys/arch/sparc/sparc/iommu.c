@@ -1,4 +1,4 @@
-/*	$NetBSD: iommu.c,v 1.25 1998/09/01 18:05:27 pk Exp $ */
+/*	$NetBSD: iommu.c,v 1.26 1998/09/10 21:08:39 pk Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -446,8 +446,8 @@ iommu_dmamap_load(t, map, buf, buflen, p, flags)
 	struct proc *p;
 	int flags;
 {
-	bus_size_t sgsize, oversize;
-	bus_addr_t sdva, dva;
+	bus_size_t sgsize;
+	bus_addr_t dva;
 	bus_addr_t boundary;
 	vaddr_t va = (vaddr_t)buf;
 	u_long align, voff;
@@ -472,39 +472,9 @@ iommu_dmamap_load(t, map, buf, buflen, p, flags)
 	align = dvma_cachealign ? dvma_cachealign : NBPG;
 	boundary = map->_dm_boundary;
 
-	/*
-	 * Find a region of DVMA addresses that can accomodate
-	 * our aligment requirements.
-	 */
-	oversize = sgsize + align - NBPG;
-	if (boundary != 0 && oversize > boundary) {
-		printf("iommu: alignment collision\n");
-		return (EINVAL);
-	}
-
-	if (extent_alloc(iommu_dvmamap, oversize, NBPG, boundary,
-			 EX_NOWAIT, (u_long *)&sdva) != 0)
+	if (extent_alloc1(iommu_dvmamap, sgsize, align, va & (align-1),
+			  boundary, EX_NOWAIT, (u_long *)&dva) != 0)
 		return (ENOMEM);
-
-	/*
-	 * Compute start of aligned region.
-	 */
-	dva = sdva;
-	dva += ((va & (align - 1)) + align - dva) & (align - 1);
-
-	/*
-	 * Return excess addresses.
-	 */
-	if (dva != sdva) {
-		if (extent_free(iommu_dvmamap, sdva, dva-sdva, EX_NOWAIT) != 0)
-			printf("warning: %ld of DVMA space lost\n", dva - sdva);
-	}
-	if (dva + sgsize != sdva + oversize) {
-		if (extent_free(iommu_dvmamap, dva + sgsize,
-				sdva + oversize - dva - sgsize, EX_NOWAIT) != 0)
-			printf("warning: %ld of DVMA space lost\n",
-				sdva + oversize - dva - sgsize);
-	}
 
 	cpuinfo.cache_flush(buf, buflen);
 
@@ -514,7 +484,7 @@ iommu_dmamap_load(t, map, buf, buflen, p, flags)
 	map->dm_mapsize = buflen;
 	map->dm_nsegs = 1;
 	map->dm_segs[0].ds_addr = dva + voff;
-	map->dm_segs[0].ds_len = sgsize /*was:buflen*/;
+	map->dm_segs[0].ds_len = buflen;
 
 	if (p != NULL)
 		pmap = p->p_vmspace->vm_map.pmap;
@@ -599,6 +569,8 @@ iommu_dmamap_unload(t, map)
 
 	addr = map->dm_segs[0].ds_addr & ~PGOFSET;
 	len = map->dm_segs[0].ds_len;
+	len = ((addr & PGOFSET) + len + PGOFSET) & ~PGOFSET;
+	addr &= ~PGOFSET;
 
 	iommu_remove(addr, len);
 	if (extent_free(iommu_dvmamap, addr, len, EX_NOWAIT) != 0)
