@@ -1,4 +1,4 @@
-/*	$NetBSD: target.c,v 1.26 2000/10/11 11:10:11 fvdl Exp $	*/
+/*	$NetBSD: target.c,v 1.27 2000/10/11 23:47:56 fvdl Exp $	*/
 
 /*
  * Copyright 1997 Jonathan Stone
@@ -75,7 +75,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: target.c,v 1.26 2000/10/11 11:10:11 fvdl Exp $");
+__RCSID("$NetBSD: target.c,v 1.27 2000/10/11 23:47:56 fvdl Exp $");
 #endif
 
 /*
@@ -424,7 +424,7 @@ make_prefixed_dir(prefix, path)
 	const char *path;
 {
 
-	run_prog(0, 0, NULL, "/bin/mkdir -p %s", concat_paths(prefix, path));
+	run_prog(0, NULL, "/bin/mkdir -p %s", concat_paths(prefix, path));
 }
 
 /* Make a directory with a pathname relative to the insatllation target. */
@@ -461,7 +461,7 @@ append_to_target_file(path, string)
 	const char *string;
 {
 
-	run_prog(1, 0, NULL, "echo %s >> %s", string, target_expand(path));
+	run_prog(RUN_FATAL, NULL, "echo %s >> %s", string, target_expand(path));
 }
 
 /*
@@ -497,7 +497,7 @@ trunc_target_file(path)
 	const char *path;
 {
 
-	run_prog(1, 0, NULL, "cat < /dev/null > %s",  target_expand(path));
+	run_prog(RUN_FATAL, NULL, "cat < /dev/null > %s",  target_expand(path));
 }
 #endif /* if 0 */
 
@@ -568,7 +568,7 @@ cp_to_target(srcpath, tgt_path)
 {
 	const char *realpath = target_expand(tgt_path);
 
-	return run_prog(0, 0, NULL, "/bin/cp %s %s", srcpath, realpath);
+	return run_prog(0, NULL, "/bin/cp %s %s", srcpath, realpath);
 }
 
 /*
@@ -600,7 +600,7 @@ mv_within_target_or_die(frompath, topath)
 	strncpy(realfrom, target_expand(frompath), STRSIZE);
 	strncpy(realto, target_expand(topath), STRSIZE);
 
-	run_prog(1, 0, NULL, "mv %s %s", realfrom, realto);
+	run_prog(RUN_FATAL, NULL, "mv %s %s", realfrom, realto);
 }
 
 /* Do a cp where both pathnames are  within the target filesystem. */
@@ -614,7 +614,7 @@ int cp_within_target(frompath, topath)
 	strncpy(realfrom, target_expand(frompath), STRSIZE);
 	strncpy(realto, target_expand(topath), STRSIZE);
 
-	return (run_prog(0, 0, NULL, "cp -p %s %s", realfrom, realto));
+	return (run_prog(0, NULL, "cp -p %s %s", realfrom, realto));
 }
 
 /* fopen a pathname in the target. */
@@ -654,7 +654,7 @@ mount_with_unwind(fstype, from, on)
 	backtowin();
 #endif
 
-	error = run_prog(0, 0, NULL, "/sbin/mount %s %s %s", fstype, from, on);
+	error = run_prog(0, NULL, "/sbin/mount %s %s %s", fstype, from, on);
 	return (error);
 }
 
@@ -683,7 +683,7 @@ unwind_mounts()
 		fprintf(stderr, "unmounting %s\n", m->um_mountpoint);
 		backtowin();
 #endif
-		run_prog(0, 0, NULL, "/sbin/umount %s", m->um_mountpoint);
+		run_prog(0, NULL, "/sbin/umount %s", m->um_mountpoint);
 		prev = m->um_prev;
 		free(m);
 		m = prev;
