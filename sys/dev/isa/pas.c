@@ -1,4 +1,4 @@
-/*	$NetBSD: pas.c,v 1.38 1998/03/22 12:50:20 drochner Exp $	*/
+/*	$NetBSD: pas.c,v 1.39 1998/03/23 01:00:22 augustss Exp $	*/
 
 /*
  * Copyright (c) 1991-1993 Regents of the University of California.
@@ -241,6 +241,8 @@ int	pasprobe __P((struct device *, void *, void *));
 int	pasprobe __P((struct device *, struct cfdata *, void *));
 #endif
 void	pasattach __P((struct device *, struct device *, void *));
+static	int pasfind __P((struct device *, struct pas_softc *, 
+			struct isa_attach_args *));
 
 struct cfattach pas_ca = {
 	sizeof(struct pas_softc), pasprobe, pasattach
@@ -250,9 +252,6 @@ struct cfattach pas_ca = {
  * Probe / attach routines.
  */
 
-/*
- * Probe for the soundblaster hardware.
- */
 int
 pasprobe(parent, match, aux)
 	struct device *parent;
@@ -263,11 +262,27 @@ pasprobe(parent, match, aux)
 #endif
 	void *aux;
 {
-#ifndef __BROKEN_INDIRECT_CONFIG
-	return(0);
+	struct pas_softc probesc, *sc = &probesc;
+
+	bzero(sc, sizeof *sc);
+#ifdef __BROKEN_INDIRECT_CONFIG
+	sc->sc_sbdsp.sc_dev.dv_cfdata = ((struct device *)match)->dv_cfdata;
 #else
-	struct pas_softc *sc = match;
-	struct isa_attach_args *ia = aux;
+	sc->sc_sbdsp.sc_dev.dv_cfdata = match;
+#endif
+	strcpy(sc->sc_sbdsp.sc_dev.dv_xname, "pas");
+	return pasfind(parent, sc, aux);
+}
+
+/*
+ * Probe for the soundblaster hardware.
+ */
+static int
+pasfind(parent, sc, ia)
+	struct device *parent;
+	struct pas_softc *sc;
+	struct isa_attach_args *ia;
+{
 	int iobase;
 	u_char id, t;
 
@@ -408,7 +423,6 @@ pasprobe(parent, match, aux)
  unmap:
 	bus_space_unmap(sc->sc_sbdsp.sc_iot, sc->sc_sbdsp.sc_ioh, SBP_NPORT);
 	return 0;
-#endif
 }
 
 #ifdef NEWCONFIG
@@ -452,6 +466,11 @@ pasattach(parent, self, aux)
 	struct isa_attach_args *ia = (struct isa_attach_args *)aux;
 	int iobase = ia->ia_iobase;
 	
+	if (!pasfind(parent, sc, ia)) {
+		printf("%s: pasfind failed\n", sc->sc_sbdsp.sc_dev.dv_xname);
+		return;
+	}
+
 	sc->sc_sbdsp.sc_iobase = iobase;
 	sc->sc_sbdsp.sc_ih = isa_intr_establish(ia->ia_ic, ia->ia_irq,
 	    IST_EDGE, IPL_AUDIO, sbdsp_intr, &sc->sc_sbdsp);
