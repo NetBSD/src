@@ -1,4 +1,4 @@
-/* $NetBSD: sgmap_common.c,v 1.5 1998/01/17 21:53:52 thorpej Exp $ */
+/* $NetBSD: sgmap_common.c,v 1.6 1998/01/18 00:05:33 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -39,7 +39,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: sgmap_common.c,v 1.5 1998/01/17 21:53:52 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sgmap_common.c,v 1.6 1998/01/18 00:05:33 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -52,6 +52,14 @@ __KERNEL_RCSID(0, "$NetBSD: sgmap_common.c,v 1.5 1998/01/17 21:53:52 thorpej Exp
 #include <machine/bus.h>
 
 #include <alpha/common/sgmapvar.h>
+
+/*
+ * Some systems will prefetch the next page during a memory -> device DMA.
+ * This can cause machine checks if there is not a spill page after the
+ * last page of the DMA (thus avoiding hitting an invalid SGMAP PTE).
+ */
+vm_offset_t	alpha_sgmap_prefetch_spill_page_va;
+bus_addr_t	alpha_sgmap_prefetch_spill_page_pa;
 
 void
 alpha_sgmap_init(t, sgmap, name, wbase, sgvabase, sgvasize, ptesize, ptva,
@@ -111,6 +119,19 @@ alpha_sgmap_init(t, sgmap, name, wbase, sgvabase, sgvasize, ptesize, ptva,
 	    M_DEVBUF, NULL, 0, EX_NOWAIT|EX_NOCOALESCE);
 	if (sgmap->aps_ex == NULL)
 		panic("alpha_sgmap_init: can't create extent map");
+
+	/*
+	 * Allocate a spill page if that hasn't already been done.
+	 */
+	if (alpha_sgmap_prefetch_spill_page_va == 0) {
+		if (bus_dmamem_alloc(t, NBPG, 0, 0, &seg, 1, &rseg,
+		    BUS_DMA_NOWAIT))
+			panic("alpha_sgmap_init: can't allocate spill page");
+		alpha_sgmap_prefetch_spill_page_pa = seg.ds_addr;
+		alpha_sgmap_prefetch_spill_page_va =
+		    ALPHA_PHYS_TO_K0SEG(alpha_sgmap_prefetch_spill_page_pa);
+		bzero((caddr_t)alpha_sgmap_prefetch_spill_page_va, NBPG);
+	}
 }
 
 int

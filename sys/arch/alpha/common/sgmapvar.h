@@ -1,4 +1,4 @@
-/* $NetBSD: sgmapvar.h,v 1.5 1998/01/17 21:53:54 thorpej Exp $ */
+/* $NetBSD: sgmapvar.h,v 1.6 1998/01/18 00:05:34 thorpej Exp $ */
 
 #define	SGMAP_LOG
 
@@ -75,6 +75,9 @@ struct sgmap_log_entry {
 	int	sl_ptecnt;		/* pte count */
 };
 #endif
+
+extern	vm_offset_t alpha_sgmap_prefetch_spill_page_va;
+extern	bus_addr_t alpha_sgmap_prefetch_spill_page_pa;
 
 void	alpha_sgmap_init __P((bus_dma_tag_t, struct alpha_sgmap *,
 	    const char *, bus_addr_t, bus_addr_t, bus_size_t, size_t, void *,
