@@ -1,4 +1,4 @@
-/*	$NetBSD: conf.c,v 1.16 1994/12/22 05:50:26 briggs Exp $	*/
+/*	$NetBSD: conf.c,v 1.17 1995/01/21 05:31:17 briggs Exp $	*/
 
 /*
  * Copyright (c) 1990 The Regents of the University of California.
@@ -661,13 +661,14 @@ int	itecnprobe(), itecninit(), itecngetc(), itecnputc();
 #if NSER > 0
 int	sercnprobe(), sercninit(), sercngetc(), sercnputc();
 #endif
+void	nullcnpollc();
 
 struct	consdev constab[] = {
 #if NITE > 0
-	{ itecnprobe,	itecninit,	itecngetc,	itecnputc },
+	{ itecnprobe, itecninit, itecngetc, itecnputc, nullcnpollc },
 #endif
 #if NSER > 0
-	{ sercnprobe,	sercninit,	sercngetc,	sercnputc },
+	{ sercnprobe, sercninit, sercngetc, sercnputc, nullcnpollc },
 #endif
 	{ 0 },
 };
