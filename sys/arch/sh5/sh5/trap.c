@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.11 2002/09/06 16:20:48 scw Exp $	*/
+/*	$NetBSD: trap.c,v 1.12 2002/09/10 12:15:39 scw Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -361,8 +361,8 @@ trap(struct proc *p, struct trapframe *tf)
 		break;
 
 	case T_FPUEXC|T_USER:
-		sig = SIGILL;
-		ucode = vaddr;
+		sig = SIGFPE;
+		ucode = vaddr;	/* XXX: "code" should probably be FPSCR */
 		break;
 
 	case T_AST|T_USER:
@@ -372,6 +372,15 @@ trap(struct proc *p, struct trapframe *tf)
 		}
 		userret(p);
 		return;
+
+#ifdef DDB
+	case T_NMI:
+	case T_NMI|T_USER:
+		printf("trap: NMI detected\n");
+		if (kdb_trap(traptype, tf))
+			return;
+		goto dopanic;
+#endif
 	}
 
 	trapsignal(p, sig, ucode);
@@ -460,90 +469,162 @@ trapa_panic:
 }
 
 void
-panic_trap(struct cpu_info *ci, struct trapframe *tf,
-    register_t pssr, register_t pspc)
+panic_trap(struct trapframe *tf, register_t ssr, register_t spc,
+    register_t expevt, int extype)
 {
+	struct exc_scratch_frame excf;
+	struct cpu_info *ci = curcpu();
+	register_t tlbregs[9];
+	register_t kcr0, kcr1;
 
-	printf("PANIC trap: %s in %s mode\n",
-	    trap_type((int)tf->tf_state.sf_expevt),
-	    USERMODE(tf) ? "user" : "kernel");
+	asm volatile("getcon kcr0, %0" : "=r"(kcr0));
+	asm volatile("getcon kcr1, %0" : "=r"(kcr1));
 
-	printf("PSSR=0x%x, PSPC=0x%lx\n", (u_int)pssr, (uintptr_t)pspc);
-	printf("SSR=0x%x, SPC=0x%lx, TEA=0x%lx, TRA=0x%x\n\n",
-	    (u_int)tf->tf_state.sf_ssr, (uintptr_t)tf->tf_state.sf_spc,
+	excf = ci->ci_escratch;
+	tlbregs[0] = ci->ci_tscratch.ts_r[0];
+	tlbregs[1] = ci->ci_tscratch.ts_r[1];
+	tlbregs[2] = ci->ci_tscratch.ts_r[2];
+	tlbregs[3] = ci->ci_tscratch.ts_r[3];
+	tlbregs[4] = ci->ci_tscratch.ts_r[4];
+	tlbregs[5] = ci->ci_tscratch.ts_r[5];
+	tlbregs[6] = ci->ci_tscratch.ts_r[6];
+	tlbregs[7] = ci->ci_tscratch.ts_tr[0];
+	tlbregs[8] = ci->ci_tscratch.ts_tr[1];
+
+	/*
+	 * Allow subsequent exceptions.
+	 */
+	ci->ci_escratch.es_critical = 0;
+
+	switch (extype) {
+	case 0:
+		printf("\n\nPANIC trap: %s in %s mode\n\n",
+		    trap_type((int)expevt),
+		    ((ssr & SH5_CONREG_SR_MD) == 0) ? "user" : "kernel");
+		break;
+
+	case 1:
+		printf("\n\nDEBUG Synchronous Exception: %s in %s mode\n\n",
+		    trap_type((int)tf->tf_state.sf_expevt),
+		    USERMODE(tf) ? "user" : "kernel");
+		break;
+
+	case 2:
+		printf("\n\nDEBUG Interrupt Exception: 0x%x from %s mode\n\n",
+		    (u_int)tf->tf_state.sf_intevt,
+		    USERMODE(tf) ? "user" : "kernel");
+		break;
+
+	default:
+		printf("\n\nUnknown DEBUG exception %d from %s mode\n\n",
+		    extype, USERMODE(tf) ? "user" : "kernel");
+		break;
+	}
+
+	printf(
+	    " SSR=0x%x,  SPC=0x%lx,  EXPEVT=0x%04x, TEA=0x%08lx, TRA=0x%x\n",
+	    (u_int)ssr, (uintptr_t)spc, (u_int)expevt,
 	    (uintptr_t)tf->tf_state.sf_tea, (u_int)tf->tf_state.sf_tra);
 
-	panic("panic_trap");
+	if (extype == 0) {
+		printf("PSSR=0x%08x, PSPC=0x%lx, PEXPEVT=0x%04x\n",
+		    (u_int)tf->tf_state.sf_ssr, (uintptr_t)tf->tf_state.sf_spc,
+		    (u_int)tf->tf_state.sf_expevt);
+		tf->tf_state.sf_ssr = ssr;
+		tf->tf_state.sf_spc = spc;
+		tf->tf_state.sf_expevt = expevt;
+	}
+
+	printf("KCR0=0x%lx, KCR1=0x%lx\n\n", (intptr_t)kcr0, (intptr_t)kcr1);
+
+	printf("Exc Scratch Area:\n");
+	printf("  CRIT: 0x%08x%08x\n", (u_int)excf.es_critical);
+	printf("    R0: 0x%08x%08x\n",
+	    (u_int)(excf.es_r[0] >> 32), (u_int)excf.es_r[0]);
+	printf("    R1: 0x%08x%08x\n",
+	    (u_int)(excf.es_r[1] >> 32), (u_int)excf.es_r[1]);
+	printf("    R2: 0x%08x%08x\n",
+	    (u_int)(excf.es_r[2] >> 32), (u_int)excf.es_r[2]);
+	printf("   R15: 0x%08x%08x\n",
+	    (u_int)(excf.es_r15 >> 32), (u_int)excf.es_r15);
+	printf("   TR0: 0x%08x%08x\n",
+	    (u_int)(excf.es_tr0 >> 32), (u_int)excf.es_tr0);
+	printf("EXPEVT: 0x%04x\n", (u_int)excf.es_expevt);
+	printf("INTEVT: 0x%04x\n", (u_int)excf.es_intevt);
+	printf("   TEA: 0x%08x%08x\n",
+	    (u_int)(excf.es_tea >> 32), (u_int)excf.es_tea);
+	printf("   TRA: 0x%04x\n", (u_int)excf.es_tra);
+	printf("   SPC: 0x%08x%08x\n",
+	    (u_int)(excf.es_spc >> 32), (u_int)excf.es_spc);
+	printf("   SSR: 0x%08x\n", (u_int)excf.es_ssr);
+	printf("   USR: 0x%04x\n\n", (u_int)excf.es_usr);
+
+#ifdef DIAGNOSTIC
+	dump_trapframe(tf);
+#endif
+#ifdef DDB
+	kdb_trap(0, tf);
+#endif
+	panic("panic trap");
 }
 
 /*
  * Called from exception.S when we get an exception inside the critical
  * section of another exception.
  */
-void panic_critical_fault(struct trapframe *, struct exc_scratch_frame *);
+void panic_critical_fault(struct trapframe *, struct exc_scratch_frame *,
+    void *, register_t);
 void
-panic_critical_fault(struct trapframe *tf, struct exc_scratch_frame *es)
+panic_critical_fault(struct trapframe *tf, struct exc_scratch_frame *es,
+    void *errloc, register_t ownerid)
 {
-	extern int sh5_vector_table;
-	uintptr_t vector;
+	struct exc_scratch_frame excf;
+
+	excf = *es;
 
 	printf("\nFAULT IN CRITICAL SECTION!\n");
 
-	printf("Post Fault State: %s\n",
-	    trap_type((int)tf->tf_state.sf_expevt));
+	printf("Detected at address: %p, Current owner: 0x%x\n",
+	    errloc, (u_int)ownerid);
 
-	printf("SSR=0x%x, SPC=0x%lx, TEA=0x%lx\n\n",
+	printf("SSR=0x%08x, SPC=0x%lx, TEA=0x%lx, EXPEVT=0x%x, INTEVT=0x%x\n\n",
 	    (u_int)tf->tf_state.sf_ssr, (uintptr_t)tf->tf_state.sf_spc,
-	    (uintptr_t)tf->tf_state.sf_tea);
+	    (uintptr_t)tf->tf_state.sf_tea, (u_int)tf->tf_state.sf_expevt,
+	    (u_int)tf->tf_state.sf_intevt);
 
-	printf("Pre Fault State: ");
+	printf("Original Fault State: Exception ");
 
-	vector = (uintptr_t)tf->tf_state.sf_spc - (uintptr_t)&sh5_vector_table;
-	vector &= ~0xff;
-
-	printf("vector: 0x%lx ", vector);
-
-	switch (vector) {
-	case 0x0:	printf("panic handler\n");	/* Can't happen */
-			break;
-
-	case 0x100:	printf("General exception handler\n");
-			printf("\t%s in %s mode\n",
-	    		    trap_type((int)es->es_expevt),
-			    (es->es_ssr & SH5_CONREG_SR_MD)?"kernel":"user");
-			break;
-
-	case 0x200:	printf("debug interrupt handler\n"); /* Can't happen */
-			break;
-
-	case 0x600:	printf("H/W interrupt handler\n");
-			break;
-
-	default:	printf("Not sure. Probably Ltlbmiss_dotrap\n");
-			break;
-	}
-
-	printf("STACKPTR=0x%lx, SSR=0x%x, SPC=0x%lx\n",
-	    (uintptr_t)tf->tf_caller.r15, (u_int)es->es_ssr,
-	    (uintptr_t)es->es_spc);
-	printf("TEA=0x%lx, TRA=0x%x, INTEVT=0x%lx\n\n",
-	    (uintptr_t)es->es_tea, (u_int)es->es_tra, (u_int)es->es_intevt);
-
-	printf("Exception temporaries:\n");
-	printf("r0=0x%08x%08x, r1=0x%08x%08x, r2=0x%08x%08x\n",
-	    (u_int)(tf->tf_caller.r0 >> 32), (u_int)tf->tf_caller.r0,
-	    (u_int)(tf->tf_caller.r1 >> 32), (u_int)tf->tf_caller.r1,
-	    (u_int)(tf->tf_caller.r2 >> 32), (u_int)tf->tf_caller.r2);
+	if ((ownerid & CRIT_EXIT) == 0) {
+		printf("entry.\n");
+		printf("Exc Scratch Area:\n");
+		printf("  CRIT: 0x%02x\n", (u_int)excf.es_critical);
+		printf("    R0: 0x%08x%08x\n",
+		    (u_int)(excf.es_r[0] >> 32), (u_int)excf.es_r[0]);
+		printf("    R1: 0x%08x%08x\n",
+		    (u_int)(excf.es_r[1] >> 32), (u_int)excf.es_r[1]);
+		printf("    R2: 0x%08x%08x\n",
+		    (u_int)(excf.es_r[2] >> 32), (u_int)excf.es_r[2]);
+		printf("   R15: 0x%08x%08x\n",
+		    (u_int)(excf.es_r15 >> 32), (u_int)excf.es_r15);
+		printf("   TR0: 0x%08x%08x\n",
+		    (u_int)(excf.es_tr0 >> 32), (u_int)excf.es_tr0);
+		printf("EXPEVT: 0x%04x\n", (u_int)excf.es_expevt);
+		printf("INTEVT: 0x%04x\n", (u_int)excf.es_intevt);
+		printf("   TEA: 0x%08x%08x\n",
+		    (u_int)(excf.es_tea >> 32), (u_int)excf.es_tea);
+		printf("   TRA: 0x%04x\n", (u_int)excf.es_tra);
+		printf("   SPC: 0x%08x%08x\n",
+		    (u_int)(excf.es_spc >> 32), (u_int)excf.es_spc);
+		printf("   SSR: 0x%08x\n", (u_int)excf.es_ssr);
+		printf("   USR: 0x%04x\n\n", (u_int)excf.es_usr);
+	} else
+		printf("exit.\nNot much to show.\n\n");
 
 #ifdef DIAGNOSTIC
-	printf("\nPre-exception Context:\n");
-	tf->tf_caller.r0 = es->es_r[0];
-	tf->tf_caller.r1 = es->es_r[1];
-	tf->tf_caller.r2 = es->es_r[2];
-	tf->tf_caller.r15 = es->es_r15;
-	tf->tf_caller.tr0 = es->es_tr0;
-
 	dump_trapframe(tf);
+#endif
+#ifdef DDB
+	kdb_trap(0, tf);
 #endif
 
 	panic("panic_critical_fault");
