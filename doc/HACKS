@@ -1,4 +1,4 @@
-# $NetBSD: HACKS,v 1.13 2003/10/27 07:26:17 simonb Exp $
+# $NetBSD: HACKS,v 1.14 2003/10/27 07:31:07 simonb Exp $
 #
 # This file is intended to document workarounds for currently unsolved
 # (mostly) compiler bugs.
@@ -220,6 +220,7 @@ who	simonb
 port	pc532
 file	sys/arch/pc532/conf/Makefile.pc532 : 1.71
 file	sys/arch/pc532/conf/files.pc532 : 1.52
+pr	GCC PR optimization/5230
 descr
 	gcc incorrectly gives an "unreachable code at beginning of switch
 	statement" for a Duff's device construct in arch/pc532/dev/ncr.c.
