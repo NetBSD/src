@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_bio.c,v 1.131 2004/09/18 16:37:12 yamt Exp $	*/
+/*	$NetBSD: vfs_bio.c,v 1.132 2004/10/03 08:17:54 enami Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -81,7 +81,7 @@
 #include "opt_softdep.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_bio.c,v 1.131 2004/09/18 16:37:12 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_bio.c,v 1.132 2004/10/03 08:17:54 enami Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1183,7 +1183,7 @@ start:
 	 * Get a new buffer from the pool; but use NOWAIT because
 	 * we have the buffer queues locked.
 	 */
-	if (buf_lotsfree() && !from_bufq &&
+	if (!from_bufq && buf_lotsfree() &&
 	    (bp = pool_get(&bufpool, PR_NOWAIT)) != NULL) {
 		memset((char *)bp, 0, sizeof(*bp));
 		BUF_INIT(bp);
