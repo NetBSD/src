@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_sysctl.c,v 1.157 2003/12/29 04:19:28 atatat Exp $	*/
+/*	$NetBSD: kern_sysctl.c,v 1.158 2004/01/17 04:01:14 atatat Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -75,7 +75,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_sysctl.c,v 1.157 2003/12/29 04:19:28 atatat Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_sysctl.c,v 1.158 2004/01/17 04:01:14 atatat Exp $");
 
 #include "opt_defcorename.h"
 #include "opt_insecure.h"
@@ -450,7 +450,7 @@ sysctl_unlock(struct lwp *l)
  */
 int
 sysctl_locate(struct lwp *l, const int *name, u_int namelen,
-	      struct sysctlnode **rv, int *nip)
+	      struct sysctlnode **rnode, int *nip)
 {
 	struct sysctlnode *node, *pnode;
 	int tn, si, ni, error, alias;
@@ -458,8 +458,8 @@ sysctl_locate(struct lwp *l, const int *name, u_int namelen,
 	/*
 	 * basic checks and setup
 	 */
-	if (*rv == NULL)
-		*rv = &sysctl_root;
+	if (*rnode == NULL)
+		*rnode = &sysctl_root;
 	if (nip)
 		*nip = 0;
 	if (namelen < 0)
@@ -470,7 +470,7 @@ sysctl_locate(struct lwp *l, const int *name, u_int namelen,
 	/*
 	 * search starts from "root"
 	 */
-	pnode = *rv;
+	pnode = *rnode;
 	node = pnode->sysctl_child;
 	error = 0;
 
@@ -533,7 +533,7 @@ sysctl_locate(struct lwp *l, const int *name, u_int namelen,
 			node = NULL;
 	}
 
-	*rv = pnode;
+	*rnode = pnode;
 	if (nip)
 		*nip = ni;
 
@@ -1704,7 +1704,8 @@ sysctl_destroyv(struct sysctlnode *rnode, ...)
 {
 	va_list ap;
 	int error, name[CTL_MAXNAME], namelen, ni;
-	struct sysctlnode *pnode, *node;
+	struct sysctlnode *pnode, *node, dnode;
+	size_t sz;
 
 	va_start(ap, rnode);
 	namelen = 0;
@@ -1737,11 +1738,21 @@ sysctl_destroyv(struct sysctlnode *rnode, ...)
 	}
 
 	/*
+	 * check to see if we crossed an aliased node
+	 */
+	if (node->sysctl_num != name[namelen - 1]) {
+		memset(&dnode, 0, sizeof(dnode));
+		dnode.sysctl_num = name[namelen - 1];
+		node = &dnode;
+	}
+
+	/*
 	 * we found it, now let's nuke it
 	 */
 	name[namelen - 1] = CTL_DESTROY;
 	pnode = node->sysctl_parent;
-	error = sysctl_destroy(&name[namelen - 1], 1, NULL, NULL,
+	sz = 0;
+	error = sysctl_destroy(&name[namelen - 1], 1, NULL, &sz,
 			       node, sizeof(*node), &name[0], NULL,
 			       pnode);
 	if (error == ENOTEMPTY)
@@ -1946,7 +1957,7 @@ sysctl_free(struct sysctlnode *rnode)
 		pnode->sysctl_child = NULL;
 		node = pnode;
 		pnode = node->sysctl_parent;
-	} while (pnode != NULL && pnode != rnode);
+	} while (pnode != NULL && node != rnode);
 }
 
 /*
@@ -2098,7 +2109,6 @@ sysctl_realloc(struct sysctlnode *p)
 	memcpy(n, p->sysctl_child, i * sizeof(struct sysctlnode));
 	memset(&n[i], 0, i * sizeof(struct sysctlnode));
 	p->sysctl_csize = 2 * i;
-	p->sysctl_clen = i;
 
 	/*
 	 * reattach moved (and new) children to parent; if a moved
