@@ -1,4 +1,4 @@
-#	$NetBSD: dot.hdprofile,v 1.1 1999/03/12 18:36:52 ragge Exp $
+#	$NetBSD: dot.hdprofile,v 1.2 1999/06/26 06:13:01 cgd Exp $
 #
 # Copyright (c) 1994 Christopher G. Demetriou
 # All rights reserved.
@@ -40,6 +40,7 @@ umask 022
 
 if [ "X${DONEPROFILE}" = "X" ]; then
 	DONEPROFILE=YES
+	export DONEPROFILE
 
 	echo "Checking filesystems..."
 	fsck -y
