@@ -1,4 +1,4 @@
-/*	$NetBSD: atrun.c,v 1.7 1999/08/16 03:08:33 simonb Exp $	*/
+/*	$NetBSD: atrun.c,v 1.7.8.1 2000/06/26 00:38:45 simonb Exp $	*/
 
 /*
  *  atrun.c - run jobs queued by at; run with root privileges.
@@ -56,21 +56,13 @@
 #include "pathnames.h"
 #include "atrun.h"
 
-/* File scope defines */
-
-#if (MAXLOGNAME-1) > UT_NAMESIZE
-#define LOGNAMESIZE UT_NAMESIZE
-#else
-#define LOGNAMESIZE (MAXLOGNAME-1)
-#endif
-
 /* File scope variables */
 
 static char *namep;
 #if 0
 static char rcsid[] = "$OpenBSD: atrun.c,v 1.7 1997/09/08 22:12:10 millert Exp $";
 #else
-__RCSID("$NetBSD: atrun.c,v 1.7 1999/08/16 03:08:33 simonb Exp $");
+__RCSID("$NetBSD: atrun.c,v 1.7.8.1 2000/06/26 00:38:45 simonb Exp $");
 #endif
 
 static int debug = 0;
@@ -152,7 +144,7 @@ run_file(filename, uid, gid)
 	pid_t pid;
 	int fd_out, fd_in;
 	int queue;
-	char mailbuf[LOGNAMESIZE + 1], fmt[49];
+	char mailbuf[LOGIN_NAME_MAX], fmt[49];
 	char *mailname = NULL;
 	FILE *stream;
 	int send_mail = 0;
@@ -239,7 +231,7 @@ run_file(filename, uid, gid)
 
 	(void)snprintf(fmt, sizeof(fmt),
 	    "#!/bin/sh\n# atrun uid=%%ld gid=%%ld\n# mail %%%ds %%d",
-	    LOGNAMESIZE);
+	    LOGIN_NAME_MAX);
 	if (fscanf(stream, fmt, &nuid, &ngid, mailbuf, &send_mail) != 4) {
 		syslog(LOG_ERR, "File %s is in wrong format - aborting",
 		    filename);
