@@ -1,4 +1,4 @@
-/*	$NetBSD: rand_key.c,v 1.2 2003/07/23 05:20:22 itojun Exp $	*/
+/*	$NetBSD: rand_key.c,v 1.3 2003/07/23 05:57:01 itojun Exp $	*/
 
 /*
  * Copyright (C) 2003 WIDE Project.
@@ -54,5 +54,5 @@ int des_random_key(des_cblock *ret)
 		}
 	} while (des_is_weak_key(ret));
 	des_set_odd_parity(ret);
-	return (0);
+	return (1);
 }
