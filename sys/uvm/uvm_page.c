@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_page.c,v 1.63 2001/05/26 21:27:21 chs Exp $	*/
+/*	$NetBSD: uvm_page.c,v 1.64 2001/06/27 21:18:34 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -1071,11 +1071,7 @@ uvm_pagealloc_strat(obj, off, anon, flags, strat, free_list)
 	 * the pagedaemon.
 	 */
 
-	if (uvmexp.free + uvmexp.paging < uvmexp.freemin ||
-	    (uvmexp.free + uvmexp.paging < uvmexp.freetarg &&
-	     uvmexp.inactive < uvmexp.inactarg)) {
-		wakeup(&uvm.pagedaemon);
-	}
+	UVM_KICK_PDAEMON();
 
 	/*
 	 * fail if any of these conditions is true:
