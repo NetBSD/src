@@ -1,4 +1,4 @@
-	$NetBSD: syscalls.master,v 1.9 2001/12/22 12:09:21 manu Exp $
+	$NetBSD: syscalls.master,v 1.10 2001/12/22 14:43:45 manu Exp $
 
 ;	@(#)syscalls.master	8.1 (Berkeley) 7/19/93
 
@@ -293,7 +293,8 @@
 200	UNIMPL		attr_multif
 201	UNIMPL		statvfs64
 202	UNIMPL		fstatvfs64
-203	UNIMPL		getmountid
+203	STD		{ int irix_sys_getmountid(const char *path, \
+			    irix_mountid_t *buf); }
 204	UNIMPL		nsproc
 205	UNIMPL		getdents64
 206	UNIMPL		dfs_XXX
