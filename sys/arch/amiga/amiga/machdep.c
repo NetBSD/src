@@ -1,3 +1,5 @@
+/*	$NetBSD: machdep.c,v 1.133.2.1.4.1 1999/06/28 06:36:46 itojun Exp $	*/
+
 /*
  * Copyright (c) 1988 University of Utah.
  * Copyright (c) 1982, 1986, 1990 The Regents of the University of California.
@@ -40,54 +42,144 @@
  *	@(#)machdep.c	7.16 (Berkeley) 6/3/91
  */
 
-#include "param.h"
-#include "systm.h"
-#include "signalvar.h"
-#include "kernel.h"
-#include "map.h"
-#include "proc.h"
-#include "buf.h"
-#include "reboot.h"
-#include "conf.h"
-#include "file.h"
-#include "clist.h"
-#include "callout.h"
-#include "malloc.h"
-#include "mbuf.h"
-#include "msgbuf.h"
-#include "user.h"
-#include "exec.h"            /* for PS_STRINGS */
+#include "opt_bufcache.h"
+#include "opt_ddb.h"
+#include "opt_inet.h"
+#include "opt_atalk.h"
+#include "opt_iso.h"
+#include "opt_ns.h"
+#include "opt_compat_netbsd.h"
+#include "opt_sysv.h"
+
+#include <sys/param.h>
+#include <sys/systm.h>
+#include <sys/signalvar.h>
+#include <sys/kernel.h>
+#include <sys/map.h>
+#include <sys/proc.h>
+#include <sys/buf.h>
+#include <sys/reboot.h>
+#include <sys/conf.h>
+#include <sys/file.h>
+#include <sys/clist.h>
+#include <sys/callout.h>
+#include <sys/malloc.h>
+#include <sys/mbuf.h>
+#include <sys/msgbuf.h>
+#include <sys/user.h>
+#include <sys/exec.h>            /* for PS_STRINGS */
+#include <sys/vnode.h>
+#include <sys/device.h>
+#include <sys/queue.h>
+#include <sys/mount.h>
+#include <sys/syscallargs.h>
+#include <sys/core.h>
+#include <sys/kcore.h>
 #ifdef SYSVSHM
-#include "shm.h"
+#include <sys/shm.h>
+#endif
+#ifdef SYSVMSG
+#include <sys/msg.h>
+#endif
+#ifdef SYSVSEM
+#include <sys/sem.h>
+#endif
+#include <net/netisr.h>
+#define	MAXMEM	64*1024*CLSIZE	/* XXX - from cmap.h */
+#include <vm/vm.h>
+#include <vm/vm_param.h>
+#include <vm/pmap.h>
+#include <vm/vm_map.h>
+#include <vm/vm_object.h>
+#include <vm/vm_kern.h>
+#include <vm/vm_page.h>
+
+#include <uvm/uvm_extern.h>
+
+#include <sys/sysctl.h>
+
+#include <machine/db_machdep.h>
+#include <ddb/db_sym.h>
+#include <ddb/db_extern.h>
+
+#include <machine/cpu.h>
+#include <machine/reg.h>
+#include <machine/psl.h>
+#include <machine/pte.h>
+#include <machine/kcore.h>
+#include <dev/cons.h>
+#include <amiga/amiga/isr.h>
+#include <amiga/amiga/custom.h>
+#ifdef DRACO
+#include <amiga/amiga/drcustom.h>
+#include <m68k/include/asm_single.h>
+#endif
+#include <amiga/amiga/cia.h>
+#include <amiga/amiga/cc.h>
+#include <amiga/amiga/memlist.h>
+
+#include "fd.h"
+#include "ser.h"
+#include "arp.h"
+#include "ppp.h"
+
+#include <net/netisr.h>
+#include <net/if.h>
+
+#ifdef INET
+#include <netinet/in.h>
+#if NARP > 0
+#include <netinet/if_inarp.h>
+#endif
+#include <netinet/ip_var.h>
+#endif 
+#ifdef INET6
+# ifndef INET
+#  include <netinet/in.h>
+# endif
+#include <netinet6/ip6.h>
+#include <netinet6/ip6_var.h>
+#endif
+#ifdef NS
+#include <netns/ns_var.h>
+#endif
+#ifdef ISO
+#include <netiso/iso.h>
+#include <netiso/clnp.h>
+#endif
+#ifdef NETATALK
+#include <netatalk/at_extern.h>
+#endif
+#if NPPP > 0
+#include <net/ppp_defs.h>
+#include <net/if_ppp.h>
 #endif
 
-#include "machine/cpu.h"
-#include "machine/reg.h"
-#include "machine/psl.h"
-#include "isr.h"
-#include "pte.h"
-#include "net/netisr.h"
-#include "sys/exec.h"
+/* prototypes */
+void identifycpu __P((void));
+vm_offset_t reserve_dumppages __P((vm_offset_t));
+void dumpsys __P((void));
+void initcpu __P((void));
+void straytrap __P((int, u_short));
+static void netintr __P((void));
+static void call_sicallbacks __P((void));
+static void _softintr_callit __P((void *, void *));
+void intrhand __P((int));
+#if NSER > 0
+void ser_outintr __P((void));
+#endif
+#if NFD > 0
+void fdintr __P((int));
+#endif
 
-#define	MAXMEM	64*1024*CLSIZE	/* XXX - from cmap.h */
-#include "vm/vm_param.h"
-#include "vm/pmap.h"
-#include "vm/vm_map.h"
-#include "vm/vm_object.h"
-#include "vm/vm_kern.h"
-#include "vm/vm_page.h"
+/*
+ * patched by some devices at attach time (currently, only the coms)
+ */
+u_int16_t amiga_serialspl = PSL_S|PSL_IPL4;
 
-#include "custom.h"
-#include "cia.h"
-
-#include "ite.h"
-#include "le.h"
-#include "a3000scsi.h"
-#include "a2091scsi.h"
-#include "gvp11scsi.h"
-
-/* vm_map_t buffer_map; */
-extern vm_offset_t avail_end;
+vm_map_t exec_map = NULL;  
+vm_map_t mb_map = NULL;
+vm_map_t phys_map = NULL;
 
 /*
  * Declare these as initialized data so we can patch them.
@@ -103,9 +195,17 @@ int	bufpages = BUFPAGES;
 #else
 int	bufpages = 0;
 #endif
-int	msgbufmapped;		/* set when safe to use msgbuf */
+caddr_t	msgbufaddr;
+vm_offset_t msgbufpa;
+
 int	maxmem;			/* max memory per process */
 int	physmem = MAXMEM;	/* max supported memory, changes to actual */
+/*
+ * extender "register" for software interrupts. Moved here 
+ * from locore.s, since softints are no longer dealt with
+ * in locore.s.
+ */
+unsigned char ssir;
 /*
  * safepri is a safe priority for sleep to set for a spin-wait
  * during autoconfiguration or after a panic.
@@ -115,9 +215,17 @@ extern  int   freebufspace;
 extern	u_int lowram;
 
 /* used in init_main.c */
-char *cpu_type = "m68k";
-
+char	*cpu_type = "m68k";
+/* the following is used externally (sysctl_hw) */
+char	machine[] = MACHINE;	/* from <machine/param.h> */
+ 
 /*
+ * current open serial device speed;  used by some SCSI drivers to reduce
+ * DMA transfer lengths.
+ */
+int	ser_open_speed;
+
+ /*
  * Console initialization: called early on from main,
  * before vm init or startup.  Do enough configuration
  * to choose and initialize a console.
@@ -125,23 +233,28 @@ char *cpu_type = "m68k";
 void
 consinit()
 {
-
-	/*
-	 * Set cpuspeed immediately since cninit() called routines
-	 * might use delay.
-	 */
-
-	cpuspeed = MHZ_25;		/* XXX */
-
-	/*
-         * Find what hardware is attached to this machine.
-         */
-	find_devs();
-
+	/* initialize custom chip interface */
+#ifdef DRACO
+	if (is_draco()) {
+		/* XXX to be done */
+	} else
+#endif
+		custom_chips_init();
 	/*
 	 * Initialize the console before we print anything out.
 	 */
 	cninit();
+
+#if defined (DDB)
+	{
+		extern int end[];
+		extern int *esym;
+
+		ddb_init(*(int *)&end, ((int *)&end) + 1, esym);
+	}
+        if (boothowto & RB_KDB)
+                Debugger();
+#endif
 }
 
 /*
@@ -154,14 +267,12 @@ cpu_startup()
 	register unsigned i;
 	register caddr_t v, firstaddr;
 	int base, residual;
-	extern long Usrptsize;
-	extern struct map *useriomap;
 #ifdef DEBUG
 	extern int pmapdebug;
 	int opmapdebug = pmapdebug;
 #endif
 	vm_offset_t minaddr, maxaddr;
-	vm_size_t size;
+	vm_size_t size = 0;
 
 	/*
 	 * Initialize error message buffer (at end of core).
@@ -169,18 +280,23 @@ cpu_startup()
 #ifdef DEBUG
 	pmapdebug = 0;
 #endif
-	/* avail_end was pre-decremented in pmap_bootstrap to compensate */
-	for (i = 0; i < btoc(sizeof (struct msgbuf)); i++)
-		pmap_enter(pmap_kernel(), msgbufp, avail_end + i * NBPG,
-			   VM_PROT_ALL, TRUE);
-	msgbufmapped = 1;
+	/*
+	 * pmap_bootstrap has positioned this at the end of kernel
+	 * memory segment - map and initialize it now.
+	 */
+
+	for (i = 0; i < btoc(MSGBUFSIZE); i++)
+		pmap_enter(pmap_kernel(), (vm_offset_t)msgbufaddr + i * NBPG,
+		    msgbufpa + i * NBPG, VM_PROT_READ|VM_PROT_WRITE, TRUE,
+		    VM_PROT_READ|VM_PROT_WRITE);
+	initmsgbuf(msgbufaddr, m68k_round_page(MSGBUFSIZE));
 
 	/*
 	 * Good {morning,afternoon,evening,night}.
 	 */
 	printf(version);
 	identifycpu();
-	printf("real mem = %d\n", ctob(physmem));
+	printf("real  mem = %d (%d pages)\n", ctob(physmem), ctob(physmem)/NBPG);
 
 	/*
 	 * Allocate space for system data structures.
@@ -207,42 +323,54 @@ again:
 	    (name) = (type *)v; v = (caddr_t)((lim) = ((name)+(num)))
 /*	valloc(cfree, struct cblock, nclist); */
 	valloc(callout, struct callout, ncallout);
-	valloc(swapmap, struct map, nswapmap = maxproc * 2);
 #ifdef SYSVSHM
 	valloc(shmsegs, struct shmid_ds, shminfo.shmmni);
 #endif
-	
+#ifdef SYSVSEM
+	valloc(sema, struct semid_ds, seminfo.semmni);
+	valloc(sem, struct sem, seminfo.semmns);
+	/* This is pretty disgusting! */
+	valloc(semu, int, (seminfo.semmnu * seminfo.semusz) / sizeof(int));
+#endif
+#ifdef SYSVMSG
+	valloc(msgpool, char, msginfo.msgmax);
+	valloc(msgmaps, struct msgmap, msginfo.msgseg);
+	valloc(msghdrs, struct msg, msginfo.msgtql);
+	valloc(msqids, struct msqid_ds, msginfo.msgmni);
+#endif
 	/*
-	 * Determine how many buffers to allocate.
-	 * Since HPs tend to be long on memory and short on disk speed,
-	 * we allocate more buffer space than the BSD standard of
-	 * use 10% of memory for the first 2 Meg, 5% of remaining.
-	 * We just allocate a flat 10%.  Insure a minimum of 16 buffers.
-	 * We allocate 1/2 as many swap buffer headers as file i/o buffers.
+	 * Determine how many buffers to allocate. We allocate
+	 * the BSD standard of use 10% of memory for the first 2 Meg,
+	 * 5% of remaining. Insure a minimum of 16 buffers.
+	 * We allocate 3/4 as many swap buffer headers as file i/o buffers.
 	 */
-	if (bufpages == 0)
-		bufpages = physmem / 10 / CLSIZE;
+  	if (bufpages == 0) {
+		if (physmem < btoc(2 * 1024 * 1024))
+			bufpages = physmem / (10 * CLSIZE);
+		else
+			bufpages = (btoc(2 * 1024 * 1024) + physmem) /
+			    (20 * CLSIZE);
+	}
+
 	if (nbuf == 0) {
 		nbuf = bufpages;
 		if (nbuf < 16)
 			nbuf = 16;
 	}
-#if 0
-	freebufspace = bufpages * NBPG;
-#endif
+
 	if (nswbuf == 0) {
-		nswbuf = (nbuf / 2) &~ 1;	/* force even */
+		nswbuf = (nbuf * 3 / 4) &~ 1;	/* force even */
 		if (nswbuf > 256)
 			nswbuf = 256;		/* sanity */
 	}
-	valloc(swbuf, struct buf, nswbuf);
 	valloc(buf, struct buf, nbuf);
 	/*
 	 * End of first pass, size has been calculated so allocate memory
 	 */
 	if (firstaddr == 0) {
 		size = (vm_size_t)(v - firstaddr);
-		firstaddr = (caddr_t) kmem_alloc(kernel_map, round_page(size));
+		firstaddr = (caddr_t)uvm_km_zalloc(kernel_map,
+		    round_page(size));
 		if (firstaddr == 0)
 			panic("startup: no room for tables");
 		goto again;
@@ -253,70 +381,72 @@ again:
 	if ((vm_size_t)(v - firstaddr) != size)
 		panic("startup: table size inconsistency");
 
-#if 0
 	/*
 	 * Now allocate buffers proper.  They are different than the above
 	 * in that they usually occupy more virtual memory than physical.
 	 */
 	size = MAXBSIZE * nbuf;
-	buffer_map = kmem_suballoc(kernel_map, (vm_offset_t)&buffers,
-				   &maxaddr, size, FALSE);
-	minaddr = (vm_offset_t)buffers;
-	if (vm_map_find(buffer_map, vm_object_allocate(size), (vm_offset_t)0,
-			&minaddr, size, FALSE) != KERN_SUCCESS)
-		panic("startup: cannot allocate buffers");
+	if (uvm_map(kernel_map, (vm_offset_t *)&buffers, round_page(size),
+	    NULL, UVM_UNKNOWN_OFFSET,
+	    UVM_MAPFLAG(UVM_PROT_NONE, UVM_PROT_NONE, UVM_INH_NONE,
+	    UVM_ADV_NORMAL, 0)) != KERN_SUCCESS)
+		panic("startup: cannot allocate VM for buffers");
+	minaddr = (vm_offset_t) buffers;
+	if ((bufpages / nbuf) >= btoc(MAXBSIZE)) {
+		/* don't want to alloc more physical mem than needed */
+		bufpages = btoc(MAXBSIZE) * nbuf;
+	}
 	base = bufpages / nbuf;
 	residual = bufpages % nbuf;
 	for (i = 0; i < nbuf; i++) {
 		vm_size_t curbufsize;
 		vm_offset_t curbuf;
+		struct vm_page *pg;
 
 		/*
-		 * First <residual> buffers get (base+1) physical pages
-		 * allocated for them.  The rest get (base) physical pages.
-		 *
-		 * The rest of each buffer occupies virtual space,
-		 * but has no physical memory allocated for it.
+		 * Each buffer has MAXBSIZE bytes of VM space allocated.  Of
+		 * that MAXBSIZE space, we allocate and map (base+1) pages
+		 * for the first "residual" buffers, and then we allocate
+		 * "base" pages for the rest.
 		 */
-		curbuf = (vm_offset_t)buffers + i * MAXBSIZE;
-		curbufsize = CLBYTES * (i < residual ? base+1 : base);
-		vm_map_pageable(buffer_map, curbuf, curbuf+curbufsize, FALSE);
-		vm_map_simplify(buffer_map, curbuf);
+		curbuf = (vm_offset_t) buffers + (i * MAXBSIZE);
+		curbufsize = CLBYTES * ((i < residual) ? (base+1) : base);
+
+		while (curbufsize) {
+			pg = uvm_pagealloc(NULL, 0, NULL, 0);
+			if (pg == NULL) 
+				panic("cpu_startup: not enough memory for "
+				    "buffer cache");
+#if defined(PMAP_NEW)
+			pmap_kenter_pgs(curbuf, &pg, 1);
+#else
+			pmap_enter(kernel_map->pmap, curbuf,
+			    VM_PAGE_TO_PHYS(pg), VM_PROT_READ|VM_PROT_WRITE,
+			    TRUE, VM_PROT_READ|VM_PROT_WRITE);
+#endif
+			curbuf += PAGE_SIZE;
+			curbufsize -= PAGE_SIZE;
+		}
 	}
 
-#if 0
 	/*
 	 * Allocate a submap for exec arguments.  This map effectively
 	 * limits the number of processes exec'ing at any time.
 	 */
-	exec_map = kmem_suballoc(kernel_map, &minaddr, &maxaddr,
-				 16*NCARGS, TRUE);
-#endif
-#else	/* code from 386BSD */
-
-	/*
-	 * Allocate a submap for buffer space allocations.
-	 */
-	buffer_map = kmem_suballoc(kernel_map, &minaddr, &maxaddr,
-				 bufpages*NBPG, TRUE);
-
-#endif	/* code from 386BSD */
+	exec_map = uvm_km_suballoc(kernel_map, &minaddr, &maxaddr,
+				   16*NCARGS, TRUE, FALSE, NULL);
 
 	/*
 	 * Allocate a submap for physio
 	 */
-	phys_map = kmem_suballoc(kernel_map, &minaddr, &maxaddr,
-				 VM_PHYS_SIZE, TRUE);
+	phys_map = uvm_km_suballoc(kernel_map, &minaddr, &maxaddr,
+				   VM_PHYS_SIZE, TRUE, FALSE, NULL);
 
 	/*
-	 * Finally, allocate mbuf pool.  Since mclrefcnt is an off-size
-	 * we use the more space efficient malloc in place of kmem_alloc.
+	 * Finally, allocate mbuf cluster submap.
 	 */
-	mclrefcnt = (char *)malloc(NMBCLUSTERS+CLBYTES/MCLBYTES,
-				   M_MBUF, M_NOWAIT);
-	bzero(mclrefcnt, NMBCLUSTERS+CLBYTES/MCLBYTES);
-	mb_map = kmem_suballoc(kernel_map, (vm_offset_t)&mbutl, &maxaddr,
-			       VM_MBUF_SIZE, FALSE);
+	mb_map = uvm_km_suballoc(kernel_map, &minaddr, &maxaddr,
+			         VM_MBUF_SIZE, FALSE, FALSE, NULL);
 
 	/*
 	 * Initialize callouts
@@ -328,413 +458,200 @@ again:
 #ifdef DEBUG
 	pmapdebug = opmapdebug;
 #endif
-	printf("avail mem = %d\n", ptoa(vm_page_free_count));
+	printf("avail mem = %ld (%ld pages)\n", ptoa(uvmexp.free),
+	    ptoa(uvmexp.free)/NBPG);
 	printf("using %d buffers containing %d bytes of memory\n",
-		nbuf, bufpages * CLBYTES);
+	    nbuf, bufpages * CLBYTES);
+	
+	/*
+	 * display memory configuration passed from loadbsd
+	 */
+	if (memlist->m_nseg > 0 && memlist->m_nseg < 16)
+		for (i = 0; i < memlist->m_nseg; i++)
+			printf("memory segment %d at %x size %x\n", i,
+			    memlist->m_seg[i].ms_start, 
+			    memlist->m_seg[i].ms_size);
+
+#ifdef DEBUG_KERNEL_START
+	printf("calling initcpu...\n");
+#endif
 	/*
 	 * Set up CPU-specific registers, cache, etc.
 	 */
 	initcpu();
 
+#ifdef DEBUG_KERNEL_START
+	printf("survived initcpu...\n");
+#endif
+	
 	/*
 	 * Set up buffers, so they can be used to read disk labels.
 	 */
 	bufinit();
 
-	/*
-	 * Configure the system.
-	 */
-	configure();
+#ifdef DEBUG_KERNEL_START
+	printf("survived bufinit...\n");
+#endif
 }
 
 /*
  * Set registers on exec.
- * XXX Should clear registers except sp, pc,
- * but would break init; should be fixed soon.
  */
 void
-setregs(p, entry, stack, retval)
+setregs(p, pack, stack)
 	register struct proc *p;
-	u_long entry;
+	struct exec_package *pack;
 	u_long stack;
-	int retval[2];
 {
-	p->p_regs[PC] = entry & ~1;
-	p->p_regs[SP] = stack;
-#ifdef FPCOPROC
+	struct frame *frame = (struct frame *)p->p_md.md_regs;
+	
+	frame->f_sr = PSL_USERSET;
+	frame->f_pc = pack->ep_entry & ~1;
+	frame->f_regs[D0] = 0;
+	frame->f_regs[D1] = 0;
+	frame->f_regs[D2] = 0;
+	frame->f_regs[D3] = 0;
+	frame->f_regs[D4] = 0;
+	frame->f_regs[D5] = 0;
+	frame->f_regs[D6] = 0;
+	frame->f_regs[D7] = 0;
+	frame->f_regs[A0] = 0;
+	frame->f_regs[A1] = 0;
+	frame->f_regs[A2] = (int)PS_STRINGS;
+	frame->f_regs[A3] = 0;
+	frame->f_regs[A4] = 0;
+	frame->f_regs[A5] = 0;
+	frame->f_regs[A6] = 0;
+	frame->f_regs[SP] = stack;
+
 	/* restore a null state frame */
 	p->p_addr->u_pcb.pcb_fpregs.fpf_null = 0;
-	m68881_restore(&p->p_addr->u_pcb.pcb_fpregs);
+#ifdef FPU_EMULATE
+	if (!fputype)
+		bzero(&p->p_addr->u_pcb.pcb_fpregs, sizeof(struct fpframe));
+	else
 #endif
+		m68881_restore(&p->p_addr->u_pcb.pcb_fpregs);
 }
 
+/*
+ * Info for CTL_HW
+ */
+char cpu_model[120];
+extern char version[];
+
+#if defined(M68060)
+int m68060_pcr_init = 0x21;	/* make this patchable */
+#endif
+
+ 
+void
 identifycpu()
 {
         /* there's alot of XXX in here... */
+	char *mach, *mmu, *fpu;
 
-	printf ("AMIGA/");
+#ifdef M68060
+	char cpubuf[16];
+	u_int32_t pcr;
+#endif
 
-	if (is_a3000 ())
-	  printf ("A3000");	/* XXX */
+#ifdef DRACO
+	char machbuf[16];
+
+	if (is_draco()) {
+		sprintf(machbuf, "DraCo rev.%d", is_draco());
+		mach = machbuf;
+	} else 
+#endif
+	if (is_a4000())
+		mach = "Amiga 4000";
+	else if (is_a3000())
+		mach = "Amiga 3000";
+	else if (is_a1200())
+		mach = "Amiga 1200";
 	else
-	  printf ("A2000");
+		mach = "Amiga 500/2000";
 
-	if (mmutype == MMU_68030)
-	  cpu_type = "m68030";	/* XXX */
-	else
-	  cpu_type = "m68020";
-
-	printf(" MC680%s CPU", mmutype == MMU_68030 ? "30" : "20");
-	switch (mmutype) {
-	case MMU_68030:
-		printf("+MMU");
-		break;
-	case MMU_68851:
-		printf(", MC68851 MMU");
-		break;
-	default:
-		printf("\nunknown MMU type %d\n", mmutype);
-		panic("startup");
+	fpu = NULL;
+#ifdef M68060
+	if (machineid & AMIGA_68060) {
+		asm(".word 0x4e7a,0x0808; movl d0,%0" : "=d"(pcr) : : "d0");
+		sprintf(cpubuf, "68%s060 rev.%d",
+		    pcr & 0x10000 ? "LC/EC" : "", (pcr>>8)&0xff);
+		cpu_type = cpubuf;
+		mmu = "/MMU";
+		if (pcr & 2) {
+			fpu = "/FPU disabled";
+			fputype = FPU_NONE;
+		} else if (m68060_pcr_init & 2){
+			fpu = "/FPU will be disabled";
+			fputype = FPU_NONE;
+		} else  if (machineid & AMIGA_FPU40) {
+			fpu = "/FPU";
+			fputype = FPU_68040; /* XXX */
+		}
+	} else 
+#endif
+	if (machineid & AMIGA_68040) {
+		cpu_type = "m68040";
+		mmu = "/MMU";
+		fpu = "/FPU";
+		fputype = FPU_68040; /* XXX */
+	} else if (machineid & AMIGA_68030) {
+		cpu_type = "m68030";	/* XXX */
+		mmu = "/MMU";
+	} else {
+		cpu_type = "m68020";
+		mmu = " m68851 MMU";
 	}
-	/* XXX */
-	if (mmutype == MMU_68030)
-		printf(", %sMhz MC68882 FPU", "25");
-	else
-		printf(", %sMhz MC68881 FPU", "16.67");
-	printf(")\n");
-	/*
-	 * Now that we have told the user what they have,
-	 * let them know if that machine type isn't configured.
-	 */
-#if 0
-	switch (machineid) {
-	case -1:		/* keep compilers happy */
-#if !defined(HP320) && !defined(HP350)
-	case HP_320:
-	case HP_350:
-#endif
-#ifndef HP330
-	case HP_330:
-#endif
-#if !defined(HP360) && !defined(HP370)
-	case HP_340:
-	case HP_360:
-	case HP_370:
-#endif
-		panic("CPU type not configured");
-	default:
-		break;
+	if (fpu == NULL) {
+		if (machineid & AMIGA_68882) {
+			fpu = " m68882 FPU";
+			fputype = FPU_68882;
+		} else if (machineid & AMIGA_68881) {
+			fpu = " m68881 FPU";
+			fputype = FPU_68881;
+		} else {
+			fpu = " no FPU";
+			fputype = FPU_NONE;
+		}
 	}
-#endif
-}
-
-#define SS_RTEFRAME	1
-#define SS_FPSTATE	2
-#define SS_USERREGS	4
-
-struct sigstate {
-	int	ss_flags;		/* which of the following are valid */
-	struct	frame ss_frame;		/* original exception frame */
-	struct	fpframe ss_fpstate;	/* 68881/68882 state info */
-};
-
-/*
- * WARNING: code in locore.s assumes the layout shown for sf_signum
- * thru sf_handler so... don't screw with them!
- */
-struct sigframe {
-	int	sf_signum;		/* signo for handler */
-	int	sf_code;		/* additional info for handler */
-	struct	sigcontext *sf_scp;	/* context ptr for handler */
-	sig_t	sf_handler;		/* handler addr for u_sigc */
-	struct	sigstate sf_state;	/* state of the hardware */
-	struct	sigcontext sf_sc;	/* actual context */
-};
-
-#ifdef DEBUG
-int sigdebug = 0x0;
-int sigpid = 0;
-#define SDB_FOLLOW	0x01
-#define SDB_KSTACK	0x02
-#define SDB_FPSTATE	0x04
-#endif
-
-/*
- * Send an interrupt to process.
- */
-void
-sendsig(catcher, sig, mask, code)
-	sig_t catcher;
-	int sig, mask;
-	unsigned code;
-{
-	register struct proc *p = curproc;
-	register struct sigframe *fp, *kfp;
-	register struct frame *frame;
-	register struct sigacts *ps = p->p_sigacts;
-	register short ft;
-	int oonstack, fsize;
-	extern short exframesize[];
-	extern char sigcode[], esigcode[];
-
-/*printf("sendsig %d %d %x %x %x\n", p->p_pid, sig, mask, code, catcher);*/
-
-	frame = (struct frame *)p->p_regs;
-	ft = frame->f_format;
-	oonstack = ps->ps_onstack;
-	/*
-	 * Allocate and validate space for the signal handler
-	 * context. Note that if the stack is in P0 space, the
-	 * call to grow() is a nop, and the useracc() check
-	 * will fail if the process has not already allocated
-	 * the space with a `brk'.
-	 */
-	fsize = sizeof(struct sigframe);
-	if (!ps->ps_onstack && (ps->ps_sigonstack & sigmask(sig))) {
-		fp = (struct sigframe *)(ps->ps_sigsp - fsize);
-		ps->ps_onstack = 1;
-	} else
-		fp = (struct sigframe *)(frame->f_regs[SP] - fsize);
-	if ((unsigned)fp <= USRSTACK - ctob(p->p_vmspace->vm_ssize)) 
-		(void)grow(p, (unsigned)fp);
-#ifdef DEBUG
-	if ((sigdebug & SDB_KSTACK) && p->p_pid == sigpid)
-		printf("sendsig(%d): sig %d ssp %x usp %x scp %x ft %d\n",
-		       p->p_pid, sig, &oonstack, fp, &fp->sf_sc, ft);
-#endif
-	if (useracc((caddr_t)fp, fsize, B_WRITE) == 0) {
-#ifdef DEBUG
-		if ((sigdebug & SDB_KSTACK) && p->p_pid == sigpid)
-			printf("sendsig(%d): useracc failed on sig %d\n",
-			       p->p_pid, sig);
-#endif
-		/*
-		 * Process has trashed its stack; give it an illegal
-		 * instruction to halt it in its tracks.
-		 */
-		SIGACTION(p, SIGILL) = SIG_DFL;
-		sig = sigmask(SIGILL);
-		p->p_sigignore &= ~sig;
-		p->p_sigcatch &= ~sig;
-		p->p_sigmask &= ~sig;
-		psignal(p, SIGILL);
-		return;
-	}
-	kfp = (struct sigframe *)malloc((u_long)fsize, M_TEMP, M_WAITOK);
-	/* 
-	 * Build the argument list for the signal handler.
-	 */
-	kfp->sf_signum = sig;
-	kfp->sf_code = code;
-	kfp->sf_scp = &fp->sf_sc;
-	kfp->sf_handler = catcher;
-	/*
-	 * Save necessary hardware state.  Currently this includes:
-	 *	- general registers
-	 *	- original exception frame (if not a "normal" frame)
-	 *	- FP coprocessor state
-	 */
-	kfp->sf_state.ss_flags = SS_USERREGS;
-	bcopy((caddr_t)frame->f_regs,
-	      (caddr_t)kfp->sf_state.ss_frame.f_regs, sizeof frame->f_regs);
-	if (ft >= FMT9) {
-#ifdef DEBUG
-		if (ft != FMT9 && ft != FMTA && ft != FMTB)
-			panic("sendsig: bogus frame type");
-#endif
-		kfp->sf_state.ss_flags |= SS_RTEFRAME;
-		kfp->sf_state.ss_frame.f_format = frame->f_format;
-		kfp->sf_state.ss_frame.f_vector = frame->f_vector;
-		bcopy((caddr_t)&frame->F_u,
-		      (caddr_t)&kfp->sf_state.ss_frame.F_u, exframesize[ft]);
-		/*
-		 * Leave an indicator that we need to clean up the kernel
-		 * stack.  We do this by setting the "pad word" above the
-		 * hardware stack frame to the amount the stack must be
-		 * adjusted by.
-		 *
-		 * N.B. we increment rather than just set f_stackadj in
-		 * case we are called from syscall when processing a
-		 * sigreturn.  In that case, f_stackadj may be non-zero.
-		 */
-		frame->f_stackadj += exframesize[ft];
-		frame->f_format = frame->f_vector = 0;
-#ifdef DEBUG
-		if (sigdebug & SDB_FOLLOW)
-			printf("sendsig(%d): copy out %d of frame %d\n",
-			       p->p_pid, exframesize[ft], ft);
-#endif
-	}
-#ifdef FPCOPROC
-	kfp->sf_state.ss_flags |= SS_FPSTATE;
-	m68881_save(&kfp->sf_state.ss_fpstate);
-#ifdef DEBUG
-	if ((sigdebug & SDB_FPSTATE) && *(char *)&kfp->sf_state.ss_fpstate)
-		printf("sendsig(%d): copy out FP state (%x) to %x\n",
-		       p->p_pid, *(u_int *)&kfp->sf_state.ss_fpstate,
-		       &kfp->sf_state.ss_fpstate);
-#endif
-#endif
-	/*
-	 * Build the signal context to be used by sigreturn.
-	 */
-	kfp->sf_sc.sc_onstack = oonstack;
-	kfp->sf_sc.sc_mask = mask;
-	kfp->sf_sc.sc_sp = frame->f_regs[SP];
-	kfp->sf_sc.sc_fp = frame->f_regs[A6];
-	kfp->sf_sc.sc_ap = (int)&fp->sf_state;
-	kfp->sf_sc.sc_pc = frame->f_pc;
-	kfp->sf_sc.sc_ps = frame->f_sr;
-	(void) copyout((caddr_t)kfp, (caddr_t)fp, fsize);
-	frame->f_regs[SP] = (int)fp;
-#ifdef DEBUG
-	if (sigdebug & SDB_FOLLOW)
-		printf("sendsig(%d): sig %d scp %x fp %x sc_sp %x sc_ap %x\n",
-		       p->p_pid, sig, kfp->sf_scp, fp,
-		       kfp->sf_sc.sc_sp, kfp->sf_sc.sc_ap);
-#endif
-	/*
-	 * Signal trampoline code is at base of user stack.
-	 */
-	frame->f_pc = (int)(((char *)PS_STRINGS) - (esigcode - sigcode));
-#ifdef DEBUG
-	if ((sigdebug & SDB_KSTACK) && p->p_pid == sigpid)
-		printf("sendsig(%d): sig %d returns\n",
-		       p->p_pid, sig);
-#endif
-	free((caddr_t)kfp, M_TEMP);
+	sprintf(cpu_model, "%s (%s CPU%s%s)", mach, cpu_type, mmu, fpu);
+	printf("%s\n", cpu_model);
 }
 
 /*
- * System call to cleanup state after a signal
- * has been taken.  Reset signal mask and
- * stack state from context left by sendsig (above).
- * Return to previous pc and psl as specified by
- * context left by sendsig. Check carefully to
- * make sure that the user has not modified the
- * psl to gain improper priviledges or to cause
- * a machine fault.
+ * machine dependent system variables.
  */
-/* ARGSUSED */
-sigreturn(p, uap, retval)
+int
+cpu_sysctl(name, namelen, oldp, oldlenp, newp, newlen, p)
+	int *name;
+	u_int namelen;
+	void *oldp;
+	size_t *oldlenp;
+	void *newp;
+	size_t newlen;
 	struct proc *p;
-	struct args {
-		struct sigcontext *sigcntxp;
-	} *uap;
-	int *retval;
 {
-	register struct sigcontext *scp;
-	register struct frame *frame;
-	register int rf;
-	struct sigcontext tsigc;
-	struct sigstate tstate;
-	int flags;
-	extern short exframesize[];
+	dev_t consdev;
 
-	scp = uap->sigcntxp;
-#ifdef DEBUG
-	if (sigdebug & SDB_FOLLOW)
-		printf("sigreturn: pid %d, scp %x\n", p->p_pid, scp);
-#endif
-	if ((int)scp & 1)
-		return (EINVAL);
-	/*
-	 * Test and fetch the context structure.
-	 * We grab it all at once for speed.
-	 */
-	if (useracc((caddr_t)scp, sizeof (*scp), B_WRITE) == 0 ||
-	    copyin((caddr_t)scp, (caddr_t)&tsigc, sizeof tsigc))
-		return (EINVAL);
-	scp = &tsigc;
-	if ((scp->sc_ps & (PSL_MBZ|PSL_IPL|PSL_S)) != 0)
-		return (EINVAL);
-	/*
-	 * Restore the user supplied information
-	 */
-	p->p_sigacts->ps_onstack = scp->sc_onstack & 01;
-	p->p_sigmask = scp->sc_mask &~ sigcantmask;
-	frame = (struct frame *) p->p_regs;
-	frame->f_regs[SP] = scp->sc_sp;
-	frame->f_regs[A6] = scp->sc_fp;
-	frame->f_pc = scp->sc_pc;
-	frame->f_sr = scp->sc_ps;
-	/*
-	 * Grab pointer to hardware state information.
-	 * If zero, the user is probably doing a longjmp.
-	 */
-	if ((rf = scp->sc_ap) == 0)
-		return (EJUSTRETURN);
-	/*
-	 * See if there is anything to do before we go to the
-	 * expense of copying in close to 1/2K of data
-	 */
-	flags = fuword((caddr_t)rf);
-#ifdef DEBUG
-	if (sigdebug & SDB_FOLLOW)
-		printf("sigreturn(%d): sc_ap %x flags %x\n",
-		       p->p_pid, rf, flags);
-#endif
-	/*
-	 * fuword failed (bogus sc_ap value).
-	 */
-	if (flags == -1)
-		return (EINVAL);
-	if (flags == 0 || copyin((caddr_t)rf, (caddr_t)&tstate, sizeof tstate))
-		return (EJUSTRETURN);
-#ifdef DEBUG
-	if ((sigdebug & SDB_KSTACK) && p->p_pid == sigpid)
-		printf("sigreturn(%d): ssp %x usp %x scp %x ft %d\n",
-		       p->p_pid, &flags, scp->sc_sp, uap->sigcntxp,
-		       (flags&SS_RTEFRAME) ? tstate.ss_frame.f_format : -1);
-#endif
-	/*
-	 * Restore most of the users registers except for A6 and SP
-	 * which were handled above.
-	 */
-	if (flags & SS_USERREGS)
-		bcopy((caddr_t)tstate.ss_frame.f_regs,
-		      (caddr_t)frame->f_regs, sizeof(frame->f_regs)-2*NBPW);
-	/*
-	 * Restore long stack frames.  Note that we do not copy
-	 * back the saved SR or PC, they were picked up above from
-	 * the sigcontext structure.
-	 */
-	if (flags & SS_RTEFRAME) {
-		register int sz;
-		
-		/* grab frame type and validate */
-		sz = tstate.ss_frame.f_format;
-		if (sz > 15 || (sz = exframesize[sz]) < 0)
-			return (EINVAL);
-		frame->f_stackadj -= sz;
-		frame->f_format = tstate.ss_frame.f_format;
-		frame->f_vector = tstate.ss_frame.f_vector;
-		bcopy((caddr_t)&tstate.ss_frame.F_u, (caddr_t)&frame->F_u, sz);
-#ifdef DEBUG
-		if (sigdebug & SDB_FOLLOW)
-			printf("sigreturn(%d): copy in %d of frame type %d\n",
-			       p->p_pid, sz, tstate.ss_frame.f_format);
-#endif
+	/* all sysctl names at this level are terminal */
+	if (namelen != 1)
+		return(ENOTDIR);               /* overloaded */
+
+	switch (name[0]) {
+	case CPU_CONSDEV:
+		if (cn_tab != NULL)
+			consdev = cn_tab->cn_dev;
+		else
+			consdev = NODEV;
+		return(sysctl_rdstruct(oldp, oldlenp, newp, &consdev,
+		    sizeof(consdev)));
+	default:
+		return(EOPNOTSUPP);
 	}
-#ifdef FPCOPROC
-	/*
-	 * Finally we restore the original FP context
-	 */
-	if (flags & SS_FPSTATE)
-		m68881_restore(&tstate.ss_fpstate);
-#ifdef DEBUG
-	if ((sigdebug & SDB_FPSTATE) && *(char *)&tstate.ss_fpstate)
-		printf("sigreturn(%d): copied in FP state (%x) at %x\n",
-		       p->p_pid, *(u_int *)&tstate.ss_fpstate,
-		       &tstate.ss_fpstate);
-#endif
-#endif
-#ifdef DEBUG
-	if ((sigdebug & SDB_FOLLOW) ||
-	    ((sigdebug & SDB_KSTACK) && p->p_pid == sigpid))
-		printf("sigreturn(%d): returns\n", p->p_pid);
-#endif
-	return (EJUSTRETURN);
+	/* NOTREACHED */
 }
 
 static int waittime = -1;
@@ -742,40 +659,9 @@ static int waittime = -1;
 void
 bootsync(void)
 {
-	if (waittime < 0 && bfreelist[0].b_forw) {
-		register struct buf *bp;
-		int iter, nbusy;
-
+	if (waittime < 0) {
 		waittime = 0;
-		(void) spl0();
-		printf("syncing disks... ");
-		/*
-		 * Release vnodes held by texts before sync.
-		 */
-		if (panicstr == 0)
-			vnode_pager_umount(NULL);
-#ifdef notdef
-#include "fd.h"
-#if NFD > 0
-		fdshutdown();
-#endif
-#endif
-		sync(&proc0, (void *)NULL, (int *)NULL);
-
-		for (iter = 0; iter < 20; iter++) {
-			nbusy = 0;
-			for (bp = &buf[nbuf]; --bp >= buf; )
-				if ((bp->b_flags & (B_BUSY|B_INVAL)) == B_BUSY)
-					nbusy++;
-			if (nbusy == 0)
-				break;
-			printf("%d ", nbusy);
-			DELAY(40000 * iter);
-		}
-		if (nbusy)
-			printf("giving up\n");
-		else
-			printf("done\n");
+		vfs_shutdown();
 		/*
 		 * If we've been adjusting the clock, the todr
 		 * will be out of synch; adjust it now.
@@ -784,46 +670,120 @@ bootsync(void)
 	}
 }
 
-__dead void
-boot(howto)
+
+void
+cpu_reboot(howto, bootstr)
 	register int howto;
+	char *bootstr;
 {
 	/* take a snap shot before clobbering any registers */
 	if (curproc)
-		savectx(curproc->p_addr, 0);
+		savectx(&curproc->p_addr->u_pcb);
 
 	boothowto = howto;
-	if ((howto&RB_NOSYNC) == 0)
+	if ((howto & RB_NOSYNC) == 0)
 		bootsync();
-	splhigh();			/* extreme priority */
-	if (howto&RB_HALT) {
-		printf("halted\n\n");
-		asm("	stop	#0x2700");
-	} else {
-		if (howto & RB_DUMP)
-			dumpsys();
-		doboot();
-		/*NOTREACHED*/
+
+	/* Disable interrupts. */
+	spl7();
+
+	/* If rebooting and a dump is requested do it. */
+	if (howto & RB_DUMP)
+		dumpsys();
+
+	if (howto & RB_HALT) {
+		printf("\n");
+		printf("The operating system has halted.\n");
+		printf("Please press any key to reboot.\n\n");
+		cngetc();
 	}
+
+	printf("rebooting...\n");
+	DELAY(1000000);
+	doboot();
 	/*NOTREACHED*/
 }
+
 
 unsigned	dumpmag = 0x8fca0101;	/* magic number for savecore */
 int	dumpsize = 0;		/* also for savecore */
 long	dumplo = 0;
+cpu_kcore_hdr_t cpu_kcore_hdr;
 
-dumpconf()
+void
+cpu_dumpconf()
 {
+	cpu_kcore_hdr_t *h = &cpu_kcore_hdr;
+	struct m68k_kcore_hdr *m = &h->un._m68k;
 	int nblks;
+	int i;
+	extern u_int Sysseg_pa;
+	extern int end[];
 
+	bzero(&cpu_kcore_hdr, sizeof(cpu_kcore_hdr));
+
+	/*
+	 * Intitialize the `dispatcher' portion of the header.
+	 */
+	strcpy(h->name, machine);
+	h->page_size = NBPG;
+	h->kernbase = KERNBASE;
+
+	/*
+	 * Fill in information about our MMU configuration.
+	 */
+	m->mmutype	= mmutype;
+	m->sg_v		= SG_V;
+	m->sg_frame	= SG_FRAME;
+	m->sg_ishift	= SG_ISHIFT;
+	m->sg_pmask	= SG_PMASK;
+	m->sg40_shift1	= SG4_SHIFT1;
+	m->sg40_mask2	= SG4_MASK2;
+	m->sg40_shift2	= SG4_SHIFT2;
+	m->sg40_mask3	= SG4_MASK3;
+	m->sg40_shift3	= SG4_SHIFT3;
+	m->sg40_addr1	= SG4_ADDR1;
+	m->sg40_addr2	= SG4_ADDR2;
+	m->pg_v		= PG_V;
+	m->pg_frame	= PG_FRAME;
+
+	/*
+	 * Initialize the pointer to the kernel segment table.
+	 */
+	m->sysseg_pa = Sysseg_pa;
+
+	/*
+	 * Initialize relocation value such that:
+	 *
+	 *	pa = (va - KERNBASE) + reloc
+	 */
+	m->reloc = lowram;
+
+	/*
+	 * Define the end of the relocatable range.
+	 */
+	m->relocend = (u_int32_t)&end;
+
+	/* XXX new corefile format, single segment + chipmem */
 	dumpsize = physmem;
+	m->ram_segs[0].start = lowram;
+	m->ram_segs[0].size  = ctob(physmem);
+	for (i = 0; i < memlist->m_nseg; i++) {
+		if ((memlist->m_seg[i].ms_attrib & MEMF_CHIP) == 0)
+			continue;
+		dumpsize += btoc(memlist->m_seg[i].ms_size);
+		m->ram_segs[1].start = 0;
+		m->ram_segs[1].size  = memlist->m_seg[i].ms_size;
+		break;
+	}
 	if (dumpdev != NODEV && bdevsw[major(dumpdev)].d_psize) {
 		nblks = (*bdevsw[major(dumpdev)].d_psize)(dumpdev);
 		if (dumpsize > btoc(dbtob(nblks - dumplo)))
 			dumpsize = btoc(dbtob(nblks - dumplo));
 		else if (dumplo == 0)
-			dumplo = nblks - btodb(ctob(physmem));
+			dumplo = nblks - btodb(ctob(dumpsize));
 	}
+	--dumplo;	/* XXX assume header fits in one block */
 	/*
 	 * Don't dump on the first CLBYTES (why CLBYTES?)
 	 * in case the dump device includes a disk label.
@@ -837,10 +797,30 @@ dumpconf()
  * getting on the dump stack, either when called above, or by
  * the auto-restart code.
  */
+#define BYTES_PER_DUMP MAXPHYS	/* Must be a multiple of pagesize XXX small */
+static vm_offset_t dumpspace;
+
+vm_offset_t
+reserve_dumppages(p)
+	vm_offset_t p;
+{
+	dumpspace = p;
+	return (p + BYTES_PER_DUMP);
+}
+
+void
 dumpsys()
 {
+	unsigned bytes, i, n, seg;
+	int     maddr, psize;
+	daddr_t blkno;
+	int     (*dump) __P((dev_t, daddr_t, caddr_t, size_t));
+	int     error = 0;
+	kcore_seg_t *kseg_p;
+	cpu_kcore_hdr_t *chdr_p;
+	char	dump_hdr[dbtob(1)];	/* XXX assume hdr fits in 1 block */
 
-	msgbufmapped = 0;
+	msgbufenabled = 0;
 	if (dumpdev == NODEV)
 		return;
 	/*
@@ -848,12 +828,75 @@ dumpsys()
 	 * if dump device has already configured...
 	 */
 	if (dumpsize == 0)
-		dumpconf();
-	if (dumplo < 0)
+		cpu_dumpconf();
+	if (dumplo <= 0) {
+		printf("\ndump to dev %u,%u not possible\n", major(dumpdev),
+		    minor(dumpdev));
 		return;
-	printf("\ndumping to dev %x, offset %d\n", dumpdev, dumplo);
+	}
+	printf("\ndumping to dev %u,%u offset %ld\n", major(dumpdev),
+	    minor(dumpdev), dumplo);
+
+	psize = (*bdevsw[major(dumpdev)].d_psize)(dumpdev);
 	printf("dump ");
-	switch ((*bdevsw[major(dumpdev)].d_dump)(dumpdev)) {
+	if (psize == -1) {
+		printf("area unavailable.\n");
+		return;
+	}
+	kseg_p = (kcore_seg_t *)dump_hdr;
+	chdr_p = (cpu_kcore_hdr_t *)&dump_hdr[ALIGN(sizeof(*kseg_p))];
+	bzero(dump_hdr, sizeof(dump_hdr));
+
+	/*
+	 * Generate a segment header
+	 */
+	CORE_SETMAGIC(*kseg_p, KCORE_MAGIC, MID_MACHINE, CORE_CPU);
+	kseg_p->c_size = dbtob(1) - ALIGN(sizeof(*kseg_p));
+
+	/*
+	 * Add the md header
+	 */
+
+	*chdr_p = cpu_kcore_hdr;
+
+	bytes = ctob(dumpsize);
+	maddr = cpu_kcore_hdr.un._m68k.ram_segs[0].start;
+	seg = 0;
+	blkno = dumplo;
+	dump = bdevsw[major(dumpdev)].d_dump;
+	error = (*dump) (dumpdev, blkno++, (caddr_t)dump_hdr, dbtob(1));
+	for (i = 0; i < bytes && error == 0; i += n) {
+		/* Print out how many MBs we have to go. */
+		n = bytes - i;
+		if (n && (n % (1024 * 1024)) == 0)
+			printf("%d ", n / (1024 * 1024));
+
+		/* Limit size for next transfer. */
+		if (n > BYTES_PER_DUMP)
+			n = BYTES_PER_DUMP;
+
+		if (maddr == 0) {	/* XXX kvtop chokes on this */
+			maddr += NBPG;
+			n -= NBPG;
+			i += NBPG;
+			++blkno;	/* XXX skip physical page 0 */
+		}
+		(void) pmap_map(dumpspace, maddr, maddr + n, VM_PROT_READ);
+		error = (*dump) (dumpdev, blkno, (caddr_t) dumpspace, n);
+		if (error)
+			break;
+		maddr += n;
+		blkno += btodb(n);	/* XXX? */
+		if (maddr >= (cpu_kcore_hdr.un._m68k.ram_segs[seg].start +
+		    cpu_kcore_hdr.un._m68k.ram_segs[seg].size)) {
+			++seg;
+			maddr = cpu_kcore_hdr.un._m68k.ram_segs[seg].start;
+			if (cpu_kcore_hdr.un._m68k.ram_segs[seg].size == 0)
+				break;
+		}
+	}
+
+	switch (error) {
 
 	case ENXIO:
 		printf("device bad\n");
@@ -875,6 +918,8 @@ dumpsys()
 		printf("succeeded\n");
 		break;
 	}
+	printf("\n\n");
+	delay(5000000);		/* 5 seconds */
 }
 
 /*
@@ -887,10 +932,11 @@ dumpsys()
  * we guarantee that the time will be greater than the value obtained by a
  * previous call.
  */
+void
 microtime(tvp)
 	register struct timeval *tvp;
 {
-	int s = splhigh();
+	int s = spl7();
 	static struct timeval lasttime;
 
 	*tvp = time;
@@ -909,20 +955,147 @@ microtime(tvp)
 	splx(s);
 }
 
+void
 initcpu()
 {
+	typedef void trapfun __P((void));
+
+	/* XXX should init '40 vecs here, too */
+#if defined(M68060) || defined(M68040) || defined(DRACO) || defined(FPU_EMULATE)
+	extern trapfun *vectab[256];
+#endif
+
+#if defined(M68060) || defined(M68040)
+	extern trapfun addrerr4060;
+#endif
+
+#ifdef M68060
+	extern trapfun buserr60;
+#if defined(M060SP)
+	/*extern u_int8_t I_CALL_TOP[];*/
+	extern trapfun intemu60, fpiemu60, fpdemu60, fpeaemu60;
+	extern u_int8_t FP_CALL_TOP[];
+#else
+	extern trapfun illinst;
+#endif
+	extern trapfun fpfault;
+#endif
+
+#ifdef M68040
+	extern trapfun buserr40;
+#endif
+
+#ifdef DRACO
+	extern trapfun DraCoIntr, DraCoLev1intr, DraCoLev2intr;
+	u_char dracorev;
+#endif
+
+#ifdef FPU_EMULATE
+	extern trapfun fpemuli;
+#endif
+
+#ifdef M68060
+	if (machineid & AMIGA_68060) {
+		if (machineid & AMIGA_FPU40 && m68060_pcr_init & 2) {
+			/* 
+			 * in this case, we're about to switch the FPU off;
+			 * do a FNOP to avoid stray FP traps later
+			 */
+			__asm("fnop");
+			/* ... and mark FPU as absent for identifyfpu() */
+			machineid &= ~(AMIGA_FPU40|AMIGA_68882|AMIGA_68881);
+		}
+		asm volatile ("movl %0,d0; .word 0x4e7b,0x0808" : : 
+			"d"(m68060_pcr_init):"d0" );
+
+		/* bus/addrerr vectors */
+		vectab[2] = buserr60;
+		vectab[3] = addrerr4060;
+#if defined(M060SP)
+
+		/* integer support */
+		vectab[61] = intemu60/*(trapfun *)&I_CALL_TOP[128 + 0x00]*/;
+
+		/* floating point support */
+		/*
+		 * XXX maybe we really should run-time check for the
+		 * stack frame format here:
+		 */
+		vectab[11] = fpiemu60/*(trapfun *)&FP_CALL_TOP[128 + 0x30]*/;
+
+		vectab[55] = fpdemu60/*(trapfun *)&FP_CALL_TOP[128 + 0x38]*/;
+		vectab[60] = fpeaemu60/*(trapfun *)&FP_CALL_TOP[128 + 0x40]*/;
+
+		vectab[54] = (trapfun *)&FP_CALL_TOP[128 + 0x00];
+		vectab[52] = (trapfun *)&FP_CALL_TOP[128 + 0x08];
+		vectab[53] = (trapfun *)&FP_CALL_TOP[128 + 0x10];
+		vectab[51] = (trapfun *)&FP_CALL_TOP[128 + 0x18];
+		vectab[50] = (trapfun *)&FP_CALL_TOP[128 + 0x20];
+		vectab[49] = (trapfun *)&FP_CALL_TOP[128 + 0x28];
+
+#else
+		vectab[61] = illinst;
+#endif
+		vectab[48] = fpfault;
+	}
+#endif
+
+/*
+ * Vector initialization for special motherboards 
+ */
+#ifdef M68040
+#ifdef M68060
+	else
+#endif
+	if (machineid & AMIGA_68040) {
+		/* addrerr vector */
+		vectab[2] = buserr40;
+		vectab[3] = addrerr4060;
+	}
+#endif
+
+#ifdef FPU_EMULATE
+	if (!(machineid & (AMIGA_68881|AMIGA_68882|AMIGA_FPU40))) {
+		vectab[11] = fpemuli;
+		printf("FPU software emulation initialized.\n");
+	}
+#endif
+
+/*
+ * Vector initialization for special motherboards 
+ */
+
+#ifdef DRACO
+	dracorev = is_draco();
+	if (dracorev) {
+		if (dracorev >= 4) {
+			vectab[24+1] = DraCoLev1intr;
+			vectab[24+2] = DraCoIntr;
+		} else {
+			vectab[24+1] = DraCoIntr;
+			vectab[24+2] = DraCoLev2intr;
+		}
+		vectab[24+3] = DraCoIntr;
+		vectab[24+4] = DraCoIntr;
+		vectab[24+5] = DraCoIntr;
+		vectab[24+6] = DraCoIntr;
+	}
+#endif
 }
 
+void
 straytrap(pc, evec)
 	int pc;
 	u_short evec;
 {
-	printf("unexpected trap (vector offset %x) from %x\n",
-	       evec & 0xFFF, pc);
+	printf("unexpected trap format %x (vector offset %x) from %x\n",
+	       evec>>12, evec & 0xFFF, pc);
+/*XXX*/	panic("straytrap");
 }
 
 int	*nofault;
 
+int
 badaddr(addr)
 	register caddr_t addr;
 {
@@ -942,6 +1115,7 @@ badaddr(addr)
 	return(0);
 }
 
+int
 badbaddr(addr)
 	register caddr_t addr;
 {
@@ -961,12 +1135,31 @@ badbaddr(addr)
 	return(0);
 }
 
+static void
 netintr()
 {
 #ifdef INET
+#if NARP > 0
+	if (netisr & (1 << NETISR_ARP)) {
+		netisr &= ~(1 << NETISR_ARP);
+		arpintr();
+	}
+#endif
 	if (netisr & (1 << NETISR_IP)) {
 		netisr &= ~(1 << NETISR_IP);
 		ipintr();
+	}
+#endif
+#ifdef INET6
+	if (netisr & (1 << NETISR_IPV6)) {
+		netisr &= ~(1 << NETISR_IPV6);
+		ip6intr();
+	}
+#endif
+#ifdef NETATALK
+	if (netisr & (1 << NETISR_ATALK)) {
+		netisr &= ~(1 << NETISR_ATALK);
+		atintr();
 	}
 #endif
 #ifdef NS
@@ -981,193 +1174,519 @@ netintr()
 		clnlintr();
 	}
 #endif
+#if NPPP > 0
+	if (netisr & (1 << NETISR_PPP)) {
+		netisr &= ~(1 << NETISR_PPP);
+		pppintr();
+	}
+#endif
 }
 
 
-/* this is a handy package to have asynchronously executed
-   function calls executed at very low interrupt priority.
-   Example for use is keyboard repeat, where the repeat 
-   handler running at splclock() triggers such a (hardware
-   aided) software interrupt.
-
-   Note: the installed functions are currently called in a
-         LIFO fashion, might want to change this to FIFO
-	 later. */
-
+/*
+ * this is a handy package to have asynchronously executed
+ * function calls executed at very low interrupt priority.
+ * Example for use is keyboard repeat, where the repeat 
+ * handler running at splclock() triggers such a (hardware
+ * aided) software interrupt.
+ * Note: the installed functions are currently called in a
+ * LIFO fashion, might want to change this to FIFO
+ * later.
+ */
 struct si_callback {
-  struct si_callback *next;
-  void (*function) __P((void *rock1, void *rock2));
-  void *rock1, *rock2;
+	struct si_callback *next;
+	void (*function) __P((void *rock1, void *rock2));
+	void *rock1, *rock2;
 };
+static struct si_callback *si_callbacks;
+static struct si_callback *si_free;
+#ifdef DIAGNOSTIC
+static int ncb;		/* number of callback blocks allocated */
+static int ncbd;	/* number of callback blocks dynamically allocated */
+#endif
 
-static struct si_callback *si_callbacks = 0;
+/*
+ * these are __GENERIC_SOFT_INTERRUPT wrappers; will be replaced
+ * once by the real thing once all drivers are converted.
+ *
+ * to help performance for converted drivers, the YYY_sicallback() function
+ * family can be implemented in terms of softintr_XXX() as an intermediate
+ * measure.
+ */
+
+static void
+_softintr_callit(rock1, rock2)
+	void *rock1, *rock2;
+{
+	(*(void (*)(void *))rock1)(rock2);
+}
+
+void *
+softintr_establish(ipl, func, arg)
+	int ipl;
+	void func __P((void *));
+	void *arg;
+{
+	struct si_callback *si;
+
+	(void)ipl;
+
+	si = (struct si_callback *)malloc(sizeof(*si), M_TEMP, M_NOWAIT);
+	if (si == NULL)
+		return (si);
+
+	si->function = (void *)0;
+	si->rock1 = (void *)func;
+	si->rock2 = arg;
+
+	alloc_sicallback();
+	return ((void *)si);
+}
+
+void
+softintr_disestablish(hook)
+	void *hook;
+{
+	/*
+	 * XXX currently, there is a memory leak here; we cant free the
+	 * sicallback structure.
+	 * this will be automatically repaired once we rewirte the soft
+	 * interupt functions.
+	 */
+	 
+	free(hook, M_TEMP);
+}
+
+void
+alloc_sicallback()
+{
+	struct si_callback *si;
+	int s;
+
+	si = (struct si_callback *)malloc(sizeof(*si), M_TEMP, M_NOWAIT);
+	if (si == NULL)
+		return;
+	s = splhigh();
+	si->next = si_free;
+	si_free = si;
+	splx(s);
+#ifdef DIAGNOSTIC
+	++ncb;
+#endif
+}
+
+void
+softintr_schedule(vsi)
+	void *vsi;
+{
+	struct si_callback *si;
+	si = vsi;
+
+	add_sicallback(_softintr_callit, si->rock1, si->rock2);
+}
 
 void
 add_sicallback (function, rock1, rock2)
-     void (*function) __P((void *rock1, void *rock2));
-     void *rock1, *rock2;
+	void (*function) __P((void *rock1, void *rock2));
+	void *rock1, *rock2;
 {
-  struct si_callback *si;
-  int s;
+	struct si_callback *si;
+	int s;
 
-  /* Note: this function may be called from high-priority
-           interrupt handlers. We may NOT block for 
-	   memory-allocation in here!. */
+	/*
+	 * this function may be called from high-priority interrupt handlers.
+	 * We may NOT block for  memory-allocation in here!.
+	 */
+	s = splhigh();
+	si = si_free;
+	if (si != NULL)
+		si_free = si->next;
+	splx(s);
 
-  si = (struct si_callback *) malloc (sizeof (*si), M_TEMP, M_NOWAIT);
+	if (si == NULL) {
+		si = (struct si_callback *)malloc(sizeof(*si), M_TEMP, M_NOWAIT);
+#ifdef DIAGNOSTIC
+		if (si)
+			++ncbd;		/* count # dynamically allocated */
+#endif
 
-  /* bad luck really.. */
-  if (! si)
-    return;
+		if (!si)
+			return;
+	}
 
-  si->function = function;
-  si->rock1    = rock1;
-  si->rock2    = rock2;
+	si->function = function;
+	si->rock1 = rock1;
+	si->rock2 = rock2;
 
-  s = splhigh();
-  si->next     = si_callbacks;
-  si_callbacks = si;
-  splx (s);
+	s = splhigh();
+	si->next = si_callbacks;
+	si_callbacks = si;
+	splx(s);
 
-  /* make sure we have software ints enabled at all.. */
-  custom.intena = INTF_SETCLR | INTF_SOFTINT;
-
-  /* and cause a software interrupt (spl1). This interrupt might happen
-     immediately, or after returning to a safe enough level. */
-  custom.intreq = INTF_SETCLR | INTF_SOFTINT;
+	/*
+	 * Cause a software interrupt (spl1). This interrupt might
+	 * happen immediately, or after returning to a safe enough level.
+	 */
+	setsoftcback();
 }
 
 
 void
-rem_sicallback (function)
-     void (*function) __P((void *rock1, void *rock2));
+rem_sicallback(function)
+	void (*function) __P((void *rock1, void *rock2));
 {
-  struct si_callback *si, *psi;
-  int s;
+	struct si_callback *si, *psi, *nsi;
+	int s;
 
-  s = splhigh();
+	s = splhigh();
+	for (psi = 0, si = si_callbacks; si; ) {
+		nsi = si->next;
 
-  for (psi = 0, si = si_callbacks; si; )
-    {
-      struct si_callback *nsi = si->next;
-
-      if (si->function == function)
-	{
-	  free (si, M_TEMP);
-	  if (psi)
-	    psi->next = nsi;
-	  else
-	    si_callbacks = nsi;
+		if (si->function != function)
+			psi = si;
+		else {
+/*			free(si, M_TEMP); */
+			si->next = si_free;
+			si_free = si;
+			if (psi)
+				psi->next = nsi;
+			else
+				si_callbacks = nsi;
+		}
+		si = nsi;
 	}
-      else
-	psi = si;
-
-      si = nsi;
-    }
-
-  splx (s);
-
+	splx(s);
 }
 
 /* purge the list */
 static void
-call_sicallbacks ()
+call_sicallbacks()
 {
-  int s;
-  struct si_callback *si;
+	struct si_callback *si;
+	int s;
+	void *rock1, *rock2;
+	void (*function) __P((void *, void *));
 
-  do
-    {
-      s = splhigh ();
-      if (si = si_callbacks)
-	si_callbacks = si->next;
-      splx (s);
+	do {
+		s = splhigh ();
+		if ((si = si_callbacks) != 0)
+			si_callbacks = si->next;
+		splx(s);
 
-      if (si)
-	{
-	  si->function (si->rock1, si->rock2);
-	  free (si, M_TEMP);
+		if (si) {
+			function = si->function;
+			rock1 = si->rock1;
+			rock2 = si->rock2;
+/*			si->function(si->rock1, si->rock2); */
+/*			free(si, M_TEMP); */
+			s = splhigh ();
+			si->next = si_free;
+			si_free = si;
+			splx(s);
+			function (rock1, rock2);
+		}
+	} while (si);
+#ifdef DIAGNOSTIC
+	if (ncbd) {
+		ncb += ncbd;
+		printf("call_sicallback: %d more dynamic structures %d total\n",
+		    ncbd, ncb);
+		ncbd = 0;
 	}
-    }
-  while (si);
+#endif
 }
 
+struct isr *isr_ports;
+#ifdef DRACO
+struct isr *isr_slot3;
+struct isr *isr_supio;
+#endif
+struct isr *isr_exter;
 
+void
+add_isr(isr)
+	struct isr *isr;
+{
+	struct isr **p, *q;
+
+#ifdef DRACO
+	switch (isr->isr_ipl) {
+	case 2:
+		p = &isr_ports;
+		break;
+	case 3:
+		p = &isr_slot3;
+		break;
+	case 5:
+		p = &isr_supio;
+		break;
+	default:	/* was case 6:; make gcc -Wall quiet */
+		p = &isr_exter;
+		break;
+	}
+#else
+	p = isr->isr_ipl == 2 ? &isr_ports : &isr_exter;
+#endif
+	while ((q = *p) != NULL)
+		p = &q->isr_forw;
+	isr->isr_forw = NULL;
+	*p = isr;
+	/* enable interrupt */
+#ifdef DRACO
+	if (is_draco())
+		switch(isr->isr_ipl) {
+			case 6:
+				single_inst_bset_b(*draco_intena, DRIRQ_INT6);
+				break;
+			case 2:
+				single_inst_bset_b(*draco_intena, DRIRQ_INT2);
+				break;
+			default:
+				break;
+		}
+	else 
+#endif
+		custom.intena = isr->isr_ipl == 2 ? 
+		    INTF_SETCLR | INTF_PORTS :
+		    INTF_SETCLR | INTF_EXTER;
+}
+
+void
+remove_isr(isr)
+	struct isr *isr;
+{
+	struct isr **p, *q;
+
+#ifdef DRACO
+	switch (isr->isr_ipl) {
+	case 2:
+		p = &isr_ports;
+		break;
+	case 3:
+		p = &isr_slot3;
+		break;
+	case 5:
+		p = &isr_supio;
+		break;
+	default:	/* XXX to make gcc -Wall quiet, was 6: */
+		p = &isr_exter;
+		break;
+	}
+#else
+	p = isr->isr_ipl == 6 ? &isr_exter : &isr_ports;
+#endif
+
+	while ((q = *p) != NULL && q != isr)
+		p = &q->isr_forw;
+	if (q)
+		*p = q->isr_forw;
+	else
+		panic("remove_isr: handler not registered");
+	/* disable interrupt if no more handlers */
+#ifdef DRACO
+	switch (isr->isr_ipl) {
+	case 2:
+		p = &isr_ports;
+		break;
+	case 3:
+		p = &isr_slot3;
+		break;
+	case 5:
+		p = &isr_supio;
+		break;
+	case 6:
+		p = &isr_exter;
+		break;
+	}
+#else
+	p = isr->isr_ipl == 6 ? &isr_exter : &isr_ports;
+#endif
+	if (*p == NULL) {
+#ifdef DRACO
+		if (is_draco()) {
+			switch(isr->isr_ipl) {
+				case 2:
+					single_inst_bclr_b(*draco_intena,
+					    DRIRQ_INT2);
+					break;
+				case 6:
+					single_inst_bclr_b(*draco_intena,
+					    DRIRQ_INT6);
+					break;
+				default:
+					break;
+			}
+		} else
+#endif
+			custom.intena = isr->isr_ipl == 6 ? 
+			    INTF_EXTER : INTF_PORTS;
+	}
+}
+
+void
 intrhand(sr)
 	int sr;
 {
-  register unsigned int ipl;
-  register unsigned short ireq;
+	register unsigned int ipl;
+	register unsigned short ireq;
+	register struct isr **p, *q;
 
-  ipl = (sr >> 8) & 7;
-  ireq = custom.intreqr;
-
-  switch (ipl) 
-    {
-    case 1:
-      if (ireq & INTF_TBE)
-	{
-	  ser_outintr ();
-	}
-
-      if (ireq & INTF_SOFTINT)
-	{
-	  /* first call installed callbacks, then clear the softint-bit */
-	  call_sicallbacks ();
-	  custom.intreq = INTF_SOFTINT;
-	}
-
-      custom.intreq = INTF_DSKBLK;
-      break;
-
-    case 2:
-      custom.intreq = INTF_PORTS;
-      /* dmaintr() also calls scsiintr() if the corresponding bit is set in
-         the interrupt status register of the sdmac */
-#if NA3000SCSI > 0
-      if (a3000dmaintr ())
-        break;
+	ipl = (sr >> 8) & 7;
+#ifdef REALLYDEBUG
+	printf("intrhand: got int. %d\n", ipl);
 #endif
-#if NA2091SCSI > 0
-      if (a2091dmaintr ())
-	break;
+#ifdef DRACO
+	if (is_draco())
+		ireq = ((ipl == 1)  && (*draco_intfrc & DRIRQ_SOFT) ?
+		    INTF_SOFTINT : 0);
+	else
 #endif
-#if NGVP11SCSI > 0
-      if (gvp11dmaintr ())
-	break;
-#endif
-#if NLE > 0
-      if (leintr (0))
-        break;
-#endif
-      ciaa_intr ();
-      break;
+		ireq = custom.intreqr;
 
-    case 3:
-      /* VBL */
-      custom.intreq = INTF_VERTB | INTF_COPER | INTF_BLIT;
-      /* do modem-control check in vbl */
-      sermint (0);
-      cc_vbl ();
-      break;
+	switch (ipl) {
+	case 1:
+#ifdef DRACO
+		if (is_draco() && (draco_ioct->io_status & DRSTAT_KBDRECV))
+			drkbdintr();
+#endif
+		if (ireq & INTF_TBE) {
+#if NSER > 0
+			ser_outintr();
+#else
+			custom.intreq = INTF_TBE;
+#endif
+		}
 
+		if (ireq & INTF_DSKBLK) {
+#if NFD > 0
+			fdintr(0);
+#endif
+			custom.intreq = INTF_DSKBLK;
+		}
+		if (ireq & INTF_SOFTINT) {
+			unsigned char ssir_active;
+			int s;
+
+			/*
+			 * first clear the softint-bit
+			 * then process all classes of softints.
+			 * this order is dicated by the nature of 
+			 * software interrupts.  The other order
+			 * allows software interrupts to be missed.
+			 * Also copy and clear ssir to prevent
+			 * interrupt loss.
+			 */
+			clrsoftint();
+			s = splhigh();
+			ssir_active = ssir;
+			siroff(SIR_NET | SIR_CLOCK | SIR_CBACK);
+			splx(s);
+			if (ssir_active & SIR_NET) {
+#ifdef REALLYDEBUG
+				printf("calling netintr\n");
+#endif
+				uvmexp.softs++;
+				netintr();
+			}
+			if (ssir_active & SIR_CLOCK) {
+#ifdef REALLYDEBUG
+				printf("calling softclock\n");
+#endif
+				uvmexp.softs++;
+				/* XXXX softclock(&frame.f_stackadj); */
+				softclock();
+			}
+			if (ssir_active & SIR_CBACK) {
+#ifdef REALLYDEBUG
+				printf("calling softcallbacks\n");
+#endif
+				uvmexp.softs++;
+				call_sicallbacks();
+			}
+		}
+		break;
+
+	case 2:
+		p = &isr_ports;
+		while ((q = *p) != NULL) {
+			if ((q->isr_intr)(q->isr_arg))
+				break;
+			p = &q->isr_forw;
+		}
+		if (q == NULL)
+			ciaa_intr ();
+#ifdef DRACO
+		if (is_draco())
+			single_inst_bclr_b(*draco_intpen, DRIRQ_INT2);
+		else
+#endif
+			custom.intreq = INTF_PORTS;
+
+		break;
+
+#ifdef DRACO
+	/* only handled here for DraCo */
+	case 6:
+		p = &isr_exter;
+		while ((q = *p) != NULL) {
+			if ((q->isr_intr)(q->isr_arg))
+				break;
+			p = &q->isr_forw;
+		}
+		single_inst_bclr_b(*draco_intpen, DRIRQ_INT6);
+		break;
+#endif
+
+	case 3: 
+	/* VBL */
+		if (ireq & INTF_BLIT)  
+			blitter_handler();
+		if (ireq & INTF_COPER)  
+			copper_handler();
+		if (ireq & INTF_VERTB) 
+			vbl_handler();
+		break;
+#ifdef DRACO
+	case 5:
+		p = &isr_supio;
+		while ((q = *p) != NULL) {
+			if ((q->isr_intr)(q->isr_arg))
+				break;
+			p = &q->isr_forw;
+		}
+		break;
+#endif
 #if 0
 /* now dealt with in locore.s for speed reasons */
-    case 5:
-      /* check RS232 RBF */
-      serintr (0);
+	case 5:
+		/* check RS232 RBF */
+		serintr (0);
 
-      custom.intreq = INTF_DSKSYNC;
-      break;
+		custom.intreq = INTF_DSKSYNC;
+		break;
 #endif
 
-    case 4:
-      custom.intreq = INTF_AUD0 | INTF_AUD1 | INTF_AUD2 | INTF_AUD3;
-
-    default:
-      printf("intrhand: unexpected sr 0x%x, intreq = 0x%x\n", sr, ireq);
-      break;
-    }
+	case 4:
+#ifdef DRACO
+#include "drsc.h"
+		if (is_draco())
+#if NDRSC > 0
+			drsc_handler();
+#else
+			single_inst_bclr_b(*draco_intpen, DRIRQ_SCSI);
+#endif
+		else
+#endif
+		audio_handler();
+		break;
+	default:
+		printf("intrhand: unexpected sr 0x%x, intreq = 0x%x\n",
+		    sr, ireq);
+		break;
+	}
+#ifdef REALLYDEBUG
+	printf("intrhand: leaving.\n");
+#endif
 }
 
 #if defined(DEBUG) && !defined(PANICBUTTON)
@@ -1178,7 +1697,9 @@ intrhand(sr)
 int panicbutton = 1;	/* non-zero if panic buttons are enabled */
 int crashandburn = 0;
 int candbdelay = 50;	/* give em half a second */
+void candbtimer __P((void));
 
+void
 candbtimer()
 {
 	crashandburn = 0;
@@ -1224,153 +1745,26 @@ nmihand(frame)
 }
 #endif
 
-
-regdump(rp, sbytes)
-  int *rp; /* must not be register */
-  int sbytes;
+/*
+ * should only get here, if no standard executable. This can currently
+ * only mean, we're reading an old ZMAGIC file without MID, but since Amiga
+ * ZMAGIC always worked the `right' way (;-)) just ignore the missing
+ * MID and proceed to new zmagic code ;-)
+ */
+int
+cpu_exec_aout_makecmds(p, epp)
+	struct proc *p;
+	struct exec_package *epp;
 {
-	static int doingdump = 0;
-	register int i;
-	int s;
-	extern char *hexstr();
-
-	if (doingdump)
-		return;
-	s = splhigh();
-	doingdump = 1;
-	printf("pid = %d, pc = %s, ", curproc->p_pid, hexstr(rp[PC], 8));
-	printf("ps = %s, ", hexstr(rp[PS], 4));
-	printf("sfc = %s, ", hexstr(getsfc(), 4));
-	printf("dfc = %s\n", hexstr(getdfc(), 4));
-	printf("Registers:\n     ");
-	for (i = 0; i < 8; i++)
-		printf("        %d", i);
-	printf("\ndreg:");
-	for (i = 0; i < 8; i++)
-		printf(" %s", hexstr(rp[i], 8));
-	printf("\nareg:");
-	for (i = 0; i < 8; i++)
-		printf(" %s", hexstr(rp[i+8], 8));
-	if (sbytes > 0) {
-		if (rp[PS] & PSL_S) {
-			printf("\n\nKernel stack (%s):",
-			       hexstr((int)(((int *)&rp)-1), 8));
-			dumpmem(((int *)&rp)-1, sbytes, 0);
-		} else {
-			printf("\n\nUser stack (%s):", hexstr(rp[SP], 8));
-			dumpmem((int *)rp[SP], sbytes, 1);
-		}
-	}
-	doingdump = 0;
-	splx(s);
-}
-
-extern char kstack[];
-#define KSADDR	((int *)&(kstack[(UPAGES-1)*NBPG]))
-
-dumpmem(ptr, sz, ustack)
-	register int *ptr;
-	int sz;
-{
-	register int i, val;
-	extern char *hexstr();
-
-	for (i = 0; i < sz; i++) {
-		if ((i & 7) == 0)
-			printf("\n%s: ", hexstr((int)ptr, 6));
-		else
-			printf(" ");
-		if (ustack == 1) {
-			if ((val = fuword(ptr++)) == -1)
-				break;
-		} else {
-			if (ustack == 0 &&
-			    (ptr < KSADDR || ptr > KSADDR+(NBPG/4-1)))
-				break;
-			val = *ptr++;
-		}
-		printf("%s", hexstr(val, 8));
-	}
-	printf("\n");
-}
-
-char *
-hexstr(val, len)
-	register int val;
-{
-	static char nbuf[9];
-	register int x, i;
-
-	if (len > 8)
-		return("");
-	nbuf[len] = '\0';
-	for (i = len-1; i >= 0; --i) {
-		x = val & 0xF;
-		if (x > 9)
-			nbuf[i] = x - 10 + 'A';
-		else
-			nbuf[i] = x + '0';
-		val >>= 4;
-	}
-	return(nbuf);
-}
-
-
-physstrat(bp, strat, prio)
-	struct buf *bp;
-	int (*strat)(), prio;
-{
-	register int s;
-#if thats_history
-	caddr_t baddr;
-
-	/*
-	 * vmapbuf clobbers b_addr so we must remember it so that it
-	 * can be restored after vunmapbuf.  This is truely rude, we
-	 * should really be storing this in a field in the buf struct
-	 * but none are available and I didn't want to add one at
-	 * this time.  Note that b_addr for dirty page pushes is 
-	 * restored in vunmapbuf. (ugh!)
-	 */
-	baddr = bp->b_un.b_addr;
+	int error = ENOEXEC;
+#ifdef COMPAT_NOMID
+	struct exec *execp = epp->ep_hdr;
 #endif
-	vmapbuf(bp);
-	(*strat)(bp);
-	/* pageout daemon doesn't wait for pushed pages */
-	if (bp->b_flags & B_DIRTY)
-		return;
-	s = splbio();
-	while ((bp->b_flags & B_DONE) == 0)
-		sleep((caddr_t)bp, prio);
-	splx(s);
-	vunmapbuf(bp);
-#if thats_history
-	bp->b_un.b_addr = baddr;
-#endif
-}
-
-/* should only get here, if no standard executable. This can currently
-   only mean, we're reading an old ZMAGIC file without MID, but since Amiga
-   ZMAGIC always worked the `right' way (;-)) just ignore the missing
-   MID and proceed to new zmagic code ;-) */
-
-cpu_exec_makecmds(p, epp)
-    struct proc *p;
-    struct exec_package *epp;
-{
-	int rv;
 
 #ifdef COMPAT_NOMID
-  if (! ((epp->ep_execp->a_midmag >> 16) & 0x0fff)
-      && epp->ep_execp->a_midmag == ZMAGIC)
-    return exec_prep_zmagic (p, epp);
+	if (!((execp->a_midmag >> 16) & 0x0fff)
+	    && execp->a_midmag == ZMAGIC)
+		return(exec_aout_prep_zmagic(p, epp));
 #endif
-
-  if (((epp->ep_execp->a_midmag >> 16) & 0x0fff) == MID_SUN020)
-    return exec_prep_zmagic (p, epp);
-
-  if (((epp->ep_execp->a_midmag >> 16) & 0x0fff) == MID_SUN010)
-    return exec_prep_zmagic (p, epp);
-
-  return ENOEXEC;
+	return(error);
 }
