@@ -1,10 +1,10 @@
-#	$NetBSD: Makefile,v 1.8 1997/10/24 07:52:23 lukem Exp $
+#	$NetBSD: Makefile,v 1.9 1999/07/14 21:36:37 wrstuden Exp $
 
-PROG=	mkastosc
+HOSTPROG=	mkastosc
 SRCS=	mkastosc.c dohits.c asc_ebc.c ebc_disp.c
 
-CPPFLAGS+=-I${.CURDIR}/../mkhits
+HOST_CPPFLAGS+=-I${.CURDIR}/../mkhits
 .PATH: ${.CURDIR}/../mkhits
 
-.include <bsd.prog.mk>
+.include <bsd.hostprog.mk>
 
