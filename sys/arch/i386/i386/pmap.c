@@ -1,4 +1,5 @@
 /* 
+ * Copyright (c) 1993 Charles Hannum.
  * Copyright (c) 1991 Regents of the University of California.
  * All rights reserved.
  *
@@ -35,7 +36,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)pmap.c	7.7 (Berkeley)	5/12/91
- *	$Id: pmap.c,v 1.8.2.8 1993/10/16 02:34:01 mycroft Exp $
+ *	$Id: pmap.c,v 1.8.2.9 1993/10/26 12:02:46 mycroft Exp $
  */
 
 /*
@@ -46,10 +47,6 @@
  * space, and to reduce the cost of memory to each process.
  *
  *	Derived from: hp300/@(#)pmap.c	7.1 (Berkeley) 12/5/90
- */
-
-/*
- *	Reno i386 version, from Mike Hibler's hp300 version.
  */
 
 /*
@@ -178,7 +175,6 @@ vm_offset_t	avail_end;	/* PA of last available physical page */
 vm_size_t	mem_size;	/* memory size in bytes */
 vm_offset_t	virtual_avail;  /* VA of first avail page (after kernel bss)*/
 vm_offset_t	virtual_end;	/* VA of last avail page (end of kernel AS) */
-int		i386pagesperpage;	/* PAGE_SIZE / I386_PAGE_SIZE */
 boolean_t	pmap_initialized = FALSE;	/* Has pmap_init completed? */
 char		*pmap_attributes;	/* reference and modify bits */
 
@@ -229,7 +225,6 @@ pmap_bootstrap(virtual_start)
 	mem_size = physmem << PGSHIFT;
 	virtual_avail = virtual_start;
 	virtual_end = VM_MAX_KERNEL_ADDRESS;
-	i386pagesperpage = PAGE_SIZE / I386_PAGE_SIZE;
 
 	/*
 	 * Initialize protection array.
@@ -271,7 +266,7 @@ pmap_bootstrap(virtual_start)
 	 * Allocate all the submaps we need
 	 */
 #define	SYSMAP(c, p, v, n)	\
-	v = (c)va; va += ((n)*I386_PAGE_SIZE); p = pte; pte += (n);
+	v = (c)va; va += ((n)*NBPG); p = pte; pte += (n);
 
 	va = virtual_avail;
 	pte = pmap_pte(kernel_pmap, va);
@@ -430,8 +425,7 @@ pmap_pinit(pmap)
 	pmap->pm_pdir = (pd_entry_t *) kmem_alloc(kernel_map, NBPG);
 
 	/* wire in kernel global address entries */
-	bcopy(PTD+KPTDI_FIRST, pmap->pm_pdir+KPTDI_FIRST,
-		(KPTDI_LAST-KPTDI_FIRST+1)*4);
+	bcopy(PTD+KPTDI, pmap->pm_pdir+KPTDI, NKPDE*4);
 
 	/* install self-referential address mapping entry */
 	*(int *)(pmap->pm_pdir+PTDPTDI) =
@@ -526,7 +520,6 @@ pmap_remove(pmap, sva, eva)
 	vm_offset_t pa;
 	pt_entry_t *pte;
 	pv_entry_t pv, npv;
-	int ix;
 	int s, bits;
 #ifdef DEBUG
 	pt_entry_t opte;
@@ -609,21 +602,13 @@ pmap_remove(pmap, sva, eva)
 		 */
 #ifdef DEBUG
 		if (pmapdebug & PDB_REMOVE)
-			printf("remove: inv %x ptes at %x(%x) ",
-			       i386pagesperpage, ptq, *(int *)ptq);
+			printf("remove: inv pte at %x(%x) ",
+			       ptq, *(int *)ptq);
 #endif
-		bits = ix = 0;
-		do {
-			bits |= *(int *)ptq & (PG_U|PG_M);
-			*(int *)ptq++ = 0;
-			/*TBIS(va + ix * I386_PAGE_SIZE);*/
-		} while (++ix != i386pagesperpage);
+		bits = *(int *)ptq & (PG_U|PG_M);
+		*(int *)ptq++ = 0;
 		if (curproc && pmap == &curproc->p_vmspace->vm_pmap)
 			pmap_activate(pmap, (struct pcb *)curproc->p_addr);
-		/* are we current address space or kernel? */
-		/*if (pmap->pm_pdir[PTDPTDI].pd_pfnum == PTDpde.pd_pfnum
-			|| pmap == kernel_pmap)
-		lcr3(curpcb->pcb_ptd);*/
 		tlbflush();
 
 #ifdef needednotdone
@@ -755,7 +740,6 @@ pmap_protect(pmap, sva, eva, prot)
 {
 	register pt_entry_t *pte;
 	register vm_offset_t va;
-	register int ix;
 	int i386prot;
 	boolean_t firstpage = TRUE;
 	register pt_entry_t *ptp;
@@ -811,15 +795,11 @@ pmap_protect(pmap, sva, eva, prot)
 		if (!pmap_pte_v(pte))
 			continue;
 
-		ix = 0;
 		i386prot = pte_prot(pmap, prot);
 		if (va < VM_MAX_ADDRESS)	/* see also pmap_enter() */
 			i386prot |= PG_u;
-		do {
-			/* clear VAC here if PG_RO? */
-			pmap_pte_set_prot(pte++, i386prot);
-			/*TBIS(va + ix * I386_PAGE_SIZE);*/
-		} while (++ix != i386pagesperpage);
+		/* clear VAC here if PG_RO? */
+		pmap_pte_set_prot(pte++, i386prot);
 	}
 	if (curproc && pmap == &curproc->p_vmspace->vm_pmap)
 		pmap_activate(pmap, (struct pcb *)curproc->p_addr);
@@ -846,7 +826,7 @@ pmap_enter(pmap, va, pa, prot, wired)
 	boolean_t wired;
 {
 	register pt_entry_t *pte;
-	register int npte, ix;
+	register int npte;
 	vm_offset_t opa;
 	boolean_t cacheable = TRUE;
 	boolean_t checkpv = TRUE;
@@ -872,10 +852,8 @@ pmap_enter(pmap, va, pa, prot, wired)
 	/*
 	 * Page Directory table entry not valid, we need a new PT page
 	 */
-	if (!pmap_pde_v(pmap_pde(pmap, va))) {
-		/* XXXX printf and panic? */
-		pg("ptdi %x", pmap->pm_pdir[PTDPTDI]);
-	}
+	if (!pmap_pde_v(pmap_pde(pmap, va)))
+		panic("ptdi %x", pmap->pm_pdir[PTDPTDI]);
 
 	pte = pmap_pte(pmap, va);
 	opa = pmap_pte_pa(pte);
@@ -1017,12 +995,11 @@ validate:
 	if (va < VM_MAXUSER_ADDRESS)	/* i.e. below USRSTACK */
 		npte |= PG_u;
 	else if (va < VM_MAX_ADDRESS)
-		/* pagetables need to be user RW, for some reason, and the
+		/*
+		 * Page tables need to be user RW, for some reason, and the
 		 * user area must be writable too.  Anything above
 		 * VM_MAXUSER_ADDRESS is protected from user access by
 		 * the user data and code segment descriptors, so this is OK.
-		 *
-		 * andrew@werple.apana.org.au
 		 */
 		npte |= PG_u | PG_RW;
 
@@ -1030,16 +1007,8 @@ validate:
 	if (pmapdebug & PDB_ENTER)
 		printf("enter: new pte value %x ", npte);
 #endif
-	ix = 0;
-	do {
-		*(int *)pte++ = npte;
-		/*TBIS(va);*/
-		npte += I386_PAGE_SIZE;
-		va += I386_PAGE_SIZE;
-	} while (++ix != i386pagesperpage);
-	pte--;
+	*(int *)pte = npte;
 	/*pads(pmap);*/
-	/*lcr3(((struct pcb *)curproc->p_addr)->pcb_ptd);*/
 	tlbflush();
 }
 
@@ -1080,7 +1049,6 @@ pmap_change_wiring(pmap, va, wired)
 	boolean_t	wired;
 {
 	register pt_entry_t *pte;
-	register int ix;
 
 #ifdef DEBUG
 	if (pmapdebug & PDB_FOLLOW)
@@ -1120,10 +1088,7 @@ pmap_change_wiring(pmap, va, wired)
 	 * Wiring is not a hardware characteristic so there is no need
 	 * to invalidate TLB.
 	 */
-	ix = 0;
-	do {
-		pmap_pte_set_w(pte++, wired);
-	} while (++ix != i386pagesperpage);
+	pmap_pte_set_w(pte, wired);
 }
 
 /*
@@ -1143,6 +1108,7 @@ struct pte *pmap_pte(pmap, va)
 	if (pmapdebug & PDB_FOLLOW)
 		printf("pmap_pte(%x, %x) ->\n", pmap, va);
 #endif
+
 	if (pmap && pmap_pde_v(pmap_pde(pmap, va))) {
 
 		/* are we current address space or kernel? */
@@ -1304,17 +1270,13 @@ void
 pmap_zero_page(phys)
 	register vm_offset_t	phys;
 {
-	register int ix;
 
 #ifdef DEBUG
 	if (pmapdebug & PDB_FOLLOW)
 		printf("pmap_zero_page(%x)", phys);
 #endif
 	phys >>= PGSHIFT;
-	ix = 0;
-	do {
-		clearseg(phys++);
-	} while (++ix != i386pagesperpage);
+	clearseg(phys);
 }
 
 /*
@@ -1327,7 +1289,6 @@ void
 pmap_copy_page(src, dst)
 	register vm_offset_t	src, dst;
 {
-	register int ix;
 
 #ifdef DEBUG
 	if (pmapdebug & PDB_FOLLOW)
@@ -1335,10 +1296,7 @@ pmap_copy_page(src, dst)
 #endif
 	src >>= PGSHIFT;
 	dst >>= PGSHIFT;
-	ix = 0;
-	do {
-		physcopyseg(src++, dst++);
-	} while (++ix != i386pagesperpage);
+	physcopyseg(src, dst);
 }
 
 
@@ -1527,7 +1485,7 @@ pmap_testbit(pa, bit)
 	int bit;
 {
 	register pv_entry_t pv;
-	register int *pte, ix;
+	register int *pte;
 	int s;
 
 	if (!pmap_valid_page(pa))
@@ -1549,13 +1507,10 @@ pmap_testbit(pa, bit)
 	if (pv->pv_pmap != NULL) {
 		for (; pv; pv = pv->pv_next) {
 			pte = (int *) pmap_pte(pv->pv_pmap, pv->pv_va);
-			ix = 0;
-			do {
-				if (*pte++ & bit) {
-					splx(s);
-					return(TRUE);
-				}
-			} while (++ix != i386pagesperpage);
+			if (*pte++ & bit) {
+				splx(s);
+				return(TRUE);
+			}
 		}
 	}
 	splx(s);
@@ -1568,7 +1523,7 @@ pmap_changebit(pa, bit, setem)
 	boolean_t setem;
 {
 	register pv_entry_t pv;
-	register int *pte, npte, ix;
+	register int *pte, npte;
 	vm_offset_t va;
 	int s;
 	boolean_t firstpage = TRUE;
@@ -1613,19 +1568,14 @@ pmap_changebit(pa, bit, setem)
                         }
 
 			pte = (int *) pmap_pte(pv->pv_pmap, va);
-			ix = 0;
-			do {
-				if (setem)
-					npte = *pte | bit;
-				else
-					npte = *pte & ~bit;
-				if (*pte != npte) {
-					*pte = npte;
-					/*TBIS(va);*/
-				}
-				va += I386_PAGE_SIZE;
-				pte++;
-			} while (++ix != i386pagesperpage);
+			if (setem)
+				npte = *pte | bit;
+			else
+				npte = *pte & ~bit;
+			if (*pte != npte)
+				*pte = npte;
+			va += NBPG;
+			pte++;
 
 			if (curproc && pv->pv_pmap == &curproc->p_vmspace->vm_pmap)
 				pmap_activate(pv->pv_pmap, (struct pcb *)curproc->p_addr);
