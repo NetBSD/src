@@ -1,4 +1,4 @@
-/*	$NetBSD: print.c,v 1.14 1997/10/20 08:08:07 scottr Exp $	*/
+/*	$NetBSD: print.c,v 1.15 1998/02/13 20:45:24 kleink Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993, 1994
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)print.c	8.6 (Berkeley) 4/16/94";
 #else
-__RCSID("$NetBSD: print.c,v 1.14 1997/10/20 08:08:07 scottr Exp $");
+__RCSID("$NetBSD: print.c,v 1.15 1998/02/13 20:45:24 kleink Exp $");
 #endif
 #endif /* not lint */
 
@@ -81,6 +81,9 @@ print(tp, wp, ldisc, fmt)
 			break;
 		case PPPDISC:	
 			cnt += printf("ppp disc; ");
+			break;
+		case STRIPDISC:	
+			cnt += printf("strip disc; ");
 			break;
 		default:	
 			cnt += printf("#%d disc; ", ldisc);
