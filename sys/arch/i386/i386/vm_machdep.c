@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_machdep.c,v 1.86.2.10 2001/01/02 06:58:09 thorpej Exp $	*/
+/*	$NetBSD: vm_machdep.c,v 1.86.2.11 2001/01/03 16:55:47 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1995 Charles M. Hannum.  All rights reserved.
@@ -299,6 +299,7 @@ pagemove(from, to, size)
 	size_t size;
 {
 	register pt_entry_t *fpte, *tpte, ofpte, otpte;
+	int32_t cpumask = 0;
 
 	if (size % NBPG)
 		panic("pagemove");
@@ -309,34 +310,17 @@ pagemove(from, to, size)
 		ofpte = *fpte;
 		*tpte++ = *fpte;
 		*fpte++ = 0;
-#if defined(I386_CPU)
-		if (cpu_class != CPUCLASS_386)
-#endif
-		{
-			if (otpte & PG_V) {
-				pmap_update_pg((vaddr_t) to);
-#ifdef MULTIPROCESSOR
-				pmap_tlb_shootdown(pmap_kernel(),
-				    (vaddr_t)to, otpte);
-#endif
-			}
-			
-			if (ofpte & PG_V) {
-				pmap_update_pg((vaddr_t) from);
-#ifdef MULTIPROCESSOR
-				pmap_tlb_shootdown(pmap_kernel(),
-				    (vaddr_t)from, ofpte);
-#endif
-			}
-		}
+		if (otpte & PG_V)
+			pmap_tlb_shootdown(pmap_kernel(),
+			    (vaddr_t)to, otpte, &cpumask);
+		if (ofpte & PG_V)
+			pmap_tlb_shootdown(pmap_kernel(),
+			    (vaddr_t)from, ofpte, &cpumask);
 		from += NBPG;
 		to += NBPG;
 		size -= NBPG;
 	}
-#if defined(I386_CPU)
-	if (cpu_class == CPUCLASS_386)
-		tlbflush();
-#endif
+	pmap_tlb_shootnow(cpumask);
 }
 
 /*

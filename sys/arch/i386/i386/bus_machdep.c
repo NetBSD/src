@@ -1,4 +1,4 @@
-/*	$NetBSD: bus_machdep.c,v 1.1.2.3 2000/11/18 22:56:26 sommerfeld Exp $	*/
+/*	$NetBSD: bus_machdep.c,v 1.1.2.4 2001/01/03 16:55:46 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -275,10 +275,7 @@ i386_mem_add_mapping(bpa, size, cacheable, bshp)
 	u_long pa, endpa;
 	vaddr_t va;
 	pt_entry_t *pte;
-#ifdef MULTIPROCESSOR
-	pt_entry_t opte;
-#endif
-	
+	int32_t cpumask = 0;
 
 	pa = i386_trunc_page(bpa);
 	endpa = i386_round_page(bpa + size);
@@ -302,6 +299,10 @@ i386_mem_add_mapping(bpa, size, cacheable, bshp)
 		 * the mainboard has wired up device space non-cacheable
 		 * on those machines.
 		 *
+		 * Note that it's not necessary to use atomic ops to
+		 * fiddle with the PTE here, because we don't care
+		 * about mod/ref information.
+		 *
 		 * XXX should hand this bit to pmap_kenter_pa to
 		 * save the extra invalidate!
 		 *
@@ -309,19 +310,16 @@ i386_mem_add_mapping(bpa, size, cacheable, bshp)
 		 */
 		if (cpu_class != CPUCLASS_386) {
 			pte = kvtopte(va);
-#ifdef MULTIPROCESSOR
-			opte = *pte;
-#endif
 			if (cacheable)
 				*pte &= ~PG_N;
 			else
 				*pte |= PG_N;
-			pmap_update_pg(va);
-#ifdef MULTIPROCESSOR
-			pmap_tlb_shootdown(pmap_kernel(), va, opte);
-#endif
+			pmap_tlb_shootdown(pmap_kernel(), va, *pte,
+			    &cpumask);
 		}
 	}
+
+	pmap_tlb_shootnow(cpumask);
  
 	return 0;
 }

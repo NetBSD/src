@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.83.2.19 2001/01/02 06:58:08 thorpej Exp $	*/
+/*	$NetBSD: pmap.c,v 1.83.2.20 2001/01/03 16:55:46 thorpej Exp $	*/
 
 /*
  *
@@ -152,16 +152,10 @@
  * is a void function.
  *
  * [B] new page tables pages (PTP)
- * 	- plan 1: call uvm_pagealloc()
+ * 	- call uvm_pagealloc()
  * 		=> success: zero page, add to pm_pdir
- * 		=> failure: we are out of free vm_pages
- * 	- plan 2: using a linked LIST of active pmaps we attempt
- * 	to "steal" a PTP from another process.   we lock
- * 	the target pmap with simple_lock_try so that if it is
- * 	busy we do not block.
- * 		=> success: remove old mappings, zero, add to pm_pdir
- * 		=> failure: highly unlikely
- * 	- plan 3: panic
+ * 		=> failure: we are out of free vm_pages, let pmap_enter()
+ *		   tell UVM about it.
  *
  * note: for kernel PTPs, we start with NKPTP of them.   as we map
  * kernel memory (at uvm_map time) we check to see if we've grown
@@ -184,14 +178,7 @@
  *		=> success: map it in, free the pv_entry's, DONE!
  *		=> failure: kmem_object locked, no free vm_pages, etc.
  *			save VA for later call to [a], go to plan 3.
- *	- plan 3: using the pv_entry/pv_head lists find a pv_entry
- *		structure that is part of a non-kernel lockable pmap
- *		and "steal" that pv_entry by removing the mapping
- *		and reusing that pv_entry.
- *		=> success: done
- *		=> failure: highly unlikely: unable to lock and steal
- *			pv_entry
- *	- plan 4: we panic.
+ *	If we fail, we simply let pmap_enter() tell UVM about it.
  */
 
 /*
@@ -305,6 +292,8 @@ struct pmap_tlb_shootdown_q {
 	int pq_flushu;		/* pending flush user */
 } pmap_tlb_shootdown_q[I386_MAXPROCS];
 
+#define	PMAP_TLB_MAXJOBS	16
+
 struct pool pmap_tlb_shootdown_job_pool;
 int pj_nentries, pj_nbytes;
 void *pj_page;
@@ -314,8 +303,6 @@ struct pmap_tlb_shootdown_job *pmap_tlb_shootdown_job_get
 	    __P((struct pmap_tlb_shootdown_q *));
 void	pmap_tlb_shootdown_job_put __P((struct pmap_tlb_shootdown_q *,
 	    struct pmap_tlb_shootdown_job *));
-
-void pmap_tlb_shootnow __P((void));
 
 /*
  * global data structures
@@ -391,7 +378,6 @@ static vaddr_t pv_cachedva;		/* cached VA for later use */
  */
 
 static struct pmap_head pmaps;
-static struct pmap *pmaps_hand = NULL;	/* used by pmap_steal_ptp */
 
 /*
  * pool that pmap structures are allocated from
@@ -438,7 +424,7 @@ extern vaddr_t pentium_idt_vaddr;
  */
 
 static struct pv_entry	*pmap_add_pvpage __P((struct pv_page *, boolean_t));
-static struct vm_page	*pmap_alloc_ptp __P((struct pmap *, int, boolean_t));
+static struct vm_page	*pmap_alloc_ptp __P((struct pmap *, int));
 static struct pv_entry	*pmap_alloc_pv __P((struct pmap *, int)); /* see codes below */
 #define ALLOCPV_NEED	0	/* need PV now */
 #define ALLOCPV_TRY	1	/* just try to allocate, don't steal */
@@ -451,20 +437,18 @@ static void		 pmap_free_pv __P((struct pmap *, struct pv_entry *));
 static void		 pmap_free_pvs __P((struct pmap *, struct pv_entry *));
 static void		 pmap_free_pv_doit __P((struct pv_entry *));
 static void		 pmap_free_pvpage __P((void));
-static struct vm_page	*pmap_get_ptp __P((struct pmap *, int, boolean_t));
+static struct vm_page	*pmap_get_ptp __P((struct pmap *, int));
 static boolean_t	 pmap_is_curpmap __P((struct pmap *));
 static boolean_t	 pmap_is_active __P((struct pmap *, int));
 static pt_entry_t	*pmap_map_ptes __P((struct pmap *));
 static struct pv_entry	*pmap_remove_pv __P((struct pv_head *, struct pmap *,
 					     vaddr_t));
 static boolean_t	 pmap_remove_pte __P((struct pmap *, struct vm_page *,
-					      pt_entry_t *, vaddr_t));
+					      pt_entry_t *, vaddr_t,
+					      int32_t *));
 static void		 pmap_remove_ptes __P((struct pmap *,
-					       void *,
 					       struct vm_page *, vaddr_t,
-					       vaddr_t, vaddr_t));
-static struct vm_page	*pmap_steal_ptp __P((struct uvm_object *,
-					     vaddr_t));
+					       vaddr_t, vaddr_t, int32_t *));
 static vaddr_t		 pmap_tmpmap_pa __P((paddr_t));
 static pt_entry_t	*pmap_tmpmap_pvepte __P((struct pv_entry *));
 static void		 pmap_tmpunmap_pa __P((void));
@@ -476,20 +460,10 @@ static boolean_t	 pmap_transfer_ptes __P((struct pmap *,
 					 struct pmap_transfer_location *,
 					 int, boolean_t));
 #endif
-static boolean_t	 pmap_try_steal_pv __P((struct pv_head *,
-						struct pv_entry *,
-						struct pv_entry *));
 static void		pmap_unmap_ptes __P((struct pmap *));
 
 void			pmap_pinit __P((pmap_t));
 void			pmap_release __P((pmap_t));
-
-static void		pmap_defer_flush __P((void *prr,
-    					 struct pmap *pmap,
-    					 vaddr_t va, pt_entry_t));
-
-static void            pmap_flush_deferred __P((void *prr,
-				         struct pmap *pmap));
 
 /*
  * p m a p   i n l i n e   h e l p e r   f u n c t i o n s
@@ -621,6 +595,8 @@ pmap_apte_flush(struct pmap *pmap)
 	 * Flush the APTE mapping from all other CPUs that
 	 * are using the pmap we are using (who's APTE space
 	 * is the one we've just modified).
+	 *
+	 * XXXthorpej -- find a way to defer the IPI.
 	 */
 	for (CPU_INFO_FOREACH(cii, ci)) {
 		if (ci == self)
@@ -729,16 +705,20 @@ pmap_kenter_pa(va, pa, prot)
 
 	pte = vtopte(va);
 
-	npte = pa | ((prot & VM_PROT_WRITE)? PG_RW : PG_RO) |
+	npte = pa | ((prot & VM_PROT_WRITE) ? PG_RW : PG_RO) |
 	     PG_V | pmap_pg_g;
 
 	opte = i386_atomic_testset_ul(pte, npte); /* zap! */
 
 	if (pmap_valid_entry(opte)) {
+#if defined(MULTIPROCESSOR)
+		int32_t cpumask = 0;
+
+		pmap_tlb_shootdown(pmap_kernel(), va, opte, &cpumask);
+		pmap_tlb_shootnow(cpumask);
+#else
+		/* Don't bother deferring in the single CPU case. */
 		pmap_update_pg(va);
-#ifdef MULTIPROCESSOR
-		/* XXX only strictly needed if opte ">" pte */
-		pmap_tlb_shootdown(pmap_kernel(), va, opte);
 #endif
 	}
 }
@@ -760,6 +740,7 @@ pmap_kremove(va, len)
 	vsize_t len;
 {
 	pt_entry_t *pte, opte;
+	int32_t cpumask = 0;
 
 	len >>= PAGE_SHIFT;
 	for ( /* null */ ; len ; len--, va += NBPG) {
@@ -770,22 +751,9 @@ pmap_kremove(va, len)
 			panic("pmap_kremove: PG_PVLIST mapping for 0x%lx\n",
 			      va);
 #endif
-
-#if defined(I386_CPU)
-		if (cpu_class != CPUCLASS_386)
-#endif
-		{
-			pmap_update_pg(va);
-#ifdef MULTIPROCESSOR
-			pmap_tlb_shootdown(pmap_kernel(), va, opte);
-#endif
-		}
-		
+		pmap_tlb_shootdown(pmap_kernel(), va, opte, &cpumask);
 	}
-#if defined(I386_CPU)
-	if (cpu_class == CPUCLASS_386)
-		tlbflush();
-#endif
+	pmap_tlb_shootnow(cpumask);
 }
 
 /*
@@ -799,36 +767,19 @@ pmap_kenter_pgs(va, pgs, npgs)
 	int npgs;
 {
 	pt_entry_t *pte, opte;
-	int lcv;
+	int32_t cpumask = 0;
 	vaddr_t tva;
-#if defined(I386_CPU)
-	boolean_t need_update = FALSE;
-#endif
+	int lcv;
 
 	for (lcv = 0 ; lcv < npgs ; lcv++) {
 		tva = va + lcv * NBPG;
 		pte = vtopte(tva);
 		opte = *pte;
 		*pte = VM_PAGE_TO_PHYS(pgs[lcv]) | PG_RW | PG_V | pmap_pg_g;
-#if defined(I386_CPU)
-		if (cpu_class == CPUCLASS_386) {
-			if (pmap_valid_entry(opte))
-				need_update = TRUE;
-			continue;
-		}
-#endif
-		if (pmap_valid_entry(opte)) {
-			pmap_update_pg(tva);
-#ifdef MULTIPROCESSOR
-			/* XXX only strictly needed if opte ">" pte */
-			pmap_tlb_shootdown(pmap_kernel(), va, opte);
-#endif
-		}
+		if (pmap_valid_entry(opte))
+			pmap_tlb_shootdown(pmap_kernel(), va, opte, &cpumask);
 	}
-#if defined(I386_CPU)
-	if (need_update && cpu_class == CPUCLASS_386)
-		tlbflush();
-#endif
+	pmap_tlb_shootnow(cpumask);
 }
 
 /*
@@ -1286,8 +1237,8 @@ pmap_alloc_pvpage(pmap, mode)
 {
 	struct vm_page *pg;
 	struct pv_page *pvpage;
-	int lcv, idx, npg, s;
-	struct pv_entry *pv, *cpv, *prevpv;
+	struct pv_entry *pv;
+	int s;
 
 	/*
 	 * if we need_entry and we've got unused pv_pages, allocate from there
@@ -1324,7 +1275,7 @@ pmap_alloc_pvpage(pmap, mode)
 		    NBPG, UVM_KMF_TRYLOCK|UVM_KMF_VALLOC);
 		if (pv_cachedva == 0) {
 			splx(s);
-			goto steal_one;
+			return (NULL);
 		}
 	}
 
@@ -1335,7 +1286,7 @@ pmap_alloc_pvpage(pmap, mode)
 
 	if (!simple_lock_try(&uvmexp.kmem_object->vmobjlock)) {
 		splx(s);
-		goto steal_one;
+		return (NULL);
 	}
 
 	pg = uvm_pagealloc(uvmexp.kmem_object, pv_cachedva -
@@ -1349,7 +1300,7 @@ pmap_alloc_pvpage(pmap, mode)
 	/* splimp now dropped */
 
 	if (pg == NULL)
-		goto steal_one;
+		return (NULL);
 
 	/*
 	 * add a mapping for our new pv_page and free its entrys (save one!)
@@ -1361,117 +1312,7 @@ pmap_alloc_pvpage(pmap, mode)
 	pmap_kenter_pa(pv_cachedva, VM_PAGE_TO_PHYS(pg), VM_PROT_ALL);
 	pvpage = (struct pv_page *) pv_cachedva;
 	pv_cachedva = 0;
-	return(pmap_add_pvpage(pvpage, mode != ALLOCPV_NONEED));
-
-steal_one:
-	/*
-	 * if we don't really need a pv_entry right now, we can just return.
-	 */
-
-	if (mode != ALLOCPV_NEED)
-		return(NULL);
-
-	/*
-	 * last ditch effort!   we couldn't allocate a free page to make
-	 * more pv_entrys so we try and steal one from someone else.
-	 */
-
-	pv = NULL;
-	for (lcv = 0 ; pv == NULL && lcv < vm_nphysseg ; lcv++) {
-		npg = vm_physmem[lcv].end - vm_physmem[lcv].start;
-		for (idx = 0 ; idx < npg ; idx++) {
-			struct pv_head *pvhead = vm_physmem[lcv].pmseg.pvhead;
-
-			if (pvhead->pvh_list == NULL)
-				continue;	/* spot check */
-			if (!simple_lock_try(&pvhead->pvh_lock))
-				continue;
-			cpv = prevpv = pvhead->pvh_list;
-			while (cpv) {
-				if (pmap_try_steal_pv(pvhead, cpv, prevpv))
-					break;
-				prevpv = cpv;
-				cpv = cpv->pv_next;
-			}
-			simple_unlock(&pvhead->pvh_lock);
-			/* got one?  break out of the loop! */
-			if (cpv) {
-				pv = cpv;
-				break;
-			}
-		}
-	}
-
-	return(pv);
-}
-
-/*
- * pmap_try_steal_pv: try and steal a pv_entry from a pmap
- *
- * => return true if we did it!
- */
-
-static boolean_t
-pmap_try_steal_pv(pvh, cpv, prevpv)
-	struct pv_head *pvh;
-	struct pv_entry *cpv, *prevpv;
-{
-	pt_entry_t *ptep;	/* pointer to a PTE */
-
-	/*
-	 * we never steal kernel mappings or mappings from pmaps we can't lock
-	 */
-
-	if (cpv->pv_pmap == pmap_kernel() ||
-	    !simple_lock_try(&cpv->pv_pmap->pm_obj.vmobjlock))
-		return(FALSE);
-
-	COUNT(try_steal_pv);
-	/*
-	 * yes, we can try and steal it.   first we need to remove the
-	 * mapping from the pmap.
-	 */
-
-	ptep = pmap_tmpmap_pvepte(cpv);
-	if (*ptep & PG_W) {
-		ptep = NULL;	/* wired page, avoid stealing this one */
-	} else {
-#ifdef MULTIPROCESSOR
-		pt_entry_t opte = *ptep;
-#endif
-		*ptep = 0;		/* zap! */
-		if (pmap_is_curpmap(cpv->pv_pmap))
-			pmap_update_pg(cpv->pv_va);
-#ifdef MULTIPROCESSOR
-		pmap_tlb_shootdown(cpv->pv_pmap, cpv->pv_va, opte);
-#endif
-		pmap_tmpunmap_pvepte(cpv);
-	}
-	if (ptep == NULL) {
-		simple_unlock(&cpv->pv_pmap->pm_obj.vmobjlock);
-		return(FALSE);	/* wired page, abort! */
-	}
-	cpv->pv_pmap->pm_stats.resident_count--;
-	if (cpv->pv_ptp && cpv->pv_ptp->wire_count)
-		/* drop PTP's wired count */
-		cpv->pv_ptp->wire_count--;
-
-	/*
-	 * XXX: if wire_count goes to one the PTP could be freed, however,
-	 * we'd have to lock the page queues (etc.) to do that and it could
-	 * cause deadlock headaches.   besides, the pmap we just stole from
-	 * may want the mapping back anyway, so leave the PTP around.
-	 */
-
-	/*
-	 * now we need to remove the entry from the pvlist
-	 */
-
-	if (cpv == pvh->pvh_list)
-		pvh->pvh_list = cpv->pv_next;
-	else
-		prevpv->pv_next = cpv->pv_next;
-	return(TRUE);
+	return (pmap_add_pvpage(pvpage, mode != ALLOCPV_NONEED));
 }
 
 /*
@@ -1733,33 +1574,19 @@ pmap_remove_pv(pvh, pmap, va)
  * => we use the ptp's wire_count to count the number of active mappings
  *	in the PTP (we start it at one to prevent any chance this PTP
  *	will ever leak onto the active/inactive queues)
- * => we should not be holding any pv_head locks (in case we are forced
- *	to call pmap_steal_ptp())
- * => we may need to lock pv_head's if we have to steal a PTP
- * => just_try: true if we want a PTP, but not enough to steal one
- * 	from another pmap (e.g. during optional functions like pmap_copy)
  */
 
 __inline static struct vm_page *
-pmap_alloc_ptp(pmap, pde_index, just_try)
+pmap_alloc_ptp(pmap, pde_index)
 	struct pmap *pmap;
 	int pde_index;
-	boolean_t just_try;
 {
 	struct vm_page *ptp;
 
 	ptp = uvm_pagealloc(&pmap->pm_obj, ptp_i2o(pde_index), NULL,
 			    UVM_PGA_USERESERVE|UVM_PGA_ZERO);
-	if (ptp == NULL) {
-		if (just_try)
-			return(NULL);
-		ptp = pmap_steal_ptp(&pmap->pm_obj, ptp_i2o(pde_index));
-		if (ptp == NULL) {
-			return (NULL);
-		}
-		/* stole one; zero it. */
-		pmap_zero_page(VM_PAGE_TO_PHYS(ptp));
-	}
+	if (ptp == NULL)
+		return(NULL);
 
 	/* got one! */
 	ptp->flags &= ~PG_BUSY;	/* never busy */
@@ -1772,121 +1599,6 @@ pmap_alloc_ptp(pmap, pde_index, just_try)
 }
 
 /*
- * pmap_steal_ptp: steal a PTP from any pmap that we can access
- *
- * => obj is locked by caller.
- * => we can throw away mappings at this level (except in the kernel's pmap)
- * => stolen PTP is placed in <obj,offset> pmap
- * => we lock pv_head's
- * => hopefully, this function will be seldom used [much better to have
- *	enough free pages around for us to allocate off the free page list]
- */
-
-static struct vm_page *
-pmap_steal_ptp(obj, offset)
-	struct uvm_object *obj;
-	vaddr_t offset;
-{
-	struct vm_page *ptp = NULL;
-	struct pmap *firstpmap;
-	struct uvm_object *curobj;
-	pt_entry_t *ptes;
-	int idx, lcv;
-	boolean_t caller_locked, we_locked;
-
-	simple_lock(&pmaps_lock);
-	if (pmaps_hand == NULL)
-		pmaps_hand = LIST_FIRST(&pmaps);
-	firstpmap = pmaps_hand;
-
-	do { /* while we haven't looped back around to firstpmap */
-
-		curobj = &pmaps_hand->pm_obj;
-		we_locked = FALSE;
-		caller_locked = (curobj == obj);
-		if (!caller_locked) {
-			we_locked = simple_lock_try(&curobj->vmobjlock);
-		}
-		if (caller_locked || we_locked) {
-			ptp = curobj->memq.tqh_first;
-			for (/*null*/; ptp != NULL; ptp = ptp->listq.tqe_next) {
-
-				/*
-				 * might have found a PTP we can steal
-				 * (unless it has wired pages).
-				 */
-
-				idx = ptp_o2i(ptp->offset);
-#ifdef DIAGNOSTIC
-				if (VM_PAGE_TO_PHYS(ptp) !=
-				    (pmaps_hand->pm_pdir[idx] & PG_FRAME))
-					panic("pmap_steal_ptp: PTP mismatch!");
-#endif
-
-				ptes = (pt_entry_t *)
-					pmap_tmpmap_pa(VM_PAGE_TO_PHYS(ptp));
-				for (lcv = 0 ; lcv < PTES_PER_PTP ; lcv++)
-					if ((ptes[lcv] & (PG_V|PG_W)) ==
-					    (PG_V|PG_W))
-						break;
-				if (lcv == PTES_PER_PTP)
-					pmap_remove_ptes(pmaps_hand, NULL, ptp,
-							 (vaddr_t)ptes,
-							 ptp_i2v(idx),
-							 ptp_i2v(idx+1));
-				pmap_tmpunmap_pa();
-
-				if (lcv != PTES_PER_PTP)
-					/* wired, try next PTP */
-					continue;
-
-				/*
-				 * got it!!!
-				 */
-
-				pmaps_hand->pm_pdir[idx] = 0;	/* zap! */
-				pmaps_hand->pm_stats.resident_count--;
-
-#ifdef MULTIPROCESSOR
-				/* XXX XXX MP */
-				/* BARF */
-				printf("pmap: stealing PTP!\n");
-#endif
-				
-				if (pmap_is_curpmap(pmaps_hand))
-					tlbflush();
-				else if (pmap_valid_entry(*APDP_PDE) &&
-					 (*APDP_PDE & PG_FRAME) ==
-					 pmaps_hand->pm_pdirpa) {
-					pmap_update_pg(((vaddr_t)APTE_BASE) +
-						       ptp->offset);
-#if defined(MULTIPROCESSOR)
-					/* XXX MP -- SHOOTDOWN */
-#endif
-				}
-
-				/* put it in our pmap! */
-				uvm_pagerealloc(ptp, obj, offset);
-				break;	/* break out of "for" loop */
-			}
-			if (we_locked) {
-				simple_unlock(&curobj->vmobjlock);
-			}
-		}
-
-		/* advance the pmaps_hand */
-		pmaps_hand = LIST_NEXT(pmaps_hand, pm_list);
-		if (pmaps_hand == NULL) {
-			pmaps_hand = LIST_FIRST(&pmaps);
-		}
-
-	} while (ptp == NULL && pmaps_hand != firstpmap);
-
-	simple_unlock(&pmaps_lock);
-	return(ptp);
-}
-
-/*
  * pmap_get_ptp: get a PTP (if there isn't one, allocate a new one)
  *
  * => pmap should NOT be pmap_kernel()
@@ -1894,10 +1606,9 @@ pmap_steal_ptp(obj, offset)
  */
 
 static struct vm_page *
-pmap_get_ptp(pmap, pde_index, just_try)
+pmap_get_ptp(pmap, pde_index)
 	struct pmap *pmap;
 	int pde_index;
-	boolean_t just_try;
 {
 	struct vm_page *ptp;
 
@@ -1919,7 +1630,7 @@ pmap_get_ptp(pmap, pde_index, just_try)
 	}
 
 	/* allocate a new PTP (updates ptphint) */
-	return(pmap_alloc_ptp(pmap, pde_index, just_try));
+	return(pmap_alloc_ptp(pmap, pde_index));
 }
 
 /*
@@ -2047,8 +1758,6 @@ pmap_release(pmap)
 	 */
 
 	simple_lock(&pmaps_lock);
-	if (pmap == pmaps_hand)
-		pmaps_hand = LIST_NEXT(pmaps_hand, pm_list);
 	LIST_REMOVE(pmap, pm_list);
 	simple_unlock(&pmaps_lock);
 
@@ -2379,64 +2088,6 @@ pmap_copy_page(srcpa, dstpa)
  * functions that remove mappings
  */
 
-
-/*
- * pmap_defer_flush:
- *
- * Record a particular pmap/va/opte combination as
- * worthy of flushing.  If we don't have space to save it, either flush
- * it immediately (for global mappings), or mark the prr so we do a
- * complete TLB flush when done.
- */
-
-__inline static void
-pmap_defer_flush (prr, pmap, va, opte)
-	void *prr;
-	struct pmap *pmap;
-	vaddr_t va;
-	pt_entry_t opte;
-{
-	pmap_tlb_dshootdown(pmap, va, opte);
-#if 0	
-	if (prr->prr_npages < PMAP_RR_MAX) {
-		prr->prr_vas[prr->prr_npages++] = va;
-	} else if (prr->prr_npages >= PMAP_RR_MAX) {
-		/* signal an overflow */
-		prr->prr_npages++;
-		if (opte & PG_G) {
-			/* PG_G requires this; flush now rather than lose */
-			pmap_update_pg(va);
-#ifdef MULTIPROCESSOR
-			pmap_tlb_shootdown(pmap, va, opte);
-#endif
-		}
-	}
-#endif
-}
-
-/*
- * pmap_flush_deferred:
- *
- * Execute the deferred flushes from before.
- *
- * XXX this should probably be trivially merged with the TLB flush pool..
- */
-
-__inline static void
-pmap_flush_deferred (prr, pmap)
-	void *prr;
-	struct pmap *pmap;
-{
-#if defined(I386_CPU)
-	if (cpu_class == CPUCLASS_386) {
-		tlbflush();
-	} else
-#endif
-		pmap_tlb_shootnow();
-}
-
-
-
 /*
  * pmap_remove_ptes: remove PTEs from a PTP
  *
@@ -2447,12 +2098,12 @@ pmap_flush_deferred (prr, pmap)
  */
 
 static void
-pmap_remove_ptes(pmap, pmap_rr, ptp, ptpva, startva, endva)
+pmap_remove_ptes(pmap, ptp, ptpva, startva, endva, cpumaskp)
 	struct pmap *pmap;
-	void *pmap_rr;
 	struct vm_page *ptp;
 	vaddr_t ptpva;
 	vaddr_t startva, endva;
+	int32_t *cpumaskp;
 {
 	struct pv_entry *pv_tofree = NULL;	/* list of pv_entrys to free */
 	struct pv_entry *pve;
@@ -2481,7 +2132,7 @@ pmap_remove_ptes(pmap, pmap_rr, ptp, ptpva, startva, endva)
 			pmap->pm_stats.wired_count--;
 		pmap->pm_stats.resident_count--;
 
-		pmap_defer_flush (pmap_rr, pmap, startva, opte);
+		pmap_tlb_shootdown(pmap, startva, opte, cpumaskp);
 
 		if (ptp)
 			ptp->wire_count--;		/* dropping a PTE */
@@ -2538,11 +2189,12 @@ pmap_remove_ptes(pmap, pmap_rr, ptp, ptpva, startva, endva)
  */
 
 static boolean_t
-pmap_remove_pte(pmap, ptp, pte, va)
+pmap_remove_pte(pmap, ptp, pte, va, cpumaskp)
 	struct pmap *pmap;
 	struct vm_page *ptp;
 	pt_entry_t *pte;
 	vaddr_t va;
+	int32_t *cpumaskp;
 {
 	pt_entry_t opte;
 	int bank, off;
@@ -2561,11 +2213,8 @@ pmap_remove_pte(pmap, ptp, pte, va)
 	if (ptp)
 		ptp->wire_count--;		/* dropping a PTE */
 
-	if (pmap_is_curpmap(pmap))
-		pmap_update_pg(va);		/* flush TLB */
-#ifdef MULTIPROCESSOR
-	pmap_tlb_shootdown(pmap, va, opte);
-#endif
+	pmap_tlb_shootdown(pmap, va, opte, cpumaskp);
+
 	/*
 	 * if we are not on a pv_head list we are done.
 	 */
@@ -2614,9 +2263,7 @@ pmap_remove(pmap, sva, eva)
 	paddr_t ptppa;
 	vaddr_t blkendva;
 	struct vm_page *ptp;
-#if 0
-	struct pmap_remove_record pmap_rr, *prr;
-#endif
+	int32_t cpumask = 0;
 
 	/*
 	 * we lock in the pmap => pv_head direction
@@ -2657,7 +2304,7 @@ pmap_remove(pmap, sva, eva)
 
 			/* do it! */
 			result = pmap_remove_pte(pmap, ptp,
-						 &ptes[i386_btop(sva)], sva);
+			    &ptes[i386_btop(sva)], sva, &cpumask);
 
 			/*
 			 * if mapping removed and the PTP is no longer
@@ -2668,26 +2315,27 @@ pmap_remove(pmap, sva, eva)
 				/* zap! */
 				opte = i386_atomic_testset_ul(
 				    &pmap->pm_pdir[pdei(sva)], 0);
-#if defined(I386_CPU)
-				/* already dumped whole TLB on i386 */
-				if (cpu_class != CPUCLASS_386)
-#endif
-				{
 #if defined(MULTIPROCESSOR)
-					vaddr_t ptpva;
+				/*
+				 * XXXthorpej Redundant shootdown can happen
+				 * here if we're using APTE space.
+				 */
 #endif
-					pmap_update_pg(((vaddr_t) ptes) +
-						       ptp->offset);
+				pmap_tlb_shootdown(curpcb->pcb_pmap,
+				    ((vaddr_t)ptes) + ptp->offset, opte,
+				    &cpumask);
 #if defined(MULTIPROCESSOR)
-					ptpva = ((vaddr_t)PTE_BASE) +
-					    ptp->offset;
-					/*
-					 * Always shoot down the pmap's
-					 * self-mapping of the PTP.
-					 */
-					pmap_tlb_shootdown(pmap, ptpva, opte);
+				/*
+				 * Always shoot down the pmap's self-mapping
+				 * of the PTP.
+				 * XXXthorpej Redundant shootdown can happen
+				 * here if pmap == curpcb->pcb_pmap (not APTE
+				 * space).
+				 */
+				pmap_tlb_shootdown(pmap,
+				    ((vaddr_t)PTE_BASE) + ptp->offset, opte,
+				    &cpumask);
 #endif
-				}
 				pmap->pm_stats.resident_count--;
 				if (pmap->pm_ptphint == ptp)
 					pmap->pm_ptphint =
@@ -2697,26 +2345,11 @@ pmap_remove(pmap, sva, eva)
 			}
 		}
 
+		pmap_tlb_shootnow(cpumask);
 		pmap_unmap_ptes(pmap);		/* unlock pmap */
 		PMAP_MAP_TO_HEAD_UNLOCK();
 		return;
 	}
-
-#if 0
-	/*
-	 * removing a range of pages: we unmap in PTP sized blocks (4MB)
-	 *
-	 * if we are the currently loaded pmap, we use prr to keep track
-	 * of the VAs we unload so that we can flush them out of the tlb.
-	 */
-
-	if (pmap_is_active(pmap, cpu_number())) {
-		prr = &pmap_rr;
-		prr->prr_npages = 0;
-	} else {
-		prr = NULL;
-	}
-#endif
 
 	for (/* null */ ; sva < eva ; sva = blkendva) {
 
@@ -2767,31 +2400,30 @@ pmap_remove(pmap, sva, eva)
 #endif
 			}
 		}
-		pmap_remove_ptes(pmap, 0, ptp,
-		    (vaddr_t)&ptes[i386_btop(sva)], sva, blkendva);
+		pmap_remove_ptes(pmap, ptp,
+		    (vaddr_t)&ptes[i386_btop(sva)], sva, blkendva, &cpumask);
 		/* if PTP is no longer being used, free it! */
 		if (ptp && ptp->wire_count <= 1) {
-#if defined(MULTIPROCESSOR)
-			vaddr_t ptpva;
-#endif
 			/* zap! */
 			opte = i386_atomic_testset_ul(
 			    &pmap->pm_pdir[pdei(sva)], 0);
-			pmap_update_pg(((vaddr_t) ptes) + ptp->offset);
 #if defined(MULTIPROCESSOR)
-			ptpva = ((vaddr_t)PTE_BASE) + ptp->offset;
+			/*
+			 * XXXthorpej Redundant shootdown can happen here
+			 * if we're using APTE space.
+			 */
+#endif
+			pmap_tlb_shootdown(curpcb->pcb_pmap,
+			    ((vaddr_t)ptes) + ptp->offset, opte, &cpumask);
+#if defined(MULTIPROCESSOR)
 			/*
 			 * Always shoot down the pmap's self-mapping
 			 * of the PTP.
+			 * XXXthorpej Redundant shootdown can happen here
+			 * if pmap == curpcb->pcb_pmap (not APTE space).
 			 */
-			pmap_tlb_shootdown(pmap, ptpva, opte);
-#endif
-#if 0 /* XXX optimization? */
-#if defined(I386_CPU)
-			/* cancel possible pending pmap update on i386 */
-			if (cpu_class == CPUCLASS_386 && prr)
-				prr->prr_npages = 0;
-#endif
+			pmap_tlb_shootdown(pmap,
+			    ((vaddr_t)PTE_BASE) + ptp->offset, opte, &cpumask);
 #endif
 			pmap->pm_stats.resident_count--;
 			if (pmap->pm_ptphint == ptp)	/* update hint? */
@@ -2801,11 +2433,7 @@ pmap_remove(pmap, sva, eva)
 		}
 	}
 
-	/*
-	 * if we kept a removal record and removed some pages update the TLB
-	 */
-
-	pmap_flush_deferred(0, pmap);
+	pmap_tlb_shootnow(cpumask);
 	pmap_unmap_ptes(pmap);
 	PMAP_MAP_TO_HEAD_UNLOCK();
 }
@@ -2825,9 +2453,7 @@ pmap_page_remove(pg)
 	struct pv_head *pvh;
 	struct pv_entry *pve;
 	pt_entry_t *ptes, opte;
-#if defined(I386_CPU)
-	boolean_t needs_update = FALSE;
-#endif
+	int32_t cpumask = 0;
 
 	/* XXX: vm_page should either contain pv_head or have a pointer to it */
 	bank = vm_physseg_find(atop(VM_PAGE_TO_PHYS(pg)), &off);
@@ -2872,17 +2498,7 @@ pmap_page_remove(pg)
 			pve->pv_pmap->pm_stats.wired_count--;
 		pve->pv_pmap->pm_stats.resident_count--;
 
-		if (pmap_is_curpmap(pve->pv_pmap)) {
-#if defined(I386_CPU)
-			if (cpu_class == CPUCLASS_386)
-				needs_update = TRUE;
-			else
-#endif
-				pmap_update_pg(pve->pv_va);
-		}
-#ifdef MULTIPROCESSOR
-		pmap_tlb_shootdown (pve->pv_pmap, pve->pv_va, opte);
-#endif
+		pmap_tlb_shootdown(pve->pv_pmap, pve->pv_va, opte, &cpumask);
 
 		/* sync R/M bits */
 		vm_physmem[bank].pmseg.attrs[off] |= (opte & (PG_U|PG_M));
@@ -2891,26 +2507,21 @@ pmap_page_remove(pg)
 		if (pve->pv_ptp) {
 			pve->pv_ptp->wire_count--;
 			if (pve->pv_ptp->wire_count <= 1) {
-#if defined(MULTIPROCESSOR)
-				vaddr_t ptpva;
-#endif
 				/* zap! */
 				opte = i386_atomic_testset_ul(
 				    &pve->pv_pmap->pm_pdir[pdei(pve->pv_va)],
 				    0);
-				pmap_update_pg(((vaddr_t)ptes) +
-					       pve->pv_ptp->offset);
+				pmap_tlb_shootdown(curpcb->pcb_pmap,
+				    ((vaddr_t)ptes) + pve->pv_ptp->offset,
+				    opte, &cpumask);
 #if defined(MULTIPROCESSOR)
-				ptpva = ((vaddr_t)PTE_BASE) +
-				    pve->pv_ptp->offset;
 				/*
 				 * Always shoot down the other pmap's
 				 * self-mapping of the PTP.
 				 */
-				pmap_tlb_shootdown(pve->pv_pmap, ptpva, opte);
-#endif
-#if defined(I386_CPU)
-				needs_update = FALSE;
+				pmap_tlb_shootdown(pve->pv_pmap,
+				    ((vaddr_t)PTE_BASE) + pve->pv_ptp->offset,
+				    opte, &cpumask);
 #endif
 				pve->pv_pmap->pm_stats.resident_count--;
 				/* update hint? */
@@ -2927,10 +2538,8 @@ pmap_page_remove(pg)
 	pvh->pvh_list = NULL;
 	simple_unlock(&pvh->pvh_lock);
 	PMAP_HEAD_TO_MAP_UNLOCK();
-#if defined(I386_CPU)
-	if (needs_update)
-		tlbflush();
-#endif
+
+	pmap_tlb_shootnow(cpumask);
 }
 
 /*
@@ -3020,9 +2629,7 @@ pmap_clear_attrs(pg, clearbits)
 	struct pv_entry *pve;
 	pt_entry_t *ptes, opte;
 	char *myattrs;
-#if defined(I386_CPU)
-	boolean_t needs_update = FALSE;
-#endif
+	int32_t cpumask = 0;
 
 	/* XXX: vm_page should either contain pv_head or have a pointer to it */
 	bank = vm_physseg_find(atop(VM_PAGE_TO_PHYS(pg)), &off);
@@ -3056,17 +2663,8 @@ pmap_clear_attrs(pg, clearbits)
 			result |= (opte & clearbits);
 			i386_atomic_clearbits_l(&ptes[i386_btop(pve->pv_va)],
 			    (opte & clearbits));	/* zap! */
-			if (pmap_is_curpmap(pve->pv_pmap)) {
-#if defined(I386_CPU)
-				if (cpu_class == CPUCLASS_386)
-					needs_update = TRUE;
-				else
-#endif
-					pmap_update_pg(pve->pv_va);
-			}
-#ifdef MULTIPROCESSOR
-			pmap_tlb_shootdown(pve->pv_pmap, pve->pv_va, opte);
-#endif
+			pmap_tlb_shootdown(pve->pv_pmap, pve->pv_va, opte,
+			    &cpumask);
 		}
 		pmap_unmap_ptes(pve->pv_pmap);		/* unlocks pmap */
 	}
@@ -3074,10 +2672,8 @@ pmap_clear_attrs(pg, clearbits)
 	simple_unlock(&pvh->pvh_lock);
 	PMAP_HEAD_TO_MAP_UNLOCK();
 
-#if defined(I386_CPU)
-	if (needs_update)
-		tlbflush();
-#endif
+	pmap_tlb_shootnow(cpumask);
+
 	return(result != 0);
 }
 
@@ -3113,22 +2709,10 @@ pmap_write_protect(pmap, sva, eva, prot)
 	vm_prot_t prot;
 {
 	pt_entry_t *ptes, *spte, *epte;
-#if 0
-	struct pmap_remove_record pmap_rr, *prr;
-#endif
 	vaddr_t blockend;
+	int32_t cpumask = 0;
 
 	ptes = pmap_map_ptes(pmap);		/* locks pmap */
-
-#if 0
-	/* need to worry about TLB? [TLB stores protection bits] */
-	if (pmap_is_active(pmap, cpu_number())) {
-		prr = &pmap_rr;
-		prr->prr_npages = 0;
-	} else {
-		prr = NULL;
-	}
-#endif
 
 	/* should be ok, but just in case ... */
 	sva &= PG_FRAME;
@@ -3169,8 +2753,8 @@ pmap_write_protect(pmap, sva, eva, prot)
 		for (/*null */; spte < epte ; spte++) {
 			if ((*spte & (PG_RW|PG_V)) == (PG_RW|PG_V)) {
 				i386_atomic_clearbits_l(spte, PG_RW); /* zap! */
-				pmap_defer_flush(0, pmap,
-				    i386_ptob(spte - ptes), *spte);
+				pmap_tlb_shootdown(pmap,
+				    i386_ptob(spte - ptes), *spte, &cpumask);
 			}
 		}
 	}
@@ -3179,7 +2763,7 @@ pmap_write_protect(pmap, sva, eva, prot)
 	 * if we kept a removal record and removed some pages update the TLB
 	 */
 
-	pmap_flush_deferred(0, pmap);
+	pmap_tlb_shootnow(cpumask);
 	pmap_unmap_ptes(pmap);		/* unlocks pmap */
 }
 
@@ -3245,453 +2829,6 @@ pmap_collect(pmap)
 	pmap_remove(pmap, VM_MIN_ADDRESS, VM_MAX_ADDRESS);
 }
 
-#if 0
-/*
- * pmap_transfer: transfer (move or copy) mapping from one pmap
- * 	to another.
- *
- * => this function is optional, it doesn't have to do anything
- * => we assume that the mapping in the src pmap is valid (i.e. that
- *    it doesn't run off the end of the map's virtual space).
- * => we assume saddr, daddr, and len are page aligned/lengthed
- */
-
-void
-pmap_transfer(dstpmap, srcpmap, daddr, len, saddr, move)
-	struct pmap *dstpmap, *srcpmap;
-	vaddr_t daddr, saddr;
-	vsize_t len;
-	boolean_t move;
-{
-	/* base address of PTEs, dst could be NULL */
-	pt_entry_t *srcptes, *dstptes;
-
-	struct pmap_transfer_location srcl, dstl;
-	int dstvalid;		  /* # of PTEs left in dst's current PTP */
-	struct pmap *mapped_pmap; /* the pmap we passed to pmap_map_ptes */
-	vsize_t blklen;
-	int blkpgs, toxfer;
-	boolean_t ok;
-
-#ifdef DIAGNOSTIC
-	/*
-	 * sanity check: let's make sure our len doesn't overflow our dst
-	 * space.
-	 */
-
-	if (daddr < VM_MAXUSER_ADDRESS) {
-		if (VM_MAXUSER_ADDRESS - daddr < len) {
-			printf("pmap_transfer: no room in user pmap "
-			       "(addr=0x%lx, len=0x%lx)\n", daddr, len);
-			return;
-		}
-	} else if (daddr < VM_MIN_KERNEL_ADDRESS ||
-		   daddr >= VM_MAX_KERNEL_ADDRESS) {
-		printf("pmap_transfer: invalid transfer address 0x%lx\n",
-		       daddr);
-	} else {
-		if (VM_MAX_KERNEL_ADDRESS - daddr < len) {
-			printf("pmap_transfer: no room in kernel pmap "
-			       "(addr=0x%lx, len=0x%lx)\n", daddr, len);
-			return;
-		}
-	}
-#endif
-
-	/*
-	 * ideally we would like to have either src or dst pmap's be the
-	 * current pmap so that we can map the other one in APTE space
-	 * (if needed... one of the maps could be the kernel's pmap).
-	 *
-	 * however, if we can't get this, then we have to use the tmpmap
-	 * (alternately we could punt).
-	 */
-
-	if (!pmap_is_curpmap(dstpmap) && !pmap_is_curpmap(srcpmap)) {
-		dstptes = NULL;			/* dstptes NOT mapped */
-		srcptes = pmap_map_ptes(srcpmap);   /* let's map the source */
-		mapped_pmap = srcpmap;
-	} else {
-		if (!pmap_is_curpmap(srcpmap)) {
-			srcptes = pmap_map_ptes(srcpmap);   /* possible APTE */
-			dstptes = PTE_BASE;
-			mapped_pmap = srcpmap;
-		} else {
-			dstptes = pmap_map_ptes(dstpmap);   /* possible APTE */
-			srcptes = PTE_BASE;
-			mapped_pmap = dstpmap;
-		}
-	}
-
-	/*
-	 * at this point we know that the srcptes are mapped.   the dstptes
-	 * are mapped if (dstptes != NULL).    if (dstptes == NULL) then we
-	 * will have to map the dst PTPs page at a time using the tmpmap.
-	 * [XXX: is it worth the effort, or should we just punt?]
-	 */
-
-	srcl.addr = saddr;
-	srcl.pte = &srcptes[i386_btop(srcl.addr)];
-	srcl.ptp = NULL;
-	dstl.addr = daddr;
-	if (dstptes)
-		dstl.pte = &dstptes[i386_btop(dstl.addr)];
-	else
-		dstl.pte  = NULL;		/* we map page at a time */
-	dstl.ptp = NULL;
-	dstvalid = 0;		/* force us to load a new dst PTP to start */
-
-	while (len) {
-
-		/*
-		 * compute the size of this block.
-		 */
-
-		/* length in bytes */
-		blklen = i386_round_pdr(srcl.addr+1) - srcl.addr;
-		if (blklen > len)
-			blklen = len;
-		blkpgs = i386_btop(blklen);
-
-		/*
-		 * if the block is not valid in the src pmap,
-		 * then we can skip it!
-		 */
-
-		if (!pmap_valid_entry(srcpmap->pm_pdir[pdei(srcl.addr)])) {
-			len = len - blklen;
-			srcl.pte  = srcl.pte + blkpgs;
-			srcl.addr += blklen;
-			dstl.addr += blklen;
-			if (blkpgs > dstvalid) {
-				dstvalid = 0;
-				dstl.ptp = NULL;
-			} else {
-				dstvalid = dstvalid - blkpgs;
-			}
-			if (dstptes == NULL && (len == 0 || dstvalid == 0)) {
-				if (dstl.pte) {
-					pmap_tmpunmap_pa();
-					dstl.pte = NULL;
-				}
-			} else {
-				dstl.pte += blkpgs;
-			}
-			continue;
-		}
-
-		/*
-		 * we have a valid source block of "blkpgs" PTEs to transfer.
-		 * if we don't have any dst PTEs ready, then get some.
-		 */
-
-		if (dstvalid == 0) {
-			if (!pmap_valid_entry(dstpmap->
-					      pm_pdir[pdei(dstl.addr)])) {
-#ifdef DIAGNOSTIC
-				if (dstl.addr >= VM_MIN_KERNEL_ADDRESS)
-					panic("pmap_transfer: missing kernel "
-					      "PTP at 0x%lx", dstl.addr);
-#endif
-				dstl.ptp = pmap_get_ptp(dstpmap,
-							pdei(dstl.addr), TRUE);
-				if (dstl.ptp == NULL)	/* out of RAM?  punt. */
-					break;
-			} else {
-				dstl.ptp = NULL;
-			}
-			dstvalid = i386_btop(i386_round_pdr(dstl.addr+1) -
-					     dstl.addr);
-			if (dstptes == NULL) {
-				dstl.pte = (pt_entry_t *)
-					pmap_tmpmap_pa(dstpmap->
-						       pm_pdir[pdei(dstl.addr)]
-						       & PG_FRAME);
-				dstl.pte = dstl.pte + (PTES_PER_PTP - dstvalid);
-			}
-		}
-
-		/*
-		 * we have a valid source block of "blkpgs" PTEs to transfer.
-		 * we have a valid dst block of "dstvalid" PTEs ready.
-		 * thus we can transfer min(blkpgs, dstvalid) PTEs now.
-		 */
-
-		srcl.ptp = NULL;	/* don't know source PTP yet */
-		if (dstvalid < blkpgs)
-			toxfer = dstvalid;
-		else
-			toxfer = blkpgs;
-
-		if (toxfer > 0) {
-			ok = pmap_transfer_ptes(srcpmap, &srcl, dstpmap, &dstl,
-						toxfer, move);
-
-			if (!ok)		/* memory shortage?  punt. */
-				break;
-
-			dstvalid -= toxfer;
-			blkpgs -= toxfer;
-			len -= i386_ptob(toxfer);
-			if (blkpgs == 0)	/* out of src PTEs?  restart */
-				continue;
-		}
-
-		/*
-		 * we have a valid source block of "blkpgs" PTEs left
-		 * to transfer.  we have just used up our "dstvalid"
-		 * PTEs, and thus must obtain more dst PTEs to finish
-		 * off the src block.  since we are now going to
-		 * obtain a brand new dst PTP, we know we can finish
-		 * the src block in one more transfer.
-		 */
-
-#ifdef DIAGNOSTIC
-		if (dstvalid)
-			panic("pmap_transfer: dstvalid non-zero after drain");
-		if ((dstl.addr & (NBPD-1)) != 0)
-			panic("pmap_transfer: dstaddr not on PD boundary "
-			      "(0x%lx)\n", dstl.addr);
-#endif
-
-		if (dstptes == NULL && dstl.pte != NULL) {
-			/* dispose of old PT mapping */
-			pmap_tmpunmap_pa();
-			dstl.pte = NULL;
-		}
-
-		/*
-		 * get new dst PTP
-		 */
-		if (!pmap_valid_entry(dstpmap->pm_pdir[pdei(dstl.addr)])) {
-#ifdef DIAGNOSTIC
-			if (dstl.addr >= VM_MIN_KERNEL_ADDRESS)
-				panic("pmap_transfer: missing kernel PTP at "
-				      "0x%lx", dstl.addr);
-#endif
-			dstl.ptp = pmap_get_ptp(dstpmap, pdei(dstl.addr), TRUE);
-			if (dstl.ptp == NULL)	/* out of free RAM?  punt. */
-				break;
-		} else {
-			dstl.ptp = NULL;
-		}
-
-		dstvalid = PTES_PER_PTP;	/* new PTP */
-
-		/*
-		 * if the dstptes are un-mapped, then we need to tmpmap in the
-		 * dstl.ptp.
-		 */
-
-		if (dstptes == NULL) {
-			dstl.pte = (pt_entry_t *)
-				pmap_tmpmap_pa(dstpmap->pm_pdir[pdei(dstl.addr)]
-					       & PG_FRAME);
-		}
-
-		/*
-		 * we have a valid source block of "blkpgs" PTEs left
-		 * to transfer.  we just got a brand new dst PTP to
-		 * receive these PTEs.
-		 */
-
-#ifdef DIAGNOSTIC
-		if (dstvalid < blkpgs)
-			panic("pmap_transfer: too many blkpgs?");
-#endif
-		toxfer = blkpgs;
-		ok = pmap_transfer_ptes(srcpmap, &srcl, dstpmap, &dstl, toxfer,
-					move);
-
-		if (!ok)		/* memory shortage?   punt. */
-			break;
-
-		dstvalid -= toxfer;
-		blkpgs -= toxfer;
-		len -= i386_ptob(toxfer);
-
-		/*
-		 * done src pte block
-		 */
-	}
-	if (dstptes == NULL && dstl.pte != NULL)
-		pmap_tmpunmap_pa();		/* dst PTP still mapped? */
-	pmap_unmap_ptes(mapped_pmap);
-}
-
-/*
- * pmap_transfer_ptes: transfer PTEs from one pmap to another
- *
- * => we assume that the needed PTPs are mapped and that we will
- *	not cross a block boundary.
- * => we return TRUE if we transfered all PTEs, FALSE if we were
- *	unable to allocate a pv_entry
- */
-
-static boolean_t
-pmap_transfer_ptes(srcpmap, srcl, dstpmap, dstl, toxfer, move)
-	struct pmap *srcpmap, *dstpmap;
-	struct pmap_transfer_location *srcl, *dstl;
-	int toxfer;
-	boolean_t move;
-{
-	pt_entry_t dstproto, opte;
-	int bank, off;
-	struct pv_head *pvh;
-	struct pv_entry *pve, *lpve;
-
-	/*
-	 * generate "prototype" dst PTE
-	 */
-
-	if (dstl->addr < VM_MAX_ADDRESS)
-		dstproto = PG_u;		/* "user" page */
-	else
-		dstproto = pmap_pg_g;	/* kernel page */
-
-	/*
-	 * ensure we have dst PTP for user addresses.
-	 */
-
-	if (dstl->ptp == NULL && dstl->addr < VM_MAXUSER_ADDRESS)
-		dstl->ptp = PHYS_TO_VM_PAGE(dstpmap->pm_pdir[pdei(dstl->addr)] &
-					    PG_FRAME);
-
-	/*
-	 * main loop over range
-	 */
-
-	for (/*null*/; toxfer > 0 ; toxfer--,
-			     srcl->addr += NBPG, dstl->addr += NBPG,
-			     srcl->pte++, dstl->pte++) {
-
-		if (!pmap_valid_entry(*srcl->pte))  /* skip invalid entrys */
-			continue;
-
-#ifdef DIAGNOSTIC
-		if (pmap_valid_entry(*dstl->pte))
-			panic("pmap_transfer_ptes: attempt to overwrite "
-			      "active entry");
-#endif
-
-		/*
-		 * let's not worry about non-pvlist mappings (typically device
-		 * pager mappings).
-		 */
-
-		opte = *srcl->pte;
-
-		if ((opte & PG_PVLIST) == 0)
-			continue;
-
-		/*
-		 * if we are moving the mapping, then we can just adjust the
-		 * current pv_entry.    if we are copying the mapping, then we
-		 * need to allocate a new pv_entry to account for it.
-		 */
-
-		if (move == FALSE) {
-			pve = pmap_alloc_pv(dstpmap, ALLOCPV_TRY);
-			if (pve == NULL)
-				return(FALSE); 		/* punt! */
-		} else {
-			pve = NULL;  /* XXX: quiet gcc warning */
-		}
-
-		/*
-		 * find the pv_head for this mapping.  since our mapping is
-		 * on the pvlist (PG_PVLIST), there must be a pv_head.
-		 */
-
-		bank = vm_physseg_find(atop(opte & PG_FRAME), &off);
-#ifdef DIAGNOSTIC
-		if (bank == -1)
-			panic("pmap_transfer_ptes: PG_PVLIST PTE and "
-			      "no pv_head!");
-#endif
-		pvh = &vm_physmem[bank].pmseg.pvhead[off];
-
-		/*
-		 * now lock down the pvhead and find the current entry (there
-		 * must be one).
-		 */
-
-		simple_lock(&pvh->pvh_lock);
-		for (lpve = pvh->pvh_list ; lpve ; lpve = lpve->pv_next)
-			if (lpve->pv_pmap == srcpmap &&
-			    lpve->pv_va == srcl->addr)
-				break;
-#ifdef DIAGNOSTIC
-		if (lpve == NULL)
-			panic("pmap_transfer_ptes: PG_PVLIST PTE, but "
-			      "entry not found");
-#endif
-
-		/*
-		 * update src ptp.   if the ptp is null in the pventry, then
-		 * we are not counting valid entrys for this ptp (this is only
-		 * true for kernel PTPs).
-		 */
-
-		if (srcl->ptp == NULL)
-			srcl->ptp = lpve->pv_ptp;
-#ifdef DIAGNOSTIC
-		if (srcl->ptp &&
-		    (srcpmap->pm_pdir[pdei(srcl->addr)] & PG_FRAME) !=
-		    VM_PAGE_TO_PHYS(srcl->ptp))
-			panic("pmap_transfer_ptes: pm_pdir - pv_ptp mismatch!");
-#endif
-
-		/*
-		 * for move, update the pve we just found (lpve) to
-		 * point to its new mapping.  for copy, init the new
-		 * pve and put it in the list.
-		 */
-
-		if (move == TRUE) {
-			pve = lpve;
-		}
-		pve->pv_pmap = dstpmap;
-		pve->pv_va = dstl->addr;
-		pve->pv_ptp = dstl->ptp;
-		if (move == FALSE) {		/* link in copy */
-			pve->pv_next = lpve->pv_next;
-			lpve->pv_next = pve;
-		}
-
-		/*
-		 * sync the R/M bits while we are here.
-		 */
-
-		vm_physmem[bank].pmseg.attrs[off] |= (opte & (PG_U|PG_M));
-
-		/*
-		 * now actually update the ptes and unlock the pvlist.
-		 */
-
-		if (move) {
-			*srcl->pte = 0;		/* zap! */
-			if (pmap_is_curpmap(srcpmap))
-				pmap_update_pg(srcl->addr);
-#ifdef MULTIPROCESSOR
-			pmap_tlb_shootdown(srcpmap, srcl->addr, opte);
-#endif
-			if (srcl->ptp)
-				/* don't bother trying to free PTP */
-				srcl->ptp->wire_count--;
-			srcpmap->pm_stats.resident_count--;
-			if (opte & PG_W)
-				srcpmap->pm_stats.wired_count--;
-		}
-		*dstl->pte = (opte & ~(PG_u|PG_U|PG_M|PG_G|PG_W)) | dstproto;
-		dstpmap->pm_stats.resident_count++;
-		if (dstl->ptp)
-			dstl->ptp->wire_count++;
-		simple_unlock(&pvh->pvh_lock);
-	}
-	return(TRUE);
-}
-
 /*
  * pmap_copy: copy mappings from one pmap to another
  *
@@ -3700,20 +2837,8 @@ pmap_transfer_ptes(srcpmap, srcl, dstpmap, dstl, toxfer, move)
  */
 
 /*
- * defined as macro call to pmap_transfer in pmap.h
+ * defined as macro in pmap.h
  */
-
-/*
- * pmap_move: move mappings from one pmap to another
- *
- * => optional function
- * void pmap_move(dst_pmap, src_pmap, dst_addr, len, src_addr)
- */
-
-/*
- * defined as macro call to pmap_transfer in pmap.h
- */
-#endif
 
 /*
  * pmap_enter: enter a mapping into a pmap
@@ -3762,7 +2887,7 @@ pmap_enter(pmap, va, pa, prot, flags)
 	if (pmap == pmap_kernel()) {
 		ptp = NULL;
 	} else {
-		ptp = pmap_get_ptp(pmap, pdei(va), FALSE);
+		ptp = pmap_get_ptp(pmap, pdei(va));
 		if (ptp == NULL) {
 			if (flags & PMAP_CANFAIL) {
 				return (KERN_RESOURCE_SHORTAGE);
@@ -3905,10 +3030,15 @@ enter_now:
 	 * flush the TLB.  (is this overkill?)
 	 */
 	if ((opte & ~(PG_M|PG_U)) != npte) {
+#if defined(MULTIPROCESSOR)
+		int32_t cpumask = 0;
+
+		pmap_tlb_shootdown(pmap, va, opte, &cpumask);
+		pmap_tlb_shootnow(cpumask);
+#else
+		/* Don't bother deferring in the single CPU case. */
 		if (pmap_is_curpmap(pmap))
 			pmap_update_pg(va);
-#ifdef MULTIPROCESSOR
-		pmap_tlb_shootdown(pmap, va, opte);
 #endif
 	}
 
@@ -3977,7 +3107,7 @@ pmap_growkernel(maxkvaddr)
 		 * INVOKED WHILE pmap_init() IS RUNNING!
 		 */
 
-		if (pmap_alloc_ptp(kpm, PDSLOT_KERN + nkpde, FALSE) == NULL) {
+		if (pmap_alloc_ptp(kpm, PDSLOT_KERN + nkpde) == NULL) {
 			panic("pmap_growkernel: alloc ptp failed");
 		}
 
@@ -4115,15 +3245,29 @@ pmap_tlb_ipispin(void)
 #endif
 
 void
-pmap_tlb_shootnow ()
+pmap_tlb_shootnow(int32_t cpumask)
 {
 #ifdef MULTIPROCESSOR
-	int s;
-	s = splimp();		/* or "splipi"? */
+	struct cpu_info *ci, *self = curcpu();
+	CPU_INFO_ITERATOR cii;
+	int s = splipi();
 #endif
-	pmap_do_tlb_shootdown(0); /* do *our* work. */
+
+	pmap_do_tlb_shootdown(0);	/* do *our* work. */
+
 #ifdef MULTIPROCESSOR
 	splx(s);
+
+	/*
+	 * Send the TLB IPI to other CPUs pending shootdowns.
+	 */
+	for (CPU_INFO_FOREACH(cii, ci)) {
+		if (ci == self)
+			continue;
+		if (cpumask & (1U << ci->ci_cpuid))
+			i386_send_ipi(ci, I386_IPI_TLB);
+	}
+
 	/* XXX should wait until ipi bit is cleared by other cpu.. */
 #if 0
 	pmap_tlb_ipispin();	/* XXX wait for completion */
@@ -4131,11 +3275,17 @@ pmap_tlb_shootnow ()
 #endif
 }
 
+/*
+ * pmap_tlb_shootdown:
+ *
+ *	Cause the TLB entry for pmap/va to be shot down.
+ */
 void
-pmap_tlb_dshootdown(pmap, va, pte)
+pmap_tlb_shootdown(pmap, va, pte, cpumaskp)
 	pmap_t pmap;
 	vaddr_t va;
 	pt_entry_t pte;
+	int32_t *cpumaskp;
 {
 	struct cpu_info *ci, *self = curcpu();
 	struct pmap_tlb_shootdown_q *pq;
@@ -4143,12 +3293,12 @@ pmap_tlb_dshootdown(pmap, va, pte)
 	CPU_INFO_ITERATOR cii;
 	int s;
 
-	if (!pmap_initialized) {
+	/* XXX MP -- i386_boot_cpu should be cpu_info_list */
+	if (pmap_initialized == FALSE || i386_boot_cpu == NULL) {
 		pmap_update_pg(va);
 		return;
 	}
 
-	/* XXX i386 case? */
 	s = splipi();
 #if 0
 	printf("dshootdown %lx\n", va);
@@ -4160,16 +3310,31 @@ pmap_tlb_dshootdown(pmap, va, pte)
 			continue;
 		pq = &pmap_tlb_shootdown_q[ci->ci_cpuid];
 		simple_lock(&pq->pq_slock);
+
+#ifdef I386_CPU
+		/*
+		 * i386 CPUs can't invalidate a single VA, only
+		 * flush the entire TLB, so don't bother allocating
+		 * jobs for them -- just queue a `flushu'.
+		 */
+		if (cpu_class == CPUCLASS_386) {
+			pq->pq_flushu++;
+			simple_unlock(&pq->pq_slock);
+			continue;
+		}
+#endif
+
 		pj = pmap_tlb_shootdown_job_get(pq);
 		pq->pq_pte |= pte;
 		if (pj == NULL) {
 			/*
 			 * Couldn't allocate a job entry.
-			 * Kill it now for this cpu; otherwise, tell 
-			 * other cpus to kill everything..
+			 * Kill it now for this cpu, unless the failure
+			 * was due to too many pending flushes; otherwise,
+			 * tell other cpus to kill everything..
 			 */
-			if (ci == self) {
-				pmap_update_pg(va); /* XXX overkill? */
+			if (ci == self && pq->pq_count < PMAP_TLB_MAXJOBS) {
+				pmap_update_pg(va);
 			} else {
 				if (pq->pq_pte & pmap_pg_g)
 					pq->pq_flushg++;
@@ -4181,23 +3346,19 @@ pmap_tlb_dshootdown(pmap, va, pte)
 				 * processor.
 				 */
 				pmap_tlb_shootdown_q_drain(pq);
+				*cpumaskp |= 1U << ci->ci_cpuid;
 			}
 		} else {
 			pj->pj_pmap = pmap;
 			pj->pj_va = va;
 			pj->pj_pte = pte;
 			TAILQ_INSERT_TAIL(&pq->pq_head, pj, pj_list);
+			*cpumaskp |= 1U << ci->ci_cpuid;
 		}
 		simple_unlock(&pq->pq_slock);
-#if defined(MULTIPROCESSOR)
-		/* Send the shootdown IPI to other CPUs. */
-		if (ci != self)
-			i386_send_ipi(ci, I386_IPI_TLB);
-#endif
 	}
 	splx(s);
 }
-
 
 /*
  * XXX belongs in cpufunc.h??
@@ -4243,21 +3404,6 @@ tlbflushg(void)
 #endif
 }
 
-
-#if 0
-void pmap_do_tlbflushg()
-{
-	tlbflushg();
-}
-
-void pmap_do_tlbflush()
-{
-	tlbflush();
-}
-#endif
-
-
-
 /*
  * pmap_do_tlb_shootdown:
  *
@@ -4267,16 +3413,9 @@ void
 pmap_do_tlb_shootdown(struct cpu_info *ci)
 {
 	u_long cpu_id = cpu_number();
-#if 0
-	u_long cpu_mask = (1UL << cpu_id);
-#endif
 	struct pmap_tlb_shootdown_q *pq = &pmap_tlb_shootdown_q[cpu_id];
 	struct pmap_tlb_shootdown_job *pj;
 	int s;
-#if 0
-	struct pmap *curpmap;
-#endif
-	
 
 	s = splipi();
 
@@ -4302,10 +3441,6 @@ pmap_do_tlb_shootdown(struct cpu_info *ci)
 		pq->pq_flushu = 0;
 		pmap_tlb_shootdown_q_drain(pq);
 	} else {
-#if 0
-		curpmap = curproc->p_addr->u_pcb.pcb_pmap;
-#endif
-
 		while ((pj = TAILQ_FIRST(&pq->pq_head)) != NULL) {
 			TAILQ_REMOVE(&pq->pq_head, pj, pj_list);
 			
@@ -4363,7 +3498,7 @@ pmap_tlb_shootdown_job_get(pq)
 {
 	struct pmap_tlb_shootdown_job *pj;
 
-	if (pq->pq_count >= PMAP_RR_MAX)
+	if (pq->pq_count >= PMAP_TLB_MAXJOBS)
 		return (NULL);
 	pj = pool_get(&pmap_tlb_shootdown_job_pool, PR_NOWAIT);
 	if (pj != NULL)
@@ -4391,20 +3526,3 @@ pmap_tlb_shootdown_job_put(pq, pj)
 	pool_put(&pmap_tlb_shootdown_job_pool, pj);
 	pq->pq_count--;
 }
-
-#ifdef MULTIPROCESSOR
-/*
- * pmap_tlb_shootdown:
- *
- *	Cause the TLB entry for pmap/va to be shot down.
- */
-void
-pmap_tlb_shootdown(pmap, va, pte)
-	pmap_t pmap;
-	vaddr_t va;
-	pt_entry_t pte;
-{
-	pmap_tlb_dshootdown(pmap, va, pte);
-	pmap_tlb_shootnow();
-}
-#endif /* MULTIPROCESSOR */
