@@ -1,4 +1,4 @@
-/*	$NetBSD: bktr_os.c,v 1.14 2000/10/28 14:50:27 wiz Exp $	*/
+/*	$NetBSD: bktr_os.c,v 1.15 2000/12/28 22:59:16 sommerfeld Exp $	*/
 
 /* FreeBSD: src/sys/dev/bktr/bktr_os.c,v 1.18 2000/10/15 14:18:06 phk Exp */
 
@@ -1387,8 +1387,7 @@ bktr_attach(struct device *parent, struct device *self, void *aux)
 	/*
 	 * map interrupt
 	 */
-	if (pci_intr_map(pa->pa_pc, pa->pa_intrtag, pa->pa_intrpin,
-			 pa->pa_intrline, &ih)) {
+	if (pci_intr_map(pa, &ih)) {
 		printf(": couldn't map interrupt\n");
 		return;
 	}
@@ -1445,8 +1444,7 @@ bktr_attach(struct device *parent, struct device *self, void *aux)
 	/*
 	 * map interrupt
 	 */
-	if (pci_intr_map(pa->pa_pc, pa->pa_intrtag, pa->pa_intrpin,
-			 pa->pa_intrline, &ih)) {
+	if (pci_intr_map(pa, &ih)) {
 		printf("%s: couldn't map interrupt\n",
 		       bktr_name(bktr));
 		return;

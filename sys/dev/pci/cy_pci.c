@@ -1,4 +1,4 @@
-/*	$NetBSD: cy_pci.c,v 1.9 2000/05/29 12:05:41 tsubai Exp $	*/
+/*	$NetBSD: cy_pci.c,v 1.10 2000/12/28 22:59:11 sommerfeld Exp $	*/
 
 /*
  * cy_pci.c
@@ -168,8 +168,7 @@ cy_attach_pci(parent, self, aux)
 	}
 
 	/* Set up interrupt handler. */
-	if (pci_intr_map(pap->pa_pc, pap->pa_intrtag, pap->pa_intrpin,
-	    pap->pa_intrline, &intrhandle) != 0) {
+	if (pci_intr_map(pap, &intrhandle) != 0) {
 		printf(": couldn't map PCI interrupt\n");
 		return;
 	}

@@ -1,4 +1,4 @@
-/*	$NetBSD: ncr.c,v 1.104 2000/09/24 12:37:03 jdolecek Exp $	*/
+/*	$NetBSD: ncr.c,v 1.105 2000/12/28 22:59:14 sommerfeld Exp $	*/
 
 /**************************************************************************
 **
@@ -1538,7 +1538,7 @@ static	int	read_tekram_eeprom
 
 #if 0
 static char ident[] =
-	"\n$NetBSD: ncr.c,v 1.104 2000/09/24 12:37:03 jdolecek Exp $\n";
+	"\n$NetBSD: ncr.c,v 1.105 2000/12/28 22:59:14 sommerfeld Exp $\n";
 #endif
 
 static const u_long	ncr_version = NCR_VERSION	* 11
@@ -3832,8 +3832,7 @@ static void ncr_attach (pcici_t config_id, int unit)
 	/*
 	**	Set up the controller chip's interrupt.
 	*/
-	retval = pci_intr_map(pc, pa->pa_intrtag, pa->pa_intrpin,
-	    pa->pa_intrline, &intrhandle);
+	retval = pci_intr_map(pa, &intrhandle);
 	if (retval) {
 		printf("%s: couldn't map interrupt\n", self->dv_xname);
 		return;

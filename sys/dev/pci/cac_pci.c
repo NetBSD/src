@@ -1,4 +1,4 @@
-/*	$NetBSD: cac_pci.c,v 1.8 2000/11/09 18:19:40 ad Exp $	*/
+/*	$NetBSD: cac_pci.c,v 1.9 2000/12/28 22:59:11 sommerfeld Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -183,8 +183,7 @@ cac_pci_attach(struct device *parent, struct device *self, void *aux)
 		       csr | PCI_COMMAND_MASTER_ENABLE);
 
 	/* Map and establish the interrupt. */
-	if (pci_intr_map(pc, pa->pa_intrtag, pa->pa_intrpin,
-	    pa->pa_intrline, &ih)) {
+	if (pci_intr_map(pa, &ih)) {
 		printf("can't map interrupt\n");
 		return;
 	}

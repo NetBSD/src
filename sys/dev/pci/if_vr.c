@@ -1,4 +1,4 @@
-/*	$NetBSD: if_vr.c,v 1.43 2000/12/19 00:12:47 thorpej Exp $	*/
+/*	$NetBSD: if_vr.c,v 1.44 2000/12/28 22:59:14 sommerfeld Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.
@@ -1509,8 +1509,7 @@ vr_attach(parent, self, aux)
 		}
 
 		/* Allocate interrupt */
-		if (pci_intr_map(pa->pa_pc, pa->pa_intrtag, pa->pa_intrpin,
-				pa->pa_intrline, &intrhandle)) {
+		if (pci_intr_map(pa, &intrhandle)) {
 			printf("%s: couldn't map interrupt\n",
 				sc->vr_dev.dv_xname);
 			return;
