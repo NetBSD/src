@@ -1,5 +1,5 @@
 #! /bin/sh -
-#	$NetBSD: makesyscalls.sh,v 1.26 1998/01/09 06:17:51 thorpej Exp $
+#	$NetBSD: makesyscalls.sh,v 1.27 1998/02/18 23:14:55 thorpej Exp $
 #
 # Copyright (c) 1994,1996 Christopher G. Demetriou
 # All rights reserved.
@@ -61,8 +61,9 @@ sysdcl="sysent.dcl"
 sysprotos="sys.protos"
 syscompat_pref="sysent."
 sysent="sysent.switch"
+sysnamesbottom="sysnames.bottom"
 
-trap "rm $sysdcl $sysprotos $sysent" 0
+trap "rm $sysdcl $sysprotos $sysent $sysnamesbottom" 0
 
 # Awk program (must support nawk extensions)
 # Use "awk" at Berkeley, "nawk" or "gawk" elsewhere.
@@ -122,6 +123,7 @@ BEGIN {
 	sysdcl = \"$sysdcl\"
 	syscompat_pref = \"$syscompat_pref\"
 	sysent = \"$sysent\"
+	sysnamesbottom = \"$sysnamesbottom\"
 	infile = \"$2\"
 
 	compatopts = \"$compatopts\"
@@ -164,7 +166,7 @@ NR == 1 {
 	printf " * created from%s\n */\n\n", $0 > sysdcl
 
 	printf " * created from%s\n */\n\n", $0 > sysnames
-	printf "char *%s[] = {\n",namesname > sysnames
+	printf "\nchar *%s[] = {\n",namesname > sysnamesbottom
 
 	printf " * created from%s\n */\n\n", $0 > sysnumhdr
 
@@ -178,19 +180,20 @@ NF == 0 || $1 ~ /^;/ {
 }
 $1 ~ /^#[ 	]*include/ {
 	print > sysdcl
+	print > sysnames
 	next
 }
 $1 ~ /^#[ 	]*if/ {
 	print > sysent
 	print > sysprotos
-	print > sysnames
+	print > sysnamesbottom
 	savesyscall[++savedepth] = syscall
 	next
 }
 $1 ~ /^#[ 	]*else/ {
 	print > sysent
 	print > sysprotos
-	print > sysnames
+	print > sysnamesbottom
 	if (savedepth <= 0) {
 		printf "%s: line %d: unbalenced #else\n", \
 		    infile, NR
@@ -210,7 +213,7 @@ $1 ~ /^#/ {
 	}
 	print > sysent
 	print > sysprotos
-	print > sysnames
+	print > sysnamesbottom
 	next
 }
 syscall != $1 {
@@ -371,10 +374,10 @@ function putent(nodefs, compatwrap) {
 	# output syscall name for names table
 	if (compatwrap == "")
 		printf("\t\"%s\",\t\t\t/* %d = %s */\n", funcalias, syscall,
-		    funcalias) > sysnames
+		    funcalias) > sysnamesbottom
 	else
 		printf("\t\"%s_%s\",\t/* %d = %s %s */\n", compatwrap,
-		    funcalias, syscall, compatwrap, funcalias) > sysnames
+		    funcalias, syscall, compatwrap, funcalias) > sysnamesbottom
 
 	# output syscall number of header, if appropriate
 	if (nodefs == "" || nodefs == "NOARGS" || nodefs == "INDIR") {
@@ -430,7 +433,7 @@ $2 == "OBSOL" || $2 == "UNIMPL" {
 	printf("\t{ 0, 0,\n\t    sys_nosys },\t\t\t/* %d = %s */\n", \
 	    syscall, comment) > sysent
 	printf("\t\"#%d (%s)\",\t\t/* %d = %s */\n", \
-	    syscall, comment, syscall, comment) > sysnames
+	    syscall, comment, syscall, comment) > sysnamesbottom
 	if ($2 != "UNIMPL")
 		printf("\t\t\t\t/* %d is %s */\n", syscall, comment) > sysnumhdr
 	syscall++
@@ -450,11 +453,12 @@ $2 == "OBSOL" || $2 == "UNIMPL" {
 }
 END {
 	printf("};\n\n") > sysent
-	printf("};\n") > sysnames
+	printf("};\n") > sysnamesbottom
 	printf("#define\t%sMAXSYSCALL\t%d\n", constprefix, syscall) > sysnumhdr
 } '
 
 cat $sysprotos >> $sysarghdr
 cat $sysdcl $sysent > $syssw
+cat $sysnamesbottom >> $sysnames
 
 #chmod 444 $sysnames $sysnumhdr $syssw
