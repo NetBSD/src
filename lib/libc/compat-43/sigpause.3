@@ -30,7 +30,7 @@
 .\" SUCH DAMAGE.
 .\"
 .\"     from: @(#)sigpause.2	8.1 (Berkeley) 6/2/93
-.\"	$NetBSD: sigpause.3,v 1.9 1998/02/05 18:45:42 perry Exp $
+.\"	$NetBSD: sigpause.3,v 1.10 1998/08/29 08:32:32 lukem Exp $
 .\"
 .Dd June 2, 1993
 .Dt SIGPAUSE 3
@@ -50,16 +50,16 @@ This interface is made obsolete by
 .Xr sigsuspend 2 .
 .Ef
 .Pp
-.Fn Sigpause
+.Fn sigpause
 assigns 
 .Fa sigmask
 to the set of masked signals
 and then waits for a signal to arrive;
 on return the set of masked signals is restored.
-.Fa Sigmask
+.Fa sigmask
 is usually 0 to indicate that no
 signals are to be blocked.
-.Fn Sigpause
+.Fn sigpause
 always terminates by being interrupted, returning -1 with
 .Va errno
 set to

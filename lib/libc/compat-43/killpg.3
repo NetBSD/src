@@ -30,7 +30,7 @@
 .\" SUCH DAMAGE.
 .\"
 .\"     from: @(#)killpg.2	8.1 (Berkeley) 6/2/93
-.\"	$NetBSD: killpg.3,v 1.8 1998/02/05 18:45:34 perry Exp $
+.\"	$NetBSD: killpg.3,v 1.9 1998/08/29 08:32:32 lukem Exp $
 .\"
 .Dd June 2, 1993
 .Dt KILLPG 3
@@ -45,7 +45,7 @@
 .Ft int
 .Fn killpg "pid_t pgrp" "int sig"
 .Sh DESCRIPTION
-.Fn Killpg
+.Fn killpg
 sends the signal
 .Fa sig
 to the process group
@@ -70,11 +70,11 @@ a value of -1 is returned and the global variable
 .Va errno
 is set to indicate the error.
 .Sh ERRORS
-.Fn Killpg
+.Fn killpg
 will fail and no signal will be sent if:
 .Bl -tag -width Er
 .It Bq Er EINVAL
-.Fa Sig
+.Fa sig
 is not a valid signal number.
 .It Bq Er ESRCH
 No process can be found in the process group specified by
