@@ -1,4 +1,4 @@
-/* $NetBSD: linux_exec_powerpc.c,v 1.2.4.3 2001/11/14 19:13:08 nathanw Exp $ */
+/* $NetBSD: linux_exec_powerpc.c,v 1.2.4.4 2002/06/24 21:49:17 nathanw Exp $ */
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -48,7 +48,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_exec_powerpc.c,v 1.2.4.3 2001/11/14 19:13:08 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_exec_powerpc.c,v 1.2.4.4 2002/06/24 21:49:17 nathanw Exp $");
 
 #if defined (__alpha__)
 #define ELFSIZE 64
@@ -62,6 +62,7 @@ __KERNEL_RCSID(0, "$NetBSD: linux_exec_powerpc.c,v 1.2.4.3 2001/11/14 19:13:08 n
 #include <sys/systm.h>
 #include <sys/kernel.h>
 #include <sys/malloc.h>
+#include <sys/lwp.h>
 #include <sys/proc.h>
 #include <sys/exec.h>
 #include <sys/exec_elf.h>
@@ -139,7 +140,7 @@ ELFNAME2(linux,copyargs)(pack, arginfo, stackp, argp)
 		/*
 		 * The exec_package doesn't have a proc pointer and it's not
 		 * exactly trivial to add one since the credentials are
-		 * changing. XXX Linux uses curproc's credentials.
+		 * changing. XXX Linux uses curlwp's credentials.
 		 * Why can't we use them too?
 		 */
 		a->a_type = LINUX_AT_EGID;
