@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.11 1998/09/05 23:57:29 eeh Exp $	*/
+/*	$NetBSD: pmap.c,v 1.12 1998/09/06 21:53:43 eeh Exp $	*/
 /* #define NO_VCACHE /* Don't forget the locked TLB in dostart */
 #define HWREF 
 /* #define BOOT_DEBUG */
@@ -871,7 +871,7 @@ pmap_bootstrap(kernelstart, kernelend, maxctx)
 			atop(mp->start),
 			atop(mp->start+mp->size),
 			atop(mp->start),
-			atop(mp->start+mp->size);
+			atop(mp->start+mp->size));
 #endif
 #endif
 	}

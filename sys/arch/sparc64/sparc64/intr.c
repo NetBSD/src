@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.c,v 1.9 1998/09/05 23:57:28 eeh Exp $ */
+/*	$NetBSD: intr.c,v 1.10 1998/09/06 21:53:42 eeh Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -113,10 +113,12 @@ strayintr(fp)
 	int timesince;
 	extern int swallow_zsintrs;
 
+	return;
+
 	/* If we're in polled mode ignore spurious interrupts */
 	if ((fp->tf_pil == PIL_SER) /* && swallow_zsintrs */) return;
 
-	printf("stray interrupt ipl %u pc=%lx npc=%lx pstate=%b\n",
+	printf("stray interrupt ipl %u pc=%lx npc=%lx pstate=%lb\n",
 		fp->tf_pil, fp->tf_pc, fp->tf_npc, 
 	       (unsigned long)(fp->tf_tstate>>TSTATE_PSTATE_SHIFT), PSTATE_BITS);
 	timesince = time.tv_sec - straytime;
