@@ -1,4 +1,4 @@
-/*	$NetBSD: cleanerd.c,v 1.50 2003/09/19 05:50:41 itojun Exp $	*/
+/*	$NetBSD: cleanerd.c,v 1.51 2004/04/21 01:05:32 christos Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -36,7 +36,7 @@ __COPYRIGHT("@(#) Copyright (c) 1992, 1993\n\
 #if 0
 static char sccsid[] = "@(#)cleanerd.c	8.5 (Berkeley) 6/10/95";
 #else
-__RCSID("$NetBSD: cleanerd.c,v 1.50 2003/09/19 05:50:41 itojun Exp $");
+__RCSID("$NetBSD: cleanerd.c,v 1.51 2004/04/21 01:05:32 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -210,7 +210,7 @@ int
 main(int argc, char **argv)
 {
 	FS_INFO	*fsp;
-	struct statfs *lstatfsp;	/* file system stats */
+	struct statvfs *lstatvfsp;	/* file system stats */
 	struct timeval timeout;		/* sleep timeout */
 	fsid_t fsid;
 	long clean_opts;		/* cleaning options */
@@ -278,7 +278,7 @@ main(int argc, char **argv)
 
 	fs_name = argv[0];
 
-	if (fs_getmntinfo(&lstatfsp, fs_name, MOUNT_LFS) == 0) {
+	if (fs_getmntinfo(&lstatvfsp, fs_name, MOUNT_LFS) == 0) {
 		/* didn't find the filesystem */
 		errx(1, "lfs_cleanerd: filesystem %s isn't an LFS!", fs_name);
 	}
@@ -334,7 +334,7 @@ main(int argc, char **argv)
 					fs_name);
 				exit(1);
 			}
-			if (fs_getmntinfo(&lstatfsp, fs_name, MOUNT_LFS) == 0) {
+			if (fs_getmntinfo(&lstatvfsp, fs_name, MOUNT_LFS) == 0) {
 				/* fs has been unmounted(?); exit quietly */
 				syslog(LOG_ERR,"lfs_cleanerd: fs %s unmounted, exiting", fs_name);
 				exit(0);
@@ -354,10 +354,9 @@ main(int argc, char **argv)
 
 	timeout.tv_sec = segwait_timeout;
 	timeout.tv_usec = 0;
-	fsid.val[0] = 0;
-	fsid.val[1] = 0;
+	(void)memset(&fsid, 0, sizeof(fsid));
 
-	for (fsp = get_fs_info(lstatfsp, do_mmap); ;
+	for (fsp = get_fs_info(lstatvfsp, do_mmap); ;
 	    reread_fs_info(fsp, do_mmap)) {
 		/*
 		 * If the user specified '-F', he doesn't want us
@@ -377,7 +376,7 @@ main(int argc, char **argv)
 		if (clean_loop(fsp, segs_per_clean, clean_opts))
 			continue;
 
-		fsid = lstatfsp->f_fsid;
+		fsid = lstatvfsp->f_fsidx;
 		if(debug > 1)
 			syslog(LOG_DEBUG,"Cleaner going to sleep.");
 		if (lfs_segwait_emul(ifile_fd, &timeout) < 0)
@@ -518,7 +517,7 @@ clean_fs(FS_INFO *fsp, unsigned long (*cost_func)(FS_INFO *, SEGUSE *),
 	int error;
 	SEGS_AND_BLOCKS *sbp;
 
-	fsidp = &fsp->fi_statfsp->f_fsid;
+	fsidp = &fsp->fi_statvfsp->f_fsidx;
 
 	if ((segs =
 	    malloc(fsp->fi_lfs.lfs_nseg * sizeof(struct seglist))) == NULL) {
@@ -564,7 +563,7 @@ clean_fs(FS_INFO *fsp, unsigned long (*cost_func)(FS_INFO *, SEGUSE *),
 
 	if (debug > 1)
 		syslog(LOG_DEBUG, "clean_fs: found %ld segments to clean in %s",
-			i, fsp->fi_statfsp->f_mntonname);
+			i, fsp->fi_statvfsp->f_mntonname);
 
 	if (i) {
 		sbp = (SEGS_AND_BLOCKS *)malloc(sizeof(SEGS_AND_BLOCKS));

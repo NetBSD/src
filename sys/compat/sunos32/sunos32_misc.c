@@ -1,4 +1,4 @@
-/*	$NetBSD: sunos32_misc.c,v 1.24 2003/10/21 12:08:11 kleink Exp $	*/
+/*	$NetBSD: sunos32_misc.c,v 1.25 2004/04/21 01:05:37 christos Exp $	*/
 /* from :NetBSD: sunos_misc.c,v 1.107 2000/12/01 19:25:10 jdolecek Exp	*/
 
 /*
@@ -79,7 +79,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sunos32_misc.c,v 1.24 2003/10/21 12:08:11 kleink Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sunos32_misc.c,v 1.25 2004/04/21 01:05:37 christos Exp $");
 
 #define COMPAT_SUNOS 1
 
@@ -1235,7 +1235,7 @@ sunos32_sys_vhangup(l, v, retval)
 
 static int
 sunstatfs(sp, buf)
-	struct statfs *sp;
+	struct statvfs *sp;
 	caddr_t buf;
 {
 	struct sunos_statfs ssfs;
@@ -1248,7 +1248,7 @@ sunstatfs(sp, buf)
 	ssfs.f_bavail = sp->f_bavail;
 	ssfs.f_files = sp->f_files;
 	ssfs.f_ffree = sp->f_ffree;
-	ssfs.f_fsid = sp->f_fsid;
+	ssfs.f_fsid = sp->f_fsidx;
 	return copyout((caddr_t)&ssfs, buf, sizeof ssfs);
 }	
 

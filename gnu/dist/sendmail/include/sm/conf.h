@@ -1,4 +1,4 @@
-/* $NetBSD: conf.h,v 1.4 2004/03/25 19:14:30 atatat Exp $ */
+/* $NetBSD: conf.h,v 1.5 2004/04/21 01:05:31 christos Exp $ */
 /*
  * Copyright (c) 1998-2004 Sendmail, Inc. and its suppliers.
  *	All rights reserved.
@@ -781,7 +781,11 @@ extern unsigned int sleepX __P((unsigned int seconds));
 #  ifndef LA_TYPE
 #   define LA_TYPE	LA_SUBR
 #  endif /* ! LA_TYPE */
+#if __NetBSD_Version__ > 200030000
+#  define SFS_TYPE	SFS_STATVFS	/* use <sys/statvfs.h> statfs() impl */
+#else
 #  define SFS_TYPE	SFS_MOUNT	/* use <sys/mount.h> statfs() impl */
+#endif
 #  define SPT_TYPE	SPT_PSSTRINGS	/* use PS_STRINGS pointer */
 # endif /* defined(BSD4_4) && !defined(__bsdi__) && !defined(__GNU__) */
 
@@ -895,7 +899,11 @@ extern unsigned int sleepX __P((unsigned int seconds));
 #  ifndef LA_TYPE
 #   define LA_TYPE	LA_SUBR
 #  endif /* ! LA_TYPE */
+#if __NetBSD_Version__ > 200030000
+#  define SFS_TYPE	SFS_STATVFS	/* use <sys/statvfs.h> statfs() impl */
+#else
 #  define SFS_TYPE	SFS_MOUNT	/* use <sys/mount.h> statfs() impl */
+#endif
 #  if defined(__NetBSD__) && (NetBSD > 199307 || NetBSD0_9 > 1)
 #   undef SPT_TYPE
 #   define SPT_TYPE	SPT_BUILTIN	/* setproctitle is in libc */

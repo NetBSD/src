@@ -1,4 +1,4 @@
-/*	$NetBSD: fstat.c,v 1.66 2004/04/02 14:22:05 aymeric Exp $	*/
+/*	$NetBSD: fstat.c,v 1.67 2004/04/21 01:05:47 christos Exp $	*/
 
 /*-
  * Copyright (c) 1988, 1993
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1988, 1993\n\
 #if 0
 static char sccsid[] = "@(#)fstat.c	8.3 (Berkeley) 5/2/95";
 #else
-__RCSID("$NetBSD: fstat.c,v 1.66 2004/04/02 14:22:05 aymeric Exp $");
+__RCSID("$NetBSD: fstat.c,v 1.67 2004/04/21 01:05:47 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -687,7 +687,7 @@ layer_filestat(vp, fsp)
 		return ("error");
 	}
 	if ((badtype = vfilestat(&vn, fsp)) == NULL)
-		fsp->fsid = mount.mnt_stat.f_fsid.val[0];
+		fsp->fsid = mount.mnt_stat.f_fsidx.__fsid_val[0];
 	return (badtype);
 }
 

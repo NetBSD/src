@@ -1,4 +1,4 @@
-/*	$NetBSD: darwin_mount.c,v 1.2 2003/12/06 11:43:56 manu Exp $ */
+/*	$NetBSD: darwin_mount.c,v 1.3 2004/04/21 01:05:36 christos Exp $ */
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: darwin_mount.c,v 1.2 2003/12/06 11:43:56 manu Exp $");
+__KERNEL_RCSID(0, "$NetBSD: darwin_mount.c,v 1.3 2004/04/21 01:05:36 christos Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -57,7 +57,8 @@ __KERNEL_RCSID(0, "$NetBSD: darwin_mount.c,v 1.2 2003/12/06 11:43:56 manu Exp $"
 #include <compat/darwin/darwin_mount.h>
 #include <compat/darwin/darwin_syscallargs.h>
 
-static void native_to_darwin_statfs(struct statfs *, struct darwin_statfs *);
+static void native_to_darwin_statvfs(const struct statvfs *,
+    struct darwin_statfs *);
 
 int
 darwin_sys_fstatfs(l, v, retval)
@@ -72,7 +73,7 @@ darwin_sys_fstatfs(l, v, retval)
 	struct proc *p = l->l_proc;
 	struct file *fp;
 	struct mount *mp;
-	struct statfs *bs;
+	struct statvfs *bs;
 	struct darwin_statfs ds;
 	int error;
 
@@ -83,11 +84,10 @@ darwin_sys_fstatfs(l, v, retval)
 	mp = ((struct vnode *)fp->f_data)->v_mount;
 	bs = &mp->mnt_stat;
 
-	if ((error = VFS_STATFS(mp, bs, p)) != 0)
+	if ((error = VFS_STATVFS(mp, bs, p)) != 0)
 		goto out;
 
-	bs->f_flags = mp->mnt_flag & MNT_VISFLAGMASK;
-	native_to_darwin_statfs(bs, &ds);
+	native_to_darwin_statvfs(bs, &ds);
 
 	error = copyout(&ds, SCARG(uap, buf), sizeof(ds));
 
@@ -109,7 +109,7 @@ darwin_sys_getfsstat(l, v, retval)
 	} */ *uap = v;
 	struct proc *p = l->l_proc;
 	struct mount *mp, *nmp;
-	struct statfs *bs;
+	struct statvfs *bs;
 	struct darwin_statfs ds;
 	struct darwin_statfs *uds;
 	long count, maxcount, error;
@@ -126,11 +126,10 @@ darwin_sys_getfsstat(l, v, retval)
 
 			if (((SCARG(uap, flags) & MNT_NOWAIT) == 0 ||
 			    (SCARG(uap, flags) & MNT_WAIT)) &&
-			    (error = VFS_STATFS(mp, bs, p)))
+			    (error = VFS_STATVFS(mp, bs, p)))
 				continue;
 
-			bs->f_flags = mp->mnt_flag & MNT_VISFLAGMASK;
-			native_to_darwin_statfs(bs, &ds);
+			native_to_darwin_statvfs(bs, &ds);
 
 			if ((error = copyout(&ds, uds, sizeof(*uds))) != 0)
 				return error;
@@ -159,7 +158,7 @@ darwin_sys_statfs(l, v, retval)
 	} */ *uap = v;
 	struct proc *p = l->l_proc;
 	struct mount *mp;
-	struct statfs *bs;
+	struct statvfs *bs;
 	struct darwin_statfs ds;
 	struct nameidata nd;
 	int error;
@@ -172,11 +171,10 @@ darwin_sys_statfs(l, v, retval)
 	bs = &mp->mnt_stat;
 	vrele(nd.ni_vp);
 
-	if ((error = VFS_STATFS(mp, bs, p)) != 0)
+	if ((error = VFS_STATVFS(mp, bs, p)) != 0)
 		return error;
 
-	bs->f_flags = mp->mnt_flag & MNT_VISFLAGMASK;
-	native_to_darwin_statfs(bs, &ds);
+	native_to_darwin_statvfs(bs, &ds);
 
 	error = copyout(&ds, SCARG(uap, buf), sizeof(ds));
 
@@ -185,30 +183,31 @@ darwin_sys_statfs(l, v, retval)
 
 
 static void
-native_to_darwin_statfs(bs, ds)
-	struct statfs *bs;
+native_to_darwin_statvfs(bs, ds)
+	const struct statvfs *bs;
 	struct darwin_statfs *ds;
 {
 	long dflags = 0;
+	long sflags = bs->f_flag & MNT_VISFLAGMASK;
 
-	if (bs->f_flags|MNT_RDONLY)
+	if (sflags|MNT_RDONLY)
 		dflags |= DARWIN_MNT_RDONLY;
-	if (bs->f_flags|MNT_SYNCHRONOUS)
+	if (sflags|MNT_SYNCHRONOUS)
 		dflags |= DARWIN_MNT_SYNCHRONOUS;
-	if (bs->f_flags|MNT_NOEXEC)
+	if (sflags|MNT_NOEXEC)
 		dflags |= DARWIN_MNT_NOEXEC;
-	if (bs->f_flags|MNT_NOSUID)
+	if (sflags|MNT_NOSUID)
 		dflags |= DARWIN_MNT_NOSUID;
-	if (bs->f_flags|MNT_NODEV)
+	if (sflags|MNT_NODEV)
 		dflags |= DARWIN_MNT_NODEV;
-	if (bs->f_flags|MNT_UNION)
+	if (sflags|MNT_UNION)
 		dflags |= DARWIN_MNT_UNION;
-	if (bs->f_flags|MNT_ASYNC)
+	if (sflags|MNT_ASYNC)
 		dflags |= DARWIN_MNT_ASYNC;
-	if (bs->f_flags|MNT_IGNORE)
+	if (sflags|MNT_IGNORE)
 		dflags |= DARWIN_MNT_DONTBROWSE;
 
-	ds->f_otype = bs->f_type; /* XXX */
+	ds->f_otype = 0;
 	ds->f_oflags = dflags & 0xffff;
 	ds->f_bsize = bs->f_bsize;
 	ds->f_iosize = bs->f_iosize;
@@ -217,10 +216,10 @@ native_to_darwin_statfs(bs, ds)
 	ds->f_bavail = bs->f_bavail;
 	ds->f_files = bs->f_files;
 	ds->f_ffree = bs->f_ffree;
-	(void)memcpy(&ds->f_fsid, &bs->f_fsid, sizeof(ds->f_fsid));
+	(void)memcpy(&ds->f_fsid, &bs->f_fsidx, sizeof(ds->f_fsid));
 	ds->f_owner = bs->f_owner;
 	ds->f_reserved1 = 0;
-	ds->f_type = bs->f_type; /* XXX */
+	ds->f_type = 0;
 	ds->f_flags = dflags;
 	(void)strlcpy(ds->f_fstypename, bs->f_fstypename, DARWIN_MFSNAMELEN);
 	(void)strlcpy(ds->f_mntonname, bs->f_mntonname, DARWIN_MNAMELEN);

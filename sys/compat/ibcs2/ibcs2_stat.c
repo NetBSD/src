@@ -1,4 +1,4 @@
-/*	$NetBSD: ibcs2_stat.c,v 1.28 2003/11/05 04:03:43 christos Exp $	*/
+/*	$NetBSD: ibcs2_stat.c,v 1.29 2004/04/21 01:05:36 christos Exp $	*/
 /*
  * Copyright (c) 1995, 1998 Scott Bartram
  * All rights reserved.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ibcs2_stat.c,v 1.28 2003/11/05 04:03:43 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ibcs2_stat.c,v 1.29 2004/04/21 01:05:36 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -54,8 +54,8 @@ __KERNEL_RCSID(0, "$NetBSD: ibcs2_stat.c,v 1.28 2003/11/05 04:03:43 christos Exp
 #include <compat/ibcs2/ibcs2_utsname.h>
 
 static void bsd_stat2ibcs_stat __P((struct stat *, struct ibcs2_stat *));
-static int cvt_statfs __P((struct statfs *, caddr_t, int));
-static int cvt_statvfs __P((struct statfs *, caddr_t, int));
+static int cvt_statfs __P((struct statvfs *, caddr_t, int));
+static int cvt_statvfs __P((struct statvfs *, caddr_t, int));
 
 static void
 bsd_stat2ibcs_stat(st, st4)
@@ -81,7 +81,7 @@ bsd_stat2ibcs_stat(st, st4)
 
 static int
 cvt_statfs(sp, buf, len)
-	struct statfs *sp;
+	struct statvfs *sp;
 	caddr_t buf;
 	int len;
 {
@@ -95,7 +95,7 @@ cvt_statfs(sp, buf, len)
 	memset(&ssfs, 0, sizeof ssfs);
 	ssfs.f_fstyp = 0;
 	ssfs.f_bsize = sp->f_bsize;
-	ssfs.f_frsize = 0;
+	ssfs.f_frsize = sp->f_frsize;
 	ssfs.f_blocks = sp->f_blocks;
 	ssfs.f_bfree = sp->f_bfree;
 	ssfs.f_files = sp->f_files;
@@ -107,7 +107,7 @@ cvt_statfs(sp, buf, len)
 
 static int
 cvt_statvfs(sp, buf, len)
-	struct statfs *sp;
+	struct statvfs *sp;
 	caddr_t buf;
 	int len;
 {
@@ -119,14 +119,15 @@ cvt_statvfs(sp, buf, len)
 		len = sizeof(ssvfs);
 
 	memset(&ssvfs, 0, sizeof ssvfs);
-	ssvfs.f_frsize = ssvfs.f_bsize = sp->f_bsize;
+	ssvfs.f_bsize = sp->f_bsize;
+	ssvfs.f_frsize = sp->f_frsize;
 	ssvfs.f_blocks = sp->f_blocks;
 	ssvfs.f_bfree = sp->f_bfree;
 	ssvfs.f_bavail = sp->f_bavail;
 	ssvfs.f_files = sp->f_files;
 	ssvfs.f_ffree = sp->f_ffree;
-	ssvfs.f_favail = sp->f_ffree;
-	ssvfs.f_fsid = sp->f_fsid.val[0];
+	ssvfs.f_favail = sp->f_favail;
+	ssvfs.f_fsid = sp->f_fsidx.__fsid_val[0];
 	strncpy(ssvfs.f_basetype, sp->f_fstypename, 15);
 	ssvfs.f_flag = 0;
 	ssvfs.f_namemax = PATH_MAX;
@@ -148,7 +149,7 @@ ibcs2_sys_statfs(l, v, retval)
 	} */ *uap = v;
 	struct proc *p = l->l_proc;
 	struct mount *mp;
-	struct statfs *sp;
+	struct statvfs *sp;
 	int error;
 	struct nameidata nd;
 	caddr_t sg = stackgap_init(p, 0);
@@ -160,9 +161,9 @@ ibcs2_sys_statfs(l, v, retval)
 	mp = nd.ni_vp->v_mount;
 	sp = &mp->mnt_stat;
 	vrele(nd.ni_vp);
-	if ((error = VFS_STATFS(mp, sp, p)) != 0)
+	if ((error = VFS_STATVFS(mp, sp, p)) != 0)
 		return (error);
-	sp->f_flags = mp->mnt_flag & MNT_VISFLAGMASK;
+	sp->f_flag = mp->mnt_flag & MNT_VISFLAGMASK;
 	return cvt_statfs(sp, (caddr_t)SCARG(uap, buf), SCARG(uap, len));
 }
 
@@ -181,7 +182,7 @@ ibcs2_sys_fstatfs(l, v, retval)
 	struct proc *p = l->l_proc;
 	struct file *fp;
 	struct mount *mp;
-	struct statfs *sp;
+	struct statvfs *sp;
 	int error;
 
 	/* getvnode() will use the descriptor for us */
@@ -189,9 +190,9 @@ ibcs2_sys_fstatfs(l, v, retval)
 		return (error);
 	mp = ((struct vnode *)fp->f_data)->v_mount;
 	sp = &mp->mnt_stat;
-	if ((error = VFS_STATFS(mp, sp, p)) != 0)
+	if ((error = VFS_STATVFS(mp, sp, p)) != 0)
 		goto out;
-	sp->f_flags = mp->mnt_flag & MNT_VISFLAGMASK;
+	sp->f_flag = mp->mnt_flag & MNT_VISFLAGMASK;
 	error = cvt_statfs(sp, (caddr_t)SCARG(uap, buf), SCARG(uap, len));
  out:
 	FILE_UNUSE(fp, p);
@@ -210,7 +211,7 @@ ibcs2_sys_statvfs(l, v, retval)
 	} */ *uap = v;
 	struct proc *p = l->l_proc;
 	struct mount *mp;
-	struct statfs *sp;
+	struct statvfs *sp;
 	int error;
 	struct nameidata nd;
 	caddr_t sg = stackgap_init(p, 0);
@@ -222,9 +223,9 @@ ibcs2_sys_statvfs(l, v, retval)
 	mp = nd.ni_vp->v_mount;
 	sp = &mp->mnt_stat;
 	vrele(nd.ni_vp);
-	if ((error = VFS_STATFS(mp, sp, p)) != 0)
+	if ((error = VFS_STATVFS(mp, sp, p)) != 0)
 		return (error);
-	sp->f_flags = mp->mnt_flag & MNT_VISFLAGMASK;
+	sp->f_flag = mp->mnt_flag & MNT_VISFLAGMASK;
 	return cvt_statvfs(sp, (caddr_t)SCARG(uap, buf),
 			   sizeof(struct ibcs2_statvfs));
 }
@@ -242,7 +243,7 @@ ibcs2_sys_fstatvfs(l, v, retval)
 	struct proc *p = l->l_proc;
 	struct file *fp;
 	struct mount *mp;
-	struct statfs *sp;
+	struct statvfs *sp;
 	int error;
 
 	/* getvnode() will use the descriptor for us */
@@ -250,9 +251,9 @@ ibcs2_sys_fstatvfs(l, v, retval)
 		return (error);
 	mp = ((struct vnode *)fp->f_data)->v_mount;
 	sp = &mp->mnt_stat;
-	if ((error = VFS_STATFS(mp, sp, p)) != 0)
+	if ((error = VFS_STATVFS(mp, sp, p)) != 0)
 		goto out;
-	sp->f_flags = mp->mnt_flag & MNT_VISFLAGMASK;
+	sp->f_flag = mp->mnt_flag & MNT_VISFLAGMASK;
 	error = cvt_statvfs(sp, (caddr_t)SCARG(uap, buf),
 			   sizeof(struct ibcs2_statvfs));
  out:

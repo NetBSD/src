@@ -1,4 +1,4 @@
-/* $NetBSD: init_sysent.c,v 1.155 2004/03/26 15:29:28 drochner Exp $ */
+/* $NetBSD: init_sysent.c,v 1.156 2004/04/21 01:05:38 christos Exp $ */
 
 /*
  * System call switch table.
@@ -8,7 +8,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: init_sysent.c,v 1.155 2004/03/26 15:29:28 drochner Exp $");
+__KERNEL_RCSID(0, "$NetBSD: init_sysent.c,v 1.156 2004/04/21 01:05:38 christos Exp $");
 
 #include "opt_ktrace.h"
 #include "opt_nfsserver.h"
@@ -80,6 +80,12 @@ __KERNEL_RCSID(0, "$NetBSD: init_sysent.c,v 1.155 2004/03/26 15:29:28 drochner E
 #define	compat_16(func) sys_nosys
 #endif
 
+#ifdef COMPAT_20
+#define	compat_20(func) __CONCAT(compat_20_,func)
+#else
+#define	compat_20(func) sys_nosys
+#endif
+
 #define	s(type)	sizeof(type)
 
 struct sysent sysent[] = {
@@ -119,8 +125,8 @@ struct sysent sysent[] = {
 	    sys_chown },			/* 16 = chown */
 	{ 1, s(struct sys_obreak_args), 0,
 	    sys_obreak },			/* 17 = break */
-	{ 3, s(struct sys_getfsstat_args), 0,
-	    sys_getfsstat },			/* 18 = getfsstat */
+	{ 3, s(struct compat_20_sys_getfsstat_args), 0,
+	    compat_20(sys_getfsstat) },		/* 18 = compat_20 getfsstat */
 	{ 3, s(struct compat_43_sys_lseek_args), 0,
 	    compat_43(sys_lseek) },		/* 19 = compat_43 olseek */
 #ifdef COMPAT_43
@@ -422,10 +428,10 @@ struct sysent sysent[] = {
 #endif
 	{ 4, s(struct compat_43_sys_getdirentries_args), 0,
 	    compat_43(sys_getdirentries) },	/* 156 = compat_43 ogetdirentries */
-	{ 2, s(struct sys_statfs_args), 0,
-	    sys_statfs },			/* 157 = statfs */
-	{ 2, s(struct sys_fstatfs_args), 0,
-	    sys_fstatfs },			/* 158 = fstatfs */
+	{ 2, s(struct compat_20_sys_statfs_args), 0,
+	    compat_20(sys_statfs) },		/* 157 = compat_20 statfs */
+	{ 2, s(struct compat_20_sys_fstatfs_args), 0,
+	    compat_20(sys_fstatfs) },		/* 158 = compat_20 fstatfs */
 	{ 0, 0, 0,
 	    sys_nosys },			/* 159 = unimplemented */
 	{ 0, 0, 0,
@@ -823,8 +829,8 @@ struct sysent sysent[] = {
 	    sys_fhopen },			/* 298 = fhopen */
 	{ 2, s(struct sys_fhstat_args), 0,
 	    sys_fhstat },			/* 299 = fhstat */
-	{ 2, s(struct sys_fhstatfs_args), 0,
-	    sys_fhstatfs },			/* 300 = fhstatfs */
+	{ 2, s(struct compat_20_sys_fhstatfs_args), 0,
+	    compat_20(sys_fhstatfs) },		/* 300 = compat_20 fhstatfs */
 #if defined(SYSVSEM) || !defined(_KERNEL)
 	{ 4, s(struct sys_____semctl13_args), 0,
 	    sys_____semctl13 },			/* 301 = ____semctl13 */
@@ -950,14 +956,14 @@ struct sysent sysent[] = {
 	    sys_fsync_range },			/* 354 = fsync_range */
 	{ 2, s(struct sys_uuidgen_args), 0,
 	    sys_uuidgen },			/* 355 = uuidgen */
-	{ 0, 0, 0,
-	    sys_nosys },			/* 356 = filler */
-	{ 0, 0, 0,
-	    sys_nosys },			/* 357 = filler */
-	{ 0, 0, 0,
-	    sys_nosys },			/* 358 = filler */
-	{ 0, 0, 0,
-	    sys_nosys },			/* 359 = filler */
+	{ 3, s(struct sys_getvfsstat_args), 0,
+	    sys_getvfsstat },			/* 356 = getvfsstat */
+	{ 3, s(struct sys_statvfs1_args), 0,
+	    sys_statvfs1 },			/* 357 = statvfs1 */
+	{ 3, s(struct sys_fstatvfs1_args), 0,
+	    sys_fstatvfs1 },			/* 358 = fstatvfs1 */
+	{ 3, s(struct sys_fhstatvfs1_args), 0,
+	    sys_fhstatvfs1 },			/* 359 = fhstatvfs1 */
 	{ 0, 0, 0,
 	    sys_nosys },			/* 360 = filler */
 	{ 0, 0, 0,

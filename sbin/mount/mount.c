@@ -1,4 +1,4 @@
-/*	$NetBSD: mount.c,v 1.68 2004/03/27 06:11:48 cgd Exp $	*/
+/*	$NetBSD: mount.c,v 1.69 2004/04/21 01:05:33 christos Exp $	*/
 
 /*
  * Copyright (c) 1980, 1989, 1993, 1994
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1989, 1993, 1994\n\
 #if 0
 static char sccsid[] = "@(#)mount.c	8.25 (Berkeley) 5/8/95";
 #else
-__RCSID("$NetBSD: mount.c,v 1.68 2004/03/27 06:11:48 cgd Exp $");
+__RCSID("$NetBSD: mount.c,v 1.69 2004/04/21 01:05:33 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -70,14 +70,14 @@ static int	debug, verbose;
 static void	catopt __P((char **, const char *));
 static const char *
 		getfslab __P((const char *str));
-static struct statfs *
+static struct statvfs *
 		getmntpt __P((const char *));
-static int 	getmntargs __P((struct statfs *, char *, size_t));
+static int 	getmntargs __P((struct statvfs *, char *, size_t));
 static int	hasopt __P((const char *, const char *));
 static void	mangle __P((char *, int *, const char ***, int *));
 static int	mountfs __P((const char *, const char *, const char *,
 		    int, const char *, const char *, int, char *, size_t));
-static void	prmount __P((struct statfs *));
+static void	prmount __P((struct statvfs *));
 static void	usage __P((void));
 
 int	main __P((int, char *[]));
@@ -100,7 +100,7 @@ main(argc, argv)
 {
 	const char *mntfromname, *mntonname, **vfslist, *vfstype;
 	struct fstab *fs;
-	struct statfs *mntbuf;
+	struct statvfs *mntbuf;
 	FILE *mountdfp;
 	int all, ch, forceall, i, init_flags, mntsize, rval;
 	char *options;
@@ -324,7 +324,7 @@ mountfs(vfstype, spec, name, flags, options, mntopts, skipmounted, buf, buflen)
 		NULL
 	};
 	const char **argv, **edir;
-	struct statfs *sfp, sf;
+	struct statvfs *sfp, sf;
 	pid_t pid;
 	int pfd[2];
 	int argc, numfs, i, status, maxargc;
@@ -387,7 +387,7 @@ mountfs(vfstype, spec, name, flags, options, mntopts, skipmounted, buf, buflen)
 	if (flags & MNT_UPDATE) {
 		catopt(&optbuf, "update");
 		/* Figure out the fstype only if we defaulted to ffs */
-		if (vfstype == ffs_fstype && statfs(name, &sf) != -1)
+		if (vfstype == ffs_fstype && statvfs(name, &sf) != -1)
 			vfstype = sf.f_fstypename;
 	}
 
@@ -494,8 +494,8 @@ mountfs(vfstype, spec, name, flags, options, mntopts, skipmounted, buf, buflen)
 
 		if (buf == NULL) {
 			if (verbose) {
-				if (statfs(name, &sf) < 0) {
-					warn("statfs %s", name);
+				if (statvfs(name, &sf) < 0) {
+					warn("statvfs %s", name);
 					return (1);
 				}
 				prmount(&sf);
@@ -509,7 +509,7 @@ mountfs(vfstype, spec, name, flags, options, mntopts, skipmounted, buf, buflen)
 
 static void
 prmount(sfp)
-	struct statfs *sfp;
+	struct statvfs *sfp;
 {
 	int flags;
 	const struct opt *o;
@@ -519,7 +519,7 @@ prmount(sfp)
 	(void)printf("%s on %s type %.*s", sfp->f_mntfromname,
 	    sfp->f_mntonname, MFSNAMELEN, sfp->f_fstypename);
 
-	flags = sfp->f_flags & MNT_VISFLAGMASK;
+	flags = sfp->f_flag & MNT_VISFLAGMASK;
 	for (f = 0, o = optnames; flags && o < 
 	    &optnames[sizeof(optnames)/sizeof(optnames[0])]; o++)
 		if (flags & o->o_opt) {
@@ -539,8 +539,11 @@ prmount(sfp)
 			(void)printf("%d", sfp->f_owner);
 	}
 	if (verbose) {
-		(void)printf("%swrites: sync %ld async %ld",
-		    !f++ ? " (" : ", ", sfp->f_syncwrites, sfp->f_asyncwrites);
+		(void)printf("%s", !f++ ? " (" : ", ");
+		(void)printf("reads: sync %llu async %llu",
+		    sfp->f_syncreads, sfp->f_asyncreads);
+		(void)printf(", writes: sync %llu async %llu",
+		    sfp->f_syncwrites, sfp->f_asyncwrites);
 		if (verbose > 1) {
 			char buf[2048];
 
@@ -554,7 +557,7 @@ prmount(sfp)
 
 static int
 getmntargs(sfs, buf, buflen)
-	struct statfs *sfs;
+	struct statvfs *sfs;
 	char *buf;
 	size_t buflen;
 {
@@ -571,11 +574,11 @@ getmntargs(sfs, buf, buflen)
 	}
 }
 
-static struct statfs *
+static struct statvfs *
 getmntpt(name)
 	const char *name;
 {
-	struct statfs *mntbuf;
+	struct statvfs *mntbuf;
 	int i, mntsize;
 
 	mntsize = getmntinfo(&mntbuf, MNT_NOWAIT);

@@ -1,4 +1,4 @@
-/*	$NetBSD: fssconfig.c,v 1.2 2004/01/11 19:05:27 hannken Exp $	*/
+/*	$NetBSD: fssconfig.c,v 1.3 2004/04/21 01:05:47 christos Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -124,7 +124,7 @@ config(int argc, char **argv)
 	char full[64], path[MAXPATHLEN];
 	off_t bssize;
 	struct stat sbuf;
-	struct statfs fsbuf;
+	struct statvfs fsbuf;
 	struct fss_set fss;
 
 	if (argc < 3)
@@ -132,8 +132,8 @@ config(int argc, char **argv)
 
 	istmp = 0;
 
-	if (statfs(argv[1], &fsbuf) != 0)
-		err(1, "statfs %s", argv[1]);
+	if (statvfs(argv[1], &fsbuf) != 0)
+		err(1, "statvfs %s", argv[1]);
 
 	fss.fss_mount = argv[1];
 	fss.fss_bstore = argv[2];
@@ -144,7 +144,7 @@ config(int argc, char **argv)
 	if (argc > 4)
 		bssize = strsuftoll("bs size", argv[4], 0, LLONG_MAX);
 	else
-		bssize = (off_t)fsbuf.f_blocks*fsbuf.f_bsize;
+		bssize = (off_t)fsbuf.f_blocks*fsbuf.f_frsize;
 
 	/*
 	 * Create the backing store. If it is a directory, create a temporary

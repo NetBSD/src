@@ -1,4 +1,4 @@
-/*	$NetBSD: advnops.c,v 1.8 2004/01/26 10:39:29 hannken Exp $	*/
+/*	$NetBSD: advnops.c,v 1.9 2004/04/21 01:05:37 christos Exp $	*/
 
 /*
  * Copyright (c) 1994 Christian E. Hopps
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: advnops.c,v 1.8 2004/01/26 10:39:29 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: advnops.c,v 1.9 2004/04/21 01:05:37 christos Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_quota.h"
@@ -179,7 +179,7 @@ adosfs_getattr(v)
 	vattr_null(vap);
 	vap->va_uid = ap->uid;
 	vap->va_gid = ap->gid;
-	vap->va_fsid = sp->a_vp->v_mount->mnt_stat.f_fsid.val[0];
+	vap->va_fsid = sp->a_vp->v_mount->mnt_stat.f_fsidx.__fsid_val[0];
 	vap->va_atime.tv_sec = vap->va_mtime.tv_sec = vap->va_ctime.tv_sec =
 		ap->mtime.days * 24 * 60 * 60 + ap->mtime.mins * 60 +
 		ap->mtime.ticks / 50 + (8 * 365 + 2) * 24 * 60 * 60;

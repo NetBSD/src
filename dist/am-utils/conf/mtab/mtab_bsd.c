@@ -1,4 +1,4 @@
-/*	$NetBSD: mtab_bsd.c,v 1.1.1.6 2003/03/09 01:13:23 christos Exp $	*/
+/*	$NetBSD: mtab_bsd.c,v 1.2 2004/04/21 01:05:31 christos Exp $	*/
 
 /*
  * Copyright (c) 1997-2003 Erez Zadok
@@ -55,6 +55,9 @@
 #include <am_defs.h>
 #include <amu.h>
 
+#if __NetBSD_Version__ > 200030000
+#define statfs statvfs
+#endif
 
 static mntent_t *
 mnt_dup(struct statfs *mp)

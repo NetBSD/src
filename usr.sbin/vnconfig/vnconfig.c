@@ -1,4 +1,4 @@
-/*	$NetBSD: vnconfig.c,v 1.30 2004/01/25 21:49:04 atatat Exp $	*/
+/*	$NetBSD: vnconfig.c,v 1.31 2004/04/21 01:05:48 christos Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -228,7 +228,7 @@ main(argc, argv)
 				    vnu.vnu_unit);
 			else {
 				char *dev;
-				struct statfs *mnt = NULL;
+				struct statvfs *mnt = NULL;
 				int i, n;
 
 				printf("vnd%d: ", vnu.vnu_unit);

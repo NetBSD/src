@@ -1,4 +1,4 @@
-/*	$NetBSD: kernfs_vfsops.c,v 1.58 2004/03/24 15:34:53 atatat Exp $	*/
+/*	$NetBSD: kernfs_vfsops.c,v 1.59 2004/04/21 01:05:41 christos Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993, 1995
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kernfs_vfsops.c,v 1.58 2004/03/24 15:34:53 atatat Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kernfs_vfsops.c,v 1.59 2004/04/21 01:05:41 christos Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_compat_netbsd.h"
@@ -71,7 +71,7 @@ int	kernfs_mount __P((struct mount *, const char *, void *,
 	    struct nameidata *, struct proc *));
 int	kernfs_start __P((struct mount *, int, struct proc *));
 int	kernfs_unmount __P((struct mount *, int, struct proc *));
-int	kernfs_statfs __P((struct mount *, struct statfs *, struct proc *));
+int	kernfs_statvfs __P((struct mount *, struct statvfs *, struct proc *));
 int	kernfs_quotactl __P((struct mount *, int, uid_t, caddr_t,
 			     struct proc *));
 int	kernfs_sync __P((struct mount *, int, struct ucred *, struct proc *));
@@ -161,7 +161,7 @@ kernfs_mount(mp, path, data, ndp, p)
 	mp->mnt_flag |= MNT_LOCAL;
 	vfs_getnewfsid(mp);
 
-	error = set_statfs_info(path, UIO_USERSPACE, "kernfs", UIO_SYSSPACE,
+	error = set_statvfs_info(path, UIO_USERSPACE, "kernfs", UIO_SYSSPACE,
 	    mp, p);
 
 	kernfs_get_rrootdev();
@@ -224,25 +224,25 @@ kernfs_quotactl(mp, cmd, uid, arg, p)
 }
 
 int
-kernfs_statfs(mp, sbp, p)
+kernfs_statvfs(mp, sbp, p)
 	struct mount *mp;
-	struct statfs *sbp;
+	struct statvfs *sbp;
 	struct proc *p;
 {
 
 	sbp->f_bsize = DEV_BSIZE;
+	sbp->f_frsize = DEV_BSIZE;
 	sbp->f_iosize = DEV_BSIZE;
 	sbp->f_blocks = 2;		/* 1K to keep df happy */
 	sbp->f_bfree = 0;
 	sbp->f_bavail = 0;
+	sbp->f_bresvd = 0;
 	sbp->f_files = 1024;	/* XXX lie */
 	sbp->f_ffree = 128;	/* XXX lie */
-#ifdef COMPAT_09
-	sbp->f_type = 7;
-#else
-	sbp->f_type = 0;
-#endif
-	copy_statfs_info(sbp, mp);
+	sbp->f_favail = 128;	/* XXX lie */
+	sbp->f_fresvd = 0;
+	sbp->f_namemax = MAXNAMLEN;
+	copy_statvfs_info(sbp, mp);
 	return (0);
 }
 
@@ -339,7 +339,7 @@ struct vfsops kernfs_vfsops = {
 	kernfs_unmount,
 	kernfs_root,
 	kernfs_quotactl,
-	kernfs_statfs,
+	kernfs_statvfs,
 	kernfs_sync,
 	kernfs_vget,
 	kernfs_fhtovp,

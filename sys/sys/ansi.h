@@ -1,4 +1,4 @@
-/*	$NetBSD: ansi.h,v 1.9 2002/05/12 22:58:48 kleink Exp $	*/
+/*	$NetBSD: ansi.h,v 1.10 2004/04/21 01:05:43 christos Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2001, 2002 The NetBSD Foundation, Inc.
@@ -51,5 +51,7 @@ typedef __int32_t	__pid_t;	/* process id */
 typedef __uint8_t	__sa_family_t;	/* socket address family */
 typedef unsigned int	__socklen_t;	/* socket-related datum length */
 typedef __uint32_t	__uid_t;	/* user id */
+typedef	__uint64_t	__fsblkcnt_t;	/* fs block count (statvfs) */
+typedef	__uint64_t	__fsfilcnt_t;	/* fs file count */
 
 #endif	/* !_SYS_ANSI_H_ */

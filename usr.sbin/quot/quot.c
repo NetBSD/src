@@ -1,4 +1,4 @@
-/*	$NetBSD: quot.c,v 1.23 2004/03/27 13:08:50 dsl Exp $	*/
+/*	$NetBSD: quot.c,v 1.24 2004/04/21 01:05:48 christos Exp $	*/
 
 /*
  * Copyright (C) 1991, 1994 Wolfgang Solfrank.
@@ -33,7 +33,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: quot.c,v 1.23 2004/03/27 13:08:50 dsl Exp $");
+__RCSID("$NetBSD: quot.c,v 1.24 2004/04/21 01:05:48 christos Exp $");
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -623,7 +623,7 @@ main(argc, argv)
 	char **argv;
 {
 	char all = 0;
-	struct statfs *mp;
+	struct statvfs *mp;
 	char dev[MNAMELEN + 1];
 	char *nm;
 	int cnt;

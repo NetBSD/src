@@ -1,4 +1,4 @@
-/*	$NetBSD: cd9660_vfsops.c,v 1.11 2004/03/24 15:34:52 atatat Exp $	*/
+/*	$NetBSD: cd9660_vfsops.c,v 1.12 2004/04/21 01:05:37 christos Exp $	*/
 
 /*-
  * Copyright (c) 1994
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cd9660_vfsops.c,v 1.11 2004/03/24 15:34:52 atatat Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cd9660_vfsops.c,v 1.12 2004/04/21 01:05:37 christos Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_compat_netbsd.h"
@@ -90,7 +90,7 @@ struct vfsops cd9660_vfsops = {
 	cd9660_unmount,
 	cd9660_root,
 	cd9660_quotactl,
-	cd9660_statfs,
+	cd9660_statvfs,
 	cd9660_sync,
 	cd9660_vget,
 	cd9660_fhtovp,
@@ -153,7 +153,7 @@ cd9660_mountroot()
 	simple_lock(&mountlist_slock);
 	CIRCLEQ_INSERT_TAIL(&mountlist, mp, mnt_list);
 	simple_unlock(&mountlist_slock);
-	(void)cd9660_statfs(mp, &mp->mnt_stat, p);
+	(void)cd9660_statvfs(mp, &mp->mnt_stat, p);
 	vfs_unbusy(mp);
 	inittodr(0);
 	return (0);
@@ -245,7 +245,7 @@ cd9660_mount(mp, path, data, ndp, p)
 		return error;
 	}
 	imp = VFSTOISOFS(mp);
-	return set_statfs_info(path, UIO_USERSPACE, args.fspec, UIO_USERSPACE,
+	return set_statvfs_info(path, UIO_USERSPACE, args.fspec, UIO_USERSPACE,
 	    mp, p);
 }
 
@@ -418,8 +418,9 @@ iso_mountfs(devvp, mp, p, argp)
 	pribp = NULL;
 	
 	mp->mnt_data = isomp;
-	mp->mnt_stat.f_fsid.val[0] = (long)dev;
-	mp->mnt_stat.f_fsid.val[1] = makefstype(MOUNT_CD9660);
+	mp->mnt_stat.f_fsidx.__fsid_val[0] = (long)dev;
+	mp->mnt_stat.f_fsidx.__fsid_val[1] = makefstype(MOUNT_CD9660);
+	mp->mnt_stat.f_fsid = mp->mnt_stat.f_fsidx.__fsid_val[0];
 	mp->mnt_maxsymlinklen = 0;
 	mp->mnt_flag |= MNT_LOCAL;
 	mp->mnt_dev_bshift = iso_bsize;
@@ -614,28 +615,27 @@ cd9660_quotactl(mp, cmd, uid, arg, p)
  * Get file system statistics.
  */
 int
-cd9660_statfs(mp, sbp, p)
+cd9660_statvfs(mp, sbp, p)
 	struct mount *mp;
-	struct statfs *sbp;
+	struct statvfs *sbp;
 	struct proc *p;
 {
 	struct iso_mnt *isomp;
 	
 	isomp = VFSTOISOFS(mp);
 
-#ifdef COMPAT_09
-	sbp->f_type = 5;
-#else
-	sbp->f_type = 0;
-#endif
 	sbp->f_bsize = isomp->logical_block_size;
+	sbp->f_frsize = sbp->f_bsize;
 	sbp->f_iosize = sbp->f_bsize;	/* XXX */
 	sbp->f_blocks = isomp->volume_space_size;
 	sbp->f_bfree = 0; /* total free blocks */
 	sbp->f_bavail = 0; /* blocks free for non superuser */
+	sbp->f_bresvd = 0; /* total reserved blocks */
 	sbp->f_files =  0; /* total files */
 	sbp->f_ffree = 0; /* free file nodes */
-	copy_statfs_info(sbp, mp);
+	sbp->f_favail = 0; /* free file nodes */
+	sbp->f_fresvd = 0; /* reserved file nodes */
+	copy_statvfs_info(sbp, mp);
 	/* Use the first spare for flags: */
 	sbp->f_spare[0] = isomp->im_flags;
 	return 0;

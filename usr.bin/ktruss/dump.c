@@ -1,4 +1,4 @@
-/*	$NetBSD: dump.c,v 1.19 2004/02/27 22:48:56 enami Exp $	*/
+/*	$NetBSD: dump.c,v 1.20 2004/04/21 01:05:47 christos Exp $	*/
 
 /*-
  * Copyright (c) 1988, 1993
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1988, 1993\n\
 #if 0
 static char sccsid[] = "@(#)kdump.c	8.4 (Berkeley) 4/28/95";
 #endif
-__RCSID("$NetBSD: dump.c,v 1.19 2004/02/27 22:48:56 enami Exp $");
+__RCSID("$NetBSD: dump.c,v 1.20 2004/04/21 01:05:47 christos Exp $");
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -472,7 +472,7 @@ syscallprint(struct ktr_header *kth)
 	case SYS_rmdir:
 	case SYS_utimes:
 	case SYS_quotactl:
-	case SYS_statfs:
+	case SYS_statvfs1:
 	case SYS_getfh:
 	case SYS_pathconf:
 	case SYS_truncate:

@@ -1,4 +1,4 @@
-	$NetBSD: syscalls.master,v 1.10 2003/09/23 18:31:03 cl Exp $
+	$NetBSD: syscalls.master,v 1.11 2004/04/21 01:05:36 christos Exp $
 
 ;	@(#)syscalls.master	8.2 (Berkeley) 1/13/94
 
@@ -112,8 +112,12 @@
 			    gid_t gid); }
 #endif
 17	NOARGS		{ int sys_obreak(char *nsize); } break
-18	NOARGS		{ int sys_getfsstat(struct statfs *buf, long bufsize, \
-			    int flags); }
+#ifdef COMPAT_20
+18	NOARGS		{ int compat_20_sys_getfsstat(struct statfs12 *buf, \
+			    long bufsize, int flags); }
+#else
+18	EXCL		compat_20_sys_getfsstat
+#endif
 #ifdef COMPAT_43
 19	NOARGS		{ long compat_43_sys_lseek(int fd, long offset, \
 			    int whence); } olseek
@@ -492,12 +496,21 @@
 #endif
 #ifdef COMPAT_AOUT_ALTPATH
 157	STD		{ int aoutm68k_sys_statfs(const char *path, \
-			    struct statfs *buf); }
+			    struct statfs12 *buf); }
 #else
-157	NOARGS		{ int sys_statfs(const char *path, \
-			    struct statfs *buf); }
+#ifdef COMPAT_20
+157	NOARGS		{ int compat_20_sys_statfs(const char *path, \
+			    struct statfs12 *buf); }
+#else
+157	EXCL		compat_20_sys_statfs
 #endif
-158	NOARGS		{ int sys_fstatfs(int fd, struct statfs *buf); }
+#endif
+#ifdef COMPAT_20
+158	NOARGS		{ int compat_20_sys_fstatfs(int fd, \
+			    struct statfs12 *buf); }
+#else
+158	EXCL		compat_20_sys_statfs
+#endif
 159	UNIMPL
 160	UNIMPL
 #if defined(NFS) || defined(NFSSERVER) || !defined(_KERNEL)
@@ -849,8 +862,12 @@
 298	NOARGS		{ int sys_fhopen(const fhandle_t *fhp, int flags); }
 299	STD		{ int aoutm68k_sys_fhstat(const fhandle_t *fhp, \
 			    struct aoutm68k_stat *sb); }
-300	NOARGS		{ int sys_fhstatfs(const fhandle_t *fhp, \
-			    struct statfs *buf); }
+#ifdef COMPAT_20
+300	NOARGS		{ int compat_20_sys_fhstatfs(const fhandle_t *fhp, \
+			    struct statfs12 *buf); }
+#else
+300	EXCL		compat_20_sys_fhstatfs
+#endif
 #if defined(SYSVSEM) || !defined(_KERNEL)
 301	NOARGS		{ int sys_____semctl13(int semid, int semnum, int cmd, \
 			    ... union __semun *arg); }

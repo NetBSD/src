@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_vfsops.c,v 1.142 2004/04/18 03:35:16 dbj Exp $	*/
+/*	$NetBSD: ffs_vfsops.c,v 1.143 2004/04/21 01:05:44 christos Exp $	*/
 
 /*
  * Copyright (c) 1989, 1991, 1993, 1994
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ffs_vfsops.c,v 1.142 2004/04/18 03:35:16 dbj Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ffs_vfsops.c,v 1.143 2004/04/21 01:05:44 christos Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ffs.h"
@@ -97,7 +97,7 @@ struct vfsops ffs_vfsops = {
 	ffs_unmount,
 	ufs_root,
 	ufs_quotactl,
-	ffs_statfs,
+	ffs_statvfs,
 	ffs_sync,
 	ffs_vget,
 	ffs_fhtovp,
@@ -165,7 +165,7 @@ ffs_mountroot()
 	fs = ump->um_fs;
 	memset(fs->fs_fsmnt, 0, sizeof(fs->fs_fsmnt));
 	(void)copystr(mp->mnt_stat.f_mntonname, fs->fs_fsmnt, MNAMELEN - 1, 0);
-	(void)ffs_statfs(mp, &mp->mnt_stat, p);
+	(void)ffs_statvfs(mp, &mp->mnt_stat, p);
 	vfs_unbusy(mp);
 	inittodr(fs->fs_time);
 	return (0);
@@ -408,7 +408,7 @@ ffs_mount(mp, path, data, ndp, p)
 		}
 	}
 
-	error = set_statfs_info(path, UIO_USERSPACE, args.fspec,
+	error = set_statvfs_info(path, UIO_USERSPACE, args.fspec,
 	    UIO_USERSPACE, mp, p);
 	if (error == 0)
 		(void)strncpy(fs->fs_fsmnt, mp->mnt_stat.f_mntonname,
@@ -568,7 +568,7 @@ ffs_reload(mountp, cred, p)
 		fs->fs_pendinginodes = 0;
 	}
 
-	ffs_statfs(mountp, &mountp->mnt_stat, p);
+	ffs_statvfs(mountp, &mountp->mnt_stat, p);
 	/*
 	 * Step 3: re-read summary information from disk.
 	 */
@@ -910,8 +910,10 @@ ffs_mountfs(devvp, mp, p)
 	if (fs->fs_avgfpdir <= 0)
 		fs->fs_avgfpdir = AFPDIR;
 	mp->mnt_data = ump;
-	mp->mnt_stat.f_fsid.val[0] = (long)dev;
-	mp->mnt_stat.f_fsid.val[1] = makefstype(MOUNT_FFS);
+	mp->mnt_stat.f_fsidx.__fsid_val[0] = (long)dev;
+	mp->mnt_stat.f_fsidx.__fsid_val[1] = makefstype(MOUNT_FFS);
+	mp->mnt_stat.f_fsid = mp->mnt_stat.f_fsidx.__fsid_val[0];
+	mp->mnt_stat.f_namemax = MAXNAMLEN;
 	mp->mnt_maxsymlinklen = fs->fs_maxsymlinklen;
 	if (UFS_MPISAPPLEUFS(mp)) {
 		/* NeXT used to keep short symlinks in the inode even
@@ -1225,9 +1227,9 @@ ffs_flushfiles(mp, flags, p)
  * Get file system statistics.
  */
 int
-ffs_statfs(mp, sbp, p)
+ffs_statvfs(mp, sbp, p)
 	struct mount *mp;
-	struct statfs *sbp;
+	struct statvfs *sbp;
 	struct proc *p;
 {
 	struct ufsmount *ump;
@@ -1235,22 +1237,23 @@ ffs_statfs(mp, sbp, p)
 
 	ump = VFSTOUFS(mp);
 	fs = ump->um_fs;
-#ifdef COMPAT_09
-	sbp->f_type = 1;
-#else
-	sbp->f_type = 0;
-#endif
-	sbp->f_bsize = fs->fs_fsize;
+	sbp->f_bsize = fs->fs_bsize;
+	sbp->f_frsize = fs->fs_fsize;
 	sbp->f_iosize = fs->fs_bsize;
 	sbp->f_blocks = fs->fs_dsize;
 	sbp->f_bfree = blkstofrags(fs, fs->fs_cstotal.cs_nbfree) +
 		fs->fs_cstotal.cs_nffree + dbtofsb(fs, fs->fs_pendingblocks);
-	sbp->f_bavail = (long) (((u_int64_t) fs->fs_dsize * (u_int64_t)
-	    (100 - fs->fs_minfree) / (u_int64_t) 100) -
-	    (u_int64_t) (fs->fs_dsize - sbp->f_bfree));
+	sbp->f_bresvd = ((u_int64_t) fs->fs_dsize * (u_int64_t)
+	    fs->fs_minfree) / (u_int64_t) 100;
+	if (sbp->f_bfree > sbp->f_bresvd)
+		sbp->f_bavail = sbp->f_bfree - sbp->f_bresvd;
+	else
+		sbp->f_bavail = 0;
 	sbp->f_files =  fs->fs_ncg * fs->fs_ipg - ROOTINO;
 	sbp->f_ffree = fs->fs_cstotal.cs_nifree + fs->fs_pendinginodes;
-	copy_statfs_info(sbp, mp);
+	sbp->f_favail = sbp->f_ffree;
+	sbp->f_fresvd = 0;
+	copy_statvfs_info(sbp, mp);
 	return (0);
 }
 

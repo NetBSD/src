@@ -1,4 +1,4 @@
-/*	$NetBSD: newfs_msdos.c,v 1.14 2004/01/05 23:23:33 jmmv Exp $	*/
+/*	$NetBSD: newfs_msdos.c,v 1.15 2004/04/21 01:05:34 christos Exp $	*/
 
 /*
  * Copyright (c) 1998 Robert Nordier
@@ -33,7 +33,7 @@
 static const char rcsid[] =
   "$FreeBSD: src/sbin/newfs_msdos/newfs_msdos.c,v 1.15 2000/10/10 01:49:37 wollman Exp $";
 #else
-__RCSID("$NetBSD: newfs_msdos.c,v 1.14 2004/01/05 23:23:33 jmmv Exp $");
+__RCSID("$NetBSD: newfs_msdos.c,v 1.15 2004/04/21 01:05:34 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -713,7 +713,7 @@ main(int argc, char *argv[])
 static void
 check_mounted(const char *fname, mode_t mode)
 {
-    struct statfs *mp;
+    struct statvfs *mp;
     const char *s1, *s2;
     size_t len;
     int n, r;

@@ -1,4 +1,4 @@
-/*	$NetBSD: darwin_attr.c,v 1.1 2003/12/31 02:55:04 manu Exp $ */
+/*	$NetBSD: darwin_attr.c,v 1.2 2004/04/21 01:05:36 christos Exp $ */
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: darwin_attr.c,v 1.1 2003/12/31 02:55:04 manu Exp $");
+__KERNEL_RCSID(0, "$NetBSD: darwin_attr.c,v 1.2 2004/04/21 01:05:36 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -118,9 +118,9 @@ darwin_sys_getattrlist(l, v, retval)
 	struct sys___stat13_args cup1;
 	struct stat *ust;
 	struct stat st;
-	struct sys_statfs_args cup2;
-	struct statfs *uf;
-	struct statfs f;
+	struct compat_20_sys_statfs_args cup2;
+	struct statfs12 *uf;
+	struct statfs12 f;
 	struct nameidata nd;
 	struct vnode *vp;
 	struct ucred *cred;
@@ -178,7 +178,7 @@ darwin_sys_getattrlist(l, v, retval)
 	uf = stackgap_alloc(p, &sg, sizeof(f));
 	SCARG(&cup2, path) = path;
 	SCARG(&cup2, buf) = uf;
-	if ((error = sys_statfs(l, &cup2, retval)) != 0)
+	if ((error = compat_20_sys_statfs(l, &cup2, retval)) != 0)
 	 	return error;
 
 	if ((error = copyin(uf, &f, sizeof(f))) != 0)
@@ -238,7 +238,6 @@ darwin_sys_getattrlist(l, v, retval)
 
 	if (kalist.commonattr & DARWIN_ATTR_CMN_FSID) {
 		fsid_t fs;
-
 		fs = f.f_fsid;
 		if (ATTR_APPEND(fs, bp, len) != 0)
 			goto out3;
@@ -421,7 +420,7 @@ darwin_sys_getattrlist(l, v, retval)
 		 * XXX Volume signature, used to distinguish
 		 * between volumes inside the same filesystem. 
 		 */
-		sign = f.f_fsid.val[0];
+		sign = f.f_fsid.__fsid_val[0];
 		if (ATTR_APPEND(sign, bp, len) != 0)
 			goto out3;
 	}

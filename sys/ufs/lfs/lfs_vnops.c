@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_vnops.c,v 1.130 2004/04/20 11:52:17 yamt Exp $	*/
+/*	$NetBSD: lfs_vnops.c,v 1.131 2004/04/21 01:05:45 christos Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_vnops.c,v 1.130 2004/04/20 11:52:17 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_vnops.c,v 1.131 2004/04/21 01:05:45 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1226,7 +1226,7 @@ lfs_fcntl(void *v)
 	}
 
 	fs = VTOI(ap->a_vp)->i_lfs;
-	fsidp = &ap->a_vp->v_mount->mnt_stat.f_fsid;
+	fsidp = &ap->a_vp->v_mount->mnt_stat.f_fsidx;
 
 	switch (ap->a_command) {
 	    case LFCNSEGWAITALL:

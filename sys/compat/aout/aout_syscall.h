@@ -1,4 +1,4 @@
-/* $NetBSD: aout_syscall.h,v 1.25 2004/03/26 15:29:28 drochner Exp $ */
+/* $NetBSD: aout_syscall.h,v 1.26 2004/04/21 01:05:35 christos Exp $ */
 
 /*
  * System call numbers.
@@ -59,9 +59,13 @@
 /* syscall: "break" ret: "int" args: "char *" */
 #define	AOUT_SYS_break	17
 
-/* syscall: "getfsstat" ret: "int" args: "struct statfs *" "long" "int" */
+#ifdef COMPAT_20
+/* syscall: "getfsstat" ret: "int" args: "struct statfs12 *" "long" "int" */
 #define	AOUT_SYS_getfsstat	18
 
+#else
+				/* 18 is excluded compat_20_sys_getfsstat */
+#endif
 /* syscall: "olseek" ret: "long" args: "int" "long" "int" */
 #define	AOUT_SYS_olseek	19
 
@@ -450,12 +454,16 @@
 /* syscall: "ogetdirentries" ret: "int" args: "int" "char *" "u_int" "long *" */
 #define	AOUT_SYS_ogetdirentries	156
 
-/* syscall: "statfs" ret: "int" args: "const char *" "struct statfs *" */
+/* syscall: "statfs" ret: "int" args: "const char *" "struct statfs12 *" */
 #define	AOUT_SYS_statfs	157
 
-/* syscall: "fstatfs" ret: "int" args: "int" "struct statfs *" */
+#ifdef COMPAT_20
+/* syscall: "fstatfs" ret: "int" args: "int" "struct statfs12 *" */
 #define	AOUT_SYS_fstatfs	158
 
+#else
+				/* 158 is excluded compat_20_sys_fstatfs */
+#endif
 #if defined(NFS) || defined(NFSSERVER) || !defined(_KERNEL)
 /* syscall: "getfh" ret: "int" args: "const char *" "fhandle_t *" */
 #define	AOUT_SYS_getfh	161
@@ -805,9 +813,13 @@
 /* syscall: "fhstat" ret: "int" args: "const fhandle_t *" "struct stat *" */
 #define	AOUT_SYS_fhstat	299
 
-/* syscall: "fhstatfs" ret: "int" args: "const fhandle_t *" "struct statfs *" */
+#ifdef COMPAT_20
+/* syscall: "fhstatfs" ret: "int" args: "const fhandle_t *" "struct statfs12 *" */
 #define	AOUT_SYS_fhstatfs	300
 
+#else
+				/* 300 is excluded compat_20_sys_fhstatfs */
+#endif
 #if defined(SYSVSEM) || !defined(_KERNEL)
 /* syscall: "____semctl13" ret: "int" args: "int" "int" "int" "..." */
 #define	AOUT_SYS_____semctl13	301

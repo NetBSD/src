@@ -1,4 +1,4 @@
-/*	$NetBSD: umap_vfsops.c,v 1.43 2004/03/24 15:34:54 atatat Exp $	*/
+/*	$NetBSD: umap_vfsops.c,v 1.44 2004/04/21 01:05:42 christos Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: umap_vfsops.c,v 1.43 2004/03/24 15:34:54 atatat Exp $");
+__KERNEL_RCSID(0, "$NetBSD: umap_vfsops.c,v 1.44 2004/04/21 01:05:42 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -227,7 +227,7 @@ umapfs_mount(mp, path, data, ndp, p)
 	vp->v_flag |= VROOT;
 	amp->umapm_rootvp = vp;
 
-	error = set_statfs_info(path, UIO_USERSPACE, args.umap_target,
+	error = set_statvfs_info(path, UIO_USERSPACE, args.umap_target,
 	    UIO_USERSPACE, mp, p);
 #ifdef UMAPFS_DIAGNOSTIC
 	printf("umapfs_mount: lower %s, alias at %s\n",
@@ -324,7 +324,7 @@ struct vfsops umapfs_vfsops = {
 	umapfs_unmount,
 	layerfs_root,
 	layerfs_quotactl,
-	layerfs_statfs,
+	layerfs_statvfs,
 	layerfs_sync,
 	layerfs_vget,
 	layerfs_fhtovp,

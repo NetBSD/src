@@ -1,4 +1,4 @@
-/*	$NetBSD: quotaon.c,v 1.20 2004/01/05 23:23:38 jmmv Exp $	*/
+/*	$NetBSD: quotaon.c,v 1.21 2004/04/21 01:05:48 christos Exp $	*/
 
 /*
  * Copyright (c) 1980, 1990, 1993
@@ -42,7 +42,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1990, 1993\n\
 #if 0
 static char sccsid[] = "@(#)quotaon.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: quotaon.c,v 1.20 2004/01/05 23:23:38 jmmv Exp $");
+__RCSID("$NetBSD: quotaon.c,v 1.21 2004/04/21 01:05:48 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -258,15 +258,15 @@ static int
 readonly(fs)
 	struct fstab *fs;
 {
-	struct statfs fsbuf;
+	struct statvfs fsbuf;
 
-	if (statfs(fs->fs_file, &fsbuf) < 0 ||
+	if (statvfs(fs->fs_file, &fsbuf) < 0 ||
 	    strcmp(fsbuf.f_mntonname, fs->fs_file) ||
 	    strcmp(fsbuf.f_mntfromname, fs->fs_spec)) {
 		printf("%s: not mounted\n", fs->fs_file);
 		return (1);
 	}
-	if (fsbuf.f_flags & MNT_RDONLY) {
+	if (fsbuf.f_flag & MNT_RDONLY) {
 		printf("%s: mounted read-only\n", fs->fs_file);
 		return (1);
 	}

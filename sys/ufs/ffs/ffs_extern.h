@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_extern.h,v 1.36 2004/01/10 16:23:36 hannken Exp $	*/
+/*	$NetBSD: ffs_extern.h,v 1.37 2004/04/21 01:05:44 christos Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993, 1994
@@ -62,7 +62,7 @@ struct ufs2_dinode;
 struct mount;
 struct nameidata;
 struct proc;
-struct statfs;
+struct statvfs;
 struct timeval;
 struct ucred;
 struct ufsmount;
@@ -129,7 +129,7 @@ int ffs_reload __P((struct mount *, struct ucred *, struct proc *));
 int ffs_mountfs __P((struct vnode *, struct mount *, struct proc *));
 int ffs_unmount __P((struct mount *, int, struct proc *));
 int ffs_flushfiles __P((struct mount *, int, struct proc *));
-int ffs_statfs __P((struct mount *, struct statfs *, struct proc *));
+int ffs_statvfs __P((struct mount *, struct statvfs *, struct proc *));
 int ffs_sync __P((struct mount *, int, struct ucred *, struct proc *));
 int ffs_vget __P((struct mount *, ino_t, struct vnode **));
 int ffs_fhtovp __P((struct mount *, struct fid *, struct vnode **));

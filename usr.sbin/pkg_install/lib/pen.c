@@ -1,11 +1,11 @@
-/*	$NetBSD: pen.c,v 1.31 2003/09/03 12:44:01 jlam Exp $	*/
+/*	$NetBSD: pen.c,v 1.32 2004/04/21 01:05:48 christos Exp $	*/
 
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static const char *rcsid = "from FreeBSD Id: pen.c,v 1.25 1997/10/08 07:48:12 charnier Exp";
 #else
-__RCSID("$NetBSD: pen.c,v 1.31 2003/09/03 12:44:01 jlam Exp $");
+__RCSID("$NetBSD: pen.c,v 1.32 2004/04/21 01:05:48 christos Exp $");
 #endif
 #endif
 
@@ -191,11 +191,11 @@ leave_playpen(char *save)
 uint64_t
 min_free(char *tmpdir)
 {
-	struct statfs buf;
+	struct statvfs buf;
 
-	if (statfs(tmpdir, &buf) != 0) {
-		warn("statfs");
-		return -1;
+	if (statvfs(tmpdir, &buf) != 0) {
+		warn("statvfs");
+		return 0;
 	}
-	return (uint64_t) buf.f_bavail * (uint64_t) buf.f_bsize;
+	return buf.f_bavail * buf.f_bsize;
 }

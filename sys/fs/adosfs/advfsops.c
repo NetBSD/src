@@ -1,4 +1,4 @@
-/*	$NetBSD: advfsops.c,v 1.11 2004/03/27 04:43:43 atatat Exp $	*/
+/*	$NetBSD: advfsops.c,v 1.12 2004/04/21 01:05:37 christos Exp $	*/
 
 /*
  * Copyright (c) 1994 Christian E. Hopps
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: advfsops.c,v 1.11 2004/03/27 04:43:43 atatat Exp $");
+__KERNEL_RCSID(0, "$NetBSD: advfsops.c,v 1.12 2004/04/21 01:05:37 christos Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_compat_netbsd.h"
@@ -66,7 +66,7 @@ int adosfs_start __P((struct mount *, int, struct proc *));
 int adosfs_unmount __P((struct mount *, int, struct proc *));
 int adosfs_root __P((struct mount *, struct vnode **));
 int adosfs_quotactl __P((struct mount *, int, uid_t, caddr_t, struct proc *));
-int adosfs_statfs __P((struct mount *, struct statfs *, struct proc *));
+int adosfs_statvfs __P((struct mount *, struct statvfs *, struct proc *));
 int adosfs_sync __P((struct mount *, int, struct ucred *, struct proc *));
 int adosfs_vget __P((struct mount *, ino_t, struct vnode **));
 int adosfs_fhtovp __P((struct mount *, struct fid *, struct vnode **));
@@ -173,7 +173,7 @@ adosfs_mount(mp, path, data, ndp, p)
 	amp->uid = args.uid;
 	amp->gid = args.gid;
 	amp->mask = args.mask;
-	return set_statfs_info(path, UIO_USERSPACE, args.fspec, UIO_USERSPACE,
+	return set_statvfs_info(path, UIO_USERSPACE, args.fspec, UIO_USERSPACE,
 	    mp, p);
 }
 
@@ -257,8 +257,9 @@ adosfs_mountfs(devvp, mp, p)
 	amp->devvp = devvp;
 	
 	mp->mnt_data = amp;
-        mp->mnt_stat.f_fsid.val[0] = (long)devvp->v_rdev;
-        mp->mnt_stat.f_fsid.val[1] = makefstype(MOUNT_ADOSFS);
+        mp->mnt_stat.f_fsidx.__fsid_val[0] = (long)devvp->v_rdev;
+        mp->mnt_stat.f_fsidx.__fsid_val[1] = makefstype(MOUNT_ADOSFS);
+        mp->mnt_stat.f_fsid = mp->mnt_stat.f_fsidx.__fsid_val[0];
 	mp->mnt_fs_bshift = ffs(amp->bsize) - 1;
 	mp->mnt_dev_bshift = DEV_BSHIFT;	/* XXX */
 	mp->mnt_flag |= MNT_LOCAL;
@@ -355,27 +356,26 @@ adosfs_root(mp, vpp)
 }
 
 int
-adosfs_statfs(mp, sbp, p)
+adosfs_statvfs(mp, sbp, p)
 	struct mount *mp;
-	struct statfs *sbp;
+	struct statvfs *sbp;
 	struct proc *p;
 {
 	struct adosfsmount *amp;
 
 	amp = VFSTOADOSFS(mp);
-#ifdef COMPAT_09
-	sbp->f_type = 16;
-#else
-	sbp->f_type = 0;
-#endif
 	sbp->f_bsize = amp->bsize;
+	sbp->f_frsize = amp->bsize;
 	sbp->f_iosize = amp->dbsize;
 	sbp->f_blocks = amp->numblks;
 	sbp->f_bfree = amp->freeblks;
 	sbp->f_bavail = amp->freeblks;
+	sbp->f_bresvd = 0;
 	sbp->f_files = 0;		/* who knows */
 	sbp->f_ffree = 0;		/* " " */
-	copy_statfs_info(sbp, mp);
+	sbp->f_favail = 0;		/* " " */
+	sbp->f_fresvd = 0;
+	copy_statvfs_info(sbp, mp);
 	return (0);
 }
 
@@ -872,7 +872,7 @@ struct vfsops adosfs_vfsops = {
 	adosfs_unmount,
 	adosfs_root,
 	adosfs_quotactl,                
-	adosfs_statfs,                  
+	adosfs_statvfs,                  
 	adosfs_sync,                    
 	adosfs_vget,
 	adosfs_fhtovp,                  

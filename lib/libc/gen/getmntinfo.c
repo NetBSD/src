@@ -1,4 +1,4 @@
-/*	$NetBSD: getmntinfo.c,v 1.12 2003/08/07 16:42:50 agc Exp $	*/
+/*	$NetBSD: getmntinfo.c,v 1.13 2004/04/21 01:05:32 christos Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -34,9 +34,11 @@
 #if 0
 static char sccsid[] = "@(#)getmntinfo.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: getmntinfo.c,v 1.12 2003/08/07 16:42:50 agc Exp $");
+__RCSID("$NetBSD: getmntinfo.c,v 1.13 2004/04/21 01:05:32 christos Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
+
+#define __LIBC12_SOURCE__
 
 #include "namespace.h"
 #include <sys/param.h>
@@ -56,28 +58,28 @@ __weak_alias(getmntinfo,_getmntinfo)
  */
 int
 getmntinfo(mntbufp, flags)
-	struct statfs **mntbufp;
+	struct statfs12 **mntbufp;
 	int flags;
 {
-	static struct statfs *mntbuf;
+	static struct statfs12 *mntbuf;
 	static int mntsize;
 	static size_t bufsize;
 
 	_DIAGASSERT(mntbufp != NULL);
 
 	if (mntsize <= 0 &&
-	    (mntsize = getfsstat(NULL, 0L, MNT_NOWAIT)) < 0)
+	    (mntsize = getfsstat(NULL, 0L, MNT_NOWAIT)) == -1)
 		return (0);
 	if (bufsize > 0 &&
-	    (mntsize = getfsstat(mntbuf, (long)bufsize, flags)) < 0)
+	    (mntsize = getfsstat(mntbuf, (long)bufsize, flags)) == -1)
 		return (0);
-	while (bufsize <= mntsize * sizeof(struct statfs)) {
+	while (bufsize <= mntsize * sizeof(struct statfs12)) {
 		if (mntbuf)
 			free(mntbuf);
-		bufsize = (mntsize + 1) * sizeof(struct statfs);
-		if ((mntbuf = (struct statfs *)malloc(bufsize)) == 0)
+		bufsize = (mntsize + 1) * sizeof(struct statfs12);
+		if ((mntbuf = malloc(bufsize)) == NULL)
 			return (0);
-		if ((mntsize = getfsstat(mntbuf, (long)bufsize, flags)) < 0)
+		if ((mntsize = getfsstat(mntbuf, (long)bufsize, flags)) == -1)
 			return (0);
 	}
 	*mntbufp = mntbuf;

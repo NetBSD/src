@@ -1,4 +1,4 @@
-/*	$NetBSD: ntfs_vfsops.c,v 1.17 2004/03/24 15:34:52 atatat Exp $	*/
+/*	$NetBSD: ntfs_vfsops.c,v 1.18 2004/04/21 01:05:38 christos Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999 Semen Ustimenko
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ntfs_vfsops.c,v 1.17 2004/03/24 15:34:52 atatat Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ntfs_vfsops.c,v 1.18 2004/04/21 01:05:38 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -77,7 +77,7 @@ static int	ntfs_quotactl __P((struct mount *, int, uid_t, caddr_t,
 				   struct proc *));
 static int	ntfs_root __P((struct mount *, struct vnode **));
 static int	ntfs_start __P((struct mount *, int, struct proc *));
-static int	ntfs_statfs __P((struct mount *, struct statfs *,
+static int	ntfs_statvfs __P((struct mount *, struct statvfs *,
 				 struct proc *));
 static int	ntfs_sync __P((struct mount *, int, struct ucred *,
 			       struct proc *));
@@ -200,7 +200,7 @@ ntfs_mountroot()
 	simple_lock(&mountlist_slock);
 	CIRCLEQ_INSERT_TAIL(&mountlist, mp, mnt_list);
 	simple_unlock(&mountlist_slock);
-	(void)ntfs_statfs(mp, &mp->mnt_stat, p);
+	(void)ntfs_statvfs(mp, &mp->mnt_stat, p);
 	vfs_unbusy(mp);
 	return (0);
 }
@@ -304,7 +304,7 @@ ntfs_mount (
 			goto error_1;
 		}
 
-		goto dostatfs;		/* success*/
+		goto dostatvfs;		/* success*/
 
 	}
 #endif /* FreeBSD */
@@ -394,7 +394,7 @@ ntfs_mount (
 		 * Update device name only on success
 		 */
 		if( !err) {
-			err = set_statfs_info(NULL, UIO_USERSPACE, args.fspec,
+			err = set_statvfs_info(NULL, UIO_USERSPACE, args.fspec,
 			    UIO_USERSPACE, mp, p);
 		}
 #endif
@@ -412,7 +412,7 @@ ntfs_mount (
 		 * upper level code.
 		 */
 		/* Save "last mounted on" info for mount point (NULL pad)*/
-		err = set_statfs_info(path, UIO_USERSPACE, args.fspec,
+		err = set_statvfs_info(path, UIO_USERSPACE, args.fspec,
 		    UIO_USERSPACE, mp, p);
 		if ( !err) {
 			err = ntfs_mountfs(devvp, mp, &args, p);
@@ -423,7 +423,7 @@ ntfs_mount (
 	}
 
 #ifdef __FreeBSD__
-dostatfs:
+dostatvfs:
 #endif
 	/*
 	 * Initialize FS stat information in mount struct; uses both
@@ -431,7 +431,7 @@ dostatfs:
 	 *
 	 * This code is common to root and non-root mounts
 	 */
-	(void)VFS_STATFS(mp, &mp->mnt_stat, p);
+	(void)VFS_STATVFS(mp, &mp->mnt_stat, p);
 
 	goto success;
 
@@ -616,8 +616,9 @@ ntfs_mountfs(devvp, mp, argsp, p)
 	mp->mnt_stat.f_fsid.val[0] = dev2udev(dev);
 	mp->mnt_stat.f_fsid.val[1] = mp->mnt_vfc->vfc_typenum;
 #else
-	mp->mnt_stat.f_fsid.val[0] = dev;
-	mp->mnt_stat.f_fsid.val[1] = makefstype(MOUNT_NTFS);
+	mp->mnt_stat.f_fsidx.__fsid_val[0] = dev;
+	mp->mnt_stat.f_fsidx.__fsid_val[1] = makefstype(MOUNT_NTFS);
+	mp->mnt_stat.f_fsid = mp->mnt_stat.f_fsidx.__fsid_val[0];
 #endif
 	mp->mnt_maxsymlinklen = 0;
 	mp->mnt_flag |= MNT_LOCAL;
@@ -789,34 +790,32 @@ ntfs_calccfree(
 }
 
 static int
-ntfs_statfs(
+ntfs_statvfs(
 	struct mount *mp,
-	struct statfs *sbp,
+	struct statvfs *sbp,
 	struct proc *p)
 {
 	struct ntfsmount *ntmp = VFSTONTFS(mp);
 	u_int64_t mftallocated;
 
-	dprintf(("ntfs_statfs():\n"));
+	dprintf(("ntfs_statvfs():\n"));
 
 	mftallocated = VTOF(ntmp->ntm_sysvn[NTFS_MFTINO])->f_allocated;
 
 #if defined(__FreeBSD__)
 	sbp->f_type = mp->mnt_vfc->vfc_typenum;
-#elif defined(__NetBSD__)
-	sbp->f_type = 0;
-#else
-	sbp->f_type = MOUNT_NTFS;
 #endif
 	sbp->f_bsize = ntmp->ntm_bps;
+	sbp->f_frsize = sbp->f_bsize; /* XXX */
 	sbp->f_iosize = ntmp->ntm_bps * ntmp->ntm_spc;
 	sbp->f_blocks = ntmp->ntm_bootfile.bf_spv;
 	sbp->f_bfree = sbp->f_bavail = ntfs_cntobn(ntmp->ntm_cfree);
-	sbp->f_ffree = sbp->f_bfree / ntmp->ntm_bpmftrec;
+	sbp->f_ffree = sbp->f_favail = sbp->f_bfree / ntmp->ntm_bpmftrec;
 	sbp->f_files = mftallocated / ntfs_bntob(ntmp->ntm_bpmftrec) +
-		       sbp->f_ffree;
-	sbp->f_flags = mp->mnt_flag;
-	copy_statfs_info(sbp, mp);
+	    sbp->f_ffree;
+	sbp->f_fresvd = sbp->f_bresvd = 0; /* XXX */
+	sbp->f_flag = mp->mnt_flag;
+	copy_statvfs_info(sbp, mp);
 	return (0);
 }
 
@@ -1034,7 +1033,7 @@ static struct vfsops ntfs_vfsops = {
 	ntfs_unmount,
 	ntfs_root,
 	ntfs_quotactl,
-	ntfs_statfs,
+	ntfs_statvfs,
 	ntfs_sync,
 	ntfs_vget,
 	ntfs_fhtovp,
@@ -1058,7 +1057,7 @@ struct vfsops ntfs_vfsops = {
 	ntfs_unmount,
 	ntfs_root,
 	ntfs_quotactl,
-	ntfs_statfs,
+	ntfs_statvfs,
 	ntfs_sync,
 	ntfs_vget,
 	ntfs_fhtovp,

@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_vfsops.c,v 1.135 2004/03/24 15:34:55 atatat Exp $	*/
+/*	$NetBSD: nfs_vfsops.c,v 1.136 2004/04/21 01:05:43 christos Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993, 1995
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_vfsops.c,v 1.135 2004/03/24 15:34:55 atatat Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_vfsops.c,v 1.136 2004/04/21 01:05:43 christos Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_compat_netbsd.h"
@@ -53,6 +53,7 @@ __KERNEL_RCSID(0, "$NetBSD: nfs_vfsops.c,v 1.135 2004/03/24 15:34:55 atatat Exp 
 #include <sys/mount.h>
 #include <sys/buf.h>
 #include <sys/mbuf.h>
+#include <sys/dirent.h>
 #include <sys/socket.h>
 #include <sys/socketvar.h>
 #include <sys/sysctl.h>
@@ -100,7 +101,7 @@ struct vfsops nfs_vfsops = {
 	nfs_unmount,
 	nfs_root,
 	nfs_quotactl,
-	nfs_statfs,
+	nfs_statvfs,
 	nfs_sync,
 	nfs_vget,
 	nfs_fhtovp,
@@ -121,12 +122,12 @@ static int nfs_mount_diskless __P((struct nfs_dlmount *, const char *,
     struct mount **, struct vnode **, struct proc *));
 
 /*
- * nfs statfs call
+ * nfs statvfs call
  */
 int
-nfs_statfs(mp, sbp, p)
+nfs_statvfs(mp, sbp, p)
 	struct mount *mp;
-	struct statfs *sbp;
+	struct statvfs *sbp;
 	struct proc *p;
 {
 	struct vnode *vp;
@@ -167,40 +168,50 @@ nfs_statfs(mp, sbp, p)
 	if (error) {
 		if (mrep != NULL) {
 			if (mrep->m_next != NULL)
-				printf("nfs_vfsops: nfs_statfs would loose buffers\n");
+				printf("nfs_vfsops: nfs_statvfs would lose buffers\n");
 			m_freem(mrep);
 		}
 		goto nfsmout;
 	}
 	nfsm_dissect(sfp, struct nfs_statfs *, NFSX_STATFS(v3));
-#ifdef COMPAT_09
-	sbp->f_type = 2;
-#else
-	sbp->f_type = 0;
-#endif
-	sbp->f_flags = nmp->nm_flag;
+	sbp->f_flag = nmp->nm_flag;
 	sbp->f_iosize = min(nmp->nm_rsize, nmp->nm_wsize);
 	if (v3) {
-		sbp->f_bsize = NFS_FABLKSIZE;
+		sbp->f_frsize = sbp->f_bsize = NFS_FABLKSIZE;
 		tquad = fxdr_hyper(&sfp->sf_tbytes);
-		sbp->f_blocks = (long)((quad_t)tquad / (quad_t)NFS_FABLKSIZE);
+		sbp->f_blocks = ((quad_t)tquad / (quad_t)NFS_FABLKSIZE);
 		tquad = fxdr_hyper(&sfp->sf_fbytes);
-		sbp->f_bfree = (long)((quad_t)tquad / (quad_t)NFS_FABLKSIZE);
+		sbp->f_bfree = ((quad_t)tquad / (quad_t)NFS_FABLKSIZE);
 		tquad = fxdr_hyper(&sfp->sf_abytes);
-		sbp->f_bavail = (long)((quad_t)tquad / (quad_t)NFS_FABLKSIZE);
+		tquad = ((quad_t)tquad / (quad_t)NFS_FABLKSIZE);
+		sbp->f_bresvd = sbp->f_bfree - tquad;
+		sbp->f_bavail = tquad;
+#ifdef COMPAT_20
+		/* Handle older NFS servers returning negative values */
+		if ((quad_t)sbp->f_bavail < 0)
+			sbp->f_bavail = 0;
+#endif
 		tquad = fxdr_hyper(&sfp->sf_tfiles);
-		sbp->f_files = (long)tquad;
+		sbp->f_files = tquad;
 		tquad = fxdr_hyper(&sfp->sf_ffiles);
-		sbp->f_ffree = (long)tquad;
+		sbp->f_ffree = tquad;
+		sbp->f_favail = tquad;
+		sbp->f_fresvd = 0;
+		sbp->f_namemax = MAXNAMLEN;
 	} else {
-		sbp->f_bsize = fxdr_unsigned(int32_t, sfp->sf_bsize);
+		sbp->f_bsize = NFS_FABLKSIZE;
+		sbp->f_frsize = fxdr_unsigned(int32_t, sfp->sf_bsize);
 		sbp->f_blocks = fxdr_unsigned(int32_t, sfp->sf_blocks);
 		sbp->f_bfree = fxdr_unsigned(int32_t, sfp->sf_bfree);
 		sbp->f_bavail = fxdr_unsigned(int32_t, sfp->sf_bavail);
+		sbp->f_fresvd = 0;
 		sbp->f_files = 0;
 		sbp->f_ffree = 0;
+		sbp->f_favail = 0;
+		sbp->f_fresvd = 0;
+		sbp->f_namemax = MAXNAMLEN;
 	}
-	copy_statfs_info(sbp, mp);
+	copy_statvfs_info(sbp, mp);
 	nfsm_reqdone;
 	crfree(cred);
 	return (error);
@@ -732,12 +743,7 @@ mountnfs(argp, mp, nam, pth, hst, vpp, p)
 	nmp->nm_deadthresh = NQ_DEADTHRESH;
 	CIRCLEQ_INIT(&nmp->nm_timerhead);
 	nmp->nm_inprog = NULLVP;
-#ifdef COMPAT_09
-	mp->mnt_stat.f_type = 2;
-#else
-	mp->mnt_stat.f_type = 0;
-#endif
-	error = set_statfs_info(pth, UIO_SYSSPACE, hst, UIO_SYSSPACE, mp, p);
+	error = set_statvfs_info(pth, UIO_SYSSPACE, hst, UIO_SYSSPACE, mp, p);
 	if (error)
 		goto bad;
 	nmp->nm_nam = nam;
@@ -761,7 +767,7 @@ mountnfs(argp, mp, nam, pth, hst, vpp, p)
 
 	/*
 	 * This is silly, but it has to be set so that vinifod() works.
-	 * We do not want to do an nfs_statfs() here since we can get
+	 * We do not want to do an nfs_statvfs() here since we can get
 	 * stuck on a dead server and we are holding a lock on the mount
 	 * point.
 	 */

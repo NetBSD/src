@@ -1,4 +1,4 @@
-/*	$NetBSD: umount.c,v 1.32 2004/03/12 21:48:32 dsl Exp $	*/
+/*	$NetBSD: umount.c,v 1.33 2004/04/21 01:05:34 christos Exp $	*/
 
 /*-
  * Copyright (c) 1980, 1989, 1993
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1989, 1993\n\
 #if 0
 static char sccsid[] = "@(#)umount.c	8.8 (Berkeley) 5/8/95";
 #else
-__RCSID("$NetBSD: umount.c,v 1.32 2004/03/12 21:48:32 dsl Exp $");
+__RCSID("$NetBSD: umount.c,v 1.33 2004/04/21 01:05:34 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -84,7 +84,7 @@ main(int argc, char *argv[])
 {
 	int all, ch, errs, mnts;
 	char **typelist = NULL;
-	struct statfs *mntbuf;
+	struct statvfs *mntbuf;
 	struct addrinfo hints;
 
 	/* Start disks transferring immediately. */
@@ -269,7 +269,7 @@ umountfs(const char *name, char **typelist)
 char *
 getmntname(const char *name, mntwhat what, char **type)
 {
-	static struct statfs *mntbuf;
+	static struct statvfs *mntbuf;
 	static int mntsize;
 	int i;
 

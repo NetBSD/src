@@ -1,4 +1,4 @@
-/*	$NetBSD: msdosfs_fat.c,v 1.2 2003/10/22 03:51:12 briggs Exp $	*/
+/*	$NetBSD: msdosfs_fat.c,v 1.3 2004/04/21 01:05:37 christos Exp $	*/
 
 /*-
  * Copyright (C) 1994, 1995, 1997 Wolfgang Solfrank.
@@ -48,7 +48,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: msdosfs_fat.c,v 1.2 2003/10/22 03:51:12 briggs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: msdosfs_fat.c,v 1.3 2004/04/21 01:05:37 christos Exp $");
 
 /*
  * kernel include files.
@@ -58,7 +58,7 @@ __KERNEL_RCSID(0, "$NetBSD: msdosfs_fat.c,v 1.2 2003/10/22 03:51:12 briggs Exp $
 #include <sys/buf.h>
 #include <sys/file.h>
 #include <sys/namei.h>
-#include <sys/mount.h>		/* to define statfs structure */
+#include <sys/mount.h>		/* to define statvfs structure */
 #include <sys/vnode.h>		/* to define vattr structure */
 #include <sys/errno.h>
 #include <sys/dirent.h>

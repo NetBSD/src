@@ -1,4 +1,4 @@
-	$NetBSD: syscalls.master,v 1.138 2004/03/26 15:18:54 drochner Exp $
+	$NetBSD: syscalls.master,v 1.139 2004/04/21 01:05:38 christos Exp $
 
 ;	@(#)syscalls.master	8.2 (Berkeley) 1/13/94
 
@@ -86,8 +86,8 @@
 16	STD		{ int sys_chown(const char *path, uid_t uid, \
 			    gid_t gid); }
 17	STD		{ int sys_obreak(char *nsize); } break
-18	STD		{ int sys_getfsstat(struct statfs *buf, long bufsize, \
-			    int flags); }
+18	COMPAT_20	{ int sys_getfsstat(struct statfs12 *buf, \
+			    long bufsize, int flags); }
 19	COMPAT_43	{ long sys_lseek(int fd, long offset, int whence); } \
 			    olseek
 #ifdef COMPAT_43
@@ -318,9 +318,9 @@
 #endif
 156	COMPAT_43	{ int sys_getdirentries(int fd, char *buf, \
 			    u_int count, long *basep); } ogetdirentries
-157	STD		{ int sys_statfs(const char *path, \
-			    struct statfs *buf); }
-158	STD		{ int sys_fstatfs(int fd, struct statfs *buf); }
+157	COMPAT_20	{ int sys_statfs(const char *path, \
+			    struct statfs12 *buf); }
+158	COMPAT_20	{ int sys_fstatfs(int fd, struct statfs12 *buf); }
 159	UNIMPL
 160	UNIMPL
 161	STD		{ int sys_getfh(const char *fname, fhandle_t *fhp); }
@@ -612,8 +612,8 @@
 298	STD		{ int sys_fhopen(const fhandle_t *fhp, int flags); }
 299	STD		{ int sys_fhstat(const fhandle_t *fhp, \
 			    struct stat *sb); }
-300	STD		{ int sys_fhstatfs(const fhandle_t *fhp, \
-			    struct statfs *buf); }
+300	COMPAT_20	{ int sys_fhstatfs(const fhandle_t *fhp, \
+			    struct statfs12 *buf); }
 #if defined(SYSVSEM) || !defined(_KERNEL)
 301	STD		{ int sys_____semctl13(int semid, int semnum, int cmd, \
 			    ... union __semun *arg); }
@@ -705,3 +705,11 @@
 354	STD		{ int sys_fsync_range(int fd, int flags, off_t start, \
 			    off_t length); }
 355	STD		{ int sys_uuidgen(struct uuid *store, int count); }
+356	STD		{ int sys_getvfsstat(struct statvfs *buf, \
+			    size_t bufsize, int flags); }
+357	STD		{ int sys_statvfs1(const char *path, \
+			    struct statvfs *buf, int flags); }
+358	STD		{ int sys_fstatvfs1(int fd, struct statvfs *buf, \
+			    int flags); }
+359	STD		{ int sys_fhstatvfs1(const fhandle_t *fhp, \
+			    struct statvfs *buf, int flags); }

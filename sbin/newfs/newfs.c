@@ -1,4 +1,4 @@
-/*	$NetBSD: newfs.c,v 1.81 2004/03/18 20:32:06 dsl Exp $	*/
+/*	$NetBSD: newfs.c,v 1.82 2004/04/21 01:05:33 christos Exp $	*/
 
 /*
  * Copyright (c) 1983, 1989, 1993, 1994
@@ -78,7 +78,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1989, 1993, 1994\n\
 #if 0
 static char sccsid[] = "@(#)newfs.c	8.13 (Berkeley) 5/1/95";
 #else
-__RCSID("$NetBSD: newfs.c,v 1.81 2004/03/18 20:32:06 dsl Exp $");
+__RCSID("$NetBSD: newfs.c,v 1.82 2004/04/21 01:05:33 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -220,7 +220,7 @@ main(int argc, char *argv[])
 	struct partition *pp = NULL;
 	struct disklabel *lp = NULL;
 	struct partition oldpartition;
-	struct statfs *mp;
+	struct statvfs *mp;
 	struct stat sb;
 	int ch, fsi, fso, len, n, Fflag, Iflag, Zflag;
 	uint ptn = 0;	/* gcc -Wuninitialised */
@@ -231,7 +231,7 @@ main(int argc, char *argv[])
 	struct mfs_args args;
 	char mountfromname[100];
 	pid_t pid, res;
-	struct statfs sf;
+	struct statvfs sf;
 	int status;
 #endif
 	mode_t mfsmode = 01777;	/* default mode for a /tmp-type directory */
@@ -528,10 +528,10 @@ main(int argc, char *argv[])
 		char	*buf;
 		int	bufsize, i;
 		off_t	bufrem;
-		struct statfs sfs;
+		struct statvfs sfs;
 
-		if (fstatfs(fso, &sfs) == -1) {
-			warn("can't fstatfs `%s'", special);
+		if (fstatvfs(fso, &sfs) == -1) {
+			warn("can't fstatvfs `%s'", special);
 			bufsize = 8192;
 		} else
 			bufsize = sfs.f_iosize;
@@ -646,8 +646,8 @@ main(int argc, char *argv[])
 				 * can mount a filesystem which hides our
 				 * ramdisk before we see the success.
 				 */
-				if (statfs(argv[1], &sf) < 0)
-					err(88, "statfs %s", argv[1]);
+				if (statvfs(argv[1], &sf) < 0)
+					err(88, "statvfs %s", argv[1]);
 				if (!strcmp(sf.f_mntfromname, mountfromname) &&
 				    !strncmp(sf.f_mntonname, argv[1],
 					     MNAMELEN) &&

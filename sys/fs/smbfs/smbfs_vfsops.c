@@ -1,4 +1,4 @@
-/*	$NetBSD: smbfs_vfsops.c,v 1.34 2004/03/24 15:34:52 atatat Exp $	*/
+/*	$NetBSD: smbfs_vfsops.c,v 1.35 2004/04/21 01:05:38 christos Exp $	*/
 
 /*
  * Copyright (c) 2000-2001, Boris Popov
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: smbfs_vfsops.c,v 1.34 2004/03/24 15:34:52 atatat Exp $");
+__KERNEL_RCSID(0, "$NetBSD: smbfs_vfsops.c,v 1.35 2004/04/21 01:05:38 christos Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_quota.h"
@@ -98,7 +98,7 @@ int smbfs_quotactl(struct mount *, int, uid_t, caddr_t, struct proc *);
 int smbfs_root(struct mount *, struct vnode **);
 static int smbfs_setroot(struct mount *);
 int smbfs_start(struct mount *, int, struct proc *);
-int smbfs_statfs(struct mount *, struct statfs *, struct proc *);
+int smbfs_statvfs(struct mount *, struct statvfs *, struct proc *);
 int smbfs_sync(struct mount *, int, struct ucred *, struct proc *);
 int smbfs_unmount(struct mount *, int, struct proc *);
 void smbfs_init(void);
@@ -124,7 +124,7 @@ struct vfsops smbfs_vfsops = {
 	smbfs_unmount,
 	smbfs_root,
 	smbfs_quotactl,
-	smbfs_statfs,
+	smbfs_statvfs,
 	smbfs_sync,
 	smbfs_vget,
 	smbfs_fhtovp,
@@ -194,7 +194,7 @@ smbfs_mount(struct mount *mp, const char *path, void *data,
 	smp->sm_args.dir_mode  = (smp->sm_args.dir_mode &
 			    (S_IRWXU|S_IRWXG|S_IRWXO)) | S_IFDIR;
 
-	error = set_statfs_info(path, UIO_USERSPACE, NULL, UIO_USERSPACE,
+	error = set_statvfs_info(path, UIO_USERSPACE, NULL, UIO_USERSPACE,
 	    mp, p);
 	if (error)
 		goto bad;
@@ -394,10 +394,10 @@ smbfs_done(void)
 }
 
 /*
- * smbfs_statfs call
+ * smbfs_statvfs call
  */
 int
-smbfs_statfs(struct mount *mp, struct statfs *sbp, struct proc *p)
+smbfs_statvfs(struct mount *mp, struct statvfs *sbp, struct proc *p)
 {
 	struct smbmount *smp = VFSTOSMBFS(mp);
 	struct smb_share *ssp = smp->sm_share;
@@ -408,15 +408,14 @@ smbfs_statfs(struct mount *mp, struct statfs *sbp, struct proc *p)
 	smb_makescred(&scred, p, p->p_ucred);
 
 	if (SMB_DIALECT(SSTOVC(ssp)) >= SMB_DIALECT_LANMAN2_0)
-		error = smbfs_smb_statfs2(ssp, sbp, &scred);
+		error = smbfs_smb_statvfs2(ssp, sbp, &scred);
 	else
-		error = smbfs_smb_statfs(ssp, sbp, &scred);
+		error = smbfs_smb_statvfs(ssp, sbp, &scred);
 	if (error)
 		return error;
-	sbp->f_flags = 0;		/* copy of mount exported flags */
+	sbp->f_flag = 0;		/* copy of mount exported flags */
 	sbp->f_owner = mp->mnt_stat.f_owner;	/* user that mounted the filesystem */
-	sbp->f_type = 0;
-	copy_statfs_info(sbp, mp);
+	copy_statvfs_info(sbp, mp);
 	return 0;
 }
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: makefs.h,v 1.12 2003/10/27 00:12:44 lukem Exp $	*/
+/*	$NetBSD: makefs.h,v 1.13 2004/04/21 01:05:48 christos Exp $	*/
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
@@ -44,7 +44,7 @@
 #define HAVE_STRUCT_STAT_ST_FLAGS 1
 #define HAVE_STRUCT_STAT_ST_GEN 1
 #define HAVE_STRUCT_STAT_ST_MTIMENSEC 1
-#define HAVE_STRUCT_STATFS_F_IOSIZE 1
+#define HAVE_STRUCT_STATVFS_F_IOSIZE 1
 #define HAVE_STRUCT_STAT_BIRTHTIME 1
 #endif
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_vfsops.c,v 1.146 2004/03/27 04:43:44 atatat Exp $	*/
+/*	$NetBSD: lfs_vfsops.c,v 1.147 2004/04/21 01:05:44 christos Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_vfsops.c,v 1.146 2004/03/27 04:43:44 atatat Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_vfsops.c,v 1.147 2004/04/21 01:05:44 christos Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_quota.h"
@@ -142,7 +142,7 @@ struct vfsops lfs_vfsops = {
 	lfs_unmount,
 	ufs_root,
 	ufs_quotactl,
-	lfs_statfs,
+	lfs_statvfs,
 	lfs_sync,
 	lfs_vget,
 	lfs_fhtovp,
@@ -324,7 +324,7 @@ lfs_mountroot()
 	simple_lock(&mountlist_slock);
 	CIRCLEQ_INSERT_TAIL(&mountlist, mp, mnt_list);
 	simple_unlock(&mountlist_slock);
-	(void)lfs_statfs(mp, &mp->mnt_stat, p);
+	(void)lfs_statvfs(mp, &mp->mnt_stat, p);
 	vfs_unbusy(mp);
 	inittodr(VFSTOUFS(mp)->um_lfs->lfs_tstamp);
 	return (0);
@@ -432,7 +432,7 @@ lfs_mount(struct mount *mp, const char *path, void *data, struct nameidata *ndp,
 	}
 	ump = VFSTOUFS(mp);
 	fs = ump->um_lfs;					/* LFS */
-	return set_statfs_info(path, UIO_USERSPACE, args.fspec,
+	return set_statvfs_info(path, UIO_USERSPACE, args.fspec,
 	    UIO_USERSPACE, mp, p);
 }
 
@@ -1049,8 +1049,10 @@ lfs_mountfs(struct vnode *devvp, struct mount *mp, struct proc *p)
 	/* Initialize the mount structure. */
 	dev = devvp->v_rdev;
 	mp->mnt_data = ump;
-	mp->mnt_stat.f_fsid.val[0] = (long)dev;
-	mp->mnt_stat.f_fsid.val[1] = makefstype(MOUNT_LFS);
+	mp->mnt_stat.f_fsidx.__fsid_val[0] = (long)dev;
+	mp->mnt_stat.f_fsidx.__fsid_val[1] = makefstype(MOUNT_LFS);
+	mp->mnt_stat.f_fsid = mp->mnt_stat.f_fsidx.__fsid_val[0];
+	mp->mnt_stat.f_namemax = MAXNAMLEN;
 	mp->mnt_stat.f_iosize = fs->lfs_bsize;
 	mp->mnt_maxsymlinklen = fs->lfs_maxsymlinklen;
 	mp->mnt_flag |= MNT_LOCAL;
@@ -1412,7 +1414,7 @@ lfs_unmount(struct mount *mp, int mntflags, struct proc *p)
  * Get file system statistics.
  */
 int
-lfs_statfs(struct mount *mp, struct statfs *sbp, struct proc *p)
+lfs_statvfs(struct mount *mp, struct statvfs *sbp, struct proc *p)
 {
 	struct lfs *fs;
 	struct ufsmount *ump;
@@ -1420,19 +1422,24 @@ lfs_statfs(struct mount *mp, struct statfs *sbp, struct proc *p)
 	ump = VFSTOUFS(mp);
 	fs = ump->um_lfs;
 	if (fs->lfs_magic != LFS_MAGIC)
-		panic("lfs_statfs: magic");
+		panic("lfs_statvfs: magic");
 
-	sbp->f_type = 0;
-	sbp->f_bsize = fs->lfs_fsize;
+	sbp->f_bsize = fs->lfs_bsize;
+	sbp->f_frsize = sbp->f_bsize; /* XXX */
 	sbp->f_iosize = fs->lfs_bsize;
 	sbp->f_blocks = fsbtofrags(fs, LFS_EST_NONMETA(fs));
 	sbp->f_bfree = fsbtofrags(fs, LFS_EST_BFREE(fs));
-	sbp->f_bavail = fsbtofrags(fs, (long)LFS_EST_BFREE(fs) -
-				  (long)LFS_EST_RSVD(fs));
+	sbp->f_bresvd = fsbtofrags(fs, LFS_EST_RSVD(fs));
+	if (sbp->f_bfree > sbp->f_bresvd)
+		sbp->f_bavail = sbp->f_bfree - sbp->f_bresvd;
+	else
+		sbp->f_bavail = 0;
 	
 	sbp->f_files = fs->lfs_bfree / btofsb(fs, fs->lfs_ibsize) * INOPB(fs);
 	sbp->f_ffree = sbp->f_files - fs->lfs_nfiles;
-	copy_statfs_info(sbp, mp);
+	sbp->f_favail = sbp->f_ffree;
+	sbp->f_fresvd = 0;
+	copy_statvfs_info(sbp, mp);
 	return (0);
 }
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: fdesc_vnops.c,v 1.79 2003/09/13 08:32:16 jdolecek Exp $	*/
+/*	$NetBSD: fdesc_vnops.c,v 1.80 2004/04/21 01:05:41 christos Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fdesc_vnops.c,v 1.79 2003/09/13 08:32:16 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fdesc_vnops.c,v 1.80 2004/04/21 01:05:41 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -587,7 +587,7 @@ fdesc_getattr(v)
 		}
 		vap->va_uid = 0;
 		vap->va_gid = 0;
-		vap->va_fsid = vp->v_mount->mnt_stat.f_fsid.val[0];
+		vap->va_fsid = vp->v_mount->mnt_stat.f_fsidx.__fsid_val[0];
 		vap->va_blocksize = DEV_BSIZE;
 		vap->va_atime.tv_sec = boottime.tv_sec;
 		vap->va_atime.tv_nsec = 0;

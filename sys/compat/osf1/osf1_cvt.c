@@ -1,4 +1,4 @@
-/* $NetBSD: osf1_cvt.c,v 1.16 2003/01/18 08:32:04 thorpej Exp $ */
+/* $NetBSD: osf1_cvt.c,v 1.17 2004/04/21 01:05:37 christos Exp $ */
 
 /*
  * Copyright (c) 1999 Christopher G. Demetriou.  All rights reserved.
@@ -58,7 +58,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: osf1_cvt.c,v 1.16 2003/01/18 08:32:04 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: osf1_cvt.c,v 1.17 2004/04/21 01:05:37 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -679,7 +679,7 @@ osf1_cvt_stat2_from_native(st, ost)
 
 void
 osf1_cvt_statfs_from_native(bsfs, osfs)
-	const struct statfs *bsfs;
+	const struct statvfs *bsfs;
 	struct osf1_statfs *osfs;
 {
 
@@ -693,20 +693,18 @@ osf1_cvt_statfs_from_native(bsfs, osfs)
 	else
 		/* uh oh...  XXX = PC, CDFS, PROCFS, etc. */
 		osfs->f_type = OSF1_MOUNT_ADDON;
-	osfs->f_flags = bsfs->f_flags;		/* XXX translate */
-	osfs->f_fsize = bsfs->f_bsize;
-	osfs->f_bsize = bsfs->f_iosize;
+	osfs->f_flags = bsfs->f_flag;		/* XXX translate */
+	osfs->f_fsize = bsfs->f_frsize;
+	osfs->f_bsize = bsfs->f_bsize;
 	osfs->f_blocks = bsfs->f_blocks;
 	osfs->f_bfree = bsfs->f_bfree;
 	osfs->f_bavail = bsfs->f_bavail;
 	osfs->f_files = bsfs->f_files;
 	osfs->f_ffree = bsfs->f_ffree;
-	memcpy(&osfs->f_fsid, &bsfs->f_fsid,
-	    max(sizeof bsfs->f_fsid, sizeof osfs->f_fsid));
+	memcpy(&osfs->f_fsid, &bsfs->f_fsidx, sizeof osfs->f_fsid);
 	/* osfs->f_spare zeroed above */
-	memcpy(osfs->f_mntonname, bsfs->f_mntonname,
-	    max(sizeof bsfs->f_mntonname, sizeof osfs->f_mntonname));
+	memcpy(osfs->f_mntonname, bsfs->f_mntonname, sizeof osfs->f_mntonname);
 	memcpy(osfs->f_mntfromname, bsfs->f_mntfromname,
-	    max(sizeof bsfs->f_mntfromname, sizeof osfs->f_mntfromname));
+	    sizeof osfs->f_mntfromname);
 	/* XXX osfs->f_xxx should be filled in... */
 }

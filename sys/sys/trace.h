@@ -1,4 +1,4 @@
-/*	$NetBSD: trace.h,v 1.9 2003/08/07 16:34:19 agc Exp $	*/
+/*	$NetBSD: trace.h,v 1.10 2004/04/21 01:05:43 christos Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1993
@@ -106,7 +106,7 @@ struct	proc *traceproc;
 int	tracewhich, tracebuf[TRCSIZ];
 u_int	tracex;
 char	traceflags[TR_NFLAGS];
-#define	pack(v,b)	(((v)->v_mount->mnt_stat.f_fsid.val[0])<<16)|(b)
+#define	pack(v,b)	(((v)->v_mount->mnt_stat.f_fsidx.__fsid_val[0])<<16)|(b)
 #define	trace(a,b,c) {							\
 	if (traceflags[a])						\
 		trace1(a,b,c);						\

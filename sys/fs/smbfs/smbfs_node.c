@@ -1,4 +1,4 @@
-/*	$NetBSD: smbfs_node.c,v 1.21 2004/02/29 12:17:39 jdolecek Exp $	*/
+/*	$NetBSD: smbfs_node.c,v 1.22 2004/04/21 01:05:38 christos Exp $	*/
 
 /*
  * Copyright (c) 2000-2001 Boris Popov
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: smbfs_node.c,v 1.21 2004/02/29 12:17:39 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: smbfs_node.c,v 1.22 2004/04/21 01:05:38 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -358,7 +358,7 @@ smbfs_attr_cachelookup(struct vnode *vp, struct vattr *va)
 	va->va_nlink = 1;		/* number of references to file */
 	va->va_uid = smp->sm_args.uid;	/* owner user id */
 	va->va_gid = smp->sm_args.gid;	/* owner group id */
-	va->va_fsid = vp->v_mount->mnt_stat.f_fsid.val[0];
+	va->va_fsid = vp->v_mount->mnt_stat.f_fsidx.__fsid_val[0];
 	va->va_fileid = np->n_ino;	/* file id */
 	if (va->va_fileid == 0)
 		va->va_fileid = 2;

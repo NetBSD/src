@@ -1,4 +1,4 @@
-/*	$NetBSD: clean.h,v 1.18 2003/08/07 09:46:43 agc Exp $	*/
+/*	$NetBSD: clean.h,v 1.19 2004/04/21 01:05:32 christos Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -75,7 +75,7 @@
 #include <sys/time.h>
 
 typedef struct fs_info {
-	struct	statfs	*fi_statfsp;	/* fsstat info from getfsstat */
+	struct	statvfs	*fi_statvfsp;	/* fsstat info from getfsstat */
 	struct	lfs	fi_lfs;		/* superblock */
 	CLEANERINFO	*fi_cip;	/* Cleaner info from ifile */
 	SEGUSE	*fi_segusep;		/* segment usage table (from ifile) */
@@ -147,11 +147,11 @@ extern int ifile_fd;	/* Ifile file descriptor */
 __BEGIN_DECLS
 /* XXX ondisk32 */
 int		 dump_summary(struct lfs *, SEGSUM *, u_long, int32_t **, daddr_t);
-int		 fs_getmntinfo(struct statfs **, char *, const char *);
+int		 fs_getmntinfo(struct statvfs **, char *, const char *);
 void		 get(int, off_t, void *, size_t);
 struct ufs1_dinode	*get_dinode (FS_INFO *, ino_t);
 int		 get_rawblock(FS_INFO *, char *, size_t, daddr_t);
-FS_INFO		*get_fs_info(struct statfs *, int);
+FS_INFO		*get_fs_info(struct statvfs *, int);
 int 		 lfs_segmapv(FS_INFO *, int, caddr_t, BLOCK_INFO **, int *);
 int		 mmap_segment(FS_INFO *, int, caddr_t *, int);
 void		 munmap_segment(FS_INFO *, caddr_t, int);

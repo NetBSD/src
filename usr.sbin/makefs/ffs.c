@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs.c,v 1.26 2004/04/02 11:27:56 lukem Exp $	*/
+/*	$NetBSD: ffs.c,v 1.27 2004/04/21 01:05:48 christos Exp $	*/
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
@@ -67,7 +67,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(__lint)
-__RCSID("$NetBSD: ffs.c,v 1.26 2004/04/02 11:27:56 lukem Exp $");
+__RCSID("$NetBSD: ffs.c,v 1.27 2004/04/21 01:05:48 christos Exp $");
 #endif	/* !__lint */
 
 #include <sys/param.h>
@@ -415,8 +415,8 @@ ffs_dump_fsinfo(fsinfo_t *f)
 static int
 ffs_create_image(const char *image, fsinfo_t *fsopts)
 {
-#if HAVE_STRUCT_STATFS_F_IOSIZE
-	struct statfs	sfs;
+#if HAVE_STRUCT_STATVFS_F_IOSIZE
+	struct statvfs	sfs;
 #endif
 	struct fs	*fs;
 	char	*buf;
@@ -434,12 +434,12 @@ ffs_create_image(const char *image, fsinfo_t *fsopts)
 	}
 
 		/* zero image */
-#if HAVE_STRUCT_STATFS_F_IOSIZE
-	if (fstatfs(fsopts->fd, &sfs) == -1) {
+#if HAVE_STRUCT_STATVFS_F_IOSIZE
+	if (fstatvfs(fsopts->fd, &sfs) == -1) {
 #endif
 		bufsize = 8192;
-#if HAVE_STRUCT_STATFS_F_IOSIZE
-		warn("can't fstatfs `%s', using default %d byte chunk",
+#if HAVE_STRUCT_STATVFS_F_IOSIZE
+		warn("can't fstatvfs `%s', using default %d byte chunk",
 		    image, bufsize);
 	} else
 		bufsize = sfs.f_iosize;

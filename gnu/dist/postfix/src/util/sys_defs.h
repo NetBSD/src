@@ -48,8 +48,13 @@
 #endif
 #define GETTIMEOFDAY(t)	gettimeofday(t,(struct timezone *) 0)
 #define ROOT_PATH	"/bin:/usr/bin:/sbin:/usr/sbin"
+#if __NetBSD_Version__ < 200040000
 #define USE_STATFS
 #define STATFS_IN_SYS_MOUNT_H
+#else
+#define USE_STATVFS
+#define STATVFS_IN_SYS_STATVFS_H
+#endif
 #define HAS_POSIX_REGEXP
 #define HAS_ST_GEN	/* struct stat contains inode generation number */
 #define NATIVE_SENDMAIL_PATH "/usr/sbin/sendmail"

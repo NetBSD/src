@@ -1,4 +1,4 @@
-/*	$NetBSD: msdosfs_vfsops.c,v 1.13 2004/03/24 15:34:52 atatat Exp $	*/
+/*	$NetBSD: msdosfs_vfsops.c,v 1.14 2004/04/21 01:05:37 christos Exp $	*/
 
 /*-
  * Copyright (C) 1994, 1995, 1997 Wolfgang Solfrank.
@@ -48,7 +48,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: msdosfs_vfsops.c,v 1.13 2004/03/24 15:34:52 atatat Exp $");
+__KERNEL_RCSID(0, "$NetBSD: msdosfs_vfsops.c,v 1.14 2004/04/21 01:05:37 christos Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_quota.h"
@@ -88,7 +88,7 @@ int msdosfs_start __P((struct mount *, int, struct proc *));
 int msdosfs_unmount __P((struct mount *, int, struct proc *));
 int msdosfs_root __P((struct mount *, struct vnode **));
 int msdosfs_quotactl __P((struct mount *, int, uid_t, caddr_t, struct proc *));
-int msdosfs_statfs __P((struct mount *, struct statfs *, struct proc *));
+int msdosfs_statvfs __P((struct mount *, struct statvfs *, struct proc *));
 int msdosfs_sync __P((struct mount *, int, struct ucred *, struct proc *));
 int msdosfs_vget __P((struct mount *, ino_t, struct vnode **));
 int msdosfs_fhtovp __P((struct mount *, struct fid *, struct vnode **));
@@ -120,7 +120,7 @@ struct vfsops msdosfs_vfsops = {
 	msdosfs_unmount,
 	msdosfs_root,
 	msdosfs_quotactl,
-	msdosfs_statfs,
+	msdosfs_statvfs,
 	msdosfs_sync,
 	msdosfs_vget,
 	msdosfs_fhtovp,
@@ -226,7 +226,7 @@ msdosfs_mountroot()
 	simple_lock(&mountlist_slock);
 	CIRCLEQ_INSERT_TAIL(&mountlist, mp, mnt_list);
 	simple_unlock(&mountlist_slock);
-	(void)msdosfs_statfs(mp, &mp->mnt_stat, p);
+	(void)msdosfs_statvfs(mp, &mp->mnt_stat, p);
 	vfs_unbusy(mp);
 	return (0);
 }
@@ -384,7 +384,7 @@ msdosfs_mount(mp, path, data, ndp, p)
 #ifdef MSDOSFS_DEBUG
 	printf("msdosfs_mount(): mp %p, pmp %p, inusemap %p\n", mp, pmp, pmp->pm_inusemap);
 #endif
-	return set_statfs_info(path, UIO_USERSPACE, args.fspec, UIO_USERSPACE,
+	return set_statvfs_info(path, UIO_USERSPACE, args.fspec, UIO_USERSPACE,
 	    mp, p);
 }
 
@@ -731,8 +731,9 @@ msdosfs_mountfs(devvp, mp, p, argp)
 	else
 		pmp->pm_fmod = 1;
 	mp->mnt_data = pmp;
-        mp->mnt_stat.f_fsid.val[0] = (long)dev;
-        mp->mnt_stat.f_fsid.val[1] = makefstype(MOUNT_MSDOS);
+        mp->mnt_stat.f_fsidx.__fsid_val[0] = (long)dev;
+        mp->mnt_stat.f_fsidx.__fsid_val[1] = makefstype(MOUNT_MSDOS);
+        mp->mnt_stat.f_fsid = mp->mnt_stat.f_fsidx.__fsid_val[0];
 	mp->mnt_flag |= MNT_LOCAL;
 	mp->mnt_dev_bshift = pmp->pm_bnshift;
 	mp->mnt_fs_bshift = pmp->pm_cnshift;
@@ -865,27 +866,26 @@ msdosfs_quotactl(mp, cmds, uid, arg, p)
 }
 
 int
-msdosfs_statfs(mp, sbp, p)
+msdosfs_statvfs(mp, sbp, p)
 	struct mount *mp;
-	struct statfs *sbp;
+	struct statvfs *sbp;
 	struct proc *p;
 {
 	struct msdosfsmount *pmp;
 
 	pmp = VFSTOMSDOSFS(mp);
-#ifdef COMPAT_09
-	sbp->f_type = 4;
-#else
-	sbp->f_type = 0;
-#endif
 	sbp->f_bsize = pmp->pm_bpcluster;
+	sbp->f_frsize = sbp->f_bsize;
 	sbp->f_iosize = pmp->pm_bpcluster;
 	sbp->f_blocks = pmp->pm_nmbrofclusters;
 	sbp->f_bfree = pmp->pm_freeclustercount;
 	sbp->f_bavail = pmp->pm_freeclustercount;
+	sbp->f_bresvd = 0;
 	sbp->f_files = pmp->pm_RootDirEnts;			/* XXX */
 	sbp->f_ffree = 0;	/* what to put in here? */
-	copy_statfs_info(sbp, mp);
+	sbp->f_favail = 0;	/* what to put in here? */
+	sbp->f_fresvd = 0;
+	copy_statvfs_info(sbp, mp);
 	return (0);
 }
 

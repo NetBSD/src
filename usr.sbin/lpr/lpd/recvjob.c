@@ -1,4 +1,4 @@
-/*	$NetBSD: recvjob.c,v 1.18 2003/08/07 11:25:28 agc Exp $	*/
+/*	$NetBSD: recvjob.c,v 1.19 2004/04/21 01:05:48 christos Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -41,7 +41,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1993\n\
 #if 0
 static char sccsid[] = "@(#)recvjob.c	8.2 (Berkeley) 4/27/95";
 #else
-__RCSID("$NetBSD: recvjob.c,v 1.18 2003/08/07 11:25:28 agc Exp $");
+__RCSID("$NetBSD: recvjob.c,v 1.19 2004/04/21 01:05:48 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -289,13 +289,13 @@ static int
 chksize(int size)
 {
 	int spacefree;
-	struct statfs sfb;
+	struct statvfs sfb;
 
-	if (statfs(".", &sfb) < 0) {
+	if (statvfs(".", &sfb) < 0) {
 		syslog(LOG_ERR, "%s: %m", "statfs(\".\")");
 		return (1);
 	}
-	spacefree = sfb.f_bavail * (sfb.f_bsize / 512);
+	spacefree = sfb.f_bavail * (sfb.f_frsize / 512);
 	size = (size + 511) / 512;
 	if (minfree + size > spacefree)
 		return(0);

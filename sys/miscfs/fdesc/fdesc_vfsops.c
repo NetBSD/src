@@ -1,4 +1,4 @@
-/*	$NetBSD: fdesc_vfsops.c,v 1.46 2004/03/24 15:34:53 atatat Exp $	*/
+/*	$NetBSD: fdesc_vfsops.c,v 1.47 2004/04/21 01:05:40 christos Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993, 1995
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fdesc_vfsops.c,v 1.46 2004/03/24 15:34:53 atatat Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fdesc_vfsops.c,v 1.47 2004/04/21 01:05:40 christos Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_compat_netbsd.h"
@@ -66,7 +66,7 @@ int	fdesc_start __P((struct mount *, int, struct proc *));
 int	fdesc_unmount __P((struct mount *, int, struct proc *));
 int	fdesc_quotactl __P((struct mount *, int, uid_t, caddr_t,
 			    struct proc *));
-int	fdesc_statfs __P((struct mount *, struct statfs *, struct proc *));
+int	fdesc_statvfs __P((struct mount *, struct statvfs *, struct proc *));
 int	fdesc_sync __P((struct mount *, int, struct ucred *, struct proc *));
 int	fdesc_vget __P((struct mount *, ino_t, struct vnode **));
 int	fdesc_fhtovp __P((struct mount *, struct fid *, struct vnode **));
@@ -110,7 +110,7 @@ fdesc_mount(mp, path, data, ndp, p)
 	mp->mnt_data = fmp;
 	vfs_getnewfsid(mp);
 
-	error = set_statfs_info(path, UIO_USERSPACE, "fdesc", UIO_SYSSPACE,
+	error = set_statvfs_info(path, UIO_USERSPACE, "fdesc", UIO_SYSSPACE,
 	    mp, p);
 	VOP_UNLOCK(rvp, 0);
 	return error;
@@ -195,9 +195,9 @@ fdesc_quotactl(mp, cmd, uid, arg, p)
 }
 
 int
-fdesc_statfs(mp, sbp, p)
+fdesc_statvfs(mp, sbp, p)
 	struct mount *mp;
-	struct statfs *sbp;
+	struct statvfs *sbp;
 	struct proc *p;
 {
 	struct filedesc *fdp;
@@ -228,18 +228,18 @@ fdesc_statfs(mp, sbp, p)
 		freefd += (lim - fdp->fd_nfiles);
 
 	sbp->f_bsize = DEV_BSIZE;
+	sbp->f_frsize = DEV_BSIZE;
 	sbp->f_iosize = DEV_BSIZE;
 	sbp->f_blocks = 2;		/* 1K to keep df happy */
 	sbp->f_bfree = 0;
 	sbp->f_bavail = 0;
+	sbp->f_bresvd = 0;
 	sbp->f_files = lim + 1;		/* Allow for "." */
 	sbp->f_ffree = freefd;		/* See comments above */
-#ifdef COMPAT_09
-	sbp->f_type = 6;
-#else
-	sbp->f_type = 0;
-#endif
-	copy_statfs_info(sbp, mp);
+	sbp->f_favail = freefd;		/* See comments above */
+	sbp->f_fresvd = 0;
+	sbp->f_namemax = MAXNAMLEN;
+	copy_statvfs_info(sbp, mp);
 	return (0);
 }
 
@@ -336,7 +336,7 @@ struct vfsops fdesc_vfsops = {
 	fdesc_unmount,
 	fdesc_root,
 	fdesc_quotactl,
-	fdesc_statfs,
+	fdesc_statvfs,
 	fdesc_sync,
 	fdesc_vget,
 	fdesc_fhtovp,

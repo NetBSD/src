@@ -1,4 +1,4 @@
-/*	$NetBSD: dump.h,v 1.38 2004/03/15 01:06:06 lukem Exp $	*/
+/*	$NetBSD: dump.h,v 1.39 2004/04/21 01:05:32 christos Exp $	*/
 
 /*-
  * Copyright (c) 1980, 1993
@@ -237,7 +237,7 @@ void	interrupt(int);	/* in case operator bangs on console */
 #define DIALUP	"ttyd"			/* prefix for dialups */
 
 struct	fstab *fstabsearch(const char *);	/* search fs_file and fs_spec */
-struct	statfs *mntinfosearch(const char *key);
+struct	statvfs *mntinfosearch(const char *key);
 
 #ifndef NAME_MAX
 #define NAME_MAX 255

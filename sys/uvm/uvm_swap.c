@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_swap.c,v 1.85 2004/03/24 07:50:49 junyoung Exp $	*/
+/*	$NetBSD: uvm_swap.c,v 1.86 2004/04/21 01:05:47 christos Exp $	*/
 
 /*
  * Copyright (c) 1995, 1996, 1997 Matthew R. Green
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_swap.c,v 1.85 2004/03/24 07:50:49 junyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_swap.c,v 1.86 2004/04/21 01:05:47 christos Exp $");
 
 #include "fs_nfs.h"
 #include "opt_uvmhist.h"
@@ -836,7 +836,7 @@ swap_on(p, sdp)
 			goto bad;
 		nblocks = (int)btodb(va.va_size);
 		if ((error =
-		     VFS_STATFS(vp->v_mount, &vp->v_mount->mnt_stat, p)) != 0)
+		     VFS_STATVFS(vp->v_mount, &vp->v_mount->mnt_stat, p)) != 0)
 			goto bad;
 
 		sdp->swd_bsize = vp->v_mount->mnt_stat.f_iosize;
@@ -917,12 +917,12 @@ swap_on(p, sdp)
 	 */
 	if (vp == rootvp) {
 		struct mount *mp;
-		struct statfs *sp;
+		struct statvfs *sp;
 		int rootblocks, rootpages;
 
 		mp = rootvnode->v_mount;
 		sp = &mp->mnt_stat;
-		rootblocks = sp->f_blocks * btodb(sp->f_bsize);
+		rootblocks = sp->f_blocks * btodb(sp->f_frsize);
 		/*
 		 * XXX: sp->f_blocks isn't the total number of
 		 * blocks in the filesystem, it's the number of

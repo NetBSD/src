@@ -1,4 +1,4 @@
-/* $NetBSD: pecoff_syscalls.c,v 1.9 2004/03/26 15:29:29 drochner Exp $ */
+/* $NetBSD: pecoff_syscalls.c,v 1.10 2004/04/21 01:05:37 christos Exp $ */
 
 /*
  * System call names.
@@ -8,7 +8,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pecoff_syscalls.c,v 1.9 2004/03/26 15:29:29 drochner Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pecoff_syscalls.c,v 1.10 2004/04/21 01:05:37 christos Exp $");
 
 #if defined(_KERNEL_OPT)
 #if defined(_KERNEL_OPT)
@@ -50,7 +50,11 @@ const char *const pecoff_syscallnames[] = {
 	"chmod",			/* 15 = chmod */
 	"chown",			/* 16 = chown */
 	"break",			/* 17 = break */
+#ifdef COMPAT_20
 	"getfsstat",			/* 18 = getfsstat */
+#else
+	"#18 (excluded compat_20_sys_getfsstat)",		/* 18 = excluded compat_20_sys_getfsstat */
+#endif
 	"#19 (excluded { long sys_lseek ( int fd , long offset , int whence ) ; } olseek)",		/* 19 = excluded { long sys_lseek ( int fd , long offset , int whence ) ; } olseek */
 #ifdef COMPAT_43
 	"getpid",			/* 20 = getpid */
@@ -210,7 +214,11 @@ const char *const pecoff_syscallnames[] = {
 #endif
 	"#156 (excluded { int sys_getdirentries ( int fd , char * buf , u_int count , long * basep ) ; } ogetdirentries)",		/* 156 = excluded { int sys_getdirentries ( int fd , char * buf , u_int count , long * basep ) ; } ogetdirentries */
 	"statfs",			/* 157 = statfs */
+#ifdef COMPAT_20
 	"fstatfs",			/* 158 = fstatfs */
+#else
+	"#158 (excluded compat_20_sys_fstatfs)",		/* 158 = excluded compat_20_sys_fstatfs */
+#endif
 	"#159 (unimplemented)",		/* 159 = unimplemented */
 	"#160 (unimplemented)",		/* 160 = unimplemented */
 	"getfh",			/* 161 = getfh */
@@ -430,7 +438,11 @@ const char *const pecoff_syscallnames[] = {
 	"fchroot",			/* 297 = fchroot */
 	"fhopen",			/* 298 = fhopen */
 	"fhstat",			/* 299 = fhstat */
+#ifdef COMPAT_20
 	"fhstatfs",			/* 300 = fhstatfs */
+#else
+	"#300 (excluded compat_20_sys_fhstatfs)",		/* 300 = excluded compat_20_sys_fhstatfs */
+#endif
 #if defined(SYSVSEM) || !defined(_KERNEL)
 	"____semctl13",			/* 301 = ____semctl13 */
 #else

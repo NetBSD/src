@@ -1,4 +1,4 @@
-/*	$NetBSD: svr4_misc.c,v 1.107 2003/11/12 21:07:37 dsl Exp $	 */
+/*	$NetBSD: svr4_misc.c,v 1.108 2004/04/21 01:05:37 christos Exp $	 */
 
 /*-
  * Copyright (c) 1994 The NetBSD Foundation, Inc.
@@ -44,7 +44,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: svr4_misc.c,v 1.107 2003/11/12 21:07:37 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: svr4_misc.c,v 1.108 2004/04/21 01:05:37 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -110,9 +110,9 @@ static int svr4_setinfo	__P((struct proc *, int, svr4_siginfo_t *));
 struct svr4_hrtcntl_args;
 static int svr4_hrtcntl	__P((struct lwp *, struct svr4_hrtcntl_args *,
     register_t *));
-static void bsd_statfs_to_svr4_statvfs __P((const struct statfs *,
+static void bsd_statvfs_to_svr4_statvfs __P((const struct statvfs *,
     struct svr4_statvfs *));
-static void bsd_statfs_to_svr4_statvfs64 __P((const struct statfs *,
+static void bsd_statvfs_to_svr4_statvfs64 __P((const struct statvfs *,
     struct svr4_statvfs64 *));
 #define svr4_pfind(pid) p_find((pid), PFIND_UNLOCK | PFIND_ZOMBIE)
 
@@ -1225,24 +1225,23 @@ svr4_sys_waitsys(l, v, retval)
 
 
 static void
-bsd_statfs_to_svr4_statvfs(bfs, sfs)
-	const struct statfs *bfs;
-	struct svr4_statvfs *sfs;
+bsd_statvfs_to_svr4_statvfs(const struct statvfs *bfs,
+    struct svr4_statvfs *sfs)
 {
-	sfs->f_bsize = bfs->f_iosize; /* XXX */
-	sfs->f_frsize = bfs->f_bsize;
+	sfs->f_bsize = bfs->f_bsize; 
+	sfs->f_frsize = bfs->f_frsize;
 	sfs->f_blocks = bfs->f_blocks;
 	sfs->f_bfree = bfs->f_bfree;
 	sfs->f_bavail = bfs->f_bavail;
 	sfs->f_files = bfs->f_files;
 	sfs->f_ffree = bfs->f_ffree;
-	sfs->f_favail = bfs->f_ffree;
-	sfs->f_fsid = bfs->f_fsid.val[0];
+	sfs->f_favail = bfs->f_favail;
+	sfs->f_fsid = bfs->f_fsidx.__fsid_val[0];
 	memcpy(sfs->f_basetype, bfs->f_fstypename, sizeof(sfs->f_basetype));
 	sfs->f_flag = 0;
-	if (bfs->f_flags & MNT_RDONLY)
+	if (bfs->f_flag & MNT_RDONLY)
 		sfs->f_flag |= SVR4_ST_RDONLY;
-	if (bfs->f_flags & MNT_NOSUID)
+	if (bfs->f_flag & MNT_NOSUID)
 		sfs->f_flag |= SVR4_ST_NOSUID;
 	sfs->f_namemax = MAXNAMLEN;
 	memcpy(sfs->f_fstr, bfs->f_fstypename, sizeof(sfs->f_fstr)); /* XXX */
@@ -1251,24 +1250,23 @@ bsd_statfs_to_svr4_statvfs(bfs, sfs)
 
 
 static void
-bsd_statfs_to_svr4_statvfs64(bfs, sfs)
-	const struct statfs *bfs;
-	struct svr4_statvfs64 *sfs;
+bsd_statvfs_to_svr4_statvfs64(const struct statvfs *bfs,
+    struct svr4_statvfs64 *sfs)
 {
-	sfs->f_bsize = bfs->f_iosize; /* XXX */
-	sfs->f_frsize = bfs->f_bsize;
+	sfs->f_bsize = bfs->f_bsize;
+	sfs->f_frsize = bfs->f_frsize;
 	sfs->f_blocks = bfs->f_blocks;
 	sfs->f_bfree = bfs->f_bfree;
 	sfs->f_bavail = bfs->f_bavail;
 	sfs->f_files = bfs->f_files;
 	sfs->f_ffree = bfs->f_ffree;
 	sfs->f_favail = bfs->f_ffree;
-	sfs->f_fsid = bfs->f_fsid.val[0];
+	sfs->f_fsid = bfs->f_fsidx.__fsid_val[0];
 	memcpy(sfs->f_basetype, bfs->f_fstypename, sizeof(sfs->f_basetype));
 	sfs->f_flag = 0;
-	if (bfs->f_flags & MNT_RDONLY)
+	if (bfs->f_flag & MNT_RDONLY)
 		sfs->f_flag |= SVR4_ST_RDONLY;
-	if (bfs->f_flags & MNT_NOSUID)
+	if (bfs->f_flag & MNT_NOSUID)
 		sfs->f_flag |= SVR4_ST_NOSUID;
 	sfs->f_namemax = MAXNAMLEN;
 	memcpy(sfs->f_fstr, bfs->f_fstypename, sizeof(sfs->f_fstr)); /* XXX */
@@ -1283,11 +1281,11 @@ svr4_sys_statvfs(l, v, retval)
 	register_t *retval;
 {
 	struct svr4_sys_statvfs_args *uap = v;
-	struct sys_statfs_args	fs_args;
+	struct sys_statvfs_args	fs_args;
 	struct proc *p = l->l_proc;
 	caddr_t sg = stackgap_init(p, 0);
-	struct statfs *fs = stackgap_alloc(p, &sg, sizeof(struct statfs));
-	struct statfs bfs;
+	struct statvfs *fs = stackgap_alloc(p, &sg, sizeof(struct statvfs));
+	struct statvfs bfs;
 	struct svr4_statvfs sfs;
 	int error;
 
@@ -1295,13 +1293,13 @@ svr4_sys_statvfs(l, v, retval)
 	SCARG(&fs_args, path) = SCARG(uap, path);
 	SCARG(&fs_args, buf) = fs;
 
-	if ((error = sys_statfs(l, &fs_args, retval)) != 0)
+	if ((error = sys_statvfs(l, &fs_args, retval)) != 0)
 		return error;
 
 	if ((error = copyin(fs, &bfs, sizeof(bfs))) != 0)
 		return error;
 
-	bsd_statfs_to_svr4_statvfs(&bfs, &sfs);
+	bsd_statvfs_to_svr4_statvfs(&bfs, &sfs);
 
 	return copyout(&sfs, SCARG(uap, fs), sizeof(sfs));
 }
@@ -1315,23 +1313,23 @@ svr4_sys_fstatvfs(l, v, retval)
 {
 	struct svr4_sys_fstatvfs_args *uap = v;
 	struct proc *p = l->l_proc;
-	struct sys_fstatfs_args	fs_args;
+	struct sys_fstatvfs_args	fs_args;
 	caddr_t sg = stackgap_init(p, 0);
-	struct statfs *fs = stackgap_alloc(p, &sg, sizeof(struct statfs));
-	struct statfs bfs;
+	struct statvfs *fs = stackgap_alloc(p, &sg, sizeof(struct statvfs));
+	struct statvfs bfs;
 	struct svr4_statvfs sfs;
 	int error;
 
 	SCARG(&fs_args, fd) = SCARG(uap, fd);
 	SCARG(&fs_args, buf) = fs;
 
-	if ((error = sys_fstatfs(l, &fs_args, retval)) != 0)
+	if ((error = sys_fstatvfs(l, &fs_args, retval)) != 0)
 		return error;
 
 	if ((error = copyin(fs, &bfs, sizeof(bfs))) != 0)
 		return error;
 
-	bsd_statfs_to_svr4_statvfs(&bfs, &sfs);
+	bsd_statvfs_to_svr4_statvfs(&bfs, &sfs);
 
 	return copyout(&sfs, SCARG(uap, fs), sizeof(sfs));
 }
@@ -1345,10 +1343,10 @@ svr4_sys_statvfs64(l, v, retval)
 {
 	struct svr4_sys_statvfs64_args *uap = v;
 	struct proc *p = l->l_proc;
-	struct sys_statfs_args	fs_args;
+	struct sys_statvfs_args	fs_args;
 	caddr_t sg = stackgap_init(p, 0);
-	struct statfs *fs = stackgap_alloc(p, &sg, sizeof(struct statfs));
-	struct statfs bfs;
+	struct statvfs *fs = stackgap_alloc(p, &sg, sizeof(struct statvfs));
+	struct statvfs bfs;
 	struct svr4_statvfs64 sfs;
 	int error;
 
@@ -1356,13 +1354,13 @@ svr4_sys_statvfs64(l, v, retval)
 	SCARG(&fs_args, path) = SCARG(uap, path);
 	SCARG(&fs_args, buf) = fs;
 
-	if ((error = sys_statfs(l, &fs_args, retval)) != 0)
+	if ((error = sys_statvfs(l, &fs_args, retval)) != 0)
 		return error;
 
 	if ((error = copyin(fs, &bfs, sizeof(bfs))) != 0)
 		return error;
 
-	bsd_statfs_to_svr4_statvfs64(&bfs, &sfs);
+	bsd_statvfs_to_svr4_statvfs64(&bfs, &sfs);
 
 	return copyout(&sfs, SCARG(uap, fs), sizeof(sfs));
 }
@@ -1376,23 +1374,23 @@ svr4_sys_fstatvfs64(l, v, retval)
 {
 	struct svr4_sys_fstatvfs64_args *uap = v;
 	struct proc *p = l->l_proc;
-	struct sys_fstatfs_args	fs_args;
+	struct sys_fstatvfs_args	fs_args;
 	caddr_t sg = stackgap_init(p, 0);
-	struct statfs *fs = stackgap_alloc(p, &sg, sizeof(struct statfs));
-	struct statfs bfs;
+	struct statvfs *fs = stackgap_alloc(p, &sg, sizeof(struct statvfs));
+	struct statvfs bfs;
 	struct svr4_statvfs64 sfs;
 	int error;
 
 	SCARG(&fs_args, fd) = SCARG(uap, fd);
 	SCARG(&fs_args, buf) = fs;
 
-	if ((error = sys_fstatfs(l, &fs_args, retval)) != 0)
+	if ((error = sys_fstatvfs(l, &fs_args, retval)) != 0)
 		return error;
 
 	if ((error = copyin(fs, &bfs, sizeof(bfs))) != 0)
 		return error;
 
-	bsd_statfs_to_svr4_statvfs64(&bfs, &sfs);
+	bsd_statvfs_to_svr4_statvfs64(&bfs, &sfs);
 
 	return copyout(&sfs, SCARG(uap, fs), sizeof(sfs));
 }

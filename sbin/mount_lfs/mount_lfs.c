@@ -1,4 +1,4 @@
-/*	$NetBSD: mount_lfs.c,v 1.18 2003/08/07 10:04:28 agc Exp $	*/
+/*	$NetBSD: mount_lfs.c,v 1.19 2004/04/21 01:05:33 christos Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1993, 1994\n\
 #if 0
 static char sccsid[] = "@(#)mount_lfs.c	8.4 (Berkeley) 4/26/95";
 #else
-__RCSID("$NetBSD: mount_lfs.c,v 1.18 2003/08/07 10:04:28 agc Exp $");
+__RCSID("$NetBSD: mount_lfs.c,v 1.19 2004/04/21 01:05:33 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -99,7 +99,7 @@ mount_lfs(argc, argv)
 	char *fs_name, *options;
 
 	const char *errcause;
-	struct statfs *mntbuf;
+	struct statvfs *mntbuf;
 
 	options = NULL;
 	nsegs = "4";
@@ -157,7 +157,7 @@ mount_lfs(argc, argv)
 			err(1, "getmntinfo");
 		for (i = 0; i < mntsize; i++) {
 			if (strcmp(mntbuf[i].f_mntfromname, args.fspec) == 0) {
-				oldflags = mntbuf[i].f_flags;
+				oldflags = mntbuf[i].f_flag;
 				break;
 			}
 		}

@@ -1,4 +1,4 @@
-.\"	$NetBSD: fhopen.2,v 1.9 2003/04/16 13:34:51 wiz Exp $
+.\"	$NetBSD: fhopen.2,v 1.10 2004/04/21 01:05:32 christos Exp $
 .\"
 .\" Copyright (c) 1999 National Aeronautics & Space Administration
 .\" All rights reserved.
@@ -31,25 +31,28 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"/
-.Dd June 29, 1999
+.Dd April 14, 2004
 .Dt FHOPEN 2
 .Os
 .Sh NAME
 .Nm fhopen ,
 .Nm fhstat ,
-.Nm fhstatfs
+.Nm fhstatvfs
 .Nd access file via file handle
 .Sh LIBRARY
 .Lb libc
 .Sh SYNOPSIS
 .In sys/types.h
-.In sys/stat.h
 .Ft int
 .Fn fhopen "const fhandle_t *fhp" "int flags"
+.In sys/stat.h
 .Ft int
 .Fn fhstat "const fhandle_t *fhp" "struct stat *sb"
+.In sys/statvfs.h
 .Ft int
-.Fn fhstatfs "const fhandle_t *fhp" "struct statfs *buf"
+.Fn fhstatvfs "const fhandle_t *fhp" "struct statvfs *buf"
+.Ft int
+.Fn fhstatvfs1 "const fhandle_t *fhp" "struct statvfs *buf" "int flags"
 .Sh DESCRIPTION
 These functions provide a means to access a file given the file handle
 .Fa fhp .
@@ -72,13 +75,15 @@ call.
 All said flags are valid except for
 .Dv O_CREAT .
 .Pp
-.Fn fhstat
+.Fn fhstat ,
+.Fn fhstatvfs ,
 and
-.Fn fhstatfs
+.Fn fhstatvfs1
 provide the functionality of the
-.Xr fstat 2
+.Xr fstat 2 ,
+.Xr fstatvfs 2 ,
 and
-.Xr fstatfs 2
+.Xr fstatvfs1 2
 calls except that they return information for the file referred to by
 .Fa fhp
 rather than an open file.
@@ -86,9 +91,10 @@ rather than an open file.
 Upon successful completion,
 .Fn fhopen
 returns the file descriptor for the opened file, while
-.Fn fhstat
+.Fn fhstat ,
+.Fn fhstatvfs ,
 and
-.Fn fhstatfs
+.Fn fhstatvfs1
 return 0.
 Otherwise, -1 is returned and
 .Va errno
@@ -97,13 +103,15 @@ is set to indicate the error.
 In addition to the errors returned by
 .Xr open 2 ,
 .Xr fstat 2 ,
+.Xr fstatvfs 2 ,
 and
-.Xr fstatfs 2
+.Xr fstatvfs1 2 ,
 respectively,
 .Fn fhopen ,
 .Fn fhstat ,
+.Fn fhstatvfs ,
 and
-.Fn fhstatfs
+.Fn fhstatvfs1 
 will return
 .Bl -tag -width Er
 .It Bq Er EINVAL
@@ -119,14 +127,20 @@ is no longer valid.
 .El
 .Sh SEE ALSO
 .Xr fstat 2 ,
-.Xr fstatfs 2 ,
+.Xr fstatvfs 2 ,
+.Xr fstatvfs1 2 ,
 .Xr getfh 2 ,
 .Xr open 2
 .Sh HISTORY
 The
 .Fn fhopen ,
-.Fn fhstat ,
 and
-.Fn fhstatfs
+.Fn fhstat 
 functions first appeared in
 .Nx 1.5 .
+The 
+.Fn fhstatvfs
+function replaced
+.Fn fhstatfs
+in
+.Nx 2.1 .

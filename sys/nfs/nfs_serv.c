@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_serv.c,v 1.87 2004/01/07 12:17:10 yamt Exp $	*/
+/*	$NetBSD: nfs_serv.c,v 1.88 2004/04/21 01:05:42 christos Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -55,7 +55,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_serv.c,v 1.87 2004/01/07 12:17:10 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_serv.c,v 1.88 2004/04/21 01:05:42 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -446,7 +446,7 @@ nfsrv_lookup(nfsd, slp, procp, mrq)
 	PNBUF_PUT(nd.ni_cnd.cn_pnbuf);
 	vp = ndp->ni_vp;
 	memset((caddr_t)fhp, 0, sizeof(nfh));
-	fhp->fh_fsid = vp->v_mount->mnt_stat.f_fsid;
+	fhp->fh_fsid = vp->v_mount->mnt_stat.f_fsidx;
 	error = VFS_VPTOFH(vp, &fhp->fh_fid);
 	if (!error)
 		error = VOP_GETATTR(vp, &va, cred, procp);
@@ -1539,7 +1539,7 @@ nfsrv_create(nfsd, slp, procp, mrq)
 	}
 	if (!error) {
 		memset((caddr_t)fhp, 0, sizeof(nfh));
-		fhp->fh_fsid = vp->v_mount->mnt_stat.f_fsid;
+		fhp->fh_fsid = vp->v_mount->mnt_stat.f_fsidx;
 		error = VFS_VPTOFH(vp, &fhp->fh_fid);
 		if (!error)
 			error = VOP_GETATTR(vp, &va, cred, procp);
@@ -1695,7 +1695,7 @@ out:
 	vp = nd.ni_vp;
 	if (!error) {
 		memset((caddr_t)fhp, 0, sizeof(nfh));
-		fhp->fh_fsid = vp->v_mount->mnt_stat.f_fsid;
+		fhp->fh_fsid = vp->v_mount->mnt_stat.f_fsidx;
 		error = VFS_VPTOFH(vp, &fhp->fh_fid);
 		if (!error)
 			error = VOP_GETATTR(vp, &va, cred, procp);
@@ -2245,7 +2245,7 @@ abortop:
 	if (!error) {
 	    if (v3) {
 		memset((caddr_t)fhp, 0, sizeof(nfh));
-		fhp->fh_fsid = nd.ni_vp->v_mount->mnt_stat.f_fsid;
+		fhp->fh_fsid = nd.ni_vp->v_mount->mnt_stat.f_fsidx;
 		error = VFS_VPTOFH(nd.ni_vp, &fhp->fh_fid);
 		if (!error)
 		    error = VOP_GETATTR(nd.ni_vp, &va, cred,
@@ -2371,7 +2371,7 @@ nfsrv_mkdir(nfsd, slp, procp, mrq)
 	if (!error) {
 		vp = nd.ni_vp;
 		memset((caddr_t)fhp, 0, sizeof(nfh));
-		fhp->fh_fsid = vp->v_mount->mnt_stat.f_fsid;
+		fhp->fh_fsid = vp->v_mount->mnt_stat.f_fsidx;
 		error = VFS_VPTOFH(vp, &fhp->fh_fid);
 		if (!error)
 			error = VOP_GETATTR(vp, &va, cred, procp);
@@ -3011,7 +3011,7 @@ again:
 				goto invalid;
 			memset((caddr_t)nfhp, 0, NFSX_V3FH);
 			nfhp->fh_fsid =
-				nvp->v_mount->mnt_stat.f_fsid;
+				nvp->v_mount->mnt_stat.f_fsidx;
 			if (VFS_VPTOFH(nvp, &nfhp->fh_fid)) {
 				vput(nvp);
 				goto invalid;
@@ -3208,7 +3208,7 @@ nfsrv_statfs(nfsd, slp, procp, mrq)
 	struct mbuf *nam = nfsd->nd_nam;
 	caddr_t dpos = nfsd->nd_dpos;
 	struct ucred *cred = &nfsd->nd_cr;
-	struct statfs *sf;
+	struct statvfs *sf;
 	struct nfs_statfs *sfp;
 	u_int32_t *tl;
 	int32_t t1;
@@ -3221,7 +3221,7 @@ nfsrv_statfs(nfsd, slp, procp, mrq)
 	struct vattr at;
 	nfsfh_t nfh;
 	fhandle_t *fhp;
-	struct statfs statfs;
+	struct statvfs statvfs;
 	u_quad_t frev, tval;
 
 #ifndef nolint
@@ -3236,8 +3236,8 @@ nfsrv_statfs(nfsd, slp, procp, mrq)
 		nfsm_srvpostop_attr(getret, &at);
 		return (0);
 	}
-	sf = &statfs;
-	error = VFS_STATFS(vp->v_mount, sf, procp);
+	sf = &statvfs;
+	error = VFS_STATVFS(vp->v_mount, sf, procp);
 	getret = VOP_GETATTR(vp, &at, cred, procp);
 	vput(vp);
 	nfsm_reply(NFSX_POSTOPATTR(v3) + NFSX_STATFS(v3));
@@ -3247,11 +3247,11 @@ nfsrv_statfs(nfsd, slp, procp, mrq)
 		return (0);
 	nfsm_build(sfp, struct nfs_statfs *, NFSX_STATFS(v3));
 	if (v3) {
-		tval = (u_quad_t)((quad_t)sf->f_blocks * (quad_t)sf->f_bsize);
+		tval = (u_quad_t)((quad_t)sf->f_blocks * (quad_t)sf->f_frsize);
 		txdr_hyper(tval, &sfp->sf_tbytes);
-		tval = (u_quad_t)((quad_t)sf->f_bfree * (quad_t)sf->f_bsize);
+		tval = (u_quad_t)((quad_t)sf->f_bfree * (quad_t)sf->f_frsize);
 		txdr_hyper(tval, &sfp->sf_fbytes);
-		tval = (u_quad_t)((quad_t)sf->f_bavail * (quad_t)sf->f_bsize);
+		tval = (u_quad_t)((quad_t)sf->f_bavail * (quad_t)sf->f_frsize);
 		txdr_hyper(tval, &sfp->sf_abytes);
 		tval = (u_quad_t)sf->f_files;
 		txdr_hyper(tval, &sfp->sf_tfiles);
@@ -3261,7 +3261,7 @@ nfsrv_statfs(nfsd, slp, procp, mrq)
 		sfp->sf_invarsec = 0;
 	} else {
 		sfp->sf_tsize = txdr_unsigned(NFS_MAXDGRAMDATA);
-		sfp->sf_bsize = txdr_unsigned(sf->f_bsize);
+		sfp->sf_bsize = txdr_unsigned(sf->f_frsize);
 		sfp->sf_blocks = txdr_unsigned(sf->f_blocks);
 		sfp->sf_bfree = txdr_unsigned(sf->f_bfree);
 		sfp->sf_bavail = txdr_unsigned(sf->f_bavail);
@@ -3296,7 +3296,7 @@ nfsrv_fsinfo(nfsd, slp, procp, mrq)
 	nfsfh_t nfh;
 	fhandle_t *fhp;
 	u_quad_t frev, maxfsize;
-	struct statfs sb;
+	struct statvfs sb;
 
 #ifndef nolint
 	cache = 0;
@@ -3312,8 +3312,8 @@ nfsrv_fsinfo(nfsd, slp, procp, mrq)
 	}
 
 	/* XXX Try to make a guess on the max file size. */
-	VFS_STATFS(vp->v_mount, &sb, (struct proc *)0);
-	maxfsize = (u_quad_t)0x80000000 * sb.f_bsize - 1;
+	VFS_STATVFS(vp->v_mount, &sb, (struct proc *)0);
+	maxfsize = (u_quad_t)0x80000000 * sb.f_frsize - 1;
 
 	getret = VOP_GETATTR(vp, &at, cred, procp);
 	vput(vp);

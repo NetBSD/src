@@ -1,4 +1,4 @@
-/*	$NetBSD: union_vnops.c,v 1.8 2004/01/25 18:06:48 hannken Exp $	*/
+/*	$NetBSD: union_vnops.c,v 1.9 2004/04/21 01:05:38 christos Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993, 1994, 1995
@@ -72,7 +72,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: union_vnops.c,v 1.8 2004/01/25 18:06:48 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: union_vnops.c,v 1.9 2004/04/21 01:05:38 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -918,7 +918,7 @@ union_getattr(v)
 				ap->a_vap->va_nlink += vap->va_nlink;
 		}
 	}
-	ap->a_vap->va_fsid = ap->a_vp->v_mount->mnt_stat.f_fsid.val[0];
+	ap->a_vap->va_fsid = ap->a_vp->v_mount->mnt_stat.f_fsidx.__fsid_val[0];
 	return (0);
 }
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: portal_vnops.c,v 1.52 2003/11/29 10:02:43 matt Exp $	*/
+/*	$NetBSD: portal_vnops.c,v 1.53 2004/04/21 01:05:41 christos Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: portal_vnops.c,v 1.52 2003/11/29 10:02:43 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: portal_vnops.c,v 1.53 2004/04/21 01:05:41 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -548,7 +548,7 @@ portal_getattr(v)
 	vattr_null(vap);
 	vap->va_uid = 0;
 	vap->va_gid = 0;
-	vap->va_fsid = vp->v_mount->mnt_stat.f_fsid.val[0];
+	vap->va_fsid = vp->v_mount->mnt_stat.f_fsidx.__fsid_val[0];
 	vap->va_size = DEV_BSIZE;
 	vap->va_blocksize = DEV_BSIZE;
 	/*
