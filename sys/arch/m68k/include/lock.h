@@ -1,4 +1,4 @@
-/*	$NetBSD: lock.h,v 1.2 2000/05/02 04:41:07 thorpej Exp $	*/
+/*	$NetBSD: lock.h,v 1.3 2000/05/02 05:17:45 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -43,9 +43,57 @@
 #ifndef _M68K_LOCK_H_
 #define	_M68K_LOCK_H_
 
-typedef	__volatile int		__cpu_simple_lock_t;
+typedef	__volatile unsigned char __cpu_simple_lock_t;
 
-#define	__SIMPLELOCK_LOCKED	1
+#define	__SIMPLELOCK_LOCKED	0x80	/* result of `tas' insn */
 #define	__SIMPLELOCK_UNLOCKED	0
+
+static __inline void __cpu_simple_lock_init __P((__cpu_simple_lock_t *)) 
+	__attribute__((__unused__)); 
+static __inline void __cpu_simple_lock __P((__cpu_simple_lock_t *))
+	__attribute__((__unused__));
+static __inline int __cpu_simple_lock_try __P((__cpu_simple_lock_t *))
+	__attribute__((__unused__)); 
+static __inline void __cpu_simple_unlock __P((__cpu_simple_lock_t *))
+	__attribute__((__unused__));
+
+static __inline void
+__cpu_simple_lock_init(__cpu_simple_lock_t *alp)
+{
+
+	*alp = __SIMPLELOCK_UNLOCKED;
+}
+
+static __inline void
+__cpu_simple_lock(__cpu_simple_lock_t *alp)
+{
+
+	__asm __volatile(
+		"1:	tas	%0	\n"
+		"	jne	1b	\n"
+		: "=m" (*alp));
+}
+
+static __inline int
+__cpu_simple_lock_try(__cpu_simple_lock_t *alp)
+{
+	int __rv = 1;
+
+	__asm __volatile(
+		"	tas	%0	\n"
+		"	jeq	1f	\n"
+		"	moveq	#0, %1	\n"
+		"1:			\n"
+		: "=m" (*alp), "=d" (__rv));
+
+	return (__rv);
+}
+
+static __inline void
+__cpu_simple_unlock(__cpu_simple_lock_t *alp)
+{
+
+	*alp = __SIMPLELOCK_UNLOCKED;
+}
 
 #endif /* _M68K_LOCK_H_ */
