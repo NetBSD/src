@@ -1,4 +1,4 @@
-/*	$NetBSD: clnp_frag.c,v 1.7 1996/02/13 22:08:21 christos Exp $	*/
+/*	$NetBSD: clnp_frag.c,v 1.8 1996/04/13 01:34:23 cgd Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -151,9 +151,8 @@ clnp_fragment(ifp, m, first_hop, total_len, segoff, flags, rt)
 				printf("clnp_fragment: total_len %d:\n",
 				       total_len);
 				while (mdump != NULL) {
-					printf("\tmbuf x%x, m_len %d\n",
-					       (unsigned int) mdump,
-					       mdump->m_len);
+					printf("\tmbuf %p, m_len %d\n",
+					       mdump, mdump->m_len);
 					tot_mlen += mdump->m_len;
 					mdump = mdump->m_next;
 				}
@@ -249,9 +248,8 @@ clnp_fragment(ifp, m, first_hop, total_len, segoff, flags, rt)
 				struct mbuf    *mdump = frag_hdr;
 				printf("clnp_fragment: sending dg:\n");
 				while (mdump != NULL) {
-					printf("\tmbuf x%x, m_len %d\n",
-					       (unsigned int) mdump,
-					       mdump->m_len);
+					printf("\tmbuf %p, m_len %d\n",
+					       mdump, mdump->m_len);
 					mdump = mdump->m_next;
 				}
 			}
@@ -499,8 +497,8 @@ clnp_insert_frag(cfh, m, seg)
 		       first, last, fraglen);
 		printf("clnp_insert_frag: current fragments:\n");
 		for (cf = cfh->cfl_frags; cf != NULL; cf = cf->cfr_next) {
-			printf("\tcf x%x: [%d-%d]\n",
-			       (unsigned int) cf, cf->cfr_first, cf->cfr_last);
+			printf("\tcf %p: [%d-%d]\n",
+			       cf, cf->cfr_first, cf->cfr_last);
 		}
 	}
 #endif
@@ -647,8 +645,8 @@ clnp_insert_frag(cfh, m, seg)
 #ifdef ARGO_DEBUG
 		if (argo_debug[D_REASS]) {
 			printf(
-			"clnp_insert_frag: clnp x%x requires %d alignment\n",
-			       (unsigned int) clnp, pad);
+			"clnp_insert_frag: clnp %p requires %d alignment\n",
+			       clnp, pad);
 		}
 #endif
 
@@ -661,8 +659,8 @@ clnp_insert_frag(cfh, m, seg)
 
 #ifdef ARGO_DEBUG
 		if (argo_debug[D_REASS]) {
-			printf("clnp_insert_frag: cf now x%x, cfr_bytes %d\n",
-			       (unsigned int) cf, cf->cfr_bytes);
+			printf("clnp_insert_frag: cf now %p, cfr_bytes %d\n",
+			       cf, cf->cfr_bytes);
 		}
 #endif
 	}
@@ -745,9 +743,8 @@ clnp_comp_pdu(cfh)
 				mdump = cf->cfr_data;
 				l = 0;
 				while (mdump != NULL) {
-					printf("\tmbuf x%x, m_len %d\n",
-					       (unsigned int) mdump,
-					       mdump->m_len);
+					printf("\tmbuf %p, m_len %d\n",
+					       mdump, mdump->m_len);
 					l += mdump->m_len;
 					mdump = mdump->m_next;
 				}
@@ -759,9 +756,8 @@ clnp_comp_pdu(cfh)
 				mdump = cf_next->cfr_data;
 				l = 0;
 				while (mdump != NULL) {
-					printf("\tmbuf x%x, m_len %d\n",
-					       (unsigned int) mdump,
-					       mdump->m_len);
+					printf("\tmbuf %p, m_len %d\n",
+					       mdump, mdump->m_len);
 					l += mdump->m_len;
 					mdump = mdump->m_next;
 				}
@@ -799,8 +795,7 @@ clnp_comp_pdu(cfh)
 		       cf->cfr_first, cf->cfr_last);
 		printf("clnp_comp_pdu: data for frag:\n");
 		while (mdump != NULL) {
-			printf("mbuf x%x, m_len %d\n", (unsigned int) mdump,
-			       mdump->m_len);
+			printf("mbuf %p, m_len %d\n", mdump, mdump->m_len);
 			/* dump_buf(mtod(mdump, caddr_t), mdump->m_len); */
 			mdump = mdump->m_next;
 		}
@@ -834,9 +829,8 @@ clnp_comp_pdu(cfh)
 			struct mbuf    *mdump = hdr;
 			printf("clnp_comp_pdu: pdu is:\n");
 			while (mdump != NULL) {
-				printf("mbuf x%x, m_len %d\n",
-				       (unsigned int) mdump,
-				       mdump->m_len);
+				printf("mbuf %p, m_len %d\n",
+				       mdump, mdump->m_len);
 #if 0
 				dump_buf(mtod(mdump, caddr_t), mdump->m_len);
 #endif

@@ -1,4 +1,4 @@
-/*	$NetBSD: clnp_er.c,v 1.7 1996/02/13 22:08:17 christos Exp $	*/
+/*	$NetBSD: clnp_er.c,v 1.8 1996/04/13 01:34:20 cgd Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -115,8 +115,8 @@ clnp_er_input(m, src, reason)
 
 #ifdef ARGO_DEBUG
 	if (argo_debug[D_CTLINPUT]) {
-		printf("clnp_er_input: m x%x, src %s, reason x%x\n",
-		       (unsigned int) m, clnp_iso_addrp(src), reason);
+		printf("clnp_er_input: m %p, src %s, reason x%x\n",
+		       m, clnp_iso_addrp(src), reason);
 	}
 #endif
 
@@ -202,8 +202,7 @@ clnp_discard(m, reason)
 {
 #ifdef ARGO_DEBUG
 	if (argo_debug[D_DISCARD]) {
-		printf("clnp_discard: m x%x, reason x%x\n",
-		       (unsigned int) m, reason);
+		printf("clnp_discard: m %p, reason x%x\n", m, reason);
 	}
 #endif
 
@@ -257,8 +256,8 @@ clnp_emit_er(m, reason)
 
 #ifdef ARGO_DEBUG
 	if (argo_debug[D_DISCARD]) {
-		printf("clnp_emit_er: m x%x, hdr len %d\n",
-		       (unsigned int) m, clnp->cnf_hdr_len);
+		printf("clnp_emit_er: m %p, hdr len %d\n",
+		       m, clnp->cnf_hdr_len);
 	}
 #endif
 
