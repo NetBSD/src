@@ -1,4 +1,4 @@
-/*	$NetBSD: compat_pwd.h,v 1.2 2002/07/03 17:17:04 pooka Exp $	*/
+/*	$NetBSD: compat_pwd.h,v 1.3 2004/05/18 22:14:35 sjg Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -40,11 +40,6 @@
 #define	_COMPAT_PWD_H_
 
 /* A very special version of <pwd.h> for pwd_mkdb(8) and __nbcompat_pwscan(3). */
-
-#if HAVE_USER_FROM_UID
-#define user_from_uid __nbcompat_system_user_from_uid
-#define group_from_gid __nbcompat_system_group_from_gid
-#endif
 
 #include "../../include/pwd.h"
 
