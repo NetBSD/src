@@ -1,4 +1,4 @@
-.\"	$NetBSD: ypmatch.1,v 1.12 2003/04/12 09:13:28 christos Exp $
+.\"	$NetBSD: ypmatch.1,v 1.13 2005/02/26 16:19:55 thorpej Exp $
 .\"
 .\" Copyright (c) 1993 Winning Strategies, Inc.
 .\" All rights reserved.
@@ -28,12 +28,12 @@
 .\" (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd December 3, 1993
+.Dd February 26, 2005
 .Dt YPMATCH 1
 .Os
 .Sh NAME
 .Nm ypmatch
-.Nd "print the values of one or more keys in a YP database"
+.Nd "print the values of one or more keys in a NIS database"
 .Sh SYNOPSIS
 .Nm
 .Op Fl ktz
@@ -45,7 +45,7 @@
 .Sh DESCRIPTION
 .Nm
 prints out the values of one or more keys from the
-.Tn YP
+.Tn NIS
 database specified by
 .Ar mapname ,
 which may be a map name or a map nickname.
@@ -70,9 +70,9 @@ the keys.
 .El
 .Sh SEE ALSO
 .Xr domainname 1 ,
+.Xr nis 8 ,
 .Xr ypcat 1 ,
 .Xr ypwhich 1 ,
-.Xr yp 8 ,
 .Xr ypbind 8 ,
 .Xr yppoll 8 ,
 .Xr ypset 8
