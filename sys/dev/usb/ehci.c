@@ -1,4 +1,4 @@
-/*	$NetBSD: ehci.c,v 1.49 2003/10/13 00:05:36 enami Exp $	*/
+/*	$NetBSD: ehci.c,v 1.50 2003/10/18 04:50:35 simonb Exp $	*/
 
 /*
  * TODO
@@ -52,7 +52,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ehci.c,v 1.49 2003/10/13 00:05:36 enami Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ehci.c,v 1.50 2003/10/18 04:50:35 simonb Exp $");
 
 #include "ohci.h"
 #include "uhci.h"
@@ -565,7 +565,6 @@ void
 ehci_pcd(ehci_softc_t *sc, usbd_xfer_handle xfer)
 {
 	usbd_pipe_handle pipe;
-	struct ehci_pipe *epipe;
 	u_char *p;
 	int i, m;
 
@@ -575,7 +574,6 @@ ehci_pcd(ehci_softc_t *sc, usbd_xfer_handle xfer)
 	}
 
 	pipe = xfer->pipe;
-	epipe = (struct ehci_pipe *)pipe;
 
 	p = KERNADDR(&xfer->dmabuf, 0);
 	m = min(sc->sc_noport, xfer->length * 8 - 1);
@@ -863,7 +861,6 @@ ehci_activate(device_ptr_t self, enum devact act)
 	switch (act) {
 	case DVACT_ACTIVATE:
 		return (EOPNOTSUPP);
-		break;
 
 	case DVACT_DEACTIVATE:
 		if (sc->sc_child != NULL)
