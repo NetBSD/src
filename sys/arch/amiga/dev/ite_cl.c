@@ -1,4 +1,4 @@
-/*	$NetBSD: ite_cl.c,v 1.3 1999/03/25 23:20:00 is Exp $	*/
+/*	$NetBSD: ite_cl.c,v 1.4 1999/06/27 21:17:17 is Exp $	*/
 
 /*
  * Copyright (c) 1995 Ezra Story
@@ -161,6 +161,9 @@ cl_putc(ip, c, dy, dx, mode)
 	unsigned char attr;
 	unsigned char *cp;
 
+	if (ip->flags & ITE_INGRF)
+		return;
+
 	attr =(unsigned char) ((mode & ATTR_INV) ? (0x70) : (0x07));
 	if (mode & ATTR_UL)     attr  = 0x01;	/* ???????? */
 	if (mode & ATTR_BOLD)   attr |= 0x08;
@@ -189,6 +192,9 @@ cl_clear(ip, sy, sx, h, w)
     	volatile unsigned char *ba = ip->grf->g_regkva;
     	int len;
 
+	if (ip->flags & ITE_INGRF)
+		return;
+
     	dst = ip->grf->g_fbkva + (sy * ip->cols) + sx;
     	src = dst + (ip->rows*ip->cols); 
     	len = w*h;
@@ -209,6 +215,9 @@ cl_scroll(ip, sy, sx, count, dir)
 {
     	unsigned char *fb;
     	volatile unsigned char *ba = ip->grf->g_regkva;
+
+	if (ip->flags & ITE_INGRF)
+		return;
 
     	fb = ip->grf->g_fbkva + sy * ip->cols;
     	SetTextPlane(ba, 0x00);
