@@ -1,4 +1,4 @@
-/*	$NetBSD: disksubr.c,v 1.33 1998/08/14 02:20:07 rvb Exp $	*/
+/*	$NetBSD: disksubr.c,v 1.34 1998/09/05 04:54:23 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1988 Regents of the University of California.
@@ -88,6 +88,7 @@ readdisklabel(dev, strat, lp, osdep)
 		lp->d_secsize = DEV_BSIZE;
 	if (lp->d_secperunit == 0)
 		lp->d_secperunit = 0x1fffffff;
+#if 0
 	if (lp->d_ncylinders == 16383) {
 		printf("disklabel: Disk > 8G ... readjusting chs %d/%d/%d to ",
 			lp->d_ncylinders, lp->d_ntracks, lp->d_nsectors);
@@ -95,6 +96,7 @@ readdisklabel(dev, strat, lp, osdep)
 		printf("%d/%d/%d\n",
 			lp->d_ncylinders, lp->d_ntracks, lp->d_nsectors);
 	}
+#endif
 	lp->d_npartitions = RAW_PART + 1;
 	for (i = 0; i < RAW_PART; i++) {
 		lp->d_partitions[i].p_size = 0;
@@ -179,6 +181,7 @@ readdisklabel(dev, strat, lp, osdep)
 				    dp->dp_size;
 				lp->d_partitions[2].p_offset = 
 				    dp->dp_start;
+#if 0
 				if (lp->d_ntracks != dp->dp_ehd + 1 ||
 				    lp->d_nsectors != DPSECT(dp->dp_esect)) {
 					printf("disklabel: BIOS sees chs %d/%d/%d as ",
@@ -194,6 +197,7 @@ readdisklabel(dev, strat, lp, osdep)
 						lp->d_ncylinders, lp->d_ntracks,
 						lp->d_nsectors);
 				    }
+#endif
 			}
 		}
 		lp->d_npartitions = RAW_PART + 1 + i;
