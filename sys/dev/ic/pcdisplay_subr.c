@@ -1,4 +1,4 @@
-/* $NetBSD: pcdisplay_subr.c,v 1.11 2000/01/05 16:04:00 ad Exp $ */
+/* $NetBSD: pcdisplay_subr.c,v 1.12 2000/01/05 16:14:35 ad Exp $ */
 
 /*
  * Copyright (c) 1995, 1996 Carnegie-Mellon University.
@@ -39,6 +39,17 @@
 #include <dev/ic/pcdisplayvar.h>
 
 #include <dev/wscons/wsdisplayvar.h>
+
+void
+pcdisplay_cursor_init(scr)
+	struct pcdisplayscreen *scr;
+{
+
+#ifdef PCDISPLAY_SOFTCURSOR
+	pcdisplay_6845_write(scr->hdl, cursorh, 0x10);
+	pcdisplay_6845_write(scr->hdl, cursorl, 0x10);
+#endif
+}
 
 void
 pcdisplay_cursor(id, on, row, col)
