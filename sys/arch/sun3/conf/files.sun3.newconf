@@ -1,4 +1,4 @@
-#	$NetBSD: files.sun3.newconf,v 1.22 1995/03/01 05:05:03 gwr Exp $
+#	$NetBSD: files.sun3.newconf,v 1.23 1995/03/10 02:31:35 gwr Exp $
 
 #
 # sun3-specific configuration info
@@ -109,7 +109,12 @@ file	arch/sun3/dev/si.c		si
 # On-Board MEMory (OBMEM)
 #
 device bwtwo at obmem: sunfb
-file arch/sun3/dev/bwtwo.c		bwtwo
+file arch/sun3/dev/bw2.c		bwtwo needs-flag
+
+device cgfour at obmem: sunfb
+file arch/sun3/dev/cg4.c		cgfour needs-flag
+
+file	arch/sparc/dev/bt_subr.c	cgfour #cgthree cgsix
 
 #
 # On-Board Control (OBCTL)
@@ -124,7 +129,7 @@ file arch/sun3/dev/kbd.c		zs
 file arch/sun3/dev/event.c		zs
 file arch/sun3/dev/kd.c			zs
 file arch/sun3/dev/ms.c			zs
-#file arch/sun3/dev/fb.c
+file arch/sun3/dev/fb.c
 
 # This is obsolete...
 pseudo-device prom
