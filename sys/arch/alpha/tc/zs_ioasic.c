@@ -1,4 +1,4 @@
-/* $NetBSD: zs_ioasic.c,v 1.7 1999/08/07 12:58:30 drochner Exp $ */
+/* $NetBSD: zs_ioasic.c,v 1.8 2000/02/03 08:13:45 nisimura Exp $ */
 
 /*-
  * Copyright (c) 1996, 1998 The NetBSD Foundation, Inc.
@@ -39,7 +39,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: zs_ioasic.c,v 1.7 1999/08/07 12:58:30 drochner Exp $");
+__KERNEL_RCSID(0, "$NetBSD: zs_ioasic.c,v 1.8 2000/02/03 08:13:45 nisimura Exp $");
 
 /*
  * Zilog Z8530 Dual UART driver (machine-dependent part).  This driver
@@ -74,7 +74,7 @@ __KERNEL_RCSID(0, "$NetBSD: zs_ioasic.c,v 1.7 1999/08/07 12:58:30 drochner Exp $
 #include <dev/ic/z8530reg.h>
 
 #include <dev/tc/tcvar.h>
-#include <alpha/tc/ioasicreg.h>
+#include <dev/tc/ioasicreg.h>
 #include <dev/tc/ioasicvar.h>
 #include <dev/dec/zskbdvar.h>
 
@@ -402,18 +402,18 @@ zs_ioasic_enable(onoff)
 {
 
 	if (onoff) {
-		*(volatile u_int *)IOASIC_REG_IMSK(ioasic_base) |=
+		*(volatile u_int *)(ioasic_base + IOASIC_IMSK) |=
 		    IOASIC_INTR_SCC_1 | IOASIC_INTR_SCC_0;
 #if !defined(DEC_3000_300) && defined(ZS_IOASIC_DMA)
-		*(volatile u_int *)IOASIC_REG_CSR(ioasic_base) |=
+		*(volatile u_int *)(ioasic_base + IOASIC_CSR) |=
 		    IOASIC_CSR_DMAEN_T1 | IOASIC_CSR_DMAEN_R1 |
 		    IOASIC_CSR_DMAEN_T2 | IOASIC_CSR_DMAEN_R2;
 #endif
 	} else {
-		*(volatile u_int *)IOASIC_REG_IMSK(ioasic_base) &= 
+		*(volatile u_int *)(ioasic_base + IOASIC_IMSK) &= 
 		    ~(IOASIC_INTR_SCC_1 | IOASIC_INTR_SCC_0);
 #if !defined(DEC_3000_300) && defined(ZS_IOASIC_DMA)
-		*(volatile u_int *)IOASIC_REG_CSR(ioasic_base) &=
+		*(volatile u_int *)(ioasic_base + IOASIC_CSR) &=
 		    ~(IOASIC_CSR_DMAEN_T1 | IOASIC_CSR_DMAEN_R1 |
 		    IOASIC_CSR_DMAEN_T2 | IOASIC_CSR_DMAEN_R2);
 #endif

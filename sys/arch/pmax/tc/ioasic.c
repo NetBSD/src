@@ -1,4 +1,4 @@
-/*	$NetBSD: ioasic.c,v 1.9 2000/02/03 05:22:47 nisimura Exp $	*/
+/*	$NetBSD: ioasic.c,v 1.10 2000/02/03 08:13:45 nisimura Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Carnegie-Mellon University.
@@ -28,19 +28,19 @@
  */
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
-__KERNEL_RCSID(0, "$NetBSD: ioasic.c,v 1.9 2000/02/03 05:22:47 nisimura Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ioasic.c,v 1.10 2000/02/03 08:13:45 nisimura Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/device.h>
 
 #include <dev/tc/tcvar.h>
+#include <dev/tc/ioasicreg.h>
 #include <dev/tc/ioasicvar.h>
 
 #include <machine/sysconf.h>
 
 #include <pmax/pmax/pmaxtype.h>
-#include <pmax/pmax/asic.h>
 #include <pmax/pmax/kmin.h>
 #include <pmax/pmax/maxine.h>
 #include <pmax/pmax/kn03.h>
