@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_kern.c,v 1.14 1994/10/29 07:35:10 cgd Exp $	*/
+/*	$NetBSD: vm_kern.c,v 1.15 1994/10/30 19:11:15 cgd Exp $	*/
 
 /* 
  * Copyright (c) 1991, 1993
@@ -408,7 +408,7 @@ kmem_alloc_wait(map, size)
 			vm_map_unlock(map);
 			return (0);
 		}
-		assert_wait((long)map, TRUE);
+		assert_wait(map, TRUE);
 		vm_map_unlock(map);
 		thread_block();
 	}
@@ -431,7 +431,7 @@ kmem_free_wakeup(map, addr, size)
 {
 	vm_map_lock(map);
 	(void) vm_map_delete(map, trunc_page(addr), round_page(addr + size));
-	thread_wakeup((long)map);
+	thread_wakeup(map);
 	vm_map_unlock(map);
 }
 

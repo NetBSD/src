@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_lock.c,v 1.9 1994/10/29 07:35:06 cgd Exp $	*/
+/*	$NetBSD: kern_lock.c,v 1.10 1994/10/30 19:11:09 cgd Exp $	*/
 
 /* 
  * Copyright (c) 1991, 1993
@@ -75,7 +75,7 @@
 
 /* XXX */
 #include <sys/proc.h>
-typedef	int *thread_t;
+typedef	void *thread_t;
 #define	current_thread()	((thread_t)&curproc->p_thread)
 /* XXX */
 
@@ -219,7 +219,7 @@ void lock_write(l)
 
 		if (l->can_sleep && l->want_write) {
 			l->waiting = TRUE;
-			thread_sleep((long) l, &l->interlock, FALSE);
+			thread_sleep(l, &l->interlock, FALSE);
 			simple_lock(&l->interlock);
 		}
 	}
@@ -238,7 +238,7 @@ void lock_write(l)
 
 		if (l->can_sleep && (l->read_count != 0 || l->want_upgrade)) {
 			l->waiting = TRUE;
-			thread_sleep((long) l, &l->interlock, FALSE);
+			thread_sleep(l, &l->interlock, FALSE);
 			simple_lock(&l->interlock);
 		}
 	}
@@ -263,7 +263,7 @@ void lock_done(l)
 
 	if (l->waiting) {
 		l->waiting = FALSE;
-		thread_wakeup((long) l);
+		thread_wakeup(l);
 	}
 	simple_unlock(&l->interlock);
 }
@@ -294,7 +294,7 @@ void lock_read(l)
 
 		if (l->can_sleep && (l->want_write || l->want_upgrade)) {
 			l->waiting = TRUE;
-			thread_sleep((long) l, &l->interlock, FALSE);
+			thread_sleep(l, &l->interlock, FALSE);
 			simple_lock(&l->interlock);
 		}
 	}
@@ -339,7 +339,7 @@ boolean_t lock_read_to_write(l)
 		 */
 		if (l->waiting) {
 			l->waiting = FALSE;
-			thread_wakeup((long) l);
+			thread_wakeup(l);
 		}
 
 		simple_unlock(&l->interlock);
@@ -358,7 +358,7 @@ boolean_t lock_read_to_write(l)
 
 		if (l->can_sleep && l->read_count != 0) {
 			l->waiting = TRUE;
-			thread_sleep((long) l, &l->interlock, FALSE);
+			thread_sleep(l, &l->interlock, FALSE);
 			simple_lock(&l->interlock);
 		}
 	}
@@ -383,7 +383,7 @@ void lock_write_to_read(l)
 
 	if (l->waiting) {
 		l->waiting = FALSE;
-		thread_wakeup((long) l);
+		thread_wakeup(l);
 	}
 
 	simple_unlock(&l->interlock);
@@ -497,7 +497,7 @@ boolean_t lock_try_read_to_write(l)
 
 	while (l->read_count != 0) {
 		l->waiting = TRUE;
-		thread_sleep((long) l, &l->interlock, FALSE);
+		thread_sleep(l, &l->interlock, FALSE);
 		simple_lock(&l->interlock);
 	}
 

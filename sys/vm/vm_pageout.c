@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_pageout.c,v 1.17 1994/10/29 07:35:21 cgd Exp $	*/
+/*	$NetBSD: vm_pageout.c,v 1.18 1994/10/30 19:11:23 cgd Exp $	*/
 
 /* 
  * Copyright (c) 1991, 1993
@@ -206,7 +206,7 @@ vm_pageout_scan()
 		else
 #endif
 		vm_pageout_page(m, object);
-		thread_wakeup((long) object);
+		thread_wakeup(object);
 		vm_object_unlock(object);
 		/*
 		 * Former next page may no longer even be on the inactive
@@ -280,7 +280,7 @@ vm_pageout_page(m, object)
 	/*
 	 * Do a wakeup here in case the following operations block.
 	 */
-	thread_wakeup((int) &cnt.v_free_count);
+	thread_wakeup(&cnt.v_free_count);
 
 	/*
 	 * If there is no pager for the page, use the default pager.
@@ -444,7 +444,7 @@ vm_pageout_cluster(m, object)
 	object->paging_in_progress++;
 	vm_object_unlock(object);
 again:
-	thread_wakeup((int) &cnt.v_free_count);
+	thread_wakeup(&cnt.v_free_count);
 	postatus = vm_pager_put_pages(object->pager, plistp, count, FALSE);
 	/*
 	 * XXX rethink this
@@ -545,7 +545,7 @@ vm_pageout()
 
 	simple_lock(&vm_pages_needed_lock);
 	while (TRUE) {
-		thread_sleep((int) &vm_pages_needed, &vm_pages_needed_lock,
+		thread_sleep(&vm_pages_needed, &vm_pages_needed_lock,
 			     FALSE);
 		/*
 		 * Compute the inactive target for this scan.
@@ -567,6 +567,6 @@ vm_pageout()
 			vm_pageout_scan();
 		vm_pager_sync();
 		simple_lock(&vm_pages_needed_lock);
-		thread_wakeup((int) &cnt.v_free_count);
+		thread_wakeup(&cnt.v_free_count);
 	}
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: lock.h,v 1.7 1994/06/29 06:47:44 cgd Exp $	*/
+/*	$NetBSD: lock.h,v 1.8 1994/10/30 19:11:11 cgd Exp $	*/
 
 /* 
  * Copyright (c) 1991, 1993
@@ -131,7 +131,7 @@ struct lock {
 	int		read_count;	/* Number of accepted readers */
 #endif	/* ns32000 */
 #endif	/* vax */
-	char		*thread;	/* Thread that has lock, if recursive locking allowed */
+	void		*thread;	/* Thread that has lock, if recursive locking allowed */
 					/* (should be thread_t, but but we then have mutually
 					   recursive definitions) */
 	int		recursion_depth;/* Depth of recursion */
