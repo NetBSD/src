@@ -35,7 +35,7 @@
  *
  *	@(#)isa.c	7.2 (Berkeley) 5/13/91
  */
-static char rcsid[] = "$Header: /cvsroot/src/sys/dev/isa/isa.c,v 1.11 1993/05/11 04:06:23 deraadt Exp $";
+static char rcsid[] = "$Header: /cvsroot/src/sys/dev/isa/isa.c,v 1.12 1993/05/11 04:15:22 deraadt Exp $";
 
 /*
  * code to manage AT bus
@@ -161,7 +161,7 @@ config_isadev(isdp, mp)
 
 			config_attach(dp, isdp);
 
-			if (isdp->id_irq != 0x0ffff) {
+			if (isdp->id_irq) {
 				int intrno;
 
 				intrno = ffs(isdp->id_irq)-1;
