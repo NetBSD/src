@@ -1,4 +1,4 @@
-/*	$NetBSD: ast.c,v 1.1 2001/02/23 03:48:08 ichiro Exp $	*/
+/*	$NetBSD: ast.c,v 1.1 2001/03/06 07:52:35 matt Exp $	*/
 
 /*
  * Copyright (c) 1994,1995 Mark Brinicombe

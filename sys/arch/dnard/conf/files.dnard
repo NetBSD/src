@@ -1,4 +1,4 @@
-#	$NetBSD: files.dnard,v 1.4 2001/03/04 20:45:03 matt Exp $
+#	$NetBSD: files.dnard,v 1.5 2001/03/06 07:52:37 matt Exp $
 #
 # First try for arm-specific configuration info
 #
@@ -96,7 +96,6 @@ major   {sd = 24}
 major   {cd = 26}
 
 # Generic MD files
-file	arch/arm32/arm32/ast.c
 file	arch/arm32/arm32/autoconf.c
 file	arch/arm32/arm32/blockio.S
 file	arch/arm32/arm32/bus_dma.c
