@@ -89,7 +89,7 @@
 #define	SUNOS_SYS_bind	104
 #define	SUNOS_SYS_sunos_setsockopt	105
 #define	SUNOS_SYS_listen	106
-#define	SUNOS_SYS_sigvec	108
+#define	SUNOS_SYS_compat_43_sigvec	108
 #define	SUNOS_SYS_compat_43_sigblock	109
 #define	SUNOS_SYS_compat_43_sigsetmask	110
 #define	SUNOS_SYS_sigsuspend	111

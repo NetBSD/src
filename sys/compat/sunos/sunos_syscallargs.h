@@ -105,7 +105,7 @@ struct sunos_setsockopt_args {
 	syscallarg(int) valsize;
 };
 
-struct sigvec_args {
+struct compat_43_sigvec_args {
 	syscallarg(int) signum;
 	syscallarg(struct sigvec *) nsv;
 	syscallarg(struct sigvec *) osv;
