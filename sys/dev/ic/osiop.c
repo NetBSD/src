@@ -1,4 +1,4 @@
-/*	$NetBSD: osiop.c,v 1.12 2003/04/12 06:11:15 tsutsui Exp $	*/
+/*	$NetBSD: osiop.c,v 1.13 2003/04/12 06:42:38 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 2001 Izumi Tsutsui.  All rights reserved.
@@ -76,7 +76,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: osiop.c,v 1.12 2003/04/12 06:11:15 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: osiop.c,v 1.13 2003/04/12 06:42:38 tsutsui Exp $");
 
 /* #define OSIOP_DEBUG */
 
@@ -513,6 +513,7 @@ osiop_poll(sc, acb)
 			i--;
 		}
 		sstat0 = osiop_read_1(sc, OSIOP_SSTAT0);
+		delay(25);
 		dstat = osiop_read_1(sc, OSIOP_DSTAT);
 		if (osiop_checkintr(sc, istat, dstat, sstat0, &status)) {
 			if (acb != sc->sc_nexus)
@@ -850,6 +851,7 @@ osiop_reset(sc)
 	stat = osiop_read_1(sc, OSIOP_ISTAT);
 	if (stat & OSIOP_ISTAT_SIP)
 		osiop_read_1(sc, OSIOP_SSTAT0);
+	delay(25);
 	if (stat & OSIOP_ISTAT_DIP)
 		osiop_read_1(sc, OSIOP_DSTAT);
 
