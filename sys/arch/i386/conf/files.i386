@@ -1,4 +1,4 @@
-#	$NetBSD: files.i386,v 1.178 2000/12/11 05:28:59 mycroft Exp $
+#	$NetBSD: files.i386,v 1.179 2000/12/18 20:38:27 jdolecek Exp $
 #
 # new style config file for i386 architecture
 #
@@ -326,6 +326,7 @@ file	arch/i386/i386/linux_syscall.c		compat_linux
 include "compat/freebsd/files.freebsd"
 file	arch/i386/i386/freebsd_machdep.c	compat_freebsd
 file	arch/i386/i386/freebsd_sigcode.s	compat_freebsd
+file	arch/i386/i386/freebsd_syscall.c	compat_freebsd
 
 # a.out binary compatibility (COMPAT_AOUT)
 include "compat/aout/files.aout"
