@@ -1,4 +1,4 @@
-/*	$NetBSD: file.c,v 1.10 1997/01/09 20:18:52 tls Exp $	*/
+/*	$NetBSD: file.c,v 1.11 1997/01/28 00:49:40 christos Exp $	*/
 
 /*
  * file - find type of a file or files - main program.
@@ -28,7 +28,7 @@
  */
 #ifndef	lint
 static char *moduleid = 
-	"@(#)$NetBSD: file.c,v 1.10 1997/01/09 20:18:52 tls Exp $";
+	"@(#)$NetBSD: file.c,v 1.11 1997/01/28 00:49:40 christos Exp $";
 #endif	/* lint */
 
 #include <stdio.h>
@@ -39,9 +39,13 @@ static char *moduleid =
 #include <sys/stat.h>
 #include <fcntl.h>	/* for open() */
 #if (__COHERENT__ >= 0x420)
-#include <sys/utime.h>
+# include <sys/utime.h>
 #else
-#include <utime.h>
+# ifdef USE_UTIMES
+#  include <sys/time.h>
+# else
+#  include <utime.h>
+# endif
 #endif
 #include <unistd.h>	/* for read() */
 
@@ -77,8 +81,10 @@ int lineno;		/* line number in the magic file	*/
 
 
 static void	unwrap		__P((char *fn));
+#if 0
 static int	byteconv4	__P((int, int, int));
 static short	byteconv2	__P((int, int, int));
+#endif
 
 /*
  * main - parse arguments and handle options
@@ -209,6 +215,7 @@ char *fn;
 }
 
 
+#if 0
 /*
  * byteconv4
  * Input:
@@ -271,6 +278,7 @@ byteconv2(from, same, big_endian)
   else
     return ntohs(from);		/* msb -> lsb conversion on lsb */
 }
+#endif
 
 /*
  * process - process input file
@@ -283,7 +291,6 @@ int wid;
 	int	fd = 0;
 	static  const char stdname[] = "standard input";
 	unsigned char	buf[HOWMANY+1];	/* one extra for terminating '\0' */
-	struct utimbuf  utbuf;
 	struct stat	sb;
 	int nbytes = 0;	/* number of bytes read from a datafile */
 	char match = '\0';
@@ -342,12 +349,24 @@ int wid;
 #endif
 
 	if (inname != stdname) {
+#ifdef RESTORE_TIME
 		/*
 		 * Try to restore access, modification times if read it.
 		 */
+# ifdef USE_UTIMES
+		struct timeval  utsbuf[2];
+		utsbuf[0].tv_sec = sb.st_atime;
+		utsbuf[1].tv_sec = sb.st_mtime;
+
+		(void) utimes(inname, utsbuf); /* don't care if loses */
+# else
+		struct utimbuf  utbuf;
+
 		utbuf.actime = sb.st_atime;
 		utbuf.modtime = sb.st_mtime;
 		(void) utime(inname, &utbuf); /* don't care if loses */
+# endif
+#endif
 		(void) close(fd);
 	}
 	(void) putchar('\n');
@@ -370,6 +389,10 @@ int nb, zflag;
 	/* try known keywords, check whether it is ASCII */
 	if (ascmagic(buf, nb))
 		return 'a';
+
+	/* see if it's international language text */
+	if (internatmagic(buf, nb))
+		return 'i';
 
 	/* abandon hope, all ye who remain here */
 	ckfputs("data", stdout);

@@ -1,4 +1,4 @@
-/*	$NetBSD: softmagic.c,v 1.12 1997/01/09 20:19:01 tls Exp $	*/
+/*	$NetBSD: softmagic.c,v 1.13 1997/01/28 00:49:48 christos Exp $	*/
 
 /*
  * softmagic - interpret variable magic from /etc/magic
@@ -28,8 +28,8 @@
  */
 
 #include <stdio.h>
-#include <stdlib.h>
 #include <string.h>
+#include <stdlib.h>
 #include <time.h>
 #include <sys/types.h>
 
@@ -37,15 +37,15 @@
 
 #ifndef	lint
 static char *moduleid = 
-	"@(#)$NetBSD: softmagic.c,v 1.12 1997/01/09 20:19:01 tls Exp $";
+	"@(#)$NetBSD: softmagic.c,v 1.13 1997/01/28 00:49:48 christos Exp $";
 #endif	/* lint */
 
 static int match	__P((unsigned char *, int));
 static int mget		__P((union VALUETYPE *,
 			     unsigned char *, struct magic *, int));
 static int mcheck	__P((union VALUETYPE *, struct magic *));
-static long mprint	__P((union VALUETYPE *, struct magic *));
-static void mdebug	__P((long, char *, int));
+static int32 mprint	__P((union VALUETYPE *, struct magic *));
+static void mdebug	__P((int32, char *, int));
 static int mconvert	__P((union VALUETYPE *, struct magic *));
 
 /*
@@ -101,12 +101,12 @@ int nbytes;
 	int cont_level = 0;
 	int need_separator = 0;
 	union VALUETYPE p;
-	static long *tmpoff = NULL;
+	static int32 *tmpoff = NULL;
 	static size_t tmplen = 0;
-	long oldoff = 0;
+	int32 oldoff = 0;
 
 	if (tmpoff == NULL)
-		if ((tmpoff = (long *) malloc(tmplen = 20)) == NULL)
+		if ((tmpoff = (int32 *) malloc(tmplen = 20)) == NULL)
 			error("out of memory\n");
 
 	for (magindex = 0; magindex < nmagic; magindex++) {
@@ -132,7 +132,7 @@ int nbytes;
 			need_separator = 1;
 		/* and any continuations that match */
 		if (++cont_level >= tmplen)
-			if ((tmpoff = (long *) realloc(tmpoff,
+			if ((tmpoff = (int32 *) realloc(tmpoff,
 						       tmplen += 20)) == NULL)
 				error("out of memory\n");
 		while (magic[magindex+1].cont_level != 0 && 
@@ -177,7 +177,7 @@ int nbytes;
 					 */
 					if (++cont_level >= tmplen)
 						if ((tmpoff = 
-						    (long *) realloc(tmpoff,
+						    (int32 *) realloc(tmpoff,
 						    tmplen += 20)) == NULL)
 							error("out of memory\n");
 				}
@@ -191,14 +191,14 @@ int nbytes;
 	return 0;			/* no match at all */
 }
 
-static long
+static int32
 mprint(p, m)
 union VALUETYPE *p;
 struct magic *m;
 {
 	char *pp, *rt;
-	unsigned long v;
-	long t=0 ;
+	uint32 v;
+	int32 t=0 ;
 
 
   	switch (m->type) {
@@ -223,8 +223,8 @@ struct magic *m;
   	case LELONG:
 		v = p->l;
 		v = signextend(m, v) & m->mask;
-		(void) printf(m->desc, (unsigned long) v);
-		t = m->offset + sizeof(long);
+		(void) printf(m->desc, (uint32) v);
+		t = m->offset + sizeof(int32);
   		break;
 
   	case STRING:
@@ -233,6 +233,11 @@ struct magic *m;
 			t = m->offset + strlen(m->value.s);
 		}
 		else {
+			if (*m->value.s == '\0') {
+				char *cp = strchr(p->s,'\n');
+				if (cp)
+					*cp = '\0';
+			}
 			(void) printf(m->desc, p->s);
 			t = m->offset + strlen(p->s);
 		}
@@ -246,7 +251,8 @@ struct magic *m;
 			*rt = '\0';
 		(void) printf(m->desc, pp);
 		t = m->offset + sizeof(time_t);
-		return;
+		break;
+
 	default:
 		error("invalid m->type (%d) in mprint().\n", m->type);
 		/*NOTREACHED*/
@@ -270,13 +276,12 @@ struct magic *m;
 		return 1;
 	case STRING:
 		{
-			size_t len;
+			char *ptr;
 
 			/* Null terminate and eat the return */
 			p->s[sizeof(p->s) - 1] = '\0';
-			len = strlen(p->s);
-			if (len > 0 && p->s[len - 1] == '\n')
-				p->s[len - 1] = '\0';
+			if ((ptr = strchr(p->s, '\n')) != NULL)
+				*ptr = '\0';
 			return 1;
 		}
 	case BESHORT:
@@ -284,7 +289,7 @@ struct magic *m;
 		return 1;
 	case BELONG:
 	case BEDATE:
-		p->l = (long)
+		p->l = (int32)
 		    ((p->hl[0]<<24)|(p->hl[1]<<16)|(p->hl[2]<<8)|(p->hl[3]));
 		return 1;
 	case LESHORT:
@@ -292,7 +297,7 @@ struct magic *m;
 		return 1;
 	case LELONG:
 	case LEDATE:
-		p->l = (long)
+		p->l = (int32)
 		    ((p->hl[3]<<24)|(p->hl[2]<<16)|(p->hl[1]<<8)|(p->hl[0]));
 		return 1;
 	default:
@@ -304,11 +309,11 @@ struct magic *m;
 
 static void
 mdebug(offset, str, len)
-long offset;
+int32 offset;
 char *str;
 int len;
 {
-	(void) fprintf(stderr, "mget @%ld: ", offset);
+	(void) fprintf(stderr, "mget @%d: ", offset);
 	showstr(stderr, (char *) str, len);
 	(void) fputc('\n', stderr);
 	(void) fputc('\n', stderr);
@@ -321,7 +326,7 @@ unsigned char	*s;
 struct magic *m;
 int nbytes;
 {
-	long offset = m->offset;
+	int32 offset = m->offset;
 
 	if (offset + sizeof(union VALUETYPE) <= nbytes)
 		memcpy(p, s + offset, sizeof(union VALUETYPE));
@@ -330,7 +335,7 @@ int nbytes;
 		 * the usefulness of padding with zeroes eludes me, it
 		 * might even cause problems
 		 */
-		long have = nbytes - offset;
+		int32 have = nbytes - offset;
 		memset(p, 0, sizeof(union VALUETYPE));
 		if (have > 0)
 			memcpy(p, s + offset, have);
@@ -380,8 +385,8 @@ mcheck(p, m)
 union VALUETYPE* p;
 struct magic *m;
 {
-	register unsigned long l = m->value.l;
-	register unsigned long v;
+	register uint32 l = m->value.l;
+	register uint32 v;
 	int matched;
 
 	if ( (m->value.s[0] == 'x') && (m->value.s[1] == '\0') ) {
@@ -424,7 +429,7 @@ struct magic *m;
 			register int len = m->vallen;
 
 			while (--len >= 0)
-				if ((v = *b++ - *a++) != 0)
+				if ((v = *b++ - *a++) != '\0')
 					break;
 		}
 		break;
@@ -438,21 +443,21 @@ struct magic *m;
 	switch (m->reln) {
 	case 'x':
 		if (debug)
-			(void) fprintf(stderr, "%lu == *any* = 1\n", v);
+			(void) fprintf(stderr, "%u == *any* = 1\n", v);
 		matched = 1;
 		break;
 
 	case '!':
 		matched = v != l;
 		if (debug)
-			(void) fprintf(stderr, "%lu != %lu = %d\n",
+			(void) fprintf(stderr, "%u != %u = %d\n",
 				       v, l, matched);
 		break;
 
 	case '=':
 		matched = v == l;
 		if (debug)
-			(void) fprintf(stderr, "%lu == %lu = %d\n",
+			(void) fprintf(stderr, "%u == %u = %d\n",
 				       v, l, matched);
 		break;
 
@@ -460,13 +465,13 @@ struct magic *m;
 		if (m->flag & UNSIGNED) {
 			matched = v > l;
 			if (debug)
-				(void) fprintf(stderr, "%lu > %lu = %d\n",
+				(void) fprintf(stderr, "%u > %u = %d\n",
 					       v, l, matched);
 		}
 		else {
-			matched = (long) v > (long) l;
+			matched = (int32) v > (int32) l;
 			if (debug)
-				(void) fprintf(stderr, "%ld > %ld = %d\n",
+				(void) fprintf(stderr, "%d > %d = %d\n",
 					       v, l, matched);
 		}
 		break;
@@ -475,13 +480,13 @@ struct magic *m;
 		if (m->flag & UNSIGNED) {
 			matched = v < l;
 			if (debug)
-				(void) fprintf(stderr, "%lu < %lu = %d\n",
+				(void) fprintf(stderr, "%u < %u = %d\n",
 					       v, l, matched);
 		}
 		else {
-			matched = (long) v < (long) l;
+			matched = (int32) v < (int32) l;
 			if (debug)
-				(void) fprintf(stderr, "%ld < %ld = %d\n",
+				(void) fprintf(stderr, "%d < %d = %d\n",
 					       v, l, matched);
 		}
 		break;
@@ -489,14 +494,14 @@ struct magic *m;
 	case '&':
 		matched = (v & l) == l;
 		if (debug)
-			(void) fprintf(stderr, "((%lx & %lx) == %lx) = %d\n",
+			(void) fprintf(stderr, "((%x & %x) == %x) = %d\n",
 				       v, l, l, matched);
 		break;
 
 	case '^':
 		matched = (v & l) != l;
 		if (debug)
-			(void) fprintf(stderr, "((%lx & %lx) != %lx) = %d\n",
+			(void) fprintf(stderr, "((%x & %x) != %x) = %d\n",
 				       v, l, l, matched);
 		break;
 
