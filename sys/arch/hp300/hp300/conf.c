@@ -1,4 +1,4 @@
-/*	$NetBSD: conf.c,v 1.39 1997/05/12 08:17:53 thorpej Exp $	*/
+/*	$NetBSD: conf.c,v 1.40 1997/09/21 22:44:47 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1991 The Regents of the University of California.
@@ -58,6 +58,8 @@ bdev_decl(ccd);
 bdev_decl(vnd);
 #include "st.h"
 bdev_decl(st);
+#include "md.h"
+bdev_decl(md);
 
 struct bdevsw	bdevsw[] =
 {
@@ -75,6 +77,7 @@ struct bdevsw	bdevsw[] =
 	bdev_lkm_dummy(),		/* 11 */
 	bdev_lkm_dummy(),		/* 12 */
 	bdev_lkm_dummy(),		/* 13 */
+	bdev_disk_init(NMD,md),		/* 14: memory disk */
 };
 int	nblkdev = sizeof(bdevsw) / sizeof(bdevsw[0]);
 
@@ -134,6 +137,7 @@ cdev_decl(ccd);
 cdev_decl(vnd);
 cdev_decl(st);
 cdev_decl(fd);
+cdev_decl(md);
 dev_decl(filedesc,open);
 #include "bpfilter.h"
 cdev_decl(bpf);
@@ -175,6 +179,7 @@ struct cdevsw	cdevsw[] =
 	cdev_lkm_dummy(),		/* 29 */
 	cdev_lkm_dummy(),		/* 30 */
 	cdev_tty_init(NAPCI,apci),	/* 31: Apollo APCI UARTs */
+	cdev_disk_init(NMD,md),		/* 32: memory disk */
 };
 int	nchrdev = sizeof(cdevsw) / sizeof(cdevsw[0]);
 
@@ -247,6 +252,8 @@ static int chrtoblktbl[] = {
 	/* 28 */	NODEV,
 	/* 29 */	NODEV,
 	/* 30 */	NODEV,
+	/* 31 */	NODEV,
+	/* 32 */	14,
 };
 
 /*
