@@ -1,4 +1,4 @@
-.\"	$NetBSD: whatis,v 1.9.10.2 2000/11/13 11:24:36 lukem Exp $
+.\"	$NetBSD: whatis,v 1.9.10.3 2001/05/09 00:10:09 he Exp $
 .
 This is the eighth major release of
 .Nx
@@ -18,7 +18,7 @@ You can still use your pre-1.5 a.out applications, though.
 Preliminary support for MCA (MicroChannel Architecture)
 .bullet)
 .Pp
-.Nx \*V
+.Nx 1.5
 on \*M is, as usual, also fully backward compatible with old
 .Nx*M
 binaries, so you don't need to recompile all your local programs
