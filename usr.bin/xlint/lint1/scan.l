@@ -1,5 +1,5 @@
 %{
-/* $NetBSD: scan.l,v 1.25 2002/01/31 19:36:54 tv Exp $ */
+/* $NetBSD: scan.l,v 1.26 2002/01/31 22:30:21 tv Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -35,7 +35,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: scan.l,v 1.25 2002/01/31 19:36:54 tv Exp $");
+__RCSID("$NetBSD: scan.l,v 1.26 2002/01/31 22:30:21 tv Exp $");
 #endif
 
 #include <stdlib.h>
@@ -686,7 +686,7 @@ fcon(void)
 
 	if (typ == FLOAT) {
 		f = (float)d;
-		if (isinf(f)) {
+		if (!finite(f)) {
 			/* floating-point constant out of range */
 			warning(248);
 			f = f > 0 ? FLT_MAX : -FLT_MAX;
