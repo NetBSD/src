@@ -1,4 +1,4 @@
-/*	$NetBSD: boot.c,v 1.2 1998/07/07 00:16:35 dbj Exp $	*/
+/*	$NetBSD: boot.c,v 1.3 2000/07/21 22:26:19 jdolecek Exp $	*/
 /*
  * Copyright (c) 1994 Rolf Grossmann
  * All rights reserved.
@@ -45,8 +45,9 @@ extern int errno;
  * Boot device is derived from PROM provided information.
  */
 
-char *version="$Revision: 1.2 $";
-extern int subversion;
+extern char *bootprog_rev;
+extern char *bootprog_name;
+extern int build;
 #define KNAMEN 100
 char kernel[KNAMEN];
 char *entry_point;		/* return value filled in by machdep_start */
@@ -58,7 +59,7 @@ extern int try_bootp;
 char *
 main(char *boot_arg)
 {
-    printf(">> NetBSD BOOT [%s #%d]\n", version, subversion);
+    printf(">> %s BOOT [%s #%d]\n", bootprog_name, bootprog_rev, build);
     rtc_init();
 
     try_bootp = 1;
