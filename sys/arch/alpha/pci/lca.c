@@ -1,4 +1,4 @@
-/*	$NetBSD: lca.c,v 1.6 1996/07/09 00:54:46 cgd Exp $	*/
+/*	$NetBSD: lca.c,v 1.7 1996/07/11 03:30:14 cgd Exp $	*/
 
 /*
  * Copyright (c) 1995, 1996 Carnegie-Mellon University.
@@ -44,6 +44,9 @@
 #include <dev/pci/pcivar.h>
 #include <alpha/pci/lcareg.h>
 #include <alpha/pci/lcavar.h>
+#if defined(DEC_AXPPCI_33)
+#include <alpha/pci/pci_axppci_33.h>
+#endif
 
 int	lcamatch __P((struct device *, void *, void *));
 void	lcaattach __P((struct device *, struct device *, void *));
@@ -67,7 +70,6 @@ lcamatch(parent, match, aux)
 	struct device *parent;
 	void *match, *aux;
 {
-	struct cfdata *cf = match;
 	struct confargs *ca = aux;
 
 	/* Make sure that we're looking for a LCA. */
