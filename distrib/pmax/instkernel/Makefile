@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.22 2002/03/12 06:26:34 lukem Exp $
+#	$NetBSD: Makefile,v 1.23 2002/03/28 03:18:56 lukem Exp $
 
 .include "${.CURDIR}/../../Makefile.inc"
 .include <bsd.own.mk>
@@ -16,7 +16,7 @@ IMAGESIZE=	4096b
 
 LISTS=		${.CURDIR}/list
 IMAGEENDIAN=	le
-IMAGEDEPENDS=	netbsd.gz ${DESTDIR}/usr/mdec/bootxx_ffs
+IMAGEDEPENDS=	netbsd.gz ${DESTDIR}/usr/mdec/boot.pmax
 # MAKEFS_FLAGS=	-o density=32k			# XXXDISTRIB
 
 CLEANFILES+=	netbsd netbsd.gz netbsd.ecoff netbsd.ecoff.gz \
