@@ -1,4 +1,4 @@
-/*	$NetBSD: math.h,v 1.12 1998/05/07 18:50:08 kleink Exp $	*/
+/*	$NetBSD: math.h,v 1.13 1998/05/11 11:06:23 kleink Exp $	*/
 
 /*
  * ====================================================
@@ -161,7 +161,7 @@ extern double nextafter __P((double, double));
 extern double remainder __P((double, double));
 extern double rint __P((double));
 extern double scalb __P((double, double));
-#endif /* defined(_XOPEN_SOURCE) || (_XOPEN_SOURCE - 0) >= 500 */
+#endif /* !defined(_XOPEN_SOURCE) || (_XOPEN_SOURCE - 0) >= 500 */
 #endif /* !_ANSI_SOURCE) && !_POSIX_C_SOURCE || _XOPEN_SOURCE */
 
 #if !defined(_ANSI_SOURCE) && !defined(_POSIX_C_SOURCE) && \
