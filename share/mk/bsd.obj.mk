@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.obj.mk,v 1.21 1999/08/21 00:41:41 sommerfeld Exp $
+#	$NetBSD: bsd.obj.mk,v 1.22 1999/12/04 02:44:07 sommerfeld Exp $
 
 .if !target(__initialized_obj__)
 __initialized_obj__:
@@ -32,13 +32,24 @@ __usrobjdirpf=
 PAWD?=		/bin/pwd
 
 obj:
-	@cd ${.CURDIR}; rm -f ${__objdir} > /dev/null 2>&1 || true; \
+	@cd ${.CURDIR}; \
 	here=`${PAWD}`; subdir=$${here#${BSDSRCDIR}/}; \
 	if test $$here != $$subdir ; then \
 		dest=${__usrobjdir}/$$subdir${__usrobjdirpf} ; \
-		echo "$$here/${__objdir} -> $$dest"; \
-		rm -rf ${__objdir}; \
-		ln -s $$dest ${__objdir}; \
+		if [ -L $$here/${__objdir} ]; then \
+			curtarg=`ls -ld $$here/${__objdir} | awk '{print $$NF}'` ; \
+			if [ "$$curtarg" = "$$dest" ]; then \
+				: ; \
+			else \
+				echo "$$here/${__objdir} -> $$dest"; \
+				rm -rf ${__objdir}; \
+				ln -s $$dest ${__objdir}; \
+			fi; \
+		else \
+			echo "$$here/${__objdir} -> $$dest"; \
+			rm -rf ${__objdir}; \
+			ln -s $$dest ${__objdir}; \
+		fi; \
 		if test -d ${__usrobjdir} -a ! -d $$dest; then \
 			mkdir -p $$dest; \
 		else \
@@ -47,8 +58,9 @@ obj:
 	else \
 		true ; \
 		dest=$$here/${__objdir} ; \
-		if test ! -d ${__objdir} ; then \
+		if test ! -d ${__objdir} || test -L ${__objdir}; then \
 			echo "making $$dest" ; \
+			rm -f ${__objdir}; \
 			mkdir $$dest; \
 		fi ; \
 	fi;
