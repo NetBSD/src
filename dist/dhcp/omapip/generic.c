@@ -294,7 +294,6 @@ isc_result_t omapi_generic_stuff_values (omapi_object_t *c,
 isc_result_t omapi_generic_clear_flags (omapi_object_t *o)
 {
 	int i;
-	isc_result_t status;
 	omapi_generic_object_t *g;
 
 	if (o -> type != omapi_type_generic)

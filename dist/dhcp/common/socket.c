@@ -3,7 +3,7 @@
    BSD socket interface code... */
 
 /*
- * Copyright (c) 1995-2000 Internet Software Consortium.
+ * Copyright (c) 1995-2002 Internet Software Consortium.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -51,7 +51,7 @@
 
 #ifndef lint
 static char copyright[] =
-"$Id: socket.c,v 1.1.1.1.4.1 2002/06/04 11:52:57 lukem Exp $ Copyright (c) 1995, 1996, 1997, 1998, 1999 The Internet Software Consortium.  All rights reserved.\n";
+"$Id: socket.c,v 1.1.1.1.4.2 2003/10/27 04:41:52 jmc Exp $ Copyright (c) 1995-2002 The Internet Software Consortium.  All rights reserved.\n";
 #endif /* not lint */
 
 #include "dhcpd.h"
@@ -64,7 +64,13 @@ static char copyright[] =
 # endif
 #endif
 
+#if defined (USE_SOCKET_SEND) || defined (USE_SOCKET_FALLBACK)
+#if 0
+#ifndef USE_SOCKET_RECEIVE
 static int once = 0;
+#endif
+#endif
+#endif
 
 /* Reinitializes the specified interface after an address change.   This
    is not required for packet-filter APIs. */
@@ -114,8 +120,8 @@ int if_register_socket (info)
 	once = 1;
 #endif
 
+	memset (&name, 0, sizeof (name));
 	/* Set up the address we're going to bind to. */
-	memset(&name, 0, sizeof(name));
 	name.sin_family = AF_INET;
 	name.sin_port = local_port;
 	name.sin_addr = local_address;
@@ -312,10 +318,13 @@ isc_result_t fallback_discard (object)
 
 	status = recvfrom (interface -> wfdesc, buf, sizeof buf, 0,
 			   (struct sockaddr *)&from, &flen);
+#if defined (DEBUG)
+	/* Only report fallback discard errors if we're debugging. */
 	if (status < 0) {
 		log_error ("fallback_discard: %m");
 		return ISC_R_UNEXPECTED;
 	}
+#endif
 	return ISC_R_SUCCESS;
 }
 #endif /* USE_SOCKET_FALLBACK */

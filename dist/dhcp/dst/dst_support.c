@@ -1,4 +1,6 @@
-static const char rcsid[] = "$Header: /cvsroot/src/dist/dhcp/dst/Attic/dst_support.c,v 1.1.1.1 2001/08/03 11:35:34 drochner Exp $";
+#if 0
+static const char rcsid[] = "$Header: /cvsroot/src/dist/dhcp/dst/Attic/dst_support.c,v 1.1.1.1.4.1 2003/10/27 04:41:53 jmc Exp $";
+#endif
 
 
 /*

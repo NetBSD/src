@@ -21,7 +21,7 @@
  */
 
 #if !defined(lint) && !defined(SABER)
-static const char rcsid[] = "$Id: res_mkupdate.c,v 1.1.1.1.4.1 2003/01/02 10:05:30 tron Exp $";
+static const char rcsid[] = "$Id: res_mkupdate.c,v 1.1.1.1.4.2 2003/10/27 04:41:53 jmc Exp $";
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -48,7 +48,9 @@ static const char rcsid[] = "$Id: res_mkupdate.c,v 1.1.1.1.4.1 2003/01/02 10:05:
 #define MAXPORT 1024
 
 static int getnum_str(const u_char **, const u_char *);
+#if 0
 static int gethexnum_str(const u_char **, const u_char *);
+#endif
 static int getword_str(char *, int,
 		       const unsigned char **,
 		       const unsigned char *);
@@ -96,12 +98,16 @@ res_nmkupdate(res_state statp,
 	ns_updrec *rrecp;
 	struct in_addr ina;
         char buf2[MAXDNAME];
+#if 0
 	u_char buf3[MAXDNAME];
+#endif
 	int section, numrrs = 0, counts[ns_s_max];
 	u_int16_t rtype, rclass;
 	u_int32_t n1, rttl;
 	u_char *dnptrs[20], **dpp, **lastdnptr;
+#if 0
 	unsigned siglen, keylen, certlen;
+#endif
 	unsigned buflen = *blp;
 	u_char *buf = (unsigned char *)bp;
 
@@ -767,6 +773,7 @@ getstr_str(char *buf, int size, const u_char **startpp, const u_char *endp) {
 	*cp = '\0';
 	return ((cp == buf)?  (seen_quote? 0: -1): (cp - buf));
 }
+#if 0
 /*
  * Get a whitespace delimited base 16 number from a string (not file) into buf
  * update the start pointer to point after the number in the string.
@@ -815,6 +822,7 @@ gethexnum_str(const u_char **startpp, const u_char *endp) {
         }
         return (n + m);
 }
+#endif
 
 /*
  * Get a whitespace delimited base 16 number from a string (not file) into buf

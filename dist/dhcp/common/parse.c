@@ -3,7 +3,7 @@
    Common parser code for dhcpd and dhclient. */
 
 /*
- * Copyright (c) 1995-2001 Internet Software Consortium.
+ * Copyright (c) 1995-2002 Internet Software Consortium.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -43,7 +43,7 @@
 
 #ifndef lint
 static char copyright[] =
-"$Id: parse.c,v 1.2 2001/08/03 13:07:04 drochner Exp $ Copyright (c) 1995-2001 The Internet Software Consortium.  All rights reserved.\n";
+"$Id: parse.c,v 1.2.4.1 2003/10/27 04:41:52 jmc Exp $ Copyright (c) 1995-2002 The Internet Software Consortium.  All rights reserved.\n";
 #endif /* not lint */
 
 #include "dhcpd.h"
@@ -317,8 +317,6 @@ int parse_ip_addr (cfile, addr)
 	struct parse *cfile;
 	struct iaddr *addr;
 {
-	const char *val;
-	enum dhcp_token token;
 
 	addr -> len = 4;
 	if (parse_numeric_aggregate (cfile, addr -> iabuf,
@@ -329,7 +327,7 @@ int parse_ip_addr (cfile, addr)
 
 /*
  * hardware-parameter :== HARDWARE hardware-type colon-seperated-hex-list SEMI
- * hardware-type :== ETHERNET | TOKEN_RING
+ * hardware-type :== ETHERNET | TOKEN_RING | FDDI
  */
 
 void parse_hardware_param (cfile, hardware)
@@ -655,7 +653,6 @@ void convert_num (cfile, buf, str, base, size)
 TIME parse_date (cfile)
 	struct parse *cfile;
 {
-	struct tm tm;
 	int guess;
 	int tzoff, wday, year, mon, mday, hour, min, sec;
 	const char *val;
@@ -975,7 +972,7 @@ void parse_option_space_decl (cfile)
 		universes = ua;
 	}
 	universes [nu -> index] = nu;
-	nu -> hash = new_hash (0, 0, 1, MDL);
+	option_new_hash (&nu -> hash, 1, MDL);
 	if (!nu -> hash)
 		log_fatal ("Can't allocate %s option hash table.", nu -> name);
 	universe_hash_add (universe_hash, nu -> name, 0, nu, MDL);
@@ -1027,7 +1024,6 @@ int parse_option_code_definition (cfile, option)
 	char tokbuf [128];
 	unsigned tokix = 0;
 	char type;
-	int code;
 	int is_signed;
 	char *s;
 	int has_encapsulation = 0;
@@ -1516,7 +1512,6 @@ int parse_executable_statement (result, cfile, lose, case_context)
 {
 	enum dhcp_token token;
 	const char *val;
-	struct executable_statement base;
 	struct class *cta;
 	struct option *option;
 	struct option_cache *cache;
@@ -1804,7 +1799,11 @@ int parse_executable_statement (result, cfile, lose, case_context)
 				executable_statement_dereference (result, MDL);
 				return 0;
 			}
-			parse_semi (cfile);
+			if (!parse_semi (cfile)) {
+				*lose = 1;
+				executable_statement_dereference (result, MDL);
+				return 0;
+			}
 		}
 		break;
 
@@ -1815,7 +1814,6 @@ int parse_executable_statement (result, cfile, lose, case_context)
 		if (token != NAME && token != NUMBER_OR_NAME) {
 			parse_warn (cfile,
 				    "%s can't be a variable name", val);
-		      badunset:
 			skip_to_semi (cfile);
 			*lose = 1;
 			return 0;
@@ -1828,7 +1826,11 @@ int parse_executable_statement (result, cfile, lose, case_context)
 		if (!(*result)->data.unset)
 			log_fatal ("can't allocate variable name");
 		strcpy ((*result) -> data.unset, val);
-		parse_semi (cfile);
+		if (!parse_semi (cfile)) {
+			*lose = 1;
+			executable_statement_dereference (result, MDL);
+			return 0;
+		}
 		break;
 
 	      case EVAL:
@@ -1850,7 +1852,10 @@ int parse_executable_statement (result, cfile, lose, case_context)
 			executable_statement_dereference (result, MDL);
 			return 0;
 		}
-		parse_semi (cfile);
+		if (!parse_semi (cfile)) {
+			*lose = 1;
+			executable_statement_dereference (result, MDL);
+		}
 		break;
 
 	      case RETURN:
@@ -1872,7 +1877,11 @@ int parse_executable_statement (result, cfile, lose, case_context)
 			executable_statement_dereference (result, MDL);
 			return 0;
 		}
-		parse_semi (cfile);
+		if (!parse_semi (cfile)) {
+			*lose = 1;
+			executable_statement_dereference (result, MDL);
+			return 0;
+		}
 		break;
 
 	      case LOG:
@@ -1949,8 +1958,8 @@ int parse_executable_statement (result, cfile, lose, case_context)
 			log_fatal ("no memory for new zone.");
 		zone -> name = parse_host_name (cfile);
 		if (!zone -> name) {
-		      badzone:
 			parse_warn (cfile, "expecting hostname.");
+		      badzone:
 			*lose = 1;
 			skip_to_semi (cfile);
 			dns_zone_dereference (&zone, MDL);
@@ -1959,8 +1968,10 @@ int parse_executable_statement (result, cfile, lose, case_context)
 		i = strlen (zone -> name);
 		if (zone -> name [i - 1] != '.') {
 			s = dmalloc ((unsigned)i + 2, MDL);
-			if (!s)
+			if (!s) {
+				parse_warn (cfile, "no trailing '.' on zone");
 				goto badzone;
+			}
 			strcpy (s, zone -> name);
 			s [i] = '.';
 			s [i + 1] = 0;
@@ -1971,10 +1982,8 @@ int parse_executable_statement (result, cfile, lose, case_context)
 			goto badzone;
 		status = enter_dns_zone (zone);
 		if (status != ISC_R_SUCCESS) {
-			if (parse_semi (cfile))
-				parse_warn (cfile, "dns zone key %s: %s",
-					    zone -> name,
-					    isc_result_totext (status));
+			parse_warn (cfile, "dns zone key %s: %s",
+				    zone -> name, isc_result_totext (status));
 			dns_zone_dereference (&zone, MDL);
 			return 0;
 		}
@@ -2026,7 +2035,11 @@ int parse_executable_statement (result, cfile, lose, case_context)
 				executable_statement_dereference (result, MDL);
 				return 0;
 			}
-			parse_semi (cfile);
+			if (!parse_semi (cfile)) {
+				*lose = 1;
+				executable_statement_dereference (result, MDL);
+				return 0;
+			}
 			break;
 		}
 
@@ -2778,16 +2791,12 @@ int parse_non_binary (expr, cfile, lose, context)
 	enum dhcp_token token;
 	const char *val;
 	struct collection *col;
-	struct option *option;
 	struct expression *nexp, **ep;
 	int known;
 	enum expr_op opcode;
 	const char *s;
 	char *cptr;
-	struct executable_statement *stmt;
-	int i;
 	unsigned long u;
-	isc_result_t status, code;
 	unsigned len;
 
 	token = peek_token (&val, (unsigned *)0, cfile);
@@ -3275,7 +3284,6 @@ int parse_non_binary (expr, cfile, lose, context)
 					parse_warn
 						(cfile,
 						 "expecting dns expression.");
-			      badnstrans:
 				expression_dereference (expr, MDL);
 				*lose = 1;
 				return 0;
@@ -3904,9 +3912,6 @@ int parse_expression (expr, cfile, lose, context, plhs, binop)
 	struct expression *rhs = (struct expression *)0, *tmp;
 	struct expression *lhs = (struct expression *)0;
 	enum expr_op next_op;
-	enum expression_context
-		lhs_context = context_any,
-		rhs_context = context_any;
 
 	/* Consume the left hand side we were passed. */
 	if (plhs) {
@@ -3960,83 +3965,51 @@ int parse_expression (expr, cfile, lose, context, plhs, binop)
 	      case AND:
 		next_op = expr_and;
 		context = expression_context (rhs);
-		if (context != context_boolean) {
-		      needbool:
-			parse_warn (cfile, "expecting boolean expressions");
-			skip_to_semi (cfile);
-			expression_dereference (&rhs, MDL);
-			*lose = 1;
-			return 0;
-		}
 		break;
 
 	      case OR:
 		next_op = expr_or;
 		context = expression_context (rhs);
-		if (context != context_boolean)
-			goto needbool;
 		break;
 
 	      case PLUS:
 		next_op = expr_add;
 		context = expression_context (rhs);
-		if (context != context_numeric) {
-		      neednum:
-			parse_warn (cfile, "expecting numeric expressions");
-			skip_to_semi (cfile);
-			expression_dereference (&rhs, MDL);
-			*lose = 1;
-			return 0;
-		}
 		break;
 
 	      case MINUS:
 		next_op = expr_subtract;
 		context = expression_context (rhs);
-		if (context != context_numeric)
-			goto neednum;
 		break;
 
 	      case SLASH:
 		next_op = expr_divide;
 		context = expression_context (rhs);
-		if (context != context_numeric)
-			goto neednum;
 		break;
 
 	      case ASTERISK:
 		next_op = expr_multiply;
 		context = expression_context (rhs);
-		if (context != context_numeric)
-			goto neednum;
 		break;
 
 	      case PERCENT:
 		next_op = expr_remainder;
 		context = expression_context (rhs);
-		if (context != context_numeric)
-			goto neednum;
 		break;
 
 	      case AMPERSAND:
 		next_op = expr_binary_and;
 		context = expression_context (rhs);
-		if (context != context_numeric)
-			goto neednum;
 		break;
 
 	      case PIPE:
 		next_op = expr_binary_or;
 		context = expression_context (rhs);
-		if (context != context_numeric)
-			goto neednum;
 		break;
 
 	      case CARET:
 		next_op = expr_binary_xor;
 		context = expression_context (rhs);
-		if (context != context_numeric)
-			goto neednum;
 		break;
 
 	      default:
@@ -4056,6 +4029,63 @@ int parse_expression (expr, cfile, lose, context, plhs, binop)
 		binop = next_op;
 		next_token (&val, (unsigned *)0, cfile);
 		goto new_rhs;
+	}
+
+	if (binop != expr_none) {
+	  if (expression_context (rhs) != expression_context (lhs)) {
+	    parse_warn (cfile, "illegal expression relating different types");
+	    skip_to_semi (cfile);
+	    expression_dereference (&rhs, MDL);
+	    expression_dereference (&lhs, MDL);
+	    *lose = 1;
+	    return 0;
+	  }
+
+	  switch(binop) {
+	    case expr_not_equal:
+	    case expr_equal:
+		if ((expression_context(rhs) != context_data_or_numeric) &&
+		    (expression_context(rhs) != context_data) &&
+		    (expression_context(rhs) != context_numeric)) {
+			parse_warn (cfile, "expecting data/numeric expression");
+			skip_to_semi (cfile);
+			expression_dereference (&rhs, MDL);
+			*lose = 1;
+			return 0;
+		}
+		break;
+
+	    case expr_and:
+	    case expr_or:
+		if (expression_context(rhs) != context_boolean) {
+			parse_warn (cfile, "expecting boolean expressions");
+			skip_to_semi (cfile);
+			expression_dereference (&rhs, MDL);
+			*lose = 1;
+			return 0;
+		}
+		break;
+
+	    case expr_add:
+	    case expr_subtract:
+	    case expr_divide:
+	    case expr_multiply:
+	    case expr_remainder:
+	    case expr_binary_and:
+	    case expr_binary_or:
+	    case expr_binary_xor:
+		if (expression_context(rhs) != context_numeric) {
+			parse_warn (cfile, "expecting numeric expressions");
+                        skip_to_semi (cfile);
+                        expression_dereference (&rhs, MDL);
+                        *lose = 1;
+                        return 0;
+		}
+		break;
+
+	    default:
+		break;
+	  }
 	}
 
 	/* Now, if we didn't find a binary operator, we're done parsing
@@ -4144,8 +4174,6 @@ int parse_option_statement (result, cfile, lookups, option, op)
 	struct expression *expr = (struct expression *)0;
 	struct expression *tmp;
 	int lose;
-	struct executable_statement *stmt;
-	int ftt = 1;
 
 	token = peek_token (&val, (unsigned *)0, cfile);
 	if (token == SEMI) {
@@ -4263,9 +4291,7 @@ int parse_option_token (rv, cfile, fmt, expr, uniform, lookups)
 	struct expression *t = (struct expression *)0;
 	unsigned char buf [4];
 	unsigned len;
-	unsigned char *ob;
 	struct iaddr addr;
-	int num;
 	const char *f, *g;
 	struct enumeration_value *e;
 
@@ -4509,7 +4535,6 @@ int parse_option_decl (oc, cfile)
 		/* Set a flag if this is an array of a simple type (i.e.,
 		   not an array of pairs of IP addresses, or something
 		   like that. */
-		int uniform = option -> format [1] == 'A';
 
 		for (fmt = option -> format; *fmt; fmt++) {
 			if (*fmt == 'A')
@@ -4706,7 +4731,6 @@ int parse_X (cfile, buf, max)
 	int token;
 	const char *val;
 	unsigned len;
-	u_int8_t *s;
 
 	token = peek_token (&val, (unsigned *)0, cfile);
 	if (token == NUMBER_OR_NAME || token == NUMBER) {
@@ -4778,7 +4802,7 @@ int parse_warn (struct parse *cfile, const char *fmt, ...)
 		if (lix < (sizeof lexbuf) - 1)
 			lexbuf [lix++] = ' ';
 		if (cfile -> token_line [i] == '\t') {
-			for (lix;
+			for (/*lix*/;
 			     lix < (sizeof lexbuf) - 1 && (lix & 7); lix++)
 				lexbuf [lix] = ' ';
 		}

@@ -3,7 +3,7 @@
    Handling for client classes. */
 
 /*
- * Copyright (c) 1998-2000 Internet Software Consortium.
+ * Copyright (c) 1998-2002 Internet Software Consortium.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -43,7 +43,7 @@
 
 #ifndef lint
 static char copyright[] =
-"$Id: class.c,v 1.1.1.1 2001/08/03 11:35:40 drochner Exp $ Copyright (c) 1998-2000 The Internet Software Consortium.  All rights reserved.\n";
+"$Id: class.c,v 1.1.1.1.4.1 2003/10/27 04:41:54 jmc Exp $ Copyright (c) 1998-2002 The Internet Software Consortium.  All rights reserved.\n";
 
 #endif /* not lint */
 
@@ -199,7 +199,7 @@ int check_collection (packet, lease, collection)
 						  MDL);
 				data_string_forget (&data, MDL);
 				if (!class -> hash)
-				    class -> hash = new_hash (0, 0, 0, MDL);
+				    class_new_hash (&class -> hash, 0, MDL);
 				class_hash_add (class -> hash,
 						(const char *)
 						nc -> hash_string.data,

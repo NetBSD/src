@@ -3,7 +3,7 @@
    DHCP options parsing and reassembly. */
 
 /*
- * Copyright (c) 1995-2001 Internet Software Consortium.
+ * Copyright (c) 1995-2002 Internet Software Consortium.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -43,7 +43,7 @@
 
 #ifndef lint
 static char copyright[] =
-"$Id: options.c,v 1.1.1.1 2001/08/03 11:35:32 drochner Exp $ Copyright (c) 1995-2001 The Internet Software Consortium.  All rights reserved.\n";
+"$Id: options.c,v 1.1.1.1.4.1 2003/10/27 04:41:52 jmc Exp $ Copyright (c) 1995-2001 The Internet Software Consortium.  All rights reserved.\n";
 #endif /* not lint */
 
 #define DHCP_OPTION_DATA
@@ -52,16 +52,11 @@ static char copyright[] =
 
 struct option *vendor_cfg_option;
 
-static void do_option_set PROTO ((pair *,
-				  struct option_cache *,
-				  enum statement_op));
-
 /* Parse all available options out of the specified packet. */
 
 int parse_options (packet)
 	struct packet *packet;
 {
-	int i;
 	struct option_cache *op = (struct option_cache *)0;
 
 	/* Allocate a new option state. */
@@ -121,11 +116,8 @@ int parse_option_buffer (options, buffer, length, universe)
 	unsigned length;
 	struct universe *universe;
 {
-	unsigned char *t;
-	const unsigned char *end = buffer + length;
 	unsigned len, offset;
 	int code;
-	struct option_cache *op = (struct option_cache *)0;
 	struct buffer *bp = (struct buffer *)0;
 
 	if (!buffer_allocate (&bp, length, MDL)) {
@@ -265,7 +257,6 @@ int fqdn_universe_decode (struct option_state *options,
 			  const unsigned char *buffer,
 			  unsigned length, struct universe *u)
 {
-	char *name;
 	struct buffer *bp = (struct buffer *)0;
 
 	/* FQDN options have to be at least four bytes long. */
@@ -373,8 +364,15 @@ int fqdn_universe_decode (struct option_state *options,
 
 			*s = '.';
 			s += len + 1;
-			total_len += len;
+			total_len += len + 1;
 		}
+
+		/* We wind up with a length that's one too many because
+		   we shouldn't increment for the last label, but there's
+		   no way to tell we're at the last label until we exit
+		   the loop.   :'*/
+		if (total_len > 0)
+			total_len--;
 
 		if (!terminated) {
 			first_len = total_len;
@@ -507,8 +505,16 @@ int cons_options (inpacket, outpacket, lease, client_state,
 	priority_list [priority_len++] = DHO_DHCP_LEASE_TIME;
 	priority_list [priority_len++] = DHO_DHCP_MESSAGE;
 	priority_list [priority_len++] = DHO_DHCP_REQUESTED_ADDRESS;
+	priority_list [priority_len++] = DHO_FQDN;
 
 	if (prl && prl -> len > 0) {
+		if ((op = lookup_option (&dhcp_universe, cfg_options,
+					 DHO_SUBNET_SELECTION))) {
+			if (priority_len < PRIORITY_COUNT)
+				priority_list [priority_len++] =
+					DHO_SUBNET_SELECTION;
+		}
+			    
 		data_string_truncate (prl, (PRIORITY_COUNT - priority_len));
 
 		for (i = 0; i < prl -> len; i++) {
@@ -536,7 +542,8 @@ int cons_options (inpacket, outpacket, lease, client_state,
 		if (cfg_options -> site_code_min) {
 		    for (i = 0; i < OPTION_HASH_SIZE; i++) {
 			hash = cfg_options -> universes [dhcp_universe.index];
-			for (pp = hash [i]; pp; pp = pp -> cdr) {
+			if (hash) {
+			    for (pp = hash [i]; pp; pp = pp -> cdr) {
 				op = (struct option_cache *)(pp -> car);
 				if (op -> option -> code <
 				    cfg_options -> site_code_min &&
@@ -545,6 +552,7 @@ int cons_options (inpacket, outpacket, lease, client_state,
 				     DHO_DHCP_AGENT_OPTIONS))
 					priority_list [priority_len++] =
 						op -> option -> code;
+			    }
 			}
 		    }
 		}
@@ -553,8 +561,9 @@ int cons_options (inpacket, outpacket, lease, client_state,
 		   is no site option space, we'll be cycling through the
 		   dhcp option space. */
 		for (i = 0; i < OPTION_HASH_SIZE; i++) {
-			hash = (cfg_options -> universes
-				[cfg_options -> site_universe]);
+		    hash = (cfg_options -> universes
+			    [cfg_options -> site_universe]);
+		    if (hash)
 			for (pp = hash [i]; pp; pp = pp -> cdr) {
 				op = (struct option_cache *)(pp -> car);
 				if (op -> option -> code >=
@@ -712,7 +721,6 @@ int store_options (buffer, buflen, packet, lease, client_state,
 	struct data_string od;
 	struct option_cache *oc;
 	unsigned code;
-	int optstart;
 
 	memset (&od, 0, sizeof od);
 
@@ -762,9 +770,9 @@ int store_options (buffer, buflen, packet, lease, client_state,
 	       to be encapsulated first, except that if it's a straight
 	       encapsulation and the user has provided a value for the
 	       encapsulation option, use the user-provided value. */
-	    if ((u -> options [code] -> format [0] == 'E' && !oc) ||
-		u -> options [code] -> format [0] == 'e') {
-		int uix;
+	    if (u -> options [code] &&
+		((u -> options [code] -> format [0] == 'E' && !oc) ||
+		 u -> options [code] -> format [0] == 'e')) {
 		static char *s, *t;
 		struct option_cache *tmp;
 		struct data_string name;
@@ -882,7 +890,6 @@ int store_options (buffer, buflen, packet, lease, client_state,
 	    optstart = bufix;
 	    while (length) {
 		    unsigned char incr = length > 255 ? 255 : length;
-		    int consumed = 0;
 		    
 		    /* If this hunk of the buffer will cross a
 		       boundary, only go up to the boundary in this
@@ -1223,7 +1230,7 @@ void set_option (universe, options, option, op)
 	      case eval_statement:
 	      case break_statement:
 	      default:
-		log_error ("bogus statement type in do_option_set.");
+		log_error ("bogus statement type in set_option.");
 		break;
 
 	      case default_option_statement:
@@ -1516,7 +1523,7 @@ int option_cache_dereference (ptr, file, line)
 	}
 
 	(*ptr) -> refcnt--;
-	rc_register (file, line, ptr, *ptr, (*ptr) -> refcnt, 1);
+	rc_register (file, line, ptr, *ptr, (*ptr) -> refcnt, 1, RC_MISC);
 	if (!(*ptr) -> refcnt) {
 		if ((*ptr) -> data.buffer)
 			data_string_forget (&(*ptr) -> data, file, line);
@@ -1706,7 +1713,6 @@ int nwip_option_space_encapsulate (result, packet, lease, client_state,
 {
 	pair ocp;
 	int status;
-	int i;
 	static struct option_cache *no_nwip;
 	struct data_string ds;
 	struct option_chain_head *head;
@@ -1720,7 +1726,6 @@ int nwip_option_space_encapsulate (result, packet, lease, client_state,
 
 	status = 0;
 	for (ocp = head -> first; ocp; ocp = ocp -> cdr) {
-		struct option_cache *oc = (struct option_cache *)(ocp -> car);
 		if (store_option (result, universe, packet,
 				  lease, client_state, in_options,
 				  cfg_options, scope,
@@ -1747,6 +1752,8 @@ int nwip_option_space_encapsulate (result, packet, lease, client_state,
 				status = 1;
 		}
 	} else {
+		memset (&ds, 0, sizeof ds);
+
 		/* If we have nwip options, the first one has to be the
 		   nwip-exists-in-option-area option. */
 		if (!buffer_allocate (&ds.buffer, result -> len + 2, MDL)) {
@@ -1904,7 +1911,6 @@ void suboption_foreach (struct packet *packet, struct lease *lease,
 {
 	struct universe *universe = find_option_universe (oc -> option,
 							  vsname);
-	int i;
 
 	if (universe -> foreach)
 		(*universe -> foreach) (packet, lease, client_state,
@@ -1954,7 +1960,6 @@ void save_linked_option (universe, options, oc)
 	struct option_cache *oc;
 {
 	pair *tail;
-	pair np = (pair )0;
 	struct option_chain_head *head;
 
 	if (universe -> index >= options -> universe_count)
@@ -2126,7 +2131,6 @@ void do_packet (interface, packet, len, from_port, from, hfrom)
 	struct iaddr from;
 	struct hardware *hfrom;
 {
-	int i;
 	struct option_cache *op;
 	struct packet *decoded_packet;
 #if defined (DEBUG_MEMORY_LEAKAGE)

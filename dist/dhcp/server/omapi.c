@@ -3,7 +3,7 @@
    OMAPI object interfaces for the DHCP server. */
 
 /*
- * Copyright (c) 1999-2001 Internet Software Consortium.
+ * Copyright (c) 1999-2002 Internet Software Consortium.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -50,7 +50,7 @@
 
 #ifndef lint
 static char copyright[] =
-"$Id: omapi.c,v 1.1.1.1 2001/08/03 11:35:43 drochner Exp $ Copyright (c) 1999-2001 The Internet Software Consortium.  All rights reserved.\n";
+"$Id: omapi.c,v 1.1.1.1.4.1 2003/10/27 04:41:54 jmc Exp $ Copyright (c) 1999-2002 The Internet Software Consortium.  All rights reserved.\n";
 #endif /* not lint */
 
 #include "dhcpd.h"
@@ -88,7 +88,8 @@ void dhcp_db_objects_setup ()
 					     0, 0,
 #endif
 					     0,
-					     sizeof (struct lease), 0);
+					     sizeof (struct lease),
+					     0, RC_LEASE);
 	if (status != ISC_R_SUCCESS)
 		log_fatal ("Can't register lease object type: %s",
 			   isc_result_totext (status));
@@ -103,7 +104,8 @@ void dhcp_db_objects_setup ()
 					     dhcp_class_lookup, 
 					     dhcp_class_create,
 					     dhcp_class_remove, 0, 0, 0,
-					     sizeof (struct class), 0);
+					     sizeof (struct class), 0,
+					     RC_MISC);
 	if (status != ISC_R_SUCCESS)
 		log_fatal ("Can't register class object type: %s",
 			   isc_result_totext (status));
@@ -118,7 +120,7 @@ void dhcp_db_objects_setup ()
 					     dhcp_subclass_lookup, 
 					     dhcp_subclass_create,
 					     dhcp_subclass_remove, 0, 0, 0,
-					     sizeof (struct class), 0);
+					     sizeof (struct class), 0, RC_MISC);
 	if (status != ISC_R_SUCCESS)
 		log_fatal ("Can't register subclass object type: %s",
 			   isc_result_totext (status));
@@ -133,7 +135,7 @@ void dhcp_db_objects_setup ()
 					     dhcp_pool_lookup, 
 					     dhcp_pool_create,
 					     dhcp_pool_remove, 0, 0, 0,
-					     sizeof (struct pool), 0);
+					     sizeof (struct pool), 0, RC_MISC);
 
 	if (status != ISC_R_SUCCESS)
 		log_fatal ("Can't register pool object type: %s",
@@ -149,7 +151,8 @@ void dhcp_db_objects_setup ()
 					     dhcp_host_lookup, 
 					     dhcp_host_create,
 					     dhcp_host_remove, 0, 0, 0,
-					     sizeof (struct host_decl), 0);
+					     sizeof (struct host_decl),
+					     0, RC_MISC);
 
 	if (status != ISC_R_SUCCESS)
 		log_fatal ("Can't register host object type: %s",
@@ -168,7 +171,7 @@ void dhcp_db_objects_setup ()
 					     dhcp_failover_state_remove,
 					     0, 0, 0,
 					     sizeof (dhcp_failover_state_t),
-					     0);
+					     0, RC_MISC);
 
 	if (status != ISC_R_SUCCESS)
 		log_fatal ("Can't register failover state object type: %s",
@@ -182,7 +185,8 @@ void dhcp_db_objects_setup ()
 					     dhcp_failover_link_signal,
 					     dhcp_failover_link_stuff_values,
 					     0, 0, 0, 0, 0, 0,
-					     sizeof (dhcp_failover_link_t), 0);
+					     sizeof (dhcp_failover_link_t), 0,
+					     RC_MISC);
 
 	if (status != ISC_R_SUCCESS)
 		log_fatal ("Can't register failover link object type: %s",
@@ -197,7 +201,8 @@ void dhcp_db_objects_setup ()
 					     dhcp_failover_listener_stuff,
 					     0, 0, 0, 0, 0, 0,
 					     sizeof
-					     (dhcp_failover_listener_t), 0);
+					     (dhcp_failover_listener_t), 0,
+					     RC_MISC);
 
 	if (status != ISC_R_SUCCESS)
 		log_fatal ("Can't register failover listener object type: %s",
@@ -212,7 +217,6 @@ isc_result_t dhcp_lease_set_value  (omapi_object_t *h,
 {
 	struct lease *lease;
 	isc_result_t status;
-	int foo;
 
 	if (h -> type != dhcp_type_lease)
 		return ISC_R_INVALIDARG;
@@ -222,16 +226,29 @@ isc_result_t dhcp_lease_set_value  (omapi_object_t *h,
 	   set - for now, we just make it possible to whack the state. */
 	if (!omapi_ds_strcmp (name, "state")) {
 	    unsigned long bar;
+	    const char *ols, *nls;
 	    status = omapi_get_int_value (&bar, value);
 	    if (status != ISC_R_SUCCESS)
 		return status;
 	    
-	    if (bar < 1 || bar > FTS_BOOTP)
+	    if (bar < 1 || bar > FTS_LAST)
 		return ISC_R_INVALIDARG;
+	    nls = binding_state_names [bar - 1];
+	    if (lease -> binding_state >= 1 &&
+		lease -> binding_state <= FTS_LAST)
+		ols = binding_state_names [lease -> binding_state - 1];
+	    else
+		ols = "unknown state";
+	    
 	    if (lease -> binding_state != bar) {
 		lease -> next_binding_state = bar;
-		if (supersede_lease (lease, 0, 1, 1, 1))
+		if (supersede_lease (lease, 0, 1, 1, 1)) {
+			log_info ("lease %s state changed from %s to %s",
+				  piaddr(lease->ip_addr), ols, nls);
 			return ISC_R_SUCCESS;
+		}
+		log_info ("lease state change from %s to %s failed.",
+			  ols, nls);
 		return ISC_R_IOERROR;
 	    }
 	    return ISC_R_UNCHANGED;
@@ -369,7 +386,6 @@ isc_result_t dhcp_lease_get_value (omapi_object_t *h, omapi_object_t *id,
 isc_result_t dhcp_lease_destroy (omapi_object_t *h, const char *file, int line)
 {
 	struct lease *lease;
-	isc_result_t status;
 
 	if (h -> type != dhcp_type_lease)
 		return ISC_R_INVALIDARG;
@@ -446,7 +462,6 @@ isc_result_t dhcp_lease_signal_handler (omapi_object_t *h,
 {
 	struct lease *lease;
 	isc_result_t status;
-	int updatep = 0;
 
 	if (h -> type != dhcp_type_lease)
 		return ISC_R_INVALIDARG;
@@ -808,9 +823,8 @@ isc_result_t dhcp_host_set_value  (omapi_object_t *h,
 				   omapi_data_string_t *name,
 				   omapi_typed_data_t *value)
 {
-	struct host_decl *host, *hp;
+	struct host_decl *host;
 	isc_result_t status;
-	int foo;
 
 	if (h -> type != dhcp_type_host)
 		return ISC_R_INVALIDARG;
@@ -821,8 +835,8 @@ isc_result_t dhcp_host_set_value  (omapi_object_t *h,
 	if (!omapi_ds_strcmp (name, "name")) {
 		if (host -> name)
 			return ISC_R_EXISTS;
-		if (value -> type == omapi_datatype_data ||
-		    value -> type == omapi_datatype_string) {
+		if (value && (value -> type == omapi_datatype_data ||
+		    	      value -> type == omapi_datatype_string)) {
 			host -> name = dmalloc (value -> u.buffer.len + 1,
 						MDL);
 			if (!host -> name)
@@ -837,8 +851,8 @@ isc_result_t dhcp_host_set_value  (omapi_object_t *h,
 	}
 
 	if (!omapi_ds_strcmp (name, "group")) {
-		if (value -> type == omapi_datatype_data ||
-		    value -> type == omapi_datatype_string) {
+		if (value && (value -> type == omapi_datatype_data ||
+		    	      value -> type == omapi_datatype_string)) {
 			struct group_object *group;
 			group = (struct group_object *)0;
 			group_hash_lookup (&group, group_name_hash,
@@ -863,8 +877,8 @@ isc_result_t dhcp_host_set_value  (omapi_object_t *h,
 	if (!omapi_ds_strcmp (name, "hardware-address")) {
 		if (host -> interface.hlen)
 			return ISC_R_EXISTS;
-		if (value -> type == omapi_datatype_data ||
-		    value -> type == omapi_datatype_string) {
+		if (value && (value -> type == omapi_datatype_data ||
+		    	      value -> type == omapi_datatype_string)) {
 			if (value -> u.buffer.len >
 			    (sizeof host -> interface.hbuf) - 1)
 				return ISC_R_INVALIDARG;
@@ -879,8 +893,8 @@ isc_result_t dhcp_host_set_value  (omapi_object_t *h,
 
 	if (!omapi_ds_strcmp (name, "hardware-type")) {
 		int type;
-		if (value -> type == omapi_datatype_data &&
-		    value -> u.buffer.len == sizeof type) {
+		if (value && (value -> type == omapi_datatype_data &&
+		    	      value -> u.buffer.len == sizeof type)) {
 			if (value -> u.buffer.len > sizeof type)
 				return ISC_R_INVALIDARG;
 			memcpy (&type,
@@ -898,8 +912,8 @@ isc_result_t dhcp_host_set_value  (omapi_object_t *h,
 	if (!omapi_ds_strcmp (name, "dhcp-client-identifier")) {
 		if (host -> client_identifier.data)
 			return ISC_R_EXISTS;
-		if (value -> type == omapi_datatype_data ||
-		    value -> type == omapi_datatype_string) {
+		if (value && (value -> type == omapi_datatype_data ||
+		    	      value -> type == omapi_datatype_string)) {
 		    if (!buffer_allocate (&host -> client_identifier.buffer,
 					  value -> u.buffer.len, MDL))
 			    return ISC_R_NOMEMORY;
@@ -919,8 +933,8 @@ isc_result_t dhcp_host_set_value  (omapi_object_t *h,
 			option_cache_dereference (&host -> fixed_addr, MDL);
 		if (!value)
 			return ISC_R_SUCCESS;
-		if (value -> type == omapi_datatype_data ||
-		    value -> type == omapi_datatype_string) {
+		if (value && (value -> type == omapi_datatype_data ||
+			      value -> type == omapi_datatype_string)) {
 			struct data_string ds;
 			memset (&ds, 0, sizeof ds);
 			ds.len = value -> u.buffer.len;
@@ -956,8 +970,8 @@ isc_result_t dhcp_host_set_value  (omapi_object_t *h,
 		}
 		if (!host -> group)
 			return ISC_R_NOMEMORY;
-		if (value -> type == omapi_datatype_data ||
-		    value -> type == omapi_datatype_string) {
+		if (value && (value -> type == omapi_datatype_data ||
+			      value -> type == omapi_datatype_string)) {
 			struct parse *parse;
 			int lose = 0;
 			parse = (struct parse *)0;
@@ -1069,7 +1083,6 @@ isc_result_t dhcp_host_get_value (omapi_object_t *h, omapi_object_t *id,
 isc_result_t dhcp_host_destroy (omapi_object_t *h, const char *file, int line)
 {
 	struct host_decl *host;
-	isc_result_t status;
 
 	if (h -> type != dhcp_type_host)
 		return ISC_R_INVALIDARG;
@@ -1490,7 +1503,6 @@ isc_result_t dhcp_pool_set_value  (omapi_object_t *h,
 {
 	struct pool *pool;
 	isc_result_t status;
-	int foo;
 
 	if (h -> type != dhcp_type_pool)
 		return ISC_R_INVALIDARG;
@@ -1536,8 +1548,10 @@ isc_result_t dhcp_pool_get_value (omapi_object_t *h, omapi_object_t *id,
 isc_result_t dhcp_pool_destroy (omapi_object_t *h, const char *file, int line)
 {
 	struct pool *pool;
-	isc_result_t status;
+#if defined (DEBUG_MEMORY_LEAKAGE) || \
+		defined (DEBUG_MEMORY_LEAKAGE_ON_EXIT)
 	struct permit *pc, *pn;
+#endif
 
 	if (h -> type != dhcp_type_pool)
 		return ISC_R_INVALIDARG;
@@ -1634,9 +1648,6 @@ isc_result_t dhcp_pool_stuff_values (omapi_object_t *c,
 isc_result_t dhcp_pool_lookup (omapi_object_t **lp,
 			       omapi_object_t *id, omapi_object_t *ref)
 {
-	omapi_value_t *tv = (omapi_value_t *)0;
-	isc_result_t status;
-	struct pool *pool;
 
 	/* Can't look up pools yet. */
 
@@ -1666,7 +1677,6 @@ isc_result_t dhcp_class_set_value  (omapi_object_t *h,
 {
 	struct class *class;
 	isc_result_t status;
-	int foo;
 
 	if (h -> type != dhcp_type_class)
 		return ISC_R_INVALIDARG;
@@ -1712,8 +1722,10 @@ isc_result_t dhcp_class_get_value (omapi_object_t *h, omapi_object_t *id,
 isc_result_t dhcp_class_destroy (omapi_object_t *h, const char *file, int line)
 {
 	struct class *class;
-	isc_result_t status;
+#if defined (DEBUG_MEMORY_LEAKAGE) || \
+		defined (DEBUG_MEMORY_LEAKAGE_ON_EXIT)
 	int i;
+#endif
 
 	if (h -> type != dhcp_type_class && h -> type != dhcp_type_subclass)
 		return ISC_R_INVALIDARG;
@@ -1740,8 +1752,8 @@ isc_result_t dhcp_class_destroy (omapi_object_t *h, const char *file, int line)
 		class -> billed_leases = (struct lease **)0;
 	}
 	if (class -> hash) {
-		free_hash_table (class -> hash, file, line);
-		class -> hash = (struct hash_table *)0;
+		class_free_hash_table (&class -> hash, file, line);
+		class -> hash = (class_hash_t *)0;
 	}
 	data_string_forget (&class -> hash_string, file, line);
 
@@ -1813,9 +1825,6 @@ isc_result_t dhcp_class_stuff_values (omapi_object_t *c,
 isc_result_t dhcp_class_lookup (omapi_object_t **lp,
 				omapi_object_t *id, omapi_object_t *ref)
 {
-	omapi_value_t *tv = (omapi_value_t *)0;
-	isc_result_t status;
-	struct class *class;
 
 	/* Can't look up classs yet. */
 
@@ -1845,7 +1854,6 @@ isc_result_t dhcp_subclass_set_value  (omapi_object_t *h,
 {
 	struct subclass *subclass;
 	isc_result_t status;
-	int foo;
 
 	if (h -> type != dhcp_type_subclass)
 		return ISC_R_INVALIDARG;
@@ -1940,9 +1948,6 @@ isc_result_t dhcp_subclass_stuff_values (omapi_object_t *c,
 isc_result_t dhcp_subclass_lookup (omapi_object_t **lp,
 				   omapi_object_t *id, omapi_object_t *ref)
 {
-	omapi_value_t *tv = (omapi_value_t *)0;
-	isc_result_t status;
-	struct subclass *subclass;
 
 	/* Can't look up subclasss yet. */
 

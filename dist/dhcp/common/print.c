@@ -3,7 +3,7 @@
    Turn data structures into printable text. */
 
 /*
- * Copyright (c) 1995-2001 Internet Software Consortium.
+ * Copyright (c) 1995-2002 Internet Software Consortium.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -43,7 +43,7 @@
 
 #ifndef lint
 static char copyright[] =
-"$Id: print.c,v 1.2 2001/08/03 13:07:04 drochner Exp $ Copyright (c) 1995-2001 The Internet Software Consortium.  All rights reserved.\n";
+"$Id: print.c,v 1.2.4.1 2003/10/27 04:41:52 jmc Exp $ Copyright (c) 1995-2002 The Internet Software Consortium.  All rights reserved.\n";
 #endif /* not lint */
 
 #include "dhcpd.h"
@@ -1020,7 +1020,6 @@ int token_print_indent_concat (FILE *file, int col,  int indent,
 			       const char *suffix, ...)
 {
 	va_list list;
-	char *buf;
 	unsigned len;
 	char *s, *t, *u;
 
@@ -1058,7 +1057,6 @@ int token_indent_data_string (FILE *file, int col, int indent,
 			      struct data_string *data)
 {
 	int i;
-	char *buf;
 	char obuf [3];
 
 	/* See if this is just ASCII. */
@@ -1197,6 +1195,14 @@ void print_dns_status (int status, ns_updque *uq)
 			}
 			predicate = "and";
 		}
+		if (u -> r_dname) {
+			if (s + 1 < end)
+				*s++ = ' ';
+			if (s + strlen (u -> r_dname) < end) {
+				strcpy (s, u -> r_dname);
+				s += strlen (s);
+			}
+		}
 		if (ttlp) {
 			if (s + 1 < end)
 				*s++ = ' ';
@@ -1253,14 +1259,6 @@ void print_dns_status (int status, ns_updque *uq)
 			strcpy (s, en);
 			s += strlen (en);
 		}
-		if (u -> r_dname) {
-			if (s + 1 < end)
-				*s++ = ' ';
-			if (s + strlen (u -> r_dname) < end) {
-				strcpy (s, u -> r_dname);
-				s += strlen (s);
-			}
-		}
 		if (u -> r_data) {
 			if (s + 1 < end)
 				*s++ = ' ';
@@ -1292,7 +1290,10 @@ void print_dns_status (int status, ns_updque *uq)
 		strcpy (s, "empty update");
 		s += strlen (s);
 	}
-	errorp = 1;
+	if (status == NOERROR)
+		errorp = 0;
+	else
+		errorp = 1;
 	en = isc_result_totext (status);
 #if 0
 	switch (status) {

@@ -3,7 +3,7 @@
    Memory-resident database... */
 
 /*
- * Copyright (c) 1995-2000 Internet Software Consortium.
+ * Copyright (c) 1995-2002 Internet Software Consortium.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -43,13 +43,13 @@
 
 #ifndef lint
 static char copyright[] =
-"$Id: memory.c,v 1.1.1.1 2001/08/03 11:35:32 drochner Exp $ Copyright (c) 1995-2000 The Internet Software Consortium.  All rights reserved.\n";
+"$Id: memory.c,v 1.1.1.1.4.1 2003/10/27 04:41:52 jmc Exp $ Copyright (c) 1995-2002 The Internet Software Consortium.  All rights reserved.\n";
 #endif /* not lint */
 
 #include "dhcpd.h"
 
 struct group *root_group;
-struct hash_table *group_name_hash;
+group_hash_t *group_name_hash;
 int (*group_write_hook) (struct group_object *);
 
 isc_result_t delete_group (struct group_object *group, int writep)
@@ -93,8 +93,7 @@ isc_result_t delete_group (struct group_object *group, int writep)
 
 isc_result_t supersede_group (struct group_object *group, int writep)
 {
-	struct group_object *t, *u;
-	isc_result_t status;
+	struct group_object *t;
 
 	/* Register the group in the group name hash table,
 	   so we can look it up later. */
@@ -128,10 +127,7 @@ isc_result_t supersede_group (struct group_object *group, int writep)
 			}
 		}
 	} else {
-		group_name_hash = new_hash ((hash_reference)
-					    group_object_reference,
-					    (hash_dereference)
-					    group_object_dereference, 0, MDL);
+		group_new_hash (&group_name_hash, 0, MDL);
 		t = (struct group_object *)0;
 	}
 
@@ -154,7 +150,6 @@ isc_result_t supersede_group (struct group_object *group, int writep)
 int clone_group (struct group **gp, struct group *group,
 		 const char *file, int line)
 {
-	isc_result_t status;
 	struct group *g = (struct group *)0;
 
 	/* Normally gp should contain the null pointer, but for convenience
