@@ -1,4 +1,4 @@
-/*	$NetBSD: wi.c,v 1.26 2001/10/13 15:00:23 ichiro Exp $	*/
+/*	$NetBSD: wi.c,v 1.27 2001/10/14 12:33:18 ichiro Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -711,8 +711,8 @@ void
 wi_pci_reset(sc)
 	struct wi_softc		*sc;
 {
-
-	bus_space_write_2(sc->sc_iot, sc->sc_ioh, WI_PCI_COR, 0x80);
+	bus_space_write_2(sc->sc_iot, sc->sc_ioh,
+			  WI_PCI_COR, WI_PCI_SOFT_RESET);
 	DELAY(100*1000); /* 100 m sec */
 
 	bus_space_write_2(sc->sc_iot, sc->sc_ioh, WI_PCI_COR, 0x0);
