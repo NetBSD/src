@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_vnops.c,v 1.100.4.2 1999/06/21 01:28:57 thorpej Exp $	*/
+/*	$NetBSD: nfs_vnops.c,v 1.100.4.3 1999/07/04 01:46:53 chs Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -131,6 +131,7 @@ struct vnodeopv_entry_desc nfsv2_vnodeop_entries[] = {
 	{ &vop_advlock_desc, nfs_advlock },		/* advlock */
 	{ &vop_blkatoff_desc, nfs_blkatoff },		/* blkatoff */
 	{ &vop_valloc_desc, nfs_valloc },		/* valloc */
+	{ &vop_balloc_desc, nfs_balloc },		/* balloc */
 	{ &vop_reallocblks_desc, nfs_reallocblks },	/* reallocblks */
 	{ &vop_vfree_desc, nfs_vfree },			/* vfree */
 	{ &vop_truncate_desc, nfs_truncate },		/* truncate */
