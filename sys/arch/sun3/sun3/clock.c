@@ -2,7 +2,7 @@
  * machine-dependent clock routines; intersil7170
  *               by Adam Glass
  *
- * $Header: /cvsroot/src/sys/arch/sun3/sun3/clock.c,v 1.7 1993/08/16 10:43:04 glass Exp $
+ * $Header: /cvsroot/src/sys/arch/sun3/sun3/clock.c,v 1.8 1993/08/21 02:17:23 glass Exp $
  */
 
 #include "systm.h"
@@ -17,11 +17,22 @@
 #include <machine/obio.h>
 
 #include "intersil7170.h"
+#include "interreg.h"
 
 #define intersil_clock ((struct intersil7170 *) intersil_softc->clock_va)
 #define intersil_command(run, interrupt) \
     (run | interrupt | INTERSIL_CMD_FREQ_32K | INTERSIL_CMD_24HR_MODE | \
      INTERSIL_CMD_NORMAL_MODE)
+
+#define intersil_disable() \
+    intersil_clock->command_reg = \
+    intersil_command(INTERSIL_CMD_RUN, INTERSIL_CMD_IDISABLE)
+
+#define intersil_enable() \
+    intersil_clock->command_reg = \
+    intersil_command(INTERSIL_CMD_RUN, INTERSIL_CMD_IENABLE)
+#define intersil_clear() intersil_clock->interrupt_reg
+
 
 #define SECS_HOUR               (60*60)
 #define SECS_DAY                (SECS_HOUR*24)
@@ -66,6 +77,83 @@ int clockmatch(parent, cf, args)
 	OBIO_DEFAULT_PARAM(caddr_t, obio_loc->obio_addr, OBIO_CLOCK);
     return /* probe */ 1;
 }
+#ifdef mine
+void set_clock_level(level_code, enable_clock)
+     unsigned int level_code;
+     int enable_clock;
+{
+    unsigned int val, stupid_thing;
+    vm_offset_t pte;
+
+    val = get_interrupt_reg();	/* get interrupt register value */
+    val &= ~(IREG_ALL_ENAB);
+    set_interrupt_reg(val);	/* disable all "interrupts" */
+    intersil_disable();		/* turn off clock interrupt source */
+    stupid_thing = intersil_clear(); /* torch peinding interrupts on clock*/
+    stupid_thing++;		/* defeat compiler? */
+    val &= ~(IREG_CLOCK_ENAB_7 | IREG_CLOCK_ENAB_5);
+    set_interrupt_reg(val);	/* clear any pending interrupts */
+    val |= level_code;
+    set_interrupt_reg(val);	/* enable requested interrupt level if any */
+    val |= IREG_ALL_ENAB;
+    set_interrupt_reg(val);	/* enable all interrupts */
+    if (enable_clock)
+	intersil_enable();
+}
+#endif
+
+/*
+ * Set and/or clear the desired clock bits in the interrupt
+ * register.  We have to be extremely careful that we do it
+ * in such a manner that we don't get ourselves lost.
+ */
+set_clk_mode(on, off, enable)
+	u_char on, off;
+        int enable;
+{
+	register u_char interreg, dummy;
+	extern char *interrupt_reg;
+	/*
+	 * make sure that we are only playing w/ 
+	 * clock interrupt register bits
+	 */
+	on &= (IREG_CLOCK_ENAB_7 | IREG_CLOCK_ENAB_5);
+	off &= (IREG_CLOCK_ENAB_7 | IREG_CLOCK_ENAB_5);
+
+	/*
+	 * Get a copy of current interrupt register,
+	 * turning off any undesired bits (aka `off')
+	 */
+	interreg = *interrupt_reg & ~(off | IREG_ALL_ENAB);
+	*interrupt_reg &= ~IREG_ALL_ENAB;
+
+	/*
+	 * Next we turns off the CLK5 and CLK7 bits to clear
+	 * the flip-flops, then we disable clock interrupts.
+	 * Now we can read the clock's interrupt register
+	 * to clear any pending signals there.
+	 */
+	*interrupt_reg &= ~(IREG_CLOCK_ENAB_7 | IREG_CLOCK_ENAB_5);
+	intersil_clock->command_reg = intersil_command(INTERSIL_CMD_RUN,
+						       INTERSIL_CMD_IDISABLE);
+	dummy = intersil_clock->interrupt_reg;	/* clear clock */
+#ifdef lint
+	dummy = dummy;
+#endif
+
+	/*
+	 * Now we set all the desired bits
+	 * in the interrupt register, then
+	 * we turn the clock back on and
+	 * finally we can enable all interrupts.
+	 */
+	*interrupt_reg |= (interreg | on);		/* enable flip-flops */
+	if (enable)
+	    intersil_clock->command_reg =
+		intersil_command(INTERSIL_CMD_RUN,
+				 INTERSIL_CMD_IENABLE);
+	*interrupt_reg |= IREG_ALL_ENAB;		/* enable interrupts */
+}
 
 void clockattach(parent, self, args)
      struct device *parent;
@@ -75,6 +163,7 @@ void clockattach(parent, self, args)
     struct clock_softc *clock = (struct clock_softc *) self;
     struct obio_cf_loc *obio_loc = OBIO_LOC(self);
     caddr_t clock_addr;
+    int clock_intr();
 
     clock_addr = 
 	OBIO_DEFAULT_PARAM(caddr_t, obio_loc->obio_addr, OBIO_CLOCK);
@@ -85,10 +174,48 @@ void clockattach(parent, self, args)
 	return;
     }
     obio_print(clock_addr, clock->clock_level);
-/*    isr_add(level, leintr, unit);    */
+    if (clock->clock_level != 5) {
+	printf(": level != 5\n");
+	panic("clock");
+    }
     intersil_softc = clock;
+    printf("intersil_clock_addr = %x\n", intersil_clock);
+    printf("intersil_clock_counters = %x\n", &intersil_clock->counters);
+    printf("intersil_clock_ram = %x\n", &intersil_clock->ram);
+    printf("intersil_clock_interrupt = %x\n", &intersil_clock->interrupt_reg);
+    printf("intersil_clock_command = %x\n", &intersil_clock->command_reg);
+    intersil_disable();
+    printf("before clear level 7\n");
+    set_clk_mode(0, IREG_CLOCK_ENAB_7, 0);
+    printf("after clear level 7\n");
+    isr_add(clock->clock_level, clock_intr, 0);
+    printf("before enable level 5\n");
+    set_clk_mode(IREG_CLOCK_ENAB_5, 0, 0);
+    printf("after enable level 5\n");
     printf("\n");
 }
+
+int clock_count = 0;
+
+int clock_intr(unit)
+     int unit;
+{
+    unsigned int level_code;
+    unsigned int regval;
+    extern char *interrupt_reg;
+
+    if (unit) panic("clock interrupt on non-zero unit\n");
+    level_code = (intersil_softc->clock_level == 5 ?
+		  IREG_CLOCK_ENAB_5 : IREG_CLOCK_ENAB_7);
+    clock_count++;
+    regval = *interrupt_reg;
+    regval &= ~(level_code);
+    *interrupt_reg = regval;
+    *interrupt_reg |= level_code;
+    return 1;
+}
+
+
 /*
  * Machine-dependent clock routines.
  *
@@ -108,11 +235,14 @@ void clockattach(parent, self, args)
  */
 void startrtclock()
 {
+    printf("startrtclock(): begin\n");
     if (!intersil_softc)
 	panic("clock: not initialized");
+
+    intersil_clock->interrupt_reg = INTERSIL_INTER_CSECONDS;
     intersil_clock->command_reg = intersil_command(INTERSIL_CMD_RUN,
 						   INTERSIL_CMD_IDISABLE);
-    intersil_clock->interrupt_reg = INTERSIL_INTER_CSECONDS;
+    printf("startrtclock(): end\n");
 }
 
 void enablertclock()

@@ -168,7 +168,7 @@
 #define splsoftclock()  spl1()
 #define splnet()        spl3()
 #define splbio()        spl2()
-#define splimp()        spl5()
+#define splimp()        spl6()
 #define spltty()        spl6()
 #define splclock()      spl5()
 #define splvm()         spl2()

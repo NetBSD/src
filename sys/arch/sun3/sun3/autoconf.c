@@ -47,6 +47,13 @@ void mainbusattach(parent, self, args)
     }
 }
 
+int nmi_intr(arg)
+     int arg;
+{
+    printf("nmi interrupt received\n");
+    return 1;
+}
+
 void configure()
 {
     int root_found;
@@ -56,6 +63,8 @@ void configure()
     root_found = config_rootfound("mainbus", NULL);
     if (!root_found)
 	panic("configure: autoconfig failed, no device tree root found");
+    isr_add(7, nmi_intr, 0);
+    isr_cleanup();
 }
 
 int always_match(parent, cf, args)

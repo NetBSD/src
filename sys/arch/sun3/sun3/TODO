@@ -1,4 +1,7 @@
 	figure out stack issues
-	figure out how much of process.s we are going to rewrite because
-		we have a different mmu
-	
+	some interface to vector table useable by isr stuff, and by
+		trap stuff. would be nice only to turn traps on before
+		configure(), i.e before that let the monitor protect us.
+	proc initialization
+	interrupt register support/api
+	trap initialization

@@ -4,6 +4,11 @@
 					| remember this is a fun project :)
 
 
+.globl tmpstk
+.data
+.space NBPG
+tmpstk:
+
 .text
 .globl start; .globl _start
 
@@ -61,9 +66,13 @@ bsszero: clrl a0@
 	addql #4, a0
 	cmpl a0, a1
 	bne bsszero
-	movl #start, sp
+	movw #PSL_LOWIPL, sr		| nothing blocked
+	movl #tmpstk, sp
 	jsr _sun3_bootstrap
-	rts					|should never get here
+	movl #KSTACK_ADDR, a1		| proc0 kernel stack
+	lea a1@(UPAGES*NBPG-4),sp	| set kernel stack to end of area
+	jsr _main
+	rts				|should never get here
 .text
 /*
  * Icode is copied out to process 1 to exec init.
@@ -91,7 +100,6 @@ eicode:
 
 _szicode:
 	.long	_szicode-_icode
-
 #include "lib.s"
 #include "copy.s"
 #include "m68k.s"

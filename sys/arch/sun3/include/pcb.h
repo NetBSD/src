@@ -50,10 +50,10 @@ struct pcb
 {
 	short	pcb_flags;	/* misc. process flags (+0) */
 	short	pcb_ps; 	/* processor status word (+2) */
-	int	pcb_ustp;	/* user segment table pointer (+4) */
+	int	pcb_ustp;	/* user segment table pointer (+4) (not used)*/
 	int	pcb_usp;	/* user stack pointer (+8) */
 	int	pcb_regs[12];	/* D0-D7, A0-A7 (+C) */
-	int	pcb_cmap2;	/* temporary copy PTE */
+	vm_offset_t pcb_upte[3]; /* ptes for u-area */
 	caddr_t	pcb_onfault;	/* for copyin/out faults */
 	struct	fpframe pcb_fpregs; /* 68881/2 context save area */
 	int	pcb_exec[16];	/* exec structure for core dumps */

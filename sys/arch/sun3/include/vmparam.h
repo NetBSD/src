@@ -1,24 +1,24 @@
 
 #define USRTEXT         NBPG
-#define USRSTACK        (0-NBPG)
+#define USRSTACK        0x0E000000
 
 /*
  * Virtual memory related constants, all in bytes
  */
 #ifndef MAXTSIZ
-#define	MAXTSIZ		(6*1024*1024)		/* max text size */
+#define	MAXTSIZ		(8*1024*1024)		/* max text size */
 #endif
 #ifndef DFLDSIZ
 #define	DFLDSIZ		(8*1024*1024)		/* initial data size limit */
 #endif
 #ifndef MAXDSIZ
-#define	MAXDSIZ		(16*1024*1024)		/* max data size */
+#define	MAXDSIZ		(32*1024*1024)		/* max data size */
 #endif
 #ifndef	DFLSSIZ
 #define	DFLSSIZ		(512*1024)		/* initial stack size limit */
 #endif
 #ifndef	MAXSSIZ
-#define	MAXSSIZ		MAXDSIZ			/* max stack size */
+#define	MAXSSIZ		(MAXDSIZ)		/* max stack size */
 #endif
 
 /*
@@ -79,9 +79,9 @@
 /* user/kernel map constants */
 #define VM_MIN_ADDRESS		((vm_offset_t)0)
 #define VM_MAXUSER_ADDRESS	((vm_offset_t)0x0E000000)
-#define VM_MAX_ADDRESS		((vm_offset_t)0xFFF00000)
+#define VM_MAX_ADDRESS		((vm_offset_t)0x0FFF00000)
 #define VM_MIN_KERNEL_ADDRESS	((vm_offset_t)0x0E004000)
-#define VM_MAX_KERNEL_ADDRESS	((vm_offset_t)0x0FD00000) /* mon start */
+#define VM_MAX_KERNEL_ADDRESS	((vm_offset_t)0x0FD00000) /* dvma start */
 
 /* virtual sizes (bytes) for various kernel submaps */
 #define VM_MBUF_SIZE		(NMBCLUSTERS*MCLBYTES)

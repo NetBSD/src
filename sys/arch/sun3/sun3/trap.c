@@ -129,6 +129,7 @@ trap(type, code, v, frame)
 	unsigned ncode;
 	int s;
 
+	printf("trap type %d, code = %x, v = %x\n", type, code, v);
 	cnt.v_trap++;
 	syst = p->p_stime;
 	if (USERMODE(frame.f_sr)) {
@@ -288,6 +289,7 @@ copyfault:
 		break;
 
 	case T_ASTFLT:		/* system async trap, cannot happen */
+		printf("system async trap\n");
 		goto dopanic;
 
 	case T_ASTFLT|T_USER:	/* user async trap */
@@ -300,11 +302,13 @@ copyfault:
 		 * check.  Note that we ensure that we are at least at SIR
 		 * IPL while processing the SIR.
 		 */
+		printf("user async trap\n");
 		spl1();
 		/* fall into... */
 
 	case T_SSIR:		/* software interrupt */
 	case T_SSIR|T_USER:
+		printf("software interrupt\n");
 		if (ssir & SIR_NET) {
 			siroff(SIR_NET);
 			cnt.v_soft++;

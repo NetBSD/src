@@ -46,3 +46,4 @@ struct isr {
 
 void isr_init __P((void));
 void isr_add __P((int, int (*handler)(), int ));
+void isr_cleanup __P((void));

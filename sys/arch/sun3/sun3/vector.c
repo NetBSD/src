@@ -1,3 +1,4 @@
+#include "sys/systm.h"
 #include "vector.h"
 
 #define COPY_ENTRY16 COPY_ENTRY, COPY_ENTRY, COPY_ENTRY, COPY_ENTRY, \
@@ -88,4 +89,19 @@ unsigned int vector_table[NVECTORS] = {
     };
 
 
+void set_vector_entry(entry, handler)
+     int entry;
+     void (*handler)();
+{
+    if ((entry <0) || (entry >= NVECTORS))
+	panic("set_vector_entry: setting vector too high or low\n");
+    vector_table[entry] = (unsigned int) handler;
+}
 
+unsigned int get_vector_entry(entry)
+     int entry;
+{
+    if ((entry <0) || (entry >= NVECTORS))
+	panic("get_vector_entry: setting vector too high or low\n");
+    return vector_table[entry];
+}

@@ -1,8 +1,11 @@
 #include "systm.h"
 #include "param.h"
+#include "proc.h"
+#include "user.h"
 
 #include "vm/vm.h"
 
+#include "machine/control.h"
 #include "machine/cpufunc.h"
 #include "machine/cpu.h"
 #include "machine/mon.h"
@@ -10,9 +13,9 @@
 #include "machine/pte.h"
 #include "machine/pmap.h"
 #include "machine/idprom.h"
-#include "machine/frame.h"
 
 #include "vector.h"
+#include "interreg.h"
 
 unsigned int *old_vector_table;
 
@@ -28,6 +31,12 @@ struct msgbuf *msgbufp = NULL;
 caddr_t vmmap;
 extern vm_offset_t tmp_vpages[];
 extern int physmem;
+unsigned char *interrupt_reg;
+unsigned int orig_nmi_vector;
+vm_offset_t u_area_va;
+vm_offset_t u_area_pa;
+struct user *proc0paddr;
+extern struct pcb *curpcb;
 
 static void initialize_vector_table()
 {
@@ -40,7 +49,10 @@ static void initialize_vector_table()
 	    vector_table[i] = old_vector_table[i];
     }
     setvbr(vector_table);
+    orig_nmi_vector = get_vector_entry(VEC_LEVEL_7_INT);
+    mon_printf("orig_nmi_vector: %x\n", orig_nmi_vector);
     mon_printf("initializing vector table (ended)\n");
+    mon_printf("old vector table at %x\n", old_vector_table);
 }
 
 vm_offset_t high_segment_alloc(npages)
@@ -62,6 +74,16 @@ vm_offset_t high_segment_alloc(npages)
 
 void sun3_stop()
 {
+    unsigned int *new_vect;
+    mon_printf("sun3_stop: kernel ended deliberately\n");
+/*    set_clk_mode(0, IREG_CLOCK_ENAB_5);*/
+    mon_printf("sun3_stop: clock(0,0)\n");
+    setvbr(old_vector_table);
+    new_vect = getvbr();
+    printf("post: nmi vec %x\n", new_vect[VEC_LEVEL_7_INT]);
+/*    set_clk_mode(IREG_CLOCK_ENAB_7,0);*/
+    mon_printf("interrupt_reg_value: %x\n", *interrupt_reg);
+    mon_printf("sun3_stop: clock(7,1)\n");
     mon_exit_to_mon();
 }
 
@@ -102,6 +124,15 @@ void sun3_context_equiv()
     }
 }
 
+void u_area_bootstrap(u_va, u_pa)
+{
+    vm_offset_t pte_proto, pa, va;
+
+    pte_proto = PG_VALID|PG_WRITE|PG_SYSTEM|PG_NC;
+
+    for (va = u_va, pa = u_pa; va < u_va+NBPG*UPAGES; va+=NBPG, pa+=NBPG)
+	set_pte(va, pte_proto|PA_PGNUM(pa));
+}
 void sun3_vm_init()
 {
     unsigned int monitor_memory = 0;
@@ -195,10 +226,9 @@ void sun3_vm_init()
     high_segment_free_end = MONSHORTPAGE;
 
     for (va = high_segment_free_start; va < high_segment_free_end;
-	 va+= NBPG) {
+	 va+= NBPG) 
 	set_pte(va, PG_INVAL);
-    }
-
+    
     /*
      * unmap user virtual segments
      */
@@ -229,32 +259,33 @@ void sun3_vm_init()
     pmeg_steal(sme);
     eva = sun3_round_up_seg(virtual_avail);
 
-    /* msgbuf */
+    /* msgbuf, pg 0 */
     avail_end -= NBPG;
     msgbufp = (struct msgbuf *) virtual_avail;
     pte = PG_VALID | PG_WRITE |PG_SYSTEM | PG_NC | (avail_end >>PGSHIFT);
     set_pte((vm_offset_t) msgbufp, pte);
     msgbufmapped = 1;
 
-    /* cleaning rest of page */
+    /* cleaning rest of segment */
     virtual_avail +=NBPG;
     for (va = virtual_avail; va < eva; va += NBPG)
 	set_pte(va, PG_INVAL);
     
-    /* vmmap (used by /dev/mem */
+    /* vmmap (used by /dev/mem), pg 1*/
     vmmap = (caddr_t) virtual_avail;
     virtual_avail += NBPG;
 
     /*
      * vpages array:
      *   just some virtual addresses for temporary mappings
-     *   in the pmap module
+     *   in the pmap module (pg 2-3)
      */
 
     tmp_vpages[0] = virtual_avail;
     virtual_avail += NBPG;
     tmp_vpages[1] = virtual_avail;
     virtual_avail += NBPG;
+
 
     virtual_avail = eva;
 
@@ -270,8 +301,22 @@ void sun3_vm_init()
 	set_segmap(va, SEGINV);
 	va = sun3_round_up_seg(va);
     }
-
     sun3_context_equiv();
+
+    /* My sincere apologies for this crud -- glass*/
+    u_area_va = high_segment_alloc(UPAGES);
+    if (u_area_va != MONSHORTSEG) /* pg 3,4,5 */
+	mon_printf("sun3_vm_init: not at right location for upage\n");
+    avail_end -= UPAGES*NBPG;
+    u_area_pa = avail_end;
+    u_area_bootstrap(u_area_va, u_area_pa);
+    proc0paddr = (struct user *) u_area_va;
+    save_u_area(&proc0paddr->u_pcb, u_area_va); 
+    pte = get_pte(u_area_va);
+    printf(" u_area_pte: \n");
+    pte_print(pte);
+    curpcb = &proc0paddr->u_pcb;
+   /*    load_u_area(&proc0paddr->u_pcb);*/
 }
 
 void idprom_etheraddr(eaddrp)
@@ -289,7 +334,6 @@ void sun3_verify_hardware()
 {
     unsigned char arch;
     int cpu_match = 0;
-
 
     if (idprom_fetch(&identity_prom, IDPROM_VERSION))
 	mon_panic("idprom fetch failed\n");
@@ -435,17 +479,65 @@ void sun3_monitor_hooks()
 	*romp->vector_cmd = v_handler;
 }
 
+void pte_print(pte)
+     vm_offset_t pte;
+{
+    mon_printf("pte: ");
+    if (pte & PG_VALID) {
+	mon_printf("Valid ");
+	if (pte & PG_WRITE)
+	    mon_printf("Write ");
+	if (pte & PG_WRITE)
+	    mon_printf("Write ");
+	if (pte & PG_SYSTEM)
+	    mon_printf("System ");
+	if (pte & PG_NC)
+	    mon_printf("Nocache ");
+	if (pte & PG_ACCESS)
+	    mon_printf("Accessed ");
+
+	if (pte & PG_MOD)
+	    mon_printf("Modified ");
+	if (pte & PG_TYPE) {
+	    vm_offset_t tmp;
+	    tmp = pte >> PG_TYPE_SHIFT;
+	    if (tmp & PG_OBIO)
+		mon_printf("OBIO ");
+	    else if (tmp & PG_VME16D)
+		mon_printf("VME16D ");
+	    else if (tmp & PG_VME32D)
+		mon_printf("VME32D ");
+	}
+	mon_printf(" PA: %x\n", PG_PA(pte));
+    }
+}
+
+void set_interrupt_reg(value)
+     unsigned int value;
+{
+    *interrupt_reg = (unsigned char) value;
+}
+unsigned int get_interrupt_reg()
+{
+    vm_offset_t pte;
+    pte = get_pte(interrupt_reg);
+    mon_printf("interrupt reg %x ", pte);
+    pte_print(pte);
+    return (unsigned int) *interrupt_reg;
+}
 
 void sun3_bootstrap()
 {
     static char hello[] = "hello world";
     int i;
+    extern int cold, astpending;
 
     /*
      * would do bzero of bss here but our bzero only works <64k stuff
      * so we've bailed and done it in locore right before this routine :)
      */
 
+    cold = 1;
     mon_printf("%s\n", hello);
     mon_printf("\nPROM Version: %x\n", romp->romvecVersion);
 
@@ -462,8 +554,6 @@ void sun3_bootstrap()
     pmap_bootstrap();		/*  */
 
     internal_configure();	/* stuff that can't wait for configure() */
-
-    main();
-
-    mon_exit_to_mon();
+    
+    astpending =0;
 }

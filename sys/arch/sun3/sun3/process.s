@@ -105,7 +105,7 @@ pcbflag:
  */
 ENTRY(swtch_exit)
 	movl	#nullpcb,_curpcb	| save state into garbage pcb
-/*	lea	tmpstk,sp		| goto a tmp stack*/
+	lea	tmpstk,sp		| goto a tmp stack
 	jra	_swtch
 
 /*
@@ -128,16 +128,11 @@ Lbadsw:
 	jbsr	_panic
 	/*NOTREACHED*/
 
+
+.globl _load_u_area;
 /*
  * Swtch()
  *
- * NOTE: On the mc68851 (318/319/330) we attempt to avoid flushing the
- * entire ATC.  The effort involved in selective flushing may not be
- * worth it, maybe we should just flush the whole thing?
- *
- * NOTE 2: With the new VM layout we now no longer know if an inactive
- * user's PTEs have been changed (formerly denoted by the SPTECHG p_flag
- * bit).  For now, we just always flush the full ATC.
  */
 ENTRY(swtch)
 	movl	_curpcb,a0		| current pcb
@@ -208,7 +203,6 @@ Lsw2:
 	moveml	#0xFCFC,a1@(PCB_REGS)	| save non-scratch registers
 	movl	usp,a2			| grab USP (a2 has been saved)
 	movl	a2,a1@(PCB_USP)		| and save it
-/*	movl	_CMAP2,a1@(PCB_CMAP2)	| save temporary map PTE*/
 #ifdef FPCOPROC
 	lea	a1@(PCB_FPCTX),a2	| pointer to FP save area
 	fsave	a2@			| save FP state
@@ -229,7 +223,7 @@ Lswnofpsave:
 	movl	a0@(P_ADDR),a1		| get p_addr
 	movl	a1,_curpcb
 	movb	a1@(PCB_FLAGS+1),pcbflag | copy of pcb_flags low byte
-
+	
 	/* see if pmap_activate needs to be called; should remove this */
 	movl	a0@(P_VMSPACE),a0	| vmspace = p->p_vmspace
 #ifdef DIAGNOSTIC
@@ -237,8 +231,6 @@ Lswnofpsave:
 	jeq	Lbadsw			| panic
 #endif
 	lea	a0@(VM_PMAP),a0		| pmap = &vmspace.vm_pmap
-/*	tstl	a0@(PM_STCHG)		| pmap->st_changed?
-	jeq	Lswnochg		| no, skip */
 	pea	a1@			| push pcb (at p_addr)
 	pea	a0@			| push pmap
 	jbsr	_pmap_activate		| pmap_activate(pmap, pcb)
@@ -246,7 +238,9 @@ Lswnofpsave:
 	movl	_curpcb,a1		| restore p_addr
 Lswnochg:
 #if 0
-
+/* this stuff was ifdefed out because it can't work under our clock level
+ * configuration + it knows about the hp300 clock hardware
+ */
 #ifdef PROFTIMER
 #ifdef notdef
 	movw	#SPL6,sr		| protect against clock interrupts
@@ -261,55 +255,19 @@ Lswnochg:
 	movb	#0,a0@(CLKCR2)		| no, just user, select CR3
 	movb	#0,a0@(CLKCR3)		| and turn it off
 Lskipoff:
-#endif
-	movl	#PGSHIFT,d1
-	movl	a1,d0
-	lsrl	d1,d0			| convert p_addr to page number
-	lsll	#2,d0			| and now to Systab offset
-	addl	_Sysmap,d0		| add Systab base to get PTE addr
-#ifdef notdef
-	movw	#PSL_HIGHIPL,sr		| go crit while changing PTEs
-#endif
-/*	lea	tmpstk,sp		| now goto a tmp stack for NMI*/
-	movl	d0,a0			| address of new context
-	movl	_Umap,a2		| address of PTEs for kstack
-	moveq	#UPAGES-1,d0		| sizeof kstack
-Lres1:
-	movl	a0@+,d1			| get PTE
-	andl	#~PG_PROT,d1		| mask out old protection
-	orl	#PG_RW+PG_V,d1		| ensure valid and writable
-	movl	d1,a2@+			| load it up
-	dbf	d0,Lres1		| til done
-	movl	#CACHE_CLR,d0
-	movc	d0,cacr			| invalidate cache(s)
-#if defined(HP330) || defined(HP360) || defined(HP370)
-	tstl	_mmutype		| HP MMU?
-	jeq	Lhpmmu4			| yes, skip
-	pflusha				| flush entire TLB
-	movl	a1@(PCB_USTP),d0	| get USTP
-	moveq	#PGSHIFT,d1
-	lsll	d1,d0			| convert to addr
-	lea	_protorp,a0		| CRP prototype
-	movl	d0,a0@(4)		| stash USTP
-	pmove	a0@,crp			| load new user root pointer
-	jra	Lcxswdone		| thats it
-Lhpmmu4:	
-#endif
-#if defined(HP320) || defined(HP350)
-	MMUADDR(a0)
-	movl	a0@(MMUTBINVAL),d1	| invalidate TLB
-	tstl	_ectype			| got external VAC?
-	jle	Lnocache1		| no, skip
-	andl	#~MMU_CEN,a0@(MMUCMD)	| toggle cache enable
-	orl	#MMU_CEN,a0@(MMUCMD)	| to clear data cache
-Lnocache1:
-	movl	a1@(PCB_USTP),a0@(MMUUSTP) | context switch
-#endif
+#endif /* PROFTIMER */
+#endif /* if 0*/
+	pea 	a1@
+	jbsr    _load_u_area
+	addql	#8,sp	
+	movl	_curpcb,a1		| restore p_addr
+	lea	tmpstk,sp		| now goto a tmp stack for NMI
 Lcxswdone:
-/*	movl	a1@(PCB_CMAP2),_CMAP2	| reload tmp map*/
 	moveml	a1@(PCB_REGS),#0xFCFC	| and registers
 	movl	a1@(PCB_USP),a0
 	movl	a0,usp			| and USP
+#if 0
+/* profiling support currently borken */
 #ifdef PROFTIMER
 	tstl	a1@(U_PROFSCALE)	| process being profiled?
 	jeq	Lskipon			| no, do nothing
@@ -324,7 +282,9 @@ Lcxswdone:
 	movb	#0,a0@(CLKCR2)		| select CR3
 	movb	#64,a0@(CLKCR3)		| turn it on
 Lskipon:
-#endif
+#endif /*proftimer*/
+#endif /* if 0 */
+
 #ifdef FPCOPROC
 	lea	a1@(PCB_FPCTX),a0	| pointer to FP save area
 	tstb	a0@			| null state frame?
@@ -337,7 +297,7 @@ Lresfprest:
 	movw	a1@(PCB_PS),sr		| no, restore PS
 	moveq	#1,d0			| return 1 (for alternate returns)
 	rts
-#endif
+
 /*
  * savectx(pcb, altreturn)
  * Update pcb, saving current processor state and arranging
@@ -349,7 +309,6 @@ ENTRY(savectx)
 	movl	usp,a0			| grab USP
 	movl	a0,a1@(PCB_USP)		| and save it
 	moveml	#0xFCFC,a1@(PCB_REGS)	| save non-scratch registers
-/*	movl	_CMAP2,a1@(PCB_CMAP2)	| save temporary map PTE*/
 #ifdef FPCOPROC
 	lea	a1@(PCB_FPCTX),a0	| pointer to FP save area
 	fsave	a0@			| save FP state
@@ -362,7 +321,7 @@ Lsvnofpsave:
 	tstl	sp@(8)			| altreturn?
 	jeq	Lsavedone
 	movl	sp,d0			| relocate current sp relative to a1
-	subl	#_kstack,d0		|   (sp is relative to kstack):
+	subl	#KSTACK_ADDR,d0		|   (sp is relative to kstack):
 	addl	d0,a1			|   a1 += sp - kstack;
 	movl	sp@,a1@			| write return pc at (relocated) sp@
 Lsavedone:
