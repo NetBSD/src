@@ -1,6 +1,6 @@
 #ifndef LINT
 #if 0
-static const char rcsid[] = "$Header: /cvsroot/src/dist/dhcp/dst/Attic/dst_api.c,v 1.3 2002/12/06 04:02:49 thorpej Exp $";
+static const char rcsid[] = "$Header: /cvsroot/src/dist/dhcp/dst/Attic/dst_api.c,v 1.4 2004/10/29 21:19:32 dsl Exp $";
 #endif
 #endif
 
@@ -564,7 +564,7 @@ dst_s_read_public_key(const char *in_name, const unsigned in_id, int in_alg)
 	enckey[--len] = '\0';
 
 	/* remove leading spaces */
-	for (notspace = (char *) enckey; isspace(*notspace); len--)
+	for (notspace = enckey; isspace((unsigned char)*notspace); len--)
 		notspace++;
 
 	dlen = b64_pton(notspace, deckey, sizeof(deckey));

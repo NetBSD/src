@@ -1,4 +1,4 @@
-/*	$NetBSD: ftp.c,v 1.13 2003/09/02 22:57:30 itojun Exp $	*/
+/*	$NetBSD: ftp.c,v 1.14 2004/10/29 21:23:18 dsl Exp $	*/
 /*	$KAME: ftp.c,v 1.23 2003/08/19 21:20:33 itojun Exp $	*/
 
 /*
@@ -393,14 +393,14 @@ ftp_copyresult(int src, int dst, enum state state)
 	 */
 	p = rbuf;
 	for (i = 0; i < 3; i++) {
-		if (!isdigit(*p)) {
+		if (!isdigit((unsigned char)*p)) {
 			/* invalid reply */
 			write(dst, rbuf, n);
 			return n;
 		}
 		p++;
 	}
-	if (!isspace(*p)) {
+	if (!isspace((unsigned char)*p)) {
 		/* invalid reply */
 		write(dst, rbuf, n);
 		return n;
@@ -408,7 +408,7 @@ ftp_copyresult(int src, int dst, enum state state)
 	code = atoi(rbuf);
 	param = p;
 	/* param points to first non-command token, if any */
-	while (*param && isspace(*param))
+	while (*param && isspace((unsigned char)*param))
 		param++;
 	if (!*param)
 		param = NULL;
@@ -465,7 +465,7 @@ passivefail0:
 		 * PASV result -> LPSV/EPSV result
 		 */
 		p = param;
-		while (*p && *p != '(' && !isdigit(*p))	/*)*/
+		while (*p && *p != '(' && !isdigit((unsigned char)*p))	/*)*/
 			p++;
 		if (!*p)
 			goto passivefail0;	/*XXX*/
@@ -632,15 +632,15 @@ ftp_copycommand(int src, int dst, enum state *state)
 	p = rbuf;
 	q = cmd;
 	for (i = 0; i < 4; i++) {
-		if (!isalpha(*p)) {
+		if (!isalpha((unsigned char)*p)) {
 			/* invalid command */
 			write(dst, rbuf, n);
 			return n;
 		}
-		*q++ = islower(*p) ? toupper(*p) : *p;
+		*q++ = islower((unsigned char)*p) ? toupper((unsigned char)*p) : *p;
 		p++;
 	}
-	if (!isspace(*p)) {
+	if (!isspace((unsigned char)*p)) {
 		/* invalid command */
 		write(dst, rbuf, n);
 		return n;
@@ -648,7 +648,7 @@ ftp_copycommand(int src, int dst, enum state *state)
 	*q = '\0';
 	param = p;
 	/* param points to first non-command token, if any */
-	while (*param && isspace(*param))
+	while (*param && isspace((unsigned char)*param))
 		param++;
 	if (!*param)
 		param = NULL;
@@ -904,7 +904,7 @@ eprtparamfail:
 		passivemode = 0;	/* to be set to 1 later */
 		return n;
 	} else if (strcmp(cmd, "EPSV") == 0 && param
-	 && strncasecmp(param, "ALL", 3) == 0 && isspace(param[3])) {
+	 && strncasecmp(param, "ALL", 3) == 0 && isspace((unsigned char)param[3])) {
 		/*
 		 * EPSV ALL
 		 */
