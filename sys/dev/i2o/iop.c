@@ -1,4 +1,4 @@
-/*	$NetBSD: iop.c,v 1.5 2000/12/03 13:17:03 ad Exp $	*/
+/*	$NetBSD: iop.c,v 1.6 2000/12/03 13:34:37 ad Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -968,9 +968,7 @@ iop_lct_get0(struct iop_softc *sc, struct i2o_lct *lct, int size,
 }
 
 /*
- * Read the IOP's logical configuration table.  Access to our private copy
- * of the LCT must be serialized through sc_conflock; this copy should match
- * the current Un*x device configuration.
+ * Read the IOP's logical configuration table.
  */
 int
 iop_lct_get(struct iop_softc *sc)
