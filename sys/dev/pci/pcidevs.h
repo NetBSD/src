@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs.h,v 1.451 2002/07/03 16:51:36 msaitoh Exp $	*/
+/*	$NetBSD: pcidevs.h,v 1.452 2002/07/04 21:00:32 rjs Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.446 2002/06/27 09:50:06 pooka Exp 
+ *	NetBSD: pcidevs,v 1.448 2002/07/04 20:51:35 rjs Exp 
  */
 
 /*
@@ -54,6 +54,7 @@
  * List of known PCI vendors
  */
 
+#define	PCI_VENDOR_PEAK	0x001c		/* Peak System Technik */
 #define	PCI_VENDOR_MARTINMARIETTA	0x003d		/* Martin-Marietta Corporation */
 #define	PCI_VENDOR_HAUPPAUGE	0x0070		/* Hauppauge Computer Works */
 #define	PCI_VENDOR_COMPAQ	0x0e11		/* Compaq */
@@ -1730,6 +1731,9 @@
 
 /* PC Tech products */
 #define	PCI_PRODUCT_PCTECH_RZ1000	0x1000		/* RZ1000 */
+
+/* Peak System Technik products */
+#define	PCI_PRODUCT_PEAK_PCAN	0x0001		/* PCAN CAN controller */
 
 /* PLX Technology products */
 #define	PCI_PRODUCT_PLX_9060ES	0x906e		/* 9060ES PCI bus controller */
