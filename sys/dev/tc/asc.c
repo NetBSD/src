@@ -1,4 +1,4 @@
-/*	$NetBSD: asc.c,v 1.48 1998/10/10 00:28:30 thorpej Exp $	*/
+/*	$NetBSD: asc.c,v 1.49 1998/11/19 21:54:35 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -413,12 +413,6 @@ static void asc_timeout __P((void *arg));
 
 #ifdef USE_NEW_SCSI
 /* Glue to the machine-independent scsi */
-struct scsipi_adapter asc_switch = {
-	NULL, /* XXX - asc_scsi_cmd */
-/*XXX*/	minphys,		/* no max transfer size; DMA engine deals */
-	NULL,			/* scsipi_ioctl */
-};
-
 struct scsipi_device asc_dev = {
 /*XXX*/	NULL,			/* Use default error handler */
 /*XXX*/	NULL,			/* have a queue, served by this */
@@ -524,12 +518,18 @@ ascattach(asc, bus_speed)
 
 #ifdef USE_NEW_SCSI
 	/*
+	 * Fill in the adapter.
+	 */
+	asc->sc_adapter.scsipi_cmd = asc_scsi_cmd;
+	asc->sc_adapter.scsipi_minphys = minphys;
+
+	/*
 	 * fill in the prototype scsi_link.
 	 */
 	asc->sc_link.scsipi_scsi.channel = SCSI_CHANNEL_ONLY_ONE;
 	asc->sc_link.adapter_softc = asc;
 	asc->sc_link.scsipi_scsi.adapter_target = asc->sc_id;
-	asc->sc_link.adapter = &asc_switch;
+	asc->sc_link.adapter = &asc->sc_adapter;
 	asc->sc_link.device = &asc_dev;
 	asc->sc_link.openings = 2;
 	asc->sc_link.scsipi_scsi.max_target = 7;

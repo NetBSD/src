@@ -1,4 +1,4 @@
-/*	$NetBSD: ascvar.h,v 1.4 1997/11/28 18:23:40 mhitch Exp $	*/
+/*	$NetBSD: ascvar.h,v 1.5 1998/11/19 21:54:35 thorpej Exp $	*/
 
 
 /*
@@ -68,6 +68,7 @@ struct asc_softc {
 	int		tb_ticks;	/* 4ns. ticks/tb channel ticks */
 #ifdef USE_NEW_SCSI
 	struct scsipi_link sc_link;		/* scsipi link struct */
+	struct scsipi_adapter sc_adapter;
 #endif
 };
 typedef struct asc_softc *asc_softc_t;
