@@ -1,4 +1,4 @@
-$NetBSD: usbdevs,v 1.342 2003/09/28 07:14:56 jdolecek Exp $
+$NetBSD: usbdevs,v 1.343 2003/10/02 18:34:12 augustss Exp $
 
 /*
  * Copyright (c) 1998, 1999, 2000 The NetBSD Foundation, Inc.
@@ -791,6 +791,7 @@ product HP 930C			0x1204	DeskJet 930c
 product HP P2000U		0x1801	Inkjet P-2000U
 product HP 640C			0x2004	DeskJet 640c
 product HP P1100		0x3102	Photosmart P1100
+product HP 6127			0x3504	Deskjet 6127
 
 /* HP products */
 product HP2 C500		0x6002	PhotoSmart C500
