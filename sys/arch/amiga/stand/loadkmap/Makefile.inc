@@ -1,4 +1,4 @@
-# $NetBSD: Makefile.inc,v 1.7 1999/02/13 02:54:38 lukem Exp $
+# $NetBSD: Makefile.inc,v 1.8 1999/03/03 19:54:05 tron Exp $
 
 BINDIR=/usr/share/keymaps/amiga
 MKMAN=	no
@@ -7,7 +7,7 @@ CLEANFILES=${FILES}
 all: ${PROG} ${FILES}
 
 ${FILES}: ${PROG}
-	./${PROG} > ${FILES}
+	./${PROG} > $@
 
 # don't install ${PROG}
 proginstall::
