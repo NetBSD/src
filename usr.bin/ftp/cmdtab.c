@@ -1,4 +1,4 @@
-/*	$NetBSD: cmdtab.c,v 1.42 2004/06/06 01:37:41 christos Exp $	*/
+/*	$NetBSD: cmdtab.c,v 1.43 2004/07/15 08:50:10 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1996-2000 The NetBSD Foundation, Inc.
@@ -70,7 +70,7 @@
 #if 0
 static char sccsid[] = "@(#)cmdtab.c	8.4 (Berkeley) 10/9/94";
 #else
-__RCSID("$NetBSD: cmdtab.c,v 1.42 2004/06/06 01:37:41 christos Exp $");
+__RCSID("$NetBSD: cmdtab.c,v 1.43 2004/07/15 08:50:10 lukem Exp $");
 #endif
 #endif /* not lint */
 
@@ -221,7 +221,7 @@ struct cmd cmdtab[] = {
 	{ "get",	H(receivehelp),	1, 1, 1, CMPL(rl)	get },
 	{ "glob",	H(globhelp),	0, 0, 0, CMPL0		setglob },
 	{ "hash",	H(hashhelp),	0, 0, 0, CMPL0		sethash },
-	{ "H(help)",	H(helphelp),	0, 0, 1, CMPL(C)	help },
+	{ "help",	H(helphelp),	0, 0, 1, CMPL(C)	help },
 	{ "idle",	H(idlehelp),	0, 1, 1, CMPL0		idlecmd },
 	{ "image",	H(binaryhelp),	0, 1, 1, CMPL0		setbinary },
 	{ "lcd",	H(lcdhelp),	0, 0, 0, CMPL(l)	lcd },
@@ -269,7 +269,7 @@ struct cmd cmdtab[] = {
 	{ "rename",	H(renamehelp),	0, 1, 1, CMPL(rr)	renamefile },
 	{ "reset",	H(resethelp),	0, 1, 1, CMPL0		reset },
 	{ "restart",	H(restarthelp),	1, 1, 1, CMPL0		restart },
-	{ "H(rhelp)",	H(remotehelp),	0, 1, 1, CMPL0		rmthelp },
+	{ "rhelp",	H(remotehelp),	0, 1, 1, CMPL0		rmthelp },
 	{ "rmdir",	H(rmdirhelp),	0, 1, 1, CMPL(r)	removedir },
 	{ "rstatus",	H(rmtstatushelp),0, 1, 1, CMPL(r)	rmtstatus },
 	{ "runique",	H(runiquehelp),	0, 0, 1, CMPL0		setrunique },
