@@ -30,25 +30,28 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	@(#)profile.h	8.1 (Berkeley) 6/11/93
+ *	from: @(#)profile.h	8.1 (Berkeley) 6/11/93
+ *	$Id: profile.h,v 1.2 1994/05/13 10:40:19 mycroft Exp $
  */
 
 #define	_MCOUNT_DECL static inline void _mcount
 
 #define	MCOUNT \
-extern void mcount() asm("mcount");				\
-void								\
-mcount()							\
-{								\
-	int selfpc, frompcindex;				\
-	/*							\
-	 * find the return address for mcount,			\
-	 * and the return address for mcount's caller.		\
-	 *							\
-	 * selfpc = pc pushed by mcount call			\
-	 * frompcindex = pc pushed by call into self.		\
-	 */							\
-	asm("movl 4(%%ebp),%0;movl (%%ebp),%1;movl 4(%1),%1"	\
-	    : "=r" (selfpc), "=r" (frompcindex));		\
-	_mcount(frompcindex, selfpc);				\
+extern void mcount() asm("mcount");					\
+void									\
+mcount()								\
+{									\
+	int selfpc, frompcindex;					\
+	/*								\
+	 * find the return address for mcount,				\
+	 * and the return address for mcount's caller.			\
+	 *								\
+	 * selfpc = pc pushed by mcount call				\
+	 */								\
+	asm("movl 4(%%ebp),%0" : "=r" (selfpc));			\
+	/*								\
+	 * frompcindex = pc pushed by call into self.			\
+	 */								\
+	asm("movl (%%ebp),%1;movl 4(%1),%1" : "=r" (frompcindex));	\
+	_mcount(frompcindex, selfpc);					\
 }
