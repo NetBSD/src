@@ -1,4 +1,4 @@
-/* $NetBSD: wsmouse.c,v 1.4 1998/07/27 22:33:22 drochner Exp $ */
+/* $NetBSD: wsmouse.c,v 1.5 1998/12/30 14:02:18 augustss Exp $ */
 
 /*
  * Copyright (c) 1996, 1997 Christopher G. Demetriou.  All rights reserved.
@@ -33,7 +33,7 @@
 static const char _copyright[] __attribute__ ((unused)) =
     "Copyright (c) 1996, 1997 Christopher G. Demetriou.  All rights reserved.";
 static const char _rcsid[] __attribute__ ((unused)) =
-    "$NetBSD: wsmouse.c,v 1.4 1998/07/27 22:33:22 drochner Exp $";
+    "$NetBSD: wsmouse.c,v 1.5 1998/12/30 14:02:18 augustss Exp $";
 
 /*
  * Copyright (c) 1992, 1993
@@ -86,6 +86,7 @@ static const char _rcsid[] __attribute__ ((unused)) =
 #include <sys/param.h>
 #include <sys/conf.h>
 #include <sys/ioctl.h>
+#include <sys/fcntl.h>
 #include <sys/kernel.h>
 #include <sys/proc.h>
 #include <sys/syslog.h>
@@ -290,6 +291,10 @@ wsmouseopen(dev, flags, mode, p)
 	    (sc = wsmouse_cd.cd_devs[unit]) == NULL)
 		return (ENXIO);
 
+	if ((flags & (FREAD | FWRITE)) == FWRITE)
+		return (0);			/* always allow open for write
+						   so ioctl() is possible. */
+
 	if (sc->sc_events.io)			/* and that it's not in use */
 		return (EBUSY);
 
@@ -327,6 +332,9 @@ wsmouseclose(dev, flags, mode, p)
 	if (unit >= wsmouse_cd.cd_ndevs ||	/* make sure it was attached */
 	    (sc = wsmouse_cd.cd_devs[unit]) == NULL)
 		return (ENXIO);
+
+	if ((flags & (FREAD | FWRITE)) == FWRITE)
+		return (0);			/* see wsmouseopen() */
 
 	(*sc->sc_accessops->disable)(sc->sc_accesscookie);
 
