@@ -1,4 +1,4 @@
-/*	$NetBSD: msg.md.fr,v 1.4 1999/07/06 06:10:07 cgd Exp $	*/
+/*	$NetBSD: msg.md.fr,v 1.5 2000/12/03 01:54:49 minoura Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -39,6 +39,11 @@
 
 /* sparc machine dependent messages, french */
 
+
+message md_hello
+{Si vous avez démarré sur une disquette, vous pouvez maintenant la retirer.
+
+}
 
 message fullpart
 {Nous allons maintenant installer NetBSD sur votre disque %s. Vous devez

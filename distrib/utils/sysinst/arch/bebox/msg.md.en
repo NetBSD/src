@@ -1,4 +1,4 @@
-/*	$NetBSD: msg.md.en,v 1.9 2000/10/17 19:52:13 fvdl Exp $	*/
+/*	$NetBSD: msg.md.en,v 1.10 2000/12/03 01:54:48 minoura Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -37,6 +37,11 @@
  */
 
 /* MD Message catalog -- english, bebox version */
+
+message md_hello
+{If you booted from a floppy, you may now remove the disk.
+
+}
 
 message fullpart
 {We are now going to install NetBSD on the disk %s.  You may

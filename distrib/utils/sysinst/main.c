@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.22 2000/10/11 23:47:56 fvdl Exp $	*/
+/*	$NetBSD: main.c,v 1.23 2000/12/03 01:54:46 minoura Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -152,6 +152,8 @@ toplevel()
 
 	/* Display banner message in (english, francais, deutsch..) */
 	msg_display(MSG_hello);
+	msg_display_add(MSG_md_hello);
+	msg_display_add(MSG_thanks);
 
 	/* 
 	 * Undo any stateful side-effects of previous menu choices.

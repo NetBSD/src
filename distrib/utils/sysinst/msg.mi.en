@@ -1,4 +1,4 @@
-/*	$NetBSD: msg.mi.en,v 1.76 2000/11/15 20:07:39 tv Exp $	*/
+/*	$NetBSD: msg.mi.en,v 1.77 2000/12/03 01:54:46 minoura Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -65,9 +65,10 @@ In the following menus, you may change the current selection by
 either typing the reference letter (a, b, c, ...).  Arrow keys may also work.
 You activate the current selection from the menu by typing the enter key.
 
-If you booted from a floppy, you may now remove the disk.
+}
 
-Thank you for using NetBSD!
+message thanks
+{Thank you for using NetBSD!
 }
 
 message installusure
