@@ -303,7 +303,8 @@ DATA_SET(_openpam_static_modules, _pam_module)
 #endif
 
 #if defined(__NetBSD__)
-# define PAM_SOEXT ".so"
+# define PAM_SOEXT	".so"
+# define PAM_SOPREFIX	"/usr/lib/security/"
 # if !defined(__GNUC__) || defined(NO_STATIC_MODULES)
 #  undef OPENPAM_STATIC_MODULE  /* disable static module macros */
 #  undef OPENPAM_STATIC_MODULES /* disable static module support in libpam */
@@ -321,6 +322,10 @@ static struct pam_module _pam_module = { _pam_name, {			\
     NULL, 0, NULL, NULL };						\
 __link_set_add_data(_openpam_static_modules, _pam_module)
 # endif
+#endif
+
+#if !defined(PAM_SOPREFIX)
+#define	PAM_SOPREFIX		""
 #endif
 
 #if !defined(OPENPAM_STATIC_MODULE)
