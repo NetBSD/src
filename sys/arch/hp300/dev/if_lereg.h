@@ -31,7 +31,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)if_lereg.h	7.1 (Berkeley) 5/8/90
- *	$Id: if_lereg.h,v 1.2 1993/05/22 07:56:25 cgd Exp $
+ *	$Id: if_lereg.h,v 1.3 1994/02/05 05:07:00 mycroft Exp $
  */
 
 #define	LEID		21
@@ -71,8 +71,7 @@ struct lereg2 {
 	/* init block */
 	u_short	ler2_mode;		/* +0x0000 */
 	u_char	ler2_padr[6];		/* +0x0002 */
-	u_long	ler2_ladrf0;		/* +0x0008 */
-	u_long	ler2_ladrf1;		/* +0x000C */
+	u_long	ler2_ladrf[2];		/* +0x0008 */
 	u_short	ler2_rdra;		/* +0x0010 */
 	u_short	ler2_rlen;		/* +0x0012 */
 	u_short	ler2_tdra;		/* +0x0014 */
