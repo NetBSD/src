@@ -6,7 +6,7 @@
 .\" *** DO NOT EDIT - any changes will be lost!!!
 .\" *** ------------------------------------------------------------------
 .\"
-.\" $NetBSD: MAKEDEV.8,v 1.9 2004/01/14 20:44:48 jdolecek Exp $
+.\" $NetBSD: MAKEDEV.8,v 1.10 2004/01/25 14:00:57 bjh21 Exp $
 .\"
 .\" Copyright (c) 2001, 2003 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -42,7 +42,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd January 14, 2004
+.Dd January 25, 2004
 .Dt MAKEDEV 8
 .Os
 .Sh NAME
@@ -414,6 +414,7 @@ First 2 ptys, for install media use only
 Archimedes parallel port
 . It Ar lpt#
 Stock lp, see
+.Xr \&lpt 4 ,
 .Xr \&acorn32/lpt 4 ,
 .Xr \&i386/lpt 4 ,
 .Xr \&mvme68k/lpt 4 ,
@@ -535,9 +536,6 @@ Power management device, see
 . It Ar audio#
 Audio devices, see
 .Xr \&audio 4
-. It Ar beep
-PC speaker, see
-.Xr \&acorn32/beep 4
 . It Ar bell#
 OPM bell device (x68k)
 . It Ar bktr
