@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# $NetBSD: newsyslog,v 1.1 2000/09/21 10:38:04 ad Exp $
+# $NetBSD: newsyslog,v 1.2 2001/08/18 19:50:19 ad Exp $
 #
 
 # PROVIDE: newsyslog
@@ -10,6 +10,7 @@
 . /etc/rc.subr
 
 name="newsyslog"
+rcvar=$name
 required_files="/etc/newsyslog.conf"
 start_precmd="checkyesno newsyslog"
 start_cmd="newsyslog_start"
