@@ -118,11 +118,15 @@ into the NetBSD _VER release. Some of the significant changes include:
 
 	All ports now use "new" config. Old config has been laid to rest.
 
-	The arp subsystem and API has been rewritten to detach it from
-	being very ethernet-centric.
+	The ARP subsystem and API has been rewritten to make it less
+	ethernet-centric.
 
-	Many kernel interface manuals have been written and added to
-	manual section 9.
+	A new if_media subsystem has been added which allows network
+	interfaces to be configured using media type names rather than
+	device-specific mode bits.
+
+	Many kernel interface manual pages have been added to manual
+	section 9.
 
 	Several ports support much more hardware.
 
@@ -235,38 +239,44 @@ NetBSD _VER has a binary distribution.  There are also
 'README.export-control' files sprinkled liberally throughout the
 distribution tree, which point out that there are some portions of the
 distribution (i.e. the `domestic' portion) that may be subject to
-export regulations of the United States, and that it is your
-responsibility should you choose to export these portions.
+export regulations of the United States.   It is your responsibility
+to determine whether or not it is legal for you to export these portions
+and to act accordingly.
 
 The source distribution sets can be found in subdirectories of the
 "source" subdirectory of the distribution tree.  They contain the 
 complete sources to the system.  The source distribution sets 
 are as follows:
 
-	dsrc13	This set contains the "domestic" sources.  These
+	secrsrc.tgz:
+		This set contains the "domestic" sources.  These
 		sources may be subject to United States export
 		regulations.
-		[ 140K gzipped, 655K uncompressed ] /* XXX */
+		[  412K gzipped,  1.8M uncompressed ]
 
-	gsrc13	This set contains the "gnu" sources, including
+	gnusrc.tgz:
+		This set contains the "gnu" sources, including
 		the source for the compiler, assembler, groff,
 		and the other GNU utilities in the binary distribution
 		sets.
-		[ 7.1M gzipped, 30.4M uncompressed ] /* XXX */
+		[ 15.6M gzipped, 66.4M uncompressed ]
 
-	ksrc13	This set contains the sources to the NetBSD _VER
+	syssrc.tgz:
+		This set contains the sources to the NetBSD _VER
 		kernel, config(8), and dbsym(8).
-		[ 6.0M gzipped, 27.0M uncompressed ] /* XXX */
+		[ 10.7M gzipped, 50.0M uncompressed ]
 
-	ssrc13	This set contains the "share" sources, which include
+	sharesrc.tgz:
+		This set contains the "share" sources, which include
 		the sources for the man pages not associated with
 		any particular program, the sources for the
 		typesettable document set, the dictionaries, and more.
-		[ 2.4M gzipped, 8.9M uncompressed ] /* XXX */
+		[  2.9M gzipped, 11.1M uncompressed ]
 
-	src13	This set contains all of the NetBSD _VER sources which
+	src.tgz:
+		This set contains all of the NetBSD _VER sources which
 		are not mentioned above.
-		[ 9.3M gzipped, 41.6M uncompressed ] /* XXX */
+		[ 13.9M gzipped, 60.7M uncompressed ]
 
 It is worth noting that unless all of the source distribution sets
 are installed (except the domestic set), you can't rebuild and install
@@ -274,29 +284,43 @@ the system from scratch, straight out of the box.  However, all that is
 required to rebuild the system in that case is a trivial modification 
 to one Makefile.
 
-The source distribution sets are distributed as groups of files named
-"set_name.xx" where "set_name" is the distribution set name, and "xx"
-is the sequence number of the file, starting with "aa" for the first
-file in the distribution set, then "ab" for the next, and so on.  All
-of these files except the last one of each set should be exactly
-240,640 bytes long.  (The last file is just long enough to contain the
-remainder of the data for that distribution set.)
+Most of the above source sets are located in the source/sets
+subdirectory of the distribution tree. The secrsrc.tgz set is
+contained in the source/security subdirectory. This set, which is
+available only to users in the United States and Canada, contains the
+sources normally found in /usr/src/domestic -- primarily kerberos and
+other cryptographic security related software. (Remember, because of
+United States law, it may not be legal to distribute this set to
+locations outside of the United States and Canada.)
 
-Catted together, the files belonging to a source distribution set 
-comprise a gzipped tar file.  If you want to look at list of the files
-contained in the set, you could use the command:
+The source sets are distributed as compressed tar files. They may be
+unpacked into /usr/src with the command:
 
-	cat set_name.?? | gunzip | tar tvf -
+	cat set_name.tgz | gunzip | (cd /; tar xpf - )
 
-or to actually extract the files contained in the set:
+The sets/Split/ and security/Split/ subdirectories contain split
+versions of the source sets for those users who need to load the
+source sets from floppy or otherwise need a split distribution. The
+split sets are are named "set_name.xx" where "set_name" is the
+distribution set name, and "xx" is the sequence number of the file,
+starting with "aa" for the first file in the distribution set, then
+"ab" for the next, and so on.  All of these files except the last one
+of each set should be exactly 240,640 bytes long.  (The last file is
+just long enough to contain the remainder of the data for that
+distribution set.)
 
-	cat set_name.?? | gunzip | tar xpf -
+The split distributions may be reassembled and extracted with "cat" as
+follows:
+
+	cat set_name.??  | gunzip | (cd /; tar xpf - )
 
 In each of the source distribution set directories, there is a file
 named "CKSUMS" which contains the checksums of the files in that
 directory, as generated by the cksum(1) utility.  You can use cksum to
 check the integrity of the archives, if you suspect that one of the
-files is corrupt and have access to a cksum binary.
+files is corrupt and have access to a cksum binary. Checksums based on
+other algorithms may also be present -- see the release(7) man page
+for details.
 
 #include "contents"
 
