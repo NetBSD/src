@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_synch.c,v 1.133 2003/07/17 18:16:59 fvdl Exp $	*/
+/*	$NetBSD: kern_synch.c,v 1.134 2003/07/18 01:02:31 matt Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
@@ -78,7 +78,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_synch.c,v 1.133 2003/07/17 18:16:59 fvdl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_synch.c,v 1.134 2003/07/18 01:02:31 matt Exp $");
 
 #include "opt_ddb.h"
 #include "opt_ktrace.h"
@@ -1177,6 +1177,16 @@ suspendsched()
 #ifndef __HAVE_MD_RUNQUEUE
 
 /*
+ * On some architectures, it's faster to use a MSB ordering for the priorites
+ * than the traditional LSB ordering.
+ */
+#ifdef __HAVE_BIGENDIAN_BITOPS
+#define	RQMASK(n) (0x80000000 >> (n))
+#else
+#define	RQMASK(n) (0x00000001 << (n))
+#endif
+
+/*
  * The primitives that manipulate the run queues.  whichqs tells which
  * of the 32 queues qs have processes in them.  Setrunqueue puts processes
  * into queues, remrunqueue removes them from queues.  The running process is
@@ -1190,14 +1200,13 @@ setrunqueue(struct lwp *l)
 {
 	struct prochd *rq;
 	struct lwp *prev;
-	int whichq;
+	const int whichq = l->l_priority / 4;
 
 #ifdef DIAGNOSTIC
 	if (l->l_back != NULL || l->l_wchan != NULL || l->l_stat != LSRUN)
 		panic("setrunqueue");
 #endif
-	whichq = l->l_priority / 4;
-	sched_whichqs |= (1 << whichq);
+	sched_whichqs |= RQMASK(whichq);
 	rq = &sched_qs[whichq];
 	prev = rq->ph_rlink;
 	l->l_forw = (struct lwp *)rq;
@@ -1210,11 +1219,9 @@ void
 remrunqueue(struct lwp *l)
 {
 	struct lwp *prev, *next;
-	int whichq;
-
-	whichq = l->l_priority / 4;
+	const int whichq = l->l_priority / 4;
 #ifdef DIAGNOSTIC
-	if (((sched_whichqs & (1 << whichq)) == 0))
+	if (((sched_whichqs & RQMASK(whichq)) == 0))
 		panic("remrunqueue");
 #endif
 	prev = l->l_back;
@@ -1223,7 +1230,8 @@ remrunqueue(struct lwp *l)
 	prev->l_forw = next;
 	next->l_back = prev;
 	if (prev == next)
-		sched_whichqs &= ~(1 << whichq);
+		sched_whichqs &= ~RQMASK(whichq);
 }
 
-#endif
+#undef RQMASK
+#endif /* !defined(__HAVE_MD_RUNQUEUE) */
