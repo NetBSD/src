@@ -1,4 +1,4 @@
-/*	$NetBSD: isa_machdep.c,v 1.19.2.3 1997/05/18 23:39:55 thorpej Exp $	*/
+/*	$NetBSD: isa_machdep.c,v 1.19.2.4 1997/05/24 20:12:27 thorpej Exp $	*/
 
 #define ISA_DMA_STATS
 
@@ -380,6 +380,9 @@ isa_intr_establish(ic, irq, type, level, ih_fun, ih_arg)
 		panic("intr_establish: bogus irq or type");
 
 	switch (intrtype[irq]) {
+	case IST_NONE:
+		intrtype[irq] = type;
+		break;
 	case IST_EDGE:
 	case IST_LEVEL:
 		if (type == intrtype[irq])
