@@ -1,4 +1,4 @@
-/*	$NetBSD: procfs_vnops.c,v 1.73 2000/08/09 21:08:11 tv Exp $	*/
+/*	$NetBSD: procfs_vnops.c,v 1.74 2000/08/09 23:30:49 tv Exp $	*/
 
 /*
  * Copyright (c) 1993 Jan-Simon Pendry
@@ -73,6 +73,10 @@
  *
  */
 
+#ifdef COMPAT_LINUX
+static int procfs_validfile_linux __P((struct proc *));
+#endif
+
 /*
  * This is a list of the valid names in the
  * process-specific sub-directories.  It is
@@ -100,7 +104,7 @@ struct proc_target {
 	{ DT_REG, N("map"),	Pmap,		procfs_validmap },
 	{ DT_REG, N("cmdline"), Pcmdline,	NULL },
 #ifdef COMPAT_LINUX
-	{ DT_REG, N("exe"),	Pfile,		procfs_validfile },
+	{ DT_REG, N("exe"),	Pfile,		procfs_validfile_linux },
 #endif
 #undef N
 };
@@ -833,9 +837,17 @@ int
 procfs_validfile(p)
 	struct proc *p;
 {
-
 	return (procfs_findtextvp(p) != NULLVP);
 }
+
+#ifdef COMPAT_LINUX
+static int
+procfs_validfile_linux(p)
+	struct proc *p;
+{
+	return (!strcmp("linux", p->p_emul->e_name) && procfs_validfile(p));
+}
+#endif
 
 /*
  * readdir returns directory entries from pfsnode (vp).
