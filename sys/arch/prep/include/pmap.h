@@ -1,6 +1,6 @@
-/*	$NetBSD: pmap.h,v 1.2 2001/06/17 16:01:29 nonaka Exp $	*/
+/*	$NetBSD: pmap.h,v 1.3 2002/03/09 23:35:59 chs Exp $	*/
 
-#ifdef NEWPMAP
+#ifndef OLDPMAP
 #include <powerpc/mpc6xx/pmap.h>
 #else
 #include <powerpc/pmap.h>
