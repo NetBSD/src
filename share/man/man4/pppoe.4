@@ -1,4 +1,4 @@
-.\"	$NetBSD: pppoe.4,v 1.21 2003/04/19 10:56:51 wiz Exp $
+.\"	$NetBSD: pppoe.4,v 1.22 2003/05/14 07:59:01 wiz Exp $
 .\"
 .\" Copyright (c) 2002 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -162,7 +162,7 @@ map pppoe0 192.168.1.0/24 -\*[Gt] 0/32 portmap tcp/udp 44000:49999 mssclamp 1440
 map pppoe0 192.168.1.0/24 -\*[Gt] 0/32 mssclamp 1440
 .Ed
 .Pp
-If you do not use NAT, you need to setup a 1:1 NAT rule, just to
+If you do not use NAT, you need to set up a 1:1 NAT rule, just to
 get the clamping:
 .Bd -literal -offset indent
 map pppoe0 x.x.x.x/24 -\*[Gt] 0/0 mssclamp 1440
