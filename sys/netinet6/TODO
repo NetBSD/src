@@ -1,5 +1,5 @@
 KAME/NetBSD integration TODOs
-$NetBSD: TODO,v 1.3 1999/07/02 07:16:29 itojun Exp $
+$NetBSD: TODO,v 1.4 1999/07/02 07:36:33 itojun Exp $
 Jun-ichiro itojun Hagino <itojun@itojun.org>
 
 
@@ -107,11 +107,6 @@ KAME code introduces 5 mbuf flags, which should be decreased.  M_ANYCAST6
 is local to IPv6 code so it should be M_PROTO0 or something like that.
 Others (IPsec items) are used across IPv4 and IPv6 so they cannot be in
 M_PROTO0 kind of thing.
-
-* tcp6 TIME_WAIT
-
-Due to some mistake in my update, all the tcp6 connections are treated like
-SO_REUSEPORT is on.  I'll be fixing this.
 
 * s/splnet/splsoftnet/
 
