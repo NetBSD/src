@@ -1,4 +1,4 @@
-/*	$NetBSD: if_le.c,v 1.22 2000/07/25 20:52:27 scw Exp $	*/
+/*	$NetBSD: if_le.c,v 1.23 2000/09/15 08:50:24 scw Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -210,7 +210,7 @@ le_pcc_attach(parent, self, aux)
 	sc->sc_memsize = ether_data_buff_size;
 	sc->sc_conf3 = LE_C3_BSWP;
 
-	myetheraddr(sc->sc_enaddr);
+	memcpy(sc->sc_enaddr, mvme_ea, ETHER_ADDR_LEN);
 
 	sc->sc_copytodesc = lance_copytobuf_contig;
 	sc->sc_copyfromdesc = lance_copyfrombuf_contig;
