@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_machdep.c,v 1.21 2001/04/24 04:31:06 thorpej Exp $	*/
+/*	$NetBSD: vm_machdep.c,v 1.22 2001/05/13 16:55:40 chs Exp $	*/
 
 /*
  * This file was taken from mvme68k/mvme68k/vm_machdep.c
@@ -100,7 +100,6 @@ cpu_fork(p1, p2, stack, stacksize, func, arg)
 	struct trapframe *tf;
 	struct switchframe *sf;
 	extern struct pcb *curpcb;
-	extern void proc_trampoline();
 
 	p2->p_md.md_flags = p1->p_md.md_flags & ~MDP_HPUXTRACE;
 
@@ -133,25 +132,6 @@ cpu_fork(p1, p2, stack, stacksize, func, arg)
 	pcb->pcb_regs[6] = (int)func;		/* A2 */
 	pcb->pcb_regs[7] = (int)arg;		/* A3 */
 	pcb->pcb_regs[11] = (int)sf;		/* SSP */
-}
-
-/*
- * Arrange for in-kernel execution of a process to continue at the
- * named pc, as if the code at that address were called as a function
- * with argument, the current process's process pointer.
- *
- * Note that it's assumed that when the named process returns, rei()
- * should be invoked, to return to user mode.
- */
-void
-cpu_set_kpc(p, pc, arg)
-	struct proc *p;
-	void (*pc) __P((void *));
-	void *arg;
-{
-
-	p->p_addr->u_pcb.pcb_regs[6] = (u_long) pc;	/* A2 */
-	p->p_addr->u_pcb.pcb_regs[7] = (u_long) arg;	/* A3 */
 }
 
 /*
@@ -259,115 +239,6 @@ pagemove(from, to, size)
 		size -= PAGE_SIZE;
 	}
 	pmap_update();
-}
-
-/*
- * Map `size' bytes of physical memory starting at `paddr' into
- * kernel VA space at `vaddr'.  Read/write and cache-inhibit status
- * are specified by `prot'.
- */ 
-void
-physaccess(vaddr, paddr, size, prot)
-	caddr_t vaddr, paddr;
-	int size, prot;
-{
-	pt_entry_t *pte;
-	u_int page;
-
-	pte = kvtopte(vaddr);
-	page = (u_int)paddr & PG_FRAME;
-	for (size = btoc(size); size; size--) {
-		*pte++ = PG_V | prot | page;
-		page += NBPG;
-	}
-	TBIAS();
-}
-
-void
-physunaccess(vaddr, size)
-	caddr_t vaddr;
-	int size;
-{
-	pt_entry_t *pte;
-
-	pte = kvtopte(vaddr);
-	for (size = btoc(size); size; size--)
-		*pte++ = PG_NV;
-	TBIAS();
-}
-
-/*
- * Allocate/deallocate a cache-inhibited range of kernel virtual address
- * space mapping the indicated physical range [pa - pa+size].
- */
-void *
-iomap(paddr, size)
-	u_long paddr;
-	size_t size;
-{
-	u_long pa, off;
-	vaddr_t va, rval;
-
-	off = paddr & PGOFSET;
-	pa = m68k_trunc_page(paddr);
-	size += off;
-	size = m68k_round_page(size);
-
-	/* Get some kernel virtual space. */
-	va = uvm_km_alloc(kernel_map, size);
-	if (va == 0)
-		return (NULL);
-	rval = va + off;
-
-	/* Map the PA range. */
-	physaccess((caddr_t)va, (caddr_t)pa, size, PG_RW|PG_CI);
-
-	return ((void *)rval);
-}
-
-void
-iounmap(kva, size)
-	void *kva;
-	size_t size;
-{
-	vaddr_t va;
-
-	va = m68k_trunc_page((vaddr_t)kva);
-	size = m68k_round_page(size);
-
-	physunaccess((caddr_t)va, size);
-	uvm_km_free(kernel_map, va, size);
-}
-
-/*
- * Set a red zone in the kernel stack after the u. area.
- * We don't support a redzone right now.  It really isn't clear
- * that it is a good idea since, if the kernel stack were to roll
- * into a write protected page, the processor would lock up (since
- * it cannot create an exception frame) and we would get no useful
- * post-mortem info.  Currently, under the DEBUG option, we just
- * check at every clock interrupt to see if the current k-stack has
- * gone too far (i.e. into the "redzone" page) and if so, panic.
- * Look at _lev6intr in locore.s for more details.
- */
-/*ARGSUSED*/
-setredzone(pte, vaddr)
-	pt_entry_t *pte;
-	caddr_t vaddr;
-{
-}
-
-/*
- * Convert kernel VA to physical address
- */
-kvtop(addr)
-	caddr_t addr;
-{
-	paddr_t pa;
-
-	if (pmap_extract(pmap_kernel(), (vaddr_t)addr, &pa) == FALSE)
-		panic("kvtop: zero page frame");
-	return((int)pa);
 }
 
 extern vm_map_t phys_map;

@@ -1,4 +1,4 @@
-/*	$NetBSD: nextdma.c,v 1.27 2001/04/17 03:42:25 dbj Exp $	*/
+/*	$NetBSD: nextdma.c,v 1.28 2001/05/13 16:55:38 chs Exp $	*/
 /*
  * Copyright (c) 1998 Darrin B. Jewell
  * All rights reserved.
@@ -445,15 +445,15 @@ next_dma_print(nd)
 	/* NDMAP is Next DMA Print (really!) */
 
 	if (nd->_nd_map) {
-		printf("NDMAP: nd->_nd_map->dm_mapsize = %d\n",
+		printf("NDMAP: nd->_nd_map->dm_mapsize = %ld\n",
 				nd->_nd_map->dm_mapsize);
 		printf("NDMAP: nd->_nd_map->dm_nsegs = %d\n",
 				nd->_nd_map->dm_nsegs);
-		printf("NDMAP: nd->_nd_map->dm_xfer_len = %d\n",
+		printf("NDMAP: nd->_nd_map->dm_xfer_len = %ld\n",
 				nd->_nd_map->dm_xfer_len);
 		printf("NDMAP: nd->_nd_map->dm_segs[%d].ds_addr = 0x%08lx\n",
 				nd->_nd_idx,nd->_nd_map->dm_segs[nd->_nd_idx].ds_addr);
-		printf("NDMAP: nd->_nd_map->dm_segs[%d].ds_len = %d\n",
+		printf("NDMAP: nd->_nd_map->dm_segs[%d].ds_len = %ld\n",
 				nd->_nd_idx,nd->_nd_map->dm_segs[nd->_nd_idx].ds_len);
 		{
 			int i;
@@ -461,7 +461,7 @@ next_dma_print(nd)
 			for(i=0;i<nd->_nd_map->dm_nsegs;i++) {
 				printf("NDMAP:   nd->_nd_map->dm_segs[%d].ds_addr = 0x%08lx\n",
 						i,nd->_nd_map->dm_segs[i].ds_addr);
-				printf("NDMAP:   nd->_nd_map->dm_segs[%d].ds_len = %d\n",
+				printf("NDMAP:   nd->_nd_map->dm_segs[%d].ds_len = %ld\n",
 						i,nd->_nd_map->dm_segs[i].ds_len);
 			}
 		}
@@ -469,15 +469,15 @@ next_dma_print(nd)
 		printf("NDMAP: nd->_nd_map = NULL\n");
 	}
 	if (nd->_nd_map_cont) {
-		printf("NDMAP: nd->_nd_map_cont->dm_mapsize = %d\n",
+		printf("NDMAP: nd->_nd_map_cont->dm_mapsize = %ld\n",
 				nd->_nd_map_cont->dm_mapsize);
 		printf("NDMAP: nd->_nd_map_cont->dm_nsegs = %d\n",
 				nd->_nd_map_cont->dm_nsegs);
-		printf("NDMAP: nd->_nd_map_cont->dm_xfer_len = %d\n",
+		printf("NDMAP: nd->_nd_map_cont->dm_xfer_len = %ld\n",
 				nd->_nd_map_cont->dm_xfer_len);
 		printf("NDMAP: nd->_nd_map_cont->dm_segs[%d].ds_addr = 0x%08lx\n",
 				nd->_nd_idx_cont,nd->_nd_map_cont->dm_segs[nd->_nd_idx_cont].ds_addr);
-		printf("NDMAP: nd->_nd_map_cont->dm_segs[%d].ds_len = %d\n",
+		printf("NDMAP: nd->_nd_map_cont->dm_segs[%d].ds_len = %ld\n",
 				nd->_nd_idx_cont,nd->_nd_map_cont->dm_segs[nd->_nd_idx_cont].ds_len);
 		if (nd->_nd_map_cont != nd->_nd_map) {
 			int i;
@@ -485,7 +485,7 @@ next_dma_print(nd)
 			for(i=0;i<nd->_nd_map_cont->dm_nsegs;i++) {
 				printf("NDMAP:   nd->_nd_map_cont->dm_segs[%d].ds_addr = 0x%08lx\n",
 						i,nd->_nd_map_cont->dm_segs[i].ds_addr);
-				printf("NDMAP:   nd->_nd_map_cont->dm_segs[%d].ds_len = %d\n",
+				printf("NDMAP:   nd->_nd_map_cont->dm_segs[%d].ds_len = %ld\n",
 						i,nd->_nd_map_cont->dm_segs[i].ds_len);
 			}
 		}
@@ -496,15 +496,15 @@ next_dma_print(nd)
 	bitmask_snprintf(dd_csr, DMACSR_BITS, sbuf, sizeof(sbuf));
 	printf("NDMAP: dd->dd_csr          = 0x%s\n",   sbuf);
 
-	printf("NDMAP: dd->dd_saved_next   = 0x%08x\n", dd_saved_next);
-	printf("NDMAP: dd->dd_saved_limit  = 0x%08x\n", dd_saved_limit);
-	printf("NDMAP: dd->dd_saved_start  = 0x%08x\n", dd_saved_start);
-	printf("NDMAP: dd->dd_saved_stop   = 0x%08x\n", dd_saved_stop);
-	printf("NDMAP: dd->dd_next         = 0x%08x\n", dd_next);
-	printf("NDMAP: dd->dd_next_initbuf = 0x%08x\n", dd_next_initbuf);
-	printf("NDMAP: dd->dd_limit        = 0x%08x\n", dd_limit);
-	printf("NDMAP: dd->dd_start        = 0x%08x\n", dd_start);
-	printf("NDMAP: dd->dd_stop         = 0x%08x\n", dd_stop);
+	printf("NDMAP: dd->dd_saved_next   = 0x%08lx\n", dd_saved_next);
+	printf("NDMAP: dd->dd_saved_limit  = 0x%08lx\n", dd_saved_limit);
+	printf("NDMAP: dd->dd_saved_start  = 0x%08lx\n", dd_saved_start);
+	printf("NDMAP: dd->dd_saved_stop   = 0x%08lx\n", dd_saved_stop);
+	printf("NDMAP: dd->dd_next         = 0x%08lx\n", dd_next);
+	printf("NDMAP: dd->dd_next_initbuf = 0x%08lx\n", dd_next_initbuf);
+	printf("NDMAP: dd->dd_limit        = 0x%08lx\n", dd_limit);
+	printf("NDMAP: dd->dd_start        = 0x%08lx\n", dd_start);
+	printf("NDMAP: dd->dd_stop         = 0x%08lx\n", dd_stop);
 
 	bitmask_snprintf(NEXT_I_BIT(nd->nd_intr), NEXT_INTR_BITS,
 			 sbuf, sizeof(sbuf));
@@ -649,7 +649,7 @@ nextdma_intr(arg)
 				bitmask_snprintf(state, DMACSR_BITS, sbuf, sizeof(sbuf));
 				printf("DMA: state 0x%s\n",sbuf);
 				next_dma_print(nd);
-				panic("DMA: Unexpected limit register (0x%08x) in finish_xfer\n",slimit);
+				panic("DMA: Unexpected limit register (0x%08lx) in finish_xfer\n",slimit);
 			}
 #endif
 
@@ -660,7 +660,7 @@ nextdma_intr(arg)
 					bitmask_snprintf(state, DMACSR_BITS, sbuf, sizeof(sbuf));
 					printf("DMA: state 0x%s\n",sbuf);
 					next_dma_print(nd);
-					panic("DMA: short limit register (0x%08x) w/o finishing map.\n",slimit);
+					panic("DMA: short limit register (0x%08lx) w/o finishing map.\n",slimit);
 				}
 			}
 #endif

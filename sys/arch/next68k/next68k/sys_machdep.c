@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_machdep.c,v 1.12 2000/12/13 18:13:09 jdolecek Exp $ */
+/*	$NetBSD: sys_machdep.c,v 1.13 2001/05/13 16:55:40 chs Exp $ */
 
 /*
  * This file was taken from mvme68k/mvme68k/sys_machdep.c
@@ -104,14 +104,12 @@ cachectl1(req, addr, len, p)
 #endif
 
 		if (addr == 0 ||
-#if defined(M68040)
 #if defined(M68060)
 		    (cputype == CPU_68040 && req & CC_IPURGE) ||
 #else
 		    (req & CC_IPURGE) ||
 #endif
-#endif
-		    (req & ~CC_EXTPURGE) != CC_PURGE && len > 2*NBPG)
+		    ((req & ~CC_EXTPURGE) != CC_PURGE && len > 2 * NBPG))
 			doall = 1;
 
 		if (!doall) {
@@ -219,10 +217,5 @@ sys_sysarch(p, v, retval)
 	void *v;
 	int *retval;
 {
-	struct sysarch_args /* {
-		syscallarg(int) op; 
-		syscallarg(void *) parms;
-	} */ *uap = v;
-
 	return (ENOSYS);
 }
