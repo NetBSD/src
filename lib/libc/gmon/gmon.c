@@ -1,4 +1,4 @@
-/*	$NetBSD: gmon.c,v 1.17 2001/02/19 22:22:16 cgd Exp $	*/
+/*	$NetBSD: gmon.c,v 1.18 2002/04/26 16:39:52 christos Exp $	*/
 
 /*-
  * Copyright (c) 1983, 1992, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)gmon.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: gmon.c,v 1.17 2001/02/19 22:22:16 cgd Exp $");
+__RCSID("$NetBSD: gmon.c,v 1.18 2002/04/26 16:39:52 christos Exp $");
 #endif
 #endif
 
@@ -157,6 +157,17 @@ _mcleanup()
 	int log, len;
 	char buf2[200];
 #endif
+
+	/*
+	 * We disallow writing to the profiling file, if we are a
+	 * set{u,g}id program and our effective {u,g}id does not match
+	 * our real one.
+	 */
+	if (issetugid() && (geteuid() != getuid() || getegid() != getgid())) {
+		warnx("mcount: Profiling of set{u,g}id binaries is not"
+		    " allowed");
+		return;
+	}
 
 	if (p->state == GMON_PROF_ERROR)
 		ERR("_mcleanup: tos overflow\n");
