@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.c,v 1.110 2001/01/21 07:48:30 christos Exp $ */
+/*	$NetBSD: cpu.c,v 1.111 2001/02/28 14:45:23 pk Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -748,10 +748,15 @@ cpumatch_sun4(sc, mp, node)
 	struct module_info *mp;
 	int	node;
 {
+	extern struct idprom *idprom;
+	/*
+	 * XXX - for e.g. myetheraddr(), which in sun4 can be called
+	 *	 before the clock attaches.
+	 */
+	idprom = &sun4_idprom_store;
 
 	getidprom(&sun4_idprom_store, sizeof(struct idprom));
 	switch (sun4_idprom_store.id_machine) {
-	/* XXX: don't know about Sun4 types */
 	case ID_SUN4_100:
 		sc->cpu_type = CPUTYP_4_100;
 		sc->classlvl = 100;
