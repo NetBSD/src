@@ -1,4 +1,4 @@
-/*	$NetBSD: wsconsio.h,v 1.1.2.1 1996/12/07 02:04:58 cgd Exp $	*/
+/*	$NetBSD: wsconsio.h,v 1.1.2.2 1997/01/31 02:30:20 cgd Exp $	*/
 
 /*
  * Copyright (c) 1995, 1996 Carnegie-Mellon University.
@@ -57,10 +57,12 @@ struct wscons_event {
 #define	WSCONS_EVENT_KEY_UP		1	/* key code */
 #define	WSCONS_EVENT_KEY_DOWN		2	/* key code */
 #define	WSCONS_EVENT_KEY_OTHER		3	/* key code */
-#define	WSCONS_EVENT_MOUSE_UP		4	/* button number */
-#define	WSCONS_EVENT_MOUSE_DOWN		5	/* button number */
-#define	WSCONS_EVENT_MOUSE_DELTA_X	6	/* delta amount */
-#define	WSCONS_EVENT_MOUSE_DELTA_Y	7	/* delta amount */
+#define	WSCONS_EVENT_MOUSE_UP		4	/* button # (leftmost = 0) */
+#define	WSCONS_EVENT_MOUSE_DOWN		5	/* button # (leftmost = 0)  */
+#define	WSCONS_EVENT_MOUSE_DELTA_X	6	/* X delta amount */
+#define	WSCONS_EVENT_MOUSE_DELTA_Y	7	/* Y delta amount */
+#define	WSCONS_EVENT_MOUSE_ABSOLUTE_X	8	/* X location */
+#define	WSCONS_EVENT_MOUSE_ABSOLUTE_Y	9	/* Y location */
 
 
 /*
@@ -195,6 +197,12 @@ struct wsdisplay_cursor {
 /* Cursor control: get/set cursor attributes/shape */
 #define	WSDISPLAYIO_GCURSOR	_IOWR('W', 73, struct wsdisplay_cursor)
 #define	WSDISPLAYIO_SCURSOR	_IOW('W', 74, struct wsdisplay_cursor)
+
+/* Display mode: Emulation (text) vs. Mapped (graphics) mode */
+#define	WSDISPLAYIO_GMODE	_IOR('W', 75, u_int)
+#define	WSDISPLAYIO_SMODE	_IOW('W', 76, u_int)
+#define		WSDISPLAYIO_MODE_EMUL	0	/* emulation (text) mode */
+#define		WSDISPLAYIO_MODE_MAPPED	1	/* mapped (graphics) mode */
 
 /* XXX NOT YET DEFINED */
 /* Mapping information retrieval. */
