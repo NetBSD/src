@@ -1,4 +1,4 @@
-/* $NetBSD: csh.c,v 1.27 2001/09/14 14:03:59 wiz Exp $ */
+/* $NetBSD: csh.c,v 1.28 2001/09/16 12:20:33 wiz Exp $ */
 
 /*-
  * Copyright (c) 1980, 1991, 1993
@@ -43,7 +43,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1991, 1993\n\
 #if 0
 static char sccsid[] = "@(#)csh.c	8.2 (Berkeley) 10/12/93";
 #else
-__RCSID("$NetBSD: csh.c,v 1.27 2001/09/14 14:03:59 wiz Exp $");
+__RCSID("$NetBSD: csh.c,v 1.28 2001/09/16 12:20:33 wiz Exp $");
 #endif
 #endif /* not lint */
 
@@ -131,6 +131,7 @@ main(int argc, char *argv[])
     cshout = stdout;
     csherr = stderr;
 
+    setprogname(argv[0]);
     settimes();			/* Immed. estab. timing base */
 
     /*
