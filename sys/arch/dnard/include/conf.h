@@ -1,4 +1,4 @@
-/*	$NetBSD: conf.h,v 1.1 2001/05/09 15:40:55 matt Exp $	*/
+/*	$NetBSD: conf.h,v 1.2 2001/05/09 22:30:44 matt Exp $	*/
 
 /*
  * Copyright (c) 1997 Mark Brinicombe.
@@ -57,13 +57,6 @@ cdev_decl(raid);
 	dev_init(c,n,open), dev_init(c,n,close), dev_init(c,n,read), \
 	dev_init(c,n,write), dev_init(c,n,ioctl), dev_init(c,n,stop), \
 	dev_init(c,n,tty), ttpoll, dev_init(c,n,mmap), 0 }
-
-/* open, close, read, ioctl */
-#define	cdev_joy_init(c,n) { \
-	dev_init(c,n,open), dev_init(c,n,close), dev_init(c,n,read), \
-	(dev_type_write((*))) enodev, dev_init(c,n,ioctl), \
-	(dev_type_stop((*))) enodev, 0, seltrue, \
-	(dev_type_mmap((*))) enodev }
 
 /* open, close, write, ioctl */
 #define cdev_cpu_init(c,n) { \
