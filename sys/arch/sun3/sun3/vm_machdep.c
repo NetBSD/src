@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_machdep.c,v 1.50 1999/05/13 21:58:36 thorpej Exp $	*/
+/*	$NetBSD: vm_machdep.c,v 1.51 1999/05/14 02:12:00 nisimura Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Gordon W. Ross
@@ -69,10 +69,11 @@ extern void proc_do_uret __P((void));
 extern void proc_trampoline __P((void));
 
 /*
- * Finish a fork operation, with process p2 nearly set up.
- * Copy and update the kernel stack and pcb, making the child
- * ready to run, and marking it so that it can return differently
- * than the parent.  Returns 1 in the child process, 0 in the parent.
+ * Finish a fork operation, with process p2 nearly set up.  Copy and
+ * update the kernel stack and pcb, making the child ready to run,  
+ * and marking it so that it can return differently than the parent.
+ * When scheduled, child p2 will start from proc_do_uret(). cpu_fork()
+ * returns once for forking parent p1. 
  */
 void
 cpu_fork(p1, p2, stack, stacksize)

@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_machdep.c,v 1.36 1999/05/13 21:58:34 thorpej Exp $	*/
+/*	$NetBSD: vm_machdep.c,v 1.37 1999/05/14 02:12:00 nisimura Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
-__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.36 1999/05/13 21:58:34 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.37 1999/05/14 02:12:00 nisimura Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -61,6 +61,7 @@ __KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.36 1999/05/13 21:58:34 thorpej Exp 
 
 #include <uvm/uvm_extern.h>
 
+#include <mips/regnum.h>
 #include <mips/locore.h>
 #include <mips/pte.h>
 #include <machine/cpu.h>
@@ -71,7 +72,11 @@ extern struct proc *fpcurproc;
 extern paddr_t kvtophys __P((vaddr_t));	/* XXX */
 
 /*
- * cpu_fork() now returns just once.
+ * Finish a fork operation, with process p2 nearly set up.  Copy and
+ * update the kernel stack and pcb, making the child ready to run,
+ * and marking it so that it can return differently than the parent.
+ * When scheduled, child p2 will start from proc_trampoline(). cpu_fork()
+ * returns once for forking parent p1.
  */
 void
 cpu_fork(p1, p2, stack, stacksize)
@@ -90,8 +95,6 @@ cpu_fork(p1, p2, stack, stacksize)
 		mips3_HitFlushDCache((vaddr_t)p2->p_addr, USPACE);
 #endif
 
-	if (p1 == fpcurproc)
-		savefpregs(p1);
 
 #ifdef DIAGNOSTIC
 	/*
@@ -100,20 +103,18 @@ cpu_fork(p1, p2, stack, stacksize)
 	if (p1 != curproc && p1 != &proc0)
 		panic("cpu_fork: curproc");
 #endif
-
-	/* Copy pcb from proc p1 to p2. */
-	p2->p_addr->u_pcb = p1->p_addr->u_pcb;
+	if (p1 == fpcurproc)
+		savefpregs(p1);
 
 	/*
-	 * Create the child's kernel stack, from scratch.
-	 * Pick a stack pointer, leaving room for a trapframe;
-	 * copy trapframe from parent so return to user mode
+	 * Copy pcb from proc p1 to p2.
+	 * Copy p1 trapframe atop on p2 stack space, so return to user mode
 	 * will be to right address, with correct registers.
 	 */
-	pcb = &p2->p_addr->u_pcb;
-	f = (struct frame *)((int)pcb + USPACE) - 1;
+	memcpy(&p2->p_addr->u_pcb, &p1->p_addr->u_pcb, sizeof(struct pcb));
+	f = (struct frame *)((caddr_t)p2->p_addr + USPACE) - 1;
 	memcpy(f, p1->p_md.md_regs, sizeof(struct frame));
-	memset(((caddr_t) f) - 24, 0, 24);
+	memset((caddr_t)f - 24, 0, 24);		/* ? required ? */
 
 	/*
 	 * If specified, give the child a different stack.
@@ -129,9 +130,10 @@ cpu_fork(p1, p2, stack, stacksize)
 		p2->p_md.md_upte[i] = pte[i].pt_entry &~ x;
 
 	/*
-	 * Arrange for continuation at child_return(), which
-	 * will return to user process soon.
+	 * Arrange for continuation at child_return(), which will return to
+	 * user process soon.
 	 */
+	pcb = &p2->p_addr->u_pcb;
 	pcb->pcb_segtab = (void *)p2->p_vmspace->vm_map.pmap->pm_segtab;
 	pcb->pcb_context[10] = (int)proc_trampoline;	/* RA */
 	pcb->pcb_context[8] = (int)f - 24;		/* SP */

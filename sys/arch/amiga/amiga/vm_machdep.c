@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_machdep.c,v 1.43 1999/05/13 21:58:33 thorpej Exp $	*/
+/*	$NetBSD: vm_machdep.c,v 1.44 1999/05/14 02:11:59 nisimura Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -63,13 +63,11 @@
 #include <machine/pte.h>
 
 /*
- * Finish a fork operation, with process p2 nearly set up.
- * Copy and update the kernel stack and pcb, making the child
- * ready to run, and marking it so that it can return differently
- * than the parent.  Returns 1 in the child process, 0 in the parent.
- * We currently double-map the user area so that the stack is at the same
- * address in each process; in the future we will probably relocate
- * the frame pointers on the stack after copying.
+ * Finish a fork operation, with process p2 nearly set up.  Copy and
+ * update the kernel stack and pcb, making the child ready to run,  
+ * and marking it so that it can return differently than the parent.
+ * When scheduled, child p2 will start from proc_trampoline(). cpu_fork()
+ * returns once for forking parent p1. 
  */
 void
 cpu_fork(p1, p2, stack, stacksize)
