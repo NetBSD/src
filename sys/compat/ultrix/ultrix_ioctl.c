@@ -1,4 +1,4 @@
-/*	$NetBSD: ultrix_ioctl.c,v 1.4 1996/06/13 18:13:34 jonathan Exp $ */
+/*	$NetBSD: ultrix_ioctl.c,v 1.5 1996/10/09 00:49:40 thorpej Exp $ */
 /*	from : NetBSD: sunos_ioctl.c,v 1.21 1995/10/07 06:27:31 mycroft Exp */
 
 /*
@@ -366,6 +366,12 @@ btios2stios(bt, st)
 	st->c_cc[4] = NATIVE_TO_EMUL_CC(bt->c_cc[VEOF]);
 	st->c_cc[5] = NATIVE_TO_EMUL_CC(bt->c_cc[VEOL]);
 	st->c_cc[6] = NATIVE_TO_EMUL_CC(bt->c_cc[VEOL2]);
+/*
+ * XXX Should not be an #ifdef here (typo or not!) since
+ * XXX COMPAT_ULTRIX is implied if this code is being
+ * XXX compiled at all!  Unfortunately, this code doesn't
+ * XXX currently compile, so leave it broken for now...
+ */
 #ifdef CMOPAT_ULTRIX
 	st->c_cc[7] = NATIVE_TO_EMUL_CC(bt->c_cc[VSWTCH]);
 #else
