@@ -1,6 +1,6 @@
 /*-
- * Copyright (c) 1982, 1986, 1990 The Regents of the University of California.
- * All rights reserved.
+ * Copyright (c) 1982, 1986, 1990, 1993
+ *	The Regents of the University of California.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -30,18 +30,17 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	from: @(#)ttychars.h	7.6 (Berkeley) 5/9/91
- *	$Id: ttychars.h,v 1.3 1993/05/20 16:23:30 cgd Exp $
+ *	from: @(#)ttychars.h	8.2 (Berkeley) 1/4/94
+ *	$Id: ttychars.h,v 1.4 1994/05/21 03:48:34 cgd Exp $
  */
-
-#ifndef _SYS_TTYCHARS_H_
-#define _SYS_TTYCHARS_H_
 
 /*
  * 4.3 COMPATIBILITY FILE
  *
  * User visible structures and constants related to terminal handling.
  */
+#ifndef _SYS_TTYCHARS_H_
+#define	_SYS_TTYCHARS_H_
 
 struct ttychars {
 	char	tc_erase;	/* erase last character */
@@ -62,5 +61,4 @@ struct ttychars {
 #ifdef USE_OLD_TTY
 #include <sys/ttydefaults.h>	/* to pick up character defaults */
 #endif
-
 #endif /* !_SYS_TTYCHARS_H_ */
