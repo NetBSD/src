@@ -1,4 +1,4 @@
-/*	$NetBSD: union_subr.c,v 1.30 1999/03/24 05:53:59 sommerfe Exp $	*/
+/*	$NetBSD: union_subr.c,v 1.31 1999/05/02 00:18:31 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1994 Jan-Simon Pendry
@@ -879,7 +879,7 @@ union_vn_create(vpp, un, p)
 	struct vattr *vap = &vat;
 	int fmode = FFLAGS(O_WRONLY|O_CREAT|O_TRUNC|O_EXCL);
 	int error;
-	int cmode = UN_FILEMODE & ~p->p_fd->fd_cmask;
+	int cmode = UN_FILEMODE & ~p->p_cwdi->cwdi_cmask;
 	struct componentname cn;
 
 	*vpp = NULLVP;
