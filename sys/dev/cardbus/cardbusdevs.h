@@ -1,10 +1,10 @@
-/*	$NetBSD: cardbusdevs.h,v 1.7 2000/04/13 10:13:12 joda Exp $	*/
+/*	$NetBSD: cardbusdevs.h,v 1.8 2000/06/13 15:37:29 soren Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: cardbusdevs,v 1.9 2000/04/13 10:12:46 joda Exp 
+ *	NetBSD: cardbusdevs,v 1.10 2000/06/06 17:21:42 soren Exp 
  */
 
 /*
@@ -64,9 +64,9 @@
 
 /* 3COM Products */
 
-#define	CARDBUS_PRODUCT_3COM_3C575TX	0x5057		/* 3c575 100Base-TX */
-#define	CARDBUS_PRODUCT_3COM_3C575BTX	0x5157		/* 3c575B 100Base-TX */
-#define	CARDBUS_PRODUCT_3COM_3CCFE575CT	0x5257		/* 3CCFE575CT 100Base-TX */
+#define	CARDBUS_PRODUCT_3COM_3C575TX	0x5057		/* 3c575-TX */
+#define	CARDBUS_PRODUCT_3COM_3C575BTX	0x5157		/* 3c575B-TX */
+#define	CARDBUS_PRODUCT_3COM_3C575CTX	0x5257		/* 3c575C-TX */
 
 /* Adaptec products */
 #define	CARDBUS_PRODUCT_ADP_1480	0x6075		/* APA-1480 */
