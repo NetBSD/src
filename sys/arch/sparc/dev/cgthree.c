@@ -1,4 +1,4 @@
-/*	$NetBSD: cgthree.c,v 1.17 1995/11/29 01:45:40 pk Exp $ */
+/*	$NetBSD: cgthree.c,v 1.18 1995/12/11 12:43:18 pk Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -78,7 +78,8 @@ struct cgthree_softc {
 	struct	sbusdev sc_sd;		/* sbus device */
 	struct	fbdevice sc_fb;		/* frame buffer device */
 	volatile struct bt_regs *sc_bt;	/* Brooktree registers */
-	caddr_t	sc_phys;		/* display RAM (phys addr) */
+	struct rom_reg	sc_phys;	/* phys address description */
+	int	sc_bustype;		/* type of bus we live on */
 	int	sc_blanked;		/* true if blanked */
 	union	bt_cmap sc_cmap;	/* Brooktree color map */
 };
@@ -142,7 +143,6 @@ cgthreeattach(parent, self, args)
 	register struct confargs *ca = args;
 	register int node, ramsize, i;
 	register volatile struct bt_regs *bt;
-	register struct cgthree_all *p;
 	int isconsole;
 	int sbus = 1;
 	char *nam;
@@ -157,6 +157,13 @@ cgthreeattach(parent, self, args)
 	sc->sc_fb.fb_type.fb_type = FBTYPE_SUN3COLOR;
 	switch (ca->ca_bustype) {
 	case BUS_OBIO:
+#if defined(SUN4M)
+		if (cputyp == CPU_SUN4M) {   /* 4m has framebuffer on obio */
+			node = ca->ca_ra.ra_node;
+			nam = getpropstring(node, "model");
+			break;
+		}
+#endif
 	case BUS_VME32:
 	case BUS_VME16:
 		sbus = node = 0;
@@ -187,14 +194,17 @@ cgthreeattach(parent, self, args)
 	 * going to print characters via rconsole.
 	 */
 	isconsole = node == fbnode && fbconstty != NULL;
-	p = (struct cgthree_all *)ca->ca_ra.ra_paddr;
 	if ((sc->sc_fb.fb_pixels = ca->ca_ra.ra_vaddr) == NULL && isconsole) {
 		/* this probably cannot happen, but what the heck */
-		sc->sc_fb.fb_pixels = mapiodev(p->ba_ram, ramsize, ca->ca_bustype);
+		sc->sc_fb.fb_pixels = mapiodev(ca->ca_ra.ra_reg, CG3REG_MEM,
+						ramsize, ca->ca_bustype);
 	}
 	sc->sc_bt = bt = (volatile struct bt_regs *)
-	    mapiodev((caddr_t)&p->ba_btreg, sizeof(p->ba_btreg), ca->ca_bustype);
-	sc->sc_phys = p->ba_ram;
+	    mapiodev(ca->ca_ra.ra_reg, CG3REG_REG,
+		     sizeof(struct bt_regs), ca->ca_bustype);
+
+	sc->sc_phys = ca->ca_ra.ra_reg[0];
+	sc->sc_bustype = ca->ca_bustype;
 
 	/* grab initial (current) color map */
 	bt->bt_addr = 0;
@@ -401,5 +411,5 @@ cgthreemmap(dev, off, prot)
 	 * I turned on PMAP_NC here to disable the cache as I was
 	 * getting horribly broken behaviour with it on.
 	 */
-	return ((int)sc->sc_phys + off + PMAP_OBIO + PMAP_NC);
+	return (REG2PHYS(&sc->sc_phys, CG3REG_MEM+off, sc->sc_bustype) | PMAP_NC);
 }

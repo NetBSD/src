@@ -1,4 +1,4 @@
-/*	$NetBSD: dma.c,v 1.13 1995/11/28 20:26:59 pk Exp $ */
+/*	$NetBSD: dma.c,v 1.14 1995/12/11 12:43:20 pk Exp $ */
 
 /*
  * Copyright (c) 1994 Peter Galbavy.  All rights reserved.
@@ -114,14 +114,11 @@ dmaattach(parent, self, aux)
 	int node, base, slot;
 	char *name;
 
-	/*
-	 * do basic sbus stuff (I think)
-	 */
 	if (ca->ca_ra.ra_vaddr == NULL)
-		ca->ca_ra.ra_vaddr = mapiodev(ca->ca_ra.ra_paddr,
-		    ca->ca_ra.ra_len, ca->ca_bustype);
-	if ((u_long)ca->ca_ra.ra_paddr & PGOFSET)
-		(u_long)ca->ca_ra.ra_vaddr |= ((u_long)ca->ca_ra.ra_paddr & PGOFSET);
+		ca->ca_ra.ra_vaddr =
+		    mapiodev(ca->ca_ra.ra_reg, 0, ca->ca_ra.ra_len,
+			     ca->ca_bustype);
+
 	sc->sc_regs = (struct dma_regs *) ca->ca_ra.ra_vaddr;
 
 	/*
@@ -253,7 +250,8 @@ dma_start(sc, addr, len, datain)
 	sc->sc_dmaaddr = addr;
 	sc->sc_dmalen = len;
 
-	ESP_DMA(("%s: start %d@0x%08x,%d\n", sc->sc_dev.dv_xname, *sc->sc_dmalen, *sc->sc_dmaaddr, datain ? 1 : 0));
+	ESP_DMA(("%s: start %d@0x%08x,%d\n", sc->sc_dev.dv_xname,
+		*sc->sc_dmalen, *sc->sc_dmaaddr, datain ? 1 : 0));
 
 	/*
 	 * the rules say we cannot transfer more than the limit
@@ -293,7 +291,6 @@ dma_start(sc, addr, len, datain)
 	 */
 	ESPCMD(sc->sc_esp, (size==0?ESPCMD_TRPAD:ESPCMD_TRANS)|ESPCMD_DMA);
 
-
 	/* Start DMA */
 	csr = DMACSR(sc);
 	/* clear from last read if this is a write */
@@ -317,12 +314,14 @@ dmaintr(sc)
 	volatile unsigned char *esp = sc->sc_esp->sc_reg;
 	int trans = 0, resid = 0;
 
-	ESP_DMA(("%s: intr: <csr %x>", sc->sc_dev.dv_xname, DMACSR(sc)));
+	 ESP_DMA(("%s: intr: addr %x, csr %b\n", sc->sc_dev.dv_xname,
+		  DMADDR(sc), DMACSR(sc), DMACSRBITS));
 
 	if (DMACSR(sc) & D_ERR_PEND) {
 		DMACSR(sc) &= ~D_EN_DMA;	/* Stop DMA */
 		DMACSR(sc) |= D_INVALIDATE;
-		printf("%s: error", sc->sc_dev.dv_xname);
+		printf("%s: error: csr=%b\n", sc->sc_dev.dv_xname,
+			DMACSR(sc), DMACSRBITS);
 		return 0;
 	}
 
@@ -343,7 +342,9 @@ dmaintr(sc)
 
 	if (sc->sc_dmasize == 0) {
 		/* A "Transfer Pad" operation completed */
-		ESP_DMA(("dmaintr: discarded %d bytes (tcl=%d, tcm=%d)\n", esp[ESP_TCL] | (esp[ESP_TCM] << 8), esp[ESP_TCL], esp[ESP_TCM]));
+		ESP_DMA(("dmaintr: discarded %d bytes (tcl=%d, tcm=%d)\n",
+			esp[ESP_TCL] | (esp[ESP_TCM] << 8),
+			esp[ESP_TCL], esp[ESP_TCM]));
 		return 0;
 	}
 
@@ -368,7 +369,9 @@ dmaintr(sc)
 		trans = sc->sc_dmasize;
 	}
 
-	ESP_DMA(("dmaintr: tcl=%d, tcm=%d, tch=%d; trans=%d, resid=%d\n", esp[ESP_TCL],esp[ESP_TCM], sc->sc_esp->sc_rev > ESP100A ? esp[ESP_TCH] : 0, trans, resid));
+	ESP_DMA(("dmaintr: tcl=%d, tcm=%d, tch=%d; trans=%d, resid=%d\n",
+		esp[ESP_TCL],esp[ESP_TCM],
+		sc->sc_esp->sc_rev > ESP100A ? esp[ESP_TCH] : 0, trans, resid));
 
 	if (DMACSR(sc) & D_WRITE)
 		cache_flush(*sc->sc_dmaaddr, trans);

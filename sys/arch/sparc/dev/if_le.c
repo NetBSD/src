@@ -1,4 +1,4 @@
-/*	$NetBSD: if_le.c,v 1.23 1995/12/10 10:15:06 mycroft Exp $	*/
+/*	$NetBSD: if_le.c,v 1.24 1995/12/11 12:43:28 pk Exp $	*/
 
 /*-
  * Copyright (c) 1995 Charles M. Hannum.  All rights reserved.
@@ -60,6 +60,8 @@
 #include <machine/cpu.h>
 
 #include <sparc/dev/sbusvar.h>
+#include <sparc/dev/dmareg.h>
+#include <sparc/dev/dmavar.h>
 #include <sparc/dev/if_lereg.h>
 #include <sparc/dev/if_levar.h>
 #include <dev/ic/am7990reg.h>
@@ -128,10 +130,11 @@ leattach(parent, self, aux)
 	struct confargs *ca = aux;
 	int pri;
 	struct bootpath *bp;
+	u_long laddr;
+	int dmachild = strncmp(parent->dv_xname, "ledma", 5) == 0;
 
 	/* XXX the following declarations should be elsewhere */
 	extern void myetheraddr(u_char *);
-	extern caddr_t dvma_malloc(size_t);
 
 	if (ca->ca_ra.ra_nintr != 1) {
 		printf(": expected 1 interrupt, got %d\n", ca->ca_ra.ra_nintr);
@@ -140,11 +143,16 @@ leattach(parent, self, aux)
 	pri = ca->ca_ra.ra_intr[0].int_pri;
 	printf(" pri %d", pri);
 
-	sc->sc_r1 = (struct lereg1 *)
-	    mapiodev(ca->ca_ra.ra_paddr, sizeof(struct lereg1), ca->ca_bustype);
-	sc->sc_mem = malloc(MEMSIZE, M_DEVBUF, M_NOWAIT);
+	sc->sc_r1 = (struct lereg1 *)mapiodev(ca->ca_ra.ra_reg, 0,
+					      sizeof(struct lereg1),
+					      ca->ca_bustype);
 	sc->sc_conf3 = LE_C3_BSWP | LE_C3_ACON | LE_C3_BCON;
-	sc->sc_addr = (u_long)kdvma_mapin(sc->sc_mem, MEMSIZE, 0) & 0xffffff;
+	laddr = (u_long)dvma_malloc(MEMSIZE, &sc->sc_mem, M_NOWAIT);
+#if defined (SUN4M)
+	if ((laddr & 0xffffff) >= (laddr & 0xffffff) + MEMSIZE) 
+		panic("if_le: Lance buffer crosses 16MB boundary");
+#endif
+	sc->sc_addr = laddr & 0xffffff;
 	sc->sc_memsize = MEMSIZE;
 
 	myetheraddr(sc->sc_arpcom.ac_enaddr);
@@ -167,7 +175,17 @@ leattach(parent, self, aux)
 
 	case BUS_SBUS:
 		sc->sc_sd.sd_reset = (void *)lereset;
-		sbus_establish(&sc->sc_sd, &sc->sc_dev);
+		if (dmachild) {
+#ifdef notyet
+			sc->sc_dma = (struct dma_softc *)parent;
+			sc->sc_dma->sc_le = sc;
+			sc->sc_dma->sc_regs->en_bar = laddr & 0xff000000;
+			sbus_establish(&sc->sc_sd, parent);
+#endif
+		} else {
+			sc->sc_dma = NULL;
+			sbus_establish(&sc->sc_sd, &sc->sc_dev);
+		}
 
 		if (bp != NULL && strcmp(bp->name, lecd.cd_name) == 0 &&
 		    SAME_LANCE(bp, ca))
@@ -183,8 +201,17 @@ leattach(parent, self, aux)
 	}
 
 	sc->sc_ih.ih_fun = leintr;
+#if defined(SUN4M) /*XXX*/
+	if (cputyp == CPU_SUN4M)
+		sc->sc_ih.ih_fun = myleintr;
+#endif
 	sc->sc_ih.ih_arg = sc;
 	intr_establish(pri, &sc->sc_ih);
+
+	/* now initialize DMA */
+	if (sc->sc_dma) {
+		DMA_ENINTR(sc->sc_dma);
+	}
 }
 
 #include <dev/ic/am7990.c>
