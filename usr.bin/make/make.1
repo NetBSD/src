@@ -1,4 +1,4 @@
-.\"	$NetBSD: make.1,v 1.85 2003/09/05 06:52:12 sjg Exp $
+.\"	$NetBSD: make.1,v 1.86 2003/09/05 06:55:46 wiz Exp $
 .\"
 .\" Copyright (c) 1990, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -1258,12 +1258,12 @@ If no sources are specified, the
 attribute is applied to every
 target in the file.
 .It Ic .SHELL
-Sets the shell that 
+Sets the shell that
 .Nm
-will use to execute commands.  
-The sources are a set of 
+will use to execute commands.
+The sources are a set of
 .Ar field=value
-pairs.  
+pairs.
 .Bl -tag -width hasErrCtls
 .It Ar name
 This is the minimal specification, used to select one of the builtin
@@ -1287,7 +1287,8 @@ The command to turn off echoing of commands executed.
 .It Ar filter
 The output to filter after issuing the
 .Ar quiet
-command.  It is typically identical to 
+command.
+It is typically identical to
 .Ar quiet .
 .It Ar errFlag
 The flag to pass the shell to enable error checking.
