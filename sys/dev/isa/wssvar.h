@@ -1,4 +1,4 @@
-/*	$NetBSD: wssvar.h,v 1.1 1998/01/19 22:18:25 augustss Exp $	*/
+/*	$NetBSD: wssvar.h,v 1.2 1998/06/09 00:05:47 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1994 John Brezak
@@ -60,9 +60,9 @@ struct wss_softc {
 	void	*sc_ih;			/* interrupt vectoring */
 	bus_space_tag_t sc_iot;		/* tag */
 	bus_space_handle_t sc_ioh;	/* handle */
-	isa_chipset_tag_t sc_ic;
 
 	struct  ad1848_softc sc_ad1848;
+#define	wss_ic	   sc_ad1848.sc_ic
 #define wss_irq    sc_ad1848.sc_irq
 #define wss_drq    sc_ad1848.sc_drq
 #define wss_recdrq sc_ad1848.sc_recdrq

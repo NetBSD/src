@@ -1,4 +1,4 @@
-/*	$NetBSD: sb_isa.c,v 1.15 1997/11/30 15:32:25 drochner Exp $	*/
+/*	$NetBSD: sb_isa.c,v 1.16 1998/06/09 00:05:46 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1991-1993 Regents of the University of California.
@@ -130,8 +130,8 @@ sbfind(parent, sc, ia)
 	if (!sbmatch(sc))
 		goto bad;
 
-	if ((sc->sc_drq8 != -1 && !isa_drq_isfree(parent, sc->sc_drq8)) ||
-	    (sc->sc_drq16 != -1 && !isa_drq_isfree(parent, sc->sc_drq16)))
+	if ((sc->sc_drq8 != -1 && !isa_drq_isfree(sc->sc_ic, sc->sc_drq8)) ||
+	    (sc->sc_drq16 != -1 && !isa_drq_isfree(sc->sc_ic, sc->sc_drq16)))
 		goto bad;
 
 	if (ISSBPROCLASS(sc))
@@ -170,6 +170,6 @@ sb_isa_attach(parent, self, aux)
 		printf("%s: sbfind failed\n", sc->sc_dev.dv_xname);
 		return;
 	}
-	sc->sc_isa = parent;
+	sc->sc_ic = ia->ia_ic;
 	sbattach(sc);
 }

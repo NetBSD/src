@@ -1,4 +1,4 @@
-/*	$NetBSD: gus.c,v 1.54 1998/05/20 16:19:42 augustss Exp $	*/
+/*	$NetBSD: gus.c,v 1.55 1998/06/09 00:05:45 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -178,9 +178,9 @@ struct gus_voice {
 
 struct gus_softc {
 	struct device sc_dev;		/* base device */
-	struct device *sc_isa;		/* pointer to ISA parent */
 	void *sc_ih;			/* interrupt vector */
 	bus_space_tag_t sc_iot;		/* tag */
+	isa_chipset_tag_t sc_ic;	/* ISA chipset info */
 	bus_space_handle_t sc_ioh1;	/* handle */
 	bus_space_handle_t sc_ioh2;	/* handle */
 	bus_space_handle_t sc_ioh3;	/* ICS2101 handle */
@@ -713,8 +713,8 @@ gusprobe(parent, match, aux)
 			return 0;
 
 done:
-	if ((ia->ia_drq    != -1 && !isa_drq_isfree(parent, ia->ia_drq)) ||
-	    (recdrq != -1 && !isa_drq_isfree(parent, recdrq)))
+	if ((ia->ia_drq    != -1 && !isa_drq_isfree(ia->ia_ic, ia->ia_drq)) ||
+	    (recdrq != -1 && !isa_drq_isfree(ia->ia_ic, recdrq)))
 		return 0;
 
 	ia->ia_iobase = iobase;
@@ -815,6 +815,7 @@ gusattach(parent, self, aux)
 	unsigned char	c,d,m;
 
 	sc->sc_iot = iot = ia->ia_iot;
+	sc->sc_ic = ia->ia_ic;
 	iobase = ia->ia_iobase;
 
 	/* Map i/o space */
@@ -845,7 +846,7 @@ gusattach(parent, self, aux)
 	 * mixer
 	 */
 
-	sc->sc_isa = parent;
+	sc->sc_ic = ia->ia_ic;
 
  	delay(500);
 
@@ -920,7 +921,7 @@ gusattach(parent, self, aux)
 		(m | GUSMASK_LATCHES) & ~(GUSMASK_LINE_OUT|GUSMASK_LINE_IN);
 
 	/* XXX WILL THIS ALWAYS WORK THE WAY THEY'RE OVERLAYED?! */
-	sc->sc_codec.sc_isa = sc->sc_dev.dv_parent;
+	sc->sc_codec.sc_ic = sc->sc_ic;
 
  	if (sc->sc_revision >= 5 && sc->sc_revision <= 9) {
  		sc->sc_flags |= GUS_MIXER_INSTALLED;
@@ -929,7 +930,7 @@ gusattach(parent, self, aux)
 	if (sc->sc_revision < 0xa || !gus_init_cs4231(sc)) {
 		/* Not using the CS4231, so create our DMA maps. */
 		if (sc->sc_drq != -1) {
-			if (isa_dmamap_create(sc->sc_isa, sc->sc_drq,
+			if (isa_dmamap_create(sc->sc_ic, sc->sc_drq,
 			    MAX_ISADMA, BUS_DMA_NOWAIT|BUS_DMA_ALLOCNOW)) {
 				printf("%s: can't create map for drq %d\n",
 				       sc->sc_dev.dv_xname, sc->sc_drq);
@@ -937,7 +938,7 @@ gusattach(parent, self, aux)
 			}
 		}
 		if (sc->sc_recdrq != -1 && sc->sc_recdrq != sc->sc_drq) {
-			if (isa_dmamap_create(sc->sc_isa, sc->sc_recdrq,
+			if (isa_dmamap_create(sc->sc_ic, sc->sc_recdrq,
 			    MAX_ISADMA, BUS_DMA_NOWAIT|BUS_DMA_ALLOCNOW)) {
 				printf("%s: can't create map for drq %d\n",
 				       sc->sc_dev.dv_xname, sc->sc_recdrq);
@@ -1472,7 +1473,7 @@ gus_dmaout_dointr(sc)
  	bus_space_handle_t ioh2 = sc->sc_ioh2;
 
 	/* sc->sc_dmaoutcnt - 1 because DMA controller counts from zero?. */
- 	isa_dmadone(sc->sc_dev.dv_parent, sc->sc_drq);
+ 	isa_dmadone(sc->sc_ic, sc->sc_drq);
 	sc->sc_flags &= ~GUS_DMAOUT_ACTIVE;  /* pending DMA is done */
  	DMAPRINTF(("gus_dmaout_dointr %d @ %p\n", sc->sc_dmaoutcnt,
 		   sc->sc_dmaoutaddr));
@@ -1986,7 +1987,7 @@ gusdmaout(sc, flags, gusaddr, buffaddr, length)
 
 	sc->sc_dmaoutaddr = (u_char *) buffaddr;
 	sc->sc_dmaoutcnt = length;
- 	isa_dmastart(sc->sc_dev.dv_parent, sc->sc_drq, buffaddr, length,
+ 	isa_dmastart(sc->sc_ic, sc->sc_drq, buffaddr, length,
  	    NULL, DMAMODE_WRITE, BUS_DMA_NOWAIT);
 
 	/*
@@ -2993,7 +2994,7 @@ gus_dma_input(addr, buf, size, callback, arg)
 	    dmac |= GUSMASK_SAMPLE_INVBIT;
 	if (sc->sc_channels == 2)
 	    dmac |= GUSMASK_SAMPLE_STEREO;
- 	isa_dmastart(sc->sc_dev.dv_parent, sc->sc_recdrq, buf, size,
+ 	isa_dmastart(sc->sc_ic, sc->sc_recdrq, buf, size,
  	    NULL, DMAMODE_READ, BUS_DMA_NOWAIT);
 
 	DMAPRINTF(("gus_dma_input isa_dmastarted\n"));
@@ -3021,7 +3022,7 @@ gus_dmain_intr(sc)
 
 	DMAPRINTF(("gus_dmain_intr called\n"));
 	if (sc->sc_dmainintr) {
- 	    isa_dmadone(sc->sc_dev.dv_parent, sc->sc_recdrq);
+ 	    isa_dmadone(sc->sc_ic, sc->sc_recdrq);
 	    callback = sc->sc_dmainintr;
 	    arg = sc->sc_inarg;
 
@@ -3077,7 +3078,7 @@ gus_halt_out_dma(addr)
  	bus_space_write_1(iot, ioh2, GUS_DATA_HIGH, 0);
 
 	untimeout(gus_dmaout_timeout, sc);
- 	isa_dmaabort(sc->sc_dev.dv_parent, sc->sc_drq);
+ 	isa_dmaabort(sc->sc_ic, sc->sc_drq);
 	sc->sc_flags &= ~(GUS_DMAOUT_ACTIVE|GUS_LOCKED);
 	sc->sc_dmaoutintr = 0;
 	sc->sc_outarg = 0;
@@ -3113,7 +3114,7 @@ gus_halt_in_dma(addr)
  	bus_space_write_1(iot, ioh2, GUS_DATA_HIGH,
  	     bus_space_read_1(iot, ioh2, GUS_DATA_HIGH) & ~(GUSMASK_SAMPLE_START|GUSMASK_SAMPLE_IRQ));
   
- 	isa_dmaabort(sc->sc_dev.dv_parent, sc->sc_recdrq);
+ 	isa_dmaabort(sc->sc_ic, sc->sc_recdrq);
 	sc->sc_flags &= ~GUS_DMAIN_ACTIVE;
 	sc->sc_dmainintr = 0;
 	sc->sc_inarg = 0;

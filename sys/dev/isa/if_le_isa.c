@@ -1,4 +1,4 @@
-/*	$NetBSD: if_le_isa.c,v 1.18 1998/04/18 10:26:56 drochner Exp $	*/
+/*	$NetBSD: if_le_isa.c,v 1.19 1998/06/09 00:05:45 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -361,7 +361,7 @@ le_isa_attach(parent, lesc, ia, p)
 	am7990_config(sc);
 
 	if (ia->ia_drq != DRQUNK)
-		isa_dmacascade(parent->dv_parent, ia->ia_drq);
+		isa_dmacascade(ia->ia_ic, ia->ia_drq);
 
 	lesc->sc_ih = isa_intr_establish(ia->ia_ic, ia->ia_irq, IST_EDGE,
 	    IPL_NET, le_isa_intredge, sc);

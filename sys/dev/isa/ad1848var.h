@@ -1,4 +1,4 @@
-/*	$NetBSD: ad1848var.h,v 1.23 1998/05/20 16:19:42 augustss Exp $	*/
+/*	$NetBSD: ad1848var.h,v 1.24 1998/06/09 00:05:44 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1994 John Brezak
@@ -48,10 +48,10 @@ struct ad1848_softc {
 	void	*sc_ih;			/* interrupt vectoring */
 	bus_space_tag_t sc_iot;		/* tag */
 	bus_space_handle_t sc_ioh;	/* handle */
+	isa_chipset_tag_t sc_ic;	/* ISA chipset info */
 	int	sc_iooffs;		/* offset from handle */
 
 	void	*parent;
-	struct	device *sc_isa;		/* ISA bus's device */
 
 	u_short	sc_locked;		/* true when doing HS DMA  */
 	u_int	sc_lastcc;		/* size of last DMA xfer */

@@ -1,4 +1,4 @@
-/*	$NetBSD: uha_isa.c,v 1.12 1998/02/17 03:02:56 thorpej Exp $	*/
+/*	$NetBSD: uha_isa.c,v 1.13 1998/06/09 00:05:46 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1994, 1996, 1997 Charles M. Hannum.  All rights reserved.
@@ -152,7 +152,7 @@ uha_isa_attach(parent, self, aux)
 
 	if (upd.sc_drq != -1) {
 		sc->sc_dmaflags = 0;
-		isa_dmacascade(parent, upd.sc_drq);
+		isa_dmacascade(ic, upd.sc_drq);
 	} else {
 		/*
 		 * We have a VLB controller, and can do 32-bit DMA.

@@ -1,4 +1,4 @@
-/*	$NetBSD: sbdsp.c,v 1.79 1998/03/04 19:38:28 augustss Exp $	*/
+/*	$NetBSD: sbdsp.c,v 1.80 1998/06/09 00:05:46 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1991-1993 Regents of the University of California.
@@ -328,7 +328,7 @@ sbdsp_attach(sc)
 	 * Create our DMA maps.
 	 */
 	if (sc->sc_drq8 != -1) {
-		if (isa_dmamap_create(sc->sc_isa, sc->sc_drq8,
+		if (isa_dmamap_create(sc->sc_ic, sc->sc_drq8,
 		    MAX_ISADMA, BUS_DMA_NOWAIT|BUS_DMA_ALLOCNOW)) {
 			printf("%s: can't create map for drq %d\n",
 			    sc->sc_dev.dv_xname, sc->sc_drq8);
@@ -336,7 +336,7 @@ sbdsp_attach(sc)
 		}
 	}
 	if (sc->sc_drq16 != -1 && sc->sc_drq16 != sc->sc_drq8) {
-		if (isa_dmamap_create(sc->sc_isa, sc->sc_drq16,
+		if (isa_dmamap_create(sc->sc_ic, sc->sc_drq16,
 		    MAX_ISADMA, BUS_DMA_NOWAIT|BUS_DMA_ALLOCNOW)) {
 			printf("%s: can't create map for drq %d\n",
 			    sc->sc_dev.dv_xname, sc->sc_drq16);
@@ -889,11 +889,11 @@ sbdsp_reset(sc)
 	sc->sc_intr8 = 0;
 	sc->sc_intr16 = 0;
 	if (sc->sc_i.run != SB_NOTRUNNING) {
-		isa_dmaabort(sc->sc_isa, sc->sc_i.dmachan);
+		isa_dmaabort(sc->sc_ic, sc->sc_i.dmachan);
 		sc->sc_i.run = SB_NOTRUNNING;
 	}
 	if (sc->sc_o.run != SB_NOTRUNNING) {
-		isa_dmaabort(sc->sc_isa, sc->sc_o.dmachan);
+		isa_dmaabort(sc->sc_ic, sc->sc_o.dmachan);
 		sc->sc_o.run = SB_NOTRUNNING;
 	}
 
@@ -1139,7 +1139,7 @@ sbdsp_dma_init_input(addr, buf, cc)
 	sc->sc_i.run = SB_DMARUNNING;
 	DPRINTF(("sbdsp: dma start loop input addr=%p cc=%d chan=%d\n", 
 		 buf, cc, sc->sc_i.dmachan));
-	isa_dmastart(sc->sc_isa, sc->sc_i.dmachan, buf,
+	isa_dmastart(sc->sc_ic, sc->sc_i.dmachan, buf,
 		     cc, NULL, DMAMODE_READ | DMAMODE_LOOP, BUS_DMA_NOWAIT);
 	return 0;
 }
@@ -1236,7 +1236,7 @@ sbdsp_dma_input(addr, p, cc, intr, arg)
 			printf("sbdsp_dma_input: dmastart buf=%p cc=%d chan=%d\n", 
 			       p, cc, sc->sc_i.dmachan);
 #endif
-		isa_dmastart(sc->sc_isa, sc->sc_i.dmachan, p,
+		isa_dmastart(sc->sc_ic, sc->sc_i.dmachan, p,
 			     cc, NULL, DMAMODE_READ, BUS_DMA_NOWAIT);
 
 		/* Start PCM in non-looping mode */
@@ -1314,7 +1314,7 @@ sbdsp_dma_init_output(addr, buf, cc)
 	sc->sc_o.run = SB_DMARUNNING;
 	DPRINTF(("sbdsp: dma start loop output buf=%p cc=%d chan=%d\n",
 		 buf, cc, sc->sc_o.dmachan));
-	isa_dmastart(sc->sc_isa, sc->sc_o.dmachan, buf,
+	isa_dmastart(sc->sc_ic, sc->sc_o.dmachan, buf,
 		     cc, NULL, DMAMODE_WRITE | DMAMODE_LOOP, BUS_DMA_NOWAIT);
 	return 0;
 }
@@ -1410,7 +1410,7 @@ sbdsp_dma_output(addr, p, cc, intr, arg)
 			printf("sbdsp: start dma out addr=%p, cc=%d, chan=%d\n",
 			       p, cc, sc->sc_o.dmachan);
 #endif
-		isa_dmastart(sc->sc_isa, sc->sc_o.dmachan, p,
+		isa_dmastart(sc->sc_ic, sc->sc_o.dmachan, p,
 			     cc, NULL, DMAMODE_WRITE, BUS_DMA_NOWAIT);
 		if ((sc->sc_model == SB_JAZZ && sc->sc_o.dmachan > 3) ||
 		    (sc->sc_model != SB_JAZZ && sc->sc_o.modep->precision == 16))
@@ -1498,7 +1498,7 @@ sbdsp_intr(arg)
 			return 0;
 		}
 	} else {
-		if (!loop && !isa_dmafinished(sc->sc_isa, sc->sc_drq8))
+		if (!loop && !isa_dmafinished(sc->sc_ic, sc->sc_drq8))
 			return 0;
 		irq = SBP_IRQ_DMA8;
 	}
@@ -1519,7 +1519,7 @@ sbdsp_intr(arg)
 	if (irq & SBP_IRQ_DMA8) {
 		bus_space_read_1(sc->sc_iot, sc->sc_ioh, SBP_DSP_IRQACK8);
 		if (!loop)
-			isa_dmadone(sc->sc_isa, sc->sc_drq8);
+			isa_dmadone(sc->sc_ic, sc->sc_drq8);
 		if (sc->sc_intr8)
 			(*sc->sc_intr8)(sc->sc_arg8);
 	}
@@ -2277,7 +2277,7 @@ sb_malloc(addr, size, pool, flags)
 {
 	struct sbdsp_softc *sc = addr;
 
-	return isa_malloc(sc->sc_isa, 4, size, pool, flags);
+	return isa_malloc(sc->sc_ic, 4, size, pool, flags);
 }
 
 void

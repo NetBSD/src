@@ -1,4 +1,4 @@
-/*	$NetBSD: aha_isa.c,v 1.7 1997/10/20 18:43:03 thorpej Exp $	*/
+/*	$NetBSD: aha_isa.c,v 1.8 1998/06/09 00:05:44 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1994, 1996, 1997 Charles M. Hannum.  All rights reserved.
@@ -136,7 +136,7 @@ aha_isa_attach(parent, self, aux)
 	}
 
 	if (apd.sc_drq != -1)
-		isa_dmacascade(parent, apd.sc_drq);
+		isa_dmacascade(ic, apd.sc_drq);
 
 	sc->sc_ih = isa_intr_establish(ic, apd.sc_irq, IST_EDGE, IPL_BIO,
 	    aha_intr, sc);

@@ -1,4 +1,4 @@
-/*	$NetBSD: ad1848.c,v 1.49 1998/05/20 16:19:42 augustss Exp $	*/
+/*	$NetBSD: ad1848.c,v 1.50 1998/06/09 00:05:44 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1994 John Brezak
@@ -77,7 +77,6 @@
 
 #include <machine/cpu.h>
 #include <machine/bus.h>
-#include <machine/pio.h>
 
 #include <sys/audioio.h>
 #include <vm/vm.h>
@@ -319,7 +318,7 @@ ad1848_forceintr(sc)
      * it is needed (and you pay the latency).  Also, you might
      * never need the buffer anyway.)
      */
-    isa_dmastart(sc->sc_isa, sc->sc_drq, &dmabuf, 1, NULL,
+    isa_dmastart(sc->sc_ic, sc->sc_drq, &dmabuf, 1, NULL,
 	DMAMODE_READ, BUS_DMA_NOWAIT);
 
     ad_write(sc, SP_LOWER_BASE_COUNT, 0);
@@ -557,7 +556,7 @@ ad1848_attach(sc)
     sc->sc_recrun = NOTRUNNING;
 
     if (sc->sc_drq != -1) {
-	if (isa_dmamap_create(sc->sc_isa, sc->sc_drq, MAX_ISADMA,
+	if (isa_dmamap_create(sc->sc_ic, sc->sc_drq, MAX_ISADMA,
 	    BUS_DMA_NOWAIT|BUS_DMA_ALLOCNOW)) {
 		printf("ad1848_attach: can't create map for drq %d\n",
 		    sc->sc_drq);
@@ -565,7 +564,7 @@ ad1848_attach(sc)
 	}
     }
     if (sc->sc_recdrq != -1 && sc->sc_recdrq != sc->sc_drq) {
-	if (isa_dmamap_create(sc->sc_isa, sc->sc_recdrq, MAX_ISADMA,
+	if (isa_dmamap_create(sc->sc_ic, sc->sc_recdrq, MAX_ISADMA,
 	    BUS_DMA_NOWAIT|BUS_DMA_ALLOCNOW)) {
 		printf("ad1848_attach: can't create map for drq %d\n",
 		    sc->sc_recdrq);
@@ -1243,11 +1242,11 @@ ad1848_close(addr)
 
     DPRINTF(("ad1848_close: stop DMA\n"));
     if (sc->sc_playrun != NOTRUNNING) {
-	isa_dmaabort(sc->sc_isa, sc->sc_drq);
+	isa_dmaabort(sc->sc_ic, sc->sc_drq);
 	sc->sc_playrun = NOTRUNNING;
     }
     if (sc->sc_recrun != NOTRUNNING) {
-	isa_dmaabort(sc->sc_isa, sc->sc_recdrq);
+	isa_dmaabort(sc->sc_ic, sc->sc_recdrq);
 	sc->sc_recrun = NOTRUNNING;
     }
     ad_write(sc, SP_LOWER_BASE_COUNT, (u_char)0);
@@ -1493,7 +1492,7 @@ ad1848_dma_init_input(addr, buf, cc)
     sc->sc_dma_flags = DMAMODE_READ | DMAMODE_LOOP;
     sc->sc_dma_bp = buf;
     sc->sc_dma_cnt = cc;
-    isa_dmastart(sc->sc_isa, sc->sc_recdrq, buf, cc, NULL,
+    isa_dmastart(sc->sc_ic, sc->sc_recdrq, buf, cc, NULL,
 		 sc->sc_dma_flags, BUS_DMA_NOWAIT);
     DPRINTF(("ad1848_dma_init_input: %p %d\n", buf, cc));
     return 0;
@@ -1531,7 +1530,7 @@ ad1848_dma_input(addr, p, cc, intr, arg)
 	sc->sc_dma_flags = DMAMODE_READ;
 	sc->sc_dma_bp = p;
 	sc->sc_dma_cnt = cc;
-	isa_dmastart(sc->sc_isa, sc->sc_recdrq, p, cc, NULL,
+	isa_dmastart(sc->sc_ic, sc->sc_recdrq, p, cc, NULL,
 		     DMAMODE_READ, BUS_DMA_NOWAIT);
 	goto startpcm;
     case DMARUNNING:
@@ -1581,7 +1580,7 @@ ad1848_dma_init_output(addr, buf, cc)
     sc->sc_dma_flags = DMAMODE_WRITE | DMAMODE_LOOP;
     sc->sc_dma_bp = buf;
     sc->sc_dma_cnt = cc;
-    isa_dmastart(sc->sc_isa, sc->sc_drq, buf, cc, NULL,
+    isa_dmastart(sc->sc_ic, sc->sc_drq, buf, cc, NULL,
 		 sc->sc_dma_flags, BUS_DMA_NOWAIT);
     DPRINTF(("ad1848_dma_init_output: %p %d\n", buf, cc));
     return 0;
@@ -1616,7 +1615,7 @@ ad1848_dma_output(addr, p, cc, intr, arg)
 	sc->sc_dma_flags = DMAMODE_WRITE;
 	sc->sc_dma_bp = p;
 	sc->sc_dma_cnt = cc;
-	isa_dmastart(sc->sc_isa, sc->sc_drq, p, cc, NULL,
+	isa_dmastart(sc->sc_ic, sc->sc_drq, p, cc, NULL,
 		     DMAMODE_WRITE, BUS_DMA_NOWAIT);
 	goto startpcm;
     case DMARUNNING:
@@ -1669,7 +1668,7 @@ ad1848_intr(arg)
 	/* ACK DMA read because it may be in a bounce buffer */
 	/* XXX Do write to mask DMA ? */
 	if ((sc->sc_dma_flags & DMAMODE_READ) && sc->sc_recrun == NOTRUNNING)
-	    isa_dmadone(sc->sc_isa, sc->sc_recdrq);
+	    isa_dmadone(sc->sc_ic, sc->sc_recdrq);
 	(*sc->sc_intr)(sc->sc_arg);
 	retval = 1;
     }
@@ -1690,7 +1689,7 @@ ad1848_malloc(addr, size, pool, flags)
 {
 	struct ad1848_softc *sc = addr;
 
-	return isa_malloc(sc->sc_isa, 4, size, pool, flags);
+	return isa_malloc(sc->sc_ic, 4, size, pool, flags);
 }
 
 void

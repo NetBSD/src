@@ -1,4 +1,4 @@
-/*	$NetBSD: wt.c,v 1.43 1998/01/20 13:08:33 drochner Exp $	*/
+/*	$NetBSD: wt.c,v 1.44 1998/06/09 00:05:47 thorpej Exp $	*/
 
 /*
  * Streamer tape driver.
@@ -122,6 +122,7 @@ struct wt_softc {
 
 	bus_space_tag_t		sc_iot;
 	bus_space_handle_t	sc_ioh;
+	isa_chipset_tag_t	sc_ic;
 
 	enum wttype type;	/* type of controller */
 	int chan;		/* dma channel number, 1..3 */
@@ -246,6 +247,7 @@ wtattach(parent, self, aux)
 
 	sc->sc_iot = iot;
 	sc->sc_ioh = ioh;
+	sc->sc_ic = ia->ia_ic;
 
 	/* Try Wangtek. */
 	if (wtreset(iot, ioh, &wtregs)) {
@@ -275,7 +277,7 @@ ok:
 
 	sc->chan = ia->ia_drq;
 
-	if (isa_dmamap_create(parent, sc->chan, MAXPHYS,
+	if (isa_dmamap_create(sc->sc_ic, sc->chan, MAXPHYS,
 	    BUS_DMA_NOWAIT|BUS_DMA_ALLOCNOW)) {
 		printf("%s: can't set up ISA DMA map\n",
 		    sc->sc_dev.dv_xname);
@@ -717,10 +719,10 @@ wtintr(arg)
 	    (sc->dmatotal - sc->dmacount) < sc->bsize) {
 		/* If reading short block, copy the internal buffer
 		 * to the user memory. */
-		isa_dmadone(sc->sc_dev.dv_parent, sc->chan);
+		isa_dmadone(sc->sc_ic, sc->chan);
 		bcopy(sc->buf, sc->dmavaddr, sc->dmatotal - sc->dmacount);
 	} else
-		isa_dmadone(sc->sc_dev.dv_parent, sc->chan);
+		isa_dmadone(sc->sc_ic, sc->chan);
 
 	/*
 	 * On exception, check for end of file and end of volume.
@@ -923,10 +925,10 @@ wtdma(sc)
 	if ((sc->dmaflags & DMAMODE_READ) &&
 	    (sc->dmatotal - sc->dmacount) < sc->bsize) {
 		/* Reading short block; do it through the internal buffer. */
-		isa_dmastart(sc->sc_dev.dv_parent, sc->chan, sc->buf,
+		isa_dmastart(sc->sc_ic, sc->chan, sc->buf,
 		    sc->bsize, NULL, sc->dmaflags, BUS_DMA_NOWAIT);
 	} else
-		isa_dmastart(sc->sc_dev.dv_parent, sc->chan, sc->dmavaddr,
+		isa_dmastart(sc->sc_ic, sc->chan, sc->dmavaddr,
 		    sc->bsize, NULL, sc->dmaflags, BUS_DMA_NOWAIT);
 }
 
