@@ -14,11 +14,13 @@
  */
 
 #if defined(LIBM_SCCS) && !defined(lint)
-static char rcsid[] = "$Id: e_powf.c,v 1.3 1994/09/22 16:40:00 jtc Exp $";
+static char rcsid[] = "$Id: e_powf.c,v 1.4 1994/12/16 08:38:24 jtc Exp $";
 #endif
 
 #include "math.h"
 #include "math_private.h"
+
+static const volatile float huge = 1.0e+30, tiny = 1.0e-30;
 
 #ifdef __STDC__
 static const float
@@ -32,8 +34,6 @@ zero    =  0.0,
 one	=  1.0,
 two	=  2.0,
 two24	=  16777216.0,	/* 0x4b800000 */
-huge	=  1.0e30,
-tiny    =  1.0e-30,
 	/* poly coefs for (3/2)*(log(x)-2s-2/3*s**3 */
 L1  =  6.0000002384e-01, /* 0x3f19999a */
 L2  =  4.2857143283e-01, /* 0x3edb6db7 */

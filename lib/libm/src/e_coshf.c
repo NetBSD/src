@@ -14,14 +14,15 @@
  */
 
 #if defined(LIBM_SCCS) && !defined(lint)
-static char rcsid[] = "$Id: e_coshf.c,v 1.3 1994/09/22 16:39:23 jtc Exp $";
+static char rcsid[] = "$Id: e_coshf.c,v 1.4 1994/12/16 08:38:20 jtc Exp $";
 #endif
 
 #include "math.h"
 #include "math_private.h"
 
 #ifdef __STDC__
-static const float one = 1.0, half=0.5, huge = 1.0e30;
+static const volatile float huge = 1.0e30;
+static const float one = 1.0, half=0.5;
 #else
 static float one = 1.0, half=0.5, huge = 1.0e30;
 #endif

@@ -14,11 +14,13 @@
  */
 
 #if defined(LIBM_SCCS) && !defined(lint)
-static char rcsid[] = "$Id: e_expf.c,v 1.3 1994/09/22 16:39:27 jtc Exp $";
+static char rcsid[] = "$Id: e_expf.c,v 1.4 1994/12/16 08:38:22 jtc Exp $";
 #endif
 
 #include "math.h"
 #include "math_private.h"
+
+static const volatile float huge = 1.0e+30;
 
 #ifdef __STDC__
 static const float
@@ -27,7 +29,6 @@ static float
 #endif
 one	= 1.0,
 halF[2]	= {0.5,-0.5,},
-huge	= 1.0e+30,
 twom100 = 7.8886090522e-31,      /* 2**-100=0x0d800000 */
 o_threshold=  8.8721679688e+01,  /* 0x42b17180 */
 u_threshold= -1.0397208405e+02,  /* 0xc2cff1b5 */
