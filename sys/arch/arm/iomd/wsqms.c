@@ -1,4 +1,4 @@
-/* $NetBSD: wsqms.c,v 1.7 2002/06/19 23:49:14 bjh21 Exp $ */
+/* $NetBSD: wsqms.c,v 1.8 2002/06/20 19:33:20 bjh21 Exp $ */
 
 /*-
  * Copyright (c) 2001 Reinoud Zandijk
@@ -44,7 +44,7 @@
 
 #include <sys/param.h>
 
-__KERNEL_RCSID(0, "$NetBSD: wsqms.c,v 1.7 2002/06/19 23:49:14 bjh21 Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wsqms.c,v 1.8 2002/06/20 19:33:20 bjh21 Exp $");
 
 #include <sys/callout.h>
 #include <sys/device.h>
@@ -106,6 +106,16 @@ static int
 wsqms_enable(void *cookie)
 {
 	struct wsqms_softc *sc = cookie;
+	int b;
+
+	/* We don't want the mouse to warp on open. */
+	sc->lastx = bus_space_read_4(sc->sc_iot, sc->sc_ioh, QMS_MOUSEX);
+	sc->lasty = bus_space_read_4(sc->sc_iot, sc->sc_ioh, QMS_MOUSEY);
+	b = bus_space_read_1(sc->sc_iot, sc->sc_butioh, QMS_BUTTONS) & 0x70;
+
+	/* patch up the buttons */
+	b >>= 4;
+	sc->lastb = ~( ((b & 1)<<2) | (b & 2) | ((b & 4)>>2));
 
 	callout_reset(&sc->sc_callout, hz / 100, wsqms_intr, sc);
 	return 0;
@@ -139,11 +149,12 @@ static void
 wsqms_intr(void *arg)
 {
 	struct wsqms_softc *sc = arg;
-	int x, y, b;
-	int dx, dy;
+	int b;
+	u_int16_t x, y;
+	int16_t dx, dy;
 
-	x = bus_space_read_4(sc->sc_iot, sc->sc_ioh, QMS_MOUSEX) & 0xffff;
-	y = bus_space_read_4(sc->sc_iot, sc->sc_ioh, QMS_MOUSEY) & 0xffff;
+	x = bus_space_read_4(sc->sc_iot, sc->sc_ioh, QMS_MOUSEX);
+	y = bus_space_read_4(sc->sc_iot, sc->sc_ioh, QMS_MOUSEY);
 	b = bus_space_read_1(sc->sc_iot, sc->sc_butioh, QMS_BUTTONS) & 0x70;
 
 	/* patch up the buttons */
@@ -151,10 +162,9 @@ wsqms_intr(void *arg)
 	b = ~( ((b & 1)<<2) | (b & 2) | ((b & 4)>>2));
 
 	if ((x != sc->lastx) || (y != sc->lasty) || (b != sc->lastb)) {
-		dx = (x - sc->lastx) & 0xffff;
-		if (dx >= 0x8000) dx -= 0x10000;
-		dy = (y - sc->lasty) & 0xffff;
-		if (dy >= 0x8000) dy -= 0x10000;
+		/* This assumes that int16_t is two's complement. */
+		dx = x - sc->lastx;
+		dy = y - sc->lasty;
 		wsmouse_input(sc->sc_wsmousedev, b, dx, dy, 0,
 		    WSMOUSE_INPUT_DELTA);
 
