@@ -1,4 +1,4 @@
-/*	$NetBSD: z8530sc.c,v 1.13 2001/06/25 08:30:11 wdk Exp $	*/
+/*	$NetBSD: z8530sc.c,v 1.14 2001/07/07 05:36:18 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1994 Gordon W. Ross
@@ -141,7 +141,7 @@ zs_loadchannelregs(cs)
 	zs_iflush(cs);	/* XXX */
 #endif
 
-	if (bcmp((caddr_t)cs->cs_preg, (caddr_t)cs->cs_creg, 16) == 0)
+	if (memcmp((caddr_t)cs->cs_preg, (caddr_t)cs->cs_creg, 16) == 0)
 	    return;	/* only change if values are different */
 
 	/* Copy "pending" regs to "current" */
