@@ -1,4 +1,4 @@
-/*	$NetBSD: private.h,v 1.10 1997/09/05 02:11:57 jtc Exp $	*/
+/*	$NetBSD: private.h,v 1.11 1998/09/09 11:32:13 kleink Exp $	*/
 
 #ifndef PRIVATE_H
 #define PRIVATE_H
@@ -222,7 +222,7 @@ char *	scheck P((const char *string, const char *format));
 ** add one more for a minus sign if the type is signed.
 */
 #define INT_STRLEN_MAXIMUM(type) \
-    ((TYPE_BIT(type) - TYPE_SIGNED(type)) * 302 / 100 + 1 + TYPE_SIGNED(type))
+    ((TYPE_BIT(type) - TYPE_SIGNED(type)) * 302 / 1000 + 1 + TYPE_SIGNED(type))
 #endif /* !defined INT_STRLEN_MAXIMUM */
 
 /*
