@@ -147,7 +147,7 @@ send-pr.el: send-pr-el.in Makefile
 	    -e 's,xGNATS_ROOTx,$(GNATS_ROOT),' \
 	    -e 's,xGNATS_SITEx,$(GNATS_SITE),' \
 	    -e 's,xDATADIRx,$(datadir),' \
-	    -e 's,xDEFAULT_SUBMITTERx,$(SUBMITTER),' \
+	    -e 's,xSUBMITTERx,$(SUBMITTER),' \
 	    -e 's,xDEFAULT_RELEASEx,$(DEFAULT_RELEASE),' \
 		$(srcdir)/send-pr-el.in \
 	    > $@-t
