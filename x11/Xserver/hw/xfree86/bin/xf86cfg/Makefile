@@ -1,10 +1,12 @@
-#	$NetBSD: Makefile,v 1.1 2003/12/26 05:23:15 rtr Exp $
+#	$NetBSD: Makefile,v 1.2 2004/01/06 16:11:49 rtr Exp $
 
 .include <bsd.own.mk>
 
 PROG=	xf86cfg
 
 .PATH:	${X11SRCDIR.xc}/programs/Xserver/hw/xfree86/xf86cfg
+.PATH:	${X11SRCDIR.xc}/programs/Xserver/hw/xfree86/xf86config	# for Cards
+.PATH:	${X11SRCDIR.xc}/programs/Xserver/hw/xfree86		# for Options
 
 # XXX only if loadable LDSRCS  = libc_wrapper.c loader.c loadmod.c
 SRCS=	accessx.c card-cfg.c cards.c config.c expert.c help.c interface.c \
@@ -60,7 +62,9 @@ FILES.bitmap=	card.xbm keyboard.xbm monitor.xbm mouse.xbm left.xbm \
 
 FILES.pixmap=	card.xpm computer.xpm keyboard.xpm monitor.xpm mouse.xpm
 
-FILES=	${FILES.bitmap} ${FILES.pixmap}
+# XXX Cards Options are both used by xf86cfg as well as other things
+#     so this may not be the appropriate place to install from.
+FILES=	${FILES.bitmap} ${FILES.pixmap} Cards Options
 
 .for _FN in ${FILES.bitmap}
 FILESDIR_${_FN}=	${X11INCDIR}/X11/bitmaps
@@ -69,6 +73,9 @@ FILESDIR_${_FN}=	${X11INCDIR}/X11/bitmaps
 .for _FN in ${FILES.pixmap}
 FILESDIR_${_FN}=	${X11INCDIR}/X11/pixmaps
 .endfor
+
+FILESDIR_Cards=		${X11USRLIBDIR}/X11
+FILESDIR_Options=	${X11USRLIBDIR}/X11
 
 .include <bsd.x11.mk>
 .include <bsd.prog.mk>
