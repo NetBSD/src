@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.12 1997/05/09 07:50:28 mycroft Exp $
+# $NetBSD: Makefile,v 1.13 1997/09/06 14:06:53 drochner Exp $
 
 S=	${.CURDIR}/../../../..
 
@@ -22,8 +22,9 @@ CLEANFILES+= vers.c vers.o ${PROG}.sym ${PROG}.nosym ${HEADERSIZE_PROG}
 AFLAGS += -DASSEMBLER
 CPPFLAGS += -I${.CURDIR}/../.. -I${.CURDIR}/../../../.. \
 	-DALPHA_BOOT_ECOFF -DALPHA_BOOT_ELF \
-	-DPRIMARY_BOOTBLOCK
-CFLAGS = -Werror -mno-fp-regs -g
+	-DPRIMARY_BOOTBLOCK -D_STANDALONE \
+	-DSUPPORT_DHCP
+CFLAGS = -Wall -Werror -mno-fp-regs -g
 
 ${PROG}.nosym: ${PROG}.sym
 	cp ${PROG}.sym ${PROG}.nosym
