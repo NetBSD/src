@@ -1,11 +1,11 @@
-/*	$NetBSD: perform.c,v 1.36.2.7 2003/08/16 22:11:22 jlam Exp $	*/
+/*	$NetBSD: perform.c,v 1.36.2.8 2003/08/17 22:02:20 jlam Exp $	*/
 
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static const char *rcsid = "from FreeBSD Id: perform.c,v 1.15 1997/10/13 15:03:52 jkh Exp";
 #else
-__RCSID("$NetBSD: perform.c,v 1.36.2.7 2003/08/16 22:11:22 jlam Exp $");
+__RCSID("$NetBSD: perform.c,v 1.36.2.8 2003/08/17 22:02:20 jlam Exp $");
 #endif
 #endif
 
@@ -758,17 +758,25 @@ pkg_do(char *pkg)
 		"(perhaps the packing list is incorrectly specified?)", pkg);
 	}
 	if (!isemptyfile(DEPOT_FNAME)) {
-		(void) unview(pkg);
-	}
-	/* Remove this package from the +REQUIRED_BY list of the packages this depends on */
-	for (p = Plist.head; p; p = p->next) {
-		if (p->type != PLIST_PKGDEP)
-			continue;
 		if (Verbose)
-			printf("Attempting to remove dependency on package `%s'\n", p->name);
+			printf("Attempting to remove the %s registration on package `%s'\n", VIEWS_FNAME, pkg);
 		if (!Fake)
-			findmatchingname((tmp = getenv(PKG_DBDIR)) ? tmp : DEF_LOG_DIR,
-			    p->name, undepend, pkg);
+			(void) unview(pkg);
+	}
+	/*
+	 * If this isn't a package in a view, then remove this package
+	 * from the +REQUIRED_BY list of the packages this depends on.
+	 */
+	if (!fexists(DEPOT_FNAME)) {
+		for (p = Plist.head; p; p = p->next) {
+			if (p->type != PLIST_PKGDEP)
+				continue;
+			if (Verbose)
+				printf("Attempting to remove dependency on package `%s'\n", p->name);
+			if (!Fake)
+				findmatchingname((tmp = getenv(PKG_DBDIR)) ? tmp : DEF_LOG_DIR,
+				    p->name, undepend, pkg);
+		}
 	}
 	if (Recurse_down) {
 		/* Also remove the packages further down, now that there's
