@@ -1,4 +1,4 @@
-/*	$NetBSD: spifi.c,v 1.8 2002/09/27 20:34:20 thorpej Exp $	*/
+/*	$NetBSD: spifi.c,v 1.9 2002/10/02 04:27:51 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2000 Tsubai Masanari.  All rights reserved.
@@ -130,9 +130,8 @@ static void spifi_write_count(struct spifi_reg *, int);
 #define DMAC3_FASTACCESS(sc)  dmac3_misc((sc)->sc_dma, DMAC3_CONF_FASTACCESS)
 #define DMAC3_SLOWACCESS(sc)  dmac3_misc((sc)->sc_dma, DMAC3_CONF_SLOWACCESS)
 
-const struct cfattach spifi_ca = {
-	sizeof(struct spifi_softc), spifi_match, spifi_attach
-};
+CFATTACH_DECL(spifi, sizeof(struct spifi_softc),
+    spifi_match, spifi_attach, NULL, NULL);
 
 int
 spifi_match(parent, cf, aux)
