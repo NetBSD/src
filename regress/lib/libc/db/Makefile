@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.14 1999/02/13 02:54:31 lukem Exp $
+#	$NetBSD: Makefile,v 1.15 2001/03/11 16:40:40 bjh21 Exp $
 #	@(#)Makefile	8.1 (Berkeley) 6/4/93
 
 PROG=	dbtest
@@ -9,7 +9,7 @@ CPPFLAGS+= -g -D__DBINTERFACE_PRIVATE -DDEBUG
 MKMAN=  no
 CLEANFILES+= t1 t2 t3
 
-regress:
+regress: dbtest
 	sh ${.CURDIR}/run.test
 
 .include <bsd.prog.mk>
