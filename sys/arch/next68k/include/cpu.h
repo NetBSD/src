@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.7 1999/01/02 13:42:17 dbj Exp $	*/
+/*	$NetBSD: cpu.h,v 1.8 1999/02/26 21:34:38 is Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -166,6 +166,9 @@ void	proc_trampoline __P((void));
 void	loadustp __P((int));
 
 void	doboot __P((void)) __attribute__((__noreturn__));
+
+/* sys_machdep.c functions */
+int	cachectl1 __P((u_long, vaddr_t, size_t, struct proc *));
 
 /* vm_machdep.c functions */
 void	physaccess __P((caddr_t, caddr_t, int, int));
