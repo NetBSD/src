@@ -1,4 +1,4 @@
-/* $NetBSD: boot.c,v 1.6 1997/09/06 14:03:56 drochner Exp $ */
+/* $NetBSD: boot.c,v 1.7 1998/01/29 22:13:25 ross Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -130,6 +130,7 @@ main()
 		bootinfo.un.v1.cnpollc = NULL;
 
 		(void)printf("Entering %s at 0x%lx...\n", name, entry);
+		alpha_pal_imb();
 		(*(void (*)())entry)(ffp_save, ptbr_save,
 		    BOOTINFO_MAGIC, &bootinfo, 0);
 	}
