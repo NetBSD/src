@@ -1,4 +1,4 @@
-.\"	$NetBSD: dmoverio.4,v 1.5 2003/04/16 13:35:17 wiz Exp $
+.\"	$NetBSD: dmoverio.4,v 1.6 2004/04/08 05:49:13 atatat Exp $
 .\"
 .\" Copyright (c) 2002 Wasabi Systems, Inc.
 .\" All rights reserved.
@@ -70,7 +70,7 @@ the following steps:
 .Bl -bullet
 .It
 Create a session handle by opening the
-.Pa /dev/dmover
+.Pa /dev/dmoverio
 device.
 .It
 Select the
@@ -184,7 +184,7 @@ hw_bzero(void *buf, size_t len)
 	struct dmio_usrresp resp;
 	int fd;
 
-	fd = open("/dev/dmover", O_RDWR, 0666);
+	fd = open("/dev/dmoverio", O_RDWR, 0666);
 	if (fd == -1)
 		return (-1);
 
