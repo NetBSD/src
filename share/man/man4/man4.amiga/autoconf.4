@@ -27,7 +27,7 @@
 .\" (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.\"	$NetBSD: autoconf.4,v 1.2 1997/10/13 11:21:40 lukem Exp $
+.\"	$NetBSD: autoconf.4,v 1.3 1998/01/23 00:15:08 is Exp $
 .\"
 .Dd
 .Dt AUTOCONF 4 amiga
@@ -75,16 +75,16 @@ The kernel is configuring AutoConfigured expansion boards.  If any Zorro
 II memory was detected, the virtual address of the space reserved for
 DMA bounce buffers is printed.
 .Pp
-.It %s at zbus0: rom 0x%x man/prod %d/%d.
+.It %s at zbus0: pa 0x%x man/prod %d/%d.
 A Zorro expansion board was configured.
-.Ql Rom 0x%0x
+.Ql pa 0x%0x
 is the physical address the board was configured at.
-.Ql Man/prod &d/%d
+.Ql Man/prod %d/%d
 is the manufacturer/product codes.
 .Pp
-.It %s at zbus0: rom 0x%x man/prod %d/%d not configured.
+.It %s at zbus0: pa 0x%x man/prod %d/%d not configured.
 A Zorro expansion board located at
-.Ql rom 0x%0x
+.Ql pa 0x%0x
 with a manufacturer/product code
 .Ql %d/%d
 was found that is not configured into the kernel.
