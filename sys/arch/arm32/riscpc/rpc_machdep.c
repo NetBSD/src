@@ -1,4 +1,4 @@
-/*	$NetBSD: rpc_machdep.c,v 1.28 1999/05/27 09:04:11 mark Exp $	*/
+/*	$NetBSD: rpc_machdep.c,v 1.29 1999/05/28 09:59:31 mark Exp $	*/
 
 /*
  * Copyright (c) 1994-1998 Mark Brinicombe.
@@ -583,14 +583,24 @@ initarm(bootconf)
 	    bootconfig.scratchphysicalbase + 0x1000);
 
 	/* Print some debugging info */
-
-/*
-	printf("page tables look like this ...\n");
+/*	printf("page tables look like this ...\n");
 	printf("V0x00000000 - %08x\n", ReadWord(l1pagetable + 0x0000));
+	printf("V0x00100000 - %08x\n", ReadWord(l1pagetable + 0x0004));
+	printf("V0x00200000 - %08x\n", ReadWord(l1pagetable + 0x0008));
+	printf("V0x00300000 - %08x\n", ReadWord(l1pagetable + 0x000C));
 	printf("V0x03500000 - %08x\n", ReadWord(l1pagetable + 0x00d4));
 	printf("V0x00200000 - %08x\n", ReadWord(l1pagetable + 0x0080));
-	printf("V0xf4000000 - %08x\n", ReadWord(l1pagetable + 0x3d00));
 	printf("V0xf0000000 - %08x\n", ReadWord(l1pagetable + 0x3c00));
+	printf("V0xf0100000 - %08x\n", ReadWord(l1pagetable + 0x3c04));
+	printf("V0xf0200000 - %08x\n", ReadWord(l1pagetable + 0x3c08));
+	printf("V0xf0300000 - %08x\n", ReadWord(l1pagetable + 0x3c0C));
+	printf("V0xf1000000 - %08x\n", ReadWord(l1pagetable + 0x3c40));
+	printf("V0xf2000000 - %08x\n", ReadWord(l1pagetable + 0x3c80));
+	printf("V0xf3000000 - %08x\n", ReadWord(l1pagetable + 0x3cc0));
+	printf("V0xf4000000 - %08x\n", ReadWord(l1pagetable + 0x3d00));
+	printf("V0xf5000000 - %08x\n", ReadWord(l1pagetable + 0x3d40));
+	printf("V0xf6000000 - %08x\n", ReadWord(l1pagetable + 0x3d80));
+	printf("V0xf7000000 - %08x\n", ReadWord(l1pagetable + 0x3dc0));
 	printf("page dir = P%08x\n", bootconfig.scratchphysicalbase + 0x4000);
 	printf("l1= V%08x\n", l1pagetable);
 */
@@ -866,9 +876,20 @@ initarm(bootconf)
 	l2pagetable = kernel_pt_table[KERNEL_PT_KERNEL] - physical_start;
 
 	if (N_GETMAGIC(kernexec[0]) == ZMAGIC) {
+		/*
+		 * This is a work around for a recent problem that occurred
+		 * with ARM 610 processors and some ARM 710 processors
+		 * Other ARM 710 and StrongARM processors don't have a problem.
+		 */
+#if defined(CPU_ARM6) || defined(CPU_ARM7)
+		logical = map_chunk(0, l2pagetable, KERNEL_TEXT_BASE,
+		    physical_start, kernexec->a_text,
+		    AP_KRW, PT_CACHEABLE);
+#else	/* CPU_ARM6 || CPU_ARM7 */
 		logical = map_chunk(0, l2pagetable, KERNEL_TEXT_BASE,
 		    physical_start, kernexec->a_text,
 		    AP_KR, PT_CACHEABLE);
+#endif	/* CPU_ARM6 || CPU_ARM7 */
 		logical += map_chunk(0, l2pagetable, KERNEL_TEXT_BASE + logical,
 		    physical_start + logical, kerneldatasize - kernexec->a_text,
 		    AP_KRW, PT_CACHEABLE);
@@ -953,21 +974,23 @@ initarm(bootconf)
 	map_section(l1pagetable, IO_BASE, IO_HW_BASE, 0);
 
 	/* Bit more debugging info */
-
 /*	printf("page tables look like this ...\n");
 	printf("V0x00000000 - %08x\n", ReadWord(l1pagetable + 0x0000));
 	printf("V0x03200000 - %08x\n", ReadWord(l1pagetable + 0x00c8));
 	printf("V0x03500000 - %08x\n", ReadWord(l1pagetable + 0x00d4));
 	printf("V0xf0000000 - %08x\n", ReadWord(l1pagetable + 0x3c00));
+	printf("V0xf0100000 - %08x\n", ReadWord(l1pagetable + 0x3c04));
 	printf("V0xf1000000 - %08x\n", ReadWord(l1pagetable + 0x3c40));
 	printf("V0xf2000000 - %08x\n", ReadWord(l1pagetable + 0x3c80));
 	printf("V0xf3000000 - %08x\n", ReadWord(l1pagetable + 0x3cc0));
 	printf("V0xf3300000 - %08x\n", ReadWord(l1pagetable + 0x3ccc));
 	printf("V0xf4000000 - %08x\n", ReadWord(l1pagetable + 0x3d00));
+	printf("V0xf5000000 - %08x\n", ReadWord(l1pagetable + 0x3d40));
 	printf("V0xf6000000 - %08x\n", ReadWord(l1pagetable + 0x3d80));
+	printf("V0xf7000000 - %08x\n", ReadWord(l1pagetable + 0x3dc0));
+	printf("V0xefc00000 - %08x\n", ReadWord(l1pagetable + 0x3bf8));
+	printf("V0xef800000 - %08x\n", ReadWord(l1pagetable + 0x3bfc));
 */
-/*	printf("V0xefc00000 - %08x\n", ReadWord(l1pagetable + 0x3bf8));
-	printf("V0xef800000 - %08x\n", ReadWord(l1pagetable + 0x3bfc));*/
 
 	/*
 	 * Now we have the real page tables in place so we can switch to them.
@@ -1000,7 +1023,7 @@ initarm(bootconf)
 	 * may have just been remapped and thus the cache could be out
 	 * of sync. A re-clean after the switch will cure this.
 	 * After booting there are no gross reloations of the kernel thus
-	 * this problem wil not occur after initarm().
+	 * this problem will not occur after initarm().
 	 */
 	cpu_cache_cleanID();
 
