@@ -1,4 +1,4 @@
-/* $NetBSD: lib.h,v 1.21.2.5 2000/01/31 20:59:47 he Exp $ */
+/* $NetBSD: lib.h,v 1.21.2.6 2000/10/12 21:26:27 he Exp $ */
 
 /* from FreeBSD Id: lib.h,v 1.25 1997/10/08 07:48:03 charnier Exp */
 
@@ -165,7 +165,8 @@ typedef int (*matchfn) (const char *found, char *data);
 
 /* Prototypes */
 /* Misc */
-int     vsystem(const char *,...);
+int     vsystem(const char *,...)
+	__attribute__((__format__(__printf__, 1, 2)));
 void    cleanup(int);
 char   *make_playpen(char *, size_t, size_t);
 char   *where_playpen(void);
@@ -211,6 +212,8 @@ void    format_cmd(char *, size_t, char *, char *, char *);
 /* ftpio.c: FTP handling */
 int	expandURL(char *expandedurl, const char *wildcardurl);
 int	unpackURL(const char *url, const char *dir);
+int	ftp_cmd(const char *cmd, const char *expectstr);
+int	ftp_start(char *base);
 void	ftp_stop(void);
 
 /* Packing list */
