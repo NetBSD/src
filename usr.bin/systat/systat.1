@@ -1,4 +1,4 @@
-.\"	$NetBSD: systat.1,v 1.7 1997/07/25 01:15:09 mrg Exp $
+.\"	$NetBSD: systat.1,v 1.8 1997/07/25 01:59:42 mrg Exp $
 .\"
 .\" Copyright (c) 1985, 1990, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -249,6 +249,12 @@ a bar graph showing the amount of
 system (shown as `='), user (shown as `>'),
 nice (shown as `-'), and idle time (shown as ` ').
 .Pp
+Next to the process statistics is a column that
+lists the average number of context switches (`Csw'),
+traps (`Trp'; includes page faults), system calls (`Sys'), interrupts (`Int'),
+network software interrupts (`Sof'),
+page faults (`Flt').
+.Pp
 Below the process display are statistics on name translations.
 It lists the number of names translated in the previous interval,
 the number and percentage of the translations that were
@@ -276,41 +282,24 @@ number of disk transfers per second over the last refresh interval;
 the second row of the display shows the average
 number of pages transferred per second over the last refresh interval.
 .Pp
-Below the paging statistics is a line listing the average number of
-total reclaims ('Rec'),
-intransit blocking page faults (`It'),
-swap text pages found in free list (`F/S'),
-file system text pages found in free list (`F/F'),
-reclaims from free list
-pages freed by the clock daemon (`Fre'),
-and sequential process pages freed (`SFr')
-per second over the refresh interval.
-.Pp
-Below this line are statistics on the average number of
-zero filled pages (`zf') and demand filled text pages (`xf')
-per second over the refresh period.
-The first row indicates the number of requests that were
-resolved, the second row shows the number that were set up,
-and the last row shows the percentage of setup requests that were
-actually used.
-Note that this percentage is usually less than 100%,
+Below the paging statistics is another columns of paging data.
+From top to bottom, these represent average numbers of copy on write faults
+(`cow'), object cache lookups (`objlk'), object cache hits (`objht'),
+pages zero filled on demand (`zfodw'), number zfod's created (`nzfod'),
+percentage of zfod's used (`%zfod'), number of kernel pages (`kern'),
+number of wired pages (`wire'), number of active pages (`act'), number
+of inactive pages (`inact'), number of free pages (`free'), pages freed
+by daemon (`daefr'), pages freed by exiting processes (`prcfr'), number
+of pages reactived from freelist (`react'), scans in page out daemon
+(`scan'), revolutions of the hand (`hdrev'), and intransit blocking page
+faults (`intrn'), per second over the refresh period.
+Note that the `%zfod' percentage is usually less than 100%,
 however it may exceed 100% if a large number of requests
 are actually used long after they were set up during a
 period when no new pages are being set up.
 Thus this figure is most interesting when observed over
 a long time period, such as from boot time
 (see below on getting such a display).
-.Pp
-Below the page fill statistics is a column that
-lists the average number of context switches (`Csw'),
-traps (`Trp'; includes page faults), system calls (`Sys'), interrupts (`Int'),
-characters output to DZ ports using
-.No pseudo Ns -DMA
-(`Pdm'),
-network software interrupts (`Sof'),
-page faults (`Flt'), pages scanned by the page daemon (`Scn'),
-and revolutions of the page daemon's hand (`Rev')
-per second over the refresh interval.
 .Pp
 Running down the right hand side of the display is a breakdown
 of the interrupts being handled by the system.
@@ -425,6 +414,11 @@ For network names.
 .It Pa /etc/services
 For port names.
 .El
+.Sh NOTES
+Much of the information that
+.Nm systat vmstat
+uses is obtained from
+.Cm struct vmmeter cnt .
 .Sh HISTORY
 The
 .Nm systat
