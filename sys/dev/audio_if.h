@@ -1,4 +1,4 @@
-/*	$NetBSD: audio_if.h,v 1.47 2003/02/01 06:23:36 thorpej Exp $	*/
+/*	$NetBSD: audio_if.h,v 1.48 2003/03/19 10:53:40 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1994 Havard Eidnes.
@@ -36,6 +36,16 @@
 
 #ifndef _SYS_DEV_AUDIO_IF_H_
 #define _SYS_DEV_AUDIO_IF_H_
+
+/* check we have an audio(4) configured into kernel */
+#if defined(_KERNEL_OPT)
+#include "audio.h"
+
+#if NAUDIO == 0
+#error "No 'audio* at audiobus?' configured into kernel"
+#endif
+
+#endif /* _KERNEL_OPT */
 
 /*
  * Generic interface to hardware driver.
