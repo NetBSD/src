@@ -1,4 +1,4 @@
-/*	$NetBSD: uipc_syscalls.c,v 1.48 1999/10/30 12:11:27 enami Exp $	*/
+/*	$NetBSD: uipc_syscalls.c,v 1.49 1999/11/05 11:48:57 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1990, 1993
@@ -177,10 +177,11 @@ sys_accept(p, v, retval)
 		syscallarg(struct sockaddr *) name;
 		syscallarg(unsigned int *) anamelen;
 	} */ *uap = v;
+	struct filedesc *fdp = p->p_fd;
 	struct file *fp;
 	struct mbuf *nam;
 	unsigned int namelen;
-	int error, s, tmpfd;
+	int error, s, fd;
 	register struct socket *so;
 
 	if (SCARG(uap, name) && (error = copyin((caddr_t)SCARG(uap, anamelen),
@@ -192,7 +193,7 @@ sys_accept(p, v, retval)
 		return (EFAULT);
 
 	/* getsock() will use the descriptor for us */
-	if ((error = getsock(p->p_fd, SCARG(uap, s), &fp)) != 0)
+	if ((error = getsock(fdp, SCARG(uap, s), &fp)) != 0)
 		return (error);
 	s = splsoftnet();
 	so = (struct socket *)fp->f_data;
@@ -228,11 +229,11 @@ sys_accept(p, v, retval)
 		return (error);
 	}
 	/* falloc() will use the descriptor for us */
-	if ((error = falloc(p, &fp, &tmpfd)) != 0) {
+	if ((error = falloc(p, &fp, &fd)) != 0) {
 		splx(s);
 		return (error);
 	}
-	*retval = tmpfd;
+	*retval = fd;
 	{ struct socket *aso = so->so_q.tqh_first;
 	  if (soqremque(aso, 1) == 0)
 		panic("accept");
@@ -254,11 +255,11 @@ sys_accept(p, v, retval)
 			    (caddr_t)SCARG(uap, anamelen),
 			    sizeof(*SCARG(uap, anamelen)));
 	}
-
 	/* if an error occured, free the file descriptor */
-	if (error)
+	if (error) {
+		fdp->fd_ofiles[fd] = 0;
 		ffree(fp);
-
+	}
 	m_freem(nam);
 	splx(s);
 	return (error);
