@@ -1,4 +1,4 @@
-/*      $NetBSD: cpu.h,v 1.64 2003/01/18 07:10:33 thorpej Exp $      */
+/*      $NetBSD: cpu.h,v 1.65 2003/02/27 07:14:19 matt Exp $      */
 
 /*
  * Copyright (c) 1994 Ludd, University of Lule}, Sweden
@@ -184,6 +184,8 @@ extern char tramp;
 #define	IOSPSZ	((64*1024) / VAX_NBPG)	/* 64k == 128 pages */
 
 struct device;
+struct buf;
+struct pte;
 
 /* Some low-level prototypes */
 #if defined(MULTIPROCESSOR)
