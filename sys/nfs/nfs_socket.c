@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_socket.c,v 1.40 1997/11/16 23:23:20 fvdl Exp $	*/
+/*	$NetBSD: nfs_socket.c,v 1.41 1998/01/30 22:44:13 fvdl Exp $	*/
 
 /*
  * Copyright (c) 1989, 1991, 1993, 1995
@@ -321,19 +321,24 @@ nfs_disconnect(nmp)
 	register struct socket *so;
 
 	if (nmp->nm_so) {
-		struct nfsreq dummyreq;
-
-		bzero(&dummyreq, sizeof(dummyreq));
-		dummyreq.r_nmp = nmp;
-		nfs_rcvlock(&dummyreq);
-
 		so = nmp->nm_so;
 		nmp->nm_so = (struct socket *)0;
 		soshutdown(so, 2);
 		soclose(so);
-
-		nfs_rcvunlock(&nmp->nm_iflag);
 	}
+}
+
+void
+nfs_safedisconnect(nmp)
+	struct nfsmount *nmp;
+{
+	struct nfsreq dummyreq;
+
+	bzero(&dummyreq, sizeof(dummyreq));
+	dummyreq.r_nmp = nmp;
+	nfs_rcvlock(&dummyreq);
+	nfs_disconnect(nmp);
+	nfs_rcvunlock(&nmp->nm_iflag);
 }
 
 /*
@@ -510,7 +515,14 @@ tryagain:
 			   }
 			} while (error == EWOULDBLOCK);
 			if (!error && auio.uio_resid > 0) {
-			    log(LOG_INFO,
+			    /*
+			     * Don't log a 0 byte receive; it means
+			     * that the socket has been closed, and
+			     * can happen during normal operation
+			     * (forcible unmount or Solaris server).
+			     */
+			    if (auio.uio_resid != sizeof (u_int32_t))
+			      log(LOG_INFO,
 				 "short receive (%d/%d) from nfs server %s\n",
 				 sizeof(u_int32_t) - auio.uio_resid,
 				 sizeof(u_int32_t),
@@ -540,7 +552,8 @@ tryagain:
 			} while (error == EWOULDBLOCK || error == EINTR ||
 				 error == ERESTART);
 			if (!error && auio.uio_resid > 0) {
-			    log(LOG_INFO,
+			    if (len != auio.uio_resid)
+			      log(LOG_INFO,
 				"short receive (%d/%d) from nfs server %s\n",
 				len - auio.uio_resid, len,
 				rep->r_nmp->nm_mountp->mnt_stat.f_mntfromname);
