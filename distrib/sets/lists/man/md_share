@@ -1,4 +1,4 @@
-# $NetBSD: md_share,v 1.72 1999/11/28 16:14:34 veego Exp $
+# $NetBSD: md_share,v 1.73 1999/11/28 17:36:34 scw Exp $
 ./usr/share/man/cat1/atari/edahdi.0
 ./usr/share/man/cat1/atari/msconfig.0
 ./usr/share/man/cat1/grfinfo.0
@@ -128,6 +128,21 @@
 ./usr/share/man/cat4/mac68k/mem.0
 ./usr/share/man/cat4/mac68k/obio.0
 ./usr/share/man/cat4/mac68k/sn.0
+./usr/share/man/cat4/mvme68k/autoconf.0
+./usr/share/man/cat4/mvme68k/clmpcc.0
+./usr/share/man/cat4/mvme68k/clock.0
+./usr/share/man/cat4/mvme68k/ie.0
+./usr/share/man/cat4/mvme68k/intro.0
+./usr/share/man/cat4/mvme68k/kmem.0
+./usr/share/man/cat4/mvme68k/le.0
+./usr/share/man/cat4/mvme68k/lpt.0
+./usr/share/man/cat4/mvme68k/mainbus.0
+./usr/share/man/cat4/mvme68k/mem.0
+./usr/share/man/cat4/mvme68k/ncrsc.0
+./usr/share/man/cat4/mvme68k/pcc.0
+./usr/share/man/cat4/mvme68k/pcctwo.0
+./usr/share/man/cat4/mvme68k/wdsc.0
+./usr/share/man/cat4/mvme68k/zsc.0
 ./usr/share/man/cat4/mtio.0
 ./usr/share/man/cat4/pc532/lpt.0
 ./usr/share/man/cat4/pc532/mem.0
@@ -281,6 +296,7 @@
 ./usr/share/man/cat8/mac68k/boot.0
 ./usr/share/man/cat8/mac68k/makedev.0
 ./usr/share/man/cat8/mvme68k/MAKEDEV.0
+./usr/share/man/cat8/mvme68k/boot.0
 ./usr/share/man/cat8/mvme68k/installboot.0
 ./usr/share/man/cat8/mvme68k/makedev.0
 ./usr/share/man/cat8/next68k/MAKEDEV.0
@@ -453,6 +469,21 @@
 ./usr/share/man/man4/mac68k/mem.4
 ./usr/share/man/man4/mac68k/obio.4
 ./usr/share/man/man4/mac68k/sn.4
+./usr/share/man/man4/mvme68k/autoconf.4
+./usr/share/man/man4/mvme68k/clmpcc.4
+./usr/share/man/man4/mvme68k/clock.4
+./usr/share/man/man4/mvme68k/ie.4
+./usr/share/man/man4/mvme68k/intro.4
+./usr/share/man/man4/mvme68k/kmem.4
+./usr/share/man/man4/mvme68k/le.4
+./usr/share/man/man4/mvme68k/lpt.4
+./usr/share/man/man4/mvme68k/mainbus.4
+./usr/share/man/man4/mvme68k/mem.4
+./usr/share/man/man4/mvme68k/ncrsc.4
+./usr/share/man/man4/mvme68k/pcc.4
+./usr/share/man/man4/mvme68k/pcctwo.4
+./usr/share/man/man4/mvme68k/wdsc.4
+./usr/share/man/man4/mvme68k/zsc.4
 ./usr/share/man/man4/mtio.4
 ./usr/share/man/man4/pc532/lpt.4
 ./usr/share/man/man4/pc532/mem.4
@@ -606,6 +637,7 @@
 ./usr/share/man/man8/mac68k/MAKEDEV.8
 ./usr/share/man/man8/mac68k/makedev.8
 ./usr/share/man/man8/mvme68k/MAKEDEV.8
+./usr/share/man/man8/mvme68k/boot.8
 ./usr/share/man/man8/mvme68k/installboot.8
 ./usr/share/man/man8/mvme68k/makedev.8
 ./usr/share/man/man8/next68k/MAKEDEV.8
