@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_syscall.c,v 1.1.14.3 2002/07/17 02:14:56 gehenna Exp $	*/
+/*	$NetBSD: netbsd32_syscall.c,v 1.1.14.4 2002/08/31 14:52:56 gehenna Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
@@ -269,7 +269,9 @@ netbsd32_syscall_fancy(frame)
 		break;
 	}
 
+#if defined(KTRACE) || defined(SYSTRACE)
 	trace_exit(p, code, args64, rval, error);
+#endif
 
 	userret(p);
 }

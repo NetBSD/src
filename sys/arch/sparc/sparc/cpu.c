@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.c,v 1.126.8.2 2002/07/21 13:00:53 gehenna Exp $ */
+/*	$NetBSD: cpu.c,v 1.126.8.3 2002/08/31 14:52:20 gehenna Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -79,6 +79,9 @@
 #include <sparc/sparc/asm.h>
 #include <sparc/sparc/cpuvar.h>
 #include <sparc/sparc/memreg.h>
+#if defined(SUN4D)
+#include <sparc/sparc/cpuunitvar.h>
+#endif
 
 struct cpu_softc {
 	struct device	sc_dv;		/* generic device info */
@@ -97,12 +100,23 @@ static	int cpu_instance;		/* current # of CPUs wired by us */
 
 
 /* The CPU configuration driver. */
-static void cpu_attach __P((struct device *, struct device *, void *));
-int  cpu_match __P((struct device *, struct cfdata *, void *));
+static void cpu_mainbus_attach __P((struct device *, struct device *, void *));
+int  cpu_mainbus_match __P((struct device *, struct cfdata *, void *));
 
-struct cfattach cpu_ca = {
-	sizeof(struct cpu_softc), cpu_match, cpu_attach
+struct cfattach cpu_mainbus_ca = {
+	sizeof(struct cpu_softc), cpu_mainbus_match, cpu_mainbus_attach
 };
+
+#if defined(SUN4D)
+static int cpu_cpuunit_match(struct device *, struct cfdata *, void *);
+static void cpu_cpuunit_attach(struct device *, struct device *, void *);
+
+struct cfattach cpu_cpuunit_ca = {
+	sizeof(struct cpu_softc), cpu_cpuunit_match, cpu_cpuunit_attach
+};
+#endif /* SUN4D */
+
+static void cpu_attach(struct cpu_softc *, int, int);
 
 static char *fsrtoname __P((int, int, int));
 void cache_print __P((struct cpu_softc *));
@@ -255,7 +269,7 @@ static char *iu_vendor[16] = {
  */
 
 int
-cpu_match(parent, cf, aux)
+cpu_mainbus_match(parent, cf, aux)
 	struct device *parent;
 	struct cfdata *cf;
 	void *aux;
@@ -265,30 +279,59 @@ cpu_match(parent, cf, aux)
 	return (strcmp(cf->cf_driver->cd_name, ma->ma_name) == 0);
 }
 
+static void
+cpu_mainbus_attach(parent, self, aux)
+	struct device *parent;
+	struct device *self;
+	void *aux;
+{
+	struct mainbus_attach_args *ma = aux;
+	int mid;
+
+#if defined(MULTIPROCESSOR)
+	mid = (ma->ma_node != 0) ? PROM_getpropint(ma->ma_node, "mid", 0) : 0;
+#else
+	mid = 0;
+#endif
+
+	cpu_attach((struct cpu_softc *)self, ma->ma_node, mid);
+}
+
+#if defined(SUN4D)
+static int
+cpu_cpuunit_match(parent, cf, aux)
+	struct device *parent;
+	struct cfdata *cf;
+	void *aux;
+{
+	struct cpuunit_attach_args *cpua = aux;
+
+	return (strcmp(cf->cf_driver->cd_name, cpua->cpua_type) == 0);
+}
+
+static void
+cpu_cpuunit_attach(parent, self, aux)
+	struct device *parent;
+	struct device *self;
+	void *aux;
+{
+	struct cpuunit_attach_args *cpua = aux;
+
+	cpu_attach((struct cpu_softc *)self, cpua->cpua_node,
+	    cpua->cpua_device_id);
+}
+#endif /* SUN4D */
+
 /*
  * Attach the CPU.
  * Discover interesting goop about the virtual address cache
  * (slightly funny place to do it, but this is where it is to be found).
  */
 static void
-cpu_attach(parent, self, aux)
-	struct device *parent;
-	struct device *self;
-	void *aux;
+cpu_attach(struct cpu_softc *sc, int node, int mid)
 {
 static	struct cpu_softc *bootcpu;
-	struct mainbus_attach_args *ma = aux;
-	struct cpu_softc *sc = (struct cpu_softc *)self;
 	struct cpu_info *cpi;
-	int node, mid;
-
-	node = ma->ma_node;
-
-#if defined(MULTIPROCESSOR)
-	mid = (node != 0) ? PROM_getpropint(node, "mid", 0) : 0;
-#else
-	mid = 0;
-#endif
 
 	/*
 	 * First, find out if we're attaching the boot CPU.
@@ -883,7 +926,7 @@ getcacheinfo_sun4(sc, node)
 		ci->c_linesize = 16;
 		ci->c_l2linesize = 4;
 		ci->c_split = 0;
-		ci->c_nlines = ci->c_totalsize << ci->c_l2linesize;
+		ci->c_nlines = ci->c_totalsize >> ci->c_l2linesize;
 		break;
 	case CPUTYP_4_300:
 		ci->c_vactype = VAC_WRITEBACK;
@@ -892,7 +935,7 @@ getcacheinfo_sun4(sc, node)
 		ci->c_linesize = 16;
 		ci->c_l2linesize = 4;
 		ci->c_split = 0;
-		ci->c_nlines = ci->c_totalsize << ci->c_l2linesize;
+		ci->c_nlines = ci->c_totalsize >> ci->c_l2linesize;
 		sc->flags |= CPUFLG_SUN4CACHEBUG;
 		break;
 	case CPUTYP_4_400:
@@ -902,7 +945,7 @@ getcacheinfo_sun4(sc, node)
 		ci->c_linesize = 32;
 		ci->c_l2linesize = 5;
 		ci->c_split = 0;
-		ci->c_nlines = ci->c_totalsize << ci->c_l2linesize;
+		ci->c_nlines = ci->c_totalsize >> ci->c_l2linesize;
 		break;
 	}
 }
@@ -1032,7 +1075,7 @@ getcacheinfo_sun4c(sc, node)
 		panic("bad cache line size %d", l);
 	ci->c_l2linesize = i;
 	ci->c_associativity = 1;
-	ci->c_nlines = ci->c_totalsize << i;
+	ci->c_nlines = ci->c_totalsize >> i;
 
 	ci->c_vactype = VAC_WRITETHROUGH;
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: pcb.h,v 1.2.2.2 2002/07/16 00:41:18 gehenna Exp $	*/
+/*	$NetBSD: pcb.h,v 1.2.2.3 2002/08/31 14:52:06 gehenna Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -45,6 +45,7 @@ struct pcb {
 	caddr_t	pcb_onfault;		/* copyin/out fault return address */
 };
 
+extern int sh5_savectx(u_int, int, struct pcb *);
 extern int sh5_fpsave(u_int, struct pcb *);
 extern void sh5_fprestore(u_int, struct pcb *);
 

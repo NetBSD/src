@@ -1,4 +1,4 @@
-#	$NetBSD: WALNUT,v 1.19.2.1 2002/07/15 01:41:05 gehenna Exp $
+#	$NetBSD: WALNUT,v 1.19.2.2 2002/08/31 14:52:50 gehenna Exp $
 #
 #	GENERIC -- everything that's currently supported
 #
@@ -118,7 +118,7 @@ options 	PCI_NETBSD_CONFIGURE	# Do not rely on BIOS/whatever to configure PCI de
 
 # wscons options
 #options 	WSEMUL_SUN		# sun terminal emulation
-options 	WSEMUL_VT100		# VT100 / VT220 emulation
+#options 	WSEMUL_VT100		# VT100 / VT220 emulation
 
 # Kernel root file system and dump configuration.
 config		netbsd	root on ? type ?
@@ -127,24 +127,22 @@ config		netbsd	root on ? type ?
 # Device configuration
 #
 
-mainbus0 at root
+plb0 at root				# Processor Local Bus
 
-cpu0	at mainbus0
+cpu0	at plb?
 
-# UARTs
-com0	at mainbus? addr 0xef600300 irq 0 # UIC IRQ 0
-com1	at mainbus? addr 0xef600400 irq 1 # UIC IRQ 1
+ecc0	at plb? irq 16			# On-chip ECC controller
 
-# Ethernet Media Access Controller
-emac0	at mainbus? addr 0xef600800 irq 15 # UIC IRQ 15
+opb*	at plb?				# On-chip Peripheral Bus
 
-# RTC
-dsrtc0	at mainbus? addr 0xf0000000
+wdog*	at opb?				# Watchdog timer
 
-# time-of-day device via rtc device
-todclock0 at dsrtc?
+com*	at opb? addr ? irq ?		# UARTs
 
-pchb0	at mainbus?			# PCI-Host bridges
+emac0	at opb? addr ? irq ?		# Ethernet Media Access Controller
+options	EMAC_EVENT_COUNTERS
+
+pchb0	at plb?				# PCI-Host bridges
 
 pci*	at pchb?
 ppb*	at pci? dev ? function ?	# PCI-PCI bridges
@@ -221,14 +219,19 @@ cd*	at atapibus? drive ? flags 0x0000	# ATAPI CD-ROM drives
 sd*	at atapibus? drive ? flags 0x0000	# ATAPI disk drives
 uk*	at atapibus? drive ? flags 0x0000	# ATAPI unknown
 
-pckbc0		at mainbus?
-pckbd*		at pckbc?
-wskbd*		at pckbd? console ?
-pms*		at pckbc?
-wsmouse*	at pms? mux 0
+pbus*	at plb?				# off-chip Peripheral BUS
 
-vga*		at pci? dev ? function ?
-wsdisplay*	at vga? console ?
+dsrtc0	at pbus? addr ?			# RTC
+todclock0 at dsrtc?			# time-of-day device via rtc device
+
+#pckbc0	at pbus?
+#pckbd*	at pckbc?
+#wskbd*	at pckbd? console ?
+#pms*	at pckbc?
+#wsmouse* at pms? mux 0
+
+#vga*	at pci? dev ? function ?
+#wsdisplay* at vga? console ?
 
 pseudo-device	vnd		4	# disk-like interface to files
 pseudo-device	ccd		4	# concatenated/striped disk devices
@@ -248,5 +251,6 @@ pseudo-device	gif		4	# IPv[46] over IPv[46] tunnel (RFC1933)
 pseudo-device	vlan			# IEEE 802.1q encapsulation
 pseudo-device	pty			# pseudo-terminals
 pseudo-device	rnd			# /dev/random and in-kernel generator
-pseudo-device	wsmux			# ick
+#pseudo-device	wsmux			# ick
 pseudo-device	clockctl		# user control of clock subsystem
+pseudo-device	kttcp			# kernel ttcp

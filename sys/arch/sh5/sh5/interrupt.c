@@ -1,4 +1,4 @@
-/*	$NetBSD: interrupt.c,v 1.1.2.2 2002/07/16 00:41:21 gehenna Exp $	*/
+/*	$NetBSD: interrupt.c,v 1.1.2.3 2002/08/31 14:52:09 gehenna Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -135,6 +135,7 @@ sh5_intr_init(int nhandles,
 	if (ih == NULL)
 		panic("sh5_intr_init: Out of memory");
 
+	memset(ih, 0, sizeof(*ih) * (nhandles + 1));
 	intrhand = ih;
 	szintrhand = nhandles + 1;
 	intr_enable = int_enable;

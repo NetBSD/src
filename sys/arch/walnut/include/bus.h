@@ -1,4 +1,4 @@
-/*	$NetBSD: bus.h,v 1.3 2001/10/18 22:25:31 eeh Exp $	*/
+/*	$NetBSD: bus.h,v 1.3.12.1 2002/08/31 14:52:51 gehenna Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -68,24 +68,24 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef _GALAXY_BUS_H_
-#define _GALAXY_BUS_H_
+#ifndef _WALNUT_BUS_H_
+#define _WALNUT_BUS_H_
 
 #include <machine/pio.h>
 
 /*
- * Values for the galaxy bus space tag, not to be used directly by MI code.
+ * Values for the ibm4xx bus space tag, not to be used directly by MI code.
  */
 
 #define __BUS_SPACE_HAS_STREAM_METHODS
 
-#define GALAXY_BUS_ADDR_MASK	0xfffff000
-#define GALAXY_BUS_STRIDE_MASK	0x0000000f
+#define IBM4XX_BUS_ADDR_MASK	0xfffff000
+#define IBM4XX_BUS_STRIDE_MASK	0x0000000f
 
-#define galaxy_make_bus_space_tag(addr, stride) \
-	(((addr) & GALAXY_BUS_ADDR_MASK) | (stride))
+#define ibm4xx_make_bus_space_tag(addr, stride) \
+	(((addr) & IBM4XX_BUS_ADDR_MASK) | (stride))
 /* Mw may need to use tag as an offset to convert between bus-side and local addresses */
-#define __BA(t, h, o) ((void *)((h) + ((o) << ((t) & GALAXY_BUS_STRIDE_MASK))))
+#define __BA(t, h, o) ((void *)((h) + ((o) << ((t) & IBM4XX_BUS_STRIDE_MASK))))
 
 
 /*
@@ -172,8 +172,8 @@ bus_space_map(t, addr, size, flags, bshp)
 	int flags;
 	bus_space_handle_t *bshp;
 {
-	paddr_t base = t & GALAXY_BUS_ADDR_MASK;
-	int stride = t & GALAXY_BUS_STRIDE_MASK;
+	paddr_t base = t & IBM4XX_BUS_ADDR_MASK;
+	int stride = t & IBM4XX_BUS_STRIDE_MASK;
 	*bshp = (bus_space_handle_t)
 		mapiodev(base + addr, size << stride);
 	return 0;
@@ -187,7 +187,7 @@ bus_space_mmap(t, addr, offset, prot, flags)
 	int prot;
 	int flags;
 {
-	paddr_t base = t & GALAXY_BUS_ADDR_MASK;
+	paddr_t base = t & IBM4XX_BUS_ADDR_MASK;
 
 	return (base+addr+offset);
 }
@@ -835,7 +835,7 @@ bus_space_copy_region_4(t, h1, o1, h2, o2, c)
  *	    bus_space_handle_t bsh, bus_size_t offset,
  *	    bus_size_t len, int flags);
  *
- * Note: the galaxy does not currently require barriers, but we must
+ * Note: the ibm4xx does not currently require barriers, but we must
  * provide the flags to MI code.
  */
 
@@ -877,8 +877,8 @@ struct uio;
 #define BUS_DMASYNC_PREWRITE	0x04	/* pre-write synchronization */
 #define BUS_DMASYNC_POSTWRITE	0x08	/* post-write synchronization */
 
-typedef struct galaxy_bus_dma_tag	*bus_dma_tag_t;
-typedef struct galaxy_bus_dmamap	*bus_dmamap_t;
+typedef struct ibm4xx_bus_dma_tag	*bus_dma_tag_t;
+typedef struct ibm4xx_bus_dmamap	*bus_dmamap_t;
 
 /*
  *	bus_dma_segment_t
@@ -886,11 +886,11 @@ typedef struct galaxy_bus_dmamap	*bus_dmamap_t;
  *	Describes a single contiguous DMA transaction.  Values
  *	are suitable for programming into DMA registers.
  */
-struct galaxy_bus_dma_segment {
+struct ibm4xx_bus_dma_segment {
 	bus_addr_t	ds_addr;	/* DMA address */
 	bus_size_t	ds_len;		/* length of transfer */
 };
-typedef struct galaxy_bus_dma_segment	bus_dma_segment_t;
+typedef struct ibm4xx_bus_dma_segment	bus_dma_segment_t;
 
 /*
  *	bus_dma_tag_t
@@ -899,7 +899,7 @@ typedef struct galaxy_bus_dma_segment	bus_dma_segment_t;
  *	DMA for a given bus.
  */
 
-struct galaxy_bus_dma_tag {
+struct ibm4xx_bus_dma_tag {
 	/*
 	 * The `bounce threshold' is checked while we are loading
 	 * the DMA map.  If the physical address of the segment
@@ -976,7 +976,7 @@ struct galaxy_bus_dma_tag {
  *
  *	Describes a DMA mapping.
  */
-struct galaxy_bus_dmamap {
+struct ibm4xx_bus_dmamap {
 	/*
 	 * PRIVATE MEMBERS: not for use my machine-independent code.
 	 */
@@ -997,7 +997,7 @@ struct galaxy_bus_dmamap {
 	bus_dma_segment_t dm_segs[1];	/* segments; variable length */
 };
 
-#ifdef _GALAXY_BUS_DMA_PRIVATE
+#ifdef _IBM4XX_BUS_DMA_PRIVATE
 int	_bus_dmamap_create(bus_dma_tag_t, bus_size_t, int, bus_size_t,
 	    bus_size_t, int, bus_dmamap_t *);
 void	_bus_dmamap_destroy(bus_dma_tag_t, bus_dmamap_t);
@@ -1030,8 +1030,8 @@ int	_bus_dmamem_alloc_range(bus_dma_tag_t tag, bus_size_t size,
 	    bus_dma_segment_t *segs, int nsegs, int *rsegs, int flags,
 	    paddr_t low, paddr_t high);
 
-extern struct galaxy_bus_dma_tag galaxy_default_bus_dma_tag;
+extern struct ibm4xx_bus_dma_tag ibm4xx_default_bus_dma_tag;
 
-#endif /* _GALAXY_BUS_DMA_PRIVATE */
+#endif /* _IBM4XX_BUS_DMA_PRIVATE */
 
-#endif /* _GALAXY_BUS_H_ */
+#endif /* _WALNUT_BUS_H_ */
