@@ -1,4 +1,4 @@
-/*	$NetBSD: random.c,v 1.13 1998/09/09 12:27:32 kleink Exp $	*/
+/*	$NetBSD: random.c,v 1.14 1998/09/09 19:34:00 kleink Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -38,12 +38,11 @@
 #if 0
 static char sccsid[] = "@(#)random.c	8.2 (Berkeley) 5/19/95";
 #else
-__RCSID("$NetBSD: random.c,v 1.13 1998/09/09 12:27:32 kleink Exp $");
+__RCSID("$NetBSD: random.c,v 1.14 1998/09/09 19:34:00 kleink Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
 #include "namespace.h"
-#include <stdio.h>
 #include <stdlib.h>
 #include "reentrant.h"
 
@@ -302,13 +301,9 @@ initstate(seed, arg_state, n)
 	else
 		state[-1] = MAX_TYPES * (rptr - state) + rand_type;
 	if (n < BREAK_0) {
-		(void)fprintf(stderr,
-		    "random: not enough state (%ld bytes); ignored.\n",
-		    (long)n);
 		mutex_unlock(&random_mutex);
-		return(0);
-	}
-	if (n < BREAK_1) {
+		return (NULL);
+	} else if (n < BREAK_1) {
 		rand_type = TYPE_0;
 		rand_deg = DEG_0;
 		rand_sep = SEP_0;
@@ -384,8 +379,8 @@ setstate(arg_state)
 		rand_sep = seps[type];
 		break;
 	default:
-		(void)fprintf(stderr,
-		    "random: state info corrupted; not changed.\n");
+		mutex_unlock(&random_mutex);
+		return (NULL);
 	}
 	state = (long *) (new_state + 1);
 	if (rand_type != TYPE_0) {
