@@ -1,4 +1,4 @@
-/*	$NetBSD: mbuf.h,v 1.85 2003/07/27 04:16:23 jonathan Exp $	*/
+/*	$NetBSD: mbuf.h,v 1.86 2003/08/04 22:13:04 jonathan Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1999, 2001 The NetBSD Foundation, Inc.
@@ -880,6 +880,18 @@ struct	m_tag *m_tag_next(struct mbuf *, struct m_tag *);
 #define PACKET_TAG_PF_FRAGCACHE			13 /* PF fragment cached */
 #define PACKET_TAG_PF_QID			14 /* PF queue id */
 #define PACKET_TAG_PF_TAG			15 /* PF tags */
+
+#define PACKET_TAG_IPSEC_IN_CRYPTO_DONE		16
+#define PACKET_TAG_IPSEC_IN_DONE		17
+#define PACKET_TAG_IPSEC_OUT_DONE		18
+#define	PACKET_TAG_IPSEC_OUT_CRYPTO_NEEDED	19  /* NIC IPsec crypto req'ed */
+#define	PACKET_TAG_IPSEC_IN_COULD_DO_CRYPTO	20  /* NIC notifies IPsec */
+#define	PACKET_TAG_IPSEC_PENDING_TDB		21  /* Reminder to do IPsec */
+
+#define	PACKET_TAG_IPSEC_SOCKET			22 /* IPSEC socket ref */
+#define	PACKET_TAG_IPSEC_HISTORY		23 /* IPSEC history */
+
+
 #endif /* _KERNEL */
 #endif /* !_SYS_MBUF_H_ */
 
