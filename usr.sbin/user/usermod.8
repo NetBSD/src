@@ -1,4 +1,4 @@
-.\" $NetBSD: usermod.8,v 1.5 2000/10/01 09:18:59 simonb Exp $ */
+.\" $NetBSD: usermod.8,v 1.6 2000/10/03 12:47:13 bjh21 Exp $ */
 .\"
 .\"
 .\" Copyright (c) 1999 Alistair G. Crooks.  All rights reserved.
@@ -44,7 +44,9 @@
 .Op Fl d Ar home-dir
 .Op Fl e Ar expiry-time
 .Op Fl f Ar inactive-secs
-.Op Fl g Ar gid/name/=uid
+.Oo
+.Fl g Ar gid | name | Li =uid
+.Oc
 .Op Fl l Ar new-login
 .Op Fl m
 .Op Fl o
@@ -75,7 +77,9 @@ GECOS field) which will be added for the user, and typically will include
 the username, and, perhaps, contact information for the user.
 .It Fl d Ar home-directory
 is the home directory which will be created and populated for the user,
-should the -m option be specified.
+should the
+.Fl m
+option be specified.
 .It Fl e Ar secs-to-expiry
 provides the number of seconds since the epoch (UTC) at
 which the current password change expire. This
@@ -92,11 +96,13 @@ by using the
 field in the
 .Pa /etc/usermgmt.conf
 file - it has the format:
-.Ar expire <secs-to-expiry> .
-.It Fl g Ar gid/name/=uid
+.D1 Ic expire Ar secs-to-expiry
+.It Xo
+.Fl g Ar gid | name | Li =uid
+.Xc
 gives the group name or identifier to be used for the new user's primary group.
 If this is
-.Ar "-g=uid" ,
+.Ql =uid ,
 then a uid and gid will be picked which are both unique
 and the same, and a line added to
 .Pa /etc/group
@@ -105,12 +111,20 @@ This value can be preset for all users
 by using the
 .Ar gid
 field in the
-.Xr /usr/share/adduser/defaults
+.Pa /usr/share/adduser/defaults
 file - it has the format:
-.Ar group <groupname/groupid/=uid> .
+.br \" XXX Shouldn't be necessary -- mdoc bug? --bjh21
+.Bd -ragged -offset indent -compact
+.Ic group
+.Ar gid | name | Li =uid
+.Ed
 .It Fl l Ar new-user
 gives the new user name.
-It must consist of alphanumeric characters, or the characters '.', '-' or '_'.
+It must consist of alphanumeric characters, or the characters
+.Ql \&. ,
+.Ql \&-
+or
+.Ql \&_ .
 .It Fl m
 moves the home directory from its old position to the new one.
 .It Fl o
@@ -126,16 +140,16 @@ by using the
 field in the
 .Pa /etc/usermgmt.conf
 file - it has the format:
-.Ar password <encrypted-password> .
+.D1 Ic password Ar encrypted-password
 .It Fl s Ar shell
 specifies the login shell for the new user.
 This value can be preset for all users
 by using the
 .Ar shell
 field in the
-.Xr /usr/share/adduser/defaults
+.Pa /usr/share/adduser/defaults
 file - it has the format:
-.Ar shell <login-shell> .
+.D1 Ic shell Ar login-shell
 .It Fl u Ar uid
 specifies a new uid for the user.
 Boundaries for this value can be preset for all users
@@ -144,7 +158,11 @@ by using the
 field in the
 .Pa /etc/usermgmt.conf
 file - they have the format:
-.Ar range <starting-uid>..<ending_uid> .
+.br \" XXX
+.Bd -ragged -offset indent -compact
+.Ic range
+.Ar starting-uid Ns Li .. Ns Ar ending_uid
+.Ed
 .It Fl v
 enables verbose mode - explain the commands as they are executed.
 .El
