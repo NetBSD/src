@@ -1,4 +1,4 @@
-/* $NetBSD: db_machdep.h,v 1.2 1996/03/06 23:16:54 mark Exp $ */
+/* $NetBSD: db_machdep.h,v 1.3 1996/10/12 18:29:32 mark Exp $ */
 
 /*
  * Copyright (c) 1996 Scott K Stevens
@@ -39,7 +39,6 @@
 #include <vm/vm.h>
 #include <machine/frame.h>
 #include <machine/psl.h>
-#include <machine/reg.h>
 
 /* end of mangling */
 
