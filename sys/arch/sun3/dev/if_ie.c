@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ie.c,v 1.20 1997/03/15 18:10:49 is Exp $ */
+/*	$NetBSD: if_ie.c,v 1.21 1997/07/29 06:43:51 fair Exp $ */
 
 /*-
  * Copyright (c) 1993, 1994, 1995 Charles Hannum.
@@ -483,7 +483,7 @@ ie_intr(arg)
 	if (sc->hard_type == IE_VME) {
 		volatile struct ievme *iev = (volatile struct ievme *)sc->sc_reg;
 		if (iev->status & IEVME_PERR) {
-			printf("%s: parity error (ctrl %x @ %02x%04x)\n",
+			printf("%s: parity error (ctrl 0x%x @ 0x%02x%04x)\n",
 			    sc->sc_dev.dv_xname, iev->pectrl,
 			    iev->pectrl & IEVME_HADDR, iev->peaddr);
 			iev->pectrl = iev->pectrl | IEVME_PARACK;
@@ -1069,7 +1069,8 @@ ie_readframe(sc, num)
 
 #ifdef IEDEBUG
 	if (sc->sc_debug & IED_READFRAME)
-		printf("%s: frame from ether %s type %x\n", sc->sc_dev.dv_xname,
+		printf("%s: frame from ether %s type 0x%x\n",
+			sc->sc_dev.dv_xname,
 		    ether_sprintf(eh.ether_shost), (u_int)eh.ether_type);
 #endif
 
@@ -1339,7 +1340,7 @@ run_tdr(sc, cmd)
 		printf("%s: TDR detected a short %d clocks away\n",
 		    sc->sc_dev.dv_xname, SWAP(result & IE_TDR_TIME));
 	} else {
-		printf("%s: TDR returned unknown status %x\n",
+		printf("%s: TDR returned unknown status 0x%x\n",
 		    sc->sc_dev.dv_xname, result);
 	}
 }
