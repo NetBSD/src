@@ -1,4 +1,4 @@
-/*	$NetBSD: regcomp.c,v 1.16 2000/01/22 22:19:17 mycroft Exp $	*/
+/*	$NetBSD: regcomp.c,v 1.17 2000/07/07 08:03:40 itohy Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993, 1994 Henry Spencer.
@@ -44,7 +44,7 @@
 #if 0
 static char sccsid[] = "@(#)regcomp.c	8.5 (Berkeley) 3/20/94";
 #else
-__RCSID("$NetBSD: regcomp.c,v 1.16 2000/01/22 22:19:17 mycroft Exp $");
+__RCSID("$NetBSD: regcomp.c,v 1.17 2000/07/07 08:03:40 itohy Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -427,7 +427,7 @@ struct parse *p;
 		ordinary(p, c);
 		break;
 	case '{':		/* okay as ordinary except if digit follows */
-		REQUIRE(!MORE() || !isdigit(PEEK()), REG_BADRPT);
+		REQUIRE(!MORE() || !isdigit((unsigned char)PEEK()), REG_BADRPT);
 		/* FALLTHROUGH */
 	default:
 		ordinary(p, c);
@@ -439,7 +439,7 @@ struct parse *p;
 	c = PEEK();
 	/* we call { a repetition if followed by a digit */
 	if (!( c == '*' || c == '+' || c == '?' ||
-				(c == '{' && MORE2() && isdigit(PEEK2())) ))
+	    (c == '{' && MORE2() && isdigit((unsigned char)PEEK2())) ))
 		return;		/* no repetition, we're done */
 	NEXT();
 
@@ -468,7 +468,7 @@ struct parse *p;
 	case '{':
 		count = p_count(p);
 		if (EAT(',')) {
-			if (isdigit(PEEK())) {
+			if (isdigit((unsigned char)PEEK())) {
 				count2 = p_count(p);
 				REQUIRE(count <= count2, REG_BADBR);
 			} else		/* single number with comma */
@@ -489,7 +489,7 @@ struct parse *p;
 		return;
 	c = PEEK();
 	if (!( c == '*' || c == '+' || c == '?' ||
-				(c == '{' && MORE2() && isdigit(PEEK2())) ) )
+	    (c == '{' && MORE2() && isdigit((unsigned char)PEEK2())) ) )
 		return;
 	SETERROR(REG_BADRPT);
 }
@@ -655,7 +655,7 @@ int starordinary;		/* is a leading * an ordinary character? */
 	} else if (EATTWO('\\', '{')) {
 		count = p_count(p);
 		if (EAT(',')) {
-			if (MORE() && isdigit(PEEK())) {
+			if (MORE() && isdigit((unsigned char)PEEK())) {
 				count2 = p_count(p);
 				REQUIRE(count <= count2, REG_BADBR);
 			} else		/* single number with comma */
@@ -688,7 +688,7 @@ struct parse *p;
 
 	_DIAGASSERT(p != NULL);
 
-	while (MORE() && isdigit(PEEK()) && count <= DUPMAX) {
+	while (MORE() && isdigit((unsigned char)PEEK()) && count <= DUPMAX) {
 		count = count*10 + (GETNEXT() - '0');
 		ndigits++;
 	}
@@ -870,7 +870,7 @@ cset *cs;
 
 	sp = p->next;
 
-	while (MORE() && isalpha(PEEK()))
+	while (MORE() && isalpha((unsigned char)PEEK()))
 		NEXT();
 	len = p->next - sp;
 	for (cp = cclasses; cp->name != NULL; cp++)
@@ -1027,8 +1027,9 @@ int ch;
 	_DIAGASSERT(p != NULL);
 
 	cap = p->g->categories;
-	if ((p->g->cflags&REG_ICASE) && isalpha(ch) && othercase(ch) != ch)
-		bothcases(p, ch);
+	if ((p->g->cflags&REG_ICASE) && isalpha((unsigned char) ch)
+	    && othercase((unsigned char) ch) != (unsigned char) ch)
+		bothcases(p, (unsigned char) ch);
 	else {
 		EMIT(OCHAR, (unsigned char)ch);
 		if (cap[ch] == 0)
