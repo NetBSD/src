@@ -1,4 +1,4 @@
-/*	$NetBSD: mach_vm.h,v 1.22 2003/11/18 01:40:18 manu Exp $ */
+/*	$NetBSD: mach_vm.h,v 1.23 2003/11/27 23:44:49 manu Exp $ */
 
 /*-
  * Copyright (c) 2002-2003 The NetBSD Foundation, Inc.
@@ -319,6 +319,7 @@ typedef struct {
 /* Kernel-private structures */
 
 struct mach_memory_entry {
+	struct proc *mme_proc;
 	vaddr_t	mme_offset;
 	size_t mme_size;
 };

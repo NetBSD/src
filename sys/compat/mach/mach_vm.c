@@ -1,4 +1,4 @@
-/*	$NetBSD: mach_vm.c,v 1.37 2003/11/24 15:06:09 manu Exp $ */
+/*	$NetBSD: mach_vm.c,v 1.38 2003/11/27 23:44:49 manu Exp $ */
 
 /*-
  * Copyright (c) 2002-2003 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mach_vm.c,v 1.37 2003/11/24 15:06:09 manu Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mach_vm.c,v 1.38 2003/11/27 23:44:49 manu Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -76,8 +76,8 @@ mach_vm_map(args)
 	mach_vm_map_request_t *req = args->smsg;
 	mach_vm_map_reply_t *rep = args->rmsg;
 	size_t *msglen = args->rsize;
-	struct lwp *l = args->l;
-	struct proc *p = l->l_proc;
+	struct lwp *tl = args->tl;
+	struct proc *tp = tl->l_proc;
 	struct sys_mmap_args cup;
 	vaddr_t addr;
 	int error, flags;
@@ -117,11 +117,11 @@ mach_vm_map(args)
 	 * Use uvm_map_findspace to find a place which conforms to the 
 	 * requested alignement.
 	 */
-	vm_map_lock(&p->p_vmspace->vm_map);
-	ret = uvm_map_findspace(&p->p_vmspace->vm_map,
+	vm_map_lock(&tp->p_vmspace->vm_map);
+	ret = uvm_map_findspace(&tp->p_vmspace->vm_map,
 	    trunc_page(req->req_address), req->req_size, &addr, 
 	    NULL, 0, req->req_mask, flags); 
-	vm_map_unlock(&p->p_vmspace->vm_map);
+	vm_map_unlock(&tp->p_vmspace->vm_map);
 
 	if (ret == NULL)
 		return mach_msg_error(args, ENOMEM);
@@ -148,7 +148,7 @@ mach_vm_map(args)
 	SCARG(&cup, fd) = -1;		/* XXX For now, no object mapping */
 	SCARG(&cup, pos) = req->req_offset;
 	
-	if ((error = sys_mmap(l, &cup, &rep->rep_retval)) != 0)
+	if ((error = sys_mmap(tl, &cup, &rep->rep_retval)) != 0)
 		return mach_msg_error(args, error);
 
 	rep->rep_msgh.msgh_bits = 
@@ -169,8 +169,8 @@ mach_vm_allocate(args)
 	mach_vm_allocate_request_t *req = args->smsg;
 	mach_vm_allocate_reply_t *rep = args->rmsg;
 	size_t *msglen = args->rsize;
-	struct lwp *l = args->l;
-	struct proc *p = l->l_proc;
+	struct lwp *tl = args->tl;
+	struct proc *tp = tl->l_proc;
 	struct sys_mmap_args cup;
 	vaddr_t addr;
 	size_t size;
@@ -184,13 +184,13 @@ mach_vm_allocate(args)
 
 	size = round_page(size);
 	if (req->req_flags & MACH_VM_FLAGS_ANYWHERE)
-		addr = vm_map_min(&p->p_vmspace->vm_map);
+		addr = vm_map_min(&tp->p_vmspace->vm_map);
 	else
 		addr = trunc_page(addr);
 
-	if (((addr + size) > vm_map_max(&p->p_vmspace->vm_map)) ||
+	if (((addr + size) > vm_map_max(&tp->p_vmspace->vm_map)) ||
 	    ((addr + size) <= addr))
-		addr = vm_map_min(&p->p_vmspace->vm_map);
+		addr = vm_map_min(&tp->p_vmspace->vm_map);
 
 	if (size == 0)
 		goto out;
@@ -204,7 +204,7 @@ mach_vm_allocate(args)
 	SCARG(&cup, fd) = -1;
 	SCARG(&cup, pos) = 0;
 
-	if ((error = sys_mmap(l, &cup, &rep->rep_address)) != 0) 
+	if ((error = sys_mmap(tl, &cup, &rep->rep_address)) != 0) 
 		return mach_msg_error(args, error);
 	DPRINTF(("vm_allocate: success at %p\n", (void *)rep->rep_address));
 
@@ -227,7 +227,7 @@ mach_vm_deallocate(args)
 	mach_vm_deallocate_request_t *req = args->smsg;
 	mach_vm_deallocate_reply_t *rep = args->rmsg;
 	size_t *msglen = args->rsize;
-	struct lwp *l = args->l;
+	struct lwp *tl = args->tl;
 	struct sys_munmap_args cup;
 	int error;
 
@@ -237,7 +237,7 @@ mach_vm_deallocate(args)
 	SCARG(&cup, addr) = (caddr_t)req->req_address;
 	SCARG(&cup, len) = req->req_size;
 
-	if ((error = sys_munmap(l, &cup, &rep->rep_retval)) != 0)
+	if ((error = sys_munmap(tl, &cup, &rep->rep_retval)) != 0)
 		return mach_msg_error(args, error);
 
 	rep->rep_msgh.msgh_bits =
@@ -263,7 +263,7 @@ mach_vm_wire(args)
 	mach_vm_wire_request_t *req = args->smsg; 
 	mach_vm_wire_reply_t *rep = args->rmsg;
 	size_t *msglen = args->rsize;
-	struct lwp *l = args->l;
+	struct lwp *tl = args->tl;
 	register_t retval;
 	int error;
 
@@ -284,18 +284,18 @@ mach_vm_wire(args)
 
 		SCARG(&cup, addr) = (void *)req->req_address;
 		SCARG(&cup, len) = req->req_size;
-		error = sys_munlock(l, &cup, &retval);
+		error = sys_munlock(tl, &cup, &retval);
 	} else {
 		struct sys_mlock_args cup;
 
 		SCARG(&cup, addr) = (void *)req->req_address;
 		SCARG(&cup, len) = req->req_size;
-		error = sys_mlock(l, &cup, &retval);
+		error = sys_mlock(tl, &cup, &retval);
 	}
 	if (error != 0)
 		return mach_msg_error(args, error);
 		
-	if ((error = uvm_map_protect(&l->l_proc->p_vmspace->vm_map,
+	if ((error = uvm_map_protect(&tl->l_proc->p_vmspace->vm_map,
 	    req->req_address, req->req_address + req->req_size,
 	    req->req_access, 0)) != 0)
 		return mach_msg_error(args, error);
@@ -319,7 +319,7 @@ mach_vm_protect(args)
 	mach_vm_protect_request_t *req = args->smsg;
 	mach_vm_protect_reply_t *rep = args->rmsg;
 	size_t *msglen = args->rsize;
-	struct lwp *l = args->l;
+	struct lwp *tl = args->tl;
 	struct sys_mprotect_args cup;
 	register_t retval;
 	int error;
@@ -328,7 +328,7 @@ mach_vm_protect(args)
 	SCARG(&cup, len) = req->req_size;
 	SCARG(&cup, prot) = req->req_prot;
 
-	if ((error = sys_mprotect(l, &cup, &retval)) != 0)
+	if ((error = sys_mprotect(tl, &cup, &retval)) != 0)
 		return mach_msg_error(args, error);
 
 	rep->rep_msgh.msgh_bits =
@@ -458,7 +458,7 @@ mach_vm_inherit(args)
 	mach_vm_inherit_request_t *req = args->smsg;
 	mach_vm_inherit_reply_t *rep = args->rmsg;
 	size_t *msglen = args->rsize;
-	struct lwp *l = args->l;
+	struct lwp *tl = args->tl;
 	struct sys_minherit_args cup;
 	register_t retval;
 	int error;
@@ -468,7 +468,7 @@ mach_vm_inherit(args)
 	/* Flags map well between Mach and NetBSD */
 	SCARG(&cup, inherit) = req->req_inh;
 
-	if ((error = sys_minherit(l, &cup, &retval)) != 0)
+	if ((error = sys_minherit(tl, &cup, &retval)) != 0)
 		return mach_msg_error(args, error);
 	
 	rep->rep_msgh.msgh_bits =
@@ -490,6 +490,7 @@ mach_make_memory_entry_64(args)
 	mach_make_memory_entry_64_reply_t *rep = args->rmsg;
 	size_t *msglen = args->rsize;
 	struct lwp *l = args->l;
+	struct lwp *tl = args->tl;
 	struct mach_port *mp;
 	struct mach_right *mr;
 	struct mach_memory_entry *mme;
@@ -502,6 +503,7 @@ mach_make_memory_entry_64(args)
 	mp->mp_datatype = MACH_MP_MEMORY_ENTRY;
 
 	mme = malloc(sizeof(*mme), M_EMULDATA, M_WAITOK);
+	mme->mme_proc = tl->l_proc;
 	mme->mme_offset = req->req_offset;
 	mme->mme_size = req->req_size;
 	mp->mp_data = mme;
@@ -530,7 +532,7 @@ mach_vm_region(args)
 	mach_vm_region_request_t *req = args->smsg;
 	mach_vm_region_reply_t *rep = args->rmsg;
 	size_t *msglen = args->rsize;
-	struct lwp *l = args->l;
+	struct lwp *tl = args->tl;
 	struct mach_vm_region_basic_info *rbi;
 	struct vm_map_entry *vme;
 	
@@ -548,9 +550,11 @@ mach_vm_region(args)
 		return mach_msg_error(args, EINVAL);
 	*msglen = sizeof(*rep) + ((req->req_count - 9) * sizeof(int));
 
-	vme = uvm_map_findspace(&l->l_proc->p_vmspace->vm_map, 
+	printf("pid = %d\n", tl->l_proc->p_pid);
+	vme = uvm_map_findspace(&tl->l_proc->p_vmspace->vm_map, 
 			    req->req_addr, 1, (vaddr_t *)&rep->rep_addr, 
 			    NULL, 0, 0, UVM_FLAG_FIXED);
+	printf("vme = %p\n", vme);
 	if (vme == NULL)
 		return mach_msg_error(args, ENOMEM);
 
@@ -593,7 +597,7 @@ mach_vm_region_64(args)
 	mach_vm_region_64_request_t *req = args->smsg;
 	mach_vm_region_64_reply_t *rep = args->rmsg;
 	size_t *msglen = args->rsize;
-	struct lwp *l = args->l;
+	struct lwp *tl = args->tl;
 	struct mach_vm_region_basic_info_64 *rbi;
 	struct vm_map_entry *vme;
 
@@ -611,7 +615,7 @@ mach_vm_region_64(args)
 		return mach_msg_error(args, EINVAL);
 	*msglen = sizeof(*rep) + ((req->req_count - 9) * sizeof(int));
 
-	vme = uvm_map_findspace(&l->l_proc->p_vmspace->vm_map, 
+	vme = uvm_map_findspace(&tl->l_proc->p_vmspace->vm_map, 
 			    req->req_addr, 1, (vaddr_t *)&rep->rep_addr, 
 			    NULL, 0, 0, UVM_FLAG_FIXED);
 	if (vme == NULL)
@@ -656,7 +660,7 @@ mach_vm_msync(args)
 	mach_vm_msync_request_t *req = args->smsg;
 	mach_vm_msync_reply_t *rep = args->rmsg;
 	size_t *msglen = args->rsize;
-	struct lwp *l = args->l;
+	struct lwp *tl = args->tl;
 	struct sys___msync13_args cup;
 	int error;
 	register_t dontcare;
@@ -671,7 +675,7 @@ mach_vm_msync(args)
 	if (req->req_flags & MACH_VM_SYNC_INVALIDATE)
 		SCARG(&cup, flags) |= MS_INVALIDATE;
 
-	error = sys___msync13(l, &cup, &dontcare);
+	error = sys___msync13(tl, &cup, &dontcare);
 
 	rep->rep_msgh.msgh_bits =
 	    MACH_MSGH_REPLY_LOCAL_BITS(MACH_MSG_TYPE_MOVE_SEND_ONCE);
@@ -685,6 +689,7 @@ mach_vm_msync(args)
 	return 0;
 }
 
+/* XXX Do it for remote task */
 int
 mach_vm_copy(args)
 	struct mach_trap_args *args;

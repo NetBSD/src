@@ -1,4 +1,4 @@
-/*	$NetBSD: mach_thread.c,v 1.26 2003/11/24 14:31:40 manu Exp $ */
+/*	$NetBSD: mach_thread.c,v 1.27 2003/11/27 23:44:49 manu Exp $ */
 
 /*-
  * Copyright (c) 2002-2003 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mach_thread.c,v 1.26 2003/11/24 14:31:40 manu Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mach_thread.c,v 1.27 2003/11/27 23:44:49 manu Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -184,6 +184,7 @@ mach_thread_policy(args)
 	return 0;
 }
 
+/* XXX it might be possible to use this on another task */
 int 
 mach_thread_create_running(args)
 	struct mach_trap_args *args;
@@ -265,19 +266,12 @@ mach_thread_info(args)
 	mach_thread_info_reply_t *rep = args->rmsg;
 	size_t *msglen = args->rsize;
 	struct lwp *l = args->l;
-	struct proc *tp;
-	struct lwp *tl;
-	mach_port_t mn;
-	int error;
+	struct lwp *tl = args->tl;
+	struct proc *tp = tl->l_proc;
 
 	/* Sanity check req->req_count */
 	if (req->req_count > 12)
 		return mach_msg_error(args, EINVAL);
-
-	/* Get the target lwp from the remote port. */
-	mn = req->req_msgh.msgh_remote_port;
-	if ((error = mach_get_target_task(l, mn, &tp, &tl)) != 0)
-		return mach_msg_error(args, error);
 
 	rep->rep_msgh.msgh_bits =
 	    MACH_MSGH_REPLY_LOCAL_BITS(MACH_MSG_TYPE_MOVE_SEND_ONCE);
@@ -368,20 +362,13 @@ mach_thread_get_state(args)
 	mach_thread_get_state_request_t *req = args->smsg; 
 	mach_thread_get_state_reply_t *rep = args->rmsg;
 	size_t *msglen = args->rsize;
-	struct lwp *l = args->l;
-	mach_port_t mn;
-	struct lwp *tl;
+	struct lwp *tl = args->tl;
 	int error;
 	int size;
 
 	/* Sanity check req->req_count */
 	if (req->req_count > 144)
 		return mach_msg_error(args, EINVAL);
-
-	/* Get the target lwp from the remote port. */
-	mn = req->req_msgh.msgh_remote_port;
-	if ((error = mach_get_target_task(l, mn, NULL, &tl)) != 0)
-		return mach_msg_error(args, error);
 
 	if ((error = mach_thread_get_state_machdep(tl, 
 	    req->req_flavor, &rep->rep_state, &size)) != 0)
@@ -407,9 +394,7 @@ mach_thread_set_state(args)
 	mach_thread_set_state_request_t *req = args->smsg; 
 	mach_thread_set_state_reply_t *rep = args->rmsg;
 	size_t *msglen = args->rsize;
-	struct lwp *l = args->l;
-	struct lwp *tl;
-	mach_port_t mn;
+	struct lwp *tl = args->tl;
 	int error;
 	int end_offset;
 
@@ -418,11 +403,6 @@ mach_thread_set_state(args)
 	if (MACH_REQMSG_OVERFLOW(args, req->req_state[end_offset]))
 		return mach_msg_error(args, EINVAL);
 
-	/* Get the target lwp from the remote port. */
-	mn = req->req_msgh.msgh_remote_port;
-	if ((error = mach_get_target_task(l, mn, NULL, &tl)) != 0)
-		return mach_msg_error(args, error);
-		
 	if ((error = mach_thread_set_state_machdep(tl, 
 	    req->req_flavor, &req->req_state)) != 0)
 		return mach_msg_error(args, error);

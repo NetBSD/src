@@ -1,4 +1,4 @@
-/*	$NetBSD: mach_message.c,v 1.31 2003/11/25 21:59:31 christos Exp $ */
+/*	$NetBSD: mach_message.c,v 1.32 2003/11/27 23:44:49 manu Exp $ */
 
 /*-
  * Copyright (c) 2002-2003 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mach_message.c,v 1.31 2003/11/25 21:59:31 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mach_message.c,v 1.32 2003/11/27 23:44:49 manu Exp $");
 
 #include "opt_ktrace.h"
 #include "opt_compat_mach.h" /* For COMPAT_MACH in <sys/ktrace.h> */
@@ -69,6 +69,8 @@ __KERNEL_RCSID(0, "$NetBSD: mach_message.c,v 1.31 2003/11/25 21:59:31 christos E
 
 /* Mach message pool */
 static struct pool mach_message_pool;
+
+static struct lwp *mach_get_target_task(struct lwp *, struct mach_port *);
 
 int
 mach_sys_msg_overwrite_trap(l, v, retval)
@@ -265,7 +267,6 @@ skip_null_lr:
 			 */
 
 
-
 			/* 
 			 * Invoke the server. We give it the opportunity
 			 * to shorten rcv_size if there is less data in
@@ -279,6 +280,7 @@ skip_null_lr:
 				rm = NULL;
 
 			args.l = l;
+			args.tl = mach_get_target_task(l, mp);
 			args.smsg = sm;
 			args.rmsg = rm;
 			args.rsize = &rcv_size;
@@ -767,6 +769,27 @@ mach_sys_msg_trap(l, v, retval)
 	SCARG(&cup, scatter_list_size) = 0;
 
 	return mach_sys_msg_overwrite_trap(l, &cup, retval);
+}
+
+static struct lwp *
+mach_get_target_task(l, mp)
+	struct lwp *l;
+	struct mach_port *mp;
+{
+	struct proc *tp;
+	struct lwp *tl;
+
+	if (mp->mp_datatype != MACH_MP_PROC)
+		return l;	
+
+	/* 
+	 * We need per thread kernel ports to avoid 
+	 * seeing always the same thread here
+	 */
+	tp = (struct proc *)mp->mp_data;
+	tl = proc_representative_lwp(tp);
+
+	return tl;
 }
 
 void
