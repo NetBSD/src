@@ -1,4 +1,4 @@
-/*	$NetBSD: mach_errno.c,v 1.1.2.3 2002/12/11 06:37:28 thorpej Exp $ */
+/*	$NetBSD: mach_errno.c,v 1.1.2.4 2002/12/19 00:44:32 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -37,11 +37,12 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mach_errno.c,v 1.1.2.3 2002/12/11 06:37:28 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mach_errno.c,v 1.1.2.4 2002/12/19 00:44:32 thorpej Exp $");
 
 #include <sys/types.h>
 #include <sys/systm.h>
 #include <sys/null.h>
+#include <sys/queue.h>
 #include <sys/errno.h>
 
 #include <compat/mach/mach_types.h>
@@ -138,16 +139,13 @@ int native_to_mach_errno[] = {
 };
 
 int
-mach_msg_error(p, msgh, req, rep, error, maxlen, dst)
-	struct proc *p;
-	mach_msg_header_t *msgh;
-	mach_msg_header_t *req;
-	mach_error_reply_t *rep;
+mach_msg_error(args, error)
+	struct mach_trap_args *args;
 	int error;
-	size_t maxlen;
-	mach_msg_header_t *dst;
 {	
-	bzero(rep, sizeof(*rep));
+	mach_msg_header_t *req = args->smsg;
+	mach_error_reply_t *rep = args->rmsg;
+	size_t *msglen = args->rsize;
 
 	rep->rep_msgh.msgh_bits = 
 	    MACH_MSGH_REPLY_LOCAL_BITS(MACH_MSG_TYPE_MOVE_SEND_ONCE);
@@ -157,5 +155,7 @@ mach_msg_error(p, msgh, req, rep, error, maxlen, dst)
 	rep->rep_retval = native_to_mach_errno[error];
 	rep->rep_trailer.msgh_trailer_size = 8;
 
-	return MACH_MSG_RETURN(p, rep, msgh, sizeof(*rep), maxlen, dst);
+	*msglen = sizeof(*rep);
+
+	return error;
 }

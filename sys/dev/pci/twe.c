@@ -1,4 +1,4 @@
-/*	$NetBSD: twe.c,v 1.12.2.12 2002/12/11 06:38:27 thorpej Exp $	*/
+/*	$NetBSD: twe.c,v 1.12.2.13 2002/12/19 00:48:15 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2001, 2002 The NetBSD Foundation, Inc.
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: twe.c,v 1.12.2.12 2002/12/11 06:38:27 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: twe.c,v 1.12.2.13 2002/12/19 00:48:15 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -81,6 +81,7 @@ __KERNEL_RCSID(0, "$NetBSD: twe.c,v 1.12.2.12 2002/12/11 06:38:27 thorpej Exp $"
 #include <sys/buf.h>
 #include <sys/endian.h>
 #include <sys/malloc.h>
+#include <sys/conf.h>
 #include <sys/disk.h>
 
 #include <uvm/uvm_extern.h>
@@ -93,6 +94,7 @@ __KERNEL_RCSID(0, "$NetBSD: twe.c,v 1.12.2.12 2002/12/11 06:38:27 thorpej Exp $"
 #include <dev/pci/pcidevs.h>
 #include <dev/pci/twereg.h>
 #include <dev/pci/twevar.h>
+#include <dev/pci/tweio.h>
 
 #define	PCI_CBIO	0x10
 
@@ -102,7 +104,8 @@ static int	twe_init_connection(struct twe_softc *);
 static int	twe_intr(void *);
 static int	twe_match(struct device *, struct cfdata *, void *);
 static int	twe_param_get(struct twe_softc *, int, int, size_t,
-			      void (*)(struct twe_ccb *, int), void **);
+    void (*)(struct twe_ccb *, int), void **);
+static int	twe_param_set(struct twe_softc *, int, int, size_t, void *);
 static void	twe_poll(struct twe_softc *);
 static int	twe_print(void *, const char *);
 static int	twe_reset(struct twe_softc *);
@@ -111,7 +114,18 @@ static int	twe_status_check(struct twe_softc *, u_int);
 static int	twe_status_wait(struct twe_softc *, u_int, int);
 
 static inline u_int32_t	twe_inl(struct twe_softc *, int);
-static inline void	twe_outl(struct twe_softc *, int, u_int32_t);
+static inline void twe_outl(struct twe_softc *, int, u_int32_t);
+
+dev_type_open(tweopen);
+dev_type_close(tweclose);
+dev_type_ioctl(tweioctl);
+
+const struct cdevsw twe_cdevsw = {
+	tweopen, tweclose, noread, nowrite, tweioctl,
+	nostop, notty, nopoll, nommap,
+};
+
+extern struct	cfdriver twe_cd; 
 
 CFATTACH_DECL(twe, sizeof(struct twe_softc),
     twe_match, twe_attach, NULL, NULL);
@@ -229,6 +243,13 @@ twe_attach(struct device *parent, struct device *self, void *aux)
 
 	printf(": 3ware Escalade\n");
 
+	ccb = malloc(sizeof(*ccb) * TWE_MAX_QUEUECNT, M_DEVBUF, M_NOWAIT);
+	if (ccb == NULL) {
+		printf("%s: unable to allocate memory for ccbs\n",
+		    sc->sc_dv.dv_xname);
+		return;
+	}
+
 	if (pci_mapreg_map(pa, PCI_CBIO, PCI_MAPREG_TYPE_IO, 0,
 	    &sc->sc_iot, &sc->sc_ioh, NULL, NULL)) {
 		printf("%s: can't map i/o space\n", sc->sc_dv.dv_xname);
@@ -294,7 +315,6 @@ twe_attach(struct device *parent, struct device *self, void *aux)
 	sc->sc_cmds_paddr = sc->sc_dmamap->dm_segs[0].ds_addr;
 	memset(sc->sc_cmds, 0, size);
 
-	ccb = malloc(sizeof(*ccb) * TWE_MAX_QUEUECNT, M_DEVBUF, M_NOWAIT);
 	sc->sc_ccbs = ccb;
 	tc = (struct twe_cmd *)sc->sc_cmds;
 	max_segs = twe_get_maxsegs();
@@ -622,14 +642,14 @@ twe_param_get(struct twe_softc *sc, int table_id, int param_id, size_t size,
 	struct twe_param *tp;
 	int rv, s;
 
+	tp = malloc(TWE_SECTOR_SIZE, M_DEVBUF, M_NOWAIT);
+	if (tp == NULL)
+		return ENOMEM;
+
 	rv = twe_ccb_alloc(sc, &ccb,
 	    TWE_CCB_PARAM | TWE_CCB_DATA_IN | TWE_CCB_DATA_OUT);
 	if (rv != 0)
-		return (rv);
-
-	tp = malloc(TWE_SECTOR_SIZE, M_DEVBUF, M_NOWAIT);
-	if (pbuf != NULL)
-		*pbuf = tp;
+		goto done;
 
 	ccb->ccb_data = tp;
 	ccb->ccb_datasize = TWE_SECTOR_SIZE;
@@ -651,8 +671,7 @@ twe_param_get(struct twe_softc *sc, int table_id, int param_id, size_t size,
 	/* Map the transfer. */
 	if ((rv = twe_ccb_map(sc, ccb)) != 0) {
 		twe_ccb_free(sc, ccb);
-		free(tp, M_DEVBUF);
-		return (rv);
+		goto done;
 	}
 
 	/* Submit the command and either wait or let the callback handle it. */
@@ -662,13 +681,76 @@ twe_param_get(struct twe_softc *sc, int table_id, int param_id, size_t size,
 		twe_ccb_unmap(sc, ccb);
 		twe_ccb_free(sc, ccb);
 		splx(s);
-		if (rv != 0)
-			free(tp, M_DEVBUF);
 	} else {
+#ifdef DIAGNOSTIC
+		if (pbuf != NULL)
+			panic("both func and pbuf defined");
+#endif
 		twe_ccb_enqueue(sc, ccb);
-		rv = 0;
+		return 0;
 	}
 
+done:
+	if (pbuf == NULL || rv != 0)
+		free(tp, M_DEVBUF);
+	else if (pbuf != NULL && rv == 0)
+		*pbuf = tp;
+	return rv;
+}
+
+/*
+ * Execute a TWE_OP_SET_PARAM command.
+ */
+static int
+twe_param_set(struct twe_softc *sc, int table_id, int param_id, size_t size,
+	      void *buf)
+{
+	struct twe_ccb *ccb;
+	struct twe_cmd *tc;
+	struct twe_param *tp;
+	int rv, s;
+
+	tp = malloc(TWE_SECTOR_SIZE, M_DEVBUF, M_NOWAIT);
+	if (tp == NULL)
+		return ENOMEM;
+
+	rv = twe_ccb_alloc(sc, &ccb,
+	    TWE_CCB_PARAM | TWE_CCB_DATA_IN | TWE_CCB_DATA_OUT);
+	if (rv != 0)
+		goto done;
+
+	ccb->ccb_data = tp;
+	ccb->ccb_datasize = TWE_SECTOR_SIZE;
+	ccb->ccb_tx.tx_handler = 0;
+	ccb->ccb_tx.tx_context = tp;
+	ccb->ccb_tx.tx_dv = &sc->sc_dv;
+
+	tc = ccb->ccb_cmd;
+	tc->tc_size = 2;
+	tc->tc_opcode = TWE_OP_SET_PARAM | (tc->tc_size << 5);
+	tc->tc_unit = 0;
+	tc->tc_count = htole16(1);
+
+	/* Fill in the outbound parameter data. */
+	tp->tp_table_id = htole16(table_id);
+	tp->tp_param_id = param_id;
+	tp->tp_param_size = size;
+	memcpy(tp->tp_data, buf, size);
+
+	/* Map the transfer. */
+	if ((rv = twe_ccb_map(sc, ccb)) != 0) {
+		twe_ccb_free(sc, ccb);
+		goto done;
+	}
+
+	/* Submit the command and wait. */
+	s = splbio();
+	rv = twe_ccb_poll(sc, ccb, 5);
+	twe_ccb_unmap(sc, ccb);
+	twe_ccb_free(sc, ccb);
+	splx(s);
+done:
+	free(tp, M_DEVBUF);
 	return (rv);
 }
 
@@ -678,6 +760,8 @@ twe_param_get(struct twe_softc *sc, int table_id, int param_id, size_t size,
  */
 static int
 twe_init_connection(struct twe_softc *sc)
+/*###762 [cc] warning: `twe_init_connection' was used with no prototype before its definition%%%*/
+/*###762 [cc] warning: `twe_init_connection' was declared implicitly `extern' and later `static'%%%*/
 {
 	struct twe_ccb *ccb;
 	struct twe_cmd *tc;
@@ -1052,4 +1136,154 @@ twe_ccb_submit(struct twe_softc *sc, struct twe_ccb *ccb)
 		rv = EBUSY;
 
 	return (rv);
+}
+
+
+/*
+ * Accept an open operation on the control device.
+ */
+int
+tweopen(dev_t dev, int flag, int mode, struct proc *p)
+{
+	struct twe_softc *twe;
+
+	if ((twe = device_lookup(&twe_cd, minor(dev))) == NULL)
+		return (ENXIO);
+	if ((twe->sc_flags & TWEF_OPEN) != 0)
+		return (EBUSY);
+
+	twe->sc_flags |= TWEF_OPEN;
+	return (0);
+}
+
+/*
+ * Accept the last close on the control device.
+ */
+int
+tweclose(dev_t dev, int flag, int mode, struct proc *p)
+{
+	struct twe_softc *twe;
+
+	twe = device_lookup(&twe_cd, minor(dev));
+	twe->sc_flags &= ~TWEF_OPEN;
+	return (0);
+}
+
+/*
+ * Handle control operations.
+ */
+int
+tweioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct proc *p)
+{
+	struct twe_softc *twe;
+	struct twe_ccb *ccb;
+	struct twe_param *param;
+	struct twe_usercommand *tu;
+	struct twe_paramcommand *tp;
+	union twe_statrequest *ts;
+	void *pdata = NULL;
+	int rv, s, error = 0;
+	u_int8_t cmdid;
+
+	if (securelevel >= 2)
+		return (EPERM);
+
+	twe = device_lookup(&twe_cd, minor(dev));
+	tu = (struct twe_usercommand *)data;
+	tp = (struct twe_paramcommand *)data;
+	ts = (union twe_statrequest *)data;
+
+	/* Hmm, compatible with FreeBSD */
+	switch (cmd) {
+	case TWEIO_COMMAND:
+		if (tu->tu_size > 0) {
+			if (tu->tu_size > TWE_SECTOR_SIZE)
+				return EINVAL;
+			pdata = malloc(tu->tu_size, M_DEVBUF, M_WAITOK);
+			error = copyin(tu->tu_data, pdata, tu->tu_size);
+			if (error != 0)
+				goto done;
+			error = twe_ccb_alloc(twe, &ccb, TWE_CCB_PARAM |
+			    TWE_CCB_DATA_IN | TWE_CCB_DATA_OUT);
+		} else {
+			error = twe_ccb_alloc(twe, &ccb, 0);
+		}
+		if (rv != 0)
+			goto done;
+		cmdid = ccb->ccb_cmdid;
+		memcpy(ccb->ccb_cmd, &tu->tu_cmd, sizeof(struct twe_cmd));
+		ccb->ccb_cmdid = cmdid;
+		if (ccb->ccb_flags & TWE_CCB_PARAM) {
+			ccb->ccb_data = pdata;
+			ccb->ccb_datasize = TWE_SECTOR_SIZE;
+			ccb->ccb_tx.tx_handler = 0;
+			ccb->ccb_tx.tx_context = pdata;
+			ccb->ccb_tx.tx_dv = &twe->sc_dv;
+		}
+		/* Map the transfer. */
+		if ((error = twe_ccb_map(twe, ccb)) != 0) {
+			twe_ccb_free(twe, ccb);
+			goto done;
+		}
+
+		/* Submit the command and wait. */
+		s = splbio();
+		rv = twe_ccb_poll(twe, ccb, 5);
+		twe_ccb_unmap(twe, ccb);
+		twe_ccb_free(twe, ccb);
+		splx(s);
+
+		if (tu->tu_size > 0)
+			error = copyout(pdata, tu->tu_data, tu->tu_size);
+		goto done;
+
+	case TWEIO_STATS:
+		return (ENOENT);
+
+	case TWEIO_AEN_POLL:
+		if ((twe->sc_flags & TWEF_AEN) == 0)
+			return (ENOENT);
+		return (0);
+
+	case TWEIO_AEN_WAIT:
+		s = splbio();
+		while ((twe->sc_flags & TWEF_AEN) == 0) {
+			/* tsleep(); */
+		}
+		splx(s);
+		return (0);
+
+	case TWEIO_GET_PARAM:
+		error = twe_param_get(twe, tp->tp_table_id, tp->tp_param_id,
+		    tp->tp_size, 0, &pdata);
+		if (error != 0)
+			return (error);
+		param = pdata;
+		if (param->tp_param_size > tp->tp_size) {
+			error = EFAULT;
+			goto done;
+		}
+		error = copyout(param->tp_data, tp->tp_data, 
+		    param->tp_param_size);
+		goto done;
+
+	case TWEIO_SET_PARAM:
+		pdata = malloc(tp->tp_size, M_DEVBUF, M_WAITOK);
+		if ((error = copyin(tp->tp_data, pdata, tp->tp_size)) != 0)
+			goto done;
+		error = twe_param_set(twe, tp->tp_table_id, tp->tp_param_id,
+		    tp->tp_size, pdata);
+		goto done;
+
+	case TWEIO_RESET:
+		twe_reset(twe);
+		return (0);
+
+	default:
+		return EINVAL;
+	}
+done:
+	if (pdata)
+		free(pdata, M_DEVBUF);
+	return error;
 }

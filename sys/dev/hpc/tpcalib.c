@@ -1,4 +1,4 @@
-/*	$NetBSD: tpcalib.c,v 1.1.2.3 2002/04/01 07:45:15 nathanw Exp $	*/
+/*	$NetBSD: tpcalib.c,v 1.1.2.4 2002/12/19 00:48:04 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1999 Shin Takemura All rights reserved.
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tpcalib.c,v 1.1.2.3 2002/04/01 07:45:15 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tpcalib.c,v 1.1.2.4 2002/12/19 00:48:04 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -49,7 +49,7 @@ int	tpcalib_debug = 0;
 extern int mra_Y_AX1_BX2_C(int *, int, int *, int, int *, int, int, int, int *,
     int *, int *);
 
-#define SCALE	(1024*1024)
+#define SCALE	(1024*256)
 
 int
 tpcalib_init(struct tpcalib_softc *sc)
@@ -118,6 +118,9 @@ tpcalib_ioctl(struct tpcalib_softc *sc, u_long cmd, caddr_t data, int flag,
 				sc->sc_miny = d->miny;
 				sc->sc_maxy = d->maxy;
 				sc->sc_saved = *d;
+				DPRINTF(("tpcalib: x=%d~%d y=%d~%d\n",
+				    sc->sc_minx, sc->sc_maxx,
+				    sc->sc_miny, sc->sc_maxy));
 				DPRINTF(("tpcalib: Ax=%d Bx=%d Cx=%d\n",
 				    sc->sc_ax, sc->sc_bx, sc->sc_cx));
 				DPRINTF(("tpcalib: Ay=%d By=%d Cy=%d\n",

@@ -1,4 +1,4 @@
-/* $NetBSD: wsdisplay_compat_usl.c,v 1.15.2.7 2002/10/18 02:44:45 nathanw Exp $ */
+/* $NetBSD: wsdisplay_compat_usl.c,v 1.15.2.8 2002/12/19 00:48:20 thorpej Exp $ */
 
 /*
  * Copyright (c) 1998
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wsdisplay_compat_usl.c,v 1.15.2.7 2002/10/18 02:44:45 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wsdisplay_compat_usl.c,v 1.15.2.8 2002/12/19 00:48:20 thorpej Exp $");
 
 #include "opt_compat_freebsd.h"
 #include "opt_compat_netbsd.h"
@@ -153,11 +153,11 @@ usl_sync_check(struct usl_syncdata *sd)
 static struct usl_syncdata *
 usl_sync_get(struct wsscreen *scr)
 {
-	struct usl_syncdata *sd;
+	void *sd;
 
-	if (wsscreen_lookup_sync(scr, &usl_syncops, (void **)&sd))
+	if (wsscreen_lookup_sync(scr, &usl_syncops, &sd))
 		return (0);
-	return (sd);
+	return (struct usl_syncdata *)sd;
 }
 
 static int

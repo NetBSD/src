@@ -1,4 +1,4 @@
-/*	$NetBSD: eap.c,v 1.44.2.8 2002/12/11 06:38:16 thorpej Exp $	*/
+/*	$NetBSD: eap.c,v 1.44.2.9 2002/12/19 00:48:09 thorpej Exp $	*/
 /*      $OpenBSD: eap.c,v 1.6 1999/10/05 19:24:42 csapuntz Exp $ */
 
 /*
@@ -57,7 +57,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: eap.c,v 1.44.2.8 2002/12/11 06:38:16 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: eap.c,v 1.44.2.9 2002/12/19 00:48:09 thorpej Exp $");
 
 #include "midi.h"
 
@@ -584,6 +584,10 @@ eap_attach(struct device *parent, struct device *self, void *aux)
 	sc->sc_1371 = !(PCI_VENDOR(pa->pa_id) == PCI_VENDOR_ENSONIQ &&
 			PCI_PRODUCT(pa->pa_id) == PCI_PRODUCT_ENSONIQ_AUDIOPCI);
 
+	/*
+	 * The vendor and product ID's are quite "interesting". Just
+	 * trust the following and be happy.
+	 */
 	pci_devinfo(pa->pa_id, pa->pa_class, 0, devinfo);
 	revision = PCI_REVISION(pa->pa_class);
 	ct5880 = 0;
@@ -592,17 +596,18 @@ eap_attach(struct device *parent, struct device *self, void *aux)
 		    PCI_PRODUCT(pa->pa_id) == PCI_PRODUCT_ENSONIQ_CT5880) {
 			ct5880 = 1;
 			switch (revision) {
-			case EAP_CT5880_C: revstr = "CT5880C "; break;
-			case EAP_CT5880_D: revstr = "CT5880D "; break;
-			case EAP_CT5880_E: revstr = "CT5880E "; break;
-			case EAP_CT5880_A: revstr = "CT5880A "; break;
+			case EAP_CT5880_C: revstr = "CT5880-C "; break;
+			case EAP_CT5880_D: revstr = "CT5880-D "; break;
+			case EAP_CT5880_E: revstr = "CT5880-E "; break;
 			}
 		} else {
 			switch (revision) {
-			case EAP_EV1938_A: revstr = "EV1938A "; break;
-			case EAP_ES1373_A: revstr = "ES1373A "; break;
-			case EAP_ES1373_B: revstr = "ES1373B "; break;
-			case EAP_ES1371_B: revstr = "ES1371B "; break;
+			case EAP_EV1938_A: revstr = "EV1938-A "; break;
+			case EAP_ES1373_A: revstr = "ES1373-A "; break;
+			case EAP_ES1373_B: revstr = "ES1373-B "; break;
+			case EAP_CT5880_A: revstr = "CT5880-A "; ct5880=1;break;
+			case EAP_ES1373_8: revstr = "ES1373-8" ; ct5880=1;break;
+			case EAP_ES1371_B: revstr = "ES1371-B "; break;
 			}
 		}
 	}

@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_ktrace.c,v 1.53.2.9 2002/12/11 06:43:04 thorpej Exp $	*/
+/*	$NetBSD: kern_ktrace.c,v 1.53.2.10 2002/12/19 00:50:42 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_ktrace.c,v 1.53.2.9 2002/12/11 06:43:04 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_ktrace.c,v 1.53.2.10 2002/12/19 00:50:42 thorpej Exp $");
 
 #include "opt_ktrace.h"
 #include "opt_compat_mach.h"
@@ -56,11 +56,6 @@ __KERNEL_RCSID(0, "$NetBSD: kern_ktrace.c,v 1.53.2.9 2002/12/11 06:43:04 thorpej
 #include <sys/mount.h>
 #include <sys/sa.h>
 #include <sys/syscallargs.h>
-
-#ifdef COMPAT_MACH
-#include <compat/mach/mach_types.h>
-#include <compat/mach/mach_message.h>
-#endif
 
 #ifdef KTRACE
 
@@ -364,31 +359,24 @@ ktruser(p, id, addr, len, ustr)
 
 }
 
-#ifdef COMPAT_MACH
 void
 ktrmmsg(p, msgh, size)
 	struct proc *p;
-	const char *msgh;
+	const void *msgh;
 	size_t size;
 {
 	struct ktr_header kth;
 	struct ktr_mmsg	*kp;
-	int error;
 	
 	p->p_traceflag |= KTRFAC_ACTIVE;
 	ktrinitheader(&kth, p, KTR_MMSG);
-
-	kp = (struct ktr_mmsg *)malloc(size, M_TEMP, M_WAITOK);
-	if ((error = copyin(msgh, kp, size)) != 0)
-		size = 0; /* Still log a message, but empty */
-
+	
+	kp = (struct ktr_mmsg *)msgh;
 	kth.ktr_buf = (caddr_t)kp;
 	kth.ktr_len = size;
 	(void) ktrwrite(p, &kth);
-	free(kp, M_TEMP);
 	p->p_traceflag &= ~KTRFAC_ACTIVE;
 }
-#endif /* COMPAT_MACH */
 
 /* Interface and common routines */
 

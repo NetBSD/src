@@ -1,4 +1,4 @@
-/*	$NetBSD: mach_bootstrap.h,v 1.1.2.2 2002/12/11 06:37:27 thorpej Exp $ */
+/*	$NetBSD: mach_bootstrap.h,v 1.1.2.3 2002/12/19 00:44:32 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -56,7 +56,6 @@ typedef struct {
 	mach_msg_trailer_t rep_trailer;
 } mach_bootstrap_look_up_reply_t;
 
-int mach_bootstrap_look_up(struct proc *, mach_msg_header_t *,
-    size_t, mach_msg_header_t *);
+int mach_bootstrap_look_up(struct mach_trap_args *);
 
 #endif /* _MACH_BOOTSTRAP_H_ */

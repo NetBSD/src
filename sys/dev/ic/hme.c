@@ -1,4 +1,4 @@
-/*	$NetBSD: hme.c,v 1.20.2.7 2002/11/11 22:09:28 nathanw Exp $	*/
+/*	$NetBSD: hme.c,v 1.20.2.8 2002/12/19 00:48:05 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hme.c,v 1.20.2.7 2002/11/11 22:09:28 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hme.c,v 1.20.2.8 2002/12/19 00:48:05 thorpej Exp $");
 
 #define HMEDEBUG
 
@@ -1031,6 +1031,11 @@ hme_mifinit(sc)
 	v = bus_space_read_4(t, mif, HME_MIFI_CFG);
 	v &= ~HME_MIF_CFG_BBMODE;
 	bus_space_write_4(t, mif, HME_MIFI_CFG, v);
+
+	if (v & HME_MIF_CFG_MDI1)
+		sc->sc_tcvr = HME_PHYAD_EXTERNAL;
+	else if (v & HME_MIF_CFG_MDI0)
+		sc->sc_tcvr = HME_PHYAD_INTERNAL;
 }
 
 /*
@@ -1046,6 +1051,9 @@ hme_mii_readreg(self, phy, reg)
 	bus_space_handle_t mif = sc->sc_mif;
 	int n;
 	u_int32_t v;
+
+	if (sc->sc_tcvr != phy)
+		return (0);
 
 	/* Select the desired PHY in the MIF configuration register */
 	v = bus_space_read_4(t, mif, HME_MIFI_CFG);
@@ -1085,6 +1093,9 @@ hme_mii_writereg(self, phy, reg, val)
 	bus_space_handle_t mif = sc->sc_mif;
 	int n;
 	u_int32_t v;
+
+	if (sc->sc_tcvr != phy)
+		return;
 
 	/* Select the desired PHY in the MIF configuration register */
 	v = bus_space_read_4(t, mif, HME_MIFI_CFG);

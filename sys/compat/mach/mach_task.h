@@ -1,4 +1,4 @@
-/*	$NetBSD: mach_task.h,v 1.1.2.3 2002/12/11 06:37:32 thorpej Exp $ */
+/*	$NetBSD: mach_task.h,v 1.1.2.4 2002/12/19 00:44:34 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -41,6 +41,12 @@
 
 /* task_get_special_port */ 
 
+#define MACH_TASK_KERNEL_PORT		1
+#define MACH_TASK_HOST_PORT		2
+#define MACH_TASK_BOOTSTRAP_PORT	4
+#define MACH_TASK_WIRED_LEDGER_PORT	5
+#define MACH_TASK_PAGED_LEDGER_PORT	6
+
 typedef struct {
 	mach_msg_header_t req_msgh;
 	mach_ndr_record_t req_ndr;
@@ -69,9 +75,25 @@ typedef struct {
 	mach_msg_trailer_t rep_trailer;
 } mach_ports_lookup_reply_t;
 
-int mach_task_get_special_port(struct proc *, mach_msg_header_t *, 
-    size_t, mach_msg_header_t *);
-int mach_ports_lookup(struct proc *, mach_msg_header_t *,
-    size_t, mach_msg_header_t *);
+/* mach_set_special_port */
+
+typedef struct {
+	mach_msg_header_t req_msgh;
+	mach_msg_body_t req_msgh_body;
+	mach_msg_port_descriptor_t req_special_port;
+	mach_ndr_record_t req_ndr;
+	int req_which_port;
+} mach_task_set_special_port_request_t;
+
+typedef struct {
+	mach_msg_header_t rep_msgh;
+	mach_ndr_record_t rep_ndr;
+	mach_kern_return_t rep_retval;
+	mach_msg_trailer_t rep_trailer;
+} mach_task_set_special_port_reply_t;
+
+int mach_task_get_special_port(struct mach_trap_args *);
+int mach_ports_lookup(struct mach_trap_args *);
+int mach_task_set_special_port(struct mach_trap_args *);
 
 #endif /* _MACH_TASK_H_ */

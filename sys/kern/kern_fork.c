@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_fork.c,v 1.84.2.22 2002/12/15 23:32:00 thorpej Exp $	*/
+/*	$NetBSD: kern_fork.c,v 1.84.2.23 2002/12/19 00:50:42 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2001 The NetBSD Foundation, Inc.
@@ -78,7 +78,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_fork.c,v 1.84.2.22 2002/12/15 23:32:00 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_fork.c,v 1.84.2.23 2002/12/19 00:50:42 thorpej Exp $");
 
 #include "opt_ktrace.h"
 #include "opt_systrace.h"
@@ -110,6 +110,12 @@ __KERNEL_RCSID(0, "$NetBSD: kern_fork.c,v 1.84.2.22 2002/12/15 23:32:00 thorpej 
 
 
 int	nprocs = 1;		/* process 0 */
+
+/*
+ * Number of ticks to sleep if fork() would fail due to process hitting
+ * limits. Exported in miliseconds to userland via sysctl.
+ */
+int	forkfsleep = 0;
 
 /*ARGSUSED*/
 int
@@ -221,6 +227,8 @@ fork1(struct lwp *l1, int flags, int exitsig, void *stack, size_t stacksize,
 
 		if (ratecheck(&lasttfm, &fork_tfmrate))
 			tablefull("proc", "increase kern.maxproc or NPROC");
+		if (forkfsleep)
+			(void)tsleep(&nprocs, PUSER, "forkmx", forkfsleep);
 		return (EAGAIN);
 	}
 	nprocs++;
@@ -234,6 +242,8 @@ fork1(struct lwp *l1, int flags, int exitsig, void *stack, size_t stacksize,
 			    p1->p_rlimit[RLIMIT_NPROC].rlim_cur)) {
 		(void)chgproccnt(uid, -1);
 		nprocs--;
+		if (forkfsleep)
+			(void)tsleep(&nprocs, PUSER, "forkulim", forkfsleep);
 		return (EAGAIN);
 	}
 
@@ -398,7 +408,7 @@ fork1(struct lwp *l1, int flags, int exitsig, void *stack, size_t stacksize,
 	 * tend to include daemons that don't exit.
 	 */
 	if (nextpid >= PID_MAX) {
-		nextpid = 500;
+		nextpid = PID_SKIP;
 		pidchecked = 0;
 	}
 	if (nextpid >= pidchecked) {

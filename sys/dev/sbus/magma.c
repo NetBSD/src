@@ -1,4 +1,4 @@
-/*	$NetBSD: magma.c,v 1.9.2.9 2002/12/11 06:38:42 thorpej Exp $	*/
+/*	$NetBSD: magma.c,v 1.9.2.10 2002/12/19 00:48:16 thorpej Exp $	*/
 /*
  * magma.c
  *
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: magma.c,v 1.9.2.9 2002/12/11 06:38:42 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: magma.c,v 1.9.2.10 2002/12/19 00:48:16 thorpej Exp $");
 
 #if 0
 #define MAGMA_DEBUG
@@ -487,7 +487,7 @@ magma_attach(parent, self, aux)
 	if (sa->sa_nintr == 0)
 		return;		/* No interrupts to service!? */
 
-	(void)bus_intr_establish(sa->sa_bustag, sa->sa_pri, IPL_TTY,
+	(void)bus_intr_establish(sa->sa_bustag, sa->sa_pri, IPL_SERIAL,
 				 magma_hard, sc);
 	sc->ms_sicookie = softintr_establish(IPL_SOFTSERIAL, magma_soft, sc);
 	if (sc->ms_sicookie == NULL) {
