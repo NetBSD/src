@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.71 1997/05/19 23:34:40 jonathan Exp $	*/
+/*	$NetBSD: machdep.c,v 1.72 1997/05/24 08:19:46 jonathan Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -82,7 +82,6 @@
 #include <machine/reg.h>
 #include <machine/psl.h>
 #include <machine/pte.h>
-#include <machine/dc7085cons.h>
 
 #include <pmax/stand/dec_prom.h>
 
@@ -108,7 +107,6 @@
 #include "mfb.h"
 #include "xcfb.h"
 #include "sfb.h"
-#include "dc.h"
 #include "dtop.h"
 #include "scc.h"
 #include "le_ioasic.h"

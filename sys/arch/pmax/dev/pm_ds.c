@@ -1,4 +1,4 @@
-/*	$NetBSD: pm_ds.c,v 1.3 1996/10/23 02:34:23 mhitch Exp $	*/
+/*	$NetBSD: pm_ds.c,v 1.4 1997/05/24 08:19:52 jonathan Exp $	*/
 
 /*
  * Copyright 1996 The Board of Trustees of The Leland Stanford
@@ -36,10 +36,10 @@
 
 #include "fb.h"
 #include "pm.h"
-#include "dc.h"
+#include "dc_ds.h"
 
 #if 0
-#if NDC == 0
+#if NDC_DS == 0
 pm needs dc device
 #endif
 #endif
