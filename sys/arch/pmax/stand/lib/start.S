@@ -1,4 +1,4 @@
-/*	$NetBSD: start.S,v 1.8 1999/03/13 11:20:55 drochner Exp $	*/
+/*	$NetBSD: start.S,v 1.9 1999/03/25 05:17:27 simonb Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -108,7 +108,7 @@ start:
 	subu	a2, a2, a0
 	sw	s3, _C_LABEL(callv)		# save call vector
 	move	a0, s0				# restore argc
-	jal	_C_LABEL(_main)			# main(argc, argv)
+	jal	_C_LABEL(main)			# main(argc, argv)
 	move	a1, s1				# restore argv
 	j	_C_LABEL(prom_restart)		# restart...
 	nop
