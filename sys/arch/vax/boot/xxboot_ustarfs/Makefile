@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.2 2002/06/09 19:21:08 matt Exp $
+#	$NetBSD: Makefile,v 1.3 2002/06/15 19:26:49 matt Exp $
 
 S=	${.CURDIR}/../../../..
 
@@ -39,6 +39,7 @@ machine-links:
 .NOPATH: machine ${MACHINE_ARCH}
 CLEANFILES+= machine ${MACHINE_ARCH}
 .endif
+CLEANFILES+= ${PROG}.out
 
 ${PROG}: ${OBJS} ${LIBSA} ${LIBZ} ${LIBKERN}
 ${PROG}: ${OBJS} ${LIBSA} ${LIBKERN}
