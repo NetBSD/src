@@ -1,4 +1,4 @@
-/*	$NetBSD: xy.c,v 1.8 1998/02/06 00:22:45 pk Exp $	*/
+/*	$NetBSD: xy.c,v 1.9 1998/06/20 13:12:55 mrg Exp $	*/
 
 /*
  *
@@ -76,10 +76,11 @@
 #include <vm/vm.h>
 #include <vm/vm_kern.h>
 
-#include <machine/bus.h>
 #include <machine/autoconf.h>
-#include <machine/sun_disklabel.h>
+#include <machine/bus.h>
 #include <machine/conf.h>
+
+#include <dev/sun/disklabel.h>
 
 #include <dev/vme/vmevar.h>
 #include <dev/vme/xyreg.h>
