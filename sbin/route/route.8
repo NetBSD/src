@@ -1,4 +1,4 @@
-.\"	$NetBSD: route.8,v 1.32 2003/06/03 04:41:42 itojun Exp $
+.\"	$NetBSD: route.8,v 1.33 2003/07/19 01:36:48 jrf Exp $
 .\"
 .\" Copyright (c) 1983, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -110,6 +110,8 @@ utility provides several commands:
 Add a route.
 .It Cm flush
 Remove all routes.
+.It Cm flushall
+Remove all routes including the default gateway.
 .It Cm delete
 Delete a specific route.
 .It Cm change
