@@ -1,5 +1,5 @@
 %{
-/*	$NetBSD: fgen.l,v 1.8 1999/06/08 12:45:47 tron Exp $	*/
+/*	$NetBSD: fgen.l,v 1.9 2000/04/14 06:11:07 simonb Exp $	*/
 /* FLEX input for FORTH input file scanner */
 /*  
  * Copyright (c) 1998 Eduardo Horvath.
@@ -952,8 +952,6 @@ main(argc, argv)
 	int argc;
 	char *argv[];
 {
-	extern char *optarg;
-	extern int optind;
 	int bflag, ch;
 	FILE *inf;
 	struct fcode_header *fheader;

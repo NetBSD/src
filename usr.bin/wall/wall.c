@@ -1,4 +1,4 @@
-/*	$NetBSD: wall.c,v 1.12 1999/05/29 21:10:43 christos Exp $	*/
+/*	$NetBSD: wall.c,v 1.13 2000/04/14 06:11:11 simonb Exp $	*/
 
 /*
  * Copyright (c) 1988, 1990, 1993
@@ -43,7 +43,7 @@ __COPYRIGHT("@(#) Copyright (c) 1988, 1990, 1993\n\
 #if 0
 static char sccsid[] = "@(#)wall.c	8.2 (Berkeley) 11/16/93";
 #endif
-__RCSID("$NetBSD: wall.c,v 1.12 1999/05/29 21:10:43 christos Exp $");
+__RCSID("$NetBSD: wall.c,v 1.13 2000/04/14 06:11:11 simonb Exp $");
 #endif /* not lint */
 
 /*
@@ -81,7 +81,6 @@ main(argc, argv)
 	int argc;
 	char **argv;
 {
-	extern int optind;
 	int ch;
 	struct iovec iov;
 	struct utmp utmp;

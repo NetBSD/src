@@ -1,4 +1,4 @@
-/*	$NetBSD: passwd.c,v 1.17 2000/03/01 12:46:36 joda Exp $	*/
+/*	$NetBSD: passwd.c,v 1.18 2000/04/14 06:11:09 simonb Exp $	*/
 
 /*
  * Copyright (c) 1988, 1993, 1994
@@ -43,7 +43,7 @@ __COPYRIGHT("@(#) Copyright (c) 1988, 1993, 1994\n\
 #if 0
 static char sccsid[] = "from: @(#)passwd.c    8.3 (Berkeley) 4/2/94";
 #else
-__RCSID("$NetBSD: passwd.c,v 1.17 2000/03/01 12:46:36 joda Exp $");
+__RCSID("$NetBSD: passwd.c,v 1.18 2000/04/14 06:11:09 simonb Exp $");
 #endif
 #endif /* not lint */
 
@@ -106,7 +106,6 @@ main(argc, argv)
 	int argc;
 	char **argv;
 {
-	extern int optind;
 	int ch;
 	char *username;
 	char optstring[64];  /* if we ever get more than 64 args, shoot me. */

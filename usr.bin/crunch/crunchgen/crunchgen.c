@@ -1,4 +1,4 @@
-/*	$NetBSD: crunchgen.c,v 1.14 2000/01/24 18:07:54 mycroft Exp $	*/
+/*	$NetBSD: crunchgen.c,v 1.15 2000/04/14 06:11:07 simonb Exp $	*/
 /*
  * Copyright (c) 1994 University of Maryland
  * All Rights Reserved.
@@ -33,7 +33,7 @@
  */
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: crunchgen.c,v 1.14 2000/01/24 18:07:54 mycroft Exp $");
+__RCSID("$NetBSD: crunchgen.c,v 1.15 2000/04/14 06:11:07 simonb Exp $");
 #endif
 
 #include <stdlib.h>
@@ -115,8 +115,6 @@ int main(int argc, char **argv)
 {
     char *p;
     int optc;
-    extern int optind;
-    extern char *optarg;
 
     if ((machine = getenv("MACHINE")) == NULL) {
 	struct utsname utsname;

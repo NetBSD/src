@@ -1,4 +1,4 @@
-/*	$NetBSD: usbhid.c,v 1.12 1999/05/16 19:42:03 augustss Exp $	*/
+/*	$NetBSD: usbhid.c,v 1.13 2000/04/14 06:11:11 simonb Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -264,8 +264,6 @@ main(int argc, char **argv)
 	report_desc_t r;
 	char devname[100], *dev = 0;
 	int ch;
-	extern char *optarg;
-	extern int optind;
 	int repdump = 0;
 	int loop = 0;
 	char *table = 0;

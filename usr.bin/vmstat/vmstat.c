@@ -1,4 +1,4 @@
-/*	$NetBSD: vmstat.c,v 1.61 2000/03/27 17:03:27 kleink Exp $	*/
+/*	$NetBSD: vmstat.c,v 1.62 2000/04/14 06:11:11 simonb Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -80,7 +80,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1986, 1991, 1993\n\
 #if 0
 static char sccsid[] = "@(#)vmstat.c	8.2 (Berkeley) 3/1/95";
 #else
-__RCSID("$NetBSD: vmstat.c,v 1.61 2000/03/27 17:03:27 kleink Exp $");
+__RCSID("$NetBSD: vmstat.c,v 1.62 2000/04/14 06:11:11 simonb Exp $");
 #endif
 #endif /* not lint */
 
@@ -210,8 +210,6 @@ main(argc, argv)
 	int argc;
 	char **argv;
 {
-	extern int optind;
-	extern char *optarg;
 	int c, todo;
 	u_int interval;
 	int reps;
