@@ -1,4 +1,4 @@
-/*	$NetBSD: config.h,v 1.1 1996/05/17 21:17:58 chuck Exp $	*/
+/*	$NetBSD: config.h,v 1.2 2001/06/10 14:12:49 scw Exp $	*/
 
 /*
  * Copyright (c) 1995 Theo de Raadt
@@ -64,3 +64,5 @@ struct brdid {
 	u_short devnum;
 	u_long  bug;
 };
+
+void	machdep_common_ether __P((u_char *));
