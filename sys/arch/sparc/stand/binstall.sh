@@ -1,5 +1,5 @@
 #!/bin/sh
-#	$NetBSD: binstall.sh,v 1.2 1995/10/11 13:32:57 pk Exp $
+#	$NetBSD: binstall.sh,v 1.3 1996/04/07 20:00:12 thorpej Exp $
 #
 
 vecho () {
@@ -59,7 +59,7 @@ fi
 WHAT=$1
 DEST=$2
 
-if [ "`sysctl -n hw.model | cut -b1-5`" = "SUN/4" ]; then
+if [ "`sysctl -n hw.model | cut -b1-5`" = "SUN-4" ]; then
 	KARCH=sun4
 else
 	KARCH=sun4c
