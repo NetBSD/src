@@ -1,4 +1,4 @@
-/*	$NetBSD: essreg.h,v 1.12 1999/06/18 20:25:23 augustss Exp $	*/
+/*	$NetBSD: essreg.h,v 1.13 2001/09/29 19:08:49 augustss Exp $	*/
 /*
  * Copyright 1997
  * Digital Equipment Corporation. All rights reserved.
@@ -33,7 +33,7 @@
  */
 
 /*
-** @(#) $RCSfile: essreg.h,v $ $Revision: 1.12 $ (SHARK) $Date: 1999/06/18 20:25:23 $
+** @(#) $RCSfile: essreg.h,v $ $Revision: 1.13 $ (SHARK) $Date: 2001/09/29 19:08:49 $
 **
 **++
 **
@@ -231,6 +231,8 @@
 #define ESS_DSP_WRITE		0x0C
 
 #define ESS_CLEAR_INTR		0x0E
+
+#define ESS_FIFO_WRITE		0x0F
 
 #define	ESS_DSP_RW_STATUS	0x0C
 #define	ESS_DSP_WRITE_BUSY	0x80
