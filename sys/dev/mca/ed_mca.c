@@ -1,4 +1,4 @@
-/*	$NetBSD: ed_mca.c,v 1.19 2003/05/02 08:45:27 dsl Exp $	*/
+/*	$NetBSD: ed_mca.c,v 1.20 2003/05/10 23:12:45 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ed_mca.c,v 1.19 2003/05/02 08:45:27 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ed_mca.c,v 1.20 2003/05/10 23:12:45 thorpej Exp $");
 
 #include "rnd.h"
 #include "locators.h"
@@ -242,7 +242,7 @@ edmcastrategy(bp)
 	 * If end of partition, just return.
 	 */
 	if (DISKPART(bp->b_dev) != RAW_PART &&
-	    bounds_check_with_label(bp, ed->sc_dk.dk_label,
+	    bounds_check_with_label(&ed->sc_dk, bp,
 	    (ed->sc_flags & (WDF_WLABEL|WDF_LABELLING)) != 0) <= 0)
 		goto done;
 

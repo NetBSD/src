@@ -1,4 +1,4 @@
-/*	$NetBSD: cdvar.h,v 1.16 2003/04/03 22:18:24 fvdl Exp $	*/
+/*	$NetBSD: cdvar.h,v 1.17 2003/05/10 23:12:47 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1997 Manuel Bouyer.  All rights reserved.
@@ -47,7 +47,7 @@ struct cd_softc {
 	struct scsipi_periph *sc_periph;
 
 	struct cd_parms {
-		int blksize;
+		u_int blksize;
 		u_long disksize;	/* total number sectors */
 		u_long disksize512;	/* total number sectors */
 	} params;
