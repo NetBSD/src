@@ -26,7 +26,7 @@ char    copyright[] =
 
 #ifndef lint
 static char rcsid[] =
-"@(#) $Id: rarpd.c,v 1.1 1993/12/16 05:31:08 deraadt Exp $";
+"@(#) $Id: rarpd.c,v 1.2 1994/01/12 19:01:00 deraadt Exp $";
 #endif
 
 
@@ -78,7 +78,6 @@ struct if_info *iflist;
 
 int    rarp_open     __P((char *));
 int    rarp_bootable __P((u_long));
-char   *intoa        __P((u_long));
 void   init_one      __P((char *));
 void   init_all      __P((void));
 void   rarp_loop     __P((void));
@@ -515,6 +514,7 @@ rarp_process(ii, pkt)
 	struct hostent *hp;
 	u_long  target_ipaddr;
 	char    ename[256];
+	struct	in_addr in;
 
 	ep = (struct ether_header *) pkt;
 
@@ -528,12 +528,12 @@ rarp_process(ii, pkt)
 		/* NOTREACHED */
 	}
 	target_ipaddr = choose_ipaddr((u_long **) hp->h_addr_list,
-	    ii->ii_ipaddr & ii->ii_netmask,
-	    ii->ii_netmask);
+	    ii->ii_ipaddr & ii->ii_netmask, ii->ii_netmask);
 
 	if (target_ipaddr == 0) {
+		in.s_addr = ii->ii_ipaddr & ii->ii_netmask;
 		err(NONFATAL, "cannot find %s on net %s\n",
-		    ename, intoa(ii->ii_ipaddr & ii->ii_netmask));
+		    ename, inet_ntoa(in));
 		return;
 	}
 	if (rarp_bootable(htonl(target_ipaddr)))
@@ -732,39 +732,6 @@ ipaddrtonetmask(addr)
 	err(FATAL, "unknown IP address class: %08X", addr);
 	/* NOTREACHED */
 }
-/*
- * A faster replacement for inet_ntoa().
- */
-char   *
-intoa(addr)
-	u_long  addr;
-{
-	register char *cp;
-	register u_int byte;
-	register int n;
-	static char buf[sizeof(".xxx.xxx.xxx.xxx")];
-
-	cp = &buf[sizeof buf];
-	*--cp = '\0';
-
-	n = 4;
-	do {
-		byte = addr & 0xff;
-		*--cp = byte % 10 + '0';
-		byte /= 10;
-		if (byte > 0) {
-			*--cp = byte % 10 + '0';
-			byte /= 10;
-			if (byte > 0)
-				*--cp = byte + '0';
-		}
-		*--cp = '.';
-		addr >>= 8;
-	} while (--n > 0);
-
-	return cp + 1;
-}
-
 
 #if __STDC__
 #include <stdarg.h>
