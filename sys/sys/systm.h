@@ -1,4 +1,4 @@
-/*	$NetBSD: systm.h,v 1.114 2000/08/09 03:23:11 tv Exp $	*/
+/*	$NetBSD: systm.h,v 1.115 2000/08/18 19:14:34 cgd Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1988, 1991, 1993
@@ -126,7 +126,7 @@ extern const char *rootspec;	/* how root device was specified */
 extern dev_t swapdev;		/* swapping device */
 extern struct vnode *swapdev_vp;/* vnode equivalent to above */
 
-typedef int	sy_call_t __P((struct proc *, void *, register_t *));
+typedef int	sy_call_t(struct proc *, void *, register_t *);
 
 extern struct sysent {		/* system call table */
 	short	sy_narg;	/* number of args */
