@@ -1,4 +1,4 @@
-/*	$NetBSD: via.c,v 1.13 1995/03/01 03:48:53 briggs Exp $	*/
+/*	$NetBSD: via.c,v 1.14 1995/03/20 05:59:42 briggs Exp $	*/
 
 /*-
  * Copyright (C) 1993	Allen K. Briggs, Chris P. Caputo,
@@ -181,23 +181,31 @@ void via2_intr(struct frame *fp)
 	static intpend = 0;
 	register unsigned char intbits, enbbits;
 	register char bitnum, bitmsk;
+	int	cnt=0;
 
 	intbits = via_reg(VIA2, vIFR);	/* get interrupts pending */
 	intbits &= via_reg(VIA2, vIER);	/* only care about enabled */
 	intbits &= ~ intpend;  		/* to stop recursion */
 
-	bitmsk = 1;
-	bitnum = 0;
-	while(bitnum < 7){
-		if(intbits & bitmsk){
-			intpend |= bitmsk;	/* don't process this twice */
-			via_reg(VIA2, vIFR) = bitmsk;
-			via2itab[bitnum](bitnum);
-			intpend &= ~bitmsk;
+	do {
+		bitmsk = 1;
+		bitnum = 0;
+		via_reg(VIA2, vIFR) = intbits;
+		while(bitnum < 7){
+			if(intbits & bitmsk){
+				intpend |= bitmsk;	/* don't process this twice */
+				via2itab[bitnum](bitnum);
+				intpend &= ~bitmsk;
+			}
+			bitnum++;
+			bitmsk <<= 1;
 		}
-		bitnum++;
-		bitmsk <<= 1;
-	}
+		intbits = via_reg(VIA2, vIFR);	/* get interrupts pending */
+		intbits &= via_reg(VIA2, vIER);	/* only care about enabled */
+		intbits &= ~ intpend;  		/* to stop recursion */
+		if (cnt++>100) printf("via2intr stuck, intbits = 0x%x.\n",
+					intbits);
+	} while (intbits);
 }
 
 void rbv_intr(struct frame *fp)
@@ -312,8 +320,6 @@ void slot_noint(int unit, int slot)
 
 	/* attempt to turn off toby fb vblank interrupt */
 	((char *)(0xf0000000 | ((long)slot << 24)))[0xa0000] = zero;
-
-	return 1;
 }
 
 
