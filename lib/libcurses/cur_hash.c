@@ -1,4 +1,4 @@
-/*	$NetBSD: cur_hash.c,v 1.7 1999/04/13 14:08:17 mrg Exp $	*/
+/*	$NetBSD: cur_hash.c,v 1.8 2000/04/13 00:01:46 simonb Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -38,13 +38,14 @@
 #if 0
 static char sccsid[] = "@(#)cur_hash.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: cur_hash.c,v 1.7 1999/04/13 14:08:17 mrg Exp $");
+__RCSID("$NetBSD: cur_hash.c,v 1.8 2000/04/13 00:01:46 simonb Exp $");
 #endif
 #endif				/* not lint */
 
 #include <sys/types.h>
 
 #include "curses.h"
+#include "curses_private.h"
 
 /*
  * __hash() is "hashpjw" from the Dragon Book, Aho, Sethi & Ullman, p.436.
