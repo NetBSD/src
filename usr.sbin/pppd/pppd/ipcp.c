@@ -18,13 +18,11 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$Id: ipcp.c,v 1.3 1993/11/10 01:34:12 paulus Exp $";
+static char rcsid[] = "$Id: ipcp.c,v 1.4 1994/02/22 00:11:57 paulus Exp $";
 #endif
 
 /*
  * TODO:
- * Fix IP address negotiation (wantoptions or hisoptions).
- * Don't set zero IP addresses.
  */
 
 #include <stdio.h>
@@ -242,6 +240,10 @@ ipcp_resetci(f)
     ipcp_options *wo = &ipcp_wantoptions[f->unit];
 
     wo->req_addr = wo->neg_addr && ipcp_allowoptions[f->unit].neg_addr;
+    if (wo->ouraddr == 0)
+	wo->accept_local = 1;
+    if (wo->hisaddr == 0)
+	wo->accept_remote = 1;
     ipcp_gotoptions[f->unit] = *wo;
     cis_received[f->unit] = 0;
 }
@@ -501,17 +503,17 @@ ipcp_nakci(f, p, len)
     }
 
     /*
-     * Accept the peer's idea of our address if we don't know it.
-     * Accept the peer's idea of his address if he knows it.
+     * Accept the peer's idea of {our,his} address, if different
+     * from our idea, only if the accept_{local,remote} flag is set.
      */
     NAKCIADDR(CI_ADDR, neg_addr, go->old_addrs,
-	      if (!go->ouraddr && ciaddr1) {	/* Do we know our address? */
-		  go->ouraddr = ciaddr1;
+	      if (go->accept_local && ciaddr1) { /* Do we know our address? */
+		  try.ouraddr = ciaddr1;
 		  IPCPDEBUG((LOG_INFO, "local IP address %s",
 			     ip_ntoa(ciaddr1)));
 	      }
-	      if (ciaddr2) {			/* Does he know his? */
-		  go->hisaddr = ciaddr2;
+	      if (go->accept_remote && ciaddr2) { /* Does he know his? */
+		  try.hisaddr = ciaddr2;
 		  IPCPDEBUG((LOG_INFO, "remote IP address %s",
 			     ip_ntoa(ciaddr2)));
 	      }
@@ -572,11 +574,11 @@ ipcp_nakci(f, p, len)
 	    try.old_addrs = 1;
 	    GETLONG(l, p);
 	    ciaddr1 = htonl(l);
-	    if (ciaddr1)
+	    if (ciaddr1 && go->accept_local)
 		try.ouraddr = ciaddr1;
 	    GETLONG(l, p);
 	    ciaddr2 = htonl(l);
-	    if (ciaddr2)
+	    if (ciaddr2 && go->accept_remote)
 		try.hisaddr = ciaddr2;
 	    no.old_addrs = 1;
 	    break;
@@ -587,7 +589,7 @@ ipcp_nakci(f, p, len)
 	    try.old_addrs = 0;
 	    GETLONG(l, p);
 	    ciaddr1 = htonl(l);
-	    if (ciaddr1)
+	    if (ciaddr1 && go->accept_local)
 		try.ouraddr = ciaddr1;
 	    no.neg_addr = 1;
 	    break;
@@ -778,7 +780,8 @@ ipcp_reqci(f, inp, len, reject_if_disagree)
 	    GETLONG(tl, p);		/* Parse source address (his) */
 	    ciaddr1 = htonl(tl);
 	    IPCPDEBUG((LOG_INFO, "(%s:", ip_ntoa(ciaddr1)));
-	    if (wo->hisaddr && ciaddr1 != wo->hisaddr) {
+	    if (ciaddr1 != wo->hisaddr
+		&& (ciaddr1 == 0 || !wo->accept_remote)) {
 		orc = CONFNAK;
 		if (!reject_if_disagree) {
 		    DECPTR(sizeof (long), p);
@@ -794,16 +797,18 @@ ipcp_reqci(f, inp, len, reject_if_disagree)
 	    GETLONG(tl, p);		/* Parse desination address (ours) */
 	    ciaddr2 = htonl(tl);
 	    IPCPDEBUG((LOG_INFO, "%s)", ip_ntoa(ciaddr2)));
-	    if (wo->ouraddr && ciaddr2 != wo->ouraddr) {
-		orc = CONFNAK;
-		if (!reject_if_disagree) {
-		    DECPTR(sizeof (long), p);
-		    tl = ntohl(wo->ouraddr);
-		    PUTLONG(tl, p);
+	    if (ciaddr2 != wo->ouraddr) {
+		if (ciaddr2 == 0 || !wo->accept_local) {
+		    orc = CONFNAK;
+		    if (!reject_if_disagree) {
+			DECPTR(sizeof (long), p);
+			tl = ntohl(wo->ouraddr);
+			PUTLONG(tl, p);
+		    }
+		} else {
+		    go->ouraddr = ciaddr2;	/* accept peer's idea */
 		}
 	    }
-	    if (orc == CONFNAK)
-		break;
 
 	    ho->neg_addr = 1;
 	    ho->old_addrs = 1;
@@ -829,7 +834,8 @@ ipcp_reqci(f, inp, len, reject_if_disagree)
 	    GETLONG(tl, p);	/* Parse source address (his) */
 	    ciaddr1 = htonl(tl);
 	    IPCPDEBUG((LOG_INFO, "(%s)", ip_ntoa(ciaddr1)));
-	    if (wo->hisaddr && ciaddr1 != wo->hisaddr) {
+	    if (ciaddr1 != wo->hisaddr
+		&& (ciaddr1 == 0 || !wo->accept_remote)) {
 		orc = CONFNAK;
 		if (!reject_if_disagree) {
 		    DECPTR(sizeof (long), p);
@@ -838,9 +844,6 @@ ipcp_reqci(f, inp, len, reject_if_disagree)
 		}
 	    }
 	
-	    if (orc == CONFNAK)
-		break;
-
 	    ho->neg_addr = 1;
 	    ho->hisaddr = ciaddr1;
 	    break;
@@ -880,8 +883,6 @@ ipcp_reqci(f, inp, len, reject_if_disagree)
 			PUTCHAR(wo->cflag, p);
 		    }
 		}
-		if (orc == CONFNAK)
-		    break;
 		ho->maxslotindex = maxslotindex;
 		ho->cflag = wo->cflag;
 	    }
@@ -972,7 +973,7 @@ ipcp_up(f)
     /*
      * We must have a non-zero IP address for both ends of the link.
      */
-    if (ho->hisaddr == 0)
+    if (!ho->neg_addr)
 	ho->hisaddr = ipcp_wantoptions[f->unit].hisaddr;
 
     if (ho->hisaddr == 0) {
