@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.167 1999/10/06 17:22:25 jdolecek Exp $
+# $NetBSD: mi,v 1.168 1999/10/28 02:34:16 perry Exp $
 ./usr/share/info/am-utils.info
 ./usr/share/info/awk.info
 ./usr/share/info/bfd.info
@@ -616,8 +616,8 @@
 ./usr/share/man/cat7/packages.0
 ./usr/share/man/cat7/re_format.0
 ./usr/share/man/cat7/release.0
-./usr/share/man/cat7/symlink.0
 ./usr/share/man/cat7/signal.0
+./usr/share/man/cat7/symlink.0
 ./usr/share/man/cat8/ac.0
 ./usr/share/man/cat8/accton.0
 ./usr/share/man/cat8/adduser.0
@@ -661,6 +661,7 @@
 ./usr/share/man/cat8/dm.0
 ./usr/share/man/cat8/dmesg.0
 ./usr/share/man/cat8/dump.0
+./usr/share/man/cat8/dump_lfs.0
 ./usr/share/man/cat8/dumpfs.0
 ./usr/share/man/cat8/dumplfs.0
 ./usr/share/man/cat8/edquota.0
@@ -798,6 +799,7 @@
 ./usr/share/man/cat8/rdate.0
 ./usr/share/man/cat8/rdisc.0
 ./usr/share/man/cat8/rdump.0
+./usr/share/man/cat8/rdump_lfs.0
 ./usr/share/man/cat8/reboot.0
 ./usr/share/man/cat8/renice.0
 ./usr/share/man/cat8/repquota.0
@@ -1501,8 +1503,8 @@
 ./usr/share/man/man7/packages.7
 ./usr/share/man/man7/re_format.7
 ./usr/share/man/man7/release.7
-./usr/share/man/man7/symlink.7
 ./usr/share/man/man7/signal.7
+./usr/share/man/man7/symlink.7
 ./usr/share/man/man8/ac.8
 ./usr/share/man/man8/accton.8
 ./usr/share/man/man8/adduser.8
@@ -1546,6 +1548,7 @@
 ./usr/share/man/man8/dm.8
 ./usr/share/man/man8/dmesg.8
 ./usr/share/man/man8/dump.8
+./usr/share/man/man8/dump_lfs.8
 ./usr/share/man/man8/dumpfs.8
 ./usr/share/man/man8/dumplfs.8
 ./usr/share/man/man8/edquota.8
@@ -1683,6 +1686,7 @@
 ./usr/share/man/man8/rdate.8
 ./usr/share/man/man8/rdisc.8
 ./usr/share/man/man8/rdump.8
+./usr/share/man/man8/rdump_lfs.8
 ./usr/share/man/man8/reboot.8
 ./usr/share/man/man8/renice.8
 ./usr/share/man/man8/repquota.8
