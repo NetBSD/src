@@ -1228,6 +1228,21 @@ record_international_format (name, assembler_name, format_num)
 
 static char	tfaff[] = "too few arguments for format";
 
+function_format_info *
+find_function_format (name, assembler_name)
+     tree name;
+     tree assembler_name;
+{
+  function_format_info *info;
+
+  for (info = function_format_list; info; info = info->next)
+    if (info->assembler_name
+	? (info->assembler_name == assembler_name)
+	: (info->name == name))
+      return info;
+  return 0;
+}
+
 /* Check the argument list of a call to printf, scanf, etc.
    NAME is the function identifier.
    ASSEMBLER_NAME is the function's assembler identifier.
@@ -1243,17 +1258,10 @@ check_function_format (name, assembler_name, params)
   function_format_info *info;
 
   /* See if this function is a format function.  */
-  for (info = function_format_list; info; info = info->next)
-    {
-      if (info->assembler_name
-	  ? (info->assembler_name == assembler_name)
-	  : (info->name == name))
-	{
-	  /* Yup; check it.  */
-	  check_format_info (info, params);
-	  break;
-	}
-    }
+  info = find_function_format (name, assembler_name);
+
+  if (info)
+    check_format_info (info, params);
 }
 
 /* Check the argument list of a call to printf, scanf, etc.
@@ -1338,11 +1346,61 @@ check_format_info (info, params)
         warning ("null format string");
       return;
     }
-  if (TREE_CODE (format_tree) != ADDR_EXPR)
-    return;
+  if (TREE_CODE (format_tree) != ADDR_EXPR) 
+    {
+      if ((info->first_arg_num == 0) &&
+	  (TREE_CODE(format_tree) == PARM_DECL)) 
+	{
+	  function_format_info *i2;
+	  tree p;
+	  int n;
+
+	  /* Now, we need to determine if the current function is printf-like,
+	     and, if so, if the parameter we have here is as a parameter of 
+	     the current function and is in the argument slot declared to 
+	     contain the format argument. */
+
+	  p = current_function_decl;
+
+	  i2 = find_function_format (p->decl.name, p->decl.assembler_name);
+
+	  if (i2 == NULL) 
+	    {
+	      if (warn_format > 1)
+		warning("non-constant format parameter");
+	    }
+	  else
+	    {
+	      for (n = 1, p = current_function_decl->decl.arguments;
+		   (n < i2->format_num) && (p != NULL); 
+		   n++, p = TREE_CHAIN(p)) 
+		;
+	      if ((p == NULL) || (n != i2->format_num)) 
+		warning("can't find format arg for current format function");
+	      else if (p != format_tree)
+		warning("format argument passed here is not declared as format argument");
+	    }
+	}
+      else if ((info->format_type != strftime_format_type) &&
+	       (warn_format > 1))
+	warning("non-constant format parameter");
+      return;
+    }
   format_tree = TREE_OPERAND (format_tree, 0);
-  if (TREE_CODE (format_tree) != STRING_CST)
-    return;
+  if (warn_format > 1 &&
+      (TREE_CODE (format_tree) == VAR_DECL) &&
+      TREE_READONLY(format_tree) &&
+      (DECL_INITIAL(format_tree) != NULL) && 
+      TREE_CODE(DECL_INITIAL(format_tree)) == STRING_CST)
+    format_tree = DECL_INITIAL(format_tree);
+       
+  if (TREE_CODE (format_tree) != STRING_CST) 
+    {
+      if ((info->format_type != strftime_format_type) &&
+	  (warn_format > 1))
+	warning("non-constant format parameter");
+      return;
+    }
   format_chars = TREE_STRING_POINTER (format_tree);
   format_length = TREE_STRING_LENGTH (format_tree);
   if (format_length <= 1)
@@ -1796,7 +1854,6 @@ check_format_info (info, params)
 	warning ("use of `%c' length character with `%c' type character",
 		 length_char, format_char);
 
-      /* Finally. . .check type of argument against desired type!  */
       if (info->first_arg_num == 0)
 	continue;
       if (fci->pointer_count == 0 && wanted_type == void_type_node)
