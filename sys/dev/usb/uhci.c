@@ -1,4 +1,4 @@
-/*	$NetBSD: uhci.c,v 1.158 2002/03/17 18:02:53 augustss Exp $	*/
+/*	$NetBSD: uhci.c,v 1.159 2002/05/19 06:24:32 augustss Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/uhci.c,v 1.33 1999/11/17 22:33:41 n_hibma Exp $	*/
 
 /*
@@ -49,7 +49,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uhci.c,v 1.158 2002/03/17 18:02:53 augustss Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uhci.c,v 1.159 2002/05/19 06:24:32 augustss Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -414,7 +414,7 @@ uhci_init(uhci_softc_t *sc)
 		  UHCI_FRAMELIST_ALIGN, &sc->sc_dma);
 	if (err)
 		return (err);
-	sc->sc_pframes = KERNADDR(&sc->sc_dma);
+	sc->sc_pframes = KERNADDR(&sc->sc_dma, 0);
 	UWRITE2(sc, UHCI_FRNUM, 0);		/* set frame number to 0 */
 	UWRITE4(sc, UHCI_FLBASEADDR, DMAADDR(&sc->sc_dma)); /* set frame list*/
 
@@ -966,7 +966,7 @@ uhci_poll_hub(void *addr)
 
 	usb_callout(sc->sc_poll_handle, sc->sc_ival, uhci_poll_hub, xfer);
 
-	p = KERNADDR(&xfer->dmabuf);
+	p = KERNADDR(&xfer->dmabuf, 0);
 	p[0] = 0;
 	if (UREAD2(sc, UHCI_PORTSC1) & (UHCI_PORTSC_CSC|UHCI_PORTSC_OCIC))
 		p[0] |= 1<<1;
@@ -1614,7 +1614,7 @@ uhci_alloc_std(uhci_softc_t *sc)
 			return (0);
 		for(i = 0; i < UHCI_STD_CHUNK; i++) {
 			offs = i * UHCI_STD_SIZE;
-			std = (uhci_soft_td_t *)((char *)KERNADDR(&dma) +offs);
+			std = KERNADDR(&dma, offs);
 			std->physaddr = DMAADDR(&dma) + offs;
 			std->link.std = sc->sc_freetds;
 			sc->sc_freetds = std;
@@ -1657,7 +1657,7 @@ uhci_alloc_sqh(uhci_softc_t *sc)
 			return (0);
 		for(i = 0; i < UHCI_SQH_CHUNK; i++) {
 			offs = i * UHCI_SQH_SIZE;
-			sqh = (uhci_soft_qh_t *)((char *)KERNADDR(&dma) +offs);
+			sqh = KERNADDR(&dma, offs);
 			sqh->physaddr = DMAADDR(&dma) + offs;
 			sqh->hlink = sc->sc_freeqhs;
 			sc->sc_freeqhs = sqh;
@@ -2192,7 +2192,7 @@ uhci_device_request(usbd_xfer_handle xfer)
 	}
 	upipe->u.ctl.length = len;
 
-	memcpy(KERNADDR(&upipe->u.ctl.reqdma), req, sizeof *req);
+	memcpy(KERNADDR(&upipe->u.ctl.reqdma, 0), req, sizeof *req);
 
 	setup->link.std = next;
 	setup->td.td_link = htole32(next->physaddr | UHCI_PTR_VF | UHCI_PTR_TD);
@@ -3001,7 +3001,7 @@ uhci_root_ctrl_start(usbd_xfer_handle xfer)
 	index = UGETW(req->wIndex);
 
 	if (len != 0)
-		buf = KERNADDR(&xfer->dmabuf);
+		buf = KERNADDR(&xfer->dmabuf, 0);
 
 #define C(x,y) ((x) | ((y) << 8))
 	switch(C(req->bRequest, req->bmRequestType)) {
