@@ -1,10 +1,10 @@
-#	$NetBSD: Makefile,v 1.7 2001/11/23 21:23:31 thorpej Exp $
+#	$NetBSD: Makefile,v 1.8 2001/11/24 00:57:43 thorpej Exp $
 
 KDIR=	/sys/arch/acorn32/include
 INCSDIR= /usr/include/acorn32
 
 INCS=	ansi.h aout_machdep.h asm.h \
-	beep.h bootconfig.h bswap.h bus.h \
+	beep.h bswap.h bus.h \
 	cdefs.h conf.h cpu.h \
 	db_machdep.h devmap.h disklabel.h disklabel_acorn.h \
 	elf_machdep.h endian.h endian_machdep.h \
