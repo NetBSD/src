@@ -1,4 +1,4 @@
-/* $NetBSD: pckbc_jazzio.c,v 1.7 2002/12/28 16:25:39 tsutsui Exp $ */
+/* $NetBSD: pckbc_jazzio.c,v 1.8 2003/01/19 10:06:15 tsutsui Exp $ */
 /* NetBSD: pckbc_isa.c,v 1.2 2000/03/23 07:01:35 thorpej Exp  */
 
 /*
@@ -37,7 +37,7 @@
 #include <sys/kernel.h>
 #include <sys/proc.h>
 #include <sys/device.h>
-#include <sys/malloc.h> 
+#include <sys/malloc.h>
 #include <sys/errno.h>
 #include <sys/queue.h>
 #include <sys/lock.h>

@@ -1,4 +1,4 @@
-/*	$NetBSD: minidebug.c,v 1.10 2000/06/29 08:34:09 mrg Exp $	*/
+/*	$NetBSD: minidebug.c,v 1.11 2003/01/19 10:06:13 tsutsui Exp $	*/
 /*	$OpenBSD: minidebug.c,v 1.2 1998/03/16 09:03:36 pefo Exp $	*/
 
 /*-
@@ -497,7 +497,7 @@ static int ssandrun;	/* Single step and run flag (when cont at brk) */
 				c = gethex(&newaddr, newaddr);
 				if(c == '\n') {
 					printf("= %02x",
-						*(u_char *)newaddr);	
+						*(u_char *)newaddr);
 				}
 				break;
 			case 'h':
@@ -505,7 +505,7 @@ static int ssandrun;	/* Single step and run flag (when cont at brk) */
 				c = gethex(&newaddr, newaddr);
 				if(c == '\n') {
 					printf("= %04x",
-						*(u_short *)newaddr);	
+						*(u_short *)newaddr);
 				}
 				break;
 			case 'w':
@@ -513,7 +513,7 @@ static int ssandrun;	/* Single step and run flag (when cont at brk) */
 				c = gethex(&newaddr, newaddr);
 				if(c == '\n') {
 					printf("= %08x",
-						*(u_int *)newaddr);	
+						*(u_int *)newaddr);
 				}
 				break;
 			}
@@ -529,7 +529,7 @@ static int ssandrun;	/* Single step and run flag (when cont at brk) */
 				if(c == ',') {
 					c = gethex(&size, 0);
 					if(c == '\n') {
-						*(u_char *)newaddr = size;	
+						*(u_char *)newaddr = size;
 					}
 				}
 				break;
@@ -539,7 +539,7 @@ static int ssandrun;	/* Single step and run flag (when cont at brk) */
 				if(c == ',') {
 					c = gethex(&size, 0);
 					if(c == '\n') {
-						*(u_short *)newaddr = size;	
+						*(u_short *)newaddr = size;
 					}
 				}
 				break;
@@ -549,7 +549,7 @@ static int ssandrun;	/* Single step and run flag (when cont at brk) */
 				if(c == ',') {
 					c = gethex(&size, 0);
 					if(c == '\n') {
-						*(u_int *)newaddr = size;	
+						*(u_int *)newaddr = size;
 					}
 				}
 				break;
@@ -578,7 +578,7 @@ static int ssandrun;	/* Single step and run flag (when cont at brk) */
 				break;
 			}
 			break;
-			
+
 #ifdef __OpenBSD__
 		case 'w':
 			printf("watch ");

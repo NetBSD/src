@@ -1,4 +1,4 @@
-/*	$NetBSD: isabus.c,v 1.17 2003/01/01 00:32:04 thorpej Exp $	*/
+/*	$NetBSD: isabus.c,v 1.18 2003/01/19 10:06:14 tsutsui Exp $	*/
 /*	$OpenBSD: isabus.c,v 1.15 1998/03/16 09:38:46 pefo Exp $	*/
 /*	NetBSD: isa.c,v 1.33 1995/06/28 04:30:51 cgd Exp 	*/
 
@@ -288,7 +288,7 @@ isabr_intr_evcnt(ic, irq)
 /*
  *	Establish a ISA bus interrupt.
  */
-void *   
+void *
 isabr_intr_establish(ic, irq, type, level, ih_fun, ih_arg)
         isa_chipset_tag_t ic;
         int irq;
@@ -354,11 +354,11 @@ isabr_intr_establish(ic, irq, type, level, ih_fun, ih_arg)
 	return (ih);
 }
 
-void                    
+void
 isabr_intr_disestablish(ic, arg)
         isa_chipset_tag_t ic;
-        void *arg;      
-{               
+        void *arg;
+{
 
 }
 
@@ -410,12 +410,12 @@ isabr_iointr(mask, cf)
 }
 
 
-/* 
+/*
  * Initialize the Interrupt controller logic.
  */
 void
 isabr_initicu()
-{  
+{
 
 	isa_outb(IO_ICU1, 0x11);		/* reset; program device, four bytes */
 	isa_outb(IO_ICU1+1, 0);			/* starting at this vector index */
@@ -424,7 +424,7 @@ isabr_initicu()
 	isa_outb(IO_ICU1+1, 0xff);		/* leave interrupts masked */
 	isa_outb(IO_ICU1, 0x68);		/* special mask mode (if available) */
 	isa_outb(IO_ICU1, 0x0a);		/* Read IRR by default. */
-#ifdef REORDER_IRQ  
+#ifdef REORDER_IRQ
 	isa_outb(IO_ICU1, 0xc0 | (3 - 1));	/* pri order 3-7, 0-2 (com2 first) */
 #endif
 
@@ -435,7 +435,7 @@ isabr_initicu()
 	isa_outb(IO_ICU2+1, 0xff);		/* leave interrupts masked */
 	isa_outb(IO_ICU2, 0x68);		/* special mask mode (if available) */
 	isa_outb(IO_ICU2, 0x0a);		/* Read IRR by default. */
-}	       
+}
 
 
 /*
