@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.15.4.1 2000/10/20 17:22:09 tv Exp $
+#	$NetBSD: Makefile.inc,v 1.15.4.2 2000/10/22 19:03:07 tv Exp $
 #
 #	etc.sparc/Makefile.inc -- sparc-specific etc Makefile targets
 #
@@ -28,7 +28,7 @@ snap_md_post:
 	(cd $(TOP)/distrib; ${MAKE})
 
 	# transfer images to release hierarchy
-.for dir in notes miniroot sparc/ramdisk sparc/bootfs
+.for dir in notes miniroot sparc/ramdisk sparc/bootfs sparc/instfs
 	(cd $(TOP)/distrib/$(dir); ${MAKE} release)
 .endfor
 
