@@ -30,7 +30,8 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	@(#)syslimits.h	7.4 (Berkeley) 2/4/91
+ *	from: @(#)syslimits.h	7.4 (Berkeley) 2/4/91
+ *	$Id: syslimits.h,v 1.4 1993/05/20 16:23:15 cgd Exp $
  */
 
 #ifndef _SYS_SYSLIMITS_H_

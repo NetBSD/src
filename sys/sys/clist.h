@@ -30,7 +30,8 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	@(#)clist.h	7.3 (Berkeley) 2/15/91
+ *	from: @(#)clist.h	7.3 (Berkeley) 2/15/91
+ *	$Id: clist.h,v 1.3 1993/05/20 16:21:56 cgd Exp $
  */
 
 #ifndef _SYS_CLIST_H_

@@ -30,7 +30,8 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	@(#)specdev.h	7.4 (Berkeley) 4/19/91
+ *	from: @(#)specdev.h	7.4 (Berkeley) 4/19/91
+ *	$Id: specdev.h,v 1.3 1993/05/20 16:23:11 cgd Exp $
  */
 
 #ifndef _SYS_SPECDEV_H_

@@ -30,7 +30,8 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	@(#)tprintf.h	7.2 (Berkeley) 5/4/91
+ *	from: @(#)tprintf.h	7.2 (Berkeley) 5/4/91
+ *	$Id: tprintf.h,v 1.3 1993/05/20 16:23:26 cgd Exp $
  */
 
 #ifndef _SYS_TPRINTF_H_

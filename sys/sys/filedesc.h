@@ -30,7 +30,8 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	@(#)filedesc.h	7.4 (Berkeley) 5/4/91
+ *	from: @(#)filedesc.h	7.4 (Berkeley) 5/4/91
+ *	$Id: filedesc.h,v 1.3 1993/05/20 16:22:17 cgd Exp $
  */
 
 #ifndef _SYS_FILEDESC_H_

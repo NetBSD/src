@@ -30,7 +30,8 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	@(#)vnode.h	7.39 (Berkeley) 6/27/91
+ *	from: @(#)vnode.h	7.39 (Berkeley) 6/27/91
+ *	$Id: vnode.h,v 1.4 1993/05/20 16:23:52 cgd Exp $
  */
 
 #ifndef _SYS_VNODE_H_

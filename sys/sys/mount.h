@@ -30,7 +30,8 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	@(#)mount.h	7.22 (Berkeley) 6/3/91
+ *	from: @(#)mount.h	7.22 (Berkeley) 6/3/91
+ *	$Id: mount.h,v 1.8 1993/05/20 16:22:43 cgd Exp $
  */
 
 #ifndef _SYS_MOUNT_H_

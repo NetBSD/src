@@ -30,7 +30,8 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	@(#)trace.h	7.6 (Berkeley) 5/5/91
+ *	from: @(#)trace.h	7.6 (Berkeley) 5/5/91
+ *	$Id: trace.h,v 1.3 1993/05/20 16:23:28 cgd Exp $
  */
 
 #ifndef _SYS_TRACE_H_

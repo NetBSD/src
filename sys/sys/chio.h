@@ -30,17 +30,11 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	@(#)chio.h	7.6 (Berkeley) 2/5/91
- *
- * PATCHES MAGIC                LEVEL   PATCH THAT GOT US HERE
- * --------------------         -----   ----------------------
- * CURRENT PATCH LEVEL:         1       00098
- * --------------------         -----   ----------------------
- *
- * 16 Feb 93	Julian Elischer		ADDED for SCSI system
+ *	from: @(#)mtio.h	7.6 (Berkeley) 2/5/91
+ *	$Id: chio.h,v 1.3 1993/05/20 16:21:55 cgd Exp $
  */
 
-/* This is a "convertet" mtio.h from 386BSD 
+/* This is a "converted" mtio.h from 386BSD 
    Stefan Grefen grefen@goofy.zdv.uni-mainz.de 
  */
 
