@@ -1,4 +1,4 @@
-/*	$NetBSD: form.h,v 1.4 2001/01/16 02:50:29 cgd Exp $	*/
+/*	$NetBSD: form.h,v 1.5 2001/01/20 11:03:43 blymn Exp $	*/
 
 /*-
  * Copyright (c) 1998-1999 Brett Lymn
@@ -202,8 +202,6 @@ struct _form_fieldtype {
 	unsigned flags; /* status of the type */
 	unsigned refcount; /* in use if > 0 */
 	_FORMI_TYPE_LINK *link; /* set if this type is linked */
-	char *args;
-	
 
 	char * (*make_args)(va_list *); /* make the args for the type */
 	char * (*copy_args)(char *); /* copy the args for the type */

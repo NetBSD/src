@@ -1,4 +1,4 @@
-/*	$NetBSD: type_regex.c,v 1.1 2000/12/17 12:04:31 blymn Exp $	*/
+/*	$NetBSD: type_regex.c,v 1.2 2001/01/20 11:03:43 blymn Exp $	*/
 
 /*-
  * Copyright (c) 1998-1999 Brett Lymn
@@ -101,8 +101,8 @@ static int
 regex_check_field(FIELD *field, char *args)
 {
 	if ((args != NULL) &&
-	    (regexec(&((regex_args *) (void *) args)->compiled,
-		   field_buffer(field, 0), 0, NULL, 0) == 0))
+	    (regexec(&((regex_args *) (void *) field->args)->compiled,
+		   args, 0, NULL, 0) == 0))
 		return TRUE;
 
 	return FALSE;
@@ -112,7 +112,6 @@ static FIELDTYPE builtin_regex = {
 	_TYPE_HAS_ARGS | _TYPE_IS_BUILTIN,  /* flags */
 	0,                                  /* refcount */
 	NULL,                               /* link */
-	NULL,                               /* args */
 	create_regex_args,                  /* make_args */
 	copy_regex_args,                    /* copy_args */
 	free_regex_args,                    /* free_args */

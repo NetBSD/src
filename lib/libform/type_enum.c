@@ -1,4 +1,4 @@
-/*	$NetBSD: type_enum.c,v 1.2 2001/01/18 05:42:23 blymn Exp $	*/
+/*	$NetBSD: type_enum.c,v 1.3 2001/01/20 11:03:43 blymn Exp $	*/
 
 /*-
  * Copyright (c) 1998-1999 Brett Lymn
@@ -214,7 +214,7 @@ enum_check_field(FIELD *field, char *args)
 	enum_args *ta;
 	unsigned match_num;
 	
-	ta = (enum_args *) (void *) field->type->args;
+	ta = (enum_args *) (void *) field->args;
 	
 	if (match_enum(ta->choices, ta->num_choices, ta->ignore_case,
 		       ta->no_blanks, args, &match_num) == TRUE) {
@@ -240,7 +240,7 @@ next_enum(FIELD *field, char *args)
 	enum_args *ta;
 	unsigned cur_choice;
 	
-	ta = (enum_args *) (void *) field->type->args;
+	ta = (enum_args *) (void *) field->args;
 
 #ifdef DEBUG
 	fprintf(dbg, "next_enum: attempt to match \'%s\'\n", args);
@@ -281,7 +281,7 @@ prev_enum(FIELD *field, char *args)
 	enum_args *ta;
 	unsigned cur_choice;
 
-	ta = (enum_args *) (void *) field->type->args;
+	ta = (enum_args *) (void *) field->args;
 	
 #ifdef DEBUG
 	fprintf(dbg, "prev_enum: attempt to match \'%s\'\n", args);
@@ -316,7 +316,6 @@ static FIELDTYPE builtin_enum = {
 	_TYPE_HAS_ARGS | _TYPE_IS_BUILTIN,  /* flags */
 	0,                                  /* refcount */
 	NULL,                               /* link */
-	NULL,                               /* args */
 	create_enum_args,                  /* make_args */
 	copy_enum_args,                    /* copy_args */
 	free_enum_args,                    /* free_args */

@@ -1,4 +1,4 @@
-/*	$NetBSD: type_alnum.c,v 1.1 2000/12/17 12:04:31 blymn Exp $	*/
+/*	$NetBSD: type_alnum.c,v 1.2 2001/01/20 11:03:43 blymn Exp $	*/
 
 /*-
  * Copyright (c) 1998-1999 Brett Lymn
@@ -93,11 +93,11 @@ free_alnum_args(char *args)
 static int
 alnum_check_field(FIELD *field, char *args)
 {
-	int width, start, cur;
-	char *buf;
+	int width, start, cur, end;
+	char *buf, *new;
 
-	width = ((alnum_args *) (void *) args)->width;
-	buf = field->buffers[0].string;
+	width = ((alnum_args *) (void *) field->args)->width;
+	buf = args;
 	start = 0;
 
 	  /* skip leading white space */
@@ -118,6 +118,8 @@ alnum_check_field(FIELD *field, char *args)
 	if ((cur - start) > width)
 		return FALSE;
 
+	end = cur;
+	
 	  /* check there is only trailing whitespace */
 	while ((buf[cur] != '\0')
 	       && ((buf[cur] == ' ') || (buf[cur] == '\t')))
@@ -127,6 +129,15 @@ alnum_check_field(FIELD *field, char *args)
 	if (buf[cur] != '\0')
 		return FALSE;
 
+	if ((new = (char *) malloc(sizeof(char) * (end - start))) == NULL)
+		return FALSE;
+
+	strncpy(new, &buf[start], end - start - 1);
+	new[end] = '\0';
+
+	set_field_buffer(field, 0, new);
+	free(new);
+	
 	  /* otherwise all was ok */
 	return TRUE;
 }
@@ -144,7 +155,6 @@ static FIELDTYPE builtin_alnum = {
 	_TYPE_HAS_ARGS | _TYPE_IS_BUILTIN,  /* flags */
 	0,                                  /* refcount */
 	NULL,                               /* link */
-	NULL,                               /* args */
 	create_alnum_args,                  /* make_args */
 	copy_alnum_args,                    /* copy_args */
 	free_alnum_args,                    /* free_args */

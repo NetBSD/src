@@ -1,4 +1,4 @@
-/*	$NetBSD: type_integer.c,v 1.1 2000/12/17 12:04:31 blymn Exp $	*/
+/*	$NetBSD: type_integer.c,v 1.2 2001/01/20 11:03:43 blymn Exp $	*/
 
 /*-
  * Copyright (c) 1998-1999 Brett Lymn
@@ -103,11 +103,11 @@ integer_check_field(FIELD *field, char *args)
 	int precision;
 	char *buf, *new_buf;
 
-	precision = ((integer_args *) (void *) args)->precision;
-	min = ((integer_args *) (void *) args)->min;
-	max = ((integer_args *) (void *) args)->max;
+	precision = ((integer_args *) (void *) field->args)->precision;
+	min = ((integer_args *) (void *) field->args)->min;
+	max = ((integer_args *) (void *) field->args)->max;
 	
-	buf = field->buffers[0].string;
+	buf = args;
 	cur = 0;
 
 	  /* skip leading white space */
@@ -137,7 +137,7 @@ integer_check_field(FIELD *field, char *args)
 
 	  /* convert and range check the number...*/
 	number = atol(buf);
-	if ((min < max) && ((number < min) || (number > max)))
+	if ((min > max) || ((number < min) || (number > max)))
 		return FALSE;
 
 	if (asprintf(&new_buf, "%.*ld", precision, number) < 0)
@@ -165,7 +165,6 @@ static FIELDTYPE builtin_integer = {
 	_TYPE_HAS_ARGS | _TYPE_IS_BUILTIN,  /* flags */
 	0,                                  /* refcount */
 	NULL,                               /* link */
-	NULL,                               /* args */
 	create_integer_args,                  /* make_args */
 	copy_integer_args,                    /* copy_args */
 	free_integer_args,                    /* free_args */

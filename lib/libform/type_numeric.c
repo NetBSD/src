@@ -1,4 +1,4 @@
-/*	$NetBSD: type_numeric.c,v 1.1 2000/12/17 12:04:31 blymn Exp $	*/
+/*	$NetBSD: type_numeric.c,v 1.2 2001/01/20 11:03:43 blymn Exp $	*/
 
 /*-
  * Copyright (c) 1998-1999 Brett Lymn
@@ -104,11 +104,11 @@ numeric_check_field(FIELD *field, char *args)
 	int precision;
 	char *buf, *new_buf;
 
-	precision = ((numeric_args *) (void *) args)->precision;
-	min = ((numeric_args *) (void *) args)->min;
-	max = ((numeric_args *) (void *) args)->max;
+	precision = ((numeric_args *) (void *) field->args)->precision;
+	min = ((numeric_args *) (void *) field->args)->min;
+	max = ((numeric_args *) (void *) field->args)->max;
 	
-	buf = field->buffers[0].string;
+	buf = args;
 	cur = 0;
 
 	  /* skip leading white space */
@@ -200,7 +200,6 @@ static FIELDTYPE builtin_numeric = {
 	_TYPE_HAS_ARGS | _TYPE_IS_BUILTIN,  /* flags */
 	0,                                  /* refcount */
 	NULL,                               /* link */
-	NULL,                               /* args */
 	create_numeric_args,                  /* make_args */
 	copy_numeric_args,                    /* copy_args */
 	free_numeric_args,                    /* free_args */

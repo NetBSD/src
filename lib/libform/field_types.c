@@ -1,4 +1,4 @@
-/*	$NetBSD: field_types.c,v 1.1 2000/12/17 12:04:30 blymn Exp $	*/
+/*	$NetBSD: field_types.c,v 1.2 2001/01/20 11:03:43 blymn Exp $	*/
 
 /*-
  * Copyright (c) 1998-1999 Brett Lymn
@@ -60,12 +60,12 @@ _formi_create_field_args(FIELDTYPE *type, char **type_args,
 				malloc(sizeof(formi_type_link));
 			if (l != NULL) {
 				_formi_create_field_args(type->link->next,
-							 &type->link->next->args,
+							 type_args,
 							 &type->link->next->link,
 							 args,
 							 error);
 				_formi_create_field_args(type->link->prev,
-							 &type->link->prev->args,
+							 type_args,
 							 &type->link->prev->link,
 							 args,
 							 error);
@@ -122,7 +122,7 @@ set_field_type(FIELD *fptr, FIELDTYPE *type, ...)
 	field = (fptr == NULL)? &_formi_default_field : fptr;
 
 	field->type = type;
-	_formi_create_field_args(type, &type->args, &type->link, &args,
+	_formi_create_field_args(type, &fptr->args, &type->link, &args,
 				 &error);
 	va_end(args);
 	
@@ -201,9 +201,6 @@ free_fieldtype(FIELDTYPE *fieldtype)
 		fieldtype->link->prev->refcount--;
 	}
 	
-	if (fieldtype->free_args != NULL)
-		fieldtype->free_args(fieldtype->args);
-
 	free(fieldtype);
 
 	return E_OK;
