@@ -16,8 +16,7 @@
 #ifndef INCLUDES_H
 #define INCLUDES_H
 
-#define RCSID(msg) \
-static /**/const char *const rcsid[] = { (char *)rcsid, "\100(#)" msg }
+#define RCSID(msg)
 
 #include <sys/types.h>
 #include <sys/socket.h>
@@ -56,6 +55,8 @@ static /**/const char *const rcsid[] = { (char *)rcsid, "\100(#)" msg }
 #include <dirent.h>
 
 #include "version.h"
+
+#include "random.h"
 
 /* Define this to be the path of the xauth program. */
 #define XAUTH_PATH "/usr/X11R6/bin/xauth"

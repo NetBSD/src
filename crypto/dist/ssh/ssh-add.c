@@ -1,5 +1,3 @@
-/*	$NetBSD: ssh-add.c,v 1.5 2001/01/21 02:44:05 itojun Exp $	*/
-
 /*
  * Author: Tatu Ylonen <ylo@cs.hut.fi>
  * Copyright (c) 1995 Tatu Ylonen <ylo@cs.hut.fi>, Espoo, Finland
@@ -36,26 +34,20 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-/* from OpenBSD: ssh-add.c,v 1.23 2000/11/12 19:50:38 markus Exp */
-
-#include <sys/cdefs.h>
-#ifndef lint
-__RCSID("$NetBSD: ssh-add.c,v 1.5 2001/01/21 02:44:05 itojun Exp $");
-#endif
-
 #include "includes.h"
+RCSID("$OpenBSD: ssh-add.c,v 1.28 2001/02/04 15:32:25 stevesk Exp $");
 
 #include <openssl/evp.h>
-#include <openssl/rsa.h>
-#include <openssl/dsa.h>
 
-#include "rsa.h"
 #include "ssh.h"
-#include "pathnames.h"
+#include "rsa.h"
+#include "log.h"
 #include "xmalloc.h"
 #include "key.h"
 #include "authfd.h"
 #include "authfile.h"
+#include "pathnames.h"
+#include "readpass.h"
 
 static void
 delete_file(AuthenticationConnection *ac, const char *filename)
@@ -94,11 +86,11 @@ delete_all(AuthenticationConnection *ac)
 	if (success)
 		fprintf(stderr, "All identities removed.\n");
 	else
-		fprintf(stderr, "Failed to remove all identitities.\n");
+		fprintf(stderr, "Failed to remove all identities.\n");
 }
 
 static char *
-ssh_askpass(const char *askpass, char *msg)
+ssh_askpass(char *askpass, char *msg)
 {
 	pid_t pid;
 	size_t len;
@@ -143,8 +135,7 @@ add_file(AuthenticationConnection *ac, const char *filename)
 	struct stat st;
 	Key *public;
 	Key *private;
-	char *saved_comment, *comment;
-	const char *askpass = NULL;
+	char *saved_comment, *comment, *askpass = NULL;
 	char buf[1024], msg[1024];
 	int success;
 	int interactive = isatty(STDIN_FILENO);
@@ -170,7 +161,7 @@ add_file(AuthenticationConnection *ac, const char *filename)
 		if (getenv(SSH_ASKPASS_ENV))
 			askpass = getenv(SSH_ASKPASS_ENV);
 		else
-			askpass = _PATH_SSH_ASKPASS;
+			askpass = _PATH_SSH_ASKPASS_DEFAULT;
 	}
 
 	/* At first, try empty passphrase */
@@ -253,7 +244,7 @@ main(int argc, char **argv)
 	int i;
 	int deleting = 0;
 
-        SSLeay_add_all_algorithms();
+	SSLeay_add_all_algorithms();
 
 	/* At first, get a connection to the authentication agent. */
 	ac = ssh_get_authentication_connection();

@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.4 2001/01/14 05:22:33 itojun Exp $
+#	$NetBSD: Makefile,v 1.5 2001/02/07 17:05:37 itojun Exp $
 
 .include <bsd.own.mk>
 
@@ -7,8 +7,8 @@ PROG=	ssh
 BINOWN=	root
 BINMODE=0555
 
-SRCS=	ssh.c log-client.c readconf.c clientloop.c sshconnect.c \
-	sshconnect1.c sshconnect2.c
+SRCS=	ssh.c log-client.c readconf.c clientloop.c \
+	sshconnect.c sshconnect1.c sshconnect2.c
 
 LINKS=	${BINDIR}/ssh ${BINDIR}/slogin
 MLINKS=	ssh.1 slogin.1
@@ -26,5 +26,5 @@ DPADD+=	${LIBKRB} ${LIBCOM_ERR} ${LIBROKEN}
 
 .include <bsd.prog.mk>
 
-LDADD+=	-lcrypto -lutil -lz
-DPADD+=	${LIBCRYPTO} ${LIBUTIL} ${LIBZ}
+LDADD+=	-lutil -lz -lcrypto
+DPADD+=	${LIBUTIL} ${LIBZ} ${LIBCRYPTO}

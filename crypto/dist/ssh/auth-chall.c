@@ -35,7 +35,7 @@ get_challenge(Authctxt *authctxt, char *devs)
 {
 	static char challenge[1024];
 	struct skey skey;
-	if (skeychallenge(&skey, authctxt->user, challenge) == -1)
+	if (skeychallenge(&skey, authctxt->user, challenge, sizeof(challenge)) == -1)
 		return NULL;
 	strlcat(challenge, "\nS/Key Password: ", sizeof challenge);
 	return challenge;

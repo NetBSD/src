@@ -1,4 +1,4 @@
-/*	$NetBSD: random.c,v 1.1.1.1 2000/09/28 22:10:08 thorpej Exp $	*/
+/*	$NetBSD: random.c,v 1.2 2001/02/07 17:05:33 itojun Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: random.c,v 1.1.1.1 2000/09/28 22:10:08 thorpej Exp $");
+__RCSID("$NetBSD: random.c,v 1.2 2001/02/07 17:05:33 itojun Exp $");
 #endif
 
 /*
@@ -54,13 +54,13 @@ __RCSID("$NetBSD: random.c,v 1.1.1.1 2000/09/28 22:10:08 thorpej Exp $");
 #include <openssl/rand.h>
 
 #include "includes.h"
-#include "ssh.h"
 #include "pathnames.h"
+#include "random.h"
 
 #define	BUFSIZE	32
 
 void
-ssh_random_stir(void)
+arc4random_stir(void)
 {
 	u_char buf[BUFSIZE];
 	ssize_t len;
@@ -82,3 +82,13 @@ ssh_random_stir(void)
 		RAND_seed(buf, sizeof(buf) >> 1);
 	}
 }
+
+u_int32_t
+arc4random(void)
+{
+	u_int32_t v;
+
+	RAND_pseudo_bytes((u_char *)&v, sizeof(v));
+	return v;
+}
+

@@ -49,6 +49,7 @@ RCSID("$OpenBSD: authfile.c,v 1.26 2001/01/28 22:27:05 stevesk Exp $");
 #include "key.h"
 #include "ssh.h"
 #include "log.h"
+#include "authfile.h"
 
 /* Version identification string for identity files. */
 static const char authfile_id_string[] =
@@ -61,7 +62,7 @@ static const char authfile_id_string[] =
  * passphrase.
  */
 
-int
+static int
 save_private_key_rsa1(const char *filename, const char *passphrase,
     RSA *key, const char *comment)
 {
@@ -156,7 +157,7 @@ save_private_key_rsa1(const char *filename, const char *passphrase,
 }
 
 /* save SSH2 key in OpenSSL PEM format */
-int
+static int
 save_private_key_ssh2(const char *filename, const char *_passphrase,
     Key *key, const char *comment)
 {
@@ -221,7 +222,7 @@ save_private_key(const char *filename, const char *passphrase, Key *key,
  * otherwise.
  */
 
-int
+static int
 load_public_key_rsa(const char *filename, RSA * pub, char **comment_return)
 {
 	int fd, i;
@@ -309,7 +310,7 @@ load_public_key(const char *filename, Key * key, char **comment_return)
  * Assumes we are called under uid of the owner of the file.
  */
 
-int
+static int
 load_private_key_rsa1(int fd, const char *filename,
     const char *passphrase, RSA * prv, char **comment_return)
 {
@@ -434,7 +435,7 @@ fail:
 	return 1;
 }
 
-int
+static int
 load_private_key_ssh2(int fd, const char *passphrase, Key *k, char **comment_return)
 {
 	FILE *fp;
@@ -539,7 +540,7 @@ load_private_key(const char *filename, const char *passphrase, Key *key,
 	return ret;
 }
 
-int
+static int
 do_load_public_key(const char *filename, Key *k, char **commentp)
 {
 	FILE *f;

@@ -33,6 +33,7 @@ RCSID("$OpenBSD: ssh-rsa.c,v 1.5 2001/01/21 19:05:58 markus Exp $");
 #include "buffer.h"
 #include "bufaux.h"
 #include "key.h"
+#include "ssh-rsa.h"
 
 /* RSASSA-PKCS1-v1_5 (PKCS #1 v2.0 signature) with SHA1 */
 int
