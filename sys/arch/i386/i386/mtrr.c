@@ -1,4 +1,4 @@
-/* $NetBSD: mtrr.c,v 1.1.2.1 2000/09/23 17:30:06 sommerfeld Exp $ */
+/* $NetBSD: mtrr.c,v 1.1.2.2 2000/09/23 18:11:10 sommerfeld Exp $ */
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -263,7 +263,9 @@ mtrr_init_first(void)
 {
 	int i;
 
+#if 0
 	mtrr_dump("init mtrr");
+#endif
 	for (i=0; i<nmtrr; i++)
 		mtrr[i].msrval = rdmsr(mtrr[i].msraddr);
 }
@@ -272,5 +274,7 @@ void
 mtrr_init_cpu(struct cpu_info *ci) 
 {
 	i686_mtrr_reload(0);
+#if 0
 	mtrr_dump(ci->ci_dev.dv_xname);
+#endif
 }
