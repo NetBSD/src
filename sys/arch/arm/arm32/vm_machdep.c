@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_machdep.c,v 1.8.4.10 2002/08/27 06:03:16 thorpej Exp $	*/
+/*	$NetBSD: vm_machdep.c,v 1.8.4.11 2002/10/07 02:51:26 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1994-1998 Mark Brinicombe.
@@ -151,20 +151,20 @@ cpu_lwp_fork(l1, l2, stack, stacksize, func, arg)
 
 #ifdef STACKCHECKS
 	/* Fill the undefined stack with a known pattern */
-	memset(((u_char *)l2->p_addr) + USPACE_UNDEF_STACK_BOTTOM, 0xdd,
+	memset(((u_char *)l2->l_addr) + USPACE_UNDEF_STACK_BOTTOM, 0xdd,
 	    (USPACE_UNDEF_STACK_TOP - USPACE_UNDEF_STACK_BOTTOM));
 	/* Fill the kernel stack with a known pattern */
-	memset(((u_char *)l2->p_addr) + USPACE_SVC_STACK_BOTTOM, 0xdd,
+	memset(((u_char *)l2->l_addr) + USPACE_SVC_STACK_BOTTOM, 0xdd,
 	    (USPACE_SVC_STACK_TOP - USPACE_SVC_STACK_BOTTOM));
 #endif	/* STACKCHECKS */
 
 #ifdef PMAP_DEBUG
 	if (pmap_debug_level >= 0) {
 		printf("l1->procaddr=%p l1->procaddr->u_pcb=%p pid=%d pmap=%p\n",
-		    l1->l_addr, &l1->p_addr->u_pcb, l1->l_lid,
+		    l1->l_addr, &l1->l_addr->u_pcb, l1->l_lid,
 		    l1->l_proc->p_vmspace->vm_map.pmap);
 		printf("l2->procaddr=%p l2->procaddr->u_pcb=%p pid=%d pmap=%p\n",
-		    l2->p_addr, &l2->p_addr->u_pcb, l2->l_lid,
+		    l2->l_addr, &l2->l_addr->u_pcb, l2->l_lid,
 		    l2->l_proc->p_vmspace->vm_map.pmap);
 	}
 #endif	/* PMAP_DEBUG */
