@@ -1,4 +1,4 @@
-/*	$NetBSD: csh.c,v 1.15 1996/10/31 23:50:53 christos Exp $	*/
+/*	$NetBSD: csh.c,v 1.16 1997/01/13 17:53:15 tls Exp $	*/
 
 /*-
  * Copyright (c) 1980, 1991, 1993
@@ -43,7 +43,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)csh.c	8.2 (Berkeley) 10/12/93";
 #else
-static char rcsid[] = "$NetBSD: csh.c,v 1.15 1996/10/31 23:50:53 christos Exp $";
+static char rcsid[] = "$NetBSD: csh.c,v 1.16 1997/01/13 17:53:15 tls Exp $";
 #endif
 #endif /* not lint */
 
@@ -118,10 +118,10 @@ main(argc, argv)
     int     argc;
     char  **argv;
 {
-    register Char *cp;
-    register char *tcp;
-    register int f;
-    register char **tempv;
+    Char *cp;
+    char *tcp;
+    int f;
+    char **tempv;
     struct sigaction oact;
     sigset_t sigset;
 
@@ -609,9 +609,9 @@ void
 importpath(cp)
     Char   *cp;
 {
-    register int i = 0;
-    register Char *dp;
-    register Char **pv;
+    int i = 0;
+    Char *dp;
+    Char **pv;
     int     c;
 
     for (dp = cp; *dp; dp++)
@@ -649,7 +649,7 @@ static int
 srccat(cp, dp)
     Char   *cp, *dp;
 {
-    register Char *ep = Strspl(cp, dp);
+    Char *ep = Strspl(cp, dp);
     char   *ptr = short2str(ep);
 
     xfree((ptr_t) ep);
@@ -664,7 +664,7 @@ srcfile(f, onlyown, flag)
     char   *f;
     bool    onlyown, flag;
 {
-    register int unit;
+    int unit;
 
     if ((unit = open(f, O_RDONLY)) == -1)
 	return 0;
@@ -682,7 +682,7 @@ srcfile(f, onlyown, flag)
 int     insource;
 static void
 srcunit(unit, onlyown, hflg)
-    register int unit;
+    int unit;
     bool    onlyown, hflg;
 {
     /* We have to push down a lot of state here */
@@ -760,7 +760,7 @@ srcunit(unit, onlyown, hflg)
     if (setintr)
 	sigprocmask(SIG_SETMASK, &osigset, NULL);
     if (oSHIN >= 0) {
-	register int i;
+	int i;
 
 	/* We made it to the new state... free up its storage */
 	/* This code could get run twice but xfree doesn't care */
@@ -1133,7 +1133,7 @@ dosource(v, t)
     struct command *t;
 
 {
-    register Char *f;
+    Char *f;
     bool    hflg = 0;
     Char    buf[BUFSIZ];
 
@@ -1163,8 +1163,8 @@ dosource(v, t)
 static void
 mailchk()
 {
-    register struct varent *v;
-    register Char **vp;
+    struct varent *v;
+    Char **vp;
     time_t  t;
     int     intvl, cnt;
     struct stat stb;
@@ -1354,7 +1354,7 @@ defaultpath()
 void
 printprompt()
 {
-    register Char *cp;
+    Char *cp;
 
     if (!whyles) {
 	for (cp = value(STRprompt); *cp; cp++)

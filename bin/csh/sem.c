@@ -1,4 +1,4 @@
-/*	$NetBSD: sem.c,v 1.9 1995/09/27 00:38:50 jtc Exp $	*/
+/*	$NetBSD: sem.c,v 1.10 1997/01/13 17:53:29 tls Exp $	*/
 
 /*-
  * Copyright (c) 1980, 1991, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)sem.c	8.1 (Berkeley) 5/31/93";
 #else
-static char rcsid[] = "$NetBSD: sem.c,v 1.9 1995/09/27 00:38:50 jtc Exp $";
+static char rcsid[] = "$NetBSD: sem.c,v 1.10 1997/01/13 17:53:29 tls Exp $";
 #endif
 #endif /* not lint */
 
@@ -66,7 +66,7 @@ static void	 chkclob __P((char *));
 
 void
 execute(t, wanttty, pipein, pipeout)
-    register struct command *t;
+    struct command *t;
     int     wanttty, *pipein, *pipeout;
 {
     bool    forked = 0;
@@ -463,7 +463,7 @@ static void
 vffree(i)
 int i;
 {
-    register Char **v;
+    Char **v;
 
     if ((v = gargv) != NULL) {
 	gargv = 0;
@@ -493,7 +493,7 @@ int i;
  */
 static Char *
 splicepipe(t, cp)
-    register struct command *t;
+    struct command *t;
     Char *cp;	/* word after < or > */
 {
     Char *blk[2];
@@ -536,12 +536,12 @@ splicepipe(t, cp)
  */
 static void
 doio(t, pipein, pipeout)
-    register struct command *t;
+    struct command *t;
     int    *pipein, *pipeout;
 {
-    register int fd;
-    register Char *cp;
-    register int flags = t->t_dflg;
+    int fd;
+    Char *cp;
+    int flags = t->t_dflg;
 
     if (didfds || (flags & F_REPEAT))
 	return;
@@ -632,7 +632,7 @@ doio(t, pipein, pipeout)
 
 void
 mypipe(pv)
-    register int *pv;
+    int *pv;
 {
 
     if (pipe(pv) < 0)
@@ -647,7 +647,7 @@ oops:
 
 static void
 chkclob(cp)
-    register char *cp;
+    char *cp;
 {
     struct stat stb;
 

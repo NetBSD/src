@@ -1,4 +1,4 @@
-/*	$NetBSD: time.c,v 1.7 1995/03/21 13:55:25 mycroft Exp $	*/
+/*	$NetBSD: time.c,v 1.8 1997/01/13 17:53:31 tls Exp $	*/
 
 /*-
  * Copyright (c) 1980, 1991, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)time.c	8.1 (Berkeley) 5/31/93";
 #else
-static char rcsid[] = "$NetBSD: time.c,v 1.7 1995/03/21 13:55:25 mycroft Exp $";
+static char rcsid[] = "$NetBSD: time.c,v 1.8 1997/01/13 17:53:31 tls Exp $";
 #endif
 #endif /* not lint */
 
@@ -96,7 +96,7 @@ donice(v, t)
     Char **v;
     struct command *t;
 {
-    register Char *cp;
+    Char *cp;
     int     nval = 0;
 
     v++, cp = *v++;
@@ -109,7 +109,7 @@ donice(v, t)
 
 void
 ruadd(ru, ru2)
-    register struct rusage *ru, *ru2;
+    struct rusage *ru, *ru2;
 {
     timeradd(&ru->ru_utime, &ru2->ru_utime, &ru->ru_utime);
     timeradd(&ru->ru_stime, &ru2->ru_stime, &ru->ru_stime);
@@ -133,17 +133,17 @@ ruadd(ru, ru2)
 
 void
 prusage(r0, r1, e, b)
-    register struct rusage *r0, *r1;
+    struct rusage *r0, *r1;
     struct timeval *e, *b;
 {
-    register time_t t =
+    time_t t =
     (r1->ru_utime.tv_sec - r0->ru_utime.tv_sec) * 100 +
     (r1->ru_utime.tv_usec - r0->ru_utime.tv_usec) / 10000 +
     (r1->ru_stime.tv_sec - r0->ru_stime.tv_sec) * 100 +
     (r1->ru_stime.tv_usec - r0->ru_stime.tv_usec) / 10000;
-    register char *cp;
-    register long i;
-    register struct varent *vp = adrof(STRtime);
+    char *cp;
+    long i;
+    struct varent *vp = adrof(STRtime);
 
     int     ms =
     (e->tv_sec - b->tv_sec) * 100 + (e->tv_usec - b->tv_usec) / 10000;
@@ -259,7 +259,7 @@ void
 psecs(l)
     long    l;
 {
-    register int i;
+    int i;
 
     i = l / 3600;
     if (i) {
@@ -280,7 +280,7 @@ void
 pcsecs(l)			/* PWP: print mm:ss.dd, l is in sec*100 */
     long    l;
 {
-    register int i;
+    int i;
 
     i = l / 360000;
     if (i) {

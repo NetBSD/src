@@ -1,4 +1,4 @@
-/*	$NetBSD: dir.c,v 1.9 1995/03/21 09:02:42 cgd Exp $	*/
+/*	$NetBSD: dir.c,v 1.10 1997/01/13 17:53:16 tls Exp $	*/
 
 /*-
  * Copyright (c) 1980, 1991, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)dir.c	8.1 (Berkeley) 5/31/93";
 #else
-static char rcsid[] = "$NetBSD: dir.c,v 1.9 1995/03/21 09:02:42 cgd Exp $";
+static char rcsid[] = "$NetBSD: dir.c,v 1.10 1997/01/13 17:53:16 tls Exp $";
 #endif
 #endif /* not lint */
 
@@ -79,9 +79,9 @@ void
 dinit(hp)
     Char   *hp;
 {
-    register char *tcp;
-    register Char *cp;
-    register struct directory *dp;
+    char *tcp;
+    Char *cp;
+    struct directory *dp;
     char    path[MAXPATHLEN];
     static char *emsg = "csh: Trying to start from \"%s\"\n";
 
@@ -149,7 +149,7 @@ Char *dp;
      * Don't call set() directly cause if the directory contains ` or
      * other junk characters glob will fail.
      */
-    register Char **vec = (Char **) xmalloc((size_t) (2 * sizeof(Char **)));
+    Char **vec = (Char **) xmalloc((size_t) (2 * sizeof(Char **)));
 
     vec[0] = Strsave(dp);
     vec[1] = 0;
@@ -207,7 +207,7 @@ dodirs(v, t)
 static void
 printdirs()
 {
-    register struct directory *dp;
+    struct directory *dp;
     Char   *s, *hp = value(STRhome);
     int     idx, len, cur;
 
@@ -244,7 +244,7 @@ printdirs()
 
 void
 dtildepr(home, dir)
-    register Char *home, *dir;
+    Char *home, *dir;
 {
 
     if (!eq(home, STRslash) && prefix(home, dir))
@@ -344,8 +344,8 @@ dochngd(v, t)
     Char **v;
     struct command *t;
 {
-    register Char *cp;
-    register struct directory *dp;
+    Char *cp;
+    struct directory *dp;
 
     skipargs(&v, " [<dir>]");
     printd = 0;
@@ -393,7 +393,7 @@ dgoto(cp)
     Char   *dp;
 
     if (*cp != '/') {
-	register Char *p, *q;
+	Char *p, *q;
 	int     cwdlen;
 
 	for (p = dcwd->di_name; *p++;)
@@ -427,9 +427,9 @@ dgoto(cp)
  */
 static Char *
 dfollow(cp)
-    register Char *cp;
+    Char *cp;
 {
-    register Char *dp;
+    Char *dp;
     struct varent *c;
     char    ebuf[MAXPATHLEN];
     int serrno;
@@ -453,7 +453,7 @@ dfollow(cp)
     if (cp[0] != '/' && !prefix(STRdotsl, cp) && !prefix(STRdotdotsl, cp)
 	&& (c = adrof(STRcdpath))) {
 	Char  **cdp;
-	register Char *p;
+	Char *p;
 	Char    buf[MAXPATHLEN];
 
 	for (cdp = c->vec; *cdp; cdp++) {
@@ -495,7 +495,7 @@ dopushd(v, t)
     Char **v;
     struct command *t;
 {
-    register struct directory *dp;
+    struct directory *dp;
 
     skipargs(&v, " [<dir>|+<n>]");
     printd = 1;
@@ -527,7 +527,7 @@ dopushd(v, t)
 	    stderror(ERR_SYSTEM, tmp, strerror(errno));
     }
     else {
-	register Char *ccp;
+	Char *ccp;
 
 	ccp = dfollow(*v);
 	dp = (struct directory *) xcalloc(sizeof(struct directory), 1);
@@ -546,11 +546,11 @@ dopushd(v, t)
  */
 static struct directory *
 dfind(cp)
-    register Char *cp;
+    Char *cp;
 {
-    register struct directory *dp;
-    register int i;
-    register Char *ep;
+    struct directory *dp;
+    int i;
+    Char *ep;
 
     if (*cp++ != '+')
 	return (0);
@@ -580,7 +580,7 @@ dopopd(v, t)
     Char **v;
     struct command *t;
 {
-    register struct directory *dp, *p = NULL;
+    struct directory *dp, *p = NULL;
 
     skipargs(&v, " [+<n>]");
     printd = 1;
@@ -618,7 +618,7 @@ dopopd(v, t)
  */
 void
 dfree(dp)
-    register struct directory *dp;
+    struct directory *dp;
 {
 
     if (dp->di_count != 0) {
@@ -637,10 +637,10 @@ dfree(dp)
  */
 Char   *
 dcanon(cp, p)
-    register Char *cp, *p;
+    Char *cp, *p;
 {
-    register Char *sp;
-    register Char *p1, *p2;	/* general purpose */
+    Char *sp;
+    Char *p1, *p2;	/* general purpose */
     bool    slash;
 
     Char    link[MAXPATHLEN];
@@ -927,7 +927,7 @@ dcanon(cp, p)
  */
 static void
 dnewcwd(dp)
-    register struct directory *dp;
+    struct directory *dp;
 {
     dcwd = dp;
     dset(dcwd->di_name);

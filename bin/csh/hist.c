@@ -1,4 +1,4 @@
-/*	$NetBSD: hist.c,v 1.7 1995/03/21 18:35:44 mycroft Exp $	*/
+/*	$NetBSD: hist.c,v 1.8 1997/01/13 17:53:24 tls Exp $	*/
 
 /*-
  * Copyright (c) 1980, 1991, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)hist.c	8.1 (Berkeley) 5/31/93";
 #else
-static char rcsid[] = "$NetBSD: hist.c,v 1.7 1995/03/21 18:35:44 mycroft Exp $";
+static char rcsid[] = "$NetBSD: hist.c,v 1.8 1997/01/13 17:53:24 tls Exp $";
 #endif
 #endif /* not lint */
 
@@ -60,8 +60,8 @@ void
 savehist(sp)
     struct wordent *sp;
 {
-    register struct Hist *hp, *np;
-    register int histlen = 0;
+    struct Hist *hp, *np;
+    int histlen = 0;
     Char   *cp;
 
     /* throw away null lines */
@@ -69,7 +69,7 @@ savehist(sp)
 	return;
     cp = value(STRhistory);
     if (*cp) {
-	register Char *p = cp;
+	Char *p = cp;
 
 	while (*p) {
 	    if (!Isdigit(*p)) {
@@ -90,10 +90,10 @@ savehist(sp)
 struct Hist *
 enthist(event, lp, docopy)
     int     event;
-    register struct wordent *lp;
+    struct wordent *lp;
     bool    docopy;
 {
-    register struct Hist *np;
+    struct Hist *np;
 
     np = (struct Hist *) xmalloc((size_t) sizeof(*np));
     np->Hnum = np->Href = event;
@@ -113,7 +113,7 @@ enthist(event, lp, docopy)
 
 static void
 hfree(hp)
-    register struct Hist *hp;
+    struct Hist *hp;
 {
 
     freelex(&hp->Hlex);
@@ -185,7 +185,7 @@ dohist1(hp, np, rflg, hflg)
 
 static void
 phist(hp, hflg)
-    register struct Hist *hp;
+    struct Hist *hp;
     int     hflg;
 {
     if (hflg == 0)

@@ -1,4 +1,4 @@
-/*	$NetBSD: glob.c,v 1.10 1995/03/21 09:03:01 cgd Exp $	*/
+/*	$NetBSD: glob.c,v 1.11 1997/01/13 17:53:23 tls Exp $	*/
 
 /*-
  * Copyright (c) 1980, 1991, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)glob.c	8.1 (Berkeley) 5/31/93";
 #else
-static char rcsid[] = "$NetBSD: glob.c,v 1.10 1995/03/21 09:03:01 cgd Exp $";
+static char rcsid[] = "$NetBSD: glob.c,v 1.11 1997/01/13 17:53:23 tls Exp $";
 #endif
 #endif /* not lint */
 
@@ -539,10 +539,10 @@ ginit()
 
 void
 rscan(t, f)
-    register Char **t;
+    Char **t;
     void    (*f) ();
 {
-    register Char *p;
+    Char *p;
 
     while ((p = *t++) != NULL)
 	while (*p)
@@ -551,9 +551,9 @@ rscan(t, f)
 
 void
 trim(t)
-    register Char **t;
+    Char **t;
 {
-    register Char *p;
+    Char *p;
 
     while ((p = *t++) != NULL)
 	while (*p)
@@ -562,9 +562,9 @@ trim(t)
 
 void
 tglob(t)
-    register Char **t;
+    Char **t;
 {
-    register Char *p, c;
+    Char *p, c;
 
     while ((p = *t++) != NULL) {
 	if (*p == '~' || *p == '=')
@@ -608,7 +608,7 @@ dobackp(cp, literal)
     Char   *cp;
     bool    literal;
 {
-    register Char *lp, *rp;
+    Char *lp, *rp;
     Char   *ep, word[MAXPATHLEN];
 
     if (pargv) {
@@ -653,8 +653,8 @@ backeval(cp, literal)
     Char   *cp;
     bool    literal;
 {
-    register int icnt, c;
-    register Char *ip;
+    int icnt, c;
+    Char *ip;
     struct command faket;
     bool    hadnl;
     int     pvec[2], quoted;
@@ -837,9 +837,9 @@ Gmatch(string, pattern)
 
 static int
 pmatch(string, pattern)
-    register Char *string, *pattern;
+    Char *string, *pattern;
 {
-    register Char stringc, patternc;
+    Char stringc, patternc;
     int     match, negate_range;
     Char    rangec;
 
@@ -895,7 +895,7 @@ void
 Gcat(s1, s2)
     Char   *s1, *s2;
 {
-    register Char *p, *q;
+    Char *p, *q;
     int     n;
 
     for (p = s1; *p++;)
@@ -919,7 +919,7 @@ Gcat(s1, s2)
 #ifdef FILEC
 int
 sortscmp(a, b)
-    register const ptr_t a, b;
+    const ptr_t a, b;
 {
 #if defined(NLS) && !defined(NOSTRCOLL)
     char    buf[2048];
