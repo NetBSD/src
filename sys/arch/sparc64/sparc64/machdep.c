@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.119.6.1 2002/06/05 04:09:19 lukem Exp $ */
+/*	$NetBSD: machdep.c,v 1.119.6.2 2002/06/13 02:47:34 lukem Exp $ */
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -1112,7 +1112,8 @@ _bus_dmamap_destroy(t, map)
 	bus_dma_tag_t t;
 	bus_dmamap_t map;
 {
-
+	if (map->dm_nsegs)
+		bus_dmamap_unload(t, map);
 	free(map, M_DMAMAP);
 }
 
@@ -1137,6 +1138,7 @@ _bus_dmamap_load(t, map, buf, buflen, p, flags)
 {
 	bus_size_t sgsize;
 	vaddr_t vaddr = (vaddr_t)buf;
+	long incr;
 	int i;
 
 	/*
@@ -1165,24 +1167,31 @@ _bus_dmamap_load(t, map, buf, buflen, p, flags)
 	i = 0;
 	map->dm_segs[i].ds_addr = NULL;
 	map->dm_segs[i].ds_len = 0;
-	while (sgsize > 0 && i < map->_dm_segcnt) {
+
+	incr = NBPG - (vaddr & PGOFSET);
+	while (sgsize > 0) {
 		paddr_t pa;
+	
+		incr = min(sgsize, incr);
 
 		(void) pmap_extract(pmap_kernel(), vaddr, &pa);
-		sgsize -= NBPG;
-		vaddr += NBPG;
+		sgsize -= incr;
+		vaddr += incr;
 		if (map->dm_segs[i].ds_len == 0)
 			map->dm_segs[i].ds_addr = pa;
 		if (pa == (map->dm_segs[i].ds_addr + map->dm_segs[i].ds_len)
-		    && ((map->dm_segs[i].ds_len + NBPG) < map->_dm_maxsegsz)) {
+		    && ((map->dm_segs[i].ds_len + incr) <= map->_dm_maxsegsz)) {
 			/* Hey, waddyaknow, they're contiguous */
-			map->dm_segs[i].ds_len += NBPG;
+			map->dm_segs[i].ds_len += incr;
+			incr = NBPG;
 			continue;
 		}
-		map->dm_segs[++i].ds_addr = pa;
-		map->dm_segs[i].ds_len = NBPG;
+		if (++i >= map->_dm_segcnt)
+			return (E2BIG);
+		map->dm_segs[i].ds_addr = pa;
+		map->dm_segs[i].ds_len = incr = NBPG;
 	}
-	map->dm_nsegs = i;
+	map->dm_nsegs = i + 1;
 	/* Mapping is bus dependent */
 	return (0);
 }
@@ -1197,7 +1206,6 @@ _bus_dmamap_load_mbuf(t, map, m, flags)
 	struct mbuf *m;
 	int flags;
 {
-#if 1
 	bus_dma_segment_t segs[MAX_DMA_SEGS];
 	int i;
 	size_t len;
@@ -1217,15 +1225,17 @@ _bus_dmamap_load_mbuf(t, map, m, flags)
 			paddr_t pa;
 			long incr;
 
-			incr = NBPG - (vaddr&PGOFSET);
+			incr = NBPG - (vaddr & PGOFSET);
 			incr = min(buflen, incr);
 
 			(void) pmap_extract(pmap_kernel(), vaddr, &pa);
 			buflen -= incr;
 			vaddr += incr;
 
-			if (i > 0 && pa == (segs[i-1].ds_addr + segs[i-1].ds_len)
-			    && ((segs[i-1].ds_len + incr) < map->_dm_maxsegsz)) {
+			if (i > 0 && 
+				pa == (segs[i-1].ds_addr + segs[i-1].ds_len) &&
+				((segs[i-1].ds_len + incr) <= 
+					map->_dm_maxsegsz)) {
 				/* Hey, waddyaknow, they're contiguous */
 				segs[i-1].ds_len += incr;
 				continue;
@@ -1286,12 +1296,7 @@ _bus_dmamap_load_mbuf(t, map, m, flags)
 		return (retval);
 	}
 #endif
-	return (bus_dmamap_load_raw(t, map, segs, i,
-			    (bus_size_t)len, flags));
-#else
-	panic("_bus_dmamap_load_mbuf: not implemented");
-	return 0;
-#endif
+	return (bus_dmamap_load_raw(t, map, segs, i, (bus_size_t)len, flags));
 }
 
 /*
@@ -1365,7 +1370,7 @@ _bus_dmamap_load_uio(t, map, uio, flags)
 
 
 			if (i > 0 && pa == (segs[i-1].ds_addr + segs[i-1].ds_len)
-			    && ((segs[i-1].ds_len + incr) < map->_dm_maxsegsz)) {
+			    && ((segs[i-1].ds_len + incr) <= map->_dm_maxsegsz)) {
 				/* Hey, waddyaknow, they're contiguous */
 				segs[i-1].ds_len += incr;
 				continue;
