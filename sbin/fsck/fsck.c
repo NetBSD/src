@@ -1,4 +1,4 @@
-/*	$NetBSD: fsck.c,v 1.38 2005/01/13 22:56:09 christos Exp $	*/
+/*	$NetBSD: fsck.c,v 1.39 2005/01/19 16:38:28 wiz Exp $	*/
 
 /*
  * Copyright (c) 1996 Christos Zoulas. All rights reserved.
@@ -36,7 +36,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: fsck.c,v 1.38 2005/01/13 22:56:09 christos Exp $");
+__RCSID("$NetBSD: fsck.c,v 1.39 2005/01/19 16:38:28 wiz Exp $");
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -554,7 +554,7 @@ static void
 usage(void)
 {
 	static const char common[] =
-	    "[-dfnpqvy] [-T fstype:fsoptions] [-t fstype]";
+	    "[-dfnPpqvy] [-l maxparallel] [-T fstype:fsoptions]\n\t\t[-t fstype]";
 
 	(void)fprintf(stderr, "usage: %s %s [special|node]...\n",
 	    getprogname(), common);
