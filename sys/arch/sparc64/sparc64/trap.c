@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.67 2001/06/07 15:31:16 mrg Exp $ */
+/*	$NetBSD: trap.c,v 1.68 2001/06/21 00:10:49 eeh Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -1287,10 +1287,12 @@ data_access_error(type, sfva, sfsr, afva, afsr, tf)
 	 * then things are really bizarre, and we treat it as a hard
 	 * error and pass it on to memerr4m. 
 	 */
+	onfault = p->p_addr ? (long)p->p_addr->u_pcb.pcb_onfault : 0;
 	if ((afsr) != 0 ||
 	    (type == T_DATAFAULT && !(sfsr & SFSR_FV))) {
 		printf("data memory error type %x sfsr=%lx sfva=%lx afsr=%lx afva=%lx tf=%p\n",
 		       type, sfsr, sfva, afsr, afva, tf);
+		if (onfault) goto kfault;
 		if (tstate & (PSTATE_PRIV<<TSTATE_PSTATE_SHIFT))
 			panic("trap: memory error");
 
@@ -1416,8 +1418,6 @@ data_access_error(type, sfva, sfsr, afva, afsr, tf)
 fault:
 		if (tstate & (PSTATE_PRIV<<TSTATE_PSTATE_SHIFT)) {
 kfault:
-			onfault = p->p_addr ?
-			    (long)p->p_addr->u_pcb.pcb_onfault : 0;
 			if (!onfault) {
 				extern int trap_trace_dis;
 				char buf[768];
