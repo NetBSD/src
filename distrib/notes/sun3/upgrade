@@ -20,7 +20,7 @@ through the procedure.  The upgrade program will:
 	* Copy a new kernel onto your root partition.
 	  NOTE: the existing kernel WILL NOT be backed up; doing
 	  so would be pointless, since older kernels may not be
-	  capable of running NetBSD 1.2 executables.
+	  capable of running NetBSD 1.2.1 executables.
 
 	* Install a new boot block.
 
@@ -32,13 +32,13 @@ manually.  To do this, follow the following procedure:
 
 	* Place _at least_ the `base' binary set in a filesystem
 	  accessible to the target machine.  A local filesystem
-	  is preferred, since the NFS subsystem in the NetBSD 1.2
+	  is preferred, since the NFS subsystem in the NetBSD 1.2.1
 	  kernel may be incompatible with your old binaries.
 
-	* Back up your pre-existing kernel and copy the 1.2
+	* Back up your pre-existing kernel and copy the 1.2.1
 	  kernel into your root partition.
 
-	* Reboot with the 1.2 kernel into single-user mode.
+	* Reboot with the 1.2.1 kernel into single-user mode.
 
 	* Check all filesystems:
 

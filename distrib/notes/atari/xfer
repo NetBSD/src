@@ -46,7 +46,7 @@ To prepare for installing via a tape:
 	your system on to the appropriate kind of tape. If you make
 	the tape on a UN*X-like system, you can create it as follows:
 
-		cd .../NetBSD-1.2/atari/binary
+		cd .../NetBSD-1.2.1/atari/binary
 		T=<tape_device>
 		mt -f $T rewind
 		for f in base etc comp games man misc text
