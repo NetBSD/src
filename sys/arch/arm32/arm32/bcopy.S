@@ -1,4 +1,4 @@
-/* $NetBSD: bcopy.S,v 1.2 1996/06/03 21:21:29 mark Exp $ */
+/* $NetBSD: bcopy.S,v 1.3 1996/06/12 19:58:43 mark Exp $ */
 
 /*
  * Copyright (c) 1995 Mark Brinicombe.
@@ -36,7 +36,7 @@
  *
  * RiscBSD kernel project
  *
- * memset.S
+ * bcopy.S
  *
  * optimized memset function
  *
@@ -57,7 +57,7 @@ _ovbcopy:
 	moveq	r0, #0x00000000
 	moveq	pc, lr
 	cmp	r0, r1
-	blt	bcopy_back
+	bcc	bcopy_back
 
 bcopy_loop:
 	ldrb	r3, [r0], #0x0001
@@ -87,7 +87,7 @@ _memcpy:
 	moveq	r0, #0x00000000
 	moveq	pc, lr
 	cmp	r1, r0
-	blt	memcpy_back
+	bcc	memcpy_back
 
 memcpy_loop:
 	ldrb	r3, [r1], #0x0001
