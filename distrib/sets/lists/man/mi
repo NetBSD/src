@@ -10,6 +10,7 @@
 ./usr/share/man/cat1/basename.0
 ./usr/share/man/cat1/batch.0
 ./usr/share/man/cat1/bc.0
+./usr/share/man/cat1/bdes.0
 ./usr/share/man/cat1/bg.0
 ./usr/share/man/cat1/biff.0
 ./usr/share/man/cat1/cal.0
@@ -105,6 +106,7 @@
 ./usr/share/man/cat1/ldd.0
 ./usr/share/man/cat1/leave.0
 ./usr/share/man/cat1/limit.0
+./usr/share/man/cat1/lint.0
 ./usr/share/man/cat1/ln.0
 ./usr/share/man/cat1/locate.0
 ./usr/share/man/cat1/lock.0
@@ -411,6 +413,7 @@
 ./usr/share/man/cat8/mail.local.0
 ./usr/share/man/cat8/makekey.0
 ./usr/share/man/cat8/makemap.0
+./usr/share/man/cat8/map-mbone.0
 ./usr/share/man/cat8/mfs.0
 ./usr/share/man/cat8/mk-amd-map.0
 ./usr/share/man/cat8/mknod.0
@@ -432,7 +435,9 @@
 ./usr/share/man/cat8/mount_umap.0
 ./usr/share/man/cat8/mount_union.0
 ./usr/share/man/cat8/mountd.0
+./usr/share/man/cat8/mrinfo.0
 ./usr/share/man/cat8/mrouted.0
+./usr/share/man/cat8/mtrace.0
 ./usr/share/man/cat8/mtree.0
 ./usr/share/man/cat8/named-xfer.0
 ./usr/share/man/cat8/named.0
