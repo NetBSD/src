@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.7 2003/01/03 15:34:36 lukem Exp $
+#	$NetBSD: Makefile.inc,v 1.8 2003/03/01 15:36:22 bjh21 Exp $
 #
 #	etc.acorn26/Makefile.inc -- acorn26-specific etc Makefile targets
 #
@@ -11,7 +11,7 @@ INSTALLATION_DIRS+=	installation/misc
 
 snap_md_post:
 	# install bootloader into installation directory
-	cp -p ${DESTDIR}/usr/mdec/boot26,ffa \
+	${HOST_INSTALL_FILE} -m ${NONBINMODE} ${DESTDIR}/usr/mdec/boot26,ffa \
 	    ${RELEASEDIR}/${MACHINE}/installation/misc
 
 	# compute checksums
