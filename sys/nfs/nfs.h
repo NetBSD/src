@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs.h,v 1.26 2001/03/25 02:22:30 matt Exp $	*/
+/*	$NetBSD: nfs.h,v 1.27 2001/04/02 11:47:23 fvdl Exp $	*/
 /*
  * Copyright (c) 1989, 1993, 1995
  *	The Regents of the University of California.  All rights reserved.
@@ -61,13 +61,22 @@
 #ifndef NFS_MAXATTRTIMO
 #define	NFS_MAXATTRTIMO 60
 #endif
+
+/*
+ * These can be overridden through <machine/param.h>, included via
+ * <sys/param.h>. This means that <sys/param.h> should always be
+ * included before this file.
+ */
 #ifndef NFS_WSIZE
-#define	NFS_WSIZE	32768		/* Def. write data size */
+#define	NFS_WSIZE	8192		/* Def. write data size */
 #endif
 #ifndef NFS_RSIZE
-#define	NFS_RSIZE	32768		/* Def. read data size */
+#define	NFS_RSIZE	8192		/* Def. read data size */
 #endif
+#ifndef NFS_READDIRSIZE
 #define NFS_READDIRSIZE	8192		/* Def. readdir size */
+#endif
+
 #define	NFS_DEFRAHEAD	2		/* Def. read ahead # blocks */
 #define	NFS_MAXRAHEAD	4		/* Max. read ahead # blocks */
 #define	NFS_MAXUIDHASH	64		/* Max. # of hashed uid entries/mp */
