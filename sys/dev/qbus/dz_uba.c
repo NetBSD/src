@@ -1,4 +1,4 @@
-/*	$NetBSD: dz_uba.c,v 1.6 1999/05/27 16:02:50 ragge Exp $ */
+/*	$NetBSD: dz_uba.c,v 1.7 1999/06/06 19:14:49 ragge Exp $ */
 /*
  * Copyright (c) 1998 Ludd, University of Lule}, Sweden. All rights reserved.
  * Copyright (c) 1996  Ken C. Wellsch.  All rights reserved.
@@ -49,11 +49,10 @@
 #include <machine/trap.h>
 #include <machine/scb.h>
 
-#include <dev/dec/qbus/ubareg.h>
-#include <dev/dec/qbus/ubavar.h>
+#include <dev/qbus/ubavar.h>
 
-#include <dev/dec/qbus/dzreg.h>
-#include <dev/dec/qbus/dzvar.h>
+#include <dev/qbus/dzreg.h>
+#include <dev/qbus/dzvar.h>
 
 #include "ioconf.h"
 
