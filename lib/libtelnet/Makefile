@@ -1,5 +1,5 @@
 #	from: @(#)Makefile	8.2 (Berkeley) 12/15/93
-#	$NetBSD: Makefile,v 1.22 2004/05/23 02:24:51 lukem Exp $
+#	$NetBSD: Makefile,v 1.23 2005/02/19 21:55:52 christos Exp $
 
 MKPRIVATELIB=	yes
 
@@ -27,6 +27,11 @@ CPPFLAGS+= -I${DESTDIR}/usr/include/kerberosIV
 SRCS+=	kerberos5.c
 CPPFLAGS+= -DKRB5
 CPPFLAGS+= -I${DESTDIR}/usr/include/krb5
+.endif
+
+.if (${USE_PAM} != "no")
+SRCS+=	sra.c
+CPPFLAGS+= -DSRA
 .endif
 
 .include <bsd.lib.mk>
