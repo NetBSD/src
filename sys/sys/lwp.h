@@ -1,4 +1,4 @@
-/* 	$NetBSD: lwp.h,v 1.21 2004/03/14 01:08:47 cl Exp $	*/
+/* 	$NetBSD: lwp.h,v 1.22 2004/05/18 11:59:11 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -109,7 +109,6 @@ extern struct lwp lwp0;			/* LWP for proc0 */
 #define	L_SINTR		0x00080	/* Sleep is interruptible. */
 #define	L_TIMEOUT	0x00400	/* Timing out during sleep. */
 #define	L_PROCEXIT	0x00800 /* In process exit, l_proc no longer valid */
-#define	L_BIGLOCK	0x80000	/* LWP needs kernel "big lock" to run */
 #define	L_SA		0x100000 /* Scheduler activations LWP */
 #define	L_SA_UPCALL	0x200000 /* SA upcall is pending */
 #define	L_SA_BLOCKING	0x400000 /* Blocking in tsleep() */
