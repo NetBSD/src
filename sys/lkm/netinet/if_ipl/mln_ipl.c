@@ -1,7 +1,7 @@
-/*	$NetBSD: mln_ipl.c,v 1.20 1998/11/17 01:46:10 mrg Exp $	*/
+/*	$NetBSD: mln_ipl.c,v 1.21 1998/11/22 14:41:29 mrg Exp $	*/
 
 /*
- * Copyright (C) 1993-1997 by Darren Reed.
+ * Copyright (C) 1993-1998 by Darren Reed.
  *
  * Redistribution and use in source and binary forms are permitted
  * provided that this notice is preserved and due credit is given
