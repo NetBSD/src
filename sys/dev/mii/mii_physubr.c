@@ -1,4 +1,4 @@
-/*	$NetBSD: mii_physubr.c,v 1.40 2004/04/11 15:40:56 thorpej Exp $	*/
+/*	$NetBSD: mii_physubr.c,v 1.41 2004/04/11 15:42:48 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2000, 2001 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mii_physubr.c,v 1.40 2004/04/11 15:40:56 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mii_physubr.c,v 1.41 2004/04/11 15:42:48 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -114,7 +114,13 @@ mii_phy_setmedia(struct mii_softc *sc)
 	int bmcr, anar, gtcr;
 
 	if (IFM_SUBTYPE(ife->ifm_media) == IFM_AUTO) {
-		/* Force renegotiation if MIIF_DOPAUSE. */
+		/*
+		 * Force renegotiation if MIIF_DOPAUSE.
+		 *
+		 * XXX This is only necessary because many NICs don't
+		 * XXX advertise PAUSE capabilities at boot time.  Maybe
+		 * XXX we should force this only once?
+		 */
 		if ((PHY_READ(sc, MII_BMCR) & BMCR_AUTOEN) == 0 ||
 		    (sc->mii_flags & (MIIF_FORCEANEG|MIIF_DOPAUSE)))
 			(void) mii_phy_auto(sc, 1);
