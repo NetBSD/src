@@ -46,7 +46,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	$Id: lptvar.h,v 1.18 1994/05/05 05:36:39 cgd Exp $
+ *	$Id: lptvar.h,v 1.19 1994/05/05 07:52:53 mycroft Exp $
  */
 
 /*
@@ -371,7 +371,7 @@ lptout(arg)
 	lptintr(sc);
 	splx(s);
 
-	timeout(lptout, (caddr_t)sc, STEP);
+	timeout(lptout, sc, STEP);
 }
 
 /*
