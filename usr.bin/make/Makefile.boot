@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.boot,v 1.8 1996/12/31 17:52:23 christos Exp $
+#	$NetBSD: Makefile.boot,v 1.9 1998/05/21 17:19:46 tv Exp $
 #
 # a very simple makefile...
 #
@@ -12,7 +12,7 @@
 
 MACHINE=sun
 MACHINE_ARCH=sparc
-CFLAGS= -I. -DMACHINE=\"${MACHINE}\" -DMACHINE_ARCH=\"${MACHINE_ARCH}\" \
+CFLAGS= -I. -DTARGET_MACHINE=\"${MACHINE}\" -DTARGET_MACHINE_ARCH=\"${MACHINE_ARCH}\" \
 	-DMAKE_BOOTSTRAP
 LIBS=
 
