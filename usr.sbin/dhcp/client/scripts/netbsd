@@ -1,8 +1,8 @@
 #!/bin/sh
 #
-# $NetBSD: netbsd,v 1.5 1999/03/05 17:52:45 mellon Exp $
+# $NetBSD: netbsd,v 1.6 1999/03/05 22:37:43 mycroft Exp $
 
-function make_resolv_conf() {
+make_resolv_conf() {
   echo search $new_domain_name >/etc/resolv.conf
   for nameserver in $new_domain_name_servers; do
     echo nameserver $nameserver >>/etc/resolv.conf
@@ -10,7 +10,7 @@ function make_resolv_conf() {
 }
 
 # Must be used on exit.   Invokes the local dhcp client exit hooks, if any.
-function exit_with_hooks() {
+exit_with_hooks() {
   exit_status=$1
   if [ -x /etc/dhclient-exit-hooks ]; then
     . /etc/dhclient-exit-hooks
