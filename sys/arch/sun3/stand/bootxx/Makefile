@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.8 2001/02/13 03:08:54 jmc Exp $
+#	$NetBSD: Makefile,v 1.9 2001/03/21 11:02:24 tsutsui Exp $
 
 SA_PROG= bootxx
 SRCS=   bootxx.c conf.c
@@ -10,7 +10,6 @@ proginstall: ${SA_PROG}
 
 PROG=	${SA_PROG}
 MKMAN= no
-NOMAN= yes
 
 .include <bsd.prog.mk>
 
