@@ -1,4 +1,4 @@
-/*	$NetBSD: union_subr.c,v 1.15 1995/06/02 02:39:20 mycroft Exp $	*/
+/*	$NetBSD: union_subr.c,v 1.16 1995/06/27 00:15:13 gwr Exp $	*/
 
 /*
  * Copyright (c) 1994 Jan-Simon Pendry
@@ -946,7 +946,15 @@ union_removed_upper(un)
 	struct union_node *un;
 {
 
-	union_newupper(un, NULLVP);
+	/*
+	 * We do not set the uppervp to NULLVP here, because lowervp
+	 * may also be NULLVP, so this routine would end up creating
+	 * a bogus union node with no upper or lower VP (that causes
+	 * pain in many places that assume at least one VP exists).
+	 * Since we've removed this node from the cache hash chains,
+	 * it won't be found again.  When all current holders
+	 * release it, union_inactive() will vgone() it.
+	 */
 	union_diruncache(un);
 
 	if (un->un_flags & UN_CACHED) {
