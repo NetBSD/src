@@ -1,4 +1,4 @@
-/*	$NetBSD: wdc.c,v 1.24.2.7 1998/06/09 13:58:17 bouyer Exp $ */
+/*	$NetBSD: wdc.c,v 1.24.2.8 1998/06/10 11:19:19 bouyer Exp $ */
 
 
 /*
@@ -335,16 +335,16 @@ wdcattach(chp)
 		wdc_atapibus_attach(chp);
 #else
 		printf("atapibus at %s channel %d not configured\n",
-		    chp->wdc->sc_dev.dv_xname, i);
+		    chp->wdc->sc_dev.dv_xname, chp->channel);
 #endif
 	}
 	if ((chp->ch_drive[0].drive_flags & DRIVE_ATA) ||
 	    (chp->ch_drive[1].drive_flags & DRIVE_ATA)) {
-#if NATAPIBUS > 0
+#if NWD > 0
 		wdc_ata_attach(chp);
 #else
 		printf("wd at %s channel %d not configured\n",
-		    chp->wdc->sc_dev.dv_xname, i);
+		    chp->wdc->sc_dev.dv_xname, chp->channel);
 #endif
 	}
 	/*
