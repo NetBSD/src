@@ -1,4 +1,4 @@
-/*	$NetBSD: pdqvar.h,v 1.23 1998/08/16 03:44:42 matt Exp $	*/
+/*	$NetBSD: pdqvar.h,v 1.24 1998/09/20 02:36:09 matt Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1996 Matt Thomas <matt@3am-software.com>
@@ -150,6 +150,7 @@ typedef pdq_bus_memaddr_t pdq_bus_memoffset_t;
 #endif
 #include <machine/bus.h>
 #include <machine/intr.h>
+#define PDQ_OS_HDR_OFFSET	(PDQ_RX_FC_OFFSET-3)
 #define	PDQ_OS_PTR_FMT		"%p"
 #define	PDQ_OS_CSR_FMT		"0x%lx"
 typedef void ifnet_ret_t;
@@ -481,6 +482,10 @@ typedef mblk_t PDQ_OS_DATABUF_T;
 
 #ifndef PDQ_OS_DATABUF_BUSPA
 #define PDQ_OS_DATABUF_BUSPA(pdq, b)	PDQ_OS_VA_TO_BUSPA(pdq, PDQ_OS_DATABUF_PTR(b))
+#endif
+
+#ifndef PDQ_OS_HDR_OFFSET
+#define	PDQ_OS_HDR_OFFSET	PDQ_RX_FC_OFFSET
 #endif
 
 extern void pdq_os_addr_fill(pdq_t *pdq, pdq_lanaddr_t *addrs, size_t numaddrs);
