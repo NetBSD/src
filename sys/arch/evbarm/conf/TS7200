@@ -1,4 +1,4 @@
-#	$NetBSD: TS7200,v 1.8 2005/01/24 02:40:00 joff Exp $
+#	$NetBSD: TS7200,v 1.9 2005/01/31 06:12:35 joff Exp $
 #
 #	GENERIC -- Generic kernel
 #
@@ -132,7 +132,7 @@ options 	DDB		# in-kernel debugger
 options		DDB_ONPANIC=1
 options 	DDB_HISTORY_SIZE=100	# Enable history editing in DDB
 #makeoptions	DEBUG="-g"	# compile full symbol table
-options 	SYMTAB_SPACE=400000
+options 	SYMTAB_SPACE=450000
 
 ##options 	PMAP_INCLUDE_PTE_SYNC
 ##options 	LOCKDEBUG
@@ -169,6 +169,9 @@ wdc0		at tspld?
 tsrtc*		at tspld?
 # HD44780 LCD on LCD header
 tslcd*		at tspld?
+# 4x4 Matrix Keypad on DIO header
+tskp*		at tspld?
+wskbd*	at tskp? console ? mux 1
 
 # TS-SER[1,2,4] multiport serial PC/104 cards
 com0		at isa? port 0x3f8 irq 6        # Standard PC serial ports
@@ -422,6 +425,6 @@ pseudo-device	ksyms			# /dev/ksyms
 #pseudo-device	dmoverio		# /dev/dmover dmover(9) interface
 
 # wscons pseudo-devices
-#pseudo-device	wsmux			# mouse & keyboard multiplexor
+pseudo-device	wsmux			# mouse & keyboard multiplexor
 #pseudo-device	wsfont
 
