@@ -1,4 +1,4 @@
-/*	$NetBSD: sd.c,v 1.78 1995/09/26 19:27:01 thorpej Exp $	*/
+/*	$NetBSD: sd.c,v 1.79 1995/09/30 22:57:19 pk Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Charles M. Hannum.  All rights reserved.
@@ -942,7 +942,7 @@ sddump(dev, blkno, va, size)
 		 * to wait for an xs.
 		 */
 		bzero(xs, sizeof(sx));
-		xs->flags |= SCSI_AUTOCONF | INUSE;
+		xs->flags |= SCSI_AUTOCONF | INUSE | SCSI_DATA_OUT;
 		xs->sc_link = sd->sc_link;
 		xs->retries = SDRETRIES;
 		xs->timeout = 10000;	/* 10000 millisecs for a disk ! */
