@@ -1,4 +1,4 @@
-/*	$NetBSD: param.h,v 1.7 2002/02/28 01:58:53 uch Exp $	*/
+/*	$NetBSD: param.h,v 1.8 2002/03/10 07:45:32 uch Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -39,15 +39,11 @@
  */
 
 /*
- * Machine dependent constants for mmEye.
+ * SuperH dependent constants.
  */
 
-#ifdef _KERNEL
-#ifdef _LOCORE
-#include <machine/psl.h>
-#else
+#if defined(_KERNEL) && !defined(_LOCORE)
 #include <machine/cpu.h>
-#endif
 #endif
 
 /*
@@ -62,30 +58,22 @@
  *
  */
 #define ALIGNBYTES		(sizeof(int) - 1)
-#define ALIGN(p)		(((u_int)(p) + ALIGNBYTES) &~ ALIGNBYTES)
-#define ALIGNED_POINTER(p, t)	((((u_long)(p)) & (sizeof(t)-1)) == 0)
-/* #define ALIGNED_POINTER(p, t)	1 */
+#define ALIGN(p)		(((u_int)(p) + ALIGNBYTES) & ~ALIGNBYTES)
+#define ALIGNED_POINTER(p, t)	((((u_long)(p)) & (sizeof(t) - 1)) == 0)
 
 #define	PGSHIFT		12		/* LOG2(NBPG) */
 #define	NBPG		(1 << PGSHIFT)	/* bytes/page */
-#define	PGOFSET		(NBPG-1)	/* byte offset into page */
-#define	NPTEPG		(NBPG/(sizeof (pt_entry_t)))
-
-#define	KERNBASE	0x8c000000	/* start of kernel virtual space */
-#define	KERNSIZE	0x01800000	/* size of kernel virtual space */
-#define	KERNTEXTOFF	0x8c000000	/* start of kernel text */
-#define	BTOPKERNBASE	((u_long)KERNBASE >> PGSHIFT)
-
-#define NPGDIR (1*NBPG)
-#define SYSMAP (5*NBPG) /* page table area offset from _end */
+#define	PGOFSET		(NBPG - 1)	/* byte offset into page */
+#define	NPTEPG		(NBPG / (sizeof(pt_entry_t)))
 
 #define	DEV_BSHIFT	9		/* log2(DEV_BSIZE) */
 #define	DEV_BSIZE	(1 << DEV_BSHIFT)
 #define	BLKDEV_IOSIZE	2048
 #define	MAXPHYS		(64 * 1024)	/* max raw I/O transfer size */
 
-#define	SSIZE		1		/* initial stack size/NBPG */
-#define	SINCR		1		/* increment of stack/NBPG */
+/*
+ * u-space.
+ */
 #define	UPAGES		4		/* pages of u-area */
 #define	USPACE		(UPAGES * NBPG)	/* total size of u-area */
 
