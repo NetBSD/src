@@ -1,4 +1,4 @@
-/*	$NetBSD: vaddrs.h,v 1.9 1998/08/23 09:53:03 pk Exp $ */
+/*	$NetBSD: vaddrs.h,v 1.10 2000/01/04 15:08:30 pk Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -105,29 +105,23 @@
 
 /*
  * The next constant defines the amount of reserved DVMA space on the
- * Sun4m. The amount of space *must* be a multiple of 16MB, and thus
- * (((u_int)0) - IOMMU_DVMA_BASE) must be divisible by 16*1024*1024!
- * Note that pagetables must be allocated at a cost of 1k per MB of DVMA
- * space, plus severe alignment restrictions. So don't make IOMMU_DVMA_BASE
- * too low (max space = 2G).
+ * IOMMU in sun4m machines. The amount of space *must* be a multiple
+ * of 16MB, and thus (((u_int)0) - IOMMU_DVMA_BASE) must be divisible
+ * by 16*1024*1024!  Note that pagetables must be allocated at a cost
+ * of 1k per MB of DVMA space, plus severe alignment restrictions. So
+ * don't make IOMMU_DVMA_BASE too low (max space = 2G).
  *
- * Since DVMA space overlaps with normal kernel address space (notably
- * the device mappings and the PROM), we don't want to put any DVMA
- * mappings where any of this useful stuff is (i.e. if we dvma_malloc
- * a buffer, we want to still have a SRMMU mapping to it, and we can't
- * have that if its on top of kernel code). Thus the last two
- * constants define the actual DVMA addresses used. These can be anything
- * as long as they are within the bounds setup by the first 2 constants.
- * This is especially important on MP systems with cache coherency: to
- * avoid consistency problems, DVMA addresses must map to the same place
- * in both processor and IOMMU space.
+ * Also note that the IOMMU DVMA range must include the D24 DVMA range
+ * defined above to be able to map legacy (sbus) devices that have
+ * their upper address bits hardwired to 0xff.
  */
 #define IOMMU_DVMA_BASE	0xfc000000	/* can change subject to above rule */
-#if 0
-#define IOMMU_DVMA_TOP	0xffffffff 	/* do not modify */
-#define IOMMU_DVMA_START 0xfd000000	/* 16M of DVMA */
-#endif
-#define IOMMU_DVMA_END	0xfe000000	/* XXX is this enough? */
+/*
+ * We could use all of DVMA space up to 0x100000000, but we cannot
+ * represent that number in an `unsigned long' which is necessary
+ * for extent(9). So we leave the very last page unused.
+ */
+#define IOMMU_DVMA_END	0xfffff000	/* one page short of the end of space */
 
 /*
  * Virtual address of the per cpu `cpu_softc' structure.
