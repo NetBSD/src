@@ -1,4 +1,4 @@
-/*	$NetBSD: bootxx.c,v 1.13 1999/03/25 05:16:06 simonb Exp $	*/
+/*	$NetBSD: bootxx.c,v 1.14 1999/03/25 05:17:49 simonb Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -39,7 +39,7 @@
  */
 
 #include <sys/param.h>
-#include <sys/exec.h>
+#include <sys/exec_elf.h>
 #include <stand.h>
 #include <machine/dec_prom.h>
 
