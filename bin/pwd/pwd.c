@@ -1,4 +1,4 @@
-/*	$NetBSD: pwd.c,v 1.13 1999/11/09 15:06:32 drochner Exp $	*/
+/* $NetBSD: pwd.c,v 1.14 2001/09/16 22:11:56 wiz Exp $ */
 
 /*
  * Copyright (c) 1991, 1993, 1994
@@ -43,12 +43,13 @@ __COPYRIGHT("@(#) Copyright (c) 1991, 1993, 1994\n\
 #if 0
 static char sccsid[] = "@(#)pwd.c	8.3 (Berkeley) 4/1/94";
 #else
-__RCSID("$NetBSD: pwd.c,v 1.13 1999/11/09 15:06:32 drochner Exp $");
+__RCSID("$NetBSD: pwd.c,v 1.14 2001/09/16 22:11:56 wiz Exp $");
 #endif
 #endif /* not lint */
 
 #include <sys/types.h>
 #include <sys/stat.h>
+
 #include <err.h>
 #include <errno.h>
 #include <stdio.h>
@@ -56,26 +57,25 @@ __RCSID("$NetBSD: pwd.c,v 1.13 1999/11/09 15:06:32 drochner Exp $");
 #include <string.h>
 #include <unistd.h>
 
-static char *	getcwd_logical __P((char *, size_t));
-static void	usage __P((void));
-int		main __P((int, char *[]));
+static char *getcwd_logical(char *, size_t);
+static void usage(void);
+int main(int, char *[]);
 
 int
-main(argc, argv)
-	int argc;
-	char *argv[];
+main(int argc, char *argv[])
 {
-	int ch;
-	int lFlag = 0;
+	int ch, lFlag;
 	const char *p;
 
+	setprogname(argv[0]);
+	lFlag = 0;
 	while ((ch = getopt(argc, argv, "LP")) != -1)
 		switch (ch) {
 		case 'L':
-			lFlag=1;
+			lFlag = 1;
 			break;
 		case 'P':
-			lFlag=0;
+			lFlag = 0;
 			break;
 		case '?':
 		default:
@@ -102,9 +102,7 @@ main(argc, argv)
 }
 
 static char *
-getcwd_logical(pt, size)
-	char *pt;
-	size_t size;
+getcwd_logical(char *pt, size_t size)
 {
 	char *pwd;
 	size_t pwdlen;
@@ -143,10 +141,9 @@ getcwd_logical(pt, size)
 }
 
 static void
-usage()
+usage(void)
 {
-
-	(void)fprintf(stderr, "usage: pwd [-LP]\n");
+	(void)fprintf(stderr, "usage: %s [-LP]\n", getprogname());
 	exit(EXIT_FAILURE);
 	/* NOTREACHED */
 }
